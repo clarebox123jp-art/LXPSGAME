@@ -13,6 +13,64 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.6(2026-06-14)— 📨 畢業帳號資料轉移(實名制 GM 審核)+ 好友「此帳號畢業已停用」徽章
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.6',
+    date: '2026-06-14',
+    brief: [
+      '📨【新功能:畢業生「帳號資料轉移」】',
+      '   ・畢業後想用<b>新的 Google 帳號</b>繼續玩,又捨不得舊帳號辛苦養成的英雄和進度嗎?現在可以申請把<b>舊學生帳號</b>的進度搬到新帳號了!',
+      '   ・做法:用<b>新帳號</b>登入 → 在登入頁帳號那一排點<b>「📨 申請帳號資料轉移」</b> → 填寫真實姓名、畢業年度、班級座號、原學生信箱 → 送出後告訴老師,等老師審核搬移。',
+      '   ・🔒 放心:搬移只是<b>複製</b>,舊帳號的資料會<b>保留、不會弄丟</b>。搬好後老師會通知你,記得<b>登出再重新登入</b>就能看到完整進度囉!',
+      '👥【好友清單小提示】',
+      '   ・如果好友是<b>已畢業停用</b>的舊帳號,清單上會顯示<b>「⚠ 此帳號畢業已停用」</b>,方便你知道對方已經換到新帳號了。',
+    ],
+    items: [
+      '★ v3.15.6 畢業帳號資料轉移(實名制 GM 審核;整套架構比照既有「下載權限申請」downloadPermissions):新增 collection accountTransferRequests/{新uid}。firestore.rules 比照 downloadPermissions——get 本人或 GM、list 限 GM、create 限本人 pending 且 newUid==auth.uid 且禁塞 oldUid/resolvedAt/resolvedBy/migratedAt、update 限本人 pending 不能動 GM 欄位、delete 限 GM(list/實名資訊讀取限 GM,保護學生姓名/班級座號個資)。',
+      '★ v3.15.6 學生端(index.html):登入頁帳號列 google-user-info 新增「📨 申請帳號資料轉移」按鈕(緊鄰 📩 申請下載權限,登入後即可見);_showAccountTransferModal 實名 modal(姓名/畢業年度/班級座號/原學生信箱四欄必填 + oldEmail 含@且≠新帳號;開啟時查既有申請顯示 pending/approved banner);後端 _fbSubmitAccountTransferRequest 寫入 + _fbGetMyAccountTransferRequest。',
+      '★ v3.15.6 GM 端遷移/復原 API(index.html module scope,★只讀舊寫新、絕不改舊帳號):_fbListAccountTransferRequests、_fbAccountSnapshot(回 知識幣/解鎖數/最高Lv/總Lv/暱稱/是否停權 供新舊比較)、_fbBackupNewAccountBeforeMigration(players 主檔+saves/live+safe → _premig_* 備份槽)、_fbRestoreNewAccountPreMigration、_fbMigrateAccountData(全搬:players 主檔 + saves/live + saves/safe + arenaTeams[改 uid 欄] + wbDamageDetail[改 uid 欄];舊主檔不存在則丟錯)、_fbResolveAccountTransfer、_fbDeleteAccountTransferRequest(deleteDoc)。',
+      '★ v3.15.6 GM 後台卡片(admin_panel.js,鐵律 1.47 三同步:HTML section #_admin-acctxfer-section + SIDEBAR_ITEMS + SIDEBAR_GROUPS「🛠 系統管理」組;ADMIN_PANEL_VERSION→v3.15.6):_bindAcctxferSection 事件委派(list 容器單一 click listener 讀 data-action/data-newuid/data-oldemail 分派)——🔍 反查舊帳號(oldEmail→oldUid via _fbAdminFindPlayerByEmail + 抓新舊 _fbAccountSnapshot 顯示比較)、✅ 核准並遷移(覆蓋前 confirm 比較 → _fbBackupNewAccountBeforeMigration → _fbMigrateAccountData → 驗證新主檔存在 → 最後才 _fbSuspendPlayer 停權舊帳號 → _fbResolveAccountTransfer approved → _fbAdminSendNotificationToPlayer 通知學生重登)、🚫 拒絕、↩ 取消停權(救回舊帳號)、↩ 還原新帳號到遷移前、🗑 刪除申請。沿用 admin_panel 慣例不用 ?. 可選鏈(舊 Safari 相容)。',
+      '★ v3.15.6 好友清單「此帳號畢業已停用」徽章(index.html 兩處渲染 _renderFriendPanelImpl[8 空格縮排] + _refreshFriendListInner[6 空格縮排]):_fbLoadFriend 回傳整份 players doc(含 _suspended),好友渲染處 fd._suspended===true 即在暱稱旁顯示紅色「⚠ 此帳號畢業已停用」徽章。',
+      '★ v3.15.6 復原後路(老師需求「萬一搬移失敗、也回不去舊帳號」5 道防線):①遷移只讀舊寫新 → 舊資料永久母本(就算舊信箱被學校停用,GM 仍能讀舊 uid 重搬)②停權是最後一步、複製驗證成功才做 ③覆蓋新帳號前 _premig_* 備份、可一鍵還原 ④GM 兩顆復原鈕(取消停權救舊帳號/還原新帳號到遷移前)⑤完成用通知彈窗請學生重登。',
+      '★ 註:本檔(game_changelog.js / index.html)已累積含 v3.15.5(森龍王綠葉特效 + 阿蘇隨機 5~9 段)全部變更;若尚未上傳 v3.15.5,直接上傳這批 v3.15.6 即涵蓋。hero_db.js 本輪未改、維持 v3.15.5。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.5(2026-06-14)— 🐉 翠綠森龍王戰背景改綠葉特效 + 🌋 阿蘇火山龍王爆發段數改隨機5~9段
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.5',
+    date: '2026-06-14',
+    brief: [
+      '🐉【翠綠森龍王 戰鬥背景特效更新】',
+      '   ・進入<b>翠綠森龍王</b>世界 BOSS 戰時,背景特效由火焰改為<b>不斷飄升的綠葉</b>,更符合森林巨龍的氣息!(火山炎龍王維持熔岩火焰)',
+      '🌋【阿蘇火山龍王 爆發技調整】',
+      '   ・爆發<b>「超光速衝擊波」</b>的連段砲擊次數改為<b>隨機 5～9 段</b>(原本約 8～9 段);自身 HP 低於 15% 時仍會提早收手。',
+    ],
+    items: [
+      '★ v3.15.5 龍王戰背景粒子「依屬性切換」(index.html advStartBattle worldboss 分支):屬性來源 window.WORLD_BOSS_LINEUP[].element(火山炎龍王=fire、翠綠森龍王=grass),加硬保底對照表 _WB_ELEM_FALLBACK 防 world-boss.js 延遲載入 race。火屬性沿用既有 main.css 火焰(wb-flame-particle);草屬性 inline 注入綠葉樣式(wb-leaf-particle,綠色 radial 漸層+葉形 border-radius+wbLeafRise/wbLeafRiseTop 上升搖曳動畫,id 守門只注入一次)。未列屬性 fallback 火焰。完全不動 main.css。',
+      '★ v3.15.5 阿蘇爆發段數改隨機(index.html _runBurst 超光速衝擊波):_asMaxSeg 由固定 12 → 5 + Math.floor(Math.random()*5) = 隨機 5~9 段;_asMaxSeg 上移至 log 之前避 TDZ;HP<15% 停止條件(_asStopHp)保留(兩者先到先停);戰鬥 log 顯示擲出的最大段數。hero_db.js BURST_DB「超光速衝擊波」d/fd 改「連轟隨機 5~9 段」;順修一處 v3.15.3 漏改的開發註解(傷害 自損×20→×10、特技 100%→50%、約10段→隨機5~9)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.4(2026-06-14)— 👑 法老王/埃及豔后 爆發技能新增專屬動畫 + 音效 + 法老王爆發新增復活效果
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.4',
+    date: '2026-06-14',
+    brief: [
+      '👑【法老王 / 埃及豔后 爆發技能 大升級】(管理員測試中)',
+      '   ・<b>法老王「太陽神的審判」</b>:新增專屬<b>爆發動畫</b>(太陽火球)與<b>大爆炸音效</b>;並<b>新增「復活」效果</b>——施放時會先<b>復活已倒下的友方</b>(以 25% HP 復活),再恢復全體 HP!',
+      '   ・<b>埃及豔后「尼羅河的詛咒」</b>:新增專屬<b>爆發動畫</b>(深海大漩渦)與<b>河水暴漲音效</b>。',
+      '   ・💡 提醒:埃及關目前仍<b>僅開放管理員(老師)測試</b>,正式對全班開放後即可體驗雙王的華麗爆發!',
+    ],
+    items: [
+      '★ v3.15.4 雙王爆發動畫/音效(hero_db.js BURST_GIF_DB + index.html):新增 BURST_GIF_DB 兩條——太陽神的審判→太陽火球.gif(sfx-pharaoh-burst,金光 tint)、尼羅河的詛咒→深海大漩渦.gif(sfx-cleopatra-burst,暗水藍 tint);爆發流程 _showBurstGif(bd.n) 於過場字幕後自動播放對應 GIF+音效。index.html 新增 2 個 <audio>:sfx-pharaoh-burst(大爆炸.mp3)、sfx-cleopatra-burst(河水暴漲.mp3,老師連結把「漲」打成「漩」,實際檔名為 河水暴漲.mp3 已確認 200)。兩爆發 body 移除舊的 playSfx(sfx-holy/sfx-curse),改由 GIF 音效統一播放(老師指定音效)。',
+      '★ v3.15.4 法老王爆發新增復活(index.html _runBurst 太陽神的審判):傷害結算後、全體治療前,先以 doRevive(dead,0.25) 復活我方所有倒下友方(25% 最大HP,acted=false 可再行動,bannerFX「☀️ 拉神復活!」);復活對 BOSS 版(寶庫王座雙王)與招募版同樣生效——BOSS 版讓法老王爆發即可救回埃及豔后(配合天賦回合開始互相復活,雙王更難纏);招募版則為 UR/SSR 級隊伍復活利器。hero_db.js BURST_DB「太陽神的審判」desc/fd 同步補上復活說明(圖鑑一致)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.3(2026-06-14)— 🌋 阿蘇火山龍王技能調整 + ⚔️ 貓空/日本小怪 HP×2 + 🐉 森龍王戰背景修復 + 🛠 GM 工具(異常門檻/奧汀/解鎖至寶)
   // ════════════════════════════════════════════════════════════════════
   {

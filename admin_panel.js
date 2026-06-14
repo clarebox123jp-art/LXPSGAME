@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.3';   // ★ v3.15.3(2026-06-14)— 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
+window.ADMIN_PANEL_VERSION = 'v3.15.6';   // ★ v3.15.6(2026-06-14)— 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1743,6 +1743,31 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.15.6 — 畢業帳號資料轉移審核(實名制) -->
+      <div id="_admin-acctxfer-section" style="background:rgba(20,30,55,0.5);border:2px solid rgba(120,180,255,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#cfe0ff;margin-bottom:8px;">📨 帳號資料轉移審核(畢業生)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.6;">
+          畢業生用<b>新帳號</b>登入後申請,想把<b>舊學生帳號</b>的進度搬過來。核對實名資訊(姓名/畢業年度/班級座號/原學生信箱)→ 按「🔍 反查舊帳號」找到舊 uid 並比較新舊進度 → 「✅ 核准並遷移」。
+          <br>★ 遷移<b>全搬</b>(主檔 + 雙槽存檔 + 鬥技場陣容 + 龍王傷害);<b style="color:#9fe0b0;">只讀舊、寫新,舊資料永久保留當母本</b>;核准時會<b>先備份新帳號</b>、遷移成功後<b>最後</b>才停權舊帳號。
+          <br>★ 後路:「↩ 取消停權」救回舊帳號、「↩ 還原新帳號」回到遷移前。
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+          <button id="_admin-acctxfer-refresh" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(40,70,130,0.5);border:1.5px solid rgba(120,180,255,0.6);color:#cfe0ff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔄 立即重新整理
+          </button>
+          <label style="font-size:12px;color:#aaa;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="_admin-acctxfer-onlypending" style="accent-color:#88bbff;">
+            僅顯示「待審核」
+          </label>
+          <span id="_admin-acctxfer-count" style="font-size:12px;color:#88ccff;margin-left:auto;"></span>
+        </div>
+        <div id="_admin-acctxfer-list" style="max-height:420px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:6px;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">載入中…</div>
+        </div>
+      </div>
+
       <!-- ★ v3.5.0 — 可疑帳號偵測區塊 -->
       <div id="_admin-sus-section" style="background:rgba(50,20,30,0.5);border:2px solid rgba(255,120,140,0.5);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#ff99bb;margin-bottom:8px;">🕵️ 5. 可疑帳號偵測</div>
@@ -2310,6 +2335,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
+      { sec: '_admin-acctxfer-section',         label: '📨 帳號資料轉移審核',     hint: '畢業生申請把舊帳號進度搬到新帳號(實名審核+全搬+復原後路)' },
       // ★ v3.13.55 — 汙染工具合併:移除重疊/不安全(可直接收回、看不到 creatorUid 證據)的 4 個面板
       //   (🕵️可疑帳號偵測 / 🔍異常解鎖偵測 / 🧹帳號汙染掃描 / 🔬稀有暴增稽核),
       //   統一走唯一安全流程:🧹 汙染清查(掃描)→ 🔬 查活動頁(看 creatorUid 證據)→
@@ -2356,7 +2382,7 @@ async function _showAdminStatsPanelImpl(){
     // ★ v3.13.63 — 任務2:29 個項目併成 8 個可摺疊群組(只改側欄導覽;各工具 section 區塊完全不動)
     //   SIDEBAR_ITEMS 保持原樣(_switchAdminSection 仍靠它查標題/預設選第一個),只改渲染方式。
     const SIDEBAR_GROUPS = [
-      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-trust-revoke-section'] },
+      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
@@ -7787,6 +7813,226 @@ async function _showAdminStatsPanelImpl(){
     if(_onlyPendingCb){
       _onlyPendingCb.onchange = () => _renderList(_adminPanelState.dlpermList);
     }
+  })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v3.15.6(2026-06-14) — 畢業帳號資料轉移審核區塊綁定(實名制)
+  // ────────────────────────────────────────────────────────────────
+  // 流程:列表 →「🔍 反查舊帳號」(oldEmail→oldUid + 新舊進度比較)→
+  //       「✅ 核准並遷移」(先備份新帳號 → 遷移[只讀舊寫新] → 驗證 →
+  //        最後才停權舊帳號 → 標記核准 → 通知學生重登)。
+  // 後路:「↩ 取消停權」救回舊帳號 /「↩ 還原新帳號到遷移前」。
+  // 註:不用 ?. 可選鏈(沿用 admin_panel 慣例;舊版 Safari 相容)。
+  // ════════════════════════════════════════════════════════════════
+  (function _bindAcctxferSection(){
+    const _listEl = document.getElementById('_admin-acctxfer-list');
+    const _refreshBtn = document.getElementById('_admin-acctxfer-refresh');
+    const _onlyPendingCb = document.getElementById('_admin-acctxfer-onlypending');
+    const _countEl = document.getElementById('_admin-acctxfer-count');
+    if(!_listEl) return;
+
+    const _esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const _fmtTime = (ms) => { if(!ms) return '—'; try { return new Date(ms).toLocaleString(); } catch(_){ return '—'; } };
+    const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
+
+    let _cache = [];
+    const _resolvedOldUid = {};  // newUid → oldUid(反查結果暫存,核准時不用再查)
+
+    const _statusBadge = (st) => {
+      const _map = {
+        pending:  ['rgba(120,90,30,0.5)', '#ffd066', '⏳ 待審核'],
+        approved: ['rgba(30,100,60,0.5)', '#88ffbb', '✅ 已核准遷移'],
+        rejected: ['rgba(100,40,40,0.5)', '#ff9999', '🚫 已拒絕']
+      };
+      const _m = _map[st] || ['rgba(80,80,80,0.5)', '#bbb', st || '—'];
+      return '<span style="display:inline-block;padding:2px 8px;background:' + _m[0] + ';color:' + _m[1] + ';border-radius:6px;font-size:11px;font-weight:800;">' + _m[2] + '</span>';
+    };
+
+    const _snapLine = (label, snap) => {
+      if(!snap || !snap.exists) return '<div style="color:#ff9999;">' + label + ':(查無此帳號資料)</div>';
+      return '<div>' + label + ':暱稱<b style="color:#ffcc66;">' + _esc(snap.displayName || '(無)') + '</b>'
+        + ' | 幣<b style="color:#88ccff;">' + (snap.coins || 0) + '</b>'
+        + ' | 解鎖<b style="color:#88ccff;">' + (snap.unlocked || 0) + '</b>'
+        + ' | 最高Lv<b style="color:#88ccff;">' + (snap.maxLv || 0) + '</b>'
+        + ' | 總Lv<b style="color:#88ccff;">' + (snap.totalLv || 0) + '</b>'
+        + (snap.suspended ? ' <span style="color:#ff9999;">(已停權)</span>' : '')
+        + '</div>';
+    };
+
+    function _btn(action, nu, oldEmail, label, bg, color){
+      return '<button data-action="' + action + '" data-newuid="' + _esc(nu) + '" data-oldemail="' + _esc(oldEmail || '') + '" '
+        + 'style="padding:6px 11px;font-size:12px;font-weight:700;background:' + bg + ';border:1.5px solid ' + color + ';color:' + color + ';border-radius:7px;cursor:pointer;font-family:inherit;">' + label + '</button>';
+    }
+
+    const _setDetail = (nu, html) => {
+      const _all = _listEl.querySelectorAll('._acctxfer-detail');
+      for(let i = 0; i < _all.length; i++){
+        if(_all[i].getAttribute('data-for') === nu){ _all[i].innerHTML = html; return; }
+      }
+    };
+
+    const _renderList = (list) => {
+      const _onlyPending = _onlyPendingCb && _onlyPendingCb.checked;
+      const _show = _onlyPending ? list.filter(r => (r.status || 'pending') === 'pending') : list;
+      if(_countEl) _countEl.textContent = '共 ' + list.length + ' 筆' + (_onlyPending ? '(待審核 ' + _show.length + ')' : '');
+      if(!_show.length){
+        _listEl.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:13px;">目前沒有' + (_onlyPending ? '待審核的' : '') + '帳號轉移申請</div>';
+        return;
+      }
+      let _html = '';
+      _show.forEach(r => {
+        const _nu = r.newUid || r.id;
+        const _st = r.status || 'pending';
+        _html += '<div class="_acctxfer-row" data-newuid="' + _esc(_nu) + '" style="background:rgba(255,255,255,0.04);border:1px solid rgba(120,180,255,0.3);border-radius:9px;padding:11px 13px;margin-bottom:9px;font-size:13px;line-height:1.65;">'
+          + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">' + _statusBadge(_st)
+          + '<span style="font-size:11px;color:#999;">申請 ' + _fmtTime(r.createdAt) + '</span>'
+          + (r.resolvedAt ? '<span style="font-size:11px;color:#999;">| 審核 ' + _fmtTime(r.resolvedAt) + ' by ' + _esc(r.resolvedBy || '') + '</span>' : '')
+          + '</div>'
+          + '<div style="background:rgba(0,0,0,0.3);border-radius:7px;padding:8px 10px;margin-bottom:7px;">'
+          + '<div>👤 <b style="color:#ffcc66;">' + _esc(r.realName || '(未填)') + '</b> | 畢業年度 <b>' + _esc(r.gradYear || '?') + '</b> | 班級座號 <b>' + _esc(r.classSeat || '?') + '</b></div>'
+          + '<div>📧 原學生信箱:<code style="color:#ffcc66;">' + _esc(r.oldEmail || '(未填)') + '</code></div>'
+          + '<div>🆕 新帳號:<code style="color:#88ccff;">' + _esc(r.newEmail || '') + '</code></div>'
+          + '<div style="font-size:11px;color:#888;">新 uid:' + _esc(_nu) + (r.oldUid ? ' | 已記錄舊 uid:' + _esc(r.oldUid) : '') + '</div>'
+          + '</div>'
+          + '<div class="_acctxfer-detail" data-for="' + _esc(_nu) + '" style="font-size:12px;color:#cfe0ff;margin-bottom:7px;"></div>'
+          + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+          + _btn('lookup', _nu, r.oldEmail, '🔍 反查舊帳號 + 比較進度', 'rgba(40,70,130,0.6)', '#9fc4ff')
+          + _btn('approve', _nu, r.oldEmail, '✅ 核准並遷移', 'rgba(30,100,60,0.6)', '#88ffbb')
+          + _btn('reject', _nu, r.oldEmail, '🚫 拒絕', 'rgba(100,40,40,0.6)', '#ff9999')
+          + _btn('unsuspend', _nu, r.oldEmail, '↩ 取消停權(救回舊帳號)', 'rgba(90,70,30,0.6)', '#ffd699')
+          + _btn('restore', _nu, r.oldEmail, '↩ 還原新帳號到遷移前', 'rgba(70,50,90,0.6)', '#d6b3ff')
+          + _btn('delete', _nu, r.oldEmail, '🗑 刪除此申請', 'rgba(70,70,70,0.6)', '#bbb')
+          + '</div>'
+          + '</div>';
+      });
+      _listEl.innerHTML = _html;
+    };
+
+    const _load = async () => {
+      _listEl.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:13px;">載入中…</div>';
+      try {
+        _cache = await window._fbListAccountTransferRequests();
+        _renderList(_cache);
+      } catch(e){
+        _listEl.innerHTML = '<div style="text-align:center;color:#ff6666;padding:20px;font-size:13px;">載入失敗:' + _esc(e && e.message || String(e)) + '</div>';
+      }
+    };
+
+    // 事件委派:整個 list 容器一個 click listener,讀 data-action/data-newuid/data-oldemail 分派
+    _listEl.addEventListener('click', async (ev) => {
+      const _b = ev.target.closest ? ev.target.closest('button[data-action]') : null;
+      if(!_b) return;
+      const _action = _b.getAttribute('data-action');
+      const _nu = _b.getAttribute('data-newuid');
+      const _oldEmail = _b.getAttribute('data-oldemail');
+      if(!_nu) return;
+
+      // oldEmail → oldUid 反查(快取避免重查)
+      const _resolveOld = async () => {
+        if(_resolvedOldUid[_nu]) return _resolvedOldUid[_nu];
+        if(!_oldEmail) return null;
+        const _r = await window._fbAdminFindPlayerByEmail(_oldEmail);
+        if(_r && _r.found){ _resolvedOldUid[_nu] = _r.uid; return _r.uid; }
+        return null;
+      };
+
+      try {
+        if(_action === 'lookup'){
+          _setDetail(_nu, '<span style="color:#aaa;">⏳ 反查 ' + _esc(_oldEmail) + ' 中…</span>');
+          const _oldUid = await _resolveOld();
+          if(!_oldUid){ _setDetail(_nu, '<span style="color:#ff6666;">❌ 找不到原學生信箱對應的帳號(' + _esc(_oldEmail) + ')。可能信箱拼錯、或舊帳號從未登入過遊戲。</span>'); return; }
+          const _oldSnap = await window._fbAccountSnapshot(_oldUid);
+          const _newSnap = await window._fbAccountSnapshot(_nu);
+          _setDetail(_nu, '<div style="background:rgba(0,0,0,0.3);border-radius:7px;padding:8px 10px;">'
+            + '<div style="color:#aaffcc;margin-bottom:3px;">✅ 已反查舊 uid:<code>' + _esc(_oldUid) + '</code></div>'
+            + _snapLine('📦 舊帳號(來源)', _oldSnap)
+            + _snapLine('🆕 新帳號(目標,將被覆蓋)', _newSnap)
+            + '<div style="color:#ffd699;margin-top:4px;font-size:11px;">確認無誤後按「✅ 核准並遷移」。新帳號現有進度會被覆蓋,但系統會先自動備份(可還原)。</div>'
+            + '</div>');
+          return;
+        }
+
+        if(_action === 'approve'){
+          const _oldUid = await _resolveOld();
+          if(!_oldUid){ alert('❌ 找不到原學生信箱對應的帳號:' + _oldEmail + '\n請先確認信箱正確、或學生舊帳號曾登入過遊戲。\n(可先按「🔍 反查舊帳號」確認)'); return; }
+          if(_oldUid === _nu){ alert('❌ 新舊 uid 相同,無需遷移。'); return; }
+          const _oldSnap = await window._fbAccountSnapshot(_oldUid);
+          const _newSnap = await window._fbAccountSnapshot(_nu);
+          const _ln = (s) => s && s.exists ? ('幣 ' + (s.coins || 0) + ' | 解鎖 ' + (s.unlocked || 0) + ' | 最高Lv ' + (s.maxLv || 0) + ' | 總Lv ' + (s.totalLv || 0)) : '(查無資料)';
+          const _confMsg = '【確認帳號資料遷移】\n\n'
+            + '來源(舊帳號):' + _oldEmail + '\n  暱稱 ' + ((_oldSnap && _oldSnap.displayName) || '(無)') + '\n  ' + _ln(_oldSnap) + '\n\n'
+            + '目標(新帳號,將被覆蓋):\n  暱稱 ' + ((_newSnap && _newSnap.displayName) || '(無)') + '\n  ' + _ln(_newSnap) + '\n\n'
+            + '★ 全搬:主檔 + 雙槽存檔 + 鬥技場陣容 + 龍王傷害\n'
+            + '★ 會先備份新帳號(可還原),遷移成功後才停權舊帳號(可解除)\n\n'
+            + '確定執行嗎?';
+          if(!confirm(_confMsg)) return;
+          _b.disabled = true; _b.textContent = '遷移中…';
+          await window._fbBackupNewAccountBeforeMigration(_nu);          // 1) 覆蓋前備份新帳號
+          const _mr = await window._fbMigrateAccountData(_oldUid, _nu);   // 2) 遷移(只讀舊寫新)
+          const _verify = await window._fbAccountSnapshot(_nu);           // 3) 驗證
+          if(!_verify || !_verify.exists){
+            alert('⚠️ 遷移後讀不到新帳號主檔,已停止(尚未停權舊帳號)。請重試或檢查網路。');
+            _b.disabled = false; _b.textContent = '✅ 核准並遷移'; return;
+          }
+          await window._fbSuspendPlayer(_oldUid, _adminEmail, '畢業帳號資料已轉移至新帳號(' + (_nu || '') + ')'); // 4) 最後才停權舊帳號
+          await window._fbResolveAccountTransfer(_nu, 'approved', { oldUid: _oldUid, migratedAt: Date.now() });      // 5) 標記核准
+          try{ if(window._fbAdminSendNotificationToPlayer) await window._fbAdminSendNotificationToPlayer(_nu, { title:'✅ 帳號資料轉移完成', body:'你的舊帳號進度已搬到這個帳號!請登出後重新登入即可看到完整進度。', type:'account_transfer' }); }catch(_){} // 6) 通知學生
+          alert('✅ 遷移完成!\n\n複製結果:主檔' + (_mr.playersDoc ? '✓' : '✗') + ' / live' + (_mr.saveLive ? '✓' : '✗') + ' / safe' + (_mr.saveSafe ? '✓' : '✗') + ' / 鬥技場' + (_mr.arenaTeams ? '✓' : '—') + ' / 龍王傷害' + (_mr.wbDamage ? '✓' : '—') + '\n\n舊帳號已停權(可在此卡片「↩ 取消停權」救回,舊資料不會刪)。已通知學生重新登入。');
+          await _load();
+          return;
+        }
+
+        if(_action === 'reject'){
+          if(!confirm('確定「拒絕」這筆帳號轉移申請嗎?\n(不會動到任何帳號資料)')) return;
+          await window._fbResolveAccountTransfer(_nu, 'rejected', {});
+          await _load();
+          return;
+        }
+
+        if(_action === 'unsuspend'){
+          const _oldUid = await _resolveOld();
+          if(!_oldUid){ alert('❌ 找不到原學生信箱對應的帳號,無法取消停權。'); return; }
+          if(!confirm('確定「取消停權」舊帳號(' + _oldEmail + ')嗎?\n學生就能再次登入舊帳號(舊資料一直都在)。')) return;
+          await window._fbUnsuspendPlayer(_oldUid, _adminEmail);
+          alert('✅ 已取消停權舊帳號:' + _oldEmail + '\n學生現在可以重新登入舊帳號。');
+          await _load();
+          return;
+        }
+
+        if(_action === 'restore'){
+          if(!confirm('確定把「新帳號」還原到「遷移前」的狀態嗎?\n(會用遷移前的備份覆蓋目前新帳號資料)')) return;
+          _b.disabled = true; _b.textContent = '還原中…';
+          const _n = await window._fbRestoreNewAccountPreMigration(_nu);
+          if(_n > 0){ alert('✅ 已還原新帳號到遷移前(還原 ' + _n + ' 份資料)。請通知學生重新登入。'); }
+          else { alert('⚠️ 找不到遷移前的備份(可能還沒執行過遷移,或備份已被清除)。'); }
+          _b.disabled = false; _b.textContent = '↩ 還原新帳號到遷移前';
+          return;
+        }
+
+        if(_action === 'delete'){
+          if(!confirm('確定「刪除」這筆申請紀錄嗎?\n(只刪申請紀錄,不動任何帳號資料)')) return;
+          await window._fbDeleteAccountTransferRequest(_nu);
+          await _load();
+          return;
+        }
+      } catch(e){
+        console.error('[帳號轉移審核] 動作失敗', e);
+        alert('❌ 操作失敗:' + (e && e.message || e));
+        try{ _b.disabled = false; }catch(_){}
+        await _load();
+      }
+    });
+
+    if(_refreshBtn) _refreshBtn.onclick = _load;
+    if(_onlyPendingCb) _onlyPendingCb.onchange = () => _renderList(_cache);
+
+    // 首次載入:等 window._fb* API 就緒(每 100ms,最多 5 秒)
+    let _tries = 0;
+    const _waitApi = setInterval(() => {
+      _tries++;
+      if(window._fbListAccountTransferRequests){ clearInterval(_waitApi); _load(); }
+      else if(_tries > 50){ clearInterval(_waitApi); _listEl.innerHTML = '<div style="text-align:center;color:#ff6666;padding:20px;font-size:13px;">後端 API 尚未就緒,請點「🔄 立即重新整理」</div>'; }
+    }, 100);
   })();
 
   // ════════════════════════════════════════════════════════════════
