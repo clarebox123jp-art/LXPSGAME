@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.6';   // ★ v3.15.6(2026-06-14)— 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
+window.ADMIN_PANEL_VERSION = 'v3.15.9';   // ★ v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -479,6 +479,70 @@ async function _showAdminStatsPanelImpl(){
           </button>
         </div>
         <div id="_admin-maint-result" style="margin-top:10px;font-size:14px;"></div>
+      </div>
+
+      <!-- ★ v3.15.9 — 伺服器休息 / 開機排程(每日自動休息時段;到點全體存檔並進休息畫面,開機倒數後自動重整) -->
+      <!--   雲端儲存於 gameConfig/restSchedule { enabled, startHHMM, endHHMM, warnMin, restMessage, warnMessage, updatedAt, updatedBy } -->
+      <div id="_admin-restsched-section" style="background:rgba(20,22,48,0.55);border:2px solid rgba(150,160,255,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#aab4ff;margin-bottom:8px;">🌙 0a. 伺服器休息 / 開機排程</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          設定<b>每日自動休息時段</b>(例:晚上 21:00 休息 → 隔天早上 07:00 開機)。<br>
+          ・休息開始時:所有玩家<b>立即存檔後進入「休息中」畫面</b>(即使正在戰鬥也會先存再擋,同維修模式),畫面顯示距離開機的倒數。<br>
+          ・開機時間到:休息畫面跑完倒數顯示「早安」後<b>自動重新整理</b>進入遊戲。<br>
+          ・休息前可設定<b>提前 N 分鐘預告</b>(在玩家畫面跳一次提醒,每天只提醒一次)。<br>
+          ・<b>管理員帳號永不受限</b>;雲端存檔在休息期間仍照常允許。此排程與「維修模式」各自獨立。
+        </div>
+        <div id="_admin-restsched-status" style="font-size:14px;color:#cdd2ff;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.4);border-radius:6px;">
+          載入中...
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:13px;color:#aab4ff;display:block;margin-bottom:4px;font-weight:700;">😴 休息開始時間</label>
+            <input id="_admin-restsched-start" type="time" value="21:00"
+              style="width:100%;padding:9px 12px;font-size:15px;background:rgba(20,20,40,0.9);
+              border:1.5px solid rgba(150,160,255,0.5);color:#fff;border-radius:6px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:13px;color:#aab4ff;display:block;margin-bottom:4px;font-weight:700;">🌅 開機時間</label>
+            <input id="_admin-restsched-end" type="time" value="07:00"
+              style="width:100%;padding:9px 12px;font-size:15px;background:rgba(20,20,40,0.9);
+              border:1.5px solid rgba(150,160,255,0.5);color:#fff;border-radius:6px;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div style="flex:1;min-width:130px;">
+            <label style="font-size:13px;color:#aab4ff;display:block;margin-bottom:4px;font-weight:700;">⏰ 提前預告(分鐘)</label>
+            <input id="_admin-restsched-warnmin" type="number" min="0" max="120" value="10"
+              style="width:100%;padding:9px 12px;font-size:15px;background:rgba(20,20,40,0.9);
+              border:1.5px solid rgba(150,160,255,0.5);color:#fff;border-radius:6px;font-family:inherit;box-sizing:border-box;">
+          </div>
+        </div>
+        <label style="font-size:13px;color:#aab4ff;display:block;margin-bottom:4px;font-weight:700;">🌙 休息畫面訊息</label>
+        <textarea id="_admin-restsched-restmsg" placeholder="休息中畫面顯示給玩家的訊息"
+          style="width:100%;min-height:54px;padding:10px;font-size:14px;background:rgba(20,20,40,0.9);
+          border:1.5px solid rgba(150,160,255,0.4);color:#fff;border-radius:8px;font-family:inherit;
+          box-sizing:border-box;margin-bottom:10px;resize:vertical;">小英雄們該休息囉～伺服器正在休息中，等天亮(開機時間)就會自動回來，先去睡覺、看書或運動一下吧！</textarea>
+        <label style="font-size:13px;color:#aab4ff;display:block;margin-bottom:4px;font-weight:700;">⏰ 預告訊息(提前 N 分鐘提醒)</label>
+        <textarea id="_admin-restsched-warnmsg" placeholder="休息前提前提醒的訊息"
+          style="width:100%;min-height:44px;padding:10px;font-size:14px;background:rgba(20,20,40,0.9);
+          border:1.5px solid rgba(150,160,255,0.4);color:#fff;border-radius:8px;font-family:inherit;
+          box-sizing:border-box;margin-bottom:10px;resize:vertical;">⏰ 提醒：伺服器即將進入休息時間，請趕快把這一場打完，並記得「立即同步雲端」，以免進度遺失喔！</textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="_admin-restsched-load" style="flex:1;min-width:120px;padding:11px 16px;font-size:14px;font-weight:800;
+            background:rgba(120,130,255,0.18);border:2px solid #8890ff;color:#cdd2ff;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            🔄 載入目前設定
+          </button>
+          <button id="_admin-restsched-on" style="flex:1;min-width:120px;padding:11px 16px;font-size:14px;font-weight:800;
+            background:rgba(120,130,255,0.28);border:2px solid #9aa4ff;color:#dfe3ff;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            🌙 啟用排程
+          </button>
+          <button id="_admin-restsched-off" style="flex:1;min-width:120px;padding:11px 16px;font-size:14px;font-weight:800;
+            background:rgba(80,255,80,0.18);border:2px solid #66dd66;color:#aaffaa;
+            border-radius:8px;cursor:pointer;font-family:inherit;">
+            ☀ 停用排程
+          </button>
+        </div>
+        <div id="_admin-restsched-result" style="margin-top:10px;font-size:14px;"></div>
       </div>
 
       <!-- ★ v1.0.20260428.3750 — GM 公告系統(對所有在線玩家發彈幕/banner/彈窗) -->
@@ -2325,6 +2389,7 @@ async function _showAdminStatsPanelImpl(){
     // ★ v3.11.35 階段 4d(2026-05-29) — 玩家活動記錄查詢插入第 3 位(老師指示)
     const SIDEBAR_ITEMS = [
       { sec: '_admin-maint-section',            label: '🔧 維修模式',              hint: '非管理員登入封鎖' },
+      { sec: '_admin-restsched-section',        label: '🌙 伺服器休息/開機排程',   hint: '每日自動休息時段(到點全體存檔並進休息畫面)+開機倒數後自動重整;管理員不受限' },
       { sec: '_admin-gm-section',               label: '📢 GM 公告',                hint: '對所有在線玩家廣播' },
       { sec: '_admin-activity-section',         label: '📜 玩家活動記錄查詢',      hint: 'email/uid/姓名 查英雄/至寶/戰鬥/幣帳' },
       { sec: '_admin-bug-section',              label: '📥 接收錯誤回報',          hint: '查看玩家提交的 bug' },
@@ -2382,7 +2447,7 @@ async function _showAdminStatsPanelImpl(){
     // ★ v3.13.63 — 任務2:29 個項目併成 8 個可摺疊群組(只改側欄導覽;各工具 section 區塊完全不動)
     //   SIDEBAR_ITEMS 保持原樣(_switchAdminSection 仍靠它查標題/預設選第一個),只改渲染方式。
     const SIDEBAR_GROUPS = [
-      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section'] },
+      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
@@ -4227,6 +4292,136 @@ async function _showAdminStatsPanelImpl(){
   // 初始渲染(用內建預設填一次,GM 進來就看得到 UI)
   _arenaRenderEditor();
   // ── 鬥技場預設陣容管理 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.15.9 — 伺服器休息 / 開機排程 init
+  //   Firestore gameConfig/restSchedule { enabled, startHHMM, endHHMM, warnMin, restMessage, warnMessage, updatedAt, updatedBy }
+  //   GM 設定後,玩家端 index.html 的 _startRestScheduleWatcher 會即時(onSnapshot + 本機 ticker)套用。
+  //   gameConfig = GM-only 寫 / 登入可讀(同 arenaSwitch),不需改 firestore.rules,無安全漏洞。
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initRestScheduleSection(){
+    const loadBtn   = document.getElementById('_admin-restsched-load');
+    const onBtn     = document.getElementById('_admin-restsched-on');
+    const offBtn    = document.getElementById('_admin-restsched-off');
+    const statusEl  = document.getElementById('_admin-restsched-status');
+    const resEl     = document.getElementById('_admin-restsched-result');
+    const startEl   = document.getElementById('_admin-restsched-start');
+    const endEl     = document.getElementById('_admin-restsched-end');
+    const warnEl    = document.getElementById('_admin-restsched-warnmin');
+    const restMsgEl = document.getElementById('_admin-restsched-restmsg');
+    const warnMsgEl = document.getElementById('_admin-restsched-warnmsg');
+    if(!loadBtn || !onBtn || !offBtn){
+      console.warn('[admin restsched] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    async function _getSdk(){
+      try{
+        if(window._fbFns && window._fbFns.setDoc){
+          return { getDoc: window._fbFns.getDoc, setDoc: window._fbFns.setDoc, doc: window._fbFns.doc };
+        }
+        const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+        return { getDoc: m.getDoc, setDoc: m.setDoc, doc: m.doc };
+      }catch(e){
+        console.warn('[admin restsched] SDK 取得失敗', e);
+        return null;
+      }
+    }
+    // HH:MM 基本驗證(input type=time 一律回傳零補位的 HH:MM,故手動解析即可,不用正則)
+    function _validHHMM(s){
+      if(typeof s !== 'string') return false;
+      const p = s.split(':');
+      if(p.length !== 2 || p[1].length !== 2) return false;
+      const h = parseInt(p[0], 10), mi = parseInt(p[1], 10);
+      return !isNaN(h) && !isNaN(mi) && h >= 0 && h <= 23 && mi >= 0 && mi <= 59;
+    }
+    async function _loadSched(){
+      statusEl.textContent = '載入中...';
+      statusEl.style.color = '#aaa';
+      try{
+        if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.getDoc || !sdk.doc){ throw new Error('Firestore SDK 未就緒'); }
+        const snap = await sdk.getDoc(sdk.doc(window._fbDb, 'gameConfig', 'restSchedule'));
+        if(snap && snap.exists()){
+          const data = snap.data() || {};
+          const enabled = (data.enabled === true);
+          if(_validHHMM(data.startHHMM) && startEl) startEl.value = data.startHHMM;
+          if(_validHHMM(data.endHHMM) && endEl) endEl.value = data.endHHMM;
+          if(typeof data.warnMin === 'number' && warnEl) warnEl.value = String(data.warnMin);
+          if(typeof data.restMessage === 'string' && data.restMessage && restMsgEl) restMsgEl.value = data.restMessage;
+          if(typeof data.warnMessage === 'string' && data.warnMessage && warnMsgEl) warnMsgEl.value = data.warnMessage;
+          const updatedAt = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '(無記錄)';
+          const updatedBy = data.updatedBy ? data.updatedBy : '(無記錄)';
+          if(enabled){
+            statusEl.style.color = '#9aa4ff';
+            statusEl.textContent = '🌙 目前:已啟用(休息 ' + (data.startHHMM || '?') + ' → 開機 ' + (data.endHHMM || '?')
+              + ',提前 ' + (typeof data.warnMin === 'number' ? data.warnMin : 10) + ' 分預告)。最後更新:' + updatedAt + ' by ' + updatedBy;
+          } else {
+            statusEl.style.color = '#88dd99';
+            statusEl.textContent = '☀ 目前:已停用(不會自動休息)。最後更新:' + updatedAt + ' by ' + updatedBy;
+          }
+        } else {
+          statusEl.style.color = '#88ccff';
+          statusEl.textContent = '☁ 雲端尚無排程設定 → 預設停用。設定時間後按「🌙 啟用排程」即生效。';
+        }
+      }catch(e){
+        statusEl.style.color = '#ff6666';
+        statusEl.textContent = '❌ 載入失敗:' + (e && e.message || e);
+      }
+    }
+    async function _saveSched(enabled){
+      const btn = enabled ? onBtn : offBtn;
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '處理中...';
+      resEl.textContent = '';
+      try{
+        if(!window._fbDb){ throw new Error('Firestore 未就緒'); }
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.setDoc || !sdk.doc){ throw new Error('Firestore SDK 未就緒'); }
+        const startHHMM = (startEl && startEl.value) || '';
+        const endHHMM   = (endEl && endEl.value) || '';
+        let warnMin = warnEl ? parseInt(warnEl.value, 10) : 10;
+        if(isNaN(warnMin) || warnMin < 0) warnMin = 0;
+        if(warnMin > 120) warnMin = 120;
+        const restMessage = (restMsgEl && restMsgEl.value) || '';
+        const warnMessage = (warnMsgEl && warnMsgEl.value) || '';
+        // 啟用時嚴驗:時間格式 + 開始≠開機(相同會造成 24 小時全鎖死)
+        if(enabled){
+          if(!_validHHMM(startHHMM) || !_validHHMM(endHHMM)){ throw new Error('時間格式錯誤,請用 HH:MM(24 小時制)'); }
+          if(startHHMM === endHHMM){ throw new Error('休息開始與開機時間不可相同(否則會 24 小時全鎖死)'); }
+        }
+        const me = (window._fbAuth && window._fbAuth.currentUser) || null;
+        const updatedBy = me ? (me.email || me.uid.slice(0, 10)) : 'unknown';
+        await sdk.setDoc(sdk.doc(window._fbDb, 'gameConfig', 'restSchedule'), {
+          enabled: !!enabled,
+          startHHMM: startHHMM,
+          endHHMM: endHHMM,
+          warnMin: warnMin,
+          restMessage: restMessage,
+          warnMessage: warnMessage,
+          updatedAt: Date.now(),
+          updatedBy: updatedBy,
+        });
+        resEl.style.color = enabled ? '#9aa4ff' : '#88dd99';
+        resEl.textContent = enabled
+          ? '🌙 已啟用!休息 ' + startHHMM + ' → 開機 ' + endHHMM + '(提前 ' + warnMin + ' 分預告)。全體玩家約 30 秒內生效。'
+          : '☀ 已停用,玩家不會再自動進入休息畫面。約 30 秒內生效。';
+        setTimeout(_loadSched, 300);
+      }catch(e){
+        console.error('[admin restsched save]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 設定失敗:' + (e && e.message || '未知錯誤');
+      }finally{
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    }
+    loadBtn.addEventListener('click', _loadSched);
+    onBtn.addEventListener('click', function(){ _saveSched(true); });
+    offBtn.addEventListener('click', function(){ _saveSched(false); });
+    setTimeout(_loadSched, 200);  // 開面板自動載一次
+  })();
 
   // ════════════════════════════════════════════════════════════════════════════
   // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 init
