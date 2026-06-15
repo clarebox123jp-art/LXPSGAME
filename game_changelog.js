@@ -13,6 +13,23 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.14(2026-06-15)— 🔧 登入逾時誤登出修正 + GM 龍王HP救援修正
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.14',
+    date: '2026-06-15',
+    brief: [
+      '🔧✨【BUG 修正】',
+      '   ・🚪 修正「<b>明明剛登入卻馬上跳出「逾時 30 分鐘,已自動登出」要重新登入</b>」的問題!現在只要打開遊戲就會從當下重新計時,不會再因為上次玩的時間隔太久而一進來被踢出。',
+      '   ・🐉 (GM 後台)修正「龍王 HP 救援」讀不到當前龍王血量的問題。',
+    ],
+    items: [
+      '★ v3.15.14【登入閒置自動登出誤判修正 index.html】_idleAutoLogoutStart 原本(v3.14.7)有「跨 reload 過期檢查」:讀 localStorage[lxps_idle_ts_<uid>](上次活躍時間戳),若距今 ≥ IDLE_TIMEOUT_MS(30 分鐘)→ setTimeout 觸發 _doAutoLogout(stale_session) 立刻登出。問題:此邏輯無法區分「iOS 殺 context 自動重開」與「玩家主動登入」,玩家隔一段時間(下課/午休/隔天)重新登入時,因 localStorage 殘留 30+ 分鐘前的舊時間戳被立刻判「閒置過久」踢出。修正:移除 stale 立刻登出 +「_lastActivityTs=_stored 往前推」分支,改為玩家登入時 localStorage.removeItem 清舊戳記 + _lastActivityTs=_now() 從現在重新計時 30 分鐘。登入後若真的 30 分鐘無操作,計時器(_tick)仍會正常觸發登出,原本的閒置保護不受影響;BOSS 戰中不倒數的保護(_adventureMode && G.round>=1)也不受影響。',
+      '★ v3.15.14【GM 龍王HP救援 當前龍王不同步修正 admin_panel.js,adminOnly】_initWbRescueSection 原本寫死 const BOSS_ID=vesuvius_fire_dragon + MAX_HP=5000000。但龍王輪替系統(v3.14.21)當前龍王走 _wbGetCurrentBossId(),維蘇威(首發)早已倒下 HP=0 → GM 救援讀的永遠是維蘇威(已倒下),重讀無效,也無法救援當前活著的龍王。修正:BOSS_ID/MAX_HP 改 let + 新增 _syncCurBoss()(讀 _wbGetCurrentBossId()/_wbGetCurrentBoss() 動態取當前龍王 id/maxHp/name),在 _refreshStatus/_writeHp/寫入按鈕/快捷按鈕 每次操作前呼叫 → 永遠對當前龍王讀寫;狀態列加顯示「🐉 當前龍王:<名稱>」。(8 隻龍王 maxHp 皆 500 萬,快捷鍵 data-hp 不需改。)',
+      '★ v3.15.14 註:本輪改動檔 = game_changelog.js(本檔)、admin_panel.js(v3.15.9→v3.15.14)、index.html(v3.15.13→v3.15.14)。hero_db.js/world-boss.js/world-boss-ui.html/sw.js 未改。CURRENT_BOOT_VER 不變。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.13(2026-06-15)— 🦁 動物學家爆發/守護強化 + 剋制埃及豔后
   // ════════════════════════════════════════════════════════════════════
   {

@@ -4838,8 +4838,19 @@ async function _showAdminStatsPanelImpl(){
   //   subscribeWbHp 會自動推送給所有玩家。
   // ════════════════════════════════════════════════════════════════════════════
   (function _initWbRescueSection(){
-    const BOSS_ID  = 'vesuvius_fire_dragon';
-    const MAX_HP   = 5000000;
+    // ★ v3.15.14 — 改為動態追蹤「當前龍王」(原寫死 vesuvius_fire_dragon → 龍王輪替後永遠讀到已倒下的維蘇威,HP 永遠顯示 0)
+    let BOSS_ID  = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : 'vesuvius_fire_dragon';
+    let MAX_HP   = 5000000;
+    let _curBossName = '';
+    function _syncCurBoss(){
+      try{
+        if(typeof window._wbGetCurrentBossId === 'function') BOSS_ID = window._wbGetCurrentBossId();
+        const _b = (typeof window._wbGetCurrentBoss === 'function') ? window._wbGetCurrentBoss() : null;
+        if(_b){ if(_b.maxHp) MAX_HP = _b.maxHp; _curBossName = _b.name || BOSS_ID; }
+        else { _curBossName = BOSS_ID; }
+      }catch(_){}
+    }
+    _syncCurBoss();
     const statusEl = document.getElementById('_admin-wb-rescue-status');
     const inputEl  = document.getElementById('_admin-wb-rescue-input');
     const writeBtn = document.getElementById('_admin-wb-rescue-write');
@@ -4852,19 +4863,22 @@ async function _showAdminStatsPanelImpl(){
     // 讀取當前 HP 並更新狀態顯示
     function _refreshStatus(){
       try{
+        _syncCurBoss();  // ★ v3.15.14 — 每次重讀都重新確認當前龍王（支援龍王輪替）
         if(!window._wbHpSync || typeof window._wbHpSync.getCurrentHp !== 'function'){
           statusEl.innerHTML = '<span style="color:#ff8866;">⚠ _wbHpSync 模組未就緒(請等遊戲完全載入)</span>';
           return;
         }
         const _cur = window._wbHpSync.getCurrentHp(BOSS_ID);
+        const _bossTag = '<span style="color:#ffcc88;">🐉 當前龍王：<b>' + _curBossName + '</b></span><br>';
         if(_cur == null){
-          statusEl.innerHTML = '<span style="color:#aaa;">📡 雲端尚未有此 BOSS 的 HP 紀錄(視為滿血 ' + _fmt(MAX_HP) + ')</span>';
+          statusEl.innerHTML = _bossTag + '<span style="color:#aaa;">📡 雲端尚未有此 BOSS 的 HP 紀錄（視為滿血 ' + _fmt(MAX_HP) + '）</span>';
+          try{ inputEl.value = MAX_HP; }catch(_){}
           return;
         }
         const _pct = Math.round((_cur / MAX_HP) * 100);
         const _color = _cur === 0 ? '#ff6666' : (_cur < MAX_HP * 0.3 ? '#ffaa66' : (_cur < MAX_HP * 0.7 ? '#ffcc66' : '#aaffaa'));
         const _label = _cur === 0 ? '💀 已倒下' : (_cur >= MAX_HP ? '❤️ 滿血' : `❤️ 剩 ${_pct}%`);
-        statusEl.innerHTML =
+        statusEl.innerHTML = _bossTag +
           '<span style="color:' + _color + ';">' + _label + '</span>'
           + ' &nbsp;<span style="color:#ddd;">當前 HP: <b style="font-size:15px;">' + _fmt(_cur) + '</b> / ' + _fmt(MAX_HP) + '</span>';
         // 把當前值填入 input 方便修改
@@ -4877,6 +4891,7 @@ async function _showAdminStatsPanelImpl(){
     // 寫入 HP
     async function _writeHp(newHp){
       try{
+        _syncCurBoss();  // ★ v3.15.14 — 寫入前確認當前龍王
         if(typeof newHp !== 'number' || isNaN(newHp) || newHp < 0 || newHp > MAX_HP){
           throw new Error('HP 必須在 0 ~ ' + _fmt(MAX_HP) + ' 之間');
         }
@@ -4916,6 +4931,7 @@ async function _showAdminStatsPanelImpl(){
       writeBtn.onclick = async () => {
         const _hp = parseInt(inputEl.value, 10);
         if(isNaN(_hp)){ resEl.style.color = '#ff8866'; resEl.textContent = '❌ 請輸入有效的數字'; return; }
+        _syncCurBoss();  // ★ v3.15.14
         // 二次確認
         const _cur = (window._wbHpSync && window._wbHpSync.getCurrentHp) ? window._wbHpSync.getCurrentHp(BOSS_ID) : null;
         const _curStr = (_cur == null) ? '(雲端無紀錄,視為滿血)' : _fmt(_cur);
@@ -4934,6 +4950,7 @@ async function _showAdminStatsPanelImpl(){
         const _hp = parseInt(btn.getAttribute('data-hp'), 10);
         if(isNaN(_hp)) return;
         inputEl.value = _hp;
+        _syncCurBoss();  // ★ v3.15.14
         const _cur = (window._wbHpSync && window._wbHpSync.getCurrentHp) ? window._wbHpSync.getCurrentHp(BOSS_ID) : null;
         const _curStr = (_cur == null) ? '(雲端無紀錄)' : _fmt(_cur);
         const _msg = '⚠ 確定要把龍王 HP 寫成 ' + _fmt(_hp) + ' 嗎?\n\n'
