@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v3.15.17(2026-06-15)— 第三隻龍王「山岳地龍王(土)」完整實裝:HERO_DB/BURST_DB/HERO_TRAIT/LORE/BIO/IMGS/AVTR/ELEMENT 掛載 + 專屬 AI(山崩落石/震天龍吼/天動地裂)+ 咆哮 + BGM/至寶/掉落/特效映射 + cap 強力減傷-40%/中毒繞cap弱點
  * ★ v3.14.24(2026-06-13)— 當前龍王排名至寶 helper(_wbGetCurrentDragonTreasureName)+ 每隻龍王專屬開戰咆哮(_WB_BOSS_ROAR_LINES,草龍王綠色系)
  * ★ v3.14.23(2026-06-13)— 草龍王戰鬥 BGM 對照表/helper(_wbGetCurrentBossBattleBgmId)+ 護盾啟動提示改依當前龍王動態產生(原寫死維蘇威盾組)
  * ★ v3.14.20(2026-06-13)— 當前龍王切換系統:_WB_BOSS_ROTATION + _wbGetCurrentBossId/_wbGetCurrentBoss/_wbGetNextBossId;
@@ -221,6 +222,7 @@
   window._WB_BATTLE_BGM_MAP = {
     vesuvius_fire_dragon: 'bgm-wb-vesuvius-battle',
     cuiyu_grass_dragon:   'bgm-wb-cuiyu-battle',
+    shanyue_earth_dragon: 'bgm-wb-shanyue-battle',   // ★ v3.15.17 — 地龍王戰BGM.m4a
   };
   window._wbGetCurrentBossBattleBgmId = function(){
     try{
@@ -235,6 +237,7 @@
   window._WB_DRAGON_TREASURE_MAP = {
     vesuvius_fire_dragon: 'dragon_fang_fire',
     cuiyu_grass_dragon:   'dragon_whisker_grass',
+    shanyue_earth_dragon: 'dragon_scale_earth',   // ★ v3.15.17 — 地龍王之麟(須與 index.html _WB_DRAGON_T_MAP 一致)
   };
   window._wbGetCurrentDragonTreasureId = function(){
     try{ return window._WB_DRAGON_TREASURE_MAP[window._wbGetCurrentBossId()] || 'dragon_fang_fire'; }
@@ -264,6 +267,14 @@
       treasure: { id:'wb_dragon_scale_water', icon:'💧', name:'冰龍鱗甲',  color:'#3296ff', price:13000, rarity:'mythical' },
       bonusItems: [
         { id:'wb_dragon_fang_water', icon:'❄', name:'冰龍獠牙', price:5000, rate:0.30 },
+      ],
+      coinBase:5500, coinSilver:13500, coinGold:27000,
+    },
+    // ★ v3.15.17 — 山岳地龍王掉落物(土系紀念物,結構對齊火/水龍王)
+    shanyue_earth_dragon: {
+      treasure: { id:'wb_dragon_scale_earth', icon:'🪨', name:'土龍鱗甲', color:'#cc8855', price:13000, rarity:'mythical' },
+      bonusItems: [
+        { id:'wb_dragon_horn_earth', icon:'⛰', name:'土龍之角', price:5000, rate:0.30 },
       ],
       coinBase:5500, coinSilver:13500, coinGold:27000,
     },
@@ -439,6 +450,11 @@
             s1:{n:'劇毒藤縛',c:5,d:'拘束特技最高 1 名對手 2 回合並使其猛毒',fd:'伸出巨大藤蔓緊緊纏住對方陣中特技最高的英雄!使其「禁動」2 回合(完全無法行動),並陷入「猛毒」5 回合(每回合損失最大 HP 8%,無視護盾與減傷)。'},
             s2:{n:'萬刃落葉',c:6,d:'特技150%全體草屬性傷害,附加出血2回合',fd:'抖落滿天如刀刃般銳利的葉片射向全場!用特技值的 150% 對全體對手造成草屬性傷害,並使全體「出血」2 回合(每回合損失最大 HP 6%,且每次受到攻擊再追加損失 6%;可被護盾與減傷抵銷)。'}
           },
+          // ★ v3.15.17 — 山岳地龍王(第三隻世界 BOSS:土屬性,地核;數值對齊火/草龍王)
+          '山岳地龍王':{hp:5000000,atk:49,sp:50,spd:15,exp:1500,star:5,isWorldBoss:true,
+            s1:{n:'山崩落石',c:6,d:'特技150%全體土屬性傷害,60%機率暈眩1回合',fd:'撼動山岳崩落巨岩砸向全場!用特技值的 150% 對全體對手造成土屬性傷害,每名對手有 60% 機率「暈眩」1 回合不能動。'},
+            s2:{n:'震天龍吼',c:4,d:'特技75%全體無屬性傷害,全體強力暈眩1回合',fd:'發出撼天動地的龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),並使全體對手陷入「強力暈眩」1 回合,完全無法行動。'}
+          },
         });
         window.HERO_DB = HERO_DB;  // ★ 暴露給 UI script 用
       }
@@ -452,6 +468,8 @@
           '火山炎龍王': {n:'天崩之炎', d:'將全體HP減至最大HP 20%(無視有利)+強力燃燒3回合,隨機1名強力暈眩+強力易傷1回合', fd:'兩千年怒火一次釋放!將全體存活對手的 HP 減至「最大 HP 的 20%」(若當前 HP 已低於 20% 則不受傷),完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效),並對全體存活對手附加「強力燃燒」狀態 3 回合(行動前後各 -10HP)。再從存活對手中隨機選 1 名,額外施加「強力暈眩」與「強力易傷」各 1 回合。'},
           // ★ v3.13.73 — 翠綠森龍王爆發(綜合 S1+S2 強力版)
           '翠綠森龍王': {n:'翠龍·萬藤絞殺', d:'特技120%全體草傷(無視有利)+全體猛毒5回(-8%/回)&強力出血2回(-9%/回)+隨機2名強力禁動1回合', fd:'太古翠藤自地底竄出絞殺全場!用特技值的 120% 對全體存活對手造成草屬性傷害(無視無敵、免疫、護盾、反射、減傷),並同時施加「猛毒」5 回合(每回合 -8% 最大HP,無視護盾/減傷)與「強力出血」2 回合(每回合 -9% 最大HP、每次受擊再追加 9%,可被護盾/減傷抵銷)。再從存活對手中隨機選 2 名,以強韌藤蔓「強力禁動」1 回合,完全無法行動。'},
+          // ★ v3.15.17 — 山岳地龍王爆發(全體大傷 + 強力暈眩主軸)
+          '山岳地龍王': {n:'天動地裂', d:'特技180%全體土傷(無視有利)+隨機2名強力暈眩1回合+隨機1名強力易傷2回合', fd:'大地崩解、山岳傾覆!用特技值的 180% 對全體存活對手造成土屬性傷害,完全無視所有有利狀態(無敵、免疫、護盾、反射、減傷全部失效;但元素護盾仍減 80%)。再從存活對手中隨機選 2 名陷入「強力暈眩」1 回合完全無法行動,並隨機選 1 名額外施加「強力易傷」2 回合。'},
         });
         window.BURST_DB = BURST_DB;
       }
@@ -465,6 +483,8 @@
           '火山炎龍王': { name:'炎之意志', icon:'🐉', desc:'單次受傷上限固定 5,000(不隨 HP 變動);第 3/5/7/9 回合啟動四元素護盾各 1 層(減傷 80%);全隊聯手爆發可無視護盾', fd:'兩千年沉睡淬煉的炎之意志,單次受傷上限固定為 5,000(不隨 HP 變動,任何一擊最高僅造成 5,000 傷害)。每場戰鬥的第 3、5、7、9 回合會自動啟動「四元素護盾」,每次補滿每個元素各 1 層(同時最多 4 層):所有傷害再減 80%,即使是無視有利狀態的攻擊也無法穿透。需要使用對應屬性(火 / 風 / 土 / 暗)的剋制元素(水 / 土 / 草 / 光)攻擊各 1 次,才能完整破除護盾恢復正常傷害。整場 4 階段護盾、最多 16 次破盾機會,需用心管理破盾節奏。註:當隊伍累積答對 5 / 10 題時觸發的「全隊聯手爆發」5,000 傷害可以無視護盾直接命中。' },
           // ★ v3.13.73 — 翠綠森龍王天賦「翠之意志」(共同 cap/護盾 + 吸能量/免疫光/燃燒特別放大)
           '翠綠森龍王': { name:'翠之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(草盾×2/水盾/光盾,減傷 80%);每回合吸取隊伍 2 能量;免疫光屬性傷害;受燃燒傷害固定為「普通-300/強力-600」', fd:'太魯閣翠玉龍的古老意志,單次受傷上限固定為 5,000(不隨 HP 變動)。每場戰鬥的第 3、5、7、9 回合會啟動「元素護盾」:草盾 2 層 + 水盾 1 層 + 光盾 1 層(同時最多 4 層,減傷 80%),需用「火」攻擊破草盾(要 2 次)、「風」破水盾、「暗」破光盾,才能完整破除。此外牠每回合會「吸取隊伍 2 點能量」據為己用(讓自己更快爆發)、且「完全免疫光屬性傷害」。但藤葉天生怕火——對牠施加的燃燒會被特別放大為固定值:普通燃燒每跳 -300、強力燃燒每跳 -600(不受暴擊影響,護盾期間同樣吃 80% 減傷)。火屬性是牠的絕對剋星(屬性克制 + 破 2 層草盾 + 燃燒放大)。' },
+          // ★ v3.15.17 — 山岳地龍王天賦「山岳之意志」(共同 cap/護盾 + 強力減傷 -40% + 50%反擊 + 弱點畏毒)
+          '山岳地龍王': { name:'山岳之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(土/火/暗/草,減傷 80%);受到所有傷害再額外減 40%;受到攻擊時 50% 機率反彈受傷的 50% 給攻擊者;但畏懼劇毒——中毒傷害大幅放大且無視上限', fd:'盤踞地核億萬年的山岳之意志,單次受傷上限固定為 5,000(不隨 HP 變動)。每場戰鬥的第 3、5、7、9 回合會啟動「四元素護盾」:土盾、火盾、暗盾、草盾各 1 層(同時最多 4 層,減傷 80%),需用「草」破土盾、「水」破火盾、「光」破暗盾、「火」破草盾,各 1 次才能完整破除。此外牠擁有堅不可摧的軀體:受到所有傷害都會「再額外減免 40%」(護盾期間在 80% 減傷之上再減),且「受到攻擊時有 50% 機率反彈受到傷害的 50%」給攻擊者(土屬性)。但再硬的岩石也會被毒液侵蝕——牠「畏懼劇毒」:受到的中毒/猛毒傷害會被大幅放大為固定值(普通中毒每跳 -1,500、猛毒每跳 -3,000),且完全無視 5,000 上限、護盾與減傷。中毒是擊敗牠最有效的手段。' },
         });
         window.HERO_TRAIT = HERO_TRAIT;
       }
@@ -477,6 +497,8 @@
           // ★ v3.13.74 — 翠綠森龍王背景故事(老師指定:世界 BOSS 都棲息於「全世界最充滿該屬性的地方」;
           //   草屬性 → 全世界植物最茂盛之地 = 亞馬遜雨林)
           '翠綠森龍王': '棲息於亞馬遜雨林最深處的太古翠玉龍。相傳全世界植物生命力最旺盛之地——這片占地球雨林面積過半、孕育數百萬物種的浩瀚綠海——正是牠藤蔓盤結的軀體所化,每一寸藤葉都是牠意志的延伸。平時牠與千年巨木融為一體靜靜沉睡,一旦有人砍伐焚林、破壞這片「世界之肺」,牠便會甦醒:萬千翠藤自地底竄出絞殺入侵者,飛葉如刀、劇毒蔓延。傳說牠唯一畏懼的是烈火,因為再堅韌的藤葉也擋不住火焰的吞噬。如今綠林告急,需要四位英雄以火為刃,才能讓這頭翠玉巨龍重歸沉眠。',
+          // ★ v3.15.17 — 山岳地龍王背景故事(全世界土石最厚重之地 = 喜馬拉雅山脈直通地核的億萬噸岩層)
+          '山岳地龍王': '蟄伏於地核最深處的太古土龍。相傳全世界岩石與土壤最厚重、最沉穩之地——喜馬拉雅山脈底下直通地核的億萬噸岩層——正是牠盤踞蜷曲的身軀所化。億萬年來牠與整座山脈融為一體靜靜沉睡,每一次翻身都化作撼動大陸的強震。當人類過度開鑿山岳、震動大地,牠便會甦醒:山崩地裂、巨岩如雨,以堅不可摧的岩甲與撼天龍吼鎮壓入侵者。傳說牠的岩甲刀槍不入,唯一的弱點是滲入岩縫的劇毒——再堅硬的磐石,也擋不住毒液經年累月的侵蝕。如今地脈震動不安,需要四位英雄以毒為刃,才能讓這頭山岳巨龍重歸沉眠。',
         });
         window.HERO_LORE = HERO_LORE;
       }
@@ -488,6 +510,8 @@
           '火山炎龍王': '沉睡於義大利維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。需要 4 位英雄聯手才能封印的世界 BOSS。',
           // ★ v3.13.74 — 改成「全世界植物最茂盛之地=亞馬遜雨林」
           '翠綠森龍王': '棲息於亞馬遜雨林最深處的太古翠玉龍,全世界植物生命力最旺盛之地即是牠的軀體所化。以藤蔓、劇毒與飛葉守護綠林,唯一畏懼烈火。需要 4 位英雄聯手才能讓牠重歸沉眠的世界 BOSS。',
+          // ★ v3.15.17 — 山岳地龍王簡介
+          '山岳地龍王': '蟄伏於地核最深處的太古土龍,全世界土石最厚重之地即是牠的軀體所化。以山崩、落石與撼天龍吼鎮壓敵人,岩甲堅不可摧,唯一弱點是劇毒。需要 4 位英雄聯手才能讓牠重歸沉眠的世界 BOSS。',
         });
         window.HERO_BIO = HERO_BIO;
       }
@@ -502,6 +526,10 @@
         HERO_IMGS['翠綠森龍王'] =
           'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
           encodeURIComponent('草龍王.png');
+        // ★ v3.15.17 — 山岳地龍王立繪(老師指定檔名 地龍王.png)
+        HERO_IMGS['山岳地龍王'] =
+          'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' +
+          encodeURIComponent('地龍王.png');
         window.HERO_IMGS = HERO_IMGS;
       }
     }catch(_){}
@@ -510,6 +538,7 @@
       if(typeof MONSTER_AVTR === 'object' && MONSTER_AVTR){
         MONSTER_AVTR['火山炎龍王'] = '🐉';
         MONSTER_AVTR['翠綠森龍王'] = '🐉';   // ★ v3.13.73
+        MONSTER_AVTR['山岳地龍王'] = '🐉';   // ★ v3.15.17
         window.MONSTER_AVTR = MONSTER_AVTR;
       }
     }catch(_){}
@@ -518,11 +547,13 @@
       if(typeof MONSTER_ELEMENT === 'object' && MONSTER_ELEMENT){
         MONSTER_ELEMENT['火山炎龍王'] = 'fire';
         MONSTER_ELEMENT['翠綠森龍王'] = 'grass';   // ★ v3.13.73
+        MONSTER_ELEMENT['山岳地龍王'] = 'earth';   // ★ v3.15.17
         window.MONSTER_ELEMENT = MONSTER_ELEMENT;
       }
     }catch(_){}
 
     console.log('[WB] ✅ 火山炎龍王資料已掛載(HP 5000000 / 攻 49 / 特 50 / 速 15)');
+    console.log('[WB] ✅ 山岳地龍王資料已掛載(HP 5000000 / 攻 49 / 特 50 / 速 15;天賦 強力減傷+反擊+畏毒)');
   }
 
   // ───────────────────────────────────────────────────────────────────
@@ -687,10 +718,22 @@
     }
     if(rawDmg <= 0) return rawDmg;
 
+    // ★ v3.15.17 — 山岳地龍王弱點·畏毒:中毒/猛毒(poison tick 已算好固定值 1500/3000)
+    //   繞過 5000 上限 + 強力減傷 + 護盾(中毒是擊敗牠最有效的手段)
+    if(boss.name === '山岳地龍王' && opts.action && opts.action._dotBypassBossCap){
+      return Math.max(1, rawDmg);
+    }
+
     // ★ v3.12.6 — 單次傷害上限「固定 5000」,不隨滿血變動
     //   設計目的:HP 放大 10 倍但 cap 不放大,讓戰鬥時間拉長,容納更多玩家上陣
     const cap1pct = 5000;
     let dmg = Math.min(rawDmg, cap1pct);
+
+    // ★ v3.15.17 — 山岳地龍王天賦「山岳之意志」強力減傷:受到所有傷害(cap 後)再額外 -40%
+    //   (護盾期間在 80% 減傷之上再減;中毒已於上方 _dotBypassBossCap 繞過,不受此減)
+    if(boss.name === '山岳地龍王'){
+      dmg = Math.max(1, Math.floor(dmg * 0.60));
+    }
 
     // 2) ★ v3.11.5(2026-05-27) — 老師鐵則:護盾凌駕於一切「無視有利狀態」之上
     //   - 任何傷害(含無視有利、必中、固定值、聯手爆發 5000)只要有護盾在,都吃 80% 減傷
@@ -1449,6 +1492,8 @@
     shield: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('最後之盾.gif'),
     // ★ v3.13.73 — 翠綠森龍王爆發/技能特效(老師指定:藤蔓攻擊.gif)
     burst_grass: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('藤蔓攻擊.gif'),
+    // ★ v3.15.17 — 山岳地龍王爆發「天動地裂」特效(老師指定:護盾碎石.gif)
+    burst_earth: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('護盾碎石.gif'),
   };
 
   // 播放全畫面 GIF 特效 (持續 1.6 秒後淡出)
@@ -1814,11 +1859,17 @@
       '🍃 砍伐、焚燒...你們對這片雨林做了什麼?',
       '🐉 萬千翠藤甦醒——入侵者,都化作我藤蔓的養分吧!',
     ],
+    shanyue_earth_dragon: [
+      '⛰ 億萬年的沉眠...被誰撼動了?',
+      '🪨 渺小的生靈,也想揻動這座山岳?',
+      '🐉 山崩地裂——入侵者,化作我腳下的塵土吧!',
+    ],
   };
   // 每隻龍王咆哮主色(配合元素;後備火紅)
   window._WB_BOSS_ROAR_COLOR = {
     vesuvius_fire_dragon: { fg:'#ff8866', glow:'#ff3322' },
     cuiyu_grass_dragon:   { fg:'#9bf09b', glow:'#22aa44' },
+    shanyue_earth_dragon: { fg:'#d9a866', glow:'#8a5a22' },
   };
   // BOSS 開戰咆哮
   window._wbBossOpeningRoar = function(){
@@ -2944,11 +2995,127 @@
     }, 2200);
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.15.17 — 山岳地龍王專屬 AI(山崩落石 / 震天龍吼 / 天動地裂)
+  //   主軸:強力暈眩。傷害走 doDmg → _wbApplyBossDmgCap(對玩家無 cap;玩家受傷正常)。
+  //   ⚠ 暈眩/易傷的「強力版」沿用引擎 _strong 慣例(對齊草龍王 trap/poison/bleed)。
+  // ════════════════════════════════════════════════════════════════════
+  // S1:山崩落石 — 特技 150% 全體土屬性傷害 + 全體 60% 機率暈眩 1 回合
+  function _wbEarthBossS1(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_earth', {duration:1500, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 1.50);
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, hitBonus: 0.30, element: 'earth' });
+        }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+      }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+      if(t.curHp > 0 && Math.random() < 0.60){
+        try{ if(typeof addStatus === 'function') addStatus(t, 'stun', 1); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(t, '💫 暈眩', '#d9a866', 700); }catch(_){}
+      }
+      try{ renderCard(t); }catch(_){}
+    });
+    try{ if(typeof log === 'function') log(`⛰ 山岳地龍王「山崩落石」!特技 150% 全體土屬性傷害 -${dmg} HP,60% 機率暈眩 1 回合!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // S2:震天龍吼 — 特技 75% 全體無屬性傷害 + 全體強力暈眩 1 回合
+  function _wbEarthBossS2(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1400, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 0.75);
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, hitBonus: 0.30, element: 'none' });
+        }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+      }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+      if(t.curHp > 0){
+        try{
+          if(typeof addStatus === 'function'){
+            addStatus(t, 'stun', 1);
+            const _ss = (t.status || []).find(s => s.type === 'stun');
+            if(_ss){ _ss._strong = true; }
+          }
+        }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(t, '💫 強力暈眩', '#8a5a22', 800); }catch(_){}
+      }
+      try{ renderCard(t); }catch(_){}
+    });
+    try{ if(typeof log === 'function') log(`🐉 山岳地龍王「震天龍吼」!特技 75% 全體無屬性傷害 -${dmg} HP,全體強力暈眩 1 回合!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // 爆發:天動地裂 — 特技 180% 全體土傷(無視有利)+ 隨機 2 名強力暈眩 1 回合 + 隨機 1 名強力易傷 2 回合
+  function _wbEarthBossBurst(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    // ★ v3.15.17 — 爆發音效「地震 + 爆炸」疊放(老師指定)
+    try{ if(typeof playSfx === 'function'){ playSfx('sfx-earthquake', 0.95); playSfx('sfx-explode', 0.85); } }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_earth', {duration:2200, shake:true}); }catch(_){}
+    try{ boss._wbActionCount = 2; }catch(_){}   // ★ 爆發後不再追擊普攻
+    try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
+    boss._wbBossTid = setTimeout(() => {
+      boss._wbBossTid = null;
+      if(boss._wbEndedThisTurn === true){ return; }
+      if(boss.curHp <= 0){ boss._wbEndedThisTurn = true; return; }
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      const dmg = Math.floor((boss.sp || 50) * 1.80);
+      alive.forEach(t => {
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, piercing: true, element: 'earth' });
+          }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+        }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+        try{ renderCard(t); }catch(_){}
+      });
+      // 隨機 2 名強力暈眩 1 回合
+      try{
+        const _survivors = G.p1.filter(h => h && h.curHp > 0);
+        const _picked = _survivors.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+        _picked.forEach(t => {
+          try{
+            if(typeof addStatus === 'function'){
+              addStatus(t, 'stun', 1);
+              const _ss = (t.status || []).find(s => s.type === 'stun');
+              if(_ss){ _ss._strong = true; }
+            }
+            try{ if(typeof bannerFX === 'function') bannerFX(t, '💫 強力暈眩', '#8a5a22', 900); }catch(_){}
+            try{ renderCard(t); }catch(_){}
+          }catch(_){}
+        });
+      }catch(_eS){ console.warn('[WB-EarthBurst] 強力暈眩失敗', _eS); }
+      // 隨機 1 名強力易傷 2 回合
+      try{
+        const _survivors2 = G.p1.filter(h => h && h.curHp > 0);
+        if(_survivors2.length){
+          const _vt = _survivors2[Math.floor(Math.random() * _survivors2.length)];
+          if(typeof addStatus === 'function'){
+            addStatus(_vt, 'dmgVuln', 2);
+            const _vs = (_vt.status || []).find(s => s.type === 'dmgVuln');
+            if(_vs){ _vs._strong = true; }
+          }
+          try{ if(typeof bannerFX === 'function') bannerFX(_vt, '💔 強力易傷', '#ff6644', 900); }catch(_){}
+          try{ renderCard(_vt); }catch(_){}
+        }
+      }catch(_eV){ console.warn('[WB-EarthBurst] 強力易傷失敗', _eV); }
+      try{ if(typeof log === 'function'){ log('⚡ 山岳地龍王爆發「天動地裂」!特技 180% 全體土屬性傷害(無視有利)!'); log('🪨 隨機 2 名英雄被巨岩壓制「強力暈眩」1 回合,1 名陷入「強力易傷」2 回合!'); } }catch(_){}
+      try{ if(typeof flashScreen === 'function') flashScreen('rgba(180,120,60,0.75)', 700); }catch(_){}
+      _scheduleBossEnd(boss, 1800);
+    }, 2200);
+  }
+
   // BOSS S1:業火灼燒(全體 sp×1.5 + 燃燒 2 回合 + 命中 +30%)
   // ★ v3.11.7(2026-05-28) — 傷害 1.0 → 1.5(對齊 v3.5.9 + 介紹彈窗描述)+ 命中率 +30%
   function _wbAdvBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossS1(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S1
+    if(boss && boss.name === '山岳地龍王'){ _wbEarthBossS1(boss); return; }   // ★ v3.15.17 — 地龍王走自己的 S1
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
@@ -2979,6 +3146,7 @@
   function _wbAdvBossS2(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossS2(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S2
+    if(boss && boss.name === '山岳地龍王'){ _wbEarthBossS2(boss); return; }   // ★ v3.15.17 — 地龍王走自己的 S2
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1600, shake:true}); }catch(_){}
@@ -3025,6 +3193,7 @@
   function _wbAdvBossBurst(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossBurst(boss); return; }   // ★ v3.13.73 — 草龍王走自己的爆發
+    if(boss && boss.name === '山岳地龍王'){ _wbEarthBossBurst(boss); return; }   // ★ v3.15.17 — 地龍王走自己的爆發
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
