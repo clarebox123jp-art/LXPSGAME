@@ -13,6 +13,23 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.19(2026-06-16)— 🐛 修正貓空/日本冒險第三場景偶爾卡死
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.19',
+    date: '2026-06-16',
+    brief: [
+      '🗺️🛠【修正:貓空/日本冒險「第三場」偶爾卡住】',
+      '   ・修正在貓空、日本冒險關卡走到第三場時,偶爾會卡在背景畫面、沒有出現對話或下一場戰鬥的問題,現在會正常進入第三場戰鬥。',
+      '   ・(小提醒:過場對話一句一句點就好,太快連點也不會再卡住了。)',
+    ],
+    items: [
+      '★ v3.15.19【貓空/日本第三場景隨機事件卡死 根治+保險 index.html】根因:第三場景隨機事件(野生動物/寶箱/裂縫)用 _tgShowDialog,每段對白完成會把 dialog.onclick 還原成 advNextDialog;玩家在「某步完成、下一步(對白/答題/戰鬥)未渲染」空檔快速連點 → 觸發 advNextDialog 自我修復 reset _advSceneChoiceDone → 重複觸發隨機事件與進行中步驟衝突 → 對話框消失/無戰鬥永久卡死(畫面只剩第三場景背景+右邊法寶)。埃及第三場是 japan_auto 直接開戰、無 _tgShowDialog 事件,故不受影響(與老師「貓空+日本才卡、埃及不卡」觀察一致)',
+      '★ v3.15.19【修法①根治 index.html advNextDialog】隨機事件進行中(_advEventInProgress=true)時 advNextDialog 直接 return;事件本身用自己的 _tgShowDialog onclick=step 推進對白,根本不需 advNextDialog → 連點不再重複觸發事件。_advEventInProgress 於 advShowChoicePanel 觸發 random_event 時設,於進入小怪戰(advStartMiniBattle)或載入新場景(advLoadScene)時清',
+      '★ v3.15.19【修法②保險 index.html _advTgEventForceProceeed / _advTgEventArmWatchdog】事件逾時(120s,每翻一行對白重新計時)自我驗證 watchdog:逾時仍卡在第三場景(過場顯示中 + 非小怪戰 + _advSceneIdx 未變)才介入 → 清理殘留 UI(寵物聚光/接受框/答題視窗/法寶彈窗)+ 重置旗標 + 強制 advStartMiniBattle(_advSceneIdx+1),保證永不永久卡死',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.18(2026-06-16)— 🐛 知識王答錯不扣分 + 貓空黑暗球卡死修復 + 畢業帳號轉移修正
   // ════════════════════════════════════════════════════════════════════
   {
