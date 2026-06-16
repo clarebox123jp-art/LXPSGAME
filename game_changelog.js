@@ -13,6 +13,26 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.18(2026-06-16)— 🐛 知識王答錯不扣分 + 貓空黑暗球卡死修復 + 畢業帳號轉移修正
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.18',
+    date: '2026-06-16',
+    brief: [
+      '👑【知識王挑戰:答錯不再扣分!】',
+      '   ・知識王挑戰答錯題目<b>不再扣分</b>了!現在只算答對加分(每題 +5,滿分 100),答錯不會倒扣,可以更放心作答。',
+      '🌑🛠【修正:貓空黑暗球打倒後卡住、領不到獎勵】',
+      '   ・修正在貓空打倒「<b>黑暗球‧希望型態</b>」之後,偶爾會卡在戰鬥畫面、無法結束、也領不到過關獎勵的嚴重問題,現在能正常結算並拿到獎勵。',
+    ],
+    items: [
+      '★ v3.15.18【知識王答錯不扣分 index.html _kingPickAnswer】移除答錯 _kc._curScore -= 5(改為不動分數,只做視覺標記+答錯音效);規則顯示「❌ 答錯 -5 分」→「❌ 答錯不扣分」;分數註解同步。滿分仍 100 = 20 題 × 答對 +5(答錯不倒扣)',
+      '★ v3.15.18【貓空黑暗球卡死 根治 index.html advStartBattle ~L74698】根因:_wbResultExecuting 只在世界 BOSS 戰開場(_wbSetupAdvForBattle)reset,從不在一般冒險戰開場 reset → 前場世界 BOSS 殘留的 _wbResultExecuting=true 漏進貓空黑暗球戰 → advShowBattleResult / advStartWinSequence 的 _wbCtx 世界 BOSS 守門誤判 → 冒險結算被擋 → 無限 watchdog 迴圈卡死。修法:一般冒險戰開打時除既有 _wbJustFinishedRaid 外,一併清 _wbResultExecuting / _wbConnectedHostMode / _wbConnectedClientMode',
+      '★ v3.15.18【貓空黑暗球卡死 防線 index.html advShowBattleResult + advStartWinSequence 兩處 _wbCtx 守門】加例外 _advBossNotWb:stage≠worldboss + p2 含「黑暗球‧希望型態」+ p2 無任何龍王(_isWorldBossTarget) → 判定為真正冒險 BOSS 戰,改 if(_wbCtx && !_advBossNotWb) 才擋。不影響「打完龍王殘留 timer」原始保護(該情境 p2 不含黑暗球)',
+      '★ v3.15.18【畢業帳號轉移修正 index.html _fbMigrateAccountData】根因:主檔整份複製把舊帳號停權狀態帶進新帳號(舊帳號在複製當下已停權時)→ 新帳號一誕生就被登入停權閘門擋下、學生無法用新帳號登入。修法:複製主檔時剝除停權6欄位(_suspended/_suspendedAt/_suspendedBy/_suspendReason/_unsuspendedAt/_unsuspendedBy)+ 連線 session 2 欄位(activeSession/sessionAt),新帳號永遠以未停權誕生',
+      '★ v3.15.18【版本鏈】_GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS index.html + game_changelog.js → v3.15.18(其餘未改:hero_db.js / world-boss.js v3.15.17、admin_panel.js v3.15.14)。本輪改動檔 = index.html + game_changelog.js(本檔)。上傳順序:game_changelog.js → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.17(2026-06-15)— 🐉 第三隻世界 BOSS「山岳地龍王(土)」登場 + 地龍王之麟開放
   // ════════════════════════════════════════════════════════════════════
   {
