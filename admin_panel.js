@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.9';   // ★ v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
+window.ADMIN_PANEL_VERSION = 'v3.15.23';   // ★ v3.15.23(2026-06-17)— 補回:GM「🔐 二次密碼管理」卡片(系統管理群組,撤銷信任裝置下方):查詢 / 解鎖(保留密碼)/ 移除學生第二段密碼;後端 _fbAdminPeekPwByEmail/_fbAdminUnlockPwByEmail/_fbAdminClearPwByEmail 一直都在,此前 GM UI 整個遺失導致無入口可呼叫,現以鏡像 trust-revoke 工具補回(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler 三點齊備)｜v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1302,6 +1302,40 @@ async function _showAdminStatsPanelImpl(){
           background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:200px;overflow-y:auto;"></div>
       </div>
 
+      <!-- ★ v3.15.23(2026-06-17)— 補回:GM 查詢 / 解鎖 / 移除學生「二次密碼(第二段密碼)」 -->
+      <div id="_admin-pw-section" style="background:rgba(30,40,60,0.5);border:2px solid rgba(150,170,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:700;color:#9fb3ff;margin-bottom:8px;">🔐 二次密碼管理(查詢 / 解鎖 / 移除)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
+          學生在登入後可自設「<b style="color:#ffcc88;">第二段密碼</b>」(8 位、含大寫英文+數字)保護自己的帳號。<br>
+          當學生<b style="color:#ffcc88;">忘記密碼</b>或<b style="color:#ffcc88;">連錯被鎖 10 分鐘</b>時,用此工具協助:<br>
+          ・<span style="color:#aaccff;">🔍 查詢狀態</span> — 看是否已設定、是否被鎖、錯誤次數。<br>
+          ・<span style="color:#aaffcc;">🔓 解鎖</span> — 只清除錯誤次數與鎖定,<b>密碼保留</b>(學生想起來還能用)。<br>
+          ・<span style="color:#ffaaaa;">🗑 移除密碼</span> — <b>清除該學生的二次密碼</b>,下次登入會重新引導他自設新的。<span style="color:#888;">(雜湊儲存無法還原原碼,故只能清除)</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-pw-email" type="text" placeholder="學生 email (如 lsps110176@stu.lsps.tp.edu.tw)"
+            style="flex:1;min-width:240px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);
+            border:1.5px solid rgba(150,170,255,0.5);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-pw-check" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(120,180,255,0.2);border:2px solid #88bbff;color:#aaccff;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔍 查詢狀態
+          </button>
+          <button id="_admin-pw-unlock" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(120,255,180,0.18);border:2px solid #66ddaa;color:#aaffcc;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🔓 解鎖(保留密碼)
+          </button>
+          <button id="_admin-pw-clear" style="padding:8px 16px;font-size:13px;font-weight:800;
+            background:rgba(255,150,150,0.2);border:2px solid #ff8888;color:#ffaaaa;
+            border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            🗑 移除密碼
+          </button>
+        </div>
+        <div id="_admin-pw-result" style="font-size:13px;color:#ddd;line-height:1.65;padding:10px;
+          background:rgba(0,0,0,0.4);border-radius:6px;display:none;max-height:240px;overflow-y:auto;"></div>
+      </div>
+
       <!-- ★ v3.13.39(2026-06-04) — 帳號汙染掃描:暴增 SSR 收回(老師指定) -->
       <div id="_admin-inflated-section" style="background:rgba(45,20,40,0.55);border:2px solid rgba(255,120,180,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#ff99cc;margin-bottom:8px;">🧹 帳號汙染掃描(暴增 SSR 收回)</div>
@@ -2399,6 +2433,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
+      { sec: '_admin-pw-section',               label: '🔐 二次密碼管理',          hint: '查詢 / 解鎖 / 移除學生的第二段密碼' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
       { sec: '_admin-acctxfer-section',         label: '📨 帳號資料轉移審核',     hint: '畢業生申請把舊帳號進度搬到新帳號(實名審核+全搬+復原後路)' },
       // ★ v3.13.55 — 汙染工具合併:移除重疊/不安全(可直接收回、看不到 creatorUid 證據)的 4 個面板
@@ -2447,7 +2482,7 @@ async function _showAdminStatsPanelImpl(){
     // ★ v3.13.63 — 任務2:29 個項目併成 8 個可摺疊群組(只改側欄導覽;各工具 section 區塊完全不動)
     //   SIDEBAR_ITEMS 保持原樣(_switchAdminSection 仍靠它查標題/預設選第一個),只改渲染方式。
     const SIDEBAR_GROUPS = [
-      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section'] },
+      { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
@@ -7175,6 +7210,115 @@ async function _showAdminStatsPanelImpl(){
       }finally{
         _revokeBtn.disabled = false;
         _revokeBtn.textContent = '❌ 撤銷全部';
+      }
+    };
+  })();
+
+  // ★★★ v3.15.23(2026-06-17)— 補回:GM「二次密碼管理」JS 邏輯(查詢 / 解鎖 / 移除)★★★
+  //   後端函式在主程式 index.html(window._fbAdminPeekPwByEmail / _fbAdminUnlockPwByEmail / _fbAdminClearPwByEmail),
+  //   此處只補回 GM 後台的操作介面(此前 UI 整個遺失,使三個函式無入口可呼叫)。鏡像 trust-revoke 工具寫法,
+  //   不使用 ?. 可選串連(相容學校舊版 Safari iPad)。
+  (function _initSecondPwTool(){
+    const _emailInput = document.getElementById('_admin-pw-email');
+    const _checkBtn   = document.getElementById('_admin-pw-check');
+    const _unlockBtn  = document.getElementById('_admin-pw-unlock');
+    const _clearBtn   = document.getElementById('_admin-pw-clear');
+    const _resultBox  = document.getElementById('_admin-pw-result');
+    if(!_emailInput || !_checkBtn || !_unlockBtn || !_clearBtn || !_resultBox) return;
+
+    const _esc = function(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+    const _fmtTs = function(ts){
+      if(!ts) return '(無)';
+      try{ return new Date(ts).toLocaleString('zh-TW'); }catch(_){ return String(ts); }
+    };
+    const _getEmail = function(){ return (_emailInput.value || '').trim().toLowerCase(); };
+
+    // 🔍 查詢二次密碼狀態
+    _checkBtn.onclick = async function(){
+      const _e = _getEmail();
+      if(!_e){ alert('請輸入學生 email'); return; }
+      if(typeof window._fbAdminPeekPwByEmail !== 'function'){ alert('_fbAdminPeekPwByEmail 未就緒(請確認主程式已載入)'); return; }
+      _checkBtn.disabled = true; _checkBtn.textContent = '查詢中...';
+      _resultBox.style.display = 'block';
+      _resultBox.innerHTML = '<span style="color:#aaa;">⏳ 查詢中...</span>';
+      try{
+        const _st = await window._fbAdminPeekPwByEmail(_e);
+        if(!_st){
+          _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 找不到此 email 對應的玩家</span>';
+          return;
+        }
+        const _now = Date.now();
+        const _locked = _st.lockedUntil && _now < _st.lockedUntil;
+        let html = '<div style="color:#aaccff;font-weight:700;margin-bottom:6px;">👤 ' + _esc(_st.displayName || '(未命名)')
+                 + ' <span style="color:#888;font-size:12px;">' + _esc(_st.email || _e) + '</span></div>';
+        if(!_st.hasPassword){
+          html += '<div style="color:#aaffcc;">✅ 此學生<b>尚未設定</b>二次密碼(無需移除)。</div>';
+        } else {
+          html += '<div style="padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:6px;border-left:3px solid ' + (_locked ? '#ff8888' : '#66aaff') + ';line-height:1.7;">'
+                + '<div>🔐 <b style="color:#ffcc88;">已設定</b>二次密碼</div>'
+                + '<div style="font-size:12px;color:#aabbcc;">設定時間:' + _esc(_fmtTs(_st.setAt)) + '</div>'
+                + '<div style="font-size:12px;color:#aabbcc;">目前錯誤次數:<b style="color:' + ((_st.failCount || 0) > 0 ? '#ffcc88' : '#aaffcc') + ';">' + (_st.failCount || 0) + '</b> / 5</div>'
+                + (_locked
+                    ? '<div style="font-size:12px;color:#ff9a9a;">🔒 目前<b>被鎖定中</b>,自動解鎖時間:' + _esc(_fmtTs(_st.lockedUntil)) + '</div>'
+                    : '<div style="font-size:12px;color:#aaffcc;">🔓 目前未被鎖定</div>')
+                + '</div>'
+                + '<div style="font-size:12px;color:#888;margin-top:6px;">需要的話:按「🔓 解鎖」清錯誤次數(保留密碼),或按「🗑 移除密碼」整組清除讓他重設。</div>';
+        }
+        _resultBox.innerHTML = html;
+      }catch(e){
+        console.error('[二次密碼 查詢]', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 查詢失敗:' + _esc(e && e.message || String(e)) + '</span>';
+      }finally{
+        _checkBtn.disabled = false; _checkBtn.textContent = '🔍 查詢狀態';
+      }
+    };
+
+    // 🔓 解鎖(只清錯誤次數 / 鎖定,密碼保留)
+    _unlockBtn.onclick = async function(){
+      const _e = _getEmail();
+      if(!_e){ alert('請輸入學生 email'); return; }
+      if(typeof window._fbAdminUnlockPwByEmail !== 'function'){ alert('_fbAdminUnlockPwByEmail 未就緒'); return; }
+      if(!confirm('確定要「解鎖」這位學生的二次密碼嗎?\n\n會清除錯誤次數與 10 分鐘鎖定,但密碼本身保留(學生想起來還能用)。')) return;
+      _unlockBtn.disabled = true; _unlockBtn.textContent = '解鎖中...';
+      _resultBox.style.display = 'block';
+      try{
+        const _r = await window._fbAdminUnlockPwByEmail(_e);
+        if(_r && _r.ok){
+          _resultBox.innerHTML = '<span style="color:#aaffcc;">✅ 已解鎖,錯誤次數歸零、解除鎖定。密碼仍保留。</span>';
+        } else {
+          _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 解鎖失敗:' + _esc((_r && _r.reason) || '未知原因') + '</span>';
+        }
+      }catch(e){
+        console.error('[二次密碼 解鎖]', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 解鎖例外:' + _esc(e && e.message || String(e)) + '</span>';
+      }finally{
+        _unlockBtn.disabled = false; _unlockBtn.textContent = '🔓 解鎖(保留密碼)';
+      }
+    };
+
+    // 🗑 移除二次密碼(整組清除,學生下次登入重設)
+    _clearBtn.onclick = async function(){
+      const _e = _getEmail();
+      if(!_e){ alert('請輸入學生 email'); return; }
+      if(typeof window._fbAdminClearPwByEmail !== 'function'){ alert('_fbAdminClearPwByEmail 未就緒'); return; }
+      if(!confirm('確定要「移除」這位學生的二次密碼嗎?\n\n會整組清除(密碼為雜湊儲存無法還原),學生下次登入時會重新引導他自設一組新的。\n不影響其他帳號資料。')) return;
+      _clearBtn.disabled = true; _clearBtn.textContent = '移除中...';
+      _resultBox.style.display = 'block';
+      try{
+        const _r = await window._fbAdminClearPwByEmail(_e);
+        if(_r && _r.ok){
+          _resultBox.innerHTML = '<span style="color:#aaffcc;">✅ 已移除 <b>' + _esc(_r.displayName || '') + '</b> 的二次密碼,該學生下次登入會重新設定。</span>';
+        } else {
+          _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 移除失敗:' + _esc((_r && _r.reason) || '未知原因') + '</span>';
+        }
+      }catch(e){
+        console.error('[二次密碼 移除]', e);
+        _resultBox.innerHTML = '<span style="color:#ff8888;">❌ 移除例外:' + _esc(e && e.message || String(e)) + '</span>';
+      }finally{
+        _clearBtn.disabled = false; _clearBtn.textContent = '🗑 移除密碼';
       }
     };
   })();

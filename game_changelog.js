@@ -13,6 +13,72 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.25(2026-06-17)— 🔁 戰鬥題目出完自動循環不卡死 ＋ ⚖️ 法老王BOSS恢復/復活下修
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.25',
+    date: '2026-06-17',
+    brief: [
+      '🔁【戰鬥答題:題目出完自動循環,不再卡死】',
+      '   ・修正某些情況下,戰鬥中題目<b>全部出完後會卡住、題目一直跳不出來</b>的問題。',
+      '   ・現在題目出完會<b>自動從頭重新循環出題</b>,戰鬥不會再卡死。',
+      '⚖️【埃及王關:法老王(BOSS)恢復與復活下修】',
+      '   ・法老王 BOSS 的大招<b>全體回血量降低 50%</b>(25%→12.5%),<b>復活量也一起調低</b>',
+      '     (大招復活倒下同伴、以及和埃及豔后「互相復活」喚回法老王的血量都從 25% 降為 12.5%)。',
+      '   ・<b>你自己招募的法老王不受影響</b>;埃及豔后被喚回的血量也維持原本數值。',
+    ],
+    items: [
+      '★ v3.15.25【戰鬥題目出完循環卡死 根治 index.html advPickQuestion】老師需求:戰鬥中題目出完後要自動從第一題循環、避免卡死。根因:題庫整輪出完時 BOSS 戰回傳 { __needRepick:true } → advShowQuiz 隔 150ms 用 _advTriggerQuizSafely 重觸發再抽;但若 _advSessionQuestions 此時是空陣列(某些路徑沒初始化/被清掉),重觸發後 advPickQuestion 清空 used 後 pool 仍空 → 又回傳 __needRepick → 150ms 無限重觸發、題目永遠不出 → 卡死',
+      '★ v3.15.25【修法 index.html】advPickQuestion 預設分支與 catch 分支同步改:只在「_advSessionQuestions 非空(剛清完 used、重觸發保證抽得到)」時才走 __needRepick 重觸發;session 為空時不再回傳 __needRepick,改用 ADV_QUIZ_DB 洗牌兜底補回 _advSessionQuestions、當場往下走隨機抽題 → 保證有題可出、從頭循環、永不無限重觸發',
+      '★ v3.15.25【法老王 BOSS 恢復量降 50% index.html 太陽神的審判】爆發「全體回 HP」原 BOSS 版固定 25%(招募版 25%→45% 隨爆發升級)。老師需求:BOSS 版恢復量降 50% → _healPct = h.isEgyptBoss ? 0.125 : (招募版維持 0.25~0.45)。只動 BOSS 版,招募版不變',
+      '★ v3.15.25【法老王 BOSS 復活量也降低 index.html】(a)爆發「太陽神的審判」復活倒下友方:_revPct = h.isEgyptBoss ? 0.125 : 0.25(BOSS 25%→12.5%,招募版維持 25%);(b)埃及雙王天賦「互相復活」喚回法老王:_phK.curHp 由最大HP×0.25 → ×0.125(兩處 hook:startTurn 行動前 + checkWin 全滅判定前皆改)。埃及豔后被喚回維持 ×0.25(老師需求僅針對法老王)',
+      '★ v3.15.25【版本鏈】3 主同步點 v3.15.24→v3.15.25(本輪改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.23、world-boss-ui.html 維持 v3.15.21、hero_db.js 未改。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.24(2026-06-17)— 🐛 兩項戰鬥修正:世界BOSS妖怪等級、冒險第三場卡死
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.24',
+    date: '2026-06-17',
+    brief: [
+      '⚔️【世界BOSS龍王戰:妖怪英雄等級修正】',
+      '   ・修正帶「<b>大天狗 / 酒吞童子 / 玉藻前</b>」(以及埃及「<b>法老王 / 埃及豔后</b>」)上場打世界BOSS龍王時,',
+      '     <b>隊伍確認顯示正確、一進戰鬥卻變回 1 級</b>的問題。現在這些英雄會正確帶著你培養的等級與能力上場了!',
+      '🗺️【冒險第三關:劇情卡死修正】',
+      '   ・修正第三場劇情演到一半,<b>只剩背景畫面 + 右邊法寶欄、進不了小怪戰</b>的卡死。',
+      '   ・原因是過場背景沒被收起來、<b>蓋住了其實已經開始的戰鬥</b>。現在會自動把背景收掉、露出戰鬥畫面,不用再手動自救了。',
+    ],
+    items: [
+      '★ v3.15.24【世界BOSS妖怪變Lv1 根治 index.html _wbSetupAdvForBattle】老師回報:世界BOSS龍王戰的大天狗/酒吞/玉藻前沒讀到參與玩家等級能力,隊伍確認顯示正確、進戰鬥變Lv1。根因:該函式的「二重保險」(防妖怪誤帶BOSS版高素質)原用固定 h.hp>=100 判定,但世界BOSS獨立入口傳進來的 G.p1 已套過「等級(冒險+2%/級,Lv上限50)+素質投資(HP自由50+膠囊20)」加成 → 英雄弱化版滿等(酒吞童子91基底→(91+70)×1.98≈319)早超過100 → 合法高等妖怪被誤判成BOSS版、強制打回 JP_BOSS_HERO_STATS 基底=Lv1',
+      '★ v3.15.24【時序差異說明】主程式 confirmHeroPick 的同款二重保險跑在「套等級之前」的基底值(大天狗75/酒吞91/玉藻74,皆<100)故不誤觸;世界BOSS的跑在「已套等級+投資」的隊伍上(滿等≈319>100)才誤觸 → 只有世界BOSS出問題,與老師觀察一致',
+      '★ v3.15.24【修法 index.html】兩處世界BOSS二重保險(妖怪 + 埃及雙王)門檻 h.hp>=100 → 改用「HERO_DB BOSS版基礎HP × 0.5」(妖怪 900×0.5=450、埃及 11500/10500×0.5=5750/5250):弱化版滿等≤319 遠低於450不誤傷;真誤帶BOSS版(900/11500)才還原。主程式兩處(跑在基底、判定正確)不動',
+      '★ v3.15.24【冒險第三場卡死 根治 index.html advStartMiniBattle】老師回報+新假設:第三場劇情到一半只剩背景+法寶卡死,自救存檔→確認→關視窗,背景圖消失後就看到戰鬥畫面 → 是不是被覆蓋?確認屬實:過場層 adv-cutscene-overlay(z-index 620,內含 adv-scene-bg 背景圖 + adv-treasure-bar 法寶欄)蓋在已起的戰場上沒掀掉,玩家只看到背景+法寶、誤以為沒戰鬥(且此時 _advMiniBattleActive 已 true、原 watchdog 不再介入)',
+      '★ v3.15.24【修法① index.html】進小怪戰 setTimeout 的「第一件事」就先隱藏 adv-cutscene-overlay(原本只在後段隱藏,若中段組怪/抽牌/狀態重置任一拋例外就會在隱藏前中斷、過場層永遠蓋住戰場)→ 確保後面任何步驟出錯都不會蓋住戰鬥',
+      '★ v3.15.24【修法②(獨立保險)index.html】另排一個與主 setTimeout 互不影響的計時器:以 _advCurrentBattleId 綁定本場戰鬥,於「開場演出(_introDelay)後 +1500ms」檢查「本場小怪戰仍在進行 + 過場層仍蓋著」→ 強制掀掉過場層 + 清其他可能遮擋的過場彈窗(boss-detail/intro/quiz/reward/result),露出戰場。綁 battleId 確保不會誤掀之後新一場戰鬥的開場演出',
+      '★ v3.15.24【版本鏈】3 主同步點 v3.15.23→v3.15.24(本輪改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.23(本輪未動),world-boss-ui.html 維持 v3.15.21,hero_db.js 未改(只讀數值)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.23(2026-06-17)— 🔧 後台維護:補回 GM「🔐 二次密碼管理」工具(老師管理用,非玩家功能)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.23',
+    date: '2026-06-17',
+    brief: [
+      '🔧【後台維護(老師管理工具)】',
+      '   ・修復老師後台「🔐 二次密碼管理」工具(查詢 / 解鎖 / 移除學生忘記的第二段密碼)。',
+      '   ・<b>此為老師管理功能,不影響一般遊玩</b>;忘記第二段密碼的同學,請<b>本人</b>聯絡老師協助重置。',
+    ],
+    items: [
+      '★ v3.15.23【補回 GM 二次密碼管理 UI admin_panel.js】老師回報:GM 選單「幫玩家移除二次密碼」功能不見了。調查:後端三函式(window._fbAdminPeekPwByEmail 查詢 / _fbAdminUnlockPwByEmail 解鎖 / _fbAdminClearPwByEmail 移除=secondPassword:deleteField())一直都在 index.html 且完好,但全 index.html + admin_panel.js 皆無任何呼叫點 → GM 後台 UI 整個遺失,三函式無入口可觸發',
+      '★ v3.15.23【三點同步補回 admin_panel.js】鏡像既有 trust-revoke(撤銷信任裝置)工具寫法,在「🛠 系統管理」群組補回卡片:① SIDEBAR_ITEMS 加 {sec:_admin-pw-section, 🔐 二次密碼管理} ② SIDEBAR_GROUPS 系統管理群加入 _admin-pw-section ③ 卡片 template(email 輸入 + 🔍查詢狀態 / 🔓解鎖[保留密碼] / 🗑移除密碼 三鈕 + result div)④ _initSecondPwTool() handler IIFE 綁三鈕。缺任一 = 卡片永久隱藏(鐵律1.47/1.140)',
+      '★ v3.15.23【三功能行為 admin_panel.js】🔍查詢:_fbAdminPeekPwByEmail → 顯示是否已設定/設定時間/錯誤次數/是否鎖定+自動解鎖時間。🔓解鎖:_fbAdminUnlockPwByEmail → 清錯誤次數與10分鐘鎖定、密碼保留(學生想起來還能用),含 confirm。🗑移除:_fbAdminClearPwByEmail → 整組清除(雜湊儲存無法還原原碼故只能清),學生下次登入重新引導自設,含 confirm。皆 try/catch + email 小寫正規化',
+      '★ v3.15.23【相容性 admin_panel.js】全程字串串接、不使用 ?. 可選串連(相容學校舊版 Safari iPad,符合 admin_panel.js 既有規範);typeof 守門確認三後端函式就緒才呼叫',
+      '★ v3.15.23【版本鏈】admin_panel.js 內 ADMIN_PANEL_VERSION 與 index.html _LXPS_FILE_VERSIONS[admin_panel.js] 同步 v3.15.9→v3.15.23(原本 v3.15.9/v3.15.14 不一致一併校正);3 主同步點 _GAME_LOADED_VERSION + _vers[index.html] + _vers[game_changelog.js] v3.15.22→v3.15.23。本輪改 admin_panel.js + index.html + game_changelog.js;world-boss-ui.html 維持 v3.15.21。上傳順序:game_changelog.js → admin_panel.js →(world-boss-ui.html 若尚未部署)→ index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.22(2026-06-17)— 👑 知識王持之以恆「達標立刻發券」 + 🔮 召喚星空新增「召喚紀錄」
   // ════════════════════════════════════════════════════════════════════
   {
