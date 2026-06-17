@@ -13,6 +13,48 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.21(2026-06-17)— 🐉 世界BOSS搶先看改地龍王 + 🔮 抽到/解鎖的英雄·至寶防「得到又消失」
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.21',
+    date: '2026-06-17',
+    brief: [
+      '🔮🛡【重要修正:抽到/解鎖的英雄、至寶不會再「得到又消失」!】',
+      '   ・修正少數同學<b>抽到角色(或打 BOSS 解鎖)後,圖鑑卻沒有解鎖</b>的問題。',
+      '   ・現在不論是召喚抽到、還是 BOSS 戰解鎖的<b>英雄與至寶,都會在當下立刻存到雲端</b>,並留下可查的解鎖紀錄 — 換平板、換帳號都不會再不見。',
+      '🐉🪨【世界 BOSS:下一隻「搶先看」換成 山岳地龍王(地龍王)】',
+      '   ・世界 BOSS 頁面的「下一隻世界 BOSS・搶先看」已更新為下一棒<b>山岳地龍王(土屬性)</b>,介紹牠的山崩落石、四元素護盾與唯一弱點(劇毒)。',
+      '   ・(圖鑑整理:地龍王原本誤出現在英雄圖鑑,現已正確歸到<b>魔物圖鑑的世界 BOSS 區</b>。)',
+    ],
+    items: [
+      '★ v3.15.21【抽到/解鎖 英雄·至寶 即時 targeted 雲端寫入 index.html _lxpsCloudInstantUnlock】老師回報三例(110164 武士、110003 幽幽+風術士、110103 死靈法師)抽到沒解鎖。根因(共用平板):正常解鎖只靠 gameCloudSave(全文重寫)寫雲端,而它 ①_progressLoaded=false(剛登入就抽卡/打關)第一行即 return false ②整份大文件寫入,課堂 Wi-Fi 壅塞易 resource-exhausted ③失敗只能靠本地 pending/紀錄「下次登入 reconcile」補,但學生離開後下一位登入會清掉前者 localStorage → 本地救援沒了+雲端從未收到 → 永久消失',
+      '★ v3.15.21【修法 index.html】新增 _lxpsCloudInstantUnlock(patch,label):解鎖當下對 players/{uid} 做一次「最小、只增不刪、冪等」targeted updateDoc。英雄:unlockedHeroes 用 arrayUnion(只增、自動去重)+ _heroUnlockHistory arrayUnion 同一筆 _entry;至寶:taiwanTreasureData.<id> dotted-path(只動該至寶鍵、寫實際當前紀錄避免覆蓋已升級者)+ _treasureUnlockHistory arrayUnion。掛在 advSaveUnlockedHero(_isNew)與 _advSaveTreasureUnlockHistory 內,涵蓋召喚/貓空/日本/埃及/世界BOSS 排名所有解鎖路徑',
+      '★ v3.15.21【為什麼安全 index.html】arrayUnion 只能加不能刪/縮減且去重(GM 已刪英雄不會被重加,_isNew 守門);dotted-path 只影響單一至寶鍵;「擁有權 + 解鎖紀錄」同一次原子寫入 → 不會出現「有擁有權卻查無解鎖紀錄」被 GM 異常掃描誤判為跨帳號汙染而刪;這些皆非停權欄位、Firestore 規則允許 owner 更新自己 players/{uid} → 無需改 rules。寫入比 gameCloudSave 輕(較不觸 resource-exhausted)+繞過就緒守門+解鎖當下落地雲端(撐過切帳號);失敗自動重試 2 次(間隔 5s),仍敗交既有 reconcile/gameCloudSave/_lxpsInstantPersist 多重兜底',
+      '★ v3.15.21【世界BOSS「下一隻搶先看」改地龍王 world-boss-ui.html】大廳靜態預告卡(.wb-boss-preview)由翠綠森龍王(草)改為山岳地龍王(地龍王,土):立繪改 地龍王.png、配色改土黃/棕、能力描述改(山崩落石/天動地裂、第3/5/7/9回合四元素護盾草破土·水破火·光破暗·火破草、單次傷害上限5000+全傷-40%+50%反彈、弱點劇poison固定大傷無視上限)、結尾改「打倒翠綠森龍王之後甦醒」。輪替序 火→草→土(地龍王)→風→水→暗→光→幻,當前為草龍王故下一隻正確為地龍王',
+      '★ v3.15.21【地龍王 英雄圖鑑SR移除→魔物圖鑑BOSS index.html】根因:v3.15.17 漏把「山岳地龍王」加進 BOSS_NAMES → 牠(★5、在 HERO_DB)跑去英雄圖鑑 SR 區。修法:BOSS_NAMES 翠綠森龍王後補「山岳地龍王」→ 英雄圖鑑/鬥技場自動排除、改在魔物圖鑑「世界 BOSS」區顯示(_buildMonsterPage 內 WORLD_BOSS_LIST/MONSTER_AVTR 早已含,本次補上排除即完成搬移),並讓靠 BOSS_NAMES.includes() 的尊嚴/秒殺守門對地龍王生效',
+      '★ v3.15.21【同根因·世界BOSS秒殺防護 index.html】把「山岳地龍王」加進 _ZEUS_TRUE_BOSSES(原僅火/草龍王)。死神收割(HP<30% curHp=0)與大嘴吸入吞噬的即死防護只靠此名單、無上游 _isWorldBossTarget 守門 → 地龍王缺席會被一招秒殺 500 萬血世界 BOSS。同翠綠森龍王處理。不動 _mainBosses(慢動作KO,翠綠森龍王也不在,保持一致)',
+      '★ v3.15.21【版本鏈】_GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS index.html + game_changelog.js → v3.15.21;world-boss-ui.html v3.15.0 → v3.15.21(本輪改)。其餘未改:hero_db.js/world-boss.js v3.15.17、admin_panel.js v3.15.14、arena.js v3.13.94。本輪改動檔 = game_changelog.js + world-boss-ui.html + index.html。上傳順序:game_changelog.js → world-boss-ui.html → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.20(2026-06-16)— 🦅 修正埃及雙重行動寵物(荷魯斯之鷹)無限連續行動/每回合卡死
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.20',
+    date: '2026-06-16',
+    brief: [
+      '🦅🛠【修正:埃及雙重行動寵物(荷魯斯之鷹)攻擊停不下來、每回合卡住】',
+      '   ・修正在埃及關卡,裝備「<b>荷魯斯之鷹</b>」的英雄會一直重複行動、停不下來,每回合都卡住、只能靠「卡死自救」才能跳到下一回合的問題。',
+      '   ・現在荷魯斯之鷹會穩定地讓主人<b>每回合行動 2 次</b>(不多不少),行動完正常換下一位,不再卡住。',
+    ],
+    items: [
+      '★ v3.15.20【埃及荷魯斯之鷹 無限連續行動/每回合卡死 根治 index.html endAction 荷魯斯 hook】根因:v3.15.17 的守門/觸發用「本回合鎖 _horusActedThisTurn」,但該鎖在 startTurn(G.p2/G.p1 forEach)「每次輪到任何單位」就被重置成 false;而 startTurn 是「每單位行動前」呼叫、非每回合一次 → 荷魯斯主人重開行動(acted=false,400ms 後)被「再次輪到」時 startTurn 又把鎖清掉 → endAction 守門再次通過 → 無限再行動 → 玩家回合永不結束 → 每回合卡(只能卡死自救跳下一回合)。v3.15.17 修法錯誤假設 startTurn 同回合不重複呼叫',
+      '★ v3.15.20【修法 index.html】守門/觸發鎖改綁 G.round(回合計數,只在 nextRound +1、同回合內穩定、startTurn 不重置它)。新欄位 _horusActedRound:守門改成「_horusActedRound 不等於目前 G.round」(G 未定義時退化為 -1);觸發時記 _horusActedRound = G.round(保留 _reActCount 加 1 / _traitReAct / 400ms acted=false 重開行動)。機制:首次觸發後 _horusActedRound 即等於 G.round → 同回合守門恆不通過 → 不再觸發(剛好 2 個動作);下回合 round +1 → 再觸發 1 次。startTurn 兩處 _horusActedThisTurn 重置已退役成無害死碼(已無人讀)',
+      '★ v3.15.20【鐵律 候選】「每回合一次性、且角色會在同回合重開行動(acted=false)」的天賦/裝備,守門絕不可用會被 startTurn「每次輪到單位」重置的旗標(_horusActedThisTurn / 裸 _reActCount / _sellThisTurn);必須改用 G.round 比對(某回合旗標 不等於 G.round)。startTurn = 每單位行動前呼叫,G.round 只在 nextRound +1。沿用既有 _gaReActRound(雅典娜女神權能)同款做法',
+      '★ v3.15.20【版本鏈】_GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS index.html + game_changelog.js → v3.15.20(其餘未改:hero_db.js / world-boss.js v3.15.17、admin_panel.js v3.15.14、arena.js v3.13.94)。本輪改動檔 = index.html + game_changelog.js(本檔)。上傳順序:game_changelog.js → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.19(2026-06-16)— 🐛 修正貓空/日本冒險第三場景偶爾卡死
   // ════════════════════════════════════════════════════════════════════
   {
