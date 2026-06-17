@@ -13,6 +13,60 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.29(2026-06-17)— 🏺 法老王・埃及豔后專屬答題對白
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.29',
+    date: '2026-06-17',
+    brief: [
+      '🏺【法老王・埃及豔后有自己的台詞了!】',
+      '   ・在埃及雙王 BOSS 戰答題時,<b>法老王與埃及豔后會說出符合各自身分的話</b>',
+      '     (法老王威嚴、豔后聰慧),不再借用九尾空貓怪的台詞囉!',
+    ],
+    items: [
+      '★ v3.15.29【埃及雙王答題反應對白 hero_db.js + index.html】原本雙王戰答題時,advShowBossReact 的 _mainReactBoss 偵測清單與 _reactSuffix 對照表都沒有法老王/埃及豔后 → suffix 為空 → fallback 到無後綴預設(九尾空貓怪台詞)。修法:① hero_db.js 新增 BOSS_REACT_{CORRECT/WRONG/TIMEOUT}_PHARAOH 與 _CLEOPATRA 共 6 組常數(法老王威嚴神聖、豔后魅惑智慧;CORRECT5+WRONG5+TIMEOUT3) ② index.html advShowBossReact 偵測清單加兩王、_reactSuffix 加 法老王→_PHARAOH/埃及豔后→_CLEOPATRA、_BOSS_REACT_MAP 補 6 key。雙王同場 find 取先存活者(法老王 pos 在前優先,倒下後換豔后)',
+      '★ v3.15.29【版本鏈】3 主同步點 v3.15.28→v3.15.29 + hero_db.js v3.15.17→v3.15.29(本輪改 index.html + hero_db.js + game_changelog.js)。admin_panel.js 維持 v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21。上傳順序:game_changelog.js → hero_db.js → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.28(2026-06-17)— 🐛 埃及雙王/黑暗球修正 + 選將圖微調
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.28',
+    date: '2026-06-17',
+    brief: [
+      '🏺【埃及雙王打倒後正確結束】',
+      '   ・法老王與埃及豔后<b>同時擊敗後,正確領獎並回到關卡頁</b>,不會再突然又重新開打一場!',
+      '🌑【黑暗球分身不再擠爆畫面】',
+      '   ・黑暗球分裂出很多隻時,畫面會<b>自動換行排列</b>,不會再被擠到看不見功能按鈕、卡住動不了。',
+      '🎴【法老王・埃及豔后選將圖微調】',
+      '   ・兩位埃及王的頭像位置<b>往下調整</b>,在選將與英雄頁看起來更好看。',
+    ],
+    items: [
+      '★ v3.15.28【埃及雙王打贏重啟修正 index.html】根因:_showResultWithDrama 內有一份硬編碼 _BOSS_SET2 清單(漏了法老王/埃及豔后)→ 玩家「同時擊殺」雙王走到 BOSS 結算流程時 _hasBoss2=false → 誤判「無 BOSS 小怪戰」→ 強制 advFinishMiniBattle → 還原滿血雙王陣容 + 推進 scene 重開雙王戰(BUG 數據:雙王滿血 11500/10500 + _advMiniResultShowing=true)。v3.15.9 已修 checkWin 的 _hasBoss 但漏此下游處。修法:_BOSS_SET2 改用單一真相 _ZEUS_TRUE_BOSSES(含雙王,鐵律 1.135),雙王不再被誤判 → 正確走 advShowBattleResult(true) 回關卡頁',
+      '★ v3.15.28【黑暗球分身撐寬戰場修正 index.html CSS】根因:main.css .brow=flex-wrap:nowrap + .card 固定 253px 寬 → 7 隻黑暗球橫排約 1843px 撐寬 #gc → 把 #sb 的 action-panel 推出可視區按不到。修法:內嵌覆寫 .brow flex-wrap:wrap+max-width:100%+row-gap(載於 main.css 之後必勝,不動 main.css),多單位換行不撐寬,功能鍵保持可見;#z2 換行靠上對齊',
+      '★ v3.15.28【法老王/埃及豔后選將立繪下移 index.html】getHeroThumbObjPos 補兩王特例:原 HERO_THUMB_POS 未設定 → fallback center 50% 偏低 → 改 center 30%(下移 20%,專案慣例 50%-20%);置於 premium 判斷後、通用 fallback 前,涵蓋選將/英雄頁/好友卡所有縮圖一致',
+      '★ v3.15.28【未動】埃及雙王「互相復活」機制(法老回 12.5%/豔后回 25%,v3.15.25 已調)維持原設計;玩家回報「打死又回血」為此機制觀感,本次僅修「打贏後重啟」bug。若需再降復活量可另行告知',
+      '★ v3.15.28【版本鏈】3 主同步點 v3.15.27→v3.15.28(本輪只改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.26、hero_db.js/world-boss.js v3.15.17、world-boss-ui.html v3.15.21',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.27(2026-06-17)— 🎨 底部主選單字體/色彩優化
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.27',
+    date: '2026-06-17',
+    brief: [
+      '🎨【底部選單看起來更清爽】',
+      '   ・主選單下方的功能按鈕(召喚、英雄、序號兌換…)<b>文字不再超出格子</b>,字體會自動配合螢幕大小。',
+      '   ・每個按鈕<b>換上不同顏色</b>,更好辨認囉!',
+    ],
+    items: [
+      '★ v3.15.27【底部主選單字體/色彩修正 index.html CSS】加第 10 顆「序號兌換」按鈕後每格變窄,原本靠繼承的 label 字體未約束→「召喚」等兩字掉到第二行/溢出格子。修法:新增 #adv-bottom-nav .adv-nav-label 高 specificity 規則(font-size clamp(10px,1.05vw,16px)+white-space nowrap+text-overflow ellipsis,!important 蓋過序號/更新日誌的 inline font-size:80%);.adv-nav-icon 也 clamp 約束;以 nth-of-type(1~10) 給 10 顆各自 border-color+label color。僅加 CSS、不動按鈕 HTML',
+      '★ v3.15.27【版本鏈】3 主同步點 v3.15.26→v3.15.27(本輪只改 index.html CSS + game_changelog.js)。admin_panel.js 維持 v3.15.26(未改)、world-boss-ui.html v3.15.21、hero_db.js/world-boss.js v3.15.17。上傳順序:game_changelog.js → admin_panel.js(若 v3.15.26 尚未部署) → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.26(2026-06-17)— 🎟️ 新功能:虛寶序號兌換(老師發序號,學生輸入領獎勵)
   // ════════════════════════════════════════════════════════════════════
   {
