@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.23';   // ★ v3.15.23(2026-06-17)— 補回:GM「🔐 二次密碼管理」卡片(系統管理群組,撤銷信任裝置下方):查詢 / 解鎖(保留密碼)/ 移除學生第二段密碼;後端 _fbAdminPeekPwByEmail/_fbAdminUnlockPwByEmail/_fbAdminClearPwByEmail 一直都在,此前 GM UI 整個遺失導致無入口可呼叫,現以鏡像 trust-revoke 工具補回(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler 三點齊備)｜v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
+window.ADMIN_PANEL_VERSION = 'v3.15.26';   // ★ v3.15.26(2026-06-17)— 新增 GM「🎟️ 虛寶序號」卡片(補償與補發群組,課堂獎勵發放下方):勾選獎勵+數量→設定產生組數/有效期/備註→批量產生「一次性兌換序號」(寫 redeemCodes,每序號限用一次)→產出含獎勵名稱的可複製清單(貼給其他老師);另可查看序號清單(未兌/已兌by誰)、刪除。後端 _fbGenerateRedeemCodes/_fbListRedeemCodes/_fbAdminDeleteRedeemCode(學生兌換走 _fbRedeemCode)在 index.html v3.15.26,⚠需先部署 redeemCodes 規則。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler)｜v3.15.23(2026-06-17)— 補回:GM「🔐 二次密碼管理」卡片(系統管理群組,撤銷信任裝置下方):查詢 / 解鎖(保留密碼)/ 移除學生第二段密碼;後端 _fbAdminPeekPwByEmail/_fbAdminUnlockPwByEmail/_fbAdminClearPwByEmail 一直都在,此前 GM UI 整個遺失導致無入口可呼叫,現以鏡像 trust-revoke 工具補回(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler 三點齊備)｜v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -819,6 +819,101 @@ async function _showAdminStatsPanelImpl(){
             background:rgba(90,130,90,0.3);border:1.5px solid rgba(160,230,130,0.45);color:#cfffcf;
             border-radius:6px;cursor:pointer;font-family:inherit;">📜 查看送禮記錄(最近 80 筆)</button>
           <div id="_admin-classreward-log" style="margin-top:10px;font-size:12px;color:#cfe;"></div>
+        </div>
+      </div>
+
+      <!-- ★ v3.15.26 — 虛寶序號(課堂獎勵兌換券):勾獎勵+數量 → 批量產生「一次性序號」→ 複製清單(含獎勵名稱)貼給其他老師 -->
+      <div id="_admin-redeem-section" style="background:rgba(40,35,55,0.55);border:2px solid rgba(190,150,255,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ddbbff;margin-bottom:8px;">🎟️ 虛寶序號(課堂獎勵兌換券)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.6;">
+          先<b style="color:#ffe066;">勾選獎勵</b>並填數量,設定<b style="color:#9fd6ff;">要產生幾組</b>序號,按「產生序號」。
+          每個序號<b style="color:#ffaaff;">只能被兌換一次</b>(誰先輸入誰得,兌過即顯示「此序號已被使用」)。
+          產生後可整段複製清單(含獎勵名稱)貼給其他老師;學生在主選單「🎟️ 序號兌換」輸入序號即可領取(union 合併,不降級已有資料)。
+          <br><span style="color:#ffcc66;font-size:12px;">⚠ 首次使用需先在 Firestore Console 部署 <b>redeemCodes</b> 規則,否則產生/兌換都會失敗。</span>
+        </div>
+        <!-- 勾選獎勵清單(同課堂獎勵 12 項;預設全不勾,避免誤產 UR 序號) -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(190,150,255,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-clair" style="width:17px;height:17px;cursor:pointer;">🌟 UR 藝天使．克雷爾
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-iliya" style="width:17px;height:17px;cursor:pointer;">🗡️ UR 魔劍姬‧伊莉雅
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-odin" style="width:17px;height:17px;cursor:pointer;">⚡ UR 主神奧汀
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-ssrpick" style="width:17px;height:17px;cursor:pointer;">🌟 SSR 自選召喚卷 ×
+            <input type="number" id="_rc-qty-ssrpick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-srpick" style="width:17px;height:17px;cursor:pointer;">✨ SR 自選召喚卷 ×
+            <input type="number" id="_rc-qty-srpick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-ssrrand" style="width:17px;height:17px;cursor:pointer;">🌈 隨機 SSR 召喚卷 ×
+            <input type="number" id="_rc-qty-ssrrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-srrand" style="width:17px;height:17px;cursor:pointer;">⭐ 隨機 SR 召喚卷 ×
+            <input type="number" id="_rc-qty-srrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-trerand" style="width:17px;height:17px;cursor:pointer;">💎 隨機至寶召喚卷 ×
+            <input type="number" id="_rc-qty-trerand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-trepick" style="width:17px;height:17px;cursor:pointer;">💠 自選至寶召喚卷 ×
+            <input type="number" id="_rc-qty-trepick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-crystal" style="width:17px;height:17px;cursor:pointer;">🔮 召喚水晶 ×
+            <input type="number" id="_rc-qty-crystal" value="10" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-coins" style="width:17px;height:17px;cursor:pointer;">💰 知識幣 ×
+            <input type="number" id="_rc-qty-coins" value="100000" min="1" max="9999999" step="1000" style="width:90px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_rc-item-fruit" style="width:17px;height:17px;cursor:pointer;">🍑 超越極限果實 ×
+            <input type="number" id="_rc-qty-fruit" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+        </div>
+        <!-- 產生設定:組數 / 有效期 / 備註 -->
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;background:rgba(0,0,0,0.2);border:1px solid rgba(190,150,255,0.25);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <label style="font-size:13px;color:#ccc;display:flex;flex-direction:column;gap:4px;">產生幾組序號(1~200)
+            <input type="number" id="_rc-count" value="30" min="1" max="200" style="width:120px;padding:6px 8px;background:rgba(20,20,30,0.9);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;box-sizing:border-box;">
+          </label>
+          <label style="font-size:13px;color:#ccc;display:flex;align-items:center;gap:7px;">
+            <input type="checkbox" id="_rc-expires-on" style="width:16px;height:16px;cursor:pointer;">設定到期日(不勾=永久有效)
+            <input type="datetime-local" id="_rc-expires" disabled style="padding:6px 8px;background:rgba(20,20,30,0.9);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;opacity:0.5;">
+          </label>
+          <label style="font-size:13px;color:#ccc;flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px;">備註(選填,僅 GM 看)
+            <input type="text" id="_rc-note" maxlength="120" placeholder="例:六年級期末獎勵" style="width:100%;padding:6px 8px;background:rgba(20,20,30,0.9);border:1px solid rgba(190,150,255,0.4);color:#fff;border-radius:5px;font-family:inherit;box-sizing:border-box;">
+          </label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button id="_admin-redeem-generate" style="padding:10px 22px;font-size:14px;font-weight:900;
+            background:linear-gradient(135deg,#7a3aaa,#5a2a8a);border:2px solid #bb88ee;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🎟️ 產生序號</button>
+        </div>
+        <div id="_admin-redeem-result" style="margin-top:10px;font-size:13px;color:#dcf;"></div>
+        <!-- 產生結果(可複製) -->
+        <div id="_admin-redeem-output-wrap" style="display:none;margin-top:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+            <span style="font-size:13px;font-weight:700;color:#ffe066;">📋 序號清單(複製這段貼給其他老師)</span>
+            <button id="_admin-redeem-copy" style="padding:7px 16px;font-size:13px;font-weight:700;
+              background:rgba(150,110,210,0.3);border:1.5px solid rgba(200,160,255,0.55);color:#e8d8ff;
+              border-radius:6px;cursor:pointer;font-family:inherit;">📋 一鍵複製</button>
+          </div>
+          <textarea id="_admin-redeem-output" readonly style="width:100%;min-height:160px;padding:10px 12px;font-size:13px;background:rgba(0,0,0,0.55);border:1.5px solid rgba(190,150,255,0.4);color:#e8d8ff;border-radius:8px;font-family:'Courier New',monospace;line-height:1.7;box-sizing:border-box;resize:vertical;"></textarea>
+        </div>
+        <!-- 序號清單檢視器 -->
+        <div style="margin-top:16px;padding-top:12px;border-top:1px dashed rgba(190,150,255,0.35);">
+          <button id="_admin-redeem-loglist" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(110,90,150,0.3);border:1.5px solid rgba(200,160,255,0.45);color:#e8d8ff;
+            border-radius:6px;cursor:pointer;font-family:inherit;">📜 查看序號清單(最近 200 筆)</button>
+          <div id="_admin-redeem-log" style="margin-top:10px;font-size:12px;color:#dcf;"></div>
         </div>
       </div>
 
@@ -2461,6 +2556,8 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
       // ★ v3.13.72 — 課堂獎勵發放 + 鬥技場排名發獎開關
       { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '勾選獎勵(克雷爾/自選券/隨機券/至寶券/水晶/幣/果實)+貼名單→比對發放,寫送禮記錄' },
+      // ★ v3.15.26 — 虛寶序號(課堂獎勵兌換券)
+      { sec: '_admin-redeem-section',           label: '🎟️ 虛寶序號',           hint: '勾選獎勵+數量→批量產生「一次性兌換序號」(每序號限用一次)→可複製清單(含獎勵名稱)貼給其他老師;另可查清單(未兌/已兌)、刪除。需先部署 redeemCodes 規則' },
       { sec: '_admin-arena-rankreward-section', label: '🏆 鬥技場排名發獎開關',   hint: '一鍵開啟/關閉每週排名獎勵自動發放' },
       // ★ v3.13.27(2026-06-03) — GitHub 線上版本檢查
       { sec: '_admin-github-check-section',     label: '🌐 GitHub 版本檢查',      hint: '啟動時自動比對 4 個檔案;手動重跑入口' },
@@ -2486,7 +2583,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
-      { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
+      { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
       { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section','_admin-treasure-unlockall-section'] },
@@ -4733,6 +4830,187 @@ async function _showAdminStatsPanelImpl(){
     if(logBtn) logBtn.onclick = _showLog;
   })();
   // ── 課堂獎勵發放 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.15.26 — 虛寶序號(課堂獎勵兌換券) init
+  //   勾獎勵+數量(鏡像課堂獎勵 _buildReward) → 設組數/有效期/備註 → _fbGenerateRedeemCodes
+  //   批量產生「一次性序號」→ 組成可複製清單(含獎勵名稱);另可列清單(未兌/已兌)、刪除。
+  //   ⚠ 無 ?.(admin_panel.js 相容舊 Safari iPad)。
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initRedeemTool(){
+    const genBtn  = document.getElementById('_admin-redeem-generate');
+    const resEl   = document.getElementById('_admin-redeem-result');
+    const outWrap = document.getElementById('_admin-redeem-output-wrap');
+    const outEl   = document.getElementById('_admin-redeem-output');
+    const copyBtn = document.getElementById('_admin-redeem-copy');
+    const logBtn  = document.getElementById('_admin-redeem-loglist');
+    const logEl   = document.getElementById('_admin-redeem-log');
+    const expOn   = document.getElementById('_rc-expires-on');
+    const expEl   = document.getElementById('_rc-expires');
+    if(!genBtn || !resEl){
+      console.warn('[admin redeem] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    function _esc(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function _chk(id){ const e = document.getElementById(id); return !!(e && e.checked); }
+    function _qty(id, def){ const e = document.getElementById(id); const v = e ? parseInt(e.value, 10) : def; return (isNaN(v) || v < 1) ? def : v; }
+    // 鏡像課堂獎勵 _buildReward(改 _rc- 前綴),回傳 { reward, items }
+    function _buildReward(){
+      const reward = {};
+      const items = [];
+      const unlockedHeroes = [];
+      const backpack = {};
+      if(_chk('_rc-item-clair')){ unlockedHeroes.push('藝天使．克雷爾'); items.push('🌟UR藝天使克雷爾'); }
+      if(_chk('_rc-item-iliya')){ unlockedHeroes.push('魔劍姬‧伊莉雅'); items.push('🗡️UR魔劍姬伊莉雅'); }
+      if(_chk('_rc-item-odin')){  unlockedHeroes.push('主神奧汀');     items.push('⚡UR主神奧汀'); }
+      if(_chk('_rc-item-ssrpick')){ const q=_qty('_rc-qty-ssrpick',1); backpack['summon_ticket_ssr_pick']=(backpack['summon_ticket_ssr_pick']||0)+q; items.push('🌟SSR自選券×'+q); }
+      if(_chk('_rc-item-srpick')){  const q=_qty('_rc-qty-srpick',1);  backpack['summon_ticket_sr_pick'] =(backpack['summon_ticket_sr_pick']||0)+q;  items.push('✨SR自選券×'+q); }
+      if(_chk('_rc-item-ssrrand')){ const q=_qty('_rc-qty-ssrrand',1); backpack['summon_ticket_ssr']=(backpack['summon_ticket_ssr']||0)+q; items.push('🌈隨機SSR券×'+q); }
+      if(_chk('_rc-item-srrand')){  const q=_qty('_rc-qty-srrand',1);  backpack['summon_ticket_sr'] =(backpack['summon_ticket_sr']||0)+q;  items.push('⭐隨機SR券×'+q); }
+      if(_chk('_rc-item-trerand')){ const q=_qty('_rc-qty-trerand',1); backpack['summon_ticket_treasure']=(backpack['summon_ticket_treasure']||0)+q; items.push('💎隨機至寶券×'+q); }
+      if(_chk('_rc-item-trepick')){ const q=_qty('_rc-qty-trepick',1); backpack['summon_ticket_treasure_pick']=(backpack['summon_ticket_treasure_pick']||0)+q; items.push('💠自選至寶券×'+q); }
+      if(_chk('_rc-item-crystal')){ const q=_qty('_rc-qty-crystal',10); backpack['summon_crystal']=(backpack['summon_crystal']||0)+q; items.push('🔮召喚水晶×'+q); }
+      if(_chk('_rc-item-fruit')){   const q=_qty('_rc-qty-fruit',1);   backpack['burst_upgrade_fruit']=(backpack['burst_upgrade_fruit']||0)+q; items.push('🍑超越極限果實×'+q); }
+      if(_chk('_rc-item-coins')){   const q=_qty('_rc-qty-coins',100000); reward.coins=q; reward.coinsMode='add'; items.push('💰知識幣×'+q); }
+      if(unlockedHeroes.length) reward.unlockedHeroes = unlockedHeroes;
+      if(Object.keys(backpack).length) reward.backpack = backpack;
+      return { reward: reward, items: items };
+    }
+    // 有效期 checkbox 切換 datetime 啟用
+    if(expOn && expEl){
+      expOn.addEventListener('change', function(){
+        expEl.disabled = !expOn.checked;
+        expEl.style.opacity = expOn.checked ? '1' : '0.5';
+      });
+    }
+    function _expiresAt(){
+      if(expOn && expOn.checked && expEl && expEl.value){
+        const t = new Date(expEl.value).getTime();
+        if(!isNaN(t)) return t;
+      }
+      return 0;
+    }
+    function _fmtTime(ms){
+      if(!ms) return '';
+      try{ return new Date(ms).toLocaleString(); }catch(_e){ return String(ms); }
+    }
+    async function _doGenerate(){
+      const built = _buildReward();
+      if(!built.items.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先勾選至少一項要發的獎勵</span>'; return; }
+      const countEl = document.getElementById('_rc-count');
+      let count = countEl ? parseInt(countEl.value, 10) : 30;
+      if(isNaN(count) || count < 1) count = 1;
+      if(count > 200) count = 200;
+      const expiresAt = _expiresAt();
+      const noteEl = document.getElementById('_rc-note');
+      const note = noteEl ? String(noteEl.value || '').slice(0, 120) : '';
+      if(typeof window._fbGenerateRedeemCodes !== 'function'){
+        resEl.innerHTML = '<span style="color:#ff6666;">_fbGenerateRedeemCodes 未載入,請重新整理頁面</span>'; return;
+      }
+      if(!confirm('確認產生 ' + count + ' 組序號?\n\n獎勵:' + built.items.join(' + ') + '\n' +
+                  (expiresAt ? ('有效期至 ' + _fmtTime(expiresAt)) : '永久有效') +
+                  '\n\n每個序號只能被兌換一次。')) return;
+      genBtn.disabled = true; const _old = genBtn.textContent; genBtn.textContent = '產生中...';
+      resEl.innerHTML = '<span style="color:#cfe;">產生中,請稍候...</span>';
+      try{
+        const r = await window._fbGenerateRedeemCodes({
+          reward: built.reward, itemsLabel: built.items, count: count, expiresAt: expiresAt, note: note
+        });
+        const codes = (r && r.codes) || [];
+        const fails = (r && r.fail) || [];
+        // 組成可複製清單(含獎勵名稱)
+        const lines = [];
+        lines.push('【小英雄大對抗 虛寶序號】');
+        lines.push('獎勵:' + built.items.join(' + '));
+        lines.push('有效期:' + (expiresAt ? _fmtTime(expiresAt) : '永久有效'));
+        if(note) lines.push('備註:' + note);
+        lines.push('每個序號限用一次,於遊戲主選單「🎟️ 序號兌換」輸入。');
+        lines.push('─────────────────────');
+        codes.forEach(function(c){ lines.push(c); });
+        if(outEl){ outEl.value = lines.join('\n'); }
+        if(outWrap){ outWrap.style.display = 'block'; }
+        resEl.innerHTML = '<span style="color:#88ff88;font-weight:800;">✅ 已產生 ' + codes.length + ' 組序號</span>' +
+                          (fails.length ? ('<span style="color:#ff6666;"> (失敗 ' + fails.length + ' 組:' + _esc(fails.slice(0,5).join('、')) + ')</span>') : '') +
+                          '<span style="color:#aaa;"> — 已填入下方清單,可一鍵複製貼給其他老師</span>';
+      }catch(e){
+        resEl.innerHTML = '<span style="color:#ff6666;">產生失敗:' + _esc(e && e.message || e) + ' (可能 redeemCodes 規則尚未部署)</span>';
+      }
+      genBtn.disabled = false; genBtn.textContent = _old;
+    }
+    function _doCopy(){
+      if(!outEl || !outEl.value){ return; }
+      let _ok = false;
+      try{
+        outEl.removeAttribute('readonly');
+        outEl.focus();
+        outEl.select();
+        outEl.setSelectionRange(0, outEl.value.length);
+        _ok = document.execCommand('copy');
+        outEl.setAttribute('readonly', 'readonly');
+      }catch(_e){ _ok = false; }
+      // 新式 API 補強(若可用)
+      if(!_ok && navigator && navigator.clipboard && navigator.clipboard.writeText){
+        try{ navigator.clipboard.writeText(outEl.value); _ok = true; }catch(_e2){}
+      }
+      if(copyBtn){
+        const _o = copyBtn.textContent;
+        copyBtn.textContent = _ok ? '✅ 已複製' : '⚠ 請手動長按選取複製';
+        setTimeout(function(){ copyBtn.textContent = _o; }, 1800);
+      }
+    }
+    async function _showList(){
+      if(!logEl) return;
+      if(typeof window._fbListRedeemCodes !== 'function'){
+        logEl.innerHTML = '<span style="color:#ff6666;">_fbListRedeemCodes 未載入,請重新整理頁面</span>'; return;
+      }
+      logEl.innerHTML = '<span style="color:#cfe;">讀取中...</span>';
+      let list;
+      try{ list = await window._fbListRedeemCodes(200); }
+      catch(e){ logEl.innerHTML = '<span style="color:#ff6666;">讀取失敗:' + _esc(e && e.message || e) + ' (可能 redeemCodes 規則尚未部署)</span>'; return; }
+      if(!list || !list.length){ logEl.innerHTML = '<span style="color:#aaa;">尚無序號(或 redeemCodes 規則尚未部署)</span>'; return; }
+      const _used = list.filter(function(x){ return x.redeemed; }).length;
+      let html = '<div style="font-size:12px;color:#bbc;margin-bottom:6px;">共 ' + list.length + ' 組(已兌 ' + _used + ' / 未兌 ' + (list.length - _used) + ');點「🗑」可刪除單一序號</div>';
+      html += '<div style="max-height:360px;overflow-y:auto;border:1px solid rgba(190,150,255,0.25);border-radius:6px;">';
+      list.forEach(function(x){
+        const _now = Date.now();
+        let _stat, _statColor;
+        if(x.enabled === false){ _stat = '⛔ 已停用'; _statColor = '#888'; }
+        else if(x.redeemed){ _stat = '✅ 已兌 ' + (x.redeemedByLabel ? _esc(x.redeemedByLabel) : '?') + (x.redeemedAt ? (' · ' + _fmtTime(x.redeemedAt)) : ''); _statColor = '#88dd88'; }
+        else if(x.expiresAt && _now > x.expiresAt){ _stat = '⏰ 已過期'; _statColor = '#ddaa44'; }
+        else { _stat = '🟢 未兌換'; _statColor = '#9fd6ff'; }
+        const _exp = x.expiresAt ? ('有效至 ' + _fmtTime(x.expiresAt)) : '永久';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid rgba(190,150,255,0.12);flex-wrap:wrap;">' +
+                  '<span style="font-family:\'Courier New\',monospace;font-weight:800;color:#ffe066;font-size:13px;min-width:120px;">' + _esc(x.code) + '</span>' +
+                  '<span style="color:' + _statColor + ';font-size:12px;min-width:140px;">' + _stat + '</span>' +
+                  '<span style="color:#cdf;font-size:12px;flex:1;min-width:160px;">' + _esc((x.itemsLabel || []).join('、')) + '</span>' +
+                  '<span style="color:#999;font-size:11px;">' + _exp + (x.note ? (' · ' + _esc(x.note)) : '') + '</span>' +
+                  '<button class="_rc-del-btn" data-code="' + _esc(x.code) + '" style="padding:3px 9px;font-size:12px;background:rgba(120,30,30,0.4);border:1px solid #e06060;color:#ffaaaa;border-radius:5px;cursor:pointer;font-family:inherit;">🗑</button>' +
+                '</div>';
+      });
+      html += '</div>';
+      logEl.innerHTML = html;
+      // 綁刪除(事件委派)
+      logEl.querySelectorAll('._rc-del-btn').forEach(function(b){
+        b.addEventListener('click', async function(){
+          const _code = b.getAttribute('data-code');
+          if(!_code) return;
+          if(!confirm('確定刪除序號「' + _code + '」?\n刪除後此序號將無法兌換(已兌換者不受影響)。')) return;
+          if(typeof window._fbAdminDeleteRedeemCode !== 'function'){ alert('_fbAdminDeleteRedeemCode 未載入'); return; }
+          b.disabled = true; b.textContent = '...';
+          try{ await window._fbAdminDeleteRedeemCode(_code); _showList(); }
+          catch(e){ alert('刪除失敗:' + (e && e.message || e)); b.disabled = false; b.textContent = '🗑'; }
+        });
+      });
+    }
+    genBtn.addEventListener('click', _doGenerate);
+    if(copyBtn) copyBtn.addEventListener('click', _doCopy);
+    if(logBtn) logBtn.addEventListener('click', _showList);
+  })();
+  // ── 虛寶序號 結束 ──
 
   // ════════════════════════════════════════════════════════════════════════════
   // ★ v3.13.72 — 鬥技場排名發獎開關 init

@@ -13,6 +13,28 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.26(2026-06-17)— 🎟️ 新功能:虛寶序號兌換(老師發序號,學生輸入領獎勵)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.26',
+    date: '2026-06-17',
+    brief: [
+      '🎟️【全新功能:虛寶序號兌換】',
+      '   ・主選單新增「<b>🎟️ 序號兌換</b>」按鈕!老師會給你<b>虛寶序號</b>,在這裡輸入就能領取獎勵。',
+      '   ・獎勵可能包含 UR 英雄、各種召喚卷、召喚水晶、知識幣、超越極限果實等等。',
+      '   ・<b>每個序號只能用一次</b>:已被別人領走的序號再輸入,會顯示「此序號已被使用」喔!',
+      '   ・領到的獎勵會直接加進你的帳號,<b>不會蓋掉你原有的東西</b>。',
+    ],
+    items: [
+      '★ v3.15.26【虛寶序號系統 新增 index.html + admin_panel.js】老師需求:GM 選單新增「虛寶序號」,可直接發課堂獎勵的序號讓學生輸入兌換。設計:一序號=一次性兌換券(每序號限用一次,誰先輸入誰得,兌過即失效)',
+      '★ v3.15.26【GM 端 admin_panel.js】「🎁 補償與補發」群組新增「🎟️ 虛寶序號」卡片(課堂獎勵發放下方):勾選獎勵(鏡像課堂獎勵 12 項)+數量 → 設定產生組數(1~200)/有效期(永久或到期日)/備註 → 批量產生序號 → 產出含獎勵名稱的可複製清單(可整段貼給其他老師);另可查看序號清單(未兌/已兌by誰/過期/停用)、單一刪除。三點同步(SIDEBAR_ITEMS+GROUPS+卡片+handler),無 ?. 相容舊 Safari',
+      '★ v3.15.26【學生端 index.html】主選單(冒險地圖頁底部功能列 + 手機版底部導覽)新增「🎟️ 序號兌換」按鈕 → openRedeemDialog 彈窗輸入序號 → _fbRedeemCode 兌換。發獎複用 _fbCompensatePlayer(union 合併不降級),走玩家寫自己 doc 路徑(payload 全非停權欄位,rule 放行)',
+      '★ v3.15.26【後端 index.html】_lxpsGenRedeemCode(12碼大寫英數,排除易混淆 0/O/1/I/L)、_fbGenerateRedeemCodes(GM 批量產生,runTransaction 防撞號)、_fbListRedeemCodes(GM 列清單)、_fbAdminDeleteRedeemCode(GM 刪)、_fbRedeemCode(學生兌換:先讀檢查 → runTransaction 原子標記 redeemed → 發獎;先標記再發獎,寧可偶爾漏發也不可重複刷)。資料結構 redeemCodes/{CODE}={code,reward,itemsLabel,redeemed,redeemedBy,redeemedByLabel,redeemedAt,expiresAt,batchId,note,createdAt,createdBy,enabled}',
+      '★ v3.15.26【安全 firestore.rules ⚠需老師手動部署】redeemCodes 規則:get 任何登入者(兌換需讀)、list/create/delete 限 GM、update 僅允許「redeemed:false→true 且 redeemedBy==自己 且只動 redeemed/redeemedBy/redeemedByLabel/redeemedAt」→ 玩家動不了 reward/有效期/啟用旗標,兌過的序號他人再寫被 rule 擋(transaction 之外的雙重保險)。未部署前產生/兌換都會失敗',
+      '★ v3.15.26【版本鏈】3 主同步點 v3.15.25→v3.15.26;admin_panel.js v3.15.23→v3.15.26(ADMIN_PANEL_VERSION + _vers 同步)。world-boss-ui.html 維持 v3.15.21、hero_db.js/world-boss.js 維持 v3.15.17。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.25(2026-06-17)— 🔁 戰鬥題目出完自動循環不卡死 ＋ ⚖️ 法老王BOSS恢復/復活下修
   // ════════════════════════════════════════════════════════════════════
   {
