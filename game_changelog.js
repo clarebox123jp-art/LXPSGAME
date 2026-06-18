@@ -13,6 +13,38 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.42(2026-06-18)— 🔨 靈魂碎片改手動合成自選召喚卷 ＋ 天青龍齊射調整 ＋ SSR 碎片數量分難度
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.42',
+    date: '2026-06-18',
+    brief: [
+      '🔨【靈魂碎片改「手動合成」自選召喚卷】',
+      '   ・SSR / SR 靈魂碎片<b>不再自動換成隨機召喚卷</b>,改成在「召喚星空」的召喚卷視窗裡<b>自己按「🔨 合成」</b>。',
+      '   ・<b>40 個 SSR 靈魂碎片 → 合成 1 張 🌟 SSR 自選召喚卷</b>;<b>20 個 SR 靈魂碎片 → 1 張 ✨ SR 自選召喚卷</b>(自選券可從未收錄英雄中自己挑一名)!',
+      '',
+      '🐉【喚龍使‧蜜鶴林 天青龍調整】',
+      '   ・天青龍(含爆發「魂芳雲魄」的至尊天青龍)的每回合龍息齊射,由<b>連攻 3 次改為 2 次</b>(節奏微調,單發威力不變)。',
+      '   ・天青龍造成傷害時,<b>新增水龍攻擊動畫</b>,出手更有龍威!',
+      '',
+      '🔮【SSR 靈魂碎片掉落數量依難度調整】',
+      '   ・黑暗球、埃及 BOSS:沒自信 <b>1</b> 片 / 普通 <b>2</b> 片 / 我很會 <b>3</b> 片(埃及 BOSS 通關現在也會掉 SSR 靈魂碎片)。',
+      '   ・日本 BOSS:沒自信 <b>1</b> 片 / 普通 <b>1~2</b> 片 / 我很會 <b>2</b> 片。',
+      '',
+      '🚲【木柵防衛戰難度標示】',
+      '   ・木柵冒險關卡介紹的難度改成 <b>★★★ ～ ★★★★★</b>(三隻 BOSS 由易到難)。',
+    ],
+    items: [
+      '★ v3.15.42【乙 靈魂碎片手動合成自選券 index.html】移除自動換券:_gainSoulShard 與收禮路徑不再呼叫 _checkSoulShardConvert(碎片持續累積)。_SOUL_SHARD_DEF 的 ticket 由隨機券 summon_ticket_ssr/sr 改為自選券 summon_ticket_ssr_pick/sr_pick(ticketName/Icon 同步 🌟/✨)。新增 _synthShardToPickTicket(rarity):每次合成 1 張,檢查碎片≥need(SSR40/SR20)、自選券<99(滿則保留碎片不白損)、扣碎片+1 張自選券+_logActivity(source:shard_synth)+音效/banner+gameCloudSave+刷新面板。_openSummonTicketModal 新增「🔨 靈魂碎片合成」區(顯示 SSR/SR 碎片持有/需求 + 合成鈕)。道具 desc/贈友 desc/貓空 toast×3/SSR 取得說明畫面文案全部由「自動換」改為「可在召喚星空🔨合成自選召喚卷」',
+      '★ v3.15.42【天青龍齊射 3→2 index.html + hero_db.js】_heLinDragonBarrage 迴圈 for(<3)→for(<2)、log「連攻 3 次」→「2 次」;BURST_UPGRADE_DEF 魂芳雲魄 5 列「特技×N%×3」→「×2」;hero_db S1 天青龍召喚 + 爆發魂芳雲魄 d/fd「攻擊隨機3次/連攻3次」→「2次」(保留召喚 3 回合不變)。涵蓋 S1 天青龍與爆發至尊天青龍兩種召喚物',
+      '★ v3.15.42【天青龍傷害動畫 index.html】_heLinDragonBarrage 每段 doDmg 後 + 爆發龍息重擊 doDmg 後,呼叫 _skillGifOnCard(target, 水龍攻擊.gif, {cls:_dragon-barrage-gif, dur:1000/1100, opacity:0.95, blend:screen})疊在受擊卡片上',
+      '★ v3.15.42【SSR 碎片掉落數量分難度 index.html】新增 _ssrShardDropCount(profile):darkorb_egypt→沒自信1/普通2/我很會3、japan→沒自信1/普通1~2隨機/我很會2(讀 _advPlayerDifficulty)。黑暗球(darkorb_always)/日本BOSS(japanboss_clear)/新增埃及BOSS(egyptboss_clear,原本無碎片)三點改用此數量;對應劇情視窗/加入夥伴 toast/埃及拾得 toast 顯示實際 ×N',
+      '★ v3.15.42【GM 自動解鎖新英雄 index.html】新增 _GM_AUTO_UNLOCK_HEROES 清單(目前=喚龍使‧蜜鶴林)+ _gmAutoUnlockNewHeroes():管理員載入完成(gameCloudLoad existing-player path)後對清單中未解鎖者呼叫 advSaveUnlockedHero(name,gm_auto)(會寫 _heroUnlockHistory、不被 v3.15.40 稽核熔斷誤刪),idempotent、非管理員不動作。鐵律:每次新增英雄要把英雄名加進 _GM_AUTO_UNLOCK_HEROES',
+      '★ v3.15.42【木柵難度範圍 index.html】adv-info 靜態星級 ★★★☆☆ → 「★★★ ～ ★★★★★」;selectAdvStage 動態星級 key===maokong 顯示範圍、其餘關卡維持 data.stars 原樣',
+      '★ v3.15.42【版本鏈】index.html(乙手動合成/天青龍3→2/傷害動畫/碎片數量分難度/GM自動解鎖/木柵難度範圍)+ hero_db.js(天青龍 fd/desc 3→2 文字),4 GAME 同步點 v3.15.41→v3.15.42、_vers[hero_db.js]→v3.15.42。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.22)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.41(2026-06-18)— 🛡️ 存檔保護修復(補發後存不了檔自動修復)＋世界王至寶補償修復
   // ════════════════════════════════════════════════════════════════════
   {
@@ -381,28 +413,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.23【三功能行為 admin_panel.js】🔍查詢:_fbAdminPeekPwByEmail → 顯示是否已設定/設定時間/錯誤次數/是否鎖定+自動解鎖時間。🔓解鎖:_fbAdminUnlockPwByEmail → 清錯誤次數與10分鐘鎖定、密碼保留(學生想起來還能用),含 confirm。🗑移除:_fbAdminClearPwByEmail → 整組清除(雜湊儲存無法還原原碼故只能清),學生下次登入重新引導自設,含 confirm。皆 try/catch + email 小寫正規化',
       '★ v3.15.23【相容性 admin_panel.js】全程字串串接、不使用 ?. 可選串連(相容學校舊版 Safari iPad,符合 admin_panel.js 既有規範);typeof 守門確認三後端函式就緒才呼叫',
       '★ v3.15.23【版本鏈】admin_panel.js 內 ADMIN_PANEL_VERSION 與 index.html _LXPS_FILE_VERSIONS[admin_panel.js] 同步 v3.15.9→v3.15.23(原本 v3.15.9/v3.15.14 不一致一併校正);3 主同步點 _GAME_LOADED_VERSION + _vers[index.html] + _vers[game_changelog.js] v3.15.22→v3.15.23。本輪改 admin_panel.js + index.html + game_changelog.js;world-boss-ui.html 維持 v3.15.21。上傳順序:game_changelog.js → admin_panel.js →(world-boss-ui.html 若尚未部署)→ index.html(最後)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.22(2026-06-17)— 👑 知識王持之以恆「達標立刻發券」 + 🔮 召喚星空新增「召喚紀錄」
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.22',
-    date: '2026-06-17',
-    brief: [
-      '👑🎁【知識王「持之以恆」達標,馬上拿到召喚卷!】',
-      '   ・修正累積<b>5 天 ≥80 分</b>(SR 卷)、<b>10 天 ≥90 分</b>(SSR 卷)達標後,要自己手動點「領取」才有卷的問題。',
-      '   ・現在<b>一達標就自動發卷</b>到背包(挑戰結算當下、或打開知識王視窗時都會自動補發),不必再手動領取。之前已達標還沒領的同學,打開知識王視窗就會自動補發!',
-      '🔮📜【召喚星空:新增「召喚紀錄」!】',
-      '   ・召喚星空右上角新增 <b>📜 召喚紀錄</b> 按鈕,可查看<b>最近 60 次召喚抽到的結果</b>(含每日免費抽、連抽、召喚卷)。',
-      '   ・(此紀錄存在你目前使用的這台裝置上。)',
-    ],
-    items: [
-      '★ v3.15.22【知識王持之以恆 達標立刻發券 index.html】老師回報:累積 5 天 ≥80 / 10 天 ≥90 達標後,沒有立刻拿到 SR/SSR 召喚卷。根因:原設計達標後需玩家自己到知識王彈窗點「🎁 領取」才發卷(_kingClaimPersistReward 由按鈕觸發),非自動。修法:新增 _kingAutoClaimPersistRewards() 複用既有 _kingClaimPersistReward(內含 _have>=need 守門+發卷 backpackAdd+天數歸0+防連點+待領帳本+雲端多段重試,最穩固),只要任一條累積天數 >= 門檻就自動領取',
-      '★ v3.15.22【兩個觸發點 index.html】① _kingClaimRewards 累加持之以恆天數後立刻呼叫 → 達標那一刻即發;② _kingShowEntryPopup 開頭呼叫 → 開啟知識王彈窗時補發「之前已達標卻還沒領」的舊帳(含本次改版前已累積達標者)。90 分同時推進 SR/SSR 兩條 → 兩條各自達標各自發;發券後該條歸 0 重新累積(維持原設計)。兩 tier 防連點旗標獨立,連續呼叫不互擋',
-      '★ v3.15.22【召喚星空 召喚紀錄 index.html】老師需求:召喚頁面新增召喚結果紀錄。新增 _recordSummonHistory(results,isFree)(依 uid 寫 localStorage lxps_summon_history_<uid>,保留最近 60 批,記錄稀有度標籤 SSR/SR/至寶/稀有)+ _showSummonHistory()(右上「📜 召喚紀錄」按鈕開啟彈窗,逐批列出時間/單抽或連抽/免費標記/各獎勵 chip)。掛點:doSummon(主抽:單抽/10+1/免費)+ _showSummonTicketResult(英雄召喚卷:隨機+自選)+ _showTreasureTicketResult(至寶召喚卷:隨機+自選)',
-      '★ v3.15.22【召喚紀錄 設計取捨 index.html】純本地 localStorage 紀錄(不進雲端存檔)→ 換裝置/清快取後可能不見,但同一台裝置會保留;依 uid 分鍵,共用平板上不同學生互不干擾。英雄/至寶「本體」的雲端持久化由 v3.15.21 _lxpsCloudInstantUnlock 負責,與此顯示用紀錄無關',
-      '★ v3.15.22【版本鏈】_GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS index.html + game_changelog.js → v3.15.22。本輪只改 index.html + game_changelog.js;world-boss-ui.html 維持 v3.15.21(上一版已改、若尚未部署需一起上傳)。其餘未改:hero_db.js/world-boss.js v3.15.17、admin_panel.js v3.15.14、arena.js v3.13.94。上傳順序:game_changelog.js →(world-boss-ui.html 若尚未部署)→ index.html(最後)',
     ],
   },
 ];
