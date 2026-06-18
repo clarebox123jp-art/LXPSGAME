@@ -13,6 +13,25 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.43(2026-06-18)— 🐉 修復新英雄「喚龍使‧蜜鶴林」抽到/解鎖卻顯示未收錄
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.43',
+    date: '2026-06-18',
+    brief: [
+      '🐉🔧【修復:抽到喚龍使‧蜜鶴林卻顯示「未收錄」】',
+      '   ・修正新英雄 <b>喚龍使‧蜜鶴林</b> 即使召喚抽到、仍顯示未解鎖/未收錄的問題。',
+      '   ・原因:這隻新英雄漏登錄到「全英雄主名單」,導致收錄判定抓不到它。現在已補上,抽到就正常收錄!',
+      '   ・同時加了防呆機制:<b>所有稀有召喚英雄都會自動同步到主名單</b>,以後新角色不會再發生「抽到卻沒收錄」。',
+    ],
+    items: [
+      '★ v3.15.43【根因 index.html】v3.15.41 新增喚龍使‧蜜鶴林時只加進 SUMMON_RARE_HEROES(召喚池),漏列兩份主清單:(a) ADMIN_ALL_HEROES — advGetUnlockedHeroes() 對管理員「直接回傳 ADMIN_ALL_HEROES.slice()(無視實際解鎖紀錄)」,故管理員帳號連抽到/GM 自動解鎖(v3.15.42)都永遠顯示未解鎖;(b) _PLAYER_HERO_NAMES — 收錄計數/存檔守門/_cleanseHeroLevelsByEmail 白名單,漏列會被當「非白名單」漏算甚至誤刪',
+      '★ v3.15.43【修復 index.html】① 把「喚龍使‧蜜鶴林」補進 ADMIN_ALL_HEROES(L≈81382 結尾)與 _PLAYER_HERO_NAMES(L≈17378,v3.15.42 已補)② ★防呆自動補列:於 SUMMON_RARE_HEROES 定義後(L≈94121),把 SUMMON_RARE_HEROES(全為玩家可收集稀有英雄、無 BOSS/小怪)中漏列者自動 push/add 進 ADMIN_ALL_HEROES 與 _PLAYER_HERO_NAMES(const 陣列/Set 內容可變)→ 以後新增稀有英雄只要進了 SUMMON_RARE_HEROES,兩份主清單自動同步,絕不再漏',
+      '★ v3.15.43【新增英雄鐵律(強化為主清單自動同步)】新英雄主清單 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES 現由「自動補列」保障(只要進 SUMMON_RARE_HEROES);_GM_AUTO_UNLOCK_HEROES(v3.15.42)對管理員實為冗餘(管理員 own-all 走 ADMIN_ALL_HEROES),保留無害',
+      '★ v3.15.43【版本鏈】index.html(蜜鶴林補主清單 + 稀有英雄自動補列防呆)+ game_changelog.js,4 GAME 同步點 v3.15.42→v3.15.43。hero_db.js 維持 v3.15.42、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.23)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.42(2026-06-18)— 🔨 靈魂碎片改手動合成自選召喚卷 ＋ 天青龍齊射調整 ＋ SSR 碎片數量分難度
   // ════════════════════════════════════════════════════════════════════
   {
@@ -394,25 +413,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.24【修法① index.html】進小怪戰 setTimeout 的「第一件事」就先隱藏 adv-cutscene-overlay(原本只在後段隱藏,若中段組怪/抽牌/狀態重置任一拋例外就會在隱藏前中斷、過場層永遠蓋住戰場)→ 確保後面任何步驟出錯都不會蓋住戰鬥',
       '★ v3.15.24【修法②(獨立保險)index.html】另排一個與主 setTimeout 互不影響的計時器:以 _advCurrentBattleId 綁定本場戰鬥,於「開場演出(_introDelay)後 +1500ms」檢查「本場小怪戰仍在進行 + 過場層仍蓋著」→ 強制掀掉過場層 + 清其他可能遮擋的過場彈窗(boss-detail/intro/quiz/reward/result),露出戰場。綁 battleId 確保不會誤掀之後新一場戰鬥的開場演出',
       '★ v3.15.24【版本鏈】3 主同步點 v3.15.23→v3.15.24(本輪改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.23(本輪未動),world-boss-ui.html 維持 v3.15.21,hero_db.js 未改(只讀數值)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.23(2026-06-17)— 🔧 後台維護:補回 GM「🔐 二次密碼管理」工具(老師管理用,非玩家功能)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.23',
-    date: '2026-06-17',
-    brief: [
-      '🔧【後台維護(老師管理工具)】',
-      '   ・修復老師後台「🔐 二次密碼管理」工具(查詢 / 解鎖 / 移除學生忘記的第二段密碼)。',
-      '   ・<b>此為老師管理功能,不影響一般遊玩</b>;忘記第二段密碼的同學,請<b>本人</b>聯絡老師協助重置。',
-    ],
-    items: [
-      '★ v3.15.23【補回 GM 二次密碼管理 UI admin_panel.js】老師回報:GM 選單「幫玩家移除二次密碼」功能不見了。調查:後端三函式(window._fbAdminPeekPwByEmail 查詢 / _fbAdminUnlockPwByEmail 解鎖 / _fbAdminClearPwByEmail 移除=secondPassword:deleteField())一直都在 index.html 且完好,但全 index.html + admin_panel.js 皆無任何呼叫點 → GM 後台 UI 整個遺失,三函式無入口可觸發',
-      '★ v3.15.23【三點同步補回 admin_panel.js】鏡像既有 trust-revoke(撤銷信任裝置)工具寫法,在「🛠 系統管理」群組補回卡片:① SIDEBAR_ITEMS 加 {sec:_admin-pw-section, 🔐 二次密碼管理} ② SIDEBAR_GROUPS 系統管理群加入 _admin-pw-section ③ 卡片 template(email 輸入 + 🔍查詢狀態 / 🔓解鎖[保留密碼] / 🗑移除密碼 三鈕 + result div)④ _initSecondPwTool() handler IIFE 綁三鈕。缺任一 = 卡片永久隱藏(鐵律1.47/1.140)',
-      '★ v3.15.23【三功能行為 admin_panel.js】🔍查詢:_fbAdminPeekPwByEmail → 顯示是否已設定/設定時間/錯誤次數/是否鎖定+自動解鎖時間。🔓解鎖:_fbAdminUnlockPwByEmail → 清錯誤次數與10分鐘鎖定、密碼保留(學生想起來還能用),含 confirm。🗑移除:_fbAdminClearPwByEmail → 整組清除(雜湊儲存無法還原原碼故只能清),學生下次登入重新引導自設,含 confirm。皆 try/catch + email 小寫正規化',
-      '★ v3.15.23【相容性 admin_panel.js】全程字串串接、不使用 ?. 可選串連(相容學校舊版 Safari iPad,符合 admin_panel.js 既有規範);typeof 守門確認三後端函式就緒才呼叫',
-      '★ v3.15.23【版本鏈】admin_panel.js 內 ADMIN_PANEL_VERSION 與 index.html _LXPS_FILE_VERSIONS[admin_panel.js] 同步 v3.15.9→v3.15.23(原本 v3.15.9/v3.15.14 不一致一併校正);3 主同步點 _GAME_LOADED_VERSION + _vers[index.html] + _vers[game_changelog.js] v3.15.22→v3.15.23。本輪改 admin_panel.js + index.html + game_changelog.js;world-boss-ui.html 維持 v3.15.21。上傳順序:game_changelog.js → admin_panel.js →(world-boss-ui.html 若尚未部署)→ index.html(最後)',
     ],
   },
 ];
