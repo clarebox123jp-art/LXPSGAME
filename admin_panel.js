@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.26';   // ★ v3.15.26(2026-06-17)— 新增 GM「🎟️ 虛寶序號」卡片(補償與補發群組,課堂獎勵發放下方):勾選獎勵+數量→設定產生組數/有效期/備註→批量產生「一次性兌換序號」(寫 redeemCodes,每序號限用一次)→產出含獎勵名稱的可複製清單(貼給其他老師);另可查看序號清單(未兌/已兌by誰)、刪除。後端 _fbGenerateRedeemCodes/_fbListRedeemCodes/_fbAdminDeleteRedeemCode(學生兌換走 _fbRedeemCode)在 index.html v3.15.26,⚠需先部署 redeemCodes 規則。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler)｜v3.15.23(2026-06-17)— 補回:GM「🔐 二次密碼管理」卡片(系統管理群組,撤銷信任裝置下方):查詢 / 解鎖(保留密碼)/ 移除學生第二段密碼;後端 _fbAdminPeekPwByEmail/_fbAdminUnlockPwByEmail/_fbAdminClearPwByEmail 一直都在,此前 GM UI 整個遺失導致無入口可呼叫,現以鏡像 trust-revoke 工具補回(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler 三點齊備)｜v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
+window.ADMIN_PANEL_VERSION = 'v3.15.37';   // ★ v3.15.37(2026-06-18)— 新增 GM 補償「🎖 鬥技之證」:①學生補償工具加「🎖 鬥技之證 (+N)」輸入框(讀值/空值檢查/摘要/重置清單/傳 arenaZheng 給 _fbCompensatePlayer);②課堂獎勵發放加「🎖 鬥技之證 ×N」勾選框(_buildReward 設 reward.arenaZheng)。後端 _fbCompensatePlayer(index.html v3.15.37)新增 arenaZhengHeld/arenaZhengLifetime 三槽寫入;搭配鬥技之證持有量上雲(arena.js gameCloudSave 觸發 + index.html _buildSafeData/_applySafeData max 合併),修復「打完鬥技場/共用平板清快取後鬥技之證不見」。｜v3.15.26(2026-06-17)— 新增 GM「🎟️ 虛寶序號」卡片(補償與補發群組,課堂獎勵發放下方):勾選獎勵+數量→設定產生組數/有效期/備註→批量產生「一次性兌換序號」(寫 redeemCodes,每序號限用一次)→產出含獎勵名稱的可複製清單(貼給其他老師);另可查看序號清單(未兌/已兌by誰)、刪除。後端 _fbGenerateRedeemCodes/_fbListRedeemCodes/_fbAdminDeleteRedeemCode(學生兌換走 _fbRedeemCode)在 index.html v3.15.26,⚠需先部署 redeemCodes 規則。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler)｜v3.15.23(2026-06-17)— 補回:GM「🔐 二次密碼管理」卡片(系統管理群組,撤銷信任裝置下方):查詢 / 解鎖(保留密碼)/ 移除學生第二段密碼;後端 _fbAdminPeekPwByEmail/_fbAdminUnlockPwByEmail/_fbAdminClearPwByEmail 一直都在,此前 GM UI 整個遺失導致無入口可呼叫,現以鏡像 trust-revoke 工具補回(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler 三點齊備)｜v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -802,6 +802,10 @@ async function _showAdminStatsPanelImpl(){
             <input type="checkbox" id="_cr-item-fruit" style="width:17px;height:17px;cursor:pointer;">🍑 超越極限果實 ×
             <input type="number" id="_cr-qty-fruit" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
           </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_cr-item-arenazheng" style="width:17px;height:17px;cursor:pointer;">🎖 鬥技之證 ×
+            <input type="number" id="_cr-qty-arenazheng" value="10" min="1" max="9999" style="width:60px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
         </div>
         <textarea id="_admin-classreward-names" placeholder="王小明&#10;陳大文&#10;5324蔣同學 ..." style="width:100%;min-height:110px;padding:10px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(140,220,120,0.4);color:#fff;border-radius:8px;font-family:inherit;line-height:1.6;box-sizing:border-box;resize:vertical;"></textarea>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
@@ -1299,6 +1303,7 @@ async function _showAdminStatsPanelImpl(){
               <label style="font-size:13px;color:#ccc;">💨 極限速度膠囊<input id="_cmp_cap_spd" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
               <label style="font-size:13px;color:#ccc;">🐉 世界 BOSS 入場券<input id="_cmp_wb_ticket" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
               <label style="font-size:13px;color:#ccc;">💕 友情之心 (+N, 上限 99)<input id="_cmp_heart" type="number" min="0" max="99" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
+              <label style="font-size:13px;color:#ccc;">🎖 鬥技之證 (+N)<input id="_cmp_arena_zheng" type="number" min="0" max="9999" value="0" style="width:100%;padding:6px 8px;margin-top:4px;background:rgba(20,20,30,0.9);border:1px solid rgba(255,180,100,0.4);color:#fff;border-radius:4px;font-family:inherit;box-sizing:border-box;"></label>
             </div>
           </div>
 
@@ -4710,6 +4715,7 @@ async function _showAdminStatsPanelImpl(){
       if(_chk('_cr-item-crystal')){ const q=_qty('_cr-qty-crystal',10); backpack['summon_crystal']=(backpack['summon_crystal']||0)+q; items.push('🔮召喚水晶×'+q); }
       if(_chk('_cr-item-fruit')){   const q=_qty('_cr-qty-fruit',1);   backpack['burst_upgrade_fruit']=(backpack['burst_upgrade_fruit']||0)+q; items.push('🍑超越極限果實×'+q); }
       if(_chk('_cr-item-coins')){   const q=_qty('_cr-qty-coins',100000); reward.coins=q; reward.coinsMode='add'; items.push('💰知識幣×'+q); }
+      if(_chk('_cr-item-arenazheng')){ const q=_qty('_cr-qty-arenazheng',10); reward.arenaZheng=(reward.arenaZheng||0)+q; items.push('🎖鬥技之證×'+q); }
       if(unlockedHeroes.length) reward.unlockedHeroes = unlockedHeroes;
       if(Object.keys(backpack).length) reward.backpack = backpack;
       return { reward, items };
@@ -6637,6 +6643,7 @@ async function _showAdminStatsPanelImpl(){
       const _capSpd    = _readNum('_cmp_cap_spd', 99);
       const _wbTicket  = _readNum('_cmp_wb_ticket', 99);
       const _heart     = _readNum('_cmp_heart', 99);
+      const _arenaZheng = _readNum('_cmp_arena_zheng', 9999);
       // 台灣至寶勾選
       const _treasures = [];
       try{
@@ -6647,7 +6654,7 @@ async function _showAdminStatsPanelImpl(){
       const heroNames = Object.keys(_compHeroes);
       if(heroNames.length === 0 && coins === 0 && expBook === 0 && skillBook === 0
          && statBook === 0 && burstFruit === 0 && burstReset === 0
-         && _extraBpSum === 0 && _heart === 0 && _treasures.length === 0){
+         && _extraBpSum === 0 && _heart === 0 && _arenaZheng === 0 && _treasures.length === 0){
         res.style.color = '#ff6666';
         res.textContent = '❌ 沒有指定任何補償內容';
         return;
@@ -6704,6 +6711,7 @@ async function _showAdminStatsPanelImpl(){
       if(_capSpd)    _extraParts.push('極限速度膠囊 +'+_capSpd);
       if(_wbTicket)  _extraParts.push('世界BOSS入場券 +'+_wbTicket);
       if(_heart)     _extraParts.push('友情之心 +'+_heart);
+      if(_arenaZheng) _extraParts.push('鬥技之證 +'+_arenaZheng);
       if(_treasures.length) _extraParts.push('台灣至寶:'+_treasures.map(_twNameOf).join('、'));
 
       // 組摘要
@@ -6743,6 +6751,7 @@ async function _showAdminStatsPanelImpl(){
           coinsMode: 'add',
           backpack: _bp,
           friendshipHeart: _heart,
+          arenaZheng: _arenaZheng,
           treasures: _treasures,
           reason: reason,
           summary: _summary,
@@ -6872,7 +6881,7 @@ async function _showAdminStatsPanelImpl(){
         try{
           ['_cmp_t_ssr','_cmp_t_sr','_cmp_t_ssr_pick','_cmp_t_sr_pick','_cmp_t_tre','_cmp_t_tre_pick',
            '_cmp_crystal','_cmp_exp_deluxe','_cmp_exp_premium','_cmp_tre_scroll','_cmp_tre_reset',
-           '_cmp_cap_reset','_cmp_cap_hp','_cmp_cap_atk','_cmp_cap_sp','_cmp_cap_spd','_cmp_wb_ticket','_cmp_heart']
+           '_cmp_cap_reset','_cmp_cap_hp','_cmp_cap_atk','_cmp_cap_sp','_cmp_cap_spd','_cmp_wb_ticket','_cmp_heart','_cmp_arena_zheng']
             .forEach(function(_id){ var _el=document.getElementById(_id); if(_el) _el.value='0'; });
           document.querySelectorAll('._cmp-treasure-chk:checked').forEach(function(c){ c.checked=false; });
         }catch(_){}

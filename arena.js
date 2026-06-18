@@ -759,6 +759,9 @@
     try { window._arenaSubmitBattleLog && window._arenaSubmitBattleLog(result); } catch (_) {}
     // ★ v3.13.61(2026-06-05)— 把本場得到的鬥技之證累計進「本週排名」(每週一 08:00 結算發獎)
     try { if (window._arenaRank && typeof window._arenaRank.addZheng === 'function') window._arenaRank.addZheng(zheng); } catch (_) {}
+    // ★ v3.15.37(2026-06-18)— 持有量上雲:結算後即時觸發雲端存檔(gameCloudSave 內含完整保護層),
+    //   讓鬥技之證「持有量/累積」跟著帳號跨裝置;修復共用 iPad 清 localStorage 後代幣消失。
+    try { if (typeof window.gameCloudSave === 'function' && window._gUserId) window.gameCloudSave(); } catch (_) {}
     return { zheng, total: s.zhengTotal, lifetime: s.zhengLifetimeTotal, state: s };
   };
 
@@ -787,6 +790,8 @@
       s.zhengTotal = have - cost;       // 只扣持有,累積(lifetime)不動
       _writeDailyState(s);
       try { localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal)); } catch (_) {}
+      // ★ v3.15.37 — 扣證後同步上雲(讓「花掉」也跨裝置生效,避免下次登入又被舊雲端值還原)
+      try { if (typeof window.gameCloudSave === 'function' && window._gUserId) window.gameCloudSave(); } catch (_) {}
       return true;
     } catch (e) { console.warn('[arena] _arenaSpendZheng 例外:', e); return false; }
   };
@@ -825,6 +830,8 @@
         localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal));
         localStorage.setItem('lxps_arena_zheng_lifetime', String(s.zhengLifetimeTotal));
       } catch (_) {}
+      // ★ v3.15.37 — 發證後同步上雲
+      try { if (typeof window.gameCloudSave === 'function' && window._gUserId) window.gameCloudSave(); } catch (_) {}
     } catch (e) { console.warn('[arena] _arenaGrantZheng 例外:', e); }
   };
 
