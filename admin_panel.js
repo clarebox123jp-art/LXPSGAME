@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.37';   // ★ v3.15.37(2026-06-18)— 新增 GM 補償「🎖 鬥技之證」:①學生補償工具加「🎖 鬥技之證 (+N)」輸入框(讀值/空值檢查/摘要/重置清單/傳 arenaZheng 給 _fbCompensatePlayer);②課堂獎勵發放加「🎖 鬥技之證 ×N」勾選框(_buildReward 設 reward.arenaZheng)。後端 _fbCompensatePlayer(index.html v3.15.37)新增 arenaZhengHeld/arenaZhengLifetime 三槽寫入;搭配鬥技之證持有量上雲(arena.js gameCloudSave 觸發 + index.html _buildSafeData/_applySafeData max 合併),修復「打完鬥技場/共用平板清快取後鬥技之證不見」。｜v3.15.26(2026-06-17)— 新增 GM「🎟️ 虛寶序號」卡片(補償與補發群組,課堂獎勵發放下方):勾選獎勵+數量→設定產生組數/有效期/備註→批量產生「一次性兌換序號」(寫 redeemCodes,每序號限用一次)→產出含獎勵名稱的可複製清單(貼給其他老師);另可查看序號清單(未兌/已兌by誰)、刪除。後端 _fbGenerateRedeemCodes/_fbListRedeemCodes/_fbAdminDeleteRedeemCode(學生兌換走 _fbRedeemCode)在 index.html v3.15.26,⚠需先部署 redeemCodes 規則。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler)｜v3.15.23(2026-06-17)— 補回:GM「🔐 二次密碼管理」卡片(系統管理群組,撤銷信任裝置下方):查詢 / 解鎖(保留密碼)/ 移除學生第二段密碼;後端 _fbAdminPeekPwByEmail/_fbAdminUnlockPwByEmail/_fbAdminClearPwByEmail 一直都在,此前 GM UI 整個遺失導致無入口可呼叫,現以鏡像 trust-revoke 工具補回(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler 三點齊備)｜v3.15.9(2026-06-14)— 新增「🌙 伺服器休息/開機排程」卡片(系統管理群組,維修模式下方):設定每日休息→開機時段(gameConfig/restSchedule),到點全體存檔進休息畫面、開機倒數後自動重整、可提前N分預告,管理員不受限｜v3.15.6 新增「📨 帳號資料轉移審核」卡片(畢業生實名申請→反查舊帳號比較進度→核准全搬[主檔+雙槽+鬥技場+龍王傷害]→先備份新帳號+遷移成功才停權舊帳號+通知學生重登;後路:取消停權救舊帳號/還原新帳號到遷移前)｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀+GM一鍵解鎖全部至寶(自己帳號,測試)｜v3.15.0 龍王排行榜各英雄傷害來源總表
+window.ADMIN_PANEL_VERSION = 'v3.15.40';   // ★ v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片(資料救援與重置群組,急救工具下方):輸入 email/uid/姓名/學號 → 用雲端帳本(_heroUnlockHistory/_crystalTransactions/_coinTransactions)反推「應有資料」比對缺漏 → 一鍵補回(只補不減,排除已刪英雄,水晶上限99)。後端 _fbRebuildAccountFromLedgers/_fbApplyAccountRebuild(走 _fbCompensatePlayer 三槽寫入)在 index.html v3.15.40。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler)。搭配 index.html 六層存/載核心修補:①跨槽合併取代「挑一槽」(_lxpsMergeSlots:累積型union/max、消耗型取最新槽、稽核感知排除已刪英雄)②記憶體擁有者守門改用_memoryOwnerUid③裝置擁有者戳記去命名空間+換帳號補清友情/送禮/知識王④熔斷改稽核感知(查解鎖紀錄)⑤背包整包清空防護。｜v3.15.37(2026-06-18)— 新增 GM 補償「🎖 鬥技之證」:①學生補償工具加「🎖 鬥技之證 (+N)」輸入框;②課堂獎勵發放加「🎖 鬥技之證 ×N」勾選框。後端 _fbCompensatePlayer 新增 arenaZhengHeld/arenaZhengLifetime 三槽寫入｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9「🌙 伺服器休息/開機排程」｜v3.15.6「📨 帳號資料轉移審核」｜v3.15.3 異常傷害門檻+課堂獎勵奧汀+GM解鎖全至寶｜v3.15.0 龍王排行榜各英雄傷害總表
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1181,6 +1181,23 @@ async function _showAdminStatsPanelImpl(){
           - 採「保留現有資料再覇上去」策略 (3 號是還原式,清空後重建)
           - 自動記錄補償次數 + 歷史 (寫 _compensationHistory 欄位)
       -->
+      <!-- ★ v3.15.40 — GM 一鍵帳號重建(由帳本反推應有資料,只補不減) -->
+      <div id="_admin-rebuild-section" style="background:rgba(18,45,40,0.5);border:2px solid rgba(90,220,180,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#6ee0bb;margin-bottom:8px;">🔧 一鍵帳號重建(由帳本反推)</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          對「資料被舊版弄壞」的帳號,用雲端帳本(解鎖紀錄 / 水晶・幣交易紀錄)反推「這個帳號本來應該有什麼」,跟現況(三槽合併)比對出缺漏一鍵補回。
+          <b style="color:#9fe;">只補不減</b>,排除已被 GM 刪除的英雄,水晶補到上限 99。<br>
+          <span style="color:#8fd;">說明:新版每次登入已會自動把散在各槽的英雄/至寶/等級/鬥技證撿回;此工具額外救援「三槽全掉但帳本還在」的英雄與「被弄丟的水晶/幣餘額」。</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+          <input id="_admin-rebuild-input" type="text" placeholder="學生 email / uid / 姓名 / 學號"
+            style="flex:2;min-width:220px;padding:8px 12px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(90,220,180,0.4);color:#fff;border-radius:6px;font-family:monospace;">
+          <button id="_admin-rebuild-analyze" style="padding:8px 18px;font-size:14px;font-weight:700;background:rgba(90,220,180,0.2);border:2px solid #5adcb4;color:#9fe;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">🔍 分析缺漏</button>
+        </div>
+        <div id="_admin-rebuild-result" style="font-size:13px;color:#ccc;margin-bottom:10px;padding:10px;background:rgba(0,0,0,0.4);border-radius:6px;display:none;line-height:1.7;"></div>
+        <button id="_admin-rebuild-apply" style="display:none;padding:9px 22px;font-size:14px;font-weight:800;background:rgba(90,220,180,0.25);border:2px solid #5adcb4;color:#aff;border-radius:6px;cursor:pointer;font-family:inherit;">✅ 套用重建(寫入三槽)</button>
+      </div>
+
       <div id="_admin-comp-section" style="background:rgba(50,30,20,0.45);border:2px solid rgba(255,180,100,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#ffbb66;margin-bottom:8px;">🎁 3.5 學生補償工具(指定信箱)</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
@@ -2530,6 +2547,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-lv1-section',              label: '🆘 Lv1 救援',              hint: '雲端三槽 + 反污染保護' },
       { sec: '_admin-pollution-check-section',  label: '📢 污染檢查提醒',          hint: '寄送進度污染提醒' },
       { sec: '_admin-rescue-section',           label: '🚑 玩家資料急救工具',      hint: '修復異常資料' },
+      { sec: '_admin-rebuild-section',          label: '🔧 一鍵帳號重建',          hint: '用雲端帳本反推「應有資料」,比對缺漏一鍵補回(只補不減,排除已刪英雄);救援被舊版弄壞的帳號' },
       { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
@@ -2587,7 +2605,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
-      { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-reset-section'] },
+      { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-rebuild-section','_admin-reset-section'] },
       { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
@@ -6019,6 +6037,82 @@ async function _showAdminStatsPanelImpl(){
       // 重置 select 方便連續加
       sel.value = '';
     };
+
+    // ★ v3.15.40 — GM 一鍵帳號重建 handler(self-contained IIFE;不使用 ?. 相容舊 iPad Safari)
+    (function(){
+      var _analyzeBtn = document.getElementById('_admin-rebuild-analyze');
+      var _applyBtn   = document.getElementById('_admin-rebuild-apply');
+      var _resultEl   = document.getElementById('_admin-rebuild-result');
+      var _inputEl    = document.getElementById('_admin-rebuild-input');
+      if(!_analyzeBtn || !_applyBtn || !_resultEl || !_inputEl) return;
+      var _pendingUid = null, _pendingPayload = null;
+      function _esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      function _resolveUidLocal(input){
+        var s = String(input==null?'':input).trim();
+        if(!s) return Promise.reject(new Error('請輸入 email / uid / 姓名 / 學號'));
+        if(/^[A-Za-z0-9-]{20,}$/.test(s) && s.indexOf('@') < 0) return Promise.resolve(s);
+        return Promise.resolve().then(function(){
+          if(typeof window._fbAdminFindPlayerByEmail === 'function'){
+            return window._fbAdminFindPlayerByEmail(s).then(function(f){
+              if(f && f.uid) return f.uid;
+              if(typeof window._fbAdminFindPlayersByName === 'function'){
+                return window._fbAdminFindPlayersByName(s).then(function(r){
+                  var ps = (r && r.players) || [];
+                  if(ps.length === 1) return ps[0].uid;
+                  if(ps.length > 1) throw new Error('「' + s + '」有多筆同名,請改用 email 或 uid');
+                  throw new Error('找不到「' + s + '」對應的玩家');
+                });
+              }
+              throw new Error('找不到「' + s + '」對應的玩家');
+            });
+          }
+          throw new Error('查無玩家解析功能');
+        });
+      }
+      _analyzeBtn.addEventListener('click', function(){
+        _pendingUid = null; _pendingPayload = null; _applyBtn.style.display = 'none';
+        _resultEl.style.display = 'block'; _resultEl.innerHTML = '⏳ 分析中…';
+        if(typeof window._fbRebuildAccountFromLedgers !== 'function'){
+          _resultEl.innerHTML = '❌ _fbRebuildAccountFromLedgers 未載入(請確認 index.html 已更新到 v3.15.40)'; return;
+        }
+        _resolveUidLocal(_inputEl.value).then(function(uid){
+          return window._fbRebuildAccountFromLedgers(uid).then(function(r){
+            _pendingUid = uid; _pendingPayload = r.payload;
+            var d = r.diff;
+            var html = '帳號 <b style="color:#9fe;">' + _esc(String(uid).slice(0,12)) + '…</b><br>';
+            html += '現有英雄 <b>' + r.current.heroes + '</b> 隻｜帳本顯示應有 <b>' + r.shouldHave.heroes + '</b> 隻<br>';
+            html += '水晶 現有 <b>' + d.crystal.current + '</b> / 帳本 <b>' + (d.crystal.ledger == null ? '無紀錄' : d.crystal.ledger) + '</b>' + (d.crystal.willAdd > 0 ? ' → <span style="color:#9fe;">補 +' + d.crystal.willAdd + '</span>' : '') + '<br>';
+            html += '知識幣 現有 <b>' + d.coins.current + '</b> / 帳本 <b>' + (d.coins.ledger == null ? '無紀錄' : d.coins.ledger) + '</b>' + (d.coins.willAdd > 0 ? ' → <span style="color:#9fe;">補 +' + d.coins.willAdd + '</span>' : '') + '<br>';
+            if(d.missingHeroCount > 0){
+              html += '<div style="margin-top:6px;color:#ffd;">缺漏英雄 ' + d.missingHeroCount + ' 隻:' + _esc(d.missingHeroes.slice(0,40).join('、')) + (d.missingHeroes.length > 40 ? ' …' : '') + '</div>';
+            }
+            if(r.hasChanges){
+              html += '<div style="margin-top:8px;color:#9fe;font-weight:700;">↑ 確認無誤後按下方「套用重建」</div>';
+              _applyBtn.style.display = 'inline-block';
+            } else {
+              html += '<div style="margin-top:8px;color:#8e8;font-weight:700;">✅ 此帳號資料已完整,無需重建</div>';
+            }
+            _resultEl.innerHTML = html;
+          });
+        }).catch(function(e){ _resultEl.innerHTML = '❌ ' + _esc(e && e.message ? e.message : e); });
+      });
+      _applyBtn.addEventListener('click', function(){
+        if(!_pendingUid || !_pendingPayload) return;
+        if(!confirm('確定要對此帳號套用重建?(只補不減,寫入三槽)')) return;
+        _applyBtn.disabled = true; _applyBtn.textContent = '⏳ 套用中…';
+        Promise.resolve().then(function(){
+          if(typeof window._fbApplyAccountRebuild !== 'function') throw new Error('_fbApplyAccountRebuild 未載入');
+          return window._fbApplyAccountRebuild(_pendingUid, _pendingPayload);
+        }).then(function(res){
+          _resultEl.innerHTML = (res && res.ok) ? '✅ 重建完成!該學生重新整理 / 重登後即可看到補回的資料。' : ((res && res.noop) ? '✅ 無需重建(帳號已完整)。' : '⚠ 重建回傳異常,請查 console。');
+          _applyBtn.style.display = 'none';
+        }).catch(function(e){
+          _resultEl.innerHTML = '❌ 套用失敗:' + _esc(e && e.message ? e.message : e);
+        }).then(function(){
+          _applyBtn.disabled = false; _applyBtn.textContent = '✅ 套用重建(寫入三槽)';
+        });
+      });
+    })();
 
     // 查找學生(email 或 uid 擇一)
     const _findBtn = document.getElementById('_admin-comp-find');

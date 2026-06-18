@@ -13,6 +13,26 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.40(2026-06-18)— 🛡️ 帳號資料保護大升級(角色/水晶/鬥技之證不再莫名消失)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.40',
+    date: '2026-06-18',
+    brief: [
+      '🛡️【你的資料,從此更安全】',
+      '   ・大幅強化帳號保護:<b>抽到/補發的角色、水晶、鬥技之證、知識幣、台灣至寶</b>等,再也不會因為共用平板、切換帳號或網路不穩而<b>莫名消失或變成別人的</b>。',
+      '   ・現在每次登入都會<b>以雲端最完整的資料為準</b>,自動把散在各處的進度全部撿回來,你看到的永遠是正確、完整的自己。',
+      '   ・若之前有同學的資料曾經出問題,老師現在可以<b>一鍵幫你修復補回</b>。',
+    ],
+    items: [
+      '★ v3.15.40【帳號資料保護「最高規格」六層核心修補 index.html】根因:載入時三槽(live/safe/主檔)只「挑最豐富一槽」,落選槽獨有的英雄/水晶/救援信號被丟掉;且換帳號時六大表記憶體殘留的守門憑證被命名空間架空→從不觸發。修:①新增 _lxpsMergeSlots「跨槽合併」取代挑一槽——累積型(英雄/六大養成表/台灣至寶/友情之心/鬥技之證持有+累積/各類帳本)union 或逐鍵 max、消耗型(知識幣/水晶/背包)取最新存檔槽、_adminRescueSignal 取三槽最大 ts、稽核感知排除「最近一筆解鎖紀錄=admin_delete」的英雄/至寶。②跨帳號污染守門改用 window._memoryOwnerUid(JS 全域變數,與殘留同生命週期,真實反映記憶體屬於誰)取代被命名空間架空的 adv_unlocked_heroes_uid。③lxps_device_owner_uid 列入命名空間白名單(復活 _lxpsEnforceDeviceOwner 換帳號清理)+ _clearAccountLocalData 補清 _friendshipHeart/_giftHistory/_giftLog/_kingChallenge/_crystalCount。④污染熔斷由「本地比雲端多>3隻就整批丟」改為「稽核感知」:逐隻查 _heroUnlockHistory(本人 creatorUid 且最近一筆非 admin_delete→保留;查無紀錄/別帳號/已刪→丟)→ 離線抽到的不誤殺、跨帳號殘留照樣擋、GM 刪除永久生效。⑤gameCloudSave 退化守門新增「背包整包被清空(0鍵但本地有≥3種物品)」防護,不誤擋正常消費',
+      '★ v3.15.40【GM 一鍵帳號重建 index.html + admin_panel.js】新增後端 _fbRebuildAccountFromLedgers(讀三槽合併→用 _heroUnlockHistory/_crystalTransactions/_coinTransactions 帳本反推「應有資料」→比對現況缺漏)/ _fbApplyAccountRebuild(走 _fbCompensatePlayer 三槽 union/max 寫入,只補不減、排除已刪英雄、水晶補到上限99);admin_panel.js 新增「🔧 一鍵帳號重建」卡片(資料救援與重置群組,急救工具下方,三點同步 SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler,無 ?. 相容舊 Safari)',
+      '★ v3.15.40【設計取捨】消耗型(幣/水晶/背包)採「最新存檔槽」而非 max:三槽同帳號不同時間寫的,最新槽=最新真相,既尊重最新消費(不退款防刷)又不被舊槽低餘額蓋掉(防遺失)。累積型 union/max 只增不減,結構上不可能造成英雄/累積資源遺失。已被舊版弄壞的帳號:跨槽合併自動撿回英雄/累積資源,消耗型餘額用 GM 一鍵重建(帳本反推)補回',
+      '★ v3.15.40【寫穿透加固 index.html】落實「獲得即上雲、不只存本地」原則:獲得幣 addKnowledgeCoins 本就立即 gameCloudSave;補上 backpackAdd(物品/水晶獲得的中央點)去抖動排程上雲(一連串獲得 2.5 秒內合併成一次同步、最長 15 秒保證落地,避免 Spark 寫入風暴)。英雄(_lxpsCloudInstantUnlock 即時 arrayUnion)、至寶(targeted updateDoc)、召喚結果/冒險解鎖確認(_lxpsInstantPersist)本就即時上雲。一次同步寫當前完整狀態→獲得物品與已扣水晶/幣一起落地。配合載入端跨槽合併「消耗型取最新槽」,共用平板換帳號也不遺失剛獲得的資源',
+      '★ v3.15.40【版本鏈】3 主同步點 v3.15.39→v3.15.40 + game_changelog.js→v3.15.40 + admin_panel.js v3.15.37→v3.15.40(ADMIN_PANEL_VERSION 同步)。arena.js 維持 v3.15.37、hero_db.js v3.15.36、world-boss.js v3.15.34(本輪未動)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.39(2026-06-18)— 🛡️ 技能防連點刷傷漏洞修正(學霸 五科滿分考卷等)
   // ════════════════════════════════════════════════════════════════════
   {
