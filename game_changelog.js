@@ -13,6 +13,56 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.50(2026-06-19)— 🐉 世界 BOSS 8 龍王大補完(雷龍王登場 + 素質天賦圖鑑 + 露臉)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.50',
+    date: '2026-06-19',
+    brief: [
+      '🐉【世界 BOSS 8 條龍王大補完!】',
+      '   ・<b>風暴雷龍王(雷龍王)</b>設計完成並登場圖鑑:風屬性,S1 雷霆貫穿(單體+麻痺)、S2 暴風肅清(全體+清除自身不利)、爆發「雷神·萬雷殛世」(全體+全體麻痺+清除自身不利);護盾 風×2/光/火(用地/暗/水破盾)。',
+      '   ・新增 <b>深淵海龍王、邪骨暗龍王、神聖光龍王、星辰幻龍王</b> 圖鑑(素質與天賦已公開,招式與爆發設計中,以「? 未知技能」標示)。',
+      '   ・所有龍王的<b>素質、共通天賦、專屬天賦</b>全部補進龍王圖鑑頁,點龍王頭像即可查看完整資料。',
+      '⚔️【龍王戰看得更清楚】',
+      '   ・所有龍王在戰鬥畫面的背景圖<b>往上調整,讓龍王的臉露在畫面中央</b>,看起來更有魄力!',
+      '📅【龍王接班規則】',
+      '   ・打倒當前龍王後,<b>下一隻龍王會在隔天早上 8:00 自動開放</b>(滿血迎戰),以後每隻龍王都這樣輪替。',
+    ],
+    items: [
+      '★ v3.15.50【8 龍王素質修正 world-boss.js HERO_DB】火山炎龍王 atk49→50;翠綠森龍王 49/50/15→45/58/12;山岳地龍王 49/50/15→60/50/5;新增 風暴雷龍王(40/45/30,風)、深淵海龍王(47/50/18,水)、邪骨暗龍王(45/55/15,暗)、神聖光龍王(45/55/15,光)、星辰幻龍王(35/50/30,無)完整 HERO_DB(hp 500萬/star5/isWorldBoss)。',
+      '★ v3.15.50【共通+專屬天賦全寫進圖鑑 world-boss.js HERO_TRAIT】圖鑑彈窗(_wbTcBuildInfoHtml / _wbAdvOpenBossInfoPopup)資料驅動讀 HERO_DB/HERO_TRAIT/BURST_DB,更新資料即自動反映。8 龍王 trait 全補共通 4 天賦(元素護盾第 3/5/7/9 回合、單次受傷上限 5000、第 11 回合崩壞場地強制結算、每回合行動完額外普攻 1 下追擊最低 HP)+各專屬:火 暴擊+30%;森 吸能量/免疫光/怕燃燒(維持);地 減傷 40%→30%(依老師 spec)+反擊/怕毒(維持);雷 開場用攻擊值襲擊隨機 1 人/被降速時受傷+30%;海 每回合查封 1 人 2 回合/被冰凍受傷+30%;暗 每回合死亡宣告 1 人/受光+30%;光 每回合封印 1 人 2 回合/受暗+30%;幻 免疫所有異常/受普攻-30%/迴避+30%。',
+      '★ v3.15.50【雷龍王完整設計 + 其餘 ? 未知 world-boss.js】風暴雷龍王 S1 雷霆貫穿(特技150%單體風傷+麻痺2回)、S2 暴風肅清(特技120%全體風傷+解除自身所有不利)、爆發 雷神·萬雷殛世(特技150%全體風傷+全體麻痺1回+解除自身所有不利);LINEUP 護盾改 風×2/光/火(shieldLayers wind:2/light:1/fire:1,破盾組合 地地暗水)。深淵海/邪骨暗/神聖光/星辰幻 之 S1/S2/爆發暫填「? 未知技能 / ? 未知爆發」(設計中),其素質與天賦已完整公開。',
+      '★ v3.15.50【龍王戰背景露臉 world-boss-ui.html】#wb-lobby-overlay.wb-in-battle 戰鬥背景(JS 動態 _bossUrl + CSS 後備)由 center/cover 改 center 10%/cover(Y 由 50% 減 40% → 10%),龍王臉露在畫面中央。戰鬥隱藏龍王卡(縮 1px 仍可點 click)+全螢幕龍王背景 本就由 body.wb-in-worldboss-battle 全龍王通用,新龍王自動套用。',
+      '★ v3.15.50【接班排程確認(既有機制已符合需求)】龍王倒下記 wbBossDownTimes[bossId];_calcSettleAt 算「倒下後下一個台灣 8:00」;該 8:00 第一個觸發 _wbSettle.trySettle 的玩家用 transaction 結算並「同一 transaction 原子接班下一隻龍王(滿血,照 _WB_BOSS_ROTATION 輪替)」。即「倒下後隔天 8:00 開放下一隻」對全龍王皆適用,本輪無需改碼。',
+      '★ v3.15.50【版本鏈】4 GAME 同步點 v3.15.49→v3.15.50,_vers[world-boss.js] v3.15.34→v3.15.50、_vers[world-boss-ui.html] v3.15.48→v3.15.50,_vers[index.html]/[game_changelog.js] 同步 v3.15.50。admin_panel.js/arena.js 維持 v3.15.49、hero_db.js v3.15.44。本輪改 world-boss.js + world-boss-ui.html + index.html(版本鏈)+ game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.30)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.49(2026-06-19)— 🎁 全體獎勵 + ⚔️ 鬥技場排名上線 + ✨ 提醒徽章 + 🛠 離場按鈕
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.49',
+    date: '2026-06-19',
+    brief: [
+      '🎁【新增:老師可一鍵發獎勵給全班】',
+      '   ・老師後台新增「全體玩家獎勵」,可一次把召喚卷 / 水晶 / 知識幣 / 英雄等發給<b>全班所有人</b>,你下次登入會自動收到並跳出通知,<b>每人只會領一次</b>(不會重複領)。',
+      '⚔️【鬥技場排名正式開跑,有發獎勵了!】',
+      '   ・排行榜改為比<b>本週獲得的 🎖 鬥技之證</b>,每週一早上 8:00 自動結算發獎,<b>同證數並列同名次</b>;結算後排行榜歸零,可在大廳按「📜 歷史」回看過去的名次。',
+      '   ・名次獎勵:🥇第 1 名 🔮15/🎖15/💰3萬、🥈第 2-5 名 🔮10/🎖10/💰2萬、🥉第 6-10 名 🔮5/🎖5/💰1萬、第 11 名以後(本週有得證)🔮2/🎖2/💰5000。',
+      '✨【關卡首頁的提醒更準了】',
+      '   ・關卡首頁下方的提醒(免費 1 抽 / 有可強化英雄 / 有至寶可強化 / 有好友可贈禮)現在會<b>定時自動更新</b>,每天早上 8:00 重置後也會正確出現。',
+      '🛠【離開鬥技場不再殘留按鈕】',
+      '   ・修正離開鬥技場回到關卡頁後,<b>「戰鬥教學」等戰鬥中按鈕沒有消失</b>的問題,現在會全部收乾淨。',
+    ],
+    items: [
+      '★ v3.15.49【離開鬥技場徹底收按鈕 index.html】backToHomeArena 補呼叫 ctrlBattleToggle(false)(隱藏左下「戰鬥教學」浮鈕 _tut-float-btn + 控制列「離開戰場」鈕/分隔線)+ 清教學遮罩 _tut-prompt/_ti-dim-overlay/_tut-dim + _tutorialActive/_gamePaused 旗標歸位 + 保險隱藏 _tut-float-btn。根因:backToHomeArena 原本只清各 overlay,從未呼叫 ctrlBattleToggle(false),故戰鬥教學浮鈕殘留',
+      '★ v3.15.49【全體玩家獎勵 admin_panel.js + index.html】GM 後台「獎勵與補償」群組(原「補償與補發」改名)新增「全體玩家獎勵」卡:勾獎勵+數量(鏡像課堂獎勵)→ 標題/訊息/有效期 → _fbCreateGlobalReward 寫 globalRewards 一筆。玩家登入後 _fbClaimGlobalRewards 讀 enabled 的 globalRewards,對未領者用 transaction 認領 globalRewardClaims 的 uid_rewardId 文件(獨立認領文件,與玩家存檔分離 → 永不被三槽 richest-merge 復活成未領 → 即使共用 iPad 清快取/雲端資料誤差也絕不重複領);標記成功才 _fbCompensatePlayer 三槽發獎(沿用序號兌換「先標記再發獎,寧漏不重複」)。玩家主檔 _grClaimed 做跳過已領快取。需先部署 globalRewards/globalRewardClaims 規則',
+      '★ v3.15.49【關卡提醒徽章定時刷新 index.html】新增 _setupStageBadgeAutoRefresh:每 25 秒,只要關卡頁 #adventure-overlay 可見就重跑 _updateStageEnhanceBadges();另追蹤台灣 game-day-key(_lxpsGetGameDayKey),跨 08:00 強制刷新。根因:徽章只在進頁/特定動作後計算一次,雲端資料(好友/至寶/每日免費召喚狀態)晚載入或玩家停在頁面跨過 08:00 都不會重檢 → 提醒常常沒出現。偵測階段零 Firebase 讀寫(純本地 + DOM class 切換)',
+      '★ v3.15.49【鬥技場排名正式上線 arena.js + index.html】arena.js _arenaIsRankRewardEnabled 預設 false→true(GM 仍可在「鬥技場排名發獎開關」關閉)。並列同名次(競賽排名):trySettleLastWeek / getMyWeeklyRank / 大廳排行 rank = 1 + 本週證數嚴格大於我的人數(同證數同名次)。大廳排行榜資料源由聚合 arenaBattles(最近 500 筆)改讀 arenaWeekly[本週](便宜/自動週重置/不限 500 筆),欄位改「名次/玩家/本週證」(移除勝平敗)。結算後 deleteField 清空 arenaWeekly[上週](set merge:true 對 map 是深度合併,寫整份缺鍵不會刪 → 必須用 deleteField 才真的刪鍵)+ arenaRankSettlement 保留最近 6 週供大廳「📜 歷史排名」回查(新增 _arenaRank.getCurrentWeekRanking/getSettlementHistory)。獎勵不漏不重(結算上方既有 claimMyAward 自助領)',
+      '★ v3.15.49【版本鏈】4 GAME 同步點 v3.15.48→v3.15.49,_vers[admin_panel.js] v3.15.40→v3.15.49(ADMIN_PANEL_VERSION 同步)、_vers[arena.js] v3.15.37→v3.15.49。hero_db.js 維持 v3.15.44、world-boss.js v3.15.34、world-boss-ui.html v3.15.48。本輪改 4 檔:game_changelog.js + admin_panel.js + arena.js + index.html。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.29)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.48(2026-06-19)— 🐉 修世界 BOSS 龍王戰崩毀後卡死
   // ════════════════════════════════════════════════════════════════════
   {
@@ -366,41 +416,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.31【管理員指令冷卻全面自動繞過 index.html】老師需求:管理員白名單帳號登入後「自動」繞過 5 類冷卻/每日限制(不再需要手動到 GM 後台按「解除冷卻」)。① 知識王每日挑戰:原 v5820 彈窗確認解除改為「自動放行」— _kingShowEntryPopup 偵測 _todayClaimed 時,管理員自動清 _todayClaimed/_snapshot/_isPlaying 後續往下進全新挑戰流程,不再彈窗(一般玩家照舊提示「08:00 再來」並 return) ② 世界BOSS每日次數:canEnter 的 _allowed 改 (_isAdmin ? true : _used<_effectiveLimit) ③ 手動雲端同步:10 秒 cooldown 與每日 30 次上限兩處均加 !_isAdminCS 繞過 ④ 預習練習每日 500 幣:結算 _canEarn 改 (isAdmin || _todayCoins<500) ⑤ 好友借用獎勵每日 3 次:擋點加 !_isAdminFB 繞過。皆以 window._isAdminUser() 判定,僅影響管理員白名單帳號',
       '★ v3.15.31【副作用備忘(僅管理員帳號)】雲端同步繞過 10 秒冷卻後,管理員若短時間大量手動同步會增加 Firestore 寫入(Spark 配額);預習/好友/世界BOSS 繞過會使管理員帳號的每日統計數字超出常規(屬測試帳號預期行為)。一般玩家不受任何影響',
       '★ v3.15.31【版本鏈】3 主同步點 v3.15.30→v3.15.31(本輪只改 index.html + game_changelog.js)。hero_db.js 維持 v3.15.29、admin_panel.js v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.30(2026-06-17)— 🔆 底部選單字體更清楚
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.30',
-    date: '2026-06-17',
-    brief: [
-      '🔆【底部選單看得更清楚了】',
-      '   ・主選單下方的功能字(召喚、英雄…)<b>放大、加粗、加上黑色外框與陰影</b>,',
-      '     在明亮的背景下也不會再看不清楚囉!',
-      '🔥【「極限挑戰」獎章調整】',
-      '   ・改成:隊伍裡<b>帶 1 名 Lv1 英雄、打倒任一台灣關 BOSS</b> 就能解鎖!',
-    ],
-    items: [
-      '★ v3.15.30【底部主選單可讀性加強 index.html CSS】老師回報亮背景下淺色 label 看不清。.adv-nav-label:font-size 放大 clamp(11px,1.25vw,18px)(原 10/16)、font-weight 900、-webkit-text-stroke 0.8px #000 黑色描邊(paint-order stroke fill 確保字芯不被邊框吃掉)、text-shadow 投影+光暈;.adv-nav-icon 微放大 + filter drop-shadow 圖示陰影。純 CSS 不動按鈕 HTML',
-      '★ v3.15.30【極限挑戰獎章難度修正 index.html】解鎖條件由「任意 BOSS 勝利+隊伍有 Lv1 英雄」改為「擊敗台灣關 10 BOSS 之一+隊伍含 1 名 Lv1 英雄」:BOSS 勝利結算的 _checkMedalExtreme 呼叫端加 G.p2.some(台灣 10 BOSS 名) 判定,只在台灣關主戰才逐一檢查 p1 英雄等級(任一 Lv1 即解,_checkMedalExtreme 內 heroLevel<=1 邏輯不變);獎章 desc 同步改「隊伍含Lv1英雄打倒台灣關BOSS」',
-      '★ v3.15.30【版本鏈】3 主同步點 v3.15.29→v3.15.30(本輪只改 index.html CSS + game_changelog.js)。hero_db.js 維持 v3.15.29(上一接力新增雙王答題對白,累積待部署)、admin_panel.js v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.29(2026-06-17)— 🏺 法老王・埃及豔后專屬答題對白
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.29',
-    date: '2026-06-17',
-    brief: [
-      '🏺【法老王・埃及豔后有自己的台詞了!】',
-      '   ・在埃及雙王 BOSS 戰答題時,<b>法老王與埃及豔后會說出符合各自身分的話</b>',
-      '     (法老王威嚴、豔后聰慧),不再借用九尾空貓怪的台詞囉!',
-    ],
-    items: [
-      '★ v3.15.29【埃及雙王答題反應對白 hero_db.js + index.html】原本雙王戰答題時,advShowBossReact 的 _mainReactBoss 偵測清單與 _reactSuffix 對照表都沒有法老王/埃及豔后 → suffix 為空 → fallback 到無後綴預設(九尾空貓怪台詞)。修法:① hero_db.js 新增 BOSS_REACT_{CORRECT/WRONG/TIMEOUT}_PHARAOH 與 _CLEOPATRA 共 6 組常數(法老王威嚴神聖、豔后魅惑智慧;CORRECT5+WRONG5+TIMEOUT3) ② index.html advShowBossReact 偵測清單加兩王、_reactSuffix 加 法老王→_PHARAOH/埃及豔后→_CLEOPATRA、_BOSS_REACT_MAP 補 6 key。雙王同場 find 取先存活者(法老王 pos 在前優先,倒下後換豔后)',
-      '★ v3.15.29【版本鏈】3 主同步點 v3.15.28→v3.15.29 + hero_db.js v3.15.17→v3.15.29(本輪改 index.html + hero_db.js + game_changelog.js)。admin_panel.js 維持 v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21。上傳順序:game_changelog.js → hero_db.js → index.html(最後)',
     ],
   },
 ];

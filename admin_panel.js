@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.40';   // ★ v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片(資料救援與重置群組,急救工具下方):輸入 email/uid/姓名/學號 → 用雲端帳本(_heroUnlockHistory/_crystalTransactions/_coinTransactions)反推「應有資料」比對缺漏 → 一鍵補回(只補不減,排除已刪英雄,水晶上限99)。後端 _fbRebuildAccountFromLedgers/_fbApplyAccountRebuild(走 _fbCompensatePlayer 三槽寫入)在 index.html v3.15.40。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler)。搭配 index.html 六層存/載核心修補:①跨槽合併取代「挑一槽」(_lxpsMergeSlots:累積型union/max、消耗型取最新槽、稽核感知排除已刪英雄)②記憶體擁有者守門改用_memoryOwnerUid③裝置擁有者戳記去命名空間+換帳號補清友情/送禮/知識王④熔斷改稽核感知(查解鎖紀錄)⑤背包整包清空防護。｜v3.15.37(2026-06-18)— 新增 GM 補償「🎖 鬥技之證」:①學生補償工具加「🎖 鬥技之證 (+N)」輸入框;②課堂獎勵發放加「🎖 鬥技之證 ×N」勾選框。後端 _fbCompensatePlayer 新增 arenaZhengHeld/arenaZhengLifetime 三槽寫入｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9「🌙 伺服器休息/開機排程」｜v3.15.6「📨 帳號資料轉移審核」｜v3.15.3 異常傷害門檻+課堂獎勵奧汀+GM解鎖全至寶｜v3.15.0 龍王排行榜各英雄傷害總表
+window.ADMIN_PANEL_VERSION = 'v3.15.49';   // ★ v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -745,6 +745,97 @@ async function _showAdminStatsPanelImpl(){
           </button>
         </div>
         <div id="_admin-arena-switch-result" style="margin-top:10px;font-size:13px;color:#ff99cc;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.15.49 — 全體玩家獎勵:勾獎勵+數量 → 設標題/訊息/有效期 → 一鍵發給全班(每人保證只領一次) -->
+      <div id="_admin-globalreward-section" style="background:rgba(45,35,55,0.5);border:2px solid rgba(210,150,240,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#e9b6ff;margin-bottom:8px;">🎉 全體玩家獎勵</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.6;">
+          勾選要發的獎勵並填數量,設定<b style="color:#ffe066;">標題 / 訊息 / 有效期</b>,按「發送給全體」即建立一筆全班獎勵。
+          玩家<b style="color:#9fd6ff;">下次登入會自動入帳並彈窗通知</b>,每人<b style="color:#ffcc66;">保證只領一次</b>
+          (用獨立認領文件防重複,<b style="color:#ff9f9f;">即使共用 iPad 清快取 / 雲端資料誤差也不會重複領</b>;union 合併不降級既有資料)。
+          <span style="color:#aaa;font-size:12px;">需先部署 <code>globalRewards</code> / <code>globalRewardClaims</code> 規則。</span>
+        </div>
+        <!-- 勾選獎勵清單(同課堂獎勵 13 項) -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(210,150,240,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-clair" style="width:17px;height:17px;cursor:pointer;">🌟 UR 藝天使．克雷爾
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-iliya" style="width:17px;height:17px;cursor:pointer;">🗡️ UR 魔劍姬‧伊莉雅
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-odin" style="width:17px;height:17px;cursor:pointer;">⚡ UR 主神奧汀
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-ssrpick" style="width:17px;height:17px;cursor:pointer;">🌟 SSR 自選召喚卷 ×
+            <input type="number" id="_gr-qty-ssrpick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-srpick" style="width:17px;height:17px;cursor:pointer;">✨ SR 自選召喚卷 ×
+            <input type="number" id="_gr-qty-srpick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-ssrrand" style="width:17px;height:17px;cursor:pointer;">🌈 隨機 SSR 召喚卷 ×
+            <input type="number" id="_gr-qty-ssrrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-srrand" style="width:17px;height:17px;cursor:pointer;">⭐ 隨機 SR 召喚卷 ×
+            <input type="number" id="_gr-qty-srrand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-trerand" style="width:17px;height:17px;cursor:pointer;">💎 隨機至寶召喚卷 ×
+            <input type="number" id="_gr-qty-trerand" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-trepick" style="width:17px;height:17px;cursor:pointer;">💠 自選至寶召喚卷 ×
+            <input type="number" id="_gr-qty-trepick" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-crystal" style="width:17px;height:17px;cursor:pointer;">🔮 召喚水晶 ×
+            <input type="number" id="_gr-qty-crystal" value="10" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-coins" style="width:17px;height:17px;cursor:pointer;">💰 知識幣 ×
+            <input type="number" id="_gr-qty-coins" value="100000" min="1" max="9999999" step="1000" style="width:90px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-fruit" style="width:17px;height:17px;cursor:pointer;">🍑 超越極限果實 ×
+            <input type="number" id="_gr-qty-fruit" value="1" min="1" max="99" style="width:50px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#fff;cursor:pointer;">
+            <input type="checkbox" id="_gr-item-arenazheng" style="width:17px;height:17px;cursor:pointer;">🎖 鬥技之證 ×
+            <input type="number" id="_gr-qty-arenazheng" value="10" min="1" max="9999" style="width:60px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(210,150,240,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+        </div>
+        <!-- 標題 / 訊息 / 有效期 -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;align-items:center;">
+          <input type="text" id="_gr-title" maxlength="40" placeholder="獎勵標題（例:期末全班獎勵）" style="flex:1;min-width:220px;padding:9px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(210,150,240,0.4);color:#fff;border-radius:8px;font-family:inherit;box-sizing:border-box;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#ddd;">有效期
+            <select id="_gr-expire" style="padding:8px 10px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(210,150,240,0.4);color:#fff;border-radius:8px;font-family:inherit;cursor:pointer;">
+              <option value="0" selected>永久</option>
+              <option value="1">1 天</option>
+              <option value="3">3 天</option>
+              <option value="7">7 天</option>
+              <option value="30">30 天</option>
+            </select>
+          </label>
+        </div>
+        <textarea id="_gr-note" maxlength="200" placeholder="給玩家看的訊息（選填,例:謝謝大家這學期的努力!）" style="width:100%;min-height:60px;padding:10px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(210,150,240,0.4);color:#fff;border-radius:8px;font-family:inherit;line-height:1.6;box-sizing:border-box;resize:vertical;"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+          <button id="_gr-send-btn" style="padding:11px 24px;font-size:14px;font-weight:900;
+            background:linear-gradient(135deg,#9a3aca,#7a2aaa);border:2px solid #d68cf0;color:#fff;
+            border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🎉 發送給全體玩家</button>
+          <span style="font-size:12px;color:#bba;">（建立後玩家下次登入自動領,每人只領一次）</span>
+        </div>
+        <div id="_gr-send-result" style="margin-top:12px;font-size:13px;color:#e8d6f5;"></div>
+        <!-- 現有全體獎勵清單管理 -->
+        <div style="margin-top:16px;padding-top:12px;border-top:1px dashed rgba(210,150,240,0.35);">
+          <button id="_gr-list-btn" style="padding:8px 16px;font-size:13px;font-weight:700;
+            background:rgba(130,90,150,0.3);border:1.5px solid rgba(210,150,240,0.45);color:#e9c6f5;
+            border-radius:6px;cursor:pointer;font-family:inherit;">📋 查看 / 管理現有全體獎勵</button>
+          <div id="_gr-list" style="margin-top:10px;font-size:12px;color:#e8d6f5;"></div>
+        </div>
       </div>
 
       <!-- ★ v3.13.74 — 課堂獎勵發放:勾選要發的獎勵(8 項)+ 填數量 → 貼學生名單 → 比對發放 → 記錄到 gmGiftLog -->
@@ -2549,6 +2640,8 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-rescue-section',           label: '🚑 玩家資料急救工具',      hint: '修復異常資料' },
       { sec: '_admin-rebuild-section',          label: '🔧 一鍵帳號重建',          hint: '用雲端帳本反推「應有資料」,比對缺漏一鍵補回(只補不減,排除已刪英雄);救援被舊版弄壞的帳號' },
       { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
+      // ★ v3.15.49 — 全體玩家獎勵(一鍵發給所有人,每人保證只領一次,免疫雲端資料誤差重複領)
+      { sec: '_admin-globalreward-section',     label: '🎉 全體玩家獎勵',          hint: '勾獎勵+數量→設標題/訊息/有效期→一鍵發給全班;玩家下次登入自動入帳,每人只領一次(獨立認領文件防重複,免疫存檔合併復活)。需先部署 globalRewards / globalRewardClaims 規則' },
       { sec: '_admin-designer-grant-section',   label: '🦸 設計師英雄補發',        hint: '一鍵補發學生設計英雄' },
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
       { sec: '_admin-pw-section',               label: '🔐 二次密碼管理',          hint: '查詢 / 解鎖 / 移除學生的第二段密碼' },
@@ -2606,7 +2699,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-rebuild-section','_admin-reset-section'] },
-      { label:'🎁 補償與補發',     secs:['_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
+      { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
       { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section','_admin-treasure-unlockall-section'] },
@@ -4854,6 +4947,139 @@ async function _showAdminStatsPanelImpl(){
     if(logBtn) logBtn.onclick = _showLog;
   })();
   // ── 課堂獎勵發放 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.15.49 — 全體玩家獎勵 init
+  //   勾獎勵+數量(鏡像課堂獎勵 _buildReward,改 _gr- 前綴) → 設標題/訊息/有效期 →
+  //   window._fbCreateGlobalReward(reward, meta) 建立 globalRewards 一筆。
+  //   玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人只領一次)。
+  //   清單管理:列出/停用/啟用/刪除現有全體獎勵。
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initGlobalRewardSection(){
+    const sendBtn = document.getElementById('_gr-send-btn');
+    const resEl   = document.getElementById('_gr-send-result');
+    const listBtn = document.getElementById('_gr-list-btn');
+    const listEl  = document.getElementById('_gr-list');
+    if(!sendBtn){
+      console.warn('[admin globalreward] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    function _esc(s){
+      return String(s == null ? '' : s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function _chk(id){ const e = document.getElementById(id); return !!(e && e.checked); }
+    function _qty(id, def){ const e = document.getElementById(id); const v = e ? parseInt(e.value, 10) : def; return (isNaN(v) || v < 1) ? def : v; }
+    // 鏡像課堂獎勵 _buildReward(改 _gr- 前綴):組 _fbCompensatePlayer payload + items 文字陣列
+    function _grBuildReward(){
+      const reward = {};
+      const items = [];
+      const unlockedHeroes = [];
+      const backpack = {};
+      if(_chk('_gr-item-clair')){ unlockedHeroes.push('藝天使．克雷爾'); items.push('🌟UR藝天使克雷爾'); }
+      if(_chk('_gr-item-iliya')){ unlockedHeroes.push('魔劍姬‧伊莉雅'); items.push('🗡️UR魔劍姬伊莉雅'); }
+      if(_chk('_gr-item-odin')){  unlockedHeroes.push('主神奧汀');     items.push('⚡UR主神奧汀'); }
+      if(_chk('_gr-item-ssrpick')){ const q=_qty('_gr-qty-ssrpick',1); backpack['summon_ticket_ssr_pick']=(backpack['summon_ticket_ssr_pick']||0)+q; items.push('🌟SSR自選券×'+q); }
+      if(_chk('_gr-item-srpick')){  const q=_qty('_gr-qty-srpick',1);  backpack['summon_ticket_sr_pick'] =(backpack['summon_ticket_sr_pick']||0)+q;  items.push('✨SR自選券×'+q); }
+      if(_chk('_gr-item-ssrrand')){ const q=_qty('_gr-qty-ssrrand',1); backpack['summon_ticket_ssr']=(backpack['summon_ticket_ssr']||0)+q; items.push('🌈隨機SSR券×'+q); }
+      if(_chk('_gr-item-srrand')){  const q=_qty('_gr-qty-srrand',1);  backpack['summon_ticket_sr'] =(backpack['summon_ticket_sr']||0)+q;  items.push('⭐隨機SR券×'+q); }
+      if(_chk('_gr-item-trerand')){ const q=_qty('_gr-qty-trerand',1); backpack['summon_ticket_treasure']=(backpack['summon_ticket_treasure']||0)+q; items.push('💎隨機至寶券×'+q); }
+      if(_chk('_gr-item-trepick')){ const q=_qty('_gr-qty-trepick',1); backpack['summon_ticket_treasure_pick']=(backpack['summon_ticket_treasure_pick']||0)+q; items.push('💠自選至寶券×'+q); }
+      if(_chk('_gr-item-crystal')){ const q=_qty('_gr-qty-crystal',10); backpack['summon_crystal']=(backpack['summon_crystal']||0)+q; items.push('🔮召喚水晶×'+q); }
+      if(_chk('_gr-item-fruit')){   const q=_qty('_gr-qty-fruit',1);   backpack['burst_upgrade_fruit']=(backpack['burst_upgrade_fruit']||0)+q; items.push('🍑超越極限果實×'+q); }
+      if(_chk('_gr-item-coins')){   const q=_qty('_gr-qty-coins',100000); reward.coins=q; reward.coinsMode='add'; items.push('💰知識幣×'+q); }
+      if(_chk('_gr-item-arenazheng')){ const q=_qty('_gr-qty-arenazheng',10); reward.arenaZheng=(reward.arenaZheng||0)+q; items.push('🎖鬥技之證×'+q); }
+      if(unlockedHeroes.length) reward.unlockedHeroes = unlockedHeroes;
+      if(Object.keys(backpack).length) reward.backpack = backpack;
+      return { reward, items };
+    }
+    async function _send(){
+      const { reward, items } = _grBuildReward();
+      if(!items.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先勾選至少一項要發的獎勵</span>'; return; }
+      if(typeof window._fbCreateGlobalReward !== 'function'){
+        resEl.innerHTML = '<span style="color:#ff6666;">_fbCreateGlobalReward 未載入,請重新整理頁面</span>'; return;
+      }
+      const _titleEl = document.getElementById('_gr-title');
+      const _noteEl  = document.getElementById('_gr-note');
+      const _expEl   = document.getElementById('_gr-expire');
+      const _title = (_titleEl && _titleEl.value.trim()) || '全班獎勵';
+      const _note  = (_noteEl && _noteEl.value.trim()) || '';
+      const _days  = _expEl ? parseInt(_expEl.value, 10) || 0 : 0;
+      const _expLabel = _days > 0 ? (_days + ' 天內有效') : '永久有效';
+      if(!confirm('確認發送給【全班所有玩家】?\n\n標題:' + _title + '\n獎勵:' + items.join('、')
+                  + '\n有效期:' + _expLabel
+                  + '\n\n每位玩家下次登入會自動領取一次(union 合併不降級;每人只領一次)。')) return;
+      sendBtn.disabled = true; const _old = sendBtn.textContent; sendBtn.textContent = '建立中...';
+      try{
+        const _r = await window._fbCreateGlobalReward(reward, { items: items, title: _title, note: _note, expiresDays: _days });
+        if(_r && _r.ok){
+          resEl.innerHTML = '<div style="color:#88ff88;font-weight:800;">✅ 已建立全體獎勵「' + _esc(_title) + '」!</div>'
+            + '<div style="color:#cfe;margin-top:3px;">📦 ' + items.map(_esc).join('、') + '</div>'
+            + '<div style="color:#aaa;margin-top:3px;">玩家下次登入會自動領取(' + _esc(_expLabel) + ')。可按下方「查看 / 管理」確認或停用。</div>';
+          // 發完後自動刷新清單
+          try{ await _showList(); }catch(_){}
+        }else{
+          resEl.innerHTML = '<span style="color:#ff6666;">建立失敗</span>';
+        }
+      }catch(e){
+        resEl.innerHTML = '<span style="color:#ff6666;">建立失敗:' + _esc(e && e.message || e) + '(可能 globalRewards 規則尚未部署)</span>';
+      }
+      sendBtn.disabled = false; sendBtn.textContent = _old;
+    }
+    async function _toggle(id, enabled){
+      if(typeof window._fbSetGlobalRewardEnabled !== 'function') return;
+      try{ await window._fbSetGlobalRewardEnabled(id, enabled); await _showList(); }
+      catch(e){ alert('操作失敗:' + (e && e.message || e)); }
+    }
+    async function _del(id, title){
+      if(typeof window._fbDeleteGlobalReward !== 'function') return;
+      if(!confirm('確定刪除全體獎勵「' + title + '」?\n(已領過的玩家不受影響;尚未領的玩家將領不到)')) return;
+      try{ await window._fbDeleteGlobalReward(id); await _showList(); }
+      catch(e){ alert('刪除失敗:' + (e && e.message || e)); }
+    }
+    // 暴露給 onclick 用(admin_panel 內函式無法直接被 inline onclick 取得 → 掛 window)
+    try{ window._grToggleReward = _toggle; window._grDeleteReward = _del; }catch(_){}
+    async function _showList(){
+      if(!listEl) return;
+      if(typeof window._fbListGlobalRewards !== 'function'){
+        listEl.innerHTML = '<span style="color:#ff6666;">_fbListGlobalRewards 未載入,請重新整理頁面</span>'; return;
+      }
+      listEl.innerHTML = '<span style="color:#aaa;">讀取中...</span>';
+      let _list;
+      try{ _list = await window._fbListGlobalRewards(); }
+      catch(e){ listEl.innerHTML = '<span style="color:#ff6666;">讀取失敗:' + _esc(e && e.message || e) + '(可能規則尚未部署)</span>'; return; }
+      if(!_list || !_list.length){ listEl.innerHTML = '<span style="color:#aaa;">目前沒有任何全體獎勵</span>'; return; }
+      const _now = Date.now();
+      let html = '<div style="max-height:300px;overflow-y:auto;border:1px solid rgba(210,150,240,0.25);border-radius:6px;padding:8px;background:rgba(0,0,0,0.3);">';
+      html += '<div style="color:#cba6e0;margin-bottom:6px;">共 ' + _list.length + ' 筆(新→舊):</div>';
+      _list.forEach(function(r){
+        const _items = Array.isArray(r.items) ? r.items : [];
+        const _expired = r.expiresAt && _now > r.expiresAt;
+        const _on = r.enabled !== false && !_expired;
+        const _statusTxt = _expired ? '⏱ 已過期' : (r.enabled !== false ? '🟢 發放中' : '⏸ 已停用');
+        const _expTxt = r.expiresAt ? ('有效至 ' + new Date(r.expiresAt).toLocaleString('zh-TW', { hour12:false })) : '永久';
+        const _ct = r.createdAt ? new Date(r.createdAt).toLocaleString('zh-TW', { hour12:false }) : '?';
+        html += '<div style="padding:7px 0;border-bottom:1px dashed rgba(200,150,230,0.18);">'
+          + '<div><span style="color:#fff;font-weight:800;">' + _esc(r.title || '(無標題)') + '</span> '
+          + '<span style="color:' + (_on ? '#88ff99' : '#ffaa66') + ';font-size:11px;">' + _statusTxt + '</span></div>'
+          + '<div style="color:#ffe066;font-size:12px;margin:2px 0;">' + _esc(_items.join('、')) + '</div>'
+          + (r.note ? ('<div style="color:#bcd;font-size:11px;">💬 ' + _esc(r.note) + '</div>') : '')
+          + '<div style="color:#789;font-size:11px;">' + _esc(_expTxt) + ' ・ 建立 ' + _esc(_ct) + ' ・ by ' + _esc(r.createdBy || '') + '</div>'
+          + '<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;">'
+          + (r.enabled !== false
+              ? ('<button onclick="window._grToggleReward(\'' + _esc(r.id) + '\',false)" style="padding:3px 10px;font-size:11px;background:rgba(200,150,60,0.3);border:1px solid rgba(230,180,90,0.5);color:#ffd88c;border-radius:5px;cursor:pointer;">⏸ 停用</button>')
+              : ('<button onclick="window._grToggleReward(\'' + _esc(r.id) + '\',true)" style="padding:3px 10px;font-size:11px;background:rgba(90,180,110,0.3);border:1px solid rgba(120,220,140,0.5);color:#a8f5b8;border-radius:5px;cursor:pointer;">▶ 啟用</button>'))
+          + '<button onclick="window._grDeleteReward(\'' + _esc(r.id) + '\',\'' + _esc(r.title || '') + '\')" style="padding:3px 10px;font-size:11px;background:rgba(200,70,70,0.3);border:1px solid rgba(240,110,110,0.5);color:#ffb3b3;border-radius:5px;cursor:pointer;">🗑 刪除</button>'
+          + '</div></div>';
+      });
+      html += '</div>';
+      listEl.innerHTML = html;
+    }
+    sendBtn.onclick = _send;
+    if(listBtn) listBtn.onclick = _showList;
+  })();
+  // ── 全體玩家獎勵 結束 ──
 
   // ════════════════════════════════════════════════════════════════════════════
   // ★ v3.15.26 — 虛寶序號(課堂獎勵兌換券) init

@@ -806,14 +806,16 @@
     return true;   // 預設開放
   };
 
-  //  GM 雲端開關:是否依排名發放獎勵(預設 false,老師按開才發)。
-  //  排名「每週結算發獎」邏輯下一輪實作,屆時會 gate 在這個旗標上。
+  //  GM 雲端開關:是否依排名發放獎勵。
+  //  ★ v3.15.49 — 鬥技場排名「正式上線」:預設改為 true(每週一 08:00 自動結算發獎)。
+  //    GM 仍可在後台「🏆 鬥技場排名發獎開關」把 arenaRankRewardEnabled 設成 false 暫停發放;
+  //    只有「明確設成 false」才會停(沿用既有 typeof==='boolean' 判定),其餘情況一律發。
   window._arenaIsRankRewardEnabled = function() {
     try {
       const g = window._cachedGlobalStats;
       if (g && typeof g.arenaRankRewardEnabled === 'boolean') return g.arenaRankRewardEnabled;
     } catch (_) {}
-    return false;  // 預設不發
+    return true;  // ★ v3.15.49 — 預設發放(正式上線)
   };
 
   // ★ v3.13.61(2026-06-05)— 排名獎勵「發放鬥技之證」(加持有 zhengTotal + 累積 zhengLifetimeTotal)。

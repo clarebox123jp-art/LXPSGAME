@@ -1901,7 +1901,7 @@ try{
   #wb-lobby-overlay.wb-in-battle{
     background:
       linear-gradient(180deg,rgba(8,10,24,0.5) 0%,rgba(8,10,24,0.3) 40%,rgba(8,10,24,0.85) 100%),
-      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center/cover no-repeat,
+      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center 10%/cover no-repeat,
       #1a0a08;
   }
   #wb-lobby-overlay.wb-in-battle .wb-lobby-card{
@@ -10436,7 +10436,7 @@ try{
         if(_lobby && _lobby.classList.contains('wb-in-battle')){
           _lobby.style.background =
             `linear-gradient(180deg,rgba(8,10,24,0.5) 0%,rgba(8,10,24,0.3) 40%,rgba(8,10,24,0.85) 100%),`+
-            `url('${_bossUrl}') center/cover no-repeat, #1a0a08`;
+            `url('${_bossUrl}') center 10%/cover no-repeat, #1a0a08`;   // ★ v3.15.50 — Y 由 center(50%) 減 40% → 10%,讓龍王臉露在畫面中央(全龍王通用)
         }
       }
     }catch(_){}
