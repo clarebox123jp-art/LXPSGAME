@@ -13,6 +13,50 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.45(2026-06-19)— 🛟 帳號資料自救看門狗(讀不到完整記錄時一鍵重新載入)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.45',
+    date: '2026-06-19',
+    brief: [
+      '🛟【讀不到完整遊戲記錄時,一鍵自救】',
+      '   ・偶爾因網路不穩,進冒險選關頁時<b>左上角的代表英雄頭像、暱稱會不見</b>——這通常代表沒有正確讀到你的完整記錄。',
+      '   ・現在系統會自動偵測這個狀況,跳出提示<b>「因為網路連線不穩定,目前沒有正確讀取到您的完整遊戲記錄,請按此重新載入」</b>。',
+      '   ・按下「<b>重新載入</b>」會自動重新整理+重新登入,用<b>雲端最完整的資料</b>蓋掉本機讀錯的資料;載入完成後會顯示<b>英雄、至寶、總等級、知識幣、水晶</b>讓你確認資料回來了!',
+      '   ・(自救後 10 分鐘內不會重複跳出,避免一直打擾。)',
+    ],
+    items: [
+      '★ v3.15.45【帳號污染自救看門狗 index.html】症狀偵測+一鍵自救(根因改過多次仍偶發,改走使用者層自救)。偵測:setInterval 每4秒跑 _advCorruptionWatchdog,守門(已登入+_cloudLoadDone===true+冒險選關頁 #adventure-overlay 開著+未冷卻+未顯示中)後,判定「本機記得暱稱(localStorage lxps_nickname_/_playerNickname/google-name 有值)但畫面暱稱條 #adv-username-bar 隱藏或 #adv-user-name 空」=疑似本地污染(暱稱條顯示條件=#google-name 有文字,污染讀不到則 display:none)。二次確認(1.2s 後再驗一次)防渲染時序瞬間誤判',
+      '★ v3.15.45【自救流程 index.html】_showAdvCorruptionModal 彈全螢幕提示(僅「重新載入」鈕,文案=老師指定)→ _advRepairReload:寫 lxps_advRepairCooldown_{uid}(冷卻10分)+ lxps_advRepairPending(重整後顯示資料確認)+ _lxpsEnforceDeviceOwner(uid)清本機別 uid 殘留 + 清 window._memoryOwnerUid 強制重驗 → location.reload(Firebase auth 持久化自動重登,gameCloudLoad _lxpsMergeSlots 三槽最豐富覆蓋本地污染)',
+      '★ v3.15.45【資料確認畫面 index.html】重整後掛在 gameCloudLoad existing-player 載入成功處(_applySafeData 後、_gmAutoUnlockNewHeroes 旁)呼叫 _advCheckRepairResult(_gUserId):讀 lxps_advRepairPending 標記(本 uid 才彈、彈一次即清)→ _showRepairResultModal 顯示 持有英雄(advGetUnlockedHeroes)/台灣至寶(taiwanTreasureData)/英雄總等級(_heroLevels 加總)/知識幣(_knowledgeCoins)/召喚水晶(_getCrystalBal),含「✓ 確認」鈕',
+      '★ v3.15.45【版本鏈】本輪只改 index.html(看門狗全在此)+ game_changelog.js。4 GAME 同步點 v3.15.44→v3.15.45。hero_db.js 維持 v3.15.44(本輪未改)、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.25)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.44(2026-06-19)— ⚡ 登入卡死修復 ＋ 24隻英雄血量提升30% ＋ 宙斯天降雷罰改三段
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.44',
+    date: '2026-06-19',
+    brief: [
+      '🔧【修復:多人同時登入偶爾卡在首頁進不去】',
+      '   ・修正全班同時開機時,少數同學<b>卡在登入畫面、要重開很久才進得去</b>的問題。',
+      '   ・現在雲端讀取若太久沒回應,會在數秒後顯示「請檢查網路後重新整理」,<b>不再無限卡住</b>(進度都在雲端,重整就回來)。',
+      '',
+      '💪【24 隻英雄基礎血量提升約 30%】',
+      '   ・這些英雄之前漏了血量加成,現在補上、<b>更耐打了</b>:武器精靈、神槍手、火柴人、青炎龍王、鳳凰、操偶師、菇女、小丑、美人魚‧角角、火爆女、幽幽、網路駭客、風術士、我的豚豚、機關王雙人組、雅典娜、阿蘇火山龍王、死神、地獄將軍、魔界花使‧朱玥、小鬼貓與兔、喚龍使‧蜜鶴林,以及法老王、埃及豔后(招募版)。',
+      '',
+      '⚡【天神宙斯爆發「天降雷罰」改版】',
+      '   ・改為:鎖定 1 名主要目標(BOSS 或玩家)造成<b>特技600%+當前HP25%</b>傷害;旁邊的<b>菁英怪 HP 砍半</b>;<b>小怪全部變成 1 HP</b>;最後<b>全體敵人強力麻痺 1 回合</b>!',
+    ],
+    items: [
+      '★ v3.15.44【登入卡死修復 index.html】根因:全班同時開機 → 同一校園對外 IP 大量並發 → Firestore 連線被限流/半通不通,getDocFromServer(強制走網路)既不成功也不快速失敗 → 永久 pending → await 卡死 gameCloudLoad/登入流程,玩家卡首頁要重開。修:新增 _fbRaceTimeout(p,ms,label) 逾時包裝,套到三槽讀取的 5 處:_fbLoad(server 9s + cache fallback 4s)、_fbLoadSlot(server 9s + cache 4s)、gameCloudLoad 二次確認(server 9s)。逾時 reject → 落入既有 catch → fallback getDoc(本 uid 專屬快取,安全);快取也逾時則拋出 → gameCloudLoad 既有「載入失敗視窗,請重整」路徑接手(不退預設池、不空白覆蓋雲端、不假裝新玩家)。最壞約 server9s+cache4s 後給可重整提示,不再無限卡',
+      '★ v3.15.44【24隻玩家英雄基礎HP×1.3補正 hero_db.js】根因:玩家英雄四維配點和=100、HP 欄位應 baked×1.3(v3.4.0「59隻」批次規則),但後續新增的學生設計英雄逐隻漏做此步(index.html 直接用 HERO_DB.hp 不二次乘,故 hp 偏低約30%)。修:HERO_DB 22隻(蜜鶴林74/武器精靈75/神槍手78/火柴人66/青炎龍王78/鳳凰73/操偶師84/菇女78/小丑77/美人魚70/火爆女72/幽幽72/網路駭客75/風術士81/我的豚豚72/機關王84/雅典娜81/阿蘇78/死神77/地獄將軍91/魔界花使83/小鬼貓與兔77)+ EGYPT_BOSS_HERO_STATS 招募版(法老王58→75/豔后54→70)。僅改玩家英雄(全在 _PLAYER_HERO_NAMES);BOSS版hp 11500/10500、小怪、河童(小怪)、幼兒園小孩(玩家英雄但故意弱化sum80)均不動',
+      '★ v3.15.44【宙斯天降雷罰改三段傷害 index.html + hero_db.js】老師更正規格,_runBurst 內 if(burstName===天降雷罰) 整段重寫:傷害1=_pickAutoBurstTarget 鎖定1名主要目標,若 BOSS(_zeusIsTrueBoss)或玩家(_PLAYER_HERO_NAMES)→特技 h.sp×_zrSpPct(Lv1=600%/每升+60%)+當前HP25%(HP段上限Lv×15);傷害2=BOSS/主目標以外的菁英怪(_zrEliteNames 對齊 _FIRE_IMMUNE_ELITE_NAMES 12名:貓空+日本菁英/稀有)→HP變當前50%;傷害3=小怪(非BOSS/非玩家/非菁英)→全體HP變1;結束全體強力麻痺1回合。鬥技場/PvP 對玩家目標沿用 v3.13.74 ×0.25 平衡;BOSS/玩家但非主目標(雙BOSS另一隻/鬥技場其他玩家)不受傷害只受麻痺。hero_db BURST_DB d/fd 同步三段文案(鐵律1.160 只寫Lv1基底600%)',
+      '★ v3.15.44【版本鏈】index.html(登入逾時+宙斯爆發)+ hero_db.js(24隻HP+宙斯文案)+ game_changelog.js,4 GAME 同步點 v3.15.43→v3.15.44、_vers[hero_db.js] v3.15.42→v3.15.44。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.24)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.43(2026-06-18)— 🐉 修復新英雄「喚龍使‧蜜鶴林」抽到/解鎖卻顯示未收錄
   // ════════════════════════════════════════════════════════════════════
   {
@@ -370,49 +414,4 @@ window.GAME_CHANGELOG = [
   },
   // ════════════════════════════════════════════════════════════════════
   // v3.15.25(2026-06-17)— 🔁 戰鬥題目出完自動循環不卡死 ＋ ⚖️ 法老王BOSS恢復/復活下修
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.25',
-    date: '2026-06-17',
-    brief: [
-      '🔁【戰鬥答題:題目出完自動循環,不再卡死】',
-      '   ・修正某些情況下,戰鬥中題目<b>全部出完後會卡住、題目一直跳不出來</b>的問題。',
-      '   ・現在題目出完會<b>自動從頭重新循環出題</b>,戰鬥不會再卡死。',
-      '⚖️【埃及王關:法老王(BOSS)恢復與復活下修】',
-      '   ・法老王 BOSS 的大招<b>全體回血量降低 50%</b>(25%→12.5%),<b>復活量也一起調低</b>',
-      '     (大招復活倒下同伴、以及和埃及豔后「互相復活」喚回法老王的血量都從 25% 降為 12.5%)。',
-      '   ・<b>你自己招募的法老王不受影響</b>;埃及豔后被喚回的血量也維持原本數值。',
-    ],
-    items: [
-      '★ v3.15.25【戰鬥題目出完循環卡死 根治 index.html advPickQuestion】老師需求:戰鬥中題目出完後要自動從第一題循環、避免卡死。根因:題庫整輪出完時 BOSS 戰回傳 { __needRepick:true } → advShowQuiz 隔 150ms 用 _advTriggerQuizSafely 重觸發再抽;但若 _advSessionQuestions 此時是空陣列(某些路徑沒初始化/被清掉),重觸發後 advPickQuestion 清空 used 後 pool 仍空 → 又回傳 __needRepick → 150ms 無限重觸發、題目永遠不出 → 卡死',
-      '★ v3.15.25【修法 index.html】advPickQuestion 預設分支與 catch 分支同步改:只在「_advSessionQuestions 非空(剛清完 used、重觸發保證抽得到)」時才走 __needRepick 重觸發;session 為空時不再回傳 __needRepick,改用 ADV_QUIZ_DB 洗牌兜底補回 _advSessionQuestions、當場往下走隨機抽題 → 保證有題可出、從頭循環、永不無限重觸發',
-      '★ v3.15.25【法老王 BOSS 恢復量降 50% index.html 太陽神的審判】爆發「全體回 HP」原 BOSS 版固定 25%(招募版 25%→45% 隨爆發升級)。老師需求:BOSS 版恢復量降 50% → _healPct = h.isEgyptBoss ? 0.125 : (招募版維持 0.25~0.45)。只動 BOSS 版,招募版不變',
-      '★ v3.15.25【法老王 BOSS 復活量也降低 index.html】(a)爆發「太陽神的審判」復活倒下友方:_revPct = h.isEgyptBoss ? 0.125 : 0.25(BOSS 25%→12.5%,招募版維持 25%);(b)埃及雙王天賦「互相復活」喚回法老王:_phK.curHp 由最大HP×0.25 → ×0.125(兩處 hook:startTurn 行動前 + checkWin 全滅判定前皆改)。埃及豔后被喚回維持 ×0.25(老師需求僅針對法老王)',
-      '★ v3.15.25【版本鏈】3 主同步點 v3.15.24→v3.15.25(本輪改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.23、world-boss-ui.html 維持 v3.15.21、hero_db.js 未改。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.24(2026-06-17)— 🐛 兩項戰鬥修正:世界BOSS妖怪等級、冒險第三場卡死
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.24',
-    date: '2026-06-17',
-    brief: [
-      '⚔️【世界BOSS龍王戰:妖怪英雄等級修正】',
-      '   ・修正帶「<b>大天狗 / 酒吞童子 / 玉藻前</b>」(以及埃及「<b>法老王 / 埃及豔后</b>」)上場打世界BOSS龍王時,',
-      '     <b>隊伍確認顯示正確、一進戰鬥卻變回 1 級</b>的問題。現在這些英雄會正確帶著你培養的等級與能力上場了!',
-      '🗺️【冒險第三關:劇情卡死修正】',
-      '   ・修正第三場劇情演到一半,<b>只剩背景畫面 + 右邊法寶欄、進不了小怪戰</b>的卡死。',
-      '   ・原因是過場背景沒被收起來、<b>蓋住了其實已經開始的戰鬥</b>。現在會自動把背景收掉、露出戰鬥畫面,不用再手動自救了。',
-    ],
-    items: [
-      '★ v3.15.24【世界BOSS妖怪變Lv1 根治 index.html _wbSetupAdvForBattle】老師回報:世界BOSS龍王戰的大天狗/酒吞/玉藻前沒讀到參與玩家等級能力,隊伍確認顯示正確、進戰鬥變Lv1。根因:該函式的「二重保險」(防妖怪誤帶BOSS版高素質)原用固定 h.hp>=100 判定,但世界BOSS獨立入口傳進來的 G.p1 已套過「等級(冒險+2%/級,Lv上限50)+素質投資(HP自由50+膠囊20)」加成 → 英雄弱化版滿等(酒吞童子91基底→(91+70)×1.98≈319)早超過100 → 合法高等妖怪被誤判成BOSS版、強制打回 JP_BOSS_HERO_STATS 基底=Lv1',
-      '★ v3.15.24【時序差異說明】主程式 confirmHeroPick 的同款二重保險跑在「套等級之前」的基底值(大天狗75/酒吞91/玉藻74,皆<100)故不誤觸;世界BOSS的跑在「已套等級+投資」的隊伍上(滿等≈319>100)才誤觸 → 只有世界BOSS出問題,與老師觀察一致',
-      '★ v3.15.24【修法 index.html】兩處世界BOSS二重保險(妖怪 + 埃及雙王)門檻 h.hp>=100 → 改用「HERO_DB BOSS版基礎HP × 0.5」(妖怪 900×0.5=450、埃及 11500/10500×0.5=5750/5250):弱化版滿等≤319 遠低於450不誤傷;真誤帶BOSS版(900/11500)才還原。主程式兩處(跑在基底、判定正確)不動',
-      '★ v3.15.24【冒險第三場卡死 根治 index.html advStartMiniBattle】老師回報+新假設:第三場劇情到一半只剩背景+法寶卡死,自救存檔→確認→關視窗,背景圖消失後就看到戰鬥畫面 → 是不是被覆蓋?確認屬實:過場層 adv-cutscene-overlay(z-index 620,內含 adv-scene-bg 背景圖 + adv-treasure-bar 法寶欄)蓋在已起的戰場上沒掀掉,玩家只看到背景+法寶、誤以為沒戰鬥(且此時 _advMiniBattleActive 已 true、原 watchdog 不再介入)',
-      '★ v3.15.24【修法① index.html】進小怪戰 setTimeout 的「第一件事」就先隱藏 adv-cutscene-overlay(原本只在後段隱藏,若中段組怪/抽牌/狀態重置任一拋例外就會在隱藏前中斷、過場層永遠蓋住戰場)→ 確保後面任何步驟出錯都不會蓋住戰鬥',
-      '★ v3.15.24【修法②(獨立保險)index.html】另排一個與主 setTimeout 互不影響的計時器:以 _advCurrentBattleId 綁定本場戰鬥,於「開場演出(_introDelay)後 +1500ms」檢查「本場小怪戰仍在進行 + 過場層仍蓋著」→ 強制掀掉過場層 + 清其他可能遮擋的過場彈窗(boss-detail/intro/quiz/reward/result),露出戰場。綁 battleId 確保不會誤掀之後新一場戰鬥的開場演出',
-      '★ v3.15.24【版本鏈】3 主同步點 v3.15.23→v3.15.24(本輪改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.23(本輪未動),world-boss-ui.html 維持 v3.15.21,hero_db.js 未改(只讀數值)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
-    ],
-  },
 ];
