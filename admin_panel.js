@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.49';   // ★ v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.15.58';   // ★ v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):掃玩家知識幣帳本「短時間反覆賣出同一金額」的洗錢痕跡(對應 index.html v3.15.57 修復的賣出復活漏洞);估算贓款=(同額簇次數-1)×金額,列嫌疑玩家可逐一回收(_fbAdminRecoverLaunderedCoins 經 _fbCompensatePlayer 負值扣減、主檔/live/safe 三槽同寫防復活)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initLaunderingSection)。｜v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1204,6 +1204,43 @@ async function _showAdminStatsPanelImpl(){
           <div style="color:#888;padding:14px;text-align:center;">尚未載入,請按「📥 載入最近 500 筆」</div>
         </div>
         <div id="_admin-arena-battles-result" style="margin-top:10px;font-size:13px;color:#ffcc66;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.15.58(2026-06-20)— 洗錢查緝(短時間重複賣出同額偵測 + 回收贓款) -->
+      <div id="_admin-laundering-section" style="background:rgba(45,35,20,0.5);border:2px solid rgba(255,200,80,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#ffcc44;margin-bottom:8px;">💰 洗錢查緝</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          掃描所有玩家的知識幣帳本,找出「<b style="color:#ffcc66;">短時間內反覆賣出同一金額</b>」的洗錢痕跡(對應 v3.15.57 修好的「賣出物品重新整理後復活、可重複賣」漏洞)。<br>
+          判定:同一金額在「視窗秒數」內連續賣出達「門檻次數」即視為一組洗錢;<b style="color:#ffaa66;">贓款 =(該組次數 - 1)× 金額</b>(保留 1 次當合法賣出)。<br>
+          <b style="color:#ff9966;">💸 回收贓款:</b>對嫌疑玩家扣減估算贓款(或自訂金額),三槽同寫、下限 0,玩家下次登入生效。<br>
+          <span style="color:#aaa;font-size:12px;">
+            資料來源:<code>players/{uid}._coinTransactions</code>(知識幣帳本,跨槽僅保留最近 400 筆,極早期洗錢可能查不到)。
+            回收走 <code>_fbCompensatePlayer</code> 負值扣減(主檔 + live + safe 三槽),不會誤發補償彈窗給玩家。
+            <b style="color:#88dd99;">此工具僅供事後查緝;漏洞本身已於 v3.15.57 修復,不會再產生新贓款。</b>
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <label style="font-size:13px;color:#ccc;">視窗秒數
+            <input id="_admin-laundering-window" type="number" value="60" min="5" max="3600"
+              style="width:72px;padding:5px 8px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <label style="font-size:13px;color:#ccc;">同額門檻次數
+            <input id="_admin-laundering-minrepeat" type="number" value="3" min="2" max="50"
+              style="width:62px;padding:5px 8px;font-size:13px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,200,80,0.4);color:#fff;border-radius:5px;font-family:inherit;">
+          </label>
+          <button id="_admin-laundering-scan" style="padding:9px 18px;font-size:14px;font-weight:800;
+            background:rgba(255,200,80,0.25);border:2px solid #ffcc44;color:#ffe0a0;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            🔍 開始查緝
+          </button>
+          <span id="_admin-laundering-count" style="font-size:12px;color:#aaa;"></span>
+        </div>
+        <div id="_admin-laundering-list" style="max-height:520px;overflow-y:auto;
+          background:rgba(0,0,0,0.4);border:1px solid rgba(255,200,80,0.3);border-radius:6px;
+          padding:8px;font-size:12px;color:#ccc;line-height:1.7;">
+          <div style="color:#888;padding:14px;text-align:center;">尚未查緝,設定參數後按「🔍 開始查緝」</div>
+        </div>
+        <div id="_admin-laundering-result" style="margin-top:10px;font-size:13px;color:#ffcc44;text-align:center;"></div>
       </div>
 
       <div id="_admin-rescue-section" style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
@@ -2654,6 +2691,8 @@ async function _showAdminStatsPanelImpl(){
       //   統一走唯一安全流程:🧹 汙染清查(掃描)→ 🔬 查活動頁(看 creatorUid 證據)→
       //   📢 發刪除預告(玩家可保留1、可復原、自動補償)。被移除的 section HTML/handler 變成無入口的死碼(無害)。
       { sec: '_admin-pollution-cluster-section', label: '🧹 汙染清查（掃描可疑帳號）', hint: 'SSR/SR序列分組找可疑帳號 → 🔴鐵證快速清單一鍵處理 + 🟡無紀錄者依豐富度(含至寶/獎章)推測原主 → 查活動頁刪汙染英雄/至寶(可復原+補償+玩家留1)' },
+      // ★ v3.15.58(2026-06-20)— 洗錢查緝(短時間重複賣出同額偵測 + 回收贓款)
+      { sec: '_admin-laundering-section',        label: '💰 洗錢查緝',              hint: '掃描「短時間反覆賣出同一金額」的洗錢痕跡(對應 v3.15.57 修復前的賣出復活漏洞):估算贓款、列出嫌疑玩家,可逐一回收(扣減知識幣,三槽同寫防復活)' },
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
@@ -2699,7 +2738,7 @@ async function _showAdminStatsPanelImpl(){
     const SIDEBAR_GROUPS = [
       { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
-      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section'] },
+      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section','_admin-laundering-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-rebuild-section','_admin-reset-section'] },
       { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
@@ -6001,6 +6040,121 @@ async function _showAdminStatsPanelImpl(){
     if(clearOldBtn) clearOldBtn.onclick = _clearOld;
   })();
   // ── 鬥技場戰鬥記錄審核 結束 ──
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v3.15.58(2026-06-20)— 洗錢查緝 init
+  //   呼叫 index.html 的 window._fbAdminScanMoneyLaundering(winSec, minRepeat) 掃描,
+  //   列出嫌疑玩家(估算贓款),逐一可「回收」(window._fbAdminRecoverLaunderedCoins 扣減知識幣)。
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initLaunderingSection(){
+    var scanBtn = document.getElementById('_admin-laundering-scan');
+    var winIn   = document.getElementById('_admin-laundering-window');
+    var minIn   = document.getElementById('_admin-laundering-minrepeat');
+    var listEl  = document.getElementById('_admin-laundering-list');
+    var resEl   = document.getElementById('_admin-laundering-result');
+    var countEl = document.getElementById('_admin-laundering-count');
+    if(!scanBtn || !listEl){
+      console.warn('[admin laundering] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    var _suspects = [];
+
+    function _fmt(n){ try{ return Number(n||0).toLocaleString(); }catch(_){ return String(n||0); } }
+    function _tstr(ms){
+      try{ var d = new Date(ms);
+        return (d.getMonth()+1) + '/' + d.getDate() + ' '
+          + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+      }catch(_){ return ''; }
+    }
+    function _esc(s){ try{ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }catch(_){ return ''; } }
+
+    function _render(){
+      if(!_suspects.length){
+        listEl.innerHTML = '<div style="color:#88dd99;padding:14px;text-align:center;">✅ 未發現「短時間重複賣出同額」的洗錢嫌疑。</div>';
+        return;
+      }
+      var html = _suspects.map(function(s, idx){
+        var _grpHtml = s.groups.map(function(g){
+          return '<div style="margin:2px 0;padding:4px 8px;background:rgba(255,150,80,0.12);border-radius:4px;">'
+            + '・金額 <b style="color:#ffcc66;">' + _fmt(g.amount) + '</b> × <b style="color:#ff8866;">' + g.count + ' 次</b>'
+            + '(' + g.spanSec + ' 秒內,' + _tstr(g.firstAt) + ' ~ ' + _tstr(g.lastAt) + ')'
+            + ' → 贓款 <b style="color:#ff6644;">' + _fmt(g.laundered) + '</b>'
+            + (g.reason ? ' <span style="color:#999;">[' + _esc(g.reason) + ']</span>' : '')
+            + '</div>';
+        }).join('');
+        var _label = _esc(s.displayName || '') + (s.email ? ' &lt;' + _esc(s.email) + '&gt;' : '');
+        return '<div style="margin-bottom:10px;padding:10px;background:rgba(40,30,20,0.6);border:1px solid rgba(255,180,80,0.4);border-radius:7px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">'
+          +   '<div style="font-size:13px;color:#ffe0a0;font-weight:700;">#' + (idx+1) + ' ' + (_label || '(無名)') + '</div>'
+          +   '<div style="font-size:12px;color:#aaa;font-family:monospace;">' + _esc(s.uid) + '</div>'
+          + '</div>'
+          + '<div style="font-size:12px;color:#ccc;margin-bottom:6px;">'
+          +   '當前知識幣 <b style="color:#ffcc44;">' + _fmt(s.currentCoins) + '</b>'
+          +   ' ｜ 估計贓款 <b style="color:#ff6644;">' + _fmt(s.launderedEst) + '</b>'
+          +   ' ｜ 賣出筆數 ' + s.sellTxCount
+          + '</div>'
+          + _grpHtml
+          + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;">'
+          +   '<input type="number" class="_ml-amt" data-uid="' + _esc(s.uid) + '" value="' + s.launderedEst + '" min="1"'
+          +     ' style="width:120px;padding:5px 8px;font-size:12px;background:rgba(20,20,30,0.9);border:1.5px solid rgba(255,150,80,0.5);color:#fff;border-radius:5px;font-family:inherit;">'
+          +   '<button class="_ml-recover" data-uid="' + _esc(s.uid) + '" data-label="' + _esc(_label) + '"'
+          +     ' style="padding:6px 14px;font-size:12px;font-weight:800;background:rgba(220,80,60,0.3);border:1.5px solid #ff6644;color:#ffaaaa;border-radius:5px;cursor:pointer;font-family:inherit;">'
+          +     '💸 回收此金額</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+      listEl.innerHTML = html;
+      var btns = listEl.querySelectorAll('._ml-recover');
+      btns.forEach(function(b){
+        b.onclick = async function(){
+          var uid = b.getAttribute('data-uid');
+          var lbl = b.getAttribute('data-label') || uid;
+          var amtEl = listEl.querySelector('._ml-amt[data-uid="' + uid + '"]');
+          var amt = amtEl ? Math.round(Number(amtEl.value) || 0) : 0;
+          if(amt <= 0){ alert('回收金額必須大於 0'); return; }
+          if(!confirm('確定要從【' + lbl + '】扣回 ' + _fmt(amt) + ' 知識幣?\n\n(三槽同寫,玩家下次登入生效;若誤判可再用補償工具補回)')) return;
+          b.disabled = true; b.textContent = '回收中...';
+          try{
+            if(typeof window._fbAdminRecoverLaunderedCoins !== 'function') throw new Error('_fbAdminRecoverLaunderedCoins 未載入');
+            await window._fbAdminRecoverLaunderedCoins(uid, amt, '洗錢查緝回收');
+            resEl.style.color = '#88dd99';
+            resEl.textContent = '✅ 已回收【' + lbl + '】' + _fmt(amt) + ' 知識幣。';
+            b.textContent = '✅ 已回收';
+            for(var i=0;i<_suspects.length;i++){ if(_suspects[i].uid===uid){ _suspects[i].currentCoins = Math.max(0, (_suspects[i].currentCoins||0) - amt); break; } }
+          }catch(e){
+            console.error('[admin laundering recover]', e);
+            resEl.style.color = '#ff6666';
+            resEl.textContent = '❌ 回收失敗:' + (e && e.message || '未知錯誤');
+            b.disabled = false; b.textContent = '💸 回收此金額';
+          }
+        };
+      });
+    }
+
+    async function _scan(){
+      var winSec = parseInt(winIn && winIn.value, 10) || 60;
+      var minN   = parseInt(minIn && minIn.value, 10) || 3;
+      listEl.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">查緝中(掃描所有玩家帳本)...</div>';
+      resEl.textContent = ''; if(countEl) countEl.textContent = '';
+      scanBtn.disabled = true;
+      try{
+        if(typeof window._fbAdminScanMoneyLaundering !== 'function') throw new Error('_fbAdminScanMoneyLaundering 未載入(請確認 index.html 已更新到 v3.15.58)');
+        var r = await window._fbAdminScanMoneyLaundering(winSec, minN);
+        _suspects = (r && r.suspects) || [];
+        var _totalLaund = _suspects.reduce(function(a,s){ return a + (s.launderedEst||0); }, 0);
+        if(countEl) countEl.textContent = '掃 ' + ((r && r.scanned)||0) + ' 位 → 嫌疑 ' + _suspects.length + ' 位,估計總贓款 ' + _fmt(_totalLaund);
+        _render();
+      }catch(e){
+        console.error('[admin laundering scan]', e);
+        listEl.innerHTML = '<div style="color:#ff6666;padding:14px;text-align:center;">❌ 查緝失敗:' + (e && e.message || '未知錯誤') + '</div>';
+      }finally{
+        scanBtn.disabled = false;
+      }
+    }
+
+    scanBtn.onclick = _scan;
+  })();
+  // ── 洗錢查緝 結束 ──
 
   document.getElementById('_admin-set-players').onclick = async () => {
     const input = document.getElementById('_admin-players-input');

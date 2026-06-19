@@ -13,6 +13,44 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.58(2026-06-20)— 💰 GM 洗錢查緝工具 + 單件賣出帳本補全
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.58',
+    date: '2026-06-20',
+    brief: [
+      '🔧【後台管理工具更新(一般同學無須理會)】',
+      '   ・老師後台新增帳號安全稽核工具,並完善了商店賣出的紀錄。對正常遊玩沒有任何影響。',
+    ],
+    items: [
+      '★ v3.15.58【GM 洗錢查緝 admin_panel.js + index.html】承接 v3.15.57(修掉「賣出物品重整後復活、可重複賣」洗錢漏洞)→ 新增事後查緝工具。後端 index.html:window._fbAdminScanMoneyLaundering(windowSec,minRepeat) 用 getDocs 掃全 players,讀 _coinTransactions 篩「賣出類」(reason 含「賣出」且 amount>0),依金額分桶、桶內按時間排序,相鄰間隔 ≤windowSec 的連續同額簇若 ≥minRepeat 即判一組洗錢,贓款=(簇次數-1)×金額(保留 1 次合法),回傳嫌疑玩家(估算贓款/當前餘額/逐組明細,按贓款降序)。預設 windowSec=60、minRepeat=3。',
+      '★ v3.15.58【回收 index.html】window._fbAdminRecoverLaunderedCoins(uid,amount,note):複用 _fbCompensatePlayer 的 coinsMode add 負值扣減(_newCoins=Math.max(0,current-amount)),主檔 + live + safe 三槽同寫(防跨槽合併把高餘額復活),不誤發補償彈窗給玩家。',
+      '★ v3.15.58【GM UI admin_panel.js】新增「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):設視窗秒數 / 同額門檻次數 → 🔍 開始查緝 → 列嫌疑玩家(餘額 / 估算贓款 / 逐組明細),每人可填金額(預設=估算贓款)一鍵「💸 回收」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片 HTML+_initLaunderingSection);全程無 optional chaining。',
+      '★ v3.15.58【賣出帳本補全 index.html】shopSellItem(單件賣出)原本未記知識幣帳本(只有一鍵賣出 shopSellAllItems 有 _logCoinTx)→ 補上 _logCoinTx(coins,"收入:賣出-道具名"),否則查緝抓不到「單件反覆賣出」的痕跡。',
+      '★ v3.15.58【限制】帳本跨槽 union 僅保留最近 400 筆,極早期洗錢可能已滾出;偵測為估算、供 GM 人工裁量回收。漏洞本身已於 v3.15.57 修復,不會再產生新贓款。Firestore 規則無需新增(掃描/回收均走 isAdmin 既有路徑)。',
+      '★ v3.15.58【版本鏈】4 GAME 同步點 v3.15.57→v3.15.58;_vers[index.html]/[game_changelog.js] 同步 v3.15.58 + _vers[admin_panel.js] v3.15.54→v3.15.58 + ADMIN_PANEL_VERSION v3.15.49→v3.15.58。arena.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪改 index.html + admin_panel.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.38)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.57(2026-06-20)— 🛒 商店賣出嚴重漏洞修復(賣出物品重整後重複出現)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.57',
+    date: '2026-06-20',
+    brief: [
+      '🛒【商店賣出穩定性修正(重要更新)】',
+      '   ・修正了少數情況下,在商店賣出物品後重新整理,背包顯示與雲端存檔<b>不同步</b>的問題。',
+      '   ・現在賣出的物品會<b>正確且穩定地保存</b>,不會再因重新整理而異常重現。感謝同學的回報!',
+    ],
+    items: [
+      '★ v3.15.57【賣出漏洞根治 index.html _lxpsMergeSlots】現象:玩家 87 萬 → 賣垃圾得 7 萬 = 94 萬(垃圾消失),重新整理後知識幣仍 94 萬(正確),但剛賣掉的垃圾又出現可再賣 → 可無限變現。根因:backpackRemove 對數量歸 0 的道具 delete key;賣出走 _fbSaveLive/_fbSave 的 set(...,{merge:true}),Firestore 對 map(物件)欄位是「深度合併」→ 新資料未提及的子鍵(賣掉的道具)不會被刪除 → 雲端 map 欄位 playerBackpack 殘留舊道具(復活),而純量字串 playerBackpack_s 被整包覆蓋(正確)→ 知識幣(純量)正確、背包(map)子鍵復活,正是「94 萬保留、垃圾復活」的不對稱現象。',
+      '★ v3.15.57【漏網與修法】_applySafeData 早有同款「優先字串繞道」(註解明寫 Firebase merge 不會刪 key 的繞道),但「多槽合併」_lxpsMergeSlots 漏修 → 有 live+safe+主檔三槽的玩家走合併路徑而中招。修:_lxpsMergeSlots 的 _bag 改為優先解析 _newest.playerBackpack_s(賣後正確、免疫 merge 污染),map 欄位僅在無字串時 fallback。單槽載入走 _applySafeData(本就優先字串)未受影響。',
+      '★ v3.15.57【影響面】新賣出 → 字串無垃圾 → 存檔(賣出函式賣完即 await gameCloudSave)→ 重整載入字串 → 不復活,漏洞徹底堵死。已中招玩家現有殘留垃圾賣掉一次變現後字串收斂、不再復活。雲端 map 欄位的歷史殘留無人讀取(載入一律用字串)、無害,列為次要後續(GM 後台讀 map 的背包種類摘要鍵數可能偏多,不影響玩家)。',
+      '★ v3.15.57【鐵律 1.213】消費型(會減量)map 欄位嚴禁僅靠 set(merge:true) 寫入後直接讀 map:Firestore map 深度合併不刪子鍵 → 減量(賣出/消耗)會殘留復活。一律「寫純量字串整包版 + 讀取優先字串版」(playerBackpack/playerBackpack_s 模式);純量欄位(knowledgeCoins 等)不受影響。新增同類消費型 map 欄位時務必同步字串版,並在所有讀取點(含 _lxpsMergeSlots、_applySafeData)優先字串。',
+      '★ v3.15.57【版本鏈】4 GAME 同步點 v3.15.56→v3.15.57;_vers[index.html]/[game_changelog.js] 同步 v3.15.57。arena.js / admin_panel.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.37)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.56(2026-06-19)— 🎟 鬥技商店召喚卷改發「卷道具」(到召喚星空使用)
   // ════════════════════════════════════════════════════════════════════
   {
@@ -423,44 +461,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.15.39【玩家行動防連發鎖 index.html】根因:多段非同步技能(如學霸 五科滿分考卷 _doExam,每段 _pSetTimeout 300ms)的「扣能量 + 設 acted」都在 endAction(動畫末段才執行),整段動畫期間 acted 仍為 false、能量尚未扣 → requestAction/selMove 守門全過 → 連點技能鍵 + 確認可在扣能量前重複觸發 execSkill,疊加出無限多段傷害。修:新增 window._pActBusy 行動鎖——於 selMove(涵蓋普攻/S1/S2,在 clearSel 之後)上鎖 _pActBusy=true + 記 _pActBusyTs;requestAction 與 confirmAction 入口偵測「鎖定中且未逾時(8 秒)」即忽略點擊;clearSel(取消)/endAction(行動完成)/startTurn(換回合保險)三處解鎖。8 秒自動逾時確保任何路徑漏解鎖也不會卡死。爆發/休息/物品另有各自流程,不受影響',
       '★ v3.15.39【版本鏈】3 主同步點 v3.15.38→v3.15.39(本輪僅 index.html 改動)+ game_changelog.js→v3.15.39。admin_panel.js / arena.js 維持 v3.15.37、hero_db.js v3.15.36、world-boss.js v3.15.34',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.38(2026-06-18)— ⚡ 玩家極限爆發必中且無視有利狀態 ＋ 好友送禮次數修正
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.38',
-    date: '2026-06-18',
-    brief: [
-      '⚡【極限爆發保證命中、無視敵方有利狀態】',
-      '   ・修正部分同學反應「對<b>大天狗</b>等速度很快、或正處於<b>迴避狀態</b>的敵人放極限爆發卻 MISS(沒打中)」的問題。',
-      '   ・現在<b>玩家英雄的極限爆發一律必中</b>,並且<b>無視敵方的有利狀態</b>(迴避/閃避/護盾/免疫/減傷)——這是專屬於玩家的霸氣!',
-      '   ・反過來,<b>BOSS 的極限爆發仍然可以被你自己的有利狀態抵抗</b>(例如你身上的迴避/護盾),這個平衡維持不變。',
-      '🎁【送禮次數不再卡住】修正少數同學「<b>今天明明還沒送過禮</b>(送禮紀錄是空的),按送禮卻被擋「今日已送 5/5」」的問題。現在送禮次數會<b>以你真實的送禮紀錄為準</b>,殘留的假次數會自動清除。',
-    ],
-    items: [
-      '★ v3.15.38【玩家極限爆發必中+無視有利狀態 index.html doDmg】新增集中判定 _isPlayerBurstHit =(爆發施放中 _burstCastActive 且攻擊者 a.side 為 p1 且敵我異側);成立時於 doDmg 開頭設 opts.mustHit/ignoreEvasion/ignoreBuffs=true,一次涵蓋速度迴避/疾風步 _windEvade/急速閃躲 spdAvoid/至寶閃避/「evasion」buff(由烏天狗 羽刃陣列、色彩噴濺、變臉戲法、神籤 等賦予;大天狗 MISS 主因是友軍 烏天狗 給全隊迴避)/trapShield/免疫/減傷等全部來源。另對「染靈幻魔・藍色憂鬱」「紅色玩家」兩個不吃 ignoreEvasion 的天生閃避加上 !_isPlayerBurstHit 讓玩家爆發也能穿透',
-      '★ v3.15.38【不對稱保留 index.html】BOSS 爆發(a.side 為 p2)不觸發上述判定 → 玩家自身的有利狀態(迴避/護盾/免疫)仍可照常抵抗 BOSS 爆發。BOSS 鎖血保命 _applyBossLifelineProtection(獨立函式、不看 ignoreBuffs)、世界BOSS 元素破盾(element-break 機制)、神樹恩澤不倒 burstUndying(玩家專屬 buff、敵方不會有)皆不受影響',
-      '★ v3.15.38【好友送禮次數以紀錄為準 index.html】根因:共用 iPad 換帳號殘留(原換帳號守門掛在六大表 UID 信號上,該信號在英雄校正時可能已被改成當前帳號 → 守門略過清空)或雲端寫入時序,使今日送禮計數 _giftHistory.sentUids 帶到非本人的送禮對象,造成 0 次卻被擋「今日已送 5/5」。修:_giftMaybeResetHistory 每次被呼叫時(送禮 gating 與計數皆會呼叫)以今日 giftLog 的 sent 去重收禮者重建 sentUids(上限 5)→ 幽靈計數自動消失、真實已送對象保留(「今日已送過此好友」判定亦正確);另加持有者 _uid 與當前帳號不符即重置之防護。並抽出 _giftKeyForTs(ts) 供逐筆判定日期(_giftGetTodayKey 改為呼叫之,邏輯不變)',
-      '★ v3.15.38【版本鏈】3 主同步點 v3.15.37→v3.15.38(本輪僅 index.html 改動)+ game_changelog.js→v3.15.38。admin_panel.js / arena.js 維持 v3.15.37、hero_db.js v3.15.36、world-boss.js v3.15.34',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.37(2026-06-18)— 🎖 鬥技之證持有量上雲(共用平板不再消失)＋ GM 可補償鬥技之證
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.37',
-    date: '2026-06-18',
-    brief: [
-      '🎖【鬥技之證不再不見了】',
-      '   ・修正部分同學反應「<b>打完鬥技場卻沒拿到鬥技之證</b>」、或在學校共用平板換人/清快取後鬥技之證歸零的問題。',
-      '   ・現在你的鬥技之證會<b>跟著帳號存到雲端</b>,換一台平板登入、或清掉瀏覽器資料後重新登入,持有數量都會自動還原(以雲端與本機較高者為準,只會多不會少)。',
-      '🎁【老師可以補發鬥技之證了】若有同學的鬥技之證真的遺失,老師可在後台直接補發。',
-    ],
-    items: [
-      '★ v3.15.37【鬥技之證持有量上雲 arena.js + index.html】鬥技之證可花費餘額(zhengTotal / zhengLifetimeTotal)原本只存在本機 localStorage(lxps_arena_zheng_total / _lifetime / 每日狀態 JSON),共用平板清快取或換裝置就歸零。改:arena.js 在「結算發證 / 商店花費 / 補發」後即時觸發 gameCloudSave;index.html _buildSafeData 把持有量寫進雲端存檔(arenaZhengHeld / arenaZhengLifetime),_applySafeData 還原時取「本機與雲端較高者」合併並回寫 localStorage + 同步每日狀態 JSON。週排行累積值 arenaWeekly 原本就在雲端,不受影響',
-      '★ v3.15.37【GM 補償鬥技之證 admin_panel.js + index.html】學生補償工具新增「🎖 鬥技之證 (+N)」輸入框、課堂獎勵發放新增「🎖 鬥技之證 ×N」勾選框,皆經 _fbCompensatePlayer 寫入;後端在主檔 + live + safe 三槽同步累加 arenaZhengHeld / arenaZhengLifetime,確保雲端載入時不論取哪一槽都帶到補發量',
-      '★ v3.15.37【版本鏈】3 主同步點 v3.15.36→v3.15.37 + admin_panel.js v3.15.26→v3.15.37 + arena.js→v3.15.37。hero_db.js 維持 v3.15.36、world-boss.js v3.15.34',
     ],
   },
 ];
