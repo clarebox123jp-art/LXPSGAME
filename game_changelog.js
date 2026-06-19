@@ -13,6 +13,27 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.56(2026-06-19)— 🎟 鬥技商店召喚卷改發「卷道具」(到召喚星空使用)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.56',
+    date: '2026-06-19',
+    brief: [
+      '🎟【鬥技商店「召喚卷」改成真正的卷了！】',
+      '   ・以前在鬥技場用鬥技之證換 SSR / SR / 至寶召喚卷,是「當場直接給你角色或至寶」;現在改成<b>發一張「召喚卷」到你的背包</b>,由你自己到<b>召喚星空</b>使用。',
+      '   ・這樣你可以<b>自己決定什麼時候用</b>;而且若該稀有度暫時收齊了,召喚卷也能<b>先留著以後再用</b>,不會浪費。',
+      '💠【鬥技場至寶券升級為「自選券」!】',
+      '   ・鬥技商店的至寶召喚卷改成<b>自選至寶召喚卷</b>,使用時可從<b>台灣 10 件 + 龍王 8 件</b>尚未擁有的至寶中<b>自己挑一件</b>,<b>挑得到龍王至寶</b>!',
+      '   ・(提醒:隨機至寶召喚卷與星空召喚仍只有台灣至寶,龍王至寶要靠龍王戰排名、老師自選卷,或鬥技場的自選至寶召喚卷取得。)',
+    ],
+    items: [
+      '★ v3.15.56【鬥技商店召喚卷改發卷道具 index.html _arenaGrantExchangeItem】arena_x_ssr_summon / arena_x_sr_summon / arena_x_treasure_summon 三件,由「當場 advSaveUnlockedHero 自動解鎖角色 / _arenaGrantTreasureVoucher 當場發至寶」改為 backpackAdd 對應卷道具(summon_ticket_ssr / summon_ticket_sr / summon_ticket_treasure_pick),玩家到召喚星空自行使用(老師裁示:召喚卷一律是卷、不直接解鎖)。_arenaGrantSummonVoucher / _arenaGrantTreasureVoucher 改為未使用(保留不刪)。',
+      '★ v3.15.56【至寶券改自選券 + 自選池納龍王 index.html】鬥技商店至寶券改發 summon_ticket_treasure_pick(自選);新增 _treasureTicketPickNotOwned(台灣 10 + 龍王 8 = 18,引用 _ARENA_DRAGON_TREASURE_IDS),_openTreasureTicketPickModal 改用此池→可挑龍王。隨機券 _useTreasureTicket 仍用 _treasureTicketNotOwned(台灣 10、不含龍王);星空召喚 random 不變(龍王 noSummon,v3.15.52 結論不動)。鬥技券卡改名「自選至寶召喚卷」+icon💠,_openTreasureTicketModal 兩卡「尚有 N 件」計數分流(隨機=台灣/自選=含龍王),summon_ticket_treasure_pick 背包說明補龍王。',
+      '★ v3.15.56【背景】玩家回報「用鬥技之證買 SSR 召喚卷卻沒拿到卷」:原實作是當場直接解鎖一名隨機未收錄 SSR(該玩家確實有解鎖到角色,並非遺失),但與「召喚卷 = 可收進背包、自行使用的道具」設計不符 → 本版全面改為發卷道具。',
+      '★ v3.15.56【版本鏈】4 GAME 同步點 v3.15.55→v3.15.56;_vers[index.html]/[game_changelog.js] 同步 v3.15.56。arena.js / admin_panel.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.36)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.55(2026-06-19)— 🏜 埃及關完整掉落物 + 魔物圖鑑「埃及探險」區
   // ════════════════════════════════════════════════════════════════════
   {
@@ -440,23 +461,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.37【鬥技之證持有量上雲 arena.js + index.html】鬥技之證可花費餘額(zhengTotal / zhengLifetimeTotal)原本只存在本機 localStorage(lxps_arena_zheng_total / _lifetime / 每日狀態 JSON),共用平板清快取或換裝置就歸零。改:arena.js 在「結算發證 / 商店花費 / 補發」後即時觸發 gameCloudSave;index.html _buildSafeData 把持有量寫進雲端存檔(arenaZhengHeld / arenaZhengLifetime),_applySafeData 還原時取「本機與雲端較高者」合併並回寫 localStorage + 同步每日狀態 JSON。週排行累積值 arenaWeekly 原本就在雲端,不受影響',
       '★ v3.15.37【GM 補償鬥技之證 admin_panel.js + index.html】學生補償工具新增「🎖 鬥技之證 (+N)」輸入框、課堂獎勵發放新增「🎖 鬥技之證 ×N」勾選框,皆經 _fbCompensatePlayer 寫入;後端在主檔 + live + safe 三槽同步累加 arenaZhengHeld / arenaZhengLifetime,確保雲端載入時不論取哪一槽都帶到補發量',
       '★ v3.15.37【版本鏈】3 主同步點 v3.15.36→v3.15.37 + admin_panel.js v3.15.26→v3.15.37 + arena.js→v3.15.37。hero_db.js 維持 v3.15.36、world-boss.js v3.15.34',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.36(2026-06-18)— ⚔ 復活無敵僅限 PvE + 埃及雙王復活說明一致
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.36',
-    date: '2026-06-18',
-    brief: [
-      '⚔【鬥技場復活保護修正】',
-      '   ・修正鬥技場(PvP)英雄復活後仍有「復活無敵」的問題——鬥技場是玩家對玩家,不該享有冒險專屬的復活保護。<b>冒險、台灣關、世界BOSS 等 PvE 戰鬥的英雄復活保護維持不變</b>。',
-      '🏺【埃及雙王圖鑑說明更新】法老王與埃及豔后「互相復活」的圖鑑說明文字,由 25% 更新為 <b>12.5%</b>(與實際效果一致)。',
-    ],
-    items: [
-      '★ v3.15.36【復活無敵僅限 PvE 玩家英雄 index.html】doRevive 的 reviveImmune 賦予條件由「side 為 p1」收緊為「side 為 p1 且非鬥技場」。鬥技場判定沿用既有慣例(_arenaBgmContext===true 或 _adventureMode===false);冒險/台灣/世界BOSS 皆 _adventureMode===true、_arenaBgmContext===false 故保留復活保護。小怪/BOSS 方(p2)本就被 p1 條件排除',
-      '★ v3.15.36【埃及雙王互相復活 fd/desc 文字一致 hero_db.js】法老王「法老威儀」+ 埃及豔后「蛇瞳魅影」的 desc/fd「互相復活至 25%HP」改為 12.5%HP(與 BOSS 程式碼 v3.15.25/v3.15.35 實際一致)。爆發「太陽神的審判」fd 的 25% 保留(招募版 Lv1 基底,鐵律 1.160);互相復活僅 BOSS 版有,招募版實際效果不變',
-      '★ v3.15.36【版本鏈】3 主同步點 v3.15.35→v3.15.36 + hero_db.js v3.15.33→v3.15.36。world-boss.js 維持 v3.15.34、admin_panel.js v3.15.26',
     ],
   },
 ];
