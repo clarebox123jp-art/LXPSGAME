@@ -13,6 +13,57 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.48(2026-06-19)— 🐉 修世界 BOSS 龍王戰崩毀後卡死
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.48',
+    date: '2026-06-19',
+    brief: [
+      '🐉【修正:龍王戰第 11 回合戰場崩毀後卡住無法離開】',
+      '   ・修正多人一起打世界 BOSS 龍王戰時,<b>第 11 回合戰場崩毀(全員陣亡)後,部分玩家卡在戰場、結算畫面跳不出來、無法離開</b>的問題。',
+      '   ・現在就算與房主的連線剛好掉封包,<b>自己也會偵測到全員陣亡並進入結算</b>,順利離開回到關卡頁。',
+    ],
+    items: [
+      '★ v3.15.48【世界 BOSS 龍王戰崩毀後 guest 卡死 修正 world-boss-ui.html】根因:多人連線世界 BOSS 戰由房主(host)權威跑戰鬥、廣播狀態給其他玩家(guest/client)。guest 端結算靠 _wbClientCheckEnded 偵測「房主廣播 meta.status 為 ended」才觸發。但房主第 11 回合戰場崩毀 _wbForceCollapseAt11 只廣播 reason=force-collapse-at-11(把 p1 全歸 0),隨後「meta.status=ended」的 sync 若因網路丟包/房主端也卡而沒送達 guest,guest 會死等 ended → 永久卡在戰場「龍王戰結束無法離開」(v3.15.36 玩家回報:Safari、round 11、p1 四人 HP 全 0、最後 sync reason=force-collapse-at-11 後再無 sync)。修法:guest 端 _wbClientApplyWire 每次套完房主狀態後,偵測「p1 全員 curHp<=0(玩家方全滅)」且戰鬥未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,與 _wbClientCheckEnded 同機制),不再依賴房主二次廣播 ended',
+      '★ v3.15.48【不誤判/不重複】世界 BOSS 戰玩家無復活機制,p1 全滅=確定戰敗,fallback 不會誤判;_wbAdvBattleEnded + _wbClientForceCheckWin 雙旗標守門避免每次 sync 重複觸發,兩旗標於新戰鬥開始 reset(world-boss.js L4546/L4585、world-boss-ui.html L10368)。checkWin worldboss + p1 全滅分支既有 → _wbShowAdvBattleResult(false) 進結算頁(index.html L55434)。房主端崩毀結算流程(_wbForceCollapseAt11 自身 600ms fallback)不受影響',
+      '★ v3.15.48【版本鏈】本輪主改 world-boss-ui.html(guest 結算 fallback)+ index.html/game_changelog.js 版本鏈同步(index.html 無功能改動)。4 GAME 同步點 v3.15.47→v3.15.48,_vers[world-boss-ui.html] v3.15.21→v3.15.48。hero_db.js 維持 v3.15.44、arena.js v3.15.37、admin_panel.js v3.15.40、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.28)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.47(2026-06-19)— ⚔️ 修鬥技場滿 10 回合勝利卡死
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.47',
+    date: '2026-06-19',
+    brief: [
+      '⚔️【修正:鬥技場打滿 10 回合分勝負時卡住】',
+      '   ・修正鬥技場<b>雙方都沒被全部打倒、打滿 10 回合</b>由存活數/血量分勝負時,<b>結算畫面跳不出來、卡在戰場結束不了</b>的問題。',
+      '   ・現在打滿 10 回合會<b>直接顯示勝負結算 + 「🏫 回到學校」</b>,乾淨結束回到關卡頁。',
+    ],
+    items: [
+      '★ v3.15.47【鬥技場滿 10 回合勝利卡死 修正 index.html】根因:nextRound 內 _arenaCheckRoundLimit 滿 10 回合結算時,原優先走 _showResultWithDrama(這是「擊殺結束」的慢動作戲劇化,鏡頭聚焦最後一擊 → advShowBattleResult 冒險結算)。但滿 10 回合是「時間到結束」、雙方都還活著、沒有擊殺動作 → 慢動作找不到擊殺對象而卡死、結算頁不顯示 → 玩家卡在戰場「結束不了」。修法:win/lose/draw 三分支改「直接走 showResult」(鬥技場結算視窗 #result-overlay + 🏫 回到學校,無慢動作,會 clearTurnTimer + 關 action-panel + 清鬥技場中斷快照,乾淨結束回關卡頁);_showResultWithDrama 降為 fallback(萬一 showResult 不存在)',
+      '★ v3.15.47【獎勵不漏不重 index.html】鬥技之證仍由結算上方 _arenaSettleReward(win/lose/draw) 先發,不重複;勝利陣容自動上雲(自動勝利槽,原在 _showResultWithDrama 內)於 win 分支補回呼叫 _arenaSaveAutoWinTeam(G.p1 四英雄名+元素)。全滅 KO 勝利仍走 _showResultWithDrama(有擊殺動作,慢動作正常),不受本次改動影響',
+      '★ v3.15.47【版本鏈】本輪只改 index.html(鬥技場結算分流)+ game_changelog.js。4 GAME 同步點 v3.15.46→v3.15.47。hero_db.js 維持 v3.15.44、arena.js v3.15.37(_arenaCheckRoundLimit 計算邏輯未改)、admin_panel.js v3.15.40、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.27)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.46(2026-06-19)— 🛒 商店購買/販賣數量 +/- 調整更順手
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.46',
+    date: '2026-06-19',
+    brief: [
+      '🛒【商店買賣數量調整更順手】',
+      '   ・按「<b>＋</b>」想加超過上限時(今日限購/本週限購/背包裝不下,或賣超過持有量、果實每日上限),會<b>跳出提示告訴你已達上限</b>,「＋」按鈕也會<b>變灰鎖住</b>,不會多扣或多賣。',
+      '   ・數量在「<b>1</b>」時按「<b>－</b>」,會<b>直接跳到最大數量</b>繼續往下調,不用從 1 一路加上去,調整更快!',
+    ],
+    items: [
+      '★ v3.15.46【商店數量 +/- 調整改良 index.html】老師需求兩項。① 按「+」超過上限 → 彈窗提示 + 卡在上限 + 「+」按鈕變灰鎖定:新增 _shopMaxBuyable(prod) 回傳 {max,reason}(購買上限取 今日剩餘(dailyLimit-_shopDailyBought)/本週剩餘(weeklyLimit-_shopWeeklyBought)/背包容量(99-backpackGet) 最小值,記錄哪項卡住);shopAdjQty delta>0 且 cur>=max → _showInGameToast(依 reason:已達今日購買上限數量/已達本週購買上限數量/背包已滿)+ 數量卡 max;販賣 bagSellAdjQty delta>0 且 cur>=max → 依卡住原因(果實今日上限→已達今日販賣上限數量;否則→已達持有數量)。② 數量為 1 時按「-」→ 跳到最大循環:shopAdjQty/bagSellAdjQty delta<0 且 cur<=1 → next=max',
+      '★ v3.15.46【+ 按鈕鎖定視覺 index.html】新增 _setPlusBtnLocked(btnId,locked) 統一切換「+」按鈕灰/綠(購買販賣共用,+ 按鈕皆綠色系);購買「+」按鈕加 id="shop-plus-{id}"、販賣加 id="bag-plus-{id}",渲染時依「數量是否已達上限」給初始灰/綠樣式,bagSellAdjQty 調整後即時更新(因販賣只更新數字不重渲染),購買 shopAdjQty 重渲染自動反映。+ 按鈕雖變灰仍保留 onclick → 玩家點到仍會跳上限提示',
+      '★ v3.15.46【版本鏈】本輪只改 index.html(商店數量調整全在此)+ game_changelog.js。4 GAME 同步點 v3.15.45→v3.15.46。hero_db.js 維持 v3.15.44、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.26)',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.45(2026-06-19)— 🛟 帳號資料自救看門狗(讀不到完整記錄時一鍵重新載入)
   // ════════════════════════════════════════════════════════════════════
   {
@@ -352,66 +403,4 @@ window.GAME_CHANGELOG = [
       '★ v3.15.29【版本鏈】3 主同步點 v3.15.28→v3.15.29 + hero_db.js v3.15.17→v3.15.29(本輪改 index.html + hero_db.js + game_changelog.js)。admin_panel.js 維持 v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21。上傳順序:game_changelog.js → hero_db.js → index.html(最後)',
     ],
   },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.28(2026-06-17)— 🐛 埃及雙王/黑暗球修正 + 選將圖微調
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.28',
-    date: '2026-06-17',
-    brief: [
-      '🏺【埃及雙王打倒後正確結束】',
-      '   ・法老王與埃及豔后<b>同時擊敗後,正確領獎並回到關卡頁</b>,不會再突然又重新開打一場!',
-      '🌑【黑暗球分身不再擠爆畫面】',
-      '   ・黑暗球分裂出很多隻時,畫面會<b>自動換行排列</b>,不會再被擠到看不見功能按鈕、卡住動不了。',
-      '🎴【法老王・埃及豔后選將圖微調】',
-      '   ・兩位埃及王的頭像位置<b>往下調整</b>,在選將與英雄頁看起來更好看。',
-    ],
-    items: [
-      '★ v3.15.28【埃及雙王打贏重啟修正 index.html】根因:_showResultWithDrama 內有一份硬編碼 _BOSS_SET2 清單(漏了法老王/埃及豔后)→ 玩家「同時擊殺」雙王走到 BOSS 結算流程時 _hasBoss2=false → 誤判「無 BOSS 小怪戰」→ 強制 advFinishMiniBattle → 還原滿血雙王陣容 + 推進 scene 重開雙王戰(BUG 數據:雙王滿血 11500/10500 + _advMiniResultShowing=true)。v3.15.9 已修 checkWin 的 _hasBoss 但漏此下游處。修法:_BOSS_SET2 改用單一真相 _ZEUS_TRUE_BOSSES(含雙王,鐵律 1.135),雙王不再被誤判 → 正確走 advShowBattleResult(true) 回關卡頁',
-      '★ v3.15.28【黑暗球分身撐寬戰場修正 index.html CSS】根因:main.css .brow=flex-wrap:nowrap + .card 固定 253px 寬 → 7 隻黑暗球橫排約 1843px 撐寬 #gc → 把 #sb 的 action-panel 推出可視區按不到。修法:內嵌覆寫 .brow flex-wrap:wrap+max-width:100%+row-gap(載於 main.css 之後必勝,不動 main.css),多單位換行不撐寬,功能鍵保持可見;#z2 換行靠上對齊',
-      '★ v3.15.28【法老王/埃及豔后選將立繪下移 index.html】getHeroThumbObjPos 補兩王特例:原 HERO_THUMB_POS 未設定 → fallback center 50% 偏低 → 改 center 30%(下移 20%,專案慣例 50%-20%);置於 premium 判斷後、通用 fallback 前,涵蓋選將/英雄頁/好友卡所有縮圖一致',
-      '★ v3.15.28【未動】埃及雙王「互相復活」機制(法老回 12.5%/豔后回 25%,v3.15.25 已調)維持原設計;玩家回報「打死又回血」為此機制觀感,本次僅修「打贏後重啟」bug。若需再降復活量可另行告知',
-      '★ v3.15.28【版本鏈】3 主同步點 v3.15.27→v3.15.28(本輪只改 index.html + game_changelog.js)。admin_panel.js 維持 v3.15.26、hero_db.js/world-boss.js v3.15.17、world-boss-ui.html v3.15.21',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.27(2026-06-17)— 🎨 底部主選單字體/色彩優化
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.27',
-    date: '2026-06-17',
-    brief: [
-      '🎨【底部選單看起來更清爽】',
-      '   ・主選單下方的功能按鈕(召喚、英雄、序號兌換…)<b>文字不再超出格子</b>,字體會自動配合螢幕大小。',
-      '   ・每個按鈕<b>換上不同顏色</b>,更好辨認囉!',
-    ],
-    items: [
-      '★ v3.15.27【底部主選單字體/色彩修正 index.html CSS】加第 10 顆「序號兌換」按鈕後每格變窄,原本靠繼承的 label 字體未約束→「召喚」等兩字掉到第二行/溢出格子。修法:新增 #adv-bottom-nav .adv-nav-label 高 specificity 規則(font-size clamp(10px,1.05vw,16px)+white-space nowrap+text-overflow ellipsis,!important 蓋過序號/更新日誌的 inline font-size:80%);.adv-nav-icon 也 clamp 約束;以 nth-of-type(1~10) 給 10 顆各自 border-color+label color。僅加 CSS、不動按鈕 HTML',
-      '★ v3.15.27【版本鏈】3 主同步點 v3.15.26→v3.15.27(本輪只改 index.html CSS + game_changelog.js)。admin_panel.js 維持 v3.15.26(未改)、world-boss-ui.html v3.15.21、hero_db.js/world-boss.js v3.15.17。上傳順序:game_changelog.js → admin_panel.js(若 v3.15.26 尚未部署) → index.html(最後)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.26(2026-06-17)— 🎟️ 新功能:虛寶序號兌換(老師發序號,學生輸入領獎勵)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.26',
-    date: '2026-06-17',
-    brief: [
-      '🎟️【全新功能:虛寶序號兌換】',
-      '   ・主選單新增「<b>🎟️ 序號兌換</b>」按鈕!老師會給你<b>虛寶序號</b>,在這裡輸入就能領取獎勵。',
-      '   ・獎勵可能包含 UR 英雄、各種召喚卷、召喚水晶、知識幣、超越極限果實等等。',
-      '   ・<b>每個序號只能用一次</b>:已被別人領走的序號再輸入,會顯示「此序號已被使用」喔!',
-      '   ・領到的獎勵會直接加進你的帳號,<b>不會蓋掉你原有的東西</b>。',
-    ],
-    items: [
-      '★ v3.15.26【虛寶序號系統 新增 index.html + admin_panel.js】老師需求:GM 選單新增「虛寶序號」,可直接發課堂獎勵的序號讓學生輸入兌換。設計:一序號=一次性兌換券(每序號限用一次,誰先輸入誰得,兌過即失效)',
-      '★ v3.15.26【GM 端 admin_panel.js】「🎁 補償與補發」群組新增「🎟️ 虛寶序號」卡片(課堂獎勵發放下方):勾選獎勵(鏡像課堂獎勵 12 項)+數量 → 設定產生組數(1~200)/有效期(永久或到期日)/備註 → 批量產生序號 → 產出含獎勵名稱的可複製清單(可整段貼給其他老師);另可查看序號清單(未兌/已兌by誰/過期/停用)、單一刪除。三點同步(SIDEBAR_ITEMS+GROUPS+卡片+handler),無 ?. 相容舊 Safari',
-      '★ v3.15.26【學生端 index.html】主選單(冒險地圖頁底部功能列 + 手機版底部導覽)新增「🎟️ 序號兌換」按鈕 → openRedeemDialog 彈窗輸入序號 → _fbRedeemCode 兌換。發獎複用 _fbCompensatePlayer(union 合併不降級),走玩家寫自己 doc 路徑(payload 全非停權欄位,rule 放行)',
-      '★ v3.15.26【後端 index.html】_lxpsGenRedeemCode(12碼大寫英數,排除易混淆 0/O/1/I/L)、_fbGenerateRedeemCodes(GM 批量產生,runTransaction 防撞號)、_fbListRedeemCodes(GM 列清單)、_fbAdminDeleteRedeemCode(GM 刪)、_fbRedeemCode(學生兌換:先讀檢查 → runTransaction 原子標記 redeemed → 發獎;先標記再發獎,寧可偶爾漏發也不可重複刷)。資料結構 redeemCodes/{CODE}={code,reward,itemsLabel,redeemed,redeemedBy,redeemedByLabel,redeemedAt,expiresAt,batchId,note,createdAt,createdBy,enabled}',
-      '★ v3.15.26【安全 firestore.rules ⚠需老師手動部署】redeemCodes 規則:get 任何登入者(兌換需讀)、list/create/delete 限 GM、update 僅允許「redeemed:false→true 且 redeemedBy==自己 且只動 redeemed/redeemedBy/redeemedByLabel/redeemedAt」→ 玩家動不了 reward/有效期/啟用旗標,兌過的序號他人再寫被 rule 擋(transaction 之外的雙重保險)。未部署前產生/兌換都會失敗',
-      '★ v3.15.26【版本鏈】3 主同步點 v3.15.25→v3.15.26;admin_panel.js v3.15.23→v3.15.26(ADMIN_PANEL_VERSION + _vers 同步)。world-boss-ui.html 維持 v3.15.21、hero_db.js/world-boss.js 維持 v3.15.17。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.25(2026-06-17)— 🔁 戰鬥題目出完自動循環不卡死 ＋ ⚖️ 法老王BOSS恢復/復活下修
 ];

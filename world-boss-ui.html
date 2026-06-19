@@ -1,5 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ★ v3.15.48(2026-06-19)— 修世界 BOSS 龍王戰崩毀後 guest 端卡死「無法離開戰鬥」:根因=guest 端結算(_wbClientCheckEnded)只認房主廣播 meta.status==='ended' 才觸發,但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11 把 p1 全歸 0)後「meta.status='ended'」的 sync 若沒送達 guest(網路丟包/房主端也卡),guest 死等 ended → 永久卡戰場。修:_wbClientApplyWire 套完狀態後偵測「p1 全員 curHp<=0(玩家方全滅)」且未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,不依賴房主再廣播 ended);世界 BOSS 無復活,p1 全滅=確定戰敗不誤判,_wbAdvBattleEnded/_wbClientForceCheckWin 雙旗標守門 -->
 <!-- ★ v3.14.25(2026-06-13)— BOSS 能力詳細介紹彈窗(_wbAdvOpenBossInfoPopup)+ 大廳預覽卡描述/屬性改「資料驅動」:依當前龍王讀 HERO_DB/HERO_TRAIT/BURST_DB + 護盾元素/配色動態,草龍王不再顯示火龍王能力 -->
 <!-- ★ v3.14.24(2026-06-13)— 排名獎勵清單至寶名改依當前龍王動態(維蘇威=火龍王之牙 / 翠玉草=草龍王之鬚) -->
 <!-- ★ v3.14.23(2026-06-13)— 戰鬥背景/BOSS資訊彈窗立繪改用 HERO_IMGS(修翠綠森龍王圖 404:實檔名草龍王.png 非由角色名推導)+ 戰鬥 BGM 改依當前龍王動態(_wbGetCurrentBossBattleBgmId) -->
@@ -10317,6 +10318,31 @@ try{
       // 重繪主程式 UI
       try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
       try{ if(typeof renderField === 'function') renderField(); }catch(_){}
+      // ★ v3.15.48 — guest 端「玩家方全滅」fallback 結算(修世界 BOSS 龍王戰崩毀後無法離開卡死)
+      //   根因:guest 端結算(_wbClientCheckEnded)只認房主廣播的 meta.status==='ended' 才觸發。
+      //   但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11)把 p1 全歸 0,
+      //   若隨後「meta.status='ended'」的 sync 沒送達 guest(網路丟包 / 房主端也卡),
+      //   guest 會死等 ended → 永久卡在戰場「龍王戰結束無法離開」(v3.15.36 玩家回報案例:
+      //   round 11、p1 四人 HP 全 0、最後 sync reason=force-collapse-at-11 後再無 sync)。
+      //   修:applyWire 套完狀態後若偵測「p1 全員 curHp<=0(玩家方全滅)」且戰鬥未結算 →
+      //      自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,與 _wbClientCheckEnded 同機制),
+      //      不依賴房主再廣播 ended。世界 BOSS 戰玩家無復活機制,p1 全滅=確定戰敗,不會誤判;
+      //      _wbAdvBattleEnded / _wbClientForceCheckWin 雙旗標守門避免重複觸發,新戰鬥會 reset。
+      try{
+        var _Gc = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+        if(_Gc && Array.isArray(_Gc.p1) && _Gc.p1.length > 0
+           && !window._wbAdvBattleEnded && !window._wbClientForceCheckWin){
+          var _allP1Dead = _Gc.p1.every(function(h){ return !h || (h.curHp || 0) <= 0; });
+          if(_allP1Dead){
+            console.warn('[WB-Client v3.15.48] 偵測玩家方全滅(p1 全 curHp<=0)但未結算 → fallback 自主觸發 checkWin 進結算(不等 meta.status=ended)');
+            window._wbClientForceCheckWin = true;
+            setTimeout(function(){
+              try{ if(typeof window.checkWin === 'function') window.checkWin(); }
+              catch(_eCw){ console.warn('[WB-Client v3.15.48] fallback checkWin 例外', _eCw); }
+            }, 500);
+          }
+        }
+      }catch(_eP1Dead){ console.warn('[WB-Client v3.15.48] p1 全滅 fallback 例外', _eP1Dead); }
     }catch(eA){
       console.error('[WB-Client v6] applyWireToG 失敗', eA);
     }
