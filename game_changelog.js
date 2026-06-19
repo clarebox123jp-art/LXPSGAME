@@ -13,6 +13,39 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.51(2026-06-19)— 🐉 5 條新龍王至寶上線(雷/海/暗/光/幻 完整實裝)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.51',
+    date: '2026-06-19',
+    brief: [
+      '🐉【5 條新龍王的至寶正式登場!】',
+      '   ・打倒世界 BOSS 排名靠前可獲得的龍王至寶,新增 <b>雷龍王之翼、海龍王之爪、暗龍王之骸、光龍王之羽、幻龍王之角</b> 5 件,能力全部開放!',
+      '   ・每件至寶都有<b>屬性剋制</b>:受到剋制屬性傷害 -10%(每升 1 級再 +3%)、對該屬性敵人傷害 +10%,再加上各自的<b>專屬免疫</b>與<b>每回合成長</b>固有效果。',
+      '⚔️【5 件新至寶能力一覽】',
+      '   ・<b>雷龍王之翼</b>:速度+15、受水/對水、免疫麻痺與遲緩、每回合速度 +5%(最高 +30%)。',
+      '   ・<b>海龍王之爪</b>:HP+15、受火/對火、免疫反彈傷害與冰凍、每回合最大 HP +5%(最高 +30%)。',
+      '   ・<b>暗龍王之骸</b>:特技+15、受光/對光、免疫查封與死亡宣告、每回合傷害 +5%(最高 +30%)。',
+      '   ・<b>光龍王之羽</b>:特技+15、受暗/對暗、免疫封印技能與失明、每回合傷害 +5%(最高 +30%)。',
+      '   ・<b>幻龍王之角</b>:HP/攻/特各 +5、受普攻/對普攻、免疫魅惑與嘲諷、每回合技能消耗 -1(最多 -5,最低 1)。',
+      '🔧【炎龍王之牙 / 森龍王之鬚 屬性更正】',
+      '   ・<b>炎龍王之牙</b>改為「受草/對草」+ 免疫燃燒、封印普攻、睡眠;<b>森龍王之鬚</b>改為「受土/對土」+ 免疫減療、禁療、中毒(對齊龍王屬性相剋環)。',
+      '📖【魔物圖鑑修正】',
+      '   ・5 條新龍王現在正確顯示在<b>魔物圖鑑「世界 BOSS」區</b>(原本誤跑到英雄圖鑑)。',
+    ],
+    items: [
+      '★ v3.15.51【5 新龍王至寶 combat 全實裝 index.html】TAIWAN_TREASURES 5 件 comingSoon 全開放:雷龍王之翼(spd+15/waterDmgReduce+waterDmgBonus/免疫 para+slow/spdRampPerRound)、海龍王之爪(hp+15/fireDmgReduce+fireDmgBonus/免疫反彈+freeze/hpMaxRampPerRound)、暗龍王之骸(sp+15/lightDmgReduce+lightDmgBonus/免疫 nosell+deathmark/atkRampPerRound)、光龍王之羽(sp+15/darkDmgReduce+darkDmgBonus/免疫 seal+forecast/atkRampPerRound)、幻龍王之角(hp/atk/sp+5/normalAtkDmgReduce+normalAtkDmgBonus/免疫 charm+taunt/skillCostReducePerRound)。',
+      '★ v3.15.51【受X/對X 18 元素 hook(doDmg FT1-FT18)】新增 9 個元素減免/加成 hook(windDmgReduce/waterDmgReduce/waterDmgBonus/fireDmgBonus/lightDmgReduce/lightDmgBonus/darkDmgReduce/darkDmgBonus/normalAtkDmgReduce);因屬性更正,FT1/FT3/FT6 持有者改名:受火→海龍王之爪、受草→炎龍王之牙、受土→森龍王之鬚,並把舊名 火龍王之牙/草龍王之鬚 一併改為 炎龍王之牙/森龍王之鬚。全程鏡像既有 pattern、dmg 後插入、無 && 短路(鐵律 1.110)。',
+      '★ v3.15.51【12 狀態免疫(addStatus 中央攔截)】炎封印普攻(noatk)/睡眠(sleep)、森中毒(poison 含猛毒)、雷麻痺(para)/遲緩(slow+spddown)、海冰凍(freeze)、暗查封(nosell)/死亡宣告(deathmark)、光封印技能(seal)/失明(forecast+blind)、幻魅惑(charm)/嘲諷(taunt+strongTaunt),對齊地龍王之麟慣例,早 return 擋掉。',
+      '★ v3.15.51【海龍王之爪免疫反彈(只反彈,不反擊)】新增 doDmg FT18:opts.isReflect 真反彈對持有者歸 0。專標 6 個反彈點(反域 reverseDomain/警長正義制裁/日月潭靈鏡 reflectChance/台灣藍鵲鏡盾/仙人掌針狀葉/武鬥家金鐘罩)isReflect:true;反擊/還手 與「爆發/技能避免還手迴圈」的 isRebound 一律不擋。',
+      '★ v3.15.51【3 遞減固有】速度遞減(_effSpd turn-order +5%/回,上限+30%,讀 G.round 不改 spd);技能消耗遞減(skillCost 每回合 -1,最多 -5,最低 1,確定性折扣 UI 同步);HP上限遞減(nextRound G.round++ 後 mutate h.hp +5%/回,上限+30%,補等量當前 HP,_hpRampBase 只記一次)。',
+      '★ v3.15.51【顯示層同步】4 旗標集(免疫/遞減旗標不被當 +N% 顯示)+ 3 標籤表(新 % 鍵中文標籤)同步,順手補地龍王 v3.15.17 漏列的 earthDmgReduce/windDmgBonus 標籤。',
+      '★ v3.15.51【魔物圖鑑修正】5 新龍王(風暴雷/深淵海/邪骨暗/神聖光/星辰幻)補進 BOSS_NAMES + WORLD_BOSS_LIST + MONSTER_AVTR(原 v3.15.50 加 HERO_DB 時漏加 → 誤列英雄圖鑑當 SR,同 v3.15.17 地龍王事故)。',
+      '★ v3.15.51【BOSS 戰天賦對齊 world-boss.js 甲+乙】甲:校對 8 龍王圖鑑天賦文字一致(全內部一致,僅修地龍王註解 -40%→-30%)。乙:山岳地龍王 combat 強力減傷由 -40% 對齊圖鑑文字 -30%(傷害 ×0.60→×0.70)。',
+      '★ v3.15.51【版本鏈】4 GAME 同步點 v3.15.50→v3.15.51,_vers[index.html]/[world-boss.js]/[game_changelog.js] 同步 v3.15.51;world-boss-ui.html 維持 v3.15.50、admin_panel.js/arena.js v3.15.49、hero_db.js v3.15.44。本輪改 index.html + world-boss.js + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.31)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.50(2026-06-19)— 🐉 世界 BOSS 8 龍王大補完(雷龍王登場 + 素質天賦圖鑑 + 露臉)
   // ════════════════════════════════════════════════════════════════════
   {
@@ -400,22 +433,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.15.32【底部選單字體最大化 index.html CSS】老師需求「字體放到最大且不超出格子、維持版面」。.adv-nav-label 基礎字體(2 字 label:召喚/英雄/至寶/魔物/寵物/好友/背包/獎章)放大為 clamp(13px,1.65vw,25px)(原 11/1.25vw/18);「序號兌換」「更新日誌」4 字 label 由 nth-of-type(9)(10) 獨立設 clamp(11px,1.35vw,20px) 確保 fit 不溢出(各自最大化、不遷就最長那兩個);.adv-nav-icon 維持 clamp(17px,2vw,28px) 不動 → 仍主導按鈕高度、nav 版面不變;保留 white-space:nowrap + text-overflow:ellipsis 作極端寬度兜底。順手移除序號兌換/更新日誌已被 CSS !important 蓋掉的 inline font-size:80% 死碼,字體完全由 CSS 控',
       '★ v3.15.32【版本鏈】3 主同步點 v3.15.31→v3.15.32(本輪只改 index.html CSS + game_changelog.js)。hero_db.js 維持 v3.15.29、admin_panel.js v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.31(2026-06-17)— 🔧 後台管理工具優化(一般玩家無感)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.31',
-    date: '2026-06-17',
-    brief: [
-      '🔧【系統維護】',
-      '   ・本次為後台管理工具的小幅優化,一般玩家的遊戲內容與規則<b>完全不受影響</b>。',
-    ],
-    items: [
-      '★ v3.15.31【管理員指令冷卻全面自動繞過 index.html】老師需求:管理員白名單帳號登入後「自動」繞過 5 類冷卻/每日限制(不再需要手動到 GM 後台按「解除冷卻」)。① 知識王每日挑戰:原 v5820 彈窗確認解除改為「自動放行」— _kingShowEntryPopup 偵測 _todayClaimed 時,管理員自動清 _todayClaimed/_snapshot/_isPlaying 後續往下進全新挑戰流程,不再彈窗(一般玩家照舊提示「08:00 再來」並 return) ② 世界BOSS每日次數:canEnter 的 _allowed 改 (_isAdmin ? true : _used<_effectiveLimit) ③ 手動雲端同步:10 秒 cooldown 與每日 30 次上限兩處均加 !_isAdminCS 繞過 ④ 預習練習每日 500 幣:結算 _canEarn 改 (isAdmin || _todayCoins<500) ⑤ 好友借用獎勵每日 3 次:擋點加 !_isAdminFB 繞過。皆以 window._isAdminUser() 判定,僅影響管理員白名單帳號',
-      '★ v3.15.31【副作用備忘(僅管理員帳號)】雲端同步繞過 10 秒冷卻後,管理員若短時間大量手動同步會增加 Firestore 寫入(Spark 配額);預習/好友/世界BOSS 繞過會使管理員帳號的每日統計數字超出常規(屬測試帳號預期行為)。一般玩家不受任何影響',
-      '★ v3.15.31【版本鏈】3 主同步點 v3.15.30→v3.15.31(本輪只改 index.html + game_changelog.js)。hero_db.js 維持 v3.15.29、admin_panel.js v3.15.26、world-boss.js v3.15.17、world-boss-ui.html v3.15.21',
     ],
   },
 ];
