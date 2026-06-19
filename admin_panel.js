@@ -1151,12 +1151,14 @@ async function _showAdminStatsPanelImpl(){
           列出最近的鬥技場戰鬥記錄,按「平均單回合傷害」排序,異常高的(&gt; 800/回合)會被標紅。<br>
           <b style="color:#ffaa66;">🎫 刪除+補償 1 券:</b>判定為 BUG 異常戰鬥時用 — 刪除記錄 + 補償 1 張鬥技場入場券。<br>
           <b style="color:#ffaaaa;">🗑️ 純刪除:</b>單純刪除記錄,不補償(極端作弊行為使用)。<br>
+          <b style="color:#aaccff;">🔍 傷害明細:</b>展開該場「逐回合 × 逐英雄 × 技能」造成的傷害(原始計算值),用來查出是哪隻英雄、哪個技能造成異常傷害。<br>
           <span style="color:#aaa;font-size:12px;">
-            雲端儲存於 <code>arenaBattles/{uid_ts}</code>;每場結算後上傳。
-            排行榜由此 collection 即時聚合,刪除記錄 = 該玩家的鬥技之證從排行榜減去
-            (勝 -3 / 平 -2 / 敗 -1)。<br>
+            雲端儲存於 <code>arenaBattles/{uid_ts}</code>(明細在 <code>arenaDamageDetail/{uid_ts}</code>);每場結算後上傳。
+            <b style="color:#88dd99;">刪除記錄不會扣到玩家的鬥技之證</b> — 持有量在
+            <code>players/{uid}.arenaZhengHeld</code>、排行榜本週證數在 <code>stats/global.arenaWeekly</code>,
+            兩者皆與這份稽核記錄無關(刪除只是移除這筆審核資料)。<br>
             入場券寫到 <code>players/{uid}.playerBackpack.arena_entry_ticket</code>(上限 5 張)。
-            週一 08:00 結算前 GM 可自由處理 BUG 異常戰鬥,玩家側使用入場券下版本實作。
+            週一 08:00 結算前 GM 可自由處理 BUG 異常戰鬥。
           </span>
         </div>
 
@@ -5672,10 +5674,11 @@ async function _showAdminStatsPanelImpl(){
         const tsStr = b.ts ? new Date(b.ts).toLocaleString('zh-TW',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '(無)';
         const heroesStr = (b.heroes || []).join('、') || '(無)';
         const playerStr = b.displayLabel || b.email || (b.uid && b.uid.slice(0,10)) || '(未知)';
-        return '<div data-docid="' + _escapeAttr(b._docId) + '" style="'
+        return '<div style="margin-bottom:6px;">'
+          + '<div data-docid="' + _escapeAttr(b._docId) + '" style="'
           + 'background:' + (isAbn ? 'rgba(200,40,40,0.2)' : 'rgba(40,40,60,0.4)') + ';'
           + 'border:1px solid ' + (isAbn ? '#cc6666' : 'rgba(255,180,80,0.2)') + ';'
-          + 'border-radius:5px;padding:7px 10px;margin-bottom:6px;'
+          + 'border-radius:5px;padding:7px 10px;'
           + 'display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;">'
           + '<span style="font-weight:800;color:' + (isAbn ? '#ff8888' : '#ffcc99') + ';min-width:70px;">'
           + (isAbn ? '⚠ ' : '') + '平均 ' + (b.avgDmgPerRound || 0) + '</span>'
@@ -5684,6 +5687,11 @@ async function _showAdminStatsPanelImpl(){
           + '<span style="color:#fff;font-weight:700;min-width:120px;">' + _escapeHtml(playerStr) + '</span>'
           + '<span style="color:#aaa;flex:1;min-width:140px;">「' + _escapeHtml(b.teamName) + '」 ' + _escapeHtml(heroesStr) + '</span>'
           + '<span style="color:#888;font-size:11px;min-width:90px;">' + tsStr + '</span>'
+          // ★ v3.15.54(2026-06-19)— 老師需求 1:逐回合×逐英雄×技能 傷害明細(查異常傷害來源)
+          + '<button class="_admin-arena-battles-detail" data-docid="' + _escapeAttr(b._docId) + '" '
+          + 'style="padding:3px 8px;font-size:11px;background:rgba(80,140,220,0.3);'
+          + 'border:1px solid #6699dd;color:#aaccff;border-radius:4px;cursor:pointer;'
+          + 'font-family:inherit;font-weight:700;">🔍 傷害明細</button>'
           + '<button class="_admin-arena-battles-del" data-docid="' + _escapeAttr(b._docId) + '" '
           + 'style="padding:3px 8px;font-size:11px;background:rgba(200,60,60,0.3);'
           + 'border:1px solid #cc6666;color:#ffaaaa;border-radius:4px;cursor:pointer;'
@@ -5700,6 +5708,11 @@ async function _showAdminStatsPanelImpl(){
           + 'style="padding:3px 8px;font-size:11px;background:rgba(120,80,80,0.3);'
           + 'border:1px solid #aa7777;color:#ddbbbb;border-radius:4px;cursor:pointer;'
           + 'font-family:inherit;">🧹 清此玩家</button>'
+          + '</div>'
+          // 明細展開區(預設收合,點「🔍 傷害明細」後載入)
+          + '<div class="_admin-arena-detail-box" data-docid="' + _escapeAttr(b._docId) + '" '
+          + 'style="display:none;background:rgba(20,28,48,0.7);border:1px solid rgba(100,150,220,0.35);'
+          + 'border-top:none;border-radius:0 0 5px 5px;padding:8px 12px;font-size:12px;color:#cde;"></div>'
           + '</div>';
       });
 
@@ -5716,6 +5729,90 @@ async function _showAdminStatsPanelImpl(){
       listEl.querySelectorAll('._admin-arena-battles-clear-user').forEach(btn => {
         btn.onclick = () => _clearByUid(btn.dataset.uid, btn.dataset.label);
       });
+      // ★ v3.15.54 — 傷害明細展開(老師需求 1)
+      listEl.querySelectorAll('._admin-arena-battles-detail').forEach(btn => {
+        btn.onclick = () => _toggleDetail(btn.dataset.docid, btn);
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v3.15.54(2026-06-19)— 老師需求 1:逐回合×逐英雄×技能 傷害明細展開
+    //   讀 arenaDamageDetail/{docId}(docId 與 arenaBattles 對齊)→ 渲染表格。
+    //   傷害為「原始計算值」(未受溢殺截斷),爆量異常才看得出公式 BUG。
+    // ════════════════════════════════════════════════════════════════════
+    const _detailCache = {};  // docId → detail payload(避免重複拉)
+    async function _toggleDetail(docId, btn){
+      if(!docId) return;
+      const box = listEl.querySelector('._admin-arena-detail-box[data-docid="' + (window.CSS && CSS.escape ? CSS.escape(docId) : docId) + '"]');
+      if(!box) return;
+      // 已展開 → 收合
+      if(box.style.display !== 'none' && box.dataset.loaded === '1'){
+        box.style.display = 'none';
+        if(btn) btn.textContent = '🔍 傷害明細';
+        return;
+      }
+      box.style.display = 'block';
+      if(btn) btn.textContent = '🔼 收合明細';
+      // 已快取 → 直接渲染
+      if(_detailCache[docId]){ box.innerHTML = _renderDetailHtml(_detailCache[docId]); box.dataset.loaded = '1'; return; }
+      box.innerHTML = '<span style="color:#88aadd;">載入明細中…</span>';
+      try{
+        const sdk = await _getSdk();
+        if(!sdk || !sdk.doc) throw new Error('Firestore SDK 未就緒');
+        // getDoc 可能不在 _fbFns,改用 window._fbFns.getDoc 或動態 import
+        let getDoc = (window._fbFns && window._fbFns.getDoc) || null;
+        if(!getDoc){
+          const m = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+          getDoc = m.getDoc;
+        }
+        const snap = await getDoc(sdk.doc(window._fbDb, 'arenaDamageDetail', docId));
+        if(!snap || !snap.exists()){
+          box.innerHTML = '<span style="color:#cc9966;">（查無此場傷害明細 — 可能是舊場次,或 arenaDamageDetail 規則尚未在 Firebase Console 部署）</span>';
+          box.dataset.loaded = '1';
+          return;
+        }
+        const data = snap.data() || {};
+        _detailCache[docId] = data;
+        box.innerHTML = _renderDetailHtml(data);
+        box.dataset.loaded = '1';
+      }catch(e){
+        console.warn('[admin arena detail]', e);
+        box.innerHTML = '<span style="color:#ff8888;">❌ 明細載入失敗:' + _escapeHtml(e && e.message || '未知錯誤')
+          + '（若為權限錯誤,請確認 arenaDamageDetail 規則已部署)</span>';
+        box.dataset.loaded = '1';
+      }
+    }
+
+    function _renderDetailHtml(data){
+      const detail = Array.isArray(data.detail) ? data.detail : [];
+      if(!detail.length) return '<span style="color:#cc9966;">（這場沒有可顯示的我方傷害明細)</span>';
+      const ABN_HIT = 5000;  // 單回合單英雄 > 5000 原始傷害標紅(可調)
+      let html = '<div style="margin:4px 0 8px;color:#9bd;font-weight:700;">'
+        + '🔍 逐回合 × 逐英雄 × 技能 傷害明細　'
+        + '<span style="color:#889;font-weight:400;font-size:11px;">（原始計算值,未受溢殺截斷;原始總傷 '
+        + (data.totalDmg || 0) + '）</span></div>';
+      detail.forEach(function(rd){
+        const r = rd.r || 0;
+        const heroes = Array.isArray(rd.h) ? rd.h : [];
+        html += '<div style="margin:6px 0;padding:6px 8px;background:rgba(40,55,90,0.5);border-radius:4px;">';
+        html += '<div style="color:#ffcc88;font-weight:800;margin-bottom:3px;">第 ' + r + ' 回合</div>';
+        heroes.forEach(function(h){
+          const isAbnH = (h.d || 0) > ABN_HIT;
+          const byArr = Array.isArray(h.by) ? h.by : [];
+          const bySrc = byArr.map(function(x){
+            return _escapeHtml(x.s || '?') + ' <b style="color:#ffd;">' + (x.d || 0) + '</b>';
+          }).join('　/　');
+          html += '<div style="padding:2px 0 2px 10px;border-left:2px solid '
+            + (isAbnH ? '#ff7766' : 'rgba(120,160,220,0.4)') + ';margin:2px 0;">'
+            + '<span style="color:' + (isAbnH ? '#ff9988' : '#dde') + ';font-weight:700;">'
+            + (isAbnH ? '⚠ ' : '') + _escapeHtml(h.n || '?') + '</span>'
+            + ' <span style="color:#fff;">合計 ' + (h.d || 0) + '</span>'
+            + '<span style="color:#9ab;font-size:11px;"> 　←　' + bySrc + '</span>'
+            + '</div>';
+        });
+        html += '</div>';
+      });
+      return html;
     }
 
     async function _deleteOne(docId){
@@ -5748,8 +5845,9 @@ async function _showAdminStatsPanelImpl(){
     //     3. 再刪除 arenaBattles/{docId} 記錄
     //     4. UI 顯示「✅ 已刪除 N 筆,並補償 X 張入場券」
     //   背後呼叫 arena.js 的 window._arenaAdminDeleteAndCompensate(docId, n)
-    //   注意:鬥技之證的「扣除」是隱性的 — 排行榜 _fetchLeaderboard 從 arenaBattles 即時聚合,
-    //         刪掉這筆 → 該玩家的 zheng 自動減 (3/2/1)。本機 localStorage 數字不動,但排行榜會正確。
+    //   ★ v3.15.54 更正:v3.15.49 起排行榜改讀 stats/global.arenaWeekly(不再從 arenaBattles 聚合),
+    //         且鬥技之證持有量在 players/{uid}.arenaZhengHeld。故刪除這筆記錄「不會」扣到玩家的
+    //         鬥技之證(持有量與排行榜證數皆不受影響),只是移除這筆稽核資料。
     // ════════════════════════════════════════════════════════════════════
     async function _deleteAndCompensate(docId, uid, label){
       if(!docId) return;
@@ -5757,9 +5855,9 @@ async function _showAdminStatsPanelImpl(){
       const ok = window._customConfirm
         ? await window._customConfirm(
             '確定要對「' + _label + '」執行:\n\n'
-            + '  1. 刪除此筆鬥技場戰鬥記錄(排行榜的鬥技之證自動扣除)\n'
+            + '  1. 刪除此筆鬥技場戰鬥記錄(不會扣到玩家的鬥技之證)\n'
             + '  2. 補償 1 張「鬥技場入場券」到該玩家持有上限 5 張內\n\n'
-            + '⚠ 玩家本機顯示的鬥技之證數字不會即時更新,但排行榜聚合會反映扣除。',
+            + '✅ 玩家的鬥技之證持有量與排行榜證數皆不受刪除影響。',
             '⚠ 確認:刪除 + 補償 1 張入場券')
         : confirm('對「' + _label + '」刪除此筆記錄並補償 1 張入場券?');
       if(!ok) return;

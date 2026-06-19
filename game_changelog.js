@@ -13,6 +13,60 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.55(2026-06-19)— 🏜 埃及關完整掉落物 + 魔物圖鑑「埃及探險」區
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.55',
+    date: '2026-06-19',
+    brief: [
+      '🏜【埃及關沙漠小怪掉落物上線!】',
+      '   ・6 隻沙漠小怪(木乃伊貓、流沙眼鏡蛇、卡諾卜壇怪、神秘圖騰、沙漠毒蠍、仙人掌怪)現在會掉落專屬賣錢物品,可前往超商賣出換知識幣。',
+      '   ・沙漠小怪掉落率提升到 <b>60%</b>,而且練功用的經驗書全程都是<b>精裝版</b>!',
+      '👑【埃及雙王掉落稀世珍寶!】',
+      '   ・打倒法老王有機會掉落 <b>黃金法老面具(可賣 60,000 知識幣)</b>;打倒埃及豔后有機會掉落 <b>尼羅河女王之珠(可賣 55,000 知識幣)</b>!',
+      '   ・埃及雙王的<b>超越極限果實掉落率大幅提升到 25%</b>,快去挑戰金字塔王座!',
+      '👹【魔物圖鑑新增「🏜 埃及探險」專區!】',
+      '   ・現在可在魔物圖鑑查看埃及關的<b>雙王 BOSS(完整 BOSS 能力)</b>、6 隻路邊小怪與稀有的<b>聖甲蟲</b>,每隻都有完整的背景介紹與掉落資訊。',
+    ],
+    items: [
+      '★ v3.15.55【埃及 6 沙漠小怪賣錢掉落物 index.html】新增 BACKPACK_ITEM_DEF + SHOP_SELL_ITEMS 6 物(eg_mummy_cloth 24/eg_cobra_fang 27/eg_canopic_shard 28/eg_totem_fragment 25/eg_scorpion_sting 26/eg_cactus_needle 22;賣值較日本路邊怪 18~23 約 +20%)。新增 EGYPT_MINI_DROP_MAP(6 mob→item)+ 結算 if-else 新增埃及小怪分支:掉落率 0.60(=日本路邊 0.50 +20%)× 難度/祝福倍率。原本 6 mob 落入 else 用 _MINI_DROP_MAP 查無→不掉落,現補齊。',
+      '★ v3.15.55【埃及小怪經驗書精裝化 index.html】場景結算 25% 經驗書:_adventureStage===egypt 改發 hero_exp_book_deluxe(📕 精裝版),其餘關卡維持 hero_exp_book(📗 一般版),對齊魔物圖鑑顯示。',
+      '★ v3.15.55【埃及雙王賣錢物品 index.html】新增 eg_pharaoh_mask(黃金法老面具 60000)/eg_cleopatra_pearl(尼羅河女王之珠 55000)至 BACKPACK_ITEM_DEF + SHOP_SELL_ITEMS。埃及雙王結算區(_adventureStage===egypt)新增 _EGYPT_BOSS_DROPS,_egKings 各自獨立 20% × 祝福(上限 95%)掉落,不限評價(比照日本 BOSS 掉落模式)。',
+      '★ v3.15.55【埃及關爆發果實基礎掉落率 25% index.html】主 BOSS 超越極限果實掉落:_adventureStage===egypt 時 _fruitDropRate 由 BOSS基礎EXP×0.1% 改為固定 0.25(其餘關卡維持原公式)。',
+      '★ v3.15.55【魔物圖鑑埃及探險區 index.html _buildMonsterPage】原 EG_BOSS_LIST/EG_MOB_LIST/EG_RARE_LIST(v3.15.17 已定義且在 _monsterDetailList 翻頁清單內)從未在 el.innerHTML render。現補上「🏜 埃及探險」區:makeSection 雙王 BOSS(boss)+ 路邊小怪(mob)+ 稀有小怪(rare),置於台灣環島與世界 BOSS 之間。makeCard 讀 HERO_DB 原始數值 → 雙王顯示 BOSS 能力版(HP 11500/10500);英雄圖鑑仍走 EGYPT_BOSS_HERO_STATS 弱化招募版,兩者並存。',
+      '★ v3.15.55【埃及 9 怪 MONSTER_LORE 完整介紹 index.html】補 9 筆魔物背景介紹(法老王/埃及豔后/木乃伊貓/流沙眼鏡蛇/卡諾卜壇怪/神秘圖騰/沙漠毒蠍/仙人掌怪/聖甲蟲),文案結合古埃及神話與其實際 BOSS/小怪戰技能行為。openMonsterDetail 之 stats/技能(b.s1/s2/burst)/天賦(HERO_TRAIT)皆資料驅動本已具備,僅缺 lore,現補齊。',
+      '★ v3.15.55【埃及掉落資訊 MONSTER_DROPS index.html】6 小怪顯示 50%→60% + 標註賣值;新增法老王(黃金法老面具 20% / 超越極限果實 25%)、埃及豔后(尼羅河女王之珠 20% / 超越極限果實 25%)掉落顯示(於英雄圖鑑詳情頁及魔物圖鑑詳情頁顯示)。',
+      '★ v3.15.55【版本鏈】4 GAME 同步點 v3.15.54→v3.15.55;_vers[index.html]/[game_changelog.js] 同步 v3.15.55。arena.js/admin_panel.js 維持 v3.15.54(本輪未動)、world-boss.js v3.15.51、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.35)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.54(2026-06-19)— ⚔ 鬥技場大調整:碎片門檻減半 + 商店調價 + 至寶卷含龍王
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.54',
+    date: '2026-06-19',
+    brief: [
+      '🔨【靈魂碎片合成自選召喚卷:需求減半!】',
+      '   ・<b>SSR 靈魂碎片</b>:集滿張數由 40 個降為 <b>20 個</b>即可在召喚星空合成 🌟 SSR 自選召喚卷。',
+      '   ・<b>SR 靈魂碎片</b>:集滿張數由 20 個降為 <b>10 個</b>即可合成 ✨ SR 自選召喚卷。',
+      '⚔【鬥技場兌換商店:價格調整】',
+      '   ・SSR 英雄召喚卷:40 → <b>30</b> 鬥技之證;SR 英雄召喚卷:20 → <b>15</b>。',
+      '   ・至寶召喚卷:50 → <b>40</b>;至寶經驗卷軸:10 → <b>5</b>;召喚水晶:5 → <b>3</b>;知識幣 1 萬維持 5。',
+      '💎【至寶召喚卷升級:現在抽得到龍王至寶了!】',
+      '   ・鬥技場「至寶召喚卷」的隨機池由 10 件台灣至寶<b>擴充為 18 件(台灣 10 + 龍王 8)</b>,有機會抽到炎/森/地/雷/海/暗/光/幻龍王的至寶!',
+      '   ・(提醒:星空召喚池仍然只有台灣至寶,龍王至寶只能靠龍王戰排名、老師自選卷、或鬥技場至寶召喚卷取得。)',
+    ],
+    items: [
+      '★ v3.15.54【靈魂碎片合成門檻減半 index.html】_SOUL_SHARD_DEF.ssr.need 40→20、sr.need 20→10(合成/換券函式皆讀 need,改常數即生效);同步更新 _buildSummonPage 合成卡 fallback 預設(40→20、20→10)、SSR 自選介紹、soul_shard_ssr/sr 背包說明、3 處貓空 SR 碎片 toast、好友送禮 SSR/SR 碎片說明,全部文案 40→20 / 20→10。',
+      '★ v3.15.54【鬥技商店調價 index.html ARENA_EXCHANGE_ITEMS】arena_x_ssr_summon 40→30、arena_x_sr_summon 20→15、arena_x_treasure_summon 50→40、arena_x_treasure_exp 10→5、arena_x_summon_crystal 5→3;arena_x_coins_10k 維持 5。同步更新註解清單與至寶卷 desc(註明台灣 10 + 龍王 8)。',
+      '★ v3.15.54【鬥技場至寶卷含龍王 index.html _arenaGrantTreasureVoucher】新增 _ARENA_DRAGON_TREASURE_IDS(8 隻龍王至寶 id),發券時把存在於 TAIWAN_TREASURES 的龍王至寶 push 進 SUMMON_RANDOM_TREASURES.slice() 合併池(去重),再依「未擁有優先」抽 1 件。⚠ 只改鬥技場至寶卷,星空召喚仍走原 SUMMON_RANDOM_TREASURES(龍王 noSummon 不變,v3.15.52 結論不動)。龍王至寶與台灣至寶同存 TAIWAN_TREASURES,_grantTaiwanTreasure/_taiwanTreasureData 通用。同步在至寶圖鑑龍王分支 _howToGet 加註「鬥技場至寶召喚卷(40 證,台灣+龍王 18 件)」管道。',
+      '★ v3.15.54【GM 傷害明細(adminOnly)admin_panel.js + arena.js + index.html】老師需求:鬥技場戰鬥記錄審核可查「逐回合×逐英雄×技能」傷害。① index.html doDmg 既有鬥技場總傷 hook(!_adventureMode)同處旁路收集 G._arenaDmgSources(只記 p1 攻擊者,技能名 opts.skillName→_curSkillName→特技/普攻,amount=原始計算傷害含溢殺) ② arena.js _arenaSubmitBattleLog 結算後聚合 round→hero→skill,旁路寫 arenaDamageDetail/{uid_ts}(docId 對齊 arenaBattles;失敗靜默) ③ admin_panel.js 每筆戰鬥列加「🔍 傷害明細」展開鈕,getDoc 讀該場明細,單回合單英雄>5000 標紅。',
+      '★ v3.15.54【⚠ Firestore 規則 — 需手動部署】新增 arenaDamageDetail/{docId} 規則(get/list 限 GM、create 限本人+docId 開頭 uid_+hasOnly 5 欄+型別/時間檢查、update:false、delete 限 GM),比照 arenaBattles 安全模型。未部署時明細寫入會被預設拒絕(僅明細缺,戰鬥記錄與其他功能照常,不會壞)。',
+      '★ v3.15.54【GM 面板舊註更正 admin_panel.js】更正「刪除鬥技記錄會扣排行榜鬥技之證」的過時說明:v3.15.49 起排行榜改讀 stats/global.arenaWeekly(不再從 arenaBattles 聚合),且持有量在 players/{uid}.arenaZhengHeld → 刪除記錄不會扣到玩家鬥技之證。同步改面板說明文字與刪除+補償確認框文案。',
+      '★ v3.15.54【版本鏈】4 GAME 同步點 v3.15.53→v3.15.54;_vers[index.html]/[game_changelog.js]/[arena.js]/[admin_panel.js] 同步 v3.15.54。world-boss.js 維持 v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.34)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.53(2026-06-19)— 🛠 素質點數BUG修復 + 圖鑑改版 + 英雄來源標註
   // ════════════════════════════════════════════════════════════════════
   {
@@ -403,40 +457,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.36【復活無敵僅限 PvE 玩家英雄 index.html】doRevive 的 reviveImmune 賦予條件由「side 為 p1」收緊為「side 為 p1 且非鬥技場」。鬥技場判定沿用既有慣例(_arenaBgmContext===true 或 _adventureMode===false);冒險/台灣/世界BOSS 皆 _adventureMode===true、_arenaBgmContext===false 故保留復活保護。小怪/BOSS 方(p2)本就被 p1 條件排除',
       '★ v3.15.36【埃及雙王互相復活 fd/desc 文字一致 hero_db.js】法老王「法老威儀」+ 埃及豔后「蛇瞳魅影」的 desc/fd「互相復活至 25%HP」改為 12.5%HP(與 BOSS 程式碼 v3.15.25/v3.15.35 實際一致)。爆發「太陽神的審判」fd 的 25% 保留(招募版 Lv1 基底,鐵律 1.160);互相復活僅 BOSS 版有,招募版實際效果不變',
       '★ v3.15.36【版本鏈】3 主同步點 v3.15.35→v3.15.36 + hero_db.js v3.15.33→v3.15.36。world-boss.js 維持 v3.15.34、admin_panel.js v3.15.26',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.35(2026-06-18)— 🛡️ BOSS 鎖血卡死修正 + 埃及豔后復活血量
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.35',
-    date: '2026-06-18',
-    brief: [
-      '🛡️【BOSS 戰手感修正】',
-      '   ・修正 BOSS 跌破半血「鎖血」後<b>整回合所有傷害都變 0</b>的問題——現在 BOSS 鎖血會立即反擊大招,但<b>之後同回合可以正常被打</b>,不再讓你以為打不動。',
-      '   ・埃及豔后與法老王互相復活的血量<b>統一降為 12.5%</b>(原豔后偏高),雙王戰不再因為一直回滿血而拖太久。',
-    ],
-    items: [
-      '★ v3.15.35【BOSS 鎖血整回合免疫移除 index.html】_applyBossLifelineProtection 第一段(50%)鎖血觸發時不再設 target._lifelineImmuneRound(原本會讓該回合所有後續傷害一律歸 0,玩家回報整回合 0 傷害以為打不動)。比照第二段(1HP,v3.15.17 已移除):保命壓住該致命擊 + 立即爆發反擊後,同回合後續攻擊正常結算。兩段保命(50%/1HP)仍各擋一次致命,不會被一擊秒殺',
-      '★ v3.15.35【埃及豔后互相復活血量 25%→12.5% index.html】startTurn + checkWin 兩處互救 hook,豔后被法老王復活的血量由最大HP 25% 降為 12.5%(與法老王被豔后復活的 12.5% 一致;v3.15.25 當時只 nerf 法老王、漏改豔后)。僅 BOSS 版(isEgyptBoss)生效,玩家招募版天賦與圖鑑說明不動',
-      '★ v3.15.35【版本鏈】3 主同步點 v3.15.34→v3.15.35。world-boss.js 維持 v3.15.34、hero_db.js v3.15.33、admin_panel.js v3.15.26',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.34(2026-06-18)— 🌳 龍王棲息地正名 + 龍王不再顯示經驗值
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.34',
-    date: '2026-06-18',
-    brief: [
-      '🌳【小修正】',
-      '   ・翠綠森龍王的棲息地正名為<b>亞馬遜雨林</b>(原天賦說明誤寫太魯閣)。',
-      '   ・所有龍王(世界 BOSS)<b>不再顯示經驗值</b>——牠們本就不發英雄經驗,魔物圖鑑不再標示經驗數字以免誤會。',
-    ],
-    items: [
-      '★ v3.15.34【翠綠森龍王棲息地正名 world-boss.js】天賦「翠之意志」fd 與 v3.13.73 註解的棲息地「太魯閣」更正為「亞馬遜雨林」,與 WORLD_BOSS_LINEUP 的 scene 欄位、背景故事一致',
-      '★ v3.15.34【龍王不再顯示經驗值 index.html】魔物圖鑑:① 卡片(makeCard)對世界 BOSS(b.isWorldBoss)不再顯示「⭐ 基本經驗值」行(原誤顯示 1500);② 詳情頁原「⭐ 基礎EXP:0(世界 BOSS 不發英雄經驗)」改純說明「⭐ 世界 BOSS 不提供英雄經驗值」。世界 BOSS 結算本就不發 EXP,此為顯示層一致化',
-      '★ v3.15.34【版本鏈】3 主同步點 v3.15.33→v3.15.34;world-boss.js v3.15.17→v3.15.34。hero_db.js 維持 v3.15.33、admin_panel.js v3.15.26',
     ],
   },
 ];

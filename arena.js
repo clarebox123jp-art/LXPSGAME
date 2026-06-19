@@ -913,6 +913,68 @@
       await setDoc(doc(window._fbDb, 'arenaBattles', docId), payload);
       console.log('[arena] 戰鬥記錄已上傳: ' + result + ' / 總傷 ' + totalDmg
         + ' / 回合 ' + rounds + ' / 平均 ' + avgDmgPerRound);
+
+      // ════════════════════════════════════════════════════════════════
+      // ★ v3.15.54(2026-06-19)— 老師需求 1:旁路寫「逐回合×逐英雄×技能」傷害明細
+      //   到 arenaDamageDetail/{uid_ts}(docId 與 arenaBattles 對齊,GM 點記錄即可反查明細)。
+      //   ❗失敗一律 try-catch 靜默,絕不影響上面已上傳的戰鬥記錄與獎勵發放。
+      //   ⚠ 需在 Firebase Console 部署 arenaDamageDetail 規則,否則此寫入會被預設拒絕(僅明細缺,
+      //      戰鬥記錄與其他功能照常)。
+      //   資料源:G._arenaDmgSources(index.html doDmg hook 收集,每筆 {round,heroName,skill,amount})。
+      //   結構:detail:[ { r:回合, h:[ { n:英雄, d:該回合總傷, by:[{s:技能, d:傷}] } ] } ]
+      // ════════════════════════════════════════════════════════════════
+      try {
+        var _rawSrc = (G && Array.isArray(G._arenaDmgSources)) ? G._arenaDmgSources : null;
+        if (_rawSrc && _rawSrc.length) {
+          // 聚合:round → hero → skill 累加
+          var _byRound = {};
+          var _grand = 0;
+          _rawSrc.forEach(function (s) {
+            if (!s) return;
+            var _r = Math.max(0, Math.floor(s.round || 0));
+            var _nm = String(s.heroName || '?').slice(0, 24);
+            var _sk = String(s.skill || '普攻').slice(0, 24);
+            var _amt = Math.max(0, Math.floor(s.amount || 0));
+            if (_amt <= 0) return;
+            if (!_byRound[_r]) _byRound[_r] = {};
+            if (!_byRound[_r][_nm]) _byRound[_r][_nm] = { total: 0, skills: {} };
+            _byRound[_r][_nm].total += _amt;
+            _byRound[_r][_nm].skills[_sk] = (_byRound[_r][_nm].skills[_sk] || 0) + _amt;
+            _grand += _amt;
+          });
+          var _detail = Object.keys(_byRound)
+            .map(function (k) { return parseInt(k, 10); })
+            .sort(function (x, y) { return x - y; })
+            .slice(0, 12)   // 鬥技場上限 10 回合,留 12 緩衝
+            .map(function (r) {
+              var _hs = _byRound[r];
+              var _hArr = Object.keys(_hs).slice(0, 8).map(function (n) {
+                var _h = _hs[n];
+                var _byArr = Object.keys(_h.skills)
+                  .map(function (sk) { return { s: sk, d: _h.skills[sk] }; })
+                  .sort(function (x, y) { return y.d - x.d; })
+                  .slice(0, 8);
+                return { n: n, d: _h.total, by: _byArr };
+              });
+              return { r: r, h: _hArr };
+            });
+          var _detailPayload = {
+            uid: user.uid,
+            detail: _detail,
+            totalDmg: _grand,
+            ts: ts,
+            v: 'v3.15.54',
+          };
+          await setDoc(doc(window._fbDb, 'arenaDamageDetail', docId), _detailPayload);
+          console.log('[arena] 傷害明細已上傳 arenaDamageDetail/' + docId
+            + '(' + _detail.length + ' 回合 / 原始總傷 ' + _grand + ')');
+        }
+      } catch (_eDetail) {
+        console.warn('[arena] 傷害明細上傳略過(不影響戰鬥記錄;檢查 arenaDamageDetail 規則是否已部署):', _eDetail);
+      }
+      // 用完即清,防跨場殘留(正常進場也會清;雙保險)
+      try { if (G) G._arenaDmgSources = []; } catch (_) {}
+
       return true;
     } catch (e) {
       console.warn('[arena] _arenaSubmitBattleLog 失敗(不影響獎勵發放):', e);
