@@ -30,7 +30,7 @@
   //  ⚙️  鬥技場核心配置
   // ──────────────────────────────────────────────────────────────────
   const ARENA_CONFIG = {
-    VERSION: 'v3.13.72',   // ★ v3.13.72(2026-06-06)— 鬥技場累積勝敗 winsLifetime/lossesLifetime(只增不減,仿 zhengLifetimeTotal)｜前版 v3.13.61 每週排名發證
+    VERSION: 'v3.15.60',   // ★ v3.15.60(2026-06-20)— 結算後呼叫 window._checkMedalArena(鬥技場成就:首勝/10·30·50累積勝/5連勝)｜v3.13.72 鬥技場累積勝敗 winsLifetime/lossesLifetime(只增不減,仿 zhengLifetimeTotal)
                            //   前版 v3.13.31 — GM 戰鬥記錄審核 API:刪除 + 補償
     TEAM_SIZE: 4,                  // 4v4
     FIXED_LEVEL: 1,                // LV1 公平戰
@@ -745,6 +745,8 @@
     s.zhengTotal = (s.zhengTotal || 0) + zheng;
     // ★ v3.13.32(2026-06-03) — 累積獲得鬥技之證(商店扣減不影響)
     s.zhengLifetimeTotal = (s.zhengLifetimeTotal || 0) + zheng;
+    // ★ v3.15.60 — 鬥技場成就檢查(主程式提供 window._checkMedalArena;win 累積/連勝、平敗中斷連勝)
+    try{ if(typeof window._checkMedalArena === 'function') window._checkMedalArena(result, s.winsLifetime || 0); }catch(_){}
     _writeDailyState(s);
     try {
       localStorage.setItem('lxps_arena_zheng_total', String(s.zhengTotal));

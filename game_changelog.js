@@ -13,6 +13,37 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.60(2026-06-20)— ⚔ 主神奧汀大改 + 🐉 各龍王成就 + 🌑 黑暗球掉落
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.60',
+    date: '2026-06-20',
+    brief: [
+      '⚔【主神奧汀 能力調整】',
+      '   ・「<b>岡格尼爾的制裁</b>」改為消耗 7 能量,造成「攻擊 300% + 目標最大 HP 10%」傷害(對<b>魔王 / 龍王</b>改為 5%,避免一招打太兇)。',
+      '   ・大絕「<b>諸神的黃昏</b>」主動版改版:先讓全隊降到剩 1 滴血,再以<b>全隊失去的 HP 總合 ×400%</b> 痛擊敵人——犧牲越多、爆發越強!(被動全滅復活版調整為最大 HP 總和 ×600%)',
+      '   ・天賦「<b>奧汀之眼</b>」追加效果:奧汀<b>受到的所有傷害減少 30%</b>(天賦升級最高 50%),更能扛住前線。',
+      '🐉【新獎章:迎戰各路龍王】',
+      '   ・世界 BOSS 新增「<b>迎戰八大龍王</b>」系列獎章:挑戰火山炎、翠綠森、山岳地、風暴雷、深淵海、邪骨暗、神聖光、星辰幻龍王各一場(不論勝負)即可獲得;<b>集滿 8 隻</b>再拿下「八龍試煉」!',
+      '🏟【新獎章:鬥技場 & 埃及關】',
+      '   ・<b>鬥技場</b>新增成就:初登鬥技場、累積 10 / 30 / 50 勝、五連勝。',
+      '   ・<b>埃及關</b>追加成就:累積通關 5 / 15 次、聖蟲獵手(累積擊敗聖甲蟲 3 次)。',
+      '🌑【黑暗球掉落加碼】',
+      '   ・挑戰「<b>黑暗球‧希望型態</b>」每場必得 <b>SSR 靈魂碎片 ×1~2</b>,還有機會掉落全新賣錢素材「<b>黑暗之晶核</b>」(可賣 5000 知識幣);超越極限果實掉落率也提高了!',
+      '   ・魔物圖鑑的黑暗球頁面<b>補上完整掉落清單</b>,一眼看清能拿到什麼好東西。',
+    ],
+    items: [
+      '★ v3.15.60【主神奧汀 S1 岡格尼爾的制裁】c:5→7;「攻擊300%(每升+5%)+ 目標最大HP%」之 HP% 由 20% 改 10%、對 BOSS(_zeusIsTrueBoss 權威清單)改 5%。execSkill(_s1HpPct)+ aiUseSkill(_s1HpPctO)雙路徑同步(鐵律1.128);走 doDmg → 世界 BOSS 5000cap 自動套用(鐵律1.31)。SKILL_UPGRADE_DEF label/註解同步 10%/BOSS5%。',
+      '★ v3.15.60【主神奧汀 爆發 諸神的黃昏(老師裁示甲)】主動版重構:先將全隊存活友方降至 HP1,再以「全隊 4 槽失去 HP 總合(含倒下、含奧汀)×400%(每升+10%乘算 _burstMult)」對敵平分(必中無視有利);_sumLostHp = Σ max(0,maxHP-curHP)。被動全滅復活版倍率 ×10→×6(固定不隨等級)。BURST_UPGRADE_DEF rows 改主動 400/440/480/520/560% + 被動固定 600%。',
+      '★ v3.15.60【主神奧汀 天賦 奧汀之眼 追加減傷】doDmg 新增減傷 hook:受到所有傷害減免 30%(每升 1 級 +5%,Lv5=50%,min(0.50,0.30+traitLv*0.05)),與 S2「英靈殿守望者」減傷分開乘算疊加(置於 reductions 區段,比照鋁合金暴龍/S2,% 減傷僅主流程)。hero_db.js desc/fd 只寫基礎 30%(鐵律1.160),逐級進 _TRAIT_LV_INFO。',
+      '★ v3.15.60【獎章成就 +17 枚,全於 index.html MEDAL_DEFS(顯示用 MEDAL_DEFS,新 id 不與 world-boss.js WB_MEDALS 衝突,免動 world-boss.js)】鬥技場 5(arena_first_win/win_10/30/50/streak_5)+ 埃及 3(egypt_clears_5/15、egypt_scarab_3)+ 世界BOSS各龍王 9(wb_dragon_fire/forest/earth/thunder/sea/dark/light/illusion + wb_dragon_all 八龍試煉)。',
+      '★ v3.15.60【獎章頒發 hook】鬥技場:arena.js 結算(result win/draw/loss)後呼叫主程式 window._checkMedalArena(累積勝場 winsLifetime 里程碑 + _medalStats.arenaWinStreak 連勝,平/敗歸零)。各龍王:WB 戰結算勝/敗兩路徑皆呼叫 window._checkMedalWbDragon(window._wbGetCurrentBoss().name)(參戰即計、不限排名;名→medalId 對照,集滿 8 隻補 wb_dragon_all)。埃及:_checkEgyptClearMedal 加 egyptClears 計數、聖甲蟲擊殺加 egyptScarabKills 計數。_medalStats 經 _saveMedals 存 adv_medal_stats 持久化。',
+      '★ v3.15.60【黑暗球‧希望型態 掉落】_ssrShardDropCount 拆 darkorb(隨機 1~2)與 egypt(固定 2)兩 profile;黑暗球新增 25% 黑暗之晶核(id dark_crystal_core,🟣,sell_only sellPrice 5000,補 BACKPACK_ITEM_DEF + SHOP_SELL_ITEMS)、超越極限果實 8%→10%。MONSTER_DROPS 補「黑暗球‧希望型態」完整掉落列(原圖鑑只顯示基礎 EXP)。埃及雙王 SSR 碎片改固定 2。',
+      '★ v3.15.60【碎片/自選券一致性稽核】全站確認 SSR 靈魂碎片合成需求 20 / SR 10(_SHARD_DEF 權威)與自選召喚卷說明一致(教學頁/道具/贈友/toast/圖鑑);修正教學頁「SSR 取得方法」鬥技商店價 40→30(對齊 ARENA_EXCHANGE_ITEMS arena_x_ssr_summon cost:30,v3.15.54 調價後漏改)。',
+      '★ v3.15.60【版本鏈】4 GAME 同步點 v3.15.59→v3.15.60;_vers[index.html]/[game_changelog.js]/[hero_db.js] 同步 v3.15.60、[arena.js] v3.15.54→v3.15.60(含 ARENA_CONFIG.VERSION→v3.15.60)。world-boss.js 維持 v3.15.51(未改)、admin_panel.js v3.15.58、world-boss-ui.html v3.15.50。本輪改 index.html + hero_db.js + arena.js + game_changelog.js 四檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.40)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.59(2026-06-20)— 🌋 新英雄登場:熔岩巨人(5 年 1 班姜同學設計)
   // ════════════════════════════════════════════════════════════════════
   {
@@ -448,26 +479,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.41【戰鬥畫面進場音效 index.html】老師需求:所有戰鬥畫面出現時加氣勢感轉場音效。新增 <audio id=sfx-battle-enter>(進入戰鬥畫面.mp3),掛在 renderField(entranceMode===true)——所有戰鬥類型(冒險/鬥技場兩路/重戰/世界BOSS/PvP/迷你)的戰場進場唯一通用點;直接 play 控制較大音量(0.9,暫停減半)呈現氣勢,尊重 _sfxMuted 靜音、800ms 防抖、播 4 秒後淡出;mid-battle 重繪走 renderField(false) 不誤觸。既有 playBattleStartSfx(開始進攻)/敲鑼未動,於冒險/鬥技場路徑會與新音效疊加',
       '★ v3.15.41【新英雄 喚龍使‧蜜鶴林 — 邏輯層 index.html(資料層在 hero_db.js v3.15.41)】(5 年 3 班 龎苡睿設計)召喚流 HP57/攻10/特18/速15。天青龍=附身式護盾(比照操偶 _puppetHp,doDmg 代承傷害、護盾全擋 return 0→逆鱗不觸發=甲);天賦逆鱗=本體受傷 50%(+5%/級)封印攻擊者;S1 天青龍召喚(護盾=本體 75% HP,3 回合,登場即齊射+每回合行動前特技 120% 連攻隨機 3 次,可 MISS);S2 杳杳香魂(全體特技 100% 傷害+60% 魅惑,龍在場×2/魅惑 70%);爆發 魂芳雲魄(至尊天青龍護盾=本體 200% HP+特技 600% 單體,玩家爆發經 _isPlayerBurstHit 必中)。execSkill+aiUseSkill 雙路徑(1.128)+ SKILL_UPGRADE_DEF/_renderSkillFdWithLv/BURST_UPGRADE_DEF 動態升級顯示(1.139/1.160)+ UI 護盾 HP 條 + SUMMON_RARE_HEROES 稀有池',
       '★ v3.15.41【版本鏈】index.html(乙=補償三槽+合併 summary 過濾／甲=補償寫解鎖紀錄+Lv1 floor／丙=載入 reconcile／丁=守門即時重算 baseline／PLAYER_DOC 修復／戰鬥進場音效／新英雄喚龍使‧蜜鶴林邏輯層)+ hero_db.js(英雄資料層)+ game_changelog.js,4 GAME 同步點 v3.15.40→v3.15.41、_vers[hero_db.js]→v3.15.41。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.40(2026-06-18)— 🛡️ 帳號資料保護大升級(角色/水晶/鬥技之證不再莫名消失)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.40',
-    date: '2026-06-18',
-    brief: [
-      '🛡️【你的資料,從此更安全】',
-      '   ・大幅強化帳號保護:<b>抽到/補發的角色、水晶、鬥技之證、知識幣、台灣至寶</b>等,再也不會因為共用平板、切換帳號或網路不穩而<b>莫名消失或變成別人的</b>。',
-      '   ・現在每次登入都會<b>以雲端最完整的資料為準</b>,自動把散在各處的進度全部撿回來,你看到的永遠是正確、完整的自己。',
-      '   ・若之前有同學的資料曾經出問題,老師現在可以<b>一鍵幫你修復補回</b>。',
-    ],
-    items: [
-      '★ v3.15.40【帳號資料保護「最高規格」六層核心修補 index.html】根因:載入時三槽(live/safe/主檔)只「挑最豐富一槽」,落選槽獨有的英雄/水晶/救援信號被丟掉;且換帳號時六大表記憶體殘留的守門憑證被命名空間架空→從不觸發。修:①新增 _lxpsMergeSlots「跨槽合併」取代挑一槽——累積型(英雄/六大養成表/台灣至寶/友情之心/鬥技之證持有+累積/各類帳本)union 或逐鍵 max、消耗型(知識幣/水晶/背包)取最新存檔槽、_adminRescueSignal 取三槽最大 ts、稽核感知排除「最近一筆解鎖紀錄=admin_delete」的英雄/至寶。②跨帳號污染守門改用 window._memoryOwnerUid(JS 全域變數,與殘留同生命週期,真實反映記憶體屬於誰)取代被命名空間架空的 adv_unlocked_heroes_uid。③lxps_device_owner_uid 列入命名空間白名單(復活 _lxpsEnforceDeviceOwner 換帳號清理)+ _clearAccountLocalData 補清 _friendshipHeart/_giftHistory/_giftLog/_kingChallenge/_crystalCount。④污染熔斷由「本地比雲端多>3隻就整批丟」改為「稽核感知」:逐隻查 _heroUnlockHistory(本人 creatorUid 且最近一筆非 admin_delete→保留;查無紀錄/別帳號/已刪→丟)→ 離線抽到的不誤殺、跨帳號殘留照樣擋、GM 刪除永久生效。⑤gameCloudSave 退化守門新增「背包整包被清空(0鍵但本地有≥3種物品)」防護,不誤擋正常消費',
-      '★ v3.15.40【GM 一鍵帳號重建 index.html + admin_panel.js】新增後端 _fbRebuildAccountFromLedgers(讀三槽合併→用 _heroUnlockHistory/_crystalTransactions/_coinTransactions 帳本反推「應有資料」→比對現況缺漏)/ _fbApplyAccountRebuild(走 _fbCompensatePlayer 三槽 union/max 寫入,只補不減、排除已刪英雄、水晶補到上限99);admin_panel.js 新增「🔧 一鍵帳號重建」卡片(資料救援與重置群組,急救工具下方,三點同步 SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+handler,無 ?. 相容舊 Safari)',
-      '★ v3.15.40【設計取捨】消耗型(幣/水晶/背包)採「最新存檔槽」而非 max:三槽同帳號不同時間寫的,最新槽=最新真相,既尊重最新消費(不退款防刷)又不被舊槽低餘額蓋掉(防遺失)。累積型 union/max 只增不減,結構上不可能造成英雄/累積資源遺失。已被舊版弄壞的帳號:跨槽合併自動撿回英雄/累積資源,消耗型餘額用 GM 一鍵重建(帳本反推)補回',
-      '★ v3.15.40【寫穿透加固 index.html】落實「獲得即上雲、不只存本地」原則:獲得幣 addKnowledgeCoins 本就立即 gameCloudSave;補上 backpackAdd(物品/水晶獲得的中央點)去抖動排程上雲(一連串獲得 2.5 秒內合併成一次同步、最長 15 秒保證落地,避免 Spark 寫入風暴)。英雄(_lxpsCloudInstantUnlock 即時 arrayUnion)、至寶(targeted updateDoc)、召喚結果/冒險解鎖確認(_lxpsInstantPersist)本就即時上雲。一次同步寫當前完整狀態→獲得物品與已扣水晶/幣一起落地。配合載入端跨槽合併「消耗型取最新槽」,共用平板換帳號也不遺失剛獲得的資源',
-      '★ v3.15.40【版本鏈】3 主同步點 v3.15.39→v3.15.40 + game_changelog.js→v3.15.40 + admin_panel.js v3.15.37→v3.15.40(ADMIN_PANEL_VERSION 同步)。arena.js 維持 v3.15.37、hero_db.js v3.15.36、world-boss.js v3.15.34(本輪未動)',
     ],
   },
 ];
