@@ -13,6 +13,29 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.59(2026-06-20)— 🌋 新英雄登場:熔岩巨人(5 年 1 班姜同學設計)
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.59',
+    date: '2026-06-20',
+    brief: [
+      '🌋【新英雄登場:熔岩巨人】',
+      '   ・由 <b>5 年 1 班 姜同學</b>設計的全新英雄「<b>熔岩巨人</b>」加入稀有召喚池!他是沉睡火山的化身,雖然不太會說話,卻愛好和平、樂於助人,能操控整座火山的力量焚燒敵人。',
+      '   ・<b>火山般的熾熱軀體</b>讓他幾乎不怕火,還會反過來灼傷膽敢徒手攻擊他的對手;「<b>熔岩巨砲</b>」必中轟擊、「<b>烈焰力場</b>」化作火焰護盾反傷,大絕「<b>火山之怒</b>」更是岩漿傾瀉、焚盡全場!',
+      '   ・快到<b>召喚星空</b>碰碰運氣,把這位溫柔又強大的火山巨人收入隊伍吧!',
+    ],
+    items: [
+      '★ v3.15.59【新英雄 熔岩巨人 — 學生設計(5 年 1 班 姜亦晟)hero_db.js 12 表 + index.html 邏輯層】定位:火/地雙屬性 SSR,⚔傷害+🛡控場。配點 HP68/攻5/特技24/速3(和=100;HERO_DB hp 欄位=配點×1.3=88)。',
+      '★ v3.15.59【天賦 高溫軀體】受到火屬性傷害減免 50%(每升 1 級 +10%,Lv5=90%);被對手「普通攻擊」時使攻擊者陷入燃燒 2 回合(固定,不隨等級)。火減傷 hook 置於 doDmg rawDmg 階段(只用 rawDmg/target/opts,鐵律1.110);反擊燃燒置於 execAtk 普攻 post-process(判定 target===熔岩巨人 → 對攻擊者 actor 加 hellfire)。',
+      '★ v3.15.59【S1 熔岩巨砲 c7】特技 300%(每升 1 級 +5%)對隨機對手造成火/地隨機屬性傷害、連攻 2 次、必中(ignoreEvasion/noGuard/noHidden)。SKILL_RANDOM_ELEMENTS 登錄火/地隨機。execSkill + aiUseSkill 雙實作(鐵律1.128)。',
+      '★ v3.15.59【S2 烈焰力場 c5】獲得護盾=自身最大 HP×50%(每升 1 級 +5%)+ 我方場上火屬性(element 為 fire)角色數×5;護盾被消耗時將吸收量化為火屬性反彈攻擊者(反彈 hook 置於 doDmg 護盾吸傷處,旗標 _lavaFieldReflect,防遞迴 _isLavaReflect+noReflect)。',
+      '★ v3.15.59【爆發 火山之怒】特技 250%(每升 1 級 +10% 乘算 _burstMult)× 3 次隨機火屬性,必中且無視有利狀態(mustHit/ignoreEvasion/ignoreBuffs);命中者陷入強力燃燒(行動前後各-10HP)+強力禁療,各 2 回合(Lv5/MAX +1=3 回合)。仿神槍手火焰神槍結構,burstName dispatch 自呼 _burstFinish。動畫=神木復仇之火.gif(與山靈古魔共用),音效=地震 sfx-earthquake + 爆炸 sfx-explode。',
+      '★ v3.15.59【資料層】SUMMON_RARE_HEROES 加入(觸發 v3.15.43 auto-sync IIFE 推入 ADMIN_ALL_HEROES + _PLAYER_HERO_NAMES);STUDENT_DESIGNER_HEROES 加入 lsps110167(姜同學,自動納入 _STUDENT_DESIGNED_HERO_SET → 圖鑑標「🎨 學生設計英雄」+ 設計師補發工具可發);另登錄 SKILL_FORCE_ELEMENT(火山之怒=fire)。',
+      '★ v3.15.59【鐵律遵循】1.31(三技/爆發皆非秒殺,走 doDmg → 世界 BOSS 5000cap 自動保護)、1.110(火減傷 hook 時序)、1.128(execSkill+aiUseSkill 雙實作)、1.139(_runBurst 乘 _burstMult)、1.160(fd 只寫 Lv1 基底,升級數字進 _TRAIT_LV_INFO/SKILL_UPGRADE_DEF/BURST_UPGRADE_DEF)、1.98(新英雄 checklist)。',
+      '★ v3.15.59【版本鏈】4 GAME 同步點 v3.15.58→v3.15.59;_vers[index.html]/[game_changelog.js] 同步 v3.15.59 + _vers[hero_db.js] v3.15.44→v3.15.59。admin_panel.js 維持 v3.15.58、arena.js v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50。本輪改 hero_db.js + index.html + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.39)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.58(2026-06-20)— 💰 GM 洗錢查緝工具 + 單件賣出帳本補全
   // ════════════════════════════════════════════════════════════════════
   {
@@ -445,22 +468,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.40【設計取捨】消耗型(幣/水晶/背包)採「最新存檔槽」而非 max:三槽同帳號不同時間寫的,最新槽=最新真相,既尊重最新消費(不退款防刷)又不被舊槽低餘額蓋掉(防遺失)。累積型 union/max 只增不減,結構上不可能造成英雄/累積資源遺失。已被舊版弄壞的帳號:跨槽合併自動撿回英雄/累積資源,消耗型餘額用 GM 一鍵重建(帳本反推)補回',
       '★ v3.15.40【寫穿透加固 index.html】落實「獲得即上雲、不只存本地」原則:獲得幣 addKnowledgeCoins 本就立即 gameCloudSave;補上 backpackAdd(物品/水晶獲得的中央點)去抖動排程上雲(一連串獲得 2.5 秒內合併成一次同步、最長 15 秒保證落地,避免 Spark 寫入風暴)。英雄(_lxpsCloudInstantUnlock 即時 arrayUnion)、至寶(targeted updateDoc)、召喚結果/冒險解鎖確認(_lxpsInstantPersist)本就即時上雲。一次同步寫當前完整狀態→獲得物品與已扣水晶/幣一起落地。配合載入端跨槽合併「消耗型取最新槽」,共用平板換帳號也不遺失剛獲得的資源',
       '★ v3.15.40【版本鏈】3 主同步點 v3.15.39→v3.15.40 + game_changelog.js→v3.15.40 + admin_panel.js v3.15.37→v3.15.40(ADMIN_PANEL_VERSION 同步)。arena.js 維持 v3.15.37、hero_db.js v3.15.36、world-boss.js v3.15.34(本輪未動)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.39(2026-06-18)— 🛡️ 技能防連點刷傷漏洞修正(學霸 五科滿分考卷等)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.39',
-    date: '2026-06-18',
-    brief: [
-      '🛡️【技能不能再連點刷傷害了】',
-      '   ・修正<b>學霸(轉學生)</b>的「五科滿分考卷」(以及其他技能)<b>連續點技能鍵就能無限連發、造成超多段傷害</b>的漏洞。',
-      '   ・現在技能/普攻按下去後,在這個行動播放與結算完成之前會<b>自動上鎖、無法再連點觸發</b>;行動一結束就解鎖,完全不影響正常出招節奏。',
-    ],
-    items: [
-      '★ v3.15.39【玩家行動防連發鎖 index.html】根因:多段非同步技能(如學霸 五科滿分考卷 _doExam,每段 _pSetTimeout 300ms)的「扣能量 + 設 acted」都在 endAction(動畫末段才執行),整段動畫期間 acted 仍為 false、能量尚未扣 → requestAction/selMove 守門全過 → 連點技能鍵 + 確認可在扣能量前重複觸發 execSkill,疊加出無限多段傷害。修:新增 window._pActBusy 行動鎖——於 selMove(涵蓋普攻/S1/S2,在 clearSel 之後)上鎖 _pActBusy=true + 記 _pActBusyTs;requestAction 與 confirmAction 入口偵測「鎖定中且未逾時(8 秒)」即忽略點擊;clearSel(取消)/endAction(行動完成)/startTurn(換回合保險)三處解鎖。8 秒自動逾時確保任何路徑漏解鎖也不會卡死。爆發/休息/物品另有各自流程,不受影響',
-      '★ v3.15.39【版本鏈】3 主同步點 v3.15.38→v3.15.39(本輪僅 index.html 改動)+ game_changelog.js→v3.15.39。admin_panel.js / arena.js 維持 v3.15.37、hero_db.js v3.15.36、world-boss.js v3.15.34',
     ],
   },
 ];
