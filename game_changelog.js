@@ -13,6 +13,33 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.62(2026-06-20)— ⚖ 比例傷害平衡:HP% 上限統一 Lv×20 + 瀕死技不再秒 BOSS/對手
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.62',
+    date: '2026-06-20',
+    brief: [
+      '⚖️【英雄「按血量比例」的傷害,上限統一了】',
+      '   ・有些技能會造成「對手血量百分比」的傷害(例如打對手目前 HP 的 20%)。這類傷害現在<b>全部統一一個上限:英雄等級 × 20</b>,讓高血量 BOSS 戰不會被某幾招無限滾雪球。',
+      '   ・涉及技能:<b>神聖鎚擊、炸彈投擲 / 炸彈連續投擲、青炎爆破、雷鳴、捨命揮斬、支配鎖鍊、死亡宣告(對 BOSS)、主神奧汀的岡格尼爾、機械師的定時炸彈、幼兒園小孩的大聲啼哭</b>。多數是把舊的「等級×10」調成「等級×20」,等於<b>上限提高、可打更多</b>(捨命揮斬同時拿掉額外 +50,支配鎖鍊由「特技×倍率」改成更直覺的「等級×20」)。',
+      '💀【「瀕死 / 秒殺」技,對 BOSS 與鬥技場對手不再「一招秒殺」】',
+      '   ・<b>靈魂收割</b>(吸血鬼):打<b>小怪</b>維持「直接收割倒下」;但對 <b>BOSS、菁英、以及鬥技場對手</b>改成造成「當前 HP 20%(上限 等級×20)」傷害並回等量血,不再一招清場。',
+      '   ・<b>惡鬼撲食</b>(幽幽):對<b>小怪</b>維持「打到剩一半血」;對 <b>BOSS</b> 的特技 300% 加上「等級×20」上限;在<b>鬥技場</b>改成「當前 HP 20%(上限 等級×20)」。',
+      '   ・<b>天降雷罰</b>(天神宙斯):打<b>小怪</b>維持「全變 1 HP」;對 BOSS 的「當前 HP 25%」那段上限由 等級×15 提高到 <b>等級×20</b>(鬥技場對玩家仍沿用原本平衡縮減)。',
+      '   ・<b>死亡宣告</b>(暗法師)對<b>小怪 / 鬥技場</b>維持「2 回合後剩 1 HP」不變,只有對 BOSS 的比例傷害上限跟著提高到 等級×20。',
+      '🏅【GM 獎章挑戰提醒徽章變大、更明顯】',
+      '   ・主選單獎章鍵上的「<b>新增獎章挑戰!</b>」提醒徽章<b>放大了一倍</b>,並修好之前被導覽列裁切、看不完整的問題。',
+    ],
+    items: [
+      '★ v3.15.62【HP% 傷害上限統一 Lv×20】index.html execSkill＋aiUseSkill 雙路徑同步:神聖鎚擊(_maxDmg)、炸彈投擲/連投(_lvCap，S1/S2×玩家/AI 共 4 處)、青炎爆破(_azDmgCap)、雷鳴(_zmMaxDmg)、捨命揮斬(_hgExtraCap，去 +50)、支配鎖鍊(移除 _capMult/_spv 改 _hcHeroLv*20)、死亡宣告 BOSS 段(_maxDmgDM，Lv×10→Lv×20)、奧汀岡格尼爾(HP% 段 Math.min(...,Lv×20)，攻擊 300% 段不限)、機械師定時炸彈(5%maxHP 段 Math.min(...,Lv×20)，固定段不限)、大聲啼哭(加 _cryHeroLv*20)。戰鬥 log/註解 Lv×10→Lv×20。',
+      '★ v3.15.62【瀕死/秒殺技 BOSS+PVP 改上限傷害】靈魂收割:玩家版 BOSS/菁英/死神段 cap Lv×10→Lv×20，新增「!_adventureMode(鬥技場)」分支=當前 HP 20% 上限 Lv×20+吸血同量(不秒殺)，小怪維持 curHp=0 處決;AI 版同款 BOSS/菁英/PVP 分支(原無條件 doDmg(curHp,piercing) 全處決)。惡鬼撲食(玩家+AI):BOSS 特技 300% 段加 Math.min(...,Lv×20)、新增 else if(_isArena)=當前 HP 20%/Lv×20、小怪維持剩 50%。天降雷罰:HP25% 段 _zrMaxHpDmg Lv×15→Lv×20(特技段不限、PVP 對玩家沿用 ×0.25、小怪維持 1HP)。死亡宣告小怪/PVP 剩 1HP 維持除外。',
+      '★ v3.15.62【審判終結雙保險】judgmentEnd tick 的 BOSS 判定加 _isWorldBossTarget(t) OR 條件(belt-and-suspenders;BOSS_NAMES 已含 8 龍王，本次為未來防呆);鬥技場(!_adventureMode)同樣走 20% 上限不秒殺。',
+      '★ v3.15.62【GM 獎章徽章 UI】_updateGmMedalW1Badge:徽章 font 11→22、padding/radius/top 放大;修 #adv-medal-btn 浮層被 #adv-bottom-nav .adv-nav-btn{overflow:hidden}(無 !important)裁切 → 對該鍵 inline overflow:visible + z-index 40(全達成時還原)。',
+      '★ v3.15.62【圖鑑 fd 同步】hero_db.js 神聖鎚擊/死亡宣告/炸彈投擲·連投/青炎爆破/捨命揮斬/支配鎖鍊 的 d+fd 上限文字改 Lv×20(地獄將軍 L1835 dead fallback 暫留)。雷鳴/奧汀/定時炸彈/大聲啼哭 fd 本未列上限數字、無不一致。',
+      '★ v3.15.62【版本鏈】4 GAME 同步點 v3.15.61→v3.15.62;_vers[index.html]/[game_changelog.js]/[hero_db.js(v3.15.60→v3.15.62)] 同步。world-boss-ui.html v3.15.61、adv_quiz_db.js 20260620、arena.js v3.15.60、world-boss.js v3.15.51、admin_panel.js v3.15.58 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.42)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.61(2026-06-20)— 🏅 19 枚高階挑戰獎章 + 🧠 機關王題庫換新 + 🐉 龍王頁更新
   // ════════════════════════════════════════════════════════════════════
   {
@@ -446,38 +473,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.43【修復 index.html】① 把「喚龍使‧蜜鶴林」補進 ADMIN_ALL_HEROES(L≈81382 結尾)與 _PLAYER_HERO_NAMES(L≈17378,v3.15.42 已補)② ★防呆自動補列:於 SUMMON_RARE_HEROES 定義後(L≈94121),把 SUMMON_RARE_HEROES(全為玩家可收集稀有英雄、無 BOSS/小怪)中漏列者自動 push/add 進 ADMIN_ALL_HEROES 與 _PLAYER_HERO_NAMES(const 陣列/Set 內容可變)→ 以後新增稀有英雄只要進了 SUMMON_RARE_HEROES,兩份主清單自動同步,絕不再漏',
       '★ v3.15.43【新增英雄鐵律(強化為主清單自動同步)】新英雄主清單 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES 現由「自動補列」保障(只要進 SUMMON_RARE_HEROES);_GM_AUTO_UNLOCK_HEROES(v3.15.42)對管理員實為冗餘(管理員 own-all 走 ADMIN_ALL_HEROES),保留無害',
       '★ v3.15.43【版本鏈】index.html(蜜鶴林補主清單 + 稀有英雄自動補列防呆)+ game_changelog.js,4 GAME 同步點 v3.15.42→v3.15.43。hero_db.js 維持 v3.15.42、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.23)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.42(2026-06-18)— 🔨 靈魂碎片改手動合成自選召喚卷 ＋ 天青龍齊射調整 ＋ SSR 碎片數量分難度
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.42',
-    date: '2026-06-18',
-    brief: [
-      '🔨【靈魂碎片改「手動合成」自選召喚卷】',
-      '   ・SSR / SR 靈魂碎片<b>不再自動換成隨機召喚卷</b>,改成在「召喚星空」的召喚卷視窗裡<b>自己按「🔨 合成」</b>。',
-      '   ・<b>40 個 SSR 靈魂碎片 → 合成 1 張 🌟 SSR 自選召喚卷</b>;<b>20 個 SR 靈魂碎片 → 1 張 ✨ SR 自選召喚卷</b>(自選券可從未收錄英雄中自己挑一名)!',
-      '',
-      '🐉【喚龍使‧蜜鶴林 天青龍調整】',
-      '   ・天青龍(含爆發「魂芳雲魄」的至尊天青龍)的每回合龍息齊射,由<b>連攻 3 次改為 2 次</b>(節奏微調,單發威力不變)。',
-      '   ・天青龍造成傷害時,<b>新增水龍攻擊動畫</b>,出手更有龍威!',
-      '',
-      '🔮【SSR 靈魂碎片掉落數量依難度調整】',
-      '   ・黑暗球、埃及 BOSS:沒自信 <b>1</b> 片 / 普通 <b>2</b> 片 / 我很會 <b>3</b> 片(埃及 BOSS 通關現在也會掉 SSR 靈魂碎片)。',
-      '   ・日本 BOSS:沒自信 <b>1</b> 片 / 普通 <b>1~2</b> 片 / 我很會 <b>2</b> 片。',
-      '',
-      '🚲【木柵防衛戰難度標示】',
-      '   ・木柵冒險關卡介紹的難度改成 <b>★★★ ～ ★★★★★</b>(三隻 BOSS 由易到難)。',
-    ],
-    items: [
-      '★ v3.15.42【乙 靈魂碎片手動合成自選券 index.html】移除自動換券:_gainSoulShard 與收禮路徑不再呼叫 _checkSoulShardConvert(碎片持續累積)。_SOUL_SHARD_DEF 的 ticket 由隨機券 summon_ticket_ssr/sr 改為自選券 summon_ticket_ssr_pick/sr_pick(ticketName/Icon 同步 🌟/✨)。新增 _synthShardToPickTicket(rarity):每次合成 1 張,檢查碎片≥need(SSR40/SR20)、自選券<99(滿則保留碎片不白損)、扣碎片+1 張自選券+_logActivity(source:shard_synth)+音效/banner+gameCloudSave+刷新面板。_openSummonTicketModal 新增「🔨 靈魂碎片合成」區(顯示 SSR/SR 碎片持有/需求 + 合成鈕)。道具 desc/贈友 desc/貓空 toast×3/SSR 取得說明畫面文案全部由「自動換」改為「可在召喚星空🔨合成自選召喚卷」',
-      '★ v3.15.42【天青龍齊射 3→2 index.html + hero_db.js】_heLinDragonBarrage 迴圈 for(<3)→for(<2)、log「連攻 3 次」→「2 次」;BURST_UPGRADE_DEF 魂芳雲魄 5 列「特技×N%×3」→「×2」;hero_db S1 天青龍召喚 + 爆發魂芳雲魄 d/fd「攻擊隨機3次/連攻3次」→「2次」(保留召喚 3 回合不變)。涵蓋 S1 天青龍與爆發至尊天青龍兩種召喚物',
-      '★ v3.15.42【天青龍傷害動畫 index.html】_heLinDragonBarrage 每段 doDmg 後 + 爆發龍息重擊 doDmg 後,呼叫 _skillGifOnCard(target, 水龍攻擊.gif, {cls:_dragon-barrage-gif, dur:1000/1100, opacity:0.95, blend:screen})疊在受擊卡片上',
-      '★ v3.15.42【SSR 碎片掉落數量分難度 index.html】新增 _ssrShardDropCount(profile):darkorb_egypt→沒自信1/普通2/我很會3、japan→沒自信1/普通1~2隨機/我很會2(讀 _advPlayerDifficulty)。黑暗球(darkorb_always)/日本BOSS(japanboss_clear)/新增埃及BOSS(egyptboss_clear,原本無碎片)三點改用此數量;對應劇情視窗/加入夥伴 toast/埃及拾得 toast 顯示實際 ×N',
-      '★ v3.15.42【GM 自動解鎖新英雄 index.html】新增 _GM_AUTO_UNLOCK_HEROES 清單(目前=喚龍使‧蜜鶴林)+ _gmAutoUnlockNewHeroes():管理員載入完成(gameCloudLoad existing-player path)後對清單中未解鎖者呼叫 advSaveUnlockedHero(name,gm_auto)(會寫 _heroUnlockHistory、不被 v3.15.40 稽核熔斷誤刪),idempotent、非管理員不動作。鐵律:每次新增英雄要把英雄名加進 _GM_AUTO_UNLOCK_HEROES',
-      '★ v3.15.42【木柵難度範圍 index.html】adv-info 靜態星級 ★★★☆☆ → 「★★★ ～ ★★★★★」;selectAdvStage 動態星級 key===maokong 顯示範圍、其餘關卡維持 data.stars 原樣',
-      '★ v3.15.42【版本鏈】index.html(乙手動合成/天青龍3→2/傷害動畫/碎片數量分難度/GM自動解鎖/木柵難度範圍)+ hero_db.js(天青龍 fd/desc 3→2 文字),4 GAME 同步點 v3.15.41→v3.15.42、_vers[hero_db.js]→v3.15.42。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.22)',
     ],
   },
 ];
