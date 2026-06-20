@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-20  / 目前主程式版本:v3.15.64(新增學生設計英雄「拘留者」5年1班彭經宸;召喚卷面板補至寶/自選至寶按鈕;修登入誤跳污染彈窗)
+//  最後更新:2026-06-20  / 目前主程式版本:v3.15.65(修正熔岩巨人/拘留者圖鑑缺設計師資訊:HERO_BIO 補 designer 子欄位)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.65(2026-06-20)— ✏️ 修正熔岩巨人/拘留者圖鑑缺設計師資訊
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.65',
+    date: '2026-06-20',
+    brief: [
+      '✏️【修正圖鑑沒顯示設計學生的問題】',
+      '   ・<b>熔岩巨人</b>(5 年 1 班 姜同學)與<b>拘留者</b>(5 年 1 班 彭同學)的圖鑑詳情頁,先前<b>沒有顯示「由 ⃝⃝ 設計」</b>的設計師資訊,現在補上了!',
+      '   ・其他學生設計英雄不受影響(本來就正常顯示)。',
+    ],
+    items: [
+      '★ v3.15.65【圖鑑設計師資訊修復 hero_db.js】根因:圖鑑詳情頁(index.html L≈103781)以 HERO_BIO 條目的「bio.designer 是否存在」作為「顯示設計師區塊」的 gate;_getDesignerLabel(反查 STUDENT_DESIGNER_HEROES→fullName 遮罩成「五年1班姜O晟同學」)僅負責美化標籤,但前提是 bio.designer 存在才會進入該區塊。熔岩巨人(v3.15.59)與拘留者(v3.15.64)新增時 HERO_BIO 只寫了 role/trait/hobby/quote,漏了 designer 子欄位 → 整塊不渲染。修:HERO_BIO 給此 2 隻補 designer:{class:"5年1班",name:"姜同學"/"彭同學",year:2026}。node 交叉比對(37 隻學生英雄 × HERO_BIO.designer)確認補後 0 缺。',
+      '★ v3.15.65【版本鏈】4 GAME 同步點 v3.15.64→v3.15.65;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。實質改 hero_db.js(HERO_BIO 2 處 designer);index.html 僅版本鏈。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.45)。',
+    ],
+  },
   // ════════════════════════════════════════════════════════════════════
   // v3.15.64(2026-06-20)— 🤖 新英雄 拘留者 + 🎟 召喚卷補至寶按鈕 + 🔧 修登入誤跳彈窗
   // ════════════════════════════════════════════════════════════════════
@@ -456,26 +472,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.46【商店數量 +/- 調整改良 index.html】老師需求兩項。① 按「+」超過上限 → 彈窗提示 + 卡在上限 + 「+」按鈕變灰鎖定:新增 _shopMaxBuyable(prod) 回傳 {max,reason}(購買上限取 今日剩餘(dailyLimit-_shopDailyBought)/本週剩餘(weeklyLimit-_shopWeeklyBought)/背包容量(99-backpackGet) 最小值,記錄哪項卡住);shopAdjQty delta>0 且 cur>=max → _showInGameToast(依 reason:已達今日購買上限數量/已達本週購買上限數量/背包已滿)+ 數量卡 max;販賣 bagSellAdjQty delta>0 且 cur>=max → 依卡住原因(果實今日上限→已達今日販賣上限數量;否則→已達持有數量)。② 數量為 1 時按「-」→ 跳到最大循環:shopAdjQty/bagSellAdjQty delta<0 且 cur<=1 → next=max',
       '★ v3.15.46【+ 按鈕鎖定視覺 index.html】新增 _setPlusBtnLocked(btnId,locked) 統一切換「+」按鈕灰/綠(購買販賣共用,+ 按鈕皆綠色系);購買「+」按鈕加 id="shop-plus-{id}"、販賣加 id="bag-plus-{id}",渲染時依「數量是否已達上限」給初始灰/綠樣式,bagSellAdjQty 調整後即時更新(因販賣只更新數字不重渲染),購買 shopAdjQty 重渲染自動反映。+ 按鈕雖變灰仍保留 onclick → 玩家點到仍會跳上限提示',
       '★ v3.15.46【版本鏈】本輪只改 index.html(商店數量調整全在此)+ game_changelog.js。4 GAME 同步點 v3.15.45→v3.15.46。hero_db.js 維持 v3.15.44、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.26)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.45(2026-06-19)— 🛟 帳號資料自救看門狗(讀不到完整記錄時一鍵重新載入)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.45',
-    date: '2026-06-19',
-    brief: [
-      '🛟【讀不到完整遊戲記錄時,一鍵自救】',
-      '   ・偶爾因網路不穩,進冒險選關頁時<b>左上角的代表英雄頭像、暱稱會不見</b>——這通常代表沒有正確讀到你的完整記錄。',
-      '   ・現在系統會自動偵測這個狀況,跳出提示<b>「因為網路連線不穩定,目前沒有正確讀取到您的完整遊戲記錄,請按此重新載入」</b>。',
-      '   ・按下「<b>重新載入</b>」會自動重新整理+重新登入,用<b>雲端最完整的資料</b>蓋掉本機讀錯的資料;載入完成後會顯示<b>英雄、至寶、總等級、知識幣、水晶</b>讓你確認資料回來了!',
-      '   ・(自救後 10 分鐘內不會重複跳出,避免一直打擾。)',
-    ],
-    items: [
-      '★ v3.15.45【帳號污染自救看門狗 index.html】症狀偵測+一鍵自救(根因改過多次仍偶發,改走使用者層自救)。偵測:setInterval 每4秒跑 _advCorruptionWatchdog,守門(已登入+_cloudLoadDone===true+冒險選關頁 #adventure-overlay 開著+未冷卻+未顯示中)後,判定「本機記得暱稱(localStorage lxps_nickname_/_playerNickname/google-name 有值)但畫面暱稱條 #adv-username-bar 隱藏或 #adv-user-name 空」=疑似本地污染(暱稱條顯示條件=#google-name 有文字,污染讀不到則 display:none)。二次確認(1.2s 後再驗一次)防渲染時序瞬間誤判',
-      '★ v3.15.45【自救流程 index.html】_showAdvCorruptionModal 彈全螢幕提示(僅「重新載入」鈕,文案=老師指定)→ _advRepairReload:寫 lxps_advRepairCooldown_{uid}(冷卻10分)+ lxps_advRepairPending(重整後顯示資料確認)+ _lxpsEnforceDeviceOwner(uid)清本機別 uid 殘留 + 清 window._memoryOwnerUid 強制重驗 → location.reload(Firebase auth 持久化自動重登,gameCloudLoad _lxpsMergeSlots 三槽最豐富覆蓋本地污染)',
-      '★ v3.15.45【資料確認畫面 index.html】重整後掛在 gameCloudLoad existing-player 載入成功處(_applySafeData 後、_gmAutoUnlockNewHeroes 旁)呼叫 _advCheckRepairResult(_gUserId):讀 lxps_advRepairPending 標記(本 uid 才彈、彈一次即清)→ _showRepairResultModal 顯示 持有英雄(advGetUnlockedHeroes)/台灣至寶(taiwanTreasureData)/英雄總等級(_heroLevels 加總)/知識幣(_knowledgeCoins)/召喚水晶(_getCrystalBal),含「✓ 確認」鈕',
-      '★ v3.15.45【版本鏈】本輪只改 index.html(看門狗全在此)+ game_changelog.js。4 GAME 同步點 v3.15.44→v3.15.45。hero_db.js 維持 v3.15.44(本輪未改)、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.25)',
     ],
   },
 ];
