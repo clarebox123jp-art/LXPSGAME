@@ -3233,19 +3233,22 @@ const BURST_GIF_DB = {
     sfx:[['sfx-summon-reveal',1.0],['sfx-aso-burst',0.9],['sfx-explode',0.6]],
     tint:'rgba(125,249,255,0.18)'
   },
-  // ★ v3.15.59 — 熔岩巨人 爆發「火山之怒」:神木復仇之火.gif(設計單指定;與山靈古魔共用同一動畫,火屬性橘紅 tint)
+  // ★ v3.15.63 — 熔岩巨人 爆發「火山之怒」改用「地火爆炸.gif」(老師指定);音效維持地震+爆炸
   //   音效=地震(sfx-earthquake) + 爆炸(sfx-explode),對應設計單「地震+爆炸」
+  //   dur=910(地火爆炸.gif 單圈約 0.91s)→ 全螢幕只播 1 次
   '火山之怒': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('神木復仇之火.gif'),
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地火爆炸.gif'),
     sfx:[['sfx-earthquake',1.0],['sfx-explode',0.9]],
-    tint:'rgba(255,72,0,0.20)'
+    tint:'rgba(255,72,0,0.20)',
+    dur:910
   },
-  // ★ v3.13.87 — 藝天使．克雷爾 爆發技「天界彩繪．毀滅與重生」動畫:科幻變化.gif(聖光金白主題)
-  //   爆發效果=復活全隊+回滿+解除不利+強化 buff,搭配女神/治療/強化音效
+  // ★ v3.15.63 — 藝天使．克雷爾 爆發技「天界彩繪．毀滅與重生」改用「大強化.gif」(老師指定)
+  //   爆發效果=復活全隊+回滿+解除不利+強化 buff,搭配女神/治療/強化音效;dur=910(大強化.gif 單圈約0.91s)播 1 次
   '天界彩繪．毀滅與重生': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A7%91%E5%B9%BB%E8%AE%8A%E5%8C%96.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('大強化.gif'),
     sfx:[['sfx-goddess',1.0],['sfx-heal',0.85],['sfx-powerup',0.7]],
-    tint:'rgba(255,233,168,0.20)'
+    tint:'rgba(255,233,168,0.20)',
+    dur:910
   },
   // ★ v3.13.87 — 我的豚豚爆發「超可愛暴擊」動畫:暈眩.gif(設計單指定)
   //   音效=2次撞擊(sfx-crit/punch)+暈眩近似(sfx-cantmove,設計單原指定「小雞叫聲」無專屬音效,以暈眩音近似)
@@ -3335,14 +3338,13 @@ const BURST_GIF_DB = {
     dur:2400  // 給足時間播完 GIF + 音效
   },
   // ★ v3.5.60 — 學生設計英雄系列(鳳凰)爆發特效「神炎之翼」
-  //   GIF:焰尾九連擊.gif(老師指定 5 年 4 班 04 號李同學設計單)
-  //   只播 1 次(老師備註:爆發技 GIF 播 1 次)
+  //   GIF:多火球射線.gif(老師指定 5 年 4 班 04 號李同學設計單)
+  //   dur=2470(多火球射線.gif 單圈約2.47s)→ 全螢幕只播 1 次(改用 dur 控制單圈,移除無效的 once 旗標)
   '神炎之翼': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('焰尾九連擊.gif'),
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('多火球射線.gif'),
     sfx:[['sfx-burn',1.0],['sfx-explode',0.85],['sfx-burst',0.7]],  // 火焰燃燒組合
     tint:'rgba(255,80,20,0.22)',  // 烈焰主題:橙紅色調
-    dur:2200,
-    once:true  // 老師指定:GIF 播 1 次
+    dur:2470
   },
   // ★ v3.5.60 — 學生設計英雄系列(操偶師)爆發特效「魁儡城牆」
   //   GIF:鑽石.gif(老師確認 5 年 2 班 11 號江同學設計單真實檔名)
@@ -3371,12 +3373,12 @@ const BURST_GIF_DB = {
     dur:2400
   },
   // ★ v3.13.76 — 第二隻 UR(陳祈宏老師設計)爆發「魔尊覺醒」
-  //   GIF:召喚上古四凶獸.gif(設計單指定);音效:暗(darkorb)+ 上古凶獸吼(qiongqi,四凶獸之一)+ 爆炸;tint 暗紫魔界
+  //   v3.15.63 改用「魔尊覺醒.gif」(老師指定);音效維持暗(darkorb)+ 上古凶獸吼(qiongqi)+ 爆炸;tint 暗紫魔界;dur=1520(單圈約1.52s)播 1 次
   '魔尊覺醒': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('召喚上古四凶獸.gif'),
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('魔尊覺醒.gif'),
     sfx:[['sfx-darkorb-burst',1.0],['sfx-qiongqi-burst',0.9],['sfx-explode',0.7]],
     tint:'rgba(140,40,200,0.22)',  // 暗紫魔界 tint
-    dur:2600
+    dur:1520
   },
   // ★ v3.14.27 — 第三隻 UR(陳祈宏老師設計)爆發「諸神的黃昏」
   //   GIF:太陽火球.gif(設計單指定);音效:爆炸 + 聖光(sfx-explode + sfx-heal/powerup);tint 金白(諸神黃昏主題)
@@ -3422,10 +3424,19 @@ const BURST_GIF_DB = {
     tint:'rgba(180,0,40,0.22)'
   },
   '三刀射擊': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('斬擊.gif'),
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('三道地裂.gif'),
     sfx:[['sfx-sword',1.0],['sfx-attack',0.85],['sfx-crit',0.7]],
     tint:'rgba(255,80,40,0.22)',  // 怒火紅橘 tint
-    dur:2400
+    dur:840
+  },
+  // ★ v3.15.63(2026-06-20)— 地獄將軍 爆發「死亡怒火」新增全螢幕 GIF:爆炸煙霧2.gif(老師指定)
+  //   原本無 BURST_GIF_DB 條目 → 爆發只有 bannerFX/flashScreen,本版補上全螢幕「爆炸煙霧」特效;
+  //   sfx 故意省略(execBurst 內已 playSfx('sfx-fire'),避免重複觸發或新增音效);
+  //   dur=2900(爆炸煙霧2.gif 幀延遲為 0,瀏覽器約 100ms/幀 × 29 幀)→ 只播 1 次
+  '死亡怒火': {
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('爆炸煙霧2.gif'),
+    tint:'rgba(170,0,0,0.20)',  // 死亡怒火 深血紅 tint
+    dur:2900
   },
   '輻射核砲': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('輻射核砲.gif'),
@@ -3492,15 +3503,14 @@ const BURST_GIF_DB = {
     dur:2400
   },
   // ★ v1.0.20260515.6900 — 學生設計英雄系列(米鈴)爆發特效
-  //   夢幻的茶會 — 設計者董同學指定使用「彩色星星.gif」呈現夢幻茶會的浪漫氛圍
+  //   夢幻的茶會 — v3.15.63 改用「泡好一杯茶.gif」(老師指定)呈現茶會主題
   //   音效:治療為主+柔和為輔+奇幻餘韻,呼應「貓女僕的溫柔茶會」感
-  //   tint:粉嫩茶會色(255,200,230),呼應貓女僕+鈴鐺+茶會主題
-  //   ⚠ 注意 GIF 與小力「夾尾皺眉」共用,但 key 不同(米鈴專屬「夢幻的茶會」)
+  //   tint:粉嫩茶會色(255,200,230);dur=800(泡好一杯茶.gif 單圈約0.8s)播 1 次
   '夢幻的茶會': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('泡好一杯茶.gif'),
     sfx:[['sfx-heal',1.0],['sfx-gentle',0.9],['sfx-fantasy',0.7]],
     tint:'rgba(255,200,230,0.22)',
-    dur:2400
+    dur:800
   },
   '壓力轉移': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%81%9A%E6%B0%A3.gif',
@@ -3521,16 +3531,14 @@ const BURST_GIF_DB = {
     dur:1600
   },
   // ★ v3.4.11 — 武器精靈爆發(5 年 5 班朱同學設計)
-  //   URL:v3.6.2 改為「俠盜飛梭.gif」(老師指定,2026-05-24)
-  //   舊版:熱情之舞.gif(舞者爆發共用,視覺風格偏「舞蹈」不貼合迴力鏢)
-  //   新版:俠盜飛梭.gif 視覺風格「快速穿梭、金屬反光」更貼合銀齒迴力鏢旋風主題
+  //   URL:v3.15.63 改為「龍捲風.gif」(老師指定),貼合迴力鏢旋風主題
   //   音效:刀劍砍擊+爆風+能量回收
-  //   tint:銀白色(迴力鏢冷光)
+  //   tint:銀白色(迴力鏢冷光);dur=360(龍捲風.gif 僅 4 幀單圈約0.36s)播 1 次
   '銀齒迴力鏢旋風': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('俠盜飛梭.gif'),
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('龍捲風.gif'),
     sfx:[['sfx-sword',1.0],['sfx-crit',0.85],['sfx-powerup',0.7]],
     tint:'rgba(200,220,255,0.18)',
-    dur:1600
+    dur:1440
   },
   // ★ v3.4.11 — 神槍手爆發(5 年 4 班莊同學設計)
   //   URL:老師設計單指定「千年發酵核爆.gif」(此 GIF 已存在於系統,line 15589 臭氣魔王共用)
@@ -3599,14 +3607,17 @@ const BURST_GIF_DB = {
     tint:'rgba(255,130,200,0.15)'
   },
   'BUG修復': {
-    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/BUG%E4%BF%AE%E5%BE%A9.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('數位代碼.gif'),
     sfx:[['sfx-powerup',1.0],['sfx-heal',0.85]],
-    tint:'rgba(85,255,200,0.15)'
+    tint:'rgba(85,255,200,0.15)',
+    dur:1600
   },
   '流浪者之歌': {
-    url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E6%B5%81%E6%B5%AA%E8%80%85%E4%B9%8B%E6%AD%8C.gif',
+    // ★ v3.15.63 — 弦樂團員 爆發「流浪者之歌」改用「音樂舞動.gif」(老師指定);音效維持奇幻+治療;dur=1960 播 1 次
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('音樂舞動.gif'),
     sfx:[['sfx-fantasy',0.9],['sfx-heal',0.8]],
-    tint:'rgba(200,150,255,0.15)'
+    tint:'rgba(200,150,255,0.15)',
+    dur:1960
   },
   '天籟之音': {
     url:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%A4%A9%E7%B1%9F%E4%B9%8B%E9%9F%B3.gif',
@@ -3629,9 +3640,11 @@ const BURST_GIF_DB = {
     tint:'rgba(50,255,200,0.12)'
   },
   '明鏡止水': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%98%8E%E9%8F%A1%E6%AD%A2%E6%B0%B4.gif',
+    // ★ v3.15.63 — 武鬥家 爆發「明鏡止水」改用「漣漪.gif」(老師指定);音效維持強化+數值;dur=7620 播 1 次(單圈約7.6s偏長,順修原 - repo 壞連結)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('漣漪.gif'),
     sfx:[['sfx-powerup',1.0],['sfx-statup',0.85]],
-    tint:'rgba(180,180,255,0.15)'
+    tint:'rgba(180,180,255,0.15)',
+    dur:2500
   },
   '逆轉神計': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E9%80%86%E8%BD%89%E7%A5%9E%E6%8A%80.gif',
@@ -3669,9 +3682,11 @@ const BURST_GIF_DB = {
     tint:'rgba(100,200,255,0.14)'
   },
   '夢境時光': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%A4%A2%E5%A2%83%E6%99%82%E5%85%89.gif',
+    // ★ v3.15.63 — 幼兒園小孩 爆發「夢境時光」改用「泡泡升起.gif」(老師指定);音效維持奇幻+治療;dur=2800 播 1 次(順修原 - repo 壞連結)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('泡泡升起.gif'),
     sfx:[['sfx-fantasy',1.0],['sfx-heal',0.8]],
-    tint:'rgba(150,120,255,0.15)'
+    tint:'rgba(150,120,255,0.15)',
+    dur:2800
   },
   '萬物創生': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%90%AC%E7%89%A9%E5%89%B5%E7%94%9F.gif',
@@ -3694,9 +3709,11 @@ const BURST_GIF_DB = {
     tint:'rgba(100,80,200,0.18)'
   },
   '激戰之舞': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%BF%80%E6%88%B0%E4%B9%8B%E8%88%9E.gif',
+    // ★ v3.15.63 — 舞者 爆發「激戰之舞」改用「舞動音符.gif」(老師指定);音效維持劍擊+爆擊;dur=1830 播 1 次(順修原 - repo 壞連結)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('舞動音符.gif'),
     sfx:[['sfx-sword',1.0],['sfx-crit',0.9]],
-    tint:'rgba(255,80,80,0.15)'
+    tint:'rgba(255,80,80,0.15)',
+    dur:1830
   },
   '正義制裁': {
     url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%A3%E7%BE%A9%E5%88%B6%E8%A3%81.gif',
@@ -3746,9 +3763,18 @@ const BURST_GIF_DB = {
     tint:'rgba(140,200,70,0.18)'
   },
   '深海大漩渦!': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif',
+    // ★ v3.15.63 — 海龍王 爆發「深海大漩渦」改用「漩渦.gif」(老師指定);音效維持奇幻+冰+爆;dur=1500 播 1 次
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('漩渦.gif'),
     sfx:[['sfx-fantasy',1.0],['sfx-ice2',0.85],['sfx-burst',0.7]],
-    tint:'rgba(60,150,220,0.20)'
+    tint:'rgba(60,150,220,0.20)',
+    dur:1500
+  },
+  '雷神·萬雷殛世': {
+    // ★ v3.15.63 — 風暴雷龍王 爆發「雷神·萬雷殛世」改用「雷雨.gif」(老師上傳);雷暴音效;dur=1650 單圈播 1 次
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雷雨.gif'),
+    sfx:[['sfx-paralysis-thunder',1.0],['sfx-explode',0.8],['sfx-burst',0.7]],
+    tint:'rgba(150,180,255,0.20)',
+    dur:1650
   },
   '永恆藍染詛咒!': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B0%B8%E6%81%86%E8%97%8D%E6%9F%93%E8%A9%9B%E5%92%92.gif',
@@ -3761,9 +3787,11 @@ const BURST_GIF_DB = {
     tint:'rgba(180,100,220,0.18)'
   },
   '萬鏡映虛獄!': {
-    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%90%AC%E9%8F%A1%E6%98%A0%E8%99%9B%E7%8D%84.gif',
+    // ★ v3.15.63 — 幻龍王 爆發「萬鏡映虛獄」改用「鑽石.gif」(老師指定);音效維持奇幻+反射+爆;dur=3000 播 1 次
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鑽石.gif'),
     sfx:[['sfx-fantasy',1.0],['sfx-reflect',0.85],['sfx-burst',0.7]],
-    tint:'rgba(140,200,255,0.18)'
+    tint:'rgba(140,200,255,0.18)',
+    dur:3000
   },
   '摩天爆破煙火祭!': {
     url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%91%A9%E5%A4%A9%E7%88%86%E7%A0%B4%E7%85%99%E7%81%AB%E7%A5%AD.gif',
