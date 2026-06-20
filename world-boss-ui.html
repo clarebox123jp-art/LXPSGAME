@@ -1,5 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ★ v3.15.61(2026-06-20)— 大廳「當前龍王」素質 + 「下一隻龍王搶先看」整卡改資料驅動,不再寫死,輪替推進自動跟上:(a)_wbApplyCurrentBossSkin 追加更新當前龍王卡的攻擊/特技/速度(由寫死火龍王 49/50/15 改讀 HERO_DB[當前龍王];HP 統一 5,000,000 不動);(b)新增 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻龍王 → 名稱/立繪/--wb-boss-bg/屬性/攻擊·特技·速度/簡介=背景故事+自動護盾文案/主題色依屬性 + 「能力詳細介紹」鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正原寫死土龍王過時文案(額外減傷 40%→實際 30% 等);next-preview HTML 加 hooks(wb-nextboss-img/nm/desc/elem/atk/sp/spd + #wb-next-boss-preview/#wb-nextboss-badge + .wb-nextboss-info-btn),排程於 skin 旁 setTimeout 120/1850,index.html 雲端當前龍王解析兩處 re-apply 同步呼叫 -->
 <!-- ★ v3.15.48(2026-06-19)— 修世界 BOSS 龍王戰崩毀後 guest 端卡死「無法離開戰鬥」:根因=guest 端結算(_wbClientCheckEnded)只認房主廣播 meta.status==='ended' 才觸發,但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11 把 p1 全歸 0)後「meta.status='ended'」的 sync 若沒送達 guest(網路丟包/房主端也卡),guest 死等 ended → 永久卡戰場。修:_wbClientApplyWire 套完狀態後偵測「p1 全員 curHp<=0(玩家方全滅)」且未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,不依賴房主再廣播 ended);世界 BOSS 無復活,p1 全滅=確定戰敗不誤判,_wbAdvBattleEnded/_wbClientForceCheckWin 雙旗標守門 -->
 <!-- ★ v3.14.25(2026-06-13)— BOSS 能力詳細介紹彈窗(_wbAdvOpenBossInfoPopup)+ 大廳預覽卡描述/屬性改「資料驅動」:依當前龍王讀 HERO_DB/HERO_TRAIT/BURST_DB + 護盾元素/配色動態,草龍王不再顯示火龍王能力 -->
 <!-- ★ v3.14.24(2026-06-13)— 排名獎勵清單至寶名改依當前龍王動態(維蘇威=火龍王之牙 / 翠玉草=草龍王之鬚) -->
@@ -1047,9 +1048,9 @@
         </div>
         <div class="wb-boss-stats">
           <span>❤️ 5,000,000 HP</span>
-          <span>⚔️ 攻擊 49</span>
-          <span>🛡️ 特技 50</span>
-          <span>💨 速度 15</span>
+          <span class="wb-curboss-atk">⚔️ 攻擊 49</span>
+          <span class="wb-curboss-sp">🛡️ 特技 50</span>
+          <span class="wb-curboss-spd">💨 速度 15</span>
           <span class="wb-curboss-elem">🔥 火屬性</span>
         </div>
         <!-- ★ v4.0 階段 2 — BOSS 能力介紹按鈕(點開可捲動詳細視窗) -->
@@ -1068,27 +1069,37 @@
       </div>
     </div>
 
-    <!-- ★ v3.15.21 — 下一隻世界 BOSS 搶先看:山岳地龍王(地龍王,土屬性,沿用 wb-boss-preview 版型,土黃/棕主題;靜態預告,不可挑戰)
-         注意:.wb-boss-preview 有 overflow:hidden,徽章必須放卡內;::before 背景圖走 var(--wb-boss-bg),此處覆寫為地龍王立繪(地龍王.png) -->
-    <div class="wb-boss-preview" style="border-color:rgba(205,165,95,0.45);background:linear-gradient(160deg,rgba(46,36,18,0.55),rgba(20,14,6,0.65));--wb-boss-bg:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png');">
+    <!-- ★ v3.15.61 — 下一隻世界 BOSS 搶先看:改「資料驅動」(由 _wbApplyNextBossPreview 依 _wbGetNextBossId
+         動態填入名稱/立繪/能力/屬性/數值/主題色),不再寫死土龍王,避免輪替推進後資訊過時。
+         下方預設內容僅為後備,實際以 JS 套用為準。 -->
+    <div id="wb-next-boss-preview" class="wb-boss-preview" style="border-color:rgba(205,165,95,0.45);background:linear-gradient(160deg,rgba(46,36,18,0.55),rgba(20,14,6,0.65));--wb-boss-bg:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png');">
       <div class="wb-boss-portrait" style="border-color:rgba(205,165,95,0.5);">
-        <img src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png"
+        <img class="wb-nextboss-img" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png"
              onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"
-             alt="山岳地龍王" style="filter:saturate(0.95) brightness(0.95);">
+             alt="下一隻世界 BOSS" style="filter:saturate(0.95) brightness(0.95);">
       </div>
       <div class="wb-boss-info">
-        <div style="display:inline-block;background:linear-gradient(135deg,#b8863f,#7a5526);color:#fff3df;font-size:13px;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:999px;border:1.5px solid rgba(255,220,160,0.6);box-shadow:0 0 12px rgba(210,160,80,0.45);margin-bottom:8px;">⛰️ 下一隻世界 BOSS・搶先看</div>
-        <div class="wb-boss-name" style="color:#e8c98c;">🪨 山岳地龍王 <span style="font-size:12px;color:#ffe6b8;background:rgba(210,160,80,0.18);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span><span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.15);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">即將登場</span></div>
-        <div style="font-size:13px;color:#aaa;line-height:1.5;">
-          蟄伏於地核最深處(喜馬拉雅山脈底下直通地核的億萬噸岩層)的太古土龍,以山崩、落石與撼天龍吼鎮壓入侵者。第 3/5/7/9 回合啟動四元素護盾:土盾 + 火盾 + 暗盾 + 草盾(減傷 80%,需用「草破土・水破火・光破暗・火破草」破除);岩甲堅不可摧——單次受傷上限固定 5,000,受到所有傷害再額外減 40%,並有 50% 機率反彈 50% 傷害。唯一弱點是劇毒——中毒/猛毒化作固定大傷(普通中毒 -1,500 / 猛毒 -3,000),完全無視上限與護盾!以毒為刃,才能讓這頭山岳巨龍重歸沉眠。打倒翠綠森龍王之後,牠就會甦醒……敬請期待!
+        <div id="wb-nextboss-badge" style="display:inline-block;background:linear-gradient(135deg,#b8863f,#7a5526);color:#fff3df;font-size:13px;font-weight:700;letter-spacing:2px;padding:4px 14px;border-radius:999px;border:1.5px solid rgba(255,220,160,0.6);box-shadow:0 0 12px rgba(210,160,80,0.45);margin-bottom:8px;">🔮 下一隻世界 BOSS・搶先看</div>
+        <div class="wb-boss-name"><span class="wb-nextboss-nm" style="color:#e8c98c;">山岳地龍王</span> <span style="font-size:12px;color:#ffe6b8;background:rgba(210,160,80,0.18);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span><span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.15);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">即將登場</span></div>
+        <div class="wb-nextboss-desc" style="font-size:13px;color:#aaa;line-height:1.5;">
+          盤踞於地核深處的太古土龍,以山崩、落石與震天龍吼鎮壓入侵者。
         </div>
         <div class="wb-boss-stats">
           <span>❤️ 5,000,000 HP</span>
-          <span>⚔️ 攻擊 49</span>
-          <span>🛡️ 特技 50</span>
-          <span>💨 速度 15</span>
-          <span>🪨 土屬性</span>
+          <span class="wb-nextboss-atk">⚔️ 攻擊 49</span>
+          <span class="wb-nextboss-sp">🛡️ 特技 50</span>
+          <span class="wb-nextboss-spd">💨 速度 15</span>
+          <span class="wb-nextboss-elem">🪨 土屬性</span>
         </div>
+        <button class="wb-nextboss-info-btn" onclick="try{ var _nid=(window._wbGetNextBossId&&window._wbGetNextBossId()); if(_nid) _wbAdvOpenBossInfoPopup(_nid); }catch(_){}" style="
+          margin-top:14px;padding:9px 18px;
+          background:linear-gradient(160deg,rgba(205,165,95,0.22),rgba(120,85,40,0.15));
+          border:2px solid #cc9955;color:#ffe6c2;
+          border-radius:10px;font-size:13px;font-weight:700;
+          letter-spacing:1.2px;cursor:pointer;font-family:inherit;
+          box-shadow:0 0 12px rgba(200,150,70,0.25);display:inline-block;">
+          📖 能力詳細介紹
+        </button>
       </div>
     </div>
 
@@ -1370,12 +1381,101 @@ window._wbApplyCurrentBossSkin = function(){
         const _ed2 = _ED2[_b.element];
         _elemEl.textContent = (_ed2 ? (_ed2.icon + ' ' + _ed2.name) : '') + '屬性';
       }
+      // ★ v3.15.61 — 當前龍王大廳卡的「攻擊/特技/速度」也依當前龍王動態(原本寫死火龍王 49/50/15;
+      //   各龍王素質不同,如森龍王 45/58/12,寫死會顯示錯誤數值)。HP 統一 5,000,000 故不動。
+      try{
+        const _hdCur = (window.HERO_DB && window.HERO_DB[_nm]) || null;
+        if(_hdCur){
+          const _sa = document.querySelector('.wb-curboss-atk');
+          if(_sa) _sa.textContent = '⚔️ 攻擊 ' + (_hdCur.atk != null ? _hdCur.atk : '');
+          const _ss = document.querySelector('.wb-curboss-sp');
+          if(_ss) _ss.textContent = '🛡️ 特技 ' + (_hdCur.sp != null ? _hdCur.sp : '');
+          const _ssp = document.querySelector('.wb-curboss-spd');
+          if(_ssp) _ssp.textContent = '💨 速度 ' + (_hdCur.spd != null ? _hdCur.spd : '');
+        }
+      }catch(_eCurStat){ console.warn('[WB skin v3.15.61] 當前龍王素質套用失敗', _eCurStat); }
     }catch(_eDesc){ console.warn('[WB skin v3.14.25] 套用當前龍王描述/屬性失敗', _eDesc); }
   }catch(_eSk){ console.warn('[WB skin v3.14.20] 套用當前龍王外觀失敗', _eSk); }
+};
+
+// ════════════════════════════════════════════════════════════════════
+// ★ v3.15.61 — 下一隻世界 BOSS 搶先看「資料驅動」套用
+//   依 _wbGetNextBossId() 取得輪替表的下一隻龍王,動態填入大廳預覽卡:
+//   名稱 / 立繪 / 屬性 / 攻擊·特技·速度 / 簡介(背景故事 + 自動護盾說明)/ 主題色。
+//   詳細招式·天賦走「能力詳細介紹」按鈕(_wbAdvOpenBossInfoPopup 資料驅動,永遠最新)。
+//   不再寫死任何龍王,輪替推進後自動跟上,不會再過時。
+// ────────────────────────────────────────────────────────────────────
+window._wbApplyNextBossPreview = function(){
+  try{
+    const _nid = (typeof window._wbGetNextBossId === 'function') ? window._wbGetNextBossId() : null;
+    const _lu = window.WORLD_BOSS_LINEUP || [];
+    const _nb = (_nid ? _lu.find(function(b){ return b && b.id === _nid; }) : null) || null;
+    if(!_nb || !_nb.name) return;
+    const _nm = _nb.name;
+    const _ED = window.ELEMENT_DB || {};
+    const _q = function(sel){ return document.querySelector(sel); };
+    // 名稱
+    document.querySelectorAll('.wb-nextboss-nm').forEach(function(el){ el.textContent = _nm; });
+    // 立繪 + 背景
+    let _img = '';
+    try{
+      _img = (window.HERO_IMGS && window.HERO_IMGS[_nm])
+        || ('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent(_nm) + '.png');
+    }catch(_){}
+    const _imgEl = _q('img.wb-nextboss-img');
+    if(_imgEl && _img){ _imgEl.src = _img; _imgEl.alt = _nm; _imgEl.style.display = ''; }
+    const _prev = document.getElementById('wb-next-boss-preview');
+    if(_prev && _img){ try{ _prev.style.setProperty('--wb-boss-bg', "url('" + _img + "')"); }catch(_){} }
+    // 屬性
+    const _ed = _ED[_nb.element] || null;
+    const _elemEl = _q('.wb-nextboss-elem');
+    if(_elemEl){ _elemEl.textContent = (_ed ? (_ed.icon + ' ' + _ed.name) : '') + '屬性'; }
+    // 素質(HP 統一 5,000,000 故不動;攻擊/特技/速度讀 HERO_DB)
+    const _hd = (window.HERO_DB && window.HERO_DB[_nm]) || null;
+    if(_hd){
+      const _sa = _q('.wb-nextboss-atk'); if(_sa) _sa.textContent = '⚔️ 攻擊 ' + (_hd.atk != null ? _hd.atk : '');
+      const _ss = _q('.wb-nextboss-sp');  if(_ss) _ss.textContent = '🛡️ 特技 ' + (_hd.sp  != null ? _hd.sp  : '');
+      const _ssp= _q('.wb-nextboss-spd'); if(_ssp)_ssp.textContent= '💨 速度 ' + (_hd.spd != null ? _hd.spd : '');
+    }
+    // 簡介:背景故事 + 自動產生的護盾說明(與當前龍王卡同風格;詳細天賦走彈窗)
+    const _elemTag = function(e){ const d = _ED[e]; return d ? (d.icon + d.name) : e; };
+    const _shEls = _nb.shieldElements || [];
+    const _shLy  = _nb.shieldLayers || null;
+    const _shDisp = _shEls.map(function(e){ const ly=(_shLy&&_shLy[e])||1; return _elemTag(e)+(ly>1?('×'+ly):''); }).join('/');
+    const _brkSeen = {};
+    const _brkDisp = _shEls.map(function(e){ return (_ED[e] && _ED[e].vs_dis && _ED[e].vs_dis[0]) || e; })
+      .filter(function(c){ if(_brkSeen[c]) return false; _brkSeen[c]=true; return true; })
+      .map(function(c){ return _elemTag(c); }).join('/');
+    const _descEl = _q('.wb-nextboss-desc');
+    if(_descEl){
+      let _d = _nb.desc || '';
+      if(_shDisp){
+        _d += ' 第 3/5/7/9 回合啟動元素護盾(' + _shDisp + '),用剋制屬性(' + _brkDisp
+            + ')各攻擊 1 次即可打破;拖到第 11 回合場地會崩壞、強制結算。點下方「能力詳細介紹」可看完整招式與專屬天賦。';
+      }
+      _descEl.textContent = _d;
+    }
+    // 主題色依屬性(border / 徽章 / 名稱 / 詳細鈕),避免換龍王後仍是土黃色
+    const _TH = {
+      fire:'#ff7a55', grass:'#5dca6a', water:'#3aa0ff', wind:'#55ccbb',
+      earth:'#cc9955', light:'#ffd24a', dark:'#bb88ee', omni:'#ff88cc'
+    };
+    const _mc = _TH[_nb.element] || '#cc9955';
+    try{
+      if(_prev) _prev.style.borderColor = _mc + '88';
+      const _badge = document.getElementById('wb-nextboss-badge');
+      if(_badge){ _badge.style.background = _mc + '33'; _badge.style.borderColor = _mc + 'aa'; _badge.style.color = '#fff7ee'; }
+      const _nmEl2 = _q('.wb-nextboss-nm'); if(_nmEl2) _nmEl2.style.color = _mc;
+      const _btn = _q('.wb-nextboss-info-btn');
+      if(_btn){ _btn.style.borderColor = _mc; _btn.style.color = _mc; }
+    }catch(_eTheme){}
+  }catch(e){ console.warn('[WB next preview v3.15.61] 套用下一隻龍王失敗', e); }
 };
 try{
   setTimeout(window._wbApplyCurrentBossSkin, 80);     // UI 注入完成後立即套用
   setTimeout(window._wbApplyCurrentBossSkin, 1800);   // 雲端快取晚到時再套一次
+  setTimeout(window._wbApplyNextBossPreview, 120);    // ★ v3.15.61 — 下一隻龍王搶先看(資料驅動)
+  setTimeout(window._wbApplyNextBossPreview, 1850);   // 雲端快取/輪替狀態晚到時再套一次
 }catch(_){}
 
   const _MAX_ROWS = 20;

@@ -13,6 +13,35 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.61(2026-06-20)— 🏅 19 枚高階挑戰獎章 + 🧠 機關王題庫換新 + 🐉 龍王頁更新
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.61',
+    date: '2026-06-20',
+    brief: [
+      '🏅【GM 加碼:19 枚高階挑戰獎章登場!】',
+      '   ・老師特別追加了一整批<b>高難度成就獎章</b>,每解鎖 1 枚就送 <b>🔮 召喚水晶 ×5 + 💰 知識幣 +10,000</b>,超大獎勵等你來拿!',
+      '   ・挑戰橫跨<b>英雄收集、台灣關、埃及關、黑暗球、鬥技場</b>各種高手關卡(例如:只用 SR 英雄通關、全程不帶寵物、一場把對手三隻一次清空…)。',
+      '   ・主選單「<b>獎章</b>」鍵上會浮出「<b>新增獎章挑戰!</b>」標記;點進獎章頁會先跳出說明視窗,<b>已達成的會打勾 ✅</b>。看過可按「我知道了」或「今日不再顯示此視窗」,<b>全部達成後就不再出現</b>。',
+      '   ・順手修好獎章頁<b>沒有顯示「埃及關 / 鬥技場」分類</b>的問題,現在這兩區的獎章都看得到了。',
+      '🧠【世界機關王大賽:題庫煥然一新】',
+      '   ・機關王關卡的題目全部換成<b>「簡單機械與 STEAM」</b>主題:斜面、槓桿、滑輪、齒輪、位能與動能、系統思考…邊打邊學超有料!',
+      '🪲【聖甲蟲會逃跑了!】',
+      '   ・埃及關的稀有「<b>聖甲蟲</b>」膽小又惜命——只要<b>撐到第 4 回合還沒被打倒,牠就會推著黃金糞球溜走</b>!想拿牠的大量獎勵就要速戰速決;不過讓牠成功逃走,也能解鎖「<b>聖蟲遁逃</b>」獎章喔。',
+      '🐉【世界 BOSS 頁面更新:當前 & 下一隻龍王資訊修正】',
+      '   ・世界 BOSS 大廳的「<b>當前龍王</b>」素質,以及「<b>下一隻龍王搶先看</b>」的名稱、立繪、屬性、能力介紹,全部改成<b>自動跟著實際龍王更新</b>,不會再顯示舊資料;點「能力詳細介紹」可看完整招式與天賦。',
+    ],
+    items: [
+      '★ v3.15.61【世界機關王大賽題庫】adv_quiz_db.js ADV_QUIZ_GREENMECH(id 9601-9620,subject 世界機關王大賽)整批換成 STEAM 簡單機械題(斜面/槓桿/滑輪/齒輪/位能動能/系統思考);node --check PASS、20 題、無英文單引號。',
+      '★ v3.15.61【19 枚高階獎章】index.html MEDAL_DEFS 新增 19 枚並全列入 _MEDAL_TOP_TIER(5💎+10000):英雄 ssr_unlock_20/40、first_ur_hero、shard_synth_first;台灣 tw_sr_only;埃及 egypt_sr_only/no_pet/4pets/kill_cleo_sealed/kill_self_charmed/both_talent_sealed/scorpion_ko/scarab_flee;黑暗球 darkorb_no_pet/r_only/all_clones;鬥技場 arena_kill_3/no_heal_win/2kill_3round。另 4 枚既有(unlock_xiaoli/kid/gm、arena_streak_5)升頂級。偵測 hook 分散於 _checkMedalHeroUnlock／_synthShardToPickTicket／doDmg 死亡集中 hook／Scorpion 即死／Scarab 逃跑／_checkEgyptClearMedal／_checkTaiwanWinMedals／黑暗球勝利分支／doHeal／_checkMedalArena;每枚 def=1 call=1 已稽核。',
+      '★ v3.15.61【獎章頁顯示修正】_buildMedalPage cats 陣列補回漏列的「埃及關」「鬥技場」(原本該兩分類獎章完全不顯示)+ 對應類別圖示(🏟／🏜)。',
+      '★ v3.15.61【聖甲蟲第 4 回合必逃】startTurn 仿寶箱怪框架:next.name===聖甲蟲 且 G.round>=4 → 從戰場 splice、curHp=0、不計擊倒/不給獎勵、_scarabFled 旗標、checkWin;逃走即解鎖 egypt_scarab_flee。聖甲蟲魔物圖鑑 lore 補逃跑警告。',
+      '★ v3.15.61【GM 第一波獎章挑戰提醒 UI】index.html 新增 _GM_MEDAL_WAVE1(19 id)+ _gmMedalW1Stats／_updateGmMedalW1Badge(#adv-medal-btn 浮「新增獎章挑戰!」粉紅脈動徽章,全達成自動移除)／_gmMedalW1ShouldShowPopup／_showGmMedalW1Popup(進獎章頁彈視窗:列 19 枚打勾+進度+5💎+10000 強調;「我知道了」設 session 旗標、「今日不再顯示」寫 localStorage _gmMedalW1DismissDate=今日;全達成不再彈)。hook:openMedalPage 彈窗+刷新徽章、_unlockMedal earn 後刷新徽章、openAdventureOverlay 進關卡刷新徽章;CSS keyframe _gmMedalW1Pulse。',
+      '★ v3.15.61【世界 BOSS 頁龍王資訊資料驅動】world-boss-ui.html:(a)當前龍王大廳卡素質(攻擊/特技/速度)由寫死火龍王 49/50/15 改 _wbApplyCurrentBossSkin 讀 HERO_DB[當前龍王](HP 統一 5,000,000 不動);(b)「下一隻龍王搶先看」整卡改資料驅動 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻 → 名稱/立繪/屬性/素質/簡介=背景故事+自動護盾文案/主題色 + 能力詳細介紹鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正寫死土龍王過時文案(額外減傷 40%→實際 30% 等),輪替推進自動跟上。index.html 雲端當前龍王解析兩處 re-apply 加呼叫 _wbApplyNextBossPreview。',
+      '★ v3.15.61【版本鏈】4 GAME 同步點 v3.15.60→v3.15.61;_vers[index.html]／[game_changelog.js] 同步 v3.15.61、[world-boss-ui.html] v3.15.50→v3.15.61、[adv_quiz_db.js] 20260612b→20260620。world-boss.js 維持 v3.15.51、hero_db.js v3.15.60、arena.js v3.15.60、admin_panel.js v3.15.58(均未改)。本輪改 index.html＋adv_quiz_db.js＋world-boss-ui.html＋game_changelog.js 四檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.41)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.60(2026-06-20)— ⚔ 主神奧汀大改 + 🐉 各龍王成就 + 🌑 黑暗球掉落
   // ════════════════════════════════════════════════════════════════════
   {
@@ -449,36 +478,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.42【GM 自動解鎖新英雄 index.html】新增 _GM_AUTO_UNLOCK_HEROES 清單(目前=喚龍使‧蜜鶴林)+ _gmAutoUnlockNewHeroes():管理員載入完成(gameCloudLoad existing-player path)後對清單中未解鎖者呼叫 advSaveUnlockedHero(name,gm_auto)(會寫 _heroUnlockHistory、不被 v3.15.40 稽核熔斷誤刪),idempotent、非管理員不動作。鐵律:每次新增英雄要把英雄名加進 _GM_AUTO_UNLOCK_HEROES',
       '★ v3.15.42【木柵難度範圍 index.html】adv-info 靜態星級 ★★★☆☆ → 「★★★ ～ ★★★★★」;selectAdvStage 動態星級 key===maokong 顯示範圍、其餘關卡維持 data.stars 原樣',
       '★ v3.15.42【版本鏈】index.html(乙手動合成/天青龍3→2/傷害動畫/碎片數量分難度/GM自動解鎖/木柵難度範圍)+ hero_db.js(天青龍 fd/desc 3→2 文字),4 GAME 同步點 v3.15.41→v3.15.42、_vers[hero_db.js]→v3.15.42。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.22)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.41(2026-06-18)— 🛡️ 存檔保護修復(補發後存不了檔自動修復)＋世界王至寶補償修復
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.41',
-    date: '2026-06-18',
-    brief: [
-      '🛡️【存檔保護修復 — 補發後存不了檔的同學會自動修復】',
-      '   ・修正少數同學<b>老師補發角色/道具後,遊戲一直存不了檔、進度卡住</b>的問題(系統把正常存檔誤判成「資料倒退」擋了下來)。',
-      '   ・更新後這些同學<b>下次登入會自動修復</b>,進度正常存檔,不會遺失任何東西。',
-      '   ・同時修好<b>世界王排行榜的至寶補發</b>:之前因程式錯誤從未成功發出,現在恢復正常。',
-      '',
-      '⚔️【戰鬥更有氣勢】',
-      '   ・所有戰鬥畫面登場時,新增<b>震撼的進場轉場音效</b>——冒險、鬥技場、世界王、雙人對戰通通有,開戰更帶感!',
-      '',
-      '🐉【新英雄登場】',
-      '   ・新增英雄 <b>喚龍使‧蜜鶴林</b>(5 年 3 班 龎苡睿設計)!召喚「天青龍」助戰的召喚流英雄。',
-      '   ・天賦「逆鱗」受傷時有機率封印攻擊者;S1 召喚天青龍化作護盾並每回合自動龍息齊射;S2「杳杳香魂」全體傷害+魅惑;爆發「魂芳雲魄」召喚至尊天青龍+特技 600% 龍息重擊。',
-    ],
-    items: [
-      '★ v3.15.41【補償/存檔保護口徑統一 index.html — 乙】根因(5407 案例鐵證):_fbCompensatePlayer 算 _dataSummary 時 unlockedCount 用 _mergedUnlocked.length、totalHeroLv 整本 _mergedLevels 加總(主檔/live/safe 三槽全未過濾白名單),而 client 端 _buildSafeData/_getLocalSummary 都用 _PLAYER_HERO_NAMES 過濾;當帳號 unlockedHeroes/heroLevels 含非白名單殘留(BOSS/小怪/舊名,約 11 項約 100 級)時 → 雲端 summary=57/500、client 算 46/400 → _fbSaveLive 健康度守門(unlockedDelta=-11≤-5 硬擋、逃生口需本地總等級高雲端 15+ 但此處反低 100)誤判「解鎖倒退 11 隻」→ 連新撿的背包都存不上。修:補償三槽 + 跨槽合併 _lxpsMergeSlots 的 _dataSummary 全部改用同一支白名單過濾,雲端與 client 口徑一致(只過濾計數,不從實際 unlockedHeroes 清單刪英雄)',
-      '★ v3.15.41【補償寫解鎖紀錄 + 等級 floor index.html — 甲】_fbCompensatePlayer 對「真的新解鎖」的英雄寫 _heroUnlockHistory(source:compensation),供 v3.15.40 稽核感知熔斷認得為本人合法擁有(否則查無紀錄會被當跨帳號殘留丟掉);並對授予英雄補 heroLevels Lv1 floor(max-merge 不降級既有高等級),一併流入主檔/live/safe 三槽',
-      '★ v3.15.41【載入 reconcile index.html — 丙】雲端 heroLevels merge 完成後,凡 unlockedHeroes(已經 v3.15.40 稽核熔斷清淨)裡的白名單英雄若缺等級即補 Lv1 floor → unlockedHeroes↔heroLevels 對齊,推導解鎖數/totalLv 不再對不上(只補白名單缺項,不覆蓋既有等級、不新增非白名單殘留)',
-      '★ v3.15.41【世界BOSS排名至寶補償修復 index.html】_wbCheckAndCompensateLostTreasure 內用了別函式作用域的區域 const PLAYER_DOC → 每次第一行 getDoc 就 throw ReferenceError 被 try/catch 吞成 WARN → 整支排名至寶自動補償從未跑成功(很可能是「第2名至寶補不回」主因)。修:函式內補上 const PLAYER_DOC=(uid)=>doc(window._fbDb,"players",uid)',
-      '★ v3.15.41【存檔守門口徑一致 + 自動修復 index.html — 丁】_fbSaveLive(live 主守門)與 _fbSave(主文件守門)比對倒退時,雲端 baseline 與本地都改用「實際 unlockedHeroes/heroLevels 陣列 + 同一支 _PLAYER_HERO_NAMES 過濾」即時重算,不再採信舊版補償寫進雲端的「未過濾」_dataSummary。效果:已被舊膨脹 summary 卡住、存不了檔的帳號,下次存檔以「過濾後雲端(46) vs 過濾後本地(46)」自動通過(免逐隻一鍵重建);真正的英雄倒退仍擋得住(過濾後雲端 > 本地才算)',
-      '★ v3.15.41【戰鬥畫面進場音效 index.html】老師需求:所有戰鬥畫面出現時加氣勢感轉場音效。新增 <audio id=sfx-battle-enter>(進入戰鬥畫面.mp3),掛在 renderField(entranceMode===true)——所有戰鬥類型(冒險/鬥技場兩路/重戰/世界BOSS/PvP/迷你)的戰場進場唯一通用點;直接 play 控制較大音量(0.9,暫停減半)呈現氣勢,尊重 _sfxMuted 靜音、800ms 防抖、播 4 秒後淡出;mid-battle 重繪走 renderField(false) 不誤觸。既有 playBattleStartSfx(開始進攻)/敲鑼未動,於冒險/鬥技場路徑會與新音效疊加',
-      '★ v3.15.41【新英雄 喚龍使‧蜜鶴林 — 邏輯層 index.html(資料層在 hero_db.js v3.15.41)】(5 年 3 班 龎苡睿設計)召喚流 HP57/攻10/特18/速15。天青龍=附身式護盾(比照操偶 _puppetHp,doDmg 代承傷害、護盾全擋 return 0→逆鱗不觸發=甲);天賦逆鱗=本體受傷 50%(+5%/級)封印攻擊者;S1 天青龍召喚(護盾=本體 75% HP,3 回合,登場即齊射+每回合行動前特技 120% 連攻隨機 3 次,可 MISS);S2 杳杳香魂(全體特技 100% 傷害+60% 魅惑,龍在場×2/魅惑 70%);爆發 魂芳雲魄(至尊天青龍護盾=本體 200% HP+特技 600% 單體,玩家爆發經 _isPlayerBurstHit 必中)。execSkill+aiUseSkill 雙路徑(1.128)+ SKILL_UPGRADE_DEF/_renderSkillFdWithLv/BURST_UPGRADE_DEF 動態升級顯示(1.139/1.160)+ UI 護盾 HP 條 + SUMMON_RARE_HEROES 稀有池',
-      '★ v3.15.41【版本鏈】index.html(乙=補償三槽+合併 summary 過濾／甲=補償寫解鎖紀錄+Lv1 floor／丙=載入 reconcile／丁=守門即時重算 baseline／PLAYER_DOC 修復／戰鬥進場音效／新英雄喚龍使‧蜜鶴林邏輯層)+ hero_db.js(英雄資料層)+ game_changelog.js,4 GAME 同步點 v3.15.40→v3.15.41、_vers[hero_db.js]→v3.15.41。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34',
     ],
   },
 ];
