@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-15  / 目前主程式版本:v3.15.16(地府酋長天賦改%疊層+刀山火海全體分攤;14個全體傷害爆發統一改基礎×4全體分攤,杏花妖/黑暗球BOSS不改)
+//  最後更新:2026-06-20  / 目前主程式版本:v3.15.64(新增學生設計英雄「拘留者」5年1班彭經宸;召喚卷面板補至寶/自選至寶按鈕;修登入誤跳污染彈窗)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,31 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.64(2026-06-20)— 🤖 新英雄 拘留者 + 🎟 召喚卷補至寶按鈕 + 🔧 修登入誤跳彈窗
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.64',
+    date: '2026-06-20',
+    brief: [
+      '🤖【新英雄登場:拘留者!】',
+      '   ・<b>5 年 1 班 彭同學</b>設計的<b>時空執法機械人</b>(SSR,⚔傷害+🛡控場)!可在召喚星空抽到。',
+      '   ・<b>S1 空間果實</b>(被動):受到直接攻擊時<b>扭曲時空閃避</b>,並把傷害<b>50% 反彈</b>給對手、<b>50% 治療自己</b>(每回合 1 次,需 4 能量)。',
+      '   ・<b>S2 神刃之力</b>:對 1 名對手造成 (攻擊+特技)×250% 必中、無視有利的傷害,並使其陷入<b>「拘留」無法行動</b>(最多疊 2 層)!',
+      '   ・<b>爆發 時空罰罪‧天手力</b>:<b>匯聚整場戰鬥累積的總傷害</b>(上限 2500),化為固定傷害由敵方全體分攤(單體上限 1250),必中、無視有利、不暴擊、不受屬性影響。',
+      '   ・<b>天賦 時序回響</b>:使用神刃之力或爆發時,<b>30%</b>(隨天賦升級提高,最高 70%)機率<b>立即再造成一次相同傷害</b>。',
+      '🎟【召喚星空補上「至寶召喚卷」按鈕】',
+      '   ・「使用召喚卷」面板原本只有 SSR/SR 英雄券;現在<b>補上「隨機至寶召喚卷」與「自選至寶召喚卷」</b>兩個按鈕,和英雄券並排,可直接在這裡使用了!',
+      '🔧【修復登入時誤跳的提示視窗】',
+      '   ・修好<b>每次登入都會跳出「沒有正確讀取到遊戲記錄」</b>視窗的問題:原因是網路較慢、資料還沒讀完就被誤判,現在會<b>等資料真的讀取成功後才檢查</b>,正常情況不會再跳。',
+    ],
+    items: [
+      '★ v3.15.64【新英雄 拘留者】hero_db.js 12 表(HERO_DB hp78/atk13/sp13/spd14;S1空間果實c4被動/S2神刃之力c7;BURST 時空罰罪‧天手力;TRAIT 時序回響;BURST_GIF 時空穿梭.gif+時空穿梭.mp3 dur450;AVATARS🤖;LORE/BIO/IMG/HEX/CATEGORIES/_TRAIT_LV_INFO)。index.html 邏輯層:execSkill/aiUseSkill 雙實作(神刃之力 (攻+特)×250% 必中無視有利+拘留疊2層+時序回響30%二次傷害)、空間果實 doDmg 頂部 hook(閃避+反彈50%+治療50%,需4能量/每回合1次,startTurn 重置 _spaceFruitUsedThisTurn)、execBurst 時空罰罪‧天手力(讀全場傷害累積器 G._detTotalDmg 上限2500→敵全體分攤·單體上限1250×_burstMult·fixedDmg)、新增「拘留」detain 狀態(BAD_STATUS/statusName/玩家+AI跳過行動/雅典娜免控/_CTRL/_CTRL_POPUP)、BURST/SKILL_UPGRADE_DEF、SUMMON_RARE_HEROES、STUDENT_DESIGNER_HEROES、sfx-detain-burst 音效。',
+      '★ v3.15.64【召喚卷面板補至寶按鈕】index.html _openSummonTicketModal:在 SSR/SR 英雄券下方新增「💎 至寶召喚卷」分組(隨機 + 自選兩張卡,_treaCard helper),onclick 接既有 _useTreasureTicket()/_openTreasureTicketPickModal()(後端 v3.13.82/v3.15.56 早已完整,先前只缺從「使用召喚卷」入口進入,只能從背包點券進);主標題改「🎟 使用召喚卷」。',
+      '★ v3.15.64【修登入誤跳污染彈窗】index.html _advCorruptionWatchdog 主 gate + 二次確認補 window._progressLoaded===true:_cloudLoadDone=true 只代表雲端流程跑完(含失敗),網路不穩讀取失敗時 _progressLoaded=false(空殼)被誤判成「污染」而在登入/載入畫面誤跳。改要求資料確實載入成功才判定(對齊全站 gameCloudSave 等 _progressLoaded 守門慣例),確保只在真正進入有資料的選關頁才可能彈窗。',
+      '★ v3.15.64【版本鏈】4 GAME 同步點 v3.15.63→v3.15.64;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.44)。',
+    ],
+  },
   // ════════════════════════════════════════════════════════════════════
   // v3.15.63(2026-06-20)— ✨ 17 枚爆發技 GIF 特效更換 + 放大近全螢幕 + 只播 1 次
   // ════════════════════════════════════════════════════════════════════
@@ -451,30 +476,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.45【自救流程 index.html】_showAdvCorruptionModal 彈全螢幕提示(僅「重新載入」鈕,文案=老師指定)→ _advRepairReload:寫 lxps_advRepairCooldown_{uid}(冷卻10分)+ lxps_advRepairPending(重整後顯示資料確認)+ _lxpsEnforceDeviceOwner(uid)清本機別 uid 殘留 + 清 window._memoryOwnerUid 強制重驗 → location.reload(Firebase auth 持久化自動重登,gameCloudLoad _lxpsMergeSlots 三槽最豐富覆蓋本地污染)',
       '★ v3.15.45【資料確認畫面 index.html】重整後掛在 gameCloudLoad existing-player 載入成功處(_applySafeData 後、_gmAutoUnlockNewHeroes 旁)呼叫 _advCheckRepairResult(_gUserId):讀 lxps_advRepairPending 標記(本 uid 才彈、彈一次即清)→ _showRepairResultModal 顯示 持有英雄(advGetUnlockedHeroes)/台灣至寶(taiwanTreasureData)/英雄總等級(_heroLevels 加總)/知識幣(_knowledgeCoins)/召喚水晶(_getCrystalBal),含「✓ 確認」鈕',
       '★ v3.15.45【版本鏈】本輪只改 index.html(看門狗全在此)+ game_changelog.js。4 GAME 同步點 v3.15.44→v3.15.45。hero_db.js 維持 v3.15.44(本輪未改)、admin_panel.js v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.25)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.44(2026-06-19)— ⚡ 登入卡死修復 ＋ 24隻英雄血量提升30% ＋ 宙斯天降雷罰改三段
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.44',
-    date: '2026-06-19',
-    brief: [
-      '🔧【修復:多人同時登入偶爾卡在首頁進不去】',
-      '   ・修正全班同時開機時,少數同學<b>卡在登入畫面、要重開很久才進得去</b>的問題。',
-      '   ・現在雲端讀取若太久沒回應,會在數秒後顯示「請檢查網路後重新整理」,<b>不再無限卡住</b>(進度都在雲端,重整就回來)。',
-      '',
-      '💪【24 隻英雄基礎血量提升約 30%】',
-      '   ・這些英雄之前漏了血量加成,現在補上、<b>更耐打了</b>:武器精靈、神槍手、火柴人、青炎龍王、鳳凰、操偶師、菇女、小丑、美人魚‧角角、火爆女、幽幽、網路駭客、風術士、我的豚豚、機關王雙人組、雅典娜、阿蘇火山龍王、死神、地獄將軍、魔界花使‧朱玥、小鬼貓與兔、喚龍使‧蜜鶴林,以及法老王、埃及豔后(招募版)。',
-      '',
-      '⚡【天神宙斯爆發「天降雷罰」改版】',
-      '   ・改為:鎖定 1 名主要目標(BOSS 或玩家)造成<b>特技600%+當前HP25%</b>傷害;旁邊的<b>菁英怪 HP 砍半</b>;<b>小怪全部變成 1 HP</b>;最後<b>全體敵人強力麻痺 1 回合</b>!',
-    ],
-    items: [
-      '★ v3.15.44【登入卡死修復 index.html】根因:全班同時開機 → 同一校園對外 IP 大量並發 → Firestore 連線被限流/半通不通,getDocFromServer(強制走網路)既不成功也不快速失敗 → 永久 pending → await 卡死 gameCloudLoad/登入流程,玩家卡首頁要重開。修:新增 _fbRaceTimeout(p,ms,label) 逾時包裝,套到三槽讀取的 5 處:_fbLoad(server 9s + cache fallback 4s)、_fbLoadSlot(server 9s + cache 4s)、gameCloudLoad 二次確認(server 9s)。逾時 reject → 落入既有 catch → fallback getDoc(本 uid 專屬快取,安全);快取也逾時則拋出 → gameCloudLoad 既有「載入失敗視窗,請重整」路徑接手(不退預設池、不空白覆蓋雲端、不假裝新玩家)。最壞約 server9s+cache4s 後給可重整提示,不再無限卡',
-      '★ v3.15.44【24隻玩家英雄基礎HP×1.3補正 hero_db.js】根因:玩家英雄四維配點和=100、HP 欄位應 baked×1.3(v3.4.0「59隻」批次規則),但後續新增的學生設計英雄逐隻漏做此步(index.html 直接用 HERO_DB.hp 不二次乘,故 hp 偏低約30%)。修:HERO_DB 22隻(蜜鶴林74/武器精靈75/神槍手78/火柴人66/青炎龍王78/鳳凰73/操偶師84/菇女78/小丑77/美人魚70/火爆女72/幽幽72/網路駭客75/風術士81/我的豚豚72/機關王84/雅典娜81/阿蘇78/死神77/地獄將軍91/魔界花使83/小鬼貓與兔77)+ EGYPT_BOSS_HERO_STATS 招募版(法老王58→75/豔后54→70)。僅改玩家英雄(全在 _PLAYER_HERO_NAMES);BOSS版hp 11500/10500、小怪、河童(小怪)、幼兒園小孩(玩家英雄但故意弱化sum80)均不動',
-      '★ v3.15.44【宙斯天降雷罰改三段傷害 index.html + hero_db.js】老師更正規格,_runBurst 內 if(burstName===天降雷罰) 整段重寫:傷害1=_pickAutoBurstTarget 鎖定1名主要目標,若 BOSS(_zeusIsTrueBoss)或玩家(_PLAYER_HERO_NAMES)→特技 h.sp×_zrSpPct(Lv1=600%/每升+60%)+當前HP25%(HP段上限Lv×15);傷害2=BOSS/主目標以外的菁英怪(_zrEliteNames 對齊 _FIRE_IMMUNE_ELITE_NAMES 12名:貓空+日本菁英/稀有)→HP變當前50%;傷害3=小怪(非BOSS/非玩家/非菁英)→全體HP變1;結束全體強力麻痺1回合。鬥技場/PvP 對玩家目標沿用 v3.13.74 ×0.25 平衡;BOSS/玩家但非主目標(雙BOSS另一隻/鬥技場其他玩家)不受傷害只受麻痺。hero_db BURST_DB d/fd 同步三段文案(鐵律1.160 只寫Lv1基底600%)',
-      '★ v3.15.44【版本鏈】index.html(登入逾時+宙斯爆發)+ hero_db.js(24隻HP+宙斯文案)+ game_changelog.js,4 GAME 同步點 v3.15.43→v3.15.44、_vers[hero_db.js] v3.15.42→v3.15.44。admin_panel.js 維持 v3.15.40、arena.js v3.15.37、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.24)',
     ],
   },
 ];
