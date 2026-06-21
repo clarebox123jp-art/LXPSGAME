@@ -12,6 +12,28 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.71 — 新 SR 英雄「鐵匠」上線
+  {
+    ver: 'v3.15.71',
+    date: '2026-06-21',
+    brief: [
+      '🔨【新英雄「鐵匠」上線!一名 SR 鋼鐵匠師,召喚率與解鎖方式都和其他 SR 相同】',
+      '   ・🔨<b>天賦「工匠魂」</b>:鐵匠存活時,依我方存活英雄裝備的<b>至寶總件數</b>,每件提升友方全體傷害(最高 +40%);自身受到致命一擊時,也以同等機率<b>以鋼鐵之軀硬撐不倒</b>(HP 留在 1)!裝備愈多、隊伍愈強。',
+      '   ・⚔<b>S1「武器精煉強化」</b>:為全隊淬鍊兵刃,依攻擊值提升友方全體造成的傷害,並使友方全體<b>暴擊率 +30%</b>,持續 2 回合。',
+      '   ・🛡<b>S2「防具精煉強化」</b>:為全隊鍛造甲冑,依攻擊值提升友方全體的減傷,並使友方全體<b>迴避率 +30%</b>,持續 2 回合。',
+      '   ・🔨<b>爆發「裝備破壞奧義」</b>:以攻擊 650% 重擊 1 名對手(必中、無視有利),<b>擊碎並消除其全部有利狀態</b>,並使其造成傷害 -30%、受到傷害 +30%,持續 3 回合!',
+      '   ・想入手鐵匠?和其他 SR 一樣——在召喚星空抽 SR、或通關貓空有機率解鎖。',
+    ],
+    items: [
+      '★ v3.15.71【鐵匠 SR 三池接入】手動列入 ADMIN_ALL_HEROES(取得 SR 稀有度 + 進 rare_sr 召喚池 + 管理員擁有 + 收錄計數)、ADV_UNLOCKABLE_HEROES(貓空通關 50% 解鎖池)、_PLAYER_HERO_NAMES(存檔守門白名單)。因非 SSR 不進 SUMMON_RARE_HEROES 自動同步 IIFE,故三處皆手動。來源標走 _getHeroRarity fallthrough → SR + 非學生/日本/活動 → 自動標「🌌 異世界英雄」,零額外設定。',
+      '★ v3.15.71【天賦「工匠魂」】新增 _blacksmithPct(side):鐵匠存活時 = min(40%, 我方存活英雄至寶總件數 × (2%+1%/天賦級));_twTreasureCount 於 _applyTaiwanTreasureToHero / _applyFriendTreasuresToHero 寫入(敵 AI 隊 undefined → 0,鬥技場無至寶 → 0 失效)。doDmg 兩扣血點(fixedDmg + 主路徑)各加「不倒」hook:鐵匠受致命傷依此機率 HP 留 1。',
+      '★ v3.15.71【S1/S2 buff + 爆發 debuff】S1 _blkWeaponBuff(_pct=攻擊×(0.5+級×0.05)/100, _critUp=0.30)、S2 _blkArmorBuff(_pct=min(0.90,攻擊×(0.5+級×0.05)/100), _evaUp=0.30) 皆 filter+push 防去重殘留(基準攻擊50%·每升+攻擊5%·S2亦可升級);爆發 _blkWeak/_blkVuln(各 30%+5%/級, 3→4 回合)。execSkill + aiUseSkill 雙實作(鐵律 1.128,S2 aiUseSkill 補 _bkS2LvA 讀級);aiSkillScore 評分。',
+      '★ v3.15.71【doDmg hooks】頂部評估區 3 hooks:防具迴避(target 帶 _blkArmorBuff._evaUp → 30% 迴避歸零,排除必中/無視有利)、攻方增傷(_blacksmithAtkBuffMult × (1+_blacksmithPct) 乘算 rawDmg)、受方修正(_blacksmithTgtMult,無視有利攻擊跳過減傷部分);暴擊計算加 S1 _blkWeaponBuff._critUp +30%。覆蓋 fixedDmg + 主路徑兩條路(鐵律 1.110)。',
+      '★ v3.15.71【顯示 + 升級表】buffClass/buffName(_blkWeaponBuff🔨/_blkArmorBuff🛡)、statusName(_blkWeak/_blkVuln)、BAD_STATUS 加此 2 debuff;SKILL_UPGRADE_DEF(武器精煉強化 special_blk_weapon + 防具精煉強化 special_blk_armor 皆含 codex 顯示 case·攻擊×(50+級×5%))、BURST_UPGRADE_DEF(裝備破壞奧義 650→910% 乘算 + debuff 30→50% + dur 3→4)。',
+      '★ v3.15.71【編組圖位 _teamFormAdjustObjPos 加 where 參數】分 grid(編組選單左列縮圖·hpick-adv/arena 兩呼叫點·包 getHeroThumbObjPos)/preview(focusHero 右半部詳情 + 戰鬥預覽):拘留者/科學發明家 grid-20 preview-20、電腦老師 grid-20 preview-10、機關王雙人組 grid0 preview-10;grid base 多為 center center(無%)→ 函式內視為 50% 再加偏移(負值往上露頭)。不動戰鬥卡/圖鑑/HERO_IMG_POS 本體。',
+      '★ v3.15.71【hero_db.js 12 表 + 版本鏈】HERO_DB hp79(配點61×1.3 pre-multiplied,不吃 runtime ×1.3)/atk20/sp11/spd8 + AVATARS🔨 + HERO_IMGS鐵匠.png + HERO_IMG_POS + HERO_BIO(無 designer 官方 SR) + BURST_DB + HERO_LORE + HERO_TRAIT工匠魂 + BURST_GIF_DB(迅雷不及掩耳的攻擊.gif·刀劍+爆破·dur1400) + 分類/HEX/_TRAIT_LV_INFO。4 GAME 同步點 v3.15.70→v3.15.71;本輪改 game_changelog.js + hero_db.js + index.html;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.51)。',
+    ],
+  },
   // v3.15.70 — 新英雄「電腦老師」上線 ＋ 英雄圖鑑稀有度收集進度
   {
     ver: 'v3.15.70',
@@ -446,39 +468,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.52【龍王至寶獲得管道顯示修正 index.html】至寶圖鑑未獲得分支 _howToGet:把只認 dragon_fang_fire 的分支改為通用 if(def.isDragonTreasure),統一顯示「世界 BOSS 龍王戰排名獎勵(冠軍必得/第2名75%/第3名50%/第4名25%/其餘5%)+ GM 自選至寶選擇卷 + 明示星空召喚抽不到」。根因:其餘 7 隻龍王至寶 bossId(世界 BOSS id)非 TAIWAN_BOSSES → 掉進「透過召喚池或特殊關卡獲得」fallback。',
       '★ v3.15.52【查證:星空召喚不會抽到龍王至寶(僅文字修正,召喚邏輯不動)】SUMMON_RANDOM_TREASURES(召喚 2% 抽至寶 L95720 / 鬥技場至寶券 _arenaGrantTreasureVoucher / 未擁有補發 共用池)只含 10 件台灣 BOSS 至寶、0 件 dragon_ 龍王至寶,且無任何 push/concat 動態塞入;龍王至寶 8 件皆 noSummon:true 雙保險。確認星空召喚實際抽不到龍王至寶。',
       '★ v3.15.52【版本鏈】4 GAME 同步點 v3.15.51→v3.15.52,_vers[index.html]/[game_changelog.js] 同步 v3.15.52;world-boss.js 維持 v3.15.51、world-boss-ui.html v3.15.50、admin_panel.js/arena.js v3.15.49、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.32)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.51(2026-06-19)— 🐉 5 條新龍王至寶上線(雷/海/暗/光/幻 完整實裝)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.51',
-    date: '2026-06-19',
-    brief: [
-      '🐉【5 條新龍王的至寶正式登場!】',
-      '   ・打倒世界 BOSS 排名靠前可獲得的龍王至寶,新增 <b>雷龍王之翼、海龍王之爪、暗龍王之骸、光龍王之羽、幻龍王之角</b> 5 件,能力全部開放!',
-      '   ・每件至寶都有<b>屬性剋制</b>:受到剋制屬性傷害 -10%(每升 1 級再 +3%)、對該屬性敵人傷害 +10%,再加上各自的<b>專屬免疫</b>與<b>每回合成長</b>固有效果。',
-      '⚔️【5 件新至寶能力一覽】',
-      '   ・<b>雷龍王之翼</b>:速度+15、受水/對水、免疫麻痺與遲緩、每回合速度 +5%(最高 +30%)。',
-      '   ・<b>海龍王之爪</b>:HP+15、受火/對火、免疫反彈傷害與冰凍、每回合最大 HP +5%(最高 +30%)。',
-      '   ・<b>暗龍王之骸</b>:特技+15、受光/對光、免疫查封與死亡宣告、每回合傷害 +5%(最高 +30%)。',
-      '   ・<b>光龍王之羽</b>:特技+15、受暗/對暗、免疫封印技能與失明、每回合傷害 +5%(最高 +30%)。',
-      '   ・<b>幻龍王之角</b>:HP/攻/特各 +5、受普攻/對普攻、免疫魅惑與嘲諷、每回合技能消耗 -1(最多 -5,最低 1)。',
-      '🔧【炎龍王之牙 / 森龍王之鬚 屬性更正】',
-      '   ・<b>炎龍王之牙</b>改為「受草/對草」+ 免疫燃燒、封印普攻、睡眠;<b>森龍王之鬚</b>改為「受土/對土」+ 免疫減療、禁療、中毒(對齊龍王屬性相剋環)。',
-      '📖【魔物圖鑑修正】',
-      '   ・5 條新龍王現在正確顯示在<b>魔物圖鑑「世界 BOSS」區</b>(原本誤跑到英雄圖鑑)。',
-    ],
-    items: [
-      '★ v3.15.51【5 新龍王至寶 combat 全實裝 index.html】TAIWAN_TREASURES 5 件 comingSoon 全開放:雷龍王之翼(spd+15/waterDmgReduce+waterDmgBonus/免疫 para+slow/spdRampPerRound)、海龍王之爪(hp+15/fireDmgReduce+fireDmgBonus/免疫反彈+freeze/hpMaxRampPerRound)、暗龍王之骸(sp+15/lightDmgReduce+lightDmgBonus/免疫 nosell+deathmark/atkRampPerRound)、光龍王之羽(sp+15/darkDmgReduce+darkDmgBonus/免疫 seal+forecast/atkRampPerRound)、幻龍王之角(hp/atk/sp+5/normalAtkDmgReduce+normalAtkDmgBonus/免疫 charm+taunt/skillCostReducePerRound)。',
-      '★ v3.15.51【受X/對X 18 元素 hook(doDmg FT1-FT18)】新增 9 個元素減免/加成 hook(windDmgReduce/waterDmgReduce/waterDmgBonus/fireDmgBonus/lightDmgReduce/lightDmgBonus/darkDmgReduce/darkDmgBonus/normalAtkDmgReduce);因屬性更正,FT1/FT3/FT6 持有者改名:受火→海龍王之爪、受草→炎龍王之牙、受土→森龍王之鬚,並把舊名 火龍王之牙/草龍王之鬚 一併改為 炎龍王之牙/森龍王之鬚。全程鏡像既有 pattern、dmg 後插入、無 && 短路(鐵律 1.110)。',
-      '★ v3.15.51【12 狀態免疫(addStatus 中央攔截)】炎封印普攻(noatk)/睡眠(sleep)、森中毒(poison 含猛毒)、雷麻痺(para)/遲緩(slow+spddown)、海冰凍(freeze)、暗查封(nosell)/死亡宣告(deathmark)、光封印技能(seal)/失明(forecast+blind)、幻魅惑(charm)/嘲諷(taunt+strongTaunt),對齊地龍王之麟慣例,早 return 擋掉。',
-      '★ v3.15.51【海龍王之爪免疫反彈(只反彈,不反擊)】新增 doDmg FT18:opts.isReflect 真反彈對持有者歸 0。專標 6 個反彈點(反域 reverseDomain/警長正義制裁/日月潭靈鏡 reflectChance/台灣藍鵲鏡盾/仙人掌針狀葉/武鬥家金鐘罩)isReflect:true;反擊/還手 與「爆發/技能避免還手迴圈」的 isRebound 一律不擋。',
-      '★ v3.15.51【3 遞減固有】速度遞減(_effSpd turn-order +5%/回,上限+30%,讀 G.round 不改 spd);技能消耗遞減(skillCost 每回合 -1,最多 -5,最低 1,確定性折扣 UI 同步);HP上限遞減(nextRound G.round++ 後 mutate h.hp +5%/回,上限+30%,補等量當前 HP,_hpRampBase 只記一次)。',
-      '★ v3.15.51【顯示層同步】4 旗標集(免疫/遞減旗標不被當 +N% 顯示)+ 3 標籤表(新 % 鍵中文標籤)同步,順手補地龍王 v3.15.17 漏列的 earthDmgReduce/windDmgBonus 標籤。',
-      '★ v3.15.51【魔物圖鑑修正】5 新龍王(風暴雷/深淵海/邪骨暗/神聖光/星辰幻)補進 BOSS_NAMES + WORLD_BOSS_LIST + MONSTER_AVTR(原 v3.15.50 加 HERO_DB 時漏加 → 誤列英雄圖鑑當 SR,同 v3.15.17 地龍王事故)。',
-      '★ v3.15.51【BOSS 戰天賦對齊 world-boss.js 甲+乙】甲:校對 8 龍王圖鑑天賦文字一致(全內部一致,僅修地龍王註解 -40%→-30%)。乙:山岳地龍王 combat 強力減傷由 -40% 對齊圖鑑文字 -30%(傷害 ×0.60→×0.70)。',
-      '★ v3.15.51【版本鏈】4 GAME 同步點 v3.15.50→v3.15.51,_vers[index.html]/[world-boss.js]/[game_changelog.js] 同步 v3.15.51;world-boss-ui.html 維持 v3.15.50、admin_panel.js/arena.js v3.15.49、hero_db.js v3.15.44。本輪改 index.html + world-boss.js + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.31)。',
     ],
   },
 ];
