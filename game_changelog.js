@@ -13,6 +13,37 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.68(2026-06-21)— 🏆 限定稱號系統 ＋ 🆔 名稱辨識度 ＋ 🎁 每日儲備上限
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.68',
+    date: '2026-06-21',
+    brief: [
+      '🏆【限定稱號系統上線!達成成就才能解鎖的專屬✨稱號】',
+      '   ・打開「設定暱稱」,形容詞和名詞選單最下方多了一區「✨ 限定稱號」!',
+      '   ・<b>屠龍王者</b>(單場世界 BOSS 戰排名第 1)解鎖:屠龍的、救世主、屠龍者。',
+      '   ・<b>任何一枚頂級獎章</b>解鎖:不敗的、傳奇的、王者的⋯ 以及 冠軍、大師、霸主、學神 等霸氣稱號!',
+      '   ・還沒達成的稱號會顯示🔒和達成條件,快去挑戰解鎖吧!',
+      '🆔【玩家名稱更好辨識了】',
+      '   ・改過暱稱的同學,名稱前面會自動加上班級座號(例如「5202勇敢的小英雄」),讓大家和老師都看得出來是誰。',
+      '   ・這樣排行榜、鬥技場、世界 BOSS 戰就算有人取一樣的暱稱,也分得清楚囉!',
+      '🎁【世界 BOSS 每日儲備入場卷上限 5 → 10】每天最多可以儲備 10 張入場卷,衝排名更彈性!',
+      '📚【英雄圖鑑經驗書排版修正】英雄詳情頁 EXP 下方的經驗書按鈕不再擠成一排跑出畫面,改成依階級分排,英雄簡介也不會再被擠壞。',
+      '⬆️【連續吃經驗書升級視窗優化】一次吃很多經驗書連續升級時,只會留<b>最新(最高等級)</b>的確認視窗,不用一直按了!',
+      '📖【新手教學小修正】能量說明改為「能量足夠時就可以使用技能」;狀態效果補充:不能動(暈眩/麻痺/魅惑/睡眠)、持續扣血(燃燒/出血)。',
+    ],
+    items: [
+      '★ v3.15.68【限定稱號系統 index.html】暱稱詞庫新增 _NICK_ADJ_SPECIAL(屠龍的=wb_top1,不敗的/傳奇的/榮耀的/至尊的/黃金的/鑽石的/王者的/殿堂的/冠軍的=any_top_tier)+ _NICK_NOUN_SPECIAL(救世主/屠龍者=wb_top1,冠軍/大師/霸主/神話/學神/榮譽生/傳奇/王者=any_top_tier),與既有 _NICK_ADJ/_NICK_NOUN 零重複。新增 window._hasNickReq(req)(wb_top1→!!_medals 屠龍王者;any_top_tier→任一 _medals key ∈ _MEDAL_TOP_TIER)+ _nickReqHint。openNicknameModal:_init 偵測含限定詞、下拉各 append optgroup「✨ 限定稱號」(已解鎖→✨可選/未解鎖→🔒停用+條件)。_checkNicknameClean 詞庫併入限定詞(他人限定暱稱判合法、正常顯示不被遮罩)。_saveNickname 過 _checkNicknameClean 後加成就把關:選限定詞但 !_hasNickReq → bannerFX 擋下 return(防 DOM 竄改)。_medals/_MEDAL_TOP_TIER 與暱稱函式同 script 區塊可直接存取。',
+      '★ v3.15.68【玩家名稱辨識度前綴 index.html】_formatPlayerDisplayName 改寫:暱稱非真名時 → lsps 在名冊回 _classSeatCode4+暱稱(「5202暱稱」,年班+座號2碼不含姓,個資保護);非 lsps / lsps 未填名冊回 _emailMaskPrefix+「@」+暱稱(「cla********@暱稱」)。暱稱為真名或空 → 維持原名冊標籤保護。新增 window._classSeatCode4(名冊 class 正則年班+座號 + seatNo/seat 補 2 碼)、_emailMaskPrefix(local 前 3 碼 + 8 星號)、_isLspsEmail。_getAdminPlayerLabel 無名冊 adminShowReal 分支非 lsps 補 email 遮罩前綴。中央函式自動傳遞至 world-boss-ui.html 排行榜 / admin_panel.js / arena.js。',
+      '★ v3.15.68【世界 BOSS 每日儲備入場卷上限 index.html + world-boss-ui.html】index.html WB_TICKET_MAX 5→10。world-boss-ui.html:彈窗持有/剩餘張數 /5 → /10、最多持有 5 張 → 10 張;每回合場次標籤「🎫 GM 補償場次」「🎟️ 入場券場次」一律改「🎁 每日儲備場次」、排行榜累計徽章合併 GM補償(wbBonusGrants)與每日入場券(wb_entry_ticket)兩來源為單一「🎁 含N場每日儲備」(N=bonusBattleCount+bonusTicketCount)。後端兩系統(playerBackpack.wb_entry_ticket 每日儲備 / wbBonusGrants GM 補發)仍各自獨立、GM 工具分開管理,僅顯示文案統一。',
+      '★ v3.15.68【英雄圖鑑經驗書排版 index.html】英雄詳情頁 EXP 下方 6 顆經驗書按鈕原 inline-flex 往右溢出擠壞英雄簡介。改:外層包 flex-wrap 容器(max-width:448px),各階級(經驗值之書/精裝版/豪華典藏版)間插條件式 flex-basis:100% 換行元素 → 依階級最多疊 3 排不再溢出。為避免大段 template literal(含跳脫雙引號 + 變數插值)整塊替換風險,採無雙引號錨點窄注入 4 處;按鈕原 margin 保留(不影響不溢出結果)。',
+      '★ v3.15.68【連續升級彈窗只留最新 index.html】_showLevelUpSequence 開頭(空陣列守門後)加 移除既有 _levelup-ov overlay,連續吃經驗書多次呼叫本函式時新彈窗移除舊的,只留最新最高等級給玩家確認。點數早已加上,彈窗僅告知。',
+      '★ v3.15.68【編組頁英雄圖 Y 微調 index.html】新增 _teamFormAdjustObjPos(name,baseObjPos)(僅編組頁專用,getHeroObjPos / HERO_IMG_POS 本體不動):拘留者/科學發明家 Y-20%、機關王雙人組 Y-10%(負值往上露頭)。套用編組頁左側列表 .hf-illus + 右側預覽(typeof 守門)。戰鬥卡/圖鑑/其他頁面不受影響。',
+      '★ v3.15.68【新手教學文字修正 index.html】第②章能量「達 3 即可使用 S1」→「能量足夠時就可以使用技能」(技能費用依英雄而異,非固定 3);狀態效果「😵暈眩（不能動）」→「暈眩 / 麻痺 / 魅惑 / 睡眠（不能動）」、「🔥燃燒（持續扣血）」→「燃燒 / 出血（持續扣血）」。',
+      '★ v3.15.68【版本鏈】本輪改 index.html + world-boss-ui.html + game_changelog.js 三檔(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION v3.15.67→v3.15.68、_vers[index.html] v3.15.67→v3.15.68、_vers[world-boss-ui.html] v3.15.61→v3.15.68、_vers[game_changelog.js] v3.15.67→v3.15.68。hero_db.js 維持 v3.15.67、world-boss.js/adv_quiz_db.js/arena.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.48)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.67(2026-06-21)— 🤖 新增學生設計英雄「科學發明家」
   // ════════════════════════════════════════════════════════════════════
   {
@@ -460,23 +491,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.49【關卡提醒徽章定時刷新 index.html】新增 _setupStageBadgeAutoRefresh:每 25 秒,只要關卡頁 #adventure-overlay 可見就重跑 _updateStageEnhanceBadges();另追蹤台灣 game-day-key(_lxpsGetGameDayKey),跨 08:00 強制刷新。根因:徽章只在進頁/特定動作後計算一次,雲端資料(好友/至寶/每日免費召喚狀態)晚載入或玩家停在頁面跨過 08:00 都不會重檢 → 提醒常常沒出現。偵測階段零 Firebase 讀寫(純本地 + DOM class 切換)',
       '★ v3.15.49【鬥技場排名正式上線 arena.js + index.html】arena.js _arenaIsRankRewardEnabled 預設 false→true(GM 仍可在「鬥技場排名發獎開關」關閉)。並列同名次(競賽排名):trySettleLastWeek / getMyWeeklyRank / 大廳排行 rank = 1 + 本週證數嚴格大於我的人數(同證數同名次)。大廳排行榜資料源由聚合 arenaBattles(最近 500 筆)改讀 arenaWeekly[本週](便宜/自動週重置/不限 500 筆),欄位改「名次/玩家/本週證」(移除勝平敗)。結算後 deleteField 清空 arenaWeekly[上週](set merge:true 對 map 是深度合併,寫整份缺鍵不會刪 → 必須用 deleteField 才真的刪鍵)+ arenaRankSettlement 保留最近 6 週供大廳「📜 歷史排名」回查(新增 _arenaRank.getCurrentWeekRanking/getSettlementHistory)。獎勵不漏不重(結算上方既有 claimMyAward 自助領)',
       '★ v3.15.49【版本鏈】4 GAME 同步點 v3.15.48→v3.15.49,_vers[admin_panel.js] v3.15.40→v3.15.49(ADMIN_PANEL_VERSION 同步)、_vers[arena.js] v3.15.37→v3.15.49。hero_db.js 維持 v3.15.44、world-boss.js v3.15.34、world-boss-ui.html v3.15.48。本輪改 4 檔:game_changelog.js + admin_panel.js + arena.js + index.html。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.29)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.48(2026-06-19)— 🐉 修世界 BOSS 龍王戰崩毀後卡死
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.48',
-    date: '2026-06-19',
-    brief: [
-      '🐉【修正:龍王戰第 11 回合戰場崩毀後卡住無法離開】',
-      '   ・修正多人一起打世界 BOSS 龍王戰時,<b>第 11 回合戰場崩毀(全員陣亡)後,部分玩家卡在戰場、結算畫面跳不出來、無法離開</b>的問題。',
-      '   ・現在就算與房主的連線剛好掉封包,<b>自己也會偵測到全員陣亡並進入結算</b>,順利離開回到關卡頁。',
-    ],
-    items: [
-      '★ v3.15.48【世界 BOSS 龍王戰崩毀後 guest 卡死 修正 world-boss-ui.html】根因:多人連線世界 BOSS 戰由房主(host)權威跑戰鬥、廣播狀態給其他玩家(guest/client)。guest 端結算靠 _wbClientCheckEnded 偵測「房主廣播 meta.status 為 ended」才觸發。但房主第 11 回合戰場崩毀 _wbForceCollapseAt11 只廣播 reason=force-collapse-at-11(把 p1 全歸 0),隨後「meta.status=ended」的 sync 若因網路丟包/房主端也卡而沒送達 guest,guest 會死等 ended → 永久卡在戰場「龍王戰結束無法離開」(v3.15.36 玩家回報:Safari、round 11、p1 四人 HP 全 0、最後 sync reason=force-collapse-at-11 後再無 sync)。修法:guest 端 _wbClientApplyWire 每次套完房主狀態後,偵測「p1 全員 curHp<=0(玩家方全滅)」且戰鬥未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,與 _wbClientCheckEnded 同機制),不再依賴房主二次廣播 ended',
-      '★ v3.15.48【不誤判/不重複】世界 BOSS 戰玩家無復活機制,p1 全滅=確定戰敗,fallback 不會誤判;_wbAdvBattleEnded + _wbClientForceCheckWin 雙旗標守門避免每次 sync 重複觸發,兩旗標於新戰鬥開始 reset(world-boss.js L4546/L4585、world-boss-ui.html L10368)。checkWin worldboss + p1 全滅分支既有 → _wbShowAdvBattleResult(false) 進結算頁(index.html L55434)。房主端崩毀結算流程(_wbForceCollapseAt11 自身 600ms fallback)不受影響',
-      '★ v3.15.48【版本鏈】本輪主改 world-boss-ui.html(guest 結算 fallback)+ index.html/game_changelog.js 版本鏈同步(index.html 無功能改動)。4 GAME 同步點 v3.15.47→v3.15.48,_vers[world-boss-ui.html] v3.15.21→v3.15.48。hero_db.js 維持 v3.15.44、arena.js v3.15.37、admin_panel.js v3.15.40、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.28)',
     ],
   },
 ];

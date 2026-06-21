@@ -1721,12 +1721,12 @@ try{
         +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
         +   _lastBattleRow        // ★ v3.10.18 — 最近一場時間 + MVP
         +   '<div style="font-size:13px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積'
-        +       ((e.bonusBattleCount||0) > 0
-              ? ' <span style="color:#ff88bb;font-weight:700;" title="GM 因 BUG 補償的額外進場場次,傷害計入排行榜總傷">🎫 含 ' + e.bonusBattleCount + ' 場補償</span>'
+        +       (((e.bonusBattleCount||0) + (e.bonusTicketCount||0)) > 0
+              ? ' <span style="color:#ff88bb;font-weight:700;" title="每日儲備場次(含 GM 補償與挑戰入場券),傷害計入排行榜總傷">🎁 含 ' + ((e.bonusBattleCount||0) + (e.bonusTicketCount||0)) + ' 場每日儲備</span>'
               : '')
         +       /* ★ v3.13.7 — 入場券場次累計徽章(綠色,跟 GM 補償粉色區分) */
-                ((e.bonusTicketCount||0) > 0
-              ? ' <span style="color:#66ddaa;font-weight:700;" title="使用世界 BOSS 挑戰入場券打的額外場次,傷害計入排行榜總傷">🎟️ 含 ' + e.bonusTicketCount + ' 場入場券</span>'
+                (false && (e.bonusTicketCount||0) > 0
+              ? ' <span style="color:#66ddaa;font-weight:700;" title="使用世界 BOSS 挑戰入場券打的額外場次,傷害計入排行榜總傷">🎁 含 ' + e.bonusTicketCount + ' 場每日儲備</span>'
               : '')
         +       (_todayCountTxt ? ' · ' + _todayCountTxt : '')
         +   '</div>'
@@ -1864,13 +1864,13 @@ try{
                 + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
                 + 'box-shadow:0 0 6px rgba(85,204,136,0.55);" '
                 + 'title="入場券場次:玩家使用世界 BOSS 挑戰入場券退場次後打的場,傷害計入排行榜總傷">'
-                + '🎟️ 入場券場次</span>';
+                + '🎁 每日儲備場次</span>';
             } else {
               _bonusBadge = '<span style="background:linear-gradient(135deg,#cc4488,#ff66aa);'
                 + 'color:#fff;font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;'
                 + 'box-shadow:0 0 6px rgba(255,102,170,0.5);" '
                 + 'title="GM 補償場次:GM 因 BUG 補償的額外進場機會,傷害計入排行榜總傷">'
-                + '🎫 GM 補償場次</span>';
+                + '🎁 每日儲備場次</span>';
             }
           }
           // ★ v3.13.4 — 墓碑場次的視覺處理:整框紅色 + 原傷劃線 + 刪除原因
@@ -4609,12 +4609,12 @@ try{
             ? 'background:linear-gradient(135deg,rgba(40,130,80,0.25),rgba(85,200,140,0.18));border:1.5px solid rgba(102,221,170,0.6);'
             : 'background:rgba(60,60,80,0.3);border:1.5px solid rgba(150,150,180,0.4);') + '">' +
           '<div style="font-size:15px;font-weight:700;color:' + (_canUseTicket ? '#88ffcc' : '#aaaacc') + ';">' +
-            '🎟️ 世界 BOSS 挑戰入場券:<b style="font-size:18px;">' + ticketN + ' / 5</b>' +
+            '🎟️ 世界 BOSS 挑戰入場券:<b style="font-size:18px;">' + ticketN + ' / 10</b>' +
           '</div>' +
           '<div style="font-size:12px;color:#bbcccc;margin-top:6px;line-height:1.55;">' +
             (_canUseTicket
               ? '使用 1 張券可額外打 1 場(本場會標記為「🎟️ 入場券場次」,傷害一樣計入排行榜)'
-              : '昨天若有沒用完的場次,今天 08:00 自動發券到背包(最多持有 5 張)') +
+              : '昨天若有沒用完的場次,今天 08:00 自動發券到背包(最多持有 10 張)') +
           '</div>' +
         '</div>';
 
@@ -4696,7 +4696,7 @@ try{
                   '✅ 使用 1 張入場券成功!<br><br>' +
                   '<div style="font-size:15px;color:#88ffcc;margin:8px 0;">' +
                     '今日場次:<b>' + _r.newCount + ' / ' + _limit + '</b> 場<br>' +
-                    '剩餘入場券:<b>' + _r.ticketsLeft + ' / 5</b> 張' +
+                    '剩餘入場券:<b>' + _r.ticketsLeft + ' / 10</b> 張' +
                   '</div>' +
                   '<div style="font-size:13px;color:#aaa;line-height:1.6;">' +
                     '本場結算後會在排行榜標記「🎟️ 入場券場次」,傷害正常計入總傷' +
