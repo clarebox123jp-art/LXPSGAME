@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-21  / 目前主程式版本:v3.15.66(英雄來源標註補完[蜜鶴林/海盜船長/武器精靈→學生設計;法老王/豔后→埃及關卡機率獲得]＋新手教學能量說明更正)
+//  最後更新:2026-06-21  / 目前主程式版本:v3.15.67(新增學生設計英雄「科學發明家」5年4班楊寓如,SSR,新發明物品卡子系統6卡＋6選3即刻發明＋靈感被動＋醫學界的發明奇蹟爆發)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,25 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // ════════════════════════════════════════════════════════════════════
+  // v3.15.67(2026-06-21)— 🤖 新增學生設計英雄「科學發明家」
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.67',
+    date: '2026-06-21',
+    brief: [
+      '🤖【新英雄登場:科學發明家(SSR)】由 5 年 4 班 楊同學 設計!一位用「發明」改變戰局的天才!',
+      '   ・💊<b>天賦「發明家的堅持」</b>:免疫「查封」(物品永遠不會被封鎖);每當自己使用發明物品卡,額外治療當前血量最低的夥伴。',
+      '   ・🔬<b>技能①「即刻發明」</b>:從 6 種新發明裡挑選 3 種,立刻製造成物品卡放進背包,並可<b>再行動一次</b>!',
+      '   ・💡<b>技能②「發明家的靈感」</b>(被動):場上任何人使用技能或爆發時,科學發明家都有機率<b>靈光一閃,多得 1 張新發明卡</b>。',
+      '   ・🧬<b>爆發「醫學界的發明奇蹟」</b>:變賣最值錢的物品卡換能量,讓<b>全體夥伴回滿血(可復活)並無敵 1 回合</b>,還讓最強的夥伴強力增傷!',
+      '   ・🎒<b>6 種新發明物品卡</b>:全效治療劑(全體治療+護盾)、淨化血清(全體治療+解不利)、戰術強化劑(強力增攻+普攻回能)、劇毒煙霧彈(敵全體強力中毒+消有利)、高能光束槍(單體必中重擊+強力麻痺)、反應力場(全體無敵+受擊反傷)。',
+    ],
+    items: [
+      '★ v3.15.67【新增學生設計英雄「科學發明家」(5年4班 楊寓如)】資料層 hero_db.js 12 表(HERO_DB hp78=配點60×1.3/atk5/sp20/spd15、S1即刻發明c5主動、S2發明家的靈感c0被動、BURST 醫學界的發明奇蹟、TRAIT 發明家的堅持🔧、BIO designer、BURST_GIF 基因結構.gif dur2730、AVATARS🤖、IMG/POS/LORE/HEX/CATEGORIES);邏輯層 index.html 完整實作(技術細節見 index.html 內 _vers 版本註解):①新發明物品卡子系統 6 卡(INVENT_CARD_DEFS+_makeInventCard 鎖 inventorSpv+_grantInventCard/_useInventCardFlow/_applyInventCard side-agnostic;玩家走用卡流程,AI 不主動使用 invent 型);②S1 即刻發明(玩家 6 選 3 modal、AI 隨機 3 → 生成卡替換非裝備槽保留裝備卡 + 再行動;skillCost Lv5 消耗-1/Lv10-2);③S2 發明家的靈感(execSkill/aiUseSkill/_runBurst 三處 _inventInspirationTrigger,任意角色用技能/爆發雙方各自發明家 20%+5%/級 cap95% 生成);④天賦(addStatus 查封免疫 + 用卡治療最低 HP 友方 spv75%+10%/級);⑤爆發(賣最高卡→能量+全體回滿復活+無敵+首席增傷);execAtk 卡③回能 hook(鐵律1.207例外)+ doDmg 卡⑥反傷 hook(仿空間果實頂部評估,鐵律1.110);SKILL/BURST_UPGRADE_DEF + 生成器B special_invent_create + SUMMON_RARE_HEROES + STUDENT_DESIGNER_HEROES(lsps110048,自動套 _STUDENT_DESIGNED_HERO_SET → 圖鑑🎨)。',
+      '★ v3.15.67【版本鏈】hero_db.js + index.html + game_changelog.js 三檔同改(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION v3.15.66→v3.15.67、_vers[index.html] v3.15.66→v3.15.67、_vers[hero_db.js] v3.15.65→v3.15.67、_vers[game_changelog.js] v3.15.66→v3.15.67。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.47)。',
+    ],
+  },
   // ════════════════════════════════════════════════════════════════════
   // v3.15.66(2026-06-21)— 🎨 英雄來源標註補完 ＋ ⚡ 新手教學能量說明更正
   // ════════════════════════════════════════════════════════════════════
@@ -458,23 +477,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.48【世界 BOSS 龍王戰崩毀後 guest 卡死 修正 world-boss-ui.html】根因:多人連線世界 BOSS 戰由房主(host)權威跑戰鬥、廣播狀態給其他玩家(guest/client)。guest 端結算靠 _wbClientCheckEnded 偵測「房主廣播 meta.status 為 ended」才觸發。但房主第 11 回合戰場崩毀 _wbForceCollapseAt11 只廣播 reason=force-collapse-at-11(把 p1 全歸 0),隨後「meta.status=ended」的 sync 若因網路丟包/房主端也卡而沒送達 guest,guest 會死等 ended → 永久卡在戰場「龍王戰結束無法離開」(v3.15.36 玩家回報:Safari、round 11、p1 四人 HP 全 0、最後 sync reason=force-collapse-at-11 後再無 sync)。修法:guest 端 _wbClientApplyWire 每次套完房主狀態後,偵測「p1 全員 curHp<=0(玩家方全滅)」且戰鬥未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,與 _wbClientCheckEnded 同機制),不再依賴房主二次廣播 ended',
       '★ v3.15.48【不誤判/不重複】世界 BOSS 戰玩家無復活機制,p1 全滅=確定戰敗,fallback 不會誤判;_wbAdvBattleEnded + _wbClientForceCheckWin 雙旗標守門避免每次 sync 重複觸發,兩旗標於新戰鬥開始 reset(world-boss.js L4546/L4585、world-boss-ui.html L10368)。checkWin worldboss + p1 全滅分支既有 → _wbShowAdvBattleResult(false) 進結算頁(index.html L55434)。房主端崩毀結算流程(_wbForceCollapseAt11 自身 600ms fallback)不受影響',
       '★ v3.15.48【版本鏈】本輪主改 world-boss-ui.html(guest 結算 fallback)+ index.html/game_changelog.js 版本鏈同步(index.html 無功能改動)。4 GAME 同步點 v3.15.47→v3.15.48,_vers[world-boss-ui.html] v3.15.21→v3.15.48。hero_db.js 維持 v3.15.44、arena.js v3.15.37、admin_panel.js v3.15.40、world-boss.js v3.15.34。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.28)',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.47(2026-06-19)— ⚔️ 修鬥技場滿 10 回合勝利卡死
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.47',
-    date: '2026-06-19',
-    brief: [
-      '⚔️【修正:鬥技場打滿 10 回合分勝負時卡住】',
-      '   ・修正鬥技場<b>雙方都沒被全部打倒、打滿 10 回合</b>由存活數/血量分勝負時,<b>結算畫面跳不出來、卡在戰場結束不了</b>的問題。',
-      '   ・現在打滿 10 回合會<b>直接顯示勝負結算 + 「🏫 回到學校」</b>,乾淨結束回到關卡頁。',
-    ],
-    items: [
-      '★ v3.15.47【鬥技場滿 10 回合勝利卡死 修正 index.html】根因:nextRound 內 _arenaCheckRoundLimit 滿 10 回合結算時,原優先走 _showResultWithDrama(這是「擊殺結束」的慢動作戲劇化,鏡頭聚焦最後一擊 → advShowBattleResult 冒險結算)。但滿 10 回合是「時間到結束」、雙方都還活著、沒有擊殺動作 → 慢動作找不到擊殺對象而卡死、結算頁不顯示 → 玩家卡在戰場「結束不了」。修法:win/lose/draw 三分支改「直接走 showResult」(鬥技場結算視窗 #result-overlay + 🏫 回到學校,無慢動作,會 clearTurnTimer + 關 action-panel + 清鬥技場中斷快照,乾淨結束回關卡頁);_showResultWithDrama 降為 fallback(萬一 showResult 不存在)',
-      '★ v3.15.47【獎勵不漏不重 index.html】鬥技之證仍由結算上方 _arenaSettleReward(win/lose/draw) 先發,不重複;勝利陣容自動上雲(自動勝利槽,原在 _showResultWithDrama 內)於 win 分支補回呼叫 _arenaSaveAutoWinTeam(G.p1 四英雄名+元素)。全滅 KO 勝利仍走 _showResultWithDrama(有擊殺動作,慢動作正常),不受本次改動影響',
-      '★ v3.15.47【版本鏈】本輪只改 index.html(鬥技場結算分流)+ game_changelog.js。4 GAME 同步點 v3.15.46→v3.15.47。hero_db.js 維持 v3.15.44、arena.js v3.15.37(_arenaCheckRoundLimit 計算邏輯未改)、admin_panel.js v3.15.40、world-boss.js v3.15.34、world-boss-ui.html v3.15.21。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.27)',
     ],
   },
 ];
