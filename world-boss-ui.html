@@ -1562,12 +1562,9 @@ try{
         // 常見泛稱直接放行
         if(_t === '玩家' || _t === '房主' || _t === 'AI' || _t === 'NPC') return _t;
         try{
-          // ★ v3.6.9 — 管理員觀看 → 直接顯示真名 + 名冊標籤(老師看得出是誰)
-          if(_viewerIsAdmin && typeof window._getAdminPlayerLabel === 'function'){
-            const _label = window._getAdminPlayerLabel(em || '', _t, { adminShowReal: true });
-            if(_label && _label !== '未知玩家') return _label;
-          }
-          // ★ v3.11.16 — 學生觀看 + 有 email:統一玩家可見格式「快樂的小狐狸 (5324蔣同學)」
+          // ★ v3.15.69 — 老師需求:排行榜「連 GM 看也一律遮罩」,完整姓名只在 GM 後台選單(admin_panel)出現。
+          //   故移除原管理員 adminShowReal 全名分支,所有觀看者(含 GM)統一走下方 _formatPlayerDisplayName 遮罩格式。
+          // ★ v3.11.16 — 統一玩家可見遮罩格式(名冊→「5408陳O彬」/「5408暱稱」;lsps 無名冊→「137暱稱」/「137陳O彬」;非lsps→「cla********@暱稱」)
           if(em && typeof window._formatPlayerDisplayName === 'function'){
             const _label = window._formatPlayerDisplayName(_t, em);
             if(_label && _label !== '玩家') return _label;
@@ -5248,7 +5245,10 @@ try{
       //         走個資保護版(顯示「5324蔣同學」而非真名),跟世界 BOSS 排行榜方向一致
       var displayLabel = name;
       try{
-        if(typeof window._getAdminPlayerLabel === 'function'){
+        // ★ v3.15.69 — 統一走玩家可見遮罩格式(名冊「5408陳O彬」/「5408暱稱」、lsps 無名冊「137…」),與排行榜一致
+        if(f.email && typeof window._formatPlayerDisplayName === 'function'){
+          displayLabel = window._formatPlayerDisplayName(name, f.email);
+        } else if(typeof window._getAdminPlayerLabel === 'function'){
           displayLabel = window._getAdminPlayerLabel(f.email || '', name, { protectIfNoEmail: true });
         }
       }catch(_){}

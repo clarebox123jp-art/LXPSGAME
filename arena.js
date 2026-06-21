@@ -337,14 +337,25 @@
       const uid = window._fbUser && window._fbUser.uid;
       const email = (window._fbUser && window._fbUser.email) || '';
       let displayLabel = '';
+      // ★ v3.15.69 — 統一走玩家可見遮罩格式(名冊「5408陳O彬」/「5408暱稱」、lsps 無名冊「137…」),避免真名外洩
       try {
-        const ros = (typeof window._getRosterEntry === 'function')
-          ? window._getRosterEntry((email || '').toLowerCase().trim()) : null;
-        if (ros && typeof window._formatRosterLabel === 'function') {
-          displayLabel = window._formatRosterLabel(ros);
+        const _nick = (window._playerNickname
+          || (window._fbUser && window._fbUser.displayName) || '');
+        if (typeof window._formatPlayerDisplayName === 'function') {
+          displayLabel = window._formatPlayerDisplayName(_nick, email) || '';
         }
       } catch (_) {}
-      // 沒名冊就用暱稱遮罩
+      // fallback:中央函式不在時走名冊短碼
+      if (!displayLabel) {
+        try {
+          const ros = (typeof window._getRosterEntry === 'function')
+            ? window._getRosterEntry((email || '').toLowerCase().trim()) : null;
+          if (ros && typeof window._formatRosterLabel === 'function') {
+            displayLabel = window._formatRosterLabel(ros);
+          }
+        } catch (_) {}
+      }
+      // 最後保險:暱稱
       if (!displayLabel) {
         displayLabel = (window._playerNickname
           || (window._fbUser && window._fbUser.displayName)

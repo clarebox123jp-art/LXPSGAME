@@ -13,6 +13,27 @@
 
 window.GAME_CHANGELOG = [
   // ════════════════════════════════════════════════════════════════════
+  // v3.15.69(2026-06-21)— 🆔 名稱顯示隱私強化 ＋ ✏️ 暱稱框加寬
+  // ════════════════════════════════════════════════════════════════════
+  {
+    ver: 'v3.15.69',
+    date: '2026-06-21',
+    brief: [
+      '🆔【名稱顯示更好認、也更保護隱私】',
+      '   ・校內信箱的同學,排行榜上的代號改顯示信箱<b>末 3 碼數字</b>(原本大家都是「lsp********」分不出誰),更好辨識!',
+      '   ・同學的真實姓名一律<b>遮住中間字</b>(例如「陳O彬」),保護個人隱私。',
+      '   ・小博士、世界 BOSS、鬥技場排行榜,以及好友列表,通通套用一致的遮罩格式;完整姓名只有老師在後台才看得到。',
+      '✏️【設定暱稱視窗與名稱框加寬】「設定暱稱」視窗變寬了,下拉選單不會再被擠出格子;左上角顯示自己暱稱的白色框也加寬+字體微縮,讓完整暱稱(班級座號/信箱末碼 + 自選組合)能完整顯示。',
+    ],
+    items: [
+      '★ v3.15.69【email 遮罩改末 3 碼 index.html】_emailMaskPrefix:lsps 校內信箱(local 皆以 lsps 開頭如 lsps110137,遮前 3 碼=「lsp********」毫無辨識度)改取「末 3 碼數字」當代號(lsps110137→137);非 lsps(gmail 等)維持前 3 碼 + 遮罩。',
+      '★ v3.15.69【_formatPlayerDisplayName 全面重寫 index.html】真名一律中間字遮罩(_maskFullName,陳煥彬→陳O彬)。分支:(A)displayName 已是「4 碼班級座號+中文真名」(如 5408陳煥彬)→ 拆碼 + 中間字遮罩(5408陳O彬);(B)合法遊戲暱稱 → 名冊回班級座號+暱稱(5408暱稱)、lsps 無名冊回末 3 碼+暱稱(137暱稱)、非 lsps 回 cla********@暱稱;(C)真名/空 → 名冊優先回班級座號+中間字遮罩全名(5408陳O彬)否則 _formatRosterLabel(5408陳同學),名冊查不到的真名 → email 前綴+中間字遮罩(137陳O彬)。修補原本「名冊查不到的真名」直接回原字串導致真名外洩。',
+      '★ v3.15.69【所有排行榜+好友列表一律遮罩】世界 BOSS 排行榜(world-boss-ui.html _protectName)移除「GM 觀看顯示真名」adminShowReal 分支,所有觀看者(含 GM)一律走 _formatPlayerDisplayName 遮罩;邀請好友列表同步走中央函式。小博士排行榜(index.html)兩寫入點(weeklyQuiz + arenaWeekly)寫入雲端前即套 _formatPlayerDisplayName 遮罩(寫入時有 email,新資料即遮罩,舊資料隨同學作答自動更新)。鬥技場(arena.js _getCurrentUserInfo)displayLabel 改走中央函式(原名冊外 fallback 原始暱稱會洩真名)。好友面板(_getFriendLabel)委派中央函式。★ 完整姓名只在 GM 後台選單(admin_panel.js _getAdminPlayerLabel adminShowReal:true 保留)出現。',
+      '★ v3.15.69【設定暱稱 modal + 暱稱框加寬 index.html】設定暱稱 modal max-width min(96vw,clamp(480,50vw,680)) → (540,58vw,800),下拉選單不溢出;左上角 #adv-user-name 框 max-width clamp(200,18vw,320) → (240,26vw,460)、font-size clamp(18,2.8vw,38) → (14,1.9vw,26),讓遮罩後較長暱稱完整顯示、版面不變。',
+      '★ v3.15.69【版本鏈】本輪改 index.html + world-boss-ui.html + arena.js + game_changelog.js 四檔(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION + _vers[index.html / world-boss-ui.html / arena.js / game_changelog.js] 全 v3.15.68→v3.15.69。hero_db.js 維持 v3.15.67、world-boss.js/adv_quiz_db.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.49)。',
+    ],
+  },
+  // ════════════════════════════════════════════════════════════════════
   // v3.15.68(2026-06-21)— 🏆 限定稱號系統 ＋ 🆔 名稱辨識度 ＋ 🎁 每日儲備上限
   // ════════════════════════════════════════════════════════════════════
   {
@@ -466,31 +487,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.50【龍王戰背景露臉 world-boss-ui.html】#wb-lobby-overlay.wb-in-battle 戰鬥背景(JS 動態 _bossUrl + CSS 後備)由 center/cover 改 center 10%/cover(Y 由 50% 減 40% → 10%),龍王臉露在畫面中央。戰鬥隱藏龍王卡(縮 1px 仍可點 click)+全螢幕龍王背景 本就由 body.wb-in-worldboss-battle 全龍王通用,新龍王自動套用。',
       '★ v3.15.50【接班排程確認(既有機制已符合需求)】龍王倒下記 wbBossDownTimes[bossId];_calcSettleAt 算「倒下後下一個台灣 8:00」;該 8:00 第一個觸發 _wbSettle.trySettle 的玩家用 transaction 結算並「同一 transaction 原子接班下一隻龍王(滿血,照 _WB_BOSS_ROTATION 輪替)」。即「倒下後隔天 8:00 開放下一隻」對全龍王皆適用,本輪無需改碼。',
       '★ v3.15.50【版本鏈】4 GAME 同步點 v3.15.49→v3.15.50,_vers[world-boss.js] v3.15.34→v3.15.50、_vers[world-boss-ui.html] v3.15.48→v3.15.50,_vers[index.html]/[game_changelog.js] 同步 v3.15.50。admin_panel.js/arena.js 維持 v3.15.49、hero_db.js v3.15.44。本輪改 world-boss.js + world-boss-ui.html + index.html(版本鏈)+ game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.30)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.49(2026-06-19)— 🎁 全體獎勵 + ⚔️ 鬥技場排名上線 + ✨ 提醒徽章 + 🛠 離場按鈕
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.49',
-    date: '2026-06-19',
-    brief: [
-      '🎁【新增:老師可一鍵發獎勵給全班】',
-      '   ・老師後台新增「全體玩家獎勵」,可一次把召喚卷 / 水晶 / 知識幣 / 英雄等發給<b>全班所有人</b>,你下次登入會自動收到並跳出通知,<b>每人只會領一次</b>(不會重複領)。',
-      '⚔️【鬥技場排名正式開跑,有發獎勵了!】',
-      '   ・排行榜改為比<b>本週獲得的 🎖 鬥技之證</b>,每週一早上 8:00 自動結算發獎,<b>同證數並列同名次</b>;結算後排行榜歸零,可在大廳按「📜 歷史」回看過去的名次。',
-      '   ・名次獎勵:🥇第 1 名 🔮15/🎖15/💰3萬、🥈第 2-5 名 🔮10/🎖10/💰2萬、🥉第 6-10 名 🔮5/🎖5/💰1萬、第 11 名以後(本週有得證)🔮2/🎖2/💰5000。',
-      '✨【關卡首頁的提醒更準了】',
-      '   ・關卡首頁下方的提醒(免費 1 抽 / 有可強化英雄 / 有至寶可強化 / 有好友可贈禮)現在會<b>定時自動更新</b>,每天早上 8:00 重置後也會正確出現。',
-      '🛠【離開鬥技場不再殘留按鈕】',
-      '   ・修正離開鬥技場回到關卡頁後,<b>「戰鬥教學」等戰鬥中按鈕沒有消失</b>的問題,現在會全部收乾淨。',
-    ],
-    items: [
-      '★ v3.15.49【離開鬥技場徹底收按鈕 index.html】backToHomeArena 補呼叫 ctrlBattleToggle(false)(隱藏左下「戰鬥教學」浮鈕 _tut-float-btn + 控制列「離開戰場」鈕/分隔線)+ 清教學遮罩 _tut-prompt/_ti-dim-overlay/_tut-dim + _tutorialActive/_gamePaused 旗標歸位 + 保險隱藏 _tut-float-btn。根因:backToHomeArena 原本只清各 overlay,從未呼叫 ctrlBattleToggle(false),故戰鬥教學浮鈕殘留',
-      '★ v3.15.49【全體玩家獎勵 admin_panel.js + index.html】GM 後台「獎勵與補償」群組(原「補償與補發」改名)新增「全體玩家獎勵」卡:勾獎勵+數量(鏡像課堂獎勵)→ 標題/訊息/有效期 → _fbCreateGlobalReward 寫 globalRewards 一筆。玩家登入後 _fbClaimGlobalRewards 讀 enabled 的 globalRewards,對未領者用 transaction 認領 globalRewardClaims 的 uid_rewardId 文件(獨立認領文件,與玩家存檔分離 → 永不被三槽 richest-merge 復活成未領 → 即使共用 iPad 清快取/雲端資料誤差也絕不重複領);標記成功才 _fbCompensatePlayer 三槽發獎(沿用序號兌換「先標記再發獎,寧漏不重複」)。玩家主檔 _grClaimed 做跳過已領快取。需先部署 globalRewards/globalRewardClaims 規則',
-      '★ v3.15.49【關卡提醒徽章定時刷新 index.html】新增 _setupStageBadgeAutoRefresh:每 25 秒,只要關卡頁 #adventure-overlay 可見就重跑 _updateStageEnhanceBadges();另追蹤台灣 game-day-key(_lxpsGetGameDayKey),跨 08:00 強制刷新。根因:徽章只在進頁/特定動作後計算一次,雲端資料(好友/至寶/每日免費召喚狀態)晚載入或玩家停在頁面跨過 08:00 都不會重檢 → 提醒常常沒出現。偵測階段零 Firebase 讀寫(純本地 + DOM class 切換)',
-      '★ v3.15.49【鬥技場排名正式上線 arena.js + index.html】arena.js _arenaIsRankRewardEnabled 預設 false→true(GM 仍可在「鬥技場排名發獎開關」關閉)。並列同名次(競賽排名):trySettleLastWeek / getMyWeeklyRank / 大廳排行 rank = 1 + 本週證數嚴格大於我的人數(同證數同名次)。大廳排行榜資料源由聚合 arenaBattles(最近 500 筆)改讀 arenaWeekly[本週](便宜/自動週重置/不限 500 筆),欄位改「名次/玩家/本週證」(移除勝平敗)。結算後 deleteField 清空 arenaWeekly[上週](set merge:true 對 map 是深度合併,寫整份缺鍵不會刪 → 必須用 deleteField 才真的刪鍵)+ arenaRankSettlement 保留最近 6 週供大廳「📜 歷史排名」回查(新增 _arenaRank.getCurrentWeekRanking/getSettlementHistory)。獎勵不漏不重(結算上方既有 claimMyAward 自助領)',
-      '★ v3.15.49【版本鏈】4 GAME 同步點 v3.15.48→v3.15.49,_vers[admin_panel.js] v3.15.40→v3.15.49(ADMIN_PANEL_VERSION 同步)、_vers[arena.js] v3.15.37→v3.15.49。hero_db.js 維持 v3.15.44、world-boss.js v3.15.34、world-boss-ui.html v3.15.48。本輪改 4 檔:game_changelog.js + admin_panel.js + arena.js + index.html。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.29)',
     ],
   },
 ];
