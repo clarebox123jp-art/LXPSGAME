@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.82 — 重大資料遺失修復(裝至寶主力變未解鎖 + GM 三槽救不回)
+  {
+    ver: 'v3.15.82',
+    date: '2026-06-22',
+    brief: [
+      '🛟【重大修復:消失的英雄救回來了!】修正部分同學在共用 iPad 上登入後,<b>原本擁有的英雄(尤其練過、裝了至寶的主力)突然「變成未解鎖」消失</b>的嚴重問題。現在每次登入都會<b>自動以雲端最完整的擁有資料為準</b>,把被誤刪的英雄救回並補齊。',
+      '   ・如果你之前有英雄不見了,<b>重新登入一次</b>系統就會自動把練過的主力從雲端等級紀錄救回解鎖清單,之後也不會再發生。',
+    ],
+    items: [
+      '★ v3.15.82【根因】_applySafeData 稽核熔斷(v3.15.40)要求「本地英雄要有解鎖紀錄」才保留;但 v3.13.19 本機按帳號命名空間(adv_unlocked_heroes@@<uid>)上線後,本地清單已是「本帳號專屬」、不可能是別帳號殘留 → 查無解鎖紀錄的合法舊英雄(尤其練過/裝至寶的主力)被當汙染誤丟 → in-memory 變薄 → autosave 把薄清單寫回雲端三槽 → 永久消失,連 GM「三槽最豐富修復」都救不回(三槽 unlockedHeroes 全薄;但 heroLevels 的等級殘留還在,成為救回線索)。',
+      '★ v3.15.82【幻影救回·提到所有分支之前】_applySafeData 一進 unlockedHeroes 處理就先掃雲端 heroLevels:凡「等級>1(代表練過/裝過至寶)卻不在 unlockedHeroes」的玩家英雄,補回 data.unlockedHeroes(排除 GM admin_delete 已刪、排除解鎖紀錄明確標別帳號 uid 者)。因為提到分支之前,救援(_adminRescueInProgress)/別人殘留/同 uid 三條路徑都受惠 → GM「三槽最豐富修復」後學生一登入即自動補回。',
+      '★ v3.15.82【同 uid 分支放寬稽核】_isLegitLocalHero 由「查無紀錄就丟」改為「有投資證據(雲端或本地 heroLevels 等級>1)即使查無紀錄也保留」;仍尊重 admin_delete(GM 刪除永久)與「紀錄明確標別帳號 uid → 丟」雙保險。原邏輯誤殺合法無紀錄英雄,新邏輯精準保留練過的主力、仍擋得住真殘留。',
+      '★ v3.15.82【自動 heal 雲端 + 跨帳號防護不變】救回的英雄寫進本地後,隨下次 autosave 經 _fbSave union(只增不減)回寫雲端主檔 + live + safe 三槽 → 雲端自動補齊,之後 GM 不必再手動救、也不會再次被誤刪。跨帳號汙染防護維持既有三層(本機命名空間 @@<uid> + _lxpsEnforceDeviceOwner 裝置擁有者對齊 + gameCloudLoad 鎖 _gUserId),本次只放寬「同一個自己帳號命名空間內」的誤殺、完全不放寬跨帳號,所以「不會讀到別人的英雄」這條安全性不變。',
+      '★ v3.15.82【安全邊界】只救 _PLAYER_HERO_NAMES 白名單內的英雄(已從 HERO_DB 移除的不救)、只救等級>1(避免剛解鎖 seed=1 的幻影或汙染)、admin_delete 與別帳號 uid 紀錄一律不救。',
+      '★ v3.15.82【版本鏈】4 GAME 同步點 v3.15.81→v3.15.82;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.82。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.62)。',
+    ],
+  },
   // v3.15.81 — 知識王完成後可查看今天做完的科目與成績
   {
     ver: 'v3.15.81',
@@ -331,33 +348,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.63【順修壞連結】激戰之舞/明鏡止水/夢境時光 原 url 指向不存在的「-」repo(404),本次換新 gif 一併修復。深海大漩渦!/萬鏡映虛獄! 整塊錨定替換,未動到埃及豔后(尼羅河的詛咒)等其他技能對深海大漩渦.gif 的重用。',
       '★ v3.15.63【#17 已補 + 長度調整】雷神·萬雷殛世(風暴雷龍王 taifeng_wind_dragon,BURST_DB 在 world-boss.js,bd.n 經 _showBurstCinematic→_showBurstGif 命中新條目)補上 雷雨.gif(老師上傳,55 格 loop:0 單圈 1650ms,dur=1650);明鏡止水 漣漪 單圈 7.6s 過長→dur 截 2500;銀齒 龍捲風 單圈僅 360ms(4 格)會眨眼→dur 1440(4 圈循環,loop:0)維持視覺。',
       '★ v3.15.63【版本鏈】4 GAME 同步點 v3.15.62→v3.15.63;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。world-boss.js v3.15.51、world-boss-ui.html v3.15.61、admin_panel.js v3.15.58、adv_quiz_db.js 20260620、arena.js v3.15.60 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.43)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.62(2026-06-20)— ⚖ 比例傷害平衡:HP% 上限統一 Lv×20 + 瀕死技不再秒 BOSS/對手
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.62',
-    date: '2026-06-20',
-    brief: [
-      '⚖️【英雄「按血量比例」的傷害,上限統一了】',
-      '   ・有些技能會造成「對手血量百分比」的傷害(例如打對手目前 HP 的 20%)。這類傷害現在<b>全部統一一個上限:英雄等級 × 20</b>,讓高血量 BOSS 戰不會被某幾招無限滾雪球。',
-      '   ・涉及技能:<b>神聖鎚擊、炸彈投擲 / 炸彈連續投擲、青炎爆破、雷鳴、捨命揮斬、支配鎖鍊、死亡宣告(對 BOSS)、主神奧汀的岡格尼爾、機械師的定時炸彈、幼兒園小孩的大聲啼哭</b>。多數是把舊的「等級×10」調成「等級×20」,等於<b>上限提高、可打更多</b>(捨命揮斬同時拿掉額外 +50,支配鎖鍊由「特技×倍率」改成更直覺的「等級×20」)。',
-      '💀【「瀕死 / 秒殺」技,對 BOSS 與鬥技場對手不再「一招秒殺」】',
-      '   ・<b>靈魂收割</b>(吸血鬼):打<b>小怪</b>維持「直接收割倒下」;但對 <b>BOSS、菁英、以及鬥技場對手</b>改成造成「當前 HP 20%(上限 等級×20)」傷害並回等量血,不再一招清場。',
-      '   ・<b>惡鬼撲食</b>(幽幽):對<b>小怪</b>維持「打到剩一半血」;對 <b>BOSS</b> 的特技 300% 加上「等級×20」上限;在<b>鬥技場</b>改成「當前 HP 20%(上限 等級×20)」。',
-      '   ・<b>天降雷罰</b>(天神宙斯):打<b>小怪</b>維持「全變 1 HP」;對 BOSS 的「當前 HP 25%」那段上限由 等級×15 提高到 <b>等級×20</b>(鬥技場對玩家仍沿用原本平衡縮減)。',
-      '   ・<b>死亡宣告</b>(暗法師)對<b>小怪 / 鬥技場</b>維持「2 回合後剩 1 HP」不變,只有對 BOSS 的比例傷害上限跟著提高到 等級×20。',
-      '🏅【GM 獎章挑戰提醒徽章變大、更明顯】',
-      '   ・主選單獎章鍵上的「<b>新增獎章挑戰!</b>」提醒徽章<b>放大了一倍</b>,並修好之前被導覽列裁切、看不完整的問題。',
-    ],
-    items: [
-      '★ v3.15.62【HP% 傷害上限統一 Lv×20】index.html execSkill＋aiUseSkill 雙路徑同步:神聖鎚擊(_maxDmg)、炸彈投擲/連投(_lvCap，S1/S2×玩家/AI 共 4 處)、青炎爆破(_azDmgCap)、雷鳴(_zmMaxDmg)、捨命揮斬(_hgExtraCap，去 +50)、支配鎖鍊(移除 _capMult/_spv 改 _hcHeroLv*20)、死亡宣告 BOSS 段(_maxDmgDM，Lv×10→Lv×20)、奧汀岡格尼爾(HP% 段 Math.min(...,Lv×20)，攻擊 300% 段不限)、機械師定時炸彈(5%maxHP 段 Math.min(...,Lv×20)，固定段不限)、大聲啼哭(加 _cryHeroLv*20)。戰鬥 log/註解 Lv×10→Lv×20。',
-      '★ v3.15.62【瀕死/秒殺技 BOSS+PVP 改上限傷害】靈魂收割:玩家版 BOSS/菁英/死神段 cap Lv×10→Lv×20，新增「!_adventureMode(鬥技場)」分支=當前 HP 20% 上限 Lv×20+吸血同量(不秒殺)，小怪維持 curHp=0 處決;AI 版同款 BOSS/菁英/PVP 分支(原無條件 doDmg(curHp,piercing) 全處決)。惡鬼撲食(玩家+AI):BOSS 特技 300% 段加 Math.min(...,Lv×20)、新增 else if(_isArena)=當前 HP 20%/Lv×20、小怪維持剩 50%。天降雷罰:HP25% 段 _zrMaxHpDmg Lv×15→Lv×20(特技段不限、PVP 對玩家沿用 ×0.25、小怪維持 1HP)。死亡宣告小怪/PVP 剩 1HP 維持除外。',
-      '★ v3.15.62【審判終結雙保險】judgmentEnd tick 的 BOSS 判定加 _isWorldBossTarget(t) OR 條件(belt-and-suspenders;BOSS_NAMES 已含 8 龍王，本次為未來防呆);鬥技場(!_adventureMode)同樣走 20% 上限不秒殺。',
-      '★ v3.15.62【GM 獎章徽章 UI】_updateGmMedalW1Badge:徽章 font 11→22、padding/radius/top 放大;修 #adv-medal-btn 浮層被 #adv-bottom-nav .adv-nav-btn{overflow:hidden}(無 !important)裁切 → 對該鍵 inline overflow:visible + z-index 40(全達成時還原)。',
-      '★ v3.15.62【圖鑑 fd 同步】hero_db.js 神聖鎚擊/死亡宣告/炸彈投擲·連投/青炎爆破/捨命揮斬/支配鎖鍊 的 d+fd 上限文字改 Lv×20(地獄將軍 L1835 dead fallback 暫留)。雷鳴/奧汀/定時炸彈/大聲啼哭 fd 本未列上限數字、無不一致。',
-      '★ v3.15.62【版本鏈】4 GAME 同步點 v3.15.61→v3.15.62;_vers[index.html]/[game_changelog.js]/[hero_db.js(v3.15.60→v3.15.62)] 同步。world-boss-ui.html v3.15.61、adv_quiz_db.js 20260620、arena.js v3.15.60、world-boss.js v3.15.51、admin_panel.js v3.15.58 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.42)。',
     ],
   },
 ];
