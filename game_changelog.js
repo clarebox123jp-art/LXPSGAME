@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.89 — 英雄強化教學 + 條件搜尋大升級(效果標籤校正 + 新增條件 + 補滿92隻)
+  {
+    ver: 'v3.15.89',
+    date: '2026-06-22',
+    brief: [
+      '📘【英雄強化教學上線!】點英雄看「詳情」時,新增一段<b>強化教學</b>互動導覽,帶你認識把英雄練強的六大方法:⬆ 升等(吃經驗書)、💪 加素質點、💎 裝備台灣至寶、🌟 天賦、📚 技能升級、🔥 極限爆發。詳情頁六角圖上方也多了「📘 強化教學」按鈕,隨時可重看。',
+      '🔍【條件搜尋大升級!新增多種條件】條件搜尋可勾選的效果變更多了!新增:<b>素質提升、受傷增加(讓敵人變脆)、造成傷害增加、追擊、模仿、封印天賦</b>,並把<b>七大屬性傷害</b>(🔥火 / 💧水 / 🪽風 / 🌿草 / 🪨土 / ⭐光 / 🌙暗)獨立成一組,想找特定屬性的打手或特定功能的角色更精準!',
+      '🛠【效果標籤全面校正 + 補滿 92 隻】重新校對全部 92 隻英雄的技能效果標籤,修正先前自動產生的誤標(例如把「免疫暈眩」誤判成「會造成暈眩」之類),並補上先前漏掉的<b>刺客、法老王、埃及豔后</b>。現在條件搜尋完整涵蓋全部 92 隻英雄!',
+    ],
+    items: [
+      '★ v3.15.89【英雄強化教學 HUT・index.html】新增 HUT 互動導覽模組(HUT_STEPS 6 步,對應 _renderHeroDetail 六個錨點 _hut-anchor-level/stats/treasure/talent/skills/burst);英雄詳情頁六角圖上方加「📘 強化教學」鈕(_hutOpenManual),首次開啟英雄詳情自動提示(_hutShowEntryPrompt);_hutShowStep/_hutShowFinal 逐步高亮+說明;完成旗標 window._heroUpgradeTutDone 隨雲端存檔(_buildSafeData/_applySafeData 白名單)。遊戲指引「英雄養成」章補各素質點(攻擊/特技/速度/HP/防禦)效果說明。',
+      '★ v3.15.89【條件搜尋:新增條件・hero_db.js + index.html】SKILL_EFFECT_DEFS 由 4 組改 5 組:新增 E「屬性傷害類」(火/水/風/草/土/光/暗 7 種,對齊 ELEMENT_DB 7 屬性,雷歸風);A 組加 素質提升、造成傷害增加;B 組加 封印天賦、受傷增加、追擊、模仿。index.html openCondSearch 彈窗渲染陣列 [A..D]→[A..E](E 色 #c9a0ff),比對邏輯資料驅動不變。',
+      '★ v3.15.89【條件搜尋:標籤校正・hero_db.js】HERO_SKILL_EFFECTS 全 92 隻逐隻校對,移除自動掃描的誤標(雅典娜免疫暈眩/麻痺/冰凍/睡眠被誤判成施放、守衛「封印時無效」被誤判成會封印技能、美人魚解燃燒被誤判成施放燃燒、幽幽屬性減免被誤判成屬性攻擊、我的豚豚降被攻擊率被誤判成提高被攻擊率…等數十處),並補上漏標效果。屬性標籤改以技能實際元素(SKILL_FORCE_ELEMENT / 描述)為準(陰陽師補火水風土四屬、美人魚移除誤判火、暗法師無強制元素故不標)。',
+      '★ v3.15.89【補滿 92 隻 + 學者改類・hero_db.js】HERO_PRIMARY_CLASS 與 HERO_SKILL_EFFECTS 補上先前漏列的 刺客(主傷害)、法老王(主傷害)、埃及豔后(主控場),兩表皆 89→92(與 _PLAYER_HERO_NAMES 聯集對齊全 92 隻);學者主分類 主控場→主傷害。',
+      '★ v3.15.89【版本鏈】4 GAME 同步點 v3.15.88→v3.15.89(_GAME_LOADED_VERSION / _vers[index.html] / _vers[hero_db.js] / _vers[game_changelog.js])。admin_panel.js v3.15.85 / world-boss.js v3.15.86 / world-boss-ui.html v3.15.87 / main.css v3.15.79 / adv_quiz_db.js 20260620 不變。本輪改 index.html + hero_db.js + game_changelog.js 三檔(index.html 最後上傳)。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.68)。',
+    ],
+  },
   // v3.15.88 — 篩選分類重定義(單一主分類)+ 新增條件搜尋
   {
     ver: 'v3.15.88',
@@ -288,37 +305,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.69【所有排行榜+好友列表一律遮罩】世界 BOSS 排行榜(world-boss-ui.html _protectName)移除「GM 觀看顯示真名」adminShowReal 分支,所有觀看者(含 GM)一律走 _formatPlayerDisplayName 遮罩;邀請好友列表同步走中央函式。小博士排行榜(index.html)兩寫入點(weeklyQuiz + arenaWeekly)寫入雲端前即套 _formatPlayerDisplayName 遮罩(寫入時有 email,新資料即遮罩,舊資料隨同學作答自動更新)。鬥技場(arena.js _getCurrentUserInfo)displayLabel 改走中央函式(原名冊外 fallback 原始暱稱會洩真名)。好友面板(_getFriendLabel)委派中央函式。★ 完整姓名只在 GM 後台選單(admin_panel.js _getAdminPlayerLabel adminShowReal:true 保留)出現。',
       '★ v3.15.69【設定暱稱 modal + 暱稱框加寬 index.html】設定暱稱 modal max-width min(96vw,clamp(480,50vw,680)) → (540,58vw,800),下拉選單不溢出;左上角 #adv-user-name 框 max-width clamp(200,18vw,320) → (240,26vw,460)、font-size clamp(18,2.8vw,38) → (14,1.9vw,26),讓遮罩後較長暱稱完整顯示、版面不變。',
       '★ v3.15.69【版本鏈】本輪改 index.html + world-boss-ui.html + arena.js + game_changelog.js 四檔(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION + _vers[index.html / world-boss-ui.html / arena.js / game_changelog.js] 全 v3.15.68→v3.15.69。hero_db.js 維持 v3.15.67、world-boss.js/adv_quiz_db.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.49)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.68(2026-06-21)— 🏆 限定稱號系統 ＋ 🆔 名稱辨識度 ＋ 🎁 每日儲備上限
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.68',
-    date: '2026-06-21',
-    brief: [
-      '🏆【限定稱號系統上線!達成成就才能解鎖的專屬✨稱號】',
-      '   ・打開「設定暱稱」,形容詞和名詞選單最下方多了一區「✨ 限定稱號」!',
-      '   ・<b>屠龍王者</b>(單場世界 BOSS 戰排名第 1)解鎖:屠龍的、救世主、屠龍者。',
-      '   ・<b>任何一枚頂級獎章</b>解鎖:不敗的、傳奇的、王者的⋯ 以及 冠軍、大師、霸主、學神 等霸氣稱號!',
-      '   ・還沒達成的稱號會顯示🔒和達成條件,快去挑戰解鎖吧!',
-      '🆔【玩家名稱更好辨識了】',
-      '   ・改過暱稱的同學,名稱前面會自動加上班級座號(例如「5202勇敢的小英雄」),讓大家和老師都看得出來是誰。',
-      '   ・這樣排行榜、鬥技場、世界 BOSS 戰就算有人取一樣的暱稱,也分得清楚囉!',
-      '🎁【世界 BOSS 每日儲備入場卷上限 5 → 10】每天最多可以儲備 10 張入場卷,衝排名更彈性!',
-      '📚【英雄圖鑑經驗書排版修正】英雄詳情頁 EXP 下方的經驗書按鈕不再擠成一排跑出畫面,改成依階級分排,英雄簡介也不會再被擠壞。',
-      '⬆️【連續吃經驗書升級視窗優化】一次吃很多經驗書連續升級時,只會留<b>最新(最高等級)</b>的確認視窗,不用一直按了!',
-      '📖【新手教學小修正】能量說明改為「能量足夠時就可以使用技能」;狀態效果補充:不能動(暈眩/麻痺/魅惑/睡眠)、持續扣血(燃燒/出血)。',
-    ],
-    items: [
-      '★ v3.15.68【限定稱號系統 index.html】暱稱詞庫新增 _NICK_ADJ_SPECIAL(屠龍的=wb_top1,不敗的/傳奇的/榮耀的/至尊的/黃金的/鑽石的/王者的/殿堂的/冠軍的=any_top_tier)+ _NICK_NOUN_SPECIAL(救世主/屠龍者=wb_top1,冠軍/大師/霸主/神話/學神/榮譽生/傳奇/王者=any_top_tier),與既有 _NICK_ADJ/_NICK_NOUN 零重複。新增 window._hasNickReq(req)(wb_top1→!!_medals 屠龍王者;any_top_tier→任一 _medals key ∈ _MEDAL_TOP_TIER)+ _nickReqHint。openNicknameModal:_init 偵測含限定詞、下拉各 append optgroup「✨ 限定稱號」(已解鎖→✨可選/未解鎖→🔒停用+條件)。_checkNicknameClean 詞庫併入限定詞(他人限定暱稱判合法、正常顯示不被遮罩)。_saveNickname 過 _checkNicknameClean 後加成就把關:選限定詞但 !_hasNickReq → bannerFX 擋下 return(防 DOM 竄改)。_medals/_MEDAL_TOP_TIER 與暱稱函式同 script 區塊可直接存取。',
-      '★ v3.15.68【玩家名稱辨識度前綴 index.html】_formatPlayerDisplayName 改寫:暱稱非真名時 → lsps 在名冊回 _classSeatCode4+暱稱(「5202暱稱」,年班+座號2碼不含姓,個資保護);非 lsps / lsps 未填名冊回 _emailMaskPrefix+「@」+暱稱(「cla********@暱稱」)。暱稱為真名或空 → 維持原名冊標籤保護。新增 window._classSeatCode4(名冊 class 正則年班+座號 + seatNo/seat 補 2 碼)、_emailMaskPrefix(local 前 3 碼 + 8 星號)、_isLspsEmail。_getAdminPlayerLabel 無名冊 adminShowReal 分支非 lsps 補 email 遮罩前綴。中央函式自動傳遞至 world-boss-ui.html 排行榜 / admin_panel.js / arena.js。',
-      '★ v3.15.68【世界 BOSS 每日儲備入場卷上限 index.html + world-boss-ui.html】index.html WB_TICKET_MAX 5→10。world-boss-ui.html:彈窗持有/剩餘張數 /5 → /10、最多持有 5 張 → 10 張;每回合場次標籤「🎫 GM 補償場次」「🎟️ 入場券場次」一律改「🎁 每日儲備場次」、排行榜累計徽章合併 GM補償(wbBonusGrants)與每日入場券(wb_entry_ticket)兩來源為單一「🎁 含N場每日儲備」(N=bonusBattleCount+bonusTicketCount)。後端兩系統(playerBackpack.wb_entry_ticket 每日儲備 / wbBonusGrants GM 補發)仍各自獨立、GM 工具分開管理,僅顯示文案統一。',
-      '★ v3.15.68【英雄圖鑑經驗書排版 index.html】英雄詳情頁 EXP 下方 6 顆經驗書按鈕原 inline-flex 往右溢出擠壞英雄簡介。改:外層包 flex-wrap 容器(max-width:448px),各階級(經驗值之書/精裝版/豪華典藏版)間插條件式 flex-basis:100% 換行元素 → 依階級最多疊 3 排不再溢出。為避免大段 template literal(含跳脫雙引號 + 變數插值)整塊替換風險,採無雙引號錨點窄注入 4 處;按鈕原 margin 保留(不影響不溢出結果)。',
-      '★ v3.15.68【連續升級彈窗只留最新 index.html】_showLevelUpSequence 開頭(空陣列守門後)加 移除既有 _levelup-ov overlay,連續吃經驗書多次呼叫本函式時新彈窗移除舊的,只留最新最高等級給玩家確認。點數早已加上,彈窗僅告知。',
-      '★ v3.15.68【編組頁英雄圖 Y 微調 index.html】新增 _teamFormAdjustObjPos(name,baseObjPos)(僅編組頁專用,getHeroObjPos / HERO_IMG_POS 本體不動):拘留者/科學發明家 Y-20%、機關王雙人組 Y-10%(負值往上露頭)。套用編組頁左側列表 .hf-illus + 右側預覽(typeof 守門)。戰鬥卡/圖鑑/其他頁面不受影響。',
-      '★ v3.15.68【新手教學文字修正 index.html】第②章能量「達 3 即可使用 S1」→「能量足夠時就可以使用技能」(技能費用依英雄而異,非固定 3);狀態效果「😵暈眩（不能動）」→「暈眩 / 麻痺 / 魅惑 / 睡眠（不能動）」、「🔥燃燒（持續扣血）」→「燃燒 / 出血（持續扣血）」。',
-      '★ v3.15.68【版本鏈】本輪改 index.html + world-boss-ui.html + game_changelog.js 三檔(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION v3.15.67→v3.15.68、_vers[index.html] v3.15.67→v3.15.68、_vers[world-boss-ui.html] v3.15.61→v3.15.68、_vers[game_changelog.js] v3.15.67→v3.15.68。hero_db.js 維持 v3.15.67、world-boss.js/adv_quiz_db.js/arena.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.48)。',
     ],
   },
 ];
