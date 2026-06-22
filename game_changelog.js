@@ -12,6 +12,15 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.88 — 篩選分類重定義(單一主分類)+ 新增條件搜尋
+  {
+    ver: 'v3.15.88',
+    date: '2026-06-22',
+    brief: [
+      '🔍【篩選分類改版】英雄圖鑑與編組的篩選分類全面改版!原本的「傷害/回復/控場坦克」改為<b>五大主分類</b>:⚔ 主傷害、💚 主回復、🌀 主控場、🛡 主坦克、🎲 其他。每隻英雄會歸到<b>最符合的單一主類</b>(坦克型獨立出來,不再和控場混在一起),分類更清楚。',
+      '🔍【全新「條件搜尋」】篩選列新增「🔍 條件搜尋」按鈕,點開後可<b>勾選想要的技能效果</b>(例如:護盾、復活、暈眩、燃燒、封印、吸血、再行動、減傷…等數十種),按「搜尋」就會列出<b>同時具備全部所選效果</b>的英雄,配隊找特定功能的角色超方便!',
+    ],
+  },
   // v3.15.86 — 龍王至寶獲得管道擴充(未收錄至寶納入8龍王)+ 重複轉換統一5
   {
     ver: 'v3.15.86',
@@ -310,25 +319,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.68【編組頁英雄圖 Y 微調 index.html】新增 _teamFormAdjustObjPos(name,baseObjPos)(僅編組頁專用,getHeroObjPos / HERO_IMG_POS 本體不動):拘留者/科學發明家 Y-20%、機關王雙人組 Y-10%(負值往上露頭)。套用編組頁左側列表 .hf-illus + 右側預覽(typeof 守門)。戰鬥卡/圖鑑/其他頁面不受影響。',
       '★ v3.15.68【新手教學文字修正 index.html】第②章能量「達 3 即可使用 S1」→「能量足夠時就可以使用技能」(技能費用依英雄而異,非固定 3);狀態效果「😵暈眩（不能動）」→「暈眩 / 麻痺 / 魅惑 / 睡眠（不能動）」、「🔥燃燒（持續扣血）」→「燃燒 / 出血（持續扣血）」。',
       '★ v3.15.68【版本鏈】本輪改 index.html + world-boss-ui.html + game_changelog.js 三檔(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION v3.15.67→v3.15.68、_vers[index.html] v3.15.67→v3.15.68、_vers[world-boss-ui.html] v3.15.61→v3.15.68、_vers[game_changelog.js] v3.15.67→v3.15.68。hero_db.js 維持 v3.15.67、world-boss.js/adv_quiz_db.js/arena.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.48)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.67(2026-06-21)— 🤖 新增學生設計英雄「科學發明家」
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.67',
-    date: '2026-06-21',
-    brief: [
-      '🤖【新英雄登場:科學發明家(SSR)】由 5 年 4 班 楊同學 設計!一位用「發明」改變戰局的天才!',
-      '   ・💊<b>天賦「發明家的堅持」</b>:免疫「查封」(物品永遠不會被封鎖);每當自己使用發明物品卡,額外治療當前血量最低的夥伴。',
-      '   ・🔬<b>技能①「即刻發明」</b>:從 6 種新發明裡挑選 3 種,立刻製造成物品卡放進背包,並可<b>再行動一次</b>!',
-      '   ・💡<b>技能②「發明家的靈感」</b>(被動):場上任何人使用技能或爆發時,科學發明家都有機率<b>靈光一閃,多得 1 張新發明卡</b>。',
-      '   ・🧬<b>爆發「醫學界的發明奇蹟」</b>:變賣最值錢的物品卡換能量,讓<b>全體夥伴回滿血(可復活)並無敵 1 回合</b>,還讓最強的夥伴強力增傷!',
-      '   ・🎒<b>6 種新發明物品卡</b>:全效治療劑(全體治療+護盾)、淨化血清(全體治療+解不利)、戰術強化劑(強力增攻+普攻回能)、劇毒煙霧彈(敵全體強力中毒+消有利)、高能光束槍(單體必中重擊+強力麻痺)、反應力場(全體無敵+受擊反傷)。',
-    ],
-    items: [
-      '★ v3.15.67【新增學生設計英雄「科學發明家」(5年4班 楊寓如)】資料層 hero_db.js 12 表(HERO_DB hp78=配點60×1.3/atk5/sp20/spd15、S1即刻發明c5主動、S2發明家的靈感c0被動、BURST 醫學界的發明奇蹟、TRAIT 發明家的堅持🔧、BIO designer、BURST_GIF 基因結構.gif dur2730、AVATARS🤖、IMG/POS/LORE/HEX/CATEGORIES);邏輯層 index.html 完整實作(技術細節見 index.html 內 _vers 版本註解):①新發明物品卡子系統 6 卡(INVENT_CARD_DEFS+_makeInventCard 鎖 inventorSpv+_grantInventCard/_useInventCardFlow/_applyInventCard side-agnostic;玩家走用卡流程,AI 不主動使用 invent 型);②S1 即刻發明(玩家 6 選 3 modal、AI 隨機 3 → 生成卡替換非裝備槽保留裝備卡 + 再行動;skillCost Lv5 消耗-1/Lv10-2);③S2 發明家的靈感(execSkill/aiUseSkill/_runBurst 三處 _inventInspirationTrigger,任意角色用技能/爆發雙方各自發明家 20%+5%/級 cap95% 生成);④天賦(addStatus 查封免疫 + 用卡治療最低 HP 友方 spv75%+10%/級);⑤爆發(賣最高卡→能量+全體回滿復活+無敵+首席增傷);execAtk 卡③回能 hook(鐵律1.207例外)+ doDmg 卡⑥反傷 hook(仿空間果實頂部評估,鐵律1.110);SKILL/BURST_UPGRADE_DEF + 生成器B special_invent_create + SUMMON_RARE_HEROES + STUDENT_DESIGNER_HEROES(lsps110048,自動套 _STUDENT_DESIGNED_HERO_SET → 圖鑑🎨)。',
-      '★ v3.15.67【版本鏈】hero_db.js + index.html + game_changelog.js 三檔同改(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION v3.15.66→v3.15.67、_vers[index.html] v3.15.66→v3.15.67、_vers[hero_db.js] v3.15.65→v3.15.67、_vers[game_changelog.js] v3.15.66→v3.15.67。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.47)。',
     ],
   },
 ];
