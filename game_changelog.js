@@ -12,6 +12,16 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.74 — 新增「特別挑戰題」(知識王第三欄,30題全對領大獎)
+  {
+    ver: 'v3.15.74',
+    date: '2026-06-22',
+    brief: [
+      '🎮【新增「特別挑戰題」!打開「👑 知識王挑戰」就能看到第三欄】小英雄大對抗・遊戲知識 30 題,教你戰鬥基礎、怎麼讓英雄變強、還有各種好康獎勵在哪拿,學會了打關卡更輕鬆!',
+      '🏆【30 題全對拿大獎】30 題「全部答對」就能領 <b>🔮 召喚水晶 ×10 + 🌈 SSR 隨機召喚卷 ×1</b>!每個帳號限領一次,但可以重複作答複習(題目順序每次都會打亂),答錯不扣分,慢慢來!',
+      '🔔【還沒領的同學注意】只要大獎還沒領,「知識王挑戰」按鈕和第三欄都會有醒目的「獎勵未獲得」提示——快去挑戰把大獎帶回家!',
+    ],
+  },
   // v3.15.73 — 世界BOSS龍王護盾說明中文化 + 埃及寵物名修正
   {
     ver: 'v3.15.73',
@@ -424,33 +434,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.55【埃及 9 怪 MONSTER_LORE 完整介紹 index.html】補 9 筆魔物背景介紹(法老王/埃及豔后/木乃伊貓/流沙眼鏡蛇/卡諾卜壇怪/神秘圖騰/沙漠毒蠍/仙人掌怪/聖甲蟲),文案結合古埃及神話與其實際 BOSS/小怪戰技能行為。openMonsterDetail 之 stats/技能(b.s1/s2/burst)/天賦(HERO_TRAIT)皆資料驅動本已具備,僅缺 lore,現補齊。',
       '★ v3.15.55【埃及掉落資訊 MONSTER_DROPS index.html】6 小怪顯示 50%→60% + 標註賣值;新增法老王(黃金法老面具 20% / 超越極限果實 25%)、埃及豔后(尼羅河女王之珠 20% / 超越極限果實 25%)掉落顯示(於英雄圖鑑詳情頁及魔物圖鑑詳情頁顯示)。',
       '★ v3.15.55【版本鏈】4 GAME 同步點 v3.15.54→v3.15.55;_vers[index.html]/[game_changelog.js] 同步 v3.15.55。arena.js/admin_panel.js 維持 v3.15.54(本輪未動)、world-boss.js v3.15.51、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.35)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.54(2026-06-19)— ⚔ 鬥技場大調整:碎片門檻減半 + 商店調價 + 至寶卷含龍王
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.54',
-    date: '2026-06-19',
-    brief: [
-      '🔨【靈魂碎片合成自選召喚卷:需求減半!】',
-      '   ・<b>SSR 靈魂碎片</b>:集滿張數由 40 個降為 <b>20 個</b>即可在召喚星空合成 🌟 SSR 自選召喚卷。',
-      '   ・<b>SR 靈魂碎片</b>:集滿張數由 20 個降為 <b>10 個</b>即可合成 ✨ SR 自選召喚卷。',
-      '⚔【鬥技場兌換商店:價格調整】',
-      '   ・SSR 英雄召喚卷:40 → <b>30</b> 鬥技之證;SR 英雄召喚卷:20 → <b>15</b>。',
-      '   ・至寶召喚卷:50 → <b>40</b>;至寶經驗卷軸:10 → <b>5</b>;召喚水晶:5 → <b>3</b>;知識幣 1 萬維持 5。',
-      '💎【至寶召喚卷升級:現在抽得到龍王至寶了!】',
-      '   ・鬥技場「至寶召喚卷」的隨機池由 10 件台灣至寶<b>擴充為 18 件(台灣 10 + 龍王 8)</b>,有機會抽到炎/森/地/雷/海/暗/光/幻龍王的至寶!',
-      '   ・(提醒:星空召喚池仍然只有台灣至寶,龍王至寶只能靠龍王戰排名、老師自選卷、或鬥技場至寶召喚卷取得。)',
-    ],
-    items: [
-      '★ v3.15.54【靈魂碎片合成門檻減半 index.html】_SOUL_SHARD_DEF.ssr.need 40→20、sr.need 20→10(合成/換券函式皆讀 need,改常數即生效);同步更新 _buildSummonPage 合成卡 fallback 預設(40→20、20→10)、SSR 自選介紹、soul_shard_ssr/sr 背包說明、3 處貓空 SR 碎片 toast、好友送禮 SSR/SR 碎片說明,全部文案 40→20 / 20→10。',
-      '★ v3.15.54【鬥技商店調價 index.html ARENA_EXCHANGE_ITEMS】arena_x_ssr_summon 40→30、arena_x_sr_summon 20→15、arena_x_treasure_summon 50→40、arena_x_treasure_exp 10→5、arena_x_summon_crystal 5→3;arena_x_coins_10k 維持 5。同步更新註解清單與至寶卷 desc(註明台灣 10 + 龍王 8)。',
-      '★ v3.15.54【鬥技場至寶卷含龍王 index.html _arenaGrantTreasureVoucher】新增 _ARENA_DRAGON_TREASURE_IDS(8 隻龍王至寶 id),發券時把存在於 TAIWAN_TREASURES 的龍王至寶 push 進 SUMMON_RANDOM_TREASURES.slice() 合併池(去重),再依「未擁有優先」抽 1 件。⚠ 只改鬥技場至寶卷,星空召喚仍走原 SUMMON_RANDOM_TREASURES(龍王 noSummon 不變,v3.15.52 結論不動)。龍王至寶與台灣至寶同存 TAIWAN_TREASURES,_grantTaiwanTreasure/_taiwanTreasureData 通用。同步在至寶圖鑑龍王分支 _howToGet 加註「鬥技場至寶召喚卷(40 證,台灣+龍王 18 件)」管道。',
-      '★ v3.15.54【GM 傷害明細(adminOnly)admin_panel.js + arena.js + index.html】老師需求:鬥技場戰鬥記錄審核可查「逐回合×逐英雄×技能」傷害。① index.html doDmg 既有鬥技場總傷 hook(!_adventureMode)同處旁路收集 G._arenaDmgSources(只記 p1 攻擊者,技能名 opts.skillName→_curSkillName→特技/普攻,amount=原始計算傷害含溢殺) ② arena.js _arenaSubmitBattleLog 結算後聚合 round→hero→skill,旁路寫 arenaDamageDetail/{uid_ts}(docId 對齊 arenaBattles;失敗靜默) ③ admin_panel.js 每筆戰鬥列加「🔍 傷害明細」展開鈕,getDoc 讀該場明細,單回合單英雄>5000 標紅。',
-      '★ v3.15.54【⚠ Firestore 規則 — 需手動部署】新增 arenaDamageDetail/{docId} 規則(get/list 限 GM、create 限本人+docId 開頭 uid_+hasOnly 5 欄+型別/時間檢查、update:false、delete 限 GM),比照 arenaBattles 安全模型。未部署時明細寫入會被預設拒絕(僅明細缺,戰鬥記錄與其他功能照常,不會壞)。',
-      '★ v3.15.54【GM 面板舊註更正 admin_panel.js】更正「刪除鬥技記錄會扣排行榜鬥技之證」的過時說明:v3.15.49 起排行榜改讀 stats/global.arenaWeekly(不再從 arenaBattles 聚合),且持有量在 players/{uid}.arenaZhengHeld → 刪除記錄不會扣到玩家鬥技之證。同步改面板說明文字與刪除+補償確認框文案。',
-      '★ v3.15.54【版本鏈】4 GAME 同步點 v3.15.53→v3.15.54;_vers[index.html]/[game_changelog.js]/[arena.js]/[admin_panel.js] 同步 v3.15.54。world-boss.js 維持 v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.34)。',
     ],
   },
 ];
