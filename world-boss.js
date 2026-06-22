@@ -364,10 +364,10 @@
   // ═══════════════════════════════════════════════════════════════════
   // ★ v3.12.0(2026-05-29)— 火龍王之牙獎勵抽取 + 發放 API
   //   排名獎勵專屬,1名 100% / 2-5名 75% / 6-10名 50% / 11-20名 25% / 21+ 5%
-  //   重複獲得 → 自動轉 treasure_exp_scroll ×3
+  //   重複獲得 → 自動轉 treasure_exp_scroll ×5(v3.15.86 老師統一為 5)
   //
   // _wbRollDragonTreasure(rank) → { won:bool, tier, chance }
-  // _wbGrantDragonTreasure(rank) → { granted:bool, fallbackScrolls:0|3, alreadyOwned:bool }
+  // _wbGrantDragonTreasure(rank) → { granted:bool, fallbackScrolls:0|5, alreadyOwned:bool }
   // ═══════════════════════════════════════════════════════════════════
   window._wbRollDragonTreasure = function(rank){
     try{
@@ -383,7 +383,7 @@
 
   window._wbGrantDragonTreasure = function(rank){
     // 結算流程呼叫此函式發放火龍王之牙;若機率未中 → granted:false 不發
-    // 若中了但已擁有 → 自動轉 treasure_exp_scroll ×3
+    // 若中了但已擁有 → 自動轉 treasure_exp_scroll ×5(v3.15.86)
     try{
       const roll = window._wbRollDragonTreasure(rank);
       if(!roll.won) return { granted:false, rolled:true, chance: roll.chance };
@@ -392,15 +392,15 @@
       const _td = (typeof window._taiwanTreasureData !== 'undefined') ? window._taiwanTreasureData : null;
       const _owned = _td && _td[tid] && (_td[tid].lv >= 1);
       if(_owned){
-        // 重複獲得 → 補 3 張至寶經驗卷軸
+        // ★ v3.15.86(老師乙統一5)— 重複獲得 → 補 5 張至寶經驗卷軸(對齊自選券/未收錄至寶)
         try{
           if(typeof window.backpackAdd === 'function'){
-            window.backpackAdd('treasure_exp_scroll', 3);
+            window.backpackAdd('treasure_exp_scroll', 5);
           }
         }catch(_){}
         try{ if(typeof window.gameCloudSave === 'function') window.gameCloudSave(); }catch(_){}
-        console.log('[v3.12.0 _wbGrantDragonTreasure] 重複獲得 → +3 treasure_exp_scroll');
-        return { granted:false, alreadyOwned:true, fallbackScrolls:3 };
+        console.log('[v3.15.86 _wbGrantDragonTreasure] 重複獲得 → +5 treasure_exp_scroll');
+        return { granted:false, alreadyOwned:true, fallbackScrolls:5 };
       }
       // 首次獲得 → 寫入 _taiwanTreasureData
       try{

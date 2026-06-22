@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.86 — 龍王至寶獲得管道擴充(未收錄至寶納入8龍王)+ 重複轉換統一5
+  {
+    ver: 'v3.15.86',
+    date: '2026-06-22',
+    brief: [
+      '🐉【龍王至寶更好收集 + 重複統一轉卷軸×5】世界 BOSS <b>排名獎勵</b>的「未收錄至寶」現在也會<b>隨機給出 8 種龍王至寶</b>(原本只給台灣 10 件);<b>自選至寶召喚卷</b>一樣可挑龍王至寶。<b>重複拿到</b>(已收齊)時統一改贈「<b>至寶經驗卷軸 ×5</b>」,不會白白浪費!',
+    ],
+    items: [
+      '★ v3.15.86【甲:未收錄至寶納入 8 龍王至寶】排名獎勵「未收錄至寶」隨機池(index.html _treasureResult)原本用 noSummon 過濾排除全部 8 龍王至寶 → 移除過濾,讓 8 龍王至寶(皆 mythic 神話級)納入隨機池。上榜玩家的「未收錄至寶」可隨機獲得任一尚未擁有的龍王至寶(不再只限當週 BOSS 對應的那一隻)。',
+      '★ v3.15.86【乙:重複轉換統一 5 張】三處對齊為「重複 / 全收齊 → 至寶經驗卷軸 ×5」:① 排名「未收錄至寶」全部收齊(含龍王)原本不發 → 改發 ×5 ② world-boss.js 該場 BOSS 龍王至寶(_wbGrantDragonTreasure)重複 3→5 ③ 自選 / 隨機至寶券全收齊本就 ×5(未改,確認一致)。',
+      '★ v3.15.86【補償一致 + 顯示】補償重發的隨機未收錄至寶 fallback 同步納入龍王至寶(與主獎勵池一致);世界 BOSS 結算第二幕「全擁有」訊息補上「改贈 至寶經驗卷軸 ×5」。',
+      '★ v3.15.86【安全】只動「未收錄至寶」候選池與全擁有 fallback、龍王至寶重複卷軸數;排名分級的 expScrollTreasure(5/3/2/1/1 名次卷軸獎勵)、龍王至寶機率 / 該場 BOSS 對應、星空召喚維持龍王 noSummon(抽不到)全不動。龍王至寶為 mythic,納入後高名次玩家會在 mythic 層較易抽到龍王至寶(老師確認的 buff)。',
+      '★ v3.15.86【版本鏈】3 GAME 同步點 v3.15.85→v3.15.86(_GAME_LOADED_VERSION / _vers[index.html] / _vers[game_changelog.js]);_vers[world-boss.js] v3.15.51→v3.15.86(本輪改 world-boss.js)。admin_panel.js v3.15.85 / hero_db.js v3.15.78 / main.css v3.15.79 / world-boss-ui.html v3.15.69 不變。本輪改 index.html + world-boss.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.66)。',
+    ],
+  },
   // v3.15.85 — 甲案資料救援統整 + 復原顯示新增英雄/至寶(名+等級)
   {
     ver: 'v3.15.85',
@@ -314,26 +329,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.15.67【新增學生設計英雄「科學發明家」(5年4班 楊寓如)】資料層 hero_db.js 12 表(HERO_DB hp78=配點60×1.3/atk5/sp20/spd15、S1即刻發明c5主動、S2發明家的靈感c0被動、BURST 醫學界的發明奇蹟、TRAIT 發明家的堅持🔧、BIO designer、BURST_GIF 基因結構.gif dur2730、AVATARS🤖、IMG/POS/LORE/HEX/CATEGORIES);邏輯層 index.html 完整實作(技術細節見 index.html 內 _vers 版本註解):①新發明物品卡子系統 6 卡(INVENT_CARD_DEFS+_makeInventCard 鎖 inventorSpv+_grantInventCard/_useInventCardFlow/_applyInventCard side-agnostic;玩家走用卡流程,AI 不主動使用 invent 型);②S1 即刻發明(玩家 6 選 3 modal、AI 隨機 3 → 生成卡替換非裝備槽保留裝備卡 + 再行動;skillCost Lv5 消耗-1/Lv10-2);③S2 發明家的靈感(execSkill/aiUseSkill/_runBurst 三處 _inventInspirationTrigger,任意角色用技能/爆發雙方各自發明家 20%+5%/級 cap95% 生成);④天賦(addStatus 查封免疫 + 用卡治療最低 HP 友方 spv75%+10%/級);⑤爆發(賣最高卡→能量+全體回滿復活+無敵+首席增傷);execAtk 卡③回能 hook(鐵律1.207例外)+ doDmg 卡⑥反傷 hook(仿空間果實頂部評估,鐵律1.110);SKILL/BURST_UPGRADE_DEF + 生成器B special_invent_create + SUMMON_RARE_HEROES + STUDENT_DESIGNER_HEROES(lsps110048,自動套 _STUDENT_DESIGNED_HERO_SET → 圖鑑🎨)。',
       '★ v3.15.67【版本鏈】hero_db.js + index.html + game_changelog.js 三檔同改(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION v3.15.66→v3.15.67、_vers[index.html] v3.15.66→v3.15.67、_vers[hero_db.js] v3.15.65→v3.15.67、_vers[game_changelog.js] v3.15.66→v3.15.67。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.47)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.66(2026-06-21)— 🎨 英雄來源標註補完 ＋ ⚡ 新手教學能量說明更正
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.66',
-    date: '2026-06-21',
-    brief: [
-      '🎨【英雄圖鑑來源標註補完】',
-      '   ・<b>喚龍使‧蜜鶴林</b>、<b>維京海盜船長</b>、<b>武器精靈</b>現在圖鑑會正確標示「🎨 學生設計英雄」。',
-      '   ・<b>法老王</b>、<b>埃及豔后</b>新增「🏜 埃及關卡機率獲得」來源標示,讓大家知道牠們是在埃及關卡有機率獲得的英雄。',
-      '⚡【新手教學「能量」說明更正】',
-      '   ・修正第 ② 章「戰鬥系統」裡<b>講錯的能量規則</b>:之前寫「普通攻擊可以賺能量」是錯的!',
-      '   ・正確規則:👊<b>普通攻擊免費,但不會回復能量</b>;每個<b>新回合開始全隊自動 +3 能量</b>🔷;☕休息 +1;🛒賣物品卡可得販賣能量;部分天賦/技能/爆發也會回能量。',
-    ],
-    items: [
-      '★ v3.15.66【英雄來源標註補完 index.html】① 學生設計英雄:喚龍使‧蜜鶴林(5年3班龎苡睿)/維京海盜船長/武器精靈 先前未列入 STUDENT_DESIGNER_HEROES email-map → 圖鑑一覽表/詳情頁無「🎨 學生設計英雄」標。修:擴充 window._STUDENT_DESIGNED_HERO_SET 建構 IIFE,於 Object.keys(STUDENT_DESIGNER_HEROES) 之後 .add 此 3 名(此 set 僅供圖鑑標籤判定,3 隻皆 SSR 故自動套用,不影響設計師區塊/GM 補發 email-map)。② 埃及來源標:法老王/埃及豔后(EGYPT_EXCLUSIVE_HEROES)新增「🏜 埃及關卡機率獲得」標,於 grid-card 稀有度 IIFE(L≈103100)與 detail 稀有度 IIFE(L≈103748)各加 _eg 判定 + early-return 標籤 div(色 #f3c97a 沙金,emoji 🏜 對齊魔物圖鑑「🏜 埃及探險」,仿 JAPAN_EXCLUSIVE_HEROES「🗾 日本關卡機率獲得」雙處模式,grid 20px/detail 24px)。',
-      '★ v3.15.66【新手教學能量說明更正 index.html】_showNewbieGuide 第 ② 章「戰鬥系統」render(L≈91192)能量機制文字與戰鬥引擎對齊。原誤植 4 處全改:① 普通攻擊 desc「賺取能量🔷」→「但不會回復能量🔷」;② 累積區「剛開場」說明改列正確來源(開場 0 能量;👊普攻 +0、☕休息 +1、🛒賣物品卡得販賣能量、部分天賦/技能/爆發回能量);③「攻擊幾次:」標籤 →「每回合 +3:」;④「能量 3 → 可使用 S1」→「每個新回合開始自動 +3 能量🔷 → 達 3 即可使用 S1」。權威定義(對照戰鬥碼):回合開始 G.energy[next.side]=min(10,+3)、普攻不耗能量、休息 +1、賣物品卡得販賣能量、外加恢復能量的天賦/技能/爆發。',
-      '★ v3.15.66【版本鏈】本輪只改 index.html(來源標註 + 教學文字)+ game_changelog.js。版本同步點:_GAME_LOADED_VERSION v3.15.65→v3.15.66、_vers[index.html] v3.15.66、_vers[game_changelog.js] v3.15.66;_vers[hero_db.js] 維持 v3.15.65(本輪未改 hero_db.js)。hero_db.js v3.15.65、arena.js v3.15.37、admin_panel.js v3.15.40、world-boss.js v3.15.34、world-boss-ui.html v3.15.21、adv_quiz_db.js、sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.46)。',
     ],
   },
 ];
