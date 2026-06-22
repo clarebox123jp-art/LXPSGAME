@@ -12,6 +12,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.75 — 修正序號兌換(亂打/無效序號不再誤判成功)
+  {
+    ver: 'v3.15.75',
+    date: '2026-06-22',
+    brief: [
+      '🔧【序號兌換修正】修正部分情況下「輸入錯誤或亂打的序號,卻顯示兌換成功」的問題。現在只要序號不存在或格式不對,都會明確顯示「查無此序號,請確認有沒有打錯」,不會再誤判成功,也不會發出任何獎勵。',
+    ],
+  },
   // v3.15.74 — 新增「特別挑戰題」(知識王第三欄,30題全對領大獎)
   {
     ver: 'v3.15.74',
@@ -407,33 +415,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.56【至寶券改自選券 + 自選池納龍王 index.html】鬥技商店至寶券改發 summon_ticket_treasure_pick(自選);新增 _treasureTicketPickNotOwned(台灣 10 + 龍王 8 = 18,引用 _ARENA_DRAGON_TREASURE_IDS),_openTreasureTicketPickModal 改用此池→可挑龍王。隨機券 _useTreasureTicket 仍用 _treasureTicketNotOwned(台灣 10、不含龍王);星空召喚 random 不變(龍王 noSummon,v3.15.52 結論不動)。鬥技券卡改名「自選至寶召喚卷」+icon💠,_openTreasureTicketModal 兩卡「尚有 N 件」計數分流(隨機=台灣/自選=含龍王),summon_ticket_treasure_pick 背包說明補龍王。',
       '★ v3.15.56【背景】玩家回報「用鬥技之證買 SSR 召喚卷卻沒拿到卷」:原實作是當場直接解鎖一名隨機未收錄 SSR(該玩家確實有解鎖到角色,並非遺失),但與「召喚卷 = 可收進背包、自行使用的道具」設計不符 → 本版全面改為發卷道具。',
       '★ v3.15.56【版本鏈】4 GAME 同步點 v3.15.55→v3.15.56;_vers[index.html]/[game_changelog.js] 同步 v3.15.56。arena.js / admin_panel.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.36)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.55(2026-06-19)— 🏜 埃及關完整掉落物 + 魔物圖鑑「埃及探險」區
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.55',
-    date: '2026-06-19',
-    brief: [
-      '🏜【埃及關沙漠小怪掉落物上線!】',
-      '   ・6 隻沙漠小怪(木乃伊貓、流沙眼鏡蛇、卡諾卜壇怪、神秘圖騰、沙漠毒蠍、仙人掌怪)現在會掉落專屬賣錢物品,可前往超商賣出換知識幣。',
-      '   ・沙漠小怪掉落率提升到 <b>60%</b>,而且練功用的經驗書全程都是<b>精裝版</b>!',
-      '👑【埃及雙王掉落稀世珍寶!】',
-      '   ・打倒法老王有機會掉落 <b>黃金法老面具(可賣 60,000 知識幣)</b>;打倒埃及豔后有機會掉落 <b>尼羅河女王之珠(可賣 55,000 知識幣)</b>!',
-      '   ・埃及雙王的<b>超越極限果實掉落率大幅提升到 25%</b>,快去挑戰金字塔王座!',
-      '👹【魔物圖鑑新增「🏜 埃及探險」專區!】',
-      '   ・現在可在魔物圖鑑查看埃及關的<b>雙王 BOSS(完整 BOSS 能力)</b>、6 隻路邊小怪與稀有的<b>聖甲蟲</b>,每隻都有完整的背景介紹與掉落資訊。',
-    ],
-    items: [
-      '★ v3.15.55【埃及 6 沙漠小怪賣錢掉落物 index.html】新增 BACKPACK_ITEM_DEF + SHOP_SELL_ITEMS 6 物(eg_mummy_cloth 24/eg_cobra_fang 27/eg_canopic_shard 28/eg_totem_fragment 25/eg_scorpion_sting 26/eg_cactus_needle 22;賣值較日本路邊怪 18~23 約 +20%)。新增 EGYPT_MINI_DROP_MAP(6 mob→item)+ 結算 if-else 新增埃及小怪分支:掉落率 0.60(=日本路邊 0.50 +20%)× 難度/祝福倍率。原本 6 mob 落入 else 用 _MINI_DROP_MAP 查無→不掉落,現補齊。',
-      '★ v3.15.55【埃及小怪經驗書精裝化 index.html】場景結算 25% 經驗書:_adventureStage===egypt 改發 hero_exp_book_deluxe(📕 精裝版),其餘關卡維持 hero_exp_book(📗 一般版),對齊魔物圖鑑顯示。',
-      '★ v3.15.55【埃及雙王賣錢物品 index.html】新增 eg_pharaoh_mask(黃金法老面具 60000)/eg_cleopatra_pearl(尼羅河女王之珠 55000)至 BACKPACK_ITEM_DEF + SHOP_SELL_ITEMS。埃及雙王結算區(_adventureStage===egypt)新增 _EGYPT_BOSS_DROPS,_egKings 各自獨立 20% × 祝福(上限 95%)掉落,不限評價(比照日本 BOSS 掉落模式)。',
-      '★ v3.15.55【埃及關爆發果實基礎掉落率 25% index.html】主 BOSS 超越極限果實掉落:_adventureStage===egypt 時 _fruitDropRate 由 BOSS基礎EXP×0.1% 改為固定 0.25(其餘關卡維持原公式)。',
-      '★ v3.15.55【魔物圖鑑埃及探險區 index.html _buildMonsterPage】原 EG_BOSS_LIST/EG_MOB_LIST/EG_RARE_LIST(v3.15.17 已定義且在 _monsterDetailList 翻頁清單內)從未在 el.innerHTML render。現補上「🏜 埃及探險」區:makeSection 雙王 BOSS(boss)+ 路邊小怪(mob)+ 稀有小怪(rare),置於台灣環島與世界 BOSS 之間。makeCard 讀 HERO_DB 原始數值 → 雙王顯示 BOSS 能力版(HP 11500/10500);英雄圖鑑仍走 EGYPT_BOSS_HERO_STATS 弱化招募版,兩者並存。',
-      '★ v3.15.55【埃及 9 怪 MONSTER_LORE 完整介紹 index.html】補 9 筆魔物背景介紹(法老王/埃及豔后/木乃伊貓/流沙眼鏡蛇/卡諾卜壇怪/神秘圖騰/沙漠毒蠍/仙人掌怪/聖甲蟲),文案結合古埃及神話與其實際 BOSS/小怪戰技能行為。openMonsterDetail 之 stats/技能(b.s1/s2/burst)/天賦(HERO_TRAIT)皆資料驅動本已具備,僅缺 lore,現補齊。',
-      '★ v3.15.55【埃及掉落資訊 MONSTER_DROPS index.html】6 小怪顯示 50%→60% + 標註賣值;新增法老王(黃金法老面具 20% / 超越極限果實 25%)、埃及豔后(尼羅河女王之珠 20% / 超越極限果實 25%)掉落顯示(於英雄圖鑑詳情頁及魔物圖鑑詳情頁顯示)。',
-      '★ v3.15.55【版本鏈】4 GAME 同步點 v3.15.54→v3.15.55;_vers[index.html]/[game_changelog.js] 同步 v3.15.55。arena.js/admin_panel.js 維持 v3.15.54(本輪未動)、world-boss.js v3.15.51、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.35)。',
     ],
   },
 ];
