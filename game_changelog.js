@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.76 — 存檔同步修正(資料修復後重整仍誤判倒退無法同步,根因雲端殘留舊資料墊高比較基準)
+  {
+    ver: 'v3.15.76',
+    date: '2026-06-22',
+    brief: [
+      '🔧【存檔同步修正】修正極少數帳號在資料修復後,重新整理仍出現「資料倒退」警告、無法把進度存上雲端的問題。根因是雲端殘留的舊資料把比較基準墊高了,造成誤判。現在改以「實際擁有的英雄」為準來判斷,正確的資料能正常同步到雲端,不會再被誤擋。',
+    ],
+    items: [
+      '★ v3.15.76【倒退守門 heroLevels map 污染免疫】根因:常規存檔走 setDoc(merge:true),對 heroLevels(map)是深合併→新資料未提及的舊子鍵殘留(同 v3.15.57 playerBackpack 病灶,但 heroLevels 無字串版 heroLevels_s);倒退守門/跨槽合併算 maxHeroLv/totalHeroLv 時只用 _PLAYER_HERO_NAMES 過濾、未對帳 unlockedHeroes→雲端 heroLevels 殘留的高 Lv 幻影條目墊高雲端 maxLv,使 GM 救援還原後正確的本地存檔被誤判「最高等級倒退」(_dMaxLv 達 -5)而拒絕同步(unlockedCount 走陣列比、0 差不觸發,真正擋下的是 maxLv 那條)。',
+      '★ v3.15.76【三處同口徑修正】以 unlockedHeroes(陣列;merge 對陣列整包取代、不累積污染)為「真正擁有」權威清單,heroLevels 僅計入確實在 unlockedHeroes 的英雄等級:① _fbSave 主文件守門 _recompS ② _fbSaveLive live/safe 槽守門 _effLv ③ _lxpsMergeSlots recompute(merged._dataSummary)。三處共用同一對帳邏輯。',
+      '★ v3.15.76【診斷日誌】_fbSave 主守門加 console.warn(🔎 倒退核對 uid=…),印出雲端 heroLevels 幻影殘留數+最高 Lv+雲端/本地真實 maxLv 與擁有數,供老師核對特定 uid 的實際資料、確認倒退警訊是否為誤判。',
+      '★ v3.15.76【安全】只去除「maxLv 被 heroLevels 幻影墊高」造成的誤判;unlockedCount(真英雄被刪/遺失)仍用 unlockedHeroes 陣列比對照常守門,真倒退擋得住,不會放行薄資料覆蓋。',
+      '★ v3.15.76【版本鏈】4 GAME 同步點 v3.15.75→v3.15.76;_vers[index.html]/[game_changelog.js] 同步 v3.15.76。hero_db.js v3.15.72、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.56)。',
+    ],
+  },
   // v3.15.75 — 修正序號兌換(亂打/無效序號不再誤判成功)
   {
     ver: 'v3.15.75',
@@ -394,27 +409,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.57【影響面】新賣出 → 字串無垃圾 → 存檔(賣出函式賣完即 await gameCloudSave)→ 重整載入字串 → 不復活,漏洞徹底堵死。已中招玩家現有殘留垃圾賣掉一次變現後字串收斂、不再復活。雲端 map 欄位的歷史殘留無人讀取(載入一律用字串)、無害,列為次要後續(GM 後台讀 map 的背包種類摘要鍵數可能偏多,不影響玩家)。',
       '★ v3.15.57【鐵律 1.213】消費型(會減量)map 欄位嚴禁僅靠 set(merge:true) 寫入後直接讀 map:Firestore map 深度合併不刪子鍵 → 減量(賣出/消耗)會殘留復活。一律「寫純量字串整包版 + 讀取優先字串版」(playerBackpack/playerBackpack_s 模式);純量欄位(knowledgeCoins 等)不受影響。新增同類消費型 map 欄位時務必同步字串版,並在所有讀取點(含 _lxpsMergeSlots、_applySafeData)優先字串。',
       '★ v3.15.57【版本鏈】4 GAME 同步點 v3.15.56→v3.15.57;_vers[index.html]/[game_changelog.js] 同步 v3.15.57。arena.js / admin_panel.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.37)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.56(2026-06-19)— 🎟 鬥技商店召喚卷改發「卷道具」(到召喚星空使用)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.56',
-    date: '2026-06-19',
-    brief: [
-      '🎟【鬥技商店「召喚卷」改成真正的卷了！】',
-      '   ・以前在鬥技場用鬥技之證換 SSR / SR / 至寶召喚卷,是「當場直接給你角色或至寶」;現在改成<b>發一張「召喚卷」到你的背包</b>,由你自己到<b>召喚星空</b>使用。',
-      '   ・這樣你可以<b>自己決定什麼時候用</b>;而且若該稀有度暫時收齊了,召喚卷也能<b>先留著以後再用</b>,不會浪費。',
-      '💠【鬥技場至寶券升級為「自選券」!】',
-      '   ・鬥技商店的至寶召喚卷改成<b>自選至寶召喚卷</b>,使用時可從<b>台灣 10 件 + 龍王 8 件</b>尚未擁有的至寶中<b>自己挑一件</b>,<b>挑得到龍王至寶</b>!',
-      '   ・(提醒:隨機至寶召喚卷與星空召喚仍只有台灣至寶,龍王至寶要靠龍王戰排名、老師自選卷,或鬥技場的自選至寶召喚卷取得。)',
-    ],
-    items: [
-      '★ v3.15.56【鬥技商店召喚卷改發卷道具 index.html _arenaGrantExchangeItem】arena_x_ssr_summon / arena_x_sr_summon / arena_x_treasure_summon 三件,由「當場 advSaveUnlockedHero 自動解鎖角色 / _arenaGrantTreasureVoucher 當場發至寶」改為 backpackAdd 對應卷道具(summon_ticket_ssr / summon_ticket_sr / summon_ticket_treasure_pick),玩家到召喚星空自行使用(老師裁示:召喚卷一律是卷、不直接解鎖)。_arenaGrantSummonVoucher / _arenaGrantTreasureVoucher 改為未使用(保留不刪)。',
-      '★ v3.15.56【至寶券改自選券 + 自選池納龍王 index.html】鬥技商店至寶券改發 summon_ticket_treasure_pick(自選);新增 _treasureTicketPickNotOwned(台灣 10 + 龍王 8 = 18,引用 _ARENA_DRAGON_TREASURE_IDS),_openTreasureTicketPickModal 改用此池→可挑龍王。隨機券 _useTreasureTicket 仍用 _treasureTicketNotOwned(台灣 10、不含龍王);星空召喚 random 不變(龍王 noSummon,v3.15.52 結論不動)。鬥技券卡改名「自選至寶召喚卷」+icon💠,_openTreasureTicketModal 兩卡「尚有 N 件」計數分流(隨機=台灣/自選=含龍王),summon_ticket_treasure_pick 背包說明補龍王。',
-      '★ v3.15.56【背景】玩家回報「用鬥技之證買 SSR 召喚卷卻沒拿到卷」:原實作是當場直接解鎖一名隨機未收錄 SSR(該玩家確實有解鎖到角色,並非遺失),但與「召喚卷 = 可收進背包、自行使用的道具」設計不符 → 本版全面改為發卷道具。',
-      '★ v3.15.56【版本鏈】4 GAME 同步點 v3.15.55→v3.15.56;_vers[index.html]/[game_changelog.js] 同步 v3.15.56。arena.js / admin_panel.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.36)。',
     ],
   },
 ];
