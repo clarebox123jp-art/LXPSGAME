@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.80';   // ★ v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源);加按鈕到既有 _admin-activity-section 免三點同步(_summonBtn grab + onclick 綁定·無 ?.)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):掃玩家知識幣帳本「短時間反覆賣出同一金額」的洗錢痕跡(對應 index.html v3.15.57 修復的賣出復活漏洞);估算贓款=(同額簇次數-1)×金額,列嫌疑玩家可逐一回收(_fbAdminRecoverLaunderedCoins 經 _fbCompensatePlayer 負值扣減、主檔/live/safe 三槽同寫防復活)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initLaunderingSection)。｜v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.15.84';   // ★ v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源);加按鈕到既有 _admin-activity-section 免三點同步(_summonBtn grab + onclick 綁定·無 ?.)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):掃玩家知識幣帳本「短時間反覆賣出同一金額」的洗錢痕跡(對應 index.html v3.15.57 修復的賣出復活漏洞);估算贓款=(同額簇次數-1)×金額,列嫌疑玩家可逐一回收(_fbAdminRecoverLaunderedCoins 經 _fbCompensatePlayer 負值扣減、主檔/live/safe 三槽同寫防復活)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initLaunderingSection)。｜v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1241,6 +1241,39 @@ async function _showAdminStatsPanelImpl(){
           <div style="color:#888;padding:14px;text-align:center;">尚未查緝,設定參數後按「🔍 開始查緝」</div>
         </div>
         <div id="_admin-laundering-result" style="margin-top:10px;font-size:13px;color:#ffcc44;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.15.84 — 英雄誤刪救回(一鍵掃描被誤刪英雄的玩家 + 復原,排除 GM 手動刪除的) -->
+      <div id="_admin-deleted-hero-section" style="background:rgba(20,40,35,0.5);border:2px solid rgba(80,220,180,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#5fe0c0;margin-bottom:8px;">🛟 英雄誤刪救回</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          一鍵掃描所有玩家,找出「<b style="color:#7fe9d0;">練過(等級&gt;1)或身上裝著至寶、卻不在已解鎖清單</b>」的英雄(對應 v3.15.82/83 修復前被稽核熔斷誤刪的主力),一鍵把這些英雄補回去。<br>
+          <b style="color:#88dd99;">復原方式:</b>只補回「已解鎖」狀態,英雄等級/經驗/至寶原樣保留(取較高、不重置),主檔 + live + safe 三槽同寫、玩家下次登入生效、不會誤發補償彈窗。<br>
+          <b style="color:#ffaa66;">★ 已排除 GM 手動刪除的英雄:</b>之前由 GM 在「汙染清查」手動刪掉的英雄(admin_delete)<b style="color:#ffaa66;">不會</b>被救回,避免把刻意刪除的汙染角色又加回來。<br>
+          <span style="color:#aaa;font-size:12px;">
+            資料來源:<code>players/{uid}</code> 的 <code>heroLevels</code> / <code>taiwanTreasureData</code> / <code>_heroUnlockHistory</code>。
+            復原走 <code>_fbCompensatePlayer</code>(union 加回、heroLevels 取 max、三槽同寫)。只救 <code>_PLAYER_HERO_NAMES</code> 白名單英雄。
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-delhero-scan" style="padding:9px 18px;font-size:14px;font-weight:800;
+            background:rgba(80,220,180,0.22);border:2px solid #5fe0c0;color:#aaf0e0;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            🔍 掃描全體玩家
+          </button>
+          <button id="_admin-delhero-restoreall" style="padding:9px 18px;font-size:14px;font-weight:800;
+            background:rgba(80,180,120,0.18);border:2px solid #4caf6a;color:#aaffcc;
+            border-radius:6px;cursor:pointer;font-family:inherit;display:none;">
+            🛟 全部一鍵救回
+          </button>
+          <span id="_admin-delhero-count" style="font-size:12px;color:#aaa;"></span>
+        </div>
+        <div id="_admin-delhero-list" style="max-height:520px;overflow-y:auto;
+          background:rgba(0,0,0,0.4);border:1px solid rgba(80,220,180,0.3);border-radius:6px;
+          padding:8px;font-size:12px;color:#ccc;line-height:1.7;">
+          <div style="color:#888;padding:14px;text-align:center;">尚未掃描,按「🔍 掃描全體玩家」開始</div>
+        </div>
+        <div id="_admin-delhero-result" style="margin-top:10px;font-size:13px;color:#5fe0c0;text-align:center;"></div>
       </div>
 
       <div id="_admin-rescue-section" style="background:rgba(40,20,50,0.4);border:2px solid rgba(200,120,255,0.5);border-radius:10px;padding:16px;margin-bottom:22px;">
@@ -2698,6 +2731,8 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-pollution-cluster-section', label: '🧹 汙染清查（掃描可疑帳號）', hint: 'SSR/SR序列分組找可疑帳號 → 🔴鐵證快速清單一鍵處理 + 🟡無紀錄者依豐富度(含至寶/獎章)推測原主 → 查活動頁刪汙染英雄/至寶(可復原+補償+玩家留1)' },
       // ★ v3.15.58(2026-06-20)— 洗錢查緝(短時間重複賣出同額偵測 + 回收贓款)
       { sec: '_admin-laundering-section',        label: '💰 洗錢查緝',              hint: '掃描「短時間反覆賣出同一金額」的洗錢痕跡(對應 v3.15.57 修復前的賣出復活漏洞):估算贓款、列出嫌疑玩家,可逐一回收(扣減知識幣,三槽同寫防復活)' },
+      // ★ v3.15.84 — 英雄誤刪救回(一鍵掃描被誤刪英雄的玩家 + 復原,排除 GM 手動刪除的)
+      { sec: '_admin-deleted-hero-section',      label: '🛟 英雄誤刪救回',          hint: '一鍵掃描所有玩家「練過或裝著至寶卻不在已解鎖清單」的英雄(v3.15.82/83 修復前被稽核熔斷誤刪的主力),一鍵復原(只補已解鎖、等級至寶原樣保留、三槽同寫);已排除 GM 手動刪除(admin_delete)的英雄' },
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
@@ -2743,7 +2778,7 @@ async function _showAdminStatsPanelImpl(){
     const SIDEBAR_GROUPS = [
       { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
-      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section','_admin-laundering-section'] },
+      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section','_admin-laundering-section','_admin-deleted-hero-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-rebuild-section','_admin-reset-section'] },
       { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
@@ -6160,6 +6195,120 @@ async function _showAdminStatsPanelImpl(){
     scanBtn.onclick = _scan;
   })();
   // ── 洗錢查緝 結束 ──
+
+  // ★ v3.15.84 — 英雄誤刪救回(一鍵掃描被誤刪英雄的玩家 + 復原,排除 GM 手動刪除的)
+  (function _initDeletedHeroSection(){
+    var scanBtn = document.getElementById('_admin-delhero-scan');
+    var allBtn  = document.getElementById('_admin-delhero-restoreall');
+    var listEl  = document.getElementById('_admin-delhero-list');
+    var resEl   = document.getElementById('_admin-delhero-result');
+    var countEl = document.getElementById('_admin-delhero-count');
+    if(!scanBtn || !listEl){
+      console.warn('[admin delhero] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    var _affected = [];
+
+    function _esc(s){ try{ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }catch(_){ return ''; } }
+    function _label(a){
+      var _n = _esc(a.displayName || '');
+      var _e = a.email ? ' &lt;' + _esc(a.email) + '&gt;' : '';
+      return (_n || '(無名)') + _e;
+    }
+
+    function _render(){
+      if(!_affected.length){
+        listEl.innerHTML = '<div style="color:#88dd99;padding:14px;text-align:center;">✅ 沒有發現任何被誤刪的英雄,全部玩家資料正常。</div>';
+        if(allBtn) allBtn.style.display = 'none';
+        return;
+      }
+      if(allBtn) allBtn.style.display = '';
+      var html = _affected.map(function(a, idx){
+        var _heroChips = (a.detail || []).map(function(h){
+          return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(80,220,180,0.14);border:1px solid rgba(80,220,180,0.35);border-radius:10px;color:#aaf0e0;">'
+            + _esc(h.name) + ' <span style="color:#888;">Lv' + (h.lv||1) + (h.equipped ? ' ·💎' : '') + '</span></span>';
+        }).join('');
+        return '<div style="margin-bottom:10px;padding:10px;background:rgba(20,40,35,0.6);border:1px solid rgba(80,220,180,0.4);border-radius:7px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">'
+          +   '<div style="font-size:13px;color:#aaf0e0;font-weight:700;">#' + (idx+1) + ' ' + _label(a) + '</div>'
+          +   '<div style="font-size:12px;color:#aaa;font-family:monospace;">' + _esc(a.uid) + '</div>'
+          + '</div>'
+          + '<div style="font-size:12px;color:#ccc;margin-bottom:6px;">被誤刪英雄 <b style="color:#5fe0c0;">' + a.count + '</b> 隻:</div>'
+          + '<div style="margin-bottom:8px;">' + _heroChips + '</div>'
+          + '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">'
+          +   '<button class="_dh-restore" data-uid="' + _esc(a.uid) + '" data-label="' + _esc(_label(a)) + '"'
+          +     ' style="padding:6px 14px;font-size:12px;font-weight:800;background:rgba(80,180,120,0.25);border:1.5px solid #4caf6a;color:#aaffcc;border-radius:5px;cursor:pointer;font-family:inherit;">'
+          +     '🛟 復原這位玩家</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+      listEl.innerHTML = html;
+      var btns = listEl.querySelectorAll('._dh-restore');
+      btns.forEach(function(b){
+        b.onclick = async function(){
+          var uid = b.getAttribute('data-uid');
+          var lbl = b.getAttribute('data-label') || uid;
+          if(!confirm('確定要復原【' + lbl + '】被誤刪的英雄嗎?\n\n(只補回「已解鎖」狀態,等級/至寶原樣保留;三槽同寫,玩家下次登入生效)')) return;
+          b.disabled = true; b.textContent = '復原中...';
+          try{
+            if(typeof window._fbAdminRestoreDeletedHeroesForUid !== 'function') throw new Error('_fbAdminRestoreDeletedHeroesForUid 未載入(請確認 index.html 已更新到 v3.15.84)');
+            var r = await window._fbAdminRestoreDeletedHeroesForUid(uid);
+            resEl.style.color = '#88dd99';
+            resEl.textContent = '✅ 已復原【' + lbl + '】' + ((r && r.restored) || 0) + ' 隻英雄。';
+            b.textContent = '✅ 已復原 ' + ((r && r.restored) || 0) + ' 隻';
+          }catch(e){
+            console.error('[admin delhero restore]', e);
+            resEl.style.color = '#ff6666';
+            resEl.textContent = '❌ 復原失敗:' + (e && e.message || '未知錯誤');
+            b.disabled = false; b.textContent = '🛟 復原這位玩家';
+          }
+        };
+      });
+    }
+
+    async function _scan(){
+      listEl.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">掃描中(逐一檢查所有玩家)...</div>';
+      resEl.textContent = ''; if(countEl) countEl.textContent = '';
+      scanBtn.disabled = true; if(allBtn) allBtn.style.display = 'none';
+      try{
+        if(typeof window._fbAdminScanDeletedHeroes !== 'function') throw new Error('_fbAdminScanDeletedHeroes 未載入(請確認 index.html 已更新到 v3.15.84)');
+        var r = await window._fbAdminScanDeletedHeroes();
+        _affected = (r && r.affected) || [];
+        if(countEl) countEl.textContent = '掃 ' + ((r && r.scanned)||0) + ' 位 → ' + _affected.length + ' 位受影響,共 ' + ((r && r.totalHeroes)||0) + ' 隻待救回';
+        _render();
+      }catch(e){
+        console.error('[admin delhero scan]', e);
+        listEl.innerHTML = '<div style="color:#ff6666;padding:14px;text-align:center;">❌ 掃描失敗:' + (e && e.message || '未知錯誤') + '</div>';
+      }finally{
+        scanBtn.disabled = false;
+      }
+    }
+
+    async function _restoreAll(){
+      if(!_affected.length){ alert('沒有可救回的玩家,請先掃描'); return; }
+      if(!confirm('確定要一鍵救回全部 ' + _affected.length + ' 位玩家的被誤刪英雄嗎?\n\n(已排除 GM 手動刪除的英雄;三槽同寫,玩家下次登入生效)')) return;
+      allBtn.disabled = true; allBtn.textContent = '救回中...';
+      resEl.style.color = '#5fe0c0'; resEl.textContent = '處理中,請稍候(玩家較多時需數十秒)...';
+      try{
+        if(typeof window._fbAdminRestoreAllDeletedHeroes !== 'function') throw new Error('_fbAdminRestoreAllDeletedHeroes 未載入');
+        var _uids = _affected.map(function(a){ return a.uid; });
+        var r = await window._fbAdminRestoreAllDeletedHeroes(_uids);
+        resEl.style.color = '#88dd99';
+        resEl.textContent = '✅ 完成:成功 ' + ((r && r.okCount)||0) + ' 位 / 救回 ' + ((r && r.heroCount)||0) + ' 隻'
+          + (((r && r.failCount)||0) ? (' / 失敗 ' + r.failCount + ' 位(見 console)') : '');
+        allBtn.textContent = '✅ 已全部救回';
+      }catch(e){
+        console.error('[admin delhero restoreall]', e);
+        resEl.style.color = '#ff6666';
+        resEl.textContent = '❌ 一鍵救回失敗:' + (e && e.message || '未知錯誤');
+        allBtn.disabled = false; allBtn.textContent = '🛟 全部一鍵救回';
+      }
+    }
+
+    scanBtn.onclick = _scan;
+    if(allBtn) allBtn.onclick = _restoreAll;
+  })();
+  // ── 英雄誤刪救回 結束 ──
 
   document.getElementById('_admin-set-players').onclick = async () => {
     const input = document.getElementById('_admin-players-input');

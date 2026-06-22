@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.84 — GM「英雄誤刪救回」一鍵掃描+復原(排除 GM 手動刪除的)
+  {
+    ver: 'v3.15.84',
+    date: '2026-06-22',
+    brief: [
+      '🛟【老師後台新增「英雄誤刪救回」工具】老師現在可以在後台<b>一鍵掃描</b>所有玩家,找出先前被誤刪的角色(你練過、或裝過至寶的主力),再<b>一鍵幫你補回來</b>。如果你之前有角色不見了,跟老師說一聲,老師按一下就能救回,<b>等級和身上的至寶都會原樣保留</b>。',
+    ],
+    items: [
+      '★ v3.15.84【GM 後端 4 函式】index.html block#02:_computeDeletedHeroesFromDoc(從一份玩家雲端資料算出「被誤刪、可救回」的英雄=heroLevels 等級>1 或 身上裝著至寶 equippedTo·但不在 unlockedHeroes·且在 _PLAYER_HERO_NAMES 白名單·且最近一筆解鎖紀錄不是 admin_delete)、_fbAdminScanDeletedHeroes(getDocs 全體玩家逐一算,回受影響清單依英雄數降序)、_fbAdminRestoreDeletedHeroesForUid(getDocFromServer 重讀重算再復原)、_fbAdminRestoreAllDeletedHeroes(逐一 await 復原回統計)。',
+      '★ v3.15.84【復原走 _fbCompensatePlayer】只帶 unlockedHeroes → union 把英雄加回(不重複)、heroLevels 取較大值(絕不重置/降級既有等級)、主檔+live+safe 三槽同寫、_adminForceRestore 繞健康度守門、記 compensation 解鎖歷史、不誤發補償彈窗給玩家。玩家下次登入即生效。',
+      '★ v3.15.84【★ 排除 GM 手動刪除(老師要求)】最近一筆解鎖紀錄 source 為 admin_delete(GM 在「汙染清查」手動刪掉的)的英雄一律不列入、不救回,避免把刻意刪除的汙染角色又加回來。',
+      '★ v3.15.84【GM UI:🛟 英雄誤刪救回卡】admin_panel.js「🧹 帳號汙染處理」群組(洗錢查緝卡下方):「🔍 掃描全體玩家」列出每位受影響玩家(uid/email/暱稱 + 被誤刪英雄晶片含 Lv·裝至寶標💎)→ 逐位「🛟 復原這位玩家」或頂部「🛟 全部一鍵救回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片 HTML+_initDeletedHeroSection IIFE);_esc HTML 跳脫、confirm 後執行、無 ?.。',
+      '★ v3.15.84【定位】鏡像 v3.15.82/83 玩家登入時 client 端救回邏輯的「server 主動批次版」:讓老師不必等學生逐一登入,即可一次把雲端被誤刪的英雄批次補齊。安全:只救/列白名單英雄、排除 admin_delete、復原為 union 加回(只增不減),跨帳號防護不變。',
+      '★ v3.15.84【版本鏈】4 GAME 同步點 v3.15.83→v3.15.84;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.84;admin_panel.js ADMIN_PANEL_VERSION 與 _vers[admin_panel.js] 同步 v3.15.80→v3.15.84。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪改 index.html + admin_panel.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.64)。',
+    ],
+  },
   // v3.15.83 — 資料救回再強化:自己解鎖/投資過的角色與污染相同時算已解鎖
   {
     ver: 'v3.15.83',
@@ -318,31 +334,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.15.65【圖鑑設計師資訊修復 hero_db.js】根因:圖鑑詳情頁(index.html L≈103781)以 HERO_BIO 條目的「bio.designer 是否存在」作為「顯示設計師區塊」的 gate;_getDesignerLabel(反查 STUDENT_DESIGNER_HEROES→fullName 遮罩成「五年1班姜O晟同學」)僅負責美化標籤,但前提是 bio.designer 存在才會進入該區塊。熔岩巨人(v3.15.59)與拘留者(v3.15.64)新增時 HERO_BIO 只寫了 role/trait/hobby/quote,漏了 designer 子欄位 → 整塊不渲染。修:HERO_BIO 給此 2 隻補 designer:{class:"5年1班",name:"姜同學"/"彭同學",year:2026}。node 交叉比對(37 隻學生英雄 × HERO_BIO.designer)確認補後 0 缺。',
       '★ v3.15.65【版本鏈】4 GAME 同步點 v3.15.64→v3.15.65;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。實質改 hero_db.js(HERO_BIO 2 處 designer);index.html 僅版本鏈。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.45)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.64(2026-06-20)— 🤖 新英雄 拘留者 + 🎟 召喚卷補至寶按鈕 + 🔧 修登入誤跳彈窗
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.64',
-    date: '2026-06-20',
-    brief: [
-      '🤖【新英雄登場:拘留者!】',
-      '   ・<b>5 年 1 班 彭同學</b>設計的<b>時空執法機械人</b>(SSR,⚔傷害+🛡控場)!可在召喚星空抽到。',
-      '   ・<b>S1 空間果實</b>(被動):受到直接攻擊時<b>扭曲時空閃避</b>,並把傷害<b>50% 反彈</b>給對手、<b>50% 治療自己</b>(每回合 1 次,需 4 能量)。',
-      '   ・<b>S2 神刃之力</b>:對 1 名對手造成 (攻擊+特技)×250% 必中、無視有利的傷害,並使其陷入<b>「拘留」無法行動</b>(最多疊 2 層)!',
-      '   ・<b>爆發 時空罰罪‧天手力</b>:<b>匯聚整場戰鬥累積的總傷害</b>(上限 2500),化為固定傷害由敵方全體分攤(單體上限 1250),必中、無視有利、不暴擊、不受屬性影響。',
-      '   ・<b>天賦 時序回響</b>:使用神刃之力或爆發時,<b>30%</b>(隨天賦升級提高,最高 70%)機率<b>立即再造成一次相同傷害</b>。',
-      '🎟【召喚星空補上「至寶召喚卷」按鈕】',
-      '   ・「使用召喚卷」面板原本只有 SSR/SR 英雄券;現在<b>補上「隨機至寶召喚卷」與「自選至寶召喚卷」</b>兩個按鈕,和英雄券並排,可直接在這裡使用了!',
-      '🔧【修復登入時誤跳的提示視窗】',
-      '   ・修好<b>每次登入都會跳出「沒有正確讀取到遊戲記錄」</b>視窗的問題:原因是網路較慢、資料還沒讀完就被誤判,現在會<b>等資料真的讀取成功後才檢查</b>,正常情況不會再跳。',
-    ],
-    items: [
-      '★ v3.15.64【新英雄 拘留者】hero_db.js 12 表(HERO_DB hp78/atk13/sp13/spd14;S1空間果實c4被動/S2神刃之力c7;BURST 時空罰罪‧天手力;TRAIT 時序回響;BURST_GIF 時空穿梭.gif+時空穿梭.mp3 dur450;AVATARS🤖;LORE/BIO/IMG/HEX/CATEGORIES/_TRAIT_LV_INFO)。index.html 邏輯層:execSkill/aiUseSkill 雙實作(神刃之力 (攻+特)×250% 必中無視有利+拘留疊2層+時序回響30%二次傷害)、空間果實 doDmg 頂部 hook(閃避+反彈50%+治療50%,需4能量/每回合1次,startTurn 重置 _spaceFruitUsedThisTurn)、execBurst 時空罰罪‧天手力(讀全場傷害累積器 G._detTotalDmg 上限2500→敵全體分攤·單體上限1250×_burstMult·fixedDmg)、新增「拘留」detain 狀態(BAD_STATUS/statusName/玩家+AI跳過行動/雅典娜免控/_CTRL/_CTRL_POPUP)、BURST/SKILL_UPGRADE_DEF、SUMMON_RARE_HEROES、STUDENT_DESIGNER_HEROES、sfx-detain-burst 音效。',
-      '★ v3.15.64【召喚卷面板補至寶按鈕】index.html _openSummonTicketModal:在 SSR/SR 英雄券下方新增「💎 至寶召喚卷」分組(隨機 + 自選兩張卡,_treaCard helper),onclick 接既有 _useTreasureTicket()/_openTreasureTicketPickModal()(後端 v3.13.82/v3.15.56 早已完整,先前只缺從「使用召喚卷」入口進入,只能從背包點券進);主標題改「🎟 使用召喚卷」。',
-      '★ v3.15.64【修登入誤跳污染彈窗】index.html _advCorruptionWatchdog 主 gate + 二次確認補 window._progressLoaded===true:_cloudLoadDone=true 只代表雲端流程跑完(含失敗),網路不穩讀取失敗時 _progressLoaded=false(空殼)被誤判成「污染」而在登入/載入畫面誤跳。改要求資料確實載入成功才判定(對齊全站 gameCloudSave 等 _progressLoaded 守門慣例),確保只在真正進入有資料的選關頁才可能彈窗。',
-      '★ v3.15.64【版本鏈】4 GAME 同步點 v3.15.63→v3.15.64;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.44)。',
     ],
   },
 ];
