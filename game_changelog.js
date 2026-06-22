@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.83 — 資料救回再強化:自己解鎖/投資過的角色與污染相同時算已解鎖
+  {
+    ver: 'v3.15.83',
+    date: '2026-06-22',
+    brief: [
+      '🛟【資料救回再強化】承接上一版的英雄救回,依老師指示再加強——只要是你<b>自己練過、或身上裝了至寶</b>的角色,就算在共用平板上和別人重複(系統紀錄的最近一次解鎖剛好是別人),系統<b>都會正確認定那是你自己的角色、算「已解鎖」,絕不會誤判成別人的污染而刪掉</b>。',
+    ],
+    items: [
+      '★ v3.15.83【依老師指示:自己解鎖的角色/至寶若跟污染相同,要算已解鎖、不可誤判為汙染】承 v3.15.82,_applySafeData 把「本地英雄是否保留」的判定順序改為「投資證據 / 本人解鎖紀錄」優先於「最近一筆解鎖紀錄標別帳號 uid」。',
+      '★ v3.15.83【投資證據 = 練過 或 身上裝著至寶】_heroInvested82(n)= heroLevels 等級>1(雲端∪本地)或 身上裝著至寶(equippedTo,來源:雲端 taiwanTreasureData / 字串版 taiwanTreasureData_s / 本地 lxps_taiwan_treasures 三者聯集)。有投資證據 → 一定是學生自己的資源 → 保留,即使最近一筆解鎖紀錄標別帳號(共用機上同一隻常見英雄最近一筆常是別人解鎖的)。',
+      '★ v3.15.83【本人解鎖紀錄看「全部」非「最近一筆」】_hasOwnUnlockRec82(n) 掃整份解鎖紀錄(雲端∪本地),只要有任一筆是「本人 curUid 或無 uid 舊資料」且非 admin_delete → 學生自己解鎖過 → 保留(修正舊版只看 _latestRec 最近一筆、被同機後來者覆蓋而誤殺)。',
+      '★ v3.15.83【幻影救回同步擴充】分支前幻影救回(救援/同 uid/別人殘留/GM 三槽修復皆受惠)候選由「heroLevels 等級>1」擴為「heroLevels>1 ∪ 身上裝著至寶」,且移除 uid 擋(有投資證據即本帳號),只擋 GM admin_delete。',
+      '★ v3.15.83【安全 / 跨帳號防護不變】GM admin_delete(刪除永久)仍最高優先丟;只救/保留 _PLAYER_HERO_NAMES 白名單英雄。跨帳號汙染防護仍靠既有三層(本機命名空間 @@<uid> + 裝置擁有者對齊 + gameCloudLoad 鎖 _gUserId);本版只放寬「同一帳號內被誤判為污染」的情形、未放寬跨帳號讀取,故「讀不到別人的角色」不變。',
+      '★ v3.15.83【版本鏈】4 GAME 同步點 v3.15.82→v3.15.83;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.83。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.63)。',
+    ],
+  },
   // v3.15.82 — 重大資料遺失修復(裝至寶主力變未解鎖 + GM 三槽救不回)
   {
     ver: 'v3.15.82',
@@ -327,27 +343,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.64【召喚卷面板補至寶按鈕】index.html _openSummonTicketModal:在 SSR/SR 英雄券下方新增「💎 至寶召喚卷」分組(隨機 + 自選兩張卡,_treaCard helper),onclick 接既有 _useTreasureTicket()/_openTreasureTicketPickModal()(後端 v3.13.82/v3.15.56 早已完整,先前只缺從「使用召喚卷」入口進入,只能從背包點券進);主標題改「🎟 使用召喚卷」。',
       '★ v3.15.64【修登入誤跳污染彈窗】index.html _advCorruptionWatchdog 主 gate + 二次確認補 window._progressLoaded===true:_cloudLoadDone=true 只代表雲端流程跑完(含失敗),網路不穩讀取失敗時 _progressLoaded=false(空殼)被誤判成「污染」而在登入/載入畫面誤跳。改要求資料確實載入成功才判定(對齊全站 gameCloudSave 等 _progressLoaded 守門慣例),確保只在真正進入有資料的選關頁才可能彈窗。',
       '★ v3.15.64【版本鏈】4 GAME 同步點 v3.15.63→v3.15.64;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.44)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.63(2026-06-20)— ✨ 17 枚爆發技 GIF 特效更換 + 放大近全螢幕 + 只播 1 次
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.63',
-    date: '2026-06-20',
-    brief: [
-      '✨【多個英雄的「爆發技」特效大改版!】',
-      '   ・這次把<b>一整批爆發技的全螢幕動畫換成全新 GIF</b>,並且<b>放大到接近滿版全螢幕</b>、<b>只播放 1 次</b>(不再重複循環),施放時更有大招的震撼感。',
-      '   ・更換清單(技能名稱不變,只換特效):<b>激戰之舞、神樂舞、天界彩繪、流浪者之歌、夢境時光、明鏡止水、魔尊覺醒、BUG 修復、三刀射擊、死亡怒火、神炎之翼、銀齒迴力鏢旋風、夢幻的茶會、火山之怒、深海大漩渦、萬鏡映虛獄</b>,以及世界 BOSS<b>風暴雷龍王</b>的爆發<b>雷神·萬雷殛世</b>。',
-      '   ・其中<b>死亡怒火</b>(地獄將軍)以前沒有全螢幕大圖,這次<b>新增了爆炸煙霧特效</b>。',
-      '   ・順手修好<b>激戰之舞、明鏡止水、夢境時光</b>三招因舊連結失效而看不到特效的問題,現在都正常顯示了。',
-    ],
-    items: [
-      '★ v3.15.63【BURST_GIF_DB 16 換 + 1 新增】hero_db.js:激戰之舞→舞動音符(dur1830)、天界彩繪．毀滅與重生→大強化(910)、流浪者之歌→音樂舞動(1960)、夢境時光→泡泡升起(2800)、明鏡止水→漣漪(7620→2500 截斷)、魔尊覺醒→魔尊覺醒(1520)、BUG修復→數位代碼(1600)、三刀射擊→三道地裂(840)、神炎之翼→多火球射線(2470,移除 dead once:true)、銀齒迴力鏢旋風→龍捲風(360→1440 改 4 圈循環免眨眼)、夢幻的茶會→泡好一杯茶(800)、火山之怒→地火爆炸(910)、深海大漩渦!→漩渦(1500)、萬鏡映虛獄!→鑽石(3000)、雷神·萬雷殛世(風暴雷龍王,新增條目)→雷雨(1650);另新增 死亡怒火→爆炸煙霧2(2900,無 sfx 沿用 execBurst 火音效)。url 統一 raw.githubusercontent + encodeURIComponent;dur=單圈長度達成「只播1次」(GIF 皆 loop:0,_showBurstGif 不讀 once),scale 維持 1.6 近全螢幕。',
-      '★ v3.15.63【神樂舞 inline overlay】index.html playSkillFX case「神樂舞」非走 BURST_GIF_DB,改 _kgImg.src 為「秋天楓葉飄落.gif」、移除 timeout 3600→3200(單圈長度),維持 scale1.6;不另加 BURST_GIF_DB 條目以免雙重播放。',
-      '★ v3.15.63【順修壞連結】激戰之舞/明鏡止水/夢境時光 原 url 指向不存在的「-」repo(404),本次換新 gif 一併修復。深海大漩渦!/萬鏡映虛獄! 整塊錨定替換,未動到埃及豔后(尼羅河的詛咒)等其他技能對深海大漩渦.gif 的重用。',
-      '★ v3.15.63【#17 已補 + 長度調整】雷神·萬雷殛世(風暴雷龍王 taifeng_wind_dragon,BURST_DB 在 world-boss.js,bd.n 經 _showBurstCinematic→_showBurstGif 命中新條目)補上 雷雨.gif(老師上傳,55 格 loop:0 單圈 1650ms,dur=1650);明鏡止水 漣漪 單圈 7.6s 過長→dur 截 2500;銀齒 龍捲風 單圈僅 360ms(4 格)會眨眼→dur 1440(4 圈循環,loop:0)維持視覺。',
-      '★ v3.15.63【版本鏈】4 GAME 同步點 v3.15.62→v3.15.63;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。world-boss.js v3.15.51、world-boss-ui.html v3.15.61、admin_panel.js v3.15.58、adv_quiz_db.js 20260620、arena.js v3.15.60 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.43)。',
     ],
   },
 ];
