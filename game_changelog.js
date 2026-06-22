@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.85 — 甲案資料救援統整 + 復原顯示新增英雄/至寶(名+等級)
+  {
+    ver: 'v3.15.85',
+    date: '2026-06-22',
+    brief: [
+      '🛠️【老師後台:資料救援工具整理 + 復原看得到補回了什麼】把後台「資料救援與重置」整理得更清楚:<b>移除一個過時工具</b>、其餘三個各加<b>「使用時機」說明</b>讓老師一眼知道該用哪個。另外老師幫你復原資料時,現在會<b>清楚列出「這次補回了哪些角色、哪些至寶、各是幾等」</b>,確保補回的就是你原本擁有的。',
+    ],
+    items: [
+      '★ v3.15.85【甲案統整:退役「🚑 玩家資料急救工具」】此工具針對 2026-04 一個早已修好的舊 bug、且用最費工的「手動填數量」,功能已被「🔧 一鍵帳號重建」(自動反推)+「🎁 學生補償工具」(手動補發)完全覆蓋 → 從側欄與「資料救援與重置」群組移除(卡片與 init 程式保留但不再顯示)。資料救援與重置由 4 個精簡為 3 個。',
+      '★ v3.15.85【三救援工具加「使用時機」導引】🆘 Lv1 救援(整個帳號變回 Lv1 / 被本地汙染覆蓋·某槽完整 → 整槽複製)、🔧 一鍵帳號重建(部分英雄/水晶/幣不見了·只補缺漏不動現有·最安全·首選)、⚠️ 完全重置(最後手段·被別帳號汙染加法救不回·清空不可逆),三卡頂各加一句明確分流。',
+      '★ v3.15.85【需求2:一鍵重建顯示「將補回英雄/至寶 + 等級」】index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail(缺漏英雄附等級·讀合併後 heroLevels=學生原本練到的等級)+ missingTreasures(解鎖紀錄有但三槽全失的至寶·id/name/lv·排除 GM admin_delete)+ payload.treasures(經 _fbCompensatePlayer union 補回·新的給 Lv1)。admin_panel.js 分析結果以晶片列「🦸 將補回英雄 N 隻(名+Lv)」「💎 將補回至寶 M 件(名+Lv)」;套用後再列「本次補回」摘要(英雄+Lv/至寶+Lv/水晶+/幣+)供老師與學生核對是否符合預期。',
+      '★ v3.15.85【需求2:Lv1 救援三槽診斷顯示每槽英雄/至寶】三槽深度掃描時,每槽除原本的「解鎖數/最高 Lv/等級總和」,再列該槽英雄(名+等級·依等級排序)與至寶(名+等級),讓老師選還原來源前就看清楚每槽內容是否為學生預期(讀 _fbDiagnoseAllSlots 已回傳的 rawData,未改後端)。',
+      '★ v3.15.85【安全】退役工具僅移出側欄,後端救援邏輯與既有補償/重建/重置/誤刪救回不受影響;一鍵重建補至寶走既有 _fbCompensatePlayer(union 只補不減,既有至寶不動,新補給 Lv1)。',
+      '★ v3.15.85【版本鏈】4 GAME 同步點 v3.15.84→v3.15.85;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION + admin_panel.js ADMIN_PANEL_VERSION/_vers[admin_panel.js] 同步 v3.15.85。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪改 index.html + admin_panel.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.65)。',
+    ],
+  },
   // v3.15.84 — GM「英雄誤刪救回」一鍵掃描+復原(排除 GM 手動刪除的)
   {
     ver: 'v3.15.84',
@@ -318,22 +334,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.66【英雄來源標註補完 index.html】① 學生設計英雄:喚龍使‧蜜鶴林(5年3班龎苡睿)/維京海盜船長/武器精靈 先前未列入 STUDENT_DESIGNER_HEROES email-map → 圖鑑一覽表/詳情頁無「🎨 學生設計英雄」標。修:擴充 window._STUDENT_DESIGNED_HERO_SET 建構 IIFE,於 Object.keys(STUDENT_DESIGNER_HEROES) 之後 .add 此 3 名(此 set 僅供圖鑑標籤判定,3 隻皆 SSR 故自動套用,不影響設計師區塊/GM 補發 email-map)。② 埃及來源標:法老王/埃及豔后(EGYPT_EXCLUSIVE_HEROES)新增「🏜 埃及關卡機率獲得」標,於 grid-card 稀有度 IIFE(L≈103100)與 detail 稀有度 IIFE(L≈103748)各加 _eg 判定 + early-return 標籤 div(色 #f3c97a 沙金,emoji 🏜 對齊魔物圖鑑「🏜 埃及探險」,仿 JAPAN_EXCLUSIVE_HEROES「🗾 日本關卡機率獲得」雙處模式,grid 20px/detail 24px)。',
       '★ v3.15.66【新手教學能量說明更正 index.html】_showNewbieGuide 第 ② 章「戰鬥系統」render(L≈91192)能量機制文字與戰鬥引擎對齊。原誤植 4 處全改:① 普通攻擊 desc「賺取能量🔷」→「但不會回復能量🔷」;② 累積區「剛開場」說明改列正確來源(開場 0 能量;👊普攻 +0、☕休息 +1、🛒賣物品卡得販賣能量、部分天賦/技能/爆發回能量);③「攻擊幾次:」標籤 →「每回合 +3:」;④「能量 3 → 可使用 S1」→「每個新回合開始自動 +3 能量🔷 → 達 3 即可使用 S1」。權威定義(對照戰鬥碼):回合開始 G.energy[next.side]=min(10,+3)、普攻不耗能量、休息 +1、賣物品卡得販賣能量、外加恢復能量的天賦/技能/爆發。',
       '★ v3.15.66【版本鏈】本輪只改 index.html(來源標註 + 教學文字)+ game_changelog.js。版本同步點:_GAME_LOADED_VERSION v3.15.65→v3.15.66、_vers[index.html] v3.15.66、_vers[game_changelog.js] v3.15.66;_vers[hero_db.js] 維持 v3.15.65(本輪未改 hero_db.js)。hero_db.js v3.15.65、arena.js v3.15.37、admin_panel.js v3.15.40、world-boss.js v3.15.34、world-boss-ui.html v3.15.21、adv_quiz_db.js、sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.46)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.65(2026-06-20)— ✏️ 修正熔岩巨人/拘留者圖鑑缺設計師資訊
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.65',
-    date: '2026-06-20',
-    brief: [
-      '✏️【修正圖鑑沒顯示設計學生的問題】',
-      '   ・<b>熔岩巨人</b>(5 年 1 班 姜同學)與<b>拘留者</b>(5 年 1 班 彭同學)的圖鑑詳情頁,先前<b>沒有顯示「由 ⃝⃝ 設計」</b>的設計師資訊,現在補上了!',
-      '   ・其他學生設計英雄不受影響(本來就正常顯示)。',
-    ],
-    items: [
-      '★ v3.15.65【圖鑑設計師資訊修復 hero_db.js】根因:圖鑑詳情頁(index.html L≈103781)以 HERO_BIO 條目的「bio.designer 是否存在」作為「顯示設計師區塊」的 gate;_getDesignerLabel(反查 STUDENT_DESIGNER_HEROES→fullName 遮罩成「五年1班姜O晟同學」)僅負責美化標籤,但前提是 bio.designer 存在才會進入該區塊。熔岩巨人(v3.15.59)與拘留者(v3.15.64)新增時 HERO_BIO 只寫了 role/trait/hobby/quote,漏了 designer 子欄位 → 整塊不渲染。修:HERO_BIO 給此 2 隻補 designer:{class:"5年1班",name:"姜同學"/"彭同學",year:2026}。node 交叉比對(37 隻學生英雄 × HERO_BIO.designer)確認補後 0 缺。',
-      '★ v3.15.65【版本鏈】4 GAME 同步點 v3.15.64→v3.15.65;_vers[index.html]/[hero_db.js]/[game_changelog.js] 同步。實質改 hero_db.js(HERO_BIO 2 處 designer);index.html 僅版本鏈。world-boss.js/world-boss-ui.html/adv_quiz_db.js/arena.js/admin_panel.js/sw.js/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.45)。',
     ],
   },
 ];

@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.84';   // ★ v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源);加按鈕到既有 _admin-activity-section 免三點同步(_summonBtn grab + onclick 綁定·無 ?.)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):掃玩家知識幣帳本「短時間反覆賣出同一金額」的洗錢痕跡(對應 index.html v3.15.57 修復的賣出復活漏洞);估算贓款=(同額簇次數-1)×金額,列嫌疑玩家可逐一回收(_fbAdminRecoverLaunderedCoins 經 _fbCompensatePlayer 負值扣減、主檔/live/safe 三槽同寫防復活)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initLaunderingSection)。｜v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.15.85';   // ★ v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1347,6 +1347,7 @@ async function _showAdminStatsPanelImpl(){
       <!-- ★ v3.15.40 — GM 一鍵帳號重建(由帳本反推應有資料,只補不減) -->
       <div id="_admin-rebuild-section" style="background:rgba(18,45,40,0.5);border:2px solid rgba(90,220,180,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#6ee0bb;margin-bottom:8px;">🔧 一鍵帳號重建(由帳本反推)</div>
+        <div style="font-size:12px;color:#aff;background:rgba(90,220,180,0.1);border-left:3px solid #5adcb4;padding:6px 10px;border-radius:5px;margin-bottom:10px;line-height:1.55;">💡 <b>使用時機:</b>學生「部分英雄/水晶/幣不見了」,要「只補缺漏、不動現有資料」時的<b>首選(最安全)</b>。整個帳號掉光需整槽還原 → 用 🆘 Lv1 救援;資料被別帳號汙染、加法救不回 → 才用 ⚠️ 完全重置。</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
           對「資料被舊版弄壞」的帳號,用雲端帳本(解鎖紀錄 / 水晶・幣交易紀錄)反推「這個帳號本來應該有什麼」,跟現況(三槽合併)比對出缺漏一鍵補回。
           <b style="color:#9fe;">只補不減</b>,排除已被 GM 刪除的英雄,水晶補到上限 99。<br>
@@ -1734,6 +1735,7 @@ async function _showAdminStatsPanelImpl(){
       -->
       <div id="_admin-reset-section" style="background:rgba(60,15,15,0.55);border:3px solid rgba(255,80,80,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#ff7777;margin-bottom:8px;">⚠ 3.9 帳號完全重置 + 重建(危險)</div>
+        <div style="font-size:12px;color:#ffcccc;background:rgba(255,80,80,0.1);border-left:3px solid #ff6666;padding:6px 10px;border-radius:5px;margin-bottom:10px;line-height:1.55;">💡 <b>使用時機:最後手段。</b>只有當帳號被別帳號資料汙染、Lv1 救援與一鍵重建都救不回(保留現有反而保下汙染)時才用。會清空一切、不可逆。</div>
         <div style="font-size:13px;color:#ffcccc;margin-bottom:12px;line-height:1.6;">
           <b style="color:#ff9999;">用於救援被其他帳號資料污染的玩家。</b><br>
           會<b style="color:#ff7777;">徹底清空</b>該玩家所有資料(角色/等級/技能/勳章/背包/補償紀錄/世界戰歷史),
@@ -1851,6 +1853,7 @@ async function _showAdminStatsPanelImpl(){
       -->
       <div id="_admin-lv1-section" style="background:rgba(60,20,30,0.55);border:2px solid rgba(255,120,150,0.7);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#ff99bb;margin-bottom:8px;">🆘 3.7 救援工具(雲端三槽救援 + 反污染保護)</div>
+        <div style="font-size:12px;color:#ffe0b0;background:rgba(255,180,80,0.12);border-left:3px solid #ffcc66;padding:6px 10px;border-radius:5px;margin-bottom:10px;line-height:1.55;">💡 <b>使用時機:</b>學生「整個帳號變回 Lv1」或進度被本地汙染覆蓋,且某一槽資料完整時 → 整槽複製還原。若只想「補缺漏、不動現有資料」請改用 🔧 一鍵帳號重建。</div>
         <div style="font-size:13px;color:#ddd;margin-bottom:12px;line-height:1.55;">
           專為「<b style="color:#ffcc88;">學生帳號變回 Lv1 / 進度被本地汙染版覆蓋</b>」的場景。<br>
           會掃描三個地方:① 主文件 ② live 槽 ③ <b style="color:#88ff88;">safe 槽(救命槽,每 5 分鐘備份一次)</b>,<br>
@@ -2714,7 +2717,6 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-bug-section',              label: '📥 接收錯誤回報',          hint: '查看玩家提交的 bug' },
       { sec: '_admin-lv1-section',              label: '🆘 Lv1 救援',              hint: '雲端三槽 + 反污染保護' },
       { sec: '_admin-pollution-check-section',  label: '📢 污染檢查提醒',          hint: '寄送進度污染提醒' },
-      { sec: '_admin-rescue-section',           label: '🚑 玩家資料急救工具',      hint: '修復異常資料' },
       { sec: '_admin-rebuild-section',          label: '🔧 一鍵帳號重建',          hint: '用雲端帳本反推「應有資料」,比對缺漏一鍵補回(只補不減,排除已刪英雄);救援被舊版弄壞的帳號' },
       { sec: '_admin-comp-section',             label: '🎁 學生補償工具',          hint: '指定信箱發放補償' },
       // ★ v3.15.49 — 全體玩家獎勵(一鍵發給所有人,每人保證只領一次,免疫雲端資料誤差重複領)
@@ -2779,7 +2781,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section','_admin-laundering-section','_admin-deleted-hero-section'] },
-      { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rescue-section','_admin-rebuild-section','_admin-reset-section'] },
+      { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rebuild-section','_admin-reset-section'] },
       { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
@@ -6677,7 +6679,7 @@ async function _showAdminStatsPanelImpl(){
       var _resultEl   = document.getElementById('_admin-rebuild-result');
       var _inputEl    = document.getElementById('_admin-rebuild-input');
       if(!_analyzeBtn || !_applyBtn || !_resultEl || !_inputEl) return;
-      var _pendingUid = null, _pendingPayload = null;
+      var _pendingUid = null, _pendingPayload = null, _pendingDiff = null;
       function _esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
       function _resolveUidLocal(input){
         var s = String(input==null?'':input).trim();
@@ -6710,16 +6712,25 @@ async function _showAdminStatsPanelImpl(){
         _resolveUidLocal(_inputEl.value).then(function(uid){
           return window._fbRebuildAccountFromLedgers(uid).then(function(r){
             _pendingUid = uid; _pendingPayload = r.payload;
-            var d = r.diff;
+            var d = r.diff; _pendingDiff = d;
             var html = '帳號 <b style="color:#9fe;">' + _esc(String(uid).slice(0,12)) + '…</b><br>';
             html += '現有英雄 <b>' + r.current.heroes + '</b> 隻｜帳本顯示應有 <b>' + r.shouldHave.heroes + '</b> 隻<br>';
             html += '水晶 現有 <b>' + d.crystal.current + '</b> / 帳本 <b>' + (d.crystal.ledger == null ? '無紀錄' : d.crystal.ledger) + '</b>' + (d.crystal.willAdd > 0 ? ' → <span style="color:#9fe;">補 +' + d.crystal.willAdd + '</span>' : '') + '<br>';
             html += '知識幣 現有 <b>' + d.coins.current + '</b> / 帳本 <b>' + (d.coins.ledger == null ? '無紀錄' : d.coins.ledger) + '</b>' + (d.coins.willAdd > 0 ? ' → <span style="color:#9fe;">補 +' + d.coins.willAdd + '</span>' : '') + '<br>';
-            if(d.missingHeroCount > 0){
-              html += '<div style="margin-top:6px;color:#ffd;">缺漏英雄 ' + d.missingHeroCount + ' 隻:' + _esc(d.missingHeroes.slice(0,40).join('、')) + (d.missingHeroes.length > 40 ? ' …' : '') + '</div>';
+            // ★ v3.15.85(需求2)— 將補回英雄列「名稱 + 等級」,讓老師核對是否為學生預期
+            var _mhd = (d.missingHeroDetail && d.missingHeroDetail.length) ? d.missingHeroDetail : null;
+            if(_mhd){
+              var _hChips = _mhd.map(function(h){ return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(90,220,180,0.14);border:1px solid rgba(90,220,180,0.35);border-radius:10px;color:#aff;">' + _esc(h.name) + ' <span style="color:#8fd;">Lv' + (h.lv||1) + '</span></span>'; }).join('');
+              html += '<div style="margin-top:8px;color:#ffd;">🦸 將補回英雄 <b>' + _mhd.length + '</b> 隻(等級為學生原本練到的,補回後保留):</div><div style="margin-top:4px;max-height:160px;overflow-y:auto;">' + _hChips + '</div>';
+            }
+            // ★ v3.15.85(需求2)— 將補回至寶列「名稱 + 等級」(三槽全失的至寶,補回為 Lv1)
+            var _mtd = (d.missingTreasures && d.missingTreasures.length) ? d.missingTreasures : null;
+            if(_mtd){
+              var _tChips = _mtd.map(function(t){ return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(120,170,255,0.14);border:1px solid rgba(120,170,255,0.35);border-radius:10px;color:#bcf;">💎 ' + _esc(t.name) + ' <span style="color:#9bf;">Lv' + (t.lv||1) + '</span></span>'; }).join('');
+              html += '<div style="margin-top:8px;color:#cdf;">💎 將補回至寶 <b>' + _mtd.length + '</b> 件(三槽皆遺失,補回為 Lv1):</div><div style="margin-top:4px;">' + _tChips + '</div>';
             }
             if(r.hasChanges){
-              html += '<div style="margin-top:8px;color:#9fe;font-weight:700;">↑ 確認無誤後按下方「套用重建」</div>';
+              html += '<div style="margin-top:8px;color:#9fe;font-weight:700;">↑ 確認以上是學生預期的角色/至寶後,按下方「套用重建」</div>';
               _applyBtn.style.display = 'inline-block';
             } else {
               html += '<div style="margin-top:8px;color:#8e8;font-weight:700;">✅ 此帳號資料已完整,無需重建</div>';
@@ -6736,7 +6747,25 @@ async function _showAdminStatsPanelImpl(){
           if(typeof window._fbApplyAccountRebuild !== 'function') throw new Error('_fbApplyAccountRebuild 未載入');
           return window._fbApplyAccountRebuild(_pendingUid, _pendingPayload);
         }).then(function(res){
-          _resultEl.innerHTML = (res && res.ok) ? '✅ 重建完成!該學生重新整理 / 重登後即可看到補回的資料。' : ((res && res.noop) ? '✅ 無需重建(帳號已完整)。' : '⚠ 重建回傳異常,請查 console。');
+          if(res && res.ok){
+            // ★ v3.15.85(需求2)— 套用後列出「本次補回」清單,讓老師與學生核對是否符合預期
+            var _parts = [];
+            if(_pendingDiff && _pendingDiff.missingHeroDetail && _pendingDiff.missingHeroDetail.length){
+              _parts.push('🦸 英雄 ' + _pendingDiff.missingHeroDetail.length + ' 隻:' + _pendingDiff.missingHeroDetail.map(function(h){ return _esc(h.name) + ' Lv' + (h.lv||1); }).join('、'));
+            }
+            if(_pendingDiff && _pendingDiff.missingTreasures && _pendingDiff.missingTreasures.length){
+              _parts.push('💎 至寶 ' + _pendingDiff.missingTreasures.length + ' 件:' + _pendingDiff.missingTreasures.map(function(t){ return _esc(t.name) + ' Lv' + (t.lv||1); }).join('、'));
+            }
+            if(_pendingDiff && _pendingDiff.crystal && _pendingDiff.crystal.willAdd > 0) _parts.push('🔮 召喚水晶 +' + _pendingDiff.crystal.willAdd);
+            if(_pendingDiff && _pendingDiff.coins && _pendingDiff.coins.willAdd > 0) _parts.push('🪙 知識幣 +' + _pendingDiff.coins.willAdd);
+            _resultEl.innerHTML = '✅ <b>重建完成!本次補回:</b>'
+              + '<div style="margin-top:6px;color:#aff;line-height:1.9;">' + (_parts.length ? _parts.join('<br>') : '(無項目)') + '</div>'
+              + '<div style="margin-top:8px;color:#8fd;font-size:12px;">📋 請與學生核對以上是否為他預期看到的角色/至寶。學生重新整理 / 重登後即可看到補回的資料。</div>';
+          } else if(res && res.noop){
+            _resultEl.innerHTML = '✅ 無需重建(帳號已完整)。';
+          } else {
+            _resultEl.innerHTML = '⚠ 重建回傳異常,請查 console。';
+          }
           _applyBtn.style.display = 'none';
         }).catch(function(e){
           _resultEl.innerHTML = '❌ 套用失敗:' + _esc(e && e.message ? e.message : e);
@@ -8370,6 +8399,35 @@ async function _showAdminStatsPanelImpl(){
         + '🎯 最高 Lv<b>' + (slot.maxHeroLv || 0) + '</b> | '
         + '📊 等級總和 <b>' + (slot.totalHeroLv || 0) + '</b>'
         + '</div>'
+        + (function(){
+            // ★ v3.15.85(需求2)— 列出此槽的英雄(名+等級,依等級排序)+ 至寶(名+等級),讓老師核對是否為學生預期再還原
+            try{
+              var rd = slot.rawData || {};
+              var _e = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+              var out = '';
+              var unl = Array.isArray(rd.unlockedHeroes) ? rd.unlockedHeroes : [];
+              var hlv = (rd.heroLevels && typeof rd.heroLevels === 'object') ? rd.heroLevels : {};
+              if(unl.length){
+                var harr = unl.slice().map(function(n){ return { n:n, lv:(typeof hlv[n]==='number'?hlv[n]:1) }; });
+                harr.sort(function(a,b){ return b.lv - a.lv; });
+                var hchips = harr.map(function(h){ return '<span style="display:inline-block;margin:2px 3px;padding:1px 7px;background:rgba(120,150,200,0.16);border:1px solid rgba(120,150,200,0.3);border-radius:9px;color:#cde;font-size:11px;">' + _e(h.n) + ' <span style="color:#9ab;">Lv' + h.lv + '</span></span>'; }).join('');
+                out += '<div style="margin-top:6px;max-height:130px;overflow-y:auto;padding:5px;background:rgba(0,0,0,0.25);border-radius:5px;">'
+                  + '<div style="font-size:11px;color:#9ab;margin-bottom:3px;">⚔ 此槽英雄(' + harr.length + ',依等級排序):</div>' + hchips + '</div>';
+              }
+              var _tre = rd.taiwanTreasureData;
+              if(!(_tre && typeof _tre === 'object') && typeof rd.taiwanTreasureData_s === 'string'){ try{ _tre = JSON.parse(rd.taiwanTreasureData_s); }catch(_){ _tre = null; } }
+              if(_tre && typeof _tre === 'object'){
+                var tids = Object.keys(_tre);
+                if(tids.length){
+                  var _tname = function(id){ try{ var t = window.TAIWAN_TREASURES && window.TAIWAN_TREASURES[id]; return (t && t.name) ? t.name : id; }catch(_){ return id; } };
+                  var tchips = tids.map(function(id){ var tt=_tre[id]||{}; var lv=(typeof tt.lv==='number'?tt.lv:1); return '<span style="display:inline-block;margin:2px 3px;padding:1px 7px;background:rgba(120,170,255,0.14);border:1px solid rgba(120,170,255,0.3);border-radius:9px;color:#bcf;font-size:11px;">💎 ' + _e(_tname(id)) + ' <span style="color:#9bf;">Lv' + lv + '</span></span>'; }).join('');
+                  out += '<div style="margin-top:5px;max-height:110px;overflow-y:auto;padding:5px;background:rgba(0,0,0,0.25);border-radius:5px;">'
+                    + '<div style="font-size:11px;color:#9bf;margin-bottom:3px;">💎 此槽至寶(' + tids.length + '):</div>' + tchips + '</div>';
+                }
+              }
+              return out;
+            }catch(_){ return ''; }
+          })()
         + '</div>';
     }
 
