@@ -2370,18 +2370,26 @@ body.wb-in-worldboss-battle .popup {
  *   ★ -webkit-overflow-scrolling:touch 讓 iOS Safari 可慣性捲動。
  */
 .king-box-2col{
-  max-width:1500px;
+  max-width:1680px;
   max-height:92vh;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
 }
 /* 雙欄模式下,左欄獎勵組距:字級放大、不強制換行,讓每條獎勵單行顯示 */
 .king-box-2col .king-rule-detail{
-  font-size:clamp(15px,1.5vw,19px);
-  line-height:1.85;
+  font-size:clamp(16px,1.5vw,21px);
+  line-height:1.9;
   white-space:nowrap;       /* 強制單行 */
   overflow:visible;
 }
+/* ★ v3.15.79 — 知識王入口彈窗加寬至接近全螢幕後,字級/按鈕同步放大,
+ *   讓三欄填得均衡、好閱讀、按鈕大顆好點擊(僅限 .king-box-2col 入口彈窗,
+ *   不影響 .king-box-question / .king-box-result 等其他知識王彈窗)。 */
+.king-box-2col .king-title{ font-size:clamp(32px,3.2vw,48px); }
+.king-box-2col .king-subtitle{ font-size:clamp(18px,1.9vw,26px); margin-bottom:20px; }
+.king-box-2col .king-rules{ font-size:clamp(16px,1.7vw,22px); padding:16px 20px; }
+.king-box-2col .king-rule-row{ margin:7px 0; }
+.king-box-2col .king-btn{ padding:14px 30px; font-size:clamp(18px,1.9vw,24px); }
 
 .king-title{
   font-size:clamp(28px,3vw,40px); font-weight:900;

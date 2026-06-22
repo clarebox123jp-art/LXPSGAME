@@ -12,6 +12,76 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.81 — 知識王完成後可查看今天做完的科目與成績
+  {
+    ver: 'v3.15.81',
+    date: '2026-06-22',
+    brief: [
+      '📋【知識王:完成後可查看今天的成績】知識王挑戰完成後,再打開挑戰視窗,底部按鈕會變成「<b>📋 查看今天的科目與成績</b>」,點下去就能看到<b>今天的分數、答對題數,以及做完的科目</b>(一般科目 + 課堂複習)。隔天 08:00 重置後,完成新挑戰會自動更新成當天的成績。',
+    ],
+    items: [
+      '★ v3.15.81【今日成績持久化 index.html】_kingChallenge 新增 _todayResult { date, score, correct, total, subN, subR, isReview };_kingClaimRewards 完成領獎時記錄(correct=_answered 中 true 數、total=_curQuestions 長度、subN=_curSubject、subR=_curSubjectReview、isReview=_isReviewMode)→ _kingSaveToCloud。',
+      '★ v3.15.81【雲端白名單 save/load】save 序列化於 _bestScore 後加 _todayResult、load 還原同步;跨日由 date !== 今日(_kingGetTodayStr)自動失效(不需顯式清除,完成新挑戰時覆寫;_dailyDone 為 false 時也進不到查看鈕)。',
+      '★ v3.15.81【UI】_kingShowEntryPopup 已完成(_dailyDone)底部按鈕由停用「✅ 今日挑戰已完成」改為可點「📋 查看今天的科目與成績」→ _kingShowTodayResult();新增 _kingShowTodayResult 全內聯彈窗(分數大字依分數變色、答對 X/Y、一般/課堂複習科目 chips、課堂複習徽章、歷史最高分;date 不符或無紀錄走 fallback「已完成」訊息;關閉用 .ktr-close JS 綁定 + 遮罩點擊,避免跳脫引號)。',
+      '★ v3.15.81【版本鏈】4 GAME 同步點 v3.15.80→v3.15.81;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.81。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69。本輪(81)只改 index.html。GAME_CHANGELOG trim 至 20(本 session 78-81 共加 4、移除最舊 v3.15.58/59/60/61)。',
+    ],
+  },
+  // v3.15.80 — 召喚紀錄改存雲端 + 登入同步 + GM 查詢
+  {
+    ver: 'v3.15.80',
+    date: '2026-06-22',
+    brief: [
+      '☁️【召喚紀錄改存雲端】以前召喚紀錄只存在這一台裝置,換裝置、清快取或重新登入就看不到了。現在<b>召喚紀錄會自動存到雲端、登入後同步</b>,不論在哪一台 iPad 都看得到<b>完整的召喚紀錄</b>(包含用合成召喚卷抽到的結果)。',
+    ],
+    items: [
+      '★ v3.15.80【雲端化 index.html block#02 加 5 helper】_fbSaveSummonHistory(整包寫 summonHistory/{uid}={uid,list≤60,updatedAt},merge:false)、_fbLoadSummonHistory(uid)、_fbSyncSummonHistoryOnLogin(雲端+本地以 t+_+n 去重、保最新 60 寫回本地,本地較多則回寫雲端)、_fbReadPlayerSummonHistory(GM:email/uid/學號 lsps→補 @stu.lsps.tp.edu.tw 以 where email 反查 uid)、_fbShowPlayerSummonHistory(GM 彈窗:摘要抽到的稀有英雄/台灣至寶 chips + 逐次明細)。Firestore SDK refs 在 block#02 模組作用域,故 helper 定義於此、跨 block 以 window.* 呼叫。',
+      '★ v3.15.80【寫入/同步點】_recordSummonHistory 寫 localStorage 後即時 window._fbSaveSummonHistory(_hist)(星空抽/隨機券/合成自選券/至寶券皆經 _showSummonResults/_showSummonTicketResult → _recordSummonHistory);登入 onAuthStateChanged 的 await gameCloudLoad(user.uid) 後加 _fbSyncSummonHistoryOnLogin()。',
+      '★ v3.15.80【GM UI admin_panel.js】玩家活動記錄查詢區(_admin-activity-section)按鈕列加「📜 召喚紀錄」鈕,讀查詢框 email/uid/學號 → window._fbShowPlayerSummonHistory;加按鈕到既有 section 免三點同步(_summonBtn grab + onclick 綁定),全程無 optional chaining。',
+      '★ v3.15.80【⚠ 需部署 Firestore 規則】summonHistory/{uid}:玩家寫自己(request.auth.uid==uid + hasOnly([uid,list,updatedAt]))、GM(isAdmin)讀全部;未部署則雲端寫入被拒,本地紀錄仍正常(belt-and-suspenders,不影響召喚本身)。',
+      '★ v3.15.80【版本鏈】4 GAME 同步點 v3.15.79→v3.15.80;_vers[admin_panel.js] v3.15.58→v3.15.80 + ADMIN_PANEL_VERSION v3.15.58→v3.15.80(自檢需一致)。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69。本輪改 index.html + admin_panel.js。',
+    ],
+  },
+  // v3.15.79 — 知識王挑戰首頁加寬至接近全螢幕 + 字體按鈕放大
+  {
+    ver: 'v3.15.79',
+    date: '2026-06-22',
+    brief: [
+      '🔍【知識王挑戰首頁加寬】「今日知識王挑戰」的視窗外框<b>加寬到接近全螢幕</b>,三欄(獎勵說明 / 本週小博士 / 特別挑戰題)的<b>字體與按鈕都放大</b>了,看得更清楚、也更好點。',
+    ],
+    items: [
+      '★ v3.15.79【index.html _kingShowEntryPopup】外框 max-width min(96vw,960px)→min(97vw,1680px)、grid gap14→20、margin-top14→18;中欄(本週小博士卡)+右欄(特別挑戰卡 _specialCardHtml)+徽章(_scBadgeHtml)行內字級/按鈕放大;底部按鈕列 margin14→18;_applyLayout 響應門檻 600/900→640/1000(字級放大後三欄需更寬視窗才舒適)。',
+      '★ v3.15.79【main.css】.king-box-2col max-width 1500→1680 + scoped 放大(.king-box-2col .king-title/.king-subtitle/.king-rules/.king-rule-row/.king-rule-detail/.king-btn),僅入口彈窗、不影響 .king-box-question/.king-box-result 等其他知識王彈窗。',
+      '★ v3.15.79【版本鏈】4 GAME 同步點 v3.15.78→v3.15.79;_vers[main.css] v3.14.5→v3.15.79。hero_db.js v3.15.78、admin_panel.js v3.15.58(本輪未改)。本輪改 index.html + main.css。',
+    ],
+  },
+  // v3.15.78 — 補喚龍使‧蜜鶴林圖鑑設計師資訊
+  {
+    ver: 'v3.15.78',
+    date: '2026-06-22',
+    brief: [
+      '✏️【補上「喚龍使‧蜜鶴林」的設計師資訊】英雄圖鑑詳情頁補上「<b>喚龍使‧蜜鶴林</b>」的設計師標示:<b>由 5 年 3 班 龎同學設計</b>。',
+    ],
+    items: [
+      '★ v3.15.78【hero_db.js】喚龍使‧蜜鶴林 HERO_BIO(L2144)補 designer:{ class:5年3班, name:龎同學, year:2026 };圖鑑詳情頁(index.html)以 bio.designer 存在為顯示設計師區塊的閘門,_getDesignerLabel 查無 STUDENT_DESIGNER_HEROES 則 fallback class+name → 顯示「✏️ 由 5年3班 龎同學 設計(2026 年)」。同 v3.15.65 熔岩巨人/拘留者病灶(新增英雄時 HERO_BIO 漏 designer 子欄位,鐵律 1.231)。',
+      '★ v3.15.78【版本鏈】_vers[hero_db.js] v3.15.72→v3.15.78;4 GAME 同步點 v3.15.77→v3.15.78(本檔僅版本鏈,實質改 hero_db.js)。本輪只改 hero_db.js。',
+    ],
+  },
+  // v3.15.77 — 十連抽優化(同批第二隻重複稀有英雄自動轉換成對應獎勵,沒有損失)
+  {
+    ver: 'v3.15.77',
+    date: '2026-06-22',
+    brief: [
+      '🌈【十連抽優化】同一次連抽中,如果抽到「第二隻重複的稀有英雄」,系統會自動把重複的那隻轉換成對應獎勵——<b>SSR 重複→超越極限果實 ×1</b>、<b>SR 重複→精裝英雄經驗之書 ×5</b>,不會再白白浪費。',
+      '   ・召喚結果視窗會明確顯示「🔄 抽到 N 隻重複英雄,已自動轉換為對應獎勵,沒有損失!」,被轉換的卡片也會標上「🔄 重複轉換」,讓你一眼就知道沒有虧到。',
+    ],
+    items: [
+      '★ v3.15.77【根因】doSummon 連抽(10+1=11 抽)的抽取迴圈一次跑完才在 _applySummonReward 統一解鎖英雄;抽取當下 advGetUnlockedHeroes() 對「同一批稍早已抽中、但尚未解鎖」的英雄是看不見的 → rare_ssr/rare_sr 的候選 _avail 只用 stale unlocked 過濾 → 同批可能重複抽到同一隻;第二隻 advSaveUnlockedHero 等同 no-op(英雄只能擁有/未擁有,無重複概念)→ 玩家空得、形同浪費一抽。',
+      '★ v3.15.77【修法】_rollOneSummon 新增 _batchExcl(Set)參數;doSummon 用 _batchClaimedHeroes Set 記錄本批已抽中的 rare_hero,逐抽即時排除。rare_ssr/rare_sr 改先算 _availUnlocked(僅依存檔已解鎖)再扣同批已抽中得 _avail:_avail 有貨→正常給英雄;_avail 空但 _availUnlocked 有貨(代表沒收錄的都在這批稍早抽中了)→第二隻重複,轉對應獎勵並標 _dupConverted/_dupTier;_availUnlocked 也空→維持原「全收錄」轉換文案。legacy rare_hero 路徑一併補 _excl 排除(保險)。',
+      '★ v3.15.77【顯示】_showSummonResults 標題下方加綠色橫幅「🔄 抽到 N 隻重複的稀有英雄,已自動轉換為對應獎勵,沒有損失!」(_dupCount>0 才顯示,單抽因 _batchExcl 空永不觸發);被轉換的結果卡加「🔄 重複轉換」小標。轉換後的獎勵走既有 _applySummonReward(rwd.id→backpackAdd),召喚紀錄/角色預覽不受影響。',
+      '★ v3.15.77【安全】只動「召喚抽取邏輯」與「結果顯示」,完全不改 SUMMON_RATES 機率表、不改英雄解鎖流程、不改任何存檔/守門。_rollOneSummon 全站僅 doSummon 一處呼叫,加選用參數向下相容(未傳=空集合,單抽行為不變)。轉換獎勵沿用既有「全收錄」同款道具(SSR→超越極限果實、SR→精裝英雄之書×5),不新增掉落物、不影響經濟平衡。',
+      '★ v3.15.77【版本鏈】4 GAME 同步點 v3.15.76→v3.15.77;_vers[index.html]/[game_changelog.js] 同步 v3.15.77。hero_db.js v3.15.72、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.57)。',
+    ],
+  },
   // v3.15.76 — 存檔同步修正(資料修復後重整仍誤判倒退無法同步,根因雲端殘留舊資料墊高比較基準)
   {
     ver: 'v3.15.76',
@@ -288,127 +358,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.62【GM 獎章徽章 UI】_updateGmMedalW1Badge:徽章 font 11→22、padding/radius/top 放大;修 #adv-medal-btn 浮層被 #adv-bottom-nav .adv-nav-btn{overflow:hidden}(無 !important)裁切 → 對該鍵 inline overflow:visible + z-index 40(全達成時還原)。',
       '★ v3.15.62【圖鑑 fd 同步】hero_db.js 神聖鎚擊/死亡宣告/炸彈投擲·連投/青炎爆破/捨命揮斬/支配鎖鍊 的 d+fd 上限文字改 Lv×20(地獄將軍 L1835 dead fallback 暫留)。雷鳴/奧汀/定時炸彈/大聲啼哭 fd 本未列上限數字、無不一致。',
       '★ v3.15.62【版本鏈】4 GAME 同步點 v3.15.61→v3.15.62;_vers[index.html]/[game_changelog.js]/[hero_db.js(v3.15.60→v3.15.62)] 同步。world-boss-ui.html v3.15.61、adv_quiz_db.js 20260620、arena.js v3.15.60、world-boss.js v3.15.51、admin_panel.js v3.15.58 未改。本輪改 index.html＋hero_db.js＋game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.42)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.61(2026-06-20)— 🏅 19 枚高階挑戰獎章 + 🧠 機關王題庫換新 + 🐉 龍王頁更新
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.61',
-    date: '2026-06-20',
-    brief: [
-      '🏅【GM 加碼:19 枚高階挑戰獎章登場!】',
-      '   ・老師特別追加了一整批<b>高難度成就獎章</b>,每解鎖 1 枚就送 <b>🔮 召喚水晶 ×5 + 💰 知識幣 +10,000</b>,超大獎勵等你來拿!',
-      '   ・挑戰橫跨<b>英雄收集、台灣關、埃及關、黑暗球、鬥技場</b>各種高手關卡(例如:只用 SR 英雄通關、全程不帶寵物、一場把對手三隻一次清空…)。',
-      '   ・主選單「<b>獎章</b>」鍵上會浮出「<b>新增獎章挑戰!</b>」標記;點進獎章頁會先跳出說明視窗,<b>已達成的會打勾 ✅</b>。看過可按「我知道了」或「今日不再顯示此視窗」,<b>全部達成後就不再出現</b>。',
-      '   ・順手修好獎章頁<b>沒有顯示「埃及關 / 鬥技場」分類</b>的問題,現在這兩區的獎章都看得到了。',
-      '🧠【世界機關王大賽:題庫煥然一新】',
-      '   ・機關王關卡的題目全部換成<b>「簡單機械與 STEAM」</b>主題:斜面、槓桿、滑輪、齒輪、位能與動能、系統思考…邊打邊學超有料!',
-      '🪲【聖甲蟲會逃跑了!】',
-      '   ・埃及關的稀有「<b>聖甲蟲</b>」膽小又惜命——只要<b>撐到第 4 回合還沒被打倒,牠就會推著黃金糞球溜走</b>!想拿牠的大量獎勵就要速戰速決;不過讓牠成功逃走,也能解鎖「<b>聖蟲遁逃</b>」獎章喔。',
-      '🐉【世界 BOSS 頁面更新:當前 & 下一隻龍王資訊修正】',
-      '   ・世界 BOSS 大廳的「<b>當前龍王</b>」素質,以及「<b>下一隻龍王搶先看</b>」的名稱、立繪、屬性、能力介紹,全部改成<b>自動跟著實際龍王更新</b>,不會再顯示舊資料;點「能力詳細介紹」可看完整招式與天賦。',
-    ],
-    items: [
-      '★ v3.15.61【世界機關王大賽題庫】adv_quiz_db.js ADV_QUIZ_GREENMECH(id 9601-9620,subject 世界機關王大賽)整批換成 STEAM 簡單機械題(斜面/槓桿/滑輪/齒輪/位能動能/系統思考);node --check PASS、20 題、無英文單引號。',
-      '★ v3.15.61【19 枚高階獎章】index.html MEDAL_DEFS 新增 19 枚並全列入 _MEDAL_TOP_TIER(5💎+10000):英雄 ssr_unlock_20/40、first_ur_hero、shard_synth_first;台灣 tw_sr_only;埃及 egypt_sr_only/no_pet/4pets/kill_cleo_sealed/kill_self_charmed/both_talent_sealed/scorpion_ko/scarab_flee;黑暗球 darkorb_no_pet/r_only/all_clones;鬥技場 arena_kill_3/no_heal_win/2kill_3round。另 4 枚既有(unlock_xiaoli/kid/gm、arena_streak_5)升頂級。偵測 hook 分散於 _checkMedalHeroUnlock／_synthShardToPickTicket／doDmg 死亡集中 hook／Scorpion 即死／Scarab 逃跑／_checkEgyptClearMedal／_checkTaiwanWinMedals／黑暗球勝利分支／doHeal／_checkMedalArena;每枚 def=1 call=1 已稽核。',
-      '★ v3.15.61【獎章頁顯示修正】_buildMedalPage cats 陣列補回漏列的「埃及關」「鬥技場」(原本該兩分類獎章完全不顯示)+ 對應類別圖示(🏟／🏜)。',
-      '★ v3.15.61【聖甲蟲第 4 回合必逃】startTurn 仿寶箱怪框架:next.name===聖甲蟲 且 G.round>=4 → 從戰場 splice、curHp=0、不計擊倒/不給獎勵、_scarabFled 旗標、checkWin;逃走即解鎖 egypt_scarab_flee。聖甲蟲魔物圖鑑 lore 補逃跑警告。',
-      '★ v3.15.61【GM 第一波獎章挑戰提醒 UI】index.html 新增 _GM_MEDAL_WAVE1(19 id)+ _gmMedalW1Stats／_updateGmMedalW1Badge(#adv-medal-btn 浮「新增獎章挑戰!」粉紅脈動徽章,全達成自動移除)／_gmMedalW1ShouldShowPopup／_showGmMedalW1Popup(進獎章頁彈視窗:列 19 枚打勾+進度+5💎+10000 強調;「我知道了」設 session 旗標、「今日不再顯示」寫 localStorage _gmMedalW1DismissDate=今日;全達成不再彈)。hook:openMedalPage 彈窗+刷新徽章、_unlockMedal earn 後刷新徽章、openAdventureOverlay 進關卡刷新徽章;CSS keyframe _gmMedalW1Pulse。',
-      '★ v3.15.61【世界 BOSS 頁龍王資訊資料驅動】world-boss-ui.html:(a)當前龍王大廳卡素質(攻擊/特技/速度)由寫死火龍王 49/50/15 改 _wbApplyCurrentBossSkin 讀 HERO_DB[當前龍王](HP 統一 5,000,000 不動);(b)「下一隻龍王搶先看」整卡改資料驅動 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻 → 名稱/立繪/屬性/素質/簡介=背景故事+自動護盾文案/主題色 + 能力詳細介紹鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正寫死土龍王過時文案(額外減傷 40%→實際 30% 等),輪替推進自動跟上。index.html 雲端當前龍王解析兩處 re-apply 加呼叫 _wbApplyNextBossPreview。',
-      '★ v3.15.61【版本鏈】4 GAME 同步點 v3.15.60→v3.15.61;_vers[index.html]／[game_changelog.js] 同步 v3.15.61、[world-boss-ui.html] v3.15.50→v3.15.61、[adv_quiz_db.js] 20260612b→20260620。world-boss.js 維持 v3.15.51、hero_db.js v3.15.60、arena.js v3.15.60、admin_panel.js v3.15.58(均未改)。本輪改 index.html＋adv_quiz_db.js＋world-boss-ui.html＋game_changelog.js 四檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.41)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.60(2026-06-20)— ⚔ 主神奧汀大改 + 🐉 各龍王成就 + 🌑 黑暗球掉落
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.60',
-    date: '2026-06-20',
-    brief: [
-      '⚔【主神奧汀 能力調整】',
-      '   ・「<b>岡格尼爾的制裁</b>」改為消耗 7 能量,造成「攻擊 300% + 目標最大 HP 10%」傷害(對<b>魔王 / 龍王</b>改為 5%,避免一招打太兇)。',
-      '   ・大絕「<b>諸神的黃昏</b>」主動版改版:先讓全隊降到剩 1 滴血,再以<b>全隊失去的 HP 總合 ×400%</b> 痛擊敵人——犧牲越多、爆發越強!(被動全滅復活版調整為最大 HP 總和 ×600%)',
-      '   ・天賦「<b>奧汀之眼</b>」追加效果:奧汀<b>受到的所有傷害減少 30%</b>(天賦升級最高 50%),更能扛住前線。',
-      '🐉【新獎章:迎戰各路龍王】',
-      '   ・世界 BOSS 新增「<b>迎戰八大龍王</b>」系列獎章:挑戰火山炎、翠綠森、山岳地、風暴雷、深淵海、邪骨暗、神聖光、星辰幻龍王各一場(不論勝負)即可獲得;<b>集滿 8 隻</b>再拿下「八龍試煉」!',
-      '🏟【新獎章:鬥技場 & 埃及關】',
-      '   ・<b>鬥技場</b>新增成就:初登鬥技場、累積 10 / 30 / 50 勝、五連勝。',
-      '   ・<b>埃及關</b>追加成就:累積通關 5 / 15 次、聖蟲獵手(累積擊敗聖甲蟲 3 次)。',
-      '🌑【黑暗球掉落加碼】',
-      '   ・挑戰「<b>黑暗球‧希望型態</b>」每場必得 <b>SSR 靈魂碎片 ×1~2</b>,還有機會掉落全新賣錢素材「<b>黑暗之晶核</b>」(可賣 5000 知識幣);超越極限果實掉落率也提高了!',
-      '   ・魔物圖鑑的黑暗球頁面<b>補上完整掉落清單</b>,一眼看清能拿到什麼好東西。',
-    ],
-    items: [
-      '★ v3.15.60【主神奧汀 S1 岡格尼爾的制裁】c:5→7;「攻擊300%(每升+5%)+ 目標最大HP%」之 HP% 由 20% 改 10%、對 BOSS(_zeusIsTrueBoss 權威清單)改 5%。execSkill(_s1HpPct)+ aiUseSkill(_s1HpPctO)雙路徑同步(鐵律1.128);走 doDmg → 世界 BOSS 5000cap 自動套用(鐵律1.31)。SKILL_UPGRADE_DEF label/註解同步 10%/BOSS5%。',
-      '★ v3.15.60【主神奧汀 爆發 諸神的黃昏(老師裁示甲)】主動版重構:先將全隊存活友方降至 HP1,再以「全隊 4 槽失去 HP 總合(含倒下、含奧汀)×400%(每升+10%乘算 _burstMult)」對敵平分(必中無視有利);_sumLostHp = Σ max(0,maxHP-curHP)。被動全滅復活版倍率 ×10→×6(固定不隨等級)。BURST_UPGRADE_DEF rows 改主動 400/440/480/520/560% + 被動固定 600%。',
-      '★ v3.15.60【主神奧汀 天賦 奧汀之眼 追加減傷】doDmg 新增減傷 hook:受到所有傷害減免 30%(每升 1 級 +5%,Lv5=50%,min(0.50,0.30+traitLv*0.05)),與 S2「英靈殿守望者」減傷分開乘算疊加(置於 reductions 區段,比照鋁合金暴龍/S2,% 減傷僅主流程)。hero_db.js desc/fd 只寫基礎 30%(鐵律1.160),逐級進 _TRAIT_LV_INFO。',
-      '★ v3.15.60【獎章成就 +17 枚,全於 index.html MEDAL_DEFS(顯示用 MEDAL_DEFS,新 id 不與 world-boss.js WB_MEDALS 衝突,免動 world-boss.js)】鬥技場 5(arena_first_win/win_10/30/50/streak_5)+ 埃及 3(egypt_clears_5/15、egypt_scarab_3)+ 世界BOSS各龍王 9(wb_dragon_fire/forest/earth/thunder/sea/dark/light/illusion + wb_dragon_all 八龍試煉)。',
-      '★ v3.15.60【獎章頒發 hook】鬥技場:arena.js 結算(result win/draw/loss)後呼叫主程式 window._checkMedalArena(累積勝場 winsLifetime 里程碑 + _medalStats.arenaWinStreak 連勝,平/敗歸零)。各龍王:WB 戰結算勝/敗兩路徑皆呼叫 window._checkMedalWbDragon(window._wbGetCurrentBoss().name)(參戰即計、不限排名;名→medalId 對照,集滿 8 隻補 wb_dragon_all)。埃及:_checkEgyptClearMedal 加 egyptClears 計數、聖甲蟲擊殺加 egyptScarabKills 計數。_medalStats 經 _saveMedals 存 adv_medal_stats 持久化。',
-      '★ v3.15.60【黑暗球‧希望型態 掉落】_ssrShardDropCount 拆 darkorb(隨機 1~2)與 egypt(固定 2)兩 profile;黑暗球新增 25% 黑暗之晶核(id dark_crystal_core,🟣,sell_only sellPrice 5000,補 BACKPACK_ITEM_DEF + SHOP_SELL_ITEMS)、超越極限果實 8%→10%。MONSTER_DROPS 補「黑暗球‧希望型態」完整掉落列(原圖鑑只顯示基礎 EXP)。埃及雙王 SSR 碎片改固定 2。',
-      '★ v3.15.60【碎片/自選券一致性稽核】全站確認 SSR 靈魂碎片合成需求 20 / SR 10(_SHARD_DEF 權威)與自選召喚卷說明一致(教學頁/道具/贈友/toast/圖鑑);修正教學頁「SSR 取得方法」鬥技商店價 40→30(對齊 ARENA_EXCHANGE_ITEMS arena_x_ssr_summon cost:30,v3.15.54 調價後漏改)。',
-      '★ v3.15.60【版本鏈】4 GAME 同步點 v3.15.59→v3.15.60;_vers[index.html]/[game_changelog.js]/[hero_db.js] 同步 v3.15.60、[arena.js] v3.15.54→v3.15.60(含 ARENA_CONFIG.VERSION→v3.15.60)。world-boss.js 維持 v3.15.51(未改)、admin_panel.js v3.15.58、world-boss-ui.html v3.15.50。本輪改 index.html + hero_db.js + arena.js + game_changelog.js 四檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.40)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.59(2026-06-20)— 🌋 新英雄登場:熔岩巨人(5 年 1 班姜同學設計)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.59',
-    date: '2026-06-20',
-    brief: [
-      '🌋【新英雄登場:熔岩巨人】',
-      '   ・由 <b>5 年 1 班 姜同學</b>設計的全新英雄「<b>熔岩巨人</b>」加入稀有召喚池!他是沉睡火山的化身,雖然不太會說話,卻愛好和平、樂於助人,能操控整座火山的力量焚燒敵人。',
-      '   ・<b>火山般的熾熱軀體</b>讓他幾乎不怕火,還會反過來灼傷膽敢徒手攻擊他的對手;「<b>熔岩巨砲</b>」必中轟擊、「<b>烈焰力場</b>」化作火焰護盾反傷,大絕「<b>火山之怒</b>」更是岩漿傾瀉、焚盡全場!',
-      '   ・快到<b>召喚星空</b>碰碰運氣,把這位溫柔又強大的火山巨人收入隊伍吧!',
-    ],
-    items: [
-      '★ v3.15.59【新英雄 熔岩巨人 — 學生設計(5 年 1 班 姜亦晟)hero_db.js 12 表 + index.html 邏輯層】定位:火/地雙屬性 SSR,⚔傷害+🛡控場。配點 HP68/攻5/特技24/速3(和=100;HERO_DB hp 欄位=配點×1.3=88)。',
-      '★ v3.15.59【天賦 高溫軀體】受到火屬性傷害減免 50%(每升 1 級 +10%,Lv5=90%);被對手「普通攻擊」時使攻擊者陷入燃燒 2 回合(固定,不隨等級)。火減傷 hook 置於 doDmg rawDmg 階段(只用 rawDmg/target/opts,鐵律1.110);反擊燃燒置於 execAtk 普攻 post-process(判定 target===熔岩巨人 → 對攻擊者 actor 加 hellfire)。',
-      '★ v3.15.59【S1 熔岩巨砲 c7】特技 300%(每升 1 級 +5%)對隨機對手造成火/地隨機屬性傷害、連攻 2 次、必中(ignoreEvasion/noGuard/noHidden)。SKILL_RANDOM_ELEMENTS 登錄火/地隨機。execSkill + aiUseSkill 雙實作(鐵律1.128)。',
-      '★ v3.15.59【S2 烈焰力場 c5】獲得護盾=自身最大 HP×50%(每升 1 級 +5%)+ 我方場上火屬性(element 為 fire)角色數×5;護盾被消耗時將吸收量化為火屬性反彈攻擊者(反彈 hook 置於 doDmg 護盾吸傷處,旗標 _lavaFieldReflect,防遞迴 _isLavaReflect+noReflect)。',
-      '★ v3.15.59【爆發 火山之怒】特技 250%(每升 1 級 +10% 乘算 _burstMult)× 3 次隨機火屬性,必中且無視有利狀態(mustHit/ignoreEvasion/ignoreBuffs);命中者陷入強力燃燒(行動前後各-10HP)+強力禁療,各 2 回合(Lv5/MAX +1=3 回合)。仿神槍手火焰神槍結構,burstName dispatch 自呼 _burstFinish。動畫=神木復仇之火.gif(與山靈古魔共用),音效=地震 sfx-earthquake + 爆炸 sfx-explode。',
-      '★ v3.15.59【資料層】SUMMON_RARE_HEROES 加入(觸發 v3.15.43 auto-sync IIFE 推入 ADMIN_ALL_HEROES + _PLAYER_HERO_NAMES);STUDENT_DESIGNER_HEROES 加入 lsps110167(姜同學,自動納入 _STUDENT_DESIGNED_HERO_SET → 圖鑑標「🎨 學生設計英雄」+ 設計師補發工具可發);另登錄 SKILL_FORCE_ELEMENT(火山之怒=fire)。',
-      '★ v3.15.59【鐵律遵循】1.31(三技/爆發皆非秒殺,走 doDmg → 世界 BOSS 5000cap 自動保護)、1.110(火減傷 hook 時序)、1.128(execSkill+aiUseSkill 雙實作)、1.139(_runBurst 乘 _burstMult)、1.160(fd 只寫 Lv1 基底,升級數字進 _TRAIT_LV_INFO/SKILL_UPGRADE_DEF/BURST_UPGRADE_DEF)、1.98(新英雄 checklist)。',
-      '★ v3.15.59【版本鏈】4 GAME 同步點 v3.15.58→v3.15.59;_vers[index.html]/[game_changelog.js] 同步 v3.15.59 + _vers[hero_db.js] v3.15.44→v3.15.59。admin_panel.js 維持 v3.15.58、arena.js v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50。本輪改 hero_db.js + index.html + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.39)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.58(2026-06-20)— 💰 GM 洗錢查緝工具 + 單件賣出帳本補全
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.58',
-    date: '2026-06-20',
-    brief: [
-      '🔧【後台管理工具更新(一般同學無須理會)】',
-      '   ・老師後台新增帳號安全稽核工具,並完善了商店賣出的紀錄。對正常遊玩沒有任何影響。',
-    ],
-    items: [
-      '★ v3.15.58【GM 洗錢查緝 admin_panel.js + index.html】承接 v3.15.57(修掉「賣出物品重整後復活、可重複賣」洗錢漏洞)→ 新增事後查緝工具。後端 index.html:window._fbAdminScanMoneyLaundering(windowSec,minRepeat) 用 getDocs 掃全 players,讀 _coinTransactions 篩「賣出類」(reason 含「賣出」且 amount>0),依金額分桶、桶內按時間排序,相鄰間隔 ≤windowSec 的連續同額簇若 ≥minRepeat 即判一組洗錢,贓款=(簇次數-1)×金額(保留 1 次合法),回傳嫌疑玩家(估算贓款/當前餘額/逐組明細,按贓款降序)。預設 windowSec=60、minRepeat=3。',
-      '★ v3.15.58【回收 index.html】window._fbAdminRecoverLaunderedCoins(uid,amount,note):複用 _fbCompensatePlayer 的 coinsMode add 負值扣減(_newCoins=Math.max(0,current-amount)),主檔 + live + safe 三槽同寫(防跨槽合併把高餘額復活),不誤發補償彈窗給玩家。',
-      '★ v3.15.58【GM UI admin_panel.js】新增「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):設視窗秒數 / 同額門檻次數 → 🔍 開始查緝 → 列嫌疑玩家(餘額 / 估算贓款 / 逐組明細),每人可填金額(預設=估算贓款)一鍵「💸 回收」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片 HTML+_initLaunderingSection);全程無 optional chaining。',
-      '★ v3.15.58【賣出帳本補全 index.html】shopSellItem(單件賣出)原本未記知識幣帳本(只有一鍵賣出 shopSellAllItems 有 _logCoinTx)→ 補上 _logCoinTx(coins,"收入:賣出-道具名"),否則查緝抓不到「單件反覆賣出」的痕跡。',
-      '★ v3.15.58【限制】帳本跨槽 union 僅保留最近 400 筆,極早期洗錢可能已滾出;偵測為估算、供 GM 人工裁量回收。漏洞本身已於 v3.15.57 修復,不會再產生新贓款。Firestore 規則無需新增(掃描/回收均走 isAdmin 既有路徑)。',
-      '★ v3.15.58【版本鏈】4 GAME 同步點 v3.15.57→v3.15.58;_vers[index.html]/[game_changelog.js] 同步 v3.15.58 + _vers[admin_panel.js] v3.15.54→v3.15.58 + ADMIN_PANEL_VERSION v3.15.49→v3.15.58。arena.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪改 index.html + admin_panel.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.38)。',
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.57(2026-06-20)— 🛒 商店賣出嚴重漏洞修復(賣出物品重整後重複出現)
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.57',
-    date: '2026-06-20',
-    brief: [
-      '🛒【商店賣出穩定性修正(重要更新)】',
-      '   ・修正了少數情況下,在商店賣出物品後重新整理,背包顯示與雲端存檔<b>不同步</b>的問題。',
-      '   ・現在賣出的物品會<b>正確且穩定地保存</b>,不會再因重新整理而異常重現。感謝同學的回報!',
-    ],
-    items: [
-      '★ v3.15.57【賣出漏洞根治 index.html _lxpsMergeSlots】現象:玩家 87 萬 → 賣垃圾得 7 萬 = 94 萬(垃圾消失),重新整理後知識幣仍 94 萬(正確),但剛賣掉的垃圾又出現可再賣 → 可無限變現。根因:backpackRemove 對數量歸 0 的道具 delete key;賣出走 _fbSaveLive/_fbSave 的 set(...,{merge:true}),Firestore 對 map(物件)欄位是「深度合併」→ 新資料未提及的子鍵(賣掉的道具)不會被刪除 → 雲端 map 欄位 playerBackpack 殘留舊道具(復活),而純量字串 playerBackpack_s 被整包覆蓋(正確)→ 知識幣(純量)正確、背包(map)子鍵復活,正是「94 萬保留、垃圾復活」的不對稱現象。',
-      '★ v3.15.57【漏網與修法】_applySafeData 早有同款「優先字串繞道」(註解明寫 Firebase merge 不會刪 key 的繞道),但「多槽合併」_lxpsMergeSlots 漏修 → 有 live+safe+主檔三槽的玩家走合併路徑而中招。修:_lxpsMergeSlots 的 _bag 改為優先解析 _newest.playerBackpack_s(賣後正確、免疫 merge 污染),map 欄位僅在無字串時 fallback。單槽載入走 _applySafeData(本就優先字串)未受影響。',
-      '★ v3.15.57【影響面】新賣出 → 字串無垃圾 → 存檔(賣出函式賣完即 await gameCloudSave)→ 重整載入字串 → 不復活,漏洞徹底堵死。已中招玩家現有殘留垃圾賣掉一次變現後字串收斂、不再復活。雲端 map 欄位的歷史殘留無人讀取(載入一律用字串)、無害,列為次要後續(GM 後台讀 map 的背包種類摘要鍵數可能偏多,不影響玩家)。',
-      '★ v3.15.57【鐵律 1.213】消費型(會減量)map 欄位嚴禁僅靠 set(merge:true) 寫入後直接讀 map:Firestore map 深度合併不刪子鍵 → 減量(賣出/消耗)會殘留復活。一律「寫純量字串整包版 + 讀取優先字串版」(playerBackpack/playerBackpack_s 模式);純量欄位(knowledgeCoins 等)不受影響。新增同類消費型 map 欄位時務必同步字串版,並在所有讀取點(含 _lxpsMergeSlots、_applySafeData)優先字串。',
-      '★ v3.15.57【版本鏈】4 GAME 同步點 v3.15.56→v3.15.57;_vers[index.html]/[game_changelog.js] 同步 v3.15.57。arena.js / admin_panel.js 維持 v3.15.54、world-boss.js v3.15.51、world-boss-ui.html v3.15.50、hero_db.js v3.15.44。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.37)。',
     ],
   },
 ];

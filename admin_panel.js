@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.58';   // ★ v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):掃玩家知識幣帳本「短時間反覆賣出同一金額」的洗錢痕跡(對應 index.html v3.15.57 修復的賣出復活漏洞);估算贓款=(同額簇次數-1)×金額,列嫌疑玩家可逐一回收(_fbAdminRecoverLaunderedCoins 經 _fbCompensatePlayer 負值扣減、主檔/live/safe 三槽同寫防復活)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initLaunderingSection)。｜v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.15.80';   // ★ v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源);加按鈕到既有 _admin-activity-section 免三點同步(_summonBtn grab + onclick 綁定·無 ?.)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組):掃玩家知識幣帳本「短時間反覆賣出同一金額」的洗錢痕跡(對應 index.html v3.15.57 修復的賣出復活漏洞);估算贓款=(同額簇次數-1)×金額,列嫌疑玩家可逐一回收(_fbAdminRecoverLaunderedCoins 經 _fbCompensatePlayer 負值扣減、主檔/live/safe 三槽同寫防復活)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initLaunderingSection)。｜v3.15.49(2026-06-19)— 群組「🎁 補償與補發」改名「🎁 獎勵與補償」+ 新增 GM「🎉 全體玩家獎勵」卡片(獎勵與補償群組,學生補償工具上方):勾獎勵+數量(鏡像課堂獎勵)→ 設標題/訊息/有效期 → window._fbCreateGlobalReward 一鍵發給全班;玩家下次登入由 index.html _fbClaimGlobalRewards 自動領取(每人保證只領一次:獨立認領文件 globalRewardClaims/{uid}_{rewardId}+transaction,免疫存檔三槽 richest-merge 復活)+彈窗通知。含「查看/管理現有全體獎勵」(停用/啟用/刪除)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initGlobalRewardSection)。需先部署 globalRewards/globalRewardClaims 規則。｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -2236,6 +2236,11 @@ async function _showAdminStatsPanelImpl(){
                   background:linear-gradient(135deg,#cc5544,#882211);color:#fff;border:none;border-radius:8px;cursor:pointer;
                   box-shadow:0 3px 10px rgba(220,120,80,0.5);" title="同 battleId 多解鎖鐵證掃描(全 200 位玩家)">
             ⚡ 掃描異常
+          </button>
+          <button id="_admin-activity-summon-history" style="padding:9px 20px;font-size:13px;font-weight:800;
+                  background:linear-gradient(135deg,#7a48c8,#4a2a8a);color:#fff;border:none;border-radius:8px;cursor:pointer;
+                  box-shadow:0 3px 10px rgba(150,100,220,0.5);" title="查看此玩家的召喚紀錄(英雄/至寶解鎖來源);用上方輸入框的 email / uid / 學號(lsps...)">
+            📜 召喚紀錄
           </button>
         </div>
         <div id="_admin-activity-status" style="font-size:12px;color:#aaa;margin-bottom:8px;min-height:18px;"></div>
@@ -9685,6 +9690,7 @@ async function _showAdminStatsPanelImpl(){
     const _queryInput = document.getElementById('_admin-activity-query');
     const _searchBtn  = document.getElementById('_admin-activity-search');
     const _scanBtn    = document.getElementById('_admin-activity-scan-anomaly');
+    const _summonBtn  = document.getElementById('_admin-activity-summon-history');
     const _statusEl   = document.getElementById('_admin-activity-status');
     const _playerCard = document.getElementById('_admin-activity-player-card');
     const _tabsEl     = document.getElementById('_admin-activity-tabs');
@@ -12537,6 +12543,17 @@ async function _showAdminStatsPanelImpl(){
     _searchBtn.onclick = function(){ _curAnomalyIdx = -1; _doQuery(); };  // ★ v3.13.68 手動查詢清除清單位置(不顯示導航條)
     _queryInput.onkeydown = (ev) => { if(ev.key === 'Enter'){ _curAnomalyIdx = -1; _doQuery(); } };
     if(_scanBtn) _scanBtn.onclick = _doScanAnomaly;
+    // ★ v3.15.80 — 召喚紀錄查詢:讀本區查詢框的 email/uid/學號 → 開 GM 召喚紀錄彈窗(掌握英雄/至寶解鎖來源)
+    if(_summonBtn) _summonBtn.onclick = function(){
+      let _qv = '';
+      if(_queryInput){ _qv = String(_queryInput.value || '').trim(); }
+      if(!_qv){ _setStatus('請先在上方輸入 email / uid / 學號(lsps...) 再查召喚紀錄', '#ffcc66'); return; }
+      if(typeof window._fbShowPlayerSummonHistory === 'function'){
+        window._fbShowPlayerSummonHistory(_qv);
+      } else {
+        alert('召喚紀錄查詢尚未就緒,請確認 index.html 已更新到 v3.15.80 以上');
+      }
+    };
 
     // ★ v3.13.30(2026-06-03) — 自動載入上次的異常掃描快取
     //   GM 開面板就看到上次結果與處理狀態,無需重掃 Firestore(節省額度)
