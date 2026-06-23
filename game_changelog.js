@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.91 — 登入到關卡頁自動說明「帳號救援申請」怎麼用(可選以後不再顯示)
+  {
+    ver: 'v3.15.91',
+    date: '2026-06-23',
+    brief: [
+      '📨【登入會自動教你「帳號救援申請」怎麼用】登入進到關卡頁時,會自動跳出一個小說明,告訴你下方「📨 帳號救援申請」按鈕的用途和使用步驟。',
+      '   ・說明裡有完整 4 步驟:① 點下方「📨 帳號救援申請」② 勾選不見的東西 ③ 送出 ④ 老師核對遊戲記錄後補回;也提醒每天最多申請 1 次。',
+      '   ・看完覺得懂了,可以勾「以後不要再顯示」,之後登入就不會再自動跳出來(沒勾的話下次登入還會再提醒一次)。',
+    ],
+    items: [
+      '★ v3.15.91【關卡頁登入說明彈窗 index.html】新增 window._showRescueGuidePopup(force):說明「📨 帳號救援申請」用途 + 4 步驟使用方式 + 每日上限 1 次提醒;底部「我知道了」+「以後不要再顯示」勾選框,勾選後寫 per-uid localStorage(lxps_rescue_guide_dismissed_{uid})→ 該帳號不再自動彈;點背景關閉等同「我知道了」(會尊重勾選)。',
+      '★ v3.15.91【觸發點 index.html block#02】掛在 onAuthStateChanged 登入流程「續戰檢查(800ms)」之後,延 2500ms 呼叫 _showRescueGuidePopup(false);自動觸發時:① per-uid localStorage 已勾不再顯示則跳過 ② 偵測到續戰提示(adv-wb-crash-notice / adv-crash-recovery-box)開著時跳過不疊加 ③ 已開著同彈窗則跳過。',
+      '★ v3.15.91【per-uid 守門】不再顯示旗標用 uid 區隔(共用平板上每位學生各自記錄,A 勾不再顯示不影響 B);未勾則每次登入仍提醒,直到學生主動勾選(呼應老師需求)。',
+      '★ v3.15.91【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.90→v3.15.91;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.70)。',
+    ],
+  },
   // v3.15.90 — 帳號救援申請(學生自助向老師申請補回遺失資料 + 同步雲端旁新增鈕)
   {
     ver: 'v3.15.90',
@@ -289,23 +305,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.71【顯示 + 升級表】buffClass/buffName(_blkWeaponBuff🔨/_blkArmorBuff🛡)、statusName(_blkWeak/_blkVuln)、BAD_STATUS 加此 2 debuff;SKILL_UPGRADE_DEF(武器精煉強化 special_blk_weapon + 防具精煉強化 special_blk_armor 皆含 codex 顯示 case·攻擊×(50+級×5%))、BURST_UPGRADE_DEF(裝備破壞奧義 650→910% 乘算 + debuff 30→50% + dur 3→4)。',
       '★ v3.15.71【編組圖位 _teamFormAdjustObjPos 加 where 參數】分 grid(編組選單左列縮圖·hpick-adv/arena 兩呼叫點·包 getHeroThumbObjPos)/preview(focusHero 右半部詳情 + 戰鬥預覽):拘留者/科學發明家 grid-20 preview-20、電腦老師 grid-20 preview-10、機關王雙人組 grid0 preview-10;grid base 多為 center center(無%)→ 函式內視為 50% 再加偏移(負值往上露頭)。不動戰鬥卡/圖鑑/HERO_IMG_POS 本體。',
       '★ v3.15.71【hero_db.js 12 表 + 版本鏈】HERO_DB hp79(配點61×1.3 pre-multiplied,不吃 runtime ×1.3)/atk20/sp11/spd8 + AVATARS🔨 + HERO_IMGS鐵匠.png + HERO_IMG_POS + HERO_BIO(無 designer 官方 SR) + BURST_DB + HERO_LORE + HERO_TRAIT工匠魂 + BURST_GIF_DB(迅雷不及掩耳的攻擊.gif·刀劍+爆破·dur1400) + 分類/HEX/_TRAIT_LV_INFO。4 GAME 同步點 v3.15.70→v3.15.71;本輪改 game_changelog.js + hero_db.js + index.html;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.51)。',
-    ],
-  },
-  // v3.15.70 — 新英雄「電腦老師」上線 ＋ 英雄圖鑑稀有度收集進度
-  {
-    ver: 'v3.15.70',
-    date: '2026-06-21',
-    brief: [
-      '💻【新英雄「電腦老師」上線!5 年 3 班 陳同學設計的 SSR 英雄】',
-      '   ・🛡<b>天賦「防毒防火牆」</b>:受到任何不利狀態(含強力版)時,有 50% 機率完全免疫(每升 1 級 +10%,滿級 90%)!',
-      '   ・📺<b>S1「螢幕廣播系統」</b>:接管全場螢幕,使敵方全體暈眩 1 回合無法行動(對 BOSS／菁英成功率減半)。',
-      '   ・📝<b>S2「很難的五大任務攻擊」</b>:出 5 道高難度任務,對隨機目標連打 5 次(特技 80~120% 遞增),命中陷入燃燒 2 回合。',
-      '   ・💻<b>爆發「系統還原」</b>:清除敵方有利與我方不利狀態,全體夥伴重新開機<b>滿血復活</b>!所有小怪直接關機倒下,菁英／BOSS／玩家英雄則受特技 600% 重啟攻擊。',
-      '📊【英雄圖鑑頂端新增「稀有度收集進度」】',
-      '   ・英雄圖鑑上方原本的「魔物圖鑑／寵物圖鑑」按鈕,改顯示你的<b>收集進度</b>:👑UR、SSR、SR、R 各「已解鎖／總數」一目了然!',
-      '   ・(魔物圖鑑與寵物圖鑑仍可從主畫面的導航列進入)想看自己離全收集還差幾隻,打開英雄圖鑑就知道囉!',
-    ],
-    items: [
     ],
   },
 ];
