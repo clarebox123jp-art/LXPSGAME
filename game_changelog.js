@@ -12,6 +12,74 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.96 — 帳號污染根治(甲):heroLevels 字串版接齊
+  {
+    ver: 'v3.15.96',
+    date: '2026-06-23',
+    brief: [
+      '🛡️【存檔同步再強化:從源頭杜絕「資料倒退」誤判】先前極少數帳號(尤其資料修復後)會因為<b>雲端殘留了已經不擁有的舊英雄等級</b>,墊高了比較基準,導致正確的存檔被誤判成「資料倒退」而存不上雲端。',
+      '   ・這版把<b>英雄等級的存/讀/合併</b>全面改為以「你實際擁有的乾淨版」為準(技術上用字串版繞過雲端不刪舊資料的限制),讓殘留的幻影等級不會再被合併進來。',
+      '   ・老師後台的清污染/刪英雄工具也同步配合,清掉的東西不會再被舊資料復活。',
+      '   ・<b>這是存檔核心的改動</b>,請老師先在 1～2 個帳號驗證正常(尤其曾回報過倒退的帳號)再全班更新。',
+    ],
+    items: [
+      '★ v3.15.96【heroLevels_s 端到端接齊 index.html】比照已驗證的 playerBackpack_s 模式,把 heroLevels 的字串版接齊四處:① 主存檔序列化新增 heroLevels_s: JSON.stringify(_heroLevels)(經 _fbSaveLive 透傳,live/safe 槽同步取得)② _lxpsObjFromSlot 新增 _LXPS_PREFER_S={heroLevels:1},僅對 heroLevels 改「優先採信 _s」→ 三槽逐鍵 max-merge 以乾淨字串版為來源,map 深合併殘留的幻影等級不再被合進 _mergedSix/merged.heroLevels(其餘 5 養成表維持原「先 map 後 _s」行為,不影響既有 GM 工具)③ _applySafeData 載入時優先採信 data.heroLevels_s(換成乾淨版後,再走既有 救援覆蓋 / 本地↔雲端 max-merge / maxLv 補檢查)④ 三支 GM 清污染工具(汙染清除 setDoc 主+live、刪英雄 admin_delete _patch、暴增收回 admin_scrub _patch)寫乾淨 heroLevels 時同步寫 heroLevels_s,否則下次載入採信舊 _s 會把剛清掉的污染復活。',
+      '★ v3.15.96【安全邊界】只動 heroLevels,完全不改 heroExp/heroSkillLevels/heroStatPoints/heroStatInvested/heroCapsuleInvested/heroBurstLevels/heroTraitLevel 的合併行為(heroStatInvested_s/heroSkillLevels_s 本已各自處理;heroStatPoints 由素質點不變式 free+invested==lv-1 自癒,輸入 heroLevels 變乾淨後更穩)。舊存檔(尚無 heroLevels_s)在 _lxpsObjFromSlot 找不到 _s 時 falls back 原 map 行為、不變;學生正常存檔一次後三槽 heroLevels_s 即接齊。v3.15.76 的 unlockedHeroes 對帳守門仍在 → 過渡期即使 _s 尚未鋪滿,也不會誤判倒退(雙保險)。',
+      '★ v3.15.96【未根治部分(待專門處理)】此版只把 heroLevels 補成字串版(逐欄位法/甲)。Firebase set(merge:true) 對 map 深合併不刪 key 的根本問題,徹底解法是主文件改 merge:false 整份覆蓋(乙·退役所有 _s 繞道),屬存檔核心架構改動、需獨立測試。登入困難(慢校網/改版卡載入)另由 sw.js 持久快取(v3.5.87)處理,真‧秒開(重檔 cache-first)為後續 B2。',
+      '★ v3.15.96【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.95→v3.15.96;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.75)。',
+    ],
+  },
+  // v3.15.95 — 練習營獎勵防跨帳號錯置(共用平板)
+  {
+    ver: 'v3.15.95',
+    date: '2026-06-23',
+    brief: [
+      '🔒【修正:共用平板上練習營獎勵可能算到別人帳號】之前練習營在等待時賺到的獎勵,是先暫存在「這台裝置的今天」;在共用 iPad 上,如果前一位同學練習後沒按「進入遊戲」就關掉,下一位登入結算時可能把前一位賺的獎勵算進自己帳號。',
+      '   ・現在把暫存獎勵<b>綁定到各自的帳號</b>,換人登入不會再互相算到對方的獎勵,獎勵只會回到當初練習的那個帳號。',
+    ],
+    items: [
+      '★ v3.15.95【練習營 bank key 綁 uid index.html】_campBankKey 由 lxps_camp_bank_{日期}(只綁日期·共用裝置同日共用一份)改 lxps_camp_bank_{uid}_{日期}(uid 取 _campState.uid,登入時即設定)→ 共用 iPad 上甲未按進入就關掉、乙接著登入時,_campLoadBank/_campSaveBank/_campSettleBank 各讀各自 uid 的暫存,不會把甲的本地存獎(每日上限 1000 幣/3 水晶)結算進乙帳號。結算本身仍走 _fbCompensatePlayer(寫 playerBackpack/_s + heroLevels_s + heroStatPoints_s + taiwanTreasureData_s 字串版,對 Firestore set(merge:true) map 深合併安全)。',
+      '★ v3.15.95【說明】sw.js(v3.5.87)/載入讀條整合(v3.15.94)不碰帳號資料(sw.js 跳過 firestore.googleapis.com、仍 network-first)→ 無污染風險。知識王換科目牌堆 deck 隨 kingChallenge 整包存(與既有答題暫存同),為科目名字串陣列、每次開彈窗重洗、不參與任何存檔守門 → 無害(更正 v3.15.92 註記「不進雲端白名單」不精確)。',
+      '★ v3.15.95【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.94→v3.15.95;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.74)。',
+    ],
+  },
+  // v3.15.94 — 練習營整合啟動載入進度條 + 載入機制可靠性強化
+  {
+    ver: 'v3.15.94',
+    date: '2026-06-23',
+    brief: [
+      '🎒【課堂練習營 × 啟動載入進度整合】現在練習營會和遊戲啟動的「資源載入中」進度條<b>合而為一</b>:',
+      '   ・一邊載入一邊就能練習答題,練習營<b>頂端會顯示資源載入進度(📦 資源載入中 X%)</b>。',
+      '   ・等<b>資源載入完成、而且帳號也連線好</b>,頂端才會出現「<b>✅ 帶獎勵進入遊戲</b>」,按下就帶獎勵進場。',
+      '   ・如果載入條跑完了、帳號卻還沒連上,就<b>繼續留在練習營邊玩邊賺</b>,連上後再進場結算。',
+      '⚡【載入機制可靠性強化】更新了背景載入規則,讓<b>開過一次遊戲的裝置之後更不容易卡在載入畫面</b>(慢網更快用上已下載好的版本;線上仍會即時抓最新版)。',
+    ],
+    items: [
+      '★ v3.15.94【練習營整合 boot-loader index.html】#boot-loader 的 _bootLoader IIFE 對外公開 window._bootLoaderPct(render 每拍寫)/_bootLoaderDone(done 設 true、session 早退路徑也設 true、啟動設 false);練習營 _campUpdateBanner 改:新增 _campCanEnter()=（_bootLoaderDone && _campState.ready）才顯示「✅ 帶獎勵進入遊戲」;未達標時依 (_bootLoaderDone, _campState.ready) 顯示三態文案 + 未載完內嵌一條資源載入進度條(讀 _bootLoaderPct)。_campStart 輪詢 1000ms→700ms 且每拍呼叫 _campUpdateBanner(資源 % 即時跑動、資源/登入任一就緒即轉場);hook2 _campMarkReady 仍設 ready 旗標(雙保險)。對齊老師:載入+登入皆完成可直接進、載入完成未登入續留練習營。',
+      '★ v3.15.94【sw.js v3.5.87 載入可靠性(另檔·高風險建議先 1~2 台 iPad 驗證)】SHELL_CACHE 由 lxps-shell-+SW_VERSION 改固定 lxps-shell-v1(跨版本保留「上次成功完整載入」當 fallback)→ 根治「改版後新 shell 快取尚未填好、activate 又刪掉舊版快取 → 慢校網逾時想 fallback 卻撈不到 → 卡住下載不完」;networkFirstShell 逾時 5000→2500ms(慢網更快回快取)、fallback 先查本 shell 快取再退查全快取庫 caches.match(belt-and-suspenders);仍為 network-first(線上先抓最新→更新即時生效不變,非 cache-first 故無「新版延後」副作用)。SW_VERSION v3.5.86→v3.5.87 讓 iPad 取得新 sw.js。install 仍以 cache:reload 重抓 SHELL_URLS 覆蓋成最新。',
+      '★ v3.15.94【誠實限制】此 sw.js 改動讓「開過一次的回頭裝置」幾乎一定進得去且更快,但「某台第一次全新開、且當下網路嚴重壅塞」仍需把資源下載一次(物理限制)→ 建議課前讓每台 iPad 先在好網路開過一次熱身。若日後要更激進的「真‧秒開」(重檔 cache-first,代價是新版延後一個開啟+需更新提示),可再評估 B2。',
+      '★ v3.15.94【版本鏈】本輪改 index.html + game_changelog.js + sw.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.93→v3.15.94;sw.js SW_VERSION v3.5.86→v3.5.87(sw.js 不在 _vers 字典);admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.73)。',
+    ],
+  },
+  // v3.15.93 — 課堂練習營(登入連線時邊等邊玩賺獎勵,不卡關)
+  {
+    ver: 'v3.15.93',
+    date: '2026-06-23',
+    brief: [
+      '🎒【新增「課堂練習營」——登入連線時不再乾等!】大家同時登入時偶爾會卡一下,現在登入時會先出現<b>全螢幕的課堂練習營</b>,讓你<b>邊等邊玩、邊賺獎勵</b>。',
+      '   ・選一個題庫開始答題(有答題音效、答對題數,玩法和知識王一樣)。答對 1 題 <b>+10 知識幣</b>,<b>答錯不扣分</b>。',
+      '   ・累積<b>答對 30 題</b>可得 <b>🔮 召喚水晶 ×1</b>(畫面有計量條,看得到進度)。',
+      '   ・遊戲在背景默默幫你連線;一連好,上方就會通知「<b>✅ 可以進入遊戲</b>」,按下去就<b>帶著剛剛賺到的獎勵</b>進場囉!',
+      '   ・(每天從練習營可賺的獎勵有上限:知識幣最多 1000、召喚水晶最多 3 顆。)',
+    ],
+    items: [
+      '★ v3.15.93【練習營啟動/就緒掛點 index.html block#02】onAuthStateChanged 隱藏 login-gate 後立刻 window._campStart(user) 蓋全螢幕練習營(管理員 email 略過·不打斷 GM 測試);背景照常 await window.gameCloudLoad(uid),完成後 window._campGameReady=true + _campMarkReady() 通知頂端可進入。★純覆蓋層:不改動真正登入/載入流程,練習營任何例外都 try-catch 不影響進遊戲。',
+      '★ v3.15.93【練習營模組 block#05】_campStart/_campBuildShell(全螢幕外框:頂端橫幅+統計列+水晶計量條+內容區·全內聯樣式)/_campShowSubjectScreen(_kingGetSubjects+_kingGetReviewSubjects 去重列題庫+🎲隨機)/_campPickSubject(首次手勢→bgmFadeTo bgm-king-challenge 播 BGM→_kingDrawQuestions 抽 50 題·用完 _campLoadDeck 重抽無限練)/_campShowQuestion(知識王式選項·data-idx 綁定避免題目文字進 onclick)/_campAnswer(answer 字母→索引判對·答對 sfx-quiz-correct+10 幣、答錯 sfx-quiz-wrong 不扣·1.15s 下一題)。',
+      '★ v3.15.93【獎勵記帳/結算】localStorage lxps_camp_bank_{日期}={dailyCorrect,settledCoins,settledCrystals}(登入前無 uid 只能存本地);_campEarnedFor 由今日答對數推導應得(知識幣=對數×10 上限 1000·水晶=floor(對數/30) 上限 3);_campEnterGame→_campSettleBank 算 target-settled 差額·經 window._fbCompensatePlayer(coins coinsMode add + backpack summon_crystal·走帳本)idempotent 入帳·成功才推進 settled(失敗保留待下次);沒按進入則留待下次登入結算。停輪詢+bgmEnsureSceneBgm 回場景+移除覆蓋層+入帳 toast。',
+      '★ v3.15.93【防刷/安全】每日上限(知識幣 1000/水晶 3)為防刷天花板(登入前身分為裝置暫時態·獎勵存本地·上限即邊界);★不寫本週小博士排行榜(練習營答對不計入·避免榜單 farming·也因登入前無法可靠寫雲端);結算走 _fbCompensatePlayer 帳本→老師可稽核。rescue 說明彈窗加「_camp-overlay 在場則跳過」防疊加。window._CAMP_ENABLED 可全域關閉。',
+      '★ v3.15.93【版本鏈】本輪只改 index.html + game_changelog.js(A 段)。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.92→v3.15.93;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(B 段秒開另回合)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.72)。',
+    ],
+  },
   // v3.15.92 — 知識王今日挑戰「換科目」上限10次 + 題庫輪播不重複
   {
     ver: 'v3.15.92',
@@ -255,50 +323,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.76【診斷日誌】_fbSave 主守門加 console.warn(🔎 倒退核對 uid=…),印出雲端 heroLevels 幻影殘留數+最高 Lv+雲端/本地真實 maxLv 與擁有數,供老師核對特定 uid 的實際資料、確認倒退警訊是否為誤判。',
       '★ v3.15.76【安全】只去除「maxLv 被 heroLevels 幻影墊高」造成的誤判;unlockedCount(真英雄被刪/遺失)仍用 unlockedHeroes 陣列比對照常守門,真倒退擋得住,不會放行薄資料覆蓋。',
       '★ v3.15.76【版本鏈】4 GAME 同步點 v3.15.75→v3.15.76;_vers[index.html]/[game_changelog.js] 同步 v3.15.76。hero_db.js v3.15.72、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.56)。',
-    ],
-  },
-  // v3.15.75 — 修正序號兌換(亂打/無效序號不再誤判成功)
-  {
-    ver: 'v3.15.75',
-    date: '2026-06-22',
-    brief: [
-      '🔧【序號兌換修正】修正部分情況下「輸入錯誤或亂打的序號,卻顯示兌換成功」的問題。現在只要序號不存在或格式不對,都會明確顯示「查無此序號,請確認有沒有打錯」,不會再誤判成功,也不會發出任何獎勵。',
-    ],
-  },
-  // v3.15.74 — 新增「特別挑戰題」(知識王第三欄,30題全對領大獎)
-  {
-    ver: 'v3.15.74',
-    date: '2026-06-22',
-    brief: [
-      '🎮【新增「特別挑戰題」!打開「👑 知識王挑戰」就能看到第三欄】小英雄大對抗・遊戲知識 30 題,教你戰鬥基礎、怎麼讓英雄變強、還有各種好康獎勵在哪拿,學會了打關卡更輕鬆!',
-      '🏆【30 題全對拿大獎】30 題「全部答對」就能領 <b>🔮 召喚水晶 ×10 + 🌈 SSR 隨機召喚卷 ×1</b>!每個帳號限領一次,但可以重複作答複習(題目順序每次都會打亂),答錯不扣分,慢慢來!',
-      '🔔【還沒領的同學注意】只要大獎還沒領,「知識王挑戰」按鈕和第三欄都會有醒目的「獎勵未獲得」提示——快去挑戰把大獎帶回家!',
-    ],
-  },
-  // v3.15.73 — 世界BOSS龍王護盾說明中文化 + 埃及寵物名修正
-  {
-    ver: 'v3.15.73',
-    date: '2026-06-22',
-    brief: [
-      '🐉【世界BOSS龍王護盾說明修正】世界BOSS頁的龍王介紹裡,護盾元素原本顯示英文(earth/fire/dark/grass),現已全部改回中文(🪨土/🔥火/🌙暗/🌿草),需要的破盾剋制屬性也正確顯示。',
-      '🐺【埃及寵物名稱修正】埃及寵物(荷魯斯之鷹/聖䗴神蟲/阿努比斯胡狼/托特聖䴉)在裝備畫面與英雄卡上的圖示原本顯示「undefined」,現已正確顯示寵物圖示。',
-      '👥【好友名單顯示優化】好友卡上較長的暱稱原本會被「…」截斷,現已改成自動換行完整顯示;點開好友「詳細」時,能力資訊改為點開當下即時讀取最新資料,修正先前只有最先載入的好友能顯示能力、其他人一片空白的問題,讓暱稱與詳細能力都能一目瞭然。',
-    ],
-  },
-  // v3.15.72 — 新 SR 英雄「偵探」上線 + 中毒/猛毒修復
-  {
-    ver: 'v3.15.72',
-    date: '2026-06-22',
-    brief: [
-      '🕵️【新英雄「偵探」上線!一名 SR 天才少年偵探,專門封鎖、壓制敵人的招式】',
-      '   ・🔍<b>天賦「縝密推理」</b>:偵探存活時,只要友方受傷,有機率讓「造成該次傷害的對手」<b>天賦失效 + 被查封</b>各 1 回合。',
-      '   ・🕵️<b>S1「察覺蛛絲馬跡」</b>(被動):看穿敵人的套路!敵方<b>無法連續使用相同的技能或極限爆發</b>,只能改用其他行動。',
-      '   ・👁<b>S2「名偵探的凝視」</b>:50% 機率<b>封印 1 名目標的極限爆發 2 回合</b>;若失敗則回收 2 點能量。',
-      '   ・⚖<b>爆發「犯人就是——你！」</b>:消除目標全部有利狀態,使其受到<b>我方全體當前 HP 總合</b>的固定傷害(必中、不受屬性影響、對 BOSS 也有效),並當場「認罪」1 回合(無法行動且受到傷害 +100%)。',
-      '   ・想入手偵探?和其他 SR 一樣——在召喚星空抽 SR、或通關貓空有機率解鎖。',
-      '☠️【中毒/猛毒修復】修正「猛毒與各種特殊中毒/流血明明應該扣很多血,卻只扣一點點」的問題;現在會正確依各招式設定的傷害值扣血。',
-      '🐉【平衡】中毒、出血對「BOSS」的每回合傷害調整為原本的 1/4,避免 BOSS 被持續傷害過快消耗(固定值傷害與山岳地龍王畏毒不受影響)。',
-      '🔥【文字對齊】燃燒狀態說明對齊實際數值(普通 6HP、強力 9HP)。',
     ],
   },
 ];
