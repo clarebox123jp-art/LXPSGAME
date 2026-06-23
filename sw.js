@@ -18,8 +18,13 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.86';   // ★ v3.5.86(對應遊戲 v3.14.1)— 正式開啟 jsDelivr CDN 改寫並擴充涵蓋全部 3 個素材 repo(LXPSGAME/-/ChrisRaelGameMaster/Game),繞過 GitHub raw 429;bump shell 讓 iPad 取得新 sw.js｜前版 v3.5.85 三修
-const SHELL_CACHE = 'lxps-shell-' + SW_VERSION;
+const SW_VERSION = 'v3.5.87';   // ★ v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+// ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
+//   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
+//   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
+//   改固定 'lxps-shell-v1' 後:install 會以 cache:'reload' 重抓 SHELL_URLS 覆蓋成最新(改版仍即時),
+//   但快取本身跨版本保留 →「上次成功完整載入」永遠在,逾時/離線一定有 fallback,回頭裝置幾乎 100% 進得去。
+const SHELL_CACHE = 'lxps-shell-v1';
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
 const ASSET_CACHE = 'lxps-assets-v1';
 
@@ -278,16 +283,25 @@ function cacheFirstAsset(req){
 }
 
 // ★ v3.5.34 — network-first(程式碼類):線上一律先抓最新, 抓到就更新快取;
-//   5 秒逾時或網路失敗才 fallback 用快取(維持可離線玩、慢校網不卡死)。
+//   逾時或網路失敗才 fallback 用快取(維持可離線玩、慢校網不卡死)。
+// ★ v3.5.87 — 逾時 5s→2.5s(慢網更快回快取);fallback 改先查本 shell 快取、再退而求其次查「全快取庫」
+//   (caches.match)→ 即使本 shell 快取剛好沒有,任何歷史快取(含舊版殘留/asset)也能頂上,絕不卡死。
 function networkFirstShell(req){
-  var TIMEOUT_MS = 5000; // 慢校網的安全網:逾時就先給快取(背景仍會更新快取供下次用)
+  var TIMEOUT_MS = 2500; // 慢校網的安全網:逾時就先給快取(背景仍會更新快取供下次用)
+  function fallbackCached(cache){
+    // 先本 shell 快取,再退而求其次查全快取庫(belt-and-suspenders)
+    return cache.match(req).then(function(c){
+      if(c) return c;
+      return caches.match(req).then(function(c2){ return c2 || null; });
+    });
+  }
   return caches.open(SHELL_CACHE).then(function(cache){
     return new Promise(function(resolve){
       var settled = false;
       function finish(res){ if(!settled){ settled = true; resolve(res); } }
       // 逾時保險:超過 TIMEOUT_MS 還沒回 → 若有快取先給快取(網路 promise 仍會繼續更新快取)
       var timer = setTimeout(function(){
-        cache.match(req).then(function(cached){ if(cached) finish(cached); });
+        fallbackCached(cache).then(function(cached){ if(cached) finish(cached); });
       }, TIMEOUT_MS);
       fetch(req).then(function(res){
         clearTimeout(timer);
@@ -299,7 +313,7 @@ function networkFirstShell(req){
       }).catch(function(){
         // 網路失敗(離線)→ fallback 快取; 連快取都沒有才回 504
         clearTimeout(timer);
-        cache.match(req).then(function(cached){
+        fallbackCached(cache).then(function(cached){
           finish(cached || new Response('', { status: 504, statusText: 'Offline' }));
         });
       });
