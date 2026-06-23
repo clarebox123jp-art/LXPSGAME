@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.85';   // ★ v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.15.90';   // ★ v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -2124,6 +2124,32 @@ async function _showAdminStatsPanelImpl(){
         </div>
       </div>
 
+      <!-- ★ v3.15.90 — 帳號救援申請審核(學生自助申請補回遺失資料) -->
+      <div id="_admin-rescue-req-section" style="background:rgba(18,40,34,0.5);border:2px solid rgba(120,200,170,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#cfe0ff;margin-bottom:8px;">📨 帳號救援申請審核</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.6;">
+          學生在關卡頁點「📨 帳號救援申請」勾選遺失的 🦸英雄/💎至寶/🔮水晶/🎫召喚卷/💰知識幣/🏆排名獎勵(每天最多 1 次)。
+          按「🔍 核對並準備救援」會<b>自動從雲端帳本權威反推</b>該玩家「應該有什麼」,對照學生勾選標 <b style="color:#88dd99;">✅符合</b> / <b style="color:#ff8888;">❌不符合</b> / <b style="color:#ffcc66;">⏳待判斷</b>,並列出「將補回」清單。
+          <br>★ 「✅ 確認救援」走<b style="color:#9fe0b0;">只增不減</b>修復(套用前讀當下資料 max-merge,避免過量補償;英雄/至寶練度不會被蓋低)。
+          <br>★ <b>召喚卷 / 排名獎勵</b>無帳本可自動對帳,標「⏳待判斷」→ 請改用「🎁 學生補償工具」按學生實況手動補發。
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+          <button id="_admin-rescuereq-refresh" style="padding:8px 14px;font-size:13px;font-weight:700;
+            background:rgba(40,90,70,0.5);border:1.5px solid rgba(120,200,170,0.6);color:#cfe0ff;
+            border-radius:7px;cursor:pointer;font-family:inherit;">
+            🔄 立即重新整理
+          </button>
+          <label style="font-size:12px;color:#aaa;display:flex;align-items:center;gap:4px;">
+            <input type="checkbox" id="_admin-rescuereq-onlypending" style="accent-color:#88bbff;" checked>
+            僅顯示「待處理」
+          </label>
+          <span id="_admin-rescuereq-count" style="font-size:12px;color:#88ddaa;margin-left:auto;"></span>
+        </div>
+        <div id="_admin-rescuereq-list" style="max-height:460px;overflow-y:auto;background:rgba(0,0,0,0.35);border-radius:8px;padding:6px;">
+          <div style="text-align:center;color:#888;padding:20px;font-size:13px;">載入中…</div>
+        </div>
+      </div>
+
       <!-- ★ v3.15.6 — 畢業帳號資料轉移審核(實名制) -->
       <div id="_admin-acctxfer-section" style="background:rgba(20,30,55,0.5);border:2px solid rgba(120,180,255,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
         <div style="font-size:18px;font-weight:700;color:#cfe0ff;margin-bottom:8px;">📨 帳號資料轉移審核(畢業生)</div>
@@ -2725,6 +2751,7 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-trust-revoke-section',     label: '🔒 撤銷信任裝置',          hint: '撤銷學生 PWA 信任裝置' },
       { sec: '_admin-pw-section',               label: '🔐 二次密碼管理',          hint: '查詢 / 解鎖 / 移除學生的第二段密碼' },
       { sec: '_admin-dlperm-section',           label: '⬇️ 下載安裝權限',          hint: '管理 PWA 安裝授權' },
+      { sec: '_admin-rescue-req-section',       label: '📨 帳號救援申請審核',     hint: '學生自助申請補回遺失資料(雲端帳本核對 + 只增不減補回 + GM 確認)' },
       { sec: '_admin-acctxfer-section',         label: '📨 帳號資料轉移審核',     hint: '畢業生申請把舊帳號進度搬到新帳號(實名審核+全搬+復原後路)' },
       // ★ v3.13.55 — 汙染工具合併:移除重疊/不安全(可直接收回、看不到 creatorUid 證據)的 4 個面板
       //   (🕵️可疑帳號偵測 / 🔍異常解鎖偵測 / 🧹帳號汙染掃描 / 🔬稀有暴增稽核),
@@ -2781,7 +2808,7 @@ async function _showAdminStatsPanelImpl(){
       { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
       { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-pollution-check-section','_admin-laundering-section','_admin-deleted-hero-section'] },
-      { label:'🚑 資料救援與重置', secs:['_admin-lv1-section','_admin-rebuild-section','_admin-reset-section'] },
+      { label:'🚑 資料救援與重置', secs:['_admin-rescue-req-section','_admin-lv1-section','_admin-rebuild-section','_admin-reset-section'] },
       { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
@@ -6311,6 +6338,239 @@ async function _showAdminStatsPanelImpl(){
     if(allBtn) allBtn.onclick = _restoreAll;
   })();
   // ── 英雄誤刪救回 結束 ──
+
+  // ★ v3.15.90 — 帳號救援申請審核(學生自助申請補回遺失資料)
+  (function _initRescueReqSection(){
+    var listEl     = document.getElementById('_admin-rescuereq-list');
+    var refreshBtn = document.getElementById('_admin-rescuereq-refresh');
+    var onlyCb     = document.getElementById('_admin-rescuereq-onlypending');
+    var countEl    = document.getElementById('_admin-rescuereq-count');
+    if(!listEl || !refreshBtn){
+      console.warn('[admin rescuereq] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    function _esc(s){ try{ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }catch(_){ return ''; } }
+
+    var CLAIM_DEFS = [
+      { key:'heroes',    label:'🦸 英雄' },
+      { key:'treasures', label:'💎 至寶' },
+      { key:'crystal',   label:'🔮 召喚水晶' },
+      { key:'coins',     label:'💰 知識幣' },
+      { key:'ticket',    label:'🎫 召喚卷' },
+      { key:'rankAward', label:'🏆 排名獎勵' }
+    ];
+
+    function _claimChips(claims){
+      claims = claims || {};
+      var on = CLAIM_DEFS.filter(function(c){ return !!claims[c.key]; });
+      if(!on.length) return '<span style="color:#888;">(未勾選任何項目)</span>';
+      return on.map(function(c){
+        return '<span style="display:inline-block;margin:2px 3px;padding:2px 9px;background:rgba(120,200,170,0.14);border:1px solid rgba(120,200,170,0.4);border-radius:10px;color:#bdf0dd;font-size:12px;">' + _esc(c.label) + '</span>';
+      }).join('');
+    }
+
+    function _statusBadge(st){
+      if(st === 'resolved') return '<span style="color:#88dd99;font-weight:700;">✅ 已處理</span>';
+      if(st === 'rejected') return '<span style="color:#ff8888;font-weight:700;">✖ 已駁回</span>';
+      return '<span style="color:#ffcc66;font-weight:700;">⏳ 待處理</span>';
+    }
+
+    async function _analyze(uid, detailEl, actionsEl, claims){
+      claims = claims || {};
+      detailEl.innerHTML = '<span style="color:#aaa;">核對中(讀雲端帳本反推)...</span>';
+      actionsEl.innerHTML = '';
+      try{
+        if(typeof window._fbRebuildAccountFromLedgers !== 'function') throw new Error('_fbRebuildAccountFromLedgers 未載入(請確認 index.html 已更新到 v3.15.90)');
+        var rr = await window._fbRebuildAccountFromLedgers(uid);
+        var diff = (rr && rr.diff) || {};
+        var _heroFound = (diff.missingHeroCount||0) > 0;
+        var _treFound  = (diff.missingTreasureCount||0) > 0;
+        var _crys = (diff.crystal && diff.crystal.willAdd) || 0;
+        var _coin = (diff.coins && diff.coins.willAdd) || 0;
+        var _mark = function(claimed, found, ledger, foundTxt){
+          if(!claimed) return '<span style="color:#777;">— 未勾</span>';
+          if(!ledger)  return '<span style="color:#ffcc66;">⏳ 待判斷(無帳本·請用學生補償工具補)</span>';
+          return found
+            ? ('<span style="color:#88dd99;">✅ 符合</span> <span style="color:#9fd8c4;">' + _esc(foundTxt) + '</span>')
+            : '<span style="color:#ff8888;">❌ 不符合(帳本顯示未短少)</span>';
+        };
+        var cmp = [
+          ['🦸 英雄',     claims.heroes,    _heroFound, true,  ((diff.missingHeroCount||0) + ' 隻可補')],
+          ['💎 至寶',     claims.treasures, _treFound,  true,  ((diff.missingTreasureCount||0) + ' 件可補')],
+          ['🔮 召喚水晶', claims.crystal,   _crys > 0,  true,  ('+' + _crys)],
+          ['💰 知識幣',   claims.coins,     _coin > 0,  true,  ('+' + _coin)],
+          ['🎫 召喚卷',   claims.ticket,    false,      false, ''],
+          ['🏆 排名獎勵', claims.rankAward, false,      false, '']
+        ];
+        var cmpHtml = cmp.map(function(r){
+          return '<div style="display:flex;gap:8px;align-items:center;font-size:12px;padding:2px 0;flex-wrap:wrap;">'
+            + '<span style="min-width:82px;color:#cfe0ff;">' + _esc(r[0]) + '</span>'
+            + '<span>' + _mark(r[1], r[2], r[3], r[4]) + '</span>'
+            + '</div>';
+        }).join('');
+        var _heroChips = (diff.missingHeroDetail||[]).map(function(h){
+          return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(80,220,180,0.14);border:1px solid rgba(80,220,180,0.35);border-radius:10px;color:#aaf0e0;font-size:11px;">' + _esc(h.name) + ' <span style="color:#888;">Lv' + (h.lv||1) + '</span></span>';
+        }).join('');
+        var _treChips = (diff.missingTreasures||[]).map(function(t){
+          return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(120,180,255,0.14);border:1px solid rgba(120,180,255,0.35);border-radius:10px;color:#bcd8ff;font-size:11px;">💎 ' + _esc(t.name) + '</span>';
+        }).join('');
+        var willHtml = '';
+        if(rr && rr.hasChanges){
+          willHtml = '<div style="margin-top:8px;padding:8px;background:rgba(20,45,38,0.7);border:1px solid rgba(80,220,180,0.35);border-radius:6px;font-size:12px;">'
+            + '<div style="color:#9fe0b0;font-weight:700;margin-bottom:4px;">將補回(只增不減):</div>'
+            + ((diff.missingHeroCount||0) ? ('<div style="margin-bottom:3px;">🦸 英雄 ' + (diff.missingHeroCount||0) + ' 隻:' + _heroChips + '</div>') : '')
+            + ((diff.missingTreasureCount||0) ? ('<div style="margin-bottom:3px;">💎 至寶 ' + (diff.missingTreasureCount||0) + ' 件:' + _treChips + '</div>') : '')
+            + (_crys ? ('<div style="margin-bottom:3px;">🔮 召喚水晶 +' + _crys + '</div>') : '')
+            + (_coin ? ('<div style="margin-bottom:3px;">💰 知識幣 +' + _coin + '</div>') : '')
+            + '</div>';
+        } else {
+          willHtml = '<div style="margin-top:8px;padding:8px;background:rgba(60,45,20,0.6);border:1px solid rgba(255,200,100,0.35);border-radius:6px;font-size:12px;color:#ffd9a0;">帳本核對:<b>無可自動補回項目</b>(該玩家擁有資料看起來完整,或學生所缺項目無帳本紀錄)。若學生確實少了召喚卷/排名獎勵,請改用「🎁 學生補償工具」手動補。</div>';
+        }
+        detailEl.innerHTML = '<div style="margin-bottom:6px;color:#cfe0ff;font-weight:700;font-size:12px;">📋 學生勾選 vs 雲端帳本核對:</div>' + cmpHtml + willHtml;
+
+        var _payload = (rr && rr.payload) || null;
+        if(rr && rr.hasChanges && _payload){
+          var btnApply = document.createElement('button');
+          btnApply.textContent = '✅ 確認救援並補回';
+          btnApply.style.cssText = 'padding:7px 16px;font-size:13px;font-weight:800;background:rgba(80,180,120,0.3);border:1.5px solid #4caf6a;color:#aaffcc;border-radius:6px;cursor:pointer;font-family:inherit;';
+          btnApply.onclick = function(){ _confirmRescue(uid, _payload, detailEl, actionsEl, true); };
+          actionsEl.appendChild(btnApply);
+        }
+        var btnDone = document.createElement('button');
+        btnDone.textContent = '✔ 標記已處理(不自動補)';
+        btnDone.style.cssText = 'padding:7px 16px;font-size:13px;font-weight:700;background:rgba(60,90,140,0.4);border:1.5px solid rgba(120,180,255,0.5);color:#cfe0ff;border-radius:6px;cursor:pointer;font-family:inherit;';
+        btnDone.onclick = function(){ _confirmRescue(uid, null, detailEl, actionsEl, false); };
+        actionsEl.appendChild(btnDone);
+        var btnRej = document.createElement('button');
+        btnRej.textContent = '✖ 駁回';
+        btnRej.style.cssText = 'padding:7px 16px;font-size:13px;font-weight:700;background:rgba(140,60,60,0.35);border:1.5px solid rgba(255,120,120,0.5);color:#ffcccc;border-radius:6px;cursor:pointer;font-family:inherit;';
+        btnRej.onclick = function(){ _reject(uid, detailEl, actionsEl); };
+        actionsEl.appendChild(btnRej);
+      }catch(e){
+        console.error('[admin rescuereq analyze]', e);
+        detailEl.innerHTML = '<span style="color:#ff6666;">❌ 核對失敗:' + _esc(e && e.message || '未知錯誤') + '</span>';
+      }
+    }
+
+    async function _confirmRescue(uid, payload, detailEl, actionsEl, doApply){
+      var _ok = doApply
+        ? confirm('確定要對此玩家執行救援、補回上列項目嗎?\n\n(只增不減:套用前會讀當下資料 max-merge,既有更高的等級/更多的資源不會被蓋低;三槽同寫,玩家下次登入生效)')
+        : confirm('確定標記此申請為「已處理」嗎?\n\n(不會自動補任何資料;適用於你已用學生補償工具手動補發,或核對後確認無需補回)');
+      if(!_ok) return;
+      actionsEl.innerHTML = '<span style="color:#9fe0b0;">處理中...</span>';
+      try{
+        var _applyMsg = '';
+        if(doApply && payload){
+          if(typeof window._fbApplyAccountRebuild !== 'function') throw new Error('_fbApplyAccountRebuild 未載入');
+          var ar = await window._fbApplyAccountRebuild(uid, payload);
+          _applyMsg = (ar && ar.noop) ? '(無需補回)' : '已補回';
+        }
+        if(typeof window._fbResolveAccountRescueRequest !== 'function') throw new Error('_fbResolveAccountRescueRequest 未載入');
+        await window._fbResolveAccountRescueRequest(uid, 'resolved', doApply ? ('已確認救援·' + _applyMsg) : '已手動處理/無需補回');
+        try{ if(typeof window._fbAdminSendNotificationToPlayer === 'function') await window._fbAdminSendNotificationToPlayer(uid, { title:'✅ 帳號救援已完成', body:'老師已核對你的遊戲記錄並完成處理。請登出後重新登入,即可看到補回的資料(若有)。', type:'account_rescue' }); }catch(_n){}
+        detailEl.innerHTML = '<span style="color:#88dd99;font-weight:700;">✅ 已標記為「已處理」' + (doApply ? ('·' + _applyMsg) : '') + '。重新整理可更新列表。</span>';
+        actionsEl.innerHTML = '';
+      }catch(e){
+        console.error('[admin rescuereq confirm]', e);
+        actionsEl.innerHTML = '<span style="color:#ff6666;">❌ 失敗:' + _esc(e && e.message || '未知錯誤') + '</span>';
+      }
+    }
+
+    async function _reject(uid, detailEl, actionsEl){
+      var _note = prompt('駁回原因(選填,會記在申請上):', '');
+      if(_note === null) return;
+      actionsEl.innerHTML = '<span style="color:#9fe0b0;">處理中...</span>';
+      try{
+        if(typeof window._fbResolveAccountRescueRequest !== 'function') throw new Error('_fbResolveAccountRescueRequest 未載入');
+        await window._fbResolveAccountRescueRequest(uid, 'rejected', _note || '已駁回');
+        detailEl.innerHTML = '<span style="color:#ff8888;font-weight:700;">✖ 已駁回。重新整理可更新列表。</span>';
+        actionsEl.innerHTML = '';
+      }catch(e){
+        console.error('[admin rescuereq reject]', e);
+        actionsEl.innerHTML = '<span style="color:#ff6666;">❌ 失敗:' + _esc(e && e.message || '未知錯誤') + '</span>';
+      }
+    }
+
+    function _render(reqs){
+      reqs = reqs || [];
+      var onlyPending = onlyCb && onlyCb.checked;
+      var list = reqs.filter(function(r){ return onlyPending ? (r.status !== 'resolved' && r.status !== 'rejected') : true; });
+      list.sort(function(a,b){
+        var pa = (a.status === 'pending' || !a.status) ? 0 : 1;
+        var pb = (b.status === 'pending' || !b.status) ? 0 : 1;
+        if(pa !== pb) return pa - pb;
+        return (b.createdAt||0) - (a.createdAt||0);
+      });
+      var _pending = reqs.filter(function(r){ return r.status !== 'resolved' && r.status !== 'rejected'; }).length;
+      if(countEl) countEl.textContent = '待處理 ' + _pending + ' 件 / 全部 ' + reqs.length + ' 件';
+      if(!list.length){
+        listEl.innerHTML = '<div style="text-align:center;color:#888;padding:20px;font-size:13px;">' + (onlyPending ? '目前沒有待處理的救援申請。' : '尚無任何救援申請。') + '</div>';
+        return;
+      }
+      listEl.innerHTML = list.map(function(r){
+        var uid = r.uid || '';
+        var lbl = _esc(r.displayLabel || r.email || '(無名)');
+        var _email = r.email ? (' &lt;' + _esc(r.email) + '&gt;') : '';
+        var _date = r.createdAt ? new Date(r.createdAt).toLocaleString('zh-TW') : '';
+        var sc = r.selfCheck || {};
+        var _scLine = (sc && (sc.missingHeroCount != null || sc.crystalWillAdd != null))
+          ? ('<div style="font-size:11px;color:#8aa;margin-top:3px;">學生端初判(僅參考):缺英雄 ' + (sc.missingHeroCount||0) + ' / 缺至寶 ' + (sc.missingTreasureCount||0) + ' / 水晶 +' + (sc.crystalWillAdd||0) + ' / 幣 +' + (sc.coinsWillAdd||0) + '</div>')
+          : '';
+        var _gmNote = r.gmNote ? ('<div style="font-size:11px;color:#9ab;margin-top:3px;">老師備註:' + _esc(r.gmNote) + '</div>') : '';
+        var _isPending = (r.status !== 'resolved' && r.status !== 'rejected');
+        return '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(120,200,170,0.3);border-radius:9px;padding:11px 13px;margin-bottom:9px;font-size:13px;line-height:1.6;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:5px;">'
+          +   '<div style="color:#bdf0dd;font-weight:700;">' + lbl + _email + '</div>'
+          +   '<div>' + _statusBadge(r.status) + '</div>'
+          + '</div>'
+          + '<div style="font-size:11px;color:#999;font-family:monospace;margin-bottom:5px;">uid: ' + _esc(uid) + (_date ? ('　·　' + _date) : '') + '</div>'
+          + '<div style="margin-bottom:5px;">學生勾選:' + _claimChips(r.claims) + '</div>'
+          + _scLine + _gmNote
+          + (_isPending
+              ? ('<div style="margin-top:8px;"><button class="_rrq-analyze" data-uid="' + _esc(uid) + '" style="padding:7px 16px;font-size:13px;font-weight:800;background:rgba(80,160,200,0.28);border:1.5px solid #4a9fd0;color:#bfe6ff;border-radius:6px;cursor:pointer;font-family:inherit;">🔍 核對並準備救援</button></div>'
+                 + '<div class="_rrq-detail" data-for="' + _esc(uid) + '" style="margin-top:8px;"></div>'
+                 + '<div class="_rrq-actions" data-for="' + _esc(uid) + '" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"></div>')
+              : '')
+          + '</div>';
+      }).join('');
+      var abtns = listEl.querySelectorAll('._rrq-analyze');
+      abtns.forEach(function(b){
+        b.onclick = function(){
+          var uid = b.getAttribute('data-uid');
+          var det = listEl.querySelector('._rrq-detail[data-for="' + uid + '"]');
+          var act = listEl.querySelector('._rrq-actions[data-for="' + uid + '"]');
+          var _r = (window._rrqCache || []).filter(function(x){ return x.uid === uid; })[0] || {};
+          if(det && act) _analyze(uid, det, act, _r.claims || {});
+        };
+      });
+    }
+
+    async function _load(){
+      listEl.innerHTML = '<div style="text-align:center;color:#888;padding:18px;font-size:13px;">載入中…</div>';
+      if(countEl) countEl.textContent = '';
+      try{
+        if(typeof window._fbListAccountRescueRequests !== 'function') throw new Error('_fbListAccountRescueRequests 未載入(請確認 index.html 已更新到 v3.15.90)');
+        var reqs = await window._fbListAccountRescueRequests();
+        window._rrqCache = reqs || [];
+        _render(window._rrqCache);
+      }catch(e){
+        console.error('[admin rescuereq load]', e);
+        listEl.innerHTML = '<div style="text-align:center;color:#ff6666;padding:18px;font-size:13px;">❌ 載入失敗:' + _esc(e && e.message || '未知錯誤') + '<br><span style="color:#aaa;">(若顯示權限不足,請確認 firestore.rules 的 accountRescueRequests 已部署)</span></div>';
+      }
+    }
+
+    function _loadWhenReady(tries){
+      tries = tries || 0;
+      if(typeof window._fbListAccountRescueRequests === 'function'){ _load(); return; }
+      if(tries < 20){ setTimeout(function(){ _loadWhenReady(tries + 1); }, 300); return; }
+      listEl.innerHTML = '<div style="text-align:center;color:#888;padding:18px;font-size:13px;">尚未就緒,請按「🔄 立即重新整理」載入。</div>';
+    }
+
+    refreshBtn.onclick = _load;
+    if(onlyCb) onlyCb.onchange = function(){ _render(window._rrqCache || []); };
+    _loadWhenReady(0);
+  })();
+  // ── 帳號救援申請審核 結束 ──
 
   document.getElementById('_admin-set-players').onclick = async () => {
     const input = document.getElementById('_admin-players-input');

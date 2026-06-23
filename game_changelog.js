@@ -12,6 +12,28 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.90 — 帳號救援申請(學生自助向老師申請補回遺失資料 + 同步雲端旁新增鈕)
+  {
+    ver: 'v3.15.90',
+    date: '2026-06-23',
+    brief: [
+      '📨【資料不見了?可以自己申請救援!】關卡頁下方「☁ 立即同步雲端」旁邊,新增一顆「📨 帳號救援申請」按鈕。',
+      '   ・點開會先說明:雲端系統會<b>先查詢你的遊戲記錄核對</b>,確認真的是「雲端同步失敗」造成的損失,才會把資料修復還給你,請耐心等老師處理。',
+      '   ・接著勾選你覺得不見的東西:🦸 英雄、💎 台灣/龍王至寶、🔮 召喚水晶、🎫 召喚卷、💰 知識幣、🏆 排名獎勵,送出申請(每天最多 1 次)。',
+      '   ・送出後系統會自動幫老師整理你的遊戲記錄;老師核對「你說缺的」哪些<b>真的有少</b>、哪些其實還在,確認後才補回。',
+      '   ・補回只會「<b>只增不減</b>」——你練到的英雄/至寶等級、現有的水晶幣都不會被蓋掉或變少,也會避免重複補太多。',
+      '✅ 這套救援沿用先前的資料修復強化,把「申請 → 核對 → 補回」做成正式流程,遇到同步問題時更安心。',
+    ],
+    items: [
+      '★ v3.15.90【關卡頁新增救援申請鈕 index.html】底部工具列(超商列下方)由「☁ 立即同步雲端 / 🐛 BUG 回報 / 📚 遊戲指引」三鈕擴為四鈕,新增「📨 帳號救援申請」(_openRescueReq);四鈕 flex:1 均分、字級沿用 clamp(14,1.7vw,21)。',
+      '★ v3.15.90【學生端救援流程 index.html】_openRescueReq:登入檢查 → 讀 accountRescueRequests/{uid} 做每日上限(_getTodayKeyTW;今日已申請則提示等候)→ 彈核對說明(老師指定原文「雲端系統會先查詢小英雄的遊戲記錄進行核對,當確認是雲端同步失敗導致的損失會修復還給您,請耐心等候,謝謝!」)→ 勾選 6 類(英雄/至寶/召喚水晶/召喚卷/知識幣/排名獎勵)→ 送出時客戶端跑一次 _fbRebuildAccountFromLedgers(自己 uid) 產初判摘要 selfCheck(僅供老師一覽參考)→ 寫申請。全程內聯樣式、動態注入(沿用特別挑戰題模式)。',
+      '★ v3.15.90【Firestore helper index.html block#02】新增 _fbSubmitAccountRescueRequest / _fbGetMyAccountRescueRequest(學生)、_fbListAccountRescueRequests / _fbResolveAccountRescueRequest(GM);接在帳號轉移 cluster 後。',
+      '★ v3.15.90【GM 審核區 admin_panel.js】新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組):list 待處理 → 開申請時自動跑 _fbRebuildAccountFromLedgers(uid) 對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本由 GM 人工以「學生補償工具」處理)→ 顯示「將補回 英雄(名+等級)/至寶(名+等級)/水晶/幣」→「✅ 確認救援」走 _fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後標 resolved /「✖ 駁回」標 rejected。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.',
+      '★ v3.15.90【安全】補償一律由 GM 端從雲端帳本權威反推,完全不採信學生寫入的 claims/selfCheck(只當參考)→ 玩家無法藉偽造刷資源;sustained 沿用 v3.15.76 heroLevels 幻影免疫,救援後重整不再誤判倒退。',
+      '★ v3.15.90【新 Firestore 規則】新增 match /accountRescueRequests/{uid}(create 限本人 pending+白名單+不塞 GM 欄位、list/GM 欄位限 GM、delete 限 GM),比照 accountTransferRequests 安全模型。⚠ 老師需手動部署 firestore.rules,否則申請寫入被預設 deny 擋下(client 端會 catch 提示「救援系統尚未啟用」,不影響遊戲)。',
+      '★ v3.15.90【版本鏈】本輪改 index.html + admin_panel.js + game_changelog.js + firestore.rules。版本同步點:_GAME_LOADED_VERSION + _vers[index.html / admin_panel.js / game_changelog.js] 全 v3.15.89→v3.15.90;ADMIN_PANEL_VERSION v3.15.85→v3.15.90。hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.69)。',
+    ],
+  },
   // v3.15.89 — 英雄強化教學 + 條件搜尋大升級(效果標籤校正 + 新增條件 + 補滿92隻)
   {
     ver: 'v3.15.89',
@@ -284,27 +306,6 @@ window.GAME_CHANGELOG = [
       '   ・(魔物圖鑑與寵物圖鑑仍可從主畫面的導航列進入)想看自己離全收集還差幾隻,打開英雄圖鑑就知道囉!',
     ],
     items: [
-    ],
-  },
-  // ════════════════════════════════════════════════════════════════════
-  // v3.15.69(2026-06-21)— 🆔 名稱顯示隱私強化 ＋ ✏️ 暱稱框加寬
-  // ════════════════════════════════════════════════════════════════════
-  {
-    ver: 'v3.15.69',
-    date: '2026-06-21',
-    brief: [
-      '🆔【名稱顯示更好認、也更保護隱私】',
-      '   ・校內信箱的同學,排行榜上的代號改顯示信箱<b>末 3 碼數字</b>(原本大家都是「lsp********」分不出誰),更好辨識!',
-      '   ・同學的真實姓名一律<b>遮住中間字</b>(例如「陳O彬」),保護個人隱私。',
-      '   ・小博士、世界 BOSS、鬥技場排行榜,以及好友列表,通通套用一致的遮罩格式;完整姓名只有老師在後台才看得到。',
-      '✏️【設定暱稱視窗與名稱框加寬】「設定暱稱」視窗變寬了,下拉選單不會再被擠出格子;左上角顯示自己暱稱的白色框也加寬+字體微縮,讓完整暱稱(班級座號/信箱末碼 + 自選組合)能完整顯示。',
-    ],
-    items: [
-      '★ v3.15.69【email 遮罩改末 3 碼 index.html】_emailMaskPrefix:lsps 校內信箱(local 皆以 lsps 開頭如 lsps110137,遮前 3 碼=「lsp********」毫無辨識度)改取「末 3 碼數字」當代號(lsps110137→137);非 lsps(gmail 等)維持前 3 碼 + 遮罩。',
-      '★ v3.15.69【_formatPlayerDisplayName 全面重寫 index.html】真名一律中間字遮罩(_maskFullName,陳煥彬→陳O彬)。分支:(A)displayName 已是「4 碼班級座號+中文真名」(如 5408陳煥彬)→ 拆碼 + 中間字遮罩(5408陳O彬);(B)合法遊戲暱稱 → 名冊回班級座號+暱稱(5408暱稱)、lsps 無名冊回末 3 碼+暱稱(137暱稱)、非 lsps 回 cla********@暱稱;(C)真名/空 → 名冊優先回班級座號+中間字遮罩全名(5408陳O彬)否則 _formatRosterLabel(5408陳同學),名冊查不到的真名 → email 前綴+中間字遮罩(137陳O彬)。修補原本「名冊查不到的真名」直接回原字串導致真名外洩。',
-      '★ v3.15.69【所有排行榜+好友列表一律遮罩】世界 BOSS 排行榜(world-boss-ui.html _protectName)移除「GM 觀看顯示真名」adminShowReal 分支,所有觀看者(含 GM)一律走 _formatPlayerDisplayName 遮罩;邀請好友列表同步走中央函式。小博士排行榜(index.html)兩寫入點(weeklyQuiz + arenaWeekly)寫入雲端前即套 _formatPlayerDisplayName 遮罩(寫入時有 email,新資料即遮罩,舊資料隨同學作答自動更新)。鬥技場(arena.js _getCurrentUserInfo)displayLabel 改走中央函式(原名冊外 fallback 原始暱稱會洩真名)。好友面板(_getFriendLabel)委派中央函式。★ 完整姓名只在 GM 後台選單(admin_panel.js _getAdminPlayerLabel adminShowReal:true 保留)出現。',
-      '★ v3.15.69【設定暱稱 modal + 暱稱框加寬 index.html】設定暱稱 modal max-width min(96vw,clamp(480,50vw,680)) → (540,58vw,800),下拉選單不溢出;左上角 #adv-user-name 框 max-width clamp(200,18vw,320) → (240,26vw,460)、font-size clamp(18,2.8vw,38) → (14,1.9vw,26),讓遮罩後較長暱稱完整顯示、版面不變。',
-      '★ v3.15.69【版本鏈】本輪改 index.html + world-boss-ui.html + arena.js + game_changelog.js 四檔(index.html 最後上傳)。版本同步點:_GAME_LOADED_VERSION + _vers[index.html / world-boss-ui.html / arena.js / game_changelog.js] 全 v3.15.68→v3.15.69。hero_db.js 維持 v3.15.67、world-boss.js/adv_quiz_db.js/admin_panel.js/sw.js(CURRENT_BOOT_VER 不動)/hero_input.html 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.49)。',
     ],
   },
 ];
