@@ -225,6 +225,7 @@
     vesuvius_fire_dragon: 'bgm-wb-vesuvius-battle',
     cuiyu_grass_dragon:   'bgm-wb-cuiyu-battle',
     shanyue_earth_dragon: 'bgm-wb-shanyue-battle',   // ★ v3.15.17 — 地龍王戰BGM.m4a
+    shenhai_water_dragon: 'bgm-wb-shenhai-battle',    // ★ v3.15.98 — 海龍王BGM.m4a
   };
   window._wbGetCurrentBossBattleBgmId = function(){
     try{
@@ -462,10 +463,10 @@
             s1:{n:'雷霆貫穿',c:5,d:'特技150%單體風屬性傷害,麻痺2回合',fd:'凝聚萬鈞雷霆貫穿目標!用特技值的 150% 對特技最高的 1 名對手造成風屬性傷害,並使其「麻痺」2 回合(完全無法行動)。'},
             s2:{n:'暴風肅清',c:6,d:'特技120%全體風屬性傷害,解除自身所有不利狀態',fd:'捲起毀滅暴風橫掃全場!用特技值的 120% 對全體對手造成風屬性傷害,並解除自己身上所有不利狀態(中毒、麻痺、暈眩、降速等全部清除)。'}
           },
-          // ★ v3.15.50 — 深淵海龍王(第五隻:水屬性,太平洋深淵;ATK47/SP50/SPD18)技能設計中
+          // ★ v3.15.98 — 深淵海龍王(第五隻:水屬性,太平洋深淵;ATK47/SP50/SPD18)正式實裝
           '深淵海龍王':{hp:5000000,atk:47,sp:50,spd:18,exp:1500,star:5,isWorldBoss:true,
-            s1:{n:'? 未知技能',c:5,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'},
-            s2:{n:'? 未知技能',c:6,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'}
+            s1:{n:'絕對零度',c:5,d:'特技130%全體水屬性傷害,全體50%機率冰凍1回合',fd:'釋放絕對零度的酷寒凍結全場!用特技值的 130% 對全體對手造成水屬性傷害,每名對手有 50% 機率陷入「冰凍」1 回合,完全無法行動。'},
+            s2:{n:'萬丈寒淵',c:6,d:'特技150%全體水屬性傷害,隨機2名強力冰凍2回合',fd:'捲起萬丈深淵的寒濤橫掃全場!用特技值的 150% 對全體對手造成水屬性傷害,並從存活對手中隨機選 2 名陷入「強力冰凍」2 回合,完全無法行動。'}
           },
           // ★ v3.15.50 — 邪骨暗龍王(第六隻:暗屬性,黃泉之門;ATK45/SP55/SPD15)技能設計中
           '邪骨暗龍王':{hp:5000000,atk:45,sp:55,spd:15,exp:1500,star:5,isWorldBoss:true,
@@ -500,7 +501,8 @@
           // ★ v3.15.50 — 風暴雷龍王爆發(item 2 設計:全體風傷+全體麻痺1回合+解除自身不利)
           '風暴雷龍王': {n:'雷神·萬雷殛世', d:'特技150%全體風傷+全體麻痺1回合+解除自身所有不利狀態', fd:'召喚九天神雷殛滅全場!用特技值的 150% 對全體存活對手造成風屬性傷害,並使全體「麻痺」1 回合(完全無法行動),同時解除自己身上所有不利狀態(中毒、暈眩、降速等全部清除)。'},
           // ★ v3.15.50 — 以下龍王爆發設計中(? 未知爆發)
-          '深淵海龍王': {n:'? 未知爆發', d:'爆發設計中', fd:'此龍王的極限爆發尚在設計中,敬請期待!'},
+          // ★ v3.15.98 — 深淵海龍王爆發(全體水傷 + 冰凍 + 招牌封技)
+          '深淵海龍王': {n:'絕對零度·冰封終焉', d:'特技150%全體水傷(無視有利)+全體冰凍1回合+隨機1名強力冰凍2回合+全體封技1回合', fd:'絕對零度全面降臨,萬物凍結!用特技值的 150% 對全體存活對手造成水屬性傷害(無視無敵、免疫、護盾、反射、減傷;但元素護盾仍減 80%),使全體「冰凍」1 回合,並從中隨機選 1 名「強力冰凍」2 回合;再對全體施加「封技」1 回合(無法使用技能與極限爆發,僅能普攻或休息)。'},
           '邪骨暗龍王': {n:'? 未知爆發', d:'爆發設計中', fd:'此龍王的極限爆發尚在設計中,敬請期待!'},
           '神聖光龍王': {n:'? 未知爆發', d:'爆發設計中', fd:'此龍王的極限爆發尚在設計中,敬請期待!'},
           '星辰幻龍王': {n:'? 未知爆發', d:'爆發設計中', fd:'此龍王的極限爆發尚在設計中,敬請期待!'},
@@ -521,8 +523,8 @@
           '山岳地龍王': { name:'山岳之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(土/火/暗/草,減傷 80%);受到所有傷害再額外減 30%;受到攻擊時 50% 機率反彈受傷的 50% 給攻擊者;但畏懼劇毒——中毒傷害大幅放大且無視上限', fd:'盤踞地核億萬年的山岳之意志,單次受傷上限固定為 5,000(不隨 HP 變動)。每場戰鬥的第 3、5、7、9 回合會啟動「四元素護盾」:土盾、火盾、暗盾、草盾各 1 層(同時最多 4 層,減傷 80%),需用「草」破土盾、「水」破火盾、「光」破暗盾、「火」破草盾,各 1 次才能完整破除。此外牠擁有堅不可摧的軀體:受到所有傷害都會「再額外減免 30%」(護盾期間在 80% 減傷之上再減),且「受到攻擊時有 50% 機率反彈受到傷害的 50%」給攻擊者(土屬性)。但再硬的岩石也會被毒液侵蝕——牠「畏懼劇毒」:受到的中毒/猛毒傷害會被大幅放大為固定值(普通中毒每跳 -1,500、猛毒每跳 -3,000),且完全無視 5,000 上限、護盾與減傷。中毒是擊敗牠最有效的手段。【共通天賦】所有龍王相同:① 每回合行動結束後會額外發動 1 次普通攻擊(追擊最低 HP 的對手);② 戰鬥若一直拖到第 11 回合,場地會崩壞、戰鬥強制結束結算。' },
           // ★ v3.15.50 — 風暴雷龍王天賦(共通 cap/護盾/崩壞/額外普攻 + 專屬 開場普攻/被降速+30%受傷)
           '風暴雷龍王': { name:'雷霆之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動元素護盾(風盾×2/光盾/火盾,減傷 80%,用地/暗/水破盾);每回合開始用攻擊值襲擊隨機 1 人;被降速時受到傷害 +30%', fd:'颱風眼雷雲龍的意志,單次受傷上限固定 5,000(不隨 HP 變動)。每場戰鬥第 3、5、7、9 回合啟動「元素護盾」:風盾 2 層 + 光盾 1 層 + 火盾 1 層(減傷 80%),需用「地」破風盾(要 2 次)、「暗」破光盾、「水」破火盾,各打 1 次才能完整破除。【專屬】牠每個新回合一開始就會用「攻擊值」襲擊隨機 1 名對手(額外的開場攻擊);而且「被降速時受到的傷害會 +30%」——對牠降速反而讓牠更脆弱,要謹慎使用降速類技能。【共通天賦】所有龍王相同:① 每回合行動結束後會額外發動 1 次普通攻擊(追擊最低 HP 的對手);② 戰鬥若一直拖到第 11 回合,場地會崩壞、戰鬥強制結束結算。' },
-          // ★ v3.15.50 — 深淵海龍王天賦(專屬 查封/被冰凍+30%受傷;技能爆發設計中)
-          '深淵海龍王': { name:'深淵之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(水/風/光/草,減傷 80%,用風/土/暗/火破盾);每回合隨機查封 1 人 2 回合;被冰凍時受到傷害 +30%', fd:'馬里亞納海溝冰龍的意志,單次受傷上限固定 5,000。每場戰鬥第 3、5、7、9 回合啟動「四元素護盾」:水盾、風盾、光盾、草盾各 1 層(減傷 80%),需用「風」破水盾、「土」破風盾、「暗」破光盾、「火」破草盾,各 1 次才能完整破除。【專屬】牠每回合會隨機對 1 名對手「查封」2 回合;而且「被冰凍時受到的傷害會 +30%」。牠的招式與爆發尚在設計中(? 未知技能)。【共通天賦】所有龍王相同:① 每回合行動結束後額外發動 1 次普通攻擊(追擊最低 HP);② 戰鬥若拖到第 11 回合,場地崩壞、強制結束結算。' },
+          // ★ v3.15.98 — 深淵海龍王天賦(專屬 每回合封技 + 冰凍三段機制:被冰凍+30%受傷/冰中受擊回能/碎裂後免疫1回合)
+          '深淵海龍王': { name:'深淵之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(水/風/光/草,減傷 80%,用風/土/暗/火破盾);每回合隨機對 1 人「封技」1 回合(封技能+爆發);被冰凍時受傷 +30%,但冰封中每受擊回 1 能量,冰層碎裂後 1 回合免疫冰凍', fd:'馬里亞納海溝冰龍的意志,單次受傷上限固定 5,000(不隨 HP 變動)。每場戰鬥第 3、5、7、9 回合啟動「四元素護盾」:水盾、風盾、光盾、草盾各 1 層(減傷 80%),需用「風」破水盾、「土」破風盾、「暗」破光盾、「火」破草盾,各 1 次才能完整破除。【專屬】① 牠每回合會隨機對 1 名對手施加「封技」1 回合——被封技者無法使用技能與極限爆發,只能普攻或休息。② 弱點·畏冰:牠「被冰凍時受到的傷害 +30%」(突破上限),冰系英雄(如冰法師)是牠的剋星;但這弱點有代價——牠被冰封住的那一回合,每受到一次攻擊就會「回復 1 點能量」加速自身爆發,而且對牠的冰凍每次只持續 1 回合,冰層碎裂後的 1 回合牠會「免疫冰凍」無法被連續凍結。要趁冰封的短暫空檔集火,並小心反而餵飽牠的爆發。【共通天賦】所有龍王相同:① 每回合行動結束後額外發動 1 次普通攻擊(追擊最低 HP);② 戰鬥若拖到第 11 回合,場地崩壞、強制結束結算。' },
           // ★ v3.15.50 — 邪骨暗龍王天賦(專屬 死亡宣告/受光+30%;技能爆發設計中)
           '邪骨暗龍王': { name:'黃泉之意志', icon:'🐉', desc:'單次受傷上限固定 5,000;第 3/5/7/9 回合啟動四元素護盾(暗/土/水/草,減傷 80%,用光/草/風/火破盾);每回合隨機對 1 人死亡宣告;受到光屬性傷害 +30%', fd:'黃泉之門骨龍的意志,單次受傷上限固定 5,000。每場戰鬥第 3、5、7、9 回合啟動「四元素護盾」:暗盾、土盾、水盾、草盾各 1 層(減傷 80%),需用「光」破暗盾、「草」破土盾、「風」破水盾、「火」破草盾,各 1 次才能完整破除。【專屬】牠每回合會隨機對 1 名對手施加「死亡宣告」(數回合後若未解除即倒下);而且「受到光屬性傷害會 +30%」——光系英雄是牠的剋星。牠的招式與爆發尚在設計中(? 未知技能)。【共通天賦】所有龍王相同:① 每回合行動結束後額外發動 1 次普通攻擊(追擊最低 HP);② 戰鬥若拖到第 11 回合,場地崩壞、強制結束結算。' },
           // ★ v3.15.50 — 神聖光龍王天賦(專屬 封印/受暗+30%;技能爆發設計中)
@@ -545,7 +547,7 @@
           '山岳地龍王': '蟄伏於地核最深處的太古土龍。相傳全世界岩石與土壤最厚重、最沉穩之地——喜馬拉雅山脈底下直通地核的億萬噸岩層——正是牠盤踞蜷曲的身軀所化。億萬年來牠與整座山脈融為一體靜靜沉睡,每一次翻身都化作撼動大陸的強震。當人類過度開鑿山岳、震動大地,牠便會甦醒:山崩地裂、巨岩如雨,以堅不可摧的岩甲與撼天龍吼鎮壓入侵者。傳說牠的岩甲刀槍不入,唯一的弱點是滲入岩縫的劇毒——再堅硬的磐石,也擋不住毒液經年累月的侵蝕。如今地脈震動不安,需要四位英雄以毒為刃,才能讓這頭山岳巨龍重歸沉眠。',
           // ★ v3.15.50 — 5 隻新龍王背景故事(各棲息於全世界最充滿該屬性之地)
           '風暴雷龍王': '盤踞於太平洋最強颱風眼正中央的雷雲巨龍。相傳全世界風與雷最狂暴之地——超級颱風的風眼——正是牠捲動的氣流所化。平時牠隨季風遊走於萬里高空靜靜沉睡,一旦人類的飛行器或船隻闖入風暴核心,牠便會甦醒:萬鈞神雷自九天劈下、暴風撕裂一切。牠的雷霆能麻痺對手,暴風能滌淨自身的一切創傷。傳說牠速度奇快、難以捉摸,但若有人能拖慢牠的身法,牠脆弱的本體便會顯露——降速,反而是逼出牠破綻的鑰匙。',
-          '深淵海龍王': '蛰伏於馬里亞納海溝最深處(全世界最深的海)的太古冰龍。相傳全世界海水最深、最寒之地正是牠蜷曲的身軀所化,以絕對零度凍結整片海洋。牠每回合會查封入侵者的招式,封鎖其反抗之力;而牠也有弱點——當被冰凍時,牠自身的傷口反而會更加致命。牠的招式與爆發,仍在四位英雄的探索之中(設計中)。',
+          '深淵海龍王': '蛰伏於馬里亞納海溝最深處(全世界最深、最寒的海)的太古冰龍。相傳全世界海水最深寒之地正是牠蜷曲的身軀所化,以絕對零度凍結整片海洋。牠每回合會「封技」入侵者,封鎖其技能與極限爆發,使其只能徒手反抗;以「絕對零度」「萬丈寒淵」凍結全場,爆發「絕對零度·冰封終焉」更將萬物冰封。傳說牠唯一的弱點是寒冰本身——當牠被冰凍時,傷口反而會更加致命(受傷 +30%);但牠被冰封的瞬間會吸納攻擊之力回復能量、加速反撲,且冰層轉瞬即碎、無法被連續凍結。需要四位英雄以冰為刃、抓準時機,才能讓這頭深淵巨龍重歸沉眠。',
           '邪骨暗龍王': '從冥界「黃泉之門」爬出的太古骨龍。相傳通往幽冥的黃泉入口正是牠白骨纏繞的身軀所化,渾身散發死亡的氣息。牠每回合會對入侵者下達「死亡宣告」,以冥界之力催命;但聖潔的光芒能灼傷牠的骨骸——受到光屬性攻擊時,牠承受的傷害會大幅增加。牠的招式與爆發,仍在四位英雄的探索之中(設計中)。',
           '神聖光龍王': '受天界差遣、自「高天原」降臨的審判之龍。相傳眾神所居的天界最高處正是牠聖光環繞的身軀所化,以神聖的裁決之力審判世間。牠每回合會封印入侵者的力量,使其無法施展極限之力;但與光相對的暗影能侵蝕牠的神性——受到暗屬性攻擊時,牠承受的傷害會大幅增加。牠的招式與爆發,仍在四位英雄的探索之中(設計中)。',
           '星辰幻龍王': '遨遊於浩瀚銀河、集八元素之力於一身的終極幻龍。相傳橫亙夜空的整條星河正是牠流轉變幻的身軀所化,每一顆星辰都是牠鱗片上的一點光。牠免疫一切異常、身法縹緲難以命中,普通攻擊更難傷其分毫,是所有龍王中最難對付的存在。傳說只有集齊七種屬性之力、層層破除牠的星辰護盾,才有可能撼動這頭橫跨星海的終極之龍。牠的招式與爆發,仍是宇宙級的謎團(設計中)。',
@@ -564,7 +566,7 @@
           '山岳地龍王': '蟄伏於地核最深處的太古土龍,全世界土石最厚重之地即是牠的軀體所化。以山崩、落石與撼天龍吼鎮壓敵人,岩甲堅不可摧,唯一弱點是劇毒。需要 4 位英雄聯手才能讓牠重歸沉眠的世界 BOSS。',
           // ★ v3.15.50 — 5 隻新龍王簡介
           '風暴雷龍王': '盤踞於太平洋颱風眼正中央的雷雲巨龍,全世界風雷最狂暴之地即是牠的軀體所化。以神雷麻痺、暴風自癒,速度奇快,但被降速時更脆弱。需要 4 位英雄聯手才能讓牠重歸沉眠的世界 BOSS。',
-          '深淵海龍王': '蛰伏於馬里亞納海溝最深處的太古冰龍,全世界最深最寒的海即是牠的軀體所化。每回合查封敵人招式,被冰凍時更致命。招式與爆發設計中。需要 4 位英雄聯手挑戰的世界 BOSS。',
+          '深淵海龍王': '蛰伏於馬里亞納海溝最深處的太古冰龍,全世界最深最寒的海即是牠的軀體所化。每回合「封技」封鎖敵人技能與爆發,以絕對零度冰封全場;被冰凍時受傷 +30%(但冰封中受擊會回能、冰層轉瞬即碎)。需要 4 位英雄聯手挑戰的世界 BOSS。',
           '邪骨暗龍王': '從黃泉之門爬出的太古骨龍,通往冥界的入口即是牠的軀體所化。每回合對敵人死亡宣告,畏懼光屬性。招式與爆發設計中。需要 4 位英雄聯手挑戰的世界 BOSS。',
           '神聖光龍王': '自高天原降臨的審判之龍,眾神天界最高處即是牠的軀體所化。每回合封印敵人之力,畏懼暗屬性。招式與爆發設計中。需要 4 位英雄聯手挑戰的世界 BOSS。',
           '星辰幻龍王': '遨遊銀河、集八元素之力的終極幻龍,整條星河即是牠的軀體所化。免疫異常、迴避極高、減免普攻,需七屬性破盾,是最難對付的終極龍王。招式與爆發設計中。',
@@ -830,6 +832,22 @@
       }
       // 受傷減 80%(只剩 20%)
       dmg = Math.floor(dmg * 0.20);
+    }
+
+    // ★ v3.15.98 — 深淵海龍王弱點·畏冰:身上有冰凍(freeze)時,最終受傷 +30%(突破 5000/1000 上限);
+    //   且冰封中每受擊 1 次回 1 能量(G.energy.p2,加速爆發·老師設計的雙刃);
+    //   標記 boss._wbWasFrozen 供「解凍後免疫 1 回合」判定(於 BOSS 主行動 hook 結算)
+    if(boss.name === '深淵海龍王' && boss.status && boss.status.some(function(s){ return s && s.type === 'freeze'; })){
+      boss._wbWasFrozen = true;
+      dmg = Math.floor(dmg * 1.30);
+      try{
+        var _Gice = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+        if(_Gice && _Gice.energy && typeof _Gice.energy.p2 === 'number'){
+          _Gice.energy.p2 = Math.min(10, (_Gice.energy.p2 || 0) + 1);
+          try{ if(typeof renderEnergyBars === 'function') renderEnergyBars(); }catch(_){}
+          try{ if(typeof bannerFX === 'function') bannerFX(boss, '❄ 冰中吸能 +1', '#9ee', 600); }catch(_){}
+        }
+      }catch(_eIce){}
     }
     return Math.max(1, dmg);
   };
@@ -1574,6 +1592,8 @@
     burst_grass: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('藤蔓攻擊.gif'),
     // ★ v3.15.17 — 山岳地龍王爆發「天動地裂」特效(老師指定:護盾碎石.gif)
     burst_earth: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('護盾碎石.gif'),
+    // ★ v3.15.98 — 深淵海龍王爆發「絕對零度·冰封終焉」特效(老師指定:冰椎爆裂.gif)
+    burst_water: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('冰椎爆裂.gif'),
   };
 
   // 播放全畫面 GIF 特效 (持續 1.6 秒後淡出)
@@ -2798,6 +2818,33 @@
       }catch(_eDrain){ console.warn('[WB] 翠綠森龍王 吸能量失敗', _eDrain); }
     }
 
+    // ★ v3.15.98 — 深淵海龍王天賦(主行動時):
+    //   (a) 冰層碎裂冷卻結算:免疫回合數遞減;若上回合被冰封、本回合已解凍 → 設「免疫冰凍 1 回合」
+    //       (被冰封的那一回合 BOSS 會 skip 主行動、不進此 hook,故此處必為「解凍後」的回合)
+    //   (b) 每回合隨機對 1 名對手「封技」2 回合 = seal(無法用技能) + _burstSeal(無法爆發)
+    if(boss.name === '深淵海龍王' && boss._wbActionCount === 1){
+      try{
+        var _hasFzNow = (boss.status || []).some(function(s){ return s && s.type === 'freeze'; });
+        if(boss._wbIceImmuneTurns && boss._wbIceImmuneTurns > 0){ boss._wbIceImmuneTurns--; }
+        if(boss._wbWasFrozen && !_hasFzNow){
+          boss._wbIceImmuneTurns = 1;
+          boss._wbWasFrozen = false;
+          try{ if(typeof log === 'function') log(`❄ [${boss.name}] 冰層碎裂,本回合免疫冰凍!`); }catch(_){}
+          try{ if(typeof bannerFX === 'function') bannerFX(boss, '❄ 免疫冰凍', '#aef', 800); }catch(_){}
+        }
+      }catch(_eIceTrk){ console.warn('[WB] 海龍王冰凍追蹤失敗', _eIceTrk); }
+      try{
+        var _aliveSeal = G.p1.filter(function(h){ return h && h.curHp > 0; });
+        if(_aliveSeal.length){
+          var _ts = _aliveSeal[Math.floor(Math.random() * _aliveSeal.length)];
+          if(typeof addStatus === 'function'){ addStatus(_ts, 'seal', 1); addStatus(_ts, '_burstSeal', 1); }
+          try{ if(typeof bannerFX === 'function') bannerFX(_ts, '❄ 封技', '#6cf', 1000); }catch(_){}
+          try{ if(typeof log === 'function') log(`❄ [${boss.name}] 深淵之意志·封技!封鎖 [${_ts.name}] 的技能與極限爆發 1 回合(仍可普攻/休息)!`); }catch(_){}
+          try{ renderCard(_ts); }catch(_){}
+        }
+      }catch(_eSeal){ console.warn('[WB] 海龍王封技失敗', _eSeal); }
+    }
+
     // ★ v3.11.6(2026-05-27) — [E1] BOSS turn 入口:R11+ 直接走 _wbForceCollapseAt11
     //   舊版用 inline 邏輯 + 單一旗標 _wbCollapseTriggered;v3.11.6 改用獨立函式 +
     //   多重保險,任何漏洞都會被別的入口接住(詳見 _wbForceCollapseAt11 的設計說明)
@@ -3190,12 +3237,129 @@
     }, 2200);
   }
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v3.15.98 — 深淵海龍王專屬 AI(絕對零度 / 萬丈寒淵 / 絕對零度·冰封終焉)
+  //   主軸:冰凍 CC + 招牌封技(天賦每回合 + 爆發全體)。傷害走 doDmg → cap5000。
+  //   ⚠ 封技 = seal(無法用技能) + _burstSeal(無法爆發)組合(老師①甲:零引擎風險)。
+  //   ⚠ 對玩家施加的冰凍正常(1~2 回合);海龍王自己被冰凍的 dur 壓制在 index.html addStatus。
+  // ════════════════════════════════════════════════════════════════════
+  // S1:絕對零度 — 特技 130% 全體水屬性傷害 + 全體 50% 機率冰凍 1 回合
+  function _wbWaterBossS1(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1500, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 1.30);
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, hitBonus: 0.30, element: 'water' });
+        }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+      }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+      if(t.curHp > 0 && Math.random() < 0.50){
+        try{ if(typeof addStatus === 'function') addStatus(t, 'freeze', 1); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(t, '❄ 冰凍', '#88ddff', 700); }catch(_){}
+      }
+      try{ renderCard(t); }catch(_){}
+    });
+    try{ if(typeof log === 'function') log(`❄ 深淵海龍王「絕對零度」!特技 130% 全體水屬性傷害 -${dmg} HP,50% 機率冰凍 1 回合!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // S2:萬丈寒淵 — 特技 150% 全體水屬性傷害 + 隨機 2 名強力冰凍 2 回合
+  function _wbWaterBossS2(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1500, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 50) * 1.50);
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, hitBonus: 0.30, element: 'water' });
+        }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+      }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+      try{ renderCard(t); }catch(_){}
+    });
+    try{
+      const _survivors = G.p1.filter(h => h && h.curHp > 0);
+      const _picked = _survivors.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+      _picked.forEach(t => {
+        try{
+          if(typeof addStatus === 'function'){
+            addStatus(t, 'freeze', 2);
+            const _fs = (t.status || []).find(s => s.type === 'freeze');
+            if(_fs){ _fs._strong = true; }
+          }
+          try{ if(typeof bannerFX === 'function') bannerFX(t, '❄ 強力冰凍', '#6cc8ff', 900); }catch(_){}
+          try{ renderCard(t); }catch(_){}
+        }catch(_){}
+      });
+    }catch(_eF){ console.warn('[WB] 海龍王 萬丈寒淵 強力冰凍失敗', _eF); }
+    try{ if(typeof log === 'function') log(`🌊 深淵海龍王「萬丈寒淵」!特技 150% 全體水屬性傷害 -${dmg} HP,隨機 2 名強力冰凍 2 回合!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // 爆發:絕對零度·冰封終焉 — 特技 150% 全體水傷(無視有利)+ 全體冰凍 1 回合 + 隨機 1 名強力冰凍 2 回合 + 全體封技 1 回合
+  function _wbWaterBossBurst(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    // ★ v3.15.98 — 爆發音效:結冰(sfx-ice1)鋪底 + 260ms 後碎冰爆破(sfx-burst),呼應「冰椎爆裂」
+    try{ if(typeof playSfx === 'function'){ playSfx('sfx-ice1', 0.85); setTimeout(function(){ try{ playSfx('sfx-burst', 0.9); }catch(_){} }, 260); } }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_water', {duration:2200, shake:true}); }catch(_){}
+    try{ boss._wbActionCount = 2; }catch(_){}   // ★ 爆發後不再追擊普攻
+    try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
+    boss._wbBossTid = setTimeout(() => {
+      boss._wbBossTid = null;
+      if(boss._wbEndedThisTurn === true){ return; }
+      if(boss.curHp <= 0){ boss._wbEndedThisTurn = true; return; }
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      const dmg = Math.floor((boss.sp || 50) * 1.50);
+      alive.forEach(t => {
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, element: 'water' });
+          }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+        }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+        // 全體冰凍 1 回合 + 全體封技 1 回合(seal + _burstSeal)
+        if(t.curHp > 0){
+          try{
+            if(typeof addStatus === 'function'){
+              addStatus(t, 'freeze', 1);
+              addStatus(t, 'seal', 1);
+              addStatus(t, '_burstSeal', 1);
+            }
+            try{ if(typeof bannerFX === 'function') bannerFX(t, '❄ 冰凍+封技', '#7cd8ff', 900); }catch(_){}
+          }catch(_){}
+        }
+        try{ renderCard(t); }catch(_){}
+      });
+      // 隨機 1 名強力冰凍 2 回合
+      try{
+        const _survivors = G.p1.filter(h => h && h.curHp > 0);
+        if(_survivors.length){
+          const _t = _survivors[Math.floor(Math.random() * _survivors.length)];
+          if(typeof addStatus === 'function'){
+            addStatus(_t, 'freeze', 2);
+            const _fs = (_t.status || []).find(s => s.type === 'freeze');
+            if(_fs){ _fs._strong = true; }
+          }
+          try{ if(typeof bannerFX === 'function') bannerFX(_t, '❄ 強力冰凍', '#6cc8ff', 900); }catch(_){}
+          try{ renderCard(_t); }catch(_){}
+        }
+      }catch(_eFb){ console.warn('[WB] 海龍王爆發 強力冰凍失敗', _eFb); }
+      try{ if(typeof log === 'function'){ log('⚡ 深淵海龍王爆發「絕對零度·冰封終焉」!特技 150% 全體水屬性傷害(無視有利)!'); log('❄ 全體冰凍 1 回合 + 全體封技 1 回合(無法用技能/爆發),隨機 1 名強力冰凍 2 回合!'); } }catch(_){}
+      try{ if(typeof flashScreen === 'function') flashScreen('rgba(80,180,255,0.7)', 700); }catch(_){}
+      _scheduleBossEnd(boss, 1800);
+    }, 2200);
+  }
+
   // BOSS S1:業火灼燒(全體 sp×1.5 + 燃燒 2 回合 + 命中 +30%)
   // ★ v3.11.7(2026-05-28) — 傷害 1.0 → 1.5(對齊 v3.5.9 + 介紹彈窗描述)+ 命中率 +30%
   function _wbAdvBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossS1(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S1
     if(boss && boss.name === '山岳地龍王'){ _wbEarthBossS1(boss); return; }   // ★ v3.15.17 — 地龍王走自己的 S1
+    if(boss && boss.name === '深淵海龍王'){ _wbWaterBossS1(boss); return; }   // ★ v3.15.98 — 海龍王走自己的 S1
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
@@ -3227,6 +3391,7 @@
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossS2(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S2
     if(boss && boss.name === '山岳地龍王'){ _wbEarthBossS2(boss); return; }   // ★ v3.15.17 — 地龍王走自己的 S2
+    if(boss && boss.name === '深淵海龍王'){ _wbWaterBossS2(boss); return; }   // ★ v3.15.98 — 海龍王走自己的 S2
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1600, shake:true}); }catch(_){}
@@ -3274,6 +3439,7 @@
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossBurst(boss); return; }   // ★ v3.13.73 — 草龍王走自己的爆發
     if(boss && boss.name === '山岳地龍王'){ _wbEarthBossBurst(boss); return; }   // ★ v3.15.17 — 地龍王走自己的爆發
+    if(boss && boss.name === '深淵海龍王'){ _wbWaterBossBurst(boss); return; }   // ★ v3.15.98 — 海龍王走自己的爆發
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
