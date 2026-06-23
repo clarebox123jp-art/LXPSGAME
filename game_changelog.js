@@ -12,6 +12,24 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.15.97 — 日本三神器不再誤佔至寶 + 練習營三修 + 強化教學畫面飄移根治
+  {
+    ver: 'v3.15.97',
+    date: '2026-06-23',
+    brief: [
+      '💎【日本三神器不再被誤算成台灣至寶】草薙劍、八尺瓊勾玉、八咫鏡這三件「日本三神器」其實是解鎖隱藏關卡(八岐大蛇)的<b>任務物品</b>,並不是台灣至寶。先前它們會被誤寫進至寶資料、<b>佔用你的至寶數量</b>,連帶讓「帳號救援」誤把它們當成缺漏的至寶補回。',
+      '   ・這版已修正:三神器不再計入台灣至寶。<b>已受影響的帳號只要登入,系統會自動把誤算的三神器從至寶清單清掉</b>(你對三神器的擁有、以及隱藏關卡的解鎖狀態都完全不受影響)。',
+      '📚【課堂練習營改善】① 題目和選項的<b>字體放大</b>,在平板上更好閱讀;② 修正部分情況下<b>「第一題按了沒反應」</b>的問題(原因是練習營被遊戲其他畫面元素蓋住、攔截了你的點擊);③ <b>「帶獎勵進入遊戲」按鈕現在隨時都能按</b>——就算遊戲還沒連線好也能按下,系統會先把你剛賺到的獎勵<b>綁定你的帳號保存起來</b>,等連線一好就自動帶你進場(不會卡住、也不會白賺)。',
+      '🖥️【英雄圖鑑「英雄強化教學」看完畫面上移卡死 已修正】先前在英雄詳情頁看完「英雄強化教學」後,整個遊戲畫面會往上移、超出螢幕(電腦版上方按鈕列會有一半不見、iPad 更會整個飄走、上方按鈕按不到形同卡死,只能重開或轉螢幕才恢復)。這版已根治;同時<b>一併改善了 iPad 上畫面容易飄移、超出螢幕的情況</b>。',
+    ],
+    items: [
+      '★ v3.15.97【日本三神器=任務物品·永不進入台灣至寶系統】根因:_japanSetTreasure() 取得三神器時呼叫了 _advSaveTreasureUnlockHistory(key,「japan_clear」),該函式不只寫 _treasureUnlockHistory 帳本,還會把 taiwanTreasureData.<key>(tengu/shutendoji/tamamo) 也寫進台灣至寶擁有清單 → 雙重污染 → 帳號救援 _fbRebuildAccountFromLedgers 從帳本反推時把三神器當缺漏至寶補回、誤佔至寶 3 個數量。修法:① _japanSetTreasure 移除該呼叫(只保留 gameCloudSave;三神器擁有/同步全由 adv_japan_treasures + japanProgress.treasures 維護,主存檔/三槽合併/載入皆已涵蓋)② 新增 window._JAPAN_TREASURE_KEYS={tengu,shutendoji,tamamo} + window._isJapanTreasureKey()(掛 window 確保跨 script block 可呼叫)③ 三處清污染:_applySafeData 載入 taiwanTreasureData 合併後迴圈剔除三神器殘留鍵 → 隨後 _saveTaiwanTreasureData() 連同 _s 整包覆蓋雲端(已污染帳號登入即自動清乾淨)、_fbRebuildAccountFromLedgers 的 _missingTreasures filter 加 「&& !window._isJapanTreasureKey(id)」、_extractDataSummaryForCompare 至寶清點加 「if(window._isJapanTreasureKey(id))return」。★ 三神器「擁有」與隱藏關解鎖完全不受影響(走 adv_japan_treasures / japanProgress.treasures,與 taiwanTreasureData 無關)。',
+      '★ v3.15.97【練習營三修】① 字體放大:_campShowQuestion 題目 18→23px、選項 15.5→20px、字母圈 26→32px、回饋 15→18px;_campShowSubjectScreen 題庫/隨機鈕 15→18px、標題 16→20px。② 第一題無法選根治:_campBuildShell overlay z-index 100000→2147483646(原 100000 被遊戲眾多高層元素 z 達 999999~2147483647 遮擋,雲端就緒後背景渲染的高層元素攔截了練習營點擊);答題改 #_camp-body「一次性事件委派」(_campOptBound 旗標 + closest「._camp-opt」,不再逐選項 onclick → 免疫 iOS 動態按鈕首次點擊被吃 + 重渲 onclick 競態);選項與題庫鈕加 touch-action:manipulation。③ 進入按鈕一律可按:_campUpdateBanner 改寫(就緒→綠色立即進入;未就緒→仍顯示橘色可按鈕 + 資源載入進度條);新增 async _campRequestEnter()(就緒→_campEnterGame;未就緒→設 window._campWantEnter=true + 先 _campSettleBank() 保存獎勵[bank 綁 uid] + 按鈕轉「準備中」);_campStart 開頭重設 _campWantEnter=false;700ms 輪詢加「_campWantEnter && _campCanEnter()→自動 _campEnterGame()」。',
+      '★ v3.15.97【強化教學(HUT)畫面飄移根治】根因:_hutShowStep 用 el.scrollIntoView({block:「center」}) 把高亮 anchor 捲到中央,但在 iOS(尤其 iPad)scrollIntoView 會連帶冒泡捲動 documentElement/body,而英雄詳情 #hero-detail-overlay 是 position:absolute → body 一被捲走、整個遊戲畫面就上移飄出螢幕,且結束 _hutRemoveAll 只移除 _hut-* 元素、沒還原捲動位置 → PC 按鈕列半截超出、iPad 整個上移卡死(轉螢幕 reflow 重置 scrollTop 才恢復)。修法:① _hutShowStep 改用「手動只捲 #hero-detail-box」(用 getBoundingClientRect 差值設容器 scrollTop 把 anchor 捲到容器垂直中央,完全不觸發 body 捲動;找不到容器才 fallback scrollIntoView)② 進入時記錄 window._hutSavedPageScroll(首次)、_hutRemoveAll 結束還原(window.scrollTo + documentElement/body scrollTop + 清 null,雙保險)③ #hero-detail-box 加 overscroll-behavior:contain。',
+      '★ v3.15.97【通用 iPad 畫面飄移根治】_initPWA 改為「無條件設 document.documentElement + body 的 overscrollBehavior=none」(原本僅 PWA standalone 模式才設)。瀏覽器分頁開啟時 iPad 也常見整頁被橡皮筋/慣性捲動推移、position:fixed/absolute 的 overlay 跟著飄出螢幕;對 html+body 阻斷捲動鏈外溢可大幅減少各種畫面飄移(不影響容器內正常捲動)。',
+      '★ v3.15.97【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.96→v3.15.97;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/main.css(v3.15.79)/world-boss.js(v3.15.51)/world-boss-ui.html(v3.15.69) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.76)。',
+    ],
+  },
   // v3.15.96 — 帳號污染根治(甲):heroLevels 字串版接齊
   {
     ver: 'v3.15.96',
@@ -308,21 +326,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.77【顯示】_showSummonResults 標題下方加綠色橫幅「🔄 抽到 N 隻重複的稀有英雄,已自動轉換為對應獎勵,沒有損失!」(_dupCount>0 才顯示,單抽因 _batchExcl 空永不觸發);被轉換的結果卡加「🔄 重複轉換」小標。轉換後的獎勵走既有 _applySummonReward(rwd.id→backpackAdd),召喚紀錄/角色預覽不受影響。',
       '★ v3.15.77【安全】只動「召喚抽取邏輯」與「結果顯示」,完全不改 SUMMON_RATES 機率表、不改英雄解鎖流程、不改任何存檔/守門。_rollOneSummon 全站僅 doSummon 一處呼叫,加選用參數向下相容(未傳=空集合,單抽行為不變)。轉換獎勵沿用既有「全收錄」同款道具(SSR→超越極限果實、SR→精裝英雄之書×5),不新增掉落物、不影響經濟平衡。',
       '★ v3.15.77【版本鏈】4 GAME 同步點 v3.15.76→v3.15.77;_vers[index.html]/[game_changelog.js] 同步 v3.15.77。hero_db.js v3.15.72、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.57)。',
-    ],
-  },
-  // v3.15.76 — 存檔同步修正(資料修復後重整仍誤判倒退無法同步,根因雲端殘留舊資料墊高比較基準)
-  {
-    ver: 'v3.15.76',
-    date: '2026-06-22',
-    brief: [
-      '🔧【存檔同步修正】修正極少數帳號在資料修復後,重新整理仍出現「資料倒退」警告、無法把進度存上雲端的問題。根因是雲端殘留的舊資料把比較基準墊高了,造成誤判。現在改以「實際擁有的英雄」為準來判斷,正確的資料能正常同步到雲端,不會再被誤擋。',
-    ],
-    items: [
-      '★ v3.15.76【倒退守門 heroLevels map 污染免疫】根因:常規存檔走 setDoc(merge:true),對 heroLevels(map)是深合併→新資料未提及的舊子鍵殘留(同 v3.15.57 playerBackpack 病灶,但 heroLevels 無字串版 heroLevels_s);倒退守門/跨槽合併算 maxHeroLv/totalHeroLv 時只用 _PLAYER_HERO_NAMES 過濾、未對帳 unlockedHeroes→雲端 heroLevels 殘留的高 Lv 幻影條目墊高雲端 maxLv,使 GM 救援還原後正確的本地存檔被誤判「最高等級倒退」(_dMaxLv 達 -5)而拒絕同步(unlockedCount 走陣列比、0 差不觸發,真正擋下的是 maxLv 那條)。',
-      '★ v3.15.76【三處同口徑修正】以 unlockedHeroes(陣列;merge 對陣列整包取代、不累積污染)為「真正擁有」權威清單,heroLevels 僅計入確實在 unlockedHeroes 的英雄等級:① _fbSave 主文件守門 _recompS ② _fbSaveLive live/safe 槽守門 _effLv ③ _lxpsMergeSlots recompute(merged._dataSummary)。三處共用同一對帳邏輯。',
-      '★ v3.15.76【診斷日誌】_fbSave 主守門加 console.warn(🔎 倒退核對 uid=…),印出雲端 heroLevels 幻影殘留數+最高 Lv+雲端/本地真實 maxLv 與擁有數,供老師核對特定 uid 的實際資料、確認倒退警訊是否為誤判。',
-      '★ v3.15.76【安全】只去除「maxLv 被 heroLevels 幻影墊高」造成的誤判;unlockedCount(真英雄被刪/遺失)仍用 unlockedHeroes 陣列比對照常守門,真倒退擋得住,不會放行薄資料覆蓋。',
-      '★ v3.15.76【版本鏈】4 GAME 同步點 v3.15.75→v3.15.76;_vers[index.html]/[game_changelog.js] 同步 v3.15.76。hero_db.js v3.15.72、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.56)。',
     ],
   },
 ];
