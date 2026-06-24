@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.87';   // ★ v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.5.88';   // ★ v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -90,9 +90,8 @@ let USE_CDN_REWRITE = true; // ★ v3.5.86 正式開啟(繞 GitHub raw 429);jsDe
 //   導致 117/159 個素材仍直撞 GitHub raw 429。這裡補齊三個 repo。
 //   ★ 未來若新增素材 repo,只要在這個陣列加一筆即可(其餘程式完全不用動)。
 const CDN_REPOS = [
-  { user: 'clarebox123jp-art',   repo: 'LXPSGAME', branch: 'main' },
-  { user: 'clarebox123jp-art',   repo: '-',        branch: 'main' },
-  { user: 'ChrisRaelGameMaster', repo: 'Game',     branch: 'main' }
+  { user: 'clarebox123jp-art',   repo: 'LXPSGAME', branch: 'main' }
+  // ★ v3.16.12 — 已移除舊倉 '-' 與 ChrisRaelGameMaster/Game(素材全統一至 LXPSGAME 單一倉)
 ];
 
 // TEST_CDN 工具的預設測試目標(僅供 console 驗證用,不影響改寫邏輯)
@@ -249,29 +248,59 @@ self.addEventListener('fetch', function(event){
   }
 });
 
+// ★ v3.5.88 — WebP 自動改寫 helper：支援 webp 的瀏覽器(Accept 含 image/webp)抓 .png 時,
+//   把目標改成同名 .webp；PWA icon(/icon-*.png) 維持 png(WebP 當不了 icon)。
+//   舊 iPad(iOS<14·Accept 不含 image/webp) 與 .gif/.mp3/.m4a 等一律回原 URL → 行為不變。
+function _lxpsPickAssetUrl(req){
+  try{
+    var url = req.url;
+    var accept = (req.headers && req.headers.get && req.headers.get('Accept')) || '';
+    if(/\.png(\?|$)/i.test(url)
+       && accept.indexOf('image/webp') !== -1
+       && !/\/icon-[^\/]*\.png(\?|$)/i.test(url)){
+      return url.replace(/\.png(\?|$)/i, '.webp$1');
+    }
+  }catch(e){}
+  return req.url;
+}
+
 // cache-first: 優先回快取, miss 才抓網路並存入
+// ★ v3.5.88 — webp-aware：png 請求在支援的瀏覽器改抓 .webp(cors,可讀 status)，
+//   webp 不存在(404/別帳號 repo/舊機) 自動退回原 .png；cache key 用實際抓取的 URL(wantUrl)，
+//   新機存 webp、舊 iPad 存 png，互不干擾、對遊戲端完全無感(瀏覽器依實際 bytes 解碼)。
 function cacheFirstAsset(req){
-  return caches.match(req, { ignoreSearch: false }).then(function(cached){
+  var wantUrl = _lxpsPickAssetUrl(req);
+  var triedWebp = (wantUrl !== req.url);
+  return caches.match(wantUrl, { ignoreSearch: false }).then(function(cached){
     if(cached) return cached;
 
-    // 同網域 vs 跨網域處理不同
-    var sameOrigin = (new URL(req.url)).origin === self.location.origin;
-    // ★ v3.4.15 — 跨域請求 (GitHub raw 等) 走 CDN 改寫; 同源照舊
-    var fetchPromise;
-    if(sameOrigin){
-      fetchPromise = fetch(req);
-    } else {
-      var noCorsOpts = { mode: 'no-cors', credentials: 'omit' };
-      fetchPromise = fetchWithCdnFallback(req.url, noCorsOpts);
+    // 抓原 png：同網域直連、跨域走既有 CDN fallback(no-cors) — 與 v3.5.87 完全相同
+    function fetchPng(){
+      var sameOrigin = (new URL(req.url)).origin === self.location.origin;
+      if(sameOrigin) return fetch(req);
+      return fetchWithCdnFallback(req.url, { mode: 'no-cors', credentials: 'omit' });
     }
 
-    return fetchPromise.then(function(res){
+    // 主 fetch：要 webp 就先用 cors 抓 webp(能讀 status 判斷有無)，失敗/404 退回 png
+    var mainFetch;
+    if(triedWebp){
+      mainFetch = fetch(wantUrl, { mode: 'cors', credentials: 'omit' }).then(function(r){
+        if(r && r.ok) return r;       // webp 存在 → 用它
+        return fetchPng();            // webp 404 → 退回 png
+      }).catch(function(){
+        return fetchPng();            // webp 抓失敗(cors/網路) → 退回 png
+      });
+    } else {
+      mainFetch = fetchPng();
+    }
+
+    return mainFetch.then(function(res){
       // 即使 opaque 也存(讀不到 status 但能用)
       if(res && (res.ok || res.type === 'opaque')){
         var resClone = res.clone();
         caches.open(ASSET_CACHE).then(function(cache){
-          // 用原始 req 當 cache key, 這樣下次 <img src="github..."> 能 hit
-          cache.put(req, resClone).catch(function(){});
+          // 用 wantUrl 當 cache key：webp/png 各存各的，下次能 hit
+          cache.put(wantUrl, resClone).catch(function(){});
         });
       }
       return res;

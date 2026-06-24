@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════
-//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.2)
+//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.3)
 // ════════════════════════════════════════════════════════════════════════
 //
 //  目的:給「沒申請下載授權」的學生使用,讓圖片/音效/字型「看過一次就存起來」,
@@ -45,9 +45,8 @@ const CACHEABLE_HOSTS = [
 //   未來新增素材 repo → 在 CDN_REPOS 加一筆即可。
 // ════════════════════════════════════════════════════════════════════════
 const CDN_REPOS = [
-  { user: 'clarebox123jp-art',   repo: 'LXPSGAME', branch: 'main' },
-  { user: 'clarebox123jp-art',   repo: '-',        branch: 'main' },
-  { user: 'ChrisRaelGameMaster', repo: 'Game',     branch: 'main' }
+  { user: 'clarebox123jp-art',   repo: 'LXPSGAME', branch: 'main' }
+  // ★ v3.11.3 — 已移除舊倉 '-' 與 ChrisRaelGameMaster/Game(素材全統一至 LXPSGAME 單一倉)
 ];
 function _isCdnRepo(user, repo){
   for(let i = 0; i < CDN_REPOS.length; i++){
@@ -85,6 +84,32 @@ async function cdnFetch(req, opts){
   }
 }
 
+// ★ v3.11.3 — WebP 自動改寫(同 sw.js)：支援 webp 的瀏覽器(Accept 含 image/webp)抓 .png 改抓同名 .webp；
+//   PWA icon(/icon-*.png) 與舊 iPad(Accept 不含 webp) 及非 png 一律回原 URL → 行為不變。
+function pickAssetUrl(req){
+  try{
+    const url = req.url;
+    const accept = (req.headers && req.headers.get && req.headers.get('Accept')) || '';
+    if(/\.png(\?|$)/i.test(url)
+       && accept.indexOf('image/webp') !== -1
+       && !/\/icon-[^\/]*\.png(\?|$)/i.test(url)){
+      return url.replace(/\.png(\?|$)/i, '.webp$1');
+    }
+  }catch(_){}
+  return req.url;
+}
+// 抓資源(webp-aware)：要 webp 先用 cors 抓 webp(可讀 status)，404/失敗退回原 png(走既有 cdnFetch，含 jsDelivr)
+async function assetFetch(req, wantUrl, opts){
+  if(wantUrl !== req.url){
+    try{
+      const r = await fetch(wantUrl, Object.assign({ mode: 'cors', credentials: 'omit' }, opts || {}));
+      if(r && r.ok) return r;          // webp 存在 → 用它
+    }catch(_){}
+    return cdnFetch(req, opts);        // webp 404/失敗 → 原 png 流程
+  }
+  return cdnFetch(req, opts);          // 非 png/舊機 → 原樣
+}
+
 // ─── 判斷此請求是否該被快取 ───
 function shouldCache(url){
   try{
@@ -116,13 +141,13 @@ async function trimCache(){
 
 // ─── install:立即進入 active,不等其他 SW ───
 self.addEventListener('install', (event) => {
-  console.log('[SW-Light v3.11.2] 安裝中(輕量圖片快取模式)');
+  console.log('[SW-Light v3.11.3] 安裝中(輕量圖片快取模式)');
   self.skipWaiting();
 });
 
 // ─── activate:接管控制權,清掉舊版 cache ───
 self.addEventListener('activate', (event) => {
-  console.log('[SW-Light v3.11.2] 啟動,接管所有頁面');
+  console.log('[SW-Light v3.11.3] 啟動,接管所有頁面');
   event.waitUntil((async () => {
     try{
       const names = await caches.keys();
@@ -153,15 +178,16 @@ self.addEventListener('fetch', (event) => {
   event.respondWith((async () => {
     try{
       const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req);
+      const wantUrl = pickAssetUrl(req);           // ★ v3.11.3 webp-aware
+      const cached = await cache.match(wantUrl);   // ★ key 用實際抓取 URL(webp/png 各存各的)
 
       if(cached){
         // ─── 有 cache → 立刻回,背景更新 ───
         event.waitUntil((async () => {
           try{
-            const fresh = await cdnFetch(req, { cache: 'no-cache' }); // ★ v3.11.2 走 CDN
+            const fresh = await assetFetch(req, wantUrl, { cache: 'no-cache' }); // ★ v3.11.3 webp→png fallback
             if(fresh && (fresh.ok || fresh.type === 'opaque')){
-              await cache.put(req, fresh.clone());
+              await cache.put(wantUrl, fresh.clone());
               // 定期 trim(每 20 次更新跑一次,避免每次都跑)
               if(Math.random() < 0.05) trimCache();
             }
@@ -172,11 +198,11 @@ self.addEventListener('fetch', (event) => {
         return cached;
       }
 
-      // ─── 沒 cache → 抓網路(優先 CDN),成功則存 cache ───
-      const network = await cdnFetch(req);   // ★ v3.11.2 走 CDN
+      // ─── 沒 cache → 抓網路(優先 webp,再 CDN),成功則存 cache ───
+      const network = await assetFetch(req, wantUrl);   // ★ v3.11.3 webp→png fallback
       if(network && (network.ok || network.type === 'opaque')){
         // clone 因為 Response body 只能讀一次
-        cache.put(req, network.clone()).then(() => {
+        cache.put(wantUrl, network.clone()).then(() => {
           if(Math.random() < 0.05) trimCache();
         }).catch(e => console.warn('[SW-Light] cache.put 失敗', e));
       }
@@ -240,4 +266,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('[SW-Light v3.11.2] script loaded — 等待 install/activate');
+console.log('[SW-Light v3.11.3] script loaded — 等待 install/activate');

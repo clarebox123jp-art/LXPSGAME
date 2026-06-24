@@ -1178,7 +1178,7 @@ const HERO_IMGS = {
   '吟遊詩人': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('吟遊詩人Q.png'),
   '吸血鬼':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('吸血鬼Q.png'),
   '學者':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('學者Q.png'),
-  '動物學家': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
+  '動物學家': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png',
   '時空法師': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('時空法師Q.png'),
   '木靈使':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('木靈使Q.png'),
   '機械師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('機械師Q.png'),
@@ -1186,20 +1186,20 @@ const HERO_IMGS = {
   '陰陽師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('陰陽師Q.png'),
   '小力':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%B0%8F%E5%8A%9BQ%E7%89%88.png',
   '籃球隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('籃球隊員Q.png'),
-  '直笛團員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
-  '田徑隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
-  '幼兒園小孩': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png',
+  '直笛團員': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png',
+  '田徑隊員': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png',
+  '幼兒園小孩': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B9%BC%E5%85%92%E5%9C%92%E5%B0%8F%E5%AD%A9(%E7%B8%AE%E5%9C%96).png',
   '巫女':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png',
-  '電腦繪圖師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '程式設計師': 'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
-  '弦樂團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
-  '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
-  '九尾空貓怪': 'https://github.com/clarebox123jp-art/-/raw/main/BOSS%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AA.png',
+  '電腦繪圖師': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '程式設計師': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png',
+  '弦樂團員':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '小劇團員':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png',
+  '九尾空貓怪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/BOSS%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AA.png',
   '杏花妖':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/BOSS%E6%9D%8F%E8%8A%B1%E5%A6%96.png',
   // ★ v3.8.0(2026-05-25) — 木柵第三隻 BOSS:黑暗球‧希望型態
   '黑暗球‧希望型態': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BB%91%E6%9A%97%E7%90%83_%E5%B8%8C%E6%9C%9B%E5%9E%8B%E6%85%8B.png',
-  '綠竹筍小妖': 'https://github.com/clarebox123jp-art/-/raw/main/%E7%B6%A0%E7%AB%B9%E7%AD%8D%E5%B0%8F%E5%A6%96.png',
-  '茶葉精靈':   'https://github.com/clarebox123jp-art/-/raw/main/%E8%8C%B6%E8%91%89%E7%B2%BE%E9%9D%88.png',
+  '綠竹筍小妖': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%B6%A0%E7%AB%B9%E7%AD%8D%E5%B0%8F%E5%A6%96.png',
+  '茶葉精靈':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%8C%B6%E8%91%89%E7%B2%BE%E9%9D%88.png',
   '偷摘花的頑皮妖精': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E6%91%98%E8%8A%B1%E7%9A%84%E9%A0%91%E7%9A%AE%E7%B2%BE%E9%9D%88.png',
   '偷鳥蛋的鳥人哈維': 'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%81%B7%E9%B3%A5%E8%9B%8B%E7%9A%84%E9%B3%A5%E4%BA%BA%E5%93%88%E7%B6%AD.png',
   '偷竹筍的哥布林': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%81%B7%E7%AB%B9%E7%AD%8D%E7%9A%84%E5%93%A5%E5%B8%83%E6%9E%97.png',
@@ -1379,7 +1379,7 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'cloud_shot', name:'百步穿雲', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E5%B0%84%E6%89%8B3.png', requiresUnlock:true },
   ],
   '程式設計師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
     { id:'quantum_code', name:'量子編碼', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A8%8B%E5%BC%8F%E8%A8%AD%E8%A8%88%E5%B8%AB3.png', requiresUnlock:true, objPos:'center 10%' },
   ],
   '聖騎士': [
@@ -1415,15 +1415,15 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'time_corridor', name:'時光迴廊', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E6%B3%95%E5%B8%AB3.png', requiresUnlock:true },
   ],
   '電腦繪圖師': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E9%9B%BB%E8%85%A6%E7%B9%AA%E5%9C%96%E5%B8%AB(%E7%B8%AE%E5%9C%96).png' },
     // ★ v1.0.20260423.8600 — 移除舊版 graphic_boy/graphic_girl(已從商店下架,改為 LV10 自動解鎖)
   ],
   '直笛團員': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9B%B4%E7%AC%9B%E5%9C%98%E5%93%A1.png' },
     // ★ v1.0.20260423.8600 — 移除舊版 recorder_boy/recorder_girl
   ],
   '弦樂團員': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%BC%A6%E6%A8%82%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
     // ★ v1.0.20260423.8600 — 移除舊版 strings_boy/strings_girl
   ],
   '籃球隊員': [
@@ -1433,11 +1433,11 @@ const HERO_PORTRAIT_LIBRARY = {
     // ★ v1.0.20260423.8600 — 移除舊版 basket_boy/basket_girl
   ],
   '田徑隊員': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%94%B0%E5%BE%91%E9%9A%8A%E5%93%A1.png' },
     // ★ v1.0.20260423.8600 — 移除舊版 track_boy/track_girl
   ],
   '小劇團員': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E5%B0%8F%E5%8A%87%E5%9C%98%E5%93%A1(%E7%B8%AE%E5%9C%96).png' },
     // ★ v1.0.20260423.8600 — 移除舊版 drama_boy/drama_girl
   ],
   // ★ v1.0.20260421.3000p — 巫女替代肖像
@@ -1452,7 +1452,7 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'dryad_lv20', name:'木靈使 Lv20', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%A8%E9%9D%88%E4%BD%BFLV20.png', requiresUnlock:true },
   ],
   '動物學家': [
-    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/-/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png' },
+    { id:'default', name:'原始肖像', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8B%95%E7%89%A9%E5%AD%B8%E5%AE%B6(%E7%B8%AE%E5%9C%96).png' },
     { id:'beast_guardian', name:'萬獸守護', url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('動物學家3.png'), objPos:'center 5%', requiresUnlock:true },
   ],
   '酒吞童子': [
@@ -3527,7 +3527,7 @@ const BURST_GIF_DB = {
   //   GIF:設計單指定「死神之鐮(暗紅死神)— 死亡 / 黑暗系」,直接重用刺客現有的「死神之鐮」GIF
   //   tint:暗紅(死亡審判主題,比刺客 0.18 略深);音效:sfx-ko + sfx-sword + sfx-darkness 三層死亡感
   '死亡審判': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
     sfx:[['sfx-ko',1.0],['sfx-sword',0.85],['sfx-darkness',0.7]],
     tint:'rgba(180,0,40,0.22)'
   },
@@ -3553,7 +3553,7 @@ const BURST_GIF_DB = {
     dur:2400
   },
   '死神龍王登場': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
     sfx:[['sfx-ko',1.0],['sfx-sword',0.85]],
     tint:'rgba(200,0,50,0.18)'
   },
@@ -3584,7 +3584,7 @@ const BURST_GIF_DB = {
     dur:2400
   },
   '刀山火海': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
     sfx:[['sfx-burst',1.0],['sfx-explode',0.9],['sfx-fantasy',0.7]],
     tint:'rgba(120,0,40,0.25)',
     dur:2400
@@ -3660,27 +3660,27 @@ const BURST_GIF_DB = {
     dur:2400
   },
   '劍神連斬': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif',
     sfx:[['sfx-sword',1.0],['sfx-crit',0.9]],
     tint:'rgba(255,220,50,0.12)'
   },
   '璀璨聖光': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%92%80%E7%92%A8%E8%81%96%E5%85%89.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%92%80%E7%92%A8%E8%81%96%E5%85%89.gif',
     sfx:[['sfx-heal',1.0],['sfx-powerup',0.8]],
     tint:'rgba(255,255,180,0.15)'
   },
   '烈焰爆發': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%83%88%E7%84%B0%E7%88%86%E7%99%BC.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%83%88%E7%84%B0%E7%88%86%E7%99%BC.gif',
     sfx:[['sfx-explode',1.0],['sfx-burst',0.85]],
     tint:'rgba(255,80,0,0.15)'
   },
   '冰封末日': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%86%B0%E5%B0%81%E6%9C%AB%E6%97%A5.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%86%B0%E5%B0%81%E6%9C%AB%E6%97%A5.gif',
     sfx:[['sfx-ice2',1.0],['sfx-ice1',0.75]],
     tint:'rgba(120,220,255,0.15)'
   },
   '怒雷狂襲': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2.gif',
     sfx:[['sfx-thunder-fury',1.0]], // ★ v1.0.20260501.4690 — 改用怒雷狂襲專屬音效
     tint:'rgba(180,255,50,0.12)'
   },
@@ -3690,12 +3690,12 @@ const BURST_GIF_DB = {
     tint:'rgba(255,255,150,0.15)'
   },
   '毀滅禁咒': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AF%80%E6%BB%85%E7%A6%81%E5%92%92.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AF%80%E6%BB%85%E7%A6%81%E5%92%92.gif',
     sfx:[['sfx-explode',1.0],['sfx-fantasy',0.8]],
     tint:'rgba(140,50,255,0.15)'
   },
   '流星箭雨': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%B5%81%E6%98%9F%E7%AE%AD%E9%9B%A8.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B5%81%E6%98%9F%E7%AE%AD%E9%9B%A8.gif',
     sfx:[['sfx-shoot',1.0],['sfx-rapidfire-gun',0.9]],
     tint:'rgba(200,230,255,0.12)'
   },
@@ -3733,17 +3733,17 @@ const BURST_GIF_DB = {
     tint:'rgba(180,80,255,0.15)'
   },
   '俠盜飛梭': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E4%BF%A0%E7%9B%9C%E9%A3%9B%E6%A2%AD.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%BF%A0%E7%9B%9C%E9%A3%9B%E6%A2%AD.gif',
     sfx:[['sfx-sword',0.9],['sfx-coin',0.8]],
     tint:'rgba(255,200,50,0.12)'
   },
   '死神之鐮': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif',
     sfx:[['sfx-ko',1.0],['sfx-sword',0.85]],
     tint:'rgba(200,0,50,0.18)'
   },
   '真理之門': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%9C%9F%E7%90%86%E4%B9%8B%E9%96%80.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9C%9F%E7%90%86%E4%B9%8B%E9%96%80.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-powerup',0.8]],
     tint:'rgba(50,255,200,0.12)'
   },
@@ -3755,22 +3755,22 @@ const BURST_GIF_DB = {
     dur:2500
   },
   '逆轉神計': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E9%80%86%E8%BD%89%E7%A5%9E%E6%8A%80.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%86%E8%BD%89%E7%A5%9E%E6%8A%80.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-confirm',0.8]],
     tint:'rgba(80,200,255,0.14)'
   },
   '地球上投': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%9C%B0%E7%90%83%E4%B8%8A%E6%8A%95.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E7%90%83%E4%B8%8A%E6%8A%95.gif',
     sfx:[['sfx-explode',1.0],['sfx-punch',0.95]],
     tint:'rgba(180,120,30,0.15)'
   },
   '鮮血契約': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E9%AE%AE%E8%A1%80%E5%A5%91%E7%B4%84.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AE%AE%E8%A1%80%E5%A5%91%E7%B4%84.gif',
     sfx:[['sfx-sword',0.9],['sfx-powerup',0.8]],
     tint:'rgba(255,30,80,0.18)'
   },
   '神鬼盡滅': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif',
     sfx:[['sfx-burst',1.0],['sfx-explode',0.9]],
     tint:'rgba(255,220,50,0.18)'
   },
@@ -3780,12 +3780,12 @@ const BURST_GIF_DB = {
     tint:'rgba(50,220,80,0.15)'
   },
   '時間壓縮': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%99%82%E9%96%93%E5%A3%93%E7%B8%AE.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E9%96%93%E5%A3%93%E7%B8%AE.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-ko',0.85]],
     tint:'rgba(150,200,255,0.15)'
   },
   '元素智慧': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%85%83%E7%B4%A0%E6%99%BA%E6%85%A71.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%85%83%E7%B4%A0%E6%99%BA%E6%85%A71.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-shoot',0.8]],
     tint:'rgba(100,200,255,0.14)'
   },
@@ -3802,17 +3802,17 @@ const BURST_GIF_DB = {
     tint:'rgba(80,220,150,0.15)'
   },
   '極速閃燃': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%A5%B5%E9%80%9F%E9%96%83%E7%87%83.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A5%B5%E9%80%9F%E9%96%83%E7%87%83.gif',
     sfx:[['sfx-sword',1.0],['sfx-explode',0.85]],
     tint:'rgba(255,160,0,0.15)'
   },
   '最後之盾': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%9C%80%E5%BE%8C%E4%B9%8B%E7%9B%BE.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9C%80%E5%BE%8C%E4%B9%8B%E7%9B%BE.gif',
     sfx:[['sfx-powerup',1.0],['sfx-heal',0.8]],
     tint:'rgba(180,200,255,0.15)'
   },
   '無盡長眠': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E7%84%A1%E7%9B%A1%E9%95%B7%E7%9C%A0.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%84%A1%E7%9B%A1%E9%95%B7%E7%9C%A0.gif',
     sfx:[['sfx-fantasy',1.0],['sfx-ko',0.85]],
     tint:'rgba(100,80,200,0.18)'
   },
@@ -3824,27 +3824,27 @@ const BURST_GIF_DB = {
     dur:1830
   },
   '正義制裁': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%AD%A3%E7%BE%A9%E5%88%B6%E8%A3%81.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%AD%A3%E7%BE%A9%E5%88%B6%E8%A3%81.gif',
     sfx:[['sfx-shoot',1.0],['sfx-burst',0.85]],
     tint:'rgba(255,230,100,0.15)'
   },
   '星空祝福': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E6%98%9F%E7%A9%BA%E7%A5%9D%E7%A6%8F.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%98%9F%E7%A9%BA%E7%A5%9D%E7%A6%8F.gif',
     sfx:[['sfx-heal',1.0],['sfx-revive',0.8]],
     tint:'rgba(120,160,255,0.15)'
   },
   '動物大軍': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%8B%95%E7%89%A9%E5%A4%A7%E8%BB%8D.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8B%95%E7%89%A9%E5%A4%A7%E8%BB%8D.gif',
     sfx:[['sfx-burst',1.0],['sfx-explode',0.85]],
     tint:'rgba(100,200,80,0.15)'
   },
   '負荷超載': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E8%B2%A0%E8%8D%B7%E8%B6%85%E8%BC%89.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%A0%E8%8D%B7%E8%B6%85%E8%BC%89.gif',
     sfx:[['sfx-explode',1.0],['sfx-crit',0.9]],
     tint:'rgba(255,200,50,0.15)'
   },
   '四聖降臨': {
-    url:'https://github.com/clarebox123jp-art/-/raw/main/%E5%9B%9B%E8%81%96%E9%99%8D%E8%87%A8.gif',
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9B%9B%E8%81%96%E9%99%8D%E8%87%A8.gif',
     sfx:[['sfx-burst',1.0],['sfx-fantasy',0.9]],
     tint:'rgba(220,180,255,0.18)'
   },

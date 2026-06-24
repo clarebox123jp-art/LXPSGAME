@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.13 — 素材全統一至單一倉(整併 Game 與舊倉'-') + 全資源壓縮優化 + SW webp-aware
+  {
+    ver: 'v3.16.13',
+    date: '2026-06-25',
+    brief: [
+      '🚀【啟動加速】遊戲圖片改用 WebP、背景音樂與動畫做了壓縮優化,啟動和登入更快、更省流量(畫質與音質幾乎沒有差別)。新款 iPad 會自動用更小的圖,舊款 iPad 照常顯示、不受影響。',
+      '🔧【素材整併】把原本分散在三個來源(主倉 + 另一帳號 + 一個舊倉)的圖片音效全部整合到單一倉庫,更穩定好維護、不再依賴外部帳號或舊倉。',
+      '🔔 十連抽的「敲鑼」音效因原檔遺失,改用主倉現有的「擎天爆閃」音效。',
+    ],
+    items: [
+      '★ v3.16.13【素材大搬家·三倉統一】原素材分散三處:主倉 clarebox123jp-art/LXPSGAME、同帳號舊倉 clarebox123jp-art/-(補搬 68 檔:26 圖+22 音樂+20 動畫)、第二帳號 ChrisRaelGameMaster/Game(37 檔:36 音效+1 圖,其中敲鑼遺失已替代)。全部搬入 LXPSGAME 單一倉;index.html 101 處 + hero_db.js 45 處 + main.css 7 處外部 URL 統一改為 raw.githubusercontent.com 指向 LXPSGAME/main(涵蓋 Game 的 raw/blob/jsDelivr 三式 + 舊倉 - 的 raw 兩式);兩 SW 的 CDN_REPOS 移除 - 與 Game、只留 LXPSGAME。不再依賴第二帳號或舊倉(避免失聯則素材 404)。',
+      '★ v3.16.13【遺失音效替代】敲鑼.mp3 三倉皆不存在 → 十連抽召喚之鐘 sfx-gong 改指向主倉現有「擎天爆閃音效.m4a」(連播三次漸弱的儀式感維持);播放邏輯未動,只換 src。',
+      '★ v3.16.13【資源壓縮·不改邏輯】全倉 PNG→WebP(q82·約 335 張)、BGM/音效降至 128kbps(約 136 個音檔)、高 fps GIF 降至 15fps(約 77 個);合計減少數百 MB 的新機傳輸量。皆為「未下載過的新機」優化,舊 iPad 與已快取裝置行為不變。WebP 為新增(原 PNG 保留作舊機 fallback),音樂/GIF 同檔名覆蓋。',
+      '★ v3.16.13【SW webp-aware】sw.js v3.5.88 + sw-light.js v3.11.3:支援的瀏覽器抓 .png 時自動改抓同名 .webp(Accept 含 image/webp)、舊 iPad 或 webp 不存在(404)自動退回原 .png;PWA icon 維持 png;cache key 改用實際抓取 URL。',
+      '★ v3.16.13【版本鏈】本輪改 index.html + hero_db.js + main.css + game_changelog.js + sw.js + sw-light.js 並上傳全部優化素材。三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.13;_vers[hero_db.js] → v3.15.90;sw.js v3.5.88、sw-light.js v3.11.3(不在 _vers);admin_panel.js(v3.16.10)/world-boss*/arena.js 未改。GAME_CHANGELOG 維持 20 筆。',
+    ],
+  },
   // v3.16.11 — 封存去重(idempotent):重複按「確認並封存」不再寫重複帳本紀錄
   {
     ver: 'v3.16.11',
@@ -321,22 +338,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.93【獎勵記帳/結算】localStorage lxps_camp_bank_{日期}={dailyCorrect,settledCoins,settledCrystals}(登入前無 uid 只能存本地);_campEarnedFor 由今日答對數推導應得(知識幣=對數×10 上限 1000·水晶=floor(對數/30) 上限 3);_campEnterGame→_campSettleBank 算 target-settled 差額·經 window._fbCompensatePlayer(coins coinsMode add + backpack summon_crystal·走帳本)idempotent 入帳·成功才推進 settled(失敗保留待下次);沒按進入則留待下次登入結算。停輪詢+bgmEnsureSceneBgm 回場景+移除覆蓋層+入帳 toast。',
       '★ v3.15.93【防刷/安全】每日上限(知識幣 1000/水晶 3)為防刷天花板(登入前身分為裝置暫時態·獎勵存本地·上限即邊界);★不寫本週小博士排行榜(練習營答對不計入·避免榜單 farming·也因登入前無法可靠寫雲端);結算走 _fbCompensatePlayer 帳本→老師可稽核。rescue 說明彈窗加「_camp-overlay 在場則跳過」防疊加。window._CAMP_ENABLED 可全域關閉。',
       '★ v3.15.93【版本鏈】本輪只改 index.html + game_changelog.js(A 段)。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.92→v3.15.93;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(B 段秒開另回合)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.72)。',
-    ],
-  },
-  // v3.15.92 — 知識王今日挑戰「換科目」上限10次 + 題庫輪播不重複
-  {
-    ver: 'v3.15.92',
-    date: '2026-06-23',
-    brief: [
-      '🎲【知識王今日挑戰「換科目」大升級】「🎲 換科目」的可重抽次數從 <b>3 次提高到 10 次</b>,想換到喜歡的題庫更有彈性!',
-      '   ・而且每次換科目都<b>保證換到不同的題庫</b>,不會一直抽到同一個;要等<b>所有題庫都出現過一輪</b>,才會再循環回第一個。',
-      '   ・課堂複習(左)與一般科目(右)各自獨立輪播,各自都會把自己的題庫全部輪過才循環。',
-    ],
-    items: [
-      '★ v3.15.92【知識王換科目改題庫輪播 index.html】_kingRerollSubject 上限 3→10;改用「洗牌副牌」輪播取代原本「隨機排除前一個」:_kingShuffleArr(Fisher-Yates) 把 _kingGetSubjects()/_kingGetReviewSubjects() 各洗成一副牌(_kingBuildSubjectDecks)、指標逐次前進(_kingDeckAdvance·% 回繞=走完整副牌回到第一個)、_kingDeckCurrentSubject/_kingDeckCurrentReviewSubject 取當前題庫;保證一輪內不重複,全部出現過才回第一個。',
-      '★ v3.15.92【兩池獨立輪播】左半課堂複習 + 右半一般科目各自一副牌、各自在自己長度循環(各自保證全部出現過才循環);換科目時兩副牌同步各前進一格(共用 10 次上限)。',
-      '★ v3.15.92【UI/初始】_kingShowStartPopup 開彈窗(!isResume)時洗牌建副牌、當前題庫取第一張、_rerollLeft 改 10-_rerollCount;規則文案改「可以重抽 10 次(每次都換不同題庫,全部出現過才會再循環)」;deck 為純執行期狀態,不進雲端存檔白名單(開彈窗即重洗,不影響存檔/不污染雲端)。',
-      '★ v3.15.92【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.91→v3.15.92;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.71)。',
     ],
   },
 ];
