@@ -12,6 +12,40 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.2 — 緊急修正:貓空打完 BOSS 後卡在確認獎勵視窗/戰鬥畫面無法結束
+  {
+    ver: 'v3.16.2',
+    date: '2026-06-24',
+    brief: [
+      '🚑【緊急修正:打完 BOSS 後卡住的嚴重問題】先前有同學反映「貓空打完 BOSS、出現評分獎勵、按了確認後卻卡在獎勵視窗或戰鬥畫面、離不開」,這版已根治!',
+      '   ・現在按下「✅ 確認」會「立刻」收掉獎勵視窗、離開戰鬥畫面,不論網路快慢都不會再卡住。',
+      '   ・敗北後選「回學校休整」也一併修正,不會再卡在戰鬥畫面。',
+    ],
+    items: [
+      '★ v3.16.2【根因】結算「✅ 確認」鈕 onclick 會先把自己 disabled 再呼叫 advStartWinSequence;舊流程函式中段 await gameCloudSave() 在校園慢網/壅塞時長時間卡住 → 原本排在其「之後」的「隱藏結算 overlay(L≈87901)+ 清戰鬥畫面 class(L≈87911)」遲遲不執行,而鈕已 disabled 無法再按 → 玩家卡在確認獎勵視窗(離不開)兼卡在戰鬥畫面(結束不了),幾乎所有學生都會踩到。',
+      '★ v3.16.2【修法①】把「隱藏結算 overlay + 清戰鬥畫面 class + 清行動順序條」提到 advStartWinSequence 入口(worldboss 守門後、重入守門前),讓 UI 轉場與後續存檔/獎勵計算完全脫鉤——無論網路多慢、無論後續是否殘留 await,確認後一定能立刻離開;後續 L≈87901/87911 同款隱藏/清除保留為冗餘雙保險。讀評分/分數是讀 DOM textContent,移除 show 只是視覺隱藏不影響計算。',
+      '★ v3.16.2【修法②】敗北「回學校休整」advGoRestAtSchool 內、隱藏戰鬥畫面 class 之前的 await gameCloudSave() 改 Promise.resolve(gameCloudSave()).catch(...) fire-and-forget(原本同樣會在慢網阻塞戰鬥畫面收起);進度另有 autosave + 中斷快照兜底。',
+      '★ v3.16.2【未動範圍】只調整「UI 轉場時機」,不改發獎/解鎖/EXP/存檔內容;BOSS 戰結算發獎、英雄加入、升級演出邏輯皆不變。承接 v3.16.1(好友借用+召喚卷/貓空 fire-and-forget)。',
+      '★ v3.16.2【版本鏈】只改 index.html + game_changelog.js;_GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.2;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.81)。',
+    ],
+  },
+  // v3.16.1 — 體驗修正(好友借用套用最高等級+至寶、召喚卷/貓空解鎖升級畫面立即出現)
+  {
+    ver: 'v3.16.1',
+    date: '2026-06-24',
+    brief: [
+      '⚡【三項體驗修正,讓遊戲更順手】',
+      '   ・<b>邀請好友借用英雄</b>:現在會正確套用好友英雄的「最高等級」與「裝備的至寶」!(以前只會用到對方「設定代表英雄那一刻」的狀態,之後升級或換至寶都沒更新到)',
+      '   ・<b>使用 SSR / SR 召喚卷、自選卷、至寶卷</b>:解鎖到的角色或至寶畫面會「立刻」出現,不用再等很久(原本網路慢時要乾等 8~30 秒)。',
+      '   ・<b>貓空打完 BOSS</b>:按下「確認」領獎後,英雄升級畫面會「立刻」出現,不再卡住 8~30 秒才跳出來。',
+    ],
+    items: [
+      '★ v3.16.1【好友借用根治】representativeHero 原僅在 _selectRepHero(設定代表英雄)當下擷取一次快照(等級/statInvested/skillLevels/burstLevel/裝備至寶),之後升級/換至寶/投資點都不更新雲端 → 好友邀請讀 fd.representativeHero 拿到舊快照。根因:_refreshMyRepHeroCloud 全程零呼叫點。修法:gameCloudSave 雲端寫入成功後接 _refreshMyRepHeroCloud()(內建 1.5s 防抖 + 只在有代表英雄時寫 + 重讀 live 等級/至寶),任何進度存檔後自動刷新雲端代表英雄快照。注意:已設代表英雄但修正上線後尚未再玩者,其雲端快照要等下次存檔才更新(自癒)。',
+      '★ v3.16.1【召喚卷顯示前存檔改 fire-and-forget】SSR/SR 隨機卷 + SSR/SR 自選卷 + 隨機/自選至寶卷 共 4 條流程,原本在顯示解鎖結果動畫「之前」await gameCloudSave → 校園 wifi 慢時阻塞 UI 8~30 秒。解鎖已即時寫 localStorage 解鎖清單 + reconcile 下次登入補雲端,await 純多餘 → 改 Promise.resolve(gameCloudSave()).catch(...) 背景化,結果畫面立即出現。',
+      '★ v3.16.1【貓空 BOSS 顯示前存檔改 fire-and-forget】advStartWinSequence(L≈87896)在收結算畫面與出升級視窗「之前」await gameCloudSave 阻塞 8~30 秒。獎勵(書/幣/水晶)、EXP、升級清單此時已套進記憶體,存檔純持久化不需擋 UI;另有 grantBattleExp 的 fire-and-forget 存檔 + autosave + 中斷快照三重兜底 → 改 fire-and-forget。三處皆只動「顯示視窗前的存檔時機」,不改發獎/解鎖/存檔內容。',
+      '★ v3.16.1【版本鏈】本輪疊在 v3.15.99 會員資料 + v3.16.0 累積答對之上,只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.1;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.80)。',
+    ],
+  },
   // v3.16.0 — 答題解鎖門檻放寬(累積答對 20 題,答錯不再歸零)
   {
     ver: 'v3.16.0',
@@ -310,35 +344,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.82【自動 heal 雲端 + 跨帳號防護不變】救回的英雄寫進本地後,隨下次 autosave 經 _fbSave union(只增不減)回寫雲端主檔 + live + safe 三槽 → 雲端自動補齊,之後 GM 不必再手動救、也不會再次被誤刪。跨帳號汙染防護維持既有三層(本機命名空間 @@<uid> + _lxpsEnforceDeviceOwner 裝置擁有者對齊 + gameCloudLoad 鎖 _gUserId),本次只放寬「同一個自己帳號命名空間內」的誤殺、完全不放寬跨帳號,所以「不會讀到別人的英雄」這條安全性不變。',
       '★ v3.15.82【安全邊界】只救 _PLAYER_HERO_NAMES 白名單內的英雄(已從 HERO_DB 移除的不救)、只救等級>1(避免剛解鎖 seed=1 的幻影或汙染)、admin_delete 與別帳號 uid 紀錄一律不救。',
       '★ v3.15.82【版本鏈】4 GAME 同步點 v3.15.81→v3.15.82;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.82。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.62)。',
-    ],
-  },
-  // v3.15.81 — 知識王完成後可查看今天做完的科目與成績
-  {
-    ver: 'v3.15.81',
-    date: '2026-06-22',
-    brief: [
-      '📋【知識王:完成後可查看今天的成績】知識王挑戰完成後,再打開挑戰視窗,底部按鈕會變成「<b>📋 查看今天的科目與成績</b>」,點下去就能看到<b>今天的分數、答對題數,以及做完的科目</b>(一般科目 + 課堂複習)。隔天 08:00 重置後,完成新挑戰會自動更新成當天的成績。',
-    ],
-    items: [
-      '★ v3.15.81【今日成績持久化 index.html】_kingChallenge 新增 _todayResult { date, score, correct, total, subN, subR, isReview };_kingClaimRewards 完成領獎時記錄(correct=_answered 中 true 數、total=_curQuestions 長度、subN=_curSubject、subR=_curSubjectReview、isReview=_isReviewMode)→ _kingSaveToCloud。',
-      '★ v3.15.81【雲端白名單 save/load】save 序列化於 _bestScore 後加 _todayResult、load 還原同步;跨日由 date !== 今日(_kingGetTodayStr)自動失效(不需顯式清除,完成新挑戰時覆寫;_dailyDone 為 false 時也進不到查看鈕)。',
-      '★ v3.15.81【UI】_kingShowEntryPopup 已完成(_dailyDone)底部按鈕由停用「✅ 今日挑戰已完成」改為可點「📋 查看今天的科目與成績」→ _kingShowTodayResult();新增 _kingShowTodayResult 全內聯彈窗(分數大字依分數變色、答對 X/Y、一般/課堂複習科目 chips、課堂複習徽章、歷史最高分;date 不符或無紀錄走 fallback「已完成」訊息;關閉用 .ktr-close JS 綁定 + 遮罩點擊,避免跳脫引號)。',
-      '★ v3.15.81【版本鏈】4 GAME 同步點 v3.15.80→v3.15.81;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.81。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69。本輪(81)只改 index.html。GAME_CHANGELOG trim 至 20(本 session 78-81 共加 4、移除最舊 v3.15.58/59/60/61)。',
-    ],
-  },
-  // v3.15.80 — 召喚紀錄改存雲端 + 登入同步 + GM 查詢
-  {
-    ver: 'v3.15.80',
-    date: '2026-06-22',
-    brief: [
-      '☁️【召喚紀錄改存雲端】以前召喚紀錄只存在這一台裝置,換裝置、清快取或重新登入就看不到了。現在<b>召喚紀錄會自動存到雲端、登入後同步</b>,不論在哪一台 iPad 都看得到<b>完整的召喚紀錄</b>(包含用合成召喚卷抽到的結果)。',
-    ],
-    items: [
-      '★ v3.15.80【雲端化 index.html block#02 加 5 helper】_fbSaveSummonHistory(整包寫 summonHistory/{uid}={uid,list≤60,updatedAt},merge:false)、_fbLoadSummonHistory(uid)、_fbSyncSummonHistoryOnLogin(雲端+本地以 t+_+n 去重、保最新 60 寫回本地,本地較多則回寫雲端)、_fbReadPlayerSummonHistory(GM:email/uid/學號 lsps→補 @stu.lsps.tp.edu.tw 以 where email 反查 uid)、_fbShowPlayerSummonHistory(GM 彈窗:摘要抽到的稀有英雄/台灣至寶 chips + 逐次明細)。Firestore SDK refs 在 block#02 模組作用域,故 helper 定義於此、跨 block 以 window.* 呼叫。',
-      '★ v3.15.80【寫入/同步點】_recordSummonHistory 寫 localStorage 後即時 window._fbSaveSummonHistory(_hist)(星空抽/隨機券/合成自選券/至寶券皆經 _showSummonResults/_showSummonTicketResult → _recordSummonHistory);登入 onAuthStateChanged 的 await gameCloudLoad(user.uid) 後加 _fbSyncSummonHistoryOnLogin()。',
-      '★ v3.15.80【GM UI admin_panel.js】玩家活動記錄查詢區(_admin-activity-section)按鈕列加「📜 召喚紀錄」鈕,讀查詢框 email/uid/學號 → window._fbShowPlayerSummonHistory;加按鈕到既有 section 免三點同步(_summonBtn grab + onclick 綁定),全程無 optional chaining。',
-      '★ v3.15.80【⚠ 需部署 Firestore 規則】summonHistory/{uid}:玩家寫自己(request.auth.uid==uid + hasOnly([uid,list,updatedAt]))、GM(isAdmin)讀全部;未部署則雲端寫入被拒,本地紀錄仍正常(belt-and-suspenders,不影響召喚本身)。',
-      '★ v3.15.80【版本鏈】4 GAME 同步點 v3.15.79→v3.15.80;_vers[admin_panel.js] v3.15.58→v3.15.80 + ADMIN_PANEL_VERSION v3.15.58→v3.15.80(自檢需一致)。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69。本輪改 index.html + admin_panel.js。',
     ],
   },
 ];
