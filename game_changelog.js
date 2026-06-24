@@ -12,6 +12,126 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.11 — 封存去重(idempotent):重複按「確認並封存」不再寫重複帳本紀錄
+  {
+    ver: 'v3.16.11',
+    date: '2026-06-24',
+    brief: [
+      '🛠️【封存小修】「✅ 確認並封存」現在可重複按而不會產生重複的封存紀錄(idempotent)。對玩家體驗無感,純穩定性。',
+    ],
+    items: [
+      '★ v3.16.11(審查殘餘風險4修正)封存寫入前先掃描帳本,排除「已有自己 uid 非 admin_delete 紀錄(含先前 migration_seal 封存)」的英雄 → 只對真正還沒紀錄的英雄補寫;送審失敗重按、或同帳號重開審查再封存,皆不再累積重複 migration_seal 紀錄。本地讀一次重用(不增讀寫),300 筆上限不變。',
+      '★ v3.16.11【安全/範圍】只動 index.html 封存 handler(_openAccountAudit 內),純去重、不改封存判定/帳本權威自癒/移除流程;封存仍只「加帳本紀錄、不刪任何英雄/資源」。三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.11(admin_panel.js 本輪未動維持 v3.16.10)。GAME_CHANGELOG trim 至 20。',
+    ],
+  },
+  // v3.16.10 — 「幫英雄上鎖(封存)」一次性登入提醒(老師開關控制)
+  {
+    ver: 'v3.16.10',
+    date: '2026-06-24',
+    brief: [
+      '🛡️【全體封存提醒·老師開關控制】老師清完帳號後,在後台「📨 帳號救援申請審核」卡頂打開「全體玩家封存提醒」開關 → 全體學生登入時會自動看到一次「幫英雄上鎖」提示,引導他們去封存英雄(每位學生只彈一次)。沒打開前不會彈。',
+    ],
+    items: [
+      '★ v3.16.10【玩家端】新增 window._maybeShowSealPrompt:登入到關卡頁後延 3200ms 觸發(排在會員首登 2200ms、救援說明 2500ms 之後),三道守門才彈——① GM 開關 gameConfig/sealPrompt.enabled===true(讀不到/未開→不彈)② per-uid 完成旗標 lxps_seal_prompt_done_<uid>(只彈一次)③ 防疊加(續戰/練習營/會員/救援/圖鑑審查/新手指引彈窗在場則跳過);_showSealPrompt 綠色彈窗三鈕:「✅ 現在就去封存」→ 標記完成 + 開 _openAccountAudit、「知道了等一下」→ 不標記(下次登入再提醒)、「我已封存過不用再提醒」→ 標記完成。',
+      '★ v3.16.10【老師端 admin_panel.js】救援審核卡頂新增「🛡️ 全體玩家封存提醒」開關(✅開啟 / ⛔關閉 + 即時狀態顯示),寫 gameConfig/sealPrompt {enabled,updatedAt,updatedBy}(window._fbAdminSetSealPrompt / _fbAdminGetSealPrompt);開啟前 confirm 提醒「請先清完髒帳號再開,否則未清幻影會被學生封存成合法」。',
+      '★ v3.16.10【安全/順序】GM 開關預設關 → 部署後不會自動彈任何人;務必先清完 backlog(救援審查 + GM 工具)再開啟;封存每人只彈一次、idempotent;gameConfig 為 GM-only 寫、登入可讀 → 不需改 firestore.rules。',
+      '★ v3.16.10【範圍/版本】index.html(封存提醒 client + onAuth 觸發)四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] → v3.16.10;admin_panel.js ADMIN_PANEL_VERSION → v3.16.10(本檔同時含 v3.16.7 救援卡回收補償/復原/爭議分流,首次上傳即一併生效)。GAME_CHANGELOG trim 至 20。',
+    ],
+  },
+  // v3.16.9 — 全體玩家自助「確認並封存」英雄 + 帳本權威自癒:徹底解決「角色不見」
+  {
+    ver: 'v3.16.9',
+    date: '2026-06-24',
+    brief: [
+      '🛡️【新增:確認並封存我的英雄】到「📨 帳號救援申請 → 🔍 我的英雄來源自我審查」,看過自己的英雄後按「✅ 確認並封存」,系統會把你的英雄鎖定保護——<b>以後就算暫時不見,下次登入也會自動回來</b>。這是為了徹底解決「角色不見」。',
+      '   ・綠框 ✅ 已確認是你的、🟡 需要你確認(不是你的可按「不是我的」回收換補償)、🔒 可能遺失的可救回——處理完按「確認並封存」一次搞定。',
+    ],
+    items: [
+      '★ v3.16.9【A·玩家自助封存】_openAccountAudit 送出鈕改「✅ 確認並封存」:對「目前持有 + 沒勾不是我的 + 查無任何解鎖紀錄 + 通過活動英雄守門(_advHasEventUnlockEvidence)」的英雄,補寫 source=migration_seal 的「自己 uid」帳本紀錄(本地 adv_hero_unlock_history + 雲端 _heroUnlockHistory via _lxpsCloudInstantUnlock arrayUnion 批次),填補帳本缺口;★ 他人 uid 的疑似幻影「不」封存(仍可被回收);旗標(回收 extraHeroes / 復原 restoreHeroes / 爭議 contestedHeroes)續送老師核對。封存為純「補帳本紀錄」不新增/不移除英雄 → 安全。',
+      '★ v3.16.9【B·帳本權威自癒】advGetUnlockedHeroes 自癒升級:一次解析帳本得兩集合 _del(最新一筆 admin_delete→不自癒)與 _own(有自己 uid 非 admin_delete 紀錄,含封存 migration_seal→且最新非 admin_delete);對 _own 中「不在清單」的英雄自動補回。★ 只認自己 uid → 跨帳號殘留(別人 uid 的紀錄)永遠無法被認領;活動限定英雄仍經解鎖證據守門。封存後帳本完整 → 合法英雄掉了下次登入自動回來。',
+      '★ v3.16.9【治本鏈完成】本機 @@uid 命名空間(v3.13.19 已擋「同 iPad 讀到別人本機資料」)+ 封存補齊帳本 + 帳本權威自癒(只認自己 uid)三者合起來:合法英雄結構上「掉不掉、會自己回來」,跨帳號殘留「認不回、可回收」→ 收斂「角色不見」與「多別人角色」。誤刪仍留 admin_delete 軌跡可一鍵還原。',
+      '★ v3.16.9【誠實邊界】極端情境(解鎖那一刻紀錄尚未落地、裝置又剛好被清)理論上仍可能,但靠「本機帳本先寫 + 自動補同步 + 封存後自癒完整 + 誤刪可逆 + 學生一鍵自救」壓到實務等於零、且自動/一鍵修復。需先清完 backlog 再請全體封存。',
+      '★ v3.16.9【範圍/版本】只動 index.html(封存 + 自癒,純玩家端);三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.9;admin_panel.js 維持 v3.16.7(GM 爭議審核沿用)。GAME_CHANGELOG trim 至 20。',
+    ],
+  },
+  // v3.16.8 — 修正「遊戲指引 > 戰鬥系統」四種行動按鈕排版(擠成窄條 → 自適應卡片)
+  {
+    ver: 'v3.16.8',
+    date: '2026-06-24',
+    brief: [
+      '🛠️【修正遊戲指引排版】「📚 遊戲指引 → ② 戰鬥系統 → 四種行動按鈕」原本全部擠成左側一條很難看,已改成整齊的卡片格(普通攻擊 / 技能 S1 / 技能 S2 / 極限爆發 各一張卡,自動填滿寬度、手機/平板會自動換行)。',
+    ],
+    items: [
+      '★ v3.16.8【根因】該區塊 HTML 有壞標籤:「…逆轉戰局！</span></div<div…」少一個「>」(</div< 把關閉標籤與下一個 <div 黏在一起)→ 少關一層 div(實測該段 <div 11 個、</div> 只有 10 個)→ DOM 結構錯亂,加上側邊縮圖把行動列擠進窄欄,四個按鈕被壓成一直線長條。另有「</div></div>></div>」多一個「>」。',
+      '★ v3.16.8【修法】把整個「四種行動按鈕」區塊重寫成乾淨的自適應四卡格 grid-template-columns:repeat(auto-fit,minmax(210px,1fr)),每張卡=按鈕 + 說明,移除會擠壓版面的側邊縮圖;同步修掉壞標籤、補齊 div(新區塊 <div/</div> 9=9 平衡)。「💡 主動技能 vs 被動技能」說明框內容保留不變。',
+      '★ v3.16.8【範圍】只動 index.html 的 _showNewbieGuide 第②章 render 字串(純前端版面),不影響任何遊戲邏輯/存檔;三點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.8(admin_panel.js 本輪未動維持 v3.16.7)。GAME_CHANGELOG trim 至 20。',
+    ],
+  },
+  // v3.16.7 — 帳號自我審查(圖鑑卡片版):看清每隻英雄來源、回收不是自己的(換補償)、申請救回遺失
+  {
+    ver: 'v3.16.7',
+    date: '2026-06-24',
+    brief: [
+      '🔍【新增:我的英雄來源自我審查(圖鑑卡片版)】打開「📨 帳號救援申請」→「🔍 我的英雄來源自我審查」,用圖鑑卡片一眼看出每隻英雄是「怎麼來的、什麼時候得到的」。',
+      '   ・<b>綠框 ✅</b> = 系統已從你的遊戲記錄確認是你的,免處理(包含「自己抽到 / 打到」和「曾被汙染」並存的情況,仍算你的)。',
+      '   ・<b>🟡 需要你確認</b> = 你持有、但查無你自己的取得紀錄。認得就不用動;<b>不是你的</b>按「不是我的」回收 → 老師核准後會<b>發給你投資補償(知識幣)</b>,讓帳號變乾淨。',
+      '   ・<b>🔒 可能遺失的英雄</b> = 有你的紀錄或練過痕跡卻不在身上,可按「這是我的、要回來」申請救回。',
+      '   ・早期沒有紀錄、但你確定曾擁有的,也可以申請,老師會人工核對(之前同場連刷出很多 SSR 的 BUG 英雄不在復原範圍)。',
+    ],
+    items: [
+      '★ v3.16.7【學生端 _openAccountAudit】client 端讀 adv_hero_unlock_history + advGetUnlockedHeroes + _heroLevels + uid 即時三桶分類:桶1 已擁有且有自己合法紀錄(own-uid 或無 uid 舊資料、非 admin_delete,含雙紀錄)→ 綠卡免動;桶2 已擁有但查無自己合法紀錄(無紀錄 / 只有他人 uid / 只有 admin_delete)→ 黃卡;桶3 未擁有但有自己紀錄或等級>1 → 可救回;桶3b 未擁有且查無紀錄 → 次級「其他英雄」可申請。圖鑑卡片用 HERO_IMGS 頭像 + 稀有度邊框(SSR金/SR紫/其他藍)+ 來源時間字幕,未擁有灰階。',
+      '★ v3.16.7【預設信任、只標例外】絕不做「沒勾就刪」;移除只對學生明確按「不是我的」動作。桶2 他人 uid / 查無紀錄者可同時按「這是我的」→ 標記爭議送 GM 人工判(對應老師裁示)。',
+      '★ v3.16.7【投資補償預覽】桶2 按「不是我的」即顯示「回收補償 ≈ min(30000,max(800,等級×600)) 幣(老師核准後發放)」,鼓勵把不屬於自己的角色回收換乾淨帳號。',
+      '★ v3.16.7【送審】三類分開收進既有 claims 物件(extraHeroes 回收 / restoreHeroes 有證據復原 / contestedHeroes 爭議)→ 沿用 _fbSubmitAccountRescueRequest,免改 helper / firestore.rules;_openRescueReq 既有文字清單改為啟動圖鑑審查的按鈕。',
+      '★ v3.16.7【GM 端 admin_panel.js】救援審核卡清楚分流:🚩 不是我的 → 一鍵移除 +（v3.16.7）回收後經 _fbCompensatePlayer 正規發放補償;🟢 無爭議可自動復原(有證據)→ 一鍵 union 加回;🔍 需你判斷的爭議(學生堅持但帳本顯示他人 / 查無紀錄)明顯標出 + 提醒核對召喚紀錄、BUG 連刷英雄不復原 → 你手動決定。_fbAdminBulkRemoveHeroes 加 opts.compensate 回傳補償金額。',
+      '★ v3.16.7【版本鏈】index.html + admin_panel.js + game_changelog.js 同步 v3.16.7;承接 v3.16.6(幻影復活根治)。本輪做學生端英雄審查 + GM 審核分流;至寶圖鑑審查與「沒爭議全自動批次」為下一輪。GAME_CHANGELOG trim 至 20。',
+    ],
+  },
+  // v3.16.6 — 幻影角色復活根治 + 帳號救援可看英雄來源、標記「不是我的」
+  {
+    ver: 'v3.16.6',
+    date: '2026-06-24',
+    brief: [
+      '🛡️【根治「被移除的英雄又自己跑回來」】先前少數同學遇到「老師幫忙移除某隻角色後、隔天登入它又出現」的狀況,這版徹底修好,移除後不會再復活。',
+      '🔍【帳號救援申請升級】打開「📨 帳號救援申請」,現在可以看到「你每一隻英雄是幾月幾日、用什麼方式得到的(召喚 / 打王 / 老師補發…)」;若有「不是你抽到 / 打到的」或「查無紀錄又完全不認得」的,勾選後送出,老師核對遊戲記錄後會幫你移除。',
+    ],
+    items: [
+      '★ v3.16.6【甲·源頭清殘留】GM 兩支選擇性移除工具(_fbAdminDeleteUnlockedHero 單刪 / _fbAdminBulkRemoveHeroes 批量收回)補清 heroExp / heroTraitLevel 殘留:此二表無 _s 字串版,原本刪英雄只清 5 表、漏 heroExp → 殘留會被 desync 修復重建等級。',
+      '★ v3.16.6【乙①·機制治本】_lxpsRepairLevelExpDesync 改為「只修已在 _heroLevels 有正等級的英雄、絕不從 heroExp-only 殘留創造新等級鍵」;合法英雄解鎖時已 seed _heroLevels=1,故零影響合法英雄、只擋幻影。',
+      '★ v3.16.6【乙②·機制治本】advGetUnlockedHeroes 自癒網對「帳本最新一筆 = admin_delete」的英雄不自癒(原本只擋活動限定英雄、普通 SSR/SR 一律放行 → 被刪英雄循 desync→自癒→雲端復活);比照 _applySafeData v3.15.82 在地救回早有的 admin_delete 守門補齊。',
+      '★ v3.16.6【復活鏈】GM 刪英雄→heroLevels_s 清乾淨但 heroExp 殘留→登入 desync 用 heroExp 重建 _heroLevels→自癒網 union 回 unlockedHeroes→存雲端→復活。甲清存量、乙堵機制 → 結構上不再復活。',
+      '★ v3.16.6【Q2·來源顯示】學生端 _openRescueReq 新增「🔍 我的英雄是怎麼來的」清單:讀本地 adv_hero_unlock_history 顯示每隻英雄來源 + 時間、查無紀錄標❓;每隻附「不是我的」勾選 → _rescueReqSubmit 收進 claims.extraHeroes(塞既有 claims 物件、免改 helper / firestore.rules)。',
+      '★ v3.16.6【Q2·GM 端】admin_panel.js 救援審核卡新增 _extraBlock 顯示學生標記「不是我的」英雄晶片 + 「🗑 移除學生標記的不是我的英雄」鈕(走 _fbAdminBulkRemoveHeroes,本版已根治復活 → 移除後不再回來)。',
+      '★ v3.16.6【版本鏈】index.html + admin_panel.js + game_changelog.js 同步 v3.16.6;補回先前漏上傳的 v3.16.4 / v3.16.5 玩家公告;GAME_CHANGELOG trim 至 20(移除最舊 v3.15.83 / 84 / 85)。',
+    ],
+  },
+  // v3.16.5 — 帳號污染完美保護:過時分頁不再蓋更新 + 一鍵重建移除幻影 + 載入更一致
+  {
+    ver: 'v3.16.5',
+    date: '2026-06-24',
+    brief: [
+      '🛡️【帳號污染完美保護】① 老師更新你的帳號後,舊分頁不再蓋掉更新(會自動重新載入套用最新)。',
+      '   ② 後台「一鍵帳號重建」會自動移除「明明被刪、卻又冒出來」的幻影角色。',
+      '   ③ 養成資料載入更一致、更防污染。',
+    ],
+    items: [
+      '★ v3.16.5【piece3】GM 補償 / 還原 / 重建 / 收回 / 重置 / 強制還原 6 處主檔寫 _authoritativeRestoreAt;_applySafeData 載入擷取 session 基線,onSnapshot 偵測雲端戳記比基線新 → 鎖存 + 1.8s 重載;gameCloudSave 保護層 1.6 拒存過時 session → 不再蓋掉老師的補償。',
+      '★ v3.16.5【piece2】_fbRebuildAccountFromLedgers 偵測 unlockedHeroes 中帳本判定不該有者:類(a)帳本最近 = admin_delete(被刪卻又出現)→ 自動移除;類(b)帳本查無紀錄 → 僅報告供老師人工審核、絕不自動移除。',
+      '★ v3.16.5【piece1】_LXPS_PREFER_S 納入 heroStatInvested / heroSkillLevels,與 _applySafeData 早已採信此二者 _s 對齊,消除三槽合併路徑不一致。',
+    ],
+  },
+  // v3.16.4 — 後台修正:GM 清除/重置/復原後,清除結果不再被學生下次登入的舊資料蓋回
+  {
+    ver: 'v3.16.4',
+    date: '2026-06-24',
+    brief: [
+      '🔧【後台修正】老師「清除異常英雄 / 重置 / 復原帳號」後,清除結果有時會在學生下次登入時被舊資料蓋回的問題已修正(讓老師的操作真正生效、不再被『復原』)。',
+    ],
+    items: [
+      '★ v3.16.4【根因】_applySafeData 載入時已優先採信 heroStatInvested_s / heroSkillLevels_s,但 4 支 GM 工具(刪英雄 / 批量收回 / 重置 / 污染清除復原)寫了乾淨 map 卻沒寫對應 _s → 學生一登入採信舊髒 _s 把清除『復原』= 污染又回來。',
+      '★ v3.16.4【修法】四處 _patch 補寫 heroStatInvested_s / heroStatPoints_s / heroSkillLevels_s / heroBurstLevels_s(污染清除復原工具連 heroLevels_s 一併補)。純加欄位、零回歸風險。',
+    ],
+  },
   // v3.16.3 — 帳號修復:校正「等級異常偏低但經驗很多」的英雄
   {
     ver: 'v3.16.3',
@@ -217,133 +337,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.92【兩池獨立輪播】左半課堂複習 + 右半一般科目各自一副牌、各自在自己長度循環(各自保證全部出現過才循環);換科目時兩副牌同步各前進一格(共用 10 次上限)。',
       '★ v3.15.92【UI/初始】_kingShowStartPopup 開彈窗(!isResume)時洗牌建副牌、當前題庫取第一張、_rerollLeft 改 10-_rerollCount;規則文案改「可以重抽 10 次(每次都換不同題庫,全部出現過才會再循環)」;deck 為純執行期狀態,不進雲端存檔白名單(開彈窗即重洗,不影響存檔/不污染雲端)。',
       '★ v3.15.92【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.91→v3.15.92;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.71)。',
-    ],
-  },
-  // v3.15.91 — 登入到關卡頁自動說明「帳號救援申請」怎麼用(可選以後不再顯示)
-  {
-    ver: 'v3.15.91',
-    date: '2026-06-23',
-    brief: [
-      '📨【登入會自動教你「帳號救援申請」怎麼用】登入進到關卡頁時,會自動跳出一個小說明,告訴你下方「📨 帳號救援申請」按鈕的用途和使用步驟。',
-      '   ・說明裡有完整 4 步驟:① 點下方「📨 帳號救援申請」② 勾選不見的東西 ③ 送出 ④ 老師核對遊戲記錄後補回;也提醒每天最多申請 1 次。',
-      '   ・看完覺得懂了,可以勾「以後不要再顯示」,之後登入就不會再自動跳出來(沒勾的話下次登入還會再提醒一次)。',
-    ],
-    items: [
-      '★ v3.15.91【關卡頁登入說明彈窗 index.html】新增 window._showRescueGuidePopup(force):說明「📨 帳號救援申請」用途 + 4 步驟使用方式 + 每日上限 1 次提醒;底部「我知道了」+「以後不要再顯示」勾選框,勾選後寫 per-uid localStorage(lxps_rescue_guide_dismissed_{uid})→ 該帳號不再自動彈;點背景關閉等同「我知道了」(會尊重勾選)。',
-      '★ v3.15.91【觸發點 index.html block#02】掛在 onAuthStateChanged 登入流程「續戰檢查(800ms)」之後,延 2500ms 呼叫 _showRescueGuidePopup(false);自動觸發時:① per-uid localStorage 已勾不再顯示則跳過 ② 偵測到續戰提示(adv-wb-crash-notice / adv-crash-recovery-box)開著時跳過不疊加 ③ 已開著同彈窗則跳過。',
-      '★ v3.15.91【per-uid 守門】不再顯示旗標用 uid 區隔(共用平板上每位學生各自記錄,A 勾不再顯示不影響 B);未勾則每次登入仍提醒,直到學生主動勾選(呼應老師需求)。',
-      '★ v3.15.91【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.90→v3.15.91;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.70)。',
-    ],
-  },
-  // v3.15.90 — 帳號救援申請(學生自助向老師申請補回遺失資料 + 同步雲端旁新增鈕)
-  {
-    ver: 'v3.15.90',
-    date: '2026-06-23',
-    brief: [
-      '📨【資料不見了?可以自己申請救援!】關卡頁下方「☁ 立即同步雲端」旁邊,新增一顆「📨 帳號救援申請」按鈕。',
-      '   ・點開會先說明:雲端系統會<b>先查詢你的遊戲記錄核對</b>,確認真的是「雲端同步失敗」造成的損失,才會把資料修復還給你,請耐心等老師處理。',
-      '   ・接著勾選你覺得不見的東西:🦸 英雄、💎 台灣/龍王至寶、🔮 召喚水晶、🎫 召喚卷、💰 知識幣、🏆 排名獎勵,送出申請(每天最多 1 次)。',
-      '   ・送出後系統會自動幫老師整理你的遊戲記錄;老師核對「你說缺的」哪些<b>真的有少</b>、哪些其實還在,確認後才補回。',
-      '   ・補回只會「<b>只增不減</b>」——你練到的英雄/至寶等級、現有的水晶幣都不會被蓋掉或變少,也會避免重複補太多。',
-      '✅ 這套救援沿用先前的資料修復強化,把「申請 → 核對 → 補回」做成正式流程,遇到同步問題時更安心。',
-    ],
-    items: [
-      '★ v3.15.90【關卡頁新增救援申請鈕 index.html】底部工具列(超商列下方)由「☁ 立即同步雲端 / 🐛 BUG 回報 / 📚 遊戲指引」三鈕擴為四鈕,新增「📨 帳號救援申請」(_openRescueReq);四鈕 flex:1 均分、字級沿用 clamp(14,1.7vw,21)。',
-      '★ v3.15.90【學生端救援流程 index.html】_openRescueReq:登入檢查 → 讀 accountRescueRequests/{uid} 做每日上限(_getTodayKeyTW;今日已申請則提示等候)→ 彈核對說明(老師指定原文「雲端系統會先查詢小英雄的遊戲記錄進行核對,當確認是雲端同步失敗導致的損失會修復還給您,請耐心等候,謝謝!」)→ 勾選 6 類(英雄/至寶/召喚水晶/召喚卷/知識幣/排名獎勵)→ 送出時客戶端跑一次 _fbRebuildAccountFromLedgers(自己 uid) 產初判摘要 selfCheck(僅供老師一覽參考)→ 寫申請。全程內聯樣式、動態注入(沿用特別挑戰題模式)。',
-      '★ v3.15.90【Firestore helper index.html block#02】新增 _fbSubmitAccountRescueRequest / _fbGetMyAccountRescueRequest(學生)、_fbListAccountRescueRequests / _fbResolveAccountRescueRequest(GM);接在帳號轉移 cluster 後。',
-      '★ v3.15.90【GM 審核區 admin_panel.js】新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組):list 待處理 → 開申請時自動跑 _fbRebuildAccountFromLedgers(uid) 對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本由 GM 人工以「學生補償工具」處理)→ 顯示「將補回 英雄(名+等級)/至寶(名+等級)/水晶/幣」→「✅ 確認救援」走 _fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後標 resolved /「✖ 駁回」標 rejected。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.',
-      '★ v3.15.90【安全】補償一律由 GM 端從雲端帳本權威反推,完全不採信學生寫入的 claims/selfCheck(只當參考)→ 玩家無法藉偽造刷資源;sustained 沿用 v3.15.76 heroLevels 幻影免疫,救援後重整不再誤判倒退。',
-      '★ v3.15.90【新 Firestore 規則】新增 match /accountRescueRequests/{uid}(create 限本人 pending+白名單+不塞 GM 欄位、list/GM 欄位限 GM、delete 限 GM),比照 accountTransferRequests 安全模型。⚠ 老師需手動部署 firestore.rules,否則申請寫入被預設 deny 擋下(client 端會 catch 提示「救援系統尚未啟用」,不影響遊戲)。',
-      '★ v3.15.90【版本鏈】本輪改 index.html + admin_panel.js + game_changelog.js + firestore.rules。版本同步點:_GAME_LOADED_VERSION + _vers[index.html / admin_panel.js / game_changelog.js] 全 v3.15.89→v3.15.90;ADMIN_PANEL_VERSION v3.15.85→v3.15.90。hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(CURRENT_BOOT_VER 不動)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.69)。',
-    ],
-  },
-  // v3.15.89 — 英雄強化教學 + 條件搜尋大升級(效果標籤校正 + 新增條件 + 補滿92隻)
-  {
-    ver: 'v3.15.89',
-    date: '2026-06-22',
-    brief: [
-      '📘【英雄強化教學上線!】點英雄看「詳情」時,新增一段<b>強化教學</b>互動導覽,帶你認識把英雄練強的六大方法:⬆ 升等(吃經驗書)、💪 加素質點、💎 裝備台灣至寶、🌟 天賦、📚 技能升級、🔥 極限爆發。詳情頁六角圖上方也多了「📘 強化教學」按鈕,隨時可重看。',
-      '🔍【條件搜尋大升級!新增多種條件】條件搜尋可勾選的效果變更多了!新增:<b>素質提升、受傷增加(讓敵人變脆)、造成傷害增加、追擊、模仿、封印天賦</b>,並把<b>七大屬性傷害</b>(🔥火 / 💧水 / 🪽風 / 🌿草 / 🪨土 / ⭐光 / 🌙暗)獨立成一組,想找特定屬性的打手或特定功能的角色更精準!',
-      '🛠【效果標籤全面校正 + 補滿 92 隻】重新校對全部 92 隻英雄的技能效果標籤,修正先前自動產生的誤標(例如把「免疫暈眩」誤判成「會造成暈眩」之類),並補上先前漏掉的<b>刺客、法老王、埃及豔后</b>。現在條件搜尋完整涵蓋全部 92 隻英雄!',
-    ],
-    items: [
-      '★ v3.15.89【英雄強化教學 HUT・index.html】新增 HUT 互動導覽模組(HUT_STEPS 6 步,對應 _renderHeroDetail 六個錨點 _hut-anchor-level/stats/treasure/talent/skills/burst);英雄詳情頁六角圖上方加「📘 強化教學」鈕(_hutOpenManual),首次開啟英雄詳情自動提示(_hutShowEntryPrompt);_hutShowStep/_hutShowFinal 逐步高亮+說明;完成旗標 window._heroUpgradeTutDone 隨雲端存檔(_buildSafeData/_applySafeData 白名單)。遊戲指引「英雄養成」章補各素質點(攻擊/特技/速度/HP/防禦)效果說明。',
-      '★ v3.15.89【條件搜尋:新增條件・hero_db.js + index.html】SKILL_EFFECT_DEFS 由 4 組改 5 組:新增 E「屬性傷害類」(火/水/風/草/土/光/暗 7 種,對齊 ELEMENT_DB 7 屬性,雷歸風);A 組加 素質提升、造成傷害增加;B 組加 封印天賦、受傷增加、追擊、模仿。index.html openCondSearch 彈窗渲染陣列 [A..D]→[A..E](E 色 #c9a0ff),比對邏輯資料驅動不變。',
-      '★ v3.15.89【條件搜尋:標籤校正・hero_db.js】HERO_SKILL_EFFECTS 全 92 隻逐隻校對,移除自動掃描的誤標(雅典娜免疫暈眩/麻痺/冰凍/睡眠被誤判成施放、守衛「封印時無效」被誤判成會封印技能、美人魚解燃燒被誤判成施放燃燒、幽幽屬性減免被誤判成屬性攻擊、我的豚豚降被攻擊率被誤判成提高被攻擊率…等數十處),並補上漏標效果。屬性標籤改以技能實際元素(SKILL_FORCE_ELEMENT / 描述)為準(陰陽師補火水風土四屬、美人魚移除誤判火、暗法師無強制元素故不標)。',
-      '★ v3.15.89【補滿 92 隻 + 學者改類・hero_db.js】HERO_PRIMARY_CLASS 與 HERO_SKILL_EFFECTS 補上先前漏列的 刺客(主傷害)、法老王(主傷害)、埃及豔后(主控場),兩表皆 89→92(與 _PLAYER_HERO_NAMES 聯集對齊全 92 隻);學者主分類 主控場→主傷害。',
-      '★ v3.15.89【版本鏈】4 GAME 同步點 v3.15.88→v3.15.89(_GAME_LOADED_VERSION / _vers[index.html] / _vers[hero_db.js] / _vers[game_changelog.js])。admin_panel.js v3.15.85 / world-boss.js v3.15.86 / world-boss-ui.html v3.15.87 / main.css v3.15.79 / adv_quiz_db.js 20260620 不變。本輪改 index.html + hero_db.js + game_changelog.js 三檔(index.html 最後上傳)。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.68)。',
-    ],
-  },
-  // v3.15.88 — 篩選分類重定義(單一主分類)+ 新增條件搜尋
-  {
-    ver: 'v3.15.88',
-    date: '2026-06-22',
-    brief: [
-      '🔍【篩選分類改版】英雄圖鑑與編組的篩選分類全面改版!原本的「傷害/回復/控場坦克」改為<b>五大主分類</b>:⚔ 主傷害、💚 主回復、🌀 主控場、🛡 主坦克、🎲 其他。每隻英雄會歸到<b>最符合的單一主類</b>(坦克型獨立出來,不再和控場混在一起),分類更清楚。',
-      '🔍【全新「條件搜尋」】篩選列新增「🔍 條件搜尋」按鈕,點開後可<b>勾選想要的技能效果</b>(例如:護盾、復活、暈眩、燃燒、封印、吸血、再行動、減傷…等數十種),按「搜尋」就會列出<b>同時具備全部所選效果</b>的英雄,配隊找特定功能的角色超方便!',
-    ],
-  },
-  // v3.15.86 — 龍王至寶獲得管道擴充(未收錄至寶納入8龍王)+ 重複轉換統一5
-  {
-    ver: 'v3.15.86',
-    date: '2026-06-22',
-    brief: [
-      '🐉【龍王至寶更好收集 + 重複統一轉卷軸×5】世界 BOSS <b>排名獎勵</b>的「未收錄至寶」現在也會<b>隨機給出 8 種龍王至寶</b>(原本只給台灣 10 件);<b>自選至寶召喚卷</b>一樣可挑龍王至寶。<b>重複拿到</b>(已收齊)時統一改贈「<b>至寶經驗卷軸 ×5</b>」,不會白白浪費!',
-    ],
-    items: [
-      '★ v3.15.86【甲:未收錄至寶納入 8 龍王至寶】排名獎勵「未收錄至寶」隨機池(index.html _treasureResult)原本用 noSummon 過濾排除全部 8 龍王至寶 → 移除過濾,讓 8 龍王至寶(皆 mythic 神話級)納入隨機池。上榜玩家的「未收錄至寶」可隨機獲得任一尚未擁有的龍王至寶(不再只限當週 BOSS 對應的那一隻)。',
-      '★ v3.15.86【乙:重複轉換統一 5 張】三處對齊為「重複 / 全收齊 → 至寶經驗卷軸 ×5」:① 排名「未收錄至寶」全部收齊(含龍王)原本不發 → 改發 ×5 ② world-boss.js 該場 BOSS 龍王至寶(_wbGrantDragonTreasure)重複 3→5 ③ 自選 / 隨機至寶券全收齊本就 ×5(未改,確認一致)。',
-      '★ v3.15.86【補償一致 + 顯示】補償重發的隨機未收錄至寶 fallback 同步納入龍王至寶(與主獎勵池一致);世界 BOSS 結算第二幕「全擁有」訊息補上「改贈 至寶經驗卷軸 ×5」。',
-      '★ v3.15.86【安全】只動「未收錄至寶」候選池與全擁有 fallback、龍王至寶重複卷軸數;排名分級的 expScrollTreasure(5/3/2/1/1 名次卷軸獎勵)、龍王至寶機率 / 該場 BOSS 對應、星空召喚維持龍王 noSummon(抽不到)全不動。龍王至寶為 mythic,納入後高名次玩家會在 mythic 層較易抽到龍王至寶(老師確認的 buff)。',
-      '★ v3.15.86【版本鏈】3 GAME 同步點 v3.15.85→v3.15.86(_GAME_LOADED_VERSION / _vers[index.html] / _vers[game_changelog.js]);_vers[world-boss.js] v3.15.51→v3.15.86(本輪改 world-boss.js)。admin_panel.js v3.15.85 / hero_db.js v3.15.78 / main.css v3.15.79 / world-boss-ui.html v3.15.69 不變。本輪改 index.html + world-boss.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.66)。',
-    ],
-  },
-  // v3.15.85 — 甲案資料救援統整 + 復原顯示新增英雄/至寶(名+等級)
-  {
-    ver: 'v3.15.85',
-    date: '2026-06-22',
-    brief: [
-      '🛠️【老師後台:資料救援工具整理 + 復原看得到補回了什麼】把後台「資料救援與重置」整理得更清楚:<b>移除一個過時工具</b>、其餘三個各加<b>「使用時機」說明</b>讓老師一眼知道該用哪個。另外老師幫你復原資料時,現在會<b>清楚列出「這次補回了哪些角色、哪些至寶、各是幾等」</b>,確保補回的就是你原本擁有的。',
-    ],
-    items: [
-      '★ v3.15.85【甲案統整:退役「🚑 玩家資料急救工具」】此工具針對 2026-04 一個早已修好的舊 bug、且用最費工的「手動填數量」,功能已被「🔧 一鍵帳號重建」(自動反推)+「🎁 學生補償工具」(手動補發)完全覆蓋 → 從側欄與「資料救援與重置」群組移除(卡片與 init 程式保留但不再顯示)。資料救援與重置由 4 個精簡為 3 個。',
-      '★ v3.15.85【三救援工具加「使用時機」導引】🆘 Lv1 救援(整個帳號變回 Lv1 / 被本地汙染覆蓋·某槽完整 → 整槽複製)、🔧 一鍵帳號重建(部分英雄/水晶/幣不見了·只補缺漏不動現有·最安全·首選)、⚠️ 完全重置(最後手段·被別帳號汙染加法救不回·清空不可逆),三卡頂各加一句明確分流。',
-      '★ v3.15.85【需求2:一鍵重建顯示「將補回英雄/至寶 + 等級」】index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail(缺漏英雄附等級·讀合併後 heroLevels=學生原本練到的等級)+ missingTreasures(解鎖紀錄有但三槽全失的至寶·id/name/lv·排除 GM admin_delete)+ payload.treasures(經 _fbCompensatePlayer union 補回·新的給 Lv1)。admin_panel.js 分析結果以晶片列「🦸 將補回英雄 N 隻(名+Lv)」「💎 將補回至寶 M 件(名+Lv)」;套用後再列「本次補回」摘要(英雄+Lv/至寶+Lv/水晶+/幣+)供老師與學生核對是否符合預期。',
-      '★ v3.15.85【需求2:Lv1 救援三槽診斷顯示每槽英雄/至寶】三槽深度掃描時,每槽除原本的「解鎖數/最高 Lv/等級總和」,再列該槽英雄(名+等級·依等級排序)與至寶(名+等級),讓老師選還原來源前就看清楚每槽內容是否為學生預期(讀 _fbDiagnoseAllSlots 已回傳的 rawData,未改後端)。',
-      '★ v3.15.85【安全】退役工具僅移出側欄,後端救援邏輯與既有補償/重建/重置/誤刪救回不受影響;一鍵重建補至寶走既有 _fbCompensatePlayer(union 只補不減,既有至寶不動,新補給 Lv1)。',
-      '★ v3.15.85【版本鏈】4 GAME 同步點 v3.15.84→v3.15.85;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION + admin_panel.js ADMIN_PANEL_VERSION/_vers[admin_panel.js] 同步 v3.15.85。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪改 index.html + admin_panel.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.65)。',
-    ],
-  },
-  // v3.15.84 — GM「英雄誤刪救回」一鍵掃描+復原(排除 GM 手動刪除的)
-  {
-    ver: 'v3.15.84',
-    date: '2026-06-22',
-    brief: [
-      '🛟【老師後台新增「英雄誤刪救回」工具】老師現在可以在後台<b>一鍵掃描</b>所有玩家,找出先前被誤刪的角色(你練過、或裝過至寶的主力),再<b>一鍵幫你補回來</b>。如果你之前有角色不見了,跟老師說一聲,老師按一下就能救回,<b>等級和身上的至寶都會原樣保留</b>。',
-    ],
-    items: [
-      '★ v3.15.84【GM 後端 4 函式】index.html block#02:_computeDeletedHeroesFromDoc(從一份玩家雲端資料算出「被誤刪、可救回」的英雄=heroLevels 等級>1 或 身上裝著至寶 equippedTo·但不在 unlockedHeroes·且在 _PLAYER_HERO_NAMES 白名單·且最近一筆解鎖紀錄不是 admin_delete)、_fbAdminScanDeletedHeroes(getDocs 全體玩家逐一算,回受影響清單依英雄數降序)、_fbAdminRestoreDeletedHeroesForUid(getDocFromServer 重讀重算再復原)、_fbAdminRestoreAllDeletedHeroes(逐一 await 復原回統計)。',
-      '★ v3.15.84【復原走 _fbCompensatePlayer】只帶 unlockedHeroes → union 把英雄加回(不重複)、heroLevels 取較大值(絕不重置/降級既有等級)、主檔+live+safe 三槽同寫、_adminForceRestore 繞健康度守門、記 compensation 解鎖歷史、不誤發補償彈窗給玩家。玩家下次登入即生效。',
-      '★ v3.15.84【★ 排除 GM 手動刪除(老師要求)】最近一筆解鎖紀錄 source 為 admin_delete(GM 在「汙染清查」手動刪掉的)的英雄一律不列入、不救回,避免把刻意刪除的汙染角色又加回來。',
-      '★ v3.15.84【GM UI:🛟 英雄誤刪救回卡】admin_panel.js「🧹 帳號汙染處理」群組(洗錢查緝卡下方):「🔍 掃描全體玩家」列出每位受影響玩家(uid/email/暱稱 + 被誤刪英雄晶片含 Lv·裝至寶標💎)→ 逐位「🛟 復原這位玩家」或頂部「🛟 全部一鍵救回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片 HTML+_initDeletedHeroSection IIFE);_esc HTML 跳脫、confirm 後執行、無 ?.。',
-      '★ v3.15.84【定位】鏡像 v3.15.82/83 玩家登入時 client 端救回邏輯的「server 主動批次版」:讓老師不必等學生逐一登入,即可一次把雲端被誤刪的英雄批次補齊。安全:只救/列白名單英雄、排除 admin_delete、復原為 union 加回(只增不減),跨帳號防護不變。',
-      '★ v3.15.84【版本鏈】4 GAME 同步點 v3.15.83→v3.15.84;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.84;admin_panel.js ADMIN_PANEL_VERSION 與 _vers[admin_panel.js] 同步 v3.15.80→v3.15.84。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪改 index.html + admin_panel.js + game_changelog.js 三檔。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.64)。',
-    ],
-  },
-  // v3.15.83 — 資料救回再強化:自己解鎖/投資過的角色與污染相同時算已解鎖
-  {
-    ver: 'v3.15.83',
-    date: '2026-06-22',
-    brief: [
-      '🛟【資料救回再強化】承接上一版的英雄救回,依老師指示再加強——只要是你<b>自己練過、或身上裝了至寶</b>的角色,就算在共用平板上和別人重複(系統紀錄的最近一次解鎖剛好是別人),系統<b>都會正確認定那是你自己的角色、算「已解鎖」,絕不會誤判成別人的污染而刪掉</b>。',
-    ],
-    items: [
-      '★ v3.15.83【依老師指示:自己解鎖的角色/至寶若跟污染相同,要算已解鎖、不可誤判為汙染】承 v3.15.82,_applySafeData 把「本地英雄是否保留」的判定順序改為「投資證據 / 本人解鎖紀錄」優先於「最近一筆解鎖紀錄標別帳號 uid」。',
-      '★ v3.15.83【投資證據 = 練過 或 身上裝著至寶】_heroInvested82(n)= heroLevels 等級>1(雲端∪本地)或 身上裝著至寶(equippedTo,來源:雲端 taiwanTreasureData / 字串版 taiwanTreasureData_s / 本地 lxps_taiwan_treasures 三者聯集)。有投資證據 → 一定是學生自己的資源 → 保留,即使最近一筆解鎖紀錄標別帳號(共用機上同一隻常見英雄最近一筆常是別人解鎖的)。',
-      '★ v3.15.83【本人解鎖紀錄看「全部」非「最近一筆」】_hasOwnUnlockRec82(n) 掃整份解鎖紀錄(雲端∪本地),只要有任一筆是「本人 curUid 或無 uid 舊資料」且非 admin_delete → 學生自己解鎖過 → 保留(修正舊版只看 _latestRec 最近一筆、被同機後來者覆蓋而誤殺)。',
-      '★ v3.15.83【幻影救回同步擴充】分支前幻影救回(救援/同 uid/別人殘留/GM 三槽修復皆受惠)候選由「heroLevels 等級>1」擴為「heroLevels>1 ∪ 身上裝著至寶」,且移除 uid 擋(有投資證據即本帳號),只擋 GM admin_delete。',
-      '★ v3.15.83【安全 / 跨帳號防護不變】GM admin_delete(刪除永久)仍最高優先丟;只救/保留 _PLAYER_HERO_NAMES 白名單英雄。跨帳號汙染防護仍靠既有三層(本機命名空間 @@<uid> + 裝置擁有者對齊 + gameCloudLoad 鎖 _gUserId);本版只放寬「同一帳號內被誤判為污染」的情形、未放寬跨帳號讀取,故「讀不到別人的角色」不變。',
-      '★ v3.15.83【版本鏈】4 GAME 同步點 v3.15.82→v3.15.83;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.83。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.63)。',
     ],
   },
 ];
