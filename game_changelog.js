@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.3 — 帳號修復:校正「等級異常偏低但經驗很多」的英雄
+  {
+    ver: 'v3.16.3',
+    date: '2026-06-24',
+    brief: [
+      '🔧【修正英雄等級顯示異常】少數英雄出現「等級變得很低(例如 Lv1)、但其實累積了很多經驗值」的狀況,這版會自動修好。',
+      '   ・登入後系統會依照英雄「累積的經驗值」自動把等級校正回正確值。',
+      '   ・<b>只會調高、不會調低</b>:已經正常的英雄完全不受影響,不會有人被降級。',
+    ],
+    items: [
+      '★ v3.16.3【根因】getHeroLevel 直讀 _heroLevels[name];舊版存檔污染/Firebase merge 幻影把它弄成 1,但 _heroExp[name] 仍保留大量經驗 → 顯示「Lv1 卻有幾萬經驗」的 desync。',
+      '★ v3.16.3【修法】新增 window._lxpsRepairLevelExpDesync():對每隻有經驗的英雄,用遊戲既有 _expForLevel 曲線(與 addHeroExp 同一道升級迴圈,但「不」重發素質點/天賦/獎章 → 避免雙重獎勵)把超額經驗排空成等級;只升不降、無超額經驗者不動 → 完全 idempotent。在兩個主載入點 _applySafeData(data) 之後呼叫。',
+      '★ v3.16.3【安全】只改記憶體 _heroLevels/_heroExp(下次存檔由 heroLevels_s 寫回校正值持久化),完全不碰 _s 字串權威 / 三槽合併 / GM 清污染工具 → 零回歸風險。',
+      '★ v3.16.3【後續(高風險,本輪未做)】帳號污染「完美保護」的 _s 全採信(PREFER_S 擴展)+ GM 帳本重建升級為「移除幻影角色」屬高風險:GM 清污染工具目前寫乾淨 map 但不寫 _s、_applySafeData 已採信 _s 但三槽合併沒採信(路徑不一致),盲目開啟會把 GM 已清的污染復活 → 需先補 GM 工具寫 _s + 一次性遷移 + 先測 110082,排在後續分段交付。',
+      '★ v3.16.3【版本鏈】只改 index.html + game_changelog.js;_GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.3;承接 v3.16.2(卡死全校根治)。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.82)。',
+    ],
+  },
   // v3.16.2 — 緊急修正:貓空打完 BOSS 後卡在確認獎勵視窗/戰鬥畫面無法結束
   {
     ver: 'v3.16.2',
@@ -327,23 +344,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.83【幻影救回同步擴充】分支前幻影救回(救援/同 uid/別人殘留/GM 三槽修復皆受惠)候選由「heroLevels 等級>1」擴為「heroLevels>1 ∪ 身上裝著至寶」,且移除 uid 擋(有投資證據即本帳號),只擋 GM admin_delete。',
       '★ v3.15.83【安全 / 跨帳號防護不變】GM admin_delete(刪除永久)仍最高優先丟;只救/保留 _PLAYER_HERO_NAMES 白名單英雄。跨帳號汙染防護仍靠既有三層(本機命名空間 @@<uid> + 裝置擁有者對齊 + gameCloudLoad 鎖 _gUserId);本版只放寬「同一帳號內被誤判為污染」的情形、未放寬跨帳號讀取,故「讀不到別人的角色」不變。',
       '★ v3.15.83【版本鏈】4 GAME 同步點 v3.15.82→v3.15.83;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.83。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.63)。',
-    ],
-  },
-  // v3.15.82 — 重大資料遺失修復(裝至寶主力變未解鎖 + GM 三槽救不回)
-  {
-    ver: 'v3.15.82',
-    date: '2026-06-22',
-    brief: [
-      '🛟【重大修復:消失的英雄救回來了!】修正部分同學在共用 iPad 上登入後,<b>原本擁有的英雄(尤其練過、裝了至寶的主力)突然「變成未解鎖」消失</b>的嚴重問題。現在每次登入都會<b>自動以雲端最完整的擁有資料為準</b>,把被誤刪的英雄救回並補齊。',
-      '   ・如果你之前有英雄不見了,<b>重新登入一次</b>系統就會自動把練過的主力從雲端等級紀錄救回解鎖清單,之後也不會再發生。',
-    ],
-    items: [
-      '★ v3.15.82【根因】_applySafeData 稽核熔斷(v3.15.40)要求「本地英雄要有解鎖紀錄」才保留;但 v3.13.19 本機按帳號命名空間(adv_unlocked_heroes@@<uid>)上線後,本地清單已是「本帳號專屬」、不可能是別帳號殘留 → 查無解鎖紀錄的合法舊英雄(尤其練過/裝至寶的主力)被當汙染誤丟 → in-memory 變薄 → autosave 把薄清單寫回雲端三槽 → 永久消失,連 GM「三槽最豐富修復」都救不回(三槽 unlockedHeroes 全薄;但 heroLevels 的等級殘留還在,成為救回線索)。',
-      '★ v3.15.82【幻影救回·提到所有分支之前】_applySafeData 一進 unlockedHeroes 處理就先掃雲端 heroLevels:凡「等級>1(代表練過/裝過至寶)卻不在 unlockedHeroes」的玩家英雄,補回 data.unlockedHeroes(排除 GM admin_delete 已刪、排除解鎖紀錄明確標別帳號 uid 者)。因為提到分支之前,救援(_adminRescueInProgress)/別人殘留/同 uid 三條路徑都受惠 → GM「三槽最豐富修復」後學生一登入即自動補回。',
-      '★ v3.15.82【同 uid 分支放寬稽核】_isLegitLocalHero 由「查無紀錄就丟」改為「有投資證據(雲端或本地 heroLevels 等級>1)即使查無紀錄也保留」;仍尊重 admin_delete(GM 刪除永久)與「紀錄明確標別帳號 uid → 丟」雙保險。原邏輯誤殺合法無紀錄英雄,新邏輯精準保留練過的主力、仍擋得住真殘留。',
-      '★ v3.15.82【自動 heal 雲端 + 跨帳號防護不變】救回的英雄寫進本地後,隨下次 autosave 經 _fbSave union(只增不減)回寫雲端主檔 + live + safe 三槽 → 雲端自動補齊,之後 GM 不必再手動救、也不會再次被誤刪。跨帳號汙染防護維持既有三層(本機命名空間 @@<uid> + _lxpsEnforceDeviceOwner 裝置擁有者對齊 + gameCloudLoad 鎖 _gUserId),本次只放寬「同一個自己帳號命名空間內」的誤殺、完全不放寬跨帳號,所以「不會讀到別人的英雄」這條安全性不變。',
-      '★ v3.15.82【安全邊界】只救 _PLAYER_HERO_NAMES 白名單內的英雄(已從 HERO_DB 移除的不救)、只救等級>1(避免剛解鎖 seed=1 的幻影或汙染)、admin_delete 與別帳號 uid 紀錄一律不救。',
-      '★ v3.15.82【版本鏈】4 GAME 同步點 v3.15.81→v3.15.82;_vers[index.html]/[game_changelog.js]/_GAME_LOADED_VERSION 同步 v3.15.82。hero_db.js v3.15.78、main.css v3.15.79、admin_panel.js v3.15.80、world-boss.js v3.15.51、world-boss-ui.html v3.15.69 不變。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.62)。',
     ],
   },
 ];
