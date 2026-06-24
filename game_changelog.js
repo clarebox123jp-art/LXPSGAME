@@ -12,6 +12,41 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.0 — 答題解鎖門檻放寬(累積答對 20 題,答錯不再歸零)
+  {
+    ver: 'v3.16.0',
+    date: '2026-06-24',
+    brief: [
+      '🎯【「小力 / 幼兒園小孩 / 機關王雙人組」更容易獲得了!】這三隻活動英雄原本要在專屬題庫「連續答對 20 題」、只要答錯一題就整個歸零重來;現在改成「累積答對 20 題」——可以慢慢累積,答錯也不會把進度清空!',
+      '   ・<b>小力</b>:在「領養與照顧狗狗」題庫累積答對 20 題即可獲得。',
+      '   ・<b>幼兒園小孩</b>:在「照顧與陪伴幼兒」題庫累積答對 20 題即可獲得。',
+      '   ・<b>機關王雙人組</b>:在「世界機關王大賽」題庫累積答對 20 題即可獲得。',
+      '   ・<b>答錯不再歸零</b>:答錯只是那一題沒拿到進度,已經累積的答對題數會永久保留,可以分很多次慢慢完成,不用怕一錯就重來。',
+    ],
+    items: [
+      '★ v3.16.0【累積制核心】_resetUnlockHeroProgressOnWrong 不再於答錯時重置 streak(careInfantStreak/dogCareStreak/greenMechStreak)或清空已用題庫,改為僅顯示鼓勵橫幅;_trackUnlockHeroProgress 答對 +1、滿 20 解鎖的累積邏輯不動 → 由「連續答對(答錯歸零)」變「累積答對(進度永久保留)」。',
+      '★ v3.16.0【文案同步】所有玩家可見文字由「連續答對 / 答錯歸零」改「累積答對」:特殊題庫進度條、冒險戰鬥橫幅、迷你戰鬥橫幅、英雄解鎖標籤×2、圖鑑機關王說明+卡片副標、詳情頁解鎖條件三分支、獎章「機關王挑戰者」(unlock_gm)描述、解鎖原因記錄×2、解鎖慶祝 toast 與 log。',
+      '★ v3.16.0【未動範圍】戰鬥內「連續答對連擊」(currentStreak / 獎章 streak_3·5·10)與「台灣關連續答對」(twQuizStreak)是另一套系統,完全未更動。',
+      '★ v3.16.0【版本鏈】本輪改 index.html + game_changelog.js(疊在 v3.15.99 會員資料之上)。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.0;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.79)。',
+    ],
+  },
+  // v3.15.99 — 小英雄會員資料(首登建立 + 編輯同步雲端)
+  {
+    ver: 'v3.15.99',
+    date: '2026-06-24',
+    brief: [
+      '🪪【新增「小英雄會員資料」】第一次登入時會跳出「會員資料建立」視窗,填寫你的基本資料,方便老師辨識並照顧每一位小英雄(這些資料只有老師看得到)。',
+      '   ・<b>填寫欄位</b>:會員暱稱、E-mail 信箱、玩家身分(可複選)、出生年份、在學就讀年級(選填)、真實性別、主要遊玩平台(可複選)。',
+      '   ・<b>填好就送禮</b>:完整填寫並送出,即可獲得 🔮召喚水晶 ×10 + 💰知識幣 20,000 + 🌈SSR 隨機召喚卷 ×1(每個帳號限領一次)!',
+      '   ・<b>之後也能改</b>:資料填過一次就不會再自動跳出;想修改隨時點關卡頁下方「📨 會員帳號與救援申請」→「✏️ 編輯會員資料」即可(原本的「帳號救援申請」也在同一個地方)。',
+    ],
+    items: [
+      '★ v3.15.99【會員資料系統】首次登入(memberProfileComplete 未設)→ 關卡頁延 2200ms 自動彈「會員資料建立」表單(7 欄:會員暱稱[GM 私密識別,與遊戲內公開暱稱無關]/E-mail/玩家身分多選/出生西元年/在學年級選填/真實性別/主要平台多選);送出寫玩家自己 players/{uid}.memberProfile + memberProfileComplete/Rewarded,走既有「玩家自己 self-write」規則,無需新增 firestore.rules。',
+      '★ v3.15.99【一次性獎勵】未領過(memberProfileRewarded 雲端旗標)才發 🔮×10 + 💰20000 + 🌈SSR隨機召喚卷×1;旗標先寫雲端、再本地 backpackAdd/addKnowledgeCoins 發獎 + gameCloudSave → at-most-once(編輯既有資料不再發)。',
+      '★ v3.15.99【入口整合】關卡頁底部「📨 帳號救援申請」鈕改名「📨 會員帳號與救援申請」→ 開 hub(✏️ 編輯會員資料 / 📨 帳號救援申請);block#02 新增 _fbGetMemberProfile/_fbSaveMemberProfile + _MEMBER_IDENTITY/GRADE/GENDER/PLATFORM_OPTS;UI _openMemberAccountHub/_openMemberProfileForm(first 首登有獎可稍後再填·點背景不關 / edit 編輯無獎)/_memberProfileSubmit/_maybeShowMemberProfileFirstLogin;救援說明彈窗加會員彈窗防疊加守門。',
+      '★ v3.15.99【版本鏈】本輪改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.15.99;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.78)。',
+    ],
+  },
   // v3.15.98 — 第五隻世界 BOSS 深淵海龍王(水)完整實裝
   {
     ver: 'v3.15.98',
@@ -304,31 +339,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.80【GM UI admin_panel.js】玩家活動記錄查詢區(_admin-activity-section)按鈕列加「📜 召喚紀錄」鈕,讀查詢框 email/uid/學號 → window._fbShowPlayerSummonHistory;加按鈕到既有 section 免三點同步(_summonBtn grab + onclick 綁定),全程無 optional chaining。',
       '★ v3.15.80【⚠ 需部署 Firestore 規則】summonHistory/{uid}:玩家寫自己(request.auth.uid==uid + hasOnly([uid,list,updatedAt]))、GM(isAdmin)讀全部;未部署則雲端寫入被拒,本地紀錄仍正常(belt-and-suspenders,不影響召喚本身)。',
       '★ v3.15.80【版本鏈】4 GAME 同步點 v3.15.79→v3.15.80;_vers[admin_panel.js] v3.15.58→v3.15.80 + ADMIN_PANEL_VERSION v3.15.58→v3.15.80(自檢需一致)。hero_db.js v3.15.78、main.css v3.15.79、world-boss.js v3.15.51、world-boss-ui.html v3.15.69。本輪改 index.html + admin_panel.js。',
-    ],
-  },
-  // v3.15.79 — 知識王挑戰首頁加寬至接近全螢幕 + 字體按鈕放大
-  {
-    ver: 'v3.15.79',
-    date: '2026-06-22',
-    brief: [
-      '🔍【知識王挑戰首頁加寬】「今日知識王挑戰」的視窗外框<b>加寬到接近全螢幕</b>,三欄(獎勵說明 / 本週小博士 / 特別挑戰題)的<b>字體與按鈕都放大</b>了,看得更清楚、也更好點。',
-    ],
-    items: [
-      '★ v3.15.79【index.html _kingShowEntryPopup】外框 max-width min(96vw,960px)→min(97vw,1680px)、grid gap14→20、margin-top14→18;中欄(本週小博士卡)+右欄(特別挑戰卡 _specialCardHtml)+徽章(_scBadgeHtml)行內字級/按鈕放大;底部按鈕列 margin14→18;_applyLayout 響應門檻 600/900→640/1000(字級放大後三欄需更寬視窗才舒適)。',
-      '★ v3.15.79【main.css】.king-box-2col max-width 1500→1680 + scoped 放大(.king-box-2col .king-title/.king-subtitle/.king-rules/.king-rule-row/.king-rule-detail/.king-btn),僅入口彈窗、不影響 .king-box-question/.king-box-result 等其他知識王彈窗。',
-      '★ v3.15.79【版本鏈】4 GAME 同步點 v3.15.78→v3.15.79;_vers[main.css] v3.14.5→v3.15.79。hero_db.js v3.15.78、admin_panel.js v3.15.58(本輪未改)。本輪改 index.html + main.css。',
-    ],
-  },
-  // v3.15.78 — 補喚龍使‧蜜鶴林圖鑑設計師資訊
-  {
-    ver: 'v3.15.78',
-    date: '2026-06-22',
-    brief: [
-      '✏️【補上「喚龍使‧蜜鶴林」的設計師資訊】英雄圖鑑詳情頁補上「<b>喚龍使‧蜜鶴林</b>」的設計師標示:<b>由 5 年 3 班 龎同學設計</b>。',
-    ],
-    items: [
-      '★ v3.15.78【hero_db.js】喚龍使‧蜜鶴林 HERO_BIO(L2144)補 designer:{ class:5年3班, name:龎同學, year:2026 };圖鑑詳情頁(index.html)以 bio.designer 存在為顯示設計師區塊的閘門,_getDesignerLabel 查無 STUDENT_DESIGNER_HEROES 則 fallback class+name → 顯示「✏️ 由 5年3班 龎同學 設計(2026 年)」。同 v3.15.65 熔岩巨人/拘留者病灶(新增英雄時 HERO_BIO 漏 designer 子欄位,鐵律 1.231)。',
-      '★ v3.15.78【版本鏈】_vers[hero_db.js] v3.15.72→v3.15.78;4 GAME 同步點 v3.15.77→v3.15.78(本檔僅版本鏈,實質改 hero_db.js)。本輪只改 hero_db.js。',
     ],
   },
 ];
