@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.15.90';   // ★ v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.16.5';   // ★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1350,8 +1350,8 @@ async function _showAdminStatsPanelImpl(){
         <div style="font-size:12px;color:#aff;background:rgba(90,220,180,0.1);border-left:3px solid #5adcb4;padding:6px 10px;border-radius:5px;margin-bottom:10px;line-height:1.55;">💡 <b>使用時機:</b>學生「部分英雄/水晶/幣不見了」,要「只補缺漏、不動現有資料」時的<b>首選(最安全)</b>。整個帳號掉光需整槽還原 → 用 🆘 Lv1 救援;資料被別帳號汙染、加法救不回 → 才用 ⚠️ 完全重置。</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
           對「資料被舊版弄壞」的帳號,用雲端帳本(解鎖紀錄 / 水晶・幣交易紀錄)反推「這個帳號本來應該有什麼」,跟現況(三槽合併)比對出缺漏一鍵補回。
-          <b style="color:#9fe;">只補不減</b>,排除已被 GM 刪除的英雄,水晶補到上限 99。<br>
-          <span style="color:#8fd;">說明:新版每次登入已會自動把散在各槽的英雄/至寶/等級/鬥技證撿回;此工具額外救援「三槽全掉但帳本還在」的英雄與「被弄丟的水晶/幣餘額」。</span>
+          <b style="color:#9fe;">補回缺漏</b>(排除已被 GM 刪除的英雄,水晶補到上限 99);<b style="color:#ffb0b0;">v3.16.5 起亦自動移除「帳本鐵證已刪卻又冒出來」的幻影角色</b>(類a);帳本查無紀錄者(類b)只列出供人工確認、不自動移除。<br>
+          <span style="color:#8fd;">說明:新版每次登入已會自動把散在各槽的英雄/至寶/等級/鬥技證撿回;此工具額外救援「三槽全掉但帳本還在」的英雄與「被弄丟的水晶/幣餘額」,並清掉污染復活的幻影角色。</span>
         </div>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
           <input id="_admin-rebuild-input" type="text" placeholder="學生 email / uid / 姓名 / 學號"
@@ -6414,19 +6414,31 @@ async function _showAdminStatsPanelImpl(){
         var _treChips = (diff.missingTreasures||[]).map(function(t){
           return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(120,180,255,0.14);border:1px solid rgba(120,180,255,0.35);border-radius:10px;color:#bcd8ff;font-size:11px;">💎 ' + _esc(t.name) + '</span>';
         }).join('');
+        // ★ v3.16.5(piece2)— 幻影角色晶片:類(a)帳本鐵證已刪將自動移除 / 類(b)帳本查無需人工審核
+        var _extraDelChips = (diff.extraDeletedHeroes||[]).map(function(n){
+          return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(255,120,120,0.16);border:1px solid rgba(255,120,120,0.4);border-radius:10px;color:#ffc0c0;font-size:11px;">🗑 ' + _esc(n) + '</span>';
+        }).join('');
+        var _extraNoRecChips = (diff.extraNoRecordHeroes||[]).map(function(n){
+          return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(255,200,100,0.14);border:1px solid rgba(255,200,100,0.4);border-radius:10px;color:#ffe0a0;font-size:11px;">❓ ' + _esc(n) + '</span>';
+        }).join('');
         var willHtml = '';
         if(rr && rr.hasChanges){
           willHtml = '<div style="margin-top:8px;padding:8px;background:rgba(20,45,38,0.7);border:1px solid rgba(80,220,180,0.35);border-radius:6px;font-size:12px;">'
-            + '<div style="color:#9fe0b0;font-weight:700;margin-bottom:4px;">將補回(只增不減):</div>'
-            + ((diff.missingHeroCount||0) ? ('<div style="margin-bottom:3px;">🦸 英雄 ' + (diff.missingHeroCount||0) + ' 隻:' + _heroChips + '</div>') : '')
-            + ((diff.missingTreasureCount||0) ? ('<div style="margin-bottom:3px;">💎 至寶 ' + (diff.missingTreasureCount||0) + ' 件:' + _treChips + '</div>') : '')
+            + '<div style="color:#9fe0b0;font-weight:700;margin-bottom:4px;">帳本核對結果:</div>'
+            + ((diff.missingHeroCount||0) ? ('<div style="margin-bottom:3px;">🦸 補回英雄 ' + (diff.missingHeroCount||0) + ' 隻:' + _heroChips + '</div>') : '')
+            + ((diff.missingTreasureCount||0) ? ('<div style="margin-bottom:3px;">💎 補回至寶 ' + (diff.missingTreasureCount||0) + ' 件:' + _treChips + '</div>') : '')
             + (_crys ? ('<div style="margin-bottom:3px;">🔮 召喚水晶 +' + _crys + '</div>') : '')
             + (_coin ? ('<div style="margin-bottom:3px;">💰 知識幣 +' + _coin + '</div>') : '')
+            + ((diff.extraDeletedCount||0) ? ('<div style="margin-top:5px;padding-top:5px;border-top:1px dashed rgba(255,120,120,0.3);color:#ffb0b0;">🗑 自動移除幻影角色 ' + (diff.extraDeletedCount||0) + ' 隻(帳本鐵證「已刪卻又出現」):' + _extraDelChips + '</div>') : '')
             + '</div>';
         } else {
-          willHtml = '<div style="margin-top:8px;padding:8px;background:rgba(60,45,20,0.6);border:1px solid rgba(255,200,100,0.35);border-radius:6px;font-size:12px;color:#ffd9a0;">帳本核對:<b>無可自動補回項目</b>(該玩家擁有資料看起來完整,或學生所缺項目無帳本紀錄)。若學生確實少了召喚卷/排名獎勵,請改用「🎁 學生補償工具」手動補。</div>';
+          willHtml = '<div style="margin-top:8px;padding:8px;background:rgba(60,45,20,0.6);border:1px solid rgba(255,200,100,0.35);border-radius:6px;font-size:12px;color:#ffd9a0;">帳本核對:<b>無可自動補回/移除項目</b>(該玩家擁有資料看起來完整,或學生所缺項目無帳本紀錄)。若學生確實少了召喚卷/排名獎勵,請改用「🎁 學生補償工具」手動補。</div>';
         }
-        detailEl.innerHTML = '<div style="margin-bottom:6px;color:#cfe0ff;font-weight:700;font-size:12px;">📋 學生勾選 vs 雲端帳本核對:</div>' + cmpHtml + willHtml;
+        // ★ v3.16.5(piece2)— 類(b)帳本查無紀錄角色:無論有無補回項目皆顯示,供人工審核(系統不自動移除)
+        var _noRecHtml = (diff.extraNoRecordCount||0)
+          ? ('<div style="margin-top:8px;padding:8px;background:rgba(60,45,20,0.55);border:1px solid rgba(255,200,100,0.4);border-radius:6px;font-size:12px;color:#ffe0a0;"><b>⚠ 帳本查無紀錄的角色 ' + (diff.extraNoRecordCount||0) + ' 隻(請人工確認,系統不會自動移除):</b><br>' + _extraNoRecChips + '<div style="margin-top:4px;color:#ccb080;font-size:11px;line-height:1.5;">可能是「跨帳號殘留」(需移除)或「舊版合法角色」(該保留)。確認要移除者,請改用 🧹 帳號汙染處理的移除工具。</div></div>')
+          : '';
+        detailEl.innerHTML = '<div style="margin-bottom:6px;color:#cfe0ff;font-weight:700;font-size:12px;">📋 學生勾選 vs 雲端帳本核對:</div>' + cmpHtml + willHtml + _noRecHtml;
 
         var _payload = (rr && rr.payload) || null;
         if(rr && rr.hasChanges && _payload){
@@ -6989,6 +7001,17 @@ async function _showAdminStatsPanelImpl(){
               var _tChips = _mtd.map(function(t){ return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(120,170,255,0.14);border:1px solid rgba(120,170,255,0.35);border-radius:10px;color:#bcf;">💎 ' + _esc(t.name) + ' <span style="color:#9bf;">Lv' + (t.lv||1) + '</span></span>'; }).join('');
               html += '<div style="margin-top:8px;color:#cdf;">💎 將補回至寶 <b>' + _mtd.length + '</b> 件(三槽皆遺失,補回為 Lv1):</div><div style="margin-top:4px;">' + _tChips + '</div>';
             }
+            // ★ v3.16.5(piece2)— 幻影角色:類(a)帳本鐵證已刪將自動移除 / 類(b)帳本查無需人工審核(不自動移除)
+            var _edh = (d.extraDeletedHeroes && d.extraDeletedHeroes.length) ? d.extraDeletedHeroes : null;
+            if(_edh){
+              var _edChips = _edh.map(function(n){ return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(255,110,110,0.16);border:1px solid rgba(255,110,110,0.42);border-radius:10px;color:#ffc0c0;">🗑 ' + _esc(n) + '</span>'; }).join('');
+              html += '<div style="margin-top:8px;color:#ffb0b0;">🗑 將自動移除幻影角色 <b>' + _edh.length + '</b> 隻(帳本鐵證「已刪卻又出現」,套用時一併移除):</div><div style="margin-top:4px;max-height:160px;overflow-y:auto;">' + _edChips + '</div>';
+            }
+            var _enrh = (d.extraNoRecordHeroes && d.extraNoRecordHeroes.length) ? d.extraNoRecordHeroes : null;
+            if(_enrh){
+              var _enrChips = _enrh.map(function(n){ return '<span style="display:inline-block;margin:2px 3px;padding:2px 8px;background:rgba(255,200,100,0.14);border:1px solid rgba(255,200,100,0.42);border-radius:10px;color:#ffe0a0;">❓ ' + _esc(n) + '</span>'; }).join('');
+              html += '<div style="margin-top:8px;padding:7px 9px;background:rgba(60,45,20,0.5);border:1px solid rgba(255,200,100,0.4);border-radius:6px;color:#ffe0a0;font-size:12px;"><b>⚠ 帳本查無紀錄的角色 ' + _enrh.length + ' 隻(系統「不會」自動移除,請人工確認):</b><div style="margin-top:4px;">' + _enrChips + '</div><div style="margin-top:4px;color:#ccb080;font-size:11px;line-height:1.5;">可能是跨帳號殘留(需移除)或舊版合法角色(該保留)。要移除者請改用 🧹 帳號汙染處理工具。</div></div>';
+            }
             if(r.hasChanges){
               html += '<div style="margin-top:8px;color:#9fe;font-weight:700;">↑ 確認以上是學生預期的角色/至寶後,按下方「套用重建」</div>';
               _applyBtn.style.display = 'inline-block';
@@ -7001,7 +7024,7 @@ async function _showAdminStatsPanelImpl(){
       });
       _applyBtn.addEventListener('click', function(){
         if(!_pendingUid || !_pendingPayload) return;
-        if(!confirm('確定要對此帳號套用重建?(只補不減,寫入三槽)')) return;
+        if(!confirm('確定要對此帳號套用重建?(補回缺漏 + 自動移除帳本鐵證「已刪卻又出現」的幻影角色;寫入三槽)')) return;
         _applyBtn.disabled = true; _applyBtn.textContent = '⏳ 套用中…';
         Promise.resolve().then(function(){
           if(typeof window._fbApplyAccountRebuild !== 'function') throw new Error('_fbApplyAccountRebuild 未載入');
@@ -7018,7 +7041,11 @@ async function _showAdminStatsPanelImpl(){
             }
             if(_pendingDiff && _pendingDiff.crystal && _pendingDiff.crystal.willAdd > 0) _parts.push('🔮 召喚水晶 +' + _pendingDiff.crystal.willAdd);
             if(_pendingDiff && _pendingDiff.coins && _pendingDiff.coins.willAdd > 0) _parts.push('🪙 知識幣 +' + _pendingDiff.coins.willAdd);
-            _resultEl.innerHTML = '✅ <b>重建完成!本次補回:</b>'
+            // ★ v3.16.5(piece2)— 列出本次自動移除的幻影角色(類a 帳本鐵證已刪)
+            if(_pendingDiff && _pendingDiff.extraDeletedHeroes && _pendingDiff.extraDeletedHeroes.length){
+              _parts.push('🗑 移除幻影角色 ' + _pendingDiff.extraDeletedHeroes.length + ' 隻:' + _pendingDiff.extraDeletedHeroes.map(function(n){ return _esc(n); }).join('、'));
+            }
+            _resultEl.innerHTML = '✅ <b>重建完成!本次異動:</b>'
               + '<div style="margin-top:6px;color:#aff;line-height:1.9;">' + (_parts.length ? _parts.join('<br>') : '(無項目)') + '</div>'
               + '<div style="margin-top:8px;color:#8fd;font-size:12px;">📋 請與學生核對以上是否為他預期看到的角色/至寶。學生重新整理 / 重登後即可看到補回的資料。</div>';
           } else if(res && res.noop){
