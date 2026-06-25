@@ -12,6 +12,50 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.22 — 英雄「小鬼貓與兔」改版:天賦惡作劇(對手用技能/爆發反噬能量消耗×50)+ S1/S2 第2擊
+  {
+    ver: 'v3.16.22',
+    date: '2026-06-25',
+    brief: [
+      '⚔️【英雄調整·小鬼貓與兔大改】① 天賦「惡作劇」全新效果:每當對手使用「技能或極限爆發」時,有 30% 機率反噬對手,造成「該招式能量消耗 ×50」的固定傷害(大招消耗越高、反噬越痛;極限爆發以滿能量計 → 反噬 500 點;對 BOSS 一樣有效並受傷害上限保護;觸發機率隨天賦升級提升)。',
+      '🐱【小鬼貓與兔 S1／S2 連擊】② S1「烈日貓抓」與 S2「月影兔咬」兩招都新增:有 30% 機率對「隨機目標」追加第 2 次相同屬性的傷害(機率隨技能升級提升)。原本的傷害、失明、中毒效果全部保留。',
+      'ℹ️【小提醒】天賦「惡作劇」只在對手「使用技能或大絕招」時才會觸發,對手普通攻擊不會觸發(這是和舊版最大的不同)。世界 BOSS 自己的招式不受此天賦影響。',
+    ],
+    items: [
+      '★ v3.16.22【天賦改版】小鬼貓與兔「惡作劇」由「對手普攻時反彈該次傷害(execAtk hook)」改為「對手使用技能/極限爆發時反噬固定傷害」:新增 top-level helper _kgMischiefOnSkill(actor,cost)→ 取 actor 對側存活的小鬼貓與兔逐隻擲 0.30+天賦級×0.05(Lv1=30%·Lv10=75%)→ 命中對 actor 造成 cost×50 固傷。掛載點同科學發明家「靈感」:execSkill 頂部(!sk.p 主動技·傳 a,cost)+ aiUseSkill 頂部(傳 a,cost)+ _runBurst 頂部(傳 h,10·爆發以滿能量條計)。doDmg 用 fixedDmg/mustHit/ignoreBuffs/ignoreEvasion/noGuard/noHidden/noCrit/noCounter(不暴擊·不受屬性·無視有利),不加 bypassShield → 龍王元素護盾與 5000 上限在固傷路徑仍生效(鐵律1.31)。execAtk 內舊「對手普攻反彈」hook 移除。',
+      '★ v3.16.22【S1/S2 第 2 擊】烈日貓抓/月影兔咬 execSkill(玩家)+ aiUseSkill(AI)雙路徑(鐵律1.128)各於主傷+附加狀態後新增:0.30+技能級×0.05 機率 → 對隨機 1 名存活敵方造成同 _kS1Dmg/_kS2Dmg、同屬性(light/dark)的純傷害(不附加狀態)。沿用既有 SKILL_UPGRADE_DEF{cat:dmg}(技能傷害 +5%/級照舊),第 2 擊機率同步隨技能等級 +5%/級。',
+      '★ v3.16.22【資料層 hero_db.js + 版本】HERO_DB s1/s2 d+fd 加「30% 第 2 擊」(鐵律1.160 圖鑑只寫 Lv1 base 30%)·HERO_TRAIT desc/fd 改寫(能量消耗×50)·_TRAIT_LV_INFO 改 base30%/+5%天賦級/max75%(Lv10)·HERO_LORE 更新。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/hero_db.js] → v3.16.22。⚠ 世界 BOSS 自身招式走 world-boss.js 專屬 AI(非 execSkill/aiUseSkill/_runBurst),故世界 BOSS 戰中 BOSS 出招不觸發此天賦(同靈感限制)。本輪改 index.html + hero_db.js + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.1)。',
+    ],
+  },
+  // v3.16.21 — 帳號救援審核不再把「初始 8 隻起始角色」誤列查無紀錄(永久免審查)
+  {
+    ver: 'v3.16.21',
+    date: '2026-06-25',
+    brief: [
+      '🛠️【老師後台修正·一般玩家無感】「帳號救援申請審核」以前會把每位同學一定都有的「初始 8 隻起始角色」(電腦繪圖師/程式設計師/弦樂團員/小劇團員/田徑隊員/直笛團員/籃球隊員/動物學家)誤標成「帳本查無紀錄·需人工確認」。其實這 8 隻是建立帳號時就贈送的基底角色,本來就沒有抽取/解鎖紀錄,屬於正常 → 現在不再列入審查清單,也不會被當成可疑角色。',
+    ],
+    items: [
+      '★ v3.16.21【根因】GM「📨 帳號救援申請審核」按「🔍 核對並準備救援」會跑 window._fbRebuildAccountFromLedgers(uid),其幻影偵測迴圈把「現有 unlockedHeroes 中、帳本查無解鎖紀錄」者收進 _extraNoRecord(diff.extraNoRecordHeroes)供老師人工審核。初始 8 隻起始角色(_ARENA_INITIAL_HEROES)是帳號建立即贈、從不經召喚/解鎖寫帳本 → 每個帳號都會把這 8 隻誤列「查無紀錄」。',
+      '★ v3.16.21【修法】_extraNoRecord 計算迴圈在 admin_delete / no-record 判定前加一道 (window._ARENA_INITIAL_HEROES||[]).indexOf(n)>=0 → return 排除:初始 8 隻永久免審查、既不列「查無紀錄」、也不會被當幻影移除(_extraDeleted)。與玩家端自助審查 _rareSrcCat 旁「initial 非 pollution」判定(v3.13.52)同口徑對齊。只動 _extraNoRecord 收集邏輯,缺漏英雄/至寶/水晶/幣 反推全不變,零回歸風險。',
+      '★ v3.16.21【版本/範圍】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.21;本輪只改 index.html + game_changelog.js(admin_panel.js 維持 v3.16.19·無需改:救援卡只讀 diff.extraNoRecordHeroes 渲染·源頭排除即不再顯示這 8 隻)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.0)。',
+    ],
+  },
+  // v3.16.20 — 取消啟動強制練習營 + 取消每次問設定二段密碼 + 二段密碼設定移到會員 hub
+  {
+    ver: 'v3.16.20',
+    date: '2026-06-25',
+    brief: [
+      '🎒【取消「課堂練習營」開場強制彈出】登入遊戲時不再自動跳出全螢幕的「課堂練習營」答題視窗,會直接進入遊戲。',
+      '🔐【不再每次詢問要不要設定第二段密碼】以前每次登入都會問「要不要設定第二段密碼」,現在取消這個提醒了。想保護帳號的人,改到關卡頁下方「📨 會員帳號與救援申請」→「🔐 二段密碼設置」自己設定即可。',
+      '🔑【已經設過密碼的帳號不受影響】如果你之前已經設定過第二段密碼,登入時仍然會照常跳出「請輸入第二段密碼」,保護不變。',
+    ],
+    items: [
+      '★ v3.16.20【取消啟動練習營】window._CAMP_ENABLED 預設值由 true 改 false → _campStart(user) 入口的 if(!window._CAMP_ENABLED) return 直接早退;onAuth 仍會呼叫但不再蓋上覆蓋層。練習營全部程式碼保留(零刪除),GM 需要時可手動 window._CAMP_ENABLED=true 重啟。',
+      '★ v3.16.20【取消每次問設定二段密碼】_lxpsRunSecondPwGate 讀 _fbGetMyPwState:已設密碼(sp.hash)→ 維持 _showVerifyForm 彈出輸入(不變);未設密碼分支由原本 _showSetupPrompt(_finish)「詢問是否設定」改為直接 _finish()(設 sessionStorage 通過旗標 + resolve 放行進遊戲),不再彈設定提示。',
+      '★ v3.16.20【二段密碼設定入口移到會員 hub】_openMemberAccountHub 在「✏️ 編輯會員資料」鈕下方新增「🔐 二段密碼設置」鈕(_mh-pw)→ onclick 呼叫既有 window._lxpsOpenSecondPwSetup(未設密碼直接開設定表單·已設密碼先驗證舊密碼再改)。後端 _fbSetMyPw/_fbVerifyMyPw/_fbGetMyPwState 與設定·驗證 UI 全部沿用,零後端改動。',
+      '★ v3.16.20【版本/範圍】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.20;本輪只改 index.html + game_changelog.js(admin_panel.js 維持 v3.16.19·world-boss*/hero_db/arena/sw 等皆未動)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.99)。',
+    ],
+  },
   // v3.16.19 — 系統審核誤判英雄「投資證據版」回收 + 道歉公告列出清單 + 救援申請加「我遺失的英雄要回來」
   {
     ver: 'v3.16.19',
@@ -270,58 +314,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.2【修法②】敗北「回學校休整」advGoRestAtSchool 內、隱藏戰鬥畫面 class 之前的 await gameCloudSave() 改 Promise.resolve(gameCloudSave()).catch(...) fire-and-forget(原本同樣會在慢網阻塞戰鬥畫面收起);進度另有 autosave + 中斷快照兜底。',
       '★ v3.16.2【未動範圍】只調整「UI 轉場時機」,不改發獎/解鎖/EXP/存檔內容;BOSS 戰結算發獎、英雄加入、升級演出邏輯皆不變。承接 v3.16.1(好友借用+召喚卷/貓空 fire-and-forget)。',
       '★ v3.16.2【版本鏈】只改 index.html + game_changelog.js;_GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.2;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.81)。',
-    ],
-  },
-  // v3.16.1 — 體驗修正(好友借用套用最高等級+至寶、召喚卷/貓空解鎖升級畫面立即出現)
-  {
-    ver: 'v3.16.1',
-    date: '2026-06-24',
-    brief: [
-      '⚡【三項體驗修正,讓遊戲更順手】',
-      '   ・<b>邀請好友借用英雄</b>:現在會正確套用好友英雄的「最高等級」與「裝備的至寶」!(以前只會用到對方「設定代表英雄那一刻」的狀態,之後升級或換至寶都沒更新到)',
-      '   ・<b>使用 SSR / SR 召喚卷、自選卷、至寶卷</b>:解鎖到的角色或至寶畫面會「立刻」出現,不用再等很久(原本網路慢時要乾等 8~30 秒)。',
-      '   ・<b>貓空打完 BOSS</b>:按下「確認」領獎後,英雄升級畫面會「立刻」出現,不再卡住 8~30 秒才跳出來。',
-    ],
-    items: [
-      '★ v3.16.1【好友借用根治】representativeHero 原僅在 _selectRepHero(設定代表英雄)當下擷取一次快照(等級/statInvested/skillLevels/burstLevel/裝備至寶),之後升級/換至寶/投資點都不更新雲端 → 好友邀請讀 fd.representativeHero 拿到舊快照。根因:_refreshMyRepHeroCloud 全程零呼叫點。修法:gameCloudSave 雲端寫入成功後接 _refreshMyRepHeroCloud()(內建 1.5s 防抖 + 只在有代表英雄時寫 + 重讀 live 等級/至寶),任何進度存檔後自動刷新雲端代表英雄快照。注意:已設代表英雄但修正上線後尚未再玩者,其雲端快照要等下次存檔才更新(自癒)。',
-      '★ v3.16.1【召喚卷顯示前存檔改 fire-and-forget】SSR/SR 隨機卷 + SSR/SR 自選卷 + 隨機/自選至寶卷 共 4 條流程,原本在顯示解鎖結果動畫「之前」await gameCloudSave → 校園 wifi 慢時阻塞 UI 8~30 秒。解鎖已即時寫 localStorage 解鎖清單 + reconcile 下次登入補雲端,await 純多餘 → 改 Promise.resolve(gameCloudSave()).catch(...) 背景化,結果畫面立即出現。',
-      '★ v3.16.1【貓空 BOSS 顯示前存檔改 fire-and-forget】advStartWinSequence(L≈87896)在收結算畫面與出升級視窗「之前」await gameCloudSave 阻塞 8~30 秒。獎勵(書/幣/水晶)、EXP、升級清單此時已套進記憶體,存檔純持久化不需擋 UI;另有 grantBattleExp 的 fire-and-forget 存檔 + autosave + 中斷快照三重兜底 → 改 fire-and-forget。三處皆只動「顯示視窗前的存檔時機」,不改發獎/解鎖/存檔內容。',
-      '★ v3.16.1【版本鏈】本輪疊在 v3.15.99 會員資料 + v3.16.0 累積答對之上,只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.1;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.80)。',
-    ],
-  },
-  // v3.16.0 — 答題解鎖門檻放寬(累積答對 20 題,答錯不再歸零)
-  {
-    ver: 'v3.16.0',
-    date: '2026-06-24',
-    brief: [
-      '🎯【「小力 / 幼兒園小孩 / 機關王雙人組」更容易獲得了!】這三隻活動英雄原本要在專屬題庫「連續答對 20 題」、只要答錯一題就整個歸零重來;現在改成「累積答對 20 題」——可以慢慢累積,答錯也不會把進度清空!',
-      '   ・<b>小力</b>:在「領養與照顧狗狗」題庫累積答對 20 題即可獲得。',
-      '   ・<b>幼兒園小孩</b>:在「照顧與陪伴幼兒」題庫累積答對 20 題即可獲得。',
-      '   ・<b>機關王雙人組</b>:在「世界機關王大賽」題庫累積答對 20 題即可獲得。',
-      '   ・<b>答錯不再歸零</b>:答錯只是那一題沒拿到進度,已經累積的答對題數會永久保留,可以分很多次慢慢完成,不用怕一錯就重來。',
-    ],
-    items: [
-      '★ v3.16.0【累積制核心】_resetUnlockHeroProgressOnWrong 不再於答錯時重置 streak(careInfantStreak/dogCareStreak/greenMechStreak)或清空已用題庫,改為僅顯示鼓勵橫幅;_trackUnlockHeroProgress 答對 +1、滿 20 解鎖的累積邏輯不動 → 由「連續答對(答錯歸零)」變「累積答對(進度永久保留)」。',
-      '★ v3.16.0【文案同步】所有玩家可見文字由「連續答對 / 答錯歸零」改「累積答對」:特殊題庫進度條、冒險戰鬥橫幅、迷你戰鬥橫幅、英雄解鎖標籤×2、圖鑑機關王說明+卡片副標、詳情頁解鎖條件三分支、獎章「機關王挑戰者」(unlock_gm)描述、解鎖原因記錄×2、解鎖慶祝 toast 與 log。',
-      '★ v3.16.0【未動範圍】戰鬥內「連續答對連擊」(currentStreak / 獎章 streak_3·5·10)與「台灣關連續答對」(twQuizStreak)是另一套系統,完全未更動。',
-      '★ v3.16.0【版本鏈】本輪改 index.html + game_changelog.js(疊在 v3.15.99 會員資料之上)。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.0;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.79)。',
-    ],
-  },
-  // v3.15.99 — 小英雄會員資料(首登建立 + 編輯同步雲端)
-  {
-    ver: 'v3.15.99',
-    date: '2026-06-24',
-    brief: [
-      '🪪【新增「小英雄會員資料」】第一次登入時會跳出「會員資料建立」視窗,填寫你的基本資料,方便老師辨識並照顧每一位小英雄(這些資料只有老師看得到)。',
-      '   ・<b>填寫欄位</b>:會員暱稱、E-mail 信箱、玩家身分(可複選)、出生年份、在學就讀年級(選填)、真實性別、主要遊玩平台(可複選)。',
-      '   ・<b>填好就送禮</b>:完整填寫並送出,即可獲得 🔮召喚水晶 ×10 + 💰知識幣 20,000 + 🌈SSR 隨機召喚卷 ×1(每個帳號限領一次)!',
-      '   ・<b>之後也能改</b>:資料填過一次就不會再自動跳出;想修改隨時點關卡頁下方「📨 會員帳號與救援申請」→「✏️ 編輯會員資料」即可(原本的「帳號救援申請」也在同一個地方)。',
-    ],
-    items: [
-      '★ v3.15.99【會員資料系統】首次登入(memberProfileComplete 未設)→ 關卡頁延 2200ms 自動彈「會員資料建立」表單(7 欄:會員暱稱[GM 私密識別,與遊戲內公開暱稱無關]/E-mail/玩家身分多選/出生西元年/在學年級選填/真實性別/主要平台多選);送出寫玩家自己 players/{uid}.memberProfile + memberProfileComplete/Rewarded,走既有「玩家自己 self-write」規則,無需新增 firestore.rules。',
-      '★ v3.15.99【一次性獎勵】未領過(memberProfileRewarded 雲端旗標)才發 🔮×10 + 💰20000 + 🌈SSR隨機召喚卷×1;旗標先寫雲端、再本地 backpackAdd/addKnowledgeCoins 發獎 + gameCloudSave → at-most-once(編輯既有資料不再發)。',
-      '★ v3.15.99【入口整合】關卡頁底部「📨 帳號救援申請」鈕改名「📨 會員帳號與救援申請」→ 開 hub(✏️ 編輯會員資料 / 📨 帳號救援申請);block#02 新增 _fbGetMemberProfile/_fbSaveMemberProfile + _MEMBER_IDENTITY/GRADE/GENDER/PLATFORM_OPTS;UI _openMemberAccountHub/_openMemberProfileForm(first 首登有獎可稍後再填·點背景不關 / edit 編輯無獎)/_memberProfileSubmit/_maybeShowMemberProfileFirstLogin;救援說明彈窗加會員彈窗防疊加守門。',
-      '★ v3.15.99【版本鏈】本輪改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.15.99;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.78)。',
     ],
   },
 ];
