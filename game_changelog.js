@@ -12,6 +12,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.16 — 修「多出別人的角色」(uid 漏洞) + 有練角色救回說明
+  {
+    ver: 'v3.16.16',
+    date: '2026-06-25',
+    brief: [
+      '🔧【修「多出別人的角色」】修正一個漏洞:判斷角色是不是你的時候,之前沒檢查解鎖紀錄是不是「你自己」的。共用 iPad 上別人的解鎖紀錄會留在這台機器、被誤認成你的,讓你多出沒抽過的角色。現在只認你自己帳號的紀錄,別人留下的不算 → 多出的角色會自動收回。你原本的等級/至寶/知識幣/進度一樣完全不動。',
+    ],
+    items: [
+      '★ v3.16.16【多出別人角色·uid 漏洞修復】_advHasGenuineUnlock 的「解鎖紀錄」判定原只排除 migration_seal/admin_delete、沒檢查 uid → 共用 iPad 上別人 uid 的真正解鎖紀錄殘留本機帳本(adv_hero_unlock_history)被當成自己 genuine → 出口過濾不收 → 多出沒抽過的角色。修法:紀錄判定加 (沒有 uid 或 uid===自己前12碼),與審查 UI ownLegit 的 uid 邏輯一致;別人 uid 的殘留紀錄不再算數,出口過濾會收回多出的角色。',
+      '★ v3.16.16【「有練的角色沒了」說明】v3.16.15 的投資證據(素質點/技能/天賦/爆發任一)已救回「有投入資源練過」的角色;co-op 借用領 EXP 的源頭早在 v3.14.12 已堵(借用英雄排除領 EXP),不再產生新污染,殘留屬舊存量。仍可能被鎖的只剩:純升等級、完全沒做過任何投資、又無解鎖紀錄無裝至寶的角色(與 co-op 借用存量資料完全相同、無法自動分辨)→ 這類用「📨 帳號救援申請」勾「這是我的、要回來」送老師核對補發。',
+      '★ v3.16.16【版本】三點同步 → v3.16.16;本輪僅改 index.html + game_changelog.js。',
+    ],
+  },
   // v3.16.15 — 修 v3.16.14 上鎖誤傷:投資證據=擁有鐵證 + 出口過濾時序保護
   {
     ver: 'v3.16.15',
@@ -316,20 +329,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.96【安全邊界】只動 heroLevels,完全不改 heroExp/heroSkillLevels/heroStatPoints/heroStatInvested/heroCapsuleInvested/heroBurstLevels/heroTraitLevel 的合併行為(heroStatInvested_s/heroSkillLevels_s 本已各自處理;heroStatPoints 由素質點不變式 free+invested==lv-1 自癒,輸入 heroLevels 變乾淨後更穩)。舊存檔(尚無 heroLevels_s)在 _lxpsObjFromSlot 找不到 _s 時 falls back 原 map 行為、不變;學生正常存檔一次後三槽 heroLevels_s 即接齊。v3.15.76 的 unlockedHeroes 對帳守門仍在 → 過渡期即使 _s 尚未鋪滿,也不會誤判倒退(雙保險)。',
       '★ v3.15.96【未根治部分(待專門處理)】此版只把 heroLevels 補成字串版(逐欄位法/甲)。Firebase set(merge:true) 對 map 深合併不刪 key 的根本問題,徹底解法是主文件改 merge:false 整份覆蓋(乙·退役所有 _s 繞道),屬存檔核心架構改動、需獨立測試。登入困難(慢校網/改版卡載入)另由 sw.js 持久快取(v3.5.87)處理,真‧秒開(重檔 cache-first)為後續 B2。',
       '★ v3.15.96【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.95→v3.15.96;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.75)。',
-    ],
-  },
-  // v3.15.95 — 練習營獎勵防跨帳號錯置(共用平板)
-  {
-    ver: 'v3.15.95',
-    date: '2026-06-23',
-    brief: [
-      '🔒【修正:共用平板上練習營獎勵可能算到別人帳號】之前練習營在等待時賺到的獎勵,是先暫存在「這台裝置的今天」;在共用 iPad 上,如果前一位同學練習後沒按「進入遊戲」就關掉,下一位登入結算時可能把前一位賺的獎勵算進自己帳號。',
-      '   ・現在把暫存獎勵<b>綁定到各自的帳號</b>,換人登入不會再互相算到對方的獎勵,獎勵只會回到當初練習的那個帳號。',
-    ],
-    items: [
-      '★ v3.15.95【練習營 bank key 綁 uid index.html】_campBankKey 由 lxps_camp_bank_{日期}(只綁日期·共用裝置同日共用一份)改 lxps_camp_bank_{uid}_{日期}(uid 取 _campState.uid,登入時即設定)→ 共用 iPad 上甲未按進入就關掉、乙接著登入時,_campLoadBank/_campSaveBank/_campSettleBank 各讀各自 uid 的暫存,不會把甲的本地存獎(每日上限 1000 幣/3 水晶)結算進乙帳號。結算本身仍走 _fbCompensatePlayer(寫 playerBackpack/_s + heroLevels_s + heroStatPoints_s + taiwanTreasureData_s 字串版,對 Firestore set(merge:true) map 深合併安全)。',
-      '★ v3.15.95【說明】sw.js(v3.5.87)/載入讀條整合(v3.15.94)不碰帳號資料(sw.js 跳過 firestore.googleapis.com、仍 network-first)→ 無污染風險。知識王換科目牌堆 deck 隨 kingChallenge 整包存(與既有答題暫存同),為科目名字串陣列、每次開彈窗重洗、不參與任何存檔守門 → 無害(更正 v3.15.92 註記「不進雲端白名單」不精確)。',
-      '★ v3.15.95【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.94→v3.15.95;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.74)。',
     ],
   },
 ];
