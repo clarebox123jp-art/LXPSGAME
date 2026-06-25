@@ -12,6 +12,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.15 — 修 v3.16.14 上鎖誤傷:投資證據=擁有鐵證 + 出口過濾時序保護
+  {
+    ver: 'v3.16.15',
+    date: '2026-06-25',
+    brief: [
+      '💚【救回修復】聽到有同學說「自己練過的英雄被收走、又沒辦法在審核裡救回」,老師加上更聰明的判斷:只要你曾經幫一隻角色加過素質點、升過技能、升過天賦或爆發,就算系統沒有你的解鎖紀錄,也會認定那是你真正擁有的角色而自動保留,不會再被收走。你的角色等級、至寶、知識幣、進度一樣完全不動。',
+    ],
+    items: [
+      '★ v3.16.15【投資證據=擁有鐵證】_advHasGenuineUnlock 新增第③類證據:_heroStatInvested(素質點·初始空)任一>0、或 _heroSkillLevels 任一槽>1、或 _heroBurstLevels>1、或 _heroTraitLevel>1 → 判定真正擁有。理由:co-op 借用好友英雄只會領到 EXP(_heroLevels 升等),玩家絕不會把自己的點數/技能資源投資到借來的角色 → 投資=真正擁有,與「裝至寶」同級鐵證。大幅修正 v3.16.14「只有等級、無紀錄、無至寶」的真正擁有英雄被誤上鎖的災情。',
+      '★ v3.16.15【出口過濾時序保護】advGetUnlockedHeroes 出口過濾新增閘:有非初始英雄但 _heroLevels 完全空(疑似存檔尚未載入)→ 跳過過濾,避免投資/等級判定在資料就緒前失效而誤刪;_heroLevels 與投資 map 同在 _applySafeData 載入,有值即代表投資已就緒,新玩家(僅初始8隻)不受影響。',
+      '★ v3.16.15【殘留與救回】仍可能被上鎖的極少數:既無解鎖紀錄、又沒裝至寶、也完全沒做過任何投資(純靠等級存在)的舊角色 —— 這類學生可用「📨 帳號救援申請」勾「這是我的、要回來」送老師核對補發(審核 UI 與送審流程本身正常,未受影響)。',
+      '★ v3.16.15【版本】三點同步 → v3.16.15;本輪僅改 index.html + game_changelog.js。',
+    ],
+  },
   // v3.16.14 — SSR 污染上鎖治本(自我審查缺陷修復)+ 道歉公告
   {
     ver: 'v3.16.14',
@@ -316,24 +330,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.95【練習營 bank key 綁 uid index.html】_campBankKey 由 lxps_camp_bank_{日期}(只綁日期·共用裝置同日共用一份)改 lxps_camp_bank_{uid}_{日期}(uid 取 _campState.uid,登入時即設定)→ 共用 iPad 上甲未按進入就關掉、乙接著登入時,_campLoadBank/_campSaveBank/_campSettleBank 各讀各自 uid 的暫存,不會把甲的本地存獎(每日上限 1000 幣/3 水晶)結算進乙帳號。結算本身仍走 _fbCompensatePlayer(寫 playerBackpack/_s + heroLevels_s + heroStatPoints_s + taiwanTreasureData_s 字串版,對 Firestore set(merge:true) map 深合併安全)。',
       '★ v3.15.95【說明】sw.js(v3.5.87)/載入讀條整合(v3.15.94)不碰帳號資料(sw.js 跳過 firestore.googleapis.com、仍 network-first)→ 無污染風險。知識王換科目牌堆 deck 隨 kingChallenge 整包存(與既有答題暫存同),為科目名字串陣列、每次開彈窗重洗、不參與任何存檔守門 → 無害(更正 v3.15.92 註記「不進雲端白名單」不精確)。',
       '★ v3.15.95【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.94→v3.15.95;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.74)。',
-    ],
-  },
-  // v3.15.94 — 練習營整合啟動載入進度條 + 載入機制可靠性強化
-  {
-    ver: 'v3.15.94',
-    date: '2026-06-23',
-    brief: [
-      '🎒【課堂練習營 × 啟動載入進度整合】現在練習營會和遊戲啟動的「資源載入中」進度條<b>合而為一</b>:',
-      '   ・一邊載入一邊就能練習答題,練習營<b>頂端會顯示資源載入進度(📦 資源載入中 X%)</b>。',
-      '   ・等<b>資源載入完成、而且帳號也連線好</b>,頂端才會出現「<b>✅ 帶獎勵進入遊戲</b>」,按下就帶獎勵進場。',
-      '   ・如果載入條跑完了、帳號卻還沒連上,就<b>繼續留在練習營邊玩邊賺</b>,連上後再進場結算。',
-      '⚡【載入機制可靠性強化】更新了背景載入規則,讓<b>開過一次遊戲的裝置之後更不容易卡在載入畫面</b>(慢網更快用上已下載好的版本;線上仍會即時抓最新版)。',
-    ],
-    items: [
-      '★ v3.15.94【練習營整合 boot-loader index.html】#boot-loader 的 _bootLoader IIFE 對外公開 window._bootLoaderPct(render 每拍寫)/_bootLoaderDone(done 設 true、session 早退路徑也設 true、啟動設 false);練習營 _campUpdateBanner 改:新增 _campCanEnter()=（_bootLoaderDone && _campState.ready）才顯示「✅ 帶獎勵進入遊戲」;未達標時依 (_bootLoaderDone, _campState.ready) 顯示三態文案 + 未載完內嵌一條資源載入進度條(讀 _bootLoaderPct)。_campStart 輪詢 1000ms→700ms 且每拍呼叫 _campUpdateBanner(資源 % 即時跑動、資源/登入任一就緒即轉場);hook2 _campMarkReady 仍設 ready 旗標(雙保險)。對齊老師:載入+登入皆完成可直接進、載入完成未登入續留練習營。',
-      '★ v3.15.94【sw.js v3.5.87 載入可靠性(另檔·高風險建議先 1~2 台 iPad 驗證)】SHELL_CACHE 由 lxps-shell-+SW_VERSION 改固定 lxps-shell-v1(跨版本保留「上次成功完整載入」當 fallback)→ 根治「改版後新 shell 快取尚未填好、activate 又刪掉舊版快取 → 慢校網逾時想 fallback 卻撈不到 → 卡住下載不完」;networkFirstShell 逾時 5000→2500ms(慢網更快回快取)、fallback 先查本 shell 快取再退查全快取庫 caches.match(belt-and-suspenders);仍為 network-first(線上先抓最新→更新即時生效不變,非 cache-first 故無「新版延後」副作用)。SW_VERSION v3.5.86→v3.5.87 讓 iPad 取得新 sw.js。install 仍以 cache:reload 重抓 SHELL_URLS 覆蓋成最新。',
-      '★ v3.15.94【誠實限制】此 sw.js 改動讓「開過一次的回頭裝置」幾乎一定進得去且更快,但「某台第一次全新開、且當下網路嚴重壅塞」仍需把資源下載一次(物理限制)→ 建議課前讓每台 iPad 先在好網路開過一次熱身。若日後要更激進的「真‧秒開」(重檔 cache-first,代價是新版延後一個開啟+需更新提示),可再評估 B2。',
-      '★ v3.15.94【版本鏈】本輪改 index.html + game_changelog.js + sw.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.93→v3.15.94;sw.js SW_VERSION v3.5.86→v3.5.87(sw.js 不在 _vers 字典);admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.73)。',
     ],
   },
 ];
