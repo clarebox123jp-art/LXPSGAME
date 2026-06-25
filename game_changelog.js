@@ -12,6 +12,34 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.18 — 緊急復原 v3.16.14~17 災情(停用自動剔除 + 修審查判定)
+  {
+    ver: 'v3.16.18',
+    date: '2026-06-25',
+    brief: [
+      '🚨【緊急復原】上一版的自動判定有嚴重 bug:在某些時機會把你自己的角色誤判成「別人的」而剔除、卻把污染留下,而且會覆蓋雲端造成永久消失。本版緊急復原:① 完全停用自動剔除——系統不再主動移除任何角色,你練過的角色會從等級自動救回 ② 修正自我審查的判定——之前封存過的污染不再被當成「合法是你的」,會正確歸到可清除的那一類。你的等級/至寶/知識幣/進度一律完全不動。',
+    ],
+    items: [
+      '★ v3.16.18【災情根因】① window._gUserId 時序:出口過濾(v3.16.14~17)可能在 _gUserId 尚未設定時被調用 → 自己前12碼 uid 對不上空字串 → 你自己的角色被判成別人的而 filter 剔除,且寫回 localStorage + 覆蓋雲端 → 永久消失;污染(lv>1 無紀錄)反而因 lv>1 被保留。② 審查 ownLegit 未排除 migration_seal → 之前封存洗白的污染被當合法塞進 B1(清不掉)= 「判定是他的很多不是他的」。',
+      '★ v3.16.18【復原措施】① advGetUnlockedHeroes 出口過濾「全面停用」(直接 return,不再 filter 剔除任何角色)。② phantom rescue 移除 v3.16.14 的 genuine 守門 → 回到 lv>1 無條件補回,從 _heroLevels 救回被誤刪的練過角色(既有救援都是「只補不刪」,同樣時序問題下只會漏補、無害,不會誤刪)。③ 審查 ownLegit/otherUid 排除 migration_seal + uid 前12碼相容 → 封存污染落入可清的 B2、真正角色(summon 等紀錄)正確歸 B1。',
+      '★ v3.16.18【現狀】回到「不缺少(練過/有紀錄的角色都救回保留)」的安全基線;污染(借來練過、封存殘留)會暫時保留(多出),改由學生自我審查勾「不是我的」或 GM 後台工具清除,不再自動判定剔除(避免再次誤刪)。_advHasGenuineUnlock 保留定義但已無調用點(死碼),待 uid 時序問題徹底解決後才考慮重啟自動判定。',
+      '★ v3.16.18【版本】三點同步 → v3.16.18;本輪僅改 index.html + game_changelog.js。',
+    ],
+  },
+  // v3.16.17 — 原有的都保留、不再多出沒有的(角色保留規則最終平衡)
+  {
+    ver: 'v3.16.17',
+    date: '2026-06-25',
+    brief: [
+      '✅【原有的都保留、不再多出沒有的】重新調整角色保留規則:① 你練過的角色(等級>1)一律保留,不會再因為「沒有解鎖紀錄」被收走——這修好了「有練的角色不見了」② 同時清掉真正多出來的:被老師刪過的、帳本顯示是別人帳號的、以及你既沒抽也沒練過卻冒出來的幻影角色。你的等級/至寶/知識幣/進度一律完全不動。',
+    ],
+    items: [
+      '★ v3.16.17【判定大改·不多出+不缺少】_advHasGenuineUnlock 重排優先序:① 初始8隻→留 ② 裝至寶→留 ③ 投資過(素質/技能/天賦/爆發)→留 ④ 最新紀錄=admin_delete→移除(被刪不復活·最高優先) ⑤ 自己 uid 真正解鎖紀錄→留 ⑥ 只有別人 uid 真正紀錄(無自己證據)→移除(別人的·即使練過) ⑦ 查無任何紀錄但練過(lv>1)→留(很可能 v3.11.10 前未記帳本時自己練的;不缺少他們認定有的) ⑧ lv≤1 又無任何紀錄/投資/至寶→移除(純幻影)。',
+      '★ v3.16.17【相對 v3.16.14~16 的調整】v3.16.14 把「lv>1 但無紀錄無投資」一律上鎖→造成「有練的角色不見了」;本版改為這類一律保留(賭是自己 v3.11.10 前練的),只精準清掉「被刪/別人 uid/純幻影」三種真正不該有的。源頭 co-op 借用領 EXP 早在 v3.14.12 堵住,不再新增污染。',
+      '★ v3.16.17【殘留說明】唯一無法自動分辨的:純 borrow 殘留(無紀錄·lv>1)與「v3.11.10 前自己練的」資料完全相同 → 從寬保留(優先不缺少);學生若不認可在「自我審查」勾「不是我的」自助清除。時序保護:存檔未載入(_heroLevels 全空)時出口過濾整段跳過,不誤刪。',
+      '★ v3.16.17【版本】三點同步 → v3.16.17;本輪僅改 index.html + game_changelog.js。',
+    ],
+  },
   // v3.16.16 — 修「多出別人的角色」(uid 漏洞) + 有練角色救回說明
   {
     ver: 'v3.16.16',
@@ -294,41 +322,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.98【背景圖】海龍王戰場立繪 水龍王.png(world-boss.js bossId→圖檔映射既有),沿用與其他龍王相同的通用顯示(--wb-boss-bg + center 10%/cover),高度對齊一致;_wbApplyCurrentBossSkin/_wbApplyNextBossPreview 資料驅動自動套用。',
       '★ v3.15.98【特效/音效/BGM】① 爆發特效:_WB_FX_URLS 加 burst_water=冰椎爆裂.gif(_wbWaterBossBurst 呼叫 _wbPlayFullscreenFx(burst_water))。② 爆發音效:結冰 sfx-ice1(單體冰凍.mp3)鋪底 + 260ms 後碎冰爆破 sfx-burst(爆發技能.mp3),呼應「冰椎爆裂」。③ 戰鬥 BGM:_WB_BATTLE_BGM_MAP 加 shenhai_water_dragon→bgm-wb-shenhai-battle;index.html 新增 <audio id=bgm-wb-shenhai-battle src=海龍王BGM.m4a loop>(仿地龍王戰BGM)。GIF/BGM 走 network 不進 sw cache(對齊既有龍王特效/BGM)。',
       '★ v3.15.98【版本鏈】本輪改 world-boss.js + index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js / world-boss.js] 全 → v3.15.98;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss-ui.html(v3.15.69) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.76)。',
-    ],
-  },
-  // v3.15.97 — 日本三神器不再誤佔至寶 + 練習營三修 + 強化教學畫面飄移根治
-  {
-    ver: 'v3.15.97',
-    date: '2026-06-23',
-    brief: [
-      '💎【日本三神器不再被誤算成台灣至寶】草薙劍、八尺瓊勾玉、八咫鏡這三件「日本三神器」其實是解鎖隱藏關卡(八岐大蛇)的<b>任務物品</b>,並不是台灣至寶。先前它們會被誤寫進至寶資料、<b>佔用你的至寶數量</b>,連帶讓「帳號救援」誤把它們當成缺漏的至寶補回。',
-      '   ・這版已修正:三神器不再計入台灣至寶。<b>已受影響的帳號只要登入,系統會自動把誤算的三神器從至寶清單清掉</b>(你對三神器的擁有、以及隱藏關卡的解鎖狀態都完全不受影響)。',
-      '📚【課堂練習營改善】① 題目和選項的<b>字體放大</b>,在平板上更好閱讀;② 修正部分情況下<b>「第一題按了沒反應」</b>的問題(原因是練習營被遊戲其他畫面元素蓋住、攔截了你的點擊);③ <b>「帶獎勵進入遊戲」按鈕現在隨時都能按</b>——就算遊戲還沒連線好也能按下,系統會先把你剛賺到的獎勵<b>綁定你的帳號保存起來</b>,等連線一好就自動帶你進場(不會卡住、也不會白賺)。',
-      '🖥️【英雄圖鑑「英雄強化教學」看完畫面上移卡死 已修正】先前在英雄詳情頁看完「英雄強化教學」後,整個遊戲畫面會往上移、超出螢幕(電腦版上方按鈕列會有一半不見、iPad 更會整個飄走、上方按鈕按不到形同卡死,只能重開或轉螢幕才恢復)。這版已根治;同時<b>一併改善了 iPad 上畫面容易飄移、超出螢幕的情況</b>。',
-    ],
-    items: [
-      '★ v3.15.97【日本三神器=任務物品·永不進入台灣至寶系統】根因:_japanSetTreasure() 取得三神器時呼叫了 _advSaveTreasureUnlockHistory(key,「japan_clear」),該函式不只寫 _treasureUnlockHistory 帳本,還會把 taiwanTreasureData.<key>(tengu/shutendoji/tamamo) 也寫進台灣至寶擁有清單 → 雙重污染 → 帳號救援 _fbRebuildAccountFromLedgers 從帳本反推時把三神器當缺漏至寶補回、誤佔至寶 3 個數量。修法:① _japanSetTreasure 移除該呼叫(只保留 gameCloudSave;三神器擁有/同步全由 adv_japan_treasures + japanProgress.treasures 維護,主存檔/三槽合併/載入皆已涵蓋)② 新增 window._JAPAN_TREASURE_KEYS={tengu,shutendoji,tamamo} + window._isJapanTreasureKey()(掛 window 確保跨 script block 可呼叫)③ 三處清污染:_applySafeData 載入 taiwanTreasureData 合併後迴圈剔除三神器殘留鍵 → 隨後 _saveTaiwanTreasureData() 連同 _s 整包覆蓋雲端(已污染帳號登入即自動清乾淨)、_fbRebuildAccountFromLedgers 的 _missingTreasures filter 加 「&& !window._isJapanTreasureKey(id)」、_extractDataSummaryForCompare 至寶清點加 「if(window._isJapanTreasureKey(id))return」。★ 三神器「擁有」與隱藏關解鎖完全不受影響(走 adv_japan_treasures / japanProgress.treasures,與 taiwanTreasureData 無關)。',
-      '★ v3.15.97【練習營三修】① 字體放大:_campShowQuestion 題目 18→23px、選項 15.5→20px、字母圈 26→32px、回饋 15→18px;_campShowSubjectScreen 題庫/隨機鈕 15→18px、標題 16→20px。② 第一題無法選根治:_campBuildShell overlay z-index 100000→2147483646(原 100000 被遊戲眾多高層元素 z 達 999999~2147483647 遮擋,雲端就緒後背景渲染的高層元素攔截了練習營點擊);答題改 #_camp-body「一次性事件委派」(_campOptBound 旗標 + closest「._camp-opt」,不再逐選項 onclick → 免疫 iOS 動態按鈕首次點擊被吃 + 重渲 onclick 競態);選項與題庫鈕加 touch-action:manipulation。③ 進入按鈕一律可按:_campUpdateBanner 改寫(就緒→綠色立即進入;未就緒→仍顯示橘色可按鈕 + 資源載入進度條);新增 async _campRequestEnter()(就緒→_campEnterGame;未就緒→設 window._campWantEnter=true + 先 _campSettleBank() 保存獎勵[bank 綁 uid] + 按鈕轉「準備中」);_campStart 開頭重設 _campWantEnter=false;700ms 輪詢加「_campWantEnter && _campCanEnter()→自動 _campEnterGame()」。',
-      '★ v3.15.97【強化教學(HUT)畫面飄移根治】根因:_hutShowStep 用 el.scrollIntoView({block:「center」}) 把高亮 anchor 捲到中央,但在 iOS(尤其 iPad)scrollIntoView 會連帶冒泡捲動 documentElement/body,而英雄詳情 #hero-detail-overlay 是 position:absolute → body 一被捲走、整個遊戲畫面就上移飄出螢幕,且結束 _hutRemoveAll 只移除 _hut-* 元素、沒還原捲動位置 → PC 按鈕列半截超出、iPad 整個上移卡死(轉螢幕 reflow 重置 scrollTop 才恢復)。修法:① _hutShowStep 改用「手動只捲 #hero-detail-box」(用 getBoundingClientRect 差值設容器 scrollTop 把 anchor 捲到容器垂直中央,完全不觸發 body 捲動;找不到容器才 fallback scrollIntoView)② 進入時記錄 window._hutSavedPageScroll(首次)、_hutRemoveAll 結束還原(window.scrollTo + documentElement/body scrollTop + 清 null,雙保險)③ #hero-detail-box 加 overscroll-behavior:contain。',
-      '★ v3.15.97【通用 iPad 畫面飄移根治】_initPWA 改為「無條件設 document.documentElement + body 的 overscrollBehavior=none」(原本僅 PWA standalone 模式才設)。瀏覽器分頁開啟時 iPad 也常見整頁被橡皮筋/慣性捲動推移、position:fixed/absolute 的 overlay 跟著飄出螢幕;對 html+body 阻斷捲動鏈外溢可大幅減少各種畫面飄移(不影響容器內正常捲動)。',
-      '★ v3.15.97【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.96→v3.15.97;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/main.css(v3.15.79)/world-boss.js(v3.15.51)/world-boss-ui.html(v3.15.69) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.76)。',
-    ],
-  },
-  // v3.15.96 — 帳號污染根治(甲):heroLevels 字串版接齊
-  {
-    ver: 'v3.15.96',
-    date: '2026-06-23',
-    brief: [
-      '🛡️【存檔同步再強化:從源頭杜絕「資料倒退」誤判】先前極少數帳號(尤其資料修復後)會因為<b>雲端殘留了已經不擁有的舊英雄等級</b>,墊高了比較基準,導致正確的存檔被誤判成「資料倒退」而存不上雲端。',
-      '   ・這版把<b>英雄等級的存/讀/合併</b>全面改為以「你實際擁有的乾淨版」為準(技術上用字串版繞過雲端不刪舊資料的限制),讓殘留的幻影等級不會再被合併進來。',
-      '   ・老師後台的清污染/刪英雄工具也同步配合,清掉的東西不會再被舊資料復活。',
-      '   ・<b>這是存檔核心的改動</b>,請老師先在 1～2 個帳號驗證正常(尤其曾回報過倒退的帳號)再全班更新。',
-    ],
-    items: [
-      '★ v3.15.96【heroLevels_s 端到端接齊 index.html】比照已驗證的 playerBackpack_s 模式,把 heroLevels 的字串版接齊四處:① 主存檔序列化新增 heroLevels_s: JSON.stringify(_heroLevels)(經 _fbSaveLive 透傳,live/safe 槽同步取得)② _lxpsObjFromSlot 新增 _LXPS_PREFER_S={heroLevels:1},僅對 heroLevels 改「優先採信 _s」→ 三槽逐鍵 max-merge 以乾淨字串版為來源,map 深合併殘留的幻影等級不再被合進 _mergedSix/merged.heroLevels(其餘 5 養成表維持原「先 map 後 _s」行為,不影響既有 GM 工具)③ _applySafeData 載入時優先採信 data.heroLevels_s(換成乾淨版後,再走既有 救援覆蓋 / 本地↔雲端 max-merge / maxLv 補檢查)④ 三支 GM 清污染工具(汙染清除 setDoc 主+live、刪英雄 admin_delete _patch、暴增收回 admin_scrub _patch)寫乾淨 heroLevels 時同步寫 heroLevels_s,否則下次載入採信舊 _s 會把剛清掉的污染復活。',
-      '★ v3.15.96【安全邊界】只動 heroLevels,完全不改 heroExp/heroSkillLevels/heroStatPoints/heroStatInvested/heroCapsuleInvested/heroBurstLevels/heroTraitLevel 的合併行為(heroStatInvested_s/heroSkillLevels_s 本已各自處理;heroStatPoints 由素質點不變式 free+invested==lv-1 自癒,輸入 heroLevels 變乾淨後更穩)。舊存檔(尚無 heroLevels_s)在 _lxpsObjFromSlot 找不到 _s 時 falls back 原 map 行為、不變;學生正常存檔一次後三槽 heroLevels_s 即接齊。v3.15.76 的 unlockedHeroes 對帳守門仍在 → 過渡期即使 _s 尚未鋪滿,也不會誤判倒退(雙保險)。',
-      '★ v3.15.96【未根治部分(待專門處理)】此版只把 heroLevels 補成字串版(逐欄位法/甲)。Firebase set(merge:true) 對 map 深合併不刪 key 的根本問題,徹底解法是主文件改 merge:false 整份覆蓋(乙·退役所有 _s 繞道),屬存檔核心架構改動、需獨立測試。登入困難(慢校網/改版卡載入)另由 sw.js 持久快取(v3.5.87)處理,真‧秒開(重檔 cache-first)為後續 B2。',
-      '★ v3.15.96【版本鏈】本輪只改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.95→v3.15.96;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.75)。',
     ],
   },
 ];
