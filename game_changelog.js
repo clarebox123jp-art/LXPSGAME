@@ -12,6 +12,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.24 — 修正「老師更新了你的帳號資料,正在重新載入」無限重載卡死(權威 restore 基線持久化+斷路器)
+  {
+    ver: 'v3.16.24',
+    date: '2026-06-25',
+    brief: [
+      '🛠️【緊急修正·卡死】部分帳號(尤其電腦安裝版)開啟遊戲後,畫面不斷跳出「🎁 老師更新了你的帳號資料,正在重新載入以套用最新進度…」一直重開、卡死進不去的問題已修正。現在最多自動重整一次套用最新進度,就能正常進入遊戲。',
+    ],
+    items: [
+      '★ v3.16.24【根因】v3.16.5「權威 restore 保護」的重載機制(_checkSnapData)會比較「雲端主檔 _authoritativeRestoreAt」>「本 session 載入時的基線 _mySessionRestoreSeen」來決定是否重載套用老師的最新操作;但基線只在 _applySafeData 從 data._authoritativeRestoreAt 設定於「記憶體」(一重載就消失),而某些載入路徑的 data 未可靠帶到此欄 → 基線=0 → 每次載入都 _cloudRA>0 觸發重載,且既有守門 _authoritativeReloadTriggered 一重載就重置、跨重載無效 → 無限重載。',
+      '★ v3.16.24【修法·雙保險】① 持久基線:_onAuthoritativeRestore 重載前把已處理的 restoreAt 寫進 localStorage(_lxpsAuthRestoreSeen·已全域命名空間化自動綁 @@uid·跨重載與關閉皆保存);_checkSnapData 計算基線時折入 max(記憶體值, localStorage 持久值)→ 同一個 restoreAt 處理過後不再重載(老師之後若有更新=更大的 restoreAt 仍會觸發一次,權威保護完全不變)。② 分頁斷路器:同一分頁同帳號(sessionStorage _lxpsAuthReloadCnt_<uid>)權威重載達 3 次後一律不再重載(硬性防呆任何殘留迴圈,寧可請玩家手動重整也不卡死)。兩者皆只會減少重載,絕不影響權威保護或存檔安全。',
+      '★ v3.16.24【版本/範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.24(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.3)。',
+    ],
+  },
   // v3.16.23 — 修正 iPad「英雄來源自我審查」底部關閉/確認按鈕點不到卡死(overlay 佈局改 flex)
   {
     ver: 'v3.16.23',
@@ -293,23 +306,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.4【根因】_applySafeData 載入時已優先採信 heroStatInvested_s / heroSkillLevels_s,但 4 支 GM 工具(刪英雄 / 批量收回 / 重置 / 污染清除復原)寫了乾淨 map 卻沒寫對應 _s → 學生一登入採信舊髒 _s 把清除『復原』= 污染又回來。',
       '★ v3.16.4【修法】四處 _patch 補寫 heroStatInvested_s / heroStatPoints_s / heroSkillLevels_s / heroBurstLevels_s(污染清除復原工具連 heroLevels_s 一併補)。純加欄位、零回歸風險。',
-    ],
-  },
-  // v3.16.3 — 帳號修復:校正「等級異常偏低但經驗很多」的英雄
-  {
-    ver: 'v3.16.3',
-    date: '2026-06-24',
-    brief: [
-      '🔧【修正英雄等級顯示異常】少數英雄出現「等級變得很低(例如 Lv1)、但其實累積了很多經驗值」的狀況,這版會自動修好。',
-      '   ・登入後系統會依照英雄「累積的經驗值」自動把等級校正回正確值。',
-      '   ・<b>只會調高、不會調低</b>:已經正常的英雄完全不受影響,不會有人被降級。',
-    ],
-    items: [
-      '★ v3.16.3【根因】getHeroLevel 直讀 _heroLevels[name];舊版存檔污染/Firebase merge 幻影把它弄成 1,但 _heroExp[name] 仍保留大量經驗 → 顯示「Lv1 卻有幾萬經驗」的 desync。',
-      '★ v3.16.3【修法】新增 window._lxpsRepairLevelExpDesync():對每隻有經驗的英雄,用遊戲既有 _expForLevel 曲線(與 addHeroExp 同一道升級迴圈,但「不」重發素質點/天賦/獎章 → 避免雙重獎勵)把超額經驗排空成等級;只升不降、無超額經驗者不動 → 完全 idempotent。在兩個主載入點 _applySafeData(data) 之後呼叫。',
-      '★ v3.16.3【安全】只改記憶體 _heroLevels/_heroExp(下次存檔由 heroLevels_s 寫回校正值持久化),完全不碰 _s 字串權威 / 三槽合併 / GM 清污染工具 → 零回歸風險。',
-      '★ v3.16.3【後續(高風險,本輪未做)】帳號污染「完美保護」的 _s 全採信(PREFER_S 擴展)+ GM 帳本重建升級為「移除幻影角色」屬高風險:GM 清污染工具目前寫乾淨 map 但不寫 _s、_applySafeData 已採信 _s 但三槽合併沒採信(路徑不一致),盲目開啟會把 GM 已清的污染復活 → 需先補 GM 工具寫 _s + 一次性遷移 + 先測 110082,排在後續分段交付。',
-      '★ v3.16.3【版本鏈】只改 index.html + game_changelog.js;_GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.3;承接 v3.16.2(卡死全校根治)。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.82)。',
     ],
   },
 ];
