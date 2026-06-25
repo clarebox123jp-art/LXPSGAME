@@ -12,6 +12,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.23 — 修正 iPad「英雄來源自我審查」底部關閉/確認按鈕點不到卡死(overlay 佈局改 flex)
+  {
+    ver: 'v3.16.23',
+    date: '2026-06-25',
+    brief: [
+      '🛠️【修正·iPad／平板】點開「🔍 英雄來源自我審查」後,下方的「關閉」與「✅ 確認並封存」按鈕按不到、點了沒反應、整個卡住的問題已修正。現在這兩個按鈕固定在畫面最底端、一定點得到,中間的英雄清單可以正常上下捲動。',
+    ],
+    items: [
+      '★ v3.16.23【根因】_openAccountAudit 的全螢幕 overlay(#_audit-ov)本身設了 overflow-y:auto(自己就是滾動容器),底部按鈕列 #_au-bar 卻用 position:fixed;bottom:0 且是它的子元素 → 在 iOS Safari／iPadOS「position:fixed 元素位於 overflow:auto 祖先內」會觸發命中測試(hit-test)失效,或把 fixed 定位算到「滾動內容底端」而非視窗底端,導致按鈕點不到、或滾到底也碰不到。',
+      '★ v3.16.23【修法】#_audit-ov 由 overflow-y:auto+padding-bottom:96px 改為 display:flex;flex-direction:column(自身不再滾動);內容改包進新增的 #_au-scroll(flex:1 1 auto·overflow-y:auto·-webkit-overflow-scrolling:touch 負責捲動);#_au-bar 由 position:fixed;bottom:0 改為 flex:0 0 auto(正常流·永遠貼在 flex 直欄底部=視窗底部·必可點);「關閉」與「確認並封存」鈕加 touch-action:manipulation。純佈局重構,所有事件 handler 與 #_au-cancel／#_au-submit／#_au-count／._au-act ID 全不變,零邏輯改動。',
+      '★ v3.16.23【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.23(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.2)。',
+    ],
+  },
   // v3.16.22 — 英雄「小鬼貓與兔」改版:天賦惡作劇(對手用技能/爆發反噬能量消耗×50)+ S1/S2 第2擊
   {
     ver: 'v3.16.22',
@@ -297,23 +310,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.3【安全】只改記憶體 _heroLevels/_heroExp(下次存檔由 heroLevels_s 寫回校正值持久化),完全不碰 _s 字串權威 / 三槽合併 / GM 清污染工具 → 零回歸風險。',
       '★ v3.16.3【後續(高風險,本輪未做)】帳號污染「完美保護」的 _s 全採信(PREFER_S 擴展)+ GM 帳本重建升級為「移除幻影角色」屬高風險:GM 清污染工具目前寫乾淨 map 但不寫 _s、_applySafeData 已採信 _s 但三槽合併沒採信(路徑不一致),盲目開啟會把 GM 已清的污染復活 → 需先補 GM 工具寫 _s + 一次性遷移 + 先測 110082,排在後續分段交付。',
       '★ v3.16.3【版本鏈】只改 index.html + game_changelog.js;_GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.3;承接 v3.16.2(卡死全校根治)。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.82)。',
-    ],
-  },
-  // v3.16.2 — 緊急修正:貓空打完 BOSS 後卡在確認獎勵視窗/戰鬥畫面無法結束
-  {
-    ver: 'v3.16.2',
-    date: '2026-06-24',
-    brief: [
-      '🚑【緊急修正:打完 BOSS 後卡住的嚴重問題】先前有同學反映「貓空打完 BOSS、出現評分獎勵、按了確認後卻卡在獎勵視窗或戰鬥畫面、離不開」,這版已根治!',
-      '   ・現在按下「✅ 確認」會「立刻」收掉獎勵視窗、離開戰鬥畫面,不論網路快慢都不會再卡住。',
-      '   ・敗北後選「回學校休整」也一併修正,不會再卡在戰鬥畫面。',
-    ],
-    items: [
-      '★ v3.16.2【根因】結算「✅ 確認」鈕 onclick 會先把自己 disabled 再呼叫 advStartWinSequence;舊流程函式中段 await gameCloudSave() 在校園慢網/壅塞時長時間卡住 → 原本排在其「之後」的「隱藏結算 overlay(L≈87901)+ 清戰鬥畫面 class(L≈87911)」遲遲不執行,而鈕已 disabled 無法再按 → 玩家卡在確認獎勵視窗(離不開)兼卡在戰鬥畫面(結束不了),幾乎所有學生都會踩到。',
-      '★ v3.16.2【修法①】把「隱藏結算 overlay + 清戰鬥畫面 class + 清行動順序條」提到 advStartWinSequence 入口(worldboss 守門後、重入守門前),讓 UI 轉場與後續存檔/獎勵計算完全脫鉤——無論網路多慢、無論後續是否殘留 await,確認後一定能立刻離開;後續 L≈87901/87911 同款隱藏/清除保留為冗餘雙保險。讀評分/分數是讀 DOM textContent,移除 show 只是視覺隱藏不影響計算。',
-      '★ v3.16.2【修法②】敗北「回學校休整」advGoRestAtSchool 內、隱藏戰鬥畫面 class 之前的 await gameCloudSave() 改 Promise.resolve(gameCloudSave()).catch(...) fire-and-forget(原本同樣會在慢網阻塞戰鬥畫面收起);進度另有 autosave + 中斷快照兜底。',
-      '★ v3.16.2【未動範圍】只調整「UI 轉場時機」,不改發獎/解鎖/EXP/存檔內容;BOSS 戰結算發獎、英雄加入、升級演出邏輯皆不變。承接 v3.16.1(好友借用+召喚卷/貓空 fire-and-forget)。',
-      '★ v3.16.2【版本鏈】只改 index.html + game_changelog.js;_GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.2;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20(移除最舊 v3.15.81)。',
     ],
   },
 ];
