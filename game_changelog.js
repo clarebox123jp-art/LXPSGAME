@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.14 — SSR 污染上鎖治本(自我審查缺陷修復)+ 道歉公告
+  {
+    ver: 'v3.16.14',
+    date: '2026-06-25',
+    brief: [
+      '🔒【重要修復】修正「自我審查」功能的缺陷:原本可能讓你在多人世界王借用過的好友角色,被誤判成你的而解鎖。現已把這些「借來才出現、不是你真正擁有」的角色收回上鎖。你真正抽到/解鎖/身上裝著至寶的角色都完整保留,角色等級、至寶、知識幣、關卡進度通通不動。登入會看到老師的道歉說明。',
+    ],
+    items: [
+      '★ v3.16.14【SSR 污染上鎖·治本】根因:co-op 借用好友 SSR 領 EXP → _heroLevels>1 → v3.15.82 幻影救回每次登入無條件補回;v3.16.9 自我審查封存又把這些寫成 migration_seal 紀錄洗白 → 幾乎全員誤解鎖全 SSR。',
+      '★ v3.16.14【真正擁有判定 _advHasGenuineUnlock】一隻角色屬本帳號當且僅當:① 初始 8 隻基礎角色 ② 有真正解鎖紀錄(source 非 migration_seal、非 admin_delete)③ 身上裝著至寶(鐵證,co-op 借用不會把自己的至寶裝到借來的角色上)。',
+      '★ v3.16.14【五處修復】① advGetUnlockedHeroes 出口統一過濾無證據污染角色(上鎖·寫回 localStorage·出錯保守保留不誤刪)② _applySafeData phantom rescue「等級>1」加 genuine 守門(裝至寶仍放行)③ 封存全面停寫 migration_seal(_sealNames 恆空,移除污染源)④ 封存提醒停用 ⑤ 登入彈道歉公告(per-uid 一次性)。',
+      '★ v3.16.14【不動原本存檔】只調整角色解鎖清單,完全不碰 heroLevels(等級)/至寶/知識幣/關卡進度;雲端靠載入過濾 + 存檔整包覆蓋逐漸清乾淨。誤傷僅限「v3.11.10 前解鎖、無解鎖紀錄、又沒裝至寶、純靠等級存在」的舊角色,可用 GM 後台個案補發救回。',
+      '★ v3.16.14【版本】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.14;本輪僅改 index.html + game_changelog.js;hero_db.js(v3.15.90)/sw.js/sw-light.js/main.css 等未動。GAME_CHANGELOG 維持 20 筆。',
+    ],
+  },
   // v3.16.13 — 素材全統一至單一倉(整併 Game 與舊倉'-') + 全資源壓縮優化 + SW webp-aware
   {
     ver: 'v3.16.13',
@@ -319,25 +334,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.94【sw.js v3.5.87 載入可靠性(另檔·高風險建議先 1~2 台 iPad 驗證)】SHELL_CACHE 由 lxps-shell-+SW_VERSION 改固定 lxps-shell-v1(跨版本保留「上次成功完整載入」當 fallback)→ 根治「改版後新 shell 快取尚未填好、activate 又刪掉舊版快取 → 慢校網逾時想 fallback 卻撈不到 → 卡住下載不完」;networkFirstShell 逾時 5000→2500ms(慢網更快回快取)、fallback 先查本 shell 快取再退查全快取庫 caches.match(belt-and-suspenders);仍為 network-first(線上先抓最新→更新即時生效不變,非 cache-first 故無「新版延後」副作用)。SW_VERSION v3.5.86→v3.5.87 讓 iPad 取得新 sw.js。install 仍以 cache:reload 重抓 SHELL_URLS 覆蓋成最新。',
       '★ v3.15.94【誠實限制】此 sw.js 改動讓「開過一次的回頭裝置」幾乎一定進得去且更快,但「某台第一次全新開、且當下網路嚴重壅塞」仍需把資源下載一次(物理限制)→ 建議課前讓每台 iPad 先在好網路開過一次熱身。若日後要更激進的「真‧秒開」(重檔 cache-first,代價是新版延後一個開啟+需更新提示),可再評估 B2。',
       '★ v3.15.94【版本鏈】本輪改 index.html + game_changelog.js + sw.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.93→v3.15.94;sw.js SW_VERSION v3.5.86→v3.5.87(sw.js 不在 _vers 字典);admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.73)。',
-    ],
-  },
-  // v3.15.93 — 課堂練習營(登入連線時邊等邊玩賺獎勵,不卡關)
-  {
-    ver: 'v3.15.93',
-    date: '2026-06-23',
-    brief: [
-      '🎒【新增「課堂練習營」——登入連線時不再乾等!】大家同時登入時偶爾會卡一下,現在登入時會先出現<b>全螢幕的課堂練習營</b>,讓你<b>邊等邊玩、邊賺獎勵</b>。',
-      '   ・選一個題庫開始答題(有答題音效、答對題數,玩法和知識王一樣)。答對 1 題 <b>+10 知識幣</b>,<b>答錯不扣分</b>。',
-      '   ・累積<b>答對 30 題</b>可得 <b>🔮 召喚水晶 ×1</b>(畫面有計量條,看得到進度)。',
-      '   ・遊戲在背景默默幫你連線;一連好,上方就會通知「<b>✅ 可以進入遊戲</b>」,按下去就<b>帶著剛剛賺到的獎勵</b>進場囉!',
-      '   ・(每天從練習營可賺的獎勵有上限:知識幣最多 1000、召喚水晶最多 3 顆。)',
-    ],
-    items: [
-      '★ v3.15.93【練習營啟動/就緒掛點 index.html block#02】onAuthStateChanged 隱藏 login-gate 後立刻 window._campStart(user) 蓋全螢幕練習營(管理員 email 略過·不打斷 GM 測試);背景照常 await window.gameCloudLoad(uid),完成後 window._campGameReady=true + _campMarkReady() 通知頂端可進入。★純覆蓋層:不改動真正登入/載入流程,練習營任何例外都 try-catch 不影響進遊戲。',
-      '★ v3.15.93【練習營模組 block#05】_campStart/_campBuildShell(全螢幕外框:頂端橫幅+統計列+水晶計量條+內容區·全內聯樣式)/_campShowSubjectScreen(_kingGetSubjects+_kingGetReviewSubjects 去重列題庫+🎲隨機)/_campPickSubject(首次手勢→bgmFadeTo bgm-king-challenge 播 BGM→_kingDrawQuestions 抽 50 題·用完 _campLoadDeck 重抽無限練)/_campShowQuestion(知識王式選項·data-idx 綁定避免題目文字進 onclick)/_campAnswer(answer 字母→索引判對·答對 sfx-quiz-correct+10 幣、答錯 sfx-quiz-wrong 不扣·1.15s 下一題)。',
-      '★ v3.15.93【獎勵記帳/結算】localStorage lxps_camp_bank_{日期}={dailyCorrect,settledCoins,settledCrystals}(登入前無 uid 只能存本地);_campEarnedFor 由今日答對數推導應得(知識幣=對數×10 上限 1000·水晶=floor(對數/30) 上限 3);_campEnterGame→_campSettleBank 算 target-settled 差額·經 window._fbCompensatePlayer(coins coinsMode add + backpack summon_crystal·走帳本)idempotent 入帳·成功才推進 settled(失敗保留待下次);沒按進入則留待下次登入結算。停輪詢+bgmEnsureSceneBgm 回場景+移除覆蓋層+入帳 toast。',
-      '★ v3.15.93【防刷/安全】每日上限(知識幣 1000/水晶 3)為防刷天花板(登入前身分為裝置暫時態·獎勵存本地·上限即邊界);★不寫本週小博士排行榜(練習營答對不計入·避免榜單 farming·也因登入前無法可靠寫雲端);結算走 _fbCompensatePlayer 帳本→老師可稽核。rescue 說明彈窗加「_camp-overlay 在場則跳過」防疊加。window._CAMP_ENABLED 可全域關閉。',
-      '★ v3.15.93【版本鏈】本輪只改 index.html + game_changelog.js(A 段)。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] 全 v3.15.92→v3.15.93;admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss*/arena.js/adv_quiz_db.js/sw.js(B 段秒開另回合)未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.72)。',
     ],
   },
 ];
