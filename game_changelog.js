@@ -12,6 +12,25 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.19 — 系統審核誤判英雄「投資證據版」回收 + 道歉公告列出清單 + 救援申請加「我遺失的英雄要回來」
+  {
+    ver: 'v3.16.19',
+    date: '2026-06-25',
+    brief: [
+      '⚖️【公平性修復:把不是你的角色收回上鎖】先前「自我審查」的缺陷,曾把一些你<b>在多人世界王借用過好友、但其實沒有真正抽到</b>的角色,誤判成你的而解鎖。這一版把這類「<b>借來才出現、沒有真正投資過(沒加素質點/技能/天賦/爆發)、也查不到取得紀錄</b>」的角色<b>收回上鎖</b>,讓大家公平。',
+      '✅【你真正的角色一個都不會少】只要是你<b>真正抽到、解鎖過、投資過、或身上裝著至寶</b>的角色,全部完整保留。這次<b>只調整「角色解鎖清單」,完全不動你原本的存檔</b>——其他角色的等級、至寶、知識幣、關卡進度通通都在。',
+      '📢【登入會告訴你收回了哪些】登入後若你有被收回的角色,會彈出一次公告<b>列出被收回的角色名單</b>與原因。',
+      '🔓【真的是你的被收回了?可以要回來】到關卡頁底部「📨 帳號救援申請」→ 新增的「<b>🔓 我遺失的英雄要回來</b>」勾選你確實擁有卻被收回的角色送出,老師核對紀錄後會補回給你。',
+    ],
+    items: [
+      '★ v3.16.19【判定標準收緊·老師裁示】老師指示「不讓學生平白獲得原本不屬於他們的英雄」→ 保留標準由 v3.16.17「練過(等級>1)即保留」改為「有真正投資證據才算他的」。依據(handoff 鐵證):好友借用只會領 EXP/等級,絕不會把素質點/技能/天賦/爆發投資到借來的角色上 → 故「光有等級/經驗」不再算擁有證據。_advHasGenuineUnlock 移除 lv>1 保留分支;保留=初始8 / 自己解鎖紀錄(來源非 migration_seal 非 admin_delete,uid 屬本帳號或無 uid 舊紀錄)/ 裝至寶 / 投資過(heroStatInvested>0 或 技能·爆發·天賦等級>1)。另加 uid 空字串 fail-safe(uid 未設定一律判為自己=保留,只漏不誤刪)。',
+      '★ v3.16.19【回收機制·繞守門可逆】orchestrator window._lxpsRecoverAuditErrorHeroes:uid 已設定 + 雲端載完(擁有≥8)+ 本機/雲端一次性旗標 + 任何例外→回收0(只漏不誤刪);逐隻用記憶體 _advHasGenuineUnlock(證據集 ⊇ 雲端,含本地未同步投資)判定無證據者 → 交 window._fbApplyAuditErrorRecover 直接 updateDoc(繞存檔倒退守門,因回收「大量英雄」必觸發 _hardRegression 而被擋,故走 GM 同款直寫)。回收寫:filter unlockedHeroes + 清齊 heroLevels/heroStatInvested/heroStatPoints/heroSkillLevels/heroBurstLevels 各 map+_s + heroExp + heroTraitLevel(杜絕載入採信舊_s/desync自癒/phantom lv>1 復活)+ 至寶解裝保留本體 + 帳本標 source=audit_error_recovered(可逆,≠admin_delete 永久刪)+ 寫 _auditRecoverDoneV1 雲端一次性旗標 + _authoritativeRestoreAt(由既有 piece3 機制乾淨重載入,避免記憶體手術;重載後因旗標早退不重跑)。',
+      '★ v3.16.19【六補回路徑全認得回收標記】audit_error_recovered 在所有「補回/保留」邏輯中視同 admin_delete(不復活):① advGetUnlockedHeroes 出口過濾(唯讀·純來源字串判定無 uid 比對→無 v3.16.14~17 時序災因·不寫回 localStorage)② v3.16.9 帳本權威自癒(_del/_own 兩處)③ v3.13.93 紀錄救援(_isDel)④ phantom rescue _rec82(裝至寶/lv>1)⑤ phantom rescue _phantomRecovered82(雲端 heroLevels lv>1)⑥ _isLegitLocalHero(最高優先丟,即使本地練過)。',
+      '★ v3.16.19【道歉公告 + 救援清單】① _showApologyNotice 改為從帳本算出「本帳號最新來源=audit_error_recovered」的角色,實際列出被收回角色名(無受影響者不彈);文案改「已收回」完成語氣 + 指向「我遺失的英雄要回來」。② _openRescueReq 新增「🔓 我遺失的英雄要回來」勾選清單(列被回收角色)→ _rescueReqSubmit 收進 claims.lostHeroes(同 extraHeroes 模式,塞既有 claims 物件免改 firestore.rules)送老師人工審。',
+      '★ v3.16.19【版本】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.19;本輪改 index.html + game_changelog.js + admin_panel.js(救援審核卡接一鍵永久復原閉環)。admin_panel.js 同步 bump v3.16.19(⚠ 順帶修正:先前 index.html 記 admin=v3.16.10 但 GitHub 實際 v3.16.5 的版本不一致,以實際 v3.16.5 為底改後對齊)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.98)。',
+      '★ v3.16.19【救援閉環】學生送「🔓 我遺失的英雄要回來」(claims.lostHeroes)→ GM 後台「📨 帳號救援申請審核」卡:摘要列「🔓 遺失英雄要回來 N 隻」晶片、核對詳情列出學生要求復原的英雄、按「🛟 一鍵永久復原這些英雄」→ window._fbAdminRestoreLostHeroes(uid,names):加回 unlockedHeroes + 從回收時暫存的 _auditRecoveredLevels 無損還原原等級 + 帳本補 source=admin_grant 合法紀錄(最新一筆非 audit_error_recovered → 出口過濾不再隱藏、_advHasGenuineUnlock 判合法、之後再跑審查/重建都不再被回收)+ 附 auditRestored 稽核標記 + 蓋 _authoritativeRestoreAt(學生下次登入 piece3 乾淨套用)→ 標記 resolved + 通知玩家。一鍵永久解決,不需再走學生補償工具。',
+    ],
+  },
   // v3.16.18 — 緊急復原 v3.16.14~17 災情(停用自動剔除 + 修審查判定)
   {
     ver: 'v3.16.18',
@@ -303,25 +322,6 @@ window.GAME_CHANGELOG = [
       '★ v3.15.99【一次性獎勵】未領過(memberProfileRewarded 雲端旗標)才發 🔮×10 + 💰20000 + 🌈SSR隨機召喚卷×1;旗標先寫雲端、再本地 backpackAdd/addKnowledgeCoins 發獎 + gameCloudSave → at-most-once(編輯既有資料不再發)。',
       '★ v3.15.99【入口整合】關卡頁底部「📨 帳號救援申請」鈕改名「📨 會員帳號與救援申請」→ 開 hub(✏️ 編輯會員資料 / 📨 帳號救援申請);block#02 新增 _fbGetMemberProfile/_fbSaveMemberProfile + _MEMBER_IDENTITY/GRADE/GENDER/PLATFORM_OPTS;UI _openMemberAccountHub/_openMemberProfileForm(first 首登有獎可稍後再填·點背景不關 / edit 編輯無獎)/_memberProfileSubmit/_maybeShowMemberProfileFirstLogin;救援說明彈窗加會員彈窗防疊加守門。',
       '★ v3.15.99【版本鏈】本輪改 index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.15.99;world-boss.js(v3.15.98)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/sw.js(v3.5.87) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.78)。',
-    ],
-  },
-  // v3.15.98 — 第五隻世界 BOSS 深淵海龍王(水)完整實裝
-  {
-    ver: 'v3.15.98',
-    date: '2026-06-24',
-    brief: [
-      '🐉【新世界 BOSS:深淵海龍王(水)登場】第五隻龍王「深淵海龍王」正式上線——蛰伏於太平洋最深處的太古冰龍,以絕對零度冰封全場。',
-      '   ・<b>招牌「封技」</b>:牠每回合會隨機封鎖一名英雄的<b>技能與極限爆發</b>(仍可普攻/休息),爆發時更會對全體封技,務必分散依賴、別把希望全押在單一輸出。',
-      '   ・<b>冰封打法</b>:招式「絕對零度」「萬丈寒淵」全體水傷並施加冰凍;弱點是<b>被冰凍時受傷 +30%</b>——帶<b>冰法師</b>等能冰凍牠的英雄是最佳剋星。',
-      '   ・<b>但冰封有代價</b>:牠被冰封住的那回合<b>每受到一次攻擊會回復 1 點能量</b>(加速牠放爆發),而且<b>對牠的冰凍每次只持續 1 回合、冰層碎裂後 1 回合免疫冰凍</b>,無法連續凍結——要抓準冰封的短暫空檔集中火力,小心反而餵飽牠的大絕。',
-    ],
-    items: [
-      '★ v3.15.98【深淵海龍王 資料層】world-boss.js:HERO_DB(ATK47/SP50/SPD18·HP500萬·水·s1 絕對零度 c5 特技130%全體水+50%冰凍1回/s2 萬丈寒淵 c6 特技150%全體水+隨機2強力冰凍2回)、BURST_DB(絕對零度·冰封終焉:特技150%全體水傷[無視有利/迴避/反射/減傷·護盾仍80%]+全體冰凍1回+隨機1強力冰凍2回+全體封技1回)、HERO_TRAIT(深淵之意志:cap5000+護盾水/風/光/草[破風/土/暗/火]+每回合隨機封技1人2回+冰凍三段弱點)、HERO_LORE/HERO_BIO 去「設計中」、舊「查封」文案改「封技」。',
-      '★ v3.15.98【深淵海龍王 AI + 機制】① 三支專屬 AI(_wbWaterBossS1/S2/Burst,仿草/土結構走 doDmg→世界BOSS 5000 cap;爆發 setTimeout 包+_wbActionCount=2 不再追擊普攻)。② dispatcher 三路由(_wbAdvBossS1/S2/Burst 各加「深淵海龍王」分支)。③ 天賦每回合封技掛 BOSS 主行動 hook(_wbActionCount===1):隨機 1 名 addStatus seal(無法用技能)+_burstSeal(無法爆發)各 1 回合〔老師①甲:沿用現成狀態組合,零引擎風險〕。④ 冰凍三段弱點:_wbApplyBossDmgCap 內「海龍王身上有 freeze」→ 最終傷害×1.3(突破 5000/1000 上限)+每受擊 G.energy.p2+1(冰中吸能加速爆發)+標記 _wbWasFrozen;BOSS 主行動 hook 結算「_wbWasFrozen 且已解凍→設 _wbIceImmuneTurns=1(冰層碎裂免疫1回)」+免疫回合遞減。',
-      '★ v3.15.98【index.html addStatus 冰凍攔截】對海龍王本體施加 freeze 時:若 _wbIceImmuneTurns>0 → 免疫不上(碎裂冷卻);否則 dur 強制壓成 1 回合(即使強力/長時冰凍)。僅針對 name==「深淵海龍王」,對玩家英雄的冰凍維持 1~2 回合不受影響。',
-      '★ v3.15.98【背景圖】海龍王戰場立繪 水龍王.png(world-boss.js bossId→圖檔映射既有),沿用與其他龍王相同的通用顯示(--wb-boss-bg + center 10%/cover),高度對齊一致;_wbApplyCurrentBossSkin/_wbApplyNextBossPreview 資料驅動自動套用。',
-      '★ v3.15.98【特效/音效/BGM】① 爆發特效:_WB_FX_URLS 加 burst_water=冰椎爆裂.gif(_wbWaterBossBurst 呼叫 _wbPlayFullscreenFx(burst_water))。② 爆發音效:結冰 sfx-ice1(單體冰凍.mp3)鋪底 + 260ms 後碎冰爆破 sfx-burst(爆發技能.mp3),呼應「冰椎爆裂」。③ 戰鬥 BGM:_WB_BATTLE_BGM_MAP 加 shenhai_water_dragon→bgm-wb-shenhai-battle;index.html 新增 <audio id=bgm-wb-shenhai-battle src=海龍王BGM.m4a loop>(仿地龍王戰BGM)。GIF/BGM 走 network 不進 sw cache(對齊既有龍王特效/BGM)。',
-      '★ v3.15.98【版本鏈】本輪改 world-boss.js + index.html + game_changelog.js。版本同步點 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js / world-boss.js] 全 → v3.15.98;sw.js(v3.5.87)/admin_panel.js(v3.15.90)/hero_db.js(v3.15.89)/world-boss-ui.html(v3.15.69) 未改。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.76)。',
     ],
   },
 ];
