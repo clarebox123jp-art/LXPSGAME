@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.27 — 英雄自我審查升級:查無證據的「不是我的」按確認當場移除·之後不再跑回來;有證據自動保留
+  {
+    ver: 'v3.16.27',
+    date: '2026-06-26',
+    brief: [
+      '🧹【重大修復·清掉不是你的英雄】之前就算把「不是你的」英雄移除,下次登入又會自己跑回來(系統的自動修復網會把練過的角色從等級表撈回解鎖清單)——這個根因已修好。現在到英雄圖鑑「🔍 英雄來源自我審查」,把確定不是你的按「不是我的」+「✅ 確認移除」,就會立刻清掉、而且之後不會再回來。',
+      '✅ 系統已確認是你的(自己抽到/打到、初始角色、裝過至寶、或投資過素質點)會用綠框標示、自動保留、免處理;你只要看「🟡 需要你確認」的幾隻就好。',
+      '🛟 誤移除了也別擔心:到「📨 帳號救援申請 →🔓 我遺失的英雄要回來」勾選送出,老師核對後可一鍵幫你補回(等級會還原)。登入時若帳號有「查不到取得來源」的英雄,會自動跳出這個審查提醒你清理(看過一次後就不再自動跳)。',
+    ],
+    items: [
+      '★ v3.16.27【根因·自癒復活】advGetUnlockedHeroes 的「自癒 v3.13.28」會把 _heroLevels 內等級>0 的英雄無條件補回 unlockedHeroes(只擋 admin_delete/audit_error_recovered 與活動限定英雄)→ 一般 SSR/SR 的練過污染移除後每次載入又被撈回=「多出一直回來」。修法:學生自助移除走守門機制(見下),被移除者帳本最新一筆=audit_error_recovered → 自癒/紀錄救援/出口過濾/phantom 等六補回路徑全認得、不再復活。',
+      '★ v3.16.27【當場移除·_fbStudentDisownHeroes】學生在自我審查按「不是我的」+確認 → 立即從雲端 unlockedHeroes 移除 + 清該英雄六養成表 _s+heroExp+heroTraitLevel(杜絕 desync/採信舊 _s 復活)+ 至寶解裝保留本體 + 帳本補 audit_error_recovered(disownedByStudent 標記)守門紀錄;暫存原等級到 _auditRecoveredLevels 供 GM 一鍵復原。刻意不寫 _authoritativeRestoreAt(不重載·本機同步即時更新)、不寫一次性旗標(可隨時再清)。本機同步:adv_unlocked_heroes 移除 + 記憶體養成清除 + 本機帳本補守門紀錄。',
+      '★ v3.16.27【有證據自動保留·分類】新增 _advHasHardEvidence(=_advHasGenuineUnlock 略過「練過 lv>1」分支·只認 自己解鎖紀錄/初始8/裝至寶/投資過);自我審查 B1(✅免處理)/B2(🟡需確認)改用硬證據分類 → 初始 8 隻、投資過、裝過至寶的不再被誤列「需確認」,只有真正查無證據(含練過卻查無紀錄的污染)才落入 B2 由學生決定。',
+      '★ v3.16.27【登入自動提示】新增 _maybeShowAccountAuditOnLogin:登入後若帳號有「持有但查無硬證據」的英雄才自動開審查(per-uid 一次性·擁有<8 或有其他彈窗時自動重試)。送出/關閉皆標記一次性,不再每次登入打擾;學生仍可從圖鑑自行開啟。',
+      '★ v3.16.27【版本/範圍】三點版本同步 → v3.16.27(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.6)。',
+    ],
+  },
   // v3.16.26 — 帳號英雄修復:練過的英雄一律保留(誤回收的自動補回);只清「沒練過又查無紀錄」的純污染
   {
     ver: 'v3.16.26',
@@ -290,24 +307,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.7【送審】三類分開收進既有 claims 物件(extraHeroes 回收 / restoreHeroes 有證據復原 / contestedHeroes 爭議)→ 沿用 _fbSubmitAccountRescueRequest,免改 helper / firestore.rules;_openRescueReq 既有文字清單改為啟動圖鑑審查的按鈕。',
       '★ v3.16.7【GM 端 admin_panel.js】救援審核卡清楚分流:🚩 不是我的 → 一鍵移除 +（v3.16.7）回收後經 _fbCompensatePlayer 正規發放補償;🟢 無爭議可自動復原(有證據)→ 一鍵 union 加回;🔍 需你判斷的爭議(學生堅持但帳本顯示他人 / 查無紀錄)明顯標出 + 提醒核對召喚紀錄、BUG 連刷英雄不復原 → 你手動決定。_fbAdminBulkRemoveHeroes 加 opts.compensate 回傳補償金額。',
       '★ v3.16.7【版本鏈】index.html + admin_panel.js + game_changelog.js 同步 v3.16.7;承接 v3.16.6(幻影復活根治)。本輪做學生端英雄審查 + GM 審核分流;至寶圖鑑審查與「沒爭議全自動批次」為下一輪。GAME_CHANGELOG trim 至 20。',
-    ],
-  },
-  // v3.16.6 — 幻影角色復活根治 + 帳號救援可看英雄來源、標記「不是我的」
-  {
-    ver: 'v3.16.6',
-    date: '2026-06-24',
-    brief: [
-      '🛡️【根治「被移除的英雄又自己跑回來」】先前少數同學遇到「老師幫忙移除某隻角色後、隔天登入它又出現」的狀況,這版徹底修好,移除後不會再復活。',
-      '🔍【帳號救援申請升級】打開「📨 帳號救援申請」,現在可以看到「你每一隻英雄是幾月幾日、用什麼方式得到的(召喚 / 打王 / 老師補發…)」;若有「不是你抽到 / 打到的」或「查無紀錄又完全不認得」的,勾選後送出,老師核對遊戲記錄後會幫你移除。',
-    ],
-    items: [
-      '★ v3.16.6【甲·源頭清殘留】GM 兩支選擇性移除工具(_fbAdminDeleteUnlockedHero 單刪 / _fbAdminBulkRemoveHeroes 批量收回)補清 heroExp / heroTraitLevel 殘留:此二表無 _s 字串版,原本刪英雄只清 5 表、漏 heroExp → 殘留會被 desync 修復重建等級。',
-      '★ v3.16.6【乙①·機制治本】_lxpsRepairLevelExpDesync 改為「只修已在 _heroLevels 有正等級的英雄、絕不從 heroExp-only 殘留創造新等級鍵」;合法英雄解鎖時已 seed _heroLevels=1,故零影響合法英雄、只擋幻影。',
-      '★ v3.16.6【乙②·機制治本】advGetUnlockedHeroes 自癒網對「帳本最新一筆 = admin_delete」的英雄不自癒(原本只擋活動限定英雄、普通 SSR/SR 一律放行 → 被刪英雄循 desync→自癒→雲端復活);比照 _applySafeData v3.15.82 在地救回早有的 admin_delete 守門補齊。',
-      '★ v3.16.6【復活鏈】GM 刪英雄→heroLevels_s 清乾淨但 heroExp 殘留→登入 desync 用 heroExp 重建 _heroLevels→自癒網 union 回 unlockedHeroes→存雲端→復活。甲清存量、乙堵機制 → 結構上不再復活。',
-      '★ v3.16.6【Q2·來源顯示】學生端 _openRescueReq 新增「🔍 我的英雄是怎麼來的」清單:讀本地 adv_hero_unlock_history 顯示每隻英雄來源 + 時間、查無紀錄標❓;每隻附「不是我的」勾選 → _rescueReqSubmit 收進 claims.extraHeroes(塞既有 claims 物件、免改 helper / firestore.rules)。',
-      '★ v3.16.6【Q2·GM 端】admin_panel.js 救援審核卡新增 _extraBlock 顯示學生標記「不是我的」英雄晶片 + 「🗑 移除學生標記的不是我的英雄」鈕(走 _fbAdminBulkRemoveHeroes,本版已根治復活 → 移除後不再回來)。',
-      '★ v3.16.6【版本鏈】index.html + admin_panel.js + game_changelog.js 同步 v3.16.6;補回先前漏上傳的 v3.16.4 / v3.16.5 玩家公告;GAME_CHANGELOG trim 至 20(移除最舊 v3.15.83 / 84 / 85)。',
     ],
   },
 ];
