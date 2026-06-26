@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-26  / 目前主程式版本:v3.16.31(救火:暫停強制登入自我審查彈窗止血 + 老師後台批次救回被誤刪英雄;至寶版圖鑑審查保留)
+//  最後更新:2026-06-26  / 目前主程式版本:v3.16.32(後台:救援/錯誤回報即時提醒+悅耳音效 + GM 信任裝置免閒置登出 + GM 一鍵解鎖全部至寶;另清理閒置區過時註解)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.32 — 審查失誤道歉 + 補償(全體玩家·限領一次)+ 後台:救援/錯誤回報即時提醒(悅耳音效)/GM 信任裝置免閒置登出/GM 一鍵解鎖全部至寶
+  {
+    ver: 'v3.16.32',
+    date: '2026-06-26',
+    brief: [
+      '💙【道歉與補償·全體玩家】前陣子「英雄圖鑑審查」每次登入強制跳出、要大家一隻一隻確認,造成有些同學誤把自己的英雄按成「不是我的」而被移除,也讓大家很困惑。老師已停止這個強制審查並向大家道歉。為了表達歉意,登入時會送上補償:💰 知識幣 100,000 + 🔮 召喚水晶 ×10(每個帳號限領一次·自動入帳)。若你的英雄不見了,到「📨 帳號救援申請」勾選送出,老師會連同等級幫你補回。',
+      '🛠️【後台優化·玩家無感】另外老師後台也升級:收到「帳號救援申請/錯誤回報」時有悅耳提示音 + 浮動提醒、老師教學裝置可免閒置登出、老師可一鍵管理至寶。你的玩法、存檔、英雄與至寶都不受影響。',
+    ],
+    items: [
+      '★ v3.16.32【GM 即時提醒·index.html】新增 onSnapshot 監聽 accountRescueRequests(待處理)+ bugReports(未回覆)→ GM 登入後右下浮動徽章顯示合併待處理數;新項目進來才播 Web Audio 合成上行大三和弦琶音(C5-E5-G5)悅耳提示音 + 徽章脈動(登入當下既有的只顯示不播音);點徽章開後台並自動跳到對應卡(救援/錯誤回報);登出 Stop 監聽。只 GM(_isAdminUser 守門);非 GM 與學生完全不啟用。',
+      '★ v3.16.32【GM 信任裝置免閒置登出·index.html + admin_panel.js】_idleAutoLogoutStart 加閘門:管理員 + 本裝置已在雲端 trustedDevices 信任 → 停用 30 分鐘閒置自動登出(失敗安全:查詢失敗/未信任一律照常登出·共用平板安全優先);_tick 加雙保險守門。admin「🔐 撤銷學生裝置信任」卡新增「🖥 GM 本裝置免閒置自動登出」子區(查詢/信任/取消·立即生效·走既有 window._lxpsDeviceTrust 同一套信任名單);無 ?.。學生與其他裝置不受影響。',
+      '★ v3.16.32【GM 至寶全解鎖·index.html】新增 window._lxpsGmUnlockAllTreasures:迭代 TAIWAN_TREASURES 主表(自動涵蓋台灣 10 + 8 龍王 + 未來新增)·排除日本三神器(_isJapanTreasureKey)·只增不減補缺(已擁有等級/裝備不動)·寫 gm_auto_unlock 解鎖紀錄·同步 window ref + localStorage + gameCloudSave;onAuth 等雲端就緒(_waitForCloudReady)後對 GM 自動執行(idempotent·下次登入自動補上次沒補到的)。至寶不觸發存檔倒退守門、GM 亦豁免守門。',
+      '★ v3.16.32【道歉補償·index.html】全體玩家登入彈「審查失誤道歉 + 補償」(_maybeShowAuditApologyCompensation):補償 💰知識幣 100,000 + 🔮召喚水晶 ×10·每帳號限領一次。一次性守門用雲端 per-UID 旗標 _auditApologyCompensatedV1(getDocFromServer 讀·旗標先寫再發獎·at-most-once·UID 同步·鏡像 memberProfileRewarded);讀旗標失敗則跳過不發(延下次登入·絕不在不確定下重發)。發獎走 addKnowledgeCoins + backpackAdd(summon_crystal)+ gameCloudSave 持久;onAuth 等 _waitForCloudReady 後排程;與既有道歉公告防疊加共存。玩家自寫 players/{uid} 旗標·非停權欄位·走既有規則無需改 rules。',
+      '★ v3.16.32【註解校正 + 範圍/版本】清除閒置自動登出區與實際代碼矛盾的舊註解(「5 分鐘」→ 實際 30 分鐘·IDLE_TIMEOUT_MS;onAuth 與 _tick 兩處)。前三件全 GM 守門·第四件「道歉補償」為全體玩家一次性(雲端旗標 at-most-once)·全部只增不減·存檔倒退守門與載入路徑完全不動。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.32(並修正既有 _vers[admin_panel.js]=v3.16.30 與檔案自身 v3.16.31 不一致);hero_db.js 維持 v3.16.22。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.11)。',
+    ],
+  },
   // v3.16.31 — 緊急修復:暫停「強制登入自我審查」(止血)+ 老師後台批次救回被誤刪的英雄
   {
     ver: 'v3.16.31',
@@ -297,18 +313,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.13【資源壓縮·不改邏輯】全倉 PNG→WebP(q82·約 335 張)、BGM/音效降至 128kbps(約 136 個音檔)、高 fps GIF 降至 15fps(約 77 個);合計減少數百 MB 的新機傳輸量。皆為「未下載過的新機」優化,舊 iPad 與已快取裝置行為不變。WebP 為新增(原 PNG 保留作舊機 fallback),音樂/GIF 同檔名覆蓋。',
       '★ v3.16.13【SW webp-aware】sw.js v3.5.88 + sw-light.js v3.11.3:支援的瀏覽器抓 .png 時自動改抓同名 .webp(Accept 含 image/webp)、舊 iPad 或 webp 不存在(404)自動退回原 .png;PWA icon 維持 png;cache key 改用實際抓取 URL。',
       '★ v3.16.13【版本鏈】本輪改 index.html + hero_db.js + main.css + game_changelog.js + sw.js + sw-light.js 並上傳全部優化素材。三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.13;_vers[hero_db.js] → v3.15.90;sw.js v3.5.88、sw-light.js v3.11.3(不在 _vers);admin_panel.js(v3.16.10)/world-boss*/arena.js 未改。GAME_CHANGELOG 維持 20 筆。',
-    ],
-  },
-  // v3.16.11 — 封存去重(idempotent):重複按「確認並封存」不再寫重複帳本紀錄
-  {
-    ver: 'v3.16.11',
-    date: '2026-06-24',
-    brief: [
-      '🛠️【封存小修】「✅ 確認並封存」現在可重複按而不會產生重複的封存紀錄(idempotent)。對玩家體驗無感,純穩定性。',
-    ],
-    items: [
-      '★ v3.16.11(審查殘餘風險4修正)封存寫入前先掃描帳本,排除「已有自己 uid 非 admin_delete 紀錄(含先前 migration_seal 封存)」的英雄 → 只對真正還沒紀錄的英雄補寫;送審失敗重按、或同帳號重開審查再封存,皆不再累積重複 migration_seal 紀錄。本地讀一次重用(不增讀寫),300 筆上限不變。',
-      '★ v3.16.11【安全/範圍】只動 index.html 封存 handler(_openAccountAudit 內),純去重、不改封存判定/帳本權威自癒/移除流程;封存仍只「加帳本紀錄、不刪任何英雄/資源」。三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.11(admin_panel.js 本輪未動維持 v3.16.10)。GAME_CHANGELOG trim 至 20。',
     ],
   },
 ];

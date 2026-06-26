@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.16.31';   // ★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.16.32';   // ★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1588,6 +1588,19 @@ async function _showAdminStatsPanelImpl(){
       -->
       <div id="_admin-trust-revoke-section" style="background:rgba(30,40,60,0.5);border:2px solid rgba(120,180,255,0.65);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:700;color:#88bbff;margin-bottom:8px;">🔐 3.7 撤銷學生「裝置信任」</div>
+        <!-- ★ v3.16.32 — GM 本裝置「免閒置自動登出」(信任此裝置·只影響管理員自己) -->
+        <div id="_admin-gmtrust-idle" style="background:rgba(20,35,55,0.7);border:1.5px dashed rgba(150,200,255,0.6);border-radius:8px;padding:12px;margin-bottom:16px;">
+          <div style="font-size:14px;font-weight:800;color:#bcd8ff;margin-bottom:6px;">🖥 GM 本裝置免閒置自動登出</div>
+          <div style="font-size:12px;color:#bbb;line-height:1.6;margin-bottom:8px;">
+            一般情況下,閒置 30 分鐘會自動登出(保護共用平板)。把<b>老師自己的教學裝置</b>設為「信任此裝置」後,<b style="color:#aaffcc;">只有管理員帳號</b>在本裝置登入時不再被閒置登出(學生與其他裝置照常 30 分鐘登出)。<br>
+            <span style="color:#888;">註:用的是同一套「信任裝置」名單(也供 PWA 自動登入);取消信任會同時恢復閒置登出。立即生效,不必重新登入。</span>
+          </div>
+          <div id="_admin-gmtrust-status" style="font-size:12px;color:#9fd6ff;margin-bottom:8px;">查詢本裝置信任狀態中…</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="_admin-gmtrust-on" style="padding:8px 14px;font-size:13px;font-weight:800;background:rgba(80,200,140,0.2);border:2px solid #66cc99;color:#aaffcc;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">✅ 信任此裝置(免閒置登出)</button>
+            <button id="_admin-gmtrust-off" style="padding:8px 14px;font-size:13px;font-weight:700;background:rgba(255,170,120,0.18);border:2px solid #ee9966;color:#ffccaa;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">🚫 取消信任本裝置</button>
+          </div>
+        </div>
         <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.55;">
           當學生反映「公用平板自動進到我的帳號」或「裝置遺失/借走」時,用此工具清空該學生<b style="color:#ffcc88;">所有已信任的裝置</b>。<br>
           撤銷後該學生在任何裝置都要重新登入。<span style="color:#aaffcc;">不影響玩家本人或帳號資料,只清「信任名單」。</span><br>
@@ -8760,6 +8773,71 @@ async function _showAdminStatsPanelImpl(){
 
     _previewBtn.onclick = function(){ _runGrant(true); };
     _applyBtn.onclick   = function(){ _runGrant(false); };
+  })();
+
+  // ★ v3.16.32 — GM 本裝置「免閒置自動登出」(信任此裝置)JS 邏輯
+  //   讀寫走既有 window._lxpsDeviceTrust(同一套 trustedDevices 名單);
+  //   信任成功立即停掉閒置計時器、取消信任立即恢復;無 ?.(舊 Safari iPad 相容)。
+  (function _initGmTrustIdle(){
+    var _statusEl = document.getElementById('_admin-gmtrust-status');
+    var _onBtn  = document.getElementById('_admin-gmtrust-on');
+    var _offBtn = document.getElementById('_admin-gmtrust-off');
+    if(!_statusEl || !_onBtn || !_offBtn) return;
+    function _uid(){ return window._gUserId || (window._fbUser && window._fbUser.uid) || null; }
+    function _dt(){ return window._lxpsDeviceTrust || null; }
+    function _setStatus(_html, _color){ _statusEl.innerHTML = _html; if(_color) _statusEl.style.color = _color; }
+    function _refresh(){
+      var _d = _dt();
+      if(!_d || typeof _d.getDeviceId !== 'function' || typeof _d.isDeviceTrustedOnCloud !== 'function'){
+        _setStatus('⚠ 此版本未載入裝置信任模組,無法設定。', '#ffcc88'); return;
+      }
+      var _u = _uid();
+      if(!_u){ _setStatus('⚠ 尚未登入,無法查詢。', '#ffcc88'); return; }
+      var _did = _d.getDeviceId();
+      var _label = (typeof _d.getDeviceLabel === 'function') ? _d.getDeviceLabel() : '本裝置';
+      _setStatus('查詢本裝置(' + _label + ')信任狀態中…', '#9fd6ff');
+      Promise.resolve(_d.isDeviceTrustedOnCloud(_u, _did)).then(function(_tr){
+        if(_tr === true){
+          _setStatus('✅ 本裝置(' + _label + ')<b>已信任</b> → 管理員在此免閒置自動登出。', '#aaffcc');
+          _onBtn.style.opacity = '0.5'; _onBtn.disabled = true;
+          _offBtn.style.opacity = '1'; _offBtn.disabled = false;
+        } else {
+          _setStatus('🔒 本裝置(' + _label + ')<b>未信任</b> → 仍會 30 分鐘閒置自動登出。', '#9fd6ff');
+          _onBtn.style.opacity = '1'; _onBtn.disabled = false;
+          _offBtn.style.opacity = '0.5'; _offBtn.disabled = true;
+        }
+      }).catch(function(_e){ _setStatus('⚠ 查詢失敗:' + ((_e && _e.message) || _e), '#ffaaaa'); });
+    }
+    _onBtn.onclick = function(){
+      var _d = _dt(); var _u = _uid();
+      if(!_d || !_u || typeof _d.setDeviceTrustedOnCloud !== 'function'){ _setStatus('⚠ 無法設定(模組或登入狀態異常)。', '#ffaaaa'); return; }
+      var _did = _d.getDeviceId();
+      var _label = (typeof _d.getDeviceLabel === 'function') ? _d.getDeviceLabel() : '本裝置';
+      _setStatus('設定中…', '#9fd6ff'); _onBtn.disabled = true;
+      Promise.resolve(_d.setDeviceTrustedOnCloud(_u, _did, _label, true)).then(function(_ok){
+        if(_ok){
+          window._lxpsGmTrustedNoIdle = true;
+          try{ if(typeof window._idleAutoLogoutStop === 'function') window._idleAutoLogoutStop(); }catch(_){}
+          _setStatus('✅ 已信任本裝置 → 管理員免閒置登出(已立即生效)。', '#aaffcc');
+        } else { _setStatus('⚠ 設定失敗,請檢查網路後再試。', '#ffaaaa'); }
+        _refresh();
+      }).catch(function(_e){ _setStatus('⚠ 設定失敗:' + ((_e && _e.message) || _e), '#ffaaaa'); _refresh(); });
+    };
+    _offBtn.onclick = function(){
+      var _d = _dt(); var _u = _uid();
+      if(!_d || !_u || typeof _d.setDeviceTrustedOnCloud !== 'function'){ _setStatus('⚠ 無法設定(模組或登入狀態異常)。', '#ffaaaa'); return; }
+      var _did = _d.getDeviceId();
+      _setStatus('取消中…', '#9fd6ff'); _offBtn.disabled = true;
+      Promise.resolve(_d.setDeviceTrustedOnCloud(_u, _did, '', false)).then(function(_ok){
+        if(_ok){
+          window._lxpsGmTrustedNoIdle = false;
+          try{ if(typeof window._idleAutoLogoutStart === 'function') window._idleAutoLogoutStart(_u); }catch(_){}
+          _setStatus('🚫 已取消信任本裝置 → 已恢復 30 分鐘閒置自動登出。', '#ffccaa');
+        } else { _setStatus('⚠ 取消失敗,請檢查網路後再試。', '#ffaaaa'); }
+        _refresh();
+      }).catch(function(_e){ _setStatus('⚠ 取消失敗:' + ((_e && _e.message) || _e), '#ffaaaa'); _refresh(); });
+    };
+    _refresh();
   })();
 
   // ★★★ v3.10.3(2026-05-26) — 3.7 撤銷學生「裝置信任」JS 邏輯 ★★★
