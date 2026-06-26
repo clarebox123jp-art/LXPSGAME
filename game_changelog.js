@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-21  / 目前主程式版本:v3.15.67(新增學生設計英雄「科學發明家」5年4班楊寓如,SSR,新發明物品卡子系統6卡＋6選3即刻發明＋靈感被動＋醫學界的發明奇蹟爆發)
+//  最後更新:2026-06-26  / 目前主程式版本:v3.16.30(待審查凍結機制:圖鑑審查不符英雄先進「審查中」由老師確認)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,38 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.30 — 待審查凍結機制:圖鑑審查勾「這是我的」但雲端查不到取得紀錄的英雄先進「審查中」凍結,由老師通過/不通過
+  {
+    ver: 'v3.16.30',
+    date: '2026-06-26',
+    brief: [
+      '🔍【英雄圖鑑審查升級·交給老師確認】當你在圖鑑審查按「這是我的」、但雲端查不到你自己的取得紀錄時,這隻英雄不會直接被鎖掉,而是先進入「🔺審查中」狀態交給老師確認。審查中的英雄你可以照常出戰、裝備至寶,只是暫時不能升級、投資能力、提升技能或升級極限爆發(戰鬥中的極限爆發照常使用)。',
+      '✅ 老師確認「通過」→ 正式解鎖、變回正常顏色;若「不通過」→ 轉為灰色未收錄(可逆——之後你重抽/自選/冒險再次解鎖,就會自動正式解鎖)。老師審查完成後會通知你「請重新整理,確認你的英雄圖鑑」。',
+      '🛟 另外:登入時若帳號裡有「查不到來源」的英雄,會先做一次圖鑑審查(完全乾淨的帳號會自動跳過);你也可以隨時到「📨 會員帳號與救援申請」→「🔍 重新申請圖鑑審查」自己重新檢查(一天一次)。',
+    ],
+    items: [
+      '★ v3.16.30【待審查凍結·玩家端】圖鑑審查送出時,勾「這是我的」但與雲端 _heroUnlockHistory 不符的英雄 → 加入 players/{uid}._auditPendingHeroes(window._fbMarkAuditPending·arrayUnion)進入「🔺審查中」凍結:7 養成閘門(addHeroExp 靜默 return 0、investStat、upgradeSkill、upgradeBurst、三本經驗書)全擋下並提示「要等老師審查結束」,戰鬥極限爆發照常、可裝至寶;圖鑑一覽卡片左上加 🔺審查中徽章、詳情頁加紅框說明。',
+      '★ v3.16.30【強制登入審查·雲端感知】_maybeShowAccountAuditOnLogin 改 async:先本機鐵證快篩(_advHasHardEvidence),完全乾淨者自動封存跳過;有疑似者再查雲端 _fbGetCloudUnlockHistory 逐隻核對自己 uid 紀錄——雲端有紀錄者一律封存不打擾、雲端讀取失敗則不強制不封存(5 秒重試最多 6 次),確實查無紀錄者才彈出審查。致歉文案改寫(共用 iPad 污染說明);「📨 會員帳號與救援申請」hub 新增「🔍 重新申請圖鑑審查」(每日一次·清完成旗標重開)。',
+      '★ v3.16.30【GM 審核·老師端 admin_panel.js】「📨 帳號救援申請審核」卡偵測 claims.contestedHeroes → 摘要「🔺待審查英雄 N 隻」晶片 + 核對詳情列出 +「✅ 全部通過(正式解鎖)」「❌ 全部不通過(轉灰)」兩鈕:通過 → window._fbAdminApproveAuditHeroes(清 _auditPendingHeroes 解凍 + 寫 admin_grant 合法紀錄 + 蓋 _authoritativeRestoreAt 重載生效);不通過 → window._fbAdminRejectAuditHeroes(移出雲端 unlockedHeroes 轉灰 + 標 audit_error_recovered·可逆≠admin_delete·六補回路徑不復活);兩者皆標記救援申請已處理 + 通知玩家「GM已審查完畢,請重新整理,確認你的英雄圖鑑」。',
+      '★ v3.16.30【範圍/版本】index.html(凍結基建 + 7 閘門 + 🔺標記 + 強制登入 + 致歉/重審入口 + 2 個 GM 後端)+ admin_panel.js(GM 通過/不通過卡)+ game_changelog.js 三檔;三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] + ADMIN_PANEL_VERSION/_vers[admin_panel.js] → v3.16.30(hero_db.js 維持 v3.16.22)。所有新增可儲存欄位(_auditPendingHeroes 等)皆綁 uid。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.9)。',
+    ],
+  },
+  // v3.16.29 — 英雄圖鑑自我審查改「視覺鎖·鐵證判定」:停用等級判定改鐵證·進圖鑑逐隻確認·這是我的核對雲端紀錄
+  {
+    ver: 'v3.16.29',
+    date: '2026-06-26',
+    brief: [
+      '🔍【英雄圖鑑自我審查升級】進入英雄圖鑑時,如果你帳號裡有「查不到取得來源」的英雄,會跳出一份「待審核圖鑑」,把這些英雄列出來讓你一隻一隻確認:是你自己抽到/解鎖/練過的就按「這是我的」(系統會立刻核對雲端紀錄,符合就解鎖、變回正常顏色);不是你的就按「不是我的」,離開時會把它鎖回未解鎖。每一隻都要選、全部選完才能離開。',
+      '✅ 有自己取得紀錄、投資過(加過素質點/技能/天賦/爆發)、裝過至寶、或是起始 8 隻角色的,都會自動通過、不會列出來,你只要確認真正可疑的那幾隻就好。',
+      '🛟 按「這是我的」但雲端查不到你的紀錄時,會幫你送老師查證(不會直接鎖掉);誤鎖了也可以到「📨 帳號救援申請 →🔓 我遺失的英雄要回來」請老師補回(等級會還原)。',
+    ],
+    items: [
+      '★ v3.16.29【停用等級判定·改鐵證】_openAccountAudit/_maybeShowAccountAuditOnLogin 不再用「等級/用過」判定英雄是不是你的(共用 iPad co-op 借用污染的英雄本來就帶等級·用等級判定會把污染當成你的)。改用「借用做不到的鐵證」(= _advHasHardEvidence):初始 8 隻 / 自己本機解鎖紀錄 / 投資過(素質點·技能·天賦·爆發) / 裝至寶。有鐵證=✅自動通過不列出;查無本機鐵證的持有英雄=待審核逐隻確認。',
+      '★ v3.16.29【視覺鎖·必勾才能離開】_openAccountAudit 重寫成逐隻 toggle:每張待審卡有「這是我的/不是我的」兩鈕(可自由切換·即時視覺回饋·不寫雲端),全部選完前底部「✅ 完成審查並離開」鈕停用(顯示還有 N 隻未確認)。離開時一次提交:不是我的→_fbStudentDisownHeroes 鎖回(移出雲端 unlockedHeroes·補 audit_error_recovered 守門紀錄·可逆·GM 一鍵復原·本機同步清養成防自癒復活);符合記錄→鏡像補回本機帳本(source=audit_verified·下次不再列入);無待審核→顯示「圖鑑審查通過」並標記完成。',
+      '★ v3.16.29【這是我的·核對雲端 uid】新增 window._fbGetCloudUnlockHistory(uid) 讀 players/{uid}._heroUnlockHistory;按「這是我的」即時核對雲端「自己 uid 真正解鎖紀錄」(排除 admin_delete/migration_seal/audit_error_recovered):符合→當作有鐵證·解鎖變正常色;不符→留在解鎖清單但送老師查證(_fbSubmitAccountRescueRequest·claims.contestedHeroes + meta.auditVerify=true·供後台篩選)。雲端帳本比共用 iPad 本機帳本不易被跨帳號污染·故當權威依據。',
+      '★ v3.16.29【範圍/版本】三點版本同步 → v3.16.29(hero_db.js 維持 v3.16.22·admin_panel.js 維持 v3.16.19)。本輪只改 index.html + game_changelog.js。後台「只顯示不符」篩選卡、至寶審查、GM 即時通知為後續輪次。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.8)。',
+    ],
+  },
   // v3.16.28 — 停止系統「自動判定有證據=你的」(紀錄被跨帳號污染判定不準);改點進圖鑑自動彈出由玩家逐隻確認
   {
     ver: 'v3.16.28',
@@ -275,35 +307,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.10【老師端 admin_panel.js】救援審核卡頂新增「🛡️ 全體玩家封存提醒」開關(✅開啟 / ⛔關閉 + 即時狀態顯示),寫 gameConfig/sealPrompt {enabled,updatedAt,updatedBy}(window._fbAdminSetSealPrompt / _fbAdminGetSealPrompt);開啟前 confirm 提醒「請先清完髒帳號再開,否則未清幻影會被學生封存成合法」。',
       '★ v3.16.10【安全/順序】GM 開關預設關 → 部署後不會自動彈任何人;務必先清完 backlog(救援審查 + GM 工具)再開啟;封存每人只彈一次、idempotent;gameConfig 為 GM-only 寫、登入可讀 → 不需改 firestore.rules。',
       '★ v3.16.10【範圍/版本】index.html(封存提醒 client + onAuth 觸發)四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] → v3.16.10;admin_panel.js ADMIN_PANEL_VERSION → v3.16.10(本檔同時含 v3.16.7 救援卡回收補償/復原/爭議分流,首次上傳即一併生效)。GAME_CHANGELOG trim 至 20。',
-    ],
-  },
-  // v3.16.9 — 全體玩家自助「確認並封存」英雄 + 帳本權威自癒:徹底解決「角色不見」
-  {
-    ver: 'v3.16.9',
-    date: '2026-06-24',
-    brief: [
-      '🛡️【新增:確認並封存我的英雄】到「📨 帳號救援申請 → 🔍 我的英雄來源自我審查」,看過自己的英雄後按「✅ 確認並封存」,系統會把你的英雄鎖定保護——<b>以後就算暫時不見,下次登入也會自動回來</b>。這是為了徹底解決「角色不見」。',
-      '   ・綠框 ✅ 已確認是你的、🟡 需要你確認(不是你的可按「不是我的」回收換補償)、🔒 可能遺失的可救回——處理完按「確認並封存」一次搞定。',
-    ],
-    items: [
-      '★ v3.16.9【A·玩家自助封存】_openAccountAudit 送出鈕改「✅ 確認並封存」:對「目前持有 + 沒勾不是我的 + 查無任何解鎖紀錄 + 通過活動英雄守門(_advHasEventUnlockEvidence)」的英雄,補寫 source=migration_seal 的「自己 uid」帳本紀錄(本地 adv_hero_unlock_history + 雲端 _heroUnlockHistory via _lxpsCloudInstantUnlock arrayUnion 批次),填補帳本缺口;★ 他人 uid 的疑似幻影「不」封存(仍可被回收);旗標(回收 extraHeroes / 復原 restoreHeroes / 爭議 contestedHeroes)續送老師核對。封存為純「補帳本紀錄」不新增/不移除英雄 → 安全。',
-      '★ v3.16.9【B·帳本權威自癒】advGetUnlockedHeroes 自癒升級:一次解析帳本得兩集合 _del(最新一筆 admin_delete→不自癒)與 _own(有自己 uid 非 admin_delete 紀錄,含封存 migration_seal→且最新非 admin_delete);對 _own 中「不在清單」的英雄自動補回。★ 只認自己 uid → 跨帳號殘留(別人 uid 的紀錄)永遠無法被認領;活動限定英雄仍經解鎖證據守門。封存後帳本完整 → 合法英雄掉了下次登入自動回來。',
-      '★ v3.16.9【治本鏈完成】本機 @@uid 命名空間(v3.13.19 已擋「同 iPad 讀到別人本機資料」)+ 封存補齊帳本 + 帳本權威自癒(只認自己 uid)三者合起來:合法英雄結構上「掉不掉、會自己回來」,跨帳號殘留「認不回、可回收」→ 收斂「角色不見」與「多別人角色」。誤刪仍留 admin_delete 軌跡可一鍵還原。',
-      '★ v3.16.9【誠實邊界】極端情境(解鎖那一刻紀錄尚未落地、裝置又剛好被清)理論上仍可能,但靠「本機帳本先寫 + 自動補同步 + 封存後自癒完整 + 誤刪可逆 + 學生一鍵自救」壓到實務等於零、且自動/一鍵修復。需先清完 backlog 再請全體封存。',
-      '★ v3.16.9【範圍/版本】只動 index.html(封存 + 自癒,純玩家端);三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.9;admin_panel.js 維持 v3.16.7(GM 爭議審核沿用)。GAME_CHANGELOG trim 至 20。',
-    ],
-  },
-  // v3.16.8 — 修正「遊戲指引 > 戰鬥系統」四種行動按鈕排版(擠成窄條 → 自適應卡片)
-  {
-    ver: 'v3.16.8',
-    date: '2026-06-24',
-    brief: [
-      '🛠️【修正遊戲指引排版】「📚 遊戲指引 → ② 戰鬥系統 → 四種行動按鈕」原本全部擠成左側一條很難看,已改成整齊的卡片格(普通攻擊 / 技能 S1 / 技能 S2 / 極限爆發 各一張卡,自動填滿寬度、手機/平板會自動換行)。',
-    ],
-    items: [
-      '★ v3.16.8【根因】該區塊 HTML 有壞標籤:「…逆轉戰局！</span></div<div…」少一個「>」(</div< 把關閉標籤與下一個 <div 黏在一起)→ 少關一層 div(實測該段 <div 11 個、</div> 只有 10 個)→ DOM 結構錯亂,加上側邊縮圖把行動列擠進窄欄,四個按鈕被壓成一直線長條。另有「</div></div>></div>」多一個「>」。',
-      '★ v3.16.8【修法】把整個「四種行動按鈕」區塊重寫成乾淨的自適應四卡格 grid-template-columns:repeat(auto-fit,minmax(210px,1fr)),每張卡=按鈕 + 說明,移除會擠壓版面的側邊縮圖;同步修掉壞標籤、補齊 div(新區塊 <div/</div> 9=9 平衡)。「💡 主動技能 vs 被動技能」說明框內容保留不變。',
-      '★ v3.16.8【範圍】只動 index.html 的 _showNewbieGuide 第②章 render 字串(純前端版面),不影響任何遊戲邏輯/存檔;三點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.8(admin_panel.js 本輪未動維持 v3.16.7)。GAME_CHANGELOG trim 至 20。',
     ],
   },
 ];
