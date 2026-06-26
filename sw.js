@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.88';   // ★ v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.5.89';   // ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -26,7 +26,10 @@ const SW_VERSION = 'v3.5.88';   // ★ v3.5.88 — WebP 自動改寫(cacheFirstA
 //   但快取本身跨版本保留 →「上次成功完整載入」永遠在,逾時/離線一定有 fallback,回頭裝置幾乎 100% 進得去。
 const SHELL_CACHE = 'lxps-shell-v1';
 // ★ v3.4.15 — ASSET_CACHE 固定不綁版本, 避免每次更新都把圖片音訊砍光重抓
-const ASSET_CACHE = 'lxps-assets-v1';
+// ★ v3.5.89 — 一次性 v1→v2:清掉 v3.5.88 opaque-bug 寫進來的「壞圖快取」(403/429 被當成功)。
+//   這是「ASSET_CACHE 永不改」鐵則的單次例外;改完每台裝置下次只重抓「用到的」圖一次,
+//   有 raw + jsDelivr 雙來源 × webp/png 共四重備援,校網短暫 429 也會自己救回。日後不再動此名。
+const ASSET_CACHE = 'lxps-assets-v2';
 
 // 同層核心檔案 — SW 安裝時自動抓 (這些一定要快取)
 const SHELL_URLS = [
@@ -268,23 +271,46 @@ function _lxpsPickAssetUrl(req){
 // ★ v3.5.88 — webp-aware：png 請求在支援的瀏覽器改抓 .webp(cors,可讀 status)，
 //   webp 不存在(404/別帳號 repo/舊機) 自動退回原 .png；cache key 用實際抓取的 URL(wantUrl)，
 //   新機存 webp、舊 iPad 存 png，互不干擾、對遊戲端完全無感(瀏覽器依實際 bytes 解碼)。
+// ★ v3.5.89 — CORS 驗證抓取:一律用 cors(讀得到 status),只回「確認 200」的回應;
+//   raw 失敗(429/404/網路/cors 拒絕)自動改試 jsDelivr 鏡像;兩者皆非 200 回 null。
+//   ★ 根治 v3.5.88 bug:no-cors 的 opaque 回應讀不到 status,403/429 錯誤頁會被當成「成功圖」
+//   快取下來造成永久壞圖。改用 cors 後可辨識錯誤、絕不快取壞回應(壞了下次還能重試)。
+//   raw.githubusercontent.com 與 cdn.jsdelivr.net 對成功與 404 皆帶 access-control-allow-origin:*。
+function _lxpsCorsFetchVerified(url){
+  function corsGet(u){
+    return fetch(u, { mode: 'cors', credentials: 'omit' }).then(function(r){
+      return (r && r.ok) ? r : null;
+    }).catch(function(){ return null; });
+  }
+  return corsGet(url).then(function(r){
+    if(r) return r;
+    var cdn = rewriteToJsDelivr(url);
+    if(!cdn) return null;
+    return corsGet(cdn);
+  });
+}
+
 function cacheFirstAsset(req){
   var wantUrl = _lxpsPickAssetUrl(req);
   var triedWebp = (wantUrl !== req.url);
-  return caches.match(wantUrl, { ignoreSearch: false }).then(function(cached){
+  var _pngUrl = req.url;
+  // ★ v3.5.89 — 雙 key 查詢:先 webp key,未命中再查 png key(讓 precache 存的 png 也能被 webp 機命中)
+  return caches.match(wantUrl, { ignoreSearch: false }).then(function(c1){
+    if(c1) return c1;
+    if(wantUrl === _pngUrl) return null;
+    return caches.match(_pngUrl, { ignoreSearch: false });
+  }).then(function(cached){
     if(cached) return cached;
 
     // 抓原 png：同網域直連、跨域走既有 CDN fallback(no-cors) — 與 v3.5.87 完全相同
     function fetchPng(){
-      var sameOrigin = (new URL(req.url)).origin === self.location.origin;
-      if(sameOrigin) return fetch(req);
-      return fetchWithCdnFallback(req.url, { mode: 'no-cors', credentials: 'omit' });
+      return _lxpsCorsFetchVerified(req.url);
     }
 
     // 主 fetch：要 webp 就先用 cors 抓 webp(能讀 status 判斷有無)，失敗/404 退回 png
     var mainFetch;
     if(triedWebp){
-      mainFetch = fetch(wantUrl, { mode: 'cors', credentials: 'omit' }).then(function(r){
+      mainFetch = _lxpsCorsFetchVerified(wantUrl).then(function(r){
         if(r && r.ok) return r;       // webp 存在 → 用它
         return fetchPng();            // webp 404 → 退回 png
       }).catch(function(){
@@ -295,15 +321,22 @@ function cacheFirstAsset(req){
     }
 
     return mainFetch.then(function(res){
-      // 即使 opaque 也存(讀不到 status 但能用)
-      if(res && (res.ok || res.type === 'opaque')){
+      // ★ v3.5.89 — 只快取「確認 200」(cors 可讀 status);no-cors opaque 一律不進此分支,根治壞圖中毒
+      if(res && res.ok){
         var resClone = res.clone();
         caches.open(ASSET_CACHE).then(function(cache){
           // 用 wantUrl 當 cache key：webp/png 各存各的，下次能 hit
           cache.put(wantUrl, resClone).catch(function(){});
         });
       }
-      return res;
+      if(res) return res;
+      // ★ v3.5.89 — cors 全失敗 → 最後 no-cors 嘗試「顯示但不快取」(非 CORS 來源仍能出圖;
+      //   讀不到 status 故絕不快取,壞了下次重試,不會永久中毒)
+      return fetch(req.url, { mode: 'no-cors', credentials: 'omit' }).then(function(rr){
+        return rr || new Response('', { status: 504, statusText: 'asset unavailable' });
+      }).catch(function(){
+        return new Response('', { status: 504, statusText: 'asset unavailable' });
+      });
     }).catch(function(){
       // 完全離線且沒快取 — 回 fallback (對音訊回空 audio, 圖片回 1x1 透明)
       return new Response('', { status: 504, statusText: 'Offline' });
@@ -474,15 +507,11 @@ function precacheUrlsInBatches(urls, client, batchId){
         return Promise.all(batch.map(function(url){
           var sameOrigin = (new URL(url)).origin === self.location.origin;
           // ★ v3.4.15 — 跨域走 CDN 改寫 (繞 GitHub 429), 同源照舊
-          var fetchPromise;
-          if(sameOrigin){
-            fetchPromise = fetch(new Request(url, { credentials: 'omit' }));
-          } else {
-            fetchPromise = fetchWithCdnFallback(url, { mode: 'no-cors', credentials: 'omit' });
-          }
+          // ★ v3.5.89 — 改 CORS 驗證抓取:只快取確認 200,不再把 no-cors opaque 錯誤當成功圖存
+          var fetchPromise = _lxpsCorsFetchVerified(url);
 
           return fetchPromise.then(function(res){
-            if(res && (res.ok || res.type === 'opaque')){
+            if(res && res.ok){
               // 用原始 url 當 cache key (不論實際是從 GitHub 還是 CDN 抓的)
               return cache.put(url, res).then(function(){
                 done++;

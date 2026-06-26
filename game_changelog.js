@@ -12,6 +12,35 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.26 — 帳號英雄修復:練過的英雄一律保留(誤回收的自動補回);只清「沒練過又查無紀錄」的純污染
+  {
+    ver: 'v3.16.26',
+    date: '2026-06-26',
+    brief: [
+      '🛡️【重大修復·英雄解鎖】上個版本(v3.16.19)為了清掉跨帳號殘留的污染角色,把「你練過(等級>1)、但剛好查不到取得紀錄、也沒投資過素質點」的角色誤判成污染收走了,造成很多同學「練過的英雄突然不見」。本版改回「只要你練過(等級>1)就一定是你的、一律保留」,並在登入時自動把先前被誤收的『練過英雄』連同等級補回你的帳號。',
+      '📌 重要:被補回的英雄「等級」會還原,但當初被清掉的「技能/天賦/極限爆發的升級」無法復原(那部分在上個版本收回當下就被刪掉、沒有備份),需要再用書本重新升級。造成的不便非常抱歉。',
+      '🧹 仍會自動清掉的只剩:「沒練過(等級 1)且完全查不到任何取得紀錄、沒裝至寶、不是初始角色」的純污染。若有你真的擁有、卻被收回的,到「📨 帳號救援申請」→「🔓 我遺失的英雄要回來」勾選送出,老師核對後補回。',
+    ],
+    items: [
+      '★ v3.16.26【判定改回·_advHasGenuineUnlock】推翻 v3.16.19「投資證據版」:於 admin_delete 檢查之後、其餘判定之前加回「等級>1 → 一律保留」分支(讀全域 _heroLevels),練過的英雄一律視為擁有(覆蓋「別人 uid 紀錄」判定,唯一例外是老師明確刪除 admin_delete);另修正自有解鎖紀錄 uid 比對改 slice(0,12)(舊紀錄若存完整 28 字 uid 也能正確認領,避免自己的紀錄被誤判成別人的)。改完 orchestrator 只會回收「等級 1 且無任何解鎖證據」的純污染。',
+      '★ v3.16.26【自動補回·_fbRestoreLeveledAuditRecovered + _lxpsRestoreLeveledOnLogin】登入後一次性:讀雲端 _auditRecoveredLevels(v3.16.19 回收時暫存的原等級),只把「暫存等級>1(練過)」的英雄加回 unlockedHeroes + 還原等級(只升不降)+ 補一筆合法紀錄 audit_auto_restored(蓋過 audit_error_recovered → 不再被出口過濾隱藏);沒練過(等級 1)的暫存維持回收=正確清掉的污染。雲端旗標 _auditLeveledRestoreV1 + 本機旗標雙重防重跑;刻意不寫 _authoritativeRestoreAt(不觸發重載)、改記憶體/本機同步即時顯示;排程在 Lv1 污染回收(orchestrator)之前。',
+      '★ v3.16.26【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.26(hero_db.js 維持 v3.16.22·本輪未動)。本輪改 index.html + game_changelog.js(sw.js 圖片修正 v3.5.89 隨 v3.16.25 一併上傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.5)。',
+    ],
+  },
+  // v3.16.25 — 修正 iPad 安裝版 R 卡(及多數英雄)圖片讀不到:資源圖快取根治(SW 改 CORS·只快取確認 200·清中毒快取)
+  {
+    ver: 'v3.16.25',
+    date: '2026-06-26',
+    brief: [
+      '🛠️【緊急修正·圖片】iPad 安裝版上,除了少數幾隻(主角小力／機關王／田徑隊／直笛團／籃球隊)以外,英雄圖片大量讀不到、變成破圖的問題已修正。重開遊戲後會自動重抓正確圖片(第一次可能稍慢,之後恢復正常)。',
+    ],
+    items: [
+      '★ v3.16.25【根因】Service Worker(sw.js v3.5.88)抓圖失敗時,fallback 用 no-cors 方式抓 → 回應是 opaque(讀不到狀態碼),程式卻把它當成功圖片快取下來。當共用網路同 IP 多人同時撞 GitHub raw 被限流(429)、或 CDN 回 403 等錯誤時,那個壞掉的錯誤回應被永久快取 → 該英雄圖從此破圖。只有最早最常載入的主角／機關王／初始三隊在被限流前就先把正確圖快取住,所以只有那幾隻正常。',
+      '★ v3.16.25【修法·sw.js v3.5.89】① 抓圖 fallback 全改 CORS(讀得到狀態碼),只快取確認 200 的回應,任何錯誤(403／429／404)一律不快取 → 根治破圖中毒。② 來源四重備援:raw webp → jsDelivr webp → raw png → jsDelivr png 依序試到出圖。③ cacheFirstAsset 改雙 key 查詢(webp 未命中再查 png),預載的圖也能被新機命中。④ 預載(precache)路徑同步去除同一 opaque bug、改 CORS。',
+      '★ v3.16.25【清中毒】圖片快取庫 ASSET_CACHE 一次性 v1→v2,把先前被當成功存進去的破圖快取整批清掉(這是「ASSET_CACHE 永不改」鐵則的單次例外);每台裝置改完後下次只會重抓用到的圖一次,之後不再重抓。',
+      '★ v3.16.25【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.25(hero_db.js 維持 v3.16.22·本輪未動)。本輪改 sw.js + index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.4)。',
+    ],
+  },
   // v3.16.24 — 修正「老師更新了你的帳號資料,正在重新載入」無限重載卡死(權威 restore 基線持久化+斷路器)
   {
     ver: 'v3.16.24',
@@ -279,33 +308,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.6【Q2·來源顯示】學生端 _openRescueReq 新增「🔍 我的英雄是怎麼來的」清單:讀本地 adv_hero_unlock_history 顯示每隻英雄來源 + 時間、查無紀錄標❓;每隻附「不是我的」勾選 → _rescueReqSubmit 收進 claims.extraHeroes(塞既有 claims 物件、免改 helper / firestore.rules)。',
       '★ v3.16.6【Q2·GM 端】admin_panel.js 救援審核卡新增 _extraBlock 顯示學生標記「不是我的」英雄晶片 + 「🗑 移除學生標記的不是我的英雄」鈕(走 _fbAdminBulkRemoveHeroes,本版已根治復活 → 移除後不再回來)。',
       '★ v3.16.6【版本鏈】index.html + admin_panel.js + game_changelog.js 同步 v3.16.6;補回先前漏上傳的 v3.16.4 / v3.16.5 玩家公告;GAME_CHANGELOG trim 至 20(移除最舊 v3.15.83 / 84 / 85)。',
-    ],
-  },
-  // v3.16.5 — 帳號污染完美保護:過時分頁不再蓋更新 + 一鍵重建移除幻影 + 載入更一致
-  {
-    ver: 'v3.16.5',
-    date: '2026-06-24',
-    brief: [
-      '🛡️【帳號污染完美保護】① 老師更新你的帳號後,舊分頁不再蓋掉更新(會自動重新載入套用最新)。',
-      '   ② 後台「一鍵帳號重建」會自動移除「明明被刪、卻又冒出來」的幻影角色。',
-      '   ③ 養成資料載入更一致、更防污染。',
-    ],
-    items: [
-      '★ v3.16.5【piece3】GM 補償 / 還原 / 重建 / 收回 / 重置 / 強制還原 6 處主檔寫 _authoritativeRestoreAt;_applySafeData 載入擷取 session 基線,onSnapshot 偵測雲端戳記比基線新 → 鎖存 + 1.8s 重載;gameCloudSave 保護層 1.6 拒存過時 session → 不再蓋掉老師的補償。',
-      '★ v3.16.5【piece2】_fbRebuildAccountFromLedgers 偵測 unlockedHeroes 中帳本判定不該有者:類(a)帳本最近 = admin_delete(被刪卻又出現)→ 自動移除;類(b)帳本查無紀錄 → 僅報告供老師人工審核、絕不自動移除。',
-      '★ v3.16.5【piece1】_LXPS_PREFER_S 納入 heroStatInvested / heroSkillLevels,與 _applySafeData 早已採信此二者 _s 對齊,消除三槽合併路徑不一致。',
-    ],
-  },
-  // v3.16.4 — 後台修正:GM 清除/重置/復原後,清除結果不再被學生下次登入的舊資料蓋回
-  {
-    ver: 'v3.16.4',
-    date: '2026-06-24',
-    brief: [
-      '🔧【後台修正】老師「清除異常英雄 / 重置 / 復原帳號」後,清除結果有時會在學生下次登入時被舊資料蓋回的問題已修正(讓老師的操作真正生效、不再被『復原』)。',
-    ],
-    items: [
-      '★ v3.16.4【根因】_applySafeData 載入時已優先採信 heroStatInvested_s / heroSkillLevels_s,但 4 支 GM 工具(刪英雄 / 批量收回 / 重置 / 污染清除復原)寫了乾淨 map 卻沒寫對應 _s → 學生一登入採信舊髒 _s 把清除『復原』= 污染又回來。',
-      '★ v3.16.4【修法】四處 _patch 補寫 heroStatInvested_s / heroStatPoints_s / heroSkillLevels_s / heroBurstLevels_s(污染清除復原工具連 heroLevels_s 一併補)。純加欄位、零回歸風險。',
     ],
   },
 ];
