@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-26  / 目前主程式版本:v3.16.30(待審查凍結機制:圖鑑審查不符英雄先進「審查中」由老師確認)
+//  最後更新:2026-06-26  / 目前主程式版本:v3.16.31(救火:暫停強制登入自我審查彈窗止血 + 老師後台批次救回被誤刪英雄;至寶版圖鑑審查保留)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.31 — 緊急修復:暫停「強制登入自我審查」(止血)+ 老師後台批次救回被誤刪的英雄
+  {
+    ver: 'v3.16.31',
+    date: '2026-06-26',
+    brief: [
+      '🛟【緊急修復·英雄不會再被誤刪】這兩天「登入時強制跳出的英雄圖鑑審查」會把你本來就擁有、但系統查不到取得紀錄的舊角色列成「可疑」、要你一隻一隻勾,結果有些同學不小心按了「不是我的」,把自己的英雄移除了。現在已經暫停這個「每次登入強制跳出」的審查,你不會再被逼著勾、也不會再誤刪英雄。',
+      '🔍【審查還在·只是不強迫】英雄圖鑑審查本身保留,你或老師仍可以隨時手動開啟(不再每次登入硬塞);台灣至寶的圖鑑審查也一樣是「可以用、但不強迫」。',
+      '💚【被誤刪的英雄會還回來】如果你的英雄已經被審查誤刪,別擔心——老師後台可以一鍵把它們連同原本的等級一起補回來(只會把資料加回去、不會拿走任何東西)。如果發現自己有角色不見了,跟老師說一聲即可。',
+    ],
+    items: [
+      '★ v3.16.31【止血·index.html】_maybeShowAccountAuditOnLogin 開頭加 early-return(鏡像 v3.16.28 orchestrator 停用 pattern):強制登入自我審查不再自動彈出(只是不彈·碰不到任何資料·不刪不改);自我審查本身保留,學生/老師仍可從圖鑑手動開 _openAccountAudit(含至寶審查)。根因:每次登入硬彈把「擁有但帳本查無紀錄」的舊版/早期取得英雄列成可疑·逼學生逐隻勾·誤按「不是我的」→ _fbStudentDisownHeroes 真的移除(且會清掉雲端等級)→ 帳號倒退。',
+      '★ v3.16.31【批次救回·index.html】新增 GM 後端 _fbAdminScanDisownedHeroes(掃全體玩家·帳本反推:某英雄「最近一筆解鎖紀錄=audit_error_recovered」且現不在 unlockedHeroes → 判為被 disown 待救回;已被救回者最近一筆=admin_grant 自動跳過 idempotent·GM 手動刪 admin_delete 排除)+ _fbAdminRestoreAllDisownedHeroes(逐一呼叫既有 _fbAdminRestoreLostHeroes:加回解鎖+還原 _auditRecoveredLevels 暫存原等級+寫 admin_grant 合法紀錄→不再被隱藏·GM 直寫繞守門·只增不減)。補既有「等級>1/裝至寶」掃描(_fbAdminScanDeletedHeroes)抓不到「等級被清掉」這批的缺口。',
+      '★ v3.16.31【GM 介面·admin_panel.js】「🛟 英雄誤刪救回」卡新增子區「🔺 審查誤刪英雄批次救回」:🔍 掃描全體玩家(審查移除)→ 列出受影響玩家與英雄(顯示移除前暫存等級)→「🛟 救回這位玩家」或「🛟 全部一鍵救回」。無 ?. 相容舊 Safari。',
+      '★ v3.16.31【安全/範圍】只做「止血(關彈窗)+ 把資料加回去」,完全不動存檔倒退守門、不動載入路徑(老師裁示:不可製造新災情)。至寶版圖鑑審查(凍結+閘門+🔺徽章+GM 通過/不通過)保留。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.31(hero_db.js 維持 v3.16.22)。所有新增可儲存欄位皆綁 uid。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.10)。',
+    ],
+  },
   // v3.16.30 — 待審查凍結機制:圖鑑審查勾「這是我的」但雲端查不到取得紀錄的英雄先進「審查中」凍結,由老師通過/不通過
   {
     ver: 'v3.16.30',
@@ -293,20 +309,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.11(審查殘餘風險4修正)封存寫入前先掃描帳本,排除「已有自己 uid 非 admin_delete 紀錄(含先前 migration_seal 封存)」的英雄 → 只對真正還沒紀錄的英雄補寫;送審失敗重按、或同帳號重開審查再封存,皆不再累積重複 migration_seal 紀錄。本地讀一次重用(不增讀寫),300 筆上限不變。',
       '★ v3.16.11【安全/範圍】只動 index.html 封存 handler(_openAccountAudit 內),純去重、不改封存判定/帳本權威自癒/移除流程;封存仍只「加帳本紀錄、不刪任何英雄/資源」。三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.11(admin_panel.js 本輪未動維持 v3.16.10)。GAME_CHANGELOG trim 至 20。',
-    ],
-  },
-  // v3.16.10 — 「幫英雄上鎖(封存)」一次性登入提醒(老師開關控制)
-  {
-    ver: 'v3.16.10',
-    date: '2026-06-24',
-    brief: [
-      '🛡️【全體封存提醒·老師開關控制】老師清完帳號後,在後台「📨 帳號救援申請審核」卡頂打開「全體玩家封存提醒」開關 → 全體學生登入時會自動看到一次「幫英雄上鎖」提示,引導他們去封存英雄(每位學生只彈一次)。沒打開前不會彈。',
-    ],
-    items: [
-      '★ v3.16.10【玩家端】新增 window._maybeShowSealPrompt:登入到關卡頁後延 3200ms 觸發(排在會員首登 2200ms、救援說明 2500ms 之後),三道守門才彈——① GM 開關 gameConfig/sealPrompt.enabled===true(讀不到/未開→不彈)② per-uid 完成旗標 lxps_seal_prompt_done_<uid>(只彈一次)③ 防疊加(續戰/練習營/會員/救援/圖鑑審查/新手指引彈窗在場則跳過);_showSealPrompt 綠色彈窗三鈕:「✅ 現在就去封存」→ 標記完成 + 開 _openAccountAudit、「知道了等一下」→ 不標記(下次登入再提醒)、「我已封存過不用再提醒」→ 標記完成。',
-      '★ v3.16.10【老師端 admin_panel.js】救援審核卡頂新增「🛡️ 全體玩家封存提醒」開關(✅開啟 / ⛔關閉 + 即時狀態顯示),寫 gameConfig/sealPrompt {enabled,updatedAt,updatedBy}(window._fbAdminSetSealPrompt / _fbAdminGetSealPrompt);開啟前 confirm 提醒「請先清完髒帳號再開,否則未清幻影會被學生封存成合法」。',
-      '★ v3.16.10【安全/順序】GM 開關預設關 → 部署後不會自動彈任何人;務必先清完 backlog(救援審查 + GM 工具)再開啟;封存每人只彈一次、idempotent;gameConfig 為 GM-only 寫、登入可讀 → 不需改 firestore.rules。',
-      '★ v3.16.10【範圍/版本】index.html(封存提醒 client + onAuth 觸發)四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] → v3.16.10;admin_panel.js ADMIN_PANEL_VERSION → v3.16.10(本檔同時含 v3.16.7 救援卡回收補償/復原/爭議分流,首次上傳即一併生效)。GAME_CHANGELOG trim 至 20。',
     ],
   },
 ];
