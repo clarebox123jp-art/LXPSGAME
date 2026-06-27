@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.47 — 首頁標題圖再放大 75% + 上移避免擋住人物頭部 + 移除副標題
+  {
+    ver: 'v3.16.47',
+    date: '2026-06-27',
+    brief: [
+      '🏠【首頁大標題再放大】首頁「小英雄大對抗」標題圖再放大 75%、更醒目;同時往上移動,盡量不擋到中間拿筆電男孩等人物的頭。',
+      '🗒️【移除副標題】移除標題下方的副標題「力行小學生與來自異世界的小夥伴」,畫面更簡潔。',
+    ],
+    items: [
+      '★ v3.16.47【標題圖放大 75%·index.html】.title-img max-width:min(82vw,560px)→min(90vw,980px)、max-height:40vh→72vh(讓寬度先綁定·依 836×470 原比例縮放)。',
+      '★ v3.16.47【標題容器上移·index.html】#overlay .title-wrap 由 main.css 的 flex 置中+margin-top:-180px 改 position:absolute+left:50%+transform:translateX(-50%)+top:-8vh(放大後往上長·圖上方 17% 透明邊距往上推不切字·底部讓出中央人物頭部);#overlay 內所有按鈕皆 position:absolute(top:67%/78%…)故不受影響。',
+      '★ v3.16.47【移除副標題·index.html】.title-en 加 display:none(移除「力行小學生與來自異世界的小夥伴」)。',
+      '★ v3.16.47【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.47;hero_db.js 維持 v3.16.46、world-boss.js v3.15.98、world-boss-ui.html v3.16.45、arena.js v3.15.69、main.css v3.15.79。本輪只改 index.html(3 處 CSS) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改);標題圖 title-zh.webp 已上傳·無需改碼。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.27)。',
+    ],
+  },
   // v3.16.46 — 首頁標題圖文字後備+尺寸 / 鬥技場·龍王戰最高治療歸施術者 / 答題獎勵不計最高傷害·治療 / 戰鬥求救鈕整併 / 答題轉3能量
   {
     ver: 'v3.16.46',
@@ -308,23 +323,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.28【圖鑑開啟自動彈】_openHeroPage_doRender 末尾掛 _maybeShowAccountAuditOnLogin(延 350ms);彈出條件由「有查無硬證據英雄」改為「有起始 8 隻以外的英雄」(per-uid 一次性·擁有<8 或有其他彈窗自動重試)。登入後 4200ms 仍保留一次後援觸發。',
       '★ v3.16.28【卡片提示校正】B2 卡片移除舊版「曾被移除/你沒有取得紀錄」誤導文字(現含有紀錄英雄·紀錄不可盡信);只在紀錄明確顯示別人 uid 時給輕量提醒,其餘交玩家辨認。',
       '★ v3.16.28【版本/範圍】三點版本同步 → v3.16.28(hero_db.js 維持 v3.16.22)。本輪只改 index.html + game_changelog.js。_advHasGenuineUnlock/_advHasHardEvidence 仍保留定義但不再驅動任何自動保留/回收。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.7)。',
-    ],
-  },
-  // v3.16.27 — 英雄自我審查升級:查無證據的「不是我的」按確認當場移除·之後不再跑回來;有證據自動保留
-  {
-    ver: 'v3.16.27',
-    date: '2026-06-26',
-    brief: [
-      '🧹【重大修復·清掉不是你的英雄】之前就算把「不是你的」英雄移除,下次登入又會自己跑回來(系統的自動修復網會把練過的角色從等級表撈回解鎖清單)——這個根因已修好。現在到英雄圖鑑「🔍 英雄來源自我審查」,把確定不是你的按「不是我的」+「✅ 確認移除」,就會立刻清掉、而且之後不會再回來。',
-      '✅ 系統已確認是你的(自己抽到/打到、初始角色、裝過至寶、或投資過素質點)會用綠框標示、自動保留、免處理;你只要看「🟡 需要你確認」的幾隻就好。',
-      '🛟 誤移除了也別擔心:到「📨 帳號救援申請 →🔓 我遺失的英雄要回來」勾選送出,老師核對後可一鍵幫你補回(等級會還原)。登入時若帳號有「查不到取得來源」的英雄,會自動跳出這個審查提醒你清理(看過一次後就不再自動跳)。',
-    ],
-    items: [
-      '★ v3.16.27【根因·自癒復活】advGetUnlockedHeroes 的「自癒 v3.13.28」會把 _heroLevels 內等級>0 的英雄無條件補回 unlockedHeroes(只擋 admin_delete/audit_error_recovered 與活動限定英雄)→ 一般 SSR/SR 的練過污染移除後每次載入又被撈回=「多出一直回來」。修法:學生自助移除走守門機制(見下),被移除者帳本最新一筆=audit_error_recovered → 自癒/紀錄救援/出口過濾/phantom 等六補回路徑全認得、不再復活。',
-      '★ v3.16.27【當場移除·_fbStudentDisownHeroes】學生在自我審查按「不是我的」+確認 → 立即從雲端 unlockedHeroes 移除 + 清該英雄六養成表 _s+heroExp+heroTraitLevel(杜絕 desync/採信舊 _s 復活)+ 至寶解裝保留本體 + 帳本補 audit_error_recovered(disownedByStudent 標記)守門紀錄;暫存原等級到 _auditRecoveredLevels 供 GM 一鍵復原。刻意不寫 _authoritativeRestoreAt(不重載·本機同步即時更新)、不寫一次性旗標(可隨時再清)。本機同步:adv_unlocked_heroes 移除 + 記憶體養成清除 + 本機帳本補守門紀錄。',
-      '★ v3.16.27【有證據自動保留·分類】新增 _advHasHardEvidence(=_advHasGenuineUnlock 略過「練過 lv>1」分支·只認 自己解鎖紀錄/初始8/裝至寶/投資過);自我審查 B1(✅免處理)/B2(🟡需確認)改用硬證據分類 → 初始 8 隻、投資過、裝過至寶的不再被誤列「需確認」,只有真正查無證據(含練過卻查無紀錄的污染)才落入 B2 由學生決定。',
-      '★ v3.16.27【登入自動提示】新增 _maybeShowAccountAuditOnLogin:登入後若帳號有「持有但查無硬證據」的英雄才自動開審查(per-uid 一次性·擁有<8 或有其他彈窗時自動重試)。送出/關閉皆標記一次性,不再每次登入打擾;學生仍可從圖鑑自行開啟。',
-      '★ v3.16.27【版本/範圍】三點版本同步 → v3.16.27(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.6)。',
     ],
   },
 ];
