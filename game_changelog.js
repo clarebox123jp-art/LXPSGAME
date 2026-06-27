@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-27  / 目前主程式版本:v3.16.38(10連抽稀有上限各 1 + 答題獎勵寵物選單字放大 + 已解鎖英雄隱藏解鎖提示)
+//  最後更新:2026-06-27  / 目前主程式版本:v3.16.39(修正 iPad 答題獎勵寵物裝備後小怪戰卡死)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.39 — 修正 iPad 答題獎勵寵物裝備後小怪戰卡死
+  {
+    ver: 'v3.16.39',
+    date: '2026-06-27',
+    brief: [
+      '🐾【修正卡死】修正在小怪戰中,答題獎勵抽到寵物、選一位英雄「立即裝備」後遊戲卡住不動的問題(iPad 上每次都會發生)。現在裝完寵物會正常繼續戰鬥。',
+    ],
+    items: [
+      '★ v3.16.39【修正寵物裝備卡死·index.html】根因:小怪戰答題獎勵抽到寵物(get_pet)時會開「選哪位英雄裝備」的選擇器,但程式在玩家還沒選之前就提前呼叫了繼續戰鬥,推進的回合撞上仍開著的選擇器而被擋下且不會重排;玩家選完寵物後又走了錯誤的續戰路徑(只解除暫停·不重新推進回合)→ 沒有任何角色行動·永久卡死。',
+      '★ v3.16.39【修法】_advMiniApplyReward 偵測到寵物選擇器開啟時改為延後繼續戰鬥並把該回呼暫存(window._advPetPickerMiniOnDone);_advFinishPetPick 收尾改三條路:小怪戰用暫存的專屬回呼續戰(不走 advOnQuizSkip)、BOSS 新回合答題走 _advFinishRoundQuiz、其餘維持原本。與 v3.14.25 修 BOSS 戰同款 bug 的手法一致(當時漏修小怪戰)。',
+      '★ v3.16.39【範圍/版本】只改 index.html(_advMiniApplyReward + _advFinishPetPick 兩處);admin_panel.js + game_changelog.js 僅版本 bump 對齊。五點版本同步 → v3.16.39(hero_db.js 維持 v3.16.22)。本套含 v3.16.36/37/38,同一批上傳。',
+    ],
+  },
   // v3.16.38 — 10連抽稀有上限(各 1) + 答題獎勵寵物選單字放大 + 已解鎖英雄隱藏解鎖提示
   {
     ver: 'v3.16.38',
@@ -293,25 +306,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.20【取消每次問設定二段密碼】_lxpsRunSecondPwGate 讀 _fbGetMyPwState:已設密碼(sp.hash)→ 維持 _showVerifyForm 彈出輸入(不變);未設密碼分支由原本 _showSetupPrompt(_finish)「詢問是否設定」改為直接 _finish()(設 sessionStorage 通過旗標 + resolve 放行進遊戲),不再彈設定提示。',
       '★ v3.16.20【二段密碼設定入口移到會員 hub】_openMemberAccountHub 在「✏️ 編輯會員資料」鈕下方新增「🔐 二段密碼設置」鈕(_mh-pw)→ onclick 呼叫既有 window._lxpsOpenSecondPwSetup(未設密碼直接開設定表單·已設密碼先驗證舊密碼再改)。後端 _fbSetMyPw/_fbVerifyMyPw/_fbGetMyPwState 與設定·驗證 UI 全部沿用,零後端改動。',
       '★ v3.16.20【版本/範圍】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.20;本輪只改 index.html + game_changelog.js(admin_panel.js 維持 v3.16.19·world-boss*/hero_db/arena/sw 等皆未動)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.99)。',
-    ],
-  },
-  // v3.16.19 — 系統審核誤判英雄「投資證據版」回收 + 道歉公告列出清單 + 救援申請加「我遺失的英雄要回來」
-  {
-    ver: 'v3.16.19',
-    date: '2026-06-25',
-    brief: [
-      '⚖️【公平性修復:把不是你的角色收回上鎖】先前「自我審查」的缺陷,曾把一些你<b>在多人世界王借用過好友、但其實沒有真正抽到</b>的角色,誤判成你的而解鎖。這一版把這類「<b>借來才出現、沒有真正投資過(沒加素質點/技能/天賦/爆發)、也查不到取得紀錄</b>」的角色<b>收回上鎖</b>,讓大家公平。',
-      '✅【你真正的角色一個都不會少】只要是你<b>真正抽到、解鎖過、投資過、或身上裝著至寶</b>的角色,全部完整保留。這次<b>只調整「角色解鎖清單」,完全不動你原本的存檔</b>——其他角色的等級、至寶、知識幣、關卡進度通通都在。',
-      '📢【登入會告訴你收回了哪些】登入後若你有被收回的角色,會彈出一次公告<b>列出被收回的角色名單</b>與原因。',
-      '🔓【真的是你的被收回了?可以要回來】到關卡頁底部「📨 帳號救援申請」→ 新增的「<b>🔓 我遺失的英雄要回來</b>」勾選你確實擁有卻被收回的角色送出,老師核對紀錄後會補回給你。',
-    ],
-    items: [
-      '★ v3.16.19【判定標準收緊·老師裁示】老師指示「不讓學生平白獲得原本不屬於他們的英雄」→ 保留標準由 v3.16.17「練過(等級>1)即保留」改為「有真正投資證據才算他的」。依據(handoff 鐵證):好友借用只會領 EXP/等級,絕不會把素質點/技能/天賦/爆發投資到借來的角色上 → 故「光有等級/經驗」不再算擁有證據。_advHasGenuineUnlock 移除 lv>1 保留分支;保留=初始8 / 自己解鎖紀錄(來源非 migration_seal 非 admin_delete,uid 屬本帳號或無 uid 舊紀錄)/ 裝至寶 / 投資過(heroStatInvested>0 或 技能·爆發·天賦等級>1)。另加 uid 空字串 fail-safe(uid 未設定一律判為自己=保留,只漏不誤刪)。',
-      '★ v3.16.19【回收機制·繞守門可逆】orchestrator window._lxpsRecoverAuditErrorHeroes:uid 已設定 + 雲端載完(擁有≥8)+ 本機/雲端一次性旗標 + 任何例外→回收0(只漏不誤刪);逐隻用記憶體 _advHasGenuineUnlock(證據集 ⊇ 雲端,含本地未同步投資)判定無證據者 → 交 window._fbApplyAuditErrorRecover 直接 updateDoc(繞存檔倒退守門,因回收「大量英雄」必觸發 _hardRegression 而被擋,故走 GM 同款直寫)。回收寫:filter unlockedHeroes + 清齊 heroLevels/heroStatInvested/heroStatPoints/heroSkillLevels/heroBurstLevels 各 map+_s + heroExp + heroTraitLevel(杜絕載入採信舊_s/desync自癒/phantom lv>1 復活)+ 至寶解裝保留本體 + 帳本標 source=audit_error_recovered(可逆,≠admin_delete 永久刪)+ 寫 _auditRecoverDoneV1 雲端一次性旗標 + _authoritativeRestoreAt(由既有 piece3 機制乾淨重載入,避免記憶體手術;重載後因旗標早退不重跑)。',
-      '★ v3.16.19【六補回路徑全認得回收標記】audit_error_recovered 在所有「補回/保留」邏輯中視同 admin_delete(不復活):① advGetUnlockedHeroes 出口過濾(唯讀·純來源字串判定無 uid 比對→無 v3.16.14~17 時序災因·不寫回 localStorage)② v3.16.9 帳本權威自癒(_del/_own 兩處)③ v3.13.93 紀錄救援(_isDel)④ phantom rescue _rec82(裝至寶/lv>1)⑤ phantom rescue _phantomRecovered82(雲端 heroLevels lv>1)⑥ _isLegitLocalHero(最高優先丟,即使本地練過)。',
-      '★ v3.16.19【道歉公告 + 救援清單】① _showApologyNotice 改為從帳本算出「本帳號最新來源=audit_error_recovered」的角色,實際列出被收回角色名(無受影響者不彈);文案改「已收回」完成語氣 + 指向「我遺失的英雄要回來」。② _openRescueReq 新增「🔓 我遺失的英雄要回來」勾選清單(列被回收角色)→ _rescueReqSubmit 收進 claims.lostHeroes(同 extraHeroes 模式,塞既有 claims 物件免改 firestore.rules)送老師人工審。',
-      '★ v3.16.19【版本】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.19;本輪改 index.html + game_changelog.js + admin_panel.js(救援審核卡接一鍵永久復原閉環)。admin_panel.js 同步 bump v3.16.19(⚠ 順帶修正:先前 index.html 記 admin=v3.16.10 但 GitHub 實際 v3.16.5 的版本不一致,以實際 v3.16.5 為底改後對齊)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.98)。',
-      '★ v3.16.19【救援閉環】學生送「🔓 我遺失的英雄要回來」(claims.lostHeroes)→ GM 後台「📨 帳號救援申請審核」卡:摘要列「🔓 遺失英雄要回來 N 隻」晶片、核對詳情列出學生要求復原的英雄、按「🛟 一鍵永久復原這些英雄」→ window._fbAdminRestoreLostHeroes(uid,names):加回 unlockedHeroes + 從回收時暫存的 _auditRecoveredLevels 無損還原原等級 + 帳本補 source=admin_grant 合法紀錄(最新一筆非 audit_error_recovered → 出口過濾不再隱藏、_advHasGenuineUnlock 判合法、之後再跑審查/重建都不再被回收)+ 附 auditRestored 稽核標記 + 蓋 _authoritativeRestoreAt(學生下次登入 piece3 乾淨套用)→ 標記 resolved + 通知玩家。一鍵永久解決,不需再走學生補償工具。',
     ],
   },
 ];
