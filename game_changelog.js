@@ -12,6 +12,29 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.46 — 首頁標題圖文字後備+尺寸 / 鬥技場·龍王戰最高治療歸施術者 / 答題獎勵不計最高傷害·治療 / 戰鬥求救鈕整併 / 答題轉3能量
+  {
+    ver: 'v3.16.46',
+    date: '2026-06-27',
+    brief: [
+      '🏠【首頁大標題修正】修正首頁「小英雄大對抗」大標題的顯示問題:① 電腦版原本標題圖沒出現、副標題「力行小學生與來自異世界的小夥伴」位置太高 ② 平板(iPad)版標題位置出現彩色閃爍細邊框和 404 破圖圖示、副標題跑到畫風切換鈕位置太低。原因是標題圖片檔尚未上傳,現在改成:圖片載入失敗時自動改顯示乾淨的金色立體文字標題,副標題位置在電腦和平板都正確一致;標題尺寸也縮小調整,不會擋到右邊遠方的 101 大樓和中間拿筆電男孩的臉。(等老師把標題圖檔上傳後,圖片就會正常顯示。)',
+      '💚【最高治療統計更準確】鬥技場和龍王戰的「最高治療」現在會正確算在「真正施展治療的英雄」身上:持續回血(像朱玥的春之戰場)、吸血、天賦觸發的治療,以前可能誤算到「當下正在行動的英雄」或「被治療的英雄」頭上,現在一律歸功給真正的施術者,才能正確看出治療是誰的功勞。',
+      '🚫【答題獎勵不計入最高傷害/治療】答題答對後使用的獎勵(對敵人造成傷害、幫全隊回血)不再灌進「最高傷害」「最高治療」的排名統計,讓這兩項只反映英雄技能本身的真實表現(龍王戰排行榜本就已排除,本次補上鬥技場結算)。',
+      '🆘【戰鬥求救鈕整併】戰鬥中的求救/救援按鈕整合成單一選單,介面更清爽。',
+      '🔷【答題獎勵可轉 3 能量】答題獎勵確認視窗新增選項:可把獎勵直接轉換成 3 點能量。',
+      '🔄【換隊友重戰/重新開戰完全復原】戰鬥卡死自救的「換隊友重新開始戰鬥」與「重新開戰」,現在會完全恢復到戰鬥剛開始的狀態——包含每位英雄的「極限爆發使用次數」(原本沒重置、重戰後爆發次數仍是用完的)、武士崛起鬥志、連招疲勞、S2 使用旗標全部歸零,真正從頭開始。',
+      '🖼️【沐雲雪立繪修正】新角色「御雲使‧沐雲雪」圖片顯示破圖(404)的問題修正了(原因:先前改成 .webp 檔名但 .webp 圖檔沒上傳到 repo;改回 repo 裡原本就有的 .png 圖檔,立繪立即正常顯示)。',
+    ],
+    items: [
+      '★ v3.16.46【首頁標題圖文字後備·index.html】根因:title-zh.webp 回傳 404(圖檔尚未上傳 repo 根目錄)。PC:img 失敗→父層 font-size:0→塌陷→副標上移;iPad:Safari 渲染破圖佔位框+404圖示→把副標往下推到畫風切換鈕。修法:.title-img 加 onerror→隱藏破圖、切顯示新增的 .title-zh-text(預設 display:none 的金漸層 POP 文字「小英雄大對抗」·-webkit-text-stroke+text-shadow+titleFloat 動畫)→破圖不再出現、.title-zh 維持應有高度→副標位置 PC/iPad 一致;.title-img 尺寸 min(90vw,680px)→max-width:min(82vw,560px)+max-height:40vh+width/height:auto(依 836×470 原比例縮入框、不擋 101/筆電男孩臉);cache param ?v=v3.16.46。老師上傳 title-zh.webp 後圖片即正常顯示、後備自動隱藏。',
+      '★ v3.16.46【最高治療歸施術者·index.html】doHeal 治療統計呼叫由 activeChar-first(const _healer=G&&(G.activeChar||opts.actor))改 actor-first(const _healer=(opts&&(opts._healSrc||opts.actor))||(G&&G.activeChar))→持續回血/吸血/天賦觸發治療(常在別英雄回合結算)歸正確施術者,不再誤算當前行動者或受治療者(仿 v3.15.45 DoT 歸施術者);稽核 154 個 doHeal 呼叫點確認傳 actor 者皆為施術者/吸血者/天賦擁有者/自療本體(actor:target=效果擁有者自療或治隊友皆正確),actor-first 安全。傳 actor:null 的持續回血補 _healSrc 明確來源:朱玥春之戰場(_healSrc=朱玥本體·不論存活)、午睡自療(_healSrc:h)、寵物鱟固定/百分比回血(_healSrc:h)。',
+      '★ v3.16.46【答題獎勵不計最高傷害/治療·index.html】答題獎勵 dmg_one/dmg_all(doDmg fixedDmg:true 走早退路徑 isFixed:true)、heal_50(doHeal fixedDmg:true→statTrack isFixed:true)本就不入 dmgReal/healReal;龍王戰排行榜(world-boss.js _findTop dmgReal/healReal)與本場 MVP(topDmg=dmgReal)早已排除。本次補上鬥技場結算 showResult:battle-stats-bar 的 byDmg/byHeal 排序 + 最強輸出/最佳治療統計卡取值由總量 dmg/heal 改 dmgReal/healReal → 答題獎勵不再灌進鬥技場最高傷害/治療(showResult 全部呼叫點皆鬥技場;鬥技場玩家+AI 答題獎勵走 advApplyReward/_arenaAIApplyReward)。',
+      '★ v3.16.46【riding·戰鬥求救鈕整併+答題轉3能量·index.html】(前一階段累積·本版一併上線)戰鬥求救/救援鈕整併為單一選單(adv-battle-help-fab + _showBattleHelpMenu);答題獎勵確認視窗新增第 4 鈕「轉 3 能量」(advRewardConfirmToEnergy)。',
+      '★ v3.16.46【換隊友重戰/重新開戰完全復原·index.html】兩條重戰路徑原本只重置 curHp/status/buffs/acted,漏了 per-battle 計數 → 重戰後極限爆發次數不恢復(老師回報)。比照正常開戰 advStartBattle(BOSS 戰前重置)補齊:① 換隊友重戰 _showRollbackReinforcePicker→_rrfSelectIn 的 G.p1/G.p2 reset 迴圈加 h._burstUsed=0+h._risingSpiritCount=0;② 重新開戰按鈕 _resetH 加 h.s2used=false+h._burstUsed=0+h._risingSpiritCount=0;兩處均加 G.comboFatigue=0/comboFatigueByHero={}/lastSkillName=null/lastSkillByHero={}(連招疲勞歸零)。時間倒轉卡(_initState 還原)與小怪戰逐場(爆發本就跨小怪戰累積到 BOSS 戰才歸零·鐵則)維持原樣不動。',
+      '★ v3.16.46【沐雲雪立繪 .webp→.png·hero_db.js】HERO_IMGS[御雲使‧沐雲雪] 由 御雲使_沐雲雪.webp(raw 404·v3.16.42 改 webp 但圖檔從未上傳)改回 御雲使_沐雲雪.png(raw 200·repo 既有)→立繪即恢復。同步 bump _vers[hero_db.js] v3.16.41→v3.16.46 破快取。⚠ 大標題 title-zh.webp 同屬「改 webp 但圖檔未上傳→404」,但已有 v3.16.46 文字後備(顯示金字標題)兜底;老師日後若要顯示圖片版,需自行上傳 title-zh.webp / 御雲使_沐雲雪.webp 到 repo 根目錄(Claude 只能改 src 引用、無法產生圖檔本體)。',
+      '★ v3.16.46【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] → v3.16.46;world-boss.js 維持 v3.15.98、world-boss-ui.html 維持 v3.16.45、arena.js 維持 v3.15.69、main.css 維持 v3.15.79。本輪改 index.html + hero_db.js(沐雲雪 .png 引用) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.26)。',
+    ],
+  },
   // v3.16.45 — 世界 BOSS 三修(龍王戰入口紫框壓縮 + 排行榜最高傷害 DoT 歸施術者 + 答題法寶確認視窗 z-index)
   {
     ver: 'v3.16.45',
@@ -302,21 +325,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.27【有證據自動保留·分類】新增 _advHasHardEvidence(=_advHasGenuineUnlock 略過「練過 lv>1」分支·只認 自己解鎖紀錄/初始8/裝至寶/投資過);自我審查 B1(✅免處理)/B2(🟡需確認)改用硬證據分類 → 初始 8 隻、投資過、裝過至寶的不再被誤列「需確認」,只有真正查無證據(含練過卻查無紀錄的污染)才落入 B2 由學生決定。',
       '★ v3.16.27【登入自動提示】新增 _maybeShowAccountAuditOnLogin:登入後若帳號有「持有但查無硬證據」的英雄才自動開審查(per-uid 一次性·擁有<8 或有其他彈窗時自動重試)。送出/關閉皆標記一次性,不再每次登入打擾;學生仍可從圖鑑自行開啟。',
       '★ v3.16.27【版本/範圍】三點版本同步 → v3.16.27(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.6)。',
-    ],
-  },
-  // v3.16.26 — 帳號英雄修復:練過的英雄一律保留(誤回收的自動補回);只清「沒練過又查無紀錄」的純污染
-  {
-    ver: 'v3.16.26',
-    date: '2026-06-26',
-    brief: [
-      '🛡️【重大修復·英雄解鎖】上個版本(v3.16.19)為了清掉跨帳號殘留的污染角色,把「你練過(等級>1)、但剛好查不到取得紀錄、也沒投資過素質點」的角色誤判成污染收走了,造成很多同學「練過的英雄突然不見」。本版改回「只要你練過(等級>1)就一定是你的、一律保留」,並在登入時自動把先前被誤收的『練過英雄』連同等級補回你的帳號。',
-      '📌 重要:被補回的英雄「等級」會還原,但當初被清掉的「技能/天賦/極限爆發的升級」無法復原(那部分在上個版本收回當下就被刪掉、沒有備份),需要再用書本重新升級。造成的不便非常抱歉。',
-      '🧹 仍會自動清掉的只剩:「沒練過(等級 1)且完全查不到任何取得紀錄、沒裝至寶、不是初始角色」的純污染。若有你真的擁有、卻被收回的,到「📨 帳號救援申請」→「🔓 我遺失的英雄要回來」勾選送出,老師核對後補回。',
-    ],
-    items: [
-      '★ v3.16.26【判定改回·_advHasGenuineUnlock】推翻 v3.16.19「投資證據版」:於 admin_delete 檢查之後、其餘判定之前加回「等級>1 → 一律保留」分支(讀全域 _heroLevels),練過的英雄一律視為擁有(覆蓋「別人 uid 紀錄」判定,唯一例外是老師明確刪除 admin_delete);另修正自有解鎖紀錄 uid 比對改 slice(0,12)(舊紀錄若存完整 28 字 uid 也能正確認領,避免自己的紀錄被誤判成別人的)。改完 orchestrator 只會回收「等級 1 且無任何解鎖證據」的純污染。',
-      '★ v3.16.26【自動補回·_fbRestoreLeveledAuditRecovered + _lxpsRestoreLeveledOnLogin】登入後一次性:讀雲端 _auditRecoveredLevels(v3.16.19 回收時暫存的原等級),只把「暫存等級>1(練過)」的英雄加回 unlockedHeroes + 還原等級(只升不降)+ 補一筆合法紀錄 audit_auto_restored(蓋過 audit_error_recovered → 不再被出口過濾隱藏);沒練過(等級 1)的暫存維持回收=正確清掉的污染。雲端旗標 _auditLeveledRestoreV1 + 本機旗標雙重防重跑;刻意不寫 _authoritativeRestoreAt(不觸發重載)、改記憶體/本機同步即時顯示;排程在 Lv1 污染回收(orchestrator)之前。',
-      '★ v3.16.26【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.26(hero_db.js 維持 v3.16.22·本輪未動)。本輪改 index.html + game_changelog.js(sw.js 圖片修正 v3.5.89 隨 v3.16.25 一併上傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.5)。',
     ],
   },
 ];

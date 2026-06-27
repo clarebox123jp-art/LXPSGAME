@@ -1168,7 +1168,7 @@ const HERO_IMGS = {
   '喚龍使‧蜜鶴林':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('喚龍使_蜜鶴林.png'),
   '熔岩巨人':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('熔岩巨人.png'),
   '拘留者':     'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('拘留者.png'),
-  '御雲使‧沐雲雪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('御雲使_沐雲雪.webp'),
+  '御雲使‧沐雲雪': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('御雲使_沐雲雪.png'),
   '科學發明家': 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('科學發明家.png'),
   '電腦老師':   'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('電腦老師.png'),
   '鐵匠':       'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('鐵匠.png'),
