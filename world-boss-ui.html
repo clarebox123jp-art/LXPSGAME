@@ -451,19 +451,19 @@
     max-width: none !important;
     width: calc(100% - 8px);
     margin: 0 auto;
-    padding: 48px 56px;
+    padding: 30px 56px 40px;   /* ★ v3.16.45 — 頂部 48→30 壓縮,紫框變矮、紅龍王卡不再被頂部撐開擠在一起 */
     border-radius: 22px;
   }
   /* 標題群 ──────────────────────────────── */
   #wb-entry-overlay .wb-title{
     font-size: 84px !important;      /* 42 → 84 */
     letter-spacing: 6px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;             /* ★ v3.16.45 — 24→12 壓縮標題下方間距 */
   }
   #wb-entry-overlay .wb-subtitle{
     font-size: 32px !important;      /* 16 → 32 */
     letter-spacing: 4px;
-    margin-bottom: 44px;
+    margin-bottom: 20px;             /* ★ v3.16.45 — 44→20 壓縮副標下方間距,讓下方卡片上移 */
   }
   /* 關閉按鈕 (✕) 同步放大 ──────────────── */
   #wb-entry-overlay .wb-close-btn{
@@ -551,9 +551,9 @@
   /* BOSS 預覽卡 ─────────────────────────── */
   #wb-entry-overlay .wb-boss-preview{
     padding: 48px 56px;
-    min-height: 480px;
+    min-height: 360px;               /* ★ v3.16.45 — 480→360,紅龍王卡不再過高 */
     border-radius: 20px;
-    margin-top: 36px;
+    margin-top: 22px;                /* ★ v3.16.45 — 36→22,與上方青框保持適當距離 */
   }
   #wb-entry-overlay .wb-boss-name{
     font-size: 64px !important;      /* 32 → 64 */

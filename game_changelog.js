@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-27  / 目前主程式版本:v3.16.40(修正 iPad 切到背景/滑掉後遊戲背景音樂沒停止)
+//  最後更新:2026-06-27  / 目前主程式版本:v3.16.45(世界 BOSS 三修:龍王戰入口紫框壓縮 + 排行榜最高傷害把持續傷害歸給施術者 + 答題法寶確認視窗 z-index)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,89 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.45 — 世界 BOSS 三修(龍王戰入口紫框壓縮 + 排行榜最高傷害 DoT 歸施術者 + 答題法寶確認視窗 z-index)
+  {
+    ver: 'v3.16.45',
+    date: '2026-06-27',
+    brief: [
+      '⚔️【世界 BOSS 三項小修正】① 龍王戰入口畫面:最上面的紫色外框太高、和下面紅色「山岳地龍王」介紹卡擠在一起的問題修正了,標題區間距縮小、兩張卡之間保持適當距離。② 龍王戰排行榜的「最高傷害」更準確:中毒、燃燒、出血這類「持續傷害」現在會正確算在「放這個技能的英雄」身上(以前會誤算到當下正在行動的那隻英雄頭上),全隊「聯手爆發」的固定傷害也不會被灌進個人最高傷害。③ 答題時使用「神諭之光」「換題葉符」等法寶,原本「使用確認視窗」會被題目蓋住、按不到的問題修正,確認視窗現在固定顯示在最上層,一定點得到。',
+    ],
+    items: [
+      '★ v3.16.45【龍王戰入口紫框壓縮·world-boss-ui.html】#wb-entry-overlay 的 .wb-card(紫框 border:3px #a884ff)頂部 padding 48→30、.wb-title margin-bottom 24→12、.wb-subtitle 44→20、.wb-boss-preview(紅框)min-height 480→360 + margin-top 36→22 → 紫框整體變矮,標題區不再把紅龍王卡往下擠。(紫框是外框、紅卡是其子元素,CSS 父子本不會真重疊;此修壓縮頂部過高間距讓視覺不再卡在一起。若實機重疊另有狀況需截圖再查。)',
+      '★ v3.16.45【排行榜最高傷害 DoT 歸屬·index.html】根因:doDmg 第二段 a=G.activeChar||opts.actor — DoT(中毒/出血)tick 沒傳 actor 就被算到「tick 當下正要行動的英雄 G.activeChar」名下,且未標 isFixed → 進 dmgReal(=排行榜 topDmg);對 BOSS 每 tick 撞 5000 上限,誤灌某英雄最高傷害;燃燒(fixedDmg)則沒人認領。修法:addStatus 為 poison/bleed/hellfire 記施術者 _dotSrc(=當下 G.activeChar);三處 tick(中毒/出血/燃燒行動前後)傳 actor=_dotSrc;doDmg 改 a=(_isDotTick?opts.actor:G.activeChar)||opts.actor 讓 DoT 歸施術者(一般傷害不變);燃燒 fixedDmg 路徑 isFixed 改 !_isDotTick → 計入施術者真實貢獻。聯手爆發 5000 本就直接扣 boss.curHp 不走 doDmg/statTrack、從不在 dmgReal;本場總傷團隊貢獻用 myUid 計、不依賴 a,無回歸。',
+      '★ v3.16.45【答題法寶確認視窗 z-index·index.html】adv-treasure-confirm(神諭之光/換題葉符 使用確認視窗)z-index 9200→10500。根因:答題時 adv-quiz-overlay 會被拉到 9500(_tgAskPetQuestion)甚至 9950(另一答題流程)以蓋過過場 cutscene,原 9200 反被題目蓋住、✔使用/✕取消 按不到。10500 高於 9950、低於系統級 overlay(2147483646)。',
+      '★ v3.16.45【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js／world-boss-ui.html] → v3.16.45;world-boss.js 維持 v3.15.98、hero_db.js 維持 v3.16.41、main.css 維持 v3.15.79。本輪改 index.html + world-boss-ui.html + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。',
+    ],
+  },
+  // v3.16.44 — 首頁主標題改用 POP 海報體立繪圖(去掉底部灰色、保留飄浮動態)
+  {
+    ver: 'v3.16.44',
+    date: '2026-06-27',
+    brief: [
+      '✨【首頁變漂亮】首頁最上面的「小英雄大對抗」主標題,換成全新的 POP 海報體立繪圖(有寶劍、皇冠、盾牌跟小星星裝飾),原本標題字底部那塊灰灰的、看起來沒填滿的影子也拿掉了。標題會輕輕飄浮的動態效果保留著。',
+    ],
+    items: [
+      '★ v3.16.44【首頁主標題改圖·index.html】原 .title-zh 是用 CSS 文字(M PLUS Rounded 1c)+ 彩虹漸層 background-clip:text + -webkit-text-stroke + 多層 drop-shadow 做的;其中 drop-shadow(0 6px 0 #fff) 與 drop-shadow(0 8px 0 rgba(0,0,0,0.25)) 這兩層「白+灰往下偏移」的假 3D,在花背景上看起來就像字底部一塊灰色沒填滿(老師回報「好醜」)。',
+      '★ v3.16.44【修法】① HTML:.title-zh 內的六個字「小英雄大對抗」改為 <img class="title-img" src="title-zh.webp">(POP 海報體已內建在圖中,含寶劍/皇冠/盾牌/星星裝飾)。② 內嵌 <style> 用 !important 把 .title-zh 的 font/漸層/background-clip/text-stroke/灰色 filter/titleRainbow 動畫全部關掉(沿用「不動 main.css」內嵌覆寫慣例,只保留 main.css 既有定位 margin-top)。③ 圖片改套新的 titleFloat 飄浮動畫(scale 1→1.02 + rotate ±0.5deg + translateY 0→-7px bob,4s 循環)+ 一道柔和 drop-shadow(非灰色硬邊)→ 保留飄浮動態、去掉灰影。副標題「力行小學生與來自異世界的小夥伴」維持文字不變。',
+      '★ v3.16.44【webp 鐵則】老師提供的 836×470 PNG(≈408KB)依鐵則轉成 webp(q90·≈77KB·小 81%·保留透明背景),命名 title-zh.webp。⚠ title-zh.webp 需老師上傳 repo 根目錄(與 index.html 同層),圖片用相對路徑 + ?v=v3.16.44 破快取。日後若換圖,改 index.html 內 ?v= 版本即可。',
+      '★ v3.16.44【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.44(hero_db.js 維持 v3.16.41、main.css 未動故 v3.15.79 不變、admin_panel.js 內容未動僅版號對齊)。本輪只改 index.html + game_changelog.js(+ 新增 title-zh.webp 圖檔由老師上傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.24)。',
+    ],
+  },
+  // v3.16.43 — 代表英雄跨帳號污染根治 + 接關搶關修正 + 代表英雄滿等改贈經驗書 + PC切帳號清單修正
+  {
+    ver: 'v3.16.43',
+    date: '2026-06-27',
+    brief: [
+      '🛡️【修正·共用平板】修正「代表英雄」在共用平板上被別的帳號污染的問題:之前 A 帳號設了代表英雄,換成 B 帳號(沒解鎖那隻)卻會看到它、甚至切回 A 後英雄/等級被改掉。現在代表英雄會牢牢綁定各自的帳號,換帳號不再互相影響。',
+      '⚔️【修正·接關】修正 BOSS 用連續爆發技把全隊一次打倒時,接關視窗剛跳出來就被「戰鬥結束」搶走、來不及按接關的問題。現在一定會等你自己按下「接關」或「放棄」,才會真正結束戰鬥。',
+      '📚【新功能·代表英雄滿等獎勵】代表英雄練到 Lv50 滿等後,每日簽到不再浪費:會改送你「豪華典藏版經驗之書 ×1」(可用在其他英雄);如果這本書已經拿滿 99 本,則改送 5000 知識幣,並會跳出視窗清楚告訴你。',
+      '💻【修正·電腦安裝版】修正電腦安裝版切換帳號時,已經加入過的帳號只顯示一個、其他不見了的問題。現在加入過的帳號都會留在清單裡,可以直接點選切換。',
+    ],
+    items: [
+      '★ v3.16.43【代表英雄跨帳號污染·根因·index.html】記憶體有兩個代表英雄變數:本 block 內 local _myRepHero(被 _loadRepHeroBar 讀)與 window._myRepHero(被即時雲端監聽/每日簽到讀),長期不同步;換帳號清理 _clearAccountLocalData 從不清這兩個變數,也不取消待寫雲端的防抖 → 前帳號殘留的代表英雄被下一個帳號 autosave(_refreshMyRepHeroCloud)以新帳號等級寫進新帳號雲端 → 永久污染(A 巫女 Lv50 → B 沒解鎖卻看到巫女 → 切回 A 變祭司)。',
+      '★ v3.16.43【代表英雄·修法·五處】① 新增 window._clearRepHeroLocal / window._applyRepHeroFromCloud helper(本 block 定義,可同時改 local+window+畫面並取消防抖);② _clearAccountLocalData 換帳號時呼叫 _clearRepHeroLocal();③ _refreshMyRepHeroCloud 寫雲端前用 advGetUnlockedHeroes() 驗證該英雄屬本帳號,殘留則中止寫入並清除(_own.length 守門防早載入誤判);④ 即時雲端監聽改走 _applyRepHeroFromCloud 並補 null 分支(切到無代表英雄帳號時清殘留);⑤ _loadRepHeroBar 顯示前驗證擁有權,非本帳號擁有則回復「設定代表英雄」。借用好友代表英雄仍讀好友快照(等級/素質投資/技能投資/至寶),不受影響。',
+      '★ v3.16.43【接關搶關·根因】王多段爆發約 6 秒才呼叫 checkWin,我方全滅 watchdog 先觸發 → 第一次 _showResultWithDrama(false) 已正確彈出接關 modal(#adv-continue-overlay);但爆發段落跑完後第二次 _showResultWithDrama(false) 被 60 秒去重守門擋下 → 走「結算 modal 救援」,而救援與 5 秒 watchdog 的 overlay 清單沒納入 adv-continue-overlay → 誤判「無結算 modal」→ 強制 advShowBattleResult(false) → 關掉接關 modal 直接判敗。',
+      '★ v3.16.43【接關搶關·修法·四處·index.html】① _showResultWithDrama 入口(worldboss 守門後)加主守門:接關 modal 顯示中且為敗北結算一律 return,等玩家按接關/放棄;② 救援 _checkOvIds 與 ③ 5 秒 watchdog _ids 都補進 adv-continue-overlay(雙保險);④ advShowBattleResult 入口加最終安全網(同款守門)。安全性:advGiveUp(玩家按放棄)會先 remove(show) 接關 overlay 再呼叫 → 正常敗北不被擋;接關次數用盡時不顯示接關 overlay → 正常敗北結算也不受影響。',
+      '★ v3.16.43【代表英雄滿等改贈·index.html】_checkDailyRepHeroBonus 的 Lv50 分支原本只標記已領就跳過(玩家空得)→ 改為:backpackAdd(hero_exp_book_premium,1) 取實際新增數,>0 即贈一本豪華典藏版經驗之書;=0(背包已滿 99)改 addKnowledgeCoins(5000)。新增 window._showRepHeroMaxLvGiftModal 簽到後彈窗清楚告知(書/幣),並寫 _logActivity 供 GM 查證;仍標記 lastDailyRepHeroExp 防同日重複發。',
+      '★ v3.16.43【PC 切帳號清單只剩一個·robustification·index.html】最近帳號原本只在 onAuth 深層 _addRecentAccount 記錄一次。修法:① _doSignInFlow popup 成功 與 ② getRedirectResult 成功的最早一刻(profile 最完整、必有 email)即記錄;③ _addRecentAccount 對同 uid 做「欄位增補合併」,新值為空時保留舊紀錄的 email/暱稱/頭像,絕不用空值覆蓋;④ _getRecentAccounts filter 由「需 uid && email」放寬為「只需 uid」,避免暫時缺 email 的帳號被整筆丟掉。多點補強確保加入過的帳號都留在清單。',
+      '★ v3.16.43【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.43;hero_db.js 維持 v3.16.41、admin_panel.js 內容未動(本輪四修皆在 index.html,僅版號對齊)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.23)。',
+    ],
+  },
+  // v3.16.42 — BOSS 開場動畫音樂無縫接續進戰鬥(不再從頭播放)+ 新圖一律 webp
+  {
+    ver: 'v3.16.42',
+    date: '2026-06-27',
+    brief: [
+      '🎵【BOSS 開場動畫音樂接續修正】修正貓空 BOSS(九尾空貓怪／杏花妖／黑暗球‧希望型態)開場動畫的背景音樂,在進入戰鬥時又從頭重新播放一次的問題。現在動畫的音樂會直接、無縫地接續進戰鬥,不會再從頭播放。',
+    ],
+    items: [
+      '★ v3.16.42【BOSS 開場動畫 BGM 無縫接續·index.html】根因:BOSS 登場動畫(_playBossIntro)本就用 bgmFadeTo 先起該 BOSS 的戰鬥 BGM(原意就是無縫銜接進戰鬥),但進戰鬥時 advStartBattle 的 _playAdvBossBgm 開頭 bgmStop() + currentTime=0 + play() 會把動畫已經起好的「同一首」BGM 停掉再從頭播 → 聽起來像重頭播放一次。',
+      '★ v3.16.42【修法】_playAdvBossBgm 開頭加冪等守門:若「應播的這首 BGM(_curBgm===id)正在播放(el.paused 為 false)」→ 不 bgmStop、不 reset currentTime,只校正音量並掛好 onended 後 return → 從動畫無縫接續。iOS 自動播放被擋時 el.paused 為真 → 不符守門 → 照常 bgmStop 重起(無回歸)。只改 index.html 1 處。',
+      '★ v3.16.42【新圖一律 webp·鐵則】老師裁示:之後新增任何圖片一律改用 webp 格式(檔案更小、新版平板下載更快)。本輪先把上一版新增的「御雲使‧沐雲雪」立繪圖檔由 .png 改 .webp(hero_db.js HERO_IMGS)。⚠ 圖檔 御雲使_沐雲雪.webp 需老師另外上傳 repo。',
+      '★ v3.16.42【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.42;hero_db.js 維持 v3.16.41(本輪未改邏輯,僅沐雲雪圖檔副檔名 .png→.webp)。本輪改 index.html + hero_db.js + game_changelog.js + admin_panel.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.22)。',
+    ],
+  },
+  // v3.16.41 — 新英雄上線:御雲使‧沐雲雪(5年3班 黃稚善設計)
+  {
+    ver: 'v3.16.41',
+    date: '2026-06-27',
+    brief: [
+      '☁️【新英雄上線·御雲使‧沐雲雪】新增學生設計英雄「御雲使‧沐雲雪」(5 年 3 班 黃稚善同學設計)!從天空誕生、總是睡眼惺忪的御雲精靈,SSR,定位 💚回復 + 🛡️控場——本身很脆,但能為全隊撐起雲霧屏障,還能把夥伴的力量再發揮一次。',
+      '☁️【天賦·雲霧飄渺】只要沐雲雪在場上,全隊被雲霧繚繞、迴避率 +15%(隨天賦升級最高 +60%);她一旦倒下,雲霧就會消散。',
+      '💤【S1·浮雲入夢】指定 1 名「已倒下」的隊友,立刻讓他施展一次屬於自己的極限爆發(沿用該隊友的爆發效果與等級,但不會復活他);每名隊友整場限喚醒 1 次,技能升到滿級可喚醒 2 次。',
+      '☁️【S2·軟軟的雲(被動)】身體像雲一樣柔軟,受到傷害時(極限爆發傷害除外)有 35% 機率把這次傷害的 200% 彈回給攻擊者,每回合最多 2 次(機率隨技能升級最高 80%)。',
+      '🌈【極限爆發·霞蔚雲蒸】全隊(含已倒下的隊友)恢復最大 HP 的 50% 並可復活(隨爆發升級最高 90%);接著由你「指定 1 名友方」立刻施展一次他自己的極限爆發!',
+      'ℹ️【取得方式】和其他 SSR 英雄一樣,可透過召喚、打 BOSS、知識王成績等機會獲得。',
+    ],
+    items: [
+      '★ v3.16.41【新增學生設計英雄·御雲使‧沐雲雪(5年3班 黃稚善)】SSR·💚回復+🛡️控場。配點 hp55×1.3=72/atk3/sp20/spd22(總和 100·鐵律1.30)。資料層 hero_db.js 14 表 + 邏輯層 index.html 全套(設計單 31 個 AI 決定欄位依老師「全照做」實作)。',
+      '★ v3.16.41【天賦 雲霧飄渺】沐雲雪存活時友方全體迴避 +15%(+5%/天賦級·Lv10=60%),doDmg 迴避計算 hook 仿風術士天賦光環(必中/爆發/反彈不受影響·倒下即失效·鐵律1.160 圖鑑只寫 Lv1 base)。',
+      "★ v3.16.41【S1 浮雲入夢(c8)】execSkill+aiUseSkill 雙路徑(鐵律1.128):setPending('ally_dead') 指定倒下隊友 → 走引擎 _runBurst 施展其自身爆發(仿菇女「極限菇」·不上暈眩·不復活)。每名隊友 _muyunDreamUsed 限喚醒 1 次·s1 Lv10=2 次;無合法目標退還能量;被喚發友方爆發以 _interrupted 收尾。",
+      '★ v3.16.41【S2 軟軟的雲(c0 被動)】doDmg 扣 HP 後 hook(才符「受到傷害時」·避免被自身迴避光環誤觸):受傷(排除爆發傷害 _burstCastActive/治療/反彈/DoT)35%+技能級×5%(Lv10=80%)反彈該次傷害 ×200% 給攻擊者·每回合 ≤2 次(_softCloudRoundUsed·startTurn 重置)。反彈走 doDmg(isRebound·無 bypassShield)→ 龍王護盾+5000cap 仍生效(鐵律1.31)。',
+      "★ v3.16.41【爆發 霞蔚雲蒸】_runBurst 分支:全體隊友(含倒下者)回復最大 HP 50%+10%/burstLv(Lv4 MAX=90%·doRevive/doHeal)→ setPending('ally') 指定 1 友方立即施展其自身爆發(乙:玩家手動點選 + 5 秒 watchdog 自動挑攻/特最高防卡)。本體 execBurst 已 acted,故分支 return,收尾交被喚發友方 _runBurst。",
+      '★ v3.16.41【UI/註冊/版本】SKILL_UPGRADE_DEF(浮雲入夢 special_yunmeng 可升級 + 軟軟的雲 pct_buff)+ codex case special_yunmeng + BURST_UPGRADE_DEF(霞蔚雲蒸 5 列治療 50→90%)+ SUMMON_RARE_HEROES + STUDENT_DESIGNER_HEROES(lsps110188·自動套 _STUDENT_DESIGNED_HERO_SET→圖鑑🎨)。BURST_GIF 霞蔚雲蒸=大強化.gif + 神聖治療音效(sfx-goddess/sfx-heal·dur910)。五點版本同步 + hero_db.js → v3.16.41。本輪改 index.html + hero_db.js + game_changelog.js。⚠ 圖檔 御雲使_沐雲雪.webp(★ 新圖一律 webp 格式·新版平板下載更快)需老師另外上傳 repo;hero_input.html 離線編輯器另上傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.21)。',
+    ],
+  },
   // v3.16.40 — 修正 iPad 切到背景/滑掉後遊戲背景音樂沒停止
   {
     ver: 'v3.16.40',
@@ -234,75 +317,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.26【判定改回·_advHasGenuineUnlock】推翻 v3.16.19「投資證據版」:於 admin_delete 檢查之後、其餘判定之前加回「等級>1 → 一律保留」分支(讀全域 _heroLevels),練過的英雄一律視為擁有(覆蓋「別人 uid 紀錄」判定,唯一例外是老師明確刪除 admin_delete);另修正自有解鎖紀錄 uid 比對改 slice(0,12)(舊紀錄若存完整 28 字 uid 也能正確認領,避免自己的紀錄被誤判成別人的)。改完 orchestrator 只會回收「等級 1 且無任何解鎖證據」的純污染。',
       '★ v3.16.26【自動補回·_fbRestoreLeveledAuditRecovered + _lxpsRestoreLeveledOnLogin】登入後一次性:讀雲端 _auditRecoveredLevels(v3.16.19 回收時暫存的原等級),只把「暫存等級>1(練過)」的英雄加回 unlockedHeroes + 還原等級(只升不降)+ 補一筆合法紀錄 audit_auto_restored(蓋過 audit_error_recovered → 不再被出口過濾隱藏);沒練過(等級 1)的暫存維持回收=正確清掉的污染。雲端旗標 _auditLeveledRestoreV1 + 本機旗標雙重防重跑;刻意不寫 _authoritativeRestoreAt(不觸發重載)、改記憶體/本機同步即時顯示;排程在 Lv1 污染回收(orchestrator)之前。',
       '★ v3.16.26【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.26(hero_db.js 維持 v3.16.22·本輪未動)。本輪改 index.html + game_changelog.js(sw.js 圖片修正 v3.5.89 隨 v3.16.25 一併上傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.5)。',
-    ],
-  },
-  // v3.16.25 — 修正 iPad 安裝版 R 卡(及多數英雄)圖片讀不到:資源圖快取根治(SW 改 CORS·只快取確認 200·清中毒快取)
-  {
-    ver: 'v3.16.25',
-    date: '2026-06-26',
-    brief: [
-      '🛠️【緊急修正·圖片】iPad 安裝版上,除了少數幾隻(主角小力／機關王／田徑隊／直笛團／籃球隊)以外,英雄圖片大量讀不到、變成破圖的問題已修正。重開遊戲後會自動重抓正確圖片(第一次可能稍慢,之後恢復正常)。',
-    ],
-    items: [
-      '★ v3.16.25【根因】Service Worker(sw.js v3.5.88)抓圖失敗時,fallback 用 no-cors 方式抓 → 回應是 opaque(讀不到狀態碼),程式卻把它當成功圖片快取下來。當共用網路同 IP 多人同時撞 GitHub raw 被限流(429)、或 CDN 回 403 等錯誤時,那個壞掉的錯誤回應被永久快取 → 該英雄圖從此破圖。只有最早最常載入的主角／機關王／初始三隊在被限流前就先把正確圖快取住,所以只有那幾隻正常。',
-      '★ v3.16.25【修法·sw.js v3.5.89】① 抓圖 fallback 全改 CORS(讀得到狀態碼),只快取確認 200 的回應,任何錯誤(403／429／404)一律不快取 → 根治破圖中毒。② 來源四重備援:raw webp → jsDelivr webp → raw png → jsDelivr png 依序試到出圖。③ cacheFirstAsset 改雙 key 查詢(webp 未命中再查 png),預載的圖也能被新機命中。④ 預載(precache)路徑同步去除同一 opaque bug、改 CORS。',
-      '★ v3.16.25【清中毒】圖片快取庫 ASSET_CACHE 一次性 v1→v2,把先前被當成功存進去的破圖快取整批清掉(這是「ASSET_CACHE 永不改」鐵則的單次例外);每台裝置改完後下次只會重抓用到的圖一次,之後不再重抓。',
-      '★ v3.16.25【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.25(hero_db.js 維持 v3.16.22·本輪未動)。本輪改 sw.js + index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.4)。',
-    ],
-  },
-  // v3.16.24 — 修正「老師更新了你的帳號資料,正在重新載入」無限重載卡死(權威 restore 基線持久化+斷路器)
-  {
-    ver: 'v3.16.24',
-    date: '2026-06-25',
-    brief: [
-      '🛠️【緊急修正·卡死】部分帳號(尤其電腦安裝版)開啟遊戲後,畫面不斷跳出「🎁 老師更新了你的帳號資料,正在重新載入以套用最新進度…」一直重開、卡死進不去的問題已修正。現在最多自動重整一次套用最新進度,就能正常進入遊戲。',
-    ],
-    items: [
-      '★ v3.16.24【根因】v3.16.5「權威 restore 保護」的重載機制(_checkSnapData)會比較「雲端主檔 _authoritativeRestoreAt」>「本 session 載入時的基線 _mySessionRestoreSeen」來決定是否重載套用老師的最新操作;但基線只在 _applySafeData 從 data._authoritativeRestoreAt 設定於「記憶體」(一重載就消失),而某些載入路徑的 data 未可靠帶到此欄 → 基線=0 → 每次載入都 _cloudRA>0 觸發重載,且既有守門 _authoritativeReloadTriggered 一重載就重置、跨重載無效 → 無限重載。',
-      '★ v3.16.24【修法·雙保險】① 持久基線:_onAuthoritativeRestore 重載前把已處理的 restoreAt 寫進 localStorage(_lxpsAuthRestoreSeen·已全域命名空間化自動綁 @@uid·跨重載與關閉皆保存);_checkSnapData 計算基線時折入 max(記憶體值, localStorage 持久值)→ 同一個 restoreAt 處理過後不再重載(老師之後若有更新=更大的 restoreAt 仍會觸發一次,權威保護完全不變)。② 分頁斷路器:同一分頁同帳號(sessionStorage _lxpsAuthReloadCnt_<uid>)權威重載達 3 次後一律不再重載(硬性防呆任何殘留迴圈,寧可請玩家手動重整也不卡死)。兩者皆只會減少重載,絕不影響權威保護或存檔安全。',
-      '★ v3.16.24【版本/範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] → v3.16.24(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.3)。',
-    ],
-  },
-  // v3.16.23 — 修正 iPad「英雄來源自我審查」底部關閉/確認按鈕點不到卡死(overlay 佈局改 flex)
-  {
-    ver: 'v3.16.23',
-    date: '2026-06-25',
-    brief: [
-      '🛠️【修正·iPad／平板】點開「🔍 英雄來源自我審查」後,下方的「關閉」與「✅ 確認並封存」按鈕按不到、點了沒反應、整個卡住的問題已修正。現在這兩個按鈕固定在畫面最底端、一定點得到,中間的英雄清單可以正常上下捲動。',
-    ],
-    items: [
-      '★ v3.16.23【根因】_openAccountAudit 的全螢幕 overlay(#_audit-ov)本身設了 overflow-y:auto(自己就是滾動容器),底部按鈕列 #_au-bar 卻用 position:fixed;bottom:0 且是它的子元素 → 在 iOS Safari／iPadOS「position:fixed 元素位於 overflow:auto 祖先內」會觸發命中測試(hit-test)失效,或把 fixed 定位算到「滾動內容底端」而非視窗底端,導致按鈕點不到、或滾到底也碰不到。',
-      '★ v3.16.23【修法】#_audit-ov 由 overflow-y:auto+padding-bottom:96px 改為 display:flex;flex-direction:column(自身不再滾動);內容改包進新增的 #_au-scroll(flex:1 1 auto·overflow-y:auto·-webkit-overflow-scrolling:touch 負責捲動);#_au-bar 由 position:fixed;bottom:0 改為 flex:0 0 auto(正常流·永遠貼在 flex 直欄底部=視窗底部·必可點);「關閉」與「確認並封存」鈕加 touch-action:manipulation。純佈局重構,所有事件 handler 與 #_au-cancel／#_au-submit／#_au-count／._au-act ID 全不變,零邏輯改動。',
-      '★ v3.16.23【版本／範圍】三點版本同步 _GAME_LOADED_VERSION + _vers[index.html／game_changelog.js] → v3.16.23(hero_db.js 維持 v3.16.22·本輪未動)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.2)。',
-    ],
-  },
-  // v3.16.22 — 英雄「小鬼貓與兔」改版:天賦惡作劇(對手用技能/爆發反噬能量消耗×50)+ S1/S2 第2擊
-  {
-    ver: 'v3.16.22',
-    date: '2026-06-25',
-    brief: [
-      '⚔️【英雄調整·小鬼貓與兔大改】① 天賦「惡作劇」全新效果:每當對手使用「技能或極限爆發」時,有 30% 機率反噬對手,造成「該招式能量消耗 ×50」的固定傷害(大招消耗越高、反噬越痛;極限爆發以滿能量計 → 反噬 500 點;對 BOSS 一樣有效並受傷害上限保護;觸發機率隨天賦升級提升)。',
-      '🐱【小鬼貓與兔 S1／S2 連擊】② S1「烈日貓抓」與 S2「月影兔咬」兩招都新增:有 30% 機率對「隨機目標」追加第 2 次相同屬性的傷害(機率隨技能升級提升)。原本的傷害、失明、中毒效果全部保留。',
-      'ℹ️【小提醒】天賦「惡作劇」只在對手「使用技能或大絕招」時才會觸發,對手普通攻擊不會觸發(這是和舊版最大的不同)。世界 BOSS 自己的招式不受此天賦影響。',
-    ],
-    items: [
-      '★ v3.16.22【天賦改版】小鬼貓與兔「惡作劇」由「對手普攻時反彈該次傷害(execAtk hook)」改為「對手使用技能/極限爆發時反噬固定傷害」:新增 top-level helper _kgMischiefOnSkill(actor,cost)→ 取 actor 對側存活的小鬼貓與兔逐隻擲 0.30+天賦級×0.05(Lv1=30%·Lv10=75%)→ 命中對 actor 造成 cost×50 固傷。掛載點同科學發明家「靈感」:execSkill 頂部(!sk.p 主動技·傳 a,cost)+ aiUseSkill 頂部(傳 a,cost)+ _runBurst 頂部(傳 h,10·爆發以滿能量條計)。doDmg 用 fixedDmg/mustHit/ignoreBuffs/ignoreEvasion/noGuard/noHidden/noCrit/noCounter(不暴擊·不受屬性·無視有利),不加 bypassShield → 龍王元素護盾與 5000 上限在固傷路徑仍生效(鐵律1.31)。execAtk 內舊「對手普攻反彈」hook 移除。',
-      '★ v3.16.22【S1/S2 第 2 擊】烈日貓抓/月影兔咬 execSkill(玩家)+ aiUseSkill(AI)雙路徑(鐵律1.128)各於主傷+附加狀態後新增:0.30+技能級×0.05 機率 → 對隨機 1 名存活敵方造成同 _kS1Dmg/_kS2Dmg、同屬性(light/dark)的純傷害(不附加狀態)。沿用既有 SKILL_UPGRADE_DEF{cat:dmg}(技能傷害 +5%/級照舊),第 2 擊機率同步隨技能等級 +5%/級。',
-      '★ v3.16.22【資料層 hero_db.js + 版本】HERO_DB s1/s2 d+fd 加「30% 第 2 擊」(鐵律1.160 圖鑑只寫 Lv1 base 30%)·HERO_TRAIT desc/fd 改寫(能量消耗×50)·_TRAIT_LV_INFO 改 base30%/+5%天賦級/max75%(Lv10)·HERO_LORE 更新。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/hero_db.js] → v3.16.22。⚠ 世界 BOSS 自身招式走 world-boss.js 專屬 AI(非 execSkill/aiUseSkill/_runBurst),故世界 BOSS 戰中 BOSS 出招不觸發此天賦(同靈感限制)。本輪改 index.html + hero_db.js + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.1)。',
-    ],
-  },
-  // v3.16.21 — 帳號救援審核不再把「初始 8 隻起始角色」誤列查無紀錄(永久免審查)
-  {
-    ver: 'v3.16.21',
-    date: '2026-06-25',
-    adminOnly: true,
-    brief: [
-      '🛠️【老師後台修正·一般玩家無感】「帳號救援申請審核」以前會把每位同學一定都有的「初始 8 隻起始角色」(電腦繪圖師/程式設計師/弦樂團員/小劇團員/田徑隊員/直笛團員/籃球隊員/動物學家)誤標成「帳本查無紀錄·需人工確認」。其實這 8 隻是建立帳號時就贈送的基底角色,本來就沒有抽取/解鎖紀錄,屬於正常 → 現在不再列入審查清單,也不會被當成可疑角色。',
-    ],
-    items: [
-      '★ v3.16.21【根因】GM「📨 帳號救援申請審核」按「🔍 核對並準備救援」會跑 window._fbRebuildAccountFromLedgers(uid),其幻影偵測迴圈把「現有 unlockedHeroes 中、帳本查無解鎖紀錄」者收進 _extraNoRecord(diff.extraNoRecordHeroes)供老師人工審核。初始 8 隻起始角色(_ARENA_INITIAL_HEROES)是帳號建立即贈、從不經召喚/解鎖寫帳本 → 每個帳號都會把這 8 隻誤列「查無紀錄」。',
-      '★ v3.16.21【修法】_extraNoRecord 計算迴圈在 admin_delete / no-record 判定前加一道 (window._ARENA_INITIAL_HEROES||[]).indexOf(n)>=0 → return 排除:初始 8 隻永久免審查、既不列「查無紀錄」、也不會被當幻影移除(_extraDeleted)。與玩家端自助審查 _rareSrcCat 旁「initial 非 pollution」判定(v3.13.52)同口徑對齊。只動 _extraNoRecord 收集邏輯,缺漏英雄/至寶/水晶/幣 反推全不變,零回歸風險。',
-      '★ v3.16.21【版本/範圍】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.21;本輪只改 index.html + game_changelog.js(admin_panel.js 維持 v3.16.19·無需改:救援卡只讀 diff.extraNoRecordHeroes 渲染·源頭排除即不再顯示這 8 隻)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.0)。',
     ],
   },
 ];
