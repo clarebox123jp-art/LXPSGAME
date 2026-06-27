@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-27  / 目前主程式版本:v3.16.39(修正 iPad 答題獎勵寵物裝備後小怪戰卡死)
+//  最後更新:2026-06-27  / 目前主程式版本:v3.16.40(修正 iPad 切到背景/滑掉後遊戲背景音樂沒停止)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.40 — 修正 iPad 切到背景/滑掉後遊戲背景音樂沒停止
+  {
+    ver: 'v3.16.40',
+    date: '2026-06-27',
+    brief: [
+      '🔇【修正背景音樂關不掉】修正在 iPad 上把遊戲切到背景、滑掉、或鎖屏後,遊戲的背景音樂仍持續播放、關不掉的問題。現在切到背景會自動暫停音樂,回到遊戲再自動恢復。',
+    ],
+    items: [
+      '★ v3.16.40【修正背景 BGM 不停·index.html】根因:切到背景時用來暫停音樂的判斷,排除條件用「目前是否在全螢幕」——但遊戲啟動會自動進全螢幕,導致「人在全螢幕時真正切到背景/鎖屏」也被誤判成全螢幕切換而跳過暫停 → 音樂在背景一直播、關不掉。',
+      '★ v3.16.40【修法】改用「是否正處於全螢幕『切換瞬間』」的短暫旗標(由全螢幕請求與 fullscreenchange 設定·1.2 秒內有效)當排除條件:只略過全螢幕轉場那一下的假切換,真正切到背景(即使正全螢幕)一律暫停所有音訊;_requestFullscreenAll 在請求全螢幕前先設旗標(避免事件順序造成靜音);另加 pagehide(關閉/離開頁面)強制停止所有音訊作雙保險。',
+      '★ v3.16.40【範圍/版本】只改 index.html(visibilitychange 處理 + _requestFullscreenAll 兩處);admin_panel.js + game_changelog.js 僅版本 bump 對齊。五點版本同步 → v3.16.40(hero_db.js 維持 v3.16.22)。本套含 v3.16.36~39,同一批上傳。',
+    ],
+  },
   // v3.16.39 — 修正 iPad 答題獎勵寵物裝備後小怪戰卡死
   {
     ver: 'v3.16.39',
@@ -290,22 +303,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.21【根因】GM「📨 帳號救援申請審核」按「🔍 核對並準備救援」會跑 window._fbRebuildAccountFromLedgers(uid),其幻影偵測迴圈把「現有 unlockedHeroes 中、帳本查無解鎖紀錄」者收進 _extraNoRecord(diff.extraNoRecordHeroes)供老師人工審核。初始 8 隻起始角色(_ARENA_INITIAL_HEROES)是帳號建立即贈、從不經召喚/解鎖寫帳本 → 每個帳號都會把這 8 隻誤列「查無紀錄」。',
       '★ v3.16.21【修法】_extraNoRecord 計算迴圈在 admin_delete / no-record 判定前加一道 (window._ARENA_INITIAL_HEROES||[]).indexOf(n)>=0 → return 排除:初始 8 隻永久免審查、既不列「查無紀錄」、也不會被當幻影移除(_extraDeleted)。與玩家端自助審查 _rareSrcCat 旁「initial 非 pollution」判定(v3.13.52)同口徑對齊。只動 _extraNoRecord 收集邏輯,缺漏英雄/至寶/水晶/幣 反推全不變,零回歸風險。',
       '★ v3.16.21【版本/範圍】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.21;本輪只改 index.html + game_changelog.js(admin_panel.js 維持 v3.16.19·無需改:救援卡只讀 diff.extraNoRecordHeroes 渲染·源頭排除即不再顯示這 8 隻)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.0)。',
-    ],
-  },
-  // v3.16.20 — 取消啟動強制練習營 + 取消每次問設定二段密碼 + 二段密碼設定移到會員 hub
-  {
-    ver: 'v3.16.20',
-    date: '2026-06-25',
-    brief: [
-      '🎒【取消「課堂練習營」開場強制彈出】登入遊戲時不再自動跳出全螢幕的「課堂練習營」答題視窗,會直接進入遊戲。',
-      '🔐【不再每次詢問要不要設定第二段密碼】以前每次登入都會問「要不要設定第二段密碼」,現在取消這個提醒了。想保護帳號的人,改到關卡頁下方「📨 會員帳號與救援申請」→「🔐 二段密碼設置」自己設定即可。',
-      '🔑【已經設過密碼的帳號不受影響】如果你之前已經設定過第二段密碼,登入時仍然會照常跳出「請輸入第二段密碼」,保護不變。',
-    ],
-    items: [
-      '★ v3.16.20【取消啟動練習營】window._CAMP_ENABLED 預設值由 true 改 false → _campStart(user) 入口的 if(!window._CAMP_ENABLED) return 直接早退;onAuth 仍會呼叫但不再蓋上覆蓋層。練習營全部程式碼保留(零刪除),GM 需要時可手動 window._CAMP_ENABLED=true 重啟。',
-      '★ v3.16.20【取消每次問設定二段密碼】_lxpsRunSecondPwGate 讀 _fbGetMyPwState:已設密碼(sp.hash)→ 維持 _showVerifyForm 彈出輸入(不變);未設密碼分支由原本 _showSetupPrompt(_finish)「詢問是否設定」改為直接 _finish()(設 sessionStorage 通過旗標 + resolve 放行進遊戲),不再彈設定提示。',
-      '★ v3.16.20【二段密碼設定入口移到會員 hub】_openMemberAccountHub 在「✏️ 編輯會員資料」鈕下方新增「🔐 二段密碼設置」鈕(_mh-pw)→ onclick 呼叫既有 window._lxpsOpenSecondPwSetup(未設密碼直接開設定表單·已設密碼先驗證舊密碼再改)。後端 _fbSetMyPw/_fbVerifyMyPw/_fbGetMyPwState 與設定·驗證 UI 全部沿用,零後端改動。',
-      '★ v3.16.20【版本/範圍】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.20;本輪只改 index.html + game_changelog.js(admin_panel.js 維持 v3.16.19·world-boss*/hero_db/arena/sw 等皆未動)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.15.99)。',
     ],
   },
 ];
