@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-26  / 目前主程式版本:v3.16.32(後台:救援/錯誤回報即時提醒+悅耳音效 + GM 信任裝置免閒置登出 + GM 一鍵解鎖全部至寶;另清理閒置區過時註解)
+//  最後更新:2026-06-27  / 目前主程式版本:v3.16.33(帳號污染源頭根治:四欄成長表 _s 接齊 + 系統默認審查孤兒剔除·全 UID 把關 + GM 救援/回報提示音改 mp3)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.33 — 帳號污染源頭根治(四欄 _s 接齊 + 系統默認審查孤兒剔除·全 UID 把關) + GM 救援/回報提示音改 mp3
+  {
+    ver: 'v3.16.33',
+    date: '2026-06-27',
+    brief: [
+      '🛡️【存檔保護再強化·玩家無感·只增不減】從源頭再堵住一類可能讓「已經不屬於你的角色」殘留在雲端存檔的情況(英雄的經驗值、剩餘能力點、極限爆發等級、天賦等級四項),並在每次登入時自動清掉這類殘留鍵。你的英雄、等級、至寶、知識幣、進度完全不受影響。',
+      '🔔【後台·老師端】老師收到「帳號救援申請/錯誤回報」時的提示音,改成新的提示音檔。玩法無感。',
+    ],
+    items: [
+      '★ v3.16.33【污染源頭根治·四欄 _s 接齊·index.html】heroExp/heroStatPoints/heroBurstLevels/heroTraitLevel 四個逐英雄成長表補字串版 _s(鏡像 heroLevels_s 既有模式):_buildSafeData 寫四個 _s + _applySafeData 載入優先採信 _s + 三槽合併 _LXPS_PREFER_S 納入四欄 + 6 處 GM 清污染工具(刪英雄/收回/審查回收/學生自助移除/污染清除復原/完全重置)同步補 heroExp_s 與 heroTraitLevel_s。根因:這四欄原僅寫 map,Firebase merge:true 深合併「永不刪 map 子鍵」→ 英雄被收回/借用後雲端殘留幻影鍵,且正常遊玩每次存檔不會清(只有 GM 移除工具會整欄覆蓋)。接齊後從源頭免疫 merge 復活,與既有 heroLevels/heroStatInvested/heroSkillLevels 三欄一致。純加欄位(同 v3.16.4/v3.15.96 性質)。',
+      '★ v3.16.33【系統默認審查·孤兒剔除·index.html】新增 _lxpsPruneOrphanGrowthMaps:雲端載入成功後對四欄剔除「不在擁有清單的孤兒鍵」(擁有權威 = advGetUnlockedHeroes 聯集 adv_unlocked_heroes 聯集 初始8·與 v3.15.76 heroLevels 幻影判定同口徑);記憶體清完下次存檔 _s 寫回乾淨值 → 源頭與既有殘留雙清。多重 UID 安全閘(任一不過整個跳過·寧可不剔也不誤刪):① window._gUserId 為空跳過 ② 擁有集合<8 跳過(空殼保險) ③ 待剔比例>40% 跳過(疑似載入異常·保留全部交 GM·印警告)。只剔孤兒鍵·絕不刪英雄·不動 unlockedHeroes 與 heroLevels。',
+      '★ v3.16.33【提示音改 mp3·index.html】GM「收到救援申請/錯誤回報」提示音由 Web Audio 合成琶音改播老師指定 mp3(收到救援申請.mp3·新增 audio 元素 sfx-rescue-chime);_lxpsPlayRescueChime 改先播音檔、被擋/載入失敗時 fallback 回原合成音(_lxpsPlayRescueChimeSynth·雙保險不影響徽章)。',
+      '★ v3.16.33【GM 選單退役·admin_panel.js】污染源頭根治後,退役(隱藏不刪)GM「📢 污染檢查提醒」卡:其功能=提醒玩家自我檢查污染,但 v3.16.31 已停用強制登入自我審查、本版改登入後系統默認審查自動清孤兒鍵 → 此「提醒玩家自查」機制已被取代。沿用 v3.15.85 退役模式(移出 SIDEBAR_ITEMS + 群組·卡片/init/handler 全保留·日後可加回)。救援/復原類卡(汙染清查掃描/洗錢查緝/英雄誤刪救回/帳號救援申請/Lv1 救援/一鍵重建/完全重置)一律保留作安全網,供清理本版前已受影響帳號。',
+      '★ v3.16.33【範圍/版本/安全】四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.33(hero_db.js 維持 v3.16.22)。本輪改 index.html(四欄 _s+孤兒審查+音效)+ admin_panel.js(版本+退役污染檢查提醒卡)+ game_changelog.js。所有新增可儲存欄位(四欄 _s)皆綁 uid·走既有 self-write 規則,無需改 firestore.rules。存檔倒退守門未動;載入路徑只「加一道只剔孤兒不刪英雄的 UID 閘審查」。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.13)。',
+    ],
+  },
   // v3.16.32 — 審查失誤道歉 + 補償(全體玩家·限領一次)+ 後台:救援/錯誤回報即時提醒(悅耳音效)/GM 信任裝置免閒置登出/GM 一鍵解鎖全部至寶
   {
     ver: 'v3.16.32',
@@ -296,23 +312,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.14【五處修復】① advGetUnlockedHeroes 出口統一過濾無證據污染角色(上鎖·寫回 localStorage·出錯保守保留不誤刪)② _applySafeData phantom rescue「等級>1」加 genuine 守門(裝至寶仍放行)③ 封存全面停寫 migration_seal(_sealNames 恆空,移除污染源)④ 封存提醒停用 ⑤ 登入彈道歉公告(per-uid 一次性)。',
       '★ v3.16.14【不動原本存檔】只調整角色解鎖清單,完全不碰 heroLevels(等級)/至寶/知識幣/關卡進度;雲端靠載入過濾 + 存檔整包覆蓋逐漸清乾淨。誤傷僅限「v3.11.10 前解鎖、無解鎖紀錄、又沒裝至寶、純靠等級存在」的舊角色,可用 GM 後台個案補發救回。',
       '★ v3.16.14【版本】三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.14;本輪僅改 index.html + game_changelog.js;hero_db.js(v3.15.90)/sw.js/sw-light.js/main.css 等未動。GAME_CHANGELOG 維持 20 筆。',
-    ],
-  },
-  // v3.16.13 — 素材全統一至單一倉(整併 Game 與舊倉'-') + 全資源壓縮優化 + SW webp-aware
-  {
-    ver: 'v3.16.13',
-    date: '2026-06-25',
-    brief: [
-      '🚀【啟動加速】遊戲圖片改用 WebP、背景音樂與動畫做了壓縮優化,啟動和登入更快、更省流量(畫質與音質幾乎沒有差別)。新款 iPad 會自動用更小的圖,舊款 iPad 照常顯示、不受影響。',
-      '🔧【素材整併】把原本分散在三個來源(主倉 + 另一帳號 + 一個舊倉)的圖片音效全部整合到單一倉庫,更穩定好維護、不再依賴外部帳號或舊倉。',
-      '🔔 十連抽的「敲鑼」音效因原檔遺失,改用主倉現有的「擎天爆閃」音效。',
-    ],
-    items: [
-      '★ v3.16.13【素材大搬家·三倉統一】原素材分散三處:主倉 clarebox123jp-art/LXPSGAME、同帳號舊倉 clarebox123jp-art/-(補搬 68 檔:26 圖+22 音樂+20 動畫)、第二帳號 ChrisRaelGameMaster/Game(37 檔:36 音效+1 圖,其中敲鑼遺失已替代)。全部搬入 LXPSGAME 單一倉;index.html 101 處 + hero_db.js 45 處 + main.css 7 處外部 URL 統一改為 raw.githubusercontent.com 指向 LXPSGAME/main(涵蓋 Game 的 raw/blob/jsDelivr 三式 + 舊倉 - 的 raw 兩式);兩 SW 的 CDN_REPOS 移除 - 與 Game、只留 LXPSGAME。不再依賴第二帳號或舊倉(避免失聯則素材 404)。',
-      '★ v3.16.13【遺失音效替代】敲鑼.mp3 三倉皆不存在 → 十連抽召喚之鐘 sfx-gong 改指向主倉現有「擎天爆閃音效.m4a」(連播三次漸弱的儀式感維持);播放邏輯未動,只換 src。',
-      '★ v3.16.13【資源壓縮·不改邏輯】全倉 PNG→WebP(q82·約 335 張)、BGM/音效降至 128kbps(約 136 個音檔)、高 fps GIF 降至 15fps(約 77 個);合計減少數百 MB 的新機傳輸量。皆為「未下載過的新機」優化,舊 iPad 與已快取裝置行為不變。WebP 為新增(原 PNG 保留作舊機 fallback),音樂/GIF 同檔名覆蓋。',
-      '★ v3.16.13【SW webp-aware】sw.js v3.5.88 + sw-light.js v3.11.3:支援的瀏覽器抓 .png 時自動改抓同名 .webp(Accept 含 image/webp)、舊 iPad 或 webp 不存在(404)自動退回原 .png;PWA icon 維持 png;cache key 改用實際抓取 URL。',
-      '★ v3.16.13【版本鏈】本輪改 index.html + hero_db.js + main.css + game_changelog.js + sw.js + sw-light.js 並上傳全部優化素材。三點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js] → v3.16.13;_vers[hero_db.js] → v3.15.90;sw.js v3.5.88、sw-light.js v3.11.3(不在 _vers);admin_panel.js(v3.16.10)/world-boss*/arena.js 未改。GAME_CHANGELOG 維持 20 筆。',
     ],
   },
 ];
