@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-27  / 目前主程式版本:v3.16.45(世界 BOSS 三修:龍王戰入口紫框壓縮 + 排行榜最高傷害把持續傷害歸給施術者 + 答題法寶確認視窗 z-index)
+//  最後更新:2026-06-27  / 目前主程式版本:v3.16.49(禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱:爆發回血40%→20%·吸血減半)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,35 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.49 — 禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱
+  {
+    ver: 'v3.16.49',
+    date: '2026-06-27',
+    brief: [
+      '🚫【禁療現在能封死所有回血了】「死亡宣告」等技能造成的「禁止恢復(不治詛咒)」與「治療減半」,以前只擋一部分治療,現在對「所有恢復 HP 的行動」(隊友治療、持續回血、吸血、天賦回血、復活…)全面生效——中了強力禁療就完全無法恢復 HP、也無法被復活;中了減療則所有回血量減半。',
+      '👹【日本 BOSS 酒吞童子變好打了】酒吞童子當關卡 BOSS 時,爆發技「鬼王酒宴」的自我回血由 40% 降為 20%、吸血效果減半,而且現在會乖乖受「禁療」限制——對牠用上禁療(例如暗法師的死亡宣告),牠就無法靠爆發回血變肉,讓禁療成為打酒吞 BOSS 的有效攻略。(你自己抽到/招募的酒吞童子維持原本的 40% 回血與滿額吸血,不受影響。)',
+    ],
+    items: [
+      '★ v3.16.49【中央禁療閘門·index.html】新增 _healCurseGate(target,amt):noheal_curse(不治詛咒/強力)→0、healReduced 普通×0.50/強力×0.25、受詛咒的神像 field→0;套用到 21 處原本繞過 doHeal 直接改 curHp 的「主動治療/復活」點(隊友治療多處、至寶 hpRegen 持續回血、寶箱怪/地獄將軍/玉藻前天賦回血、死靈法師「怨念化慈悲」與「死靈之力」復活設定型→中禁療時 curHp 夾 0 不復活)。',
+      '★ v3.16.49【復活也受減療·index.html】doRevive 原本只擋 noheal_curse(復活剩 1 HP),補上 healReduced:中減療時復活 HP 也減半(普通×0.50/強力×0.25,最低保 1),呼應「減療對所有恢復 HP 行動生效」。',
+      '★ v3.16.49【酒吞 BOSS 回血削弱·index.html】爆發「鬼王酒宴」自身回血原為「直接 h.curHp += 40%」完全繞過禁療(中死亡宣告禁療仍回 40% 的漏洞根因),改走 doHeal → 自動受不治詛咒/減療攔截;並依「冒險模式敵方 p2」判定 BOSS 版:自身回血 40%→20%、吸血 burstVamp _vampMult 1.0→0.5;玩家招募版(p1/鬥技場 p2)維持 40%/1.0。吸血本就走 doHeal,故中禁療時吸血也歸 0。',
+      '★ v3.16.49【刻意不套(防禦/免死非主動回血)】金鐘罩減傷補回、漩渦反擊迴避補回、武鬥家「鋼鐵意志」致命傷免死回血、各種「不倒(剩 1 HP)」、魔劍姬伊莉雅爆發 HP 翻倍、救醫馬/裝備的最大 HP 增益(curHp 跟漲),屬「受傷時的防禦/上限變動」非主動恢復行動,維持原狀不被禁療誤殺。',
+      '★ v3.16.49【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.49;hero_db.js 維持 v3.16.46。本輪只改 index.html(新增 1 helper + 22 處治療/復活點 + 酒吞爆發 3 改) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.29)。',
+    ],
+  },
+  // v3.16.48 — 答對題目後三個獎勵選項新增專屬行動音效
+  {
+    ver: 'v3.16.48',
+    date: '2026-06-27',
+    brief: [
+      '🔊【答對選獎勵有音效了】戰鬥中答對題目、選擇獎勵時,三個選項(✨ 立即使用 / 💡 存到「知識化為力量」 / ⚡ 轉換為 3 能量)現在各自會播放專屬音效,點起來更有回饋感。',
+    ],
+    items: [
+      '★ v3.16.48【三個獎勵選項音效·index.html】新增 3 個 <audio> 元素:sfx-reward-use(使用答題獎勵.mp3)／sfx-reward-keep(知識化為力量.mp3)／sfx-reward-energy(轉為能量.mp3),皆 preload="auto"、引 GitHub raw,接在偵探音效 sfx-detective-burst 之後。',
+      '★ v3.16.48【替換既有通用音(取代非疊加)·index.html】advRewardConfirmUse／advRewardConfirmKeep／advRewardConfirmToEnergy 三函式開頭原各播通用 UI 音(sfx-confirm 0.7／sfx-powerup 0.6),改播對應專屬音(音量 0.8);採「取代」避免專屬音與通用音同時響起。',
+      '★ v3.16.48【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.48;hero_db.js 維持 v3.16.46、world-boss.js v3.15.98、world-boss-ui.html v3.16.45、arena.js v3.15.69、main.css v3.15.79。本輪只改 index.html(3 audio + 3 函式各替換 1 行) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.28)。',
+    ],
+  },
   // v3.16.47 — 首頁標題圖再放大 75% + 上移避免擋住人物頭部 + 移除副標題
   {
     ver: 'v3.16.47',
@@ -290,39 +319,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.30【強制登入審查·雲端感知】_maybeShowAccountAuditOnLogin 改 async:先本機鐵證快篩(_advHasHardEvidence),完全乾淨者自動封存跳過;有疑似者再查雲端 _fbGetCloudUnlockHistory 逐隻核對自己 uid 紀錄——雲端有紀錄者一律封存不打擾、雲端讀取失敗則不強制不封存(5 秒重試最多 6 次),確實查無紀錄者才彈出審查。致歉文案改寫(共用 iPad 污染說明);「📨 會員帳號與救援申請」hub 新增「🔍 重新申請圖鑑審查」(每日一次·清完成旗標重開)。',
       '★ v3.16.30【GM 審核·老師端 admin_panel.js】「📨 帳號救援申請審核」卡偵測 claims.contestedHeroes → 摘要「🔺待審查英雄 N 隻」晶片 + 核對詳情列出 +「✅ 全部通過(正式解鎖)」「❌ 全部不通過(轉灰)」兩鈕:通過 → window._fbAdminApproveAuditHeroes(清 _auditPendingHeroes 解凍 + 寫 admin_grant 合法紀錄 + 蓋 _authoritativeRestoreAt 重載生效);不通過 → window._fbAdminRejectAuditHeroes(移出雲端 unlockedHeroes 轉灰 + 標 audit_error_recovered·可逆≠admin_delete·六補回路徑不復活);兩者皆標記救援申請已處理 + 通知玩家「GM已審查完畢,請重新整理,確認你的英雄圖鑑」。',
       '★ v3.16.30【範圍/版本】index.html(凍結基建 + 7 閘門 + 🔺標記 + 強制登入 + 致歉/重審入口 + 2 個 GM 後端)+ admin_panel.js(GM 通過/不通過卡)+ game_changelog.js 三檔;三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] + ADMIN_PANEL_VERSION/_vers[admin_panel.js] → v3.16.30(hero_db.js 維持 v3.16.22)。所有新增可儲存欄位(_auditPendingHeroes 等)皆綁 uid。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.9)。',
-    ],
-  },
-  // v3.16.29 — 英雄圖鑑自我審查改「視覺鎖·鐵證判定」:停用等級判定改鐵證·進圖鑑逐隻確認·這是我的核對雲端紀錄
-  {
-    ver: 'v3.16.29',
-    date: '2026-06-26',
-    brief: [
-      '🔍【英雄圖鑑自我審查升級】進入英雄圖鑑時,如果你帳號裡有「查不到取得來源」的英雄,會跳出一份「待審核圖鑑」,把這些英雄列出來讓你一隻一隻確認:是你自己抽到/解鎖/練過的就按「這是我的」(系統會立刻核對雲端紀錄,符合就解鎖、變回正常顏色);不是你的就按「不是我的」,離開時會把它鎖回未解鎖。每一隻都要選、全部選完才能離開。',
-      '✅ 有自己取得紀錄、投資過(加過素質點/技能/天賦/爆發)、裝過至寶、或是起始 8 隻角色的,都會自動通過、不會列出來,你只要確認真正可疑的那幾隻就好。',
-      '🛟 按「這是我的」但雲端查不到你的紀錄時,會幫你送老師查證(不會直接鎖掉);誤鎖了也可以到「📨 帳號救援申請 →🔓 我遺失的英雄要回來」請老師補回(等級會還原)。',
-    ],
-    items: [
-      '★ v3.16.29【停用等級判定·改鐵證】_openAccountAudit/_maybeShowAccountAuditOnLogin 不再用「等級/用過」判定英雄是不是你的(共用 iPad co-op 借用污染的英雄本來就帶等級·用等級判定會把污染當成你的)。改用「借用做不到的鐵證」(= _advHasHardEvidence):初始 8 隻 / 自己本機解鎖紀錄 / 投資過(素質點·技能·天賦·爆發) / 裝至寶。有鐵證=✅自動通過不列出;查無本機鐵證的持有英雄=待審核逐隻確認。',
-      '★ v3.16.29【視覺鎖·必勾才能離開】_openAccountAudit 重寫成逐隻 toggle:每張待審卡有「這是我的/不是我的」兩鈕(可自由切換·即時視覺回饋·不寫雲端),全部選完前底部「✅ 完成審查並離開」鈕停用(顯示還有 N 隻未確認)。離開時一次提交:不是我的→_fbStudentDisownHeroes 鎖回(移出雲端 unlockedHeroes·補 audit_error_recovered 守門紀錄·可逆·GM 一鍵復原·本機同步清養成防自癒復活);符合記錄→鏡像補回本機帳本(source=audit_verified·下次不再列入);無待審核→顯示「圖鑑審查通過」並標記完成。',
-      '★ v3.16.29【這是我的·核對雲端 uid】新增 window._fbGetCloudUnlockHistory(uid) 讀 players/{uid}._heroUnlockHistory;按「這是我的」即時核對雲端「自己 uid 真正解鎖紀錄」(排除 admin_delete/migration_seal/audit_error_recovered):符合→當作有鐵證·解鎖變正常色;不符→留在解鎖清單但送老師查證(_fbSubmitAccountRescueRequest·claims.contestedHeroes + meta.auditVerify=true·供後台篩選)。雲端帳本比共用 iPad 本機帳本不易被跨帳號污染·故當權威依據。',
-      '★ v3.16.29【範圍/版本】三點版本同步 → v3.16.29(hero_db.js 維持 v3.16.22·admin_panel.js 維持 v3.16.19)。本輪只改 index.html + game_changelog.js。後台「只顯示不符」篩選卡、至寶審查、GM 即時通知為後續輪次。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.8)。',
-    ],
-  },
-  // v3.16.28 — 停止系統「自動判定有證據=你的」(紀錄被跨帳號污染判定不準);改點進圖鑑自動彈出由玩家逐隻確認
-  {
-    ver: 'v3.16.28',
-    date: '2026-06-26',
-    brief: [
-      '🛑【重要調整·停止系統自動判定】系統原本會自動判斷「哪些英雄有證據、是你的」並據此自動保留或回收——但因為英雄的取得紀錄會跨帳號互相影響、判定幾乎都不準(可能把別人的當成你的留著、也可能把你紀錄遺失的真角色誤回收)。所以即日起停止這個自動判定與自動回收,改成完全交給最清楚的你來確認。',
-      '🔍【點進英雄圖鑑自動彈出確認】只要你帳號裡有「起始 8 隻角色以外」的英雄,點進英雄圖鑑時會自動跳出「英雄來源自我審查」,把這些角色列出來讓你逐一確認:是你自己抽到/打到/練過的就留著不要動(預設保留);不是你的(沒印象、從沒用過)就按「不是我的」+「✅ 確認移除」,立刻清掉、之後不會再跑回來。',
-      '🛟 起始的 8 隻角色一定是你的、不會列出來;誤移除可到「📨 帳號救援申請 →🔓 我遺失的英雄要回來」請老師補回(等級會還原)。',
-    ],
-    items: [
-      '★ v3.16.28【停用自動回收】_lxpsRecoverAuditErrorHeroes 協調器原本登入時逐隻用 _advHasGenuineUnlock(證據判定)把「無證據」者自動回收 → 因解鎖紀錄跨帳號污染,該判定會把污染當證據保留、把紀錄遺失的真角色當無證據誤回收。改為函式開頭直接 return 全面停用;清污染改全由學生自助確認。',
-      '★ v3.16.28【自我審查停用證據分類】_openAccountAudit 的 B1/B2 不再用 _advHasHardEvidence/_advHasGenuineUnlock 判定:B1(✅免處理·不顯示)只認「起始 8 隻 _ARENA_INITIAL_HEROES」(建帳號即贈·全帳號相同·不可能跨帳號污染);其餘持有英雄一律列入 B2「請確認是不是你的」(預設保留·勾「不是我的」才走 v3.16.27 _fbStudentDisownHeroes 當場移除+守門不復活)。綠色「已確認是你的」整區隱藏(只列預計刪除)。',
-      '★ v3.16.28【圖鑑開啟自動彈】_openHeroPage_doRender 末尾掛 _maybeShowAccountAuditOnLogin(延 350ms);彈出條件由「有查無硬證據英雄」改為「有起始 8 隻以外的英雄」(per-uid 一次性·擁有<8 或有其他彈窗自動重試)。登入後 4200ms 仍保留一次後援觸發。',
-      '★ v3.16.28【卡片提示校正】B2 卡片移除舊版「曾被移除/你沒有取得紀錄」誤導文字(現含有紀錄英雄·紀錄不可盡信);只在紀錄明確顯示別人 uid 時給輕量提醒,其餘交玩家辨認。',
-      '★ v3.16.28【版本/範圍】三點版本同步 → v3.16.28(hero_db.js 維持 v3.16.22)。本輪只改 index.html + game_changelog.js。_advHasGenuineUnlock/_advHasHardEvidence 仍保留定義但不再驅動任何自動保留/回收。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.7)。',
     ],
   },
 ];
