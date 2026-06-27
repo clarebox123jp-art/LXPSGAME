@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-27  / 目前主程式版本:v3.16.49(禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱:爆發回血40%→20%·吸血減半)
+//  最後更新:2026-06-27  / 目前主程式版本:v3.16.50(禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱:爆發回血40%→20%·吸血減半)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.50 — 新角色登場:魔術師(4年6班 張簡映澤·SSR)
+  {
+    ver: 'v3.16.50',
+    date: '2026-06-27',
+    brief: [
+      '🎩【新英雄登場！魔術師（SSR）】由 4 年 6 班 張簡映澤 設計的神秘魔術師加入小英雄行列！口頭禪「見證奇蹟的時刻，到了」，擅長幻術與逃脫術。天賦「障眼法」每回合有機率讓對手的被動技能失效（對手都沒有被動就改用暈眩）；S1「魔術閃光」造成傷害後隱身休息（免傷＋回血）；S2「表演魔術」讓全場敵人暈眩並從帽子裡變出物品卡；爆發「禁錮牢籠」把敵人關進無形牢籠 3 回合（無法行動、無法被治療、天賦與被動全部失效），對 BOSS 與玩家英雄則有一半機率掙脫但會受到強力反噬！',
+      '✨【召喚登場】魔術師為 SSR 稀有度，可在召喚星空抽到（🎩 禮帽為其代表標記），圖鑑可查看完整介紹與升級效果。'
+    ],
+    items: [
+      '★ v3.16.50【魔術師資料層·hero_db.js】HERO_DB(HP75/攻8/特22/速12·S1魔術閃光c4/S2表演魔術c5)/AVATARS(🎩)/HERO_IMGS/HERO_BIO(designer 4年6班張簡同學)/BURST_DB(禁錮牢籠)/HERO_TRAIT(障眼法)/HERO_LORE/BURST_GIF_DB(禁錮.gif+禁錮.mp3)/HERO_CATEGORIES/HEX/PRIMARY_CLASS(ctrl)/HERO_SKILL_EFFECTS 共 14 表;node --check 通過。',
+      '★ v3.16.50【新狀態 imprison/_passiveSeal·index.html】禁錮(無法行動+禁療+天賦/被動失效)+被動失效兩新狀態:BAD_STATUS/STATUS_DESCS/statusName(🔒/🎭)+5處控制清單+禁療判定(_healCurseGate/doHeal/doRevive)+天賦失效判定(_getTraitLv)全部接好。',
+      '★ v3.16.50【技能/爆發/天賦·index.html】爆發禁錮牢籠(_runBurst:imprison 3回合+消有利+強敵50%脫離受特技500%×爆發乘數反噬)+S1魔術閃光(當前HP20%上限Lv×20+隱身休息immune+回血)+S2表演魔術(全體暈眩對BOSS減半+drawItem加普通物品卡)+天賦障眼法(startTurn封被動/無被動則暈眩);execSkill+aiUseSkill雙路徑(鐵律1.128)。',
+      '★ v3.16.50【升級預覽+被動攔截·index.html】SKILL_UPGRADE_DEF(special_magic_flash/show)+codex case(S1回血%/S2加卡數逐級高亮)+BURST_UPGRADE_DEF(脫離反噬500→700%);被動失效/禁錮攔截 7 個被動(拘留者空間果實/武士迴避反擊/御雲使軟軟的雲/武鬥家金鐘罩/漩渦反擊/科學發明家靈感/偵探察覺蛛絲馬跡)。',
+      '★ v3.16.50【三池+音效+版本】SUMMON_RARE_HEROES+STUDENT_DESIGNER_HEROES(lsps111132)+sfx-imprison-burst(禁錮.mp3);四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.50。'
+    ],
+  },
   // v3.16.49 — 禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱
   {
     ver: 'v3.16.49',
@@ -303,22 +319,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.31【批次救回·index.html】新增 GM 後端 _fbAdminScanDisownedHeroes(掃全體玩家·帳本反推:某英雄「最近一筆解鎖紀錄=audit_error_recovered」且現不在 unlockedHeroes → 判為被 disown 待救回;已被救回者最近一筆=admin_grant 自動跳過 idempotent·GM 手動刪 admin_delete 排除)+ _fbAdminRestoreAllDisownedHeroes(逐一呼叫既有 _fbAdminRestoreLostHeroes:加回解鎖+還原 _auditRecoveredLevels 暫存原等級+寫 admin_grant 合法紀錄→不再被隱藏·GM 直寫繞守門·只增不減)。補既有「等級>1/裝至寶」掃描(_fbAdminScanDeletedHeroes)抓不到「等級被清掉」這批的缺口。',
       '★ v3.16.31【GM 介面·admin_panel.js】「🛟 英雄誤刪救回」卡新增子區「🔺 審查誤刪英雄批次救回」:🔍 掃描全體玩家(審查移除)→ 列出受影響玩家與英雄(顯示移除前暫存等級)→「🛟 救回這位玩家」或「🛟 全部一鍵救回」。無 ?. 相容舊 Safari。',
       '★ v3.16.31【安全/範圍】只做「止血(關彈窗)+ 把資料加回去」,完全不動存檔倒退守門、不動載入路徑(老師裁示:不可製造新災情)。至寶版圖鑑審查(凍結+閘門+🔺徽章+GM 通過/不通過)保留。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.31(hero_db.js 維持 v3.16.22)。所有新增可儲存欄位皆綁 uid。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.10)。',
-    ],
-  },
-  // v3.16.30 — 待審查凍結機制:圖鑑審查勾「這是我的」但雲端查不到取得紀錄的英雄先進「審查中」凍結,由老師通過/不通過
-  {
-    ver: 'v3.16.30',
-    date: '2026-06-26',
-    brief: [
-      '🔍【英雄圖鑑審查升級·交給老師確認】當你在圖鑑審查按「這是我的」、但雲端查不到你自己的取得紀錄時,這隻英雄不會直接被鎖掉,而是先進入「🔺審查中」狀態交給老師確認。審查中的英雄你可以照常出戰、裝備至寶,只是暫時不能升級、投資能力、提升技能或升級極限爆發(戰鬥中的極限爆發照常使用)。',
-      '✅ 老師確認「通過」→ 正式解鎖、變回正常顏色;若「不通過」→ 轉為灰色未收錄(可逆——之後你重抽/自選/冒險再次解鎖,就會自動正式解鎖)。老師審查完成後會通知你「請重新整理,確認你的英雄圖鑑」。',
-      '🛟 另外:登入時若帳號裡有「查不到來源」的英雄,會先做一次圖鑑審查(完全乾淨的帳號會自動跳過);你也可以隨時到「📨 會員帳號與救援申請」→「🔍 重新申請圖鑑審查」自己重新檢查(一天一次)。',
-    ],
-    items: [
-      '★ v3.16.30【待審查凍結·玩家端】圖鑑審查送出時,勾「這是我的」但與雲端 _heroUnlockHistory 不符的英雄 → 加入 players/{uid}._auditPendingHeroes(window._fbMarkAuditPending·arrayUnion)進入「🔺審查中」凍結:7 養成閘門(addHeroExp 靜默 return 0、investStat、upgradeSkill、upgradeBurst、三本經驗書)全擋下並提示「要等老師審查結束」,戰鬥極限爆發照常、可裝至寶;圖鑑一覽卡片左上加 🔺審查中徽章、詳情頁加紅框說明。',
-      '★ v3.16.30【強制登入審查·雲端感知】_maybeShowAccountAuditOnLogin 改 async:先本機鐵證快篩(_advHasHardEvidence),完全乾淨者自動封存跳過;有疑似者再查雲端 _fbGetCloudUnlockHistory 逐隻核對自己 uid 紀錄——雲端有紀錄者一律封存不打擾、雲端讀取失敗則不強制不封存(5 秒重試最多 6 次),確實查無紀錄者才彈出審查。致歉文案改寫(共用 iPad 污染說明);「📨 會員帳號與救援申請」hub 新增「🔍 重新申請圖鑑審查」(每日一次·清完成旗標重開)。',
-      '★ v3.16.30【GM 審核·老師端 admin_panel.js】「📨 帳號救援申請審核」卡偵測 claims.contestedHeroes → 摘要「🔺待審查英雄 N 隻」晶片 + 核對詳情列出 +「✅ 全部通過(正式解鎖)」「❌ 全部不通過(轉灰)」兩鈕:通過 → window._fbAdminApproveAuditHeroes(清 _auditPendingHeroes 解凍 + 寫 admin_grant 合法紀錄 + 蓋 _authoritativeRestoreAt 重載生效);不通過 → window._fbAdminRejectAuditHeroes(移出雲端 unlockedHeroes 轉灰 + 標 audit_error_recovered·可逆≠admin_delete·六補回路徑不復活);兩者皆標記救援申請已處理 + 通知玩家「GM已審查完畢,請重新整理,確認你的英雄圖鑑」。',
-      '★ v3.16.30【範圍/版本】index.html(凍結基建 + 7 閘門 + 🔺標記 + 強制登入 + 致歉/重審入口 + 2 個 GM 後端)+ admin_panel.js(GM 通過/不通過卡)+ game_changelog.js 三檔;三點 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js] + ADMIN_PANEL_VERSION/_vers[admin_panel.js] → v3.16.30(hero_db.js 維持 v3.16.22)。所有新增可儲存欄位(_auditPendingHeroes 等)皆綁 uid。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.9)。',
     ],
   },
 ];
