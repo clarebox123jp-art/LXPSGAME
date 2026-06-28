@@ -12,6 +12,24 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.51 — 平衡調整:HP素質只給玩家英雄版 + %治療不吃HP放大 + 暗法師加強 + 自動戰鬥AI更聰明
+  {
+    ver: 'v3.16.51',
+    date: '2026-06-28',
+    brief: [
+      '⚖️【平衡調整·HP素質更合理】英雄的「生命值(HP)」素質帶來的「減傷」與「受到治療量提升」效果,現在只對你的玩家英雄生效(包含你招募到的英雄版酒吞童子、玉藻前、大天狗、法老王、埃及豔后)。冒險關卡裡的敵方 BOSS、菁英、小怪即使是同名角色,也不再享有這兩項加成。攻擊、特技、速度三項素質對戰鬥的影響維持不變。',
+      '💧【治療計算更直覺】所有「按 HP 百分比回復」的治療(例如「回復最大 HP 的 30%」),不再被 HP 素質額外放大——百分比治療就是實打實的百分比,不會再因為堆高 HP 而暴漲。(治療技能、至寶等「提升治療量」的效果仍然有效。)',
+      '🌑【暗法師加強】暗法師的 S1「死亡宣告」能量消耗從 5 降到 4,更容易施放!爆發技「毀滅禁咒」傷害不變,但現在保證附加「強力封印」+「強力禁療」2 回合(把爆發練到滿級可達 3 回合),讓敵人既不能用技能、也無法被治療!',
+      '🤖【自動戰鬥更聰明】開啟自動戰鬥時:只有「天賦會在普通攻擊時觸發效果」的英雄才會去普攻(例如法師、祭司、神偷等),其他英雄不再浪費回合做微弱的普攻,改成賣出高價物品蓄積能量、優先施放爆發或技能。主治療類型的英雄,只要有隊友倒下或血量偏低,就會優先進行復活/治療!'
+    ],
+    items: [
+      '★ v3.16.51【HP素質範圍·index.html】新增 _isBossVerStat(t)(世界BOSS龍王 || p2側且 _adventureMode)→ SITE5 受傷減免(L≈39638)+SITE1 受治療放大(L≈41819)的 _isPlayerHero 閘各加 && !_isBossVerStat;競技場/PVP 的 p2 非冒險回 false → 英雄版酒吞/玉藻前/大天狗/法老王/豔后保留 HP 加成。atk/特技/速度三素質公式完全未動(BOSS/菁英/小怪/玩家一致·無上限)。',
+      '★ v3.16.51【%治療不吃HP放大·index.html】doHeal 新增 opts.isPctHeal;SITE1 受治療放大閘加 && !opts.isPctHeal;13 處「按目標最大HP百分比」的 doHeal 呼叫點補 isPctHeal:true。至寶 healReceived/草龍王 healRamp/healReduced 等「技能效果」仍生效;回滿血(t.hp-t.curHp / 滿血菇 / 賢者之石)因已夾 maxHP 為 no-op 不標。',
+      '★ v3.16.51【暗法師·hero_db.js+index.html】S1死亡宣告 c:5→c:4(hero_db.js);爆發毀滅禁咒(index.html L≈31539)傷害不變,per-enemy 由「機率封印1回合」改「保證 addStatus seal+noheal_curse·皆 _strong:true·dur=2+_lv5Extra(_burstLv>=4→3回合)」。',
+      '★ v3.16.51【自動戰鬥AI·index.html】_realAiAct:(1)優先3普攻只在 a.side==p1 且 HERO_TRAIT desc/fd 含「普通攻擊」時執行(否則略過·改賣最高價非裝備/非治療/非復活物品蓄能·無可賣才休息);(2)isHealer 併入 HERO_PRIMARY_CLASS[a.name]==heal → 主治療型套用治療門檻優先治療/復活。敵方 p2 AI 維持原行為不動 BOSS 平衡。',
+      '★ v3.16.51【驗證/版本】index.html 20 個 inline script node --check 全過·0 lone surrogate;hero_db.js/admin_panel.js node --check 過。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.51。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.31)。'
+    ],
+  },
   // v3.16.50 — 新角色登場:魔術師(4年6班 張簡映澤·SSR)
   {
     ver: 'v3.16.50',
@@ -303,22 +321,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.32【GM 至寶全解鎖·index.html】新增 window._lxpsGmUnlockAllTreasures:迭代 TAIWAN_TREASURES 主表(自動涵蓋台灣 10 + 8 龍王 + 未來新增)·排除日本三神器(_isJapanTreasureKey)·只增不減補缺(已擁有等級/裝備不動)·寫 gm_auto_unlock 解鎖紀錄·同步 window ref + localStorage + gameCloudSave;onAuth 等雲端就緒(_waitForCloudReady)後對 GM 自動執行(idempotent·下次登入自動補上次沒補到的)。至寶不觸發存檔倒退守門、GM 亦豁免守門。',
       '★ v3.16.32【道歉補償·index.html】全體玩家登入彈「審查失誤道歉 + 補償」(_maybeShowAuditApologyCompensation):補償 💰知識幣 100,000 + 🔮召喚水晶 ×10·每帳號限領一次。一次性守門用雲端 per-UID 旗標 _auditApologyCompensatedV1(getDocFromServer 讀·旗標先寫再發獎·at-most-once·UID 同步·鏡像 memberProfileRewarded);讀旗標失敗則跳過不發(延下次登入·絕不在不確定下重發)。發獎走 addKnowledgeCoins + backpackAdd(summon_crystal)+ gameCloudSave 持久;onAuth 等 _waitForCloudReady 後排程;與既有道歉公告防疊加共存。玩家自寫 players/{uid} 旗標·非停權欄位·走既有規則無需改 rules。',
       '★ v3.16.32【註解校正 + 範圍/版本】清除閒置自動登出區與實際代碼矛盾的舊註解(「5 分鐘」→ 實際 30 分鐘·IDLE_TIMEOUT_MS;onAuth 與 _tick 兩處)。前三件全 GM 守門·第四件「道歉補償」為全體玩家一次性(雲端旗標 at-most-once)·全部只增不減·存檔倒退守門與載入路徑完全不動。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.32(並修正既有 _vers[admin_panel.js]=v3.16.30 與檔案自身 v3.16.31 不一致);hero_db.js 維持 v3.16.22。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.11)。',
-    ],
-  },
-  // v3.16.31 — 緊急修復:暫停「強制登入自我審查」(止血)+ 老師後台批次救回被誤刪的英雄
-  {
-    ver: 'v3.16.31',
-    date: '2026-06-26',
-    brief: [
-      '🛟【緊急修復·英雄不會再被誤刪】這兩天「登入時強制跳出的英雄圖鑑審查」會把你本來就擁有、但系統查不到取得紀錄的舊角色列成「可疑」、要你一隻一隻勾,結果有些同學不小心按了「不是我的」,把自己的英雄移除了。現在已經暫停這個「每次登入強制跳出」的審查,你不會再被逼著勾、也不會再誤刪英雄。',
-      '🔍【審查還在·只是不強迫】英雄圖鑑審查本身保留,你或老師仍可以隨時手動開啟(不再每次登入硬塞);台灣至寶的圖鑑審查也一樣是「可以用、但不強迫」。',
-      '💚【被誤刪的英雄會還回來】如果你的英雄已經被審查誤刪,別擔心——老師後台可以一鍵把它們連同原本的等級一起補回來(只會把資料加回去、不會拿走任何東西)。如果發現自己有角色不見了,跟老師說一聲即可。',
-    ],
-    items: [
-      '★ v3.16.31【止血·index.html】_maybeShowAccountAuditOnLogin 開頭加 early-return(鏡像 v3.16.28 orchestrator 停用 pattern):強制登入自我審查不再自動彈出(只是不彈·碰不到任何資料·不刪不改);自我審查本身保留,學生/老師仍可從圖鑑手動開 _openAccountAudit(含至寶審查)。根因:每次登入硬彈把「擁有但帳本查無紀錄」的舊版/早期取得英雄列成可疑·逼學生逐隻勾·誤按「不是我的」→ _fbStudentDisownHeroes 真的移除(且會清掉雲端等級)→ 帳號倒退。',
-      '★ v3.16.31【批次救回·index.html】新增 GM 後端 _fbAdminScanDisownedHeroes(掃全體玩家·帳本反推:某英雄「最近一筆解鎖紀錄=audit_error_recovered」且現不在 unlockedHeroes → 判為被 disown 待救回;已被救回者最近一筆=admin_grant 自動跳過 idempotent·GM 手動刪 admin_delete 排除)+ _fbAdminRestoreAllDisownedHeroes(逐一呼叫既有 _fbAdminRestoreLostHeroes:加回解鎖+還原 _auditRecoveredLevels 暫存原等級+寫 admin_grant 合法紀錄→不再被隱藏·GM 直寫繞守門·只增不減)。補既有「等級>1/裝至寶」掃描(_fbAdminScanDeletedHeroes)抓不到「等級被清掉」這批的缺口。',
-      '★ v3.16.31【GM 介面·admin_panel.js】「🛟 英雄誤刪救回」卡新增子區「🔺 審查誤刪英雄批次救回」:🔍 掃描全體玩家(審查移除)→ 列出受影響玩家與英雄(顯示移除前暫存等級)→「🛟 救回這位玩家」或「🛟 全部一鍵救回」。無 ?. 相容舊 Safari。',
-      '★ v3.16.31【安全/範圍】只做「止血(關彈窗)+ 把資料加回去」,完全不動存檔倒退守門、不動載入路徑(老師裁示:不可製造新災情)。至寶版圖鑑審查(凍結+閘門+🔺徽章+GM 通過/不通過)保留。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.31(hero_db.js 維持 v3.16.22)。所有新增可儲存欄位皆綁 uid。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.10)。',
     ],
   },
 ];
