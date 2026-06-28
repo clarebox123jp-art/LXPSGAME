@@ -12,6 +12,31 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.69 — 英雄圖鑑字級放大(左下方來源帶 + 右側內容區)
+  {
+    ver: 'v3.16.69',
+    date: '2026-06-28',
+    brief: [
+      '🔍【英雄圖鑑字放大】英雄圖鑑左側大圖下方的「解鎖來源/時間」標示與「✅ 確認是我的 / 🗑 不是我的 / 🔓 要救回」按鈕字級放大一倍;右側的能力數值、極限膠囊、裝備至寶、素質點數效果、天賦技能說明等(英雄名除外)也整體放大,更清楚好讀。',
+    ],
+    items: [
+      '★ v3.16.69【英雄圖鑑來源帶字級放大·index.html】_codexUnlockBarHtml 的 compact 模式(英雄左側大圖底部·_renderHeroCodexUnlockBar 用)字級 + padding 約放大 2 倍:來源標籤 12.5→25、🕐 時間 11→22、三鈕(確認是我的/不是我的/要救回)11.5→23(padding 5px8px→10px16px)、今天已申請提示 11→22。至寶圖鑑(non-compact)維持不變。',
+      '★ v3.16.69【英雄圖鑑右側內容放大·index.html】#hero-detail-content 加 zoom:1.8 整體放大右側內容(維持排版比例·不含獨立疊加的雷達圖);英雄名 font-size 56→31 反向抵消 zoom 維持原大小,其餘(Lv/能力卡/極限膠囊/裝備至寶/素質點數效果/天賦技能說明)皆放大。純字級/縮放、不動邏輯與 id。',
+      '★ v3.16.69【版本/範圍】七點版本同步 → v3.16.69;本輪只改 index.html(字級+zoom),admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.49)。',
+    ],
+  },
+  // v3.16.68 — GM獎勵視窗字級再放大
+  {
+    ver: 'v3.16.68',
+    date: '2026-06-28',
+    brief: [
+      '🔍【「🎁 GM獎勵」視窗字放大】關卡頁「🎁 GM獎勵」視窗(序號兌換 + 課堂獎勵收件區)裡的字再放大一倍,標題、獎項、表現優良事蹟、確認領取鈕、已領取紀錄都更大更好讀。',
+    ],
+    items: [
+      '★ v3.16.68【GM獎勵視窗字級放大·index.html】#redeem-overlay 視窗內所有文字字級約放大 2 倍:標題 40→72、序號兌換區、收件卡(🏅 事蹟/🎁 獎項/✅ 確認領取鈕)、無待領提示、已領取紀錄(標題/事蹟/獎項/時間)、領取成功/已領過/失敗訊息;序號輸入框字級取 ~×1.4 防溢出。靜態 HTML + _renderGmClassRewardInbox 動態渲染 + _claimGmClassRewardFromInbox 結果訊息全放大。純字級調整、不動邏輯與 id。',
+      '★ v3.16.68【版本/範圍】七點版本同步 → v3.16.68;本輪只改 index.html(字級),admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.48)。',
+    ],
+  },
   // v3.16.67 — 圖鑑標示UID解鎖來源 + 自助辨識快捷鈕 + 至寶投資跨帳號修復 + 按鍵音效
   {
     ver: 'v3.16.67',
@@ -266,35 +291,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.50【技能/爆發/天賦·index.html】爆發禁錮牢籠(_runBurst:imprison 3回合+消有利+強敵50%脫離受特技500%×爆發乘數反噬)+S1魔術閃光(當前HP20%上限Lv×20+隱身休息immune+回血)+S2表演魔術(全體暈眩對BOSS減半+drawItem加普通物品卡)+天賦障眼法(startTurn封被動/無被動則暈眩);execSkill+aiUseSkill雙路徑(鐵律1.128)。',
       '★ v3.16.50【升級預覽+被動攔截·index.html】SKILL_UPGRADE_DEF(special_magic_flash/show)+codex case(S1回血%/S2加卡數逐級高亮)+BURST_UPGRADE_DEF(脫離反噬500→700%);被動失效/禁錮攔截 7 個被動(拘留者空間果實/武士迴避反擊/御雲使軟軟的雲/武鬥家金鐘罩/漩渦反擊/科學發明家靈感/偵探察覺蛛絲馬跡)。',
       '★ v3.16.50【三池+音效+版本】SUMMON_RARE_HEROES+STUDENT_DESIGNER_HEROES(lsps111132)+sfx-imprison-burst(禁錮.mp3);四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.50。'
-    ],
-  },
-  // v3.16.49 — 禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱
-  {
-    ver: 'v3.16.49',
-    date: '2026-06-27',
-    brief: [
-      '🚫【禁療現在能封死所有回血了】「死亡宣告」等技能造成的「禁止恢復(不治詛咒)」與「治療減半」,以前只擋一部分治療,現在對「所有恢復 HP 的行動」(隊友治療、持續回血、吸血、天賦回血、復活…)全面生效——中了強力禁療就完全無法恢復 HP、也無法被復活;中了減療則所有回血量減半。',
-      '👹【日本 BOSS 酒吞童子變好打了】酒吞童子當關卡 BOSS 時,爆發技「鬼王酒宴」的自我回血由 40% 降為 20%、吸血效果減半,而且現在會乖乖受「禁療」限制——對牠用上禁療(例如暗法師的死亡宣告),牠就無法靠爆發回血變肉,讓禁療成為打酒吞 BOSS 的有效攻略。(你自己抽到/招募的酒吞童子維持原本的 40% 回血與滿額吸血,不受影響。)',
-    ],
-    items: [
-      '★ v3.16.49【中央禁療閘門·index.html】新增 _healCurseGate(target,amt):noheal_curse(不治詛咒/強力)→0、healReduced 普通×0.50/強力×0.25、受詛咒的神像 field→0;套用到 21 處原本繞過 doHeal 直接改 curHp 的「主動治療/復活」點(隊友治療多處、至寶 hpRegen 持續回血、寶箱怪/地獄將軍/玉藻前天賦回血、死靈法師「怨念化慈悲」與「死靈之力」復活設定型→中禁療時 curHp 夾 0 不復活)。',
-      '★ v3.16.49【復活也受減療·index.html】doRevive 原本只擋 noheal_curse(復活剩 1 HP),補上 healReduced:中減療時復活 HP 也減半(普通×0.50/強力×0.25,最低保 1),呼應「減療對所有恢復 HP 行動生效」。',
-      '★ v3.16.49【酒吞 BOSS 回血削弱·index.html】爆發「鬼王酒宴」自身回血原為「直接 h.curHp += 40%」完全繞過禁療(中死亡宣告禁療仍回 40% 的漏洞根因),改走 doHeal → 自動受不治詛咒/減療攔截;並依「冒險模式敵方 p2」判定 BOSS 版:自身回血 40%→20%、吸血 burstVamp _vampMult 1.0→0.5;玩家招募版(p1/鬥技場 p2)維持 40%/1.0。吸血本就走 doHeal,故中禁療時吸血也歸 0。',
-      '★ v3.16.49【刻意不套(防禦/免死非主動回血)】金鐘罩減傷補回、漩渦反擊迴避補回、武鬥家「鋼鐵意志」致命傷免死回血、各種「不倒(剩 1 HP)」、魔劍姬伊莉雅爆發 HP 翻倍、救醫馬/裝備的最大 HP 增益(curHp 跟漲),屬「受傷時的防禦/上限變動」非主動恢復行動,維持原狀不被禁療誤殺。',
-      '★ v3.16.49【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.49;hero_db.js 維持 v3.16.46。本輪只改 index.html(新增 1 helper + 22 處治療/復活點 + 酒吞爆發 3 改) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.29)。',
-    ],
-  },
-  // v3.16.48 — 答對題目後三個獎勵選項新增專屬行動音效
-  {
-    ver: 'v3.16.48',
-    date: '2026-06-27',
-    brief: [
-      '🔊【答對選獎勵有音效了】戰鬥中答對題目、選擇獎勵時,三個選項(✨ 立即使用 / 💡 存到「知識化為力量」 / ⚡ 轉換為 3 能量)現在各自會播放專屬音效,點起來更有回饋感。',
-    ],
-    items: [
-      '★ v3.16.48【三個獎勵選項音效·index.html】新增 3 個 <audio> 元素:sfx-reward-use(使用答題獎勵.mp3)／sfx-reward-keep(知識化為力量.mp3)／sfx-reward-energy(轉為能量.mp3),皆 preload="auto"、引 GitHub raw,接在偵探音效 sfx-detective-burst 之後。',
-      '★ v3.16.48【替換既有通用音(取代非疊加)·index.html】advRewardConfirmUse／advRewardConfirmKeep／advRewardConfirmToEnergy 三函式開頭原各播通用 UI 音(sfx-confirm 0.7／sfx-powerup 0.6),改播對應專屬音(音量 0.8);採「取代」避免專屬音與通用音同時響起。',
-      '★ v3.16.48【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.48;hero_db.js 維持 v3.16.46、world-boss.js v3.15.98、world-boss-ui.html v3.16.45、arena.js v3.15.69、main.css v3.15.79。本輪只改 index.html(3 audio + 3 函式各替換 1 行) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.28)。',
     ],
   },
 ];
