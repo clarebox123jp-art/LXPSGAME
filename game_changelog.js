@@ -12,6 +12,30 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.63 — 學生名冊上線(student_roster.js 補完 706 筆)
+  {
+    ver: 'v3.16.63',
+    date: '2026-06-28',
+    brief: [
+      '🔍【老師找學生大升級】學生名冊已補上全校 706 筆資料！現在課堂獎勵發放與玩家活動查詢，可以用中文真名搜到全校任何一位同學，候選清單也會顯示班級座號方便核對。',
+    ],
+    items: [
+      '★ v3.16.63【學生名冊上線·student_roster.js + index.html】老師補完 student_roster.js(window._STUDENT_ROSTER 706 筆·每筆 class/seatNo/surname/fullName)取代原本空白名冊。index.html 把名冊破快取版號 _LXPS_FILE_VERSIONS[student_roster.js] 由 20260524→20260628·讓學生端立即載入新名冊。→ _fbAdminFindPlayersByName 階段1.5 名冊反查全校生效(中文真名搜尋)·_classSeatCode4 班級座號顯示生效(課堂獎勵候選清單)·好友面板/排行榜/圖鑑短碼標籤一併補上。',
+      '★ v3.16.63【版本/範圍】七點版本同步 → v3.16.63。本輪改 student_roster.js(名冊本體·需上傳 repo) + index.html(名冊版號+主版本) + admin_panel.js(版本對齊) + game_changelog.js;hero_db.js 未改內容·僅 manifest 版號對齊免重傳。⚠ 名冊有 29 組「班級+座號」重複(多為跨屆轉入/重設帳號學生·不影響真名搜尋·僅班級座號碼會重複)·留待日後校正。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.43)。',
+    ],
+  },
+  // v3.16.62 — GM 玩家搜尋:設計師學生中文真名備援(補名冊缺漏)
+  {
+    ver: 'v3.16.62',
+    date: '2026-06-28',
+    brief: [
+      '🔍【老師找學生更準了】課堂獎勵發放與玩家活動查詢，現在就算某位設計過英雄的同學沒被收進名冊，也能用中文真名搜到他了。',
+    ],
+    items: [
+      '★ v3.16.62【設計師名冊備援·index.html】_fbAdminFindPlayersByName 階段 1.5：原本只掃 student_roster.js 的 _STUDENT_ROSTER 反查真名→email；若該名冊缺某生或未上傳/未載入則搜不到。新增備援：_STUDENT_ROSTER 沒命中時，改用 index.html 內建的 STUDENT_DESIGNER_HEROES(約 30+ 名設計過英雄的學生·含 fullName 真名)反查 email→查玩家 doc(matchType designer)。讓設計過英雄但不在名冊的學生(如高廷睿 lsps110127 5年4班)可用中文真名搜到。課堂獎勵+活動查詢共用此函式·兩邊同時生效。',
+      '★ v3.16.62【版本/範圍】七點版本同步 → v3.16.62。本輪改 index.html + admin_panel.js(版本對齊) + game_changelog.js(hero_db.js 未改內容·僅 manifest 版號對齊·免重傳)。⚠ 非設計師且已取暱稱、且不在 student_roster.js 的學生·仍需補完 student_roster.js 才能用真名搜到(可改用學號/班級座號/信箱搜)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.42)。',
+    ],
+  },
   // v3.16.61 — GM 課堂獎勵/活動查詢中文姓名搜尋根治 + 同名候選班級座號挑選 + 帳號轉移修復
   {
     ver: 'v3.16.61',
@@ -279,40 +303,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.44【修法】① HTML:.title-zh 內的六個字「小英雄大對抗」改為 <img class="title-img" src="title-zh.webp">(POP 海報體已內建在圖中,含寶劍/皇冠/盾牌/星星裝飾)。② 內嵌 <style> 用 !important 把 .title-zh 的 font/漸層/background-clip/text-stroke/灰色 filter/titleRainbow 動畫全部關掉(沿用「不動 main.css」內嵌覆寫慣例,只保留 main.css 既有定位 margin-top)。③ 圖片改套新的 titleFloat 飄浮動畫(scale 1→1.02 + rotate ±0.5deg + translateY 0→-7px bob,4s 循環)+ 一道柔和 drop-shadow(非灰色硬邊)→ 保留飄浮動態、去掉灰影。副標題「力行小學生與來自異世界的小夥伴」維持文字不變。',
       '★ v3.16.44【webp 鐵則】老師提供的 836×470 PNG(≈408KB)依鐵則轉成 webp(q90·≈77KB·小 81%·保留透明背景),命名 title-zh.webp。⚠ title-zh.webp 需老師上傳 repo 根目錄(與 index.html 同層),圖片用相對路徑 + ?v=v3.16.44 破快取。日後若換圖,改 index.html 內 ?v= 版本即可。',
       '★ v3.16.44【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.44(hero_db.js 維持 v3.16.41、main.css 未動故 v3.15.79 不變、admin_panel.js 內容未動僅版號對齊)。本輪只改 index.html + game_changelog.js(+ 新增 title-zh.webp 圖檔由老師上傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.24)。',
-    ],
-  },
-  // v3.16.43 — 代表英雄跨帳號污染根治 + 接關搶關修正 + 代表英雄滿等改贈經驗書 + PC切帳號清單修正
-  {
-    ver: 'v3.16.43',
-    date: '2026-06-27',
-    brief: [
-      '🛡️【修正·共用平板】修正「代表英雄」在共用平板上被別的帳號污染的問題:之前 A 帳號設了代表英雄,換成 B 帳號(沒解鎖那隻)卻會看到它、甚至切回 A 後英雄/等級被改掉。現在代表英雄會牢牢綁定各自的帳號,換帳號不再互相影響。',
-      '⚔️【修正·接關】修正 BOSS 用連續爆發技把全隊一次打倒時,接關視窗剛跳出來就被「戰鬥結束」搶走、來不及按接關的問題。現在一定會等你自己按下「接關」或「放棄」,才會真正結束戰鬥。',
-      '📚【新功能·代表英雄滿等獎勵】代表英雄練到 Lv50 滿等後,每日簽到不再浪費:會改送你「豪華典藏版經驗之書 ×1」(可用在其他英雄);如果這本書已經拿滿 99 本,則改送 5000 知識幣,並會跳出視窗清楚告訴你。',
-      '💻【修正·電腦安裝版】修正電腦安裝版切換帳號時,已經加入過的帳號只顯示一個、其他不見了的問題。現在加入過的帳號都會留在清單裡,可以直接點選切換。',
-    ],
-    items: [
-      '★ v3.16.43【代表英雄跨帳號污染·根因·index.html】記憶體有兩個代表英雄變數:本 block 內 local _myRepHero(被 _loadRepHeroBar 讀)與 window._myRepHero(被即時雲端監聽/每日簽到讀),長期不同步;換帳號清理 _clearAccountLocalData 從不清這兩個變數,也不取消待寫雲端的防抖 → 前帳號殘留的代表英雄被下一個帳號 autosave(_refreshMyRepHeroCloud)以新帳號等級寫進新帳號雲端 → 永久污染(A 巫女 Lv50 → B 沒解鎖卻看到巫女 → 切回 A 變祭司)。',
-      '★ v3.16.43【代表英雄·修法·五處】① 新增 window._clearRepHeroLocal / window._applyRepHeroFromCloud helper(本 block 定義,可同時改 local+window+畫面並取消防抖);② _clearAccountLocalData 換帳號時呼叫 _clearRepHeroLocal();③ _refreshMyRepHeroCloud 寫雲端前用 advGetUnlockedHeroes() 驗證該英雄屬本帳號,殘留則中止寫入並清除(_own.length 守門防早載入誤判);④ 即時雲端監聽改走 _applyRepHeroFromCloud 並補 null 分支(切到無代表英雄帳號時清殘留);⑤ _loadRepHeroBar 顯示前驗證擁有權,非本帳號擁有則回復「設定代表英雄」。借用好友代表英雄仍讀好友快照(等級/素質投資/技能投資/至寶),不受影響。',
-      '★ v3.16.43【接關搶關·根因】王多段爆發約 6 秒才呼叫 checkWin,我方全滅 watchdog 先觸發 → 第一次 _showResultWithDrama(false) 已正確彈出接關 modal(#adv-continue-overlay);但爆發段落跑完後第二次 _showResultWithDrama(false) 被 60 秒去重守門擋下 → 走「結算 modal 救援」,而救援與 5 秒 watchdog 的 overlay 清單沒納入 adv-continue-overlay → 誤判「無結算 modal」→ 強制 advShowBattleResult(false) → 關掉接關 modal 直接判敗。',
-      '★ v3.16.43【接關搶關·修法·四處·index.html】① _showResultWithDrama 入口(worldboss 守門後)加主守門:接關 modal 顯示中且為敗北結算一律 return,等玩家按接關/放棄;② 救援 _checkOvIds 與 ③ 5 秒 watchdog _ids 都補進 adv-continue-overlay(雙保險);④ advShowBattleResult 入口加最終安全網(同款守門)。安全性:advGiveUp(玩家按放棄)會先 remove(show) 接關 overlay 再呼叫 → 正常敗北不被擋;接關次數用盡時不顯示接關 overlay → 正常敗北結算也不受影響。',
-      '★ v3.16.43【代表英雄滿等改贈·index.html】_checkDailyRepHeroBonus 的 Lv50 分支原本只標記已領就跳過(玩家空得)→ 改為:backpackAdd(hero_exp_book_premium,1) 取實際新增數,>0 即贈一本豪華典藏版經驗之書;=0(背包已滿 99)改 addKnowledgeCoins(5000)。新增 window._showRepHeroMaxLvGiftModal 簽到後彈窗清楚告知(書/幣),並寫 _logActivity 供 GM 查證;仍標記 lastDailyRepHeroExp 防同日重複發。',
-      '★ v3.16.43【PC 切帳號清單只剩一個·robustification·index.html】最近帳號原本只在 onAuth 深層 _addRecentAccount 記錄一次。修法:① _doSignInFlow popup 成功 與 ② getRedirectResult 成功的最早一刻(profile 最完整、必有 email)即記錄;③ _addRecentAccount 對同 uid 做「欄位增補合併」,新值為空時保留舊紀錄的 email/暱稱/頭像,絕不用空值覆蓋;④ _getRecentAccounts filter 由「需 uid && email」放寬為「只需 uid」,避免暫時缺 email 的帳號被整筆丟掉。多點補強確保加入過的帳號都留在清單。',
-      '★ v3.16.43【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.43;hero_db.js 維持 v3.16.41、admin_panel.js 內容未動(本輪四修皆在 index.html,僅版號對齊)。本輪只改 index.html + game_changelog.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.23)。',
-    ],
-  },
-  // v3.16.42 — BOSS 開場動畫音樂無縫接續進戰鬥(不再從頭播放)+ 新圖一律 webp
-  {
-    ver: 'v3.16.42',
-    date: '2026-06-27',
-    brief: [
-      '🎵【BOSS 開場動畫音樂接續修正】修正貓空 BOSS(九尾空貓怪／杏花妖／黑暗球‧希望型態)開場動畫的背景音樂,在進入戰鬥時又從頭重新播放一次的問題。現在動畫的音樂會直接、無縫地接續進戰鬥,不會再從頭播放。',
-    ],
-    items: [
-      '★ v3.16.42【BOSS 開場動畫 BGM 無縫接續·index.html】根因:BOSS 登場動畫(_playBossIntro)本就用 bgmFadeTo 先起該 BOSS 的戰鬥 BGM(原意就是無縫銜接進戰鬥),但進戰鬥時 advStartBattle 的 _playAdvBossBgm 開頭 bgmStop() + currentTime=0 + play() 會把動畫已經起好的「同一首」BGM 停掉再從頭播 → 聽起來像重頭播放一次。',
-      '★ v3.16.42【修法】_playAdvBossBgm 開頭加冪等守門:若「應播的這首 BGM(_curBgm===id)正在播放(el.paused 為 false)」→ 不 bgmStop、不 reset currentTime,只校正音量並掛好 onended 後 return → 從動畫無縫接續。iOS 自動播放被擋時 el.paused 為真 → 不符守門 → 照常 bgmStop 重起(無回歸)。只改 index.html 1 處。',
-      '★ v3.16.42【新圖一律 webp·鐵則】老師裁示:之後新增任何圖片一律改用 webp 格式(檔案更小、新版平板下載更快)。本輪先把上一版新增的「御雲使‧沐雲雪」立繪圖檔由 .png 改 .webp(hero_db.js HERO_IMGS)。⚠ 圖檔 御雲使_沐雲雪.webp 需老師另外上傳 repo。',
-      '★ v3.16.42【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.42;hero_db.js 維持 v3.16.41(本輪未改邏輯,僅沐雲雪圖檔副檔名 .png→.webp)。本輪改 index.html + hero_db.js + game_changelog.js + admin_panel.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.22)。',
     ],
   },
 ];
