@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-28  / 目前主程式版本:v3.16.65(序號兌換鈕改名「🎁 GM獎勵」+課堂獎勵改自行領取;前版 v3.16.64 老師回信右下角小視窗+鈴聲)
+//  最後更新:2026-06-28  / 目前主程式版本:v3.16.66(GM獎勵領完有紀錄+學生自助申請移除不是我的英雄;前版 v3.16.65 序號兌換鈕改名GM獎勵+課堂獎勵自行領取)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,39 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.67 — 圖鑑標示UID解鎖來源 + 自助辨識快捷鈕 + 至寶投資跨帳號修復 + 按鍵音效
+  {
+    ver: 'v3.16.67',
+    date: '2026-06-28',
+    brief: [
+      '🔍【圖鑑大圖直接看「這隻是怎麼來的」】打開英雄/至寶圖鑑時,大圖下方會直接標示它的「解鎖來源」和「取得時間」(像是 ✨召喚/合成、⚔冒險挑戰、🛒商店兌換、🏆龍王戰排名、🎁活動補償、💝好友贈送、🛡老師核可…);如果是共用平板上別人帶進來的、查不到你自己的取得紀錄,會用紅色標「⚠ 來源不明」,一眼就能分辨哪些是你的、哪些可疑。',
+      '🛠️【在圖鑑就能自己處理】每隻英雄/至寶下方都有三顆鈕:「✅ 確認是我的」(確定是自己的→永久標記、把擁有證明存進雲端,之後不會再被誤判,按了就不再顯示這些鈕)、「🗑 不是我的」(送老師審核移除)、「🔓 要救回」(其實是你的卻被鎖住/誤判→送老師確認補回)。連「來源不明」被鎖住的也能直接申請;每隻一天限按一次,隔天還能再調整。',
+      '💎【修正:至寶投資點數切帳號後歸零】之前在共用平板上 A 帳號把至寶投資點數點完、切到 B 再切回 A,投資點數會變回「尚未投資」。這個資料合併的漏洞已修好,投資點數會正確保留。',
+      '🔊【按鍵音效回饋】投資至寶屬性、打開英雄技能升級視窗時,都會有按鍵音效,操作更有反饋感。',
+    ],
+    items: [
+      '★ v3.16.67【圖鑑解鎖來源標示】英雄圖鑑左側大圖底部 / 至寶圖鑑主圖正下方,顯示該英雄/至寶的解鎖來源(召喚合成/冒險挑戰/商店/龍王戰排名/補償/好友贈送/老師核可…)+ 解鎖時間;查無自己 UID 合法紀錄或只有回收紀錄→「⚠ 來源不明」(紅);初始 8 隻→「🎒 初始角色」。資料讀本地 adv_hero_unlock_history / adv_treasure_unlock_history(載入時雲端已合併寫回本地),零雲端讀取、即時。',
+      '★ v3.16.67【圖鑑自助辨識快捷鈕】來源不明/一般取得的英雄/至寶顯示三鈕:✅ 確認是我的(寫 player_confirmed 解鎖紀錄到三槽+雲端·永久標記·之後不再被污染判定誤刪、永久移除這些鈕)、🗑 不是我的(送 disownHeroes/disownTreasures 審核)、🔓 要救回(送 lostHeroes/lostTreasures 老師確認);每英雄/至寶「申請」一天限一次,確認是我的為永久即時。',
+      '★ v3.16.67【GM 端閉環】老師「📨 帳號救援申請審核」卡新增至寶兩區塊:🗑 刪除至寶(走 _fbAdminRejectAuditTreasures·移出+_s整包覆蓋·不復活)、🛟 補回至寶(走新增 _fbAdminRestoreLostTreasures·不存在補 Lv1/已存在保留等級投資+寫 admin_grant);英雄的 disown/lost 沿用 v3.16.66 / v3.16.19 既有閉環。',
+      '★ v3.16.67【修正:至寶投資點數跨帳號丟失】根因:三槽合併 _lxpsMergeSlots 的 taiwanTreasureData 合併(_twAcc),同一至寶在多槽都有時走的 else 分支只重建 lv/exp/equippedTo,漏掉 invested(投資點數)→ 切帳號回來投資歸零。修法:else 分支比照 _applySafeData 對 invested 逐項取 max 保留,並保住其他子欄位。',
+      '★ v3.16.67【按鍵音效】至寶投資加點、開啟英雄技能升級確認視窗新增按鍵音效;技能升級確認鈕本就有音效。',
+      '★ v3.16.67【版本／範圍】本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 僅版號對齊免重傳。新增的「確認是我的」走自我寫入、disown/lost 走既有 accountRescueRequests、GM 至寶操作走 players 自身 isAdmin → 皆不需新增 firestore.rules。七點版本同步 → v3.16.67;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.47)。',
+    ],
+  },
+  // v3.16.66 — GM獎勵領完有紀錄 + 學生自助申請移除不是我的英雄
+  {
+    ver: 'v3.16.66',
+    date: '2026-06-28',
+    brief: [
+      '🎁【領過的 GM 獎勵看得到了】以前在「🎁 GM獎勵」按了確認領取後,收件區就變空白,讓人懷疑到底有沒有領到。現在領取後下半會出現「✅ 已領取紀錄」,清楚列出你領過哪些獎項、表現優良事蹟、還有領取時間,不會再有「我明明領了卻沒紀錄」的情況。',
+      '🗑【不是我的英雄,可以自己申請移除】在「📨 會員帳號與救援申請」裡新增「🗑 申請移除不是我的英雄」:會列出你目前擁有的全部英雄,並標示哪些「來源不明」(共用平板上別人帶進來的)。你只要勾選不是自己的、送出申請,老師審核確認後才會移除——你只是申請、不會馬上被刪,安心又公平。',
+    ],
+    items: [
+      '★ v3.16.66【GM 獎勵領取紀錄】領取時把獎項/事蹟/領取時間寫進帳號,「🎁 GM獎勵」收件區下半新增「✅ 已領取紀錄」區;待領領完後不再空白,根治「學生領完不認帳」。老師後台「📜 玩家活動記錄查詢」新增「🎁 GM獎勵紀錄」鈕,可查任一學生領過哪些獎勵與精確領取時間(讀認領文件·權威)。',
+      '★ v3.16.66【學生自助申請移除污染英雄】「📨 會員帳號與救援申請」新增「🗑 申請移除不是我的英雄」:列全部擁有英雄+來源標(來源不明標紅·初始角色保護提示),學生勾選送審(只送申請·不即時刪,避免誤按倒退);老師「📨 帳號救援申請審核」卡新增「🗑 一鍵刪除」,確認後永久移除(寫三槽+清養成資料+標記·不會再污染或復活)。',
+      '★ v3.16.66【版本／範圍】本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 僅版號對齊免重傳。兩塊皆沿用既有 firestore.rules(不需新增規則);需求 B 依賴 v3.16.65 的 gmClassRewards / gmClassRewardClaims 規則已部署。七點版本同步 → v3.16.66;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.46)。',
+    ],
+  },
   // v3.16.65 — 序號兌換改名「🎁 GM獎勵」+ 老師課堂獎勵改自行領取(待領取)
   {
     ver: 'v3.16.65',
@@ -262,44 +295,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.48【三個獎勵選項音效·index.html】新增 3 個 <audio> 元素:sfx-reward-use(使用答題獎勵.mp3)／sfx-reward-keep(知識化為力量.mp3)／sfx-reward-energy(轉為能量.mp3),皆 preload="auto"、引 GitHub raw,接在偵探音效 sfx-detective-burst 之後。',
       '★ v3.16.48【替換既有通用音(取代非疊加)·index.html】advRewardConfirmUse／advRewardConfirmKeep／advRewardConfirmToEnergy 三函式開頭原各播通用 UI 音(sfx-confirm 0.7／sfx-powerup 0.6),改播對應專屬音(音量 0.8);採「取代」避免專屬音與通用音同時響起。',
       '★ v3.16.48【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.48;hero_db.js 維持 v3.16.46、world-boss.js v3.15.98、world-boss-ui.html v3.16.45、arena.js v3.15.69、main.css v3.15.79。本輪只改 index.html(3 audio + 3 函式各替換 1 行) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.28)。',
-    ],
-  },
-  // v3.16.47 — 首頁標題圖再放大 75% + 上移避免擋住人物頭部 + 移除副標題
-  {
-    ver: 'v3.16.47',
-    date: '2026-06-27',
-    brief: [
-      '🏠【首頁大標題再放大】首頁「小英雄大對抗」標題圖再放大 75%、更醒目;同時往上移動,盡量不擋到中間拿筆電男孩等人物的頭。',
-      '🗒️【移除副標題】移除標題下方的副標題「力行小學生與來自異世界的小夥伴」,畫面更簡潔。',
-    ],
-    items: [
-      '★ v3.16.47【標題圖放大 75%·index.html】.title-img max-width:min(82vw,560px)→min(90vw,980px)、max-height:40vh→72vh(讓寬度先綁定·依 836×470 原比例縮放)。',
-      '★ v3.16.47【標題容器上移·index.html】#overlay .title-wrap 由 main.css 的 flex 置中+margin-top:-180px 改 position:absolute+left:50%+transform:translateX(-50%)+top:-8vh(放大後往上長·圖上方 17% 透明邊距往上推不切字·底部讓出中央人物頭部);#overlay 內所有按鈕皆 position:absolute(top:67%/78%…)故不受影響。',
-      '★ v3.16.47【移除副標題·index.html】.title-en 加 display:none(移除「力行小學生與來自異世界的小夥伴」)。',
-      '★ v3.16.47【版本/範圍】四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.47;hero_db.js 維持 v3.16.46、world-boss.js v3.15.98、world-boss-ui.html v3.16.45、arena.js v3.15.69、main.css v3.15.79。本輪只改 index.html(3 處 CSS) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改);標題圖 title-zh.webp 已上傳·無需改碼。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.27)。',
-    ],
-  },
-  // v3.16.46 — 首頁標題圖文字後備+尺寸 / 鬥技場·龍王戰最高治療歸施術者 / 答題獎勵不計最高傷害·治療 / 戰鬥求救鈕整併 / 答題轉3能量
-  {
-    ver: 'v3.16.46',
-    date: '2026-06-27',
-    brief: [
-      '🏠【首頁大標題修正】修正首頁「小英雄大對抗」大標題的顯示問題:① 電腦版原本標題圖沒出現、副標題「力行小學生與來自異世界的小夥伴」位置太高 ② 平板(iPad)版標題位置出現彩色閃爍細邊框和 404 破圖圖示、副標題跑到畫風切換鈕位置太低。原因是標題圖片檔尚未上傳,現在改成:圖片載入失敗時自動改顯示乾淨的金色立體文字標題,副標題位置在電腦和平板都正確一致;標題尺寸也縮小調整,不會擋到右邊遠方的 101 大樓和中間拿筆電男孩的臉。(等老師把標題圖檔上傳後,圖片就會正常顯示。)',
-      '💚【最高治療統計更準確】鬥技場和龍王戰的「最高治療」現在會正確算在「真正施展治療的英雄」身上:持續回血(像朱玥的春之戰場)、吸血、天賦觸發的治療,以前可能誤算到「當下正在行動的英雄」或「被治療的英雄」頭上,現在一律歸功給真正的施術者,才能正確看出治療是誰的功勞。',
-      '🚫【答題獎勵不計入最高傷害/治療】答題答對後使用的獎勵(對敵人造成傷害、幫全隊回血)不再灌進「最高傷害」「最高治療」的排名統計,讓這兩項只反映英雄技能本身的真實表現(龍王戰排行榜本就已排除,本次補上鬥技場結算)。',
-      '🆘【戰鬥求救鈕整併】戰鬥中的求救/救援按鈕整合成單一選單,介面更清爽。',
-      '🔷【答題獎勵可轉 3 能量】答題獎勵確認視窗新增選項:可把獎勵直接轉換成 3 點能量。',
-      '🔄【換隊友重戰/重新開戰完全復原】戰鬥卡死自救的「換隊友重新開始戰鬥」與「重新開戰」,現在會完全恢復到戰鬥剛開始的狀態——包含每位英雄的「極限爆發使用次數」(原本沒重置、重戰後爆發次數仍是用完的)、武士崛起鬥志、連招疲勞、S2 使用旗標全部歸零,真正從頭開始。',
-      '🖼️【沐雲雪立繪修正】新角色「御雲使‧沐雲雪」圖片顯示破圖(404)的問題修正了(原因:先前改成 .webp 檔名但 .webp 圖檔沒上傳到 repo;改回 repo 裡原本就有的 .png 圖檔,立繪立即正常顯示)。',
-    ],
-    items: [
-      '★ v3.16.46【首頁標題圖文字後備·index.html】根因:title-zh.webp 回傳 404(圖檔尚未上傳 repo 根目錄)。PC:img 失敗→父層 font-size:0→塌陷→副標上移;iPad:Safari 渲染破圖佔位框+404圖示→把副標往下推到畫風切換鈕。修法:.title-img 加 onerror→隱藏破圖、切顯示新增的 .title-zh-text(預設 display:none 的金漸層 POP 文字「小英雄大對抗」·-webkit-text-stroke+text-shadow+titleFloat 動畫)→破圖不再出現、.title-zh 維持應有高度→副標位置 PC/iPad 一致;.title-img 尺寸 min(90vw,680px)→max-width:min(82vw,560px)+max-height:40vh+width/height:auto(依 836×470 原比例縮入框、不擋 101/筆電男孩臉);cache param ?v=v3.16.46。老師上傳 title-zh.webp 後圖片即正常顯示、後備自動隱藏。',
-      '★ v3.16.46【最高治療歸施術者·index.html】doHeal 治療統計呼叫由 activeChar-first(const _healer=G&&(G.activeChar||opts.actor))改 actor-first(const _healer=(opts&&(opts._healSrc||opts.actor))||(G&&G.activeChar))→持續回血/吸血/天賦觸發治療(常在別英雄回合結算)歸正確施術者,不再誤算當前行動者或受治療者(仿 v3.15.45 DoT 歸施術者);稽核 154 個 doHeal 呼叫點確認傳 actor 者皆為施術者/吸血者/天賦擁有者/自療本體(actor:target=效果擁有者自療或治隊友皆正確),actor-first 安全。傳 actor:null 的持續回血補 _healSrc 明確來源:朱玥春之戰場(_healSrc=朱玥本體·不論存活)、午睡自療(_healSrc:h)、寵物鱟固定/百分比回血(_healSrc:h)。',
-      '★ v3.16.46【答題獎勵不計最高傷害/治療·index.html】答題獎勵 dmg_one/dmg_all(doDmg fixedDmg:true 走早退路徑 isFixed:true)、heal_50(doHeal fixedDmg:true→statTrack isFixed:true)本就不入 dmgReal/healReal;龍王戰排行榜(world-boss.js _findTop dmgReal/healReal)與本場 MVP(topDmg=dmgReal)早已排除。本次補上鬥技場結算 showResult:battle-stats-bar 的 byDmg/byHeal 排序 + 最強輸出/最佳治療統計卡取值由總量 dmg/heal 改 dmgReal/healReal → 答題獎勵不再灌進鬥技場最高傷害/治療(showResult 全部呼叫點皆鬥技場;鬥技場玩家+AI 答題獎勵走 advApplyReward/_arenaAIApplyReward)。',
-      '★ v3.16.46【riding·戰鬥求救鈕整併+答題轉3能量·index.html】(前一階段累積·本版一併上線)戰鬥求救/救援鈕整併為單一選單(adv-battle-help-fab + _showBattleHelpMenu);答題獎勵確認視窗新增第 4 鈕「轉 3 能量」(advRewardConfirmToEnergy)。',
-      '★ v3.16.46【換隊友重戰/重新開戰完全復原·index.html】兩條重戰路徑原本只重置 curHp/status/buffs/acted,漏了 per-battle 計數 → 重戰後極限爆發次數不恢復(老師回報)。比照正常開戰 advStartBattle(BOSS 戰前重置)補齊:① 換隊友重戰 _showRollbackReinforcePicker→_rrfSelectIn 的 G.p1/G.p2 reset 迴圈加 h._burstUsed=0+h._risingSpiritCount=0;② 重新開戰按鈕 _resetH 加 h.s2used=false+h._burstUsed=0+h._risingSpiritCount=0;兩處均加 G.comboFatigue=0/comboFatigueByHero={}/lastSkillName=null/lastSkillByHero={}(連招疲勞歸零)。時間倒轉卡(_initState 還原)與小怪戰逐場(爆發本就跨小怪戰累積到 BOSS 戰才歸零·鐵則)維持原樣不動。',
-      '★ v3.16.46【沐雲雪立繪 .webp→.png·hero_db.js】HERO_IMGS[御雲使‧沐雲雪] 由 御雲使_沐雲雪.webp(raw 404·v3.16.42 改 webp 但圖檔從未上傳)改回 御雲使_沐雲雪.png(raw 200·repo 既有)→立繪即恢復。同步 bump _vers[hero_db.js] v3.16.41→v3.16.46 破快取。⚠ 大標題 title-zh.webp 同屬「改 webp 但圖檔未上傳→404」,但已有 v3.16.46 文字後備(顯示金字標題)兜底;老師日後若要顯示圖片版,需自行上傳 title-zh.webp / 御雲使_沐雲雪.webp 到 repo 根目錄(Claude 只能改 src 引用、無法產生圖檔本體)。',
-      '★ v3.16.46【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] → v3.16.46;world-boss.js 維持 v3.15.98、world-boss-ui.html 維持 v3.16.45、arena.js 維持 v3.15.69、main.css 維持 v3.15.79。本輪改 index.html + hero_db.js(沐雲雪 .png 引用) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.26)。',
     ],
   },
 ];
