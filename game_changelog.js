@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-28  / 目前主程式版本:v3.16.60(召喚物行動在主人卡牌跳趣味標籤·青龍助攻延後0.5秒;前版 v3.16.59 鬥技場動態影片背景)
+//  最後更新:2026-06-28  / 目前主程式版本:v3.16.65(序號兌換鈕改名「🎁 GM獎勵」+課堂獎勵改自行領取;前版 v3.16.64 老師回信右下角小視窗+鈴聲)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,31 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.65 — 序號兌換改名「🎁 GM獎勵」+ 老師課堂獎勵改自行領取(待領取)
+  {
+    ver: 'v3.16.65',
+    date: '2026-06-28',
+    brief: [
+      '🎁【「序號兌換」變身「GM獎勵」】關卡頁右下角的「序號兌換」鈕改名為「🎁 GM獎勵」,視窗放大、字更大更好讀。裡面除了原本的序號兌換,還多了「課堂獎勵收件區」——老師發給你的課堂獎勵會出現在這裡,顯示你的「表現優良事蹟」(像是期末第一、滿分、進步前三…)和獲得的獎項,按下「✅ 確認領取」才會存進你的帳號。有獎勵可領時,「GM獎勵」鈕上方會冒出紅色「有可領取獎勵」標籤提醒你。',
+    ],
+    items: [
+      '★ v3.16.65【課堂獎勵改「自己領取」·玩家面向】老師發課堂獎勵的方式由「直接發到你帳號」改成「放進你的收件箱、由你自己確認領取」:好處是在共用 iPad 上,別人登入時看不到也領不到你的獎勵(尤其 UR 英雄),獎勵只會在「你本人登入並按確認領取」時才存進你的帳號,更安全、不會發錯人;每份獎勵只能領一次(換裝置/重新整理也不會重複),領取後畫面會自動重新整理讓獎勵生效。',
+      '★ v3.16.65【後台·老師端】課堂獎勵發放頁新增「🏅 表現優良事蹟」(8 個預設可複選 + 自由補充);「發放」改為寫入該學生收件箱(待領取),學生下次登入在「🎁 GM獎勵」看到事蹟+獎項並自行「確認領取」入帳(嚴防共用平板 UR 發錯人/帳號污染)。送禮記錄、同名候選挑選維持不變。',
+      '★ v3.16.65【版本／範圍】本輪改 index.html + admin_panel.js + game_changelog.js + firestore.rules(新增 gmClassRewards / gmClassRewardClaims·老師另部署);hero_db.js 僅版號對齊免重傳。七點版本同步 → v3.16.65;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.45)。',
+    ],
+  },
+  // v3.16.64 — 老師回信改右下角小視窗+鈴聲通知
+  {
+    ver: 'v3.16.64',
+    date: '2026-06-28',
+    brief: [
+      '🔔【老師回覆通知更貼心】老師回覆你的 BUG／問題回報後，登入時畫面右下角會跳出小視窗加上提示鈴聲，點一下就能看老師回覆的完整內容；看完關閉後就不會再重複提醒。即使老師回覆時你不在線上也沒關係，下次上線會立刻通知。',
+    ],
+    items: [
+      '★ v3.16.64【老師回信通知改版·index.html】原本登入會直接蓋一個置中大視窗，改成在畫面右下角彈出一張小通知卡(仿老師端收到回報的小視窗)＋鈴聲提示(sfx-rescue-chime)：新增 _showAdminReplyToast(顯示老師回覆前 40 字摘要＋若有多則顯示還有 N 則)，登入檢查 _checkUnreadBugReplies 偵測到未讀回信時改彈此小卡。點小卡→開既有「老師回覆你的回報」完整視窗(_showAdminReplyPopup·看完按「我知道了」即標記已讀、不再顯示)；右上角 ×→只收起小卡(未讀，下次登入再提醒，確保不漏看)。',
+      '★ v3.16.64【範圍/安全】老師端按「儲存回覆」沿用既有 _fbUpdateBugReportAdminReply(寫 adminReply＋adminReplyRead:false)完全不變；玩家標記已讀沿用既有 _markPendingBugRepliesAsRead；不需改 firestore.rules(bugReports 既有權限已允許玩家讀自己回報＋標記已讀)。只改 index.html；admin_panel.js／hero_db.js 僅版本對齊免重傳。七點版本同步→v3.16.64。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.44)。',
+    ],
+  },
   // v3.16.63 — 學生名冊上線(student_roster.js 補完 706 筆)
   {
     ver: 'v3.16.63',
@@ -275,34 +300,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.46【換隊友重戰/重新開戰完全復原·index.html】兩條重戰路徑原本只重置 curHp/status/buffs/acted,漏了 per-battle 計數 → 重戰後極限爆發次數不恢復(老師回報)。比照正常開戰 advStartBattle(BOSS 戰前重置)補齊:① 換隊友重戰 _showRollbackReinforcePicker→_rrfSelectIn 的 G.p1/G.p2 reset 迴圈加 h._burstUsed=0+h._risingSpiritCount=0;② 重新開戰按鈕 _resetH 加 h.s2used=false+h._burstUsed=0+h._risingSpiritCount=0;兩處均加 G.comboFatigue=0/comboFatigueByHero={}/lastSkillName=null/lastSkillByHero={}(連招疲勞歸零)。時間倒轉卡(_initState 還原)與小怪戰逐場(爆發本就跨小怪戰累積到 BOSS 戰才歸零·鐵則)維持原樣不動。',
       '★ v3.16.46【沐雲雪立繪 .webp→.png·hero_db.js】HERO_IMGS[御雲使‧沐雲雪] 由 御雲使_沐雲雪.webp(raw 404·v3.16.42 改 webp 但圖檔從未上傳)改回 御雲使_沐雲雪.png(raw 200·repo 既有)→立繪即恢復。同步 bump _vers[hero_db.js] v3.16.41→v3.16.46 破快取。⚠ 大標題 title-zh.webp 同屬「改 webp 但圖檔未上傳→404」,但已有 v3.16.46 文字後備(顯示金字標題)兜底;老師日後若要顯示圖片版,需自行上傳 title-zh.webp / 御雲使_沐雲雪.webp 到 repo 根目錄(Claude 只能改 src 引用、無法產生圖檔本體)。',
       '★ v3.16.46【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] → v3.16.46;world-boss.js 維持 v3.15.98、world-boss-ui.html 維持 v3.16.45、arena.js 維持 v3.15.69、main.css 維持 v3.15.79。本輪改 index.html + hero_db.js(沐雲雪 .png 引用) + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.26)。',
-    ],
-  },
-  // v3.16.45 — 世界 BOSS 三修(龍王戰入口紫框壓縮 + 排行榜最高傷害 DoT 歸施術者 + 答題法寶確認視窗 z-index)
-  {
-    ver: 'v3.16.45',
-    date: '2026-06-27',
-    brief: [
-      '⚔️【世界 BOSS 三項小修正】① 龍王戰入口畫面:最上面的紫色外框太高、和下面紅色「山岳地龍王」介紹卡擠在一起的問題修正了,標題區間距縮小、兩張卡之間保持適當距離。② 龍王戰排行榜的「最高傷害」更準確:中毒、燃燒、出血這類「持續傷害」現在會正確算在「放這個技能的英雄」身上(以前會誤算到當下正在行動的那隻英雄頭上),全隊「聯手爆發」的固定傷害也不會被灌進個人最高傷害。③ 答題時使用「神諭之光」「換題葉符」等法寶,原本「使用確認視窗」會被題目蓋住、按不到的問題修正,確認視窗現在固定顯示在最上層,一定點得到。',
-    ],
-    items: [
-      '★ v3.16.45【龍王戰入口紫框壓縮·world-boss-ui.html】#wb-entry-overlay 的 .wb-card(紫框 border:3px #a884ff)頂部 padding 48→30、.wb-title margin-bottom 24→12、.wb-subtitle 44→20、.wb-boss-preview(紅框)min-height 480→360 + margin-top 36→22 → 紫框整體變矮,標題區不再把紅龍王卡往下擠。(紫框是外框、紅卡是其子元素,CSS 父子本不會真重疊;此修壓縮頂部過高間距讓視覺不再卡在一起。若實機重疊另有狀況需截圖再查。)',
-      '★ v3.16.45【排行榜最高傷害 DoT 歸屬·index.html】根因:doDmg 第二段 a=G.activeChar||opts.actor — DoT(中毒/出血)tick 沒傳 actor 就被算到「tick 當下正要行動的英雄 G.activeChar」名下,且未標 isFixed → 進 dmgReal(=排行榜 topDmg);對 BOSS 每 tick 撞 5000 上限,誤灌某英雄最高傷害;燃燒(fixedDmg)則沒人認領。修法:addStatus 為 poison/bleed/hellfire 記施術者 _dotSrc(=當下 G.activeChar);三處 tick(中毒/出血/燃燒行動前後)傳 actor=_dotSrc;doDmg 改 a=(_isDotTick?opts.actor:G.activeChar)||opts.actor 讓 DoT 歸施術者(一般傷害不變);燃燒 fixedDmg 路徑 isFixed 改 !_isDotTick → 計入施術者真實貢獻。聯手爆發 5000 本就直接扣 boss.curHp 不走 doDmg/statTrack、從不在 dmgReal;本場總傷團隊貢獻用 myUid 計、不依賴 a,無回歸。',
-      '★ v3.16.45【答題法寶確認視窗 z-index·index.html】adv-treasure-confirm(神諭之光/換題葉符 使用確認視窗)z-index 9200→10500。根因:答題時 adv-quiz-overlay 會被拉到 9500(_tgAskPetQuestion)甚至 9950(另一答題流程)以蓋過過場 cutscene,原 9200 反被題目蓋住、✔使用/✕取消 按不到。10500 高於 9950、低於系統級 overlay(2147483646)。',
-      '★ v3.16.45【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js／world-boss-ui.html] → v3.16.45;world-boss.js 維持 v3.15.98、hero_db.js 維持 v3.16.41、main.css 維持 v3.15.79。本輪改 index.html + world-boss-ui.html + game_changelog.js + admin_panel.js(僅版號對齊·內容未改)。',
-    ],
-  },
-  // v3.16.44 — 首頁主標題改用 POP 海報體立繪圖(去掉底部灰色、保留飄浮動態)
-  {
-    ver: 'v3.16.44',
-    date: '2026-06-27',
-    brief: [
-      '✨【首頁變漂亮】首頁最上面的「小英雄大對抗」主標題,換成全新的 POP 海報體立繪圖(有寶劍、皇冠、盾牌跟小星星裝飾),原本標題字底部那塊灰灰的、看起來沒填滿的影子也拿掉了。標題會輕輕飄浮的動態效果保留著。',
-    ],
-    items: [
-      '★ v3.16.44【首頁主標題改圖·index.html】原 .title-zh 是用 CSS 文字(M PLUS Rounded 1c)+ 彩虹漸層 background-clip:text + -webkit-text-stroke + 多層 drop-shadow 做的;其中 drop-shadow(0 6px 0 #fff) 與 drop-shadow(0 8px 0 rgba(0,0,0,0.25)) 這兩層「白+灰往下偏移」的假 3D,在花背景上看起來就像字底部一塊灰色沒填滿(老師回報「好醜」)。',
-      '★ v3.16.44【修法】① HTML:.title-zh 內的六個字「小英雄大對抗」改為 <img class="title-img" src="title-zh.webp">(POP 海報體已內建在圖中,含寶劍/皇冠/盾牌/星星裝飾)。② 內嵌 <style> 用 !important 把 .title-zh 的 font/漸層/background-clip/text-stroke/灰色 filter/titleRainbow 動畫全部關掉(沿用「不動 main.css」內嵌覆寫慣例,只保留 main.css 既有定位 margin-top)。③ 圖片改套新的 titleFloat 飄浮動畫(scale 1→1.02 + rotate ±0.5deg + translateY 0→-7px bob,4s 循環)+ 一道柔和 drop-shadow(非灰色硬邊)→ 保留飄浮動態、去掉灰影。副標題「力行小學生與來自異世界的小夥伴」維持文字不變。',
-      '★ v3.16.44【webp 鐵則】老師提供的 836×470 PNG(≈408KB)依鐵則轉成 webp(q90·≈77KB·小 81%·保留透明背景),命名 title-zh.webp。⚠ title-zh.webp 需老師上傳 repo 根目錄(與 index.html 同層),圖片用相對路徑 + ?v=v3.16.44 破快取。日後若換圖,改 index.html 內 ?v= 版本即可。',
-      '★ v3.16.44【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] → v3.16.44(hero_db.js 維持 v3.16.41、main.css 未動故 v3.15.79 不變、admin_panel.js 內容未動僅版號對齊)。本輪只改 index.html + game_changelog.js(+ 新增 title-zh.webp 圖檔由老師上傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.24)。',
     ],
   },
 ];

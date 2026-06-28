@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.16.63';   // ★ v3.16.63(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·學生名冊 student_roster.js 補完 706 筆上線·真名搜尋+班級座號全校生效·名冊本體+index.html 名冊版號) ｜ ★ v3.16.62(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM 玩家搜尋「設計師學生中文真名備援」全在 index.html _fbAdminFindPlayersByName 階段1.5) ｜ ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.16.65';   // ★ v3.16.65(2026-06-28)— 課堂獎勵改「拉取制」:勾選獎勵下方新增「🏅 表現優良事蹟」(8 預設複選+自由補充 _cr-merit-*/_buildMerit);_send 由直接 _fbCompensatePlayer 推送改寫入該玩家收件箱 window._fbWriteGmClassReward(獎勵+事蹟),學生在「🎁 GM獎勵」自行「確認領取」才入帳(嚴防共用平板 UR 發錯人/帳號污染);送禮記錄/同名候選不變。⚠ 需 index.html 同版 + 部署 firestore.rules(gmClassRewards/gmClassRewardClaims) ｜ ★ v3.16.64(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·老師回信改右下角小視窗+鈴聲通知全在 index.html·GM 端儲存回覆沿用既有 _fbUpdateBugReportAdminReply 不變) ｜ ★ v3.16.63(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·學生名冊 student_roster.js 補完 706 筆上線·真名搜尋+班級座號全校生效·名冊本體+index.html 名冊版號) ｜ ★ v3.16.62(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM 玩家搜尋「設計師學生中文真名備援」全在 index.html _fbAdminFindPlayersByName 階段1.5) ｜ ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -842,9 +842,9 @@ async function _showAdminStatsPanelImpl(){
       <div id="_admin-classreward-section" style="background:rgba(30,45,30,0.5);border:2px solid rgba(140,220,120,0.6);border-radius:10px;padding:16px;margin-bottom:22px;">
         <div style="font-size:18px;font-weight:800;color:#aaffaa;margin-bottom:8px;">🎁 課堂獎勵發放</div>
         <div style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.6;">
-          先<b style="color:#ffe066;">勾選要發的獎勵</b>並填數量,再貼上學生(一行一個;支援中文姓名 / 學號 / 班級碼 / uid)。
-          系統比對帳號後對每位發放所勾選的獎勵(<b style="color:#9fd6ff;">union 合併,不會降級已有資料</b>),並寫入<b style="color:#ffcc66;">送禮記錄</b>。
-          <span style="color:#aaa;font-size:12px;"><b style="color:#ffcc66;">同名多筆者會被列出並跳過</b>,請改用學號 / uid 個別補發,避免 UR 發錯人。</span>
+          先<b style="color:#ffe066;">勾選要發的獎勵</b>與<b style="color:#ffd98c;">表現優良事蹟</b>,再貼上學生(一行一個;支援中文姓名 / 信箱 / 學號 / 班級座號)。
+          <b style="color:#9fd6ff;">改為「待領取」</b>:系統把獎勵+事蹟寫入該學生收件箱,學生下次登入在<b style="color:#ddbbff;">「🎁 GM獎勵」</b>按「確認領取」才入帳(<b style="color:#9fd6ff;">嚴防共用平板 UR 發錯人/帳號污染</b>),並寫入<b style="color:#ffcc66;">送禮記錄</b>。
+          <span style="color:#aaa;font-size:12px;"><b style="color:#ffcc66;">同名多筆</b>會列出候選,請核對「班級座號」勾選是哪一位。</span>
         </div>
         <!-- 勾選獎勵清單 -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px;background:rgba(0,0,0,0.28);border:1px solid rgba(140,220,120,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
@@ -897,6 +897,21 @@ async function _showAdminStatsPanelImpl(){
             <input type="checkbox" id="_cr-item-arenazheng" style="width:17px;height:17px;cursor:pointer;">🎖 鬥技之證 ×
             <input type="number" id="_cr-qty-arenazheng" value="10" min="1" max="9999" style="width:60px;padding:3px 5px;background:rgba(0,0,0,0.5);border:1px solid rgba(140,220,120,0.4);color:#fff;border-radius:5px;font-family:inherit;">
           </label>
+        </div>
+        <!-- ★ v3.16.65 — 表現優良事蹟(發獎理由;玩家領取「🎁 GM獎勵」時看得到。可勾選 + 自由補充) -->
+        <div style="background:rgba(0,0,0,0.28);border:1px solid rgba(255,210,120,0.45);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:800;color:#ffd98c;margin-bottom:8px;">🏅 表現優良事蹟 <span style="font-size:12px;color:#cdbf9a;font-weight:600;">(發獎理由 · 學生領取時看得到 · 可複選 + 自由補充)</span></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:6px 14px;">
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-1" style="width:16px;height:16px;cursor:pointer;">期末評量全班第一</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-2" style="width:16px;height:16px;cursor:pointer;">期末評量滿分 100 分</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-3" style="width:16px;height:16px;cursor:pointer;">進步分數全班前三</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-4" style="width:16px;height:16px;cursor:pointer;">期末評量 95 分以上</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-5" style="width:16px;height:16px;cursor:pointer;">期末評量 90 分以上</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-6" style="width:16px;height:16px;cursor:pointer;">進步 10 分以上</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-7" style="width:16px;height:16px;cursor:pointer;">封面設計前三名</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13.5px;color:#fff;cursor:pointer;"><input type="checkbox" id="_cr-merit-8" style="width:16px;height:16px;cursor:pointer;">課堂自製科學玩具</label>
+          </div>
+          <input type="text" id="_cr-merit-custom" maxlength="60" placeholder="其他事蹟(自由輸入,可與上方勾選並用)" style="width:100%;margin-top:8px;padding:8px 10px;font-size:13.5px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,210,120,0.45);color:#fff;border-radius:7px;font-family:inherit;box-sizing:border-box;">
         </div>
         <textarea id="_admin-classreward-names" placeholder="王小明&#10;陳大文&#10;5324蔣同學 ..." style="width:100%;min-height:110px;padding:10px 12px;font-size:14px;background:rgba(0,0,0,0.5);border:1.5px solid rgba(140,220,120,0.4);color:#fff;border-radius:8px;font-family:inherit;line-height:1.6;box-sizing:border-box;resize:vertical;"></textarea>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;">
@@ -2826,7 +2841,7 @@ async function _showAdminStatsPanelImpl(){
       // ★ v3.13.20(2026-06-02) — 鬥技場入口開關 + 戰鬥記錄審核
       { sec: '_admin-arena-switch-section',     label: '⚔ 鬥技場入口開關',       hint: '一鍵關閉/開啟全站鬥技場入口' },
       // ★ v3.13.72 — 課堂獎勵發放 + 鬥技場排名發獎開關
-      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '勾選獎勵(克雷爾/自選券/隨機券/至寶券/水晶/幣/果實)+貼名單→比對發放,寫送禮記錄' },
+      { sec: '_admin-classreward-section',      label: '🎁 課堂獎勵發放',         hint: '勾獎勵+事蹟+貼名單→指派「待領取」,學生在「🎁 GM獎勵」自行領取(嚴防UR發錯人/帳號污染),寫送禮記錄' },
       // ★ v3.15.26 — 虛寶序號(課堂獎勵兌換券)
       { sec: '_admin-redeem-section',           label: '🎟️ 虛寶序號',           hint: '勾選獎勵+數量→批量產生「一次性兌換序號」(每序號限用一次)→可複製清單(含獎勵名稱)貼給其他老師;另可查清單(未兌/已兌)、刪除。需先部署 redeemCodes 規則' },
       { sec: '_admin-arena-rankreward-section', label: '🏆 鬥技場排名發獎開關',   hint: '一鍵開啟/關閉每週排名獎勵自動發放' },
@@ -4990,6 +5005,25 @@ async function _showAdminStatsPanelImpl(){
       if(Object.keys(backpack).length) reward.backpack = backpack;
       return { reward, items };
     }
+    // ★ v3.16.65 — 組「表現優良事蹟」字串(勾選的預設事蹟 + 自由補充,頓號相連)
+    var _CR_MERIT_PRESETS = {
+      '_cr-merit-1': '期末評量全班第一',
+      '_cr-merit-2': '期末評量滿分 100 分',
+      '_cr-merit-3': '進步分數全班前三',
+      '_cr-merit-4': '期末評量 95 分以上',
+      '_cr-merit-5': '期末評量 90 分以上',
+      '_cr-merit-6': '進步 10 分以上',
+      '_cr-merit-7': '封面設計前三名',
+      '_cr-merit-8': '課堂自製科學玩具'
+    };
+    function _buildMerit(){
+      var parts = [];
+      for(var _mid in _CR_MERIT_PRESETS){ if(_chk(_mid)) parts.push(_CR_MERIT_PRESETS[_mid]); }
+      var custEl = document.getElementById('_cr-merit-custom');
+      var cust = custEl ? String(custEl.value || '').trim() : '';
+      if(cust) parts.push(cust);
+      return parts.join('、').slice(0, 120);
+    }
     function _setSendEnabled(on){
       sendBtn.disabled = !on;
       sendBtn.style.opacity = on ? '1' : '0.5';
@@ -5109,23 +5143,24 @@ async function _showAdminStatsPanelImpl(){
       if(!_matched.length) return;
       const { reward, items } = _buildReward();
       if(!items.length){ resEl.innerHTML = '<span style="color:#ff8866;">沒有勾選任何獎勵</span>'; _setSendEnabled(false); return; }
-      if(typeof window._fbCompensatePlayer !== 'function'){
-        resEl.innerHTML = '<span style="color:#ff6666;">_fbCompensatePlayer 未載入,請重新整理頁面</span>'; return;
+      // ★ v3.16.65 — 改「拉取制」:不再直接 _fbCompensatePlayer 推送,改寫入該玩家待領收件箱(gmClassRewards),
+      //   學生下次登入在「🎁 GM獎勵」自行「確認領取」才入帳 → 嚴防共用平板 UR 發錯人/帳號污染。
+      if(typeof window._fbWriteGmClassReward !== 'function'){
+        resEl.innerHTML = '<span style="color:#ff6666;">_fbWriteGmClassReward 未載入,請重新整理頁面(可能 index.html 尚未更新到 v3.16.65)</span>'; return;
       }
-      if(!confirm('確認對 ' + _matched.length + ' 位學生發放?\n\n' + items.join('\n') + '\n\n(union 合併,不會降級已有資料)')) return;
-      sendBtn.disabled = true; const _old = sendBtn.textContent; sendBtn.textContent = '發放中...';
+      const _merit = _buildMerit();
+      if(!confirm('確認指派給 ' + _matched.length + ' 位學生?\n\n獎勵:\n' + items.join('\n')
+                  + '\n\n事蹟:' + (_merit || '(未填)')
+                  + '\n\n※改為「待領取」:學生下次登入在「🎁 GM獎勵」按「確認領取」才入帳(嚴防共用平板領錯人;UR 安全)。')) return;
+      sendBtn.disabled = true; const _old = sendBtn.textContent; sendBtn.textContent = '指派中...';
       const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
       const _summary = items.join(' + ');
       let _done = 0; const _fail = [];
       for(const m of _matched){
         try{
-          await window._fbCompensatePlayer(m.uid, Object.assign({}, reward, {
-            reason: '課堂獎勵發放',
-            summary: '課堂獎勵:' + _summary,
-            by: _adminEmail
-          }));
-          _done++; sendBtn.textContent = '發放中... ' + _done + '/' + _matched.length;
-          // ★ v3.13.74 — 寫送禮記錄(失敗不影響發獎)
+          await window._fbWriteGmClassReward(m.uid, m.label, m.email, reward, items, _merit);
+          _done++; sendBtn.textContent = '指派中... ' + _done + '/' + _matched.length;
+          // 寫送禮記錄(GM 稽核軌跡;失敗不影響指派)
           if(typeof window._fbWriteGmGiftLog === 'function'){
             try{ await window._fbWriteGmGiftLog({ uid:m.uid, label:m.label, email:m.email, items:items, by:_adminEmail }); }
             catch(_eLog){ console.warn('[課堂獎勵] 送禮記錄寫入失敗', _eLog); }
@@ -5133,13 +5168,14 @@ async function _showAdminStatsPanelImpl(){
         }catch(e){ _fail.push(m.label + ':' + (e && e.message || e)); }
       }
       let html = '<div style="text-align:left;font-size:13px;line-height:1.7;">';
-      html += '<div style="color:#88ff88;font-weight:800;">✅ 已發放 ' + _done + '/' + _matched.length + ' 人(' + _esc(_summary) + ')</div>';
+      html += '<div style="color:#88ff88;font-weight:800;">✅ 已指派(待領取) ' + _done + '/' + _matched.length + ' 人:' + _esc(_summary) + '</div>';
+      if(_merit) html += '<div style="color:#ffd98c;">🏅 事蹟:' + _esc(_merit) + '</div>';
       if(_fail.length) html += '<div style="color:#ff6666;">❌ 失敗 ' + _fail.length + ':<br>' + _fail.map(x => '・' + _esc(x)).join('<br>') + '</div>';
-      html += '<div style="color:#aaa;margin-top:4px;">(已清空待發名單,如要再發請重新比對;記錄可按下方「查看送禮記錄」)</div>';
+      html += '<div style="color:#aaa;margin-top:4px;">學生下次登入會在「🎁 GM獎勵」看到事蹟+獎項並自行「確認領取」入帳(已清空待發名單;記錄可按下方「查看送禮記錄」)</div>';
       html += '</div>';
       resEl.innerHTML = html;
       sendBtn.textContent = _old;
-      _matched = []; _setSendEnabled(false);   // 發完清空,避免重複發
+      _matched = []; _setSendEnabled(false);   // 指派完清空,避免重複指派
     }
     // ★ v3.13.74 — 送禮記錄檢視器
     async function _showLog(){
