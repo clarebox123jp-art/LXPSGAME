@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-28  / 目前主程式版本:v3.16.70(英雄圖鑑放大改版:取代失敗的整體縮放,改真字級放大+雙欄RWD+至寶選單放大+龍王至寶旗標中文化;前版 v3.16.69 圖鑑來源帶字級放大)
+//  最後更新:2026-06-28  / 目前主程式版本:v3.16.71(素質四欄兩行排版修正 + 四說明視窗字放大×2 + 技能/爆發升級即開窗+音效改點;前版 v3.16.70 英雄圖鑑放大改版)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.71 — 素質四欄兩行排版 + 四說明視窗字放大 + 技能/爆發升級即開窗
+  {
+    ver: 'v3.16.71',
+    date: '2026-06-28',
+    brief: [
+      '🧩【素質欄位排版修正】英雄圖鑑詳情頁的 HP/攻擊/特技/速度 四個欄位排版修正：字體放大後不再擠成一團或破版，改成「項目名稱和 ? 說明」放第一行、「數值和加減按鈕」放第二行，看得更清楚。',
+      '🔍【四個說明視窗字放大一倍】圖鑑裡四個說明視窗的字體放大一倍，看得更清楚：①點四項素質旁的「?」說明視窗 ②點六邊形雷達圖各頂點的說明視窗 ③天賦的「查看升級表」視窗 ④最下面爆發技的「升級效果一覽」表格。',
+      '⚡【技能/爆發升級不再卡頓】技能、爆發技按下「升級」後，升級視窗現在會立刻打開（原本要等好幾秒）；按下時不再播音效，改成按「確定升級」時才播放升級音效，操作更順暢。'
+    ],
+    items: [
+      '★ v3.16.71【素質四欄兩行排版·index.html】_renderHeroDetail(L≈110642) 的 HP/攻擊/特技/速度 素質卡由水平 flex(項目在左、數值在右、加減鈕)改為直向 flex-direction:column：第一行=圖示+名稱+ ? 說明(toggleStatPopup span，加 line-height:1.25)；第二行=新 wrapper div(flex+space-between+flex-wrap)放「數值與加成」span(加 white-space:nowrap)與「待分配/加減按鈕」IIFE。字級放大後不再換行破版；所有 ? 與 ± 的 onclick(toggleStatPopup/adjustPendingStat)完整保留。',
+      '★ v3.16.71【四說明視窗字放大×2·index.html】①圖鑑素質 ? 說明：toggleStatPopup 在圖鑑的呼叫點(L≈110643)第三參數 24→48(其餘呼叫點 L61571/61580/61584/61588/28397 維持不動；此 popup 掛到 #gc 不被 _codexScaleFontSizes 縮放故需直接放大)②六邊形雷達 _showRadarLabelInfo(L≈128186)：標題 22→44/說明 18→36/關閉 14→28/padding 16px22px→24px32px/max-width 340→560/定位上移 py-190→py-330 ③天賦升級表 _showTraitLvPopup(L≈122739)：標題 22→44/效果 17→34/分級列 18→36/footer 15→30/固定效果 32/max-width 380→620/popW 400→640/top clamp 1080-400→1080-760 與 ey-80→ey-160 ④爆發升級效果一覽(_renderHeroDetail 底部 ⚡極限爆發 #_hut-anchor-burst 表格)：cell 由 clamp(13px,1.8vw,22px)改 font-size:24px → 經 _codexScaleFontSizes ×1.6 放大成 38px(與爆發說明字級一致；原 clamp 寫法被縮放工具略過故顯示偏小)。',
+      '★ v3.16.71【技能/爆發升級即開窗+音效改點·index.html】根因：upgradeSkill(L≈111327)同步建構確認視窗(無 await)，但開窗 onclick 串接兩個音效(按下 sfx-statup + 開窗 sfx-sel)造成 iOS 音訊卡頓、體感「等好幾秒」。修正：①技能升級鈕(L≈110975)移除 onclick 的按下音效 → 視窗即時開啟 ②技能開窗音效(L≈111393 原 sfx-sel)移除 ③技能確認鈕 _upg_yes2(L≈111395)首行補播 sfx-statup(0.7)(原成功音 sfx-powerup 0.7 保留)④爆發升級鈕(L≈111004)移除 onclick 按下音效 ⑤爆發確認鈕 _burst_yes(L≈111072)首行補播 sfx-statup(0.7)(原成功音 sfx-powerup 0.8 保留)。技能與爆發一致：開窗無聲即時開、按下確定升級才播音效。',
+      '★ v3.16.71【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js 與 admin_panel.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.71。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.51)。本輪只改 index.html(三項修正全在此)，admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。'
+    ],
+  },
   // v3.16.70 — 英雄圖鑑放大改版(取代上一版失敗的整體縮放)
   {
     ver: 'v3.16.70',
@@ -20,6 +36,7 @@ window.GAME_CHANGELOG = [
       '🔍【英雄圖鑑放大·更清楚】英雄圖鑑的字體整體放大,看得更清楚;同時修正上一版「整體縮放」造成的電腦版排版跑掉、裝備至寶文字變成一個字一行、天賦欄變得超長,以及平板上「只有六邊形雷達放大、其餘字沒變大」的問題。裝備至寶選單的字也一起放大、原本顯示英文的龍王至寶效果改回中文。英雄名維持原本大小。天賦下方的 S1/S2/爆發技能排版維持不變。',
       '🔓【未收錄英雄也能申請救回】英雄圖鑑裡「還沒擁有(未收錄)」的英雄,大圖下方新增「🔓 要救回」按鈕——如果那隻其實是你的、卻不見了,可送老師人工審查;送出後顯示「⏳ GM 審查中」、審查期間不能再按,老師核可補回後會標示「✅ 救回申請已通過(日期)」並移除按鈕。',
       '🎁【GM 獎勵視窗左右兩區】「🎁 GM 獎勵」視窗改成左右兩區:左邊是老師發的獎勵、右邊是序號兌換,兩區可各自上下捲動互不干擾(手機等窄螢幕會自動上下排)。',
+      '✅【辨識按鈕自動消失】英雄/至寶只要有了「正常解鎖紀錄」(你正常抽到/打到/兌換而來、綁你的帳號存到雲端),圖鑑就會自動移除「✅ 確認是我的 / 🗑 不是我的 / 🔓 要救回」按鈕——這些按鈕只保留給「查不到來源(來源不明)」的英雄/至寶;換裝置或重新登入也一致(雲端紀錄會合併回本機)。',
     ],
     items: [
       '★ v3.16.70【取代縮放改真字級放大·index.html】移除英雄圖鑑右側內容的 zoom:1.8(電腦版排版被壓垮、平板上 zoom 對文字不可靠的根因),改用 _codexScaleFontSizes 把右側內容的「行內 px 字級」乘上倍率 _CODEX_FONT_SCALE(預設 1.6,老師可一鍵調整);雷達圖(SVG)與英雄名(data-noscale)不放大;所有重繪都經 _renderHeroDetail 出口套用,吃經驗書/投資能力/裝至寶/升技能後仍維持放大。',
@@ -27,7 +44,8 @@ window.GAME_CHANGELOG = [
       '★ v3.16.70【英雄名固定 + 裝備至寶選單放大 + 龍王至寶中文化·index.html】英雄名字級還原 56px(縮放前的視覺大小)且不被放大;💎裝備至寶選擇視窗套用同一放大工具;補上龍王至寶效果旗標的中文(原顯示 immuneNoatk/atkRampPerRound 等英文,改為 免疫無法攻擊/每回合攻擊力遞增 等)。',
       '★ v3.16.70【未收錄英雄救回 + GM 審查狀態機·index.html】_renderHeroCodexUnlockBar 解除「未擁有不顯示」閘門:未收錄英雄改渲染新 _codexLostRescueBarHtml(僅「🔓 要救回」路徑);送出 lost 申請時加寫持久 pending 標記(lxps_codex_lostpending_<uid>_hero_<name>·與每日限額分離)→ 顯示「⏳ GM 審查中」且按鈕消失(防重複送出);偵測「曾 pending + 現已擁有(GM 經 _fbAdminRestoreLostHeroes 核可補回)」=通過 → 清 pending、標 passed 日期,已擁有帶顯示「✅ 救回申請已通過(日期)」並移除所有按鈕。★帳號完整性:全程不自動發放/刪除,GM 仍為唯一權威;不碰載入路徑/存檔倒退守門。',
       '★ v3.16.70【GM 獎勵視窗左右兩區·index.html】#redeem-overlay 由上下單欄改左右兩區:外卡改 flex-column(🎁標題固定)、內含左區「🎁 老師發的獎勵」(#gmcr-inbox)+右區「🎟️ 序號兌換」(虛線分隔),兩區各自 overflow-y:auto 獨立捲動、flex-wrap 窄螢幕自動堆疊;保留 #gmcr-inbox/#redeem-input/#redeem-submit-btn/#redeem-result 與 closeRedeemDialog/_doRedeem 全不變,字級維持放大略修以容兩欄。',
-      '★ v3.16.70【版本/範圍】七點版本同步 → v3.16.70;本輪只改 index.html(圖鑑放大+雙欄RWD+至寶旗標中文 + 未收錄英雄救回審查 + GM獎勵左右兩區),admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.50)。',
+      '★ v3.16.70【有正常解鎖紀錄就移除辨識按鈕·index.html】_codexUnlockBarHtml 按鈕顯示條件由「known(有正常解鎖紀錄)|| pollution(來源不明)」收斂為「只 pollution」:有自己 uid 的合法正常解鎖紀錄(known·初始/已確認亦同)一律不顯示 ✅確認是我的/🗑不是我的/🔓要救回,只顯示來源標;英雄+至寶共用此函式故同時生效。判定依據綁 uid 上雲端既有完備:advSaveUnlockedHero/_advSaveTreasureUnlockHistory 正常解鎖即寫綁 uid 本機紀錄 + _lxpsCloudInstantUnlock arrayUnion 雲端 _heroUnlockHistory/_treasureUnlockHistory,_applySafeData 載入時雲端 ∪ 本機去重寫回 → 換裝置/重登一致;未收錄英雄被正常解鎖後自動進已擁有帶且無按鈕。',
+      '★ v3.16.70【版本/範圍】七點版本同步 → v3.16.70;本輪只改 index.html(圖鑑放大+雙欄RWD+至寶旗標中文 + 未收錄英雄救回審查 + GM獎勵左右兩區 + 有正常解鎖紀錄自動移除辨識按鈕),admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.50)。',
     ],
   },
   // v3.16.69 — 英雄圖鑑字級放大(左下方來源帶 + 右側內容區)
@@ -275,24 +293,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.52【本週進度顯示·index.html】新增 _advWeeklyBankInfo(subject) 回 {answered,total}(五下第三/四單元、期中評量讀各自陣列·其餘 ADV_QUIZ_DB.filter by subject·三專屬解鎖題庫回 null);_renderChoiceBtnContent + makeBtn 兩個 render 路徑的「一般科目」else 分支顯示「📘 本週已答對 N/M」或「✅ 本週已完成」。需求「隨機調整選項」引擎本就有(河堤 BOSS L≈82593 + 小怪戰 L≈118283 每次出題 Fisher-Yates 洗選項·dataset.isCorrect 判答)·本輪未改答題判分路徑。',
       '★ v3.16.52【條件搜尋補標·hero_db.js】SKILL_EFFECT_DEFS B 組(傷害/控場類)新增 3 標籤 禁錮/拘留/認罪(置於「無法行動」後);HERO_SKILL_EFFECTS 掛標:魔術師+禁錮、拘留者+拘留、偵探+認罪(封印被動 v3.16.50 已在表內)。稽核 84 勾選項/84 英雄使用·無孤兒標籤、無空結果勾選項。',
       '★ v3.16.52【驗證/版本】index.html 20 個 inline script node --check 全過·0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過·UTF-8 OK。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.52(admin_panel.js 僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.32)。'
-    ],
-  },
-  // v3.16.51 — 平衡調整:HP素質只給玩家英雄版 + %治療不吃HP放大 + 暗法師加強 + 自動戰鬥AI更聰明
-  {
-    ver: 'v3.16.51',
-    date: '2026-06-28',
-    brief: [
-      '⚖️【平衡調整·HP素質更合理】英雄的「生命值(HP)」素質帶來的「減傷」與「受到治療量提升」效果,現在只對你的玩家英雄生效(包含你招募到的英雄版酒吞童子、玉藻前、大天狗、法老王、埃及豔后)。冒險關卡裡的敵方 BOSS、菁英、小怪即使是同名角色,也不再享有這兩項加成。攻擊、特技、速度三項素質對戰鬥的影響維持不變。',
-      '💧【治療計算更直覺】所有「按 HP 百分比回復」的治療(例如「回復最大 HP 的 30%」),不再被 HP 素質額外放大——百分比治療就是實打實的百分比,不會再因為堆高 HP 而暴漲。(治療技能、至寶等「提升治療量」的效果仍然有效。)',
-      '🌑【暗法師加強】暗法師的 S1「死亡宣告」能量消耗從 5 降到 4,更容易施放!爆發技「毀滅禁咒」傷害不變,但現在保證附加「強力封印」+「強力禁療」2 回合(把爆發練到滿級可達 3 回合),讓敵人既不能用技能、也無法被治療!',
-      '🤖【自動戰鬥更聰明】開啟自動戰鬥時:只有「天賦會在普通攻擊時觸發效果」的英雄才會去普攻(例如法師、祭司、神偷等),其他英雄不再浪費回合做微弱的普攻,改成賣出高價物品蓄積能量、優先施放爆發或技能。主治療類型的英雄,只要有隊友倒下或血量偏低,就會優先進行復活/治療!'
-    ],
-    items: [
-      '★ v3.16.51【HP素質範圍·index.html】新增 _isBossVerStat(t)(世界BOSS龍王 || p2側且 _adventureMode)→ SITE5 受傷減免(L≈39638)+SITE1 受治療放大(L≈41819)的 _isPlayerHero 閘各加 && !_isBossVerStat;競技場/PVP 的 p2 非冒險回 false → 英雄版酒吞/玉藻前/大天狗/法老王/豔后保留 HP 加成。atk/特技/速度三素質公式完全未動(BOSS/菁英/小怪/玩家一致·無上限)。',
-      '★ v3.16.51【%治療不吃HP放大·index.html】doHeal 新增 opts.isPctHeal;SITE1 受治療放大閘加 && !opts.isPctHeal;13 處「按目標最大HP百分比」的 doHeal 呼叫點補 isPctHeal:true。至寶 healReceived/草龍王 healRamp/healReduced 等「技能效果」仍生效;回滿血(t.hp-t.curHp / 滿血菇 / 賢者之石)因已夾 maxHP 為 no-op 不標。',
-      '★ v3.16.51【暗法師·hero_db.js+index.html】S1死亡宣告 c:5→c:4(hero_db.js);爆發毀滅禁咒(index.html L≈31539)傷害不變,per-enemy 由「機率封印1回合」改「保證 addStatus seal+noheal_curse·皆 _strong:true·dur=2+_lv5Extra(_burstLv>=4→3回合)」。',
-      '★ v3.16.51【自動戰鬥AI·index.html】_realAiAct:(1)優先3普攻只在 a.side==p1 且 HERO_TRAIT desc/fd 含「普通攻擊」時執行(否則略過·改賣最高價非裝備/非治療/非復活物品蓄能·無可賣才休息);(2)isHealer 併入 HERO_PRIMARY_CLASS[a.name]==heal → 主治療型套用治療門檻優先治療/復活。敵方 p2 AI 維持原行為不動 BOSS 平衡。',
-      '★ v3.16.51【驗證/版本】index.html 20 個 inline script node --check 全過·0 lone surrogate;hero_db.js/admin_panel.js node --check 過。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.51。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.31)。'
     ],
   },
 ];
