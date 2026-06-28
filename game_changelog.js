@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-28  / 目前主程式版本:v3.16.54(巫女神樂舞新動畫+音效 + 召喚星空動態影片背景;前版 v3.16.53 BOSS攻擊素質強制減傷+素質50%上限文案)
+//  最後更新:2026-06-28  / 目前主程式版本:v3.16.60(召喚物行動在主人卡牌跳趣味標籤·青龍助攻延後0.5秒;前版 v3.16.59 鬥技場動態影片背景)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,85 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.60 — 召喚物行動時在主人卡牌跳趣味標籤
+  {
+    ver: 'v3.16.60',
+    date: '2026-06-28',
+    brief: [
+      '🎉【召喚物出手更有戲了】陰陽師的式神、操偶師的傀儡、喚龍使的天青龍在場上幫忙時，會在「主人的卡牌」上跳出可愛的提示標籤：朱雀治療！、青龍助攻！、玄武白虎守護！、操偶／城牆守護！、天青龍守護！——一眼就知道是哪隻召喚物在出力。',
+      '🐉【青龍助攻慢半拍登場】青龍追擊的傷害數字和「青龍助攻！」標籤會比原本的攻擊慢 0.5 秒才跳出來，跟原本的傷害數字錯開、看得更清楚。',
+    ],
+    items: [
+      '★ v3.16.60【召喚物笑果標籤·index.html】五隻召喚物在「主人卡牌」跳 bannerFX 標籤：朱雀治療！(治療友方·主人＝陰陽師)／青龍助攻！(追擊友方目標·主人＝陰陽師)／玄武白虎守護！(代承陰陽師傷害·主人＝陰陽師)／操偶守護！‧城牆守護！(操偶師·依當前 _puppetLabel 狀態)／天青龍守護！‧至尊天青龍守護！(喚龍使‧蜜鶴林本體·依當前 _dlabel 狀態)。原本守護顯示的「-扣血數字」移到戰鬥紀錄文字，卡牌 banner 改顯示笑果文字。',
+      '★ v3.16.60【青龍助攻延後 0.5 秒·index.html】青龍追擊的傷害套用＋「青龍助攻！」標籤改用 _pSetTimeout 延後 0.5 秒(避免和原本傷害數字疊在一起)；立即設防遞迴旗標、capture 區域變數，延後回呼會重新確認目標／陰陽師／青龍式神都還在場才執行，戰鬥結束或式神陣亡則略過。pause-aware：暫停中會排隊、解除後再跑，並自帶 fallback 不卡死。',
+      '★ v3.16.60【範圍/版本】只改 index.html(doDmg／doHeal hook 五處 bannerFX)；admin_panel.js＋game_changelog.js 僅版本對齊。七點版本同步 → v3.16.60。未來新增召喚物比照此模式加標籤。「替身！」「反擊！」等其他既有機制不動。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.40)。',
+    ],
+  },
+  // v3.16.59 — 鬥技場動態影片背景
+  {
+    ver: 'v3.16.59',
+    date: '2026-06-28',
+    brief: [
+      '🏟️【鬥技場換上動態背景】鬥技場主頁加入全螢幕動態背景影片，畫面更有氣勢！若影片還沒下載好或讀取失敗，會自動顯示原本的鬥技場背景圖，不影響使用。',
+    ],
+    items: [
+      '★ v3.16.59【鬥技場動態影片·index.html】#arenaLobbyOverlay 第一子層新增 <video id=arena-bg-video>（鬥技場動態.mp4·autoplay/loop/muted/playsinline·object-fit:cover 全螢幕·opacity:0 + onloadeddata 淡入·onerror→display:none 露出靜態 鬥技場.png）。作法同召喚星空動態影片，但 z-index 用 -1（非召喚頁的 0）：鬥技場 .al-body 內容為正常流(static)，影片若用 z0 會蓋住內容，改用負 z 讓影片畫在「本元素背景圖(png+漸層)之上、正常流內容之下」（.al-header 為 sticky z5 亦在其上）。',
+      '★ v3.16.59【需上傳 repo + 版本】⚠ 老師需上傳 repo 根目錄：鬥技場動態.mp4（缺檔則鬥技場頁自動隱藏影片·露出原本的鬥技場.png）。七點版本同步 → v3.16.59。GAME_CHANGELOG trim 至 20 筆（本批新增 v3.16.55~59·移除最舊 v3.16.39~35）。',
+    ],
+  },
+  // v3.16.58 — 自動戰鬥「每位英雄 AI 行動設定」
+  {
+    ver: 'v3.16.58',
+    date: '2026-06-28',
+    brief: [
+      '🤖【自動戰鬥可以細調每位英雄了】開啟「自動戰鬥」前，會先跳出設定視窗，讓你為隊上「每一位英雄」分別決定 AI 要不要做這些行動：使用普通攻擊／技能1／技能2／極限爆發／優先賣物品卡蓄能／優先使用物品卡／優先使用治療復活技能／優先攻擊HP最高的目標／優先攻擊HP最低的目標。',
+      '⚙️【打到一半也能改】自動戰鬥進行中，點畫面會出現「是否取消自動戰鬥」視窗，裡面多了「⚙ 修改AI設定」按鈕，可以隨時調整、下一個我方行動就生效。設定會記住並同步雲端，換裝置也還在。',
+      '💡【預設不變】沒有特別調整時，AI 行為跟以前完全一樣；這只是讓你能進一步客製化每位英雄的打法。',
+    ],
+    items: [
+      '★ v3.16.58【每位英雄AI設定·index.html】新增 window._autoBattleHeroCfg（綁英雄名·9 布林開關 atk/s1/s2/burst/sell/useItem/healRevive/tgtHigh/tgtLow）+ localStorage(lxps_auto_battle_cfg) + 雲端同步（_buildSafeData 寫 autoBattleCfg / autoBattleCfg_s·_applySafeData 優先採信 _s·自寫欄位不需改 firestore.rules·不在英雄存檔載入路徑）。預設值=等同舊行為（普攻依天賦判定·其餘 true·目標兩項 false）。',
+      '★ v3.16.58【設定視窗·index.html】toggleAutoBattle 開啟前先彈 showAutoBattleSettings({live:false, onConfirm:_doEnableAutoBattle})；showAutoBattleConfirm（進行中）新增「⚙ 修改AI設定」鈕 → showAutoBattleSettings({live:true})（只存檔不重啟）。視窗 25 秒未操作自動套用並繼續（防卡死）·空隊伍直接放行·任何例外都不擋流程。畫面點擊攔截 excluded 加 auto-confirm-settings / auto-battle-settings-ov。新增 #auto-battle-settings-ov CSS（iPad 友善開關·≥44px 觸控·可捲動·z 9960）。',
+      '★ v3.16.58【_realAiAct 閘門·index.html】只在「玩家側 p1 + 自動戰鬥開啟 + 該英雄有設定」時生效（敵方 p2 與未設定英雄完全不受影響）。爆發/技能(canS1b/canS2b 折入 s1/s2 開關·涵蓋治療段與攻擊段)/普攻/賣卡蓄能/物品卡(裝寵物·復活/治療/攻擊道具)/治療技能 各加「不允許就略過、往下一個選項走」；目標 HP 最高/最低（恰好勾一項時生效·XOR）。最後一定有「休息」收尾且永不被閘門擋 → 任何勾選組合都會結束回合、不會卡死。',
+    ],
+  },
+  // v3.16.57 — 戰鬥存檔教學放大 + 每次提醒可暫停存檔
+  {
+    ver: 'v3.16.57',
+    date: '2026-06-28',
+    brief: [
+      '📖【戰鬥存檔教學放大】「戰鬥存檔功能教學」的金色說明框裡的文字全部放大一倍，看得更清楚。',
+      '⏸️【每次都提醒可暫停存檔】很多同學不知道戰鬥中可以暫停存檔，現在新手教學的「第一步」一定會先提醒「右上角可以暫停，暫停就會存檔」；之前的「不再顯示」勾選也移除了（共用 iPad 每位同學都看得到）。',
+    ],
+    items: [
+      '★ v3.16.57【教學金框放大·index.html】._tut-pause-hint-box 系列 CSS 字級 ×2（標題 18→36px·內文 15→30px·勾選 14→28px·checkbox 28px）。',
+      '★ v3.16.57【暫停提醒每次顯示·index.html】移除 localStorage(pauseHintDismissed) 守門與「不再顯示」勾選；於 TUTORIAL_STEPS 最前插入一步（target:null·side:center·標題「⏸ 戰鬥可以暫停存檔！」）→ 每次走教學（含 ❓ 重看）第一步都先提醒。',
+    ],
+  },
+  // v3.16.56 — 戰鬥 LOG 展開/收合 + 移除雲端同步洗頻
+  {
+    ver: 'v3.16.56',
+    date: '2026-06-28',
+    brief: [
+      '📜【戰鬥紀錄可以展開看全文了】戰鬥畫面的戰鬥紀錄區右上角新增「📜 展開／✖ 收合」按鈕，展開時紀錄會放大覆蓋整個區域、可往上捲讀完整戰鬥過程；進入下一場戰鬥會自動收合。原本的戰鬥指令排版完全不變。',
+      '🧹【移除洗頻訊息】移除戰鬥紀錄裡頻繁出現的「☁️ 雲端已同步」洗頻訊息（存檔很頻繁，改為只記在開發者主控台，不再洗版戰鬥紀錄）。',
+    ],
+    items: [
+      '★ v3.16.56【LOG 展開/收合·index.html】#sb 第一子層新增 #log-toggle-btn（position:absolute·top4/right8·z60·不佔排版流 → 不影響任何戰鬥指令位置）；toggleBattleLog 展開時 #log 改 position:absolute inset:0 覆蓋 #sb（z55·深底·padding 44px）·收合清回 inline 空字串還原 main.css；startTurn round1 呼叫 _collapseBattleLog 自動收合。全程不修改 #action-panel 與任何指令按鈕。',
+      '★ v3.16.56【移除同步洗頻·index.html】兩處 log(☁️雲端已同步 / 部分) 改為僅 console.log，不再寫入戰鬥 LOG。',
+    ],
+  },
+  // v3.16.55 — 死亡宣告對日本/埃及小怪也生效
+  {
+    ver: 'v3.16.55',
+    date: '2026-06-28',
+    brief: [
+      '💀【死亡宣告對日本／埃及小怪也生效了】英雄技能「死亡宣告」原本只對台灣關卡的路邊小怪生效（2 回合後強制剩 1 HP），現在日本（河童等）與埃及（木乃伊貓等）關卡的路邊小怪也一樣生效。',
+      '💡【說明】菁英小怪（九尾空貓怪／綠竹筍小妖／茶葉精靈）、各關頭目、以及免疫即死的死神／暗龍王之骸 不受影響，維持原本規則。',
+    ],
+    items: [
+      '★ v3.16.55【死亡宣告擴關·index.html】死亡宣告的「路邊小怪」判定名單由原本只含台灣 MINI_MONSTERS，擴充為 concat(MINI_MONSTERS, MINI_MONSTERS_JP, MINI_MONSTERS_EG)（以 typeof 守門避免未定義）。玩家施放路徑（L≈45118）與 deathmark 到期結算路徑（L≈54484·最後防線）雙處同口徑修正。菁英小怪/BOSS 陣容走 20% 當前 HP 傷害+禁療（上限英雄 Lv×20）·死神/暗龍王之骸 即死免疫·皆不變。',
+    ],
+  },
   // v3.16.54 — 巫女神樂舞新動畫+音效 + 召喙星空動態影片背景
   {
     ver: 'v3.16.54',
@@ -238,89 +317,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.41【S2 軟軟的雲(c0 被動)】doDmg 扣 HP 後 hook(才符「受到傷害時」·避免被自身迴避光環誤觸):受傷(排除爆發傷害 _burstCastActive/治療/反彈/DoT)35%+技能級×5%(Lv10=80%)反彈該次傷害 ×200% 給攻擊者·每回合 ≤2 次(_softCloudRoundUsed·startTurn 重置)。反彈走 doDmg(isRebound·無 bypassShield)→ 龍王護盾+5000cap 仍生效(鐵律1.31)。',
       "★ v3.16.41【爆發 霞蔚雲蒸】_runBurst 分支:全體隊友(含倒下者)回復最大 HP 50%+10%/burstLv(Lv4 MAX=90%·doRevive/doHeal)→ setPending('ally') 指定 1 友方立即施展其自身爆發(乙:玩家手動點選 + 5 秒 watchdog 自動挑攻/特最高防卡)。本體 execBurst 已 acted,故分支 return,收尾交被喚發友方 _runBurst。",
       '★ v3.16.41【UI/註冊/版本】SKILL_UPGRADE_DEF(浮雲入夢 special_yunmeng 可升級 + 軟軟的雲 pct_buff)+ codex case special_yunmeng + BURST_UPGRADE_DEF(霞蔚雲蒸 5 列治療 50→90%)+ SUMMON_RARE_HEROES + STUDENT_DESIGNER_HEROES(lsps110188·自動套 _STUDENT_DESIGNED_HERO_SET→圖鑑🎨)。BURST_GIF 霞蔚雲蒸=大強化.gif + 神聖治療音效(sfx-goddess/sfx-heal·dur910)。五點版本同步 + hero_db.js → v3.16.41。本輪改 index.html + hero_db.js + game_changelog.js。⚠ 圖檔 御雲使_沐雲雪.webp(★ 新圖一律 webp 格式·新版平板下載更快)需老師另外上傳 repo;hero_input.html 離線編輯器另上傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.21)。',
-    ],
-  },
-  // v3.16.40 — 修正 iPad 切到背景/滑掉後遊戲背景音樂沒停止
-  {
-    ver: 'v3.16.40',
-    date: '2026-06-27',
-    brief: [
-      '🔇【修正背景音樂關不掉】修正在 iPad 上把遊戲切到背景、滑掉、或鎖屏後,遊戲的背景音樂仍持續播放、關不掉的問題。現在切到背景會自動暫停音樂,回到遊戲再自動恢復。',
-    ],
-    items: [
-      '★ v3.16.40【修正背景 BGM 不停·index.html】根因:切到背景時用來暫停音樂的判斷,排除條件用「目前是否在全螢幕」——但遊戲啟動會自動進全螢幕,導致「人在全螢幕時真正切到背景/鎖屏」也被誤判成全螢幕切換而跳過暫停 → 音樂在背景一直播、關不掉。',
-      '★ v3.16.40【修法】改用「是否正處於全螢幕『切換瞬間』」的短暫旗標(由全螢幕請求與 fullscreenchange 設定·1.2 秒內有效)當排除條件:只略過全螢幕轉場那一下的假切換,真正切到背景(即使正全螢幕)一律暫停所有音訊;_requestFullscreenAll 在請求全螢幕前先設旗標(避免事件順序造成靜音);另加 pagehide(關閉/離開頁面)強制停止所有音訊作雙保險。',
-      '★ v3.16.40【範圍/版本】只改 index.html(visibilitychange 處理 + _requestFullscreenAll 兩處);admin_panel.js + game_changelog.js 僅版本 bump 對齊。五點版本同步 → v3.16.40(hero_db.js 維持 v3.16.22)。本套含 v3.16.36~39,同一批上傳。',
-    ],
-  },
-  // v3.16.39 — 修正 iPad 答題獎勵寵物裝備後小怪戰卡死
-  {
-    ver: 'v3.16.39',
-    date: '2026-06-27',
-    brief: [
-      '🐾【修正卡死】修正在小怪戰中,答題獎勵抽到寵物、選一位英雄「立即裝備」後遊戲卡住不動的問題(iPad 上每次都會發生)。現在裝完寵物會正常繼續戰鬥。',
-    ],
-    items: [
-      '★ v3.16.39【修正寵物裝備卡死·index.html】根因:小怪戰答題獎勵抽到寵物(get_pet)時會開「選哪位英雄裝備」的選擇器,但程式在玩家還沒選之前就提前呼叫了繼續戰鬥,推進的回合撞上仍開著的選擇器而被擋下且不會重排;玩家選完寵物後又走了錯誤的續戰路徑(只解除暫停·不重新推進回合)→ 沒有任何角色行動·永久卡死。',
-      '★ v3.16.39【修法】_advMiniApplyReward 偵測到寵物選擇器開啟時改為延後繼續戰鬥並把該回呼暫存(window._advPetPickerMiniOnDone);_advFinishPetPick 收尾改三條路:小怪戰用暫存的專屬回呼續戰(不走 advOnQuizSkip)、BOSS 新回合答題走 _advFinishRoundQuiz、其餘維持原本。與 v3.14.25 修 BOSS 戰同款 bug 的手法一致(當時漏修小怪戰)。',
-      '★ v3.16.39【範圍/版本】只改 index.html(_advMiniApplyReward + _advFinishPetPick 兩處);admin_panel.js + game_changelog.js 僅版本 bump 對齊。五點版本同步 → v3.16.39(hero_db.js 維持 v3.16.22)。本套含 v3.16.36/37/38,同一批上傳。',
-    ],
-  },
-  // v3.16.38 — 10連抽稀有上限(各 1) + 答題獎勵寵物選單字放大 + 已解鎖英雄隱藏解鎖提示
-  {
-    ver: 'v3.16.38',
-    date: '2026-06-27',
-    brief: [
-      '🎰【10 連抽稀有上限】每次 10 連抽最多只會出 1 隻 SSR、1 隻 SR、1 個至寶(同一批不會重複);超過的部分會改成普通獎勵(技能升級書)。讓稀有更珍貴、產出更平均。',
-      '🐾【答題獎勵寵物選單字放大】答對題目獲得寵物、選要裝給哪位英雄的視窗裡,寵物功能說明(例如「攻擊+20%」)字放大,看得更清楚。',
-      '🔓【解鎖提示優化】已經解鎖小力、幼兒園小孩、機關王雙人組之後,再做該題庫不會再跳「再答對 X 題解鎖」的提示了。',
-    ],
-    items: [
-      '★ v3.16.38【10 連抽稀有上限·index.html】doSummon 連抽迴圈加入本批產出上限:最多 1 隻 SSR、1 隻 SR、1 個至寶;超過上限的那一抽改成普通獎勵(技能升級書 ×2),不另作沒有損失轉換提示(老師裁示乙·感覺像沒中)。因上限=1,同批稀有不可能重複(涵蓋不重複抽取);只動水晶 10 連抽,單抽與召喚卷不受影響(本來就 ≤1)。',
-      '★ v3.16.38【寵物選單字放大·index.html】_advShowPetTargetPicker(答題獎勵獲得寵物時選擇裝備英雄的選單)頂部寵物功能說明文字由 font-size:0.95em → 1.35em。',
-      '★ v3.16.38【解鎖提示隱藏·index.html】新增 _lxpsUnlockHeroAlreadyDone(q) 依題庫對應英雄判斷是否已解鎖(獎章旗標優先·英雄解鎖清單後援);_trackUnlockHeroProgress 開頭加已解鎖即早退 + 冒險與迷你戰兩處「再答對 X 題解鎖」橫幅各加守門。進度條/詳情頁本來就顯示已解鎖不受影響。',
-      '★ v3.16.38【範圍/版本】只改 index.html;admin_panel.js + game_changelog.js 僅版本 bump 對齊。五點版本同步 → v3.16.38(hero_db.js 維持 v3.16.22)。本套含 v3.16.36 王者尊嚴 + v3.16.37 寵物卡字放大,同一批上傳。',
-    ],
-  },
-  // v3.16.37 — 寵物效果說明字放大(攻擊+20% 等看得更清楚)
-  {
-    ver: 'v3.16.37',
-    date: '2026-06-27',
-    brief: [
-      '🐾【寵物效果說明字放大】英雄卡上的寵物效果說明(例如「攻擊+20%」「速度+20%」「機率不會倒下」)以及寵物名稱原本字太小,現在通通放大,看得更清楚。',
-    ],
-    items: [
-      '★ v3.16.37【寵物效果字放大·只改 index.html】equipExtHTML(英雄戰鬥卡的寵物徽章)寵物效果短語(_EQUIP_SHORT:攻擊+20% 等)由 font-size:16px → 22px、寵物名 20px → 22px;equipSlotHTML(英雄詳情寵物欄)寵物說明 18px → 22px、效果文字 .equip-effect 加行內 font-size:22px 覆蓋 main.css。純行內字級放大·不動 main.css·不改任何版面邏輯。',
-      '★ v3.16.37【範圍/版本】只改 index.html(寵物字級 4 處);admin_panel.js + game_changelog.js 僅版本 bump 對齊。四點版本同步 → v3.16.37(hero_db.js 維持 v3.16.22)。本版與上一版 v3.16.36「王者尊嚴」同一批上傳(本套已含 v3.16.36 修正)。',
-    ],
-  },
-  // v3.16.36 — 平衡修正:王者尊嚴至高無上(阿蘇火山龍王爆發不再一發秒殺關卡 BOSS)
-  {
-    ver: 'v3.16.36',
-    date: '2026-06-27',
-    brief: [
-      '⚔️【平衡修正·王者尊嚴】修正「阿蘇火山龍王」的極限爆發「超光速衝擊波」可以一發直接把關卡頭目(八岐大蛇/埃及雙王/黑暗球‧希望型態 等)秒殺的問題。現在頭目的「鎖血保命」在被逼到絕境的「那一回合」絕不會被擊殺——你仍然可以打出傷害、把頭目打到只剩 1 HP,但牠會以王者之軀撐住、施展覺醒反擊,下一回合你才能真正擊殺牠。',
-      '💡【說明】這只影響「關卡頭目」;世界 BOSS 龍王本來就有「單次最多 5000 傷害」的保護,不受這次調整影響。被鎖血的那一回合,頭目仍會正常受到傷害(血量看得到一直往下掉),只是「不會在這一回合被打死」而已,下一回合就能正常擊殺,不會卡關。',
-    ],
-    items: [
-      '★ v3.16.36【王者尊嚴至高無上·index.html】根因:_applyBossLifelineProtection 兩段鎖血(50%/1HP)在 v3.15.17 / v3.15.35 為修「鎖血後整回合打 0、玩家以為打不動」而移除「鎖血回合免疫」設定點 → _lifelineImmuneRound 從此無處寫入 → 阿蘇爆發「超光速衝擊波」(同一目標 5~9 段連轟)的 _asLocked 守門永遠 false → 多段在同一回合內燒穿兩段保命、後續段直接擊殺真 BOSS。修法:鎖血第一段(50%)與第二段(1HP)觸發時重新設 target._lifelineImmuneRound = 當前回合;阿蘇爆發既有 _asLocked(讀此旗標)隨之復活,偵測目標鎖血即停止砲擊(王者之軀絕對免疫·收手)。',
-      '★ v3.16.36【死亡免疫地板·不再看起來無敵·index.html】鎖血回合免疫由舊版「整回合 return 0(後續全打 0)」改為「死亡免疫地板」:非致命傷害照常結算(HP 可見下降·不再整回合無敵)、會致命的傷害才夾到剩 1 HP(王者不倒+覺醒反擊);下一回合 _lifelineImmuneRound 不等於當前回合即恢復可擊殺(保證不卡死)。另補一道暴擊額外補扣的 1 HP 地板(_llCritFloor),堵「非致命主傷 + 致命爆擊」這條繞過主鎖血的穿透路徑;DOT/出血/固定傷害皆走同一鎖血函式,一併受地板保護。世界 BOSS 龍王走 5000 cap(_adventureStage 為 worldboss 時早退),不經此地板·不受影響。',
-      '★ v3.16.36【範圍/版本】只改 index.html(BOSS 鎖血機制 4 處 + 過時註解 1 處);admin_panel.js 與 game_changelog.js 僅版本 bump 對齊。四點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js / admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.36(hero_db.js 維持 v3.16.22)。無新增可儲存欄位,不需改 firestore.rules。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.16)。',
-    ],
-  },
-  // v3.16.35 — 後台:救援審核卡接玩家活動查詢 + 老師後台相關更新日誌對玩家隱藏(adminOnly)
-  {
-    ver: 'v3.16.35',
-    date: '2026-06-27',
-    adminOnly: true,
-    brief: [
-      '🛠️【後台·老師端】「帳號救援申請審核」卡:每一筆申請下方新增「📜 查看玩家活動紀錄查詢」鈕,點一下直接切到「玩家活動記錄查詢」頁、自動帶入該玩家 uid 並送出查詢,方便老師核對遊戲紀錄後再決定是否救援。',
-      '🔒【更新日誌】所有「跟老師後台有關」的更新項目對一般玩家隱藏,只有老師(管理員)看得到;玩家端只會看到與玩法、獎勵、英雄有關的公告。',
-    ],
-    items: [
-      '★ v3.16.35【救援審核卡接活動查詢·admin_panel.js】_initRescueReqSection 的 _render 每筆申請卡(待處理/已處理皆有)在學生勾選摘要下方加「📜 查看玩家活動紀錄查詢」鈕(class ._rrq-activity·帶 data-uid);wiring 於既有 abtns.forEach 之後新增 actBtns forEach onclick:呼叫 window._switchAdminSection 切到 _admin-activity-section → setTimeout 140ms 填入 _admin-activity-query 的 value=uid → scrollIntoView → 點 _admin-activity-search 自動送出。沿用既有多處「切活動頁帶 uid 查詢」模式·無 ?. 相容舊 iPad。',
-      '★ v3.16.35【GM 日誌對玩家隱藏·index.html + game_changelog.js】把純老師後台的更新日誌對玩家隱藏:v3.16.21(老師後台修正)整筆標 adminOnly:true;移除 v3.16.33 與 v3.16.32 brief 內各一行(後台·老師端提示音 / 後台優化)GM 項目(玩家端不再顯示·老師端 items 仍保留完整技術紀錄);_filterChangelogForDisplay 的 _ADMIN_KEYWORD_RE 由「帳號救援」收斂為「帳號救援申請審核」(GM 卡名)→ 修正先前把玩家端「📨 帳號救援申請」公告也一併誤隱藏的問題·玩家現在能正常看到道歉補償與救援相關公告。',
-      '★ v3.16.35【範圍/版本】四點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js / admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.35(hero_db.js 維持 v3.16.22)。本輪改 admin_panel.js(救援卡活動鈕)+ index.html(changelog 過濾正則)+ game_changelog.js(adminOnly + 移除 GM brief 行 + 本筆)。本筆 entry 亦標 adminOnly:true(純後台/日誌呈現改動·玩家無感)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.15)。',
     ],
   },
 ];
