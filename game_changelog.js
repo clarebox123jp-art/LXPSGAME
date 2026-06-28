@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-27  / 目前主程式版本:v3.16.50(禁療/減療對所有恢復HP行動全面生效 + 酒吞童子BOSS回血削弱:爆發回血40%→20%·吸血減半)
+//  最後更新:2026-06-28  / 目前主程式版本:v3.16.54(巫女神樂舞新動畫+音效 + 召喚星空動態影片背景;前版 v3.16.53 BOSS攻擊素質強制減傷+素質50%上限文案)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,50 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.54 — 巫女神樂舞新動畫+音效 + 召喙星空動態影片背景
+  {
+    ver: 'v3.16.54',
+    date: '2026-06-28',
+    brief: [
+      '🎐【巫女大絕「神樂舞」換新裝】巫女的極限爆發「神樂舞」換上全新的「花瓣飛起」動畫，並加入清脆的「風鈴聲」音效，施放時更有神社祈福的氛圍！',
+      '🌌【召喙星空動起來了】召喙星空頁面加入全螢幕動態背景影片，夜空與水面流動更生動；原本的流星特效保留，水面漣漪改由影片呈現。（若影片還沒下載好，會先顯示原本的星空背景圖，不影響召喙。）'
+    ],
+    items: [
+      '★ v3.16.54【神樂舞特效·index.html】爆發 VFX case 神樂舞：全螢幕 GIF 由「秋天楓葉飄落.gif」改「花瓣飛起.gif」（移除 timeout 維持 3200ms）；音效新增 playSfx(sfx-windchime,0.85)（新註冊 <audio id=sfx-windchime src=風鈴聲.mp3>·與既有 sfx-burst/sfx-heal 並存）。',
+      '★ v3.16.54【召喙星空動態影片·index.html】#summon-overlay 第一子層新增 <video id=summon-bg-video>（召喙星空動態.mp4·autoplay/loop/muted/playsinline·z-index:0 覆蓋背景圖·object-fit:cover 全螢幕·opacity:0+onloadeddata 淡入·onerror→display:none 露出靜態背景圖 fallback）；#summon-stars 流星特效保留；#summon-river 河面波紋漣漪層改 display:none 隱藏。',
+      '★ v3.16.54【需上傳 repo + 版本】⚠ 老師需上傳 repo 根目錄：花瓣飛起.gif、風鈴聲.mp3、召喙星空動態.mp4（缺檔則神樂舞無新動畫/無風鈴聲·召喙頁影片自動隱藏露出靜態星空圖）。六點版本同步 → v3.16.54。GAME_CHANGELOG trim 至 20 筆（移除最舊 v3.16.34/v3.16.33）。'
+    ],
+  },
+  // v3.16.53 — 素質50%上限說明補完 + BOSS/世界BOSS依攻擊素質強制減傷
+  {
+    ver: 'v3.16.53',
+    date: '2026-06-28',
+    brief: [
+      '⚖️【BOSS 變得更耐打·攻擊越高越會擋】所有冰險關卡 BOSS 與世界 BOSS（龍王）現在會依「攻擊力」自動減免受到的傷害——攻擊力數字就是減傷百分比（例如攻擊 60 的龍王，受到普攻/技能/爆發/一般天賦傷害會減少 60%），最高減 60%。不過「固定傷害」「依 HP 百分比的傷害」「物品卡上有寫傷害數字的攻擊（像飛鏢、煉金術炸彈）」都不會被這個減傷擋下，仍是穿透打滿！',
+      '📖【素質說明更完整】英雄圖鑑與新手教學裡的「能力投資」說明，補上 HP 減傷的上限提示：每 1 點 HP +0.2% 減傷，最多減 50%。'
+    ],
+    items: [
+      '★ v3.16.53【BOSS 攻擊素質減傷·index.html】doDmg(L≈39669)玩家HP減傷之後、世界BOSS 5000cap 之前新增 hook：對 _isWorldBossTarget||_zeusIsTrueBoss 的目標，減傷% = min(0.60, (target.atk||0)×0.01)（攻擊素質直接換算·攻擊60→60%·上限60%）；菁英/小怪不套。穿透條件 !opts.fixedDmg && !opts._pierceBossReduce。對世界BOSS=先攻擊減傷、再夾 5000cap。',
+      '★ v3.16.53【穿透豁免標記·index.html】固定傷害走 opts.fixedDmg；另對 HP%傷害與物品卡寫死數值傷害補 opts._pierceBossReduce（無副作用旗標）：11 處—神聖鑇擊/死亡宣告BOSS段/魔術閃光含AI/大聲啲哭含AI/暗黑洞含AI/弄壞你的玩具/夢境時光爆發 + 物品卡 atk(L≈51856)。奧汀岡格尼爾/青炎爆破(攻擊·特技混合)、超能衝鋒(攻擊)、惡鬼撲食(特技)維持被減傷。',
+      '★ v3.16.53【素質50%上限文案·index.html】HP 減傷 50% 上限（程式本就 min(0.50,hp×0.002)）補進「英雄強化教學 HUT·分配四項能力」頁（STAT_DESCS + 新手教學③本就有「最多減50%」）；受治療放大無上限。',
+      '★ v3.16.53【驗證】index.html 20 inline script node --check 全過·0 lone surrogate；四檔版本同步 → v3.16.53。'
+    ],
+  },
+  // v3.16.52 — 題庫顯示「本週累積答對進度」+ 每週重置 + 英雄條件搜尋補標(禁錮/拘留/認罪)
+  {
+    ver: 'v3.16.52',
+    date: '2026-06-28',
+    brief: [
+      '📘【題庫進度看得見·每週重新挑戰】貓空關「河堤」選科目時,每個題庫下方會顯示「本週已答對 N／M 題」,整個題庫都答對了就顯示「✅ 本週已完成」,讓你一眼看出本週還有哪些題庫沒做完。每週知識王結算後,所有題庫的本週進度會自動重置歸零,可以重新累積、再次挑戰拚小博士排行榜!(三個專屬解鎖題庫「領養與照顧狗狗／照顧與陪伴幼兒／世界機關王大賽」維持原本的連擊解鎖顯示。)',
+      '🔍【英雄條件搜尋補上新效果】英雄圖鑑與編組的「🔍 條件搜尋」新增三個可勾選的技能效果標籤:「禁錮」(魔術師)、「拘留」(拘留者)、「認罪」(偵探),配隊找控制型英雄更方便。'
+    ],
+    items: [
+      '★ v3.16.52【題庫每週累積·index.html】_persistentCorrectQuestions 由「永久」改「本週」範圍:新增 _persistentCorrectWeekKey(綁 window._weeklyQuiz.getWeekKey 知識王週次)+ _pcqWeeklyResetCheck()(跨週清空 + fire-and-forget gameCloudSave;冪等;weeklyQuiz 未就緒回空時不動);掛 advGetQuizPool / _advMiniGetQuizPool / _kingPickAnswer 三入口。存檔新增 persistentCorrectWeekKey 欄(綁 UID·走既有 self-write 規則·無需改 firestore.rules);舊存檔無此欄→首次進題庫視為遷移、清成本週空白。小博士 first-correct 計分(recordCorrect)隨週重置=每週可重新累積。',
+      '★ v3.16.52【本週進度顯示·index.html】新增 _advWeeklyBankInfo(subject) 回 {answered,total}(五下第三/四單元、期中評量讀各自陣列·其餘 ADV_QUIZ_DB.filter by subject·三專屬解鎖題庫回 null);_renderChoiceBtnContent + makeBtn 兩個 render 路徑的「一般科目」else 分支顯示「📘 本週已答對 N/M」或「✅ 本週已完成」。需求「隨機調整選項」引擎本就有(河堤 BOSS L≈82593 + 小怪戰 L≈118283 每次出題 Fisher-Yates 洗選項·dataset.isCorrect 判答)·本輪未改答題判分路徑。',
+      '★ v3.16.52【條件搜尋補標·hero_db.js】SKILL_EFFECT_DEFS B 組(傷害/控場類)新增 3 標籤 禁錮/拘留/認罪(置於「無法行動」後);HERO_SKILL_EFFECTS 掛標:魔術師+禁錮、拘留者+拘留、偵探+認罪(封印被動 v3.16.50 已在表內)。稽核 84 勾選項/84 英雄使用·無孤兒標籤、無空結果勾選項。',
+      '★ v3.16.52【驗證/版本】index.html 20 個 inline script node --check 全過·0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過·UTF-8 OK。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.52(admin_panel.js 僅版號對齊·內容未改)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.32)。'
+    ],
+  },
   // v3.16.51 — 平衡調整:HP素質只給玩家英雄版 + %治療不吃HP放大 + 暗法師加強 + 自動戰鬥AI更聰明
   {
     ver: 'v3.16.51',
@@ -277,50 +321,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.35【救援審核卡接活動查詢·admin_panel.js】_initRescueReqSection 的 _render 每筆申請卡(待處理/已處理皆有)在學生勾選摘要下方加「📜 查看玩家活動紀錄查詢」鈕(class ._rrq-activity·帶 data-uid);wiring 於既有 abtns.forEach 之後新增 actBtns forEach onclick:呼叫 window._switchAdminSection 切到 _admin-activity-section → setTimeout 140ms 填入 _admin-activity-query 的 value=uid → scrollIntoView → 點 _admin-activity-search 自動送出。沿用既有多處「切活動頁帶 uid 查詢」模式·無 ?. 相容舊 iPad。',
       '★ v3.16.35【GM 日誌對玩家隱藏·index.html + game_changelog.js】把純老師後台的更新日誌對玩家隱藏:v3.16.21(老師後台修正)整筆標 adminOnly:true;移除 v3.16.33 與 v3.16.32 brief 內各一行(後台·老師端提示音 / 後台優化)GM 項目(玩家端不再顯示·老師端 items 仍保留完整技術紀錄);_filterChangelogForDisplay 的 _ADMIN_KEYWORD_RE 由「帳號救援」收斂為「帳號救援申請審核」(GM 卡名)→ 修正先前把玩家端「📨 帳號救援申請」公告也一併誤隱藏的問題·玩家現在能正常看到道歉補償與救援相關公告。',
       '★ v3.16.35【範圍/版本】四點同步 _GAME_LOADED_VERSION + _vers[index.html / game_changelog.js / admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.35(hero_db.js 維持 v3.16.22)。本輪改 admin_panel.js(救援卡活動鈕)+ index.html(changelog 過濾正則)+ game_changelog.js(adminOnly + 移除 GM brief 行 + 本筆)。本筆 entry 亦標 adminOnly:true(純後台/日誌呈現改動·玩家無感)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.15)。',
-    ],
-  },
-  // v3.16.34 — BOSS 登場動畫(貓空:九尾空貓怪/杏花妖 + 黑暗球·全螢幕·保留mp4音軌+BOSS戰BGM·可跳過)
-  {
-    ver: 'v3.16.34',
-    date: '2026-06-27',
-    brief: [
-      '🎬【BOSS 登場動畫】部分頭目戰開打前,現在會先播放全螢幕「登場動畫」:畫面變暗淡入 → 播放動畫(保留動畫本身的聲音,並同時響起該頭目的戰鬥音樂)→ 淡出進入戰鬥。原本的劇情對白(對話框字幕)維持不變。右上角有「⏭ 跳過動畫」可隨時跳過,每次戰鬥都會播放。這次先做:貓空的「九尾空貓怪」「杏花妖」,以及「黑暗球‧希望型態」。',
-    ],
-    items: [
-      '★ v3.16.34【BOSS 登場動畫·index.html】新增 _BOSS_INTRO_MAP(九尾空貓怪→bgm-boss-01 / 杏花妖→bgm-boss-apricot / 黑暗球‧希望型態→bgm-boss-darkorb)+ _bossIntroDetect(冒險模式·非世界BOSS·讀 G.p2 名稱判定本批 BOSS)+ _playBossIntro(全螢幕 overlay z-index 2147483646·畫面變暗淡入 → 播 mp4 動畫 → 「⏭ 跳過動畫」鈕 → ended/error/逾時14s → 淡出·淡出同時重入建立戰鬥畫面銜接順暢)。掛在 advStartBattle 最頂(接在現有過場對白 adv-cutscene-overlay 之後·完全不動對白);_bossIntroResuming 旗標防動畫 callback 重入重播。每次都播 + 可跳過。',
-      '★ v3.16.34【音訊·index.html】保留 mp4 動畫自身音軌(不靜音)+ 同時 bgmFadeTo 起該 BOSS 戰鬥 BGM(無縫銜接進戰鬥);iOS 擋「有聲自動播放」→ 退靜音播放保險(畫面仍出來·BGM 由遊戲 bgm 系統提供聲音)·載入失敗/逾時一律不卡死。現有過場對白(對話框字幕)完全不變。',
-      '★ v3.16.34【素材·壓縮·保留音軌】三支登場動畫 mp4 壓縮(1280×720·CRF28·保留 AAC 音軌·faststart):九尾空貓動態 2.5→1.4MB / 杏花妖動態 2.5→1.8MB / 黑暗球動態 2.7→1.4MB。老師覆蓋上傳同檔名即可(未覆蓋仍可用原檔·只是較大)。',
-      '★ v3.16.34【範圍/版本】本輪改 index.html(登場動畫)+ game_changelog.js + admin_panel.js(僅版本·功能沿用 v3.16.33)。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.34(hero_db.js 維持 v3.16.22)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.14)。⚠ 需上傳三支壓縮 mp4(覆蓋同名)登場動畫才會更新。',
-    ],
-  },
-  // v3.16.33 — 帳號污染源頭根治(四欄 _s 接齊 + 系統默認審查孤兒剔除·全 UID 把關) + GM 救援/回報提示音改 mp3
-  {
-    ver: 'v3.16.33',
-    date: '2026-06-27',
-    brief: [
-      '🛡️【存檔保護再強化·玩家無感·只增不減】從源頭再堵住一類可能讓「已經不屬於你的角色」殘留在雲端存檔的情況(英雄的經驗值、剩餘能力點、極限爆發等級、天賦等級四項),並在每次登入時自動清掉這類殘留鍵。你的英雄、等級、至寶、知識幣、進度完全不受影響。',
-    ],
-    items: [
-      '★ v3.16.33【污染源頭根治·四欄 _s 接齊·index.html】heroExp/heroStatPoints/heroBurstLevels/heroTraitLevel 四個逐英雄成長表補字串版 _s(鏡像 heroLevels_s 既有模式):_buildSafeData 寫四個 _s + _applySafeData 載入優先採信 _s + 三槽合併 _LXPS_PREFER_S 納入四欄 + 6 處 GM 清污染工具(刪英雄/收回/審查回收/學生自助移除/污染清除復原/完全重置)同步補 heroExp_s 與 heroTraitLevel_s。根因:這四欄原僅寫 map,Firebase merge:true 深合併「永不刪 map 子鍵」→ 英雄被收回/借用後雲端殘留幻影鍵,且正常遊玩每次存檔不會清(只有 GM 移除工具會整欄覆蓋)。接齊後從源頭免疫 merge 復活,與既有 heroLevels/heroStatInvested/heroSkillLevels 三欄一致。純加欄位(同 v3.16.4/v3.15.96 性質)。',
-      '★ v3.16.33【系統默認審查·孤兒剔除·index.html】新增 _lxpsPruneOrphanGrowthMaps:雲端載入成功後對四欄剔除「不在擁有清單的孤兒鍵」(擁有權威 = advGetUnlockedHeroes 聯集 adv_unlocked_heroes 聯集 初始8·與 v3.15.76 heroLevels 幻影判定同口徑);記憶體清完下次存檔 _s 寫回乾淨值 → 源頭與既有殘留雙清。多重 UID 安全閘(任一不過整個跳過·寧可不剔也不誤刪):① window._gUserId 為空跳過 ② 擁有集合<8 跳過(空殼保險) ③ 待剔比例>40% 跳過(疑似載入異常·保留全部交 GM·印警告)。只剔孤兒鍵·絕不刪英雄·不動 unlockedHeroes 與 heroLevels。',
-      '★ v3.16.33【提示音改 mp3·index.html】GM「收到救援申請/錯誤回報」提示音由 Web Audio 合成琶音改播老師指定 mp3(收到救援申請.mp3·新增 audio 元素 sfx-rescue-chime);_lxpsPlayRescueChime 改先播音檔、被擋/載入失敗時 fallback 回原合成音(_lxpsPlayRescueChimeSynth·雙保險不影響徽章)。',
-      '★ v3.16.33【GM 選單退役·admin_panel.js】污染源頭根治後,退役(隱藏不刪)GM「📢 污染檢查提醒」卡:其功能=提醒玩家自我檢查污染,但 v3.16.31 已停用強制登入自我審查、本版改登入後系統默認審查自動清孤兒鍵 → 此「提醒玩家自查」機制已被取代。沿用 v3.15.85 退役模式(移出 SIDEBAR_ITEMS + 群組·卡片/init/handler 全保留·日後可加回)。救援/復原類卡(汙染清查掃描/洗錢查緝/英雄誤刪救回/帳號救援申請/Lv1 救援/一鍵重建/完全重置)一律保留作安全網,供清理本版前已受影響帳號。',
-      '★ v3.16.33【範圍/版本/安全】四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.33(hero_db.js 維持 v3.16.22)。本輪改 index.html(四欄 _s+孤兒審查+音效)+ admin_panel.js(版本+退役污染檢查提醒卡)+ game_changelog.js。所有新增可儲存欄位(四欄 _s)皆綁 uid·走既有 self-write 規則,無需改 firestore.rules。存檔倒退守門未動;載入路徑只「加一道只剔孤兒不刪英雄的 UID 閘審查」。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.13)。',
-    ],
-  },
-  // v3.16.32 — 審查失誤道歉 + 補償(全體玩家·限領一次)+ 後台:救援/錯誤回報即時提醒(悅耳音效)/GM 信任裝置免閒置登出/GM 一鍵解鎖全部至寶
-  {
-    ver: 'v3.16.32',
-    date: '2026-06-26',
-    brief: [
-      '💙【道歉與補償·全體玩家】前陣子「英雄圖鑑審查」每次登入強制跳出、要大家一隻一隻確認,造成有些同學誤把自己的英雄按成「不是我的」而被移除,也讓大家很困惑。老師已停止這個強制審查並向大家道歉。為了表達歉意,登入時會送上補償:💰 知識幣 100,000 + 🔮 召喚水晶 ×10(每個帳號限領一次·自動入帳)。若你的英雄不見了,到「📨 帳號救援申請」勾選送出,老師會連同等級幫你補回。',
-    ],
-    items: [
-      '★ v3.16.32【GM 即時提醒·index.html】新增 onSnapshot 監聽 accountRescueRequests(待處理)+ bugReports(未回覆)→ GM 登入後右下浮動徽章顯示合併待處理數;新項目進來才播 Web Audio 合成上行大三和弦琶音(C5-E5-G5)悅耳提示音 + 徽章脈動(登入當下既有的只顯示不播音);點徽章開後台並自動跳到對應卡(救援/錯誤回報);登出 Stop 監聽。只 GM(_isAdminUser 守門);非 GM 與學生完全不啟用。',
-      '★ v3.16.32【GM 信任裝置免閒置登出·index.html + admin_panel.js】_idleAutoLogoutStart 加閘門:管理員 + 本裝置已在雲端 trustedDevices 信任 → 停用 30 分鐘閒置自動登出(失敗安全:查詢失敗/未信任一律照常登出·共用平板安全優先);_tick 加雙保險守門。admin「🔐 撤銷學生裝置信任」卡新增「🖥 GM 本裝置免閒置自動登出」子區(查詢/信任/取消·立即生效·走既有 window._lxpsDeviceTrust 同一套信任名單);無 ?.。學生與其他裝置不受影響。',
-      '★ v3.16.32【GM 至寶全解鎖·index.html】新增 window._lxpsGmUnlockAllTreasures:迭代 TAIWAN_TREASURES 主表(自動涵蓋台灣 10 + 8 龍王 + 未來新增)·排除日本三神器(_isJapanTreasureKey)·只增不減補缺(已擁有等級/裝備不動)·寫 gm_auto_unlock 解鎖紀錄·同步 window ref + localStorage + gameCloudSave;onAuth 等雲端就緒(_waitForCloudReady)後對 GM 自動執行(idempotent·下次登入自動補上次沒補到的)。至寶不觸發存檔倒退守門、GM 亦豁免守門。',
-      '★ v3.16.32【道歉補償·index.html】全體玩家登入彈「審查失誤道歉 + 補償」(_maybeShowAuditApologyCompensation):補償 💰知識幣 100,000 + 🔮召喚水晶 ×10·每帳號限領一次。一次性守門用雲端 per-UID 旗標 _auditApologyCompensatedV1(getDocFromServer 讀·旗標先寫再發獎·at-most-once·UID 同步·鏡像 memberProfileRewarded);讀旗標失敗則跳過不發(延下次登入·絕不在不確定下重發)。發獎走 addKnowledgeCoins + backpackAdd(summon_crystal)+ gameCloudSave 持久;onAuth 等 _waitForCloudReady 後排程;與既有道歉公告防疊加共存。玩家自寫 players/{uid} 旗標·非停權欄位·走既有規則無需改 rules。',
-      '★ v3.16.32【註解校正 + 範圍/版本】清除閒置自動登出區與實際代碼矛盾的舊註解(「5 分鐘」→ 實際 30 分鐘·IDLE_TIMEOUT_MS;onAuth 與 _tick 兩處)。前三件全 GM 守門·第四件「道歉補償」為全體玩家一次性(雲端旗標 at-most-once)·全部只增不減·存檔倒退守門與載入路徑完全不動。四點同步 _GAME_LOADED_VERSION + _vers[index.html/game_changelog.js/admin_panel.js] + ADMIN_PANEL_VERSION → v3.16.32(並修正既有 _vers[admin_panel.js]=v3.16.30 與檔案自身 v3.16.31 不一致);hero_db.js 維持 v3.16.22。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.11)。',
     ],
   },
 ];
