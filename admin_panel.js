@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.16.60';   // ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.16.61';   // ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -4953,6 +4953,10 @@ async function _showAdminStatsPanelImpl(){
       return;
     }
     let _matched = [];   // [{name, uid, label, email}]
+    // ★ v3.16.61 — 同名多筆候選挑選(核對班級座號)+ 大量逗點/換行貼上
+    let _multiGroups = [];   // [{name, truncated, candidates:[{uid,email,name,seat,label}]}]
+    let _noneList = [];      // [name...] 查無此人
+    let _previewItems = [];  // 上次比對時勾選的獎勵文字陣列
     function _esc(s){
       return String(s == null ? '' : s)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -4992,48 +4996,114 @@ async function _showAdminStatsPanelImpl(){
     }
     async function _preview(){
       const { items } = _buildReward();
+      _previewItems = items;
       if(!items.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先勾選至少一項要發的獎勵</span>'; _setSendEnabled(false); return; }
       const names = _parseNames(namesEl.value);
-      if(!names.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先貼上學生姓名 / 學號 / uid</span>'; _setSendEnabled(false); return; }
+      if(!names.length){ resEl.innerHTML = '<span style="color:#ff8866;">請先貼上學生姓名 / 信箱 / 班級座號 / 學號 / uid(可用逗點「,」或換行分隔大量貼上)</span>'; _setSendEnabled(false); return; }
       if(typeof window._fbAdminFindPlayersByName !== 'function'){
         resEl.innerHTML = '<span style="color:#ff6666;">_fbAdminFindPlayersByName 未載入,請重新整理頁面</span>'; return;
       }
       prevBtn.disabled = true; const _old = prevBtn.textContent; prevBtn.textContent = '比對中...';
       _setSendEnabled(false);
-      _matched = [];
-      const _ok = [], _none = [], _multi = [];
+      _matched = []; _multiGroups = []; _noneList = [];
       const _seenUid = new Set();
+      const _seenName = new Set();   // 同一個輸入只查一次(去重貼上)
       for(const nm of names){
+        if(_seenName.has(nm)) continue;
+        _seenName.add(nm);
         try{
           const r = await window._fbAdminFindPlayersByName(nm);
           const players = (r && r.players) || [];
-          if(!players.length){ _none.push(nm); }
-          else if(players.length > 1){ _multi.push({ name: nm, count: players.length }); }
-          else {
+          if(!players.length){ _noneList.push(nm); }
+          else if(players.length === 1){
             const p = players[0];
             if(_seenUid.has(p.uid)) continue;   // 同一人重複貼,去重
             _seenUid.add(p.uid);
-            const label = (typeof window._adminLabel === 'function') ? window._adminLabel(p.email, p.name) : ((p.name || nm) + (p.email ? (' <' + p.email + '>') : ''));
-            _matched.push({ name: nm, uid: p.uid, label, email: p.email || '' });
-            _ok.push(label);
+            _matched.push(_mkRecipient(nm, p));
+          } else {
+            // ★ 同名多筆 → 收集候選,顯示班級座號讓老師核對是誰再點選(老師需求)
+            _multiGroups.push({ name: nm, truncated: !!(r && r.truncated), candidates: players.map(_mkCandidate) });
           }
-        }catch(e){ _none.push(nm + '(查詢失敗)'); }
+        }catch(e){ _noneList.push(nm + '(查詢失敗)'); }
       }
+      prevBtn.disabled = false; prevBtn.textContent = _old;
+      _renderClassRewardPreview();
+    }
+    // 玩家物件 → 收件人紀錄(發放用)
+    function _mkRecipient(nm, p){
+      const label = (typeof window._adminLabel === 'function') ? window._adminLabel(p.email, p.name) : ((p.name || nm) + (p.email ? (' <' + p.email + '>') : ''));
+      return { name: nm, uid: p.uid, label: label, email: p.email || '' };
+    }
+    // 候選玩家 → 顯示物件(含班級座號,供同名核對)
+    function _mkCandidate(p){
+      let _seat = '';
+      try{ if(typeof window._classSeatCode4 === 'function') _seat = window._classSeatCode4(p.email) || ''; }catch(_){}
+      const label = (typeof window._adminLabel === 'function') ? window._adminLabel(p.email, p.name) : (p.name || p.email || p.uid);
+      return { uid: p.uid, email: p.email || '', name: p.name || '', seat: _seat, label: label };
+    }
+    // 渲染預覽:✅可發放清單(可移除) + ⚠同名候選挑選(核對班級座號) + ❌查無此人
+    function _renderClassRewardPreview(){
+      const items = _previewItems || [];
       let html = '<div style="text-align:left;font-size:13px;line-height:1.7;">';
       html += '<div style="color:#ffe066;font-weight:800;margin-bottom:4px;">📦 將發放:' + items.map(_esc).join('、') + '</div>';
-      html += '<div style="color:#88ff88;font-weight:800;">✅ 可發放 ' + _ok.length + ' 人</div>';
-      if(_ok.length) html += '<div style="color:#cfe;margin:2px 0 6px;">' + _ok.map(x => '・' + _esc(x)).join('<br>') + '</div>';
-      if(_multi.length){
-        html += '<div style="color:#ffcc44;">⚠ 同名多筆(' + _multi.length + ')→ 已跳過,請改用學號 / uid 個別補發:</div>';
-        html += '<div style="color:#ffe;margin:2px 0 6px;">' + _multi.map(m => '・' + _esc(m.name) + '(' + m.count + ' 筆)').join('<br>') + '</div>';
+      html += '<div style="color:#88ff88;font-weight:800;">✅ 確定發放 ' + _matched.length + ' 人</div>';
+      if(_matched.length){
+        html += '<div style="margin:2px 0 8px;">';
+        _matched.forEach(function(m, i){
+          html += '<div style="display:flex;align-items:center;gap:6px;color:#cfe;padding:1px 0;">'
+            + '<span style="flex:1;">・' + _esc(m.label) + (m.email ? (' <span style="color:#889;font-size:11px;">' + _esc(m.email) + '</span>') : '') + '</span>'
+            + '<button type="button" class="crp-del" data-i="' + i + '" style="padding:1px 8px;font-size:11px;font-weight:700;background:rgba(120,40,40,0.5);border:1px solid #a55;color:#fcc;border-radius:5px;cursor:pointer;">移除</button>'
+            + '</div>';
+        });
+        html += '</div>';
       }
-      if(_none.length){
-        html += '<div style="color:#ff8866;">❌ 查無此人(' + _none.length + '):' + _none.map(_esc).join('、') + '</div>';
+      if(_multiGroups.length){
+        html += '<div style="color:#ffcc44;font-weight:800;margin-top:6px;">⚠ 同名多筆,請核對「班級座號」後點選是哪一位(可複選):</div>';
+        _multiGroups.forEach(function(g, gi){
+          html += '<div style="margin:4px 0 8px;padding:7px 9px;background:rgba(120,90,30,0.18);border:1px solid rgba(255,200,100,0.35);border-radius:7px;">';
+          html += '<div style="color:#ffe0a0;font-weight:700;margin-bottom:4px;">「' + _esc(g.name) + '」共 ' + g.candidates.length + ' 位' + (g.truncated ? '(僅顯示前數筆)' : '') + ':</div>';
+          g.candidates.forEach(function(c, ci){
+            const _picked = _matched.some(function(m){ return m.uid === c.uid; });
+            const _seatTxt = c.seat ? ('班級座號 ' + c.seat) : '(名冊查無座號)';
+            html += '<button type="button" class="crp-cand" data-gi="' + gi + '" data-ci="' + ci + '" '
+              + 'style="display:block;width:100%;text-align:left;margin:3px 0;padding:7px 10px;font-size:12.5px;font-family:inherit;cursor:pointer;border-radius:6px;'
+              + (_picked
+                  ? 'background:rgba(30,110,60,0.55);border:1.5px solid #7fdca0;color:#dfffe8;'
+                  : 'background:rgba(0,0,0,0.3);border:1.5px solid rgba(150,190,255,0.3);color:#dde;') + '">'
+              + (_picked ? '✅ ' : '◻ ')
+              + '<b style="color:' + (_picked ? '#dfffe8' : '#ffe066') + ';">' + _esc(_seatTxt) + '</b>　'
+              + _esc(c.name || c.label)
+              + (c.email ? (' <span style="color:#889;font-size:11px;">' + _esc(c.email) + '</span>') : '')
+              + '</button>';
+          });
+          html += '</div>';
+        });
+      }
+      if(_noneList.length){
+        html += '<div style="color:#ff8866;margin-top:4px;">❌ 查無此人(' + _noneList.length + '):' + _noneList.map(_esc).join('、') + '</div>';
+        html += '<div style="color:#c99;font-size:11px;">查無者可改用 學號(lsps110xxx 或 6 碼)/ 班級座號 / 信箱 / uid 再貼一次。</div>';
       }
       html += '</div>';
       resEl.innerHTML = html;
+      Array.prototype.forEach.call(resEl.querySelectorAll('.crp-cand'), function(btn){
+        btn.onclick = function(){
+          const gi = parseInt(btn.getAttribute('data-gi'), 10);
+          const ci = parseInt(btn.getAttribute('data-ci'), 10);
+          const g = _multiGroups[gi]; if(!g) return;
+          const c = g.candidates[ci]; if(!c) return;
+          const _idx = _matched.findIndex(function(m){ return m.uid === c.uid; });
+          if(_idx >= 0){ _matched.splice(_idx, 1); }
+          else { _matched.push({ name: g.name, uid: c.uid, label: c.label, email: c.email }); }
+          _renderClassRewardPreview();
+        };
+      });
+      Array.prototype.forEach.call(resEl.querySelectorAll('.crp-del'), function(btn){
+        btn.onclick = function(){
+          const i = parseInt(btn.getAttribute('data-i'), 10);
+          if(i >= 0 && i < _matched.length){ _matched.splice(i, 1); _renderClassRewardPreview(); }
+        };
+      });
       _setSendEnabled(_matched.length > 0);
-      prevBtn.disabled = false; prevBtn.textContent = _old;
     }
     async function _send(){
       if(!_matched.length) return;
@@ -10892,6 +10962,42 @@ async function _showAdminStatsPanelImpl(){
       _setStatus('沒有更多未處理的玩家了', '#ffaa66');
     }
 
+    // ★ v3.16.61 — 載入玩家「會員資料」(玩家自填:暱稱/信箱/身分/出生年/性別/年級/平台)到活動卡。
+    //   每次查詢都即時讀最新 → 玩家更新後 GM 這邊同步更新。幫助 GM 初步認識該玩家。
+    async function _loadMemberProfileCard(uid){
+      const _box = _playerCard ? _playerCard.querySelector('#_aa-member-profile') : null;
+      if(!_box || !uid) return;
+      _box.innerHTML = '<div style="font-size:12px;color:#889;padding:4px 0;">📋 讀取會員資料中…</div>';
+      let _st = null;
+      try{ if(typeof window._fbGetMemberProfile === 'function') _st = await window._fbGetMemberProfile(uid); }catch(_){}
+      // 查詢期間玩家卡可能已切換 → 避免把舊資料塞進新卡
+      if(!_playerCard || _playerCard.querySelector('#_aa-member-profile') !== _box) return;
+      const _mp = (_st && _st.profile) ? _st.profile : null;
+      if(!_mp){
+        _box.innerHTML = '<div style="padding:8px 12px;background:rgba(60,60,80,0.35);border-left:4px solid #889;border-radius:6px;font-size:12px;color:#bbc;">📋 此玩家尚未填寫會員資料</div>';
+        return;
+      }
+      const _row = function(label, val){
+        if(val == null || val === '' || (Array.isArray(val) && !val.length)) return '';
+        const _v = Array.isArray(val) ? val.join('、') : String(val);
+        return '<div style="display:flex;gap:6px;padding:1px 0;"><span style="color:#9bf;min-width:74px;flex:none;">' + _esc(label) + '</span><span style="color:#fff;">' + _esc(_v) + '</span></div>';
+      };
+      const _thisYear = new Date().getFullYear();
+      const _age = (typeof _mp.birthYear === 'number' && _mp.birthYear > 1900 && _mp.birthYear <= _thisYear) ? (_thisYear - _mp.birthYear) : null;
+      const _upd = (_st && _st.updatedAt) ? new Date(_st.updatedAt).toLocaleString('zh-TW', { hour12:false }) : '';
+      let _html = '<div style="padding:9px 13px;background:rgba(20,40,30,0.4);border-left:4px solid #66cc99;border-radius:6px;font-size:12.5px;line-height:1.6;">';
+      _html += '<div style="font-size:13px;font-weight:700;color:#aaffcc;margin-bottom:5px;">📋 玩家會員資料(玩家自填)</div>';
+      _html += _row('會員暱稱', _mp.nickname);
+      _html += _row('信箱', _mp.email);
+      _html += _row('玩家身分', _mp.identities);
+      _html += _row('出生年', _mp.birthYear ? (_mp.birthYear + (_age != null ? ('(約 ' + _age + ' 歲)') : '')) : '');
+      _html += _row('性別', _mp.gender);
+      _html += _row('就讀年級', _mp.grade);
+      _html += _row('遊玩平台', _mp.platforms);
+      if(_upd) _html += '<div style="font-size:11px;color:#789;margin-top:4px;">最後更新:' + _esc(_upd) + '</div>';
+      _html += '</div>';
+      _box.innerHTML = _html;
+    }
     function _renderPlayerCard(r){
       if(!_playerCard || !r) return;
       const p = r.player || {};
@@ -10967,6 +11073,7 @@ async function _showAdminStatsPanelImpl(){
             <div><span style="color:#aac;">💎 至寶</span> <b style="color:#ffdd66;">${p.treasureCount || 0}</b></div>
           </div>
         </div>
+        <div id="_aa-member-profile" style="margin-top:10px;"></div>
         ${anomalyHtml}
         <div style="margin-top:10px;padding:10px 14px;background:rgba(60,40,20,0.4);border-left:4px solid #ffcc66;border-radius:6px;">
           <div style="font-size:13px;font-weight:700;color:#ffdd99;margin-bottom:6px;">🎖 補償鬥技之證(本週排名用)</div>
@@ -10981,6 +11088,8 @@ async function _showAdminStatsPanelImpl(){
           <div id="_aa-zheng-result" style="margin-top:6px;font-size:12px;color:#dfe;min-height:16px;"></div>
         </div>
       `;
+      // ★ v3.16.61 — 載入並顯示該玩家會員資料(玩家自填,即時讀最新;玩家更新後 GM 同步看到)
+      _loadMemberProfileCard(p.uid);
       // ★ v3.13.92 — 綁定「補償鬥技之證」按鈕(用目前查到的玩家 _curUid)
       (function(){
         const _zBtn = _playerCard.querySelector('#_aa-zheng-grant');

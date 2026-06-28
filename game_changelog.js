@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.61 — GM 課堂獎勵/活動查詢中文姓名搜尋根治 + 同名候選班級座號挑選 + 帳號轉移修復
+  {
+    ver: 'v3.16.61',
+    date: '2026-06-28',
+    brief: [
+      '📨【會員資料新增「帳號轉移功能申請」按鈕】在「會員資料」編輯畫面的 E-mail 信箱欄位下方，新增了「帳號轉移功能申請」按鈕。畢業換新帳號、或想把舊帳號的進度搬到新帳號時，可直接從這裡申請（功能同首頁左上角，每天限申請一次）。',
+      '✅【修好「轉移後新帳號無法登入」】之前申請帳號轉移、老師搬好資料後，新帳號登入會卡在「載入失敗」進不去——這次已修正，新帳號現在可以正常登入並看到搬過來的進度。',
+    ],
+    items: [
+      '★ v3.16.61【中文姓名搜尋根治·index.html】GM 課堂獎勵發放 + 玩家活動記錄查詢共用的 _fbAdminFindPlayersByName：玩家真名/暱稱實際存於 players 文件的 displayName 欄位(並無 name 欄位)，原階段1精確查 name 永遠 0 筆、階段2全掃讀 _data.name 為空字串被 if(!_name)return 全略過(連名冊 fullName 比對都跑不到)。改為查/讀 displayName(保留 name 後備)，中文姓名(未取暱稱者=真名、已取暱稱者=暱稱)現可精確+子字串命中;校外帳號(無真名/學號/名冊)新增信箱搜尋:輸入含 @ → 精確查 email、純文字片段≥3字 → 模糊比對 email(純數字輸入不走此路·避免班級碼誤配)。',
+      '★ v3.16.61【課堂獎勵·大量貼上+同名候選挑選·admin_panel.js】姓名輸入沿用逗點/換行分隔(可一次大量貼上)；單筆命中自動入列、可逐一移除；同名多筆改列候選清單並顯示每位的班級座號(走 _classSeatCode4)讓老師核對是誰、點選加入(可複選)；查無此人另列並提示改用學號/班級座號/信箱/uid。發放對象以確認後的清單為準。',
+      '★ v3.16.61【活動查詢顯示會員資料·admin_panel.js+index.html】玩家活動記錄查詢的玩家卡新增會員資料區塊，顯示玩家自填的 暱稱/信箱/身分/出生年(換算約略年齡)/性別/年級/平台，每次查詢即時讀最新(玩家更新後 GM 同步看到)；_fbGetMemberProfile 回傳加 updatedAt 供顯示最後更新時間；玩家未填則顯示尚未填寫。',
+      '★ v3.16.61【帳號轉移殘留根因修復·index.html】_fbMigrateAccountData 整份複製舊帳號存檔時會連 ownerUid 一起搬進新帳號，導致新帳號登入時 gameCloudLoad 的 Layer B 偵測 ownerUid(舊)≠登入 uid(新) 判為外來資料拒絕套用、卡載入失敗。修法：主檔 + saves/live + saves/safe 三處 ownerUid 一律改寫為新 uid(只讀舊寫新，不動母本)。',
+      '★ v3.16.61【會員資料加轉移鈕 + 每天限一次·index.html】會員資料編輯模式 E-mail 欄下方新增帳號轉移功能申請鈕(首登模式不顯示)，點擊開啟既有 _showAccountTransferModal。轉移彈窗(首頁左上角 + 會員資料兩入口共用)新增每日一次限制：以雲端申請紀錄 createdAt 對比台灣當日，今日已申請則顯示提示橫幅 + 停用送出鈕 + 送出守門擋下；送出成功另寫 localStorage 當日旗標備援。',
+      '★ v3.16.61【版本/範圍】七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + 本條 ver → v3.16.61。本輪改 index.html + admin_panel.js + game_changelog.js(hero_db.js 未改內容·僅 manifest 版號對齊·免重傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.41)。',
+    ],
+  },
   // v3.16.60 — 召喚物行動時在主人卡牌跳趣味標籤
   {
     ver: 'v3.16.60',
@@ -296,27 +313,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.42【修法】_playAdvBossBgm 開頭加冪等守門:若「應播的這首 BGM(_curBgm===id)正在播放(el.paused 為 false)」→ 不 bgmStop、不 reset currentTime,只校正音量並掛好 onended 後 return → 從動畫無縫接續。iOS 自動播放被擋時 el.paused 為真 → 不符守門 → 照常 bgmStop 重起(無回歸)。只改 index.html 1 處。',
       '★ v3.16.42【新圖一律 webp·鐵則】老師裁示:之後新增任何圖片一律改用 webp 格式(檔案更小、新版平板下載更快)。本輪先把上一版新增的「御雲使‧沐雲雪」立繪圖檔由 .png 改 .webp(hero_db.js HERO_IMGS)。⚠ 圖檔 御雲使_沐雲雪.webp 需老師另外上傳 repo。',
       '★ v3.16.42【版本／範圍】五點版本同步 _GAME_LOADED_VERSION + _vers[index.html／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.42;hero_db.js 維持 v3.16.41(本輪未改邏輯,僅沐雲雪圖檔副檔名 .png→.webp)。本輪改 index.html + hero_db.js + game_changelog.js + admin_panel.js。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.22)。',
-    ],
-  },
-  // v3.16.41 — 新英雄上線:御雲使‧沐雲雪(5年3班 黃稚善設計)
-  {
-    ver: 'v3.16.41',
-    date: '2026-06-27',
-    brief: [
-      '☁️【新英雄上線·御雲使‧沐雲雪】新增學生設計英雄「御雲使‧沐雲雪」(5 年 3 班 黃稚善同學設計)!從天空誕生、總是睡眼惺忪的御雲精靈,SSR,定位 💚回復 + 🛡️控場——本身很脆,但能為全隊撐起雲霧屏障,還能把夥伴的力量再發揮一次。',
-      '☁️【天賦·雲霧飄渺】只要沐雲雪在場上,全隊被雲霧繚繞、迴避率 +15%(隨天賦升級最高 +60%);她一旦倒下,雲霧就會消散。',
-      '💤【S1·浮雲入夢】指定 1 名「已倒下」的隊友,立刻讓他施展一次屬於自己的極限爆發(沿用該隊友的爆發效果與等級,但不會復活他);每名隊友整場限喚醒 1 次,技能升到滿級可喚醒 2 次。',
-      '☁️【S2·軟軟的雲(被動)】身體像雲一樣柔軟,受到傷害時(極限爆發傷害除外)有 35% 機率把這次傷害的 200% 彈回給攻擊者,每回合最多 2 次(機率隨技能升級最高 80%)。',
-      '🌈【極限爆發·霞蔚雲蒸】全隊(含已倒下的隊友)恢復最大 HP 的 50% 並可復活(隨爆發升級最高 90%);接著由你「指定 1 名友方」立刻施展一次他自己的極限爆發!',
-      'ℹ️【取得方式】和其他 SSR 英雄一樣,可透過召喚、打 BOSS、知識王成績等機會獲得。',
-    ],
-    items: [
-      '★ v3.16.41【新增學生設計英雄·御雲使‧沐雲雪(5年3班 黃稚善)】SSR·💚回復+🛡️控場。配點 hp55×1.3=72/atk3/sp20/spd22(總和 100·鐵律1.30)。資料層 hero_db.js 14 表 + 邏輯層 index.html 全套(設計單 31 個 AI 決定欄位依老師「全照做」實作)。',
-      '★ v3.16.41【天賦 雲霧飄渺】沐雲雪存活時友方全體迴避 +15%(+5%/天賦級·Lv10=60%),doDmg 迴避計算 hook 仿風術士天賦光環(必中/爆發/反彈不受影響·倒下即失效·鐵律1.160 圖鑑只寫 Lv1 base)。',
-      "★ v3.16.41【S1 浮雲入夢(c8)】execSkill+aiUseSkill 雙路徑(鐵律1.128):setPending('ally_dead') 指定倒下隊友 → 走引擎 _runBurst 施展其自身爆發(仿菇女「極限菇」·不上暈眩·不復活)。每名隊友 _muyunDreamUsed 限喚醒 1 次·s1 Lv10=2 次;無合法目標退還能量;被喚發友方爆發以 _interrupted 收尾。",
-      '★ v3.16.41【S2 軟軟的雲(c0 被動)】doDmg 扣 HP 後 hook(才符「受到傷害時」·避免被自身迴避光環誤觸):受傷(排除爆發傷害 _burstCastActive/治療/反彈/DoT)35%+技能級×5%(Lv10=80%)反彈該次傷害 ×200% 給攻擊者·每回合 ≤2 次(_softCloudRoundUsed·startTurn 重置)。反彈走 doDmg(isRebound·無 bypassShield)→ 龍王護盾+5000cap 仍生效(鐵律1.31)。',
-      "★ v3.16.41【爆發 霞蔚雲蒸】_runBurst 分支:全體隊友(含倒下者)回復最大 HP 50%+10%/burstLv(Lv4 MAX=90%·doRevive/doHeal)→ setPending('ally') 指定 1 友方立即施展其自身爆發(乙:玩家手動點選 + 5 秒 watchdog 自動挑攻/特最高防卡)。本體 execBurst 已 acted,故分支 return,收尾交被喚發友方 _runBurst。",
-      '★ v3.16.41【UI/註冊/版本】SKILL_UPGRADE_DEF(浮雲入夢 special_yunmeng 可升級 + 軟軟的雲 pct_buff)+ codex case special_yunmeng + BURST_UPGRADE_DEF(霞蔚雲蒸 5 列治療 50→90%)+ SUMMON_RARE_HEROES + STUDENT_DESIGNER_HEROES(lsps110188·自動套 _STUDENT_DESIGNED_HERO_SET→圖鑑🎨)。BURST_GIF 霞蔚雲蒸=大強化.gif + 神聖治療音效(sfx-goddess/sfx-heal·dur910)。五點版本同步 + hero_db.js → v3.16.41。本輪改 index.html + hero_db.js + game_changelog.js。⚠ 圖檔 御雲使_沐雲雪.webp(★ 新圖一律 webp 格式·新版平板下載更快)需老師另外上傳 repo;hero_input.html 離線編輯器另上傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.21)。',
     ],
   },
 ];
