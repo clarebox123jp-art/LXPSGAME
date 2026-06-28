@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-28  / 目前主程式版本:v3.16.66(GM獎勵領完有紀錄+學生自助申請移除不是我的英雄;前版 v3.16.65 序號兌換鈕改名GM獎勵+課堂獎勵自行領取)
+//  最後更新:2026-06-28  / 目前主程式版本:v3.16.70(英雄圖鑑放大改版:取代失敗的整體縮放,改真字級放大+雙欄RWD+至寶選單放大+龍王至寶旗標中文化;前版 v3.16.69 圖鑑來源帶字級放大)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,24 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.70 — 英雄圖鑑放大改版(取代上一版失敗的整體縮放)
+  {
+    ver: 'v3.16.70',
+    date: '2026-06-28',
+    brief: [
+      '🔍【英雄圖鑑放大·更清楚】英雄圖鑑的字體整體放大,看得更清楚;同時修正上一版「整體縮放」造成的電腦版排版跑掉、裝備至寶文字變成一個字一行、天賦欄變得超長,以及平板上「只有六邊形雷達放大、其餘字沒變大」的問題。裝備至寶選單的字也一起放大、原本顯示英文的龍王至寶效果改回中文。英雄名維持原本大小。天賦下方的 S1/S2/爆發技能排版維持不變。',
+      '🔓【未收錄英雄也能申請救回】英雄圖鑑裡「還沒擁有(未收錄)」的英雄,大圖下方新增「🔓 要救回」按鈕——如果那隻其實是你的、卻不見了,可送老師人工審查;送出後顯示「⏳ GM 審查中」、審查期間不能再按,老師核可補回後會標示「✅ 救回申請已通過(日期)」並移除按鈕。',
+      '🎁【GM 獎勵視窗左右兩區】「🎁 GM 獎勵」視窗改成左右兩區:左邊是老師發的獎勵、右邊是序號兌換,兩區可各自上下捲動互不干擾(手機等窄螢幕會自動上下排)。',
+    ],
+    items: [
+      '★ v3.16.70【取代縮放改真字級放大·index.html】移除英雄圖鑑右側內容的 zoom:1.8(電腦版排版被壓垮、平板上 zoom 對文字不可靠的根因),改用 _codexScaleFontSizes 把右側內容的「行內 px 字級」乘上倍率 _CODEX_FONT_SCALE(預設 1.6,老師可一鍵調整);雷達圖(SVG)與英雄名(data-noscale)不放大;所有重繪都經 _renderHeroDetail 出口套用,吃經驗書/投資能力/裝至寶/升技能後仍維持放大。',
+      '★ v3.16.70【雙欄響應式排版·index.html】左欄(屬性+裝備至寶+天賦)移除 max-width:52%(原本在縮放下被壓到極窄,是裝備至寶逐字換行、天賦超長的元兇),改 flex 基準+min-width;外層加 flex-wrap、右欄(雷達+素質效果)加 flex 基準與 min-width,電腦/平板橫向維持左右雙欄、窄螢幕才自動上下堆疊。',
+      '★ v3.16.70【英雄名固定 + 裝備至寶選單放大 + 龍王至寶中文化·index.html】英雄名字級還原 56px(縮放前的視覺大小)且不被放大;💎裝備至寶選擇視窗套用同一放大工具;補上龍王至寶效果旗標的中文(原顯示 immuneNoatk/atkRampPerRound 等英文,改為 免疫無法攻擊/每回合攻擊力遞增 等)。',
+      '★ v3.16.70【未收錄英雄救回 + GM 審查狀態機·index.html】_renderHeroCodexUnlockBar 解除「未擁有不顯示」閘門:未收錄英雄改渲染新 _codexLostRescueBarHtml(僅「🔓 要救回」路徑);送出 lost 申請時加寫持久 pending 標記(lxps_codex_lostpending_<uid>_hero_<name>·與每日限額分離)→ 顯示「⏳ GM 審查中」且按鈕消失(防重複送出);偵測「曾 pending + 現已擁有(GM 經 _fbAdminRestoreLostHeroes 核可補回)」=通過 → 清 pending、標 passed 日期,已擁有帶顯示「✅ 救回申請已通過(日期)」並移除所有按鈕。★帳號完整性:全程不自動發放/刪除,GM 仍為唯一權威;不碰載入路徑/存檔倒退守門。',
+      '★ v3.16.70【GM 獎勵視窗左右兩區·index.html】#redeem-overlay 由上下單欄改左右兩區:外卡改 flex-column(🎁標題固定)、內含左區「🎁 老師發的獎勵」(#gmcr-inbox)+右區「🎟️ 序號兌換」(虛線分隔),兩區各自 overflow-y:auto 獨立捲動、flex-wrap 窄螢幕自動堆疊;保留 #gmcr-inbox/#redeem-input/#redeem-submit-btn/#redeem-result 與 closeRedeemDialog/_doRedeem 全不變,字級維持放大略修以容兩欄。',
+      '★ v3.16.70【版本/範圍】七點版本同步 → v3.16.70;本輪只改 index.html(圖鑑放大+雙欄RWD+至寶旗標中文 + 未收錄英雄救回審查 + GM獎勵左右兩區),admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.50)。',
+    ],
+  },
   // v3.16.69 — 英雄圖鑑字級放大(左下方來源帶 + 右側內容區)
   {
     ver: 'v3.16.69',
@@ -275,22 +293,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.51【暗法師·hero_db.js+index.html】S1死亡宣告 c:5→c:4(hero_db.js);爆發毀滅禁咒(index.html L≈31539)傷害不變,per-enemy 由「機率封印1回合」改「保證 addStatus seal+noheal_curse·皆 _strong:true·dur=2+_lv5Extra(_burstLv>=4→3回合)」。',
       '★ v3.16.51【自動戰鬥AI·index.html】_realAiAct:(1)優先3普攻只在 a.side==p1 且 HERO_TRAIT desc/fd 含「普通攻擊」時執行(否則略過·改賣最高價非裝備/非治療/非復活物品蓄能·無可賣才休息);(2)isHealer 併入 HERO_PRIMARY_CLASS[a.name]==heal → 主治療型套用治療門檻優先治療/復活。敵方 p2 AI 維持原行為不動 BOSS 平衡。',
       '★ v3.16.51【驗證/版本】index.html 20 個 inline script node --check 全過·0 lone surrogate;hero_db.js/admin_panel.js node --check 過。四點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.51。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.31)。'
-    ],
-  },
-  // v3.16.50 — 新角色登場:魔術師(4年6班 張簡映澤·SSR)
-  {
-    ver: 'v3.16.50',
-    date: '2026-06-27',
-    brief: [
-      '🎩【新英雄登場！魔術師（SSR）】由 4 年 6 班 張簡映澤 設計的神秘魔術師加入小英雄行列！口頭禪「見證奇蹟的時刻，到了」，擅長幻術與逃脫術。天賦「障眼法」每回合有機率讓對手的被動技能失效（對手都沒有被動就改用暈眩）；S1「魔術閃光」造成傷害後隱身休息（免傷＋回血）；S2「表演魔術」讓全場敵人暈眩並從帽子裡變出物品卡；爆發「禁錮牢籠」把敵人關進無形牢籠 3 回合（無法行動、無法被治療、天賦與被動全部失效），對 BOSS 與玩家英雄則有一半機率掙脫但會受到強力反噬！',
-      '✨【召喚登場】魔術師為 SSR 稀有度，可在召喚星空抽到（🎩 禮帽為其代表標記），圖鑑可查看完整介紹與升級效果。'
-    ],
-    items: [
-      '★ v3.16.50【魔術師資料層·hero_db.js】HERO_DB(HP75/攻8/特22/速12·S1魔術閃光c4/S2表演魔術c5)/AVATARS(🎩)/HERO_IMGS/HERO_BIO(designer 4年6班張簡同學)/BURST_DB(禁錮牢籠)/HERO_TRAIT(障眼法)/HERO_LORE/BURST_GIF_DB(禁錮.gif+禁錮.mp3)/HERO_CATEGORIES/HEX/PRIMARY_CLASS(ctrl)/HERO_SKILL_EFFECTS 共 14 表;node --check 通過。',
-      '★ v3.16.50【新狀態 imprison/_passiveSeal·index.html】禁錮(無法行動+禁療+天賦/被動失效)+被動失效兩新狀態:BAD_STATUS/STATUS_DESCS/statusName(🔒/🎭)+5處控制清單+禁療判定(_healCurseGate/doHeal/doRevive)+天賦失效判定(_getTraitLv)全部接好。',
-      '★ v3.16.50【技能/爆發/天賦·index.html】爆發禁錮牢籠(_runBurst:imprison 3回合+消有利+強敵50%脫離受特技500%×爆發乘數反噬)+S1魔術閃光(當前HP20%上限Lv×20+隱身休息immune+回血)+S2表演魔術(全體暈眩對BOSS減半+drawItem加普通物品卡)+天賦障眼法(startTurn封被動/無被動則暈眩);execSkill+aiUseSkill雙路徑(鐵律1.128)。',
-      '★ v3.16.50【升級預覽+被動攔截·index.html】SKILL_UPGRADE_DEF(special_magic_flash/show)+codex case(S1回血%/S2加卡數逐級高亮)+BURST_UPGRADE_DEF(脫離反噬500→700%);被動失效/禁錮攔截 7 個被動(拘留者空間果實/武士迴避反擊/御雲使軟軟的雲/武鬥家金鐘罩/漩渦反擊/科學發明家靈感/偵探察覺蛛絲馬跡)。',
-      '★ v3.16.50【三池+音效+版本】SUMMON_RARE_HEROES+STUDENT_DESIGNER_HEROES(lsps111132)+sfx-imprison-burst(禁錮.mp3);四點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION → v3.16.50。'
     ],
   },
 ];
