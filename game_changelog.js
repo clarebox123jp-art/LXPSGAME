@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-29  / 目前主程式版本:v3.16.83(GM 誤發獎勵刪除連帶清收件箱紀錄;含 v3.16.82 埃及雙王開放 SSR 卷+戰鬥中延後套用)
+//  最後更新:2026-06-29  / 目前主程式版本:v3.16.84(救援/圖鑑認定全面綁 UID+舊英雄憑培養證據自動歸屬補蓋 UID;含 v3.16.82/83)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,27 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.84 — 帳號救援/圖鑑認定全面綁 UID + 舊英雄憑培養證據自動歸屬並補蓋 UID(GM 專屬)
+  {
+    ver: 'v3.16.84',
+    date: '2026-06-29',
+    adminOnly: true,
+    brief: [
+      '🛡【GM·救援/審查綁 UID 防誤判】帳號救援的「帳本核對補回英雄」改為只認本帳號 UID 的解鎖紀錄,根治共用 iPad 跨帳號污染害「補回一堆不是學生的英雄」;沒有 UID 紀錄但練過(等級>1)/裝過至寶/投資過的舊英雄,一律直接歸屬該玩家(玩家下次登入自動補蓋 UID 永久認定),不再被當污染。',
+      '🔍【GM·過度補回稽查與回收】新增工具(玩家活動記錄查詢卡):輸入學生帳號 → 查出之前「沒審 uid 的舊救援『確認救援並補回』」誤補進來的別位同學英雄/至寶 → 一鍵全數回收;已練的英雄自動補償(知識幣+召喚水晶),並寄道歉通知讓學生登入時看到收回了哪些、補了什麼。學生自己按「這是我的」確認的英雄,等級與培養記錄一併鎖進雲端三槽,不再被誤刪或回溯成 Lv1。',
+    ],
+    items: [
+      '★ v3.16.84【救援帳本核對綁 UID·index.html】_fbRebuildAccountFromLedgers「應該擁有英雄」改只認 _heroUnlockHistory 中 uid=本帳號前 12 碼的解鎖紀錄(advSaveUnlockedHero/_advSaveTreasureUnlockHistory 每筆都寫自己 uid;共用平板別人留下的帶別人 uid)→ 別帳號殘留的解鎖事件不再被當「該補回」,根治老師回報「補回英雄錯很多·學生說都不是他們的」。退回類來源(admin_delete/audit_error_recovered)一律不補回。至寶帳本同步只認本帳號 uid。',
+      '★ v3.16.84【舊英雄歸屬·grandfather·index.html】救援核對對「現有但無自己 uid 紀錄」的英雄:若練過(lv>1)/裝至寶/投資過(素質·技能·天賦·爆發,皆從載入合併後資料 _cur+_s 算)→ 列為「✅ 已歸屬本帳號的舊英雄」(diff.grandfatheredHeroes),不列污染清單、不移除;真的查無紀錄又沒任何培養證據者才列「帳本查無紀錄」供人工確認(仍不自動移除)。★ 關鍵拆分:對「有別位同學 uid 真實解鎖紀錄、但本帳號自己無紀錄」者(舊救援沒審 uid 誤補進來的別人英雄)單獨列為 diff.crossAccountHeroes,不當 grandfather 歸屬(否則會把別人的英雄變成學生的)→ 改導引去「🔍 過度補回稽查與回收」回收+補償+道歉。玩家端自動補蓋 UID 亦同步排除「有別人 uid 紀錄」者,避免在 GM 回收前先把它合法化。',
+      '★ v3.16.84【玩家端自動補蓋 UID·止 churn·index.html】登入協調器 _lxpsRecoverAuditErrorHeroes(原 v3.16.28 已全停用·絕不回收任何角色)改作「舊英雄補蓋 UID 歸屬」:對「擁有但無自己 uid 解鎖紀錄」且練過/裝至寶/投資過的英雄,補寫一筆 legacy_grandfather 自己 uid 紀錄(本機 adv_hero_unlock_history + fire-and-forget arrayUnion 雲端 _heroUnlockHistory)→ 永久歸屬本帳號,圖鑑審查/救援不再反覆把它當「查無紀錄污染」重判。純加紀錄·不刪不改任何英雄/等級(載入路徑神聖·只增不減);idempotent(已有自己紀錄即跳過)·初始 8 隻免紀錄略過·擁有<8 視為雲端未載完輕量重試。',
+      '★ v3.16.84【圖鑑認定·沿用既有 UID 綁定】英雄圖鑑「這是我的」自助審查自 v3.16.29 起即核對雲端 _heroUnlockHistory 自己 uid、v3.16.67 圖鑑大圖下方標示每隻 UID 解鎖來源,本就綁 UID;_advHasGenuineUnlock 亦已保留練過/裝至寶/投資/自己 uid 紀錄者。配合本輪玩家端自動補蓋 UID,練過的舊英雄會取得自己 uid 紀錄 → 圖鑑認定全面綁 UID 一致,無需再改判定。',
+      '★ v3.16.84【GM 選單同步·admin_panel.js】「📨 帳號救援申請審核」卡與「🔧 一鍵帳號重建」卡的核對結果皆新增「✅ 已歸屬本帳號的舊英雄 N 隻」綠晶片區塊(讀 diff.grandfatheredHeroes),讓老師清楚看到哪些舊英雄已被自動認定為學生的、無需處理。純顯示·無邏輯/同步變動·無 ?.;免三點同步。',
+      '★ v3.16.84【過度補回稽查與回收·後端·index.html】新增 window._fbAdminScanOverRestoredForUid(uid)(讀三槽合併·列出「有別位同學 uid 真實解鎖紀錄但本帳號自己無紀錄、也未 player_confirmed」的英雄[名+等級]與至寶=舊救援沒審 uid 誤補的別人項目)+ window._fbAdminReclaimOverRestoredForUid(uid,英雄,至寶):①對已練(lv>1)者先補償(每等級 500 知識幣 + 每隻練過 2 召喚水晶上限 20·走 _fbCompensatePlayer add)②回收英雄(走既有 _fbAdminBulkRemoveHeroes 寫三槽+admin_delete+清養成_s·不復活)+ 至寶(_fbAdminRejectAuditTreasures)③寄道歉通知(_fbAdminSendNotificationToPlayer·type compensation·列回收項目+補償·玩家登入彈窗)。根治老師回報「舊『確認救援並補回』按鈕沒審 uid 過度補回」災難。',
+      '★ v3.16.84【過度補回稽查·GM UI·index.html+admin_panel.js】index.html 加 window._fbShowOverRestoredAudit(email/uid/學號)(解析帳號→掃描→彈窗列誤補的英雄[Lv·已練標🔥]/至寶→「🔄 全部回收並補償+發道歉通知」鈕·confirm 後執行+結果回報);admin_panel.js「📜 玩家活動記錄查詢」卡新增「🔍 過度補回稽查與回收」鈕(讀查詢框 email/uid/學號→開該彈窗)+「📨 帳號救援申請審核」卡核對結果加 diff.crossAccountHeroes 紅晶片區塊(導引去稽查工具)。無 ?.·免三點同步。',
+      '★ v3.16.84【確認「這是我的」鎖等級·index.html】_lxpsConfirmOwnHero(圖鑑「✅ 確認是我的」)在寫 player_confirmed 自己 uid 紀錄後,gameCloudSave 立即同步+加 2.5s 延遲重試 → 把該英雄目前等級+培養記錄(heroLevels_s/各養成 _s)確實寫上雲端三槽(合併優先採信 _s·v3.15.96)→ 學生確認過的英雄不會再被誤刪、也不會回溯成 Lv1(涵蓋首登 _progressLoaded 尚未就緒時第一次存檔被略過的情況)。',
+      '★ v3.16.84【版本/範圍/尚未上傳堆疊】本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 內容未改僅 manifest 版號·免重傳。七點版本同步 → v3.16.84。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.64)。⚠ 本版含尚未上傳的 v3.16.82(埃及雙王開放 SSR 卷+戰鬥中延後套用)與 v3.16.83(GM 誤發獎勵刪除連帶清收件箱),請老師直接上傳最新 v3.16.84(已涵蓋全部)。',
+    ],
+  },
   // v3.16.83 — GM:誤發 GM 獎勵刪除時連帶清除學生收件箱紀錄(GM 專屬)
   {
     ver: 'v3.16.83',
@@ -284,18 +305,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.65【課堂獎勵改「自己領取」·玩家面向】老師發課堂獎勵的方式由「直接發到你帳號」改成「放進你的收件箱、由你自己確認領取」:好處是在共用 iPad 上,別人登入時看不到也領不到你的獎勵(尤其 UR 英雄),獎勵只會在「你本人登入並按確認領取」時才存進你的帳號,更安全、不會發錯人;每份獎勵只能領一次(換裝置/重新整理也不會重複),領取後畫面會自動重新整理讓獎勵生效。',
       '★ v3.16.65【後台·老師端】課堂獎勵發放頁新增「🏅 表現優良事蹟」(8 個預設可複選 + 自由補充);「發放」改為寫入該學生收件箱(待領取),學生下次登入在「🎁 GM獎勵」看到事蹟+獎項並自行「確認領取」入帳(嚴防共用平板 UR 發錯人/帳號污染)。送禮記錄、同名候選挑選維持不變。',
       '★ v3.16.65【版本／範圍】本輪改 index.html + admin_panel.js + game_changelog.js + firestore.rules(新增 gmClassRewards / gmClassRewardClaims·老師另部署);hero_db.js 僅版號對齊免重傳。七點版本同步 → v3.16.65;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.45)。',
-    ],
-  },
-  // v3.16.64 — 老師回信改右下角小視窗+鈴聲通知
-  {
-    ver: 'v3.16.64',
-    date: '2026-06-28',
-    brief: [
-      '🔔【老師回覆通知更貼心】老師回覆你的 BUG／問題回報後，登入時畫面右下角會跳出小視窗加上提示鈴聲，點一下就能看老師回覆的完整內容；看完關閉後就不會再重複提醒。即使老師回覆時你不在線上也沒關係，下次上線會立刻通知。',
-    ],
-    items: [
-      '★ v3.16.64【老師回信通知改版·index.html】原本登入會直接蓋一個置中大視窗，改成在畫面右下角彈出一張小通知卡(仿老師端收到回報的小視窗)＋鈴聲提示(sfx-rescue-chime)：新增 _showAdminReplyToast(顯示老師回覆前 40 字摘要＋若有多則顯示還有 N 則)，登入檢查 _checkUnreadBugReplies 偵測到未讀回信時改彈此小卡。點小卡→開既有「老師回覆你的回報」完整視窗(_showAdminReplyPopup·看完按「我知道了」即標記已讀、不再顯示)；右上角 ×→只收起小卡(未讀，下次登入再提醒，確保不漏看)。',
-      '★ v3.16.64【範圍/安全】老師端按「儲存回覆」沿用既有 _fbUpdateBugReportAdminReply(寫 adminReply＋adminReplyRead:false)完全不變；玩家標記已讀沿用既有 _markPendingBugRepliesAsRead；不需改 firestore.rules(bugReports 既有權限已允許玩家讀自己回報＋標記已讀)。只改 index.html；admin_panel.js／hero_db.js 僅版本對齊免重傳。七點版本同步→v3.16.64。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.44)。',
     ],
   },
 ];
