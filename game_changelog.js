@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.79 — 成績獎勵搜尋反向模糊比對收緊 + 全體獎勵 UR 廣播二次確認(GM 後台·玩家無感)
+  {
+    ver: 'v3.16.79',
+    date: '2026-06-29',
+    adminOnly: true,
+    brief: [
+      '🛠【GM 後台·發獎發錯人根治】修正成績獎勵只輸入某帳號(如 clarebox123jp)卻把獎勵發到不相干學生(jlu1201 解鎖 UR)的問題;玩家端無感。',
+    ],
+    items: [
+      '★ v3.16.79【根因】玩家搜尋 _fbAdminFindPlayersByName 的反向模糊比對 reverse_contains(輸入字串「包含」某玩家暱稱·暱稱長度大於等於 2 即命中)過鬆:輸入信箱帳號字串 clarebox123jp(13 字)時·任何暱稱剛好是其子字串(box／clare／123 等)的學生都被誤命中→若成為唯一命中就自動入收件清單→UR 發錯到該學生。',
+      '★ v3.16.79【修法·index.html】reverse_contains 與 no_prefix_reverse 兩條反向分支加守門 _norm.length 小於等於 6(僅真名／部分中文名才允許反向)·長信箱帳號字串不再反向誤命中學生暱稱;本尊仍由 email_contains(信箱含輸入·安全方向)正確找到·中文部分名搜尋照常。此函式多處共用·收緊等於搜尋更精準·無回歸。',
+      '★ v3.16.79【乙·admin_panel.js】全體玩家獎勵廣播工具勾到任一 UR(克雷爾／伊莉雅／奧汀)時·送出前硬性打字確認(需輸入四個字 發給全校)·防手滑把 UR 廣播給全校約 900 人;UR 單發給某帳號改用 GM 獎勵 per-uid 工具(綁 gmClassRewards 該 uid·已驗證不外洩)。',
+      '★ v3.16.79【清理】已誤發的 UR 用 GM 英雄／至寶持有者審查掃全體逐人刪除。',
+      '★ v3.16.79【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js node --check 過、0 個真正可選串接。七點版本同步 → v3.16.79。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.59)。本輪改 index.html(搜尋)+admin_panel.js(廣播護欄)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。',
+    ],
+  },
   // v3.16.78 — 「📨 帳號救援申請審核」逐項處理不互架、狀態永久保留
   {
     ver: 'v3.16.78',
@@ -280,18 +296,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.60【召喚物笑果標籤·index.html】五隻召喚物在「主人卡牌」跳 bannerFX 標籤：朱雀治療！(治療友方·主人＝陰陽師)／青龍助攻！(追擊友方目標·主人＝陰陽師)／玄武白虎守護！(代承陰陽師傷害·主人＝陰陽師)／操偶守護！‧城牆守護！(操偶師·依當前 _puppetLabel 狀態)／天青龍守護！‧至尊天青龍守護！(喚龍使‧蜜鶴林本體·依當前 _dlabel 狀態)。原本守護顯示的「-扣血數字」移到戰鬥紀錄文字，卡牌 banner 改顯示笑果文字。',
       '★ v3.16.60【青龍助攻延後 0.5 秒·index.html】青龍追擊的傷害套用＋「青龍助攻！」標籤改用 _pSetTimeout 延後 0.5 秒(避免和原本傷害數字疊在一起)；立即設防遞迴旗標、capture 區域變數，延後回呼會重新確認目標／陰陽師／青龍式神都還在場才執行，戰鬥結束或式神陣亡則略過。pause-aware：暫停中會排隊、解除後再跑，並自帶 fallback 不卡死。',
       '★ v3.16.60【範圍/版本】只改 index.html(doDmg／doHeal hook 五處 bannerFX)；admin_panel.js＋game_changelog.js 僅版本對齊。七點版本同步 → v3.16.60。未來新增召喚物比照此模式加標籤。「替身！」「反擊！」等其他既有機制不動。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.40)。',
-    ],
-  },
-  // v3.16.59 — 鬥技場動態影片背景
-  {
-    ver: 'v3.16.59',
-    date: '2026-06-28',
-    brief: [
-      '🏟️【鬥技場換上動態背景】鬥技場主頁加入全螢幕動態背景影片，畫面更有氣勢！若影片還沒下載好或讀取失敗，會自動顯示原本的鬥技場背景圖，不影響使用。',
-    ],
-    items: [
-      '★ v3.16.59【鬥技場動態影片·index.html】#arenaLobbyOverlay 第一子層新增 <video id=arena-bg-video>（鬥技場動態.mp4·autoplay/loop/muted/playsinline·object-fit:cover 全螢幕·opacity:0 + onloadeddata 淡入·onerror→display:none 露出靜態 鬥技場.png）。作法同召喚星空動態影片，但 z-index 用 -1（非召喚頁的 0）：鬥技場 .al-body 內容為正常流(static)，影片若用 z0 會蓋住內容，改用負 z 讓影片畫在「本元素背景圖(png+漸層)之上、正常流內容之下」（.al-header 為 sticky z5 亦在其上）。',
-      '★ v3.16.59【需上傳 repo + 版本】⚠ 老師需上傳 repo 根目錄：鬥技場動態.mp4（缺檔則鬥技場頁自動隱藏影片·露出原本的鬥技場.png）。七點版本同步 → v3.16.59。GAME_CHANGELOG trim 至 20 筆（本批新增 v3.16.55~59·移除最舊 v3.16.39~35）。',
     ],
   },
 ];
