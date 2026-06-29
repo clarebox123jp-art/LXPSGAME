@@ -12,6 +12,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.77 — 「🔍 持有者審查」勾選清單補齊 UR／SR／R（含答題解鎖）
+  {
+    ver: 'v3.16.77',
+    date: '2026-06-29',
+    brief: [
+      '🔍【持有者審查勾選清單補齊】老師後台「🔍 英雄／至寶持有者審查」原本勾選清單只有 SSR 英雄，現在補齊為四大稀有度分組：👑 UR／SSR／SR／R（R 含答題解鎖的 小力／幼兒園小孩／機關王雙人組），全稀有度都查得到了。(玩家端無感)',
+    ],
+    items: [
+      '★ v3.16.77【全稀有度勾選清單·index.html+admin_panel.js】原 _buildPicker 只讀 window.SUMMON_RARE_HEROES(=SSR 母體)。修法：① index.html 在 _getHeroRarity 旁暴露 window._LXPS_RARITY_UR = Array.from(_RARITY_UR_HEROES)、window._LXPS_RARITY_R = Array.from(_RARITY_R_HEROES)（SSR=SUMMON_RARE_HEROES、SR=SUMMON_SR_HEROES 早已暴露）。② admin_panel.js _buildPicker 改為四稀有度分組 👑UR／🟧SSR／🟪SR／🟦R（_heroGroup 逐組標題+計數+到 _seen 去重），同一搜尋框篩選。R 組含答題解鎖 小力／幼兒園小孩／機關王雙人組(原本在 _RARITY_R_HEROES Set 裡)。查詢／刷除／補償邏輯不變。無 ?. 可選串接。',
+      '★ v3.16.77【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 → v3.16.77。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.57）。本輪改 index.html(UR／R 暴露)+admin_panel.js(_buildPicker 四分組)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
+    ],
+  },
   // v3.16.76 — 老師後台新增「🔍 英雄／至寶持有者審查」工具
   {
     ver: 'v3.16.76',
@@ -280,19 +292,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.58【每位英雄AI設定·index.html】新增 window._autoBattleHeroCfg（綁英雄名·9 布林開關 atk/s1/s2/burst/sell/useItem/healRevive/tgtHigh/tgtLow）+ localStorage(lxps_auto_battle_cfg) + 雲端同步（_buildSafeData 寫 autoBattleCfg / autoBattleCfg_s·_applySafeData 優先採信 _s·自寫欄位不需改 firestore.rules·不在英雄存檔載入路徑）。預設值=等同舊行為（普攻依天賦判定·其餘 true·目標兩項 false）。',
       '★ v3.16.58【設定視窗·index.html】toggleAutoBattle 開啟前先彈 showAutoBattleSettings({live:false, onConfirm:_doEnableAutoBattle})；showAutoBattleConfirm（進行中）新增「⚙ 修改AI設定」鈕 → showAutoBattleSettings({live:true})（只存檔不重啟）。視窗 25 秒未操作自動套用並繼續（防卡死）·空隊伍直接放行·任何例外都不擋流程。畫面點擊攔截 excluded 加 auto-confirm-settings / auto-battle-settings-ov。新增 #auto-battle-settings-ov CSS（iPad 友善開關·≥44px 觸控·可捲動·z 9960）。',
       '★ v3.16.58【_realAiAct 閘門·index.html】只在「玩家側 p1 + 自動戰鬥開啟 + 該英雄有設定」時生效（敵方 p2 與未設定英雄完全不受影響）。爆發/技能(canS1b/canS2b 折入 s1/s2 開關·涵蓋治療段與攻擊段)/普攻/賣卡蓄能/物品卡(裝寵物·復活/治療/攻擊道具)/治療技能 各加「不允許就略過、往下一個選項走」；目標 HP 最高/最低（恰好勾一項時生效·XOR）。最後一定有「休息」收尾且永不被閘門擋 → 任何勾選組合都會結束回合、不會卡死。',
-    ],
-  },
-  // v3.16.57 — 戰鬥存檔教學放大 + 每次提醒可暫停存檔
-  {
-    ver: 'v3.16.57',
-    date: '2026-06-28',
-    brief: [
-      '📖【戰鬥存檔教學放大】「戰鬥存檔功能教學」的金色說明框裡的文字全部放大一倍，看得更清楚。',
-      '⏸️【每次都提醒可暫停存檔】很多同學不知道戰鬥中可以暫停存檔，現在新手教學的「第一步」一定會先提醒「右上角可以暫停，暫停就會存檔」；之前的「不再顯示」勾選也移除了（共用 iPad 每位同學都看得到）。',
-    ],
-    items: [
-      '★ v3.16.57【教學金框放大·index.html】._tut-pause-hint-box 系列 CSS 字級 ×2（標題 18→36px·內文 15→30px·勾選 14→28px·checkbox 28px）。',
-      '★ v3.16.57【暫停提醒每次顯示·index.html】移除 localStorage(pauseHintDismissed) 守門與「不再顯示」勾選；於 TUTORIAL_STEPS 最前插入一步（target:null·side:center·標題「⏸ 戰鬥可以暫停存檔！」）→ 每次走教學（含 ❓ 重看）第一步都先提醒。',
     ],
   },
 ];
