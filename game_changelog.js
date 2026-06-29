@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-29  / 目前主程式版本:v3.16.72(素質四欄兩行排版修正 + 四說明視窗字放大×2 + 技能/爆發升級即開窗+音效改點;前版 v3.16.70 英雄圖鑑放大改版)
+//  最後更新:2026-06-29  / 目前主程式版本:v3.16.74(素質四欄兩行排版修正 + 四說明視窗字放大×2 + 技能/爆發升級即開窗+音效改點;前版 v3.16.70 英雄圖鑑放大改版)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,58 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.76 — 老師後台新增「🔍 英雄／至寶持有者審查」工具
+  {
+    ver: 'v3.16.76',
+    date: '2026-06-29',
+    brief: [
+      '🔍【老師後台：英雄／至寶持有者審查】老師在管理面板「🧹 帳號污染處理」新增一個工具：勾選任意英雄／至寶 → 查出全班「誰持有這些英雄／至寶」，並顯示每人的取得來源與取得時間，方便審查是否為不正常取得。來源查無紀錄／未標記的會排在最前面。可直接對單一玩家刷除該英雄／至寶或發放補償。(玩家端無感)',
+    ],
+    items: [
+      '★ v3.16.76【持有者審查·後端·index.html】新增 window._fbAdminScanItemOwners(heroNames, treasureIds)：一次 getDocs(players) 全玩家掃描，逐人取 unlockedHeroes ∩ 所選英雄 + taiwanTreasureData key ∩ 所選至寶；來源／時間取自 _heroUnlockHistory／_treasureUnlockHistory 每名「最新一筆」帳本紀錄，等級讀 heroLevels／taiwanTreasureData[id].lv；回傳 {scanned, owners:[{uid,email,displayName,heroes:[{name,source,at,lv}],treasures:[{id,name,source,at,lv}]}]}，來源空白／admin_delete(可疑)排最前、其次依名稱。唯讀不寫。',
+      '★ v3.16.76【持有者審查·面板·admin_panel.js】新增 GM 區塊 #_admin-item-owner-section(🧹 帳號污染處理群組)：可搜尋的英雄(讀 window.SUMMON_RARE_HEROES)／至寶(讀 window.TAIWAN_TREASURES)勾選清單 + 「🔍 查詢持有者」鈕 → 呼 window._fbAdminScanItemOwners → 逐位列玩家（名／uid／信箱）+ 每項英雄／至寶的來源白話標籤 + 時間。每列「🗑 券除」(英雄走 window._fbAdminBulkRemoveHeroes 寫三槽+admin_delete 不復活；至寶走 window._fbAdminRejectAuditTreasures 移出)，「🎁 補償」(輸入知識幣／召喚水晶數量→ window._fbCompensatePlayer)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initItemOwnerSection IIFE)；_buildPicker 載入競態守門(globals 未就緒 1.5s 重試)；_esc 跳脫；無 ?. 可選串接。',
+      '★ v3.16.76【影響／安全】新增純屬 GM 審查工具，玩家端零改動、不碰存檔／載入／同步核心。查詢為一次性讀取所有玩家文件(配額消耗大·僅手動點查詢時)；刷除走既有 admin_delete 三槽守門不復活·補償走既有帳本。本輪改 index.html(后端 helper)+admin_panel.js(卡片+IIFE+三點同步)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
+      '★ v3.16.76【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 → v3.16.76。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.56）。同輪並含 v3.16.75 鬥技場主頁排版(視窗加寬 50%+排名獎勵各名次獨立一行)。',
+    ],
+  },
+  // v3.16.75 — 鬥技場主頁內容視窗加寬 50% + 排名獎勵各名次獨立一行
+  {
+    ver: 'v3.16.75',
+    date: '2026-06-29',
+    brief: [
+      '🏟️【鬥技場主頁排版優化】① 中央內容視窗加寬約 50%，鬥技場介紹、戰鬥模式、排名獎勵等文字不再被擠到第二行、看得更整齊。② 排名獎勵改成「每個名次各自一行」（第 1 名／第 2-5 名／第 6-10 名／第 11 名以後 分行列出），不再擠在一起亂換行。',
+    ],
+    items: [
+      '★ v3.16.75【內容視窗加寬·index.html】#arenaLobbyOverlay .al-body 的 max-width 由 900px 改 1350px（+50%）：配合 v3.16.72 介紹／獎勵文字放大 200%，寬螢幕用更多橫向空間讓單行文字不跨第二行；保留 width:100% 故窄螢幕（手機／直式）仍不溢出、margin:0 auto 維持置中。純 CSS 一處。',
+      '★ v3.16.75【排名獎勵分行·index.html】#arenaLobbyOverlay 排名獎勵區 .al-reward-text 四個名次原以全形空白「　」兩兩併在同一行（第 1 名＋第 2-5 名一行、第 6-10 名＋第 11 名以後一行），放大字級後擠在一起亂換行；改為每名次各自獨立一行（🥇第 1 名 ／ 🥈第 2-5 名 ／ 🥉第 6-10 名 ／ 🎀第 11 名以後 共 4 行），獎勵數值內容完全不變。純文字排版一處。',
+      '★ v3.16.75【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.75。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.55）。本輪僅改 index.html 2 處（鬥技場 CSS+文字排版），admin_panel.js 與 game_changelog.js 僅版號對齊／新增條目、hero_db.js 僅 manifest 版號免重傳。',
+    ],
+  },
+  // v3.16.74 — 鬥技場上方場次統計欄底色改透明深藍(字看得更清楚)
+  {
+    ver: 'v3.16.74',
+    date: '2026-06-29',
+    brief: [
+      '🏟️【鬥技場統計欄看得更清楚】鬥技場上方「今日剩餘/總勝場/總平手/總敗場/鬥技之證/入場券」那一排的底色,由原本很淡的金色改成透明深藍色,在明亮的天空背景下數字和文字都清楚多了。'
+    ],
+    items: [
+      '★ v3.16.74【鬥技場統計欄底色·index.html】#arenaLobbyOverlay .al-stats-bar 背景由 rgba(255,200,80,0.12)(淡金·在明亮天空動態背景下對比不足→金色數字+白色標籤看不清)改 rgba(14,30,72,0.82)透明深藍,邊框由淡金 rgba(255,200,80,0.3)改淺藍 rgba(120,170,255,0.45)使面板協調;金色數字(.al-stats-num #ffd07b)維持→深藍底上對比更強。純 CSS 一處,JS/結構/版號邏輯不動。',
+      '★ v3.16.74【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 → v3.16.74。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.54)。本輪僅改 index.html 1 處 CSS,admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。'
+    ],
+  },
+  // v3.16.73 — 修正放棄戰鬥回關卡主頁左下 SOS 求救鈕殘留
+  {
+    ver: 'v3.16.73',
+    date: '2026-06-29',
+    brief: [
+      '🆘【修正左下 SOS 求救鈕殘留】放棄戰鬥回到關卡主頁後,左下角紅色「🆘 求救(SOS)」鈕沒有隱藏(它只該在戰鬥中出現)。現在任何路徑回到冒險選關頁都會把它正確隱藏,不再殘留在主頁。'
+    ],
+    items: [
+      '★ v3.16.73【SOS 求救鈕殘留修正·index.html】症狀:放棄戰鬥(toast「已放棄上次戰鬥,可以開始新的冒險!」)回到關卡主頁後,左下角 #adv-battle-help-fab(🆘 求救/SOS·v3.16.46 整併鈕)仍顯示。根因:該 FAB 顯示由戰鬥 watchdog(_lxpsBattleRescueBtnWatchdog·每 1.5s)在 _inBattle() 為真時強制 display:block 並 reparent 到 body,但 watchdog 只負責「戰鬥中顯示」、離開戰鬥(放棄/勝/敗)時並不負責隱藏;_hideDeadlockRescueButton 也刻意不改其 display(註「顯隱交給 watchdog」)→ 離開戰鬥後 FAB 維持戰鬥中的 display:block 殘留。放棄函式已把 _adventureMode=false / G.p1=[] / _advBattleResultShown=true 全清(故 _inBattle() 回 false→watchdog 提早 return 不再碰它),但沒有任何點把它設回 none。修法:在 openAdventureOverlay(冒險選關頁進入點·所有回選關頁路徑皆經過)既有「強制隱藏 🔄回溯/❓教學 戰鬥專用鈕」處,補上把 #adv-battle-help-fab 設 display:none + 解除可能殘留的紅光 alert 樣式(dataset.state 清空·animation:none)。選關頁 _inBattle() 為 false→watchdog 不會再把它顯示回來,修正穩定。',
+      '★ v3.16.73【影響範圍/安全】只動 openAdventureOverlay 一處(以 try/catch 包覆·取不到元素即靜默略過),不碰戰鬥 watchdog 全域邏輯、不碰 _hideDeadlockRescueButton、不影響戰鬥中該鈕的常駐顯示與卡死自救紅光提醒、不影響結算/過場/首頁/其他模式。本輪僅改 index.html(此修正在此),admin_panel.js 與 game_changelog.js 僅版號對齊/新增條目、hero_db.js 僅 manifest 版號免重傳。',
+      '★ v3.16.73【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.73。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.53)。'
+    ],
+  },
   // v3.16.72 — 鬥技場主頁(動態背景固定+字放大+底色加深) + 場景圖延遲載入策略(登入只載必要圖·冒險點進去才載·PWA 安裝版仍完整預載)
   {
     ver: 'v3.16.72',
@@ -241,60 +293,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.57【教學金框放大·index.html】._tut-pause-hint-box 系列 CSS 字級 ×2（標題 18→36px·內文 15→30px·勾選 14→28px·checkbox 28px）。',
       '★ v3.16.57【暫停提醒每次顯示·index.html】移除 localStorage(pauseHintDismissed) 守門與「不再顯示」勾選；於 TUTORIAL_STEPS 最前插入一步（target:null·side:center·標題「⏸ 戰鬥可以暫停存檔！」）→ 每次走教學（含 ❓ 重看）第一步都先提醒。',
-    ],
-  },
-  // v3.16.56 — 戰鬥 LOG 展開/收合 + 移除雲端同步洗頻
-  {
-    ver: 'v3.16.56',
-    date: '2026-06-28',
-    brief: [
-      '📜【戰鬥紀錄可以展開看全文了】戰鬥畫面的戰鬥紀錄區右上角新增「📜 展開／✖ 收合」按鈕，展開時紀錄會放大覆蓋整個區域、可往上捲讀完整戰鬥過程；進入下一場戰鬥會自動收合。原本的戰鬥指令排版完全不變。',
-      '🧹【移除洗頻訊息】移除戰鬥紀錄裡頻繁出現的「☁️ 雲端已同步」洗頻訊息（存檔很頻繁，改為只記在開發者主控台，不再洗版戰鬥紀錄）。',
-    ],
-    items: [
-      '★ v3.16.56【LOG 展開/收合·index.html】#sb 第一子層新增 #log-toggle-btn（position:absolute·top4/right8·z60·不佔排版流 → 不影響任何戰鬥指令位置）；toggleBattleLog 展開時 #log 改 position:absolute inset:0 覆蓋 #sb（z55·深底·padding 44px）·收合清回 inline 空字串還原 main.css；startTurn round1 呼叫 _collapseBattleLog 自動收合。全程不修改 #action-panel 與任何指令按鈕。',
-      '★ v3.16.56【移除同步洗頻·index.html】兩處 log(☁️雲端已同步 / 部分) 改為僅 console.log，不再寫入戰鬥 LOG。',
-    ],
-  },
-  // v3.16.55 — 死亡宣告對日本/埃及小怪也生效
-  {
-    ver: 'v3.16.55',
-    date: '2026-06-28',
-    brief: [
-      '💀【死亡宣告對日本／埃及小怪也生效了】英雄技能「死亡宣告」原本只對台灣關卡的路邊小怪生效（2 回合後強制剩 1 HP），現在日本（河童等）與埃及（木乃伊貓等）關卡的路邊小怪也一樣生效。',
-      '💡【說明】菁英小怪（九尾空貓怪／綠竹筍小妖／茶葉精靈）、各關頭目、以及免疫即死的死神／暗龍王之骸 不受影響，維持原本規則。',
-    ],
-    items: [
-      '★ v3.16.55【死亡宣告擴關·index.html】死亡宣告的「路邊小怪」判定名單由原本只含台灣 MINI_MONSTERS，擴充為 concat(MINI_MONSTERS, MINI_MONSTERS_JP, MINI_MONSTERS_EG)（以 typeof 守門避免未定義）。玩家施放路徑（L≈45118）與 deathmark 到期結算路徑（L≈54484·最後防線）雙處同口徑修正。菁英小怪/BOSS 陣容走 20% 當前 HP 傷害+禁療（上限英雄 Lv×20）·死神/暗龍王之骸 即死免疫·皆不變。',
-    ],
-  },
-  // v3.16.54 — 巫女神樂舞新動畫+音效 + 召喙星空動態影片背景
-  {
-    ver: 'v3.16.54',
-    date: '2026-06-28',
-    brief: [
-      '🎐【巫女大絕「神樂舞」換新裝】巫女的極限爆發「神樂舞」換上全新的「花瓣飛起」動畫，並加入清脆的「風鈴聲」音效，施放時更有神社祈福的氛圍！',
-      '🌌【召喙星空動起來了】召喙星空頁面加入全螢幕動態背景影片，夜空與水面流動更生動；原本的流星特效保留，水面漣漪改由影片呈現。（若影片還沒下載好，會先顯示原本的星空背景圖，不影響召喙。）'
-    ],
-    items: [
-      '★ v3.16.54【神樂舞特效·index.html】爆發 VFX case 神樂舞：全螢幕 GIF 由「秋天楓葉飄落.gif」改「花瓣飛起.gif」（移除 timeout 維持 3200ms）；音效新增 playSfx(sfx-windchime,0.85)（新註冊 <audio id=sfx-windchime src=風鈴聲.mp3>·與既有 sfx-burst/sfx-heal 並存）。',
-      '★ v3.16.54【召喙星空動態影片·index.html】#summon-overlay 第一子層新增 <video id=summon-bg-video>（召喙星空動態.mp4·autoplay/loop/muted/playsinline·z-index:0 覆蓋背景圖·object-fit:cover 全螢幕·opacity:0+onloadeddata 淡入·onerror→display:none 露出靜態背景圖 fallback）；#summon-stars 流星特效保留；#summon-river 河面波紋漣漪層改 display:none 隱藏。',
-      '★ v3.16.54【需上傳 repo + 版本】⚠ 老師需上傳 repo 根目錄：花瓣飛起.gif、風鈴聲.mp3、召喙星空動態.mp4（缺檔則神樂舞無新動畫/無風鈴聲·召喙頁影片自動隱藏露出靜態星空圖）。六點版本同步 → v3.16.54。GAME_CHANGELOG trim 至 20 筆（移除最舊 v3.16.34/v3.16.33）。'
-    ],
-  },
-  // v3.16.53 — 素質50%上限說明補完 + BOSS/世界BOSS依攻擊素質強制減傷
-  {
-    ver: 'v3.16.53',
-    date: '2026-06-28',
-    brief: [
-      '⚖️【BOSS 變得更耐打·攻擊越高越會擋】所有冰險關卡 BOSS 與世界 BOSS（龍王）現在會依「攻擊力」自動減免受到的傷害——攻擊力數字就是減傷百分比（例如攻擊 60 的龍王，受到普攻/技能/爆發/一般天賦傷害會減少 60%），最高減 60%。不過「固定傷害」「依 HP 百分比的傷害」「物品卡上有寫傷害數字的攻擊（像飛鏢、煉金術炸彈）」都不會被這個減傷擋下，仍是穿透打滿！',
-      '📖【素質說明更完整】英雄圖鑑與新手教學裡的「能力投資」說明，補上 HP 減傷的上限提示：每 1 點 HP +0.2% 減傷，最多減 50%。'
-    ],
-    items: [
-      '★ v3.16.53【BOSS 攻擊素質減傷·index.html】doDmg(L≈39669)玩家HP減傷之後、世界BOSS 5000cap 之前新增 hook：對 _isWorldBossTarget||_zeusIsTrueBoss 的目標，減傷% = min(0.60, (target.atk||0)×0.01)（攻擊素質直接換算·攻擊60→60%·上限60%）；菁英/小怪不套。穿透條件 !opts.fixedDmg && !opts._pierceBossReduce。對世界BOSS=先攻擊減傷、再夾 5000cap。',
-      '★ v3.16.53【穿透豁免標記·index.html】固定傷害走 opts.fixedDmg；另對 HP%傷害與物品卡寫死數值傷害補 opts._pierceBossReduce（無副作用旗標）：11 處—神聖鑇擊/死亡宣告BOSS段/魔術閃光含AI/大聲啲哭含AI/暗黑洞含AI/弄壞你的玩具/夢境時光爆發 + 物品卡 atk(L≈51856)。奧汀岡格尼爾/青炎爆破(攻擊·特技混合)、超能衝鋒(攻擊)、惡鬼撲食(特技)維持被減傷。',
-      '★ v3.16.53【素質50%上限文案·index.html】HP 減傷 50% 上限（程式本就 min(0.50,hp×0.002)）補進「英雄強化教學 HUT·分配四項能力」頁（STAT_DESCS + 新手教學③本就有「最多減50%」）；受治療放大無上限。',
-      '★ v3.16.53【驗證】index.html 20 inline script node --check 全過·0 lone surrogate；四檔版本同步 → v3.16.53。'
     ],
   },
 ];

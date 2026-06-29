@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v3.16.72';   // ★ v3.16.69(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·英雄圖鑑左下方來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM獎勵視窗「🎁 GM 獎勵」字級再放大全在 index.html) ｜ ★ v3.16.67(2026-06-28)— 「📨 帳號救援申請審核」卡新增至寶兩區塊:claims.disownTreasures(紅晶片+「🗑 刪除這些至寶」→_disownRemoveTre 走 window._fbAdminRejectAuditTreasures 移出+_s整包覆蓋·不復活)+ claims.lostTreasures(藍晶片+「🛟 補回這些至寶」→_restoreLostTre 走 window._fbAdminRestoreLostTreasures 不存在補Lv1/已存在保留+admin_grant)·鏡像英雄版 disown/lost·皆 _fbResolveAccountRescueRequest('resolved')+通知玩家·無 ?.·免三點同步。⚠ 需 index.html 同版 v3.16.67 ｜ ★ v3.16.66(2026-06-28)— ①「📨 帳號救援申請審核」卡:_analyze 加 claims.disownHeroes 區塊(紅晶片)+「🗑 一鍵刪除這些污染英雄」鈕→_disownRemove 走 window._fbAdminBulkRemoveHeroes(寫三槽+admin_delete+清養成_s+_adminRescueSignal·不復活=無效救援)+_fbResolveAccountRescueRequest('resolved')+通知玩家(鏡像 v3.16.19 _restoreLost 反方向) ②玩家活動記錄查詢卡新增「🎁 GM獎勵紀錄」鈕(_admin-activity-gmreward-log·讀查詢框 email/uid/學號→window._fbShowPlayerGmClassRewardClaims 列該玩家領過哪些 GM 獎勵+精確領取時間·讀認領文件權威·根治學生不認帳)。無 ?.;只動救援卡+活動卡,免三點同步。⚠ 需 index.html 同版 v3.16.66 ｜ ★ v3.16.65(2026-06-28)— 課堂獎勵改「拉取制」:勾選獎勵下方新增「🏅 表現優良事蹟」(8 預設複選+自由補充 _cr-merit-*/_buildMerit);_send 由直接 _fbCompensatePlayer 推送改寫入該玩家收件箱 window._fbWriteGmClassReward(獎勵+事蹟),學生在「🎁 GM獎勵」自行「確認領取」才入帳(嚴防共用平板 UR 發錯人/帳號污染);送禮記錄/同名候選不變。⚠ 需 index.html 同版 + 部署 firestore.rules(gmClassRewards/gmClassRewardClaims) ｜ ★ v3.16.64(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·老師回信改右下角小視窗+鈴聲通知全在 index.html·GM 端儲存回覆沿用既有 _fbUpdateBugReportAdminReply 不變) ｜ ★ v3.16.63(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·學生名冊 student_roster.js 補完 706 筆上線·真名搜尋+班級座號全校生效·名冊本體+index.html 名冊版號) ｜ ★ v3.16.62(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM 玩家搜尋「設計師學生中文真名備援」全在 index.html _fbAdminFindPlayersByName 階段1.5) ｜ ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v3.16.76';   // ★ v3.16.69(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·英雄圖鑑左下方來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM獎勵視窗「🎁 GM 獎勵」字級再放大全在 index.html) ｜ ★ v3.16.67(2026-06-28)— 「📨 帳號救援申請審核」卡新增至寶兩區塊:claims.disownTreasures(紅晶片+「🗑 刪除這些至寶」→_disownRemoveTre 走 window._fbAdminRejectAuditTreasures 移出+_s整包覆蓋·不復活)+ claims.lostTreasures(藍晶片+「🛟 補回這些至寶」→_restoreLostTre 走 window._fbAdminRestoreLostTreasures 不存在補Lv1/已存在保留+admin_grant)·鏡像英雄版 disown/lost·皆 _fbResolveAccountRescueRequest('resolved')+通知玩家·無 ?.·免三點同步。⚠ 需 index.html 同版 v3.16.67 ｜ ★ v3.16.66(2026-06-28)— ①「📨 帳號救援申請審核」卡:_analyze 加 claims.disownHeroes 區塊(紅晶片)+「🗑 一鍵刪除這些污染英雄」鈕→_disownRemove 走 window._fbAdminBulkRemoveHeroes(寫三槽+admin_delete+清養成_s+_adminRescueSignal·不復活=無效救援)+_fbResolveAccountRescueRequest('resolved')+通知玩家(鏡像 v3.16.19 _restoreLost 反方向) ②玩家活動記錄查詢卡新增「🎁 GM獎勵紀錄」鈕(_admin-activity-gmreward-log·讀查詢框 email/uid/學號→window._fbShowPlayerGmClassRewardClaims 列該玩家領過哪些 GM 獎勵+精確領取時間·讀認領文件權威·根治學生不認帳)。無 ?.;只動救援卡+活動卡,免三點同步。⚠ 需 index.html 同版 v3.16.66 ｜ ★ v3.16.65(2026-06-28)— 課堂獎勵改「拉取制」:勾選獎勵下方新增「🏅 表現優良事蹟」(8 預設複選+自由補充 _cr-merit-*/_buildMerit);_send 由直接 _fbCompensatePlayer 推送改寫入該玩家收件箱 window._fbWriteGmClassReward(獎勵+事蹟),學生在「🎁 GM獎勵」自行「確認領取」才入帳(嚴防共用平板 UR 發錯人/帳號污染);送禮記錄/同名候選不變。⚠ 需 index.html 同版 + 部署 firestore.rules(gmClassRewards/gmClassRewardClaims) ｜ ★ v3.16.64(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·老師回信改右下角小視窗+鈴聲通知全在 index.html·GM 端儲存回覆沿用既有 _fbUpdateBugReportAdminReply 不變) ｜ ★ v3.16.63(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·學生名冊 student_roster.js 補完 706 筆上線·真名搜尋+班級座號全校生效·名冊本體+index.html 名冊版號) ｜ ★ v3.16.62(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM 玩家搜尋「設計師學生中文真名備援」全在 index.html _fbAdminFindPlayersByName 階段1.5) ｜ ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.14.15 — 🌟 龍王的祝福手動控制(老師需求 2026-06-12)
@@ -1256,6 +1256,42 @@ async function _showAdminStatsPanelImpl(){
           <div style="color:#888;padding:14px;text-align:center;">尚未查緝,設定參數後按「🔍 開始查緝」</div>
         </div>
         <div id="_admin-laundering-result" style="margin-top:10px;font-size:13px;color:#ffcc44;text-align:center;"></div>
+      </div>
+
+      <!-- ★ v3.16.76 — 英雄/至寶持有者審查(勾選 → 查全體持有者 + 來源/時間 → 刪除/補償) -->
+      <div id="_admin-item-owner-section" style="background:rgba(40,30,55,0.5);border:2px solid rgba(180,140,255,0.55);border-radius:10px;padding:16px;margin-bottom:22px;">
+        <div style="font-size:18px;font-weight:800;color:#c9a8ff;margin-bottom:8px;">🔍 英雄/至寶持有者審查</div>
+        <div style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.6;">
+          勾選一個或多個<b style="color:#d9b8ff;">英雄/至寶</b>,按「🔍 查詢持有者」掃描全體玩家,列出<b style="color:#d9b8ff;">誰持有 + 怎麼來的(獲得來源)+ 何時取得(時間標記)</b>。<br>
+          <b style="color:#ffaa66;">★ 來源「⚠ 未標記/查無紀錄」或「已被移除」者最可疑</b>(自動排在最前),協助判斷是否為不正常取得。<br>
+          可直接對單一玩家的該英雄/至寶按 <b style="color:#ff8888;">🗑 刪除</b>(英雄走 admin_delete 三槽同寫不復活、至寶移出)或 <b style="color:#88dd99;">🎁 補償</b>(輸入知識幣/召喚水晶數量發放)。<br>
+          <span style="color:#ff9999;font-size:12px;">⚠ 「查詢」會讀取所有玩家文件(資料量大、配額消耗大),請勿頻繁點擊。</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <input id="_admin-itemown-search" type="text" placeholder="🔎 搜尋英雄/至寶名稱…(篩選下方勾選清單)" style="width:100%;box-sizing:border-box;padding:8px 12px;font-size:14px;background:rgba(0,0,0,0.45);border:1.5px solid rgba(180,140,255,0.4);border-radius:6px;color:#eee;font-family:inherit;">
+        </div>
+        <div id="_admin-itemown-picker" style="max-height:230px;overflow-y:auto;background:rgba(0,0,0,0.4);border:1px solid rgba(180,140,255,0.3);border-radius:6px;padding:8px;margin-bottom:12px;font-size:13px;line-height:2.0;">
+          <div style="color:#888;padding:14px;text-align:center;">載入清單中…</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <button id="_admin-itemown-query" style="padding:9px 18px;font-size:14px;font-weight:800;
+            background:rgba(180,140,255,0.22);border:2px solid #b48cff;color:#e6d4ff;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            🔍 查詢持有者
+          </button>
+          <button id="_admin-itemown-clear" style="padding:9px 14px;font-size:13px;font-weight:700;
+            background:rgba(120,120,140,0.2);border:1.5px solid #888;color:#ccc;
+            border-radius:6px;cursor:pointer;font-family:inherit;">
+            清除勾選
+          </button>
+          <span id="_admin-itemown-count" style="font-size:12px;color:#aaa;"></span>
+        </div>
+        <div id="_admin-itemown-list" style="max-height:560px;overflow-y:auto;
+          background:rgba(0,0,0,0.4);border:1px solid rgba(180,140,255,0.3);border-radius:6px;
+          padding:8px;font-size:12px;color:#ccc;line-height:1.7;">
+          <div style="color:#888;padding:14px;text-align:center;">勾選英雄/至寶後按「🔍 查詢持有者」</div>
+        </div>
+        <div id="_admin-itemown-result" style="margin-top:10px;font-size:13px;color:#c9a8ff;text-align:center;"></div>
       </div>
 
       <!-- ★ v3.15.84 — 英雄誤刪救回(一鍵掃描被誤刪英雄的玩家 + 復原,排除 GM 手動刪除的) -->
@@ -2827,6 +2863,8 @@ async function _showAdminStatsPanelImpl(){
       { sec: '_admin-laundering-section',        label: '💰 洗錢查緝',              hint: '掃描「短時間反覆賣出同一金額」的洗錢痕跡(對應 v3.15.57 修復前的賣出復活漏洞):估算贓款、列出嫌疑玩家,可逐一回收(扣減知識幣,三槽同寫防復活)' },
       // ★ v3.15.84 — 英雄誤刪救回(一鍵掃描被誤刪英雄的玩家 + 復原,排除 GM 手動刪除的)
       { sec: '_admin-deleted-hero-section',      label: '🛟 英雄誤刪救回',          hint: '一鍵掃描所有玩家「練過或裝著至寶卻不在已解鎖清單」的英雄(v3.15.82/83 修復前被稽核熔斷誤刪的主力),一鍵復原(只補已解鎖、等級至寶原樣保留、三槽同寫);已排除 GM 手動刪除(admin_delete)的英雄' },
+      // ★ v3.16.76 — 英雄/至寶持有者審查(勾選 → 查全體持有者 + 來源/時間 → 刪除/補償)
+      { sec: '_admin-item-owner-section',        label: '🔍 英雄/至寶持有者審查',  hint: '勾選一個或多個英雄/至寶 → 掃描全體玩家列出「誰持有 + 獲得來源 + 時間標記」(來源未標記/查無/已移除者排最前·最可疑),可逐位直接刪除(不復活)或補償(知識幣/水晶)。⚠ 查詢會讀取所有玩家文件' },
       { sec: '_admin-skin-recovery-section',    label: '🎨 皮膚復原/稽核',          hint: '查玩家買過哪些皮膚・跨槽復原・手動補發' },
       { sec: '_admin-medal-scan-section',        label: '🏅 全員獎章補發掃描',     hint: '反推未領獎章 + 補發水晶/幣' },
       { sec: '_admin-wblb-section',             label: '🏆 世界 BOSS 排行榜',      hint: '查看 / 清除排行' },
@@ -2872,7 +2910,7 @@ async function _showAdminStatsPanelImpl(){
     const SIDEBAR_GROUPS = [
       { label:'🛠 系統管理',       secs:['_admin-maint-section','_admin-restsched-section','_admin-gm-section','_admin-github-check-section','_admin-dlperm-section','_admin-acctxfer-section','_admin-trust-revoke-section','_admin-pw-section'] },
       { label:'🔎 玩家查詢與回報', secs:['_admin-activity-section','_admin-bug-section'] },
-      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-laundering-section','_admin-deleted-hero-section'] },
+      { label:'🧹 帳號汙染處理',   secs:['_admin-pollution-cluster-section','_admin-laundering-section','_admin-deleted-hero-section','_admin-item-owner-section'] },
       { label:'🚑 資料救援與重置', secs:['_admin-rescue-req-section','_admin-lv1-section','_admin-rebuild-section','_admin-reset-section'] },
       { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
@@ -6494,6 +6532,227 @@ async function _showAdminStatsPanelImpl(){
     if(allBtn) allBtn.onclick = _restoreAll;
   })();
   // ── 英雄誤刪救回 結束 ──
+
+  // ★ v3.16.76 — 英雄/至寶持有者審查(勾選 → 查全體持有者 + 來源/時間 → 刪除/補償)
+  (function _initItemOwnerSection(){
+    var searchEl = document.getElementById('_admin-itemown-search');
+    var pickerEl = document.getElementById('_admin-itemown-picker');
+    var queryBtn = document.getElementById('_admin-itemown-query');
+    var clearBtn = document.getElementById('_admin-itemown-clear');
+    var countEl  = document.getElementById('_admin-itemown-count');
+    var listEl   = document.getElementById('_admin-itemown-list');
+    var resEl    = document.getElementById('_admin-itemown-result');
+    if(!pickerEl || !queryBtn || !listEl){
+      console.warn('[admin itemown] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    var _owners = [];
+
+    function _esc(s){ try{ return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }catch(_){ return ''; } }
+    function _label(o){
+      var _n = _esc(o.displayName || '');
+      var _e = o.email ? ' &lt;' + _esc(o.email) + '&gt;' : '';
+      return (_n || '(無名)') + _e;
+    }
+    // 來源代碼 → 白話(對齊玩家端 _rrqSrcLabel;空字串/admin_delete = 可疑)
+    function _srcLabel(src){
+      var s = String(src == null ? '' : src);
+      if(!s) return '⚠ 未標記來源(較早期 / 查無紀錄)';
+      if(s === 'admin_delete') return '(已被老師移除)';
+      if(s.indexOf('summon') === 0 || s.indexOf('ticket') === 0) return '召喚(星空 / 召喚卷)';
+      if(s === 'maokong_50pct') return '貓空通關獲得';
+      if(s === 'darkorb_5pct') return '黑暗球掉落';
+      if(s === 'japan_boss_5pct') return '日本 BOSS 獲得';
+      if(s === 'yamata_miko_5pct') return '八岐大蛇(巫女)';
+      if(s === 'taiwan_clear') return '台灣通關獲得';
+      if(s === 'japan_clear') return '日本通關獲得';
+      if(s === 'event_quest') return '答題解鎖(活動英雄)';
+      if(s === 'shop_purchase') return '商店購買';
+      if(s === 'student_designer') return '學生設計英雄';
+      if(s === 'admin_grant' || s === 'compensation') return '老師補發';
+      if(s.indexOf('wb_') === 0) return '世界 BOSS 獲得';
+      if(s.indexOf('boss_') === 0) return 'BOSS 戰獲得';
+      return '其他來源(' + _esc(s) + ')';
+    }
+    function _isSusp(src){ var s = String(src || ''); return (!s || s === 'admin_delete'); }
+    function _fmtTime(at){
+      try{
+        if(!at) return '無時間';
+        var d = new Date(Number(at) || 0);
+        var p = function(n){ return (n < 10 ? '0' : '') + n; };
+        return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+      }catch(_){ return ''; }
+    }
+
+    function _buildPicker(){
+      var _heroes = (window.SUMMON_RARE_HEROES && window.SUMMON_RARE_HEROES.length) ? window.SUMMON_RARE_HEROES.slice() : [];
+      var _treObj = (window.TAIWAN_TREASURES && typeof window.TAIWAN_TREASURES === 'object') ? window.TAIWAN_TREASURES : {};
+      var _treIds = Object.keys(_treObj);
+      if(!_heroes.length && !_treIds.length){
+        pickerEl.innerHTML = '<div style="color:#ffaa66;padding:14px;text-align:center;">清單尚未就緒,1.5 秒後自動重試…(或重新開啟管理面板)</div>';
+        setTimeout(_buildPicker, 1500);
+        return;
+      }
+      _heroes.sort(function(a, b){ return String(a).localeCompare(String(b)); });
+      var html = '<div style="font-weight:800;color:#9be0ff;margin:2px 0 4px;">🦸 英雄(' + _heroes.length + ')</div>';
+      _heroes.forEach(function(n){
+        html += '<label class="_io-pick" data-kind="hero" data-key="' + _esc(n) + '" data-name="' + _esc(n) + '" style="display:inline-flex;align-items:center;gap:4px;margin:1px 10px 1px 0;cursor:pointer;white-space:nowrap;">'
+          + '<input type="checkbox" class="_io-cb" style="cursor:pointer;"> ' + _esc(n) + '</label>';
+      });
+      html += '<div style="font-weight:800;color:#ffd07b;margin:8px 0 4px;border-top:1px dashed rgba(255,255,255,0.12);padding-top:6px;">💎 台灣至寶(' + _treIds.length + ')</div>';
+      _treIds.forEach(function(id){
+        var _nm = (_treObj[id] && _treObj[id].name) || id;
+        html += '<label class="_io-pick" data-kind="treasure" data-key="' + _esc(id) + '" data-name="' + _esc(_nm) + '" style="display:inline-flex;align-items:center;gap:4px;margin:1px 10px 1px 0;cursor:pointer;white-space:nowrap;">'
+          + '<input type="checkbox" class="_io-cb" style="cursor:pointer;"> ' + _esc(_nm) + '</label>';
+      });
+      pickerEl.innerHTML = html;
+    }
+
+    function _filterPicker(){
+      var q = ((searchEl && searchEl.value) || '').trim().toLowerCase();
+      var labels = pickerEl.querySelectorAll('._io-pick');
+      labels.forEach(function(l){
+        var nm = (l.getAttribute('data-name') || '').toLowerCase();
+        l.style.display = (!q || nm.indexOf(q) >= 0) ? '' : 'none';
+      });
+    }
+
+    function _getChecked(){
+      var heroes = [], treasures = [];
+      pickerEl.querySelectorAll('._io-pick').forEach(function(l){
+        var cb = l.querySelector('._io-cb');
+        if(cb && cb.checked){
+          if(l.getAttribute('data-kind') === 'hero') heroes.push(l.getAttribute('data-key'));
+          else treasures.push(l.getAttribute('data-key'));
+        }
+      });
+      return { heroes:heroes, treasures:treasures };
+    }
+
+    function _itemRowHtml(o, it, kind){
+      var _nm = _esc(it.name || it.id || '');
+      var _srcColor = _isSusp(it.source) ? '#ff8a8a' : '#aadbb8';
+      var _key = _esc(kind === 'hero' ? it.name : it.id);
+      var _kindIcon = kind === 'hero' ? '🦸' : '💎';
+      var _btns = '<button class="_io-del" data-uid="' + _esc(o.uid) + '" data-kind="' + kind + '" data-key="' + _key + '" data-name="' + _nm + '" data-label="' + _esc(_label(o)) + '"'
+        + ' style="padding:3px 9px;font-size:11px;font-weight:800;background:rgba(220,80,80,0.22);border:1px solid #d05050;color:#ffb8b8;border-radius:4px;cursor:pointer;font-family:inherit;margin-left:4px;">🗑 刪除</button>'
+        + '<button class="_io-comp" data-uid="' + _esc(o.uid) + '" data-label="' + _esc(_label(o)) + '"'
+        + ' style="padding:3px 9px;font-size:11px;font-weight:800;background:rgba(80,180,120,0.2);border:1px solid #4caf6a;color:#aaffcc;border-radius:4px;cursor:pointer;font-family:inherit;margin-left:4px;">🎁 補償</button>';
+      return '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.08);">'
+        + '<span style="font-weight:700;color:#e6d4ff;">' + _kindIcon + ' ' + _nm + '</span>'
+        + '<span style="color:#888;">Lv' + (it.lv || 1) + '</span>'
+        + '<span style="color:' + _srcColor + ';">· ' + _srcLabel(it.source) + '</span>'
+        + '<span style="color:#99aacc;">· ' + _fmtTime(it.at) + '</span>'
+        + _btns + '</div>';
+    }
+
+    function _render(){
+      if(!_owners.length){
+        listEl.innerHTML = '<div style="color:#88dd99;padding:14px;text-align:center;">沒有任何玩家持有所勾選的英雄/至寶。</div>';
+        return;
+      }
+      var html = _owners.map(function(o, idx){
+        var rows = '';
+        (o.heroes || []).forEach(function(h){ rows += _itemRowHtml(o, h, 'hero'); });
+        (o.treasures || []).forEach(function(t){ rows += _itemRowHtml(o, t, 'treasure'); });
+        return '<div style="margin-bottom:10px;padding:10px;background:rgba(35,28,52,0.7);border:1px solid rgba(180,140,255,0.4);border-radius:7px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">'
+          +   '<div style="font-size:13px;color:#e6d4ff;font-weight:700;">#' + (idx + 1) + ' ' + _label(o) + '</div>'
+          +   '<div style="font-size:12px;color:#aaa;font-family:monospace;">' + _esc(o.uid) + '</div>'
+          + '</div>' + rows + '</div>';
+      }).join('');
+      listEl.innerHTML = html;
+      _wireRowButtons();
+    }
+
+    function _wireRowButtons(){
+      listEl.querySelectorAll('._io-del').forEach(function(b){
+        b.onclick = async function(){
+          var uid = b.getAttribute('data-uid');
+          var kind = b.getAttribute('data-kind');
+          var key = b.getAttribute('data-key');
+          var name = b.getAttribute('data-name') || key;
+          var lbl = b.getAttribute('data-label') || uid;
+          if(!confirm('確定要從【' + lbl + '】刪除' + (kind === 'hero' ? '英雄' : '至寶') + '「' + name + '」嗎?\n\n(三槽同寫 + admin_delete 紀錄、不會復活;玩家下次登入生效。此操作「不補償」,要補償請按該列的 🎁 補償。)')) return;
+          b.disabled = true; b.textContent = '刪除中…';
+          try{
+            if(kind === 'hero'){
+              if(typeof window._fbAdminBulkRemoveHeroes !== 'function') throw new Error('_fbAdminBulkRemoveHeroes 未載入(請確認 index.html 已更新到 v3.16.76)');
+              await window._fbAdminBulkRemoveHeroes(uid, [key], { reason: '持有者審查刪除(疑似不正常取得)' });
+            } else {
+              if(typeof window._fbAdminRejectAuditTreasures !== 'function') throw new Error('_fbAdminRejectAuditTreasures 未載入(請確認 index.html 已更新)');
+              await window._fbAdminRejectAuditTreasures(uid, [key]);
+            }
+            resEl.style.color = '#88dd99';
+            resEl.textContent = '✅ 已從【' + lbl + '】刪除「' + name + '」(玩家下次登入生效)。';
+            b.textContent = '✅ 已刪除';
+          }catch(e){
+            console.error('[admin itemown del]', e);
+            resEl.style.color = '#ff6666';
+            resEl.textContent = '❌ 刪除失敗:' + ((e && e.message) || '未知錯誤');
+            b.disabled = false; b.textContent = '🗑 刪除';
+          }
+        };
+      });
+      listEl.querySelectorAll('._io-comp').forEach(function(b){
+        b.onclick = async function(){
+          var uid = b.getAttribute('data-uid');
+          var lbl = b.getAttribute('data-label') || uid;
+          var _c = prompt('補償【' + lbl + '】知識幣數量(可留 0):', '0');
+          if(_c === null) return;
+          var _k = prompt('補償召喚水晶數量(可留 0):', '0');
+          if(_k === null) return;
+          var coins = Math.max(0, parseInt(_c, 10) || 0);
+          var crystals = Math.max(0, parseInt(_k, 10) || 0);
+          if(!coins && !crystals){ alert('未輸入任何補償數量,已取消。'); return; }
+          if(!confirm('確定補償【' + lbl + '】:知識幣 ' + coins + ' + 召喚水晶 ' + crystals + ' ?')) return;
+          b.disabled = true; b.textContent = '補償中…';
+          try{
+            if(typeof window._fbCompensatePlayer !== 'function') throw new Error('_fbCompensatePlayer 未載入');
+            await window._fbCompensatePlayer(uid, { coins: coins, backpack: { summon_crystal: crystals } });
+            resEl.style.color = '#88dd99';
+            resEl.textContent = '✅ 已補償【' + lbl + '】知識幣 ' + coins + ' + 水晶 ' + crystals + '。';
+            b.textContent = '✅ 已補償';
+          }catch(e){
+            console.error('[admin itemown comp]', e);
+            resEl.style.color = '#ff6666';
+            resEl.textContent = '❌ 補償失敗:' + ((e && e.message) || '未知錯誤');
+            b.disabled = false; b.textContent = '🎁 補償';
+          }
+        };
+      });
+    }
+
+    async function _query(){
+      var sel = _getChecked();
+      if(!sel.heroes.length && !sel.treasures.length){ alert('請先勾選至少一個英雄或至寶'); return; }
+      listEl.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">查詢中(讀取所有玩家,請稍候)…</div>';
+      resEl.textContent = ''; if(countEl) countEl.textContent = '';
+      queryBtn.disabled = true;
+      try{
+        if(typeof window._fbAdminScanItemOwners !== 'function') throw new Error('_fbAdminScanItemOwners 未載入(請確認 index.html 已更新到 v3.16.76)');
+        var r = await window._fbAdminScanItemOwners(sel.heroes, sel.treasures);
+        _owners = (r && r.owners) || [];
+        if(countEl) countEl.textContent = '掃 ' + ((r && r.scanned) || 0) + ' 位 → ' + _owners.length + ' 位持有(勾選 ' + sel.heroes.length + ' 英雄 / ' + sel.treasures.length + ' 至寶)';
+        _render();
+      }catch(e){
+        console.error('[admin itemown query]', e);
+        listEl.innerHTML = '<div style="color:#ff6666;padding:14px;text-align:center;">❌ 查詢失敗:' + ((e && e.message) || '未知錯誤') + '</div>';
+      }finally{
+        queryBtn.disabled = false;
+      }
+    }
+
+    function _clear(){
+      pickerEl.querySelectorAll('._io-cb').forEach(function(cb){ cb.checked = false; });
+    }
+
+    _buildPicker();
+    if(searchEl) searchEl.oninput = _filterPicker;
+    queryBtn.onclick = _query;
+    if(clearBtn) clearBtn.onclick = _clear;
+  })();
+  // ── 英雄/至寶持有者審查 結束 ──
 
   // ★ v3.16.31 — 審查「不是我的」誤移除(disown)批次救回(帳本反推,補 v3.15.84 抓不到的;走 _fbAdminRestoreLostHeroes 還原原等級)
   (function _initDisownHeroSection(){
