@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-29  / 目前主程式版本:v3.16.74(素質四欄兩行排版修正 + 四說明視窗字放大×2 + 技能/爆發升級即開窗+音效改點;前版 v3.16.70 英雄圖鑑放大改版)
+//  最後更新:2026-06-29  / 目前主程式版本:v3.16.83(GM 誤發獎勵刪除連帶清收件箱紀錄;含 v3.16.82 埃及雙王開放 SSR 卷+戰鬥中延後套用)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,35 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.83 — GM:誤發 GM 獎勵刪除時連帶清除學生收件箱紀錄(GM 專屬)
+  {
+    ver: 'v3.16.83',
+    date: '2026-06-29',
+    adminOnly: true,
+    brief: [
+      '🎁【GM·誤發獎勵清紀錄】後台「🎁 GM獎勵紀錄」彈窗每筆新增「🗑 刪除此筆」鈕:誤發的 GM 獎勵刪除後,會一併把學生「🎁 GM 獎勵」收件箱的待領項與已領取紀錄清乾淨。',
+    ],
+    items: [
+      '★ v3.16.83【GM刪除誤發獎勵·index.html】新增 window._fbAdminDeleteGmClassReward(uid,rewardId):清 ① 收件箱 items doc(gmClassRewards/items;規則不允許刪除時退而 enabled:false 隱藏待領)② 認領文件 claim doc(gmClassRewardClaims)③ 玩家主檔 _gmcrClaimLog(收件箱「✅ 已領取紀錄」顯示來源·GM 對 players 全權必能寫)。_gmcrClaimed 待領抑制快取刻意保留(即使 items 沒刪成功也不會讓該筆又冒出來變待領)。「🎁 GM獎勵紀錄」彈窗每列加 data-rid 的「🗑 刪除此筆」鈕,確認後呼叫此函式並隱藏該列。⚠ 只刪「紀錄」,不自動扣回已入帳的獎勵/英雄(收回另用學生補償負值/污染英雄刪除工具)。⚠ items/claim 兩 collection 刪除需部署 firestore.rules 允許 isAdmin delete(Console 權威);_gmcrClaimLog 清除不受規則影響必生效。',
+      '★ v3.16.83【調查·無程式改動】另兩項學生回報經查:①「每天登入莫名得 10 顆召喚水晶」——全部 10 顆水晶來源(會員資料獎勵/特別挑戰30題/小博士+世界BOSS排名/全體獎勵/審查道歉補償)守門皆正確(雲端旗標/認領文件 transaction/claimedAt),靜態無法重現,需老師提供「受影響學生是否同時得到幣/SSR券、登入時有無彈窗」以精準定位,故本輪不貿然改發獎邏輯。②「圖鑑稀有度篩選對部分人無效」——圖鑑(heroFilterClick)與編組(hpickFilterClick)兩套篩選+_getHeroRarity 代碼皆正確且對所有人一致,「有些人正常」研判為舊版快取;本次版號 bump 會破快取,請受影響學生更新到最新版(清快取/重新整理/重裝)。',
+      '★ v3.16.83【版本/範圍】七點版本同步 → v3.16.83。本輪只改 index.html(GM 刪除誤發獎勵);admin_panel.js 純版號對齊·hero_db.js 內容未改僅 manifest 版號·免重傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.63)。本版含尚未上傳的 v3.16.82(埃及雙王開放 SSR 卷 + 戰鬥中老師更新資料改打完再套用)。',
+    ],
+  },
+  // v3.16.82 — 埃及雙王開放 SSR 召喚卷取得 + 戰鬥中老師更新資料改打完再套用(不再中斷回溯)
+  {
+    ver: 'v3.16.82',
+    date: '2026-06-29',
+    brief: [
+      '🏜【埃及雙王開放召喚卷】法老王與埃及豔后現在也能用「SSR 自選召喚卷」直接挑、或用「SSR 隨機召喚卷」抽到了(原本只能在埃及關卡機率收服);星空召喚仍維持不會抽到雙王。',
+      '🛡【戰鬥中老師更新資料·改打完再套用】老師更新你的帳號資料時,如果你正在戰鬥中,系統不再立刻重新載入(避免打到一半的進度被中斷回溯);會先提示「打完本場戰鬥、回到關卡選擇後自動套用」,等你回到非戰鬥畫面才重新載入吃最新進度。',
+    ],
+    items: [
+      '★ v3.16.82【埃及雙王開放 SSR 卷·index.html】_summonTicketUnrecorded 的 SSR 分支移除埃及雙王過濾(原 not _egExcl.has(n))→ 法老王/埃及豔后(EGYPT_EXCLUSIVE_HEROES)現可進入 SSR 自選卷可選池與 SSR 隨機卷產出池;星空召喚池仍以 _egSummonExcl/_egSummonExcl2 排除雙王(維持星空抽不到),兩條互不影響。',
+      '★ v3.16.82【戰鬥中延後權威重載·index.html】_onAuthoritativeRestore(GM 補償/還原/重建偵測後的重新載入)改為:先立即停止本機所有寫雲端(unsub session listener + 清安全槽定時存檔)並落地「已處理 restoreAt」基線/計數;若此刻 _isInBattleNow() 為真→不硬重載,改提示「打完回關卡選擇自動套用」並每 1.5 秒輪詢,回到非戰鬥畫面(或最長 15 分鐘保險逾時)才 location.reload();非戰鬥則照舊 1.8 秒重載。比照既有「即時版本更新」延後機制(_isInBattleNow + _flushPendingUpdateIfAny)。★ 延後期間存檔已被擋(上述 unsub+清定時 + _authoritativeReloadTriggered 保護層),過時進度不會反向覆蓋老師改動;110082「補了又消失」防護不變。',
+      '★ v3.16.82【課堂獎勵 UR 天使預設不勾·admin_panel.js】GM「課堂獎勵發放」工具的「UR 藝天使．克雷爾」勾選框移除預設勾選 → 改為預設不勾,避免老師批次發課堂獎勵時誤把 UR 天使一起發出去(廣播/序號兌換工具本就無預設勾選,此次對齊)。',
+      '★ v3.16.82【版本/範圍】七點版本同步 → v3.16.82。本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 內容未改·僅 manifest 版號對齊·免重傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.62)。',
+    ],
+  },
   // v3.16.81 — 學生 GM 獎勵視窗改外層單一捲動·底部領取／兌換鈕保證點得到
   {
     ver: 'v3.16.81',
@@ -267,30 +296,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.64【老師回信通知改版·index.html】原本登入會直接蓋一個置中大視窗，改成在畫面右下角彈出一張小通知卡(仿老師端收到回報的小視窗)＋鈴聲提示(sfx-rescue-chime)：新增 _showAdminReplyToast(顯示老師回覆前 40 字摘要＋若有多則顯示還有 N 則)，登入檢查 _checkUnreadBugReplies 偵測到未讀回信時改彈此小卡。點小卡→開既有「老師回覆你的回報」完整視窗(_showAdminReplyPopup·看完按「我知道了」即標記已讀、不再顯示)；右上角 ×→只收起小卡(未讀，下次登入再提醒，確保不漏看)。',
       '★ v3.16.64【範圍/安全】老師端按「儲存回覆」沿用既有 _fbUpdateBugReportAdminReply(寫 adminReply＋adminReplyRead:false)完全不變；玩家標記已讀沿用既有 _markPendingBugRepliesAsRead；不需改 firestore.rules(bugReports 既有權限已允許玩家讀自己回報＋標記已讀)。只改 index.html；admin_panel.js／hero_db.js 僅版本對齊免重傳。七點版本同步→v3.16.64。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.44)。',
-    ],
-  },
-  // v3.16.63 — 學生名冊上線(student_roster.js 補完 706 筆)
-  {
-    ver: 'v3.16.63',
-    date: '2026-06-28',
-    brief: [
-      '🔍【老師找學生大升級】學生名冊已補上全校 706 筆資料！現在課堂獎勵發放與玩家活動查詢，可以用中文真名搜到全校任何一位同學，候選清單也會顯示班級座號方便核對。',
-    ],
-    items: [
-      '★ v3.16.63【學生名冊上線·student_roster.js + index.html】老師補完 student_roster.js(window._STUDENT_ROSTER 706 筆·每筆 class/seatNo/surname/fullName)取代原本空白名冊。index.html 把名冊破快取版號 _LXPS_FILE_VERSIONS[student_roster.js] 由 20260524→20260628·讓學生端立即載入新名冊。→ _fbAdminFindPlayersByName 階段1.5 名冊反查全校生效(中文真名搜尋)·_classSeatCode4 班級座號顯示生效(課堂獎勵候選清單)·好友面板/排行榜/圖鑑短碼標籤一併補上。',
-      '★ v3.16.63【版本/範圍】七點版本同步 → v3.16.63。本輪改 student_roster.js(名冊本體·需上傳 repo) + index.html(名冊版號+主版本) + admin_panel.js(版本對齊) + game_changelog.js;hero_db.js 未改內容·僅 manifest 版號對齊免重傳。⚠ 名冊有 29 組「班級+座號」重複(多為跨屆轉入/重設帳號學生·不影響真名搜尋·僅班級座號碼會重複)·留待日後校正。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.43)。',
-    ],
-  },
-  // v3.16.62 — GM 玩家搜尋:設計師學生中文真名備援(補名冊缺漏)
-  {
-    ver: 'v3.16.62',
-    date: '2026-06-28',
-    brief: [
-      '🔍【老師找學生更準了】課堂獎勵發放與玩家活動查詢，現在就算某位設計過英雄的同學沒被收進名冊，也能用中文真名搜到他了。',
-    ],
-    items: [
-      '★ v3.16.62【設計師名冊備援·index.html】_fbAdminFindPlayersByName 階段 1.5：原本只掃 student_roster.js 的 _STUDENT_ROSTER 反查真名→email；若該名冊缺某生或未上傳/未載入則搜不到。新增備援：_STUDENT_ROSTER 沒命中時，改用 index.html 內建的 STUDENT_DESIGNER_HEROES(約 30+ 名設計過英雄的學生·含 fullName 真名)反查 email→查玩家 doc(matchType designer)。讓設計過英雄但不在名冊的學生(如高廷睿 lsps110127 5年4班)可用中文真名搜到。課堂獎勵+活動查詢共用此函式·兩邊同時生效。',
-      '★ v3.16.62【版本/範圍】七點版本同步 → v3.16.62。本輪改 index.html + admin_panel.js(版本對齊) + game_changelog.js(hero_db.js 未改內容·僅 manifest 版號對齊·免重傳)。⚠ 非設計師且已取暱稱、且不在 student_roster.js 的學生·仍需補完 student_roster.js 才能用真名搜到(可改用學號/班級座號/信箱搜)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.42)。',
     ],
   },
 ];
