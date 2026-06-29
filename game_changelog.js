@@ -12,6 +12,32 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.81 — 學生 GM 獎勵視窗改外層單一捲動·底部領取／兌換鈕保證點得到
+  {
+    ver: 'v3.16.81',
+    date: '2026-06-29',
+    brief: [
+      '🎁【修正·GM 獎勵視窗可捲動】學生「🎁 GM 獎勵」視窗（老師發的獎勵＋序號兌換）現在整個視窗都能上下捲動,內容再長也能捲到最底,確實點到每張獎勵的「✅ 確認領取」與「✨ 兌換」按鈕(先前直式 iPad 上下兩區堆疊時,底部按鈕會被裁切點不到)。',
+    ],
+    items: [
+      '★ v3.16.81【捲動修正·index.html】redeem-overlay 卡片內改用外層單一捲動容器(flex 1 1 auto·min-height 0·overflow-y auto·-webkit-overflow-scrolling touch)包住左右兩區。根因:原 v3.16.70 雙欄各自捲動依賴 flex-wrap wrap 換行後的欄位高度約束·但直式 iPad 兩區堆疊時 wrapped 欄位失去高度上界→內層 overflow-y auto 不生效→內容溢出被卡片 overflow hidden 於 max-height 92vh 裁掉→底部確認鈕點不到。改外層捲動為標準可靠 iOS 模式(卡片 flex column＋max-height 92vh→外層取得受限高度可靠捲動)·任何裝置／直式都能捲到底。',
+      '★ v3.16.81【純佈局·零邏輯】只改 index.html 視窗結構與副標文案(各自捲動→往下捲看全部)·收件區渲染與認領／兌換邏輯(_renderGmClassRewardInbox／_claimGmClassRewardFromInbox／_doRedeem)完全不動·event handler 與 id 全不變。七點版本同步 → v3.16.81·admin_panel.js 僅版號·hero_db.js 免重傳。',
+    ],
+  },
+  // v3.16.80 — 新增 UR 自選召喚卷(可自選一隻 UR 英雄)+ GM 發獎可發放
+  {
+    ver: 'v3.16.80',
+    date: '2026-06-29',
+    brief: [
+      '👑【新道具·UR 自選召喚卷】新增「UR 自選召喚卷」!持有後到召喚星空使用,可從尚未收錄的 UR 英雄(藝天使．克雷爾／魔劍姬‧伊莉雅／主神奧汀)中親自挑選一名解鎖(若 UR 已全收錄則保留以後再用)。老師可透過發獎工具發放。',
+    ],
+    items: [
+      '★ v3.16.80【新道具·index.html】BACKPACK_ITEM_DEF 新增 summon_ticket_ur_pick(UR 自選召喚卷·👑·type:use·前往召喚星空使用)·完全比照 summon_ticket_ssr_pick。',
+      '★ v3.16.80【使用流程·index.html】沿用既有 tier 參數化自選券機制加 UR tier:_summonTicketUnrecorded 加 UR 分支(讀 window._LXPS_RARITY_UR 三隻 UR 中尚未收錄者)·_openSummonTicketModal 面板加 UR 自選券卡(張數+剩餘可選數)·_openSummonTicketPickModal 與 _useSummonTicketPick 的 _ticketId/_accent 加 UR 對應(summon_ticket_ur_pick·色 ff5e9c)·背包道具使用鈕路由加 summon_ticket_ur_pick 開召喚卷面板。解鎖/防重入/結果動畫全沿用既有路徑·不改機率表。',
+      '★ v3.16.80【GM 發獎·admin_panel.js】三支發獎工具(成績獎勵 _cr／全體玩家獎勵 _gr／虛寶序號 _rc)各於 UR 三隻下方新增 UR 自選召喚卷數量勾選列·_buildReward/_grBuildReward/_rcBuildReward 各加 backpack.summon_ticket_ur_pick 入袋(比照 SSR 自選券)。全體玩家獎勵廣播的 UR 打字確認守門(v3.16.79)同步納入 _gr-item-urpick→廣播 UR 自選券一樣需輸入發給全校。',
+      '★ v3.16.80【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js node --check 過、0 個真正可選串接。七點版本同步 → v3.16.80。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.60)。本輪改 index.html(道具+使用流程)+admin_panel.js(GM 發獎勾選)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。',
+    ],
+  },
   // v3.16.79 — 成績獎勵搜尋反向模糊比對收緊 + 全體獎勵 UR 廣播二次確認(GM 後台·玩家無感)
   {
     ver: 'v3.16.79',
@@ -265,37 +291,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.62【設計師名冊備援·index.html】_fbAdminFindPlayersByName 階段 1.5：原本只掃 student_roster.js 的 _STUDENT_ROSTER 反查真名→email；若該名冊缺某生或未上傳/未載入則搜不到。新增備援：_STUDENT_ROSTER 沒命中時，改用 index.html 內建的 STUDENT_DESIGNER_HEROES(約 30+ 名設計過英雄的學生·含 fullName 真名)反查 email→查玩家 doc(matchType designer)。讓設計過英雄但不在名冊的學生(如高廷睿 lsps110127 5年4班)可用中文真名搜到。課堂獎勵+活動查詢共用此函式·兩邊同時生效。',
       '★ v3.16.62【版本/範圍】七點版本同步 → v3.16.62。本輪改 index.html + admin_panel.js(版本對齊) + game_changelog.js(hero_db.js 未改內容·僅 manifest 版號對齊·免重傳)。⚠ 非設計師且已取暱稱、且不在 student_roster.js 的學生·仍需補完 student_roster.js 才能用真名搜到(可改用學號/班級座號/信箱搜)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.42)。',
-    ],
-  },
-  // v3.16.61 — GM 課堂獎勵/活動查詢中文姓名搜尋根治 + 同名候選班級座號挑選 + 帳號轉移修復
-  {
-    ver: 'v3.16.61',
-    date: '2026-06-28',
-    brief: [
-      '📨【會員資料新增「帳號轉移功能申請」按鈕】在「會員資料」編輯畫面的 E-mail 信箱欄位下方，新增了「帳號轉移功能申請」按鈕。畢業換新帳號、或想把舊帳號的進度搬到新帳號時，可直接從這裡申請（功能同首頁左上角，每天限申請一次）。',
-      '✅【修好「轉移後新帳號無法登入」】之前申請帳號轉移、老師搬好資料後，新帳號登入會卡在「載入失敗」進不去——這次已修正，新帳號現在可以正常登入並看到搬過來的進度。',
-    ],
-    items: [
-      '★ v3.16.61【中文姓名搜尋根治·index.html】GM 課堂獎勵發放 + 玩家活動記錄查詢共用的 _fbAdminFindPlayersByName：玩家真名/暱稱實際存於 players 文件的 displayName 欄位(並無 name 欄位)，原階段1精確查 name 永遠 0 筆、階段2全掃讀 _data.name 為空字串被 if(!_name)return 全略過(連名冊 fullName 比對都跑不到)。改為查/讀 displayName(保留 name 後備)，中文姓名(未取暱稱者=真名、已取暱稱者=暱稱)現可精確+子字串命中;校外帳號(無真名/學號/名冊)新增信箱搜尋:輸入含 @ → 精確查 email、純文字片段≥3字 → 模糊比對 email(純數字輸入不走此路·避免班級碼誤配)。',
-      '★ v3.16.61【課堂獎勵·大量貼上+同名候選挑選·admin_panel.js】姓名輸入沿用逗點/換行分隔(可一次大量貼上)；單筆命中自動入列、可逐一移除；同名多筆改列候選清單並顯示每位的班級座號(走 _classSeatCode4)讓老師核對是誰、點選加入(可複選)；查無此人另列並提示改用學號/班級座號/信箱/uid。發放對象以確認後的清單為準。',
-      '★ v3.16.61【活動查詢顯示會員資料·admin_panel.js+index.html】玩家活動記錄查詢的玩家卡新增會員資料區塊，顯示玩家自填的 暱稱/信箱/身分/出生年(換算約略年齡)/性別/年級/平台，每次查詢即時讀最新(玩家更新後 GM 同步看到)；_fbGetMemberProfile 回傳加 updatedAt 供顯示最後更新時間；玩家未填則顯示尚未填寫。',
-      '★ v3.16.61【帳號轉移殘留根因修復·index.html】_fbMigrateAccountData 整份複製舊帳號存檔時會連 ownerUid 一起搬進新帳號，導致新帳號登入時 gameCloudLoad 的 Layer B 偵測 ownerUid(舊)≠登入 uid(新) 判為外來資料拒絕套用、卡載入失敗。修法：主檔 + saves/live + saves/safe 三處 ownerUid 一律改寫為新 uid(只讀舊寫新，不動母本)。',
-      '★ v3.16.61【會員資料加轉移鈕 + 每天限一次·index.html】會員資料編輯模式 E-mail 欄下方新增帳號轉移功能申請鈕(首登模式不顯示)，點擊開啟既有 _showAccountTransferModal。轉移彈窗(首頁左上角 + 會員資料兩入口共用)新增每日一次限制：以雲端申請紀錄 createdAt 對比台灣當日，今日已申請則顯示提示橫幅 + 停用送出鈕 + 送出守門擋下；送出成功另寫 localStorage 當日旗標備援。',
-      '★ v3.16.61【版本/範圍】七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + 本條 ver → v3.16.61。本輪改 index.html + admin_panel.js + game_changelog.js(hero_db.js 未改內容·僅 manifest 版號對齊·免重傳)。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.41)。',
-    ],
-  },
-  // v3.16.60 — 召喚物行動時在主人卡牌跳趣味標籤
-  {
-    ver: 'v3.16.60',
-    date: '2026-06-28',
-    brief: [
-      '🎉【召喚物出手更有戲了】陰陽師的式神、操偶師的傀儡、喚龍使的天青龍在場上幫忙時，會在「主人的卡牌」上跳出可愛的提示標籤：朱雀治療！、青龍助攻！、玄武白虎守護！、操偶／城牆守護！、天青龍守護！——一眼就知道是哪隻召喚物在出力。',
-      '🐉【青龍助攻慢半拍登場】青龍追擊的傷害數字和「青龍助攻！」標籤會比原本的攻擊慢 0.5 秒才跳出來，跟原本的傷害數字錯開、看得更清楚。',
-    ],
-    items: [
-      '★ v3.16.60【召喚物笑果標籤·index.html】五隻召喚物在「主人卡牌」跳 bannerFX 標籤：朱雀治療！(治療友方·主人＝陰陽師)／青龍助攻！(追擊友方目標·主人＝陰陽師)／玄武白虎守護！(代承陰陽師傷害·主人＝陰陽師)／操偶守護！‧城牆守護！(操偶師·依當前 _puppetLabel 狀態)／天青龍守護！‧至尊天青龍守護！(喚龍使‧蜜鶴林本體·依當前 _dlabel 狀態)。原本守護顯示的「-扣血數字」移到戰鬥紀錄文字，卡牌 banner 改顯示笑果文字。',
-      '★ v3.16.60【青龍助攻延後 0.5 秒·index.html】青龍追擊的傷害套用＋「青龍助攻！」標籤改用 _pSetTimeout 延後 0.5 秒(避免和原本傷害數字疊在一起)；立即設防遞迴旗標、capture 區域變數，延後回呼會重新確認目標／陰陽師／青龍式神都還在場才執行，戰鬥結束或式神陣亡則略過。pause-aware：暫停中會排隊、解除後再跑，並自帶 fallback 不卡死。',
-      '★ v3.16.60【範圍/版本】只改 index.html(doDmg／doHeal hook 五處 bannerFX)；admin_panel.js＋game_changelog.js 僅版本對齊。七點版本同步 → v3.16.60。未來新增召喚物比照此模式加標籤。「替身！」「反擊！」等其他既有機制不動。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.40)。',
     ],
   },
 ];
