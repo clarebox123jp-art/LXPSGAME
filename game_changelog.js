@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.78 — 「📨 帳號救援申請審核」逐項處理不互架、狀態永久保留
+  {
+    ver: 'v3.16.78',
+    date: '2026-06-29',
+    brief: [
+      '📨【帳號救援審核逐項處理】修正老師後台「📨 帳號救援申請審核」：以前一筆申請內若同時有英雄審查和至寶審查，只要處理其中一項（按通過／刷除／補回）整筆就被關閉，導致另一項沒辦法處理。現在改為「逐項處理互不影響」：每項處理完會顯示 ✅ 已審查完畢（含時間）、該項按鈕收起，其他項目的按鈕繼續保留可繼續處理；狀態寫雲端永久保留，重新整理也看得到哪些已審查、哪些待確認。整筆只由「✔ 標記已處理／✖ 駁回」關閉。(玩家端無感)',
+    ],
+    items: [
+      '★ v3.16.78【根因】救援審核卡 _analyze 內所有審查區塊的按鈕都 append 到同一個 actionsEl，而每個逐項 handler 結尾 actionsEl.innerHTML 設空字串會清掉「全部」按鈕；加上每個 handler 都呼 _fbResolveAccountRescueRequest(resolved) 關閉整筆 → 處理一項就不能處理另一項。',
+      '★ v3.16.78【後端·index.html】新增 window._fbMarkRescueItemHandled(uid, itemKey, note)：只寫 accountRescueRequests/{uid}._handledItems[itemKey] = {at,by,note}(merge:true 對 nested map 子鍵安全·不洗掉其他已處理項)·不改 status。整筆關閉仍走 _fbResolveAccountRescueRequest(由 ✔標記已處理／✖駁回 觸發)。GM 寫同一 doc·沒有新 collection·免新增 firestore.rules。',
+      '★ v3.16.78【面板·admin_panel.js】_analyze 加 handled 參數(傳 _r._handledItems)+新增 _appendActionOrDone(key,label,btns)：已處理項顯示 ✅已審查完畢+時間+備註、不再出鈕；未處理才出鈕。六區塊(遺失英雄復原／污染英雄刷除／污染至寶刷除／遺失至寶補回／英雄審查／至寶審查)各綁一個 handledKey(lostHeroes／disownHeroes／disownTreasures／lostTreasures／auditHeroes／auditTreasures)。',
+      '★ v3.16.78【8 個逐項 handler】_restoreLost／_disownRemove／_approveAudit／_rejectAudit／_approveAuditTreasures／_rejectAuditTreasures／_disownRemoveTre／_restoreLostTre 都加 (claims, handled) 參數，動作後改呼 _fbMarkRescueItemHandled(只標單項) + handled[key]=... + 重呼 _analyze 重渲(保留其他區塊按鈕)、不再清空或關閉整筆。「✔ 標記已處理／✖ 駁回」(_confirmRescue／_reject)維持關閉整筆不變。無 ?.。',
+      '★ v3.16.78【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；admin_panel.js node --check 過、0 個真正可選串接；逐項 resolve 殘留=0(只剩整筆 _confirmRescue／_reject)、markHandled=8。七點版本同步 → v3.16.78。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.58）。本輪改 index.html(後端 helper)+admin_panel.js(救援卡)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
+    ],
+  },
   // v3.16.77 — 「🔍 持有者審查」勾選清單補齊 UR／SR／R（含答題解鎖）
   {
     ver: 'v3.16.77',
@@ -277,21 +292,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.59【鬥技場動態影片·index.html】#arenaLobbyOverlay 第一子層新增 <video id=arena-bg-video>（鬥技場動態.mp4·autoplay/loop/muted/playsinline·object-fit:cover 全螢幕·opacity:0 + onloadeddata 淡入·onerror→display:none 露出靜態 鬥技場.png）。作法同召喚星空動態影片，但 z-index 用 -1（非召喚頁的 0）：鬥技場 .al-body 內容為正常流(static)，影片若用 z0 會蓋住內容，改用負 z 讓影片畫在「本元素背景圖(png+漸層)之上、正常流內容之下」（.al-header 為 sticky z5 亦在其上）。',
       '★ v3.16.59【需上傳 repo + 版本】⚠ 老師需上傳 repo 根目錄：鬥技場動態.mp4（缺檔則鬥技場頁自動隱藏影片·露出原本的鬥技場.png）。七點版本同步 → v3.16.59。GAME_CHANGELOG trim 至 20 筆（本批新增 v3.16.55~59·移除最舊 v3.16.39~35）。',
-    ],
-  },
-  // v3.16.58 — 自動戰鬥「每位英雄 AI 行動設定」
-  {
-    ver: 'v3.16.58',
-    date: '2026-06-28',
-    brief: [
-      '🤖【自動戰鬥可以細調每位英雄了】開啟「自動戰鬥」前，會先跳出設定視窗，讓你為隊上「每一位英雄」分別決定 AI 要不要做這些行動：使用普通攻擊／技能1／技能2／極限爆發／優先賣物品卡蓄能／優先使用物品卡／優先使用治療復活技能／優先攻擊HP最高的目標／優先攻擊HP最低的目標。',
-      '⚙️【打到一半也能改】自動戰鬥進行中，點畫面會出現「是否取消自動戰鬥」視窗，裡面多了「⚙ 修改AI設定」按鈕，可以隨時調整、下一個我方行動就生效。設定會記住並同步雲端，換裝置也還在。',
-      '💡【預設不變】沒有特別調整時，AI 行為跟以前完全一樣；這只是讓你能進一步客製化每位英雄的打法。',
-    ],
-    items: [
-      '★ v3.16.58【每位英雄AI設定·index.html】新增 window._autoBattleHeroCfg（綁英雄名·9 布林開關 atk/s1/s2/burst/sell/useItem/healRevive/tgtHigh/tgtLow）+ localStorage(lxps_auto_battle_cfg) + 雲端同步（_buildSafeData 寫 autoBattleCfg / autoBattleCfg_s·_applySafeData 優先採信 _s·自寫欄位不需改 firestore.rules·不在英雄存檔載入路徑）。預設值=等同舊行為（普攻依天賦判定·其餘 true·目標兩項 false）。',
-      '★ v3.16.58【設定視窗·index.html】toggleAutoBattle 開啟前先彈 showAutoBattleSettings({live:false, onConfirm:_doEnableAutoBattle})；showAutoBattleConfirm（進行中）新增「⚙ 修改AI設定」鈕 → showAutoBattleSettings({live:true})（只存檔不重啟）。視窗 25 秒未操作自動套用並繼續（防卡死）·空隊伍直接放行·任何例外都不擋流程。畫面點擊攔截 excluded 加 auto-confirm-settings / auto-battle-settings-ov。新增 #auto-battle-settings-ov CSS（iPad 友善開關·≥44px 觸控·可捲動·z 9960）。',
-      '★ v3.16.58【_realAiAct 閘門·index.html】只在「玩家側 p1 + 自動戰鬥開啟 + 該英雄有設定」時生效（敵方 p2 與未設定英雄完全不受影響）。爆發/技能(canS1b/canS2b 折入 s1/s2 開關·涵蓋治療段與攻擊段)/普攻/賣卡蓄能/物品卡(裝寵物·復活/治療/攻擊道具)/治療技能 各加「不允許就略過、往下一個選項走」；目標 HP 最高/最低（恰好勾一項時生效·XOR）。最後一定有「休息」收尾且永不被閘門擋 → 任何勾選組合都會結束回合、不會卡死。',
     ],
   },
 ];
