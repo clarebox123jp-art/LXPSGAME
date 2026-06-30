@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-30  / 目前主程式版本:v3.16.93(自選召喚卷挑英雄強制寫雲端權威記錄防消失+存檔倒退守門豁免GM收回過度補償/學生自助刪除的英雄)
+//  最後更新:2026-06-30  / 目前主程式版本:v3.16.95(商店每日購買次數沒刷新根治[shopDailyData_s 字串版+一次性清空遷移]+至寶重置靈水退回內容修正[正確退卷軸張數+補退知識幣])
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,35 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.95 — 商店每日購買次數沒刷新修復 + 至寶重置靈水退回內容修正
+  {
+    ver: 'v3.16.95',
+    date: '2026-06-30',
+    brief: [
+      '🛒【商店每日次數修復】有同學「今天第一次開商店,召喚水晶/極限爆發果實等卻顯示已買完、無法購買」—— 現在已修好:跨日後每日限購次數會正確歸零刷新,大家都能正常購買當天的份額。(受影響的同學登入後會自動恢復可購)',
+      '💧【至寶重置靈水退回修正】之前「至寶重置靈水」退回的內容完全錯誤(退一把 Lv.5 至寶竟給超過 99 張卷軸、又沒退知識幣)—— 現在改為正確退回:升級時實際花掉的「至寶經驗卷軸 + 知識幣」全額退回(例如 Lv.5 退回 14 張卷軸 + 90,000 知識幣)。',
+    ],
+    items: [
+      '★ v3.16.95【商店每日購買次數沒刷新根治·index.html】根因同 playerBackpack_s/heroLevels_s:Firebase set(merge:true) 對 shopDailyData(map)深度合併殘留昨天計數子鍵 → 跨日後今天買 A 商品時 _shopDailyData reset 成 {date:今天,A:1}、存檔 merge 後雲端深合併昨天的 B:1 殘留 → 下次載入 date===today 成立 → _shopDailyBought(B) 回殘留值 → 顯示「今日剩 0/X」沒刷新。修法(對齊既有 _s 鐵律):①_buildSafeData 加 shopDailyData_s/shopWeeklyData_s 字串版(整包覆蓋·免疫 merge 深合併)②_applySafeData 載入優先採信 _s(雲端 map 版即使殘留也忽略)③一次性清空遷移旗標 _shopDailyResetV1(部署後存檔即帶·載入時無此旗標→清空 merge 殘留·當前受影響學生立即恢復可購)。讀取/渲染/重置/今日計算邏輯本就正確(_shopDailyBought/_getShopDailyKey/_lxpsGetGameDayKey 台灣8:00界),病灶純在雲端 merge 殘留。',
+      '★ v3.16.95【至寶重置靈水退回內容修正·index.html】_doTreasureReset 退回計算三重錯誤根治:原 _refund=(lv-1)*lv/2*10+exp 對 Lv.5=100 → ①公式算錯總EXP(用 1+2+3+4 而非實際每級 (curLv+1)*10 的 2+3+4+5=140)②把「總EXP」當「卷軸張數」直接退(應 ÷10=14 張·100>99 即老師回報症狀)③完全沒退知識幣。修法:從 Lv1 用 _getTaiwanTreasureExpForNextLv/_getTaiwanTreasureCoinForNextLv 逐級加總實際投入 → 退回卷軸張數=總EXP÷10(每張10EXP)+ 全額知識幣(addKnowledgeCoins);Lv.5 正確退 14 張卷軸 + 90,000 知識幣。modal 卡片/toast/商店與背包道具描述同步更正。⚠ 另有「第一隻英雄不斷+500EXP」回報:程式碼中 +500EXP 來源(精裝經驗書 hero_exp_book_deluxe)皆為正常單次使用、_backpackOpenHeroSelect 無重入,靜態查無「不斷」迴圈,待現場資訊定位。',
+      '★ v3.16.95【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接(?.)。七點版本同步 → v3.16.95。GAME_CHANGELOG 維持 20 筆(移除最舊)。本輪改 index.html(問題1+問題3退回)+ game_changelog.js;admin_panel.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。',
+    ],
+  },
+  // v3.16.94 — GM獎勵領取空轉修復 + 登入後原本有練的英雄變低等/不見修復(+ 後台過度補償掃描升級)
+  {
+    ver: 'v3.16.94',
+    date: '2026-06-30',
+    brief: [
+      '🎁【GM 獎勵領取修復】老師發給你的「課堂自製科學玩具」等 GM 獎勵(含 SSR 自選召喚卷),之前有人按了「確認領取」卻一直轉圈、收件區也不會消失、獎勵沒進帳 —— 現在已修好:領取會正常入帳、收件卡會正常消失,而且同一份獎勵只會領一次(不會重複)。',
+      '🦸【練過的英雄不再變低等/不見】之前少數同學重新登入後,原本練過的某些英雄會「等級變低」或「整隻不見」—— 現在登入時會以雲端最完整的資料為準,把「你有練過(升過級/投資過素質技能/裝過至寶)」的英雄等級與進度保底補回來,不會再被洗掉或降等。(注意:這只會補回「你真的練過」的英雄,不會憑空多出沒練過的角色。)',
+    ],
+    items: [
+      '★ v3.16.94【GM獎勵領取空轉根治·index.html】_fbClaimGmClassReward 重構:改以「玩家自己的主檔 _gmcrClaimed 標記」為領取主閘門(玩家對自己 players/{uid} 的自寫一定成功),不再卡在 gmClassRewardClaims transaction(該集合 firestore 規則若未部署會被拒→原本先 return→收件區不消失+鈕 re-enable=無限空轉);新流程:①先讀主檔 _gmcrClaimed 若已含本筆→擋重複;②transaction 降為「最佳努力」(catch 靜默·規則部署後才生效·belt-and-suspenders 跨裝置去重);③發獎前先 read-modify-write 標記 _gmcrClaimed(+競態重讀)再呼 _fbCompensatePlayer 入帳;④入帳失敗→從 _gmcrClaimed 移除該 rewardId 回滾(可再領);⑤補 _gmcrClaimLog。自選券 backpack key=summon_ticket_ssr_pick。',
+      '★ v3.16.94【練英雄保底·登入權威下載·index.html】新增 window._lxpsHeroFloorOntoMain(main, slots, cutoff):v3.16.87/90 的登入「權威下載」多數情況直接採主檔(不合併)→ 若某存檔槽有「主檔沒有、但你已練過」的英雄(或主檔該英雄等級偏低、槽裡等級高),會被靜默丟失或降等。修法:主檔權威為底,只把「有投資證據(等級>1/投資過素質‧技能‧天賦‧爆發‧膠囊‧點數‧經驗/裝過至寶)且未被 admin_delete(GM 收回)/audit_error_recovered(自助刪除)、且來自 reset 之後(savedAt > _lastResetAt)的槽」的英雄,union 補回 unlockedHeroes + 逐鍵 max 養成(純加不減),同步重寫 _s 與 _dataSummary;全程 try-catch,任何錯誤回原主檔。只在權威分支套用(合併保底分支本就有自己的 removal-aware union);知識幣/至寶/背包一律仍採主檔。',
+      '★ v3.16.94【過度補償掃描升級·後台·index.html + admin_panel.js】GM「🩹 6/24~6/25 救援查無紀錄過度補償收回」工具強化:_computeOverRestoredFromDoc 補第二趟掃描 extraNoRecordHeroes/Detail(=「compensation 補償發放、或帳本完全查無解鎖紀錄」、且「沒有任何投資證據」的英雄;有真實取得來源 admin_grant/summon_rare/initial 等 或 有投資證據者→永久保護不收回);_fbAdminScanAllNoRecordOverComp 回傳每位玩家 detail + 依補償日期(台灣時間)聚合的 batches;admin 端加「📅 補償批次摘要」與每隻英雄來源/日期顯示(🎁補償 YYYY-MM-DD / ❓查無紀錄)。收回前對最新雲端權威重判、只收回仍查無紀錄者、寄更正通知 —— 與你的遊戲體驗無關,純後台工具。',
+      '★ v3.16.94【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接(?.)。七點版本同步 → v3.16.94。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.74)。本輪改 index.html(問題1+2+3)+ admin_panel.js(問題2 後台 UI);hero_db.js 僅 manifest 版號免重傳。GM 獎勵跨裝置去重(gmClassRewards/gmClassRewardClaims)firestore 規則建議部署(非必要·主檔自寫去重已生效)。',
+    ],
+  },
   // v3.16.93 — 自選召喚卷挑英雄強制寫雲端權威記錄(防登入後消失) + 存檔倒退守門豁免「GM收回過度補償/學生自助刪除」的英雄
   {
     ver: 'v3.16.93',
@@ -281,31 +310,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.76【持有者審查·面板·admin_panel.js】新增 GM 區塊 #_admin-item-owner-section(🧹 帳號污染處理群組)：可搜尋的英雄(讀 window.SUMMON_RARE_HEROES)／至寶(讀 window.TAIWAN_TREASURES)勾選清單 + 「🔍 查詢持有者」鈕 → 呼 window._fbAdminScanItemOwners → 逐位列玩家（名／uid／信箱）+ 每項英雄／至寶的來源白話標籤 + 時間。每列「🗑 券除」(英雄走 window._fbAdminBulkRemoveHeroes 寫三槽+admin_delete 不復活；至寶走 window._fbAdminRejectAuditTreasures 移出)，「🎁 補償」(輸入知識幣／召喚水晶數量→ window._fbCompensatePlayer)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initItemOwnerSection IIFE)；_buildPicker 載入競態守門(globals 未就緒 1.5s 重試)；_esc 跳脫；無 ?. 可選串接。',
       '★ v3.16.76【影響／安全】新增純屬 GM 審查工具，玩家端零改動、不碰存檔／載入／同步核心。查詢為一次性讀取所有玩家文件(配額消耗大·僅手動點查詢時)；刷除走既有 admin_delete 三槽守門不復活·補償走既有帳本。本輪改 index.html(后端 helper)+admin_panel.js(卡片+IIFE+三點同步)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
       '★ v3.16.76【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 → v3.16.76。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.56）。同輪並含 v3.16.75 鬥技場主頁排版(視窗加寬 50%+排名獎勵各名次獨立一行)。',
-    ],
-  },
-  // v3.16.75 — 鬥技場主頁內容視窗加寬 50% + 排名獎勵各名次獨立一行
-  {
-    ver: 'v3.16.75',
-    date: '2026-06-29',
-    brief: [
-      '🏟️【鬥技場主頁排版優化】① 中央內容視窗加寬約 50%，鬥技場介紹、戰鬥模式、排名獎勵等文字不再被擠到第二行、看得更整齊。② 排名獎勵改成「每個名次各自一行」（第 1 名／第 2-5 名／第 6-10 名／第 11 名以後 分行列出），不再擠在一起亂換行。',
-    ],
-    items: [
-      '★ v3.16.75【內容視窗加寬·index.html】#arenaLobbyOverlay .al-body 的 max-width 由 900px 改 1350px（+50%）：配合 v3.16.72 介紹／獎勵文字放大 200%，寬螢幕用更多橫向空間讓單行文字不跨第二行；保留 width:100% 故窄螢幕（手機／直式）仍不溢出、margin:0 auto 維持置中。純 CSS 一處。',
-      '★ v3.16.75【排名獎勵分行·index.html】#arenaLobbyOverlay 排名獎勵區 .al-reward-text 四個名次原以全形空白「　」兩兩併在同一行（第 1 名＋第 2-5 名一行、第 6-10 名＋第 11 名以後一行），放大字級後擠在一起亂換行；改為每名次各自獨立一行（🥇第 1 名 ／ 🥈第 2-5 名 ／ 🥉第 6-10 名 ／ 🎀第 11 名以後 共 4 行），獎勵數值內容完全不變。純文字排版一處。',
-      '★ v3.16.75【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html／hero_db.js／admin_panel.js／game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.75。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.55）。本輪僅改 index.html 2 處（鬥技場 CSS+文字排版），admin_panel.js 與 game_changelog.js 僅版號對齊／新增條目、hero_db.js 僅 manifest 版號免重傳。',
-    ],
-  },
-  // v3.16.74 — 鬥技場上方場次統計欄底色改透明深藍(字看得更清楚)
-  {
-    ver: 'v3.16.74',
-    date: '2026-06-29',
-    brief: [
-      '🏟️【鬥技場統計欄看得更清楚】鬥技場上方「今日剩餘/總勝場/總平手/總敗場/鬥技之證/入場券」那一排的底色,由原本很淡的金色改成透明深藍色,在明亮的天空背景下數字和文字都清楚多了。'
-    ],
-    items: [
-      '★ v3.16.74【鬥技場統計欄底色·index.html】#arenaLobbyOverlay .al-stats-bar 背景由 rgba(255,200,80,0.12)(淡金·在明亮天空動態背景下對比不足→金色數字+白色標籤看不清)改 rgba(14,30,72,0.82)透明深藍,邊框由淡金 rgba(255,200,80,0.3)改淺藍 rgba(120,170,255,0.45)使面板協調;金色數字(.al-stats-num #ffd07b)維持→深藍底上對比更強。純 CSS 一處,JS/結構/版號邏輯不動。',
-      '★ v3.16.74【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 → v3.16.74。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.54)。本輪僅改 index.html 1 處 CSS,admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。'
     ],
   },
 ];
