@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-29  / 目前主程式版本:v3.16.90(登入權威下載零風險完善:主檔存檔時間地板·杜絕登入弄丟未同步進度)
+//  最後更新:2026-06-29  / 目前主程式版本:v3.16.91(過度補回自審視窗顯示目前登入帳號+不是本人可切換帳號重登再審查)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.91 — 過度補回自審視窗:頂部顯示目前登入帳號 + 不是本人可切換帳號重登再審查
+  {
+    ver: 'v3.16.91',
+    date: '2026-06-29',
+    brief: [
+      '🛡️【審查前先確認帳號】「請確認這些是不是你的」審查視窗,最上方現在會清楚顯示「目前登入的帳號」是誰(班級座號+姓名 + email)。共用平板上如果發現登到的不是你本人的帳號,可以直接按「🔄 這不是我的帳號,切換帳號重新登入」登出、改登自己的帳號後再審查——避免幫別人的帳號做錯判斷。',
+    ],
+    items: [
+      '★ v3.16.91【審查視窗加帳號身分橫幅·index.html】_showOverRestoreReviewModal 頂部新增帳號橫幅:用 window._fbAuth.currentUser.email + window._getRosterEntry/_formatRosterLabel 顯示「目前登入的帳號」(班級座號姓名「5324王同學」+ email);讀不到時提示重新整理。明確提醒學生先確認是本人帳號再往下審查。',
+      '★ v3.16.91【切換帳號重登·index.html】橫幅內「🔄 這不是我的帳號,切換帳號重新登入」鈕 → 呼叫 window._fbSignOut()(含 iPad Safari IndexedDB firebaseLocalStorageDb 清理)登出回登入頁;學生改登自己帳號後,該帳號若有待審 pending 會自動再跳出審查。',
+      '★ v3.16.91【切換不消化此帳號審查·防呆關鍵·index.html】切換時 modal resolve({switched:true});_doFetchAdminNotifications 讀取迴圈收到 switched → break,且「不寫本地 hide 旗標、不 deleteDoc」→ 此帳號的待審 pending 不被誤消化 → 下次正確學生登入此帳號時審查會再出現(根治「在別人帳號上把審查做完、真正本人卻再也看不到」)。',
+      '★ v3.16.91【範圍/相容】只改 index.html(審查視窗 + 登入通知讀取迴圈);沿用既有 pendingAdminNotifications 集合與 GM 派發(掃全體 scan-all → queue),免新增 firestore.rules。admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。七點版本同步 → v3.16.91;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.71)。',
+    ],
+  },
   // v3.16.90 — 登入權威下載「零風險」完善:加主檔存檔時間地板,杜絕登入弄丟未同步進度
   {
     ver: 'v3.16.90',
@@ -292,22 +306,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.72【延遲載入接點·index.html】①鬥技場 openArenaLobby:pending-battle 守門後加非阻塞預載鬥技場.png(_lxpsShowLoading→_lxpsPreloadResources→_lxpsHideLoading,主頁照常顯示在遮罩下方)②冒險 openAdventureOverlay 成功路徑(所有登入/雲端守門通過後、_setAdventureOverlayBg 前)加 _lxpsAdvScenesPreloaded 一次性守門:首次進選關頁才批次預載全部 _lazyImages(打完一場回選關頁不再重跳=已快取);兩處皆遮罩逾時/可點穿過→絕不卡頁。',
       '★ v3.16.72【PWA 完整安裝版精準預載·index.html】collectAllResourceUrls 第 7 步補入 window._LXPS_ALL_SCENE_IMAGES(優先+延遲全部;這些 URL 由 _gB+字串 串接組成→第 6 步全文 regex 抓不到)→ 完整安裝版(管理員/已授權/已安裝)precacheAllAssets 一定把所有關卡場景圖存進 cache,保證安裝版離線/弱網各頁面不卡載入;web 版未授權學生不走本函式(走 sw-light 執行期快取),故完全不受影響、登入照樣輕量。',
       '★ v3.16.72【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.72。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.52)。本輪改 index.html(鬥技場主頁 + 延遲載入策略全在此),admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。完全未動存檔/載入/帳號同步路徑。'
-    ],
-  },
-  // v3.16.71 — 素質四欄兩行排版 + 四說明視窗字放大 + 技能/爆發升級即開窗
-  {
-    ver: 'v3.16.71',
-    date: '2026-06-28',
-    brief: [
-      '🧩【素質欄位排版修正】英雄圖鑑詳情頁的 HP/攻擊/特技/速度 四個欄位排版修正：字體放大後不再擠成一團或破版，改成「項目名稱和 ? 說明」放第一行、「數值和加減按鈕」放第二行，看得更清楚。',
-      '🔍【四個說明視窗字放大一倍】圖鑑裡四個說明視窗的字體放大一倍，看得更清楚：①點四項素質旁的「?」說明視窗 ②點六邊形雷達圖各頂點的說明視窗 ③天賦的「查看升級表」視窗 ④最下面爆發技的「升級效果一覽」表格。',
-      '⚡【技能/爆發升級不再卡頓】技能、爆發技按下「升級」後，升級視窗現在會立刻打開（原本要等好幾秒）；按下時不再播音效，改成按「確定升級」時才播放升級音效，操作更順暢。'
-    ],
-    items: [
-      '★ v3.16.71【素質四欄兩行排版·index.html】_renderHeroDetail(L≈110642) 的 HP/攻擊/特技/速度 素質卡由水平 flex(項目在左、數值在右、加減鈕)改為直向 flex-direction:column：第一行=圖示+名稱+ ? 說明(toggleStatPopup span，加 line-height:1.25)；第二行=新 wrapper div(flex+space-between+flex-wrap)放「數值與加成」span(加 white-space:nowrap)與「待分配/加減按鈕」IIFE。字級放大後不再換行破版；所有 ? 與 ± 的 onclick(toggleStatPopup/adjustPendingStat)完整保留。',
-      '★ v3.16.71【四說明視窗字放大×2·index.html】①圖鑑素質 ? 說明：toggleStatPopup 在圖鑑的呼叫點(L≈110643)第三參數 24→48(其餘呼叫點 L61571/61580/61584/61588/28397 維持不動；此 popup 掛到 #gc 不被 _codexScaleFontSizes 縮放故需直接放大)②六邊形雷達 _showRadarLabelInfo(L≈128186)：標題 22→44/說明 18→36/關閉 14→28/padding 16px22px→24px32px/max-width 340→560/定位上移 py-190→py-330 ③天賦升級表 _showTraitLvPopup(L≈122739)：標題 22→44/效果 17→34/分級列 18→36/footer 15→30/固定效果 32/max-width 380→620/popW 400→640/top clamp 1080-400→1080-760 與 ey-80→ey-160 ④爆發升級效果一覽(_renderHeroDetail 底部 ⚡極限爆發 #_hut-anchor-burst 表格)：cell 由 clamp(13px,1.8vw,22px)改 font-size:24px → 經 _codexScaleFontSizes ×1.6 放大成 38px(與爆發說明字級一致；原 clamp 寫法被縮放工具略過故顯示偏小)。',
-      '★ v3.16.71【技能/爆發升級即開窗+音效改點·index.html】根因：upgradeSkill(L≈111327)同步建構確認視窗(無 await)，但開窗 onclick 串接兩個音效(按下 sfx-statup + 開窗 sfx-sel)造成 iOS 音訊卡頓、體感「等好幾秒」。修正：①技能升級鈕(L≈110975)移除 onclick 的按下音效 → 視窗即時開啟 ②技能開窗音效(L≈111393 原 sfx-sel)移除 ③技能確認鈕 _upg_yes2(L≈111395)首行補播 sfx-statup(0.7)(原成功音 sfx-powerup 0.7 保留)④爆發升級鈕(L≈111004)移除 onclick 按下音效 ⑤爆發確認鈕 _burst_yes(L≈111072)首行補播 sfx-statup(0.7)(原成功音 sfx-powerup 0.8 保留)。技能與爆發一致：開窗無聲即時開、按下確定升級才播音效。',
-      '★ v3.16.71【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js 與 admin_panel.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.71。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.51)。本輪只改 index.html(三項修正全在此)，admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。'
     ],
   },
 ];
