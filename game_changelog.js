@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-30  / 目前主程式版本:v3.16.92(自選/隨機至寶券發放強制寫雲端權威記錄+iPad審查視窗送出鈕修復+GM查無紀錄過度補償收回工具)
+//  最後更新:2026-06-30  / 目前主程式版本:v3.16.93(自選召喚卷挑英雄強制寫雲端權威記錄防消失+存檔倒退守門豁免GM收回過度補償/學生自助刪除的英雄)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.93 — 自選召喚卷挑英雄強制寫雲端權威記錄(防登入後消失) + 存檔倒退守門豁免「GM收回過度補償/學生自助刪除」的英雄
+  {
+    ver: 'v3.16.93',
+    date: '2026-06-30',
+    brief: [
+      '👑【自選召喚卷修復】用 UR／SSR／SR 自選召喚卷挑選英雄後,現在會立刻把這位英雄寫進雲端最高權威記錄 —— 避免重新登入後英雄又不見了(特別根治老師發「UR 自選召喚卷」、挑了 UR 卻沒拿到的狀況)。',
+      '🛡️【存檔保護優化】被老師「收回的過度補償英雄」或你「自己申請刪除的英雄」,現在不會再被誤判成「資料倒退」而卡住存檔 —— 你的遊戲進度可以正常更新、正常存檔了。',
+    ],
+    items: [
+      '★ v3.16.93【自選召喚卷發放強制權威寫入·index.html】_useSummonTicketPick:解鎖來源三元式補 UR 分支(原本 UR 會落到 ticket_sr_pick 的 else 分支)→ ticket_ur_pick;發英雄後「無條件」再呼一次 window._lxpsCloudInstantUnlock 寫 unlockedHeroes(arrayUnion)+ _heroUnlockHistory(帶本帳號 uid),補上 advSaveUnlockedHero 受 _isNew 閘門可能略過的權威寫 → UR／SSR／SR 自選券皆保險(根治 GM 發 UR 自選券、玩家挑 UR 後沒拿到/又消失);挑選視窗標題補 UR 分支(原本只認 SSR／SR)。',
+      '★ v3.16.93【存檔倒退守門·稽核感知豁免·index.html】三道存檔守門 _fbSave(主檔)、_fbSaveLive(live 槽)、_suspectRegression(gameCloudSave 對本機備份)一致新增豁免:凡「最近一筆解鎖紀錄=admin_delete(GM 收回過度補償)或 audit_error_recovered(學生自助『不是我的』disown)」的英雄,視為已合法移除 —— 用既有 _lxpsLatestDeletedMap(本版加掛 window 供 gameCloudSave 跨 script block 取用)算出移除集合,從倒退比較的擁有數扣除 + 不被聯集(union)復活 → GM 收回 / 學生自審刪除的英雄能正常從存檔減少,不再卡「⛔ 存檔保護啟動·偵測到資料倒退」與「解鎖英雄倒退 X 隻」。',
+      '★ v3.16.93【安全性】只豁免上述兩種「明確合法移除」來源;latest-entry-wins:玩家若之後重新抽到/老師補發(更新的解鎖紀錄,at 更大)則自然恢復擁有;真正的資料遺失(非此兩來源)仍照舊擋下,不影響原有防薄資料覆蓋保護。',
+      '★ v3.16.93【範圍/相容】只改 index.html;admin_panel.js 僅版號對齊;hero_db.js 僅 manifest 版號免重傳。免新增 firestore.rules。七點版本同步 → v3.16.93;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.73)。',
+    ],
+  },
   // v3.16.92 — 自選/隨機至寶券獲得後強制寫雲端權威記錄(防登入後消失) + iPad 審查視窗送出鈕點不到 + GM 查無紀錄過度補償收回工具
   {
     ver: 'v3.16.92',
@@ -291,19 +306,6 @@ window.GAME_CHANGELOG = [
     items: [
       '★ v3.16.74【鬥技場統計欄底色·index.html】#arenaLobbyOverlay .al-stats-bar 背景由 rgba(255,200,80,0.12)(淡金·在明亮天空動態背景下對比不足→金色數字+白色標籤看不清)改 rgba(14,30,72,0.82)透明深藍,邊框由淡金 rgba(255,200,80,0.3)改淺藍 rgba(120,170,255,0.45)使面板協調;金色數字(.al-stats-num #ffd07b)維持→深藍底上對比更強。純 CSS 一處,JS/結構/版號邏輯不動。',
       '★ v3.16.74【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 → v3.16.74。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.54)。本輪僅改 index.html 1 處 CSS,admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。'
-    ],
-  },
-  // v3.16.73 — 修正放棄戰鬥回關卡主頁左下 SOS 求救鈕殘留
-  {
-    ver: 'v3.16.73',
-    date: '2026-06-29',
-    brief: [
-      '🆘【修正左下 SOS 求救鈕殘留】放棄戰鬥回到關卡主頁後,左下角紅色「🆘 求救(SOS)」鈕沒有隱藏(它只該在戰鬥中出現)。現在任何路徑回到冒險選關頁都會把它正確隱藏,不再殘留在主頁。'
-    ],
-    items: [
-      '★ v3.16.73【SOS 求救鈕殘留修正·index.html】症狀:放棄戰鬥(toast「已放棄上次戰鬥,可以開始新的冒險!」)回到關卡主頁後,左下角 #adv-battle-help-fab(🆘 求救/SOS·v3.16.46 整併鈕)仍顯示。根因:該 FAB 顯示由戰鬥 watchdog(_lxpsBattleRescueBtnWatchdog·每 1.5s)在 _inBattle() 為真時強制 display:block 並 reparent 到 body,但 watchdog 只負責「戰鬥中顯示」、離開戰鬥(放棄/勝/敗)時並不負責隱藏;_hideDeadlockRescueButton 也刻意不改其 display(註「顯隱交給 watchdog」)→ 離開戰鬥後 FAB 維持戰鬥中的 display:block 殘留。放棄函式已把 _adventureMode=false / G.p1=[] / _advBattleResultShown=true 全清(故 _inBattle() 回 false→watchdog 提早 return 不再碰它),但沒有任何點把它設回 none。修法:在 openAdventureOverlay(冒險選關頁進入點·所有回選關頁路徑皆經過)既有「強制隱藏 🔄回溯/❓教學 戰鬥專用鈕」處,補上把 #adv-battle-help-fab 設 display:none + 解除可能殘留的紅光 alert 樣式(dataset.state 清空·animation:none)。選關頁 _inBattle() 為 false→watchdog 不會再把它顯示回來,修正穩定。',
-      '★ v3.16.73【影響範圍/安全】只動 openAdventureOverlay 一處(以 try/catch 包覆·取不到元素即靜默略過),不碰戰鬥 watchdog 全域邏輯、不碰 _hideDeadlockRescueButton、不影響戰鬥中該鈕的常駐顯示與卡死自救紅光提醒、不影響結算/過場/首頁/其他模式。本輪僅改 index.html(此修正在此),admin_panel.js 與 game_changelog.js 僅版號對齊/新增條目、hero_db.js 僅 manifest 版號免重傳。',
-      '★ v3.16.73【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.73。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.53)。'
     ],
   },
 ];
