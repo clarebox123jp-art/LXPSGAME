@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-29  / 目前主程式版本:v3.16.91(過度補回自審視窗顯示目前登入帳號+不是本人可切換帳號重登再審查)
+//  最後更新:2026-06-30  / 目前主程式版本:v3.16.92(自選/隨機至寶券發放強制寫雲端權威記錄+iPad審查視窗送出鈕修復+GM查無紀錄過度補償收回工具)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.92 — 自選/隨機至寶券獲得後強制寫雲端權威記錄(防登入後消失) + iPad 審查視窗送出鈕點不到 + GM 查無紀錄過度補償收回工具
+  {
+    ver: 'v3.16.92',
+    date: '2026-06-30',
+    brief: [
+      '💠【至寶券修復】使用「自選至寶召喚卷」或「隨機至寶召喚卷」獲得至寶後,現在會立刻把這件至寶寫進雲端最高權威記錄 —— 避免之後重新登入時這件至寶又不見了。',
+      '📱【iPad 審查視窗修復】「請確認這些是不是你的」審查視窗,在 iPad 上最下面的「送出」按鈕被系統列擋住、按不到的問題已修正(視窗改用動態視窗高度 + 底部留安全距離,送出鈕一定點得到)。',
+    ],
+    items: [
+      '★ v3.16.92【至寶券發放強制權威寫入·index.html】_useTreasureTicketPick(自選券)與 _useTreasureTicket(隨機券)在 _grantTaiwanTreasure 後「無條件」再呼一次 window._advSaveTreasureUnlockHistory(treasure_pick_ticket / treasure_random_ticket):根因 _grantTaiwanTreasure 內的權威寫入被 if(!_taiwanTreasureData[id]) 守門,跨 script block 的 _taiwanTreasureData 參照不同步時該守門可能被略過 → 權威寫入沒觸發 → 登入權威下載(v3.16.87/90)把只在本機的至寶洗掉。現改在發放後強制呼叫(內部 _lxpsCloudInstantUnlock 以 dotted-path 原子寫主檔 taiwanTreasureData.<id> + 解鎖紀錄)→ 不再消失。',
+      '★ v3.16.92【iPad 審查視窗送出鈕點不到·index.html】_showOverRestoreReviewModal 外框 _box 高度 height:100% 加 height:100dvh(動態視窗高度·讓底部按鈕列落在 iPad Safari 動態工具列之上)+ 底部按鈕列 _bar 底部 padding 改 calc(14px + env(safe-area-inset-bottom))(避開 home indicator 觸控死區);純 CSS 兩處,送出鈕一定點得到。',
+      '★ v3.16.92【GM 查無紀錄過度補償收回工具·index.html + admin_panel.js】「🔴 過度補回稽查與回收(掃全體)」卡內新增子區塊「🩹 6/24~6/25 救援查無紀錄過度補償 → GM 直接收回」:🔍 window._fbAdminScanAllNoRecordOverComp 掃全體列出「6/24-6/25 舊救援自動補進、帳本完全查無解鎖紀錄、Lv1 沒練/沒投資/沒裝至寶」的英雄(已練/投資/裝至寶者被 v3.16.84 legacy_grandfather 補蓋 UID 歸屬·絕不在此清單·絕不誤收)→ 逐位/全部「🗑 收回」(window._fbAdminReclaimNoRecordForUid 收回前對最新雲端 doc 權威重判·只收回仍查無紀錄者·防玩家掃描後已練誤刪·Lv1 不補償·寄更正通知)。加在既有卡內免三點同步·無 ?.。',
+      '★ v3.16.92【範圍/相容】改 index.html + admin_panel.js;沿用既有 pendingAdminNotifications 規則(GM 收回更正通知),免新增 firestore.rules。hero_db.js 僅 manifest 版號免重傳。七點版本同步 → v3.16.92;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.72)。',
+    ],
+  },
   // v3.16.91 — 過度補回自審視窗:頂部顯示目前登入帳號 + 不是本人可切換帳號重登再審查
   {
     ver: 'v3.16.91',
@@ -289,23 +304,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.73【SOS 求救鈕殘留修正·index.html】症狀:放棄戰鬥(toast「已放棄上次戰鬥,可以開始新的冒險!」)回到關卡主頁後,左下角 #adv-battle-help-fab(🆘 求救/SOS·v3.16.46 整併鈕)仍顯示。根因:該 FAB 顯示由戰鬥 watchdog(_lxpsBattleRescueBtnWatchdog·每 1.5s)在 _inBattle() 為真時強制 display:block 並 reparent 到 body,但 watchdog 只負責「戰鬥中顯示」、離開戰鬥(放棄/勝/敗)時並不負責隱藏;_hideDeadlockRescueButton 也刻意不改其 display(註「顯隱交給 watchdog」)→ 離開戰鬥後 FAB 維持戰鬥中的 display:block 殘留。放棄函式已把 _adventureMode=false / G.p1=[] / _advBattleResultShown=true 全清(故 _inBattle() 回 false→watchdog 提早 return 不再碰它),但沒有任何點把它設回 none。修法:在 openAdventureOverlay(冒險選關頁進入點·所有回選關頁路徑皆經過)既有「強制隱藏 🔄回溯/❓教學 戰鬥專用鈕」處,補上把 #adv-battle-help-fab 設 display:none + 解除可能殘留的紅光 alert 樣式(dataset.state 清空·animation:none)。選關頁 _inBattle() 為 false→watchdog 不會再把它顯示回來,修正穩定。',
       '★ v3.16.73【影響範圍/安全】只動 openAdventureOverlay 一處(以 try/catch 包覆·取不到元素即靜默略過),不碰戰鬥 watchdog 全域邏輯、不碰 _hideDeadlockRescueButton、不影響戰鬥中該鈕的常駐顯示與卡死自救紅光提醒、不影響結算/過場/首頁/其他模式。本輪僅改 index.html(此修正在此),admin_panel.js 與 game_changelog.js 僅版號對齊/新增條目、hero_db.js 僅 manifest 版號免重傳。',
       '★ v3.16.73【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.73。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.53)。'
-    ],
-  },
-  // v3.16.72 — 鬥技場主頁(動態背景固定+字放大+底色加深) + 場景圖延遲載入策略(登入只載必要圖·冒險點進去才載·PWA 安裝版仍完整預載)
-  {
-    ver: 'v3.16.72',
-    date: '2026-06-29',
-    brief: [
-      '🏟️【鬥技場主頁優化】①動態背景影片改成固定不隨內容捲動(跟原本的靜態圖一樣穩定)②鬥技場介紹說明與排行榜的字體放大一倍、看得更清楚 ③文字框底色加深,字更清晰好讀。',
-      '⚡【登入更快‧不卡載入】登入時只先下載必要的圖(首頁/關卡主頁/每日召喚/每日商店/背包),冒險各關卡的場景圖改成「點進冒險才邊看貓咪讀取中、邊慢慢下載」。這樣全班同時登入時不會再卡在載入畫面、也不會一直重複載入失敗;載入太久時點一下讀取畫面就能直接進入,絕不卡住。',
-      '📥【完整安裝版照樣完整】如果是「加入主畫面」的完整安裝版(老師授權版),仍然會在安裝時把所有關卡場景圖先存進手機/平板,離線或網路不好時各頁面都不會卡載入。'
-    ],
-    items: [
-      '★ v3.16.72【鬥技場主頁·index.html】①動態影片背景固定:#arenaLobbyOverlay 移除自身 overflow-y:auto,捲動容器改到 .al-body(flex:1+min-height:0+overflow-y:auto+-webkit-overflow-scrolling:touch)→ #arena-bg-video(position:absolute 相對非捲動的 overlay)像原靜態鬥技場.png 一樣固定(仿 v3.16.23 audit overlay 佈局,避免 iOS position:fixed 在 overflow 容器內抖動);影片元素本身未動 ②文字放大×2:.al-rules-list 16→32 / .al-rule-key min-width 110→200 / .al-rank-table 15→30 / th 14→28 / 載入空狀態 15→30 / 排名獎勵說明 16→32 / 結算徽章 15→28 / 介紹段落內聯 15→30;窄螢幕@max-width480 同步放大 ③.al-section 底色 rgba(0,0,0,0.55→0.74)加深。純 CSS/內聯,JS 未動。',
-      '★ v3.16.72【場景圖延遲載入策略·index.html】老師最高準則:①絕不卡登入/不連續載入失敗 ②不碰存檔與帳號同步(純資源預載,結構上不可能造成同裝置污染)。作法:【A 工具】新增 window._lxpsShowLoading/_lxpsHideLoading(貓咪讀取中.gif 全螢幕遮罩,三重防卡死:頁面一律先顯示在遮罩下方=非阻塞、點一下遮罩可強制關閉、12 秒自動關閉安全網,貓咪圖 onerror 不破圖)+ window._lxpsPreloadResources(urls,opts)(批次預載圖片,回傳 Promise 永不 reject,每張 8s/整批逾時都 resolve→頁面一定進得去)。【B boot loader】場景圖拆 _priorityImages(11 張:首頁/關卡主頁/元素選擇/每日召喚可愛+精美/超商/背包/精美首頁+校門+自然教室)與 _lazyImages(23 張:貓空/日本/台灣/精美版冒險場景),boot 首次模式只預載 _priorityImages(原 34→11)→ 下載尖峰大降、失敗率更易 <30% 而寫 done 旗標→下次走快速模式不再重抓→不卡登入;兩陣列在 sessionStorage 早退前就掛 window(回頭分頁也讀得到);boot BGM 等待清單縮成只等選單 BGM(戰鬥/冒險 BGM 進場時自然載入,不動 <audio> 標籤故播放時機不變)。',
-      '★ v3.16.72【延遲載入接點·index.html】①鬥技場 openArenaLobby:pending-battle 守門後加非阻塞預載鬥技場.png(_lxpsShowLoading→_lxpsPreloadResources→_lxpsHideLoading,主頁照常顯示在遮罩下方)②冒險 openAdventureOverlay 成功路徑(所有登入/雲端守門通過後、_setAdventureOverlayBg 前)加 _lxpsAdvScenesPreloaded 一次性守門:首次進選關頁才批次預載全部 _lazyImages(打完一場回選關頁不再重跳=已快取);兩處皆遮罩逾時/可點穿過→絕不卡頁。',
-      '★ v3.16.72【PWA 完整安裝版精準預載·index.html】collectAllResourceUrls 第 7 步補入 window._LXPS_ALL_SCENE_IMAGES(優先+延遲全部;這些 URL 由 _gB+字串 串接組成→第 6 步全文 regex 抓不到)→ 完整安裝版(管理員/已授權/已安裝)precacheAllAssets 一定把所有關卡場景圖存進 cache,保證安裝版離線/弱網各頁面不卡載入;web 版未授權學生不走本函式(走 sw-light 執行期快取),故完全不受影響、登入照樣輕量。',
-      '★ v3.16.72【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接。七點版本同步 _GAME_LOADED_VERSION + _vers[index.html/hero_db.js/admin_panel.js/game_changelog.js] + ADMIN_PANEL_VERSION + changelog 頂部 ver → v3.16.72。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.52)。本輪改 index.html(鬥技場主頁 + 延遲載入策略全在此),admin_panel.js 與 game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。完全未動存檔/載入/帳號同步路徑。'
     ],
   },
 ];
