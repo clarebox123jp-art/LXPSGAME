@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-30  / 目前主程式版本:v3.17.1(更新流程友善化:更新程式時不打斷正在戰鬥/做知識王/打世界BOSS的玩家·黃色置頂更新通知最久10秒自動隱藏·回到關卡選擇首頁且閒置才強制重整·重整前務必先把存檔同步到雲端)
+//  最後更新:2026-06-30  / 目前主程式版本:v3.17.3(根治污染↔救援拉鋸:老師正式發放的英雄發放即寫 admin_grant 永久合法·永不被回收工具誤收 + 下架「補償批次回收」帳本不全工具 + 關閉玩家端自動回收·保留「一鍵無損救回」)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,34 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.17.3 — 根治:老師正式發放的英雄永久合法(發放即寫 admin_grant) + 下架「補償批次回收」帳本不全工具
+  {
+    ver: 'v3.17.3',
+    date: '2026-06-30',
+    brief: [
+      '🛡【「正當取得的英雄被誤收」問題,老師已從源頭修好】之前老師清理重複補發的英雄時,因為早期的「取得紀錄」沒寫齊,曾把少數同學自己努力取得的英雄也一起收走。這一版老師從根本修好了:以後凡是老師發放給你的英雄(課堂獎勵、序號、全班獎勵、補償救援),系統都會「當下就把它永久記成是你的」,從此不會再被任何清理工具誤收;同時把會誤判的舊「自動回收」也整個關掉了。如果你先前有英雄被誤收,老師會用「無損救回」工具連同原本的等級幫你還回來,請留意登入後的道歉通知。',
+    ],
+    items: [
+      '★ v3.17.3【根治·index.html】污染↔救援拉鋸的真正病根=_fbCompensatePlayer 發英雄時寫 source:\'compensation\'(會被「補償批次回收/查無紀錄回收」當待收目標)、但同函式發至寶卻早就寫 source:\'admin_grant\'(永久合法)→ 英雄與至寶兩套標準不一致。修法:英雄補償紀錄(L≈10599)改寫 source:\'admin_grant\'+adminAction:true+uid(對齊至寶 L≈10629)→ 凡老師正式發放的英雄(課堂獎勵領取/虛寶序號/全體獎勵/學生補償/救援補回/練習營結算·全走此函式)當下即永久合法、永不被任何回收工具當 compensation 誤收。歷史已發的(已是 compensation)不變·配合「🛟 一鍵無損救回」補救。',
+      '★ v3.17.3【下架帳本不全工具·admin_panel.js】移除 GM「🎁 補償批次回收(依日期·無真實解鎖紀錄即收·含已練)」整支工具(HTML 子區塊 + _initCompBatchReclaimSection wiring 129 行)→ 留碑文。原因:它的判定壓在「帳本紀錄寫得齊」這個前提上,而紀錄當初就沒寫齊(=根治前的病根)→ 前提不成立·留著下次還會誤收已練的正當英雄。後端 _computeCompBatchesFromDoc/_fbAdminScanAllCompBatches/_fbAdminReclaimCompBatchForUid 保留為 dead code(無 UI 入口·不再被呼叫)·不貿然刪以免動到依賴鏈。',
+      '★ v3.17.3【關閉玩家端自動回收·index.html】_GMCR_AUTO_RECLAIM_ENABLED 由 true 改 false(永久停用)。玩家端登入自動回收(v3.16.99)沿用同一套有缺陷的 _computeCompBatchesFromDoc 判定·對白名單日期的 compensation 英雄自動回收→同屬「帳本不全會誤收」風險·與 GM UI 一併下架。閘門 L≈115642 if(!_GMCR_AUTO_RECLAIM_ENABLED) return 早退·不動任何資料。',
+      '★ v3.17.3【保留/範圍/驗證】保留 v3.17.2「🛟 補償批次回收·一鍵無損救回」(救回既有誤收·從存檔還原原等級+寫 admin_grant 永久免疫)。v3.16.92「查無紀錄」工具(只收 Lv1 沒練·風險低)暫留·老師可視需要再決定移除。本輪改 index.html(根治發放紀錄+關自動回收+5處版號)+admin_panel.js(移除補償批次回收 UI/wiring+版號)+game_changelog.js;hero_db.js 內容未改免重傳;不涉新 firestore 集合/欄位。七點版本同步→v3.17.3。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.83)。',
+    ],
+  },
+  // v3.17.2 — GM 補償批次回收·一鍵無損救回(從存檔還原等級/養成 + 寫 admin_grant 永久免疫)
+  {
+    ver: 'v3.17.2',
+    date: '2026-06-30',
+    brief: [
+      '🛟【英雄被誤收的同學,老師會連同原等級幫你還回來】先前老師在清理「重複補發的英雄」時,因為早期的取得紀錄沒有寫齊,可能不小心把少數同學自己努力取得、甚至已經練到高等的英雄也一起收走了,非常抱歉!老師後台已新增「無損救回」工具:會從你的雲端存檔讀回那些英雄原本的等級與技能/天賦/爆發/素質,完整地還給你(不是退回 1 級重練),而且還回來的英雄之後不會再被任何清理工具誤收。如果你發現有英雄不見了,登入後留意老師的道歉與還原通知即可。',
+    ],
+    items: [
+      '★ v3.17.2【補償批次回收·一鍵無損救回·index.html+admin_panel.js】根治「v3.16.98 補償批次回收誤收正當英雄、且現成救回工具會還原成 Lv1」:根因 _fbAdminBulkRemoveHeroes 收回時把等級+5養成表+經驗整批 _clean 清掉、且未暫存原等級(不像 v3.16.19 存 _auditRecoveredLevels)→ 舊救回工具讀不到原等級只能補 Lv1。救星=回收只 updateDoc 主檔、完全沒碰三槽存檔(saves/live、saves/safe),回收前完整等級/養成原封不動留在存檔槽 → 從那裡讀回 = 無損還原。',
+      '★ v3.17.2【三後端函式·index.html】新增 _fbReadHeroGrowthFromSaves(讀主檔+saves/live+saves/safe,對每隻英雄取等級最高那槽整包回傳養成)+ _fbAdminScanCompReclaimedHeroes(掃全體,鎖定「最新一筆=admin_delete 且 reason 含『補償批次回收』、且現已不在 unlockedHeroes」的英雄,並從存檔讀回原等級供核對·只對候選玩家讀存檔)+ _fbAdminRestoreCompReclaimedForUid(權威重判→從存檔還原等級/養成只升不降→寫 admin_grant[auditRestored]永久免疫任何回收→寄道歉通知)。',
+      '★ v3.17.2【GM UI·admin_panel.js】「🔴 過度補回稽查與回收」卡內、「🎁 補償批次回收」子區塊下方新增「🛟 補償批次回收·一鍵無損救回」子區塊:🔍 掃描列出每位被誤收英雄(晶片標「LvN 可還原」或「存檔無料只能Lv1」)→「🛟 救回這位」或「🛟 全部一鍵救回」(走 _fbAdminRestoreCompReclaimedForUid·救回前再判一次)。無 ?.·免三點同步(加在既有卡內)。',
+      '★ v3.17.2【取捨/安全/範圍】帳本當初沒寫真實解鎖紀錄→分不出純污染 vs 正當取得→一律救回(合「誤刪是大忌、保守漏收可接受」鐵律);少數連 safe 槽都被覆蓋者只還原本體(Lv1·會標示·可另循帳號救援個案處理)。鎖定 admin_delete+「補償批次回收」reason→不誤救正常手動刪/暴增收回。建議救回後停用「補償批次回收」工具(其判定壓在帳本紀錄完整性、前提不成立);根治方向=發放當下就把 ticket/admin_grant 紀錄寫進帳本。本輪改 index.html+admin_panel.js+game_changelog.js;hero_db.js 內容未改免重傳;不涉新 firestore 集合/欄位(GM 走 isAdmin 既有路徑)。七點版本同步→v3.17.2。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.82)。',
+    ],
+  },
   // v3.17.1 — 更新流程友善化:不打斷戰鬥/知識王·黃色通知10秒自動隱藏·回關卡首頁才重整·重整前先同步雲端(玩家公告)
   {
     ver: 'v3.17.1',
@@ -281,35 +309,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.84【過度補回稽查·GM UI·index.html+admin_panel.js】index.html 加 window._fbShowOverRestoredAudit(email/uid/學號)(解析帳號→掃描→彈窗列誤補的英雄[Lv·已練標🔥]/至寶→「🔄 全部回收並補償+發道歉通知」鈕·confirm 後執行+結果回報);admin_panel.js「📜 玩家活動記錄查詢」卡新增「🔍 過度補回稽查與回收」鈕(讀查詢框 email/uid/學號→開該彈窗)+「📨 帳號救援申請審核」卡核對結果加 diff.crossAccountHeroes 紅晶片區塊(導引去稽查工具)。無 ?.·免三點同步。',
       '★ v3.16.84【確認「這是我的」鎖等級·index.html】_lxpsConfirmOwnHero(圖鑑「✅ 確認是我的」)在寫 player_confirmed 自己 uid 紀錄後,gameCloudSave 立即同步+加 2.5s 延遲重試 → 把該英雄目前等級+培養記錄(heroLevels_s/各養成 _s)確實寫上雲端三槽(合併優先採信 _s·v3.15.96)→ 學生確認過的英雄不會再被誤刪、也不會回溯成 Lv1(涵蓋首登 _progressLoaded 尚未就緒時第一次存檔被略過的情況)。',
       '★ v3.16.84【版本/範圍/尚未上傳堆疊】本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 內容未改僅 manifest 版號·免重傳。七點版本同步 → v3.16.84。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.64)。⚠ 本版含尚未上傳的 v3.16.82(埃及雙王開放 SSR 卷+戰鬥中延後套用)與 v3.16.83(GM 誤發獎勵刪除連帶清收件箱),請老師直接上傳最新 v3.16.84(已涵蓋全部)。',
-    ],
-  },
-  // v3.16.83 — GM:誤發 GM 獎勵刪除時連帶清除學生收件箱紀錄(GM 專屬)
-  {
-    ver: 'v3.16.83',
-    date: '2026-06-29',
-    adminOnly: true,
-    brief: [
-      '🎁【GM·誤發獎勵清紀錄】後台「🎁 GM獎勵紀錄」彈窗每筆新增「🗑 刪除此筆」鈕:誤發的 GM 獎勵刪除後,會一併把學生「🎁 GM 獎勵」收件箱的待領項與已領取紀錄清乾淨。',
-    ],
-    items: [
-      '★ v3.16.83【GM刪除誤發獎勵·index.html】新增 window._fbAdminDeleteGmClassReward(uid,rewardId):清 ① 收件箱 items doc(gmClassRewards/items;規則不允許刪除時退而 enabled:false 隱藏待領)② 認領文件 claim doc(gmClassRewardClaims)③ 玩家主檔 _gmcrClaimLog(收件箱「✅ 已領取紀錄」顯示來源·GM 對 players 全權必能寫)。_gmcrClaimed 待領抑制快取刻意保留(即使 items 沒刪成功也不會讓該筆又冒出來變待領)。「🎁 GM獎勵紀錄」彈窗每列加 data-rid 的「🗑 刪除此筆」鈕,確認後呼叫此函式並隱藏該列。⚠ 只刪「紀錄」,不自動扣回已入帳的獎勵/英雄(收回另用學生補償負值/污染英雄刪除工具)。⚠ items/claim 兩 collection 刪除需部署 firestore.rules 允許 isAdmin delete(Console 權威);_gmcrClaimLog 清除不受規則影響必生效。',
-      '★ v3.16.83【調查·無程式改動】另兩項學生回報經查:①「每天登入莫名得 10 顆召喚水晶」——全部 10 顆水晶來源(會員資料獎勵/特別挑戰30題/小博士+世界BOSS排名/全體獎勵/審查道歉補償)守門皆正確(雲端旗標/認領文件 transaction/claimedAt),靜態無法重現,需老師提供「受影響學生是否同時得到幣/SSR券、登入時有無彈窗」以精準定位,故本輪不貿然改發獎邏輯。②「圖鑑稀有度篩選對部分人無效」——圖鑑(heroFilterClick)與編組(hpickFilterClick)兩套篩選+_getHeroRarity 代碼皆正確且對所有人一致,「有些人正常」研判為舊版快取;本次版號 bump 會破快取,請受影響學生更新到最新版(清快取/重新整理/重裝)。',
-      '★ v3.16.83【版本/範圍】七點版本同步 → v3.16.83。本輪只改 index.html(GM 刪除誤發獎勵);admin_panel.js 純版號對齊·hero_db.js 內容未改僅 manifest 版號·免重傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.63)。本版含尚未上傳的 v3.16.82(埃及雙王開放 SSR 卷 + 戰鬥中老師更新資料改打完再套用)。',
-    ],
-  },
-  // v3.16.82 — 埃及雙王開放 SSR 召喚卷取得 + 戰鬥中老師更新資料改打完再套用(不再中斷回溯)
-  {
-    ver: 'v3.16.82',
-    date: '2026-06-29',
-    brief: [
-      '🏜【埃及雙王開放召喚卷】法老王與埃及豔后現在也能用「SSR 自選召喚卷」直接挑、或用「SSR 隨機召喚卷」抽到了(原本只能在埃及關卡機率收服);星空召喚仍維持不會抽到雙王。',
-      '🛡【戰鬥中老師更新資料·改打完再套用】老師更新你的帳號資料時,如果你正在戰鬥中,系統不再立刻重新載入(避免打到一半的進度被中斷回溯);會先提示「打完本場戰鬥、回到關卡選擇後自動套用」,等你回到非戰鬥畫面才重新載入吃最新進度。',
-    ],
-    items: [
-      '★ v3.16.82【埃及雙王開放 SSR 卷·index.html】_summonTicketUnrecorded 的 SSR 分支移除埃及雙王過濾(原 not _egExcl.has(n))→ 法老王/埃及豔后(EGYPT_EXCLUSIVE_HEROES)現可進入 SSR 自選卷可選池與 SSR 隨機卷產出池;星空召喚池仍以 _egSummonExcl/_egSummonExcl2 排除雙王(維持星空抽不到),兩條互不影響。',
-      '★ v3.16.82【戰鬥中延後權威重載·index.html】_onAuthoritativeRestore(GM 補償/還原/重建偵測後的重新載入)改為:先立即停止本機所有寫雲端(unsub session listener + 清安全槽定時存檔)並落地「已處理 restoreAt」基線/計數;若此刻 _isInBattleNow() 為真→不硬重載,改提示「打完回關卡選擇自動套用」並每 1.5 秒輪詢,回到非戰鬥畫面(或最長 15 分鐘保險逾時)才 location.reload();非戰鬥則照舊 1.8 秒重載。比照既有「即時版本更新」延後機制(_isInBattleNow + _flushPendingUpdateIfAny)。★ 延後期間存檔已被擋(上述 unsub+清定時 + _authoritativeReloadTriggered 保護層),過時進度不會反向覆蓋老師改動;110082「補了又消失」防護不變。',
-      '★ v3.16.82【課堂獎勵 UR 天使預設不勾·admin_panel.js】GM「課堂獎勵發放」工具的「UR 藝天使．克雷爾」勾選框移除預設勾選 → 改為預設不勾,避免老師批次發課堂獎勵時誤把 UR 天使一起發出去(廣播/序號兌換工具本就無預設勾選,此次對齊)。',
-      '★ v3.16.82【版本/範圍】七點版本同步 → v3.16.82。本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 內容未改·僅 manifest 版號對齊·免重傳。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.62)。',
     ],
   },
 ];
