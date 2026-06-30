@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-30  / 目前主程式版本:v3.16.95(商店每日購買次數沒刷新根治[shopDailyData_s 字串版+一次性清空遷移]+至寶重置靈水退回內容修正[正確退卷軸張數+補退知識幣])
+//  最後更新:2026-06-30  / 目前主程式版本:v3.16.97(BOSS擊敗離不開戰鬥畫面徹底根治[advStartWinSequence 入口收 UI 提到 _wbCtx 守門 return 之前]+黑暗球獎勵回關卡頁誤判未完成修復[勝利序列存快照抑制鎖 _advSuppressSnapSave])
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,29 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.97 — 課堂獎勵「自選召喚卷」領了卻沒拿到 → 徹底修復 + 自動補發
+  {
+    ver: 'v3.16.97',
+    date: '2026-06-30',
+    brief: [
+      '🎁【老師發的「自選召喚卷」沒收到 → 自動補發】少數同學反映:老師發的 UR／SSR／自選至寶召喚卷,按了「確認領取」卻沒出現在背包裡。已徹底修好:① 現在按下「確認領取」後,獎勵會「立刻」進到你的背包(不必等重新整理),不會再被存檔覆蓋掉;② 之前已經領過、卻實際沒拿到券的同學,「下次登入會自動補發」漏掉的卷,並跳出「🎁 老師補發了你漏領的…」提示。',
+      '🔒【絕不重複拿】系統會精準比對「老師發了幾張、你已經用掉幾張、背包還有幾張」,只補真正漏掉的那幾張;已經拿到或已經用掉的不會再給,不會重複發放。',
+    ],
+  },
+  // v3.16.96 — BOSS 擊敗離不開戰鬥畫面徹底根治 + 黑暗球獎勵回關卡頁誤判「戰鬥未完成」修復
+  {
+    ver: 'v3.16.96',
+    date: '2026-06-30',
+    brief: [
+      '⚔️【打倒 BOSS 後卡在戰鬥畫面·徹底根治】少數同學回報「打倒 BOSS 後,求救鈕(SOS)消失了、卻還是離不開戰鬥畫面、回不了關卡頁」—— 已徹底修好:現在不論任何情況,按下「✅ 確認」當下會立刻清乾淨戰鬥畫面並返回,不會再卡住。',
+      '🌑【黑暗球獎勵不再憑空消失】之前打倒貓空「黑暗球」明明顯示拿到 SSR 碎片,回到關卡頁卻跳出「戰鬥未完成、是否繼續」,選了放棄後碎片就不見了 —— 已修好:打完 BOSS 的勝利結算期間不會再被誤判成「戰鬥未完成」,辛苦打贏拿到的獎勵會正常保留。',
+    ],
+    items: [
+      '★ v3.16.96【BOSS 擊敗離不開戰鬥畫面·徹底根治·index.html】advStartWinSequence 入口順序 bug:v3.16.2 雖把「收結算 overlay + 清戰鬥畫面 class(gc 的 adv-battle)+ 清行動條」提到入口,但放在「世界 BOSS 守門 _wbCtx」的 return 之後 → 若一般 BOSS 殘留 _wbJustFinishedRaid/_wbResultExecuting 等旗標、或 _isWorldBossTarget 誤判而觸發守門 → 提早 return → 跳過清戰鬥畫面 → 結算視窗被守門收了、但戰鬥畫面 class 沒清 → 卡住(SOS 因 _advBattleResultShown 已 true 而消失)。修法:把「收 UI + 清 adv-battle class + 清 turn-bar + 隱 SOS」提到函式「最最前面」(所有 return 之前),覆蓋 _wbCtx 守門 return / 重入守衛 return / 正常發獎三路徑;純 UI 轉場不發任何獎勵,對世界 BOSS 結算(走 _wbShowAdvBattleResult)無影響。',
+      '★ v3.16.96【黑暗球獎勵回關卡頁誤判未完成·index.html】根因:advStartWinSequence 在 _advClearCrashSnapshot 清掉中斷快照(adv_battle_snap/adv_crash_snapshot)後,黑暗球勝利序列流程長(碎片+升級演出),期間若 _advBattleResultShown 被某 reset 點設回 false(在 _adventureMode 仍 true 的空檔),「每回合 _saveBattleRoundSnapshot / 每 30 秒 _forceSaveBattleSnapshotAndSync」watchdog 會趁隙重寫 adv_battle_snap → 回關卡頁 _advCheckCrashRecovery 誤判未完成 → 玩家放棄時回滾掉剛得的 SSR 碎片。修法:新增勝利序列「存快照抑制鎖」window._advSuppressSnapSave(不依賴 _advBattleResultShown 時序):advStartWinSequence 入口上鎖;兩個存快照守門各加 || _advSuppressSnapSave 一律不存;解鎖=① 新 BOSS 戰開始(L≈83918 同步清鎖·涵蓋打完黑暗球再打 BOSS)② 15 秒 setTimeout 兜底(屆時通常已回關卡頁·_adventureMode=false·守門自然擋)。',
+      '★ v3.16.96【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接(?.)。七點版本同步 → v3.16.96。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.76)。本輪僅改 index.html(問題2+問題4·純戰鬥勝利序列收尾);admin_panel.js + game_changelog.js 版號對齊、hero_db.js 僅 manifest 版號免重傳。另:玩家回報「使用至寶重置卷後第一隻英雄(布奶鳥獸)不斷 +500EXP 一直升級」已縮小範圍(backpackAdd 確認乾淨·cap99 無溢出轉換)、待下一輪深入定位修復。',
+    ],
+  },
   // v3.16.95 — 商店每日購買次數沒刷新修復 + 至寶重置靈水退回內容修正
   {
     ver: 'v3.16.95',
@@ -284,32 +307,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.78【面板·admin_panel.js】_analyze 加 handled 參數(傳 _r._handledItems)+新增 _appendActionOrDone(key,label,btns)：已處理項顯示 ✅已審查完畢+時間+備註、不再出鈕；未處理才出鈕。六區塊(遺失英雄復原／污染英雄刷除／污染至寶刷除／遺失至寶補回／英雄審查／至寶審查)各綁一個 handledKey(lostHeroes／disownHeroes／disownTreasures／lostTreasures／auditHeroes／auditTreasures)。',
       '★ v3.16.78【8 個逐項 handler】_restoreLost／_disownRemove／_approveAudit／_rejectAudit／_approveAuditTreasures／_rejectAuditTreasures／_disownRemoveTre／_restoreLostTre 都加 (claims, handled) 參數，動作後改呼 _fbMarkRescueItemHandled(只標單項) + handled[key]=... + 重呼 _analyze 重渲(保留其他區塊按鈕)、不再清空或關閉整筆。「✔ 標記已處理／✖ 駁回」(_confirmRescue／_reject)維持關閉整筆不變。無 ?.。',
       '★ v3.16.78【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；admin_panel.js node --check 過、0 個真正可選串接；逐項 resolve 殘留=0(只剩整筆 _confirmRescue／_reject)、markHandled=8。七點版本同步 → v3.16.78。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.58）。本輪改 index.html(後端 helper)+admin_panel.js(救援卡)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
-    ],
-  },
-  // v3.16.77 — 「🔍 持有者審查」勾選清單補齊 UR／SR／R（含答題解鎖）
-  {
-    ver: 'v3.16.77',
-    date: '2026-06-29',
-    brief: [
-      '🔍【持有者審查勾選清單補齊】老師後台「🔍 英雄／至寶持有者審查」原本勾選清單只有 SSR 英雄，現在補齊為四大稀有度分組：👑 UR／SSR／SR／R（R 含答題解鎖的 小力／幼兒園小孩／機關王雙人組），全稀有度都查得到了。(玩家端無感)',
-    ],
-    items: [
-      '★ v3.16.77【全稀有度勾選清單·index.html+admin_panel.js】原 _buildPicker 只讀 window.SUMMON_RARE_HEROES(=SSR 母體)。修法：① index.html 在 _getHeroRarity 旁暴露 window._LXPS_RARITY_UR = Array.from(_RARITY_UR_HEROES)、window._LXPS_RARITY_R = Array.from(_RARITY_R_HEROES)（SSR=SUMMON_RARE_HEROES、SR=SUMMON_SR_HEROES 早已暴露）。② admin_panel.js _buildPicker 改為四稀有度分組 👑UR／🟧SSR／🟪SR／🟦R（_heroGroup 逐組標題+計數+到 _seen 去重），同一搜尋框篩選。R 組含答題解鎖 小力／幼兒園小孩／機關王雙人組(原本在 _RARITY_R_HEROES Set 裡)。查詢／刷除／補償邏輯不變。無 ?. 可選串接。',
-      '★ v3.16.77【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 → v3.16.77。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.57）。本輪改 index.html(UR／R 暴露)+admin_panel.js(_buildPicker 四分組)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
-    ],
-  },
-  // v3.16.76 — 老師後台新增「🔍 英雄／至寶持有者審查」工具
-  {
-    ver: 'v3.16.76',
-    date: '2026-06-29',
-    brief: [
-      '🔍【老師後台：英雄／至寶持有者審查】老師在管理面板「🧹 帳號污染處理」新增一個工具：勾選任意英雄／至寶 → 查出全班「誰持有這些英雄／至寶」，並顯示每人的取得來源與取得時間，方便審查是否為不正常取得。來源查無紀錄／未標記的會排在最前面。可直接對單一玩家刷除該英雄／至寶或發放補償。(玩家端無感)',
-    ],
-    items: [
-      '★ v3.16.76【持有者審查·後端·index.html】新增 window._fbAdminScanItemOwners(heroNames, treasureIds)：一次 getDocs(players) 全玩家掃描，逐人取 unlockedHeroes ∩ 所選英雄 + taiwanTreasureData key ∩ 所選至寶；來源／時間取自 _heroUnlockHistory／_treasureUnlockHistory 每名「最新一筆」帳本紀錄，等級讀 heroLevels／taiwanTreasureData[id].lv；回傳 {scanned, owners:[{uid,email,displayName,heroes:[{name,source,at,lv}],treasures:[{id,name,source,at,lv}]}]}，來源空白／admin_delete(可疑)排最前、其次依名稱。唯讀不寫。',
-      '★ v3.16.76【持有者審查·面板·admin_panel.js】新增 GM 區塊 #_admin-item-owner-section(🧹 帳號污染處理群組)：可搜尋的英雄(讀 window.SUMMON_RARE_HEROES)／至寶(讀 window.TAIWAN_TREASURES)勾選清單 + 「🔍 查詢持有者」鈕 → 呼 window._fbAdminScanItemOwners → 逐位列玩家（名／uid／信箱）+ 每項英雄／至寶的來源白話標籤 + 時間。每列「🗑 券除」(英雄走 window._fbAdminBulkRemoveHeroes 寫三槽+admin_delete 不復活；至寶走 window._fbAdminRejectAuditTreasures 移出)，「🎁 補償」(輸入知識幣／召喚水晶數量→ window._fbCompensatePlayer)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initItemOwnerSection IIFE)；_buildPicker 載入競態守門(globals 未就緒 1.5s 重試)；_esc 跳脫；無 ?. 可選串接。',
-      '★ v3.16.76【影響／安全】新增純屬 GM 審查工具，玩家端零改動、不碰存檔／載入／同步核心。查詢為一次性讀取所有玩家文件(配額消耗大·僅手動點查詢時)；刷除走既有 admin_delete 三槽守門不復活·補償走既有帳本。本輪改 index.html(后端 helper)+admin_panel.js(卡片+IIFE+三點同步)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
-      '★ v3.16.76【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js／admin_panel.js／game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接。七點版本同步 → v3.16.76。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.56）。同輪並含 v3.16.75 鬥技場主頁排版(視窗加寬 50%+排名獎勵各名次獨立一行)。',
     ],
   },
 ];
