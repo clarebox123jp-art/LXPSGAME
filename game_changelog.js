@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-06-30  / 目前主程式版本:v3.16.97(BOSS擊敗離不開戰鬥畫面徹底根治[advStartWinSequence 入口收 UI 提到 _wbCtx 守門 return 之前]+黑暗球獎勵回關卡頁誤判未完成修復[勝利序列存快照抑制鎖 _advSuppressSnapSave])
+//  最後更新:2026-06-30  / 目前主程式版本:v3.16.99(玩家端登入自動回收「GM 錯誤補發批次」:白名單日期[6/25]內、無真實解鎖紀錄的 compensation 英雄→彈告知清單→玩家確認→可逆回收+二次確認;判定沿用 v3.16.98 GM 工具·學生自己抽過/解鎖過絕不誤刪)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,36 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.16.99 — 登入自動整理「老師誤補發的英雄」+ 二次確認(玩家公告)
+  {
+    ver: 'v3.16.99',
+    date: '2026-06-30',
+    brief: [
+      '🙇【老師的更正通知·自動整理誤補的英雄】之前的「帳號救援」因系統設定問題,把一些你原本沒有的英雄誤補進了帳號。現在登入時,系統會自動找出「老師在特定日期(目前是 6/25)誤補發、而你查不到自己真正取得紀錄」的英雄,跳出「🙇 老師的更正通知」列出清單 → 你按「✅ 好,整理我的圖鑑」就會把這些誤發的整理掉,圖鑑回到原本乾淨的狀態(之後也可以重新用自選召喚卷抽你真正想要的)。',
+      '✅【你自己的英雄完全不受影響】只要是你自己抽到、解鎖過的英雄,都不會出現在清單、完全不動;若有整理錯的,到關卡頁「📨 帳號救援申請」→「🔓 我遺失的英雄要回來」勾選送出,老師核對後補回。整理完會再出現一次「確認是不是我的角色」勾選,這時清單只剩沒被整理掉的英雄,讓你再確認一次。',
+    ],
+    items: [
+      '★ v3.16.99【玩家端自動回收·階段1·index.html】新增日期白名單 _GMCR_BAD_COMP_DATES(目前含 2026-06-25·老師可加錯誤批次日期·正常補發日期絕不放)+總開關 _GMCR_AUTO_RECLAIM_ENABLED(出問題即時關)。登入序列 4000ms hook 呼叫 _lxpsAutoReclaimBadCompHeroes:總開關/白名單空/uid空/GM救援中(_adminRescueInProgress)/防重入/雲端未載完(擁有<8 輕量重試)皆不動作=只漏不誤刪;呼叫 _fbScanMyBadCompHeroes(讀自己 getDocFromServer doc·跑 v3.16.98 _computeCompBatchesFromDoc·取白名單日期內無真實解鎖的 compensation 英雄)→ 讀取失敗重試→ 已對此白名單版本跑過早退→ 空名單寫旗標不重載→ 有清單彈 _gmcrShowReclaimNotice 告知。',
+      '★ v3.16.99【回收引擎·index.html】_fbApplyBadCompReclaim(uid,names,verTag):鏡像 v3.16.19 _fbApplyAuditErrorRecover 但用「獨立旗標 _gmcrAutoReclaimVer」(綁白名單版本字串·不碰 v3.16.19 的 _auditRecoverDoneV1→跑過自我審查的玩家也能回收 6/25 批)。只回收雲端確實擁有者→標可逆 audit_error_recovered(GM 一鍵永久復原/救援卡 _fbAdminRestoreLostHeroes 可還原)→至寶解裝保留本體→清 unlockedHeroes+6 養成表全 _s→暫存原等級 _auditRecoveredLevels→蓋 _authoritativeRestoreAt 乾淨重載。告知 UI 點確認→回收成功→設 localStorage _gmcrPostReclaimAudit_{uid}→1.5s 重載。',
+      '★ v3.16.99【階段2·二次確認·index.html】_maybeShowAccountAuditOnLogin 開頭改:僅「剛回收帳號(localStorage _gmcrPostReclaimAudit_{uid} 在)」解除 v3.16.31 早退、走原有「本機+雲端都查無自己 uid 紀錄才開 _openAccountAudit」審查(此時清單只剩沒被回收的)+消耗旗標+清封存旗標讓審查能跑;其餘帳號維持 v3.16.31 止血不彈(不影響全校)。可逆:二次確認「不是我的」走既有 disown(GM 可一鍵救回)。',
+      '★ v3.16.99【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接。七點版本同步 → v3.16.99。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.79)。本輪改 index.html(自動回收引擎+掃描+orchestrator+告知UI+階段2串接+登入hook)+game_changelog.js;v3.16.98 GM 補償批次回收 admin_panel.js UI 一併輸出;hero_db.js 僅 manifest 版號免重傳。⚠ 載入路徑+自動回收=高風險區·建議老師先用測試帳號實測階段1(該收的收/不該收不出現)+階段2再放心全校。',
+    ],
+  },
+  // v3.16.98 — GM「補償批次回收」(後台工具·依台灣日期·無真實解鎖紀錄即收·含已練)
+  {
+    ver: 'v3.16.98',
+    date: '2026-06-30',
+    adminOnly: true,
+    brief: [
+      '🎁【後台·GM 補償批次回收】老師後台「🔴 過度補回稽查與回收」卡新增「🎁 GM 補償批次回收(依日期·無真實解鎖紀錄即收·含已練)」:把某次救援大量補進、但學生自己查無真實解鎖紀錄的 compensation 英雄,依台灣補償日期整批列出、逐批或逐位回收(即使已練到高等也收;學生自己抽到/解鎖/老師正式補發/起始角一律保留不誤刪)。受影響學生會收到「老師的更正通知」登入彈窗。(玩家端一般無感)',
+    ],
+    items: [
+      '★ v3.16.98【判定·index.html】新增 _computeCompBatchesFromDoc(d,uid):讀「完整」_heroUnlockHistory 逐筆,以「自己 uid(或無 uid 早期)·source」分類 → realUnlock = source 不在 SUSPECT{compensation,legacy_grandfather,migration_seal,admin_delete,audit_error_recovered}(故 summon_rare/ticket_*/maokong/admin_grant/initial/player_confirmed/空字串 = 真實 → 永久保護);compDates = source==compensation 的台灣日期集合(_twDateKeyForComp 用 +8 偏移+getUTC*+手動補零·不依賴執行時區)。候選 = 非初始8(_ARENA_INITIAL_HEROES)且 無 realUnlock 且 有自己 compensation 紀錄 → 依日期分組。★ legacy_grandfather 刻意算 SUSPECT(突破 v3.16.84「練過自動補蓋 UID」洗白),故拘留者 Lv.36 等已練但無真實解鎖者收得回(v3.16.92 effort 閘門收不回)。',
+      '★ v3.16.98【掃描/回收·index.html】_fbAdminScanAllCompBatches():getDocs 全體 → 依台灣日期聚合 batches[{date,ownerCount,totalHeroes,owners[{uid,email,displayName,heroes[{name,lv}]}]}](日期新→舊)。_fbAdminReclaimCompBatchForUid(uid,dateStr,heroNames):getDocFromServer 權威重判 → 只收「仍是該日 compensation 且無真實解鎖」∩ 傳入名單 → 走既有 _fbAdminBulkRemoveHeroes(清 unlockedHeroes+6 養成表+全 _s+至寶解裝保留本體·寫 admin_delete 可逆不復活·蓋 _authoritativeRestoreAt 乾淨重載)·不帶 compensate=不補償·寄 type=comp_batch_reclaim 更正通知。',
+      '★ v3.16.98【面板·admin_panel.js】「🔴 過度補回稽查與回收」卡內新增子區塊 _initCompBatchReclaimSection:🔍 掃描 → 每日期批次卡(header 日期/N位/M隻 +「🗑 回收此整批」+ 逐位列玩家英雄晶片[Lv/⚠已練]+「🗑 收回這位」)。逐批 _reclaimBatch、逐位 _reclaimOne,皆 confirm 警告含已練、權威重判、進度顯示。6/25 21:25+21:31 聚成同一「2026-06-25」批一鍵收·6/22 另成一批不誤收。無 ?.、_esc HTML 跳脫。與 v3.16.92「查無紀錄」工具並存(保守只收 Lv1 vs 放寬收已練)。',
+      '★ v3.16.98【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.16.98。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.78)。本輪改 index.html(3 後端函式)+admin_panel.js(子區塊 HTML+JS)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。另:任務1「INDEX 登入優化」本輪未動(全體 900 學生命脈·高風險·建議單獨一輪做+單獨測·見文字簡述)。',
+    ],
+  },
   // v3.16.97 — 課堂獎勵「自選召喚卷」領了卻沒拿到 → 徹底修復 + 自動補發
   {
     ver: 'v3.16.97',
@@ -276,37 +306,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.80【使用流程·index.html】沿用既有 tier 參數化自選券機制加 UR tier:_summonTicketUnrecorded 加 UR 分支(讀 window._LXPS_RARITY_UR 三隻 UR 中尚未收錄者)·_openSummonTicketModal 面板加 UR 自選券卡(張數+剩餘可選數)·_openSummonTicketPickModal 與 _useSummonTicketPick 的 _ticketId/_accent 加 UR 對應(summon_ticket_ur_pick·色 ff5e9c)·背包道具使用鈕路由加 summon_ticket_ur_pick 開召喚卷面板。解鎖/防重入/結果動畫全沿用既有路徑·不改機率表。',
       '★ v3.16.80【GM 發獎·admin_panel.js】三支發獎工具(成績獎勵 _cr／全體玩家獎勵 _gr／虛寶序號 _rc)各於 UR 三隻下方新增 UR 自選召喚卷數量勾選列·_buildReward/_grBuildReward/_rcBuildReward 各加 backpack.summon_ticket_ur_pick 入袋(比照 SSR 自選券)。全體玩家獎勵廣播的 UR 打字確認守門(v3.16.79)同步納入 _gr-item-urpick→廣播 UR 自選券一樣需輸入發給全校。',
       '★ v3.16.80【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js node --check 過、0 個真正可選串接。七點版本同步 → v3.16.80。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.60)。本輪改 index.html(道具+使用流程)+admin_panel.js(GM 發獎勾選)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。',
-    ],
-  },
-  // v3.16.79 — 成績獎勵搜尋反向模糊比對收緊 + 全體獎勵 UR 廣播二次確認(GM 後台·玩家無感)
-  {
-    ver: 'v3.16.79',
-    date: '2026-06-29',
-    adminOnly: true,
-    brief: [
-      '🛠【GM 後台·發獎發錯人根治】修正成績獎勵只輸入某帳號(如 clarebox123jp)卻把獎勵發到不相干學生(jlu1201 解鎖 UR)的問題;玩家端無感。',
-    ],
-    items: [
-      '★ v3.16.79【根因】玩家搜尋 _fbAdminFindPlayersByName 的反向模糊比對 reverse_contains(輸入字串「包含」某玩家暱稱·暱稱長度大於等於 2 即命中)過鬆:輸入信箱帳號字串 clarebox123jp(13 字)時·任何暱稱剛好是其子字串(box／clare／123 等)的學生都被誤命中→若成為唯一命中就自動入收件清單→UR 發錯到該學生。',
-      '★ v3.16.79【修法·index.html】reverse_contains 與 no_prefix_reverse 兩條反向分支加守門 _norm.length 小於等於 6(僅真名／部分中文名才允許反向)·長信箱帳號字串不再反向誤命中學生暱稱;本尊仍由 email_contains(信箱含輸入·安全方向)正確找到·中文部分名搜尋照常。此函式多處共用·收緊等於搜尋更精準·無回歸。',
-      '★ v3.16.79【乙·admin_panel.js】全體玩家獎勵廣播工具勾到任一 UR(克雷爾／伊莉雅／奧汀)時·送出前硬性打字確認(需輸入四個字 發給全校)·防手滑把 UR 廣播給全校約 900 人;UR 單發給某帳號改用 GM 獎勵 per-uid 工具(綁 gmClassRewards 該 uid·已驗證不外洩)。',
-      '★ v3.16.79【清理】已誤發的 UR 用 GM 英雄／至寶持有者審查掃全體逐人刪除。',
-      '★ v3.16.79【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js node --check 過、0 個真正可選串接。七點版本同步 → v3.16.79。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.59)。本輪改 index.html(搜尋)+admin_panel.js(廣播護欄)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。',
-    ],
-  },
-  // v3.16.78 — 「📨 帳號救援申請審核」逐項處理不互架、狀態永久保留
-  {
-    ver: 'v3.16.78',
-    date: '2026-06-29',
-    brief: [
-      '📨【帳號救援審核逐項處理】修正老師後台「📨 帳號救援申請審核」：以前一筆申請內若同時有英雄審查和至寶審查，只要處理其中一項（按通過／刷除／補回）整筆就被關閉，導致另一項沒辦法處理。現在改為「逐項處理互不影響」：每項處理完會顯示 ✅ 已審查完畢（含時間）、該項按鈕收起，其他項目的按鈕繼續保留可繼續處理；狀態寫雲端永久保留，重新整理也看得到哪些已審查、哪些待確認。整筆只由「✔ 標記已處理／✖ 駁回」關閉。(玩家端無感)',
-    ],
-    items: [
-      '★ v3.16.78【根因】救援審核卡 _analyze 內所有審查區塊的按鈕都 append 到同一個 actionsEl，而每個逐項 handler 結尾 actionsEl.innerHTML 設空字串會清掉「全部」按鈕；加上每個 handler 都呼 _fbResolveAccountRescueRequest(resolved) 關閉整筆 → 處理一項就不能處理另一項。',
-      '★ v3.16.78【後端·index.html】新增 window._fbMarkRescueItemHandled(uid, itemKey, note)：只寫 accountRescueRequests/{uid}._handledItems[itemKey] = {at,by,note}(merge:true 對 nested map 子鍵安全·不洗掉其他已處理項)·不改 status。整筆關閉仍走 _fbResolveAccountRescueRequest(由 ✔標記已處理／✖駁回 觸發)。GM 寫同一 doc·沒有新 collection·免新增 firestore.rules。',
-      '★ v3.16.78【面板·admin_panel.js】_analyze 加 handled 參數(傳 _r._handledItems)+新增 _appendActionOrDone(key,label,btns)：已處理項顯示 ✅已審查完畢+時間+備註、不再出鈕；未處理才出鈕。六區塊(遺失英雄復原／污染英雄刷除／污染至寶刷除／遺失至寶補回／英雄審查／至寶審查)各綁一個 handledKey(lostHeroes／disownHeroes／disownTreasures／lostTreasures／auditHeroes／auditTreasures)。',
-      '★ v3.16.78【8 個逐項 handler】_restoreLost／_disownRemove／_approveAudit／_rejectAudit／_approveAuditTreasures／_rejectAuditTreasures／_disownRemoveTre／_restoreLostTre 都加 (claims, handled) 參數，動作後改呼 _fbMarkRescueItemHandled(只標單項) + handled[key]=... + 重呼 _analyze 重渲(保留其他區塊按鈕)、不再清空或關閉整筆。「✔ 標記已處理／✖ 駁回」(_confirmRescue／_reject)維持關閉整筆不變。無 ?.。',
-      '★ v3.16.78【驗證／版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；admin_panel.js node --check 過、0 個真正可選串接；逐項 resolve 殘留=0(只剩整筆 _confirmRescue／_reject)、markHandled=8。七點版本同步 → v3.16.78。GAME_CHANGELOG 維持 20 筆（移除最舊 v3.16.58）。本輪改 index.html(後端 helper)+admin_panel.js(救援卡)+game_changelog.js；hero_db.js 僅 manifest 版號免重傳。',
     ],
   },
 ];
