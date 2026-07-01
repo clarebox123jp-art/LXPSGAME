@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-01  / 目前主程式版本:v3.17.9(冒險關卡答題主題錯亂修復:選了主題卻出現隨機科目題目)
+//  最後更新:2026-07-01  / 目前主程式版本:v3.25.0(簡單風 英雄圖鑑 全稀有度 R/SR/SSR/UR 天賦/技能/爆發 說明短句化完成)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,110 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.25.0 — 簡單風文字簡化 Phase 8：英雄圖鑑（SSR+UR 共 53 隻）天賦/技能/爆發說明短句化（全稀有度完成）
+  {
+    ver: 'v3.25.0',
+    date: '2026-07-01',
+    brief: [
+      '📖【簡單風的英雄圖鑑說明·全部英雄都完成了】接續上次，這次把「英雄圖鑑」裡剩下的 SSR 卡、UR 卡（共 53 隻英雄）的天賦、技能、極限爆發說明，在🧸簡單風下也改成更短、更好懂的句子。現在不論哪種稀有度（R/SR/SSR/UR）的英雄，🧸簡單風都有精簡好讀的版本；✨精緻風維持原本完整說明與逐級升級數字，內容不變。',
+    ],
+    items: [
+      '★ v3.25.0【SSR+UR 圖鑑補簡單風·hero_db.js】為 UR（3 隻：藝天使．克雷爾/魔劍姬‧伊莉雅/主神奧汀）+ SSR（50 隻）共 53 隻英雄的 天賦/S1/S2/極限爆發 各補一份簡單風短句（sd 欄位），沿用「存在才補、已有 sd 不覆蓋」的 IIFE 掛到 HERO_TRAIT / HERO_DB.s1 / .s2 / BURST_DB；_LXPS_HERO_SD 表由 41 隻擴至 94 隻。簡單風守鐵律：圖鑑技能/天賦/爆發只寫 Lv1 基礎（升級數字歸升級視窗）、能量文字定義一致；既有精緻風完整說明（fd）一字不動。至此全稀有度（R/SR/SSR/UR）圖鑑簡單風說明全部完成。',
+      '★ v3.25.0【圖鑑渲染·index.html】_renderHeroDetail 三處 _artStyle 分岔於 v3.24.0 已就緒（🧸簡單風顯示 sd 短句、不疊逐級數字；✨精緻風維持 fd 完整版+逐級數字+升級效果一覽表），本輪 SSR/UR 因 hero_db.js 補上 sd 而自動生效，index.html 邏輯不需再改、僅版號同步。純顯示層，不動任何技能數值/邏輯/資料。',
+      '★ v3.25.0【尺寸/版面檢查】確認簡單風文字尺寸適當、不影響原有版面：英雄圖鑑詳情容器為可上下捧動（overflow-y:auto）、文字自動換行、無固定高度裁切，且精緻風本就顯示更長的完整說明+逐級數字仍正常；故簡單風短句一律安全顯示。',
+      '★ v3.25.0【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate；hero_db.js / admin_panel.js / game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接（?.）。七點版本同步 → v3.25.0；GAME_CHANGELOG trim 至 20 筆（移除最舊 v3.16.97）。本輪改 hero_db.js（53 隻 sd）+ index.html（版號）；admin_panel.js 僅版號對齊、game_changelog.js 補本筆。',
+    ],
+  },
+  // v3.24.0 — 簡單風文字簡化 Phase 7:英雄圖鑑(R+SR 共 41 隻)天賦/技能/爆發說明短句化
+  {
+    ver: 'v3.24.0',
+    date: '2026-07-01',
+    brief: [
+      '📖【簡單風的英雄圖鑑說明更好讀】這次把「英雄圖鑑」裡 R 卡、SR 卡(共 41 隻英雄)的天賦、技能、極限爆發說明,在🧸簡單風下改成更短、更好懂的句子——中低年級同學看起來更輕鬆;✨精緻風維持原本完整說明與逐級升級數字,內容不變。',
+    ],
+    items: [
+      '★ v3.24.0【R+SR 圖鑑補簡單風·hero_db.js】為 R(11 隻)+ SR(30 隻)共 41 隻英雄的 天賦/S1/S2/極限爆發 各補一份簡單風短句(sd 欄位,共 164 筆),以「存在才補、已有 sd 不覆蓋」的 IIFE 掛到 HERO_TRAIT / HERO_DB.s1 / .s2 / BURST_DB;簡單風守鐵律:圖鑑技能/天賦/爆發只寫 Lv1 基礎(升級數字歸升級視窗)、能量文字定義一致。既有精緻風完整說明(fd)一字不動;日後新增英雄若已自帶 sd,IIFE 不覆蓋。',
+      '★ v3.24.0【圖鑑渲染分岔·index.html】_renderHeroDetail(玩家實際點開的英雄詳情頁)在 天賦/技能/爆發 三處依 _artStyle 分岔:🧸簡單風顯示 sd 短句版(不疊逐級升級數字)、✨精緻風維持原本 fd 完整版 + 逐級升級數字。爆發下方「升級效果一覽表」兩種風格都保留(它本身就是升級數字的專屬視窗)。純顯示層,不動任何技能數值/邏輯/資料;沒有 sd 的英雄(如未來 UR/SSR)簡單風自動回退顯示完整版,不會空白。',
+      '★ v3.24.0【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js / admin_panel.js / game_changelog.js node --check 過、admin_panel.js 0 可選串接(?.)。七點版本同步 → v3.24.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.96)。本輪改 hero_db.js + index.html;admin_panel.js 僅版號對齊、game_changelog.js 補本筆。UR/SSR 圖鑑簡化留待後續逐批補。',
+    ],
+  },
+  // v3.23.0 — 簡單風文字簡化 Phase 6:戰鬥教學(TUTORIAL_STEPS 11 步)+ 戰鬥求救選單 兩處說明短句化
+  {
+    ver: 'v3.23.0',
+    date: '2026-07-01',
+    brief: [
+      '📖【簡單風的戰鬥說明更好讀】這次把「戰鬥教學」(第一次戰鬥時一步步教你怎麼打的那些說明)和「🆘 戰鬥求救選單」(戰鬥中左下角求救鈕點開的選單)都改得更短好懂——在🧸簡單風下改成更簡短的句子;✨精緻風維持原本完整說明，內容不變。',
+    ],
+    items: [
+      '★ v3.23.0【戰鬥教學補簡單風·index.html】TUTORIAL_STEPS 11 步(暫停存檔/勝利目標/行動順序/普通攻擊/能量系統/技能/極限爆發/物品背包/自動戰鬥/教學指引/準備完成)各新增 descSimple 短句欄位,_showTutorialStep 渲染時依 _artStyle 分岔(🧸簡單風用 descSimple 短句版·✨精緻風用原 desc 一字不改)。簡單風守能量規則:每個新回合 +3 能量、技能與極限爆發都要消耗能量、極限爆發需集滿 10 顆能量。',
+      '★ v3.23.0【戰鬥求救選單補簡單風·index.html】_showBattleHelpMenu(🆘 戰鬥求救選單)副標 + 三顆按鈕(🚨 卡死自救 / 🐛 BUG 回報 / ❓ 戰鬥教學)的說明句,於 innerHTML 建置時依 _artStyle 行內分岔補簡單風短句版;精緻風原文一字不改。純顯示層,不動任何按鈕行為/邏輯/資料。',
+      '★ v3.23.0【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接(?.)。七點版本同步 → v3.23.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.95)。本輪只改 index.html;admin_panel.js 僅版號對齊、hero_db.js 免重傳。英雄圖鑑字數最多·依老師指示留待最後(需 hero_db.js)。',
+    ],
+  },
+  // v3.22.0 — 簡單風文字簡化 Phase 5:素質說明 + 小博士榜獎勵 + 更新提示 + 安裝版首開登入 五處說明短句化
+  {
+    ver: 'v3.22.0',
+    date: '2026-07-01',
+    brief: [
+      '📖【簡單風的說明更好讀】這次又把幾個常看到的說明改得更短好懂——點英雄素質(生命值/攻擊值/特技值…)看到的說明、「🏆 小博士榜獎勵規則」、更新提示視窗、安裝版(手機/平板)第一次開啟的登入說明——在🧸簡單風下都改成更短好懂的句子;✨精緻風維持原本完整說明，內容不變。',
+    ],
+    items: [
+      '★ v3.22.0【五處說明補簡單風·index.html】① 素質說明 STAT_DESCS 六素質(生命值/攻擊值/特技值/速度值/治療力/控場力)加 simple 欄位 → 同時涵蓋「點素質卡看說明」(toggleStatPopup)與「點雷達圖標籤看說明」(_showRadarLabelInfo)兩處 ②_showWeeklyQuizRewardsInfo(🏆 小博士榜獎勵規則)副標依 _artStyle 分岔(獎勵卡片/總額數字兩風格共用不動)③_showForceRefreshPopup(更新提示視窗)標題+內文分岔 ④_showPwaFirstOpenLoginGuide(安裝版首次開啟登入說明)兩段分岔。簡單風短句、精緻風原文一字不改。',
+      '★ v3.22.0【安全性/範圍】純顯示文字調整，不動任何遊戲邏輯/資料/數值。_showPwaGuide(安裝步驟)本已極簡(多裝置分支)故本輪未動;英雄圖鑑字數最多·依老師指示留待最後處理(需 hero_db.js)。只改 index.html;admin_panel.js + hero_db.js 內容未改僅版號對齊、免重傳。七點版本同步 → v3.22.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.94)。',
+    ],
+  },
+  // v3.21.0 — 簡單風文字簡化 Phase 4:GM獎勵/序號兌換 + 召喚機率 + 立即同步雲端 + 檢查遊戲版本 四處說明短句化
+  {
+    ver: 'v3.21.0',
+    date: '2026-07-01',
+    brief: [
+      '📖【簡單風的說明視窗更好讀】幾個大家常看到的說明——「🎁 GM 獎勵/序號兌換」、「🔮 召喚機率說明」、「☁ 立即同步雲端」、「🔄 檢查遊戲版本」——在🧸簡單風下改成更短好懂的句子;✨精緻風維持原本完整說明,內容不變。',
+    ],
+    items: [
+      '★ v3.21.0【四處說明補簡單風·index.html】①「🎁 GM 獎勵」視窗的副標與「🎟️ 序號兌換」說明加 id(gmr-subtitle / redeem-intro)納入既有 _SIMPLE_TEXT_MAP 字典系統,簡單風顯示短句、精緻風還原原文 ②_showSummonHelp(🔮 召喚機率說明)開頭介紹句依 _artStyle 分岔(機率表格數字不動)③_showManualCloudSyncHelp(☁ 立即同步雲端 說明)簡單風把 4 個說明框縮成 3 個短框(即時使用量數據區兩風格共用不變)④_showVersionCheckHelp(🔄 檢查遊戲版本 說明)依 _artStyle 分岔短句版。',
+      '★ v3.21.0【安全性/範圍】純顯示文字調整,不動任何遊戲邏輯/資料/機率數字/使用量限制。只改 index.html;admin_panel.js + hero_db.js 內容未改僅版號對齊、免重傳;arena.js 本輪未動。英雄圖鑑字數最多,依老師指示留待最後處理。七點版本同步 → v3.21.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.93)。',
+    ],
+  },
+  // v3.20.0 — 簡單風文字簡化 Phase 3:兩個常見說明彈窗(檢查進度、帳號救援)補短句版
+  {
+    ver: 'v3.20.0',
+    date: '2026-07-01',
+    brief: [
+      '📖【簡單風的說明彈窗更好讀】兩個大家常看到的說明視窗——「什麼是檢查我的進度」和「帳號救援申請是什麼」——在🧸簡單風下改成更短、更好懂的句子;✨精緻風維持原本完整說明,內容不變。',
+    ],
+    items: [
+      '★ v3.20.0【兩個說明彈窗補簡單風·index.html】①_showManualCheckHelp(「🔍 什麼是檢查我的進度」說明彈窗)②_showRescueGuidePopup(登入後自動彈的「📨 帳號救援申請是什麼」說明彈窗):各於 innerHTML 建置時依 _artStyle 分岔——簡單風(cute)輸出短句精簡版(字級略放大、拿掉進階細節如 safe 槽/與同步差異等),精緻風(premium)一字不改輸出原完整版。',
+      '★ v3.20.0【安全性/範圍】純顯示文字調整,完全不動彈窗的防疊加判斷、「不再顯示」localStorage 記憶鍵、按鈕行為與任何遊戲邏輯/資料。只改 index.html;admin_panel.js + hero_db.js 內容未改僅版號對齊、免重傳。七點版本同步 → v3.20.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.92)。',
+    ],
+  },
+  // v3.19.0 — 簡單風文字簡化 Phase 2:新手教學指引(📚 遊戲指引)5 章全面精簡改寫
+  {
+    ver: 'v3.19.0',
+    date: '2026-07-01',
+    brief: [
+      '📚【簡單風的新手教學更好讀了】首頁「📖 遊戲介紹與說明書」裡的「新手教學指引」(5 章:認識遊戲、戰鬥系統、英雄培育、遊戲模式、每日習慣),在🧸簡單風下全部改寫成更短、更好懂的句子,圖片和重點數字都保留;✨精緻風維持原本完整的圖文說明,內容完全不變。',
+    ],
+    items: [
+      '★ v3.19.0【新手教學 5 章精簡改寫·index.html】window._showNewbieGuide 的 PAGES 陣列每一章新增 renderSimple() 函式,套用既有 nbg-* CSS class(nbg-step/nbg-card/nbg-tip/nbg-rarity-item/nbg-mode-card/nbg-daily-item 等,原本就定義好但先前各章 render() 幾乎全用行內樣式重複刻版,本輪 renderSimple 直接沿用這套現成 class,樣式與 render() 版一致、只是文字精簡)。頁面初次建置時依 _artStyle 選擇:簡單風(cute)→ renderSimple();精緻風(premium)→ render()(逐字保留原文,一個字都沒改)。章節切換(_nbgGoto)本就只是 CSS class 顯示/隱藏、不重新渲染,不受影響。',
+      '★ v3.19.0【內容範圍】①認識遊戲:3 步驟開始玩法+iPad 共用提醒 ②戰鬥系統:普攻/技能/大絕 3 張卡片+能量規則+物品卡寵物提示 ③英雄培育:R/SR/SSR/UR 稀有度+5 項成長要素+隊伍搭配 ④遊戲模式:冒險/鬥技場/世界BOSS 3 卡片+答題賺幣+每日召喚+獎章成就 ⑤每日習慣:5 項每日待辦+4 步新手成長路線。皆保留原版的核心資訊(數字、機制)僅用更短的句子重新表達,不是逐字刪減。',
+      '★ v3.19.0【安全性/範圍】純顯示文字調整,不觸碰任何遊戲邏輯/資料;比較用圖片沿用原有素材,無新增圖檔依賴。只改 index.html;admin_panel.js + hero_db.js 內容未改僅版號對齊、免重傳。七點版本同步 → v3.19.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.91)。',
+    ],
+  },
+  // v3.18.0 — 首頁「切換畫風」改名「切換年齡層」:簡單風/精緻風 + 首次登入風格選擇畫面
+  {
+    ver: 'v3.18.0',
+    date: '2026-07-01',
+    brief: [
+      '🎨【首頁改成選「簡單風」或「精緻風」】原本首頁的「畫風切換」改名成更好懂的「年齡層」選擇:🧸簡單風保留大家熟悉的可愛畫面,而且把大部分的按鈕與說明文字改寫得更簡短好懂;✨精緻風維持原本精美的畫面與完整的文字說明,內容完全不變。兩種風格都可以隨時在首頁按鈕切換,只是換個看起來/讀起來的方式,你的英雄、等級、道具、進度完全不受影響。',
+      '👋【第一次登入會先讓你選一次】現在登入進到遊戲後,如果你還沒選過風格,會先出現一個小畫面,用實際的圖片讓你比較「簡單風」跟「精緻風」長什麼樣子,點一下喜歡的就可以了;選過一次之後就不會再自動跳出來,但你隨時都可以回首頁用按鈕重新選。',
+    ],
+    items: [
+      '★ v3.18.0【機制·index.html】首頁「art-style-bar」兩顆按鈕文案由「🎨可愛畫風/✨精美畫風」改名「🧸簡單風/✨精緻風」(對應切換中/切換完成的提示文字、鬥技場精美圖預覽提示文字皆同步改名);內部變數/元素 id/雲端儲存值(_artStyle、cute/premium、art-style-cute-btn/art-style-premium-btn)完全不動,零風險沿用玩家既有雲端偏好,不需任何資料遷移。',
+      '★ v3.18.0【簡單風文字簡化系統·index.html】新增 _SIMPLE_TEXT_MAP/_SIMPLE_TITLE_MAP 字典 + _applySimpleTextStyle(),掛入既有 _applyArtStyle() 呼叫鏈,當風格為簡單風(cute)時把指定元素的文字換成精簡版、切回精緻風(premium)時用套用當下自動備份的原文字(存於 dataset,絕不寫死字串覆蓋)原樣還原,確保精緻風內容 100% 不變。Phase 1(本輪)涵蓋範圍:首頁「🗺展開冒險故事/📖遊戲介紹與說明書/📨申請帳號資料轉移/建議使用Chrome」按鈕文案、「遊戲介紹與說明書」彈窗完整內文與副標、「登入以開始遊戲」彈窗說明文字。所有 UI 元件位置、按鈕大小、版面配置完全不動,僅文字內容與可讀性提升;其餘畫面(新手教學/關卡介紹/英雄至寶說明/各類彈窗)排入後續輪次依畫面逐批擴大簡化範圍。',
+      '★ v3.18.0【首次登入風格選擇畫面·index.html】新增 #style-onboarding-modal:登入到關卡頁後,若玩家從未主動選擇過風格(新增純顯示偏好旗標 _artStyleChosen/雲端欄位 artStyleChosen,綁 uid 同步,完全不含任何遊戲權威資料),於登入序列延遲 1500ms 彈出比較畫面(排在續戰提示 800ms 之後、會員資料首登 2200ms 與帳號救援說明 2500ms 之前;三者互斥彈窗皆已補上「風格選擇畫面顯示中則暫緩」的防疊加判斷,避免同時彈出互相覆蓋)。比較圖片取自 _ARENA_INITIAL_HEROES 中保證所有玩家都持有的起始英雄之簡單風/精緻風兩種既有圖片即時讀取顯示,不需新增圖檔資源。玩家點選任一風格後套用 + 記憶選擇,並提示可隨時回首頁按鈕更改;不提供點背景關閉,確保玩家有實際看過比較後再選擇。',
+      '★ v3.18.0【安全性/範圍】本輪純屬顯示層(文字/按鈕標籤/新彈窗)調整,完全不觸碰任何英雄/至寶/等級/背包/知識幣等 uid 權威遊戲資料,亦未改動 firestore.rules(新增的 artStyleChosen 欄位走玩家自己 players/{uid} 既有 self-write 規則,無需新增條款)。只改 index.html;admin_panel.js + hero_db.js 內容未改僅版號對齊、免重傳。七點版本同步 → v3.18.0;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.90)。',
+    ],
+  },
   // v3.17.9 — 冒險關卡答題科目錯亂修復:選了主題(如「自然」)卻出現任何科目的隨機題目
   {
     ver: 'v3.17.9',
@@ -186,116 +290,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.98【掃描/回收·index.html】_fbAdminScanAllCompBatches():getDocs 全體 → 依台灣日期聚合 batches[{date,ownerCount,totalHeroes,owners[{uid,email,displayName,heroes[{name,lv}]}]}](日期新→舊)。_fbAdminReclaimCompBatchForUid(uid,dateStr,heroNames):getDocFromServer 權威重判 → 只收「仍是該日 compensation 且無真實解鎖」∩ 傳入名單 → 走既有 _fbAdminBulkRemoveHeroes(清 unlockedHeroes+6 養成表+全 _s+至寶解裝保留本體·寫 admin_delete 可逆不復活·蓋 _authoritativeRestoreAt 乾淨重載)·不帶 compensate=不補償·寄 type=comp_batch_reclaim 更正通知。',
       '★ v3.16.98【面板·admin_panel.js】「🔴 過度補回稽查與回收」卡內新增子區塊 _initCompBatchReclaimSection:🔍 掃描 → 每日期批次卡(header 日期/N位/M隻 +「🗑 回收此整批」+ 逐位列玩家英雄晶片[Lv/⚠已練]+「🗑 收回這位」)。逐批 _reclaimBatch、逐位 _reclaimOne,皆 confirm 警告含已練、權威重判、進度顯示。6/25 21:25+21:31 聚成同一「2026-06-25」批一鍵收·6/22 另成一批不誤收。無 ?.、_esc HTML 跳脫。與 v3.16.92「查無紀錄」工具並存(保守只收 Lv1 vs 放寬收已練)。',
       '★ v3.16.98【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.16.98。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.78)。本輪改 index.html(3 後端函式)+admin_panel.js(子區塊 HTML+JS)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。另:任務1「INDEX 登入優化」本輪未動(全體 900 學生命脈·高風險·建議單獨一輪做+單獨測·見文字簡述)。',
-    ],
-  },
-  // v3.16.97 — 課堂獎勵「自選召喚卷」領了卻沒拿到 → 徹底修復 + 自動補發
-  {
-    ver: 'v3.16.97',
-    date: '2026-06-30',
-    brief: [
-      '🎁【老師發的「自選召喚卷」沒收到 → 自動補發】少數同學反映:老師發的 UR／SSR／自選至寶召喚卷,按了「確認領取」卻沒出現在背包裡。已徹底修好:① 現在按下「確認領取」後,獎勵會「立刻」進到你的背包(不必等重新整理),不會再被存檔覆蓋掉;② 之前已經領過、卻實際沒拿到券的同學,「下次登入會自動補發」漏掉的卷,並跳出「🎁 老師補發了你漏領的…」提示。',
-      '🔒【絕不重複拿】系統會精準比對「老師發了幾張、你已經用掉幾張、背包還有幾張」,只補真正漏掉的那幾張;已經拿到或已經用掉的不會再給,不會重複發放。',
-    ],
-  },
-  // v3.16.96 — BOSS 擊敗離不開戰鬥畫面徹底根治 + 黑暗球獎勵回關卡頁誤判「戰鬥未完成」修復
-  {
-    ver: 'v3.16.96',
-    date: '2026-06-30',
-    brief: [
-      '⚔️【打倒 BOSS 後卡在戰鬥畫面·徹底根治】少數同學回報「打倒 BOSS 後,求救鈕(SOS)消失了、卻還是離不開戰鬥畫面、回不了關卡頁」—— 已徹底修好:現在不論任何情況,按下「✅ 確認」當下會立刻清乾淨戰鬥畫面並返回,不會再卡住。',
-      '🌑【黑暗球獎勵不再憑空消失】之前打倒貓空「黑暗球」明明顯示拿到 SSR 碎片,回到關卡頁卻跳出「戰鬥未完成、是否繼續」,選了放棄後碎片就不見了 —— 已修好:打完 BOSS 的勝利結算期間不會再被誤判成「戰鬥未完成」,辛苦打贏拿到的獎勵會正常保留。',
-    ],
-    items: [
-      '★ v3.16.96【BOSS 擊敗離不開戰鬥畫面·徹底根治·index.html】advStartWinSequence 入口順序 bug:v3.16.2 雖把「收結算 overlay + 清戰鬥畫面 class(gc 的 adv-battle)+ 清行動條」提到入口,但放在「世界 BOSS 守門 _wbCtx」的 return 之後 → 若一般 BOSS 殘留 _wbJustFinishedRaid/_wbResultExecuting 等旗標、或 _isWorldBossTarget 誤判而觸發守門 → 提早 return → 跳過清戰鬥畫面 → 結算視窗被守門收了、但戰鬥畫面 class 沒清 → 卡住(SOS 因 _advBattleResultShown 已 true 而消失)。修法:把「收 UI + 清 adv-battle class + 清 turn-bar + 隱 SOS」提到函式「最最前面」(所有 return 之前),覆蓋 _wbCtx 守門 return / 重入守衛 return / 正常發獎三路徑;純 UI 轉場不發任何獎勵,對世界 BOSS 結算(走 _wbShowAdvBattleResult)無影響。',
-      '★ v3.16.96【黑暗球獎勵回關卡頁誤判未完成·index.html】根因:advStartWinSequence 在 _advClearCrashSnapshot 清掉中斷快照(adv_battle_snap/adv_crash_snapshot)後,黑暗球勝利序列流程長(碎片+升級演出),期間若 _advBattleResultShown 被某 reset 點設回 false(在 _adventureMode 仍 true 的空檔),「每回合 _saveBattleRoundSnapshot / 每 30 秒 _forceSaveBattleSnapshotAndSync」watchdog 會趁隙重寫 adv_battle_snap → 回關卡頁 _advCheckCrashRecovery 誤判未完成 → 玩家放棄時回滾掉剛得的 SSR 碎片。修法:新增勝利序列「存快照抑制鎖」window._advSuppressSnapSave(不依賴 _advBattleResultShown 時序):advStartWinSequence 入口上鎖;兩個存快照守門各加 || _advSuppressSnapSave 一律不存;解鎖=① 新 BOSS 戰開始(L≈83918 同步清鎖·涵蓋打完黑暗球再打 BOSS)② 15 秒 setTimeout 兜底(屆時通常已回關卡頁·_adventureMode=false·守門自然擋)。',
-      '★ v3.16.96【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接(?.)。七點版本同步 → v3.16.96。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.76)。本輪僅改 index.html(問題2+問題4·純戰鬥勝利序列收尾);admin_panel.js + game_changelog.js 版號對齊、hero_db.js 僅 manifest 版號免重傳。另:玩家回報「使用至寶重置卷後第一隻英雄(布奶鳥獸)不斷 +500EXP 一直升級」已縮小範圍(backpackAdd 確認乾淨·cap99 無溢出轉換)、待下一輪深入定位修復。',
-    ],
-  },
-  // v3.16.95 — 商店每日購買次數沒刷新修復 + 至寶重置靈水退回內容修正
-  {
-    ver: 'v3.16.95',
-    date: '2026-06-30',
-    brief: [
-      '🛒【商店每日次數修復】有同學「今天第一次開商店,召喚水晶/極限爆發果實等卻顯示已買完、無法購買」—— 現在已修好:跨日後每日限購次數會正確歸零刷新,大家都能正常購買當天的份額。(受影響的同學登入後會自動恢復可購)',
-      '💧【至寶重置靈水退回修正】之前「至寶重置靈水」退回的內容完全錯誤(退一把 Lv.5 至寶竟給超過 99 張卷軸、又沒退知識幣)—— 現在改為正確退回:升級時實際花掉的「至寶經驗卷軸 + 知識幣」全額退回(例如 Lv.5 退回 14 張卷軸 + 90,000 知識幣)。',
-    ],
-    items: [
-      '★ v3.16.95【商店每日購買次數沒刷新根治·index.html】根因同 playerBackpack_s/heroLevels_s:Firebase set(merge:true) 對 shopDailyData(map)深度合併殘留昨天計數子鍵 → 跨日後今天買 A 商品時 _shopDailyData reset 成 {date:今天,A:1}、存檔 merge 後雲端深合併昨天的 B:1 殘留 → 下次載入 date===today 成立 → _shopDailyBought(B) 回殘留值 → 顯示「今日剩 0/X」沒刷新。修法(對齊既有 _s 鐵律):①_buildSafeData 加 shopDailyData_s/shopWeeklyData_s 字串版(整包覆蓋·免疫 merge 深合併)②_applySafeData 載入優先採信 _s(雲端 map 版即使殘留也忽略)③一次性清空遷移旗標 _shopDailyResetV1(部署後存檔即帶·載入時無此旗標→清空 merge 殘留·當前受影響學生立即恢復可購)。讀取/渲染/重置/今日計算邏輯本就正確(_shopDailyBought/_getShopDailyKey/_lxpsGetGameDayKey 台灣8:00界),病灶純在雲端 merge 殘留。',
-      '★ v3.16.95【至寶重置靈水退回內容修正·index.html】_doTreasureReset 退回計算三重錯誤根治:原 _refund=(lv-1)*lv/2*10+exp 對 Lv.5=100 → ①公式算錯總EXP(用 1+2+3+4 而非實際每級 (curLv+1)*10 的 2+3+4+5=140)②把「總EXP」當「卷軸張數」直接退(應 ÷10=14 張·100>99 即老師回報症狀)③完全沒退知識幣。修法:從 Lv1 用 _getTaiwanTreasureExpForNextLv/_getTaiwanTreasureCoinForNextLv 逐級加總實際投入 → 退回卷軸張數=總EXP÷10(每張10EXP)+ 全額知識幣(addKnowledgeCoins);Lv.5 正確退 14 張卷軸 + 90,000 知識幣。modal 卡片/toast/商店與背包道具描述同步更正。⚠ 另有「第一隻英雄不斷+500EXP」回報:程式碼中 +500EXP 來源(精裝經驗書 hero_exp_book_deluxe)皆為正常單次使用、_backpackOpenHeroSelect 無重入,靜態查無「不斷」迴圈,待現場資訊定位。',
-      '★ v3.16.95【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接(?.)。七點版本同步 → v3.16.95。GAME_CHANGELOG 維持 20 筆(移除最舊)。本輪改 index.html(問題1+問題3退回)+ game_changelog.js;admin_panel.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。',
-    ],
-  },
-  // v3.16.94 — GM獎勵領取空轉修復 + 登入後原本有練的英雄變低等/不見修復(+ 後台過度補償掃描升級)
-  {
-    ver: 'v3.16.94',
-    date: '2026-06-30',
-    brief: [
-      '🎁【GM 獎勵領取修復】老師發給你的「課堂自製科學玩具」等 GM 獎勵(含 SSR 自選召喚卷),之前有人按了「確認領取」卻一直轉圈、收件區也不會消失、獎勵沒進帳 —— 現在已修好:領取會正常入帳、收件卡會正常消失,而且同一份獎勵只會領一次(不會重複)。',
-      '🦸【練過的英雄不再變低等/不見】之前少數同學重新登入後,原本練過的某些英雄會「等級變低」或「整隻不見」—— 現在登入時會以雲端最完整的資料為準,把「你有練過(升過級/投資過素質技能/裝過至寶)」的英雄等級與進度保底補回來,不會再被洗掉或降等。(注意:這只會補回「你真的練過」的英雄,不會憑空多出沒練過的角色。)',
-    ],
-    items: [
-      '★ v3.16.94【GM獎勵領取空轉根治·index.html】_fbClaimGmClassReward 重構:改以「玩家自己的主檔 _gmcrClaimed 標記」為領取主閘門(玩家對自己 players/{uid} 的自寫一定成功),不再卡在 gmClassRewardClaims transaction(該集合 firestore 規則若未部署會被拒→原本先 return→收件區不消失+鈕 re-enable=無限空轉);新流程:①先讀主檔 _gmcrClaimed 若已含本筆→擋重複;②transaction 降為「最佳努力」(catch 靜默·規則部署後才生效·belt-and-suspenders 跨裝置去重);③發獎前先 read-modify-write 標記 _gmcrClaimed(+競態重讀)再呼 _fbCompensatePlayer 入帳;④入帳失敗→從 _gmcrClaimed 移除該 rewardId 回滾(可再領);⑤補 _gmcrClaimLog。自選券 backpack key=summon_ticket_ssr_pick。',
-      '★ v3.16.94【練英雄保底·登入權威下載·index.html】新增 window._lxpsHeroFloorOntoMain(main, slots, cutoff):v3.16.87/90 的登入「權威下載」多數情況直接採主檔(不合併)→ 若某存檔槽有「主檔沒有、但你已練過」的英雄(或主檔該英雄等級偏低、槽裡等級高),會被靜默丟失或降等。修法:主檔權威為底,只把「有投資證據(等級>1/投資過素質‧技能‧天賦‧爆發‧膠囊‧點數‧經驗/裝過至寶)且未被 admin_delete(GM 收回)/audit_error_recovered(自助刪除)、且來自 reset 之後(savedAt > _lastResetAt)的槽」的英雄,union 補回 unlockedHeroes + 逐鍵 max 養成(純加不減),同步重寫 _s 與 _dataSummary;全程 try-catch,任何錯誤回原主檔。只在權威分支套用(合併保底分支本就有自己的 removal-aware union);知識幣/至寶/背包一律仍採主檔。',
-      '★ v3.16.94【過度補償掃描升級·後台·index.html + admin_panel.js】GM「🩹 6/24~6/25 救援查無紀錄過度補償收回」工具強化:_computeOverRestoredFromDoc 補第二趟掃描 extraNoRecordHeroes/Detail(=「compensation 補償發放、或帳本完全查無解鎖紀錄」、且「沒有任何投資證據」的英雄;有真實取得來源 admin_grant/summon_rare/initial 等 或 有投資證據者→永久保護不收回);_fbAdminScanAllNoRecordOverComp 回傳每位玩家 detail + 依補償日期(台灣時間)聚合的 batches;admin 端加「📅 補償批次摘要」與每隻英雄來源/日期顯示(🎁補償 YYYY-MM-DD / ❓查無紀錄)。收回前對最新雲端權威重判、只收回仍查無紀錄者、寄更正通知 —— 與你的遊戲體驗無關,純後台工具。',
-      '★ v3.16.94【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;hero_db.js/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個可選串接(?.)。七點版本同步 → v3.16.94。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.74)。本輪改 index.html(問題1+2+3)+ admin_panel.js(問題2 後台 UI);hero_db.js 僅 manifest 版號免重傳。GM 獎勵跨裝置去重(gmClassRewards/gmClassRewardClaims)firestore 規則建議部署(非必要·主檔自寫去重已生效)。',
-    ],
-  },
-  // v3.16.93 — 自選召喚卷挑英雄強制寫雲端權威記錄(防登入後消失) + 存檔倒退守門豁免「GM收回過度補償/學生自助刪除」的英雄
-  {
-    ver: 'v3.16.93',
-    date: '2026-06-30',
-    brief: [
-      '👑【自選召喚卷修復】用 UR／SSR／SR 自選召喚卷挑選英雄後,現在會立刻把這位英雄寫進雲端最高權威記錄 —— 避免重新登入後英雄又不見了(特別根治老師發「UR 自選召喚卷」、挑了 UR 卻沒拿到的狀況)。',
-      '🛡️【存檔保護優化】被老師「收回的過度補償英雄」或你「自己申請刪除的英雄」,現在不會再被誤判成「資料倒退」而卡住存檔 —— 你的遊戲進度可以正常更新、正常存檔了。',
-    ],
-    items: [
-      '★ v3.16.93【自選召喚卷發放強制權威寫入·index.html】_useSummonTicketPick:解鎖來源三元式補 UR 分支(原本 UR 會落到 ticket_sr_pick 的 else 分支)→ ticket_ur_pick;發英雄後「無條件」再呼一次 window._lxpsCloudInstantUnlock 寫 unlockedHeroes(arrayUnion)+ _heroUnlockHistory(帶本帳號 uid),補上 advSaveUnlockedHero 受 _isNew 閘門可能略過的權威寫 → UR／SSR／SR 自選券皆保險(根治 GM 發 UR 自選券、玩家挑 UR 後沒拿到/又消失);挑選視窗標題補 UR 分支(原本只認 SSR／SR)。',
-      '★ v3.16.93【存檔倒退守門·稽核感知豁免·index.html】三道存檔守門 _fbSave(主檔)、_fbSaveLive(live 槽)、_suspectRegression(gameCloudSave 對本機備份)一致新增豁免:凡「最近一筆解鎖紀錄=admin_delete(GM 收回過度補償)或 audit_error_recovered(學生自助『不是我的』disown)」的英雄,視為已合法移除 —— 用既有 _lxpsLatestDeletedMap(本版加掛 window 供 gameCloudSave 跨 script block 取用)算出移除集合,從倒退比較的擁有數扣除 + 不被聯集(union)復活 → GM 收回 / 學生自審刪除的英雄能正常從存檔減少,不再卡「⛔ 存檔保護啟動·偵測到資料倒退」與「解鎖英雄倒退 X 隻」。',
-      '★ v3.16.93【安全性】只豁免上述兩種「明確合法移除」來源;latest-entry-wins:玩家若之後重新抽到/老師補發(更新的解鎖紀錄,at 更大)則自然恢復擁有;真正的資料遺失(非此兩來源)仍照舊擋下,不影響原有防薄資料覆蓋保護。',
-      '★ v3.16.93【範圍/相容】只改 index.html;admin_panel.js 僅版號對齊;hero_db.js 僅 manifest 版號免重傳。免新增 firestore.rules。七點版本同步 → v3.16.93;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.73)。',
-    ],
-  },
-  // v3.16.92 — 自選/隨機至寶券獲得後強制寫雲端權威記錄(防登入後消失) + iPad 審查視窗送出鈕點不到 + GM 查無紀錄過度補償收回工具
-  {
-    ver: 'v3.16.92',
-    date: '2026-06-30',
-    brief: [
-      '💠【至寶券修復】使用「自選至寶召喚卷」或「隨機至寶召喚卷」獲得至寶後,現在會立刻把這件至寶寫進雲端最高權威記錄 —— 避免之後重新登入時這件至寶又不見了。',
-      '📱【iPad 審查視窗修復】「請確認這些是不是你的」審查視窗,在 iPad 上最下面的「送出」按鈕被系統列擋住、按不到的問題已修正(視窗改用動態視窗高度 + 底部留安全距離,送出鈕一定點得到)。',
-    ],
-    items: [
-      '★ v3.16.92【至寶券發放強制權威寫入·index.html】_useTreasureTicketPick(自選券)與 _useTreasureTicket(隨機券)在 _grantTaiwanTreasure 後「無條件」再呼一次 window._advSaveTreasureUnlockHistory(treasure_pick_ticket / treasure_random_ticket):根因 _grantTaiwanTreasure 內的權威寫入被 if(!_taiwanTreasureData[id]) 守門,跨 script block 的 _taiwanTreasureData 參照不同步時該守門可能被略過 → 權威寫入沒觸發 → 登入權威下載(v3.16.87/90)把只在本機的至寶洗掉。現改在發放後強制呼叫(內部 _lxpsCloudInstantUnlock 以 dotted-path 原子寫主檔 taiwanTreasureData.<id> + 解鎖紀錄)→ 不再消失。',
-      '★ v3.16.92【iPad 審查視窗送出鈕點不到·index.html】_showOverRestoreReviewModal 外框 _box 高度 height:100% 加 height:100dvh(動態視窗高度·讓底部按鈕列落在 iPad Safari 動態工具列之上)+ 底部按鈕列 _bar 底部 padding 改 calc(14px + env(safe-area-inset-bottom))(避開 home indicator 觸控死區);純 CSS 兩處,送出鈕一定點得到。',
-      '★ v3.16.92【GM 查無紀錄過度補償收回工具·index.html + admin_panel.js】「🔴 過度補回稽查與回收(掃全體)」卡內新增子區塊「🩹 6/24~6/25 救援查無紀錄過度補償 → GM 直接收回」:🔍 window._fbAdminScanAllNoRecordOverComp 掃全體列出「6/24-6/25 舊救援自動補進、帳本完全查無解鎖紀錄、Lv1 沒練/沒投資/沒裝至寶」的英雄(已練/投資/裝至寶者被 v3.16.84 legacy_grandfather 補蓋 UID 歸屬·絕不在此清單·絕不誤收)→ 逐位/全部「🗑 收回」(window._fbAdminReclaimNoRecordForUid 收回前對最新雲端 doc 權威重判·只收回仍查無紀錄者·防玩家掃描後已練誤刪·Lv1 不補償·寄更正通知)。加在既有卡內免三點同步·無 ?.。',
-      '★ v3.16.92【範圍/相容】改 index.html + admin_panel.js;沿用既有 pendingAdminNotifications 規則(GM 收回更正通知),免新增 firestore.rules。hero_db.js 僅 manifest 版號免重傳。七點版本同步 → v3.16.92;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.72)。',
-    ],
-  },
-  // v3.16.91 — 過度補回自審視窗:頂部顯示目前登入帳號 + 不是本人可切換帳號重登再審查
-  {
-    ver: 'v3.16.91',
-    date: '2026-06-29',
-    brief: [
-      '🛡️【審查前先確認帳號】「請確認這些是不是你的」審查視窗,最上方現在會清楚顯示「目前登入的帳號」是誰(班級座號+姓名 + email)。共用平板上如果發現登到的不是你本人的帳號,可以直接按「🔄 這不是我的帳號,切換帳號重新登入」登出、改登自己的帳號後再審查——避免幫別人的帳號做錯判斷。',
-    ],
-    items: [
-      '★ v3.16.91【審查視窗加帳號身分橫幅·index.html】_showOverRestoreReviewModal 頂部新增帳號橫幅:用 window._fbAuth.currentUser.email + window._getRosterEntry/_formatRosterLabel 顯示「目前登入的帳號」(班級座號姓名「5324王同學」+ email);讀不到時提示重新整理。明確提醒學生先確認是本人帳號再往下審查。',
-      '★ v3.16.91【切換帳號重登·index.html】橫幅內「🔄 這不是我的帳號,切換帳號重新登入」鈕 → 呼叫 window._fbSignOut()(含 iPad Safari IndexedDB firebaseLocalStorageDb 清理)登出回登入頁;學生改登自己帳號後,該帳號若有待審 pending 會自動再跳出審查。',
-      '★ v3.16.91【切換不消化此帳號審查·防呆關鍵·index.html】切換時 modal resolve({switched:true});_doFetchAdminNotifications 讀取迴圈收到 switched → break,且「不寫本地 hide 旗標、不 deleteDoc」→ 此帳號的待審 pending 不被誤消化 → 下次正確學生登入此帳號時審查會再出現(根治「在別人帳號上把審查做完、真正本人卻再也看不到」)。',
-      '★ v3.16.91【範圍/相容】只改 index.html(審查視窗 + 登入通知讀取迴圈);沿用既有 pendingAdminNotifications 集合與 GM 派發(掃全體 scan-all → queue),免新增 firestore.rules。admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。七點版本同步 → v3.16.91;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.71)。',
-    ],
-  },
-  // v3.16.90 — 登入權威下載「零風險」完善:加主檔存檔時間地板,杜絕登入弄丟未同步進度
-  {
-    ver: 'v3.16.90',
-    date: '2026-06-29',
-    brief: [
-      '🔒【登入存檔保護升級·零風險】把「登入以雲端最完整存檔為準」做到零風險:登入會比對雲端主檔與備援槽的「存檔時間」,只有主檔是最新(或同時)存的才直接採用;萬一你上一手進度還沒完整同步到主檔(網路延遲等),系統會自動改用「只增不減的合併」把所有進度(英雄/等級/知識幣/至寶…)完整保留,絕不會因為登入而弄丟任何進度。',
-    ],
-    items: [
-      '★ v3.16.90【登入權威下載·零風險地板·index.html】_readRichest 採權威條件由「_gmFresh || !_anySlotRicher」收緊為「_gmFresh || (_mainTimeFresh && !_anySlotRicher)」。新增 _mainTimeFresh = 主檔 savedAt ≥ 兩槽最新 savedAt(主檔每次存檔由 _buildSafeData 寫 savedAt,與兩槽同一份 data)。根因:原 _anySlotRicher 只比英雄數/最高等級,量不到 知識幣/至寶/小幅升級等維度;若某槽存得比主檔新但沒多英雄,會誤採過時主檔而「靜默遺失」那些進度。',
-      '★ v3.16.90【修法·絕不遺失】只要某槽 savedAt > 主檔 savedAt(代表該次主檔寫入延遲/失敗、槽卻成功 → 主檔可能過時)→ 一律改走合併保底 _lxpsMergeSlots(union/max 只增不減)→ 任何維度(英雄/等級/知識幣/至寶/投資…)的新進度都不會被過時主檔蓋掉,真正零遺失。正常乾淨帳號(主檔與槽同時存·_mainTimeFresh 成立)照舊直接採權威。',
-      '★ v3.16.90【不削弱污染杜絕/GM 即時生效】_gmFresh(主檔 _authoritativeRestoreAt 比兩槽新·GM 清污染/補償/重置剛寫過主檔)仍優先採權威 → GM 清污染照舊立即生效、三槽歸一(C)照舊把乾淨主檔覆寫 live/safe 槽。本次只把「主檔可能過時」的情況從『直接採權威(會遺失)』改為『合併保底(零遺失)』,純加強安全、不動污染杜絕邏輯。',
-      '★ v3.16.90【範圍/相容】只改 index.html 的 _readRichest 判斷(加 _mainTimeFresh 1 訊號 + 收緊採權威條件 + 診斷日誌 + 註解);存檔流程/三槽歸一/_applySafeData/戰鬥救援快照 全不動。admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。不需新增 firestore.rules。七點版本同步 → v3.16.90;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.70)。本版與 v3.16.87 登入權威下載一起上線——87 至此為「零風險完美版」。',
     ],
   },
 ];
