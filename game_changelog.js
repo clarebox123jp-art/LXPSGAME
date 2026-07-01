@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-01  / 目前主程式版本:v3.17.5(救英雄工具收斂成一個·一鍵涵蓋所有被回收/刪除途徑、連原等級從存檔救回;治本主軸=GM 不再自動判定刪英雄·誤刪是大忌)
+//  最後更新:2026-07-01  / 目前主程式版本:v3.17.6(GM 送禮三合一:送禮記錄查詢[姓名/獎項]+GM 發放召喚卷獨立區分並顯示發放理由時間+安全補發遺失獎勵[雙權威防重複])
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,25 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.17.6 — GM 送禮三合一:①送禮記錄查詢(姓名/獎項)②GM 發放召喚卷獨立區分+背包顯示發放理由時間 ③安全補發遺失獎勵(雙權威防重複)
+  {
+    ver: 'v3.17.6',
+    date: '2026-07-01',
+    brief: [
+      '🎁【老師發放的召喚卷,現在一眼就分得出來】以後老師發給你的召喚卷(UR/SSR/SR 自選卷、隨機卷、至寶卷)都會標成「GM獎勵…召喚卷」,和你自己合成/獲得的分開放:背包最上方的召喚卷總覽會多一區「🎁 老師發放的召喚卷」,在召喚星空的使用畫面也會獨立一區「🎁 老師發放的召喚卷」,而且每張卷還會顯示老師發放的理由(你的優良事蹟)和時間,永遠不會再和自己合成的搞混。',
+      '🛟【遺失的獎勵,老師可以安全補發、不會重複】如果你確定老師發過某個獎勵、但你雲端查不到有領到,老師可以幫你安全補發;系統會先用兩道權威記錄把關,只有確認你真的沒領過才會補發,已經領過或用過的絕對不會再補一次,讓每一份獎勵都可信、不重複。',
+      '⚔️【鬥技場按鈕字放大】鬥技場「單人挑戰／雙人決鬥」按鈕文字加大加粗,更好按。',
+      '🐛【問題回報冷卻縮短】回報問題後的等待時間由 10 分鐘縮短為 1 分鐘,遇到狀況能更快回報給老師。',
+    ],
+    items: [
+      '★ v3.17.6【GM 發放召喚卷獨立道具·index.html+admin_panel.js】老師發放的召喚卷改為 7 種獨立道具 gm_summon_ticket_*(BACKPACK_ITEM_DEF 新增·_gmReward/_base 標記),與自己合成的 summon_ticket_* 永久區分。三獎勵產生器(課堂/全體/序號 _buildReward)改發 gm_ 變體+標籤「GM獎勵…」。召喚星空面板 _openSummonTicketModal 新增「🎁 老師發放的召喚卷」專區(按鈕呼 _useGmTicket);背包總覽 _bagTicketOverviewHtml 拆「自己獲得」+「🎁 老師發放的召喚卷」兩區並顯示理由時間;背包物品說明 gm_ 卷附發放理由+時間。',
+      '★ v3.17.6【使用不動核心引擎·零回歸】_useGmTicket(gmId):消耗 1 張 gm_ 卷 → 暫時實體化 1 張對應 base 卷(window._suppressTicketLedger 抑制帳本)→ 呼叫既有 base 卷使用流程(_useSummonTicket/_openSummonTicketPickModal/_useTreasureTicket/_openTreasureTicketPickModal)。核心召喚/揭曉/機率完全沿用原碼未動;最壞情況(自選卷取消挑選)僅把 gm_ 卷轉成一般 base 卷,價值不減。_GM_TICKET_BASE/_GM_TICKET_OF 映射;useBackpackItem 加 gm_ 分支導召喚星空。',
+      '★ v3.17.6【發放理由+時間中繼】認領成功時 _recordGmTicketMeta(uid,reward.backpack,merit,at) 把事蹟+時間記到本機(lxps_gm_ticket_meta_{uid}·綁 uid)·供背包/星空/總覽顯示「🎁 老師發放理由…（時間）」;_fbClaimGmClassReward 入帳成功後呼叫,純顯示用不影響存檔。',
+      '★ v3.17.6【送禮記錄查詢·需求1·admin_panel.js+index.html】「課堂獎勵發放」卡「查看送禮記錄」升級為「🔍 送禮記錄查詢(姓名/信箱/uid/獎項/事蹟關鍵字)」:後端 _fbAdminGiftAudit(keyword) 讀 gmGiftLog 關鍵字過濾 + 交叉比對 gmClassRewardClaims 認領文件,每筆標 ✅已領取(UID權威·含領取時間)/❌未領取/❔未知;_fbWriteGmGiftLog 加 merit/rewardId/kind,_send 帶入供比對。',
+      '★ v3.17.6【安全補發·需求3·index.html+admin_panel.js】_fbAdminResendLostGift(uid,rewardId):補發前用兩道權威訊號把關——①gmClassRewardClaims 認領文件存在=已入帳→擋 ②玩家主檔 _gmcrClaimed 含本筆(領取入帳前就標記·rollback 會移除)→擋。雙雙查無才補:停用原收件箱該筆 enabled:false(避免同時領原筆+補發筆)+寫新一筆收件箱(新 rewardId·create-only 認領規則天然防重複領)→補發即權威化不重複。查詢結果每筆「❌未領取」附「🔁 安全補發」鈕。',
+      '★ v3.17.6【範圍/驗證】本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 內容未改僅 manifest 版號·免重傳。新道具 gm_ 卷走 playerBackpack 自寫、gmGiftLog 新欄位/補發走既有 isAdmin 路徑 → 免新增 firestore.rules(上輪 ticketLedger 區塊仍待部署)。七點版本同步 → v3.17.6。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.86)。',
+    ],
+  },
   // v3.17.5 — 英雄圖鑑來源標示更精準(全94隻標籤+日期·汙染/未收錄區分·未收錄不顯示按鈕)+ 召喚到超越極限果實專屬金色光圈動畫
   {
     ver: 'v3.17.5',
@@ -279,23 +298,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.87【合併稽核擴充·index.html】三槽合併的「已移除」判定,由只認 admin_delete(GM 刪)擴充為同時認 audit_error_recovered(學生自助「不是我的」disown)→ 學生 disown 的污染英雄/至寶不會被殘槽 union 復活;以「最近一筆紀錄」為準,日後重新抽到/老師補發(更新紀錄)會自然恢復擁有,不影響合法再取得。',
       '★ v3.16.87【設計理念·老師裁示】主檔=權威真相。多數情況直接採主檔→殘槽幻影無法復活;只在「主檔疑似存檔失敗(某槽顯著更豐富、且非剛被清理)」才合併保底→真資料絕不遺失。新玩家/離線/退化路徑皆不受影響。',
       '★ v3.16.87【版本／範圍】本輪只改 index.html(登入載入路徑 + 合併稽核);admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。不需新增 firestore.rules(沿用既有 players/saves 自身寫入)。七點版本同步 → v3.16.87;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.67)。★ 高風險變更:建議先以 110082 / 110170 兩帳號實測再廣推。',
-    ],
-  },
-  // v3.16.86 — 過度補回改「學生自我審核」:老師發起→學生登入逐項勾是我的綁定/不是我的移除+補償
-  {
-    ver: 'v3.16.86',
-    date: '2026-06-29',
-    brief: [
-      '🛡【英雄／至寶歸屬確認·登入會跳出】如果老師發現你的帳號裡有「可能不是你的」英雄或至寶(其實是別位同學帳號的、被系統不小心補錯進來的),你登入時會跳出一個「自我審核視窗」,把它們一個一個列出來,讓你自己判斷:勾「✅ 是我的」→ 永久綁定給你、以後不會再被問;勾「🗑 不是我的」→ 幫你移除掉,而且如果你已經練過它,還會補償你練功的心力(💰知識幣+🔮召喚水晶)。★ 勾「不是我的」時如果那隻已經練了很多級,會再跳一次確認,避免你手滑按錯;就算真的不小心移除了,老師後台也救得回來。判斷權完全交給你自己!',
-      '📨【GM·改派發學生自審】後台「過度補回稽查」掃全體的回收按鈕,由「GM 直接刪」改成「📨 通知學生自審」:GM 不再直接刪除任何角色,而是把清單派發給學生本人,由學生登入後逐項確認(✅是我的綁 UID 永久 / 🗑不是我的可逆移除+補償)。GM「🔍 逐項審查」彈窗仍保留(你自己很確定時可直接刪/救回)。',
-    ],
-    items: [
-      '★ v3.16.86【派發後端·index.html】新增 window._fbAdminQueueOverRestoreReview(uid,英雄,至寶):把過度補回清單(名稱+等級)寫成一筆 pendingAdminNotifications/{uid}/items/{ts}(type=overRestoreReview)→ 學生下次登入彈自審視窗。沿用既有 pendingAdminNotifications 集合與規則(create 限管理員→學生偽造不了清單·補償依 GM 記錄等級算→改本機等級也沒用)→ 免新增 firestore.rules。',
-      '★ v3.16.86【學生自審視窗·index.html】新增 window._showOverRestoreReviewModal(uid,data):全螢幕逐項勾選視窗(✅是我的/🗑不是我的·每筆不預設·全部選完才能送出);勾「不是我的」且該英雄已練(Lv>1)→ 彈「再確認」子視窗(z-index 2147483640 > 主視窗 2147483600·階層保證絕不被蓋·老師明確要求)。送出:是我的→_lxpsConfirmOwnHero/_lxpsConfirmOwnTreasure 綁 UID 永久(player_confirmed 三槽);不是我的→可逆移除+補償(不是我的·已練英雄·每等級 500 幣+每隻 2 水晶上限 20·與 GM 回收公式一致);完成後重整。掛在既有登入 pendingAdminNotifications 讀取迴圈(type 分流)·處理完寫本地 hide 旗標+deleteDoc 雙保險防重複彈。',
-      '★ v3.16.86【學生端至寶可逆移除·index.html】新增 window._fbStudentDisownTreasures(uid,ids)(鏡像 _fbStudentDisownHeroes):從 taiwanTreasureData 移除指定鍵(整包覆蓋+_s 防 Firebase merge 殘留)、暫存原始至寶資料(_auditRecoveredTreasureData 供 GM 精確復原)、帳本寫可逆標記 audit_error_recovered(disownedByStudent)→ GM 後台可由帳號救援補回。',
-      '★ v3.16.86【掃全體卡改派發·admin_panel.js】「過度補回稽查與回收(掃全體)」卡的「🔄 回收這位玩家」/「🔄 全部一鍵回收」按鈕,改為「📨 通知學生自審」/「📨 全部通知學生自審」(走 _fbAdminQueueOverRestoreReview 派發·GM 不直接刪);卡片標題 🔴→🔵、說明改派發語意+防刷說明。「🔍 逐項審查」彈窗(GM 直接刪/救回·不經學生)保留為 GM 備用。無 ?.。',
-      '★ v3.16.86【設計理念·老師裁示①乙②乙③甲】把「這是不是我的」判斷權交給最清楚自己練過誰的學生本人,GM 不再替學生猜、不再直接刪;不是我的走可逆移除(GM 後台「🛟 審查誤刪英雄批次救回」可還原)→ 即使學生按錯也救得回;已練英雄勾不是我的會二次確認且階層正確不被蓋。三槽存檔不再質疑學生確認過的英雄。',
-      '★ v3.16.86【版本／範圍】本輪改 index.html + admin_panel.js + game_changelog.js;hero_db.js 內容未改僅 manifest 版號·免重傳。沿用既有 pendingAdminNotifications 規則 → 免新增 firestore.rules。七點版本同步 → v3.16.86;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.66)。',
     ],
   },
 ];
