@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-01  / 目前主程式版本:v3.17.7(甲:老師發放的至寶永久歸屬[補 uid 印記免被重複資料清理誤收]·丙:GM 玩家查詢加名冊真名[老師後台])
+//  最後更新:2026-07-01  / 目前主程式版本:v3.17.8(帳號權威資料稽核:序號兌換/全體玩家獎勵 補齊漏領自選卷防護+登入回溯對帳)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.17.8 — 帳號權威資料稽核:序號兌換/全體玩家獎勵 補齊「領了卻沒拿到」防護(比照 v3.16.97 GM課堂獎勵同款修法)
+  {
+    ver: 'v3.17.8',
+    date: '2026-07-01',
+    brief: [
+      '🎟【序號兌換／全體獎勵,不會再悄悄不見】老師深入檢查後發現:序號兌換或收到全班獎勵時,如果你兌換/領取完沒有馬上「重新整理」就繼續玩下去,極少數情況下剛拿到的召喚卷可能會被之後自動存檔的舊資料蓋掉、不見。現在兌換/領取的當下就會立刻把獎勵記在你這次的遊戲畫面裡,不用擔心中間被洗掉;而且下次登入系統也會自動核對「你領過什麼、實際有沒有拿到」,萬一真的有漏掉,會自動悄悄幫你補回來並跳提示告訴你。',
+    ],
+    items: [
+      '★ v3.17.8【根因·帳號權威資料深度稽核】老師交辦「深度檢查目前整個遊戲的權威資料同步情形有無漏洞」:追出 v3.16.97 只根治了「GM 課堂獎勵」領取這一個入口的 race condition(領取寫入雲端後、玩家沒立刻重整、後續 autosave 用舊記憶體背包寫槽,把剛發的自選卷從雲端沖掉——因為 playerBackpack/knowledgeCoins 是消耗型欄位,三槽合併採「取最新槽(savedAt 最大)」而非聯集,不像英雄/至寶/等級走聯集或取最大值天生安全);同一支 _fbCompensatePlayer 底層的另外兩個入口——序號兌換(_fbRedeemCode)、全體玩家獎勵(_fbClaimGlobalRewards)——都還沒有這層防護,且兩者恰好都「不強制重新整理」(序號兌換給重整按鈕但不強迫、全體獎勵有「稍後再看」按鈕),校園 WiFi 慢 + 遊戲內 autosave 觸發點多達 130+ 處,競速視窗是真實存在的。',
+      '★ v3.17.8【甲·序號兌換·index.html】_fbRedeemCode 兌換成功回傳結構化 reward(含 backpack 明細);_doRedeem 兌換成功當下立即 backpackAdd 套進記憶體背包(比照 _claimGmClassRewardFromInbox 手法),讓後續任何 autosave 都帶著新券一起寫槽,不受「只取最新槽」影響;沿用既有「顯示重新整理鈕」UI,只是多了記憶體即時套用的保險。',
+      '★ v3.17.8【乙·全體玩家獎勵·index.html】_fbClaimGlobalRewards 每筆新領獎勵一併回傳 reward 明細;登入自動認領流程(setTimeout 5500ms)在彈出通知前先把每筆 reward.backpack 內容 backpackAdd 進記憶體,免疫玩家點「稍後再看」後繼續遊戲時被舊背包蓋過。',
+      '★ v3.17.8【丙·登入回溯對帳(雙保險)·index.html】仿 v3.16.97 _fbReconcileGmClassRewardTickets 手法,新增 _fbReconcileRedeemCodeTickets(讀玩家自寫 _redeemClaimLog·由 _fbRedeemCode 兌換成功時寫入)、_fbReconcileGlobalRewardTickets(讀玩家自寫 _grClaimLog·由 _fbClaimGlobalRewards 發獎成功時寫入)兩支對帳函式,登入序列一併呼叫;安全不等式與原版相同:已發(reward.backpack)− 已用(durable 帳本 _heroUnlockHistory/_treasureUnlockHistory 對應 source 計數)− 現有(背包)− 已補(冪等記錄)>0 才補、永不重複發。★ 未走查詢 redeemCodes/globalRewards 集合的 list(該權限僅限管理員,一般玩家會被 firestore.rules 擋下),改用「自己主檔自寫紀錄」路徑,不需部署任何新規則。⚠ 邊界:僅涵蓋本輪上線「之後」的兌換/領取(之前無 _redeemClaimLog/_grClaimLog 紀錄者無法回溯;如老師手邊有 v3.17.8 前疑似漏發的個案,仍請用既有補償工具手動補發)。',
+      '★ v3.17.8【已確認安全·不受影響】英雄(unlockedHeroes 聯集+admin_delete 稽核感知排除)、台灣至寶(union 取等級較高)、等級/素質點(逐鍵取最大值)、鬥技之證/友情之心(取最大值)這些欄位本來就用聯集或取最大值合併,不受「取最新槽」影響,本輪未動;GM 補償/刪除工具(_fbCompensatePlayer 全欄位、_fbAdminDeleteUnlockedHero/_fbAdminBulkRemoveHeroes)寫入時皆已加蓋 _authoritativeRestoreAt,在線玩家的舊分頁會被既有 piece3 機制(v3.16.5)偵測並鎖存重載,不會用過時本機資料反蓋老師的操作。',
+      '★ v3.17.8【版本／範圍】本輪只改 index.html;admin_panel.js + hero_db.js 內容未改僅 manifest 版號對齊、免重傳。全程 self-write(自己主檔),不需新增/修改 firestore.rules(上輪 ticketLedger 區塊仍待老師於 Firebase Console 部署,與本輪無關)。七點版本同步 → v3.17.8;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.88)。',
+    ],
+  },
   // v3.17.7 — 甲:老師發放的至寶永久算你的(補歸屬印記·免被重複資料清理誤收)+ 丙:GM 玩家查詢加名冊真名(老師後台認人)
   {
     ver: 'v3.17.7',
@@ -280,22 +296,6 @@ window.GAME_CHANGELOG = [
       '★ v3.16.89【群體治療優先·技能·index.html】優先1治療新增 _woundedCount(存活且 HP<75% 的友方數);≥2 時 healSks 排序把「群體治療技能」排最前(GROUP_HEAL_SKILLS=全體治療/治癒之風/天堂樂章/餘音繞樑/雙小提琴協奏曲/一壺鐵觀音/流浪者之歌/天籟之音/BUG修復/神籤·皆恢復多名或全體友方);<2 或無群體技能時沿用估算治療量排序(單體治療照常)。',
       '★ v3.16.89【群體治療優先·物品·index.html】≥2 友方<75% 時 healItems 排序把「群體治療物品」(target a3·恢復全體友方·療癒香水 hp15／木柵鐵觀音 hp30)排最前;且 AI 使用 a3 群體治療物品時改對「全體存活友方」各施用(applyItemOnTarget 預設僅單體·此處展開全體·鏡像物品系統既有 a3 處理·道具仍只消耗 1 次)→ 群體治療物品真正惠及全隊。',
       '★ v3.16.89【相容性／範圍】只動 p1 自動戰鬥的「治療選擇」邏輯,敵方 p2 與關卡/世界 BOSS 平衡完全不受影響;與 v3.16.58「每位英雄 AI 行動設定」相容(設定關閉治療仍不治療·本次只精修「允許治療」情況下的時機/對象)。本輪只改 index.html(needsHeal 1 處＋優先1治療 4 處);admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。不需新增 firestore.rules。七點版本同步 → v3.16.89;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.69)。',
-    ],
-  },
-  // v3.16.88 — 召喚卷儀式感:SSR/SR/UR 召喚卷改走星空抽同款角色揭曉視窗+特效(取代純文字)
-  {
-    ver: 'v3.16.88',
-    date: '2026-06-29',
-    brief: [
-      '✨【召喚卷儀式感升級】使用 SSR／SR／UR 召喚卷(隨機卷與自選卷)時,不再只是冒一行文字了!現在會跟在「召喚星空」抽到新角色一樣:播放召喚開場特效、角色登場的光芒與三段慶祝音效,並彈出大張的「角色登場視窗」(立繪＋技能＋極限爆發介紹),讓每一次用卷都更有儀式感、更值得期待。',
-      '🎟【連續使用更順手】看完角色登場視窗、按下「確認」後,會自動回到召喚卷面板,方便你接著使用下一張卷。你抽到的英雄一樣會記入召喚紀錄。',
-    ],
-    items: [
-      '★ v3.16.88【召喚卷儀式感·index.html】_showSummonTicketResult(SSR/SR/UR 隨機卷＋自選卷共用)由「直接冒文字結果」改走星空抽同款儀式:單抽開場特效 _playSummon1xFx → 角色 reveal _playSummonRevealFx(三層慶祝音)→ _showSummonResults(內含 _showSummonRareHeroPreview 大張角色登場視窗:立繪＋S1/S2＋極限爆發)。組同款 results 物件 {kind:rare_hero,heroName,icon,qty:1,isRare:true,_rarityTier};UR 補正確圖示 👑＋粉色強調色(原僅 SSR🌈/SR⭐)。',
-      '★ v3.16.88【後備保護·index.html】召喚卷一律在「召喚星空」頁使用(背包使用→openSummonOverlay→召喚卷面板·summon-fx-layer 為該頁靜態元素)故必定走完整儀式;萬一不在召喚星空頁(無 fx 層)→ 自動退回原純文字結果,確保玩家一定看得到抽到的英雄、不會白按(防呆雙保險)。',
-      '★ v3.16.88【連續使用體驗保留·index.html】用卷儀式以 window._summonTicketCeremony 旗標標記;結果視窗按「確認」(_dismissSummonResults)關閉後自動重開召喚卷面板(沿用舊版「連續用卷」體驗)。doSummon 開頭清旗標 → 正常星空抽結束不會誤開召喚卷面板。召喚紀錄(_recordSummonHistory)記錄行為不變。',
-      '★ v3.16.88【偵探編組圖位·index.html】英雄編組頁「偵探」左側縮圖與右側預覽大圖的圖片垂直位置 Y 上移 20%(_teamFormAdjustObjPos _ADJ 表新增 偵探:{grid:-20,preview:-20},與拘留者/科學發明家同款),露出更多上半身/頭部;純 object-position 微調,不影響戰鬥卡/圖鑑。',
-      '★ v3.16.88【版本／範圍】本輪只改 index.html(召喚卷結果展示路徑·3 處 + 偵探編組圖位 1 處);admin_panel.js + game_changelog.js 僅版號對齊、hero_db.js 僅 manifest 版號免重傳。不需新增 firestore.rules。七點版本同步 → v3.16.88;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.68)。完全不影響召喚機率/解鎖/存檔,僅改變召喚卷結果的「呈現方式」。本版與 v3.16.87(登入權威下載)一起上線。',
     ],
   },
 ];
