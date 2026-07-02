@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-02  / 目前主程式版本:v3.34.0(新英雄「大刀勇士」上線·5年4班陳同學設計·SSR·⚔傷害+💚回復)
+//  最後更新:2026-07-02  / 目前主程式版本:v3.35.0(好友線上狀態顯示修復·在線好友不再顯示離線·登入通知即時亮綠並顯示上線時間)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.35.0 — 好友線上狀態顯示修復(在線好友不再顯示離線·登入通知即時亮綠並顯示上線時間)
+  {
+    ver: 'v3.35.0',
+    date: '2026-07-02',
+    brief: [
+      '🟢【好友線上狀態修復】修正好友明明在線上、好友清單卻一直顯示「離線」灰燈的問題!現在打開好友清單,會正確顯示哪位好友正在遊戲中。',
+      '🔔【登入通知一亮就是線上】開了「登入通知」的好友一上線,除了右下角彈出提醒,好友清單上那位好友也會「立刻」亮成綠色的「線上」並顯示他的上線時間,不用等!',
+    ],
+    items: [
+      '★ v3.35.0【根因】好友線上圓點與登入通知都靠監聽 presences(在線狀態)集合,但原本是「一次訂閱整個集合」——在全校幾百人同時上線、集合高頻變動時,這種訂閱會停止推送更新/卡在舊資料,導致在線好友一直被判離線、登入通知也不會跳(與 v3.12.2 記載的老問題同源)。',
+      '★ v3.35.0【修法·好友圓點】改為「只讀好友本人那幾筆」:好友清單打開時,每 15 秒對每位好友各自的在線資料做一次「強制向伺服器讀取」(不吃舊快取),可靠反映最新狀態;在線判定門檻由 90 秒放寬到 150 秒(容忍慢網漏一拍心跳)。',
+      '★ v3.35.0【修法·登入通知】從壞掉的「整集合訂閱」脫鉤,改為一支常駐輕量輪詢:每 30 秒「只讀有勾登入通知的那幾位好友」(沒勾任何人就完全不讀·零額外用量),偵測到好友從離線→上線就彈出提醒,同時把該好友狀態設為線上、記下上線時間;若此時好友清單正開著,圓點會立刻亮綠並顯示上線時間(老師需求)。沿用原本的防洗頻(每位好友 5 分鐘冷卻)與首次只建基準不補彈。',
+      '★ v3.35.0【讀取量降低為原則】以上兩者都只讀「必要的那幾位好友」而非整個在線集合,整體雲端讀取量比原本更省;登入時啟動通知輪詢、登出/關頁時停止。',
+      '★ v3.35.0【範圍】只改 index.html(_fbWatchFriendsPresence 重寫為 per-friend 輪詢、移除 _fbWatchOnlineCount 內的通知偵測呼叫、新增 _friendLoginDetectFromHb/_fbFriendNotifyPollOnce/_fbStartFriendNotifyPoll/_fbStopFriendNotifyPoll);admin_panel.js/hero_db.js 內容未改;免改 firestore.rules(全為讀自己/好友既有權限)。⚠ 首頁「目前在線」人數仍用整集合訂閱(全體學生都在跑=最大讀取源·下一輪再決定改法);兩台裝置都要更新到 v3.35.0 才會互相顯示在線。七點版本同步 → v3.35.0;移除最舊 v3.17.7 維持 20 筆。',
+    ],
+  },
   // v3.34.0 — 新英雄「大刀勇士」上線(5年4班 陳柏安設計·SSR·⚔傷害+💚回復)
   {
     ver: 'v3.34.0',
@@ -292,20 +308,6 @@ window.GAME_CHANGELOG = [
       '★ v3.17.8【丙·登入回溯對帳(雙保險)·index.html】仿 v3.16.97 _fbReconcileGmClassRewardTickets 手法,新增 _fbReconcileRedeemCodeTickets(讀玩家自寫 _redeemClaimLog·由 _fbRedeemCode 兌換成功時寫入)、_fbReconcileGlobalRewardTickets(讀玩家自寫 _grClaimLog·由 _fbClaimGlobalRewards 發獎成功時寫入)兩支對帳函式,登入序列一併呼叫;安全不等式與原版相同:已發(reward.backpack)− 已用(durable 帳本 _heroUnlockHistory/_treasureUnlockHistory 對應 source 計數)− 現有(背包)− 已補(冪等記錄)>0 才補、永不重複發。★ 未走查詢 redeemCodes/globalRewards 集合的 list(該權限僅限管理員,一般玩家會被 firestore.rules 擋下),改用「自己主檔自寫紀錄」路徑,不需部署任何新規則。⚠ 邊界:僅涵蓋本輪上線「之後」的兌換/領取(之前無 _redeemClaimLog/_grClaimLog 紀錄者無法回溯;如老師手邊有 v3.17.8 前疑似漏發的個案,仍請用既有補償工具手動補發)。',
       '★ v3.17.8【已確認安全·不受影響】英雄(unlockedHeroes 聯集+admin_delete 稽核感知排除)、台灣至寶(union 取等級較高)、等級/素質點(逐鍵取最大值)、鬥技之證/友情之心(取最大值)這些欄位本來就用聯集或取最大值合併,不受「取最新槽」影響,本輪未動;GM 補償/刪除工具(_fbCompensatePlayer 全欄位、_fbAdminDeleteUnlockedHero/_fbAdminBulkRemoveHeroes)寫入時皆已加蓋 _authoritativeRestoreAt,在線玩家的舊分頁會被既有 piece3 機制(v3.16.5)偵測並鎖存重載,不會用過時本機資料反蓋老師的操作。',
       '★ v3.17.8【版本／範圍】本輪只改 index.html;admin_panel.js + hero_db.js 內容未改僅 manifest 版號對齊、免重傳。全程 self-write(自己主檔),不需新增/修改 firestore.rules(上輪 ticketLedger 區塊仍待老師於 Firebase Console 部署,與本輪無關)。七點版本同步 → v3.17.8;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.88)。',
-    ],
-  },
-  // v3.17.7 — 甲:老師發放的至寶永久算你的(補歸屬印記·免被重複資料清理誤收)+ 丙:GM 玩家查詢加名冊真名(老師後台認人)
-  {
-    ver: 'v3.17.7',
-    date: '2026-07-01',
-    brief: [
-      '🏆【老師發放的至寶,永久算你的】修正:老師直接發放給你的台灣至寶,現在會永久記在你名下(補上專屬歸屬印記)——就跟英雄一樣受到完整保護,絕對不會再被系統的「重複資料清理」誤判成別人的而收回。你原本擁有的至寶等級、裝備、投資完全不受影響。',
-    ],
-    items: [
-      '★ v3.17.7【甲·至寶補償授權補齊 uid·index.html】老師需求「同英雄召喚的規模仔細做好權威」:_fbCompensatePlayer 發放台灣至寶時,寫入 _treasureUnlockHistory 的 admin_grant 紀錄補上 uid:String(uid).slice(0,12)(對齊英雄 v3.17.3 發放即合法的 {source:admin_grant, adminAction:true, uid, by})。根因:舊版此筆漏 uid → 老師發的至寶在「過度補回/查無紀錄」稽核眼中「查無自己 uid 的解鎖紀錄」→ 可能被誤判成別帳號殘留而收回(英雄那半 v3.17.3 已補·這是對稱漏洞)。補後=老師正式發放的至寶永久正向歸屬、圖鑑來源顯示「老師補發」、永不被任何回收工具當殘留誤收。客戶端召喚至寶 _advSaveTreasureUnlockHistory 本就綁 uid+即時雲端寫入·規模與英雄一致·僅此 GM 補償路徑補齊。',
-      '★ v3.17.7【丙·GM 玩家查詢加名冊真名·admin_panel.js·老師後台】玩家活動記錄查詢的「玩家卡」身分區塊·在信箱下方新增名冊真名列:_renderPlayerCard 讀 window._STUDENT_ROSTER[email 小寫] → 顯示「🏫 班級座號 中文真名(名冊真名·僅老師可見)」。查無名冊(非 lsps 校內信箱/名冊未收錄)回空字串不顯示·全程 try-catch、無 ?.。方便老師在做污染回收/更正通知時直接認出是哪位學生(學生端一律遮罩·此為老師後台專用)。',
-      '★ v3.17.7【乙·至寶重置藥水 +500EXP 排查】老師回報「至寶重置藥水害布奶鳥獸重複 +500EXP、同一次登入內連續觸發多次」:全 22 個 addHeroExp 呼叫點逐一排查·現行 v3.17.6 碼查無可重現路徑——所有 +500 皆來自英雄經驗書(hero_exp_book_deluxe)·背包用/詳情頁用/全部使用三入口各有 backpackGet<=0 前置守門不會超發;每日代表英雄 EXP 有 per-day 旗標守門(旗標在授予前設)且值=升級所需×10% 非固定 500、同 session 不會二次觸發;_doTreasureReset 只退 treasure_exp_scroll+知識幣、完全不碰英雄 EXP;addHeroExp 本身無遞迴。研判:此 bug 已於更早版本修復(記憶為過時 carry-forward)或原歸因有誤。未硬改以免製造回歸;addHeroExp 每筆授予都 console.log caller·待老師提供該 log 或確認布奶鳥獸是否為代表英雄即可精準定位。',
-      '★ v3.17.7【版本／範圍】本輪改 index.html(甲)+ admin_panel.js(丙)+ game_changelog.js;hero_db.js 內容未改僅 manifest 版號、免重傳。皆自寫既有欄位/讀既有名冊 → 免新增 firestore.rules(上輪 ticketLedger 區塊仍待老師於 Firebase Console 部署)。七點版本同步 → v3.17.7;GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.87)。',
     ],
   },
 ];
