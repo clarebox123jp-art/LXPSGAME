@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-01  / 目前主程式版本:v3.25.0(簡單風 英雄圖鑑 全稀有度 R/SR/SSR/UR 天賦/技能/爆發 說明短句化完成)
+//  最後更新:2026-07-02  / 目前主程式版本:v3.27.0(帳號救援申請新增「📩 老師的回覆」查看駁回理由與時間;老師端審核工具優化)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,35 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.27.0 — 帳號救援申請新增「📩 老師的回覆」查看駁回理由與時間(玩家可見);老師端審核三項優化(adminOnly)
+  {
+    ver: 'v3.27.0',
+    date: '2026-07-02',
+    brief: [
+      '📩【看得到老師的回覆囉！】在關卡頁「📨 帳號救援申請」裡，如果老師已經處理完成或駁回過你先前的申請，畫面上會多出一顆「📩 查看老師的回覆」按鈕——點一下就能看到老師的處理結果或駁回理由，還有處理的時間，讓你清楚知道申請到哪一步、也知道下一步可以怎麼做。',
+    ],
+    items: [
+      '★ v3.27.0【學生端新增「📩 老師的回覆」·index.html】_openRescueReq 會讀取你自己的救援申請文件(_fbGetMyAccountRescueRequest)，若老師處理或駁回過(申請上已有老師備註 gmNote 與處理時間 resolvedAt)，就在狀態說明下方顯示一顆「📩 查看老師的回覆」按鈕，點開後展開老師的處理結果或駁回理由(gmNote)與時間(resolvedAt)。純顯示層、只讀自己的文件，未改任何權限規則(firestore.rules)。',
+      '★ v3.27.0【老師端·重送申請即視為新申請·帳號救援申請審核·adminOnly】同一位學生重複送出救援申請時，之前逐項處理過的「已審查完畢」標記不再卡住整筆(以本次申請時間 createdAt 為界，舊週期的處理標記自動失效)，老師可以重新逐項勾選、再次處理。純顯示判定，不會自動執行任何動作。',
+      '★ v3.27.0【老師端·駁回理由勾選·帳號救援申請審核·adminOnly】駁回改為勾選式：查不到獲得該英雄的解鎖記錄／該英雄為被共用平板存檔汙染的記錄／直接輸入駁回說明(可複選)，組成回覆記在申請上，學生即可在「📩 老師的回覆」看到。',
+      '★ v3.27.0【老師端·解鎖記錄救援清單·帳號救援申請審核·adminOnly】在「英雄解鎖記錄」下方新增「🗂 本次申請・救援處理清單」，把本筆申請的英雄與至寶依 🔓申請救回／🗑申請刪除／🤖自動判定可救回 三種標記逐項列出、可逐一勾選，最後一鍵確認執行救援或刪除；沿用既有安全流程，刪除預設不勾(可逆)。並保留原本各類別的處理按鈕。',
+      '★ v3.27.0【驗證與版本·帳號救援申請審核】index.html 全部 inline script 通過 node --check、無孤立代理字元；admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.27.0；GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.99)。本輪改 index.html＋admin_panel.js＋game_changelog.js；hero_db.js 內容未改、維持 v3.25.0 免重傳。',
+    ],
+  },
+  // v3.26.0 — 簡單風 英雄圖鑑 天賦/技能/爆發 精簡說明下方新增「📖 看完整說明」可開完整版視窗
+  {
+    ver: 'v3.26.0',
+    date: '2026-07-02',
+    brief: [
+      '📖【看不懂簡短說明？可以打開完整版！】在🧸簡單風的「英雄圖鑑」裡，天賦、技能、極限爆發的簡短說明下面，現在多了一顆「📖 看完整說明」按鈕——想知道更詳細的效果時，點一下就會跳出完整版說明視窗（和✨精緻風看到的完整說明一樣，含詳細數字），看完按「關閉」或點旁邊就能收起。✨精緻風本來就直接顯示完整說明，所以不會有這顆按鈕。',
+    ],
+    items: [
+      '★ v3.26.0【簡單風圖鑑加「看完整說明」鈕·index.html】_renderHeroDetail 於🧸簡單風(_isSimple)時，在 天賦 / 技能(S1·S2 各一) / 極限爆發 三處的精簡說明下方各加一顆「📖 看完整說明」鈕(共用新 helper _fullDescBtn(kind,name)，✨精緻風回傳空字串故不顯示)。點擊呼叫新全域函式 _showHeroFullDesc(kind,heroName)。',
+      '★ v3.26.0【完整說明內容與精緻風一致】彈窗顯示的完整說明與✨精緻風 inline 完全相同：天賦＝HERO_TRAIT[name].desc 原文；技能＝colorizeSkillDesc(_renderSkillFdWithLv(名稱, fd, 當前技能等級))；極限爆發＝_renderBurstFdWithLv(名稱, fd, 當前爆發等級)——皆帶該英雄「當前等級」的實際數值。查無對應資料時安全略過、不報錯不空窗。',
+      '★ v3.26.0【彈窗實作·相容】_showHeroFullDesc 走 body 層 position:fixed 全螢幕半透明底＋置中卡片(max-height:86vh 可上下捲動、字級 clamp 適配手機/平板)，點背景或「關閉」鈕關閉、卡片內 stopPropagation。以 var＋明確 top/left/right/bottom(不用 inset 簡寫)＋無可選串接(?.)撰寫，避免舊 iPad Safari「fixed 在 overflow 祖先內」失效與語法不相容。純新增顯示層，不動任何技能數值/邏輯/資料/存檔，也不改✨精緻風(premium 仍 inline 顯示完整說明、不出現此鈕)。',
+      '★ v3.26.0【鐵律1.232 遵循＋驗證/版本】此功能是讓🧸簡單風同學也能查看✨精緻風完整說明的橋樑：英雄說明本就兩版齊備(簡單風 sd inline／精緻風 fd·desc 於此視窗)，新增鈕與視窗文案僅簡單風出現、本即精簡好讀，premium 不需對應版本。index.html 20 個 inline script node --check 全過、0 lone surrogate；admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.26.0；GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.98)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳。',
+    ],
+  },
   // v3.25.0 — 簡單風文字簡化 Phase 8：英雄圖鑑（SSR+UR 共 53 隻）天賦/技能/爆發說明短句化（全稀有度完成）
   {
     ver: 'v3.25.0',
@@ -260,36 +289,6 @@ window.GAME_CHANGELOG = [
       '★ v3.17.0【逃走小怪卡死·index.html·checkWin】根因:寶箱怪/小惡魔逃跑會把自己從 G.p2 用 splice 移除 → p2 變成空陣列;v3.11.4 防呆見「空 p2」即 return false 不判勝利(原為擋黑暗球 init 失敗、p2 從沒生成卻直接戰鬥勝利的漏洞),卻誤把「敵人全逃光」也當成 init 失敗 → 戰鬥永不結束、玩家卡死(回報1 maokong mini 戰 round3 p2 空·回報4 同源)。修法:checkWin 開頭設 G._everHadEnemies(敵人存活時設 true);空 p2 防呆改判 if(!G._everHadEnemies) 才擋(從頭到尾沒出現過敵人=init 失敗),否則落到下方正常結算(mini 戰 _advMiniBattleActive→advFinishMiniBattle(true)、一般戰→_showResultWithDrama(true))。聖甲蟲 v3.15.72 已改「留場變灰」不 splice·本就不受影響;逃跑兩路徑(主動技能箱底抹油 + 被動)既有 if(checkWin())return 現會正確 return true 結束。',
       '★ v3.17.0【無法同步/等級倒退·index.html·gameCloudSave】根因(回報「手動同步雲端失敗·試八次」「學霸 22→8 倒退」):共用 iPad 累積多位學生 lxps_{uid}_progress 整包存檔鏡像 → localStorage(約 5MB)爆滿 → gameCloudSave 本地鏡像 localStorage.setItem 拋 QuotaExceededError 往上炸、整個函式中斷在「雲端寫入(_fbSaveLive/_fbSave)之前」→ 雲端永遠寫不進去(同步失敗八次)、本地練的新等級沒上雲 → 重整讀回舊雲端 = 等級倒退。這是被誤當 merge/載入問題追了很多版的真兇。修法:① 本地鏡像 setItem 包 try-catch,即使寫不進去也照常往下做雲端寫入(雲端權威);② 新增 _lxpsFreeLocalStorageQuota(currentUid):爆滿時安全清「其他帳號的 lxps_{別人uid}_progress 鏡像(雲端權威)+ 過期備份(任何 *_expiresAt 時間戳已過)」釋放空間後重試一次,絕不動當前帳號資料或未過期備份 → 零誤刪風險。',
       '★ v3.17.0【驗證/版本】index.html 19 個非 module inline script + 1 個 Firebase module 全數語法檢查通過、0 lone surrogate;admin_panel.js/game_changelog.js 語法過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.17.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.80)。本輪改 index.html(checkWin 3 處 + gameCloudSave 2 處)+ game_changelog.js;admin_panel.js 僅版號對齊;hero_db.js 內容未改免重傳。⚠ 仍未動「INDEX 登入優化(約 900 人同時登入)」高風險任務,建議單獨一輪做+單獨測。',
-    ],
-  },
-  // v3.16.99 — 登入自動整理「老師誤補發的英雄」+ 二次確認(玩家公告)
-  {
-    ver: 'v3.16.99',
-    date: '2026-06-30',
-    brief: [
-      '🙇【老師的更正通知·自動整理誤補的英雄】之前的「帳號救援」因系統設定問題,把一些你原本沒有的英雄誤補進了帳號。現在登入時,系統會自動找出「老師在特定日期(目前是 6/25)誤補發、而你查不到自己真正取得紀錄」的英雄,跳出「🙇 老師的更正通知」列出清單 → 你按「✅ 好,整理我的圖鑑」就會把這些誤發的整理掉,圖鑑回到原本乾淨的狀態(之後也可以重新用自選召喚卷抽你真正想要的)。',
-      '✅【你自己的英雄完全不受影響】只要是你自己抽到、解鎖過的英雄,都不會出現在清單、完全不動;若有整理錯的,到關卡頁「📨 帳號救援申請」→「🔓 我遺失的英雄要回來」勾選送出,老師核對後補回。整理完會再出現一次「確認是不是我的角色」勾選,這時清單只剩沒被整理掉的英雄,讓你再確認一次。',
-    ],
-    items: [
-      '★ v3.16.99【玩家端自動回收·階段1·index.html】新增日期白名單 _GMCR_BAD_COMP_DATES(目前含 2026-06-25·老師可加錯誤批次日期·正常補發日期絕不放)+總開關 _GMCR_AUTO_RECLAIM_ENABLED(出問題即時關)。登入序列 4000ms hook 呼叫 _lxpsAutoReclaimBadCompHeroes:總開關/白名單空/uid空/GM救援中(_adminRescueInProgress)/防重入/雲端未載完(擁有<8 輕量重試)皆不動作=只漏不誤刪;呼叫 _fbScanMyBadCompHeroes(讀自己 getDocFromServer doc·跑 v3.16.98 _computeCompBatchesFromDoc·取白名單日期內無真實解鎖的 compensation 英雄)→ 讀取失敗重試→ 已對此白名單版本跑過早退→ 空名單寫旗標不重載→ 有清單彈 _gmcrShowReclaimNotice 告知。',
-      '★ v3.16.99【回收引擎·index.html】_fbApplyBadCompReclaim(uid,names,verTag):鏡像 v3.16.19 _fbApplyAuditErrorRecover 但用「獨立旗標 _gmcrAutoReclaimVer」(綁白名單版本字串·不碰 v3.16.19 的 _auditRecoverDoneV1→跑過自我審查的玩家也能回收 6/25 批)。只回收雲端確實擁有者→標可逆 audit_error_recovered(GM 一鍵永久復原/救援卡 _fbAdminRestoreLostHeroes 可還原)→至寶解裝保留本體→清 unlockedHeroes+6 養成表全 _s→暫存原等級 _auditRecoveredLevels→蓋 _authoritativeRestoreAt 乾淨重載。告知 UI 點確認→回收成功→設 localStorage _gmcrPostReclaimAudit_{uid}→1.5s 重載。',
-      '★ v3.16.99【階段2·二次確認·index.html】_maybeShowAccountAuditOnLogin 開頭改:僅「剛回收帳號(localStorage _gmcrPostReclaimAudit_{uid} 在)」解除 v3.16.31 早退、走原有「本機+雲端都查無自己 uid 紀錄才開 _openAccountAudit」審查(此時清單只剩沒被回收的)+消耗旗標+清封存旗標讓審查能跑;其餘帳號維持 v3.16.31 止血不彈(不影響全校)。可逆:二次確認「不是我的」走既有 disown(GM 可一鍵救回)。',
-      '★ v3.16.99【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 可選串接。七點版本同步 → v3.16.99。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.79)。本輪改 index.html(自動回收引擎+掃描+orchestrator+告知UI+階段2串接+登入hook)+game_changelog.js;v3.16.98 GM 補償批次回收 admin_panel.js UI 一併輸出;hero_db.js 僅 manifest 版號免重傳。⚠ 載入路徑+自動回收=高風險區·建議老師先用測試帳號實測階段1(該收的收/不該收不出現)+階段2再放心全校。',
-    ],
-  },
-  // v3.16.98 — GM「補償批次回收」(後台工具·依台灣日期·無真實解鎖紀錄即收·含已練)
-  {
-    ver: 'v3.16.98',
-    date: '2026-06-30',
-    adminOnly: true,
-    brief: [
-      '🎁【後台·GM 補償批次回收】老師後台「🔴 過度補回稽查與回收」卡新增「🎁 GM 補償批次回收(依日期·無真實解鎖紀錄即收·含已練)」:把某次救援大量補進、但學生自己查無真實解鎖紀錄的 compensation 英雄,依台灣補償日期整批列出、逐批或逐位回收(即使已練到高等也收;學生自己抽到/解鎖/老師正式補發/起始角一律保留不誤刪)。受影響學生會收到「老師的更正通知」登入彈窗。(玩家端一般無感)',
-    ],
-    items: [
-      '★ v3.16.98【判定·index.html】新增 _computeCompBatchesFromDoc(d,uid):讀「完整」_heroUnlockHistory 逐筆,以「自己 uid(或無 uid 早期)·source」分類 → realUnlock = source 不在 SUSPECT{compensation,legacy_grandfather,migration_seal,admin_delete,audit_error_recovered}(故 summon_rare/ticket_*/maokong/admin_grant/initial/player_confirmed/空字串 = 真實 → 永久保護);compDates = source==compensation 的台灣日期集合(_twDateKeyForComp 用 +8 偏移+getUTC*+手動補零·不依賴執行時區)。候選 = 非初始8(_ARENA_INITIAL_HEROES)且 無 realUnlock 且 有自己 compensation 紀錄 → 依日期分組。★ legacy_grandfather 刻意算 SUSPECT(突破 v3.16.84「練過自動補蓋 UID」洗白),故拘留者 Lv.36 等已練但無真實解鎖者收得回(v3.16.92 effort 閘門收不回)。',
-      '★ v3.16.98【掃描/回收·index.html】_fbAdminScanAllCompBatches():getDocs 全體 → 依台灣日期聚合 batches[{date,ownerCount,totalHeroes,owners[{uid,email,displayName,heroes[{name,lv}]}]}](日期新→舊)。_fbAdminReclaimCompBatchForUid(uid,dateStr,heroNames):getDocFromServer 權威重判 → 只收「仍是該日 compensation 且無真實解鎖」∩ 傳入名單 → 走既有 _fbAdminBulkRemoveHeroes(清 unlockedHeroes+6 養成表+全 _s+至寶解裝保留本體·寫 admin_delete 可逆不復活·蓋 _authoritativeRestoreAt 乾淨重載)·不帶 compensate=不補償·寄 type=comp_batch_reclaim 更正通知。',
-      '★ v3.16.98【面板·admin_panel.js】「🔴 過度補回稽查與回收」卡內新增子區塊 _initCompBatchReclaimSection:🔍 掃描 → 每日期批次卡(header 日期/N位/M隻 +「🗑 回收此整批」+ 逐位列玩家英雄晶片[Lv/⚠已練]+「🗑 收回這位」)。逐批 _reclaimBatch、逐位 _reclaimOne,皆 confirm 警告含已練、權威重判、進度顯示。6/25 21:25+21:31 聚成同一「2026-06-25」批一鍵收·6/22 另成一批不誤收。無 ?.、_esc HTML 跳脫。與 v3.16.92「查無紀錄」工具並存(保守只收 Lv1 vs 放寬收已練)。',
-      '★ v3.16.98【驗證/版本】index.html 20 個 inline script node --check 全過、0 lone surrogate;admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.16.98。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.78)。本輪改 index.html(3 後端函式)+admin_panel.js(子區塊 HTML+JS)+game_changelog.js;hero_db.js 僅 manifest 版號免重傳。另:任務1「INDEX 登入優化」本輪未動(全體 900 學生命脈·高風險·建議單獨一輪做+單獨測·見文字簡述)。',
     ],
   },
 ];
