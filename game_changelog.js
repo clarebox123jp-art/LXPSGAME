@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-02  / 目前主程式版本:v3.29.0(新增 GM「🎓 課堂獎勵加成」:隨機一般科目 +25% 知識幣/經驗/掉寶·可設持續時數開關)
+//  最後更新:2026-07-02  / 目前主程式版本:v3.30.0(鬥技場「📊 傷害排行」·六隻起始英雄初始圖修復·GM 可開關課堂複習 🎁+25%/⭐再+25% 全部加成)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,24 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.30.0 — 鬥技場「📊 傷害排行」;六隻 R 起始英雄初始圖修復(需上傳 6 張圖檔);GM 雙開關 課堂複習 🎁+25%/⭐再+25%(冒險+知識王)
+  {
+    ver: 'v3.30.0',
+    date: '2026-07-02',
+    brief: [
+      '📊【鬥技場新增「傷害排行」!看看你的最強一擊】鬥技場主頁右上角多了一顆「📊 傷害排行」按鈕,點開就能看到你的每位英雄、每個招式打出過的「最大單次傷害」排行榜(由高到低,前三名還有獎牌標記)。每打完一場鬥技場都會自動更新紀錄,快去刷新你的最強一擊吧!(答題獎勵的固定傷害不列入,比的是英雄招式的真本事)',
+      '🖼️【六隻起始英雄的圖片回來了】幼兒園小孩、弦樂團員、動物學家、小劇團員、程式設計師、電腦繪圖師這六隻起始英雄,先前初始(LV1)的可愛版圖片一直讀不到、顯示破圖,現在已經修復,圖片會正常顯示囉!',
+      '📖【課堂複習的加成獎勵改由老師控制】課堂複習的兩層加成——「🎁 獎勵 +25%」(冒險關卡和知識王都有)和某些單元的「⭐ 加強複習期間獎勵再 +25%」——現在都改成老師可以開關。老師關閉時,對應的加成標籤會消失、結算也不再加成;老師配合課程進度重新開啟後就會恢復。看到 +25% 標籤亮著,就代表老師希望大家多練那些題庫喔!',
+    ],
+    items: [
+      '★ v3.30.0【鬥技場傷害排行·index.html·需求3】資料源沿用既有 doDmg hook 的 G._arenaDmgSources(v3.15.54·只在鬥技場且攻擊者為我方時收集),push 物件新增一欄 fx=opts.fixedDmg(標記答題獎勵/固定傷害·純加欄位,arena.js 的 arenaDamageDetail 聚合只讀既有 4 欄=零回歸)。新增 window._arenaDmgRankAbsorb:於三個鬥技場結算點(10 回合上限 nextRound、正常 KO _showResultWithDrama hook、投降)在 _arenaSettleReward→_arenaSubmitBattleLog 清空來源之前吸收,依「英雄+招式」鍵取最大單次 amount、排除 fx,max-merge 寫 localStorage(lxps_arena_dmg_rank_綁uid·上限 200 鍵)→天然冪等,重複吸收無害。純本地、零雲端、零經濟風險;冒險/世界BOSS 一律不吸收(_adventureMode 守門)。arena.js 檔案未改、維持 v3.15.60 免重傳。',
+      '★ v3.30.0【傷害排行 UI·index.html】鬥技場大廳標題列(al-header)離開鈕左側靜態新增「📊 傷害排行」鈕(inline onclick 執行期查 window,免跨 script 依賴);window._arenaShowDmgRank 開全螢幕視窗(z=2147483647·點背景/✕ 關閉·完全鏡像 v3.28.0 交換記錄模式),列「英雄 × 招式 × 💥最大傷害」降序前 100 名,前三名 🥇🥈🥉;空狀態說明依 _artStyle 備簡單風/精緻風兩版(鐵律1.232)。',
+      '★ v3.30.0【六隻 R 起始英雄初始可愛版圖 404 根因與修復·免改程式】根因:hero_db.js 這六隻的 LV1 底圖 URL(Q幼兒園小孩(縮圖).png 等 6 檔)指向 LXPSGAME repo,但這些檔案只存在於早期舊 repo「clarebox123jp-art/-」,批次改 URL 到 LXPSGAME 時從未搬移(git 全歷史查證:LXPSGAME 從未存在這 6 個檔名)→ 上線以來一直 404。修法:自舊 repo 救回原始 6 張 PNG,由老師上傳到 LXPSGAME repo 根目錄(檔名必須一字不差)→ 零程式變更、零風險。LV10 進化圖與其他起始英雄(籃球隊員/直笛團員/田徑隊員/小力)不受影響。',
+      '★ v3.30.0【GM 雙開關:課堂複習 🎁基礎+25% / ⭐加強複習 再+25%·index.html+admin_panel.js】老師需求:所有課堂複習加成皆可開關,依課程進度決定學生選題庫的動力。新增雲端旗標 gameConfig/reviewBoost={baseEnabled,doubledEnabled,updatedAt,updatedBy}(同 classRewardBoost 規則:玩家讀/GM 寫·免改 firestore.rules·獨立文件不被課堂獎勵加成 merge:false 覆寫);學生端監聽 _fbWatchReviewBoost(掛休息排程同一啟動點·回呼即時刷新關卡頁黃色 flash)+雙中央閘門 window._reviewBaseActive/_doubledReviewActive(欄位===false 才關·讀不到雲端=預設全開=維持現狀·向下相容)。基礎 +25% 套閘 6 點:冒險結算 _advCalcRewardMult 的 _isReviewSubject(唯一冒險發獎點·下游 isReview UI 連動消失)、關卡頁「課堂複習獎勵增加中」flash(_advRefreshReviewBonusUI 關閉時隱藏)、冒險科目選單群組標題 +25% 字樣、知識王結算擲骰 _kingRollReviewBonus 閘門+結算橫幅、知識王大廳卡標 🎁+25%、挑戰鈕浮籤與換科目 log。再+25% 套閘 5 點:直達鈕 _kingGetDoubledReviewTopics、大廳卡標 _isLeftDoubled、結算 _isDoubledSubject、冒險選單兩 render 的 ⭐ badge。GM UI 在「🎓 課堂獎勵加成」卡內子區塊「📖 課堂複習加成開關」:狀態列+查詢+兩組開/關四鈕(_adminReviewBoostQuery/Set·寫入前先讀舊值保留另一欄·無可選串接·同卡免側欄三點同步)。課堂複習科目分區/題庫本身不受開關影響、照常可選。',
+      '★ v3.30.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.30.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.17.2)。本輪改 index.html＋admin_panel.js(版號＋加強複習開關 GM UI)＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳;arena.js 未改、維持 v3.15.60。另需老師上傳 6 張圖檔到 repo 根目錄。',
+    ],
+  },
+
   // v3.29.0 — 新增 GM 選單「🎓 課堂獎勵加成」(隨機一般科目·+25% 知識幣/經驗/掉寶·持續時數開關)
   {
     ver: 'v3.29.0',
@@ -277,20 +295,6 @@ window.GAME_CHANGELOG = [
       '★ v3.17.3【下架帳本不全工具·admin_panel.js】移除 GM「🎁 補償批次回收(依日期·無真實解鎖紀錄即收·含已練)」整支工具(HTML 子區塊 + _initCompBatchReclaimSection wiring 129 行)→ 留碑文。原因:它的判定壓在「帳本紀錄寫得齊」這個前提上,而紀錄當初就沒寫齊(=根治前的病根)→ 前提不成立·留著下次還會誤收已練的正當英雄。後端 _computeCompBatchesFromDoc/_fbAdminScanAllCompBatches/_fbAdminReclaimCompBatchForUid 保留為 dead code(無 UI 入口·不再被呼叫)·不貿然刪以免動到依賴鏈。',
       '★ v3.17.3【關閉玩家端自動回收·index.html】_GMCR_AUTO_RECLAIM_ENABLED 由 true 改 false(永久停用)。玩家端登入自動回收(v3.16.99)沿用同一套有缺陷的 _computeCompBatchesFromDoc 判定·對白名單日期的 compensation 英雄自動回收→同屬「帳本不全會誤收」風險·與 GM UI 一併下架。閘門 L≈115642 if(!_GMCR_AUTO_RECLAIM_ENABLED) return 早退·不動任何資料。',
       '★ v3.17.3【保留/範圍/驗證】保留 v3.17.2「🛟 補償批次回收·一鍵無損救回」(救回既有誤收·從存檔還原原等級+寫 admin_grant 永久免疫)。v3.16.92「查無紀錄」工具(只收 Lv1 沒練·風險低)暫留·老師可視需要再決定移除。本輪改 index.html(根治發放紀錄+關自動回收+5處版號)+admin_panel.js(移除補償批次回收 UI/wiring+版號)+game_changelog.js;hero_db.js 內容未改免重傳;不涉新 firestore 集合/欄位。七點版本同步→v3.17.3。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.83)。',
-    ],
-  },
-  // v3.17.2 — GM 補償批次回收·一鍵無損救回(從存檔還原等級/養成 + 寫 admin_grant 永久免疫)
-  {
-    ver: 'v3.17.2',
-    date: '2026-06-30',
-    brief: [
-      '🛟【英雄被誤收的同學,老師會連同原等級幫你還回來】先前老師在清理「重複補發的英雄」時,因為早期的取得紀錄沒有寫齊,可能不小心把少數同學自己努力取得、甚至已經練到高等的英雄也一起收走了,非常抱歉!老師後台已新增「無損救回」工具:會從你的雲端存檔讀回那些英雄原本的等級與技能/天賦/爆發/素質,完整地還給你(不是退回 1 級重練),而且還回來的英雄之後不會再被任何清理工具誤收。如果你發現有英雄不見了,登入後留意老師的道歉與還原通知即可。',
-    ],
-    items: [
-      '★ v3.17.2【補償批次回收·一鍵無損救回·index.html+admin_panel.js】根治「v3.16.98 補償批次回收誤收正當英雄、且現成救回工具會還原成 Lv1」:根因 _fbAdminBulkRemoveHeroes 收回時把等級+5養成表+經驗整批 _clean 清掉、且未暫存原等級(不像 v3.16.19 存 _auditRecoveredLevels)→ 舊救回工具讀不到原等級只能補 Lv1。救星=回收只 updateDoc 主檔、完全沒碰三槽存檔(saves/live、saves/safe),回收前完整等級/養成原封不動留在存檔槽 → 從那裡讀回 = 無損還原。',
-      '★ v3.17.2【三後端函式·index.html】新增 _fbReadHeroGrowthFromSaves(讀主檔+saves/live+saves/safe,對每隻英雄取等級最高那槽整包回傳養成)+ _fbAdminScanCompReclaimedHeroes(掃全體,鎖定「最新一筆=admin_delete 且 reason 含『補償批次回收』、且現已不在 unlockedHeroes」的英雄,並從存檔讀回原等級供核對·只對候選玩家讀存檔)+ _fbAdminRestoreCompReclaimedForUid(權威重判→從存檔還原等級/養成只升不降→寫 admin_grant[auditRestored]永久免疫任何回收→寄道歉通知)。',
-      '★ v3.17.2【GM UI·admin_panel.js】「🔴 過度補回稽查與回收」卡內、「🎁 補償批次回收」子區塊下方新增「🛟 補償批次回收·一鍵無損救回」子區塊:🔍 掃描列出每位被誤收英雄(晶片標「LvN 可還原」或「存檔無料只能Lv1」)→「🛟 救回這位」或「🛟 全部一鍵救回」(走 _fbAdminRestoreCompReclaimedForUid·救回前再判一次)。無 ?.·免三點同步(加在既有卡內)。',
-      '★ v3.17.2【取捨/安全/範圍】帳本當初沒寫真實解鎖紀錄→分不出純污染 vs 正當取得→一律救回(合「誤刪是大忌、保守漏收可接受」鐵律);少數連 safe 槽都被覆蓋者只還原本體(Lv1·會標示·可另循帳號救援個案處理)。鎖定 admin_delete+「補償批次回收」reason→不誤救正常手動刪/暴增收回。建議救回後停用「補償批次回收」工具(其判定壓在帳本紀錄完整性、前提不成立);根治方向=發放當下就把 ticket/admin_grant 紀錄寫進帳本。本輪改 index.html+admin_panel.js+game_changelog.js;hero_db.js 內容未改免重傳;不涉新 firestore 集合/欄位(GM 走 isAdmin 既有路徑)。七點版本同步→v3.17.2。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.82)。',
     ],
   },
 ];
