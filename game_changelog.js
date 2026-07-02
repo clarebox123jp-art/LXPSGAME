@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-02  / 目前主程式版本:v3.27.0(帳號救援申請新增「📩 老師的回覆」查看駁回理由與時間;老師端審核工具優化)
+//  最後更新:2026-07-02  / 目前主程式版本:v3.29.0(新增 GM「🎓 課堂獎勵加成」:隨機一般科目 +25% 知識幣/經驗/掉寶·可設持續時數開關)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,38 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v3.29.0 — 新增 GM 選單「🎓 課堂獎勵加成」(隨機一般科目·+25% 知識幣/經驗/掉寶·持續時數開關)
+  {
+    ver: 'v3.29.0',
+    date: '2026-07-02',
+    brief: [
+      '🎓【老師開「課堂獎勵加成」時，那個科目做冒險更好賺!】當老師開啟「課堂獎勵加成」並指定某一個科目時，你在那個科目的冒險關卡、打完結算時拿到的知識幣、經驗值和掉寶率都會 +25%(加成期間內)。老師會不定期換不同科目、也會設定持續時間，把握加成中的科目多多練習喔!',
+    ],
+    items: [
+      '★ v3.29.0【新增 GM 選單「🎓 課堂獎勵加成」·admin_panel.js】新卡片(世界BOSS 群組·仿龍王的祝福):可「🎲 隨機抽一個一般科目(不重複輪替·整輪抽完自動重來)」+設定持續時數+加成%(預設25)→「🎓 開啟/續期加成」;另有「⛔ 立即關閉」「🔄 查詢目前狀態」。寫 gameConfig/classRewardBoost={enabled,subject,pct,expiresAt,recent[],updatedAt,updatedBy}(gameConfig=GM 寫/登入讀·免改 firestore.rules)。科目清單取自 _kingGetSubjects(一般科目·排除日本關/特殊題庫)。新增 _adminClassBoostQuery/Roll/On/Off + _cbEsc;側欄項 + 世界BOSS 群組登錄;無真正可選串接。',
+      '★ v3.29.0【學生端套用·index.html】新增 gameConfig/classRewardBoost 監聽 _fbWatchClassBoost → window._classBoost(掛在休息排程監聽同一啟動點·登入後啟動)。加成折入既有 _gameBlessingMult:當「本場冒險科目 _advPlayerSubject == 指定科目」且啟用未過期時,倍率再 ×(1+pct%)→自動作用於既有所有結算發獎點(知識幣/經驗/各關掉寶率·與龍王的祝福同一套用面;英雄解鎖機率一律不吃加成)。與龍王的祝福乘算並存;科目不符或未啟用時倍率=1.0 完全零影響。',
+      '★ v3.29.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.29.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.17.1)。本輪改 index.html＋admin_panel.js＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳。需求6(GM 課堂獎勵加成)完成。',
+    ],
+  },
+
+  // v3.28.0 — 首頁風格按鈕改名「字少可愛風/字多精緻風」+切換說明比較彈窗;鬥技場放棄戰鬥確認框修正;鬥技之證交換記錄(玩家公告)
+  {
+    ver: 'v3.28.0',
+    date: '2026-07-02',
+    brief: [
+      '🧸✨【首頁風格按鈕改名，還多了「說明與比較」視窗】首頁那兩顆風格按鈕改名成「🧸 字少可愛風」和「✨ 字多精緻風」，一看就懂差別在哪。現在點下去不會馬上切換，而是先跳出一個「說明與比較」視窗：用同一隻英雄的兩種風格圖片讓你比一比，並清楚說明——字少可愛風＝說明文字比較少、圖畫比較可愛；字多精緻風＝說明文字比較完整、部分英雄與場景圖片更精緻。看好再選，或按「先不改，關閉」離開。（兩種風格遊戲內容完全一樣，只差文字多少和部分圖片）',
+      '🏳️【鬥技場「放棄戰鬥」的確認視窗不再被蓋住】以前在鬥技場要放棄一場沒打完的戰鬥時，跳出來的「確定放棄？」視窗有時會被鬥技場畫面蓋住、按鈕點不到。現在這個確認視窗會正確浮在最上層，看得到也點得到。',
+      '📜【鬥技之證兌換商店新增「交換記錄」】在「⚔ 鬥技之證兌換商店」右上角多了一顆「📜 交換記錄」按鈕，點開就能看到你用鬥技之證換過哪些獎勵、以及每一筆兌換的時間，方便你回顧自己換了什麼。',
+    ],
+    items: [
+      '★ v3.28.0【首頁風格按鈕改名＋切換說明比較彈窗·index.html·需求5】「切換年齡層」兩鈕文字改名為「🧸 字少可愛風」「✨ 字多精緻風」；onclick 由直接 _setArtStyle 改為 _openStyleSwitchInfo()（重用既有首次登入比較彈窗 #style-onboarding-modal，動態帶入 _getStyleCompareSample() 同一隻起始英雄的可愛版/精緻版圖片）；彈窗開頭說明強化為強調「文字量差異＋部分英雄/場景圖片不同」，新增「先不改，關閉」鈕（僅手動開啟時顯示，首次登入強制選擇流程不受影響）；切換完成 toast 與讀條文字同步改名。內部變數/id/雲端偏好值（_artStyle、cute/premium、art-style-cute/premium-btn）完全不動＝沿用雲端既有偏好零風險。切換 UI 本身為選擇器（非依 _artStyle 分岔的內容），不受鐵律1.232 雙版限制；新增空狀態說明文字已備簡單風/精緻風兩版。',
+      '★ v3.28.0【鬥技場放棄戰鬥確認框 z-index 修正·index.html·需求2】玩家端「放棄鬥技場戰鬥？（記為一場戰敗）」確認框 _arena_discard_confirm 的 z-index 由 9950 提升到 2147483647（最上層），修正被鬥技場 overlay（z=2147483646）蓋住點不到的問題。並深度檢查其他鬥技場確認框：兌換確認框走全域 custom-confirm-overlay（z=2147483647）＋購買時 re-append 到 DOM 尾（v3.14.3 已解）；老師後台刪除鬥技場戰鬥記錄的確認走 _customConfirm（同 2147483647 最上層）或原生 confirm（瀏覽器層），本就在最上層、不會被蓋 → 皆無需再改。',
+      '★ v3.28.0【鬥技之證交換記錄·index.html·需求4】兌換發放成功後寫入一筆本地交換記錄（_arenaLogExchange，綁 uid 的 localStorage lxps_arena_exchange_log_{uid}，記獎勵名稱/花費鬥技之證/時間，只留最近 200 筆）；兌換商店標題列動態插入「📜 交換記錄」鈕（_arenaShowExchangeLog 開全螢幕視窗、最新在上、可關閉），空狀態說明備簡單風/精緻風兩版（鐵律1.232）。純本地顯示，完全不動雲端權威資料（鬥技之證持有量/發放邏輯）。',
+      '★ v3.28.0【arena.js 版號校正·index.html manifest】_LXPS_FILE_VERSIONS 內 arena.js 由誤植的 v3.17.9（該版 limit(150) 變更從未實際部署到 GitHub arena.js）還原為實際部署內容版本 v3.15.60，消除快取破壞字串與實檔版本漂移；arena.js 健康檢查（檢查3）比對的是 GitHub arena.js 內 VERSION 與本機 ARENA_CONFIG.VERSION（皆 v3.15.60）、不讀 manifest，故不影響、不會誤觸請更新提示。arena.js 檔案本身內容未改、不需重傳。',
+      '★ v3.28.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate；admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.28.0；GAME_CHANGELOG 維持 20 筆（移除最舊 v3.17.0）。本輪改 index.html＋admin_panel.js（僅版號對齊）＋game_changelog.js；hero_db.js 內容未改、維持 v3.25.0 免重傳。本輪完成 需求2/4/5 ＋ arena.js 版號校正；需求1（GM獎勵箱「重新整理」補領鈕）、需求3（鬥技場傷害/技能排行）、需求6（GM 課堂獎勵加成開關/隨機科目不重複/持續時間）為較大改動，留待後續各自專注、完整驗證後再交付。',
+    ],
+  },
+
   // v3.27.0 — 帳號救援申請新增「📩 老師的回覆」查看駁回理由與時間(玩家可見);老師端審核三項優化(adminOnly)
   {
     ver: 'v3.27.0',
@@ -259,36 +291,6 @@ window.GAME_CHANGELOG = [
       '★ v3.17.2【三後端函式·index.html】新增 _fbReadHeroGrowthFromSaves(讀主檔+saves/live+saves/safe,對每隻英雄取等級最高那槽整包回傳養成)+ _fbAdminScanCompReclaimedHeroes(掃全體,鎖定「最新一筆=admin_delete 且 reason 含『補償批次回收』、且現已不在 unlockedHeroes」的英雄,並從存檔讀回原等級供核對·只對候選玩家讀存檔)+ _fbAdminRestoreCompReclaimedForUid(權威重判→從存檔還原等級/養成只升不降→寫 admin_grant[auditRestored]永久免疫任何回收→寄道歉通知)。',
       '★ v3.17.2【GM UI·admin_panel.js】「🔴 過度補回稽查與回收」卡內、「🎁 補償批次回收」子區塊下方新增「🛟 補償批次回收·一鍵無損救回」子區塊:🔍 掃描列出每位被誤收英雄(晶片標「LvN 可還原」或「存檔無料只能Lv1」)→「🛟 救回這位」或「🛟 全部一鍵救回」(走 _fbAdminRestoreCompReclaimedForUid·救回前再判一次)。無 ?.·免三點同步(加在既有卡內)。',
       '★ v3.17.2【取捨/安全/範圍】帳本當初沒寫真實解鎖紀錄→分不出純污染 vs 正當取得→一律救回(合「誤刪是大忌、保守漏收可接受」鐵律);少數連 safe 槽都被覆蓋者只還原本體(Lv1·會標示·可另循帳號救援個案處理)。鎖定 admin_delete+「補償批次回收」reason→不誤救正常手動刪/暴增收回。建議救回後停用「補償批次回收」工具(其判定壓在帳本紀錄完整性、前提不成立);根治方向=發放當下就把 ticket/admin_grant 紀錄寫進帳本。本輪改 index.html+admin_panel.js+game_changelog.js;hero_db.js 內容未改免重傳;不涉新 firestore 集合/欄位(GM 走 isAdmin 既有路徑)。七點版本同步→v3.17.2。GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.16.82)。',
-    ],
-  },
-  // v3.17.1 — 更新流程友善化:不打斷戰鬥/知識王·黃色通知10秒自動隱藏·回關卡首頁才重整·重整前先同步雲端(玩家公告)
-  {
-    ver: 'v3.17.1',
-    date: '2026-06-30',
-    brief: [
-      '🔄【更新程式時更友善:不會打斷你的戰鬥與知識王】以前老師一更新遊戲,有時會在你戰鬥中、或做知識王挑戰時,突然要你重新整理、打斷進行到一半的進度。現在改成:偵測到新版本時,如果你正在「戰鬥中、做知識王挑戰、或打世界 BOSS」,系統絕對不會打斷你;會一直等到你回到關卡選擇首頁、而且沒有正在進行的對戰時,才自動幫你套用新版本。',
-      '⏱️【上方黃色更新通知 10 秒會自動收起】畫面最上方那條黃色的「老師更新了遊戲」通知,現在最多顯示 10 秒就會自動收起來,不會一直卡在畫面上;右上角的「🔄 重新整理」按鈕仍然會亮著提醒你有更新,你也可以隨時自己按它立刻套用。',
-      '☁️【重新整理前一定先幫你存到雲端】系統在自動重新整理、套用新版本「之前」,一定會先把你目前的存檔同步到雲端(以雲端為準)再重整,確保你的等級與進度不會因為更新而遺失。',
-    ],
-    items: [
-      '★ v3.17.1【更新流程友善化·index.html】老師需求:更新程式時(一)不打斷正在戰鬥/做知識王/打世界BOSS的玩家;(二)黃色置頂更新通知最久顯示10秒就自動隱藏;(三)等玩家回到關卡選擇首頁才強制重新整理;(四)重整前務必先把存檔自動同步到雲端。',
-      '★ v3.17.1【新增三 helper·index.html】_lxpsBusyNoReload()=戰鬥中(_isInBattleNow)||世界BOSS(_wbInWorldBossMode/_wbSoloPracticeMode)||知識王挑戰流程中(king-question-popup/king-start-popup/king-challenge-popup/king-result-popup/king-today-result-popup 任一開著);_lxpsSafeToForceReloadNow()=不忙 且 雲端已載完(_cloudLoadDone) 且 adventure-overlay 顯示中(=回到關卡選擇首頁且閒置才算可安全強制硬刷);_lxpsSyncThenHardRefresh(reason)=先 await gameCloudSave()(v3.17.0 已容錯化、localStorage 爆滿不再中斷雲端寫入)再 _hardRefreshForPWAUpdate(),加 6 秒逾時兜底防校園慢網卡住 await、單次旗標 _lxpsSyncRefreshInFlight 防重入。',
-      '★ v3.17.1【改三入口·index.html】_lxpsTriggerForcedUpdate:偵測到更新時若非「安全可重整」(戰鬥/知識王/世界BOSS/非關卡首頁)一律延後→設 _pendingForcedUpdate + 發 banner(雲端載入中只記旗標不彈 banner 打擾),僅在關卡首頁閒置才走防硬刷迴圈計數→同步雲端後硬刷(原「非戰鬥即直接硬刷」收斂);_showUpdateAvailableBanner 加 10 秒 setTimeout 自動淡出隱藏(gmBannerSlideUp·保留 _pendingForcedUpdate 與右上🔄按鈕亮起);_flushPendingUpdateIfAny(回關卡頁 L71584 hook + 雲端同步完成 L123838 hook)改用 _lxpsSafeToForceReloadNow 判定(取代原 _isInBattleNow·涵蓋知識王/世界BOSS/非首頁/載入中)、硬刷前改走 _lxpsSyncThenHardRefresh。_hardRefreshForPWAUpdate 只清 Cache Storage + 卸 SW、不碰 localStorage/Firestore → 已先同步雲端故重整無損;其戰鬥中二次確認分支不受影響(本流程只在非戰鬥+首頁呼叫)。',
-      '★ v3.17.1【驗證/版本/範圍】index.html 19 個非 module inline script + 1 個 Firebase module 全數語法檢查通過、三檔 0 lone surrogate;admin_panel.js 語法過、0 個真正可選串接(?.);game_changelog.js node --check 過、維持 20 筆(移除最舊 v3.16.81)。七點版本同步 → v3.17.1。本輪疊在 v3.17.0 之上(逃走小怪逃光卡死 + 無法同步/英雄等級倒退 兩根因修復已含其中),改 index.html(版本更新系統 4 區塊)+ game_changelog.js;admin_panel.js 僅版號對齊;hero_db.js 內容未改免重傳。注意:玩家停在關卡首頁不動時靠每 90 秒偵測輪詢觸發;知識王作答完關閉彈窗後若未經過回關卡頁 hook,亦由 90 秒輪詢兜底套用。⚠ 仍未動「INDEX 登入優化(約 900 人同時登入)」高風險任務,建議單獨一輪做+單獨測。',
-    ],
-  },
-  // v3.17.0 — 逃走小怪逃光後卡死修復 + 無法同步/英雄等級倒退修復(玩家公告)
-  {
-    ver: 'v3.17.0',
-    date: '2026-06-30',
-    brief: [
-      '⚔️【逃走的小怪逃光後卡住、戰鬥結束不了 → 修好了】寶箱怪、小惡魔這類「會逃跑」的小怪,如果牠們是場上最後的敵人、全部逃光之後,原本會卡在戰鬥畫面動彈不得(沒有敵人可以打、戰鬥又不會結束)。現在敵人全部逃光時,戰鬥會正確判定為「清場」、自動結束並離開戰鬥,不再卡死。(聖甲蟲那種「留在場上變灰」的逃跑本來就正常,不受影響)',
-      '☁️【一直「無法同步雲端」、英雄等級莫名變低 → 找到根本原因修好了】少數同學(特別是共用 iPad)遇到「手動同步雲端一直失敗、試很多次都不行」,甚至「英雄等級打完一場後莫名倒退變低」。根本原因是:共用平板上累積了很多人的存檔備份,把瀏覽器的本機儲存空間塞爆了 → 導致存檔程序在「還沒寫到雲端之前」就中斷 → 雲端一直沒更新到你的新進度 → 重新整理就讀回比較舊(較低)的等級。現在已修好:本機空間塞爆時,系統會自動清掉「別人帳號的舊備份、以及過期的備份」釋放空間;而且就算本機真的寫不進去,也一定會照常把資料同步到雲端(以雲端為準),不再卡同步、也不再倒退。',
-    ],
-    items: [
-      '★ v3.17.0【逃走小怪卡死·index.html·checkWin】根因:寶箱怪/小惡魔逃跑會把自己從 G.p2 用 splice 移除 → p2 變成空陣列;v3.11.4 防呆見「空 p2」即 return false 不判勝利(原為擋黑暗球 init 失敗、p2 從沒生成卻直接戰鬥勝利的漏洞),卻誤把「敵人全逃光」也當成 init 失敗 → 戰鬥永不結束、玩家卡死(回報1 maokong mini 戰 round3 p2 空·回報4 同源)。修法:checkWin 開頭設 G._everHadEnemies(敵人存活時設 true);空 p2 防呆改判 if(!G._everHadEnemies) 才擋(從頭到尾沒出現過敵人=init 失敗),否則落到下方正常結算(mini 戰 _advMiniBattleActive→advFinishMiniBattle(true)、一般戰→_showResultWithDrama(true))。聖甲蟲 v3.15.72 已改「留場變灰」不 splice·本就不受影響;逃跑兩路徑(主動技能箱底抹油 + 被動)既有 if(checkWin())return 現會正確 return true 結束。',
-      '★ v3.17.0【無法同步/等級倒退·index.html·gameCloudSave】根因(回報「手動同步雲端失敗·試八次」「學霸 22→8 倒退」):共用 iPad 累積多位學生 lxps_{uid}_progress 整包存檔鏡像 → localStorage(約 5MB)爆滿 → gameCloudSave 本地鏡像 localStorage.setItem 拋 QuotaExceededError 往上炸、整個函式中斷在「雲端寫入(_fbSaveLive/_fbSave)之前」→ 雲端永遠寫不進去(同步失敗八次)、本地練的新等級沒上雲 → 重整讀回舊雲端 = 等級倒退。這是被誤當 merge/載入問題追了很多版的真兇。修法:① 本地鏡像 setItem 包 try-catch,即使寫不進去也照常往下做雲端寫入(雲端權威);② 新增 _lxpsFreeLocalStorageQuota(currentUid):爆滿時安全清「其他帳號的 lxps_{別人uid}_progress 鏡像(雲端權威)+ 過期備份(任何 *_expiresAt 時間戳已過)」釋放空間後重試一次,絕不動當前帳號資料或未過期備份 → 零誤刪風險。',
-      '★ v3.17.0【驗證/版本】index.html 19 個非 module inline script + 1 個 Firebase module 全數語法檢查通過、0 lone surrogate;admin_panel.js/game_changelog.js 語法過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.17.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.80)。本輪改 index.html(checkWin 3 處 + gameCloudSave 2 處)+ game_changelog.js;admin_panel.js 僅版號對齊;hero_db.js 內容未改免重傳。⚠ 仍未動「INDEX 登入優化(約 900 人同時登入)」高風險任務,建議單獨一輪做+單獨測。',
     ],
   },
 ];
