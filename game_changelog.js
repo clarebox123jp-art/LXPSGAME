@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-04  / 目前主程式版本:v4.8.0(龍王總HP 1000萬+龍王戰替補列表篩選/條件搜尋/圖鑑整備+GM獎勵箱🔄重新整理)
+//  最後更新:2026-07-04  / 目前主程式版本:v4.9.0(寵物小屋六大更新:首入送五色鳥兩段教學+每日夥伴鎖定8:00重置+飼料分類頁籤+圖鑑z-index+iPad寵物鈕+召喚寵物池改馴養口徑)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,28 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.9.0 — 🐾 寵物小屋六大更新:首入送五色鳥+兩段教學、每日夥伴鎖定(早上8:00重置)、飼料分類頁籤、圖鑑不再被蓋住、iPad寵物鈕修正、召喚寵物改「未馴養」口徑
+  {
+    ver: 'v4.9.0',
+    date: '2026-07-04',
+    brief: [
+      '🐦【第一次進寵物小屋送你一隻寵物!】現在第一次走進寵物小屋,會自動獲得可愛的「五色鳥」!教學也變得更貼心:先帶你把五色鳥「請進小屋入住」,入住完成後才開始教你撫摸、餵食、玩耍——一步一步跟著做就對了!',
+      '🔒【開始互動前,先確認今天的夥伴!】每天第一次要和寵物互動(撫摸/餵食/玩耍)時,會先跳出確認視窗,列出今天入住的 3 隻寵物問你「今天要和牠們一起玩嗎?」——按下「✅ 開始互動」之後,今天就不能再更換入住寵物囉!要等到隔天「早上 8:00」互動次數重置後才能換新夥伴(每日互動的重置時間也統一改為早上 8:00)。',
+      '🍽【飼料區大改版:分類頁籤!】小屋下方的「動物主食大百科」改成清楚的分類頁籤(🌱植物甜食/🐛蟲/🍖肉/🐟水產/✨特殊),一次看一類、字變大、拖出來的飼料圖示也更大!最重要的是:以前在 iPad 上按不到的「糞球」等最下排飼料,現在切到分類就一定點得到、拖得到!',
+      '📖【寵物圖鑑不再被小屋蓋住!】在寵物小屋按左邊桌上的大書本翻開寵物圖鑑時,圖鑑會好好地顯示在最上層,不會再被小屋畫面蓋住看不到了!',
+      '📱【iPad 首頁「🐾寵物」按鈕消失修正!】部分 iPad 因為校園網路不穩,首頁下方的「寵物」按鈕會整節課不見——已經修好了!就算網路暫時讀不到設定,寵物按鈕也會正常顯示,還會自動重試連線。',
+      '🌌【召喚星空的寵物改為召喚「未馴養」寵物!】召喚星空 SSR/SR 出現寵物的判定修正:只要是「還沒馴養」的寵物都有機會召喚到(以前圖鑑看過就會被排除,害你的召喚機會變少)!要等該稀有度的寵物「全部馴養完成」,才會轉成寵物訓練書。',
+    ],
+    items: [
+      '★ v4.9.0【首入小屋贈五色鳥+兩段式教學·index.html】_petMaybeFirstTutorial:首次進小屋(教學完成鍵未寫)且未馴養五色鳥 → _petRecordTame(五色鳥, house_first_gift) 自動馴養入庫(走既有統一入口:入帳本/圖鑑收錄/獎章檢查)+雙版 toast+雲端存檔。教學 _petHouseTutorial 加第二參數 phase:intro=前 3 步(歡迎/入住/圖鑑)+自訂「先請五色鳥入住」結尾步,結束不寫完成鍵、掛 _petTutAwaitCheckIn 旗標;玩家在 _petHousePickResident 完成入住 → 自動接 play 段(撫摸/餵食/玩耍/好感/開始體驗後 5 步),跑完才寫完成鍵。intro 段按「略過教學」=直接寫完成鍵退出不再引導;小屋內手動「❓教學」不帶 phase,維持完整 8 步不變。',
+      '★ v4.9.0【每日互動 8:00 重置+當日夥伴鎖定·index.html】_petTwDateStr 由台灣午夜換日改「取 UTC 日期」=台灣早上 8:00 換日(同每日獎勵題庫口徑);新增 _petHouseLockInfo/_petHouseLockToday/_petHouseAskLock(確認視窗 z-9650·列出目前入住寵物·雙版文案):撫摸(_petHouseStrokeStart)/餵食(_petHouseFeedMode+_petHouseFoodDragStart)/玩耍(_petPlayStart) 四個互動入口首次觸發先確認,按「✅ 開始互動」把當下入住名單寫入 _petHouseDaily.lock;鎖定後 _petHousePickResident(請寵物入住/更換)與寵物卡「↩ 回家」皆擋下並提示明日早上 8:00 重置。lock 隨既有 petHouseDaily_s 序列化上雲,載入「僅雲端有當日」分支一併採信、同日走聯集口徑(任一端鎖了就算鎖,防換裝置重挑夥伴)。⚠ 部署當天若在台灣 00:00~08:00 之間,互動日鍵會往回移一天,當日互動可能多重置一次(一次性過渡、無害)。',
+      '★ v4.9.0【飼料分類頁籤+放大·index.html】_petHouseRenderFood 重寫:根因是食物按鈕 CSS touch-action:none(拖曳必需)讓整個食物面板在 iPad 無法手指捲動,原五列全展開超出 34vh 時最下排(✨特殊:糞球等)永遠捲不到=按不到;改為分類頁籤(window._phFoodCat·一般按鈕點擊切換)一次只渲染一類 → 每頁內容必在可視高度內,全部飼料保證點得到/拖得到。標題 19→24px、食物鈕 16→22px+內距放大,拖曳幽靈圖示 ._ph-food-ghost 42px×1.35 → 60px×1.5;拖曳判定/餵食獎懲/存檔完全沿用 v4.1.0 不變。',
+      '★ v4.9.0【寵物圖鑑 z-index 修正·index.html】根因:pet-page-overlay 位於 #adventure-overlay(z-index:510 stacking context)內,自身 z-9100 永遠壓不過掛在 body 上的小屋 overlay(z-9400)。openPetPage 在小屋開著時把圖鑑 overlay 暫時搬到 body 並改 position:fixed+z-9550(手法同 v4.8.0 龍王替補圖鑑整備),closePetPage 還原 DOM 位置與 z;寵物詳情卡 pet-detail-modal 本就是 body fixed z-9700 不受影響。',
+      '★ v4.9.0【iPad 首頁寵物鈕消失修正·index.html】根因:寵物系統雲端開關(gameConfig/petSystemSwitch)在校園網路不穩時 getDoc 偶發失敗 → _petSysCloudOpen 停留 null → 退回硬編碼預設 false → _applyPetSysGate 把「🐾寵物」鈕整節課藏起來。三重修法:①window._PET_SYS_PUBLIC false→true(系統已對全體正式開放,讀不到開關時 fail-open;GM 雲端「暫時關閉」在正常讀取下依然生效)②_fbLoadPetSysSwitch 讀取失敗自動重試最多 5 次(每 6 秒·_petSwitchRetry)③_applyPetSysGate 改冪等寫入並掛入 _syncMobileNav 既有 500ms 週期,開關載入後 0.5 秒內按鈕必復原。',
+      '★ v4.9.0【召喚星空寵物池口徑修正·index.html】老師裁決:召喚出的是「未馴養的寵物」,全收錄判定=馴養寵物全收錄,而非寵物圖鑑解鎖全收錄。rare_ssr/rare_sr 兩處寵物池 filter 由 !_isPetCollected(pn) 改 !window._petIsTamed(pn)(typeof 守門同步改 _petIsTamed);原口徑會把「圖鑑看過但還沒馴養」的寵物排除在召喚池外,錯誤壓縮玩家召喚機率。寵物全馴養才走 fallback 轉寵物訓練書(SSR×6/SR×3·標籤同步改「英雄全收錄·寵物全馴養」)。⚠ 隨機寵物召喚卷 pet_summon_ticket 仍為圖鑑收錄口徑(老師本輪僅指示召喚星空,是否對齊待裁決)。',
+      '★ v4.9.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v4.9.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.26.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v4.5.0 免重傳,世界BOSS兩檔維持 v4.8.0 免重傳。',
+    ],
+  },
   // v4.8.0 — 🐉 龍王總 HP 提升到 1,000 萬 + ⚔ 替補英雄列表大升級(篩選/條件搜尋/圖鑑整備/縮圖)+ 🎁 GM 獎勵箱重新整理
   {
     ver: 'v4.8.0',
@@ -347,20 +369,6 @@ window.GAME_CHANGELOG = [
       '★ v3.27.0【老師端·駁回理由勾選·帳號救援申請審核·adminOnly】駁回改為勾選式：查不到獲得該英雄的解鎖記錄／該英雄為被共用平板存檔汙染的記錄／直接輸入駁回說明(可複選)，組成回覆記在申請上，學生即可在「📩 老師的回覆」看到。',
       '★ v3.27.0【老師端·解鎖記錄救援清單·帳號救援申請審核·adminOnly】在「英雄解鎖記錄」下方新增「🗂 本次申請・救援處理清單」，把本筆申請的英雄與至寶依 🔓申請救回／🗑申請刪除／🤖自動判定可救回 三種標記逐項列出、可逐一勾選，最後一鍵確認執行救援或刪除；沿用既有安全流程，刪除預設不勾(可逆)。並保留原本各類別的處理按鈕。',
       '★ v3.27.0【驗證與版本·帳號救援申請審核】index.html 全部 inline script 通過 node --check、無孤立代理字元；admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.27.0；GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.99)。本輪改 index.html＋admin_panel.js＋game_changelog.js；hero_db.js 內容未改、維持 v3.25.0 免重傳。',
-    ],
-  },
-  // v3.26.0 — 簡單風 英雄圖鑑 天賦/技能/爆發 精簡說明下方新增「📖 看完整說明」可開完整版視窗
-  {
-    ver: 'v3.26.0',
-    date: '2026-07-02',
-    brief: [
-      '📖【看不懂簡短說明？可以打開完整版！】在🧸簡單風的「英雄圖鑑」裡，天賦、技能、極限爆發的簡短說明下面，現在多了一顆「📖 看完整說明」按鈕——想知道更詳細的效果時，點一下就會跳出完整版說明視窗（和✨精緻風看到的完整說明一樣，含詳細數字），看完按「關閉」或點旁邊就能收起。✨精緻風本來就直接顯示完整說明，所以不會有這顆按鈕。',
-    ],
-    items: [
-      '★ v3.26.0【簡單風圖鑑加「看完整說明」鈕·index.html】_renderHeroDetail 於🧸簡單風(_isSimple)時，在 天賦 / 技能(S1·S2 各一) / 極限爆發 三處的精簡說明下方各加一顆「📖 看完整說明」鈕(共用新 helper _fullDescBtn(kind,name)，✨精緻風回傳空字串故不顯示)。點擊呼叫新全域函式 _showHeroFullDesc(kind,heroName)。',
-      '★ v3.26.0【完整說明內容與精緻風一致】彈窗顯示的完整說明與✨精緻風 inline 完全相同：天賦＝HERO_TRAIT[name].desc 原文；技能＝colorizeSkillDesc(_renderSkillFdWithLv(名稱, fd, 當前技能等級))；極限爆發＝_renderBurstFdWithLv(名稱, fd, 當前爆發等級)——皆帶該英雄「當前等級」的實際數值。查無對應資料時安全略過、不報錯不空窗。',
-      '★ v3.26.0【彈窗實作·相容】_showHeroFullDesc 走 body 層 position:fixed 全螢幕半透明底＋置中卡片(max-height:86vh 可上下捲動、字級 clamp 適配手機/平板)，點背景或「關閉」鈕關閉、卡片內 stopPropagation。以 var＋明確 top/left/right/bottom(不用 inset 簡寫)＋無可選串接(?.)撰寫，避免舊 iPad Safari「fixed 在 overflow 祖先內」失效與語法不相容。純新增顯示層，不動任何技能數值/邏輯/資料/存檔，也不改✨精緻風(premium 仍 inline 顯示完整說明、不出現此鈕)。',
-      '★ v3.26.0【鐵律1.232 遵循＋驗證/版本】此功能是讓🧸簡單風同學也能查看✨精緻風完整說明的橋樑：英雄說明本就兩版齊備(簡單風 sd inline／精緻風 fd·desc 於此視窗)，新增鈕與視窗文案僅簡單風出現、本即精簡好讀，premium 不需對應版本。index.html 20 個 inline script node --check 全過、0 lone surrogate；admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接(?.)。七點版本同步 → v3.26.0；GAME_CHANGELOG 維持 20 筆(移除最舊 v3.16.98)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳。',
     ],
   },
 ];
