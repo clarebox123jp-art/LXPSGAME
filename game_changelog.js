@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
-  // v4.9.0 — 🐾 寵物小屋六大更新:首入送五色鳥+兩段教學、每日夥伴鎖定(早上8:00重置)、飼料分類頁籤、圖鑑不再被蓋住、iPad寵物鈕修正、召喚寵物改「未馴養」口徑
+  // v4.9.0 — 🐾 寵物系統大更新:首入送五色鳥+兩段教學、每日夥伴鎖定(早上8:00重置)、飼料分類頁籤、圖鑑修正、iPad寵物鈕修正、寵物「相遇/收錄馴養」全站語義重定義+召喚改「未馴養」口徑、小屋體驗五修(桌鈕/三鈕同列/撫摸回饋/鬥技場禁寵/躲貓貓提示泡泡)
   {
     ver: 'v4.9.0',
     date: '2026-07-04',
@@ -22,7 +22,9 @@ window.GAME_CHANGELOG = [
       '🍽【飼料區大改版:分類頁籤!】小屋下方的「動物主食大百科」改成清楚的分類頁籤(🌱植物甜食/🐛蟲/🍖肉/🐟水產/✨特殊),一次看一類、字變大、拖出來的飼料圖示也更大!最重要的是:以前在 iPad 上按不到的「糞球」等最下排飼料,現在切到分類就一定點得到、拖得到!',
       '📖【寵物圖鑑不再被小屋蓋住!】在寵物小屋按左邊桌上的大書本翻開寵物圖鑑時,圖鑑會好好地顯示在最上層,不會再被小屋畫面蓋住看不到了!',
       '📱【iPad 首頁「🐾寵物」按鈕消失修正!】部分 iPad 因為校園網路不穩,首頁下方的「寵物」按鈕會整節課不見——已經修好了!就算網路暫時讀不到設定,寵物按鈕也會正常顯示,還會自動重試連線。',
-      '🌌【召喚星空的寵物改為召喚「未馴養」寵物!】召喚星空 SSR/SR 出現寵物的判定修正:只要是「還沒馴養」的寵物都有機會召喚到(以前圖鑑看過就會被排除,害你的召喚機會變少)!要等該稀有度的寵物「全部馴養完成」,才會轉成寵物訓練書。',
+      '🌌【召喚出的寵物改為「未馴養」寵物!】召喚星空 SSR/SR 與「隨機寵物召喚卷」的判定統一修正:只要是「還沒馴養」的寵物都有機會召喚到(以前圖鑑看過就會被排除,害你的召喚機會變少)!要等該稀有度的寵物「全部馴養完成」,才會轉成寵物訓練書/頂級飼料。',
+      '🏠【寵物小屋更好玩!】①寵物圖鑑按鈕變小、移到「動物主食大百科」上方,不再擋住第一隻寵物!②撫摸/餵食/玩耍三顆按鈕排成同一排,一眼看完!③撫摸的時候寵物會微微放大、輕輕上下搖晃,超有感覺!④玩躲貓貓時每次點擊,畫面中間會出現「💭 思考泡泡」偷偷告訴你距離:藍色=很遠、紅色=超近!⑤鬥技場為了公平,不能使用馴養寵物的力量喔。',
+      '👀🎓【寵物圖鑑全新雙狀態!】重新定義:打怪時「出現並帶過」的寵物=「👀 已相遇」(可以看牠的科普資料,但還不算收錄);「馴養成功」才是真正的「🎓 收錄馴養」!圖鑑每一區現在同時顯示「👀 已相遇 X/N」和「🎓 收錄馴養 Z/N」兩種進度,已相遇但還沒馴養的寵物卡片會掛「👀 已相遇」標籤,馴養完成則是「🎓Lv」標籤——目標就是把 28 隻全部收錄馴養!',
     ],
     items: [
       '★ v4.9.0【首入小屋贈五色鳥+兩段式教學·index.html】_petMaybeFirstTutorial:首次進小屋(教學完成鍵未寫)且未馴養五色鳥 → _petRecordTame(五色鳥, house_first_gift) 自動馴養入庫(走既有統一入口:入帳本/圖鑑收錄/獎章檢查)+雙版 toast+雲端存檔。教學 _petHouseTutorial 加第二參數 phase:intro=前 3 步(歡迎/入住/圖鑑)+自訂「先請五色鳥入住」結尾步,結束不寫完成鍵、掛 _petTutAwaitCheckIn 旗標;玩家在 _petHousePickResident 完成入住 → 自動接 play 段(撫摸/餵食/玩耍/好感/開始體驗後 5 步),跑完才寫完成鍵。intro 段按「略過教學」=直接寫完成鍵退出不再引導;小屋內手動「❓教學」不帶 phase,維持完整 8 步不變。',
@@ -30,7 +32,9 @@ window.GAME_CHANGELOG = [
       '★ v4.9.0【飼料分類頁籤+放大·index.html】_petHouseRenderFood 重寫:根因是食物按鈕 CSS touch-action:none(拖曳必需)讓整個食物面板在 iPad 無法手指捲動,原五列全展開超出 34vh 時最下排(✨特殊:糞球等)永遠捲不到=按不到;改為分類頁籤(window._phFoodCat·一般按鈕點擊切換)一次只渲染一類 → 每頁內容必在可視高度內,全部飼料保證點得到/拖得到。標題 19→24px、食物鈕 16→22px+內距放大,拖曳幽靈圖示 ._ph-food-ghost 42px×1.35 → 60px×1.5;拖曳判定/餵食獎懲/存檔完全沿用 v4.1.0 不變。',
       '★ v4.9.0【寵物圖鑑 z-index 修正·index.html】根因:pet-page-overlay 位於 #adventure-overlay(z-index:510 stacking context)內,自身 z-9100 永遠壓不過掛在 body 上的小屋 overlay(z-9400)。openPetPage 在小屋開著時把圖鑑 overlay 暫時搬到 body 並改 position:fixed+z-9550(手法同 v4.8.0 龍王替補圖鑑整備),closePetPage 還原 DOM 位置與 z;寵物詳情卡 pet-detail-modal 本就是 body fixed z-9700 不受影響。',
       '★ v4.9.0【iPad 首頁寵物鈕消失修正·index.html】根因:寵物系統雲端開關(gameConfig/petSystemSwitch)在校園網路不穩時 getDoc 偶發失敗 → _petSysCloudOpen 停留 null → 退回硬編碼預設 false → _applyPetSysGate 把「🐾寵物」鈕整節課藏起來。三重修法:①window._PET_SYS_PUBLIC false→true(系統已對全體正式開放,讀不到開關時 fail-open;GM 雲端「暫時關閉」在正常讀取下依然生效)②_fbLoadPetSysSwitch 讀取失敗自動重試最多 5 次(每 6 秒·_petSwitchRetry)③_applyPetSysGate 改冪等寫入並掛入 _syncMobileNav 既有 500ms 週期,開關載入後 0.5 秒內按鈕必復原。',
-      '★ v4.9.0【召喚星空寵物池口徑修正·index.html】老師裁決:召喚出的是「未馴養的寵物」,全收錄判定=馴養寵物全收錄,而非寵物圖鑑解鎖全收錄。rare_ssr/rare_sr 兩處寵物池 filter 由 !_isPetCollected(pn) 改 !window._petIsTamed(pn)(typeof 守門同步改 _petIsTamed);原口徑會把「圖鑑看過但還沒馴養」的寵物排除在召喚池外,錯誤壓縮玩家召喚機率。寵物全馴養才走 fallback 轉寵物訓練書(SSR×6/SR×3·標籤同步改「英雄全收錄·寵物全馴養」)。⚠ 隨機寵物召喚卷 pet_summon_ticket 仍為圖鑑收錄口徑(老師本輪僅指示召喚星空,是否對齊待裁決)。',
+      '★ v4.9.0【召喚星空寵物池口徑修正·index.html】老師裁決:召喚出的是「未馴養的寵物」,全收錄判定=馴養寵物全收錄,而非寵物圖鑑解鎖全收錄。rare_ssr/rare_sr 兩處寵物池 filter 由 !_isPetCollected(pn) 改 !window._petIsTamed(pn)(typeof 守門同步改 _petIsTamed);原口徑會把「圖鑑看過但還沒馴養」的寵物排除在召喚池外,錯誤壓縮玩家召喚機率。寵物全馴養才走 fallback 轉寵物訓練書(SSR×6/SR×3·標籤同步改「英雄全收錄·寵物全馴養」)。',
+      '★ v4.9.0【寵物「相遇/收錄馴養」全站語義重定義·index.html】老師裁決:原「出現並攜帶過而解鎖」的集合(_petsEverCollected/_isPetCollected)統一正名為「👀 已相遇」,並非收錄;「寵物收錄」重新定義為「🎓 收錄馴養」(以 _petIsTamed/_tamedPets 為唯一權威)。實作:①新增語義正確別名 window._isPetMet(舊函式名保留全站相容,誤刪是大忌)+定義處/序列化/載入/戰鬥攜帶標記四處註解正名 ②寵物圖鑑 _buildPetPage:台/日/埃三區段標頭改雙計數「👀 已相遇 X/N·🎓 收錄馴養 Z/N」;已相遇未馴養的卡片加「👀 已相遇」琥珀徽章(馴養完成維持「🎓Lv.N」綠徽章);詳情閱覽門檻維持「已相遇」但訊息正名(尚未相遇/已相遇·尚未收錄馴養/已收錄馴養);系統介紹 intro 雙版補語義說明 ③隨機寵物召喚卷 pet_summon_ticket 一併改馴養口徑:召喚池 filter 由 _isPetCollected 改 !_petIsTamed(召喚出未馴養寵物),28 隻「全數收錄馴養」才自動轉頂級寵物飼料(帳本註記 all_tamed) ④全站文案正名:SUMMON_RATES 兩列說明/SSR 取得方法總整理/背包道具說明(召喚卷+訓練書)/GM 獎勵產生器標籤/新手教學第⑥章/戰鬥馴養成功提示,「未收錄寵物」一律改「未馴養寵物」、「全部收錄」一律改「英雄全收錄且寵物全馴養」。資料零遷移:petsEverCollected 集合本身不動,只重定義顯示語義與召喚判定。',
+      '★ v4.9.0【寵物小屋體驗五修·index.html】❶iPad 圖鑑桌鈕(_ph-codex-desk-btn)縮小約 4 成(📖 clamp 40~62→26~40px·標題 17~24→14~18·padding 16/22→10/14)並下移(bottom clamp(160px,37vh,340px)→clamp(126px,35vh,300px))貼齊食物面板(#_ph-food max-height:34vh)正上方,不再蓋到左側第一個寵物槽位 ❷寵物卡「撫摸/餵食/玩耍」三鈕改固定同一列(btnRow flex-wrap:wrap→nowrap+各鈕 flex:1 1 0/min-width:0/white-space:nowrap·字級 17→clamp(13,1.5vw,16)·完成態「✅ 🤚 撫摸」→「✅撫摸」去 emoji 省寬) ❸撫摸回饋:StrokeStart 對寵物圖 wrap 掛 ._ph-stroking(scale 1.07+上下 ±4px 0.9s 無限輕搖·transform-origin 底部·先移除 _ph-bouncing/_ph-shaking 防動畫互蓋),StrokeEnd/StrokeReward 雙點卸除 ❹鬥技場禁用馴養寵物·調查確認+補洞:跟隨寵物素質加成/自動攜帶只在 confirmHeroPick 的 _isAdvMode 分支套用(鬥技場本就不套=無素質外掛✅);但寵物極限爆發 _petFollowBurstName 有「依英雄名 _petFollowOf」fallback,在鬥技場共用 execBurst 下可觸發雙選=漏洞→於該單一咽喉點加閘門:非冒險模式(_adventureMode)且非世界BOSS(_wbInWorldBossMode/_wbSoloPracticeMode)一律回 null(龍王戰為 v4.5.0 設計本就放行),另 _execPetBurst 開頭加同判定防禦雙保險 ❺躲貓貓(_petPlayHideSeek)每次未命中點擊於畫面中央(top 40%)彈 💭 思考對話泡泡,依四段距離 tier 顯示暗示文字(cute/premium 雙版·鐵律 1.232),邊框色沿用星星四段同色系(藍=遠/綠/黃/紅=近),1.6 秒後淡出、命中(HIT_R 內)直接揭曉寵物不彈泡泡。',
       '★ v4.9.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v4.9.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.26.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v4.5.0 免重傳,世界BOSS兩檔維持 v4.8.0 免重傳。',
     ],
   },
