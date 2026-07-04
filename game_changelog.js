@@ -12,6 +12,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.13.2 — 💚 寵物極限爆發威力隨「好感度」成正比(越要好威力越強)
+  {
+    ver: 'v4.13.2',
+    date: '2026-07-05',
+    brief: [
+      '💚【和寵物越要好，牠的大絕招越強!】寵物的「極限爆發」威力現在會依你們的好感度打折或加成:有點陌生只有 25%、已經熟識 50%、有點親密 75%、非常親密 100%、養到「不離不棄」更會爆發到 125%!多去寵物小屋撫摸、餵對主食、玩遊戲，把牠養到最好，戰場上牠就會更給力!',
+    ],
+    items: [
+      '💚 寵物極限爆發「基礎威力」與好感度成正比:有點陌生(好感 0~24)×25%、已經熟識(25~49)×50%、有點親密(50~74)×75%、非常親密(75~99)×100%、不離不棄(100)×125%。28 隻寵物的爆發傷害/治療/護盾一律等比縮放，施放時戰鬥訊息會顯示目前好感度與威力百分比。',
+      '⚙ 傷害仍受既有世界BOSS(龍王)5000 上限與護盾規則保護，平衡不變;好感度可透過寵物小屋每日互動慢慢養成。',
+    ],
+  },
   // v4.13.1 — 🧸 簡單風的寵物說明文字修復(之前一直顯示成精緻風)
   {
     ver: 'v4.13.1',
@@ -362,23 +374,6 @@ window.GAME_CHANGELOG = [
       '★ v3.33.0【偵測掛既有 snapshot·零額外 listener】_friendLoginDetectFromSnap(snap) 掛進常駐的 _fbWatchOnlineCount presences onSnapshot:對每個「已勾選」好友判定 lastHeartbeat 150 秒內視為 online,偵測 offline→online 轉變才彈;首次(或換帳號)只建 baseline 不補彈已在線好友;每位好友 5 分鐘冷卻防洗頻;剛勾選以當下線上狀態當 baseline 避免立刻補彈。',
       '★ v3.33.0【好友清單最近登入/離線時間·需求2·index.html】登入時把 lastLoginAt/lastSeenAt 寫進自己的 players/{uid} 主檔(self-write 非停權欄位·非存檔白名單不進載入路徑·免改 firestore.rules);心跳每 4 分鐘鏡射 lastSeenAt 一次(節流·非每次心跳);登出/關頁 best-effort 補寫 lastSeenAt(誤差 ≤4 分)。好友端經既有 _fbLoadFriend 讀對方主檔 + presence meta;_fbWatchFriendsPresence 回傳 metaMap{uid:{loginAt,lastHb}},_applyFriendPresenceDots 更新 ._friend-presence-time(在線→🕐上線時間/剛離開→相對時間/離線→最後上線相對時間·_friendClockStr/_friendAgoStr)。',
       '★ v3.33.0【老師訊息音效·需求3+工程】_gmChatIncoming 彈窗 appendChild 後播 sfx-gm-message(0.85·訊息.wav)找不到退回 sfx-confirm;新增 audio 元素 sfx-friend-login(好友登入.wav)/sfx-gm-message(訊息.wav)。兩 render 路徑 _renderFriendPanelImpl/_refreshFriendListInner 同步(時間文字行+通知 toggle);七點版本同步 v3.33.0·20 個 inline script node --check 全過·GAME_CHANGELOG 移除最舊 v3.17.5 維持 20 筆。⚠ 需老師確認 好友登入.wav / 訊息.wav 已在 repo 根目錄(已驗證 200)。',
-    ],
-  },
-  // v3.32.0 — 本日獎勵題庫(每日 8:00 自動更換)+ 老師即時訊息(可回覆)+ GM 線上玩家查詢
-  {
-    ver: 'v3.32.0',
-    date: '2026-07-02',
-    brief: [
-      '🎲 冒險關卡題庫選單新增「本日獎勵題庫」!每天早上 8:00 自動更換一個隨機學科,當天玩這個題庫,結算獎勵(經驗、知識幣、掉寶率)通通 +25%——每天都來看看今天輪到哪一科!',
-      '📌 本日獎勵題庫放在課堂複習的上方,金橙色框框超好認;明天早上 8:00 就會換下一科,天天玩不一樣的題庫最划算!',
-      '👨‍🏫 新增「老師的訊息」:老師可能會在你玩的時候傳訊息給你,畫面會直接跳出來;想回覆的話直接打字送出,老師就收得到囉!',
-    ],
-    items: [
-      '★ v3.32.0【本日獎勵題庫】window._dailyBonusInfo:台灣 8:00 == UTC 0:00 → dayKey 取 UTC 日期,hash 決定科目(deterministic·所有裝置同日必同科·零雲端寫入·相鄰日 best-effort 不重複);科目池=一般學科(排除生活常識/國際交流/課堂複習/專屬解鎖題庫)。',
-      '★ v3.32.0【加成折入】_gameBlessingMult:本場冒險科目==當日科目 → ×1.25;GM「🎓 課堂獎勵加成」同科目已生效則本段跳過(防雙重疊乘),GM 加成其他科目則兩者獨立;英雄解鎖機率不吃加成(同祝福鐵律)。GM 手動加成後台完整保留。',
-      '★ v3.32.0【選單】_advGroupSubjects 新增 daily 群組置最前(課堂複習上方),當日科目自一般學科移入避免重複按鈕;label 含 🎁 自動 reward-flash;subject 場景+多步驟兩 render 路徑共用自動生效。',
-      '★ v3.32.0【GM 線上玩家查詢】首頁「🔴 目前在線」改可點擊(僅管理員有反應):列出在線玩家的名冊標籤、登入時間(presence 新增 loginAt)、目前狀況(scene:世界BOSS/戰鬥/知識王/召喚星空/關卡頁/首頁·心跳每分鐘更新)、會員資料查看、✉️ 傳訊、💬 看回覆。',
-      '★ v3.32.0【GM↔玩家訊息】GM updateDoc players/{uid}._gmChat(isAdmin 路徑);玩家端掛既有主檔 onSnapshot 偵測即時彈窗(已讀基線 localStorage 綁 uid 防重複彈),可回覆 → 自寫 _gmChatReply(self-write 非停權欄位);兩欄位非存檔白名單,merge:true 存檔不清;完全免改 firestore.rules。',
     ],
   },
 ];
