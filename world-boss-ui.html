@@ -1,5 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
+<!-- ★ v4.8.0(2026-07-04)— ① 龍王總 HP 5,000,000 → 10,000,000 全 UI 同步(靜態卡×2/超級血條預設/介紹彈窗/戰場血條 fallback×3/註解);② 替補英雄列表(_wbTcOpenSwapHero)三升級:(a)列表上方加「篩選列」(全部/⚔主傷害/💚主回復/🌀主控場/🛡主坦克/🎲其他/👑UR/🌈SSR/⭐SR/💎R + 🔍條件搜尋 openCondSearch('wbswap'),沿用主程式既有分類與條件搜尋口徑 window._wbSwapHeroPassFilter,至寶 modal 共用 grid 時自動隱藏);(b)每隻英雄名下加「📖 圖鑑整備」鈕(_wbOpenCodexFromSwap → 主程式 _openHeroCodexFromWbSwap 開該英雄圖鑑升級/裝至寶/裝寵物,關閉自動回到替補列表且等級即時刷新;已選英雄鈕改保留可點=只擋選角不擋整備);(c)替補縮圖 object-position 50%→30%(Y 下移 20%),排除 33 隻圖高已適當者(_WB_SWAP_THUMB_KEEP) -->
 <!-- ★ v3.15.61(2026-06-20)— 大廳「當前龍王」素質 + 「下一隻龍王搶先看」整卡改資料驅動,不再寫死,輪替推進自動跟上:(a)_wbApplyCurrentBossSkin 追加更新當前龍王卡的攻擊/特技/速度(由寫死火龍王 49/50/15 改讀 HERO_DB[當前龍王];HP 統一 5,000,000 不動);(b)新增 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻龍王 → 名稱/立繪/--wb-boss-bg/屬性/攻擊·特技·速度/簡介=背景故事+自動護盾文案/主題色依屬性 + 「能力詳細介紹」鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正原寫死土龍王過時文案(額外減傷 40%→實際 30% 等);next-preview HTML 加 hooks(wb-nextboss-img/nm/desc/elem/atk/sp/spd + #wb-next-boss-preview/#wb-nextboss-badge + .wb-nextboss-info-btn),排程於 skin 旁 setTimeout 120/1850,index.html 雲端當前龍王解析兩處 re-apply 同步呼叫 -->
 <!-- ★ v3.15.48(2026-06-19)— 修世界 BOSS 龍王戰崩毀後 guest 端卡死「無法離開戰鬥」:根因=guest 端結算(_wbClientCheckEnded)只認房主廣播 meta.status==='ended' 才觸發,但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11 把 p1 全歸 0)後「meta.status='ended'」的 sync 若沒送達 guest(網路丟包/房主端也卡),guest 死等 ended → 永久卡戰場。修:_wbClientApplyWire 套完狀態後偵測「p1 全員 curHp<=0(玩家方全滅)」且未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,不依賴房主再廣播 ended);世界 BOSS 無復活,p1 全滅=確定戰敗不誤判,_wbAdvBattleEnded/_wbClientForceCheckWin 雙旗標守門 -->
 <!-- ★ v3.14.25(2026-06-13)— BOSS 能力詳細介紹彈窗(_wbAdvOpenBossInfoPopup)+ 大廳預覽卡描述/屬性改「資料驅動」:依當前龍王讀 HERO_DB/HERO_TRAIT/BURST_DB + 護盾元素/配色動態,草龍王不再顯示火龍王能力 -->
@@ -1047,7 +1048,7 @@
           沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 3/5/7/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
         <div class="wb-boss-stats">
-          <span>❤️ 5,000,000 HP</span>
+          <span>❤️ 10,000,000 HP</span>
           <span class="wb-curboss-atk">⚔️ 攻擊 49</span>
           <span class="wb-curboss-sp">🛡️ 特技 50</span>
           <span class="wb-curboss-spd">💨 速度 15</span>
@@ -1085,7 +1086,7 @@
           盤踞於地核深處的太古土龍,以山崩、落石與震天龍吼鎮壓入侵者。
         </div>
         <div class="wb-boss-stats">
-          <span>❤️ 5,000,000 HP</span>
+          <span>❤️ 10,000,000 HP</span>
           <span class="wb-nextboss-atk">⚔️ 攻擊 49</span>
           <span class="wb-nextboss-sp">🛡️ 特技 50</span>
           <span class="wb-nextboss-spd">💨 速度 15</span>
@@ -1382,7 +1383,7 @@ window._wbApplyCurrentBossSkin = function(){
         _elemEl.textContent = (_ed2 ? (_ed2.icon + ' ' + _ed2.name) : '') + '屬性';
       }
       // ★ v3.15.61 — 當前龍王大廳卡的「攻擊/特技/速度」也依當前龍王動態(原本寫死火龍王 49/50/15;
-      //   各龍王素質不同,如森龍王 45/58/12,寫死會顯示錯誤數值)。HP 統一 5,000,000 故不動。
+      //   各龍王素質不同,如森龍王 45/58/12,寫死會顯示錯誤數值)。HP 統一 10,000,000 故不動(★ v4.8.0)。
       try{
         const _hdCur = (window.HERO_DB && window.HERO_DB[_nm]) || null;
         if(_hdCur){
@@ -1430,7 +1431,7 @@ window._wbApplyNextBossPreview = function(){
     const _ed = _ED[_nb.element] || null;
     const _elemEl = _q('.wb-nextboss-elem');
     if(_elemEl){ _elemEl.textContent = (_ed ? (_ed.icon + ' ' + _ed.name) : '') + '屬性'; }
-    // 素質(HP 統一 5,000,000 故不動;攻擊/特技/速度讀 HERO_DB)
+    // 素質(HP 統一 10,000,000 故不動;攻擊/特技/速度讀 HERO_DB)(★ v4.8.0)
     const _hd = (window.HERO_DB && window.HERO_DB[_nm]) || null;
     if(_hd){
       const _sa = _q('.wb-nextboss-atk'); if(_sa) _sa.textContent = '⚔️ 攻擊 ' + (_hd.atk != null ? _hd.atk : '');
@@ -3928,7 +3929,7 @@ try{
       <div>
         <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ <span class="wb-curboss-nm">火山炎龍王</span></div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
-          HP 5,000,000 ✦ 火屬性 ✦ 4 階段護盾<br>
+          HP 10,000,000 ✦ 火屬性 ✦ 4 階段護盾<br>
           🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
         </div>
       </div>
@@ -3977,7 +3978,7 @@ try{
             </div>
             <div class="wb-mega-hp-bar">
               <div class="wb-mega-hp-fill" id="wb-mega-hp-fill" style="width:100%;"></div>
-              <div class="wb-mega-hp-text" id="wb-mega-hp-text">5,000,000 / 5,000,000 (100%)</div>
+              <div class="wb-mega-hp-text" id="wb-mega-hp-text">10,000,000 / 10,000,000 (100%)</div>
             </div>
             <div class="wb-mega-shields-row" id="wb-mega-shields-row">
               <!-- 護盾 chip 動態填入 -->
@@ -7591,9 +7592,123 @@ try{
   };
 
   // ════════════════════════════════════════════════════════════════════
+  // ★ v4.8.0(2026-07-04)— 龍王戰替補英雄列表三升級 helper 區
+  //   ① 縮圖排除名單:老師指定 33 隻「圖高已適當」的英雄縮圖維持置中,
+  //      其餘全部 object-position 50% 30%(Y 下移 20%)。名單已對 hero_db.js
+  //      HERO_DB keys 逐一驗證(喚龍使/御雲使為全名)。
+  //   ② 篩選列(_wbTcEnsureSwapFilterBar):與圖鑑/邀約頁同款 全部/五主類/
+  //      四稀有度 + 🔍條件搜尋;判定住主程式 window._wbSwapHeroPassFilter
+  //      (HERO_SKILL_EFFECTS/HERO_PRIMARY_CLASS 為 index.html const 不可跨檔讀)。
+  //      至寶 modal 共用同 grid → _wbTcOpenSwapTreasure 開頭會把本列藏起來。
+  //   ③ 📖 圖鑑整備(_wbOpenCodexFromSwap):關 swap modal → 呼叫主程式
+  //      _openHeroCodexFromWbSwap 開該英雄圖鑑(升級/裝至寶/裝寵物);
+  //      closeHeroDetail/closeHeroPage 的 WB 分支會自動重開替補列表
+  //      (_wbSwapReturnSlotIdx)→ 等級/裝備即時刷新。
+  // ════════════════════════════════════════════════════════════════════
+  window._WB_SWAP_THUMB_KEEP = new Set([
+    '喚龍使‧蜜鶴林','熔岩巨人','御雲使‧沐雲雪','聖騎士','大力士','機械師','陰陽師',
+    '學者','時空法師','田徑隊員','幼兒園小孩','弦樂團員','窮奇','雙星姊妹','死靈法師',
+    '布奶鳥獸','紅色玩家','救醫馬','水狐','米鈴','天神宙斯','武器精靈','神槍手','火柴人',
+    '鳳凰','操偶師','菇女','小丑','幽幽','雅典娜','死神','地獄將軍','小鬼貓與兔'
+  ]);
+
+  // 篩選列鍵定義(key 對齊主程式 pick 篩選列 data-filter 口徑)
+  window._WB_SWAP_FILTER_DEFS = [
+    { k:'all',        t:'全部' },
+    { k:'dmg',        t:'⚔ 主傷害' },
+    { k:'heal',       t:'💚 主回復' },
+    { k:'ctrl',       t:'🌀 主控場' },
+    { k:'tank',       t:'🛡 主坦克' },
+    { k:'other',      t:'🎲 其他' },
+    { k:'rarity_UR',  t:'👑 UR' },
+    { k:'rarity_SSR', t:'🌈 SSR' },
+    { k:'rarity_SR',  t:'⭐ SR' },
+    { k:'rarity_R',   t:'💎 R' }
+  ];
+
+  // 建立/更新篩選列(冪等;英雄 picker 每次開啟呼叫;至寶 picker 會把它藏起來)
+  window._wbTcEnsureSwapFilterBar = function(){
+    const grid = document.getElementById('wb-tc-swap-grid');
+    if(!grid || !grid.parentNode) return;
+    let bar = document.getElementById('wb-tc-swap-filter');
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'wb-tc-swap-filter';
+      bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center;'
+        + 'padding:8px 2px 10px;margin-bottom:4px;border-bottom:1px solid rgba(168,132,255,0.25);';
+      grid.parentNode.insertBefore(bar, grid);
+    }
+    bar.style.display = '';
+    const cur = window._wbSwapFilterKey || 'all';
+    const defs = window._WB_SWAP_FILTER_DEFS || [];
+    let html = '';
+    for(let i = 0; i < defs.length; i++){
+      const d = defs[i];
+      const on = (cur === d.k);
+      html += '<button type="button" onclick="_wbSwapSetFilter(\'' + d.k + '\')" style="'
+        + 'padding:6px 12px;font-size:16px;font-weight:800;letter-spacing:1px;border-radius:999px;'
+        + 'cursor:pointer;font-family:inherit;'
+        + (on
+            ? 'background:linear-gradient(135deg,#a884ff,#7755cc);border:1.5px solid #d0bcff;color:#fff;box-shadow:0 0 10px rgba(168,132,255,0.6);'
+            : 'background:rgba(60,45,100,0.5);border:1.5px solid rgba(168,132,255,0.4);color:#c9b8ff;')
+        + '">' + d.t + '</button>';
+    }
+    // 🔍 條件搜尋(彈主程式 openCondSearch 勾選視窗;#cond-search-ov z-index 99999 蓋過本 modal 10700)
+    const condOn = (cur === 'cond');
+    html += '<button type="button" onclick="_wbSwapOpenCondSearch()" style="'
+      + 'padding:6px 12px;font-size:16px;font-weight:800;letter-spacing:1px;border-radius:999px;'
+      + 'cursor:pointer;font-family:inherit;'
+      + (condOn
+          ? 'background:linear-gradient(135deg,#ffb84d,#cc8822);border:1.5px solid #ffe0a0;color:#fff;box-shadow:0 0 10px rgba(255,190,90,0.6);'
+          : 'background:rgba(100,75,30,0.5);border:1.5px solid rgba(255,190,90,0.5);color:#ffd9a0;')
+      + '">🔍 條件搜尋</button>';
+    bar.innerHTML = html;
+  };
+
+  // 切換篩選鍵 → 重繪替補列表
+  window._wbSwapSetFilter = function(key){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.4); }catch(_e){}
+    window._wbSwapFilterKey = key || 'all';
+    window._wbTcRefreshSwapGrid();
+  };
+
+  // 開條件搜尋(主程式 openCondSearch;wbswap 模式 → doCondSearch 會回呼 _wbTcRefreshSwapGrid)
+  window._wbSwapOpenCondSearch = function(){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.4); }catch(_e){}
+    if(typeof window.openCondSearch === 'function'){
+      window.openCondSearch('wbswap');
+    } else {
+      _wbGameAlert('條件搜尋需要最新版主程式,請重新整理頁面後再試');
+    }
+  };
+
+  // 用最後一次開啟的槽位重繪替補列表(篩選切換/條件搜尋/圖鑑整備回流共用)
+  window._wbTcRefreshSwapGrid = function(){
+    try{
+      if(typeof window._wbSwapLastSlotIdx === 'number' && typeof window._wbTcOpenSwapHero === 'function'){
+        window._wbTcOpenSwapHero(window._wbSwapLastSlotIdx);
+      }
+    }catch(_e){ console.warn('[v4.8.0 替補列表重繪] 失敗', _e); }
+  };
+
+  // 📖 圖鑑整備入口:記回流槽位 → 關 swap modal → 開主程式圖鑑(該英雄詳細頁)
+  window._wbOpenCodexFromSwap = function(name, slotIdx){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.5); }catch(_e){}
+    window._wbSwapReturnSlotIdx = slotIdx;
+    try{ if(typeof window._wbTcCloseSwapModal === 'function') window._wbTcCloseSwapModal(); }catch(_e){}
+    if(typeof window._openHeroCodexFromWbSwap === 'function'){
+      window._openHeroCodexFromWbSwap(name);
+    } else {
+      _wbGameAlert('圖鑑整備需要最新版主程式,請重新整理頁面後再試');
+    }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
   // ★ FIX 20260516 v2 — 替換英雄 modal
   // ════════════════════════════════════════════════════════════════════
   window._wbTcOpenSwapHero = function(targetSlotIdx){
+    // ★ v4.8.0 — 記住最後開啟的槽位(篩選切換/條件搜尋/圖鑑整備回流重繪共用)
+    window._wbSwapLastSlotIdx = targetSlotIdx;
     // ★ v3.4.14 — 統一改用 _wbGetAvailableHeroes() 取得清單
     //   舊 bug:用 _heroLevels.keys 當解鎖名單,剛解鎖未出戰的英雄(日本三大妖怪+巫女
     //          + 新學生英雄)會被擋掉。改用 advGetUnlockedHeroes() 為主的統一管道,
@@ -7647,34 +7762,62 @@ try{
     }catch(_eUsed){ console.warn('[WB-Picker v3.5.73] 蒐集已用英雄失敗', _eUsed); }
 
     document.getElementById('wb-tc-swap-title').textContent = '🔄 替換英雄(槽位 ' + (targetSlotIdx+1) + ')';
-    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;綠框=當前、灰色=已被隊友選走';
+    document.getElementById('wb-tc-swap-sub').textContent = '點選一隻英雄;綠框=當前、灰色=已被隊友選走;📖 圖鑑整備可直接升級/裝備';
     const grid = document.getElementById('wb-tc-swap-grid');
     const curHero = snap?.players?.[targetSlotIdx]?.heroName;
-    grid.innerHTML = heroes.map(name => {
+    // ★ v4.8.0 — 確保篩選列存在並顯示(至寶 modal 共用本 grid 時會被 _wbTcOpenSwapTreasure 藏起來)
+    try{ window._wbTcEnsureSwapFilterBar(); }catch(_eFb){ console.warn('[v4.8.0 篩選列] 建立失敗', _eFb); }
+    // ★ v4.8.0 — 套用篩選/條件搜尋(判定函式住主程式 index.html;typeof 守門:主程式舊版 → 不過濾照舊全列)
+    let _list = heroes;
+    try{
+      if(typeof window._wbSwapHeroPassFilter === 'function'){
+        _list = heroes.filter(function(n){ return window._wbSwapHeroPassFilter(n); });
+      }
+    }catch(_eFl){ _list = heroes; }
+    if(_list.length === 0){
+      // 篩選後沒有英雄 → 顯示空狀態(不彈 alert;玩家換條件或按「全部」即可;鐵律 1.232 雙版)
+      const _isCuteEmpty = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+      const _emptyMsg = _isCuteEmpty
+        ? '🔍 沒有符合的英雄!換一個篩選條件,或按「全部」看全部英雄。'
+        : '🔍 目前的篩選/條件搜尋沒有符合的英雄。請調整條件,或點「全部」還原完整替補清單。';
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:36px 16px;text-align:center;color:#c9b8ff;'
+        + 'font-size:19px;font-weight:800;letter-spacing:1px;line-height:1.7;">' + _emptyMsg + '</div>';
+    } else {
+    grid.innerHTML = _list.map(name => {
       const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
       const av = (typeof MONSTER_AVTR !== 'undefined' && MONSTER_AVTR[name]) || '⚔';
       const lv = (typeof _heroLevels !== 'undefined' && _heroLevels[name]) || 1;
       const cur = (name === curHero);
-      // ★ v3.5.73 — 已被隊友選走 → disable(不含自己當前選的)
+      // ★ v3.5.73 — 已被隊友選走 → 不能選(不含自己當前選的)
+      // ★ v4.8.0 — 已選項不再加 .disabled class / disabled 屬性:CSS
+      //   .wb-tc-swap-item.disabled{pointer-events:none} 與 disabled 屬性會連子層
+      //   「📖 圖鑑整備」一起鎖死;改為只灰階圖與文字(_dim)+主 onclick 空轉,
+      //   整備鈕在子層 stopPropagation 照常可點(已選英雄也能升級/換裝)。
       const _isUsed = _usedHeroNames.has(name);
       let cls = 'wb-tc-swap-item';
       if(cur) cls += ' current';
-      if(_isUsed) cls += ' disabled';
       const safeName = name.replace(/'/g,"\\'");
+      const _dim = _isUsed ? 'opacity:0.35;filter:grayscale(80%);' : '';
       const click = _isUsed
-        ? `onclick="event.preventDefault();event.stopPropagation();" style="opacity:0.35;cursor:not-allowed;filter:grayscale(80%);" disabled`
+        ? `onclick="event.preventDefault();event.stopPropagation();" style="cursor:not-allowed;"`
         : `onclick="_wbTcConfirmSwapHero(${targetSlotIdx}, '${safeName}')"`;
+      // ★ v4.8.0 — 縮圖 Y 下移 20%(object-position 50% 50% → 50% 30%);
+      //   _WB_SWAP_THUMB_KEEP 名單(圖高已適當)維持置中不動。
+      const _keepSet = window._WB_SWAP_THUMB_KEEP;
+      const _thumbStyle = (_keepSet && _keepSet.has(name)) ? '' : ' style="object-position:50% 30%;"';
       return `<button class="${cls}" ${click}>
-        <div class="wb-tc-si-img">
+        <div class="wb-tc-si-img" style="${_dim}">
           ${img
-            ? `<img src="${img}" alt="${name}" onerror="this.style.display='none';this.parentElement.innerHTML='${av}';">`
+            ? `<img src="${img}" alt="${name}"${_thumbStyle} onerror="this.style.display='none';this.parentElement.innerHTML='${av}';">`
             : av}
         </div>
-        <div class="wb-tc-si-name">${name}</div>
-        <div class="wb-tc-si-meta">Lv.${lv}</div>
+        <div class="wb-tc-si-name" style="${_dim}">${name}</div>
+        <div class="wb-tc-si-codex" onclick="event.preventDefault();event.stopPropagation();_wbOpenCodexFromSwap('${safeName}', ${targetSlotIdx});" style="pointer-events:auto;margin:4px auto 2px;width:max-content;font-size:15px;font-weight:800;color:#ffe8a0;background:linear-gradient(135deg,rgba(70,48,0,0.92),rgba(45,32,0,0.88));border:1.5px solid rgba(212,168,67,0.7);border-radius:8px;padding:4px 10px;letter-spacing:1px;cursor:pointer;">📖 圖鑑整備</div>
+        <div class="wb-tc-si-meta" style="${_dim}">Lv.${lv}</div>
         ${cur ? '<div class="wb-tc-si-note">當前</div>' : (_isUsed ? '<div class="wb-tc-si-note" style="color:#888;">已選</div>' : '')}
       </button>`;
     }).join('');
+    }
     // ★ v3.12.10 — 雙保險:用 inline zIndex 強制設,確保即使 #wb-ui-container 建立
     //   stacking context 也能蓋過圖鑑詳細頁(z-index:10500)
     const _swapM1 = document.getElementById('wb-tc-swap-modal');
@@ -7817,6 +7960,12 @@ try{
   };
 
   window._wbTcOpenSwapTreasure = function(targetSlotIdx){
+    // ★ v4.8.0 — 至寶 picker 與英雄 picker 共用 #wb-tc-swap-grid;
+    //   英雄篩選列只屬於英雄 picker → 這裡(三條至寶路徑的匯流單點)先藏起來。
+    try{
+      const _fbar = document.getElementById('wb-tc-swap-filter');
+      if(_fbar) _fbar.style.display = 'none';
+    }catch(_eFb){}
     // ★ FIX 20260518(b) — 代打槽分支:_wbTcAssignedSlotOpenSwapTreasure 會先設 ctx,
     //   這時 snap.players[targetSlotIdx] 是空槽(null/undefined),要從 _wbHostAssignedSlots
     //   拼出「假 me」走後續渲染,否則第 5465 行 `if(!me)` 直接擋掉,代打槽永遠裝不上至寶。
@@ -11054,8 +11203,8 @@ try{
     // ★ v3.12.6(2026-05-30) — 答題獎勵聯手爆發「固定 5000」,不隨滿血變動
     //   設計鐵則:HP 從 50 萬放大到 500 萬「只放大血量」,「傷害上限不放大」,
     //   讓戰鬥延長、更多玩家可加入。聯手爆發跟單次傷害 cap 同步維持 5000。
-    //   _wbMaxHp 留下來只給 console.log 用(觀察),不再決定傷害值。
-    const _wbMaxHp = boss._wbOriginalMaxHp || boss.hp || 5000000;
+    //   _wbMaxHp 留下來只給 console.log 用(觀察),不再決定傷害值。(★ v4.8.0 後備值同步 1000 萬,傷害仍固定 5000)
+    const _wbMaxHp = boss._wbOriginalMaxHp || boss.hp || 10000000;
     const rewardDmg = 5000;
     try{ console.log('[WB-FireTeamBurst v3.12.6] 觸發 cnt=' + _cnt + ', dmg=' + rewardDmg + ' (固定 5000, maxHp=' + _wbMaxHp + '), reason=' + (reason||'?')); }catch(_){}
 
@@ -13358,7 +13507,7 @@ try{
           <div id="wb-adv-mega-hp-text" style="position:absolute;inset:0;display:flex;
             align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;
             text-shadow:0 0 4px #000, 0 0 8px #000;letter-spacing:1.5px;">
-            ${boss ? `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()} (100%)` : '5,000,000 / 5,000,000 (100%)'}
+            ${boss ? `${boss.curHp.toLocaleString()} / ${boss.hp.toLocaleString()} (100%)` : '10,000,000 / 10,000,000 (100%)'}
           </div>
         </div>
         <div id="wb-adv-mega-shields-row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
@@ -13645,7 +13794,7 @@ try{
          || '火山炎龍王');  // ★ v3.14.20
     // 非現場時數值優先讀 HERO_DB(精準),其次 lineup maxHp / 後備值
     const _hdTop = (window.HERO_DB && window.HERO_DB[bossName]) || null;
-    const bossHp = boss ? boss.hp : ((_hdTop && _hdTop.hp) || (_argCfg && _argCfg.maxHp) || 5000000);
+    const bossHp = boss ? boss.hp : ((_hdTop && _hdTop.hp) || (_argCfg && _argCfg.maxHp) || 10000000);
     const bossAtk = boss ? boss.atk : ((_hdTop && _hdTop.atk) || 49);
     const bossSp = boss ? boss.sp : ((_hdTop && _hdTop.sp) || 50);
     // ★ v3.11.7(2026-05-28) — fallback SPD 從 80 → 15(對齊 HERO_DB 火山炎龍王實際數值)

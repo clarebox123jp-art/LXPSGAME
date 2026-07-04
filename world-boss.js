@@ -1,5 +1,9 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v4.8.0(2026-07-04)— 龍王總 HP 全面調整 5,000,000 → 10,000,000(老師指示:1~2 名高手單日可各打近百萬,
+ *   500 萬已失去「全服共同挑戰」意義)。範圍:WORLD_BOSS_LINEUP 八龍 maxHp、HERO_DB 掛載八條 hp、
+ *   兩處 fallback(開放新一輪重置/入口 HP 條)、console 記錄。護盾為回合制(3/5/7/9)非 HP% → 不受影響;
+ *   單次扣血上限 5,000 / 單場 100,000 為固定值 → 不受影響;雲端 worldBossHp 存「剩餘絕對值」→ 當前龍王血量不變。
  * ★ v3.15.34(2026-06-18)— 翠綠森龍王天賦「翠之意志」fd 與 v3.13.73 註解的棲息地「太魯閣」更正為「亞馬遜雨林」(與 WORLD_BOSS_LINEUP scene、背景故事一致)
  * ★ v3.15.17(2026-06-15)— 第三隻龍王「山岳地龍王(土)」完整實裝:HERO_DB/BURST_DB/HERO_TRAIT/LORE/BIO/IMGS/AVTR/ELEMENT 掛載 + 專屬 AI(山崩落石/震天龍吼/天動地裂)+ 咆哮 + BGM/至寶/掉落/特效映射 + cap 強力減傷-40%/中毒繞cap弱點
  * ★ v3.14.24(2026-06-13)— 當前龍王排名至寶 helper(_wbGetCurrentDragonTreasureName)+ 每隻龍王專屬開戰咆哮(_WB_BOSS_ROAR_LINES,草龍王綠色系)
@@ -150,30 +154,31 @@
   // ───────────────────────────────────────────────────────────────────
   window.WORLD_BOSS_LINEUP = [
     // ★ FIX 20260530 — 8 隻龍王 HP 全部統一設為 500 萬(v3.12.5 強化版基準)
-    { id:'vesuvius_fire_dragon',     name:'火山炎龍王',    element:'fire',  maxHp:5000000,  scene:'維蘇威火山口',
+    // ★ v4.8.0 — 8 隻龍王 HP 全部統一調升為 1,000 萬(恢復全服共同挑戰意義)
+    { id:'vesuvius_fire_dragon',     name:'火山炎龍王',    element:'fire',  maxHp:10000000,  scene:'維蘇威火山口',
       shieldElements:['fire','wind','earth','dark'],
       desc:'沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」,西元 79 年龐貝大爆發即是牠的甦醒' },
-    { id:'shenhai_water_dragon',   name:'深淵海龍王',    element:'water', maxHp:5000000,  scene:'太平洋深淵',
+    { id:'shenhai_water_dragon',   name:'深淵海龍王',    element:'water', maxHp:10000000,  scene:'太平洋深淵',
       shieldElements:['water','wind','light','grass'],
       desc:'蛰伏於馬里亞納海溝的冰龍,以絕對零度凍結整片海洋' },
-    { id:'taifeng_wind_dragon',    name:'風暴雷龍王',    element:'wind',  maxHp:5000000,  scene:'颱風眼',
+    { id:'taifeng_wind_dragon',    name:'風暴雷龍王',    element:'wind',  maxHp:10000000,  scene:'颱風眼',
       shieldElements:['wind','light','fire'],          // ★ v3.15.50 — 風盾×2/光盾/火盾,破盾:地(風)/暗(光)/水(火)
       shieldLayers:{wind:2, light:1, fire:1},          // ★ v3.15.50 — 風盾雙層(需地攻 2 次)→ 破盾組合「地地暗水」
       desc:'颱風眼正中央誕生的雷雲龍,捲起整座島嶼的氣流,以神雷麻痺、暴風自癒' },
-    { id:'shanyue_earth_dragon',   name:'山岳地龍王',    element:'earth', maxHp:5000000, scene:'地核深處',
+    { id:'shanyue_earth_dragon',   name:'山岳地龍王',    element:'earth', maxHp:10000000, scene:'地核深處',
       shieldElements:['earth','fire','dark','grass'],
       desc:'盤據於地核的古老土龍,一動就引發強震' },
-    { id:'bushi_dark_dragon',      name:'邪骨暗龍王',    element:'dark',  maxHp:5000000, scene:'黃泉之門',
+    { id:'bushi_dark_dragon',      name:'邪骨暗龍王',    element:'dark',  maxHp:10000000, scene:'黃泉之門',
       shieldElements:['dark','earth','water','grass'],
       desc:'從黃泉之門爬出的骨龍,擊敗一次後會以半血復活再戰' },
-    { id:'shensheng_light_dragon', name:'神聖光龍王',    element:'light', maxHp:5000000, scene:'高天原',
+    { id:'shensheng_light_dragon', name:'神聖光龍王',    element:'light', maxHp:10000000, scene:'高天原',
       shieldElements:['light','fire','wind','grass'],
       desc:'天界派遣的審判龍,僅暗系英雄能對其造成完整傷害' },
-    { id:'cuiyu_grass_dragon',     name:'翠綠森龍王',    element:'grass', maxHp:5000000, scene:'亞馬遜雨林',
+    { id:'cuiyu_grass_dragon',     name:'翠綠森龍王',    element:'grass', maxHp:10000000, scene:'亞馬遜雨林',
       shieldElements:['grass','water','light'],          // ★ v3.13.73 — 破盾:火(草盾×2)/風(水盾)/暗(光盾)
       shieldLayers:{grass:2, water:1, light:1},          // ★ v3.13.73 — 草盾雙層(需火攻 2 次)→ 破盾組合「火火風暗」
       desc:'棲息於亞馬遜雨林(全世界植物最茂盛之地)的翠玉龍,以藤蔓束縛、劇毒與飛葉絞殺入侵者' },  // ★ v3.13.74
-    { id:'xingchen_omni_dragon',   name:'星辰幻龍王',    element:'omni',  maxHp:5000000, scene:'銀河',
+    { id:'xingchen_omni_dragon',   name:'星辰幻龍王',    element:'omni',  maxHp:10000000, scene:'銀河',
       shieldElements:['fire','water','wind','earth','light','dark','grass'],  // ★ 終極龍:7 元素全開
       desc:'集八元素之力於一身的終極龍,每階段切換屬性' },
   ];
@@ -442,44 +447,44 @@
     try{
       if(typeof HERO_DB === 'object' && HERO_DB){
         Object.assign(HERO_DB, {
-          '火山炎龍王':{hp:5000000,atk:50,sp:50,spd:15,exp:1500,star:5,isWorldBoss:true,
+          '火山炎龍王':{hp:10000000,atk:50,sp:50,spd:15,exp:1500,star:5,isWorldBoss:true,
             // ★ v3.5.9 — s1「業火灼燒」:能量 4→5、傷害 100%→150%(更具威脅性)
             // ★ v3.12.7(2026-05-30) — 配合追擊普攻設計,s1 能量 5→6 拉長放招間隔
             s1:{n:'業火灼燒',c:6,d:'特技150%全體火屬性傷害,附加燃燒2回合',fd:'噴出無盡業火灼燒全場!用特技值的 150% 對全體對手造成火屬性傷害,並對全體附加「燃燒」狀態 2 回合(行動前後各損失 6 HP)。'},
             s2:{n:'龍吼震懾',c:4,d:'特技75%全體無屬性傷害,50%機率眩暈1回合',fd:'發出震天龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),每名對手有 50% 機率「眩暈」1 回合不能動。'}
           },
           // ★ v3.13.73 — 翠綠森龍王(第二隻世界 BOSS:草屬性,亞馬遜雨林;數值對齊火龍王)
-          '翠綠森龍王':{hp:5000000,atk:45,sp:58,spd:12,exp:1500,star:5,isWorldBoss:true,
+          '翠綠森龍王':{hp:10000000,atk:45,sp:58,spd:12,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'劇毒藤縛',c:5,d:'拘束特技最高 1 名對手 2 回合並使其猛毒',fd:'伸出巨大藤蔓緊緊纏住對方陣中特技最高的英雄!使其「禁動」2 回合(完全無法行動),並陷入「猛毒」5 回合(每回合損失最大 HP 8%,無視護盾與減傷)。'},
             s2:{n:'萬刃落葉',c:6,d:'特技150%全體草屬性傷害,附加出血2回合',fd:'抖落滿天如刀刃般銳利的葉片射向全場!用特技值的 150% 對全體對手造成草屬性傷害,並使全體「出血」2 回合(每回合損失最大 HP 6%,且每次受到攻擊再追加損失 6%;可被護盾與減傷抵銷)。'}
           },
           // ★ v3.15.17 — 山岳地龍王(第三隻世界 BOSS:土屬性,地核;數值對齊火/草龍王)
-          '山岳地龍王':{hp:5000000,atk:60,sp:50,spd:5,exp:1500,star:5,isWorldBoss:true,
+          '山岳地龍王':{hp:10000000,atk:60,sp:50,spd:5,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'山崩落石',c:6,d:'特技150%全體土屬性傷害,60%機率暈眩1回合',fd:'撼動山岳崩落巨岩砸向全場!用特技值的 150% 對全體對手造成土屬性傷害,每名對手有 60% 機率「暈眩」1 回合不能動。'},
             s2:{n:'震天龍吼',c:4,d:'特技75%全體無屬性傷害,全體強力暈眩1回合',fd:'發出撼天動地的龍吼!用特技值的 75% 對全體對手造成無屬性傷害(無視屬性抗性),並使全體對手陷入「強力暈眩」1 回合,完全無法行動。'}
           },
           // ★ v3.15.50 — 風暴雷龍王(第四隻世界 BOSS:風屬性,颱風眼;ATK40/SP45/SPD30)
-          '風暴雷龍王':{hp:5000000,atk:40,sp:45,spd:30,exp:1500,star:5,isWorldBoss:true,
+          '風暴雷龍王':{hp:10000000,atk:40,sp:45,spd:30,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'雷霆貫穿',c:5,d:'特技150%單體風屬性傷害,麻痺2回合',fd:'凝聚萬鈞雷霆貫穿目標!用特技值的 150% 對特技最高的 1 名對手造成風屬性傷害,並使其「麻痺」2 回合(完全無法行動)。'},
             s2:{n:'暴風肅清',c:6,d:'特技120%全體風屬性傷害,解除自身所有不利狀態',fd:'捲起毀滅暴風橫掃全場!用特技值的 120% 對全體對手造成風屬性傷害,並解除自己身上所有不利狀態(中毒、麻痺、暈眩、降速等全部清除)。'}
           },
           // ★ v3.15.98 — 深淵海龍王(第五隻:水屬性,太平洋深淵;ATK47/SP50/SPD18)正式實裝
-          '深淵海龍王':{hp:5000000,atk:47,sp:50,spd:18,exp:1500,star:5,isWorldBoss:true,
+          '深淵海龍王':{hp:10000000,atk:47,sp:50,spd:18,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'絕對零度',c:5,d:'特技130%全體水屬性傷害,全體50%機率冰凍1回合',fd:'釋放絕對零度的酷寒凍結全場!用特技值的 130% 對全體對手造成水屬性傷害,每名對手有 50% 機率陷入「冰凍」1 回合,完全無法行動。'},
             s2:{n:'萬丈寒淵',c:6,d:'特技150%全體水屬性傷害,隨機2名強力冰凍2回合',fd:'捲起萬丈深淵的寒濤橫掃全場!用特技值的 150% 對全體對手造成水屬性傷害,並從存活對手中隨機選 2 名陷入「強力冰凍」2 回合,完全無法行動。'}
           },
           // ★ v3.15.50 — 邪骨暗龍王(第六隻:暗屬性,黃泉之門;ATK45/SP55/SPD15)技能設計中
-          '邪骨暗龍王':{hp:5000000,atk:45,sp:55,spd:15,exp:1500,star:5,isWorldBoss:true,
+          '邪骨暗龍王':{hp:10000000,atk:45,sp:55,spd:15,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'? 未知技能',c:5,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'},
             s2:{n:'? 未知技能',c:6,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'}
           },
           // ★ v3.15.50 — 神聖光龍王(第七隻:光屬性,高天原;ATK45/SP55/SPD15)技能設計中
-          '神聖光龍王':{hp:5000000,atk:45,sp:55,spd:15,exp:1500,star:5,isWorldBoss:true,
+          '神聖光龍王':{hp:10000000,atk:45,sp:55,spd:15,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'? 未知技能',c:5,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'},
             s2:{n:'? 未知技能',c:6,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'}
           },
           // ★ v3.15.50 — 星辰幻龍王(第八隻終極:無屬性,銀河;ATK35/SP50/SPD30)技能設計中
-          '星辰幻龍王':{hp:5000000,atk:35,sp:50,spd:30,exp:1500,star:5,isWorldBoss:true,
+          '星辰幻龍王':{hp:10000000,atk:35,sp:50,spd:30,exp:1500,star:5,isWorldBoss:true,
             s1:{n:'? 未知技能',c:5,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'},
             s2:{n:'? 未知技能',c:6,d:'技能設計中',fd:'此招式尚在設計中,敬請期待!'}
           },
@@ -633,8 +638,8 @@
       }
     }catch(_){}
 
-    console.log('[WB] ✅ 火山炎龍王資料已掛載(HP 5000000 / 攻 49 / 特 50 / 速 15)');
-    console.log('[WB] ✅ 山岳地龍王資料已掛載(HP 5000000 / 攻 49 / 特 50 / 速 15;天賦 強力減傷+反擊+畏毒)');
+    console.log('[WB] ✅ 火山炎龍王資料已掛載(HP 10000000 / 攻 49 / 特 50 / 速 15)');
+    console.log('[WB] ✅ 山岳地龍王資料已掛載(HP 10000000 / 攻 49 / 特 50 / 速 15;天賦 強力減傷+反擊+畏毒)');
   }
 
   // ───────────────────────────────────────────────────────────────────
@@ -1276,10 +1281,10 @@
       if(st.ceasefire === true && newCeasefire === false){
         try{
           if(window._wbHpSync && typeof window._wbHpSync.resetHp === 'function'){
-            // 從當前龍王(★ v3.14.20 動態,_wbGetCurrentBoss)拿滿血;後備維蘇威 5000000
+            // 從當前龍王(★ v3.14.20 動態,_wbGetCurrentBoss)拿滿血;後備維蘇威 10000000(★ v4.8.0)
             const _curBoss = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss())
                           || (window.WORLD_BOSS_LINEUP || [])[0];
-            const _maxHp = (_curBoss && _curBoss.maxHp) || 5000000;
+            const _maxHp = (_curBoss && _curBoss.maxHp) || 10000000;
             const _bossId = (_curBoss && _curBoss.id) || 'vesuvius_fire_dragon';
             await window._wbHpSync.resetHp(_bossId, _maxHp);
             console.log('[WB-Admin] 開放新一輪 → BOSS HP 重置為滿血', _bossId, _maxHp);
@@ -1492,7 +1497,7 @@
     // 取得當前 BOSS 的 maxHp(★ v3.14.20 動態當前龍王)
     const lineup = window.WORLD_BOSS_LINEUP || [];
     const curBoss = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || lineup[0];
-    const maxHp = (curBoss && curBoss.maxHp) || 5000000;
+    const maxHp = (curBoss && curBoss.maxHp) || 10000000;
 
     // 取得當前 HP — 從 _cachedGlobalStats.worldBossHp 讀
     let curHp = maxHp;  // 預設 100%
