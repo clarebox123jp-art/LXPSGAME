@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.11.0 — 🐾 寵物小屋生氣表情(去背圖+💢)+🏪 商店販售清單分類索引標籤+🐾 寵物教學改「進到關卡主頁才彈」
+  {
+    ver: 'v4.11.0',
+    date: '2026-07-04',
+    brief: [
+      '😊【寵物小屋:餵對、摸對會露出開心表情!】在寵物小屋餵對主食、或按住搓揉撫摸完成時,寵物會短暫換上「開心」的表情圖(1.5 秒後自動變回原本的樣子)!',
+      '💢【餵錯、亂戳會生氣!】餵錯食物、或只是戳戳點點寵物,牠會冒出「💢 生氣符號」表示不開心(1.5 秒消失)——先用原本的樣子加上生氣符號提醒你要好好照顧牠喔!(專屬的「不悅」表情圖之後會再補上)',
+      '🏪【商店大改版:左側商品加分類標籤!】不可思議超商的商品清單左側新增「🔮 召喚 / 💪 強化 / 🐾 寵物 / ♻️ 重置 / 🖼️ 肖像」五個分類標籤,點一下就只看該類商品,每個標籤還會顯示該類有幾樣,找東西更快!(右側背包和賣出功能完全不變)',
+      '🐾【寵物教學時機修正:進到關卡主頁才出現!】之前寵物的第一次教學有時候太早跳出來(你還沒真正進到關卡選擇畫面),害你錯過「跟著點一次」的教學和第一次召喚。現在改成「確定進到關卡主頁、畫面都準備好」才會出現,不會再被登入或其他視窗蓋住、也不會錯過囉!',
+    ],
+    items: [
+      '★ v4.11.0【寵物小屋互動表情·index.html】window._petHouseEmote(slotIdx,mood) 改雙分支:mood="happy"→短暫把該槽 #_ph-img-{slotIdx} 內 <img> 換成 _petHappyUrl(pn)=寵物名_開心.webp(記憶體記 _petBaseSrc·_PET_EMOTE_MS=1500 後還原·onerror 立即還原去背圖不破圖);mood="sad"/"angry"→★不換圖★維持去背圖,在 wrap 疊 span._ph-angry-sym(💢·position:absolute top:0 right:4%·一次性注入 @keyframes _phAngryPop·連戳先移除舊符號防疊加·wrap 若 static 暫設 relative 到時還原·_PET_EMOTE_MS 後移除)。四咽喉點沿用:_petHouseFeed 餵對→happy/餵錯→sad·_petHouseStrokeReward 撫摸完成→happy·_petHouseStrokeEnd 戳戳→sad。_petSadUrl(寵物名_不悅.webp)保留備用,之後補「不悅」專屬圖時把 sad 分支改走換圖即可。',
+      '★ v4.11.0【商店販售清單分類索引標籤·index.html】新增 window._SHOP_CAT_DEFS(召喚/強化/寵物/重置/肖像 5 類)+window._shopProductCat(p) 依 id 判定單一主分類:肖像=BACKPACK_ITEM_DEF[id].type="portrait" 或 id 尾綴 _portrait(涵蓋 priest_portrait_dawn 等非尾綴命名)、寵物=id 開頭 pet_food、重置=id 含 reset、召喚=summon_crystal、其餘=強化。#shop-main「🏪 商品」標題下插入 sticky #shop-cat-tabs 分頁列(_renderShopProducts 每次重繪·顯示各類商品數·當前類金橙高亮·空類 disabled);_shopBaseProducts 依當前 _shopActiveCat(預設 summon)過濾,pinTop 召喚水晶/當日特價排序在類內維持;window._shopSetCat(cat) 切換+商品區 scrollTop 回頂。右側背包/賣出完全不動。分佈:召喚1/強化6/寵物3/重置5/肖像36=共51件。',
+      '★ v4.11.0【寵物第一階段聚光教學 _petT1 觸發時機修正·index.html】老師回報:教學在玩家還沒真正進到關卡主頁就彈出,害玩家錯過點擊教學+首次召喚。根因:舊觸發輪詢(登入後 9 秒起)只檢查 adventure-overlay 非 display:none,但該 overlay 是常駐底層容器,登入/雲端載入途中就會 display:block→誤判「在關卡頁」而提前彈,再被登入閘/會員資料/救援說明等前置彈窗蓋掉。修法三處:①openAdventureOverlay 通過所有硬守門(uid 解析/雲端驗證/二段密碼閘門皆在早退之後)真正 ov.style.display=flex 顯示關卡頁的成功點,設正向旗標 window._petT1EnteredLevelPage=true;②觸發輪詢改「正向就緒」門檻:必須 _petT1EnteredLevelPage===true + _cloudLoadDone===true + 關卡頁顯示中 + 不在戰鬥 + 無任何前置/其他彈窗(_petT1Blocked),且以上條件連續穩定 2 拍(settle)才啟動(防登入/雲端載入轉場瞬間誤觸)·上限 80→120 拍;③_petT1Blocked 黑名單補入 login-gate-modal/_member-profile-modal/_member-hub-modal/_rescue-guide-modal/_audit-ov 等登入首登前置彈窗。純觸發時機收斂·教學內容/步驟/完成旗標(petTut1Done)一律不動。',
+    ],
+  },
   // v4.10.0 — 🐾 寵物同萌正式上線:全服上線禮+兩階段教學(聚光引導/馴養教學送五色鳥)、每日互動改「逐槽位」鎖定、圖鑑三改版、戰鬥寵物稀有度出現率
   {
     ver: 'v4.10.0',
@@ -365,24 +381,6 @@ window.GAME_CHANGELOG = [
       '★ v3.29.0【新增 GM 選單「🎓 課堂獎勵加成」·admin_panel.js】新卡片(世界BOSS 群組·仿龍王的祝福):可「🎲 隨機抽一個一般科目(不重複輪替·整輪抽完自動重來)」+設定持續時數+加成%(預設25)→「🎓 開啟/續期加成」;另有「⛔ 立即關閉」「🔄 查詢目前狀態」。寫 gameConfig/classRewardBoost={enabled,subject,pct,expiresAt,recent[],updatedAt,updatedBy}(gameConfig=GM 寫/登入讀·免改 firestore.rules)。科目清單取自 _kingGetSubjects(一般科目·排除日本關/特殊題庫)。新增 _adminClassBoostQuery/Roll/On/Off + _cbEsc;側欄項 + 世界BOSS 群組登錄;無真正可選串接。',
       '★ v3.29.0【學生端套用·index.html】新增 gameConfig/classRewardBoost 監聽 _fbWatchClassBoost → window._classBoost(掛在休息排程監聽同一啟動點·登入後啟動)。加成折入既有 _gameBlessingMult:當「本場冒險科目 _advPlayerSubject == 指定科目」且啟用未過期時,倍率再 ×(1+pct%)→自動作用於既有所有結算發獎點(知識幣/經驗/各關掉寶率·與龍王的祝福同一套用面;英雄解鎖機率一律不吃加成)。與龍王的祝福乘算並存;科目不符或未啟用時倍率=1.0 完全零影響。',
       '★ v3.29.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.29.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.17.1)。本輪改 index.html＋admin_panel.js＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳。需求6(GM 課堂獎勵加成)完成。',
-    ],
-  },
-
-  // v3.28.0 — 首頁風格按鈕改名「字少可愛風/字多精緻風」+切換說明比較彈窗;鬥技場放棄戰鬥確認框修正;鬥技之證交換記錄(玩家公告)
-  {
-    ver: 'v3.28.0',
-    date: '2026-07-02',
-    brief: [
-      '🧸✨【首頁風格按鈕改名，還多了「說明與比較」視窗】首頁那兩顆風格按鈕改名成「🧸 字少可愛風」和「✨ 字多精緻風」，一看就懂差別在哪。現在點下去不會馬上切換，而是先跳出一個「說明與比較」視窗：用同一隻英雄的兩種風格圖片讓你比一比，並清楚說明——字少可愛風＝說明文字比較少、圖畫比較可愛；字多精緻風＝說明文字比較完整、部分英雄與場景圖片更精緻。看好再選，或按「先不改，關閉」離開。（兩種風格遊戲內容完全一樣，只差文字多少和部分圖片）',
-      '🏳️【鬥技場「放棄戰鬥」的確認視窗不再被蓋住】以前在鬥技場要放棄一場沒打完的戰鬥時，跳出來的「確定放棄？」視窗有時會被鬥技場畫面蓋住、按鈕點不到。現在這個確認視窗會正確浮在最上層，看得到也點得到。',
-      '📜【鬥技之證兌換商店新增「交換記錄」】在「⚔ 鬥技之證兌換商店」右上角多了一顆「📜 交換記錄」按鈕，點開就能看到你用鬥技之證換過哪些獎勵、以及每一筆兌換的時間，方便你回顧自己換了什麼。',
-    ],
-    items: [
-      '★ v3.28.0【首頁風格按鈕改名＋切換說明比較彈窗·index.html·需求5】「切換年齡層」兩鈕文字改名為「🧸 字少可愛風」「✨ 字多精緻風」；onclick 由直接 _setArtStyle 改為 _openStyleSwitchInfo()（重用既有首次登入比較彈窗 #style-onboarding-modal，動態帶入 _getStyleCompareSample() 同一隻起始英雄的可愛版/精緻版圖片）；彈窗開頭說明強化為強調「文字量差異＋部分英雄/場景圖片不同」，新增「先不改，關閉」鈕（僅手動開啟時顯示，首次登入強制選擇流程不受影響）；切換完成 toast 與讀條文字同步改名。內部變數/id/雲端偏好值（_artStyle、cute/premium、art-style-cute/premium-btn）完全不動＝沿用雲端既有偏好零風險。切換 UI 本身為選擇器（非依 _artStyle 分岔的內容），不受鐵律1.232 雙版限制；新增空狀態說明文字已備簡單風/精緻風兩版。',
-      '★ v3.28.0【鬥技場放棄戰鬥確認框 z-index 修正·index.html·需求2】玩家端「放棄鬥技場戰鬥？（記為一場戰敗）」確認框 _arena_discard_confirm 的 z-index 由 9950 提升到 2147483647（最上層），修正被鬥技場 overlay（z=2147483646）蓋住點不到的問題。並深度檢查其他鬥技場確認框：兌換確認框走全域 custom-confirm-overlay（z=2147483647）＋購買時 re-append 到 DOM 尾（v3.14.3 已解）；老師後台刪除鬥技場戰鬥記錄的確認走 _customConfirm（同 2147483647 最上層）或原生 confirm（瀏覽器層），本就在最上層、不會被蓋 → 皆無需再改。',
-      '★ v3.28.0【鬥技之證交換記錄·index.html·需求4】兌換發放成功後寫入一筆本地交換記錄（_arenaLogExchange，綁 uid 的 localStorage lxps_arena_exchange_log_{uid}，記獎勵名稱/花費鬥技之證/時間，只留最近 200 筆）；兌換商店標題列動態插入「📜 交換記錄」鈕（_arenaShowExchangeLog 開全螢幕視窗、最新在上、可關閉），空狀態說明備簡單風/精緻風兩版（鐵律1.232）。純本地顯示，完全不動雲端權威資料（鬥技之證持有量/發放邏輯）。',
-      '★ v3.28.0【arena.js 版號校正·index.html manifest】_LXPS_FILE_VERSIONS 內 arena.js 由誤植的 v3.17.9（該版 limit(150) 變更從未實際部署到 GitHub arena.js）還原為實際部署內容版本 v3.15.60，消除快取破壞字串與實檔版本漂移；arena.js 健康檢查（檢查3）比對的是 GitHub arena.js 內 VERSION 與本機 ARENA_CONFIG.VERSION（皆 v3.15.60）、不讀 manifest，故不影響、不會誤觸請更新提示。arena.js 檔案本身內容未改、不需重傳。',
-      '★ v3.28.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate；admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.28.0；GAME_CHANGELOG 維持 20 筆（移除最舊 v3.17.0）。本輪改 index.html＋admin_panel.js（僅版號對齊）＋game_changelog.js；hero_db.js 內容未改、維持 v3.25.0 免重傳。本輪完成 需求2/4/5 ＋ arena.js 版號校正；需求1（GM獎勵箱「重新整理」補領鈕）、需求3（鬥技場傷害/技能排行）、需求6（GM 課堂獎勵加成開關/隨機科目不重複/持續時間）為較大改動，留待後續各自專注、完整驗證後再交付。',
     ],
   },
 
