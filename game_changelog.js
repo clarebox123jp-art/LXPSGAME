@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.12.0 — 🐾 寵物好感度大修正(餵食暴衝根治+互動數值+好感稱號)+📖 圖鑑稀有度邊框+✨ 今日互動更清楚
+  {
+    ver: 'v4.12.0',
+    date: '2026-07-04',
+    brief: [
+      '🐾【寵物好感度大修正!】修好了「餵寵物吃東西時，好感度會突然爆衝」的問題。現在撫摸、餵食、玩遊戲給的好感度都正確了，好感度只會一點一點慢慢累積，不會再亂跳囉!',
+      '💖【好感度有稱號了!】看看你和寵物有多要好:0~24 有點陌生、25~49 已經熟識、50~74 有點親密、75~99 非常親密、100 不離不棄。每天到寵物小屋撫摸、餵對主食、玩遊戲，慢慢把牠養到「不離不棄」吧!',
+      '📖【寵物圖鑑更好看!】「🎓 已馴養／👀 已相遇」標籤移到寵物名字下方(不再擋住寵物圖片)，而且卡片邊框會依稀有度發光:SSR 彩虹流動、SR 金黃、R 藍色，一眼就看得出誰最稀有!',
+      '✨【今日互動提示更清楚!】關卡下方的「今日互動!」提醒，等你把小屋裡入住的寵物都摸過、餵過、玩過就會自動收起來，隔天早上 8:00 再出現。小屋裡的提示視窗也縮小、移到畫面右下角，不再閃來閃去。',
+    ],
+    items: [
+      '🐾 寵物小屋互動數值調整:撫摸 好感+1、餵對主食 好感+2、玩遊戲 好感+2(每天在小屋互動最多累積 +5 好感);經驗值:撫摸 EXP+2、餵對 EXP+5、玩遊戲 EXP+3。★戰鬥中攜帶寵物、打贏 BOSS 得到的好感度是另外算的，不受這個每日上限影響喔!',
+      '💖 修好了少數寵物好感度會「一次暴衝到滿」的異常。現在好感度來源都有嚴格把關，不會再因為連點或網路重試而重複累加。',
+      '📖 寵物圖鑑卡片:已馴養顯示「🎓 已馴養　Lv.X」，只出現過還沒收服的顯示「👀 已相遇」(收服後就只顯示已馴養)；卡片邊框改成稀有度顏色(SSR 彩虹會流動、SR 金黃、R 藍)。',
+    ],
+  },
+
   // v4.11.0 — 🐾 寵物小屋生氣表情(去背圖+💢)+🏪 商店販售清單分類索引標籤+🐾 寵物教學改「進到關卡主頁才彈」
   {
     ver: 'v4.11.0',
@@ -367,20 +384,6 @@ window.GAME_CHANGELOG = [
       '★ v3.30.0【六隻 R 起始英雄初始可愛版圖 404 根因與修復·免改程式】根因:hero_db.js 這六隻的 LV1 底圖 URL(Q幼兒園小孩(縮圖).png 等 6 檔)指向 LXPSGAME repo,但這些檔案只存在於早期舊 repo「clarebox123jp-art/-」,批次改 URL 到 LXPSGAME 時從未搬移(git 全歷史查證:LXPSGAME 從未存在這 6 個檔名)→ 上線以來一直 404。修法:自舊 repo 救回原始 6 張 PNG,由老師上傳到 LXPSGAME repo 根目錄(檔名必須一字不差)→ 零程式變更、零風險。LV10 進化圖與其他起始英雄(籃球隊員/直笛團員/田徑隊員/小力)不受影響。',
       '★ v3.30.0【GM 雙開關:課堂複習 🎁基礎+25% / ⭐加強複習 再+25%·index.html+admin_panel.js】老師需求:所有課堂複習加成皆可開關,依課程進度決定學生選題庫的動力。新增雲端旗標 gameConfig/reviewBoost={baseEnabled,doubledEnabled,updatedAt,updatedBy}(同 classRewardBoost 規則:玩家讀/GM 寫·免改 firestore.rules·獨立文件不被課堂獎勵加成 merge:false 覆寫);學生端監聽 _fbWatchReviewBoost(掛休息排程同一啟動點·回呼即時刷新關卡頁黃色 flash)+雙中央閘門 window._reviewBaseActive/_doubledReviewActive(欄位===false 才關·讀不到雲端=預設全開=維持現狀·向下相容)。基礎 +25% 套閘 6 點:冒險結算 _advCalcRewardMult 的 _isReviewSubject(唯一冒險發獎點·下游 isReview UI 連動消失)、關卡頁「課堂複習獎勵增加中」flash(_advRefreshReviewBonusUI 關閉時隱藏)、冒險科目選單群組標題 +25% 字樣、知識王結算擲骰 _kingRollReviewBonus 閘門+結算橫幅、知識王大廳卡標 🎁+25%、挑戰鈕浮籤與換科目 log。再+25% 套閘 5 點:直達鈕 _kingGetDoubledReviewTopics、大廳卡標 _isLeftDoubled、結算 _isDoubledSubject、冒險選單兩 render 的 ⭐ badge。GM UI 在「🎓 課堂獎勵加成」卡內子區塊「📖 課堂複習加成開關」:狀態列+查詢+兩組開/關四鈕(_adminReviewBoostQuery/Set·寫入前先讀舊值保留另一欄·無可選串接·同卡免側欄三點同步)。課堂複習科目分區/題庫本身不受開關影響、照常可選。',
       '★ v3.30.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.30.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.17.2)。本輪改 index.html＋admin_panel.js(版號＋加強複習開關 GM UI)＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳;arena.js 未改、維持 v3.15.60。另需老師上傳 6 張圖檔到 repo 根目錄。',
-    ],
-  },
-
-  // v3.29.0 — 新增 GM 選單「🎓 課堂獎勵加成」(隨機一般科目·+25% 知識幣/經驗/掉寶·持續時數開關)
-  {
-    ver: 'v3.29.0',
-    date: '2026-07-02',
-    brief: [
-      '🎓【老師開「課堂獎勵加成」時，那個科目做冒險更好賺!】當老師開啟「課堂獎勵加成」並指定某一個科目時，你在那個科目的冒險關卡、打完結算時拿到的知識幣、經驗值和掉寶率都會 +25%(加成期間內)。老師會不定期換不同科目、也會設定持續時間，把握加成中的科目多多練習喔!',
-    ],
-    items: [
-      '★ v3.29.0【新增 GM 選單「🎓 課堂獎勵加成」·admin_panel.js】新卡片(世界BOSS 群組·仿龍王的祝福):可「🎲 隨機抽一個一般科目(不重複輪替·整輪抽完自動重來)」+設定持續時數+加成%(預設25)→「🎓 開啟/續期加成」;另有「⛔ 立即關閉」「🔄 查詢目前狀態」。寫 gameConfig/classRewardBoost={enabled,subject,pct,expiresAt,recent[],updatedAt,updatedBy}(gameConfig=GM 寫/登入讀·免改 firestore.rules)。科目清單取自 _kingGetSubjects(一般科目·排除日本關/特殊題庫)。新增 _adminClassBoostQuery/Roll/On/Off + _cbEsc;側欄項 + 世界BOSS 群組登錄;無真正可選串接。',
-      '★ v3.29.0【學生端套用·index.html】新增 gameConfig/classRewardBoost 監聽 _fbWatchClassBoost → window._classBoost(掛在休息排程監聽同一啟動點·登入後啟動)。加成折入既有 _gameBlessingMult:當「本場冒險科目 _advPlayerSubject == 指定科目」且啟用未過期時,倍率再 ×(1+pct%)→自動作用於既有所有結算發獎點(知識幣/經驗/各關掉寶率·與龍王的祝福同一套用面;英雄解鎖機率一律不吃加成)。與龍王的祝福乘算並存;科目不符或未啟用時倍率=1.0 完全零影響。',
-      '★ v3.29.0【驗證/版本/範圍】index.html 全部 inline script 通過 node --check、三檔 0 lone surrogate;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v3.29.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.17.1)。本輪改 index.html＋admin_panel.js＋game_changelog.js;hero_db.js 內容未改、維持 v3.25.0 免重傳。需求6(GM 課堂獎勵加成)完成。',
     ],
   },
 
