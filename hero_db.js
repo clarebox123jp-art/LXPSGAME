@@ -5106,7 +5106,7 @@ const HERO_PRIMARY_CLASS = {
   '機關王雙人組': 'other',
   '雅典娜': 'other',
   '阿蘇火山龍王': 'dmg',
-  '藝天使．克雷爾': 'tank',
+  '藝天使．克雷爾': 'heal',   // ★ v4.19.0 — 老師裁定:主分類由 tank 改 heal(克雷爾 S1/S2/爆發皆治療/護盾/復活,歸主回復;HERO_CATEGORIES_OVERRIDE 早已 heal/dmg,此處對齊)
   '魔劍姬‧伊莉雅': 'dmg',
   '主神奧汀': 'tank',
   '死神': 'dmg',

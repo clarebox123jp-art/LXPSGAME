@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-05  / 目前主程式版本:v4.18.0(戰鬥寵物體驗四合一:馴養鈕發光/LOG鈕移位/忠誠羈絆防驅逐/貓掌爆發槽/寵物浮動圖迷你圖鑑)
+//  最後更新:2026-07-05  / 目前主程式版本:v4.19.0(戰鬥中替換跟隨寵物二合一:已馴養新寵裝到已有夥伴的英雄→彈「換夥伴對照視窗」;寵物爆發改逐寵物計次[戰鬥內·沒放換下去次數保留·只有實放才消耗]+克雷爾主分類 tank→heal)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.19.0 — 🔄 戰鬥中換夥伴對照視窗 + 逐寵物爆發計次(換寵保留·不跨戰鬥)+ 克雷爾主分類修正
+  {
+    ver: 'v4.19.0',
+    date: '2026-07-05',
+    brief: [
+      '🔄【戰鬥中換夥伴,先看對照再決定!】戰鬥中抽到「已經馴養」的寵物、想裝到「已經有跟隨夥伴」的英雄身上時,會先跳出「換夥伴對照視窗」——一次看清楚英雄目前的攻擊/特技/速度/HP、新舊兩隻夥伴的功能效果與專屬爆發招、以及各自「還能放幾次爆發」,再決定要「換成新夥伴」還是「保留原夥伴」(保留的話新夥伴會收進背包)。',
+      '🐾【寵物爆發改「逐寵物計次」】現在每一隻寵物在同一位英雄身上,都有屬於自己的爆發次數(好感度滿 100 一樣是 2 次);還沒放爆發就把牠換下去,次數會「留著」,之後換回來還能繼續用;只有「真的放出爆發」才會消耗那隻寵物的次數。此紀錄只在同一場戰鬥內計算,戰鬥結束就重新開始。',
+      '🌈【克雷爾歸類修正】藝天使‧克雷爾在「主定位篩選」裡從「主坦克」改為「主回復」,更符合她實際的治療定位,編組用篩選時更好找。',
+    ],
+    items: [
+      '★ v4.19.0【替換對照視窗·index.html】新增 _advShowPetSwapCompareModal(雙版·鐵律1.232·z-index 12800):顯示英雄當下攻/特/速/HP + 舊/新寵物功能效果(_EQUIP_SHORT / EQUIP_DB.d)與專屬爆發名稱說明(PET_BURST_DB cute/premium)及各自剩餘次數;替換 / 保留原夥伴 / 背景點擊=保留 / 出錯保底=保留,每條退出路徑都呼叫收尾避免卡死。',
+      '★ v4.19.0【逐寵物計次·index.html】新增 h._petBurstUsedByPet(戰前歸零·不跨戰鬥):_applyFollowPetToHero 初始化、_execPetBurst 寫回當前寵物已用次數;_petBurstUsed / _petBurstBonus 改為「當前跟隨寵物視圖」,與貓掌槽 / 雙選視窗 / renderCard 顯示同步。',
+      '★ v4.19.0【換裝流程·index.html】_advApplyPetToHero:換裝前卸除舊寵 onRemove、設 equip+onEquip、_followPet=新寵、次數視圖還原(換回舊寵取回保留次數)、_petBurstBonus 依新寵好感重算;_advFinishPetPick 於「已有跟隨寵物且新寵已馴養」彈對照視窗,收尾抽成 _advFinishPetPickTail 由抉擇 handler 呼叫(維持 v3.14.25/v3.16.39 三路推進),保留原夥伴則新寵進背包(滿則放棄)。',
+      '★ v4.19.0【克雷爾主分類·hero_db.js】HERO_PRIMARY_CLASS 內「藝天使．克雷爾」由 tank 改 heal(篩選 _heroSkillTypes 讀取來源);hero_db.js 版本自 v4.5.0 起隨主程式對齊為 v4.19.0。',
+      '★ v4.19.0【範圍/安全】戰鬥中換寵不重新套用寵物「成長素質加成」(避免場中補血 / HP 重算風險),對照視窗僅呈現當下素質+功能效果+爆發供決策;競技場仍照舊封鎖寵物爆發;全程 try-catch,不動既有傷害計算 / 存檔 / 守門。',
+    ],
+  },
   // v4.18.0 — 🐾 戰鬥寵物體驗大升級(馴養鈕發光/LOG鈕搬家/忠誠羈絆/貓掌爆發槽/寵物浮動圖)
   {
     ver: 'v4.18.0',
@@ -335,26 +352,6 @@ window.GAME_CHANGELOG = [
       '★ v4.6.0【🐾 寵物獎章 14 枚·index.html】MEDAL_DEFS 新增 cat=寵物:馴養組 7(初次馴養/7 隻/14 隻/28 隻全收「動物王者」=_MEDAL_TOP_TIER 頂級 🔮×5+💰10000/SSR 全收/任一 Lv20/任一好感 100)+ 互動組 7(餵對 20/撫摸 20/玩耍首勝/玩耍勝 20/翻牌≤30 秒/躲貓貓≤5 點/寵物爆發初體驗=裁決⑥甲·掛 _runPetBurst 僅玩家方 p1)。獎章頁 cats 陣列+分類圖示鏈加「寵物🐾」;新條目帶 cute 欄位、渲染改 (簡單風 && m.cute)?m.cute:m.desc(鐵律 1.232 樣式③·舊獎章無 cute 自動 fallback desc 完全回溯相容)。',
       '★ v4.6.0【計數與檢查管線·index.html】互動累計掛「既有 _medalStats」新鍵 petFeedOk/petPat/petPlayWin(localStorage adv_medal_stats+雲存 medalStats/_s+三槽合併逐鍵 max 全部現成)→ 僅把 3 新鍵加入 _applySafeData 雲端合併 _numKeys 白名單,零新存檔欄位·只增不減·誤刪是大忌天然合規。遞增點:_petHouseFeed 餵對 / _petHouseStrokeReward 搓揉完成(實際撫摸完成點) / _petHouseInteract(play);_checkPetMedals 檢查點:馴養統一入口 _petRecordTame(涵蓋 battle_tame/summon/admin_grant)/ 寵物實際升級 _petAddExp / 好感首達 100 _petAddAff / 各遞增點 / 登入 _checkMedalsOnLogin 批次(舊玩家已達成自動補·_unlockMedal 三層防重複)。',
       '★ v4.6.0【文案/素材/範圍】小屋頂欄說明+首入教學 🎾 步驟改「玩耍已開放」(cute/premium 雙版·鐵律 1.232;圖鑑好感度說明本就寫「撫摸/玩耍 +1」免改);兩款遊戲說明列/結算面板/CD 指示/逾時氣泡皆雙版。素材:躲貓貓 4 段 mp3+點擊星星.gif 已在 repo(本輪 HTTP 200 驗證·零上傳);記憶翻牌全音效重用既有池(kansatsu-flip/quiz-correct/applause)。零新 Firestore 集合/規則。改 index.html+game_changelog.js+admin_panel.js(僅版號·無 ?.);hero_db.js 未動(_vers 維持 v4.5.0);CURRENT_BOOT_VER 未動;GAME_CHANGELOG trim 20 筆(移除最舊 v3.23.0)。',
-    ],
-  },
-  // v4.5.0 — 寵物馴養 Phase C:28 隻寵物專屬「極限爆發」大絕招(跟隨寵物·雙選·專屬華麗特效)
-  {
-    ver: 'v4.5.0',
-    date: '2026-07-04',
-    brief: [
-      '🌟【28 隻寵物都有自己的「極限爆發」大絕招了!】只要把馴養好的寵物設成某位英雄的「跟隨寵物」,戰鬥中當那位英雄的「極限爆發」集滿能量、亮起來的時候,就會多出一個選擇:要放「英雄自己的爆發」,還是改放「🐾 寵物的極限爆發」!每隻寵物的絕招都不一樣、超帥氣!',
-      '💥【每隻寵物的絕招都不同!】舉幾個例子:台灣黑熊「黑熊怒擊」連續重擊敵人、綠蠵龜「龜甲庇護」讓全隊大幅減傷、丹頂鶴「鶴舞千年」幫全隊持續回血、荷魯斯之鷹「天空神之瞳」審判全場敵人、聖䗴神蟲「聖甲重生術」救活所有倒下的夥伴、阿努比斯胡狼「冥界審判」讓敵人不能回血也不能被救活…28 種效果等你發現!',
-      '🎯【怎麼使用 & 次數規則】寵物要先「跟隨」一位英雄(在英雄詳情頁🐾設定或寵物圖鑑裡設定),牠才會帶著自己的爆發上場。每場戰鬥可以放 1 次寵物爆發,而且是和英雄自己的 2 次爆發「分開算」的!好感度養到滿 100 的寵物,每場還能多放 1 次寵物爆發喔!',
-      '✨【每隻都有專屬華麗動畫】28 隻寵物的極限爆發各自搭配了華麗的全螢幕動畫特效與音效,放大絕的時候超有氣勢!快去寵物圖鑑點開每隻寵物,看看牠的專屬絕招介紹吧!',
-    ],
-    items: [
-      '★ v4.5.0【寵物極限爆發總覽·index.html】為 28 隻寵物(台灣 12+日本 12+埃及 4)各設計專屬極限爆發:資料表 window.PET_BURST_DB[寵物名]={n:招式名,cute,premium}(鐵律 1.232 雙版文案);跟隨寵物且該寵物有爆發定義時,英雄爆發就緒會觸發「英雄爆發 / 🐾 寵物爆發」雙選(_showPetBurstChoiceModal)。每場限 1 次(h._petBurstUsed,與英雄自身 2 次爆發分開計);好感度滿 100 → h._petBurstBonus=1 額外 +1 次(v4.3.0 已就緒旗標)。',
-      '★ v4.5.0【雙選與施放·index.html】execBurst 頂部 hook:若英雄有可用寵物爆發且本場尚未用(或好感滿 100 尚有加次)→ 彈雙選;選寵物則走 _runPetBurst(pn,h) 施放該寵物專屬效果、標記 _petBurstUsed、消耗英雄爆發能量;_canBurst / updateBurstEffects 同步認得寵物爆發可用狀態。所有寵物爆發傷害皆必中、無視有利,走 doDmg 不加 bypassShield → 龍王護盾與世界 BOSS 5000 傷害上限仍生效(鐵律 1.31);固定傷害段(如冥界審判 HP×400%)走 fixedDmg 組同樣受 cap。',
-      '★ v4.5.0【doDmg 頂部/受傷後 hook·index.html】頂部:變化狸「百變障眼法」全隊共用免疫接下來 5 次傷害(G._petTanukiShield 每側計數·多段各扣 1)、對馬山貓「山貓瞬影」自身閃避 +40%(_petEvade·mustHit/ignoreEvasion 可破)、綠蠵龜/聖䗴神蟲減傷(_petDmgReduce)、丹頂鶴/奈良神鹿屬性減傷(_petElemGuard)、荷魯斯之鷹易傷(_petVuln)、錦鯉威能×2(_petAmpNext)。受傷後(扣 HP 之後·用實際 dmg·仿軟軟的雲):台灣藍鵲「長尾迴旋」50% 反彈給攻擊者(_petReflect·走 doDmg 受 cap)、綠雉「雉羽轉化」受傷 50% 轉治療(_petConvertDmg·經 _healCurseGate 尊重禁療)。',
-      '★ v4.5.0【doHeal / doRevive / skillCost hook·index.html】doHeal:錦鯉「躍龍門」施療者身上 _petAmpNext → 本次治療 ×2(與傷害共用旗標·誰先出手先消耗)。doRevive:阿努比斯胡狼「冥界審判」目標 _petNoRevive>0 → 禁止復活(與禁療分開的獨立旗標·2 回合)。skillCost:五色鳥「五彩羽光」全體友 _petCostCut → 下次技能消耗 -80%(仿托特聖䴉一次性折扣·UI 顯示也套用·實際執行才消耗)。',
-      '★ v4.5.0【startTurn 收尾 hook·index.html】新回合每英雄(tickStatus 之前):翠鳥「翠影急襲」下回合保證先手(_petFirstStrikeNext→速度暫拉滿 _petOrigSpd·次回合還原);阿努比斯禁復活回合遞減;石虎「石虎疾襲」等自我素質 buff 到期還原(_petStatBuffs 自管陣列);丹頂鶴/日本大山椒魚持續恢復(_petRegen·經 _healCurseGate);梅花鹿「鹿鳴呦呦」/奈良神鹿「神鹿賜福」能量賜予(_petEnergyGift·每側每回合僅一次·log 標明「來源:寵物爆發」鐵律 1.207)。其餘 _pet* buff/status 由既有 tickStatus 自動遞減移除。',
-      '★ v4.5.0【寵物圖鑑爆發區 + 特效·index.html + hero_db.js】寵物詳情頁(_showPetDetail)在馴養狀態與生態科普之間新增「🌟 寵物極限爆發」區塊:顯示招式名 + cute/premium 雙版說明(鐵律 1.232)+ 使用方式提示(固定效果一版數值·無升級 → 鐵律 1.160 天然合規)。hero_db.js BURST_GIF_DB 新增 28 隻寵物爆發特效條目:全部重用 repo 既有 GIF(不同 key·仿大刀勇士做法·零上傳·GitHub 樹已確認 28 檔皆存在)、音效沿用既有 sfx 池、dur 統一 2000ms 全螢幕只播一段淡出。',
-      '★ v4.5.0【安全性/範圍】皆為新增旁路 hook(全程 try-catch·不動既有傷害計算/存檔/守門/機率);借用好友英雄不觸發寵物爆發(_isFriendHero 天然排除)。改 index.html + hero_db.js(BURST_GIF_DB 28 條)+ admin_panel.js(僅版號 v4.5.0·內容未改·無 ?.)+ game_changelog.js。七點版本同步 → v4.5.0(含 hero_db.js·CURRENT_BOOT_VER 未動);GAME_CHANGELOG trim 至 20 筆(移除最舊 v3.22.0)。',
     ],
   },
 
