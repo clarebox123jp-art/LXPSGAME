@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-05  / 目前主程式版本:v4.19.0(戰鬥中替換跟隨寵物二合一:已馴養新寵裝到已有夥伴的英雄→彈「換夥伴對照視窗」;寵物爆發改逐寵物計次[戰鬥內·沒放換下去次數保留·只有實放才消耗]+克雷爾主分類 tank→heal)
+//  最後更新:2026-07-05  / 目前主程式版本:v4.20.0(寵物小屋 iPad 兩修[三槽位完整顯示不捲動+記憶翻牌點了立刻翻]+PC 版槽位自動放大+戰鬥寵物出現視窗稀有度/相遇/馴養徽章+寵物爆發演出換該寵物放大特寫+字少版圖鑑技能與爆發說明隨等級顯示數值+主定位篩選調整[動物學家改「其他」])
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,30 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.20.0 — 🏠 寵物小屋 iPad 兩修:三槽位完整顯示不捲動 + 🃏 記憶翻牌點了立刻翻
+  {
+    ver: 'v4.20.0',
+    date: '2026-07-05',
+    brief: [
+      '🏠【小屋三隻寵物一眼看齊全!】修正 iPad 上寵物小屋的排版問題:以前畫面比較矮時,寵物卡的上半部會被上方的列蓋住、往上滑之後圖片還會卡住回不來。現在三個草蓆槽位會自動縮放成剛剛好的大小,寵物的圖、等級、經驗、好感度和三顆互動按鈕全部完整顯示,不用捲動!電腦上空間夠的話畫面完全不變。',
+      '🃏【翻牌遊戲手指一碰就翻!】修正 iPad 玩「記憶翻牌」時點了卡片要等一下才翻開的卡頓問題——現在手指一碰到卡片就立刻翻面,計時挑戰玩起來更順手!',
+      '🖥️【電腦上小屋寵物變大隻!】電腦等大螢幕空間充裕時,寵物小屋的三個槽位會自動等比放大(最多約 1.7 倍),寵物的名字、等級、好感度文字都變大更好讀;iPad 空間不夠時照舊自動縮小塞好塞滿。',
+      '🏷️【戰鬥抽到寵物,一眼看懂身分!】戰鬥中寵物出現的視窗(獲得寵物 / 答題獎勵選英雄 / 動物學家召喚),寵物名字旁現在會顯示完整徽章:稀有度(SSR/SR/R)+ 🎓已馴養、或 👀已相遇 + ✨未馴養、或 🌫未相遇 + ✨未馴養——是不是新面孔、要不要馴養,一眼就知道!',
+      '🐾【寵物爆發換上主角特寫!】寵物施放專屬極限爆發時,畫面右側的大圖從英雄立繪改成「那隻寵物的放大特寫」(去背圖加金色光暈),招式大字與全螢幕特效照舊——這一招是誰放的,看得清清楚楚!',
+      '🧸【簡單風圖鑑數字跟著等級跑!】切「簡單風」時,英雄圖鑑的技能與極限爆發精簡說明,現在也會跟精緻風一樣「隨你升級後的等級」顯示計算後的實際數值(並附 Lv.X 標籤),不再永遠停在 Lv1 的數字。',
+      '🔎【編組篩選歸類微調】「動物學家」在主定位篩選裡從「主坦克」改到「其他」,更符合牠召喚寵物、保護隊友的定位(藝天使‧克雷爾上一版已從主坦克改到主回復);編組用「主定位」篩選時更好找。',
+    ],
+    items: [
+      '★ v4.20.0【小屋槽位排版·index.html】#_ph-slots 由 overflow-y:auto 改 overflow:hidden 並補 min-height:0(根治 flex 子項不縮小把食物面板擠出畫面 + align-items:center 內容過高時上緣被裁在捲動原點之外「捲不回來」的 iPad 病灶);三張槽位卡改包進單一內層列 #_ph-slot-row,_petHouseRender 渲染尾端(食物面板高度定案後)呼叫新函式 _phFitSlots:以 row.offsetWidth/offsetHeight(版面尺寸·不受 transform 影響)對容器可視尺寸量測,超出即整列等比 transform:scale 縮小塞進可視高度(transform-origin:center·容器置中故視覺完整);空間足夠時比例=1 完全不變(桌機零影響)。另 +150ms 補量一拍吃掉字型/分頁籤晚到的版面變動,並一次性綁定 resize / orientationchange 重量測(小屋未開啟時自動 no-op)。附帶效益:不再需要捲動後,「想捲動卡片卻誤觸寵物圖而跳出綁定今日夥伴確認」的情形自然消失(逐槽鎖定機制本身零改動)。',
+      '★ v4.20.0【記憶翻牌 iPad 即時響應·index.html】._ppg-card 加 touch-action:manipulation(移除 iOS 合成 click ~300ms 延遲=卡頓主因)+ -webkit-tap-highlight-color:transparent + user-select:none;._ppg-inner 加 will-change:transform(翻牌 3D 動畫走 GPU 合成更順);卡片加 touchstart(passive:true)立即呼叫 onCard 翻牌,後續補來的合成 click 打到「已翻卡」會被 onCard 開頭 _ppg-flip 判定早退=天然防重複觸發,桌機滑鼠仍走 click;「✕ 放棄」鈕同加 touch-action:manipulation。翻牌配對判定 / 60 秒計時 / 發獎(走既有 _petHouseInteract)/ 敗不消耗可再挑戰 / 躲貓貓 全部零改動。',
+      '★ v4.20.0【PC 槽位放大·index.html】_phFitSlots 縮放比上限 1→1.7(r=min(1.7, availH/needH, availW/needW)·|r-1|>0.01 才套 transform):大螢幕空間充裕即等比放大三槽位整列(字更大更好讀·視覺仍完整落在可視區);iPad 空間不足時 r<1 縮小分支行為不變。',
+      '★ v4.20.0【寵物出現視窗徽章·index.html】新增 window._petStatusBadgesHtml(pn,fs)=稀有度徽章(_petRarityBadgeHtml)+ 狀態徽章(🎓已馴養[_petIsTamed 權威] / 👀已相遇+✨未馴養[_isPetMet·v4.9.0 語義] / 🌫未相遇+✨未馴養),為「出現當下」快照(裝備攜帶後才算相遇);套用三視窗:showEquipUI 的 #equip-pet-name(第二設定點改 innerHTML=名+徽章)、_showBurstEquipSequence、_advShowPetTargetPicker(helper 缺席退回舊 _petTameBadgeHtml 組合·寵物名為內建常數無 XSS 風險)。',
+      '★ v4.20.0【寵物爆發特寫·index.html】_execPetBurst 演出呼叫改 _showBurstCinematic(h,{n,_petName:pn});_showBurstCinematic 對 bd._petName 走寵物分支:右側面板改 img 元素三段 fallback(_petNobgUrl 去背圖 object-fit:contain+金色 drop-shadow → EQUIP_DB petImg 照片 cover+圓角 → 大 icon emoji·仿 v4.18 迷你圖鑑),左側/底部漸層遮罩、淡入 0.35s/2s 淡出、集中效果線、招式大字、BURST_GIF_DB 特效全不動;英雄爆發路徑(無 _petName)零改動(其餘 8 個呼叫點不受影響)。',
+      '★ v4.20.0【簡單風動態數值·index.html】老師裁決推翻 v3.24.0「cute 顯示 sd 不套升級數值」:_renderHeroDetail 技能分岔 cute 改 _renderSkillFdWithLv(sk.n, sd, skLv)、爆發分岔 cute 改 _renderBurstFdWithLv(burst.n, sd, _bLv)——與 premium 同一顆數值替換引擎(通用類全 N% 替換對 sd 必中·special/custom regex 錨定 fd 措辭者對 sd miss 時該數字維持 Lv1 基準=保守可接受)+ 一律附 Lv.X 標籤;premium 路徑一字不改;天賦兩版本本就不套動態值(v3.5.62 摘要制)不動。鐵律 1.160 原意=不寫升級 scaling 說明,顯示當前等級計算值不違反。',
+      '★ v4.20.0【主定位篩選調整·hero_db.js】HERO_PRIMARY_CLASS[\'動物學家\'] tank→other(篩選唯一權威·v3.15.88);藝天使．克雷爾 v4.19.0 已 tank→heal,本版不再變動。只動篩選分類,雷達用 HERO_CATEGORIES_OVERRIDE(動物學家 [\'ctrl\'])與 HERO_HEX_OVERRIDE 兩者分離皆不動。',
+      '★ v4.20.0【版本與範圍】改 index.html + hero_db.js(篩選調整·本輪解凍 v4.19.0→v4.20.0);admin_panel.js/game_changelog.js 版號公告;world-boss 兩檔凍結不動。版本同步 → v4.20.0(含 hero_db.js key);GAME_CHANGELOG trim 20 筆(移除最舊 v4.6.0)。',
+    ],
+  },
   // v4.19.0 — 🔄 戰鬥中換夥伴對照視窗 + 逐寵物爆發計次(換寵保留·不跨戰鬥)+ 克雷爾主分類修正
   {
     ver: 'v4.19.0',
@@ -333,25 +357,6 @@ window.GAME_CHANGELOG = [
       '★ v4.7.0【上線體檢修正①·index.html】_clearAccountLocalData 補清寵物四狀態(_tamedPets/_petTameHistory/_petHouseSlots/_petHouseDaily):共用 iPad 換帳號無整頁 reload,Phase A 起漏列 → 前一位學生寵物殘留記憶體會被 union 只增不減載入永久合併進下一位帳號(與英雄污染同型)。比照 _heroLevels 既有清除;只清記憶體不動雲端,本人資料由雲端載入原樣還原。',
       '★ v4.7.0【上線體檢修正②·index.html】_petPlayFinish 發獎段移到 overlay 檢查之前:勝利→結算面板有 0.65~1.4 秒空窗,若玩家按 ✕ 放棄會 return 漏發 → 改為發獎不依賴 overlay 存在,勝利瞬間必入帳(overlay 已關僅略過結算面板)。',
       '★ v4.7.0【驗證/範圍】index.html 20 inline script node --check 全過、0 lone surrogate;admin_panel.js 0 真 ?.(本輪有實質修改:活動卡 🐾 鈕+grab+wiring 三處·免三點同步);零新 Firestore 集合/規則(寵物券帳本讀取沿用 ticketLedger 既有規則·未部署會顯示提示)。七點版本同步 → v4.7.0(hero_db.js 未動維持 v4.5.0·CURRENT_BOOT_VER 未動);GAME_CHANGELOG trim 20 筆(移除最舊 v3.24.0)。',
-    ],
-  },
-  // v4.6.0 — 寵物小屋「玩耍」開放:🃏記憶翻牌+🙈躲貓貓雙迷你遊戲(隨機輪替)+ 🐾寵物獎章 14 枚
-  {
-    ver: 'v4.6.0',
-    date: '2026-07-04',
-    brief: [
-      '🎾【寵物小屋「玩耍」正式開放!】小屋裡每隻寵物的「🎾 玩耍」按鈕可以按了!按下去會隨機輪流出現兩款小遊戲:「🃏 記憶翻牌」和「🙈 躲貓貓」。挑戰成功,那隻寵物 EXP+10、💖好感+1(每隻寵物每天 1 次);就算挑戰失敗也不會用掉當天的次數,可以馬上再挑戰一次!',
-      '🃏【記憶翻牌怎麼玩】畫面上有 16 張蓋起來的卡牌(8 種寵物、每種 2 張)。每次翻開兩張:一樣的會發光留下來,不一樣的會自動蓋回去。在 60 秒內找齊 8 對就成功!30 秒內完成還能拿「⚡ 過目不忘」獎章!',
-      '🙈【躲貓貓怎麼玩】寵物躲在小屋的某個地方!點小屋各處會跳出星星,用「聲音」和「星星的顏色」判斷距離:聲音越急、星星越紅=越近(藍色=很遠)!每次點完要等 3 秒。60 秒內找到牠就成功;只點 5 下以內就找到,可以拿「👂 順風耳」獎章!',
-      '🏅【全新「🐾 寵物」獎章 14 枚!】獎章頁多了寵物分類:初次馴養、動物之友(7 隻)、森林夥伴(14 隻)、動物王者(28 隻全收服=最難獎章,獎勵 🔮×5+💰10000!)、傳說馴獸師(SSR 8 隻全收)、滿級教練(Lv.20)、心心相印(好感 100)、小小飼育員(餵對 20 次)、搓揉高手(撫摸 20 次)、玩耍初勝、遊戲高手(玩耍勝 20 次)、過目不忘、順風耳、爆發初體驗(第一次放寵物大絕招)。每枚解鎖自動送 🔮召喚水晶+💰知識幣,以前就達成的登入會自動補發!',
-    ],
-    items: [
-      '★ v4.6.0【玩耍入口與輪替·index.html】小屋寵物卡「🎾 玩耍」由 v4.3.0 敬請期待改為 mk 工廠鈕(act=play·當日完成自動 ✅ 鎖定=裁決③甲)→ _petPlayStart:守門 _petSysOpenForMe/_petIsTamed/_petHouseCanDo → A/B 輪替=隨機起手+強制交替(localStorage _petPlayLast·裁決①甲·非關鍵資料不進存檔 schema)。勝利瞬間走既有 _petHouseInteract(pn,play,slotIdx) 發獎(EXP+10·好感+1·標記當日·雲存·重繪·防中途關閉漏發);失敗/中途離開不消耗(裁決②甲),結算面板供 🔄 再挑戰(同款遊戲·躲貓貓重新隨機藏點)/🏠 回小屋。',
-      '★ v4.6.0【🃏 記憶翻牌·index.html】_petPlayMemory:28 隻全池隨機 8 隻 ×2 Fisher-Yates 洗入 4×4(裁決④甲·未馴養寵物入鏡=天然新寵預告);CSS 3D 翻牌(-webkit 前綴照顧老 iPad Safari);翻牌 sfx-kansatsu-flip、配對成功 sfx-quiz-correct+金框發光鎖定、配對失敗依規格靜默 0.8 秒自動翻回(期間全盤鎖點防連點)、8 對完成 sfx-applause;60 秒倒數(剩 10 秒轉紅脈動);≤30 秒完成 → ⚡過目不忘。卡面=EQUIP_DB petImg(emoji 墊底防破圖)、卡背 CSS 🐾,零新素材。',
-      '★ v4.6.0【🙈 躲貓貓·index.html】_petPlayHideSeek:背景=靜態 寵物小屋.png 滿版(規格指定·不用動態 mp4);藏點正規化隨機(x 0.08~0.92 / y 0.10~0.90);點擊(touchstart preventDefault+mousedown 雙路徑防雙發)跳 點擊星星.gif,依對角線正規化距離 d 播四段音效:d>0.55 很遠 / ≤0.55 有點距離 / ≤0.35 有點近 / ≤0.18 非常近(4 段 mp3 開場預載·repo 已有·尊重全域靜音);裁決⑤乙:星星顏色隨距離 hue-rotate(藍→綠→黃→紅),靜音平板也玩得動;每次點擊 CD 3 秒(底部膠囊倒數指示);d≤0.08 命中 → sfx-quiz-correct+去背寵物圖彈出(_petNobgUrl·petImg fallback)+♪♫ 音符飄升;逾時寵物自行現身+氣泡;≤5 次點擊命中 → 👂順風耳。60÷3=最多 20 次點擊。',
-      '★ v4.6.0【🐾 寵物獎章 14 枚·index.html】MEDAL_DEFS 新增 cat=寵物:馴養組 7(初次馴養/7 隻/14 隻/28 隻全收「動物王者」=_MEDAL_TOP_TIER 頂級 🔮×5+💰10000/SSR 全收/任一 Lv20/任一好感 100)+ 互動組 7(餵對 20/撫摸 20/玩耍首勝/玩耍勝 20/翻牌≤30 秒/躲貓貓≤5 點/寵物爆發初體驗=裁決⑥甲·掛 _runPetBurst 僅玩家方 p1)。獎章頁 cats 陣列+分類圖示鏈加「寵物🐾」;新條目帶 cute 欄位、渲染改 (簡單風 && m.cute)?m.cute:m.desc(鐵律 1.232 樣式③·舊獎章無 cute 自動 fallback desc 完全回溯相容)。',
-      '★ v4.6.0【計數與檢查管線·index.html】互動累計掛「既有 _medalStats」新鍵 petFeedOk/petPat/petPlayWin(localStorage adv_medal_stats+雲存 medalStats/_s+三槽合併逐鍵 max 全部現成)→ 僅把 3 新鍵加入 _applySafeData 雲端合併 _numKeys 白名單,零新存檔欄位·只增不減·誤刪是大忌天然合規。遞增點:_petHouseFeed 餵對 / _petHouseStrokeReward 搓揉完成(實際撫摸完成點) / _petHouseInteract(play);_checkPetMedals 檢查點:馴養統一入口 _petRecordTame(涵蓋 battle_tame/summon/admin_grant)/ 寵物實際升級 _petAddExp / 好感首達 100 _petAddAff / 各遞增點 / 登入 _checkMedalsOnLogin 批次(舊玩家已達成自動補·_unlockMedal 三層防重複)。',
-      '★ v4.6.0【文案/素材/範圍】小屋頂欄說明+首入教學 🎾 步驟改「玩耍已開放」(cute/premium 雙版·鐵律 1.232;圖鑑好感度說明本就寫「撫摸/玩耍 +1」免改);兩款遊戲說明列/結算面板/CD 指示/逾時氣泡皆雙版。素材:躲貓貓 4 段 mp3+點擊星星.gif 已在 repo(本輪 HTTP 200 驗證·零上傳);記憶翻牌全音效重用既有池(kansatsu-flip/quiz-correct/applause)。零新 Firestore 集合/規則。改 index.html+game_changelog.js+admin_panel.js(僅版號·無 ?.);hero_db.js 未動(_vers 維持 v4.5.0);CURRENT_BOOT_VER 未動;GAME_CHANGELOG trim 20 筆(移除最舊 v3.23.0)。',
     ],
   },
 
