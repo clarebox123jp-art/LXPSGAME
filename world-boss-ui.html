@@ -1,6 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
-<!-- ★ v4.22.0(2026-07-06)— ①戰鬥畫面 BOSS 背景圖 Y 10%→-10%(全龍王下移·避開上半部 HP 條;_wbRenderBattleScreen JS + CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊補套跟隨寵物(需求3甲·_applyFollowPetToHero·唯一套用點不雙套)。需 index.html 同版 v4.22.0 -->
+<!-- ★ v4.25.0(2026-07-06)— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到龍頭;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處·硬編碼全龍王通用·無 _bossBgY)。需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)— ①戰鬥畫面 BOSS 背景圖 Y 10%→-10%(全龍王下移·避開上半部 HP 條;_wbRenderBattleScreen JS + CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊補套跟隨寵物(需求3甲·_applyFollowPetToHero·唯一套用點不雙套)。需 index.html 同版 v4.22.0 -->
 <!-- ★ v4.8.0(2026-07-04)— ① 龍王總 HP 5,000,000 → 10,000,000 全 UI 同步(靜態卡×2/超級血條預設/介紹彈窗/戰場血條 fallback×3/註解);② 替補英雄列表(_wbTcOpenSwapHero)三升級:(a)列表上方加「篩選列」(全部/⚔主傷害/💚主回復/🌀主控場/🛡主坦克/🎲其他/👑UR/🌈SSR/⭐SR/💎R + 🔍條件搜尋 openCondSearch('wbswap'),沿用主程式既有分類與條件搜尋口徑 window._wbSwapHeroPassFilter,至寶 modal 共用 grid 時自動隱藏);(b)每隻英雄名下加「📖 圖鑑整備」鈕(_wbOpenCodexFromSwap → 主程式 _openHeroCodexFromWbSwap 開該英雄圖鑑升級/裝至寶/裝寵物,關閉自動回到替補列表且等級即時刷新;已選英雄鈕改保留可點=只擋選角不擋整備);(c)替補縮圖 object-position 50%→30%(Y 下移 20%),排除 33 隻圖高已適當者(_WB_SWAP_THUMB_KEEP) -->
 <!-- ★ v3.15.61(2026-06-20)— 大廳「當前龍王」素質 + 「下一隻龍王搶先看」整卡改資料驅動,不再寫死,輪替推進自動跟上:(a)_wbApplyCurrentBossSkin 追加更新當前龍王卡的攻擊/特技/速度(由寫死火龍王 49/50/15 改讀 HERO_DB[當前龍王];HP 統一 5,000,000 不動);(b)新增 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻龍王 → 名稱/立繪/--wb-boss-bg/屬性/攻擊·特技·速度/簡介=背景故事+自動護盾文案/主題色依屬性 + 「能力詳細介紹」鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正原寫死土龍王過時文案(額外減傷 40%→實際 30% 等);next-preview HTML 加 hooks(wb-nextboss-img/nm/desc/elem/atk/sp/spd + #wb-next-boss-preview/#wb-nextboss-badge + .wb-nextboss-info-btn),排程於 skin 旁 setTimeout 120/1850,index.html 雲端當前龍王解析兩處 re-apply 同步呼叫 -->
 <!-- ★ v3.15.48(2026-06-19)— 修世界 BOSS 龍王戰崩毀後 guest 端卡死「無法離開戰鬥」:根因=guest 端結算(_wbClientCheckEnded)只認房主廣播 meta.status==='ended' 才觸發,但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11 把 p1 全歸 0)後「meta.status='ended'」的 sync 若沒送達 guest(網路丟包/房主端也卡),guest 死等 ended → 永久卡戰場。修:_wbClientApplyWire 套完狀態後偵測「p1 全員 curHp<=0(玩家方全滅)」且未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,不依賴房主再廣播 ended);世界 BOSS 無復活,p1 全滅=確定戰敗不誤判,_wbAdvBattleEnded/_wbClientForceCheckWin 雙旗標守門 -->
@@ -2000,7 +2000,7 @@ try{
   #wb-lobby-overlay.wb-in-battle{
     background:
       linear-gradient(180deg,rgba(8,10,24,0.5) 0%,rgba(8,10,24,0.3) 40%,rgba(8,10,24,0.85) 100%),
-      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center -10%/cover no-repeat,   /* ★ v4.22.0 — Y 10%→-10% 全龍王下移,與 JS 動態設定一致 */
+      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center -30%/cover no-repeat,   /* ★ v4.25.0 — Y -10%→-30% 全龍王再下移 20%(露出龍頭),與 JS 動態設定一致 */
       #1a0a08;
   }
   #wb-lobby-overlay.wb-in-battle .wb-lobby-card{
@@ -10695,7 +10695,7 @@ try{
         if(_lobby && _lobby.classList.contains('wb-in-battle')){
           _lobby.style.background =
             `linear-gradient(180deg,rgba(8,10,24,0.5) 0%,rgba(8,10,24,0.3) 40%,rgba(8,10,24,0.85) 100%),`+
-            `url('${_bossUrl}') center -10%/cover no-repeat, #1a0a08`;   // ★ v4.22.0 — Y 由 10% 再下移 20% → -10%(全龍王通用,避開上半部被 HP 條遮住的區域);原 v3.15.50 為 10%
+            `url('${_bossUrl}') center -30%/cover no-repeat, #1a0a08`;   // ★ v4.25.0 — 老師回報 -10% 仍看不到龍頭 → 再下移 20% 至 -30%(全龍王通用·龍王在畫面上更往下=龍頭露出於 HP 條下方);v4.22.0 -10%·原 v3.15.50 為 10%
         }
       }
     }catch(_){}

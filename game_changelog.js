@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-06  / 目前主程式版本:v4.24.0(寵物小屋:撫摸(按住搓揉)對 GM 失效修復)
+//  最後更新:2026-07-06  / 目前主程式版本:v4.25.0(龍王戰:戰報鈕圓化/寵物浮圖階層/英雄預覽 z-index+寵物/龍王背景再下移)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.25.0 — 🐉 龍王戰畫面四個小修正(戰報鈕/寵物浮圖/英雄預覽/龍王背景)
+  {
+    ver: 'v4.25.0',
+    date: '2026-07-06',
+    brief: [
+      '🐉【龍王戰畫面更好看、更好用了!】左下角的「戰報」按鈕(原本的 LOG)縮成和求救鈕一樣的小圓鈕、不再擋到英雄卡;英雄卡上攜帶的寵物「去背發光圖」現在會穩穩出現在角色圖右上角(可以點開看寵物說明);點英雄看詳細資料的視窗不再被龍王血條蓋住;有帶寵物時詳細視窗下方也會正確顯示寵物、不再寫「無寵物」。',
+    ],
+    items: [
+      '★ v4.25.0【戰報鈕·index.html】左下 #log-toggle-btn 由圓角矩形「📜 LOG」改為與 SOS(#adv-battle-help-fab)同直徑的圓鈕(58px·border-radius:50%·font-size:20px·line-height:53px)、標籤改「戰報」(展開時「收合」·_collapseBattleLog/toggleBattleLog 兩 textContent 同步)。縮小後不再壓到最左邊的角色卡;位置維持 SOS 正上方(left:10px bottom:80px)。',
+      '★ v4.25.0【寵物浮圖階層·index.html】renderCard 寵物攜帶/跟隨浮動去背圖(.pet-float-badge)原掛在 .card-illus-space(該層是 inset:0 的卡片背景層)→ 被卡片前景文字/技能列/HP 蓋住=老師回報「階層太低沒出現在角色圖右上」(左上稀有度徽章剛好在無文字角落才看得見)。修法:改掛到卡片前景層(el·getComputedStyle position:static 才補 relative)+ z-index 12→30 → 浮圖穩定顯示在肖像右上;位置口徑不變(illus-space 本 inset:0=全卡)。點圖開迷你圖鑑(_togglePetMiniCodex)不變·敵我雙方卡片皆套·涵蓋所有戰鬥畫面(冒險/世界BOSS)·鬥技場本就禁用寵物。',
+      '★ v4.25.0【英雄預覽 z-index + 寵物·index.html】①點英雄卡彈出的詳細預覽 #hero-preview-overlay 加行內 z-index:12000(蓋過世界BOSS大廳 #wb-lobby-overlay 9000/元素確認 10500·仍低於 SOS/戰報 2147483646)→ 不再被龍王 BOSS 血條(.wb-mega-hp-zone 吃 lobby 9000)蓋住;所有預覽入口共用此元素故一次生效。②showHeroPreview 寵物顯示來源放寬 h.equip.n || h._followPet(_applyFollowPetToHero 有時只設 _followPet →原只看 h.equip 會誤顯「無寵物」)·與 renderCard 浮圖同口徑·有攜帶就顯示。',
+      '★ v4.25.0【龍王戰場背景·world-boss-ui.html】戰鬥畫面 BOSS 背景圖位置 Y -10%→-30%(全龍王通用·龍王在畫面上再往下移 20%·露出龍頭於 HP 條下方;_wbRenderBattleScreen JS 動態設定 + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處同步·硬編碼無 _bossBgY 逐龍王判定→全 8 龍王一致)。老師回報 v4.22.0 的 -10% 仍看不到龍頭故再下移。',
+      '★ v4.25.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.25.0(index.html+admin_panel.js+game_changelog.js+world-boss-ui.html;hero_db.js 維持 v4.20.0、world-boss.js 維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.11.0·新最舊 v4.12.0)。上傳順序:game_changelog.js → admin_panel.js → world-boss-ui.html → index.html(最後)。',
+    ],
+  },
   // v4.24.0 — 🤚 寵物小屋「撫摸(按住搓揉)」互動小修正(讓撫摸更穩定)
   {
     ver: 'v4.24.0',
@@ -311,23 +326,6 @@ window.GAME_CHANGELOG = [
       '🐾 寵物小屋互動數值調整:撫摸 好感+1、餵對主食 好感+2、玩遊戲 好感+2(每天在小屋互動最多累積 +5 好感);經驗值:撫摸 EXP+2、餵對 EXP+5、玩遊戲 EXP+3。★戰鬥中攜帶寵物、打贏 BOSS 得到的好感度是另外算的，不受這個每日上限影響喔!',
       '💖 修好了少數寵物好感度會「一次暴衝到滿」的異常。現在好感度來源都有嚴格把關，不會再因為連點或網路重試而重複累加。',
       '📖 寵物圖鑑卡片:已馴養顯示「🎓 已馴養　Lv.X」，只出現過還沒收服的顯示「👀 已相遇」(收服後就只顯示已馴養)；卡片邊框改成稀有度顏色(SSR 彩虹會流動、SR 金黃、R 藍)。',
-    ],
-  },
-
-  // v4.11.0 — 🐾 寵物小屋生氣表情(去背圖+💢)+🏪 商店販售清單分類索引標籤+🐾 寵物教學改「進到關卡主頁才彈」
-  {
-    ver: 'v4.11.0',
-    date: '2026-07-04',
-    brief: [
-      '😊【寵物小屋:餵對、摸對會露出開心表情!】在寵物小屋餵對主食、或按住搓揉撫摸完成時,寵物會短暫換上「開心」的表情圖(1.5 秒後自動變回原本的樣子)!',
-      '💢【餵錯、亂戳會生氣!】餵錯食物、或只是戳戳點點寵物,牠會冒出「💢 生氣符號」表示不開心(1.5 秒消失)——先用原本的樣子加上生氣符號提醒你要好好照顧牠喔!(專屬的「不悅」表情圖之後會再補上)',
-      '🏪【商店大改版:左側商品加分類標籤!】不可思議超商的商品清單左側新增「🔮 召喚 / 💪 強化 / 🐾 寵物 / ♻️ 重置 / 🖼️ 肖像」五個分類標籤,點一下就只看該類商品,每個標籤還會顯示該類有幾樣,找東西更快!(右側背包和賣出功能完全不變)',
-      '🐾【寵物教學時機修正:進到關卡主頁才出現!】之前寵物的第一次教學有時候太早跳出來(你還沒真正進到關卡選擇畫面),害你錯過「跟著點一次」的教學和第一次召喚。現在改成「確定進到關卡主頁、畫面都準備好」才會出現,不會再被登入或其他視窗蓋住、也不會錯過囉!',
-    ],
-    items: [
-      '★ v4.11.0【寵物小屋互動表情·index.html】window._petHouseEmote(slotIdx,mood) 改雙分支:mood="happy"→短暫把該槽 #_ph-img-{slotIdx} 內 <img> 換成 _petHappyUrl(pn)=寵物名_開心.webp(記憶體記 _petBaseSrc·_PET_EMOTE_MS=1500 後還原·onerror 立即還原去背圖不破圖);mood="sad"/"angry"→★不換圖★維持去背圖,在 wrap 疊 span._ph-angry-sym(💢·position:absolute top:0 right:4%·一次性注入 @keyframes _phAngryPop·連戳先移除舊符號防疊加·wrap 若 static 暫設 relative 到時還原·_PET_EMOTE_MS 後移除)。四咽喉點沿用:_petHouseFeed 餵對→happy/餵錯→sad·_petHouseStrokeReward 撫摸完成→happy·_petHouseStrokeEnd 戳戳→sad。_petSadUrl(寵物名_不悅.webp)保留備用,之後補「不悅」專屬圖時把 sad 分支改走換圖即可。',
-      '★ v4.11.0【商店販售清單分類索引標籤·index.html】新增 window._SHOP_CAT_DEFS(召喚/強化/寵物/重置/肖像 5 類)+window._shopProductCat(p) 依 id 判定單一主分類:肖像=BACKPACK_ITEM_DEF[id].type="portrait" 或 id 尾綴 _portrait(涵蓋 priest_portrait_dawn 等非尾綴命名)、寵物=id 開頭 pet_food、重置=id 含 reset、召喚=summon_crystal、其餘=強化。#shop-main「🏪 商品」標題下插入 sticky #shop-cat-tabs 分頁列(_renderShopProducts 每次重繪·顯示各類商品數·當前類金橙高亮·空類 disabled);_shopBaseProducts 依當前 _shopActiveCat(預設 summon)過濾,pinTop 召喚水晶/當日特價排序在類內維持;window._shopSetCat(cat) 切換+商品區 scrollTop 回頂。右側背包/賣出完全不動。分佈:召喚1/強化6/寵物3/重置5/肖像36=共51件。',
-      '★ v4.11.0【寵物第一階段聚光教學 _petT1 觸發時機修正·index.html】老師回報:教學在玩家還沒真正進到關卡主頁就彈出,害玩家錯過點擊教學+首次召喚。根因:舊觸發輪詢(登入後 9 秒起)只檢查 adventure-overlay 非 display:none,但該 overlay 是常駐底層容器,登入/雲端載入途中就會 display:block→誤判「在關卡頁」而提前彈,再被登入閘/會員資料/救援說明等前置彈窗蓋掉。修法三處:①openAdventureOverlay 通過所有硬守門(uid 解析/雲端驗證/二段密碼閘門皆在早退之後)真正 ov.style.display=flex 顯示關卡頁的成功點,設正向旗標 window._petT1EnteredLevelPage=true;②觸發輪詢改「正向就緒」門檻:必須 _petT1EnteredLevelPage===true + _cloudLoadDone===true + 關卡頁顯示中 + 不在戰鬥 + 無任何前置/其他彈窗(_petT1Blocked),且以上條件連續穩定 2 拍(settle)才啟動(防登入/雲端載入轉場瞬間誤觸)·上限 80→120 拍;③_petT1Blocked 黑名單補入 login-gate-modal/_member-profile-modal/_member-hub-modal/_rescue-guide-modal/_audit-ov 等登入首登前置彈窗。純觸發時機收斂·教學內容/步驟/完成旗標(petTut1Done)一律不動。',
     ],
   },
 ];
