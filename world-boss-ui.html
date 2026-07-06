@@ -1,6 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
-<!-- ★ v4.25.0(2026-07-06)— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到龍頭;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處·硬編碼全龍王通用·無 _bossBgY)。需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)— ①戰鬥畫面 BOSS 背景圖 Y 10%→-10%(全龍王下移·避開上半部 HP 條;_wbRenderBattleScreen JS + CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊補套跟隨寵物(需求3甲·_applyFollowPetToHero·唯一套用點不雙套)。需 index.html 同版 v4.22.0 -->
+<!-- ★ v4.28.0(2026-07-06)【解凍】— 需求3(圖1「無寵物」根治):單人練習/一人龍王戰的「WB-Solo」p1 組建路徑(L≈12974·與連線戰 _wbUiStartBattle L9020 不同函式)原本漏呼叫 window._applyFollowPetToHero → 設了跟隨寵物的英雄一進單人龍王戰沒寵物(卡片浮圖/貓掌爆發槽/寵物爆發/英雄詳細預覽皆顯示「無寵物」),要到戰鬥中出現寵物並手動選擇後才顯示;比照連線戰在 p1.push 前補套跟隨寵物(素質加成 + 自動裝備該寵物 + 爆發旗標)·此路徑唯一套用點不雙套 → 一進場即自動讀取玩家已設定的跟隨寵物並顯示。另圖1 英雄預覽被超級血條蓋住/圖2 浮圖縮小下移 皆在 index.html。⚠ 需 index.html 同版 v4.28.0 ｜ ★ v4.25.0(2026-07-06)— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到龍頭;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處·硬編碼全龍王通用·無 _bossBgY)。需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)— ①戰鬥畫面 BOSS 背景圖 Y 10%→-10%(全龍王下移·避開上半部 HP 條;_wbRenderBattleScreen JS + CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊補套跟隨寵物(需求3甲·_applyFollowPetToHero·唯一套用點不雙套)。需 index.html 同版 v4.22.0 -->
 <!-- ★ v4.8.0(2026-07-04)— ① 龍王總 HP 5,000,000 → 10,000,000 全 UI 同步(靜態卡×2/超級血條預設/介紹彈窗/戰場血條 fallback×3/註解);② 替補英雄列表(_wbTcOpenSwapHero)三升級:(a)列表上方加「篩選列」(全部/⚔主傷害/💚主回復/🌀主控場/🛡主坦克/🎲其他/👑UR/🌈SSR/⭐SR/💎R + 🔍條件搜尋 openCondSearch('wbswap'),沿用主程式既有分類與條件搜尋口徑 window._wbSwapHeroPassFilter,至寶 modal 共用 grid 時自動隱藏);(b)每隻英雄名下加「📖 圖鑑整備」鈕(_wbOpenCodexFromSwap → 主程式 _openHeroCodexFromWbSwap 開該英雄圖鑑升級/裝至寶/裝寵物,關閉自動回到替補列表且等級即時刷新;已選英雄鈕改保留可點=只擋選角不擋整備);(c)替補縮圖 object-position 50%→30%(Y 下移 20%),排除 33 隻圖高已適當者(_WB_SWAP_THUMB_KEEP) -->
 <!-- ★ v3.15.61(2026-06-20)— 大廳「當前龍王」素質 + 「下一隻龍王搶先看」整卡改資料驅動,不再寫死,輪替推進自動跟上:(a)_wbApplyCurrentBossSkin 追加更新當前龍王卡的攻擊/特技/速度(由寫死火龍王 49/50/15 改讀 HERO_DB[當前龍王];HP 統一 5,000,000 不動);(b)新增 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻龍王 → 名稱/立繪/--wb-boss-bg/屬性/攻擊·特技·速度/簡介=背景故事+自動護盾文案/主題色依屬性 + 「能力詳細介紹」鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正原寫死土龍王過時文案(額外減傷 40%→實際 30% 等);next-preview HTML 加 hooks(wb-nextboss-img/nm/desc/elem/atk/sp/spd + #wb-next-boss-preview/#wb-nextboss-badge + .wb-nextboss-info-btn),排程於 skin 旁 setTimeout 120/1850,index.html 雲端當前龍王解析兩處 re-apply 同步呼叫 -->
 <!-- ★ v3.15.48(2026-06-19)— 修世界 BOSS 龍王戰崩毀後 guest 端卡死「無法離開戰鬥」:根因=guest 端結算(_wbClientCheckEnded)只認房主廣播 meta.status==='ended' 才觸發,但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11 把 p1 全歸 0)後「meta.status='ended'」的 sync 若沒送達 guest(網路丟包/房主端也卡),guest 死等 ended → 永久卡戰場。修:_wbClientApplyWire 套完狀態後偵測「p1 全員 curHp<=0(玩家方全滅)」且未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,不依賴房主再廣播 ended);世界 BOSS 無復活,p1 全滅=確定戰敗不誤判,_wbAdvBattleEnded/_wbClientForceCheckWin 雙旗標守門 -->
@@ -12971,6 +12971,12 @@ try{
       }catch(eSoloGrow){
         console.warn('[WB-Solo Growth v3.6.11] 套用養成資料失敗 (槽 ' + i + ')', eSoloGrow);
       }
+      // ★ v4.28.0 需求3 — 單人練習/一人戰龍王「一進場自動套跟隨寵物」:
+      //   此為「WB-Solo」p1 組建路徑(與連線戰 _wbUiStartBattle L9020 不同函式),原本漏呼叫
+      //   _applyFollowPetToHero → 設了跟隨寵物的英雄一進單人龍王戰沒寵物(浮圖/貓掌/寵物爆發/
+      //   英雄預覽皆顯示「無寵物」),要到戰鬥中出現寵物並手動選擇後才顯示。比照連線戰同步在
+      //   push 前套上跟隨寵物(素質加成 + 自動裝備該寵物 + 爆發旗標);此路徑唯一套用點不雙套。
+      try{ if(typeof window._applyFollowPetToHero === 'function') window._applyFollowPetToHero(h); }catch(ePetSolo){ console.warn('[WB-Solo 跟隨寵物套用] 失敗', ePetSolo); }
       p1.push(h);
     }
     const _curWbBossS = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;  // ★ v3.14.20 動態當前龍王
