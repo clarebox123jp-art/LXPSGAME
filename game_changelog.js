@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.35.0(天神宙斯「天降雷罰」等即死技秒殺龍王根治·BOSS 保護鐵則寫入)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.37.0(三支爆發技動畫更新+改成覆蓋右邊大特寫圖)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,35 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.37.0 — 🎬 三支爆發技動畫更新 + 改成覆蓋右邊大特寫圖
+  {
+    ver: 'v4.37.0',
+    date: '2026-07-07',
+    brief: [
+      '🎬【爆發技動畫大改版!】藝天使．克雷爾、主神奧汀、魔劍姬‧伊莉雅(神魔滅斬)這三支爆發動畫都更新了新版本;而且播放方式改了——以前動畫是「鑲嵌在畫面正中央上方的小框」,現在改成「直接覆蓋右邊那張爆發特寫大圖」,尺寸放大到跟特寫圖一樣大,出現時機也和特寫圖同時,魄力更足!',
+      '✨【往後新英雄也一樣】未來新的 SSR 英雄若有動畫版爆發特寫,也會用這個「覆蓋右邊大特寫圖」的方式呈現。',
+    ],
+    items: [
+      '★ v4.37.0【影片破快取重抓·index.html】老師更新了三支影片檔(天界彩繪動畫/神魔滅斬動畫/諸神的黃昏·同檔名內容變)。_BV_RAW 產生影片 URL 時附上 ?v=<版本>(讀 _LXPS_FILE_VERSIONS[\'index.html\']),每次版本 bump 即產生新 URL → 客戶端強制重抓最新影片(raw.githubusercontent 忽略未知 query 照常回檔);解決「同檔名被瀏覽器/SW 快取成舊影片」。',
+      '★ v4.37.0【取消中央鑲嵌·改覆蓋右側靜態特寫大圖片·index.html】_ensureBurstVideoStyle 的 #_bv-overlay 由「畫面正中上方 left:50%+translateX·width:58%·height:50%·z60」改為「right:0;top:0;width:600px;height:100%·z461·object-fit:cover」——與右側靜態特寫盒 #burst-img-panel(z460)完全同框同尺寸,影片以 z461 覆蓋在靜態特寫圖之上、集中效果線(z462)與招式名大字(z465)仍疊在最上。播放器 _playBurstVideo 與觸發流程(execBurst 撐住模式→建立特寫圖→緊接播影片)不變,故影片出現時機同特寫圖。',
+      '★ v4.37.0【伊莉雅技能影片統一·資料驅動可擴充】魔劍姬 gated S1「神魔滅斬」技能影片同樣落在右側特寫框(統一呈現)。未來 SSR 動畫版爆發特寫只需在 _BURST_VIDEO_DB 加一筆(url 用 _BV_RAW(\'檔名.mp4\')),即自動走「覆蓋右側特寫」做法,無需改邏輯。',
+      '★ v4.37.0【範圍與驗證】只改 index.html(_BV_RAW 破快取 + _ensureBurstVideoStyle 定位/尺寸/object-fit + 規格註解);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.37.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.17.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
+  // v4.36.0 — 🐾 寵物在英雄倒下/復活時不再消失 + 戰鬥中換寵物同步換爆發技
+  {
+    ver: 'v4.36.0',
+    date: '2026-07-07',
+    brief: [
+      '🐾【友方英雄倒下、復活時,身上帶的寵物不會再不見了!】以前英雄在戰鬥中倒下(或被免死盾犧牲)後,角色卡上的跟隨寵物小圖有時會消失,復活後也回不來。現在只要英雄有帶著寵物,不管牠是倒下還是又站起來,寵物圖都會一直顯示——唯一會變的只有「這場已經用過的寵物爆發次數」。(鬥技場本來就不能帶寵物,不受影響。)',
+      '🔄【戰鬥中替換跟隨寵物,爆發技也會跟著換!】以前在戰鬥中幫英雄換一隻新寵物,圖片換了、但寵物的「極限爆發技」有時還是舊寵物那招。現在替換寵物時,圖片、寵物爆發技名稱、以及實際施放的爆發效果三者會完全一致,換誰就用誰的招。',
+    ],
+    items: [
+      '★ v4.36.0【倒下/復活寵物浮圖不消失·index.html】renderCard 建立寵物浮動去背圖(.pet-float-badge)的來源判斷,原為「h.equip.n || h._followPet」;英雄死亡處理(黑冠麻鷺免死盾犧牲等)會把 equip 清成 null,若 _followPet 也未設就無來源 → 浮圖消失。修法:來源加第三層耐久 fallback _pfPnDurable = 當該英雄為 p1 非好友英雄、寵物系統對本人開放(_petSysOpenForMe())、且處於冒險/世界BOSS/單人練習戰(_adventureMode||_wbInWorldBossMode||_wbSoloPracticeMode·明確排除鬥技場)時,讀 window._petFollowOf(h.name) 取得其跟隨寵物名 → 即使 equip/_followPet 被清仍持久顯示攜帶寵物。舊條件保留為註解(誤刪是大忌)。無 ?.。',
+      '★ v4.36.0【替換寵物同步爆發技·index.html】戰鬥中兩條主要替換路徑(_advApplyPetToHero / 答題獎勵 _advFinishPetPick)本就同時設 equip(圖片)與 _followPet(→爆發名),爆發名由 _petFollowBurstName 讀 h._followPet 動態決定、爆發執行 _runPetBurst 亦讀 h._followPet;破口在舊版通用 doEquip 裝寵路徑只設 equip 沒設 _followPet → 圖換了但 _petFollowBurstName fallback 回舊寵。修法:doEquip 於 _markPetCollected 之後,若裝備物件帶 pet,補設 h._followPet=eq.pet、h._petBurstUsedByPet、h._petBurstUsed(已用次數視圖)、h._petBurstBonus(好感≥100 多一次),比照 _advApplyPetToHero → 圖片+爆發名+爆發執行三者一致。刻意不重設寵物素質加成(比照既有設計·防中途換寵回血 exploit)。無 ?.。',
+      '★ v4.36.0【範圍與驗證】只改 index.html(renderCard 浮圖來源 + doEquip 裝寵補設兩處);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js(v4.20.0)/world-boss.js(v4.30.0)/world-boss-ui.html(v4.28.0)/arena.js(v3.15.60)/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.36.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.16.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
   {
     ver: 'v4.35.0',
@@ -298,41 +327,6 @@ window.GAME_CHANGELOG = [
       '★ v4.18.0【LOG鈕移位】#log-toggle-btn 改 fixed left:10px bottom:80px(SOS 正上方)·預設 display:none·加入 _lxpsBattleRescueBtnWatchdog _ids(戰鬥中顯示+reparent body)·openAdventureOverlay/advStartWinSequence 出口隱藏+_collapseBattleLog;收合標籤改「📜 LOG」·展開頂部留白 44→14px。',
       '★ v4.18.0【忠誠羈絆】新增 _petIsProtectedEquip(靜默:side===p1 且 _petIsTamed(equip.n))+_petStealGuard(banner/log 雙版);守門 11 點:俠盜飛梭奪裝/神偷天賦掠奪/AI強奪/盜取選單 _hasPet/_doSteal pet/_doStealReplacePet/_autoSteal/AI盜取池/動物大軍 AI+玩家/獸盟 filter;僅保護 p1,敵方寵物照舊。',
       '★ v4.18.0【貓掌槽+浮動圖】burst-star-bar 內 absolute bottom:100% 🐾槽(allow=1+_petBurstBonus·可超出卡片邊界);equipExtHTML 改 return \'\'(舊版保留 _equipExtHTMLLegacyV417)·renderCard 肖像右上 .pet-float-badge 高40%(_petNobgUrl→petImg→icon 三段fallback·金色光暈)·_imgOld 選取器改 img:not(.pet-float-img) 防肖像誤用·點擊 _togglePetMiniCodex(z12600·特寫/稀有度/馴養狀態/效果/爆發雙版·鐵律1.232)。',
-    ],
-  },
-  // v4.17.0 — 🎴 編組頁英雄圖位調整 + 隨機編成改版
-  {
-    ver: 'v4.17.0',
-    date: '2026-07-05',
-    brief: [
-      '🎴【編組頁英雄圖片位置調整】冒險編組選單「左列英雄縮圖」有 10 位英雄的頭部露出更多、更好辨識:大天狗、酒吞童子、玉藻前、暗魔將·血、地府酋長、鐵匠、偵探、魔術師、聖冥法師、大刀勇士。',
-      '🖼️【右側預覽同步微調】聖冥法師與魔術師的右側大圖預覽也往上調整露出頭部;御雲使‧沐雲雪與喚龍使‧蜜鶴林的預覽則往下微調,構圖更完整。',
-      '🎲【隨機編成改版】現在每按一次「隨機編成」,就會自動移除全部已選隊員、重新隨機編配 4 名新隊員(以前是保留已選、只補滿空位)——想換一整隊直接再按一次就好!',
-      '⏱️【防連點】隨機編成按鈕加入 1 秒冷卻,快速連點不會重複觸發,平板上操作更穩定。',
-    ],
-    items: [
-      '★ v4.17.0【編組圖位】_teamFormAdjustObjPos 的 _ADJ 表擴充:左列(grid)Y-20%(負值=往上露頭)新增 大天狗/酒吞童子/玉藻前/暗魔將·血/地府酋長/鐵匠/大刀勇士(preview:0 不動);魔術師/聖冥法師 grid:-20 且 preview:-20;御雲使‧沐雲雪/喚龍使‧蜜鶴林 preview:+10(正值=往下);偵探沿用既有 -20/-20。base 無 % 視為 50% 再加偏移,只影響編組選單左列與右側預覽/戰鬥預覽,圖鑑與戰鬥卡完全不動。',
-      '★ v4.17.0【隨機編成整隊重抽】randomTeamPick 冒險分支由「保留已選、補滿空位」改「keep=[] 從 fullPool(初始池+已解鎖·排除 BOSS·含召喚稀有)隨機重抽 4 名」,舊補滿邏輯以註解保留供追溯;召喚稀有英雄(大天狗等)照常可入池。',
-      '★ v4.17.0【冷卻 1 秒】randomTeamPick 頂部加 window._randTeamCdUntil 冷卻守門(try-catch 包覆·冒險與鬥技場兩分支皆生效),1 秒內重複點擊直接 return,防連點狂刷動畫與音效。',
-      '★ v4.17.0【範圍】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊;hero_db.js(v4.5.0)/world-boss.js·world-boss-ui.html(v4.16.0/v4.8.0)/sw.js/arena.js 未改免重傳。版本同步 → v4.17.0;移除最舊 v4.2.0 維持 20 筆。',
-    ],
-  },
-  // v4.16.0 — 🌌 星辰幻龍王(終極龍王)三防禦被動正式生效
-  {
-    ver: 'v4.16.0',
-    date: '2026-07-05',
-    brief: [
-      '🌌【最終龍王「星辰幻龍王」的三大防禦本領正式生效!】上一版牠的招式與爆發已經上線,但介紹裡寫的三個防禦本領還沒真正作用;這一版把牠們全部接進戰鬥系統,星辰幻龍王現在真的是最難對付的終極龍王了!',
-      '🛡️【一、免疫所有異常狀態】對星辰幻龍王施加的中毒、暈眩、麻痺、封印、死亡宣告等任何異常狀態(含強力版)一律無效——想用控制流打牠是行不通的,只能靠純傷害硬拚。',
-      '💨【二、迴避 +30%】星辰幻龍王天生身法縹緲,受到攻擊時有 30% 機率直接閃過(技能和普攻都可能被閃)。不過「必中技」「極限爆發」以及「無視迴避」的招式照樣打得中——想穩定輸出,帶這類招式的英雄很重要。',
-      '⚔️【三、受普通攻擊傷害 -30%】用「普通攻擊」打星辰幻龍王,傷害會再減 30%(只影響普攻,技能、爆發、中毒燃燒等持續傷害不受影響)。想高效破牠,多靠技能與爆發、少靠普攻。',
-      '👑【提醒】以上防禦只保護星辰幻龍王本體,對你的英雄毫無影響;而且牠一樣受「單次最多 5,000 傷害」與元素護盾限制(龍王的尊嚴),仍然打得倒——只是要更講究隊伍與招式搭配。集齊七屬性破盾、帶上必中/爆發招式,一起挑戰這頭終極之龍吧!',
-    ],
-    items: [
-      '★ v4.16.0【星辰結界(免疫異常)】對「星辰幻龍王」本體施加的所有 BAD_STATUS(含強力版)於 addStatus 階段 100% 攔截(無條件·不看骰子/天賦級);僅保護本體,對玩家英雄的異常狀態完全不受影響。',
-      '★ v4.16.0【星塵殘影(迴避+30%)】doDmg 命中判定新增固定 30% 迴避(仿風術士/沐雲雪光環);必中技(mustHit)、極限爆發(_burstCastActive)、反彈、無視迴避(ignoreEvasion)、穿透(piercing)一律不受影響 → 保留可擊殺性。',
-      '★ v4.16.0【星鎧護體(受普攻-30%)】doDmg 於 let dmg=rawDmg 之後對「普通攻擊」傷害 ×0.70(僅普攻:!isSkill && !fixedDmg && !_fromBurn && !_isDot && !isRebound && !_burstCastActive);置於世界 BOSS 5000 cap 之後 → 普攻即使撞 cap 也可見降 30%,後續任何 cap 只取 min 不回吹。與既有 BOSS 攻擊素質減傷各自獨立相乘。',
-      '★ v4.16.0【範圍與安全】三 hook 皆 gate 「boss.name === 星辰幻龍王」,僅保護本體;傷害一律走既有 doDmg,受「單次 5,000 上限」與元素護盾(減傷 80%)限制,爆發不穿盾(鐵律 1.31)。主要改 index.html(addStatus + doDmg 三處);world-boss.js 僅更新註解(天賦文本 v4.15.0 已就緒);admin_panel.js/game_changelog.js 版號/公告。hero_db.js/world-boss-ui.html/sw.js/arena.js 未改免重傳。版本同步 → v4.16.0;移除最舊 v4.1.0 維持 20 筆。',
     ],
   },
 ];
