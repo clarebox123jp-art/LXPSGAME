@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-05  / 目前主程式版本:v4.20.0(寵物小屋 iPad 兩修[三槽位完整顯示不捲動+記憶翻牌點了立刻翻]+PC 版槽位自動放大+戰鬥寵物出現視窗稀有度/相遇/馴養徽章+寵物爆發演出換該寵物放大特寫+字少版圖鑑技能與爆發說明隨等級顯示數值+主定位篩選調整[動物學家改「其他」])
+//  最後更新:2026-07-06  / 目前主程式版本:v4.22.0(世界 BOSS 風暴雷龍王改回自己的雷電招式與開場對白 + 戰場背景大圖下移避開血條 + 連線戰帶跟隨寵物)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,38 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.22.0 — ⚡ 風暴雷龍王改回自己的雷電招式與開場對白 + 世界 BOSS 戰場背景下移 + 連線戰帶跟隨寵物
+  {
+    ver: 'v4.22.0',
+    date: '2026-07-06',
+    brief: [
+      '⚡【風暴雷龍王終於用自己的招式了!】之前打「風暴雷龍王」時,牠的開場登場對白和施放的技能其實都是「火山炎龍王」的火焰版本(業火灼燒、天崩之炎那些)。現在修好了:雷龍王會用自己的雷電招式——雷霆貫穿(單體雷擊+麻痺)、暴風肅清(全體風傷+淨化自身)、以及爆發「雷神·萬雷殛世」(全體雷擊+全體麻痺),開場咆哮也換回雷龍王專屬台詞。',
+      '🐉【龍王大圖不再被血條擋住頭】世界 BOSS 戰鬥畫面裡的龍王背景大圖整體往下移了一點,原本被畫面上方血條/資訊列遮住的龍王頭部,現在看得更完整了(所有龍王都調整)。',
+      '🐾【世界王連線戰也能帶跟隨寵物了】以前在世界 BOSS 連線戰,就算你幫英雄設定了「跟隨寵物」,一進戰鬥卻看不到寵物(浮動小圖、貓腳印、寵物爆發都沒有)。現在補上了,設定跟隨的寵物會一起上場!',
+    ],
+    items: [
+      '★ v4.22.0【風暴雷龍王對白+技能修正·world-boss.js】根源:①_WB_BOSS_ROAR_LINES/_WB_BOSS_ROAR_COLOR 只有火/草/土三龍王,缺 taifeng_wind_dragon → 開場對白 fallback 成火龍王三句。補上雷龍王專屬三句咆哮+雷金配色。②三個 BOSS 技能 dispatcher(_wbAdvBossS1/S2/BossBurst)只有草/地/水龍王有專屬分支,風暴雷龍王沒有 → 落到預設分支(=火龍王的業火灼燒/龍吼震懾/天崩之炎,連戰報都印火山炎龍王)。新增 _wbWindBossS1/S2/Burst 專屬 AI(對齊 HERO_DB/BURST_DB[風暴雷龍王] 文案:雷霆貫穿=特技150%單體風傷+麻痺2回合/暴風肅清=特技120%全體風傷+解除自身不利/雷神·萬雷殛世=特技150%全體風傷+全體麻痺1+解除自身不利)+ _wbWindClearBossDebuffs helper(麻痺用遊戲既有 status para、element wind),並在三 dispatcher 海龍王判斷後各加風暴雷龍王分支。',
+      '★ v4.22.0【世界 BOSS 戰場背景 Y 下移·world-boss-ui.html】老師需求:龍王戰場上半部被 HP 條擋住 → 全龍王背景圖 object-position 由 center 10% 改為 center -10%(下移 20%)。兩處同步:_wbRenderBattleScreen 的 JS 動態 _lobby.style.background + #wb-lobby-overlay.wb-in-battle 的 CSS fallback。',
+      '★ v4.22.0【世界 BOSS 連線戰跟隨寵物·world-boss-ui.html】需求3(甲):連線戰 p1 組隊(_wbUiStartBattle)原本漏套跟隨寵物(一般大冒險/單人練習走 confirmHeroPick 已正確)。在 p1 組隊迴圈養成套用後、push 前,對每個英雄呼叫 window._applyFollowPetToHero(素質加成+自動裝備寵物+爆發旗標)。唯一套用點(_wbSetupAdvForBattle 只設 G.p1 不再套 → 不雙套)。⚠ 連線多人由房主組隊廣播,套的是房主本機的跟隨寵物(=房主帶自己寵物隊伍打;單人完全正確);每位玩家各帶自己寵物需另做連線寵物同步(乙案,日後獨立場次)。',
+      '★ v4.22.0【驗證/範圍】解凍 world-boss.js(v4.16.0→v4.22.0)+ world-boss-ui.html(v4.8.0→v4.22.0);index.html/admin_panel.js 僅版號同步;hero_db.js 維持 v4.20.0。node --check world-boss.js 全過、index 20 inline block 0 fail、四檔 0 lone surrogate、admin_panel.js 0 真 ?.、7 版號同步點全 v4.22.0(+world-boss 兩 key 解凍)。GAME_CHANGELOG trim 20 筆(移除最舊 v4.8.0)。零新 Firestore 集合/規則。',
+    ],
+  },
+  // v4.21.0 — 🐾 戰鬥角色卡寵物浮圖與貓掌更明顯 + 寵物小屋槽位空間變大(GM 開關移到老師後台)
+  {
+    ver: 'v4.21.0',
+    date: '2026-07-06',
+    brief: [
+      '🐾【戰鬥中一眼看出你的寵物!】戰鬥中角色卡上,跟隨(或裝備)的寵物會浮現一張「會發光的去背小圖」在肖像右上角——點一下就能看牠的能力介紹;圖片這次加大、光暈也更亮,更好認了!(要先到寵物圖鑑把某隻寵物設定「跟隨」某位英雄,帶那位英雄出戰就會看到喔)',
+      '🐾【貓腳印告訴你還能放幾次寵物爆發!】有跟隨寵物且該寵物有專屬極限爆發時,角色卡左上角兩顆爆發星星「正上方」會出現黃色貓腳印🐾:亮的表示這一場還能放幾次寵物爆發、灰的表示已用完(好感度滿 100 可多放 1 次)。這次把貓腳印放大、變更亮,更明顯!',
+      '🏠【寵物小屋槽位看得更完整】把小屋裡一列老師專用的小開關收起來(移到老師的後台),讓三個寵物草蓆槽位有更充足、更完整的顯示空間。',
+    ],
+    items: [
+      '★ v4.21.0【寵物小屋 GM 開關移至後台·index.html+admin_panel.js】移除 _openPetHouse 內的 GM 開關列(gmBar·騰出 #_ph-slots 垂直空間讓三槽位更完整);等效功能改在 GM 後台「🛠 系統管理」新增「🐾 寵物系統開關」卡(三點同步:SIDEBAR_ITEMS+SIDEBAR_GROUPS+section HTML+_initPetSysSection IIFE)——狀態讀 window._petSysPublicOpen()、對全體開放/暫時關閉走 window._fbSetPetSysSwitch(bool)、🔄 重新讀取呼 window._fbLoadPetSysSwitch(皆沿用 index.html 既有後端·gameConfig/petSystemSwitch·免改 firestore.rules);confirm 二次確認+關閉不刪資料說明。無 ?.。',
+      '★ v4.21.0【GM 寵物互動不限次數·index.html】老師需求:讓 GM 測試時與寵物互動不受每日次數限制。單一咽喉點 _petHouseCanDo 對 _isAdminUser 一律回 true(撫摸/餵食/玩耍可重複)+ 逐槽鎖定 _petHouseAskLockSlot 對 GM 一律放行(不鎖槽·可自由換寵測試)。★ 每日增加好感度上限 +5 不變:好感仍走 _petHouseAddAff 的 affGain 每日 cap → GM 多互動只多得 EXP(方便測試升級),好感不會超額累加。學生行為完全零改動(僅 _isAdminUser 分支)。',
+      '★ v4.21.0【戰鬥卡寵物浮圖+貓掌增強·index.html】老師回報戰鬥卡寵物浮圖/貓掌「沒看到」→ 確認 v4.18.0 已於 renderCard 建置(浮圖 gate=h.equip.n、貓掌 gate=_petFollowBurstName·皆需英雄有跟隨/裝備寵物);本輪提升可見度與穩健性:①浮圖來源由 h.equip.n 放寬為 h.equip.n || h._followPet(雙保險·_applyFollowPetToHero 兩者都會設)②浮圖高度 40%→50%、max-width 96→118、z-index 9→12、金色光暈加強(對應「帶有光暈」)③貓掌爆發次數符號 15→19px+亮腳印光暈加強。點浮圖開 _togglePetMiniCodex 迷你圖鑑、點貓掌 _showBurstStarTip 看剩餘次數 皆不變;敵我雙方卡片皆套·鬥技場本就禁用。',
+      '★ v4.21.0【驗證/範圍】改 index.html + admin_panel.js(本輪有實質修改:🐾 寵物系統開關卡三點同步+init)+ game_changelog.js;hero_db.js(維持 v4.20.0)/world-boss 兩檔凍結不動。index.html 20 inline script node --check 全過、0 lone surrogate;admin_panel.js 0 真 ?.;零新 Firestore 集合/規則。版本同步 → v4.21.0(hero_db.js key 維持 v4.20.0);GAME_CHANGELOG trim 20 筆(移除最舊 v4.7.0)。',
+    ],
+  },
   // v4.20.0 — 🏠 寵物小屋 iPad 兩修:三槽位完整顯示不捲動 + 🃏 記憶翻牌點了立刻翻
   {
     ver: 'v4.20.0',
@@ -321,42 +353,6 @@ window.GAME_CHANGELOG = [
       '★ v4.9.0【寵物「相遇/收錄馴養」全站語義重定義·index.html】老師裁決:原「出現並攜帶過而解鎖」的集合(_petsEverCollected/_isPetCollected)統一正名為「👀 已相遇」,並非收錄;「寵物收錄」重新定義為「🎓 收錄馴養」(以 _petIsTamed/_tamedPets 為唯一權威)。實作:①新增語義正確別名 window._isPetMet(舊函式名保留全站相容,誤刪是大忌)+定義處/序列化/載入/戰鬥攜帶標記四處註解正名 ②寵物圖鑑 _buildPetPage:台/日/埃三區段標頭改雙計數「👀 已相遇 X/N·🎓 收錄馴養 Z/N」;已相遇未馴養的卡片加「👀 已相遇」琥珀徽章(馴養完成維持「🎓Lv.N」綠徽章);詳情閱覽門檻維持「已相遇」但訊息正名(尚未相遇/已相遇·尚未收錄馴養/已收錄馴養);系統介紹 intro 雙版補語義說明 ③隨機寵物召喚卷 pet_summon_ticket 一併改馴養口徑:召喚池 filter 由 _isPetCollected 改 !_petIsTamed(召喚出未馴養寵物),28 隻「全數收錄馴養」才自動轉頂級寵物飼料(帳本註記 all_tamed) ④全站文案正名:SUMMON_RATES 兩列說明/SSR 取得方法總整理/背包道具說明(召喚卷+訓練書)/GM 獎勵產生器標籤/新手教學第⑥章/戰鬥馴養成功提示,「未收錄寵物」一律改「未馴養寵物」、「全部收錄」一律改「英雄全收錄且寵物全馴養」。資料零遷移:petsEverCollected 集合本身不動,只重定義顯示語義與召喚判定。',
       '★ v4.9.0【寵物小屋體驗五修·index.html】❶iPad 圖鑑桌鈕(_ph-codex-desk-btn)縮小約 4 成(📖 clamp 40~62→26~40px·標題 17~24→14~18·padding 16/22→10/14)並下移(bottom clamp(160px,37vh,340px)→clamp(126px,35vh,300px))貼齊食物面板(#_ph-food max-height:34vh)正上方,不再蓋到左側第一個寵物槽位 ❷寵物卡「撫摸/餵食/玩耍」三鈕改固定同一列(btnRow flex-wrap:wrap→nowrap+各鈕 flex:1 1 0/min-width:0/white-space:nowrap·字級 17→clamp(13,1.5vw,16)·完成態「✅ 🤚 撫摸」→「✅撫摸」去 emoji 省寬) ❸撫摸回饋:StrokeStart 對寵物圖 wrap 掛 ._ph-stroking(scale 1.07+上下 ±4px 0.9s 無限輕搖·transform-origin 底部·先移除 _ph-bouncing/_ph-shaking 防動畫互蓋),StrokeEnd/StrokeReward 雙點卸除 ❹鬥技場禁用馴養寵物·調查確認+補洞:跟隨寵物素質加成/自動攜帶只在 confirmHeroPick 的 _isAdvMode 分支套用(鬥技場本就不套=無素質外掛✅);但寵物極限爆發 _petFollowBurstName 有「依英雄名 _petFollowOf」fallback,在鬥技場共用 execBurst 下可觸發雙選=漏洞→於該單一咽喉點加閘門:非冒險模式(_adventureMode)且非世界BOSS(_wbInWorldBossMode/_wbSoloPracticeMode)一律回 null(龍王戰為 v4.5.0 設計本就放行),另 _execPetBurst 開頭加同判定防禦雙保險 ❺躲貓貓(_petPlayHideSeek)每次未命中點擊於畫面中央(top 40%)彈 💭 思考對話泡泡,依四段距離 tier 顯示暗示文字(cute/premium 雙版·鐵律 1.232),邊框色沿用星星四段同色系(藍=遠/綠/黃/紅=近),1.6 秒後淡出、命中(HIT_R 內)直接揭曉寵物不彈泡泡。',
       '★ v4.9.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v4.9.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.26.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v4.5.0 免重傳,世界BOSS兩檔維持 v4.8.0 免重傳。',
-    ],
-  },
-  // v4.8.0 — 🐉 龍王總 HP 提升到 1,000 萬 + ⚔ 替補英雄列表大升級(篩選/條件搜尋/圖鑑整備/縮圖)+ 🎁 GM 獎勵箱重新整理
-  {
-    ver: 'v4.8.0',
-    date: '2026-07-04',
-    brief: [
-      '🐉【龍王變得超級耐打!】8 隻龍王的總 HP 從 500 萬提升到 1,000 萬!之前有高手一天就能打掉快一半,現在真的需要全校同學一起合作才打得倒——快揪隊友一起挑戰吧!(打法、護盾、排名獎勵都不變,只是龍王更耐打了)',
-      '⚔【龍王戰選英雄大升級!】替換英雄的視窗現在有「篩選按鈕」了:全部/⚔主傷害/💚主回復/🌀主控場/🛡主坦克/👑UR/🌈SSR…還有 🔍 條件搜尋!而且每隻英雄下面都多了一顆「📖 圖鑑整備」按鈕——點下去可以直接幫他升級、裝至寶、裝寵物,關掉圖鑑會自動回到選英雄的畫面,等級馬上更新,超方便!',
-      '🎁【GM 獎勵箱多了 🔄 重新整理】如果老師剛發的獎勵還沒出現在收件箱,按一下「🔄 重新整理」就會重新連線雲端同步,絕對不會重複領取。',
-      '📸 替補英雄列表的縮圖位置也調整了,大部分英雄的臉現在看得更清楚!',
-    ],
-    items: [
-      '★ v4.8.0【龍王總 HP 5,000,000 → 10,000,000·world-boss.js+world-boss-ui.html+index.html+admin_panel.js】WORLD_BOSS_LINEUP 八龍 maxHp+HERO_DB 掛載八條 hp+開放新一輪/入口 HP 條 fallback×2+console(world-boss.js);全 UI 同步(靜態龍王卡×2/超級血條預設/介紹彈窗/戰場血條 fallback×3·world-boss-ui);輪替接班/結算 fallback×2+關卡頁 HP 條+龍王介紹卡最大 HP(index);GM 龍王 HP 救援卡 MAX_HP fallback+查詢/切換 fallback+說明字+輸入框 max 上限放寬 10000000+五顆快捷鈕改 10M/7.5M/5M/2.5M/1M(admin)。',
-      '★ v4.8.0【HP 調整不良影響檢查(全數確認)】①護盾為回合制(第 3/5/7/9 回合)非 HP% → 不受影響 ②單次扣血上限 5,000/單場上限 100,000 為固定值 → 不變 ③雲端 stats/global.worldBossHp 存「剩餘絕對值」→ 當前龍王血量原樣沿用不會跳動 ④排名/獎章/傷害統計皆絕對值 → 不受影響 ⑤過渡期:未更新的舊快取端若觸發輪替,會把下一隻龍王初始成 500 萬(建議部署後 GM 到後台用「龍王 HP 救援」把當前/新龍王補滿 1,000 萬;下下隻起自我修正);舊端看新雲端血量 >500 萬時血條暫時顯示 >100%(純視覺·更新後消失) ⑥擊殺週期約×2 = 本次調整目的;若實測超過兩週可再議下調。',
-      '★ v4.8.0【替補列表篩選+條件搜尋·world-boss-ui+index】_wbTcOpenSwapHero 列表上方加篩選列(_wbTcEnsureSwapFilterBar·全部/五主類/四稀有度+🔍條件搜尋·冪等建立·至寶 modal 共用 grid 時由 _wbTcOpenSwapTreasure 匯流單點自動隱藏);判定函式 window._wbSwapHeroPassFilter 住 index.html(HERO_SKILL_EFFECTS/HERO_PRIMARY_CLASS 為主程式 const 不可跨檔讀),口徑與圖鑑/邀約頁完全一致(_heroSkillTypes/_getHeroRarity/_condSearchEffects.every);doCondSearch 新增 wbswap 分支(typeof 守門·不影響既有 pick/grid);篩選後空結果顯示雙版空狀態文字(鐵律 1.232)不彈 alert。',
-      '★ v4.8.0【📖 圖鑑整備·world-boss-ui+index】每隻英雄名下加「📖 圖鑑整備」鈕(_wbOpenCodexFromSwap:記回流槽位→關 swap modal→呼主程式 _openHeroCodexFromWbSwap);主程式側完整鏡射既有編組版(_openHeroCodexFromTeam):detach hero-page/hero-detail 兩 overlay 到 body(z 10000/10500 絕對蓋過 WB UI)+狀態旗標 _heroDetailReturnToWbSwap;closeHeroDetail/closeHeroPage 各加 WB 回流分支(收 overlay→還原 DOM parent/z-index→重開 _wbTcOpenSwapHero(_wbSwapReturnSlotIdx)→剛升級/換裝的變更立即反映在列表);openHeroDetail 首次教學守門加 _heroDetailReturnToWbSwap(整備進來不觸發教學);已選(灰色)英雄改「保留可點」:移除 disabled 屬性與 .disabled class(其 pointer-events:none 會鎖死子鈕),改 _dim 灰階圖與文字+主 onclick 空轉 → 只擋選角不擋整備。',
-      '★ v4.8.0【替補縮圖 Y 下移 20%·world-boss-ui】非排除名單英雄縮圖 img 加 object-position:50% 30%(原 object-fit:cover 置中 50% 50%);老師指定 33 隻「圖高已適當」者(_WB_SWAP_THUMB_KEEP)維持置中,名單已逐一對 hero_db.js HERO_DB keys 驗證通過(喚龍使‧蜜鶴林/御雲使‧沐雲雪為全名)。',
-      '★ v4.8.0【GM 獎勵箱 🔄 重新整理·index·老師需求 1】收件箱(🎁 GM獎勵)最上方加「🔄 重新整理」鈕+雙版說明句(鐵律 1.232):_gmcrRefreshInbox 先跑 v3.16.97 既有冪等對帳 _fbReconcileGmClassRewardTickets(安全不等式·永不重複發·失敗靜默略過)再重繪收件箱(重新讀雲端待領+已領取紀錄);零改動任何領取/去重/transaction 路徑(_fbClaimGmClassReward/_gmcrClaimed 一字未動)。老師需求 3(鬥技場最高傷害與技能排行)經查證已於 v3.30.0 完整上線(📊 傷害排行鈕·本輪免重做)。',
-      '★ v4.8.0【驗證/版本/範圍】index.html 20 個 inline script node --check 全過、0 lone surrogate;world-boss.js/world-boss-ui.html/admin_panel.js/game_changelog.js node --check 過、admin_panel.js 0 個真正可選串接(?.)、本輪全部新增區塊無 ?. 與 ??。七點版本同步 → v4.8.0(hero_db.js 未動維持 v4.5.0、arena.js 未動維持 v3.15.60、CURRENT_BOOT_VER 未動);GAME_CHANGELOG 維持 20 筆(移除最舊 v3.25.0)。本輪改 index.html+world-boss.js+world-boss-ui.html+admin_panel.js+game_changelog.js。',
-    ],
-  },
-  // v4.7.0 — GM 管理工具:🐾 寵物紀錄查詢 + 🎁 指定補發寵物(含上線體檢兩項穩定性修正)
-  {
-    ver: 'v4.7.0',
-    date: '2026-07-04',
-    brief: [
-      '🛠️【系統更穩定了!】老師幫寵物系統做了上線前的總體檢,把兩個看不見的小問題修好了:①共用 iPad 換帳號時,前一位同學的寵物資料現在會確實清乾淨,不會跑到下一位同學的帳號裡 ②玩耍小遊戲獲勝的獎勵改成「贏的瞬間就入帳」,就算馬上關掉畫面也絕對不會漏發!',
-      '👨‍🏫【老師的新管理工具】老師現在可以查詢每位同學的完整寵物紀錄(馴養了誰、等級好感、餵食撫摸玩耍次數、獎章、每一筆馴養來源),寵物如果出問題也能直接指定補發。大家可以安心養寵物!',
-    ],
-    items: [
-      '★ v4.7.0【GM 寵物紀錄查詢·index.html+admin_panel.js】玩家活動記錄查詢卡新增「🐾 寵物紀錄」鈕 → window._fbShowPlayerPetRecords(email/lsps學號/uid 反查·比照召喚紀錄):getDocFromServer 讀 players 權威主檔+ticketLedger,彈窗顯示 馴養總覽(N/28·SSR/SR/R 分佈)/寵物明細(Lv/EXP/好感/跟隨)/互動累計(餵對·撫摸·玩耍勝,讀 medalStats)/寵物獎章 14 枚/馴養帳本 200 筆(來源標籤+uid12,非本人 uid 自動紅底=共用平板污染線索)/寵物券帳本(領用+抽到哪隻)。唯讀零風險;取值口徑與 _applySafeData 一致(_s 字串優先)。',
-      '★ v4.7.0【GM 指定補發寵物·index.html】彈窗底部「🎁 指定補發寵物」(28 隻下拉標已馴養+Lv 1~20)→ window._fbAdminGrantPetToPlayer:只增不減(已馴養僅取 max(lv)·絕不降級·不動好感/跟隨)、主檔必寫+saves live/safe 存在才同寫(tamedPets 載入為跨槽 union → 主檔寫入即充分·不創建殘缺槽)、map+_s 雙寫(載入 _s 優先·防補發隱形)、馴養帳本補 src=admin_grant(帶 uid12+by 合法來源佐證)、petsEverCollected 同步收錄、寄登入彈窗通知玩家。建議玩家離線時操作(避免整包存檔覆寫 race)。',
-      '★ v4.7.0【上線體檢修正①·index.html】_clearAccountLocalData 補清寵物四狀態(_tamedPets/_petTameHistory/_petHouseSlots/_petHouseDaily):共用 iPad 換帳號無整頁 reload,Phase A 起漏列 → 前一位學生寵物殘留記憶體會被 union 只增不減載入永久合併進下一位帳號(與英雄污染同型)。比照 _heroLevels 既有清除;只清記憶體不動雲端,本人資料由雲端載入原樣還原。',
-      '★ v4.7.0【上線體檢修正②·index.html】_petPlayFinish 發獎段移到 overlay 檢查之前:勝利→結算面板有 0.65~1.4 秒空窗,若玩家按 ✕ 放棄會 return 漏發 → 改為發獎不依賴 overlay 存在,勝利瞬間必入帳(overlay 已關僅略過結算面板)。',
-      '★ v4.7.0【驗證/範圍】index.html 20 inline script node --check 全過、0 lone surrogate;admin_panel.js 0 真 ?.(本輪有實質修改:活動卡 🐾 鈕+grab+wiring 三處·免三點同步);零新 Firestore 集合/規則(寵物券帳本讀取沿用 ticketLedger 既有規則·未部署會顯示提示)。七點版本同步 → v4.7.0(hero_db.js 未動維持 v4.5.0·CURRENT_BOOT_VER 未動);GAME_CHANGELOG trim 20 筆(移除最舊 v3.24.0)。',
     ],
   },
 

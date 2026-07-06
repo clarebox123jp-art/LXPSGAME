@@ -1,5 +1,8 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v4.22.0(2026-07-06)— 風暴雷龍王(taifeng_wind_dragon)修正:①補 _WB_BOSS_ROAR_LINES/_ROAR_COLOR 專屬開場咆哮+雷金配色
+ *   (原缺→開場對白 fallback 火龍王)②新增 _wbWindBossS1/S2/Burst 專屬 AI + _wbWindClearBossDebuffs(雷霆貫穿/暴風肅清/
+ *   雷神·萬雷殛世;麻痺用 status 'para'、element 'wind')③三 dispatcher 加風暴雷龍王分支(原無→落預設火龍王招式)。需 index.html 同版 v4.22.0
  * ★ v4.8.0(2026-07-04)— 龍王總 HP 全面調整 5,000,000 → 10,000,000(老師指示:1~2 名高手單日可各打近百萬,
  *   500 萬已失去「全服共同挑戰」意義)。範圍:WORLD_BOSS_LINEUP 八龍 maxHp、HERO_DB 掛載八條 hp、
  *   兩處 fallback(開放新一輪重置/入口 HP 條)、console 記錄。護盾為回合制(3/5/7/9)非 HP% → 不受影響;
@@ -1969,12 +1972,19 @@
       '🪨 渺小的生靈,也想揻動這座山岳?',
       '🐉 山崩地裂——入侵者,化作我腳下的塵土吧!',
     ],
+    // ★ v4.22.0 — 風暴雷龍王專屬開場咆哮(原本缺此筆 → 開場對白 fallback 成火龍王的 BUG)
+    taifeng_wind_dragon: [
+      '⚡ 是誰...喚醒了沉眠颱風眼的雷雲之龍?',
+      '🌪 渺小的凡人,可聽得見這撼動天地的雷鳴?',
+      '🐉 萬雷齊發——入侵者,在神雷之下化為焦土吧!',
+    ],
   };
   // 每隻龍王咆哮主色(配合元素;後備火紅)
   window._WB_BOSS_ROAR_COLOR = {
     vesuvius_fire_dragon: { fg:'#ff8866', glow:'#ff3322' },
     cuiyu_grass_dragon:   { fg:'#9bf09b', glow:'#22aa44' },
     shanyue_earth_dragon: { fg:'#d9a866', glow:'#8a5a22' },
+    taifeng_wind_dragon:  { fg:'#ffe680', glow:'#44ccbb' },   // ★ v4.22.0 — 雷金字 + 風青光暈
   };
   // BOSS 開戰咆哮
   window._wbBossOpeningRoar = function(){
@@ -3358,6 +3368,114 @@
     }, 2200);
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ★ v4.22.0 — 風暴雷龍王(taifeng_wind_dragon)專屬 AI
+  //   原本三個 dispatcher(_wbAdvBossS1/S2/Burst)只有草/地/水龍王有專屬分支,
+  //   風暴雷龍王沒有 → 落到「預設分支」= 火龍王的業火灼燒/龍吼震懾/天崩之炎,
+  //   導致老師回報「雷龍王技能都是火龍王的」。此處補上雷龍王的戰鬥實作,
+  //   對齊 HERO_DB/BURST_DB[風暴雷龍王] 的文案(雷霆貫穿/暴風肅清/雷神·萬雷殛世)。
+  //   麻痺 = 遊戲既有 status type 'para'(完全無法行動);風屬性 element:'wind'。
+  // ═══════════════════════════════════════════════════════════════════
+  // 「解除自身所有不利狀態」helper(中毒/麻痺/暈眩/降速/冰凍/燃燒等一律清除)
+  //   BAD_STATUS 是 index.html 頂層 const(未掛 window),此處優先讀 window.BAD_STATUS,
+  //   讀不到才用內建 fallback 清單(涵蓋常見不利;漏收保守可接受)。
+  function _wbWindClearBossDebuffs(boss){
+    try{
+      const _BADS = (typeof window !== 'undefined' && Array.isArray(window.BAD_STATUS) && window.BAD_STATUS.length)
+        ? window.BAD_STATUS
+        : ['stun','freeze','sleep','para','trap','seal','noatk','forecast','spddown',
+           'hellfire','poison','bleed','noheal_curse','berserk','exhaust','deathmark',
+           'confused','dmgVuln','healReduced','weakened','charm','breakDef','detain',
+           'imprison','_burstSeal','_traitSeal'];
+      if(boss && Array.isArray(boss.status) && boss.status.length){
+        boss.status = boss.status.filter(function(s){ return s && _BADS.indexOf(s.type) === -1; });
+      }
+      try{ if(typeof renderCard === 'function') renderCard(boss); }catch(_){}
+    }catch(_){}
+  }
+
+  // S1:雷霆貫穿 — 特技 150% 對「特技最高的 1 名對手」風屬性傷害 + 麻痺 2 回合
+  function _wbWindBossS1(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1500, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    // 特技最高的 1 名對手(平手取先出現者)
+    let _tgt = null;
+    alive.forEach(function(h){ if(!_tgt || (h.sp||0) > (_tgt.sp||0)) _tgt = h; });
+    const dmg = Math.floor((boss.sp || 45) * 1.50);
+    if(_tgt){
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(_tgt, dmg, { actor: boss, isSkill: true, hitBonus: 0.30, element: 'wind' });
+        }else{ _tgt.curHp = Math.max(0, _tgt.curHp - dmg); }
+      }catch(_){ _tgt.curHp = Math.max(0, _tgt.curHp - dmg); }
+      if(_tgt.curHp > 0){
+        try{ if(typeof addStatus === 'function') addStatus(_tgt, 'para', 2); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(_tgt, '⚡ 麻痺', '#ffee00', 800); }catch(_){}
+      }
+      try{ if(typeof renderCard === 'function') renderCard(_tgt); }catch(_){}
+    }
+    try{ if(typeof log === 'function') log(`⚡ 風暴雷龍王「雷霆貫穿」!特技 150% 對 ${_tgt ? _tgt.name : '對手'} 造成風屬性傷害 -${dmg} HP,並麻痺 2 回合(完全無法行動)!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // S2:暴風肅清 — 特技 120% 全體風屬性傷害 + 解除自身所有不利狀態
+  function _wbWindBossS2(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1500, shake:true}); }catch(_){}
+    const alive = G.p1.filter(h => h && h.curHp > 0);
+    const dmg = Math.floor((boss.sp || 45) * 1.20);
+    alive.forEach(t => {
+      try{
+        if(typeof doDmg === 'function'){
+          doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, hitBonus: 0.30, element: 'wind' });
+        }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+      }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+      try{ if(typeof renderCard === 'function') renderCard(t); }catch(_){}
+    });
+    // 解除自身所有不利狀態(對應天賦文案「捲起毀滅暴風…解除自己身上所有不利狀態」)
+    _wbWindClearBossDebuffs(boss);
+    try{ if(typeof bannerFX === 'function') bannerFX(boss, '🌪 淨化', '#7eddcc', 800); }catch(_){}
+    try{ if(typeof log === 'function') log(`🌪 風暴雷龍王「暴風肅清」!特技 120% 全體風屬性傷害 -${dmg} HP,並解除自身所有不利狀態!`); }catch(_){}
+    _scheduleBossEnd(boss, 1300);
+  }
+
+  // 爆發:雷神·萬雷殛世 — 特技 150% 全體風傷(無視有利)+ 全體麻痺 1 回合 + 解除自身所有不利
+  function _wbWindBossBurst(boss){
+    const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
+    try{ if(typeof playSfx === 'function'){ playSfx('sfx-paralysis-thunder', 0.9); setTimeout(function(){ try{ playSfx('sfx-burst', 0.9); }catch(_){} }, 240); } }catch(_){}
+    try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
+    try{ boss._wbActionCount = 2; }catch(_){}   // ★ 爆發後不再追擊普攻
+    try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
+    boss._wbBossTid = setTimeout(() => {
+      boss._wbBossTid = null;
+      if(boss._wbEndedThisTurn === true){ return; }
+      if(boss.curHp <= 0){ boss._wbEndedThisTurn = true; return; }
+      const alive = G.p1.filter(h => h && h.curHp > 0);
+      const dmg = Math.floor((boss.sp || 45) * 1.50);
+      alive.forEach(t => {
+        try{
+          if(typeof doDmg === 'function'){
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, element: 'wind' });
+          }else{ t.curHp = Math.max(0, t.curHp - dmg); }
+        }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
+        // 全體麻痺 1 回合
+        if(t.curHp > 0){
+          try{ if(typeof addStatus === 'function') addStatus(t, 'para', 1); }catch(_){}
+          try{ if(typeof bannerFX === 'function') bannerFX(t, '⚡ 麻痺', '#ffee00', 800); }catch(_){}
+        }
+        try{ if(typeof renderCard === 'function') renderCard(t); }catch(_){}
+      });
+      // 解除自身所有不利狀態
+      _wbWindClearBossDebuffs(boss);
+      try{ if(typeof log === 'function'){ log('⚡ 風暴雷龍王爆發「雷神·萬雷殛世」!特技 150% 全體風屬性傷害(無視有利)!'); log('🌩 全體麻痺 1 回合(完全無法行動),並解除自身所有不利狀態!'); } }catch(_){}
+      try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,240,80,0.7)', 700); }catch(_){}
+      _scheduleBossEnd(boss, 1800);
+    }, 2200);
+  }
+
   // BOSS S1:業火灼燒(全體 sp×1.5 + 燃燒 2 回合 + 命中 +30%)
   // ★ v3.11.7(2026-05-28) — 傷害 1.0 → 1.5(對齊 v3.5.9 + 介紹彈窗描述)+ 命中率 +30%
   function _wbAdvBossS1(boss){
@@ -3365,6 +3483,7 @@
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossS1(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S1
     if(boss && boss.name === '山岳地龍王'){ _wbEarthBossS1(boss); return; }   // ★ v3.15.17 — 地龍王走自己的 S1
     if(boss && boss.name === '深淵海龍王'){ _wbWaterBossS1(boss); return; }   // ★ v3.15.98 — 海龍王走自己的 S1
+    if(boss && boss.name === '風暴雷龍王'){ _wbWindBossS1(boss); return; }    // ★ v4.22.0 — 雷龍王走自己的 S1(原落預設火龍王 BUG)
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1600, shake:true}); }catch(_){}
@@ -3397,6 +3516,7 @@
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossS2(boss); return; }   // ★ v3.13.73 — 草龍王走自己的 S2
     if(boss && boss.name === '山岳地龍王'){ _wbEarthBossS2(boss); return; }   // ★ v3.15.17 — 地龍王走自己的 S2
     if(boss && boss.name === '深淵海龍王'){ _wbWaterBossS2(boss); return; }   // ★ v3.15.98 — 海龍王走自己的 S2
+    if(boss && boss.name === '風暴雷龍王'){ _wbWindBossS2(boss); return; }    // ★ v4.22.0 — 雷龍王走自己的 S2(原落預設火龍王 BUG)
     // ★ FIX 20260517 — 技能音效(龍的呼嘯)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
     try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1600, shake:true}); }catch(_){}
@@ -3445,6 +3565,7 @@
     if(boss && boss.name === '翠綠森龍王'){ _wbGrassBossBurst(boss); return; }   // ★ v3.13.73 — 草龍王走自己的爆發
     if(boss && boss.name === '山岳地龍王'){ _wbEarthBossBurst(boss); return; }   // ★ v3.15.17 — 地龍王走自己的爆發
     if(boss && boss.name === '深淵海龍王'){ _wbWaterBossBurst(boss); return; }   // ★ v3.15.98 — 海龍王走自己的爆發
+    if(boss && boss.name === '風暴雷龍王'){ _wbWindBossBurst(boss); return; }   // ★ v4.22.0 — 雷龍王走自己的爆發(原落預設火龍王 BUG)
     // ★ FIX 20260517 — 爆發技用技能音效(更大聲)
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.9); }catch(_){}
     try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
