@@ -1602,6 +1602,12 @@
     burst_earth: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('護盾碎石.gif'),
     // ★ v3.15.98 — 深淵海龍王爆發「絕對零度·冰封終焉」特效(老師指定:冰椎爆裂.gif)
     burst_water: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('冰椎爆裂.gif'),
+    // ★ v4.29.0 — 風暴雷龍王(taifeng_wind_dragon)專屬「雷電/風」特效(全用現有英雄爆發技的 GIF)
+    //   老師回報:風暴雷龍王 S1/S2 之前傳通用 key 's1'(=火雨.gif 火龍王特效)、爆發走 _wbPlayBurstAnimation
+    //   (寫死播「火山炎龍王/天崩之炎」)→ 三招全顯示成火龍王的火特效與火爆發名稱。此處補三個雷電專屬 key:
+    wind_s1:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('迅雷不及掩耳的攻擊.gif'),  // S1 雷霆貫穿(單體雷擊·借鐵匠爆發 GIF)
+    wind_s2:    'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('龍捲風.gif'),               // S2 暴風肅清(全體暴風·借迴力鏢旋風 GIF)
+    burst_wind: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雷雨.gif'),                // 爆發 雷神·萬雷殛世(對齊 hero_db.js BURST_GIF_DB v3.15.63)
   };
 
   // 播放全畫面 GIF 特效 (持續 1.6 秒後淡出)
@@ -3262,7 +3268,8 @@
   function _wbWaterBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
-    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1500, shake:true}); }catch(_){}
+    // ★ v4.29.0 — 特效改冰系 'burst_water'(原 's1'=火雨.gif 火龍王特效·但本招「絕對零度」是冰凍系)
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_water', {duration:1500, shake:true}); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     const dmg = Math.floor((boss.sp || 50) * 1.30);
     alive.forEach(t => {
@@ -3398,7 +3405,8 @@
   function _wbWindBossS1(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
-    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s1', {duration:1500, shake:true}); }catch(_){}
+    // ★ v4.29.0 — 特效改雷電專屬 'wind_s1'(原 's1'=火雨.gif 火龍王特效·老師回報)
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('wind_s1', {duration:1500, shake:true}); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     // 特技最高的 1 名對手(平手取先出現者)
     let _tgt = null;
@@ -3424,7 +3432,8 @@
   function _wbWindBossS2(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
-    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('s2', {duration:1500, shake:true}); }catch(_){}
+    // ★ v4.29.0 — 特效改暴風專屬 'wind_s2'(原 's2'=集中效果線通用特效·非雷電風)
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('wind_s2', {duration:1500, shake:true}); }catch(_){}
     const alive = G.p1.filter(h => h && h.curHp > 0);
     const dmg = Math.floor((boss.sp || 45) * 1.20);
     alive.forEach(t => {
@@ -3446,7 +3455,10 @@
   function _wbWindBossBurst(boss){
     const G = (typeof window._wbGetG === "function") ? window._wbGetG() : window.G;
     try{ if(typeof playSfx === 'function'){ playSfx('sfx-paralysis-thunder', 0.9); setTimeout(function(){ try{ playSfx('sfx-burst', 0.9); }catch(_){} }, 240); } }catch(_){}
-    try{ if(typeof window._wbPlayBurstAnimation === 'function') window._wbPlayBurstAnimation(); }catch(_){}
+    // ★ v4.29.0 — 爆發特效改雷雨專屬 'burst_wind'(原走 _wbPlayBurstAnimation 寫死播「火山炎龍王/天崩之炎」
+    //   火特效+火爆發名稱大字→這正是老師回報「雷龍王爆發技名稱與提示顯示火龍王」的根因;
+    //   本函式下方 log 本就正確輸出「雷神·萬雷殛世」,改用只播 GIF 的 _wbPlayFullscreenFx 即不再冒出火龍王文字)
+    try{ if(typeof window._wbPlayFullscreenFx === 'function') window._wbPlayFullscreenFx('burst_wind', {duration:2200, shake:true}); }catch(_){}
     try{ boss._wbActionCount = 2; }catch(_){}   // ★ 爆發後不再追擊普攻
     try{ if(boss._wbBossTid) clearTimeout(boss._wbBossTid); }catch(_){}
     boss._wbBossTid = setTimeout(() => {
