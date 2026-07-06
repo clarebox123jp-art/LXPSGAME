@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.37.0(三支爆發技動畫更新+改成覆蓋右邊大特寫圖)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.38.0(三支爆發影片改成和特寫圖同時出現並完全取代、且有聲音)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.38.0 — 🎬 三支爆發影片改成和特寫圖同時出現、並完全取代、而且有聲音
+  {
+    ver: 'v4.38.0',
+    date: '2026-07-07',
+    brief: [
+      '🎬【爆發動畫時機修好了!】藝天使．克雷爾、主神奧汀、魔劍姬‧伊莉雅(神魔滅斬)這三支爆發動畫,現在會「和右邊那張爆發特寫大圖同時出現、並完全取代它」——不會再發生「特寫圖先跑出來、影片卻慢半拍才姍姍現身」的情況(尤其學校網路比較慢時)。',
+      '🔊【爆發動畫有聲音了!】這三支影片本身帶的聲音現在會播出來,魄力更足!',
+    ],
+    items: [
+      '★ v4.38.0【影片就緒才淡入·index.html】_playBurstVideo 的淡入時機由「一 append overlay 就 requestAnimationFrame 淡入」改為「影片可顯示畫面(loadeddata/playing/canplay 任一,0.8s 兜底)才淡入」→ 淡入的是真正有畫面的影片,而非空白 overlay,消除載入延遲造成的視覺空窗。',
+      '★ v4.38.0【撐住靜態特寫盒直到影片覆蓋·index.html】爆發路徑(execBurst)下 _showBurstCinematic 的右側靜態特寫盒 #burst-img-panel 改「撐住模式」:不再固定 2 秒自動淡出,存參照(_bvHold.imgPanel)交由影片結束/跳過的 _bvDone 統一淡出移除→影片就緒瞬間覆蓋(取代)特寫圖、兩者同時呈現,無「特寫圖已消失、影片尚未出現」的落差。非影片英雄仍走原本 2 秒淡出時序,零改動。',
+      '★ v4.38.0【解除靜音·帶聲音播放·index.html】_playBurstVideo 的 video 由 v.muted=true 改 v.muted=false/volume=1(老師更新的三支影片已含音軌)。帶聲音的自動播放若被瀏覽器擋(play() reject),退回「靜音重播」讓影片仍照常出現(絕不整支略過);伊莉雅技能影片神魔滅斬同走此播放器=一併解靜音+就緒才顯示。',
+      '★ v4.38.0【範圍與驗證】只改 index.html(_showBurstCinematic 撐住 imgPanel + execBurst _bvDone 收尾 imgPanel + _playBurstVideo 解靜音/就緒才淡入/被擋退回靜音);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.38.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.18.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
   // v4.37.0 — 🎬 三支爆發技動畫更新 + 改成覆蓋右邊大特寫圖
   {
     ver: 'v4.37.0',
@@ -309,24 +324,6 @@ window.GAME_CHANGELOG = [
       '★ v4.19.0【換裝流程·index.html】_advApplyPetToHero:換裝前卸除舊寵 onRemove、設 equip+onEquip、_followPet=新寵、次數視圖還原(換回舊寵取回保留次數)、_petBurstBonus 依新寵好感重算;_advFinishPetPick 於「已有跟隨寵物且新寵已馴養」彈對照視窗,收尾抽成 _advFinishPetPickTail 由抉擇 handler 呼叫(維持 v3.14.25/v3.16.39 三路推進),保留原夥伴則新寵進背包(滿則放棄)。',
       '★ v4.19.0【克雷爾主分類·hero_db.js】HERO_PRIMARY_CLASS 內「藝天使．克雷爾」由 tank 改 heal(篩選 _heroSkillTypes 讀取來源);hero_db.js 版本自 v4.5.0 起隨主程式對齊為 v4.19.0。',
       '★ v4.19.0【範圍/安全】戰鬥中換寵不重新套用寵物「成長素質加成」(避免場中補血 / HP 重算風險),對照視窗僅呈現當下素質+功能效果+爆發供決策;競技場仍照舊封鎖寵物爆發;全程 try-catch,不動既有傷害計算 / 存檔 / 守門。',
-    ],
-  },
-  // v4.18.0 — 🐾 戰鬥寵物體驗大升級(馴養鈕發光/LOG鈕搬家/忠誠羈絆/貓掌爆發槽/寵物浮動圖)
-  {
-    ver: 'v4.18.0',
-    date: '2026-07-05',
-    brief: [
-      '🐾【馴養按鈕更醒目!】戰鬥中出現「🐾 馴養」按鈕時,按鈕會放大並有綠色邊框呼吸發光——遇到可以馴養的寵物,一眼就看到!',
-      '📜【戰鬥LOG按鈕搬家】原本在右上角、會被功能鍵蓋住的「戰鬥紀錄」按鈕,移到畫面左下角「🆘 求救鈕」的正上方,而且只在戰鬥中才會出現;點一下展開完整戰鬥過程,再點一下收合。',
-      '💞【忠誠羈絆:已馴養寵物不離不棄!】你已經馴養的寵物裝在英雄身上時,不會再被任何招式「驅逐、替換、奪取」——動物大軍、獸盟、神偷的掠奪/盜取通通無效,牠會忠誠地留在你身邊!(敵人身上的寵物照樣可以驅逐或偷過來)',
-      '🐾【寵物爆發次數一目了然】英雄卡片左上角兩顆爆發星星的「正上方」,新增黃色貓掌🐾槽位,顯示寵物極限爆發還剩幾次(好感度滿 100 會多一格!);點貓掌可以看說明。',
-      '🖼️【寵物改用可愛去背圖亮相!】戰鬥中英雄卡下方的寵物文字標籤,改成「去背寵物圖」浮在英雄肖像的右上角(帶金色光暈);點寵物圖會打開「迷你圖鑑」,看寵物特寫、功能效果、爆發技和好感度,再點一下就關閉!',
-    ],
-    items: [
-      '★ v4.18.0【馴養鈕】_advRefreshTameBtn 顯示時套 keyframes lxpsTameBreath(scale1.04↔1.09+綠光呼吸)·隱藏/守門分支清 animation+transform·字級 20→26/13→17。',
-      '★ v4.18.0【LOG鈕移位】#log-toggle-btn 改 fixed left:10px bottom:80px(SOS 正上方)·預設 display:none·加入 _lxpsBattleRescueBtnWatchdog _ids(戰鬥中顯示+reparent body)·openAdventureOverlay/advStartWinSequence 出口隱藏+_collapseBattleLog;收合標籤改「📜 LOG」·展開頂部留白 44→14px。',
-      '★ v4.18.0【忠誠羈絆】新增 _petIsProtectedEquip(靜默:side===p1 且 _petIsTamed(equip.n))+_petStealGuard(banner/log 雙版);守門 11 點:俠盜飛梭奪裝/神偷天賦掠奪/AI強奪/盜取選單 _hasPet/_doSteal pet/_doStealReplacePet/_autoSteal/AI盜取池/動物大軍 AI+玩家/獸盟 filter;僅保護 p1,敵方寵物照舊。',
-      '★ v4.18.0【貓掌槽+浮動圖】burst-star-bar 內 absolute bottom:100% 🐾槽(allow=1+_petBurstBonus·可超出卡片邊界);equipExtHTML 改 return \'\'(舊版保留 _equipExtHTMLLegacyV417)·renderCard 肖像右上 .pet-float-badge 高40%(_petNobgUrl→petImg→icon 三段fallback·金色光暈)·_imgOld 選取器改 img:not(.pet-float-img) 防肖像誤用·點擊 _togglePetMiniCodex(z12600·特寫/稀有度/馴養狀態/效果/爆發雙版·鐵律1.232)。',
     ],
   },
 ];
