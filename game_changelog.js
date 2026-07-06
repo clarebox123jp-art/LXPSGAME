@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-06  / 目前主程式版本:v4.22.0(世界 BOSS 風暴雷龍王改回自己的雷電招式與開場對白 + 戰場背景大圖下移避開血條 + 連線戰帶跟隨寵物)
+//  最後更新:2026-07-06  / 目前主程式版本:v4.24.0(寵物小屋:撫摸(按住搓揉)對 GM 失效修復)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,33 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.24.0 — 🤚 寵物小屋「撫摸(按住搓揉)」互動小修正(讓撫摸更穩定)
+  {
+    ver: 'v4.24.0',
+    date: '2026-07-06',
+    brief: [
+      '🤚【寵物小屋「撫摸」互動更穩定了!】修好了寵物小屋裡「在寵物身上按住搓揉」在某些情況下按了沒反應、無法開始撫摸的小問題。一般同學的撫摸/餵食/玩耍原本就正常,這次是把撫摸的啟動判斷修得更一致、更可靠。',
+    ],
+    items: [
+      '★ v4.24.0【撫摸對 GM 失效修復·index.html】_petHouseStrokeStart 逐槽鎖守門由「直接讀 _petHouseSlotLock 判斷」改「採信 _petHouseAskLockSlot 回傳值」,與餵食 _petHouseFeedMode / 玩耍 _petPlayStart 兩入口一致。根因:v4.21.0 讓 _petHouseAskLockSlot 對管理員一律放行(回 true 但不鎖槽)→ GM 永不鎖任何槽 → _slk 恆為 null → 撫摸入口 if(_slk!==pn) 恆真 → 每次都停在「呼叫 AskLockSlot(對 GM 空轉)後 return」→ GM 撫摸完全無法啟動,且確認視窗因 GM 放行也不彈。修法:未鎖到本寵時呼叫 AskLockSlot,回 false(學生已彈確認 / 鎖到別隻已擋)才 return;回 true(GM 放行)則往下開始撫摸。',
+      '★ v4.24.0【影響範圍】僅修復 GM(管理員)測試路徑;一般學生流程完全不變:未鎖此槽→仍先彈「確認今日互動夥伴」視窗、確認後鎖槽、再次按住搓揉才開始撫摸(自 v4.10.0 起行為一致)。餵食/玩耍原本就採信 AskLockSlot 回傳值故對 GM 正常,只有撫摸用了不一致的直接讀鎖寫法。',
+      '★ v4.24.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.24.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.10.0·新最舊 v4.11.0)。本輪 index.html 同時含 v4.23.0 兩處純顯示微調(圖鑑桌鈕右移+食物頁籤藍底)+ v4.24.0 撫摸修復。',
+    ],
+  },
+  // v4.23.0 — 🏠 寵物小屋兩個小調整:圖鑑書本鈕移到右邊、食物分類標籤改藍底更好認
+  {
+    ver: 'v4.23.0',
+    date: '2026-07-06',
+    brief: [
+      '📖【寵物圖鑑書本鈕移到右邊了!】寵物小屋裡「翻開寵物圖鑑」的書本大按鈕,原本在左邊會擋到第一隻寵物,現在移到右邊、貼齊下方食物面板的上緣,三隻寵物看得更清楚!',
+      '🔵【食物分類標籤改成藍色底,更好認!】小屋下方「動物主食大百科」的分類標籤(🌿植物與甜食/🐛蟲類/🍖肉類/🐟水產類/✨特殊)原本是深綠色,跟下面的食物清單底色太像、不好分辨——現在改成藍色底,一眼就看得出來哪些是「分類按鈕」、哪些是「食物」!',
+    ],
+    items: [
+      '★ v4.23.0【寵物圖鑑桌鈕左→右·index.html】_ph-codex-desk-btn 定位由 left:clamp(10px,2vw,28px) 改 right:clamp(10px,2vw,28px)(移到小屋右下·避開左邊第一個寵物槽);bottom 由 clamp(126px,35vh,300px) 微調為 clamp(126px,34vh,300px) 使鈕底緣貼齊下方食物面板 #_ph-food(max-height:34vh)頂端。純顯示層定位,點擊行為/openPetPage 呼叫不變。',
+      '★ v4.23.0【食物分類頁籤底色 深綠→深藍·index.html】_petHouseRenderFood 分類頁籤 tb.style:active 由綠漸層改藍漸層(linear-gradient(135deg,rgba(40,95,190,.96),rgba(70,150,245,.96))+藍框+藍光暈)、inactive 由 rgba(22,40,30,.9) 深綠改 rgba(18,30,60,.92) 深藍(藍框+#bcd2f2 淺藍字);與下方食物列表深綠黑底(#_ph-food gradient)區隔明顯。純顏色調整,分類切換/拖曳餵食邏輯不變。',
+      '★ v4.23.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。版本同步點 → v4.23.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.9.0·新最舊 v4.10.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js。',
+    ],
+  },
   // v4.22.0 — ⚡ 風暴雷龍王改回自己的雷電招式與開場對白 + 世界 BOSS 戰場背景下移 + 連線戰帶跟隨寵物
   {
     ver: 'v4.22.0',
@@ -303,57 +330,4 @@ window.GAME_CHANGELOG = [
       '★ v4.11.0【寵物第一階段聚光教學 _petT1 觸發時機修正·index.html】老師回報:教學在玩家還沒真正進到關卡主頁就彈出,害玩家錯過點擊教學+首次召喚。根因:舊觸發輪詢(登入後 9 秒起)只檢查 adventure-overlay 非 display:none,但該 overlay 是常駐底層容器,登入/雲端載入途中就會 display:block→誤判「在關卡頁」而提前彈,再被登入閘/會員資料/救援說明等前置彈窗蓋掉。修法三處:①openAdventureOverlay 通過所有硬守門(uid 解析/雲端驗證/二段密碼閘門皆在早退之後)真正 ov.style.display=flex 顯示關卡頁的成功點,設正向旗標 window._petT1EnteredLevelPage=true;②觸發輪詢改「正向就緒」門檻:必須 _petT1EnteredLevelPage===true + _cloudLoadDone===true + 關卡頁顯示中 + 不在戰鬥 + 無任何前置/其他彈窗(_petT1Blocked),且以上條件連續穩定 2 拍(settle)才啟動(防登入/雲端載入轉場瞬間誤觸)·上限 80→120 拍;③_petT1Blocked 黑名單補入 login-gate-modal/_member-profile-modal/_member-hub-modal/_rescue-guide-modal/_audit-ov 等登入首登前置彈窗。純觸發時機收斂·教學內容/步驟/完成旗標(petTut1Done)一律不動。',
     ],
   },
-  // v4.10.0 — 🐾 寵物同萌正式上線:全服上線禮+兩階段教學(聚光引導/馴養教學送五色鳥)、每日互動改「逐槽位」鎖定、圖鑑三改版、戰鬥寵物稀有度出現率
-  {
-    ver: 'v4.10.0',
-    date: '2026-07-04',
-    brief: [
-      '🎁【寵物同萌 全服上線禮!】為慶祝寵物系統正式全面開放,每位小英雄登入就自動獲得「🎟️ 隨機寵物召喚卷 ×1」和「🍖 高級寵物飼料 ×10」!每人限領一次(換平板、換瀏覽器都不會重複領),快去召喚你的第一隻寵物吧!',
-      '👆【全新聚光教學,一步一步帶你玩!】第一次來到關卡選擇頁,畫面會變暗、只亮起你要按的按鈕,還有 👆 手指指給你看:帶你進寵物小屋 → 翻開寵物圖鑑 → 用上線禮的召喚卷召喚第一隻寵物 → 告訴你飼料在「🏪 不可思議超商」買得到!右下角隨時有「⏭ 跳過教學」,看過一次就不會再出現。',
-      '🐦【每日首戰馴養教學:五色鳥送給你!】現在改成在「冒險戰鬥」中學馴養:每天第一次進關卡戰鬥,戰鬥教學結束後會出現馴養教學——一隻可愛的「五色鳥」會停在先行動的英雄身邊,輪到他時按「🐾 馴養」,教學不會用掉你的飼料、答案直接標 ⭐ 告訴你、保證馴養成功!第一次要看完,之後每天可以選「這次跳過」或「以後不再顯示」。已經有五色鳥的同學一樣可以練習,不會重複獲得。(所以第一次進小屋不再直接送五色鳥囉,改成教學獲得更好玩!)',
-      '🔒【每日夥伴鎖定改「一個位置一隻」!】小屋鎖定規則更自由:改成「每個草蓆位置」每天各自綁定一隻寵物——某個位置開始互動(撫摸/餵食/玩耍其中一種)就鎖住那個位置,但其他空位還是可以請「今天還沒互動過」的寵物來玩!已鎖定的位置會掛「🔒 今日夥伴」標籤,每天早上 8:00 全部重置。還有:只要今天還有寵物沒互動完,關卡頁的「🐾 寵物」按鈕會亮出「🐾 今日互動!」小提醒!',
-      '📖【寵物圖鑑三大改版!】①已馴養的寵物,卡片圖片「左上角」直接掛「🎓 已馴養」綠標,一眼看出哪些是你的!②已設定跟隨的寵物,卡片名字下方直接顯示「🤝 跟隨:英雄名」!③「選擇跟隨英雄」選單全新改版:和龍王戰替補選單一樣,有英雄縮圖、⚔💚🌀🛡 主分類按鈕、UR/SSR/SR/R 稀有度按鈕、還能用「🔍 條件搜尋」找有特定技能效果的英雄!',
-      '⚔【戰鬥出現的寵物大改版!】戰鬥中出現寵物(答題獎勵/動物學家召喚)時:①圖片會標示「🎓 已馴養」或「✨ 未馴養」②所有寵物依稀有度有不同出現率:SSR=15%、SR=30%、R=55%,每次出現都是獨立機率、不會偏心「還沒收錄的」——高稀有度寵物保持真正的稀少感!③出現「已馴養」的寵物不會重複馴養,但攜帶牠出戰可以提升好感度 +1(每場戰鬥每隻限一次)!動物學家召喚的寵物也一樣照稀有度出現。',
-      '💬【小屋提示視窗不再擋住寵物!】戳戳寵物生氣的提示、撫摸完成的提示,通通縮小約 20% 並移到畫面「最右下角」,不會再蓋住寵物圖片、也不會擋到下面的食物清單!',
-      '🌌【五色鳥不佔召喚機率!】五色鳥改由馴養教學必定獲得,所以召喚星空和寵物召喚卷的寵物池都不會再出現五色鳥——你的每一次召喚機會都留給其他 27 隻寵物!',
-    ],
-    items: [
-      '★ v4.10.0【全服上線禮·index.html】_fbClaimGlobalRewards 讀取失敗不再早退,並於有效獎勵清單前端硬編碼注入 pet40_launch_v4100(pet_summon_ticket×1+pet_food_adv×10·_petSysOpenForMe 守門):防重複沿用既有 globalRewardClaims/{uid}_{rid} transaction create-only 認領文件(UID 雲端權威·免疫三槽合併復活/跨裝置重領);領取即時 backpackAdd 進記憶體+_grClaimLog 供 v3.17.8 登入回溯對帳,免 GM 在後台手動建立。同一次主檔讀取順讀 petTut1Done/petTut2Seen/petTut2Off 三旗標存 window._petTutCloudFlags(零額外讀取);module block 新增 window._fbSetPetTutFlag(白名單三欄位·setDoc merge:true self-write 免改規則)。',
-      '★ v4.10.0【第一階段聚光引導 _petT1·index.html】首次進關卡選擇頁(登入後 9 秒起輪詢·避開 style-onboarding/練習營/續戰/全體獎勵通知/GM獎勵等彈窗)自動啟動:4 塊遮罩板挖洞聚光(只有目標點得到)+金框脈動+👆手指+提示框(viewport clamp 不出畫面·iPad 邊緣必點得到);步驟=上線禮資訊卡→🐾寵物鈕(桌機 adv-nav-pet-btn/手機 nav 自動擇一)→📖圖鑑桌鈕→🎟️召喚卷使用鈕(_pet-ticket-use-btn·等券數減少且慶祝視窗 _pet-ticket-celebrate 關閉才前進)→🍖飼料資訊卡(提及 🏪 不可思議超商)→「← 返回」(_pet-page-close-btn)回小屋;右下 ⏭ 跳過教學永遠在場(z-15020·離邊 14px),每步 5 秒 watchdog 找不到目標自動跳步、任何例外自動收尾絕不卡死;完成/跳過寫 petTut1Done(localStorage per-uid+雲端旗標)不再出現;完成後若小屋開著自動補跑既有小屋互動教學(_petT1WantHouseTut 延後接力)。',
-      '★ v4.10.0【第二階段馴養教學 _petT2·index.html】小怪戰啟動點(advStartMiniBattle 教學觸發區塊後·教學已完成的老玩家也觸發)呼 _petT2Arm:輪詢等戰鬥教學(_tutorialActive/_tut-prompt/_tut-dim)完全結束後彈教學視窗(z-13900·守門:寵物系統開放/冒險模式/非世界BOSS=鐵律1.203/今日未彈/未永久關);首次只有「🐦 開始教學」,petTut2Seen 之後多「這次跳過」「以後不再顯示」(petTut2Off 永久關·仍可自行按🐾馴養);彈出即記今日鍵(台灣 8:00 換日)不重複騷擾。開始教學=行動序第一位存活玩家英雄暫時換裝五色鳥(prevEquip 暫存·舊裝 onRemove)→輕量聚光 #b-tame(金框+👆+提示·僅該英雄回合顯示·戰鬥結束 watchdog 自動收尾還原);馴養鏈四處教學分支(guard e._tut):_advTameEligible 教學英雄一律 eligible(五色鳥已馴養也放行·免飼料·免每回合限制)、_advOpenTameMenu 只列高級飼料一列標「🎓 教學體驗·不消耗」、_advTameQuizOpen 免飼料守門+正解加 ⭐ 綠框直接提示、_advDoTame 不扣飼料+必定成功+已馴養不重複 _petRecordTame(只播特效)+收尾 _petT2Complete(寫 seen 旗標·新馴養留鳥出戰/已馴養還原原攜帶·雙版完成提示);新馴養來源標 tutorial_tame 入帳本。',
-      '★ v4.10.0【逐槽位每日鎖定·index.html】取代 v4.9.0「三夥伴一次鎖」:新增 _petHouseSlotLock/_petHouseLockSlot/_petHouseAskLockSlot(單寵確認視窗 z-9650·含 v4.9.0 legacy lock 陣列一次性遷移到 lockSlots);每槽首次互動(撫摸/玩耍/餵食任一)先確認→鎖定「該槽」寵物,其他未鎖/空槽仍可自由入住與更換(教學結束後可用剩餘槽位補排「還沒互動過」的寵物);餵食拖曳改在放下咽喉點 _petHouseFeed 逐槽判定(起點放行拖曳);_petHousePickResident/回家鈕改「該槽鎖定才擋」;鎖定槽卡左上掛「🔒 今日夥伴」chip;資料掛 _petHouseDaily.lockSlots 隨 petHouseDaily_s 上雲(非同日採信當日雲端·同日逐槽聯集防換裝置重挑);舊三函式 _petHouseLockInfo/LockToday/AskLock 保留未刪(誤刪是大忌)。新增 _petHouseHasPendingToday/_petNavBadgeRefresh:今日尚有可互動寵物(已鎖槽未完成三互動、或有未互動寵物且尚有可安排槽位)→ 關卡頁 adv-nav-pet-btn 上方浮「🐾 今日互動!」金色 chip、手機 nav 寵物鈕掛紅點;掛入 _applyPetSysGate 隨 _syncMobileNav 500ms 週期自動刷新。',
-      '★ v4.10.0【寵物圖鑑三修·index.html】①_buildPetPage 已馴養卡:圖片左上加「🎓 已馴養」綠標(_tamedTL·稀有度徽章維持右上/Lv 徽章維持左下不衝突) ②已設 followTo 的卡片名字下方加「🤝 跟隨:英雄名」(_followLine·詳情頁本就顯示) ③跟隨英雄選單 V2(_petPickFollowHero 函式名不變·呼叫點零改動;舊版改名 _petPickFollowHeroV1 保留未呼叫):仿龍王戰替補選單=篩選列(全部/⚔傷害/💚回復/🌀控場/🛡坦克/🎲其他/UR/SSR/SR/R/🔍條件搜尋)+英雄縮圖格(HERO_IMGS+getHeroThumbObjPos+_teamFormAdjustObjPos grid 口徑·跟隨中✅/現有寵物=替換提示);新增 _petFollowHeroPass(判定口徑鏡射 _wbSwapHeroPassFilter=主圖鑑同款)+doCondSearch 加 petfollow 分支(_petFollowFilterKey=cond→重繪)。',
-      '★ v4.10.0【戰鬥寵物出現機制·index.html】新增 window._PET_APPEAR_RATE={SSR:0.15,SR:0.30,R:0.55}+window._petRollByRarity(pool,n):先擲稀有度層再於層內均勻抽 1(空層依剩餘層機率重新正規化·同批去重·排除五色鳥);每次出現皆獨立機率、完全不設「優先未收錄/未馴養」加權(高稀有度保持真正稀少感)。套用三處:答題獎勵 get_pet(原均勻抽全池)、動物學家爆發 AI 路徑 picks2、玩家路徑 picks(原 shuffle 均勻取 4)。出現視窗標示:_advShowPetTargetPicker 寵物卡加稀有度+_petTameBadgeHtml(🎓已馴養綠/✨未馴養琥珀)+已馴養說明行;_showBurstEquipSequence 標題同步加徽章。攜帶已馴養寵物→好感+1:新增 _petCarryAffOnce(每場每寵限 1 次防動物學家連放刷好感·G._petCarryAffGiven·+1 好感+💖popup+toast+存檔),掛 _advFinishPetPick 裝備完成點與動物學家序列裝備 onclick;戰鬥馴養鈕對已馴養寵物本就不顯示(不重複馴養✅)。',
-      '★ v4.10.0【五色鳥退出召喚池+首入小屋改版·index.html】_petPoolSSR/_petPoolSR/_usePetSummonTicket 三處池 filter 加 pn!==五色鳥(教學必得·不佔玩家抽取其他寵物的機率;_petRollByRarity 亦排除);_petMaybeFirstTutorial 移除 v4.9.0 house_first_gift 自動送鳥區塊(改教學獲得;已領過的帳號資料不動),_petT1 進行中掛 _petT1WantHouseTut 延後小屋教學防兩套互蓋;_petHouseTutorial intro 第 4 步改條件式:已有馴養寵物→入住引導/一隻都沒有→引導先去戰鬥馴養(教學送五色鳥)或用召喚卷(cute/premium 雙版·鐵律 1.232)。',
-      '★ v4.10.0【小屋提示視窗右下縮小·index.html】新增 window._phHintToast(fixed right:12px·bottom:calc(34vh+14px) 錨在食物清單正上方·字 44→35px 整體縮約 20%·max-width min(480px,72vw)·例外 fallback 原 toast);戳戳生氣提示與撫摸完成提示(_petHouseInteract pat 分支)改走此版,玩耍提示維持原位。',
-      '★ v4.10.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v4.10.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.27.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v4.5.0 免重傳,世界BOSS兩檔維持 v4.8.0 免重傳。⚠ 上線禮/教學旗標為 self-write players 欄位,免改 firestore.rules。',
-    ],
-  },
-  // v4.9.0 — 🐾 寵物系統大更新:首入送五色鳥+兩段教學、每日夥伴鎖定(早上8:00重置)、飼料分類頁籤、圖鑑修正、iPad寵物鈕修正、寵物「相遇/收錄馴養」全站語義重定義+召喚改「未馴養」口徑、小屋體驗五修(桌鈕/三鈕同列/撫摸回饋/鬥技場禁寵/躲貓貓提示泡泡)
-  {
-    ver: 'v4.9.0',
-    date: '2026-07-04',
-    brief: [
-      '🐦【第一次進寵物小屋送你一隻寵物!】現在第一次走進寵物小屋,會自動獲得可愛的「五色鳥」!教學也變得更貼心:先帶你把五色鳥「請進小屋入住」,入住完成後才開始教你撫摸、餵食、玩耍——一步一步跟著做就對了!',
-      '🔒【開始互動前,先確認今天的夥伴!】每天第一次要和寵物互動(撫摸/餵食/玩耍)時,會先跳出確認視窗,列出今天入住的 3 隻寵物問你「今天要和牠們一起玩嗎?」——按下「✅ 開始互動」之後,今天就不能再更換入住寵物囉!要等到隔天「早上 8:00」互動次數重置後才能換新夥伴(每日互動的重置時間也統一改為早上 8:00)。',
-      '🍽【飼料區大改版:分類頁籤!】小屋下方的「動物主食大百科」改成清楚的分類頁籤(🌱植物甜食/🐛蟲/🍖肉/🐟水產/✨特殊),一次看一類、字變大、拖出來的飼料圖示也更大!最重要的是:以前在 iPad 上按不到的「糞球」等最下排飼料,現在切到分類就一定點得到、拖得到!',
-      '📖【寵物圖鑑不再被小屋蓋住!】在寵物小屋按左邊桌上的大書本翻開寵物圖鑑時,圖鑑會好好地顯示在最上層,不會再被小屋畫面蓋住看不到了!',
-      '📱【iPad 首頁「🐾寵物」按鈕消失修正!】部分 iPad 因為校園網路不穩,首頁下方的「寵物」按鈕會整節課不見——已經修好了!就算網路暫時讀不到設定,寵物按鈕也會正常顯示,還會自動重試連線。',
-      '🌌【召喚出的寵物改為「未馴養」寵物!】召喚星空 SSR/SR 與「隨機寵物召喚卷」的判定統一修正:只要是「還沒馴養」的寵物都有機會召喚到(以前圖鑑看過就會被排除,害你的召喚機會變少)!要等該稀有度的寵物「全部馴養完成」,才會轉成寵物訓練書/頂級飼料。',
-      '🏠【寵物小屋更好玩!】①寵物圖鑑按鈕變小、移到「動物主食大百科」上方,不再擋住第一隻寵物!②撫摸/餵食/玩耍三顆按鈕排成同一排,一眼看完!③撫摸的時候寵物會微微放大、輕輕上下搖晃,超有感覺!④玩躲貓貓時每次點擊,畫面中間會出現「💭 思考泡泡」偷偷告訴你距離:藍色=很遠、紅色=超近!⑤鬥技場為了公平,不能使用馴養寵物的力量喔。',
-      '👀🎓【寵物圖鑑全新雙狀態!】重新定義:打怪時「出現並帶過」的寵物=「👀 已相遇」(可以看牠的科普資料,但還不算收錄);「馴養成功」才是真正的「🎓 收錄馴養」!圖鑑每一區現在同時顯示「👀 已相遇 X/N」和「🎓 收錄馴養 Z/N」兩種進度,已相遇但還沒馴養的寵物卡片會掛「👀 已相遇」標籤,馴養完成則是「🎓Lv」標籤——目標就是把 28 隻全部收錄馴養!',
-    ],
-    items: [
-      '★ v4.9.0【首入小屋贈五色鳥+兩段式教學·index.html】_petMaybeFirstTutorial:首次進小屋(教學完成鍵未寫)且未馴養五色鳥 → _petRecordTame(五色鳥, house_first_gift) 自動馴養入庫(走既有統一入口:入帳本/圖鑑收錄/獎章檢查)+雙版 toast+雲端存檔。教學 _petHouseTutorial 加第二參數 phase:intro=前 3 步(歡迎/入住/圖鑑)+自訂「先請五色鳥入住」結尾步,結束不寫完成鍵、掛 _petTutAwaitCheckIn 旗標;玩家在 _petHousePickResident 完成入住 → 自動接 play 段(撫摸/餵食/玩耍/好感/開始體驗後 5 步),跑完才寫完成鍵。intro 段按「略過教學」=直接寫完成鍵退出不再引導;小屋內手動「❓教學」不帶 phase,維持完整 8 步不變。',
-      '★ v4.9.0【每日互動 8:00 重置+當日夥伴鎖定·index.html】_petTwDateStr 由台灣午夜換日改「取 UTC 日期」=台灣早上 8:00 換日(同每日獎勵題庫口徑);新增 _petHouseLockInfo/_petHouseLockToday/_petHouseAskLock(確認視窗 z-9650·列出目前入住寵物·雙版文案):撫摸(_petHouseStrokeStart)/餵食(_petHouseFeedMode+_petHouseFoodDragStart)/玩耍(_petPlayStart) 四個互動入口首次觸發先確認,按「✅ 開始互動」把當下入住名單寫入 _petHouseDaily.lock;鎖定後 _petHousePickResident(請寵物入住/更換)與寵物卡「↩ 回家」皆擋下並提示明日早上 8:00 重置。lock 隨既有 petHouseDaily_s 序列化上雲,載入「僅雲端有當日」分支一併採信、同日走聯集口徑(任一端鎖了就算鎖,防換裝置重挑夥伴)。⚠ 部署當天若在台灣 00:00~08:00 之間,互動日鍵會往回移一天,當日互動可能多重置一次(一次性過渡、無害)。',
-      '★ v4.9.0【飼料分類頁籤+放大·index.html】_petHouseRenderFood 重寫:根因是食物按鈕 CSS touch-action:none(拖曳必需)讓整個食物面板在 iPad 無法手指捲動,原五列全展開超出 34vh 時最下排(✨特殊:糞球等)永遠捲不到=按不到;改為分類頁籤(window._phFoodCat·一般按鈕點擊切換)一次只渲染一類 → 每頁內容必在可視高度內,全部飼料保證點得到/拖得到。標題 19→24px、食物鈕 16→22px+內距放大,拖曳幽靈圖示 ._ph-food-ghost 42px×1.35 → 60px×1.5;拖曳判定/餵食獎懲/存檔完全沿用 v4.1.0 不變。',
-      '★ v4.9.0【寵物圖鑑 z-index 修正·index.html】根因:pet-page-overlay 位於 #adventure-overlay(z-index:510 stacking context)內,自身 z-9100 永遠壓不過掛在 body 上的小屋 overlay(z-9400)。openPetPage 在小屋開著時把圖鑑 overlay 暫時搬到 body 並改 position:fixed+z-9550(手法同 v4.8.0 龍王替補圖鑑整備),closePetPage 還原 DOM 位置與 z;寵物詳情卡 pet-detail-modal 本就是 body fixed z-9700 不受影響。',
-      '★ v4.9.0【iPad 首頁寵物鈕消失修正·index.html】根因:寵物系統雲端開關(gameConfig/petSystemSwitch)在校園網路不穩時 getDoc 偶發失敗 → _petSysCloudOpen 停留 null → 退回硬編碼預設 false → _applyPetSysGate 把「🐾寵物」鈕整節課藏起來。三重修法:①window._PET_SYS_PUBLIC false→true(系統已對全體正式開放,讀不到開關時 fail-open;GM 雲端「暫時關閉」在正常讀取下依然生效)②_fbLoadPetSysSwitch 讀取失敗自動重試最多 5 次(每 6 秒·_petSwitchRetry)③_applyPetSysGate 改冪等寫入並掛入 _syncMobileNav 既有 500ms 週期,開關載入後 0.5 秒內按鈕必復原。',
-      '★ v4.9.0【召喚星空寵物池口徑修正·index.html】老師裁決:召喚出的是「未馴養的寵物」,全收錄判定=馴養寵物全收錄,而非寵物圖鑑解鎖全收錄。rare_ssr/rare_sr 兩處寵物池 filter 由 !_isPetCollected(pn) 改 !window._petIsTamed(pn)(typeof 守門同步改 _petIsTamed);原口徑會把「圖鑑看過但還沒馴養」的寵物排除在召喚池外,錯誤壓縮玩家召喚機率。寵物全馴養才走 fallback 轉寵物訓練書(SSR×6/SR×3·標籤同步改「英雄全收錄·寵物全馴養」)。',
-      '★ v4.9.0【寵物「相遇/收錄馴養」全站語義重定義·index.html】老師裁決:原「出現並攜帶過而解鎖」的集合(_petsEverCollected/_isPetCollected)統一正名為「👀 已相遇」,並非收錄;「寵物收錄」重新定義為「🎓 收錄馴養」(以 _petIsTamed/_tamedPets 為唯一權威)。實作:①新增語義正確別名 window._isPetMet(舊函式名保留全站相容,誤刪是大忌)+定義處/序列化/載入/戰鬥攜帶標記四處註解正名 ②寵物圖鑑 _buildPetPage:台/日/埃三區段標頭改雙計數「👀 已相遇 X/N·🎓 收錄馴養 Z/N」;已相遇未馴養的卡片加「👀 已相遇」琥珀徽章(馴養完成維持「🎓Lv.N」綠徽章);詳情閱覽門檻維持「已相遇」但訊息正名(尚未相遇/已相遇·尚未收錄馴養/已收錄馴養);系統介紹 intro 雙版補語義說明 ③隨機寵物召喚卷 pet_summon_ticket 一併改馴養口徑:召喚池 filter 由 _isPetCollected 改 !_petIsTamed(召喚出未馴養寵物),28 隻「全數收錄馴養」才自動轉頂級寵物飼料(帳本註記 all_tamed) ④全站文案正名:SUMMON_RATES 兩列說明/SSR 取得方法總整理/背包道具說明(召喚卷+訓練書)/GM 獎勵產生器標籤/新手教學第⑥章/戰鬥馴養成功提示,「未收錄寵物」一律改「未馴養寵物」、「全部收錄」一律改「英雄全收錄且寵物全馴養」。資料零遷移:petsEverCollected 集合本身不動,只重定義顯示語義與召喚判定。',
-      '★ v4.9.0【寵物小屋體驗五修·index.html】❶iPad 圖鑑桌鈕(_ph-codex-desk-btn)縮小約 4 成(📖 clamp 40~62→26~40px·標題 17~24→14~18·padding 16/22→10/14)並下移(bottom clamp(160px,37vh,340px)→clamp(126px,35vh,300px))貼齊食物面板(#_ph-food max-height:34vh)正上方,不再蓋到左側第一個寵物槽位 ❷寵物卡「撫摸/餵食/玩耍」三鈕改固定同一列(btnRow flex-wrap:wrap→nowrap+各鈕 flex:1 1 0/min-width:0/white-space:nowrap·字級 17→clamp(13,1.5vw,16)·完成態「✅ 🤚 撫摸」→「✅撫摸」去 emoji 省寬) ❸撫摸回饋:StrokeStart 對寵物圖 wrap 掛 ._ph-stroking(scale 1.07+上下 ±4px 0.9s 無限輕搖·transform-origin 底部·先移除 _ph-bouncing/_ph-shaking 防動畫互蓋),StrokeEnd/StrokeReward 雙點卸除 ❹鬥技場禁用馴養寵物·調查確認+補洞:跟隨寵物素質加成/自動攜帶只在 confirmHeroPick 的 _isAdvMode 分支套用(鬥技場本就不套=無素質外掛✅);但寵物極限爆發 _petFollowBurstName 有「依英雄名 _petFollowOf」fallback,在鬥技場共用 execBurst 下可觸發雙選=漏洞→於該單一咽喉點加閘門:非冒險模式(_adventureMode)且非世界BOSS(_wbInWorldBossMode/_wbSoloPracticeMode)一律回 null(龍王戰為 v4.5.0 設計本就放行),另 _execPetBurst 開頭加同判定防禦雙保險 ❺躲貓貓(_petPlayHideSeek)每次未命中點擊於畫面中央(top 40%)彈 💭 思考對話泡泡,依四段距離 tier 顯示暗示文字(cute/premium 雙版·鐵律 1.232),邊框色沿用星星四段同色系(藍=遠/綠/黃/紅=近),1.6 秒後淡出、命中(HIT_R 內)直接揭曉寵物不彈泡泡。',
-      '★ v4.9.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。七點版本同步 → v4.9.0;GAME_CHANGELOG 維持 20 筆(移除最舊 v3.26.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js;hero_db.js 內容未改、維持 v4.5.0 免重傳,世界BOSS兩檔維持 v4.8.0 免重傳。',
-    ],
-  },
-
 ];
