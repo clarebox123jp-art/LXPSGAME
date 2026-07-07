@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.40.0(集中線/招式名固定3秒 + 圖鑑播放動畫 + 大天狗動畫)(爆發動畫卡住修好 + 播放順序重排)(三支爆發影片改成和特寫圖同時出現並完全取代、且有聲音)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.41.0(圖鑑「播放動畫」按鈕不再被收錄記錄蓋住 + 玉藻前爆發動畫「禍世邪魅」登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.41.0 — 📖 圖鑑「播放動畫」按鈕不再被收錄記錄蓋住 + 🦊 玉藻前爆發動畫「禍世邪魅」登場
+  {
+    ver: 'v4.41.0',
+    date: '2026-07-07',
+    brief: [
+      '📖【圖鑑「播放動畫」按鈕移到看得到的地方】英雄圖鑑左邊大圖右下角的「🎬 播放動畫」按鈕,之前會被下方「你已收錄+日期」那一條蓋住;現在會自動移到那一條的上方,不再被擋住,更好按了!',
+      '🦊【玉藻前爆發動畫登場!】玉藻前新增專屬爆發動畫「禍世邪魅」,戰鬥爆發和英雄圖鑑的「播放動畫」欣賞都看得到、聽得到聲音!',
+    ],
+    items: [
+      '★ v4.41.0【圖鑑播放動畫鈕上移·index.html】#hero-detail-anim-btn(原 bottom:14px·z8)會被 #hero-detail-unlock-record(收錄記錄帶·bottom:0·z8·高度依內容變·v3.16.69 放大約2倍)蓋住;修法:_codexRefreshBurstAnimBtn 顯示按鈕後量測收錄帶 offsetHeight,動態設 _btn.style.bottom = 收錄帶高度+12px(量測不到→退回舊值 14px);immediate + requestAnimationFrame 兩拍(catch 首次 overlay 剛顯示版面未定)。收錄帶在 _renderHeroDetail 順序上先於本函式渲染(117402→117404),量測穩定。純顯示層,不動收錄帶/按鈕行為/事件。',
+      '★ v4.41.0【玉藻前爆發動畫·index.html】_BURST_VIDEO_DB 加「玉藻前→禍世邪魅動畫.mp4」一筆(SSR 標準流程):戰鬥爆發自動走 execBurst→_playBurstVideo、圖鑑欣賞自動走 _codexVideoUrlFor→_codexPlayHeroAnim,雙處自動生效無需改邏輯。URL 走 _BV_RAW(encodeURIComponent 中文檔名+?v=<版本> 破快取)。',
+      '★ v4.41.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.41.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.21.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
   // v4.40.0 — 🎬 集中線/招式名固定3秒 + 英雄圖鑑「播放動畫」欣賞 + 大天狗動畫
   {
     ver: 'v4.40.0',
@@ -299,22 +313,6 @@ window.GAME_CHANGELOG = [
       '★ v4.22.0【世界 BOSS 戰場背景 Y 下移·world-boss-ui.html】老師需求:龍王戰場上半部被 HP 條擋住 → 全龍王背景圖 object-position 由 center 10% 改為 center -10%(下移 20%)。兩處同步:_wbRenderBattleScreen 的 JS 動態 _lobby.style.background + #wb-lobby-overlay.wb-in-battle 的 CSS fallback。',
       '★ v4.22.0【世界 BOSS 連線戰跟隨寵物·world-boss-ui.html】需求3(甲):連線戰 p1 組隊(_wbUiStartBattle)原本漏套跟隨寵物(一般大冒險/單人練習走 confirmHeroPick 已正確)。在 p1 組隊迴圈養成套用後、push 前,對每個英雄呼叫 window._applyFollowPetToHero(素質加成+自動裝備寵物+爆發旗標)。唯一套用點(_wbSetupAdvForBattle 只設 G.p1 不再套 → 不雙套)。⚠ 連線多人由房主組隊廣播,套的是房主本機的跟隨寵物(=房主帶自己寵物隊伍打;單人完全正確);每位玩家各帶自己寵物需另做連線寵物同步(乙案,日後獨立場次)。',
       '★ v4.22.0【驗證/範圍】解凍 world-boss.js(v4.16.0→v4.22.0)+ world-boss-ui.html(v4.8.0→v4.22.0);index.html/admin_panel.js 僅版號同步;hero_db.js 維持 v4.20.0。node --check world-boss.js 全過、index 20 inline block 0 fail、四檔 0 lone surrogate、admin_panel.js 0 真 ?.、7 版號同步點全 v4.22.0(+world-boss 兩 key 解凍)。GAME_CHANGELOG trim 20 筆(移除最舊 v4.8.0)。零新 Firestore 集合/規則。',
-    ],
-  },
-  // v4.21.0 — 🐾 戰鬥角色卡寵物浮圖與貓掌更明顯 + 寵物小屋槽位空間變大(GM 開關移到老師後台)
-  {
-    ver: 'v4.21.0',
-    date: '2026-07-06',
-    brief: [
-      '🐾【戰鬥中一眼看出你的寵物!】戰鬥中角色卡上,跟隨(或裝備)的寵物會浮現一張「會發光的去背小圖」在肖像右上角——點一下就能看牠的能力介紹;圖片這次加大、光暈也更亮,更好認了!(要先到寵物圖鑑把某隻寵物設定「跟隨」某位英雄,帶那位英雄出戰就會看到喔)',
-      '🐾【貓腳印告訴你還能放幾次寵物爆發!】有跟隨寵物且該寵物有專屬極限爆發時,角色卡左上角兩顆爆發星星「正上方」會出現黃色貓腳印🐾:亮的表示這一場還能放幾次寵物爆發、灰的表示已用完(好感度滿 100 可多放 1 次)。這次把貓腳印放大、變更亮,更明顯!',
-      '🏠【寵物小屋槽位看得更完整】把小屋裡一列老師專用的小開關收起來(移到老師的後台),讓三個寵物草蓆槽位有更充足、更完整的顯示空間。',
-    ],
-    items: [
-      '★ v4.21.0【寵物小屋 GM 開關移至後台·index.html+admin_panel.js】移除 _openPetHouse 內的 GM 開關列(gmBar·騰出 #_ph-slots 垂直空間讓三槽位更完整);等效功能改在 GM 後台「🛠 系統管理」新增「🐾 寵物系統開關」卡(三點同步:SIDEBAR_ITEMS+SIDEBAR_GROUPS+section HTML+_initPetSysSection IIFE)——狀態讀 window._petSysPublicOpen()、對全體開放/暫時關閉走 window._fbSetPetSysSwitch(bool)、🔄 重新讀取呼 window._fbLoadPetSysSwitch(皆沿用 index.html 既有後端·gameConfig/petSystemSwitch·免改 firestore.rules);confirm 二次確認+關閉不刪資料說明。無 ?.。',
-      '★ v4.21.0【GM 寵物互動不限次數·index.html】老師需求:讓 GM 測試時與寵物互動不受每日次數限制。單一咽喉點 _petHouseCanDo 對 _isAdminUser 一律回 true(撫摸/餵食/玩耍可重複)+ 逐槽鎖定 _petHouseAskLockSlot 對 GM 一律放行(不鎖槽·可自由換寵測試)。★ 每日增加好感度上限 +5 不變:好感仍走 _petHouseAddAff 的 affGain 每日 cap → GM 多互動只多得 EXP(方便測試升級),好感不會超額累加。學生行為完全零改動(僅 _isAdminUser 分支)。',
-      '★ v4.21.0【戰鬥卡寵物浮圖+貓掌增強·index.html】老師回報戰鬥卡寵物浮圖/貓掌「沒看到」→ 確認 v4.18.0 已於 renderCard 建置(浮圖 gate=h.equip.n、貓掌 gate=_petFollowBurstName·皆需英雄有跟隨/裝備寵物);本輪提升可見度與穩健性:①浮圖來源由 h.equip.n 放寬為 h.equip.n || h._followPet(雙保險·_applyFollowPetToHero 兩者都會設)②浮圖高度 40%→50%、max-width 96→118、z-index 9→12、金色光暈加強(對應「帶有光暈」)③貓掌爆發次數符號 15→19px+亮腳印光暈加強。點浮圖開 _togglePetMiniCodex 迷你圖鑑、點貓掌 _showBurstStarTip 看剩餘次數 皆不變;敵我雙方卡片皆套·鬥技場本就禁用。',
-      '★ v4.21.0【驗證/範圍】改 index.html + admin_panel.js(本輪有實質修改:🐾 寵物系統開關卡三點同步+init)+ game_changelog.js;hero_db.js(維持 v4.20.0)/world-boss 兩檔凍結不動。index.html 20 inline script node --check 全過、0 lone surrogate;admin_panel.js 0 真 ?.;零新 Firestore 集合/規則。版本同步 → v4.21.0(hero_db.js key 維持 v4.20.0);GAME_CHANGELOG trim 20 筆(移除最舊 v4.7.0)。',
     ],
   },
 ];
