@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.39.0(爆發動畫卡住修好 + 播放順序重排)(三支爆發影片改成和特寫圖同時出現並完全取代、且有聲音)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.40.0(集中線/招式名固定3秒 + 圖鑑播放動畫 + 大天狗動畫)(爆發動畫卡住修好 + 播放順序重排)(三支爆發影片改成和特寫圖同時出現並完全取代、且有聲音)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.40.0 — 🎬 集中線/招式名固定3秒 + 英雄圖鑑「播放動畫」欣賞 + 大天狗動畫
+  {
+    ver: 'v4.40.0',
+    date: '2026-07-07',
+    brief: [
+      '🎬【爆發演出更俐落】爆發時的「集中效果線」和「招式名稱大字」現在固定演出 3 秒後淡出,不會再跟著動畫長度一直停在畫面上,節奏更清爽!',
+      '📖【英雄圖鑑可以看動畫囉!】在英雄圖鑑的個人頁,左邊大圖的右下角新增「🎬 播放動畫」按鈕。已經收錄(圖片是彩色)的英雄才能點,點下去動畫會放大蓋住左邊大圖播給你看,還能聽到聲音!第一次點會先下載並存起來,之後戰鬥時就能更快讀取播放。還沒收錄的英雄不能點;動畫還沒做好的英雄點了會出現「敬請期待」。',
+      '🐉【大天狗動畫登場!】大天狗新增專屬爆發動畫(神威‧風獵),戰鬥爆發和圖鑑欣賞都看得到!',
+    ],
+    items: [
+      '★ v4.40.0【集中線/招式名固定3秒·index.html】_showBurstCinematic 影片路徑下 speedLines(集中效果線 z462)與 cin(招式名大字 z465)由「撐到影片結束」改「固定 3 秒後淡出」;仍存參照給 execBurst _bvDone,影片比 3 秒短時由影片結束提前收(_faded 守門防重複);招式名 3 秒淡出不放 GIF(GIF 仍由影片結束 _bvDone 觸發)。靜態特寫盒 imgPanel 維持撐到影片結束(被影片覆蓋)。非影片英雄(_bvHold=null)時序零改動。',
+      '★ v4.40.0【圖鑑播放動畫·index.html】#hero-detail-img-side 右下加 #hero-detail-anim-btn;_renderHeroDetail 設圖後 _codexRefreshBurstAnimBtn(name,_heroIsUnlocked)刷新(彩色=已收錄→可點·未收錄→禁用灰階·同大圖灰階口徑)。點擊 _codexOnAnimBtnClick:未收錄→輕提示;有動畫(_codexVideoUrlFor 查 _BURST_VIDEO_DB→_SKILL_VIDEO_DB)→_codexPlayHeroAnim 建 #hero-detail-anim-overlay(z30 覆蓋左側大圖·蓋過 SSR徽章 z10/皮膚切換 z5/收錄記錄·object-fit:contain·靜音起播→playing 解靜音出聲·關閉鈕/onended/onerror 自動收);無動畫→_codexAnimNotice「敬請期待」。文字 cute+premium 雙版(鐵律1.232)。',
+      '★ v4.40.0【緩存·index.html】圖鑑動畫 URL 走 _BV_RAW(自帶 ?v=<版本>);圖鑑首播即進瀏覽器 HTTP 快取→戰鬥爆發 _playBurstVideo 用同一 URL 命中快取快速讀取(零額外 JS 記憶體·版本 bump 自動破快取重抓)。',
+      '★ v4.40.0【大天狗動畫·index.html】_BURST_VIDEO_DB 加「大天狗→神威風獵動畫.mp4」一筆:戰鬥爆發自動走 execBurst→_playBurstVideo、圖鑑欣賞自動走 _codexVideoUrlFor→_codexPlayHeroAnim。★慣例:未來新增 SSR 爆發動畫只加 _BURST_VIDEO_DB 一筆即「戰鬥+圖鑑」雙處生效,無需改邏輯。',
+      '★ v4.40.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.40.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.20.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
   // v4.39.0 — 🎬 爆發動畫「卡住」修好 + 播放順序重排(先文字/音效/特寫圖 → 動畫 → 技能特效/色彩遮罩/傷害)
   {
     ver: 'v4.39.0',
@@ -298,30 +315,6 @@ window.GAME_CHANGELOG = [
       '★ v4.21.0【GM 寵物互動不限次數·index.html】老師需求:讓 GM 測試時與寵物互動不受每日次數限制。單一咽喉點 _petHouseCanDo 對 _isAdminUser 一律回 true(撫摸/餵食/玩耍可重複)+ 逐槽鎖定 _petHouseAskLockSlot 對 GM 一律放行(不鎖槽·可自由換寵測試)。★ 每日增加好感度上限 +5 不變:好感仍走 _petHouseAddAff 的 affGain 每日 cap → GM 多互動只多得 EXP(方便測試升級),好感不會超額累加。學生行為完全零改動(僅 _isAdminUser 分支)。',
       '★ v4.21.0【戰鬥卡寵物浮圖+貓掌增強·index.html】老師回報戰鬥卡寵物浮圖/貓掌「沒看到」→ 確認 v4.18.0 已於 renderCard 建置(浮圖 gate=h.equip.n、貓掌 gate=_petFollowBurstName·皆需英雄有跟隨/裝備寵物);本輪提升可見度與穩健性:①浮圖來源由 h.equip.n 放寬為 h.equip.n || h._followPet(雙保險·_applyFollowPetToHero 兩者都會設)②浮圖高度 40%→50%、max-width 96→118、z-index 9→12、金色光暈加強(對應「帶有光暈」)③貓掌爆發次數符號 15→19px+亮腳印光暈加強。點浮圖開 _togglePetMiniCodex 迷你圖鑑、點貓掌 _showBurstStarTip 看剩餘次數 皆不變;敵我雙方卡片皆套·鬥技場本就禁用。',
       '★ v4.21.0【驗證/範圍】改 index.html + admin_panel.js(本輪有實質修改:🐾 寵物系統開關卡三點同步+init)+ game_changelog.js;hero_db.js(維持 v4.20.0)/world-boss 兩檔凍結不動。index.html 20 inline script node --check 全過、0 lone surrogate;admin_panel.js 0 真 ?.;零新 Firestore 集合/規則。版本同步 → v4.21.0(hero_db.js key 維持 v4.20.0);GAME_CHANGELOG trim 20 筆(移除最舊 v4.7.0)。',
-    ],
-  },
-  // v4.20.0 — 🏠 寵物小屋 iPad 兩修:三槽位完整顯示不捲動 + 🃏 記憶翻牌點了立刻翻
-  {
-    ver: 'v4.20.0',
-    date: '2026-07-05',
-    brief: [
-      '🏠【小屋三隻寵物一眼看齊全!】修正 iPad 上寵物小屋的排版問題:以前畫面比較矮時,寵物卡的上半部會被上方的列蓋住、往上滑之後圖片還會卡住回不來。現在三個草蓆槽位會自動縮放成剛剛好的大小,寵物的圖、等級、經驗、好感度和三顆互動按鈕全部完整顯示,不用捲動!電腦上空間夠的話畫面完全不變。',
-      '🃏【翻牌遊戲手指一碰就翻!】修正 iPad 玩「記憶翻牌」時點了卡片要等一下才翻開的卡頓問題——現在手指一碰到卡片就立刻翻面,計時挑戰玩起來更順手!',
-      '🖥️【電腦上小屋寵物變大隻!】電腦等大螢幕空間充裕時,寵物小屋的三個槽位會自動等比放大(最多約 1.7 倍),寵物的名字、等級、好感度文字都變大更好讀;iPad 空間不夠時照舊自動縮小塞好塞滿。',
-      '🏷️【戰鬥抽到寵物,一眼看懂身分!】戰鬥中寵物出現的視窗(獲得寵物 / 答題獎勵選英雄 / 動物學家召喚),寵物名字旁現在會顯示完整徽章:稀有度(SSR/SR/R)+ 🎓已馴養、或 👀已相遇 + ✨未馴養、或 🌫未相遇 + ✨未馴養——是不是新面孔、要不要馴養,一眼就知道!',
-      '🐾【寵物爆發換上主角特寫!】寵物施放專屬極限爆發時,畫面右側的大圖從英雄立繪改成「那隻寵物的放大特寫」(去背圖加金色光暈),招式大字與全螢幕特效照舊——這一招是誰放的,看得清清楚楚!',
-      '🧸【簡單風圖鑑數字跟著等級跑!】切「簡單風」時,英雄圖鑑的技能與極限爆發精簡說明,現在也會跟精緻風一樣「隨你升級後的等級」顯示計算後的實際數值(並附 Lv.X 標籤),不再永遠停在 Lv1 的數字。',
-      '🔎【編組篩選歸類微調】「動物學家」在主定位篩選裡從「主坦克」改到「其他」,更符合牠召喚寵物、保護隊友的定位(藝天使‧克雷爾上一版已從主坦克改到主回復);編組用「主定位」篩選時更好找。',
-    ],
-    items: [
-      '★ v4.20.0【小屋槽位排版·index.html】#_ph-slots 由 overflow-y:auto 改 overflow:hidden 並補 min-height:0(根治 flex 子項不縮小把食物面板擠出畫面 + align-items:center 內容過高時上緣被裁在捲動原點之外「捲不回來」的 iPad 病灶);三張槽位卡改包進單一內層列 #_ph-slot-row,_petHouseRender 渲染尾端(食物面板高度定案後)呼叫新函式 _phFitSlots:以 row.offsetWidth/offsetHeight(版面尺寸·不受 transform 影響)對容器可視尺寸量測,超出即整列等比 transform:scale 縮小塞進可視高度(transform-origin:center·容器置中故視覺完整);空間足夠時比例=1 完全不變(桌機零影響)。另 +150ms 補量一拍吃掉字型/分頁籤晚到的版面變動,並一次性綁定 resize / orientationchange 重量測(小屋未開啟時自動 no-op)。附帶效益:不再需要捲動後,「想捲動卡片卻誤觸寵物圖而跳出綁定今日夥伴確認」的情形自然消失(逐槽鎖定機制本身零改動)。',
-      '★ v4.20.0【記憶翻牌 iPad 即時響應·index.html】._ppg-card 加 touch-action:manipulation(移除 iOS 合成 click ~300ms 延遲=卡頓主因)+ -webkit-tap-highlight-color:transparent + user-select:none;._ppg-inner 加 will-change:transform(翻牌 3D 動畫走 GPU 合成更順);卡片加 touchstart(passive:true)立即呼叫 onCard 翻牌,後續補來的合成 click 打到「已翻卡」會被 onCard 開頭 _ppg-flip 判定早退=天然防重複觸發,桌機滑鼠仍走 click;「✕ 放棄」鈕同加 touch-action:manipulation。翻牌配對判定 / 60 秒計時 / 發獎(走既有 _petHouseInteract)/ 敗不消耗可再挑戰 / 躲貓貓 全部零改動。',
-      '★ v4.20.0【PC 槽位放大·index.html】_phFitSlots 縮放比上限 1→1.7(r=min(1.7, availH/needH, availW/needW)·|r-1|>0.01 才套 transform):大螢幕空間充裕即等比放大三槽位整列(字更大更好讀·視覺仍完整落在可視區);iPad 空間不足時 r<1 縮小分支行為不變。',
-      '★ v4.20.0【寵物出現視窗徽章·index.html】新增 window._petStatusBadgesHtml(pn,fs)=稀有度徽章(_petRarityBadgeHtml)+ 狀態徽章(🎓已馴養[_petIsTamed 權威] / 👀已相遇+✨未馴養[_isPetMet·v4.9.0 語義] / 🌫未相遇+✨未馴養),為「出現當下」快照(裝備攜帶後才算相遇);套用三視窗:showEquipUI 的 #equip-pet-name(第二設定點改 innerHTML=名+徽章)、_showBurstEquipSequence、_advShowPetTargetPicker(helper 缺席退回舊 _petTameBadgeHtml 組合·寵物名為內建常數無 XSS 風險)。',
-      '★ v4.20.0【寵物爆發特寫·index.html】_execPetBurst 演出呼叫改 _showBurstCinematic(h,{n,_petName:pn});_showBurstCinematic 對 bd._petName 走寵物分支:右側面板改 img 元素三段 fallback(_petNobgUrl 去背圖 object-fit:contain+金色 drop-shadow → EQUIP_DB petImg 照片 cover+圓角 → 大 icon emoji·仿 v4.18 迷你圖鑑),左側/底部漸層遮罩、淡入 0.35s/2s 淡出、集中效果線、招式大字、BURST_GIF_DB 特效全不動;英雄爆發路徑(無 _petName)零改動(其餘 8 個呼叫點不受影響)。',
-      '★ v4.20.0【簡單風動態數值·index.html】老師裁決推翻 v3.24.0「cute 顯示 sd 不套升級數值」:_renderHeroDetail 技能分岔 cute 改 _renderSkillFdWithLv(sk.n, sd, skLv)、爆發分岔 cute 改 _renderBurstFdWithLv(burst.n, sd, _bLv)——與 premium 同一顆數值替換引擎(通用類全 N% 替換對 sd 必中·special/custom regex 錨定 fd 措辭者對 sd miss 時該數字維持 Lv1 基準=保守可接受)+ 一律附 Lv.X 標籤;premium 路徑一字不改;天賦兩版本本就不套動態值(v3.5.62 摘要制)不動。鐵律 1.160 原意=不寫升級 scaling 說明,顯示當前等級計算值不違反。',
-      '★ v4.20.0【主定位篩選調整·hero_db.js】HERO_PRIMARY_CLASS[\'動物學家\'] tank→other(篩選唯一權威·v3.15.88);藝天使．克雷爾 v4.19.0 已 tank→heal,本版不再變動。只動篩選分類,雷達用 HERO_CATEGORIES_OVERRIDE(動物學家 [\'ctrl\'])與 HERO_HEX_OVERRIDE 兩者分離皆不動。',
-      '★ v4.20.0【版本與範圍】改 index.html + hero_db.js(篩選調整·本輪解凍 v4.19.0→v4.20.0);admin_panel.js/game_changelog.js 版號公告;world-boss 兩檔凍結不動。版本同步 → v4.20.0(含 hero_db.js key);GAME_CHANGELOG trim 20 筆(移除最舊 v4.6.0)。',
     ],
   },
 ];
