@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.41.0(圖鑑「播放動畫」按鈕不再被收錄記錄蓋住 + 玉藻前爆發動畫「禍世邪魅」登場)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.42.0(🍶 酒吞童子爆發動畫「鬼王酒宴」登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.42.0 — 🍶 酒吞童子爆發動畫「鬼王酒宴」登場
+  {
+    ver: 'v4.42.0',
+    date: '2026-07-07',
+    brief: [
+      '🍶【酒吞童子爆發動畫上線】使出極限爆發時,畫面右邊會播放酒吞童子專屬的爆發動畫「鬼王酒宴」!在英雄圖鑑點開酒吞童子,按左邊大圖右下角的「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
+    ],
+  },
   // v4.41.0 — 📖 圖鑑「播放動畫」按鈕不再被收錄記錄蓋住 + 🦊 玉藻前爆發動畫「禍世邪魅」登場
   {
     ver: 'v4.41.0',
@@ -297,22 +305,6 @@ window.GAME_CHANGELOG = [
       '★ v4.23.0【寵物圖鑑桌鈕左→右·index.html】_ph-codex-desk-btn 定位由 left:clamp(10px,2vw,28px) 改 right:clamp(10px,2vw,28px)(移到小屋右下·避開左邊第一個寵物槽);bottom 由 clamp(126px,35vh,300px) 微調為 clamp(126px,34vh,300px) 使鈕底緣貼齊下方食物面板 #_ph-food(max-height:34vh)頂端。純顯示層定位,點擊行為/openPetPage 呼叫不變。',
       '★ v4.23.0【食物分類頁籤底色 深綠→深藍·index.html】_petHouseRenderFood 分類頁籤 tb.style:active 由綠漸層改藍漸層(linear-gradient(135deg,rgba(40,95,190,.96),rgba(70,150,245,.96))+藍框+藍光暈)、inactive 由 rgba(22,40,30,.9) 深綠改 rgba(18,30,60,.92) 深藍(藍框+#bcd2f2 淺藍字);與下方食物列表深綠黑底(#_ph-food gradient)區隔明顯。純顏色調整,分類切換/拖曳餵食邏輯不變。',
       '★ v4.23.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。版本同步點 → v4.23.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.9.0·新最舊 v4.10.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js。',
-    ],
-  },
-  // v4.22.0 — ⚡ 風暴雷龍王改回自己的雷電招式與開場對白 + 世界 BOSS 戰場背景下移 + 連線戰帶跟隨寵物
-  {
-    ver: 'v4.22.0',
-    date: '2026-07-06',
-    brief: [
-      '⚡【風暴雷龍王終於用自己的招式了!】之前打「風暴雷龍王」時,牠的開場登場對白和施放的技能其實都是「火山炎龍王」的火焰版本(業火灼燒、天崩之炎那些)。現在修好了:雷龍王會用自己的雷電招式——雷霆貫穿(單體雷擊+麻痺)、暴風肅清(全體風傷+淨化自身)、以及爆發「雷神·萬雷殛世」(全體雷擊+全體麻痺),開場咆哮也換回雷龍王專屬台詞。',
-      '🐉【龍王大圖不再被血條擋住頭】世界 BOSS 戰鬥畫面裡的龍王背景大圖整體往下移了一點,原本被畫面上方血條/資訊列遮住的龍王頭部,現在看得更完整了(所有龍王都調整)。',
-      '🐾【世界王連線戰也能帶跟隨寵物了】以前在世界 BOSS 連線戰,就算你幫英雄設定了「跟隨寵物」,一進戰鬥卻看不到寵物(浮動小圖、貓腳印、寵物爆發都沒有)。現在補上了,設定跟隨的寵物會一起上場!',
-    ],
-    items: [
-      '★ v4.22.0【風暴雷龍王對白+技能修正·world-boss.js】根源:①_WB_BOSS_ROAR_LINES/_WB_BOSS_ROAR_COLOR 只有火/草/土三龍王,缺 taifeng_wind_dragon → 開場對白 fallback 成火龍王三句。補上雷龍王專屬三句咆哮+雷金配色。②三個 BOSS 技能 dispatcher(_wbAdvBossS1/S2/BossBurst)只有草/地/水龍王有專屬分支,風暴雷龍王沒有 → 落到預設分支(=火龍王的業火灼燒/龍吼震懾/天崩之炎,連戰報都印火山炎龍王)。新增 _wbWindBossS1/S2/Burst 專屬 AI(對齊 HERO_DB/BURST_DB[風暴雷龍王] 文案:雷霆貫穿=特技150%單體風傷+麻痺2回合/暴風肅清=特技120%全體風傷+解除自身不利/雷神·萬雷殛世=特技150%全體風傷+全體麻痺1+解除自身不利)+ _wbWindClearBossDebuffs helper(麻痺用遊戲既有 status para、element wind),並在三 dispatcher 海龍王判斷後各加風暴雷龍王分支。',
-      '★ v4.22.0【世界 BOSS 戰場背景 Y 下移·world-boss-ui.html】老師需求:龍王戰場上半部被 HP 條擋住 → 全龍王背景圖 object-position 由 center 10% 改為 center -10%(下移 20%)。兩處同步:_wbRenderBattleScreen 的 JS 動態 _lobby.style.background + #wb-lobby-overlay.wb-in-battle 的 CSS fallback。',
-      '★ v4.22.0【世界 BOSS 連線戰跟隨寵物·world-boss-ui.html】需求3(甲):連線戰 p1 組隊(_wbUiStartBattle)原本漏套跟隨寵物(一般大冒險/單人練習走 confirmHeroPick 已正確)。在 p1 組隊迴圈養成套用後、push 前,對每個英雄呼叫 window._applyFollowPetToHero(素質加成+自動裝備寵物+爆發旗標)。唯一套用點(_wbSetupAdvForBattle 只設 G.p1 不再套 → 不雙套)。⚠ 連線多人由房主組隊廣播,套的是房主本機的跟隨寵物(=房主帶自己寵物隊伍打;單人完全正確);每位玩家各帶自己寵物需另做連線寵物同步(乙案,日後獨立場次)。',
-      '★ v4.22.0【驗證/範圍】解凍 world-boss.js(v4.16.0→v4.22.0)+ world-boss-ui.html(v4.8.0→v4.22.0);index.html/admin_panel.js 僅版號同步;hero_db.js 維持 v4.20.0。node --check world-boss.js 全過、index 20 inline block 0 fail、四檔 0 lone surrogate、admin_panel.js 0 真 ?.、7 版號同步點全 v4.22.0(+world-boss 兩 key 解凍)。GAME_CHANGELOG trim 20 筆(移除最舊 v4.8.0)。零新 Firestore 集合/規則。',
     ],
   },
 ];
