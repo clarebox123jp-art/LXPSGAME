@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.43.0(🛡 BOSS 鎖血時圖片顯示「發威狀態·免疫傷害」標示)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.44.0(⛩ 巫女「神樂舞」+ ☀️ 法老王「太陽神的審判」爆發動畫登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,15 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.44.0 — ⛩ 巫女「神樂舞」+ ☀️ 法老王「太陽神的審判」爆發動畫登場
+  {
+    ver: 'v4.44.0',
+    date: '2026-07-07',
+    brief: [
+      '⛩【巫女爆發動畫上線】使出極限爆發「神樂舞」時,畫面右邊會播放巫女專屬的爆發動畫!在英雄圖鑑點開巫女,按左邊大圖右下角的「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
+      '☀️【法老王爆發動畫上線】使出極限爆發「太陽神的審判」時,畫面右邊會播放法老王專屬的爆發動畫!在英雄圖鑑點開法老王,按「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
+    ],
+  },
   // v4.43.0 — 🛡 BOSS 鎖血時圖片顯示「發威狀態·免疫傷害」標示
   {
     ver: 'v4.43.0',
@@ -291,19 +300,6 @@ window.GAME_CHANGELOG = [
       '★ v4.25.0【英雄預覽 z-index + 寵物·index.html】①點英雄卡彈出的詳細預覽 #hero-preview-overlay 加行內 z-index:12000(蓋過世界BOSS大廳 #wb-lobby-overlay 9000/元素確認 10500·仍低於 SOS/戰報 2147483646)→ 不再被龍王 BOSS 血條(.wb-mega-hp-zone 吃 lobby 9000)蓋住;所有預覽入口共用此元素故一次生效。②showHeroPreview 寵物顯示來源放寬 h.equip.n || h._followPet(_applyFollowPetToHero 有時只設 _followPet →原只看 h.equip 會誤顯「無寵物」)·與 renderCard 浮圖同口徑·有攜帶就顯示。',
       '★ v4.25.0【龍王戰場背景·world-boss-ui.html】戰鬥畫面 BOSS 背景圖位置 Y -10%→-30%(全龍王通用·龍王在畫面上再往下移 20%·露出龍頭於 HP 條下方;_wbRenderBattleScreen JS 動態設定 + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處同步·硬編碼無 _bossBgY 逐龍王判定→全 8 龍王一致)。老師回報 v4.22.0 的 -10% 仍看不到龍頭故再下移。',
       '★ v4.25.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.25.0(index.html+admin_panel.js+game_changelog.js+world-boss-ui.html;hero_db.js 維持 v4.20.0、world-boss.js 維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.11.0·新最舊 v4.12.0)。上傳順序:game_changelog.js → admin_panel.js → world-boss-ui.html → index.html(最後)。',
-    ],
-  },
-  // v4.24.0 — 🤚 寵物小屋「撫摸(按住搓揉)」互動小修正(讓撫摸更穩定)
-  {
-    ver: 'v4.24.0',
-    date: '2026-07-06',
-    brief: [
-      '🤚【寵物小屋「撫摸」互動更穩定了!】修好了寵物小屋裡「在寵物身上按住搓揉」在某些情況下按了沒反應、無法開始撫摸的小問題。一般同學的撫摸/餵食/玩耍原本就正常,這次是把撫摸的啟動判斷修得更一致、更可靠。',
-    ],
-    items: [
-      '★ v4.24.0【撫摸對 GM 失效修復·index.html】_petHouseStrokeStart 逐槽鎖守門由「直接讀 _petHouseSlotLock 判斷」改「採信 _petHouseAskLockSlot 回傳值」,與餵食 _petHouseFeedMode / 玩耍 _petPlayStart 兩入口一致。根因:v4.21.0 讓 _petHouseAskLockSlot 對管理員一律放行(回 true 但不鎖槽)→ GM 永不鎖任何槽 → _slk 恆為 null → 撫摸入口 if(_slk!==pn) 恆真 → 每次都停在「呼叫 AskLockSlot(對 GM 空轉)後 return」→ GM 撫摸完全無法啟動,且確認視窗因 GM 放行也不彈。修法:未鎖到本寵時呼叫 AskLockSlot,回 false(學生已彈確認 / 鎖到別隻已擋)才 return;回 true(GM 放行)則往下開始撫摸。',
-      '★ v4.24.0【影響範圍】僅修復 GM(管理員)測試路徑;一般學生流程完全不變:未鎖此槽→仍先彈「確認今日互動夥伴」視窗、確認後鎖槽、再次按住搓揉才開始撫摸(自 v4.10.0 起行為一致)。餵食/玩耍原本就採信 AskLockSlot 回傳值故對 GM 正常,只有撫摸用了不一致的直接讀鎖寫法。',
-      '★ v4.24.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.24.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.10.0·新最舊 v4.11.0)。本輪 index.html 同時含 v4.23.0 兩處純顯示微調(圖鑑桌鈕右移+食物頁籤藍底)+ v4.24.0 撫摸修復。',
     ],
   },
 ];
