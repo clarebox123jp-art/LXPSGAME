@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.38.0(三支爆發影片改成和特寫圖同時出現並完全取代、且有聲音)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.39.0(爆發動畫卡住修好 + 播放順序重排)(三支爆發影片改成和特寫圖同時出現並完全取代、且有聲音)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.39.0 — 🎬 爆發動畫「卡住」修好 + 播放順序重排(先文字/音效/特寫圖 → 動畫 → 技能特效/色彩遮罩/傷害)
+  {
+    ver: 'v4.39.0',
+    date: '2026-07-07',
+    brief: [
+      '🎬【爆發動畫不卡了!】之前爆發動畫有時會停住好幾秒才繼續——原因是上一版讓影片「帶著聲音自動播放」,在 iPad 上常常卡住、播不動,要等到保險時間到才恢復。現在改成「先靜音把影片播起來(iPad 一定播得動),一開始播放就立刻打開聲音」,聲音照樣有、但不會再卡住了!',
+      '🎞️【爆發演出順序調整】現在爆發的順序是:先出現「招式名文字 + 爆發音效 + 右側特寫大圖 + 集中線」→ 接著播放右側動畫 → 動畫結束後,才一起出現「原本的招式特效 + 音效 + 全螢幕色彩閃光 + 傷害/治療數字」,節奏更清楚、更有魄力!',
+    ],
+    items: [
+      '★ v4.39.0【卡住根治·index.html】_playBurstVideo 影片由 v.muted=false(v4.38.0 解靜音)改「v.muted=true 靜音起播(iPad muted autoplay 一定能播、onended 正常) → playing 事件後 v.muted=false 解除靜音出聲」;根因=iPad Safari 對帶聲音的網路影片自動播放常令 play() 卡住/不播、onended 不觸發→一路等 10s 兜底=體感卡住。移除舊「解靜音被擋→退回靜音重播」邏輯。聲音仍播、且不卡。',
+      '★ v4.39.0【順序重排·index.html】全螢幕色彩遮罩 flashScreen 由 execBurst 開頭「延到影片結束的 _bvDone」,與 _showBurstGif(原技能特效·含自帶音效)+ _runBurst(傷害/治療)同時登場→順序=爆發音效 sfx-burst + 招式名文字 bannerFX + 右側特寫大圖 + 集中線『先出現』→影片播→動畫完畢→技能特效+音效+色彩遮罩+傷害/治療。爆發音效 sfx-burst 維持在開頭(第一步)。',
+      '★ v4.39.0【非影片路徑零改動·index.html】無爆發影片的英雄與世界BOSS(else 分支)沒有動畫要等,色彩遮罩 flashScreen 補回 else 分支開頭,維持與 v4.38.0 前完全一致的時序,杜絕回歸。',
+      '★ v4.39.0【範圍與驗證】只改 index.html(_playBurstVideo 靜音起播+playing 解靜音、execBurst 色彩遮罩分流至影片路徑 _bvDone / 非影片路徑 else 開頭);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.39.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.19.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
   // v4.38.0 — 🎬 三支爆發影片改成和特寫圖同時出現、並完全取代、而且有聲音
   {
     ver: 'v4.38.0',
@@ -307,23 +322,6 @@ window.GAME_CHANGELOG = [
       '★ v4.20.0【簡單風動態數值·index.html】老師裁決推翻 v3.24.0「cute 顯示 sd 不套升級數值」:_renderHeroDetail 技能分岔 cute 改 _renderSkillFdWithLv(sk.n, sd, skLv)、爆發分岔 cute 改 _renderBurstFdWithLv(burst.n, sd, _bLv)——與 premium 同一顆數值替換引擎(通用類全 N% 替換對 sd 必中·special/custom regex 錨定 fd 措辭者對 sd miss 時該數字維持 Lv1 基準=保守可接受)+ 一律附 Lv.X 標籤;premium 路徑一字不改;天賦兩版本本就不套動態值(v3.5.62 摘要制)不動。鐵律 1.160 原意=不寫升級 scaling 說明,顯示當前等級計算值不違反。',
       '★ v4.20.0【主定位篩選調整·hero_db.js】HERO_PRIMARY_CLASS[\'動物學家\'] tank→other(篩選唯一權威·v3.15.88);藝天使．克雷爾 v4.19.0 已 tank→heal,本版不再變動。只動篩選分類,雷達用 HERO_CATEGORIES_OVERRIDE(動物學家 [\'ctrl\'])與 HERO_HEX_OVERRIDE 兩者分離皆不動。',
       '★ v4.20.0【版本與範圍】改 index.html + hero_db.js(篩選調整·本輪解凍 v4.19.0→v4.20.0);admin_panel.js/game_changelog.js 版號公告;world-boss 兩檔凍結不動。版本同步 → v4.20.0(含 hero_db.js key);GAME_CHANGELOG trim 20 筆(移除最舊 v4.6.0)。',
-    ],
-  },
-  // v4.19.0 — 🔄 戰鬥中換夥伴對照視窗 + 逐寵物爆發計次(換寵保留·不跨戰鬥)+ 克雷爾主分類修正
-  {
-    ver: 'v4.19.0',
-    date: '2026-07-05',
-    brief: [
-      '🔄【戰鬥中換夥伴,先看對照再決定!】戰鬥中抽到「已經馴養」的寵物、想裝到「已經有跟隨夥伴」的英雄身上時,會先跳出「換夥伴對照視窗」——一次看清楚英雄目前的攻擊/特技/速度/HP、新舊兩隻夥伴的功能效果與專屬爆發招、以及各自「還能放幾次爆發」,再決定要「換成新夥伴」還是「保留原夥伴」(保留的話新夥伴會收進背包)。',
-      '🐾【寵物爆發改「逐寵物計次」】現在每一隻寵物在同一位英雄身上,都有屬於自己的爆發次數(好感度滿 100 一樣是 2 次);還沒放爆發就把牠換下去,次數會「留著」,之後換回來還能繼續用;只有「真的放出爆發」才會消耗那隻寵物的次數。此紀錄只在同一場戰鬥內計算,戰鬥結束就重新開始。',
-      '🌈【克雷爾歸類修正】藝天使‧克雷爾在「主定位篩選」裡從「主坦克」改為「主回復」,更符合她實際的治療定位,編組用篩選時更好找。',
-    ],
-    items: [
-      '★ v4.19.0【替換對照視窗·index.html】新增 _advShowPetSwapCompareModal(雙版·鐵律1.232·z-index 12800):顯示英雄當下攻/特/速/HP + 舊/新寵物功能效果(_EQUIP_SHORT / EQUIP_DB.d)與專屬爆發名稱說明(PET_BURST_DB cute/premium)及各自剩餘次數;替換 / 保留原夥伴 / 背景點擊=保留 / 出錯保底=保留,每條退出路徑都呼叫收尾避免卡死。',
-      '★ v4.19.0【逐寵物計次·index.html】新增 h._petBurstUsedByPet(戰前歸零·不跨戰鬥):_applyFollowPetToHero 初始化、_execPetBurst 寫回當前寵物已用次數;_petBurstUsed / _petBurstBonus 改為「當前跟隨寵物視圖」,與貓掌槽 / 雙選視窗 / renderCard 顯示同步。',
-      '★ v4.19.0【換裝流程·index.html】_advApplyPetToHero:換裝前卸除舊寵 onRemove、設 equip+onEquip、_followPet=新寵、次數視圖還原(換回舊寵取回保留次數)、_petBurstBonus 依新寵好感重算;_advFinishPetPick 於「已有跟隨寵物且新寵已馴養」彈對照視窗,收尾抽成 _advFinishPetPickTail 由抉擇 handler 呼叫(維持 v3.14.25/v3.16.39 三路推進),保留原夥伴則新寵進背包(滿則放棄)。',
-      '★ v4.19.0【克雷爾主分類·hero_db.js】HERO_PRIMARY_CLASS 內「藝天使．克雷爾」由 tank 改 heal(篩選 _heroSkillTypes 讀取來源);hero_db.js 版本自 v4.5.0 起隨主程式對齊為 v4.19.0。',
-      '★ v4.19.0【範圍/安全】戰鬥中換寵不重新套用寵物「成長素質加成」(避免場中補血 / HP 重算風險),對照視窗僅呈現當下素質+功能效果+爆發供決策;競技場仍照舊封鎖寵物爆發;全程 try-catch,不動既有傷害計算 / 存檔 / 守門。',
     ],
   },
 ];
