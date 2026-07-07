@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.42.0(🍶 酒吞童子爆發動畫「鬼王酒宴」登場)
+//  最後更新:2026-07-07  / 目前主程式版本:v4.43.0(🛡 BOSS 鎖血時圖片顯示「發威狀態·免疫傷害」標示)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.43.0 — 🛡 BOSS 鎖血時圖片顯示「發威狀態·免疫傷害」標示
+  {
+    ver: 'v4.43.0',
+    date: '2026-07-07',
+    brief: [
+      '🛡【王者發威!關卡 BOSS 鎖血時會亮起提示】當關卡 BOSS 血量被打到剩一半、或用最後一絲氣力撐住 1 滴血「王者不倒」的那一回合,BOSS 圖片上會出現醒目的「💢 進入發威狀態,免疫任何傷害!」標示,讓你一眼看出牠這回合正在拚死硬撐、絕不會倒下;等這回合過去、鎖血無敵結束,標示就會自動消失。(切到🧸簡單風時文字會變成更短的「💢 發威中!免疫傷害!」)',
+    ],
+    items: [
+      '★ v4.43.0【BOSS 鎖血發威標示·index.html·強化版】抽出單一真相 helper _lxpsPaintBossRageLabel(h):p2 真 BOSS 卡(card-p2-{pos})中央加持久 .boss-rage-label(z32·pointer-events:none·Web Animations 輕微脈動)。顯示條件=「鎖血同回合 h._lifelineImmuneRound===G.round」或「保底顯示期未過 Date.now()<h._bossRageUntil」。★根治老師實測「鎖血卻看不到標籤」:改「鎖血觸發當下即時畫(_applyBossLifelineProtection 兩處 50%/1HP 賦值後呼叫 _lxpsTriggerBossRageLabel)+保底顯示 ~2.6s」→玩家該回合是最後行動者時 G.round 立刻前進也不會一閃即逝;renderCard 每次重繪呼叫同 helper(依同條件加/移除)。保底期滿 setTimeout 補收一次;鎖血無敵結束(下一回合)後自然移除(=「直到鎖血無敵結束」)。',
+      '★ v4.43.0【純顯示層·不改機制】完全不動鎖血傷害機制:死亡免疫地板仍為 v3.16.36 版(非致命傷害照常結算·HP 可見下降·會致命才夾到剩 1 HP)。_lifelineImmuneRound 只會被 _applyBossLifelineProtection 對「真 BOSS」寫入→一般 p2 雜魚/菁英不誤顯示;世界 BOSS 龍王走 worldboss 早退不進此函式,不受影響。文字 cute+premium 雙版(鐵律1.232)。',
+      '★ v4.43.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.43.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.23.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
+    ],
+  },
   // v4.42.0 — 🍶 酒吞童子爆發動畫「鬼王酒宴」登場
   {
     ver: 'v4.42.0',
@@ -291,20 +304,6 @@ window.GAME_CHANGELOG = [
       '★ v4.24.0【撫摸對 GM 失效修復·index.html】_petHouseStrokeStart 逐槽鎖守門由「直接讀 _petHouseSlotLock 判斷」改「採信 _petHouseAskLockSlot 回傳值」,與餵食 _petHouseFeedMode / 玩耍 _petPlayStart 兩入口一致。根因:v4.21.0 讓 _petHouseAskLockSlot 對管理員一律放行(回 true 但不鎖槽)→ GM 永不鎖任何槽 → _slk 恆為 null → 撫摸入口 if(_slk!==pn) 恆真 → 每次都停在「呼叫 AskLockSlot(對 GM 空轉)後 return」→ GM 撫摸完全無法啟動,且確認視窗因 GM 放行也不彈。修法:未鎖到本寵時呼叫 AskLockSlot,回 false(學生已彈確認 / 鎖到別隻已擋)才 return;回 true(GM 放行)則往下開始撫摸。',
       '★ v4.24.0【影響範圍】僅修復 GM(管理員)測試路徑;一般學生流程完全不變:未鎖此槽→仍先彈「確認今日互動夥伴」視窗、確認後鎖槽、再次按住搓揉才開始撫摸(自 v4.10.0 起行為一致)。餵食/玩耍原本就採信 AskLockSlot 回傳值故對 GM 正常,只有撫摸用了不一致的直接讀鎖寫法。',
       '★ v4.24.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.24.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.10.0·新最舊 v4.11.0)。本輪 index.html 同時含 v4.23.0 兩處純顯示微調(圖鑑桌鈕右移+食物頁籤藍底)+ v4.24.0 撫摸修復。',
-    ],
-  },
-  // v4.23.0 — 🏠 寵物小屋兩個小調整:圖鑑書本鈕移到右邊、食物分類標籤改藍底更好認
-  {
-    ver: 'v4.23.0',
-    date: '2026-07-06',
-    brief: [
-      '📖【寵物圖鑑書本鈕移到右邊了!】寵物小屋裡「翻開寵物圖鑑」的書本大按鈕,原本在左邊會擋到第一隻寵物,現在移到右邊、貼齊下方食物面板的上緣,三隻寵物看得更清楚!',
-      '🔵【食物分類標籤改成藍色底,更好認!】小屋下方「動物主食大百科」的分類標籤(🌿植物與甜食/🐛蟲類/🍖肉類/🐟水產類/✨特殊)原本是深綠色,跟下面的食物清單底色太像、不好分辨——現在改成藍色底,一眼就看得出來哪些是「分類按鈕」、哪些是「食物」!',
-    ],
-    items: [
-      '★ v4.23.0【寵物圖鑑桌鈕左→右·index.html】_ph-codex-desk-btn 定位由 left:clamp(10px,2vw,28px) 改 right:clamp(10px,2vw,28px)(移到小屋右下·避開左邊第一個寵物槽);bottom 由 clamp(126px,35vh,300px) 微調為 clamp(126px,34vh,300px) 使鈕底緣貼齊下方食物面板 #_ph-food(max-height:34vh)頂端。純顯示層定位,點擊行為/openPetPage 呼叫不變。',
-      '★ v4.23.0【食物分類頁籤底色 深綠→深藍·index.html】_petHouseRenderFood 分類頁籤 tb.style:active 由綠漸層改藍漸層(linear-gradient(135deg,rgba(40,95,190,.96),rgba(70,150,245,.96))+藍框+藍光暈)、inactive 由 rgba(22,40,30,.9) 深綠改 rgba(18,30,60,.92) 深藍(藍框+#bcd2f2 淺藍字);與下方食物列表深綠黑底(#_ph-food gradient)區隔明顯。純顏色調整,分類切換/拖曳餵食邏輯不變。',
-      '★ v4.23.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接(?.)。版本同步點 → v4.23.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.9.0·新最舊 v4.10.0)。本輪改 index.html＋admin_panel.js(僅版號)＋game_changelog.js。',
     ],
   },
 ];
