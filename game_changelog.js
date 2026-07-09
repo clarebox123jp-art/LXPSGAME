@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-07  / 目前主程式版本:v4.44.0(⛩ 巫女「神樂舞」+ ☀️ 法老王「太陽神的審判」爆發動畫登場)
+//  最後更新:2026-07-10  / 目前主程式版本:v4.45.0(👑 埃及豔后「尼羅河的詛咒」爆發動畫登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.45.0 — 👑 埃及豔后爆發動畫「尼羅河的詛咒」登場
+  {
+    ver: 'v4.45.0',
+    date: '2026-07-10',
+    brief: [
+      '👑【埃及豔后爆發動畫上線】使出極限爆發「尼羅河的詛咒」時,畫面右邊會播放埃及豔后專屬的爆發動畫!在英雄圖鑑點開埃及豔后,按左邊大圖右下角的「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
+    ],
+  },
   // v4.44.0 — ⛩ 巫女「神樂舞」+ ☀️ 法老王「太陽神的審判」爆發動畫登場
   {
     ver: 'v4.44.0',
@@ -285,21 +293,6 @@ window.GAME_CHANGELOG = [
       '★ v4.26.0【首頁·裝置信任小卡·index.html】①_isOnHomepageForBadge() 由「黑名單 overlay 列舉」改「白名單:只認首頁 #overlay 可見」——根治世界BOSS／鬥技場／知識王／練習營／會員hub 等未列入清單的畫面被誤判成首頁、badge 殘留擋住畫面右下角(舊黑名單版保留為註解·誤刪是大忌);進入任何遊戲畫面 #overlay 皆 display:none → 立即隱藏。②badge 位置由右下角 right:14px 改左下角 left:14px。',
       '★ v4.26.0【首頁·在線統計列·index.html】#player-stats-bar 由「首頁頂端置中 top:12px」移到「📖 遊戲介紹與說明書鈕(#game-info-btn·main.css top:78%)下方」top:85%(置中不變)。純顯示定位·統計內容／點擊 _gmOpenOnlineList 不變。',
       '★ v4.26.0【圖檔+驗證+版本】更新「聖䗴神蟲」四張圖(主圖 .png 保留埃及場景背景／去背 .png／開心 .webp／不悅 .webp·表情圖依程式為 .webp)。index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.26.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.12.0·新最舊 v4.13.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.25.0 — 🐉 龍王戰畫面四個小修正(戰報鈕/寵物浮圖/英雄預覽/龍王背景)
-  {
-    ver: 'v4.25.0',
-    date: '2026-07-06',
-    brief: [
-      '🐉【龍王戰畫面更好看、更好用了!】左下角的「戰報」按鈕(原本的 LOG)縮成和求救鈕一樣的小圓鈕、不再擋到英雄卡;英雄卡上攜帶的寵物「去背發光圖」現在會穩穩出現在角色圖右上角(可以點開看寵物說明);點英雄看詳細資料的視窗不再被龍王血條蓋住;有帶寵物時詳細視窗下方也會正確顯示寵物、不再寫「無寵物」。',
-    ],
-    items: [
-      '★ v4.25.0【戰報鈕·index.html】左下 #log-toggle-btn 由圓角矩形「📜 LOG」改為與 SOS(#adv-battle-help-fab)同直徑的圓鈕(58px·border-radius:50%·font-size:20px·line-height:53px)、標籤改「戰報」(展開時「收合」·_collapseBattleLog/toggleBattleLog 兩 textContent 同步)。縮小後不再壓到最左邊的角色卡;位置維持 SOS 正上方(left:10px bottom:80px)。',
-      '★ v4.25.0【寵物浮圖階層·index.html】renderCard 寵物攜帶/跟隨浮動去背圖(.pet-float-badge)原掛在 .card-illus-space(該層是 inset:0 的卡片背景層)→ 被卡片前景文字/技能列/HP 蓋住=老師回報「階層太低沒出現在角色圖右上」(左上稀有度徽章剛好在無文字角落才看得見)。修法:改掛到卡片前景層(el·getComputedStyle position:static 才補 relative)+ z-index 12→30 → 浮圖穩定顯示在肖像右上;位置口徑不變(illus-space 本 inset:0=全卡)。點圖開迷你圖鑑(_togglePetMiniCodex)不變·敵我雙方卡片皆套·涵蓋所有戰鬥畫面(冒險/世界BOSS)·鬥技場本就禁用寵物。',
-      '★ v4.25.0【英雄預覽 z-index + 寵物·index.html】①點英雄卡彈出的詳細預覽 #hero-preview-overlay 加行內 z-index:12000(蓋過世界BOSS大廳 #wb-lobby-overlay 9000/元素確認 10500·仍低於 SOS/戰報 2147483646)→ 不再被龍王 BOSS 血條(.wb-mega-hp-zone 吃 lobby 9000)蓋住;所有預覽入口共用此元素故一次生效。②showHeroPreview 寵物顯示來源放寬 h.equip.n || h._followPet(_applyFollowPetToHero 有時只設 _followPet →原只看 h.equip 會誤顯「無寵物」)·與 renderCard 浮圖同口徑·有攜帶就顯示。',
-      '★ v4.25.0【龍王戰場背景·world-boss-ui.html】戰鬥畫面 BOSS 背景圖位置 Y -10%→-30%(全龍王通用·龍王在畫面上再往下移 20%·露出龍頭於 HP 條下方;_wbRenderBattleScreen JS 動態設定 + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處同步·硬編碼無 _bossBgY 逐龍王判定→全 8 龍王一致)。老師回報 v4.22.0 的 -10% 仍看不到龍頭故再下移。',
-      '★ v4.25.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.25.0(index.html+admin_panel.js+game_changelog.js+world-boss-ui.html;hero_db.js 維持 v4.20.0、world-boss.js 維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.11.0·新最舊 v4.12.0)。上傳順序:game_changelog.js → admin_panel.js → world-boss-ui.html → index.html(最後)。',
     ],
   },
 ];
