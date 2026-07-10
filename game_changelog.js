@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-10  / 目前主程式版本:v4.45.0(👑 埃及豔后「尼羅河的詛咒」爆發動畫登場)
+//  最後更新:2026-07-10  / 目前主程式版本:v4.46.0(🔥 炎火超少女登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.46.0 — 🔥 炎火超少女登場
+  {
+    ver: 'v4.46.0',
+    date: '2026-07-10',
+    brief: [
+      '🌬️【新角色登場介紹】🔥 炎火超少女(SSR·火屬性·1年4班 梁同學設計)—— 繼承火神血脈的異世界少女登場!她是高特技、高速度的火焰輸出兼控場好手。天賦「烈焰亂舞」:每回合出手前先甩出 4 道火焰亂舞灼燒隨機敵人、附加燃燒。S1「不滅炎魂」(被動):只要敵人一復活,就立刻被烈焰擊倒(遇到 BOSS、世界 BOSS 或鬥技場對手則改成造成上限傷害+強力燃燒,不會秒殺);而且每有敵人復活一次,她的特技就會越燒越旺!S2「怒火連環拳」:一口氣打出 5 記火拳,每一拳還會打掉對手 1 個有利狀態。極限爆發「火神附體」:對全體敵人灑下 900% 火焰、封住他們的增益 3 回合,接著自己進入「火神附體」3 回合——受傷減半、傷而不倒(最低保留 1 滴血)、火焰與燃燒反而幫她回血、出手還必中無視防禦!',
+      '🔥【怎麼獲得】到「召喚星空」就有機會抽到炎火超少女喔!',
+    ],
+    items: [
+      '★ v4.46.0【新增學生設計 SSR 英雄「炎火超少女」(1年4班 梁同學)·index.html+hero_db.js】火屬性·主分類 dmg+ctrl·配點 hp55/atk5/sp24/spd16(hp 欄位 72=55×1.3)。hero_db.js 14 表齊備(HERO_DB/AVATARS🔥/HERO_IMGS 炎火超少女.png/HERO_IMG_POS/HERO_BIO 含 designer(1年4班 梁同學)/BURST_DB/HERO_LORE/HERO_TRAIT/BURST_GIF_DB→神木復仇之火.gif/HERO_CATEGORIES_OVERRIDE[dmg,ctrl]/HERO_HEX_OVERRIDE/_TRAIT_LV_INFO/HERO_PRIMARY_CLASS dmg/HERO_SKILL_EFFECTS)+檔尾 sd 簡單風(鐵律1.232 cute+premium 雙版·1.160 只寫 Lv1)。',
+      '★ v4.46.0【邏輯層 index.html】SUMMON_RARE_HEROES(IIFE 自動補 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES)+SKILL_FORCE_ELEMENT 四招火屬性+頂層 helper(_yhHasFireGod/_yhSoulPerLayer/_yhSpMult)+天賦 startTurn 行動前 hook(烈焰亂舞 特技40%×4 火傷+燃燒·天賦被封停用)+S1 doRevive hook(不滅炎魂:敵方復活即處決/上限傷害 Lv×20+強力燃燒·特技疊層+20%[3回合最多5層])+S2 execSkill/aiUseSkill 雙實作(鐵律1.128·怒火連環拳 特技100%火屬性隨機5次·每擊消1有利)+爆發 _runBurst(火神附體 特技900%×_burstMult 全體分攤·命中者禁益3回合·自身 firegodbody buff 3回合)+doDmg 5 hook(actor 必中無視有利/受傷減半/火傷·燃燒轉治療/不會倒下/造成傷害套禁益)+buffName/buffClass firegodbody+SKILL_UPGRADE_DEF(special_yh_soul+dmg)+codex 升級視窗 render case+BURST_UPGRADE_DEF(900→1260%)。',
+      '★ v4.46.0【鐵律1.31 BOSS 尊嚴】天賦/S1/S2/爆發全部走 doDmg → 世界 BOSS 5000cap、真 BOSS 鎖血地板自動兜底,不會秒殺/HP 設 1/HP 比例/固定傷害>5000。S1 對世界 BOSS/真 BOSS/鬥技場對手一律改為上限傷害 Lv×20+強力燃燒(不處決)。',
+      '★ v4.46.0【範圍與驗證】改 index.html+hero_db.js+hero_input.html(編輯器 HEROES_DB/HERO_CATEGORIES_INITIAL 純新增炎火超少女);admin_panel.js/game_changelog.js 版號/公告對齊。world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.46.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.26.0)。爆發用視覺特效 GIF 神木復仇之火.gif(無影片)。設計者 1年4班25號 梁同學掛名(index.html 補入 _STUDENT_DESIGNED_HERO_SET → 圖鑑標 🎨 學生設計英雄 + HERO_BIO.designer 顯示設計者區塊;該生未達三年級、無學生信箱 → 不入 STUDENT_DESIGNER_HEROES 獎勵登錄、不發設計師獎勵)。',
+    ],
+  },
   // v4.45.0 — 👑 埃及豔后爆發動畫「尼羅河的詛咒」登場
   {
     ver: 'v4.45.0',
@@ -277,22 +292,6 @@ window.GAME_CHANGELOG = [
       '★ v4.27.0【裝置信任小卡離開首頁自動隱藏·index.html】根因:v4.26.0 一修改用的「只認首頁 #overlay 可見」判定失效——#overlay 是常駐底層,只有「進入戰鬥」才隱藏,關卡頁/世界BOSS/鬥技場/知識王等全螢幕畫面都是「疊在 #overlay 之上」、#overlay 仍顯示 → 被判成「到處都是首頁」故小卡不隱藏。改為穩健正向偵測:用 elementFromPoint 檢查首頁「開始冒險」鈕(#adventure-btn)中心點的最上層元素是否仍屬於 #overlay(有任何畫面疊上來就會蓋住它)+ 世界BOSS/戰鬥模式旗標雙保險,免逐一列舉所有 overlay;watchdog 每拍加「非首頁且小卡仍在就移除」防殘留。舊「白名單/黑名單」兩版判定皆保留為註解(誤刪是大忌)。',
       '★ v4.27.0【變化狸不悅表情顯示修正·repo 根目錄·異體字檔名】老師其實已上傳不悅表情圖,但檔名用了異體字「變化貍_不悅.webp」(貍 U+8C8D),而遊戲寵物名與去背/開心兩圖用的是「變化狸」(狸 U+72F8)——兩字外觀幾乎相同但編碼不同。程式依寵物名組 變化狸_不悅.webp(狸 U+72F8)去抓 → 對不到那個貍(U+8C8D)檔 → 404 顯示不出。修法:把老師的原不悅圖(640×640 透明 RGBA·完全沿用不重壓)改存為正確檔名 變化狸_不悅.webp(狸 U+72F8·與其他兩圖及寵物名一致)供上傳;老師可把舊的「貍」版檔案刪除(不刪也不影響·只是用不到)。純檔名修正·零程式改動。',
       '★ v4.27.0【驗證與版本】index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.27.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0/v4.25.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.0·新最舊 v4.13.1)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後);變化狸_不悅.webp 放 repo 根目錄。',
-    ],
-  },
-  // v4.26.0 — 🐾 寵物小屋兩處優化 + 🏠 首頁兩處整理
-  {
-    ver: 'v4.26.0',
-    date: '2026-07-06',
-    brief: [
-      '🐾【寵物小屋更好操作了!】底部的食物清單縮短了一點,把「寵物圖鑑」大按鈕移到食物清單旁邊的右下角(不再蓋在食物清單上方),說明文字也放大更好讀——現在可以一邊在左邊選食物、一邊從右邊翻開圖鑑;另外和寵物互動時的小提示(例如「不要一直戳我啦」)會直接顯示在「正在互動的那隻寵物頭上」,一看就知道是在說哪一隻。',
-      '🏠【首頁看起來更清爽!】右下角那個「已信任此裝置」小視窗改成只在遊戲首頁出現(進到冒險、世界BOSS、鬥技場等畫面就會自動隱藏、不再擋住畫面右下角),位置也從右下角移到左下角;首頁上方的「目前在線／今日上線／累計冒險」統計列,移到了「📖 遊戲介紹與說明書」按鈕的下方。',
-    ],
-    items: [
-      '★ v4.26.0【寵物小屋·食物面板+圖鑑鈕·index.html】#_ph-food 加 box-sizing:border-box + margin-right:clamp(150px,20vw,250px) 由右側縮寬約 20% 騰出右欄;#_ph-codex-desk-btn 由「食物面板正上方 bottom:clamp(126px,34vh,300px)」移到「右下角與食物清單同一水平帶 bottom:clamp(16px,6vh,70px)」+ 新增 width:clamp(132px,17.5vw,224px) 對齊騰出欄寬(不再上下相蓋);桌鈕說明字 clamp(10,1.2vw,13)→clamp(14,1.8vw,19)+移除 white-space:nowrap 讓窄欄可換行。',
-      '★ v4.26.0【寵物小屋·互動提示錨定·index.html】_phHintToast 新增第 4 參數 anchorIdx(互動槽位):傳入時讀 #_ph-img-{idx} 的畫面位置,把提示置中貼在該寵物圖正上方(getBoundingClientRect + translateX(-50%) + 左右夾邊防切);無 anchorIdx／找不到寵物圖時退回舊版「畫面右下角」(相容舊呼叫·誤刪是大忌保留)。四個互動提示呼叫點(餵對／餵錯／戳戳生氣／撫摸完成)皆傳入該槽 slotIdx。',
-      '★ v4.26.0【首頁·裝置信任小卡·index.html】①_isOnHomepageForBadge() 由「黑名單 overlay 列舉」改「白名單:只認首頁 #overlay 可見」——根治世界BOSS／鬥技場／知識王／練習營／會員hub 等未列入清單的畫面被誤判成首頁、badge 殘留擋住畫面右下角(舊黑名單版保留為註解·誤刪是大忌);進入任何遊戲畫面 #overlay 皆 display:none → 立即隱藏。②badge 位置由右下角 right:14px 改左下角 left:14px。',
-      '★ v4.26.0【首頁·在線統計列·index.html】#player-stats-bar 由「首頁頂端置中 top:12px」移到「📖 遊戲介紹與說明書鈕(#game-info-btn·main.css top:78%)下方」top:85%(置中不變)。純顯示定位·統計內容／點擊 _gmOpenOnlineList 不變。',
-      '★ v4.26.0【圖檔+驗證+版本】更新「聖䗴神蟲」四張圖(主圖 .png 保留埃及場景背景／去背 .png／開心 .webp／不悅 .webp·表情圖依程式為 .webp)。index.html 全部 inline script 通過 node --check、零孤立代理字元;admin_panel.js 通過檢查、0 個真正可選串接。版本同步點 → v4.26.0(index.html+admin_panel.js+game_changelog.js;hero_db.js 維持 v4.20.0、世界BOSS兩檔維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.12.0·新最舊 v4.13.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
 ];
