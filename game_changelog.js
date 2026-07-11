@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-11  / 目前主程式版本:v4.47.0(🛡 戰鬥體驗穩定四合一)
+//  最後更新:2026-07-12  / 目前主程式版本:v4.48.0(🐱 新角色 貓人族長 登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,25 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.48.0 — 🐱 新角色登場:貓人族長(元素小精靈召喚)
+  {
+    ver: 'v4.48.0',
+    date: '2026-07-12',
+    brief: [
+      '🌟【新角色登場介紹】🐱 貓人族長(SSR·4 年 6 班 張同學設計)—— 隱居深山的貓人族千金,天生擅長召喚魔法!天賦「小精靈召喚」:每回合出手前自動召喚火/冰/雷元素小精靈中還沒有的一種(最多同時 3 隻),小精靈會擁有自己的血量、優先幫族長擋下傷害;而且普通攻擊時,每有 1 隻小精靈就追加一次對應屬性的爪擊,還會讓對手燃燒/緩速/麻痺!',
+      '⚡【技能一·雷精靈風暴】消耗雷精靈,喚起狂雷對隨機對手連轟 4 次,每一擊都有機會讓對手麻痺!(沒有雷精靈時無法施展喔)',
+      '❄️【技能二·冰精靈守護】消耗冰精靈,展開極寒守護結界,讓我方全體受到的傷害大幅減少,而且攻擊我方的對手會被冰霜緩速!(沒有冰精靈時無法施展)',
+      '💥【極限爆發·上級元素精靈‧引爆】把所有小精靈昇華引爆!每 1 隻精靈都會對敵方全體造成強力對應屬性傷害,還附帶強力燃燒/凍結/強力麻痺,必中且無視有利狀態!(至少要有 1 隻精靈才能發動)',
+      '🐱【怎麼獲得】到「召喚星空」就有機會抽到貓人族長喔!',
+    ],
+    items: [
+      '★ v4.48.0【新增學生設計英雄 貓人族長·4 年 6 班 張同學·SSR·dmg+ctrl】天賦小精靈召喚(startTurn 行動前召喚火/冰/雷未持有元素之一·最多 3 隻·HP=本體最大HP×70%×(1+天賦Lv×0.1)·天賦被封停用)+doDmg FIFO 精靈代承(比照天青龍·扣精靈 hp 不繞 5000cap)+renderCard 精靈 HP 條+普攻每隻追加特技60%對應屬性+異常。',
+      '★ v4.48.0【技能與爆發】S1 雷精靈風暴(消耗雷精靈·特技100%+5%/lv 風屬性隨機4次·每次70%麻痺)+S2 冰精靈守護(消耗冰精靈·全隊 _catIceGuard 減傷70%+3%/lv[Lv5=82%]2回合+攻擊者緩速)+爆發 上級元素精靈‧引爆(消耗全部精靈·每隻對敵全體特技500%×_burstMult 對應屬性分攤必中無視有利+強力異常·需≥1隻)。',
+      '★ v4.48.0【接線與平衡】execSkill+aiUseSkill 雙實作(鐵律1.128·AI 無對應精靈改普攻)+SKILL_FORCE_ELEMENT+SKILL_UPGRADE_DEF+BURST_UPGRADE_DEF(500→700%)+buffClass/buffName(_catIceGuard)+SUMMON_RARE_HEROES(IIFE 自動補池)+STUDENT_DESIGNER_HEROES(lsps111050→圖鑑🎨)·全走 doDmg 對世界BOSS 5000cap(鐵律1.31)。',
+      '★ v4.48.0【資料與資產】資料層 15 表+檔尾 sd 在 hero_db.js(鐵律1.232 cute+premium 雙版·1.160 只寫Lv1);圖檔 貓人族長.png 已在 repo·爆發視覺沿用既有 摩天爆破煙火祭.gif(無影片)。',
+      '★ v4.48.0【範圍與驗證】改 index.html+hero_db.js+hero_input.html(admin_panel.js/game_changelog.js 版號同步);無 ?.;七版號同步點全對齊 v4.48.0。',
+    ],
+  },
   // v4.47.0 — 🛡 戰鬥體驗穩定四合一(封印提示/存檔更穩/劇情防卡/續戰診斷)
   {
     ver: 'v4.47.0',
@@ -280,22 +299,6 @@ window.GAME_CHANGELOG = [
       '★ v4.29.0【風暴雷龍王 S1/S2/爆發 雷電特效與爆發名稱修正·world-boss.js】根因:_WB_FX_URLS 對照表裡 s1=火雨.gif(火龍王特效)、爆發 _wbPlayBurstAnimation() 寫死播「火山炎龍王/天崩之炎」;風暴雷龍王 S1/S2 之前傳通用 key s1/s2、爆發呼叫 _wbPlayBurstAnimation → 三招全顯示成火龍王的火特效與火爆發名稱。修法:新增雷電專屬 key(全用現有英雄爆發技 GIF)wind_s1=迅雷不及掩耳的攻擊.gif、wind_s2=龍捲風.gif、burst_wind=雷雨.gif;_wbWindBossS1 特效 s1→wind_s1、_wbWindBossS2 特效 s2→wind_s2、_wbWindBossBurst 由 _wbPlayBurstAnimation() 改 _wbPlayFullscreenFx(burst_wind)(只播雷雨 GIF·爆發 log 本就正確輸出「雷神·萬雷殛世」)。連線戰/單人戰皆走本檔 dispatcher(_wbAdvBossS1/S2/Burst)一併修正。',
       '★ v4.29.0【順修 深淵海龍王 S1 絕對零度 特效·world-boss.js】_wbWaterBossS1 特效 s1(火雨.gif 火龍王特效)→ burst_water(冰椎爆裂.gif·冰系正確)。',
       '★ v4.29.0【版本與驗證】world-boss.js 解凍(v4.22.0→v4.29.0);版本同步點 → v4.29.0(index.html + admin_panel.js + world-boss.js + game_changelog.js;hero_db.js 維持 v4.20.0、world-boss-ui.html 維持 v4.28.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.2)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → index.html(最後)。',
-    ],
-  },
-  // v4.28.0 — 🐲 龍王戰三修:英雄詳細預覽不再被血條蓋住 + 一進場自動帶跟隨寵物 + 卡片寵物圖縮小
-  {
-    ver: 'v4.28.0',
-    date: '2026-07-06',
-    brief: [
-      '🐲【龍王戰角色卡預覽不再被血條蓋住!】在世界BOSS(龍王)戰鬥中點角色卡看詳細預覽時，上半部原本會被上方龍王的超級血條蓋住看不到，現在修好了——預覽會完整浮在最上層。',
-      '🐾【一進龍王戰就自動帶上你設定的跟隨寵物!】以前單人打龍王時，明明幫英雄設好了跟隨寵物，一進場卻不會出現(卡片沒有寵物圖、也顯示「無寵物」)，要等戰鬥中出現寵物再手動選才會有。現在一進戰鬥就會自動讀取你設定好的跟隨寵物並顯示在角色卡上。',
-      '🖼【角色卡右上角的寵物圖縮小、不再蓋住HP條!】戰鬥角色卡右上角的寵物去背圖片縮小了約 30%，並往下移到 HP 條下方，不會再擋住血量數字。',
-    ],
-    items: [
-      '★ v4.28.0【英雄詳細預覽被龍王超級血條蓋住·根治·index.html】根因:#hero-preview-overlay 位在 #gc 內、且是 position:absolute(main.css z-index:9990，行內雖已拉到 12000，但只在 #gc 這個堆疊脈絡內有效);世界BOSS大廳 #wb-lobby-overlay 是「body 層 z-index:9000」→ 整個 #gc(含此預覽)被壓在它之下，故大廳內的龍王超級血條反而蓋住預覽。修法:showHeroPreview 顯示時把預覽移到 body 層 + 改 position:fixed(inset:0 滿版) + z-index 12000 → 高於 body 層 9000 的世界BOSS大廳，預覽穩定浮在最上層(手法同 v4.9.0 圖鑑 detach to body)。一般冒險戰不受影響。',
-      '★ v4.28.0【單人龍王戰一進場自動套跟隨寵物·world-boss-ui.html】根因:單人練習/一人龍王戰的 p1 組建走「WB-Solo」路徑(與連線戰 _wbUiStartBattle 不同函式)，原本漏呼叫 _applyFollowPetToHero → 設了跟隨寵物的英雄一進單人龍王戰沒有寵物(浮圖/貓掌爆發槽/寵物爆發/英雄詳細預覽全顯示「無寵物」)。修法:比照連線戰在 p1.push 前補套跟隨寵物(素質加成 + 自動裝備該寵物 + 爆發旗標)，此路徑唯一套用點不雙套。英雄詳細預覽本就用「裝備寵物或跟隨寵物」雙口徑，套上後預覽與卡片皆正確顯示攜帶的寵物。',
-      '★ v4.28.0【戰鬥卡寵物浮圖縮小30%+下移不蓋HP條·index.html】renderCard 的 .pet-float-badge:高度 50%→35%、下方圖片 max-width 118→82(縮小約 30%);位置 top 2px→34px，讓浮圖落在 .card-hp-wrap2(固定 23px 高 + 6px 下邊距)之下方的肖像右上角，不再壓住 HP 條數字。純顯示層調整。',
-      '★ v4.28.0【驗證與版本】world-boss-ui.html 解凍(v4.25.0→v4.28.0);版本同步點 → v4.28.0(index.html + admin_panel.js + world-boss-ui.html + game_changelog.js;hero_db.js 維持 v4.20.0、world-boss.js 維持 v4.22.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.1)。上傳順序:game_changelog.js → admin_panel.js → world-boss-ui.html → index.html(最後)。',
     ],
   },
 ];
