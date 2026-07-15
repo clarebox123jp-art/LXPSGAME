@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-12  / 目前主程式版本:v4.49.0(🐱 貓人族長 天賦強化)
+//  最後更新:2026-07-15  / 目前主程式版本:v4.50.0(📖 遊戲教學說明更正)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.50.0 — 📖 遊戲教學說明更正(龍王血量/素質上限/寵物好感爆發威力)
+  {
+    ver: 'v4.50.0',
+    date: '2026-07-15',
+    brief: [
+      '🐉【世界龍王血量更正】遊戲教學與說明書中的世界龍王 HP 由「500 萬」更正為「1000 萬」(和實際遊戲一致);同時把「每人每回合傷害上限 5000」寫得更清楚:是「每位英雄」每回合傷害上限 5000 喔!',
+      '📊【素質提升上限補充】英雄能力點說明補上各項的提升上限:❤️HP 每點 +0.2% 減傷(最多減 50%)、⚔️攻擊每點 +0.5% 暴擊率與暴擊傷害(暴擊率最高疊到 100%)、✨特技每點 +1% 技能傷害與治療(沒有上限!投越多越強)、💨速度依速度差每點 +1% 迴避(最多躲 60%)。素質說明卡、新手教學、英雄強化教學都同步更新!',
+      '💖【寵物好感度說明補完】原本只寫到「主人倒下時寵物會救活他、滿 100 爆發多 1 次」,現在補上遺漏的重點:寵物極限爆發的「威力」也會隨好感度五階提升——有點陌生 25% → 已經熟識 50% → 有點親密 75% → 非常親密 100% → 不離不棄 125%!和寵物越要好,寵物大絕越強!新手教學、寵物圖鑑、寵物小屋教學、寵物詳情頁全部同步。',
+    ],
+    items: [
+      '★ v4.50.0【龍王血量】新手教學第4章 + 遊戲介紹說明書(可見文字與註解)HP 500 萬→1000 萬,對齊 v4.8.0 實況 10,000,000;「每人每回合」正名「每位英雄每回合」傷害上限 5000。',
+      '★ v4.50.0【素質上限】STAT_DESCS(desc+simple 雙版)/ 新手教學第3章(premium 四行+simple 升級加點)/ HUT「分配四項能力」頁,補上:HP 減傷上限 50%(既有)、攻擊暴擊率最高疊到 100%(基礎15%+0.5%/點·doDmg Math.min(1))、特技無上限、速度依速度差每點+1%迴避上限 60%(doDmg Math.min(0.6))。',
+      '★ v4.50.0【寵物好感爆發威力】依 v4.13.2 _affMult 實況(25/50/75/100/125%),於六處雙版文字補完:新手教學第6章 / 近期活動寵物卡 / 寵物小屋教學 STEPS / 寵物圖鑑 intro / 詳情頁忠誠夥伴 _desc / 詳情頁爆發區塊 _tip(鐵律1.232 cute+premium 全齊)。純顯示層·零邏輯改動·無 ?.。',
+    ],
+  },
   // v4.49.0 — 🐱 新角色登場:貓人族長(元素小精靈召喚·天賦強化)
   {
     ver: 'v4.49.0',
@@ -287,20 +302,6 @@ window.GAME_CHANGELOG = [
       '★ v4.30.0【三龍王 AI 與 dispatcher·world-boss.js】新增 _wbDark/Light/OmniBossS1/S2/Burst 共 9 個 AI 函式(比照海龍王/雷龍王範本:playSfx + _wbPlayFullscreenFx + doDmg 迴圈 + addStatus + log + _scheduleBossEnd);dispatcher _wbAdvBossS1/S2/Burst 三處各加暗/光/幻 3 分支(按中文名分流),不再落預設火龍王。爆發音效:暗 sfx-darkorb-burst、光 sfx-athena-burst、幻 sfx-fantasy,皆 +sfx-burst。',
       '★ v4.30.0【三龍王天賦引擎·world-boss.js + index.html】暗龍王每回合死亡宣告(BOSS 主行動 hook)+ 受光屬性+30%(_wbApplyBossDmgCap);光龍王每回合封印+爆發封印(seal+_burstSeal)+ 受暗屬性+30%;幻龍王三防禦被動(免疫異常/迴避+30%/受普攻-30%)沿用 v4.16.0 已在 index.html 引擎的實作。',
       '★ v4.30.0【版本與驗證】world-boss.js 續解凍(v4.29.0→v4.30.0);7 版本同步點 → v4.30.0(index.html + admin_panel.js + world-boss.js + game_changelog.js;hero_db.js 維持 v4.20.0、world-boss-ui.html 維持 v4.28.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.3)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → index.html(最後)。',
-    ],
-  },
-  // v4.29.0 — ⚡ 風暴雷龍王 S1/S2/爆發 雷電特效與爆發名稱改回正確(原顯示成火龍王的)
-  {
-    ver: 'v4.29.0',
-    date: '2026-07-06',
-    brief: [
-      '⚡【風暴雷龍王的招式與大絕招改回「雷電」特效與名稱了!】之前風暴雷龍王(雷龍王)使出招式和極限爆發時，畫面特效和技能名稱都錯誤地顯示成火龍王的(火焰特效、「天崩之炎」)。現在全部修正:S1「雷霆貫穿」、S2「暴風肅清」、爆發「雷神·萬雷殛世」都會播放正確的雷電/暴風特效與名稱。',
-      '❄【順帶修正:深淵海龍王 S1「絕對零度」的特效也改回冰系】原本誤用火焰特效，現在改成冰椎特效。',
-    ],
-    items: [
-      '★ v4.29.0【風暴雷龍王 S1/S2/爆發 雷電特效與爆發名稱修正·world-boss.js】根因:_WB_FX_URLS 對照表裡 s1=火雨.gif(火龍王特效)、爆發 _wbPlayBurstAnimation() 寫死播「火山炎龍王/天崩之炎」;風暴雷龍王 S1/S2 之前傳通用 key s1/s2、爆發呼叫 _wbPlayBurstAnimation → 三招全顯示成火龍王的火特效與火爆發名稱。修法:新增雷電專屬 key(全用現有英雄爆發技 GIF)wind_s1=迅雷不及掩耳的攻擊.gif、wind_s2=龍捲風.gif、burst_wind=雷雨.gif;_wbWindBossS1 特效 s1→wind_s1、_wbWindBossS2 特效 s2→wind_s2、_wbWindBossBurst 由 _wbPlayBurstAnimation() 改 _wbPlayFullscreenFx(burst_wind)(只播雷雨 GIF·爆發 log 本就正確輸出「雷神·萬雷殛世」)。連線戰/單人戰皆走本檔 dispatcher(_wbAdvBossS1/S2/Burst)一併修正。',
-      '★ v4.29.0【順修 深淵海龍王 S1 絕對零度 特效·world-boss.js】_wbWaterBossS1 特效 s1(火雨.gif 火龍王特效)→ burst_water(冰椎爆裂.gif·冰系正確)。',
-      '★ v4.29.0【版本與驗證】world-boss.js 解凍(v4.22.0→v4.29.0);版本同步點 → v4.29.0(index.html + admin_panel.js + world-boss.js + game_changelog.js;hero_db.js 維持 v4.20.0、world-boss-ui.html 維持 v4.28.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.2)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → index.html(最後)。',
     ],
   },
 ];
