@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-15  / 目前主程式版本:v4.50.0(📖 遊戲教學說明更正)
+//  最後更新:2026-07-16  / 目前主程式版本:v4.51.0(🛟 戰鬥卡死自動救援升級)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.51.0 — 🛟 戰鬥卡死自動救援升級(選目標超時自動取消)
+  {
+    ver: 'v4.51.0',
+    date: '2026-07-16',
+    brief: [
+      '🛟【戰鬥卡住自動救援升級】按了「普通攻擊」或「使用物品」之後要點選目標,如果超過 30 秒都沒點成(不小心點錯、或一時找不到可以點的對象),以前遊戲可能會整個卡住不動。現在系統會自動幫你「取消這次選擇」,把行動按鈕還給你重新選一次,完全不會損失回合、不會影響戰鬥數值!',
+      '🆘【自救按鈕保底】萬一自動救援連續幾次都沒成功,畫面會直接出現「卡死自救」按鈕讓你手動處理,不會再默默卡在原地。遇到「我方不動」的同學,更新後重新整理就能套用囉!',
+    ],
+    items: [
+      '★ v4.51.0【根因】玩家按普攻/物品後 setPending 設 G.pendingTarget 進入「等點目標」,updateUI 依設計隱藏 action-panel;30 秒未完成點選 → 卡死 watchdog 進自動救援,但舊救援僅設 display 空字串再呼叫 updateUI —— updateUI 見 G.pendingTarget 仍在,立即把面板藏回去 → 「還原→2 秒後又判卡死」無限循環(單人模式 startTurnTimer 已停用,無 AI 代管,本救援為唯一保險網)。實錄:日本關 round 5 大天狗「我方不動卡死」,自動救援連跑 7+ 次全失敗。',
+      '★ v4.51.0【修法①】救援(6)還原面板前,偵測 pendingTarget / selMove / pendingCb 殘留 → 先走內建取消選取路徑 clearSel()(一次清乾淨:pendingTarget/pendingCb/selMove/selItem/確認欄/item-ops/連發鎖/targetable 高亮),玩家效果=超時自動取消選取、行動面板還給玩家重選,不損失回合、零戰鬥數值改動。',
+      '★ v4.51.0【修法②】面板還原由 display 空字串改 display:block,對齊 startTurn 正常開面板路徑;還原後補 renderItems() 重繪物品欄。',
+      '★ v4.51.0【修法③保底】同一 actor+回合 連續還原 4 次仍卡 → 停止自動循環,改顯示「卡死自救」按鈕(舊版 _autoRescueOk 恆 true,自救按鈕永遠不會出現);換人/換回合計數自動歸零。僅動 watchdog 救援(6)區塊,無 ?.。',
+    ],
+  },
   // v4.50.0 — 📖 遊戲教學說明更正(龍王血量/素質上限/寵物好感爆發威力)
   {
     ver: 'v4.50.0',
@@ -284,24 +299,6 @@ window.GAME_CHANGELOG = [
       '★ v4.31.0【三掛鉤點·鐵律1.128雙實作】① _runBurst 內 name=_mimicSourceName||h.name 後:side===p1 且 _BURST_VIDEO_DB[name] 存在即播(藝天使→天界彩繪動畫.mp4、奧汀→諸神的黃昏.mp4)。②execSkill 與 ③aiUseSkill 開頭各查 _SKILL_VIDEO_DB[a.name]:魔劍姬 sk.n===神魔滅殺 且 a.side===p1 且 when(a)=h._iliyaBurstActive===true 才播 神魔滅斬動畫.mp4(自動戰鬥 p1 同觸發)。',
       '★ v4.31.0【影片壓縮·交付】三支 720p 去音軌(ffmpeg libx264 crf29 veryslow +faststart):天界彩繪動畫 7.1MB→866KB、神魔滅斬動畫 7.5MB→1.39MB、諸神的黃昏 5.8MB→966KB(原檔名直接覆蓋 GitHub 根目錄·網址不變)。',
       '★ v4.31.0【版本與驗證】7 版本同步點 → v4.31.0(index.html + admin_panel.js + game_changelog.js;world-boss.js 維持 v4.30.0、hero_db.js 維持 v4.20.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.4)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.30.0 — 🐲 世界 BOSS 最後三龍王(邪骨暗/神聖光/星辰幻)技能·爆發·天賦·特效·音效正式實裝
-  {
-    ver: 'v4.30.0',
-    date: '2026-07-06',
-    brief: [
-      '🐲【世界 BOSS 最後三隻龍王正式登場!】邪骨暗龍王、神聖光龍王、星辰幻龍王原本是「設計中(招式未知)」,現在技能、大絕招、天賦、專屬視覺特效與音效全部到位,可以正式挑戰了!',
-      '💀【邪骨暗龍王(暗屬性)】天賦「黃泉之意志」:每回合會對一名英雄烙下死亡宣告(倒數歸零會倒下,要盡快解除),而且畏懼光屬性(受光屬性傷害增加)。招式「幽冥凋零 / 黃泉侵蝕」、爆發「黃泉歸葬」,伴隨煙霧與死神鐮刀特效。',
-      '✨【神聖光龍王(光屬性)】天賦「高天原之意志」:每回合會封印一名英雄的技能與爆發,而且畏懼暗屬性。招式「神聖裁決 / 天罰之光」、爆發「高天原審判」,伴隨審判光束與金色聖光特效。',
-      '🌌【星辰幻龍王(無屬性·終極)】天賦「星辰之意志」:免疫所有異常狀態、極高迴避、受普通攻擊傷害減少,需要湊齊七種屬性才能有效破防。招式「星流閃擊 / 銀河潮汐」、爆發「星辰湮滅」,伴隨星辰與虛空特效。',
-    ],
-    items: [
-      '★ v4.30.0【三龍王技能/爆發/天賦正式化·world-boss.js】HERO_DB 內嵌補充的 s1/s2、BURST_DB 三筆爆發、HERO_TRAIT/HERO_LORE/HERO_BIO 由「? 未知/設計中」改為正式技能文案。暗=幽冥凋零(c5·特130% 全體暗+隨機2死亡宣告)/黃泉侵蝕(c6·特150% 全體暗+全體強力易傷)/爆發黃泉歸葬(特150% 全體暗 無視增益+全體死亡宣告+隨機2強力暈眩)。光=神聖裁決(c5·特130% 全體光+隨機2封印)/天罰之光(c6·特150% 全體光+隨機2強力暈眩)/爆發高天原審判(特150% 全體光 無視增益+全體封印+隨機1強力暈眩)。幻=星流閃擊(c5·特130% 全體無屬性+隨機2暈眩)/銀河潮汐(c6·特150% 全體+隨機2強力易傷)/爆發星辰湮滅(特160% 全體 無視增益+全體暈眩+全體強力易傷)。',
-      '★ v4.30.0【三龍王專屬特效 key·world-boss.js】_WB_FX_URLS 新增 9 key(全用現有英雄爆發技 GIF·curl 200):暗 dark_s1=煙霧爆開.gif / dark_s2=永恆藍染詛咒.gif / burst_dark=死神之鐮.gif;光 light_s1=審判光束.gif / light_s2=持續神聖光芒.gif / burst_light=金色閃光炸開.gif;幻 omni_s1=彩色星星.gif / omni_s2=星空祝福.gif / burst_omni=萬鏡映虛獄.gif。切勿再用通用 s1/s2(=火雨/集中線)或 _wbPlayBurstAnimation(寫死火龍王)。',
-      '★ v4.30.0【三龍王 AI 與 dispatcher·world-boss.js】新增 _wbDark/Light/OmniBossS1/S2/Burst 共 9 個 AI 函式(比照海龍王/雷龍王範本:playSfx + _wbPlayFullscreenFx + doDmg 迴圈 + addStatus + log + _scheduleBossEnd);dispatcher _wbAdvBossS1/S2/Burst 三處各加暗/光/幻 3 分支(按中文名分流),不再落預設火龍王。爆發音效:暗 sfx-darkorb-burst、光 sfx-athena-burst、幻 sfx-fantasy,皆 +sfx-burst。',
-      '★ v4.30.0【三龍王天賦引擎·world-boss.js + index.html】暗龍王每回合死亡宣告(BOSS 主行動 hook)+ 受光屬性+30%(_wbApplyBossDmgCap);光龍王每回合封印+爆發封印(seal+_burstSeal)+ 受暗屬性+30%;幻龍王三防禦被動(免疫異常/迴避+30%/受普攻-30%)沿用 v4.16.0 已在 index.html 引擎的實作。',
-      '★ v4.30.0【版本與驗證】world-boss.js 續解凍(v4.29.0→v4.30.0);7 版本同步點 → v4.30.0(index.html + admin_panel.js + world-boss.js + game_changelog.js;hero_db.js 維持 v4.20.0、world-boss-ui.html 維持 v4.28.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.3)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → index.html(最後)。',
     ],
   },
 ];
