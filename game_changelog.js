@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-16  / 目前主程式版本:v4.51.0(🛟 戰鬥卡死自動救援升級)
+//  最後更新:2026-07-16  / 目前主程式版本:v4.52.0(🦊 新英雄 幽魂暗狐 登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,26 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.52.0 — 新英雄 幽魂暗狐
+  {
+    ver: 'v4.52.0',
+    date: '2026-07-16',
+    brief: [
+      '🦊 新英雄「幽魂暗狐」登場!由 4 年 7 班 于同學設計的 SSR 九尾幻獸,速度是全遊戲最頂尖的等級之一!',
+      '👻 天賦「離魂蹤步」:每回合開始有機率化為殘影搶先行動,還會把敵人裡速度最快的那一隻往後擠 1 格。',
+      '🐾 技能「殘影抓擊」:用特技連抓 2 下,而且會直接咬碎對手身上的 1 個召喚物(操偶、天青龍、小精靈、式神都算)。',
+      '💀 技能「魂飛魄散擊」:把自己 HP 燒到剩 1,換一記必中的固定傷害加暈眩;打 BOSS 時威力更強(但有傷害上限保護)。',
+      '🌀 極限爆發「靈魂交換」:跟 1 個對手交換魂魄!兩邊的攻擊和特技對調,暗狐還能用對手的技能跟大絕(大絕只能用 1 次)。',
+      '🎨 這是 4 年 7 班的第二隻學生設計英雄,快去星空召喚看看能不能遇到牠!',
+    ],
+    items: [
+      '★ v4.52.0【新英雄 幽魂暗狐】資料層 14 表(hero_db.js):HERO_DB(hp81=配點62×1.3/atk3/sp15/spd20·總和100)、AVATARS🦊、HERO_IMGS(幽魂暗狐.webp)、HERO_IMG_POS(524×749 四足幻獸·130%/center 26%)、HERO_BIO(designer 4年7班 于同學)、BURST_DB、HERO_LORE、HERO_TRAIT、BURST_GIF_DB(紫光籠罩吸收.gif·實測16幀/單圈1120ms→dur:1120·sfx-darkorb-burst+sfx-youyou-burst·tint紫)、HERO_CATEGORIES_OVERRIDE(dmg/ctrl)、HERO_HEX_OVERRIDE(heal0/ctrl5)、_TRAIT_LV_INFO(base 搶先50%/+10%級/max 90%Lv5)、HERO_PRIMARY_CLASS(dmg)、HERO_SKILL_EFFECTS + _LXPS_HERO_SD 簡單風四段(鐵律1.232 雙版齊備)。',
+      '★ v4.52.0【邏輯層 index.html】天賦離魂蹤步(startTurn renderTurnOrderBar 前·仿翠鳥v3.36.0 _foxOrigSpd 搶先 + 仿警長 _foxPushOrigSpd 推後1格·天賦被封停用)、S1殘影抓擊 + S2魂飛魄散擊(execSkill 玩家路徑 + aiUseSkill AI 路徑雙實作·鐵律1.128·附 2 行 AI 評分)、爆發靈魂交換(_runBurst·新狀態 _soulSwap·helper 三支 _foxStripSummon/_foxSoulSwapApply/_foxSoulSwapRestore)、SUMMON_RARE_HEROES、STUDENT_DESIGNER_HEROES(4年7班第二位·isFirstOfClass 不設)、SKILL_UPGRADE_DEF×2、BURST_UPGRADE_DEF、STATUS_DESCS/statusName/buff圖示、SKILL_EFFECT_DEFS B組新增「搶先行動」「消除召喚物」2 標籤(鐵律六易錯點④·否則編組🔍搜不到)、_renderBurstFdWithLv 新增 case 靈魂交換(本爆發無百分數·通用N%引擎抓不到)。',
+      '★ v4.52.0【鐵律 1.31 BOSS 保護·老師裁決】① S2 魂飛魄散擊對 BOSS 雖為 500%,但玩家/AI 兩路徑一律硬 cap 5000(_FOX_S2_BOSS_CAP·貼齊世界BOSS每英雄每回合上限);「HP降至1」是對自身非對BOSS設HP=1。② 爆發靈魂交換對 BOSS/世界BOSS 自動降級:只換 atk/sp + 可用其 S1/S2,禁止複製其爆發(防秒殺類公式被打回 BOSS 自己)。③ S1 消召喚物只清召喚物欄位、不碰本體 curHp;全技能走 doDmg 不加 bypassShield → 5000cap 自動生效。',
+      '★ v4.52.0【實作要點】換魂期間直接把暗狐 s1/s2 換成對手技能物件 → 既有技能面板/skillCost/execSkill 分派全自動生效(零 UI 改動);借爆發走 _runBurst 第5參數 _mimicSourceName(臨摹大師現成引擎)並在 _runBurst 入口單點覆寫(execBurst 有多個呼叫點·不逐一改動);爆發選角沿用 _pickAutoBurstTarget(v3.7.10 起爆發禁用 setPending 防 cinematic 卡死);換魂 buff 帶 _strong:true(v3.13.46 通則·不可消除/奪取/交換),到期於既有 buff dur===1 區各自還原 atk/sp。',
+      '★ v4.52.0【已知限制】借來的技能只有「通用倍率公式」生效、對方專屬特效不跑 —— 與既有臨摹大師「模仿」同款限制(execSkill 多數分支以 actor.name 把關),非新問題。⚠ 上線前必辦:老師需上傳「幽魂暗狐.webp」(repo 現為 .jpg),否則立繪破圖。admin_panel.js 本輪僅版號 bump·內容未改。',
+    ],
+  },
   // v4.51.0 — 🛟 戰鬥卡死自動救援升級(選目標超時自動取消)
   {
     ver: 'v4.51.0',
@@ -281,24 +301,6 @@ window.GAME_CHANGELOG = [
       '★ v4.32.0③【BOSS 尊嚴·魔劍姬必爆穿透鎖血根治】doDmg 的「暴擊額外傷害」是主傷之後另扣一次的補扣路徑,原本只有「本擊主傷已觸發鎖血」時才歸零;漏洞=主傷未觸發鎖血(HP 仍 >0/未破 50% 門檻,或第一段已用但主傷未致命),但主傷+暴擊額外會把 BOSS 打到 <50% 或 ≤0 時,暴擊額外照扣→穿透兩段鎖血直接秒殺、且不觸發反擊(魔劍姬「魔尊血脈」對關卡 BOSS 必定暴擊→穩定觸發此洞)。修法:對真 BOSS 讓暴擊額外補扣也經 _applyBossLifelineProtection(此時 curHp 已扣主傷,依剩餘 HP 正確判 50%/1HP 鎖血並排程強制爆發反擊)。世界 BOSS 走 5000 cap 不受影響(鐵律 1.31)。',
       '★ v4.32.0④【龍王排名獎勵至寶對應各龍王·index.html】原 _WB_DRAGON_T_MAP 只有火/草/地 3 筆→雷/海/暗/光/幻 5 隻查無 bossId→fallback 火龍王之牙(排名獎勵與獎勵頁至寶彈窗都發錯/顯示錯)。新增單一真相 helper window._lxpsDragonTreasureMapFull()/_lxpsDragonTreasureId(bossId):本地完整 8 龍王 base(炎龍王之牙/森龍王之鬚/地龍王之麟/雷龍王之翼/海龍王之爪/暗龍王之骸/光龍王之羽/幻龍王之角)· Object.assign 疊 world-boss.js window._WB_DRAGON_TREASURE_MAP;排名獎勵發放與 _wbShowDragonTreasureInfo 雙路徑改走 helper。未來新增龍王只需補一筆即自動對應。★ world-boss.js 未動(其顯示 map 仍 3 筆但被本地 8 筆覆蓋;因 raw 落後於未部署 v4.30.0,不動避免誤刪三龍王微調)——world-boss.js 顯示 helper map 之後由老師於正確 v4.30.0 底本補齊 8 筆。',
       '★ v4.32.0【範圍與驗證】改 index.html(超商 video/爆發影片 URL+錨點/BOSS 尊嚴引擎/龍王至寶 helper);admin_panel.js/game_changelog.js 版號對齊。7 版本同步點 → v4.32.0(world-boss.js v4.29.0 未動 / hero_db.js v4.20.0 / world-boss-ui.html v4.28.0 / arena.js v3.15.60 凍結免重傳)。GAME_CHANGELOG 維持 20 筆。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。★待辦:鬥技場預設陣容顯示跟隨寵物去背圖+寵物名、並把寵物/至寶加成存進預設陣容記錄(尚未做)。',
-    ],
-  },
-  // v4.31.0 — 🎬 三英雄爆發技鑲嵌動畫上線(資料驅動可擴充)
-  {
-    ver: 'v4.31.0',
-    date: '2026-07-06',
-    brief: [
-      '🎬【爆發技動畫登場!】部分英雄施展極限爆發時,戰鬥畫面左上角會疊上一段專屬的動畫短片,讓爆發更有氣勢!動畫會自動淡入淡出、播完就消失,不影響操作。',
-      '👼 藝天使．克雷爾 施放極限爆發時 → 播放「天界彩繪」動畫。',
-      '⚡ 主神奧汀 施放極限爆發時 → 播放「諸神的黃昏」動畫。',
-      '⚔️ 魔劍姬‧伊莉雅 只有在爆發「魔尊覺醒」進入再行動、免費施放 S1 神魔滅殺 的那一下 → 播放「神魔滅斬」動畫(直接放 S1 或還沒覺醒都不會播)。',
-      '✨ 之後會陸續替更多英雄的爆發技加上專屬動畫,敬請期待!',
-    ],
-    items: [
-      '★ v4.31.0【爆發技鑲嵌動畫系統·index.html·資料驅動可擴充】新增資料表 _BURST_VIDEO_DB(英雄名→爆發影片)與 _SKILL_VIDEO_DB(英雄名→特定技能+條件影片)+ 播放器 _playBurstVideo/_ensureBurstVideoStyle:overlay 錨定 #field-center 填左上(width52%/height50%/z-index60)、opacity 淡入淡出、播完 onended/onerror 自動移除、pointer-events:none 純視覺不吃點擊、muted+playsinline+webkit-playsinline(舊 iPad inline autoplay)、play().catch 與 10s watchdog 兜底、載入失敗靜默略過絕不擋爆發。之後大量新增只加一筆資料,不改邏輯。',
-      '★ v4.31.0【三掛鉤點·鐵律1.128雙實作】① _runBurst 內 name=_mimicSourceName||h.name 後:side===p1 且 _BURST_VIDEO_DB[name] 存在即播(藝天使→天界彩繪動畫.mp4、奧汀→諸神的黃昏.mp4)。②execSkill 與 ③aiUseSkill 開頭各查 _SKILL_VIDEO_DB[a.name]:魔劍姬 sk.n===神魔滅殺 且 a.side===p1 且 when(a)=h._iliyaBurstActive===true 才播 神魔滅斬動畫.mp4(自動戰鬥 p1 同觸發)。',
-      '★ v4.31.0【影片壓縮·交付】三支 720p 去音軌(ffmpeg libx264 crf29 veryslow +faststart):天界彩繪動畫 7.1MB→866KB、神魔滅斬動畫 7.5MB→1.39MB、諸神的黃昏 5.8MB→966KB(原檔名直接覆蓋 GitHub 根目錄·網址不變)。',
-      '★ v4.31.0【版本與驗證】7 版本同步點 → v4.31.0(index.html + admin_panel.js + game_changelog.js;world-boss.js 維持 v4.30.0、hero_db.js 維持 v4.20.0 免重傳)。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.4)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
 ];
