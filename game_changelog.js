@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-16  / 目前主程式版本:v4.52.0(🦊 新英雄 幽魂暗狐 登場)
+//  最後更新:2026-07-17  / 目前主程式版本:v4.53.0(🍡 新英雄 麻吉喵‧Nico 登場)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,26 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.53.0 — 新英雄 麻吉喵‧Nico
+  {
+    ver: 'v4.53.0',
+    date: '2026-07-17',
+    brief: [
+      '🍡 新英雄「麻吉喵‧Nico」登場!由 5 年 5 班 熊同學設計的 SSR 麻糬貓咪,是全遊戲第 7 隻「主坦克」英雄!',
+      '🍡 天賦「Q彈」:隊友要被普通攻擊時,Nico 有機率彈過去幫他挨;而且自己每次被普通攻擊,軟軟的身體都會把衝擊彈開、回自己的 HP。',
+      '😼 技能「喵的厲害」(被動):對手的極限爆發光芒一亮起,畫面就會問你要不要花能量發動 —— 一巴掌把對手的爆發光芒拍熄!每回合最多 1 次。',
+      '🛡 技能「Nico保護你」:把自己撐成大麻糬盾牌,讓自己和 1 個隊友無敵 1 回合;每擋掉 1 次攻擊還會回能量和 HP。',
+      '💢 極限爆發「怎麼樣?看看我的厲害!」:氣鼓鼓地連撞 7 下(撞倒了就換去打 HP 最低的那個),最後一下讓對手強力暈眩,自己再回一半 HP!',
+      '🎨 這是 5 年 5 班的第七隻學生設計英雄,快去星空召喚看看能不能遇到牠!',
+    ],
+    items: [
+      '★ v4.53.0【新英雄 麻吉喵‧Nico】資料層 14 表(hero_db.js):HERO_DB(hp91=配點70×1.3/atk15/sp10/spd5·總和100·老師裁決2乙由設計單 hp79 下修為 70 避免坦度爆表)、AVATARS🍡(全表零重複)、HERO_IMGS(麻吉喵Nico.webp·由 repo 既有 .jpg 轉出 524×749/q92/83KB/PSNR 41.15dB)、HERO_IMG_POS(150%/center 40%·主角貓在畫面中央偏下、背景有大量麻糬同伴需放大聚焦)、HERO_BIO(designer 5年5班 熊同學)、BURST_DB、HERO_LORE、HERO_TRAIT、BURST_GIF_DB(生氣的布丁奶茶.gif·實測 243×231/10幀/單圈 900ms→dur:900·sfx-punch+sfx-crit·tint 麻糬暖粉)、HERO_CATEGORIES_OVERRIDE(ctrl/heal/tank)、HERO_HEX_OVERRIDE(heal3/ctrl4)、_TRAIT_LV_INFO(代承50%+5%/級·回血10%+4%/級)、HERO_PRIMARY_CLASS(tank)、HERO_SKILL_EFFECTS(8 標籤全用既有·SKILL_EFFECT_DEFS 零新增)+ _LXPS_HERO_SD 簡單風四段(鐵律1.232 雙版齊備)。',
+      '★ v4.53.0【邏輯層 index.html】天賦Q彈代承(doDmg 代承類集中區·挺身守護後/仁王挺立前·機率 50%+5%級·排除 AoE/DoT/反彈·_mochiGuardChecked 防連鎖)、天賦Q彈回血(doDmg 扣血後·對齊沐雲雪 軟軟的雲 hook 位置·10%+4%級)、S1喵的厲害被動確認窗(helper _mochiS1Prompt/_mochiS1Fire/_mochiS1Drain 置於 _catSummonChance 與 startTurn 之間;掛 nextRound「雙方各補3能量」後 → 對手爆發光芒剛亮起的瞬間;阻塞式彈窗由回呼排 startTurn·完全對齊 showEquipUI/showDiscardUI 既有非同步慣例)、S2 Nico保護你(execSkill 玩家路徑 + aiUseSkill AI 路徑雙實作·鐵律1.128·附 2 行 AI 評分)、S2 無敵回饋(doDmg immune 擋傷分支·靠 buff 上 _mochiGuard 標記辨識·別處來源的無敵不誤觸發)、爆發(_runBurst·7 連撞+倒下轉移 HP 最低+末擊強力暈眩+回 50%HP)、SUMMON_RARE_HEROES、STUDENT_DESIGNER_HEROES、SKILL_UPGRADE_DEF×2(special_mochi_s1/s2)+ 圖鑑升級視窗兩處 case、BURST_UPGRADE_DEF、_renderBurstFdWithLv 專屬 case。',
+      '★ v4.53.0【鐵律 1.31 BOSS 保護】本隻全招式皆為純倍率/純我方增益 —— 無固定傷害、無 HP% 傷害、無即死、無 HP 設 1、無 >5000 固定傷害 → 走 doDmg 不加 bypassShield,世界 BOSS 每英雄每回合 5000 cap 與龍王元素護盾全部自動生效,對 BOSS 零破口,不需任何額外 cap(本輪為近期少數「零 BOSS 風險」的新英雄)。',
+      '★ v4.53.0【老師四項裁決】① S1 保留「被動」定位但改為彈確認窗詢問是否消耗能量發動(完全比照煉金術師「道具複製」showAlchemistPrompt 模式·含自動戰鬥自動發動分支;AI 側走同一顆 _mochiS1Fire 保證同口徑)。② 配點 hp79→70(hp 欄位 103→91·與地獄將軍同級·非全遊戲最高)。③ 天賦代承由「必定」改機率制(50%起+5%/級·Lv5=70%)、回血 15%→10%(+4%/級)。④ S2 無敵回饋加每回合上限 2 次(_mochiGuardRoundUsed·nextRound 重置)→ 避免被連續 AoE 打成無限回復。',
+      '★ v4.53.0【英雄編輯器 hero_input.html 修正·老師要求釐清】查證發現 _heroSkillTypes 是「HERO_PRIMARY_CLASS 有值就直接 return、CATEGORIES 永遠到不了」,而 PRIMARY_CLASS 已 100 筆涵蓋全英雄 → 編輯器舊有的「篩選分類」複選對遊戲篩選 100% 是死碼,真正決定篩選的 HERO_PRIMARY_CLASS 卻沒有欄位可填。本輪(老師選甲):新增「🎯 主分類(單選)」欄位 + HERO_PRIMARY_CLASS_INITIAL(100 筆)+ 設計單多印「主分類」+ 舊複選正名為「副分類(舊制備援)」並補上 tank 第四色;另補回 v4.52.0 漏同步的幽魂暗狐與本輪 Nico 至 HEROES_DB/HERO_CATEGORIES_INITIAL。⚠ 釐清:主分類(篩選)與雷達圖(HERO_HEX_OVERRIDE)是兩件不同的事。',
+    ],
+  },
   // v4.52.0 — 新英雄 幽魂暗狐
   {
     ver: 'v4.52.0',
@@ -283,24 +303,6 @@ window.GAME_CHANGELOG = [
       '★ v4.33.0①【冒險預設陣容儲存跟隨寵物·甲·index.html】_confirmSavePreset 於冒險模式(_adventureStage!=null)把 heroes.map(_petFollowOf) 存為槽位新欄位 pets[](鬥技場不存);_advPresetTeams 是整個陣列寫進主存檔→Firestore set(merge:true) 對陣列整包取代不深合併,加 pets 欄位天生安全且自動上雲。openPresetTeamPanel 冒險模式每位英雄下方顯示寵物去背圖(_petNobgUrl·onerror→🐾)+寵物名(舊存檔無 pets 欄位退回讀當下 _petFollowOf 不留白)。_applyPresetTeam 冒險分支套用時對 pt.pets[] 逐一 _petSetFollow 還原跟隨寵物(_petIsTamed 守門,未馴養靜默略過),戰前 _applyFollowPetToHero 據此上寵物。',
       '★ v4.33.0②【爆發技影片播放時序重排·index.html】僅「有爆發影片的玩家英雄(_BURST_VIDEO_DB[h.name])且非世界BOSS」走重排:execBurst 尾端 t=0 同時起播 爆發字幕(大字)+集中效果線+爆發音效(sfx-burst)+全屏光彩(flashScreen)+影片;_showBurstCinematic 加「撐住」模式(window._bvHoldCinematic)→大字/集中線不自動淡出、不自動放 GIF,存參照待影片結束回收;_playBurstVideo 新增 onEnd 回呼,影片自然結束/跳過/載入失敗/10s 兜底任一路徑只觸發一次→收大字/集中線→放原有 GIF 特效→顯示傷害/治療數字(執行爆發效果·抑制 _runBurst 內部重播影片旗標 _bvSuppressInRunBurst)。overlay 位置由左上改置中上方(left:50%+translateX·貼頂),新增「跳過 ⏭」鈕(overlay pointer-events:none,鈕單獨 auto)。世界BOSS(多人同步時序敏感)與無影片英雄一律走原路徑,零改動。',
       '★ v4.33.0【範圍與驗證】只改 index.html(兩功能)+admin_panel.js/game_changelog.js 版號對齊;hero_db.js(v4.20.0)/world-boss.js(v4.30.0)/world-boss-ui.html(v4.28.0)凍結免重傳。7 版本同步點 → v4.33.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.13.6)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。★待辦:鬥技場預設陣容顯示/儲存(鬥技場禁寵物,僅至寶加成待評估)。',
-    ],
-  },
-  // v4.32.0 — 🛒 超商動態背景 + 🎬 爆發技影片顯示修復 + 🛡 BOSS 尊嚴根治 + 🐉 龍王排名至寶對應
-  {
-    ver: 'v4.32.0',
-    date: '2026-07-06',
-    brief: [
-      '🛒【不可思議超商變成會動的了!】進到「不可思議超商」(每日商店)時,背景會播放一段全螢幕的動態影片,讓超商更有氣氛!畫面自動淡入,萬一載入失敗會自動換回靜態背景圖,不影響購物。',
-      '🎬【爆發技動畫終於出得來了!】修好「爆發技鑲嵌動畫沒有出現」的問題(影片網址與顯示階層都調整過),藝天使‧克雷爾、主神奧汀、魔劍姬的爆發動畫現在會正確疊在戰鬥畫面上。',
-      '🛡【王者尊嚴補強!】修正「魔劍姬爆發一發把關卡 BOSS 秒殺、沒有觸發強制鎖血與爆發反擊」的漏洞。現在 BOSS 遇到會致命的暴擊,一樣會先鎖在半血/1 滴血並反擊,不會被一擊帶走。',
-      '🐉【龍王排名獎勵至寶對應正確了!】世界 BOSS 排名獎勵的「龍王專屬至寶」現在會正確對應「當前這隻龍王」——雷龍王發雷龍王之翼、海龍王發海龍王之爪…等,全 8 隻龍王都對應好了(原本雷/海/暗/光/幻會誤發成火龍王之牙)。獎勵頁的至寶介紹也一併顯示正確。',
-    ],
-    items: [
-      '★ v4.32.0①【不可思議超商動態影片背景·index.html】商店 overlay(#shop-overlay)最前端新增全螢幕動態影片 #shop-bg-video(autoplay/loop/muted/playsinline·onloadeddata 才淡入·onerror 自動隱藏→露出靜態 不可思議超商.png),作法比照召喚星空/鬥技場:z-index:0 疊在自身靜態底圖之上、遮罩(z0)與內容(z1)之下,pointer-events:none。',
-      '★ v4.32.0②【爆發技影片沒出現·根治】❶URL 由相對路徑檔名改完整 raw(_BV_RAW encodeURIComponent)——全站影音一律走 raw.githubusercontent,GitHub Pages 下相對路徑會 404→onerror 靜默移除→影片不出現。❷_playBurstVideo 錨點由 #field-center(場地效果卡容器·常空→updateFieldFX 會 center.innerHTML=\'\' 幾乎零高度且清掉 overlay)改為穩定全尺寸 #gc(戰鬥畫面外層·z-index:60 疊在敵方卡牌區上方)。',
-      '★ v4.32.0③【BOSS 尊嚴·魔劍姬必爆穿透鎖血根治】doDmg 的「暴擊額外傷害」是主傷之後另扣一次的補扣路徑,原本只有「本擊主傷已觸發鎖血」時才歸零;漏洞=主傷未觸發鎖血(HP 仍 >0/未破 50% 門檻,或第一段已用但主傷未致命),但主傷+暴擊額外會把 BOSS 打到 <50% 或 ≤0 時,暴擊額外照扣→穿透兩段鎖血直接秒殺、且不觸發反擊(魔劍姬「魔尊血脈」對關卡 BOSS 必定暴擊→穩定觸發此洞)。修法:對真 BOSS 讓暴擊額外補扣也經 _applyBossLifelineProtection(此時 curHp 已扣主傷,依剩餘 HP 正確判 50%/1HP 鎖血並排程強制爆發反擊)。世界 BOSS 走 5000 cap 不受影響(鐵律 1.31)。',
-      '★ v4.32.0④【龍王排名獎勵至寶對應各龍王·index.html】原 _WB_DRAGON_T_MAP 只有火/草/地 3 筆→雷/海/暗/光/幻 5 隻查無 bossId→fallback 火龍王之牙(排名獎勵與獎勵頁至寶彈窗都發錯/顯示錯)。新增單一真相 helper window._lxpsDragonTreasureMapFull()/_lxpsDragonTreasureId(bossId):本地完整 8 龍王 base(炎龍王之牙/森龍王之鬚/地龍王之麟/雷龍王之翼/海龍王之爪/暗龍王之骸/光龍王之羽/幻龍王之角)· Object.assign 疊 world-boss.js window._WB_DRAGON_TREASURE_MAP;排名獎勵發放與 _wbShowDragonTreasureInfo 雙路徑改走 helper。未來新增龍王只需補一筆即自動對應。★ world-boss.js 未動(其顯示 map 仍 3 筆但被本地 8 筆覆蓋;因 raw 落後於未部署 v4.30.0,不動避免誤刪三龍王微調)——world-boss.js 顯示 helper map 之後由老師於正確 v4.30.0 底本補齊 8 筆。',
-      '★ v4.32.0【範圍與驗證】改 index.html(超商 video/爆發影片 URL+錨點/BOSS 尊嚴引擎/龍王至寶 helper);admin_panel.js/game_changelog.js 版號對齊。7 版本同步點 → v4.32.0(world-boss.js v4.29.0 未動 / hero_db.js v4.20.0 / world-boss-ui.html v4.28.0 / arena.js v3.15.60 凍結免重傳)。GAME_CHANGELOG 維持 20 筆。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。★待辦:鬥技場預設陣容顯示跟隨寵物去背圖+寵物名、並把寵物/至寶加成存進預設陣容記錄(尚未做)。',
     ],
   },
 ];
