@@ -25,7 +25,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.55.0';
+window.AVATAR_DB_VERSION = 'v4.55.1';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -52,6 +52,161 @@ window.AVATAR_PALETTES = {
  * ════════════════════════════════════════ */
 var LN = '#4a3438'; // 統一描邊色
 
+/* ════════════════════════════════════════
+ * ★ v4.55.0 PNG 部件管線(老師供圖模式)
+ *   - 老師以「同構圖基準人物」生成素體與變體圖 → 去背後全畫布圖層疊放,
+ *     同體型共用一組 transform → 部件自動對齊,零手工定位
+ *   - AVATAR_IMG_TF:各體型在遊戲畫布(360×480)的置入參數
+ *     (基於原圖 1049×1499 座標系;地面線 y=462;幼兒縮 85%)
+ *   - _AVATAR_PNG_MODE=true:渲染只疊「有 img 的部件」,SVG 部件庫整套保留為
+ *     fallback(要切回 SVG 版把此旗標改 false 即可)
+ *   - 部件圖檔放 repo 的 avatar_parts/ 資料夾(相對路徑,與 Pages 部署同源)
+ * ════════════════════════════════════════ */
+window._AVATAR_PNG_MODE = true;
+var AVATAR_IMG_BASE = './avatar_parts/';
+var AVATAR_IMG_TF = {
+  0: { x:26.1, y:33.6,  w:314.7, h:449.7 },  /* 少年 */
+  1: { x:23.7, y:32.7,  w:314.7, h:449.7 },  /* 少女 */
+  2: { x:47.7, y:95.3,  w:267.5, h:382.2 },  /* 幼兒男 */
+  3: { x:47.7, y:100.7, w:267.5, h:382.2 }   /* 幼兒女 */
+};
+function _imgLayer(imgFile, tf){
+  if(!imgFile || !tf) return '';
+  var u = AVATAR_IMG_BASE + imgFile;
+  return _imgLayerSrc(u, tf);
+}
+function _imgLayerSrc(src, tf){
+  if(!src || !tf) return '';
+  return '<image href="' + src + '" xlink:href="' + src + '" x="' + tf.x + '" y="' + tf.y
+    + '" width="' + tf.w + '" height="' + tf.h + '" preserveAspectRatio="xMidYMid meet"/>';
+}
+
+/* ════════════════════════════════════════
+ * ★ v4.55.1 PNG 指定部位換色引擎(老師需求:髮色/眉色/膚色/瞳色)
+ *   原理:canvas 逐像素「色域 + ROI」雙重過濾 → 亮度映射(保留陰影高光層次)
+ *   - 膚色:全圖膚色域(橘域 H10-46・中低飽和・高明度,含陰影膚)
+ *   - 瞳色:眼睛 ROI 內的虹膜棕(排除描邊 V<0.34 與眼白高光 S<0.24)
+ *   - 眉色:眉毛 ROI 內的深棕
+ *   - 髮色:髮型為獨立圖層 → 整層亮度染色(_avatarTintLayer,髮型素材加入即生效)
+ *   色票 idx 0 = 「原本的顏色」(不染,直接用原圖,零成本)
+ *   快取:同 (體型,膚,瞳,眉) 組合只算一次(dataURL);染色非同步,
+ *   首繪先出原色、完成後自動重繪(iPad 一次 ~50-100ms)
+ *   AVATAR_BODY_META 座標系 = 部件圖檔原生 504×720
+ * ════════════════════════════════════════ */
+var AVATAR_BODY_META = {
+  0: { sbv:0.98, eye:[196,100,296,150], brow:[196,80,296,102]  },  /* 少年 */
+  1: { sbv:0.99, eye:[192,110,308,164], brow:[196,88,304,112]  },  /* 少女 */
+  2: { sbv:0.99, eye:[182,120,320,192], brow:[186,96,316,122]  },  /* 幼兒男 */
+  3: { sbv:0.99, eye:[180,124,318,198], brow:[184,98,314,126]  }   /* 幼兒女 */
+};
+var _avTintCache = {};
+function _avHex2Rgb(hx){
+  return [parseInt(hx.slice(1,3),16), parseInt(hx.slice(3,5),16), parseInt(hx.slice(5,7),16)];
+}
+window._avatarNeedTint = function(cfg){
+  return ((cfg.skin|0) > 0) || ((cfg.eyeC|0) > 0) || ((cfg.browC|0) > 0);
+};
+function _avatarTintKey(cfg){
+  return 'b' + cfg.body + '|' + (cfg.skin|0) + '|' + (cfg.eyeC|0) + '|' + (cfg.browC|0);
+}
+/* 亮度映射:ratio<=1 → 目標色×ratio(陰影);ratio>1 → 向白提亮(高光) */
+function _avMapC(t, ratio){
+  if(ratio <= 1) return t * ratio;
+  var k = (ratio - 1) * 1.8; if(k > 1) k = 1;
+  return t + (255 - t) * k;
+}
+window._avatarComposeBody = function(cfg, cb){
+  var key = _avatarTintKey(cfg);
+  if(_avTintCache[key]){ cb(_avTintCache[key]); return; }
+  var bodyDef = P.body[(cfg.body >= 0 && cfg.body < P.body.length) ? cfg.body : 0];
+  if(!bodyDef || !bodyDef.img){ cb(null); return; }
+  var meta = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
+  var PAL = window.AVATAR_PALETTES;
+  var doSkin = (cfg.skin|0) > 0, doEye = (cfg.eyeC|0) > 0, doBrow = (cfg.browC|0) > 0;
+  var skinT = doSkin ? _avHex2Rgb(PAL.skin[cfg.skin]) : null;
+  var eyeT  = doEye  ? _avHex2Rgb(PAL.eye[cfg.eyeC])  : null;
+  var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;  /* 眉色共用髮色票 */
+  var img = new Image();
+  img.onload = function(){
+    try{
+      var W2 = img.naturalWidth, H2 = img.naturalHeight;
+      var sc = W2 / 504;  /* 圖檔若非 504 寬,ROI 等比換算 */
+      var cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
+      var ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0);
+      var d = ctx.getImageData(0, 0, W2, H2), px = d.data;
+      var ex1=meta.eye[0]*sc, ey1=meta.eye[1]*sc, ex2=meta.eye[2]*sc, ey2=meta.eye[3]*sc;
+      var bx1=meta.brow[0]*sc, by1=meta.brow[1]*sc, bx2=meta.brow[2]*sc, by2=meta.brow[3]*sc;
+      var sbv = meta.sbv;
+      for(var i=0;i<px.length;i+=4){
+        if(px[i+3] < 10) continue;
+        var r=px[i]/255, g=px[i+1]/255, b=px[i+2]/255;
+        var mx=Math.max(r,g,b), mn=Math.min(r,g,b), dd=mx-mn;
+        var v=mx, s=(mx>0)?dd/mx:0, h=0;
+        if(dd>0){
+          if(mx===r) h=60*(((g-b)/dd)%6);
+          else if(mx===g) h=60*((b-r)/dd+2);
+          else h=60*((r-g)/dd+4);
+          if(h<0) h+=360;
+        }
+        var p=(i/4)|0, y=(p/W2)|0, x=p-y*W2;
+        var T=null, ratio=0;
+        if(doSkin && h>10 && h<46 && s>0.06 && s<0.52 && v>0.60){
+          T=skinT; ratio=v/sbv;
+        } else if(doEye && x>=ex1 && x<ex2 && y>=ey1 && y<ey2
+                  && h>4 && h<52 && s>0.24 && s<0.8 && v>0.34 && v<0.82){
+          T=eyeT; ratio=v/0.55;
+        } else if(doBrow && x>=bx1 && x<bx2 && y>=by1 && y<by2
+                  && h>4 && h<52 && s>0.2 && v>0.10 && v<0.68){
+          T=browT; ratio=v/0.38;
+        }
+        if(T){
+          if(ratio>1.6) ratio=1.6;
+          px[i]   = _avMapC(T[0], ratio);
+          px[i+1] = _avMapC(T[1], ratio);
+          px[i+2] = _avMapC(T[2], ratio);
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+      var url = cv.toDataURL('image/png');
+      _avTintCache[key] = url;
+      cb(url);
+    }catch(e){ console.warn('[avatar] 染色失敗(改用原圖)', e); cb(null); }
+  };
+  img.onerror = function(){ cb(null); };
+  img.src = AVATAR_IMG_BASE + bodyDef.img;
+};
+
+/* 整層染色(髮型/任何單色系圖層):全部非透明像素亮度映射;baseV 預設 0.55 */
+var _avLayerTintCache = {};
+window._avatarTintLayer = function(imgFile, palHex, baseV, cb){
+  var key = imgFile + '|' + palHex;
+  if(_avLayerTintCache[key]){ cb(_avLayerTintCache[key]); return; }
+  var T = _avHex2Rgb(palHex), bv = baseV || 0.55;
+  var img = new Image();
+  img.onload = function(){
+    try{
+      var cv = document.createElement('canvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      var ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0);
+      var d = ctx.getImageData(0, 0, cv.width, cv.height), px = d.data;
+      for(var i=0;i<px.length;i+=4){
+        if(px[i+3] < 10) continue;
+        var v = Math.max(px[i], px[i+1], px[i+2]) / 255;
+        var ratio = v / bv; if(ratio > 1.6) ratio = 1.6;
+        px[i]   = _avMapC(T[0], ratio);
+        px[i+1] = _avMapC(T[1], ratio);
+        px[i+2] = _avMapC(T[2], ratio);
+      }
+      ctx.putImageData(d, 0, 0);
+      var url = cv.toDataURL('image/png');
+      _avLayerTintCache[key] = url;
+      cb(url);
+    }catch(e){ console.warn('[avatar] 圖層染色失敗', e); cb(null); }
+  };
+  img.onerror = function(){ cb(null); };
+  img.src = AVATAR_IMG_BASE + imgFile;
+};
+
 var P = {};
 window.AVATAR_PARTS = P;
 
@@ -59,16 +214,16 @@ window.AVATAR_PARTS = P;
  * Q 版二頭身。座標基準:頸 y225 肩 y252 臀 y345 腿底 y438。
  * kid 體型不另畫 path:身體 group 套 transform 縮短(見渲染器)。 */
 P.body = [
-  { id:0, n:'少年', ns:'少年', lock:null, svg:
+  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', svg:
     '<path d="M180 222 c-30 2 -50 16 -52 42 l-4 78 c-1 14 8 22 18 22 l14 0 4 66 c0 6 5 9 10 9 l20 0 c5 0 10 -3 10 -9 l4 -66 14 0 c10 0 19 -8 18 -22 l-4 -78 c-2 -26 -22 -40 -52 -42 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M132 262 c-10 4 -16 14 -17 26 l-3 46 c0 8 5 13 12 13 8 0 12 -5 12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M228 262 c10 4 16 14 17 26 l3 46 c0 8 -5 13 -12 13 -8 0 -12 -5 -12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:1, n:'少女', ns:'少女', lock:null, svg:
+  { id:1, n:'少女', ns:'少女', lock:null, img:'body_girl.png', svg:
     '<path d="M180 222 c-28 2 -46 16 -48 40 l-3 44 c-2 12 -6 22 -6 34 0 16 12 24 24 24 l8 0 3 66 c0 6 5 9 10 9 l24 0 c5 0 10 -3 10 -9 l3 -66 8 0 c12 0 24 -8 24 -24 0 -12 -4 -22 -6 -34 l-3 -44 c-2 -24 -20 -38 -48 -40 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M134 260 c-9 4 -15 13 -16 24 l-3 46 c0 8 5 13 12 13 7 0 11 -5 11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M226 260 c9 4 15 13 16 24 l3 46 c0 8 -5 13 -12 13 -7 0 -11 -5 -11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:2, n:'幼兒(男)', ns:'小小男生', lock:null, svg:'@0' },
-  { id:3, n:'幼兒(女)', ns:'小小女生', lock:null, svg:'@1' }
+  { id:2, n:'幼兒(男)', ns:'小小男生', lock:null, img:'body_kidboy.png', svg:'@0' },
+  { id:3, n:'幼兒(女)', ns:'小小女生', lock:null, img:'body_kidgirl.png', svg:'@1' }
 ];
 /* '@N' = 借用第 N 款 path,渲染器對 id 2/3 另套幼兒縮放 transform */
 
@@ -312,6 +467,11 @@ P.cape = [
     f:'<path d="M148 240 l64 0 c5 0 8 6 4 10 l-14 10 -44 0 -14 -10 c-4 -4 -1 -10 4 -10 z" fill="#6b2444" stroke="__LN__" stroke-width="3"/><circle cx="180" cy="248" r="5" fill="#ffd35a" stroke="__LN__" stroke-width="2"/>' }
 ];
 
+/* ── ★ v4.55.1 新分類(老師指定模組):耳環 / 口罩 / 襪子 — 佔位就緒,等素材圖 ── */
+P.earring = [ { id:0, n:'無', ns:'不戴', lock:null } ];
+P.mask    = [ { id:0, n:'無', ns:'不戴', lock:null } ];
+P.sock    = [ { id:0, n:'無', ns:'不穿', lock:null } ];
+
 /* ── 上衣 — 10 款(蓋在軀幹 y248~352) ── */
 function topBase(fill, extra){
   return '<path d="M180 226 c-28 2 -46 15 -48 38 l-4 66 c0 8 6 12 12 12 l80 0 c6 0 12 -4 12 -12 l-4 -66 c-2 -23 -20 -36 -48 -38 z" fill="'+fill+'" stroke="__LN__" stroke-width="3.5"/>'
@@ -382,7 +542,8 @@ window.AVATAR_QUOTES = [
 window._avatarDefaultCfg = function(){
   return { v:1, body:0, skin:0, face:0, hair:0, hairC:0, brow:0, eye:0, eyeC:0,
     nose:0, mouth:0, ear:0, horn:0, wing:0, tail:0, held:0,
-    hat:0, gls:0, neck:0, wrist:0, cape:0, top:0, btm:0, sh:0, q:0 };
+    hat:0, gls:0, neck:0, wrist:0, cape:0, top:0, btm:0, sh:0, q:0,
+    browC:0, earr:0, mask:0, sock:0 };
 };
 
 function _pick(list, idx){
@@ -405,6 +566,72 @@ window._avatarRenderSVG = function(cfg, sizeCss){
   var sk = _col(PAL.skin, cfg.skin), hc = _col(PAL.hair, cfg.hairC), ec = _col(PAL.eye, cfg.eyeC);
   var isKid = (cfg.body === 2 || cfg.body === 3);
   var bodyDef = _pick(P.body, cfg.body);
+
+  /* ★ v4.55.0 PNG 模式:只疊「有 img 的部件」,全畫布圖層同 transform 自動對齊
+   *   圖層序(底→頂):翅 → 披風後 → 後髮 → 尾 → 素體(含臉五官) → 鞋 → 下衣 → 上衣
+   *   → 手鐲 → 披風前領 → 項鍊 → 五官替換件 → 前髮 → 頂耳 → 角 → 眼鏡 → 帽 → 手持 */
+  if(window._AVATAR_PNG_MODE && bodyDef.img){
+    var tf = AVATAR_IMG_TF[cfg.body] || AVATAR_IMG_TF[0];
+    var hairD = _pick(P.hair, cfg.hair), capePng = _pick(P.cape, cfg.cape);
+    var earPng = _pick(P.ear, cfg.ear);
+    /* ★ v4.55.1 素體染色層(膚/瞳/眉):快取命中用染後圖;未命中先出原圖、背景染色完成後自動重繪 */
+    var bodySrc2 = null;
+    if(window._avatarNeedTint(cfg)){
+      var tk2 = _avatarTintKey(cfg);
+      if(_avTintCache[tk2]){ bodySrc2 = _avTintCache[tk2]; }
+      else {
+        window._avatarComposeBody(cfg, function(u){
+          if(!u) return;
+          try{ _avRefreshPreview(); }catch(_e){}
+          try{ if(typeof window._avatarCardRerender === 'function') window._avatarCardRerender(); }catch(_e){}
+        });
+      }
+    }
+    /* ★ v4.55.1 髮色:髮型為獨立圖層 → 整層染色(素材加入後即生效) */
+    function _hairLayer(imgFile){
+      if(!imgFile) return '';
+      if((cfg.hairC|0) > 0){
+        var hk = imgFile + '|' + window.AVATAR_PALETTES.hair[cfg.hairC];
+        if(_avLayerTintCache[hk]) return _imgLayerSrc(_avLayerTintCache[hk], tf);
+        window._avatarTintLayer(imgFile, window.AVATAR_PALETTES.hair[cfg.hairC], 0.55, function(u){
+          if(!u) return;
+          try{ _avRefreshPreview(); }catch(_e){}
+          try{ if(typeof window._avatarCardRerender === 'function') window._avatarCardRerender(); }catch(_e){}
+        });
+      }
+      return _imgLayer(imgFile, tf);
+    }
+    /* 圖層序(底→頂):翅 → 披風後 → 後髮 → 尾 → 素體(含臉五官) → 襪 → 鞋 → 下衣 → 上衣
+     * → 手鐲 → 披風前領 → 項鍊 → 五官替換件 → 口罩 → 前髮 → 頂耳 → 耳環 → 角 → 眼鏡 → 帽 → 手持 */
+    var png = ''
+      + _imgLayer(_pick(P.wing, cfg.wing).img, tf)
+      + _imgLayer(capePng.bImg, tf)
+      + _hairLayer(hairD.bImg)
+      + _imgLayer(_pick(P.tail, cfg.tail).img, tf)
+      + (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf))
+      + _imgLayer(_pick(P.sock, cfg.sock).img, tf)
+      + _imgLayer(_pick(P.shoe, cfg.sh).img, tf)
+      + _imgLayer(_pick(P.btm, cfg.btm).img, tf)
+      + _imgLayer(_pick(P.top, cfg.top).img, tf)
+      + _imgLayer(_pick(P.wrist, cfg.wrist).img, tf)
+      + _imgLayer(capePng.fImg, tf)
+      + _imgLayer(_pick(P.neck, cfg.neck).img, tf)
+      + _imgLayer(_pick(P.brow, cfg.brow).img, tf)
+      + _imgLayer(_pick(P.eye, cfg.eye).img, tf)
+      + _imgLayer(_pick(P.nose, cfg.nose).img, tf)
+      + _imgLayer(_pick(P.mouth, cfg.mouth).img, tf)
+      + _imgLayer(_pick(P.mask, cfg.mask).img, tf)
+      + _hairLayer(hairD.fImg)
+      + _imgLayer(earPng.img, tf)
+      + _imgLayer(_pick(P.earring, cfg.earr).img, tf)
+      + _imgLayer(_pick(P.horn, cfg.horn).img, tf)
+      + _imgLayer(_pick(P.glasses, cfg.gls).img, tf)
+      + _imgLayer(_pick(P.hat, cfg.hat).img, tf)
+      + _imgLayer(_pick(P.held, cfg.held).img, tf);
+    return '<svg viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
+      + (sizeCss || 'width:100%;height:100%;') + 'display:block;">' + png + '</svg>';
+  }
+
   var bodySvg = bodyDef.svg;
   if(bodySvg && bodySvg.charAt(0) === '@') bodySvg = P.body[parseInt(bodySvg.slice(1),10)].svg;
 
@@ -412,17 +639,23 @@ window._avatarRenderSVG = function(cfg, sizeCss){
   var earD = _pick(P.ear, cfg.ear);
   var capeD = _pick(P.cape, cfg.cape);
 
-  /* 幼兒:身體區塊縮矮(頭不縮 → 更 Q);頭部微下移貼近身體 */
+  /* 幼兒:身體區塊縮矮(頭不縮 → 更 Q);頭部下移與縮短的頸部相連
+   * ★ v4.55.0 老師回報修正:原 translate(0,26) 頭浮在半空 —
+   *   幾何:頸 y225 經 scale(0.9,0.72) 錨 y438 → y=(225-438)*0.72+438=284.6,
+   *   頭需下移 ≈56(頭底 232+56=288 與頸 284.6 微疊 3px 自然銜接) */
   var bodyT = isKid ? ' transform="translate(180,438) scale(0.9,0.72) translate(-180,-438)"' : '';
-  var headT = isKid ? ' transform="translate(0,26)"' : '';
+  var headT = isKid ? ' transform="translate(0,56)"' : '';
   var backT = isKid ? ' transform="translate(180,420) scale(0.95,0.82) translate(-180,-420)"' : '';
+  /* ★ v4.55.0 老師回報修正:髮型包覆 — 髮以臉心(180,152)為錨放大 7%,
+   *   讓髮蓋住臉輪廓外緣(原本髮僅比臉寬 8px 視覺像浮貼) */
+  var hairWrapOpen = '<g transform="translate(180,152) scale(1.07,1.05) translate(-180,-152)">';
 
   var s = '';
   /* 後層:翅 → 披風後 → 尾 → 後髮 */
   s += '<g'+backT+'>' + _fill(_pick(P.wing, cfg.wing).svg, sk, hc, ec)
      + _fill(capeD.b, sk, hc, ec)
      + _fill(_pick(P.tail, cfg.tail).svg, sk, hc, ec) + '</g>';
-  s += '<g'+headT+'>' + _fill(hair.b || '', sk, hc, ec) + '</g>';
+  s += '<g'+headT+'>' + hairWrapOpen + _fill(hair.b || '', sk, hc, ec) + '</g></g>';
   /* 身體組:體、鞋、下衣、上衣、手鐲、披風前領、項鍊 */
   s += '<g'+bodyT+'>' + _fill(bodySvg, sk, hc, ec)
      + _fill(_pick(P.shoe, cfg.sh).svg, sk, hc, ec)
@@ -440,7 +673,7 @@ window._avatarRenderSVG = function(cfg, sizeCss){
      + _fill(_pick(P.eye, cfg.eye).svg, sk, hc, ec)
      + _fill(_pick(P.nose, cfg.nose).svg, sk, hc, ec)
      + _fill(_pick(P.mouth, cfg.mouth).svg, sk, hc, ec)
-     + _fill(hair.f || '', sk, hc, ec)
+     + hairWrapOpen + _fill(hair.f || '', sk, hc, ec) + '</g>'
      + _fill(earTop, sk, hc, ec)
      + _fill(_pick(P.horn, cfg.horn).svg, sk, hc, ec)
      + _fill(_pick(P.glasses, cfg.gls).svg, sk, hc, ec)
@@ -531,18 +764,19 @@ window._avatarPullFromCloud = function(){
  * ════════════════════════════════════════ */
 var _AV_TABS = [
   { k:'bodyTab', p:'身體',   c:'身體',   cats:[['body','體型','體型'],['skin','膚色','皮膚顏色']] },
-  { k:'faceTab', p:'臉部',   c:'臉臉',   cats:[['face','臉型','臉型'],['brow','眉毛','眉毛'],['eye','眼睛','眼睛'],['eyeC','瞳色','眼睛顏色'],['nose','鼻子','鼻子'],['mouth','嘴巴','嘴巴']] },
+  { k:'faceTab', p:'臉部',   c:'臉臉',   cats:[['face','臉型','臉型'],['brow','眉毛','眉毛'],['browC','眉毛顏色','眉毛顏色'],['eye','眼睛','眼睛'],['eyeC','瞳孔顏色','眼睛顏色'],['nose','鼻子','鼻子'],['mouth','嘴巴','嘴巴']] },
   { k:'hairTab', p:'髮型',   c:'頭髮',   cats:[['hair','髮型','髮型'],['hairC','髮色','頭髮顏色']] },
   { k:'beastTab',p:'耳角翅尾', c:'變身',  cats:[['ear','耳朵','耳朵'],['horn','角','角角'],['wing','翅膀','翅膀'],['tail','尾巴','尾巴']] },
-  { k:'wearTab', p:'服裝',   c:'衣服',   cats:[['top','上衣','上衣'],['btm','下衣','下衣'],['sh','鞋子','鞋鞋']] },
-  { k:'accTab',  p:'配件',   c:'裝飾',   cats:[['hat','帽子','帽帽'],['gls','眼鏡','眼鏡'],['neck','項鍊','項鍊'],['wrist','手鐲','手環'],['cape','披風','披風']] },
-  { k:'heldTab', p:'手持',   c:'拿的',   cats:[['held','手持物','拿什麼']] },
+  { k:'wearTab', p:'服裝',   c:'衣服',   cats:[['top','上衣','上衣'],['btm','下褲(裙)','下褲(裙)'],['sock','襪子','襪襪'],['sh','鞋子','鞋鞋']] },
+  { k:'accTab',  p:'配件',   c:'裝飾',   cats:[['hat','帽子','帽帽'],['gls','眼鏡','眼鏡'],['earring','耳環','耳環'],['mask','口罩','口罩'],['neck','項鍊','項鍊'],['wrist','手環','手環'],['cape','披風','披風']] },
+  { k:'heldTab', p:'手持',   c:'拿的',   cats:[['held','手拿物品','拿什麼']] },
   { k:'cardTab', p:'名片',   c:'名片',   cats:[['q','名片語錄','名片的話']] }
 ];
 var _AV_CFG_KEY = { body:'body', skin:'skin', face:'face', brow:'brow', eye:'eye', eyeC:'eyeC',
   nose:'nose', mouth:'mouth', hair:'hair', hairC:'hairC', ear:'ear', horn:'horn', wing:'wing',
   tail:'tail', top:'top', btm:'btm', sh:'sh', hat:'hat', gls:'gls', neck:'neck', wrist:'wrist',
-  cape:'cape', held:'held', q:'q' };
+  cape:'cape', held:'held', q:'q',
+  browC:'browC', earring:'earr', mask:'mask', sock:'sock' };
 var _avCurTab = 0;
 
 function _avEsc(t){
@@ -624,19 +858,30 @@ function _avRenderOpts(){
   var box = document.getElementById('_av-opts'); if(!box) return;
   var tab = _AV_TABS[_avCurTab];
   var cfg = window._avatarLocalCard.cfg;
+  var pngMode = (window._AVATAR_PNG_MODE && _pick(P.body, cfg.body).img);
+  var _wipHtml = '<div style="padding:14px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:14.5px;">🎨 '
+    + _avT('此類素材繪製中,之後的更新會陸續加入,敬請期待!','這類的圖還在畫,等更新就會有囉!') + '</div>';
   var h = '';
   for(var c=0;c<tab.cats.length;c++){
     var cat = tab.cats[c][0], labP = tab.cats[c][1], labC = tab.cats[c][2];
     h += '<div style="font-size:16px;font-weight:900;color:#ffd97a;margin:14px 2px 8px;">' + _avT(labP, labC) + '</div>';
+    if(pngMode && cat === 'hairC' && !_avatarAnyHairImg()){
+      /* 髮色:染色引擎已就緒,髮型素材加入後即生效 */
+      h += '<div style="padding:10px 14px;margin-bottom:8px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:13.5px;">💡 '
+        + _avT('髮色引擎已就緒:髮型素材加入後,選好的髮色會自動套用','選好頭髮顏色,等髮型的圖加進來就會變色囉!') + '</div>';
+    }
     h += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-    if(cat === 'skin' || cat === 'hairC' || cat === 'eyeC'){
+    if(cat === 'skin' || cat === 'hairC' || cat === 'eyeC' || cat === 'browC'){
       var pal = (cat === 'skin') ? window.AVATAR_PALETTES.skin
-              : (cat === 'hairC') ? window.AVATAR_PALETTES.hair : window.AVATAR_PALETTES.eye;
+              : (cat === 'eyeC') ? window.AVATAR_PALETTES.eye : window.AVATAR_PALETTES.hair;
       for(var i=0;i<pal.length;i++){
-        var sel = (cfg[cat] === i);
-        h += '<button onclick="_avatarSetPart(\''+cat+'\','+i+')" title="'+_avT('色票','顏色')+' '+(i+1)
-          + '" style="width:44px;height:44px;border-radius:50%;cursor:pointer;background:'+pal[i]+';'
-          + 'border:'+(sel?'3.5px solid #8ad4ff;box-shadow:0 0 12px rgba(120,200,255,0.7);':'2.5px solid rgba(255,255,255,0.35);')+'"></button>';
+        var sel = (cfg[cat] === i || (!cfg[cat] && i === 0));
+        var tt = (i === 0) ? _avT('原本的顏色','原本的顏色') : (_avT('色票','顏色') + ' ' + (i+1));
+        h += '<button onclick="_avatarSetPart(\''+cat+'\','+i+')" title="'+tt
+          + '" style="width:44px;height:44px;border-radius:50%;cursor:pointer;background:'+pal[i]+';position:relative;'
+          + 'border:'+(sel?'3.5px solid #8ad4ff;box-shadow:0 0 12px rgba(120,200,255,0.7);':'2.5px solid rgba(255,255,255,0.35);')+'">'
+          + (i === 0 ? '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:rgba(60,40,30,0.75);">原</span>' : '')
+          + '</button>';
       }
     } else if(cat === 'q'){
       var qs = window.AVATAR_QUOTES;
@@ -649,8 +894,12 @@ function _avRenderOpts(){
       }
     } else {
       var list = P[cat];
+      var shown = 0;
       for(var j=0;j<list.length;j++){
         var it = list[j];
+        /* ★ PNG 模式:只顯示有素材的款式(img / fImg / bImg 任一) */
+        if(pngMode && !(it.img || it.fImg || it.bImg)) continue;
+        shown++;
         var unlocked = window._avatarIsUnlocked(cat, it.id);
         var selP = (cfg[_AV_CFG_KEY[cat]] === it.id);
         var nm = _avT(it.n, it.ns);
@@ -663,6 +912,7 @@ function _avRenderOpts(){
           h += '<button title="' + _avT('主線劇情開放後取得','等主線故事開放') + '" style="padding:10px 16px;font-size:15px;font-weight:800;border-radius:10px;cursor:not-allowed;font-family:inherit;opacity:0.5;background:rgba(40,40,55,0.4);border:2px dashed rgba(150,150,170,0.45);color:#8890a8;">🔒 ' + _avEsc(nm) + '</button>';
         }
       }
+      if(pngMode && shown === 0){ h += '</div>' + _wipHtml + '<div style="display:none;">'; }
     }
     h += '</div>';
   }
@@ -677,6 +927,14 @@ window._avatarSetQuote = function(i){
   window._avatarLocalCard.q = i;
   _avRenderOpts();
 };
+
+/* ★ v4.55.1 — 是否已有任何髮型素材(供髮色提示判斷) */
+function _avatarAnyHairImg(){
+  for(var i=0;i<P.hair.length;i++){
+    if(P.hair[i].fImg || P.hair[i].bImg) return true;
+  }
+  return false;
+}
 
 window._avatarSaveClick = function(){
   var btn = document.getElementById('_av-save-btn');
@@ -698,6 +956,8 @@ window._avatarOpenCard = function(name, card){
   var old = document.getElementById('_avatar-card-modal');
   if(old) old.remove();
   card = (card && card.cfg) ? card : { cfg: window._avatarDefaultCfg(), q: 0 };
+  /* ★ v4.55.1 記住參數:body 染色完成後可重繪名片 */
+  window._avLastCardArgs = [name, card];
   var qi = (typeof card.q === 'number' && card.q >= 0 && card.q < window.AVATAR_QUOTES.length) ? card.q : 0;
 
   var wrap = document.createElement('div');
@@ -724,6 +984,15 @@ window._avatarPreviewCard = function(){
   var name = '';
   try{ name = localStorage.getItem('lxps_nickname_' + uid) || ''; }catch(_e){}
   window._avatarOpenCard(name || _avT('我的主角','我的主角'), window._avatarLocalCard);
+};
+
+/* ★ v4.55.1 — 染色完成後,名片若開著就用同參數重繪(拿到染後圖) */
+window._avatarCardRerender = function(){
+  try{
+    if(document.getElementById('_avatar-card-modal') && window._avLastCardArgs){
+      window._avatarOpenCard(window._avLastCardArgs[0], window._avLastCardArgs[1]);
+    }
+  }catch(_e){}
 };
 
 /* 好友名單用:傳入好友 players doc(fd)與顯示名 → 開名片 */
