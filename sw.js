@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.89';   // ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.5.90';   // ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -38,6 +38,7 @@ const SHELL_URLS = [
   './main.css',
   './adv_quiz_db.js',
   './hero_db.js',
+  './avatar_db.js',
   './world-boss.js',
   './world-boss-ui.html',
   './game_changelog.js',

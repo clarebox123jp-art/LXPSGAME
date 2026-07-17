@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-17  / 目前主程式版本:v4.54.0(🌿 朱玥天賦強化 + 🔍 條件搜尋修正)
+//  最後更新:2026-07-17  / 目前主程式版本:v4.55.0(👤 主角捏臉系統 Phase 1 + 📇 冒險者名片)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,24 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.55.0 — 主角捏臉系統 Phase 1 + 冒險者名片
+  {
+    ver: 'v4.55.0',
+    date: '2026-07-17',
+    brief: [
+      '👤 搶先預告:全新功能「我的主角」即將登場!到時主畫面會出現入口按鈕,打開「造型工房」就能捏出屬於你自己的主角:4 種體型(少年/少女/小小男生/小小女生)、8 種膚色、16 種髮色、12 種瞳色,加上臉型、髮型、眉毛、眼睛、鼻子、嘴巴各 10 款,自由搭配、左邊立繪即時預覽!',
+      '🦊 還有超可愛的變身部件:精靈耳、貓耳、兔耳、狐狸耳、熊耳、狗耳,以及鹿角、龍角、天使翅膀、蝴蝶翅膀、貓尾巴、狐狸尾…有些款式上鎖了 🔒 —— 它們會在之後的「主線劇情」中解鎖,敬請期待!',
+      '📇 「冒險者名片」也會一起來!捏好造型後可以選一句名片語錄(20 句可愛台詞任你挑),按「儲存造型」存到雲端;到「🤝 好友英雄」名單,每張好友卡片會多一顆「📇」按鈕,點開就能看好友的主角造型和名片!',
+      '☁ 造型會自動存在你的帳號雲端,換一台 iPad 登入也不會不見。目前功能由老師先行測試中,正式開放請等公告,敬請期待!',
+    ],
+    items: [
+      '★ v4.55.0【管理員測試期 gating】(老師指示:先讓管理員測試·對一般玩家隱藏)單一開關 avatar_db.js 內 _AVATAR_ADMIN_ONLY=true;三層防護:①主畫面入口按鈕靜態 display:none+_avatarRefreshEntryVisibility 登入後輪詢(30 秒內·20 次×1.5s)判 _isAdminUser 才顯示 ②好友卡片 📇 按鈕渲染時同開關條件輸出 ③_avatarOpenPanel/_avatarOpenFriendCard 開頭雙保險守門(非管理員 alert「測試中敬請期待」);正式開放=把該行改 false 一處即可全員可見。',
+      '★ v4.55.0【主角捏臉系統 Phase 1·架構】全新獨立檔 avatar_db.js(部件庫+SVG 渲染器+造型工房面板+名片+雲端存取整包,index.html 僅 4 個掛鉤:mega-line 鍵/載入行/入口按鈕/好友卡片名片按鈕 → 改動最小化);部件定義 {id,type,svg,lock} 架構支援日後逐件替換 PNG 精繪(老師裁定丙案:Phase 1 SVG 全套上線·美術可漸進升級);Q 版二頭身 viewBox 360×480,色彩換色零額外資產(佔位字串 __SK__/__HC__/__EC__ 渲染時替換,膚8/髮16/瞳12 色票);幼兒體型=身體 group transform 縮矮(不另畫 path·部件 100% 共用)。',
+      '★ v4.55.0【雲端與名片】avatarCard 整包 {cfg,unlock,q,ver} 存 players/{uid} 主檔 merge:true(照 representativeHero 模式;players 主檔 allow read: 登入玩家 → firestore.rules 零修改零部署);好友名片讀 _friendHeroData 既有整份 players doc → 零額外 Firestore 讀取;寫入僅「儲存造型」按鈕單次觸發=天然節流(v4.47.0 雲端節流教訓);本機 localStorage lxps_avatarCard_{uid} 快取,面板開啟時背景拉雲端一次跨裝置還原;名片語錄選單制 20 句(不開放自由輸入·900 位國小生校園安全·老師裁定)。',
+      '★ v4.55.0【解鎖與雙版】特殊款 lock:{t:soon}=「主線劇情敬請期待」(Phase 2「萬象共鳴」主線掛真條件:獸耳↔對應英雄夥伴等);avatarCard.unlock 陣列帳本已預留(未來 GM 可補發);鐵律 1.232:全部件名稱+UI 說明文字 cute/premium 雙版(_artStyle 分流·avatar_db.js 內建 _avT 工具),主畫面入口按鈕副標註冊 _SIMPLE_TEXT_MAP;avatar_db.js 零 optional chaining、載入失敗僅 console.warn 不影響遊戲其餘功能(入口按鈕與好友名片按鈕都有 typeof 守門)。',
+      '★ v4.55.0【驗證基準變更】index.html 新增 avatar_db.js document.write 載入行 → inline script 塊 20→21(check_inline 驗證基準同步更新);sw.js v3.5.90:SHELL_URLS 新增 ./avatar_db.js(隨核心檔快取·離線可用);admin_panel.js 僅版號同步。',
+    ],
+  },
   // v4.53.0 — 新英雄 麻吉喵‧Nico
   // v4.54.0 — 朱玥天賦強化 + 條件搜尋修正
   {
@@ -293,19 +311,6 @@ window.GAME_CHANGELOG = [
       '★ v4.35.0【單一真相修法】改 _zeusIsTrueBoss 函式本體加 _isWorldBossTarget(讀 WORLD_BOSS_LINEUP)判定,一律認全 8 龍王為真 BOSS,未來新增龍王自動涵蓋;龍王改走「BOSS 分支」比例傷害(受 5000 cap)不再被秒殺。連死神收割/大嘴吸入/超能衝鋒等同源秒殺技一併修好。',
       '★ v4.35.0【安全與範圍】僅影響 _zeusIsTrueBoss() 秒殺保護判定(全保護方向);不動 _ZEUS_TRUE_BOSSES.has() 直接呼叫(checkWin BOSS 存活/尊嚴反擊結算);_applyBossLifelineProtection 對世界 BOSS 有 worldboss 早退不受影響;玩家英雄阿蘇火山/青炎龍王不在 lineup 不誤判。只改 index.html;admin_panel.js/game_changelog.js 版號同步。',
       '★ 鐵則(今後永久生效):新增冒險關 BOSS 只要進 _ZEUS_TRUE_BOSSES 權威清單,即自動享有「BOSS 尊嚴」(50%/1HP 兩段鎖血+強制爆發反擊);新增世界 BOSS 只要進 WORLD_BOSS_LINEUP,即自動享有「單次傷害上限 5,000」——任何會造成傷害的公式對世界 BOSS 都不可再出現直接秒殺/HP 剩 1/HP 比例傷害/固定傷害超過 5,000。',
-    ],
-  },
-  // v4.34.0 — 🐉 世界龍王連線戰「一場秒殺」修復
-  {
-    ver: 'v4.34.0',
-    date: '2026-07-07',
-    brief: [
-      '🐉【世界龍王連線戰「一場被秒殺」的重大漏洞修好了!】修正世界 BOSS 龍王在「連線正式討伐戰」中,極少數情況下會被單一隊伍「一場戰鬥就打掉近千萬血、瞬間擊敗」的嚴重問題。龍王的「單次最多 5,000 傷害」尊嚴限制,現在不論戰鬥途中發生什麼狀況(斷線續戰、狀態殘留等)都一律生效,再也不會整場失效被秒殺。之前因此漏洞產生的異常排行紀錄,老師可在後台單筆刪除並補償參戰同學。',
-    ],
-    items: [
-      '★ v4.34.0【乙案·龍王 cap 守門硬化·index.html】根因:doDmg 內 7 個龍王傷害 cap 站點(主路徑/固定傷害/爆擊額外的 pre-cap+終極 5000 cap+回合累計 budget)原守門為「_isWorldBossTarget(target) && _adventureStage===\'worldboss\'」兩條件同時成立才套 cap;連線正式龍王戰若中途被快照/續戰還原(_advRestoreSnapshot:_adventureStage=snap.stage)或殘留 maokong 冒險狀態把 _adventureStage 洗成非 worldboss,兩條件之一失效即「整場所有 cap 靜默全失效」→ 龍王被幾發普攻/技能秒空(排行榜 _dealt=boss.hp-boss.curHp=本場真實掉血 9.38M)。修法:新增單一真相 helper _wbCapStageOk()(恆回 true,stage 異常時 console.warn 一次診斷),7 站點守門改為「_isWorldBossTarget(target) && _wbCapStageOk()」→ 只要 target 是 WORLD_BOSS_LINEUP 八龍王之一就一律套 5000 cap,不再依賴脆弱的 _adventureStage。玩家英雄「阿蘇火山龍王/青炎龍王」名字不在 lineup、_isWorldBossTarget 回 false、絕不誤中。舊 _adventureStage 條件全部保留為註解(誤刪是大忌)。純記帳(addContribution)/FX 同步/護盾觸發/治療免疫等非 cap 站點維持原 stage 條件不動(stage 洗掉時只會少記傷害或少觸發護盾,不會造成秒殺,守保守原則)。',
-      '★ v4.34.0【GM 排行榜工具補齊全 8 龍王·admin_panel.js·後台】「🏆 世界 BOSS 排行榜管理」原寫死火山炎龍王(_bindWblbSection 的 const BOSS_ID),七隻新龍王的排名/傷害看不到也刪不了。修法:區塊加龍王下拉 _admin-wblb-boss-select(依 WORLD_BOSS_LINEUP 列全 8 龍王·標⭐當前),BOSS_ID 改 let(預設帶入當前龍王 _wbGetCurrentBossId),下拉切換即換 BOSS_ID+重新整理;讀榜/清榜/明細(逐隊英雄+等級/四冠軍/📜傷害來源明細=每位英雄每個技能名稱+累積傷害+命中次數)/勾選刪除異常紀錄/單場墓碑標記+發補償券 全部閉包共用同一 let BOSS_ID → 切龍王即全套切換,龍王名稱全動態(_wbBossName)。讓老師可隨時針對「一場秒殺/異常傷害」紀錄單筆刪除並補償參戰玩家。',
-      '★ v4.34.0【範圍與驗證】改 index.html(7 個 cap 站點守門+helper)+admin_panel.js(GM 排行榜工具);game_changelog.js 版號/公告。hero_db.js/world-boss.js/world-boss-ui.html 凍結免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.34.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.14.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.33.0 — 🐾 預設陣容記住寵物 + 🎬 爆發技影片播放順序改善
