@@ -1,7 +1,20 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
- * 版本: v4.55.0(2026-07-17)
+ * 版本: v4.55.3(2026-07-18)
  *
+ * ★ v4.55.3 — 新髮型 4 款 + 眼神部件 2 款(× 四體型 PNG)
+ *   - 髮型:齊瀏海妹妹頭(id4)掛 fImg;id7 更名「自然中捲髮/捲捲頭」並解鎖掛 fImg;
+ *     新增 id10 低馬尾、id11 超長直髮(PNG 主打,SVG 後備借既有路徑)
+ *   - 刺蝟頭(id5)PNG 版經評估後不採用,維持原 SVG 造型(PNG 模式清單自動隱藏)
+ *   - 眼神:P.eye id5 銳利鳳眼=冷酷眼睛、id4 半月垂眼=溫柔眼睛(img 四體型陣列,
+ *     渲染行以 _avImgFor 依體型解析;部件含蓋住素體原眼所需的小範圍膚色)
+ *   - 已知限制:眼神部件不吃膚色/瞳色染色(素材原色);髮型部件不受影響
+ * ★ v4.55.2 — 髮型 PNG 素材上線(短髮/長髮/高馬尾/雙馬尾 × 四體型)
+ *   - P.hair id0/2/3/6 掛 fImg 陣列(依體型 [boy,girl,kidboy,kidgirl] 取檔)
+ *   - _hairLayer 支援 fImg/bImg 為「單檔字串」或「四體型陣列」(_avImgFor 解析)
+ *   - id3 更名「自然長髮」(素材為自然垂落長髮,非僅及腰直髮)
+ *   - 素體 v2:輕薄內衣 → 運動服(少年/幼男=淡藍、少女/幼女=粉紅,T恤+及膝短褲)
+ *     圖檔同名覆蓋(body_*.png),臉部五官/眼瞳ROI 完全未動,AVATAR_BODY_META 免調
  * ★ v4.55.0 — 全新檔案:主角捏臉系統 + 名片(Phase 1)
  *   內容:
  *     1. AVATAR_PALETTES — 膚色 8 / 髮色 16 / 瞳色 12 色票
@@ -25,7 +38,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.55.1';
+window.AVATAR_DB_VERSION = 'v4.55.3';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -245,24 +258,30 @@ P.face = [
 /* ── 髮型(f=前髮壓臉上 / b=後髮壓身後,髮色) — 10 款 ── */
 P.hair = [
   { id:0, n:'清爽短髮', ns:'短短頭', lock:null,
+    fImg:['hair_short_boy.png','hair_short_girl.png','hair_short_kidboy.png','hair_short_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 22 6 -26 20 -38 32 -40 -4 10 -4 20 -1 27 8 -18 20 -28 30 -30 -2 9 0 18 5 24 6 -16 16 -24 30 -26 12 -2 26 4 34 18 4 -8 4 -18 1 -26 12 4 22 16 26 33 2 -7 3 -14 3 -22 0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
   { id:1, n:'旁分瀏海', ns:'帥氣旁分', lock:null,
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 7 1 14 2 20 4 -24 12 -36 24 -42 -2 10 0 19 4 25 4 -16 12 -26 24 -30 16 -6 52 -6 74 10 8 6 14 16 17 30 2 -6 3 -12 3 -19 0 -44 -33 -74 -80 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
   { id:2, n:'雙馬尾', ns:'雙馬尾', lock:null,
+    fImg:['hair_twin_boy.png','hair_twin_girl.png','hair_twin_kidboy.png','hair_twin_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 16 -36 28 -40 -2 9 -1 18 3 24 6 -16 16 -25 28 -28 14 -4 42 -2 58 12 8 7 13 16 16 28 2 -6 3 -12 3 -19 0 -44 -33 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
     b:'<path d="M104 140 c-16 6 -24 26 -22 48 2 24 12 46 26 56 6 4 12 2 12 -6 -6 -18 -10 -38 -10 -56 0 -16 2 -30 -6 -42 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M256 140 c16 6 24 26 22 48 -2 24 -12 46 -26 56 -6 4 -12 2 -12 -6 6 -18 10 -38 10 -56 0 -16 -2 -30 6 -42 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
-  { id:3, n:'及腰長直髮', ns:'長長直髮', lock:null,
+  { id:3, n:'自然長髮', ns:'長長頭髮', lock:null,
+    fImg:['hair_long_boy.png','hair_long_girl.png','hair_long_kidboy.png','hair_long_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 15 -36 27 -40 -2 9 -1 18 3 24 6 -16 16 -25 28 -28 14 -4 42 -2 58 12 8 7 13 16 16 28 2 -6 3 -12 3 -19 0 -44 -33 -72 -79 -72 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
     b:'<path d="M103 130 c-8 20 -12 60 -10 96 1 26 6 50 14 64 4 7 12 6 14 -2 l6 -30 c14 10 32 16 53 16 21 0 39 -6 53 -16 l6 30 c2 8 10 9 14 2 8 -14 13 -38 14 -64 2 -36 -2 -76 -10 -96 -10 -26 -40 -40 -77 -40 -37 0 -67 14 -77 40 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
   { id:4, n:'齊瀏海妹妹頭', ns:'妹妹頭', lock:null,
+    fImg:['hair_bob_boy.png','hair_bob_girl.png','hair_bob_kidboy.png','hair_bob_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 l0 10 c0 6 6 8 10 4 l14 -16 8 14 c3 5 9 5 12 0 l8 -14 10 15 c3 5 9 5 12 0 l10 -15 10 15 c3 5 9 5 12 0 l10 -15 8 14 c3 5 9 5 12 0 l8 -14 14 16 c4 4 10 2 10 -4 l0 -10 c0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
     b:'<path d="M104 132 c-6 14 -8 34 -6 52 2 16 8 28 16 34 5 3 10 1 10 -5 l0 -60 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M256 132 c6 14 8 34 6 52 -2 16 -8 28 -16 34 -5 3 -10 1 -10 -5 l0 -60 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
   { id:5, n:'活力刺蝟頭', ns:'刺刺頭', lock:null,
     f:'<path d="M180 76 c-46 0 -82 28 -82 72 0 7 1 13 2 19 3 -20 8 -32 16 -40 l-8 -22 22 12 c4 -8 10 -14 18 -18 l-2 -22 18 14 c5 -2 11 -3 16 -3 5 0 11 1 16 3 l18 -14 -2 22 c8 4 14 10 18 18 l22 -12 -8 22 c8 8 13 20 16 40 1 -6 2 -12 2 -19 0 -44 -35 -72 -82 -72 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
   { id:6, n:'高馬尾', ns:'馬尾巴', lock:null,
+    fImg:['hair_pony_boy.png','hair_pony_girl.png','hair_pony_kidboy.png','hair_pony_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 16 -37 28 -41 -2 9 0 18 4 24 6 -15 16 -24 28 -27 14 -4 40 -2 56 11 9 7 14 17 17 30 2 -6 3 -12 3 -18 0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
     b:'<path d="M226 96 c22 4 34 24 34 50 0 30 -12 60 -30 76 -6 5 -14 1 -12 -7 8 -24 12 -48 10 -70 -1 -18 -6 -34 -14 -42 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
-  { id:7, n:'波浪長捲髮', ns:'捲捲長髮', lock:{t:'soon'},
+  { id:7, n:'自然中捲髮', ns:'捲捲頭', lock:null,
+    fImg:['hair_curl_boy.png','hair_curl_girl.png','hair_curl_kidboy.png','hair_curl_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 15 -36 27 -40 -2 9 -1 18 3 24 6 -16 16 -25 28 -28 14 -4 42 -2 58 12 8 7 13 16 16 28 2 -6 3 -12 3 -19 0 -44 -33 -72 -79 -72 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
     b:'<path d="M102 132 c-10 18 -14 46 -8 70 -8 8 -10 24 -4 38 -6 10 -4 26 6 34 8 7 18 4 18 -6 12 12 30 18 46 14 12 8 28 8 40 0 16 4 34 -2 46 -14 0 10 10 13 18 6 10 -8 12 -24 6 -34 6 -14 4 -30 -4 -38 6 -24 2 -52 -8 -70 -12 -24 -42 -38 -78 -38 -36 0 -66 14 -78 38 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
   { id:8, n:'圓滾丸子頭', ns:'包包頭', lock:{t:'soon'},
@@ -270,7 +289,16 @@ P.hair = [
      +'<circle cx="180" cy="66" r="26" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
   { id:9, n:'狼尾層次髮', ns:'小狼尾', lock:{t:'soon'},
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 7 1 14 2 20 4 -22 10 -34 20 -40 l-4 -18 16 10 c6 -8 14 -13 22 -15 l0 -18 14 14 c5 -1 9 -1 14 -1 5 0 9 0 14 1 l14 -14 0 18 c8 2 16 7 22 15 l16 -10 -4 18 c10 6 16 18 20 40 1 -6 2 -13 2 -20 0 -44 -32 -74 -84 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
-    b:'<path d="M112 136 c-10 16 -14 40 -10 62 l-10 24 18 -8 2 20 14 -14 c10 8 22 13 34 15 l-48 -99 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M248 136 c10 16 14 40 10 62 l10 24 -18 -8 -2 20 -14 -14 c-10 8 -22 13 -34 15 l48 -99 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' }
+    b:'<path d="M112 136 c-10 16 -14 40 -10 62 l-10 24 18 -8 2 20 14 -14 c10 8 22 13 34 15 l-48 -99 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M248 136 c10 16 14 40 10 62 l10 24 -18 -8 -2 20 -14 -14 c-10 8 -22 13 -34 15 l48 -99 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  /* ★ v4.55.3 — 新增兩款(PNG 素材主打;SVG 後備借用既有路徑造型) */
+  { id:10, n:'低馬尾', ns:'低馬尾', lock:null,
+    fImg:['hair_lowtail_boy.png','hair_lowtail_girl.png','hair_lowtail_kidboy.png','hair_lowtail_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 16 -37 28 -41 -2 9 0 18 4 24 6 -15 16 -24 28 -27 14 -4 40 -2 56 11 9 7 14 17 17 30 2 -6 3 -12 3 -18 0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M118 150 c-14 10 -20 32 -16 56 4 26 16 48 32 58 6 4 13 0 11 -8 -10 -22 -14 -44 -13 -64 1 -16 -4 -32 -14 -42 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  { id:11, n:'超長直髮', ns:'超長頭髮', lock:null,
+    fImg:['hair_xlong_boy.png','hair_xlong_girl.png','hair_xlong_kidboy.png','hair_xlong_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 15 -36 27 -40 -2 9 -1 18 3 24 6 -16 16 -25 28 -28 14 -4 42 -2 58 12 8 7 13 16 16 28 2 -6 3 -12 3 -19 0 -44 -33 -72 -79 -72 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M103 130 c-8 20 -12 60 -10 96 1 26 6 50 14 64 4 7 12 6 14 -2 l6 -30 c14 10 32 16 53 16 21 0 39 -6 53 -16 l6 30 c2 8 10 9 14 2 8 -14 13 -38 14 -64 2 -36 -2 -76 -10 -96 -10 -26 -40 -40 -77 -40 -37 0 -67 14 -77 40 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' }
 ];
 
 /* ── 眉毛 — 10 款(髮色) ── */
@@ -295,8 +323,12 @@ P.eye = [
   { id:1, n:'標準杏眼', ns:'一般眼', lock:null, svg:eyePair('<path d="M__X__ 156 c8 0 13 5 13 11 0 7 -5 12 -13 12 -8 0 -13 -5 -13 -12 0 -6 5 -11 13 -11 z" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="168" r="7" fill="__EC__"/><circle cx="__X__" cy="165" r="2.5" fill="#fff"/>') },
   { id:2, n:'星光閃閃眼', ns:'星星眼', lock:null, svg:eyePair('<ellipse cx="__X__" cy="166" rx="13" ry="15" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="168" r="9" fill="__EC__"/><path d="M__X__ 161 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 z" fill="#fff"/>') },
   { id:3, n:'瞇瞇笑眼', ns:'瞇瞇眼', lock:null, svg:'<path d="M138 168 q12 -12 24 0" fill="none" stroke="__LN__" stroke-width="4.5" stroke-linecap="round"/><path d="M222 168 q-12 -12 -24 0" fill="none" stroke="__LN__" stroke-width="4.5" stroke-linecap="round"/>' },
-  { id:4, n:'半月垂眼', ns:'月亮眼', lock:null, svg:eyePair('<path d="M__X__ 158 c8 0 13 5 13 12 l-26 0 c0 -7 5 -12 13 -12 z" fill="#fff" stroke="__LN__" stroke-width="3"/><path d="M__X__ 162 a6 6 0 0 1 6 8 l-12 0 a6 6 0 0 1 6 -8 z" fill="__EC__"/>') },
-  { id:5, n:'銳利鳳眼', ns:'帥帥眼', lock:null, svg:eyePair('<path d="M__X__ 160 c9 -2 14 3 14 8 0 6 -5 10 -14 10 -8 0 -12 -4 -12 -9 0 -5 4 -8 12 -9 z" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="169" r="6" fill="__EC__"/>') },
+  { id:4, n:'半月垂眼', ns:'月亮眼', lock:null,
+    img:['eye_soft_boy.png','eye_soft_girl.png','eye_soft_kidboy.png','eye_soft_kidgirl.png'],
+    svg:eyePair('<path d="M__X__ 158 c8 0 13 5 13 12 l-26 0 c0 -7 5 -12 13 -12 z" fill="#fff" stroke="__LN__" stroke-width="3"/><path d="M__X__ 162 a6 6 0 0 1 6 8 l-12 0 a6 6 0 0 1 6 -8 z" fill="__EC__"/>') },
+  { id:5, n:'銳利鳳眼', ns:'帥帥眼', lock:null,
+    img:['eye_cool_boy.png','eye_cool_girl.png','eye_cool_kidboy.png','eye_cool_kidgirl.png'],
+    svg:eyePair('<path d="M__X__ 160 c9 -2 14 3 14 8 0 6 -5 10 -14 10 -8 0 -12 -4 -12 -9 0 -5 4 -8 12 -9 z" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="169" r="6" fill="__EC__"/>') },
   { id:6, n:'圓豆豆眼', ns:'豆豆眼', lock:null, svg:'<circle cx="150" cy="167" r="7" fill="__LN__"/><circle cx="210" cy="167" r="7" fill="__LN__"/><circle cx="152" cy="164" r="2" fill="#fff"/><circle cx="212" cy="164" r="2" fill="#fff"/>' },
   { id:7, n:'貓瞳眼', ns:'貓貓眼', lock:{t:'soon'}, svg:eyePair('<ellipse cx="__X__" cy="166" rx="12" ry="14" fill="#fff" stroke="__LN__" stroke-width="3"/><ellipse cx="__X__" cy="167" rx="4" ry="9" fill="__EC__"/>') },
   { id:8, n:'渦渦眼', ns:'蚊香眼', lock:{t:'soon'}, svg:'<path d="M150 167 m8 0 a8 8 0 1 1 -4 -7 a5 5 0 1 0 1 5" fill="none" stroke="__LN__" stroke-width="3.5"/><path d="M210 167 m8 0 a8 8 0 1 1 -4 -7 a5 5 0 1 0 1 5" fill="none" stroke="__LN__" stroke-width="3.5"/>' },
@@ -560,6 +592,18 @@ function _fill(svg, sk, hc, ec){
             .split('__EC__').join(ec).split('__LN__').join(LN);
 }
 
+/* ★ v4.55.2 — 部件圖檔解析:字串直接回傳;陣列依體型索引取檔
+ *   [0]=少年 body_boy、[1]=少女 body_girl、[2]=幼男 body_kidboy、[3]=幼女 body_kidgirl */
+function _avImgFor(val, bodyIdx){
+  if(!val) return val;
+  if(Object.prototype.toString.call(val) === '[object Array]'){
+    var k = bodyIdx|0;
+    if(k < 0 || k >= val.length) k = 0;
+    return val[k];
+  }
+  return val;
+}
+
 window._avatarRenderSVG = function(cfg, sizeCss){
   cfg = cfg || window._avatarDefaultCfg();
   var PAL = window.AVATAR_PALETTES;
@@ -589,6 +633,7 @@ window._avatarRenderSVG = function(cfg, sizeCss){
     }
     /* ★ v4.55.1 髮色:髮型為獨立圖層 → 整層染色(素材加入後即生效) */
     function _hairLayer(imgFile){
+      imgFile = _avImgFor(imgFile, cfg.body);   /* ★ v4.55.2 依體型解析陣列素材 */
       if(!imgFile) return '';
       if((cfg.hairC|0) > 0){
         var hk = imgFile + '|' + window.AVATAR_PALETTES.hair[cfg.hairC];
@@ -617,7 +662,7 @@ window._avatarRenderSVG = function(cfg, sizeCss){
       + _imgLayer(capePng.fImg, tf)
       + _imgLayer(_pick(P.neck, cfg.neck).img, tf)
       + _imgLayer(_pick(P.brow, cfg.brow).img, tf)
-      + _imgLayer(_pick(P.eye, cfg.eye).img, tf)
+      + _imgLayer(_avImgFor(_pick(P.eye, cfg.eye).img, cfg.body), tf)   /* ★ v4.55.3 眼神部件依體型解析 */
       + _imgLayer(_pick(P.nose, cfg.nose).img, tf)
       + _imgLayer(_pick(P.mouth, cfg.mouth).img, tf)
       + _imgLayer(_pick(P.mask, cfg.mask).img, tf)
