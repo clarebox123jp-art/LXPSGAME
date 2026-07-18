@@ -1,5 +1,30 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
+ * 版本: v4.60.0(2026-07-18)
+ *
+ * ★ v4.60.0 — 自訂角色大優化(老師六大系統裁決·管理員測試):
+ *   ① 全套換裝(P.full·v4.59.0)保留:隱藏基礎圖整張取代
+ *   ② 整頭造型(P.headfull·新):脖子以上整頭(髮+五官)一起換·素體拆層後真正隱藏素體頭,
+ *      同時隱藏 髮型層+五官替換件(眉/眼/鼻/嘴);眼鏡/帽/耳等配件照常疊加
+ *   ③ 整身造型(P.bodyfull·新):脖子以下整身換·隱藏素體身+上衣/下衣/襪/鞋圖層
+ *   ④ 素體拆層(裁決一乙):body_head_{bt}.png + body_torso_{bt}.png(頸線切割·頭件下蓋 6px
+ *      蓋接縫·重組與原素體逐像素一致);P.body 各體型加 headImg/torsoImg
+ *   ⑤ 換色引擎改「上層渲染」(裁決二):膚/瞳/眉/髮/服裝配色 全部改對「玩家套用後的
+ *      可見圖層」做選擇性染色(_avatarTintPiece:膚色域/眼框虹膜/眉框/頸上非膚=髮/
+ *      頸下非膚=服裝),取代只染基礎圖(基礎圖被取代時染了沒用);
+ *      無任何取代件時維持既有 _avatarComposeBody 整體路徑(零回歸)
+ *   ⑥ 服裝配色 clothC(裁決三乙·新):非膚色像素選擇性染·皮膚永遠排除可再調膚色;
+ *      適用 整套/整身/素體運動服/上衣/下衣/鞋 圖層;新色票 AVATAR_PALETTES.cloth 16 色
+ *   ⑦ 換髮型系統先隱藏(裁決四):頁籤移除髮型款式選單(P.hair 完整保留·cfg.hair 照常
+ *      渲染·髮色 hairC 保留可用·以後優化再開)
+ *   ⑧ 背景更換(P.bg·新):現有遊戲場景圖 14 選項(台灣/日本/埃及/小屋/至寶星空),
+ *      渲染最底層 360×480 slice 滿版
+ *   衍生素材:12 套裝各拆 整頭件 headfull_{en}_{bt}.png + 整身件 bodyfull_{en}_{bt}.png
+ *   (頸線切割·頭件連通過濾去殘片);長髮款頭件之長髮垂落段歸屬限制見各款註記
+ *   ★ 頸線位置修正(老師指正):初版誤用 ROI 參數(242/243/284/268=胸口)裁切,
+ *     重測解剖頸線(輪廓最窄列)= boy117/girl121/kidboy159/kidgirl153,全素材重裁;
+ *     並發現 META 舊 eye/brow 框整組錯位(落點在頸部)→ 新增實測 eye2/brow2,
+ *     素體染色引擎與部件染色引擎皆改用實測框(素體瞳/眉染色疑一直靜默失效,一併修復)
  * 版本: v4.59.0(2026-07-18)
  *
  * ★ v4.59.0 — 整套造型系統(整張取代基礎圖·管理員測試):
@@ -103,7 +128,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.59.0';
+window.AVATAR_DB_VERSION = 'v4.60.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -119,7 +144,10 @@ window.AVATAR_PALETTES = {
   hair: ['#3a2a24','#111318','#6b4a2f','#a5713d','#d9a441','#f2d478','#b8412f','#e2603f',
          '#7a3fa0','#4457c9','#3f8fd4','#54b98a','#3f7d4a','#d45a8f','#c9ccd4','#f5f0e6'],
   eye:  ['#5a3d2b','#2b2b33','#3f6fd4','#2e9e7a','#c9433a','#8a4fd4','#d4913f','#3fa9d4',
-         '#d45a9e','#6b7a3f','#8a8f99','#d4b23f']
+         '#d45a9e','#6b7a3f','#8a8f99','#d4b23f'],
+  /* ★ v4.60.0 服裝配色(idx0=原本的顏色不染) */
+  cloth:['#ffffff','#c9433a','#e2703f','#e8c23f','#54b98a','#2e8b8b','#3f6fd4','#2b3a6b',
+         '#8a4fd4','#d45a8f','#8a5a2f','#22222a','#f5f0e6','#8a8f99','#d4a441','#b8c4d4']
 };
 
 /* ════════════════════════════════════════
@@ -172,10 +200,16 @@ function _imgLayerSrc(src, tf){
  *   AVATAR_BODY_META 座標系 = 部件圖檔原生 504×720
  * ════════════════════════════════════════ */
 var AVATAR_BODY_META = {
-  0: { sbv:0.98, eye:[196,100,296,150], brow:[196,80,296,102]  },  /* 少年 */
-  1: { sbv:0.99, eye:[192,110,308,164], brow:[196,88,304,112]  },  /* 少女 */
-  2: { sbv:0.99, eye:[182,120,320,192], brow:[186,96,316,122]  },  /* 幼兒男 */
-  3: { sbv:0.99, eye:[180,124,318,198], brow:[184,98,314,126]  }   /* 幼兒女 */
+  /* ★ v4.60.0 實測修正(老師指正裁切位置錯誤後全面重測):
+   *   neck=頸部最窄列(素體輪廓寬度實測:boy寬35/girl28/kidboy36/kidgirl33);
+   *   eye2/brow2=素體「實測」瞳孔/眉毛框(深色blob對定位)——
+   *   ⚠ 發現原 eye/brow 座標整組錯位(boy eye 寫 y100-150 實際瞳孔在 y62-86,
+   *   落點是頸部!)→ 素體瞳色/眉色染色疑似一直靜默失效;兩引擎改用 eye2/brow2
+   *   (帶 ||fallback 舊值),舊 eye/brow 保留原值不刪(誤刪是大忌·供老師比對) */
+  0: { sbv:0.98, eye:[196,100,296,150], brow:[196,80,296,102], eye2:[213,62,281,86],  brow2:[213,36,281,60],  neck:117 },  /* 少年 */
+  1: { sbv:0.99, eye:[192,110,308,164], brow:[196,88,304,112], eye2:[215,69,287,97],  brow2:[215,43,287,67],  neck:121 },  /* 少女 */
+  2: { sbv:0.99, eye:[182,120,320,192], brow:[186,96,316,122], eye2:[205,91,297,128], brow2:[205,63,297,89],  neck:159 },  /* 幼兒男 */
+  3: { sbv:0.99, eye:[180,124,318,198], brow:[184,98,314,126], eye2:[207,90,295,124], brow2:[207,62,295,88],  neck:153 }   /* 幼兒女 */
 };
 var _avTintCache = {};
 function _avHex2Rgb(hx){
@@ -212,8 +246,9 @@ window._avatarComposeBody = function(cfg, cb){
       var cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
       var ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0);
       var d = ctx.getImageData(0, 0, W2, H2), px = d.data;
-      var ex1=meta.eye[0]*sc, ey1=meta.eye[1]*sc, ex2=meta.eye[2]*sc, ey2=meta.eye[3]*sc;
-      var bx1=meta.brow[0]*sc, by1=meta.brow[1]*sc, bx2=meta.brow[2]*sc, by2=meta.brow[3]*sc;
+      var _eyeB = meta.eye2 || meta.eye, _browB = meta.brow2 || meta.brow;   /* ★ v4.60.0 改用實測框(舊框錯位) */
+      var ex1=_eyeB[0]*sc, ey1=_eyeB[1]*sc, ex2=_eyeB[2]*sc, ey2=_eyeB[3]*sc;
+      var bx1=_browB[0]*sc, by1=_browB[1]*sc, bx2=_browB[2]*sc, by2=_browB[3]*sc;
       var sbv = meta.sbv;
       for(var i=0;i<px.length;i+=4){
         if(px[i+3] < 10) continue;
@@ -288,20 +323,124 @@ window._avatarTintLayer = function(imgFile, palHex, baseV, cb){
 var P = {};
 window.AVATAR_PARTS = P;
 
+/* ════════════════════════════════════════
+ * ★ v4.60.0 部件選擇性染色引擎(裁決二:對「玩家套用後的可見圖層」上層渲染,
+ *   染基礎圖沒用—基礎圖可能已被整套/整頭/整身件取代)
+ *   kind 決定該件適用哪些染色規則(逐像素優先序:瞳 → 眉 → 膚 → 髮 → 服裝):
+ *     'full'      整套造型件:瞳(眼框)+膚+髮(頸上非膚)+服裝(頸下非膚)
+ *     'headfull'  整頭件:瞳(眼框)+膚+髮(非膚·眼框外)
+ *     'bodyfull'  整身件:膚+服裝(非膚)
+ *     'baseHead'  素體頭:瞳+眉+膚(拆層路徑·與 _avatarComposeBody 同規則)
+ *     'baseTorso' 素體身:膚+服裝(=預設運動服可配色)
+ *     'cloth'     上衣/下衣/鞋 圖層:服裝(非膚)
+ *   膚色像素永遠排除於服裝/髮染色之外 → 玩家最後仍可獨立調膚色(裁決三乙)
+ *   快取 dataURL;染色非同步,首繪先出原色、完成後自動重繪(同既有引擎模式)
+ * ════════════════════════════════════════ */
+var _avPieceTintCache = {};
+function _avPieceNeedTint(kind, cfg){
+  var dS=(cfg.skin|0)>0, dE=(cfg.eyeC|0)>0, dB=(cfg.browC|0)>0, dH=(cfg.hairC|0)>0, dC=(cfg.clothC|0)>0;
+  if(kind==='full')      return dS||dE||dH||dC;
+  if(kind==='headfull')  return dS||dE||dH;
+  if(kind==='bodyfull')  return dS||dC;
+  if(kind==='baseHead')  return dS||dE||dB;
+  if(kind==='baseTorso') return dS||dC;
+  if(kind==='cloth')     return dC;
+  return false;
+}
+function _avPieceKey(imgFile, kind, cfg){
+  return imgFile+'|'+kind+'|b'+(cfg.body|0)+'|'+(cfg.skin|0)+'|'+(cfg.eyeC|0)+'|'
+    +(cfg.browC|0)+'|'+(cfg.hairC|0)+'|'+(cfg.clothC|0);
+}
+window._avatarTintPiece = function(imgFile, kind, cfg, cb){
+  var key = _avPieceKey(imgFile, kind, cfg);
+  if(_avPieceTintCache[key]){ cb(_avPieceTintCache[key]); return; }
+  var PAL = window.AVATAR_PALETTES;
+  var meta = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
+  var uS=false,uE=false,uB=false,uH=false,uC=false, clothBelowNeckOnly=false, hairAboveNeckOnly=false;
+  if(kind==='full'){ uS=true; uE=true; uH=true; uC=true; clothBelowNeckOnly=true; hairAboveNeckOnly=true; }
+  else if(kind==='headfull'){ uS=true; uE=true; uH=true; }
+  else if(kind==='bodyfull'){ uS=true; uC=true; }
+  else if(kind==='baseHead'){ uS=true; uE=true; uB=true; }
+  else if(kind==='baseTorso'){ uS=true; uC=true; }
+  else if(kind==='cloth'){ uC=true; }
+  var doSkin = uS && (cfg.skin|0)>0, doEye = uE && (cfg.eyeC|0)>0, doBrow = uB && (cfg.browC|0)>0;
+  var doHair = uH && (cfg.hairC|0)>0, doCloth = uC && (cfg.clothC|0)>0;
+  if(!doSkin && !doEye && !doBrow && !doHair && !doCloth){ cb(null); return; }
+  var skinT = doSkin ? _avHex2Rgb(PAL.skin[cfg.skin]) : null;
+  var eyeT  = doEye  ? _avHex2Rgb(PAL.eye[cfg.eyeC])  : null;
+  var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;
+  var hairT = doHair ? _avHex2Rgb(PAL.hair[cfg.hairC]) : null;
+  var clothT= doCloth? _avHex2Rgb(PAL.cloth[cfg.clothC]) : null;
+  var img = new Image();
+  img.onload = function(){
+    try{
+      var W2 = img.naturalWidth, H2 = img.naturalHeight;
+      var sc = W2 / 504;
+      var cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
+      var ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0);
+      var d = ctx.getImageData(0, 0, W2, H2), px = d.data;
+      var _eyeB = meta.eye2 || meta.eye, _browB = meta.brow2 || meta.brow;   /* ★ v4.60.0 改用實測框(舊框錯位) */
+      var ex1=_eyeB[0]*sc, ey1=_eyeB[1]*sc, ex2=_eyeB[2]*sc, ey2=_eyeB[3]*sc;
+      var bx1=_browB[0]*sc, by1=_browB[1]*sc, bx2=_browB[2]*sc, by2=_browB[3]*sc;
+      var neckPx = (meta.neck||117)*sc, sbv = meta.sbv;
+      for(var i=0;i<px.length;i+=4){
+        if(px[i+3] < 10) continue;
+        var r=px[i]/255, g=px[i+1]/255, b=px[i+2]/255;
+        var mx=Math.max(r,g,b), mn=Math.min(r,g,b), dd=mx-mn;
+        var v=mx, s=(mx>0)?dd/mx:0, h=0;
+        if(dd>0){
+          if(mx===r) h=60*(((g-b)/dd)%6);
+          else if(mx===g) h=60*((b-r)/dd+2);
+          else h=60*((r-g)/dd+4);
+          if(h<0) h+=360;
+        }
+        var p2=(i/4)|0, y=(p2/W2)|0, x=p2-y*W2;
+        var isSkin = (h>10 && h<46 && s>0.06 && s<0.52 && v>0.60);
+        var inEye  = (x>=ex1 && x<ex2 && y>=ey1 && y<ey2);
+        var T=null, ratio=0;
+        if(doEye && inEye && h>4 && h<52 && s>0.24 && s<0.8 && v>0.34 && v<0.82){
+          T=eyeT; ratio=v/0.55;
+        } else if(doBrow && x>=bx1 && x<bx2 && y>=by1 && y<by2
+                  && h>4 && h<52 && s>0.2 && v>0.10 && v<0.68){
+          T=browT; ratio=v/0.38;
+        } else if(doSkin && isSkin){
+          T=skinT; ratio=v/sbv;
+        } else if(doHair && !isSkin && !inEye && (!hairAboveNeckOnly || y < neckPx)){
+          T=hairT; ratio=v/0.55;
+        } else if(doCloth && !isSkin && (!clothBelowNeckOnly || y >= neckPx)){
+          T=clothT; ratio=v/0.55;
+        }
+        if(T){
+          if(ratio>1.6) ratio=1.6;
+          px[i]   = _avMapC(T[0], ratio);
+          px[i+1] = _avMapC(T[1], ratio);
+          px[i+2] = _avMapC(T[2], ratio);
+        }
+      }
+      ctx.putImageData(d, 0, 0);
+      var url = cv.toDataURL('image/png');
+      _avPieceTintCache[key] = url;
+      cb(url);
+    }catch(e){ console.warn('[avatar] 部件染色失敗(改用原圖)', e); cb(null); }
+  };
+  img.onerror = function(){ cb(null); };
+  img.src = AVATAR_IMG_BASE + imgFile;
+};
+
 /* ── 體型(身體底,膚色) ──
  * Q 版二頭身。座標基準:頸 y225 肩 y252 臀 y345 腿底 y438。
  * kid 體型不另畫 path:身體 group 套 transform 縮短(見渲染器)。 */
 P.body = [
-  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', svg:
+  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', headImg:'body_head_boy.png', torsoImg:'body_torso_boy.png', svg:
     '<path d="M180 222 c-30 2 -50 16 -52 42 l-4 78 c-1 14 8 22 18 22 l14 0 4 66 c0 6 5 9 10 9 l20 0 c5 0 10 -3 10 -9 l4 -66 14 0 c10 0 19 -8 18 -22 l-4 -78 c-2 -26 -22 -40 -52 -42 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M132 262 c-10 4 -16 14 -17 26 l-3 46 c0 8 5 13 12 13 8 0 12 -5 12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M228 262 c10 4 16 14 17 26 l3 46 c0 8 -5 13 -12 13 -8 0 -12 -5 -12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:1, n:'少女', ns:'少女', lock:null, img:'body_girl.png', svg:
+  { id:1, n:'少女', ns:'少女', lock:null, img:'body_girl.png', headImg:'body_head_girl.png', torsoImg:'body_torso_girl.png', svg:
     '<path d="M180 222 c-28 2 -46 16 -48 40 l-3 44 c-2 12 -6 22 -6 34 0 16 12 24 24 24 l8 0 3 66 c0 6 5 9 10 9 l24 0 c5 0 10 -3 10 -9 l3 -66 8 0 c12 0 24 -8 24 -24 0 -12 -4 -22 -6 -34 l-3 -44 c-2 -24 -20 -38 -48 -40 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M134 260 c-9 4 -15 13 -16 24 l-3 46 c0 8 5 13 12 13 7 0 11 -5 11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M226 260 c9 4 15 13 16 24 l3 46 c0 8 -5 13 -12 13 -7 0 -11 -5 -11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:2, n:'男童', ns:'男童', lock:null, img:'body_kidboy.png', svg:'@0' },
-  { id:3, n:'女童', ns:'女童', lock:null, img:'body_kidgirl.png', svg:'@1' }
+  { id:2, n:'男童', ns:'男童', lock:null, img:'body_kidboy.png', headImg:'body_head_kidboy.png', torsoImg:'body_torso_kidboy.png', svg:'@0' },
+  { id:3, n:'女童', ns:'女童', lock:null, img:'body_kidgirl.png', headImg:'body_head_kidgirl.png', torsoImg:'body_torso_kidgirl.png', svg:'@1' }
 ];
 /* '@N' = 借用第 N 款 path,渲染器對 id 2/3 另套幼兒縮放 transform */
 
@@ -749,6 +888,60 @@ P.full = [
     img:['fullbody_kimono_boy.png', 'fullbody_kimono_girl.png', 'fullbody_kimono_kidboy.png', 'fullbody_kimono_kidgirl.png'] }
 ];
 
+/* ── 整頭造型(★ v4.60.0 裁決二)— 脖子以上整頭(髮+五官)一起換 ──
+ * 選擇時隱藏:素體頭(拆層)+髮型層+五官替換件(眉/眼/鼻/嘴);眼鏡/帽/耳等配件照常疊加
+ * 素材=12 套裝頸線切割+連通過濾;長髮款(細劍士/紫電/水藍/女童和服)垂落至肩下的長髮
+ * 歸屬於整身件側(頸線切割限制),整頭件僅含頸線以上部分 */
+P.headfull = [
+  { id:0, n:'預設頭部', ns:'原本的頭', lock:null, img:null },
+  { id:1, n:'輕裝大劍士頭部', ns:'大劍士頭', lock:null, img:[null,null,'headfull_lightgreatsword_kidboy.png',null] },
+  { id:2, n:'華麗細劍士頭部', ns:'細劍士頭', lock:null, img:[null,'headfull_fancyrapier_girl.png',null,null] },
+  { id:3, n:'重裝鎧甲劍士頭部', ns:'鎧甲劍士頭', lock:null, img:['headfull_heavysword_boy.png',null,null,null] },
+  { id:4, n:'俏麗雙劍士頭部', ns:'雙劍士頭', lock:null, img:[null,null,null,'headfull_dualblade_kidgirl.png'] },
+  { id:5, n:'水藍魔法師頭部', ns:'水水魔法頭', lock:null, img:[null,null,null,'headfull_aquamage_kidgirl.png'] },
+  { id:6, n:'紫電魔法師頭部', ns:'閃電魔法頭', lock:null, img:[null,'headfull_thundermage_girl.png',null,null] },
+  { id:7, n:'赤紅魔法師頭部', ns:'火火魔法頭', lock:null, img:['headfull_flamemage_boy.png',null,null,null] },
+  { id:8, n:'翠綠魔法師頭部', ns:'綠綠魔法頭', lock:null, img:[null,null,'headfull_forestmage_kidboy.png',null] },
+  { id:9, n:'和服髮型頭部', ns:'和服頭', lock:null,
+    img:['headfull_kimono_boy.png','headfull_kimono_girl.png','headfull_kimono_kidboy.png','headfull_kimono_kidgirl.png'] }
+];
+
+/* ── 整身造型(★ v4.60.0 裁決三)— 脖子以下整身(衣+手腳)一起換 ──
+ * 選擇時隱藏:素體身(拆層)+上衣/下衣/襪/鞋圖層;手環/披風/項鍊/手持照常疊加 */
+P.bodyfull = [
+  { id:0, n:'預設身體', ns:'原本的身體', lock:null, img:null },
+  { id:1, n:'輕裝大劍士裝束', ns:'大劍士身', lock:null, img:[null,null,'bodyfull_lightgreatsword_kidboy.png',null] },
+  { id:2, n:'華麗細劍士裝束', ns:'細劍士身', lock:null, img:[null,'bodyfull_fancyrapier_girl.png',null,null] },
+  { id:3, n:'重裝鎧甲劍士裝束', ns:'鎧甲劍士身', lock:null, img:['bodyfull_heavysword_boy.png',null,null,null] },
+  { id:4, n:'俏麗雙劍士裝束', ns:'雙劍士身', lock:null, img:[null,null,null,'bodyfull_dualblade_kidgirl.png'] },
+  { id:5, n:'水藍魔法師裝束', ns:'水水魔法身', lock:null, img:[null,null,null,'bodyfull_aquamage_kidgirl.png'] },
+  { id:6, n:'紫電魔法師裝束', ns:'閃電魔法身', lock:null, img:[null,'bodyfull_thundermage_girl.png',null,null] },
+  { id:7, n:'赤紅魔法師裝束', ns:'火火魔法身', lock:null, img:['bodyfull_flamemage_boy.png',null,null,null] },
+  { id:8, n:'翠綠魔法師裝束', ns:'綠綠魔法身', lock:null, img:[null,null,'bodyfull_forestmage_kidboy.png',null] },
+  { id:9, n:'和服裝束', ns:'和服身', lock:null,
+    img:['bodyfull_kimono_boy.png','bodyfull_kimono_girl.png','bodyfull_kimono_kidboy.png','bodyfull_kimono_kidgirl.png'] }
+];
+
+/* ── 背景(★ v4.60.0 老師需求)— 現有遊戲場景圖·渲染最底層 360×480 slice 滿版 ──
+ * file=repo 根目錄檔名(非 avatar_parts)·id0=無背景(透明) */
+P.bg = [
+  { id:0,  n:'無背景', ns:'沒有背景', lock:null, file:null },
+  { id:1,  n:'台灣地圖', ns:'台灣地圖', lock:null, file:'台灣地圖.png' },
+  { id:2,  n:'玉山頂', ns:'玉山', lock:null, file:'玉山頂.png' },
+  { id:3,  n:'阿里山', ns:'阿里山', lock:null, file:'阿里山.png' },
+  { id:4,  n:'台北101', ns:'101大樓', lock:null, file:'台北101.png' },
+  { id:5,  n:'三峽老街', ns:'三峽老街', lock:null, file:'三峽老街.png' },
+  { id:6,  n:'深坑老街', ns:'深坑老街', lock:null, file:'深坑老街.png' },
+  { id:7,  n:'彰化老街', ns:'彰化老街', lock:null, file:'彰化老街.png' },
+  { id:8,  n:'寵物小屋', ns:'寵物小屋', lock:null, file:'寵物小屋.png' },
+  { id:9,  n:'日本古老神社', ns:'日本神社', lock:null, file:'古老神社 第二場景 大天狗路線.png' },
+  { id:10, n:'日本表參道祭典', ns:'日本祭典', lock:null, file:'表參道祭典 第一場景 共通開場.png' },
+  { id:11, n:'埃及沙漠', ns:'沙漠', lock:null, file:'埃及冒險第一關 沙漠.png' },
+  { id:12, n:'埃及金字塔', ns:'金字塔', lock:null, file:'埃及冒險第三關 金字塔.png' },
+  { id:13, n:'法老王座寶庫', ns:'黃金寶庫', lock:null, file:'埃及冒險BOSS戰背景 寶庫王座.png' },
+  { id:14, n:'至寶星空', ns:'星空', lock:null, file:'至寶背景.png' }
+];
+
 /* ── 名片語錄(玩家擇一;內容非說明文字,單版) ── */
 window.AVATAR_QUOTES = [
   '我還沒覺醒,但我很努力!','貓空纜車坐一半,人生轉彎。','超能力是什麼?能吃嗎?',
@@ -769,7 +962,8 @@ window._avatarDefaultCfg = function(){
   return { v:1, body:0, skin:0, face:0, hair:0, hairC:0, brow:0, eye:0, eyeC:0,
     nose:0, mouth:0, ear:0, horn:0, wing:0, tail:0, held:0,
     hat:0, gls:0, neck:0, wrist:0, cape:0, top:0, btm:0, sh:0, q:0,
-    browC:0, earr:0, mask:0, sock:0, full:0 };   /* ★ v4.59.0 full=整套造型 */
+    browC:0, earr:0, mask:0, sock:0, full:0,
+    headf:0, bodyf:0, bg:0, clothC:0 };   /* ★ v4.59.0 full=整套 / v4.60.0 headf=整頭 bodyf=整身 bg=背景 clothC=服裝配色 */
 };
 
 function _pick(list, idx){
@@ -842,28 +1036,66 @@ window._avatarRenderSVG = function(cfg, sizeCss){
     }
     /* 圖層序(底→頂):翅 → 披風後 → 後髮 → 尾 → 素體(含臉五官) → 襪 → 鞋 → 下衣 → 上衣
      * → 手鐲 → 披風前領 → 項鍊 → 五官替換件 → 口罩 → 前髮 → 頂耳 → 耳環 → 角 → 眼鏡 → 帽 → 手持 */
-    /* ★ v4.59.0 整套造型:整張取代素體(隱藏基礎圖·老師裁定),其餘圖層照常疊加;
-     *   膚色/瞳色染色不套用於整套素材(素材自帶完整外觀) */
+    /* ★ v4.60.0 自訂角色優化(老師六大系統):
+     *   fullPng=整套(隱藏素體全部+髮+五官件+衣物層)/ headPng=整頭(隱藏素體頭+髮+五官件)
+     *   bodyPng2=整身(隱藏素體身+上衣/下衣/襪/鞋);素體拆層 headImg/torsoImg 補未取代半邊
+     *   染色=對「套用後的可見圖層」上層渲染(_avatarTintPiece);背景=最底層場景圖 */
     var fullPng = _avImgFor(_pick(P.full, cfg.full).img, cfg.body);
+    var headPng = _avImgFor(_pick(P.headfull, cfg.headf).img, cfg.body);
+    var bodyPng2 = _avImgFor(_pick(P.bodyfull, cfg.bodyf).img, cfg.body);
+    var hideHead = !!(fullPng || headPng);   /* 隱藏素體頭+髮型層+五官替換件 */
+    var hideBody = !!(fullPng || bodyPng2);  /* 隱藏素體身+上衣/下衣/襪/鞋 */
+    function _pieceLayer(imgFile, kind){
+      imgFile = _avImgFor(imgFile, cfg.body);
+      if(!imgFile) return '';
+      if(!_avPieceNeedTint(kind, cfg)) return _imgLayer(imgFile, tf);
+      var pk = _avPieceKey(imgFile, kind, cfg);
+      if(_avPieceTintCache[pk]) return _imgLayerSrc(_avPieceTintCache[pk], tf);
+      window._avatarTintPiece(imgFile, kind, cfg, function(u){
+        if(!u) return;
+        try{ _avRefreshPreview(); }catch(_e){}
+        try{ if(typeof window._avatarCardRerender === 'function') window._avatarCardRerender(); }catch(_e){}
+      });
+      return _imgLayer(imgFile, tf);   /* 首繪先出原色,染完自動重繪 */
+    }
+    function _bgLayer(){
+      var bgd = _pick(P.bg, cfg.bg);
+      if(!bgd || !bgd.file) return '';
+      var u = './' + encodeURI(bgd.file) + '?v=' + (window.AVATAR_DB_VERSION || '');
+      return '<image href="' + u + '" xlink:href="' + u + '" x="0" y="0" width="360" height="480" preserveAspectRatio="xMidYMid slice"/>';
+    }
+    /* 素體/取代件圖層組合:
+     *   整套 → 單張 full;有頭或身取代 → 拆層(身層先·頭層後蓋接縫);
+     *   皆未取代 → 維持既有整體路徑(compose 染色·零回歸) */
+    var baseLayers;
+    if(fullPng){
+      baseLayers = _pieceLayer(fullPng, 'full');
+    } else if(hideHead || hideBody){
+      baseLayers = (bodyPng2 ? _pieceLayer(bodyPng2, 'bodyfull') : _pieceLayer(bodyDef.torsoImg, 'baseTorso'))
+                 + (headPng ? _pieceLayer(headPng, 'headfull') : _pieceLayer(bodyDef.headImg, 'baseHead'));
+    } else {
+      baseLayers = (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf));
+    }
     var png = ''
+      + _bgLayer()   /* ★ v4.60.0 背景最底層 */
       + _imgLayer(_pick(P.wing, cfg.wing).img, tf)
       + _imgLayer(capePng.bImg, tf)
-      + _hairLayer(hairD.bImg)
+      + (hideHead ? '' : _hairLayer(hairD.bImg))   /* ★ v4.60.0 整頭/整套時隱藏髮型層 */
       + _imgLayer(_pick(P.tail, cfg.tail).img, tf)
-      + (fullPng ? _imgLayer(fullPng, tf) : (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf)))   /* ★ v4.59.0 fullPng 優先=隱藏素體 */
-      + _imgLayer(_avImgFor(_pick(P.sock, cfg.sock).img, cfg.body), tf)   /* ★ v4.55.5 襪/鞋/下衣/上衣/耳/眼鏡同步支援四體型陣列 */
-      + _imgLayer(_avImgFor(_pick(P.shoe, cfg.sh).img, cfg.body), tf)
-      + _imgLayer(_avImgFor(_pick(P.btm, cfg.btm).img, cfg.body), tf)
-      + _imgLayer(_avImgFor(_pick(P.top, cfg.top).img, cfg.body), tf)
+      + baseLayers
+      + (hideBody ? '' : _pieceLayer(_pick(P.sock, cfg.sock).img, 'cloth'))   /* ★ v4.60.0 整身/整套時隱藏衣物層;clothC 服裝配色染色 */
+      + (hideBody ? '' : _pieceLayer(_pick(P.shoe, cfg.sh).img, 'cloth'))
+      + (hideBody ? '' : _pieceLayer(_pick(P.btm, cfg.btm).img, 'cloth'))
+      + (hideBody ? '' : _pieceLayer(_pick(P.top, cfg.top).img, 'cloth'))
       + _imgLayer(_pick(P.wrist, cfg.wrist).img, tf)
       + _imgLayer(capePng.fImg, tf)
       + _imgLayer(_pick(P.neck, cfg.neck).img, tf)
-      + _imgLayer(_avImgFor(_pick(P.brow, cfg.brow).img, cfg.body), tf)   /* ★ v4.55.4 眉/鼻/嘴同步支援四體型陣列 */
-      + _imgLayer(_avImgFor(_pick(P.eye, cfg.eye).img, cfg.body), tf)   /* ★ v4.55.3 眼神部件依體型解析 */
-      + _imgLayer(_avImgFor(_pick(P.nose, cfg.nose).img, cfg.body), tf)
-      + _imgLayer(_avImgFor(_pick(P.mouth, cfg.mouth).img, cfg.body), tf)
+      + (hideHead ? '' : _imgLayer(_avImgFor(_pick(P.brow, cfg.brow).img, cfg.body), tf))   /* ★ v4.60.0 整頭/整套時隱藏五官替換件 */
+      + (hideHead ? '' : _imgLayer(_avImgFor(_pick(P.eye, cfg.eye).img, cfg.body), tf))
+      + (hideHead ? '' : _imgLayer(_avImgFor(_pick(P.nose, cfg.nose).img, cfg.body), tf))
+      + (hideHead ? '' : _imgLayer(_avImgFor(_pick(P.mouth, cfg.mouth).img, cfg.body), tf))
       + _imgLayer(_pick(P.mask, cfg.mask).img, tf)
-      + _hairLayer(hairD.fImg)
+      + (hideHead ? '' : _hairLayer(hairD.fImg))
       + _imgLayer(_avImgFor(earPng.img, cfg.body), tf)
       + _imgLayer(_pick(P.earring, cfg.earr).img, tf)
       + _imgLayer(_pick(P.horn, cfg.horn).img, tf)
@@ -1022,18 +1254,25 @@ window._avatarPullFromCloud = function(){
  *   { k:'cardTab', p:'名片',   c:'名片',   cats:[['q','名片語錄','名片的話']] }
  * ]; */
 var _AV_TABS = [
-  { k:'hairTab', p:'換髮型', c:'換頭髮', cats:[['hair','髮型','髮型'],['hairC','髮色','頭髮顏色']] },
+  /* ★ v4.60.0 頁籤重構(老師六大系統):造型分頁置首(整套/整頭/整身/服裝配色/背景);
+   *   髮型款式選單先隱藏(裁決四·P.hair 完整保留·cfg.hair 照常渲染·以後優化再開),
+   *   髮色保留於「髮色」分頁;舊 v4.58.1 頁籤定義保留於下方註解可復原 */
+  { k:'styleTab', p:'造型', c:'裝扮', cats:[['full','整套造型','整套裝扮'],['headfull','整頭造型','換頭頭'],['bodyfull','整身造型','換身體裝'],['clothC','服裝配色','衣服顏色'],['bg','背景','背景']] },
+  { k:'hairTab', p:'髮色', c:'頭髮顏色', cats:[['hairC','髮色','頭髮顏色']] },
   { k:'faceTab', p:'換臉', c:'換臉臉', cats:[['eye','眼睛','眼睛'],['eyeC','瞳孔顏色','眼睛顏色'],['mouth','嘴巴','嘴巴'],['gls','眼鏡','眼鏡'],['ear','耳朵','耳朵'],['browC','眉毛顏色','眉毛顏色']] },
-  { k:'bodyTab', p:'換身體', c:'換身體', cats:[['body','體型','體型'],['skin','膚色','皮膚顏色'],['full','整套造型','整套裝扮'],['top','上衣/套裝','衣服'],['btm','褲子','褲褲'],['sh','鞋子','鞋鞋']] },   /* ★ v4.59.0 加整套造型 */
+  { k:'bodyTab', p:'換身體', c:'換身體', cats:[['body','體型','體型'],['skin','膚色','皮膚顏色'],['top','上衣/套裝','衣服'],['btm','褲子','褲褲'],['sh','鞋子','鞋鞋']] },
   { k:'heldTab', p:'手持', c:'拿的', cats:[['held','手拿物品','拿什麼']] },
   { k:'cardTab', p:'名片', c:'名片', cats:[['q','座右銘','名片的話']] }
 ];
+/* ★ v4.58.1 舊頁籤(v4.60.0 前·髮型款式選單在此·誤刪是大忌):
+ * { k:'hairTab', p:'換髮型', c:'換頭髮', cats:[['hair','髮型','髮型'],['hairC','髮色','頭髮顏色']] },
+ * { k:'bodyTab', ... ['full','整套造型','整套裝扮'] 原在換身體分頁 ... } */
 var _AV_CFG_KEY = { body:'body', skin:'skin', face:'face', brow:'brow', eye:'eye', eyeC:'eyeC',
   nose:'nose', mouth:'mouth', hair:'hair', hairC:'hairC', ear:'ear', horn:'horn', wing:'wing',
   tail:'tail', top:'top', btm:'btm', sh:'sh', hat:'hat', gls:'gls', neck:'neck', wrist:'wrist',
   cape:'cape', held:'held', q:'q',
   browC:'browC', earring:'earr', mask:'mask', sock:'sock',
-  full:'full' };   /* ★ v4.59.0 整套造型 */
+  full:'full', headfull:'headf', bodyfull:'bodyf', bg:'bg', clothC:'clothC' };   /* ★ v4.59.0 整套 / v4.60.0 整頭/整身/背景/服裝配色 */
 var _avCurTab = 0;
 
 function _avEsc(t){
@@ -1128,9 +1367,10 @@ function _avRenderOpts(){
         + _avT('髮色引擎已就緒:髮型素材加入後,選好的髮色會自動套用','選好頭髮顏色,等髮型的圖加進來就會變色囉!') + '</div>';
     }
     h += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-    if(cat === 'skin' || cat === 'hairC' || cat === 'eyeC' || cat === 'browC'){
+    if(cat === 'skin' || cat === 'hairC' || cat === 'eyeC' || cat === 'browC' || cat === 'clothC'){
       var pal = (cat === 'skin') ? window.AVATAR_PALETTES.skin
-              : (cat === 'eyeC') ? window.AVATAR_PALETTES.eye : window.AVATAR_PALETTES.hair;
+              : (cat === 'eyeC') ? window.AVATAR_PALETTES.eye
+              : (cat === 'clothC') ? window.AVATAR_PALETTES.cloth : window.AVATAR_PALETTES.hair;   /* ★ v4.60.0 服裝配色色票 */
       for(var i=0;i<pal.length;i++){
         var sel = (cfg[cat] === i || (!cfg[cat] && i === 0));
         var tt = (i === 0) ? _avT('原本的顏色','原本的顏色') : (_avT('色票','顏色') + ' ' + (i+1));
@@ -1156,7 +1396,7 @@ function _avRenderOpts(){
         var it = list[j];
         /* ★ PNG 模式:只顯示「當前體型」有素材的款式(fImg/img/bImg 支援四體型陣列,
          *   缺格為 null → 該體型自動隱藏);j===0 的預設款(素體內建外觀)永遠顯示 — v4.58.0 */
-        if(pngMode && j !== 0){
+        if(pngMode && j !== 0 && cat !== 'bg'){   /* ★ v4.60.0 背景項用 file 欄位·不做素材過濾 */
           var _hasPiece = _avImgFor(it.img, cfg.body) || _avImgFor(it.fImg, cfg.body) || _avImgFor(it.bImg, cfg.body);
           if(!_hasPiece) continue;
         }

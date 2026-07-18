@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-18  / 目前主程式版本:v4.59.0(👤 主角整套造型系統 12 件)
+//  最後更新:2026-07-18  / 目前主程式版本:v4.60.0(👤 自訂角色大優化:整頭/整身/配色/背景)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.60.0 — 👤 我的主角:自訂角色大優化(整頭/整身/配色/背景·管理員測試中)
+  {
+    ver: 'v4.60.0',
+    date: '2026-07-18',
+    brief: [
+      '👤【我的主角・大優化!(老師測試中)】全新「造型」分頁登場:除了整套換裝,現在還可以「只換整顆頭」或「只換整個身體」!劍士的頭配和服的身體?魔法師的頭配鎧甲?自由混搭!',
+      '🎨 全新「服裝配色」:16 種顏色一鍵改變衣服色系,皮膚永遠不會被染到,膚色可以另外調!瞳色、髮色、膚色現在換上任何造型後都照樣可以調整!',
+      '🖼 全新「背景更換」:14 個遊戲場景任你選!台灣地圖、玉山頂、阿里山、台北101、三峽/深坑/彰化老街、寵物小屋、日本神社、日本祭典、埃及沙漠、金字塔、黃金寶庫、至寶星空,讓你的主角站在最喜歡的地方!',
+      '💇 髮型款式選單暫時收起來優化中(髮色照常可調),之後會以更棒的方式回歸,敬請期待!',
+    ],
+    items: [
+      '★ v4.60.0【自訂角色優化・avatar_db.js】老師六大系統裁決全實裝:①素體拆層(裁決一乙)body_head/body_torso_{bt}.png 頸線切割(頭件下蓋6px蓋接縫·重組與原素體逐像素一致maxdiff=1)·P.body 加 headImg/torsoImg ②P.headfull 整頭造型(隱藏素體頭+髮型層+眉/眼/鼻/嘴五官件·眼鏡/帽/耳照常疊)③P.bodyfull 整身造型(隱藏素體身+上衣/下衣/襪/鞋層)·衍生素材=12套裝頸線切割24件(整頭件連通過濾去劍柄/肩甲殘片·長髮款垂落段歸整身件側=頸線切割已知限制)④換色引擎改上層渲染(裁決二·染基礎圖沒用已被取代):新 _avatarTintPiece 選擇性染色(逐像素優先序 瞳眼框虹膜→眉框→膚色域→髮=非膚眼框外→服裝=非膚·kind 分 full/headfull/bodyfull/baseHead/baseTorso/cloth 六類規則)·無任何取代件維持既有 _avatarComposeBody 整體路徑零回歸 ⑤clothC 服裝配色(裁決三乙·AVATAR_PALETTES.cloth 16色·膚色像素永遠排除可再調膚色·適用整套/整身/素體運動服/上衣/下衣/鞋層·和服實測可染px與膚+頸上保護區重疊=0)⑥髮型款式選單隱藏(裁決四·P.hair 完整保留·cfg.hair 照常渲染·hairC 髮色保留·舊頁籤註解可復原)⑦P.bg 背景 14 場景(repo 根目錄現有圖·渲染最底層 360×480 slice·encodeURI 處理中文空格檔名·PNG模式清單過濾對 bg 豁免)⑧頁籤重構:造型(整套/整頭/整身/服裝配色/背景)/髮色/換臉/換身體/手持/名片;cfg 新增 headf/bodyf/bg/clothC 四鍵·舊存檔 _pick 容錯退 id0 完全相容;素材 32 件(8 拆層+24 衍生)放 avatar_parts/;index.html/admin_panel.js 僅版號同步。',
+    ],
+  },
   // v4.59.0 — 👤 我的主角:整套造型系統(12 件·管理員測試中)
   {
     ver: 'v4.59.0',
@@ -299,21 +313,6 @@ window.GAME_CHANGELOG = [
       '★ v4.39.0【順序重排·index.html】全螢幕色彩遮罩 flashScreen 由 execBurst 開頭「延到影片結束的 _bvDone」,與 _showBurstGif(原技能特效·含自帶音效)+ _runBurst(傷害/治療)同時登場→順序=爆發音效 sfx-burst + 招式名文字 bannerFX + 右側特寫大圖 + 集中線『先出現』→影片播→動畫完畢→技能特效+音效+色彩遮罩+傷害/治療。爆發音效 sfx-burst 維持在開頭(第一步)。',
       '★ v4.39.0【非影片路徑零改動·index.html】無爆發影片的英雄與世界BOSS(else 分支)沒有動畫要等,色彩遮罩 flashScreen 補回 else 分支開頭,維持與 v4.38.0 前完全一致的時序,杜絕回歸。',
       '★ v4.39.0【範圍與驗證】只改 index.html(_playBurstVideo 靜音起播+playing 解靜音、execBurst 色彩遮罩分流至影片路徑 _bvDone / 非影片路徑 else 開頭);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.39.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.19.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.38.0 — 🎬 三支爆發影片改成和特寫圖同時出現、並完全取代、而且有聲音
-  {
-    ver: 'v4.38.0',
-    date: '2026-07-07',
-    brief: [
-      '🎬【爆發動畫時機修好了!】藝天使．克雷爾、主神奧汀、魔劍姬‧伊莉雅(神魔滅斬)這三支爆發動畫,現在會「和右邊那張爆發特寫大圖同時出現、並完全取代它」——不會再發生「特寫圖先跑出來、影片卻慢半拍才姍姍現身」的情況(尤其學校網路比較慢時)。',
-      '🔊【爆發動畫有聲音了!】這三支影片本身帶的聲音現在會播出來,魄力更足!',
-    ],
-    items: [
-      '★ v4.38.0【影片就緒才淡入·index.html】_playBurstVideo 的淡入時機由「一 append overlay 就 requestAnimationFrame 淡入」改為「影片可顯示畫面(loadeddata/playing/canplay 任一,0.8s 兜底)才淡入」→ 淡入的是真正有畫面的影片,而非空白 overlay,消除載入延遲造成的視覺空窗。',
-      '★ v4.38.0【撐住靜態特寫盒直到影片覆蓋·index.html】爆發路徑(execBurst)下 _showBurstCinematic 的右側靜態特寫盒 #burst-img-panel 改「撐住模式」:不再固定 2 秒自動淡出,存參照(_bvHold.imgPanel)交由影片結束/跳過的 _bvDone 統一淡出移除→影片就緒瞬間覆蓋(取代)特寫圖、兩者同時呈現,無「特寫圖已消失、影片尚未出現」的落差。非影片英雄仍走原本 2 秒淡出時序,零改動。',
-      '★ v4.38.0【解除靜音·帶聲音播放·index.html】_playBurstVideo 的 video 由 v.muted=true 改 v.muted=false/volume=1(老師更新的三支影片已含音軌)。帶聲音的自動播放若被瀏覽器擋(play() reject),退回「靜音重播」讓影片仍照常出現(絕不整支略過);伊莉雅技能影片神魔滅斬同走此播放器=一併解靜音+就緒才顯示。',
-      '★ v4.38.0【範圍與驗證】只改 index.html(_showBurstCinematic 撐住 imgPanel + execBurst _bvDone 收尾 imgPanel + _playBurstVideo 解靜音/就緒才淡入/被擋退回靜音);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.38.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.18.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
