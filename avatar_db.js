@@ -1,5 +1,23 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
+ * 版本: v4.59.0(2026-07-18)
+ *
+ * ★ v4.59.0 — 整套造型系統(整張取代基礎圖·管理員測試):
+ *   - 新分類 P.full「整套造型」(換身體頁籤·cfg.full·id0=無 自由搭配):
+ *     選擇整套造型時「隱藏素體基礎圖」,直接以整張 fullbody 素材取代(老師裁定),
+ *     其餘圖層(髮型/眼鏡/帽子/手持等)照常疊加,玩家可自行搭配或保留預設
+ *   - 首批 12 件素材(504×720 同素體規格·頭頂腳底已對齊素體幾何·切換不跳動):
+ *     劍士系列 4(輕裝大劍士=男童/華麗細劍士=少女/重裝鎧甲劍士=少年/俏麗雙劍士=女童)
+ *     魔法師系列 4(水藍=女童/紫電=少女/赤紅=少年/翠綠=男童)
+ *     日式和服 1 款四體型齊全;缺體型格 null 佔位該體型自動隱藏(沿用 v4.58.0 機制)
+ *   - 素材檔名 fullbody_{en}_{body}.png 放 avatar_parts/;名稱雙版(鐵律 1.232)
+ * 版本: v4.58.1(2026-07-18)
+ *
+ * ★ v4.58.1 — 老師實測修正:①棋盤格裁切根治(aligned 圖透明背景匯出成灰白棋盤格被
+ *   當髮件抽入 → remove_bg 加「中灰低飽和全域清除」+小連通塊精修,八款問題髮型
+ *   [刺頭/超長髮/中分/大馬尾/公主頭/制服/精靈長髮/雙馬尾]四體型殘留降 <0.2%)
+ *   ②預覽立繪放大至 80vh(PC+iPad 同步·左欄 flex 46%/max 640)③體型幼兒(男)/(女)
+ *   →男童/女童 ④換身體頁加「手持」分類復原(held·素材待補顯繪製中)⑤名片語錄→座右銘
  * 版本: v4.58.0(2026-07-18)
  *
  * ★ v4.58.0 — 差異法乾淨素材 122 件正式接線(管理員測試)
@@ -85,7 +103,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.58.0';
+window.AVATAR_DB_VERSION = 'v4.59.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -282,8 +300,8 @@ P.body = [
     '<path d="M180 222 c-28 2 -46 16 -48 40 l-3 44 c-2 12 -6 22 -6 34 0 16 12 24 24 24 l8 0 3 66 c0 6 5 9 10 9 l24 0 c5 0 10 -3 10 -9 l3 -66 8 0 c12 0 24 -8 24 -24 0 -12 -4 -22 -6 -34 l-3 -44 c-2 -24 -20 -38 -48 -40 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M134 260 c-9 4 -15 13 -16 24 l-3 46 c0 8 5 13 12 13 7 0 11 -5 11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M226 260 c9 4 15 13 16 24 l3 46 c0 8 -5 13 -12 13 -7 0 -11 -5 -11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:2, n:'幼兒(男)', ns:'小小男生', lock:null, img:'body_kidboy.png', svg:'@0' },
-  { id:3, n:'幼兒(女)', ns:'小小女生', lock:null, img:'body_kidgirl.png', svg:'@1' }
+  { id:2, n:'男童', ns:'男童', lock:null, img:'body_kidboy.png', svg:'@0' },
+  { id:3, n:'女童', ns:'女童', lock:null, img:'body_kidgirl.png', svg:'@1' }
 ];
 /* '@N' = 借用第 N 款 path,渲染器對 id 2/3 另套幼兒縮放 transform */
 
@@ -706,6 +724,31 @@ P.shoe = [
     svg:shoeP('#22222a') }
 ];
 
+/* ── 整套造型(★ v4.59.0)— 整張取代素體基礎圖(選擇時隱藏素體·老師裁定) ──
+ * img=[少年,少女,男童,女童] 四體型陣列·缺格 null 該體型自動隱藏(沿用 v4.58.0 機制)
+ * 素材 504×720 同素體規格·頭頂/腳底已對齊素體幾何·其餘圖層(髮/鏡/帽/手持)照常疊加 */
+P.full = [
+  { id:0, n:'無(自由搭配)', ns:'自己搭配', lock:null, img:null },
+  { id:1, n:'輕裝大劍士套裝', ns:'大劍士裝', lock:null,
+    img:[null, null, 'fullbody_lightgreatsword_kidboy.png', null] },
+  { id:2, n:'華麗細劍士套裝', ns:'細劍士裝', lock:null,
+    img:[null, 'fullbody_fancyrapier_girl.png', null, null] },
+  { id:3, n:'重裝鎧甲劍士套裝', ns:'鎧甲劍士裝', lock:null,
+    img:['fullbody_heavysword_boy.png', null, null, null] },
+  { id:4, n:'俏麗雙劍士套裝', ns:'雙劍士裝', lock:null,
+    img:[null, null, null, 'fullbody_dualblade_kidgirl.png'] },
+  { id:5, n:'水藍魔法師套裝', ns:'水水魔法裝', lock:null,
+    img:[null, null, null, 'fullbody_aquamage_kidgirl.png'] },
+  { id:6, n:'紫電魔法師套裝', ns:'閃電魔法裝', lock:null,
+    img:[null, 'fullbody_thundermage_girl.png', null, null] },
+  { id:7, n:'赤紅魔法師套裝', ns:'火火魔法裝', lock:null,
+    img:['fullbody_flamemage_boy.png', null, null, null] },
+  { id:8, n:'翠綠魔法師套裝', ns:'綠綠魔法裝', lock:null,
+    img:[null, null, 'fullbody_forestmage_kidboy.png', null] },
+  { id:9, n:'日式和服', ns:'和服', lock:null,
+    img:['fullbody_kimono_boy.png', 'fullbody_kimono_girl.png', 'fullbody_kimono_kidboy.png', 'fullbody_kimono_kidgirl.png'] }
+];
+
 /* ── 名片語錄(玩家擇一;內容非說明文字,單版) ── */
 window.AVATAR_QUOTES = [
   '我還沒覺醒,但我很努力!','貓空纜車坐一半,人生轉彎。','超能力是什麼?能吃嗎?',
@@ -726,7 +769,7 @@ window._avatarDefaultCfg = function(){
   return { v:1, body:0, skin:0, face:0, hair:0, hairC:0, brow:0, eye:0, eyeC:0,
     nose:0, mouth:0, ear:0, horn:0, wing:0, tail:0, held:0,
     hat:0, gls:0, neck:0, wrist:0, cape:0, top:0, btm:0, sh:0, q:0,
-    browC:0, earr:0, mask:0, sock:0 };
+    browC:0, earr:0, mask:0, sock:0, full:0 };   /* ★ v4.59.0 full=整套造型 */
 };
 
 function _pick(list, idx){
@@ -799,12 +842,15 @@ window._avatarRenderSVG = function(cfg, sizeCss){
     }
     /* 圖層序(底→頂):翅 → 披風後 → 後髮 → 尾 → 素體(含臉五官) → 襪 → 鞋 → 下衣 → 上衣
      * → 手鐲 → 披風前領 → 項鍊 → 五官替換件 → 口罩 → 前髮 → 頂耳 → 耳環 → 角 → 眼鏡 → 帽 → 手持 */
+    /* ★ v4.59.0 整套造型:整張取代素體(隱藏基礎圖·老師裁定),其餘圖層照常疊加;
+     *   膚色/瞳色染色不套用於整套素材(素材自帶完整外觀) */
+    var fullPng = _avImgFor(_pick(P.full, cfg.full).img, cfg.body);
     var png = ''
       + _imgLayer(_pick(P.wing, cfg.wing).img, tf)
       + _imgLayer(capePng.bImg, tf)
       + _hairLayer(hairD.bImg)
       + _imgLayer(_pick(P.tail, cfg.tail).img, tf)
-      + (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf))
+      + (fullPng ? _imgLayer(fullPng, tf) : (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf)))   /* ★ v4.59.0 fullPng 優先=隱藏素體 */
       + _imgLayer(_avImgFor(_pick(P.sock, cfg.sock).img, cfg.body), tf)   /* ★ v4.55.5 襪/鞋/下衣/上衣/耳/眼鏡同步支援四體型陣列 */
       + _imgLayer(_avImgFor(_pick(P.shoe, cfg.sh).img, cfg.body), tf)
       + _imgLayer(_avImgFor(_pick(P.btm, cfg.btm).img, cfg.body), tf)
@@ -978,14 +1024,16 @@ window._avatarPullFromCloud = function(){
 var _AV_TABS = [
   { k:'hairTab', p:'換髮型', c:'換頭髮', cats:[['hair','髮型','髮型'],['hairC','髮色','頭髮顏色']] },
   { k:'faceTab', p:'換臉', c:'換臉臉', cats:[['eye','眼睛','眼睛'],['eyeC','瞳孔顏色','眼睛顏色'],['mouth','嘴巴','嘴巴'],['gls','眼鏡','眼鏡'],['ear','耳朵','耳朵'],['browC','眉毛顏色','眉毛顏色']] },
-  { k:'bodyTab', p:'換身體', c:'換身體', cats:[['body','體型','體型'],['skin','膚色','皮膚顏色'],['top','上衣/套裝','衣服'],['btm','褲子','褲褲'],['sh','鞋子','鞋鞋']] },
-  { k:'cardTab', p:'名片', c:'名片', cats:[['q','名片語錄','名片的話']] }
+  { k:'bodyTab', p:'換身體', c:'換身體', cats:[['body','體型','體型'],['skin','膚色','皮膚顏色'],['full','整套造型','整套裝扮'],['top','上衣/套裝','衣服'],['btm','褲子','褲褲'],['sh','鞋子','鞋鞋']] },   /* ★ v4.59.0 加整套造型 */
+  { k:'heldTab', p:'手持', c:'拿的', cats:[['held','手拿物品','拿什麼']] },
+  { k:'cardTab', p:'名片', c:'名片', cats:[['q','座右銘','名片的話']] }
 ];
 var _AV_CFG_KEY = { body:'body', skin:'skin', face:'face', brow:'brow', eye:'eye', eyeC:'eyeC',
   nose:'nose', mouth:'mouth', hair:'hair', hairC:'hairC', ear:'ear', horn:'horn', wing:'wing',
   tail:'tail', top:'top', btm:'btm', sh:'sh', hat:'hat', gls:'gls', neck:'neck', wrist:'wrist',
   cape:'cape', held:'held', q:'q',
-  browC:'browC', earring:'earr', mask:'mask', sock:'sock' };
+  browC:'browC', earring:'earr', mask:'mask', sock:'sock',
+  full:'full' };   /* ★ v4.59.0 整套造型 */
 var _avCurTab = 0;
 
 function _avEsc(t){
@@ -1023,8 +1071,8 @@ window._avatarOpenPanel = function(){
     + '</div></div>'
     /* 主體:左預覽 + 右選單 */
     + '<div style="flex:1;display:flex;min-height:0;">'
-    + '<div style="flex:0 0 42%;max-width:420px;display:flex;align-items:center;justify-content:center;padding:12px;background:radial-gradient(circle at 50% 42%,rgba(120,160,255,0.14),transparent 65%);">'
-    + '<div id="_av-preview" style="width:100%;max-width:360px;aspect-ratio:3/4;"></div></div>'
+    + '<div style="flex:0 0 46%;max-width:640px;display:flex;align-items:center;justify-content:center;padding:12px;background:radial-gradient(circle at 50% 42%,rgba(120,160,255,0.14),transparent 65%);">'
+    + '<div id="_av-preview" style="height:80vh;max-height:80vh;aspect-ratio:3/4;width:auto;max-width:100%;"></div></div>'
     + '<div style="flex:1;display:flex;flex-direction:column;min-width:0;border-left:1.5px solid rgba(140,200,255,0.25);">'
     + '<div id="_av-tabs" style="display:flex;gap:6px;padding:10px 12px 6px;overflow-x:auto;flex-shrink:0;"></div>'
     + '<div id="_av-opts" style="flex:1;overflow-y:auto;padding:6px 14px 20px;"></div>'

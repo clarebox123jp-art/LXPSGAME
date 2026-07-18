@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-18  / 目前主程式版本:v4.58.0(👤 自訂主角三大類+全新素材上線)
+//  最後更新:2026-07-18  / 目前主程式版本:v4.59.0(👤 主角整套造型系統 12 件)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,9 +12,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
-  // v4.58.0 — 👤 我的主角大改版:三大類打扮 + 全新素材上線(管理員測試中)
+  // v4.59.0 — 👤 我的主角:整套造型系統(12 件·管理員測試中)
   {
-    ver: 'v4.58.0',
+    ver: 'v4.59.0',
+    date: '2026-07-18',
+    brief: [
+      '👤【我的主角・整套造型登場!(老師測試中)】「換身體」新增「整套造型」:一鍵直接換上整套帥氣/漂亮的完整裝扮,連髮型姿勢都完美搭配好!',
+      '⚔ 劍士系列 4 套:輕裝大劍士(男童)/華麗細劍士(少女)/重裝鎧甲劍士(少年)/俏麗雙劍士(女童),背著大劍握著細劍超有冒險者風範!',
+      '🧙 魔法師系列 4 套:水藍(女童)/紫電(少女)/赤紅(少年)/翠綠(男童),四色魔法袍加披風,走到哪都是最亮眼的魔法師!',
+      '👘 日式和服 1 款四種體型通通有!選「無(自由搭配)」就回到原本自由混搭模式;整套造型只有你的體型有的才會出現,之後會陸續補齊其他體型,敬請期待!',
+    ],
+    items: [
+      '★ v4.59.0【整套造型系統・avatar_db.js】新分類 P.full「整套造型」(換身體頁籤·cfg.full·id0=無 自由搭配):選擇時「隱藏素體基礎圖」直接以整張 fullbody 素材取代(老師裁定),其餘圖層(髮型/眼鏡/帽子/手持等)照常疊加;渲染器素體層改 fullPng 優先(fullPng ? 整套 : 素體染色/素體),膚色/瞳色染色不套用於整套素材(素材自帶完整外觀);首批 12 件=劍士 4(輕裝大劍士 kidboy/華麗細劍士 girl/重裝鎧甲劍士 boy/俏麗雙劍士 kidgirl)+魔法師 4(水藍 kidgirl/紫電 girl/赤紅 boy/翠綠 kidboy)+日式和服四體型齊;素材 504×720 同素體規格·頭頂/腳底對齊素體幾何(切換造型大小不跳動)·檔名 fullbody_{en}_{body}.png 放 avatar_parts/;缺體型格 null 佔位該體型自動隱藏(沿用 v4.58.0 _avImgFor per-body 機制);名稱全雙版(鐵律1.232);_avatarDefaultCfg/_AV_CFG_KEY 補 full 欄位·舊存檔無 full 鍵 _pick 容錯退 id0 完全相容;index.html/admin_panel.js 僅版號同步。',
+    ],
+  },
+  // v4.58.1 — 👤 我的主角:髮型裁切修復 + 介面放大(管理員測試中)
+  {
+    ver: 'v4.58.1',
     date: '2026-07-18',
     brief: [
       '👤【我的主角・造型工房 大改版!(老師測試中)】打扮方式變得超簡單:只有「換髮型」「換臉」「換身體」三大類加名片語錄,一眼就知道要按哪裡!',
@@ -300,21 +314,6 @@ window.GAME_CHANGELOG = [
       '★ v4.38.0【撐住靜態特寫盒直到影片覆蓋·index.html】爆發路徑(execBurst)下 _showBurstCinematic 的右側靜態特寫盒 #burst-img-panel 改「撐住模式」:不再固定 2 秒自動淡出,存參照(_bvHold.imgPanel)交由影片結束/跳過的 _bvDone 統一淡出移除→影片就緒瞬間覆蓋(取代)特寫圖、兩者同時呈現,無「特寫圖已消失、影片尚未出現」的落差。非影片英雄仍走原本 2 秒淡出時序,零改動。',
       '★ v4.38.0【解除靜音·帶聲音播放·index.html】_playBurstVideo 的 video 由 v.muted=true 改 v.muted=false/volume=1(老師更新的三支影片已含音軌)。帶聲音的自動播放若被瀏覽器擋(play() reject),退回「靜音重播」讓影片仍照常出現(絕不整支略過);伊莉雅技能影片神魔滅斬同走此播放器=一併解靜音+就緒才顯示。',
       '★ v4.38.0【範圍與驗證】只改 index.html(_showBurstCinematic 撐住 imgPanel + execBurst _bvDone 收尾 imgPanel + _playBurstVideo 解靜音/就緒才淡入/被擋退回靜音);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.38.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.18.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.37.0 — 🎬 三支爆發技動畫更新 + 改成覆蓋右邊大特寫圖
-  {
-    ver: 'v4.37.0',
-    date: '2026-07-07',
-    brief: [
-      '🎬【爆發技動畫大改版!】藝天使．克雷爾、主神奧汀、魔劍姬‧伊莉雅(神魔滅斬)這三支爆發動畫都更新了新版本;而且播放方式改了——以前動畫是「鑲嵌在畫面正中央上方的小框」,現在改成「直接覆蓋右邊那張爆發特寫大圖」,尺寸放大到跟特寫圖一樣大,出現時機也和特寫圖同時,魄力更足!',
-      '✨【往後新英雄也一樣】未來新的 SSR 英雄若有動畫版爆發特寫,也會用這個「覆蓋右邊大特寫圖」的方式呈現。',
-    ],
-    items: [
-      '★ v4.37.0【影片破快取重抓·index.html】老師更新了三支影片檔(天界彩繪動畫/神魔滅斬動畫/諸神的黃昏·同檔名內容變)。_BV_RAW 產生影片 URL 時附上 ?v=<版本>(讀 _LXPS_FILE_VERSIONS[\'index.html\']),每次版本 bump 即產生新 URL → 客戶端強制重抓最新影片(raw.githubusercontent 忽略未知 query 照常回檔);解決「同檔名被瀏覽器/SW 快取成舊影片」。',
-      '★ v4.37.0【取消中央鑲嵌·改覆蓋右側靜態特寫大圖片·index.html】_ensureBurstVideoStyle 的 #_bv-overlay 由「畫面正中上方 left:50%+translateX·width:58%·height:50%·z60」改為「right:0;top:0;width:600px;height:100%·z461·object-fit:cover」——與右側靜態特寫盒 #burst-img-panel(z460)完全同框同尺寸,影片以 z461 覆蓋在靜態特寫圖之上、集中效果線(z462)與招式名大字(z465)仍疊在最上。播放器 _playBurstVideo 與觸發流程(execBurst 撐住模式→建立特寫圖→緊接播影片)不變,故影片出現時機同特寫圖。',
-      '★ v4.37.0【伊莉雅技能影片統一·資料驅動可擴充】魔劍姬 gated S1「神魔滅斬」技能影片同樣落在右側特寫框(統一呈現)。未來 SSR 動畫版爆發特寫只需在 _BURST_VIDEO_DB 加一筆(url 用 _BV_RAW(\'檔名.mp4\')),即自動走「覆蓋右側特寫」做法,無需改邏輯。',
-      '★ v4.37.0【範圍與驗證】只改 index.html(_BV_RAW 破快取 + _ensureBurstVideoStyle 定位/尺寸/object-fit + 規格註解);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.37.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.17.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
