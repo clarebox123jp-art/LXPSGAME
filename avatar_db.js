@@ -1,7 +1,27 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
- * 版本: v4.55.3(2026-07-18)
+ * 版本: v4.55.5(2026-07-18)
  *
+ * ★ v4.55.5 — 老師 20 張變體圖第三批:8 套造型 76 件 PNG 部件(× 四體型)
+ *   - 髮型 7 款:id15 學生制服短髮、id16 精靈金色長捲、id17 斯文旁分頭、id18 雙辮子髮、
+ *     id19 紳士油頭、id20 單側俏馬尾、id21 西瓜皮短髮(fImg 四體型;SVG 後備借近似路徑)
+ *   - 眼神:id12 高傲自信眼(含挑眉,精靈配套;含膚色補丁層)
+ *   - 耳朵:id1 精靈長耳掛 PNG 並解鎖(原 SVG 保留後備)
+ *   - 眼鏡:id4 經典黑框眼鏡(PNG 四體型)
+ *   - 上衣 6 款:id10 白T恤、id11 學生制服套裝、id12 藍色連身長裙、id13 紳士西裝、
+ *     id14 粉紅小洋裝、id15 吊帶短褲裝(洋裝/西裝/吊帶=連身整套佔上衣槽)
+ *   - 下衣:id10 休閒牛仔褲;鞋 3 款:id10 帆布鞋、id11 學生皮鞋襪、id12 黑亮皮鞋
+ *   - 渲染行:襪/鞋/下衣/上衣/耳/眼鏡 img 同步套 _avImgFor(支援四體型陣列)
+ *   - 素材說明:制服/便服/精靈/眼鏡款為四體型原生;長裙/西裝/洋裝/吊帶為單體型
+ *     跨體型幾何合成(肩寬+頸地比映射),品質次於原生,可日後補生成替換
+ * ★ v4.55.4 — 老師 12 張變體圖第二批:髮型 3 款 + 眼 3 款 + 嘴 3 款(× 四體型 PNG)
+ *   - 髮型:id12 中分清爽短髮、id13 飄逸大馬尾、id14 公主頭髮辮(fImg 四體型;
+ *     SVG fallback 借用近似既有路徑:中分←旁分、大馬尾←高馬尾、公主頭←妹妹頭)
+ *   - 眼神:id3 瞇瞇笑眼掛 img(素材化);新增 id10 自信神采眼、id11 柔弱水汪眼
+ *   - 嘴型:id0 開心微笑掛 img;新增 id10 得意露齒笑、id11 委屈抿嘴
+ *   - 眼/嘴部件均內建「膚色補丁層」精準蓋住素體原五官(素體眼線/眉/嘴不外露)
+ *   - 渲染行:眉/鼻/嘴 img 同步套 _avImgFor(v4.55.3 只有眼有)
+ *   - 素材:本批衣服與耳朵與素體同款同色(變體圖以原素體生成)→ 無新服裝/耳件
  * ★ v4.55.3 — 新髮型 4 款 + 眼神部件 2 款(× 四體型 PNG)
  *   - 髮型:齊瀏海妹妹頭(id4)掛 fImg;id7 更名「自然中捲髮/捲捲頭」並解鎖掛 fImg;
  *     新增 id10 低馬尾、id11 超長直髮(PNG 主打,SVG 後備借既有路徑)
@@ -38,7 +58,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.55.3';
+window.AVATAR_DB_VERSION = 'v4.55.5';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -298,7 +318,45 @@ P.hair = [
   { id:11, n:'超長直髮', ns:'超長頭髮', lock:null,
     fImg:['hair_xlong_boy.png','hair_xlong_girl.png','hair_xlong_kidboy.png','hair_xlong_kidgirl.png'],
     f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 15 -36 27 -40 -2 9 -1 18 3 24 6 -16 16 -25 28 -28 14 -4 42 -2 58 12 8 7 13 16 16 28 2 -6 3 -12 3 -19 0 -44 -33 -72 -79 -72 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
-    b:'<path d="M103 130 c-8 20 -12 60 -10 96 1 26 6 50 14 64 4 7 12 6 14 -2 l6 -30 c14 10 32 16 53 16 21 0 39 -6 53 -16 l6 30 c2 8 10 9 14 2 8 -14 13 -38 14 -64 2 -36 -2 -76 -10 -96 -10 -26 -40 -40 -77 -40 -37 0 -67 14 -77 40 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' }
+    b:'<path d="M103 130 c-8 20 -12 60 -10 96 1 26 6 50 14 64 4 7 12 6 14 -2 l6 -30 c14 10 32 16 53 16 21 0 39 -6 53 -16 l6 30 c2 8 10 9 14 2 8 -14 13 -38 14 -64 2 -36 -2 -76 -10 -96 -10 -26 -40 -40 -77 -40 -37 0 -67 14 -77 40 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  /* ★ v4.55.4(2026-07-18)— 老師 12 張變體圖第二批:中分/大馬尾/公主頭(SVG fallback 沿用近似款式路徑) */
+  { id:12, n:'中分清爽短髮', ns:'中分頭', lock:null,
+    fImg:['hair_mid_boy.png','hair_mid_girl.png','hair_mid_kidboy.png','hair_mid_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 7 1 14 2 20 4 -24 12 -36 24 -42 -2 10 0 19 4 25 4 -16 12 -26 24 -30 16 -6 52 -6 74 10 8 6 14 16 17 30 2 -6 3 -12 3 -19 0 -44 -33 -74 -80 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
+  { id:13, n:'飄逸大馬尾', ns:'大馬尾', lock:null,
+    fImg:['hair_bigtail_boy.png','hair_bigtail_girl.png','hair_bigtail_kidboy.png','hair_bigtail_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 16 -37 28 -41 -2 9 0 18 4 24 6 -15 16 -24 28 -27 14 -4 40 -2 56 11 9 7 14 17 17 30 2 -6 3 -12 3 -18 0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M226 96 c22 4 34 24 34 50 0 30 -12 60 -30 76 -6 5 -14 1 -12 -7 8 -24 12 -48 10 -70 -1 -18 -6 -34 -14 -42 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  { id:14, n:'公主頭髮辮', ns:'公主頭', lock:null,
+    fImg:['hair_princess_boy.png','hair_princess_girl.png','hair_princess_kidboy.png','hair_princess_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 l0 10 c0 6 6 8 10 4 l14 -16 8 14 c3 5 9 5 12 0 l8 -14 10 15 c3 5 9 5 12 0 l10 -15 10 15 c3 5 9 5 12 0 l10 -15 8 14 c3 5 9 5 12 0 l8 -14 14 16 c4 4 10 2 10 -4 l0 -10 c0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M104 132 c-6 14 -8 34 -6 52 2 16 8 28 16 34 5 3 10 1 10 -5 l0 -60 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M256 132 c6 14 8 34 6 52 -2 16 -8 28 -16 34 -5 3 -10 1 -10 -5 l0 -60 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批:7 款髮型(SVG fallback 借近似既有路徑:
+   *   制服頭←清爽短髮、精靈捲捲←中捲、旁分頭/油亮頭←旁分瀏海、辮子頭/西瓜頭←妹妹頭、側馬尾←高馬尾) */
+  { id:15, n:'學生制服短髮', ns:'制服頭', lock:null,
+    fImg:['hair_uniform_boy.png','hair_uniform_girl.png','hair_uniform_kidboy.png','hair_uniform_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 22 6 -26 20 -38 32 -40 -4 10 -4 20 -1 27 8 -18 20 -28 30 -30 -2 9 0 18 5 24 6 -16 16 -24 30 -26 12 -2 26 4 34 18 4 -8 4 -18 1 -26 12 4 22 16 26 33 2 -7 3 -14 3 -22 0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
+  { id:16, n:'精靈金色長捲', ns:'精靈捲捲', lock:null,
+    fImg:['hair_elf_boy.png','hair_elf_girl.png','hair_elf_kidboy.png','hair_elf_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 15 -36 27 -40 -2 9 -1 18 3 24 6 -16 16 -25 28 -28 14 -4 42 -2 58 12 8 7 13 16 16 28 2 -6 3 -12 3 -19 0 -44 -33 -72 -79 -72 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M102 132 c-10 18 -14 46 -8 70 -8 8 -10 24 -4 38 -6 10 -4 26 6 34 8 7 18 4 18 -6 12 12 30 18 46 14 12 8 28 8 40 0 16 4 34 -2 46 -14 0 10 10 13 18 6 10 -8 12 -24 6 -34 6 -14 4 -30 -4 -38 6 -24 2 -52 -8 -70 -12 -24 -42 -38 -78 -38 -36 0 -66 14 -78 38 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  { id:17, n:'斯文旁分頭', ns:'旁分頭', lock:null,
+    fImg:['hair_sidepart_boy.png','hair_sidepart_girl.png','hair_sidepart_kidboy.png','hair_sidepart_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 7 1 14 2 20 4 -24 12 -36 24 -42 -2 10 0 19 4 25 4 -16 12 -26 24 -30 16 -6 52 -6 74 10 8 6 14 16 17 30 2 -6 3 -12 3 -19 0 -44 -33 -74 -80 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
+  { id:18, n:'雙辮子髮', ns:'辮子頭', lock:null,
+    fImg:['hair_braids_boy.png','hair_braids_girl.png','hair_braids_kidboy.png','hair_braids_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 l0 10 c0 6 6 8 10 4 l14 -16 8 14 c3 5 9 5 12 0 l8 -14 10 15 c3 5 9 5 12 0 l10 -15 10 15 c3 5 9 5 12 0 l10 -15 8 14 c3 5 9 5 12 0 l8 -14 14 16 c4 4 10 2 10 -4 l0 -10 c0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M104 132 c-6 14 -8 34 -6 52 2 16 8 28 16 34 5 3 10 1 10 -5 l0 -60 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M256 132 c6 14 8 34 6 52 -2 16 -8 28 -16 34 -5 3 -10 1 -10 -5 l0 -60 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  { id:19, n:'紳士油頭', ns:'油亮頭', lock:null,
+    fImg:['hair_slick_boy.png','hair_slick_girl.png','hair_slick_kidboy.png','hair_slick_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 7 1 14 2 20 4 -24 12 -36 24 -42 -2 10 0 19 4 25 4 -16 12 -26 24 -30 16 -6 52 -6 74 10 8 6 14 16 17 30 2 -6 3 -12 3 -19 0 -44 -33 -74 -80 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' },
+  { id:20, n:'單側俏馬尾', ns:'側馬尾', lock:null,
+    fImg:['hair_sideponytail_boy.png','hair_sideponytail_girl.png','hair_sideponytail_kidboy.png','hair_sideponytail_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 0 8 1 15 3 21 5 -24 16 -37 28 -41 -2 9 0 18 4 24 6 -15 16 -24 28 -27 14 -4 40 -2 56 11 9 7 14 17 17 30 2 -6 3 -12 3 -18 0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>',
+    b:'<path d="M226 96 c22 4 34 24 34 50 0 30 -12 60 -30 76 -6 5 -14 1 -12 -7 8 -24 12 -48 10 -70 -1 -18 -6 -34 -14 -42 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>' },
+  { id:21, n:'西瓜皮短髮', ns:'西瓜頭', lock:null,
+    fImg:['hair_mushroom_boy.png','hair_mushroom_girl.png','hair_mushroom_kidboy.png','hair_mushroom_kidgirl.png'],
+    f:'<path d="M180 74 c-48 0 -84 30 -84 74 l0 10 c0 6 6 8 10 4 l14 -16 8 14 c3 5 9 5 12 0 l8 -14 10 15 c3 5 9 5 12 0 l10 -15 10 15 c3 5 9 5 12 0 l10 -15 8 14 c3 5 9 5 12 0 l8 -14 14 16 c4 4 10 2 10 -4 l0 -10 c0 -44 -32 -74 -79 -74 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/>', b:'' }
 ];
 
 /* ── 眉毛 — 10 款(髮色) ── */
@@ -322,7 +380,9 @@ P.eye = [
   { id:0, n:'圓亮大眼', ns:'圓圓眼', lock:null, svg:eyePair('<ellipse cx="__X__" cy="166" rx="13" ry="15" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="168" r="8" fill="__EC__"/><circle cx="__X__" cy="164" r="3" fill="#fff"/>') },
   { id:1, n:'標準杏眼', ns:'一般眼', lock:null, svg:eyePair('<path d="M__X__ 156 c8 0 13 5 13 11 0 7 -5 12 -13 12 -8 0 -13 -5 -13 -12 0 -6 5 -11 13 -11 z" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="168" r="7" fill="__EC__"/><circle cx="__X__" cy="165" r="2.5" fill="#fff"/>') },
   { id:2, n:'星光閃閃眼', ns:'星星眼', lock:null, svg:eyePair('<ellipse cx="__X__" cy="166" rx="13" ry="15" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="168" r="9" fill="__EC__"/><path d="M__X__ 161 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 z" fill="#fff"/>') },
-  { id:3, n:'瞇瞇笑眼', ns:'瞇瞇眼', lock:null, svg:'<path d="M138 168 q12 -12 24 0" fill="none" stroke="__LN__" stroke-width="4.5" stroke-linecap="round"/><path d="M222 168 q-12 -12 -24 0" fill="none" stroke="__LN__" stroke-width="4.5" stroke-linecap="round"/>' },
+  { id:3, n:'瞇瞇笑眼', ns:'瞇瞇眼', lock:null,
+    img:['eye_smile_boy.png','eye_smile_girl.png','eye_smile_kidboy.png','eye_smile_kidgirl.png'],   /* ★ v4.55.4 老師變體圖素材 */
+    svg:'<path d="M138 168 q12 -12 24 0" fill="none" stroke="__LN__" stroke-width="4.5" stroke-linecap="round"/><path d="M222 168 q-12 -12 -24 0" fill="none" stroke="__LN__" stroke-width="4.5" stroke-linecap="round"/>' },
   { id:4, n:'半月垂眼', ns:'月亮眼', lock:null,
     img:['eye_soft_boy.png','eye_soft_girl.png','eye_soft_kidboy.png','eye_soft_kidgirl.png'],
     svg:eyePair('<path d="M__X__ 158 c8 0 13 5 13 12 l-26 0 c0 -7 5 -12 13 -12 z" fill="#fff" stroke="__LN__" stroke-width="3"/><path d="M__X__ 162 a6 6 0 0 1 6 8 l-12 0 a6 6 0 0 1 6 -8 z" fill="__EC__"/>') },
@@ -332,7 +392,18 @@ P.eye = [
   { id:6, n:'圓豆豆眼', ns:'豆豆眼', lock:null, svg:'<circle cx="150" cy="167" r="7" fill="__LN__"/><circle cx="210" cy="167" r="7" fill="__LN__"/><circle cx="152" cy="164" r="2" fill="#fff"/><circle cx="212" cy="164" r="2" fill="#fff"/>' },
   { id:7, n:'貓瞳眼', ns:'貓貓眼', lock:{t:'soon'}, svg:eyePair('<ellipse cx="__X__" cy="166" rx="12" ry="14" fill="#fff" stroke="__LN__" stroke-width="3"/><ellipse cx="__X__" cy="167" rx="4" ry="9" fill="__EC__"/>') },
   { id:8, n:'渦渦眼', ns:'蚊香眼', lock:{t:'soon'}, svg:'<path d="M150 167 m8 0 a8 8 0 1 1 -4 -7 a5 5 0 1 0 1 5" fill="none" stroke="__LN__" stroke-width="3.5"/><path d="M210 167 m8 0 a8 8 0 1 1 -4 -7 a5 5 0 1 0 1 5" fill="none" stroke="__LN__" stroke-width="3.5"/>' },
-  { id:9, n:'愛心眼', ns:'愛心眼', lock:{t:'soon'}, svg:eyePair('<path d="M__X__ 176 c-8 -6 -12 -11 -12 -15 0 -4 3 -6 6 -6 3 0 5 2 6 4 1 -2 3 -4 6 -4 3 0 6 2 6 6 0 4 -4 9 -12 15 z" fill="__EC__" stroke="__LN__" stroke-width="2.5"/>') }
+  { id:9, n:'愛心眼', ns:'愛心眼', lock:{t:'soon'}, svg:eyePair('<path d="M__X__ 176 c-8 -6 -12 -11 -12 -15 0 -4 3 -6 6 -6 3 0 5 2 6 4 1 -2 3 -4 6 -4 3 0 6 2 6 6 0 4 -4 9 -12 15 z" fill="__EC__" stroke="__LN__" stroke-width="2.5"/>') },
+  /* ★ v4.55.4(2026-07-18)— 老師 12 張變體圖第二批:神氣眼(壞壞笑)/水汪眼(柔弱) */
+  { id:10, n:'自信神采眼', ns:'神氣眼', lock:null,
+    img:['eye_sly_boy.png','eye_sly_girl.png','eye_sly_kidboy.png','eye_sly_kidgirl.png'],
+    svg:eyePair('<path d="M__X__ 160 c9 -2 14 3 14 8 0 6 -5 10 -14 10 -8 0 -12 -4 -12 -9 0 -5 4 -8 12 -9 z" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="169" r="6" fill="__EC__"/>') },
+  { id:11, n:'柔弱水汪眼', ns:'水汪眼', lock:null,
+    img:['eye_gentle_boy.png','eye_gentle_girl.png','eye_gentle_kidboy.png','eye_gentle_kidgirl.png'],
+    svg:eyePair('<ellipse cx="__X__" cy="166" rx="13" ry="15" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="168" r="8" fill="__EC__"/><circle cx="__X__" cy="164" r="3" fill="#fff"/>') },
+  /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批:高傲眼(含挑眉,精靈套裝配套;SVG 後備借鳳眼路徑) */
+  { id:12, n:'高傲自信眼', ns:'高傲眼', lock:null,
+    img:['eye_proud_boy.png','eye_proud_girl.png','eye_proud_kidboy.png','eye_proud_kidgirl.png'],
+    svg:eyePair('<path d="M__X__ 160 c9 -2 14 3 14 8 0 6 -5 10 -14 10 -8 0 -12 -4 -12 -9 0 -5 4 -8 12 -9 z" fill="#fff" stroke="__LN__" stroke-width="3"/><circle cx="__X__" cy="169" r="6" fill="__EC__"/>') }
 ];
 
 /* ── 鼻子 — 10 款 ── */
@@ -351,7 +422,9 @@ P.nose = [
 
 /* ── 嘴巴 — 10 款 ── */
 P.mouth = [
-  { id:0, n:'開心微笑', ns:'微笑嘴', lock:null, svg:'<path d="M166 206 q14 12 28 0" fill="none" stroke="__LN__" stroke-width="4" stroke-linecap="round"/>' },
+  { id:0, n:'開心微笑', ns:'微笑嘴', lock:null,
+    img:['mouth_smile_boy.png','mouth_smile_girl.png','mouth_smile_kidboy.png','mouth_smile_kidgirl.png'],   /* ★ v4.55.4 老師變體圖素材 */
+    svg:'<path d="M166 206 q14 12 28 0" fill="none" stroke="__LN__" stroke-width="4" stroke-linecap="round"/>' },
   { id:1, n:'大笑開口', ns:'哈哈嘴', lock:null, svg:'<path d="M162 204 q18 22 36 0 z" fill="#8a3040" stroke="__LN__" stroke-width="3"/><path d="M168 210 q12 8 24 0 l0 4 q-12 8 -24 0 z" fill="#ff9aa8"/>' },
   { id:2, n:'抿嘴淺笑', ns:'小小笑', lock:null, svg:'<path d="M172 208 q8 5 16 0" fill="none" stroke="__LN__" stroke-width="3.5" stroke-linecap="round"/>' },
   { id:3, n:'驚訝圓嘴', ns:'哇哇嘴', lock:null, svg:'<ellipse cx="180" cy="209" rx="7" ry="9" fill="#8a3040" stroke="__LN__" stroke-width="3"/>' },
@@ -360,14 +433,22 @@ P.mouth = [
   { id:6, n:'吐舌俏皮', ns:'吐舌頭', lock:null, svg:'<path d="M166 205 q14 10 28 0" fill="none" stroke="__LN__" stroke-width="3.5" stroke-linecap="round"/><path d="M176 208 q4 10 10 8 q4 -2 2 -9 z" fill="#ff8898" stroke="__LN__" stroke-width="2.5"/>' },
   { id:7, n:'小虎牙笑', ns:'小虎牙', lock:{t:'soon'}, svg:'<path d="M164 204 q16 16 32 0 z" fill="#8a3040" stroke="__LN__" stroke-width="3"/><path d="M170 205 l5 0 -2.5 6 z" fill="#fff"/><path d="M185 205 l5 0 -2.5 6 z" fill="#fff"/>' },
   { id:8, n:'波浪困惑嘴', ns:'歪歪嘴', lock:{t:'soon'}, svg:'<path d="M166 208 q5 -5 10 0 q4 5 9 0 q4 -5 9 0" fill="none" stroke="__LN__" stroke-width="3.5" stroke-linecap="round"/>' },
-  { id:9, n:'鴨鴨嘴', ns:'鴨鴨嘴', lock:{t:'soon'}, svg:'<path d="M170 204 q10 -5 20 0 q-4 6 -10 6 q-6 0 -10 -6 z" fill="#ffb64f" stroke="__LN__" stroke-width="2.5"/><path d="M170 206 q10 3 20 0" fill="none" stroke="__LN__" stroke-width="2"/>' }
+  { id:9, n:'鴨鴨嘴', ns:'鴨鴨嘴', lock:{t:'soon'}, svg:'<path d="M170 204 q10 -5 20 0 q-4 6 -10 6 q-6 0 -10 -6 z" fill="#ffb64f" stroke="__LN__" stroke-width="2.5"/><path d="M170 206 q10 3 20 0" fill="none" stroke="__LN__" stroke-width="2"/>' },
+  /* ★ v4.55.4(2026-07-18)— 老師 12 張變體圖第二批:嘿嘿嘴(壞壞笑)/癟癟嘴(柔弱) */
+  { id:10, n:'得意露齒笑', ns:'嘿嘿嘴', lock:null,
+    img:['mouth_sly_boy.png','mouth_sly_girl.png','mouth_sly_kidboy.png','mouth_sly_kidgirl.png'],
+    svg:'<path d="M164 204 q16 16 32 0 z" fill="#8a3040" stroke="__LN__" stroke-width="3"/><path d="M167 205 q13 5 26 0 l0 5 q-13 5 -26 0 z" fill="#fff"/>' },
+  { id:11, n:'委屈抿嘴', ns:'癟癟嘴', lock:null,
+    img:['mouth_gentle_boy.png','mouth_gentle_girl.png','mouth_gentle_kidboy.png','mouth_gentle_kidgirl.png'],
+    svg:'<path d="M172 210 q8 -6 16 0" fill="none" stroke="__LN__" stroke-width="4" stroke-linecap="round"/>' }
 ];
 
 /* ── 耳朵 — 7 款(0=人耳臉側;獸耳掛頭頂,精靈耳臉側) ── */
 P.ear = [
   { id:0, n:'一般耳', ns:'一般耳', lock:null, pos:'side',
     svg:'<ellipse cx="102" cy="168" rx="9" ry="13" fill="__SK__" stroke="__LN__" stroke-width="3"/><ellipse cx="258" cy="168" rx="9" ry="13" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:1, n:'精靈長耳', ns:'精靈耳', lock:{t:'soon'}, pos:'side',
+  { id:1, n:'精靈長耳', ns:'精靈耳', lock:null, pos:'side',   /* ★ v4.55.5 掛 PNG 素材並解鎖(老師 20 張變體圖第三批) */
+    img:['ear_elf_boy.png','ear_elf_girl.png','ear_elf_kidboy.png','ear_elf_kidgirl.png'],
     svg:'<path d="M104 160 c-14 -4 -28 -12 -36 -24 6 20 14 34 30 40 6 2 10 -2 10 -8 z" fill="__SK__" stroke="__LN__" stroke-width="3"/><path d="M256 160 c14 -4 28 -12 36 -24 -6 20 -14 34 -30 40 -6 2 -10 -2 -10 -8 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
   { id:2, n:'貓貓耳', ns:'貓耳朵', lock:{t:'soon'}, pos:'top',
     svg:'<path d="M118 108 l-8 -34 32 18 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M122 104 l-4 -18 16 9 z" fill="#ffb0c4"/><path d="M242 108 l8 -34 -32 18 z" fill="__HC__" stroke="__LN__" stroke-width="3.5"/><path d="M238 104 l4 -18 -16 9 z" fill="#ffb0c4"/>' },
@@ -466,7 +547,11 @@ P.glasses = [
   { id:2, n:'方框眼鏡', ns:'方眼鏡', lock:{t:'soon'},
     svg:'<g fill="none" stroke="__LN__" stroke-width="3.5"><rect x="132" y="152" width="36" height="28" rx="6"/><rect x="192" y="152" width="36" height="28" rx="6"/><path d="M168 164 l24 0 M132 160 l-24 -5 M228 160 l24 -5"/></g>' },
   { id:3, n:'星星墨鏡', ns:'酷墨鏡', lock:{t:'soon'},
-    svg:'<g stroke="__LN__" stroke-width="3"><path d="M132 154 l7 20 -20 -13 24 0 -20 13 z M192 154 l7 20 -20 -13 24 0 -20 13 z" fill="#2b2b33" transform="translate(11 0) scale(1.55) translate(-58 -87)"/><path d="M130 152 l40 0 4 26 -48 0 z" fill="#2b2b33"/><path d="M190 152 l40 0 4 26 -48 0 z" fill="#2b2b33"/><path d="M170 162 l20 0 M130 158 l-22 -5 M234 158 l22 -5" fill="none"/></g>' }
+    svg:'<g stroke="__LN__" stroke-width="3"><path d="M132 154 l7 20 -20 -13 24 0 -20 13 z M192 154 l7 20 -20 -13 24 0 -20 13 z" fill="#2b2b33" transform="translate(11 0) scale(1.55) translate(-58 -87)"/><path d="M130 152 l40 0 4 26 -48 0 z" fill="#2b2b33"/><path d="M190 152 l40 0 4 26 -48 0 z" fill="#2b2b33"/><path d="M170 162 l20 0 M130 158 l-22 -5 M234 158 l22 -5" fill="none"/></g>' },
+  /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批:黑框眼鏡(PNG 四體型;SVG 後備借方框路徑) */
+  { id:4, n:'經典黑框眼鏡', ns:'黑框眼鏡', lock:null,
+    img:['glasses_black_boy.png','glasses_black_girl.png','glasses_black_kidboy.png','glasses_black_kidgirl.png'],
+    svg:'<g fill="none" stroke="#22222a" stroke-width="5"><rect x="132" y="152" width="36" height="28" rx="6"/><rect x="192" y="152" width="36" height="28" rx="6"/><path d="M168 164 l24 0 M132 160 l-24 -6 M228 160 l24 -6"/></g>' }
 ];
 P.neck = [
   { id:0, n:'無', ns:'不戴', lock:null, svg:'' },
@@ -520,7 +605,27 @@ P.top = [
   { id:6, n:'和風羽織', ns:'和服', lock:{t:'soon'}, svg:topBase('#3f4d8a','<path d="M180 232 l-24 44 M180 232 l24 44" stroke="#e8eef8" stroke-width="4"/><path d="M148 300 l64 0 0 12 -64 0 z" fill="#c94848" stroke="__LN__" stroke-width="2.5"/>') },
   { id:7, n:'鎧甲胸擋', ns:'鎧甲', lock:{t:'soon'}, svg:topBase('#8a94a8','<path d="M158 244 l44 0 c6 22 4 44 -22 56 -26 -12 -28 -34 -22 -56 z" fill="#b8c4d4" stroke="__LN__" stroke-width="3"/><path d="M180 258 l5 9 -5 9 -5 -9 z" fill="#ffd35a" stroke="__LN__" stroke-width="2"/>') },
   { id:8, n:'魔女長袍上身', ns:'魔女袍', lock:{t:'soon'}, svg:topBase('#4a3d78','<path d="M156 240 q24 16 48 0 l-4 12 q-20 12 -40 0 z" fill="#38306b" stroke="__LN__" stroke-width="2.5"/><path d="M164 320 l8 -10 8 10 8 -10 8 -10 8 10" fill="none" stroke="#ffd35a" stroke-width="2.5"/>') },
-  { id:9, n:'古埃及束衣', ns:'埃及裝', lock:{t:'soon'}, svg:topBase('#f0e2c4','<path d="M150 246 q30 22 60 0 l0 10 q-30 20 -60 0 z" fill="#3f8fd4" stroke="__LN__" stroke-width="2.5"/><path d="M150 250 q30 22 60 0" fill="none" stroke="#ffd35a" stroke-width="3"/>') }
+  { id:9, n:'古埃及束衣', ns:'埃及裝', lock:{t:'soon'}, svg:topBase('#f0e2c4','<path d="M150 246 q30 22 60 0 l0 10 q-30 20 -60 0 z" fill="#3f8fd4" stroke="__LN__" stroke-width="2.5"/><path d="M150 250 q30 22 60 0" fill="none" stroke="#ffd35a" stroke-width="3"/>') },
+  /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批:6 款 PNG 服裝(SVG 後備借 topBase 換色;
+   *   洋裝/西裝/吊帶為連身整套,含裙擺/褲管,佔上衣槽) */
+  { id:10, n:'簡約白T恤', ns:'白T恤', lock:null,
+    img:['top_tee_boy.png','top_tee_girl.png','top_tee_kidboy.png','top_tee_kidgirl.png'],
+    svg:topBase('#f5f2ee','<path d="M162 234 q18 12 36 0" fill="none" stroke="__LN__" stroke-width="3"/>') },
+  { id:11, n:'學生制服套裝', ns:'學生制服', lock:null,
+    img:['top_uniform_boy.png','top_uniform_girl.png','top_uniform_kidboy.png','top_uniform_kidgirl.png'],
+    svg:topBase('#3f4d8a','<path d="M180 232 l-10 14 10 8 10 -8 z" fill="#f5f2ee" stroke="__LN__" stroke-width="2.5"/><path d="M180 254 l0 84" stroke="__LN__" stroke-width="2.5"/>') },
+  { id:12, n:'藍色連身長裙', ns:'藍長裙', lock:null,
+    img:['top_bluedress_boy.png','top_bluedress_girl.png','top_bluedress_kidboy.png','top_bluedress_kidgirl.png'],
+    svg:topBase('#7ac0e8','<path d="M158 238 q22 14 44 0 l0 8 q-22 12 -44 0 z" fill="#fff" stroke="__LN__" stroke-width="2.5"/>') },
+  { id:13, n:'紳士西裝', ns:'帥西裝', lock:null,
+    img:['top_suit_boy.png','top_suit_girl.png','top_suit_kidboy.png','top_suit_kidgirl.png'],
+    svg:topBase('#3a4560','<path d="M180 232 l-12 18 12 10 12 -10 z" fill="#f5f2ee" stroke="__LN__" stroke-width="2.5"/><path d="M176 242 l8 0 -4 30 z" fill="#8a3040"/>') },
+  { id:14, n:'粉紅小洋裝', ns:'粉洋裝', lock:null,
+    img:['top_pinkdress_boy.png','top_pinkdress_girl.png','top_pinkdress_kidboy.png','top_pinkdress_kidgirl.png'],
+    svg:topBase('#ff9ab8','<path d="M158 238 q22 14 44 0 l0 8 q-22 12 -44 0 z" fill="#fff" stroke="__LN__" stroke-width="2.5"/><circle cx="180" cy="286" r="4" fill="#fff" stroke="__LN__" stroke-width="2"/>') },
+  { id:15, n:'吊帶短褲裝', ns:'吊帶裝', lock:null,
+    img:['top_overall_boy.png','top_overall_girl.png','top_overall_kidboy.png','top_overall_kidgirl.png'],
+    svg:topBase('#4a76b8','<path d="M156 232 l10 20 M204 232 l-10 20" stroke="#3a5e94" stroke-width="4" stroke-linecap="round"/>') }
 ];
 
 /* ── 下衣 — 10 款(y336~400) ── */
@@ -534,7 +639,11 @@ P.btm = [
   { id:6, n:'和風袴', ns:'和服褲', lock:{t:'soon'}, svg:'<path d="M146 334 l68 0 10 90 c1 5 -3 9 -8 9 l-16 0 c-4 0 -8 -3 -9 -8 l-11 -52 -11 52 c-1 5 -5 8 -9 8 l-16 0 c-5 0 -9 -4 -8 -9 z" fill="#8a3040" stroke="__LN__" stroke-width="3.5"/><path d="M160 344 l40 0" stroke="#ffd35a" stroke-width="3"/>' },
   { id:7, n:'鎧甲戰裙', ns:'鐵裙裙', lock:{t:'soon'}, svg:'<path d="M150 334 l60 0 10 36 c2 5 -2 9 -7 9 l-66 0 c-5 0 -9 -4 -7 -9 z" fill="#8a94a8" stroke="__LN__" stroke-width="3.5"/><path d="M162 340 l0 36 M180 340 l0 39 M198 340 l0 36" stroke="__LN__" stroke-width="2.5"/>' },
   { id:8, n:'魔女長裙', ns:'魔女裙', lock:{t:'soon'}, svg:'<path d="M148 334 l64 0 20 84 c2 6 -2 11 -8 11 l-88 0 c-6 0 -10 -5 -8 -11 z" fill="#4a3d78" stroke="__LN__" stroke-width="3.5"/><path d="M156 400 l10 -12 10 12 10 -12 10 12 10 -12 10 12" fill="none" stroke="#ffd35a" stroke-width="2.5"/>' },
-  { id:9, n:'古埃及圍裙', ns:'埃及裙', lock:{t:'soon'}, svg:'<path d="M150 334 l60 0 6 52 c1 5 -3 9 -8 9 l-56 0 c-5 0 -9 -4 -8 -9 z" fill="#f0e2c4" stroke="__LN__" stroke-width="3.5"/><path d="M172 334 l16 0 -4 56 -8 0 z" fill="#3f8fd4" stroke="__LN__" stroke-width="2.5"/>' }
+  { id:9, n:'古埃及圍裙', ns:'埃及裙', lock:{t:'soon'}, svg:'<path d="M150 334 l60 0 6 52 c1 5 -3 9 -8 9 l-56 0 c-5 0 -9 -4 -8 -9 z" fill="#f0e2c4" stroke="__LN__" stroke-width="3.5"/><path d="M172 334 l16 0 -4 56 -8 0 z" fill="#3f8fd4" stroke="__LN__" stroke-width="2.5"/>' },
+  /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批(SVG 後備借長褲換色) */
+  { id:10, n:'休閒牛仔褲', ns:'牛仔褲', lock:null,
+    img:['btm_jeans_boy.png','btm_jeans_girl.png','btm_jeans_kidboy.png','btm_jeans_kidgirl.png'],
+    svg:'<path d="M148 334 l64 0 4 92 c0 5 -4 8 -9 8 l-12 0 c-4 0 -8 -3 -8 -8 l-7 -60 -7 60 c0 5 -4 8 -8 8 l-12 0 c-5 0 -9 -3 -9 -8 z" fill="#4a76b8" stroke="__LN__" stroke-width="3.5"/>' }
 ];
 
 /* ── 鞋子 — 10 款(y426~466) ── */
@@ -552,7 +661,17 @@ P.shoe = [
   { id:6, n:'忍者足袋', ns:'忍者鞋', lock:{t:'soon'}, svg:shoeP('#3f4d6b','<path d="M164 432 l0 24 M196 432 l0 24" stroke="__LN__" stroke-width="2.5"/>') },
   { id:7, n:'鐵甲戰靴', ns:'鐵靴靴', lock:{t:'soon'}, svg:shoeP('#8a94a8','<path d="M154 442 l22 0 M184 442 l22 0" stroke="__LN__" stroke-width="2.5"/>') },
   { id:8, n:'魔法星星鞋', ns:'星星鞋', lock:{t:'soon'}, svg:shoeP('#7a5ac9','<path d="M164 440 l2 4 4 1 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 4 -1 z" fill="#ffd35a"/><path d="M196 440 l2 4 4 1 -3 3 1 4 -4 -2 -4 2 1 -4 -3 -3 4 -1 z" fill="#ffd35a"/>') },
-  { id:9, n:'黃金法老鞋', ns:'金金鞋', lock:{t:'soon'}, svg:shoeP('#ffd35a','<path d="M154 446 l22 0 M184 446 l22 0" stroke="#c9a441" stroke-width="3"/>') }
+  { id:9, n:'黃金法老鞋', ns:'金金鞋', lock:{t:'soon'}, svg:shoeP('#ffd35a','<path d="M154 446 l22 0 M184 446 l22 0" stroke="#c9a441" stroke-width="3"/>') },
+  /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批(SVG 後備借 shoeP 換色) */
+  { id:10, n:'休閒帆布鞋', ns:'帆布鞋', lock:null,
+    img:['shoe_sneaker_boy.png','shoe_sneaker_girl.png','shoe_sneaker_kidboy.png','shoe_sneaker_kidgirl.png'],
+    svg:shoeP('#5a6b8a','<path d="M154 446 l20 0 M186 446 l20 0" stroke="#fff" stroke-width="3.5"/>') },
+  { id:11, n:'學生皮鞋襪', ns:'制服鞋', lock:null,
+    img:['shoe_loafer_boy.png','shoe_loafer_girl.png','shoe_loafer_kidboy.png','shoe_loafer_kidgirl.png'],
+    svg:shoeP('#4a3428','<path d="M154 438 l22 0 M184 438 l22 0" stroke="#f5f2ee" stroke-width="3"/>') },
+  { id:12, n:'黑亮皮鞋', ns:'黑皮鞋', lock:null,
+    img:['shoe_leather_boy.png','shoe_leather_girl.png','shoe_leather_kidboy.png','shoe_leather_kidgirl.png'],
+    svg:shoeP('#22222a') }
 ];
 
 /* ── 名片語錄(玩家擇一;內容非說明文字,單版) ── */
@@ -654,23 +773,23 @@ window._avatarRenderSVG = function(cfg, sizeCss){
       + _hairLayer(hairD.bImg)
       + _imgLayer(_pick(P.tail, cfg.tail).img, tf)
       + (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf))
-      + _imgLayer(_pick(P.sock, cfg.sock).img, tf)
-      + _imgLayer(_pick(P.shoe, cfg.sh).img, tf)
-      + _imgLayer(_pick(P.btm, cfg.btm).img, tf)
-      + _imgLayer(_pick(P.top, cfg.top).img, tf)
+      + _imgLayer(_avImgFor(_pick(P.sock, cfg.sock).img, cfg.body), tf)   /* ★ v4.55.5 襪/鞋/下衣/上衣/耳/眼鏡同步支援四體型陣列 */
+      + _imgLayer(_avImgFor(_pick(P.shoe, cfg.sh).img, cfg.body), tf)
+      + _imgLayer(_avImgFor(_pick(P.btm, cfg.btm).img, cfg.body), tf)
+      + _imgLayer(_avImgFor(_pick(P.top, cfg.top).img, cfg.body), tf)
       + _imgLayer(_pick(P.wrist, cfg.wrist).img, tf)
       + _imgLayer(capePng.fImg, tf)
       + _imgLayer(_pick(P.neck, cfg.neck).img, tf)
-      + _imgLayer(_pick(P.brow, cfg.brow).img, tf)
+      + _imgLayer(_avImgFor(_pick(P.brow, cfg.brow).img, cfg.body), tf)   /* ★ v4.55.4 眉/鼻/嘴同步支援四體型陣列 */
       + _imgLayer(_avImgFor(_pick(P.eye, cfg.eye).img, cfg.body), tf)   /* ★ v4.55.3 眼神部件依體型解析 */
-      + _imgLayer(_pick(P.nose, cfg.nose).img, tf)
-      + _imgLayer(_pick(P.mouth, cfg.mouth).img, tf)
+      + _imgLayer(_avImgFor(_pick(P.nose, cfg.nose).img, cfg.body), tf)
+      + _imgLayer(_avImgFor(_pick(P.mouth, cfg.mouth).img, cfg.body), tf)
       + _imgLayer(_pick(P.mask, cfg.mask).img, tf)
       + _hairLayer(hairD.fImg)
-      + _imgLayer(earPng.img, tf)
+      + _imgLayer(_avImgFor(earPng.img, cfg.body), tf)
       + _imgLayer(_pick(P.earring, cfg.earr).img, tf)
       + _imgLayer(_pick(P.horn, cfg.horn).img, tf)
-      + _imgLayer(_pick(P.glasses, cfg.gls).img, tf)
+      + _imgLayer(_avImgFor(_pick(P.glasses, cfg.gls).img, cfg.body), tf)
       + _imgLayer(_pick(P.hat, cfg.hat).img, tf)
       + _imgLayer(_pick(P.held, cfg.held).img, tf);
     return '<svg viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'

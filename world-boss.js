@@ -249,9 +249,25 @@
     vesuvius_fire_dragon: 'dragon_fang_fire',
     cuiyu_grass_dragon:   'dragon_whisker_grass',
     shanyue_earth_dragon: 'dragon_scale_earth',   // ★ v3.15.17 — 地龍王之麟(須與 index.html _WB_DRAGON_T_MAP 一致)
+    // ★ v4.56.0(2026-07-18)— 補齊其餘 5 龍王(原僅 3 筆 → 雷/海/暗/光/幻 fallback 炎龍王之牙,
+    //   造成獎勵頁分級表至寶名永遠顯示「炎龍王之牙」;內容與 index.html _lxpsDragonTreasureMapFull base 一致)
+    shenhai_water_dragon:   'dragon_claw_sea',       // 海龍王之爪(水)
+    taifeng_wind_dragon:    'dragon_wing_thunder',   // 雷龍王之翼(風暴雷龍王)
+    bushi_dark_dragon:      'dragon_bone_dark',      // 暗龍王之骸(暗)
+    shensheng_light_dragon: 'dragon_feather_light',  // 光龍王之羽(光)
+    xingchen_omni_dragon:   'dragon_horn_omni',      // 幻龍王之角(幻/omni)
   };
   window._wbGetCurrentDragonTreasureId = function(){
-    try{ return window._WB_DRAGON_TREASURE_MAP[window._wbGetCurrentBossId()] || 'dragon_fang_fire'; }
+    // ★ v4.56.0 — 優先走 index.html 完整 8 龍王映射(_lxpsDragonTreasureId,與獎勵頁 ? 彈窗同源單一真相);
+    //   本地 map 已補齊 8 筆作 fallback(防 index helper 尚未載入)。原 3 筆時代的舊行為保留於下方 fallback。
+    try{
+      if(typeof window._lxpsDragonTreasureId === 'function'){
+        var _bid = ((typeof window._wbGetCurrentBoss === 'function') && window._wbGetCurrentBoss() || {}).id;
+        var _full = window._lxpsDragonTreasureId(_bid);
+        if(_full) return _full;
+      }
+      return window._WB_DRAGON_TREASURE_MAP[window._wbGetCurrentBossId()] || 'dragon_fang_fire';
+    }
     catch(_){ return 'dragon_fang_fire'; }
   };
   window._wbGetCurrentDragonTreasureName = function(){
@@ -390,13 +406,19 @@
     }catch(e){ console.warn('[v3.12.0 _wbRollDragonTreasure]', e); return { won:false }; }
   };
 
-  window._wbGrantDragonTreasure = function(rank){
-    // 結算流程呼叫此函式發放火龍王之牙;若機率未中 → granted:false 不發
+  window._wbGrantDragonTreasure = function(rank, tidOverride){
+    // 結算流程呼叫此函式發放龍王排名至寶;若機率未中 → granted:false 不發
     // 若中了但已擁有 → 自動轉 treasure_exp_scroll ×5(v3.15.86)
+    // ★ v4.56.0 — 加第二參數 tidOverride:領獎端傳入「結算當下寫入 pending award 的 dragonTreasureId」。
+    //   原因:結算隔天 08:00 下一隻龍王已原子接班,領獎時的「當前龍王」≠ 被擊敗的龍王;
+    //   且 _WORLD_BOSS_TEAM_REWARDS 各分級的 dragonTreasureId 寫死 dragon_fang_fire →
+    //   原本非火龍王場次的排名至寶一律發成炎龍王之牙。有 override 一律優先。
     try{
       const roll = window._wbRollDragonTreasure(rank);
       if(!roll.won) return { granted:false, rolled:true, chance: roll.chance };
-      const tid = roll.treasureId || 'dragon_fang_fire';
+      const tid = (typeof tidOverride === 'string' && tidOverride)
+        ? tidOverride
+        : (roll.treasureId || 'dragon_fang_fire');
       // 檢查是否已擁有(讀 window 端的 _taiwanTreasureData,index.html 內已掛 window)
       const _td = (typeof window._taiwanTreasureData !== 'undefined') ? window._taiwanTreasureData : null;
       const _owned = _td && _td[tid] && (_td[tid].lv >= 1);

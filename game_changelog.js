@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-17  / 目前主程式版本:v4.55.0(👤 主角捏臉系統 Phase 1 + 📇 冒險者名片)
+//  最後更新:2026-07-18  / 目前主程式版本:v4.56.0(🐉 龍王至寶修正 + 👤 造型素材第三批)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.56.0 — 🐉 世界BOSS龍王至寶修正 + 👤 主角造型素材第三批(管理員測試中)
+  {
+    ver: 'v4.56.0',
+    date: '2026-07-18',
+    brief: [
+      '🐉【世界 BOSS 排名獎勵的「龍王至寶」修正!】之前不管當期是哪一隻龍王,獎勵頁分級表上寫的至寶永遠是「炎龍王之牙」(只有按 ? 小圓鈕看簡介才是對的)。現在分級表會跟著當期龍王顯示正確的專屬至寶名稱(例如海龍王之爪、雷龍王之翼、光龍王之羽…)!',
+      '🎁【更重要的:實際發下來的至寶也修正了!】原本打贏非火龍王的場次、隔天領取排名獎勵時,發到手的龍王至寶一律變成「炎龍王之牙」——現在會正確發放「你當時擊敗的那隻龍王」的專屬至寶,就算領獎當天已經換下一隻龍王接班也不會發錯!',
+      '👤 主角造型工房又進貨啦(老師測試中):新增 8 套完整造型素材——白T牛仔褲便服、學生制服、精靈套裝(金色捲髮+尖耳+高傲眼)、黑框眼鏡書卷風、雙辮子藍長裙、紳士西裝、單側馬尾粉洋裝、吊帶短褲西瓜頭,髮型 7 款、服裝 10 件、眼鏡與精靈耳通通有,正式開放請等公告!',
+    ],
+    items: [
+      '★ v4.56.0【龍王至寶顯示修正·world-boss.js】根因:_WB_DRAGON_TREASURE_MAP 只有 3 筆(維蘇威/翠玉草/山岳)→ 雷/海/暗/光/幻龍王查無 → fallback dragon_fang_fire → 獎勵頁分級表 _wbGetCurrentDragonTreasureName() 永遠回「炎龍王之牙」(? 彈窗 v4.32.0 已改走 index 完整 8 龍王映射所以正確)。修法:①map 補齊 8 筆(與 index _lxpsDragonTreasureMapFull base 一致);②_wbGetCurrentDragonTreasureId 優先走 window._lxpsDragonTreasureId(_wbGetCurrentBoss().id)(與 ? 彈窗同源單一真相),舊路徑保留 fallback。無 ?.。',
+      '★ v4.56.0【龍王至寶發放修正·world-boss.js + index.html】根因:領獎時 index 呼叫 _wbGrantDragonTreasure(rank) 只傳名次,grant 內部擲骰取 _WORLD_BOSS_TEAM_REWARDS[tier].dragonTreasureId(五個分級全寫死 dragon_fang_fire)→ 非火龍王場次排名至寶一律發成炎龍王之牙(結算寫入 pending award 的 dragonTreasureId 其實是正確的,但領獎忽略它;且結算隔天 08:00 下一隻龍王已原子接班,不能用「當前龍王」推算)。修法:_wbGrantDragonTreasure 加第二參數 tidOverride 一律優先;index 領獎呼叫改傳 _result.dragonTreasureId。歷史補寫 _advSaveTreasureUnlockHistory 原本就用 _result.dragonTreasureId,發放與歷史自此一致。',
+      '★ v4.56.0【主角造型素材第三批·avatar_db.js v4.55.5】老師 20 張變體圖抽出 8 套 76 件 PNG 部件(×四體型):髮型 id15-21(制服頭/精靈捲捲/旁分頭/辮子頭/油亮頭/側馬尾/西瓜頭)、眼 id12 高傲眼(含挑眉+膚色補丁)、耳 id1 精靈長耳掛 PNG 解鎖、眼鏡 id4 黑框、上衣 id10-15(白T/學生制服/藍長裙/西裝/粉洋裝/吊帶裝)、下衣 id10 牛仔褲、鞋 id10-12(帆布/制服鞋/黑皮鞋);渲染行襪/鞋/下衣/上衣/耳/眼鏡補 _avImgFor 四體型陣列支援;雙版名稱(n/ns)全數齊備。長裙/西裝/粉洋裝/吊帶裝為單體型跨體型幾何合成(肩寬+頸地比映射),品質次於原生可日後補生成替換。素材仍受 _AVATAR_ADMIN_ONLY gating,一般玩家不可見。',
+      '★ v4.56.0【範圍與驗證】改 world-boss.js(map 補齊+id 解析+grant 簽名)、index.html(領獎傳 override + mega 鍵)、avatar_db.js(v4.55.5 部件接線)。hero_db.js/adv_quiz_db.js/world-boss-ui.html/sw.js 未改免重傳(獎勵頁顯示行在 world-boss-ui.html 內原本就呼叫 _wbGetCurrentDragonTreasureName,修 helper 即生效)。check_inline 21 塊/node --check/孤立代理/admin 零真 ?./7 版本同步點 全數 → v4.56.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.35.0)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → avatar_db.js → index.html(最後);avatar_parts/ 素材資料夾同步上傳。',
+    ],
+  },
   // v4.55.0 — 主角捏臉系統 Phase 1 + 冒險者名片
   {
     ver: 'v4.55.0',
@@ -300,18 +316,4 @@ window.GAME_CHANGELOG = [
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
-  {
-    ver: 'v4.35.0',
-    date: '2026-07-07',
-    brief: [
-      '🐉【世界龍王不會再被「一招秒殺」了!】修正天神宙斯的極限爆發「天降雷罰」等即死類招式,原本會把最新幾隻世界 BOSS 龍王當成「小怪」直接打到只剩 1 滴血(等於一招秒殺)的嚴重漏洞。現在全部 8 隻龍王一律享有「王者尊嚴」保護,即死招式對龍王只會造成有上限的傷害,絕不會再被秒殺!',
-    ],
-    items: [
-      '★ v4.35.0【天降雷罰秒殺龍王根治·index.html】根因:即死/秒殺保護的權威判定 _zeusIsTrueBoss 依賴的 _ZEUS_TRUE_BOSSES 清單只登錄到第三隻龍王(火山炎/翠綠森/山岳地),後 5 隻龍王(深淵海/風暴雷/邪骨暗/神聖光/星辰幻)漏加 → 被判為「非 BOSS」→ 天降雷罰(curHp=1)/死神收割(curHp=0)/大嘴吸入(curHp=0)/超能衝鋒瀕死 等把龍王當小怪直接設 HP=1/0(繞過 doDmg 5000 cap)一發秒殺。',
-      '★ v4.35.0【單一真相修法】改 _zeusIsTrueBoss 函式本體加 _isWorldBossTarget(讀 WORLD_BOSS_LINEUP)判定,一律認全 8 龍王為真 BOSS,未來新增龍王自動涵蓋;龍王改走「BOSS 分支」比例傷害(受 5000 cap)不再被秒殺。連死神收割/大嘴吸入/超能衝鋒等同源秒殺技一併修好。',
-      '★ v4.35.0【安全與範圍】僅影響 _zeusIsTrueBoss() 秒殺保護判定(全保護方向);不動 _ZEUS_TRUE_BOSSES.has() 直接呼叫(checkWin BOSS 存活/尊嚴反擊結算);_applyBossLifelineProtection 對世界 BOSS 有 worldboss 早退不受影響;玩家英雄阿蘇火山/青炎龍王不在 lineup 不誤判。只改 index.html;admin_panel.js/game_changelog.js 版號同步。',
-      '★ 鐵則(今後永久生效):新增冒險關 BOSS 只要進 _ZEUS_TRUE_BOSSES 權威清單,即自動享有「BOSS 尊嚴」(50%/1HP 兩段鎖血+強制爆發反擊);新增世界 BOSS 只要進 WORLD_BOSS_LINEUP,即自動享有「單次傷害上限 5,000」——任何會造成傷害的公式對世界 BOSS 都不可再出現直接秒殺/HP 剩 1/HP 比例傷害/固定傷害超過 5,000。',
-    ],
-  },
-  // v4.33.0 — 🐾 預設陣容記住寵物 + 🎬 爆發技影片播放順序改善
 ];
