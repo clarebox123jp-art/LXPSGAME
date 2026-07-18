@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-18  / 目前主程式版本:v4.56.0(🐉 龍王至寶修正 + 👤 造型素材第三批)
+//  最後更新:2026-07-18  / 目前主程式版本:v4.58.0(👤 自訂主角三大類+全新素材上線)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.58.0 — 👤 我的主角大改版:三大類打扮 + 全新素材上線(管理員測試中)
+  {
+    ver: 'v4.58.0',
+    date: '2026-07-18',
+    brief: [
+      '👤【我的主角・造型工房 大改版!(老師測試中)】打扮方式變得超簡單:只有「換髮型」「換臉」「換身體」三大類加名片語錄,一眼就知道要按哪裡!',
+      '💇 全新繪製的素材大量上線:髮型 20 款(短髮/雙馬尾/自然長髮/妹妹頭/刺蝟頭/高馬尾/中捲/低馬尾/超長直髮/中分/大馬尾/公主頭/制服頭/精靈捲/旁分/雙辮子/油頭/側馬尾/西瓜頭/中等長髮)配 16 種髮色!',
+      '😊「換臉」可以選 6 款眼睛(瞇瞇眼/溫柔眼/帥帥眼/神氣眼/水汪眼/高傲眼)、2 款嘴巴、黑框眼鏡、精靈耳,再調瞳孔和眉毛顏色;「換身體」可以挑體型、膚色,還能換上白T牛仔褲、學生制服、西裝、藍長裙、小洋裝、吊帶裝!',
+      '📌 有些款式只有特定體型才有(例如西裝目前只有少年版),選單會自動只顯示你的體型有的款式,之後會陸續補齊,敬請期待!正式開放時間請等公告。',
+    ],
+    items: [
+      '★ v4.58.0【自訂主角簡化+素材接線·avatar_db.js】_AV_TABS 簡化為四頁籤:換髮型(hair+hairC)/換臉(eye+eyeC+mouth+gls+ear+browC)/換身體(body+skin+top+btm+sh)/名片(q);舊八頁籤定義保留於註解可復原。素材=老師人眼對位 aligned 圖 × 差異法抽件四批共 122 件(等比零拉長;髮件為光頭素體上之完整整頭;服裝件完全覆蓋素體;層序 素體→襪鞋褲衣→臉部件→前髮→耳→眼鏡)。缺體型格以 null 佔位,PNG 模式清單過濾改依當前體型(_avImgFor per-body)判定,缺格款於該體型自動隱藏;j===0 預設款永遠顯示(top/btm/shoe id0 更名 預設運動服/預設運動短褲/打赤腳)。',
+      '★ v4.58.0【接線明細】髮 20 款(id0/2/3/4/5/6/7/10~22;id3 缺少年、id18 僅少女、id19/22 僅少年、id20 僅幼女、id21 僅幼男)、眼 id3/4/5/10/11/12、嘴 id10/11(少年原圖無變化無件)、眼鏡 id4、精靈耳 id1 解鎖、上衣 id10 白T+套裝 id11 制服/id12 藍長裙(少女)/id13 西裝(少年)/id14 小洋裝(幼女)/id15 吊帶裝(幼男)、下衣 id10 牛仔褲、鞋 id10 帆布鞋;檔名沿用既有槽位規劃(hair_short_boy.png 等),程式引用 126 檔與素材包交叉核對零缺零餘。mouth id0/shoe id11/12 無件維持 _offImg 停用。',
+      '★ v4.58.0【範圍與驗證】改 avatar_db.js(頁籤+接線+per-body 過濾)+ index.html(mega 鍵與版號)+ game_changelog.js + admin_panel.js(僅版號)。功能仍受 _AVATAR_ADMIN_ONLY gating 一般玩家不可見。⚠ 部署需同步上傳 avatar_parts/ 資料夾 122 件 PNG(缺檔時選該款=素體原樣不破圖,_imgLayer 空值防呆)。check_inline 21 塊/node --check/孤立代理 0/admin 零真 ?./7 版本同步點全數 → v4.58.0。GAME_CHANGELOG 維持 20 筆(v4.57.0 未部署併入本條)。上傳順序:game_changelog.js → admin_panel.js → avatar_db.js → avatar_parts/ 素材 → index.html(最後)。',
+    ],
+  },
   // v4.56.0 — 🐉 世界BOSS龍王至寶修正 + 👤 主角造型素材第三批(管理員測試中)
   {
     ver: 'v4.56.0',
@@ -299,20 +315,6 @@ window.GAME_CHANGELOG = [
       '★ v4.37.0【取消中央鑲嵌·改覆蓋右側靜態特寫大圖片·index.html】_ensureBurstVideoStyle 的 #_bv-overlay 由「畫面正中上方 left:50%+translateX·width:58%·height:50%·z60」改為「right:0;top:0;width:600px;height:100%·z461·object-fit:cover」——與右側靜態特寫盒 #burst-img-panel(z460)完全同框同尺寸,影片以 z461 覆蓋在靜態特寫圖之上、集中效果線(z462)與招式名大字(z465)仍疊在最上。播放器 _playBurstVideo 與觸發流程(execBurst 撐住模式→建立特寫圖→緊接播影片)不變,故影片出現時機同特寫圖。',
       '★ v4.37.0【伊莉雅技能影片統一·資料驅動可擴充】魔劍姬 gated S1「神魔滅斬」技能影片同樣落在右側特寫框(統一呈現)。未來 SSR 動畫版爆發特寫只需在 _BURST_VIDEO_DB 加一筆(url 用 _BV_RAW(\'檔名.mp4\')),即自動走「覆蓋右側特寫」做法,無需改邏輯。',
       '★ v4.37.0【範圍與驗證】只改 index.html(_BV_RAW 破快取 + _ensureBurstVideoStyle 定位/尺寸/object-fit + 規格註解);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.37.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.17.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.36.0 — 🐾 寵物在英雄倒下/復活時不再消失 + 戰鬥中換寵物同步換爆發技
-  {
-    ver: 'v4.36.0',
-    date: '2026-07-07',
-    brief: [
-      '🐾【友方英雄倒下、復活時,身上帶的寵物不會再不見了!】以前英雄在戰鬥中倒下(或被免死盾犧牲)後,角色卡上的跟隨寵物小圖有時會消失,復活後也回不來。現在只要英雄有帶著寵物,不管牠是倒下還是又站起來,寵物圖都會一直顯示——唯一會變的只有「這場已經用過的寵物爆發次數」。(鬥技場本來就不能帶寵物,不受影響。)',
-      '🔄【戰鬥中替換跟隨寵物,爆發技也會跟著換!】以前在戰鬥中幫英雄換一隻新寵物,圖片換了、但寵物的「極限爆發技」有時還是舊寵物那招。現在替換寵物時,圖片、寵物爆發技名稱、以及實際施放的爆發效果三者會完全一致,換誰就用誰的招。',
-    ],
-    items: [
-      '★ v4.36.0【倒下/復活寵物浮圖不消失·index.html】renderCard 建立寵物浮動去背圖(.pet-float-badge)的來源判斷,原為「h.equip.n || h._followPet」;英雄死亡處理(黑冠麻鷺免死盾犧牲等)會把 equip 清成 null,若 _followPet 也未設就無來源 → 浮圖消失。修法:來源加第三層耐久 fallback _pfPnDurable = 當該英雄為 p1 非好友英雄、寵物系統對本人開放(_petSysOpenForMe())、且處於冒險/世界BOSS/單人練習戰(_adventureMode||_wbInWorldBossMode||_wbSoloPracticeMode·明確排除鬥技場)時,讀 window._petFollowOf(h.name) 取得其跟隨寵物名 → 即使 equip/_followPet 被清仍持久顯示攜帶寵物。舊條件保留為註解(誤刪是大忌)。無 ?.。',
-      '★ v4.36.0【替換寵物同步爆發技·index.html】戰鬥中兩條主要替換路徑(_advApplyPetToHero / 答題獎勵 _advFinishPetPick)本就同時設 equip(圖片)與 _followPet(→爆發名),爆發名由 _petFollowBurstName 讀 h._followPet 動態決定、爆發執行 _runPetBurst 亦讀 h._followPet;破口在舊版通用 doEquip 裝寵路徑只設 equip 沒設 _followPet → 圖換了但 _petFollowBurstName fallback 回舊寵。修法:doEquip 於 _markPetCollected 之後,若裝備物件帶 pet,補設 h._followPet=eq.pet、h._petBurstUsedByPet、h._petBurstUsed(已用次數視圖)、h._petBurstBonus(好感≥100 多一次),比照 _advApplyPetToHero → 圖片+爆發名+爆發執行三者一致。刻意不重設寵物素質加成(比照既有設計·防中途換寵回血 exploit)。無 ?.。',
-      '★ v4.36.0【範圍與驗證】只改 index.html(renderCard 浮圖來源 + doEquip 裝寵補設兩處);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js(v4.20.0)/world-boss.js(v4.30.0)/world-boss-ui.html(v4.28.0)/arena.js(v3.15.60)/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.36.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.16.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
