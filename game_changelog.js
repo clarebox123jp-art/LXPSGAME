@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-18  / 目前主程式版本:v4.60.0(👤 自訂角色大優化:整頭/整身/配色/背景)
+//  最後更新:2026-07-18  / 目前主程式版本:v4.60.1(👤 體型選單修復+眼白修復)
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,6 +12,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.60.1 — 👤 我的主角:體型選單修復 + 眼白修復(管理員測試中)
+  {
+    ver: 'v4.60.1',
+    date: '2026-07-18',
+    brief: [
+      '👤【我的主角・緊急修復!(老師測試中)】「換臉」「換身體」分頁修好了:四種體型(少年/少女/男童/女童)通通選得到,眼鏡和鞋子的選單也回來了!',
+      '👀 換造型後眼睛的眼白變透明的問題修復:全部 36 件造型素材重新製作,眼睛白白亮亮!',
+    ],
+    items: [
+      '★ v4.60.1【兩BUG修復・avatar_db.js+素材】①體型選不到根治(老師實機回報):_avRenderOpts/_avatarIsUnlocked 直接 P[cat] 查表但頁籤 cats 用短名 gls/sh(正確鍵 glasses/shoe)→ undefined.length THROW →「換臉」「換身體」整頁 innerHTML 未寫入=空白·體型/膚色/上衣/褲/鞋全選不到;經 vm sandbox 重現確認 v4.58.1 原版同樣 THROW=v4.57 簡化頁籤時的原生 bug 非本輪引入;修法=cat→P 鍵映射(gls→glasses/sh→shoe·對照 _AV_CFG_KEY 逆向)+查無分類顯示繪製中佔位不炸整頁 ②眼白透明根治:素材管線去背「封閉背景塊清除」(灰>10%+白>10%判棋盤格)把含灰色陰影的眼白誤清 → 去背加臉區保護區(角色上42%高·中央64%寬內的封閉塊一律保留)·從 src2 原圖以合成仿射單次 warp 重產 12 整套+24 整頭整身件(免二次重採樣·眼框透明px全數歸0·髮隨頭走/身件髮洞 inpaint 沿用);素體拆層 8 件不受影響未動。',
+    ],
+  },
   // v4.60.0 — 👤 我的主角:自訂角色大優化(整頭/整身/配色/背景·管理員測試中)
   {
     ver: 'v4.60.0',
@@ -298,21 +310,6 @@ window.GAME_CHANGELOG = [
       '★ v4.40.0【緩存·index.html】圖鑑動畫 URL 走 _BV_RAW(自帶 ?v=<版本>);圖鑑首播即進瀏覽器 HTTP 快取→戰鬥爆發 _playBurstVideo 用同一 URL 命中快取快速讀取(零額外 JS 記憶體·版本 bump 自動破快取重抓)。',
       '★ v4.40.0【大天狗動畫·index.html】_BURST_VIDEO_DB 加「大天狗→神威風獵動畫.mp4」一筆:戰鬥爆發自動走 execBurst→_playBurstVideo、圖鑑欣賞自動走 _codexVideoUrlFor→_codexPlayHeroAnim。★慣例:未來新增 SSR 爆發動畫只加 _BURST_VIDEO_DB 一筆即「戰鬥+圖鑑」雙處生效,無需改邏輯。',
       '★ v4.40.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.40.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.20.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.39.0 — 🎬 爆發動畫「卡住」修好 + 播放順序重排(先文字/音效/特寫圖 → 動畫 → 技能特效/色彩遮罩/傷害)
-  {
-    ver: 'v4.39.0',
-    date: '2026-07-07',
-    brief: [
-      '🎬【爆發動畫不卡了!】之前爆發動畫有時會停住好幾秒才繼續——原因是上一版讓影片「帶著聲音自動播放」,在 iPad 上常常卡住、播不動,要等到保險時間到才恢復。現在改成「先靜音把影片播起來(iPad 一定播得動),一開始播放就立刻打開聲音」,聲音照樣有、但不會再卡住了!',
-      '🎞️【爆發演出順序調整】現在爆發的順序是:先出現「招式名文字 + 爆發音效 + 右側特寫大圖 + 集中線」→ 接著播放右側動畫 → 動畫結束後,才一起出現「原本的招式特效 + 音效 + 全螢幕色彩閃光 + 傷害/治療數字」,節奏更清楚、更有魄力!',
-    ],
-    items: [
-      '★ v4.39.0【卡住根治·index.html】_playBurstVideo 影片由 v.muted=false(v4.38.0 解靜音)改「v.muted=true 靜音起播(iPad muted autoplay 一定能播、onended 正常) → playing 事件後 v.muted=false 解除靜音出聲」;根因=iPad Safari 對帶聲音的網路影片自動播放常令 play() 卡住/不播、onended 不觸發→一路等 10s 兜底=體感卡住。移除舊「解靜音被擋→退回靜音重播」邏輯。聲音仍播、且不卡。',
-      '★ v4.39.0【順序重排·index.html】全螢幕色彩遮罩 flashScreen 由 execBurst 開頭「延到影片結束的 _bvDone」,與 _showBurstGif(原技能特效·含自帶音效)+ _runBurst(傷害/治療)同時登場→順序=爆發音效 sfx-burst + 招式名文字 bannerFX + 右側特寫大圖 + 集中線『先出現』→影片播→動畫完畢→技能特效+音效+色彩遮罩+傷害/治療。爆發音效 sfx-burst 維持在開頭(第一步)。',
-      '★ v4.39.0【非影片路徑零改動·index.html】無爆發影片的英雄與世界BOSS(else 分支)沒有動畫要等,色彩遮罩 flashScreen 補回 else 分支開頭,維持與 v4.38.0 前完全一致的時序,杜絕回歸。',
-      '★ v4.39.0【範圍與驗證】只改 index.html(_playBurstVideo 靜音起播+playing 解靜音、execBurst 色彩遮罩分流至影片路徑 _bvDone / 非影片路徑 else 開頭);admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.39.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.19.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了

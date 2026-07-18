@@ -1,5 +1,15 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
+ * 版本: v4.60.1(2026-07-18)
+ *
+ * ★ v4.60.1 — 老師實機測試兩 BUG 修復:
+ *   ①「只有少年體型/換臉換身體整頁空白」根治:_avRenderOpts 與 _avatarIsUnlocked
+ *     直接 P[cat] 查表,但頁籤 cats 用短名 gls/sh(正確鍵 glasses/shoe)→
+ *     undefined.length THROW 整頁不渲染(v4.57 簡化頁籤即存在·v4.58.1 原版重現確認)
+ *     → 補 cat→P 鍵映射 + 查無分類跳過防呆
+ *   ② 眼白變透明:素材管線去背「封閉背景塊清除」把含灰陰影的眼白誤判棋盤格清掉
+ *     → 去背加臉區保護(上42%高·中央64%寬保護區)·12 整套+24 拆件全部重產
+ *     (素材檔更新·本檔僅版號與①修正)
  * 版本: v4.60.0(2026-07-18)
  *
  * ★ v4.60.0 — 自訂角色大優化(老師六大系統裁決·管理員測試):
@@ -128,7 +138,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.60.0';
+window.AVATAR_DB_VERSION = 'v4.60.1';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1163,7 +1173,7 @@ window._avatarRenderSVG = function(cfg, sizeCss){
  * 4. 解鎖判定(Phase 1:免費款開放;lock 款看 avatarCard.unlock 帳本)
  * ════════════════════════════════════════ */
 window._avatarIsUnlocked = function(cat, id){
-  var list = P[cat]; if(!list) return false;
+  var list = P[{ gls:'glasses', sh:'shoe' }[cat] || cat]; if(!list) return false;   /* ★ v4.60.1 gls/sh 短名映射(同 _avRenderOpts 修正) */
   var item = null;
   for(var i=0;i<list.length;i++){ if(list[i].id === id){ item = list[i]; break; } }
   if(!item) return false;
@@ -1390,7 +1400,13 @@ function _avRenderOpts(){
           + '">💬 ' + _avEsc(qs[qi]) + '</button>';
       }
     } else {
-      var list = P[cat];
+      /* ★ v4.60.1 BUG根治(老師回報「只有少年體型」):頁籤 cats 用短名 gls/sh,
+       *   但此處直接 P[cat] 查表(正確鍵=glasses/shoe)→ undefined.length THROW →
+       *   「換臉」「換身體」整頁空白·體型選不到(v4.57 簡化頁籤即存在的原生 bug,
+       *   對照 _AV_CFG_KEY 逆向補映射)+ 防呆:查無分類跳過不炸整頁 */
+      var _CAT_PART_ALIAS = { gls:'glasses', sh:'shoe' };
+      var list = P[_CAT_PART_ALIAS[cat] || cat];
+      if(!list){ h += _wipHtml; continue; }
       var shown = 0;
       for(var j=0;j<list.length;j++){
         var it = list[j];
