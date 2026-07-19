@@ -1,5 +1,16 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
+ * 版本: v4.62.0(2026-07-19)
+ *
+ * ★ v4.62.0 — 自訂角色系統優化(老師 2026-07-19 四需求):
+ *   ①名片專屬 BGM:開名片切入 自訂角色名片.m4a(audio#bgm-avatar-card 在 index.html·
+ *     bgmFadeTo 淡入)·關名片淡回原曲(_avatarCardClose 統一關閉·染色重繪不斷音)
+ *   ②造型工房全螢幕動態影片背景 自訂角色動態背景.mp4(比照寵物小屋:z-index:-1·
+ *     muted autoplay playsinline·onloadeddata 淡入/onerror 露出漸層底·brightness 0.55 保文字可讀)
+ *   ③特寫(放大)改「只放大人物·背景尺寸不變」:PNG 路徑 viewBox 維持全幅·
+ *     人物圖層包 <g transform=scale+translate> 群組映射特寫矩形(_pRect)·背景層在群組外全幅鋪滿;
+ *     名片同款構圖一併生效;legacy SVG 路徑(無背景層)維持舊 viewBox 裁切
+ *   ④「全部重置」確認框由瀏覽器 confirm 改遊戲內建風格視窗 _avShowConfirm(樣式同面板·✅確定/✖取消)
  * 版本: v4.61.0(2026-07-18)
  *
  * ★ v4.61.0 — 面板改版(老師 2026-07-18 三需求):
@@ -150,7 +161,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.61.0';
+window.AVATAR_DB_VERSION = 'v4.62.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1017,15 +1028,20 @@ function _avImgFor(val, bodyIdx){
 window._avatarRenderSVG = function(cfg, sizeCss, portrait){
   cfg = cfg || window._avatarDefaultCfg();
   /* ★ v4.61.0 特寫模式(老師需求2):等比例放大上半身(胸部以上+完整頭部·看清瞳色);
-   *   僅改 viewBox 裁切視窗=零重繪成本;名片/戰鬥卡片預覽同用此模式 */
+   * ★ v4.62.0 需求3改法:看特寫時「只放大人物·背景尺寸保持不變」——
+   *   PNG 路徑改為 viewBox 維持全幅 0 0 360 480(背景照常鋪滿),
+   *   人物各圖層包進 <g transform> 群組放大到特寫構圖(_pRect 記裁切矩形);
+   *   legacy SVG 路徑(無背景層)維持舊 viewBox 裁切法零改動 */
   var _vb = '0 0 360 480';
+  var _pRect = null;   /* ★ v4.62.0 特寫裁切矩形(SVG 座標) */
   if(portrait){
     var _pm = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
     var _ptf = AVATAR_IMG_TF[cfg.body] || AVATAR_IMG_TF[0];
     var _ch = (((_pm.neck || 117) + 118) / 720) * _ptf.h + 10;
     var _cw = _ch * 0.75;
     var _pcx = _ptf.x + (250 / 504) * _ptf.w;
-    _vb = (_pcx - _cw/2).toFixed(1) + ' ' + (_ptf.y - 4).toFixed(1) + ' ' + _cw.toFixed(1) + ' ' + _ch.toFixed(1);
+    _pRect = { x: (_pcx - _cw/2), y: (_ptf.y - 4), w: _cw, h: _ch };
+    _vb = _pRect.x.toFixed(1) + ' ' + _pRect.y.toFixed(1) + ' ' + _cw.toFixed(1) + ' ' + _ch.toFixed(1);
   }
   var PAL = window.AVATAR_PALETTES;
   var sk = _col(PAL.skin, cfg.skin), hc = _col(PAL.hair, cfg.hairC), ec = _col(PAL.eye, cfg.eyeC);
@@ -1109,8 +1125,17 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     } else {
       baseLayers = (bodySrc2 ? _imgLayerSrc(bodySrc2, tf) : _imgLayer(bodyDef.img, tf));
     }
+    /* ★ v4.62.0 需求3:特寫=背景全幅不動·人物群組等比放大(把特寫矩形映射回全畫布) */
+    var _charOpen = '', _charClose = '', _pngVb = _vb;
+    if(portrait && _pRect){
+      _pngVb = '0 0 360 480';
+      var _ps = 480 / _pRect.h;   /* 寬比 360/_pRect.w 與此相等(3:4 同比) */
+      _charOpen = '<g transform="scale(' + _ps.toFixed(5) + ') translate(' + (-_pRect.x).toFixed(2) + ',' + (-_pRect.y).toFixed(2) + ')">';
+      _charClose = '</g>';
+    }
     var png = ''
-      + _bgLayer()   /* ★ v4.60.0 背景最底層 */
+      + _bgLayer()   /* ★ v4.60.0 背景最底層(★ v4.62.0 特寫時不隨人物放大) */
+      + _charOpen
       + _imgLayer(_pick(P.wing, cfg.wing).img, tf)
       + _imgLayer(capePng.bImg, tf)
       + (hideHead ? '' : _hairLayer(hairD.bImg))   /* ★ v4.60.0 整頭/整套時隱藏髮型層 */
@@ -1134,8 +1159,9 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       + _imgLayer(_pick(P.horn, cfg.horn).img, tf)
       + _imgLayer(_avImgFor(_pick(P.glasses, cfg.gls).img, cfg.body), tf)
       + _imgLayer(_pick(P.hat, cfg.hat).img, tf)
-      + _imgLayer(_pick(P.held, cfg.held).img, tf);
-    return '<svg viewBox="' + _vb + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
+      + _imgLayer(_pick(P.held, cfg.held).img, tf)
+      + _charClose;   /* ★ v4.62.0 特寫人物群組關閉 */
+    return '<svg viewBox="' + _pngVb + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
       + (sizeCss || 'width:100%;height:100%;') + 'display:block;">' + png + '</svg>';
   }
 
@@ -1369,6 +1395,23 @@ window._avatarOpenPanel = function(){
     + _avT('🔒 鎖定款式將於主線劇情「萬象共鳴」開放取得,敬請期待!','🔒 鎖住的款式,等主線故事開放就拿得到囉!')
     + '</div>';
 
+  /* ★ v4.62.0 需求2:自訂角色動態背景 — 全螢幕動態影片背景(自訂角色動態背景.mp4·
+   *   作法同寵物小屋/鬥技場:z-index:-1 蓋面板漸層底圖·在正常流內容之下;
+   *   muted autoplay+playsinline(iPad 穩定)·onloadeddata 淡入·onerror 靜默移除露出漸層底·
+   *   brightness 壓暗確保右側選單文字可讀·隨面板關閉一併移除) */
+  try{
+    var _bgv = document.createElement('video');
+    _bgv.autoplay = true; _bgv.loop = true; _bgv.muted = true; _bgv.playsInline = true;
+    _bgv.setAttribute('playsinline',''); _bgv.setAttribute('muted','');
+    _bgv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
+      + 'z-index:-1;opacity:0;transition:opacity 0.8s;filter:brightness(0.55);pointer-events:none;';
+    _bgv.src = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/'
+      + encodeURIComponent('自訂角色動態背景.mp4') + '?v=' + (window.AVATAR_DB_VERSION || '');
+    _bgv.onloadeddata = function(){ _bgv.style.opacity = '1'; try{ _bgv.play(); }catch(_e){} };
+    _bgv.onerror = function(){ try{ _bgv.remove(); }catch(_e){} };
+    panel.insertBefore(_bgv, panel.firstChild);
+  }catch(_e){}
+
   document.body.appendChild(panel);
   _avRefreshPreview();
   _avRenderTabs();
@@ -1471,15 +1514,49 @@ window._avatarRandomize = function(){
   _avRefreshPreview(); _avRenderOpts();
 };
 
-/* ★ v4.61.0 需求1-十:全部重置 — 造型全部回預設;體型與座右銘保留(孩子的體型認同不動) */
+/* ★ v4.62.0 需求4:遊戲內建風格確認視窗(取代瀏覽器原生 confirm·樣式同造型工房/名片) */
+function _avShowConfirm(title, msg, onOk){
+  var old = document.getElementById('_av-confirm-modal');
+  if(old) old.remove();
+  var w = document.createElement('div');
+  w.id = '_av-confirm-modal';
+  w.style.cssText = 'position:fixed;inset:0;z-index:20005;display:flex;align-items:center;justify-content:center;'
+    + 'background:rgba(0,0,10,0.72);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  w.innerHTML =
+    '<div style="width:min(90vw,440px);background:linear-gradient(160deg,#20184a,#141028);'
+    + 'border:2.5px solid rgba(140,200,255,0.65);border-radius:18px;padding:20px 24px;'
+    + 'box-shadow:0 10px 40px rgba(0,0,0,0.7),0 0 30px rgba(120,180,255,0.25);">'
+    + '<div style="font-size:19px;font-weight:900;color:#ffd97a;letter-spacing:1px;margin-bottom:10px;">' + _avEsc(title) + '</div>'
+    + '<div style="font-size:15.5px;color:#d4ecff;line-height:1.65;">' + _avEsc(msg) + '</div>'
+    + '<div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">'
+    + '<button id="_av-cf-no" style="padding:10px 20px;font-size:15px;font-weight:800;background:rgba(60,70,110,0.35);'
+    + 'border:2px solid rgba(140,160,210,0.6);color:#c9d4ee;border-radius:10px;cursor:pointer;font-family:inherit;">✖ ' + _avT('取消','不要') + '</button>'
+    + '<button id="_av-cf-yes" style="padding:10px 20px;font-size:15px;font-weight:800;background:rgba(200,60,60,0.28);'
+    + 'border:2px solid rgba(230,100,100,0.75);color:#ff9a9a;border-radius:10px;cursor:pointer;font-family:inherit;">✅ ' + _avT('確定','好') + '</button>'
+    + '</div></div>';
+  document.body.appendChild(w);
+  w.onclick = function(e){ if(e.target === w) w.remove(); };
+  var _no = document.getElementById('_av-cf-no');
+  if(_no) _no.onclick = function(){ w.remove(); };
+  var _yes = document.getElementById('_av-cf-yes');
+  if(_yes) _yes.onclick = function(){ w.remove(); try{ if(typeof onOk === 'function') onOk(); }catch(_e){} };
+}
+
+/* ★ v4.61.0 需求1-十:全部重置 — 造型全部回預設;體型與座右銘保留(孩子的體型認同不動)
+ * ★ v4.62.0 需求4:確認視窗由瀏覽器 confirm 改遊戲內建風格視窗 _avShowConfirm(舊寫法保留註解):
+ *   if(!confirm(_avT('確定要把造型全部重置回預設嗎?(體型與座右銘會保留)','要把打扮全部變回原本的樣子嗎?(體型和名片的話會留著)'))) return; */
 window._avatarResetAll = function(){
-  if(!confirm(_avT('確定要把造型全部重置回預設嗎?(體型與座右銘會保留)','要把打扮全部變回原本的樣子嗎?(體型和名片的話會留著)'))) return;
-  var keepBody = window._avatarLocalCard.cfg.body | 0;
-  var keepQ = window._avatarLocalCard.q;
-  window._avatarLocalCard.cfg = window._avatarDefaultCfg();
-  window._avatarLocalCard.cfg.body = keepBody;
-  if(typeof keepQ === 'number') window._avatarLocalCard.q = keepQ;
-  _avRefreshPreview(); _avRenderOpts();
+  _avShowConfirm(
+    '↩️ ' + _avT('全部重置','全部重來'),
+    _avT('確定要把造型全部重置回預設嗎?(體型與座右銘會保留)','要把打扮全部變回原本的樣子嗎?(體型和名片的話會留著)'),
+    function(){
+      var keepBody = window._avatarLocalCard.cfg.body | 0;
+      var keepQ = window._avatarLocalCard.q;
+      window._avatarLocalCard.cfg = window._avatarDefaultCfg();
+      window._avatarLocalCard.cfg.body = keepBody;
+      if(typeof keepQ === 'number') window._avatarLocalCard.q = keepQ;
+      _avRefreshPreview(); _avRenderOpts();
+    });
 };
 
 function _avRenderOpts(){
@@ -1608,12 +1685,12 @@ window._avatarOpenCard = function(name, card){
   var wrap = document.createElement('div');
   wrap.id = '_avatar-card-modal';
   wrap.style.cssText = 'position:fixed;inset:0;z-index:20001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,10,0.72);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-  wrap.onclick = function(e){ if(e.target === wrap) wrap.remove(); };
+  wrap.onclick = function(e){ if(e.target === wrap) window._avatarCardClose(); };   /* ★ v4.62.0 走統一關閉(還原 BGM) */
   wrap.innerHTML =
     '<div style="width:min(92vw,380px);background:linear-gradient(160deg,#20184a,#141028);border:2.5px solid rgba(140,200,255,0.65);border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.7),0 0 30px rgba(120,180,255,0.25);">'
     + '<div style="padding:10px 18px;background:linear-gradient(to right,rgba(60,90,180,0.55),rgba(120,60,180,0.55));display:flex;justify-content:space-between;align-items:center;">'
     + '<span style="font-size:17px;font-weight:900;color:#d4ecff;letter-spacing:1px;">📇 ' + _avT('冒險者名片','冒險名片') + '</span>'
-    + '<button onclick="document.getElementById(\'_avatar-card-modal\').remove()" style="background:none;border:none;color:#ff9a9a;font-size:20px;font-weight:900;cursor:pointer;font-family:inherit;">✕</button></div>'
+    + '<button onclick="_avatarCardClose()" style="background:none;border:none;color:#ff9a9a;font-size:20px;font-weight:900;cursor:pointer;font-family:inherit;">✕</button></div>'   /* ★ v4.62.0 統一關閉(還原 BGM) */
     + '<div style="display:flex;align-items:center;justify-content:center;padding:10px;background:radial-gradient(circle at 50% 40%,rgba(120,160,255,0.16),transparent 70%);">'
     + '<div style="width:220px;aspect-ratio:3/4;">' + window._avatarRenderSVG(card.cfg, null, true) + '</div></div>'   /* ★ v4.61.0 名片=上半身特寫(戰鬥卡片預覽圖) */
     + '<div style="padding:4px 20px 18px;text-align:center;">'
@@ -1622,6 +1699,36 @@ window._avatarOpenCard = function(name, card){
     + '<div style="margin-top:10px;padding:10px 12px;background:rgba(0,0,10,0.4);border:1.5px solid rgba(255,210,140,0.4);border-radius:12px;font-size:14.5px;color:#ffe9cc;line-height:1.5;">💬 ' + _avEsc(window.AVATAR_QUOTES[qi]) + '</div>'
     + '</div></div>';
   document.body.appendChild(wrap);
+
+  /* ★ v4.62.0 需求1:名片專屬 BGM(自訂角色名片.m4a·audio#bgm-avatar-card 在 index.html 註冊):
+   *   開名片 → 記住原本在播的 BGM → bgmFadeTo 切入名片曲;關名片(_avatarCardClose)→ 淡回原曲。
+   *   染色重繪 _avatarCardRerender 走 old.remove() 直接重開 → 名片曲已在播即跳過不重起(不斷音)。 */
+  try{
+    var _cb = document.getElementById('bgm-avatar-card');
+    if(_cb && typeof bgmFadeTo === 'function' && _cb.paused){
+      var _prev = null;
+      var _all = document.querySelectorAll('audio[id^="bgm-"]');
+      for(var _bi = 0; _bi < _all.length; _bi++){
+        if(!_all[_bi].paused && _all[_bi].id !== 'bgm-avatar-card'){ _prev = _all[_bi].id; break; }
+      }
+      window._avCardPrevBgm = _prev;
+      bgmFadeTo('bgm-avatar-card', 500);
+    }
+  }catch(_e){}
+};
+
+/* ★ v4.62.0 — 名片統一關閉:收視窗 + BGM 淡回原曲(原本沒在播 BGM 則直接停) */
+window._avatarCardClose = function(){
+  var el = document.getElementById('_avatar-card-modal');
+  if(el) el.remove();
+  try{
+    var _cb = document.getElementById('bgm-avatar-card');
+    if(_cb && !_cb.paused){
+      if(window._avCardPrevBgm && typeof bgmFadeTo === 'function'){ bgmFadeTo(window._avCardPrevBgm, 500); }
+      else if(typeof bgmStop === 'function'){ bgmStop(); }
+    }
+  }catch(_e){}
+  window._avCardPrevBgm = null;
 };
 
 window._avatarPreviewCard = function(){

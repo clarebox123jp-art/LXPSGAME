@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-18  / 目前主程式版本:v4.61.0(👤 面板直式選單+隨機組合+特寫名片)
+//  最後更新:2026-07-19  / 目前主程式版本:v4.62.0(👤 名片BGM+動態背景+特寫只放大人物+重置視窗)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
-//    本次已標 7 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0
+//    目前已標 8 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0/v4.62.0
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -16,6 +16,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.62.0 — 👤 我的主角:名片BGM+動態背景+特寫優化+重置視窗(管理員測試中)
+  {
+    ver: 'v4.62.0',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
+    date: '2026-07-19',
+    brief: [
+      '👤【我的主角・體驗四升級!(老師測試中)】打開冒險者名片會播放專屬的名片音樂,關掉名片就自動換回原本的背景音樂!',
+      '🎬 造型工房加上全螢幕動態影片背景,幫主角打扮的時候超有氣氛!',
+      '🔍 按「放大」看特寫時,現在只放大人物、背景保持原本大小,構圖更自然、背景不會糊掉!',
+      '↩️「全部重置」的確認視窗換成遊戲風格的漂亮視窗,不再是瀏覽器的小灰框!',
+    ],
+    items: [
+      '★ v4.62.0【自訂角色優化四合一・avatar_db.js+index.html】①名片專屬 BGM:index.html 新增 audio#bgm-avatar-card(preload=none·raw 網址載 自訂角色名片.m4a·loop);_avatarOpenCard 開名片時掃 audio[id^=bgm-] 記住原播曲(window._avCardPrevBgm)→ bgmFadeTo 淡入名片曲;新 _avatarCardClose 統一關閉(✕/點背景皆走此)→ 有原曲 bgmFadeTo 淡回·無原曲 bgmStop;染色重繪 _avatarCardRerender 重開時名片曲已在播即跳過不重起(不斷音) ②造型工房全螢幕動態影片背景(自訂角色動態背景.mp4·比照寵物小屋 v4.2.0 模式):createElement video muted autoplay playsinline·z-index:-1 蓋面板漸層底在正常流內容之下·onloadeddata 淡入/onerror 靜默移除露出漸層底·brightness(0.55) 壓暗保右側選單可讀·隨面板關閉一併移除·URL 帶 ?v=AVATAR_DB_VERSION 破快取 ③特寫改「只放大人物·背景尺寸不變」:_avatarRenderSVG PNG 路徑 portrait 時 viewBox 維持全幅 0 0 360 480(_bgLayer 背景照常鋪滿),人物全部圖層包 <g transform=scale(480/_pRect.h) translate(-x,-y)> 群組把特寫矩形映射回全畫布(_pRect=v4.61.0 同款頸線+118 構圖·3:4 等比故 X/Y 縮放一致);背景層在群組外;名片(portrait=true)同構圖自動生效;legacy SVG 路徑(無背景層)維持舊 viewBox 裁切零改動 ④全部重置確認框改遊戲內建風格視窗:新 _avShowConfirm(title,msg,onOk)(樣式同造型工房/名片·z20005·✅確定/✖取消/點背景取消·文字 _avT 雙版=鐵律1.232);_avatarResetAll 改走此視窗(瀏覽器原生 confirm 舊寫法保留註解·誤刪是大忌);拆層隱藏規則不變(整頭→隱藏素體頭+髮+五官件·整身/整套→隱藏素體身+衣物層·服裝分頁單件維持覆蓋法不隱藏素體);admin_panel.js 僅版號同步·無 ?.。',
+    ],
+  },
   // v4.61.0 — 👤 我的主角:面板大改版(直式選單/隨機組合/特寫名片·管理員測試中)
   {
     ver: 'v4.61.0',
@@ -304,20 +319,6 @@ window.GAME_CHANGELOG = [
     date: '2026-07-07',
     brief: [
       '🍶【酒吞童子爆發動畫上線】使出極限爆發時,畫面右邊會播放酒吞童子專屬的爆發動畫「鬼王酒宴」!在英雄圖鑑點開酒吞童子,按左邊大圖右下角的「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
-    ],
-  },
-  // v4.41.0 — 📖 圖鑑「播放動畫」按鈕不再被收錄記錄蓋住 + 🦊 玉藻前爆發動畫「禍世邪魅」登場
-  {
-    ver: 'v4.41.0',
-    date: '2026-07-07',
-    brief: [
-      '📖【圖鑑「播放動畫」按鈕移到看得到的地方】英雄圖鑑左邊大圖右下角的「🎬 播放動畫」按鈕,之前會被下方「你已收錄+日期」那一條蓋住;現在會自動移到那一條的上方,不再被擋住,更好按了!',
-      '🦊【玉藻前爆發動畫登場!】玉藻前新增專屬爆發動畫「禍世邪魅」,戰鬥爆發和英雄圖鑑的「播放動畫」欣賞都看得到、聽得到聲音!',
-    ],
-    items: [
-      '★ v4.41.0【圖鑑播放動畫鈕上移·index.html】#hero-detail-anim-btn(原 bottom:14px·z8)會被 #hero-detail-unlock-record(收錄記錄帶·bottom:0·z8·高度依內容變·v3.16.69 放大約2倍)蓋住;修法:_codexRefreshBurstAnimBtn 顯示按鈕後量測收錄帶 offsetHeight,動態設 _btn.style.bottom = 收錄帶高度+12px(量測不到→退回舊值 14px);immediate + requestAnimationFrame 兩拍(catch 首次 overlay 剛顯示版面未定)。收錄帶在 _renderHeroDetail 順序上先於本函式渲染(117402→117404),量測穩定。純顯示層,不動收錄帶/按鈕行為/事件。',
-      '★ v4.41.0【玉藻前爆發動畫·index.html】_BURST_VIDEO_DB 加「玉藻前→禍世邪魅動畫.mp4」一筆(SSR 標準流程):戰鬥爆發自動走 execBurst→_playBurstVideo、圖鑑欣賞自動走 _codexVideoUrlFor→_codexPlayHeroAnim,雙處自動生效無需改邏輯。URL 走 _BV_RAW(encodeURIComponent 中文檔名+?v=<版本> 破快取)。',
-      '★ v4.41.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.41.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.21.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
