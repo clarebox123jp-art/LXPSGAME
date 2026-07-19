@@ -1,5 +1,17 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
+ * 版本: v4.61.0(2026-07-18)
+ *
+ * ★ v4.61.0 — 面板改版(老師 2026-07-18 三需求):
+ *   ①右側選單十項直式重排(由上而下):換身體(體型獨立置頂)/隨機組合(act)/
+ *     套裝 頭+身體(整套+整頭+整身)/膚色/表情+瞳色/髮型+髮色(髮型款式重新開放)/
+ *     服裝+配色/手持(日後開放 wip)/背景/名片語錄(保留)/全部重置(act);
+ *     選單欄改直式(左預覽·右=選單欄+選項區並排);隨機組合=當前體型可用款亂數
+ *     三模式(整套/頭身混搭/自由搭配)+顏色全隨機;全部重置=造型回預設(體型/座右銘保留·有確認框)
+ *   ②預覽 放大/縮小 鈕:放大=等比例上半身特寫(胸部以上+完整頭部·viewBox 裁切·看清瞳色);
+ *     名片(=戰鬥卡片預覽圖)改用同款特寫構圖(含所選背景)
+ *   ③拆層隱藏(v4.60.0 已實裝·重申):素體頸線拆 head/torso,整頭→隱藏素體頭,
+ *     整身→隱藏素體身(hideHead/hideBody 抑制規則不變)
  * 版本: v4.60.1(2026-07-18)
  *
  * ★ v4.60.1 — 老師實機測試兩 BUG 修復:
@@ -138,7 +150,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.60.1';
+window.AVATAR_DB_VERSION = 'v4.61.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1002,8 +1014,19 @@ function _avImgFor(val, bodyIdx){
   return val;
 }
 
-window._avatarRenderSVG = function(cfg, sizeCss){
+window._avatarRenderSVG = function(cfg, sizeCss, portrait){
   cfg = cfg || window._avatarDefaultCfg();
+  /* ★ v4.61.0 特寫模式(老師需求2):等比例放大上半身(胸部以上+完整頭部·看清瞳色);
+   *   僅改 viewBox 裁切視窗=零重繪成本;名片/戰鬥卡片預覽同用此模式 */
+  var _vb = '0 0 360 480';
+  if(portrait){
+    var _pm = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
+    var _ptf = AVATAR_IMG_TF[cfg.body] || AVATAR_IMG_TF[0];
+    var _ch = (((_pm.neck || 117) + 118) / 720) * _ptf.h + 10;
+    var _cw = _ch * 0.75;
+    var _pcx = _ptf.x + (250 / 504) * _ptf.w;
+    _vb = (_pcx - _cw/2).toFixed(1) + ' ' + (_ptf.y - 4).toFixed(1) + ' ' + _cw.toFixed(1) + ' ' + _ch.toFixed(1);
+  }
   var PAL = window.AVATAR_PALETTES;
   var sk = _col(PAL.skin, cfg.skin), hc = _col(PAL.hair, cfg.hairC), ec = _col(PAL.eye, cfg.eyeC);
   var isKid = (cfg.body === 2 || cfg.body === 3);
@@ -1112,7 +1135,7 @@ window._avatarRenderSVG = function(cfg, sizeCss){
       + _imgLayer(_avImgFor(_pick(P.glasses, cfg.gls).img, cfg.body), tf)
       + _imgLayer(_pick(P.hat, cfg.hat).img, tf)
       + _imgLayer(_pick(P.held, cfg.held).img, tf);
-    return '<svg viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
+    return '<svg viewBox="' + _vb + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
       + (sizeCss || 'width:100%;height:100%;') + 'display:block;">' + png + '</svg>';
   }
 
@@ -1165,7 +1188,7 @@ window._avatarRenderSVG = function(cfg, sizeCss){
   /* 最前:手持物 */
   s += '<g'+bodyT+'>' + _fill(_pick(P.held, cfg.held).svg, sk, hc, ec) + '</g>';
 
-  return '<svg viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg" style="'
+  return '<svg viewBox="' + _vb + '" xmlns="http://www.w3.org/2000/svg" style="'
     + (sizeCss || 'width:100%;height:100%;') + 'display:block;">' + s + '</svg>';
 };
 
@@ -1264,16 +1287,27 @@ window._avatarPullFromCloud = function(){
  *   { k:'cardTab', p:'名片',   c:'名片',   cats:[['q','名片語錄','名片的話']] }
  * ]; */
 var _AV_TABS = [
-  /* ★ v4.60.0 頁籤重構(老師六大系統):造型分頁置首(整套/整頭/整身/服裝配色/背景);
-   *   髮型款式選單先隱藏(裁決四·P.hair 完整保留·cfg.hair 照常渲染·以後優化再開),
-   *   髮色保留於「髮色」分頁;舊 v4.58.1 頁籤定義保留於下方註解可復原 */
-  { k:'styleTab', p:'造型', c:'裝扮', cats:[['full','整套造型','整套裝扮'],['headfull','整頭造型','換頭頭'],['bodyfull','整身造型','換身體裝'],['clothC','服裝配色','衣服顏色'],['bg','背景','背景']] },
-  { k:'hairTab', p:'髮色', c:'頭髮顏色', cats:[['hairC','髮色','頭髮顏色']] },
-  { k:'faceTab', p:'換臉', c:'換臉臉', cats:[['eye','眼睛','眼睛'],['eyeC','瞳孔顏色','眼睛顏色'],['mouth','嘴巴','嘴巴'],['gls','眼鏡','眼鏡'],['ear','耳朵','耳朵'],['browC','眉毛顏色','眉毛顏色']] },
-  { k:'bodyTab', p:'換身體', c:'換身體', cats:[['body','體型','體型'],['skin','膚色','皮膚顏色'],['top','上衣/套裝','衣服'],['btm','褲子','褲褲'],['sh','鞋子','鞋鞋']] },
-  { k:'heldTab', p:'手持', c:'拿的', cats:[['held','手拿物品','拿什麼']] },
-  { k:'cardTab', p:'名片', c:'名片', cats:[['q','座右銘','名片的話']] }
+  /* ★ v4.61.0 右側選單十項直式重排(老師 2026-07-18 指示·由上而下):
+   *   一 換身體(體型獨立置頂)/二 隨機組合(act)/三 套裝(整套+整頭+整身)/四 膚色/
+   *   五 表情+瞳色/六 髮型+髮色(髮型款式重新開放)/七 服裝+配色/八 手持(日後開放·wip)/
+   *   九 背景/(名片語錄保留於此·非老師清單內·避免座右銘功能失聯·可隨時移除)/十 全部重置(act)
+   *   act 項=按下直接執行動作不切頁;wip 項=顯示日後開放佔位 */
+  { k:'bodyTab',   p:'換身體', c:'換身體', cats:[['body','體型(少年/少女/男童/女童)','體型']] },
+  { k:'randomAct', p:'隨機組合', c:'隨機變裝', act:'random' },
+  { k:'setTab',    p:'套裝(頭+身體)', c:'套裝', cats:[['full','整套造型','整套裝扮'],['headfull','整頭造型','換頭頭'],['bodyfull','整身造型','換身體裝']] },
+  { k:'skinTab',   p:'膚色', c:'皮膚顏色', cats:[['skin','膚色','皮膚顏色']] },
+  { k:'faceTab',   p:'表情+瞳色', c:'表情+眼睛', cats:[['eye','眼睛','眼睛'],['eyeC','瞳孔顏色','眼睛顏色'],['mouth','嘴巴','嘴巴'],['gls','眼鏡','眼鏡'],['ear','耳朵','耳朵'],['browC','眉毛顏色','眉毛顏色']] },
+  { k:'hairTab',   p:'髮型+髮色', c:'頭髮', cats:[['hair','髮型','髮型'],['hairC','髮色','頭髮顏色']] },
+  { k:'wearTab',   p:'服裝+配色', c:'衣服', cats:[['top','上衣/套裝','衣服'],['btm','褲子','褲褲'],['sh','鞋子','鞋鞋'],['clothC','服裝配色','衣服顏色']] },
+  { k:'heldTab',   p:'手持(日後開放)', c:'拿的(日後開放)', wip:true },
+  { k:'bgTab',     p:'背景', c:'背景', cats:[['bg','背景','背景']] },
+  { k:'cardTab',   p:'名片語錄', c:'名片的話', cats:[['q','座右銘','名片的話']] },
+  { k:'resetAct',  p:'全部重置', c:'全部重來', act:'reset' }
 ];
+/* ★ v4.60.0 舊六頁籤(v4.61.0 前·誤刪是大忌):
+ * styleTab 造型[full/headfull/bodyfull/clothC/bg] / hairTab 髮色[hairC] /
+ * faceTab 換臉[eye/eyeC/mouth/gls/ear/browC] / bodyTab 換身體[body/skin/top/btm/sh] /
+ * heldTab 手持[held] / cardTab 名片[q] */
 /* ★ v4.58.1 舊頁籤(v4.60.0 前·髮型款式選單在此·誤刪是大忌):
  * { k:'hairTab', p:'換髮型', c:'換頭髮', cats:[['hair','髮型','髮型'],['hairC','髮色','頭髮顏色']] },
  * { k:'bodyTab', ... ['full','整套造型','整套裝扮'] 原在換身體分頁 ... } */
@@ -1321,10 +1355,15 @@ window._avatarOpenPanel = function(){
     /* 主體:左預覽 + 右選單 */
     + '<div style="flex:1;display:flex;min-height:0;">'
     + '<div style="flex:0 0 46%;max-width:640px;display:flex;align-items:center;justify-content:center;padding:12px;background:radial-gradient(circle at 50% 42%,rgba(120,160,255,0.14),transparent 65%);">'
-    + '<div id="_av-preview" style="height:80vh;max-height:80vh;aspect-ratio:3/4;width:auto;max-width:100%;"></div></div>'
-    + '<div style="flex:1;display:flex;flex-direction:column;min-width:0;border-left:1.5px solid rgba(140,200,255,0.25);">'
-    + '<div id="_av-tabs" style="display:flex;gap:6px;padding:10px 12px 6px;overflow-x:auto;flex-shrink:0;"></div>'
-    + '<div id="_av-opts" style="flex:1;overflow-y:auto;padding:6px 14px 20px;"></div>'
+    /* ★ v4.61.0 需求2:預覽加 放大/縮小 鈕(放大=上半身特寫·看清瞳色·同名片/戰鬥卡構圖) */
+    + '<div style="position:relative;height:80vh;max-height:80vh;aspect-ratio:3/4;width:auto;max-width:100%;">'
+    + '<div id="_av-preview" style="width:100%;height:100%;"></div>'
+    + '<button id="_av-zoom-btn" onclick="_avatarToggleZoom()" style="position:absolute;top:8px;right:8px;padding:8px 14px;font-size:14px;font-weight:800;background:rgba(30,40,80,0.7);border:2px solid rgba(140,200,255,0.6);color:#c9e4ff;border-radius:10px;cursor:pointer;font-family:inherit;">🔍 ' + _avT('放大','看特寫') + '</button>'
+    + '</div></div>'
+    /* ★ v4.61.0 需求1:右側選單改「由上而下」直式排列(選單欄+選項區左右並排) */
+    + '<div style="flex:1;display:flex;flex-direction:row;min-width:0;border-left:1.5px solid rgba(140,200,255,0.25);">'
+    + '<div id="_av-tabs" style="display:flex;flex-direction:column;gap:6px;padding:10px 8px;overflow-y:auto;flex:0 0 auto;width:clamp(126px,16vw,184px);border-right:1px solid rgba(140,200,255,0.18);"></div>'
+    + '<div id="_av-opts" style="flex:1;overflow-y:auto;padding:6px 14px 20px;min-width:0;"></div>'
     + '</div></div>'
     + '<div style="padding:8px 20px;font-size:13px;color:#8899bb;border-top:1px solid rgba(140,200,255,0.2);background:rgba(0,0,10,0.4);">'
     + _avT('🔒 鎖定款式將於主線劇情「萬象共鳴」開放取得,敬請期待!','🔒 鎖住的款式,等主線故事開放就拿得到囉!')
@@ -1341,28 +1380,117 @@ window._avatarOpenPanel = function(){
   });
 };
 
+var _avZoom = false;   /* ★ v4.61.0 預覽 放大(上半身特寫)/縮小 狀態 */
 function _avRefreshPreview(){
   var el = document.getElementById('_av-preview');
-  if(el) el.innerHTML = window._avatarRenderSVG(window._avatarLocalCard.cfg);
+  if(el) el.innerHTML = window._avatarRenderSVG(window._avatarLocalCard.cfg, null, _avZoom);
 }
+window._avatarToggleZoom = function(){
+  _avZoom = !_avZoom;
+  var b = document.getElementById('_av-zoom-btn');
+  if(b) b.textContent = _avZoom ? ('🔎 ' + _avT('縮小','看全身')) : ('🔍 ' + _avT('放大','看特寫'));
+  _avRefreshPreview();
+};
 
 function _avRenderTabs(){
   var box = document.getElementById('_av-tabs'); if(!box) return;
   var h = '';
   for(var i=0;i<_AV_TABS.length;i++){
     var t = _AV_TABS[i], on = (i === _avCurTab);
-    h += '<button onclick="_avatarSwitchTab('+i+')" style="padding:8px 16px;font-size:15px;font-weight:800;white-space:nowrap;border-radius:10px;cursor:pointer;font-family:inherit;'
-      + (on ? 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;'
-            : 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#9aa8cc;')
-      + '">' + _avT(t.p, t.c) + '</button>';
+    /* ★ v4.61.0 直式選單:act 項(隨機/重置)用醒目色·按下直接執行 */
+    var sty;
+    if(t.act === 'random'){
+      sty = 'background:rgba(255,170,60,0.22);border:2px solid rgba(255,190,90,0.7);color:#ffd97a;';
+    } else if(t.act === 'reset'){
+      sty = 'background:rgba(200,60,60,0.2);border:2px solid rgba(230,100,100,0.65);color:#ff9a9a;';
+    } else if(on){
+      sty = 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;';
+    } else {
+      sty = 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#9aa8cc;';
+    }
+    var ico = (t.act === 'random') ? '🎲 ' : (t.act === 'reset') ? '↩️ ' : '';
+    h += '<button onclick="_avatarSwitchTab('+i+')" style="padding:10px 10px;font-size:14.5px;font-weight:800;text-align:left;border-radius:10px;cursor:pointer;font-family:inherit;'
+      + sty + '">' + ico + _avT(t.p, t.c) + '</button>';
   }
   box.innerHTML = h;
 }
-window._avatarSwitchTab = function(i){ _avCurTab = i; _avRenderTabs(); _avRenderOpts(); };
+window._avatarSwitchTab = function(i){
+  var t = _AV_TABS[i];
+  if(t && t.act === 'random'){ window._avatarRandomize(); return; }   /* ★ v4.61.0 act 不切頁 */
+  if(t && t.act === 'reset'){ window._avatarResetAll(); return; }
+  _avCurTab = i; _avRenderTabs(); _avRenderOpts();
+};
+
+/* ★ v4.61.0 需求1-二:隨機組合 — 在「當前體型」可用+已解鎖款式中亂數搭配;
+ *   三種模式輪盤:整套 / 整頭+整身混搭 / 自由搭配(髮型+衣裝);顏色全隨機;體型/座右銘不動 */
+function _avAvailIds(cat){
+  var key = { gls:'glasses', sh:'shoe' }[cat] || cat;
+  var list = P[key]; if(!list) return [0];
+  var cfg = window._avatarLocalCard.cfg, out = [];
+  for(var j=0;j<list.length;j++){
+    var it = list[j];
+    if(j !== 0 && cat !== 'bg'){
+      if(!(_avImgFor(it.img, cfg.body) || _avImgFor(it.fImg, cfg.body) || _avImgFor(it.bImg, cfg.body))) continue;
+    }
+    if(!window._avatarIsUnlocked(cat, it.id)) continue;
+    out.push(it.id);
+  }
+  return out.length ? out : [0];
+}
+function _avRndOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+window._avatarRandomize = function(){
+  var cfg = window._avatarLocalCard.cfg;
+  var PAL = window.AVATAR_PALETTES;
+  var mode = Math.floor(Math.random()*3);
+  cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0;
+  if(mode === 0){
+    var fl = _avAvailIds('full').filter(function(x){ return x !== 0; });
+    if(fl.length){ cfg.full = _avRndOf(fl); }
+    else mode = 1;
+  }
+  if(mode === 1){
+    cfg.headf = _avRndOf(_avAvailIds('headfull'));
+    cfg.bodyf = _avRndOf(_avAvailIds('bodyfull'));
+  }
+  if(mode === 2){
+    cfg.hair = _avRndOf(_avAvailIds('hair'));
+    cfg.top = _avRndOf(_avAvailIds('top'));
+    cfg.btm = _avRndOf(_avAvailIds('btm'));
+    cfg.sh = _avRndOf(_avAvailIds('sh'));
+  }
+  cfg.eye = _avRndOf(_avAvailIds('eye'));
+  cfg.mouth = _avRndOf(_avAvailIds('mouth'));
+  cfg.gls = (Math.random() < 0.25) ? _avRndOf(_avAvailIds('gls')) : 0;
+  cfg.ear = (Math.random() < 0.25) ? _avRndOf(_avAvailIds('ear')) : 0;
+  cfg.skin = Math.floor(Math.random()*PAL.skin.length);
+  cfg.hairC = Math.floor(Math.random()*PAL.hair.length);
+  cfg.eyeC = Math.floor(Math.random()*PAL.eye.length);
+  cfg.browC = Math.floor(Math.random()*PAL.hair.length);
+  cfg.clothC = Math.floor(Math.random()*PAL.cloth.length);
+  cfg.bg = _avRndOf(_avAvailIds('bg'));
+  _avRefreshPreview(); _avRenderOpts();
+};
+
+/* ★ v4.61.0 需求1-十:全部重置 — 造型全部回預設;體型與座右銘保留(孩子的體型認同不動) */
+window._avatarResetAll = function(){
+  if(!confirm(_avT('確定要把造型全部重置回預設嗎?(體型與座右銘會保留)','要把打扮全部變回原本的樣子嗎?(體型和名片的話會留著)'))) return;
+  var keepBody = window._avatarLocalCard.cfg.body | 0;
+  var keepQ = window._avatarLocalCard.q;
+  window._avatarLocalCard.cfg = window._avatarDefaultCfg();
+  window._avatarLocalCard.cfg.body = keepBody;
+  if(typeof keepQ === 'number') window._avatarLocalCard.q = keepQ;
+  _avRefreshPreview(); _avRenderOpts();
+};
 
 function _avRenderOpts(){
   var box = document.getElementById('_av-opts'); if(!box) return;
   var tab = _AV_TABS[_avCurTab];
+  /* ★ v4.61.0 wip 頁(手持·日後開放)與 act/無 cats 防呆 */
+  if(tab && (tab.wip || !tab.cats)){
+    box.innerHTML = '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:15px;">🔒 '
+      + _avT('此功能日後開放,敬請期待!','這個功能之後才會開放,再等等喔!') + '</div>';
+    return;
+  }
   var cfg = window._avatarLocalCard.cfg;
   var pngMode = (window._AVATAR_PNG_MODE && _pick(P.body, cfg.body).img);
   var _wipHtml = '<div style="padding:14px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:14.5px;">🎨 '
@@ -1487,7 +1615,7 @@ window._avatarOpenCard = function(name, card){
     + '<span style="font-size:17px;font-weight:900;color:#d4ecff;letter-spacing:1px;">📇 ' + _avT('冒險者名片','冒險名片') + '</span>'
     + '<button onclick="document.getElementById(\'_avatar-card-modal\').remove()" style="background:none;border:none;color:#ff9a9a;font-size:20px;font-weight:900;cursor:pointer;font-family:inherit;">✕</button></div>'
     + '<div style="display:flex;align-items:center;justify-content:center;padding:10px;background:radial-gradient(circle at 50% 40%,rgba(120,160,255,0.16),transparent 70%);">'
-    + '<div style="width:220px;aspect-ratio:3/4;">' + window._avatarRenderSVG(card.cfg) + '</div></div>'
+    + '<div style="width:220px;aspect-ratio:3/4;">' + window._avatarRenderSVG(card.cfg, null, true) + '</div></div>'   /* ★ v4.61.0 名片=上半身特寫(戰鬥卡片預覽圖) */
     + '<div style="padding:4px 20px 18px;text-align:center;">'
     + '<div style="font-size:21px;font-weight:900;color:#ffe9b8;letter-spacing:1px;">' + _avEsc(name || _avT('神秘旅人','神祕人')) + '</div>'
     + '<div style="font-size:13px;color:#8ad4ff;font-weight:800;margin-top:2px;">' + _avT('✦ 異界旅人 ✦','✦ 從別的世界來的 ✦') + '</div>'

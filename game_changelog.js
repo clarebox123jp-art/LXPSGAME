@@ -1,6 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-18  / 目前主程式版本:v4.60.1(👤 體型選單修復+眼白修復)
+//  最後更新:2026-07-18  / 目前主程式版本:v4.61.0(👤 面板直式選單+隨機組合+特寫名片)
+//  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
+//    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
+//    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
+//    本次已標 7 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -12,9 +16,25 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.61.0 — 👤 我的主角:面板大改版(直式選單/隨機組合/特寫名片·管理員測試中)
+  {
+    ver: 'v4.61.0',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
+    date: '2026-07-18',
+    brief: [
+      '👤【我的主角・面板全新排版!(老師測試中)】右邊選單改成由上到下十個項目:換身體/隨機組合/套裝/膚色/表情+瞳色/髮型+髮色/服裝+配色/手持(日後開放)/背景/全部重置,一眼看懂!',
+      '🎲 全新「隨機組合」:按一下就幫你亂數搭配整套或混搭造型加隨機配色,手氣好就是最帥最可愛的造型!「全部重置」一鍵變回原本的樣子(體型和名片的話會保留)。',
+      '🔍 預覽圖新增「放大」按鈕:等比例放大上半身特寫,眼睛瞳色看得一清二楚!名片(戰鬥卡片預覽圖)也改用特寫構圖,配上你選的背景超有型!',
+      '💇 髮型款式選單重新開放:20 款髮型配 16 種髮色又回來了!',
+    ],
+    items: [
+      '★ v4.61.0【面板改版・avatar_db.js】①_AV_TABS 十項直式重排(老師指示序):換身體(體型獨立)/隨機組合(act)/套裝(full+headfull+bodyfull)/膚色/表情+瞳色(eye+eyeC+mouth+gls+ear+browC)/髮型+髮色(P.hair 重新開放)/服裝+配色(top+btm+sh+clothC)/手持(wip 日後開放佔位)/背景(bg)/名片語錄(非清單項·保留座右銘入口可移除)/全部重置(act);面板右側改「直式選單欄+選項區」左右並排;act 項按下直接執行不切頁(_avatarSwitchTab 分流)②_avatarRandomize:當前體型可用+已解鎖款亂數(_avAvailIds 同選單過濾規則·gls/sh 短名映射),三模式輪盤(整套/整頭+整身混搭/自由搭配髮+衣),顏色全隨機(膚/髮/瞳/眉/服裝配色)+配件25%機率+背景隨機;體型/座右銘不動 ③_avatarResetAll:confirm 後 cfg 回預設(體型/座右銘保留)④_avatarRenderSVG 加第三參數 portrait:上半身特寫 viewBox(頸線+118px 高·3:4 等比·臉中心對齊·依體型 META/TF 計算);預覽 🔍放大/🔎縮小 鈕切換 _avZoom;名片卡 _avatarOpenCard 改 portrait=true(=戰鬥卡片預覽構圖·含所選背景)⑤wip/無cats 頁防呆佔位;拆層隱藏規則(v4.60.0)不變;index.html/admin_panel.js 僅版號同步。',
+    ],
+  },
   // v4.60.1 — 👤 我的主角:體型選單修復 + 眼白修復(管理員測試中)
   {
     ver: 'v4.60.1',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
     date: '2026-07-18',
     brief: [
       '👤【我的主角・緊急修復!(老師測試中)】「換臉」「換身體」分頁修好了:四種體型(少年/少女/男童/女童)通通選得到,眼鏡和鞋子的選單也回來了!',
@@ -27,6 +47,7 @@ window.GAME_CHANGELOG = [
   // v4.60.0 — 👤 我的主角:自訂角色大優化(整頭/整身/配色/背景·管理員測試中)
   {
     ver: 'v4.60.0',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
     date: '2026-07-18',
     brief: [
       '👤【我的主角・大優化!(老師測試中)】全新「造型」分頁登場:除了整套換裝,現在還可以「只換整顆頭」或「只換整個身體」!劍士的頭配和服的身體?魔法師的頭配鎧甲?自由混搭!',
@@ -41,6 +62,7 @@ window.GAME_CHANGELOG = [
   // v4.59.0 — 👤 我的主角:整套造型系統(12 件·管理員測試中)
   {
     ver: 'v4.59.0',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
     date: '2026-07-18',
     brief: [
       '👤【我的主角・整套造型登場!(老師測試中)】「換身體」新增「整套造型」:一鍵直接換上整套帥氣/漂亮的完整裝扮,連髮型姿勢都完美搭配好!',
@@ -55,6 +77,7 @@ window.GAME_CHANGELOG = [
   // v4.58.1 — 👤 我的主角:髮型裁切修復 + 介面放大(管理員測試中)
   {
     ver: 'v4.58.1',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
     date: '2026-07-18',
     brief: [
       '👤【我的主角・造型工房 大改版!(老師測試中)】打扮方式變得超簡單:只有「換髮型」「換臉」「換身體」三大類加名片語錄,一眼就知道要按哪裡!',
@@ -71,6 +94,7 @@ window.GAME_CHANGELOG = [
   // v4.56.0 — 🐉 世界BOSS龍王至寶修正 + 👤 主角造型素材第三批(管理員測試中)
   {
     ver: 'v4.56.0',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
     date: '2026-07-18',
     brief: [
       '🐉【世界 BOSS 排名獎勵的「龍王至寶」修正!】之前不管當期是哪一隻龍王,獎勵頁分級表上寫的至寶永遠是「炎龍王之牙」(只有按 ? 小圓鈕看簡介才是對的)。現在分級表會跟著當期龍王顯示正確的專屬至寶名稱(例如海龍王之爪、雷龍王之翼、光龍王之羽…)!',
@@ -87,6 +111,7 @@ window.GAME_CHANGELOG = [
   // v4.55.0 — 主角捏臉系統 Phase 1 + 冒險者名片
   {
     ver: 'v4.55.0',
+    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
     date: '2026-07-17',
     brief: [
       '👤 搶先預告:全新功能「我的主角」即將登場!到時主畫面會出現入口按鈕,打開「造型工房」就能捏出屬於你自己的主角:4 種體型(少年/少女/小小男生/小小女生)、8 種膚色、16 種髮色、12 種瞳色,加上臉型、髮型、眉毛、眼睛、鼻子、嘴巴各 10 款,自由搭配、左邊立繪即時預覽!',
@@ -293,23 +318,6 @@ window.GAME_CHANGELOG = [
       '★ v4.41.0【圖鑑播放動畫鈕上移·index.html】#hero-detail-anim-btn(原 bottom:14px·z8)會被 #hero-detail-unlock-record(收錄記錄帶·bottom:0·z8·高度依內容變·v3.16.69 放大約2倍)蓋住;修法:_codexRefreshBurstAnimBtn 顯示按鈕後量測收錄帶 offsetHeight,動態設 _btn.style.bottom = 收錄帶高度+12px(量測不到→退回舊值 14px);immediate + requestAnimationFrame 兩拍(catch 首次 overlay 剛顯示版面未定)。收錄帶在 _renderHeroDetail 順序上先於本函式渲染(117402→117404),量測穩定。純顯示層,不動收錄帶/按鈕行為/事件。',
       '★ v4.41.0【玉藻前爆發動畫·index.html】_BURST_VIDEO_DB 加「玉藻前→禍世邪魅動畫.mp4」一筆(SSR 標準流程):戰鬥爆發自動走 execBurst→_playBurstVideo、圖鑑欣賞自動走 _codexVideoUrlFor→_codexPlayHeroAnim,雙處自動生效無需改邏輯。URL 走 _BV_RAW(encodeURIComponent 中文檔名+?v=<版本> 破快取)。',
       '★ v4.41.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.41.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.21.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.40.0 — 🎬 集中線/招式名固定3秒 + 英雄圖鑑「播放動畫」欣賞 + 大天狗動畫
-  {
-    ver: 'v4.40.0',
-    date: '2026-07-07',
-    brief: [
-      '🎬【爆發演出更俐落】爆發時的「集中效果線」和「招式名稱大字」現在固定演出 3 秒後淡出,不會再跟著動畫長度一直停在畫面上,節奏更清爽!',
-      '📖【英雄圖鑑可以看動畫囉!】在英雄圖鑑的個人頁,左邊大圖的右下角新增「🎬 播放動畫」按鈕。已經收錄(圖片是彩色)的英雄才能點,點下去動畫會放大蓋住左邊大圖播給你看,還能聽到聲音!第一次點會先下載並存起來,之後戰鬥時就能更快讀取播放。還沒收錄的英雄不能點;動畫還沒做好的英雄點了會出現「敬請期待」。',
-      '🐉【大天狗動畫登場!】大天狗新增專屬爆發動畫(神威‧風獵),戰鬥爆發和圖鑑欣賞都看得到!',
-    ],
-    items: [
-      '★ v4.40.0【集中線/招式名固定3秒·index.html】_showBurstCinematic 影片路徑下 speedLines(集中效果線 z462)與 cin(招式名大字 z465)由「撐到影片結束」改「固定 3 秒後淡出」;仍存參照給 execBurst _bvDone,影片比 3 秒短時由影片結束提前收(_faded 守門防重複);招式名 3 秒淡出不放 GIF(GIF 仍由影片結束 _bvDone 觸發)。靜態特寫盒 imgPanel 維持撐到影片結束(被影片覆蓋)。非影片英雄(_bvHold=null)時序零改動。',
-      '★ v4.40.0【圖鑑播放動畫·index.html】#hero-detail-img-side 右下加 #hero-detail-anim-btn;_renderHeroDetail 設圖後 _codexRefreshBurstAnimBtn(name,_heroIsUnlocked)刷新(彩色=已收錄→可點·未收錄→禁用灰階·同大圖灰階口徑)。點擊 _codexOnAnimBtnClick:未收錄→輕提示;有動畫(_codexVideoUrlFor 查 _BURST_VIDEO_DB→_SKILL_VIDEO_DB)→_codexPlayHeroAnim 建 #hero-detail-anim-overlay(z30 覆蓋左側大圖·蓋過 SSR徽章 z10/皮膚切換 z5/收錄記錄·object-fit:contain·靜音起播→playing 解靜音出聲·關閉鈕/onended/onerror 自動收);無動畫→_codexAnimNotice「敬請期待」。文字 cute+premium 雙版(鐵律1.232)。',
-      '★ v4.40.0【緩存·index.html】圖鑑動畫 URL 走 _BV_RAW(自帶 ?v=<版本>);圖鑑首播即進瀏覽器 HTTP 快取→戰鬥爆發 _playBurstVideo 用同一 URL 命中快取快速讀取(零額外 JS 記憶體·版本 bump 自動破快取重抓)。',
-      '★ v4.40.0【大天狗動畫·index.html】_BURST_VIDEO_DB 加「大天狗→神威風獵動畫.mp4」一筆:戰鬥爆發自動走 execBurst→_playBurstVideo、圖鑑欣賞自動走 _codexVideoUrlFor→_codexPlayHeroAnim。★慣例:未來新增 SSR 爆發動畫只加 _BURST_VIDEO_DB 一筆即「戰鬥+圖鑑」雙處生效,無需改邏輯。',
-      '★ v4.40.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.40.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.20.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
