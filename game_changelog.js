@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-19  / 目前主程式版本:v4.62.0(👤 名片BGM+動態背景+特寫只放大人物+重置視窗)
+//  最後更新:2026-07-19  / 目前主程式版本:v4.63.0(🤝 好友名單「切換成名片」檢視模式)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
-//    目前已標 8 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0/v4.62.0
+//    目前已標 9 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0/v4.62.0/v4.63.0
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -16,6 +16,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.63.0 — 🤝 好友名單「切換成名片」檢視模式(管理員測試中)
+  {
+    ver: 'v4.63.0',
+    adminOnly: true,   /* ★ 主角系統測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
+    date: '2026-07-19',
+    brief: [
+      '🤝【好友名單・切換成名片!(老師測試中)】好友頁新增「🪪 切換成名片」按鈕,一鍵把好友名冊變成大頭照名片牆!',
+      '🪪 名片牆上每位好友都用自己打扮的冒險者造型當大頭照,一眼認出誰是誰,點大頭照就能看完整名片!',
+      '🟢 大頭照右上角有線上小綠燈,誰在線上一看就知道;再按一下「📋 切換成清單」就變回原本的名冊!',
+    ],
+    items: [
+      '★ v4.63.0【好友名單名片檢視模式・index.html 為主】①面板標題列新增「🪪 切換成名片/📋 切換成清單」切換鈕:偏好記 localStorage(_friendPanelCardMode) 下次開面板沿用;與 📇 名片按鈕同 _AVATAR_ADMIN_ONLY gating(測試期僅管理員可見·正式開放改 avatar_db.js 單一開關);avatar_db.js 未載入(_avatarRenderSVG 不存在)不顯示按鈕不炸 ②名片模式=名片縮圖網格:每位好友一張 3:4 上半身特寫大頭照(_avatarRenderSVG(cfg,null,true)·v4.61.0 名片同款構圖),資料來源 _friendHeroData[uid].avatarCard(v4.55.0 _fbLoadFriend 已整份讀回·零額外 Firestore 讀取);未捏臉好友顯示預設造型+「尚未設定造型/還沒打扮喔」角標(鐵律1.232 雙版·_fpSimple 分流·按鈕與 title 同雙版);點縮圖 _openFriendAvatarCard 開完整名片;線上燈號沿用 class=_friend-presence-dot data-friend-uid 機制移至縮圖右上角(_applyFriendPresenceDots/onSnapshot 免改直接套) ③網格欄寬:名片模式 minmax(168px,1fr)/清單模式維持 280px ④_refreshFriendListInner(好友資料 lazy load 完成的增量更新路徑)在名片模式改走整面板重渲 _renderFriendPanel(清單模板直接蓋會把名片網格洗掉;輸入中延後 500ms 守門為既有機制·重渲後補套 _applyFriendPresenceDots) ⑤avatar_db.js/admin_panel.js 僅版號對齊(AVATAR_DB_VERSION 順帶破素材快取·老師剛上傳的 avatar_parts 新素材可正確更新);無 ?.。',
+    ],
+  },
   // v4.62.0 — 👤 我的主角:名片BGM+動態背景+特寫優化+重置視窗(管理員測試中)
   {
     ver: 'v4.62.0',
@@ -311,14 +325,6 @@ window.GAME_CHANGELOG = [
       '★ v4.43.0【BOSS 鎖血發威標示·index.html·強化版】抽出單一真相 helper _lxpsPaintBossRageLabel(h):p2 真 BOSS 卡(card-p2-{pos})中央加持久 .boss-rage-label(z32·pointer-events:none·Web Animations 輕微脈動)。顯示條件=「鎖血同回合 h._lifelineImmuneRound===G.round」或「保底顯示期未過 Date.now()<h._bossRageUntil」。★根治老師實測「鎖血卻看不到標籤」:改「鎖血觸發當下即時畫(_applyBossLifelineProtection 兩處 50%/1HP 賦值後呼叫 _lxpsTriggerBossRageLabel)+保底顯示 ~2.6s」→玩家該回合是最後行動者時 G.round 立刻前進也不會一閃即逝;renderCard 每次重繪呼叫同 helper(依同條件加/移除)。保底期滿 setTimeout 補收一次;鎖血無敵結束(下一回合)後自然移除(=「直到鎖血無敵結束」)。',
       '★ v4.43.0【純顯示層·不改機制】完全不動鎖血傷害機制:死亡免疫地板仍為 v3.16.36 版(非致命傷害照常結算·HP 可見下降·會致命才夾到剩 1 HP)。_lifelineImmuneRound 只會被 _applyBossLifelineProtection 對「真 BOSS」寫入→一般 p2 雜魚/菁英不誤顯示;世界 BOSS 龍王走 worldboss 早退不進此函式,不受影響。文字 cute+premium 雙版(鐵律1.232)。',
       '★ v4.43.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.43.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.23.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.42.0 — 🍶 酒吞童子爆發動畫「鬼王酒宴」登場
-  {
-    ver: 'v4.42.0',
-    date: '2026-07-07',
-    brief: [
-      '🍶【酒吞童子爆發動畫上線】使出極限爆發時,畫面右邊會播放酒吞童子專屬的爆發動畫「鬼王酒宴」!在英雄圖鑑點開酒吞童子,按左邊大圖右下角的「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
     ],
   },
   // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了

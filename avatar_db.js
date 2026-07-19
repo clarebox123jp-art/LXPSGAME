@@ -1,6 +1,6 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
- * 版本: v4.62.0(2026-07-19)
+ * 版本: v4.63.0(2026-07-19)
  *
  * ★ v4.62.0 — 自訂角色系統優化(老師 2026-07-19 四需求):
  *   ①名片專屬 BGM:開名片切入 自訂角色名片.m4a(audio#bgm-avatar-card 在 index.html·
@@ -161,7 +161,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.62.0';
+window.AVATAR_DB_VERSION = 'v4.63.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
