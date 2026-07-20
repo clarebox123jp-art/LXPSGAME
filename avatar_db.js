@@ -37,6 +37,11 @@
  *     (離線由頭件冠部實測·距離<44 視為頭髮·紫電/細劍士撞衫色不掛) 修4 黑框眼鏡破檔停用
  *     修5 kidboy_shaggy 實為少年圖→移少年分頁另立款 修6 水水魔法裝 404→改掛 aquamage 舊件
  *     +俏馬尾移男童分頁+接線 repo 既有 curlybob/hime 女童新髮 修7 全選單按鈕/字級放大
+ *   ⑯(2026-07-20 第九輪)四體型基礎素體全面換新(力行運動服版):老師四張原圖經
+ *     去背→眼錨正規化(眼中線/足底對齊既有基準)→髮域偵測→下巴弧底切線(頭=髮域∪
+ *     y<=chinCut 含完整下巴輪廓零脖子;身=非髮∧y>=chinCut−15·15px 重疊帶含完整脖子)
+ *     產出 body_head/body_torso ×4 同名覆蓋;P.body headImg 改回 body_head_X(新圖含
+ *     瀏海髮型);AVATAR_HEAD_GEO 依新素體實測更新;hhRef 換新頭髮參考色(黑髮)
  * 版本: v4.63.1(2026-07-20)
  *
  * ★ v4.63.1 — 造型工房 BGM(老師 2026-07-20):
@@ -294,10 +299,10 @@ var AVATAR_BODY_META = {
  *   下巴線用 META.neck2。帽=頭寬×倍率·帽底停在頭高 1/3;眼鏡=頭寬×1.06 對瞳孔中線;
  *   嘴飾=對嘴部(眼→下巴 60% 處)。玩家可再用 XY 微調(cfg.pos)。 */
 var AVATAR_HEAD_GEO = {
-  0: { cx:246, top:16, eyeY:74,  headW:83  },   /* 少年 */
-  1: { cx:250, top:19, eyeY:83,  headW:87  },   /* 少女 */
-  2: { cx:251, top:24, eyeY:110, headW:122 },   /* 幼兒男 */
-  3: { cx:250, top:24, eyeY:107, headW:116 }    /* 幼兒女 */
+  0: { cx:247, top:4, eyeY:74, headW:95 },   /* 少年(★第九輪:力行運動服新素體實測·含髮) */
+  1: { cx:251, top:4, eyeY:83, headW:105 },   /* 少女 */
+  2: { cx:251, top:22, eyeY:110, headW:116 },   /* 男童 */
+  3: { cx:251, top:19, eyeY:107, headW:120 }    /* 女童(側馬尾偏斜·寬取中位法) */
 };
 var _avTintCache = {};function _avHex2Rgb(hx){
   return [parseInt(hx.slice(1,3),16), parseInt(hx.slice(3,5),16), parseInt(hx.slice(5,7),16)];
@@ -440,7 +445,10 @@ function _avPieceKey(imgFile, kind, cfg){
 }
 window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
   /* ★ v4.64.0(第五輪)修3b:hairRefs=該套裝落髮參考色 [[r,g,b],...](離線由頭件冠部實測)
-   *   → 整身件(bodyfull)內「顏色貼近參考色且非膚」的像素(=垂落到衣服上的頭髮)一併染髮色 */
+   *   → 整身件(bodyfull)內「顏色貼近參考色且非膚」的像素(=垂落到衣服上的頭髮)一併染髮色
+   * ★ v4.64.0(第七輪·老師指示)修3改版:頭件(headfull)染髮不用遮罩 — 規則=
+   *   「與頭髮內部參考色相近(低容錯·距離<34)且避開眼似像素與深色邊線」即染髮色;
+   *   臉部膚色因與參考色距離遠自然不染;參考色命中的像素也不被膚色/服裝配色波及 */
   var key = _avPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
   if(_avPieceTintCache[key]){ cb(_avPieceTintCache[key]); return; }
   var PAL = window.AVATAR_PALETTES;
@@ -461,6 +469,21 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
   var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;
   var hairT = (doHair || doHairRef) ? _avHex2Rgb(PAL.hair[cfg.hairC]) : null;   /* ★ 修3b:hairRef 路徑也要髮色目標 */
   var clothT= doCloth? _avHex2Rgb(PAL.cloth[cfg.clothC]) : null;
+  /* ★ 修3(第七輪):headfull 參考色前置量(低容錯 TH=34;bodyfull 落髮沿用 TH=44)
+   *   _hrHeadOn=頭件參考色模式(髮染僅依參考色·並保護命中像素不被膚/服染);
+   *   _outlineV=邊線排除門檻(參考色最暗檔 v−0.15·上限0.30·黑髮自動趨近0不影響) */
+  var _hrHue = (hairRefs && typeof hairRefs.hue === 'number') ? hairRefs.hue : null;   /* ★ 第八輪:色相模式(金髮等髮膚同 RGB 域件·hue 中位) */
+  var _hrN = (_hrHue === null && hairRefs && hairRefs.length) ? hairRefs.length : 0;
+  var _hrHeadOn = (_hrN > 0 || _hrHue !== null) && (kind === 'headfull');
+  var _outlineV = 0;
+  if(_hrHeadOn && _hrN > 0){
+    var _minRv = 1;
+    for(var _ri=0; _ri<_hrN; _ri++){
+      var _rv = Math.max(hairRefs[_ri][0], hairRefs[_ri][1], hairRefs[_ri][2]) / 255;
+      if(_rv < _minRv) _minRv = _rv;
+    }
+    _outlineV = Math.max(0, Math.min(0.30, _minRv - 0.15));
+  }
   var img = new Image();
   img.onload = function(){
     try{
@@ -473,6 +496,9 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
       var ex1=_eyeB[0]*sc, ey1=_eyeB[1]*sc, ex2=_eyeB[2]*sc, ey2=_eyeB[3]*sc;
       var bx1=_browB[0]*sc, by1=_browB[1]*sc, bx2=_browB[2]*sc, by2=_browB[3]*sc;
       var neckPx = (meta.neck2 || meta.neck || 117)*sc, sbv = meta.sbv;   /* ★ v4.64.0 改用新切法顎線 */
+      /* ★ 第八輪:色相模式臉橢圓(眼框橫距+10 / 眼頂→下巴+6·像素座標) */
+      var _fcxE=(ex1+ex2)/2, _fcyE=(ey1+neckPx)/2;
+      var _frxE=(ex2-ex1)/2 + 10*sc, _fryE=(neckPx-ey1)/2 + 6*sc;
       for(var i=0;i<px.length;i+=4){
         if(px[i+3] < 10) continue;
         var r=px[i]/255, g=px[i+1]/255, b=px[i+2]/255;
@@ -493,10 +519,21 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
                                   || (s<0.24 && v>0.72));
         /* ★ v4.64.0(第五輪)修3b:身件落髮 — 顏色貼近該套裝髮參考色(距離<44)即視為頭髮 */
         var nearHairRef = false;
-        if(doHairRef){
+        if(_hrHue !== null && _hrHeadOn){
+          /* ★ 第八輪 色相混合模式:hue 距中位 ≤8 且 s>0.08 且「臉橢圓外」= 頭髮
+           *   (金髮與膚色 RGB/明度/飽和皆重疊·唯 hue 有分離帶;臉橢圓=眼框+下巴推出·
+           *    橢圓內一律不髮染保護臉;耳朵膚色 hue 低於髮窗自然不染) */
+          var _hdif = h - _hrHue; if(_hdif > 180) _hdif -= 360; if(_hdif < -180) _hdif += 360;
+          if(_hdif < 0) _hdif = -_hdif;
+          if(_hdif <= 8 && s > 0.08){
+            var _ndx = (x - _fcxE)/_frxE, _ndy = (y - _fcyE)/_fryE;
+            if(_ndx*_ndx + _ndy*_ndy > 1){ nearHairRef = true; }
+          }
+        } else if(doHairRef || _hrHeadOn){
+          var _hrTH2 = _hrHeadOn ? 1156 : 1936;   /* ★ 第七輪:頭件低容錯 34²·身件落髮 44² */
           for(var hri=0; hri<hairRefs.length; hri++){
             var _dr=px[i]-hairRefs[hri][0], _dg=px[i+1]-hairRefs[hri][1], _db2=px[i+2]-hairRefs[hri][2];
-            if(_dr*_dr + _dg*_dg + _db2*_db2 < 1936){ nearHairRef = true; break; }
+            if(_dr*_dr + _dg*_dg + _db2*_db2 < _hrTH2){ nearHairRef = true; break; }
           }
         }
         var T=null, ratio=0;
@@ -505,9 +542,11 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
         } else if(doBrow && x>=bx1 && x<bx2 && y>=by1 && y<by2
                   && h>4 && h<52 && s>0.2 && v>0.10 && v<0.68){
           T=browT; ratio=v/0.38;
+        } else if(_hrHeadOn && nearHairRef && !isEyeLike && v >= _outlineV){   /* ★ 修3(第七輪):頭件參考色模式 — 近髮內部色即染;未選髮色也吃掉此像素(保護不被膚/服染到) */
+          if(doHair){ T=hairT; ratio=v/0.55; }
         } else if(doSkin && isSkin){
           T=skinT; ratio=v/sbv;
-        } else if(doHair && !isSkin && !isEyeLike && (!hairAboveNeckOnly || y < neckPx)){   /* ★ 修3a:!inEye → !isEyeLike */
+        } else if(!_hrHeadOn && doHair && !isSkin && !isEyeLike && (!hairAboveNeckOnly || y < neckPx)){   /* ★ 修3a:!inEye → !isEyeLike;有參考色的頭件髮染僅依參考色 */
           T=hairT; ratio=v/0.55;
         } else if(doHairRef && nearHairRef && !isSkin){   /* ★ 修3b:身件落髮染髮色(優先於服裝配色) */
           T=hairT; ratio=v/0.55;
@@ -535,16 +574,16 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
  * Q 版二頭身。座標基準:頸 y225 肩 y252 臀 y345 腿底 y438。
  * kid 體型不另畫 path:身體 group 套 transform 縮短(見渲染器)。 */
 P.body = [
-  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', headImg:'boy_uniform_head.png', torsoImg:'body_torso_boy.png', svg:   /* ★ v4.64.0 修2:少年「原本的頭」改用 boy_uniform_head(老師指定;舊值 body_head_boy.png 保留註記) */
+  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', headImg:'body_head_boy.png', hhRef:[[48,48,47],[123,113,105]], torsoImg:'body_torso_boy.png', svg:   /* ★ v4.64.0 修2:少年「原本的頭」改用 boy_uniform_head(老師指定;舊值 body_head_boy.png 保留註記) */
     '<path d="M180 222 c-30 2 -50 16 -52 42 l-4 78 c-1 14 8 22 18 22 l14 0 4 66 c0 6 5 9 10 9 l20 0 c5 0 10 -3 10 -9 l4 -66 14 0 c10 0 19 -8 18 -22 l-4 -78 c-2 -26 -22 -40 -52 -42 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M132 262 c-10 4 -16 14 -17 26 l-3 46 c0 8 5 13 12 13 8 0 12 -5 12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M228 262 c10 4 16 14 17 26 l3 46 c0 8 -5 13 -12 13 -8 0 -12 -5 -12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:1, n:'少女', ns:'少女', lock:null, img:'body_girl.png', headImg:'body_head_girl.png', torsoImg:'body_torso_girl.png', svg:
+  { id:1, n:'少女', ns:'少女', lock:null, img:'body_girl.png', headImg:'body_head_girl.png', hhRef:[[61,59,58],[117,100,91]], torsoImg:'body_torso_girl.png', svg:   /* ★ v4.64.0 第六輪修1:少女基本頭改 girl_longstraight_head(舊 body_head_girl.png) */
     '<path d="M180 222 c-28 2 -46 16 -48 40 l-3 44 c-2 12 -6 22 -6 34 0 16 12 24 24 24 l8 0 3 66 c0 6 5 9 10 9 l24 0 c5 0 10 -3 10 -9 l3 -66 8 0 c12 0 24 -8 24 -24 0 -12 -4 -22 -6 -34 l-3 -44 c-2 -24 -20 -38 -48 -40 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M134 260 c-9 4 -15 13 -16 24 l-3 46 c0 8 5 13 12 13 7 0 11 -5 11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M226 260 c9 4 15 13 16 24 l3 46 c0 8 -5 13 -12 13 -7 0 -11 -5 -11 -13 l0 -66 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
-  { id:2, n:'男童', ns:'男童', lock:null, img:'body_kidboy.png', headImg:'body_head_kidboy.png', torsoImg:'body_torso_kidboy.png', svg:'@0' },
-  { id:3, n:'女童', ns:'女童', lock:null, img:'body_kidgirl.png', headImg:'body_head_kidgirl.png', torsoImg:'body_torso_kidgirl.png', svg:'@1' }
+  { id:2, n:'男童', ns:'男童', lock:null, img:'body_kidboy.png', headImg:'body_head_kidboy.png', hhRef:[[55,54,53],[112,99,93]], torsoImg:'body_torso_kidboy.png', svg:'@0' },   /* ★ v4.64.0 第六輪修1:男童基本頭改 kidboy_kimono_head(舊 body_head_kidboy.png) */
+  { id:3, n:'女童', ns:'女童', lock:null, img:'body_kidgirl.png', headImg:'body_head_kidgirl.png', hhRef:[[60,58,56],[118,100,91]], torsoImg:'body_torso_kidgirl.png', svg:'@1' }   /* ★ v4.64.0 第六輪修1:女童基本頭改 kidgirl_twintail_head(舊 body_head_kidgirl.png) */
 ];
 /* '@N' = 借用第 N 款 path,渲染器對 id 2/3 另套幼兒縮放 transform */
 
@@ -1058,25 +1097,25 @@ P.bodyfull = [
  *    ponytail2(kidgirl·藍運動衫批)命名暫定,待老師定名後只改 n/ns 即可 */
 P.hairhead = [
   { id:0,  n:'預設頭部', ns:'原本的頭', lock:null, img:null },
-  { id:1,  n:'蓬鬆層次髮', ns:'蓬蓬頭', lock:null, img:['boy_shaggy_head.png',null,null,null] },   /* ★ 修5:kidboy_shaggy 實為少年圖→男童槽移除(該圖另立 id15) */
-  { id:2,  n:'活力刺蝟頭', ns:'刺刺頭', lock:null, img:[null,null,'kidboy_spiky_head.png',null] },
-  { id:3,  n:'側編辮子髮', ns:'辮子頭', lock:null, img:[null,'girl_braid_head.png',null,'kidgirl_braid_head.png'] },
-  { id:4,  n:'恬靜閉眼髮', ns:'閉眼頭', lock:null, img:[null,'girl_closedeyes_head.png',null,'kidgirl_closedeyes_head.png'] },
-  { id:5,  n:'精靈金色捲髮', ns:'精靈捲捲', lock:null, img:[null,'girl_elfcurl_head.png',null,null] },
-  { id:6,  n:'精靈波浪長髮', ns:'精靈波波', lock:null, img:[null,null,null,'kidgirl_elfwavy_head.png'] },
-  { id:7,  n:'文青眼鏡髮', ns:'眼鏡頭', lock:null, img:[null,'girl_glasses_head.png','kidboy_glasses_head.png','kidgirl_glasses_head.png'] },
-  { id:8,  n:'超長直髮', ns:'超長直髮', lock:null, img:[null,'girl_longstraight_head.png',null,'kidgirl_longstraight_head.png'] },
-  { id:9,  n:'飄逸長捲髮', ns:'長捲捲', lock:null, img:[null,'girl_longwavy_head.png',null,'kidgirl_longwavy_head.png'] },
-  { id:10, n:'高馬尾', ns:'馬尾巴', lock:null, img:[null,'girl_ponytail_head.png',null,'kidgirl_ponytail_head.png'] },
-  { id:11, n:'活力俏馬尾', ns:'俏馬尾', lock:null, img:[null,null,'kidgirl_ponytail2_head.png',null] },   /* ★ 修6:圖實為男童(檔名照舊)→移男童槽 */
-  { id:12, n:'單側馬尾', ns:'側馬尾', lock:null, img:[null,'girl_sideponytail_head.png',null,'kidgirl_sideponytail_head.png'] },
-  { id:13, n:'雙馬尾', ns:'雙馬尾', lock:null, img:[null,'girl_twintail_head.png',null,'kidgirl_twintail_head.png'] },
-  { id:14, n:'波浪鮑伯頭', ns:'波波頭', lock:null, img:[null,'girl_wavybob_head.png',null,'kidgirl_wavybob_head.png'] },
+  { id:1,  n:'蓬鬆層次髮', ns:'蓬蓬頭', lock:null, img:['boy_shaggy_head.png',null,null,null], hhRef:[[[67,64,62],[125,122,120],[181,179,178]],null,null,null] },   /* ★ 修5:kidboy_shaggy 實為少年圖→男童槽移除(該圖另立 id15) */
+  { id:2,  n:'活力刺蝟頭', ns:'刺刺頭', lock:null, img:[null,null,'kidboy_spiky_head.png',null], hhRef:[null,null,[[49,49,48],[121,111,106],[180,165,156]],null] },
+  { id:3,  n:'側編辮子髮', ns:'辮子頭', lock:null, img:[null,'girl_braid_head.png',null,'kidgirl_braid_head.png'], hhRef:[null,[[65,63,63],[117,113,115],[159,168,178]],null,[[62,59,57],[123,106,98],[179,153,148]]] },
+  { id:4,  n:'恬靜閉眼髮', ns:'閉眼頭', lock:null, img:[null,'girl_closedeyes_head.png',null,'kidgirl_closedeyes_head.png'], hhRef:[null,[[57,55,55],[123,115,111]],null,[[61,59,57],[121,114,112]]] },
+  { id:5,  n:'精靈金色捲髮', ns:'精靈捲捲', lock:null, img:[null,'girl_elfcurl_head.png',null,null], hhHue:[null,36.4,null,null] },
+  { id:6,  n:'精靈波浪長髮', ns:'精靈波波', lock:null, img:[null,null,null,'kidgirl_elfwavy_head.png'], hhHue:[null,null,null,40.3] },
+  { id:7,  n:'文青眼鏡髮', ns:'眼鏡頭', lock:null, img:[null,'girl_glasses_head.png','kidboy_glasses_head.png','kidgirl_glasses_head.png'], hhRef:[null,[[62,61,61],[120,114,113]],[[55,53,52],[122,118,116]],[[65,63,62],[120,103,96]]] },
+  { id:8,  n:'超長直髮', ns:'超長直髮', lock:null, img:[null,'girl_longstraight_head.png',null,'kidgirl_longstraight_head.png'], hhRef:[null,[[72,70,70],[117,111,110]],null,[[65,64,64],[122,114,114]]] },
+  { id:9,  n:'飄逸長捲髮', ns:'長捲捲', lock:null, img:[null,'girl_longwavy_head.png',null,'kidgirl_longwavy_head.png'], hhRef:[null,[[64,61,64],[118,112,114]],null,[[65,62,61],[116,103,100]]] },
+  { id:10, n:'高馬尾', ns:'馬尾巴', lock:null, img:[null,'girl_ponytail_head.png',null,'kidgirl_ponytail_head.png'], hhRef:[null,[[61,60,60],[114,110,112],[151,160,179]],null,[[57,56,54],[117,104,100]]] },
+  { id:11, n:'活力俏馬尾', ns:'俏馬尾', lock:null, img:[null,null,'kidgirl_ponytail2_head.png',null], hhRef:[null,null,[[50,49,48],[115,103,97]],null] },   /* ★ 修6:圖實為男童(檔名照舊)→移男童槽 */
+  { id:12, n:'單側馬尾', ns:'側馬尾', lock:null, img:[null,'girl_sideponytail_head.png',null,'kidgirl_sideponytail_head.png'], hhRef:[null,[[67,65,68],[119,113,115]],null,[[64,62,61],[116,104,101]]] },
+  { id:13, n:'雙馬尾', ns:'雙馬尾', lock:null, img:[null,'girl_twintail_head.png',null,'kidgirl_twintail_head.png'], hhRef:[null,[[65,63,67],[127,122,121]],null,[[63,59,59],[116,102,100]]] },
+  { id:14, n:'波浪鮑伯頭', ns:'波波頭', lock:null, img:[null,'girl_wavybob_head.png',null,'kidgirl_wavybob_head.png'], hhRef:[null,[[66,64,67],[125,119,118]],null,[[68,64,64],[113,102,100]]] },
   /* ★ v4.64.0(第五輪)— 修5:kidboy_shaggy_head 實為少年圖·移入少年分頁另立款式;
    *   repo 另有兩件女童新髮未接線(curlybob/hime)一併掛上(命名暫定待老師確認) */
-  { id:15, n:'隨性蓬亂髮', ns:'亂亂頭', lock:null, img:['kidboy_shaggy_head.png',null,null,null] },
-  { id:16, n:'捲髮鮑伯頭', ns:'捲波波頭', lock:null, img:[null,null,null,'kidgirl_curlybob_head.png'] },
-  { id:17, n:'公主切長髮', ns:'公主切', lock:null, img:[null,null,null,'kidgirl_hime_head.png'] }
+  { id:15, n:'隨性蓬亂髮', ns:'亂亂頭', lock:null, img:['kidboy_shaggy_head.png',null,null,null], hhRef:[[[67,64,65],[119,114,115],[178,177,177]],null,null,null] },
+  { id:16, n:'捲髮鮑伯頭', ns:'捲波波頭', lock:null, img:[null,null,null,'kidgirl_curlybob_head.png'], hhRef:[null,null,null,[[67,63,62],[119,107,101],[175,172,172]]] },
+  { id:17, n:'公主切長髮', ns:'公主切', lock:null, img:[null,null,null,'kidgirl_hime_head.png'], hhRef:[null,null,null,[[65,64,63],[122,113,112]]] }
 ];
 
 /* ── ★ v4.64.0 套裝(P.outfit)— 頭+身分離件 34 件 13 款(頭身新切法) ──
@@ -1087,40 +1126,40 @@ P.hairhead = [
 P.outfit = [
   { id:0,  n:'預設裝扮(素體)', ns:'原本的樣子', lock:null, head:null, body:null },
   { id:1,  n:'學生制服', ns:'學生制服', lock:null,
-    head:['boy_uniform_head.png','girl_uniform_head.png','kidboy_uniform_head.png',null],
+    head:['boy_uniform_head.png','girl_uniform_head.png','kidboy_uniform_head.png',null], hhRef:[[[44,43,43],[125,119,113]],[[59,58,57],[127,121,118],[180,179,178]],[[55,55,55],[128,126,125]],null],
     body:['boy_uniform_body.png','girl_uniform_body.png','kidboy_uniform_body.png',null] },
   { id:2,  n:'日式和服', ns:'和服', lock:null,
-    head:['boy_kimono_head.png','girl_kimono_head.png','kidboy_kimono_head.png',null],
+    head:['boy_kimono_head.png','girl_kimono_head.png','kidboy_kimono_head.png',null], hhRef:[[[52,51,52],[128,119,114]],[[53,52,52],[129,113,125],[180,153,180]],[[52,51,50],[125,113,100]],null],
     body:['boy_kimono_body.png','girl_kimono_body.png','kidboy_kimono_body.png',null],
     hairRef:[null,[[53,52,51],[116,104,110]],null,null] },   /* ★ 修3b:少女和服落髮參考色(僅少女·男生短髮免掛防染到深色和服) */
   { id:3,  n:'紳士西裝', ns:'帥西裝', lock:null,
-    head:['boy_suit_head.png',null,null,null], body:['boy_suit_body.png',null,null,null] },
+    head:['boy_suit_head.png',null,null,null], hhRef:[[[42,40,39],[128,121,116]],null,null,null], body:['boy_suit_body.png',null,null,null] },
   { id:4,  n:'重裝鎧甲劍士', ns:'鎧甲劍士裝', lock:null,
-    head:['boy_heavysword_head.png',null,null,null], body:['boy_heavysword_body.png',null,null,null] },
+    head:['boy_heavysword_head.png',null,null,null], hhRef:[[[55,53,51],[122,113,108]],null,null,null], body:['boy_heavysword_body.png',null,null,null] },
   { id:5,  n:'赤紅魔法師', ns:'火火魔法裝', lock:null,
-    head:['boy_redmage_head.png',null,null,null], body:['boy_redmage_body.png',null,null,null] },
+    head:['boy_redmage_head.png',null,null,null], hhRef:[[[55,54,53],[123,112,110]],null,null,null], body:['boy_redmage_body.png',null,null,null] },
   { id:6,  n:'清新藍洋裝', ns:'藍洋裝', lock:null, lockHair:true,   /* ★ 修2:原髮蓋住衣服裁切困難→暫不提供更換髮型 */
-    head:[null,'girl_dress_head.png',null,null], body:[null,'girl_dress_body.png',null,null],
+    head:[null,'girl_dress_head.png',null,null], hhRef:[null,[[54,53,53],[126,116,110]],null,null], body:[null,'girl_dress_body.png',null,null],
     hairRef:[null,[[54,53,52],[114,104,99]],null,null] },   /* ★ 修3b:辮子落在身件·髮色照染 */
   { id:7,  n:'俏麗雙劍士', ns:'雙劍士裝', lock:null,
     /* ★ 修1(2026-07-20 第五輪):雙劍士是女童的+新切件不在 repo(girl_dualblade_* 404)→
      *   改掛 v4.60.0 既有女童舊件(整套取代無接縫問題);日後老師上傳新切件再換檔名 */
-    head:[null,null,null,'headfull_dualblade_kidgirl.png'],
+    head:[null,null,null,'headfull_dualblade_kidgirl.png'], hhRef:[null,null,null,[[69,65,64],[118,103,96]]],
     body:[null,null,null,'bodyfull_dualblade_kidgirl.png'],
     hairRef:[null,null,null,[[68,65,63],[108,95,89]]] },
   { id:8,  n:'華麗細劍士', ns:'細劍士裝', lock:null,
-    head:[null,'girl_rapier_head.png',null,null], body:[null,'girl_rapier_body.png',null,null] },
+    head:[null,'girl_rapier_head.png',null,null], hhRef:[null,[[63,61,62],[121,108,102]],null,null], body:[null,'girl_rapier_body.png',null,null] },
   { id:9,  n:'紫電魔法師', ns:'閃電魔法裝', lock:null, lockHair:true,   /* ★ 修2:暫不提供更換髮型(裁切困難);落髮撞深色衣不掛 hairRef */
-    head:[null,'girl_purplemage_head.png',null,null], body:[null,'girl_purplemage_body.png',null,null] },
+    head:[null,'girl_purplemage_head.png',null,null], hhRef:[null,[[57,54,55],[122,112,118],[164,156,177]],null,null], body:[null,'girl_purplemage_body.png',null,null] },
   { id:10, n:'輕裝大劍士', ns:'大劍士裝', lock:null,
-    head:[null,null,'kidboy_greatsword_head.png',null], body:[null,null,'kidboy_greatsword_body.png',null] },
+    head:[null,null,'kidboy_greatsword_head.png',null], hhRef:[null,null,[[59,57,57],[119,108,104]],null], body:[null,null,'kidboy_greatsword_body.png',null] },
   { id:11, n:'翠綠魔法師', ns:'綠綠魔法裝', lock:null,
-    head:[null,null,'kidboy_greenmage_head.png',null], body:[null,null,'kidboy_greenmage_body.png',null] },
+    head:[null,null,'kidboy_greenmage_head.png',null], hhRef:[null,null,[[60,57,54],[119,109,103],[176,169,164]],null], body:[null,null,'kidboy_greenmage_body.png',null] },
   { id:12, n:'吊帶短褲裝', ns:'吊帶裝', lock:null,
-    head:[null,null,'kidboy_overalls_head.png',null], body:[null,null,'kidboy_overalls_body.png',null] },
+    head:[null,null,'kidboy_overalls_head.png',null], hhRef:[null,null,[[54,53,52],[111,100,95]],null], body:[null,null,'kidboy_overalls_body.png',null] },
   { id:13, n:'水藍魔法師', ns:'水水魔法裝', lock:null,
     /* ★ 修6:kidgirl_watermage_* 不在 repo(404)→ 改掛 v4.60.0 aquamage 女童舊件;日後上傳新件再換 */
-    head:[null,null,null,'headfull_aquamage_kidgirl.png'],
+    head:[null,null,null,'headfull_aquamage_kidgirl.png'], hhRef:[null,null,null,[[68,66,66],[108,102,106],[110,144,180]]],
     body:[null,null,null,'bodyfull_aquamage_kidgirl.png'],
     hairRef:[null,null,null,[[67,66,66],[103,94,94]]] }
 ];
@@ -1361,7 +1400,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     function _pieceLayer(imgFile, kind, hairRefs){
       imgFile = _avImgFor(imgFile, cfg.body);
       if(!imgFile) return '';
-      var _needHr = (hairRefs && hairRefs.length && (cfg.hairC|0) > 0);   /* ★ v4.64.0 第五輪:落髮染色需求 */
+      var _needHr = (hairRefs && (hairRefs.length || typeof hairRefs.hue === 'number') && (cfg.hairC|0) > 0);   /* ★ 第五輪落髮/第八輪色相模式 染色需求 */
       if(!_avPieceNeedTint(kind, cfg) && !_needHr) return _imgLayer(imgFile, tf);
       var pk = _avPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
       if(_avPieceTintCache[pk]) return _imgLayerSrc(_avPieceTintCache[pk], tf);
@@ -1396,13 +1435,22 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     if(fullPng){
       baseLayers = _pieceLayer(fullPng, 'full');   /* 舊整套件(舊存檔相容) */
     } else {
-      /* ★ v4.64.0 第五輪 修3b:套裝身件帶落髮參考色(依體型槽取 item.hairRef) */
+      /* ★ v4.64.0 第五輪 修3b:套裝身件帶落髮參考色(依體型槽取 item.hairRef)
+       * ★ v4.64.0 第六輪 修3:頭件帶髮罩/參考色(來源=髮型整頭件或套裝件自身欄位) */
       var _ofRefs = (_ofBodyPng && _ofD && _ofD.hairRef) ? _avImgFor(_ofD.hairRef, cfg.body) : null;
+      var _hpSrcItem = _hhPng ? _pick(P.hairhead, cfg.hh) : (_ofHeadPng ? _ofD : null);
+      /* ★ 第八輪:hhHue(色相混合模式·金髮件)優先於 hhRef(RGB 參考色) */
+      var _hpRefs = null;
+      if(_hpSrcItem){
+        var _hueV = _hpSrcItem.hhHue ? _avImgFor(_hpSrcItem.hhHue, cfg.body) : null;
+        if(typeof _hueV === 'number'){ _hpRefs = { hue: _hueV }; }
+        else if(_hpSrcItem.hhRef){ _hpRefs = _avImgFor(_hpSrcItem.hhRef, cfg.body); }
+      }
       baseLayers = _ofsWrap(bodyPiece ? 'ofb' : 'baseB',
                      (bodyPiece ? _pieceLayer(bodyPiece, 'bodyfull', _ofRefs) : _pieceLayer(bodyDef.torsoImg, 'baseTorso')))
                  + _ofsWrap(headPiece ? _headPosKey : 'baseH',
-                     (headPiece ? _pieceLayer(headPiece, 'headfull')
-                                : _pieceLayer(bodyDef.headImg, 'headfull')));   /* ★ v4.64.0 素體頭也走 headfull 染色 → 需求5:髮色對預設頭髮同樣生效(舊 kind 'baseHead' 保留引擎內定義未用) */
+                     (headPiece ? _pieceLayer(headPiece, 'headfull', _hpRefs)
+                                : _pieceLayer(bodyDef.headImg, 'headfull', bodyDef.hhRef)));   /* ★ v4.64.0 素體頭也走 headfull 染色 → 需求5:髮色對預設頭髮同樣生效(舊 kind 'baseHead' 保留引擎內定義未用) */
     }
     /* ★ v4.62.0 需求3:特寫=背景全幅不動·人物群組等比放大(把特寫矩形映射回全畫布) */
     var _charOpen = '', _charClose = '', _pngVb = _vb;
