@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-20  / 目前主程式版本:v4.64.2(👤 自訂角色大改版:頭身新素材+頭飾眼鏡嘴飾+位置微調)
+//  最後更新:2026-07-21  / 目前主程式版本:v4.67.0(📖 主線劇情批次2a·序章接線·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,53 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.67.0 — 主線劇情批次2a:序章接線(捏臉/名片/加入演出/次元裂縫)·管理員測試
+  {
+    ver: 'v4.67.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '📖 主線劇情更好玩了!序章帶你「捏臉」做主角、看冒險者名片、夥伴「加入隊伍」演出,裂縫穿越也有畫面轉場;第三、四章通關還會直接收服 SR 夥伴(劍士/祭司/守衛/刺客/火法師),而且玩到一半離開,下次能接著上次的地方看。(測試中,先開放給老師)',
+    ],
+    items: [
+      '★ v4.67.0【主線批次2a】新增演出動作分派器 _msRunAct:每段對白播完後執行該場景的 act,完成再自動續播下一段(無 act 直接續播·全程 try-catch + watchdog 防卡死)。',
+      '★ v4.67.0【序章接線】捏臉(open_avatar_studio→開造型工房·掛 _avatarPanelClose 偵測離開續播)/名片(set_card→展示自動生成的冒險者名片·掛 _avatarCardClose)/加入隊伍(join_prologue:小劇團員‧直笛團員‧弦樂團員‧動物學家 純敘事演出·不發卡·初始8英雄建帳號即贈)/次元裂縫(改暗場穿越對白+結尾淡出全黑→下一場景淡入·不做影片)。',
+      '★ v4.67.0【加入演出全通】join_ch1 籃球隊員‧田徑隊員 / join_ch2 程式設計師‧電腦繪圖師(初始8英雄至此全數登場·純敘事) / join_ch3 劍士‧祭司 / join_ch4 守衛‧刺客‧火法師 加入隊伍演出。',
+      '★ v4.67.0【SR 夥伴解鎖(Q3)】第三章通關直接解鎖 劍士‧祭司;第四章通關直接解鎖 守衛‧刺客‧火法師(共 5 位 SR·經 advSaveUnlockedHero 來源 mainstory_clear·圖鑑顯示「主線劇情獲得」)。已擁有者每重複 1 位改為 +5 召喚水晶。維持 SR 稀有度(不進 SUMMON_RARE_HEROES SSR 池·5 位皆早在 _PLAYER_HERO_NAMES 白名單與 ADMIN_ALL_HEROES 之內·免造角)。發放綁章節通關 reward·冪等(_r_chap_chX)。',
+      '★ v4.67.0【火法師登場】第四章花林新增火法師登場對白(火剋魅惑妖花·雙版說明);火法師為既有 hero_db 英雄,故事化收服。',
+      '★ v4.67.0【主線關卡進度綁 UID(Q2)】主線改為「章節內場景續播點」:玩到一半離開,下次從上次那一段接續(_sc_chX·綁 UID·雲端 mainStoryProgress + 本地 lxps_mainstory_uid 鏡像·取大還原·整章完成清除)。與戰鬥/一般存檔分離·只增不退。',
+      '★ v4.67.0【場景圖】MAINSTORY_DB 9 張場景圖副檔名 .png→.jpg(配合 JPGq90 場景圖省流量);保留 貓空BOSS戰背景/深坑老街/臭豆腐BOSS/第一章河堤 為 .png 不動。',
+      '★ v4.67.0【範圍與驗證】只改 index.html(主線引擎+DB);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js 未動;無 ?.·九版號同步點全對齊 v4.67.0·changelog 恰 20 條。戰鬥/教學類 act(battle_*/tutorial_*/grant_sword/awaken_hero)留待批次2b/3。',
+    ],
+  },
+  // v4.66.0 — 自訂角色安全開關(隨機變裝暫停 + GM鎖款玩家隱藏·管理員測試)
+  {
+    ver: 'v4.66.0',
+    date: '2026-07-20',
+    adminOnly: true,
+    brief: [
+      '🎲 打扮小屋:「隨機變裝」先暫停整理中,還有一些服裝在準備;老師鎖起來的款式也先不顯示,等做好、開放後就會出現囉!(測試中)',
+    ],
+    items: [
+      '★ v4.66.0【自訂角色】隨機變裝暫時關閉(window._AV_RANDOM_OFF·部分套裝素材整理中,避免抽到未完成款;點選會提示整理中·邏輯完整保留,日後 _AV_RANDOM_OFF=false 一鍵重開)',
+      '★ v4.66.0【自訂角色】GM 上鎖款對「非管理員」完全隱藏(連鎖定預覽也不顯示,等對應套裝素材修好重傳、GM 解鎖後才對玩家出現;管理員照常可見、可切換測試)',
+      '★ v4.66.0【範圍與驗證】只改 avatar_db.js(index.html/admin_panel.js/game_changelog.js 僅版號同步);無 ?.·九版號同步點全對齊 v4.66.0·changelog 恰 20 條。',
+    ],
+  },
+  // v4.65.0 — 主線劇情模式 Phase 1 地基(穿越冒險故事外殼·管理員測試)
+  {
+    ver: 'v4.65.0',
+    date: '2026-07-20',
+    adminOnly: true,
+    brief: [
+      '📖 全新「主線劇情」要來囉!跟著力行小學生穿越到異世界,和夥伴一起冒險、學會戰鬥和馴養,最後喚醒你自己的主角!(測試中,先開放給老師)',
+    ],
+    items: [
+      '★ v4.65.0【主線劇情】Phase 1 地基:資料驅動章節腳本 MAINSTORY_DB(序章~第六章)+ 過場播放引擎(獨立 overlay 鏈式·打字機對白·可跳過·影片插槽缺檔靜默 fallback·防卡死 watchdog)',
+      '★ v4.65.0【主線劇情】進度 self-write(mainStoryProgress·players 主檔 merge·免改 rules)+ 各章 🔮×5 / 全通關 🌈SSR隨機召喚卷×1 冪等發獎(序章不發)',
+      '★ v4.65.0【主線劇情】關卡頁「📖 主線劇情」入口 + 首登自動導入序章(admin gating 測試期·防疊加守門);演出動作(造型工房/夥伴加入/教學/劇情戰)批次2/3 接既有系統',
+    ],
+  },
   // v4.64.2 — 頭飾尺寸上限 ±50% + 素體/部件圖快取自清 + 眼鏡白鏡片版補齊(管理員測試)
   {
     ver: 'v4.64.2',
@@ -290,60 +337,6 @@ window.GAME_CHANGELOG = [
       '★ v4.50.0【龍王血量】新手教學第4章 + 遊戲介紹說明書(可見文字與註解)HP 500 萬→1000 萬,對齊 v4.8.0 實況 10,000,000;「每人每回合」正名「每位英雄每回合」傷害上限 5000。',
       '★ v4.50.0【素質上限】STAT_DESCS(desc+simple 雙版)/ 新手教學第3章(premium 四行+simple 升級加點)/ HUT「分配四項能力」頁,補上:HP 減傷上限 50%(既有)、攻擊暴擊率最高疊到 100%(基礎15%+0.5%/點·doDmg Math.min(1))、特技無上限、速度依速度差每點+1%迴避上限 60%(doDmg Math.min(0.6))。',
       '★ v4.50.0【寵物好感爆發威力】依 v4.13.2 _affMult 實況(25/50/75/100/125%),於六處雙版文字補完:新手教學第6章 / 近期活動寵物卡 / 寵物小屋教學 STEPS / 寵物圖鑑 intro / 詳情頁忠誠夥伴 _desc / 詳情頁爆發區塊 _tip(鐵律1.232 cute+premium 全齊)。純顯示層·零邏輯改動·無 ?.。',
-    ],
-  },
-  // v4.49.0 — 🐱 新角色登場:貓人族長(元素小精靈召喚·天賦強化)
-  {
-    ver: 'v4.49.0',
-    date: '2026-07-12',
-    brief: [
-      '🌟【新角色登場介紹】🐱 貓人族長(SSR·4 年 6 班 張同學設計)—— 隱居深山的貓人族千金,天生擅長召喚魔法!天賦「小精靈召喚」:每回合出手前「一定」會召喚火/冰/雷元素小精靈中還沒有的一種(最多同時 3 隻);而且「普通攻擊時」和「受到傷害時」還各有機會再多召喚一隻!小精靈會擁有自己的血量、優先幫族長擋下傷害,普通攻擊時每有 1 隻小精靈就追加一次對應屬性的爪擊,讓對手燃燒/緩速/麻痺!(天賦每升 1 級,普攻與受傷的召喚機率就 +10%,最高 90%)',
-      '💥【爆發更好懂】貓人族長準備發動極限爆發時,爆發說明會即時顯示「目前有幾隻小精靈」以及「引爆的總傷害量」,讓你一眼就知道現在爆發打得夠不夠痛,要不要再多召喚幾隻!',
-      '⚡【技能一·雷精靈風暴】消耗雷精靈,喚起狂雷對隨機對手連轟 4 次,每一擊都有機會讓對手麻痺!(沒有雷精靈時無法施展喔)',
-      '❄️【技能二·冰精靈守護】消耗冰精靈,展開極寒守護結界,讓我方全體受到的傷害大幅減少,而且攻擊我方的對手會被冰霜緩速!(沒有冰精靈時無法施展)',
-      '💥【極限爆發·上級元素精靈‧引爆】把所有小精靈昇華引爆!每 1 隻精靈都會對敵方全體造成強力對應屬性傷害,還附帶強力燃燒/凍結/強力麻痺,必中且無視有利狀態!(至少要有 1 隻精靈才能發動)',
-      '🐱【怎麼獲得】到「召喚星空」就有機會抽到貓人族長喔!',
-    ],
-    items: [
-      '★ v4.49.0【天賦強化 小精靈召喚】①行動前「必定」召喚一隻缺少的小精靈(startTurn 改用 _catSummonMissingSprite helper·精靈 HP 改固定=本體最大HP×70% 不再隨天賦級成長) ②普通攻擊時(execAtk 追擊後) ③受到傷害時(doDmg 代承前·單次擲一次·排除治療反彈) 各有機率額外召喚一隻缺少的小精靈;召喚機率=50%+10%/天賦級(Lv5=90%)·天賦被封三處皆停用。',
-      '★ v4.49.0【文字同步】HERO_TRAIT desc/fd(鐵律1.160 只寫Lv1=50%)+_TRAIT_LV_INFO(改為 base 召喚機率50%/+10%級/max 90%)+檔尾 sd(鐵律1.232 簡單風)+hero_input.html 天賦皆同步;召喚只加精靈不造成傷害·無新增秒殺路徑。',
-      '★ v4.49.0【爆發面板動態資訊】showBurstPanel 與 adventure 爆發選角面板為貓人族長注入即時顯示:目前小精靈數量(含元素 emoji)+引爆總傷害量(=精靈數×spv×500%×_burstMult·_burstMult=1+爆發Lv×0.1);0 隻時提示需持有至少 1 隻才能發動。純顯示層·不動任何傷害邏輯。',
-      '★ v4.48.0【新增學生設計英雄 貓人族長·4 年 6 班 張同學·SSR·dmg+ctrl】doDmg FIFO 精靈代承(比照天青龍·扣精靈 hp 不繞 5000cap·全擋 return 0)+renderCard 精靈 HP 條+普攻每持有1隻追加特技60%對應屬性傷害+對應異常2回合。',
-      '★ v4.48.0【技能與爆發】S1 雷精靈風暴(消耗雷精靈·特技100%+5%/lv 風屬性隨機4次·每次70%麻痺)+S2 冰精靈守護(消耗冰精靈·全隊 _catIceGuard 減傷70%+3%/lv[Lv5=82%]2回合+攻擊者緩速)+爆發 上級元素精靈‧引爆(消耗全部精靈·每隻對敵全體特技500%×_burstMult 對應屬性分攤必中無視有利+強力異常·需≥1隻·走 doDmg 受5000cap 鐵律1.31)。',
-      '★ v4.48.0【接線】execSkill+aiUseSkill 雙實作(鐵律1.128·AI 無對應精靈改普攻)+SKILL_FORCE_ELEMENT+SKILL_UPGRADE_DEF+BURST_UPGRADE_DEF(500→700%)+buffClass/buffName(_catIceGuard)+SUMMON_RARE_HEROES(IIFE 自動補池)+STUDENT_DESIGNER_HEROES(lsps111050→圖鑑🎨)·全在 index.html+hero_db.js+hero_input.html·無 ?.·七版號同步全對齊 v4.49.0。',
-    ],
-  },
-  // v4.47.0 — 🛡 戰鬥體驗穩定四合一(封印提示/存檔更穩/劇情防卡/續戰診斷)
-  {
-    ver: 'v4.47.0',
-    date: '2026-07-11',
-    brief: [
-      '🚫【封印看得懂了】被敵人「封印」時,技能按鈕上方會出現清楚提示:「技能被封印無法使用!可改用普通攻擊、休息或物品卡」。以前按技能沒反應會以為壞掉,現在一看就知道是被封印了,等封印回合結束就會恢復!',
-      '☁️【存檔更穩定】戰鬥中的雲端存檔改成「聰明合併」:太密集的存檔會自動合併成一筆再上傳,重要時刻(暫停存檔、離開遊戲)一樣立刻存。這樣全班同時上課時,雲端不會塞車,你的進度反而存得更牢!',
-      '👆【劇情不再卡住】劇情對話如果停很久沒動,畫面會出現「點擊畫面繼續劇情」提示;再等一陣子系統會自動幫你點一下,不會再有「卡在過場畫面出不去」的情況。',
-      '🔍【續戰更透明】戰鬥中斷後的「續戰快照」現在會在系統紀錄留下完整線索,之後如果遇到「跳出後不能繼續打」,老師能更快幫你查出原因!',
-    ],
-    items: [
-      '★ v4.47.0【任務A·封印零回饋根治·index.html】updateUI 於技能鈕(b-s1)正上方動態建 #seal-hint 提示條:行動英雄 seal/sealall→「🚫 技能被封印無法使用!可改用普通攻擊、休息或物品卡」;_burstSeal→爆發封印版;兩者並存→合併版。cute+premium 雙版(鐵律1.232)·pointer-events:none 純顯示層·不改任何 disabled 判定。根治玩家回報「按技能或爆發沒反應」(日本關學霸被八岐大蛇封印案例)。',
-      '★ v4.47.0【任務B·雲端存檔節流·index.html】根治 Firestore resource-exhausted(Write stream exhausted maximum allowed queued writes→最大退避→存檔靜默失敗):gameCloudSave 保護層1.6後加 leading+trailing throttle——僅「戰鬥進行中且未結算」生效,距上次實寫<15秒→排尾端補寫(到期以最新記憶體狀態上雲·資料不遺失·最多延15秒·被節流呼叫共享同一Promise);直通旗標 _lxpsCloudSaveForceNext 由 _forceSaveBattleSnapshotAndSync/暫停存檔離開/只存檔 三關鍵路徑先設;三層離場事件偵測尾端補寫排程中→補寫一次。非戰鬥/結算存檔行為零改動。',
-      '★ v4.47.0【任務C·過場防卡死 watchdog·index.html】adv-cutscene-overlay 每5秒輪詢:場景/對白索引60秒無推進→顯示脈動「👆 點擊畫面繼續劇情」(cute:點一下畫面繼續!);120秒起每60秒自動代點 advNextDialog 一次(借用既有自我修復重置殘留旗標·上限10次)。小怪戰/隨機事件/選擇面板/日本難度/法寶彈窗/答題/暫停 皆列例外不計時。',
-      '★ v4.47.0【任務D·續戰快照診斷·index.html】_saveBattleRoundSnapshot 每回合寫入印 stage/round;_advCheckCrashRecovery 四個不彈續戰分支(無快照/內容無效/超過24小時/已在同關戰鬥中)各印明確原因→「跳出後沒讓我繼續打」類回報可直接從 console 定位。',
-      '★ v4.47.0【範圍與驗證】只改 index.html(admin_panel.js/game_changelog.js 僅版號同步);無新增雲端欄位·firestore.rules 免改·無 ?.;七版號同步點全對齊 v4.47.0。',
-    ],
-  },
-  // v4.46.0 — 🔥 炎火超少女登場
-  {
-    ver: 'v4.46.0',
-    date: '2026-07-10',
-    brief: [
-      '🌬️【新角色登場介紹】🔥 炎火超少女(SSR·火屬性·1年4班 梁同學設計)—— 繼承火神血脈的異世界少女登場!她是高特技、高速度的火焰輸出兼控場好手。天賦「烈焰亂舞」:每回合出手前先甩出 4 道火焰亂舞灼燒隨機敵人、附加燃燒。S1「不滅炎魂」(被動):只要敵人一復活,就立刻被烈焰擊倒(遇到 BOSS、世界 BOSS 或鬥技場對手則改成造成上限傷害+強力燃燒,不會秒殺);而且每有敵人復活一次,她的特技就會越燒越旺!S2「怒火連環拳」:一口氣打出 5 記火拳,每一拳還會打掉對手 1 個有利狀態。極限爆發「火神附體」:對全體敵人灑下 900% 火焰、封住他們的增益 3 回合,接著自己進入「火神附體」3 回合——受傷減半、傷而不倒(最低保留 1 滴血)、火焰與燃燒反而幫她回血、出手還必中無視防禦!',
-      '🔥【怎麼獲得】到「召喚星空」就有機會抽到炎火超少女喔!',
-    ],
-    items: [
-      '★ v4.46.0【新增學生設計 SSR 英雄「炎火超少女」(1年4班 梁同學)·index.html+hero_db.js】火屬性·主分類 dmg+ctrl·配點 hp55/atk5/sp24/spd16(hp 欄位 72=55×1.3)。hero_db.js 14 表齊備(HERO_DB/AVATARS🔥/HERO_IMGS 炎火超少女.png/HERO_IMG_POS/HERO_BIO 含 designer(1年4班 梁同學)/BURST_DB/HERO_LORE/HERO_TRAIT/BURST_GIF_DB→神木復仇之火.gif/HERO_CATEGORIES_OVERRIDE[dmg,ctrl]/HERO_HEX_OVERRIDE/_TRAIT_LV_INFO/HERO_PRIMARY_CLASS dmg/HERO_SKILL_EFFECTS)+檔尾 sd 簡單風(鐵律1.232 cute+premium 雙版·1.160 只寫 Lv1)。',
-      '★ v4.46.0【邏輯層 index.html】SUMMON_RARE_HEROES(IIFE 自動補 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES)+SKILL_FORCE_ELEMENT 四招火屬性+頂層 helper(_yhHasFireGod/_yhSoulPerLayer/_yhSpMult)+天賦 startTurn 行動前 hook(烈焰亂舞 特技40%×4 火傷+燃燒·天賦被封停用)+S1 doRevive hook(不滅炎魂:敵方復活即處決/上限傷害 Lv×20+強力燃燒·特技疊層+20%[3回合最多5層])+S2 execSkill/aiUseSkill 雙實作(鐵律1.128·怒火連環拳 特技100%火屬性隨機5次·每擊消1有利)+爆發 _runBurst(火神附體 特技900%×_burstMult 全體分攤·命中者禁益3回合·自身 firegodbody buff 3回合)+doDmg 5 hook(actor 必中無視有利/受傷減半/火傷·燃燒轉治療/不會倒下/造成傷害套禁益)+buffName/buffClass firegodbody+SKILL_UPGRADE_DEF(special_yh_soul+dmg)+codex 升級視窗 render case+BURST_UPGRADE_DEF(900→1260%)。',
-      '★ v4.46.0【鐵律1.31 BOSS 尊嚴】天賦/S1/S2/爆發全部走 doDmg → 世界 BOSS 5000cap、真 BOSS 鎖血地板自動兜底,不會秒殺/HP 設 1/HP 比例/固定傷害>5000。S1 對世界 BOSS/真 BOSS/鬥技場對手一律改為上限傷害 Lv×20+強力燃燒(不處決)。',
-      '★ v4.46.0【範圍與驗證】改 index.html+hero_db.js+hero_input.html(編輯器 HEROES_DB/HERO_CATEGORIES_INITIAL 純新增炎火超少女);admin_panel.js/game_changelog.js 版號/公告對齊。world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.46.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.26.0)。爆發用視覺特效 GIF 神木復仇之火.gif(無影片)。設計者 1年4班25號 梁同學掛名(index.html 補入 _STUDENT_DESIGNED_HERO_SET → 圖鑑標 🎨 學生設計英雄 + HERO_BIO.designer 顯示設計者區塊;該生未達三年級、無學生信箱 → 不入 STUDENT_DESIGNER_HEROES 獎勵登錄、不發設計師獎勵)。',
     ],
   },
 ];

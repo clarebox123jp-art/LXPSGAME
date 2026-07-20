@@ -218,7 +218,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.64.2';
+window.AVATAR_DB_VERSION = 'v4.67.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -2004,7 +2004,14 @@ function _avRndOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 /* ★ v4.64.0 隨機變裝(新頭身系統):
  *   50% 整套模式=隨機套裝(頭+身一起·清髮型頭);50% 混搭模式=隨機髮型頭+機率配隨機套裝身;
  *   膚色/髮色/瞳色/服裝配色全隨機;體型/座右銘/背景/位置微調不動;舊 full/headf/bodyf 槽一律清 0 */
+/* ★ v4.66.0 決策4:隨機變裝暫時關閉(部分套裝素材整理中,避免抽到未完成款)。
+ *   日後素材補齊 → 改回 window._AV_RANDOM_OFF = false 一鍵重開,其餘邏輯完整保留。 */
+window._AV_RANDOM_OFF = true;
 window._avatarRandomize = function(){
+  if(window._AV_RANDOM_OFF){
+    try{ alert(_avT('🎲 隨機變裝整理中,暫時關閉,近期重新開放!','🎲 隨機變裝整理中,先關起來,很快就開放喔!')); }catch(_){}
+    return;
+  }
   var cfg = window._avatarLocalCard.cfg;
   var PAL = window.AVATAR_PALETTES;
   _avSfx('select');
@@ -2218,6 +2225,9 @@ function _avRenderOpts(){
         var _LOCKABLE = { outfit:1, hairhead:1, hat:1, gls:1, mouth:1, mouthacc:1, held:1 };
         var _isGm = (typeof window._isAdminUser === 'function' && window._isAdminUser());
         var _gmLk = !!(window._avatarGmLocks && window._avatarGmLocks[cat + ':' + it.id] === true);
+        /* ★ v4.66.0 決策4:GM 上鎖款對「非管理員」完全不顯示(連 🔒 鎖定預覽也隱藏),
+         *   等對應套裝素材修好重傳、GM 解鎖後才對玩家出現;管理員照常見(可測試/切換)。 */
+        if(_gmLk && !_isGm && !unlocked){ shown--; continue; }
         var _gmBtn = '';
         if(_isGm && _LOCKABLE[cat] && it.id !== 0){
           _gmBtn = '<button onclick="_avatarGmToggleLock(\'' + cat + '\',' + it.id + ')" title="'
