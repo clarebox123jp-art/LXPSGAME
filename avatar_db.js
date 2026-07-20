@@ -1,6 +1,12 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
- * 版本: v4.63.0(2026-07-19)
+ * 版本: v4.63.1(2026-07-20)
+ *
+ * ★ v4.63.1 — 造型工房 BGM(老師 2026-07-20):
+ *   進造型工房自動播放 自訂角色名片.m4a(與名片共用 audio#bgm-avatar-card)·
+ *   離開工房(離開鈕→_avatarPanelClose 統一關閉)淡出並切回原場景 BGM(關卡首頁= bgm-menu-01)·
+ *   iPad 舊 Safari 首播保險:點擊授權內先以音量 0 同步 play 解鎖元素·再交 bgmFadeTo 淡入·
+ *   名片 BGM 加 _avCardStartedBgm 旗標:工房曲在播時開/關名片不重起也不誤停
  *
  * ★ v4.62.0 — 自訂角色系統優化(老師 2026-07-19 四需求):
  *   ①名片專屬 BGM:開名片切入 自訂角色名片.m4a(audio#bgm-avatar-card 在 index.html·
@@ -161,7 +167,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.63.0';
+window.AVATAR_DB_VERSION = 'v4.63.1';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1376,7 +1382,7 @@ window._avatarOpenPanel = function(){
     + '<div style="display:flex;gap:8px;">'
     + '<button onclick="_avatarPreviewCard()" style="padding:9px 18px;font-size:15px;font-weight:800;background:rgba(255,180,80,0.22);border:2px solid rgba(255,200,100,0.75);color:#ffd97a;border-radius:10px;cursor:pointer;font-family:inherit;">📇 ' + _avT('名片預覽','看名片') + '</button>'
     + '<button id="_av-save-btn" onclick="_avatarSaveClick()" style="padding:9px 18px;font-size:15px;font-weight:800;background:rgba(80,200,120,0.25);border:2px solid rgba(100,230,150,0.8);color:#9effc0;border-radius:10px;cursor:pointer;font-family:inherit;">💾 ' + _avT('儲存造型','存起來') + '</button>'
-    + '<button onclick="document.getElementById(\'_avatar-panel\').remove()" style="padding:9px 18px;font-size:15px;font-weight:800;background:rgba(60,10,10,0.45);border:2px solid #e84040;color:#ff9a9a;border-radius:10px;cursor:pointer;font-family:inherit;">✕ ' + _avT('關閉','關掉') + '</button>'
+    + '<button onclick="window._avatarPanelClose()" style="padding:9px 18px;font-size:15px;font-weight:800;background:rgba(60,10,10,0.45);border:2px solid #e84040;color:#ff9a9a;border-radius:10px;cursor:pointer;font-family:inherit;">✕ ' + _avT('關閉','關掉') + '</button>'
     + '</div></div>'
     /* 主體:左預覽 + 右選單 */
     + '<div style="flex:1;display:flex;min-height:0;">'
@@ -1413,6 +1419,23 @@ window._avatarOpenPanel = function(){
   }catch(_e){}
 
   document.body.appendChild(panel);
+
+  /* ★ v4.63.1 — 造型工房 BGM(老師 2026-07-20):進工房自動播 自訂角色名片.m4a,
+   *   離開(_avatarPanelClose)淡出切回原場景 BGM。iPad 舊 Safari 首播保險:
+   *   點擊授權內先以音量 0 同步 play 解鎖媒體元素,再交 bgmFadeTo 正常淡入流程。 */
+  try{
+    var _pb = document.getElementById('bgm-avatar-card');
+    if(_pb && _pb.paused){
+      var _pPrev = null;
+      var _pAll = document.querySelectorAll('audio[id^="bgm-"]');
+      for(var _ppi = 0; _ppi < _pAll.length; _ppi++){
+        if(!_pAll[_ppi].paused && _pAll[_ppi].id !== 'bgm-avatar-card'){ _pPrev = _pAll[_ppi].id; break; }
+      }
+      window._avPanelPrevBgm = _pPrev;
+      try{ _pb.volume = 0; var _pwp = _pb.play(); if(_pwp && _pwp['catch']) _pwp['catch'](function(){}); }catch(_eW2){}
+      if(typeof bgmFadeTo === 'function'){ bgmFadeTo('bgm-avatar-card', 500); }
+    }
+  }catch(_eBgm){}
   _avRefreshPreview();
   _avRenderTabs();
   _avRenderOpts();
@@ -1421,6 +1444,26 @@ window._avatarOpenPanel = function(){
   window._avatarPullFromCloud().then(function(card){
     if(card && document.getElementById('_avatar-panel')){ _avRefreshPreview(); _avRenderOpts(); }
   });
+};
+
+/* ★ v4.63.1 — 造型工房統一關閉:收面板 + 名片曲淡出切回原場景 BGM(關卡首頁= bgm-menu-01)。
+ *   有記到原曲 → bgmFadeTo 淡回原曲;沒有原曲(進工房前是安靜的) → bgmStop 後交
+ *   bgmEnsureSceneBgm 依目前可見場景補播正確 BGM(冒險選關頁可見= bgm-menu-01)。 */
+window._avatarPanelClose = function(){
+  var el = document.getElementById('_avatar-panel');
+  if(el) el.remove();
+  try{
+    var _cb = document.getElementById('bgm-avatar-card');
+    if(_cb && !_cb.paused){
+      if(window._avPanelPrevBgm && typeof bgmFadeTo === 'function'){
+        bgmFadeTo(window._avPanelPrevBgm, 500);
+      } else {
+        if(typeof bgmStop === 'function'){ try{ bgmStop(); }catch(_e1){} }
+        if(typeof bgmEnsureSceneBgm === 'function'){ try{ bgmEnsureSceneBgm(); }catch(_e2){} }
+      }
+    }
+  }catch(_e){}
+  window._avPanelPrevBgm = null;
 };
 
 var _avZoom = false;   /* ★ v4.61.0 預覽 放大(上半身特寫)/縮小 狀態 */
@@ -1712,7 +1755,11 @@ window._avatarOpenCard = function(name, card){
         if(!_all[_bi].paused && _all[_bi].id !== 'bgm-avatar-card'){ _prev = _all[_bi].id; break; }
       }
       window._avCardPrevBgm = _prev;
+      window._avCardStartedBgm = true;   /* ★ v4.63.1 — 名片曲由本次開名片啟動(關名片才需還原) */
+      try{ _cb.volume = 0; var _pw = _cb.play(); if(_pw && _pw['catch']) _pw['catch'](function(){}); }catch(_eW){}   /* ★ v4.63.1 — iPad 首播解鎖:點擊授權內先同步 play */
       bgmFadeTo('bgm-avatar-card', 500);
+    } else {
+      window._avCardStartedBgm = false;  /* ★ v4.63.1 — 工房曲已在播,名片不接管 BGM */
     }
   }catch(_e){}
 };
@@ -1723,12 +1770,13 @@ window._avatarCardClose = function(){
   if(el) el.remove();
   try{
     var _cb = document.getElementById('bgm-avatar-card');
-    if(_cb && !_cb.paused){
+    if(_cb && !_cb.paused && window._avCardStartedBgm){   /* ★ v4.63.1 — 只有名片自己啟動的曲才由名片收尾(工房曲在播時不誤停) */
       if(window._avCardPrevBgm && typeof bgmFadeTo === 'function'){ bgmFadeTo(window._avCardPrevBgm, 500); }
       else if(typeof bgmStop === 'function'){ bgmStop(); }
     }
   }catch(_e){}
   window._avCardPrevBgm = null;
+  window._avCardStartedBgm = false;
 };
 
 window._avatarPreviewCard = function(){

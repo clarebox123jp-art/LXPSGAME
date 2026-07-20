@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-19  / 目前主程式版本:v4.63.0(🤝 好友名單「切換成名片」檢視模式)
+//  最後更新:2026-07-20  / 目前主程式版本:v4.63.1(🎵 造型工房 BGM)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
-//    目前已標 9 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0/v4.62.0/v4.63.0
+//    目前已標 9 筆主角系統測試期條目:v4.55.0/v4.56.0/v4.58.1/v4.59.0/v4.60.0/v4.60.1/v4.61.0/v4.62.0/v4.63.0/v4.63.1
 //
 //  ★ 維護注意事項(老師請務必看):
 //    1. 這個檔案必須是「合法的 JS」,結尾要有 `];` 把陣列關起來
@@ -16,6 +16,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.63.1 — 🎵 造型工房 BGM:進工房自動播放·離開切回關卡音樂(管理員測試中)
+  {
+    ver: 'v4.63.1',
+    adminOnly: true,   /* ★ 主角系統測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
+    date: '2026-07-20',
+    brief: [
+      '🎵【造型工房也有音樂了!(老師測試中)】打開「自訂主角」造型工房,會自動響起專屬的打扮音樂,邊聽邊幫主角換造型更有氣氛!',
+      '🚪 按「離開」關掉工房時,音樂會輕輕淡出,自動切回關卡選單原本的背景音樂,完全不用自己動手!',
+      '📱 也修好了平板上有時第一次點開名片會聽不到音樂的小狀況,現在一點開就聽得到!',
+    ],
+    items: [
+      '★ v4.63.1【造型工房 BGM・avatar_db.js 為主】①_avatarOpenPanel 進工房自動播 自訂角色名片.m4a(共用 audio#bgm-avatar-card·先記原播曲 _avPanelPrevBgm·bgmFadeTo 500ms 淡入) ②新增 window._avatarPanelClose 統一關閉:收面板+名片曲淡出→有原曲淡回原曲/無原曲 bgmStop 後 bgmEnsureSceneBgm 依場景補播(冒險選關頁= bgm-menu-01);離開鈕 onclick 改走統一關閉 ③iPad 舊 Safari 首播保險(工房與名片同套):點擊授權內先將 bgm-avatar-card 音量 0 同步 play() 解鎖媒體元素,再交 bgmFadeTo 正常流程(避免 500ms 淡出 timer 內的 play 因失去手勢授權被拒→安靜) ④名片 BGM 加 _avCardStartedBgm 旗標:工房曲已在播時開名片不重起、關名片不誤停(修 _avCardPrevBgm 為空時走 bgmStop 把工房曲關掉的邏輯洞) ⑤index.html/admin_panel.js 僅版號對齊;無 ?.。',
+    ],
+  },
   // v4.63.0 — 🤝 好友名單「切換成名片」檢視模式(管理員測試中)
   {
     ver: 'v4.63.0',
@@ -314,18 +328,5 @@ window.GAME_CHANGELOG = [
       '☀️【法老王爆發動畫上線】使出極限爆發「太陽神的審判」時,畫面右邊會播放法老王專屬的爆發動畫!在英雄圖鑑點開法老王,按「🎬 播放動畫」也能欣賞(要先收錄才看得到喔)。',
     ],
   },
-  // v4.43.0 — 🛡 BOSS 鎖血時圖片顯示「發威狀態·免疫傷害」標示
-  {
-    ver: 'v4.43.0',
-    date: '2026-07-07',
-    brief: [
-      '🛡【王者發威!關卡 BOSS 鎖血時會亮起提示】當關卡 BOSS 血量被打到剩一半、或用最後一絲氣力撐住 1 滴血「王者不倒」的那一回合,BOSS 圖片上會出現醒目的「💢 進入發威狀態,免疫任何傷害!」標示,讓你一眼看出牠這回合正在拚死硬撐、絕不會倒下;等這回合過去、鎖血無敵結束,標示就會自動消失。(切到🧸簡單風時文字會變成更短的「💢 發威中!免疫傷害!」)',
-    ],
-    items: [
-      '★ v4.43.0【BOSS 鎖血發威標示·index.html·強化版】抽出單一真相 helper _lxpsPaintBossRageLabel(h):p2 真 BOSS 卡(card-p2-{pos})中央加持久 .boss-rage-label(z32·pointer-events:none·Web Animations 輕微脈動)。顯示條件=「鎖血同回合 h._lifelineImmuneRound===G.round」或「保底顯示期未過 Date.now()<h._bossRageUntil」。★根治老師實測「鎖血卻看不到標籤」:改「鎖血觸發當下即時畫(_applyBossLifelineProtection 兩處 50%/1HP 賦值後呼叫 _lxpsTriggerBossRageLabel)+保底顯示 ~2.6s」→玩家該回合是最後行動者時 G.round 立刻前進也不會一閃即逝;renderCard 每次重繪呼叫同 helper(依同條件加/移除)。保底期滿 setTimeout 補收一次;鎖血無敵結束(下一回合)後自然移除(=「直到鎖血無敵結束」)。',
-      '★ v4.43.0【純顯示層·不改機制】完全不動鎖血傷害機制:死亡免疫地板仍為 v3.16.36 版(非致命傷害照常結算·HP 可見下降·會致命才夾到剩 1 HP)。_lifelineImmuneRound 只會被 _applyBossLifelineProtection 對「真 BOSS」寫入→一般 p2 雜魚/菁英不誤顯示;世界 BOSS 龍王走 worldboss 早退不進此函式,不受影響。文字 cute+premium 雙版(鐵律1.232)。',
-      '★ v4.43.0【範圍與驗證】只改 index.html;admin_panel.js/game_changelog.js 版號/公告對齊。hero_db.js/world-boss.js/world-boss-ui.html/arena.js/sw.js 未改免重傳。check_inline 20 塊/node --check/孤立代理字元/admin 零真 ?./7 版本同步點 全數 → v4.43.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.23.0)。上傳順序:game_changelog.js → admin_panel.js → index.html(最後)。',
-    ],
-  },
-  // v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
+// v4.35.0 — 🐉 天神宙斯「天降雷罰」秒殺龍王的漏洞修好了
 ];
