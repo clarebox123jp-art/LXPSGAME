@@ -30,6 +30,13 @@
  *     眼鏡頁「鏡片樣式」開關切換(cfg.glsClear·預設透明·墨鏡單版不受影響)
  *   ⑭(第四輪)所有飾品(頭戴/眼鏡/嘴飾)可調尺寸:每按 ±1%·上限 ±20%
  *     (存 cfg.pos[key][2]·prop 件對自身中心縮放·legacy 全畫布件以瞳孔中線為軸)
+ *   ⑮(2026-07-20 第五輪)老師實機七修:
+ *     修1 雙劍士裝移正女童分頁(新切件不在 repo→改掛 v4.60 舊件) 修2 少年預設頭改
+ *     boy_uniform_head+藍洋裝/閃電魔法裝穿著中鎖髮型(lockHair·守門+提示條) 修3 染髮根治:
+ *     (a)瀏海方框=眼框整塊排除改「眼似像素」才排除 (b)身件落髮=套裝掛 hairRef 參考色
+ *     (離線由頭件冠部實測·距離<44 視為頭髮·紫電/細劍士撞衫色不掛) 修4 黑框眼鏡破檔停用
+ *     修5 kidboy_shaggy 實為少年圖→移少年分頁另立款 修6 水水魔法裝 404→改掛 aquamage 舊件
+ *     +俏馬尾移男童分頁+接線 repo 既有 curlybob/hime 女童新髮 修7 全選單按鈕/字級放大
  * 版本: v4.63.1(2026-07-20)
  *
  * ★ v4.63.1 — 造型工房 BGM(老師 2026-07-20):
@@ -431,8 +438,10 @@ function _avPieceKey(imgFile, kind, cfg){
   return imgFile+'|'+kind+'|b'+(cfg.body|0)+'|'+(cfg.skin|0)+'|'+(cfg.eyeC|0)+'|'
     +(cfg.browC|0)+'|'+(cfg.hairC|0)+'|'+(cfg.clothC|0);
 }
-window._avatarTintPiece = function(imgFile, kind, cfg, cb){
-  var key = _avPieceKey(imgFile, kind, cfg);
+window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
+  /* ★ v4.64.0(第五輪)修3b:hairRefs=該套裝落髮參考色 [[r,g,b],...](離線由頭件冠部實測)
+   *   → 整身件(bodyfull)內「顏色貼近參考色且非膚」的像素(=垂落到衣服上的頭髮)一併染髮色 */
+  var key = _avPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
   if(_avPieceTintCache[key]){ cb(_avPieceTintCache[key]); return; }
   var PAL = window.AVATAR_PALETTES;
   var meta = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
@@ -445,11 +454,12 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb){
   else if(kind==='cloth'){ uC=true; }
   var doSkin = uS && (cfg.skin|0)>0, doEye = uE && (cfg.eyeC|0)>0, doBrow = uB && (cfg.browC|0)>0;
   var doHair = uH && (cfg.hairC|0)>0, doCloth = uC && (cfg.clothC|0)>0;
-  if(!doSkin && !doEye && !doBrow && !doHair && !doCloth){ cb(null); return; }
+  var doHairRef = (kind==='bodyfull') && hairRefs && hairRefs.length && (cfg.hairC|0)>0;   /* ★ 修3b */
+  if(!doSkin && !doEye && !doBrow && !doHair && !doCloth && !doHairRef){ cb(null); return; }
   var skinT = doSkin ? _avHex2Rgb(PAL.skin[cfg.skin]) : null;
   var eyeT  = doEye  ? _avHex2Rgb(PAL.eye[cfg.eyeC])  : null;
   var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;
-  var hairT = doHair ? _avHex2Rgb(PAL.hair[cfg.hairC]) : null;
+  var hairT = (doHair || doHairRef) ? _avHex2Rgb(PAL.hair[cfg.hairC]) : null;   /* ★ 修3b:hairRef 路徑也要髮色目標 */
   var clothT= doCloth? _avHex2Rgb(PAL.cloth[cfg.clothC]) : null;
   var img = new Image();
   img.onload = function(){
@@ -477,6 +487,18 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb){
         var p2=(i/4)|0, y=(p2/W2)|0, x=p2-y*W2;
         var isSkin = (h>10 && h<46 && s>0.06 && s<0.52 && v>0.60);
         var inEye  = (x>=ex1 && x<ex2 && y>=ey1 && y<ey2);
+        /* ★ v4.64.0(第五輪)修3a:染髮不再整塊排除眼框(瀏海壓在眼框上出現不自然方框)→
+         *   只排除「眼似像素」:虹膜色窗 或 眼白(低飽和偏亮);框內深色瀏海/睫毛照染髮色 */
+        var isEyeLike = inEye && ((h>4 && h<52 && s>0.24 && s<0.8 && v>0.34 && v<0.82)
+                                  || (s<0.24 && v>0.72));
+        /* ★ v4.64.0(第五輪)修3b:身件落髮 — 顏色貼近該套裝髮參考色(距離<44)即視為頭髮 */
+        var nearHairRef = false;
+        if(doHairRef){
+          for(var hri=0; hri<hairRefs.length; hri++){
+            var _dr=px[i]-hairRefs[hri][0], _dg=px[i+1]-hairRefs[hri][1], _db2=px[i+2]-hairRefs[hri][2];
+            if(_dr*_dr + _dg*_dg + _db2*_db2 < 1936){ nearHairRef = true; break; }
+          }
+        }
         var T=null, ratio=0;
         if(doEye && inEye && h>4 && h<52 && s>0.24 && s<0.8 && v>0.34 && v<0.82){
           T=eyeT; ratio=v/0.55;
@@ -485,9 +507,11 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb){
           T=browT; ratio=v/0.38;
         } else if(doSkin && isSkin){
           T=skinT; ratio=v/sbv;
-        } else if(doHair && !isSkin && !inEye && (!hairAboveNeckOnly || y < neckPx)){
+        } else if(doHair && !isSkin && !isEyeLike && (!hairAboveNeckOnly || y < neckPx)){   /* ★ 修3a:!inEye → !isEyeLike */
           T=hairT; ratio=v/0.55;
-        } else if(doCloth && !isSkin && (!clothBelowNeckOnly || y >= neckPx)){
+        } else if(doHairRef && nearHairRef && !isSkin){   /* ★ 修3b:身件落髮染髮色(優先於服裝配色) */
+          T=hairT; ratio=v/0.55;
+        } else if(doCloth && !isSkin && !nearHairRef && (!clothBelowNeckOnly || y >= neckPx)){   /* ★ 修3b:服裝配色排除落髮 */
           T=clothT; ratio=v/0.55;
         }
         if(T){
@@ -511,7 +535,7 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb){
  * Q 版二頭身。座標基準:頸 y225 肩 y252 臀 y345 腿底 y438。
  * kid 體型不另畫 path:身體 group 套 transform 縮短(見渲染器)。 */
 P.body = [
-  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', headImg:'body_head_boy.png', torsoImg:'body_torso_boy.png', svg:
+  { id:0, n:'少年', ns:'少年', lock:null, img:'body_boy.png', headImg:'boy_uniform_head.png', torsoImg:'body_torso_boy.png', svg:   /* ★ v4.64.0 修2:少年「原本的頭」改用 boy_uniform_head(老師指定;舊值 body_head_boy.png 保留註記) */
     '<path d="M180 222 c-30 2 -50 16 -52 42 l-4 78 c-1 14 8 22 18 22 l14 0 4 66 c0 6 5 9 10 9 l20 0 c5 0 10 -3 10 -9 l4 -66 14 0 c10 0 19 -8 18 -22 l-4 -78 c-2 -26 -22 -40 -52 -42 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M132 262 c-10 4 -16 14 -17 26 l-3 46 c0 8 5 13 12 13 8 0 12 -5 12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>'
    +'<path d="M228 262 c10 4 16 14 17 26 l3 46 c0 8 -5 13 -12 13 -8 0 -12 -5 -12 -13 l0 -68 z" fill="__SK__" stroke="__LN__" stroke-width="3"/>' },
@@ -831,7 +855,7 @@ P.glasses = [
     svg:'<g stroke="__LN__" stroke-width="3"><path d="M132 154 l7 20 -20 -13 24 0 -20 13 z M192 154 l7 20 -20 -13 24 0 -20 13 z" fill="#2b2b33" transform="translate(11 0) scale(1.55) translate(-58 -87)"/><path d="M130 152 l40 0 4 26 -48 0 z" fill="#2b2b33"/><path d="M190 152 l40 0 4 26 -48 0 z" fill="#2b2b33"/><path d="M170 162 l20 0 M130 158 l-22 -5 M234 158 l22 -5" fill="none"/></g>' },
   /* ★ v4.55.5(2026-07-18)— 老師 20 張變體圖第三批:黑框眼鏡(PNG 四體型;SVG 後備借方框路徑) */
   { id:4, n:'經典黑框眼鏡', ns:'黑框眼鏡', lock:null,
-    img:['glasses_black_boy.png','glasses_black_girl.png','glasses_black_kidboy.png','glasses_black_kidgirl.png'],
+    _offImg:['glasses_black_boy.png','glasses_black_girl.png','glasses_black_kidboy.png','glasses_black_kidgirl.png'],   /* ★ v4.64.0 修4:舊圖破檔→停用(_offImg 資料保留·PNG 模式自動隱藏) */
     svg:'<g fill="none" stroke="#22222a" stroke-width="5"><rect x="132" y="152" width="36" height="28" rx="6"/><rect x="192" y="152" width="36" height="28" rx="6"/><path d="M168 164 l24 0 M132 160 l-24 -6 M228 160 l24 -6"/></g>' },
   /* ★ v4.64.0(2026-07-20 第二輪)— 老師眼鏡圖 10 款(prop 定位引擎·對瞳孔中線)
    * ★ v4.64.0(第四輪)— 鏡片雙版:img=白鏡片原圖版 / clearImg=鏡片透明版(透出眼睛),
@@ -1034,7 +1058,7 @@ P.bodyfull = [
  *    ponytail2(kidgirl·藍運動衫批)命名暫定,待老師定名後只改 n/ns 即可 */
 P.hairhead = [
   { id:0,  n:'預設頭部', ns:'原本的頭', lock:null, img:null },
-  { id:1,  n:'蓬鬆層次髮', ns:'蓬蓬頭', lock:null, img:['boy_shaggy_head.png',null,'kidboy_shaggy_head.png',null] },
+  { id:1,  n:'蓬鬆層次髮', ns:'蓬蓬頭', lock:null, img:['boy_shaggy_head.png',null,null,null] },   /* ★ 修5:kidboy_shaggy 實為少年圖→男童槽移除(該圖另立 id15) */
   { id:2,  n:'活力刺蝟頭', ns:'刺刺頭', lock:null, img:[null,null,'kidboy_spiky_head.png',null] },
   { id:3,  n:'側編辮子髮', ns:'辮子頭', lock:null, img:[null,'girl_braid_head.png',null,'kidgirl_braid_head.png'] },
   { id:4,  n:'恬靜閉眼髮', ns:'閉眼頭', lock:null, img:[null,'girl_closedeyes_head.png',null,'kidgirl_closedeyes_head.png'] },
@@ -1044,10 +1068,15 @@ P.hairhead = [
   { id:8,  n:'超長直髮', ns:'超長直髮', lock:null, img:[null,'girl_longstraight_head.png',null,'kidgirl_longstraight_head.png'] },
   { id:9,  n:'飄逸長捲髮', ns:'長捲捲', lock:null, img:[null,'girl_longwavy_head.png',null,'kidgirl_longwavy_head.png'] },
   { id:10, n:'高馬尾', ns:'馬尾巴', lock:null, img:[null,'girl_ponytail_head.png',null,'kidgirl_ponytail_head.png'] },
-  { id:11, n:'活力俏馬尾', ns:'俏馬尾', lock:null, img:[null,null,null,'kidgirl_ponytail2_head.png'] },
+  { id:11, n:'活力俏馬尾', ns:'俏馬尾', lock:null, img:[null,null,'kidgirl_ponytail2_head.png',null] },   /* ★ 修6:圖實為男童(檔名照舊)→移男童槽 */
   { id:12, n:'單側馬尾', ns:'側馬尾', lock:null, img:[null,'girl_sideponytail_head.png',null,'kidgirl_sideponytail_head.png'] },
   { id:13, n:'雙馬尾', ns:'雙馬尾', lock:null, img:[null,'girl_twintail_head.png',null,'kidgirl_twintail_head.png'] },
-  { id:14, n:'波浪鮑伯頭', ns:'波波頭', lock:null, img:[null,'girl_wavybob_head.png',null,'kidgirl_wavybob_head.png'] }
+  { id:14, n:'波浪鮑伯頭', ns:'波波頭', lock:null, img:[null,'girl_wavybob_head.png',null,'kidgirl_wavybob_head.png'] },
+  /* ★ v4.64.0(第五輪)— 修5:kidboy_shaggy_head 實為少年圖·移入少年分頁另立款式;
+   *   repo 另有兩件女童新髮未接線(curlybob/hime)一併掛上(命名暫定待老師確認) */
+  { id:15, n:'隨性蓬亂髮', ns:'亂亂頭', lock:null, img:['kidboy_shaggy_head.png',null,null,null] },
+  { id:16, n:'捲髮鮑伯頭', ns:'捲波波頭', lock:null, img:[null,null,null,'kidgirl_curlybob_head.png'] },
+  { id:17, n:'公主切長髮', ns:'公主切', lock:null, img:[null,null,null,'kidgirl_hime_head.png'] }
 ];
 
 /* ── ★ v4.64.0 套裝(P.outfit)— 頭+身分離件 34 件 13 款(頭身新切法) ──
@@ -1062,20 +1091,26 @@ P.outfit = [
     body:['boy_uniform_body.png','girl_uniform_body.png','kidboy_uniform_body.png',null] },
   { id:2,  n:'日式和服', ns:'和服', lock:null,
     head:['boy_kimono_head.png','girl_kimono_head.png','kidboy_kimono_head.png',null],
-    body:['boy_kimono_body.png','girl_kimono_body.png','kidboy_kimono_body.png',null] },
+    body:['boy_kimono_body.png','girl_kimono_body.png','kidboy_kimono_body.png',null],
+    hairRef:[null,[[53,52,51],[116,104,110]],null,null] },   /* ★ 修3b:少女和服落髮參考色(僅少女·男生短髮免掛防染到深色和服) */
   { id:3,  n:'紳士西裝', ns:'帥西裝', lock:null,
     head:['boy_suit_head.png',null,null,null], body:['boy_suit_body.png',null,null,null] },
   { id:4,  n:'重裝鎧甲劍士', ns:'鎧甲劍士裝', lock:null,
     head:['boy_heavysword_head.png',null,null,null], body:['boy_heavysword_body.png',null,null,null] },
   { id:5,  n:'赤紅魔法師', ns:'火火魔法裝', lock:null,
     head:['boy_redmage_head.png',null,null,null], body:['boy_redmage_body.png',null,null,null] },
-  { id:6,  n:'清新藍洋裝', ns:'藍洋裝', lock:null,
-    head:[null,'girl_dress_head.png',null,null], body:[null,'girl_dress_body.png',null,null] },
+  { id:6,  n:'清新藍洋裝', ns:'藍洋裝', lock:null, lockHair:true,   /* ★ 修2:原髮蓋住衣服裁切困難→暫不提供更換髮型 */
+    head:[null,'girl_dress_head.png',null,null], body:[null,'girl_dress_body.png',null,null],
+    hairRef:[null,[[54,53,52],[114,104,99]],null,null] },   /* ★ 修3b:辮子落在身件·髮色照染 */
   { id:7,  n:'俏麗雙劍士', ns:'雙劍士裝', lock:null,
-    head:[null,'girl_dualblade_head.png',null,null], body:[null,'girl_dualblade_body.png',null,null] },
+    /* ★ 修1(2026-07-20 第五輪):雙劍士是女童的+新切件不在 repo(girl_dualblade_* 404)→
+     *   改掛 v4.60.0 既有女童舊件(整套取代無接縫問題);日後老師上傳新切件再換檔名 */
+    head:[null,null,null,'headfull_dualblade_kidgirl.png'],
+    body:[null,null,null,'bodyfull_dualblade_kidgirl.png'],
+    hairRef:[null,null,null,[[68,65,63],[108,95,89]]] },
   { id:8,  n:'華麗細劍士', ns:'細劍士裝', lock:null,
     head:[null,'girl_rapier_head.png',null,null], body:[null,'girl_rapier_body.png',null,null] },
-  { id:9,  n:'紫電魔法師', ns:'閃電魔法裝', lock:null,
+  { id:9,  n:'紫電魔法師', ns:'閃電魔法裝', lock:null, lockHair:true,   /* ★ 修2:暫不提供更換髮型(裁切困難);落髮撞深色衣不掛 hairRef */
     head:[null,'girl_purplemage_head.png',null,null], body:[null,'girl_purplemage_body.png',null,null] },
   { id:10, n:'輕裝大劍士', ns:'大劍士裝', lock:null,
     head:[null,null,'kidboy_greatsword_head.png',null], body:[null,null,'kidboy_greatsword_body.png',null] },
@@ -1084,7 +1119,10 @@ P.outfit = [
   { id:12, n:'吊帶短褲裝', ns:'吊帶裝', lock:null,
     head:[null,null,'kidboy_overalls_head.png',null], body:[null,null,'kidboy_overalls_body.png',null] },
   { id:13, n:'水藍魔法師', ns:'水水魔法裝', lock:null,
-    head:[null,null,null,'kidgirl_watermage_head.png'], body:[null,null,null,'kidgirl_watermage_body.png'] }
+    /* ★ 修6:kidgirl_watermage_* 不在 repo(404)→ 改掛 v4.60.0 aquamage 女童舊件;日後上傳新件再換 */
+    head:[null,null,null,'headfull_aquamage_kidgirl.png'],
+    body:[null,null,null,'bodyfull_aquamage_kidgirl.png'],
+    hairRef:[null,null,null,[[67,66,66],[103,94,94]]] }
 ];
 
 /* ── ★ v4.64.0 嘴部飾品(P.mouthacc)— 老師嘴飾圖 9 款(2026-07-20 第二輪) ──
@@ -1320,17 +1358,18 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
         + '" y="' + (tf.y + y504*s).toFixed(1) + '" width="' + (w504*s).toFixed(1)
         + '" height="' + ((w504/pr.ar)*s).toFixed(1) + '" preserveAspectRatio="xMidYMid meet"/>';
     }
-    function _pieceLayer(imgFile, kind){
+    function _pieceLayer(imgFile, kind, hairRefs){
       imgFile = _avImgFor(imgFile, cfg.body);
       if(!imgFile) return '';
-      if(!_avPieceNeedTint(kind, cfg)) return _imgLayer(imgFile, tf);
-      var pk = _avPieceKey(imgFile, kind, cfg);
+      var _needHr = (hairRefs && hairRefs.length && (cfg.hairC|0) > 0);   /* ★ v4.64.0 第五輪:落髮染色需求 */
+      if(!_avPieceNeedTint(kind, cfg) && !_needHr) return _imgLayer(imgFile, tf);
+      var pk = _avPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
       if(_avPieceTintCache[pk]) return _imgLayerSrc(_avPieceTintCache[pk], tf);
       window._avatarTintPiece(imgFile, kind, cfg, function(u){
         if(!u) return;
         try{ _avRefreshPreview(); }catch(_e){}
         try{ if(typeof window._avatarCardRerender === 'function') window._avatarCardRerender(); }catch(_e){}
-      });
+      }, hairRefs);
       return _imgLayer(imgFile, tf);   /* 首繪先出原色,染完自動重繪 */
     }
     function _bgLayer(){
@@ -1357,8 +1396,10 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     if(fullPng){
       baseLayers = _pieceLayer(fullPng, 'full');   /* 舊整套件(舊存檔相容) */
     } else {
+      /* ★ v4.64.0 第五輪 修3b:套裝身件帶落髮參考色(依體型槽取 item.hairRef) */
+      var _ofRefs = (_ofBodyPng && _ofD && _ofD.hairRef) ? _avImgFor(_ofD.hairRef, cfg.body) : null;
       baseLayers = _ofsWrap(bodyPiece ? 'ofb' : 'baseB',
-                     (bodyPiece ? _pieceLayer(bodyPiece, 'bodyfull') : _pieceLayer(bodyDef.torsoImg, 'baseTorso')))
+                     (bodyPiece ? _pieceLayer(bodyPiece, 'bodyfull', _ofRefs) : _pieceLayer(bodyDef.torsoImg, 'baseTorso')))
                  + _ofsWrap(headPiece ? _headPosKey : 'baseH',
                      (headPiece ? _pieceLayer(headPiece, 'headfull')
                                 : _pieceLayer(bodyDef.headImg, 'headfull')));   /* ★ v4.64.0 素體頭也走 headfull 染色 → 需求5:髮色對預設頭髮同樣生效(舊 kind 'baseHead' 保留引擎內定義未用) */
@@ -1713,7 +1754,7 @@ window._avatarOpenPanel = function(){
     + '</div></div>'
     /* ★ v4.61.0 需求1:右側選單改「由上而下」直式排列(選單欄+選項區左右並排) */
     + '<div style="flex:1;display:flex;flex-direction:row;min-width:0;border-left:1.5px solid rgba(140,200,255,0.25);">'
-    + '<div id="_av-tabs" style="display:flex;flex-direction:column;gap:6px;padding:10px 8px;overflow-y:auto;flex:0 0 auto;width:clamp(126px,16vw,184px);border-right:1px solid rgba(140,200,255,0.18);"></div>'
+    + '<div id="_av-tabs" style="display:flex;flex-direction:column;gap:6px;padding:10px 8px;overflow-y:auto;flex:0 0 auto;width:clamp(150px,19vw,230px);border-right:1px solid rgba(140,200,255,0.18);"></div>'
     + '<div id="_av-opts" style="flex:1;overflow-y:auto;padding:6px 14px 20px;min-width:0;"></div>'
     + '</div></div>'
     + '<div style="padding:8px 20px;font-size:13px;color:#8899bb;border-top:1px solid rgba(140,200,255,0.2);background:rgba(0,0,10,0.4);">'
@@ -1837,7 +1878,7 @@ function _avRenderTabs(){
       sty = 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#9aa8cc;';
     }
     var ico = (t.act === 'random') ? '🎲 ' : (t.act === 'reset') ? '↩️ ' : '';
-    h += '<button onclick="_avatarSwitchTab('+i+')" style="padding:10px 10px;font-size:14.5px;font-weight:800;text-align:left;border-radius:10px;cursor:pointer;font-family:inherit;'
+    h += '<button onclick="_avatarSwitchTab('+i+')" style="padding:14px 12px;font-size:17.5px;font-weight:800;text-align:left;border-radius:10px;cursor:pointer;font-family:inherit;'
       + sty + '">' + ico + _avT(t.p, t.c) + '</button>';
   }
   box.innerHTML = h;
@@ -2029,18 +2070,26 @@ function _avRenderOpts(){
   var tab = _AV_TABS[_avCurTab];
   /* ★ v4.61.0 wip 頁(手持·日後開放)與 act/無 cats 防呆 */
   if(tab && (tab.wip || !tab.cats)){
-    box.innerHTML = '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:15px;">🔒 '
+    box.innerHTML = '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16.5px;">🔒 '
       + _avT('此功能日後開放,敬請期待!','這個功能之後才會開放,再等等喔!') + '</div>';
     return;
   }
   var cfg = window._avatarLocalCard.cfg;
   var pngMode = (window._AVATAR_PNG_MODE && _pick(P.body, cfg.body).img);
-  var _wipHtml = '<div style="padding:14px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:14.5px;">🎨 '
+  var _wipHtml = '<div style="padding:14px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16px;">🎨 '
     + _avT('此類素材繪製中,之後的更新會陸續加入,敬請期待!','這類的圖還在畫,等更新就會有囉!') + '</div>';
   var h = '';
   for(var c=0;c<tab.cats.length;c++){
     var cat = tab.cats[c][0], labP = tab.cats[c][1], labC = tab.cats[c][2];
-    h += '<div style="font-size:16px;font-weight:900;color:#ffd97a;margin:14px 2px 8px;">' + _avT(labP, labC) + '</div>';
+    h += '<div style="font-size:19px;font-weight:900;color:#ffd97a;margin:14px 2px 8px;">' + _avT(labP, labC) + '</div>';
+    /* ★ v4.64.0(第五輪)修2:穿著鎖髮套裝時,髮型頁頂端顯示提示 */
+    if(cat === 'hairhead'){
+      var _ofChk = _pick(P.outfit, cfg.of|0);
+      if((cfg.of|0) > 0 && _ofChk && _ofChk.lockHair){
+        h += '<div style="padding:12px 14px;margin-bottom:8px;background:rgba(200,120,40,0.18);border:1.5px dashed rgba(255,190,90,0.6);border-radius:12px;color:#ffd97a;font-size:15.5px;">⚠ '
+          + _avT('目前的套裝頭髮與服裝相連,暫不支援更換髮型;先換其他套裝即可更換。','現在這套衣服的頭髮跟衣服連在一起,先換別套衣服才能換髮型喔!') + '</div>';
+      }
+    }
     if(pngMode && cat === 'hairC' && !_avatarAnyHairImg()){
       /* 髮色:染色引擎已就緒,髮型素材加入後即生效 */
       h += '<div style="padding:10px 14px;margin-bottom:8px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:13.5px;">💡 '
@@ -2055,9 +2104,9 @@ function _avRenderOpts(){
         var sel = (cfg[cat] === i || (!cfg[cat] && i === 0));
         var tt = (i === 0) ? _avT('原本的顏色','原本的顏色') : (_avT('色票','顏色') + ' ' + (i+1));
         h += '<button onclick="_avatarSetPart(\''+cat+'\','+i+')" title="'+tt
-          + '" style="width:44px;height:44px;border-radius:50%;cursor:pointer;background:'+pal[i]+';position:relative;'
+          + '" style="width:56px;height:56px;border-radius:50%;cursor:pointer;background:'+pal[i]+';position:relative;'
           + 'border:'+(sel?'3.5px solid #8ad4ff;box-shadow:0 0 12px rgba(120,200,255,0.7);':'2.5px solid rgba(255,255,255,0.35);')+'">'
-          + (i === 0 ? '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:rgba(60,40,30,0.75);">原</span>' : '')
+          + (i === 0 ? '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:rgba(60,40,30,0.75);">原</span>' : '')
           + '</button>';
       }
     } else if(cat === 'glsClear'){
@@ -2070,7 +2119,7 @@ function _avRenderOpts(){
       ];
       for(var gi=0; gi<_gcOpts.length; gi++){
         var _gcSel = (_gcCur === _gcOpts[gi][0]);
-        h += '<button onclick="_avatarSetPart(\'glsClear\',' + _gcOpts[gi][0] + ')" style="padding:10px 16px;font-size:15px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;'
+        h += '<button onclick="_avatarSetPart(\'glsClear\',' + _gcOpts[gi][0] + ')" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:pointer;font-family:inherit;'
           + (_gcSel ? 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;box-shadow:0 0 10px rgba(120,200,255,0.4);'
                     : 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#c4d0ea;')
           + '">' + (_gcOpts[gi][0] === 1 ? '👀 ' : '⬜ ') + _avT(_gcOpts[gi][1], _gcOpts[gi][2]) + '</button>';
@@ -2116,18 +2165,18 @@ function _avRenderOpts(){
         if(_isGm && _LOCKABLE[cat] && it.id !== 0){
           _gmBtn = '<button onclick="_avatarGmToggleLock(\'' + cat + '\',' + it.id + ')" title="'
             + _avT('GM:切換此款上鎖(鎖定=玩家須達成條件/兌換取得)','GM:切換上鎖')
-            + '" style="padding:10px 8px;font-size:14px;border-radius:10px;cursor:pointer;font-family:inherit;'
+            + '" style="padding:13px 11px;font-size:17px;border-radius:11px;cursor:pointer;font-family:inherit;'
             + (_gmLk ? 'background:rgba(200,60,60,0.3);border:2px solid rgba(230,100,100,0.75);'
                      : 'background:rgba(60,110,70,0.3);border:2px solid rgba(110,210,140,0.6);')
             + 'color:#fff;">' + (_gmLk ? '🔒' : '🔓') + '</button>';
         }
         if(unlocked){
-          h += '<button onclick="_avatarSetPart(\''+cat+'\','+it.id+')" style="padding:10px 16px;font-size:15px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;'
+          h += '<button onclick="_avatarSetPart(\''+cat+'\','+it.id+')" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:pointer;font-family:inherit;'
             + (selP ? 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;box-shadow:0 0 10px rgba(120,200,255,0.4);'
                     : 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#c4d0ea;')
             + '">' + (_gmLk ? '🔒 ' : '') + _avEsc(nm) + '</button>' + _gmBtn;
         } else {
-          h += '<button title="' + _avT('需達成成就、兌換或購買後取得,敬請期待!','要完成任務或兌換才能拿到,再等等喔!') + '" style="padding:10px 16px;font-size:15px;font-weight:800;border-radius:10px;cursor:not-allowed;font-family:inherit;opacity:0.5;background:rgba(40,40,55,0.4);border:2px dashed rgba(150,150,170,0.45);color:#8890a8;">🔒 ' + _avEsc(nm) + '</button>' + _gmBtn;
+          h += '<button title="' + _avT('需達成成就、兌換或購買後取得,敬請期待!','要完成任務或兌換才能拿到,再等等喔!') + '" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:not-allowed;font-family:inherit;opacity:0.5;background:rgba(40,40,55,0.4);border:2px dashed rgba(150,150,170,0.45);color:#8890a8;">🔒 ' + _avEsc(nm) + '</button>' + _gmBtn;
         }
       }
       if(pngMode && shown === 0){ h += '</div>' + _wipHtml + '<div style="display:none;">'; }
@@ -2137,9 +2186,9 @@ function _avRenderOpts(){
   /* ★ v4.64.0 需求9:位置微調區(依分頁 adj 設定)— 上下左右每按 ±1px·±100·↺歸零
    * ★ v4.64.0(第四輪)老師需求:飾品鍵(hat/gls/macc)加「尺寸」列 — 每按 ±1%·上限 ±20% */
   if(tab.adj && tab.adj.length){
-    h += '<div style="font-size:16px;font-weight:900;color:#8ad4ff;margin:18px 2px 8px;">📐 '
+    h += '<div style="font-size:19px;font-weight:900;color:#8ad4ff;margin:18px 2px 8px;">📐 '
       + _avT('位置/尺寸調整(位置每按 ±1 像素·上限 ±100;尺寸每按 ±1%·上限 ±20%)','調整位置和大小(一次動 1 格)') + '</div>';
-    var _abS = 'padding:8px 12px;font-size:15px;font-weight:900;border-radius:9px;cursor:pointer;font-family:inherit;'
+    var _abS = 'padding:12px 16px;font-size:18px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;'
       + 'background:rgba(60,70,110,0.3);border:2px solid rgba(140,200,255,0.5);color:#c9e4ff;';
     var _SIZEABLE = { hat:1, gls:1, macc:1 };   /* 飾品鍵可調尺寸(prop 定位引擎件+legacy 黑框眼鏡) */
     for(var ai=0; ai<tab.adj.length; ai++){
@@ -2147,15 +2196,15 @@ function _avRenderOpts(){
       var ap = (cfg.pos && cfg.pos[ak]) || [0, 0, 0];
       var asv = (ap.length > 2 ? (ap[2]|0) : 0);
       h += '<div style="margin:8px 0;padding:10px 12px;background:rgba(20,30,60,0.35);border:1.5px solid rgba(140,200,255,0.25);border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
-        + '<span style="font-size:14.5px;font-weight:800;color:#ffd97a;min-width:100px;">' + _avT(alP, alC) + '</span>'
-        + '<span style="font-size:13.5px;color:#9aa8cc;">X:<span id="_av-pos-' + ak + '-x" style="display:inline-block;min-width:28px;text-align:center;color:#d4ecff;font-weight:800;">' + (ap[0]|0) + '</span>'
-        + ' Y:<span id="_av-pos-' + ak + '-y" style="display:inline-block;min-width:28px;text-align:center;color:#d4ecff;font-weight:800;">' + (ap[1]|0) + '</span></span>'
+        + '<span style="font-size:16.5px;font-weight:800;color:#ffd97a;min-width:120px;">' + _avT(alP, alC) + '</span>'
+        + '<span style="font-size:15.5px;color:#9aa8cc;">X:<span id="_av-pos-' + ak + '-x" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;font-size:16.5px;">' + (ap[0]|0) + '</span>'
+        + ' Y:<span id="_av-pos-' + ak + '-y" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;font-size:16.5px;">' + (ap[1]|0) + '</span></span>'
         + '<button onclick="_avatarNudge(\'' + ak + '\',-1,0)" style="' + _abS + '">◀</button>'
         + '<button onclick="_avatarNudge(\'' + ak + '\',1,0)" style="' + _abS + '">▶</button>'
         + '<button onclick="_avatarNudge(\'' + ak + '\',0,-1)" style="' + _abS + '">▲</button>'
         + '<button onclick="_avatarNudge(\'' + ak + '\',0,1)" style="' + _abS + '">▼</button>'
         + (_SIZEABLE[ak]
-          ? ('<span style="font-size:13.5px;color:#9aa8cc;margin-left:4px;">' + _avT('尺寸','大小') + ':<span id="_av-pos-' + ak + '-s" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;">' + (asv > 0 ? '+' : '') + asv + '</span>%</span>'
+          ? ('<span style="font-size:15.5px;color:#9aa8cc;margin-left:4px;">' + _avT('尺寸','大小') + ':<span id="_av-pos-' + ak + '-s" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;">' + (asv > 0 ? '+' : '') + asv + '</span>%</span>'
             + '<button onclick="_avatarNudgeSize(\'' + ak + '\',-1)" style="' + _abS + '">➖</button>'
             + '<button onclick="_avatarNudgeSize(\'' + ak + '\',1)" style="' + _abS + '">➕</button>')
           : '')
@@ -2178,6 +2227,13 @@ window._avatarSetPart = function(cat, id){
     if(id > 0){ cfg.hh = 0; }
     cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0;   /* 舊槽互斥清空(舊存檔換新裝即脫離舊件) */
   } else if(cat === 'hairhead'){
+    /* ★ v4.64.0(第五輪)修2:藍洋裝/閃電魔法裝原髮蓋住衣服(裁切困難)→ 穿著中暫不提供更換髮型 */
+    var _ofNow = _pick(P.outfit, cfg.of|0);
+    if(id > 0 && (cfg.of|0) > 0 && _ofNow && _ofNow.lockHair){
+      alert(_avT('此套裝的頭髮與服裝相連,暫不支援更換髮型(先換其他套裝再換髮型喔)',
+                 '這套衣服的頭髮跟衣服連在一起,先不能換髮型;先換別套衣服再換喔!'));
+      return;
+    }
     cfg.hh = id;
     if(id > 0){ cfg.ofHead = 0; }
     cfg.full = 0; cfg.headf = 0;
