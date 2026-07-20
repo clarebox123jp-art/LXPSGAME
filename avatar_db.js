@@ -24,6 +24,12 @@
  *   ⑪GM 上鎖通道:gameConfig/avatarLocks(雲端·僅 GM 可寫·登入者可讀·免改 rules);
  *     管理員在造型工房各選項旁直接 🔓/🔒 切換;被鎖款式玩家須有 avatarCard.unlock
  *     帳本(未來成就/購買/抽取入帳通道)才可用;管理員一律可選(測試用)
+ *   ⑫(2026-07-20 第三輪)造型小屋背景動畫連續輪播加 0.5 秒淡出/淡入轉場
+ *     (loop 循環接點前 0.5s 淡出·跳回開頭淡回·切換更自然;初載淡入同步改 0.5s)
+ *   ⑬(2026-07-20 第四輪)眼鏡鏡片雙版:img=白鏡片原圖 / clearImg=鏡片透明(透出眼睛),
+ *     眼鏡頁「鏡片樣式」開關切換(cfg.glsClear·預設透明·墨鏡單版不受影響)
+ *   ⑭(第四輪)所有飾品(頭戴/眼鏡/嘴飾)可調尺寸:每按 ±1%·上限 ±20%
+ *     (存 cfg.pos[key][2]·prop 件對自身中心縮放·legacy 全畫布件以瞳孔中線為軸)
  * 版本: v4.63.1(2026-07-20)
  *
  * ★ v4.63.1 — 造型工房 BGM(老師 2026-07-20):
@@ -827,17 +833,19 @@ P.glasses = [
   { id:4, n:'經典黑框眼鏡', ns:'黑框眼鏡', lock:null,
     img:['glasses_black_boy.png','glasses_black_girl.png','glasses_black_kidboy.png','glasses_black_kidgirl.png'],
     svg:'<g fill="none" stroke="#22222a" stroke-width="5"><rect x="132" y="152" width="36" height="28" rx="6"/><rect x="192" y="152" width="36" height="28" rx="6"/><path d="M168 164 l24 0 M132 160 l-24 -6 M228 160 l24 -6"/></g>' },
-  /* ★ v4.64.0(2026-07-20 第二輪)— 老師眼鏡圖 10 款(prop 定位引擎·對瞳孔中線) */
+  /* ★ v4.64.0(2026-07-20 第二輪)— 老師眼鏡圖 10 款(prop 定位引擎·對瞳孔中線)
+   * ★ v4.64.0(第四輪)— 鏡片雙版:img=白鏡片原圖版 / clearImg=鏡片透明版(透出眼睛),
+   *   玩家以眼鏡頁「鏡片樣式」開關(cfg.glsClear·預設透明)切換;墨鏡單版無 clearImg */
   { id:5, n:'酷炫墨鏡', ns:'酷墨鏡', lock:null, img:'gls_sun.png',        prop:{k:'gls', ar:2.886, wf:1.06, dy:0} },
-  { id:6, n:'紳士單片眼鏡', ns:'單眼鏡', lock:null, img:'gls_monocle.png', prop:{k:'gls', ar:0.810, wf:0.42, dy:8, dx:14} },
-  { id:7, n:'黑粗框眼鏡', ns:'粗框眼鏡', lock:null, img:'gls_bold.png',   prop:{k:'gls', ar:2.860, wf:1.06, dy:0} },
-  { id:8, n:'金眉框眼鏡', ns:'金眉框', lock:null, img:'gls_browgold.png', prop:{k:'gls', ar:2.820, wf:1.06, dy:0} },
-  { id:9, n:'黑眉框眼鏡', ns:'黑眉框', lock:null, img:'gls_browblack.png', prop:{k:'gls', ar:3.325, wf:1.06, dy:0} },
-  { id:10, n:'無框斯文眼鏡', ns:'無框眼鏡', lock:null, img:'gls_rimless.png', prop:{k:'gls', ar:3.351, wf:1.04, dy:0} },
-  { id:11, n:'金圓框眼鏡', ns:'金圓框', lock:null, img:'gls_roundgold.png', prop:{k:'gls', ar:2.246, wf:1.06, dy:0} },
-  { id:12, n:'黑圓框眼鏡', ns:'黑圓框', lock:null, img:'gls_roundblack.png', prop:{k:'gls', ar:2.727, wf:1.06, dy:0} },
-  { id:13, n:'細方框眼鏡', ns:'細框眼鏡', lock:null, img:'gls_slim.png',   prop:{k:'gls', ar:4.186, wf:1.04, dy:0} },
-  { id:14, n:'酒紅框眼鏡', ns:'紅框眼鏡', lock:null, img:'gls_red.png',    prop:{k:'gls', ar:3.012, wf:1.06, dy:0} }
+  { id:6, n:'紳士單片眼鏡', ns:'單眼鏡', lock:null, img:'gls_monocle.png', clearImg:'gls_monocle_clear.png', prop:{k:'gls', ar:0.810, wf:0.42, dy:8, dx:14} },
+  { id:7, n:'黑粗框眼鏡', ns:'粗框眼鏡', lock:null, img:'gls_bold.png',   clearImg:'gls_bold_clear.png', prop:{k:'gls', ar:2.860, wf:1.06, dy:0} },
+  { id:8, n:'金眉框眼鏡', ns:'金眉框', lock:null, img:'gls_browgold.png', clearImg:'gls_browgold_clear.png', prop:{k:'gls', ar:2.820, wf:1.06, dy:0} },
+  { id:9, n:'黑眉框眼鏡', ns:'黑眉框', lock:null, img:'gls_browblack.png', clearImg:'gls_browblack_clear.png', prop:{k:'gls', ar:3.325, wf:1.06, dy:0} },
+  { id:10, n:'無框斯文眼鏡', ns:'無框眼鏡', lock:null, img:'gls_rimless.png', clearImg:'gls_rimless_clear.png', prop:{k:'gls', ar:3.351, wf:1.04, dy:0} },
+  { id:11, n:'金圓框眼鏡', ns:'金圓框', lock:null, img:'gls_roundgold.png', clearImg:'gls_roundgold_clear.png', prop:{k:'gls', ar:2.246, wf:1.06, dy:0} },
+  { id:12, n:'黑圓框眼鏡', ns:'黑圓框', lock:null, img:'gls_roundblack.png', clearImg:'gls_roundblack_clear.png', prop:{k:'gls', ar:2.727, wf:1.06, dy:0} },
+  { id:13, n:'細方框眼鏡', ns:'細框眼鏡', lock:null, img:'gls_slim.png',   clearImg:'gls_slim_clear.png', prop:{k:'gls', ar:4.186, wf:1.04, dy:0} },
+  { id:14, n:'酒紅框眼鏡', ns:'紅框眼鏡', lock:null, img:'gls_red.png',    clearImg:'gls_red_clear.png', prop:{k:'gls', ar:3.012, wf:1.06, dy:0} }
 ];
 P.neck = [
   { id:0, n:'無', ns:'不戴', lock:null, svg:'' },
@@ -1138,7 +1146,7 @@ window._avatarDefaultCfg = function(){
     hat:0, gls:0, neck:0, wrist:0, cape:0, top:0, btm:0, sh:0, q:0,
     browC:0, earr:0, mask:0, sock:0, full:0,
     headf:0, bodyf:0, bg:0, clothC:0,   /* ★ v4.59.0 full=整套 / v4.60.0 headf=整頭 bodyf=整身 bg=背景 clothC=服裝配色 */
-    hh:0, of:0, ofHead:0, pos:{}, macc:0 };   /* ★ v4.64.0 hh=髮型整頭 of=套裝 ofHead=套裝頭旗標 pos=各部件XY微調 {key:[dx,dy]} macc=嘴部飾品 */
+    hh:0, of:0, ofHead:0, pos:{}, macc:0, glsClear:1 };   /* ★ v4.64.0 hh=髮型整頭 of=套裝 ofHead=套裝頭旗標 pos=各部件[dx,dy,尺寸%]微調 macc=嘴部飾品 glsClear=鏡片樣式(1=透明顯示眼睛/0=白鏡片原圖) */
 };
 
 function _pick(list, idx){
@@ -1259,9 +1267,28 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     /* ★ v4.64.0 prop 定位圖層(頭飾/眼鏡/嘴飾:單張道具圖依 AVATAR_HEAD_GEO 自動對位四體型)
      *   帽:寬=頭寬×wf·帽底停在「頭頂→下巴 1/3」處;眼鏡:寬=頭寬×wf 對瞳孔中線;
      *   嘴飾:對嘴部(眼→下巴 60%);dx/dy=各款 504 座標微調;之後玩家再用 cfg.pos 調 */
-    function _avAccLayer(item){
-      if(!item || !item.prop) return _imgLayer(_avImgFor(item ? item.img : null, cfg.body), tf);   /* 無 prop=舊全畫布件 */
+    /* ★ v4.64.0(第四輪)_avAccLayer 升級:
+     *   ① posKey → 讀 cfg.pos[posKey][2] = 尺寸% (−20~+20·老師先設 20% 上限):
+     *      prop 件對「自身中心」等比縮放;legacy 全畫布件(如黑框眼鏡)以瞳孔中線為軸縮放
+     *   ② 眼鏡鏡片雙版:item.clearImg 且 cfg.glsClear!==0(預設透明)→ 用透明鏡片版透出眼睛 */
+    function _avAccLayer(item, posKey){
+      var scl = 1;
+      if(posKey && cfg.pos && cfg.pos[posKey] && cfg.pos[posKey].length > 2){
+        var dsv = cfg.pos[posKey][2]|0;
+        if(dsv > 20) dsv = 20; if(dsv < -20) dsv = -20;
+        scl = 1 + dsv/100;
+      }
+      if(!item || !item.prop){
+        var base0 = _imgLayer(_avImgFor(item ? item.img : null, cfg.body), tf);   /* 無 prop=舊全畫布件 */
+        if(!base0 || scl === 1) return base0;
+        var geo0 = AVATAR_HEAD_GEO[cfg.body] || AVATAR_HEAD_GEO[0];
+        var s0 = tf.w / 504;
+        var px0 = tf.x + geo0.cx*s0, py0 = tf.y + geo0.eyeY*s0;
+        return '<g transform="translate(' + px0.toFixed(1) + ',' + py0.toFixed(1) + ') scale(' + scl
+          + ') translate(' + (-px0).toFixed(1) + ',' + (-py0).toFixed(1) + ')">' + base0 + '</g>';
+      }
       var f = _avImgFor(item.img, cfg.body);
+      if(item.clearImg && cfg.glsClear !== 0){ f = _avImgFor(item.clearImg, cfg.body); }   /* ★ 鏡片透明版 */
       if(!f) return '';
       var geo = AVATAR_HEAD_GEO[cfg.body] || AVATAR_HEAD_GEO[0];
       var meta2 = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
@@ -1279,6 +1306,13 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
         var mouthY = geo.eyeY + (chin - geo.eyeY) * 0.60;
         w504 = geo.headW * (pr.wf || 0.45);
         x504 = geo.cx - w504/2 + pdx; y504 = mouthY - (w504/pr.ar)/2 + pdy;
+      }
+      /* ★ 尺寸縮放:對「自身中心」等比放大/縮小(位置錨點不跑) */
+      if(scl !== 1){
+        var h504 = w504/pr.ar;
+        var ccx = x504 + w504/2, ccy = y504 + h504/2;
+        w504 = w504 * scl;
+        x504 = ccx - w504/2; y504 = ccy - (w504/pr.ar)/2;
       }
       var s = tf.w / 504;
       var u = AVATAR_IMG_BASE + f + '?v=' + (window.AVATAR_DB_VERSION || '');
@@ -1363,9 +1397,9 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       + _imgLayer(_avImgFor(earPng.img, cfg.body), tf)
       + _imgLayer(_pick(P.earring, cfg.earr).img, tf)
       + _imgLayer(_pick(P.horn, cfg.horn).img, tf)
-      + _ofsWrap('macc', _avAccLayer(_pick(P.mouthacc, cfg.macc)))   /* ★ v4.64.0 嘴部飾品(不因整頭件隱藏·口罩/奶嘴疊任何頭上)+XY微調 */
-      + _ofsWrap('gls', _avAccLayer(_pick(P.glasses, cfg.gls)))   /* ★ v4.64.0 眼鏡改 prop 引擎(舊全畫布件自動相容)+XY微調(需求7) */
-      + _ofsWrap('hat', _avAccLayer(_pick(P.hat, cfg.hat)))   /* ★ v4.64.0 頭戴改 prop 引擎+XY微調(需求7) */
+      + _ofsWrap('macc', _avAccLayer(_pick(P.mouthacc, cfg.macc), 'macc'))   /* ★ v4.64.0 嘴部飾品(不因整頭件隱藏·口罩/奶嘴疊任何頭上)+XY微調+尺寸 */
+      + _ofsWrap('gls', _avAccLayer(_pick(P.glasses, cfg.gls), 'gls'))   /* ★ v4.64.0 眼鏡改 prop 引擎(舊全畫布件自動相容)+XY微調+尺寸+鏡片雙版 */
+      + _ofsWrap('hat', _avAccLayer(_pick(P.hat, cfg.hat), 'hat'))   /* ★ v4.64.0 頭戴改 prop 引擎+XY微調+尺寸 */
       + _ofsWrap('held', _imgLayer(_pick(P.held, cfg.held).img, tf))   /* ★ v4.64.0 手持+XY微調 */
       + _charClose;   /* ★ v4.62.0 特寫人物群組關閉 */
     return '<svg viewBox="' + _pngVb + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
@@ -1579,7 +1613,7 @@ var _AV_TABS = [
   { k:'skinTab',   p:'膚色', c:'皮膚顏色', cats:[['skin','膚色','皮膚顏色']] },
   { k:'hairCTab',  p:'髮色', c:'頭髮顏色', cats:[['hairC','髮色','頭髮顏色']] },
   { k:'hatTab',    p:'頭戴', c:'戴頭上', cats:[['hat','頭戴(帽子)','帽帽']], adj:[['hat','頭戴位置','帽帽位置']] },
-  { k:'glsTab',    p:'眼鏡', c:'眼鏡', cats:[['gls','眼鏡','眼鏡']], adj:[['gls','眼鏡位置','眼鏡位置']] },
+  { k:'glsTab',    p:'眼鏡', c:'眼鏡', cats:[['gls','眼鏡','眼鏡'],['glsClear','鏡片樣式','鏡片樣子']], adj:[['gls','眼鏡位置','眼鏡位置']] },
   { k:'mouthTab',  p:'嘴巴', c:'嘴巴', cats:[['mouth','嘴巴','嘴嘴'],['mouthacc','嘴部飾品','嘴巴戴的']],
     adj:[['mouth','嘴巴位置','嘴嘴位置'],['macc','嘴部飾品位置','嘴飾位置']] },
   { k:'heldTab',   p:'手持', c:'拿的', cats:[['held','手持物品','拿什麼']], adj:[['held','手持位置','拿的位置']] }
@@ -1609,7 +1643,7 @@ var _AV_CFG_KEY = { body:'body', skin:'skin', face:'face', brow:'brow', eye:'eye
   cape:'cape', held:'held', q:'q',
   browC:'browC', earring:'earr', mask:'mask', sock:'sock',
   full:'full', headfull:'headf', bodyfull:'bodyf', bg:'bg', clothC:'clothC',   /* ★ v4.59.0 整套 / v4.60.0 整頭/整身/背景/服裝配色 */
-  hairhead:'hh', outfit:'of', mouthacc:'macc' };   /* ★ v4.64.0 髮型整頭 / 套裝(頭+身) / 嘴部飾品 */
+  hairhead:'hh', outfit:'of', mouthacc:'macc', glsClear:'glsClear' };   /* ★ v4.64.0 髮型整頭 / 套裝(頭+身) / 嘴部飾品 / 鏡片樣式 */
 var _avCurTab = 0;
 
 function _avEsc(t){
@@ -1695,11 +1729,30 @@ window._avatarOpenPanel = function(){
     _bgv.autoplay = true; _bgv.loop = true; _bgv.muted = true; _bgv.playsInline = true;
     _bgv.setAttribute('playsinline',''); _bgv.setAttribute('muted','');
     _bgv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;'
-      + 'z-index:-1;opacity:0;transition:opacity 0.8s;filter:brightness(0.55);pointer-events:none;';
+      + 'z-index:-1;opacity:0;transition:opacity 0.5s;filter:brightness(0.55);pointer-events:none;';   /* ★ v4.64.0 轉場統一 0.5s(原 0.8s) */
     _bgv.src = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/'
       + encodeURIComponent('自訂角色動態背景.mp4') + '?v=' + (window.AVATAR_DB_VERSION || '');
     _bgv.onloadeddata = function(){ _bgv.style.opacity = '1'; try{ _bgv.play(); }catch(_e){} };
     _bgv.onerror = function(){ try{ _bgv.remove(); }catch(_e){} };
+    /* ★ v4.64.0 — 老師 2026-07-20:背景動畫連續輪播加 0.5 秒淡出/淡入轉場(循環接點更自然):
+     *   保留 loop=true 原生循環不中斷,僅在接點前 0.5 秒淡出(露出面板漸層底)、
+     *   跳回開頭後 0.5 秒淡回;timeupdate 約每 250ms 觸發一次足以命中 0.5 秒窗;
+     *   影片長度 <2 秒或讀不到 duration 時不套用(避免頻繁閃爍);整段 try-catch 防呆 */
+    var _bgvFading = false;
+    _bgv.ontimeupdate = function(){
+      try{
+        var _d = _bgv.duration;
+        if(!_d || !isFinite(_d) || _d < 2) return;
+        var _rem = _d - _bgv.currentTime;
+        if(!_bgvFading && _rem <= 0.55){
+          _bgvFading = true;
+          _bgv.style.opacity = '0';
+        } else if(_bgvFading && _bgv.currentTime < 1){
+          _bgvFading = false;
+          _bgv.style.opacity = '1';
+        }
+      }catch(_e){}
+    };
     panel.insertBefore(_bgv, panel.firstChild);
   }catch(_e){}
 
@@ -1935,25 +1988,39 @@ window._avatarResetClick = function(){
 window._avatarNudge = function(key, dx, dy){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
-  var p = cfg.pos[key] || [0, 0];
+  var p = cfg.pos[key] || [0, 0, 0];
   var nx = (p[0]|0) + (dx|0), ny = (p[1]|0) + (dy|0);
   if(nx > 100) nx = 100; if(nx < -100) nx = -100;
   if(ny > 100) ny = 100; if(ny < -100) ny = -100;
-  cfg.pos[key] = [nx, ny];
+  cfg.pos[key] = [nx, ny, (p.length > 2 ? (p[2]|0) : 0)];   /* ★ v4.64.0 第四輪:保留第三欄尺寸% */
   var ex = document.getElementById('_av-pos-' + key + '-x');
   var ey = document.getElementById('_av-pos-' + key + '-y');
   if(ex) ex.textContent = nx;
   if(ey) ey.textContent = ny;
   _avRefreshPreview();
 };
+/* ★ v4.64.0(第四輪)老師需求:所有飾品可調尺寸(每按 ±1%·上限 ±20%·存 cfg.pos[key][2]) */
+window._avatarNudgeSize = function(key, d){
+  var cfg = window._avatarLocalCard.cfg;
+  if(!cfg.pos) cfg.pos = {};
+  var p = cfg.pos[key] || [0, 0, 0];
+  var ns = (p.length > 2 ? (p[2]|0) : 0) + (d|0);
+  if(ns > 20) ns = 20; if(ns < -20) ns = -20;
+  cfg.pos[key] = [(p[0]|0), (p[1]|0), ns];
+  var es = document.getElementById('_av-pos-' + key + '-s');
+  if(es) es.textContent = (ns > 0 ? '+' : '') + ns;
+  _avRefreshPreview();
+};
 window._avatarNudgeReset = function(key){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
-  cfg.pos[key] = [0, 0];
+  cfg.pos[key] = [0, 0, 0];   /* ★ v4.64.0 第四輪:尺寸一併歸零 */
   var ex = document.getElementById('_av-pos-' + key + '-x');
   var ey = document.getElementById('_av-pos-' + key + '-y');
+  var es = document.getElementById('_av-pos-' + key + '-s');
   if(ex) ex.textContent = 0;
   if(ey) ey.textContent = 0;
+  if(es) es.textContent = 0;
   _avRefreshPreview();
 };
 
@@ -1992,6 +2059,21 @@ function _avRenderOpts(){
           + 'border:'+(sel?'3.5px solid #8ad4ff;box-shadow:0 0 12px rgba(120,200,255,0.7);':'2.5px solid rgba(255,255,255,0.35);')+'">'
           + (i === 0 ? '<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:rgba(60,40,30,0.75);">原</span>' : '')
           + '</button>';
+      }
+    } else if(cat === 'glsClear'){
+      /* ★ v4.64.0(第四輪)鏡片樣式開關:1=透明鏡片(顯示眼睛·預設)/ 0=白色鏡片(原圖);
+       *   套用在所有雙版眼鏡(墨鏡單版不受影響) */
+      var _gcCur = (cfg.glsClear !== 0) ? 1 : 0;
+      var _gcOpts = [
+        [1, '透明鏡片(顯示眼睛)', '看得到眼睛'],
+        [0, '白色鏡片(原圖)', '白白鏡片']
+      ];
+      for(var gi=0; gi<_gcOpts.length; gi++){
+        var _gcSel = (_gcCur === _gcOpts[gi][0]);
+        h += '<button onclick="_avatarSetPart(\'glsClear\',' + _gcOpts[gi][0] + ')" style="padding:10px 16px;font-size:15px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;'
+          + (_gcSel ? 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;box-shadow:0 0 10px rgba(120,200,255,0.4);'
+                    : 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#c4d0ea;')
+          + '">' + (_gcOpts[gi][0] === 1 ? '👀 ' : '⬜ ') + _avT(_gcOpts[gi][1], _gcOpts[gi][2]) + '</button>';
       }
     } else if(cat === 'q'){
       var qs = window.AVATAR_QUOTES;
@@ -2052,15 +2134,18 @@ function _avRenderOpts(){
     }
     h += '</div>';
   }
-  /* ★ v4.64.0 需求9:位置微調區(依分頁 adj 設定)— 上下左右每按 ±1px·±100·↺歸零 */
+  /* ★ v4.64.0 需求9:位置微調區(依分頁 adj 設定)— 上下左右每按 ±1px·±100·↺歸零
+   * ★ v4.64.0(第四輪)老師需求:飾品鍵(hat/gls/macc)加「尺寸」列 — 每按 ±1%·上限 ±20% */
   if(tab.adj && tab.adj.length){
     h += '<div style="font-size:16px;font-weight:900;color:#8ad4ff;margin:18px 2px 8px;">📐 '
-      + _avT('位置調整(每按 ±1 像素·上限 ±100)','調整位置(一次動 1 格·最多 100)') + '</div>';
+      + _avT('位置/尺寸調整(位置每按 ±1 像素·上限 ±100;尺寸每按 ±1%·上限 ±20%)','調整位置和大小(一次動 1 格)') + '</div>';
     var _abS = 'padding:8px 12px;font-size:15px;font-weight:900;border-radius:9px;cursor:pointer;font-family:inherit;'
       + 'background:rgba(60,70,110,0.3);border:2px solid rgba(140,200,255,0.5);color:#c9e4ff;';
+    var _SIZEABLE = { hat:1, gls:1, macc:1 };   /* 飾品鍵可調尺寸(prop 定位引擎件+legacy 黑框眼鏡) */
     for(var ai=0; ai<tab.adj.length; ai++){
       var ak = tab.adj[ai][0], alP = tab.adj[ai][1], alC = tab.adj[ai][2];
-      var ap = (cfg.pos && cfg.pos[ak]) || [0, 0];
+      var ap = (cfg.pos && cfg.pos[ak]) || [0, 0, 0];
+      var asv = (ap.length > 2 ? (ap[2]|0) : 0);
       h += '<div style="margin:8px 0;padding:10px 12px;background:rgba(20,30,60,0.35);border:1.5px solid rgba(140,200,255,0.25);border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
         + '<span style="font-size:14.5px;font-weight:800;color:#ffd97a;min-width:100px;">' + _avT(alP, alC) + '</span>'
         + '<span style="font-size:13.5px;color:#9aa8cc;">X:<span id="_av-pos-' + ak + '-x" style="display:inline-block;min-width:28px;text-align:center;color:#d4ecff;font-weight:800;">' + (ap[0]|0) + '</span>'
@@ -2069,6 +2154,11 @@ function _avRenderOpts(){
         + '<button onclick="_avatarNudge(\'' + ak + '\',1,0)" style="' + _abS + '">▶</button>'
         + '<button onclick="_avatarNudge(\'' + ak + '\',0,-1)" style="' + _abS + '">▲</button>'
         + '<button onclick="_avatarNudge(\'' + ak + '\',0,1)" style="' + _abS + '">▼</button>'
+        + (_SIZEABLE[ak]
+          ? ('<span style="font-size:13.5px;color:#9aa8cc;margin-left:4px;">' + _avT('尺寸','大小') + ':<span id="_av-pos-' + ak + '-s" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;">' + (asv > 0 ? '+' : '') + asv + '</span>%</span>'
+            + '<button onclick="_avatarNudgeSize(\'' + ak + '\',-1)" style="' + _abS + '">➖</button>'
+            + '<button onclick="_avatarNudgeSize(\'' + ak + '\',1)" style="' + _abS + '">➕</button>')
+          : '')
         + '<button onclick="_avatarNudgeReset(\'' + ak + '\')" style="' + _abS + 'color:#ff9a9a;border-color:rgba(230,100,100,0.6);">↺ ' + _avT('歸零','歸零') + '</button>'
         + '</div>';
     }
