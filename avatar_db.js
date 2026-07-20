@@ -1,6 +1,15 @@
 /* ============================================================
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
- * 版本: v4.64.0(2026-07-20)
+ * 版本: v4.64.2(2026-07-20)
+ *
+ * ★ v4.64.2 — (老師續修)①所有頭飾(頭戴/眼鏡/嘴飾)尺寸縮放上限 ±30% → ±50%
+ *   ②素體/部件圖「快取自清」根治:v4.64.1 事件顯示個別裝置 SW ASSET_CACHE 對舊圖頑固
+ *     (boy/kidboy 舊素體卡快取·girl/kidgirl 恰為新圖 → 只更新一半)。本版於 avatar_db 版本升級時
+ *     主動刪 ASSET_CACHE 內所有 avatar_parts 圖條目,強制重抓最新素材(不再只靠 ?v= query)
+ *   ③眼鏡白鏡片版 gls_X.png ×9 補齊:repo 原缺白版(全 404·只有 _clear 透明版)→玩家切「白色鏡片」
+ *     載入失敗。程式 P.glasses img 引用本已正確,老師補上 9 張白版素材至 repo/avatar_parts/ 即解決
+ *
+ * ★ v4.64.1 — ①頭飾尺寸上限 ±20%→±30% ②素體運動服版快取刷新(bump AVATAR_DB_VERSION 破 ?v= 快取)
  *
  * ★ v4.64.0 — 自訂角色系統大改版(老師 2026-07-20 九需求·頭身新切法素材正式接線):
  *   ①素體 8 件新切法拆層(body_head_×4 + body_torso_×4·chin boy118/girl125/kidboy165/
@@ -28,7 +37,7 @@
  *     (loop 循環接點前 0.5s 淡出·跳回開頭淡回·切換更自然;初載淡入同步改 0.5s)
  *   ⑬(2026-07-20 第四輪)眼鏡鏡片雙版:img=白鏡片原圖 / clearImg=鏡片透明(透出眼睛),
  *     眼鏡頁「鏡片樣式」開關切換(cfg.glsClear·預設透明·墨鏡單版不受影響)
- *   ⑭(第四輪)所有飾品(頭戴/眼鏡/嘴飾)可調尺寸:每按 ±1%·上限 ±20%
+ *   ⑭(第四輪)所有飾品(頭戴/眼鏡/嘴飾)可調尺寸:每按 ±1%·上限 ±50%
  *     (存 cfg.pos[key][2]·prop 件對自身中心縮放·legacy 全畫布件以瞳孔中線為軸)
  *   ⑮(2026-07-20 第五輪)老師實機七修:
  *     修1 雙劍士裝移正女童分頁(新切件不在 repo→改掛 v4.60 舊件) 修2 少年預設頭改
@@ -209,7 +218,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.64.0';
+window.AVATAR_DB_VERSION = 'v4.64.2';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1345,7 +1354,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
      *   帽:寬=頭寬×wf·帽底停在「頭頂→下巴 1/3」處;眼鏡:寬=頭寬×wf 對瞳孔中線;
      *   嘴飾:對嘴部(眼→下巴 60%);dx/dy=各款 504 座標微調;之後玩家再用 cfg.pos 調 */
     /* ★ v4.64.0(第四輪)_avAccLayer 升級:
-     *   ① posKey → 讀 cfg.pos[posKey][2] = 尺寸% (−20~+20·老師先設 20% 上限):
+     *   ① posKey → 讀 cfg.pos[posKey][2] = 尺寸% (−50~+50·上限 50%):
      *      prop 件對「自身中心」等比縮放;legacy 全畫布件(如黑框眼鏡)以瞳孔中線為軸縮放
      *   ② 眼鏡鏡片雙版:item.clearImg 且 cfg.glsClear!==0(預設透明)→ 用透明鏡片版透出眼睛 */
     function _avAccLayer(item, posKey){
@@ -2088,13 +2097,13 @@ window._avatarNudge = function(key, dx, dy){
   if(ey) ey.textContent = ny;
   _avRefreshPreview();
 };
-/* ★ v4.64.0(第四輪)老師需求:所有飾品可調尺寸(每按 ±1%·上限 ±20%·存 cfg.pos[key][2]) */
+/* ★ v4.64.0(第四輪)老師需求:所有飾品可調尺寸(每按 ±1%·上限 ±50%·存 cfg.pos[key][2]) */
 window._avatarNudgeSize = function(key, d){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
   var p = cfg.pos[key] || [0, 0, 0];
   var ns = (p.length > 2 ? (p[2]|0) : 0) + (d|0);
-  if(ns > 20) ns = 20; if(ns < -20) ns = -20;
+  if(ns > 50) ns = 50; if(ns < -50) ns = -50;
   cfg.pos[key] = [(p[0]|0), (p[1]|0), ns];
   var es = document.getElementById('_av-pos-' + key + '-s');
   if(es) es.textContent = (ns > 0 ? '+' : '') + ns;
@@ -2232,10 +2241,10 @@ function _avRenderOpts(){
     h += '</div>';
   }
   /* ★ v4.64.0 需求9:位置微調區(依分頁 adj 設定)— 上下左右每按 ±1px·±100·↺歸零
-   * ★ v4.64.0(第四輪)老師需求:飾品鍵(hat/gls/macc)加「尺寸」列 — 每按 ±1%·上限 ±20% */
+   * ★ v4.64.0(第四輪)老師需求:飾品鍵(hat/gls/macc)加「尺寸」列 — 每按 ±1%·上限 ±50% */
   if(tab.adj && tab.adj.length){
     h += '<div style="font-size:19px;font-weight:900;color:#8ad4ff;margin:18px 2px 8px;">📐 '
-      + _avT('位置/尺寸調整(位置每按 ±1 像素·上限 ±100;尺寸每按 ±1%·上限 ±20%)','調整位置和大小(一次動 1 格)') + '</div>';
+      + _avT('位置/尺寸調整(位置每按 ±1 像素·上限 ±100;尺寸每按 ±1%·上限 ±50%)','調整位置和大小(一次動 1 格)') + '</div>';
     var _abS = 'padding:12px 16px;font-size:18px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;'
       + 'background:rgba(60,70,110,0.3);border:2px solid rgba(140,200,255,0.5);color:#c9e4ff;';
     var _SIZEABLE = { hat:1, gls:1, macc:1 };   /* 飾品鍵可調尺寸(prop 定位引擎件+legacy 黑框眼鏡) */
@@ -2450,5 +2459,39 @@ window._avatarRefreshEntryVisibility = function(){
 
 /* 啟動時載一次本機資料(供名片/未來主線使用) */
 try{ window._avatarLoadLocal(); }catch(_e){}
+
+/* ★ v4.64.2 素體/部件圖快取自清(根治頑固快取):同名覆蓋素材後即使圖 URL 帶 ?v= 破快取,
+   個別裝置的 Service Worker ASSET_CACHE 仍可能頑固命中舊圖(v4.64.1 事件:boy/kidboy 舊素體卡快取·
+   girl/kidgirl 恰為新圖 → 只有一半更新)。本段在 avatar_db 版本升級時,主動刪除 ASSET_CACHE 內所有
+   avatar_parts 圖條目,強制下次重抓最新素材(不再依賴 SW/CDN 是否尊重 query 當 cache key)。
+   用 localStorage 標記本版已清·不重複·caches 不存在或失敗一律靜默(舊 iPad Safari 相容) */
+try{
+  if(typeof caches !== 'undefined' && caches.keys){
+    var _apVer = window.AVATAR_DB_VERSION || '';
+    var _apKey = 'lxps_avatar_asset_purged_ver';
+    var _apLast = null;
+    try{ _apLast = localStorage.getItem(_apKey); }catch(_e){}
+    if(_apLast !== _apVer){
+      caches.keys().then(function(_names){
+        var _jobs = [];
+        _names.forEach(function(_cn){
+          if(_cn.indexOf('assets') === -1) return;   /* 只動 ASSET_CACHE(lxps-assets-*)·不碰 SHELL_CACHE */
+          _jobs.push(caches.open(_cn).then(function(_cache){
+            return _cache.keys().then(function(_reqs){
+              _reqs.forEach(function(_req){
+                if(_req && _req.url && _req.url.indexOf('avatar_parts/') !== -1){
+                  _cache.delete(_req);   /* 刪所有素體/頭飾/髮型/套裝/眼鏡等部件圖快取條目 */
+                }
+              });
+            });
+          }));
+        });
+        return Promise.all(_jobs);
+      }).then(function(){
+        try{ localStorage.setItem(_apKey, _apVer); }catch(_e){}
+      }).catch(function(){});
+    }
+  }
+}catch(_e){}
 
 })();
