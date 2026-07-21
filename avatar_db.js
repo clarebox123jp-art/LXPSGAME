@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.69.0';
+window.AVATAR_DB_VERSION = 'v4.70.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){

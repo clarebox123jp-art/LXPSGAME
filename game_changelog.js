@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-21  / 目前主程式版本:v4.69.0(造型工房紙娃娃/管理員預設·管理員測試)
+//  最後更新:2026-07-21  / 目前主程式版本:v4.70.0(主線劇情大改版:章節標題+開場封面+豐富音效+小說化對白·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.70.0 — 主線劇情大改版:新章節標題+章節開場封面與開場曲+豐富音效+小說化對白+主線鈕移到最上方·管理員測試
+  {
+    ver: 'v4.70.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '📖 主線劇情大改版!① 每一章都有了正式的章節標題(像「第一章・河堤上的初陣」),進入章節前會先播一段「章節開場封面」——大大的標題配上專屬開場曲,像翻開一本故事書的新篇章。② 對白重新改寫成小說的口吻,每個夥伴講話都有自己的個性和語氣,讀起來更有帶入感。③ 加入了豐富的「環境音效」和「動作音效」——河堤的風聲、教室的氛圍、翻牌的聲音、施法的聲響…讓每個場景都活了起來。④「主線劇情」按鈕移到了關卡列表的最上方,一進冒險就看得到。(主線仍在測試中,先開放給老師)',
+    ],
+    items: [
+      '★ v4.70.0【B·章節新標題】MAINSTORY_DB 全 7 章(序章+第一~六章)新增/更新雙版標題 titleP(精緻)/titleC(簡單):序章・穿越到異世界、第一章・河堤上的初陣、第二章・異變的線索、第三章・褪色的茶園、第四章・被奪走的心、第五章・發酵魔王的陰謀、第六章・吞噬色彩的黑暗(cute 版對應簡短標題·鐵律 1.232 雙版齊備);章節選擇視窗與章節開場封面共用同一標題來源。',
+      '★ v4.70.0【C·章節開場封面引擎】新增 _msPlayCover(cid,onDone):讀 chapter.cover{img,bgm} → 全螢幕封面 overlay(z-index 9810)顯示封面圖(缺圖 graceful fallback 漸層底)+ 程式疊上大字章節標題 + 專屬開場曲(new Audio·有開場曲才 bgmStop() 獨佔·缺檔靜默);支援「跳過」鈕/點畫面略過/10 秒自動結束;接入 _msRunChapter:僅從章節開頭(i===0)播封面,封面播畢才 _msEnterStoryBgm+開始場景,續播章節中段不重播。封面資產檔名規格:主線_封面_序章.jpg…主線_封面_第六章.jpg、開場曲 主線_開場_序章.m4a…主線_開場_第六章.m4a(repo 根目錄)。',
+      '★ v4.70.0【D3·豐富音效引擎】新增環境音(amb)+動作音(sfx)雙軌:_msStartAmb(key) 循環環境音(淡入到 0.35·同 key 不重起·切換場景自動接續)、_msStopAmb() 淡出(離開主線/進章節選擇時停)、_msPlaySfx(key,vol) 單發動作音(動態 Audio·play().catch 靜默);MAINSTORY_DB 各 scene 依語意標 amb(森林/河堤/公園/教室/茶園/花之森/老街/黑暗…)、關鍵對白 line 標 sfx(腳步/破裂/登場/翻牌/哨聲/施法/劍擊/祈禱/護盾/火焰…);接入 _msPlayScene(換場景啟動環境音)與 showLine(對白觸發動作音)。★缺音檔一律 graceful fallback 靜默不影響劇情播放。',
+      '★ v4.70.0【A·小說化對白改寫】MAINSTORY_DB 全 7 章 premium 對白重寫為小說筆觸,融入各代表英雄語氣個性(小劇團員「人生如戲」、直笛演奏家對音準的堅持、弦樂團員「音樂是靈魂的語言」、動物學家的好奇、籃球隊「Team work makes the dream work」、田徑隊「每一秒比昨天快」、程式高手「Bug 只是還沒找到的 Feature」、繪圖高手「顏色不夠再加一層」、劍士的直率、祭司「每條生命都值得被守護」…);cute 版維持簡短口語(鐵律 1.232)。順手統一用語「弦樂隊員」→「弦樂團員」。',
+      '★ v4.70.0【D1·主線鈕移到最上方 + 範圍驗證】「📖 主線劇情」入口鈕(#adv-mainstory-btn)由原位置(頭像鈕與近期活動鈕之間)移到冒險關卡列表最上方(木柵防衛戰之上)·一進冒險即見。★全部改動集中在 index.html 主線引擎/MAINSTORY_DB(avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js 未動);無真 ?.·九版號同步點全對齊 v4.70.0·changelog 恰 20 條·CURRENT_BOOT_VER 未動(v1.0.20260510.6050)。主線 _MAINSTORY_ADMIN_ONLY 管理員限定測試。',
+    ],
+  },
   // v4.69.0 — 造型工房:紙娃娃說明+全部件尺寸+管理員定位設預設+玩家用預設勾選·管理員測試
   {
     ver: 'v4.69.0',
@@ -299,7 +315,6 @@ window.GAME_CHANGELOG = [
       '★ v4.55.0【驗證基準變更】index.html 新增 avatar_db.js document.write 載入行 → inline script 塊 20→21(check_inline 驗證基準同步更新);sw.js v3.5.90:SHELL_URLS 新增 ./avatar_db.js(隨核心檔快取·離線可用);admin_panel.js 僅版號同步。',
     ],
   },
-  // v4.53.0 — 新英雄 麻吉喵‧Nico
   // v4.54.0 — 朱玥天賦強化 + 條件搜尋修正
   {
     ver: 'v4.54.0',
@@ -315,25 +330,6 @@ window.GAME_CHANGELOG = [
       '★ v4.54.0【朱玥天賦·實作位置】hook 掛 nextRound「救醫馬 救馬本能」之後、冬之戰場速度還原之前 = 新回合開始治療類集中區(與朱玥 S1 春之戰場「每回合開始恢復 20% HP」同一函式 → 語感對齊老師的「每回合開始時」);守門=朱玥存活 + 天賦未被封(_traitSeal / imprison / confused);特技值 spv=floor(sp×(1+sp×0.01)) 與寄生/爆發同口徑;doHeal 帶 actor 讓最高治療統計歸朱玥(v3.16.46 口徑)並自動吃禁療/減療閘門;純治療零傷害零復活 → 完全不涉鐵律 1.31。資料層四表同步:HERO_TRAIT desc/fd、_TRAIT_LV_INFO effect 補述、檔尾 sd 簡單風(鐵律 1.232 雙版齊備)、HERO_SKILL_EFFECTS 補「單體回復HP」;hero_input.html 天賦同步。',
       '★ v4.54.0【英雄 🔍 條件搜尋稽核修正】(老師回報操偶師漏標 + 全表稽核·純篩選顯示層·零戰鬥邏輯):❶老師裁定「召喚物」= 持久性且有獨立 HP 掛在角色身上(卡牌 card-summon-bars 有 HP 條)才算 → 操偶師(_puppetHp/_puppetWall)補標(本就在 v4.52.0 幽魂暗狐 _foxStripSummon 消召喚物權威清單內);動物學家(動物召喚=給友方裝寵物·走 EQUIP 無 HP 條)與水狐(天賦水精靈=一次性治療·不留 HP)移除舊標 → 召喚物精準剩 4 隻(操偶師/喚龍使‧蜜鶴林/貓人族長/陰陽師)與 card-summon-bars 渲染區完全對齊(雙星姊妹 _dualStarForm 只是型態標籤·無 HP·不列入)。',
       '★ v4.54.0【條件搜尋·孤兒標籤根治】❷貓人族長「凍結」→「冰凍」:v4.48.0 接線錯字,SKILL_EFFECT_DEFS 正式標籤為「冰凍」(實際狀態 addStatus freeze) → 舊值是孤兒標籤造成雙重失效(玩家勾「冰凍」搜不到貓人族長 / 「凍結」永遠不會有勾選框=死碼)。❸炎火超少女補「免死(HP剩1)」(爆發火神附體 3 回合明載「不會倒下·致命→HP剩1」·同鐵匠/魔劍姬/木靈使口徑)。❹幼兒園小孩「自身進入睡眠」依老師裁定不掛「睡眠」(該標籤語意=讓對手睡眠)。SKILL_EFFECT_DEFS 零新增;修正後稽核:86 標籤零孤兒(用到但不在表)、零空結果(勾了必無英雄)、100 隻英雄與 HERO_PRIMARY_CLASS 100 筆完全對齊。',
-    ],
-  },
-  {
-    ver: 'v4.53.0',
-    date: '2026-07-17',
-    brief: [
-      '🍡 新英雄「麻吉喵‧Nico」登場!由 5 年 5 班 熊同學設計的 SSR 麻糬貓咪,是全遊戲第 7 隻「主坦克」英雄!',
-      '🍡 天賦「Q彈」:隊友要被普通攻擊時,Nico 有機率彈過去幫他挨;而且自己每次被普通攻擊,軟軟的身體都會把衝擊彈開、回自己的 HP。',
-      '😼 技能「喵的厲害」(被動):對手的極限爆發光芒一亮起,畫面就會問你要不要花能量發動 —— 一巴掌把對手的爆發光芒拍熄!每回合最多 1 次。',
-      '🛡 技能「Nico保護你」:把自己撐成大麻糬盾牌,讓自己和 1 個隊友無敵 1 回合;每擋掉 1 次攻擊還會回能量和 HP。',
-      '💢 極限爆發「怎麼樣?看看我的厲害!」:氣鼓鼓地連撞 7 下(撞倒了就換去打 HP 最低的那個),最後一下讓對手強力暈眩,自己再回一半 HP!',
-      '🎨 這是 5 年 5 班的第七隻學生設計英雄,快去星空召喚看看能不能遇到牠!',
-    ],
-    items: [
-      '★ v4.53.0【新英雄 麻吉喵‧Nico】資料層 14 表(hero_db.js):HERO_DB(hp91=配點70×1.3/atk15/sp10/spd5·總和100·老師裁決2乙由設計單 hp79 下修為 70 避免坦度爆表)、AVATARS🍡(全表零重複)、HERO_IMGS(麻吉喵Nico.webp·由 repo 既有 .jpg 轉出 524×749/q92/83KB/PSNR 41.15dB)、HERO_IMG_POS(150%/center 40%·主角貓在畫面中央偏下、背景有大量麻糬同伴需放大聚焦)、HERO_BIO(designer 5年5班 熊同學)、BURST_DB、HERO_LORE、HERO_TRAIT、BURST_GIF_DB(生氣的布丁奶茶.gif·實測 243×231/10幀/單圈 900ms→dur:900·sfx-punch+sfx-crit·tint 麻糬暖粉)、HERO_CATEGORIES_OVERRIDE(ctrl/heal/tank)、HERO_HEX_OVERRIDE(heal3/ctrl4)、_TRAIT_LV_INFO(代承50%+5%/級·回血10%+4%/級)、HERO_PRIMARY_CLASS(tank)、HERO_SKILL_EFFECTS(8 標籤全用既有·SKILL_EFFECT_DEFS 零新增)+ _LXPS_HERO_SD 簡單風四段(鐵律1.232 雙版齊備)。',
-      '★ v4.53.0【邏輯層 index.html】天賦Q彈代承(doDmg 代承類集中區·挺身守護後/仁王挺立前·機率 50%+5%級·排除 AoE/DoT/反彈·_mochiGuardChecked 防連鎖)、天賦Q彈回血(doDmg 扣血後·對齊沐雲雪 軟軟的雲 hook 位置·10%+4%級)、S1喵的厲害被動確認窗(helper _mochiS1Prompt/_mochiS1Fire/_mochiS1Drain 置於 _catSummonChance 與 startTurn 之間;掛 nextRound「雙方各補3能量」後 → 對手爆發光芒剛亮起的瞬間;阻塞式彈窗由回呼排 startTurn·完全對齊 showEquipUI/showDiscardUI 既有非同步慣例)、S2 Nico保護你(execSkill 玩家路徑 + aiUseSkill AI 路徑雙實作·鐵律1.128·附 2 行 AI 評分)、S2 無敵回饋(doDmg immune 擋傷分支·靠 buff 上 _mochiGuard 標記辨識·別處來源的無敵不誤觸發)、爆發(_runBurst·7 連撞+倒下轉移 HP 最低+末擊強力暈眩+回 50%HP)、SUMMON_RARE_HEROES、STUDENT_DESIGNER_HEROES、SKILL_UPGRADE_DEF×2(special_mochi_s1/s2)+ 圖鑑升級視窗兩處 case、BURST_UPGRADE_DEF、_renderBurstFdWithLv 專屬 case。',
-      '★ v4.53.0【鐵律 1.31 BOSS 保護】本隻全招式皆為純倍率/純我方增益 —— 無固定傷害、無 HP% 傷害、無即死、無 HP 設 1、無 >5000 固定傷害 → 走 doDmg 不加 bypassShield,世界 BOSS 每英雄每回合 5000 cap 與龍王元素護盾全部自動生效,對 BOSS 零破口,不需任何額外 cap(本輪為近期少數「零 BOSS 風險」的新英雄)。',
-      '★ v4.53.0【老師四項裁決】① S1 保留「被動」定位但改為彈確認窗詢問是否消耗能量發動(完全比照煉金術師「道具複製」showAlchemistPrompt 模式·含自動戰鬥自動發動分支;AI 側走同一顆 _mochiS1Fire 保證同口徑)。② 配點 hp79→70(hp 欄位 103→91·與地獄將軍同級·非全遊戲最高)。③ 天賦代承由「必定」改機率制(50%起+5%/級·Lv5=70%)、回血 15%→10%(+4%/級)。④ S2 無敵回饋加每回合上限 2 次(_mochiGuardRoundUsed·nextRound 重置)→ 避免被連續 AoE 打成無限回復。',
-      '★ v4.53.0【英雄編輯器 hero_input.html 修正·老師要求釐清】查證發現 _heroSkillTypes 是「HERO_PRIMARY_CLASS 有值就直接 return、CATEGORIES 永遠到不了」,而 PRIMARY_CLASS 已 100 筆涵蓋全英雄 → 編輯器舊有的「篩選分類」複選對遊戲篩選 100% 是死碼,真正決定篩選的 HERO_PRIMARY_CLASS 卻沒有欄位可填。本輪(老師選甲):新增「🎯 主分類(單選)」欄位 + HERO_PRIMARY_CLASS_INITIAL(100 筆)+ 設計單多印「主分類」+ 舊複選正名為「副分類(舊制備援)」並補上 tank 第四色;另補回 v4.52.0 漏同步的幽魂暗狐與本輪 Nico 至 HEROES_DB/HERO_CATEGORIES_INITIAL。⚠ 釐清:主分類(篩選)與雷達圖(HERO_HEX_OVERRIDE)是兩件不同的事。',
     ],
   },
 ];
