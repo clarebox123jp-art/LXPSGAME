@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-21  / 目前主程式版本:v4.72.0(主線:章節封面新圖+前情提要+對白上一句下一句翻頁+內嵌教學與發劍演出·管理員測試)
+//  最後更新:2026-07-21  / 目前主程式版本:v4.73.0(主線:序章森林停BGM留環境音+章節選擇縮圖+封面改播章節音樂播完自動關閉·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.73.0 — 主線:序章森林停BGM留環境音+章節選擇縮圖(首張場景插圖)+封面改播章節音樂.m4a一次播完自動關閉·管理員測試
+  {
+    ver: 'v4.73.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '📖 主線再調整!① 序章穿越到「迷霧森林」後,原本那首不太搭的背景音樂會停掉,只留下森林的環境音(鳥鳴、風聲),更有「剛闖進陌生異世界」的神祕感。② 章節選擇畫面每一章的按鈕下方,現在會嵌入該章「第一張劇情插圖」的縮圖,一眼就看得出那章的場景氛圍。③ 章節開場封面改成:顯示封面時播放專屬的章節音樂一次,音樂播完封面就自動關閉、進入劇情(當然隨時可以按跳過)。(主線仍在測試中,先開放給老師)',
+    ],
+    items: [
+      '★ v4.73.0【序章森林停BGM留環境音】_msPlayScene 逐場景 BGM 新增 scene.bgm==="none" 分支:bgmStop() 停所有 audio[id^="bgm"] 但完全不碰 amb(amb 是 _msStartAmb 的動態 new Audio·不在 DOM bgm 清單內)→ 真正「停BGM、留環境音」;window._msCurBgm 設 "none" 防重觸。序章「主線_序章_迷霧森林」場景 bgm 由 bgm-taiwan-intro 改 "none"(保留 amb:forest)。',
+      '★ v4.73.0【章節選擇縮圖】新增 _msFirstSceneImg(cid)(回傳該章第一張有 img 的場景插圖);_msOpenChapterSelect 章節卡右欄由「單一動作鈕」改「rightCol 直欄:動作鈕 + 其下層縮圖」(190×107 圓角·邊框同章節狀態色 accent·_msAsset 帶 ?v= 破快取);縮圖沿用既有場景插圖零新素材。',
+      '★ v4.73.0【封面改播章節音樂.m4a·播完自動關閉】_msPlayCover 音樂由「per-chapter cover.bgm(未上傳)」改「單一 章節音樂.m4a(已上傳 330KB·全章共用)」:進封面 bgmStop 獨佔 → 播 章節音樂.m4a 一次(volume 0.72)→ onended 觸發 finish() 自動關閉封面進劇情;被擋/缺檔 8 秒兜底、異常沒觸發 onended 45 秒硬兜底;skip 鈕/點畫面 隨時可跳過(finish 冪等)。原固定 10 秒自動進正片邏輯移除。',
+      '★ v4.73.0【範圍與驗證】全部改動集中在 index.html 主線引擎(_msPlayScene bgm 分派 / _msPlayCover 封面音樂與關閉 / _msOpenChapterSelect 縮圖 + _msFirstSceneImg);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js/world-boss 未動。無真 ?.·九版號同步點全對齊 v4.73.0·changelog 恰 20 條·CURRENT_BOOT_VER 未動。主線 _MAINSTORY_ADMIN_ONLY 管理員限定測試。Phase 2(6 場劇情引導戰+主角戰鬥英雄+覺醒)另輪製作。',
+    ],
+  },
   // v4.72.0 — 主線:章節封面新圖+前情提要+對白上一句/下一句翻頁+環境音短檔名+內嵌教學×3與發劍演出·管理員測試
   {
     ver: 'v4.72.0',
@@ -311,23 +326,6 @@ window.GAME_CHANGELOG = [
       '★ v4.58.0【自訂主角簡化+素材接線·avatar_db.js】_AV_TABS 簡化為四頁籤:換髮型(hair+hairC)/換臉(eye+eyeC+mouth+gls+ear+browC)/換身體(body+skin+top+btm+sh)/名片(q);舊八頁籤定義保留於註解可復原。素材=老師人眼對位 aligned 圖 × 差異法抽件四批共 122 件(等比零拉長;髮件為光頭素體上之完整整頭;服裝件完全覆蓋素體;層序 素體→襪鞋褲衣→臉部件→前髮→耳→眼鏡)。缺體型格以 null 佔位,PNG 模式清單過濾改依當前體型(_avImgFor per-body)判定,缺格款於該體型自動隱藏;j===0 預設款永遠顯示(top/btm/shoe id0 更名 預設運動服/預設運動短褲/打赤腳)。',
       '★ v4.58.0【接線明細】髮 20 款(id0/2/3/4/5/6/7/10~22;id3 缺少年、id18 僅少女、id19/22 僅少年、id20 僅幼女、id21 僅幼男)、眼 id3/4/5/10/11/12、嘴 id10/11(少年原圖無變化無件)、眼鏡 id4、精靈耳 id1 解鎖、上衣 id10 白T+套裝 id11 制服/id12 藍長裙(少女)/id13 西裝(少年)/id14 小洋裝(幼女)/id15 吊帶裝(幼男)、下衣 id10 牛仔褲、鞋 id10 帆布鞋;檔名沿用既有槽位規劃(hair_short_boy.png 等),程式引用 126 檔與素材包交叉核對零缺零餘。mouth id0/shoe id11/12 無件維持 _offImg 停用。',
       '★ v4.58.0【範圍與驗證】改 avatar_db.js(頁籤+接線+per-body 過濾)+ index.html(mega 鍵與版號)+ game_changelog.js + admin_panel.js(僅版號)。功能仍受 _AVATAR_ADMIN_ONLY gating 一般玩家不可見。⚠ 部署需同步上傳 avatar_parts/ 資料夾 122 件 PNG(缺檔時選該款=素體原樣不破圖,_imgLayer 空值防呆)。check_inline 21 塊/node --check/孤立代理 0/admin 零真 ?./7 版本同步點全數 → v4.58.0。GAME_CHANGELOG 維持 20 筆(v4.57.0 未部署併入本條)。上傳順序:game_changelog.js → admin_panel.js → avatar_db.js → avatar_parts/ 素材 → index.html(最後)。',
-    ],
-  },
-  // v4.56.0 — 🐉 世界BOSS龍王至寶修正 + 👤 主角造型素材第三批(管理員測試中)
-  {
-    ver: 'v4.56.0',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-18',
-    brief: [
-      '🐉【世界 BOSS 排名獎勵的「龍王至寶」修正!】之前不管當期是哪一隻龍王,獎勵頁分級表上寫的至寶永遠是「炎龍王之牙」(只有按 ? 小圓鈕看簡介才是對的)。現在分級表會跟著當期龍王顯示正確的專屬至寶名稱(例如海龍王之爪、雷龍王之翼、光龍王之羽…)!',
-      '🎁【更重要的:實際發下來的至寶也修正了!】原本打贏非火龍王的場次、隔天領取排名獎勵時,發到手的龍王至寶一律變成「炎龍王之牙」——現在會正確發放「你當時擊敗的那隻龍王」的專屬至寶,就算領獎當天已經換下一隻龍王接班也不會發錯!',
-      '👤 主角造型工房又進貨啦(老師測試中):新增 8 套完整造型素材——白T牛仔褲便服、學生制服、精靈套裝(金色捲髮+尖耳+高傲眼)、黑框眼鏡書卷風、雙辮子藍長裙、紳士西裝、單側馬尾粉洋裝、吊帶短褲西瓜頭,髮型 7 款、服裝 10 件、眼鏡與精靈耳通通有,正式開放請等公告!',
-    ],
-    items: [
-      '★ v4.56.0【龍王至寶顯示修正·world-boss.js】根因:_WB_DRAGON_TREASURE_MAP 只有 3 筆(維蘇威/翠玉草/山岳)→ 雷/海/暗/光/幻龍王查無 → fallback dragon_fang_fire → 獎勵頁分級表 _wbGetCurrentDragonTreasureName() 永遠回「炎龍王之牙」(? 彈窗 v4.32.0 已改走 index 完整 8 龍王映射所以正確)。修法:①map 補齊 8 筆(與 index _lxpsDragonTreasureMapFull base 一致);②_wbGetCurrentDragonTreasureId 優先走 window._lxpsDragonTreasureId(_wbGetCurrentBoss().id)(與 ? 彈窗同源單一真相),舊路徑保留 fallback。無 ?.。',
-      '★ v4.56.0【龍王至寶發放修正·world-boss.js + index.html】根因:領獎時 index 呼叫 _wbGrantDragonTreasure(rank) 只傳名次,grant 內部擲骰取 _WORLD_BOSS_TEAM_REWARDS[tier].dragonTreasureId(五個分級全寫死 dragon_fang_fire)→ 非火龍王場次排名至寶一律發成炎龍王之牙(結算寫入 pending award 的 dragonTreasureId 其實是正確的,但領獎忽略它;且結算隔天 08:00 下一隻龍王已原子接班,不能用「當前龍王」推算)。修法:_wbGrantDragonTreasure 加第二參數 tidOverride 一律優先;index 領獎呼叫改傳 _result.dragonTreasureId。歷史補寫 _advSaveTreasureUnlockHistory 原本就用 _result.dragonTreasureId,發放與歷史自此一致。',
-      '★ v4.56.0【主角造型素材第三批·avatar_db.js v4.55.5】老師 20 張變體圖抽出 8 套 76 件 PNG 部件(×四體型):髮型 id15-21(制服頭/精靈捲捲/旁分頭/辮子頭/油亮頭/側馬尾/西瓜頭)、眼 id12 高傲眼(含挑眉+膚色補丁)、耳 id1 精靈長耳掛 PNG 解鎖、眼鏡 id4 黑框、上衣 id10-15(白T/學生制服/藍長裙/西裝/粉洋裝/吊帶裝)、下衣 id10 牛仔褲、鞋 id10-12(帆布/制服鞋/黑皮鞋);渲染行襪/鞋/下衣/上衣/耳/眼鏡補 _avImgFor 四體型陣列支援;雙版名稱(n/ns)全數齊備。長裙/西裝/粉洋裝/吊帶裝為單體型跨體型幾何合成(肩寬+頸地比映射),品質次於原生可日後補生成替換。素材仍受 _AVATAR_ADMIN_ONLY gating,一般玩家不可見。',
-      '★ v4.56.0【範圍與驗證】改 world-boss.js(map 補齊+id 解析+grant 簽名)、index.html(領獎傳 override + mega 鍵)、avatar_db.js(v4.55.5 部件接線)。hero_db.js/adv_quiz_db.js/world-boss-ui.html/sw.js 未改免重傳(獎勵頁顯示行在 world-boss-ui.html 內原本就呼叫 _wbGetCurrentDragonTreasureName,修 helper 即生效)。check_inline 21 塊/node --check/孤立代理/admin 零真 ?./7 版本同步點 全數 → v4.56.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.35.0)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → avatar_db.js → index.html(最後);avatar_parts/ 素材資料夾同步上傳。',
     ],
   },
 ];
