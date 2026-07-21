@@ -2,6 +2,12 @@
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
  * 版本: v4.64.2(2026-07-20)
  *
+ * ★ v4.69.0 — 造型工房兩需求(老師 2026-07-21):①標題後追加雙版說明「每個部位都像紙娃娃一樣,可以調整位置和尺寸哦!」
+ *   ②管理員定位設預設(決定1丙+2乙+3乙):a)尺寸調整擴大到「全部件」(baseH/baseB/ofh/ofb/hh/mouth/held 全畫布件尺寸縮放接進 _ofsWrap·頭群組以瞳孔中線為軸/身持物以下半身中心為軸;飾品 hat/gls/macc 尺寸維持 _avAccLayer 自身中心·順修其讀取 cap ±20→±50 對齊寫入);
+ *   b)雲端管理員預設 gameConfig/avatarPartDefaults(同 avatarLocks 模式·僅 GM 可寫·登入者可讀·免改 rules){defaults:{'key':[dx,dy,尺寸%]}}·管理員取消「使用預設」→調整→按「📌設為預設」寫雲端全體套用·另有「📤匯出JSON」供日後寫進檔(丙);
+ *   c)玩家每部件「☑使用預設」勾選(決定3乙):勾=用管理員預設鎖微調·取消=自己調(從預設值起·↺回預設);
+ *   d)單一真相 _avEffPos(cfg,key):使用預設→管理員雲端預設(無則玩家舊值/[0,0,0])·自己調→玩家 cfg.pos[key];render(_ofsWrap/_avAccLayer)與微調 UI 全走此;
+ *   e)cfg.posDef[key]!==false=使用預設(存 avatarCard 隨 cfg 上雲免改 rules)·玩家動微調鈕自動 posDef=false。★同名覆蓋 avatar 素材需 bump AVATAR_DB_VERSION(本版純程式·bump 觸發部件圖一次性 ?v= 重抓·屬預期)。
  * ★ v4.64.2 — (老師續修)①所有頭飾(頭戴/眼鏡/嘴飾)尺寸縮放上限 ±30% → ±50%
  *   ②素體/部件圖「快取自清」根治:v4.64.1 事件顯示個別裝置 SW ASSET_CACHE 對舊圖頑固
  *     (boy/kidboy 舊素體卡快取·girl/kidgirl 恰為新圖 → 只更新一半)。本版於 avatar_db 版本升級時
@@ -9,6 +15,8 @@
  *   ③眼鏡白鏡片版 gls_X.png ×9 補齊:repo 原缺白版(全 404·只有 _clear 透明版)→玩家切「白色鏡片」
  *     載入失敗。程式 P.glasses img 引用本已正確,老師補上 9 張白版素材至 repo/avatar_parts/ 即解決
  *
+ * ★ v4.68.1 — 版號對齊主程式(本輪 avatar_db.js 內容未改·主線劇情場景切換連貫性修復全在 index.html)
+ * ★ v4.68.0 — 版號對齊主程式(本輪 avatar_db.js 內容未改·主線劇情章節選擇視窗+主線專屬 BGM 全在 index.html)
  * ★ v4.64.1 — ①頭飾尺寸上限 ±20%→±30% ②素體運動服版快取刷新(bump AVATAR_DB_VERSION 破 ?v= 快取)
  *
  * ★ v4.64.0 — 自訂角色系統大改版(老師 2026-07-20 九需求·頭身新切法素材正式接線):
@@ -218,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.67.0';
+window.AVATAR_DB_VERSION = 'v4.69.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1342,13 +1350,28 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     var _headPosKey = _hhPng ? 'hh' : (_ofHeadPng ? 'ofh' : (headPng ? 'ofh' : 'baseH'));
     var hideHead = !!(fullPng || headPiece);   /* 隱藏素體頭+髮型層+五官替換件 */
     var hideBody = !!(fullPng || bodyPiece);   /* 隱藏素體身+上衣/下衣/襪/鞋 */
-    /* ★ v4.64.0 部件 XY 微調(cfg.pos = {key:[dx,dy]}·±100·單位=預覽畫布像素) */
+    /* ★ v4.64.0 部件 XY 微調 + ★ v4.69.0 尺寸縮放(全部件·2乙)·全走 _avEffPos(玩家自訂或管理員預設)
+     *   cfg.pos[key]=[dx,dy,尺寸%];飾品件(hat/gls/macc)尺寸由 _avAccLayer 處理→此處只平移;
+     *   其餘全畫布件在此套尺寸縮放(頭群組=瞳孔中線為軸·身/持物群組=下半身中心為軸) */
+    var _ACC_KEYS = { hat:1, gls:1, macc:1 };
+    var _HEADG_KEYS = { baseH:1, ofh:1, hh:1, mouth:1 };
     function _ofsWrap(key, inner){
       if(!inner) return '';
-      var pm = cfg.pos && cfg.pos[key];
-      var dx = pm ? (pm[0]|0) : 0, dy = pm ? (pm[1]|0) : 0;
-      if(!dx && !dy) return inner;
-      return '<g transform="translate(' + dx + ',' + dy + ')">' + inner + '</g>';
+      var pm = window._avEffPos(cfg, key);
+      var dx = pm[0]|0, dy = pm[1]|0, sz = (pm.length > 2 ? (pm[2]|0) : 0);
+      var scl = (!_ACC_KEYS[key] && sz) ? (1 + sz/100) : 1;
+      if(!dx && !dy && scl === 1) return inner;
+      var out = inner;
+      if(scl !== 1){
+        var geoW = AVATAR_HEAD_GEO[cfg.body] || AVATAR_HEAD_GEO[0];
+        var sW = tf.w / 504;
+        var ccx = tf.x + geoW.cx * sW;
+        var ccy = tf.y + (_HEADG_KEYS[key] ? geoW.eyeY : 420) * sW;   /* 頭群組=瞳孔中線·其餘=下半身中心 */
+        out = '<g transform="translate(' + ccx.toFixed(1) + ',' + ccy.toFixed(1) + ') scale(' + scl.toFixed(4)
+            + ') translate(' + (-ccx).toFixed(1) + ',' + (-ccy).toFixed(1) + ')">' + out + '</g>';
+      }
+      if(dx || dy){ out = '<g transform="translate(' + dx + ',' + dy + ')">' + out + '</g>'; }
+      return out;
     }
     /* ★ v4.64.0 prop 定位圖層(頭飾/眼鏡/嘴飾:單張道具圖依 AVATAR_HEAD_GEO 自動對位四體型)
      *   帽:寬=頭寬×wf·帽底停在「頭頂→下巴 1/3」處;眼鏡:寬=頭寬×wf 對瞳孔中線;
@@ -1359,9 +1382,10 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
      *   ② 眼鏡鏡片雙版:item.clearImg 且 cfg.glsClear!==0(預設透明)→ 用透明鏡片版透出眼睛 */
     function _avAccLayer(item, posKey){
       var scl = 1;
-      if(posKey && cfg.pos && cfg.pos[posKey] && cfg.pos[posKey].length > 2){
-        var dsv = cfg.pos[posKey][2]|0;
-        if(dsv > 20) dsv = 20; if(dsv < -20) dsv = -20;
+      if(posKey){   /* ★ v4.69.0 走 _avEffPos(玩家自訂或管理員預設)·cap ±50 對齊寫入 */
+        var _ep = window._avEffPos(cfg, posKey);
+        var dsv = (_ep && _ep.length > 2) ? (_ep[2]|0) : 0;
+        if(dsv > 50) dsv = 50; if(dsv < -50) dsv = -50;
         scl = 1 + dsv/100;
       }
       if(!item || !item.prop){
@@ -1610,6 +1634,62 @@ window._avatarGmToggleLock = function(cat, id){
   try{ _avRenderOpts(); }catch(_e2){}
 };
 
+/* ★ v4.69.0 管理員部件預設(位置+尺寸)雲端通道(gameConfig/avatarPartDefaults·同 avatarLocks 模式·
+ *   僅 GM 可寫·登入者可讀·走 gameConfig 既有 rules 免新增條款):
+ *   { defaults:{'key':[dx,dy,尺寸%],...}, updatedAt, updatedBy }
+ *   key = baseH/baseB/ofh/ofb/hh/hat/gls/mouth/macc/held(與 tab.adj 鍵一致) */
+window._avatarPartDefaults = {};
+window._avatarLoadPartDefaults = function(){
+  if(!window._fbDb || !window._fbFns){ return Promise.resolve(null); }
+  try{
+    var F = window._fbFns;
+    return F.getDoc(F.doc(window._fbDb, 'gameConfig', 'avatarPartDefaults')).then(function(snap){
+      if(snap.exists()){
+        var d = snap.data();
+        window._avatarPartDefaults = (d && d.defaults) ? d.defaults : {};
+      }
+      return window._avatarPartDefaults;
+    }).catch(function(){ return null; });
+  }catch(_e){ return Promise.resolve(null); }
+};
+/* 管理員:把目前該部件的調整值設為全體玩家預設(寫雲端·同 avatarLocks setDoc) */
+window._avatarSetPartDefault = function(key){
+  if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+  var cfg = window._avatarLocalCard.cfg;
+  var p = (cfg.pos && cfg.pos[key]) || [0, 0, 0];
+  if(!window._avatarPartDefaults) window._avatarPartDefaults = {};
+  window._avatarPartDefaults[key] = [ (p[0]|0), (p[1]|0), (p.length > 2 ? (p[2]|0) : 0) ];
+  try{
+    if(window._fbDb && window._fbFns){
+      var F = window._fbFns;
+      F.setDoc(F.doc(window._fbDb, 'gameConfig', 'avatarPartDefaults'),
+        { defaults: window._avatarPartDefaults, updatedAt: Date.now(),
+          updatedBy: ((window._fbUser && window._fbUser.email) || '') },
+        { merge: false })['catch'](function(e){ console.warn('[avatar] 預設寫入失敗', e); });
+    }
+  }catch(_e){}
+  _avSfx('confirm');
+  try{ _avRenderOpts(); }catch(_e2){}
+};
+/* 管理員:匯出目前全部預設 JSON(供日後寫進 avatar_db.js 永久保存·丙案) */
+window._avatarExportPartDefaults = function(){
+  if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+  var j = '';
+  try{ j = JSON.stringify(window._avatarPartDefaults || {}); }catch(_e){ j = '{}'; }
+  try{ console.log('[avatar] AVATAR_PART_DEFAULTS 匯出:\n' + j); }catch(_e2){}
+  try{ window.prompt(_avT('複製這段預設 JSON 交給開發者寫進程式永久保存:','複製這段給老師:'), j); }catch(_e3){}
+};
+/* ★ v4.69.0 部件有效位置/尺寸解析(單一真相·render 與 UI 皆走此):
+ *   玩家「使用預設」(cfg.posDef[key]!==false·預設 true)→ 用管理員雲端預設 _avatarPartDefaults[key]
+ *     (雲端未設 → fallback 玩家舊值或 [0,0,0]);
+ *   玩家「自己調整」(cfg.posDef[key]===false)→ 用玩家 cfg.pos[key]。 */
+window._avEffPos = function(cfg, key){
+  var def = (window._avatarPartDefaults && window._avatarPartDefaults[key]) || null;
+  var useDef = !(cfg && cfg.posDef && cfg.posDef[key] === false);
+  if(useDef) return def || (cfg && cfg.pos && cfg.pos[key]) || [0, 0, 0];
+  return (cfg && cfg.pos && cfg.pos[key]) || def || [0, 0, 0];
+};
+
 /* ════════════════════════════════════════
  * 5. 本機 + 雲端存取
  *    整包 avatarCard = { cfg, unlock, q(語錄idx), ver }
@@ -1792,8 +1872,12 @@ window._avatarOpenPanel = function(){
   panel.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;'
     + 'border-bottom:2px solid rgba(140,200,255,0.4);background:linear-gradient(to right,rgba(20,30,60,0.9),rgba(30,15,50,0.9));flex-wrap:wrap;gap:10px;">'
+    + '<div>'
     + '<div style="font-size:clamp(22px,3vw,34px);font-weight:900;color:#8ad4ff;letter-spacing:2px;text-shadow:0 0 16px rgba(120,200,255,0.5);">'
     + _avT('👤 我的主角 — 造型工房','👤 我的主角 — 打扮小屋') + '</div>'
+    + '<div style="font-size:clamp(12px,1.5vw,17px);font-weight:700;color:#bcd8ff;margin-top:4px;opacity:0.92;">'    /* ★ v4.69.0 需求一:紙娃娃說明 */
+    + _avT('每個部位都像紙娃娃一樣，可以調整位置和尺寸哦！','每個部位都像紙娃娃，可以移動、變大變小哦！') + '</div>'
+    + '</div>'
     + '<div style="display:flex;gap:8px;">'
     + '<button onclick="_avatarPreviewCard()" style="padding:9px 18px;font-size:15px;font-weight:800;background:rgba(255,180,80,0.22);border:2px solid rgba(255,200,100,0.75);color:#ffd97a;border-radius:10px;cursor:pointer;font-family:inherit;">📇 ' + _avT('名片預覽','看名片') + '</button>'
     /* ★ v4.64.0 需求6/8:全部重置改標題列「重來」鈕(按下即播取消音效→確認框);儲存鈕改「確認儲存」(播確認音效) */
@@ -1883,6 +1967,10 @@ window._avatarOpenPanel = function(){
   /* ★ v4.64.0 載入 GM 上鎖表(拉到才重繪選項區) */
   window._avatarLoadGmLocks().then(function(lk){
     if(lk && document.getElementById('_avatar-panel')){ _avRenderOpts(); }
+  });
+  /* ★ v4.69.0 載入管理員部件預設(位置/尺寸)·拉到才重繪(預覽+選項區皆吃預設) */
+  window._avatarLoadPartDefaults().then(function(pd){
+    if(pd && document.getElementById('_avatar-panel')){ try{ _avRefreshPreview(); }catch(_e){} _avRenderOpts(); }
   });
 };
 
@@ -2093,7 +2181,9 @@ window._avatarResetClick = function(){
 window._avatarNudge = function(key, dx, dy){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
-  var p = cfg.pos[key] || [0, 0, 0];
+  if(!cfg.posDef) cfg.posDef = {};
+  cfg.posDef[key] = false;   /* ★ v4.69.0 玩家動了→改用自訂(不再吃管理員預設) */
+  var p = cfg.pos[key] || (window._avEffPos(cfg, key) || [0, 0, 0]).slice();   /* 從有效值起調(順接管理員預設) */
   var nx = (p[0]|0) + (dx|0), ny = (p[1]|0) + (dy|0);
   if(nx > 100) nx = 100; if(nx < -100) nx = -100;
   if(ny > 100) ny = 100; if(ny < -100) ny = -100;
@@ -2104,11 +2194,13 @@ window._avatarNudge = function(key, dx, dy){
   if(ey) ey.textContent = ny;
   _avRefreshPreview();
 };
-/* ★ v4.64.0(第四輪)老師需求:所有飾品可調尺寸(每按 ±1%·上限 ±50%·存 cfg.pos[key][2]) */
+/* ★ v4.64.0(第四輪)尺寸微調(每按 ±1%·上限 ±50%·存 cfg.pos[key][2])·★ v4.69.0 全部件可調(2乙) */
 window._avatarNudgeSize = function(key, d){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
-  var p = cfg.pos[key] || [0, 0, 0];
+  if(!cfg.posDef) cfg.posDef = {};
+  cfg.posDef[key] = false;   /* ★ v4.69.0 玩家動了→改用自訂 */
+  var p = cfg.pos[key] || (window._avEffPos(cfg, key) || [0, 0, 0]).slice();
   var ns = (p.length > 2 ? (p[2]|0) : 0) + (d|0);
   if(ns > 50) ns = 50; if(ns < -50) ns = -50;
   cfg.pos[key] = [(p[0]|0), (p[1]|0), ns];
@@ -2116,17 +2208,39 @@ window._avatarNudgeSize = function(key, d){
   if(es) es.textContent = (ns > 0 ? '+' : '') + ns;
   _avRefreshPreview();
 };
+/* ★ v4.69.0 回預設:把玩家自訂值重設為「管理員預設」(無雲端預設→[0,0,0]) */
 window._avatarNudgeReset = function(key){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
-  cfg.pos[key] = [0, 0, 0];   /* ★ v4.64.0 第四輪:尺寸一併歸零 */
+  var d = (window._avatarPartDefaults && window._avatarPartDefaults[key]) || [0, 0, 0];
+  cfg.pos[key] = [ (d[0]|0), (d[1]|0), (d.length > 2 ? (d[2]|0) : 0) ];
   var ex = document.getElementById('_av-pos-' + key + '-x');
   var ey = document.getElementById('_av-pos-' + key + '-y');
   var es = document.getElementById('_av-pos-' + key + '-s');
-  if(ex) ex.textContent = 0;
-  if(ey) ey.textContent = 0;
-  if(es) es.textContent = 0;
+  if(ex) ex.textContent = (d[0]|0);
+  if(ey) ey.textContent = (d[1]|0);
+  if(es) es.textContent = ((d.length > 2 ? (d[2]|0) : 0) > 0 ? '+' : '') + (d.length > 2 ? (d[2]|0) : 0);
+  _avSfx('cancel');
   _avRefreshPreview();
+};
+/* ★ v4.69.0 決定3乙:勾/取消「使用預設」— 勾=用管理員預設(鎖微調)·取消=自己調(從預設值起) */
+window._avatarTogglePosDef = function(key){
+  var cfg = window._avatarLocalCard.cfg;
+  if(!cfg.posDef) cfg.posDef = {};
+  var useDefNow = !(cfg.posDef[key] === false);
+  if(useDefNow){
+    cfg.posDef[key] = false;   /* 切成自己調:cfg.pos 從管理員預設值起(方便微調) */
+    if(!cfg.pos) cfg.pos = {};
+    if(!cfg.pos[key]){
+      var d = (window._avatarPartDefaults && window._avatarPartDefaults[key]) || [0, 0, 0];
+      cfg.pos[key] = [ (d[0]|0), (d[1]|0), (d.length > 2 ? (d[2]|0) : 0) ];
+    }
+  } else {
+    cfg.posDef[key] = true;    /* 切回用預設 */
+  }
+  _avSfx('select');
+  _avRefreshPreview();
+  try{ _avRenderOpts(); }catch(_e){}
 };
 
 function _avRenderOpts(){
@@ -2250,33 +2364,48 @@ function _avRenderOpts(){
     }
     h += '</div>';
   }
-  /* ★ v4.64.0 需求9:位置微調區(依分頁 adj 設定)— 上下左右每按 ±1px·±100·↺歸零
-   * ★ v4.64.0(第四輪)老師需求:飾品鍵(hat/gls/macc)加「尺寸」列 — 每按 ±1%·上限 ±50% */
+  /* ★ v4.64.0 需求9 位置微調 + ★ v4.69.0 全部件尺寸(2乙)+使用預設勾選(3乙)+管理員設為預設(1丙) */
   if(tab.adj && tab.adj.length){
+    var _isGmAdj = (typeof window._isAdminUser === 'function' && window._isAdminUser());
     h += '<div style="font-size:19px;font-weight:900;color:#8ad4ff;margin:18px 2px 8px;">📐 '
-      + _avT('位置/尺寸調整(位置每按 ±1 像素·上限 ±100;尺寸每按 ±1%·上限 ±50%)','調整位置和大小(一次動 1 格)') + '</div>';
+      + _avT('位置/尺寸調整(像紙娃娃一樣移動、變大變小)','移動位置、變大變小(一次動 1 格)') + '</div>';
+    if(_isGmAdj){
+      h += '<div style="margin:4px 2px 10px;padding:9px 12px;background:rgba(120,60,160,0.18);border:1.5px dashed rgba(200,160,255,0.55);border-radius:10px;color:#e2c8ff;font-size:14px;line-height:1.5;">🛠 '
+        + _avT('管理員:取消勾「使用預設」→ 調整 → 按「📌設為預設」即設定為全體玩家的預設(寫雲端·全體登入即套用)。','管理員:調好按📌設為預設。')
+        + '<br><button onclick="_avatarExportPartDefaults()" style="margin-top:6px;padding:6px 12px;font-size:13px;font-weight:800;border-radius:8px;cursor:pointer;font-family:inherit;background:rgba(60,70,110,0.4);border:1.5px solid rgba(180,160,255,0.5);color:#d8ccff;">📤 匯出全部預設 JSON</button></div>';
+    }
     var _abS = 'padding:12px 16px;font-size:18px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;'
       + 'background:rgba(60,70,110,0.3);border:2px solid rgba(140,200,255,0.5);color:#c9e4ff;';
-    var _SIZEABLE = { hat:1, gls:1, macc:1 };   /* 飾品鍵可調尺寸(prop 定位引擎件+legacy 黑框眼鏡) */
     for(var ai=0; ai<tab.adj.length; ai++){
       var ak = tab.adj[ai][0], alP = tab.adj[ai][1], alC = tab.adj[ai][2];
-      var ap = (cfg.pos && cfg.pos[ak]) || [0, 0, 0];
-      var asv = (ap.length > 2 ? (ap[2]|0) : 0);
-      h += '<div style="margin:8px 0;padding:10px 12px;background:rgba(20,30,60,0.35);border:1.5px solid rgba(140,200,255,0.25);border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
-        + '<span style="font-size:16.5px;font-weight:800;color:#ffd97a;min-width:120px;">' + _avT(alP, alC) + '</span>'
-        + '<span style="font-size:15.5px;color:#9aa8cc;">X:<span id="_av-pos-' + ak + '-x" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;font-size:16.5px;">' + (ap[0]|0) + '</span>'
-        + ' Y:<span id="_av-pos-' + ak + '-y" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;font-size:16.5px;">' + (ap[1]|0) + '</span></span>'
-        + '<button onclick="_avatarNudge(\'' + ak + '\',-1,0)" style="' + _abS + '">◀</button>'
-        + '<button onclick="_avatarNudge(\'' + ak + '\',1,0)" style="' + _abS + '">▶</button>'
-        + '<button onclick="_avatarNudge(\'' + ak + '\',0,-1)" style="' + _abS + '">▲</button>'
-        + '<button onclick="_avatarNudge(\'' + ak + '\',0,1)" style="' + _abS + '">▼</button>'
-        + (_SIZEABLE[ak]
-          ? ('<span style="font-size:15.5px;color:#9aa8cc;margin-left:4px;">' + _avT('尺寸','大小') + ':<span id="_av-pos-' + ak + '-s" style="display:inline-block;min-width:32px;text-align:center;color:#d4ecff;font-weight:800;">' + (asv > 0 ? '+' : '') + asv + '</span>%</span>'
-            + '<button onclick="_avatarNudgeSize(\'' + ak + '\',-1)" style="' + _abS + '">➖</button>'
-            + '<button onclick="_avatarNudgeSize(\'' + ak + '\',1)" style="' + _abS + '">➕</button>')
-          : '')
-        + '<button onclick="_avatarNudgeReset(\'' + ak + '\')" style="' + _abS + 'color:#ff9a9a;border-color:rgba(230,100,100,0.6);">↺ ' + _avT('歸零','歸零') + '</button>'
+      var _eff = window._avEffPos(cfg, ak) || [0, 0, 0];
+      var _useDef = !(cfg.posDef && cfg.posDef[ak] === false);
+      var _ex = _eff[0]|0, _ey = _eff[1]|0, _es = (_eff.length > 2 ? (_eff[2]|0) : 0);
+      h += '<div style="margin:8px 0;padding:10px 12px;background:rgba(20,30,60,0.35);border:1.5px solid rgba(140,200,255,0.25);border-radius:12px;">'
+        + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:' + (_useDef ? '2' : '8') + 'px;">'
+        + '<span style="font-size:16.5px;font-weight:800;color:#ffd97a;min-width:104px;">' + _avT(alP, alC) + '</span>'
+        + '<label style="display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:800;color:#bcd8ff;cursor:pointer;user-select:none;">'
+        + '<input type="checkbox" ' + (_useDef ? 'checked' : '') + ' onclick="_avatarTogglePosDef(\'' + ak + '\')" style="width:20px;height:20px;cursor:pointer;"/> '
+        + _avT('使用預設', '用預設') + '</label>'
+        + '<span style="font-size:15px;color:#9aa8cc;">X:<span id="_av-pos-' + ak + '-x" style="display:inline-block;min-width:30px;text-align:center;color:#d4ecff;font-weight:800;font-size:16px;">' + _ex + '</span>'
+        + ' Y:<span id="_av-pos-' + ak + '-y" style="display:inline-block;min-width:30px;text-align:center;color:#d4ecff;font-weight:800;font-size:16px;">' + _ey + '</span>'
+        + ' ' + _avT('尺寸', '大小') + ':<span id="_av-pos-' + ak + '-s" style="display:inline-block;min-width:34px;text-align:center;color:#d4ecff;font-weight:800;font-size:16px;">' + (_es > 0 ? '+' : '') + _es + '</span>%</span>'
         + '</div>';
+      if(_useDef){
+        h += '<div style="font-size:14px;color:#8a97b8;padding:2px 0 0;">🔒 ' + _avT('目前使用預設值。取消勾選「使用預設」即可自己調整。', '現在用預設。把勾勾拿掉就能自己調囉!') + '</div>';
+      } else {
+        h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+          + '<button onclick="_avatarNudge(\'' + ak + '\',-1,0)" style="' + _abS + '">◀</button>'
+          + '<button onclick="_avatarNudge(\'' + ak + '\',1,0)" style="' + _abS + '">▶</button>'
+          + '<button onclick="_avatarNudge(\'' + ak + '\',0,-1)" style="' + _abS + '">▲</button>'
+          + '<button onclick="_avatarNudge(\'' + ak + '\',0,1)" style="' + _abS + '">▼</button>'
+          + '<button onclick="_avatarNudgeSize(\'' + ak + '\',-1)" style="' + _abS + '">➖</button>'
+          + '<button onclick="_avatarNudgeSize(\'' + ak + '\',1)" style="' + _abS + '">➕</button>'
+          + '<button onclick="_avatarNudgeReset(\'' + ak + '\')" style="' + _abS + 'color:#ff9a9a;border-color:rgba(230,100,100,0.6);">↺ ' + _avT('回預設', '回預設') + '</button>'
+          + (_isGmAdj ? ('<button onclick="_avatarSetPartDefault(\'' + ak + '\')" style="' + _abS + 'color:#e2c8ff;border-color:rgba(200,160,255,0.7);background:rgba(120,60,160,0.25);">📌 ' + _avT('設為預設', '設為預設') + '</button>') : '')
+          + '</div>';
+      }
+      h += '</div>';
     }
   }
   box.innerHTML = h;
