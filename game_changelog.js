@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-21  / 目前主程式版本:v4.71.0(主線:世界觀介紹+主角吐槽役+對白音效改場景轉場·管理員測試)
+//  最後更新:2026-07-21  / 目前主程式版本:v4.72.0(主線:章節封面新圖+前情提要+對白上一句下一句翻頁+內嵌教學與發劍演出·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.72.0 — 主線:章節封面新圖+前情提要+對白上一句/下一句翻頁+環境音短檔名+內嵌教學×3與發劍演出·管理員測試
+  {
+    ver: 'v4.72.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '📖 主線又更完整了!① 七章都換上了全新的精緻章節封面大圖(進章節前會先看到),封面下半部會浮現「前情提要」——用幾句話回顧從序章到上一章發生的故事,接關也不怕忘記劇情。② 劇情對白新增「上一句/下一句」按鈕,可以往回看剛剛錯過的對白,切換時會有翻頁音,不怕手快點過頭。③ 補上環境音效(河堤、教室、茶園、老街…的氛圍聲)。④ 劇情中會穿插「認識魔王、英雄升級、逛商店」的小教學,以及第五章打敗發酵魔王後「神劍現世」的演出。(主線仍在測試中,先開放給老師)',
+    ],
+    items: [
+      '★ v4.72.0【封面換圖+關程式疊字】老師提供 7 張內建標題的精緻章節封面(主線_封面_序章.jpg…第六章.jpg·1672×941 JPGq90·放 repo 根目錄·DB cover.img 本就指向此檔名免改);_msPlayCover 移除程式疊標題大字(圖已內建標題·避免雙標題)→ titleBox 僅在「無封面圖 fallback 漸層底」時才顯示。',
+      '★ v4.72.0【前情提要(封面下半部)】新增 _MS_CH_RECAP(七章各一句話回顧·premium/cute 雙版鐵律1.232)+ _msRecapForCover(cid)(串接 order 中「本章之前」各章回顧·序章無前文回傳空);_msPlayCover 於封面下半部(bottom:8%)疊白字黑框(text-shadow 八向黑描邊·無底·楷書字族)顯示前情提要,淡入。',
+      '★ v4.72.0【對白上一句/下一句+翻頁音】_msPlayScene 對白層改版:showLine(instant) 加參數(回看整句直接顯示不重打字);新增 _msNavBarHtml(上一句/下一句 導覽列·curIdx=0 時上一句灰化不可按·取代舊點擊繼續)+ _msBindNav + _msAdvance(打字中→補完·否則前進·切到有效下一句才播翻頁);翻頁音 _msPlayPageTurn 播 翻頁.mp3(缺檔靜默);點畫面/下一句鈕/上一句鈕三入口統一。line.sfx 動作音與場景轉場音不受影響。',
+      '★ v4.72.0【環境音短檔名(乙案)】_msSndUrl 由 主線_音效_{key}.m4a 改抓 {key}.m4a(老師上傳 forest/riverside/park/teafarm/flowerforest/darkness.m4a 等短檔名即生效·amb/sfx 共用此規則;classroom/oldstreet 待補即靜默 graceful)。',
+      '★ v4.72.0【內嵌教學×3+發劍演出】_msRunAct 接 tutorial_king(認識魔王)/tutorial_levelup(英雄升級)/tutorial_shop(商店補給)→ _msActTutorial 自成一體教學卡(雙版·點我知道了續播·30s watchdog);grant_sword_tutorial → _msActGrantSword 神劍現世演出(純演出不動存檔·實際發劍走 _msGrantChapterReward ch5 crystal5_sword)。battle_*/awaken_hero 仍 default 放行=Phase 2(待主角戰鬥英雄)。',
+      '★ v4.72.0【範圍與驗證】全部改動集中在 index.html 主線引擎(_msPlayCover/_msPlayScene/_msRunAct+新 helper);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js/world-boss 未動。無真 ?.·九版號同步點全對齊 v4.72.0·changelog 恰 20 條·CURRENT_BOOT_VER 未動。主線 _MAINSTORY_ADMIN_ONLY 管理員限定測試。Phase 2(6 場劇情引導戰+主角戰鬥英雄+覺醒)另輪製作。',
+    ],
+  },
   // v4.71.0 — 主線劇情:戰前世界觀介紹+主角吐槽役+逐場景BGM換曲+對白著色(主角淡藍/關鍵詞亮黃)+對白音效改場景轉場·管理員測試
   {
     ver: 'v4.71.0',
@@ -311,25 +328,6 @@ window.GAME_CHANGELOG = [
       '★ v4.56.0【龍王至寶發放修正·world-boss.js + index.html】根因:領獎時 index 呼叫 _wbGrantDragonTreasure(rank) 只傳名次,grant 內部擲骰取 _WORLD_BOSS_TEAM_REWARDS[tier].dragonTreasureId(五個分級全寫死 dragon_fang_fire)→ 非火龍王場次排名至寶一律發成炎龍王之牙(結算寫入 pending award 的 dragonTreasureId 其實是正確的,但領獎忽略它;且結算隔天 08:00 下一隻龍王已原子接班,不能用「當前龍王」推算)。修法:_wbGrantDragonTreasure 加第二參數 tidOverride 一律優先;index 領獎呼叫改傳 _result.dragonTreasureId。歷史補寫 _advSaveTreasureUnlockHistory 原本就用 _result.dragonTreasureId,發放與歷史自此一致。',
       '★ v4.56.0【主角造型素材第三批·avatar_db.js v4.55.5】老師 20 張變體圖抽出 8 套 76 件 PNG 部件(×四體型):髮型 id15-21(制服頭/精靈捲捲/旁分頭/辮子頭/油亮頭/側馬尾/西瓜頭)、眼 id12 高傲眼(含挑眉+膚色補丁)、耳 id1 精靈長耳掛 PNG 解鎖、眼鏡 id4 黑框、上衣 id10-15(白T/學生制服/藍長裙/西裝/粉洋裝/吊帶裝)、下衣 id10 牛仔褲、鞋 id10-12(帆布/制服鞋/黑皮鞋);渲染行襪/鞋/下衣/上衣/耳/眼鏡補 _avImgFor 四體型陣列支援;雙版名稱(n/ns)全數齊備。長裙/西裝/粉洋裝/吊帶裝為單體型跨體型幾何合成(肩寬+頸地比映射),品質次於原生可日後補生成替換。素材仍受 _AVATAR_ADMIN_ONLY gating,一般玩家不可見。',
       '★ v4.56.0【範圍與驗證】改 world-boss.js(map 補齊+id 解析+grant 簽名)、index.html(領獎傳 override + mega 鍵)、avatar_db.js(v4.55.5 部件接線)。hero_db.js/adv_quiz_db.js/world-boss-ui.html/sw.js 未改免重傳(獎勵頁顯示行在 world-boss-ui.html 內原本就呼叫 _wbGetCurrentDragonTreasureName,修 helper 即生效)。check_inline 21 塊/node --check/孤立代理/admin 零真 ?./7 版本同步點 全數 → v4.56.0。GAME_CHANGELOG 維持 20 筆(移除最舊 v4.35.0)。上傳順序:game_changelog.js → admin_panel.js → world-boss.js → avatar_db.js → index.html(最後);avatar_parts/ 素材資料夾同步上傳。',
-    ],
-  },
-  // v4.55.0 — 主角捏臉系統 Phase 1 + 冒險者名片
-  {
-    ver: 'v4.55.0',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-17',
-    brief: [
-      '👤 搶先預告:全新功能「我的主角」即將登場!到時主畫面會出現入口按鈕,打開「造型工房」就能捏出屬於你自己的主角:4 種體型(少年/少女/小小男生/小小女生)、8 種膚色、16 種髮色、12 種瞳色,加上臉型、髮型、眉毛、眼睛、鼻子、嘴巴各 10 款,自由搭配、左邊立繪即時預覽!',
-      '🦊 還有超可愛的變身部件:精靈耳、貓耳、兔耳、狐狸耳、熊耳、狗耳,以及鹿角、龍角、天使翅膀、蝴蝶翅膀、貓尾巴、狐狸尾…有些款式上鎖了 🔒 —— 它們會在之後的「主線劇情」中解鎖,敬請期待!',
-      '📇 「冒險者名片」也會一起來!捏好造型後可以選一句名片語錄(20 句可愛台詞任你挑),按「儲存造型」存到雲端;到「🤝 好友英雄」名單,每張好友卡片會多一顆「📇」按鈕,點開就能看好友的主角造型和名片!',
-      '☁ 造型會自動存在你的帳號雲端,換一台 iPad 登入也不會不見。目前功能由老師先行測試中,正式開放請等公告,敬請期待!',
-    ],
-    items: [
-      '★ v4.55.0【管理員測試期 gating】(老師指示:先讓管理員測試·對一般玩家隱藏)單一開關 avatar_db.js 內 _AVATAR_ADMIN_ONLY=true;三層防護:①主畫面入口按鈕靜態 display:none+_avatarRefreshEntryVisibility 登入後輪詢(30 秒內·20 次×1.5s)判 _isAdminUser 才顯示 ②好友卡片 📇 按鈕渲染時同開關條件輸出 ③_avatarOpenPanel/_avatarOpenFriendCard 開頭雙保險守門(非管理員 alert「測試中敬請期待」);正式開放=把該行改 false 一處即可全員可見。',
-      '★ v4.55.0【主角捏臉系統 Phase 1·架構】全新獨立檔 avatar_db.js(部件庫+SVG 渲染器+造型工房面板+名片+雲端存取整包,index.html 僅 4 個掛鉤:mega-line 鍵/載入行/入口按鈕/好友卡片名片按鈕 → 改動最小化);部件定義 {id,type,svg,lock} 架構支援日後逐件替換 PNG 精繪(老師裁定丙案:Phase 1 SVG 全套上線·美術可漸進升級);Q 版二頭身 viewBox 360×480,色彩換色零額外資產(佔位字串 __SK__/__HC__/__EC__ 渲染時替換,膚8/髮16/瞳12 色票);幼兒體型=身體 group transform 縮矮(不另畫 path·部件 100% 共用)。',
-      '★ v4.55.0【雲端與名片】avatarCard 整包 {cfg,unlock,q,ver} 存 players/{uid} 主檔 merge:true(照 representativeHero 模式;players 主檔 allow read: 登入玩家 → firestore.rules 零修改零部署);好友名片讀 _friendHeroData 既有整份 players doc → 零額外 Firestore 讀取;寫入僅「儲存造型」按鈕單次觸發=天然節流(v4.47.0 雲端節流教訓);本機 localStorage lxps_avatarCard_{uid} 快取,面板開啟時背景拉雲端一次跨裝置還原;名片語錄選單制 20 句(不開放自由輸入·900 位國小生校園安全·老師裁定)。',
-      '★ v4.55.0【解鎖與雙版】特殊款 lock:{t:soon}=「主線劇情敬請期待」(Phase 2「萬象共鳴」主線掛真條件:獸耳↔對應英雄夥伴等);avatarCard.unlock 陣列帳本已預留(未來 GM 可補發);鐵律 1.232:全部件名稱+UI 說明文字 cute/premium 雙版(_artStyle 分流·avatar_db.js 內建 _avT 工具),主畫面入口按鈕副標註冊 _SIMPLE_TEXT_MAP;avatar_db.js 零 optional chaining、載入失敗僅 console.warn 不影響遊戲其餘功能(入口按鈕與好友名片按鈕都有 typeof 守門)。',
-      '★ v4.55.0【驗證基準變更】index.html 新增 avatar_db.js document.write 載入行 → inline script 塊 20→21(check_inline 驗證基準同步更新);sw.js v3.5.90:SHELL_URLS 新增 ./avatar_db.js(隨核心檔快取·離線可用);admin_panel.js 僅版號同步。',
     ],
   },
 ];
