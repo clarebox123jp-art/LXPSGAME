@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-22  / 目前主程式版本:v4.79.0(主線加入夥伴角色解鎖大卡+管理員造型預設/上鎖雲端同步修正+我的主角入口移至英雄圖鑑·管理員測試)
+//  最後更新:2026-07-22  / 目前主程式版本:v4.80.0(主線至寶實發+解鎖至寶大卡+造型解鎖條件全面接線+未解鎖部件可預覽·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,27 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.80.0 — 主線至寶實發+解鎖至寶大卡 / 造型解鎖條件全面接線 / 未解鎖部件可預覽
+  {
+    ver: 'v4.80.0',
+    date: '2026-07-22',
+    adminOnly: true,
+    brief: [
+      '⚔️【主線第五章・神劍終於真的拿得到了】以前打完第五章,畫面會跳出「神劍至寶現世!」,可是至寶欄裡什麼都沒有——那把劍其實從來沒有真的發給你。現在修好了:打敗發酵魔王之後,【深坑臭豆腐神劍】會正式進到你的至寶欄(攻擊+10、特技+5、爆擊率+30%),而且跟抽到新角色一樣,會跳出一張大大的「解鎖至寶」獎勵卡,上面有至寶的圖、名字、稀有度、加了哪些素質、以及能力說明,看完按「太棒了!」就繼續播劇情。已經有這把劍的人不會被覆蓋等級。',
+      '👤【打完主線章節,造型工房就多一樣東西】從序章到第六章,每通關一章就解鎖一款配件:序章→酷炫墨鏡、第一章→趕時間吐司、第二章→學生帽、第三章→瀟灑葉子、第四章→櫻花瓣、第五章→棒球帽、第六章→黑色口罩。解鎖時畫面上會跳出提示,直接去「👤 我的主角」就能換上。',
+      '👘【日本關卡・八岐大蛇】用「我很會」難度打贏日本關卡的最終BOSS八岐大蛇,造型工房就解鎖【日式和服】,四種體型(少年/少女/男童/女童)都能穿。不用拿S評價,也不用收服牠,打贏就算。',
+      '🪄【埃及關卡・法老王與埃及豔后】用「我很會」難度打贏埃及關卡的最終BOSS,一次解鎖四款魔法師服:赤紅(少年)、紫電(少女)、翠綠(男童)、水藍(女童)。同樣不看評價,打贏就算。',
+      '👀【還沒解鎖的東西,現在可以先穿起來看看】造型工房裡還沒拿到的配件不再是灰灰的點不動,而是可以直接點下去穿在身上預覽,同時跳出小視窗告訴你「這款要怎麼拿」(例如「打完主線第三章就拿得到!」)。還沒安排取得方式的款式會顯示「敬請期待」。★注意:試穿的東西不能存檔——按「確認儲存」時會自動幫你脫下來,並告訴你脫掉了哪些,等真的解鎖之後才能永久穿上。',
+      '💄【造型工房・移除沒有作用的「嘴巴位置」調整】嘴巴分頁裡原本有一排「嘴巴位置」的上下左右按鈕,但那個圖層其實畫不出來,按了不會有任何變化,已經移除。同一頁的「嘴部飾品位置」照常可以調。',
+      '🎬【主線序章不再播覺醒影片】老師調整:覺醒的橋段改在第六章、打黑暗球之前才發生,序章那段影片已移除(序章原本就沒有這支影片檔,以前會直接跳過)。',
+    ],
+    items: [
+      '★ v4.80.0【主線至寶實發 + 解鎖至寶大卡・index.html】①新增 _msGrantStoryTreasure(tid):走既有台灣至寶路徑(window._taiwanTreasureData[tid]={lv:1,exp:0,equippedTo:null} → _saveTaiwanTreasureData → _advSaveTreasureUnlockHistory(tid,mainstory_clear) → _lxpsInstantPersist),已擁有直接 return false 冪等不覆蓋等級/裝備狀態 ②_msGrantChapterReward 的 ch5 crystal5_sword 分支由「僅發水晶」改為「水晶+實際發劍」(v4.78.0 以前註解自承由批次2 接·從未接線) ③新增 _msTreasureCardHtml(tid)+_msActTreasureReveal(tids,onDone):規格對齊 v4.79.0 join 角色大卡(overlay z9975·分頁·watchdog 3分鐘),內容取自 TAIWAN_TREASURES(iconUrl/icon fallback/rarity 徽章/baseStats 晶片/abilityText/desc) ④_msActGrantSword 金光演出結束改呼叫 _after():實際入帳 → 解鎖至寶大卡 → 續播;catch 分支同樣先試 _after 再退回 onDone;舊行為保留註解。',
+      '★ v4.80.0【造型解鎖條件全面接線・avatar_db.js + index.html】①avatar_db.js 新增 AVATAR_UNLOCK_HOW(key=cat:id·與 _avatarIsUnlocked/GM 上鎖同一組鍵·雙版文案鐵律1.232)共 12 筆 ②新增 window._avatarGrantUnlock(keys):寫 avatarCard.unlock 帳本+本機存檔+雲端 fire-and-forget+工房開著即時重繪,回傳本次新解鎖 key 陣列(冪等) ③12 款由 lock:null 改 lock:{t:quest}——gls:5 酷炫墨鏡/mouthacc:1 趕時間吐司/hat:4 學生帽/mouthacc:3 瀟灑葉子(★老師寫「瀟灑的葉子」·repo 實名無「的」)/mouthacc:6 櫻花瓣/hat:5 棒球帽(★hat 有兩筆同名·id2 為舊 SVG 版早已 soon 且無素材·本輪只鎖 id5 圖片版 hat_baseball.png)/mouthacc:8 黑色口罩/outfit:2 日式和服/outfit:5,9,11,13 四款魔法師服 ④index.html 新增 _MS_STORY_AVATAR_GRANTS 七章對照表 + _MS_AVATAR_NAME + _msShowAvatarUnlockToast,掛進 _msGrantChapterReward(沿用既有 _msRewardFlagGet 冪等旗標) ⑤日本:_mainBoss===八岐大蛇 且 _advPlayerDifficulty 含「我很會」→ 解 outfit:2(不限評價/是否收服) ⑥埃及:_adventureStage===egypt 且 _advPlayerDifficulty 含「我很會」→ 解 outfit:5/9/11/13。★現行選單 setTab 只掛 P.outfit(P.full/headfull/bodyfull 為 v4.61.0 舊系統已不在選單)故只需鎖 outfit 一組鍵。',
+      '★ v4.80.0【未解鎖部件可預覽(甲案)・avatar_db.js】①★反轉 v4.66.0 決策4:原「GM 上鎖款對非管理員完全隱藏」改為一律顯示(舊 if 保留註解) ②未解鎖按鈕由 cursor:not-allowed 改可點 → _avatarPreviewLocked(cat,id,name):套上身預覽 + 彈 _avatarShowUnlockHow 遊戲內小視窗(非 alert·查 AVATAR_UNLOCK_HOW·查無顯示「敬請期待」);選中時邊框轉金色標「預覽中/試穿中」 ③_avatarSetPart 加第三參數 _allowLocked:未解鎖 id 一律改走預覽路徑(避免遞迴) ④甲案還原 window._avatarStripLocked():驗證式逐槽重判(outfit/hairhead/hat/gls/mouthacc/mouth/held)凡選了但未解鎖一律歸零(outfit 另清 ofHead/full/headf/bodyf),掛在 _avatarSaveToCloud 開頭 → 所有存檔路徑統一把關,順帶清乾淨舊存檔殘留;_avatarSaveClick 於存檔後 alert 告知脫掉了哪些 ⑤_avRenderOpts 頂端加常駐提示條(同一組槽位定義·單一真相) ⑥GM 專用「🎁」鈕:lock.t===quest 且未入帳時顯示,直接寫 unlock 帳本供老師實測解鎖後效果(不必真的通關)。',
+      '★ v4.80.0【其他・index.html / avatar_db.js】①序章 scene 移除 video:主線_序章_定形覺醒.mp4(該檔 repo 為 404·原本就靜默略過),保留 act:open_avatar_studio;第六章 主線_第六章_主角覺醒.mp4 未動 ②_AV_TABS mouthTab.adj 移除 [mouth,嘴巴位置,嘴嘴位置](P.mouth 只有 svg/_offImg·渲染抓的 .img 不存在=該排按鈕調的是畫不出來的圖層),保留 [macc,嘴部飾品位置];舊值保留註解 ③9 版號同步點全對齊 v4.80.0;hero_db.js 未動維持 v4.54.0;CURRENT_BOOT_VER 永久凍結未動;admin_panel.js 僅版號同步·無真 ?.。',
+    ],
+  },
   // v4.79.0 — 主線加入夥伴角色解鎖大卡 + 管理員造型預設/上鎖雲端同步修正 + 我的主角入口搬家
   {
     ver: 'v4.79.0',
@@ -326,20 +347,6 @@ window.GAME_CHANGELOG = [
     ],
     items: [
       '★ v4.63.1【造型工房 BGM・avatar_db.js 為主】①_avatarOpenPanel 進工房自動播 自訂角色名片.m4a(共用 audio#bgm-avatar-card·先記原播曲 _avPanelPrevBgm·bgmFadeTo 500ms 淡入) ②新增 window._avatarPanelClose 統一關閉:收面板+名片曲淡出→有原曲淡回原曲/無原曲 bgmStop 後 bgmEnsureSceneBgm 依場景補播(冒險選關頁= bgm-menu-01);離開鈕 onclick 改走統一關閉 ③iPad 舊 Safari 首播保險(工房與名片同套):點擊授權內先將 bgm-avatar-card 音量 0 同步 play() 解鎖媒體元素,再交 bgmFadeTo 正常流程(避免 500ms 淡出 timer 內的 play 因失去手勢授權被拒→安靜) ④名片 BGM 加 _avCardStartedBgm 旗標:工房曲已在播時開名片不重起、關名片不誤停(修 _avCardPrevBgm 為空時走 bgmStop 把工房曲關掉的邏輯洞) ⑤index.html/admin_panel.js 僅版號對齊;無 ?.。',
-    ],
-  },
-  // v4.63.0 — 🤝 好友名單「切換成名片」檢視模式(管理員測試中)
-  {
-    ver: 'v4.63.0',
-    adminOnly: true,   /* ★ 主角系統測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-19',
-    brief: [
-      '🤝【好友名單・切換成名片!(老師測試中)】好友頁新增「🪪 切換成名片」按鈕,一鍵把好友名冊變成大頭照名片牆!',
-      '🪪 名片牆上每位好友都用自己打扮的冒險者造型當大頭照,一眼認出誰是誰,點大頭照就能看完整名片!',
-      '🟢 大頭照右上角有線上小綠燈,誰在線上一看就知道;再按一下「📋 切換成清單」就變回原本的名冊!',
-    ],
-    items: [
-      '★ v4.63.0【好友名單名片檢視模式・index.html 為主】①面板標題列新增「🪪 切換成名片/📋 切換成清單」切換鈕:偏好記 localStorage(_friendPanelCardMode) 下次開面板沿用;與 📇 名片按鈕同 _AVATAR_ADMIN_ONLY gating(測試期僅管理員可見·正式開放改 avatar_db.js 單一開關);avatar_db.js 未載入(_avatarRenderSVG 不存在)不顯示按鈕不炸 ②名片模式=名片縮圖網格:每位好友一張 3:4 上半身特寫大頭照(_avatarRenderSVG(cfg,null,true)·v4.61.0 名片同款構圖),資料來源 _friendHeroData[uid].avatarCard(v4.55.0 _fbLoadFriend 已整份讀回·零額外 Firestore 讀取);未捏臉好友顯示預設造型+「尚未設定造型/還沒打扮喔」角標(鐵律1.232 雙版·_fpSimple 分流·按鈕與 title 同雙版);點縮圖 _openFriendAvatarCard 開完整名片;線上燈號沿用 class=_friend-presence-dot data-friend-uid 機制移至縮圖右上角(_applyFriendPresenceDots/onSnapshot 免改直接套) ③網格欄寬:名片模式 minmax(168px,1fr)/清單模式維持 280px ④_refreshFriendListInner(好友資料 lazy load 完成的增量更新路徑)在名片模式改走整面板重渲 _renderFriendPanel(清單模板直接蓋會把名片網格洗掉;輸入中延後 500ms 守門為既有機制·重渲後補套 _applyFriendPresenceDots) ⑤avatar_db.js/admin_panel.js 僅版號對齊(AVATAR_DB_VERSION 順帶破素材快取·老師剛上傳的 avatar_parts 新素材可正確更新);無 ?.。',
     ],
   },
 ];

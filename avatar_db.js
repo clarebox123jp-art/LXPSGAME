@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.79.0';
+window.AVATAR_DB_VERSION = 'v4.80.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -890,8 +890,8 @@ P.hat = [
     svg:'<g stroke="__LN__" stroke-width="2.2"><circle cx="132" cy="102" r="7" fill="#ff9ab8"/><circle cx="156" cy="92" r="7" fill="#ffd35a"/><circle cx="180" cy="88" r="7" fill="#ff9ab8"/><circle cx="204" cy="92" r="7" fill="#8ad4a0"/><circle cx="228" cy="102" r="7" fill="#ffd35a"/></g>' },
   /* ★ v4.64.0(2026-07-20 第二輪)— 老師頭飾圖 10 款(prop 定位引擎:單張道具圖自動對位四體型)
    *   prop:{k:'hat', ar:寬高比(抽件實測), wf:寬=頭寬×倍率, dy:垂直微調(504px)} */
-  { id:4, n:'學生帽', ns:'學生帽', lock:null, img:'hat_cadet.png',    prop:{k:'hat', ar:1.343, wf:1.28, dy:0} },
-  { id:5, n:'棒球帽', ns:'棒球帽', lock:null, img:'hat_baseball.png', prop:{k:'hat', ar:1.182, wf:1.28, dy:0} },
+  { id:4, n:'學生帽', ns:'學生帽', lock:{t:'quest'}, img:'hat_cadet.png',    prop:{k:'hat', ar:1.343, wf:1.28, dy:0} },
+  { id:5, n:'棒球帽', ns:'棒球帽', lock:{t:'quest'}, img:'hat_baseball.png', prop:{k:'hat', ar:1.182, wf:1.28, dy:0} },
   { id:6, n:'報童帽', ns:'報童帽', lock:null, img:'hat_newsboy.png',  prop:{k:'hat', ar:1.317, wf:1.32, dy:0} },
   { id:7, n:'紳士帽', ns:'紳士帽', lock:null, img:'hat_fedora.png',   prop:{k:'hat', ar:1.517, wf:1.34, dy:0} },
   { id:8, n:'漁夫帽', ns:'漁夫帽', lock:null, img:'hat_bucket.png',   prop:{k:'hat', ar:1.337, wf:1.32, dy:0} },
@@ -916,7 +916,7 @@ P.glasses = [
   /* ★ v4.64.0(2026-07-20 第二輪)— 老師眼鏡圖 10 款(prop 定位引擎·對瞳孔中線)
    * ★ v4.64.0(第四輪)— 鏡片雙版:img=白鏡片原圖版 / clearImg=鏡片透明版(透出眼睛),
    *   玩家以眼鏡頁「鏡片樣式」開關(cfg.glsClear·預設透明)切換;墨鏡單版無 clearImg */
-  { id:5, n:'酷炫墨鏡', ns:'酷墨鏡', lock:null, img:'gls_sun.png',        prop:{k:'gls', ar:2.886, wf:1.06, dy:0} },
+  { id:5, n:'酷炫墨鏡', ns:'酷墨鏡', lock:{t:'quest'}, img:'gls_sun.png',        prop:{k:'gls', ar:2.886, wf:1.06, dy:0} },
   { id:6, n:'紳士單片眼鏡', ns:'單眼鏡', lock:null, img:'gls_monocle.png', clearImg:'gls_monocle_clear.png', prop:{k:'gls', ar:0.810, wf:0.42, dy:8, dx:14} },
   { id:7, n:'黑粗框眼鏡', ns:'粗框眼鏡', lock:null, img:'gls_bold.png',   clearImg:'gls_bold_clear.png', prop:{k:'gls', ar:2.860, wf:1.06, dy:0} },
   { id:8, n:'金眉框眼鏡', ns:'金眉框', lock:null, img:'gls_browgold.png', clearImg:'gls_browgold_clear.png', prop:{k:'gls', ar:2.820, wf:1.06, dy:0} },
@@ -1147,7 +1147,7 @@ P.outfit = [
     head:['boy_uniform_head.png','girl_uniform_head.png','kidboy_uniform_head.png',null], hhRef:[[[44,43,43],[125,119,113]],[[59,58,57],[127,121,118],[180,179,178]],[[55,55,55],[128,126,125]],null],
     body:['boy_uniform_body.png','girl_uniform_body.png','kidboy_uniform_body.png','top_uniform_kidgirl.png'],
     whole:[null,null,null,1] },
-  { id:2,  n:'日式和服', ns:'和服', lock:null,
+  { id:2,  n:'日式和服', ns:'和服', lock:{t:'quest'},
     /* ★ v4.78.0(2026-07-22)女童補位:headfull_/bodyfull_kimono_kidgirl.png 早已在 repo,
      *   但本欄原為 null=從未接線 → 女童選不到和服。hhRef 由該圖髮區實測取樣(排除膚色與和服紅) */
     head:['boy_kimono_head.png','girl_kimono_head.png','kidboy_kimono_head.png','headfull_kimono_kidgirl.png'], hhRef:[[[52,51,52],[128,119,114]],[[53,52,52],[129,113,125],[180,153,180]],[[52,51,50],[125,113,100]],[[56,53,50],[101,98,95]]],
@@ -1157,7 +1157,7 @@ P.outfit = [
     head:['boy_suit_head.png',null,null,null], hhRef:[[[42,40,39],[128,121,116]],null,null,null], body:['boy_suit_body.png',null,null,null] },
   { id:4,  n:'重裝鎧甲劍士', ns:'鎧甲劍士裝', lock:null,
     head:['boy_heavysword_head.png',null,null,null], hhRef:[[[55,53,51],[122,113,108]],null,null,null], body:['boy_heavysword_body.png',null,null,null] },
-  { id:5,  n:'赤紅魔法師', ns:'火火魔法裝', lock:null,
+  { id:5,  n:'赤紅魔法師', ns:'火火魔法裝', lock:{t:'quest'},
     head:['boy_redmage_head.png',null,null,null], hhRef:[[[55,54,53],[123,112,110]],null,null,null], body:['boy_redmage_body.png',null,null,null] },
   { id:6,  n:'清新藍洋裝', ns:'藍洋裝', lock:null, lockHair:true,   /* ★ 修2:原髮蓋住衣服裁切困難→暫不提供更換髮型 */
     head:[null,'girl_dress_head.png',null,null], hhRef:[null,[[54,53,53],[126,116,110]],null,null], body:[null,'girl_dress_body.png',null,null],
@@ -1172,15 +1172,15 @@ P.outfit = [
     whole:[null,null,null,1] },
   { id:8,  n:'華麗細劍士', ns:'細劍士裝', lock:null,
     head:[null,'girl_rapier_head.png',null,null], hhRef:[null,[[63,61,62],[121,108,102]],null,null], body:[null,'girl_rapier_body.png',null,null] },
-  { id:9,  n:'紫電魔法師', ns:'閃電魔法裝', lock:null, lockHair:true,   /* ★ 修2:暫不提供更換髮型(裁切困難);落髮撞深色衣不掛 hairRef */
+  { id:9,  n:'紫電魔法師', ns:'閃電魔法裝', lock:{t:'quest'}, lockHair:true,   /* ★ 修2:暫不提供更換髮型(裁切困難);落髮撞深色衣不掛 hairRef */
     head:[null,'girl_purplemage_head.png',null,null], hhRef:[null,[[57,54,55],[122,112,118],[164,156,177]],null,null], body:[null,'girl_purplemage_body.png',null,null] },
   { id:10, n:'輕裝大劍士', ns:'大劍士裝', lock:null,
     head:[null,null,'kidboy_greatsword_head.png',null], hhRef:[null,null,[[59,57,57],[119,108,104]],null], body:[null,null,'kidboy_greatsword_body.png',null] },
-  { id:11, n:'翠綠魔法師', ns:'綠綠魔法裝', lock:null,
+  { id:11, n:'翠綠魔法師', ns:'綠綠魔法裝', lock:{t:'quest'},
     head:[null,null,'kidboy_greenmage_head.png',null], hhRef:[null,null,[[60,57,54],[119,109,103],[176,169,164]],null], body:[null,null,'kidboy_greenmage_body.png',null] },
   { id:12, n:'吊帶短褲裝', ns:'吊帶裝', lock:null,
     head:[null,null,'kidboy_overalls_head.png',null], hhRef:[null,null,[[54,53,52],[111,100,95]],null], body:[null,null,'kidboy_overalls_body.png',null] },
-  { id:13, n:'水藍魔法師', ns:'水水魔法裝', lock:null,
+  { id:13, n:'水藍魔法師', ns:'水水魔法裝', lock:{t:'quest'},
     /* ★ v4.78.0(2026-07-22)老師回報「衣服白色區域被過度去背」根因與修法:
      *   舊件 bodyfull_aquamage_kidgirl.png 內部有 3021px 白色破洞(alpha 被挖空·RGB 仍在),
      *   老師重新切好的新件 kidgirl_watermage_head/body.png 已在 repo 且實測 0 內部破洞 → 改掛新件。
@@ -1203,14 +1203,14 @@ P.outfit = [
  * 註:原圖第一列第 5 格為空白色塊(生成失敗),自動略過未收錄 */
 P.mouthacc = [
   { id:0, n:'無', ns:'不戴', lock:null, img:null },
-  { id:1, n:'趕時間吐司', ns:'吐司', lock:null, img:'macc_toast.png',  prop:{k:'macc', ar:1.009, wf:0.46, dx:16, dy:8} },
+  { id:1, n:'趕時間吐司', ns:'吐司', lock:{t:'quest'}, img:'macc_toast.png',  prop:{k:'macc', ar:1.009, wf:0.46, dx:16, dy:8} },
   { id:2, n:'粉紅棒棒糖', ns:'棒棒糖', lock:null, img:'macc_lolly.png', prop:{k:'macc', ar:0.660, wf:0.30, dx:16, dy:14} },
-  { id:3, n:'瀟灑葉子', ns:'小葉子', lock:null, img:'macc_leaf.png',   prop:{k:'macc', ar:2.110, wf:0.46, dx:20, dy:2} },
+  { id:3, n:'瀟灑葉子', ns:'小葉子', lock:{t:'quest'}, img:'macc_leaf.png',   prop:{k:'macc', ar:2.110, wf:0.46, dx:20, dy:2} },
   { id:4, n:'浪人草莖', ns:'小草', lock:null, img:'macc_grass.png',   prop:{k:'macc', ar:4.123, wf:0.62, dx:26, dy:0} },
   { id:5, n:'幸運四葉草', ns:'四葉草', lock:null, img:'macc_clover.png', prop:{k:'macc', ar:1.019, wf:0.34, dx:16, dy:6} },
-  { id:6, n:'櫻花瓣', ns:'櫻花', lock:null, img:'macc_sakura.png',    prop:{k:'macc', ar:1.299, wf:0.36, dx:16, dy:4} },
+  { id:6, n:'櫻花瓣', ns:'櫻花', lock:{t:'quest'}, img:'macc_sakura.png',    prop:{k:'macc', ar:1.299, wf:0.36, dx:16, dy:4} },
   { id:7, n:'白色口罩', ns:'白口罩', lock:null, img:'macc_maskw.png', prop:{k:'macc', ar:1.848, wf:0.80, dx:0, dy:2} },
-  { id:8, n:'黑色口罩', ns:'黑口罩', lock:null, img:'macc_maskb.png', prop:{k:'macc', ar:1.927, wf:0.80, dx:0, dy:2} },
+  { id:8, n:'黑色口罩', ns:'黑口罩', lock:{t:'quest'}, img:'macc_maskb.png', prop:{k:'macc', ar:1.927, wf:0.80, dx:0, dy:2} },
   { id:9, n:'嬰兒奶嘴', ns:'奶嘴', lock:null, img:'macc_paci.png',    prop:{k:'macc', ar:1.178, wf:0.30, dx:0, dy:6} }
 ];
 
@@ -1627,6 +1627,151 @@ window._avatarIsUnlocked = function(cat, id){
   return un.indexOf(gmKey) >= 0;
 };
 
+/* ════════════════════════════════════════════════════════════════════════
+ * ★★ v4.79.0(2026-07-22)老師指示 — 部件解鎖條件表 + 玩家可預覽未解鎖部件(甲案)
+ * ────────────────────────────────────────────────────────────────────────
+ *   ①解鎖條件表 AVATAR_UNLOCK_HOW:key = 'cat:id'(與 _avatarIsUnlocked / GM 上鎖同一組鍵),
+ *     值 = {p:精緻風說明, c:簡單風說明}(鐵律 1.232 雙版)。查無 key → 一律顯示「敬請期待」。
+ *   ②玩家點未解鎖部件 → 直接套到身上預覽 + 彈出遊戲內小視窗說明解鎖方式(不是 alert)。
+ *   ③甲案:預覽「不能儲存」——按「確認儲存」時 _avatarStripLocked() 自動把所有未解鎖的
+ *     槽位還原成 0(沒有套未解鎖部件的狀態)後才寫檔,並提示玩家已還原。
+ *     ★ 這是「驗證式還原」(掃描當前 cfg 逐槽重判),不靠追蹤旗標 → 舊存檔若殘留
+ *       未解鎖部件也會被順手清乾淨,且任何進入預覽的路徑都涵蓋得到。
+ *   ★★ 本版同時反轉 v4.66.0 決策4(原本 GM 上鎖款對非管理員完全隱藏)→ 一律顯示可預覽。
+ * ════════════════════════════════════════════════════════════════════════ */
+window.AVATAR_UNLOCK_HOW = {
+  /* ── 主線劇情章節通關(七章七款)── */
+  'gls:5':      { p:'完成主線劇情【序章・異世界的入口】即可獲得',     c:'打完主線「序章」就拿得到！' },
+  'mouthacc:1': { p:'完成主線劇情【第一章・河堤上的初陣】即可獲得',   c:'打完主線「第一章」就拿得到！' },
+  'hat:4':      { p:'完成主線劇情【第二章・異變的線索】即可獲得',     c:'打完主線「第二章」就拿得到！' },
+  'mouthacc:3': { p:'完成主線劇情【第三章・褪色的茶園】即可獲得',     c:'打完主線「第三章」就拿得到！' },
+  'mouthacc:6': { p:'完成主線劇情【第四章・被奪走的心】即可獲得',     c:'打完主線「第四章」就拿得到！' },
+  'hat:5':      { p:'完成主線劇情【第五章・發酵魔王的陰謀】即可獲得', c:'打完主線「第五章」就拿得到！' },
+  'mouthacc:8': { p:'完成主線劇情【第六章・吞噬色彩的黑暗】即可獲得', c:'打完主線「第六章」就拿得到！' },
+  /* ── 日本關卡:八岐大蛇「我很會」難度通關 ── */
+  'outfit:2':   { p:'以「我很會」難度打贏日本關卡最終 BOSS【八岐大蛇】即可獲得',
+                  c:'用「我很會」難度打贏日本的八岐大蛇就拿得到！' },
+  /* ── 埃及關卡:最終 BOSS「我很會」難度通關(四款魔法師服一次全開)── */
+  'outfit:5':   { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
+                  c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' },
+  'outfit:9':   { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
+                  c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' },
+  'outfit:11':  { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
+                  c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' },
+  'outfit:13':  { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
+                  c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' }
+};
+
+/* 解鎖說明查詢:查無 → null(呼叫端顯示「敬請期待」) */
+window._avatarUnlockHow = function(cat, id){
+  try{ return window.AVATAR_UNLOCK_HOW[cat + ':' + id] || null; }catch(_e){ return null; }
+};
+
+/* ★ 解鎖入帳:寫進 avatarCard.unlock 帳本(隨 cfg 上雲·merge:true 免改 rules)
+ *   keys 可傳單一字串或陣列;回傳「本次新解鎖」的 key 陣列(已有的不重複計) */
+window._avatarGrantUnlock = function(keys){
+  var added = [];
+  try{
+    if(!keys) return added;
+    if(typeof keys === 'string') keys = [keys];
+    /* ★ v4.80.0 共用平板保護:card 為空、或不是「當前登入者」那份 → 先依現在的 uid 重讀,
+     *   避免把解鎖寫進上一位同學的造型檔(專案既有帳號污染防線同口徑)。 */
+    var _nowUid = (window._gUserId || 'guest');
+    if(!window._avatarLocalCard || !window._avatarLocalCard.cfg || window._avatarLocalCardUid !== _nowUid){
+      try{ window._avatarLoadLocal(); }catch(_e0){}
+    }
+    var card = window._avatarLocalCard;
+    if(!card) return added;
+    if(!card.unlock) card.unlock = [];
+    for(var i = 0; i < keys.length; i++){
+      var k = keys[i];
+      if(!k) continue;
+      if(card.unlock.indexOf(k) < 0){ card.unlock.push(k); added.push(k); }
+    }
+    if(added.length){
+      try{ window._avatarSaveLocal(); }catch(_e1){}
+      /* 雲端 fire-and-forget(失敗有本機·下次儲存造型會補上去) */
+      try{
+        var pr = window._avatarSaveToCloud();
+        if(pr && pr['catch']) pr['catch'](function(){});
+      }catch(_e2){}
+      /* 工房開著就即時重繪(剛解鎖的款式立刻變成可選) */
+      try{ if(document.getElementById('_avatar-panel')){ _avRenderOpts(); } }catch(_e3){}
+    }
+  }catch(_e){ console.warn('[avatar] 解鎖入帳失敗', _e); }
+  return added;
+};
+
+/* ★ 遊戲內小視窗:顯示這款部件的解鎖方式(不用 alert·雙版文案) */
+window._avatarShowUnlockHow = function(cat, id, name){
+  try{
+    var old = document.getElementById('_av-unlock-how');
+    if(old) old.remove();
+    var how = window._avatarUnlockHow(cat, id);
+    var body = how ? _avT(how.p, how.c)
+                   : _avT('這款目前還沒開放取得方式，敬請期待！', '這個還不能拿，敬請期待喔！');
+    var ov = document.createElement('div');
+    ov.id = '_av-unlock-how';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:20050;display:flex;align-items:center;'
+      + 'justify-content:center;background:rgba(0,0,10,0.72);padding:18px;'
+      + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;opacity:0;transition:opacity 0.25s;';
+    ov.onclick = function(e){ if(e.target === ov) ov.remove(); };
+    ov.innerHTML =
+      '<div style="width:min(92vw,420px);background:linear-gradient(160deg,#241a4e,#15102c);'
+      + 'border:2.5px solid rgba(255,200,110,0.7);border-radius:20px;overflow:hidden;'
+      + 'box-shadow:0 10px 40px rgba(0,0,0,0.72),0 0 30px rgba(255,190,90,0.25);">'
+      + '<div style="padding:11px 18px;background:linear-gradient(to right,rgba(150,100,40,0.55),rgba(120,60,160,0.55));'
+      + 'font-size:18px;font-weight:900;color:#ffe9b8;letter-spacing:1px;">🔒 '
+      + _avT('還沒解鎖', '還不能用') + '</div>'
+      + '<div style="padding:18px 20px 20px;text-align:center;">'
+      + '<div style="font-size:21px;font-weight:900;color:#ffd97a;letter-spacing:1px;margin-bottom:10px;">'
+      + _avEsc(name || '') + '</div>'
+      + '<div style="padding:13px 14px;background:rgba(0,0,10,0.4);border:1.5px solid rgba(255,210,140,0.4);'
+      + 'border-radius:12px;font-size:16.5px;color:#ffe9cc;line-height:1.65;">' + _avEsc(body) + '</div>'
+      + '<div style="margin-top:12px;font-size:14.5px;color:#9fd6ff;line-height:1.6;">👀 '
+      + _avT('現在可以先穿上試看看效果，但儲存時會自動脫下來喔。',
+             '可以先穿起來看看，不過存檔的時候會自動脫掉喔！') + '</div>'
+      + '<button onclick="document.getElementById(\'_av-unlock-how\').remove()" '
+      + 'style="margin-top:16px;padding:11px 38px;font-size:18px;font-weight:800;'
+      + 'background:linear-gradient(135deg,rgba(180,100,40,0.85),rgba(220,140,60,0.85));'
+      + 'border:2.5px solid rgba(255,220,150,0.85);color:#fff;border-radius:10px;cursor:pointer;'
+      + 'font-family:inherit;letter-spacing:2px;">' + _avT('我知道了', '好！') + '</button>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.style.opacity = '1'; });
+  }catch(_e){ console.warn('[avatar] 解鎖說明視窗失敗', _e); }
+};
+
+/* ★ 甲案:點未解鎖部件 → 直接套上身預覽 + 彈解鎖說明(儲存時會被 _avatarStripLocked 還原) */
+window._avatarPreviewLocked = function(cat, id, name){
+  try{ window._avatarSetPart(cat, id, true); }catch(_e){}
+  try{ window._avatarShowUnlockHow(cat, id, name); }catch(_e2){}
+};
+
+/* ★ 甲案還原:掃描所有可上鎖槽位,凡是「目前選了但沒解鎖」的一律歸零(=沒有套未解鎖部件的狀態)
+ *   回傳被還原的分類名稱陣列(供提示玩家);儲存路徑統一在 _avatarSaveToCloud 開頭呼叫。 */
+window._avatarStripLocked = function(){
+  var changed = [];
+  try{
+    var cfg = window._avatarLocalCard && window._avatarLocalCard.cfg;
+    if(!cfg) return changed;
+    var SLOTS = [['outfit','of','整套裝扮','整套衣服'], ['hairhead','hh','髮型','頭髮'],
+                 ['hat','hat','頭戴','帽帽'], ['gls','gls','眼鏡','眼鏡'],
+                 ['mouthacc','macc','嘴部飾品','嘴巴戴的'], ['mouth','mouth','嘴巴','嘴嘴'],
+                 ['held','held','手持物品','拿的東西']];
+    for(var i = 0; i < SLOTS.length; i++){
+      var cat = SLOTS[i][0], key = SLOTS[i][1];
+      var id = cfg[key] | 0;
+      if(!id) continue;
+      if(window._avatarIsUnlocked(cat, id)) continue;
+      cfg[key] = 0;
+      if(cat === 'outfit'){ cfg.ofHead = 0; cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0; }
+      changed.push(_avT(SLOTS[i][2], SLOTS[i][3]));
+    }
+  }catch(_e){ console.warn('[avatar] 未解鎖還原失敗', _e); }
+  return changed;
+};
+
 /* ★ v4.64.0 GM 上鎖資料(雲端 gameConfig/avatarLocks·僅 GM 可寫·登入者可讀·
  *   走 gameConfig 既有 rules 免新增條款):{ locks:{'cat:id':true,...}, updatedAt, updatedBy } */
 /* ★★ v4.79.0(2026-07-22)老師指示 — 兩張 GM 雲端表「登入即載入 + 本機快取墊底」════════
@@ -1780,6 +1925,7 @@ function _avLsKey(){
 window._avatarLocalCard = null;
 
 window._avatarLoadLocal = function(){
+  try{ window._avatarLocalCardUid = (window._gUserId || 'guest'); }catch(_eU){}   /* ★ v4.80.0 記錄本份 card 屬於哪個 uid */
   try{
     var raw = localStorage.getItem(_avLsKey());
     if(raw){ window._avatarLocalCard = JSON.parse(raw); }
@@ -1799,6 +1945,14 @@ window._avatarSaveLocal = function(){
 
 /* 儲存造型 → 本機 + 雲端(單次寫入,無高頻;失敗僅提示不擋本機) */
 window._avatarSaveToCloud = function(){
+  /* ★ v4.79.0 甲案:未解鎖部件只能預覽不能儲存 → 存檔前一律還原(所有儲存路徑統一在此把關) */
+  try{
+    var _stripped = window._avatarStripLocked();
+    window._avLastStripped = _stripped;
+    if(_stripped && _stripped.length){
+      try{ if(document.getElementById('_avatar-panel')){ _avRefreshPreview(); _avRenderOpts(); } }catch(_eR){}
+    }
+  }catch(_eS){ window._avLastStripped = []; }
   window._avatarSaveLocal();
   var uid = window._gUserId;
   if(!uid || !window._fbDb || !window._fbFns){ return Promise.resolve(false); }
@@ -1892,7 +2046,10 @@ var _AV_TABS = [
   { k:'hatTab',    p:'頭戴', c:'戴頭上', cats:[['hat','頭戴(帽子)','帽帽']], adj:[['hat','頭戴位置','帽帽位置']] },
   { k:'glsTab',    p:'眼鏡', c:'眼鏡', cats:[['gls','眼鏡','眼鏡'],['glsClear','鏡片樣式','鏡片樣子']], adj:[['gls','眼鏡位置','眼鏡位置']] },
   { k:'mouthTab',  p:'嘴巴', c:'嘴巴', cats:[['mouth','嘴巴','嘴嘴'],['mouthacc','嘴部飾品','嘴巴戴的']],
-    adj:[['mouth','嘴巴位置','嘴嘴位置'],['macc','嘴部飾品位置','嘴飾位置']] },
+    /* ★ v4.79.0 老師指示:移除「嘴巴位置」調整(沒有這項功能——P.mouth 只有 svg/_offImg,
+     *   渲染抓的 .img 不存在,那排按鈕調的是畫不出來的圖層)。舊值保留:
+     *   adj:[['mouth','嘴巴位置','嘴嘴位置'],['macc','嘴部飾品位置','嘴飾位置']] */
+    adj:[['macc','嘴部飾品位置','嘴飾位置']] },
   { k:'heldTab',   p:'手持', c:'拿的', cats:[['held','手持物品','拿什麼']], adj:[['held','手持位置','拿的位置']] },
   /* ★ v4.78.0 老師 2026-07-22 需求2:手持之下新增「暱稱」項(act 不切頁·直接開既有 openNicknameModal 設定暱稱視窗) */
   { k:'nickAct',   p:'暱稱', c:'名字', act:'nick' }
@@ -2373,6 +2530,27 @@ function _avRenderOpts(){
   var _wipHtml = '<div style="padding:14px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16px;">🎨 '
     + _avT('此類素材繪製中,之後的更新會陸續加入,敬請期待!','這類的圖還在畫,等更新就會有囉!') + '</div>';
   var h = '';
+  /* ★★ v4.79.0 甲案提示條:目前身上有「還沒解鎖、只是預覽」的部件時,常駐提醒儲存會被脫下。
+   *   用 _avatarStripLocked 同一組槽位定義逐槽重判(單一真相·不靠旗標)。 */
+  try{
+    var _LOCK_SLOTS = [['outfit','of','整套裝扮','整套衣服'], ['hairhead','hh','髮型','頭髮'],
+                       ['hat','hat','頭戴','帽帽'], ['gls','gls','眼鏡','眼鏡'],
+                       ['mouthacc','macc','嘴部飾品','嘴巴戴的'], ['mouth','mouth','嘴巴','嘴嘴'],
+                       ['held','held','手持物品','拿的東西']];
+    var _prevNames = [];
+    for(var _pi = 0; _pi < _LOCK_SLOTS.length; _pi++){
+      var _pc = _LOCK_SLOTS[_pi][0], _pk = _LOCK_SLOTS[_pi][1];
+      var _pid = cfg[_pk] | 0;
+      if(_pid && !window._avatarIsUnlocked(_pc, _pid)){ _prevNames.push(_avT(_LOCK_SLOTS[_pi][2], _LOCK_SLOTS[_pi][3])); }
+    }
+    if(_prevNames.length){
+      h += '<div style="padding:12px 14px;margin:2px 2px 10px;background:rgba(200,150,40,0.16);'
+        + 'border:2px dashed rgba(255,200,110,0.7);border-radius:12px;color:#ffe0a0;font-size:15.5px;line-height:1.6;">👀 '
+        + _avT('你正在試穿還沒解鎖的部件(' + _prevNames.join('、') + ')。可以先看效果，但按「確認儲存」時會自動脫下來喔！',
+               '你正在試穿還沒拿到的東西(' + _prevNames.join('、') + ')。可以先看看，存檔的時候會自動脫掉喔!')
+        + '</div>';
+    }
+  }catch(_ePv){}
   for(var c=0;c<tab.cats.length;c++){
     var cat = tab.cats[c][0], labP = tab.cats[c][1], labC = tab.cats[c][2];
     h += '<div style="font-size:19px;font-weight:900;color:#ffd97a;margin:14px 2px 8px;">' + _avT(labP, labC) + '</div>';
@@ -2455,9 +2633,10 @@ function _avRenderOpts(){
         var _LOCKABLE = { outfit:1, hairhead:1, hat:1, gls:1, mouth:1, mouthacc:1, held:1 };
         var _isGm = (typeof window._isAdminUser === 'function' && window._isAdminUser());
         var _gmLk = !!(window._avatarGmLocks && window._avatarGmLocks[cat + ':' + it.id] === true);
-        /* ★ v4.66.0 決策4:GM 上鎖款對「非管理員」完全不顯示(連 🔒 鎖定預覽也隱藏),
-         *   等對應套裝素材修好重傳、GM 解鎖後才對玩家出現;管理員照常見(可測試/切換)。 */
-        if(_gmLk && !_isGm && !unlocked){ shown--; continue; }
+        /* ★★ v4.79.0 老師指示:玩家今後可以「預覽」未解鎖的配件 → 反轉 v4.66.0 決策4。
+         *   舊行為(保留備查·誤刪是大忌):GM 上鎖款對非管理員完全不顯示,連 🔒 鎖定預覽也隱藏 —
+         *     if(_gmLk && !_isGm && !unlocked){ shown--; continue; }
+         *   新行為:一律顯示,點下去直接套上身預覽並彈出「解鎖方式」小視窗;儲存時自動脫下。 */
         var _gmBtn = '';
         if(_isGm && _LOCKABLE[cat] && it.id !== 0){
           _gmBtn = '<button onclick="_avatarGmToggleLock(\'' + cat + '\',' + it.id + ')" title="'
@@ -2467,13 +2646,30 @@ function _avRenderOpts(){
                      : 'background:rgba(60,110,70,0.3);border:2px solid rgba(110,210,140,0.6);')
             + 'color:#fff;">' + (_gmLk ? '🔒' : '🔓') + '</button>';
         }
+        /* ★ v4.79.0 GM 測試鈕:有解鎖條件(lock:{t:quest})且尚未入帳 → 「🎁」直接寫進 unlock 帳本,
+         *   老師不必真的去通關就能驗證「解鎖後能不能正常穿上/儲存」。只有管理員看得到。 */
+        if(_isGm && it.lock && it.lock.t === 'quest' && !unlocked){
+          _gmBtn += '<button onclick="_avatarGrantUnlock(\'' + cat + ':' + it.id + '\')" title="'
+            + _avT('GM:直接把這款入帳(測試用)', 'GM:直接給我這款')
+            + '" style="padding:13px 11px;font-size:17px;border-radius:11px;cursor:pointer;font-family:inherit;'
+            + 'background:rgba(150,110,40,0.32);border:2px solid rgba(255,200,110,0.7);color:#ffe9b8;">🎁</button>';
+        }
         if(unlocked){
           h += '<button onclick="_avatarSetPart(\''+cat+'\','+it.id+')" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:pointer;font-family:inherit;'
             + (selP ? 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;box-shadow:0 0 10px rgba(120,200,255,0.4);'
                     : 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#c4d0ea;')
             + '">' + (_gmLk ? '🔒 ' : '') + _avEsc(nm) + '</button>' + _gmBtn;
         } else {
-          h += '<button title="' + _avT('需達成成就、兌換或購買後取得,敬請期待!','要完成任務或兌換才能拿到,再等等喔!') + '" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:not-allowed;font-family:inherit;opacity:0.5;background:rgba(40,40,55,0.4);border:2px dashed rgba(150,150,170,0.45);color:#8890a8;">🔒 ' + _avEsc(nm) + '</button>' + _gmBtn;
+          /* ★★ v4.79.0 未解鎖款:可點(套上身預覽 + 彈解鎖方式小視窗)·選中時邊框變金色標示「預覽中」
+           *   舊行為保留備查:cursor:not-allowed 不可點,只有 title 提示。 */
+          var _howT = window._avatarUnlockHow(cat, it.id);
+          h += '<button onclick="_avatarPreviewLocked(\'' + cat + '\',' + it.id + ',\'' + _avEsc(nm).replace(/'/g, '&#39;') + '\')"'
+            + ' title="' + (_howT ? _avEsc(_avT(_howT.p, _howT.c))
+                                  : _avT('這款目前還沒開放取得方式,敬請期待!','這個還不能拿,敬請期待喔!'))
+            + '" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:pointer;font-family:inherit;'
+            + (selP ? 'background:rgba(255,190,90,0.22);border:2px solid #ffc45a;color:#ffe9c0;box-shadow:0 0 10px rgba(255,190,90,0.4);'
+                    : 'opacity:0.72;background:rgba(40,40,55,0.45);border:2px dashed rgba(180,170,200,0.55);color:#b8b0c8;')
+            + '">🔒 ' + _avEsc(nm) + (selP ? (' · ' + _avT('預覽中', '試穿中')) : '') + '</button>' + _gmBtn;
         }
       }
       if(pngMode && shown === 0){ h += '</div>' + _wipHtml + '<div style="display:none;">'; }
@@ -2532,7 +2728,18 @@ function _avRenderOpts(){
  *   選套裝 → 頭+身一起套(cfg.of+ofHead=1)·自動移除髮型頭(cfg.hh=0)·並清舊 full/headf/bodyf 槽
  *   選髮型 → 只換頭(cfg.hh)·移除套裝頭旗標(ofHead=0·套裝身保留)·並清舊 full/headf 槽
  *   其餘分類照舊;所有選項點擊播「選擇音效」(需求6) */
-window._avatarSetPart = function(cat, id){
+window._avatarSetPart = function(cat, id, _allowLocked){
+  /* ★ v4.79.0 未解鎖款一律走 _avatarPreviewLocked(套上身預覽+彈解鎖說明);
+   *   _allowLocked=true 由預覽端傳入,避免無限遞迴。 */
+  try{
+    if(!_allowLocked && id && !window._avatarIsUnlocked(cat, id)){
+      var _lst = P[{ gls:'glasses', sh:'shoe' }[cat] || cat] || [];
+      var _nm = '';
+      for(var _li = 0; _li < _lst.length; _li++){ if(_lst[_li].id === id){ _nm = _avT(_lst[_li].n, _lst[_li].ns); break; } }
+      window._avatarPreviewLocked(cat, id, _nm);
+      return;
+    }
+  }catch(_eL){}
   var cfg = window._avatarLocalCard.cfg;
   if(cat === 'outfit'){
     cfg.of = id;
@@ -2576,6 +2783,13 @@ window._avatarSaveClick = function(){
   if(btn){ btn.disabled = true; btn.textContent = '⏳ ' + _avT('儲存中…','存檔中…'); }
   window._avatarSaveToCloud().then(function(ok){
     if(!btn) return;
+    /* ★ v4.79.0 甲案:若存檔前把未解鎖預覽脫掉了,明確告訴玩家(不然會以為存壞了) */
+    var _sp = window._avLastStripped;
+    if(_sp && _sp.length){
+      try{ alert(_avT('還沒解鎖的部件不能儲存,已經幫你脫下來囉(' + _sp.join('、') + ')。完成解鎖條件後就能永久穿上!',
+                      '還沒解鎖的東西不能存,已經幫你脫下來了(' + _sp.join('、') + ')。拿到之後就能一直穿囉!')); }catch(_eA){}
+      window._avLastStripped = [];
+    }
     btn.textContent = ok ? ('✅ ' + _avT('已儲存!','存好了!')) : ('✅ ' + _avT('已存本機(雲端稍後重試)','先存在平板上囉'));
     setTimeout(function(){
       if(btn){ btn.disabled = false; btn.textContent = '✅ ' + _avT('確認儲存','確認存好'); }   /* ★ v4.64.0 新標籤 */
