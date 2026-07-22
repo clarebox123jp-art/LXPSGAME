@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.73.0';
+window.AVATAR_DB_VERSION = 'v4.78.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1656,6 +1656,7 @@ window._avatarLoadPartDefaults = function(){
 window._avatarSetPartDefault = function(key){
   if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
   var cfg = window._avatarLocalCard.cfg;
+  try{ if(window._avPartVarKey) key = window._avPartVarKey(cfg, key); }catch(_){}
   var p = (cfg.pos && cfg.pos[key]) || [0, 0, 0];
   if(!window._avatarPartDefaults) window._avatarPartDefaults = {};
   window._avatarPartDefaults[key] = [ (p[0]|0), (p[1]|0), (p.length > 2 ? (p[2]|0) : 0) ];
@@ -1683,7 +1684,24 @@ window._avatarExportPartDefaults = function(){
  *   玩家「使用預設」(cfg.posDef[key]!==false·預設 true)→ 用管理員雲端預設 _avatarPartDefaults[key]
  *     (雲端未設 → fallback 玩家舊值或 [0,0,0]);
  *   玩家「自己調整」(cfg.posDef[key]===false)→ 用玩家 cfg.pos[key]。 */
+/* ★ 部件預設「每個變體獨立」鍵(2026-07-21 修:不同髮型/套裝/飾品×體型各自獨立預設與微調·互不影響)
+ *   槽位鍵 → 「槽#體型#變體id」;素體(baseH/baseB)只到體型;該槽未選變體只到體型;未知槽維持原鍵向下相容。
+ *   單一真相:_avEffPos/設為預設/微調/使用預設 全走此鍵 → 換髮型/套裝/飾品各自記住自己的位置尺寸。 */
+window._avPartVarKey = function(cfg, slot){
+  try{
+    if(!cfg || !slot) return slot;
+    var body = (cfg.body != null ? cfg.body : 0);
+    if(slot === 'baseH' || slot === 'baseB') return slot + '#' + body;
+    var VARF = { ofh:'of', ofb:'of', hh:'hh', hat:'hat', gls:'gls', mouth:'mouth', macc:'macc', held:'held' };
+    var f = VARF[slot];
+    if(!f) return slot;
+    var v = cfg[f];
+    if(v === undefined || v === null || v === '') return slot + '#' + body;
+    return slot + '#' + body + '#' + v;
+  }catch(_){ return slot; }
+};
 window._avEffPos = function(cfg, key){
+  try{ if(window._avPartVarKey) key = window._avPartVarKey(cfg, key); }catch(_){}
   var def = (window._avatarPartDefaults && window._avatarPartDefaults[key]) || null;
   var useDef = !(cfg && cfg.posDef && cfg.posDef[key] === false);
   if(useDef) return def || (cfg && cfg.pos && cfg.pos[key]) || [0, 0, 0];
@@ -1709,6 +1727,9 @@ window._avatarLoadLocal = function(){
   if(!window._avatarLocalCard || !window._avatarLocalCard.cfg){
     window._avatarLocalCard = { cfg: window._avatarDefaultCfg(), unlock: [], q: 0, ver: 1 };
   }
+  /* ★ A2(2026-07-21) 主角覺醒持久化:從 avatarCard 載入覺醒旗標 → index.html _lxpsProtagAwakened()/
+   *   _getHeroRarity 據此判主角 R(未覺醒)/SSR(已覺醒)。avatarCard 隨 cfg 上雲(merge:true)免改 rules。 */
+  try{ window._protagAwakened = !!(window._avatarLocalCard && window._avatarLocalCard.protagAwakened); }catch(_e){}
   return window._avatarLocalCard;
 };
 
@@ -1730,6 +1751,22 @@ window._avatarSaveToCloud = function(){
   }catch(e){ console.warn('[avatar] 雲端儲存例外(本機已存)', e); return Promise.resolve(false); }
 };
 
+/* ★ A2(2026-07-21) 主角覺醒旗標寫入 + 持久化(第六章 awaken_hero act 呼叫)
+ *   設 window._protagAwakened 記憶體旗標 + avatarCard.protagAwakened 欄位 → 本機 + 雲端(隨 cfg 上雲免改 rules)。
+ *   稀有度 R→SSR 立即生效(index.html _lxpsProtagAwakened/_getHeroRarity 讀 window._protagAwakened)。
+ *   v 預設 true;傳 false 供未來重置回未覺醒使用。 */
+window._lxpsSetProtagAwakened = function(v){
+  var val = (v === false) ? false : true;
+  try{ window._protagAwakened = val; }catch(_e){}
+  try{
+    if(!window._avatarLocalCard){ if(typeof window._avatarLoadLocal === 'function') window._avatarLoadLocal(); }
+    if(window._avatarLocalCard){ window._avatarLocalCard.protagAwakened = val; }
+  }catch(_e2){}
+  try{ if(typeof window._avatarSaveToCloud === 'function') return window._avatarSaveToCloud(); }catch(_e3){}
+  try{ if(typeof window._avatarSaveLocal === 'function') window._avatarSaveLocal(); }catch(_e4){}
+  return Promise.resolve(false);
+};
+
 /* 從自己的 players 主檔拉雲端造型(跨裝置還原;面板開啟時呼叫一次) */
 window._avatarPullFromCloud = function(){
   var uid = window._gUserId;
@@ -1742,6 +1779,8 @@ window._avatarPullFromCloud = function(){
         if(d && d.avatarCard && d.avatarCard.cfg){
           window._avatarLocalCard = d.avatarCard;
           window._avatarSaveLocal();
+          /* ★ A2 主角覺醒持久化:雲端拉取後同步旗標(跨裝置還原覺醒狀態) */
+          try{ window._protagAwakened = !!(d.avatarCard && d.avatarCard.protagAwakened); }catch(_e){}
           return d.avatarCard;
         }
       }
@@ -1794,7 +1833,9 @@ var _AV_TABS = [
   { k:'glsTab',    p:'眼鏡', c:'眼鏡', cats:[['gls','眼鏡','眼鏡'],['glsClear','鏡片樣式','鏡片樣子']], adj:[['gls','眼鏡位置','眼鏡位置']] },
   { k:'mouthTab',  p:'嘴巴', c:'嘴巴', cats:[['mouth','嘴巴','嘴嘴'],['mouthacc','嘴部飾品','嘴巴戴的']],
     adj:[['mouth','嘴巴位置','嘴嘴位置'],['macc','嘴部飾品位置','嘴飾位置']] },
-  { k:'heldTab',   p:'手持', c:'拿的', cats:[['held','手持物品','拿什麼']], adj:[['held','手持位置','拿的位置']] }
+  { k:'heldTab',   p:'手持', c:'拿的', cats:[['held','手持物品','拿什麼']], adj:[['held','手持位置','拿的位置']] },
+  /* ★ v4.78.0 老師 2026-07-22 需求2:手持之下新增「暱稱」項(act 不切頁·直接開既有 openNicknameModal 設定暱稱視窗) */
+  { k:'nickAct',   p:'暱稱', c:'名字', act:'nick' }
 ];
 /* ★ v4.61.0 舊十一項選單(v4.64.0 前·誤刪是大忌):
  * { k:'bodyTab',   p:'換身體', c:'換身體', cats:[['body','體型(少年/少女/男童/女童)','體型']] },
@@ -2017,12 +2058,14 @@ function _avRenderTabs(){
       sty = 'background:rgba(255,170,60,0.22);border:2px solid rgba(255,190,90,0.7);color:#ffd97a;';
     } else if(t.act === 'reset'){
       sty = 'background:rgba(200,60,60,0.2);border:2px solid rgba(230,100,100,0.65);color:#ff9a9a;';
+    } else if(t.act === 'nick'){   /* ★ v4.78.0 暱稱項 */
+      sty = 'background:rgba(120,200,255,0.2);border:2px solid rgba(140,215,255,0.7);color:#a8e4ff;';
     } else if(on){
       sty = 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;';
     } else {
       sty = 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#9aa8cc;';
     }
-    var ico = (t.act === 'random') ? '🎲 ' : (t.act === 'reset') ? '↩️ ' : '';
+    var ico = (t.act === 'random') ? '🎲 ' : (t.act === 'reset') ? '↩️ ' : (t.act === 'nick') ? '✏️ ' : '';
     h += '<button onclick="_avatarSwitchTab('+i+')" style="padding:14px 12px;font-size:17.5px;font-weight:800;text-align:left;border-radius:10px;cursor:pointer;font-family:inherit;'
       + sty + '">' + ico + _avT(t.p, t.c) + '</button>';
   }
@@ -2032,6 +2075,15 @@ window._avatarSwitchTab = function(i){
   var t = _AV_TABS[i];
   if(t && t.act === 'random'){ window._avatarRandomize(); return; }   /* ★ v4.61.0 act 不切頁 */
   if(t && t.act === 'reset'){ window._avatarResetAll(); return; }
+  /* ★ v4.78.0 暱稱:直接開既有設定暱稱視窗(index.html openNicknameModal·z29999 蓋在造型工房 z19999 之上·
+   *   儲存走既有 _saveNickname 路徑=localStorage lxps_nickname_{uid} + 雲端,與名片暱稱同一份真相) */
+  if(t && t.act === 'nick'){
+    try{
+      if(typeof window.openNicknameModal === 'function'){ window.openNicknameModal(); }
+      else if(typeof window.bannerFX === 'function'){ window.bannerFX(null, _avT('暱稱設定尚未載入', '還不能改名字'), '#ff9a9a', 1600); }
+    }catch(_e){ try{ console.warn('[avatar] 開啟暱稱視窗失敗', _e); }catch(__){} }
+    return;
+  }
   _avCurTab = i; _avRenderTabs(); _avRenderOpts();
 };
 
@@ -2182,12 +2234,13 @@ window._avatarNudge = function(key, dx, dy){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
   if(!cfg.posDef) cfg.posDef = {};
-  cfg.posDef[key] = false;   /* ★ v4.69.0 玩家動了→改用自訂(不再吃管理員預設) */
-  var p = cfg.pos[key] || (window._avEffPos(cfg, key) || [0, 0, 0]).slice();   /* 從有效值起調(順接管理員預設) */
+  var _vk = (window._avPartVarKey ? window._avPartVarKey(cfg, key) : key);
+  cfg.posDef[_vk] = false;   /* ★ v4.69.0 玩家動了→改用自訂(不再吃管理員預設) */
+  var p = cfg.pos[_vk] || (window._avEffPos(cfg, key) || [0, 0, 0]).slice();   /* 從有效值起調(順接管理員預設) */
   var nx = (p[0]|0) + (dx|0), ny = (p[1]|0) + (dy|0);
   if(nx > 100) nx = 100; if(nx < -100) nx = -100;
   if(ny > 100) ny = 100; if(ny < -100) ny = -100;
-  cfg.pos[key] = [nx, ny, (p.length > 2 ? (p[2]|0) : 0)];   /* ★ v4.64.0 第四輪:保留第三欄尺寸% */
+  cfg.pos[_vk] = [nx, ny, (p.length > 2 ? (p[2]|0) : 0)];   /* ★ v4.64.0 第四輪:保留第三欄尺寸% */
   var ex = document.getElementById('_av-pos-' + key + '-x');
   var ey = document.getElementById('_av-pos-' + key + '-y');
   if(ex) ex.textContent = nx;
@@ -2199,11 +2252,12 @@ window._avatarNudgeSize = function(key, d){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
   if(!cfg.posDef) cfg.posDef = {};
-  cfg.posDef[key] = false;   /* ★ v4.69.0 玩家動了→改用自訂 */
-  var p = cfg.pos[key] || (window._avEffPos(cfg, key) || [0, 0, 0]).slice();
+  var _vk = (window._avPartVarKey ? window._avPartVarKey(cfg, key) : key);
+  cfg.posDef[_vk] = false;   /* ★ v4.69.0 玩家動了→改用自訂 */
+  var p = cfg.pos[_vk] || (window._avEffPos(cfg, key) || [0, 0, 0]).slice();
   var ns = (p.length > 2 ? (p[2]|0) : 0) + (d|0);
   if(ns > 50) ns = 50; if(ns < -50) ns = -50;
-  cfg.pos[key] = [(p[0]|0), (p[1]|0), ns];
+  cfg.pos[_vk] = [(p[0]|0), (p[1]|0), ns];
   var es = document.getElementById('_av-pos-' + key + '-s');
   if(es) es.textContent = (ns > 0 ? '+' : '') + ns;
   _avRefreshPreview();
@@ -2212,8 +2266,9 @@ window._avatarNudgeSize = function(key, d){
 window._avatarNudgeReset = function(key){
   var cfg = window._avatarLocalCard.cfg;
   if(!cfg.pos) cfg.pos = {};
-  var d = (window._avatarPartDefaults && window._avatarPartDefaults[key]) || [0, 0, 0];
-  cfg.pos[key] = [ (d[0]|0), (d[1]|0), (d.length > 2 ? (d[2]|0) : 0) ];
+  var _vk = (window._avPartVarKey ? window._avPartVarKey(cfg, key) : key);
+  var d = (window._avatarPartDefaults && window._avatarPartDefaults[_vk]) || [0, 0, 0];
+  cfg.pos[_vk] = [ (d[0]|0), (d[1]|0), (d.length > 2 ? (d[2]|0) : 0) ];
   var ex = document.getElementById('_av-pos-' + key + '-x');
   var ey = document.getElementById('_av-pos-' + key + '-y');
   var es = document.getElementById('_av-pos-' + key + '-s');
@@ -2226,6 +2281,7 @@ window._avatarNudgeReset = function(key){
 /* ★ v4.69.0 決定3乙:勾/取消「使用預設」— 勾=用管理員預設(鎖微調)·取消=自己調(從預設值起) */
 window._avatarTogglePosDef = function(key){
   var cfg = window._avatarLocalCard.cfg;
+  try{ if(window._avPartVarKey) key = window._avPartVarKey(cfg, key); }catch(_){}
   if(!cfg.posDef) cfg.posDef = {};
   var useDefNow = !(cfg.posDef[key] === false);
   if(useDefNow){
@@ -2379,7 +2435,8 @@ function _avRenderOpts(){
     for(var ai=0; ai<tab.adj.length; ai++){
       var ak = tab.adj[ai][0], alP = tab.adj[ai][1], alC = tab.adj[ai][2];
       var _eff = window._avEffPos(cfg, ak) || [0, 0, 0];
-      var _useDef = !(cfg.posDef && cfg.posDef[ak] === false);
+      var _vkUI = (window._avPartVarKey ? window._avPartVarKey(cfg, ak) : ak);
+      var _useDef = !(cfg.posDef && cfg.posDef[_vkUI] === false);
       var _ex = _eff[0]|0, _ey = _eff[1]|0, _es = (_eff.length > 2 ? (_eff[2]|0) : 0);
       h += '<div style="margin:8px 0;padding:10px 12px;background:rgba(20,30,60,0.35);border:1.5px solid rgba(140,200,255,0.25);border-radius:12px;">'
         + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:' + (_useDef ? '2' : '8') + 'px;">'

@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-21  / 目前主程式版本:v4.73.0(主線:序章森林停BGM留環境音+章節選擇縮圖+封面改播章節音樂播完自動關閉·管理員測試)
+//  最後更新:2026-07-22  / 目前主程式版本:v4.78.0(主線劇情:動作音效缺檔回退近義音+教學引導戰鬥六場全接線·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,87 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.78.0 — 主線劇情:動作音效缺檔回退近義音 + 教學引導戰鬥六場全接線·管理員測試
+  {
+    ver: 'v4.78.0',
+    date: '2026-07-22',
+    adminOnly: true,
+    brief: [
+      '📖【主線劇情・音效補齊 + 教學戰鬥(測試中·未開放)】兩項升級:①還沒錄好的劇情音效,先自動借用遊戲裡意思最接近的技能音效頂上(例如登場借召喚角色、護盾借守護、恢復借治癒魔法),劇情不再有一段一段的靜默;等正式音效上傳後會自動改用正式的,不必再改程式。②六場劇情戰鬥全部做好了——第一章第一戰會用卡片一步一步帶你認識戰鬥操作(可以上一步、下一步、也可以跳過),接著播出戰鬥與勝利演出,其餘五場則直接播戰鬥與勝利,劇情從頭到尾走得完。③每一張教學卡片下面,主角都會忍不住吐槽一句(像是「有 AI 幫我打,那我站在這裡幹嘛」),把教學裡難免會提到的遊戲介面名詞,變成主角的個性。④八位夥伴在劇情裡有名字了:動物學家‧小真老師、小劇團員‧善行、弦樂團員‧真音、籃球隊員‧力強、田徑隊員‧阿動、電腦繪圖師‧活靈、程式設計師‧知理、直笛團員‧誠欣(只在劇情對白中出現,英雄圖鑑、召喚、戰鬥、編組一律維持原本名稱),對白上方的名字也略微縮小,長名字不會擠到台詞。⑤「👤 我的主角」造型工房選單最下面新增「✏️ 暱稱」,不用退出去就能直接改暱稱(和原本的設定暱稱是同一個)。⑥資料安全加強:主線劇情進度與主角造型都再確認過綁定各自帳號,共用平板換人登入時不會把上一位的劇情進度或造型帶到下一位身上。',
+    ],
+    items: [
+      '★ v4.78.0【動作音效缺檔回退·index.html】新增 _MS_SFX_FALLBACK(16 個主線 sfx key → 既有 <audio> 元素 id)+ _msFbUrl();_msPlaySfx / _msPlayHeldSfx 改為「先抓短檔名 {key}.m4a?v=版本,onerror 或 play() 失敗才用近義音效頂替」,成功播放則鎖住不回退。對照:appear→sfx-summon-reveal、card→sfx-deal、whistle→sfx-battle-start、charm→sfx-youyou-burst、shield→sfx-guard、fire→sfx-explode、stink→sfx-powerdown、treasure→sfx-medal-unlock、darkrise→sfx-wb-boss-skill、restore→sfx-heal;已到齊的 6 個(footstep/crack/fall/keyboard/sword/pray)也各配一組保險回退。',
+      '★ v4.78.0【教學引導戰鬥(甲案)·index.html】新增 _MS_BATTLE_DEFS(六場敵人名/圖示/導語·雙版文案 鐵律1.232)與四幕演出:_msBattleIntro(敵人現身)→ _msBattleTutorial(復用既有 TUTORIAL_STEPS 11 步文案·premium 取 desc / cute 取 descSimple·上一步/下一步/跳過)→ _msBattleSim(敵人血條四段遞減+普攻與暴擊音)→ _msBattleWin(勝利卡·點畫面或 2.6 秒續播)。',
+      '★ v4.78.0【分派器接線·index.html】_msRunAct 新增 battle_ch1_1 / ch1_2 / ch3_boss / ch4_boss / ch5_boss / ch6_boss 六個 case → _msActBattle(act, done),不再 fall-through 到 default;default 改為未知 act 直接續播。battle_ch1_1 帶完整教學引導,其餘五場只播戰鬥與勝利。',
+      '★ v4.78.0【主角吐槽條·index.html】新增 _msQuipBar(premium,cute)(💭+_msWho(__hero) 暱稱+淡藍吐槽框)與 _MS_TUT_QUIPS(11 步吐槽·以標題關鍵字配對而非索引,TUTORIAL_STEPS 日後增刪不會錯位·查無走通用兜底句);教學引導戰鬥每一步、以及既有三張教學卡(tutorial_king/levelup/shop)皆插入吐槽條(插在按鈕之前)。語氣沿用主線 DB 主角既有的「（心想）…」自嘲風格,雙版文案(鐵律1.232)。',
+      '★ v4.78.0【劇情專屬姓名·index.html】新增 _MS_STORY_NAME 對照表(八位夥伴)+ _msStoryName(n) helper;_msWho 尾端與 _msActJoin 加入隊伍演出各套一次,DB 的 who 值/HERO_DB key/圖鑑/召喚/戰鬥/編組完全不動(純顯示層對照,查無對照回原名無害)。另 DB 內兩句動物學家自我介紹台詞(premium+cute)同步改寫為「我是動物學家‧小真老師」。',
+      '★ v4.78.0【對白名字縮小·index.html】showLine 說話者名字 font-size 38→30px、letter-spacing 3→2px、margin-bottom 16→14px(劇情專屬姓名最長 7 字·避免擠壓對白區)。',
+      '★ v4.78.0【造型工房新增暱稱項·avatar_db.js】_AV_TABS 於 heldTab 之後新增第 11 項 { k:nickAct, act:nick }(act 型不切頁);_avRenderTabs 補藍色系樣式+✏️ 圖示;_avatarSwitchTab 補 nick 分支 → 呼叫 index.html 既有 window.openNicknameModal()(z29999 蓋在造型工房 z19999 之上·儲存走既有 _saveNickname 路徑=localStorage lxps_nickname_{uid} + 雲端·與名片暱稱同一份真相);函式未載入時走 bannerFX 雙版提示。',
+      '★ v4.78.0【UID 綁定稽核(任務3)·index.html】稽核結果:主線進度雲端 players/{uid}.mainStoryProgress ✅、本機 lxps_mainstory_{uid} ✅(三個寫入點皆 if(uid) 守門)、avatarCard 雲端 players/{uid} ✅、本機 lxps_avatarCard_{uid} ✅ — 儲存層全部已綁 uid。★但查出真實漏洞:_clearAccountLocalData 換帳號清單漏列 window._mainStoryProgress / _avatarLocalCard / _protagAwakened / _avatarNickname 四個記憶體物件 → 共用 iPad 換帳號未整頁 reload 時,前一位的章節 done 會被 _msHydrateProgress 的 union(只增不減)併進下一位並寫上雲端(與 v4.6.0 寵物同型病灶)。修法:四者一併加入換帳號記憶體清除(只清記憶體不動雲端·誤刪是大忌)+ _msHydrateProgress 加 UID 守門第二道防線(window._mainStoryProgressUid 與當前 uid 不符→先清空再 union)。',
+      '★ v4.78.0【零副作用保證】教學引導戰鬥為純演出:不建立/不改動 G 戰場物件、不呼叫 startTurn 或 _closeTutorial、不寫 _tutorialDone/_tutorialMiniDone、不動存檔與獎勵,因此真實戰鬥的教學提示與流程完全不受影響;演出掛 15 分鐘 watchdog 兜底防卡死。真實可操作的主線戰鬥仍列 Phase 2(待主角戰鬥英雄)。',
+      '★ v4.78.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0、sw.js/world-boss.js 未動。9 版號同步點對齊 v4.78.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;admin 零真?.。',
+    ],
+  },
+  // v4.77.0 — 主線劇情:動作音效對接 + 打字機修正 + 序章森林腳步聲5秒·管理員測試
+  {
+    ver: 'v4.77.0',
+    date: '2026-07-22',
+    adminOnly: true,
+    brief: [
+      '📖【主線劇情・體驗優化(測試中·未開放)】三項打磨:①對白動作音效正式接上(踏步、破裂、翻頁、寶劍出鞘、祈禱等已上傳的音效會在對應台詞響起);②打字途中手滑點到「上一句」,會先把整句補完、要再點一次才真的回看,避免訊息一閃而過看不到;③踏進序章森林那一刻的腳步聲會持續約5秒後自動淡出停止,不會一直踩個不停。',
+    ],
+    items: [
+      '★ v4.77.0【動作音效對接·index.html】對白 sfx key→_msPlaySfx→抓短檔名 {key}.m4a?v=版本;已上傳6音效(footstep/crack/fall/keyboard/sword/pray)bump版號破SW/CDN快取後即響;其餘10個缺檔 graceful 靜默待老師上傳。',
+      '★ v4.77.0【打字機修正·index.html】pb.onclick(上一句)對稱補上「打字中→clearInterval+顯示整句+return」守門,與 _msAdvance/下一句一致;打字未完不會直接跳段回看。',
+      '★ v4.77.0【森林腳步聲5秒·index.html】新增 held-sfx 機制(_msPlayHeldSfx/_msStopHeldSfx·loop 播放+ms 後淡出);序章森林 footstep 行掛 sfxHold:5000;showLine 進下一句/離場皆自動停止持續音。',
+      '★ v4.77.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js/sw.js 維持不動。',
+    ],
+  },
+  // v4.76.0 — 主角 A2:三覺醒技(三分投射/變臉戲法/凡人的臨摹大師)+覺醒閘門·管理員測試
+  {
+    ver: 'v4.76.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '👤【我的主角・覺醒技能(測試中·未開放)】主角覺醒後學會兩招 + 一招大絕:三分投射(打一個敵人·有機會暴擊還能拿能量)、變臉戲法(先給自己一個好狀態再攻擊)、大絕「凡人的臨摹大師」(打全部敵人 + 把隊友的好狀態學來分給整隊)。未覺醒前一律不能使用;主角仍不會出現在學生的召喚/圖鑑,正式開放請等公告。',
+    ],
+    items: [
+      '★ v4.76.0【主角三覺醒技·index.html·管理員限定】覆寫 HERO_DB[主角] s1三分投射(c3·特技250%單體+50%暴擊×1.5+暴擊回2能量·沿用籃球隊員既有 execSkill 通用實作)、s2變臉戲法(c4·隨機獲得1有利狀態+特技+攻擊+速度傷害·沿用既有通用實作);注入 BURST_DB[主角]「凡人的臨摹大師」。三招皆走 doDmg 受世界BOSS 5000cap(鐵律1.31);升級沿用既有 _activeSkLvMult(每級+5%) + SKILL_UPGRADE_DEF 技能名共用(三分投射/變臉戲法皆已在表)。d/fd/sd 雙版(鐵律1.232·fd 只寫 Lv1 鐵律1.160)。',
+      '★ v4.76.0【爆發 凡人的臨摹大師·_runBurst name===主角 分支(甲)】敵全體特技200%×_burstMult 分攤(必中·無視有利·isAoe)+ 臨摹複製我方1名夥伴身上1個有利狀態給全隊1回合(查無則從基礎有利清單挑1·臨摹兜底);BURST_UPGRADE_DEF[主角]200→280%(每升+10%乘算);BURST_GIF 本輪未注入→查無走預設視覺(下輪於 hero_db.js 補一筆專屬 GIF)。',
+      '★ v4.76.0【覺醒閘門(乙)】skillCost 頂部:主角未覺醒時 s1/s2 回99(能量永遠不足=不可施放)、覺醒後正常 c3/c4;execSkill 頂部雙保險守門(未覺醒 return 不執行);_canBurst 未覺醒→false(不可爆發)。三處皆 _isProtagHero 把關·不影響同名的籃球隊員/變臉戲法原主人。aiUseSkill 三分投射/變臉戲法既有通用分支自動涵蓋(鐵律1.128)。',
+      '★ v4.76.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.76.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;admin 零真?.。剩餘 A2:任務1立繪(需老師實機驗渲染路徑)、任務4重置回Lv1(呼 _lxpsSetProtagAwakened(false))。',
+    ],
+  },
+  // v4.75.0 — 主角 A2:覺醒持久化 + 第六章覺醒 act + 圖鑑暱稱顯示·管理員測試(補記)
+  {
+    ver: 'v4.75.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '👤【我的主角・覺醒與名字(測試中·未開放)】主角打完第六章覺醒場景後會「覺醒」(稀有度 R→SSR)並永久記住;英雄圖鑑主角卡會顯示玩家取的暱稱(沒設就顯示「主角」)。主角仍不會出現在學生的召喚/圖鑑,正式開放請等公告。',
+    ],
+    items: [
+      '★ v4.75.0【覺醒持久化·avatar_db.js】avatarCard 新增 protagAwakened 欄位(隨 cfg 上雲 merge:true·免改 rules);_avatarLoadLocal/雲端命中設 window._protagAwakened;新增 window._lxpsSetProtagAwakened(v)(設記憶體旗標 + avatarCard 欄位 + 存本機/雲端·v 預設 true,傳 false 供重置)。讀取端 _getHeroRarity 主角→覺醒?SSR:R。',
+      '★ v4.75.0【第六章覺醒 act·index.html】_msRunAct 分派器新增 case awaken_hero → 呼 _lxpsSetProtagAwakened(true)(fire-and-forget·退路設 _protagAwakened=true)→ done() 續播;第六章覺醒場景(v4.68.0/67.0 已建)播完 act 觸發覺醒。',
+      '★ v4.75.0【圖鑑暱稱顯示·index.html】圖鑑卡名 + 詳情頁英雄名標題套 _heroDisplayName(主角→玩家暱稱 fallback「主角」·非主角一律回原名無害);只接顯示點·不改 HERO_DB key/狀態/統計(onclick/data-heroname 仍用原 name)。戰鬥卡/編組頁暱稱留待任務1立繪一起做。',
+    ],
+  },
+  // v4.74.0 — avatar 部件預設「每個變體獨立」修復 + 主角資料地基(A1·休眠·管理員測試)
+  {
+    ver: 'v4.74.0',
+    date: '2026-07-21',
+    adminOnly: true,
+    brief: [
+      '🎨【造型工房・設為預設 大修(老師測試中)】管理員把不同髮型/套裝/飾品分別設為預設時,現在每一款各自獨立記住自己的位置與大小,互不覆蓋;玩家自訂微調也一樣每個部件×體型分開記。★注意:舊的共用預設會清空,管理員需針對每一款重新按「📌設為預設」。',
+      '👤【我的主角・可上場英雄地基(測試中·未開放)】為之後主角能編入隊伍、上場戰鬥、覺醒鋪好底層資料;此版僅資料地基,主角仍不會出現在學生的召喚/圖鑑/鬥技場,正式開放請等公告。',
+    ],
+    items: [
+      '★ v4.74.0【avatar 部件預設 per-變體獨立·avatar_db.js】新增 window._avPartVarKey(cfg,slot):槽位鍵→「槽#體型#變體id」(素體 baseH/baseB 只到體型·該槽未選變體只到體型·未知槽維持原鍵向下相容)。單一真相 _avEffPos 頂部解析變體鍵→render(_ofsWrap/_avAccLayer)自動 per-變體;_avatarSetPartDefault/_avatarNudge/_avatarNudgeSize/_avatarNudgeReset/_avatarTogglePosDef/UI 使用預設勾選 共 7 讀寫點集中改走變體鍵(DOM 顯示 id 保留槽位鍵、儲存走變體鍵·兩者分離)。',
+      '★ v4.74.0【遷移·一次性】舊雲端管理員預設 gameConfig/avatarPartDefaults(舊槽位鍵)與玩家舊 cfg.pos/posDef 槽位鍵→新版讀變體鍵故被孤立=舊共用預設清空(本為錯誤共用·屬預期改善);管理員重新針對每款×體型按📌設為預設。bump AVATAR_DB_VERSION 破圖片 ?v= 快取(玩家首次進造型工房一次性重抓·屬預期)。',
+      '★ v4.74.0【主角資料地基 A1·index.html·休眠管理員限定】中央 IIFE:_PROTAG_HERO_NAME/_isProtagHero/_PROTAG_HERO_PUBLIC=false/_protagHeroOpenForMe(=公開旗標||管理員)/_lxpsProtagAwakened(預設 false→R)/_heroDisplayName(暱稱 helper);注入 HERO_DB 主角(hp79/atk13/sp13/spd13·S1三分投射/S2變臉戲法 c99 佔位待 A2)+AVATARS+HERO_IMGS(星佔位)+_PLAYER_HERO_NAMES。_getHeroRarity 主角→覺醒?SSR:R;advGetUnlockedHeroes 管理員推入+final force-include(gated);圖鑑 _buildHeroGrid/arena×4/援軍/全收錄/收藏獎章 共 17 站點 _isProtagHero 排除閘門(全 gated·學生完全看不到)。',
+      '★ v4.74.0【範圍與驗證】avatar_db.js(_avPartVarKey+7 讀寫點)+index.html(A1 中央 IIFE+17 站點閘門)+admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.74.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;avatar_db.js node --check 過·0 孤立代理字元。A2(立繪渲染/3覺醒技/覺醒持久化/重置/第六章覺醒 act)下一版接。',
+    ],
+  },
   // v4.73.0 — 主線:序章森林停BGM留環境音+章節選擇縮圖(首張場景插圖)+封面改播章節音樂.m4a一次播完自動關閉·管理員測試
   {
     ver: 'v4.73.0',
@@ -251,81 +332,6 @@ window.GAME_CHANGELOG = [
     ],
     items: [
       '★ v4.62.0【自訂角色優化四合一・avatar_db.js+index.html】①名片專屬 BGM:index.html 新增 audio#bgm-avatar-card(preload=none·raw 網址載 自訂角色名片.m4a·loop);_avatarOpenCard 開名片時掃 audio[id^=bgm-] 記住原播曲(window._avCardPrevBgm)→ bgmFadeTo 淡入名片曲;新 _avatarCardClose 統一關閉(✕/點背景皆走此)→ 有原曲 bgmFadeTo 淡回·無原曲 bgmStop;染色重繪 _avatarCardRerender 重開時名片曲已在播即跳過不重起(不斷音) ②造型工房全螢幕動態影片背景(自訂角色動態背景.mp4·比照寵物小屋 v4.2.0 模式):createElement video muted autoplay playsinline·z-index:-1 蓋面板漸層底在正常流內容之下·onloadeddata 淡入/onerror 靜默移除露出漸層底·brightness(0.55) 壓暗保右側選單可讀·隨面板關閉一併移除·URL 帶 ?v=AVATAR_DB_VERSION 破快取 ③特寫改「只放大人物·背景尺寸不變」:_avatarRenderSVG PNG 路徑 portrait 時 viewBox 維持全幅 0 0 360 480(_bgLayer 背景照常鋪滿),人物全部圖層包 <g transform=scale(480/_pRect.h) translate(-x,-y)> 群組把特寫矩形映射回全畫布(_pRect=v4.61.0 同款頸線+118 構圖·3:4 等比故 X/Y 縮放一致);背景層在群組外;名片(portrait=true)同構圖自動生效;legacy SVG 路徑(無背景層)維持舊 viewBox 裁切零改動 ④全部重置確認框改遊戲內建風格視窗:新 _avShowConfirm(title,msg,onOk)(樣式同造型工房/名片·z20005·✅確定/✖取消/點背景取消·文字 _avT 雙版=鐵律1.232);_avatarResetAll 改走此視窗(瀏覽器原生 confirm 舊寫法保留註解·誤刪是大忌);拆層隱藏規則不變(整頭→隱藏素體頭+髮+五官件·整身/整套→隱藏素體身+衣物層·服裝分頁單件維持覆蓋法不隱藏素體);admin_panel.js 僅版號同步·無 ?.。',
-    ],
-  },
-  // v4.61.0 — 👤 我的主角:面板大改版(直式選單/隨機組合/特寫名片·管理員測試中)
-  {
-    ver: 'v4.61.0',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-18',
-    brief: [
-      '👤【我的主角・面板全新排版!(老師測試中)】右邊選單改成由上到下十個項目:換身體/隨機組合/套裝/膚色/表情+瞳色/髮型+髮色/服裝+配色/手持(日後開放)/背景/全部重置,一眼看懂!',
-      '🎲 全新「隨機組合」:按一下就幫你亂數搭配整套或混搭造型加隨機配色,手氣好就是最帥最可愛的造型!「全部重置」一鍵變回原本的樣子(體型和名片的話會保留)。',
-      '🔍 預覽圖新增「放大」按鈕:等比例放大上半身特寫,眼睛瞳色看得一清二楚!名片(戰鬥卡片預覽圖)也改用特寫構圖,配上你選的背景超有型!',
-      '💇 髮型款式選單重新開放:20 款髮型配 16 種髮色又回來了!',
-    ],
-    items: [
-      '★ v4.61.0【面板改版・avatar_db.js】①_AV_TABS 十項直式重排(老師指示序):換身體(體型獨立)/隨機組合(act)/套裝(full+headfull+bodyfull)/膚色/表情+瞳色(eye+eyeC+mouth+gls+ear+browC)/髮型+髮色(P.hair 重新開放)/服裝+配色(top+btm+sh+clothC)/手持(wip 日後開放佔位)/背景(bg)/名片語錄(非清單項·保留座右銘入口可移除)/全部重置(act);面板右側改「直式選單欄+選項區」左右並排;act 項按下直接執行不切頁(_avatarSwitchTab 分流)②_avatarRandomize:當前體型可用+已解鎖款亂數(_avAvailIds 同選單過濾規則·gls/sh 短名映射),三模式輪盤(整套/整頭+整身混搭/自由搭配髮+衣),顏色全隨機(膚/髮/瞳/眉/服裝配色)+配件25%機率+背景隨機;體型/座右銘不動 ③_avatarResetAll:confirm 後 cfg 回預設(體型/座右銘保留)④_avatarRenderSVG 加第三參數 portrait:上半身特寫 viewBox(頸線+118px 高·3:4 等比·臉中心對齊·依體型 META/TF 計算);預覽 🔍放大/🔎縮小 鈕切換 _avZoom;名片卡 _avatarOpenCard 改 portrait=true(=戰鬥卡片預覽構圖·含所選背景)⑤wip/無cats 頁防呆佔位;拆層隱藏規則(v4.60.0)不變;index.html/admin_panel.js 僅版號同步。',
-    ],
-  },
-  // v4.60.1 — 👤 我的主角:體型選單修復 + 眼白修復(管理員測試中)
-  {
-    ver: 'v4.60.1',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-18',
-    brief: [
-      '👤【我的主角・緊急修復!(老師測試中)】「換臉」「換身體」分頁修好了:四種體型(少年/少女/男童/女童)通通選得到,眼鏡和鞋子的選單也回來了!',
-      '👀 換造型後眼睛的眼白變透明的問題修復:全部 36 件造型素材重新製作,眼睛白白亮亮!',
-    ],
-    items: [
-      '★ v4.60.1【兩BUG修復・avatar_db.js+素材】①體型選不到根治(老師實機回報):_avRenderOpts/_avatarIsUnlocked 直接 P[cat] 查表但頁籤 cats 用短名 gls/sh(正確鍵 glasses/shoe)→ undefined.length THROW →「換臉」「換身體」整頁 innerHTML 未寫入=空白·體型/膚色/上衣/褲/鞋全選不到;經 vm sandbox 重現確認 v4.58.1 原版同樣 THROW=v4.57 簡化頁籤時的原生 bug 非本輪引入;修法=cat→P 鍵映射(gls→glasses/sh→shoe·對照 _AV_CFG_KEY 逆向)+查無分類顯示繪製中佔位不炸整頁 ②眼白透明根治:素材管線去背「封閉背景塊清除」(灰>10%+白>10%判棋盤格)把含灰色陰影的眼白誤清 → 去背加臉區保護區(角色上42%高·中央64%寬內的封閉塊一律保留)·從 src2 原圖以合成仿射單次 warp 重產 12 整套+24 整頭整身件(免二次重採樣·眼框透明px全數歸0·髮隨頭走/身件髮洞 inpaint 沿用);素體拆層 8 件不受影響未動。',
-    ],
-  },
-  // v4.60.0 — 👤 我的主角:自訂角色大優化(整頭/整身/配色/背景·管理員測試中)
-  {
-    ver: 'v4.60.0',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-18',
-    brief: [
-      '👤【我的主角・大優化!(老師測試中)】全新「造型」分頁登場:除了整套換裝,現在還可以「只換整顆頭」或「只換整個身體」!劍士的頭配和服的身體?魔法師的頭配鎧甲?自由混搭!',
-      '🎨 全新「服裝配色」:16 種顏色一鍵改變衣服色系,皮膚永遠不會被染到,膚色可以另外調!瞳色、髮色、膚色現在換上任何造型後都照樣可以調整!',
-      '🖼 全新「背景更換」:14 個遊戲場景任你選!台灣地圖、玉山頂、阿里山、台北101、三峽/深坑/彰化老街、寵物小屋、日本神社、日本祭典、埃及沙漠、金字塔、黃金寶庫、至寶星空,讓你的主角站在最喜歡的地方!',
-      '💇 髮型款式選單暫時收起來優化中(髮色照常可調),之後會以更棒的方式回歸,敬請期待!',
-    ],
-    items: [
-      '★ v4.60.0【自訂角色優化・avatar_db.js】老師六大系統裁決全實裝:①素體拆層(裁決一乙)body_head/body_torso_{bt}.png 頸線切割(頭件下蓋6px蓋接縫·重組與原素體逐像素一致maxdiff=1)·P.body 加 headImg/torsoImg ②P.headfull 整頭造型(隱藏素體頭+髮型層+眉/眼/鼻/嘴五官件·眼鏡/帽/耳照常疊)③P.bodyfull 整身造型(隱藏素體身+上衣/下衣/襪/鞋層)·衍生素材=12套裝頸線切割24件(整頭件連通過濾去劍柄/肩甲殘片·長髮款垂落段歸整身件側=頸線切割已知限制)④換色引擎改上層渲染(裁決二·染基礎圖沒用已被取代):新 _avatarTintPiece 選擇性染色(逐像素優先序 瞳眼框虹膜→眉框→膚色域→髮=非膚眼框外→服裝=非膚·kind 分 full/headfull/bodyfull/baseHead/baseTorso/cloth 六類規則)·無任何取代件維持既有 _avatarComposeBody 整體路徑零回歸 ⑤clothC 服裝配色(裁決三乙·AVATAR_PALETTES.cloth 16色·膚色像素永遠排除可再調膚色·適用整套/整身/素體運動服/上衣/下衣/鞋層·和服實測可染px與膚+頸上保護區重疊=0)⑥髮型款式選單隱藏(裁決四·P.hair 完整保留·cfg.hair 照常渲染·hairC 髮色保留·舊頁籤註解可復原)⑦P.bg 背景 14 場景(repo 根目錄現有圖·渲染最底層 360×480 slice·encodeURI 處理中文空格檔名·PNG模式清單過濾對 bg 豁免)⑧頁籤重構:造型(整套/整頭/整身/服裝配色/背景)/髮色/換臉/換身體/手持/名片;cfg 新增 headf/bodyf/bg/clothC 四鍵·舊存檔 _pick 容錯退 id0 完全相容;素材 32 件(8 拆層+24 衍生)放 avatar_parts/;index.html/admin_panel.js 僅版號同步。',
-    ],
-  },
-  // v4.59.0 — 👤 我的主角:整套造型系統(12 件·管理員測試中)
-  {
-    ver: 'v4.59.0',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-18',
-    brief: [
-      '👤【我的主角・整套造型登場!(老師測試中)】「換身體」新增「整套造型」:一鍵直接換上整套帥氣/漂亮的完整裝扮,連髮型姿勢都完美搭配好!',
-      '⚔ 劍士系列 4 套:輕裝大劍士(男童)/華麗細劍士(少女)/重裝鎧甲劍士(少年)/俏麗雙劍士(女童),背著大劍握著細劍超有冒險者風範!',
-      '🧙 魔法師系列 4 套:水藍(女童)/紫電(少女)/赤紅(少年)/翠綠(男童),四色魔法袍加披風,走到哪都是最亮眼的魔法師!',
-      '👘 日式和服 1 款四種體型通通有!選「無(自由搭配)」就回到原本自由混搭模式;整套造型只有你的體型有的才會出現,之後會陸續補齊其他體型,敬請期待!',
-    ],
-    items: [
-      '★ v4.59.0【整套造型系統・avatar_db.js】新分類 P.full「整套造型」(換身體頁籤·cfg.full·id0=無 自由搭配):選擇時「隱藏素體基礎圖」直接以整張 fullbody 素材取代(老師裁定),其餘圖層(髮型/眼鏡/帽子/手持等)照常疊加;渲染器素體層改 fullPng 優先(fullPng ? 整套 : 素體染色/素體),膚色/瞳色染色不套用於整套素材(素材自帶完整外觀);首批 12 件=劍士 4(輕裝大劍士 kidboy/華麗細劍士 girl/重裝鎧甲劍士 boy/俏麗雙劍士 kidgirl)+魔法師 4(水藍 kidgirl/紫電 girl/赤紅 boy/翠綠 kidboy)+日式和服四體型齊;素材 504×720 同素體規格·頭頂/腳底對齊素體幾何(切換造型大小不跳動)·檔名 fullbody_{en}_{body}.png 放 avatar_parts/;缺體型格 null 佔位該體型自動隱藏(沿用 v4.58.0 _avImgFor per-body 機制);名稱全雙版(鐵律1.232);_avatarDefaultCfg/_AV_CFG_KEY 補 full 欄位·舊存檔無 full 鍵 _pick 容錯退 id0 完全相容;index.html/admin_panel.js 僅版號同步。',
-    ],
-  },
-  // v4.58.1 — 👤 我的主角:髮型裁切修復 + 介面放大(管理員測試中)
-  {
-    ver: 'v4.58.1',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-18',
-    brief: [
-      '👤【我的主角・造型工房 大改版!(老師測試中)】打扮方式變得超簡單:只有「換髮型」「換臉」「換身體」三大類加名片語錄,一眼就知道要按哪裡!',
-      '💇 全新繪製的素材大量上線:髮型 20 款(短髮/雙馬尾/自然長髮/妹妹頭/刺蝟頭/高馬尾/中捲/低馬尾/超長直髮/中分/大馬尾/公主頭/制服頭/精靈捲/旁分/雙辮子/油頭/側馬尾/西瓜頭/中等長髮)配 16 種髮色!',
-      '😊「換臉」可以選 6 款眼睛(瞇瞇眼/溫柔眼/帥帥眼/神氣眼/水汪眼/高傲眼)、2 款嘴巴、黑框眼鏡、精靈耳,再調瞳孔和眉毛顏色;「換身體」可以挑體型、膚色,還能換上白T牛仔褲、學生制服、西裝、藍長裙、小洋裝、吊帶裝!',
-      '📌 有些款式只有特定體型才有(例如西裝目前只有少年版),選單會自動只顯示你的體型有的款式,之後會陸續補齊,敬請期待!正式開放時間請等公告。',
-    ],
-    items: [
-      '★ v4.58.0【自訂主角簡化+素材接線·avatar_db.js】_AV_TABS 簡化為四頁籤:換髮型(hair+hairC)/換臉(eye+eyeC+mouth+gls+ear+browC)/換身體(body+skin+top+btm+sh)/名片(q);舊八頁籤定義保留於註解可復原。素材=老師人眼對位 aligned 圖 × 差異法抽件四批共 122 件(等比零拉長;髮件為光頭素體上之完整整頭;服裝件完全覆蓋素體;層序 素體→襪鞋褲衣→臉部件→前髮→耳→眼鏡)。缺體型格以 null 佔位,PNG 模式清單過濾改依當前體型(_avImgFor per-body)判定,缺格款於該體型自動隱藏;j===0 預設款永遠顯示(top/btm/shoe id0 更名 預設運動服/預設運動短褲/打赤腳)。',
-      '★ v4.58.0【接線明細】髮 20 款(id0/2/3/4/5/6/7/10~22;id3 缺少年、id18 僅少女、id19/22 僅少年、id20 僅幼女、id21 僅幼男)、眼 id3/4/5/10/11/12、嘴 id10/11(少年原圖無變化無件)、眼鏡 id4、精靈耳 id1 解鎖、上衣 id10 白T+套裝 id11 制服/id12 藍長裙(少女)/id13 西裝(少年)/id14 小洋裝(幼女)/id15 吊帶裝(幼男)、下衣 id10 牛仔褲、鞋 id10 帆布鞋;檔名沿用既有槽位規劃(hair_short_boy.png 等),程式引用 126 檔與素材包交叉核對零缺零餘。mouth id0/shoe id11/12 無件維持 _offImg 停用。',
-      '★ v4.58.0【範圍與驗證】改 avatar_db.js(頁籤+接線+per-body 過濾)+ index.html(mega 鍵與版號)+ game_changelog.js + admin_panel.js(僅版號)。功能仍受 _AVATAR_ADMIN_ONLY gating 一般玩家不可見。⚠ 部署需同步上傳 avatar_parts/ 資料夾 122 件 PNG(缺檔時選該款=素體原樣不破圖,_imgLayer 空值防呆)。check_inline 21 塊/node --check/孤立代理 0/admin 零真 ?./7 版本同步點全數 → v4.58.0。GAME_CHANGELOG 維持 20 筆(v4.57.0 未部署併入本條)。上傳順序:game_changelog.js → admin_panel.js → avatar_db.js → avatar_parts/ 素材 → index.html(最後)。',
     ],
   },
 ];
