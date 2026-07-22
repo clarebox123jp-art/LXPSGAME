@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-22  / 目前主程式版本:v4.78.0(主線劇情:動作音效缺檔回退近義音+教學引導戰鬥六場全接線·管理員測試)
+//  最後更新:2026-07-22  / 目前主程式版本:v4.79.0(主線加入夥伴角色解鎖大卡+管理員造型預設/上鎖雲端同步修正+我的主角入口移至英雄圖鑑·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.79.0 — 主線加入夥伴角色解鎖大卡 + 管理員造型預設/上鎖雲端同步修正 + 我的主角入口搬家
+  {
+    ver: 'v4.79.0',
+    date: '2026-07-22',
+    adminOnly: true,
+    brief: [
+      '📖【主線劇情・新夥伴登場大卡(測試中)】劇情裡有新夥伴加入隊伍時,除了原本浮現名字的演出,接著會跳出一張大大的角色卡:完整立繪、角色名字、兩個技能(含要花多少能量)和極限爆發的說明,規格跟召喚抽到新角色時看到的那張一模一樣。一次只看一位,按「▶ 下一位」換下一個,上方會顯示「第幾位 ／ 共幾位」,看完最後一位按「太棒了!」就繼續播劇情。序章一次登場四位、第一章兩位、第二章兩位、第三章兩位、第四章三位,現在都看得到他們長什麼樣子、會什麼招。卡片上的名字用劇情裡的稱呼(例如動物學家‧小真老師),但圖片與技能還是取自英雄圖鑑本人,不會對不上。',
+      '👤【管理員造型預設與上鎖・真正套用到全體玩家】修好一個藏得很深的問題:老師在造型工房把每個部件的位置與大小調好、按「📌設為預設」之後,那份預設其實只有在「打開造型工房」的當下才會從雲端抓下來,而且重新整理網頁就忘記了。結果學生在「冒險者名片」、「好友名片牆」以及主線劇情展示名片的地方,看到的都是沒有套上老師預設的版本,位置會跑掉。現在改成三點:①登入完成就先把老師設好的預設與上鎖名單抓下來,不必等學生點開造型工房;②抓下來的內容會存在平板本機,重新整理網頁、甚至暫時沒網路也還在;③打開造型工房那一瞬間,不會再閃過一下「本來應該被鎖住的款式」。老師改完預設或鎖定後,學生下次登入(或重新打開造型工房)就會套用。',
+      '🗂【「👤 我的主角」入口搬家】原本放在冒險選關頁一長串按鈕的中間,現在移到「⚔️ 英雄圖鑑」畫面最上方、標題的左邊,和「← 返回」在同一排,一進圖鑑就看得到,不用再往下捲。功能完全一樣,一樣是管理員測試期間才看得見。',
+    ],
+    items: [
+      '★ v4.79.0【主線加入夥伴角色解鎖大卡・乙案·index.html】①新增 _msJoinCardHtml(nm):單位夥伴大卡 HTML,規格對齊 _showSummonRareHeroPreview(立繪 min(70vw,300px) 1:1 金框 + 名稱 + s1/s2(技能名/能量🔷/說明) + 💥極限爆發);圖片走 HERO_IMGS[原名]·技能走 HERO_DB[原名]·爆發走 BURST_DB[原名],顯示名走 _msStoryName(劇情專屬姓名)→ 底層 key 完全不動;img onerror 退回 AVATARS emoji 不留破圖;新增 _msEscTx 對 名稱/技能名/說明 做 <>& 逸出(13 位夥伴實測資料無 HTML,純防未來學生設計英雄) ②新增 _msActJoinReveal(names,onDone):分頁 overlay(z-index 9975·淡入淡出),一次一位,底部按鈕「▶ 下一位」/最後一位「太棒了!」,list.length>1 才顯示「n ／ 共」頁碼;切換播 sfx-summon-reveal、結束播 sfx-confirm;onclick 走 window._msJoinRevealNext(全域可達·逐位順序播放不互相覆蓋);3 分鐘 watchdog 兜底防卡死 ③_msActJoin 尾端由「文字浮現完直接 onDone」改為「浮現完 → _msActJoinReveal(names,onDone)」,catch 分支也先試大卡再退回 onDone;舊行為保留為註解(誤刪是大忌) ④★乙案:_showSummonRareHeroPreview(抽卡結果預覽)完全未改動,零回歸風險;代價是日後改卡片規格需兩處同步 ⑤已逐名核對 13 位夥伴(小劇團員/直笛團員/弦樂團員/動物學家/籃球隊員/田徑隊員/程式設計師/電腦繪圖師/劍士/祭司/守衛/刺客/火法師)HERO_IMGS+HERO_DB(s1/s2)+BURST_DB 全數齊備。',
+      '★ v4.79.0【管理員造型預設/上鎖雲端同步三項修正・avatar_db.js】根因:gameConfig/avatarLocks 與 gameConfig/avatarPartDefaults 兩張表只在 _avatarPanelOpen 內 getDoc 拉一次(唯一呼叫點),且為純記憶體全域變數不落地 → ①玩家沒開過造型工房 → _avatarPartDefaults 為空 → _avEffPos 退回 [0,0,0] → _avatarOpenCard(📇名片)/好友面板名片縮圖網格(v4.63.0)/主線 set_card 演出全吃不到管理員預設,位置尺寸跑掉 ②重整即歸零 ③開工房先渲染一次舊表,0.3~1 秒空窗期鎖款露出可點 ④離線/讀取失敗 fail-open。修正:①新增 _avatarCacheTables/_avatarLoadTablesFromLS(localStorage 鍵 lxps_avatarGmLocks / lxps_avatarPartDefaults),兩 loader 拉回後與兩個 GM 寫入點(_avatarGmToggleLock/_avatarSetPartDefault)皆同步落地 ②檔尾 _avatarLoadLocal() 之後先 _avatarLoadTablesFromLS() 用快取墊底 ③新增 _avatarBootSyncTables()+1.5s×20 輪詢等 _fbDb/_fbFns 就緒(登入完成)即 Promise.all 拉一次兩表後停,拉回若 _avatar-panel 開著則 _avRefreshPreview+_avRenderOpts 重繪。firestore.rules 已涵蓋(gameConfig:登入者可讀·isAdmin 可寫)不需改。成本:每位玩家每次登入多 2 次 gameConfig 讀取(一次性非輪詢)。仍為 getDoc 非 onSnapshot → 學生正開著工房時老師改設定,需關掉重開才生效。',
+      '★ v4.79.0【👤 我的主角入口移至英雄圖鑑標題列・index.html】①冒險選關頁原 class=adv-event-btn 兩行大按鈕停用,整段舊 HTML 完整保留為註解(誤刪是大忌·日後要搬回可直接還原) ②hero-page-overlay 標題列 inner flex 內、「⚔️ 英雄圖鑑」標題之前插入緊湊版單行按鈕,id 沿用 adv-avatar-btn → avatar_db.js _avatarRefreshEntryVisibility 的管理員 gating 與 30 秒輪詢完全不用改(新位置同為靜態 DOM 常駐,overlay 隱藏時元素仍在),_AVATAR_ADMIN_ONLY 仍是正式開放的單一開關 ③_SIMPLE_TEXT_MAP[adv-avatar-btn] 由兩行含 <br> 副標的 cute 版改為單行「👤 打扮自己」(原值保留註解),避免簡單風把標題列撐爆 ④按鈕 display:none 靜態,_avatarRefreshEntryVisibility 設 style.display=空字串後回到 button 預設顯示,不依賴 flex。',
+      '★ v4.79.0【版號】9 同步點全對齊 v4.79.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 四鍵 index/avatar_db/admin_panel/game_changelog、AVATAR_DB_VERSION、ADMIN_PANEL_VERSION、changelog 檔頭 + 置頂 ver);hero_db.js 本輪未動維持 v4.54.0;CURRENT_BOOT_VER 永久凍結未動;admin_panel.js 僅版號同步·無真 ?.。AVATAR_DB_VERSION 隨版 bump → avatar_parts 部件圖一次性帶新 ?v= 重抓(小流量峰值·屬預期)。',
+    ],
+  },
   // v4.78.0 — 主線劇情:動作音效缺檔回退近義音 + 教學引導戰鬥六場全接線·管理員測試
   {
     ver: 'v4.78.0',
@@ -323,21 +340,6 @@ window.GAME_CHANGELOG = [
     ],
     items: [
       '★ v4.63.0【好友名單名片檢視模式・index.html 為主】①面板標題列新增「🪪 切換成名片/📋 切換成清單」切換鈕:偏好記 localStorage(_friendPanelCardMode) 下次開面板沿用;與 📇 名片按鈕同 _AVATAR_ADMIN_ONLY gating(測試期僅管理員可見·正式開放改 avatar_db.js 單一開關);avatar_db.js 未載入(_avatarRenderSVG 不存在)不顯示按鈕不炸 ②名片模式=名片縮圖網格:每位好友一張 3:4 上半身特寫大頭照(_avatarRenderSVG(cfg,null,true)·v4.61.0 名片同款構圖),資料來源 _friendHeroData[uid].avatarCard(v4.55.0 _fbLoadFriend 已整份讀回·零額外 Firestore 讀取);未捏臉好友顯示預設造型+「尚未設定造型/還沒打扮喔」角標(鐵律1.232 雙版·_fpSimple 分流·按鈕與 title 同雙版);點縮圖 _openFriendAvatarCard 開完整名片;線上燈號沿用 class=_friend-presence-dot data-friend-uid 機制移至縮圖右上角(_applyFriendPresenceDots/onSnapshot 免改直接套) ③網格欄寬:名片模式 minmax(168px,1fr)/清單模式維持 280px ④_refreshFriendListInner(好友資料 lazy load 完成的增量更新路徑)在名片模式改走整面板重渲 _renderFriendPanel(清單模板直接蓋會把名片網格洗掉;輸入中延後 500ms 守門為既有機制·重渲後補套 _applyFriendPresenceDots) ⑤avatar_db.js/admin_panel.js 僅版號對齊(AVATAR_DB_VERSION 順帶破素材快取·老師剛上傳的 avatar_parts 新素材可正確更新);無 ?.。',
-    ],
-  },
-  // v4.62.0 — 👤 我的主角:名片BGM+動態背景+特寫優化+重置視窗(管理員測試中)
-  {
-    ver: 'v4.62.0',
-    adminOnly: true,   /* ★ 管理員測試期內容·僅管理員可見(老師 2026-07-18 永久規則) */
-    date: '2026-07-19',
-    brief: [
-      '👤【我的主角・體驗四升級!(老師測試中)】打開冒險者名片會播放專屬的名片音樂,關掉名片就自動換回原本的背景音樂!',
-      '🎬 造型工房加上全螢幕動態影片背景,幫主角打扮的時候超有氣氛!',
-      '🔍 按「放大」看特寫時,現在只放大人物、背景保持原本大小,構圖更自然、背景不會糊掉!',
-      '↩️「全部重置」的確認視窗換成遊戲風格的漂亮視窗,不再是瀏覽器的小灰框!',
-    ],
-    items: [
-      '★ v4.62.0【自訂角色優化四合一・avatar_db.js+index.html】①名片專屬 BGM:index.html 新增 audio#bgm-avatar-card(preload=none·raw 網址載 自訂角色名片.m4a·loop);_avatarOpenCard 開名片時掃 audio[id^=bgm-] 記住原播曲(window._avCardPrevBgm)→ bgmFadeTo 淡入名片曲;新 _avatarCardClose 統一關閉(✕/點背景皆走此)→ 有原曲 bgmFadeTo 淡回·無原曲 bgmStop;染色重繪 _avatarCardRerender 重開時名片曲已在播即跳過不重起(不斷音) ②造型工房全螢幕動態影片背景(自訂角色動態背景.mp4·比照寵物小屋 v4.2.0 模式):createElement video muted autoplay playsinline·z-index:-1 蓋面板漸層底在正常流內容之下·onloadeddata 淡入/onerror 靜默移除露出漸層底·brightness(0.55) 壓暗保右側選單可讀·隨面板關閉一併移除·URL 帶 ?v=AVATAR_DB_VERSION 破快取 ③特寫改「只放大人物·背景尺寸不變」:_avatarRenderSVG PNG 路徑 portrait 時 viewBox 維持全幅 0 0 360 480(_bgLayer 背景照常鋪滿),人物全部圖層包 <g transform=scale(480/_pRect.h) translate(-x,-y)> 群組把特寫矩形映射回全畫布(_pRect=v4.61.0 同款頸線+118 構圖·3:4 等比故 X/Y 縮放一致);背景層在群組外;名片(portrait=true)同構圖自動生效;legacy SVG 路徑(無背景層)維持舊 viewBox 裁切零改動 ④全部重置確認框改遊戲內建風格視窗:新 _avShowConfirm(title,msg,onOk)(樣式同造型工房/名片·z20005·✅確定/✖取消/點背景取消·文字 _avT 雙版=鐵律1.232);_avatarResetAll 改走此視窗(瀏覽器原生 confirm 舊寫法保留註解·誤刪是大忌);拆層隱藏規則不變(整頭→隱藏素體頭+髮+五官件·整身/整套→隱藏素體身+衣物層·服裝分頁單件維持覆蓋法不隱藏素體);admin_panel.js 僅版號同步·無 ?.。',
     ],
   },
 ];

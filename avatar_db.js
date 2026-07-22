@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.78.0';
+window.AVATAR_DB_VERSION = 'v4.79.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1629,6 +1629,35 @@ window._avatarIsUnlocked = function(cat, id){
 
 /* ★ v4.64.0 GM 上鎖資料(雲端 gameConfig/avatarLocks·僅 GM 可寫·登入者可讀·
  *   走 gameConfig 既有 rules 免新增條款):{ locks:{'cat:id':true,...}, updatedAt, updatedBy } */
+/* ★★ v4.79.0(2026-07-22)老師指示 — 兩張 GM 雲端表「登入即載入 + 本機快取墊底」════════
+ *   【原本的漏洞】GM 上鎖表(avatarLocks)與管理員部件預設表(avatarPartDefaults)
+ *     只在「開造型工房」時 getDoc 拉一次,而且是純記憶體變數、不落地本機 → 後果:
+ *     ① 玩家沒開過造型工房 → _avatarPartDefaults 為空 → _avEffPos 退回 [0,0,0] →
+ *        📇冒險者名片視窗 / 好友面板名片縮圖網格 / 主線 set_card 演出
+ *        全都「吃不到管理員設的預設位置與尺寸」,位置跑掉(老師實測回報)
+ *     ② 重整頁面記憶體歸零,要再開一次工房才會回來
+ *     ③ 開工房那一瞬間先用舊表渲染一次,約 0.3~1 秒空窗期被鎖住的款式會露出且可點
+ *     ④ 離線/讀取失敗時兩張表皆空 = fail-open(全部視為未鎖、預設全失效)
+ *   【修正三項】
+ *     ① 啟動後偵測到 Firebase 就緒(登入完成)即主動拉一次,不必等玩家開工房
+ *     ② 兩張表拉回即寫入 localStorage;啟動時先用快取墊底 → 重整立即有、離線也有
+ *     ③ 快取墊底自然消掉開工房的空窗期;雲端拉回再覆蓋並重繪已開啟的工房
+ *   ※ 成本:每位玩家每次登入多 2 次 gameConfig 讀取(一次性,不是輪詢)。 */
+window._avatarCacheTables = function(){
+  try{ localStorage.setItem('lxps_avatarGmLocks', JSON.stringify(window._avatarGmLocks || {})); }catch(_e1){}
+  try{ localStorage.setItem('lxps_avatarPartDefaults', JSON.stringify(window._avatarPartDefaults || {})); }catch(_e2){}
+};
+window._avatarLoadTablesFromLS = function(){
+  try{
+    var a = localStorage.getItem('lxps_avatarGmLocks');
+    if(a){ var oa = JSON.parse(a); if(oa && typeof oa === 'object') window._avatarGmLocks = oa; }
+  }catch(_e1){}
+  try{
+    var b = localStorage.getItem('lxps_avatarPartDefaults');
+    if(b){ var ob = JSON.parse(b); if(ob && typeof ob === 'object') window._avatarPartDefaults = ob; }
+  }catch(_e2){}
+};
+
 window._avatarGmLocks = {};
 window._avatarLoadGmLocks = function(){
   if(!window._fbDb || !window._fbFns){ return Promise.resolve(null); }
@@ -1639,6 +1668,7 @@ window._avatarLoadGmLocks = function(){
         var d = snap.data();
         window._avatarGmLocks = (d && d.locks) ? d.locks : {};
       }
+      try{ window._avatarCacheTables(); }catch(_eC){}   /* ★ v4.79.0 落地本機(重整/離線墊底) */
       return window._avatarGmLocks;
     }).catch(function(){ return null; });
   }catch(_e){ return Promise.resolve(null); }
@@ -1658,6 +1688,7 @@ window._avatarGmToggleLock = function(cat, id){
         { merge: false })['catch'](function(e){ console.warn('[avatar] 上鎖寫入失敗', e); });
     }
   }catch(_e){}
+  try{ window._avatarCacheTables(); }catch(_eC){}   /* ★ v4.79.0 管理員本機快取同步落地 */
   try{ _avRenderOpts(); }catch(_e2){}
 };
 
@@ -1675,6 +1706,7 @@ window._avatarLoadPartDefaults = function(){
         var d = snap.data();
         window._avatarPartDefaults = (d && d.defaults) ? d.defaults : {};
       }
+      try{ window._avatarCacheTables(); }catch(_eC){}   /* ★ v4.79.0 落地本機(重整/離線墊底) */
       return window._avatarPartDefaults;
     }).catch(function(){ return null; });
   }catch(_e){ return Promise.resolve(null); }
@@ -1696,6 +1728,7 @@ window._avatarSetPartDefault = function(key){
         { merge: false })['catch'](function(e){ console.warn('[avatar] 預設寫入失敗', e); });
     }
   }catch(_e){}
+  try{ window._avatarCacheTables(); }catch(_eC){}   /* ★ v4.79.0 管理員本機快取同步落地 */
   _avSfx('confirm');
   try{ _avRenderOpts(); }catch(_e2){}
 };
@@ -2682,6 +2715,44 @@ window._avatarRefreshEntryVisibility = function(){
 
 /* 啟動時載一次本機資料(供名片/未來主線使用) */
 try{ window._avatarLoadLocal(); }catch(_e){}
+
+/* ★★ v4.79.0 需求2 修正①③ — 兩張 GM 雲端表:啟動先用本機快取墊底,登入完成後主動拉一次雲端。
+ *   這樣「沒開過造型工房」的玩家(名片/好友名片牆/主線 set_card)也吃得到管理員設的預設位置與尺寸,
+ *   同時消掉開工房那 0.3~1 秒的上鎖空窗期。拉回後若工房正開著 → 立即重繪預覽與選項區。 */
+try{ window._avatarLoadTablesFromLS(); }catch(_e){}
+
+window._avatarBootSyncTables = function(){
+  if(!window._fbDb || !window._fbFns) return Promise.resolve(false);
+  var jobs = [];
+  try{ jobs.push(window._avatarLoadGmLocks()); }catch(_e1){}
+  try{ jobs.push(window._avatarLoadPartDefaults()); }catch(_e2){}
+  return Promise.all(jobs).then(function(){
+    try{ window._avatarCacheTables(); }catch(_eC){}
+    /* 工房正開著才重繪(名片/好友牆是開啟當下才渲染,拉回時通常還沒開,不必動) */
+    try{
+      if(document.getElementById('_avatar-panel')){
+        try{ _avRefreshPreview(); }catch(_eR){}
+        try{ _avRenderOpts(); }catch(_eO){}
+      }
+    }catch(_e3){}
+    return true;
+  })['catch'](function(){ return false; });
+};
+
+/* 等 Firebase 就緒(登入完成)→ 拉一次即停;30 秒內判定(20 次 × 1.5s,與入口顯示輪詢同節奏) */
+(function(){
+  var n = 0, fired = false;
+  var t = setInterval(function(){
+    n++;
+    if(!fired && window._fbDb && window._fbFns){
+      fired = true;
+      try{ window._avatarBootSyncTables(); }catch(_e){}
+      clearInterval(t);
+      return;
+    }
+    if(n >= 20) clearInterval(t);
+  }, 1500);
+})();
 
 /* ★ v4.64.2 素體/部件圖快取自清(根治頑固快取):同名覆蓋素材後即使圖 URL 帶 ?v= 破快取,
    個別裝置的 Service Worker ASSET_CACHE 仍可能頑固命中舊圖(v4.64.1 事件:boy/kidboy 舊素體卡快取·
