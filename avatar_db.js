@@ -1143,11 +1143,15 @@ P.hairhead = [
 P.outfit = [
   { id:0,  n:'預設裝扮(素體)', ns:'原本的樣子', lock:null, head:null, body:null },
   { id:1,  n:'學生制服', ns:'學生制服', lock:null,
+    /* ★ v4.78.0 女童補位:top_uniform_kidgirl.png(整張含頭·whole)。其他三體型維持頭+身分離件不受影響 */
     head:['boy_uniform_head.png','girl_uniform_head.png','kidboy_uniform_head.png',null], hhRef:[[[44,43,43],[125,119,113]],[[59,58,57],[127,121,118],[180,179,178]],[[55,55,55],[128,126,125]],null],
-    body:['boy_uniform_body.png','girl_uniform_body.png','kidboy_uniform_body.png',null] },
+    body:['boy_uniform_body.png','girl_uniform_body.png','kidboy_uniform_body.png','top_uniform_kidgirl.png'],
+    whole:[null,null,null,1] },
   { id:2,  n:'日式和服', ns:'和服', lock:null,
-    head:['boy_kimono_head.png','girl_kimono_head.png','kidboy_kimono_head.png',null], hhRef:[[[52,51,52],[128,119,114]],[[53,52,52],[129,113,125],[180,153,180]],[[52,51,50],[125,113,100]],null],
-    body:['boy_kimono_body.png','girl_kimono_body.png','kidboy_kimono_body.png',null],
+    /* ★ v4.78.0(2026-07-22)女童補位:headfull_/bodyfull_kimono_kidgirl.png 早已在 repo,
+     *   但本欄原為 null=從未接線 → 女童選不到和服。hhRef 由該圖髮區實測取樣(排除膚色與和服紅) */
+    head:['boy_kimono_head.png','girl_kimono_head.png','kidboy_kimono_head.png','headfull_kimono_kidgirl.png'], hhRef:[[[52,51,52],[128,119,114]],[[53,52,52],[129,113,125],[180,153,180]],[[52,51,50],[125,113,100]],[[56,53,50],[101,98,95]]],
+    body:['boy_kimono_body.png','girl_kimono_body.png','kidboy_kimono_body.png','bodyfull_kimono_kidgirl.png'],
     hairRef:[null,[[53,52,51],[116,104,110]],null,null] },   /* ★ 修3b:少女和服落髮參考色(僅少女·男生短髮免掛防染到深色和服) */
   { id:3,  n:'紳士西裝', ns:'帥西裝', lock:null,
     head:['boy_suit_head.png',null,null,null], hhRef:[[[42,40,39],[128,121,116]],null,null,null], body:['boy_suit_body.png',null,null,null] },
@@ -1159,11 +1163,13 @@ P.outfit = [
     head:[null,'girl_dress_head.png',null,null], hhRef:[null,[[54,53,53],[126,116,110]],null,null], body:[null,'girl_dress_body.png',null,null],
     hairRef:[null,[[54,53,52],[114,104,99]],null,null] },   /* ★ 修3b:辮子落在身件·髮色照染 */
   { id:7,  n:'俏麗雙劍士', ns:'雙劍士裝', lock:null,
-    /* ★ 修1(2026-07-20 第五輪):雙劍士是女童的+新切件不在 repo(girl_dualblade_* 404)→
-     *   改掛 v4.60.0 既有女童舊件(整套取代無接縫問題);日後老師上傳新切件再換檔名 */
-    head:[null,null,null,'headfull_dualblade_kidgirl.png'], hhRef:[null,null,null,[[69,65,64],[118,103,96]]],
-    body:[null,null,null,'bodyfull_dualblade_kidgirl.png'],
-    hairRef:[null,null,null,[[68,65,63],[108,95,89]]] },
+    /* ★ v4.78.0(2026-07-22)老師回報「手套/武器/肩膀/裙擺被過度去背」根治:
+     *   原掛的 headfull_/bodyfull_dualblade_kidgirl.png 內部有 3863px 白色破洞(且邊緣被削),
+     *   老師既有完好素材是 top_dualsword_kidgirl.png(★關鍵字是 dualsword 不是 dualblade)→ 改掛整張式。
+     *   舊 dualblade 件保留在 repo 與 P.headfull/P.bodyfull/P.full 定義中(誤刪是大忌)。 */
+    head:[null,null,null,null], hhRef:[null,null,null,null],
+    body:[null,null,null,'top_dualsword_kidgirl.png'],
+    whole:[null,null,null,1] },
   { id:8,  n:'華麗細劍士', ns:'細劍士裝', lock:null,
     head:[null,'girl_rapier_head.png',null,null], hhRef:[null,[[63,61,62],[121,108,102]],null,null], body:[null,'girl_rapier_body.png',null,null] },
   { id:9,  n:'紫電魔法師', ns:'閃電魔法裝', lock:null, lockHair:true,   /* ★ 修2:暫不提供更換髮型(裁切困難);落髮撞深色衣不掛 hairRef */
@@ -1175,10 +1181,20 @@ P.outfit = [
   { id:12, n:'吊帶短褲裝', ns:'吊帶裝', lock:null,
     head:[null,null,'kidboy_overalls_head.png',null], hhRef:[null,null,[[54,53,52],[111,100,95]],null], body:[null,null,'kidboy_overalls_body.png',null] },
   { id:13, n:'水藍魔法師', ns:'水水魔法裝', lock:null,
-    /* ★ 修6:kidgirl_watermage_* 不在 repo(404)→ 改掛 v4.60.0 aquamage 女童舊件;日後上傳新件再換 */
-    head:[null,null,null,'headfull_aquamage_kidgirl.png'], hhRef:[null,null,null,[[68,66,66],[108,102,106],[110,144,180]]],
-    body:[null,null,null,'bodyfull_aquamage_kidgirl.png'],
-    hairRef:[null,null,null,[[67,66,66],[103,94,94]]] }
+    /* ★ v4.78.0(2026-07-22)老師回報「衣服白色區域被過度去背」根因與修法:
+     *   舊件 bodyfull_aquamage_kidgirl.png 內部有 3021px 白色破洞(alpha 被挖空·RGB 仍在),
+     *   老師重新切好的新件 kidgirl_watermage_head/body.png 已在 repo 且實測 0 內部破洞 → 改掛新件。
+     *   hhRef 沿用舊值:新件髮區實測中段 [68,66,67] 與現行 [68,66,66] 幾乎相同(同一張原圖)。
+     *   舊件 aquamage_kidgirl 保留在 repo 與 P.headfull/P.bodyfull 定義中(誤刪是大忌)。 */
+    head:[null,null,null,'kidgirl_watermage_head.png'], hhRef:[null,null,null,[[68,66,66],[108,102,106],[110,144,180]]],
+    body:[null,null,null,'kidgirl_watermage_body.png'],
+    hairRef:[null,null,null,[[67,66,66],[103,94,94]]] },
+  /* ★ v4.78.0(2026-07-22)新增第 14 款:女童粉紅長洋裝(老師既有素材 top_dress_kidgirl.png·整張含頭)
+   *   ★ _pick 是「依陣列索引」取件,故 id 必須等於陣列索引 → 新款一律追加在陣列最後 */
+  { id:14, n:'粉紅長洋裝', ns:'粉紅洋裝', lock:null,
+    head:[null,null,null,null], hhRef:[null,null,null,null],
+    body:[null,null,null,'top_dress_kidgirl.png'],
+    whole:[null,null,null,1] }
 ];
 
 /* ── ★ v4.64.0 嘴部飾品(P.mouthacc)— 老師嘴飾圖 9 款(2026-07-20 第二輪) ──
@@ -1242,6 +1258,16 @@ window._avatarDefaultCfg = function(){
     headf:0, bodyf:0, bg:0, clothC:0,   /* ★ v4.59.0 full=整套 / v4.60.0 headf=整頭 bodyf=整身 bg=背景 clothC=服裝配色 */
     hh:0, of:0, ofHead:0, pos:{}, macc:0, glsClear:1 };   /* ★ v4.64.0 hh=髮型整頭 of=套裝 ofHead=套裝頭旗標 pos=各部件[dx,dy,尺寸%]微調 macc=嘴部飾品 glsClear=鏡片樣式(1=透明顯示眼睛/0=白鏡片原圖) */
 };
+
+/* ★ v4.78.0(2026-07-22)整張式套裝(whole)判定 — 老師 2026-07-22 乙案
+ *   P.outfit 原設計是「頭件 + 身件」分離;但女童的制服/洋裝/雙劍士只有「含頭的整張全身圖」
+ *   (top_*_kidgirl.png·老師既有素材·不再裁切)。此類款式:head 留 null、body 放整張圖、
+ *   whole 陣列對應體型標 1 → 渲染時 hideHead 一併為 true(素體頭隱藏·避免整張圖的頭與素體頭重疊),
+ *   且比照 lockHair 擋更換髮型(頭髮畫在圖裡)。whole 是「逐體型」陣列,故同一款式其他體型
+ *   若有正規分離件仍走原本頭+身流程,互不影響。 */
+function _ofIsWhole(d, bodyIdx){
+  try{ return !!_avImgFor(d && d.whole, bodyIdx); }catch(_e){ return false; }
+}
 
 function _pick(list, idx){
   var i = (typeof idx === 'number' && idx >= 0 && idx < list.length) ? idx : 0;
@@ -1347,8 +1373,9 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     var _ofBodyPng = ((cfg.of|0) > 0) ? _avImgFor(_ofD.body, cfg.body) : null;
     var headPiece = _hhPng || _ofHeadPng || headPng;
     var bodyPiece = _ofBodyPng || bodyPng2;
+    var _ofWhole = ((cfg.of|0) > 0 && _ofBodyPng) ? _ofIsWhole(_ofD, cfg.body) : false;   /* ★ v4.78.0 整張式套裝 */
     var _headPosKey = _hhPng ? 'hh' : (_ofHeadPng ? 'ofh' : (headPng ? 'ofh' : 'baseH'));
-    var hideHead = !!(fullPng || headPiece);   /* 隱藏素體頭+髮型層+五官替換件 */
+    var hideHead = !!(fullPng || headPiece || _ofWhole);   /* 隱藏素體頭+髮型層+五官替換件(★ v4.78.0 整張式套裝含頭→亦隱藏,防兩顆頭重疊) */
     var hideBody = !!(fullPng || bodyPiece);   /* 隱藏素體身+上衣/下衣/襪/鞋 */
     /* ★ v4.64.0 部件 XY 微調 + ★ v4.69.0 尺寸縮放(全部件·2乙)·全走 _avEffPos(玩家自訂或管理員預設)
      *   cfg.pos[key]=[dx,dy,尺寸%];飾品件(hat/gls/macc)尺寸由 _avAccLayer 處理→此處只平移;
@@ -2319,7 +2346,7 @@ function _avRenderOpts(){
     /* ★ v4.64.0(第五輪)修2:穿著鎖髮套裝時,髮型頁頂端顯示提示 */
     if(cat === 'hairhead'){
       var _ofChk = _pick(P.outfit, cfg.of|0);
-      if((cfg.of|0) > 0 && _ofChk && _ofChk.lockHair){
+      if((cfg.of|0) > 0 && _ofChk && (_ofChk.lockHair || _ofIsWhole(_ofChk, cfg.body))){   /* ★ v4.78.0 整張式套裝亦鎖髮 */
         h += '<div style="padding:12px 14px;margin-bottom:8px;background:rgba(200,120,40,0.18);border:1.5px dashed rgba(255,190,90,0.6);border-radius:12px;color:#ffd97a;font-size:15.5px;">⚠ '
           + _avT('目前的套裝頭髮與服裝相連,暫不支援更換髮型;先換其他套裝即可更換。','現在這套衣服的頭髮跟衣服連在一起,先換別套衣服才能換髮型喔!') + '</div>';
       }
@@ -2482,7 +2509,7 @@ window._avatarSetPart = function(cat, id){
   } else if(cat === 'hairhead'){
     /* ★ v4.64.0(第五輪)修2:藍洋裝/閃電魔法裝原髮蓋住衣服(裁切困難)→ 穿著中暫不提供更換髮型 */
     var _ofNow = _pick(P.outfit, cfg.of|0);
-    if(id > 0 && (cfg.of|0) > 0 && _ofNow && _ofNow.lockHair){
+    if(id > 0 && (cfg.of|0) > 0 && _ofNow && (_ofNow.lockHair || _ofIsWhole(_ofNow, cfg.body))){   /* ★ v4.78.0 整張式套裝亦鎖髮 */
       alert(_avT('此套裝的頭髮與服裝相連,暫不支援更換髮型(先換其他套裝再換髮型喔)',
                  '這套衣服的頭髮跟衣服連在一起,先不能換髮型;先換別套衣服再換喔!'));
       return;
