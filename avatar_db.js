@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.80.0';
+window.AVATAR_DB_VERSION = 'v4.83.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -246,6 +246,36 @@ window.AVATAR_PALETTES = {
   /* ★ v4.60.0 服裝配色(idx0=原本的顏色不染) */
   cloth:['#ffffff','#c9433a','#e2703f','#e8c23f','#54b98a','#2e8b8b','#3f6fd4','#2b3a6b',
          '#8a4fd4','#d45a8f','#8a5a2f','#22222a','#f5f0e6','#8a8f99','#d4a441','#b8c4d4']
+};
+
+/* ★★ v4.82.0(2026-07-23)隱藏色票機制 — 移除最深膚色 skin[6]=#8f5a38(永久設計決策)
+ *   【為何移除】染色引擎 _avatarTintPiece 的膚色判定帶明度門檻 v>0.60,臉部陰影與線稿旁的
+ *     膚色像素(v<=0.60)不被視為膚色 → 不染 → 保留原本的淺膚色。淺膚色時色差小看不出來;
+ *     換成最深膚色,這些漏染像素就變成「滿臉淺色雜點」(實測 boy_shaggy_head.png:
+ *     膚色色相域 3146px 中有 143px[4.5%] 落在 0.42~0.60 漏染,集中在臉部陰影與髮際線)。
+ *   【★ 關鍵設計決策·日後沿用】採「陣列原地保留 + UI 不渲染 + 已選到自動退回鄰近色」,
+ *     ★ 絕不直接 splice ★ —— 因為 cfg.skin 存的是「索引值」,真刪會讓整排索引位移:
+ *     舊存檔 skin=7(粉白 #f9e0e6)會指到不存在的位置、skin=6 會突然變成粉白色,
+ *     等於默默改掉大家已存好的膚色。誤刪是大忌。
+ *   【涵蓋四條路徑】① 選單不渲染 ② 主渲染器 _col ③ 兩個染色引擎 skinT ④ 隨機變裝。
+ *   ★ 未來若要再隱藏其他色票,只要把索引加進 _AV_HIDDEN_COLORS 即可,不必動 UI 與渲染。
+ *   ★ 既有限制備忘:若日後想加回深膚色,需先把 _avatarTintPiece 的明度門檻放寬
+ *     (實測 0.42 可明顯改善),而不是直接加色票。 */
+window._AV_HIDDEN_COLORS = { skin: [6] };
+window._avColorHidden = function(cat, idx){
+  try{
+    var arr = window._AV_HIDDEN_COLORS[cat];
+    if(!arr) return false;
+    for(var i = 0; i < arr.length; i++){ if(arr[i] === (idx|0)) return true; }
+  }catch(_e){}
+  return false;
+};
+/* 已選到被隱藏色 → 退回「前一個可用索引」(往下找,找不到就回 0) */
+window._avColorFallback = function(cat, idx){
+  var i = idx|0;
+  if(!window._avColorHidden(cat, i)) return i;
+  for(var j = i - 1; j >= 0; j--){ if(!window._avColorHidden(cat, j)) return j; }
+  return 0;
 };
 
 /* ════════════════════════════════════════
@@ -344,7 +374,7 @@ window._avatarComposeBody = function(cfg, cb){
   var meta = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
   var PAL = window.AVATAR_PALETTES;
   var doSkin = (cfg.skin|0) > 0, doEye = (cfg.eyeC|0) > 0, doBrow = (cfg.browC|0) > 0;
-  var skinT = doSkin ? _avHex2Rgb(PAL.skin[cfg.skin]) : null;
+  var skinT = doSkin ? _avHex2Rgb(PAL.skin[(window._avColorFallback ? window._avColorFallback('skin', cfg.skin) : cfg.skin)]) : null;
   var eyeT  = doEye  ? _avHex2Rgb(PAL.eye[cfg.eyeC])  : null;
   var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;  /* 眉色共用髮色票 */
   var img = new Image();
@@ -481,7 +511,7 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
   var doHair = uH && (cfg.hairC|0)>0, doCloth = uC && (cfg.clothC|0)>0;
   var doHairRef = (kind==='bodyfull') && hairRefs && hairRefs.length && (cfg.hairC|0)>0;   /* ★ 修3b */
   if(!doSkin && !doEye && !doBrow && !doHair && !doCloth && !doHairRef){ cb(null); return; }
-  var skinT = doSkin ? _avHex2Rgb(PAL.skin[cfg.skin]) : null;
+  var skinT = doSkin ? _avHex2Rgb(PAL.skin[(window._avColorFallback ? window._avColorFallback('skin', cfg.skin) : cfg.skin)]) : null;
   var eyeT  = doEye  ? _avHex2Rgb(PAL.eye[cfg.eyeC])  : null;
   var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;
   var hairT = (doHair || doHairRef) ? _avHex2Rgb(PAL.hair[cfg.hairC]) : null;   /* ★ 修3b:hairRef 路徑也要髮色目標 */
@@ -1216,22 +1246,86 @@ P.mouthacc = [
 
 /* ── 背景(★ v4.60.0 老師需求)— 現有遊戲場景圖·渲染最底層 360×480 slice 滿版 ──
  * file=repo 根目錄檔名(非 avatar_parts)·id0=無背景(透明) */
+/* ══ ★★ v4.83.0 主角卡片卡框(老師需求1·裁定1=甲全部統一)══════════════
+ *   卡框強制 7:10 = 350×500;人物固定佔卡片高度 80%(上下各留 10%)。
+ *   ★★ 實作關鍵(零回歸的原因):人物座標系 360×480 「完全不動」——
+ *     所有部件定位 / prop 幾何 / _ofsWrap 微調 / 特寫矩形 全部一行都不用改,
+ *     只在最外面再包一層卡框群組 translate(25,50) scale(0.833333) 做映射:
+ *       360 × 0.833333 = 300 → 水平置中於 350 → x 偏移 25
+ *       480 × 0.833333 = 400 = 卡片高 500 的 80% → 垂直置中 → y 偏移 50
+ *   套用範圍:造型工房左預覽 / 冒險者名片 / 好友名片縮圖 全部統一。 */
+window._AV_CARD_W = 350;
+window._AV_CARD_H = 500;
+window._AV_FIG_RATIO = 0.8;
+var _AV_CARD_W = window._AV_CARD_W, _AV_CARD_H = window._AV_CARD_H;
+var _AV_FIG_S  = (_AV_CARD_H * window._AV_FIG_RATIO) / 480;          /* = 0.833333 */
+var _AV_CARD_TF = 'translate(' + ((_AV_CARD_W - 360 * _AV_FIG_S) / 2).toFixed(3) + ','
+                + ((_AV_CARD_H - 480 * _AV_FIG_S) / 2).toFixed(3) + ') scale(' + _AV_FIG_S.toFixed(6) + ')';
+window._avGradSeq = 0;   /* ★ SVG 漸層 id 全域流水號(同頁多張名片縮圖不互相污染) */
+
 P.bg = [
-  { id:0,  n:'無背景', ns:'沒有背景', lock:null, file:null },
-  { id:1,  n:'台灣地圖', ns:'台灣地圖', lock:null, file:'台灣地圖.png' },
-  { id:2,  n:'玉山頂', ns:'玉山', lock:null, file:'玉山頂.png' },
-  { id:3,  n:'阿里山', ns:'阿里山', lock:null, file:'阿里山.png' },
-  { id:4,  n:'台北101', ns:'101大樓', lock:null, file:'台北101.png' },
-  { id:5,  n:'三峽老街', ns:'三峽老街', lock:null, file:'三峽老街.png' },
-  { id:6,  n:'深坑老街', ns:'深坑老街', lock:null, file:'深坑老街.png' },
-  { id:7,  n:'彰化老街', ns:'彰化老街', lock:null, file:'彰化老街.png' },
-  { id:8,  n:'寵物小屋', ns:'寵物小屋', lock:null, file:'寵物小屋.png' },
-  { id:9,  n:'日本古老神社', ns:'日本神社', lock:null, file:'古老神社 第二場景 大天狗路線.png' },
-  { id:10, n:'日本表參道祭典', ns:'日本祭典', lock:null, file:'表參道祭典 第一場景 共通開場.png' },
-  { id:11, n:'埃及沙漠', ns:'沙漠', lock:null, file:'埃及冒險第一關 沙漠.png' },
-  { id:12, n:'埃及金字塔', ns:'金字塔', lock:null, file:'埃及冒險第三關 金字塔.png' },
-  { id:13, n:'法老王座寶庫', ns:'黃金寶庫', lock:null, file:'埃及冒險BOSS戰背景 寶庫王座.png' },
-  { id:14, n:'至寶星空', ns:'星空', lock:null, file:'至寶背景.png' }
+  /* ── 免費款(無條件開放·給每位玩家一組基本選擇)────────────────────── */
+  { id:0,  n:'無背景(用純色/漸層)', ns:'不放圖片', lock:null, file:null, grp:'free' },
+  { id:1,  n:'台灣地圖', ns:'台灣地圖', lock:null, file:'台灣地圖.png', grp:'free' },
+  { id:8,  n:'寵物小屋', ns:'寵物小屋', lock:null, file:'寵物小屋.png', grp:'free' },
+  { id:14, n:'至寶星空', ns:'星空', lock:null, file:'至寶背景.png', grp:'free' },
+  { id:20, n:'力行走廊', ns:'學校走廊', lock:null, file:'力行走廊.png', grp:'free' },
+  { id:21, n:'不可思議超商', ns:'超商', lock:null, file:'不可思議超商.png', grp:'free' },
+
+  /* ── BOSS 純背景(解鎖=以「我很會」難度通關該 BOSS)───────────────────
+   *   ★ id2~7/9/13 是 v4.60.0 既有款,原為免費;本版依老師裁定改為 BOSS 解鎖制。
+   *     因 _AVATAR_ADMIN_ONLY = true(造型工房仍測試中),目前零學生受影響;
+   *     若日後想改回免費,把該款 lock 改回 null 即可(id 與檔名皆未變·舊存檔相容)。 */
+  { id:7,  n:'彰化老街', ns:'彰化老街', lock:{t:'quest'}, file:'彰化老街.png', grp:'boss', boss:'油膩魔王・滷汁大鍋' },
+  { id:22, n:'台中鳳梨酥工廠', ns:'鳳梨酥工廠', lock:{t:'quest'}, file:'台中鳳梨酥工廠.png', grp:'boss', boss:'酥脆狂魔・熱浪糕師' },
+  { id:6,  n:'深坑老街', ns:'深坑老街', lock:{t:'quest'}, file:'深坑老街.png', grp:'boss', boss:'臭氣魔王・發酵公' },
+  { id:3,  n:'阿里山', ns:'阿里山', lock:{t:'quest'}, file:'阿里山.png', grp:'boss', boss:'山靈古魔・千年怒木' },
+  { id:23, n:'蘭嶼', ns:'蘭嶼', lock:{t:'quest'}, file:'蘭嶼.png', grp:'boss', boss:'深海惡靈・觸手大蛟' },
+  { id:5,  n:'三峽老街', ns:'三峽老街', lock:{t:'quest'}, file:'三峽老街.png', grp:'boss', boss:'染靈幻魔・藍色憂鬱' },
+  { id:24, n:'西門町', ns:'西門町', lock:{t:'quest'}, file:'西門町.png', grp:'boss', boss:'珍奶吸魂魔・大波霸' },
+  { id:25, n:'日月潭', ns:'日月潭', lock:{t:'quest'}, file:'日月潭.png', grp:'boss', boss:'水靈反魔・倒映女' },
+  { id:4,  n:'台北101', ns:'101大樓', lock:{t:'quest'}, file:'台北101.png', grp:'boss', boss:'摩天魔將・夜空爆裂者' },
+  { id:2,  n:'玉山頂', ns:'玉山', lock:{t:'quest'}, file:'玉山頂.png', grp:'boss', boss:'山岳禁咒・崩天巨人' },
+  { id:26, n:'貓空 BOSS 戰場', ns:'貓空戰場', lock:{t:'quest'}, file:'貓空BOSS戰背景.png', grp:'boss', boss:'九尾空貓怪' },
+  { id:27, n:'杏花妖花林', ns:'杏花林', lock:{t:'quest'}, file:'杏花妖場景.png', grp:'boss', boss:'杏花妖' },
+  { id:28, n:'黑暗球降臨', ns:'黑暗球', lock:{t:'quest'}, file:'主線_第六章_黑暗球降臨.jpg', grp:'boss', boss:'黑暗球‧希望型態' },
+  { id:9,  n:'古老神社(大天狗)', ns:'神社·天狗', lock:{t:'quest'}, file:'古老神社 第二場景 大天狗路線.png', grp:'boss', boss:'大天狗' },
+  { id:29, n:'古老神社(酒吞童子)', ns:'神社·酒吞', lock:{t:'quest'}, file:'古老神社 第二場景 酒吞童子軍路線.png', grp:'boss', boss:'酒吞童子' },
+  { id:30, n:'古老神社(玉藻前)', ns:'神社·玉藻前', lock:{t:'quest'}, file:'古老神社 第二場景 玉藻前路線.png', grp:'boss', boss:'玉藻前' },
+  { id:31, n:'富士山火口', ns:'富士山火口', lock:{t:'quest'}, file:'富士山火口 隱藏BOSS 八岐大蛇.png', grp:'boss', boss:'八岐大蛇' },
+  { id:13, n:'法老王座寶庫', ns:'黃金寶庫', lock:{t:'quest'}, file:'埃及冒險BOSS戰背景 寶庫王座.png', grp:'boss', boss:'法老王' },
+
+  /* ── 關卡劇情場景(解鎖=通關該關時每張各 5% 機率)──────────────────── */
+  { id:34, n:'景美溪河堤', ns:'河堤', lock:{t:'quest'}, file:'景美溪河堤(精美版).png', grp:'scene', stage:'maokong' },
+  { id:10, n:'表參道祭典', ns:'日本祭典', lock:{t:'quest'}, file:'表參道祭典 第一場景 共通開場.png', grp:'scene', stage:'japan' },
+  { id:32, n:'富士山深處', ns:'富士山', lock:{t:'quest'}, file:'富士山深入 第三場景 三路線共通BOSS戰前.png', grp:'scene', stage:'japan' },
+  { id:11, n:'埃及沙漠', ns:'沙漠', lock:{t:'quest'}, file:'埃及冒險第一關 沙漠.png', grp:'scene', stage:'egypt' },
+  { id:33, n:'金字塔入口', ns:'金字塔門口', lock:{t:'quest'}, file:'埃及冒險第二關 金字塔入口.png', grp:'scene', stage:'egypt' },
+  { id:12, n:'埃及金字塔', ns:'金字塔', lock:{t:'quest'}, file:'埃及冒險第三關 金字塔.png', grp:'scene', stage:'egypt' },
+
+  /* ── 特殊管道 ──────────────────────────────────────────────────────
+   *   ★ 老師裁定5:動態影片背景放棄(SVG <image> 不能播影片·且好友名片縮圖網格同頁
+   *     多支 video 會拖垮舊 iPad)→ 改釋出同場景的「靜態圖版本」。 */
+  { id:35, n:'鬥技場', ns:'鬥技場', lock:{t:'exchange'}, file:'鬥技場.png', grp:'special' },
+  { id:36, n:'召喚星空(可愛版)', ns:'召喚星空(可愛)', lock:{t:'summon'}, file:'召喚星空(可愛版).png', grp:'special' },
+  { id:37, n:'召喚星空(精美版)', ns:'召喚星空(精美)', lock:{t:'summon'}, file:'召喚星空(精美版).png', grp:'special' },
+
+  /* ── 主線劇情場景(解鎖=通關該章時每張各 5% 機率)──────────────────── */
+  { id:40, n:'主線·序章封面', ns:'序章封面', lock:{t:'quest'}, file:'主線_封面_序章.jpg', grp:'story', chap:'prologue' },
+  { id:41, n:'校外教學', ns:'校外教學', lock:{t:'quest'}, file:'主線_序章_校外教學.jpg', grp:'story', chap:'prologue' },
+  { id:42, n:'迷霧森林', ns:'迷霧森林', lock:{t:'quest'}, file:'主線_序章_迷霧森林.jpg', grp:'story', chap:'prologue' },
+  { id:43, n:'雙月河堤', ns:'雙月河堤', lock:{t:'quest'}, file:'主線_序章_雙月河堤.jpg', grp:'story', chap:'prologue' },
+  { id:44, n:'主線·第一章封面', ns:'第一章封面', lock:{t:'quest'}, file:'主線_封面_第一章.jpg', grp:'story', chap:'ch1' },
+  { id:45, n:'主線·第二章封面', ns:'第二章封面', lock:{t:'quest'}, file:'主線_封面_第二章.jpg', grp:'story', chap:'ch2' },
+  { id:46, n:'社團教室', ns:'社團教室', lock:{t:'quest'}, file:'主線_第二章_社團教室.jpg', grp:'story', chap:'ch2' },
+  { id:47, n:'主線·第三章封面', ns:'第三章封面', lock:{t:'quest'}, file:'主線_封面_第三章.jpg', grp:'story', chap:'ch3' },
+  { id:48, n:'貓空異變', ns:'貓空異變', lock:{t:'quest'}, file:'主線_第三章_貓空異變.jpg', grp:'story', chap:'ch3' },
+  { id:49, n:'劍士與祭司', ns:'劍士祭司', lock:{t:'quest'}, file:'主線_第三章_劍士祭司登場.jpg', grp:'story', chap:'ch3' },
+  { id:50, n:'主線·第四章封面', ns:'第四章封面', lock:{t:'quest'}, file:'主線_封面_第四章.jpg', grp:'story', chap:'ch4' },
+  { id:51, n:'杏花妖花林(劇情)', ns:'杏花花林', lock:{t:'quest'}, file:'主線_第四章_杏花妖花林.jpg', grp:'story', chap:'ch4' },
+  { id:52, n:'魅惑的守衛與刺客', ns:'守衛刺客', lock:{t:'quest'}, file:'主線_第四章_魅惑守衛刺客.jpg', grp:'story', chap:'ch4' },
+  { id:53, n:'主線·第五章封面', ns:'第五章封面', lock:{t:'quest'}, file:'主線_封面_第五章.jpg', grp:'story', chap:'ch5' },
+  { id:54, n:'主線·第六章封面', ns:'第六章封面', lock:{t:'quest'}, file:'主線_封面_第六章.jpg', grp:'story', chap:'ch6' }
 ];
 
 /* ── 名片語錄(玩家擇一;內容非說明文字,單版) ── */
@@ -1256,7 +1350,8 @@ window._avatarDefaultCfg = function(){
     hat:0, gls:0, neck:0, wrist:0, cape:0, top:0, btm:0, sh:0, q:0,
     browC:0, earr:0, mask:0, sock:0, full:0,
     headf:0, bodyf:0, bg:0, clothC:0,   /* ★ v4.59.0 full=整套 / v4.60.0 headf=整頭 bodyf=整身 bg=背景 clothC=服裝配色 */
-    hh:0, of:0, ofHead:0, pos:{}, macc:0, glsClear:1 };   /* ★ v4.64.0 hh=髮型整頭 of=套裝 ofHead=套裝頭旗標 pos=各部件[dx,dy,尺寸%]微調 macc=嘴部飾品 glsClear=鏡片樣式(1=透明顯示眼睛/0=白鏡片原圖) */
+    hh:0, of:0, ofHead:0, pos:{}, macc:0, glsClear:1,
+    bgType:0, bgC:0 };   /* ★ v4.83.0 bgType=卡片背景型別(0=純白 / 1=左右對稱漸層 / 2=圖片走 cfg.bg) · bgC=漸層顏色(AVATAR_PALETTES.cloth 索引·0=白=等同純白) */   /* ★ v4.64.0 hh=髮型整頭 of=套裝 ofHead=套裝頭旗標 pos=各部件[dx,dy,尺寸%]微調 macc=嘴部飾品 glsClear=鏡片樣式(1=透明顯示眼睛/0=白鏡片原圖) */
 };
 
 /* ★ v4.78.0(2026-07-22)整張式套裝(whole)判定 — 老師 2026-07-22 乙案
@@ -1273,8 +1368,10 @@ function _pick(list, idx){
   var i = (typeof idx === 'number' && idx >= 0 && idx < list.length) ? idx : 0;
   return list[i];
 }
-function _col(list, idx){
+function _col(list, idx, cat){
   var i = (typeof idx === 'number' && idx >= 0 && idx < list.length) ? idx : 0;
+  /* ★ v4.82.0 隱藏色票:已選到被隱藏的色 → 自動退回鄰近可用色(舊存檔不破圖) */
+  try{ if(cat && window._avColorHidden && window._avColorHidden(cat, i)) i = window._avColorFallback(cat, i); }catch(_e){}
   return list[i];
 }
 function _fill(svg, sk, hc, ec){
@@ -1314,7 +1411,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     _vb = _pRect.x.toFixed(1) + ' ' + _pRect.y.toFixed(1) + ' ' + _cw.toFixed(1) + ' ' + _ch.toFixed(1);
   }
   var PAL = window.AVATAR_PALETTES;
-  var sk = _col(PAL.skin, cfg.skin), hc = _col(PAL.hair, cfg.hairC), ec = _col(PAL.eye, cfg.eyeC);
+  var sk = _col(PAL.skin, cfg.skin, 'skin'), hc = _col(PAL.hair, cfg.hairC, 'hairC'), ec = _col(PAL.eye, cfg.eyeC, 'eyeC');
   var isKid = (cfg.body === 2 || cfg.body === 3);
   var bodyDef = _pick(P.body, cfg.body);
 
@@ -1471,11 +1568,40 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       }, hairRefs);
       return _imgLayer(imgFile, tf);   /* 首繪先出原色,染完自動重繪 */
     }
+    /* ★★ v4.83.0 卡片背景(老師需求2·裁定2=乙左右對稱同色)
+     *   bgType 0 = 純白(預設) / 1 = 左 25% 色C → 中 50% 純白 → 右 25% 色C / 2 = 圖片(cfg.bg)
+     *   ★ 漸層 id 必須全域唯一:同一頁會同時出現多張名片縮圖(好友名單網格),
+     *     id 撞名會互相污染(後面那張的漸層會覆蓋前面)→ 用流水號 _avGradSeq。
+     *   ★ 卡框 350×500(7:10)全幅龬transparent 不再露底。 */
     function _bgLayer(){
-      var bgd = _pick(P.bg, cfg.bg);
-      if(!bgd || !bgd.file) return '';
-      var u = './' + encodeURI(bgd.file) + '?v=' + (window.AVATAR_DB_VERSION || '');
-      return '<image href="' + u + '" xlink:href="' + u + '" x="0" y="0" width="360" height="480" preserveAspectRatio="xMidYMid slice"/>';
+      var W = _AV_CARD_W, H = _AV_CARD_H;
+      var bt = cfg.bgType | 0;
+      if(bt === 2){
+        var bgd = _pick(P.bg, cfg.bg);
+        if(bgd && bgd.file){
+          var u = './' + encodeURI(bgd.file) + '?v=' + (window.AVATAR_DB_VERSION || '');
+          return '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#ffffff"/>'
+            + '<image href="' + u + '" xlink:href="' + u + '" x="0" y="0" width="' + W + '" height="' + H + '" preserveAspectRatio="xMidYMid slice"/>';
+        }
+        /* 圖片型但沒選圖 → 退回純白 */
+      }
+      if(bt === 1){
+        var cIdx = cfg.bgC | 0;
+        var cArr = window.AVATAR_PALETTES.cloth;
+        var cc = (cIdx >= 0 && cIdx < cArr.length) ? cArr[cIdx] : '#ffffff';
+        window._avGradSeq = (window._avGradSeq | 0) + 1;
+        var gid = 'avbg' + window._avGradSeq;
+        return '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="0">'
+          + '<stop offset="0%" stop-color="' + cc + '"/>'
+          + '<stop offset="25%" stop-color="' + cc + '"/>'
+          + '<stop offset="42%" stop-color="#ffffff"/>'
+          + '<stop offset="58%" stop-color="#ffffff"/>'
+          + '<stop offset="75%" stop-color="' + cc + '"/>'
+          + '<stop offset="100%" stop-color="' + cc + '"/>'
+          + '</linearGradient></defs>'
+          + '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="url(#' + gid + ')"/>';
+      }
+      return '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#ffffff"/>';
     }
     /* 素體/取代件圖層組合:
      *   整套 → 單張 full;有頭或身取代 → 拆層(身層先·頭層後蓋接縫);
@@ -1520,6 +1646,11 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       _charOpen = '<g transform="scale(' + _ps.toFixed(5) + ') translate(' + (-_pRect.x).toFixed(2) + ',' + (-_pRect.y).toFixed(2) + ')">';
       _charClose = '</g>';
     }
+    /* ★★ v4.83.0 卡框 7:10:viewBox 改 350×500·人物(含特寫群組)再包一層卡框映射群組。
+     *   背景層在卡框群組「外」→ 鋪滿整張卡(且特寫放大時背景不跟著放大·沿用 v4.62.0 設計)。 */
+    _pngVb = '0 0 ' + _AV_CARD_W + ' ' + _AV_CARD_H;
+    _charOpen = '<g transform="' + _AV_CARD_TF + '">' + _charOpen;
+    _charClose = _charClose + '</g>';
     var png = ''
       + _bgLayer()   /* ★ v4.60.0 背景最底層(★ v4.62.0 特寫時不隨人物放大) */
       + _charOpen
@@ -1611,7 +1742,22 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
 /* ════════════════════════════════════════
  * 4. 解鎖判定(Phase 1:免費款開放;lock 款看 avatarCard.unlock 帳本)
  * ════════════════════════════════════════ */
+/* ★★ v4.82.0(2026-07-23)顏色調整功能全面失效 — v4.79.0 回歸 BUG 根治(永久鐵律)
+ *   【現象】造型工房點膚色／髮色／服裝配色,一律跳「🔒 還沒解鎖」,根本改不了顏色,
+ *           且色票在畫面上顯示灰暗(被當未解鎖款渲染)。
+ *   【根因】v4.79.0 讓 _avatarSetPart(cat,id) 開頭一律先跑 _avatarIsUnlocked(cat,id),
+ *           但本函式第一行是 `var list = P[...]; if(!list) return false;` ——
+ *           而「色票類／開關類」分類(skin/hairC/eyeC/browC/clothC/glsClear/q…)根本不是部件,
+ *           值放在 AVATAR_PALETTES 或布林開關裡,P 底下沒有同名陣列 → list=undefined →
+ *           一律 return false(判成未解鎖)→ 每次點擊都被攔截 → 整組顏色功能鎖死。
+ *   【修法】非部件分類白名單,_avatarIsUnlocked 開頭直接早退 true。
+ *   ★ 永久規則:任何「值存在 AVATAR_PALETTES 或布林開關、P 底下沒有同名陣列」的新分類,
+ *     建立當下就要加進 _AV_NON_PART_CATS,否則整組功能會被靜默鎖死。
+ *   ★ v4.83.0 已補入 hatC/glsC/maccC(飾品染色·批B)與 bgType/bgC(卡片背景型別/顏色)。 */
+window._AV_NON_PART_CATS = { skin:1, hairC:1, eyeC:1, browC:1, clothC:1, glsClear:1, q:1,
+                             hatC:1, glsC:1, maccC:1, bgType:1, bgC:1 };
 window._avatarIsUnlocked = function(cat, id){
+  if(window._AV_NON_PART_CATS[cat]) return true;   /* ★ v4.82.0 色票/開關類永不做解鎖判定 */
   var list = P[{ gls:'glasses', sh:'shoe' }[cat] || cat]; if(!list) return false;   /* ★ v4.60.1 gls/sh 短名映射(同 _avRenderOpts 修正) */
   var item = null;
   for(var i=0;i<list.length;i++){ if(list[i].id === id){ item = list[i]; break; } }
@@ -1661,6 +1807,139 @@ window.AVATAR_UNLOCK_HOW = {
   'outfit:13':  { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
                   c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' }
 };
+
+/* ★★ v4.83.0 卡片背景解鎖說明:依 P.bg 的 grp/boss/stage/chap 欄位自動生成,
+ *   新增背景只要在 P.bg 加一筆就自動有說明文字(不必再維護一張表)。 */
+(function(){
+  try{
+    var _STAGE_N = { maokong:['貓空關卡','貓空'], japan:['日本關卡','日本'], egypt:['埃及關卡','埃及'] };
+    var _CHAP_N = { prologue:['序章','序章'], ch1:['第一章','第一章'], ch2:['第二章','第二章'],
+                    ch3:['第三章','第三章'], ch4:['第四章','第四章'], ch5:['第五章','第五章'], ch6:['第六章','第六章'] };
+    for(var i = 0; i < P.bg.length; i++){
+      var b = P.bg[i];
+      if(!b || !b.lock) continue;
+      var k = 'bg:' + b.id, o = null;
+      if(b.grp === 'boss' && b.boss){
+        o = { p:'以「我很會」難度打贏 BOSS【' + b.boss + '】即可獲得',
+              c:'用「我很會」難度打贏【' + b.boss + '】就拿得到！' };
+      } else if(b.grp === 'scene'){
+        var sn = _STAGE_N[b.stage] || ['該關卡','這一關'];
+        o = { p:'通關【' + sn[0] + '】時有 5% 機率獲得(每張各自擲一次)',
+              c:'過【' + sn[1] + '】的關時，有小小機率拿到！' };
+      } else if(b.grp === 'story'){
+        var cn = _CHAP_N[b.chap] || ['該章節','這一章'];
+        o = { p:'通關主線劇情【' + cn[0] + '】時有 5% 機率獲得(每張各自擲一次)',
+              c:'打完主線【' + cn[1] + '】時，有小小機率拿到！' };
+      } else if(b.lock.t === 'exchange'){
+        o = { p:'用【鬥技之證】×20 到造型工房卡片背景頁兌換',
+              c:'用鬥技之證 20 張換！' };
+      } else if(b.lock.t === 'summon'){
+        o = { p:'在【召喚星空】召喚時有 1% 機率獲得',
+              c:'去召喚星空抽，有 1% 機率拿到！' };
+      }
+      if(o && !window.AVATAR_UNLOCK_HOW[k]) window.AVATAR_UNLOCK_HOW[k] = o;
+    }
+  }catch(_e){ try{ console.warn('[avatar] 背景解鎖說明生成失敗', _e); }catch(__){} }
+})();
+
+/* ══════════════════════════════════════════════════════
+ * ★★ v4.83.0 卡片背景「四種解鎖管道」—— 全部實作在本檔(因為要讀 P.bg),
+ *   index.html 只負責在對的時間點呼叫。回傳「本次新解鎖的背景名稱陣列」供提示。
+ *   ★ 帳本沿用 avatarCard.unlock(key = 'bg:<id>'),與 _avatarIsUnlocked / GM 上鎖 /
+ *     _avatarStripLocked 完全同一組鍵 → 不用新機制。
+ * ══════════════════════════════════════════════════════ */
+function _avBgName(b){ return _avT(b.n, b.ns); }
+function _avBgGrantList(ids){
+  var keys = [], names = [], i, b;
+  for(i = 0; i < ids.length; i++){ keys.push('bg:' + ids[i]); }
+  var added = [];
+  try{ added = window._avatarGrantUnlock(keys) || []; }catch(_e){ return []; }
+  for(i = 0; i < P.bg.length; i++){
+    b = P.bg[i];
+    if(added.indexOf('bg:' + b.id) >= 0) names.push(_avBgName(b));
+  }
+  return names;
+}
+
+/* ① BOSS「我很會」難度通關 → 解鎖該 BOSS 純背景(不限戰鬥評價·幂等)
+ *   bossNames = 本場已倒下的 BOSS 名稱陣列(index.html 從 G.p2 拿) */
+window._avatarBgUnlockOnBossWin = function(bossNames, difficulty){
+  try{
+    if(!bossNames || !bossNames.length) return [];
+    if(!difficulty || String(difficulty).indexOf('我很會') < 0) return [];
+    var ids = [], i, j, b;
+    for(i = 0; i < P.bg.length; i++){
+      b = P.bg[i];
+      if(b.grp !== 'boss' || !b.boss) continue;
+      for(j = 0; j < bossNames.length; j++){
+        if(bossNames[j] === b.boss){ ids.push(b.id); break; }
+      }
+    }
+    if(!ids.length) return [];
+    return _avBgGrantList(ids);
+  }catch(_e){ try{ console.warn('[avatar] BOSS 背景解鎖失敗', _e); }catch(__){} return []; }
+};
+
+/* ② 關卡通關 → 該關場景圖「每張各 5%」逐張擲(已拥有的不重擲) */
+window._avatarBgUnlockOnStageClear = function(stageKey){
+  try{
+    if(!stageKey) return [];
+    var ids = [], i, b;
+    for(i = 0; i < P.bg.length; i++){
+      b = P.bg[i];
+      if(b.grp !== 'scene' || b.stage !== stageKey) continue;
+      if(window._avatarIsUnlocked('bg', b.id)) continue;
+      if(Math.random() < 0.05) ids.push(b.id);
+    }
+    if(!ids.length) return [];
+    return _avBgGrantList(ids);
+  }catch(_e){ return []; }
+};
+
+/* ③ 主線章節通關 → 該章劇情場景圖「每張各 5%」逐張擲 */
+window._avatarBgUnlockOnChapterClear = function(chapId){
+  try{
+    if(!chapId) return [];
+    var ids = [], i, b;
+    for(i = 0; i < P.bg.length; i++){
+      b = P.bg[i];
+      if(b.grp !== 'story' || b.chap !== chapId) continue;
+      if(window._avatarIsUnlocked('bg', b.id)) continue;
+      if(Math.random() < 0.05) ids.push(b.id);
+    }
+    if(!ids.length) return [];
+    return _avBgGrantList(ids);
+  }catch(_e){ return []; }
+};
+
+/* ④ 召喚星空抽一次 → 1% 機率抽到一張未擁有的召喚星空背景 */
+window._avatarBgUnlockOnSummon = function(){
+  try{
+    var pool = [], i, b;
+    for(i = 0; i < P.bg.length; i++){
+      b = P.bg[i];
+      if(!b.lock || b.lock.t !== 'summon') continue;
+      if(window._avatarIsUnlocked('bg', b.id)) continue;
+      pool.push(b.id);
+    }
+    if(!pool.length) return [];
+    if(Math.random() >= 0.01) return [];
+    return _avBgGrantList([ pool[Math.floor(Math.random() * pool.length)] ]);
+  }catch(_e){ return []; }
+};
+
+/* ⑤ 鬥技之證 ×20 兌換鬥技場背景(扣點由 index.html 負責·此處只入帳) */
+window._avatarBgArenaExchangeIds = function(){
+  var ids = [], i, b;
+  try{
+    for(i = 0; i < P.bg.length; i++){
+      b = P.bg[i];
+      if(b.lock && b.lock.t === 'exchange') ids.push(b.id);
+    }
+  }catch(_e){}
+  return ids;
+};
+window._avatarBgGrantByIds = function(ids){ return _avBgGrantList(ids || []); };
 
 /* 解鎖說明查詢:查無 → null(呼叫端顯示「敬請期待」) */
 window._avatarUnlockHow = function(cat, id){
@@ -1758,7 +2037,8 @@ window._avatarStripLocked = function(){
     var SLOTS = [['outfit','of','整套裝扮','整套衣服'], ['hairhead','hh','髮型','頭髮'],
                  ['hat','hat','頭戴','帽帽'], ['gls','gls','眼鏡','眼鏡'],
                  ['mouthacc','macc','嘴部飾品','嘴巴戴的'], ['mouth','mouth','嘴巴','嘴嘴'],
-                 ['held','held','手持物品','拿的東西']];
+                 ['held','held','手持物品','拿的東西'],
+                 ['bg','bg','卡片背景圖','背景圖']];   /* ★ v4.83.0 背景圖也走同一套解鎖帳本 */
     for(var i = 0; i < SLOTS.length; i++){
       var cat = SLOTS[i][0], key = SLOTS[i][1];
       var id = cfg[key] | 0;
@@ -1766,6 +2046,7 @@ window._avatarStripLocked = function(){
       if(window._avatarIsUnlocked(cat, id)) continue;
       cfg[key] = 0;
       if(cat === 'outfit'){ cfg.ofHead = 0; cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0; }
+      if(cat === 'bg' && (cfg.bgType | 0) === 2){ cfg.bgType = 0; }   /* ★ v4.83.0 背景圖被脫掉 → 背景型退回純白(不留空白圖片型) */
       changed.push(_avT(SLOTS[i][2], SLOTS[i][3]));
     }
   }catch(_e){ console.warn('[avatar] 未解鎖還原失敗', _e); }
@@ -2051,6 +2332,9 @@ var _AV_TABS = [
      *   adj:[['mouth','嘴巴位置','嘴嘴位置'],['macc','嘴部飾品位置','嘴飾位置']] */
     adj:[['macc','嘴部飾品位置','嘴飾位置']] },
   { k:'heldTab',   p:'手持', c:'拿的', cats:[['held','手持物品','拿什麼']], adj:[['held','手持位置','拿的位置']] },
+  /* ★★ v4.83.0 卡片背景(老師需求2/3)—— v4.61.0 曾移出選單的 bg 頁籤在此復活並擴充 */
+  { k:'bgTab',     p:'卡片背景', c:'卡片背景',
+    cats:[['bgType','背景樣式','背景樣式'],['bgC','漸層顏色','漸層顏色'],['bg','背景圖片','背景圖']] },
   /* ★ v4.78.0 老師 2026-07-22 需求2:手持之下新增「暱稱」項(act 不切頁·直接開既有 openNicknameModal 設定暱稱視窗) */
   { k:'nickAct',   p:'暱稱', c:'名字', act:'nick' }
 ];
@@ -2079,7 +2363,8 @@ var _AV_CFG_KEY = { body:'body', skin:'skin', face:'face', brow:'brow', eye:'eye
   cape:'cape', held:'held', q:'q',
   browC:'browC', earring:'earr', mask:'mask', sock:'sock',
   full:'full', headfull:'headf', bodyfull:'bodyf', bg:'bg', clothC:'clothC',   /* ★ v4.59.0 整套 / v4.60.0 整頭/整身/背景/服裝配色 */
-  hairhead:'hh', outfit:'of', mouthacc:'macc', glsClear:'glsClear' };   /* ★ v4.64.0 髮型整頭 / 套裝(頭+身) / 嘴部飾品 / 鏡片樣式 */
+  hairhead:'hh', outfit:'of', mouthacc:'macc', glsClear:'glsClear',
+  bgType:'bgType', bgC:'bgC' };   /* ★ v4.83.0 卡片背景型別/漸層顏色 */   /* ★ v4.64.0 髮型整頭 / 套裝(頭+身) / 嘴部飾品 / 鏡片樣式 */
 var _avCurTab = 0;
 
 function _avEsc(t){
@@ -2147,7 +2432,7 @@ window._avatarOpenPanel = function(){
     + '<div style="flex:1;display:flex;min-height:0;">'
     + '<div style="flex:0 0 46%;max-width:640px;display:flex;align-items:center;justify-content:center;padding:12px;background:radial-gradient(circle at 50% 42%,rgba(120,160,255,0.14),transparent 65%);">'
     /* ★ v4.61.0 需求2:預覽加 放大/縮小 鈕(放大=上半身特寫·看清瞳色·同名片/戰鬥卡構圖) */
-    + '<div style="position:relative;height:80vh;max-height:80vh;aspect-ratio:3/4;width:auto;max-width:100%;">'
+    + '<div style="position:relative;height:80vh;max-height:80vh;aspect-ratio:7/10;width:auto;max-width:100%;">'
     + '<div id="_av-preview" style="width:100%;height:100%;"></div>'
     + '<button id="_av-zoom-btn" onclick="_avatarToggleZoom()" style="position:absolute;top:8px;right:8px;padding:8px 14px;font-size:14px;font-weight:800;background:rgba(30,40,80,0.7);border:2px solid rgba(140,200,255,0.6);color:#c9e4ff;border-radius:10px;cursor:pointer;font-family:inherit;">🔍 ' + _avT('放大','看特寫') + '</button>'
     + '</div></div>'
@@ -2386,7 +2671,11 @@ window._avatarRandomize = function(){
   cfg.gls = (Math.random() < 0.25) ? _avRndOf(_avAvailIds('gls')) : 0;
   cfg.hat = (Math.random() < 0.3) ? _avRndOf(_avAvailIds('hat')) : 0;    /* ★ v4.64.0 頭飾 */
   cfg.macc = (Math.random() < 0.2) ? _avRndOf(_avAvailIds('mouthacc')) : 0;   /* ★ v4.64.0 嘴飾 */
-  cfg.skin = Math.floor(Math.random()*PAL.skin.length);
+  cfg.skin = (function(){
+    var _pool = [];
+    for(var _si = 0; _si < PAL.skin.length; _si++){ if(!window._avColorHidden('skin', _si)) _pool.push(_si); }
+    return _pool.length ? _pool[Math.floor(Math.random()*_pool.length)] : 0;
+  })();
   cfg.hairC = Math.floor(Math.random()*PAL.hair.length);
   cfg.eyeC = Math.floor(Math.random()*PAL.eye.length);
   cfg.clothC = Math.floor(Math.random()*PAL.cloth.length);
@@ -2536,7 +2825,8 @@ function _avRenderOpts(){
     var _LOCK_SLOTS = [['outfit','of','整套裝扮','整套衣服'], ['hairhead','hh','髮型','頭髮'],
                        ['hat','hat','頭戴','帽帽'], ['gls','gls','眼鏡','眼鏡'],
                        ['mouthacc','macc','嘴部飾品','嘴巴戴的'], ['mouth','mouth','嘴巴','嘴嘴'],
-                       ['held','held','手持物品','拿的東西']];
+                       ['held','held','手持物品','拿的東西'],
+                       ['bg','bg','卡片背景圖','背景圖']];   /* ★ v4.83.0 */
     var _prevNames = [];
     for(var _pi = 0; _pi < _LOCK_SLOTS.length; _pi++){
       var _pc = _LOCK_SLOTS[_pi][0], _pk = _LOCK_SLOTS[_pi][1];
@@ -2568,11 +2858,36 @@ function _avRenderOpts(){
         + _avT('髮色引擎已就緒:髮型素材加入後,選好的髮色會自動套用','選好頭髮顏色,等髮型的圖加進來就會變色囉!') + '</div>';
     }
     h += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-    if(cat === 'skin' || cat === 'hairC' || cat === 'eyeC' || cat === 'browC' || cat === 'clothC'){
+    /* ★★ v4.83.0 卡片背景樣式三選一 */
+    if(cat === 'bgType'){
+      var _btCur = cfg.bgType | 0;
+      var _btOpts = [ [0,'純白底','白底'], [1,'左右漸層色(中間白)','兩邊有顏色'], [2,'背景圖片','放圖片'] ];
+      for(var bti=0; bti<_btOpts.length; bti++){
+        var _btSel = (_btCur === _btOpts[bti][0]);
+        h += '<button onclick="_avatarSetPart(\'bgType\',' + _btOpts[bti][0] + ')" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:pointer;font-family:inherit;'
+          + (_btSel ? 'background:rgba(120,180,255,0.3);border:2px solid #8ad4ff;color:#d4ecff;box-shadow:0 0 10px rgba(120,200,255,0.4);'
+                    : 'background:rgba(60,70,110,0.25);border:2px solid rgba(120,140,190,0.4);color:#c4d0ea;')
+          + '">' + ['⬜ ','Ἲ8 ','Ὓc️ '][bti].replace('Ἲ8','ἰ8') + _avT(_btOpts[bti][1], _btOpts[bti][2]) + '</button>';
+      }
+      h += '</div><div style="font-size:14px;color:#8a97b8;margin:4px 2px 0;">Ὂ1 '
+        + _avT('卡框固定 7:10，人物占卡片高度 80%；選「漸層」時中間 50% 一律是白色，左右各 25% 是你選的顏色。',
+               '卡片是直的，人在中間；選漸層的話，中間是白的，兩邊有顏色。')
+        + '</div><div style="display:none;">';
+    } else if(cat === 'bgC'){
+      /* 漸層顏色:只在選了漸層型才有意義(仍允許先選色再切型) */
+      var _bcPal = window.AVATAR_PALETTES.cloth;
+      for(var bci=0; bci<_bcPal.length; bci++){
+        var _bcSel = ((cfg.bgC|0) === bci);
+        h += '<button onclick="_avatarSetPart(\'bgC\',' + bci + ')" title="' + (bci===0 ? _avT('全白(等同純白底)','全白') : (_avT('顏色','顏色') + ' ' + (bci+1)))
+          + '" style="width:56px;height:56px;border-radius:50%;cursor:pointer;background:' + _bcPal[bci] + ';'
+          + 'border:' + (_bcSel ? '3.5px solid #8ad4ff;box-shadow:0 0 12px rgba(120,200,255,0.7);' : '2.5px solid rgba(255,255,255,0.35);') + '"></button>';
+      }
+    } else if(cat === 'skin' || cat === 'hairC' || cat === 'eyeC' || cat === 'browC' || cat === 'clothC'){
       var pal = (cat === 'skin') ? window.AVATAR_PALETTES.skin
               : (cat === 'eyeC') ? window.AVATAR_PALETTES.eye
               : (cat === 'clothC') ? window.AVATAR_PALETTES.cloth : window.AVATAR_PALETTES.hair;   /* ★ v4.60.0 服裝配色色票 */
       for(var i=0;i<pal.length;i++){
+        if(window._avColorHidden && window._avColorHidden(cat, i)) continue;   /* ★ v4.82.0 隱藏色票不渲染(陣列原地保留·索引不位移) */
         var sel = (cfg[cat] === i || (!cfg[cat] && i === 0));
         var tt = (i === 0) ? _avT('原本的顏色','原本的顏色') : (_avT('色票','顏色') + ' ' + (i+1));
         h += '<button onclick="_avatarSetPart(\''+cat+'\','+i+')" title="'+tt
@@ -2614,8 +2929,22 @@ function _avRenderOpts(){
       var list = P[_CAT_PART_ALIAS[cat] || cat];
       if(!list){ h += _wipHtml; continue; }
       var shown = 0;
+      var _bgGrpSeen = {};   /* ★ v4.83.0 背景圖分群標題(free/boss/scene/special/story) */
       for(var j=0;j<list.length;j++){
         var it = list[j];
+        /* ★ v4.83.0 背景圖選單:依 grp 欄位插入分群標題(學生一眼看懂怎麼拿) */
+        if(cat === 'bg' && it.grp && !_bgGrpSeen[it.grp]){
+          _bgGrpSeen[it.grp] = 1;
+          var _GT = { free:   ['⭐ 一開始就有', '⭐ 本來就有'],
+                      boss:   ['ὀ9 BOSS 戰場(用「我很會」難度打贏該 BOSS 取得)', 'ὀ9 BOSS 場地(用「我很會」打贏它就有)'],
+                      scene:  ['Ὗa️ 關卡場景(通關時每張各 5% 機率取得)', 'Ὗa️ 關卡場景(過關有小小機率拿到)'],
+                      special:['✨ 特殊管道', '✨ 特別的'],
+                      story:  ['Ὅ6 主線劇情場景(通關該章時每張各 5% 機率取得)', 'Ὅ6 主線劇情(過關有小小機率拿到)'] }[it.grp];
+          if(_GT){
+            h += '</div><div style="font-size:16px;font-weight:900;color:#8ad4ff;margin:14px 2px 6px;width:100%;">'
+              + _avT(_GT[0], _GT[1]) + '</div><div style="display:flex;flex-wrap:wrap;gap:8px;">';
+          }
+        }
         /* ★ PNG 模式:只顯示「當前體型」有素材的款式(fImg/img/bImg 支援四體型陣列,
          *   缺格為 null → 該體型自動隱藏);j===0 的預設款(素體內建外觀)永遠顯示 — v4.58.0 */
         if(pngMode && j !== 0 && cat !== 'bg'){   /* ★ v4.60.0 背景項用 file 欄位·不做素材過濾 */
@@ -2779,6 +3108,9 @@ function _avatarAnyHairImg(){
 
 window._avatarSaveClick = function(){
   _avSfx('confirm');   /* ★ v4.64.0 需求6:確認音效 */
+  /* ★ v4.83.0 儲存造型後立即重刷「主角英雄立繪」(index.html 的 HERO_IMGS)，
+   *   讓圖鑑/戰鬥卡/編組馬上看到新造型。函式不存在就静默跳過。 */
+  try{ if(typeof window._lxpsProtagPortraitRefresh === 'function') window._lxpsProtagPortraitRefresh(); }catch(_ePp){}
   var btn = document.getElementById('_av-save-btn');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ ' + _avT('儲存中…','存檔中…'); }
   window._avatarSaveToCloud().then(function(ok){
@@ -2819,7 +3151,7 @@ window._avatarOpenCard = function(name, card){
     + '<span style="font-size:17px;font-weight:900;color:#d4ecff;letter-spacing:1px;">📇 ' + _avT('冒險者名片','冒險名片') + '</span>'
     + '<button onclick="_avatarCardClose()" style="background:none;border:none;color:#ff9a9a;font-size:20px;font-weight:900;cursor:pointer;font-family:inherit;">✕</button></div>'   /* ★ v4.62.0 統一關閉(還原 BGM) */
     + '<div style="display:flex;align-items:center;justify-content:center;padding:10px;background:radial-gradient(circle at 50% 40%,rgba(120,160,255,0.16),transparent 70%);">'
-    + '<div style="width:220px;aspect-ratio:3/4;">' + window._avatarRenderSVG(card.cfg, null, true) + '</div></div>'   /* ★ v4.61.0 名片=上半身特寫(戰鬥卡片預覽圖) */
+    + '<div style="width:220px;aspect-ratio:7/10;">' + window._avatarRenderSVG(card.cfg, null, true) + '</div></div>'   /* ★ v4.61.0 名片=上半身特寫(戰鬥卡片預覽圖) */
     + '<div style="padding:4px 20px 18px;text-align:center;">'
     + '<div style="font-size:21px;font-weight:900;color:#ffe9b8;letter-spacing:1px;">' + _avEsc(name || _avT('神秘旅人','神祕人')) + '</div>'
     + '<div style="font-size:13px;color:#8ad4ff;font-weight:800;margin-top:2px;">' + _avT('✦ 異界旅人 ✦','✦ 從別的世界來的 ✦') + '</div>'
