@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-23  / 目前主程式版本:v4.86.0(造型工房三修+教學指引兩新章+第七章待續入口+對白閃過根治+回顧模式全內容可選·管理員測試)
+//  最後更新:2026-07-23  / 目前主程式版本:v4.87.0(主角/主線夥伴不再被要求確認歸屬+主角圖鑑四表補齊+暱稱顯示隱私修補·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,43 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.87.0 — 主角/主線夥伴不再被要求「確認是不是自己的」+ 主角圖鑑四表補齊 + 暱稱顯示隱私修補(管理員測試)
+  {
+    ver: 'v4.87.0',
+    date: '2026-07-23',
+    adminOnly: true,   /* ★ 主線劇情/主角系統測試期內容·僅管理員可見(正式開放時另發玩家版公告) */
+    brief: [
+      '🌟【主角不會再被問「這是你的嗎」】英雄圖鑑打開主角卡時，左下角那條紅色的「來源不明・請自行確認」和三顆按鈕不見了，改成綠色的「🌟 你的主角(自訂角色)」。主角本來就是你自己捏出來的，不需要再確認一次。',
+      '📖【主線劇情送的夥伴也一樣】走過主線第三、四章拿到的劍士、祭司、守衛、刺客、火法師，現在會標成「📖 主線劇情解鎖」，而且就算換了平板、清了快取，也不會再被系統列進「請確認這些是不是你的」名單裡。',
+      '📇【主角圖鑑資料補齊】主角卡現在看得到角色簡介與背景故事，編組頁的「🔍 條件搜尋」也搜得到主角了。',
+      '🔒【隱私修補】以前沒有設定暱稱的同學，圖鑑主角卡上會直接把整串校內信箱當成名字印出來;現在改成顯示你在造型工房設的暱稱，沒設就顯示「主角」，信箱不會再外露。',
+      '⚔️【戰鬥中也叫你的名字】設好暱稱後，戰鬥畫面的角色卡上主角會顯示你的暱稱，不再只是寫「主角」。',
+      '🎬【序章多了一段動畫】掉進異世界、身體還在發光還沒定形的那一刻，現在會先播一段「定形覺醒」動畫，播完才進造型工房捏出你自己的樣子。',
+    ],
+    items: [
+      '【需求1・單一真相】新增 _lxpsStoryOwnedSource(name)(index.html·_lxpsUnlockSourceLabel 上方)與 _msStoryHeroGranted(name)(主線 IIFE 內·export 到 window)',
+      '→ 主角/覺醒別名恆判 true(走 _isProtagHero);主線夥伴需 _MS_STORY_HERO_GRANTS 命中 且 hero_{cid} 或 chap_{cid} 旗標已落(存 mainStoryProgress·會上雲·換裝置也在)',
+      '→ ★ 刻意綁章節旗標而非整張名單無條件豁免:劍士/祭司/守衛/刺客/火法師 也能靠一般召喚取得，無條件豁免會讓沒玩過主線的帳號躲過污染稽核。綁旗標後沒玩過主線者行為與過去完全相同，稽核零削弱。',
+      '【需求1・接線①圖鑑】_lxpsGetHeroUnlockInfo 開頭早退回 { cat:known, source:protagonist 或 mainstory_clear, at:0 }',
+      '→ 刻意回 known 而非新開 cat:story，是為了零回歸:_codexUnlockBarHtml 與 _codexLostRescueBarHtml 兩個消費端本來就認得 known(綠色來源列·_suspicious=false → 紅框與三顆確認鈕全部不出現)，不必動那兩支的分支結構。',
+      '【需求1・接線②稽核】_advHasGenuineUnlock 補主線夥伴早退 true(主角原本已有)',
+      '→ 一處早退即涵蓋 _advHasHardEvidence(登入自我審查 PENDING 名單)、advGetUnlockedHeroes 自癒、幻影過濾、GM 過度補回稽核。',
+      '【需求1・接線③標籤】_lxpsUnlockSourceLabel 最前面補 protagonist → 🌟 你的主角(自訂角色) / mainstory → 📖 主線劇情解鎖',
+      '→ ★ 必須排在最前面:mainstory_clear 含子字串 clear，會被既有的 s.indexOf(clear)>=0 誤標成「🗺 冒險關卡解鎖」。',
+      '【B2・主角圖鑑四表】主角 IIFE 內 inline 補 HERO_BIO / HERO_LORE / HERO_PRIMARY_CLASS(dmg) / HERO_SKILL_EFFECTS(5 個標籤全取自 SKILL_EFFECT_DEFS 既有清單·零孤兒標籤)',
+      '→ 四表同步複製給覺醒別名「主角‧覺醒」(否則第六章覺醒後改顯示 SSR 卡時簡介會整塊消失);主角刻意不給 designer 欄位(他就是玩家自己)→ 圖鑑不出現「🎨 學生設計英雄」區塊。',
+      '【B3・暱稱單一真相】新增 _lxpsProtagNick():_avatarNickname → localStorage lxps_nickname_{uid} → 空字串;_heroDisplayName 改走它，覺醒別名補「‧覺醒」後綴',
+      '→ ★ 舊碼病灶:_heroDisplayName 讀 window._playerNickname，而 _playerNickname 的 fallback 鏈是「暱稱 || user.displayName || user.email」，沒設暱稱的學生會把整串校內信箱印在圖鑑主角卡上(隱私外洩)。新口徑與主線對白 __hero(v4.81.0 A7)完全一致。舊碼保留為註解。',
+      '【B3・戰鬥卡接線】renderCard 的 card-name-sm 由 h._displayName || h.name 改為 h._displayName || _heroDisplayName(h.name)',
+      '→ h._displayName(被魅惑的敵人)優先權不變，零回歸;非主角英雄 _heroDisplayName 原樣回傳。',
+      '【範圍】只改 index.html + admin_panel.js(版號) + game_changelog.js;avatar_db.js 本輪未動(維持 v4.86.0·未覆蓋任何 avatar_parts 素材故不需 bump AVATAR_DB_VERSION)',
+      '【老師裁定1・序章影片】序章 scene 加回 video:主線_序章_定形覺醒.mp4(老師已上傳·實測 HTTP 200)，掛在 act:open_avatar_studio 同一場',
+      '→ 播放順序由 _msPlayScene 天然保證:影片播完 → 本場 lines 為空 → finish() → 才跑 act 開造型工房，即老師要求的「造型工房之前」。缺檔/播放失敗仍靜默 fallback 直接開工房，絕不擋劇情。舊值(無 video)保留為註解。',
+      '【老師裁定2・序章不發獎勵】經查證程式本來就不發，零改動:prologue 的 reward 為 null 且不在 _MS_STORY_HERO_GRANTS，_msGrantChapterReward 第二行 if(!ch.reward && !_MS_STORY_HERO_GRANTS[cid]) return; 直接早退。此裁定留檔，日後若要改發只需給 prologue 一個 reward 值。',
+      '★ 三個測試期閘門 _MAINSTORY_ADMIN_ONLY / _AVATAR_ADMIN_ONLY / _PROTAG_HERO_PUBLIC 本輪一律未動(老師驗收完整後再一起開放);玩家版開放公告亦尚未發。',
+      '★ 老師裁定3(主線 Phase 2 戰鬥實戰化・甲案:六場全接真實戰鬥/戰敗可重打/該章不算通關)本輪未動工，待四項子規格確認後單獨成版(見交付說明)。',
+    ],
+  },
   // v4.86.0 — 七修:造型工房三修 + 教學指引兩新章 + 第七章待續入口 + 對白閃過根治 + 回顧模式全內容可選(含未部署的 v4.85.0 全部內容)
   {
     ver: 'v4.86.0',
@@ -382,19 +419,5 @@ window.GAME_CHANGELOG = [
       '★ v4.66.0【範圍與驗證】只改 avatar_db.js(index.html/admin_panel.js/game_changelog.js 僅版號同步);無 ?.·九版號同步點全對齊 v4.66.0·changelog 恰 20 條。',
     ],
   },
-  // v4.65.0 — 主線劇情模式 Phase 1 地基(穿越冒險故事外殼·管理員測試)
-  {
-    ver: 'v4.65.0',
-    date: '2026-07-20',
-    adminOnly: true,
-    brief: [
-      '📖 全新「主線劇情」要來囉!跟著力行小學生穿越到異世界,和夥伴一起冒險、學會戰鬥和馴養,最後喚醒你自己的主角!(測試中,先開放給老師)',
-    ],
-    items: [
-      '★ v4.65.0【主線劇情】Phase 1 地基:資料驅動章節腳本 MAINSTORY_DB(序章~第六章)+ 過場播放引擎(獨立 overlay 鏈式·打字機對白·可跳過·影片插槽缺檔靜默 fallback·防卡死 watchdog)',
-      '★ v4.65.0【主線劇情】進度 self-write(mainStoryProgress·players 主檔 merge·免改 rules)+ 各章 🔮×5 / 全通關 🌈SSR隨機召喚卷×1 冪等發獎(序章不發)',
-      '★ v4.65.0【主線劇情】關卡頁「📖 主線劇情」入口 + 首登自動導入序章(admin gating 測試期·防疊加守門);演出動作(造型工房/夥伴加入/教學/劇情戰)批次2/3 接既有系統',
-    ],
-  },
-  // v4.64.0 — 自訂角色系統大改版(頭身新切法素材+頭飾/眼鏡/嘴飾+GM上鎖通道·管理員測試)
+  // v4.65.0 — 主線劇情模式 Phase 1 地基(已移出·更新日誌恆保 20 條)
 ];
