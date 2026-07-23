@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.85.0';
+window.AVATAR_DB_VERSION = 'v4.86.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1262,7 +1262,7 @@ var _AV_FIG_S  = (_AV_CARD_H * window._AV_FIG_RATIO) / 480;          /* = 0.8333
 var _AV_CARD_TF = 'translate(' + ((_AV_CARD_W - 360 * _AV_FIG_S) / 2).toFixed(3) + ','
                 + ((_AV_CARD_H - 480 * _AV_FIG_S) / 2).toFixed(3) + ') scale(' + _AV_FIG_S.toFixed(6) + ')';
 window._avGradSeq = 0;   /* ★ SVG 漸層 id 全域流水號(同頁多張名片縮圖不互相污染) */
-/* ★★ v4.85.0 漸層背景「中間純白帶」的左右邊界(卡片寬度比例·0=最左 1=最右)。
+/* ★★ v4.86.0 漸層背景「中間純白帶」的左右邊界(卡片寬度比例·0=最左 1=最右)。
  *   老師需求:白色要蓋到人物左右邊緣(袖子最寬處)。因為特寫(名片/好友縮圖/圖鑑立繪)
  *   把人物放大約 2.4 倍,兩種檢視要用不同寬度,故拆 full(全身)/ port(特寫) 兩組。
  *   數值來源=實測 body_torso_boy/girl/kidboy/kidgirl 四張 alpha bbox 換算成卡片座標後取最寬,
@@ -1598,7 +1598,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
         var cc = (cIdx >= 0 && cIdx < cArr.length) ? cArr[cIdx] : '#ffffff';
         window._avGradSeq = (window._avGradSeq | 0) + 1;
         var gid = 'avbg' + window._avGradSeq;
-        /* ★★ v4.85.0 老師需求2:中間白色範圍擴大到「人物左右邊緣(袖子最寬處)」。
+        /* ★★ v4.86.0 老師需求2:中間白色範圍擴大到「人物左右邊緣(袖子最寬處)」。
          *   人物在卡片中所佔寬度依檢視模式差很多(特寫比全身放大約 2.4 倍),
          *   故白帶寬度依 portrait 分流(實測 body_torso_×4 alpha bbox 換算卡片座標):
          *     全身檢視 人物約佔卡寬 36%~64% → 純白 33%~67%
@@ -3091,13 +3091,13 @@ window._avatarSetPart = function(cat, id, _allowLocked){
   if(cat === 'outfit'){
     cfg.of = id;
     cfg.ofHead = (id > 0) ? 1 : 0;
-    /* ★ v4.85.0 老師需求3:按「預設裝扮(素體)」時,頭部也一併回到預設素體頭
+    /* ★ v4.86.0 老師需求3:按「預設裝扮(素體)」時,頭部也一併回到預設素體頭
      *   (舊行為只脫衣服·頭上原本套的髮型整頭件會留著·視覺上沒有真的回到素體)。
      *   選其他套裝時仍照舊清掉髮型整頭件(套裝自帶頭)。 */
     cfg.hh = 0;
     cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0;   /* 舊槽互斥清空(舊存檔換新裝即脫離舊件) */
   } else if(cat === 'bg'){
-    /* ★★ v4.85.0 老師需求1:選了風景背景圖卻被純白/漸層蓋住 —— 根因是背景圖(cfg.bg)
+    /* ★★ v4.86.0 老師需求1:選了風景背景圖卻被純白/漸層蓋住 —— 根因是背景圖(cfg.bg)
      *   與背景樣式(cfg.bgType)是兩個獨立分頁,玩家在「背景圖片」選了圖,bgType 仍停在
      *   0(純白)或 1(漸層)→ _bgLayer 走不到 bt===2 的圖片分支,畫面永遠是純色。
      *   修法:選到有效背景圖就自動切成圖片型;把背景圖脫掉(id=0)且目前是圖片型 →
@@ -3106,7 +3106,7 @@ window._avatarSetPart = function(cat, id, _allowLocked){
     if(id > 0){ cfg.bgType = 2; }
     else if((cfg.bgType | 0) === 2){ cfg.bgType = 0; }
   } else if(cat === 'bgC'){
-    /* ★ v4.85.0 同上對稱處理:在「純白」狀態下點漸層顏色 → 自動切成漸層型(不然點了沒反應);
+    /* ★ v4.86.0 同上對稱處理:在「純白」狀態下點漸層顏色 → 自動切成漸層型(不然點了沒反應);
      *   目前是圖片型則只記住顏色不動背景(避免手滑點色票就把選好的風景圖蓋掉)。 */
     cfg.bgC = id;
     if((cfg.bgType | 0) === 0 && id > 0){ cfg.bgType = 1; }
