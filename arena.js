@@ -1,6 +1,9 @@
 // ════════════════════════════════════════════════════════════════════════
 //  arena.js  —  英雄鬥技場核心配置與邏輯
 //  建立日:2026-06-02   /   v3.13.15(2026-06-02)雲端陣容池系統
+//  最後更新:2026-07-24  /  v4.88.0 — 傷害明細 by 陣列補 m(最大單次傷害),
+//                                     供 GM「技能傷害排行(全校)」判斷過強技能/BUG。
+//                                     頂層欄位不變 → firestore.rules 零改動。
 //
 //  ★ 設計鐵則(老師指定):
 //    1. 完全獨立 — 絕對不影響原有冒險/World BOSS/Taiwan 任何功能
@@ -934,7 +937,13 @@
       //   ⚠ 需在 Firebase Console 部署 arenaDamageDetail 規則,否則此寫入會被預設拒絕(僅明細缺,
       //      戰鬥記錄與其他功能照常)。
       //   資料源:G._arenaDmgSources(index.html doDmg hook 收集,每筆 {round,heroName,skill,amount})。
-      //   結構:detail:[ { r:回合, h:[ { n:英雄, d:該回合總傷, by:[{s:技能, d:傷}] } ] } ]
+      //   結構:detail:[ { r:回合, h:[ { n:英雄, d:該回合總傷, by:[{s:技能, d:傷, m:最大單次}] } ] } ]
+      // ★ v4.88.0(2026-07-24)— 老師需求:GM 要靠這份明細判斷「哪個技能過強/有 BUG」。
+      //   舊版 by 只有 d(該回合該技能的**累加合計**)→ 多段攻擊技能(打 5 下)會被加總成大數字,
+      //   看起來像爆量其實正常 → 最容易誤判。故每筆補 m = 該回合該技能的**最大單次**傷害。
+      //   ★ 頂層欄位維持 uid/detail/totalDmg/ts/v 五個不變 → firestore.rules 的
+      //     hasOnly 白名單與型別檢查完全不受影響(規則不檢查 detail 陣列內部結構)→ 規則零改動。
+      //   ★ 舊場次沒有 m 欄,GM 端顯示「—」,不可回溯。
       // ════════════════════════════════════════════════════════════════
       try {
         var _rawSrc = (G && Array.isArray(G._arenaDmgSources)) ? G._arenaDmgSources : null;
@@ -950,9 +959,11 @@
             var _amt = Math.max(0, Math.floor(s.amount || 0));
             if (_amt <= 0) return;
             if (!_byRound[_r]) _byRound[_r] = {};
-            if (!_byRound[_r][_nm]) _byRound[_r][_nm] = { total: 0, skills: {} };
+            if (!_byRound[_r][_nm]) _byRound[_r][_nm] = { total: 0, skills: {}, maxes: {} };
             _byRound[_r][_nm].total += _amt;
             _byRound[_r][_nm].skills[_sk] = (_byRound[_r][_nm].skills[_sk] || 0) + _amt;
+            // ★ v4.88.0 — 最大單次(max-merge;寫成 !(x >= y) 讓 undefined 一定會被寫入)
+            if (!(_byRound[_r][_nm].maxes[_sk] >= _amt)) _byRound[_r][_nm].maxes[_sk] = _amt;
             _grand += _amt;
           });
           var _detail = Object.keys(_byRound)
@@ -963,9 +974,13 @@
               var _hs = _byRound[r];
               var _hArr = Object.keys(_hs).slice(0, 8).map(function (n) {
                 var _h = _hs[n];
+                // ★ v4.88.0 — 補 m(最大單次);排序主軸改「最大單次」高→低,
+                //   讓 GM 展開明細時第一眼就看到爆量的那一招(合計 d 仍完整保留)。
                 var _byArr = Object.keys(_h.skills)
-                  .map(function (sk) { return { s: sk, d: _h.skills[sk] }; })
-                  .sort(function (x, y) { return y.d - x.d; })
+                  .map(function (sk) {
+                    return { s: sk, d: _h.skills[sk], m: (_h.maxes && _h.maxes[sk]) || 0 };
+                  })
+                  .sort(function (x, y) { return (y.m - x.m) || (y.d - x.d); })
                   .slice(0, 8);
                 return { n: n, d: _h.total, by: _byArr };
               });
@@ -976,7 +991,7 @@
             detail: _detail,
             totalDmg: _grand,
             ts: ts,
-            v: 'v3.15.54',
+            v: 'v4.88.0',
           };
           await setDoc(doc(window._fbDb, 'arenaDamageDetail', docId), _detailPayload);
           console.log('[arena] 傷害明細已上傳 arenaDamageDetail/' + docId
