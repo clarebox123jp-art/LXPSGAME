@@ -226,7 +226,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.83.0';
+window.AVATAR_DB_VERSION = 'v4.85.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1262,6 +1262,13 @@ var _AV_FIG_S  = (_AV_CARD_H * window._AV_FIG_RATIO) / 480;          /* = 0.8333
 var _AV_CARD_TF = 'translate(' + ((_AV_CARD_W - 360 * _AV_FIG_S) / 2).toFixed(3) + ','
                 + ((_AV_CARD_H - 480 * _AV_FIG_S) / 2).toFixed(3) + ') scale(' + _AV_FIG_S.toFixed(6) + ')';
 window._avGradSeq = 0;   /* ★ SVG 漸層 id 全域流水號(同頁多張名片縮圖不互相污染) */
+/* ★★ v4.85.0 漸層背景「中間純白帶」的左右邊界(卡片寬度比例·0=最左 1=最右)。
+ *   老師需求:白色要蓋到人物左右邊緣(袖子最寬處)。因為特寫(名片/好友縮圖/圖鑑立繪)
+ *   把人物放大約 2.4 倍,兩種檢視要用不同寬度,故拆 full(全身)/ port(特寫) 兩組。
+ *   數值來源=實測 body_torso_boy/girl/kidboy/kidgirl 四張 alpha bbox 換算成卡片座標後取最寬,
+ *   再各留一點餘裕(服裝件比素體略寬)。日後要加寬/縮窄只改這一行即可。 */
+window._AV_BG_WHITE = { full:[0.33, 0.67], port:[0.16, 0.84] };
+window._AV_BG_FADE  = 0.10;   /* 白↔色的柔和過渡帶寬度(比例)·0 = 生硬直線 */
 
 P.bg = [
   /* ── 免費款(無條件開放·給每位玩家一組基本選擇)────────────────────── */
@@ -1591,12 +1598,23 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
         var cc = (cIdx >= 0 && cIdx < cArr.length) ? cArr[cIdx] : '#ffffff';
         window._avGradSeq = (window._avGradSeq | 0) + 1;
         var gid = 'avbg' + window._avGradSeq;
+        /* ★★ v4.85.0 老師需求2:中間白色範圍擴大到「人物左右邊緣(袖子最寬處)」。
+         *   人物在卡片中所佔寬度依檢視模式差很多(特寫比全身放大約 2.4 倍),
+         *   故白帶寬度依 portrait 分流(實測 body_torso_×4 alpha bbox 換算卡片座標):
+         *     全身檢視 人物約佔卡寬 36%~64% → 純白 33%~67%
+         *     特寫檢視 人物約佔卡寬 18%~85% → 純白 16%~84%
+         *   兩側各留 _AV_BG_FADE 柔和過渡帶,不會出現生硬直線。
+         *   ★ 舊值(固定 0/25/42/58/75/100)保留註記,誤刪是大忌。 */
+        var _bw = window._AV_BG_WHITE[portrait ? 'port' : 'full'];
+        var _fd = window._AV_BG_FADE;
+        var _p0 = Math.max(0, _bw[0] - _fd), _p3 = Math.min(1, _bw[1] + _fd);
+        var _pct = function(v){ return (v * 100).toFixed(1) + '%'; };
         return '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="0">'
           + '<stop offset="0%" stop-color="' + cc + '"/>'
-          + '<stop offset="25%" stop-color="' + cc + '"/>'
-          + '<stop offset="42%" stop-color="#ffffff"/>'
-          + '<stop offset="58%" stop-color="#ffffff"/>'
-          + '<stop offset="75%" stop-color="' + cc + '"/>'
+          + '<stop offset="' + _pct(_p0) + '" stop-color="' + cc + '"/>'
+          + '<stop offset="' + _pct(_bw[0]) + '" stop-color="#ffffff"/>'
+          + '<stop offset="' + _pct(_bw[1]) + '" stop-color="#ffffff"/>'
+          + '<stop offset="' + _pct(_p3) + '" stop-color="' + cc + '"/>'
           + '<stop offset="100%" stop-color="' + cc + '"/>'
           + '</linearGradient></defs>'
           + '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="url(#' + gid + ')"/>';
@@ -2870,8 +2888,8 @@ function _avRenderOpts(){
           + '">' + ['⬜ ','Ἲ8 ','Ὓc️ '][bti].replace('Ἲ8','ἰ8') + _avT(_btOpts[bti][1], _btOpts[bti][2]) + '</button>';
       }
       h += '</div><div style="font-size:14px;color:#8a97b8;margin:4px 2px 0;">Ὂ1 '
-        + _avT('卡框固定 7:10，人物占卡片高度 80%；選「漸層」時中間 50% 一律是白色，左右各 25% 是你選的顏色。',
-               '卡片是直的，人在中間；選漸層的話，中間是白的，兩邊有顏色。')
+        + _avT('卡框固定 7:10，人物占卡片高度 80%；選「漸層」時中間白色會蓋滿人物左右邊緣，只有兩側細細的一條是你選的顏色。直接到「背景圖片」挑一張圖，會自動切換成圖片背景。',
+               '卡片是直的，人在中間；選漸層的話，中間白白的，只有兩邊有顏色。想放風景圖就直接去「放圖片」挑一張，會自動幫你換過去。')
         + '</div><div style="display:none;">';
     } else if(cat === 'bgC'){
       /* 漸層顏色:只在選了漸層型才有意義(仍允許先選色再切型) */
@@ -3073,8 +3091,25 @@ window._avatarSetPart = function(cat, id, _allowLocked){
   if(cat === 'outfit'){
     cfg.of = id;
     cfg.ofHead = (id > 0) ? 1 : 0;
-    if(id > 0){ cfg.hh = 0; }
+    /* ★ v4.85.0 老師需求3:按「預設裝扮(素體)」時,頭部也一併回到預設素體頭
+     *   (舊行為只脫衣服·頭上原本套的髮型整頭件會留著·視覺上沒有真的回到素體)。
+     *   選其他套裝時仍照舊清掉髮型整頭件(套裝自帶頭)。 */
+    cfg.hh = 0;
     cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0;   /* 舊槽互斥清空(舊存檔換新裝即脫離舊件) */
+  } else if(cat === 'bg'){
+    /* ★★ v4.85.0 老師需求1:選了風景背景圖卻被純白/漸層蓋住 —— 根因是背景圖(cfg.bg)
+     *   與背景樣式(cfg.bgType)是兩個獨立分頁,玩家在「背景圖片」選了圖,bgType 仍停在
+     *   0(純白)或 1(漸層)→ _bgLayer 走不到 bt===2 的圖片分支,畫面永遠是純色。
+     *   修法:選到有效背景圖就自動切成圖片型;把背景圖脫掉(id=0)且目前是圖片型 →
+     *   退回純白(不留空白圖片型)。玩家仍可到「背景樣式」手動切回純白/漸層。 */
+    cfg.bg = id;
+    if(id > 0){ cfg.bgType = 2; }
+    else if((cfg.bgType | 0) === 2){ cfg.bgType = 0; }
+  } else if(cat === 'bgC'){
+    /* ★ v4.85.0 同上對稱處理:在「純白」狀態下點漸層顏色 → 自動切成漸層型(不然點了沒反應);
+     *   目前是圖片型則只記住顏色不動背景(避免手滑點色票就把選好的風景圖蓋掉)。 */
+    cfg.bgC = id;
+    if((cfg.bgType | 0) === 0 && id > 0){ cfg.bgType = 1; }
   } else if(cat === 'hairhead'){
     /* ★ v4.64.0(第五輪)修2:藍洋裝/閃電魔法裝原髮蓋住衣服(裁切困難)→ 穿著中暫不提供更換髮型 */
     var _ofNow = _pick(P.outfit, cfg.of|0);
