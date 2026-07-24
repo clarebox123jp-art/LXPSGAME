@@ -2,6 +2,18 @@
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
  * 版本: v4.64.2(2026-07-20)
  *
+ * ★ v4.89.0 — 卡片背景圖「名稱↔圖片幾乎全錯位」修復(老師 2026-07-24 回報):
+ *   根因:選單按鈕寫入 cfg.bg 的是「id 欄位值」,但 _bgLayer 舊碼用 _pick(P.bg, cfg.bg)
+ *   =「陣列索引」取圖;P.bg 的 id 亂序(0,1,8,14,20,21,7,22,6,3,...)→ 兩套座標系錯接,
+ *   選深坑老街(id6)實際畫 P.bg[6]=台中鳳梨酥工廠…只有 id0/id1 碰巧索引=id 顯示正確。
+ *   修法:_bgLayer 改「按 id 欄位查找」(唯一病點·其餘 P.bg[i] 皆為 for 迴圈合法索引;
+ *   解鎖帳本 bg:<id>/GM 上鎖/主線發放/舊存檔 cfg.bg 本來就都用 id → 全部歸一,舊存檔相容);
+ *   查無 id 退回純白不破圖。AVATAR_DB_VERSION bump → 部件圖 ?v= 一次性重抓屬預期。
+ *   ★ 同版第二項(老師 2026-07-24 指示):背景選單「主線劇情章節封面/劇情圖」15 筆(id40~54·
+ *     grp:story)整批移出(逐行註解保留備查);_avatarBgUnlockOnChapterClear 掃 grp==='story'
+ *     恆回空陣列(index 章節通關呼叫點零改動仍安全)·帳本殘留 bg:40~54 鍵查無條目自動忽略·
+ *     已選用中的存檔經 id 查找防呆退回純白不破圖·story 分群標題依 grp 驅動自動不再出現。
+ *
  * ★ v4.69.0 — 造型工房兩需求(老師 2026-07-21):①標題後追加雙版說明「每個部位都像紙娃娃一樣,可以調整位置和尺寸哦!」
  *   ②管理員定位設預設(決定1丙+2乙+3乙):a)尺寸調整擴大到「全部件」(baseH/baseB/ofh/ofb/hh/mouth/held 全畫布件尺寸縮放接進 _ofsWrap·頭群組以瞳孔中線為軸/身持物以下半身中心為軸;飾品 hat/gls/macc 尺寸維持 _avAccLayer 自身中心·順修其讀取 cap ±20→±50 對齊寫入);
  *   b)雲端管理員預設 gameConfig/avatarPartDefaults(同 avatarLocks 模式·僅 GM 可寫·登入者可讀·免改 rules){defaults:{'key':[dx,dy,尺寸%]}}·管理員取消「使用預設」→調整→按「📌設為預設」寫雲端全體套用·另有「📤匯出JSON」供日後寫進檔(丙);
@@ -226,7 +238,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.86.0';
+window.AVATAR_DB_VERSION = 'v4.89.0';
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1315,24 +1327,30 @@ P.bg = [
    *     多支 video 會拖垮舊 iPad)→ 改釋出同場景的「靜態圖版本」。 */
   { id:35, n:'鬥技場', ns:'鬥技場', lock:{t:'exchange'}, file:'鬥技場.png', grp:'special' },
   { id:36, n:'召喚星空(可愛版)', ns:'召喚星空(可愛)', lock:{t:'summon'}, file:'召喚星空(可愛版).png', grp:'special' },
-  { id:37, n:'召喚星空(精美版)', ns:'召喚星空(精美)', lock:{t:'summon'}, file:'召喚星空(精美版).png', grp:'special' },
+  { id:37, n:'召喚星空(精美版)', ns:'召喚星空(精美)', lock:{t:'summon'}, file:'召喚星空(精美版).png', grp:'special' }
 
-  /* ── 主線劇情場景(解鎖=通關該章時每張各 5% 機率)──────────────────── */
-  { id:40, n:'主線·序章封面', ns:'序章封面', lock:{t:'quest'}, file:'主線_封面_序章.jpg', grp:'story', chap:'prologue' },
-  { id:41, n:'校外教學', ns:'校外教學', lock:{t:'quest'}, file:'主線_序章_校外教學.jpg', grp:'story', chap:'prologue' },
-  { id:42, n:'迷霧森林', ns:'迷霧森林', lock:{t:'quest'}, file:'主線_序章_迷霧森林.jpg', grp:'story', chap:'prologue' },
-  { id:43, n:'雙月河堤', ns:'雙月河堤', lock:{t:'quest'}, file:'主線_序章_雙月河堤.jpg', grp:'story', chap:'prologue' },
-  { id:44, n:'主線·第一章封面', ns:'第一章封面', lock:{t:'quest'}, file:'主線_封面_第一章.jpg', grp:'story', chap:'ch1' },
-  { id:45, n:'主線·第二章封面', ns:'第二章封面', lock:{t:'quest'}, file:'主線_封面_第二章.jpg', grp:'story', chap:'ch2' },
-  { id:46, n:'社團教室', ns:'社團教室', lock:{t:'quest'}, file:'主線_第二章_社團教室.jpg', grp:'story', chap:'ch2' },
-  { id:47, n:'主線·第三章封面', ns:'第三章封面', lock:{t:'quest'}, file:'主線_封面_第三章.jpg', grp:'story', chap:'ch3' },
-  { id:48, n:'貓空異變', ns:'貓空異變', lock:{t:'quest'}, file:'主線_第三章_貓空異變.jpg', grp:'story', chap:'ch3' },
-  { id:49, n:'劍士與祭司', ns:'劍士祭司', lock:{t:'quest'}, file:'主線_第三章_劍士祭司登場.jpg', grp:'story', chap:'ch3' },
-  { id:50, n:'主線·第四章封面', ns:'第四章封面', lock:{t:'quest'}, file:'主線_封面_第四章.jpg', grp:'story', chap:'ch4' },
-  { id:51, n:'杏花妖花林(劇情)', ns:'杏花花林', lock:{t:'quest'}, file:'主線_第四章_杏花妖花林.jpg', grp:'story', chap:'ch4' },
-  { id:52, n:'魅惑的守衛與刺客', ns:'守衛刺客', lock:{t:'quest'}, file:'主線_第四章_魅惑守衛刺客.jpg', grp:'story', chap:'ch4' },
-  { id:53, n:'主線·第五章封面', ns:'第五章封面', lock:{t:'quest'}, file:'主線_封面_第五章.jpg', grp:'story', chap:'ch5' },
-  { id:54, n:'主線·第六章封面', ns:'第六章封面', lock:{t:'quest'}, file:'主線_封面_第六章.jpg', grp:'story', chap:'ch6' }
+  /* ★★ v4.89.0 — 主線劇情章節封面/劇情圖 15 筆整批移出背景選單(老師 2026-07-24 指示)。
+   *   舊碼逐行保留備查(誤刪是大忌·日後要復原把 // 拿掉並在上方 id:37 行尾補逗號即可):
+   *   ★ 連動安全性:①_avatarBgUnlockOnChapterClear 掃 grp==='story',條目移除後恆回空陣列,
+   *     index.html 章節通關呼叫點(L≈143764)零改動仍安全 ②已解鎖帳本殘留 bg:40~54 鍵,
+   *     所有讀取皆掃 P.bg 查無即忽略,無害 ③已選用中的存檔 cfg.bg=40~54 → _bgLayer
+   *     v4.89.0 id 查找防呆查無 → 退回純白不破圖 ④選單 story 分群標題依 grp 驅動,自動不再出現。
+  // { id:40, n:'主線·序章封面', ns:'序章封面', lock:{t:'quest'}, file:'主線_封面_序章.jpg', grp:'story', chap:'prologue' },
+  // { id:41, n:'校外教學', ns:'校外教學', lock:{t:'quest'}, file:'主線_序章_校外教學.jpg', grp:'story', chap:'prologue' },
+  // { id:42, n:'迷霧森林', ns:'迷霧森林', lock:{t:'quest'}, file:'主線_序章_迷霧森林.jpg', grp:'story', chap:'prologue' },
+  // { id:43, n:'雙月河堤', ns:'雙月河堤', lock:{t:'quest'}, file:'主線_序章_雙月河堤.jpg', grp:'story', chap:'prologue' },
+  // { id:44, n:'主線·第一章封面', ns:'第一章封面', lock:{t:'quest'}, file:'主線_封面_第一章.jpg', grp:'story', chap:'ch1' },
+  // { id:45, n:'主線·第二章封面', ns:'第二章封面', lock:{t:'quest'}, file:'主線_封面_第二章.jpg', grp:'story', chap:'ch2' },
+  // { id:46, n:'社團教室', ns:'社團教室', lock:{t:'quest'}, file:'主線_第二章_社團教室.jpg', grp:'story', chap:'ch2' },
+  // { id:47, n:'主線·第三章封面', ns:'第三章封面', lock:{t:'quest'}, file:'主線_封面_第三章.jpg', grp:'story', chap:'ch3' },
+  // { id:48, n:'貓空異變', ns:'貓空異變', lock:{t:'quest'}, file:'主線_第三章_貓空異變.jpg', grp:'story', chap:'ch3' },
+  // { id:49, n:'劍士與祭司', ns:'劍士祭司', lock:{t:'quest'}, file:'主線_第三章_劍士祭司登場.jpg', grp:'story', chap:'ch3' },
+  // { id:50, n:'主線·第四章封面', ns:'第四章封面', lock:{t:'quest'}, file:'主線_封面_第四章.jpg', grp:'story', chap:'ch4' },
+  // { id:51, n:'杏花妖花林(劇情)', ns:'杏花花林', lock:{t:'quest'}, file:'主線_第四章_杏花妖花林.jpg', grp:'story', chap:'ch4' },
+  // { id:52, n:'魅惑的守衛與刺客', ns:'守衛刺客', lock:{t:'quest'}, file:'主線_第四章_魅惑守衛刺客.jpg', grp:'story', chap:'ch4' },
+  // { id:53, n:'主線·第五章封面', ns:'第五章封面', lock:{t:'quest'}, file:'主線_封面_第五章.jpg', grp:'story', chap:'ch5' },
+  // { id:54, n:'主線·第六章封面', ns:'第六章封面', lock:{t:'quest'}, file:'主線_封面_第六章.jpg', grp:'story', chap:'ch6' }
+   */
 ];
 
 /* ── 名片語錄(玩家擇一;內容非說明文字,單版) ── */
@@ -1584,7 +1602,19 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       var W = _AV_CARD_W, H = _AV_CARD_H;
       var bt = cfg.bgType | 0;
       if(bt === 2){
-        var bgd = _pick(P.bg, cfg.bg);
+        /* ★★ v4.89.0 修復(老師回報:背景名稱和實際圖片幾乎都是錯的):
+         *   選單按鈕 _avatarSetPart('bg', it.id) 寫入 cfg.bg 的是「id 欄位值」,
+         *   但這裡舊碼用 _pick(P.bg, cfg.bg) = P.bg[陣列索引] 取圖 —— P.bg 的 id 完全亂序
+         *   (0,1,8,14,20,21,7,22,6,3,...),兩套座標系錯接 → 選「深坑老街(id6)」實際渲染
+         *   P.bg[6]=台中鳳梨酥工廠…幾乎全部錯位,只有 id0/id1 碰巧索引=id 而顯示正確。
+         *   修法:改為「按 id 欄位查找」——與解鎖帳本('bg:'+id)/GM 上鎖/主線發放/舊存檔(cfg.bg 存 id)
+         *   全部同一套座標系;查無此 id(壞資料)→ 退回純白不破圖。
+         *   ★ 舊碼保留備查(誤刪是大忌):var bgd = _pick(P.bg, cfg.bg); */
+        var bgd = null;
+        var _bgWant = cfg.bg | 0;
+        for(var _bi = 0; _bi < P.bg.length; _bi++){
+          if(P.bg[_bi] && (P.bg[_bi].id | 0) === _bgWant){ bgd = P.bg[_bi]; break; }
+        }
         if(bgd && bgd.file){
           var u = './' + encodeURI(bgd.file) + '?v=' + (window.AVATAR_DB_VERSION || '');
           return '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="#ffffff"/>'

@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-24  / 目前主程式版本:v4.88.0(鬥技場技能傷害排行(全校·GM 察覺過強技能/BUG)+本機排行改管理員限定·管理員測試)
+//  最後更新:2026-07-24  / 目前主程式版本:v4.89.0(主線 Phase 2 戰鬥實戰化:六場主線戰鬥改真實可操作戰鬥·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,34 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.89.0 — 主線 Phase 2:戰鬥實戰化(六場主線戰鬥改真實可操作戰鬥·管理員測試)
+  {
+    ver: 'v4.89.0',
+    date: '2026-07-24',
+    adminOnly: true,   /* ★ 主線劇情測試期內容·僅管理員可見(正式開放時另發玩家版公告) */
+    brief: [
+      '⚔️【主線的戰鬥現在是真的打!】主線劇情裡的六場戰鬥(第一章兩場小怪戰、第三章九尾空貓怪、第四章被魅惑的守衛與刺客、第五章臭氣魔王、第六章黑暗球)不再只是看動畫,而是進入真正的戰鬥畫面,由你親自指揮、答題、放技能!',
+      '🛡【隊伍由故事安排】每場戰鬥前會先看到「出戰編組」畫面:這一場的 4 位夥伴和屬性都是故事排好的(第一場還會教你什麼是編組頁、屬性相剋是怎麼運作的)。夥伴會帶著你平常練的等級、素質投資、至寶和跟隨寵物一起上場!',
+      '🎁【打贏有獎勵】每場首次獲勝:全隊經驗值 + 技能升級書 ×1(同一場重打通關不會重複拿);第一次拿到技能升級書,還會告訴你去哪裡學怎麼讓英雄變強。',
+      '💪【打輸不用怕】戰敗不會有任何損失,直接再挑戰一次就好;也可以先撤退回章節選單,想好了再回來打(那一章要打贏才算通關)。',
+      '🖼【造型工房背景修好了】名片「卡片背景」選單裡,選的名稱和實際出現的圖片對不上的問題已修復——現在選「深坑老街」就真的是深坑老街,每一張背景都和名稱一致了! 另外,主線劇情的章節封面和劇情圖片已從背景選單移出。',
+    ],
+    items: [
+      '【Q1 丙・鎖定劇情隊伍】六場隊伍+元素寫死於 _MS_BATTLE_TEAMS 資料表(主角一律光屬性;ch3 對火屬九尾配水屬剋制;ch6 對暗屬黑暗球配光屬)。主角測試閘門未開放時自動以初始 8 隻替補、絕不重複、絕不開天窗。',
+      '【Q5 乙・自建唯讀編組卡】不碰共用選角頁(confirmHeroPick/編組頁 UI 零改動=零回歸);首場(battle_ch1_1)編組卡附「編組頁小教室」示範教學(雙版文字·鐵律 1.232)。',
+      '【Q6 甲・屬性相剋教學】首場編組卡後接「屬性相剋小教室」:💧➜🔥➜🌿➜🪨➜🪽➜💧 + ⭐⇄🌙 + ±10% 說明,並預告「技能替換」(本次不替換·先熟悉原有技能)。',
+      '【我方建構】照 confirmHeroPick isAdvMode 正統流程唯讀套用:素質投資→冒險等級 HP 加成(_applyAdvLevelHpBonus 含極限膠囊)→技能等級(_skLv)→爆發等級(_burstLvAdv)→台灣至寶→跟隨寵物;任何一隻建構失敗自動以替補池救援,p1/p2 建構失敗整場退回純演出版,絕不擋劇情。',
+      '【敵方建構】全現成敵人零新建:ch1_1=3 隨機小怪/ch1_2=2 隨機小怪/ch3=九尾空貓怪(fire·BOSS 登場動畫經 _bossIntroDetect 自動播放)/ch4=被魅惑守衛+刺客(charmedFromHero 素質繼承+HP×2·照杏花妖前例)/ch5=_buildTaiwanBossTeam("shenkeng_tofu") 臭氣魔王・發酵公/ch6=黑暗球‧希望型態(dark·分裂機制照常)。鐵律 1.31:真 BOSS 尊嚴保護經 _ZEUS_TRUE_BOSSES 自動生效,未繞過。',
+      '【Q3 乙・獎勵】勝利首次:全隊 addHeroExp(ch1 兩場各 60/ch3 ch4 各 120/ch5 150/ch6 180)+ backpackAdd 技能升級書×1;綁 _r_bt_{key} 冪等旗標(存 mainStoryProgress 上雲·重打通關不重發·勝利卡明示「已領過」)。首次拿書 → 一次性強化教學指路卡(_r_bt_bookteach·指向既有「📘 英雄強化教學」HUT·不新寫教學)。',
+      '【Q4 甲/Q7 乙・戰敗】只重打該場、不接關(advCheckContinue 對主線 return false);「暫時撤退」回章節選單且該章不算通關(進度不落 done·下次可重新挑戰)。',
+      '★【帳號零汙染五守門(老師 2026-07-24 明令)】①_saveBattleRoundSnapshot 對主線早退(絕不寫續戰快照→不會誤跳續戰彈窗/誤還原冒險戰) ②③④ _showResultWithDrama/advFinishMiniBattle/advShowBattleResult 三結算入口照 worldboss 前例(鐵律 1.112/1.135)入口攔截改派 _msBattleResult(絕不進冒險結算/發獎/推場景;advFinishMiniBattle 守門必要——ch1/ch4 敵方無真 BOSS 會被 checkWin 防呆強制推入 mini 結算) ⑤ advCheckContinue 對主線 return false。另:好友英雄不注入(_friendHeroInParty=false 照 worldboss·不清 _invitedFriendHero)、難度倍率/科目清空(全題庫隨機)、戰鬥法寶 3 個隨機(純戰鬥內消耗零持久)。',
+      '【結算收場】_msBattleResult 照 _wbCleanupAdvAfterBattle 前例:清 watchdog/旗標歸位/G._resultShown/清 adv_battle_snap+adv_crash_snapshot/停 BGM/收戰鬥 overlay → 恢復主線畫面與場景環境音 → 勝利卡(含升級名單)或重打視窗。冪等:_msBattleCtx.settled 只認第一次派發(48+ 呼叫點 race 安全)。',
+      '【回顧模式】🔁 回顧劇情一律走原「純演出版」(_msActBattleShow 改名保留):不真打、不發獎、零帳號影響;真實戰鬥引擎缺失時亦以純演出兜底。',
+      '【造型工房背景・主線圖移出(avatar_db.js)】老師指示:背景選單「主線劇情章節封面/劇情圖」15 筆(id40~54·grp:story)整批移出(逐行註解保留備查可復原)。連動安全:_avatarBgUnlockOnChapterClear 掃 grp==story 恆回空陣列(index 章節通關呼叫點零改動)·解鎖帳本殘留鍵查無條目自動忽略·已選用中的存檔經 id 查找防呆退回純白不破圖。',
+      '【造型工房背景錯位修復(avatar_db.js)】根因:選單按鈕 _avatarSetPart("bg", it.id) 寫入 cfg.bg 的是「id 欄位值」,但 _bgLayer 舊碼用 _pick(P.bg, cfg.bg)=「陣列索引」取圖;P.bg 的 id 亂序(0,1,8,14,20,21,7,22,6,3,...)→ 兩套座標系錯接,選「深坑老街(id6)」實際渲染 P.bg[6]=台中鳳梨酥工廠,幾乎全部錯位(只有 id0/id1 碰巧索引=id 正確)。修法:_bgLayer 改按 id 欄位查找(唯一病點;其餘 P.bg[i] 皆 for 迴圈合法索引);與解鎖帳本 bg:<id>/GM 上鎖/主線發放/舊存檔 cfg.bg 全部歸一同座標系,舊存檔相容;查無 id 退回純白不破圖。47 張背景圖已逐張下載比對:資料表 n↔file 對映本身全部正確,錯的只有渲染取值。AVATAR_DB_VERSION v4.86.0→v4.89.0(部件圖 ?v= 一次性重抓屬預期)。',
+      '【範圍】改 index.html(主線引擎+五守門)+ game_changelog.js + avatar_db.js(背景修復);hero_db.js(v4.54.0)/admin_panel.js(v4.88.0)/arena.js(v4.88.0)/world-boss 系/sw.js/firestore.rules 一律未動。',
+    ],
+  },
   // v4.88.0 — 鬥技場技能傷害排行(全校·GM 察覺過強技能/BUG)+ 本機排行改管理員限定(管理員測試)
   {
     ver: 'v4.88.0',
@@ -409,25 +437,6 @@ window.GAME_CHANGELOG = [
       '★ v4.68.0【尚未解鎖】章節依序解鎖:只有「第一個未完成章」可進行,之後的章顯示 🔒 並提示「先完成前一章才會解鎖」(維持主線循序敘事)。',
       '★ v4.68.0【主線專屬 BGM】根據場合挑選現有音樂:章節選單 + 序章/第一章/第二章 = 冒險小隊出發(bgm-adv-march);第三章貓空異變/第四章花林魅惑/第五章深坑臭氣/第六章黑暗球 = 台灣關卡簡介劇情BGM(bgm-taiwan-cutscene·較具戲劇張力)。進主線(選單/播章)以 bgmFadeTo 切入;離開主線(關閉視窗 / 首登序章播完)還原關卡頁 BGM 貓空冒險(bgm-adv-scene)。_msEnterStoryBgm / _msExitStoryBgm 集中管理·window._msInStory 旗標防重複存曲。',
       '★ v4.68.0【範圍與驗證】只改 index.html(主線引擎:BGM 管理 + _msRunChapter 加 review/BGM + _msOpenMainStory 改開選單 + 新增 _msOpenChapterSelect/_msPlayFromSelect);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js 未動;無 ?.·九版號同步點全對齊 v4.68.0·changelog 恰 20 條。戰鬥/教學類 act(battle_*/tutorial_*)仍留待批次2b/3。',
-    ],
-  },
-  // v4.67.0 — 主線劇情批次2a:序章接線(捏臉/名片/加入演出/次元裂縫)·管理員測試
-  {
-    ver: 'v4.67.0',
-    date: '2026-07-21',
-    adminOnly: true,
-    brief: [
-      '📖 主線劇情更好玩了!序章帶你「捏臉」做主角、看冒險者名片、夥伴「加入隊伍」演出,裂縫穿越也有畫面轉場;第三、四章通關還會直接收服 SR 夥伴(劍士/祭司/守衛/刺客/火法師),而且玩到一半離開,下次能接著上次的地方看。(測試中,先開放給老師)',
-    ],
-    items: [
-      '★ v4.67.0【主線批次2a】新增演出動作分派器 _msRunAct:每段對白播完後執行該場景的 act,完成再自動續播下一段(無 act 直接續播·全程 try-catch + watchdog 防卡死)。',
-      '★ v4.67.0【序章接線】捏臉(open_avatar_studio→開造型工房·掛 _avatarPanelClose 偵測離開續播)/名片(set_card→展示自動生成的冒險者名片·掛 _avatarCardClose)/加入隊伍(join_prologue:小劇團員‧直笛團員‧弦樂團員‧動物學家 純敘事演出·不發卡·初始8英雄建帳號即贈)/次元裂縫(改暗場穿越對白+結尾淡出全黑→下一場景淡入·不做影片)。',
-      '★ v4.67.0【加入演出全通】join_ch1 籃球隊員‧田徑隊員 / join_ch2 程式設計師‧電腦繪圖師(初始8英雄至此全數登場·純敘事) / join_ch3 劍士‧祭司 / join_ch4 守衛‧刺客‧火法師 加入隊伍演出。',
-      '★ v4.67.0【SR 夥伴解鎖(Q3)】第三章通關直接解鎖 劍士‧祭司;第四章通關直接解鎖 守衛‧刺客‧火法師(共 5 位 SR·經 advSaveUnlockedHero 來源 mainstory_clear·圖鑑顯示「主線劇情獲得」)。已擁有者每重複 1 位改為 +5 召喚水晶。維持 SR 稀有度(不進 SUMMON_RARE_HEROES SSR 池·5 位皆早在 _PLAYER_HERO_NAMES 白名單與 ADMIN_ALL_HEROES 之內·免造角)。發放綁章節通關 reward·冪等(_r_chap_chX)。',
-      '★ v4.67.0【火法師登場】第四章花林新增火法師登場對白(火剋魅惑妖花·雙版說明);火法師為既有 hero_db 英雄,故事化收服。',
-      '★ v4.67.0【主線關卡進度綁 UID(Q2)】主線改為「章節內場景續播點」:玩到一半離開,下次從上次那一段接續(_sc_chX·綁 UID·雲端 mainStoryProgress + 本地 lxps_mainstory_uid 鏡像·取大還原·整章完成清除)。與戰鬥/一般存檔分離·只增不退。',
-      '★ v4.67.0【場景圖】MAINSTORY_DB 9 張場景圖副檔名 .png→.jpg(配合 JPGq90 場景圖省流量);保留 貓空BOSS戰背景/深坑老街/臭豆腐BOSS/第一章河堤 為 .png 不動。',
-      '★ v4.67.0【範圍與驗證】只改 index.html(主線引擎+DB);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js 未動;無 ?.·九版號同步點全對齊 v4.67.0·changelog 恰 20 條。戰鬥/教學類 act(battle_*/tutorial_*/grant_sword/awaken_hero)留待批次2b/3。',
     ],
   },
   // v4.66.0 — 自訂角色安全開關(已移出·更新日誌恆保 20 條)
