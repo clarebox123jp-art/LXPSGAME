@@ -26,6 +26,7 @@ window.GAME_CHANGELOG = [
       '🛡【隊伍由故事安排】每場戰鬥前會先看到「出戰編組」畫面:這一場的 4 位夥伴和屬性都是故事排好的(第一場還會教你什麼是編組頁、屬性相剋是怎麼運作的)。夥伴會帶著你平常練的等級、素質投資、至寶和跟隨寵物一起上場!',
       '🎁【打贏有獎勵】每場首次獲勝:全隊經驗值 + 技能升級書 ×1(同一場重打通關不會重複拿);第一次拿到技能升級書,還會告訴你去哪裡學怎麼讓英雄變強。',
       '💪【打輸不用怕】戰敗不會有任何損失,直接再挑戰一次就好;也可以先撤退回章節選單,想好了再回來打(那一章要打贏才算通關)。',
+      '💬【主線對白不再被跳過】劇情對白改成:打字中點一下=立刻顯示完整句子;整句顯示後會停留至少 2 秒才能進下一句(這段時間「▼ 點擊繼續」和「下一句」會先變暗,亮起就能點)。手快連點再也不會把還沒看到的對話跳掉了!',
       '🖼【造型工房背景修好了】名片「卡片背景」選單裡,選的名稱和實際出現的圖片對不上的問題已修復——現在選「深坑老街」就真的是深坑老街,每一張背景都和名稱一致了! 另外,主線劇情的章節封面和劇情圖片已從背景選單移出。',
     ],
     items: [
@@ -39,6 +40,7 @@ window.GAME_CHANGELOG = [
       '★【帳號零汙染五守門(老師 2026-07-24 明令)】①_saveBattleRoundSnapshot 對主線早退(絕不寫續戰快照→不會誤跳續戰彈窗/誤還原冒險戰) ②③④ _showResultWithDrama/advFinishMiniBattle/advShowBattleResult 三結算入口照 worldboss 前例(鐵律 1.112/1.135)入口攔截改派 _msBattleResult(絕不進冒險結算/發獎/推場景;advFinishMiniBattle 守門必要——ch1/ch4 敵方無真 BOSS 會被 checkWin 防呆強制推入 mini 結算) ⑤ advCheckContinue 對主線 return false。另:好友英雄不注入(_friendHeroInParty=false 照 worldboss·不清 _invitedFriendHero)、難度倍率/科目清空(全題庫隨機)、戰鬥法寶 3 個隨機(純戰鬥內消耗零持久)。',
       '【結算收場】_msBattleResult 照 _wbCleanupAdvAfterBattle 前例:清 watchdog/旗標歸位/G._resultShown/清 adv_battle_snap+adv_crash_snapshot/停 BGM/收戰鬥 overlay → 恢復主線畫面與場景環境音 → 勝利卡(含升級名單)或重打視窗。冪等:_msBattleCtx.settled 只認第一次派發(48+ 呼叫點 race 安全)。',
       '【回顧模式】🔁 回顧劇情一律走原「純演出版」(_msActBattleShow 改名保留):不真打、不發獎、零帳號影響;真實戰鬥引擎缺失時亦以純演出兜底。',
+      '【主線對白跳句根治(index.html _msPlayScene)】老師回報「還是會異常跳過或未顯示」+明定規格。殘留病灶:點一下把打字中整句補完時 _lineShownAt 未重置(打字通常已超過 450ms 節流窗)→補完那一瞬的第二下(iPad 觸控合成 click/連點)立刻推進下一句。修法:新增「整句完整顯示至少停 2 秒」機制(_MS_LINE_HOLD_MS=2000)——補完/自然打完/回看直顯三路統一走 _msLineDone 收口記時,_msAdvance 在 hold 期間忽略推進(點畫面/下一句鈕皆同);視覺回饋:hold 期間「▼ 點擊繼續」與「下一句 ▶」降透明,2 秒到自動亮起。上一句回看與「⏭ 跳過這一段」不受 2 秒鎖限制;既有 450ms 換句節流閘保留。',
       '【造型工房背景・主線圖移出(avatar_db.js)】老師指示:背景選單「主線劇情章節封面/劇情圖」15 筆(id40~54·grp:story)整批移出(逐行註解保留備查可復原)。連動安全:_avatarBgUnlockOnChapterClear 掃 grp==story 恆回空陣列(index 章節通關呼叫點零改動)·解鎖帳本殘留鍵查無條目自動忽略·已選用中的存檔經 id 查找防呆退回純白不破圖。',
       '【造型工房背景錯位修復(avatar_db.js)】根因:選單按鈕 _avatarSetPart("bg", it.id) 寫入 cfg.bg 的是「id 欄位值」,但 _bgLayer 舊碼用 _pick(P.bg, cfg.bg)=「陣列索引」取圖;P.bg 的 id 亂序(0,1,8,14,20,21,7,22,6,3,...)→ 兩套座標系錯接,選「深坑老街(id6)」實際渲染 P.bg[6]=台中鳳梨酥工廠,幾乎全部錯位(只有 id0/id1 碰巧索引=id 正確)。修法:_bgLayer 改按 id 欄位查找(唯一病點;其餘 P.bg[i] 皆 for 迴圈合法索引);與解鎖帳本 bg:<id>/GM 上鎖/主線發放/舊存檔 cfg.bg 全部歸一同座標系,舊存檔相容;查無 id 退回純白不破圖。47 張背景圖已逐張下載比對:資料表 n↔file 對映本身全部正確,錯的只有渲染取值。AVATAR_DB_VERSION v4.86.0→v4.89.0(部件圖 ?v= 一次性重抓屬預期)。',
       '【範圍】改 index.html(主線引擎+五守門)+ game_changelog.js + avatar_db.js(背景修復);hero_db.js(v4.54.0)/admin_panel.js(v4.88.0)/arena.js(v4.88.0)/world-boss 系/sw.js/firestore.rules 一律未動。',
