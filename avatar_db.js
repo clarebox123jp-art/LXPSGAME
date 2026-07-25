@@ -238,7 +238,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.89.0';
+window.AVATAR_DB_VERSION = 'v4.95.0';   /* ★ v4.95.0(2026-07-25)新增 16 髮型頭件(P.hairhead id18~33)+8 便服身件(P.outfit id15~22)+管理員命名/移除通道(gameConfig/avatarPieceMeta);bump 觸發部件圖 ?v= 重抓 */
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -1174,7 +1174,27 @@ P.hairhead = [
    *   repo 另有兩件女童新髮未接線(curlybob/hime)一併掛上(命名暫定待老師確認) */
   { id:15, n:'隨性蓬亂髮', ns:'亂亂頭', lock:null, img:['kidboy_shaggy_head.png',null,null,null], hhRef:[[[67,64,65],[119,114,115],[178,177,177]],null,null,null] },
   { id:16, n:'捲髮鮑伯頭', ns:'捲波波頭', lock:null, img:[null,null,null,'kidgirl_curlybob_head.png'], hhRef:[null,null,null,[[67,63,62],[119,107,101],[175,172,172]]] },
-  { id:17, n:'公主切長髮', ns:'公主切', lock:null, img:[null,null,null,'kidgirl_hime_head.png'], hhRef:[null,null,null,[[65,64,63],[122,113,112]]] }
+  { id:17, n:'公主切長髮', ns:'公主切', lock:null, img:[null,null,null,'kidgirl_hime_head.png'], hhRef:[null,null,null,[[65,64,63],[122,113,112]]] },
+  /* ── ★ v4.95.0(2026-07-25)老師 16 張全身圖切件·頭件(髮型) id18~33 ──
+   *   頭件按「頭」縮放對位(眼線→base eyeY·下巴線→neck2·臉中線→cx)·留全下巴+全臉+全髮·零脖子;
+   *   img 只填該體型格·其餘 null;hhRef 由頭件髮區實測取樣供 headfull 染髮引擎;
+   *   命名/位置尺寸/移除由管理員在工房調(gameConfig/avatarPieceMeta + avatarPartDefaults·設為預設寫雲端全體套用) */
+  { id:18, n:'整齊短髮', ns:'乖乖短髮', lock:null, img:['boy_src01_head.png',null,null,null], hhRef:[[[27,19,17],[61,55,55]],null,null,null] },
+  { id:19, n:'蓬亂短髮', ns:'蓬蓬短髮', lock:null, img:['boy_src06_head.png',null,null,null], hhRef:[[[25,19,19],[63,56,57],[74,65,66]],null,null,null] },
+  { id:20, n:'刺蝟蓬鬆髮', ns:'刺刺頭', lock:null, img:['boy_src10_head.png',null,null,null], hhRef:[[[27,21,21],[65,60,58]],null,null,null] },
+  { id:21, n:'成熟俐落短髮', ns:'帥帥短髮', lock:null, img:['boy_src13_head.png',null,null,null], hhRef:[[[19,15,14],[55,53,52]],null,null,null] },
+  { id:22, n:'狂野刺蝟髮', ns:'亂亂刺刺', lock:null, img:['boy_src14_head.png',null,null,null], hhRef:[[[13,8,7],[52,49,48]],null,null,null] },
+  { id:23, n:'妹妹頭鮑伯A', ns:'妹妹頭A', lock:null, img:[null,'girl_src02_head.png',null,null], hhRef:[null,[[20,16,16],[55,48,47],[66,59,59]],null,null] },
+  { id:24, n:'妹妹頭鮑伯B', ns:'妹妹頭B', lock:null, img:[null,'girl_src03_head.png',null,null], hhRef:[null,[[20,17,18],[49,48,49]],null,null] },
+  { id:25, n:'妹妹頭鮑伯C', ns:'妹妹頭C', lock:null, img:[null,'girl_src04_head.png',null,null], hhRef:[null,[[20,17,17],[54,54,54]],null,null] },
+  { id:26, n:'清爽側馬尾', ns:'側馬尾', lock:null, img:[null,'girl_src05_head.png',null,null], hhRef:[null,[[20,15,15],[60,57,58]],null,null] },
+  { id:27, n:'單側長辮', ns:'長辮子', lock:null, img:[null,'girl_src11_head.png',null,null], hhRef:[null,[[20,16,15],[51,49,49]],null,null] },
+  { id:28, n:'低雙馬尾', ns:'低雙尾', lock:null, img:[null,'girl_src12_head.png',null,null], hhRef:[null,[[14,10,7],[53,50,46]],null,null] },
+  { id:29, n:'雙麻花辮', ns:'麻花辮', lock:null, img:[null,'girl_src15_head.png',null,null], hhRef:[null,[[26,24,27],[52,50,52]],null,null] },
+  { id:30, n:'活力高馬尾', ns:'高馬尾', lock:null, img:[null,'girl_src16_head.png',null,null], hhRef:[null,[[17,14,15],[48,48,49]],null,null] },
+  { id:31, n:'妹妹頭短髮', ns:'妹妹頭', lock:null, img:[null,null,'kidboy_src07_head.png',null], hhRef:[null,null,[[10,9,9],[42,41,42],[76,73,71]],null] },
+  { id:32, n:'齊瀏海鮑伯', ns:'齊瀏海', lock:null, img:[null,null,null,'kidgirl_src08_head.png'], hhRef:[null,null,null,[[13,11,13],[48,46,50],[63,60,62]]] },
+  { id:33, n:'俏皮側馬尾', ns:'側馬尾', lock:null, img:[null,null,null,'kidgirl_src09_head.png'], hhRef:[null,null,null,[[31,27,28],[60,59,60]]] }
 ];
 
 /* ── ★ v4.64.0 套裝(P.outfit)— 頭+身分離件 34 件 13 款(頭身新切法) ──
@@ -1236,7 +1256,19 @@ P.outfit = [
   { id:14, n:'粉紅長洋裝', ns:'粉紅洋裝', lock:null,
     head:[null,null,null,null], hhRef:[null,null,null,null],
     body:[null,null,null,'top_dress_kidgirl.png'],
-    whole:[null,null,null,1] }
+    whole:[null,null,null,1] },
+  /* ── ★ v4.95.0(2026-07-25)老師 16 張全身圖切件·身件(便服) id15~22 ──
+   *   身件按「身體」縮放對位(下巴線→neck2·腳線→base foot·臉中線→cx)·留全脖子+服裝(內白區已補洞)·切除下巴以上;
+   *   head:null=純換衣可搭任意髮型;body 只填該體型格·其餘 null;命名/位置尺寸/移除由管理員在工房調。
+   *   ★ 老師裁定(2026-07-25):8 張力行運動服變體圖「只取髮型頭件」,運動服身件與素體預設同款不重複接入,故此處只有 8 件真新便服 */
+  { id:15, n:'森綠條紋T恤', ns:'條紋衣', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:['boy_src06_body.png',null,null,null] },
+  { id:16, n:'甜心粉連帽外套', ns:'粉帽帽外套', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,'girl_src02_body.png',null,null] },
+  { id:17, n:'學院深藍T恤', ns:'深藍衣', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,'girl_src03_body.png',null,null] },
+  { id:18, n:'元氣紅格紋襯衫', ns:'格子襯衫', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,'girl_src04_body.png',null,null] },
+  { id:19, n:'薄荷綠連帽外套', ns:'薄荷帽帽外套', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,'girl_src05_body.png',null,null] },
+  { id:20, n:'陽光橘連帽衫', ns:'橘橘帽帽衣', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,null,'kidboy_src07_body.png',null] },
+  { id:21, n:'紫羅蘭百褶裙裝', ns:'紫色裙裙', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,null,null,'kidgirl_src08_body.png'] },
+  { id:22, n:'檸檬黃吊帶裙', ns:'吊帶裙裙', lock:null, head:[null,null,null,null], hhRef:[null,null,null,null], body:[null,null,null,'kidgirl_src09_body.png'] }
 ];
 
 /* ── ★ v4.64.0 嘴部飾品(P.mouthacc)— 老師嘴飾圖 9 款(2026-07-20 第二輪) ──
@@ -2120,6 +2152,7 @@ window._avatarStripLocked = function(){
 window._avatarCacheTables = function(){
   try{ localStorage.setItem('lxps_avatarGmLocks', JSON.stringify(window._avatarGmLocks || {})); }catch(_e1){}
   try{ localStorage.setItem('lxps_avatarPartDefaults', JSON.stringify(window._avatarPartDefaults || {})); }catch(_e2){}
+  try{ localStorage.setItem('lxps_avatarPieceMeta', JSON.stringify(window._avatarPieceMeta || { names:{}, removed:{} })); }catch(_e3){}   /* ★ v4.95.0 命名/移除落地本機 */
 };
 window._avatarLoadTablesFromLS = function(){
   try{
@@ -2130,6 +2163,10 @@ window._avatarLoadTablesFromLS = function(){
     var b = localStorage.getItem('lxps_avatarPartDefaults');
     if(b){ var ob = JSON.parse(b); if(ob && typeof ob === 'object') window._avatarPartDefaults = ob; }
   }catch(_e2){}
+  try{
+    var c = localStorage.getItem('lxps_avatarPieceMeta');   /* ★ v4.95.0 */
+    if(c){ var oc = JSON.parse(c); if(oc && typeof oc === 'object') window._avatarPieceMeta = { names: (oc.names || {}), removed: (oc.removed || {}) }; }
+  }catch(_e3){}
 };
 
 window._avatarGmLocks = {};
@@ -2213,6 +2250,81 @@ window._avatarExportPartDefaults = function(){
   try{ j = JSON.stringify(window._avatarPartDefaults || {}); }catch(_e){ j = '{}'; }
   try{ console.log('[avatar] AVATAR_PART_DEFAULTS 匯出:\n' + j); }catch(_e2){}
   try{ window.prompt(_avT('複製這段預設 JSON 交給開發者寫進程式永久保存:','複製這段給老師:'), j); }catch(_e3){}
+};
+/* ── ★ v4.95.0(2026-07-25)造型部件「命名/移除」雲端通道(gameConfig/avatarPieceMeta·同 avatarLocks 模式·
+ *   僅 GM 可寫·登入者可讀·走 gameConfig 既有 rules 免新增條款):
+ *   { names:{'cat:id':'顯示名'}, removed:{'cat:id':true}, updatedAt, updatedBy }
+ *   命名=覆蓋該款顯示名(雙版共用一名);移除(乙案:真的從清單移除)=該款自所有玩家選單消失,
+ *   管理員仍在該分類最下方「已移除」區看得到並可「↩ 復原」(P 陣列資料/素材永留·誤刪是大忌·可逆) */
+window._avatarPieceMeta = { names:{}, removed:{} };
+window._avatarLoadPieceMeta = function(){
+  if(!window._fbDb || !window._fbFns){ return Promise.resolve(null); }
+  try{
+    var F = window._fbFns;
+    return F.getDoc(F.doc(window._fbDb, 'gameConfig', 'avatarPieceMeta')).then(function(snap){
+      if(snap.exists()){
+        var d = snap.data();
+        window._avatarPieceMeta = { names: (d && d.names) ? d.names : {}, removed: (d && d.removed) ? d.removed : {} };
+      }
+      try{ window._avatarCacheTables(); }catch(_eC){}
+      return window._avatarPieceMeta;
+    }).catch(function(){ return null; });
+  }catch(_e){ return Promise.resolve(null); }
+};
+function _avPieceKey(cat, id){ return cat + ':' + id; }
+window._avatarPieceRemoved = function(cat, id){
+  return !!(window._avatarPieceMeta && window._avatarPieceMeta.removed && window._avatarPieceMeta.removed[_avPieceKey(cat, id)] === true);
+};
+window._avatarPieceName = function(cat, id, fallback){
+  try{
+    var nm = window._avatarPieceMeta && window._avatarPieceMeta.names && window._avatarPieceMeta.names[_avPieceKey(cat, id)];
+    if(nm && typeof nm === 'string' && nm.length){ return nm; }
+  }catch(_e){}
+  return fallback;
+};
+function _avWritePieceMeta(){
+  try{
+    if(window._fbDb && window._fbFns){
+      var F = window._fbFns;
+      F.setDoc(F.doc(window._fbDb, 'gameConfig', 'avatarPieceMeta'),
+        { names: (window._avatarPieceMeta.names || {}), removed: (window._avatarPieceMeta.removed || {}),
+          updatedAt: Date.now(), updatedBy: ((window._fbUser && window._fbUser.email) || '') },
+        { merge: false })['catch'](function(e){ console.warn('[avatar] 部件命名/移除寫入失敗', e); });
+    }
+  }catch(_e){}
+  try{ window._avatarCacheTables(); }catch(_eC){}
+}
+window._avatarGmRenamePiece = function(cat, id){
+  if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+  if(!window._avatarPieceMeta) window._avatarPieceMeta = { names:{}, removed:{} };
+  if(!window._avatarPieceMeta.names) window._avatarPieceMeta.names = {};
+  var k = _avPieceKey(cat, id);
+  var cur = window._avatarPieceMeta.names[k] || '';
+  var nv = null;
+  try{ nv = window.prompt(_avT('輸入這款的新名稱(全體玩家都會看到;留空並按確定=還原內建名稱):','幫這個改名字(空白=用原本的):'), cur); }catch(_e){ return; }
+  if(nv === null) return;
+  nv = ('' + nv).replace(/[<>]/g, '').slice(0, 20).replace(/^\s+|\s+$/g, '');
+  if(nv){ window._avatarPieceMeta.names[k] = nv; }
+  else { delete window._avatarPieceMeta.names[k]; }
+  _avWritePieceMeta(); try{ _avSfx('confirm'); }catch(_eS){}
+  try{ _avRenderOpts(); }catch(_e2){}
+};
+window._avatarGmRemovePiece = function(cat, id){
+  if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+  var ok = false;
+  try{ ok = window.confirm(_avT('確定把這款從全體玩家的選單「移除」嗎?(之後可在該分類最下方「已移除」區復原)','確定移除這款嗎?可以再復原喔。')); }catch(_e){ ok = true; }
+  if(!ok) return;
+  if(!window._avatarPieceMeta) window._avatarPieceMeta = { names:{}, removed:{} };
+  if(!window._avatarPieceMeta.removed) window._avatarPieceMeta.removed = {};
+  window._avatarPieceMeta.removed[_avPieceKey(cat, id)] = true;
+  _avWritePieceMeta(); try{ _avSfx('confirm'); }catch(_eS){}
+  try{ _avRenderOpts(); }catch(_e2){}
+};
+window._avatarGmRestorePiece = function(cat, id){
+  if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+  if(window._avatarPieceMeta && window._avatarPieceMeta.removed){ delete window._avatarPieceMeta.removed[_avPieceKey(cat, id)]; }
+  _avWritePieceMeta(); try{ _avSfx('confirm'); }catch(_eS){}
+  try{ _avRenderOpts(); }catch(_e2){}
 };
 /* ★ v4.69.0 部件有效位置/尺寸解析(單一真相·render 與 UI 皆走此):
  *   玩家「使用預設」(cfg.posDef[key]!==false·預設 true)→ 用管理員雲端預設 _avatarPartDefaults[key]
@@ -2562,6 +2674,10 @@ window._avatarOpenPanel = function(){
   /* ★ v4.69.0 載入管理員部件預設(位置/尺寸)·拉到才重繪(預覽+選項區皆吃預設) */
   window._avatarLoadPartDefaults().then(function(pd){
     if(pd && document.getElementById('_avatar-panel')){ try{ _avRefreshPreview(); }catch(_e){} _avRenderOpts(); }
+  });
+  /* ★ v4.95.0 載入部件命名/移除設定·拉到才重繪選項區 */
+  window._avatarLoadPieceMeta().then(function(pm){
+    if(pm && document.getElementById('_avatar-panel')){ _avRenderOpts(); }
   });
 };
 
@@ -3004,12 +3120,22 @@ function _avRenderOpts(){
         shown++;
         var unlocked = window._avatarIsUnlocked(cat, it.id);
         var selP = (cfg[_AV_CFG_KEY[cat]] === it.id);
-        var nm = _avT(it.n, it.ns);
+        var nm = window._avatarPieceName(cat, it.id, _avT(it.n, it.ns));   /* ★ v4.95.0 管理員命名覆蓋 */
         /* ★ v4.64.0 GM 上鎖通道:可上鎖分類 + 管理員在選項旁直接 🔓/🔒 切換;
          *   被 GM 鎖定的款式管理員仍可選(測試),名稱前顯示 🔒 提示鎖定中 */
         var _LOCKABLE = { outfit:1, hairhead:1, hat:1, gls:1, mouth:1, mouthacc:1, held:1 };
         var _isGm = (typeof window._isAdminUser === 'function' && window._isAdminUser());
         var _gmLk = !!(window._avatarGmLocks && window._avatarGmLocks[cat + ':' + it.id] === true);
+        /* ★ v4.95.0 命名/移除(乙案):已移除款 → 玩家完全不顯示;管理員顯示灰色「已移除」+「↩ 復原」鈕 */
+        var _RENAMEABLE = { hairhead:1, outfit:1 };
+        var _rmv = !!(window._avatarPieceRemoved && window._avatarPieceRemoved(cat, it.id));
+        if(_rmv && !_isGm){ shown--; continue; }
+        if(_rmv && _isGm){
+          h += '<div style="display:flex;gap:5px;align-items:center;opacity:0.9;">'
+            + '<span style="padding:11px 16px;font-size:15.5px;border-radius:11px;background:rgba(70,50,50,0.45);border:2px dashed rgba(200,120,120,0.5);color:#e0b0b0;">🗑 ' + _avEsc(nm) + ' · ' + _avT('已移除','已刪掉') + '</span>'
+            + '<button onclick="_avatarGmRestorePiece(\'' + cat + '\',' + it.id + ')" title="' + _avT('GM:把這款復原到清單','GM:復原這款') + '" style="padding:11px 12px;font-size:16px;border-radius:11px;cursor:pointer;font-family:inherit;background:rgba(60,110,70,0.3);border:2px solid rgba(110,210,140,0.6);color:#fff;">↩</button></div>';
+          continue;
+        }
         /* ★★ v4.79.0 老師指示:玩家今後可以「預覽」未解鎖的配件 → 反轉 v4.66.0 決策4。
          *   舊行為(保留備查·誤刪是大忌):GM 上鎖款對非管理員完全不顯示,連 🔒 鎖定預覽也隱藏 —
          *     if(_gmLk && !_isGm && !unlocked){ shown--; continue; }
@@ -3030,6 +3156,17 @@ function _avRenderOpts(){
             + _avT('GM:直接把這款入帳(測試用)', 'GM:直接給我這款')
             + '" style="padding:13px 11px;font-size:17px;border-radius:11px;cursor:pointer;font-family:inherit;'
             + 'background:rgba(150,110,40,0.32);border:2px solid rgba(255,200,110,0.7);color:#ffe9b8;">🎁</button>';
+        }
+        /* ★ v4.95.0 GM 命名/移除鈕(僅髮型 hairhead 與服裝 outfit·id0 預設款不可動·寫雲端全體套用) */
+        if(_isGm && _RENAMEABLE[cat] && it.id !== 0){
+          _gmBtn += '<button onclick="_avatarGmRenamePiece(\'' + cat + '\',' + it.id + ')" title="'
+            + _avT('GM:幫這款改名稱(寫雲端·全體玩家套用)', 'GM:改名字')
+            + '" style="padding:13px 11px;font-size:16px;border-radius:11px;cursor:pointer;font-family:inherit;'
+            + 'background:rgba(60,90,140,0.32);border:2px solid rgba(130,180,255,0.6);color:#dce9ff;">' + '\u270f\ufe0f' + '</button>'
+            + '<button onclick="_avatarGmRemovePiece(\'' + cat + '\',' + it.id + ')" title="'
+            + _avT('GM:把這款從全體玩家清單移除(可在最下方復原)', 'GM:移除這款')
+            + '" style="padding:13px 11px;font-size:16px;border-radius:11px;cursor:pointer;font-family:inherit;'
+            + 'background:rgba(160,60,60,0.32);border:2px solid rgba(230,110,110,0.65);color:#ffdede;">\ud83d\uddd1\ufe0f</button>';
         }
         if(unlocked){
           h += '<button onclick="_avatarSetPart(\''+cat+'\','+it.id+')" style="padding:13px 20px;font-size:17.5px;font-weight:800;border-radius:11px;cursor:pointer;font-family:inherit;'
@@ -3337,6 +3474,7 @@ window._avatarBootSyncTables = function(){
   var jobs = [];
   try{ jobs.push(window._avatarLoadGmLocks()); }catch(_e1){}
   try{ jobs.push(window._avatarLoadPartDefaults()); }catch(_e2){}
+  try{ jobs.push(window._avatarLoadPieceMeta()); }catch(_e3){}   /* ★ v4.95.0 */
   return Promise.all(jobs).then(function(){
     try{ window._avatarCacheTables(); }catch(_eC){}
     /* 工房正開著才重繪(名片/好友牆是開啟當下才渲染,拉回時通常還沒開,不必動) */

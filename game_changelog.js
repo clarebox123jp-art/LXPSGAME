@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-25  / 目前主程式版本:v4.94.0(主角戰鬥立繪空白修正:戰鬥卡/戰鬥詳情改把素體圖內嵌顯示主角造型·管理員測試)
+//  最後更新:2026-07-25  / 目前主程式版本:v4.95.0(造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.95.0 — 造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試
+  {
+    ver: 'v4.95.0',
+    date: '2026-07-25',
+    adminOnly: true,   /* ★ 主角造型測試期內容·僅管理員可見 */
+    brief: [
+      '🎨【造型工房大更新·髮型與服裝】老師把 16 張全身角色圖切成「頭件(髮型)」和「身件(衣服)」放進造型工房:新增 16 款髮型 + 8 款便服,男生女生、大朋友小朋友都有,可以自由搭配(頭跟身體分開,想換髮型換髮型、想換衣服換衣服)。',
+      '🛠【老師可以自己微調每一款】每一款髮型/服裝,老師都能在造型工房裡「調整預設大小和位置、幫它改名字、或從清單移除」,調好按「📌設為預設」就會套用到全班同學。',
+      '🗑【移除也能反悔】不小心移除的款式,會留在該分類最下方的「已移除」區,按「↩」就能復原回來,不會真的不見。',
+    ],
+    items: [
+      '★ v4.95.0【素材接線·avatar_db.js】老師 16 張全身圖切件:頭件按「頭」縮放對位(眼線→base eyeY·下巴→neck2·臉中線→cx·留全下巴+全髮零脖子)→P.hairhead id18~33(img 四體型陣列+hhRef 髮區實測供 headfull 染髮);身件按「身體」縮放(下巴→neck2·腳→base foot)→P.outfit id15~22(head:null 可搭任意髮型·內白區補洞)。★老師裁定運動服身件與素體同款不重複,8 張運動服變體圖只取髮型頭件。24 張素材放 avatar_parts/。',
+      '★ v4.95.0【命名/移除通道·gameConfig/avatarPieceMeta】新增 window._avatarPieceMeta{names,removed}+_avatarLoadPieceMeta(開機兩序列載入)+_avatarPieceName/_avatarPieceRemoved(render 讀取)+_avatarGmRenamePiece(✏️改名·prompt≤20字去<>)/_avatarGmRemovePiece(🗑乙案 confirm→removed=true 全體選單移除)/_avatarGmRestorePiece(↩復原刪 removed 旗標);同 avatarLocks 模式(僅 GM 可寫·登入者可讀·免改 rules)+本機快取落地。_avRenderOpts:名稱覆蓋+已移除玩家不顯示/GM 顯示灰色+↩+髮型/服裝加 ✏️🗑 GM 鈕(id0 不可動)。尺寸/位置沿用既有 avatarPartDefaults(v4.69.0·📌設為預設寫雲端全體套用)。',
+      '★ v4.95.0【範圍與驗證】avatar_db.js(P.hairhead+16/P.outfit+8/pieceMeta 系統/_avRenderOpts 三改/AVATAR_DB_VERSION→v4.95.0)+index.html/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.95.0;avatar_db.js node --check 過·0 孤立代理字元·無真 ?.;changelog 恰 20 條;CURRENT_BOOT_VER 未動;emoji 用跳脫寫法避免孤立代理字元。',
+    ]
+  },
   // v4.94.0 — 主角戰鬥立繪「空白」根治:戰鬥卡改把素體圖內嵌·管理員測試
   {
     ver: 'v4.94.0',
@@ -428,23 +444,6 @@ window.GAME_CHANGELOG = [
       '★ v4.73.0【章節選擇縮圖】新增 _msFirstSceneImg(cid)(回傳該章第一張有 img 的場景插圖);_msOpenChapterSelect 章節卡右欄由「單一動作鈕」改「rightCol 直欄:動作鈕 + 其下層縮圖」(190×107 圓角·邊框同章節狀態色 accent·_msAsset 帶 ?v= 破快取);縮圖沿用既有場景插圖零新素材。',
       '★ v4.73.0【封面改播章節音樂.m4a·播完自動關閉】_msPlayCover 音樂由「per-chapter cover.bgm(未上傳)」改「單一 章節音樂.m4a(已上傳 330KB·全章共用)」:進封面 bgmStop 獨佔 → 播 章節音樂.m4a 一次(volume 0.72)→ onended 觸發 finish() 自動關閉封面進劇情;被擋/缺檔 8 秒兜底、異常沒觸發 onended 45 秒硬兜底;skip 鈕/點畫面 隨時可跳過(finish 冪等)。原固定 10 秒自動進正片邏輯移除。',
       '★ v4.73.0【範圍與驗證】全部改動集中在 index.html 主線引擎(_msPlayScene bgm 分派 / _msPlayCover 封面音樂與關閉 / _msOpenChapterSelect 縮圖 + _msFirstSceneImg);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js/world-boss 未動。無真 ?.·九版號同步點全對齊 v4.73.0·changelog 恰 20 條·CURRENT_BOOT_VER 未動。主線 _MAINSTORY_ADMIN_ONLY 管理員限定測試。Phase 2(6 場劇情引導戰+主角戰鬥英雄+覺醒)另輪製作。',
-    ],
-  },
-  // v4.72.0 — 主線:章節封面新圖+前情提要+對白上一句/下一句翻頁+環境音短檔名+內嵌教學×3與發劍演出·管理員測試
-  {
-    ver: 'v4.72.0',
-    date: '2026-07-21',
-    adminOnly: true,
-    brief: [
-      '📖 主線又更完整了!① 七章都換上了全新的精緻章節封面大圖(進章節前會先看到),封面下半部會浮現「前情提要」——用幾句話回顧從序章到上一章發生的故事,接關也不怕忘記劇情。② 劇情對白新增「上一句/下一句」按鈕,可以往回看剛剛錯過的對白,切換時會有翻頁音,不怕手快點過頭。③ 補上環境音效(河堤、教室、茶園、老街…的氛圍聲)。④ 劇情中會穿插「認識魔王、英雄升級、逛商店」的小教學,以及第五章打敗發酵魔王後「神劍現世」的演出。(主線仍在測試中,先開放給老師)',
-    ],
-    items: [
-      '★ v4.72.0【封面換圖+關程式疊字】老師提供 7 張內建標題的精緻章節封面(主線_封面_序章.jpg…第六章.jpg·1672×941 JPGq90·放 repo 根目錄·DB cover.img 本就指向此檔名免改);_msPlayCover 移除程式疊標題大字(圖已內建標題·避免雙標題)→ titleBox 僅在「無封面圖 fallback 漸層底」時才顯示。',
-      '★ v4.72.0【前情提要(封面下半部)】新增 _MS_CH_RECAP(七章各一句話回顧·premium/cute 雙版鐵律1.232)+ _msRecapForCover(cid)(串接 order 中「本章之前」各章回顧·序章無前文回傳空);_msPlayCover 於封面下半部(bottom:8%)疊白字黑框(text-shadow 八向黑描邊·無底·楷書字族)顯示前情提要,淡入。',
-      '★ v4.72.0【對白上一句/下一句+翻頁音】_msPlayScene 對白層改版:showLine(instant) 加參數(回看整句直接顯示不重打字);新增 _msNavBarHtml(上一句/下一句 導覽列·curIdx=0 時上一句灰化不可按·取代舊點擊繼續)+ _msBindNav + _msAdvance(打字中→補完·否則前進·切到有效下一句才播翻頁);翻頁音 _msPlayPageTurn 播 翻頁.mp3(缺檔靜默);點畫面/下一句鈕/上一句鈕三入口統一。line.sfx 動作音與場景轉場音不受影響。',
-      '★ v4.72.0【環境音短檔名(乙案)】_msSndUrl 由 主線_音效_{key}.m4a 改抓 {key}.m4a(老師上傳 forest/riverside/park/teafarm/flowerforest/darkness.m4a 等短檔名即生效·amb/sfx 共用此規則;classroom/oldstreet 待補即靜默 graceful)。',
-      '★ v4.72.0【內嵌教學×3+發劍演出】_msRunAct 接 tutorial_king(認識魔王)/tutorial_levelup(英雄升級)/tutorial_shop(商店補給)→ _msActTutorial 自成一體教學卡(雙版·點我知道了續播·30s watchdog);grant_sword_tutorial → _msActGrantSword 神劍現世演出(純演出不動存檔·實際發劍走 _msGrantChapterReward ch5 crystal5_sword)。battle_*/awaken_hero 仍 default 放行=Phase 2(待主角戰鬥英雄)。',
-      '★ v4.72.0【範圍與驗證】全部改動集中在 index.html 主線引擎(_msPlayCover/_msPlayScene/_msRunAct+新 helper);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js/world-boss 未動。無真 ?.·九版號同步點全對齊 v4.72.0·changelog 恰 20 條·CURRENT_BOOT_VER 未動。主線 _MAINSTORY_ADMIN_ONLY 管理員限定測試。Phase 2(6 場劇情引導戰+主角戰鬥英雄+覺醒)另輪製作。',
     ],
   },
 ];
