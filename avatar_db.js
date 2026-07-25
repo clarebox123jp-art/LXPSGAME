@@ -238,7 +238,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.95.0';   /* ★ v4.95.0(2026-07-25)新增 16 髮型頭件(P.hairhead id18~33)+8 便服身件(P.outfit id15~22)+管理員命名/移除通道(gameConfig/avatarPieceMeta);bump 觸發部件圖 ?v= 重抓 */
+window.AVATAR_DB_VERSION = 'v4.95.1';   /* ★ v4.95.1(2026-07-25)服裝染色引擎改 HSL 保明暗重著色(修正亮彩服裝素材染不出指定色:沖白/失飽和/暖色漏染)·bump 觸發部件圖 ?v= 重抓 ｜ ★ v4.95.0(2026-07-25)新增 16 髮型頭件(P.hairhead id18~33)+8 便服身件(P.outfit id15~22)+管理員命名/移除通道(gameConfig/avatarPieceMeta) */
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -528,6 +528,24 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
   var browT = doBrow ? _avHex2Rgb(PAL.hair[cfg.browC]) : null;
   var hairT = (doHair || doHairRef) ? _avHex2Rgb(PAL.hair[cfg.hairC]) : null;   /* ★ 修3b:hairRef 路徑也要髮色目標 */
   var clothT= doCloth? _avHex2Rgb(PAL.cloth[cfg.clothC]) : null;
+  /* ★ v4.95.1 服裝染色改「HSL 保明暗重著色」:先算目標服裝色的 H/S/L(色相·飽和·亮度·迴圈外一次)
+   *   逐服裝像素 outL = 目標L×0.6 + 原像素視覺亮度×0.4(0.6 目標定調確保深色染得出·0.4 保留布料明暗立體感)
+   *   套目標 H/S → 忠實染出玩家指定色;修正舊「目標色×(v/0.55) 亮度映射」對亮彩素材(v 0.66~0.99)沖白/失飽和/暖色被膚色判定漏染 */
+  var clothH=0, clothS=0, clothL=0, _clHn=0;
+  if(clothT){
+    var _clr=clothT[0]/255, _clg=clothT[1]/255, _clb=clothT[2]/255;
+    var _clmx=Math.max(_clr,_clg,_clb), _clmn=Math.min(_clr,_clg,_clb), _cld=_clmx-_clmn;
+    clothL=(_clmx+_clmn)/2;
+    if(_cld>0){
+      clothS = clothL>0.5 ? _cld/(2-_clmx-_clmn) : _cld/(_clmx+_clmn);
+      if(_clmx===_clr) clothH=((_clg-_clb)/_cld)%6;
+      else if(_clmx===_clg) clothH=(_clb-_clr)/_cld+2;
+      else clothH=(_clr-_clg)/_cld+4;
+      clothH*=60; if(clothH<0) clothH+=360;
+    }
+    _clHn = clothH/360;
+  }
+  var _hue2rgb = function(p,q,t){ if(t<0)t+=1; if(t>1)t-=1; if(t<0.16666667)return p+(q-p)*6*t; if(t<0.5)return q; if(t<0.66666667)return p+(q-p)*(0.66666667-t)*6; return p; };
   /* ★ 修3(第七輪):headfull 參考色前置量(低容錯 TH=34;bodyfull 落髮沿用 TH=44)
    *   _hrHeadOn=頭件參考色模式(髮染僅依參考色·並保護命中像素不被膚/服染);
    *   _outlineV=邊線排除門檻(參考色最暗檔 v−0.15·上限0.30·黑髮自動趨近0不影響) */
@@ -610,7 +628,22 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
         } else if(doHairRef && nearHairRef && !isSkin){   /* ★ 修3b:身件落髮染髮色(優先於服裝配色) */
           T=hairT; ratio=v/0.55;
         } else if(doCloth && !isSkin && !nearHairRef && (!clothBelowNeckOnly || y >= neckPx)){   /* ★ 修3b:服裝配色排除落髮 */
-          T=clothT; ratio=v/0.55;
+          /* ★ v4.95.1 服裝染色 HSL 保明暗重著色:保留原布料相對明暗·套目標色相/飽和·亮度以目標色為中心
+           *   (0.6 目標定調確保深色/飽和色染得出·0.4 保留原明暗立體感);寫入後 continue 跳過統一亮度映射 */
+          var _oL = 0.299*r + 0.587*g + 0.114*b;
+          var _outL = clothL*0.6 + _oL*0.4;
+          if(_outL<0.04) _outL=0.04; else if(_outL>0.96) _outL=0.96;
+          if(clothS<=0){
+            var _gv = _outL*255;
+            px[i]=_gv; px[i+1]=_gv; px[i+2]=_gv;
+          } else {
+            var _cq = _outL<0.5 ? _outL*(1+clothS) : _outL+clothS-_outL*clothS;
+            var _cp = 2*_outL - _cq;
+            px[i]   = _hue2rgb(_cp,_cq,_clHn+0.33333333)*255;
+            px[i+1] = _hue2rgb(_cp,_cq,_clHn)*255;
+            px[i+2] = _hue2rgb(_cp,_cq,_clHn-0.33333333)*255;
+          }
+          continue;
         }
         if(T){
           if(ratio>1.6) ratio=1.6;

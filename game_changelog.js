@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-25  / 目前主程式版本:v4.95.0(造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試)
+//  最後更新:2026-07-25  / 目前主程式版本:v4.95.1(造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.95.1 — 造型工房服裝染色修復:忠實染出指定色·管理員測試
+  {
+    ver: 'v4.95.1',
+    date: '2026-07-25',
+    adminOnly: true,   /* ★ 主角造型測試期內容·僅管理員可見 */
+    brief: [
+      '🎨【造型工房·服裝配色修好了】主角造型的服裝配色原本染不出指定的顏色(選深藍/正紅卻變成淡淡的一片、顏色太淡看不出來),現在會忠實染出你選的顏色,而且保留衣服的皮背明暗立體感。',
+    ],
+    items: [
+      '★ v4.95.1【服裝染色引擎·avatar_db.js】_avatarTintPiece 服裝染色由「目標色×(亮度/0.55)亮度映射」改「HSL 保明暗重著色」:保留原布料相對明暗(luma)·色相/飽和取自目標色·亮度以目標色為中心(0.6 目標定調+0.4 保留立體感)→ 忠實染出指定色。根治亮彩服裝素材(素體運動服 v0.86~0.99·便服 v0.66~0.97)被舊亮度映射沖白/失飽和/暖色被膚色判定漏染。只動服裝分支(baseTorso/bodyfull/cloth/full 服裝部分)·膚/髮/瞳染色不動·膚色像素仍不染(玩家可獨立調膚色)。bump AVATAR_DB_VERSION→v4.95.1 破 ?v= 快取重抑;index.html/admin_panel.js/game_changelog.js 版號同步·9 版號同步點對齊 v4.95.1;hero_db.js/world-boss.js/world-boss-ui.html 維持原版。avatar_db.js node --check 過·0 孤立代理字元·無真 ?.;changelog 恰 20 條;CURRENT_BOOT_VER 未動。',
+    ]
+  },
   // v4.95.0 — 造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試
   {
     ver: 'v4.95.0',
@@ -432,18 +444,4 @@ window.GAME_CHANGELOG = [
     ],
   },
   // v4.73.0 — 主線:序章森林停BGM留環境音+章節選擇縮圖(首張場景插圖)+封面改播章節音樂.m4a一次播完自動關閉·管理員測試
-  {
-    ver: 'v4.73.0',
-    date: '2026-07-21',
-    adminOnly: true,
-    brief: [
-      '📖 主線再調整!① 序章穿越到「迷霧森林」後,原本那首不太搭的背景音樂會停掉,只留下森林的環境音(鳥鳴、風聲),更有「剛闖進陌生異世界」的神祕感。② 章節選擇畫面每一章的按鈕下方,現在會嵌入該章「第一張劇情插圖」的縮圖,一眼就看得出那章的場景氛圍。③ 章節開場封面改成:顯示封面時播放專屬的章節音樂一次,音樂播完封面就自動關閉、進入劇情(當然隨時可以按跳過)。(主線仍在測試中,先開放給老師)',
-    ],
-    items: [
-      '★ v4.73.0【序章森林停BGM留環境音】_msPlayScene 逐場景 BGM 新增 scene.bgm==="none" 分支:bgmStop() 停所有 audio[id^="bgm"] 但完全不碰 amb(amb 是 _msStartAmb 的動態 new Audio·不在 DOM bgm 清單內)→ 真正「停BGM、留環境音」;window._msCurBgm 設 "none" 防重觸。序章「主線_序章_迷霧森林」場景 bgm 由 bgm-taiwan-intro 改 "none"(保留 amb:forest)。',
-      '★ v4.73.0【章節選擇縮圖】新增 _msFirstSceneImg(cid)(回傳該章第一張有 img 的場景插圖);_msOpenChapterSelect 章節卡右欄由「單一動作鈕」改「rightCol 直欄:動作鈕 + 其下層縮圖」(190×107 圓角·邊框同章節狀態色 accent·_msAsset 帶 ?v= 破快取);縮圖沿用既有場景插圖零新素材。',
-      '★ v4.73.0【封面改播章節音樂.m4a·播完自動關閉】_msPlayCover 音樂由「per-chapter cover.bgm(未上傳)」改「單一 章節音樂.m4a(已上傳 330KB·全章共用)」:進封面 bgmStop 獨佔 → 播 章節音樂.m4a 一次(volume 0.72)→ onended 觸發 finish() 自動關閉封面進劇情;被擋/缺檔 8 秒兜底、異常沒觸發 onended 45 秒硬兜底;skip 鈕/點畫面 隨時可跳過(finish 冪等)。原固定 10 秒自動進正片邏輯移除。',
-      '★ v4.73.0【範圍與驗證】全部改動集中在 index.html 主線引擎(_msPlayScene bgm 分派 / _msPlayCover 封面音樂與關閉 / _msOpenChapterSelect 縮圖 + _msFirstSceneImg);avatar_db.js/admin_panel.js/game_changelog.js 僅版號同步·hero_db.js/world-boss 未動。無真 ?.·九版號同步點全對齊 v4.73.0·changelog 恰 20 條·CURRENT_BOOT_VER 未動。主線 _MAINSTORY_ADMIN_ONLY 管理員限定測試。Phase 2(6 場劇情引導戰+主角戰鬥英雄+覺醒)另輪製作。',
-    ],
-  },
 ];
