@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-25  / 目前主程式版本:v4.95.1(造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試)
+//  最後更新:2026-07-25  / 目前主程式版本:v4.95.2(造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.95.2 — 造型工房服裝染色「換色不變/整片平塗」根治·管理員測試
+  {
+    ver: 'v4.95.2',
+    date: '2026-07-25',
+    adminOnly: true,   /* ★ 主角造型測試期內容·僅管理員可見 */
+    brief: [
+      '🎨【造型工房·服裝配色根治】修好服裝配色「不管選哪個顏色都只有同一種、整片平塗」的問題,並改成只染衣服的主色塊：現在換顏色會真的變色、保留明暗立體感,而且白襯衫、黑色/白色/灰色、人物輪廓線都不會被染到。',
+    ],
+    items: [
+      '★ v4.95.2【染色快取鍵命名衝突根治·avatar_db.js】根因:染色快取鍵函式 _avPieceKey(imgFile,kind,cfg)(含 clothC)被 v4.95.0 pieceMeta 新增的同名 _avPieceKey(cat,id)(只回 cat+id)函式宣告覆蓋→染色呼叫實際跑後者→快取鍵=imgFile:kind 不含 clothC→第一次染紅存快取、之後換任何色都回同一張紅圖(=換色不變+整片平塗)。修法:染色版改名 _avTintPieceKey(含 clothC)·其 2 處呼叫同改;pieceMeta 的 _avPieceKey(cat,id) 維持。Node 驗證不同 clothC 產生不同鍵→換色重染→走 v4.95.1 HSL 保明暗重著色(有立體感)。bump AVATAR_DB_VERSION→v4.95.2 破 ?v= 快取;index.html/admin_panel.js/game_changelog.js 版號同步·9 版號同步點對齊 v4.95.2;hero_db.js/world-boss.js/world-boss-ui.html 維持原版。node --check 過·0 孤立代理字元·無真 ?.;changelog 恰 20 條;CURRENT_BOOT_VER 未動。',
+      '★ v4.95.2【主色調選擇性染色+中性色排除·avatar_db.js】服裝染色改雙遍:第一遍掃服裝像素色相直方圖找主色相 _clMainHue(排中性色 s>0.18/v>0.16·排膚色·只計脇子以下·峰值 bin±1 圓形平均);第二遍只染「色相接近主色相 ±42 且 s>0.16 且 v>0.16」的像素→白襯衫(低飽和)、灰、黑線稿/人物輪廓線(低明度)、偏主色相的次色塊一律保留原色。多色塊衣(制服/西裝)只染外套主色留白襯衫·單色衣(運動服/便服)整件換色(主色=整件)。用 pngjs 跑實際 JS 邏輯對真實素材輸出成品驗證(主色相偵測 制服224/西裝223/運動服198/連帽衫27°)。canvas 多一遍掃描·有 dataURL 快取同組合只算一次·iPad 可接受。累積於 v4.95.2(不再 bump);快取鍵含 clothC 故換色即重跑主色調染色。',
+    ]
+  },
   // v4.95.1 — 造型工房服裝染色修復:忠實染出指定色·管理員測試
   {
     ver: 'v4.95.1',
@@ -428,20 +441,5 @@ window.GAME_CHANGELOG = [
     ],
   },
   // v4.74.0 — avatar 部件預設「每個變體獨立」修復 + 主角資料地基(A1·休眠·管理員測試)
-  {
-    ver: 'v4.74.0',
-    date: '2026-07-21',
-    adminOnly: true,
-    brief: [
-      '🎨【造型工房・設為預設 大修(老師測試中)】管理員把不同髮型/套裝/飾品分別設為預設時,現在每一款各自獨立記住自己的位置與大小,互不覆蓋;玩家自訂微調也一樣每個部件×體型分開記。★注意:舊的共用預設會清空,管理員需針對每一款重新按「📌設為預設」。',
-      '👤【我的主角・可上場英雄地基(測試中·未開放)】為之後主角能編入隊伍、上場戰鬥、覺醒鋪好底層資料;此版僅資料地基,主角仍不會出現在學生的召喚/圖鑑/鬥技場,正式開放請等公告。',
-    ],
-    items: [
-      '★ v4.74.0【avatar 部件預設 per-變體獨立·avatar_db.js】新增 window._avPartVarKey(cfg,slot):槽位鍵→「槽#體型#變體id」(素體 baseH/baseB 只到體型·該槽未選變體只到體型·未知槽維持原鍵向下相容)。單一真相 _avEffPos 頂部解析變體鍵→render(_ofsWrap/_avAccLayer)自動 per-變體;_avatarSetPartDefault/_avatarNudge/_avatarNudgeSize/_avatarNudgeReset/_avatarTogglePosDef/UI 使用預設勾選 共 7 讀寫點集中改走變體鍵(DOM 顯示 id 保留槽位鍵、儲存走變體鍵·兩者分離)。',
-      '★ v4.74.0【遷移·一次性】舊雲端管理員預設 gameConfig/avatarPartDefaults(舊槽位鍵)與玩家舊 cfg.pos/posDef 槽位鍵→新版讀變體鍵故被孤立=舊共用預設清空(本為錯誤共用·屬預期改善);管理員重新針對每款×體型按📌設為預設。bump AVATAR_DB_VERSION 破圖片 ?v= 快取(玩家首次進造型工房一次性重抓·屬預期)。',
-      '★ v4.74.0【主角資料地基 A1·index.html·休眠管理員限定】中央 IIFE:_PROTAG_HERO_NAME/_isProtagHero/_PROTAG_HERO_PUBLIC=false/_protagHeroOpenForMe(=公開旗標||管理員)/_lxpsProtagAwakened(預設 false→R)/_heroDisplayName(暱稱 helper);注入 HERO_DB 主角(hp79/atk13/sp13/spd13·S1三分投射/S2變臉戲法 c99 佔位待 A2)+AVATARS+HERO_IMGS(星佔位)+_PLAYER_HERO_NAMES。_getHeroRarity 主角→覺醒?SSR:R;advGetUnlockedHeroes 管理員推入+final force-include(gated);圖鑑 _buildHeroGrid/arena×4/援軍/全收錄/收藏獎章 共 17 站點 _isProtagHero 排除閘門(全 gated·學生完全看不到)。',
-      '★ v4.74.0【範圍與驗證】avatar_db.js(_avPartVarKey+7 讀寫點)+index.html(A1 中央 IIFE+17 站點閘門)+admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.74.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;avatar_db.js node --check 過·0 孤立代理字元。A2(立繪渲染/3覺醒技/覺醒持久化/重置/第六章覺醒 act)下一版接。',
-    ],
-  },
   // v4.73.0 — 主線:序章森林停BGM留環境音+章節選擇縮圖(首張場景插圖)+封面改播章節音樂.m4a一次播完自動關閉·管理員測試
 ];

@@ -238,7 +238,7 @@
 (function(){
 'use strict';
 
-window.AVATAR_DB_VERSION = 'v4.95.1';   /* ★ v4.95.1(2026-07-25)服裝染色引擎改 HSL 保明暗重著色(修正亮彩服裝素材染不出指定色:沖白/失飽和/暖色漏染)·bump 觸發部件圖 ?v= 重抓 ｜ ★ v4.95.0(2026-07-25)新增 16 髮型頭件(P.hairhead id18~33)+8 便服身件(P.outfit id15~22)+管理員命名/移除通道(gameConfig/avatarPieceMeta) */
+window.AVATAR_DB_VERSION = 'v4.95.2';   /* ★ v4.95.2(2026-07-25)根治服裝染色「換色不變/整片平塗」:染色快取鍵函式 _avPieceKey(imgFile,kind,cfg) 被 v4.95.0 pieceMeta 的同名 _avPieceKey(cat,id) 覆蓋→鍵不含 clothC→回舊快取;改名 _avTintPieceKey 解衝突·bump 破 ?v= 快取 ｜ ★ v4.95.1 服裝染色引擎改 HSL 保明暗重著色 ｜ ★ v4.95.0 新增 16 髮型頭件+8 便服身件+管理員命名/移除通道 */
 
 /* ── 雙版文字小工具(鐵律 1.232) ── */
 function _avT(prem, cute){
@@ -498,7 +498,7 @@ function _avPieceNeedTint(kind, cfg){
   if(kind==='cloth')     return dC;
   return false;
 }
-function _avPieceKey(imgFile, kind, cfg){
+function _avTintPieceKey(imgFile, kind, cfg){
   return imgFile+'|'+kind+'|b'+(cfg.body|0)+'|'+(cfg.skin|0)+'|'+(cfg.eyeC|0)+'|'
     +(cfg.browC|0)+'|'+(cfg.hairC|0)+'|'+(cfg.clothC|0);
 }
@@ -508,7 +508,7 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
    * ★ v4.64.0(第七輪·老師指示)修3改版:頭件(headfull)染髮不用遮罩 — 規則=
    *   「與頭髮內部參考色相近(低容錯·距離<34)且避開眼似像素與深色邊線」即染髮色;
    *   臉部膚色因與參考色距離遠自然不染;參考色命中的像素也不被膚色/服裝配色波及 */
-  var key = _avPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
+  var key = _avTintPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
   if(_avPieceTintCache[key]){ cb(_avPieceTintCache[key]); return; }
   var PAL = window.AVATAR_PALETTES;
   var meta = AVATAR_BODY_META[cfg.body] || AVATAR_BODY_META[0];
@@ -576,6 +576,39 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
       /* ★ 第八輪:色相模式臉橢圓(眼框橫距+10 / 眼頂→下巴+6·像素座標) */
       var _fcxE=(ex1+ex2)/2, _fcyE=(ey1+neckPx)/2;
       var _frxE=(ex2-ex1)/2 + 10*sc, _fryE=(neckPx-ey1)/2 + 6*sc;
+      /* ★ v4.95.2 服裝主色調偵測(第一遍):統計服裝像素色相直方圖找主色相 _clMainHue,
+       *   第二遍只染「色相接近主色 且 非中性色(非黑白灰/輪廓線)」→ 保留白襯衫/線稿等次色塊 */
+      var _clMainHue = -1;
+      if(doCloth){
+        var _hHist=[], _hSin=[], _hCos=[], _hbi;
+        for(_hbi=0; _hbi<36; _hbi++){ _hHist[_hbi]=0; _hSin[_hbi]=0; _hCos[_hbi]=0; }
+        for(var _pi=0; _pi<px.length; _pi+=4){
+          if(px[_pi+3] < 10) continue;
+          var _pr=px[_pi]/255, _pg=px[_pi+1]/255, _pb=px[_pi+2]/255;
+          var _pmx=Math.max(_pr,_pg,_pb), _pmn=Math.min(_pr,_pg,_pb), _pdd=_pmx-_pmn;
+          var _pv=_pmx, _ps=(_pmx>0)?_pdd/_pmx:0, _ph=0;
+          if(_pdd>0){
+            if(_pmx===_pr) _ph=60*(((_pg-_pb)/_pdd)%6);
+            else if(_pmx===_pg) _ph=60*((_pb-_pr)/_pdd+2);
+            else _ph=60*((_pr-_pg)/_pdd+4);
+            if(_ph<0) _ph+=360;
+          }
+          if(_ps <= 0.18 || _pv <= 0.16) continue;   /* 排中性色(白灰黑/輪廓線) */
+          if(_ph>10 && _ph<46 && _ps>0.06 && _ps<0.52 && _pv>0.60) continue;   /* 排膚色 */
+          var _ppos=(_pi/4)|0, _pyy=(_ppos/W2)|0;
+          if(clothBelowNeckOnly && _pyy < neckPx) continue;   /* 只計脖子以下服裝 */
+          var _hbin=(_ph/10)|0; if(_hbin>35) _hbin=35;
+          _hHist[_hbin]++;
+          var _prad=_ph*Math.PI/180; _hSin[_hbin]+=Math.sin(_prad); _hCos[_hbin]+=Math.cos(_prad);
+        }
+        var _pk=0, _pkv=0;
+        for(_hbi=0; _hbi<36; _hbi++){ if(_hHist[_hbi]>_pkv){ _pkv=_hHist[_hbi]; _pk=_hbi; } }
+        if(_pkv>0){
+          var _sSin=0, _sCos=0, _dj, _bj;
+          for(_dj=-1; _dj<=1; _dj++){ _bj=(_pk+_dj+36)%36; _sSin+=_hSin[_bj]; _sCos+=_hCos[_bj]; }
+          _clMainHue = Math.atan2(_sSin,_sCos)*180/Math.PI; if(_clMainHue<0) _clMainHue+=360;
+        }
+      }
       for(var i=0;i<px.length;i+=4){
         if(px[i+3] < 10) continue;
         var r=px[i]/255, g=px[i+1]/255, b=px[i+2]/255;
@@ -628,21 +661,25 @@ window._avatarTintPiece = function(imgFile, kind, cfg, cb, hairRefs){
         } else if(doHairRef && nearHairRef && !isSkin){   /* ★ 修3b:身件落髮染髮色(優先於服裝配色) */
           T=hairT; ratio=v/0.55;
         } else if(doCloth && !isSkin && !nearHairRef && (!clothBelowNeckOnly || y >= neckPx)){   /* ★ 修3b:服裝配色排除落髮 */
-          /* ★ v4.95.1 服裝染色 HSL 保明暗重著色:保留原布料相對明暗·套目標色相/飽和·亮度以目標色為中心
-           *   (0.6 目標定調確保深色/飽和色染得出·0.4 保留原明暗立體感);寫入後 continue 跳過統一亮度映射 */
-          var _oL = 0.299*r + 0.587*g + 0.114*b;
-          var _outL = clothL*0.6 + _oL*0.4;
-          if(_outL<0.04) _outL=0.04; else if(_outL>0.96) _outL=0.96;
-          if(clothS<=0){
-            var _gv = _outL*255;
-            px[i]=_gv; px[i+1]=_gv; px[i+2]=_gv;
-          } else {
-            var _cq = _outL<0.5 ? _outL*(1+clothS) : _outL+clothS-_outL*clothS;
-            var _cp = 2*_outL - _cq;
-            px[i]   = _hue2rgb(_cp,_cq,_clHn+0.33333333)*255;
-            px[i+1] = _hue2rgb(_cp,_cq,_clHn)*255;
-            px[i+2] = _hue2rgb(_cp,_cq,_clHn-0.33333333)*255;
+          /* ★ v4.95.2 主色調選擇性染色:只染「色相接近服裝主色相 ±42 且 s>0.16 且 v>0.16」的像素
+           *   → 保留白襯衫(低飽和)/灰/黑線稿(輪廓線·低明度)/偏主色相的次色塊;其餘走 v4.95.1 HSL 保明暗重著色 */
+          var _hd2 = h - _clMainHue; if(_hd2>180) _hd2-=360; else if(_hd2<-180) _hd2+=360; if(_hd2<0) _hd2=-_hd2;
+          if(_clMainHue >= 0 && _hd2 <= 42 && s > 0.16 && v > 0.16){
+            var _oL = 0.299*r + 0.587*g + 0.114*b;
+            var _outL = clothL*0.6 + _oL*0.4;
+            if(_outL<0.04) _outL=0.04; else if(_outL>0.96) _outL=0.96;
+            if(clothS<=0){
+              var _gv = _outL*255;
+              px[i]=_gv; px[i+1]=_gv; px[i+2]=_gv;
+            } else {
+              var _cq = _outL<0.5 ? _outL*(1+clothS) : _outL+clothS-_outL*clothS;
+              var _cp = 2*_outL - _cq;
+              px[i]   = _hue2rgb(_cp,_cq,_clHn+0.33333333)*255;
+              px[i+1] = _hue2rgb(_cp,_cq,_clHn)*255;
+              px[i+2] = _hue2rgb(_cp,_cq,_clHn-0.33333333)*255;
+            }
           }
+          /* 否則(中性色/偏主色相)保留原像素·不動 px */
           continue;
         }
         if(T){
@@ -1649,7 +1686,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       if(!imgFile) return '';
       var _needHr = (hairRefs && (hairRefs.length || typeof hairRefs.hue === 'number') && (cfg.hairC|0) > 0);   /* ★ 第五輪落髮/第八輪色相模式 染色需求 */
       if(!_avPieceNeedTint(kind, cfg) && !_needHr) return _imgLayer(imgFile, tf);
-      var pk = _avPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
+      var pk = _avTintPieceKey(imgFile, kind, cfg) + (hairRefs ? '|hr' : '');
       if(_avPieceTintCache[pk]) return _imgLayerSrc(_avPieceTintCache[pk], tf);
       window._avatarTintPiece(imgFile, kind, cfg, function(u){
         if(!u) return;
