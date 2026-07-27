@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-27  / 目前主程式版本:v4.96.0(遊戲指引視窗加寬 50%+章節重排:主線劇情→第2章、我的主角→第3章)
+//  最後更新:2026-07-27  / 目前主程式版本:v4.97.0(主線第二章商店實戰教學:真的開商店賣垃圾、買召喚水晶、召喚保底超越極限果實)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,25 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.97.0 — 主線第二章「商店實戰教學」:真開商店賣垃圾→買召喚水晶→召喚保底超越極限果實
+  {
+    ver: 'v4.97.0',
+    date: '2026-07-27',
+    brief: [
+      '🏪【主線第二章大升級】程式設計師和電腦繪圖師不再只用嘴巴講解商店——現在會「真的帶你打開商店」,手把手實際操作一遍!',
+      '💱 第一課・販賣:電腦繪圖師送你一杯「喝一半的好茶」當教材,親手按「賣出」把它換成知識幣!',
+      '🔮 第二課・購買:實際買 1 顆「召喚水晶」。錢不夠?程式設計師:「放心,先從你的獎學金裡面扣除。」',
+      '🌌 第三課・召喚星空:帶著水晶按下「召喚 1 次」——程式設計師偷偷動了一點手腳,第一抽必定召喚出「超越極限果實」!它能讓英雄的極限爆發升 1 級,之後打魔王一定用得上,要收好喔!',
+      '⏭ 不想上課?教學列右邊有「略過教學」可以隨時跳過;之前已經看過商店教學的同學,重看劇情時維持原本的說明卡,不會被重新拉去上課。',
+    ],
+    items: [
+      '★ v4.97.0【主線第二章商店實戰教學·index.html】act tutorial_shop 首次遊玩改走 _msActShopLive(完成過/回顧模式/環境不齊 → 退回 v4.72.0 靜態卡·絕不擋劇情):①販賣課(教材 half_tea ×1·背包沒有才補發)→②購買課(summon_crystal;知識幣不足→獎學金預支補足含帳本 _logCoinTx;今日限購已買過→直接補發 1 顆含 _logCrystalTx 略過本課)→③召喚課(保底旗標 _msShopTutForceFruit 於 _rollOneSummon 第一抽消耗即清,必得 burst_upgrade_fruit ×1)→④收尾卡說明果實用途→繼續劇情;第二章新增鋪陳對白 3 句+收尾提醒 1 句(雙版鐵律 1.232)',
+      '・冪等旗標 _r_shoptut2_{junk/sold/crystal/fruit/done} 走既有 _msRewardFlag*(存 mainStoryProgress·綁 uid·上雲 union)→ 共用 iPad 換裝置也不可能重複拿保底果實;中斷可續走(依旗標直跳未完成課程;果實已拿→跳收尾卡防水晶不足卡死)',
+      '・圖層術:shop-overlay/summon-overlay 原生於 #adventure-overlay 內(z750 會被主線 z9800 蓋死)→ 教學期間暫抬升至 document.body(fixed z9830),結束原位原樣還原;不隱藏主線圖層(v4.91.0 全黑事故反向教訓);教學列 fixed z9930 底部置中,含「⏭ 略過教學」逃生門(確認後視同完成);防呆巡邏 1.5s:課程中誤關商店/召喚自動重開',
+      '・hook 四點(教學未啟動時皆 no-op):shopSellItem 賣出通知/shopBuyItem 購買通知/doSummon 召喚成立通知/_rollOneSummon 保底注入;保底為一次性旗標消耗即清,任何正常召喚(含十連)機率完全不變;結束後 bgmFadeTo 接回主線場景 BGM',
+      '・版號:index.html/game_changelog.js/admin_panel.js → v4.97.0(admin 內容未改僅同步);avatar_db 等其餘檔不動;node --check 過·inline 21 塊·0 孤立代理字元·admin 真?.=0·changelog 恰 20 條·CURRENT_BOOT_VER 未動',
+    ],
+  },
   // v4.96.0 — 遊戲指引視窗加寬 + 章節重排(主線劇情→第2章、我的主角→第3章)
   {
     ver: 'v4.96.0',
@@ -426,21 +445,6 @@ window.GAME_CHANGELOG = [
       '★ v4.77.0【打字機修正·index.html】pb.onclick(上一句)對稱補上「打字中→clearInterval+顯示整句+return」守門,與 _msAdvance/下一句一致;打字未完不會直接跳段回看。',
       '★ v4.77.0【森林腳步聲5秒·index.html】新增 held-sfx 機制(_msPlayHeldSfx/_msStopHeldSfx·loop 播放+ms 後淡出);序章森林 footstep 行掛 sfxHold:5000;showLine 進下一句/離場皆自動停止持續音。',
       '★ v4.77.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js/sw.js 維持不動。',
-    ],
-  },
-  // v4.76.0 — 主角 A2:三覺醒技(三分投射/變臉戲法/凡人的臨摹大師)+覺醒閘門·管理員測試
-  {
-    ver: 'v4.76.0',
-    date: '2026-07-21',
-    adminOnly: true,
-    brief: [
-      '👤【我的主角・覺醒技能(測試中·未開放)】主角覺醒後學會兩招 + 一招大絕:三分投射(打一個敵人·有機會暴擊還能拿能量)、變臉戲法(先給自己一個好狀態再攻擊)、大絕「凡人的臨摹大師」(打全部敵人 + 把隊友的好狀態學來分給整隊)。未覺醒前一律不能使用;主角仍不會出現在學生的召喚/圖鑑,正式開放請等公告。',
-    ],
-    items: [
-      '★ v4.76.0【主角三覺醒技·index.html·管理員限定】覆寫 HERO_DB[主角] s1三分投射(c3·特技250%單體+50%暴擊×1.5+暴擊回2能量·沿用籃球隊員既有 execSkill 通用實作)、s2變臉戲法(c4·隨機獲得1有利狀態+特技+攻擊+速度傷害·沿用既有通用實作);注入 BURST_DB[主角]「凡人的臨摹大師」。三招皆走 doDmg 受世界BOSS 5000cap(鐵律1.31);升級沿用既有 _activeSkLvMult(每級+5%) + SKILL_UPGRADE_DEF 技能名共用(三分投射/變臉戲法皆已在表)。d/fd/sd 雙版(鐵律1.232·fd 只寫 Lv1 鐵律1.160)。',
-      '★ v4.76.0【爆發 凡人的臨摹大師·_runBurst name===主角 分支(甲)】敵全體特技200%×_burstMult 分攤(必中·無視有利·isAoe)+ 臨摹複製我方1名夥伴身上1個有利狀態給全隊1回合(查無則從基礎有利清單挑1·臨摹兜底);BURST_UPGRADE_DEF[主角]200→280%(每升+10%乘算);BURST_GIF 本輪未注入→查無走預設視覺(下輪於 hero_db.js 補一筆專屬 GIF)。',
-      '★ v4.76.0【覺醒閘門(乙)】skillCost 頂部:主角未覺醒時 s1/s2 回99(能量永遠不足=不可施放)、覺醒後正常 c3/c4;execSkill 頂部雙保險守門(未覺醒 return 不執行);_canBurst 未覺醒→false(不可爆發)。三處皆 _isProtagHero 把關·不影響同名的籃球隊員/變臉戲法原主人。aiUseSkill 三分投射/變臉戲法既有通用分支自動涵蓋(鐵律1.128)。',
-      '★ v4.76.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.76.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;admin 零真?.。剩餘 A2:任務1立繪(需老師實機驗渲染路徑)、任務4重置回Lv1(呼 _lxpsSetProtagAwakened(false))。',
     ],
   },
   // v4.74.0 — avatar 部件預設「每個變體獨立」修復 + 主角資料地基(A1·休眠·管理員測試)
