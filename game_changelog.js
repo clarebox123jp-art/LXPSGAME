@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-25  / 目前主程式版本:v4.95.2(造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試)
+//  最後更新:2026-07-27  / 目前主程式版本:v4.96.0(遊戲指引視窗加寬 50%+章節重排:主線劇情→第2章、我的主角→第3章)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v4.96.0 — 遊戲指引視窗加寬 + 章節重排(主線劇情→第2章、我的主角→第3章)
+  {
+    ver: 'v4.96.0',
+    date: '2026-07-27',
+    brief: [
+      '📚 遊戲指引(遊戲介紹與說明書)的視窗變寬囉!圖片和文字看起來更舒服、更清楚!',
+      '📖 章節順序調整:「主線劇情」搬到第 2 章、「我的主角」搬到第 3 章,先看故事和捏角色,快速了解整個遊戲怎麼玩!',
+      '🔢 其他章節自動往後排,編號通通會自己接好,不會跳號!',
+    ],
+    items: [
+      '★ v4.96.0【技術細目】遊戲指引 #_nbg-box 寬度 min(98vw,860px)→min(98vw,1290px)(X 放大 50%);高度/其餘版面不動',
+      '・章節重排採「守門後動態搬移」:_showNewbieGuide 內於 _AVATAR/_MAINSTORY 守門 splice 之後,依 tabLabel 把「主線劇情」「我的主角」搬到索引 1、2(第1章認識遊戲之後),被守門隱藏的章自動略過不搬',
+      '・tabLabel 圈號(①~⑩)與各章 render/renderSimple 內文開頭「第N章」改為動態改寫(僅首個阿拉伯數字命中;「第五章」等中文數字為主線故事章節、不受影響)→ 學生(守門中僅 6 章)與管理員(8 章)任何組合都保證連號',
+      '・寵物圖鑑提示「遊戲指引第 ⑥ 章」改為「遊戲指引的「寵物系統」章節」(編號動態化後不再寫死)',
+      '・重排/改號全包在獨立 try-catch(_nbgReorderErr),任何例外自動退回原順序顯示,不影響指引開啟',
+    ],
+  },
   // v4.95.2 — 造型工房服裝染色「換色不變/整片平塗」根治·管理員測試
   {
     ver: 'v4.95.2',
@@ -424,20 +441,6 @@ window.GAME_CHANGELOG = [
       '★ v4.76.0【爆發 凡人的臨摹大師·_runBurst name===主角 分支(甲)】敵全體特技200%×_burstMult 分攤(必中·無視有利·isAoe)+ 臨摹複製我方1名夥伴身上1個有利狀態給全隊1回合(查無則從基礎有利清單挑1·臨摹兜底);BURST_UPGRADE_DEF[主角]200→280%(每升+10%乘算);BURST_GIF 本輪未注入→查無走預設視覺(下輪於 hero_db.js 補一筆專屬 GIF)。',
       '★ v4.76.0【覺醒閘門(乙)】skillCost 頂部:主角未覺醒時 s1/s2 回99(能量永遠不足=不可施放)、覺醒後正常 c3/c4;execSkill 頂部雙保險守門(未覺醒 return 不執行);_canBurst 未覺醒→false(不可爆發)。三處皆 _isProtagHero 把關·不影響同名的籃球隊員/變臉戲法原主人。aiUseSkill 三分投射/變臉戲法既有通用分支自動涵蓋(鐵律1.128)。',
       '★ v4.76.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.76.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;admin 零真?.。剩餘 A2:任務1立繪(需老師實機驗渲染路徑)、任務4重置回Lv1(呼 _lxpsSetProtagAwakened(false))。',
-    ],
-  },
-  // v4.75.0 — 主角 A2:覺醒持久化 + 第六章覺醒 act + 圖鑑暱稱顯示·管理員測試(補記)
-  {
-    ver: 'v4.75.0',
-    date: '2026-07-21',
-    adminOnly: true,
-    brief: [
-      '👤【我的主角・覺醒與名字(測試中·未開放)】主角打完第六章覺醒場景後會「覺醒」(稀有度 R→SSR)並永久記住;英雄圖鑑主角卡會顯示玩家取的暱稱(沒設就顯示「主角」)。主角仍不會出現在學生的召喚/圖鑑,正式開放請等公告。',
-    ],
-    items: [
-      '★ v4.75.0【覺醒持久化·avatar_db.js】avatarCard 新增 protagAwakened 欄位(隨 cfg 上雲 merge:true·免改 rules);_avatarLoadLocal/雲端命中設 window._protagAwakened;新增 window._lxpsSetProtagAwakened(v)(設記憶體旗標 + avatarCard 欄位 + 存本機/雲端·v 預設 true,傳 false 供重置)。讀取端 _getHeroRarity 主角→覺醒?SSR:R。',
-      '★ v4.75.0【第六章覺醒 act·index.html】_msRunAct 分派器新增 case awaken_hero → 呼 _lxpsSetProtagAwakened(true)(fire-and-forget·退路設 _protagAwakened=true)→ done() 續播;第六章覺醒場景(v4.68.0/67.0 已建)播完 act 觸發覺醒。',
-      '★ v4.75.0【圖鑑暱稱顯示·index.html】圖鑑卡名 + 詳情頁英雄名標題套 _heroDisplayName(主角→玩家暱稱 fallback「主角」·非主角一律回原名無害);只接顯示點·不改 HERO_DB key/狀態/統計(onclick/data-heroname 仍用原 name)。戰鬥卡/編組頁暱稱留待任務1立繪一起做。',
     ],
   },
   // v4.74.0 — avatar 部件預設「每個變體獨立」修復 + 主角資料地基(A1·休眠·管理員測試)
