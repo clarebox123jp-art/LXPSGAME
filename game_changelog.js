@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-07-27  / 目前主程式版本:v4.98.0(主線第三/四章劇情修改:第三章隊伍改編 主角/劍士/祭司/電腦繪圖師;第四章火法師戰前登場打醒被魅惑夥伴)
+//  最後更新:2026-07-28  / 目前主程式版本:v5.0.0(主線第五章新增學校社團教室開場對話:異世界小隊自我介紹+感應深坑老街汙染,銜接臭豆腐BOSS劇情)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,44 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.0.0 — 主線第五章新增「學校社團教室」開場對話(異世界小隊的祕密+感應深坑)
+  {
+    ver: 'v5.0.0',
+    date: '2026-07-28',
+    brief: [
+      '🏫【第五章劇情加長】出發去深坑老街之前,大家會先回到社團教室,聽異世界夥伴們說出自己的祕密!',
+      '🌌 劍士、祭司、火法師、刺客、守衛終於說明:他們五個都是從異世界來的討伐小隊,任務就是打倒各地的異象和魔物!',
+      '🔮 祭司施展感應之力,發現下一個被汙染的地方就是「深坑老街」——而且那裡飄來一股非常特別的「味道」……',
+      '🤢 之後才會遇到臭氣魔王・發酵公的暴走事件,爆笑劇情原汁原味不變!',
+      '📖 已經通關第五章的同學,可以到章節選單用「回顧劇情」重看完整新內容!',
+    ],
+    items: [
+      '★ 主線第五章 scenes 最前插入新場景:沿用現有 主線_第二章_社團教室.jpg + amb classroom + bgm-menu-01,對白 11 句全數雙版(鐵律 1.232),sfx 沿用既有 sword/pray 零新音檔。',
+      '★ 劇情內容(老師需求):劍士/祭司/火法師/刺客/守衛 說明來自異世界、任務=討伐各地的異象與魔物;祭司感應下一個受汙染地點=深坑老街(氣味鋪梗),之後銜接原第 1 場「循著臭氣來到深坑老街」臭豆腐 BOSS 爆笑劇情,原內容一字未動。',
+      '★ 安全性:主線引擎 _msRunChapter 逐場順序播放、無硬編場景索引;戰鬥獎勵 _r_bt_battle_ch5_boss 冪等旗標不受場次位移影響,零帳號資料風險。唯一影響:若有同學正好停在第五章「章中續播點」,續播會多看/重看一場(獎勵不重發)。',
+      '★ 只改 index.html(MAINSTORY_DB ch5);admin_panel.js/game_changelog.js 僅版號同步,無任何戰鬥/資料邏輯改動,admin 無真 ?.。',
+      '★ v5.0.0【版號】7 同步點全對齊 v5.0.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 三鍵 index/admin_panel/game_changelog、ADMIN_PANEL_VERSION、changelog 檔頭 + 置頂 ver);avatar_db.js 維持 v4.95.2、hero_db.js 維持 v4.54.0 本輪未動;CURRENT_BOOT_VER 永久凍結未動。',
+    ],
+  },
+  // v4.99.0 — 主線第四章戰鬥補上杏花妖本尊(出場動畫+專屬答題反應+完整陣容)
+  {
+    ver: 'v4.99.0',
+    date: '2026-07-28',
+    brief: [
+      '🌸【第四章魔王親自登場】花之森 BOSS 戰全面升級!這次杏花妖不再躲在幕後——她會親自現身戰場,和被魅惑的守衛、刺客一起擋在你面前!',
+      '🎬 戰鬥開始前,畫面會全螢幕播放杏花妖的華麗登場動畫,魔王氣勢十足!(可以按跳過)',
+      '💬 答題的時候,杏花妖會用她自己的專屬台詞回應你——答對她會氣得花瓣發抖,答錯她會嬌氣地嘲笑你,不再說錯別人的台詞!',
+      '🔥 打法不變:火剋妖花,讓火法師打頭陣!打倒杏花妖、把兩位夥伴打醒,魅惑就會解開!',
+      '📖 戰鬥結束後,新增杏花妖敗退、魅惑消散的劇情銜接,故事更完整!',
+    ],
+    items: [
+      '★ v4.99.0【主線第四章補杏花妖本尊·index.html】_msBattleEnemies battle_ch4_boss 陣容由 被魅惑守衛/被魅惑刺客 兩人改為 被魅惑守衛/杏花妖(grass)/被魅惑刺客 三人(排法照冒險模式杏花妖路線慣例·杏花妖居中·舊陣容保留註解備查)',
+      '・出場動畫:杏花妖進入 G.p2 後由既有 _bossIntroDetect 自動偵測 → 全螢幕播放杏花妖動態影片+切換杏花妖專屬戰鬥音樂(v3.16.34 既有機制·零新增程式·第三章九尾貓同路徑已驗證)',
+      '・BOSS 答題反應:advShowBossReact 在敵方找到杏花妖 → 自動改用杏花妖專屬台詞(答對/答錯/超時三組);根因=舊陣容沒有她 → 查無對應 BOSS 而退回九尾貓預設台詞',
+      '・詢問卡名稱與說明補杏花妖(雙版·鐵律 1.232);戰後場景開頭補一句杏花妖敗退+魅惑碎裂旁白(雙版)銜接守衛/刺客甦醒;舊文案皆保留註解',
+      '・杏花妖本就在真 BOSS 尊嚴保護名單 → 鎖血/反擊機制自動生效(鐵律 1.31);魅惑天賦與傾城一笑爆發於主線戰鬥同樣成立;版號 7 同步點 → v4.99.0(admin 內容未改僅同步)·changelog 刪最舊 v4.78.0 維持恰 20 條',
+    ],
+  },
   // v4.98.0 — 主線第三章隊伍改編:主角/劍士/祭司/電腦繪圖師
   {
     ver: 'v4.98.0',
@@ -408,49 +446,6 @@ window.GAME_CHANGELOG = [
     ],
   },
   // v4.79.0 — 主線加入夥伴角色解鎖大卡 + 管理員造型預設/上鎖雲端同步修正 + 我的主角入口搬家
-  {
-    ver: 'v4.79.0',
-    date: '2026-07-22',
-    adminOnly: true,
-    brief: [
-      '📖【主線劇情・新夥伴登場大卡(測試中)】劇情裡有新夥伴加入隊伍時,除了原本浮現名字的演出,接著會跳出一張大大的角色卡:完整立繪、角色名字、兩個技能(含要花多少能量)和極限爆發的說明,規格跟召喚抽到新角色時看到的那張一模一樣。一次只看一位,按「▶ 下一位」換下一個,上方會顯示「第幾位 ／ 共幾位」,看完最後一位按「太棒了!」就繼續播劇情。序章一次登場四位、第一章兩位、第二章兩位、第三章兩位、第四章三位,現在都看得到他們長什麼樣子、會什麼招。卡片上的名字用劇情裡的稱呼(例如動物學家‧小真老師),但圖片與技能還是取自英雄圖鑑本人,不會對不上。',
-      '👤【管理員造型預設與上鎖・真正套用到全體玩家】修好一個藏得很深的問題:老師在造型工房把每個部件的位置與大小調好、按「📌設為預設」之後,那份預設其實只有在「打開造型工房」的當下才會從雲端抓下來,而且重新整理網頁就忘記了。結果學生在「冒險者名片」、「好友名片牆」以及主線劇情展示名片的地方,看到的都是沒有套上老師預設的版本,位置會跑掉。現在改成三點:①登入完成就先把老師設好的預設與上鎖名單抓下來,不必等學生點開造型工房;②抓下來的內容會存在平板本機,重新整理網頁、甚至暫時沒網路也還在;③打開造型工房那一瞬間,不會再閃過一下「本來應該被鎖住的款式」。老師改完預設或鎖定後,學生下次登入(或重新打開造型工房)就會套用。',
-      '🗂【「👤 我的主角」入口搬家】原本放在冒險選關頁一長串按鈕的中間,現在移到「⚔️ 英雄圖鑑」畫面最上方、標題的左邊,和「← 返回」在同一排,一進圖鑑就看得到,不用再往下捲。功能完全一樣,一樣是管理員測試期間才看得見。',
-    ],
-    items: [
-      '★ v4.79.0【主線加入夥伴角色解鎖大卡・乙案·index.html】①新增 _msJoinCardHtml(nm):單位夥伴大卡 HTML,規格對齊 _showSummonRareHeroPreview(立繪 min(70vw,300px) 1:1 金框 + 名稱 + s1/s2(技能名/能量🔷/說明) + 💥極限爆發);圖片走 HERO_IMGS[原名]·技能走 HERO_DB[原名]·爆發走 BURST_DB[原名],顯示名走 _msStoryName(劇情專屬姓名)→ 底層 key 完全不動;img onerror 退回 AVATARS emoji 不留破圖;新增 _msEscTx 對 名稱/技能名/說明 做 <>& 逸出(13 位夥伴實測資料無 HTML,純防未來學生設計英雄) ②新增 _msActJoinReveal(names,onDone):分頁 overlay(z-index 9975·淡入淡出),一次一位,底部按鈕「▶ 下一位」/最後一位「太棒了!」,list.length>1 才顯示「n ／ 共」頁碼;切換播 sfx-summon-reveal、結束播 sfx-confirm;onclick 走 window._msJoinRevealNext(全域可達·逐位順序播放不互相覆蓋);3 分鐘 watchdog 兜底防卡死 ③_msActJoin 尾端由「文字浮現完直接 onDone」改為「浮現完 → _msActJoinReveal(names,onDone)」,catch 分支也先試大卡再退回 onDone;舊行為保留為註解(誤刪是大忌) ④★乙案:_showSummonRareHeroPreview(抽卡結果預覽)完全未改動,零回歸風險;代價是日後改卡片規格需兩處同步 ⑤已逐名核對 13 位夥伴(小劇團員/直笛團員/弦樂團員/動物學家/籃球隊員/田徑隊員/程式設計師/電腦繪圖師/劍士/祭司/守衛/刺客/火法師)HERO_IMGS+HERO_DB(s1/s2)+BURST_DB 全數齊備。',
-      '★ v4.79.0【管理員造型預設/上鎖雲端同步三項修正・avatar_db.js】根因:gameConfig/avatarLocks 與 gameConfig/avatarPartDefaults 兩張表只在 _avatarPanelOpen 內 getDoc 拉一次(唯一呼叫點),且為純記憶體全域變數不落地 → ①玩家沒開過造型工房 → _avatarPartDefaults 為空 → _avEffPos 退回 [0,0,0] → _avatarOpenCard(📇名片)/好友面板名片縮圖網格(v4.63.0)/主線 set_card 演出全吃不到管理員預設,位置尺寸跑掉 ②重整即歸零 ③開工房先渲染一次舊表,0.3~1 秒空窗期鎖款露出可點 ④離線/讀取失敗 fail-open。修正:①新增 _avatarCacheTables/_avatarLoadTablesFromLS(localStorage 鍵 lxps_avatarGmLocks / lxps_avatarPartDefaults),兩 loader 拉回後與兩個 GM 寫入點(_avatarGmToggleLock/_avatarSetPartDefault)皆同步落地 ②檔尾 _avatarLoadLocal() 之後先 _avatarLoadTablesFromLS() 用快取墊底 ③新增 _avatarBootSyncTables()+1.5s×20 輪詢等 _fbDb/_fbFns 就緒(登入完成)即 Promise.all 拉一次兩表後停,拉回若 _avatar-panel 開著則 _avRefreshPreview+_avRenderOpts 重繪。firestore.rules 已涵蓋(gameConfig:登入者可讀·isAdmin 可寫)不需改。成本:每位玩家每次登入多 2 次 gameConfig 讀取(一次性非輪詢)。仍為 getDoc 非 onSnapshot → 學生正開著工房時老師改設定,需關掉重開才生效。',
-      '★ v4.79.0【👤 我的主角入口移至英雄圖鑑標題列・index.html】①冒險選關頁原 class=adv-event-btn 兩行大按鈕停用,整段舊 HTML 完整保留為註解(誤刪是大忌·日後要搬回可直接還原) ②hero-page-overlay 標題列 inner flex 內、「⚔️ 英雄圖鑑」標題之前插入緊湊版單行按鈕,id 沿用 adv-avatar-btn → avatar_db.js _avatarRefreshEntryVisibility 的管理員 gating 與 30 秒輪詢完全不用改(新位置同為靜態 DOM 常駐,overlay 隱藏時元素仍在),_AVATAR_ADMIN_ONLY 仍是正式開放的單一開關 ③_SIMPLE_TEXT_MAP[adv-avatar-btn] 由兩行含 <br> 副標的 cute 版改為單行「👤 打扮自己」(原值保留註解),避免簡單風把標題列撐爆 ④按鈕 display:none 靜態,_avatarRefreshEntryVisibility 設 style.display=空字串後回到 button 預設顯示,不依賴 flex。',
-      '★ v4.79.0【版號】9 同步點全對齊 v4.79.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 四鍵 index/avatar_db/admin_panel/game_changelog、AVATAR_DB_VERSION、ADMIN_PANEL_VERSION、changelog 檔頭 + 置頂 ver);hero_db.js 本輪未動維持 v4.54.0;CURRENT_BOOT_VER 永久凍結未動;admin_panel.js 僅版號同步·無真 ?.。AVATAR_DB_VERSION 隨版 bump → avatar_parts 部件圖一次性帶新 ?v= 重抓(小流量峰值·屬預期)。',
-    ],
-  },
-  // v4.78.0 — 主線劇情:動作音效缺檔回退近義音 + 教學引導戰鬥六場全接線·管理員測試
-  {
-    ver: 'v4.78.0',
-    date: '2026-07-22',
-    adminOnly: true,
-    brief: [
-      '📖【主線劇情・音效補齊 + 教學戰鬥(測試中·未開放)】兩項升級:①還沒錄好的劇情音效,先自動借用遊戲裡意思最接近的技能音效頂上(例如登場借召喚角色、護盾借守護、恢復借治癒魔法),劇情不再有一段一段的靜默;等正式音效上傳後會自動改用正式的,不必再改程式。②六場劇情戰鬥全部做好了——第一章第一戰會用卡片一步一步帶你認識戰鬥操作(可以上一步、下一步、也可以跳過),接著播出戰鬥與勝利演出,其餘五場則直接播戰鬥與勝利,劇情從頭到尾走得完。③每一張教學卡片下面,主角都會忍不住吐槽一句(像是「有 AI 幫我打,那我站在這裡幹嘛」),把教學裡難免會提到的遊戲介面名詞,變成主角的個性。④八位夥伴在劇情裡有名字了:動物學家‧小真老師、小劇團員‧善行、弦樂團員‧真音、籃球隊員‧力強、田徑隊員‧阿動、電腦繪圖師‧活靈、程式設計師‧知理、直笛團員‧誠欣(只在劇情對白中出現,英雄圖鑑、召喚、戰鬥、編組一律維持原本名稱),對白上方的名字也略微縮小,長名字不會擠到台詞。⑤「👤 我的主角」造型工房選單最下面新增「✏️ 暱稱」,不用退出去就能直接改暱稱(和原本的設定暱稱是同一個)。⑥資料安全加強:主線劇情進度與主角造型都再確認過綁定各自帳號,共用平板換人登入時不會把上一位的劇情進度或造型帶到下一位身上。⑦女童(幼女)套裝終於補齊!整套裝扮頁現在有:學生制服、日式和服、俏麗雙劍士、水藍魔法師、粉紅長洋裝 五款(原本只有兩款)。雙劍士改用完好的圖,手套、武器、肩膀、裙擺不會再缺角;水藍魔法師也換成重新切好的版本,衣服白色部分完整。少年、少女、男童的套裝完全不受影響。',
-    ],
-    items: [
-      '★ v4.78.0【動作音效缺檔回退·index.html】新增 _MS_SFX_FALLBACK(16 個主線 sfx key → 既有 <audio> 元素 id)+ _msFbUrl();_msPlaySfx / _msPlayHeldSfx 改為「先抓短檔名 {key}.m4a?v=版本,onerror 或 play() 失敗才用近義音效頂替」,成功播放則鎖住不回退。對照:appear→sfx-summon-reveal、card→sfx-deal、whistle→sfx-battle-start、charm→sfx-youyou-burst、shield→sfx-guard、fire→sfx-explode、stink→sfx-powerdown、treasure→sfx-medal-unlock、darkrise→sfx-wb-boss-skill、restore→sfx-heal;已到齊的 6 個(footstep/crack/fall/keyboard/sword/pray)也各配一組保險回退。',
-      '★ v4.78.0【教學引導戰鬥(甲案)·index.html】新增 _MS_BATTLE_DEFS(六場敵人名/圖示/導語·雙版文案 鐵律1.232)與四幕演出:_msBattleIntro(敵人現身)→ _msBattleTutorial(復用既有 TUTORIAL_STEPS 11 步文案·premium 取 desc / cute 取 descSimple·上一步/下一步/跳過)→ _msBattleSim(敵人血條四段遞減+普攻與暴擊音)→ _msBattleWin(勝利卡·點畫面或 2.6 秒續播)。',
-      '★ v4.78.0【分派器接線·index.html】_msRunAct 新增 battle_ch1_1 / ch1_2 / ch3_boss / ch4_boss / ch5_boss / ch6_boss 六個 case → _msActBattle(act, done),不再 fall-through 到 default;default 改為未知 act 直接續播。battle_ch1_1 帶完整教學引導,其餘五場只播戰鬥與勝利。',
-      '★ v4.78.0【主角吐槽條·index.html】新增 _msQuipBar(premium,cute)(💭+_msWho(__hero) 暱稱+淡藍吐槽框)與 _MS_TUT_QUIPS(11 步吐槽·以標題關鍵字配對而非索引,TUTORIAL_STEPS 日後增刪不會錯位·查無走通用兜底句);教學引導戰鬥每一步、以及既有三張教學卡(tutorial_king/levelup/shop)皆插入吐槽條(插在按鈕之前)。語氣沿用主線 DB 主角既有的「（心想）…」自嘲風格,雙版文案(鐵律1.232)。',
-      '★ v4.78.0【劇情專屬姓名·index.html】新增 _MS_STORY_NAME 對照表(八位夥伴)+ _msStoryName(n) helper;_msWho 尾端與 _msActJoin 加入隊伍演出各套一次,DB 的 who 值/HERO_DB key/圖鑑/召喚/戰鬥/編組完全不動(純顯示層對照,查無對照回原名無害)。另 DB 內兩句動物學家自我介紹台詞(premium+cute)同步改寫為「我是動物學家‧小真老師」。',
-      '★ v4.78.0【對白名字縮小·index.html】showLine 說話者名字 font-size 38→30px、letter-spacing 3→2px、margin-bottom 16→14px(劇情專屬姓名最長 7 字·避免擠壓對白區)。',
-      '★ v4.78.0【造型工房新增暱稱項·avatar_db.js】_AV_TABS 於 heldTab 之後新增第 11 項 { k:nickAct, act:nick }(act 型不切頁);_avRenderTabs 補藍色系樣式+✏️ 圖示;_avatarSwitchTab 補 nick 分支 → 呼叫 index.html 既有 window.openNicknameModal()(z29999 蓋在造型工房 z19999 之上·儲存走既有 _saveNickname 路徑=localStorage lxps_nickname_{uid} + 雲端·與名片暱稱同一份真相);函式未載入時走 bannerFX 雙版提示。',
-      '★ v4.78.0【UID 綁定稽核(任務3)·index.html】稽核結果:主線進度雲端 players/{uid}.mainStoryProgress ✅、本機 lxps_mainstory_{uid} ✅(三個寫入點皆 if(uid) 守門)、avatarCard 雲端 players/{uid} ✅、本機 lxps_avatarCard_{uid} ✅ — 儲存層全部已綁 uid。★但查出真實漏洞:_clearAccountLocalData 換帳號清單漏列 window._mainStoryProgress / _avatarLocalCard / _protagAwakened / _avatarNickname 四個記憶體物件 → 共用 iPad 換帳號未整頁 reload 時,前一位的章節 done 會被 _msHydrateProgress 的 union(只增不減)併進下一位並寫上雲端(與 v4.6.0 寵物同型病灶)。修法:四者一併加入換帳號記憶體清除(只清記憶體不動雲端·誤刪是大忌)+ _msHydrateProgress 加 UID 守門第二道防線(window._mainStoryProgressUid 與當前 uid 不符→先清空再 union)。',
-      '★ v4.78.0【女童(kidgirl)套裝修正·avatar_db.js + 素材】老師回報「衣服白色區域被過度去背」。repo 逐檔實測(新切法 kidgirl_{13款式}_{head/body}.png 全試·舊命名 headfull_/bodyfull_{款式}_kidgirl.png 全試·full_ 前綴·制服/洋裝各種別名)結論分三種病因:❶水藍魔法師=新切件 kidgirl_watermage_head/body.png 早已在 repo 且實測 0 內部破洞,但 P.outfit id13 仍掛舊件 bodyfull_aquamage_kidgirl.png(內部 3021px 白色破洞)→ 改掛新件(hhRef 沿用舊值·新件髮區實測中段 [68,66,67] 與現行 [68,66,66] 幾近相同=同一張原圖)。❷日式和服=headfull_/bodyfull_kimono_kidgirl.png 一直都在 repo,但 P.outfit id2 女童欄位是 null 從未接線 → 補上(hhRef [[56,53,50],[101,98,95]] 由該圖髮區實測取樣·已排除膚色與和服紅·並用雙劍士女童現行值反推比例校正)。❸雙劍士=程式已掛對、檔案也在,但 bodyfull_dualblade_kidgirl.png 內部有 3863px 白色破洞(headfull 另 10px)→ 產出修補檔請老師同名覆蓋上傳。舊件 aquamage_kidgirl 保留在 repo 與 P.headfull/P.bodyfull 定義中(誤刪是大忌)。',
-      '★ v4.78.0【素材修補手法·雙劍士女童】非重新去背:原檔 RGB 完整保留、僅 alpha 被挖空,故只把「被角色輪廓完全包圍的透明像素」(scipy.ndimage.label 標記背景連通元件·從四邊界反推 outside·剩餘即內部破洞)alpha 補回 255,顏色一個都沒動。修補 3863px 實測 RGB 平均 (232,220,225)、81.5% 為純白系(RGB 皆>200)、最暗 (167,155,159)=白布陰影 → 確認就是被誤挖的白色衣服。修補後內部破洞 0。手臂與身體間的合法鏤空因連通到外部不受影響。',
-      '★ v4.78.0【仍缺素材】女童「學生制服」與「小洋裝」逐檔實測確認不在 repo(全 404),P.outfit id1/id6 女童欄位維持 null。待老師上傳 kidgirl_uniform_head/body.png 與 kidgirl_dress_head/body.png 後即可接線。',
-      '★ v4.78.0【女童套裝補齊(老師乙案)·avatar_db.js】★根因更正:前一輪誤判「制服/洋裝女童件不在 repo」,實際是漏探 top_*_kidgirl.png 這個 P.top 命名慣例;老師上傳的 7 張與 repo 現行檔逐像素比對總差=0 → 素材一直都在,問題全在程式碼引用。★另一關鍵:雙劍士老師的關鍵字是 dualsword,程式碼掛的是 dualblade(不同檔·且該舊件有 3863px 白色破洞+邊緣被削)→ 改掛 top_dualsword_kidgirl.png。P.outfit 女童欄位接線結果:id1 學生制服=top_uniform_kidgirl.png(整張式)、id2 日式和服=headfull_/bodyfull_kimono_kidgirl.png(頭+身分離件·可換髮型)、id7 俏麗雙劍士=top_dualsword_kidgirl.png(整張式)、id13 水藍魔法師=kidgirl_watermage_head/body.png(頭+身分離件·可換髮型)、新增 id14 粉紅長洋裝=top_dress_kidgirl.png(整張式)。★_pick 是依陣列索引取件,故新款一律追加陣列最後(id 必須等於索引)。',
-      '★ v4.78.0【整張式套裝機制(whole)·avatar_db.js】P.outfit 原設計為「頭件+身件」分離,但女童的制服/洋裝/雙劍士只有含頭的整張全身圖(老師既有素材·不再裁切)。新增逐體型陣列欄位 whole 與 helper _ofIsWhole(d,bodyIdx):head 留 null、body 放整張圖、whole 對應體型標 1 → ❶渲染 hideHead 補 _ofWhole(素體頭隱藏·防整張圖的頭與素體頭重疊)❷髮型頁提示條與換髮型守門比照 lockHair 擋下(頭髮畫在圖裡)。★whole 是逐體型的,同款式其他體型若有正規分離件仍走原本頭+身流程,少年/少女/男童完全不受影響。',
-      '★ v4.78.0【素材零改動】本輪未裁切、未修圖、未產生任何新素材;前一輪產出的 bodyfull_/headfull_dualblade_kidgirl.png 修補檔作廢不上傳(改用老師既有的 top_dualsword_kidgirl.png)。舊 dualblade / aquamage 件保留在 repo 與 P.full/P.headfull/P.bodyfull 定義中(誤刪是大忌)。',
-      '★ v4.78.0【零副作用保證】教學引導戰鬥為純演出:不建立/不改動 G 戰場物件、不呼叫 startTurn 或 _closeTutorial、不寫 _tutorialDone/_tutorialMiniDone、不動存檔與獎勵,因此真實戰鬥的教學提示與流程完全不受影響;演出掛 15 分鐘 watchdog 兜底防卡死。真實可操作的主線戰鬥仍列 Phase 2(待主角戰鬥英雄)。',
-      '★ v4.78.0【範圍與驗證】全在 index.html;avatar_db.js/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0、sw.js/world-boss.js 未動。9 版號同步點對齊 v4.78.0;index.html 21 inline 塊 node --check 全過·0 孤立代理字元;admin 零真?.。',
-    ],
-  },
   // v4.74.0 — avatar 部件預設「每個變體獨立」修復 + 主角資料地基(A1·休眠·管理員測試)
   // v4.73.0 — 主線:序章森林停BGM留環境音+章節選擇縮圖(首張場景插圖)+封面改播章節音樂.m4a一次播完自動關閉·管理員測試
 ];
