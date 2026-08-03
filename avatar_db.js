@@ -2,6 +2,18 @@
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
  * 版本: v4.64.2(2026-07-20)
  *
+ * ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(老師需求·1乙+2乙):
+ *   ①P.mask 佔位分類正式接線 25 款(mask_01~25.png·老師 5×5 全圖切割去背·全款
+ *     lock:{t:'summon'} 靜態鎖);②選單併入「頭戴」頁第二分類「動物面具」(1乙)+面具位置微調;
+ *   ③prop 引擎新 mask 錨點(整臉覆蓋·面具眼部約自身高 46% 對齊素體眼線·四體型自動對位);
+ *   ④渲染層移至眼鏡之上、頭戴之下(戴面具蓋過眼鏡·帽子仍可疊面具上);
+ *   ⑤_avatarMaskUnlockOnSummon:召喚水晶每抽 1% 隨機獲得未擁有款(比照 v4.83.0 召喚背景
+ *     前例·集滿 25 款不再中·index.html 召喚點掛鉤);⑥儲存驗證式還原/預覽提示條/GM 上鎖鈕/
+ *     AVATAR_UNLOCK_HOW 雙版說明全數納入 mask 槽;⑦GM 🎁 測試鈕擴及 summon 鎖款(免真抽驗穿戴)。
+ *   ★★ 2乙:AVATAR_DB_VERSION 維持 v4.95.2「不 bump」——25 張面具為新檔名首次抓取不受
+ *     舊快取影響;900 台不重抓既有部件圖。本檔更新靠 index.html _LXPS_FILE_VERSIONS
+ *     的 avatar_db.js 載入鍵 bump 至 v5.10.0 破快取。同名覆蓋面具素材時才需 bump 本檔版號。
+ *
  * ★ v4.89.0 — 卡片背景圖「名稱↔圖片幾乎全錯位」修復(老師 2026-07-24 回報):
  *   根因:選單按鈕寫入 cfg.bg 的是「id 欄位值」,但 _bgLayer 舊碼用 _pick(P.bg, cfg.bg)
  *   =「陣列索引」取圖;P.bg 的 id 亂序(0,1,8,14,20,21,7,22,6,3,...)→ 兩套座標系錯接,
@@ -1072,7 +1084,39 @@ P.cape = [
 
 /* ── ★ v4.55.1 新分類(老師指定模組):耳環 / 口罩 / 襪子 — 佔位就緒,等素材圖 ── */
 P.earring = [ { id:0, n:'無', ns:'不戴', lock:null } ];
-P.mask    = [ { id:0, n:'無', ns:'不戴', lock:null } ];
+/* ★ v5.10.0 — 動物面具 25 款正式接線(老師 2026-08-03):
+ *   素材=老師 5×5 全圖切割去背(mask_01~25.png·avatar_parts/·新檔名首抓不受舊快取影響);
+ *   全款 lock:{t:'summon'} 靜態鎖 → 召喚水晶每抽 1% 機率隨機獲得一款未擁有面具
+ *   (_avatarMaskUnlockOnSummon·比照 v4.83.0 卡片背景召喚 1% 前例·集滿 25 款後不再中);
+ *   prop:{k:'mask'} 新錨點=整臉覆蓋·眼線對位(見 _avAccLayer);渲染移至眼鏡之上、頭戴之下 */
+P.mask    = [
+  { id:0,  n:'無', ns:'不戴', lock:null },
+  { id:1,  n:'天竺鼠面具',   ns:'天竺鼠',  lock:{t:'summon'}, img:'mask_01.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:2,  n:'乳牛面具',     ns:'小乳牛',  lock:{t:'summon'}, img:'mask_02.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:3,  n:'老虎面具',     ns:'小老虎',  lock:{t:'summon'}, img:'mask_03.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:4,  n:'兔子面具',     ns:'小兔兔',  lock:{t:'summon'}, img:'mask_04.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:5,  n:'青龍面具',     ns:'小青龍',  lock:{t:'summon'}, img:'mask_05.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:6,  n:'眼鏡蛇面具',   ns:'小蛇蛇',  lock:{t:'summon'}, img:'mask_06.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:7,  n:'小馬面具',     ns:'小馬馬',  lock:{t:'summon'}, img:'mask_07.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:8,  n:'綿羊面具',     ns:'小綿羊',  lock:{t:'summon'}, img:'mask_08.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:9,  n:'猴子面具',     ns:'小猴子',  lock:{t:'summon'}, img:'mask_09.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:10, n:'麻雀面具',     ns:'小麻雀',  lock:{t:'summon'}, img:'mask_10.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:11, n:'小豬面具',     ns:'小豬豬',  lock:{t:'summon'}, img:'mask_11.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:12, n:'柴犬面具',     ns:'小柴犬',  lock:{t:'summon'}, img:'mask_12.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:13, n:'哈士奇面具',   ns:'哈士奇',  lock:{t:'summon'}, img:'mask_13.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:14, n:'貴賓狗面具',   ns:'貴賓狗',  lock:{t:'summon'}, img:'mask_14.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:15, n:'黃金獵犬面具', ns:'黃金犬',  lock:{t:'summon'}, img:'mask_15.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:16, n:'瑪爾濟斯面具', ns:'白狗狗',  lock:{t:'summon'}, img:'mask_16.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:17, n:'虎斑貓面具',   ns:'橘貓咪',  lock:{t:'summon'}, img:'mask_17.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:18, n:'黑貓面具',     ns:'小黑貓',  lock:{t:'summon'}, img:'mask_18.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:19, n:'白貓面具',     ns:'小白貓',  lock:{t:'summon'}, img:'mask_19.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:20, n:'三花貓面具',   ns:'三花貓',  lock:{t:'summon'}, img:'mask_20.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:21, n:'獅子面具',     ns:'小獅子',  lock:{t:'summon'}, img:'mask_21.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:22, n:'黑熊面具',     ns:'小黑熊',  lock:{t:'summon'}, img:'mask_22.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:23, n:'熊貓面具',     ns:'熊貓',    lock:{t:'summon'}, img:'mask_23.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:24, n:'大象面具',     ns:'小象',    lock:{t:'summon'}, img:'mask_24.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} },
+  { id:25, n:'狐狸面具',     ns:'狐狸面具',lock:{t:'summon'}, img:'mask_25.png', prop:{k:'mask', ar:1.0, wf:1.25, dy:0} }
+];
 P.sock    = [ { id:0, n:'無', ns:'不穿', lock:null } ];
 
 /* ── 上衣 — 10 款(蓋在軀幹 y248~352) ── */
@@ -1663,6 +1707,12 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       } else if(pr.k === 'gls'){
         w504 = geo.headW * (pr.wf || 1.06);
         x504 = geo.cx - w504/2 + pdx; y504 = geo.eyeY - (w504/pr.ar)/2 + pdy;
+      } else if(pr.k === 'mask'){
+        /* ★ v5.10.0 動物面具:整臉覆蓋·面具眼部(約自身高 46%)對齊素體眼線,
+         *   四體型自動對位;玩家仍可 XY 微調+尺寸縮放(走既有 _avEffPos 通道) */
+        w504 = geo.headW * (pr.wf || 1.25);
+        x504 = geo.cx - w504/2 + pdx;
+        y504 = geo.eyeY - (w504/pr.ar) * 0.46 + pdy;
       } else {   /* macc 嘴飾 */
         var mouthY = geo.eyeY + (chin - geo.eyeY) * 0.60;
         w504 = geo.headW * (pr.wf || 0.45);
@@ -1823,12 +1873,14 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       + _imgLayer(capePng.fImg, tf)
       + _imgLayer(_pick(P.neck, cfg.neck).img, tf)
       + (hideHead ? '' : _ofsWrap('mouth', _imgLayer(_avImgFor(_pick(P.mouth, cfg.mouth).img, cfg.body), tf)))   /* ★ v4.64.0 嘴巴保留(選單九)+XY微調;整頭/整套時隱藏 */
-      + _imgLayer(_pick(P.mask, cfg.mask).img, tf)
+      /* ★ v5.10.0 面具層移至眼鏡之上、頭戴之下(戴面具蓋過眼鏡屬合理),改 prop 引擎;
+       *   舊全畫布件寫法保留備查(誤刪是大忌):_imgLayer(_pick(P.mask, cfg.mask).img, tf) */
       + _imgLayer(_avImgFor(earPng.img, cfg.body), tf)
       + _imgLayer(_pick(P.earring, cfg.earr).img, tf)
       + _imgLayer(_pick(P.horn, cfg.horn).img, tf)
       + _ofsWrap('macc', _avAccLayer(_pick(P.mouthacc, cfg.macc), 'macc'))   /* ★ v4.64.0 嘴部飾品(不因整頭件隱藏·口罩/奶嘴疊任何頭上)+XY微調+尺寸 */
       + _ofsWrap('gls', _avAccLayer(_pick(P.glasses, cfg.gls), 'gls'))   /* ★ v4.64.0 眼鏡改 prop 引擎(舊全畫布件自動相容)+XY微調+尺寸+鏡片雙版 */
+      + _ofsWrap('mask', _avAccLayer(_pick(P.mask, cfg.mask), 'mask'))   /* ★ v5.10.0 動物面具(prop 引擎 mask 錨點·不因整頭件隱藏·蓋過眼鏡)+XY微調+尺寸 */
       + _ofsWrap('hat', _avAccLayer(_pick(P.hat, cfg.hat), 'hat'))   /* ★ v4.64.0 頭戴改 prop 引擎+XY微調+尺寸 */
       + _ofsWrap('held', _imgLayer(_pick(P.held, cfg.held).img, tf))   /* ★ v4.64.0 手持+XY微調 */
       + _charClose;   /* ★ v4.62.0 特寫人物群組關閉 */
@@ -1955,7 +2007,33 @@ window.AVATAR_UNLOCK_HOW = {
   'outfit:11':  { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
                   c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' },
   'outfit:13':  { p:'以「我很會」難度打贏埃及關卡最終 BOSS【法老王・埃及豔后】即可獲得',
-                  c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' }
+                  c:'用「我很會」難度打贏埃及的法老王和埃及豔后就拿得到！' },
+  /* ── ★ v5.10.0 動物面具 25 款:召喚水晶每抽 1% 隨機獲得未擁有款(帳本自動去重) ── */
+  'mask:1':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:2':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:3':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:4':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:5':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:6':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:7':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:8':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:9':  { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:10': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:11': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:12': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:13': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:14': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:15': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:16': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:17': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:18': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:19': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:20': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:21': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:22': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:23': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:24': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' },
+  'mask:25': { p:'使用召喚水晶召喚時,每次有 1% 機率隨機獲得一款尚未擁有的動物面具', c:'用召喚水晶召喚,運氣好就會抽到動物面具喔！' }
 };
 
 /* ★★ v4.83.0 卡片背景解鎖說明:依 P.bg 的 grp/boss/stage/chap 欄位自動生成,
@@ -2078,6 +2156,27 @@ window._avatarBgUnlockOnSummon = function(){
   }catch(_e){ return []; }
 };
 
+/* ⑥ ★ v5.10.0 動物面具:召喚水晶每抽 1% 機率獲得一款未擁有面具(比照④召喚背景前例;
+ *   只從未擁有池隨機挑 → 天然不重複;25 款集滿後 pool 空 → 永不再中,機率不浪費也不誤發) */
+window._avatarMaskUnlockOnSummon = function(){
+  try{
+    var pool = [], i, m;
+    for(i = 0; i < P.mask.length; i++){
+      m = P.mask[i];
+      if(!m.lock || m.lock.t !== 'summon') continue;
+      if(window._avatarIsUnlocked('mask', m.id)) continue;
+      pool.push(m);
+    }
+    if(!pool.length) return [];
+    if(Math.random() >= 0.01) return [];
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    var added = [];
+    try{ added = window._avatarGrantUnlock(['mask:' + pick.id]) || []; }catch(_eG){ return []; }
+    if(added.length) return [ _avT(pick.n, pick.ns) ];
+    return [];
+  }catch(_e){ return []; }
+};
+
 /* ⑤ 鬥技之證 ×20 兌換鬥技場背景(扣點由 index.html 負責·此處只入帳) */
 window._avatarBgArenaExchangeIds = function(){
   var ids = [], i, b;
@@ -2186,6 +2285,7 @@ window._avatarStripLocked = function(){
     if(!cfg) return changed;
     var SLOTS = [['outfit','of','整套裝扮','整套衣服'], ['hairhead','hh','髮型','頭髮'],
                  ['hat','hat','頭戴','帽帽'], ['gls','gls','眼鏡','眼鏡'],
+                 ['mask','mask','動物面具','動物面具'],   /* ★ v5.10.0 面具同走解鎖帳本+儲存驗證式還原 */
                  ['mouthacc','macc','嘴部飾品','嘴巴戴的'], ['mouth','mouth','嘴巴','嘴嘴'],
                  ['held','held','手持物品','拿的東西'],
                  ['bg','bg','卡片背景圖','背景圖']];   /* ★ v4.83.0 背景圖也走同一套解鎖帳本 */
@@ -2554,7 +2654,8 @@ var _AV_TABS = [
     adj:[['hh','髮型頭部位置','頭髮位置']] },
   { k:'skinTab',   p:'膚色', c:'皮膚顏色', cats:[['skin','膚色','皮膚顏色']] },
   { k:'hairCTab',  p:'髮色', c:'頭髮顏色', cats:[['hairC','髮色','頭髮顏色']] },
-  { k:'hatTab',    p:'頭戴', c:'戴頭上', cats:[['hat','頭戴(帽子)','帽帽']], adj:[['hat','頭戴位置','帽帽位置']] },
+  { k:'hatTab',    p:'頭戴', c:'戴頭上', cats:[['hat','頭戴(帽子)','帽帽'],['mask','動物面具','動物面具']],
+    adj:[['hat','頭戴位置','帽帽位置'],['mask','面具位置','面具位置']] },   /* ★ v5.10.0 動物面具併入頭戴頁(老師 1乙) */
   { k:'glsTab',    p:'眼鏡', c:'眼鏡', cats:[['gls','眼鏡','眼鏡'],['glsClear','鏡片樣式','鏡片樣子']], adj:[['gls','眼鏡位置','眼鏡位置']] },
   { k:'mouthTab',  p:'嘴巴', c:'嘴巴', cats:[['mouth','嘴巴','嘴嘴'],['mouthacc','嘴部飾品','嘴巴戴的']],
     /* ★ v4.79.0 老師指示:移除「嘴巴位置」調整(沒有這項功能——P.mouth 只有 svg/_offImg,
@@ -3058,6 +3159,7 @@ function _avRenderOpts(){
   try{
     var _LOCK_SLOTS = [['outfit','of','整套裝扮','整套衣服'], ['hairhead','hh','髮型','頭髮'],
                        ['hat','hat','頭戴','帽帽'], ['gls','gls','眼鏡','眼鏡'],
+                       ['mask','mask','動物面具','動物面具'],   /* ★ v5.10.0 */
                        ['mouthacc','macc','嘴部飾品','嘴巴戴的'], ['mouth','mouth','嘴巴','嘴嘴'],
                        ['held','held','手持物品','拿的東西'],
                        ['bg','bg','卡片背景圖','背景圖']];   /* ★ v4.83.0 */
@@ -3193,7 +3295,7 @@ function _avRenderOpts(){
         var nm = window._avatarPieceName(cat, it.id, _avT(it.n, it.ns));   /* ★ v4.95.0 管理員命名覆蓋 */
         /* ★ v4.64.0 GM 上鎖通道:可上鎖分類 + 管理員在選項旁直接 🔓/🔒 切換;
          *   被 GM 鎖定的款式管理員仍可選(測試),名稱前顯示 🔒 提示鎖定中 */
-        var _LOCKABLE = { outfit:1, hairhead:1, hat:1, gls:1, mouth:1, mouthacc:1, held:1 };
+        var _LOCKABLE = { outfit:1, hairhead:1, hat:1, gls:1, mouth:1, mouthacc:1, held:1, mask:1 };   /* ★ v5.10.0 面具可 GM 疊加上鎖 */
         var _isGm = (typeof window._isAdminUser === 'function' && window._isAdminUser());
         var _gmLk = !!(window._avatarGmLocks && window._avatarGmLocks[cat + ':' + it.id] === true);
         /* ★ v4.95.0 命名/移除(乙案):已移除款 → 玩家完全不顯示;管理員顯示灰色「已移除」+「↩ 復原」鈕 */
@@ -3221,7 +3323,7 @@ function _avRenderOpts(){
         }
         /* ★ v4.79.0 GM 測試鈕:有解鎖條件(lock:{t:quest})且尚未入帳 → 「🎁」直接寫進 unlock 帳本,
          *   老師不必真的去通關就能驗證「解鎖後能不能正常穿上/儲存」。只有管理員看得到。 */
-        if(_isGm && it.lock && it.lock.t === 'quest' && !unlocked){
+        if(_isGm && it.lock && (it.lock.t === 'quest' || it.lock.t === 'summon') && !unlocked){   /* ★ v5.10.0 summon 鎖款(面具/召喚背景)亦給 GM 測試鈕 */
           _gmBtn += '<button onclick="_avatarGrantUnlock(\'' + cat + ':' + it.id + '\')" title="'
             + _avT('GM:直接把這款入帳(測試用)', 'GM:直接給我這款')
             + '" style="padding:13px 11px;font-size:17px;border-radius:11px;cursor:pointer;font-family:inherit;'
