@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.90';   // ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.5.93';   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -39,6 +39,7 @@ const SHELL_URLS = [
   './adv_quiz_db.js',
   './hero_db.js',
   './avatar_db.js',
+  './mainstory.js',
   './world-boss.js',
   './world-boss-ui.html',
   './game_changelog.js',
@@ -203,6 +204,18 @@ self.addEventListener('activate', function(event){
         }
       }));
     }).then(function(){
+      // ★ v3.5.93 — 圖片瘦身一次性遷移(老師 2026-08-04 裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):
+      //   清掉 ASSET_CACHE 內「可 JPG 化的 .png 快取鍵」(排除 icon/avatar_parts/_去背/body_ 與去背透明圖),
+      //   已快取大 PNG 的舊玩家下次載到該圖時改抓小 JPG、新機改抓 WebP(cache-first 不清不會換)。
+      //   遷移後鍵已是 jpg/webp,之後每版 activate 再跑此規則幾乎清不到東西(冪等·零成本)。
+      return caches.open(ASSET_CACHE).then(function(cache){
+        return cache.keys().then(function(reqs){
+          var kill = reqs.filter(function(r){ return _lxpsPngSlimEligible(r.url); });
+          if(kill.length){ console.log('[SW] v3.5.93 圖片瘦身遷移:清除舊 png 快取鍵', kill.length, '筆'); }
+          return Promise.all(kill.map(function(r){ return cache.delete(r).catch(function(){}); }));
+        });
+      }).catch(function(){});
+    }).then(function(){
       return self.clients.claim();
     })
   );
@@ -255,15 +268,51 @@ self.addEventListener('fetch', function(event){
 // ★ v3.5.88 — WebP 自動改寫 helper：支援 webp 的瀏覽器(Accept 含 image/webp)抓 .png 時,
 //   把目標改成同名 .webp；PWA icon(/icon-*.png) 維持 png(WebP 當不了 icon)。
 //   舊 iPad(iOS<14·Accept 不含 image/webp) 與 .gif/.mp3/.m4a 等一律回原 URL → 行為不變。
+// ★ v3.5.93 — 圖片瘦身共用判定:此 .png 是否「可 JPG 化」(有同名 jpg 可抓)。
+//   與 jpg 改寫同一套排除規則,供「fetch 改寫/activate 一次性清理/precache」三處共用:
+//   排除 icon-*(PWA 圖示)、avatar_parts/(造型工房 321 張)、寵物 _去背、素體 body_。
+function _lxpsPngSlimEligible(url){
+  try{
+    if(!/\.png(\?|$)/i.test(url)) return false;
+    if(/\/icon-[^\/]*\.png(\?|$)/i.test(url)) return false;
+    if(url.indexOf('/avatar_parts/') !== -1) return false;
+    if(/\/body_[^\/]*\.png(\?|$)/i.test(url)) return false;
+    var dec = url; try{ dec = decodeURIComponent(url); }catch(_dz){}
+    if(dec.indexOf('_去背.png') !== -1) return false;
+    return true;
+  }catch(e){ return false; }
+}
+
+// ★ v3.5.93 — 字串版格式選擇器(precache 也要用,故與 request 版拆開):
+//   支援 webp → png 改抓 .webp(v3.5.88 原規則·僅排除 icon);
+//   不支援 webp(舊 iPad)→ 可 JPG 化的 png 改抓 .jpg(v3.5.92 規則);其餘原樣。
+function _lxpsPickAssetUrlStr(url, wantsWebp){
+  try{
+    if(/\.png(\?|$)/i.test(url) && !/\/icon-[^\/]*\.png(\?|$)/i.test(url)){
+      if(wantsWebp){
+        return url.replace(/\.png(\?|$)/i, '.webp$1');
+      }
+      if(_lxpsPngSlimEligible(url)){
+        // ★ v3.5.92 — 舊機 JPG 分流(圖片瘦身甲案·老師 2026-08-04 裁定):
+        //   repo 已備 348 張不透明圖同名 jpg(q88·297MB→43MB);
+        //   jpg 不存在(=透明圖)→ cacheFirstAsset 既有 404 退回 png 機制自動兜底。
+        return url.replace(/\.png(\?|$)/i, '.jpg$1');
+      }
+    }
+  }catch(e){}
+  return url;
+}
+
+// ★ v3.5.93 — 本機 webp 支援度「學習旗標」:每次圖片 fetch 事件從 Accept 學一次,
+//   供 precache(message 事件讀不到 Accept)判斷該預載 webp 還是 jpg;null=尚未學到。
+var _lxpsAcceptWebp = null;
+
 function _lxpsPickAssetUrl(req){
   try{
     var url = req.url;
     var accept = (req.headers && req.headers.get && req.headers.get('Accept')) || '';
-    if(/\.png(\?|$)/i.test(url)
-       && accept.indexOf('image/webp') !== -1
-       && !/\/icon-[^\/]*\.png(\?|$)/i.test(url)){
-      return url.replace(/\.png(\?|$)/i, '.webp$1');
-    }
+    if(accept){ _lxpsAcceptWebp = (accept.indexOf('image/webp') !== -1); }
+    return _lxpsPickAssetUrlStr(url, accept.indexOf('image/webp') !== -1);
   }catch(e){}
   return req.url;
 }
@@ -296,10 +345,16 @@ function cacheFirstAsset(req){
   var triedWebp = (wantUrl !== req.url);
   var _pngUrl = req.url;
   // ★ v3.5.89 — 雙 key 查詢:先 webp key,未命中再查 png key(讓 precache 存的 png 也能被 webp 機命中)
+  // ★ v3.5.93 — 第三 key:再查 jpg key(precache 依學習旗標可能存成 jpg;webp 機也能命中直接用,jpg 全機型可解碼)
   return caches.match(wantUrl, { ignoreSearch: false }).then(function(c1){
     if(c1) return c1;
     if(wantUrl === _pngUrl) return null;
     return caches.match(_pngUrl, { ignoreSearch: false });
+  }).then(function(c2){
+    if(c2) return c2;
+    var _jpgUrl = _lxpsPngSlimEligible(_pngUrl) ? _pngUrl.replace(/\.png(\?|$)/i, '.jpg$1') : null;
+    if(!_jpgUrl || _jpgUrl === wantUrl) return null;
+    return caches.match(_jpgUrl, { ignoreSearch: false });
   }).then(function(cached){
     if(cached) return cached;
 
@@ -418,7 +473,12 @@ self.addEventListener('message', function(event){
     var batchId = data.batchId || 'default';
     var client = event.source;
 
-    precacheUrlsInBatches(urls, client, batchId);
+    // ★ v3.5.93 — 格式感知預載:webp 判定=「fetch 事件學到的 Accept」優先,其次客端 canvas 偵測提示
+    //   (Safari canvas 不會回 webp → 新 iPad 靠學習旗標;兩者皆未知 → 當舊機抓 jpg,
+    //    新機仍能靠三 key 查詢命中 jpg 鍵直接用,jpg 全機型可解碼,絕不存出解不開的格式)。
+    var wantsWebp = (_lxpsAcceptWebp === true) || (_lxpsAcceptWebp === null && data.supportsWebp === true);
+
+    precacheUrlsInBatches(urls, client, batchId, wantsWebp);
     return;
   }
 
@@ -452,7 +512,10 @@ self.addEventListener('message', function(event){
 });
 
 // 批次下載 — 每批 CONCURRENT 個並行, 跑完一批回報進度
-function precacheUrlsInBatches(urls, client, batchId){
+// ★ v3.5.93 — 格式感知:每個 png URL 依 wantsWebp 換算偏好格式(webp/jpg),
+//   已快取過濾查「偏好鍵→原 png 鍵→jpg 鍵」;下載先抓偏好格式,404(透明圖無 jpg)退回原 png,
+//   cache key 用「實際抓到的格式 URL」— 舊 iPad 完整下載從 297MB 級縮到 43MB 級。
+function precacheUrlsInBatches(urls, client, batchId, wantsWebp){
   var total = urls.length;
   var done = 0;
   var failed = 0;
@@ -487,10 +550,29 @@ function precacheUrlsInBatches(urls, client, batchId){
   }
 
   caches.open(ASSET_CACHE).then(function(cache){
-    // 先過濾掉已快取的 (避免重複下載)
-    return Promise.all(urls.map(function(url){
-      return cache.match(url, { ignoreSearch: false }).then(function(hit){
-        return hit ? null : url; // 已有快取 → null, 需要抓 → url
+    // ★ v3.5.93 — 每個 URL 的偏好格式與候選快取鍵(偏好→原 png→jpg,去重)
+    function planFor(url){
+      var wantU = _lxpsPickAssetUrlStr(url, wantsWebp);
+      var keys = [wantU];
+      if(keys.indexOf(url) === -1) keys.push(url);
+      if(_lxpsPngSlimEligible(url)){
+        var jpgU = url.replace(/\.png(\?|$)/i, '.jpg$1');
+        if(keys.indexOf(jpgU) === -1) keys.push(jpgU);
+      }
+      return { url: url, wantU: wantU, keys: keys };
+    }
+    function matchAny(keys, i){
+      i = i || 0;
+      if(i >= keys.length) return Promise.resolve(null);
+      return cache.match(keys[i], { ignoreSearch: false }).then(function(hit){
+        return hit ? hit : matchAny(keys, i + 1);
+      });
+    }
+    // 先過濾掉已快取的 (避免重複下載;任一格式鍵命中即視為已有)
+    var plans = urls.map(planFor);
+    return Promise.all(plans.map(function(pl){
+      return matchAny(pl.keys).then(function(hit){
+        return hit ? null : pl; // 已有快取 → null, 需要抓 → plan
       });
     })).then(function(filtered){
       var toFetch = filtered.filter(function(u){ return u !== null; });
@@ -505,26 +587,34 @@ function precacheUrlsInBatches(urls, client, batchId){
           return;
         }
         var batch = toFetch.splice(0, CONCURRENT);
-        return Promise.all(batch.map(function(url){
-          var sameOrigin = (new URL(url)).origin === self.location.origin;
+        return Promise.all(batch.map(function(pl){
           // ★ v3.4.15 — 跨域走 CDN 改寫 (繞 GitHub 429), 同源照舊
           // ★ v3.5.89 — 改 CORS 驗證抓取:只快取確認 200,不再把 no-cors opaque 錯誤當成功圖存
-          var fetchPromise = _lxpsCorsFetchVerified(url);
+          // ★ v3.5.93 — 先抓偏好格式(webp/jpg),失敗/404 退回原 URL;鍵用實抓格式
+          var fetchPromise = (pl.wantU !== pl.url)
+            ? _lxpsCorsFetchVerified(pl.wantU).then(function(r){
+                if(r && r.ok) return { res: r, key: pl.wantU };
+                return _lxpsCorsFetchVerified(pl.url).then(function(r2){
+                  return { res: r2, key: pl.url };
+                });
+              })
+            : _lxpsCorsFetchVerified(pl.url).then(function(r){ return { res: r, key: pl.url }; });
 
-          return fetchPromise.then(function(res){
+          return fetchPromise.then(function(got){
+            var res = got && got.res;
             if(res && res.ok){
-              // 用原始 url 當 cache key (不論實際是從 GitHub 還是 CDN 抓的)
-              return cache.put(url, res).then(function(){
+              // 用「實際抓到的格式 URL」當 cache key (不論實際是從 GitHub 還是 CDN 抓的)
+              return cache.put(got.key, res).then(function(){
                 done++;
               }).catch(function(err){
-                console.warn('[SW] cache.put failed:', url, err);
+                console.warn('[SW] cache.put failed:', got.key, err);
                 failed++;
               });
             } else {
               failed++;
             }
           }).catch(function(err){
-            console.warn('[SW] fetch failed:', url, err);
+            console.warn('[SW] fetch failed:', pl.url, err);
             failed++;
           });
         })).then(function(){

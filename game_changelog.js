@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-03  / 目前主程式版本:v5.11.0(世界龍王連線流量熔斷+降載·選角失敗根治)
+//  最後更新:2026-08-04  / 目前主程式版本:v5.14.0(圖片瘦身全面接管·舊玩家快取自動換 JPG)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,52 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.14.0 — 圖片瘦身全面接管:所有玩家自動換用小圖
+  {
+    ver: 'v5.14.0',
+    date: '2026-08-04',
+    brief: [
+      '🧹 這次更新後,大家 iPad 裡原本存的大張圖片會自動換成新的小張圖片,幫 iPad 省下超多空間(最多可以省下 250MB)!',
+      '⚡ 「完整下載」也變快超多:圖片部分從快 300MB 變成只要 43MB,裝遊戲快很多!',
+      '✅ 畫面一樣漂亮,遊戲內容完全沒變,大家什麼都不用做,更新後自動完成!',
+    ],
+    items: [
+      '★ v5.14.0【activate 一次性遷移】老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG(去背圖除外)」:SW activate 清除 ASSET_CACHE 內可JPG化的 .png 快取鍵(排除 icon-*/avatar_parts//_去背/body_·規則同 _lxpsPngSlimEligible 三處共用),已快取大 PNG 的玩家下次載到該圖時自動改抓小 JPG(舊機)或 WebP(新機);遷移後鍵已是新格式,之後每版 activate 再跑同規則清不到東西=冪等零成本。',
+      '★ v5.14.0【precache 格式感知】完整下載/背景補抓改依機型抓對格式:webp 判定=fetch Accept 學習旗標優先、客端 canvas supportsWebp 提示次之(Safari canvas 不回 webp 也不怕,誤判為 jpg 仍全機型可解碼);偏好格式 404(透明圖)自動退回原 png;cache 鍵=實抓格式;已快取過濾查偏好/png/jpg 三鍵。舊 iPad 完整下載圖片 297MB 級→43MB 級。',
+      '★ v5.14.0【三 key 查詢】cacheFirstAsset 查快取 want→png→jpg 三鍵,任何機型/任何時期存下的格式鍵都能命中,precache 絕不白做;jpg 全機型可解碼,絕不會存出解不開的圖。',
+      '★ v5.14.0【範圍】sw.js v3.5.92→v3.5.93(_lxpsPngSlimEligible/_lxpsPickAssetUrlStr 抽共用+Accept 學習旗標+activate 遷移+precache 感知+三鍵);index.html 僅兩個 PRECACHE_URLS 發送點加 supportsWebp 欄位(舊 SW 收到多的欄位自動忽略·相容);admin/changelog 僅版號同步;圖包(348 JPG+13 WebP)與 v5.13.0 相同無新增。',
+      '★ v5.14.0【驗證】sw.js node --check 過;index inline 22 塊全過;0 孤立代理字元;無真 optional chaining;7 版號同步點對齊 v5.14.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動;mainstory.js(v5.12.0)/hero_db/avatar_db/world-boss 全未動。',
+    ],
+  },
+  // v5.13.0 — 遊戲圖片瘦身:舊 iPad 下載量大減·畫面不變
+  {
+    ver: 'v5.13.0',
+    date: '2026-08-04',
+    brief: [
+      '🖼 遊戲圖片大瘦身!圖片下載量從將近 300MB 變成只要 43MB,進入遊戲、完整下載都變快超多,也更省流量!',
+      '✅ 畫面看起來一模一樣漂亮,遊戲內容完全沒有改變,放心玩!',
+    ],
+    items: [
+      '★ v5.13.0【圖片瘦身甲案·檔名不動 SW 分流】全 repo 根目錄 390 張 PNG 逐張盤點+alpha 掃描:不透明 348 張(排除 icon-* 8 張)全數產出同名 .jpg(q88·297MB→43MB 省 85.5%)並補產 13 張缺漏 .webp;34 張真透明(寵物 _去背 30 張/標題字/素體預覽/body_×4)與 avatar_parts/ 321 張依老師裁定保持 PNG。掃描發現大量動態組檔名(寵物 名+_去背.png/日本英雄 n+.png/世界BOSS背景/hero_db petImg 完整 URL)→ 裁定不改檔名,規避漏改破圖風險。',
+      '★ v5.13.0【sw.js v3.5.92 舊機 JPG 分流】_lxpsPickAssetUrl 單點擴充:支援 webp 的新機維持 png→webp 完全不變;不支援 webp 的舊 iPad png 請求改試同名 .jpg,jpg 不存在(透明圖)由 cacheFirstAsset 既有機制 404 自動退回 png(v3.5.88/89 雙 key 快取+CORS 驗證全沿用零改動);排除 icon-*、avatar_parts/、_去背、body_ 免首抓無謂 404。遊戲程式碼零改動·AVATAR_DB_VERSION 不動。',
+      '★ v5.13.0【上傳順序鐵則】jpg/webp 圖包必須先全部上傳,sw.js(v3.5.92)最後上;順序顛倒會讓舊機把 png 回應快取進 jpg key(cache-first),之後吃不到新 jpg。',
+      '★ v5.13.0【驗證】sw.js node --check 過;index inline 22 塊全過;0 孤立代理字元;無真 optional chaining;7 版號同步點對齊 v5.13.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動;mainstory.js(v5.12.0)/hero_db/avatar_db/world-boss 系列全未動。',
+    ],
+  },
+  // v5.12.0 — 遊戲瘦身:主線劇情搬進獨立檔案·更新下載更快
+  {
+    ver: 'v5.12.0',
+    date: '2026-08-04',
+    brief: [
+      '🚀 遊戲更新變快了!我們把主線劇情搬進獨立的檔案,以後遊戲更新時要下載的東西變少,打開遊戲會更快、更省流量!',
+      '✅ 遊戲內容完全沒有改變:主線劇情、戰鬥、獎勵通通跟原本一模一樣,放心玩!',
+    ],
+    items: [
+      '★ v5.12.0【額度瘦身丙案第一刀】主線劇情引擎+MAINSTORY_DB(index.html L144205-148311·4,107 行/約 228KB)整段拆出成 mainstory.js;index.html 原位改 document.write(_lxpsFileSrc) 載入,傳統 script 共享全域 scope,執行順序維持原點(_advSystemReady 之後同步載入),零行為變更。',
+      '★ v5.12.0【連動】_LXPS_FILE_VERSIONS 新增 mainstory.js 載入鍵(?v= 破快取);sw.js SHELL_URLS 新增 ./mainstory.js + SW_VERSION v3.5.90→v3.5.91(隨核心檔快取·離線可用);check_inline 基準 21→22(新增 document.write 小包裝塊)。',
+      '★ v5.12.0【驗證】mainstory.js node --check 過;index inline 22 塊全過;0 孤立代理字元;無真 optional chaining;7 版號同步點對齊 v5.12.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動;hero_db/avatar_db/world-boss 系列全未動。',
+    ],
+  },
   // v5.11.0 — 世界龍王連線更穩定:伺服器忙碌自動保護+中文友善提示
   {
     ver: 'v5.11.0',
@@ -327,46 +373,5 @@ window.GAME_CHANGELOG = [
       '・寵物圖鑑提示「遊戲指引第 ⑥ 章」改為「遊戲指引的「寵物系統」章節」(編號動態化後不再寫死)',
       '・重排/改號全包在獨立 try-catch(_nbgReorderErr),任何例外自動退回原順序顯示,不影響指引開啟',
     ],
-  },
-  // v4.95.2 — 造型工房服裝染色「換色不變/整片平塗」根治·管理員測試
-  {
-    ver: 'v4.95.2',
-    date: '2026-07-25',
-    adminOnly: true,   /* ★ 主角造型測試期內容·僅管理員可見 */
-    brief: [
-      '🎨【造型工房·服裝配色根治】修好服裝配色「不管選哪個顏色都只有同一種、整片平塗」的問題,並改成只染衣服的主色塊：現在換顏色會真的變色、保留明暗立體感,而且白襯衫、黑色/白色/灰色、人物輪廓線都不會被染到。',
-    ],
-    items: [
-      '★ v4.95.2【染色快取鍵命名衝突根治·avatar_db.js】根因:染色快取鍵函式 _avPieceKey(imgFile,kind,cfg)(含 clothC)被 v4.95.0 pieceMeta 新增的同名 _avPieceKey(cat,id)(只回 cat+id)函式宣告覆蓋→染色呼叫實際跑後者→快取鍵=imgFile:kind 不含 clothC→第一次染紅存快取、之後換任何色都回同一張紅圖(=換色不變+整片平塗)。修法:染色版改名 _avTintPieceKey(含 clothC)·其 2 處呼叫同改;pieceMeta 的 _avPieceKey(cat,id) 維持。Node 驗證不同 clothC 產生不同鍵→換色重染→走 v4.95.1 HSL 保明暗重著色(有立體感)。bump AVATAR_DB_VERSION→v4.95.2 破 ?v= 快取;index.html/admin_panel.js/game_changelog.js 版號同步·9 版號同步點對齊 v4.95.2;hero_db.js/world-boss.js/world-boss-ui.html 維持原版。node --check 過·0 孤立代理字元·無真 ?.;changelog 恰 20 條;CURRENT_BOOT_VER 未動。',
-      '★ v4.95.2【主色調選擇性染色+中性色排除·avatar_db.js】服裝染色改雙遍:第一遍掃服裝像素色相直方圖找主色相 _clMainHue(排中性色 s>0.18/v>0.16·排膚色·只計脇子以下·峰值 bin±1 圓形平均);第二遍只染「色相接近主色相 ±42 且 s>0.16 且 v>0.16」的像素→白襯衫(低飽和)、灰、黑線稿/人物輪廓線(低明度)、偏主色相的次色塊一律保留原色。多色塊衣(制服/西裝)只染外套主色留白襯衫·單色衣(運動服/便服)整件換色(主色=整件)。用 pngjs 跑實際 JS 邏輯對真實素材輸出成品驗證(主色相偵測 制服224/西裝223/運動服198/連帽衫27°)。canvas 多一遍掃描·有 dataURL 快取同組合只算一次·iPad 可接受。累積於 v4.95.2(不再 bump);快取鍵含 clothC 故換色即重跑主色調染色。',
-    ]
-  },
-  // v4.95.1 — 造型工房服裝染色修復:忠實染出指定色·管理員測試
-  {
-    ver: 'v4.95.1',
-    date: '2026-07-25',
-    adminOnly: true,   /* ★ 主角造型測試期內容·僅管理員可見 */
-    brief: [
-      '🎨【造型工房·服裝配色修好了】主角造型的服裝配色原本染不出指定的顏色(選深藍/正紅卻變成淡淡的一片、顏色太淡看不出來),現在會忠實染出你選的顏色,而且保留衣服的皮背明暗立體感。',
-    ],
-    items: [
-      '★ v4.95.1【服裝染色引擎·avatar_db.js】_avatarTintPiece 服裝染色由「目標色×(亮度/0.55)亮度映射」改「HSL 保明暗重著色」:保留原布料相對明暗(luma)·色相/飽和取自目標色·亮度以目標色為中心(0.6 目標定調+0.4 保留立體感)→ 忠實染出指定色。根治亮彩服裝素材(素體運動服 v0.86~0.99·便服 v0.66~0.97)被舊亮度映射沖白/失飽和/暖色被膚色判定漏染。只動服裝分支(baseTorso/bodyfull/cloth/full 服裝部分)·膚/髮/瞳染色不動·膚色像素仍不染(玩家可獨立調膚色)。bump AVATAR_DB_VERSION→v4.95.1 破 ?v= 快取重抑;index.html/admin_panel.js/game_changelog.js 版號同步·9 版號同步點對齊 v4.95.1;hero_db.js/world-boss.js/world-boss-ui.html 維持原版。avatar_db.js node --check 過·0 孤立代理字元·無真 ?.;changelog 恰 20 條;CURRENT_BOOT_VER 未動。',
-    ]
-  },
-  // v4.95.0 — 造型工房新增 16 髮型+8 便服素材+管理員命名/移除·管理員測試
-  {
-    ver: 'v4.95.0',
-    date: '2026-07-25',
-    adminOnly: true,   /* ★ 主角造型測試期內容·僅管理員可見 */
-    brief: [
-      '🎨【造型工房大更新·髮型與服裝】老師把 16 張全身角色圖切成「頭件(髮型)」和「身件(衣服)」放進造型工房:新增 16 款髮型 + 8 款便服,男生女生、大朋友小朋友都有,可以自由搭配(頭跟身體分開,想換髮型換髮型、想換衣服換衣服)。',
-      '🛠【老師可以自己微調每一款】每一款髮型/服裝,老師都能在造型工房裡「調整預設大小和位置、幫它改名字、或從清單移除」,調好按「📌設為預設」就會套用到全班同學。',
-      '🗑【移除也能反悔】不小心移除的款式,會留在該分類最下方的「已移除」區,按「↩」就能復原回來,不會真的不見。',
-    ],
-    items: [
-      '★ v4.95.0【素材接線·avatar_db.js】老師 16 張全身圖切件:頭件按「頭」縮放對位(眼線→base eyeY·下巴→neck2·臉中線→cx·留全下巴+全髮零脖子)→P.hairhead id18~33(img 四體型陣列+hhRef 髮區實測供 headfull 染髮);身件按「身體」縮放(下巴→neck2·腳→base foot)→P.outfit id15~22(head:null 可搭任意髮型·內白區補洞)。★老師裁定運動服身件與素體同款不重複,8 張運動服變體圖只取髮型頭件。24 張素材放 avatar_parts/。',
-      '★ v4.95.0【命名/移除通道·gameConfig/avatarPieceMeta】新增 window._avatarPieceMeta{names,removed}+_avatarLoadPieceMeta(開機兩序列載入)+_avatarPieceName/_avatarPieceRemoved(render 讀取)+_avatarGmRenamePiece(✏️改名·prompt≤20字去<>)/_avatarGmRemovePiece(🗑乙案 confirm→removed=true 全體選單移除)/_avatarGmRestorePiece(↩復原刪 removed 旗標);同 avatarLocks 模式(僅 GM 可寫·登入者可讀·免改 rules)+本機快取落地。_avRenderOpts:名稱覆蓋+已移除玩家不顯示/GM 顯示灰色+↩+髮型/服裝加 ✏️🗑 GM 鈕(id0 不可動)。尺寸/位置沿用既有 avatarPartDefaults(v4.69.0·📌設為預設寫雲端全體套用)。',
-      '★ v4.95.0【範圍與驗證】avatar_db.js(P.hairhead+16/P.outfit+8/pieceMeta 系統/_avRenderOpts 三改/AVATAR_DB_VERSION→v4.95.0)+index.html/admin_panel.js/game_changelog.js 版號同步;hero_db.js 維持 v4.54.0。9 版號同步點對齊 v4.95.0;avatar_db.js node --check 過·0 孤立代理字元·無真 ?.;changelog 恰 20 條;CURRENT_BOOT_VER 未動;emoji 用跳脫寫法避免孤立代理字元。',
-    ]
   },
 ];
