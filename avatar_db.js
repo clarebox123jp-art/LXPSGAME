@@ -2,6 +2,13 @@
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
  * 版本: v4.64.2(2026-07-20)
  *
+ * ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件(老師裁定 題1甲/題2乙/題3甲):
+ *   ①window._dynAvatarApply 冪等合併引擎(帽/眼鏡/面具/嘴飾四分類·id=200+序號永不重用·
+ *     佔位停用制=永不刪只停用→索引永不位移·id==index 不變量與選單/解鎖帳本/GM上鎖/預設四座標系歸一);
+ *   ②_avAccLayer prop 路徑支援 item.b64 dataURI(Firestore base64 圖·天然免快取·AVATAR_DB_VERSION 維持凍結);
+ *   ③_avatarMaskUnlockOnSummon 池擴充:動態四分類 summon 鎖款同池(仍每抽 1%·index 呼叫點零改動);
+ *   ④VARF 加 mask 鍵=每款面具獨立管理員預設/微調 + _avEffPos raw 鍵 fallback(舊平鍵值相容);
+ *   本檔更新靠 index.html _LXPS_FILE_VERSIONS avatar_db.js 鍵 bump v5.17.0 破快取·AVATAR_DB_VERSION 不動。
  * ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(老師需求·1乙+2乙):
  *   ①P.mask 佔位分類正式接線 25 款(mask_01~25.png·老師 5×5 全圖切割去背·全款
  *     lock:{t:'summon'} 靜態鎖);②選單併入「頭戴」頁第二分類「動物面具」(1乙)+面具位置微調;
@@ -1727,6 +1734,7 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
       }
       var s = tf.w / 504;
       var u = AVATAR_IMG_BASE + f + '?v=' + (window.AVATAR_DB_VERSION || '');
+      if(item.b64){ u = item.b64; }   /* ★ v5.17.0 動態配件:base64 dataURI 直接當 src(來自 Firestore·天然免快取·不經 avatar_parts/ 路徑) */
       return '<image href="' + u + '" xlink:href="' + u + '" x="' + (tf.x + x504*s).toFixed(1)
         + '" y="' + (tf.y + y504*s).toFixed(1) + '" width="' + (w504*s).toFixed(1)
         + '" height="' + ((w504/pr.ar)*s).toFixed(1) + '" preserveAspectRatio="xMidYMid meet"/>';
@@ -2160,21 +2168,105 @@ window._avatarBgUnlockOnSummon = function(){
  *   只從未擁有池隨機挑 → 天然不重複;25 款集滿後 pool 空 → 永不再中,機率不浪費也不誤發) */
 window._avatarMaskUnlockOnSummon = function(){
   try{
-    var pool = [], i, m;
-    for(i = 0; i < P.mask.length; i++){
-      m = P.mask[i];
-      if(!m.lock || m.lock.t !== 'summon') continue;
-      if(window._avatarIsUnlocked('mask', m.id)) continue;
-      pool.push(m);
+    /* ★ v5.17.0 池擴充:除靜態面具外,動態造型配件(帽/眼鏡/面具/嘴飾·GM 後台上傳)
+     *   凡 lock:{t:'summon'} 且未解鎖者一律入同一池·仍每抽 1% 中一款·index 呼叫點零改動。
+     *   cat 座標系=解鎖帳本鍵(hat/gls/mask/mouthacc,與 _avatarIsUnlocked/選單一致)。 */
+    var _CATS = [ ['mask','mask'], ['hat','hat'], ['gls','glasses'], ['mouthacc','mouthacc'] ];
+    var pool = [], ci, i, m, cat, arr;
+    for(ci = 0; ci < _CATS.length; ci++){
+      cat = _CATS[ci][0]; arr = P[_CATS[ci][1]];
+      if(!arr) continue;
+      for(i = 0; i < arr.length; i++){
+        m = arr[i];
+        if(!m || m._ph) continue;
+        if(!m.lock || m.lock.t !== 'summon') continue;
+        if(window._avatarIsUnlocked(cat, m.id)) continue;
+        pool.push({ cat: cat, it: m });
+      }
     }
     if(!pool.length) return [];
     if(Math.random() >= 0.01) return [];
-    var pick = pool[Math.floor(Math.random() * pool.length)];
+    var pk = pool[Math.floor(Math.random() * pool.length)];
     var added = [];
-    try{ added = window._avatarGrantUnlock(['mask:' + pick.id]) || []; }catch(_eG){ return []; }
-    if(added.length) return [ _avT(pick.n, pick.ns) ];
+    try{ added = window._avatarGrantUnlock([pk.cat + ':' + pk.it.id]) || []; }catch(_eG){ return []; }
+    if(added.length) return [ _avT(pk.it.n, pk.it.ns) ];
     return [];
   }catch(_e){ return []; }
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+ * ★★ v5.17.0 動態內容層・第二期:動態造型配件(GM 後台上傳→Firestore→全體玩家自動合併)
+ * ────────────────────────────────────────────────────────────────────────
+ *   設計要點(鐵律 1.235 造型版):
+ *   ① id==index 不變量:選單寫入 it.id、_pick 按索引取值、解鎖帳本/GM上鎖/管理員預設
+ *      皆以 'cat:id' 為鍵——四座標系靠「id 恰等於陣列索引」歸一(v4.89.0 bg 亂序即前車之鑑)。
+ *      動態件 id 一律 = 200 + 分類序號(自 _index.avatarNext 單調配發·永不重用),
+ *      合併時先把分類陣列補「佔位」到索引 200,再把動態件放進 index===id 槽位 → 恆成立。
+ *   ② 佔位停用制(老師裁定題1甲):動態件永不從雲端清單移除,只能停用(off:1);
+ *      停用件在此轉為佔位(無 img → 選單自動隱藏·穿戴中玩家渲染為空不破圖),
+ *      索引永不位移 → 全校玩家 cfg 永不張冠李戴。
+ *   ③ 冪等:每次呼叫先截回靜態段再重建動態區,重複呼叫/GM 停用即時反映。
+ *   ④ 分類代碼 = 解鎖帳本 cat(hat/gls/mask/mouthacc);渲染錨點走既有 prop 引擎
+ *      (_avAccLayer 四錨點),圖用 b64 dataURI(天然免 AVATAR_DB_VERSION 快取問題)。
+ *   ⑤ 上傳後定位:老師在造型工房用既有「位置/尺寸調整→📌設為預設」逐款設定
+ *      (mask 已納入變體鍵·每款獨立預設)。
+ * ════════════════════════════════════════════════════════════════════════ */
+var _DYN_AV_BASE = 200;   /* 動態區起始索引/最小 id(靜態各分類遠小於此·永不相撞) */
+var _DYN_AV_PKEY = { hat:'hat', gls:'glasses', mask:'mask', mouthacc:'mouthacc' };   /* cat → P 陣列鍵 */
+var _DYN_AV_PROPK = { hat:'hat', gls:'gls', mask:'mask', mouthacc:'macc' };          /* cat → prop 錨點 */
+var _DYN_AV_STATIC_LEN = null;   /* 首次套用時記下各分類靜態段長度(冪等截斷基準) */
+function _dynAvPh(idx){ return { id: idx, n:'', ns:'', lock:{t:'soon'}, _ph:1 }; }   /* 佔位件:無 img→選單隱藏·渲染空 */
+window._dynAvatarApply = function(list){
+  try{
+    if(!window.AVATAR_PARTS) return 0;
+    if(!Array.isArray(list)) list = [];
+    var c, arr;
+    if(!_DYN_AV_STATIC_LEN){
+      _DYN_AV_STATIC_LEN = {};
+      for(c in _DYN_AV_PKEY){
+        arr = P[_DYN_AV_PKEY[c]];
+        _DYN_AV_STATIC_LEN[c] = Math.min(arr ? arr.length : 0, _DYN_AV_BASE);
+      }
+    }
+    /* 冪等重建:截回靜態段 → 佔位補到 200 */
+    for(c in _DYN_AV_PKEY){
+      arr = P[_DYN_AV_PKEY[c]];
+      if(!arr) continue;
+      arr.length = _DYN_AV_STATIC_LEN[c];
+      while(arr.length < _DYN_AV_BASE){ arr.push(_dynAvPh(arr.length)); }
+    }
+    var sorted = list.slice().sort(function(a,b){ return ((a && a.id)|0) - ((b && b.id)|0); });
+    var added = 0, i, d, pk, arr2, lk, item;
+    for(i = 0; i < sorted.length; i++){
+      d = sorted[i];
+      if(!d || typeof d.id !== 'number' || d.id < _DYN_AV_BASE) continue;
+      pk = _DYN_AV_PKEY[d.cat];
+      if(!pk) continue;
+      arr2 = P[pk];
+      if(!arr2) continue;
+      while(arr2.length < d.id){ arr2.push(_dynAvPh(arr2.length)); }   /* 補洞(理論不發生·防禦) */
+      if(d.off || !d.b64){
+        item = _dynAvPh(d.id);   /* 停用=佔位(選單隱藏·渲染空·索引不位移) */
+      } else {
+        lk = (d.lock === 'summon') ? { t:'summon' } : ((d.lock === 'soon') ? { t:'soon' } : null);
+        item = { id: d.id, n: String(d.n || ''), ns: String(d.ns || d.n || ''), lock: lk,
+                 img: 'dyn_' + d.cat + '_' + d.id, b64: String(d.b64),
+                 prop: { k: _DYN_AV_PROPK[d.cat], ar: (typeof d.ar === 'number' && d.ar > 0) ? d.ar : 1.0 } };
+        /* summon 鎖款註冊雙版解鎖說明(soon 不註冊=呼叫端自動顯示「敬請期待」) */
+        if(lk && lk.t === 'summon'){
+          try{
+            if(window.AVATAR_UNLOCK_HOW){
+              window.AVATAR_UNLOCK_HOW[d.cat + ':' + d.id] =
+                { p:'使用召喚水晶召喚英雄時,有機會隨機獲得!', c:'抽英雄的時候有機會拿到喔!' };
+            }
+          }catch(_eH){}
+        }
+        added++;
+      }
+      if(arr2.length === d.id){ arr2.push(item); } else { arr2[d.id] = item; }
+    }
+    return added;
+  }catch(_e){ console.warn('[動態配件] 套用失敗(不影響既有造型)', _e); return 0; }
 };
 
 /* ⑤ 鬥技之證 ×20 兌換鬥技場背景(扣點由 index.html 負責·此處只入帳) */
@@ -2508,7 +2600,7 @@ window._avPartVarKey = function(cfg, slot){
     if(!cfg || !slot) return slot;
     var body = (cfg.body != null ? cfg.body : 0);
     if(slot === 'baseH' || slot === 'baseB') return slot + '#' + body;
-    var VARF = { ofh:'of', ofb:'of', hh:'hh', hat:'hat', gls:'gls', mouth:'mouth', macc:'macc', held:'held' };
+    var VARF = { ofh:'of', ofb:'of', hh:'hh', hat:'hat', gls:'gls', mouth:'mouth', macc:'macc', held:'held', mask:'mask' };   /* ★ v5.17.0 mask 納入變體鍵:動態配件每款面具獨立預設/微調(靜態舊值走 _avEffPos raw 鍵 fallback 相容) */
     var f = VARF[slot];
     if(!f) return slot;
     var v = cfg[f];
@@ -2517,11 +2609,14 @@ window._avPartVarKey = function(cfg, slot){
   }catch(_){ return slot; }
 };
 window._avEffPos = function(cfg, key){
+  var _rawK = key;   /* ★ v5.17.0 raw 鍵 fallback:mask 新納入變體鍵後,玩家/管理員舊「mask」平鍵值仍讀得到(其餘槽同理=「無則玩家舊值」原始設計) */
   try{ if(window._avPartVarKey) key = window._avPartVarKey(cfg, key); }catch(_){}
-  var def = (window._avatarPartDefaults && window._avatarPartDefaults[key]) || null;
+  var _DFT = window._avatarPartDefaults || null;
+  var def = (_DFT && (_DFT[key] || _DFT[_rawK])) || null;
   var useDef = !(cfg && cfg.posDef && cfg.posDef[key] === false);
-  if(useDef) return def || (cfg && cfg.pos && cfg.pos[key]) || [0, 0, 0];
-  return (cfg && cfg.pos && cfg.pos[key]) || def || [0, 0, 0];
+  var _own = (cfg && cfg.pos && (cfg.pos[key] || cfg.pos[_rawK])) || null;
+  if(useDef) return def || _own || [0, 0, 0];
+  return _own || def || [0, 0, 0];
 };
 
 /* ════════════════════════════════════════
