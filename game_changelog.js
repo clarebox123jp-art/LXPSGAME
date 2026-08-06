@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-05  / 目前主程式版本:v5.15.0(主角圖鑑頭身位置修正·重開遊戲不再跑位)
+//  最後更新:2026-08-06  / 目前主程式版本:v5.16.0(動態題庫第一期·GM 遊戲內直接擴充題目+mainstory.js 缺檔救援)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.16.0 — 動態題庫第一期:GM 遊戲內直接新增題目(測試期 adminOnly)+ mainstory.js 缺檔救援
+  {
+    ver: 'v5.16.0',
+    date: '2026-08-06',
+    adminOnly: true,
+    brief: [
+      '📚 GM 後台新增「動態題庫擴充」:老師可以直接在遊戲裡新增題目,全體玩家下次開機自動載入,不用再改程式檔!',
+      '🛠 同時修好了主線劇情打不開的問題(缺了一個檔案,已經救回來)!',
+    ],
+    items: [
+      '★ v5.16.0【動態內容層第一期・動態題庫】GM 後台新增「📚 動態題庫擴充」(新側欄群組『📚 內容擴充』):單題表單/批次 JSON 匯入/待發佈清單/一鍵發佈/已發佈題目搜尋與勾選刪除。題目寫入 Firestore dynamicContent(_index 版本指標 + quiz_N 題包·每包 1800 題防 1MB 上限),id 自 100001 單調配發永不與靜態題庫(最大 34694)相撞、永不重用。',
+      '★ v5.16.0【玩家端載入器・index.html】開機先套 localStorage 快取(離線可用)→ 登入後只讀 _index 一份比對版本(900 台每次開機各 1 讀·版本相同即結束)→ 有更新才拉題包 → 冪等合併進 ADV_QUIZ_DB;冒險答題/鬥技場/知識王/小博士全是執行期翻表,自動生效零接線;任何失敗靜默不影響遊戲。',
+      '★ v5.16.0【mainstory.js 缺檔救援】開場 SOP 發現 repo 無 mainstory.js(v5.12.0 拆檔後未上傳→LIVE 主線入口全站失效·有 typeof 守門不崩潰):自 git 歷史 0996239(v5.11.0 拆檔前 index)原段 L144205-148311 重建 4,111 行,內容一字不差,node --check 過;FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動。',
+      '★ v5.16.0【部署】需部署 firestore.rules(新增 dynamicContent 條款:讀=登入玩家·寫=isAdmin);上傳順序:firestore.rules 先部署 → game_changelog.js → mainstory.js → admin_panel.js → index.html 最後;admin 無真 optional chaining;index inline 22 塊 node 全過。',
+    ],
+  },
   // v5.15.0 — 主角圖鑑位置修正:重開遊戲不再跑位
   {
     ver: 'v5.15.0',
@@ -351,25 +367,6 @@ window.GAME_CHANGELOG = [
       '・一致性稽核:battle_ch3_boss 詢問卡 lp「劍士在前排開路、祭司在後方療傷」自此與實際編組吻合(舊隊伍時代不一致);第五/六章編組成員皆已於各自章節加入·無矛盾',
       '・第四章劇情修改(老師裁定甲+劇情修改):火法師「火柱登場」演出由第3場(戰後)移到第1場(戰前),新增打醒被魅惑夥伴(守衛/刺客)參戰理由+祭司火剋花回應+主角吐槽(全雙版鐵律1.232);第3場原首次登場段移除改戰後收尾對白(舊段保留註解);battle_ch4_boss 隊伍 主角/劍士/祭司/火法師 不動·自此與劇情一致;詢問卡 lp/lc 補「火剋妖花·火法師打頭陣」',
       '・版號:index.html/game_changelog.js/admin_panel.js → v4.98.0(admin 內容未改僅同步);changelog 刪最舊 v4.77.0 維持恰 20 條;node --check 過·inline 21 塊·0 孤立代理字元·admin 真?.=0',
-    ],
-  },
-  // v4.97.0 — 主線第二章「商店實戰教學」:真開商店賣垃圾→買召喚水晶→召喚保底超越極限果實
-  {
-    ver: 'v4.97.0',
-    date: '2026-07-27',
-    brief: [
-      '🏪【主線第二章大升級】程式設計師和電腦繪圖師不再只用嘴巴講解商店——現在會「真的帶你打開商店」,手把手實際操作一遍!',
-      '💱 第一課・販賣:電腦繪圖師送你一杯「喝一半的好茶」當教材,親手按「賣出」把它換成知識幣!',
-      '🔮 第二課・購買:實際買 1 顆「召喚水晶」。錢不夠?程式設計師:「放心,先從你的獎學金裡面扣除。」',
-      '🌌 第三課・召喚星空:帶著水晶按下「召喚 1 次」——程式設計師偷偷動了一點手腳,第一抽必定召喚出「超越極限果實」!它能讓英雄的極限爆發升 1 級,之後打魔王一定用得上,要收好喔!',
-      '⏭ 不想上課?教學列右邊有「略過教學」可以隨時跳過;之前已經看過商店教學的同學,重看劇情時維持原本的說明卡,不會被重新拉去上課。',
-    ],
-    items: [
-      '★ v4.97.0【主線第二章商店實戰教學·index.html】act tutorial_shop 首次遊玩改走 _msActShopLive(完成過/回顧模式/環境不齊 → 退回 v4.72.0 靜態卡·絕不擋劇情):①販賣課(教材 half_tea ×1·背包沒有才補發)→②購買課(summon_crystal;知識幣不足→獎學金預支補足含帳本 _logCoinTx;今日限購已買過→直接補發 1 顆含 _logCrystalTx 略過本課)→③召喚課(保底旗標 _msShopTutForceFruit 於 _rollOneSummon 第一抽消耗即清,必得 burst_upgrade_fruit ×1)→④收尾卡說明果實用途→繼續劇情;第二章新增鋪陳對白 3 句+收尾提醒 1 句(雙版鐵律 1.232)',
-      '・冪等旗標 _r_shoptut2_{junk/sold/crystal/fruit/done} 走既有 _msRewardFlag*(存 mainStoryProgress·綁 uid·上雲 union)→ 共用 iPad 換裝置也不可能重複拿保底果實;中斷可續走(依旗標直跳未完成課程;果實已拿→跳收尾卡防水晶不足卡死)',
-      '・圖層術:shop-overlay/summon-overlay 原生於 #adventure-overlay 內(z750 會被主線 z9800 蓋死)→ 教學期間暫抬升至 document.body(fixed z9830),結束原位原樣還原;不隱藏主線圖層(v4.91.0 全黑事故反向教訓);教學列 fixed z9930 底部置中,含「⏭ 略過教學」逃生門(確認後視同完成);防呆巡邏 1.5s:課程中誤關商店/召喚自動重開',
-      '・hook 四點(教學未啟動時皆 no-op):shopSellItem 賣出通知/shopBuyItem 購買通知/doSummon 召喚成立通知/_rollOneSummon 保底注入;保底為一次性旗標消耗即清,任何正常召喚(含十連)機率完全不變;結束後 bgmFadeTo 接回主線場景 BGM',
-      '・版號:index.html/game_changelog.js/admin_panel.js → v4.97.0(admin 內容未改僅同步);avatar_db 等其餘檔不動;node --check 過·inline 21 塊·0 孤立代理字元·admin 真?.=0·changelog 恰 20 條·CURRENT_BOOT_VER 未動',
     ],
   },
 ];

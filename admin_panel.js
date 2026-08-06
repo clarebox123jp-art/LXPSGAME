@@ -15,7 +15,7 @@
 //   index.html 的 _runVersionStampHealthCheck() 會比對:
 //     window.ADMIN_PANEL_VERSION === _LXPS_FILE_VERSIONS['admin_panel.js']
 //   若不一致 → console.warn 警告。同步兩邊以消除告警。
-window.ADMIN_PANEL_VERSION = 'v5.15.0'   /* ★ v5.15.0(2026-08-05)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主角圖鑑頭身位置跑掉根治[立繪簽章納入部件預設表+預設表到貨監看+世代守門]全在 index.html;無真 optional chaining) ｜ ★ v5.14.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身全面接管 sw v3.5.93;無真 optional chaining) ｜ ★ v5.13.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身甲案·sw.js JPG 分流;無真 optional chaining) ｜ ★ v5.12.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主線引擎拆出 mainstory.js 額度瘦身;無真 optional chaining) ｜ ★ v5.11.0(2026-08-03)— 版號對齊主程式(本輪 admin 無功能改動;主程式=世界龍王連線 Firestore 配額熔斷+心跳/watchdog 降載+友善錯誤訊息,全在 index.html;無真 optional chaining) ｜ ★ v5.10.0(2026-08-03)— 版號對齊主程式(本輪 admin 無功能改動;主程式新增動物面具 25 款:召喚水晶每抽 1% 隨機獲得未擁有款不重複·造型工房頭戴頁第二分類·無真 optional chaining) ｜ ★ v5.9.0(2026-08-02)— 版號對齊主程式(本輪 admin 無功能改動;主程式新增「主角」類 20 枚獎章:主線章節/主角成長/造型解鎖) ｜ ★ v5.8.0(2026-08-02)— 版號對齊主程式(本輪 admin 無功能改動;主程式修正主角技能繼承面板兩段式確認/圖鑑顯示繼承後招式/主角造型登入同步與儲存自癒) ｜ ★ v5.7.0(2026-08-01)— 新增「⏪ 3.6 主線/主角回溯」GM 工具(正式開放前建置·嚴重BUG時回溯玩家到未開啟主線/未自訂主角;診斷+整欄替換寫入回溯紀元+稽核紀錄;不動存檔三槽;無真 optional chaining) ｜ ★ v5.6.0(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改;主線入口進度徽章與近期活動介紹卡全在 index.html;無真 optional chaining 運算子) ｜ ★ v5.5.1(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;SSR「主角‧覺醒」圖片與 R 卡「主角」恆同步[別名建立即繼承+切畫風收尾強制同步]全在 index.html;無真 optional chaining 運算子) ｜ ★ v5.5.0(2026-07-31)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;主線 ch6 黑暗球‧初始型態降強度50%+覺醒影片同步章節BGM 全在 index.html)｜ ★ v5.4.0(2026-07-30)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;主程式=主線ch6殘留勝利視窗根治) ｜ ★ v5.3.0(2026-07-30)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;主程式=寵物馴養提示強化+連續失敗保底 甲+丙) ｜ ★ v5.2.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線戰鬥獎勵改依魔物原設定經驗值+知識幣[首勝限定]/技能繼承 _pgiEditable 漏 () 根治+主線收場清戰場/ch6 黑暗球偽結算守門 全在 index.html;無 ?.)｜★ v5.1.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第六章開頭新增電腦繪圖與程式設計校隊教室對話場景[次元裂縫快訊]全在 index.html;無 ?.) ｜ ★ v5.0.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第五章新增學校社團教室開場對話場景) ｜ ★ v4.98.0(2026-07-27)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第三章隊伍改編+第四章火法師戰前登場) ｜ ★ v4.95.0(2026-07-25)— 版號對齊主程式(本輪 admin_panel.js 內容未改·造型工房新增 16 髮型+8 便服素材+命名/移除通道全在 avatar_db.js;無 ?.)⚠ 需 avatar_db.js/index.html 同版 v4.95.0 ｜ ★ v4.90.0(2026-07-24)— 鬥技場技能傷害排行(全校·GM 用途:察覺過強技能/BUG):①單場「🔍 傷害明細」每招補「單次」欄(舊場次顯示 —)·單次爆量門檻 ABN_ONE 與回合合計門檻 ABN_HIT 分開②新增「📊 技能傷害排行(全校)」:讀 arenaDamageDetail 最近 100/300/500 場(GM 自選)→ 端側聚合成 英雄×技能 → 最大單次/合計最高/出現場次/總傷,可排序、篩選、調爆量門檻,點列展開最高那場的 uid 與 docId 供反查·純讀取零寫入·firestore.rules 零改動 ③玩家版鬥技場「📊 傷害排行」鈕改為管理員限定(純本地 localStorage 換裝置就歸零,對學生無意義)·資料源 m 欄由 arena.js 提供;無 ?.)⚠ 需 index.html/game_changelog.js/arena.js 同版 v4.90.0 ｜ ★ v4.87.0(2026-07-23)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三修全在 index.html:①主角/主線劇情夥伴劇情解鎖後永遠不再要求玩家確認「是不是自己的」[_lxpsStoryOwnedSource/_msStoryHeroGranted 單一真相·接圖鑑來源帶+稽核硬證據+來源標籤三處]②主角圖鑑四表補齊 ③主角顯示暱稱單一真相+隱私修補[舊碼會把沒設暱稱學生的校內信箱印在圖鑑主角卡上]·未動三個測試期閘門·未發玩家公告;無 ?.)⚠ 需 index.html/game_changelog.js 同版 v4.87.0 ｜ ★ v4.86.0(2026-07-23)— 版號對齊主程式(本輪 admin_panel.js 內容未改·六修:造型工房三修[風景背景圖被純色蓋住/漸層白帶擴大/回預設素體連頭一起]在 avatar_db.js;教學指引新增主線劇情+我的主角兩章、章節選單第七章待續卡、主線對白太快閃過根治 在 index.html;無 ?.)⚠ 需 avatar_db.js/index.html 同版 v4.86.0 ｜ ★ v4.81.0(2026-07-22)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線劇情對白精緻化與 18 項 BUG/體驗修正全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.81.0 ｜ ★ v4.64.0(2026-07-20)— 版號對齊主程式(本輪 admin_panel.js 內容未改·自訂角色大改版[頭身新切法素材接線+頭飾/眼鏡/嘴飾+XY位置微調+選單音效+GM上鎖通道 gameConfig/avatarLocks:GM在造型工房各選項旁直接🔓/🔒切換·免改rules]全在 avatar_db.js+avatar_parts/;無 ?.)⚠ 需 avatar_db.js/index.html 同版 v4.64.0 ｜ ★ v4.62.0(2026-07-19)— 版號對齊主程式(本輪 admin_panel.js 內容未改·自訂角色系統優化四合一全在 avatar_db.js+index.html;無 ?.) */;   // ★ v4.58.1 素材棋盤格修復+預覽80vh+體型改名男童女童+手持頁+座右銘 全在 avatar_db.js/avatar_parts;無 ?. ｜   // ★ v4.58.0(2026-07-18)— 版號對齊主程式(本輪 admin_panel.js 內容未改·自訂主角簡化為三大類[換髮型/換臉/換身體+名片]並正式接線差異法乾淨素材 122 件[髮20款/眼6/嘴2/眼鏡/精靈耳/白T牛仔褲帆布鞋/制服西裝長裙洋裝吊帶套裝]·缺體型格 null 佔位+清單依當前體型過濾·舊壞素材維持 _offImg 停用 全在 avatar_db.js+avatar_parts/;無 ?.)⚠ 需 index.html/avatar_db.js 同版 v4.58.0 並上傳 avatar_parts/ 122 件 ｜ ★ v4.51.0(2026-07-16)— 版號對齊主程式(本輪 admin_panel.js 內容未改·卡死自動救援修復[選目標殘留超時自動取消+面板還原改block+連續失敗顯示自救按鈕]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.51.0 ｜ ★ v4.50.0(2026-07-15)— 版號對齊主程式(本輪 admin_panel.js 內容未改·遊戲教學說明三處校正[龍王血量1000萬/素質提升上限/寵物好感爆發威力]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.50.0 ｜ // ★ v4.49.0(2026-07-12)— 版號對齊主程式(本輪 admin_panel.js 內容未改·貓人族長 天賦「小精靈召喚」強化:行動前必定召喚+普通攻擊/受到傷害時各50%機率+10%/天賦級[Lv5=90%]額外召喚一隻缺少的小精靈·精靈HP改固定本體70%·全在 index.html+hero_db.js+hero_input.html·召喚不造成傷害無秒殺路徑·無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.49.0 ｜ // ★ v4.48.0(2026-07-12)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增學生設計英雄「貓人族長」[4 年 6 班 張同學·SSR·dmg+ctrl·元素小精靈召喚系統:天賦每回合召喚火/冰/雷小精靈之一最多3隻·FIFO 代承傷害·普攻每隻追加對應屬性+異常/S1雷精靈風暴消耗雷精靈風屬性隨機4次麻痺/S2冰精靈守護消耗冰精靈全隊減傷+攻擊者緩速/爆發上級元素精靈‧引爆消耗全部精靈對敵全體分攤+強力異常]全在 index.html+hero_db.js+hero_input.html·走 doDmg 對世界BOSS 5000cap 鐵律1.31·無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.48.0 ｜ // ★ v4.47.0(2026-07-11)— 版號對齊主程式(本輪 admin_panel.js 內容未改·玩家 BUG 回報四合一:①封印「按了沒反應」即時提示條 ②戰鬥中雲端存檔節流根治 Firestore 寫入佇列爆滿 ③過場對白防卡死 watchdog[60s提示/120s起自動代點] ④續戰快照診斷 log·全在 index.html) ｜ // ★ v4.46.0(2026-07-10)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增官方異世界 SSR 英雄「炎火超少女」[火屬性·dmg+ctrl·天賦烈焰亂舞每回合行動前特技40%×4隨機火傷+燃燒/S1不滅炎魂被動:敵方復活即烈焰擊倒·BOSS/世界BOSS/鬥技場對手改上限傷害 Lv×20+強力燃燒+每次敵方復活自身特技疊層放大/S2怒火連環拳特技100%火屬性隨機5連擊每擊消1有利/爆發火神附體特技900%全體分攤+命中者禁益3回合+自身火神附體3回合(受傷減半·不倒·受火傷/燃燒轉治療·造成傷害必中無視有利+禁益)] 全在 index.html+hero_db.js·爆發用視覺特效 GIF 神木復仇之火.gif 無影片·無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.46.0 ｜ // ★ v4.45.0(2026-07-10)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增埃及豔后[尼羅河的詛咒.mp4]爆發動畫加入 _BURST_VIDEO_DB→戰鬥爆發+圖鑑欣賞雙處自動生效[SSR 標準流程只加一筆·埃及豔后同法老王有敵方 BOSS 版 p2·影片播放 gate side==='p1'→BOSS 版不觸發] 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.45.0 ｜ // ★ v4.44.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增巫女[神樂舞動畫.mp4]+法老王[太陽神的審判動畫.mp4]爆發動畫加入 _BURST_VIDEO_DB→戰鬥爆發+圖鑑欣賞雙處自動生效[SSR 標準流程各只加一筆·法老王僅 p1 玩家版] 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.44.0 ｜ // ★ v4.43.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·BOSS 鎖血(50%/1HP)死亡免疫回合在 BOSS 圖片顯示「進入發威狀態,免疫任何傷害!」持久標示[cute:發威中!免疫傷害!]·資料驅動於 renderCard h._lifelineImmuneRound===G.round·下回合鎖血無敵結束自動消失·純顯示層不改鎖血機制 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.43.0 ｜ // ★ v4.42.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增酒吞童子爆發動畫 全在 index.html·任務一 GitHub 全檔版本檢查+龍王救援卡入場券補償早於 v4.35.0 完成在線;無 ?.)⚠ 需 index.html 同版 v4.42.0 ｜ // ★ v4.41.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·英雄圖鑑『播放動畫』按鈕上移到收錄記錄帶上方避免被蓋住+新增玉藻前爆發動畫 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.41.0 ｜ ★ v4.40.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·集中效果線/招式名固定3秒+英雄圖鑑左側大圖『播放動畫』欣賞[收錄才可點·覆蓋大圖·緩存後戰鬥快速讀取·未實裝敬請期待]+大天狗爆發動畫 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.40.0 ｜ ★ v4.39.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·爆發影片卡住根治[靜音起播→playing 後解靜音出聲·根治 iPad 帶聲音自動播放卡 10 秒]+爆發播放順序重排[色彩遮罩由開頭延到動畫完畢後·與技能特效+傷害同時·僅影片路徑]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.39.0 ｜ ★ v4.38.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三支爆發影片時序+聲音修正[影片就緒才淡入+撐住右側靜態特寫盒直到影片覆蓋→與特寫圖同時出現並完全取代·消除載入慢的時間落差;影片解除靜音帶聲音播放·被擋退回靜音重播不整支略過]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.38.0 ｜ ★ v4.37.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·爆發技動畫改版[三支影片破快取重抓+取消中央鑲嵌改覆蓋右側靜態特寫大圖片·同框同尺寸 object-fit:cover·未來 SSR 加一筆自動生效]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.37.0 ｜ ★ v4.36.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·①友方英雄倒下/復活時攜帶寵物浮圖不再消失[renderCard 浮圖來源加耐久 fallback _pfPnDurable·排除鬥技場]②戰鬥中替換跟隨寵物同步更新爆發技[doEquip 裝寵補設 _followPet 比照 _advApplyPetToHero]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.36.0 ｜ ★ v4.35.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·天神宙斯爆發「天降雷罰」等即死/秒殺技一發秒殺世界龍王根治[_zeusIsTrueBoss 本體加 _isWorldBossTarget 一律認全 8 龍王·連死神收割/大嘴吸入/超能衝鋒同源秒殺一併修好]全在 index.html;★寫入鐵則:今後新增冒險關 BOSS 進 _ZEUS_TRUE_BOSSES 自動享 50%/1HP 鎖血+爆發反擊、新增世界 BOSS 進 WORLD_BOSS_LINEUP 自動享 5000 傷害上限;無 ?.)⚠ 需 index.html 同版 v4.35.0 ｜ ★ v4.34.0(2026-07-07)— GM「🏆 世界 BOSS 排行榜管理」工具補齊全 8 龍王(原寫死火山炎龍王→新龍王看不到排名/刪不了):加龍王下拉 _admin-wblb-boss-select(WORLD_BOSS_LINEUP 全 8 龍王·標⭐當前)·_bindWblbSection 的 BOSS_ID const→let(預設 _wbGetCurrentBossId)·下拉 onchange 換 BOSS_ID+refresh·讀榜/清榜/明細(逐隊英雄+Lv/四冠軍/📜傷害來源每英雄每技能名稱+傷害+命中)/勾選刪除異常紀錄/單場墓碑+補償券 全閉包共用同一 let BOSS_ID→切龍王全套切換·龍王名全動態 _wbBossName;免三點同步·無 ?.。⚠ 需 index.html 同版 v4.34.0 ｜ ★ v4.33.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·①冒險預設陣容儲存/顯示/還原攜帶跟隨寵物 ②爆發技影片播放時序重排 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.33.0 ｜ ★ v4.32.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·四項全在 index.html:①不可思議超商動態影片背景 ②爆發技鑲嵌動畫影片沒出現根治[URL 改 raw+錨點改 #gc] ③BOSS 尊嚴根治[魔劍姬必爆額外補扣也經 lifeline·堵穿透鎖血秒殺] ④龍王排名獎勵至寶對應各龍王[補齊 8 龍王 helper·修雷/海/暗/光/幻];無 ?.)⚠ 需 index.html 同版 v4.32.0 ｜ ★ v4.31.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·爆發技鑲嵌動畫系統全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.31.0 ｜ ★ v4.29.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·世界 BOSS 風暴雷龍王 S1/S2/爆發雷電特效與爆發技名稱修正全在 world-boss.js;無 ?.)⚠ 需 index.html/world-boss.js 同版 v4.29.0 ｜ ★ v4.28.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·龍王戰三修[英雄詳細預覽 detach 到 body 蓋過龍王超級血條/單人練習龍王戰一進場自動套跟隨寵物/戰鬥卡寵物浮圖縮小30%+下移不蓋HP條]全在 index.html + world-boss-ui.html;無 ?.)⚠ 需 index.html 同版 v4.28.0 ｜ ★ v4.27.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·首頁裝置信任小卡離開首頁自動隱藏根治 + 變化狸_不悅.webp 補圖 全在 index.html/repo;無 ?.)⚠ 需 index.html 同版 v4.27.0 ｜ ★ v4.26.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋食物面板縮寬/圖鑑鈕移右下並列/互動提示錨定寵物正上方 + 首頁裝置信任小卡只在首頁顯示並移左下/在線統計列移到說明書鈕下方 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.26.0 ｜ ★ v4.25.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·龍王戰戰報鈕/寵物浮圖階層/英雄預覽 全在 index.html;世界BOSS背景 world-boss-ui.html;無 ?.)⚠ 需 index.html 同版 v4.25.0 ｜ ★ v4.24.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋撫摸對 GM 失效修復·功能全在 index.html) ｜ ★ v4.23.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋圖鑑桌鈕由左移到右側+食物分類頁籤底色 深綠→深藍 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.23.0 ｜ ★ v4.22.0(2026-07-06)— 本輪 admin_panel.js 僅版號同步(世界 BOSS 風暴雷龍王三需求在 world-boss.js/world-boss-ui.html)。⚠ 需 index.html 同版 ｜ ★ v4.21.0(2026-07-06)— 本輪 admin_panel.js 有實質修改:新增 GM「🐾 寵物系統開關」卡(由寵物小屋內移來·三點同步+_initPetSysSection·讀 _petSysPublicOpen/寫 _fbSetPetSysSwitch/刷 _fbLoadPetSysSwitch·後端全在 index.html·gameConfig/petSystemSwitch 免改規則)·無 ?.。⚠ 需 index.html 同版 v4.21.0 ｜ ★ v4.20.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋 iPad 兩修[三槽位完整顯示不捲動 _phFitSlots 整列縮放+記憶翻牌 touchstart 即時翻牌去 iOS 300ms 延遲]+PC 槽位隨解析度放大(cap1.7)+戰鬥寵物出現視窗稀有度/相遇/馴養徽章(_petStatusBadgesHtml 三視窗)+寵物爆發演出右圖改該寵物放大特寫(三段fallback)+字少版圖鑑技能/爆發說明隨等級動態顯示數值(sd 走同一替換引擎)+主定位篩選 hero_db.js 動物學家 tank→other[克雷爾 v4.19.0 已 heal]·本輪 hero_db.js 解凍 v4.19.0→v4.20.0 全在 index.html+hero_db.js;無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.20.0 ｜ ★ v4.19.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·戰鬥中替換跟隨寵物對照視窗+逐寵物爆發計次+克雷爾主分類 tank→heal 全在 index.html+hero_db.js;無 ?.)⚠ 需 index.html 同版 v4.19.0 ｜ ★ v4.18.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·戰鬥寵物體驗四合一[馴養鈕發光/LOG鈕移左下/已馴養寵物防驅逐奪取/寵物爆發貓掌槽/寵物浮動去背圖+迷你圖鑑]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.18.0 ｜ ★ v4.17.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·編組頁英雄圖位調整[左列10隻Y-20%/預覽聖冥法師·魔術師-20%·沐雲雪·蜜鶴林+10%]+隨機編成整隊重抽4名/冷卻1秒 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.17.0 ｜ ★ v4.16.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·星辰幻龍王三防禦被動[免疫異常/迴避+30%/受普攻-30%]接入引擎全在 index.html+world-boss.js註解;無 ?.)⚠ 需 index.html/world-boss.js 同版 v4.16.0 ｜ ★ v4.15.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三龍王[邪骨暗龍王/神聖光龍王/星辰幻龍王]技能與爆發正式實裝全在 world-boss.js;無 ?.)⚠ 需 index.html/world-boss.js 同版 v4.15.0 ｜ ★ v4.14.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物素質隨機成長乙案+寵物重新訓練書+GM寵物重置補償兩模式[reroll/full·後端 _fbAdminResetPetForPlayer 與重置 UI 皆在 index.html 的 _fbShowPlayerPetRecords 彈窗·GM 寵物紀錄卡按鈕已於 v4.7.0 就緒]+十連抽開場動畫改全螢幕黑幕 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.14.0 ｜ ★ v4.13.6(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三登入重跳修正[龍王排名至寶補發通知/獎章「傳說降臨」金色橫幅不再每次登入重跳·iPad 小屋寵物圖鑑滿版]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.13.6 ｜ ★ v4.13.2(2026-07-05)— 版號對齊主程式(admin_panel.js 內容未改·本輪玩法在 index.html:寵物極限爆發基礎威力與好感度成正比——_runPetBurst 頂部單一咽喉點乘 _affMult[有點陌生×25%/已經熟識×50%/有點親密×75%/非常親密×100%/不離不棄×125%]涵蓋全28隻·傷害仍走 doDmg 受5000cap/龍王護盾鐵律1.31)·無 ?.。⚠ 需 index.html 同版 v4.13.2 ｜ ★ v4.13.1(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·顯示層修復全在 index.html:window._artStyle 即時鏡像修復——約 32 處 window._artStyle 讀取因 _artStyle 是頂層 let 從未掛 window→永遠判 premium→寵物系統[爆發雙選/馴養選單/馴養問答/圖鑑intro/小屋教學/英雄詳情寵物槽/召喚收服預覽/近期活動介紹卡/獎章卡]已寫好的簡單風cute文字從不顯示;修法於宣告處加 Object.defineProperty getter/setter 讓 window._artStyle 即時鏡像 bare _artStyle[bare 仍唯一權威·符合鐵律]·一處修全部·零改任何 UI 字串)·無 ?.。⚠ 需 index.html 同版 v4.13.1 ｜ ★ v4.13.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物介面放大與表情優化六合一[圖鑑放大/爆發視窗放大/不悅表情/提示縮小/五色鳥文案/教學數值校正]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.13.0 ｜ ★ v4.11.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋生氣表情[去背圖+💢符號]+商店販售清單分類索引標籤[召喚/強化/寵物/重置/肖像]+寵物第一階段聚光教學 _petT1 觸發時機修正[改「玩家真正進到關卡主頁才彈」:openAdventureOverlay 硬守門通過後設 _petT1EnteredLevelPage 正向旗標·觸發輪詢改正向就緒門檻+連續穩定 2 拍 settle·_petT1Blocked 黑名單補登入首登前置彈窗]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.11.0 ｜ ★ v4.10.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物同萌正式上線[全服上線禮/兩階段教學/逐槽位鎖定/圖鑑三修/戰鬥寵物稀有度出現率]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.10.0 ｜ ★ v4.9.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物系統六修[圖鑑z-index/首入送五色鳥兩段教學/每日夥伴鎖定8:00重置/飼料分類頁籤/iPad寵物鈕/召喚寵物池改馴養口徑]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.9.0 ｜ ★ v4.8.0(2026-07-04)— 龍王 HP 救援卡同步「總 HP 1,000 萬」:_initWbRescueSection 的 MAX_HP fallback 5000000→10000000(執行時仍動態讀 _wbGetCurrentBoss().maxHp)+_adminWbBossQuery/_adminWbBossSwitch 兩處 (_b && _b.maxHp) fallback 同步+說明字「🔒 滿血 = 10,000,000(1,000 萬)」+輸入框 placeholder/max 上限放寬 10000000(否則 GM 寫不進滿血)+五顆快捷鈕 data-hp 與標籤全改 滿血10,000,000/75% 7,500,000/50% 5,000,000/25% 2,500,000/10% 1,000,000。⚠ 部署過渡期:若本檔已上但 world-boss.js 仍舊版,MAX_HP 會被動態同步回 5M(驗證上限暫為 5M),world-boss.js 部署後自動恢復;單次扣血 5,000/單場 100,000 上限不變。無 ?.。⚠ 需 index.html 同版 v4.8.0 ｜ ★ v4.7.0(2026-07-04)— 玩家活動記錄查詢卡新增「🐾 寵物紀錄」鈕+wiring(讀查詢框 email/uid/學號 → 呼 window._fbShowPlayerPetRecords 開 GM 寵物紀錄彈窗:馴養總覽/等級好感/互動累計/寵物獎章/馴養帳本[非本人 uid 紅底=污染線索]/寵物券帳本;彈窗內可「🎁 指定補發寵物」只增不減·寫帳本 admin_grant·通知玩家,後端全在 index.html)。本輪 admin_panel.js 有實質修改(按鈕+grab+wiring 三處)·免三點同步(加在既有活動卡)·無 ?.。⚠ 需 index.html 同版 v4.7.0 ｜ ★ v4.6.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋🎾玩耍開放[記憶翻牌/躲貓貓雙迷你遊戲隨機輪替]+寵物獎章 14 枚[cat:寵物·帶 cute 雙版]全在 index.html;無 ?.) ｜ ★ v4.5.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物極限爆發 Phase C:28 隻寵物專屬爆發·雙選/引擎 hooks/BURST_GIF_DB 全在 index.html + hero_db.js) ｜ ★ v4.3.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋互動包[荷魯斯圖修正+撫摸搓揉+首入教學+玩耍敬請期待+GM小屋內雲端開關+近期活動預告]全在 index.html) ｜ // ★ v4.2.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋改造[主選單直接進小屋+動態影片背景+圖鑑改左桌大按鈕]+寵物系統 GM 測試限定閘門 _PET_SYS_PUBLIC 全在 index.html) ｜ // ★ v4.1.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·召喚星空 SSR/SR 槽英雄+寵物混池·全收錄轉寵物訓練書 SSR×6/SR×3·新道具 pet_training_book 全在 index.html;寵物訓練書非 GM 發放品·三獎勵產生器不加) ｜ // ★ v4.0.0(2026-07-03)— 課堂獎勵/全體玩家獎勵/虛寶序號 三獎勵產生器新增「🎟️ 隨機寵物召喚卷」勾選發放(pet_summon_ticket·未收錄 SSR10%/SR30%/R60% 直接馴養收服·玩家於寵物圖鑑上方使用)+ 道具名稱 map 補 pet_summon_ticket;免三點同步·無 ?.。⚠ 需 index.html 同版 v4.0.0 ｜ // ★ v3.37.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物馴養系統 Phase A 全在 index.html) ｜ // ★ v3.36.0(2026-07-02)— 版號對齊主程式(本輪 admin_panel.js 內容未改·日本 12 寵物全新獨立效果+動物學家加倍全在 index.html) ｜ // ★ v3.35.0(2026-07-02)— 版號對齊主程式(本輪內容未改·好友線上圓點/登入通知改 per-friend getDocFromServer 輪詢降低讀取量·全在 index.html) ｜ // ★ v3.34.0(2026-07-02)— 版號對齊主程式(本輪內容未改·新英雄大刀勇士全在 index.html + hero_db.js) ｜ // ★ v3.33.0(2026-07-02)— 版號對齊主程式(本輪內容未改·好友登入通知/線上離線時間/老師訊息音效 全在 index.html) ｜ // ★ v3.32.0(2026-07-02)— 版號對齊主程式(本輪內容未改·GM 線上玩家查詢在遊戲首頁 index.html) ｜ // ★ v3.31.0(2026-07-02)— 版號對齊主程式(本輪內容未改·新英雄聖冥法師全在 index.html + hero_db.js) ｜ // ★ v3.27.0(2026-07-02)— 「📨 帳號救援申請審核」四合一優化:①學生重送申請即視為新申請(_analyze/_appendActionOrDone 以本筆 createdAt 為界·舊週期已處理標記失效→GM 可重新逐項審核·時間戳判定免改規則)②駁回理由改勾選(查不到解鎖記錄/共用平板汙染記錄/直接輸入說明·可複選組成 gmNote·取代 prompt)③「英雄解鎖記錄」表格下方新增「🗂 本次申請・救援處理清單」(🔓申請救回/🗑申請刪除/🤖自動判定可救回 三標記逐項勾選+全選/全不選/只選救援+🔒一鍵確認·沿用既有 _fbAdminRestoreLostHeroes/_fbAdminRestoreLostTreasures/_fbApplyAccountRebuild/_fbAdminBulkRemoveHeroes/_fbAdminRejectAuditTreasures 後端·刪除預設不勾誤刪是大忌)④保留原各類別按鈕(乙案)。免三點同步·無 ?.。⚠ 需 index.html 同版 v3.27.0(新增學生端「📩 老師的回覆」) ｜ // ★ v3.25.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·SSR+UR 53 隻圖鑑簡單風精簡說明 sd 補齊[全稀有度完成]全在 index.html 版號 + hero_db.js sd 資料) ｜ // ★ v3.24.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·R+SR 圖鑑簡單風精簡說明[41隻天賦/技能/爆發 sd 兩版]全在 index.html + hero_db.js) ｜ // ★ v3.23.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·文字簡化 Phase 6[戰鬥教學 TUTORIAL_STEPS 11 步各加 descSimple + 戰鬥求救選單 _showBattleHelpMenu 副標/三鈕說明分岔]全在 index.html) ｜ // ★ v3.22.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·說明文字簡化 Phase 5[素質說明/小博士榜獎勵/更新提示/安裝版首開登入 補簡單風短句版]全在 index.html) ｜ // ★ v3.21.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·說明視窗文字簡化 Phase 4 全在 index.html) ｜ // ★ v3.20.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·說明彈窗文字簡化 Phase 3 全在 index.html) ｜ // ★ v3.19.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新手教學文字簡化 Phase 2 全在 index.html) ｜ // ★ v3.18.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·簡單風/精緻風年齡層切換+首登風格選擇畫面全在 index.html) ｜ // ★ v3.17.9(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·冒險關卡答題科目過濾修復全在 index.html) ｜ // ★ v3.17.8(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·帳號權威資料稽核[序號兌換/全體獎勵補齊漏領防護]全在 index.html) ｜ // ★ v3.17.7(2026-07-01)— 丙(老師需求):玩家活動記錄查詢玩家卡加名冊真名列(_renderPlayerCard 讀 window._STUDENT_ROSTER→🏫班級座號+中文真名·僅老師可見·查無名冊回空·無 ?.·對照污染回收認人)。⚠ 需 index.html 同版 v3.17.7 ｜ // ★ v3.17.6(2026-07-01)— GM 送禮三需求(admin_panel 側):三獎勵產生器(課堂/全體/序號)召喚卷改發 gm_summon_ticket_* + 標籤「GM獎勵…」;「查看送禮記錄」升級為「送禮記錄查詢(姓名/獎項)+認領狀態(_fbAdminGiftAudit)+安全補發(_fbAdminResendLostGift 雙權威把關)」;_send 送禮記錄帶 merit+rewardId。免三點同步·無 ?.。⚠ 需 index.html 同版 v3.17.6 ｜ // ★ v3.17.4(2026-06-30)— 救回工具放寬:一鍵涵蓋所有被回收/刪除途徑(admin_delete + audit_error_recovered)從存檔還原原等級(index.html _gmcrIsCompReclaimed 放寬 + 本檔 UI 文案改「這是你唯一需要的救英雄工具」);治本主軸=GM 不再自動判定刪英雄。 ｜ ★ v3.17.3(2026-06-30)— 移除「🎁 GM 補償批次回收」UI+wiring(_initCompBatchReclaimSection·帳本不全會誤收正當英雄);根治在 index.html(_fbCompensatePlayer 發英雄改寫 admin_grant + 玩家端自動回收永久停用);保留 v3.17.2「🛟 一鍵無損救回」 ｜ ★ v3.17.2(2026-06-30)— 新增「🛟 補償批次回收·一鍵無損救回」(從存檔還原被誤收英雄等級+寫 admin_grant 永久免疫·_initCompReclaimRestoreSection;後端 3 函式在 index.html)   // ★ v3.17.1(2026-06-30)— 版號對齊主程式(本輪 admin_panel.js 內容未改·更新流程友善化[更新程式時不打斷戰鬥/知識王/世界BOSS玩家·黃色置頂更新通知10秒自動隱藏·回到關卡選擇首頁且閒置才強制硬刷·硬刷前先 gameCloudSave 同步存檔到雲端]全在 index.html) ｜ ★ v3.17.0(2026-06-30)— 版號對齊主程式(本輪 admin_panel.js 內容未改·逃走小怪逃光後戰鬥卡死根治[checkWin _everHadEnemies 區分逃跑清場 vs init 失敗]+無法同步/英雄等級倒退根治[localStorage 爆滿不再中斷雲端寫入·_lxpsFreeLocalStorageQuota]全在 index.html) ｜ ★ v3.16.99(2026-06-30)— 版號對齊主程式(本輪 admin_panel.js 內容未改·玩家端登入自動回收全在 index.html;v3.16.98 GM 補償批次回收 UI 一併輸出) ｜ ★ v3.16.98(2026-06-30)— 「🔴 過度補回稽查與回收」卡內新增子區塊「🎁 GM 補償批次回收(依日期·無真實解鎖紀錄即收·含已練)」:_initCompBatchReclaimSection·🔍 掃描全體 window._fbAdminScanAllCompBatches 依台灣補償日期(6/25 21:25+21:31 聚成同一「2026-06-25」批·6/22 另成一批不誤收)聚合列每批(N位/M隻·英雄晶片標 Lv/⚠已練)→「🗑 回收此整批」或逐位「🗑 收回這位」(走 window._fbAdminReclaimCompBatchForUid 對最新雲端權威重判·只收仍符合·不補償·寄更正通知·可逆 admin_delete)·與 v3.16.92「查無紀錄」工具並存(保守只收 Lv1 查無紀錄 vs 放寬收 compensation+已練+無真實解鎖)·免三點同步·無 ?.;index.html 同步 3 後端函式。⚠ 需 index.html 同版 v3.16.98 ｜ ★ v3.16.94(2026-06-30)— 「🩹 6/24~6/25 救援『查無紀錄過度補償』→ GM 直接收回」子區塊升級:_scan 擷取後端新增 batches(依補償日期聚合)+ noRecordTotal·_render 頂端加「📅 補償批次摘要(依台灣時間·🎁日期 N 隻)」+ 每隻英雄晶片由「Lv1」改為 detail 顯示來源 🎁補償YYYY-MM-DD / ❓查無紀錄(讀後端 _fbAdminScanAllNoRecordOverComp 新增的 affected[].detail)·收回流程不變(逐位/全部·收回前對最新雲端權威重判·只收仍查無紀錄/補償者)·免三點同步·無 ?.;index.html 同步升級 _computeOverRestoredFromDoc(補 extraNoRecordHeroes/Detail + effort 閘門)+ _fbAdminScanAllNoRecordOverComp(回傳 detail/batches/noRecordTotal)。⚠ 需 index.html 同版 v3.16.94 ｜ ★ v3.16.92(2026-06-29)— 「🔴 過度補回稽查與回收(掃全體)」卡內新增子區塊「🩹 6/24~6/25 救援『查無紀錄過度補償』→ GM 直接收回」:🔍 掃描全體 window._fbAdminScanAllNoRecordOverComp 列出「6/24-6/25 舊救援自動補進、帳本完全查無解鎖紀錄、Lv1 沒練/沒投資/沒裝至寶」的英雄(已練/投資/裝至寶者被 v3.16.84 legacy_grandfather 補蓋 UID 歸屬·絕不在此清單·絕不誤收)→ 逐位「🗑 收回這位」或「🗑 全部一鍵收回」(收回前 window._fbAdminReclaimNoRecordForUid 對最新雲端 doc 權威重判·只收回仍查無紀錄者·防玩家掃描後已練誤刪·Lv1 不補償·寄更正通知)。加在既有卡內·免三點同步·無 ?.;index.html 同步 2 後端函式。⚠ 需 index.html 同版 v3.16.92 ｜ ★ v3.16.86(2026-06-29)— 過度補回卡改「派發學生自我審核」:逐位/全部按鈕由「回收」改「📨 通知學生自審」(走 _fbAdminQueueOverRestoreReview 寫 pendingAdminNotifications·GM 不直接刪·學生登入逐項勾✅是我的綁UID永久/🗑不是我的可逆移除+補償)·逐項審查彈窗保留 GM 備用·卡片標題/說明改派發語意 ｜ ★ v3.16.85(2026-06-29)— 新增「🔴 過度補回稽查與回收(掃全體)」卡(🧹 帳號汙染處理群組·鏡像「🛟 英雄誤刪救回」):🔍 掃描全體 window._fbAdminScanAllOverRestored 一次讀全部玩家頂層 doc 列出「舊救援沒審 uid 誤補的別位同學英雄/至寶」(快篩)→ 逐位「🔄 回收這位」或「🔄 全部一鍵回收」(回收前先 window._fbAdminScanOverRestoredForUid 權威三槽重判·只回收三槽確認者→不誤刪·已練英雄補償知識幣+召喚水晶·寄道歉登入彈窗);另救援審核卡「僅顯示待處理」預設改「不勾」(預設顯示全部救援記錄·仍可勾回只看待處理)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initOverRestoreSection IIFE)·無 ?.。⚠ 需 index.html 同版 v3.16.85 ｜ ★ v3.16.69(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·英雄圖鑑左下方來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM獎勵視窗「🎁 GM 獎勵」字級再放大全在 index.html) ｜ ★ v3.16.67(2026-06-28)— 「📨 帳號救援申請審核」卡新增至寶兩區塊:claims.disownTreasures(紅晶片+「🗑 刪除這些至寶」→_disownRemoveTre 走 window._fbAdminRejectAuditTreasures 移出+_s整包覆蓋·不復活)+ claims.lostTreasures(藍晶片+「🛟 補回這些至寶」→_restoreLostTre 走 window._fbAdminRestoreLostTreasures 不存在補Lv1/已存在保留+admin_grant)·鏡像英雄版 disown/lost·皆 _fbResolveAccountRescueRequest('resolved')+通知玩家·無 ?.·免三點同步。⚠ 需 index.html 同版 v3.16.67 ｜ ★ v3.16.66(2026-06-28)— ①「📨 帳號救援申請審核」卡:_analyze 加 claims.disownHeroes 區塊(紅晶片)+「🗑 一鍵刪除這些污染英雄」鈕→_disownRemove 走 window._fbAdminBulkRemoveHeroes(寫三槽+admin_delete+清養成_s+_adminRescueSignal·不復活=無效救援)+_fbResolveAccountRescueRequest('resolved')+通知玩家(鏡像 v3.16.19 _restoreLost 反方向) ②玩家活動記錄查詢卡新增「🎁 GM獎勵紀錄」鈕(_admin-activity-gmreward-log·讀查詢框 email/uid/學號→window._fbShowPlayerGmClassRewardClaims 列該玩家領過哪些 GM 獎勵+精確領取時間·讀認領文件權威·根治學生不認帳)。無 ?.;只動救援卡+活動卡,免三點同步。⚠ 需 index.html 同版 v3.16.66 ｜ ★ v3.16.65(2026-06-28)— 課堂獎勵改「拉取制」:勾選獎勵下方新增「🏅 表現優良事蹟」(8 預設複選+自由補充 _cr-merit-*/_buildMerit);_send 由直接 _fbCompensatePlayer 推送改寫入該玩家收件箱 window._fbWriteGmClassReward(獎勵+事蹟),學生在「🎁 GM獎勵」自行「確認領取」才入帳(嚴防共用平板 UR 發錯人/帳號污染);送禮記錄/同名候選不變。⚠ 需 index.html 同版 + 部署 firestore.rules(gmClassRewards/gmClassRewardClaims) ｜ ★ v3.16.64(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·老師回信改右下角小視窗+鈴聲通知全在 index.html·GM 端儲存回覆沿用既有 _fbUpdateBugReportAdminReply 不變) ｜ ★ v3.16.63(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·學生名冊 student_roster.js 補完 706 筆上線·真名搜尋+班級座號全校生效·名冊本體+index.html 名冊版號) ｜ ★ v3.16.62(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM 玩家搜尋「設計師學生中文真名備援」全在 index.html _fbAdminFindPlayersByName 階段1.5) ｜ ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
+window.ADMIN_PANEL_VERSION = 'v5.16.0'   /* ★ v5.16.0(2026-08-06)— 本輪 admin_panel.js 有實質修改:新增「📚 動態題庫擴充」區段(三點同步:模板卡+SIDEBAR_ITEMS+新群組『📚 內容擴充』+ _initDynQuizSection IIFE):讀雲端現況(dynamicContent/_index + quiz_N 題包)/單題新增表單(年級・科目 datalist 帶既有科目・難度三檔)/批次 JSON 匯入(逐題驗證·錯誤逐條回報)/待發佈清單(可逐題移除)/🚀 發佈(發佈前重讀雲端最新防互蓋·id 自 quizNextId 100001 起單調配發永不重用·自動分包每包 1800 題防 1MB 文件上限·縮包自動刪多餘舊包·bump quizVer=Date.now()·成功後呼 window._dynContentSync(true) GM 本機立即生效可試玩)/已發佈題目關鍵字過濾+勾選刪除(同樣先重讀再寫回·nextId 不回收);全走 window._fbDb+_fbFns 既有橋接·寫入權限由 firestore.rules v5.16.0 dynamicContent 條款把關(需部署一次)·無真 optional chaining ｜ ★ v5.15.0(2026-08-05)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主角圖鑑頭身位置跑掉根治[立繪簽章納入部件預設表+預設表到貨監看+世代守門]全在 index.html;無真 optional chaining) ｜ ★ v5.14.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身全面接管 sw v3.5.93;無真 optional chaining) ｜ ★ v5.13.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身甲案·sw.js JPG 分流;無真 optional chaining) ｜ ★ v5.12.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主線引擎拆出 mainstory.js 額度瘦身;無真 optional chaining) ｜ ★ v5.11.0(2026-08-03)— 版號對齊主程式(本輪 admin 無功能改動;主程式=世界龍王連線 Firestore 配額熔斷+心跳/watchdog 降載+友善錯誤訊息,全在 index.html;無真 optional chaining) ｜ ★ v5.10.0(2026-08-03)— 版號對齊主程式(本輪 admin 無功能改動;主程式新增動物面具 25 款:召喚水晶每抽 1% 隨機獲得未擁有款不重複·造型工房頭戴頁第二分類·無真 optional chaining) ｜ ★ v5.9.0(2026-08-02)— 版號對齊主程式(本輪 admin 無功能改動;主程式新增「主角」類 20 枚獎章:主線章節/主角成長/造型解鎖) ｜ ★ v5.8.0(2026-08-02)— 版號對齊主程式(本輪 admin 無功能改動;主程式修正主角技能繼承面板兩段式確認/圖鑑顯示繼承後招式/主角造型登入同步與儲存自癒) ｜ ★ v5.7.0(2026-08-01)— 新增「⏪ 3.6 主線/主角回溯」GM 工具(正式開放前建置·嚴重BUG時回溯玩家到未開啟主線/未自訂主角;診斷+整欄替換寫入回溯紀元+稽核紀錄;不動存檔三槽;無真 optional chaining) ｜ ★ v5.6.0(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改;主線入口進度徽章與近期活動介紹卡全在 index.html;無真 optional chaining 運算子) ｜ ★ v5.5.1(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;SSR「主角‧覺醒」圖片與 R 卡「主角」恆同步[別名建立即繼承+切畫風收尾強制同步]全在 index.html;無真 optional chaining 運算子) ｜ ★ v5.5.0(2026-07-31)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;主線 ch6 黑暗球‧初始型態降強度50%+覺醒影片同步章節BGM 全在 index.html)｜ ★ v5.4.0(2026-07-30)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;主程式=主線ch6殘留勝利視窗根治) ｜ ★ v5.3.0(2026-07-30)— 版號對齊主程式(本輪 admin_panel.js 無功能改動;主程式=寵物馴養提示強化+連續失敗保底 甲+丙) ｜ ★ v5.2.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線戰鬥獎勵改依魔物原設定經驗值+知識幣[首勝限定]/技能繼承 _pgiEditable 漏 () 根治+主線收場清戰場/ch6 黑暗球偽結算守門 全在 index.html;無 ?.)｜★ v5.1.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第六章開頭新增電腦繪圖與程式設計校隊教室對話場景[次元裂縫快訊]全在 index.html;無 ?.) ｜ ★ v5.0.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第五章新增學校社團教室開場對話場景) ｜ ★ v4.98.0(2026-07-27)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第三章隊伍改編+第四章火法師戰前登場) ｜ ★ v4.95.0(2026-07-25)— 版號對齊主程式(本輪 admin_panel.js 內容未改·造型工房新增 16 髮型+8 便服素材+命名/移除通道全在 avatar_db.js;無 ?.)⚠ 需 avatar_db.js/index.html 同版 v4.95.0 ｜ ★ v4.90.0(2026-07-24)— 鬥技場技能傷害排行(全校·GM 用途:察覺過強技能/BUG):①單場「🔍 傷害明細」每招補「單次」欄(舊場次顯示 —)·單次爆量門檻 ABN_ONE 與回合合計門檻 ABN_HIT 分開②新增「📊 技能傷害排行(全校)」:讀 arenaDamageDetail 最近 100/300/500 場(GM 自選)→ 端側聚合成 英雄×技能 → 最大單次/合計最高/出現場次/總傷,可排序、篩選、調爆量門檻,點列展開最高那場的 uid 與 docId 供反查·純讀取零寫入·firestore.rules 零改動 ③玩家版鬥技場「📊 傷害排行」鈕改為管理員限定(純本地 localStorage 換裝置就歸零,對學生無意義)·資料源 m 欄由 arena.js 提供;無 ?.)⚠ 需 index.html/game_changelog.js/arena.js 同版 v4.90.0 ｜ ★ v4.87.0(2026-07-23)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三修全在 index.html:①主角/主線劇情夥伴劇情解鎖後永遠不再要求玩家確認「是不是自己的」[_lxpsStoryOwnedSource/_msStoryHeroGranted 單一真相·接圖鑑來源帶+稽核硬證據+來源標籤三處]②主角圖鑑四表補齊 ③主角顯示暱稱單一真相+隱私修補[舊碼會把沒設暱稱學生的校內信箱印在圖鑑主角卡上]·未動三個測試期閘門·未發玩家公告;無 ?.)⚠ 需 index.html/game_changelog.js 同版 v4.87.0 ｜ ★ v4.86.0(2026-07-23)— 版號對齊主程式(本輪 admin_panel.js 內容未改·六修:造型工房三修[風景背景圖被純色蓋住/漸層白帶擴大/回預設素體連頭一起]在 avatar_db.js;教學指引新增主線劇情+我的主角兩章、章節選單第七章待續卡、主線對白太快閃過根治 在 index.html;無 ?.)⚠ 需 avatar_db.js/index.html 同版 v4.86.0 ｜ ★ v4.81.0(2026-07-22)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線劇情對白精緻化與 18 項 BUG/體驗修正全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.81.0 ｜ ★ v4.64.0(2026-07-20)— 版號對齊主程式(本輪 admin_panel.js 內容未改·自訂角色大改版[頭身新切法素材接線+頭飾/眼鏡/嘴飾+XY位置微調+選單音效+GM上鎖通道 gameConfig/avatarLocks:GM在造型工房各選項旁直接🔓/🔒切換·免改rules]全在 avatar_db.js+avatar_parts/;無 ?.)⚠ 需 avatar_db.js/index.html 同版 v4.64.0 ｜ ★ v4.62.0(2026-07-19)— 版號對齊主程式(本輪 admin_panel.js 內容未改·自訂角色系統優化四合一全在 avatar_db.js+index.html;無 ?.) */;   // ★ v4.58.1 素材棋盤格修復+預覽80vh+體型改名男童女童+手持頁+座右銘 全在 avatar_db.js/avatar_parts;無 ?. ｜   // ★ v4.58.0(2026-07-18)— 版號對齊主程式(本輪 admin_panel.js 內容未改·自訂主角簡化為三大類[換髮型/換臉/換身體+名片]並正式接線差異法乾淨素材 122 件[髮20款/眼6/嘴2/眼鏡/精靈耳/白T牛仔褲帆布鞋/制服西裝長裙洋裝吊帶套裝]·缺體型格 null 佔位+清單依當前體型過濾·舊壞素材維持 _offImg 停用 全在 avatar_db.js+avatar_parts/;無 ?.)⚠ 需 index.html/avatar_db.js 同版 v4.58.0 並上傳 avatar_parts/ 122 件 ｜ ★ v4.51.0(2026-07-16)— 版號對齊主程式(本輪 admin_panel.js 內容未改·卡死自動救援修復[選目標殘留超時自動取消+面板還原改block+連續失敗顯示自救按鈕]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.51.0 ｜ ★ v4.50.0(2026-07-15)— 版號對齊主程式(本輪 admin_panel.js 內容未改·遊戲教學說明三處校正[龍王血量1000萬/素質提升上限/寵物好感爆發威力]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.50.0 ｜ // ★ v4.49.0(2026-07-12)— 版號對齊主程式(本輪 admin_panel.js 內容未改·貓人族長 天賦「小精靈召喚」強化:行動前必定召喚+普通攻擊/受到傷害時各50%機率+10%/天賦級[Lv5=90%]額外召喚一隻缺少的小精靈·精靈HP改固定本體70%·全在 index.html+hero_db.js+hero_input.html·召喚不造成傷害無秒殺路徑·無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.49.0 ｜ // ★ v4.48.0(2026-07-12)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增學生設計英雄「貓人族長」[4 年 6 班 張同學·SSR·dmg+ctrl·元素小精靈召喚系統:天賦每回合召喚火/冰/雷小精靈之一最多3隻·FIFO 代承傷害·普攻每隻追加對應屬性+異常/S1雷精靈風暴消耗雷精靈風屬性隨機4次麻痺/S2冰精靈守護消耗冰精靈全隊減傷+攻擊者緩速/爆發上級元素精靈‧引爆消耗全部精靈對敵全體分攤+強力異常]全在 index.html+hero_db.js+hero_input.html·走 doDmg 對世界BOSS 5000cap 鐵律1.31·無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.48.0 ｜ // ★ v4.47.0(2026-07-11)— 版號對齊主程式(本輪 admin_panel.js 內容未改·玩家 BUG 回報四合一:①封印「按了沒反應」即時提示條 ②戰鬥中雲端存檔節流根治 Firestore 寫入佇列爆滿 ③過場對白防卡死 watchdog[60s提示/120s起自動代點] ④續戰快照診斷 log·全在 index.html) ｜ // ★ v4.46.0(2026-07-10)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增官方異世界 SSR 英雄「炎火超少女」[火屬性·dmg+ctrl·天賦烈焰亂舞每回合行動前特技40%×4隨機火傷+燃燒/S1不滅炎魂被動:敵方復活即烈焰擊倒·BOSS/世界BOSS/鬥技場對手改上限傷害 Lv×20+強力燃燒+每次敵方復活自身特技疊層放大/S2怒火連環拳特技100%火屬性隨機5連擊每擊消1有利/爆發火神附體特技900%全體分攤+命中者禁益3回合+自身火神附體3回合(受傷減半·不倒·受火傷/燃燒轉治療·造成傷害必中無視有利+禁益)] 全在 index.html+hero_db.js·爆發用視覺特效 GIF 神木復仇之火.gif 無影片·無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.46.0 ｜ // ★ v4.45.0(2026-07-10)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增埃及豔后[尼羅河的詛咒.mp4]爆發動畫加入 _BURST_VIDEO_DB→戰鬥爆發+圖鑑欣賞雙處自動生效[SSR 標準流程只加一筆·埃及豔后同法老王有敵方 BOSS 版 p2·影片播放 gate side==='p1'→BOSS 版不觸發] 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.45.0 ｜ // ★ v4.44.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增巫女[神樂舞動畫.mp4]+法老王[太陽神的審判動畫.mp4]爆發動畫加入 _BURST_VIDEO_DB→戰鬥爆發+圖鑑欣賞雙處自動生效[SSR 標準流程各只加一筆·法老王僅 p1 玩家版] 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.44.0 ｜ // ★ v4.43.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·BOSS 鎖血(50%/1HP)死亡免疫回合在 BOSS 圖片顯示「進入發威狀態,免疫任何傷害!」持久標示[cute:發威中!免疫傷害!]·資料驅動於 renderCard h._lifelineImmuneRound===G.round·下回合鎖血無敵結束自動消失·純顯示層不改鎖血機制 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.43.0 ｜ // ★ v4.42.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新增酒吞童子爆發動畫 全在 index.html·任務一 GitHub 全檔版本檢查+龍王救援卡入場券補償早於 v4.35.0 完成在線;無 ?.)⚠ 需 index.html 同版 v4.42.0 ｜ // ★ v4.41.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·英雄圖鑑『播放動畫』按鈕上移到收錄記錄帶上方避免被蓋住+新增玉藻前爆發動畫 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.41.0 ｜ ★ v4.40.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·集中效果線/招式名固定3秒+英雄圖鑑左側大圖『播放動畫』欣賞[收錄才可點·覆蓋大圖·緩存後戰鬥快速讀取·未實裝敬請期待]+大天狗爆發動畫 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.40.0 ｜ ★ v4.39.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·爆發影片卡住根治[靜音起播→playing 後解靜音出聲·根治 iPad 帶聲音自動播放卡 10 秒]+爆發播放順序重排[色彩遮罩由開頭延到動畫完畢後·與技能特效+傷害同時·僅影片路徑]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.39.0 ｜ ★ v4.38.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三支爆發影片時序+聲音修正[影片就緒才淡入+撐住右側靜態特寫盒直到影片覆蓋→與特寫圖同時出現並完全取代·消除載入慢的時間落差;影片解除靜音帶聲音播放·被擋退回靜音重播不整支略過]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.38.0 ｜ ★ v4.37.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·爆發技動畫改版[三支影片破快取重抓+取消中央鑲嵌改覆蓋右側靜態特寫大圖片·同框同尺寸 object-fit:cover·未來 SSR 加一筆自動生效]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.37.0 ｜ ★ v4.36.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·①友方英雄倒下/復活時攜帶寵物浮圖不再消失[renderCard 浮圖來源加耐久 fallback _pfPnDurable·排除鬥技場]②戰鬥中替換跟隨寵物同步更新爆發技[doEquip 裝寵補設 _followPet 比照 _advApplyPetToHero]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.36.0 ｜ ★ v4.35.0(2026-07-07)— 版號對齊主程式(本輪 admin_panel.js 內容未改·天神宙斯爆發「天降雷罰」等即死/秒殺技一發秒殺世界龍王根治[_zeusIsTrueBoss 本體加 _isWorldBossTarget 一律認全 8 龍王·連死神收割/大嘴吸入/超能衝鋒同源秒殺一併修好]全在 index.html;★寫入鐵則:今後新增冒險關 BOSS 進 _ZEUS_TRUE_BOSSES 自動享 50%/1HP 鎖血+爆發反擊、新增世界 BOSS 進 WORLD_BOSS_LINEUP 自動享 5000 傷害上限;無 ?.)⚠ 需 index.html 同版 v4.35.0 ｜ ★ v4.34.0(2026-07-07)— GM「🏆 世界 BOSS 排行榜管理」工具補齊全 8 龍王(原寫死火山炎龍王→新龍王看不到排名/刪不了):加龍王下拉 _admin-wblb-boss-select(WORLD_BOSS_LINEUP 全 8 龍王·標⭐當前)·_bindWblbSection 的 BOSS_ID const→let(預設 _wbGetCurrentBossId)·下拉 onchange 換 BOSS_ID+refresh·讀榜/清榜/明細(逐隊英雄+Lv/四冠軍/📜傷害來源每英雄每技能名稱+傷害+命中)/勾選刪除異常紀錄/單場墓碑+補償券 全閉包共用同一 let BOSS_ID→切龍王全套切換·龍王名全動態 _wbBossName;免三點同步·無 ?.。⚠ 需 index.html 同版 v4.34.0 ｜ ★ v4.33.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·①冒險預設陣容儲存/顯示/還原攜帶跟隨寵物 ②爆發技影片播放時序重排 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.33.0 ｜ ★ v4.32.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·四項全在 index.html:①不可思議超商動態影片背景 ②爆發技鑲嵌動畫影片沒出現根治[URL 改 raw+錨點改 #gc] ③BOSS 尊嚴根治[魔劍姬必爆額外補扣也經 lifeline·堵穿透鎖血秒殺] ④龍王排名獎勵至寶對應各龍王[補齊 8 龍王 helper·修雷/海/暗/光/幻];無 ?.)⚠ 需 index.html 同版 v4.32.0 ｜ ★ v4.31.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·爆發技鑲嵌動畫系統全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.31.0 ｜ ★ v4.29.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·世界 BOSS 風暴雷龍王 S1/S2/爆發雷電特效與爆發技名稱修正全在 world-boss.js;無 ?.)⚠ 需 index.html/world-boss.js 同版 v4.29.0 ｜ ★ v4.28.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·龍王戰三修[英雄詳細預覽 detach 到 body 蓋過龍王超級血條/單人練習龍王戰一進場自動套跟隨寵物/戰鬥卡寵物浮圖縮小30%+下移不蓋HP條]全在 index.html + world-boss-ui.html;無 ?.)⚠ 需 index.html 同版 v4.28.0 ｜ ★ v4.27.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·首頁裝置信任小卡離開首頁自動隱藏根治 + 變化狸_不悅.webp 補圖 全在 index.html/repo;無 ?.)⚠ 需 index.html 同版 v4.27.0 ｜ ★ v4.26.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋食物面板縮寬/圖鑑鈕移右下並列/互動提示錨定寵物正上方 + 首頁裝置信任小卡只在首頁顯示並移左下/在線統計列移到說明書鈕下方 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.26.0 ｜ ★ v4.25.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·龍王戰戰報鈕/寵物浮圖階層/英雄預覽 全在 index.html;世界BOSS背景 world-boss-ui.html;無 ?.)⚠ 需 index.html 同版 v4.25.0 ｜ ★ v4.24.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋撫摸對 GM 失效修復·功能全在 index.html) ｜ ★ v4.23.0(2026-07-06)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋圖鑑桌鈕由左移到右側+食物分類頁籤底色 深綠→深藍 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.23.0 ｜ ★ v4.22.0(2026-07-06)— 本輪 admin_panel.js 僅版號同步(世界 BOSS 風暴雷龍王三需求在 world-boss.js/world-boss-ui.html)。⚠ 需 index.html 同版 ｜ ★ v4.21.0(2026-07-06)— 本輪 admin_panel.js 有實質修改:新增 GM「🐾 寵物系統開關」卡(由寵物小屋內移來·三點同步+_initPetSysSection·讀 _petSysPublicOpen/寫 _fbSetPetSysSwitch/刷 _fbLoadPetSysSwitch·後端全在 index.html·gameConfig/petSystemSwitch 免改規則)·無 ?.。⚠ 需 index.html 同版 v4.21.0 ｜ ★ v4.20.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋 iPad 兩修[三槽位完整顯示不捲動 _phFitSlots 整列縮放+記憶翻牌 touchstart 即時翻牌去 iOS 300ms 延遲]+PC 槽位隨解析度放大(cap1.7)+戰鬥寵物出現視窗稀有度/相遇/馴養徽章(_petStatusBadgesHtml 三視窗)+寵物爆發演出右圖改該寵物放大特寫(三段fallback)+字少版圖鑑技能/爆發說明隨等級動態顯示數值(sd 走同一替換引擎)+主定位篩選 hero_db.js 動物學家 tank→other[克雷爾 v4.19.0 已 heal]·本輪 hero_db.js 解凍 v4.19.0→v4.20.0 全在 index.html+hero_db.js;無 ?.)⚠ 需 index.html/hero_db.js 同版 v4.20.0 ｜ ★ v4.19.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·戰鬥中替換跟隨寵物對照視窗+逐寵物爆發計次+克雷爾主分類 tank→heal 全在 index.html+hero_db.js;無 ?.)⚠ 需 index.html 同版 v4.19.0 ｜ ★ v4.18.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·戰鬥寵物體驗四合一[馴養鈕發光/LOG鈕移左下/已馴養寵物防驅逐奪取/寵物爆發貓掌槽/寵物浮動去背圖+迷你圖鑑]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.18.0 ｜ ★ v4.17.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·編組頁英雄圖位調整[左列10隻Y-20%/預覽聖冥法師·魔術師-20%·沐雲雪·蜜鶴林+10%]+隨機編成整隊重抽4名/冷卻1秒 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.17.0 ｜ ★ v4.16.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·星辰幻龍王三防禦被動[免疫異常/迴避+30%/受普攻-30%]接入引擎全在 index.html+world-boss.js註解;無 ?.)⚠ 需 index.html/world-boss.js 同版 v4.16.0 ｜ ★ v4.15.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三龍王[邪骨暗龍王/神聖光龍王/星辰幻龍王]技能與爆發正式實裝全在 world-boss.js;無 ?.)⚠ 需 index.html/world-boss.js 同版 v4.15.0 ｜ ★ v4.14.0(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物素質隨機成長乙案+寵物重新訓練書+GM寵物重置補償兩模式[reroll/full·後端 _fbAdminResetPetForPlayer 與重置 UI 皆在 index.html 的 _fbShowPlayerPetRecords 彈窗·GM 寵物紀錄卡按鈕已於 v4.7.0 就緒]+十連抽開場動畫改全螢幕黑幕 全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.14.0 ｜ ★ v4.13.6(2026-07-05)— 版號對齊主程式(本輪 admin_panel.js 內容未改·三登入重跳修正[龍王排名至寶補發通知/獎章「傳說降臨」金色橫幅不再每次登入重跳·iPad 小屋寵物圖鑑滿版]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.13.6 ｜ ★ v4.13.2(2026-07-05)— 版號對齊主程式(admin_panel.js 內容未改·本輪玩法在 index.html:寵物極限爆發基礎威力與好感度成正比——_runPetBurst 頂部單一咽喉點乘 _affMult[有點陌生×25%/已經熟識×50%/有點親密×75%/非常親密×100%/不離不棄×125%]涵蓋全28隻·傷害仍走 doDmg 受5000cap/龍王護盾鐵律1.31)·無 ?.。⚠ 需 index.html 同版 v4.13.2 ｜ ★ v4.13.1(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·顯示層修復全在 index.html:window._artStyle 即時鏡像修復——約 32 處 window._artStyle 讀取因 _artStyle 是頂層 let 從未掛 window→永遠判 premium→寵物系統[爆發雙選/馴養選單/馴養問答/圖鑑intro/小屋教學/英雄詳情寵物槽/召喚收服預覽/近期活動介紹卡/獎章卡]已寫好的簡單風cute文字從不顯示;修法於宣告處加 Object.defineProperty getter/setter 讓 window._artStyle 即時鏡像 bare _artStyle[bare 仍唯一權威·符合鐵律]·一處修全部·零改任何 UI 字串)·無 ?.。⚠ 需 index.html 同版 v4.13.1 ｜ ★ v4.13.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物介面放大與表情優化六合一[圖鑑放大/爆發視窗放大/不悅表情/提示縮小/五色鳥文案/教學數值校正]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.13.0 ｜ ★ v4.11.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋生氣表情[去背圖+💢符號]+商店販售清單分類索引標籤[召喚/強化/寵物/重置/肖像]+寵物第一階段聚光教學 _petT1 觸發時機修正[改「玩家真正進到關卡主頁才彈」:openAdventureOverlay 硬守門通過後設 _petT1EnteredLevelPage 正向旗標·觸發輪詢改正向就緒門檻+連續穩定 2 拍 settle·_petT1Blocked 黑名單補登入首登前置彈窗]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.11.0 ｜ ★ v4.10.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物同萌正式上線[全服上線禮/兩階段教學/逐槽位鎖定/圖鑑三修/戰鬥寵物稀有度出現率]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.10.0 ｜ ★ v4.9.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物系統六修[圖鑑z-index/首入送五色鳥兩段教學/每日夥伴鎖定8:00重置/飼料分類頁籤/iPad寵物鈕/召喚寵物池改馴養口徑]全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.9.0 ｜ ★ v4.8.0(2026-07-04)— 龍王 HP 救援卡同步「總 HP 1,000 萬」:_initWbRescueSection 的 MAX_HP fallback 5000000→10000000(執行時仍動態讀 _wbGetCurrentBoss().maxHp)+_adminWbBossQuery/_adminWbBossSwitch 兩處 (_b && _b.maxHp) fallback 同步+說明字「🔒 滿血 = 10,000,000(1,000 萬)」+輸入框 placeholder/max 上限放寬 10000000(否則 GM 寫不進滿血)+五顆快捷鈕 data-hp 與標籤全改 滿血10,000,000/75% 7,500,000/50% 5,000,000/25% 2,500,000/10% 1,000,000。⚠ 部署過渡期:若本檔已上但 world-boss.js 仍舊版,MAX_HP 會被動態同步回 5M(驗證上限暫為 5M),world-boss.js 部署後自動恢復;單次扣血 5,000/單場 100,000 上限不變。無 ?.。⚠ 需 index.html 同版 v4.8.0 ｜ ★ v4.7.0(2026-07-04)— 玩家活動記錄查詢卡新增「🐾 寵物紀錄」鈕+wiring(讀查詢框 email/uid/學號 → 呼 window._fbShowPlayerPetRecords 開 GM 寵物紀錄彈窗:馴養總覽/等級好感/互動累計/寵物獎章/馴養帳本[非本人 uid 紅底=污染線索]/寵物券帳本;彈窗內可「🎁 指定補發寵物」只增不減·寫帳本 admin_grant·通知玩家,後端全在 index.html)。本輪 admin_panel.js 有實質修改(按鈕+grab+wiring 三處)·免三點同步(加在既有活動卡)·無 ?.。⚠ 需 index.html 同版 v4.7.0 ｜ ★ v4.6.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋🎾玩耍開放[記憶翻牌/躲貓貓雙迷你遊戲隨機輪替]+寵物獎章 14 枚[cat:寵物·帶 cute 雙版]全在 index.html;無 ?.) ｜ ★ v4.5.0(2026-07-04)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物極限爆發 Phase C:28 隻寵物專屬爆發·雙選/引擎 hooks/BURST_GIF_DB 全在 index.html + hero_db.js) ｜ ★ v4.3.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋互動包[荷魯斯圖修正+撫摸搓揉+首入教學+玩耍敬請期待+GM小屋內雲端開關+近期活動預告]全在 index.html) ｜ // ★ v4.2.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物小屋改造[主選單直接進小屋+動態影片背景+圖鑑改左桌大按鈕]+寵物系統 GM 測試限定閘門 _PET_SYS_PUBLIC 全在 index.html) ｜ // ★ v4.1.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·召喚星空 SSR/SR 槽英雄+寵物混池·全收錄轉寵物訓練書 SSR×6/SR×3·新道具 pet_training_book 全在 index.html;寵物訓練書非 GM 發放品·三獎勵產生器不加) ｜ // ★ v4.0.0(2026-07-03)— 課堂獎勵/全體玩家獎勵/虛寶序號 三獎勵產生器新增「🎟️ 隨機寵物召喚卷」勾選發放(pet_summon_ticket·未收錄 SSR10%/SR30%/R60% 直接馴養收服·玩家於寵物圖鑑上方使用)+ 道具名稱 map 補 pet_summon_ticket;免三點同步·無 ?.。⚠ 需 index.html 同版 v4.0.0 ｜ // ★ v3.37.0(2026-07-03)— 版號對齊主程式(本輪 admin_panel.js 內容未改·寵物馴養系統 Phase A 全在 index.html) ｜ // ★ v3.36.0(2026-07-02)— 版號對齊主程式(本輪 admin_panel.js 內容未改·日本 12 寵物全新獨立效果+動物學家加倍全在 index.html) ｜ // ★ v3.35.0(2026-07-02)— 版號對齊主程式(本輪內容未改·好友線上圓點/登入通知改 per-friend getDocFromServer 輪詢降低讀取量·全在 index.html) ｜ // ★ v3.34.0(2026-07-02)— 版號對齊主程式(本輪內容未改·新英雄大刀勇士全在 index.html + hero_db.js) ｜ // ★ v3.33.0(2026-07-02)— 版號對齊主程式(本輪內容未改·好友登入通知/線上離線時間/老師訊息音效 全在 index.html) ｜ // ★ v3.32.0(2026-07-02)— 版號對齊主程式(本輪內容未改·GM 線上玩家查詢在遊戲首頁 index.html) ｜ // ★ v3.31.0(2026-07-02)— 版號對齊主程式(本輪內容未改·新英雄聖冥法師全在 index.html + hero_db.js) ｜ // ★ v3.27.0(2026-07-02)— 「📨 帳號救援申請審核」四合一優化:①學生重送申請即視為新申請(_analyze/_appendActionOrDone 以本筆 createdAt 為界·舊週期已處理標記失效→GM 可重新逐項審核·時間戳判定免改規則)②駁回理由改勾選(查不到解鎖記錄/共用平板汙染記錄/直接輸入說明·可複選組成 gmNote·取代 prompt)③「英雄解鎖記錄」表格下方新增「🗂 本次申請・救援處理清單」(🔓申請救回/🗑申請刪除/🤖自動判定可救回 三標記逐項勾選+全選/全不選/只選救援+🔒一鍵確認·沿用既有 _fbAdminRestoreLostHeroes/_fbAdminRestoreLostTreasures/_fbApplyAccountRebuild/_fbAdminBulkRemoveHeroes/_fbAdminRejectAuditTreasures 後端·刪除預設不勾誤刪是大忌)④保留原各類別按鈕(乙案)。免三點同步·無 ?.。⚠ 需 index.html 同版 v3.27.0(新增學生端「📩 老師的回覆」) ｜ // ★ v3.25.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·SSR+UR 53 隻圖鑑簡單風精簡說明 sd 補齊[全稀有度完成]全在 index.html 版號 + hero_db.js sd 資料) ｜ // ★ v3.24.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·R+SR 圖鑑簡單風精簡說明[41隻天賦/技能/爆發 sd 兩版]全在 index.html + hero_db.js) ｜ // ★ v3.23.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·文字簡化 Phase 6[戰鬥教學 TUTORIAL_STEPS 11 步各加 descSimple + 戰鬥求救選單 _showBattleHelpMenu 副標/三鈕說明分岔]全在 index.html) ｜ // ★ v3.22.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·說明文字簡化 Phase 5[素質說明/小博士榜獎勵/更新提示/安裝版首開登入 補簡單風短句版]全在 index.html) ｜ // ★ v3.21.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·說明視窗文字簡化 Phase 4 全在 index.html) ｜ // ★ v3.20.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·說明彈窗文字簡化 Phase 3 全在 index.html) ｜ // ★ v3.19.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·新手教學文字簡化 Phase 2 全在 index.html) ｜ // ★ v3.18.0(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·簡單風/精緻風年齡層切換+首登風格選擇畫面全在 index.html) ｜ // ★ v3.17.9(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·冒險關卡答題科目過濾修復全在 index.html) ｜ // ★ v3.17.8(2026-07-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·帳號權威資料稽核[序號兌換/全體獎勵補齊漏領防護]全在 index.html) ｜ // ★ v3.17.7(2026-07-01)— 丙(老師需求):玩家活動記錄查詢玩家卡加名冊真名列(_renderPlayerCard 讀 window._STUDENT_ROSTER→🏫班級座號+中文真名·僅老師可見·查無名冊回空·無 ?.·對照污染回收認人)。⚠ 需 index.html 同版 v3.17.7 ｜ // ★ v3.17.6(2026-07-01)— GM 送禮三需求(admin_panel 側):三獎勵產生器(課堂/全體/序號)召喚卷改發 gm_summon_ticket_* + 標籤「GM獎勵…」;「查看送禮記錄」升級為「送禮記錄查詢(姓名/獎項)+認領狀態(_fbAdminGiftAudit)+安全補發(_fbAdminResendLostGift 雙權威把關)」;_send 送禮記錄帶 merit+rewardId。免三點同步·無 ?.。⚠ 需 index.html 同版 v3.17.6 ｜ // ★ v3.17.4(2026-06-30)— 救回工具放寬:一鍵涵蓋所有被回收/刪除途徑(admin_delete + audit_error_recovered)從存檔還原原等級(index.html _gmcrIsCompReclaimed 放寬 + 本檔 UI 文案改「這是你唯一需要的救英雄工具」);治本主軸=GM 不再自動判定刪英雄。 ｜ ★ v3.17.3(2026-06-30)— 移除「🎁 GM 補償批次回收」UI+wiring(_initCompBatchReclaimSection·帳本不全會誤收正當英雄);根治在 index.html(_fbCompensatePlayer 發英雄改寫 admin_grant + 玩家端自動回收永久停用);保留 v3.17.2「🛟 一鍵無損救回」 ｜ ★ v3.17.2(2026-06-30)— 新增「🛟 補償批次回收·一鍵無損救回」(從存檔還原被誤收英雄等級+寫 admin_grant 永久免疫·_initCompReclaimRestoreSection;後端 3 函式在 index.html)   // ★ v3.17.1(2026-06-30)— 版號對齊主程式(本輪 admin_panel.js 內容未改·更新流程友善化[更新程式時不打斷戰鬥/知識王/世界BOSS玩家·黃色置頂更新通知10秒自動隱藏·回到關卡選擇首頁且閒置才強制硬刷·硬刷前先 gameCloudSave 同步存檔到雲端]全在 index.html) ｜ ★ v3.17.0(2026-06-30)— 版號對齊主程式(本輪 admin_panel.js 內容未改·逃走小怪逃光後戰鬥卡死根治[checkWin _everHadEnemies 區分逃跑清場 vs init 失敗]+無法同步/英雄等級倒退根治[localStorage 爆滿不再中斷雲端寫入·_lxpsFreeLocalStorageQuota]全在 index.html) ｜ ★ v3.16.99(2026-06-30)— 版號對齊主程式(本輪 admin_panel.js 內容未改·玩家端登入自動回收全在 index.html;v3.16.98 GM 補償批次回收 UI 一併輸出) ｜ ★ v3.16.98(2026-06-30)— 「🔴 過度補回稽查與回收」卡內新增子區塊「🎁 GM 補償批次回收(依日期·無真實解鎖紀錄即收·含已練)」:_initCompBatchReclaimSection·🔍 掃描全體 window._fbAdminScanAllCompBatches 依台灣補償日期(6/25 21:25+21:31 聚成同一「2026-06-25」批·6/22 另成一批不誤收)聚合列每批(N位/M隻·英雄晶片標 Lv/⚠已練)→「🗑 回收此整批」或逐位「🗑 收回這位」(走 window._fbAdminReclaimCompBatchForUid 對最新雲端權威重判·只收仍符合·不補償·寄更正通知·可逆 admin_delete)·與 v3.16.92「查無紀錄」工具並存(保守只收 Lv1 查無紀錄 vs 放寬收 compensation+已練+無真實解鎖)·免三點同步·無 ?.;index.html 同步 3 後端函式。⚠ 需 index.html 同版 v3.16.98 ｜ ★ v3.16.94(2026-06-30)— 「🩹 6/24~6/25 救援『查無紀錄過度補償』→ GM 直接收回」子區塊升級:_scan 擷取後端新增 batches(依補償日期聚合)+ noRecordTotal·_render 頂端加「📅 補償批次摘要(依台灣時間·🎁日期 N 隻)」+ 每隻英雄晶片由「Lv1」改為 detail 顯示來源 🎁補償YYYY-MM-DD / ❓查無紀錄(讀後端 _fbAdminScanAllNoRecordOverComp 新增的 affected[].detail)·收回流程不變(逐位/全部·收回前對最新雲端權威重判·只收仍查無紀錄/補償者)·免三點同步·無 ?.;index.html 同步升級 _computeOverRestoredFromDoc(補 extraNoRecordHeroes/Detail + effort 閘門)+ _fbAdminScanAllNoRecordOverComp(回傳 detail/batches/noRecordTotal)。⚠ 需 index.html 同版 v3.16.94 ｜ ★ v3.16.92(2026-06-29)— 「🔴 過度補回稽查與回收(掃全體)」卡內新增子區塊「🩹 6/24~6/25 救援『查無紀錄過度補償』→ GM 直接收回」:🔍 掃描全體 window._fbAdminScanAllNoRecordOverComp 列出「6/24-6/25 舊救援自動補進、帳本完全查無解鎖紀錄、Lv1 沒練/沒投資/沒裝至寶」的英雄(已練/投資/裝至寶者被 v3.16.84 legacy_grandfather 補蓋 UID 歸屬·絕不在此清單·絕不誤收)→ 逐位「🗑 收回這位」或「🗑 全部一鍵收回」(收回前 window._fbAdminReclaimNoRecordForUid 對最新雲端 doc 權威重判·只收回仍查無紀錄者·防玩家掃描後已練誤刪·Lv1 不補償·寄更正通知)。加在既有卡內·免三點同步·無 ?.;index.html 同步 2 後端函式。⚠ 需 index.html 同版 v3.16.92 ｜ ★ v3.16.86(2026-06-29)— 過度補回卡改「派發學生自我審核」:逐位/全部按鈕由「回收」改「📨 通知學生自審」(走 _fbAdminQueueOverRestoreReview 寫 pendingAdminNotifications·GM 不直接刪·學生登入逐項勾✅是我的綁UID永久/🗑不是我的可逆移除+補償)·逐項審查彈窗保留 GM 備用·卡片標題/說明改派發語意 ｜ ★ v3.16.85(2026-06-29)— 新增「🔴 過度補回稽查與回收(掃全體)」卡(🧹 帳號汙染處理群組·鏡像「🛟 英雄誤刪救回」):🔍 掃描全體 window._fbAdminScanAllOverRestored 一次讀全部玩家頂層 doc 列出「舊救援沒審 uid 誤補的別位同學英雄/至寶」(快篩)→ 逐位「🔄 回收這位」或「🔄 全部一鍵回收」(回收前先 window._fbAdminScanOverRestoredForUid 權威三槽重判·只回收三槽確認者→不誤刪·已練英雄補償知識幣+召喚水晶·寄道歉登入彈窗);另救援審核卡「僅顯示待處理」預設改「不勾」(預設顯示全部救援記錄·仍可勾回只看待處理)。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initOverRestoreSection IIFE)·無 ?.。⚠ 需 index.html 同版 v3.16.85 ｜ ★ v3.16.69(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·英雄圖鑑左下方來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM獎勵視窗「🎁 GM 獎勵」字級再放大全在 index.html) ｜ ★ v3.16.67(2026-06-28)— 「📨 帳號救援申請審核」卡新增至寶兩區塊:claims.disownTreasures(紅晶片+「🗑 刪除這些至寶」→_disownRemoveTre 走 window._fbAdminRejectAuditTreasures 移出+_s整包覆蓋·不復活)+ claims.lostTreasures(藍晶片+「🛟 補回這些至寶」→_restoreLostTre 走 window._fbAdminRestoreLostTreasures 不存在補Lv1/已存在保留+admin_grant)·鏡像英雄版 disown/lost·皆 _fbResolveAccountRescueRequest('resolved')+通知玩家·無 ?.·免三點同步。⚠ 需 index.html 同版 v3.16.67 ｜ ★ v3.16.66(2026-06-28)— ①「📨 帳號救援申請審核」卡:_analyze 加 claims.disownHeroes 區塊(紅晶片)+「🗑 一鍵刪除這些污染英雄」鈕→_disownRemove 走 window._fbAdminBulkRemoveHeroes(寫三槽+admin_delete+清養成_s+_adminRescueSignal·不復活=無效救援)+_fbResolveAccountRescueRequest('resolved')+通知玩家(鏡像 v3.16.19 _restoreLost 反方向) ②玩家活動記錄查詢卡新增「🎁 GM獎勵紀錄」鈕(_admin-activity-gmreward-log·讀查詢框 email/uid/學號→window._fbShowPlayerGmClassRewardClaims 列該玩家領過哪些 GM 獎勵+精確領取時間·讀認領文件權威·根治學生不認帳)。無 ?.;只動救援卡+活動卡,免三點同步。⚠ 需 index.html 同版 v3.16.66 ｜ ★ v3.16.65(2026-06-28)— 課堂獎勵改「拉取制」:勾選獎勵下方新增「🏅 表現優良事蹟」(8 預設複選+自由補充 _cr-merit-*/_buildMerit);_send 由直接 _fbCompensatePlayer 推送改寫入該玩家收件箱 window._fbWriteGmClassReward(獎勵+事蹟),學生在「🎁 GM獎勵」自行「確認領取」才入帳(嚴防共用平板 UR 發錯人/帳號污染);送禮記錄/同名候選不變。⚠ 需 index.html 同版 + 部署 firestore.rules(gmClassRewards/gmClassRewardClaims) ｜ ★ v3.16.64(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·老師回信改右下角小視窗+鈴聲通知全在 index.html·GM 端儲存回覆沿用既有 _fbUpdateBugReportAdminReply 不變) ｜ ★ v3.16.63(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·學生名冊 student_roster.js 補完 706 筆上線·真名搜尋+班級座號全校生效·名冊本體+index.html 名冊版號) ｜ ★ v3.16.62(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·GM 玩家搜尋「設計師學生中文真名備援」全在 index.html _fbAdminFindPlayersByName 階段1.5) ｜ ★ v3.16.61(2026-06-28)— 課堂獎勵:同名多筆改列候選+顯示班級座號讓老師核對點選(可複選)·大量逗點/換行貼上·單筆自動入列可移除;玩家活動記錄查詢卡新增「玩家會員資料」區塊(暱稱/信箱/身分/出生年約略年齡/性別/年級/平台·即時讀最新)。本輪 admin_panel.js 有改。 ｜ ★ v3.16.60(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·召喚物笑果標籤全在 index.html) ｜ ★ v3.16.59(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·v3.16.55~59 死亡宣告擴台/日/埃·戰鬥LOG展開收合·存檔教學放大·自動戰鬥每位英雄AI設定·鬥技場動態影片 全在 index.html)｜ ★ v3.16.54(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·巫女神樂舞特效+召喚星空動態影片全在 index.html)｜ ★ v3.16.53(2026-06-28)— 版本對齊主程式(素質50%上限文案＋BOSS攻擊素質強制減傷+HP%/物品卡豁免全在 index.html)｜ ★ v3.16.52(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·題庫每週累積進度顯示+英雄條件搜尋補標 禁錮/拘留/認罪 全在 index.html+hero_db.js)｜★ v3.16.51(2026-06-28)— 版本對齊主程式(本輪 admin_panel.js 內容未改·禁療/減療對所有恢復HP行動全面生效+酒吞童子BOSS回血削弱全在 index.html)｜★ v3.16.48(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·答對題目後三個答題獎勵選項新增專屬行動音效全在 index.html)｜★ v3.16.47(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·首頁標題圖再放大75%+標題容器上移避免擋住中央人物頭部+移除副標題全在 index.html)｜★ v3.16.46(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·五修全在 index.html:首頁標題圖文字後備+尺寸·鬥技場/龍王戰最高治療歸施術者·答題獎勵不計最高傷害/治療·戰鬥求救鈕整併·答題轉3能量)｜★ v3.16.45(2026-06-27)— 版本對齊(本輪 admin_panel.js 內容未改·世界BOSS三修全在 index.html + world-boss-ui.html·此次一併把 admin_panel.js 版號補齊到主版本·化解 v3.16.40→44 的 manifest↔檔案漂移)｜★ v3.16.40(2026-06-27)— 版本對齊(本輪修 iPad 切背景/滑掉後遊戲背景 BGM 不停·只改 index.html)｜★ v3.16.39(2026-06-27)— 版本對齊(本輪修正 iPad 答題獎勵寵物裝備後小怪戰卡死·只改 index.html)｜★ v3.16.38(2026-06-27)— 版本對齊(本輪 #1 寵物選單字級 + #2 解鎖提示守門 + #3 10連抽稀有上限·乙·全在 index.html)｜★ v3.16.37(2026-06-27)— 版本對齊(本輪僅版本 bump·寵物效果字放大全在 index.html)｜★ v3.16.36(2026-06-27)— 版本對齊(本輪僅版本 bump·功能沿用 v3.16.35;v3.16.36 修正全在 index.html 的 BOSS 鎖血機制)｜★ v3.16.35(2026-06-27)— 「📨 帳號救援申請審核」卡每筆申請(待處理/已處理皆有)在學生勾選摘要下方新增「📜 查看玩家活動紀錄查詢」鈕(._rrq-activity·data-uid):點擊呼叫 window._switchAdminSection 切到 _admin-activity-section → 自動帶入該 uid 到 _admin-activity-query 並點 _admin-activity-search 送出·方便老師核對遊戲紀錄後再決定是否救援。沿用既有「切活動頁帶 uid 查詢」模式·無 ?.·只動救援卡 _render/wiring·免三點同步。｜★ v3.16.31(2026-06-26)— 「📨 帳號救援申請審核」卡接「至寶版圖鑑審查」閉環(鏡像 v3.16.30 英雄版):① 摘要 _claimChips 加 claims.contestedTreasures →「🔺 待審查至寶 N 個」晶片 ② _analyze 加「待審查至寶」區塊(讀 window.TAIWAN_TREASURES 顯示名)+「✅ 至寶全部通過」/「❌ 至寶全部不通過」鈕 ③ 新增 _approveAuditTreasures/_rejectAuditTreasures → 呼 window._fbAdminApproveAuditTreasures/_fbAdminRejectAuditTreasures + _fbResolveAccountRescueRequest('resolved') + 通知玩家重整。無 ?.;只動救援卡,免三點同步。對應 index.html v3.16.31:至寶待審凍結(_auditPendingTreasures)+ 升級/投資/卷軸閘門 + 🔺徽章 + 圖鑑審查掃描送出。｜★ v3.16.19(2026-06-25)— 「📨 帳號救援申請審核」卡接「系統審核誤判回收英雄」閉環:① 摘要列 claims.lostHeroes →「🔓 遺失英雄要回來 N 隻」晶片 ② 核對詳情顯示學生要求復原的英雄清單 + 新增「🛟 一鍵永久復原這些英雄」鈕(_restoreLost)→ 呼叫 window._fbAdminRestoreLostHeroes(uid,names) 永久把英雄還給學生(加回解鎖+還原原等級+寫 admin_grant 合法紀錄→出口過濾不再隱藏、之後不會再被回收·附 auditRestored 標記)+ 標記 resolved + 通知玩家。無 ?.;只動救援卡 _analyze/_claimChips + 加 _restoreLost,免三點同步。對應 index.html v3.16.19:_fbApplyAuditErrorRecover 回收時暫存 _auditRecoveredLevels 供無損還原 + 新增 _fbAdminRestoreLostHeroes。｜★ v3.16.5(2026-06-24)— 帳號重建 UI 顯示幻影角色:「📨 帳號救援申請審核」+「🔧 一鍵帳號重建」兩處 diff 渲染新增『🗑 將自動移除幻影(類a 帳本鐵證已刪卻又出現)』與『❓ 帳本查無紀錄需人工審核(類b,不自動移除)』晶片;套用後列出移除清單;卡片說明同步。對應 index.html v3.16.5:_fbRebuildAccountFromLedgers diff 新增 extraDeletedHeroes/extraNoRecordHeroes + _fbApplyAccountRebuild 接 _fbAdminBulkRemoveHeroes 移除類a。｜v3.15.90(2026-06-23)— 新增「📨 帳號救援申請審核」卡(🚑 資料救援與重置群組,置頂):list accountRescueRequests 待處理(學生在關卡頁自助勾選遺失 英雄/至寶/水晶/召喚卷/知識幣/排名獎勵申請·每日上限1)→「🔍 核對並準備救援」自動跑 window._fbRebuildAccountFromLedgers(uid) 從雲端帳本權威反推,對照學生勾選逐項標 ✅符合/❌不符合/⏳待判斷(召喚卷/排名獎勵無帳本→待判斷,GM 改用學生補償工具手動)+ 列「將補回 英雄(名+Lv)/至寶/水晶/幣」→「✅ 確認救援並補回」走 window._fbApplyAccountRebuild(只增不減+套用前讀當下 max-merge 避免過量)後 window._fbResolveAccountRescueRequest('resolved')+彈窗通知玩家/「✔ 標記已處理」/「✖ 駁回」。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initRescueReqSection IIFE);_esc 跳脫;無 ?.;補償一律由 GM 端權威反推不採信學生 claims/selfCheck。⚠ 需部署 firestore.rules accountRescueRequests｜v3.15.85(2026-06-22)— 甲案資料救援統整:① 退役「🚑 玩家資料急救工具」(_admin-rescue-section 移出 SIDEBAR_ITEMS + 資料救援與重置群組·卡片/init 保留不掛側欄·功能已被一鍵重建+學生補償覆蓋)② Lv1 救援/一鍵重建/完全重置 三卡頂各加「💡 使用時機」導引(明確分流:整槽複製/只補不減/最後手段)③ 需求2:一鍵重建分析顯示「將補回英雄(名+等級)/至寶(名+等級)」晶片+套用後列「本次補回」摘要供與學生核對(讀 index.html _fbRebuildAccountFromLedgers diff 新增 missingHeroDetail/missingTreasures);Lv1 救援三槽診斷每槽顯示英雄(名+等級排序)與至寶(名+等級,讀 _fbDiagnoseAllSlots rawData,無需改後端);無 ?.｜v3.15.84(2026-06-22)— 新增 GM「🛟 英雄誤刪救回」卡(🧹 帳號汙染處理群組,洗錢查緝卡下方):「🔍 掃描全體玩家」→ window._fbAdminScanDeletedHeroes 列出有被誤刪英雄的玩家(uid/email/暱稱+英雄晶片 Lv·裝至寶💎)→ 逐位「🛟 復原這位玩家」(_fbAdminRestoreDeletedHeroesForUid)或「🛟 全部一鍵救回」(_fbAdminRestoreAllDeletedHeroes);復原只補已解鎖、等級/至寶原樣保留、三槽同寫、不彈通知;已排除 GM 手動刪除(admin_delete)的英雄。三點同步(SIDEBAR_ITEMS+SIDEBAR_GROUPS+卡片+_initDeletedHeroSection IIFE);無 ?.｜v3.15.80(2026-06-22)— 玩家活動記錄查詢區加「📜 召喚紀錄」鈕(讀查詢框 email/uid/學號→window._fbShowPlayerSummonHistory 開 GM 彈窗·摘要抽到的稀有英雄/台灣至寶+逐次明細·掌握解鎖來源)｜v3.15.58(2026-06-20)— 新增 GM「💰 洗錢查緝」卡(🧹 帳號汙染處理群組)｜v3.15.49(2026-06-19)— 新增 GM「🎉 全體玩家獎勵」卡片｜v3.15.40(2026-06-18)— 帳號資料保護「最高規格」總修 + 新增 GM「🔧 一鍵帳號重建」卡片｜v3.15.37 學生補償/課堂獎勵新增鬥技之證｜v3.15.26 GM「🎟️ 虛寶序號」卡片｜v3.15.23 補回 GM「🔐 二次密碼管理」卡片｜v3.15.9 伺服器休息排程卡｜v3.15.6 帳號資料轉移審核卡片｜v3.15.3 異常傷害門檻5000→20000+課堂獎勵加UR主神奧汀
 
 // ════════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════════
@@ -771,6 +771,87 @@ async function _showAdminStatsPanelImpl(){
           </button>
         </div>
         <div id="_admin-petsys-result" style="margin-top:10px;font-size:14px;"></div>
+      </div>
+
+      <!-- ★ v5.16.0 — 動態題庫擴充(動態內容層第一期):GM 遊戲內直接新增題目 → Firestore dynamicContent → 全體玩家下次開機自動合併,免改檔免部署 -->
+      <div id="_admin-dynquiz-section" style="background:rgba(20,26,44,0.55);border:2px solid rgba(130,170,255,0.55);border-radius:10px;padding:16px;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;color:#aac6ff;margin-bottom:8px;">📚 動態題庫擴充(遊戲內直接新增題目・免改程式檔)</div>
+        <div style="font-size:14px;color:#ccc;margin-bottom:10px;line-height:1.55;">
+          在這裡新增的題目會寫入雲端(dynamicContent),<b>全體玩家下次開機自動載入</b>,與既有題庫混合抽題(冒險答題・鬥技場・知識王・小博士全部自動生效)。<br>
+          ・<b>不需要</b>再改 adv_quiz_db.js、不需要重新上傳任何檔案。<br>
+          ・題目編號由系統自動配發(100000 起),永不與既有題庫相撞。<br>
+          ・科目若填入<b>新名稱</b>,會自動成為知識王可抽的新科目;填既有科目(國語文/數學/自然…)則併入該科目題池。
+        </div>
+        <div id="_admin-dynquiz-status" style="font-size:14px;color:#cdd8ff;margin-bottom:12px;padding:9px 12px;background:rgba(40,55,100,0.35);border-radius:8px;line-height:1.6;">
+          尚未讀取。請按「🔄 讀取雲端題庫現況」。
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <button id="_admin-dynquiz-reload" style="flex:1;min-width:160px;padding:11px 16px;font-size:14px;font-weight:800;
+            background:rgba(120,130,255,0.18);border:2px solid #8890ff;color:#cdd2ff;
+            border-radius:8px;cursor:pointer;font-family:inherit;">🔄 讀取雲端題庫現況</button>
+        </div>
+
+        <!-- 單題新增 -->
+        <div style="border:1px solid rgba(130,170,255,0.35);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:700;color:#bcd2ff;margin-bottom:8px;">➕ 單題新增</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <select id="_admin-dynquiz-grade" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+              <option value="低年級">低年級</option><option value="中年級" selected>中年級</option><option value="高年級">高年級</option>
+            </select>
+            <input id="_admin-dynquiz-subject" list="_admin-dynquiz-subject-list" placeholder="科目(可選既有或輸入新科目)" style="flex:1;min-width:180px;padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+            <datalist id="_admin-dynquiz-subject-list"></datalist>
+            <select id="_admin-dynquiz-diff" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+              <option value="沒自信">沒自信</option><option value="普通" selected>普通</option><option value="我很會">我很會</option>
+            </select>
+          </div>
+          <textarea id="_admin-dynquiz-question" placeholder="題目內容" rows="2" style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;margin-bottom:8px;"></textarea>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input id="_admin-dynquiz-optA" placeholder="選項 A" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+            <input id="_admin-dynquiz-optB" placeholder="選項 B" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+            <input id="_admin-dynquiz-optC" placeholder="選項 C" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+            <input id="_admin-dynquiz-optD" placeholder="選項 D" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <label style="color:#ccd;font-size:14px;">正確答案
+              <select id="_admin-dynquiz-answer" style="padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;margin-left:6px;">
+                <option>A</option><option>B</option><option>C</option><option>D</option>
+              </select>
+            </label>
+            <input id="_admin-dynquiz-hint" placeholder="提示(可留空)" style="flex:1;min-width:160px;padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+            <button id="_admin-dynquiz-add" style="padding:10px 18px;font-size:14px;font-weight:800;background:rgba(80,220,120,0.2);border:2px solid #55dd88;color:#bfffd2;border-radius:8px;cursor:pointer;font-family:inherit;">➕ 加入待發佈清單</button>
+          </div>
+        </div>
+
+        <!-- 批次匯入 -->
+        <div style="border:1px solid rgba(130,170,255,0.35);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:700;color:#bcd2ff;margin-bottom:6px;">📥 批次匯入(JSON 陣列)</div>
+          <div style="font-size:13px;color:#aab;margin-bottom:6px;line-height:1.5;">格式範例(貼上後按解析;id 不用填,系統自動配發):<br>
+            <code style="font-size:12px;color:#9fc;">[{"grade":"中年級","subject":"自然","difficulty":"普通","question":"太陽從哪邊升起?","options":["東","西","南","北"],"answer":"A","hint":""}]</code>
+          </div>
+          <textarea id="_admin-dynquiz-batch" rows="4" placeholder='[{"grade":"...","subject":"...","difficulty":"...","question":"...","options":["...","...","...","..."],"answer":"A","hint":""}]' style="width:100%;box-sizing:border-box;padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;margin-bottom:8px;"></textarea>
+          <button id="_admin-dynquiz-parse" style="padding:10px 18px;font-size:14px;font-weight:800;background:rgba(120,130,255,0.18);border:2px solid #8890ff;color:#cdd2ff;border-radius:8px;cursor:pointer;font-family:inherit;">📥 解析並加入待發佈清單</button>
+        </div>
+
+        <!-- 待發佈清單 + 發佈 -->
+        <div style="border:1px solid rgba(255,200,120,0.4);border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:700;color:#ffd9a0;margin-bottom:6px;">🗂 待發佈清單(尚未寫入雲端)</div>
+          <div id="_admin-dynquiz-pending" style="font-size:13px;color:#ccd;max-height:220px;overflow-y:auto;margin-bottom:8px;line-height:1.5;">(空)</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="_admin-dynquiz-clearpending" style="padding:10px 16px;font-size:14px;font-weight:800;background:rgba(160,160,160,0.15);border:2px solid #888;color:#ccc;border-radius:8px;cursor:pointer;font-family:inherit;">🧹 清空待發佈</button>
+            <button id="_admin-dynquiz-publish" style="flex:1;min-width:180px;padding:11px 16px;font-size:15px;font-weight:800;background:rgba(80,220,120,0.22);border:2px solid #55dd88;color:#bfffd2;border-radius:8px;cursor:pointer;font-family:inherit;">🚀 發佈到雲端(全體玩家下次開機生效)</button>
+          </div>
+        </div>
+
+        <!-- 現有動態題管理 -->
+        <div style="border:1px solid rgba(255,140,140,0.35);border-radius:8px;padding:12px;">
+          <div style="font-size:15px;font-weight:700;color:#ffb8b8;margin-bottom:6px;">🗑 已發佈動態題管理(搜尋・勾選刪除)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <input id="_admin-dynquiz-filter" placeholder="輸入關鍵字或科目過濾(最多顯示 200 筆)" style="flex:1;min-width:200px;padding:8px;border-radius:6px;background:#1a2238;color:#e8ecff;border:1px solid #556;font-family:inherit;">
+          </div>
+          <div id="_admin-dynquiz-list" style="font-size:13px;color:#ccd;max-height:260px;overflow-y:auto;margin-bottom:8px;line-height:1.5;">(請先讀取雲端題庫現況)</div>
+          <button id="_admin-dynquiz-delete" style="padding:10px 16px;font-size:14px;font-weight:800;background:rgba(220,90,90,0.2);border:2px solid #dd6666;color:#ffcaca;border-radius:8px;cursor:pointer;font-family:inherit;">🗑 刪除勾選的題目(寫回雲端)</button>
+        </div>
+        <div id="_admin-dynquiz-result" style="margin-top:10px;font-size:14px;"></div>
       </div>
 
       <!-- ★ v1.0.20260428.3750 — GM 公告系統(對所有在線玩家發彈幕/banner/彈窗) -->
@@ -3340,6 +3421,8 @@ async function _showAdminStatsPanelImpl(){
       // ★ v4.21.0 — 寵物系統開關(由寵物小屋內移來:一鍵對全體開放/暫時關閉小屋・馴養・召喚寵物)
       { sec: '_admin-petsys-section',           label: '🐾 寵物系統開關',           hint: '一鍵對全體開放 / 暫時關閉寵物系統(小屋・馴養・戰鬥寵物・召喚寵物);關閉時只有 GM 可測試,不刪任何寵物資料(gameConfig/petSystemSwitch)' },
       { sec: '_admin-gm-section',               label: '📢 GM 公告',                hint: '對所有在線玩家廣播' },
+      // ★ v5.16.0 — 動態內容層第一期:遊戲內直接擴充題庫(Firestore dynamicContent·免改檔免部署·全體玩家下次開機自動載入)
+      { sec: '_admin-dynquiz-section',          label: '📚 動態題庫擴充',           hint: '遊戲內直接新增題目→寫入雲端→全體玩家下次開機自動合併進題庫(冒險/鬥技場/知識王/小博士全自動生效);免改 adv_quiz_db.js 免重新部署' },
       { sec: '_admin-activity-section',         label: '📜 玩家活動記錄查詢',      hint: 'email/uid/姓名 查英雄/至寶/戰鬥/幣帳' },
       { sec: '_admin-bug-section',              label: '📥 接收錯誤回報',          hint: '查看玩家提交的 bug' },
       { sec: '_admin-lv1-section',              label: '🆘 Lv1 救援',              hint: '雲端三槽 + 反污染保護' },
@@ -3421,6 +3504,8 @@ async function _showAdminStatsPanelImpl(){
       { label:'🎁 獎勵與補償',     secs:['_admin-globalreward-section','_admin-comp-section','_admin-classreward-section','_admin-redeem-section','_admin-designer-grant-section','_admin-medal-scan-section','_admin-skin-recovery-section'] },
       { label:'🐉 世界 BOSS',      secs:['_admin-wblb-section','_admin-wbboss-section','_admin-blessing-section','_admin-classboost-section','_admin-bonus-section','_admin-ticket-section','_admin-wb-rescue-section'] },
       { label:'⚔ 鬥技場',         secs:['_admin-arena-preset-section','_admin-arena-switch-section','_admin-arena-rankreward-section','_admin-arena-battles-section'] },
+      // ★ v5.16.0 — 動態內容層專屬群組(第一期:題庫;未來二~四期:造型配件/寵物魔物/英雄BOSS 積木引擎陸續加入此群組)
+      { label:'📚 內容擴充',       secs:['_admin-dynquiz-section'] },
       { label:'📊 統計校正與測試', secs:['_admin-wq-section','_admin-backfill-players-section','_admin-set-players-section','_admin-set-adv-section','_admin-bypass-section','_admin-test-batch-section','_admin-treasure-unlockall-section'] },
     ];
     const _secToItem = {};
@@ -5470,6 +5555,295 @@ async function _showAdminStatsPanelImpl(){
     openBtn.addEventListener('click', function(){ _setSwitch(true); });
     closeBtn.addEventListener('click', function(){ _setSwitch(false); });
     setTimeout(_renderStatus, 200);  // 開面板自動顯示目前狀態
+  })();
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ★ v5.16.0 — 動態題庫擴充 init(動態內容層第一期)
+  //   雲端結構:dynamicContent/_index = { quizVer, quizPacks:[], quizNextId }
+  //             dynamicContent/quiz_N = { list:[{id,grade,subject,difficulty,question,options,answer,hint}] }
+  //   規則:讀=登入玩家;寫=isAdmin(firestore.rules v5.16.0 條款,需部署一次)。
+  //   id 自 quizNextId(100001 起)單調配發永不重用;每包上限 1800 題防 1MB 文件上限。
+  //   發佈成功後呼叫 window._dynContentSync(true) → GM 自己這台立即生效可試玩驗證。
+  //   無真 optional chaining(老 Safari iPad 相容)。
+  // ════════════════════════════════════════════════════════════════════════════
+  (function _initDynQuizSection(){
+    var statusEl  = document.getElementById('_admin-dynquiz-status');
+    var reloadBtn = document.getElementById('_admin-dynquiz-reload');
+    var addBtn    = document.getElementById('_admin-dynquiz-add');
+    var parseBtn  = document.getElementById('_admin-dynquiz-parse');
+    var pubBtn    = document.getElementById('_admin-dynquiz-publish');
+    var clrBtn    = document.getElementById('_admin-dynquiz-clearpending');
+    var delBtn    = document.getElementById('_admin-dynquiz-delete');
+    var pendEl    = document.getElementById('_admin-dynquiz-pending');
+    var listEl    = document.getElementById('_admin-dynquiz-list');
+    var filterEl  = document.getElementById('_admin-dynquiz-filter');
+    var resEl     = document.getElementById('_admin-dynquiz-result');
+    if(!statusEl || !reloadBtn || !pubBtn){
+      console.warn('[admin dynquiz] DOM 元素缺失,跳過初始化');
+      return;
+    }
+    var PACK_MAX = 1800;                 // 每包題數上限(約 550~700KB,遠低於 Firestore 1MB 文件上限)
+    var ID_START = 100001;               // 動態題起始 id(靜態題庫最大 34694,永不相撞)
+    var GRADES = ['低年級','中年級','高年級'];
+    var DIFFS  = ['沒自信','普通','我很會'];
+
+    var _cloudIdx = null;                // 最近一次讀到的 _index
+    var _cloudList = [];                 // 最近一次讀到的全部已發佈動態題
+    var _pending = [];                   // 待發佈(尚未寫入雲端,無 id)
+
+    function _esc(t){
+      return String(t === undefined || t === null ? '' : t)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function _say(msg, ok){
+      if(resEl) resEl.innerHTML = '<span style="color:' + (ok ? '#8fffb0' : '#ff9a9a') + ';">' + msg + '</span>';
+    }
+    function _fb(){
+      var db = window._fbDb, F = window._fbFns;
+      if(!db || !F){ _say('❌ Firestore 未就緒,請先在遊戲主頁登入 GM 帳號。', false); return null; }
+      return { db: db, F: F };
+    }
+
+    // ── 驗證一題(回傳錯誤字串或 null)──
+    function _validate(q){
+      if(!q || typeof q !== 'object') return '不是物件';
+      if(GRADES.indexOf(String(q.grade)) === -1) return '年級必須是:低年級/中年級/高年級';
+      if(!q.subject || !String(q.subject).trim()) return '科目不可空白';
+      if(DIFFS.indexOf(String(q.difficulty)) === -1) return '難度必須是:沒自信/普通/我很會';
+      if(!q.question || !String(q.question).trim()) return '題目不可空白';
+      if(!Array.isArray(q.options) || q.options.length !== 4) return '選項必須恰 4 個';
+      for(var i = 0; i < 4; i++){
+        if(!q.options[i] || !String(q.options[i]).trim()) return '選項 ' + 'ABCD'[i] + ' 不可空白';
+      }
+      if(['A','B','C','D'].indexOf(q.answer) === -1) return '答案必須是 A/B/C/D';
+      return null;
+    }
+    function _norm(q){
+      return {
+        grade: String(q.grade).trim(), subject: String(q.subject).trim(),
+        difficulty: String(q.difficulty).trim(), question: String(q.question).trim(),
+        options: [String(q.options[0]).trim(), String(q.options[1]).trim(), String(q.options[2]).trim(), String(q.options[3]).trim()],
+        answer: q.answer, hint: String(q.hint || '').trim()
+      };
+    }
+
+    // ── 讀雲端現況 ──
+    async function _loadCloud(silent){
+      var h = _fb(); if(!h) return false;
+      try{
+        if(!silent) statusEl.innerHTML = '⏳ 讀取中…';
+        var idxSnap = await h.F.getDoc(h.F.doc(h.db, 'dynamicContent', '_index'));
+        _cloudIdx = idxSnap.exists() ? (idxSnap.data() || {}) : { quizVer: 0, quizPacks: [], quizNextId: ID_START };
+        if(typeof _cloudIdx.quizNextId !== 'number' || _cloudIdx.quizNextId < ID_START) _cloudIdx.quizNextId = ID_START;
+        if(!Array.isArray(_cloudIdx.quizPacks)) _cloudIdx.quizPacks = [];
+        _cloudList = [];
+        for(var i = 0; i < _cloudIdx.quizPacks.length; i++){
+          var pSnap = await h.F.getDoc(h.F.doc(h.db, 'dynamicContent', String(_cloudIdx.quizPacks[i])));
+          if(pSnap.exists()){
+            var pd = pSnap.data();
+            if(pd && Array.isArray(pd.list)) _cloudList = _cloudList.concat(pd.list);
+          }
+        }
+        _renderStatus(); _renderList(); _renderSubjectDatalist();
+        return true;
+      }catch(e){
+        statusEl.innerHTML = '❌ 讀取失敗:' + _esc(e && e.message ? e.message : e) +
+          '<br><span style="font-size:12px;color:#fa8;">若訊息含 permission,代表 firestore.rules 尚未部署 v5.16.0 的 dynamicContent 條款。</span>';
+        return false;
+      }
+    }
+    function _renderStatus(){
+      var bySub = {};
+      for(var i = 0; i < _cloudList.length; i++){
+        var s = _cloudList[i].subject || '(無科目)';
+        bySub[s] = (bySub[s] || 0) + 1;
+      }
+      var subs = Object.keys(bySub).sort().map(function(k){ return _esc(k) + ' ' + bySub[k] + ' 題'; }).join('、');
+      var verStr = _cloudIdx.quizVer ? new Date(_cloudIdx.quizVer).toLocaleString('zh-TW') : '(從未發佈)';
+      statusEl.innerHTML = '📦 已發佈動態題:<b style="color:#9fe;">' + _cloudList.length + '</b> 題' +
+        '(' + _cloudIdx.quizPacks.length + ' 包)・最後發佈:' + _esc(verStr) +
+        (subs ? '<br>科目分布:' + subs : '');
+    }
+    function _renderSubjectDatalist(){
+      var dl = document.getElementById('_admin-dynquiz-subject-list');
+      if(!dl) return;
+      var set = {};
+      try{
+        if(Array.isArray(window.ADV_QUIZ_DB)){
+          for(var i = 0; i < window.ADV_QUIZ_DB.length; i++){
+            var q = window.ADV_QUIZ_DB[i];
+            if(q && q.subject) set[q.subject] = 1;
+          }
+        }
+      }catch(_e){}
+      dl.innerHTML = Object.keys(set).sort().map(function(s){ return '<option value="' + _esc(s) + '">'; }).join('');
+    }
+
+    // ── 待發佈清單 ──
+    function _renderPending(){
+      if(!_pending.length){ pendEl.innerHTML = '(空)'; return; }
+      pendEl.innerHTML = _pending.map(function(q, i){
+        return '<div style="border-bottom:1px dashed #445;padding:4px 0;">' +
+          '<button data-pi="' + i + '" class="_dq-pend-rm" style="float:right;background:none;border:1px solid #d66;color:#faa;border-radius:5px;cursor:pointer;font-family:inherit;padding:1px 7px;">移除</button>' +
+          '<b>' + (i + 1) + '.</b>【' + _esc(q.grade) + '・' + _esc(q.subject) + '・' + _esc(q.difficulty) + '】' + _esc(q.question) +
+          '<br><span style="color:#9ab;">A.' + _esc(q.options[0]) + '　B.' + _esc(q.options[1]) + '　C.' + _esc(q.options[2]) + '　D.' + _esc(q.options[3]) + '　✅' + q.answer + '</span></div>';
+      }).join('');
+      var rms = pendEl.querySelectorAll('._dq-pend-rm');
+      for(var r = 0; r < rms.length; r++){
+        rms[r].addEventListener('click', function(){
+          var pi = parseInt(this.getAttribute('data-pi'), 10);
+          if(!isNaN(pi)){ _pending.splice(pi, 1); _renderPending(); }
+        });
+      }
+    }
+
+    // ── 已發佈題目清單(過濾+勾選)──
+    function _renderList(){
+      if(!_cloudList.length){ listEl.innerHTML = '(目前雲端沒有已發佈的動態題)'; return; }
+      var kw = (filterEl && filterEl.value ? filterEl.value : '').trim();
+      var shown = 0, html = '';
+      for(var i = 0; i < _cloudList.length; i++){
+        var q = _cloudList[i];
+        if(kw && String(q.question).indexOf(kw) === -1 && String(q.subject).indexOf(kw) === -1) continue;
+        if(shown >= 200){ html += '<div style="color:#fa8;">…僅顯示前 200 筆,請用關鍵字縮小範圍。</div>'; break; }
+        shown++;
+        html += '<div style="border-bottom:1px dashed #445;padding:4px 0;">' +
+          '<label style="cursor:pointer;"><input type="checkbox" class="_dq-del-cb" value="' + q.id + '" style="margin-right:6px;">' +
+          '<b>#' + q.id + '</b>【' + _esc(q.grade) + '・' + _esc(q.subject) + '・' + _esc(q.difficulty) + '】' + _esc(q.question) +
+          ' <span style="color:#9ab;">✅' + _esc(q.answer) + '</span></label></div>';
+      }
+      listEl.innerHTML = html || '(沒有符合關鍵字的題目)';
+    }
+
+    // ── 單題新增 ──
+    function _grabForm(){
+      function v(id){ var el = document.getElementById(id); return el ? el.value : ''; }
+      return {
+        grade: v('_admin-dynquiz-grade'), subject: v('_admin-dynquiz-subject'),
+        difficulty: v('_admin-dynquiz-diff'), question: v('_admin-dynquiz-question'),
+        options: [v('_admin-dynquiz-optA'), v('_admin-dynquiz-optB'), v('_admin-dynquiz-optC'), v('_admin-dynquiz-optD')],
+        answer: v('_admin-dynquiz-answer'), hint: v('_admin-dynquiz-hint')
+      };
+    }
+    function _clearForm(){
+      var ids = ['_admin-dynquiz-question','_admin-dynquiz-optA','_admin-dynquiz-optB','_admin-dynquiz-optC','_admin-dynquiz-optD','_admin-dynquiz-hint'];
+      for(var i = 0; i < ids.length; i++){ var el = document.getElementById(ids[i]); if(el) el.value = ''; }
+    }
+    addBtn.addEventListener('click', function(){
+      var q = _grabForm();
+      var err = _validate(q);
+      if(err){ _say('⚠ ' + _esc(err), false); return; }
+      _pending.push(_norm(q));
+      _clearForm(); _renderPending();
+      _say('✅ 已加入待發佈清單(共 ' + _pending.length + ' 題)。記得按「🚀 發佈到雲端」才會生效。', true);
+    });
+
+    // ── 批次匯入 ──
+    parseBtn.addEventListener('click', function(){
+      var ta = document.getElementById('_admin-dynquiz-batch');
+      var raw = ta ? ta.value.trim() : '';
+      if(!raw){ _say('⚠ 批次欄位是空的。', false); return; }
+      var arr;
+      try{ arr = JSON.parse(raw); }catch(e){ _say('⚠ JSON 解析失敗:' + _esc(e.message), false); return; }
+      if(!Array.isArray(arr)){ _say('⚠ 最外層必須是陣列 [ ... ]。', false); return; }
+      var okN = 0, errs = [];
+      for(var i = 0; i < arr.length; i++){
+        var err = _validate(arr[i]);
+        if(err){ errs.push('第 ' + (i + 1) + ' 題:' + err); continue; }
+        _pending.push(_norm(arr[i])); okN++;
+      }
+      _renderPending();
+      if(errs.length){
+        _say('⚠ 成功加入 ' + okN + ' 題;' + errs.length + ' 題有問題未加入:<br>' + _esc(errs.slice(0, 8).join(';')), okN > 0);
+      }else{
+        if(ta) ta.value = '';
+        _say('✅ 批次解析成功,已加入 ' + okN + ' 題到待發佈清單。', true);
+      }
+    });
+    clrBtn.addEventListener('click', function(){ _pending = []; _renderPending(); _say('已清空待發佈清單。', true); });
+
+    // ── 分包寫回(發佈與刪除共用):寫 quiz_N 各包 + 刪多餘舊包 + 更新 _index ──
+    async function _writeAll(fullList, nextId){
+      var h = _fb(); if(!h) throw new Error('Firestore 未就緒');
+      var packs = [];
+      var packCount = Math.max(1, Math.ceil(fullList.length / PACK_MAX));
+      for(var p = 0; p < packCount; p++){
+        var name = 'quiz_' + (p + 1);
+        packs.push(name);
+        var chunk = fullList.slice(p * PACK_MAX, (p + 1) * PACK_MAX);
+        await h.F.setDoc(h.F.doc(h.db, 'dynamicContent', name),
+          { list: chunk, count: chunk.length, updatedAt: Date.now() });
+      }
+      // 刪掉超出的舊包(例:刪題後從 3 包縮成 2 包)
+      var oldPacks = (_cloudIdx && Array.isArray(_cloudIdx.quizPacks)) ? _cloudIdx.quizPacks : [];
+      for(var o = 0; o < oldPacks.length; o++){
+        if(packs.indexOf(oldPacks[o]) === -1){
+          try{ await h.F.deleteDoc(h.F.doc(h.db, 'dynamicContent', String(oldPacks[o]))); }catch(_eD){}
+        }
+      }
+      var newVer = Date.now();
+      await h.F.setDoc(h.F.doc(h.db, 'dynamicContent', '_index'),
+        { quizVer: newVer, quizPacks: packs, quizNextId: nextId, updatedAt: newVer }, { merge: true });
+      _cloudIdx.quizVer = newVer; _cloudIdx.quizPacks = packs; _cloudIdx.quizNextId = nextId;
+      _cloudList = fullList;
+    }
+
+    // ── 發佈 ──
+    pubBtn.addEventListener('click', async function(){
+      if(!_pending.length){ _say('⚠ 待發佈清單是空的。', false); return; }
+      pubBtn.disabled = true; pubBtn.textContent = '🔄 發佈中…';
+      try{
+        // 發佈前重讀雲端最新(拿最新 nextId 與現有題,避免覆蓋別台 GM 剛發佈的內容)
+        var ok = await _loadCloud(true);
+        if(!ok) throw new Error('讀取雲端現況失敗,已中止(未寫入任何資料)');
+        var nextId = _cloudIdx.quizNextId;
+        var toAdd = [];
+        for(var i = 0; i < _pending.length; i++){
+          var q = _pending[i];
+          toAdd.push({ id: nextId, grade: q.grade, subject: q.subject, difficulty: q.difficulty,
+            question: q.question, options: q.options, answer: q.answer, hint: q.hint });
+          nextId++;
+        }
+        await _writeAll(_cloudList.concat(toAdd), nextId);
+        var n = _pending.length; _pending = [];
+        _renderPending(); _renderStatus(); _renderList(); _renderSubjectDatalist();
+        // GM 自己這台立即重新同步 → 可以馬上在遊戲裡試玩驗證新題
+        try{ if(typeof window._dynContentSync === 'function') window._dynContentSync(true); }catch(_eS){}
+        _say('✅ 發佈成功!新增 ' + n + ' 題(雲端共 ' + _cloudList.length + ' 題)。全體玩家下次開機自動生效;你這台已立即生效可直接試玩驗證。', true);
+      }catch(e){
+        _say('❌ 發佈失敗:' + _esc(e && e.message ? e.message : e), false);
+      }
+      pubBtn.disabled = false; pubBtn.textContent = '🚀 發佈到雲端(全體玩家下次開機生效)';
+    });
+
+    // ── 刪除勾選 ──
+    delBtn.addEventListener('click', async function(){
+      var cbs = listEl.querySelectorAll('._dq-del-cb');
+      var ids = [];
+      for(var i = 0; i < cbs.length; i++){ if(cbs[i].checked) ids.push(parseInt(cbs[i].value, 10)); }
+      if(!ids.length){ _say('⚠ 沒有勾選任何題目。', false); return; }
+      if(!confirm('確定刪除勾選的 ' + ids.length + ' 題?刪除後全體玩家下次開機同步移除。')) return;
+      delBtn.disabled = true; delBtn.textContent = '🔄 刪除中…';
+      try{
+        var ok = await _loadCloud(true);
+        if(!ok) throw new Error('讀取雲端現況失敗,已中止(未寫入任何資料)');
+        var kept = [];
+        for(var k = 0; k < _cloudList.length; k++){
+          if(ids.indexOf(_cloudList[k].id) === -1) kept.push(_cloudList[k]);
+        }
+        await _writeAll(kept, _cloudIdx.quizNextId);   // nextId 不回收,永不重用
+        _renderStatus(); _renderList();
+        try{ if(typeof window._dynContentSync === 'function') window._dynContentSync(true); }catch(_eS2){}
+        _say('✅ 已刪除 ' + ids.length + ' 題(雲端剩 ' + _cloudList.length + ' 題)。', true);
+      }catch(e){
+        _say('❌ 刪除失敗:' + _esc(e && e.message ? e.message : e), false);
+      }
+      delBtn.disabled = false; delBtn.textContent = '🗑 刪除勾選的題目(寫回雲端)';
+    });
+
+    if(filterEl) filterEl.addEventListener('input', _renderList);
+    reloadBtn.addEventListener('click', function(){ _loadCloud(false); });
+    setTimeout(function(){ _renderSubjectDatalist(); }, 300);
   })();
 
   // ════════════════════════════════════════════════════════════════════════════
