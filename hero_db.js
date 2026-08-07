@@ -1,3 +1,13 @@
+// ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄引擎(檔尾 IIFE 附加·本檔既有內容一字未動·零 optional chaining):
+//   window._dynHeroApply(冪等套用:全拆除重建·與既有英雄重名拒絕·off 停用仍完整註冊資料表只下架取得途徑=玩家資產永不損壞)、
+//   全資料表註冊(HERO_DB/BURST_DB/HERO_TRAIT/_TRAIT_LV_INFO/HERO_IMGS b64/AVATARS/HERO_BIO/HERO_LORE/CATEGORIES/PRIMARY_CLASS/
+//   HERO_SKILL_EFFECTS 標籤自動推導/SKILL_UPGRADE_DEF cat=dmg|heal 標準/BURST_UPGRADE_DEF 五列自動/SKILL_FORCE_ELEMENT/BURST_GIF_DB 現有素材)、
+//   grant 三途徑(summon→同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES 對齊 v3.15.43/gm/email→STUDENT_DESIGNER_HEROES)、
+//   雙版文字自動生成(鐵律1.160 只寫 Lv1/1.232 兩版齊備·_dynHeroPreview 供 GM 後台預覽)、
+//   戰鬥引擎 _dynSkillEngine(玩家)/_dynSkillEngineAI(AI)/_dynBurstEngine(爆發)=一套引擎雙路徑滿足鐵律1.128·
+//   效果池不利15(+強力 _strong)/有利8(僅收驗證過通用路徑)·傷害三型全走 doDmg→世界BOSS 5000cap/鐵律1.31 自動·
+//   即死/HP%/固定傷害不存在於引擎·天賦六模板三 hook(戰開/行動前/受傷)守門 _traitSeal/imprison/confused·機率+3%/天賦級。
+//   ⚠ 需 index.html v5.18.0(七 hook)+ admin_panel.js v5.18.0(GM 後台卡)同版。
 // ★ v4.49.0(2026-07-12)— 貓人族長 天賦「小精靈召喚」強化(僅改天賦文字·邏輯在 index.html):HERO_TRAIT desc/fd 改為「行動前必定召喚+普攻/受傷各50%機率額外召喚一隻缺少的小精靈」(鐵律1.160 只寫Lv1=50%);_TRAIT_LV_INFO 由「精靈HP+10%/級」改為「召喚機率50%+10%/級·max 90%(Lv5)」(精靈HP改固定本體70%不隨級);檔尾 _LXPS_HERO_SD trait sd 同步(鐵律1.232 簡單風)。⚠ 需 index.html 同版 v4.49.0(三處召喚 hook+helper)
 // ★ v4.48.0(2026-07-11)— 新增學生設計英雄「貓人族長」(4年6班 張涵瑜,SSR,⚔傷害+🛡控場)資料層14表:HERO_DB(hp75=配點58×1.3/atk3/sp23/spd16;S1雷精靈風暴c2·消耗雷精靈·特技100%風屬性隨機4次·每次70%麻痺1回合/S2冰精靈守護c2·消耗冰精靈·全隊減傷70% 2回合+攻擊我方者緩速2回合)、AVATARS(🐱)、HERO_IMGS(貓人族長.png·已在repo)、HERO_IMG_POS(135% auto·center 18%·臉在立繪上方)、HERO_BIO(designer 4年6班張同學2026·鐵律1.231)、BURST_DB(上級元素精靈‧引爆·消耗全部精靈·每隻對敵全體特技500%對應屬性分攤+對應強力異常[火強力燃燒2/冰凍結1/雷強力麻痺2]·必中無視有利·需≥1隻)、HERO_LORE、HERO_TRAIT(小精靈召喚🐾·每回合行動前召喚未持有元素精靈[火/冰/雷·最多3隻]·每隻HP=本體70%附身護盾層代承傷害[比照天青龍]·普攻每隻追加特技60%對應屬性+異常2回合[火燃燒/冰緩速/雷麻痺])、BURST_GIF_DB(上級元素精靈‧引爆·重用摩天爆破煙火祭.gif不同key·sfx-explode+sfx-burst大爆炸·tint冰藍)、HERO_CATEGORIES_OVERRIDE(dmg/ctrl)、HERO_HEX_OVERRIDE(heal1/ctrl5)、_TRAIT_LV_INFO(精靈HP70%·+10%/天賦級乘算·Lv5≈98%)、HERO_PRIMARY_CLASS(dmg)、HERO_SKILL_EFFECTS(14標籤·全用既有標籤無新增)。★檔尾 _LXPS_HERO_SD 補四段簡單風(鐵律1.232 cute+premium雙版·1.160 只寫Lv1)。★元素↔屬性:火精靈→火/冰精靈→水/雷精靈→風(遊戲無雷屬性)。★邏輯層(精靈護盾層doDmg代承hook/startTurn行動前召喚/普攻追加execAtk hook/S1S2雙路徑execSkill+aiUseSkill鐵律1.128/爆發_runBurst+_canBurst守門/S2全隊減傷_catIceGuard buff/升級表/SUMMON_RARE_HEROES/STUDENT_DESIGNER_HEROES)在 index.html v4.48.0,單獨上線此檔=英雄看得到但技能全失效。
 // ★ v3.34.0(2026-07-02)— 新增學生設計英雄「大刀勇士」(5年4班 陳柏安,SSR,⚔傷害+💚回復)資料層14表:HERO_DB(hp78=配點60×1.3/atk25/sp5/spd10;S1霸道裂地斬c6·攻擊500%單體無視有利·對BOSS傷害+50%固定/S2勇士決勝之力c6·攻擊80%×4次隨機目標·每次實傷50%轉治療我方HP最低未滿血夥伴)、AVATARS(⚔️·與劍士/地獄將軍重複有先例)、HERO_IMGS(大刀勇士.png·已在repo)、HERO_IMG_POS(center 12%·臉在立繪上方約20%)、HERO_BIO(designer 5年4班陳同學2026)、BURST_DB(奧義‧勇士大刀滅絕斬·攻擊250%×3次隨機必中無視有利+每次實傷50%轉治療同S2+對BOSS傷害×2固定)、HERO_LORE、HERO_TRAIT(愈戰愈勇🗡️·每回合行動前攻/速各+2累積上限+30直到倒下+不會被降低能力)、BURST_GIF_DB(奧義‧勇士大刀滅絕斬·重用劍神連斬.gif 不同key·sfx-sword/crit·tint暖橙)、HERO_CATEGORIES_OVERRIDE(dmg/heal)、HERO_HEX_OVERRIDE(heal5/ctrl1)、_TRAIT_LV_INFO(+1/天賦級·Lv10=+11/回合·上限30固定)、HERO_PRIMARY_CLASS(dmg)、HERO_SKILL_EFFECTS(8標籤·全用既有標籤無新增)。★HERO_DB s1/s2/BURST_DB/HERO_TRAIT 皆同步附 inline sd 簡單風(鐵律1.232)。★邏輯層(天賦疊攻速hook+doRevive歸零/降能力免疫系統_bvStatDownImmune+addStatus攔截+10直寫點守門/S1S2雙路徑execSkill+aiUseSkill/爆發_runBurst/升級表/SUMMON_RARE_HEROES/STUDENT_DESIGNER_HEROES)在index.html v3.34.0,單獨上線此檔=英雄看得到但技能全失效。
@@ -5563,4 +5573,718 @@ var _LXPS_HERO_SD = {
     }
     try{ window._LXPS_HERO_SD = _LXPS_HERO_SD; }catch(_w){}
   }catch(_err){ try{ console.warn('[v3.24.0 sd 注入失敗]', _err); }catch(_){} }
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.18.0(2026-08-07) — 動態內容層・第三期:動態英雄(鐵律候選 1.237)
+//   目標:老師在 GM 後台上架新英雄(數值/立繪/技能參數/爆發動畫音效)→ 寫入
+//   Firestore dynamicContent(_index.heroVer/heroPacks + hero_N 英雄包)→
+//   全體玩家開機自動合併進 HERO_DB 等全部資料表,免改檔免部署。
+//   ── 核心設計 ──
+//   ① 泛用參數化技能引擎 _dynSkillEngine / _dynBurstEngine:一套引擎同時服務
+//      玩家端(execSkill hook)與 AI 端(aiUseSkill 鏈尾 hook)→ 天生滿足鐵律 1.128。
+//   ② 所有傷害一律走 doDmg → 世界 BOSS 5000 cap / BOSS 保命 / 鐵律 1.31 自動生效。
+//      安全排除:即死 / HP%傷害 / 固定傷害 三類不在引擎能力範圍(硬性)。
+//   ③ 升級口徑(老師裁定題3甲):
+//      ・技能傷害:玩家路徑由 doDmg 的 _activeSkLvMult 自動套(cat='dmg' 標準
+//        ×(1+skLv×0.05)),引擎「不可」再乘一次;AI 路徑引擎手動乘同倍率。
+//      ・技能治療:引擎雙路徑手動乘 ×(1+skLv×0.05)(cat='heal' 標準)。
+//      ・爆發傷害/治療:×(1+burstLv×0.05),BURST_UPGRADE_DEF 五列自動生成對齊。
+//      ・狀態機率:固定不隨技能等級(圖鑑不可說謊);天賦機率 +3%/天賦級。
+//   ④ 效果池(僅收錄「通用消費路徑已驗證」的類型;強力版=狀態物件 _strong 旗標,
+//      對齊強力失明/猛毒/強力易傷既有引擎):
+//      不利 15:stun/freeze/sleep/para/seal/forecast/spddown/hellfire/poison/
+//              bleed/noheal_curse/healReduced/dmgVuln/charm/berserk
+//      有利 8:immune/halfDmg/evasion/hidden/statusImmune/ctrlImmune/taunt/dmgup
+//   ⑤ 天賦六模板(老師裁定題1甲):T1 戰開自身buff / T2 戰開全隊buff /
+//      T3 行動前機率回血 / T4 行動前機率隨機敵掛狀態 / T5 受傷時機率回血 /
+//      T6 受傷時機率反施狀態。守門 _traitSeal/imprison/confused(對齊逆鱗慣例)。
+//   ⑥ 雙版文字(老師裁定題5甲):d/fd(精緻)+ sd(簡單)依參數自動生成,GM 可覆寫;
+//      鐵律 1.160:只寫 Lv1 基準;鐵律 1.232 兩版齊備。
+//   ⑦ 鐵則(對齊二期配件):動態英雄「發佈後永不刪除,只能停用(off)」。
+//      off 英雄仍完整註冊資料表(已擁有玩家的圖鑑/戰鬥照常),只從取得途徑
+//      (召喚池/指定發放)移除 → 玩家資產永不損壞。
+//   ⑧ 獲得途徑(題4甲)grant:'summon'(進召喚池,自動同步 ADMIN_ALL_HEROES/
+//      _PLAYER_HERO_NAMES,對齊 v3.15.43)/'gm'(僅GM送禮)/{email:'…'}(登入自動發,
+//      註冊 STUDENT_DESIGNER_HEROES)。
+//   ⑨ 本檔零 optional chaining(?.);所有資料表存取皆 typeof 守門,單表缺席不中斷。
+// ════════════════════════════════════════════════════════════════════
+(function(){
+  var CAPS = { skDmg:400, buDmg:900, skHeal:300, buHeal:600, hits:6, dur:5, cost:10, fxMax:2, chance:100, trChance:80, trHeal:100 };
+  var FOE_POOL = { stun:'暈眩', freeze:'冰凍', sleep:'睡眠', para:'麻痺', seal:'封印技能', forecast:'失明', spddown:'遲緩', hellfire:'燃燒', poison:'中毒', bleed:'出血', noheal_curse:'禁療', healReduced:'減療', dmgVuln:'受傷增加', charm:'魅惑', berserk:'狂亂' };
+  var ALLY_POOL = { immune:'無敵', halfDmg:'減傷一半', evasion:'迴避', hidden:'隱身', statusImmune:'免疫不利狀態', ctrlImmune:'控制免疫', taunt:'嘲諷', dmgup:'攻擊強化' };
+  var ELEM_KEYS = { fire:'火', water:'水', wind:'風', grass:'草', earth:'土', light:'光', dark:'暗' };
+  var TPL_NAMES = { T1:'開場強化(自身)', T2:'開場強化(全隊)', T3:'行動前回復', T4:'行動前干擾', T5:'受傷回復', T6:'受傷反制' };
+
+  window._DYN_HERO_REG = {};
+  window._DYN_SKILL_MAP = {};
+  var _APPLIED = {};
+
+  function _num(v, d, min, max){
+    v = Number(v);
+    if(isNaN(v) || !isFinite(v)) v = d;
+    if(typeof min === 'number' && v < min) v = min;
+    if(typeof max === 'number' && v > max) v = max;
+    return v;
+  }
+  function _int(v, d, min, max){ return Math.round(_num(v, d, min, max)); }
+  function _str(v){ return (v === undefined || v === null) ? '' : String(v); }
+  function _durOf(fx){ return fx.battle ? 999 : _int(fx.dur, 1, 1, CAPS.dur); }
+  function _durText(fx){ return fx.battle ? '直到戰鬥結束' : (_int(fx.dur,1,1,CAPS.dur) + '回合'); }
+
+  // ── 淨化(防禦性上限;GM 後台另有表單驗證,此處雙保險)──
+  function _sanFxList(arr, pool){
+    if(!Array.isArray(arr)) return [];
+    var out = [];
+    for(var i = 0; i < arr.length && out.length < CAPS.fxMax; i++){
+      var fx = arr[i];
+      if(!fx || !pool[fx.t]) continue;
+      out.push({
+        t: fx.t,
+        scope: (fx.scope === 'all' || fx.scope === 'self' || fx.scope === 'one') ? fx.scope : 'one',
+        dur: _int(fx.dur, 1, 1, CAPS.dur),
+        battle: fx.battle ? 1 : 0,
+        strong: fx.strong ? 1 : 0,
+        chance: _int(fx.chance, 100, 1, CAPS.chance)
+      });
+    }
+    return out;
+  }
+  function _sanSkill(sc, isBurst){
+    if(!sc || !sc.n) return null;
+    var dCap = isBurst ? CAPS.buDmg : CAPS.skDmg;
+    var hCap = isBurst ? CAPS.buHeal : CAPS.skHeal;
+    var out = { n: _str(sc.n), ns: _str(sc.ns) || _str(sc.n), c: _int(sc.c, 5, 1, CAPS.cost) };
+    if(sc.dmg && sc.dmg.pct > 0){
+      var k = sc.dmg.kind;
+      out.dmg = {
+        kind: (k === 'split' || k === 'multi') ? k : 'single',
+        stat: (sc.dmg.stat === 'atk') ? 'atk' : 'sp',
+        pct: _int(sc.dmg.pct, 100, 10, dCap),
+        tmin: _int(sc.dmg.tmin, 2, 2, CAPS.hits),
+        tmax: _int(sc.dmg.tmax, 3, 2, CAPS.hits),
+        mustHit: sc.dmg.mustHit ? 1 : 0,
+        ignoreBuffs: sc.dmg.ignoreBuffs ? 1 : 0,
+        elem: ELEM_KEYS[sc.dmg.elem] ? sc.dmg.elem : ''
+      };
+      if(out.dmg.tmax < out.dmg.tmin) out.dmg.tmax = out.dmg.tmin;
+    }
+    if(sc.heal && sc.heal.pct > 0){
+      var hk = sc.heal.kind;
+      out.heal = {
+        kind: (hk === 'all' || hk === 'self') ? hk : 'single',
+        pct: _int(sc.heal.pct, 100, 10, hCap),
+        revive: sc.heal.revive ? 1 : 0
+      };
+    }
+    out.ally = _sanFxList(sc.ally, ALLY_POOL);
+    out.foe = _sanFxList(sc.foe, FOE_POOL);
+    if(!out.dmg && !out.heal && !out.ally.length && !out.foe.length) return null;
+    // GM 覆寫文字(題5甲:自動生成+可改寫)
+    if(sc.d)  out.d  = _str(sc.d);
+    if(sc.fd) out.fd = _str(sc.fd);
+    if(sc.sd) out.sd = _str(sc.sd);
+    return out;
+  }
+  function _sanTrait(tc){
+    if(!tc || !TPL_NAMES[tc.tpl]) return null;
+    var out = { tpl: tc.tpl, icon: _str(tc.icon) || '✨', name: _str(tc.name) || TPL_NAMES[tc.tpl] };
+    if(tc.tpl === 'T1' || tc.tpl === 'T2'){
+      if(!ALLY_POOL[tc.buff]) return null;
+      out.buff = tc.buff; out.dur = _int(tc.dur, 2, 1, CAPS.dur); out.battle = tc.battle ? 1 : 0;
+    } else if(tc.tpl === 'T3' || tc.tpl === 'T5'){
+      out.chance = _int(tc.chance, 30, 5, CAPS.trChance);
+      out.healPct = _int(tc.healPct, 30, 5, CAPS.trHeal);
+    } else {
+      if(!FOE_POOL[tc.st]) return null;
+      out.chance = _int(tc.chance, 30, 5, CAPS.trChance);
+      out.st = tc.st; out.strong = tc.strong ? 1 : 0;
+    }
+    if(tc.desc) out.desc = _str(tc.desc);
+    if(tc.fd)   out.fd   = _str(tc.fd);
+    if(tc.sd)   out.sd   = _str(tc.sd);
+    return out;
+  }
+
+  // ── 雙版文字自動生成(鐵律 1.160 只寫 Lv1;鐵律 1.232 兩版齊備)──
+  function _dmgPhrase(dm, mult){
+    var pct = Math.round(dm.pct * (mult || 1));
+    var statN = dm.stat === 'atk' ? '攻擊' : '特技';
+    var elemN = dm.elem ? (ELEM_KEYS[dm.elem] + '屬性') : '';
+    var tail = [];
+    if(dm.mustHit) tail.push('必中');
+    if(dm.ignoreBuffs) tail.push('無視有利狀態');
+    var tailS = tail.length ? '(' + tail.join('、') + ')' : '';
+    if(dm.kind === 'split')  return '對所有敵人造成' + statN + pct + '%的' + elemN + '分攤傷害' + tailS;
+    if(dm.kind === 'multi')  return '以' + statN + pct + '%的' + elemN + '傷害攻擊隨機敵人' + dm.tmin + '~' + dm.tmax + '次' + tailS;
+    return '對1名敵人造成' + statN + pct + '%的' + elemN + '傷害' + tailS;
+  }
+  function _healPhrase(hl, mult){
+    var pct = Math.round(hl.pct * (mult || 1));
+    var who = hl.kind === 'all' ? '全體友方' : (hl.kind === 'self' ? '自己' : '1名友方');
+    return '回復' + who + '特技' + pct + '%的HP' + (hl.revive ? '(可復活)' : '');
+  }
+  function _fxPhrase(fx, isAlly){
+    var nm = isAlly ? ALLY_POOL[fx.t] : ((fx.strong ? '強力' : '') + FOE_POOL[fx.t]);
+    var who = isAlly
+      ? (fx.scope === 'all' ? '全隊' : (fx.scope === 'self' ? '自己' : '1名友方'))
+      : (fx.scope === 'all' ? '所有敵人' : '目標');
+    var ch = (!isAlly && fx.chance < 100) ? (fx.chance + '%機率') : '';
+    return ch + '使' + who + '獲得「' + nm + '」' + _durText(fx);
+  }
+  function _skillTextGen(sc, mult){
+    var parts = [];
+    if(sc.dmg)  parts.push(_dmgPhrase(sc.dmg, mult));
+    if(sc.heal) parts.push(_healPhrase(sc.heal, mult));
+    var i;
+    for(i = 0; i < sc.ally.length; i++) parts.push(_fxPhrase(sc.ally[i], true));
+    for(i = 0; i < sc.foe.length; i++)  parts.push(_fxPhrase(sc.foe[i], false));
+    return parts.join(',');
+  }
+  function _mkSkillTexts(sc){
+    var body = _skillTextGen(sc, 1);
+    return {
+      d:  sc.d  || body,
+      fd: sc.fd || ('施展「' + sc.n + '」:' + body + '。'),
+      sd: sc.sd || (body + '。')
+    };
+  }
+  function _traitTextGen(tc){
+    if(tc.tpl === 'T1') return '戰鬥開始時,自己獲得「' + ALLY_POOL[tc.buff] + '」' + _durText(tc);
+    if(tc.tpl === 'T2') return '戰鬥開始時,全隊獲得「' + ALLY_POOL[tc.buff] + '」' + _durText(tc);
+    if(tc.tpl === 'T3') return '每回合行動前,有' + tc.chance + '%機率回復自己特技' + tc.healPct + '%的HP';
+    if(tc.tpl === 'T4') return '每回合行動前,有' + tc.chance + '%機率使隨機1名敵人獲得「' + (tc.strong?'強力':'') + FOE_POOL[tc.st] + '」1回合';
+    if(tc.tpl === 'T5') return '受到傷害時,有' + tc.chance + '%機率回復自己特技' + tc.healPct + '%的HP';
+    return '受到傷害時,有' + tc.chance + '%機率使攻擊者獲得「' + (tc.strong?'強力':'') + FOE_POOL[tc.st] + '」1回合';
+  }
+  function _mkTraitTexts(tc){
+    var body = _traitTextGen(tc);
+    return { desc: tc.desc || body, fd: tc.fd || (body + '。'), sd: tc.sd || (body + '。') };
+  }
+  function _mkTraitLvInfo(tc){
+    if(tc.tpl === 'T1' || tc.tpl === 'T2'){
+      return { base:'固定效果', bonus:'不隨天賦等級變動', max:'—', effect: _traitTextGen(tc) };
+    }
+    var mx = Math.min(100, tc.chance + 5 * 3);
+    return { base:'機率' + tc.chance + '%', bonus:'+3%/天賦級', max: Math.min(100, tc.chance + 15) + '%(Lv5)', effect: _traitTextGen(tc) + '的機率' };
+  }
+  function _mkBurstRows(sc){
+    var rows = [];
+    for(var lv = 0; lv <= 4; lv++){
+      rows.push([lv, _skillTextGen(sc, 1 + lv * 0.05) + (lv === 4 ? '(MAX)' : '')]);
+    }
+    return rows;
+  }
+  // 編組 🔍 條件搜尋標籤自動推導(鐵律六易錯點④:新效果必進 HERO_SKILL_EFFECTS)
+  var FOE_TAG = { stun:'暈眩', freeze:'冰凍', sleep:'睡眠', para:'麻痺', seal:'封印技能', forecast:'失明', spddown:'緩速', hellfire:'燃燒', poison:'中毒', bleed:'出血', noheal_curse:'禁療', healReduced:'減療', dmgVuln:'受傷增加', charm:'魅惑', berserk:'狂亂' };
+  var ALLY_TAG = { immune:'無敵', halfDmg:'減傷', evasion:'迴避', hidden:'隱身', statusImmune:'免疫不利狀態', ctrlImmune:'免疫不利狀態', taunt:'嘲諷', dmgup:'造成傷害增加' };
+  var ELEM_TAG = { fire:'火屬性傷害', water:'水屬性傷害', wind:'風屬性傷害', grass:'草屬性傷害', earth:'土屬性傷害', light:'光屬性傷害', dark:'暗屬性傷害' };
+  function _collectTags(cfg){
+    var tags = {}, i;
+    function _fromSkill(sc){
+      if(!sc) return;
+      if(sc.dmg){
+        tags[sc.dmg.kind === 'single' ? '單體傷害' : '全體傷害'] = 1;
+        if(sc.dmg.mustHit) tags['必中'] = 1;
+        if(sc.dmg.ignoreBuffs) tags['無視有利狀態'] = 1;
+        if(sc.dmg.elem && ELEM_TAG[sc.dmg.elem]) tags[ELEM_TAG[sc.dmg.elem]] = 1;
+      }
+      if(sc.heal) tags[sc.heal.kind === 'single' || sc.heal.kind === 'self' ? '單體回復HP' : '全體回復HP'] = 1;
+      if(sc.heal && sc.heal.revive) tags['復活'] = 1;
+      for(i = 0; i < sc.ally.length; i++){ if(ALLY_TAG[sc.ally[i].t]) tags[ALLY_TAG[sc.ally[i].t]] = 1; }
+      for(i = 0; i < sc.foe.length; i++){ if(FOE_TAG[sc.foe[i].t]) tags[FOE_TAG[sc.foe[i].t]] = 1; }
+    }
+    _fromSkill(cfg.s1); _fromSkill(cfg.s2); _fromSkill(cfg.burst);
+    var tc = cfg.trait;
+    if(tc){
+      if(tc.tpl === 'T1' || tc.tpl === 'T2'){ if(ALLY_TAG[tc.buff]) tags[ALLY_TAG[tc.buff]] = 1; }
+      else if(tc.tpl === 'T3' || tc.tpl === 'T5') tags['單體回復HP'] = 1;
+      else if(FOE_TAG[tc.st]) tags[FOE_TAG[tc.st]] = 1;
+    }
+    var out = []; for(var k in tags){ if(Object.prototype.hasOwnProperty.call(tags, k)) out.push(k); }
+    return out;
+  }
+  function _primaryClass(cfg){
+    var dmg = 0, heal = 0, ctrl = 0;
+    function _w(sc){ if(!sc) return; if(sc.dmg) dmg++; if(sc.heal) heal++; if(sc.foe.length) ctrl++; }
+    _w(cfg.s1); _w(cfg.s2); _w(cfg.burst);
+    if(heal > dmg && heal >= ctrl) return 'heal';
+    if(ctrl > dmg && ctrl > heal) return 'ctrl';
+    if(dmg > 0) return 'dmg';
+    return 'other';
+  }
+
+  // ── 資料表註冊/拆除 ──
+  function _removeHero(name){
+    var rec = _APPLIED[name];
+    if(!rec) return;
+    try{ if(typeof HERO_DB !== 'undefined') delete HERO_DB[name]; }catch(_){}
+    try{ if(typeof BURST_DB !== 'undefined') delete BURST_DB[name]; }catch(_){}
+    try{ if(typeof HERO_TRAIT !== 'undefined') delete HERO_TRAIT[name]; }catch(_){}
+    try{ if(typeof _TRAIT_LV_INFO !== 'undefined') delete _TRAIT_LV_INFO[name]; }catch(_){}
+    try{ if(typeof HERO_IMGS !== 'undefined') delete HERO_IMGS[name]; }catch(_){}
+    try{ if(typeof AVATARS !== 'undefined') delete AVATARS[name]; }catch(_){}
+    try{ if(typeof HERO_BIO !== 'undefined') delete HERO_BIO[name]; }catch(_){}
+    try{ if(typeof HERO_LORE !== 'undefined') delete HERO_LORE[name]; }catch(_){}
+    try{ if(typeof HERO_CATEGORIES_OVERRIDE !== 'undefined') delete HERO_CATEGORIES_OVERRIDE[name]; }catch(_){}
+    try{ if(typeof HERO_PRIMARY_CLASS !== 'undefined') delete HERO_PRIMARY_CLASS[name]; }catch(_){}
+    try{ if(typeof HERO_SKILL_EFFECTS !== 'undefined') delete HERO_SKILL_EFFECTS[name]; }catch(_){}
+    try{ if(typeof BURST_UPGRADE_DEF !== 'undefined') delete BURST_UPGRADE_DEF[name]; }catch(_){}
+    try{ if(typeof BURST_GIF_DB !== 'undefined' && rec.burstN) delete BURST_GIF_DB[rec.burstN]; }catch(_){}
+    try{
+      if(typeof SKILL_UPGRADE_DEF !== 'undefined'){
+        if(rec.s1n) delete SKILL_UPGRADE_DEF[rec.s1n];
+        if(rec.s2n) delete SKILL_UPGRADE_DEF[rec.s2n];
+      }
+    }catch(_){}
+    try{
+      if(typeof SKILL_FORCE_ELEMENT !== 'undefined'){
+        if(rec.s1n) delete SKILL_FORCE_ELEMENT[rec.s1n];
+        if(rec.s2n) delete SKILL_FORCE_ELEMENT[rec.s2n];
+        if(rec.burstN) delete SKILL_FORCE_ELEMENT[rec.burstN];
+      }
+    }catch(_){}
+    try{
+      if(typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES)){
+        var ix = SUMMON_RARE_HEROES.indexOf(name);
+        if(ix >= 0) SUMMON_RARE_HEROES.splice(ix, 1);
+      }
+    }catch(_){}
+    try{
+      if(rec.email && typeof STUDENT_DESIGNER_HEROES !== 'undefined' && STUDENT_DESIGNER_HEROES[rec.email]
+         && STUDENT_DESIGNER_HEROES[rec.email].hero === name){
+        delete STUDENT_DESIGNER_HEROES[rec.email];
+      }
+    }catch(_){}
+    delete _APPLIED[name];
+  }
+
+  function _registerHero(raw){
+    if(!raw || !raw.name) return false;
+    var name = _str(raw.name);
+    // 靜態英雄保護:絕不覆蓋既有(非動態)英雄
+    try{
+      if(typeof HERO_DB !== 'undefined' && HERO_DB[name] && !_APPLIED[name]){
+        console.warn('[動態英雄] 與既有英雄重名,拒絕註冊:', name);
+        return false;
+      }
+    }catch(_){}
+    var s1 = _sanSkill(raw.s1, false);
+    var s2 = _sanSkill(raw.s2, false);
+    var burst = _sanSkill(raw.burst, true);
+    var trait = _sanTrait(raw.trait);
+    if(!s1 || !s2 || !burst){ console.warn('[動態英雄] 技能設定不完整,拒絕註冊:', name); return false; }
+    var hp  = _int(raw.hp, 65, 1, 200);
+    var atk = _int(raw.atk, 10, 1, 60);
+    var sp  = _int(raw.sp, 15, 1, 60);
+    var spd = _int(raw.spd, 10, 1, 60);
+    var rarity = (raw.rarity === 'R' || raw.rarity === 'SR' || raw.rarity === 'SSR') ? raw.rarity : 'SSR';
+    var cfg = { name: name, rarity: rarity, hp: hp, atk: atk, sp: sp, spd: spd,
+                img: _str(raw.img), trait: trait, s1: s1, s2: s2, burst: burst,
+                grant: raw.grant, off: raw.off ? 1 : 0 };
+    var t1 = _mkSkillTexts(s1), t2 = _mkSkillTexts(s2), tb = _mkSkillTexts(burst);
+    try{
+      if(typeof HERO_DB !== 'undefined'){
+        HERO_DB[name] = { hp: hp, atk: atk, sp: sp, spd: spd,
+          s1: { n: s1.n, ns: s1.ns, c: s1.c, d: t1.d, fd: t1.fd, sd: t1.sd },
+          s2: { n: s2.n, ns: s2.ns, c: s2.c, d: t2.d, fd: t2.fd, sd: t2.sd } };
+      }
+    }catch(_e1){ console.warn('[動態英雄] HERO_DB 註冊失敗', name, _e1); return false; }
+    try{ if(typeof BURST_DB !== 'undefined') BURST_DB[name] = { n: burst.n, d: tb.d, fd: tb.fd, sd: tb.sd }; }catch(_){}
+    if(trait){
+      var tt = _mkTraitTexts(trait);
+      try{ if(typeof HERO_TRAIT !== 'undefined') HERO_TRAIT[name] = { name: trait.name, icon: trait.icon, desc: tt.desc, fd: tt.fd, sd: tt.sd }; }catch(_){}
+      try{ if(typeof _TRAIT_LV_INFO !== 'undefined') _TRAIT_LV_INFO[name] = _mkTraitLvInfo(trait); }catch(_){}
+    }
+    try{ if(typeof HERO_IMGS !== 'undefined' && cfg.img) HERO_IMGS[name] = cfg.img; }catch(_){}
+    try{ if(typeof AVATARS !== 'undefined') AVATARS[name] = _str(raw.emoji) || '🌟'; }catch(_){}
+    try{
+      if(typeof HERO_BIO !== 'undefined'){
+        var bio = { role: _str(raw.role) || '動態內容英雄', trait: _str(raw.persona) || '', hobby: _str(raw.hobby) || '', quote: _str(raw.quote) || '' };
+        if(raw.designer && raw.designer.name) bio.designer = { class: _str(raw.designer.cls), name: _str(raw.designer.name), year: _int(raw.designer.year, 2026, 2020, 2100) };
+        HERO_BIO[name] = bio;
+      }
+    }catch(_){}
+    try{ if(typeof HERO_LORE !== 'undefined' && raw.lore) HERO_LORE[name] = _str(raw.lore); }catch(_){}
+    var pcls = _primaryClass(cfg);
+    try{ if(typeof HERO_CATEGORIES_OVERRIDE !== 'undefined') HERO_CATEGORIES_OVERRIDE[name] = (pcls === 'other') ? ['dmg'] : [pcls]; }catch(_){}
+    try{ if(typeof HERO_PRIMARY_CLASS !== 'undefined') HERO_PRIMARY_CLASS[name] = pcls; }catch(_){}
+    try{ if(typeof HERO_SKILL_EFFECTS !== 'undefined') HERO_SKILL_EFFECTS[name] = _collectTags(cfg); }catch(_){}
+    try{
+      if(typeof SKILL_UPGRADE_DEF !== 'undefined'){
+        SKILL_UPGRADE_DEF[s1.n] = { cat: s1.dmg ? 'dmg' : 'heal', label: s1.dmg ? '技能傷害' : '治療量' };
+        SKILL_UPGRADE_DEF[s2.n] = { cat: s2.dmg ? 'dmg' : 'heal', label: s2.dmg ? '技能傷害' : '治療量' };
+      }
+    }catch(_){}
+    try{ if(typeof BURST_UPGRADE_DEF !== 'undefined') BURST_UPGRADE_DEF[name] = { rows: _mkBurstRows(burst) }; }catch(_){}
+    try{
+      if(typeof SKILL_FORCE_ELEMENT !== 'undefined'){
+        if(s1.dmg && s1.dmg.elem) SKILL_FORCE_ELEMENT[s1.n] = s1.dmg.elem;
+        if(s2.dmg && s2.dmg.elem) SKILL_FORCE_ELEMENT[s2.n] = s2.dmg.elem;
+        if(burst.dmg && burst.dmg.elem) SKILL_FORCE_ELEMENT[burst.n] = burst.dmg.elem;
+      }
+    }catch(_){}
+    // 爆發動畫+音效(題目需求 2:從現有素材套用)
+    try{
+      if(typeof BURST_GIF_DB !== 'undefined' && raw.anim && raw.anim.gif){
+        var entry = { url: 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent(_str(raw.anim.gif)) };
+        if(Array.isArray(raw.anim.sfx)){
+          var sfxArr = [];
+          for(var si = 0; si < raw.anim.sfx.length && si < 4; si++){
+            var se = raw.anim.sfx[si];
+            if(Array.isArray(se) && se[0]) sfxArr.push([_str(se[0]), _num(se[1], 0.8, 0, 1)]);
+          }
+          if(sfxArr.length) entry.sfx = sfxArr;
+        }
+        if(raw.anim.tint) entry.tint = _str(raw.anim.tint);
+        if(raw.anim.dur)  entry.dur  = _int(raw.anim.dur, 0, 300, 10000);
+        BURST_GIF_DB[burst.n] = entry;
+      }
+    }catch(_){}
+    // 取得途徑(off 英雄跳過 → 鐵則⑦:資料表保留、取得下架)
+    var rec = { s1n: s1.n, s2n: s2.n, burstN: burst.n, email: '' };
+    if(!cfg.off){
+      try{
+        if(raw.grant === 'summon' && typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES)){
+          if(SUMMON_RARE_HEROES.indexOf(name) < 0) SUMMON_RARE_HEROES.push(name);
+        }
+      }catch(_){}
+      try{
+        if(raw.grant && raw.grant.email && typeof STUDENT_DESIGNER_HEROES !== 'undefined'){
+          var em = _str(raw.grant.email).toLowerCase();
+          if(em && !STUDENT_DESIGNER_HEROES[em]){
+            STUDENT_DESIGNER_HEROES[em] = { hero: name, name: _str(raw.designer && raw.designer.name) || '同學', class: _str(raw.designer && raw.designer.cls) || '', flagId: 'dyn_' + name, fullName: _str(raw.designer && raw.designer.full) || '' };
+            rec.email = em;
+          }
+        }
+      }catch(_){}
+    }
+    // 主清單同步(對齊 v3.15.43:漏列=管理員/收錄計數/存檔守門全壞;off 也要列,保護既有擁有者)
+    try{ if(typeof ADMIN_ALL_HEROES !== 'undefined' && Array.isArray(ADMIN_ALL_HEROES) && ADMIN_ALL_HEROES.indexOf(name) < 0) ADMIN_ALL_HEROES.push(name); }catch(_){}
+    try{ if(typeof _PLAYER_HERO_NAMES !== 'undefined' && _PLAYER_HERO_NAMES && typeof _PLAYER_HERO_NAMES.add === 'function' && !_PLAYER_HERO_NAMES.has(name)) _PLAYER_HERO_NAMES.add(name); }catch(_){}
+    _APPLIED[name] = rec;
+    window._DYN_HERO_REG[name] = cfg;
+    window._DYN_SKILL_MAP[s1.n] = { hero: name, slot: 's1' };
+    window._DYN_SKILL_MAP[s2.n] = { hero: name, slot: 's2' };
+    return true;
+  }
+
+  window._dynHeroApply = function(list){
+    try{
+      if(!Array.isArray(list)) list = [];
+      // 冪等:先拆除所有既有動態英雄再整批重建
+      var old = []; for(var k in _APPLIED){ if(Object.prototype.hasOwnProperty.call(_APPLIED, k)) old.push(k); }
+      for(var i = 0; i < old.length; i++) _removeHero(old[i]);
+      window._DYN_HERO_REG = {}; window._DYN_SKILL_MAP = {};
+      var n = 0;
+      for(var j = 0; j < list.length; j++){ if(_registerHero(list[j])) n++; }
+      return n;
+    }catch(_e){ console.warn('[動態英雄] 套用失敗(不影響既有英雄)', _e); return 0; }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 戰鬥引擎(執行期才解析全域戰鬥函式;任何缺席以 try 靜默守門)
+  // ════════════════════════════════════════════════════════════════
+  function _statBase(h, stat){
+    var v = (stat === 'atk') ? (h.atk || 0) : (h.sp || 0);
+    return Math.max(1, Math.floor(v * (1 + v * 0.01)));  // 對齊 spv/atkv 口徑
+  }
+  function _skLvOf(h, slot){
+    try{
+      if(h._skLv && typeof h._skLv[slot] === 'number') return h._skLv[slot];
+      if(typeof _adventureMode !== 'undefined' && _adventureMode && typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels[h.name] && slot) return _heroSkillLevels[h.name][slot] || 0;
+    }catch(_){}
+    return 0;
+  }
+  function _burstLvOf(h){
+    try{
+      if(h._isFriendHero) return h._burstLvAdv || 0;
+      if(typeof h._burstLvAdv === 'number' && h._burstLvAdv > 0) return h._burstLvAdv;
+      if(typeof _adventureMode !== 'undefined' && _adventureMode && typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels[h.name]) return _heroBurstLevels[h.name] || 0;
+    }catch(_){}
+    return 0;
+  }
+  function _alive(arr){ var o = []; for(var i = 0; i < (arr || []).length; i++){ if(arr[i] && arr[i].curHp > 0) o.push(arr[i]); } return o; }
+  function _randOf(arr){ return arr.length ? arr[Math.floor(Math.random() * arr.length)] : null; }
+  function _lowestHp(arr){
+    var best = null;
+    for(var i = 0; i < arr.length; i++){
+      var h = arr[i];
+      if(!h || h.curHp <= 0) continue;
+      if(!best || (h.curHp / Math.max(1, h.hp)) < (best.curHp / Math.max(1, best.hp))) best = h;
+    }
+    return best;
+  }
+  function _mkStatus(a, tgt, fx){
+    if(!tgt || tgt.curHp <= 0) return;
+    if(Math.random() >= fx.chance / 100){
+      try{ log('💨 [' + tgt.name + '] 抵抗了「' + FOE_POOL[fx.t] + '」!'); }catch(_){}
+      return;
+    }
+    try{ addStatus(tgt, fx.t, _durOf(fx)); }catch(_e){ return; }
+    if(fx.strong){
+      try{
+        var arr = tgt.status || [];
+        for(var i = arr.length - 1; i >= 0; i--){
+          if(arr[i] && arr[i].type === fx.t){ arr[i]._strong = true; break; }
+        }
+      }catch(_s){}
+    }
+    try{ if(typeof renderCard === 'function') renderCard(tgt); }catch(_){}
+  }
+  function _mkBuff(tgt, fx){
+    if(!tgt || tgt.curHp <= 0) return;
+    try{ addBuff(tgt, fx.t, _durOf(fx)); }catch(_){}
+    try{ if(typeof renderCard === 'function') renderCard(tgt); }catch(_){}
+  }
+  // 效果執行核心。dmgMult:套在傷害上的額外倍率(玩家技能=1,doDmg 自動套等級;
+  //   AI 技能=1+skLv×0.05;爆發=1+burstLv×0.05)。healMult:治療倍率(雙路徑手動)。
+  function _execEffects(a, sc, dmgMult, healMult, tgtEnemy, tgtAlly, isBurst){
+    var side = a.side, opp = side === 'p1' ? 'p2' : 'p1';
+    var enemies = _alive(G[opp]);
+    var allies  = _alive(G[side]);
+    var i, j;
+    var _batch = false;
+    try{ if(typeof beginBatchTotals === 'function'){ beginBatchTotals(); _batch = true; } }catch(_){}
+    var hitTargets = [];
+    if(sc.dmg){
+      var dm = sc.dmg;
+      var base = _statBase(a, dm.stat);
+      var opts0 = { actor: a, isSkill: true };
+      if(dm.mustHit){ opts0.mustHit = true; opts0.ignoreEvasion = true; }
+      if(dm.ignoreBuffs) opts0.ignoreBuffs = true;
+      if(dm.elem){ opts0.elem = dm.elem; opts0.element = dm.elem; }
+      if(dm.kind === 'split'){
+        var total = Math.max(1, Math.floor(base * dm.pct / 100 * dmgMult));
+        var each = Math.max(1, Math.floor(total / Math.max(1, enemies.length)));
+        for(i = 0; i < enemies.length; i++){
+          var o1 = {}; for(var k1 in opts0){ o1[k1] = opts0[k1]; }
+          try{ doDmg(enemies[i], each, o1); }catch(_){}
+          hitTargets.push(enemies[i]);
+        }
+      } else if(dm.kind === 'multi'){
+        var times = dm.tmin + Math.floor(Math.random() * (dm.tmax - dm.tmin + 1));
+        var per = Math.max(1, Math.floor(base * dm.pct / 100 * dmgMult));
+        for(i = 0; i < times; i++){
+          var pool = _alive(G[opp]);
+          var t2 = _randOf(pool);
+          if(!t2) break;
+          var o2 = {}; for(var k2 in opts0){ o2[k2] = opts0[k2]; }
+          try{ doDmg(t2, per, o2); }catch(_){}
+          if(hitTargets.indexOf(t2) < 0) hitTargets.push(t2);
+        }
+      } else {
+        var t0 = (tgtEnemy && tgtEnemy.curHp > 0) ? tgtEnemy : _randOf(enemies);
+        if(t0){
+          try{ doDmg(t0, Math.max(1, Math.floor(base * dm.pct / 100 * dmgMult)), opts0); }catch(_){}
+          hitTargets.push(t0);
+        }
+      }
+    }
+    if(sc.heal){
+      var hl = sc.heal;
+      var amt = Math.max(1, Math.floor(_statBase(a, 'sp') * hl.pct / 100 * healMult));
+      var healTargets = [];
+      if(hl.kind === 'all'){ healTargets = hl.revive ? (G[side] || []).slice() : allies.slice(); }
+      else if(hl.kind === 'self'){ healTargets = [a]; }
+      else {
+        var ht = tgtAlly || (hl.revive ? null : _lowestHp(allies));
+        if(!ht && hl.revive){
+          var deadArr = [];
+          for(i = 0; i < (G[side] || []).length; i++){ if(G[side][i] && G[side][i].curHp <= 0) deadArr.push(G[side][i]); }
+          ht = deadArr.length ? deadArr[0] : _lowestHp(allies);
+        }
+        if(ht) healTargets = [ht];
+      }
+      for(i = 0; i < healTargets.length; i++){
+        var th = healTargets[i];
+        if(!th) continue;
+        if(th.curHp <= 0){
+          if(hl.revive){ try{ if(typeof doRevive === 'function') doRevive(th, Math.min(1, hl.pct / 100)); }catch(_){} }
+          continue;
+        }
+        try{ doHeal(th, amt, { actor: a, isHeal: true }); }catch(_){}
+      }
+    }
+    for(i = 0; i < sc.ally.length; i++){
+      var af = sc.ally[i];
+      var aTs = af.scope === 'all' ? allies : (af.scope === 'self' ? [a] : [tgtAlly || _lowestHp(allies)]);
+      for(j = 0; j < aTs.length; j++){ if(aTs[j]) _mkBuff(aTs[j], af); }
+    }
+    for(i = 0; i < sc.foe.length; i++){
+      var ff = sc.foe[i];
+      var fTs;
+      if(ff.scope === 'all') fTs = _alive(G[opp]);
+      else if(hitTargets.length) fTs = [hitTargets[0]];
+      else fTs = [(tgtEnemy && tgtEnemy.curHp > 0) ? tgtEnemy : _randOf(_alive(G[opp]))];
+      for(j = 0; j < fTs.length; j++){ if(fTs[j]) _mkStatus(a, fTs[j], ff); }
+    }
+    try{ if(typeof updateUI === 'function') updateUI(); }catch(_){}
+    if(_batch){ try{ setTimeout(function(){ try{ endBatchTotals(); }catch(_){} }, 60); }catch(_){} }
+  }
+
+  // 玩家路徑(execSkill hook 呼叫):自行處理選目標與 endAction
+  window._dynSkillEngine = function(a, n, cost){
+    var map = window._DYN_SKILL_MAP[n];
+    if(!map || !a) return false;
+    var cfg = window._DYN_HERO_REG[map.hero];
+    if(!cfg) return false;
+    var sc = (map.slot === 's1') ? cfg.s1 : cfg.s2;
+    // 玩家路徑傷害:doDmg 依 _activeSkLvMult 自動套技能等級 → dmgMult=1(嚴禁重複乘)
+    var healMult = 1 + _skLvOf(a, map.slot) * 0.05;
+    function _run(tE, tA){
+      try{ log('[' + a.name + '] ' + n + '!'); }catch(_){}
+      try{ if(typeof playSkillFX === 'function') playSkillFX(n, a, tE ? [tE] : []); }catch(_){}
+      _execEffects(a, sc, 1, healMult, tE, tA, false);
+      try{ endAction(a, cost); }catch(_){}
+    }
+    try{
+      if(sc.dmg && sc.dmg.kind === 'single'){
+        setPending('enemy', function(t){ _run(t, null); });
+      } else if(sc.heal && sc.heal.kind === 'single'){
+        setPending(sc.heal.revive ? 'ally_or_dead' : 'ally', function(t){ _run(null, t); });
+      } else if(sc.foe.length && sc.foe[0].scope === 'one' && !sc.dmg){
+        setPending('enemy', function(t){ _run(t, null); });
+      } else if(sc.ally.length && sc.ally[0].scope === 'one'){
+        setPending('ally', function(t){ _run(null, t); });
+      } else {
+        _run(null, null);
+      }
+    }catch(_e){
+      console.warn('[動態英雄] 技能執行失敗', n, _e);
+      try{ endAction(a, cost); }catch(_){}
+    }
+    return true;
+  };
+
+  // AI 路徑(aiUseSkill 鏈尾 hook 呼叫):純效果,不呼叫 endAction(鏈尾統一收尾);
+  //   能量已於鏈頭扣除。t=鏈頭選好的敵方目標、al=最低HP友方。
+  window._dynSkillEngineAI = function(a, n, t, al){
+    var map = window._DYN_SKILL_MAP[n];
+    if(!map || !a) return false;
+    var cfg = window._DYN_HERO_REG[map.hero];
+    if(!cfg) return false;
+    var sc = (map.slot === 's1') ? cfg.s1 : cfg.s2;
+    var mult = 1 + _skLvOf(a, map.slot) * 0.05;   // AI 路徑不經 _activeSkLvMult → 手動乘
+    _execEffects(a, sc, mult, mult, (t && t.side !== a.side) ? t : null, al || null, false);
+    return true;
+  };
+
+  // 爆發路徑(_runBurst 鏈首 hook 呼叫):目標自動(對齊既有爆發慣例)
+  window._dynBurstEngine = function(h, side){
+    var cfg = window._DYN_HERO_REG[h && h.name];
+    if(!cfg || !cfg.burst) return false;
+    var mult = 1 + _burstLvOf(h) * 0.05;
+    try{ log('💥 [' + h.name + '] 極限爆發「' + cfg.burst.n + '」!'); }catch(_){}
+    _execEffects(h, cfg.burst, mult, mult, null, null, true);
+    return true;
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 天賦引擎(三 hook:戰開 / 行動前 / 受傷時)
+  // ════════════════════════════════════════════════════════════════
+  function _traitLvOf(name){
+    try{ if(typeof _getTraitLv === 'function') return _getTraitLv(name) || 0; }catch(_){}
+    return 0;
+  }
+  function _traitBlocked(h){
+    try{
+      if(typeof hasStatus === 'function'){
+        if(hasStatus(h, '_traitSeal') || hasStatus(h, 'imprison') || hasStatus(h, 'confused')) return true;
+      }
+    }catch(_){}
+    return false;
+  }
+  function _traitChance(cfg){
+    return Math.min(1, (cfg.trait.chance + _traitLvOf(cfg.name) * 3) / 100);
+  }
+  window._dynTraitBattleStart = function(){
+    try{
+      var all = [].concat(G.p1 || [], G.p2 || []);
+      for(var i = 0; i < all.length; i++){
+        var h = all[i];
+        if(!h || h.curHp <= 0) continue;
+        var cfg = window._DYN_HERO_REG[h.name];
+        if(!cfg || !cfg.trait || _traitBlocked(h)) continue;
+        var tc = cfg.trait;
+        if(tc.tpl === 'T1'){
+          _mkBuff(h, tc);
+          try{ log(tc.icon + ' [' + h.name + '] 天賦:' + tc.name + '!獲得「' + ALLY_POOL[tc.buff] + '」!'); }catch(_){}
+          try{ if(typeof bannerFX === 'function') bannerFX(h, tc.icon + ' ' + tc.name, '#ffd866', 900); }catch(_){}
+        } else if(tc.tpl === 'T2'){
+          var mates = _alive(G[h.side]);
+          for(var j = 0; j < mates.length; j++) _mkBuff(mates[j], tc);
+          try{ log(tc.icon + ' [' + h.name + '] 天賦:' + tc.name + '!全隊獲得「' + ALLY_POOL[tc.buff] + '」!'); }catch(_){}
+          try{ if(typeof bannerFX === 'function') bannerFX(h, tc.icon + ' ' + tc.name, '#ffd866', 900); }catch(_){}
+        }
+      }
+    }catch(_e){ console.warn('[動態英雄 戰開天賦] 失敗', _e); }
+  };
+  window._dynTraitTurnStart = function(next){
+    try{
+      if(!next || next.curHp <= 0) return;
+      var cfg = window._DYN_HERO_REG[next.name];
+      if(!cfg || !cfg.trait || _traitBlocked(next)) return;
+      var tc = cfg.trait;
+      if(tc.tpl !== 'T3' && tc.tpl !== 'T4') return;
+      if(Math.random() >= _traitChance(cfg)) return;
+      if(tc.tpl === 'T3'){
+        var amt = Math.max(1, Math.floor(_statBase(next, 'sp') * tc.healPct / 100));
+        try{ doHeal(next, amt, { actor: next, isHeal: true }); }catch(_){}
+        try{ log(tc.icon + ' [' + next.name + '] 天賦:' + tc.name + '!回復 ' + amt + ' HP!'); }catch(_){}
+      } else {
+        var opp = next.side === 'p1' ? 'p2' : 'p1';
+        var t = _randOf(_alive(G[opp]));
+        if(!t) return;
+        _mkStatus(next, t, { t: tc.st, dur: 1, battle: 0, strong: tc.strong, chance: 100 });
+        try{ log(tc.icon + ' [' + next.name + '] 天賦:' + tc.name + '![' + t.name + '] 獲得「' + (tc.strong ? '強力' : '') + FOE_POOL[tc.st] + '」1回合!'); }catch(_){}
+      }
+      try{ if(typeof bannerFX === 'function') bannerFX(next, tc.icon + ' ' + tc.name, '#ffd866', 800); }catch(_){}
+    }catch(_e){ console.warn('[動態英雄 行動前天賦] 失敗', _e); }
+  };
+  window._dynTraitOnDamaged = function(target, rawDmg, opts){
+    try{
+      if(!target || target.curHp <= 0 || !(rawDmg > 0)) return;
+      if(opts && (opts.isHeal || opts.isRebound || opts._isDotTick || opts._fromBleedProc || opts._isDynTrait)) return;
+      var cfg = window._DYN_HERO_REG[target.name];
+      if(!cfg || !cfg.trait || _traitBlocked(target)) return;
+      var tc = cfg.trait;
+      if(tc.tpl !== 'T5' && tc.tpl !== 'T6') return;
+      if(Math.random() >= _traitChance(cfg)) return;
+      if(tc.tpl === 'T5'){
+        var amt = Math.max(1, Math.floor(_statBase(target, 'sp') * tc.healPct / 100));
+        try{ doHeal(target, amt, { actor: target, isHeal: true, _isDynTrait: true }); }catch(_){}
+        try{ log(tc.icon + ' [' + target.name + '] 天賦:' + tc.name + '!回復 ' + amt + ' HP!'); }catch(_){}
+      } else {
+        var atkr = opts && opts.actor;
+        if(!atkr || atkr === target || atkr.side === target.side || atkr.curHp <= 0) return;
+        _mkStatus(target, atkr, { t: tc.st, dur: 1, battle: 0, strong: tc.strong, chance: 100 });
+        try{ log(tc.icon + ' [' + target.name + '] 天賦:' + tc.name + '![' + atkr.name + '] 獲得「' + (tc.strong ? '強力' : '') + FOE_POOL[tc.st] + '」1回合!'); }catch(_){}
+        try{ if(typeof renderCard === 'function') renderCard(atkr); }catch(_){}
+      }
+      try{ if(typeof bannerFX === 'function') bannerFX(target, tc.icon + ' ' + tc.name, '#ffd866', 800); }catch(_){}
+    }catch(_e){ console.warn('[動態英雄 受傷天賦] 失敗', _e); }
+  };
+
+  try{ window._DYN_HERO_POOLS = { foe: FOE_POOL, ally: ALLY_POOL, elem: ELEM_KEYS, tpl: TPL_NAMES, caps: CAPS }; }catch(_){}
+  // GM 後台預覽出口(v5.18.0 Phase B):傳入原始 cfg → 回傳淨化結果+自動生成雙版文字(不動任何資料表)
+  try{
+    window._dynHeroPreview = function(raw){
+      try{
+        var s1 = _sanSkill(raw && raw.s1, false);
+        var s2 = _sanSkill(raw && raw.s2, false);
+        var bu = _sanSkill(raw && raw.burst, true);
+        var tr = _sanTrait(raw && raw.trait);
+        return {
+          ok: !!(s1 && s2 && bu),
+          s1: s1 ? _mkSkillTexts(s1) : null,
+          s2: s2 ? _mkSkillTexts(s2) : null,
+          burst: bu ? _mkSkillTexts(bu) : null,
+          burstRows: bu ? _mkBurstRows(bu) : null,
+          trait: tr ? _mkTraitTexts(tr) : null,
+          traitLv: tr ? _mkTraitLvInfo(tr) : null
+        };
+      }catch(_e){ return { ok: false, err: String(_e && _e.message ? _e.message : _e) }; }
+    };
+  }catch(_){}
 })();
