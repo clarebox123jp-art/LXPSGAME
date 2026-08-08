@@ -3703,7 +3703,11 @@ window._avatarOpenFriendCard = function(label, fd){
  *    - 好友卡片 📇 按鈕:渲染時同開關判定(index.html _renderFriendPanelImpl 內)
  *    - _avatarOpenPanel / _avatarOpenFriendCard 開頭雙保險守門
  * ════════════════════════════════════════ */
-window._AVATAR_ADMIN_ONLY = true;
+/* ★ v5.19.0(2026-08-08·老師指示)—— 自訂主角系統隨主線劇情「正式開放」:閘門改 false,全員可見。
+ *   (主線序章會開造型工房,兩系統為一體,依 v4.86.0 設計兩旗標同輪切換)
+ *   連動全自動:關卡頁 👤 我的主角鈕/好友 📇 名片鈕全員顯示、遊戲指引「我的主角」章自動出現。
+ *   舊值備查(誤刪是大忌):window._AVATAR_ADMIN_ONLY = true; */
+window._AVATAR_ADMIN_ONLY = false;
 
 window._avatarGateAllowed = function(){
   if(window._AVATAR_ADMIN_ONLY !== true) return true;

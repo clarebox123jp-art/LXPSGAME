@@ -15,7 +15,11 @@
 (function(){
   'use strict';
 
-  window._MAINSTORY_ADMIN_ONLY = true;
+  /* ★ v5.19.0(2026-08-08·老師指示)—— 主線劇情「正式開放」:測試期閘門改 false,全體玩家可見。
+   *   連動全自動(v4.86.0/v5.6.0 既有設計·零另改):關卡頁 📖 主線劇情鈕全員顯示+進度徽章、
+   *   近期活動介紹卡自動切「NEW!」正式文案、遊戲指引「主線劇情」章自動出現。
+   *   舊值備查(誤刪是大忌):window._MAINSTORY_ADMIN_ONLY = true; */
+  window._MAINSTORY_ADMIN_ONLY = false;
 
   // ── 破快取:場景圖/影片 URL 帶 ?v=版本(比照爆發影片 _BV_RAW)──
   function _msVer(){
