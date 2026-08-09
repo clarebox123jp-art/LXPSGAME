@@ -1,5 +1,7 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v5.23.0(2026-08-09)— 六處龍王爆發 doDmg 加 _wbBurstMinHalf+_wbBurstOrigDmg(老師裁定:爆發遇強大減傷/無敵至少保留一半傷害;下限引擎在 index.html doDmg 尾端)
+ * ★ v5.22.1(2026-08-09)— 普攻/追擊 LOG「維蘇威炎爪」改依當前龍王屬性動態(海龍王戰出現火龍王爪修正);爆發沒傷害根因②(奧汀注視免疫漏 ignoreBuffs)修在 index.html v5.22.1
  * ★ v5.22.0(2026-08-09)— ①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補齊 海/暗/光/幻 4 龍王專屬開場咆哮+配色(原缺→fallback 火龍王,
  *   老師回報海龍王開場仍是火龍王台詞)②aiAct hook 直達 _wbAdvBossTurn 路徑加 acted 守門(疊發重複呼叫會清掉爆發傷害 timer=
  *   海龍王爆發沒傷害根因)③崩毀/擊敗訊息改動態龍王名 ④新增 _WB_BOSS_SKILL_NAMES 三招表 ⑤關卡文案去寫死。需 index.html 同版 v5.22.0
@@ -734,6 +736,7 @@
               noHalfDmg: true,      // 不受減傷
               piercing: true,       // 無視防禦
               fixedDmg: true,
+              _wbBurstMinHalf: true, _wbBurstOrigDmg: _dmg,   // ★ v5.23.0 傷害下限:至少保留一半
               element: 'fire'
             });
           }
@@ -3173,7 +3176,7 @@
       alive.forEach(t => {
         try{
           if(typeof doDmg === 'function'){
-            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, element: 'grass' });
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, _wbBurstMinHalf: true, _wbBurstOrigDmg: dmg, element: 'grass' });   // ★ v5.23.0 傷害下限:至少保留一半
           }else{ t.curHp = Math.max(0, t.curHp - dmg); }
         }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
         // 全體：猛毒(poison+_strong,-8%/回×5) + 強力出血(bleed+_strong,-9%/回×2 且受擊再追加 9%)雙 DoT 疊加
@@ -3288,7 +3291,7 @@
       alive.forEach(t => {
         try{
           if(typeof doDmg === 'function'){
-            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, piercing: true, element: 'earth' });
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, piercing: true, _wbBurstMinHalf: true, _wbBurstOrigDmg: dmg, element: 'earth' });   // ★ v5.23.0 傷害下限:至少保留一半
           }else{ t.curHp = Math.max(0, t.curHp - dmg); }
         }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
         try{ renderCard(t); }catch(_){}
@@ -3410,7 +3413,7 @@
       alive.forEach(t => {
         try{
           if(typeof doDmg === 'function'){
-            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, element: 'water' });
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, _wbBurstMinHalf: true, _wbBurstOrigDmg: dmg, element: 'water' });   // ★ v5.23.0 傷害下限:至少保留一半
           }else{ t.curHp = Math.max(0, t.curHp - dmg); }
         }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
         // 全體冰凍 1 回合 + 全體封技 1 回合(seal + _burstSeal)
@@ -3541,7 +3544,7 @@
       alive.forEach(t => {
         try{
           if(typeof doDmg === 'function'){
-            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, element: 'wind' });
+            doDmg(t, dmg, { actor: boss, isSkill: true, isAoe: true, ignoreBuffs: true, ignoreEvasion: true, noReflect: true, noHalfDmg: true, _wbBurstMinHalf: true, _wbBurstOrigDmg: dmg, element: 'wind' });   // ★ v5.23.0 傷害下限:至少保留一半
           }else{ t.curHp = Math.max(0, t.curHp - dmg); }
         }catch(_){ t.curHp = Math.max(0, t.curHp - dmg); }
         // 全體麻痺 1 回合
@@ -3687,6 +3690,7 @@
                 noHalfDmg: true,      // 不受減傷
                 piercing: true,       // 無視防禦
                 fixedDmg: true,
+                _wbBurstMinHalf: true, _wbBurstOrigDmg: d,   // ★ v5.23.0 傷害下限:至少保留一半
                 element: 'fire'
               });
             }else{
@@ -3750,7 +3754,22 @@
       tgt.curHp = Math.max(0, tgt.curHp - d);
     }
     try{ renderCard(tgt); }catch(_){}
-    if(typeof log === 'function') log(`🦷 維蘇威炎爪攻擊 ${tgt.name} -${d} HP`);
+    // ★ v5.22.1 — 普攻 LOG 改依當前龍王屬性顯示專屬爪擊名(原寫死「維蘇威炎爪」→ 老師回報
+    //   海龍王戰仍出現火龍王爪;本函式為全龍王共用普攻/追擊,一次修好全 8 龍王)
+    if(typeof log === 'function'){
+      var _clawMap = { fire:'維蘇威炎爪', water:'深淵冰爪', grass:'翠玉藤爪', earth:'山岳岩爪',
+                       wind:'風暴雷爪', dark:'黃泉冥爪', light:'高天原聖爪', omni:'星辰幻爪' };
+      var _bElemC = '';
+      try{
+        _bElemC = (typeof MONSTER_ELEMENT === 'object' && MONSTER_ELEMENT && MONSTER_ELEMENT[boss.name]) || '';
+        if(!_bElemC){
+          var _luC = (window.WORLD_BOSS_LINEUP || []).find(function(b){ return b && b.name === boss.name; });
+          if(_luC) _bElemC = _luC.element || '';
+        }
+      }catch(_){}
+      var _clawNm = _clawMap[_bElemC] || ((boss.name || '龍王') + '之爪');
+      log(`🦷 ${_clawNm}攻擊 ${tgt.name} -${d} HP`);
+    }
     // ★ FIX 20260518(c) #3 — 用 _scheduleBossEnd 取代裸 setTimeout
     _scheduleBossEnd(boss, 1200);
   }
