@@ -1,5 +1,8 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v5.22.0(2026-08-09)— ①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補齊 海/暗/光/幻 4 龍王專屬開場咆哮+配色(原缺→fallback 火龍王,
+ *   老師回報海龍王開場仍是火龍王台詞)②aiAct hook 直達 _wbAdvBossTurn 路徑加 acted 守門(疊發重複呼叫會清掉爆發傷害 timer=
+ *   海龍王爆發沒傷害根因)③崩毀/擊敗訊息改動態龍王名 ④新增 _WB_BOSS_SKILL_NAMES 三招表 ⑤關卡文案去寫死。需 index.html 同版 v5.22.0
  * ★ v4.22.0(2026-07-06)— 風暴雷龍王(taifeng_wind_dragon)修正:①補 _WB_BOSS_ROAR_LINES/_ROAR_COLOR 專屬開場咆哮+雷金配色
  *   (原缺→開場對白 fallback 火龍王)②新增 _wbWindBossS1/S2/Burst 專屬 AI + _wbWindClearBossDebuffs(雷霆貫穿/暴風肅清/
  *   雷神·萬雷殛世;麻痺用 status 'para'、element 'wind')③三 dispatcher 加風暴雷龍王分支(原無→落預設火龍王招式)。需 index.html 同版 v4.22.0
@@ -2006,6 +2009,28 @@
       '🌪 渺小的凡人,可聽得見這撼動天地的雷鳴?',
       '🐉 萬雷齊發——入侵者,在神雷之下化為焦土吧!',
     ],
+    // ★ v5.22.0 — 補齊其餘 4 隻龍王專屬開場咆哮(原缺此筆 → 開場對白 fallback 成火龍王,
+    //   老師回報海龍王開場仍是火龍王台詞;同 v4.22.0 雷龍王前例,一次補齊防日後重演)
+    shenhai_water_dragon: [
+      '❄ 是誰...攪動了萬丈深淵的寒水?',
+      '🌊 渺小的凡人,可曾感受過絕對零度的靜寂?',
+      '🐉 深淵冰封——入侵者,連同靈魂一起沉眠海底吧!',
+    ],
+    bushi_dark_dragon: [
+      '💀 黃泉之門...再度被打開了嗎?',
+      '🌑 渺小的生者,竟敢踏入死者的國度?',
+      '🐉 萬骨咆哮——入侵者,成為我黃泉軍勢的一員吧!',
+    ],
+    shensheng_light_dragon: [
+      '✨ 高天原之光,照見了不潔的入侵者...',
+      '⚖ 渺小的凡人,可願接受天界的審判?',
+      '🐉 神聖裁決——罪人們,在聖光之下懺悔吧!',
+    ],
+    xingchen_omni_dragon: [
+      '🌌 星辰的軌跡...被誰擾亂了?',
+      '💫 渺小的凡人,可知八元素盡歸我掌?',
+      '🐉 銀河傾瀉——入侵者,化作宇宙的星塵吧!',
+    ],
   };
   // 每隻龍王咆哮主色(配合元素;後備火紅)
   window._WB_BOSS_ROAR_COLOR = {
@@ -2013,6 +2038,20 @@
     cuiyu_grass_dragon:   { fg:'#9bf09b', glow:'#22aa44' },
     shanyue_earth_dragon: { fg:'#d9a866', glow:'#8a5a22' },
     taifeng_wind_dragon:  { fg:'#ffe680', glow:'#44ccbb' },   // ★ v4.22.0 — 雷金字 + 風青光暈
+    // ★ v5.22.0 — 補齊 4 隻龍王咆哮配色(原缺 → fallback 火紅)
+    shenhai_water_dragon:   { fg:'#9bd8ff', glow:'#2277dd' },   // 冰藍字 + 深海藍光暈
+    bushi_dark_dragon:      { fg:'#cc99ff', glow:'#5522aa' },   // 幽紫字 + 黃泉紫光暈
+    shensheng_light_dragon: { fg:'#fff2b0', glow:'#ddaa22' },   // 聖金字 + 神聖金光暈
+    xingchen_omni_dragon:   { fg:'#c8d8ff', glow:'#6644cc' },   // 星辰藍紫
+  };
+  // ★ v5.22.0 — 各龍王三招顯示名(房間迷你預覽等 UI 用;未實裝專屬 AI 的暗/光/幻不列,
+  //   world-boss-ui.html 讀不到時顯示「❓ 招式情報收集中」,不會再錯掛火龍王三招)
+  window._WB_BOSS_SKILL_NAMES = {
+    '火山炎龍王': '🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎',
+    '翠綠森龍王': '🌿 劇毒藤縛 / 🍃 萬刃落葉 / ⚡ 翠龍·萬藤絞殺',
+    '山岳地龍王': '🪨 山崩落石 / 🐉 震天龍吼 / ⚡ 天動地裂',
+    '風暴雷龍王': '⚡ 雷霆貫穿 / 🌪 暴風肅清 / ⚡ 雷神·萬雷殛世',
+    '深淵海龍王': '❄ 絕對零度 / 🌊 萬丈寒淵 / ⚡ 絕對零度·冰封終焉',
   };
   // BOSS 開戰咆哮
   window._wbBossOpeningRoar = function(){
@@ -2084,13 +2123,14 @@
     ADV.worldboss = {
       name: '🌍 世界 BOSS 討伐戰',
       emoji: '🐉🌋🔥💀',
-      desc: '來自地心的火山炎龍王降臨!4 位英雄聯手在 10 回合內擊敗牠,'
-          + '善用元素相剋削減多層護盾,小心第 5 / 10 回合的天崩之炎爆發!',
+      // ★ v5.22.0 — 去火龍王寫死改通用(龍王輪替制,所有龍王共用本關卡定義)
+      desc: '當前輪替的世界龍王降臨!4 位英雄聯手在 10 回合內挑戰牠,'
+          + '善用元素相剋削減多層護盾,小心第 5 / 10 回合的爆發技!',
       stars: 5,
       objectives: [
         '⚔ 4 位英雄共同作戰,10 回合內擊敗龍王',
         '🛡 用 4 種破盾元素削減 BOSS 護盾(第 3/5/7/9 回合啟動)',
-        '💥 撐過第 5 / 10 回合的「天崩之炎」爆發技',
+        '💥 撐過第 5 / 10 回合的龍王爆發技',   // ★ v5.22.0 — 去天崩之炎寫死(各龍王爆發不同)
         '🏆 全員存活擊敗 BOSS 獲得最高排名',
       ],
       rewards: [
@@ -2672,6 +2712,15 @@
               console.log('[WB-Adv aiAct hook] BOSS 需要先答題,讓主程式 aiAct 接管 quiz 觸發');
               return _origAiAct.apply(this, arguments);
             }
+            // ★ v5.22.0 — acted 守門(對齊 index.html v5.21.0 甲/v5.22.0):正規流程 BOSS 未行動
+            //   一律先走 quiz(上方 _needQuiz),能走到這裡且 acted=true = 疊發的重複 aiAct 呼叫。
+            //   若放行會重進 _wbAdvBossTurn → 入口 clearTimeout(_wbBossTid) 把「爆發動畫播完後
+            //   才生效的傷害 timer」整條砍掉(老師回報「海龍王爆發沒造成傷害」的根因),且 BOSS
+            //   同回合再行動一次。直接忽略、不排 startTurn:原行動鏈自己的 timer 會正常推進回合。
+            if(a.acted === true){
+              console.warn('🛡 [v5.22.0 WB acted 守門] ' + a.name + ' acted=true 重複進入 aiAct hook → 忽略,保護 BOSS 行動鏈 timer');
+              return;
+            }
             return window._wbAdvBossTurn(a);
           }
         }
@@ -2751,8 +2800,8 @@
 
       // 音效
       try{ if(typeof playSfx === 'function') playSfx('sfx-wb-boss-skill', 0.7); }catch(_){}
-      // log
-      try{ if(typeof log === 'function') log('💥 戰場崩毀!火山炎龍王發動最終滅絕!'); }catch(_){}
+      // log — ★ v5.22.0 改動態當前龍王名(原寫死火山炎龍王,所有龍王共用此崩毀流程)
+      try{ if(typeof log === 'function') log('💥 戰場崩毀!' + ((boss && boss.name) || '龍王') + '發動最終滅絕!'); }catch(_){}
 
       // 把全隊強制歸 0(包括「已 acted=true 還活著的」也要全滅)
       const allOnField = G.p1.filter(h => h);
@@ -4936,8 +4985,10 @@
         prevBest: _prevBest,         // 結算前的個人最佳(供顯示「破紀錄/未破紀錄」對照)
       });
     }else{
-      // fallback alert
-      _wbGameAlert(win ? '🏆 火山炎龍王已被擊敗!' : '💀 全員陣亡...');
+      // fallback alert — ★ v5.22.0 改動態當前龍王名(原寫死火山炎龍王)
+      var _wbWinNm = '龍王';
+      try{ _wbWinNm = (window._wbGetCurrentBoss && window._wbGetCurrentBoss().name) || _wbWinNm; }catch(_){}
+      _wbGameAlert(win ? ('🏆 ' + _wbWinNm + '已被擊敗!') : '💀 全員陣亡...');
     }
 
     // 清理 worldboss 全域狀態:走主程式對外清理函式(才能正確清掉 let _adventureStage)

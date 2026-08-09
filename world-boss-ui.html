@@ -1396,6 +1396,20 @@ window._wbApplyCurrentBossSkin = function(){
           if(_ssp) _ssp.textContent = '💨 速度 ' + (_hdCur.spd != null ? _hdCur.spd : '');
         }
       }catch(_eCurStat){ console.warn('[WB skin v3.15.61] 當前龍王素質套用失敗', _eCurStat); }
+      // ★ v5.22.0 — 房間頭 BOSS 迷你預覽的「屬性/三招名」也依當前龍王動態(原寫死火龍王三招,
+      //   海龍王等其他龍王的房間仍顯示業火灼燒/龍吼震懾/天崩之炎)。三招讀 world-boss.js
+      //   _WB_BOSS_SKILL_NAMES;未實裝專屬 AI 的龍王(暗/光/幻)查無 → 顯示「招式情報收集中」。
+      try{
+        const _skTbl22 = window._WB_BOSS_SKILL_NAMES || {};
+        const _skTxt22 = _skTbl22[_nm] || '❓ 招式情報收集中';
+        document.querySelectorAll('.wb-curboss-skills').forEach(function(el){ el.textContent = _skTxt22; });
+        const _edLine22 = _ED2[_b.element];
+        if(_edLine22){
+          document.querySelectorAll('.wb-curboss-elemline').forEach(function(el){
+            el.textContent = _edLine22.icon + ' ' + _edLine22.name + '屬性';
+          });
+        }
+      }catch(_eSk22){ console.warn('[WB skin v5.22.0] 房間頭三招/屬性套用失敗', _eSk22); }
     }catch(_eDesc){ console.warn('[WB skin v3.14.25] 套用當前龍王描述/屬性失敗', _eDesc); }
   }catch(_eSk){ console.warn('[WB skin v3.14.20] 套用當前龍王外觀失敗', _eSk); }
 };
@@ -3930,8 +3944,9 @@ try{
       <div>
         <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ <span class="wb-curboss-nm">火山炎龍王</span></div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
-          HP 10,000,000 ✦ 火屬性 ✦ 4 階段護盾<br>
-          🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎
+          <!-- ★ v5.22.0 — 屬性/三招名加 class 掛勾,由 _wbApplyCurrentBossSkin 依當前龍王動態換(原寫死火龍王) -->
+          HP 10,000,000 ✦ <span class="wb-curboss-elemline">🔥 火屬性</span> ✦ 4 階段護盾<br>
+          <span class="wb-curboss-skills">🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎</span>
         </div>
       </div>
     </div>
@@ -13771,7 +13786,15 @@ try{
       if(round === 4){
         burstWarn.style.display = 'block';
         burstWarn.style.color = '#ffaa66';
-        burstWarn.textContent = '⚠ 下回合 BOSS 將釋放天崩之炎爆發技!';
+        // ★ v5.22.0 — 爆發預告改依「當前龍王」動態顯示爆發技名
+        //   (原寫死火龍王「天崩之炎」→ 老師回報海龍王戰預告仍顯示火龍王招式)
+        let _bWarnNm = '爆發技';
+        try{
+          const _bDB0 = (typeof BURST_DB !== 'undefined') ? BURST_DB : window.BURST_DB;
+          const _bd0 = _bDB0 && boss && _bDB0[boss.name];
+          if(_bd0 && _bd0.n) _bWarnNm = '「' + _bd0.n + '」爆發技';
+        }catch(_eBw){}
+        burstWarn.textContent = '⚠ 下回合 BOSS 將釋放' + _bWarnNm + '!';
       }else if(round === 8){
         burstWarn.style.display = 'block';
         burstWarn.style.color = '#ffaa66';
