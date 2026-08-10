@@ -2,6 +2,12 @@
  * 小英雄大對抗 — avatar_db.js(主角系統 Phase 1)
  * 版本: v4.64.2(2026-07-20)
  *
+ * ★ v5.25.0(2026-08-10)— iPad 直向預覽溢出修正(老師 iPad 優化需求):
+ *   造型工房左預覽容器 height:80vh → min(80vh,60vw)(僅此一行;所有橫向 iPad 取值仍= 80vh
+ *   行為零變更·只在直向 iPad 自動縮進左欄寬防人物變形/溢出);
+ *   觸控優化主體(按鈕 touch-action / 44px 觸控目標 / 捲動容器慣性+防外溢)在 index.html
+ *   v5.25.0 全域 CSS(以 _avatar-panel 等 overlay id 作用域選中·本檔按鈕零改動即受惠)。
+ *
  * ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件(老師裁定 題1甲/題2乙/題3甲):
  *   ①window._dynAvatarApply 冪等合併引擎(帽/眼鏡/面具/嘴飾四分類·id=200+序號永不重用·
  *     佔位停用制=永不刪只停用→索引永不位移·id==index 不變量與選單/解鎖帳本/GM上鎖/預設四座標系歸一);
@@ -2858,7 +2864,12 @@ window._avatarOpenPanel = function(){
     + '<div style="flex:1;display:flex;min-height:0;">'
     + '<div style="flex:0 0 46%;max-width:640px;display:flex;align-items:center;justify-content:center;padding:12px;background:radial-gradient(circle at 50% 42%,rgba(120,160,255,0.14),transparent 65%);">'
     /* ★ v4.61.0 需求2:預覽加 放大/縮小 鈕(放大=上半身特寫·看清瞳色·同名片/戰鬥卡構圖) */
-    + '<div style="position:relative;height:80vh;max-height:80vh;aspect-ratio:7/10;width:auto;max-width:100%;">'
+    /* ★ v5.25.0 — iPad 直向溢出修正:舊 height:80vh 在直向 iPad(768×1024)= 819px,
+     *   換算 7:10 寬 573px 遠超左欄 46%(約 353px),max-width:100% 只鎖寬、顯式 height 讓
+     *   aspect-ratio 失效 → 人物變形/溢出。改 min(80vh,60vw):所有「橫向」iPad
+     *   (1024/1180/1366 寬)取值仍= 80vh 行為零變更,只在直向自動縮到欄寬內。
+     *   舊值保留備查(誤刪是大忌):height:80vh;max-height:80vh; */
+    + '<div style="position:relative;height:min(80vh,60vw);max-height:min(80vh,60vw);aspect-ratio:7/10;width:auto;max-width:100%;">'
     + '<div id="_av-preview" style="width:100%;height:100%;"></div>'
     + '<button id="_av-zoom-btn" onclick="_avatarToggleZoom()" style="position:absolute;top:8px;right:8px;padding:8px 14px;font-size:14px;font-weight:800;background:rgba(30,40,80,0.7);border:2px solid rgba(140,200,255,0.6);color:#c9e4ff;border-radius:10px;cursor:pointer;font-family:inherit;">🔍 ' + _avT('放大','看特寫') + '</button>'
     + '</div></div>'

@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-09  / 目前主程式版本:v5.24.0(主神奧汀「注視」機制改版:奧汀代承+反擊,每人最多1層)
+//  最後更新:2026-08-10  / 目前主程式版本:v5.25.0(iPad 觸控優化:主線劇情/造型工房/寵物小屋 按鍵好按不卡頓)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,22 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.25.0 — iPad 觸控優化(主線劇情/造型工房/寵物小屋:按鍵好按、連點不卡、捲動更順)
+  {
+    ver: 'v5.25.0',
+    date: '2026-08-10',
+    brief: [
+      '📱【iPad 操作大優化】主線劇情、造型工房、寵物小屋在 iPad 上全面變好按了!所有按鈕加上觸控加速,快速連點(像造型工房的 ◀▶▲▼ 微調鈕、劇情的「下一句」)不再有卡一下的延遲;按鈕也不會再因為「按住太久」跳出奇怪的文字選取選單。',
+      '🐾 寵物小屋的「撫摸/餵食/玩耍」按鈕和右上角「請出小屋」按鈕通通變大變好按,再也不會想按卻按不到!造型工房和主線章節選單的捲動也變順了,捲到底不會再把整個畫面拉走。',
+      '👤 直著拿 iPad 開造型工房時,左邊的主角預覽現在會自動縮到剛剛好的大小,不會再變形或超出畫面。',
+    ],
+    items: [
+      '★ v5.25.0【全域觸控 CSS(index.html 主 style 區塊)】以 overlay 根 id 作用域一次涵蓋三系統(mainstory-select-overlay / mainstory-overlay / mainstory-cover-overlay / _avatar-panel / _av-confirm-modal / _avatar-card-modal / _av-unlock-how / pet-house-overlay / _ph-pick-modal / pet-play-overlay)內所有 button:touch-action:manipulation(消除 iPad Safari 快速連點的雙擊縮放判定延遲)+ -webkit-tap-highlight-color:transparent + user-select/touch-callout:none(防長按跳文字選取)+ min-height:44px(觸控目標拉到 Apple HIG 44pt 下限;寵物槽位互動鈕原約 35px、「請出小屋」鈕原約 26px 為誤觸主因;槽位列增高由既有 _phFitSlots 自動縮放吸收)。所有動態 DOM 都掛同一 document,CSS 依 id 必生效 → mainstory.js 完全不必改動免重傳。',
+      '★ v5.25.0【捲動容器補強】mainstory-select-overlay(章節選單)/_av-tabs、_av-opts(工房頁籤與選項區)/_ph-food(食物面板)/_ph-pick-modal 選寵清單:補 -webkit-overflow-scrolling:touch(慣性捲動)+ overscroll-behavior:contain(捲到底不外溢拉動整頁=iOS 橡皮筋卡死根治)+ touch-action:pan-y(捲動手勢與點擊不互吃)。餵食拖曳(_ph-food-drag touch-action:none)與翻牌/躲貓貓小遊戲既有觸控設定零改動。',
+      '★ v5.25.0【造型工房直向 iPad 溢出修正(avatar_db.js 唯一實質改動)】左預覽容器 height:80vh → min(80vh,60vw):直向 iPad 80vh=819px 換算 7:10 寬遠超左欄 46%,顯式 height 讓 aspect-ratio 失效造成人物變形/溢出;60vw 在所有橫向 iPad(1024/1180/1366 寬)取值仍= 80vh 行為零變更,只在直向自動縮進欄寬。',
+      '★ v5.25.0【範圍說明】戰鬥引擎(冒險/主線實戰/世界龍王/鬥技場共用)久經驗證本輪不動;戰報鈕/圖鑑頁等既有 touch-action 零改動。版號 7 同步點對齊 v5.25.0(FILE_VERSIONS bump index/avatar_db/admin_panel/game_changelog 四鍵;hero_db/mainstory/sw/world-boss 未動不 bump);CURRENT_BOOT_VER 與 AVATAR_DB_VERSION 永久凍結未動;changelog 刪最舊 v5.6.0 維持恰 20 條。',
+    ],
+  },
   // v5.24.0 — 主神奧汀「注視」機制改版(老師裁定:代承+反擊,每人最多 1 層)
   {
     ver: 'v5.24.0',
@@ -327,27 +343,6 @@ window.GAME_CHANGELOG = [
       '★ 刻意不動存檔三槽:已發出的水晶/知識幣/技能書/SSR卷/英雄本體不自動收回(BUG 情境實際數字未必等於標準值),由 GM 依診斷報告標準值走既有戰場驗證工具:「🔬 稀有暴增稽查回收(負值扣減三槽)」「🗂 英雄/至寶持有者審查(admin_delete 三槽不復活)」。',
       '★ 已知邊界:學生正在線上玩主線時執行,該 session 的落地可能把舊鍵寫回雲端(merge 不刪 _rst)→ 請學生離開主線重新登入後,必要時重按一次工具即可(冪等)。',
       '★ v5.7.0【版號】7 同步點全對齊 v5.7.0;CURRENT_BOOT_VER 永久凍結未動。',
-    ],
-  },
-  // v5.6.0 — 主線劇情按鈕顯示章節進度 + 近期活動新增「主線劇情故事與自訂主角系統」介紹
-  {
-    ver: 'v5.6.0',
-    date: '2026-08-01',
-    brief: [
-      '📖【主線劇情按鈕會顯示進度了】關卡選擇頁最上面的「主線劇情」按鈕,右上角新增進度小徽章,隨時告訴你已經完成幾個章節(例如「已完成 3 / 7 章」);把全部章節都打完,還會變成閃亮亮的「全章完成」獎盃徽章喔!',
-      '🎉【近期活動新增主線劇情介紹】打開「近期活動與新角色」,最上面多了一張全新主題卡:「主線劇情故事與自訂主角系統」!裡面介紹七個章節的冒險故事、怎麼捏出你自己的主角、夥伴如何加入隊伍、主角覺醒成 SSR,還有首次通關獎勵的說明,想了解主線玩什麼看這張卡就對了!',
-      '🛡【共用平板更安全了】針對大家共用 iPad 和換裝置的情況,加了四道保護:章節獎勵拿到後會立刻存進雲端,不會因為換平板不見;換帳號登入後,主角卡片絕對不會再顯示到上一位同學設計的造型;萬一之前網路不穩讓進度沒存好,下次登入會自動幫你補存;如果第六章打完了主角卻沒有覺醒,系統也會自動幫你修好!',
-    ],
-    items: [
-      '★ 需求一(入口進度徽章):主線劇情按鈕加 position:relative 與右上角徽章 span;文字由 _msRefreshEntryVisibility 依 _msChapterDone 逐章計數動態更新(單一更新出口),並於 _msMarkChapterDone(章節完成當下)與 _msHydrateProgress(雲端進度回填完成)兩處補呼叫刷新,避免關掉主線視窗回關卡頁或登入非同步回填造成徽章過期;徽章全文案雙版(鐵律 1.232:精緻「已完成 N / 7 章」/簡單「打完 N / 7 章」;全通關「全章完成/全部破完」)。',
-      '★ 需求二(近期活動介紹卡):新增 buildMainStorySection 建卡函式(比照寵物系統卡雙版模式),含五格特色卡(七章故事/捏主角/夥伴加入/主角覺醒 SSR/首次通關獎勵)與入口位置提示;_themes 主題清單置頂插入 mainstory 條目。測試期(主線管理員限定旗標為 true)標題帶「即將推出(預告)」並顯示搶先預告橫幅;正式開放把旗標改 false 後,本卡與標題自動切換 NEW! 正式文案,免再改程式。',
-      '★ 純顯示層新增:不動戰鬥、存檔、章節解鎖、獎勵發放任何機制;主線進度讀取沿用既有 _msChapterDone / MAINSTORY_DB.order,未載入時徽章自動隱藏不炸。',
-      '★ 甲(章節/全通關獎勵即時上雲):_msGrantChapterReward 與 _msGrantAllClearReward 落冪等旗標後各補一筆 _lxpsInstantPersist(比照 ch5 至寶既有做法)——根因是 _r_ 旗標走 players 主檔即時 self-write、水晶/知識幣/技能書/SSR卷在存檔系統等一般 autosave,共用平板在時間差內換帳號或當機會「旗標在、獎勵丟」且被冪等守門擋補發,永久遺失無補救。',
-      '★ 乙(主角「臉」殘留根治·三處):①_backupCuteArt 快照剔除 主角/主角‧覺醒 兩鍵(玩家立繪是啟動後動態寫入的資源,快照只拍一次,換帳號無 reload 後切畫風會把前一位學生的臉還原回來,再被收尾同步抄到覺醒卡,而立繪刷新有簽章守門不重畫)②_clearAccountLocalData 補清:雙卡還原 A1 星形佔位(佔位參照由建立處存 window._LXPS_PROTAG_PLACEHOLDER)、立繪刷新簽章/完成/忙碌旗標歸零、快照防禦性再剔一次 ③主角無精緻風覆蓋,剔除零功能損失;雙卡一致仍由收尾同步與兩名同寫保證。',
-      '★ 丙1(進度懶回寫對帳):_msHydrateProgress union 完成後,若本機鏡像/記憶體有雲端沒有的鍵(先前 fire-and-forget 寫入失敗)→ 立即補寫一次(merge 深合併·每次登入最多一筆),免得換裝置時雲端缺進度導致重打章節重複領獎。',
-      '★ 丙2(ch6 已完成未覺醒自我修復):三個冪等檢查點——hydrate 立即 + 8 秒後重檢(避開 avatarCard 雲端載入較晚把記憶體旗標蓋回 false 的時序)+ 開章節選單時(avatarCard 必已載入,最可靠);條件 ch6 done 且未覺醒 → 補跑 _msEnsureChapterState。根因:覺醒走 avatarCard 那條線,雲端寫失敗+換裝置會卡死角,回顧模式又刻意不跑狀態套用,玩家自己永遠修不回來。',
-      '★ 只改 index.html;admin_panel.js 與 game_changelog.js 僅版號同步,無真 optional chaining 運算子。',
-      '★ v5.6.0【版號】7 同步點全對齊 v5.6.0;CURRENT_BOOT_VER 永久凍結未動。',
     ],
   },
 ];
