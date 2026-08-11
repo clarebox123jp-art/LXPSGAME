@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  mainstory.js — 主線劇情引擎 + MAINSTORY_DB(自 index.html 拆出)
-//  ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
+//  ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
 // ════════════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════════
@@ -3277,6 +3277,7 @@
     }
     function buildDialogBox(){
       dialogWrap = document.createElement("div");
+      dialogWrap.className = "ms-dlg-wrap";   /* ★ v5.26.0 手機適配 CSS 錨點(用 class 不用 id:v4.89.0 舊場景改名 -prev 時會拔子元素 id·class 不受影響·零行為變更) */
       dialogWrap.style.cssText = "width:90%;max-width:1400px;margin-bottom:56px;background:linear-gradient(180deg,rgba(18,10,32,0.94),rgba(38,20,58,0.96));border:3px solid rgba(160,200,255,0.7);border-radius:22px;padding:30px 48px;box-shadow:0 0 40px rgba(120,150,255,0.35);";
       ov.appendChild(dialogWrap);
     }
@@ -3927,6 +3928,7 @@
 
     // 標題 + 進度
     var head = document.createElement("div");
+    head.className = "ms-sel-head";   /* ★ v5.26.0 手機適配 CSS 錨點(index.html media query 用·零行為變更) */
     head.style.cssText = "text-align:center;margin-bottom:22px;";
     var pct = Math.round(doneCnt / order.length * 100);
     head.innerHTML =
@@ -3950,6 +3952,7 @@
       var status = _msChapterDone(cid) ? "done" : (idx === firstUndone ? "current" : "locked");
 
       var card = document.createElement("div");
+      card.className = "ms-ch-card";   /* ★ v5.26.0 手機適配 CSS 錨點(零行為變更) */
       var accent = status === "done" ? "rgba(120,220,150,0.75)" : (status === "current" ? "rgba(255,205,110,0.85)" : "rgba(150,150,170,0.4)");
       var op = status === "locked" ? "0.55" : "1";
       card.style.cssText =
@@ -4034,6 +4037,7 @@
     (function _msComingSoonCard(){
       try{
         var csCard = document.createElement("div");
+        csCard.className = "ms-ch-card";   /* ★ v5.26.0 手機適配 CSS 錨點(與章節卡同版型·零行為變更) */
         var csAccent = "rgba(150,150,170,0.42)";
         csCard.style.cssText =
           "display:flex;align-items:center;gap:18px;margin:0 auto 16px auto;padding:20px 22px;border-radius:20px;" +
