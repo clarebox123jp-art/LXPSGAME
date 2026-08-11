@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  mainstory.js — 主線劇情引擎 + MAINSTORY_DB(自 index.html 拆出)
-//  ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
+//  ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
 // ════════════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════════
@@ -2551,7 +2551,7 @@
     /* ★★ v4.91.0(老師裁定 F甲·老師 2026-07-24 補充口徑)—— ch1_2 馴養教學:
      *   ★老師明確指正:「不是把小怪打到殘血,是會有動物加入物品卡,攜帶後才能開始用飼料馴養」。
      *   作法=沿用既有 window._pendingEventPet 機制(茶園野生動物事件同款):advStartBattle 開場發牌時
-     *   會把該寵物的 EQUIP_DB 物件放進 G.inv[0] → 玩家在物品格看到「動物夥伴卡」→ 用卡把牠帶上
+     *   會把該寵物的 CARRY_PET_DB 物件放進 G.inv[0] → 玩家在物品格看到「動物夥伴卡」→ 用卡把牠帶上
      *   某位英雄身上(doEquip)→ 該英雄回合才會出現 🐾 馴養鈕 → 用飼料馴養。完全對齊老師描述的流程。
      *   ★ 教學旗標 _msTameTut:讓這一場免飼料、問答直接標答案、必定成功(仿既有 _petT2 教學分支),
      *     學生就算背包一份飼料都沒有也一定能完成劇情,不會卡在「按不動」。 */

@@ -1490,6 +1490,7 @@
          + (s.totalHeroLv||0) * 10
          + (s.maxHeroLv||0) * 5
          + (s.treasureCount||0) * 50       // ★ v3.14.17 — 至寶計分(50/件):領了新至寶的槽必勝舊快照,防覆蓋謀殺;權重低於英雄(1000/隻)不干擾主排序
+         + (s.gearCount||0) * 30           // ★ v5.27.0 — 裝備計分(30/件):同款防覆蓋謀殺;權重低於至寶不干擾主排序
          + Math.min((s.coins||0) / 1000, 100)   // ★ v3.9.2 — coins 權重從上限 100000 → 100,只當小尾數
          + Math.min((s.bagItems||0), 100);      // ★ v3.9.2 — bagItems 移除 ×20 倍率
   }
@@ -1805,6 +1806,34 @@
       });
       Object.keys(_treDel).forEach(function(tid){ if(_treDel[tid].deleted) delete _twAcc[tid]; });
 
+      // ── 5b) ★ v5.27.0 裝備系統:帳本去重合併 + 稽核感知 + 以 eqUid 整顆實例 union ──
+      //   鐵則③:整顆實例物件原樣搬移(itemId/affixes/gifted/equippedTo/src/at/at2/rr 一個欄位都不能漏,
+      //   直接吸取 v3.16.67 至寶 union 漏搬 invested 的教訓);同 eqUid 多槽衝突 → at2(最後異動時間)高者整包勝出
+      //   (裝/卸/GM 重Roll 都會更新 at2,newest-wins 語義正確);最近一筆帳本=admin_delete/audit_error_recovered
+      //   的 eqUid 一律排除,防 GM 刪除後被殘槽復活(_lxpsLatestDeletedMap 英雄/至寶前例)。
+      var _gearHist = _lxpsMergeHist(slots, '_equipUnlockHistory', function(e){ return (e.at||0)+'|'+(e.eqUid||''); }, 300);
+      var _gearDel  = _lxpsLatestDeletedMap(_gearHist, 'eqUid');
+      var _gearAcc = {};
+      slots.forEach(function(s){
+        var go = _lxpsObjFromSlot(s, 'equipmentData');
+        var inst = (go && go.instances && typeof go.instances === 'object') ? go.instances : {};
+        Object.keys(inst).forEach(function(uid){
+          var rec = inst[uid];
+          if(!rec || typeof rec !== 'object' || !rec.itemId) return;
+          var prev = _gearAcc[uid];
+          if(!prev || ((rec.at2||rec.at||0) > (prev.at2||prev.at||0))){
+            try{ _gearAcc[uid] = JSON.parse(JSON.stringify(rec)); }catch(_eGc){ _gearAcc[uid] = rec; }
+          }
+        });
+      });
+      Object.keys(_gearDel).forEach(function(uid){ if(_gearDel[uid].deleted) delete _gearAcc[uid]; });
+      // 受贈抵銷帳(鐵則⑧):累積型,逐鍵取 max
+      var _grlAcc = {};
+      slots.forEach(function(s){
+        var o = _lxpsObjFromSlot(s, 'giftReceivedLedger');
+        Object.keys(o).forEach(function(k){ var v = o[k]; if(typeof v === 'number'){ if(!(k in _grlAcc) || v > _grlAcc[k]) _grlAcc[k] = v; } });
+      });
+
       // ── 6) 獎章:union(任一槽有就保留)。★ 真正的已得獎章在 playerMedals(物件);
       //   medals 是「永遠空陣列的遺留欄位」,兩者都 union 但以 playerMedals 為主。 ──
       var _medalAcc = {};   // playerMedals
@@ -1879,6 +1908,9 @@
       merged.unlockedHeroes        = _unlocked;
       _SIX.forEach(function(tk){ merged[tk] = _mergedSix[tk]; merged[tk+'_s'] = JSON.stringify(_mergedSix[tk]); });
       merged.taiwanTreasureData    = _twAcc;  merged.taiwanTreasureData_s = JSON.stringify(_twAcc);
+      merged.equipmentData         = { instances:_gearAcc };  merged.equipmentData_s = JSON.stringify({ instances:_gearAcc });   // ★ v5.27.0 裝備
+      merged._equipUnlockHistory   = _gearHist;  merged._equipUnlockHistory_s = JSON.stringify(_gearHist);
+      merged.giftReceivedLedger    = _grlAcc;    merged.giftReceivedLedger_s = JSON.stringify(_grlAcc);
       merged.tamedPets             = _petAcc; merged.tamedPets_s = JSON.stringify(_petAcc);   // ★ v3.37.0 寵物馴養
       merged._petTameHistory       = _petHist; merged._petTameHistory_s = JSON.stringify(_petHist);
       merged.playerMedals          = _medalAcc;   merged.playerMedals_s = JSON.stringify(_medalAcc);
@@ -1916,7 +1948,7 @@
       Object.keys(_mergedSix.heroLevels||{}).forEach(function(n){ if(!_isPHN12(n)) return; if(!_unlSet12[n]) return; var lv = _mergedSix.heroLevels[n]||0; if(lv>_maxLv) _maxLv=lv; _totalLv+=lv; });
       var _bagItems = Object.keys(_bag).reduce(function(a,k){ return a + (typeof _bag[k]==='number' ? _bag[k] : 0); }, 0);
       merged._dataSummary = { unlockedCount:_unlocked.filter(_isPHN12).length, totalHeroLv:_totalLv, maxHeroLv:_maxLv,
-        coins:_coins, bagItems:_bagItems, treasureCount:Object.keys(_twAcc).length, ts:Date.now(), _source:'_lxpsMergeSlots_v3.15.40' };
+        coins:_coins, bagItems:_bagItems, treasureCount:Object.keys(_twAcc).length, gearCount:Object.keys(_gearAcc).length, ts:Date.now(), _source:'_lxpsMergeSlots_v3.15.40' };
 
       console.log('[跨槽合併 v3.15.40] 槽數=' + slots.length + ' → 英雄=' + _unlocked.length
         + ' 最高Lv=' + _maxLv + ' 幣=' + _coins + ' 水晶=' + (_bag.summon_crystal||0)
@@ -6419,7 +6451,7 @@
     const _rCol = { SSR:'#ffd33b', SR:'#b48cff', R:'#8fd0ff' };
     const _icoOf = function(pn){
       try{
-        const eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(e){ return (e.pet || e.n) === pn; }) : null;
+        const eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(e){ return (e.pet || e.n) === pn; }) : null;
         return (eq && eq.icon) || '🐾';
       }catch(_){ return '🐾'; }
     };
@@ -20942,18 +20974,18 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <script>
 window._LXPS_FILE_VERSIONS = {
-  'index.html'         : 'v5.26.0',      // ★ v5.26.0(2026-08-10)— 手機解析度適配(老師需求·排版/按鈕/視窗/文字完整呈現可捲動):主 style 區塊新增雙斷點 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中零影響):主線章節選單卡片可換行+標題字級縮/劇情對白框字級縮+max-height 可捲動長句不裁切/右上鈕貼齊瀏海 safe-area;造型工房直向改上預覽下選單堆疊+頁籤欄縮窄+說明列隱藏;寵物小屋直向槽位列取消 _phFitSlots 整列縮放改全尺寸橫向捲動(卡片按鈕維持好按)+頂列說明隱藏+食物面板縮;圖鑑三頁內距縮;選擇器錨點=mainstory.js v5.26.0 三處純加 class+工房/小屋 id+nth-of-type 結構選擇器(改頂層子元素順序需同步檢查);戰鬥引擎與其他系統不動 ｜ ★ v5.25.0(2026-08-10)— iPad 觸控優化(老師需求·主線劇情/造型工房/寵物小屋):主 style 區塊新增全域 CSS(overlay 根 id 作用域·三系統所有 button 補 touch-action:manipulation 消連點延遲/tap-highlight 透明/user-select+touch-callout none 防長按跳選單/min-height:44px 觸控目標達 Apple HIG 下限[寵物槽位鈕原35px·請出鈕原26px];捲動容器 mainstory-select-overlay/_av-tabs/_av-opts/_ph-food/_ph-pick-modal 補慣性捲動+overscroll-behavior:contain 橡皮筋外溢根治+pan-y);mainstory.js 因 CSS 作用域涵蓋完全不必改動免重傳;配套 avatar_db.js v5.25.0(直向 iPad 預覽 80vh 溢出修正一行) ｜ ★ v5.24.0(2026-08-09)— 主神奧汀天賦「奧汀之眼」注視機制改版(老師裁定):①doDmg ODIN-2 hook 被注視友方受對手直接攻擊時,由「免疫該次傷害(return 0)」改為「奧汀代為承受該次傷害」(return doDmg(奧汀, rawDmg, opts+_odinGazeRedirect 防遞迴;目標若是奧汀自己則不轉移·傷害照常結算)+奧汀以攻擊 100%(+10%/天賦級·乘算·不變)反擊+該次「注視」整顆移除;奧汀已倒下不觸發·DoT/反擊/治療不觸發 ②startTurn 施加段改「每人最多 1 層」(只挑尚未注視的最低 HP% 友方·不再疊第 2 層·配額 1+天賦級 max4 全數分散不同人) ③ignoreBuffs(無視有利)攻擊維持 v5.23.0「擋下一半」分支零改動(不轉移/不反擊/不消耗·龍王爆發 _wbBurstMinHalf 下限不受影響) ④文案同步:奧汀登場介紹卡+hero_db.js(HERO_TRAIT desc/fd·_TRAIT_LV_INFO·HERO_LORE·檔尾 sd 鐵律1.232/1.160)+hero_input.html trait ｜ ★ v5.23.0(2026-08-09)— 龍王爆發傷害規則裁定(老師:遇強大減傷/無敵技能至少保留一半傷害):①三免疫類(奧汀注視/幽幽暗行/科學發明家反應力場)vs 無視有利攻擊由 v5.22.1「完全貫穿」改「擋下一半」(rawDmg×0.5·免疫失效但仍抵擋 50%·不消耗層數/卡片·不反擊反彈·對齊火龍王天崩之炎「無敵改減傷 50%」原設計;未帶 ignoreBuffs 的一般攻擊維持原免疫/擋反行為零改動;反應力場拆前置擋半段+主 hook !ignoreBuffs 排除) ②doDmg 主扣血點前新增龍王爆發「至少保留原始一半」最終下限兜底(opts._wbBurstMinHalf+_wbBurstOrigDmg·各種免疫/減傷鏈疊完低於 50% 即補回 ceil(orig/2)·印貫穿 log;置於工匠魂等不倒類保命被動之前·保命仍可 HP 剩 1) ③配套 world-boss.js v5.23.0:六處龍王爆發 doDmg(草/土/水/風/火 hook 版/火預設天崩之炎)opts 加 _wbBurstMinHalf+_wbBurstOrigDmg;S1/S2/普攻不帶旗標·注視等免疫對其維持全額;world-boss-ui.html 本輪未動維持 v5.22.1 ｜ ★ v5.22.1(2026-08-09)— 世界龍王 LOG/爆發無傷害追修(老師+玩家 v5.22.0 實錘回報):①doDmg 龍王受傷 cap 三處 LOG「炎之意志」改依 HERO_TRAIT[當前龍王].name 動態(海龍王戰仍顯示火龍王天賦名) ②【爆發沒傷害根因②】奧汀「注視」(_odinGaze)免疫 hook 原無 ignoreBuffs 檢查——奧汀每回合幫最低 HP 隊友補注視·滿血隊層數遍佈全隊→龍王 AoE 爆發(無視有利·ignoreBuffs:true)四發全被 return 0·狀態照上 HP 全滿(玩家回報 G 狀態實錘);改尊重 opts.ignoreBuffs:貫穿時印 log·不消耗層數·S1/S2/普攻等未帶 ignoreBuffs 維持原免疫+反擊 ③同類病灶一次修:幽幽「暗行」全免疫+科學發明家「反應力場」擋反·同樣改尊重 ignoreBuffs(貫穿=不擋不反·buff/卡片保留) ④配套 world-boss.js v5.22.1(普攻「維蘇威炎爪」LOG 改依屬性:深淵冰爪/翠玉藤爪/山岳岩爪/風暴雷爪/黃泉冥爪/高天原聖爪/星辰幻爪)+world-boss-ui.html v5.22.1(舊引擎兩處寫死同步去除·保險) ｜ ★ v5.22.0(2026-08-09)— 世界龍王戰四合一修正(老師需求):①龍王戰背景 Y 65%→35%(全龍王下移露出龍頭·BOSS 血條不再蓋住頭部) ②acted 守門補涵蓋 _realAiAct 世界BOSS路徑(v5.21.0 守門在 WB 攔截之後→疊發重複呼叫直達 _wbAdvBossTurn→入口 clearTimeout 砍掉爆發「動畫後才生效」的傷害 timer=老師回報海龍王爆發沒傷害的根因鏈;_quizCbBypass 一次性旗標同語義放行·重複呼叫忽略不排 startTurn 防疊發) ③爆發時序重排擴及世界BOSS戰(老師需求「所有爆發技動畫結束後才生效傷害/治療·點跳過=立即生效」:移除 v4.33.0 _bvInWB 排除,WB 內有爆發影片英雄也改「影片結束/跳過才放 GIF 特效+傷害/治療」·補影片路徑 _wbFxCapture burstCinematic 廣播讓連線隊友端看得到演出;無影片英雄 else 原路徑零改動) ④配套:world-boss.js v5.22.0(補 4 龍王專屬開場咆哮/aiAct hook acted 守門/崩毀·擊敗訊息動態龍王名/_WB_BOSS_SKILL_NAMES 三招表/關卡文案去寫死)+world-boss-ui.html v5.22.0(R4 爆發預告與房間迷你預覽三招·屬性依當前龍王動態) ｜ ★ v5.21.0(2026-08-09)— 玩家 BUG「玩一半跳出遊戲」修復(甲+乙·老師裁定):甲=_realAiAct 一般路徑新增 p2 acted 守門(同一敵人單回合多次行動+多重 startTurn 疊發+新回合答題被孤兒清除秒判答錯 根治;世界BOSS 行動前答題 cb 以 _quizCbBypass 一次性旗標放行·追擊鐵律1.113 走 _wbAdvBossTurn 攔截零影響) 乙=_gpHeartbeatCheck 借既有 3 秒節拍新增冒險戰鬥全滅巡邏(任一方全滅未結算→立即走 startTurn v3.14.0/v3.14.4 保險同款正規收場·最長 20+ 秒凍結縮到 ≤3 秒;G._annihilationPatrolFired 每場一次latch·cutscene/小怪結算/答題中不介入·worldboss/鬥技場不適用) ｜ ★ v5.20.0(2026-08-08)— 主線活動介紹卡圖文並茂大改版(老師需求·純顯示層):buildMainStorySection ①序章封面大橫幅 ②「捏出你的主角」升級置頂主打區(雙月河堤場景圖+三步驟晶片+入口指路·鼓勵孩子創造自己的主角) ③七章封面縮圖帶(章節選單同組封面·零新圖檔) ④特色卡改圖+文(社團教室/黑暗球等場景圖·onerror 隱藏防缺圖破版) ⑤獎勵文案修正對齊實發(🔮×5+💰20,000) ⑥近期活動選單列補 2 張縮圖+sub 捏主角前置;文案 cute/premium 雙版鐵律1.232·零機制改動 ｜ ★ v5.19.0(2026-08-08)— 主線劇情+自訂主角系統正式開放(老師指示):本檔僅版號七點同步(_GAME_LOADED_VERSION+FILE_VERSIONS 五鍵 index/mainstory/avatar_db/admin/changelog);兩個閘門在 mainstory.js(_MAINSTORY_ADMIN_ONLY→false)與 avatar_db.js(_AVATAR_ADMIN_ONLY→false),index 既有連動全自動生效(關卡頁 📖 主線鈕+進度徽章全員顯示/近期活動卡自動切 NEW! 正式文案/遊戲指引主線+我的主角兩章自動出現/獎章·GM回溯·四道共用平板保護 v5.6.0-v5.9.0 早已就緒);遊戲程式碼零改動 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄(index 側七 hook:execSkill 玩家路徑[先設 _activeSkLvMult 再交引擎·doDmg 自動套等級引擎不重複乘]/aiUseSkill 鏈尾 else-if 分支[引擎手動乘等級·鏈尾統一收尾]/_runBurst 鏈首分支[BURST_GIF_DB 註冊即自動播動畫]/startBattle 戰開天賦 T1T2/startTurn 行動前天賦 T3T4/doDmg 受傷天賦 T5T6[逆鱗後同區·rawDmg·_isDynTrait 防遞迴]/載入器 ①c 開機套 lxps_dynHero_v1 快取+_dynContentSync 第三軌 heroVer/heroPacks 獨立比對·quota 滿靜默降級;引擎/資料層在 hero_db.js v5.18.0·GM 後台在 admin_panel.js v5.18.0) ｜ ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件(index 側=動態載入器擴充:_index 同讀 avatarVer/avatarPacks·開機套 lxps_dynAvatar_v1 快取·quota 滿靜默降級·_dynContentSync 題庫/配件雙軌獨立版本比對;主引擎在 avatar_db.js v5.17.0·GM 後台在 admin_panel.js) ｜ ★ v5.16.0(2026-08-06)— 動態內容層第一期・動態題庫:新增開機載入器(localStorage 快取先套→登入後只讀 dynamicContent/_index 一份比對版本→有更新才拉 quiz_N 題包→冪等合併進 ADV_QUIZ_DB id>=100000 專屬區段·所有消費端[冒險抽題/鬥技場/知識王/小博士]執行期翻表自動生效零接線·任何失敗靜默不影響遊戲);同輪救援:發現 repo 缺 mainstory.js(v5.12.0 拆檔後未上傳→主線入口全站失效)·自 git 歷史 0996239(v5.11.0)原段重建 4,111 行交付·內容一字不差·FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動 ｜ ★ v5.15.0(2026-08-05)— 主角圖鑑頭身位置跑掉根治(老師回報:每次重開遊戲,英雄圖鑑網格與詳情頁的主角「頭部+身體」組合位置錯位;開造型工房卻正常,按確認儲存才恢復,下次重開又壞):根因=啟動立繪 poll 常在 gameConfig/avatarPartDefaults 雲端預設表拉回前完成,且立繪簽章只含 cfg → 預設表稍後到貨也永遠不重畫,錯位整場鎖死;開工房是 inline 即時渲染(此時表已到)所以正常;按確認儲存會重畫是因為工房開啟時採用雲端卡(Firestore 鍵序不同)cfg 簽章碰巧改變。修法三保險全在 index.html:①立繪簽章納入預設表內容(表變=舊簽章自動失效)②新增預設表「到貨監看」(每 1.5s 廉價字串比對×60 次·偵測到內容變動即簽章歸零重畫·90 秒停·無變動零渲染成本)③世代守門 _lxpsProtagPortraitGen(舊輪 base64 內嵌抓圖在途完成一律作廢不回寫·一併根治既有 hydrate 歸零重畫與舊輪互蓋的競態)+_msHydrateFromCloud 對帳簽章改同組合格式;avatar_db.js 零更動不 bump(900 台不重抓部件圖) ｜ ★ v5.14.0(2026-08-04)— 圖片瘦身全面接管(老師裁定):sw.js v3.5.93 ①activate 一次性清可JPG化舊 png 快取鍵→已快取玩家自動換 jpg/webp ②precache 格式感知(舊 iPad 完整下載 297MB→43MB 級)③三 key 查詢;index 僅兩個 PRECACHE_URLS 發送點加 supportsWebp 提示欄位·其餘零改動 ｜ ★ v5.13.0(2026-08-04)— 圖片瘦身甲案(檔名不動·SW分流):根目錄 390 張 PNG 盤點→不透明 348 張(除 icon-*)產同名 .jpg q88(297MB→43MB 省85.5%)+補 13 張 .webp;34 張透明(寵物_去背/標題字/素體/body_×4)與 avatar_parts/ 保持 PNG;sw.js v3.5.92 舊機 png→jpg 分流·新機 png→webp 不變;本檔僅版號同步·遊戲程式碼零改動 ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:主線劇情引擎+MAINSTORY_DB(L144205-148311·4,107行/約228KB)整段拆出成 mainstory.js·原位 document.write(_lxpsFileSrc) 載入·零行為變更;FILE_VERSIONS 新增 mainstory.js 鍵·sw.js SHELL_URLS+SW_VERSION 連動·check_inline 基準 21→22 ｜ ★ v5.11.0(2026-08-03)— 世界龍王連線 Firestore 配額熔斷+降載(玩家回報「打龍王一直選角失敗」根治:resource-exhausted 配額耗盡時 ①心跳/離線監測熔斷暫停60秒停止每秒3次重試風暴 ②開房/加入/選角/準備失敗改雙版友善訊息不再直出英文錯誤碼 ③常態降載:心跳10s→20s·watchdog 5s→15s·離線判定20s→45s 讀寫量降約60%;全在 index.html WB net 層·world-boss.js/ui 未動;同版加碼:主角技能繼承(PGI)升級效果文字修正——升級確認視窗/升級書技能選擇視窗/一覽表可升級標籤 三處改用繼承後招式顯示與查表·戰鬥實際威力經檢驗本就正確吃主角自身技能等級 Q2甲·純顯示層) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— GM 主線/主角回溯 client 配套(老師需求·正式開放前建置):①_msHydrateProgress 回溯紀元 _rst(雲端較新→本機鏡像/記憶體整份作廢並刪鏡像檔·union 不復原·懶回寫不回寫·_rst 隨 p 保存逐台失效冪等) ②_msHydrateFromCloud avatarCard.rst 較新→整份採用重置卡+覆寫本機鏡像+清暱稱本機鍵+立繪簽章歸零重畫(只有被 GM 重置的帳號有 rst·其他玩家零影響) ｜ ★ v5.6.0(2026-08-01)— 老師兩需求:①關卡頁主線劇情按鈕右上角新增「已完成章節進度」徽章(✅ 已完成 N / 7 章·全通關🏆·_msRefreshEntryVisibility 單一更新出口+_msMarkChapterDone/_msHydrateProgress 補刷·雙版文字鐵律1.232) ②近期活動置頂新增「主線劇情故事與自訂主角系統」介紹卡(buildMainStorySection·五格特色卡·測試期預告橫幅·_MAINSTORY_ADMIN_ONLY 改 false 自動切 NEW! 正式文案) ③共用平板/換裝置四道保護:甲=章節/全通關獎勵落旗標後即時 _lxpsInstantPersist(補「旗標快、背包慢」時間差) 乙=主角臉殘留根治(_backupCuteArt 快照剔除主角雙鍵+_clearAccountLocalData 雙卡還原★佔位[_LXPS_PROTAG_PLACEHOLDER]+立繪簽章歸零) 丙1=hydrate 懶回寫對帳(本機有雲端沒有→補寫一次) 丙2=ch6 done 未覺醒自我修復(hydrate 即時+8秒重檢+章節選單三檢查點·冪等)
-  'mainstory.js'       : 'v5.26.0',     // ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點:三處純加 className(ms-sel-head/ms-ch-card×2/ms-dlg-wrap·對白框用 class 不用 id 避開 v4.89.0 拔 id 機制)零行為變更;版型規則全在 index.html v5.26.0 media query ｜ ★ v5.19.0(2026-08-08)— 主線劇情正式開放:_MAINSTORY_ADMIN_ONLY true→false(單一開關·全員可見);內容有變依鐵律 bump 本鍵破快取(900 台重抓) ｜ ★ v5.12.0(2026-08-04)— 新檔:主線劇情引擎+MAINSTORY_DB 自 index.html 拆出(額度瘦身丙案第一刀·零行為變更·document.write 原位載入) ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
+  'index.html'         : 'v5.27.0',      // ★ v5.27.0(2026-08-11)— 裝備系統 Phase 1(老師需求·權威=設計表 v4.1+MEMORY_HANDOFF):①資料層 GEAR_DB 60 件(6 部位×10·生活物品命名·四階稀有度=詞條1/2/3/4·dp精緻+ds簡單雙版鐵律1.232)+GEAR_AFFIX_POOL 57 條(通用26/主副武附加10/頭部抵抗11/飾品開場10·免疫7條限傳說+·同狀態免疫抵抗互斥·開場≤2·權重抽選上下限roll取得當下永久固定) ②資料模型 equipmentData={instances:{eqUid:{itemId,affixes,gifted,equippedTo,src,at,at2,rr}}} 唯一實例碼為鍵隨主檔·零新collection rules免改 ③雲端同步總鐵則:槽計分 gearCount×30/件(_summaryRichnessScore+存檔/合併雙側摘要)·三槽合併 eqUid 整顆實例 union at2 新者勝(v3.16.67教訓)+_equipUnlockHistory 300筆帳本稽核感知 admin_delete/audit_error_recovered 排除·giftReceivedLedger 逐鍵max·★零本機鏡像雲端唯一權威(v3.13.93教訓)+_clearAccountLocalData 四全域重置 ④hydrate 於 _applySafeData 至寶合併後整份採用+_gearRepairEquipped 同部位冪等修復 ⑤套用 _applyGearToHero(冒險建隊至寶後同點·數值型直加素質·百分比彙總 h._gearEff 待 Phase 2 戰鬥機制·h._gearCount 供鐵匠改版·鬥技場不經此路徑=1.153 公平制) ⑥UI:圖鑑詳情至寶下方「🛡️裝備欄位」六槽裝/卸/轉裝 modal+素質卡/右欄/排序 _getHeroEffectiveStat 計入 🛡️藍徽章 ⑦GM(老師裁定):hydrate 後自動發放全 60 件各1件(src=gm_grant 冪等)+每件 🎲重Roll 鈕(rr++·GM限定) ⑧同版改名:舊寵物卡 EQUIP_DB→CARRY_PET_DB 全面改名 139 處(純識別字零行為·新系統 GEAR_ 前綴防靜默讀錯庫) ⑨老師四裁定同輪落實(2026-08-11):絕緣工作服=風屬性-25%+抵抗麻痺30%·厚字典=減傷2%+攻擊+2·同名裝備可重複獲得(詞條各異)全保留+全帳號持有上限100件(_GEAR_MAX_OWNED·_gearGrant 守門+滿載提示·GM 補發 ignoreCap 豁免·賣出/贈送騰位在 Phase 3/4)·測試期閘門 _GEAR_ADMIN_ONLY=true 學生完全看不到裝備欄位區塊(picker 雙守門·正式開放改 false 單一開關) ｜ ★ v5.26.0(2026-08-10)— 手機解析度適配(老師需求·排版/按鈕/視窗/文字完整呈現可捲動):主 style 區塊新增雙斷點 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中零影響):主線章節選單卡片可換行+標題字級縮/劇情對白框字級縮+max-height 可捲動長句不裁切/右上鈕貼齊瀏海 safe-area;造型工房直向改上預覽下選單堆疊+頁籤欄縮窄+說明列隱藏;寵物小屋直向槽位列取消 _phFitSlots 整列縮放改全尺寸橫向捲動(卡片按鈕維持好按)+頂列說明隱藏+食物面板縮;圖鑑三頁內距縮;選擇器錨點=mainstory.js v5.26.0 三處純加 class+工房/小屋 id+nth-of-type 結構選擇器(改頂層子元素順序需同步檢查);戰鬥引擎與其他系統不動 ｜ ★ v5.25.0(2026-08-10)— iPad 觸控優化(老師需求·主線劇情/造型工房/寵物小屋):主 style 區塊新增全域 CSS(overlay 根 id 作用域·三系統所有 button 補 touch-action:manipulation 消連點延遲/tap-highlight 透明/user-select+touch-callout none 防長按跳選單/min-height:44px 觸控目標達 Apple HIG 下限[寵物槽位鈕原35px·請出鈕原26px];捲動容器 mainstory-select-overlay/_av-tabs/_av-opts/_ph-food/_ph-pick-modal 補慣性捲動+overscroll-behavior:contain 橡皮筋外溢根治+pan-y);mainstory.js 因 CSS 作用域涵蓋完全不必改動免重傳;配套 avatar_db.js v5.25.0(直向 iPad 預覽 80vh 溢出修正一行) ｜ ★ v5.24.0(2026-08-09)— 主神奧汀天賦「奧汀之眼」注視機制改版(老師裁定):①doDmg ODIN-2 hook 被注視友方受對手直接攻擊時,由「免疫該次傷害(return 0)」改為「奧汀代為承受該次傷害」(return doDmg(奧汀, rawDmg, opts+_odinGazeRedirect 防遞迴;目標若是奧汀自己則不轉移·傷害照常結算)+奧汀以攻擊 100%(+10%/天賦級·乘算·不變)反擊+該次「注視」整顆移除;奧汀已倒下不觸發·DoT/反擊/治療不觸發 ②startTurn 施加段改「每人最多 1 層」(只挑尚未注視的最低 HP% 友方·不再疊第 2 層·配額 1+天賦級 max4 全數分散不同人) ③ignoreBuffs(無視有利)攻擊維持 v5.23.0「擋下一半」分支零改動(不轉移/不反擊/不消耗·龍王爆發 _wbBurstMinHalf 下限不受影響) ④文案同步:奧汀登場介紹卡+hero_db.js(HERO_TRAIT desc/fd·_TRAIT_LV_INFO·HERO_LORE·檔尾 sd 鐵律1.232/1.160)+hero_input.html trait ｜ ★ v5.23.0(2026-08-09)— 龍王爆發傷害規則裁定(老師:遇強大減傷/無敵技能至少保留一半傷害):①三免疫類(奧汀注視/幽幽暗行/科學發明家反應力場)vs 無視有利攻擊由 v5.22.1「完全貫穿」改「擋下一半」(rawDmg×0.5·免疫失效但仍抵擋 50%·不消耗層數/卡片·不反擊反彈·對齊火龍王天崩之炎「無敵改減傷 50%」原設計;未帶 ignoreBuffs 的一般攻擊維持原免疫/擋反行為零改動;反應力場拆前置擋半段+主 hook !ignoreBuffs 排除) ②doDmg 主扣血點前新增龍王爆發「至少保留原始一半」最終下限兜底(opts._wbBurstMinHalf+_wbBurstOrigDmg·各種免疫/減傷鏈疊完低於 50% 即補回 ceil(orig/2)·印貫穿 log;置於工匠魂等不倒類保命被動之前·保命仍可 HP 剩 1) ③配套 world-boss.js v5.23.0:六處龍王爆發 doDmg(草/土/水/風/火 hook 版/火預設天崩之炎)opts 加 _wbBurstMinHalf+_wbBurstOrigDmg;S1/S2/普攻不帶旗標·注視等免疫對其維持全額;world-boss-ui.html 本輪未動維持 v5.22.1 ｜ ★ v5.22.1(2026-08-09)— 世界龍王 LOG/爆發無傷害追修(老師+玩家 v5.22.0 實錘回報):①doDmg 龍王受傷 cap 三處 LOG「炎之意志」改依 HERO_TRAIT[當前龍王].name 動態(海龍王戰仍顯示火龍王天賦名) ②【爆發沒傷害根因②】奧汀「注視」(_odinGaze)免疫 hook 原無 ignoreBuffs 檢查——奧汀每回合幫最低 HP 隊友補注視·滿血隊層數遍佈全隊→龍王 AoE 爆發(無視有利·ignoreBuffs:true)四發全被 return 0·狀態照上 HP 全滿(玩家回報 G 狀態實錘);改尊重 opts.ignoreBuffs:貫穿時印 log·不消耗層數·S1/S2/普攻等未帶 ignoreBuffs 維持原免疫+反擊 ③同類病灶一次修:幽幽「暗行」全免疫+科學發明家「反應力場」擋反·同樣改尊重 ignoreBuffs(貫穿=不擋不反·buff/卡片保留) ④配套 world-boss.js v5.22.1(普攻「維蘇威炎爪」LOG 改依屬性:深淵冰爪/翠玉藤爪/山岳岩爪/風暴雷爪/黃泉冥爪/高天原聖爪/星辰幻爪)+world-boss-ui.html v5.22.1(舊引擎兩處寫死同步去除·保險) ｜ ★ v5.22.0(2026-08-09)— 世界龍王戰四合一修正(老師需求):①龍王戰背景 Y 65%→35%(全龍王下移露出龍頭·BOSS 血條不再蓋住頭部) ②acted 守門補涵蓋 _realAiAct 世界BOSS路徑(v5.21.0 守門在 WB 攔截之後→疊發重複呼叫直達 _wbAdvBossTurn→入口 clearTimeout 砍掉爆發「動畫後才生效」的傷害 timer=老師回報海龍王爆發沒傷害的根因鏈;_quizCbBypass 一次性旗標同語義放行·重複呼叫忽略不排 startTurn 防疊發) ③爆發時序重排擴及世界BOSS戰(老師需求「所有爆發技動畫結束後才生效傷害/治療·點跳過=立即生效」:移除 v4.33.0 _bvInWB 排除,WB 內有爆發影片英雄也改「影片結束/跳過才放 GIF 特效+傷害/治療」·補影片路徑 _wbFxCapture burstCinematic 廣播讓連線隊友端看得到演出;無影片英雄 else 原路徑零改動) ④配套:world-boss.js v5.22.0(補 4 龍王專屬開場咆哮/aiAct hook acted 守門/崩毀·擊敗訊息動態龍王名/_WB_BOSS_SKILL_NAMES 三招表/關卡文案去寫死)+world-boss-ui.html v5.22.0(R4 爆發預告與房間迷你預覽三招·屬性依當前龍王動態) ｜ ★ v5.21.0(2026-08-09)— 玩家 BUG「玩一半跳出遊戲」修復(甲+乙·老師裁定):甲=_realAiAct 一般路徑新增 p2 acted 守門(同一敵人單回合多次行動+多重 startTurn 疊發+新回合答題被孤兒清除秒判答錯 根治;世界BOSS 行動前答題 cb 以 _quizCbBypass 一次性旗標放行·追擊鐵律1.113 走 _wbAdvBossTurn 攔截零影響) 乙=_gpHeartbeatCheck 借既有 3 秒節拍新增冒險戰鬥全滅巡邏(任一方全滅未結算→立即走 startTurn v3.14.0/v3.14.4 保險同款正規收場·最長 20+ 秒凍結縮到 ≤3 秒;G._annihilationPatrolFired 每場一次latch·cutscene/小怪結算/答題中不介入·worldboss/鬥技場不適用) ｜ ★ v5.20.0(2026-08-08)— 主線活動介紹卡圖文並茂大改版(老師需求·純顯示層):buildMainStorySection ①序章封面大橫幅 ②「捏出你的主角」升級置頂主打區(雙月河堤場景圖+三步驟晶片+入口指路·鼓勵孩子創造自己的主角) ③七章封面縮圖帶(章節選單同組封面·零新圖檔) ④特色卡改圖+文(社團教室/黑暗球等場景圖·onerror 隱藏防缺圖破版) ⑤獎勵文案修正對齊實發(🔮×5+💰20,000) ⑥近期活動選單列補 2 張縮圖+sub 捏主角前置;文案 cute/premium 雙版鐵律1.232·零機制改動 ｜ ★ v5.19.0(2026-08-08)— 主線劇情+自訂主角系統正式開放(老師指示):本檔僅版號七點同步(_GAME_LOADED_VERSION+FILE_VERSIONS 五鍵 index/mainstory/avatar_db/admin/changelog);兩個閘門在 mainstory.js(_MAINSTORY_ADMIN_ONLY→false)與 avatar_db.js(_AVATAR_ADMIN_ONLY→false),index 既有連動全自動生效(關卡頁 📖 主線鈕+進度徽章全員顯示/近期活動卡自動切 NEW! 正式文案/遊戲指引主線+我的主角兩章自動出現/獎章·GM回溯·四道共用平板保護 v5.6.0-v5.9.0 早已就緒);遊戲程式碼零改動 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄(index 側七 hook:execSkill 玩家路徑[先設 _activeSkLvMult 再交引擎·doDmg 自動套等級引擎不重複乘]/aiUseSkill 鏈尾 else-if 分支[引擎手動乘等級·鏈尾統一收尾]/_runBurst 鏈首分支[BURST_GIF_DB 註冊即自動播動畫]/startBattle 戰開天賦 T1T2/startTurn 行動前天賦 T3T4/doDmg 受傷天賦 T5T6[逆鱗後同區·rawDmg·_isDynTrait 防遞迴]/載入器 ①c 開機套 lxps_dynHero_v1 快取+_dynContentSync 第三軌 heroVer/heroPacks 獨立比對·quota 滿靜默降級;引擎/資料層在 hero_db.js v5.18.0·GM 後台在 admin_panel.js v5.18.0) ｜ ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件(index 側=動態載入器擴充:_index 同讀 avatarVer/avatarPacks·開機套 lxps_dynAvatar_v1 快取·quota 滿靜默降級·_dynContentSync 題庫/配件雙軌獨立版本比對;主引擎在 avatar_db.js v5.17.0·GM 後台在 admin_panel.js) ｜ ★ v5.16.0(2026-08-06)— 動態內容層第一期・動態題庫:新增開機載入器(localStorage 快取先套→登入後只讀 dynamicContent/_index 一份比對版本→有更新才拉 quiz_N 題包→冪等合併進 ADV_QUIZ_DB id>=100000 專屬區段·所有消費端[冒險抽題/鬥技場/知識王/小博士]執行期翻表自動生效零接線·任何失敗靜默不影響遊戲);同輪救援:發現 repo 缺 mainstory.js(v5.12.0 拆檔後未上傳→主線入口全站失效)·自 git 歷史 0996239(v5.11.0)原段重建 4,111 行交付·內容一字不差·FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動 ｜ ★ v5.15.0(2026-08-05)— 主角圖鑑頭身位置跑掉根治(老師回報:每次重開遊戲,英雄圖鑑網格與詳情頁的主角「頭部+身體」組合位置錯位;開造型工房卻正常,按確認儲存才恢復,下次重開又壞):根因=啟動立繪 poll 常在 gameConfig/avatarPartDefaults 雲端預設表拉回前完成,且立繪簽章只含 cfg → 預設表稍後到貨也永遠不重畫,錯位整場鎖死;開工房是 inline 即時渲染(此時表已到)所以正常;按確認儲存會重畫是因為工房開啟時採用雲端卡(Firestore 鍵序不同)cfg 簽章碰巧改變。修法三保險全在 index.html:①立繪簽章納入預設表內容(表變=舊簽章自動失效)②新增預設表「到貨監看」(每 1.5s 廉價字串比對×60 次·偵測到內容變動即簽章歸零重畫·90 秒停·無變動零渲染成本)③世代守門 _lxpsProtagPortraitGen(舊輪 base64 內嵌抓圖在途完成一律作廢不回寫·一併根治既有 hydrate 歸零重畫與舊輪互蓋的競態)+_msHydrateFromCloud 對帳簽章改同組合格式;avatar_db.js 零更動不 bump(900 台不重抓部件圖) ｜ ★ v5.14.0(2026-08-04)— 圖片瘦身全面接管(老師裁定):sw.js v3.5.93 ①activate 一次性清可JPG化舊 png 快取鍵→已快取玩家自動換 jpg/webp ②precache 格式感知(舊 iPad 完整下載 297MB→43MB 級)③三 key 查詢;index 僅兩個 PRECACHE_URLS 發送點加 supportsWebp 提示欄位·其餘零改動 ｜ ★ v5.13.0(2026-08-04)— 圖片瘦身甲案(檔名不動·SW分流):根目錄 390 張 PNG 盤點→不透明 348 張(除 icon-*)產同名 .jpg q88(297MB→43MB 省85.5%)+補 13 張 .webp;34 張透明(寵物_去背/標題字/素體/body_×4)與 avatar_parts/ 保持 PNG;sw.js v3.5.92 舊機 png→jpg 分流·新機 png→webp 不變;本檔僅版號同步·遊戲程式碼零改動 ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:主線劇情引擎+MAINSTORY_DB(L144205-148311·4,107行/約228KB)整段拆出成 mainstory.js·原位 document.write(_lxpsFileSrc) 載入·零行為變更;FILE_VERSIONS 新增 mainstory.js 鍵·sw.js SHELL_URLS+SW_VERSION 連動·check_inline 基準 21→22 ｜ ★ v5.11.0(2026-08-03)— 世界龍王連線 Firestore 配額熔斷+降載(玩家回報「打龍王一直選角失敗」根治:resource-exhausted 配額耗盡時 ①心跳/離線監測熔斷暫停60秒停止每秒3次重試風暴 ②開房/加入/選角/準備失敗改雙版友善訊息不再直出英文錯誤碼 ③常態降載:心跳10s→20s·watchdog 5s→15s·離線判定20s→45s 讀寫量降約60%;全在 index.html WB net 層·world-boss.js/ui 未動;同版加碼:主角技能繼承(PGI)升級效果文字修正——升級確認視窗/升級書技能選擇視窗/一覽表可升級標籤 三處改用繼承後招式顯示與查表·戰鬥實際威力經檢驗本就正確吃主角自身技能等級 Q2甲·純顯示層) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— GM 主線/主角回溯 client 配套(老師需求·正式開放前建置):①_msHydrateProgress 回溯紀元 _rst(雲端較新→本機鏡像/記憶體整份作廢並刪鏡像檔·union 不復原·懶回寫不回寫·_rst 隨 p 保存逐台失效冪等) ②_msHydrateFromCloud avatarCard.rst 較新→整份採用重置卡+覆寫本機鏡像+清暱稱本機鍵+立繪簽章歸零重畫(只有被 GM 重置的帳號有 rst·其他玩家零影響)
+  'mainstory.js'       : 'v5.27.0',     // ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點:三處純加 className(ms-sel-head/ms-ch-card×2/ms-dlg-wrap·對白框用 class 不用 id 避開 v4.89.0 拔 id 機制)零行為變更;版型規則全在 index.html v5.26.0 media query ｜ ★ v5.19.0(2026-08-08)— 主線劇情正式開放:_MAINSTORY_ADMIN_ONLY true→false(單一開關·全員可見);內容有變依鐵律 bump 本鍵破快取(900 台重抓) ｜ ★ v5.12.0(2026-08-04)— 新檔:主線劇情引擎+MAINSTORY_DB 自 index.html 拆出(額度瘦身丙案第一刀·零行為變更·document.write 原位載入) ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
   'main.css'           : 'v3.15.79',     // ★ v3.15.79(2026-06-22)— 知識王入口彈窗 .king-box-2col 加寬(max-width 1500→1680)+ scoped 字級/按鈕放大(.king-box-2col .king-title/.king-subtitle/.king-rules/.king-rule-row/.king-btn·僅入口彈窗·不影響 question/result)｜v3.14.5(2026-06-10)— 手機橫向 A+B 級可讀性補償(max-height:500px 區塊:戰鬥卡/冒險地圖/過場/相遇/選將/投降/技替/結算/四圖鑑/確認框/登入提示)｜前版 20260602-v3-13-24-arenabtn
   'adv_quiz_db.js'     : '20260620',     // ★ 20260620(v3.15.61)— 世界機關王大賽 ADV_QUIZ_GREENMECH(id 9601-9620)整批換成 STEAM 簡單機械題(斜面/槓桿/滑輪/齒輪/位能動能/系統思考)｜v3.14.18 — 修復四下自然 94 題誤放 TAIWAN_QUIZ_DB(玩家回報無題目);執行期搬移進 ADV_QUIZ_DB｜20260612a 世界機關王大賽 20 題
   'hero_db.js'         : 'v5.24.0',     // ★ v5.24.0(2026-08-09)— 奧汀天賦「奧汀之眼」文案改版四處(HERO_TRAIT desc/fd:注視每人最多1層·被注視受傷改由奧汀代為承受並以攻擊100%反擊[失去注視]/_TRAIT_LV_INFO base·max·effect 同步[注視4人非5層]/HERO_LORE/檔尾 _LXPS_HERO_SD trait·鐵律1.232雙版+1.160只寫Lv1);⚠ 邏輯層(doDmg ODIN-2 代承+startTurn 每人1層)在 index.html 需同版 v5.24.0 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄引擎(檔尾 IIFE·零?.):_dynHeroApply 冪等套用(全拆重建·與既有英雄重名拒絕·off 停用仍完整註冊資料表只下架取得途徑=玩家資產永不損壞)·註冊 HERO_DB/BURST_DB/HERO_TRAIT/_TRAIT_LV_INFO/HERO_IMGS(b64)/AVATARS/HERO_BIO/HERO_LORE/CATEGORIES/PRIMARY_CLASS/HERO_SKILL_EFFECTS(標籤自動推導)/SKILL_UPGRADE_DEF(cat=dmg|heal 標準)/BURST_UPGRADE_DEF(五列自動生成)/SKILL_FORCE_ELEMENT/BURST_GIF_DB(現有 gif+sfx 套用)·grant 三途徑(summon 同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES 對齊 v3.15.43/gm/email 註冊 STUDENT_DESIGNER_HEROES)·雙版文字 d/fd/sd 依參數自動生成(1.160 只寫 Lv1/1.232 兩版齊備·GM 可覆寫·_dynHeroPreview 出口)·戰鬥引擎 _dynSkillEngine(玩家 setPending+endAction·傷害倍率=1)/_dynSkillEngineAI(手動乘 1+skLv×0.05)/_dynBurstEngine(1+burstLv×0.05)=一套引擎雙路徑滿足鐵律1.128·效果池不利15+強力_strong/有利8(僅收驗證過的通用路徑)·傷害三型全走 doDmg→5000cap/鐵律1.31 自動·即死/HP%/固定傷害不存在於引擎·天賦六模板三 hook 守門 _traitSeal/imprison/confused 機率+3%/天賦級 ｜ ★ v4.54.0(2026-07-17)— 兩合一(全在 index.html+hero_db.js+hero_input.html·無 ?.):①朱玥天賦「百草共鳴」新增效果(老師需求):每回合開始時用特技100%恢復我方 HP 最低的 1 名友方(★不可復活→只找存活且未滿血者)。★升級口徑(老師裁定「此效果的升級不用額外提升·隨著原有天賦提升即可」):不另設升級軌·治療基數固定特技100%,但走 doHeal 且 actor=朱玥 → 自動吃既有「百草共鳴治療加成 hook」(草屬性存活數×(4+天賦Lv×2)%·上限+50%)→ 天賦升級自然一起變強;_TRAIT_LV_INFO base/bonus/max 三軌完全不動(鐵律1.160 只寫Lv1基準)。hook 掛 nextRound 救醫馬「救馬本能」之後、冬卡速度還原之前=新回合開始治療類集中區(與春之戰場「每回合開始恢復20%HP」同函式·語感對齊);守門=朱玥存活+天賦未封(_traitSeal/imprison/confused);spv=floor(sp×(1+sp×0.01)) 同寄生/爆發口徑;純治療零傷害→不涉鐵律1.31。資料層四表同步(HERO_TRAIT desc/fd+_TRAIT_LV_INFO effect+檔尾 sd 簡單風+HERO_SKILL_EFFECTS 補「單體回復HP」)·hero_input.html 天賦同步 ②英雄🔍條件搜尋稽核修正(老師回報+全表稽核·純篩選顯示層):❶操偶師補「召喚物」(老師裁定召喚物=持久且卡牌有獨立HP條·_puppetHp 符合·且本就在 _foxStripSummon 消召喚物權威清單內)❷動物學家/水狐移除「召喚物」(動物召喚=給友方裝寵物無HP條/水精靈=一次性治療→依裁定不算)→ 召喚物精準剩 4 隻(操偶師/喚龍使/貓人族長/陰陽師)完全對齊 card-summon-bars❸貓人族長孤兒標籤「凍結」→「冰凍」(v4.48.0 錯字·DEFS 無「凍結」→雙重失效:勾冰凍搜不到牠、凍結永無勾選框=死碼;實際狀態 addStatus freeze)❹炎火超少女補「免死(HP剩1)」(爆發火神附體3回合不會倒下·同鐵匠/魔劍姬口徑)。幼兒園小孩「自身睡眠」依老師裁定不掛「睡眠」(讓對手睡眠才算)。SKILL_EFFECT_DEFS 零新增·稽核後 86 標籤零孤兒零空結果·100 隻與 HERO_PRIMARY_CLASS 完全對齊 ｜ ★ v4.53.0(2026-07-17)— 新英雄 麻吉喵‧Nico(5年5班 熊梓芸·SSR·🛡坦克);英雄編輯器補主分類欄位 ｜ ★ v4.52.0(2026-07-16)— 新增學生設計英雄「幽魂暗狐」(4年7班 于同學·SSR·⚔dmg+🛡ctrl) ｜ ★ v4.20.0(2026-07-05)— 主定位篩選(HERO_PRIMARY_CLASS)調整:動物學家 tank→other(其他);藝天使．克雷爾 v4.19.0 已 tank→heal 不變。只動篩選單一權威·雷達 HERO_CATEGORIES_OVERRIDE/HEX 不動。 ｜ ★ v4.5.0(2026-07-04)— 寵物馴養 Phase C:BURST_GIF_DB 新增 28 隻寵物爆發特效(重用既有 GIF·不同 key·仿大刀勇士·零上傳·key=寵物爆發招式名·dur 2000 全螢幕只播一段);邏輯層在 index.html v4.5.0。 ｜ ★ v3.34.0(2026-07-02)— 新增學生設計英雄「大刀勇士」資料層14表(HERO_DB hp78[=配點60×1.3]/atk25/sp5/spd10·S1霸道裂地斬c6/S2勇士決勝之力c6·BURST奧義‧勇士大刀滅絕斬·TRAIT愈戰愈勇·BURST_GIF劍神連斬.gif[既有]·HERO_IMGS大刀勇士.png·CATEGORIES dmg/heal·PRIMARY dmg·含 inline sd 鐵律1.232 cute+premium雙版·鐵律1.160 desc只寫Lv1);邏輯層在 index.html v3.34.0。 ｜ // ★ v3.31.0(2026-07-02)— 新增學生設計英雄「聖冥法師」資料層14表(HERO_DB hp78/atk8/sp24/spd8·S1死之轉刃c6/S2生與死的洗禮c6·BURST聖光與暗影的調停·TRAIT光暗共生☯️·BURST_GIF死神之鐮.gif·HEX heal6/ctrl4·PRIMARY dmg·SKILL_EFFECTS 13既有標籤·含 inline sd 鐵律1.232);邏輯層在 index.html v3.31.0。 ｜ // ★ v3.25.0(2026-07-01)— SSR+UR 53 隻圖鑑「簡單風」精簡說明:_LXPS_HERO_SD 表擴至 94 隻(41+53=376 條 sd)·全稀有度(R/SR/SSR/UR)完成。載入 attach 迴圈不變(存在才補·已有 sd 不覆蓋)。premium fd/desc 一字不改。鐵律1.232/1.160/1.207。 ｜ // ★ v3.24.0(2026-07-01)— R+SR 41 隻圖鑑「簡單風」精簡說明:檔尾新增 _LXPS_HERO_SD 表(41×trait/s1/s2/burst=164 條)+ 載入時 attach 迴圈把 sd 補進 HERO_TRAIT/HERO_DB.s1s2/BURST_DB(存在才補·已有 sd 不覆蓋→未來新英雄可寫 inline sd 優先)。原 fd/desc 一字不改·premium 沿用。鐵律1.232/1.160/1.207。 ｜ // ★ v3.17.9(2026-07-01)— 版號對齊主程式(本輪 hero_db.js 內容未改·冒險關卡答題科目過濾修復全在 index.html·免重傳) ｜ // ★ v3.17.8(2026-07-01)— 版號對齊主程式(本輪 hero_db.js 內容未改·帳號權威資料稽核全在 index.html·免重傳) ｜ // ★ v3.17.7(2026-07-01)— 版號對齊·內容未改·免重傳(本輪甲=至寶補償 uid + 丙=GM 活動查詢名冊真名列 全在 index.html + admin_panel.js) ｜ // ★ v3.17.6(2026-07-01)— 版號對齊·內容未改·免重傳(本輪 GM 送禮三需求全在 index.html + admin_panel.js) ｜ // ★ v3.17.1(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·更新流程友善化全在 index.html) ｜ ★ v3.17.0(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·逃走小怪卡死+無法同步/等級倒退根治全在 index.html·hero_db.js 免重傳) ｜ ★ v3.16.99(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·玩家端登入自動回收全在 index.html·hero_db.js 免重傳) ｜ ★ v3.16.98(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM補償批次回收全在 index.html + admin_panel.js·hero_db.js 免重傳) ｜ ★ v3.16.94(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM獎勵自選卷領取空轉/過度補償掃描查無紀錄/登入權威下載練英雄保底 全在 index.html + admin_panel.js·hero_db.js 免重傳) ｜ ★ v3.16.69(2026-06-28)— 版號對齊主程式(本輪 hero_db.js 內容未改·英雄圖鑑來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM獎勵視窗字級放大全在 index.html)
   'student_roster.js'  : '20260628',
   'avatar_db.js'       : 'v5.25.0',     // ★ v5.25.0(2026-08-10)— iPad 直向預覽溢出修正(造型工房左預覽容器 height:80vh→min(80vh,60vw):直向 iPad 80vh=819px 遠超左欄 46% 寬·aspect-ratio 7/10 被顯式 height 鎖死導致人物變形/溢出;60vw 在所有橫向 iPad 情境取值仍為 80vh 行為零變更·只在直向生效;觸控 CSS 主體在 index.html v5.25.0) ｜ ★ v5.19.0(2026-08-08)— 自訂主角系統隨主線正式開放:_AVATAR_ADMIN_ONLY true→false(單一開關·全員可見);AVATAR_DB_VERSION 維持凍結 v4.95.2(未覆蓋任何同名素材檔)·靠本載入鍵破快取 ｜ ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件主引擎(_dynAvatarApply 冪等合併·佔位停用制 id==index 不變量·_avAccLayer b64 支援·召喚池擴充四分類·VARF+mask 逐款獨立預設;AVATAR_DB_VERSION 維持凍結 v4.95.2·靠本載入鍵 v5.17.0 破快取) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v4.95.0(2026-07-25)— 造型工房新增 16 髮型頭件(P.hairhead id18~33)+8 便服身件(P.outfit id15~22·老師 16 張全身圖切件·運動服身件不重複只取髮型)+管理員命名/移除通道 gameConfig/avatarPieceMeta(✏️改名/🗑移除乙案·↩復原·免改 rules);尺寸/位置沿用 avatarPartDefaults·bump 破 ?v= 快取 ｜ ★ v4.89.0(2026-07-24)— 卡片背景圖「名稱↔圖片幾乎全錯位」修復:選單寫入 cfg.bg 的是 id 欄位值,_bgLayer 舊碼卻用 _pick(P.bg,cfg.bg)=陣列索引取圖(P.bg id 亂序→兩套座標系錯接,只有 id0/id1 碰巧正確);改按 id 查找(與解鎖帳本 bg:<id>/GM 上鎖/主線發放/舊存檔同一座標系·查無 id 退回純白不破圖)·AVATAR_DB_VERSION bump 破 ?v= 快取;同版第二項:背景選單「主線劇情章節封面/劇情圖」15 筆(id40~54·grp:story)整批移出(註解保留備查·章節解鎖函式恆回空·舊存檔防呆退純白) ｜ ★ v4.86.0(2026-07-23)— 造型工房三修(本輪唯一實質改動檔)：_avatarSetPart 新增 bg/bgC 分支、_bgLayer 漸層白帶依 portrait 分流、outfit 分支一律 cfg.hh=0 ｜ ★ v4.67.0(2026-07-21)— 主線劇情批次2a:act 分派器 _msRunAct(對白播完→執行 act→續播)+ 序章接線(捏臉開工房/名片展示/加入隊伍演出/次元裂縫改暗場穿越淡黑)+ 第一章 join_ch1 + MAINSTORY_DB 9 場景圖 .png→.jpg(配合 JPGq90)·只改 index.html 主線引擎+DB·avatar_db/admin_panel 僅版號同步 ｜ ★ v4.64.0(2026-07-20)— 自訂角色大改版:頭身新切法素材+頭飾/眼鏡/嘴飾+XY微調+音效+GM上鎖(全在 avatar_db.js) ｜ ★ v4.62.0(2026-07-19)— 自訂角色系統優化四合一(名片BGM 切入/還原·造型工房動態影片背景·特寫只放大人物背景不動[PNG 路徑人物 g transform 群組]·全部重置改遊戲內建確認視窗 _avShowConfirm)｜★ v4.61.0(2026-07-18)— 面板改版(十項直式選單/隨機組合/全部重置/上半身特寫放大/名片=戰鬥卡特寫構圖/髮型款式重新開放)｜★ v4.60.1(2026-07-18)— 兩BUG修復(gls/sh 頁籤短名映射根治體型選不到·去背臉區保護根治眼白透明·素材36件重產)｜★ v4.60.0(2026-07-18)— 自訂角色大優化(整頭/整身/上層渲染染色/服裝配色/背景14場景/髮型選單隱藏·素材32件)｜★ v4.59.0(2026-07-18)— 整套造型系統(P.full 12件·整張取代素體·隱藏基礎圖·雙版名稱)｜★ v4.55.3(2026-07-18)— 新髮型4款(妹妹頭/自然中捲髮/低馬尾/超長直髮 × 四體型)+眼神部件2款(冷酷=銳利鳳眼/溫柔=半月垂眼)、新增 P.hair id10/id11、眼渲染行 _avImgFor 體型解析;刺蝟頭PNG不採用維持SVG｜★ v4.55.2(2026-07-18)— 髮型 PNG 素材上線(短髮/自然長髮/高馬尾/雙馬尾 × 四體型 fImg 陣列,_avImgFor 依體型解析)+素體 v2 運動服(少年幼男淡藍/少女幼女粉紅,body_*.png 同名覆蓋)｜★ v4.55.1(2026-07-17)— PNG 部位換色引擎(膚/瞳/眉 canvas 色域+ROI 染色·髮色整層染色引擎就緒等髮型素材·色票第一格=原色)+ 新分類耳環/口罩/襪子模組佔位 + PNG 圖層序全就緒(21 層)｜★ v4.55.0(2026-07-17)— 全新檔案:主角捏臉系統 Phase 1(部件庫+渲染器+客製化面板+冒險者名片+players 主檔 avatarCard 雲端存取)
-  'admin_panel.js'     : 'v5.26.0',     // ★ v5.26.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;手機解析度適配在 index.html/mainstory.js;無真 optional chaining) ｜ ★ v5.25.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;iPad 觸控優化在 index.html/avatar_db.js;無真 optional chaining) ｜ ★ v5.24.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;奧汀「注視」改版[代承+反擊·每人最多1層]在 index.html/hero_db.js;無真 optional chaining) ｜ ★ v5.23.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發「至少保留一半傷害」規則在 index.html/world-boss.js;無真 optional chaining) ｜ ★ v5.22.1(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發無傷害根因②[奧汀注視免疫漏 ignoreBuffs]與 LOG 動態化在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.22.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;世界龍王戰四合一修正在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.21.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;玩家 BUG「玩一半跳出遊戲」修復 甲 acted 守門+乙 全滅 3 秒巡邏 全在 index.html;無真 optional chaining) ｜ ★ v5.20.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線活動介紹卡圖文並茂改版全在 index.html) ｜ ★ v5.19.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線劇情+自訂主角正式開放·兩閘門在 mainstory.js/avatar_db.js) ｜ ★ v5.18.0(2026-08-07)— 新增「🦸 動態英雄」區段(三點同步:模板卡+SIDEBAR_ITEMS+掛『📚 內容擴充』群組+_initDynHeroSection IIFE):設計單表單(配點總和=100 驗證·HP發佈時×1.3 baked·立繪 canvas 壓縮≦120KB·天賦六模板·三技能參數[傷害三型/治療三型/有利8/不利15+強力+機率+回合或戰鬥結束]·爆發動畫 gif/音效 sfx 執行期自現有素材蒐集零硬編碼·文字預覽走 _dynHeroPreview)→待發佈→🚀發佈(先重讀防多GM互蓋·hero_N 依位元組分包≦700KB·bump heroVer·成功呼 _dynContentSync(true) GM 本機立即生效)·已發佈清單(⏸停用/▶啟用+取得三檔 召喚池/GM送禮/指定學生email)·技能名防碰撞(與全部靜態技能/爆發名比對防劫持派發)·永不刪只停用·無真 optional chaining ｜ ★ v5.17.0(2026-08-06)— 新增「🎩 動態造型配件」區段(上傳→canvas 壓縮 WebP/PNG base64→四體型試穿預覽→發佈至 dynamicContent·停用制永不刪·逐款鎖 開放/召喚1%/暫鎖·id=200+序號永不重用) ｜ ★ v5.16.0(2026-08-06)— 新增 GM「📚 動態題庫擴充」區段(三點同步+新側欄群組『📚 內容擴充』):讀雲端現況/單題新增表單/批次 JSON 匯入/待發佈清單/一鍵發佈(自動配發 id 自 quizNextId·自動分包每包1800題防 1MB 上限·bump quizVer)/現有動態題搜尋與勾選刪除;全走 window._fbDb+_fbFns 既有橋接·寫入限 isAdmin(firestore.rules 新增 dynamicContent 條款需部署)·無真 optional chaining ｜ ★ v5.15.0(2026-08-05)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主角圖鑑頭身位置跑掉根治[立繪簽章納入部件預設表+預設表到貨監看+世代守門]全在 index.html;無真 optional chaining) ｜ ★ v5.14.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身全面接管 sw v3.5.93;無真 optional chaining) ｜ ★ v5.13.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身甲案·sw.js JPG 分流;無真 optional chaining) ｜ ★ v5.12.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主線引擎拆出 mainstory.js 額度瘦身;無真 optional chaining) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 新增「⏪ 3.6 主線/主角回溯」工具(巢狀於急救區段免側欄三點同步):診斷(章節/旗標/標準應得量/夥伴來源/主角卡)→ updateDoc 整欄替換 mainStoryProgress={_rst:ts} + avatarCard=重置卡(保留非主線 unlock)+ _msRollbackLog 稽核;不動存檔三槽·收回獎勵導引既有回收工具;無真 optional chaining ｜ ★ v5.6.0(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線入口進度徽章與近期活動介紹卡全在 index.html;無真 optional chaining 運算子) ｜ ★ ★ v5.1.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第六章校隊教室開場對話全在 index.html;無 ?.) ｜ ★ v5.0.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第五章學校對話場景) ｜ ★ v4.99.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第四章補杏花妖本尊全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.99.0 ｜ ★ v4.98.0(2026-07-27)— 主線第三章隊伍改編(主角/劍士/祭司/電腦繪圖師·繪圖師參戰理由對白)+第四章劇情修改(火法師改戰前火柱登場參戰·打醒被魅惑的守衛/刺客·展現火剋花妖·詢問卡補火剋說明·編組與劇情全一致化)
+  'admin_panel.js'     : 'v5.27.0',     // ★ v5.27.0(2026-08-11)— 版號對齊主程式(本輪 admin 無功能改動;裝備系統 Phase 1[GEAR_DB 60件+詞條池57條+雲端同步+圖鑑裝備欄位+GM 全套發放/重Roll]全在 index.html v5.27.0·GM 操作走遊戲內圖鑑 UI·GM 後台「裝備管理」區依分期計畫 Phase 4 再建;無真 optional chaining) ｜ ★ v5.26.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;手機解析度適配在 index.html/mainstory.js;無真 optional chaining) ｜ ★ v5.25.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;iPad 觸控優化在 index.html/avatar_db.js;無真 optional chaining) ｜ ★ v5.24.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;奧汀「注視」改版[代承+反擊·每人最多1層]在 index.html/hero_db.js;無真 optional chaining) ｜ ★ v5.23.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發「至少保留一半傷害」規則在 index.html/world-boss.js;無真 optional chaining) ｜ ★ v5.22.1(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發無傷害根因②[奧汀注視免疫漏 ignoreBuffs]與 LOG 動態化在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.22.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;世界龍王戰四合一修正在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.21.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;玩家 BUG「玩一半跳出遊戲」修復 甲 acted 守門+乙 全滅 3 秒巡邏 全在 index.html;無真 optional chaining) ｜ ★ v5.20.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線活動介紹卡圖文並茂改版全在 index.html) ｜ ★ v5.19.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線劇情+自訂主角正式開放·兩閘門在 mainstory.js/avatar_db.js) ｜ ★ v5.18.0(2026-08-07)— 新增「🦸 動態英雄」區段(三點同步:模板卡+SIDEBAR_ITEMS+掛『📚 內容擴充』群組+_initDynHeroSection IIFE):設計單表單(配點總和=100 驗證·HP發佈時×1.3 baked·立繪 canvas 壓縮≦120KB·天賦六模板·三技能參數[傷害三型/治療三型/有利8/不利15+強力+機率+回合或戰鬥結束]·爆發動畫 gif/音效 sfx 執行期自現有素材蒐集零硬編碼·文字預覽走 _dynHeroPreview)→待發佈→🚀發佈(先重讀防多GM互蓋·hero_N 依位元組分包≦700KB·bump heroVer·成功呼 _dynContentSync(true) GM 本機立即生效)·已發佈清單(⏸停用/▶啟用+取得三檔 召喚池/GM送禮/指定學生email)·技能名防碰撞(與全部靜態技能/爆發名比對防劫持派發)·永不刪只停用·無真 optional chaining ｜ ★ v5.17.0(2026-08-06)— 新增「🎩 動態造型配件」區段(上傳→canvas 壓縮 WebP/PNG base64→四體型試穿預覽→發佈至 dynamicContent·停用制永不刪·逐款鎖 開放/召喚1%/暫鎖·id=200+序號永不重用) ｜ ★ v5.16.0(2026-08-06)— 新增 GM「📚 動態題庫擴充」區段(三點同步+新側欄群組『📚 內容擴充』):讀雲端現況/單題新增表單/批次 JSON 匯入/待發佈清單/一鍵發佈(自動配發 id 自 quizNextId·自動分包每包1800題防 1MB 上限·bump quizVer)/現有動態題搜尋與勾選刪除;全走 window._fbDb+_fbFns 既有橋接·寫入限 isAdmin(firestore.rules 新增 dynamicContent 條款需部署)·無真 optional chaining ｜ ★ v5.15.0(2026-08-05)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主角圖鑑頭身位置跑掉根治[立繪簽章納入部件預設表+預設表到貨監看+世代守門]全在 index.html;無真 optional chaining) ｜ ★ v5.14.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身全面接管 sw v3.5.93;無真 optional chaining) ｜ ★ v5.13.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身甲案·sw.js JPG 分流;無真 optional chaining) ｜ ★ v5.12.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主線引擎拆出 mainstory.js 額度瘦身;無真 optional chaining) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 新增「⏪ 3.6 主線/主角回溯」工具(巢狀於急救區段免側欄三點同步):診斷(章節/旗標/標準應得量/夥伴來源/主角卡)→ updateDoc 整欄替換 mainStoryProgress={_rst:ts} + avatarCard=重置卡(保留非主線 unlock)+ _msRollbackLog 稽核;不動存檔三槽·收回獎勵導引既有回收工具;無真 optional chaining ｜ ★ v5.6.0(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線入口進度徽章與近期活動介紹卡全在 index.html;無真 optional chaining 運算子) ｜ ★ ★ v5.1.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第六章校隊教室開場對話全在 index.html;無 ?.) ｜ ★ v5.0.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第五章學校對話場景) ｜ ★ v4.99.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第四章補杏花妖本尊全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.99.0
   'world-boss.js'      : 'v5.23.0',     // ★ v5.23.0(2026-08-09)— 六處龍王爆發 doDmg(草/土/水/風/火 execSkill hook 版/火預設)opts 加 _wbBurstMinHalf:true+_wbBurstOrigDmg(index.html doDmg 尾端下限:最終傷害至少為原始一半;免疫類擋半在 index);S1/S2/普攻不帶旗標。⚠ 需 index.html 同版 v5.23.0 ｜ ★ v5.22.1(2026-08-09)— _wbAdvBossNormalAtk 普攻/追擊 LOG「維蘇威炎爪」改依當前龍王屬性動態(冰爪/藤爪/岩爪/雷爪/冥爪/聖爪/幻爪·MONSTER_ELEMENT 優先·LINEUP fallback)。⚠ 需 index.html 同版 v5.22.1 ｜ ★ v5.22.0(2026-08-09)— ①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補齊 海/暗/光/幻 4 隻龍王專屬開場咆哮+配色(原缺此筆→開場對白 fallback 成火龍王的,老師回報海龍王開場仍是火龍王台詞;同 v4.22.0 雷龍王前例) ②aiAct hook「直達 _wbAdvBossTurn」路徑加 acted=true 守門(對齊 index.html v5.21.0/v5.22.0 甲:疊發重複呼叫會重進 _wbAdvBossTurn→入口 clearTimeout 砍掉爆發傷害 timer=海龍王爆發沒傷害根因;守門忽略不排 startTurn) ③崩毀「最終滅絕」與勝利「已被擊敗」訊息改動態當前龍王名(原寫死火山炎龍王) ④新增 window._WB_BOSS_SKILL_NAMES 各龍王三招顯示表(房間迷你預覽用) ⑤ADV_STAGES.worldboss 關卡說明文案去火龍王/天崩之炎寫死改通用。⚠ 需 index.html 同版 v5.22.0 ｜ ★ v4.29.0(2026-07-06)【解凍】— 世界 BOSS 風暴雷龍王(taifeng_wind_dragon)S1/S2/爆發「雷電視覺特效」與「爆發技名稱」全部改正確(老師回報顯示成火龍王的):_WB_FX_URLS 新增 wind_s1(迅雷不及掩耳的攻擊.gif)/wind_s2(龍捲風.gif)/burst_wind(雷雨.gif)三個雷電風專屬 key(全用現有英雄爆發 GIF);_wbWindBossS1 特效 s1→wind_s1(原 s1=火雨.gif 火龍王火特效)、_wbWindBossS2 特效 s2→wind_s2(原集中效果線通用)、_wbWindBossBurst 由 _wbPlayBurstAnimation()【寫死播「火山炎龍王/天崩之炎」火特效+火爆發大字=名稱顯示火龍王的根因】改 _wbPlayFullscreenFx('burst_wind')(只播雷雨 GIF·爆發 log 本就正確輸出「雷神·萬雷殛世」);順修 _wbWaterBossS1 絕對零度 s1(火雨)→burst_water(冰椎爆裂·冰系正確)。連線戰/單人戰皆走本檔 dispatcher 一併修正。⚠ 需 index.html 同版 v4.29.0 ｜ ★ v4.22.0(2026-07-06)【解凍】— 世界 BOSS 風暴雷龍王(taifeng_wind_dragon)修正:①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補 taifeng 專屬開場咆哮+雷金配色(原缺此筆→開場對白 fallback 成火龍王)②新增 _wbWindBossS1/S2/Burst 專屬 AI + _wbWindClearBossDebuffs helper(雷霆貫穿=特技150%單體風傷+麻痺2/暴風肅清=特技120%全體風傷+解除自身不利/雷神·萬雷殛世=特技150%全體風傷+全體麻痺1+解除不利;麻痺用既有 status 'para'、element 'wind')③三 dispatcher(_wbAdvBossS1/S2/BossBurst)加風暴雷龍王分支(原無專屬分支→落預設火龍王的業火灼燒/龍吼震懾/天崩之炎)。⚠ 需 index.html 同版 v4.22.0 ｜ ★ v4.16.0(2026-07-05)— 星辰幻龍王三防禦被動已接入 index.html 引擎(本檔僅更新 header/天賦註解·天賦文本 v4.15.0 已就緒)。 ｜ ★ v4.15.0(2026-07-05)— 三龍王技能爆發正式實裝:暗(幽冥凋零/黃泉侵蝕/黃泉歸葬)光(神聖裁決/天罰之光/高天原審判)幻(星流閃擊/銀河潮汐/星辰湮滅·屬性每回合輪替);暗龍王每回合死亡宣告+光龍王每回合封印被動;HERO_DB/BURST_DB/TRAIT/LORE/BIO 去設計中;暗龍王復活設定取消(文本刪除)。幻龍王三防禦被動待引擎。 ｜ ★ v4.8.0(2026-07-04)— 龍王總HP 5,000,000→10,000,000:WORLD_BOSS_LINEUP 八龍 maxHp+HERO_DB 掛載八條 hp+開放新一輪/入口HP條 fallback×2+console。護盾回合制/單次5000·單場100000 固定值不受影響。 ｜ ★ v3.15.98(2026-06-24)— 深淵海龍王(水)完整實裝:HERO_DB/BURST_DB/HERO_TRAIT/LORE/BIO 正式化+3 AI(_wbWaterBossS1/S2/Burst)+dispatcher 三路由+天賦每回合封技(seal+_burstSeal)+冰凍三段弱點(_wbApplyBossDmgCap 有freeze→×1.3+冰中受擊 G.energy.p2+1+標記_wbWasFrozen·BOSS主行動hook解凍→_wbIceImmuneTurns=1冷卻)｜v3.15.86(2026-06-22)— _wbGrantDragonTreasure 該場 BOSS 龍王至寶重複獲得 fallback 卷軸 3→5(老師乙統一5,對齊自選券/未收錄至寶);排名分級獎勵 expScrollTreasure 5/3/2/1/1 不動(那是名次卷軸獎勵非重複轉換)｜v3.15.51(2026-06-19)— 甲+乙 BOSS 戰天賦對齊:校對 8 龍王圖鑑天賦文字一致 + 地龍王 combat 減傷由 -40% 對齊圖鑑 -30%(傷害 ×0.6→×0.7)｜v3.15.50(2026-06-19)— 8 龍王資料大補完｜v3.15.34 翠之意志棲地正名｜v3.15.17 山岳地龍王實裝
   'world-boss-ui.html' : 'v5.22.1',    // ★ v5.22.1(2026-08-09)— 舊引擎 fallback 路徑兩處寫死同步去除(_wbHostExecuteBossTurn 普攻「維蘇威炎爪」→ boss.name 之爪;cap log「炎之意志吸收」→「龍王之意志吸收」;現行戰鬥走主程式·純保險) ｜ ★ v5.22.0(2026-08-09)— ①戰鬥中 R4 爆發預告改依當前龍王動態顯示爆發技名(_wbAdvSyncOnce 讀 BURST_DB[boss.name]·原寫死火龍王「天崩之炎」,老師回報海龍王預告仍是火龍王招式) ②房間頭 BOSS 迷你預覽「屬性/三招名」改 _wbApplyCurrentBossSkin 動態(新增 .wb-curboss-elemline/.wb-curboss-skills 掛勾·三招讀 world-boss.js _WB_BOSS_SKILL_NAMES·查無顯示「招式情報收集中」)。⚠ 需 world-boss.js 同版 v5.22.0 ｜ ★ v4.25.0(2026-07-06)【解凍】— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處)。⚠ 需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)【解凍】— ①戰鬥畫面 BOSS 背景圖 Y 由 10%→-10%(全龍王下移·避開上半部被 HP 條遮住區;_wbRenderBattleScreen JS 動態設定 + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊(_wbUiStartBattle)補套跟隨寵物(需求3甲:對每個 p1 英雄呼叫 window._applyFollowPetToHero·唯一套用點不雙套·連線為房主寵物)。⚠ 需 index.html 同版 v4.22.0 ｜ ★ v4.8.0(2026-07-04)— ①HP 10M 全UI同步(靜態卡×2/超級血條/介紹彈窗/戰場血條fallback×3);②替補列表三升級:篩選列+🔍條件搜尋(wbswap·至寶modal自動隱藏)+📖圖鑑整備鈕(_wbOpenCodexFromSwap·已選英雄改保留可點只擋選角)+縮圖 object-position 50%→30%(排除33隻 _WB_SWAP_THUMB_KEEP)。 ｜ ★ v3.16.45(2026-06-27)— 龍王戰入口紫框頂部間距壓縮(標題84px下方+副標+紅龍王卡 margin/min-height 縮·紅卡不再被頂部撐開擠在一起)｜ ★ v3.15.87(2026-06-22)— 龍王戰背景圖 Y 值:火龍王(火山炎龍王)維持 center 10%,其餘 7 隻龍王 10%→-10%(_wbRenderBattleScreen L≈10539 在套 _lobby.style.background 前加 _bossBgY 依 _bossName 判定),把背景圖往下移露出更上方的龍頭(地龍王等龍頭偏上原被切掉看不到);CSS fallback L2001 用維蘇威=火龍王圖維持 10% 不動;頂部露出的少量背景由上方 gradient 壓暗｜v3.15.69(2026-06-21)— 排行榜名稱:移除「GM觀看顯示真名」分支(adminShowReal),所有觀看者(含GM)一律走_formatPlayerDisplayName遮罩格式(名冊「5408陳O彬」/lsps「137暱稱」);邀請好友列表同步走中央遮罩函式__完整姓名只在GM後台選單｜v3.15.68(2026-06-21)— 每日儲備入場卷上限顯示 5→10(彈窗持有/剩餘張數);世界BOSS戰績場次標籤正名:「GM補償場次」「入場券場次」一律改「🎁 每日儲備場次」,排行榜累計徽章合併兩來源(bonusBattleCount+bonusTicketCount)為單一「🎁 含N場每日儲備」(後端 wb_entry_ticket / wbBonusGrants 兩系統仍各自獨立、GM工具分開管理)｜v3.15.61(2026-06-20)— 世界 BOSS 頁龍王資訊資料驅動:(a)當前龍王大廳卡素質(攻擊/特技/速度)由寫死火龍王 49/50/15 改 _wbApplyCurrentBossSkin 讀 HERO_DB[當前龍王](HP 統一 5,000,000 不動);(b)「下一隻龍王搶先看」整卡改 _wbApplyNextBossPreview 資料驅動(依 _wbGetNextBossId 取輪替下一隻 → 名稱/立繪/屬性/素質/簡介=背景故事+自動護盾文案/主題色 + 能力詳細介紹鈕 _wbAdvOpenBossInfoPopup(nextId)),修寫死土龍王過時文案(額外減傷 40%→實際 30% 等)｜v3.15.50(2026-06-19)— 龍王戰背景圖 Y 由 center(50%) 減 40% → 10%,讓龍王臉露在畫面中央(全 8 龍王通用;隱藏戰鬥卡縮 1px 可點/點圖攻擊本就通用)。圖鑑彈窗資料驅動,自動反映 world-boss.js 新龍王素質/天賦/技能｜v3.15.48(2026-06-19)— 修龍王戰崩毀後 guest 卡死「無法離開」｜v3.15.21 搶先看改地龍王｜v3.14.25 BOSS能力詳細介紹彈窗
   'arena.js'           : 'v4.88.0',      // ★ v3.17.9(2026-07-01)— 讀取量控管:_arenaFetchTeamPool 原本無 limit() 全集合掃描 arenaTeams(500人×2hr/日用量稽核發現的最大讀取風險點),改加 limit(CLOUD_POOL_MAX_DOCS=150) 鎖死單次讀取上限 + 快取冷卻 60秒→5分鐘;⚠ 取捨:limit 後池子多樣性下降(每次讀到同一批文件ID排序在前的玩家陣容),非隨機取樣,可接受(功能不受影響,只是對手池不夠隨機,後續可用分片隨機欄位優化) ｜ // ★ v3.15.69(2026-06-21)— _getCurrentUserInfo displayLabel改走_formatPlayerDisplayName中央遮罩函式(原本只名冊內走_formatRosterLabel、名冊外fallback原始暱稱會洩真名;改後涵蓋lsps末3碼+真名中間字遮罩全情境,鬥技場對手名與排行榜統一)｜v3.15.60(2026-06-20)— 結算後呼叫主程式 window._checkMedalArena(新增鬥技場成就:首勝/10·30·50累積勝場/5連勝;平敗中斷連勝)｜v3.15.54(2026-06-19)— 結算時旁路寫「逐回合×逐英雄×技能」傷害明細到 arenaDamageDetail/{uid_ts}(聚合 G._arenaDmgSources;失敗靜默不影響戰鬥記錄與獎勵)｜v3.15.49(2026-06-19)— 鬥技場排名發獎正式上線:_arenaIsRankRewardEnabled 預設改 true(GM 仍可關)｜v3.15.37(2026-06-18)— 鬥技之證結算/扣證/發證後即時 gameCloudSave 上雲(跨裝置不消失)
-  'game_changelog.js'  : 'v5.26.0'       // ★ v5.26.0(2026-08-10)— 置頂 v5.26.0 手機解析度適配·刪最舊 v5.7.0·恰 20 條 ｜ ★ v5.25.0(2026-08-10)— 置頂 v5.25.0 iPad 觸控優化(主線/造型工房/寵物小屋)·刪最舊 v5.6.0·恰 20 條 ｜ ★ v5.24.0(2026-08-09)— 置頂 v5.24.0 奧汀「注視」機制改版(代承+反擊·每人最多1層)·刪最舊 v5.5.1·恰 20 條 ｜ ★ v5.23.0(2026-08-09)— 置頂 v5.23.0 龍王爆發至少保留一半傷害(免疫改擋半+最終下限)·刪最舊 v5.5.0·恰 20 條 ｜ ★ v5.22.1(2026-08-09)— 置頂 v5.22.1 龍王爆發無傷害根因②修復+龍王 LOG 動態化·刪最舊 v5.4.0·恰 20 條 ｜ ★ v5.22.0(2026-08-09)— 置頂 v5.22.0 世界龍王戰四合一修正(背景位置/開場咆哮/爆發傷害守門/爆發動畫時序)·刪最舊 v5.3.0·恰 20 條 ｜ ★ v5.21.0(2026-08-09)— 置頂 v5.21.0 戰鬥卡死修復(甲 acted 守門+乙 全滅 3 秒巡邏)·刪最舊 v5.2.0·恰 20 條 ｜ ★ v5.20.0(2026-08-08)— 置頂 v5.20.0 主線活動介紹卡圖文並茂改版·刪最舊 v5.1.0·恰 20 條 ｜ ★ v5.19.0(2026-08-08)— 置頂 v5.19.0 主線劇情+自訂主角正式開放玩家公告(不標 adminOnly)·刪最舊 v5.0.0·恰 20 條 ｜ ★ v5.18.0(2026-08-07)— 置頂 v5.18.0 動態英雄三期(adminOnly 測試期)·刪最舊 v4.99.0·恰 20 條 ｜ ★ v5.17.0(2026-08-06)— 置頂 v5.17.0 動態造型配件(adminOnly 測試期)·刪最舊 v4.98.0·恰 20 條 ｜ ★ v5.16.0(2026-08-06)— 置頂新增 v5.16.0 條目(動態題庫第一期+mainstory.js 缺檔救援)·刪最舊 v4.97.0 維持恰 20 條 ｜ ★ v5.15.0(2026-08-05)— 置頂新增 v5.15.0 條目(主角圖鑑位置修正)·刪最舊 v4.96.0 維持恰 20 條 ｜ ★ v5.14.0(2026-08-04)— 置頂新增 v5.14.0 條目(圖片瘦身全面接管)·刪最舊 v4.95.2 維持恰 20 條 ｜ ★ v5.13.0(2026-08-04)— 置頂新增 v5.13.0 條目(圖片瘦身)·刪最舊 v4.95.1 維持恰 20 條 ｜ ★ v5.12.0(2026-08-04)— 置頂新增 v5.12.0 條目(主線拆檔瘦身)·刪最舊 v4.95.0 維持恰 20 條 ｜ ★ v5.11.0(2026-08-03)— 置頂新增 v5.11.0 條目(龍王配額熔斷+主角繼承升級效果修正)·刪最舊維持恰 20 條 ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 置頂新增 v5.7.0 條目(GM 回溯工具·adminOnly)·刪最舊 v4.90.0 維持恰 20 條 ｜ ★ v5.6.0(2026-08-01)— 置頂新增 v5.6.0 公告(主線入口進度徽章+近期活動主線與主角系統介紹卡)·刪最舊 v4.89.0 維持恰 20 條 ｜ ★ ★ v5.1.0(2026-07-29)— 置頂新增 v5.1.0 公告(第六章校隊教室開場對話·次元裂縫快訊)·刪最舊 v4.80.0 維持恰 20 條 ｜ ★ v5.0.0(2026-07-28)— 置頂新增 v5.0.0 公告(第五章學校對話場景)·刪最舊 v4.79.0 維持恰 20 條 ｜ ★ v4.99.0(2026-07-28)— 置頂新增 v4.99.0 公告(第四章杏花妖親自參戰+出場動畫+專屬答題反應)·刪最舊 v4.78.0·恰 20 條
+  'game_changelog.js'  : 'v5.27.0'       // ★ v5.27.0(2026-08-11)— 置頂 v5.27.0 裝備系統 Phase 1(adminOnly 測試期)·刪最舊 v5.8.0·恰 20 條 ｜ ★ v5.26.0(2026-08-10)— 置頂 v5.26.0 手機解析度適配·刪最舊 v5.7.0·恰 20 條 ｜ ★ v5.25.0(2026-08-10)— 置頂 v5.25.0 iPad 觸控優化(主線/造型工房/寵物小屋)·刪最舊 v5.6.0·恰 20 條 ｜ ★ v5.24.0(2026-08-09)— 置頂 v5.24.0 奧汀「注視」機制改版(代承+反擊·每人最多1層)·刪最舊 v5.5.1·恰 20 條 ｜ ★ v5.23.0(2026-08-09)— 置頂 v5.23.0 龍王爆發至少保留一半傷害(免疫改擋半+最終下限)·刪最舊 v5.5.0·恰 20 條 ｜ ★ v5.22.1(2026-08-09)— 置頂 v5.22.1 龍王爆發無傷害根因②修復+龍王 LOG 動態化·刪最舊 v5.4.0·恰 20 條 ｜ ★ v5.22.0(2026-08-09)— 置頂 v5.22.0 世界龍王戰四合一修正(背景位置/開場咆哮/爆發傷害守門/爆發動畫時序)·刪最舊 v5.3.0·恰 20 條 ｜ ★ v5.21.0(2026-08-09)— 置頂 v5.21.0 戰鬥卡死修復(甲 acted 守門+乙 全滅 3 秒巡邏)·刪最舊 v5.2.0·恰 20 條 ｜ ★ v5.20.0(2026-08-08)— 置頂 v5.20.0 主線活動介紹卡圖文並茂改版·刪最舊 v5.1.0·恰 20 條 ｜ ★ v5.19.0(2026-08-08)— 置頂 v5.19.0 主線劇情+自訂主角正式開放玩家公告(不標 adminOnly)·刪最舊 v5.0.0·恰 20 條 ｜ ★ v5.18.0(2026-08-07)— 置頂 v5.18.0 動態英雄三期(adminOnly 測試期)·刪最舊 v4.99.0·恰 20 條 ｜ ★ v5.17.0(2026-08-06)— 置頂 v5.17.0 動態造型配件(adminOnly 測試期)·刪最舊 v4.98.0·恰 20 條 ｜ ★ v5.16.0(2026-08-06)— 置頂新增 v5.16.0 條目(動態題庫第一期+mainstory.js 缺檔救援)·刪最舊 v4.97.0 維持恰 20 條 ｜ ★ v5.15.0(2026-08-05)— 置頂新增 v5.15.0 條目(主角圖鑑位置修正)·刪最舊 v4.96.0 維持恰 20 條 ｜ ★ v5.14.0(2026-08-04)— 置頂新增 v5.14.0 條目(圖片瘦身全面接管)·刪最舊 v4.95.2 維持恰 20 條 ｜ ★ v5.13.0(2026-08-04)— 置頂新增 v5.13.0 條目(圖片瘦身)·刪最舊 v4.95.1 維持恰 20 條 ｜ ★ v5.12.0(2026-08-04)— 置頂新增 v5.12.0 條目(主線拆檔瘦身)·刪最舊 v4.95.0 維持恰 20 條 ｜ ★ v5.11.0(2026-08-03)— 置頂新增 v5.11.0 條目(龍王配額熔斷+主角繼承升級效果修正)·刪最舊維持恰 20 條 ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 置頂新增 v5.7.0 條目(GM 回溯工具·adminOnly)·刪最舊 v4.90.0 維持恰 20 條 ｜ ★ v5.6.0(2026-08-01)— 置頂新增 v5.6.0 公告(主線入口進度徽章+近期活動主線與主角系統介紹卡)·刪最舊 v4.89.0 維持恰 20 條 ｜ ★ ★ v5.1.0(2026-07-29)— 置頂新增 v5.1.0 公告(第六章校隊教室開場對話·次元裂縫快訊)·刪最舊 v4.80.0 維持恰 20 條 ｜ ★ v5.0.0(2026-07-28)— 置頂新增 v5.0.0 公告(第五章學校對話場景)·刪最舊 v4.79.0 維持恰 20 條
 };
 // 破快取工具:把檔名 → 'file?v=版本' 字串。版本字串做白名單過濾,避免 URL 注入。
 window._lxpsFileSrc = function(name){
@@ -27382,7 +27414,7 @@ const ITEM_DB = [
 
 
 // ====== 裝備資料庫 ======
-const EQUIP_DB = [
+const CARRY_PET_DB = [
   {
     n:'台灣黑熊', sell:5, icon:'🐻',
     d:'攻擊+20%', pet:'台灣黑熊', petDesc:'胸前印著白 V 標記，山中守護神。', petImg:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E9%BB%91%E7%86%8A.png',
@@ -27477,7 +27509,7 @@ const EQUIP_DB = [
     onRemove(h){ }
   }
 ];
-const EQUIP_NAMES = new Set(EQUIP_DB.map(e=>e.n));
+const CARRY_PET_NAMES = new Set(CARRY_PET_DB.map(e=>e.n));
 
 // ★ v1.0.20260421.3000x — 寵物圖鑑科普知識資料
 // 欄位：中文名(key)、sci:學名、alias:別名、region:分布地區、food:主要食物、enemy:主要天敵、habit:特殊習性、reproduce:繁殖方式
@@ -32661,6 +32693,9 @@ function confirmHeroPick(){
       h._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[h.name]) || 0;
       // ★ v1.0.20260428.3730 — 4. 至寶加成(基礎屬性 + 投資點 + 特殊效果)
       try{ if(typeof _applyTaiwanTreasureToHero === 'function') _applyTaiwanTreasureToHero(h); }catch(e){ console.warn('[至寶套用] 失敗', e); }
+      // ★ v5.27.0 裝備系統 Phase 1 — 4b. 裝備加成(數值型直加素質;百分比彙總 h._gearEff 待 Phase 2 戰鬥機制)
+      //   PVP 公平制(鐵律 1.153):鬥技場建隊不走本路徑,自然不套用,與至寶同款排除。
+      try{ if(typeof _applyGearToHero === 'function') _applyGearToHero(h); }catch(e){ console.warn('[裝備套用] 失敗', e); }
       // ★ v3.37.0 寵物馴養 — 5. 跟隨寵物(素質加成 + 自動裝備該寵物)
       try{ if(typeof window._applyFollowPetToHero==='function') window._applyFollowPetToHero(h); }catch(e){ console.warn('[跟隨寵物套用] 失敗', e); }
     });
@@ -34124,7 +34159,7 @@ function buildDeck(){
   // ★ v1.0.20260421.0400 — 依關卡取寵物池：貓空/鬥技場=台灣12、日本關=日本12
   const _equipPool = (typeof window._getEquipPoolForStage === 'function')
     ? window._getEquipPoolForStage()
-    : EQUIP_DB;
+    : CARRY_PET_DB;
   _equipPool.forEach(eq=>{
     pool.push({...eq, uid:Math.random(), type:'equip'});
   });
@@ -34462,7 +34497,7 @@ function renderCard(h){
         const _base_spd=_init.spd||h.spd;
         const _base_hp=_init.hp||h.hp;
         // 計算裝備對各屬性的影響（只看力量手套/智慧頭冠/羽毛短靴/鋼鐵鎧甲類）
-        const _eq=h.equip?EQUIP_DB.find(e=>e.n===h.equip.n):null;
+        const _eq=h.equip?CARRY_PET_DB.find(e=>e.n===h.equip.n):null;
         let _eq_atk=0,_eq_sp=0,_eq_spd=0;
         if(_eq){
           // ★ v1.0.20260423.7900 — 三隻寵物改為百分比加成
@@ -34573,7 +34608,7 @@ function renderCard(h){
     }catch(_){}
     // ★ v4.18.0 — 寵物攜帶/跟隨浮動圖:去背正常圖片浮在肖像「右上角」,高度約肖像高的 40%,
     //   外圍光暈(drop-shadow),點擊開關迷你圖鑑(_togglePetMiniCodex);取代原底部文字標籤。
-    //   圖源三段 fallback:寵物名_去背.png → EQUIP_DB petImg 照片 → 文字 icon。
+    //   圖源三段 fallback:寵物名_去背.png → CARRY_PET_DB petImg 照片 → 文字 icon。
     try{
       // ★ v4.21.0 — 來源放寬:裝備寵物「或」跟隨寵物皆顯示浮圖(_applyFollowPetToHero 兩者都會設·雙保險防漏顯示)
       // ★ v4.36.0 — 倒下/復活後寵物圖片不消失(老師需求):跟隨狀態(_followPet)在倒下/復活時本就不清,
@@ -34588,7 +34623,7 @@ function renderCard(h){
         ? (window._petFollowOf(h.name) || '') : '';
       if((h.equip && h.equip.n) || h._followPet || _pfPnDurable){
         const _pfPn = (h.equip && h.equip.n) ? h.equip.n : (h._followPet || _pfPnDurable);
-        const _pfEq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(e => e.n === _pfPn) : null;
+        const _pfEq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(e => e.n === _pfPn) : null;
         const _pfW = document.createElement('div');
         _pfW.className = 'pet-float-badge';
         // ★ v4.28.0(圖2)— 老師回報浮圖太大且蓋住 HP 條:①縮小 30%(高 50%→35%·下方 img max-width 118→82)
@@ -35574,12 +35609,12 @@ function _showBurstCinematic(h, bd){
 
   // ★ v4.20.0(任務5) — 寵物爆發:右側面板改「該寵物放大特寫」(bd._petName 有值才走此分支;
   //   英雄爆發路徑零改動)。改用 img 元素(才能 onerror)三段 fallback 仿 v4.18 迷你圖鑑:
-  //   去背圖(object-fit:contain+金色光暈)→ EQUIP_DB petImg 照片(cover+圓角)→ 大 icon emoji。
+  //   去背圖(object-fit:contain+金色光暈)→ CARRY_PET_DB petImg 照片(cover+圓角)→ 大 icon emoji。
   if(bd && bd._petName){
     try{
       const _pbPn = bd._petName;
       let _pbEq = null;
-      try{ _pbEq = (typeof EQUIP_DB!=='undefined') ? EQUIP_DB.find(function(e){ return e && (e.pet===_pbPn || e.n===_pbPn); }) : null; }catch(_){}
+      try{ _pbEq = (typeof CARRY_PET_DB!=='undefined') ? CARRY_PET_DB.find(function(e){ return e && (e.pet===_pbPn || e.n===_pbPn); }) : null; }catch(_){}
       const _pbWrap = document.createElement('div');
       _pbWrap.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:30px 20px;';
       const _pbImg = document.createElement('img');
@@ -37312,9 +37347,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     if(side!=='p1'){ 
       // AI用：直接隨機裝備給存活友方
       // ★ v1.0.20260421.0500 — 動物學家召喚依關卡決定（鬥技場=台灣、貓空=台灣、日本關=日本）
-      const EQUIP_LIST2=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : EQUIP_DB.filter(e=>e.n);
+      const CARRY_PET_LIST2=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : CARRY_PET_DB.filter(e=>e.n);
       // ★ v4.10.0(修正5) — 動物學家召喚同套稀有度出現率 SSR15%/SR30%/R55%(每隻獨立擲層·排除五色鳥)
-      const picks2=(typeof window._petRollByRarity==='function') ? window._petRollByRarity(EQUIP_LIST2,4) : [...EQUIP_LIST2].sort(()=>Math.random()-0.5).slice(0,4);
+      const picks2=(typeof window._petRollByRarity==='function') ? window._petRollByRarity(CARRY_PET_LIST2,4) : [...CARRY_PET_LIST2].sort(()=>Math.random()-0.5).slice(0,4);
       picks2.forEach((eq,i)=>{
         const t=allies[i%allies.length];
         if(t&&!t.equip){ t.equip={...eq,uid:Math.random(),type:'equip'}; if(eq.onEquip) eq.onEquip(t); renderCard(t); }
@@ -37347,9 +37382,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
     // 玩家用：呼喚4件裝備，逐一讓玩家裝備
     // ★ v1.0.20260421.0500 — 動物學家召喚依關卡決定（鬥技場=台灣、貓空=台灣、日本關=日本）
-    const EQUIP_LIST=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : EQUIP_DB.filter(e=>e.n);
+    const CARRY_PET_LIST=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : CARRY_PET_DB.filter(e=>e.n);
     // ★ v4.10.0(修正5) — 動物學家召喚同套稀有度出現率 SSR15%/SR30%/R55%(每隻獨立擲層·排除五色鳥)
-    const picks=(typeof window._petRollByRarity==='function') ? window._petRollByRarity(EQUIP_LIST,4) : [...EQUIP_LIST].sort(()=>Math.random()-0.5).slice(0,4);
+    const picks=(typeof window._petRollByRarity==='function') ? window._petRollByRarity(CARRY_PET_LIST,4) : [...CARRY_PET_LIST].sort(()=>Math.random()-0.5).slice(0,4);
     const burstEquips=picks.map(eq=>({...eq,uid:Math.random(),type:'equip'}));
     log(`[${h.name}] 動物大軍！呼喚4隻寵物！`);
     G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
@@ -42172,7 +42207,7 @@ function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
   const ov = document.createElement('div');
   ov.id = 'burst-equip-ov';
   ov.style.cssText='position:absolute;inset:0;background:rgba(0,0,12,0.94);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:24px;overflow-y:auto;';
-  const eqDataForTitle = EQUIP_DB.find(e=>e.n===eq.n);
+  const eqDataForTitle = CARRY_PET_DB.find(e=>e.n===eq.n);
   const _petImg = eqDataForTitle&&eqDataForTitle.petImg ? eqDataForTitle.petImg : '';
   const _petName = eqDataForTitle&&eqDataForTitle.pet ? eqDataForTitle.pet : eq.n;
   const _petDesc = eqDataForTitle&&eqDataForTitle.petDesc ? eqDataForTitle.petDesc : '';
@@ -42206,7 +42241,7 @@ function _showBurstEquipSequence(equips, idx, caster, side, _interrupted){
       // 若已有裝備先卸除
       if(hero.equip){ const old=getEquip(hero); if(old&&old.onRemove) old.onRemove(hero); }
       hero.equip={...eq,uid:Math.random(),type:'equip'};
-      const eqData=EQUIP_DB.find(e=>e.n===eq.n);
+      const eqData=CARRY_PET_DB.find(e=>e.n===eq.n);
       if(eqData&&eqData.onEquip) eqData.onEquip(hero);
       renderCard(hero);
       log(`[${hero.name}] 攜帶了 ${eq.icon||''} ${eq.n}！`);
@@ -42292,7 +42327,7 @@ function renderItems(){
 
 function showEquipDetailPopup(btn, equipName){
   document.querySelectorAll('.equip-detail-popup').forEach(p=>p.remove());
-  const eq=EQUIP_DB.find(e=>e.n===equipName);
+  const eq=CARRY_PET_DB.find(e=>e.n===equipName);
   if(!eq) return;
   const pop=document.createElement('div');
   pop.className='equip-detail-popup skill-popup';
@@ -42309,7 +42344,7 @@ function showEquipDetailPopup(btn, equipName){
   pop.style.top=(r.bottom+6)+'px';
   setTimeout(()=>{ document.addEventListener('click',()=>pop.remove(),{once:true}); },50);
 }
-const _EQUIP_SHORT={'台灣黑熊':'攻擊+20%','台灣獼猴':'特技+20%','石虎':'速度固定+20','喜鵲':'機率不會倒下','櫻花鉤吻鮭':'治療上升','五色鳥':'機率省能量','綠蠵龜':'減速減受傷','台灣藍鵲':'機率反彈傷害','鱟':'HP+10%/回血','梅花鹿':'額外補充能量','白頭翁':'機率免疫狀態','黑冠麻鷺':'抵抗1次倒下'};
+const _CARRY_PET_SHORT={'台灣黑熊':'攻擊+20%','台灣獼猴':'特技+20%','石虎':'速度固定+20','喜鵲':'機率不會倒下','櫻花鉤吻鮭':'治療上升','五色鳥':'機率省能量','綠蠵龜':'減速減受傷','台灣藍鵲':'機率反彈傷害','鱟':'HP+10%/回血','梅花鹿':'額外補充能量','白頭翁':'機率免疫狀態','黑冠麻鷺':'抵抗1次倒下'};
 function equipExtHTML(h){
   if(!h.equip) return '<span class="equip-slot-empty">— 無寵物 —</span>';
   // ★ v4.18.0 — 寵物攜帶/跟隨標籤改為「肖像右上角浮動去背圖」(renderCard 內建立·點擊開迷你圖鑑);
@@ -42318,14 +42353,14 @@ function equipExtHTML(h){
 }
 function _equipExtHTMLLegacyV417(h){
   if(!h.equip) return '<span class="equip-slot-empty">— 無寵物 —</span>';
-  const eq=EQUIP_DB.find(e=>e.n===h.equip.n);
+  const eq=CARRY_PET_DB.find(e=>e.n===h.equip.n);
   const icon=eq && eq.svg ? eq.svg : (eq && eq.icon ? eq.icon : (h.equip.icon||'⚙'));
-  const shortDesc=_EQUIP_SHORT[h.equip.n]||'';
+  const shortDesc=_CARRY_PET_SHORT[h.equip.n]||'';
   return `<div class="equip-badge" style="flex-wrap:nowrap;align-items:center;gap:4px;"><span class="eq-icon" style="flex-shrink:0">${icon}</span><span class="eq-name" style="white-space:nowrap;font-size:22px">${h.equip.n}</span>${shortDesc?`<span style="color:#aaa;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">｜${shortDesc}</span>`:''}  </div>`;
 }
 function equipSlotHTML(h){
   if(!h.equip) return '<span class="equip-slot-empty">— 無寵物 —</span>';
-  const eq = EQUIP_DB.find(e=>e.n===h.equip.n);
+  const eq = CARRY_PET_DB.find(e=>e.n===h.equip.n);
   const icon = eq && eq.svg ? eq.svg : (eq && eq.icon ? eq.icon : (h.equip.icon||'⚙'));
   const desc = eq ? eq.d : '';
   const petName = eq && eq.pet ? eq.pet : '';
@@ -46416,7 +46451,7 @@ function doDmg(target, rawDmg, opts={}){
       } else {
         log(`[${target.name}] 黑冠麻鷺出動！免疫致命傷害！寵物消失！`);
         bannerFX(target,'黑冠麻鷺！','#ffcc88',1000);
-        const _puppetData=EQUIP_DB.find(e=>e.n===target.equip.n);
+        const _puppetData=CARRY_PET_DB.find(e=>e.n===target.equip.n);
         if(_puppetData) G.deck.unshift({..._puppetData,uid:Math.random(),type:'equip'});
         target.equip=null;
         target._deathShieldUsedOnce=false;
@@ -49654,10 +49689,10 @@ function execAtk(actor, target, dmg, opts={}){
       renderCard(target); renderCard(actor);
     } else if(target.equip && !(window._petStealGuard && window._petStealGuard(target))){  /* ★ v4.18.0 已馴養寵物不被掠奪 */
       const oldEq=target.equip;
-      const eqData=EQUIP_DB.find(e=>e.n===oldEq.n);
+      const eqData=CARRY_PET_DB.find(e=>e.n===oldEq.n);
       if(eqData&&eqData.onRemove) eqData.onRemove(target);
       target.equip=null;
-      if(actor.equip){ const prevEq=EQUIP_DB.find(e=>e.n===actor.equip.n); if(prevEq&&prevEq.onRemove)prevEq.onRemove(actor); }
+      if(actor.equip){ const prevEq=CARRY_PET_DB.find(e=>e.n===actor.equip.n); if(prevEq&&prevEq.onRemove)prevEq.onRemove(actor); }
       actor.equip={n:oldEq.n};
       if(eqData&&eqData.onEquip) eqData.onEquip(actor);
       log(`🗡️ [神偷] 天賦：掠奪！奪取 [${target.name}] 的寵物 [${oldEq.n}]！`);
@@ -55529,10 +55564,10 @@ function execSkill(a, sk, cost, stype){
       } else if(t.equip && !(window._petStealGuard && window._petStealGuard(t))){  /* ★ v4.18.0 已馴養寵物不被強奪 */
         // Steal equipment
         const oldEq=t.equip;
-        const eqData=EQUIP_DB.find(e=>e.n===oldEq.n);
+        const eqData=CARRY_PET_DB.find(e=>e.n===oldEq.n);
         if(eqData && eqData.onRemove) eqData.onRemove(t);
         t.equip=null;
-        if(a.equip){ const prevEq=EQUIP_DB.find(e=>e.n===a.equip.n); if(prevEq&&prevEq.onRemove)prevEq.onRemove(a); }
+        if(a.equip){ const prevEq=CARRY_PET_DB.find(e=>e.n===a.equip.n); if(prevEq&&prevEq.onRemove)prevEq.onRemove(a); }
         a.equip={n:oldEq.n};
         if(eqData&&eqData.onEquip) eqData.onEquip(a);
         log(`[${a.name}] 奪取了 [${t.name}] 的寵物 [${oldEq.n}]！`);
@@ -55619,8 +55654,8 @@ function execSkill(a, sk, cost, stype){
       }
     }
     // 召喚1隻寵物
-    const _EQUIP_POOL2=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : EQUIP_DB.filter(e=>e.n);
-    const _randEq2={..._EQUIP_POOL2[Math.floor(Math.random()*_EQUIP_POOL2.length)],uid:Math.random(),type:'equip'};
+    const _CARRY_PET_POOL2=(typeof window._getEquipPoolForStage==='function') ? window._getEquipPoolForStage() : CARRY_PET_DB.filter(e=>e.n);
+    const _randEq2={..._CARRY_PET_POOL2[Math.floor(Math.random()*_CARRY_PET_POOL2.length)],uid:Math.random(),type:'equip'};
     bannerFX(a,'召喚寵物!','#d4a843',900);
     _showBurstEquipSequence([_randEq2],0,a,a.side,null);
     endAction(a,cost);
@@ -61962,11 +61997,11 @@ G.p1.concat(G.p2).forEach(h=>{
       log(`[BOSS] 拒絕攜帶 [${_p2Card.n}](世界BOSS不收任何道具),直接賣掉 +${_sellAmt} 能量`);
     } else if(_p2Card.type==='equip'){
       // AI auto-equips to lowest HP hero
-      var _p2eq=EQUIP_DB.find(function(e){return e.n===_p2Card.n;});
+      var _p2eq=CARRY_PET_DB.find(function(e){return e.n===_p2Card.n;});
       if(_p2eq){
         var _p2h=G.p2.filter(function(h){return h.curHp>0;}).sort(function(a,b){return a.curHp-b.curHp;})[0];
         if(_p2h){
-          if(_p2h.equip){ var _oldEq=EQUIP_DB.find(function(e){return e.n===_p2h.equip.n;}); if(_oldEq&&_oldEq.onRemove)_oldEq.onRemove(_p2h); }
+          if(_p2h.equip){ var _oldEq=CARRY_PET_DB.find(function(e){return e.n===_p2h.equip.n;}); if(_oldEq&&_oldEq.onRemove)_oldEq.onRemove(_p2h); }
           _p2h.equip={n:_p2Card.n};
           if(_p2eq.onEquip)_p2eq.onEquip(_p2h);
           log('[AI] '+_p2h.name+' 自動攜帶 '+_p2Card.n+'！');
@@ -62990,11 +63025,11 @@ function _realAiAct(a){
   // ═══════════════════════════════════════════════
   const equipItem = inv.find(it=>it&&it.type==='equip');
   if(equipItem && _abAllowItem){
-    const eq=EQUIP_DB.find(e=>e.n===equipItem.n);
+    const eq=CARRY_PET_DB.find(e=>e.n===equipItem.n);
     if(eq){
       const noEquipAllies=allies.filter(h=>!h.equip);
       const target=(noEquipAllies.length?noEquipAllies.sort((x,y)=>x.curHp-y.curHp)[0]:allies.sort((x,y)=>x.curHp-y.curHp)[0])||a;
-      if(target.equip){ const old=EQUIP_DB.find(e=>e.n===target.equip.n); if(old&&old.onRemove)old.onRemove(target); }
+      if(target.equip){ const old=CARRY_PET_DB.find(e=>e.n===target.equip.n); if(old&&old.onRemove)old.onRemove(target); }
       target.equip={n:equipItem.n};
       if(eq.onEquip)eq.onEquip(target);
       log('['+a.name+'] AI攜帶 ['+equipItem.n+'] → ['+target.name+']！');
@@ -68319,7 +68354,7 @@ function showEquipUI(item, cb){
   }
 
   const overlay = document.getElementById('equip-overlay');
-  const eq = EQUIP_DB.find(e=>e.n===item.n);
+  const eq = CARRY_PET_DB.find(e=>e.n===item.n);
   document.getElementById('equip-title').innerHTML = `${eq && eq.svg ? eq.svg : (eq && eq.icon ? eq.icon : '')} 獲得寵物：${item.n}`;
   document.getElementById('equip-desc').innerHTML = `<span style="color:#f0c060;font-size:38px;font-weight:500">${item.d}</span><br><span style="color:#aaaaaa;font-size:28px">選擇要攜帶寵物的角色（已有寵物可替換，舊寵物放生）</span>`;
   // 填充寵物圖片和介紹
@@ -68391,11 +68426,11 @@ function doEquip(pos){
   if(!h){ if(_equipCb){const cb=_equipCb;_equipCb=null;cb();} return; }
   const item = _pendingEquip;
   if(!item){ if(_equipCb){const cb=_equipCb;_equipCb=null;cb();} return; }
-  const eq = EQUIP_DB.find(e=>e.n===item.n);
+  const eq = CARRY_PET_DB.find(e=>e.n===item.n);
 
   // 如果已有裝備，先移除舊裝備並放回牌池
   if(h.equip){
-    const oldEq = EQUIP_DB.find(e=>e.n===h.equip.n);
+    const oldEq = CARRY_PET_DB.find(e=>e.n===h.equip.n);
     if(oldEq && oldEq.onRemove) oldEq.onRemove(h);
     // 放回牌池（插入牌組底部讓它之後能重新抽到）
     G.deck.unshift({...oldEq, uid:Math.random(), type:'equip'});
@@ -68467,7 +68502,7 @@ function doEquipSkip(){
 
 function getEquip(h){
   if(!h||!h.equip) return null;
-  return EQUIP_DB.find(e=>e.n===h.equip.n)||null;
+  return CARRY_PET_DB.find(e=>e.n===h.equip.n)||null;
 }
 // ★ v3.36.0 — BOSS 套用「寵物恢復 HP」時，單次上限 = 最大HP的10%（避免 BOSS 血厚導致回血拖延戰鬥）。
 //   僅對真 BOSS（世界BOSS龍王 + 關卡BOSS/埃及雙王）生效；玩家英雄/菁英/小怪/競技場不受影響。
@@ -68616,7 +68651,7 @@ function showHeroPreview(h, isEnemy){
   // ★ v4.25.0 — 攜帶寵物來源放寬:h.equip「或」h._followPet(_applyFollowPetToHero 有時只設 _followPet
   //   →原本只看 h.equip 會誤顯「無寵物」);與 renderCard 浮圖同口徑,有攜帶就顯示、不再顯示無寵物。
   const _hpPetNm = (h.equip && h.equip.n) ? h.equip.n : (h._followPet || '');
-  const _eqData = _hpPetNm ? ((typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(e => e.n === _hpPetNm) : null) : null;
+  const _eqData = _hpPetNm ? ((typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(e => e.n === _hpPetNm) : null) : null;
   const equip = _hpPetNm
     ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:24px">${_eqData&&_eqData.icon||'🐾'}</span><span style="color:var(--gold);font-weight:500;font-size:28px">${_hpPetNm}</span></div><div style="font-size:24px;color:#aaa;line-height:1.5">${_eqData?_eqData.d:'攜帶效果未知'}</div>`
     : '<span style="color:#444">— 無寵物 —</span>';
@@ -72893,7 +72928,7 @@ function _rfSelectIn(newName){
   const oldHero=G.p1[pos];
   log(`[${actor.name}] 呼叫援軍！[${oldHero.name}] 退場，[${newName}] 登場！`);
   // Remove equip from old hero
-  if(oldHero.equip){ const oeq=EQUIP_DB.find(e=>e.n===oldHero.equip.n); if(oeq&&oeq.onRemove)oeq.onRemove(oldHero); }
+  if(oldHero.equip){ const oeq=CARRY_PET_DB.find(e=>e.n===oldHero.equip.n); if(oeq&&oeq.onRemove)oeq.onRemove(oldHero); }
   // Create new hero
   const newHero=newHero_replace(newName,'p1',pos);
   G.p1[pos]=newHero;
@@ -75253,6 +75288,840 @@ function _getHeroEquippedTreasures(heroName){
   });
   return result;
 }
+// ════════════════════════════════════════════════════════════════════
+// ★★★ v5.27.0(2026-08-11)— 裝備系統 Phase 1:資料層+核心 ★★★
+// ────────────────────────────────────────────────────────────────────
+// 權威文件:裝備系統設計表 v4.1(裝備系統設計表_v4.xlsx)+ MEMORY_HANDOFF 2026-08-11。
+// 本期範圍:GEAR_DB 60 件(6 部位×10)+ 詞條池 57 條(限定部位/最低稀有度/權重)
+//           + roll 引擎(取得當下生成 eqUid+詞條·永久固定)+ equipmentData 資料模型
+//           + 雲端同步①②③④⑤⑧ + 素質套用引擎(比照至寶)+ 圖鑑裝備欄位(至寶下方)
+//           + GM 全 60 件測試發放(冪等)+ GM 限定重Roll。
+// 命名:舊寵物卡系統 EQUIP_DB 已於本版改名 CARRY_PET_DB(老師裁定);
+//       新裝備系統刻意採 GEAR_ 前綴 —— 若任何舊引用漏改會直接 ReferenceError 可見,
+//       絕不會靜默讀到新資料庫。
+// 雲端同步(★★總鐵則檢查表):
+//   ① 資料模型:玩家主檔 equipmentData = { instances:{ eqUid:{ itemId, affixes, gifted,
+//      equippedTo, src, at, at2, rr } } }。eqUid=取得當下唯一實例碼(同 itemId 可多件、詞條各異),
+//      絕不以 itemId 為鍵。隨主檔單文件讀寫、零新 collection → firestore.rules 免改。
+//      at2=最後異動時間(union 整顆實例新者勝);rr=GM 重Roll 次數。
+//   ② 槽計分:_dataSummary.gearCount ×30/件(_summaryRichnessScore)→ 剛獲得新裝備的
+//      存檔槽必勝舊快照,防覆蓋謀殺(至寶 ×50 前例;權重低於英雄 1000 不干擾主排序)。
+//   ③ 三槽合併:_lxpsMergeSlots 以 eqUid 為單位 union,整顆實例物件原樣搬移
+//      (v3.16.67 至寶漏搬 invested 教訓);_equipUnlockHistory 最近一筆 admin_delete /
+//      audit_error_recovered 的 eqUid 一律排除不復活(_lxpsLatestDeletedMap 前例)。
+//   ④ 帳本:_equipUnlockHistory{ eqUid, itemId, src, giftFrom?, uid12, at } 每次取得寫一筆
+//      (300 筆去重合併),供 GM 救援/稽核。
+//   ⑤ 共用裝置:★ 不做 localStorage 本機鏡像,雲端為唯一權威(v3.13.93 友情之心教訓,
+//      從根本消滅本機汙染面);全域變數 _gearData/_equipUnlockHistory/_giftReceivedLedger
+//      已列入 _clearAccountLocalData 重置清單。
+//   ⑧ 受贈抵銷帳 giftReceivedLedger:累積型隨主檔(union 逐鍵 max);給心計算改造在 Phase 4。
+// 鐵律相容:1.31(詞條無即死/HP%/固定大額傷害)/1.207(刻意無能量類詞條,普攻不產能量)
+//           /1.232(60 件 dp 精緻風+ds 簡單風雙版創建期一次到位)。
+// PVP 公平制:鬥技場建隊路徑不呼叫 _applyGearToHero(比照至寶「不套用」同點),鐵律 1.153。
+// Phase 2 預告:格擋/貫穿/沉默/三上限(減傷50·抗性50·格擋35)/丙案 40% 下限/鐵匠改版,
+//   屆時消費 h._gearEff 與 h._gearCount;本期 _gearEff 僅彙總+顯示,不進戰鬥計算。
+// 屬性對照:設計表原「雷屬性」引擎無對應(ELEMENT_DB=water/fire/wind/grass/earth/light/dark)
+//   → 老師裁定(2026-08-11):絕緣工作服基礎效果=受到風屬性傷害 -25% + 抵抗麻痺 +30%。
+// 老師同輪裁定:厚字典=減傷2%+攻擊+2;同名裝備可重複獲得(詞條各異)全部保留,
+//   全帳號持有上限 100 件(_GEAR_MAX_OWNED·_gearGrant 守門·GM 補發 ignoreCap 豁免);
+//   測試期 _GEAR_ADMIN_ONLY=true 學生完全看不到裝備欄位區塊(正式開放改 false 單一開關)。
+// ════════════════════════════════════════════════════════════════════
+const GEAR_DB = {
+  head_straw_hat: { slot:'head', n:'草帽', icon:'👒', r:'rare', eff:[{"k":"dr","v":2}],
+    dp:'田邊常見的寬簷草帽,帽緣還留著陽光曬過的稻草香。',
+    ds:'涼涼草帽,幫你擋一點點痛!(減傷2%)', img:'草帽.png' },
+  head_cap: { slot:'head', n:'鴨舌帽', icon:'🧢', r:'rare', eff:[{"k":"resistAll","v":10}],
+    dp:'壓低帽簷就有精神的深藍鴨舌帽,誰都有一頂。',
+    ds:'戴上帽子精神好,壞狀態比較黏不上你!', img:'鴨舌帽.png' },
+  head_mask: { slot:'head', n:'口罩', icon:'😷', r:'rare', eff:[{"k":"res","st":"poison","v":30},{"k":"res","st":"silence","v":30}],
+    dp:'戴好戴滿的立體口罩,髒空氣和煙霧都被擋在外面。',
+    ds:'口罩戴好好,毒毒和煙煙都進不來!', img:'口罩.png' },
+  head_beanie: { slot:'head', n:'毛線帽', icon:'🧶', r:'rare', eff:[{"k":"dr","v":1},{"k":"res","st":"freeze","v":30}],
+    dp:'阿嬤親手織的暖暖毛線帽,冬天戴著特別安心。',
+    ds:'暖暖毛帽,戴著就覺得元氣多一點!', img:'毛線帽.png' },
+  head_hard_hat: { slot:'head', n:'工地安全帽', icon:'👷', r:'epic', eff:[{"k":"dr","v":4},{"k":"resistAll","v":10}],
+    dp:'黃色工程安全帽,進工地必戴,結實可靠。',
+    ds:'工地安全帽,又硬又讓壞狀態靠不近!', img:'工地安全帽.png' },
+  head_chef_hat: { slot:'head', n:'廚師帽', icon:'👨‍🍳', r:'epic', eff:[{"k":"resistAll","v":13},{"k":"res","st":"burn","v":30}],
+    dp:'高高白白的主廚帽,油煙熱氣都不怕。',
+    ds:'大廚的高帽子,壞狀態通通閃邊去!', img:'廚師帽.png' },
+  head_sunglasses: { slot:'head', n:'太陽眼鏡', icon:'🕶️', r:'epic', eff:[{"k":"res","st":"charm","v":30},{"k":"res","st":"blind","v":50}],
+    dp:'酷酷的墨鏡一戴,再迷人的花招或眩光也晃不了你的眼。',
+    ds:'酷酷墨鏡,別人想迷惑或閃瞎你?看不到看不到!', img:'太陽眼鏡.png' },
+  head_helmet: { slot:'head', n:'機車安全帽', icon:'🪖', r:'legend', eff:[{"k":"dr","v":6},{"k":"resistAll","v":15}],
+    dp:'全罩式安全帽,保護力沒話說,騎士的好夥伴。',
+    ds:'全罩安全帽,頭好壯壯超安全!', img:'機車安全帽.png' },
+  head_football_helmet: { slot:'head', n:'橄欖球頭盔', icon:'🏈', r:'legend', eff:[{"k":"dr","v":6},{"k":"critDmgTaken","v":14},{"k":"res","st":"stun","v":30}],
+    dp:'橄欖球員的專業護具,再猛的衝撞也撞不暈你。',
+    ds:'橄欖球頭盔,被大力撞也不會暈頭轉向!', img:'橄欖球頭盔.png' },
+  head_knight_helm: { slot:'head', n:'騎士頭盔', icon:'⚔️', r:'mythic', eff:[{"k":"dr","v":8},{"k":"resistAll","v":22},{"k":"cleanse","v":20}],
+    dp:'中世紀騎士的鐵頭盔,雖然有點舊,護主之心從未生鏽。',
+    ds:'古代騎士的鐵帽帽!超能擋,偶爾還會把壞狀態抖掉~', img:'騎士頭盔.png' },
+  body_apron: { slot:'body', n:'帆布圍裙', icon:'🥼', r:'rare', eff:[{"k":"dr","v":4}],
+    dp:'厚實的帆布工作圍裙,口袋還放著幾根粉筆。',
+    ds:'耐磨圍裙,穿上就少痛一點!(減傷4%)', img:'帆布圍裙.png' },
+  body_fire_jacket: { slot:'body', n:'消防外套', icon:'🚒', r:'rare', eff:[{"k":"elemDr","el":"fire","v":25}],
+    dp:'橘色防火布料的外套,靠近火也不怕燙。',
+    ds:'防火外套,火燒過來也不太痛!', img:'消防外套.png' },
+  body_raincoat: { slot:'body', n:'雨衣', icon:'🌧️', r:'rare', eff:[{"k":"elemDr","el":"water","v":25}],
+    dp:'亮黃色的連身雨衣,再大的雨也淋不溼你。',
+    ds:'黃色小雨衣,水攻擊通通滑掉!', img:'雨衣.png' },
+  body_windbreaker: { slot:'body', n:'風衣外套', icon:'🧥', r:'rare', eff:[{"k":"elemDr","el":"wind","v":25}],
+    dp:'輕薄的防風外套,拉鍊拉到頂就密不透風。',
+    ds:'防風外套咻咻叫,風攻擊吹不痛你!', img:'風衣外套.png' },
+  body_work_vest: { slot:'body', n:'工作背心', icon:'🦺', r:'epic', eff:[{"k":"dr","v":6},{"k":"elemDr","el":"earth","v":25}],
+    dp:'多口袋的耐磨工作背心,沾了點水泥灰更顯專業。',
+    ds:'工作背心口袋多,土攻擊只是搔癢!', img:'工作背心.png' },
+  body_gardener: { slot:'body', n:'園丁工作服', icon:'🌿', r:'epic', eff:[{"k":"dr","v":6},{"k":"elemDr","el":"grass","v":25}],
+    dp:'沾著青草汁的工作服,對植物的脾氣瞭若指掌。',
+    ds:'園丁服香香的,草攻擊對你客氣一點!', img:'園丁工作服.png' },
+  body_insulated: { slot:'body', n:'絕緣工作服', icon:'⚡', r:'epic', eff:[{"k":"elemDr","el":"wind","v":25},{"k":"res","st":"para","v":30}],
+    dp:'電力人員的專業絕緣服,橡膠內裡電流不侵。',
+    ds:'絕緣工作服,連閃電都電不麻你!', img:'絕緣工作服.png' },
+  body_leather_jacket: { slot:'body', n:'皮夾克', icon:'🧑‍🎤', r:'legend', eff:[{"k":"dr","v":8},{"k":"allElemDr","v":15}],
+    dp:'有型又耐操的黑色皮衣,什麼場面都罩得住。',
+    ds:'帥氣皮外套,什麼屬性攻擊都少痛痛!', img:'皮夾克.png' },
+  body_down_jacket: { slot:'body', n:'羽絨外套', icon:'🧊', r:'legend', eff:[{"k":"dr","v":7},{"k":"hpMax","v":20}],
+    dp:'蓬蓬軟軟的羽絨外套,像隨身帶著一床暖被。',
+    ds:'蓬蓬羽絨衣,擋痛之外血量也變多!', img:'羽絨外套.png' },
+  body_ancient_armor: { slot:'body', n:'古代鎧甲', icon:'🛡️', r:'mythic', eff:[{"k":"dr","v":10},{"k":"allElemDr","v":20},{"k":"hpMax","v":30}],
+    dp:'博物館裡那種古代士兵的鐵鎧甲,沉甸甸的很有安全感。',
+    ds:'古時候的鐵甲甲!超硬超厚,全部攻擊都變小!', img:'古代鎧甲.png' },
+  main_broom: { slot:'main', n:'掃帚', icon:'🧹', r:'rare', eff:[{"k":"atk","v":3}],
+    dp:'打掃時間人手一支,揮起來虎虎生風。',
+    ds:'值日生神器!掃把揮起來,攻擊+3!', img:'掃帚.png' },
+  main_pen: { slot:'main', n:'原子筆', icon:'🖊️', r:'rare', eff:[{"k":"sp","v":3}],
+    dp:'按起來喀喀響的藍色原子筆,寫什麼都順手。',
+    ds:'喀喀原子筆,寫出來的招式更厲害!', img:'原子筆.png' },
+  main_frying_pan: { slot:'main', n:'平底鍋', icon:'🍳', r:'rare', eff:[{"k":"atk","v":2},{"k":"naDmg","v":4}],
+    dp:'家家都有的鐵平底鍋,敲下去鏗鏘有力。',
+    ds:'鏘鏘平底鍋,普通攻擊打得更痛!', img:'平底鍋.png' },
+  main_thermos: { slot:'main', n:'保溫瓶', icon:'🫙', r:'rare', eff:[{"k":"sp","v":2},{"k":"heal","v":4}],
+    dp:'永遠裝著熱湯的保溫瓶,喝一口就元氣滿滿。',
+    ds:'熱湯保溫瓶,幫隊友補血更有效!', img:'保溫瓶.png' },
+  main_kitchen_knife: { slot:'main', n:'菜刀', icon:'🔪', r:'epic', eff:[{"k":"atk","v":6},{"k":"naDmg","v":6}],
+    dp:'市場老師傅磨過的菜刀,又快又利。',
+    ds:'師傅磨的菜刀!砍下去超級痛!', img:'菜刀.png' },
+  main_flashlight: { slot:'main', n:'手電筒', icon:'🔦', r:'epic', eff:[{"k":"sp","v":6},{"k":"skDmg","v":6}],
+    dp:'超亮的LED手電筒,一照就把黑暗趕跑。',
+    ds:'超亮手電筒,特技轟出去更猛!', img:'手電筒.png' },
+  main_first_aid: { slot:'main', n:'急救箱', icon:'🩹', r:'epic', eff:[{"k":"sp","v":4},{"k":"heal","v":9}],
+    dp:'紅十字急救箱,OK繃、繃帶、藥水一應俱全。',
+    ds:'急救小箱子,補血量大提升!', img:'急救箱.png' },
+  main_hammer: { slot:'main', n:'鐵鎚', icon:'🔨', r:'legend', eff:[{"k":"atk","v":8},{"k":"allDmg","v":7}],
+    dp:'工具箱裡最可靠的鐵鎚,一鎚一個準。',
+    ds:'咚咚大鐵鎚!所有攻擊都變更痛!', img:'鐵鎚.png' },
+  main_watering_can: { slot:'main', n:'澆水壺', icon:'🚿', r:'legend', eff:[{"k":"sp","v":8},{"k":"heal","v":13}],
+    dp:'園丁的綠色澆水壺,灑下的水滋潤每個夥伴。',
+    ds:'灑水壺澆呀澆,隊友血量回好多!', img:'澆水壺.png' },
+  main_katana: { slot:'main', n:'武士刀', icon:'🗡️', r:'mythic', eff:[{"k":"atk","v":10},{"k":"sp","v":10},{"k":"allDmg","v":9}],
+    dp:'古董店裡的老武士刀,刀身映著歲月磨出的光。',
+    ds:'古董武士刀!攻擊特技通通變強!', img:'武士刀.png' },
+  off_pot_lid: { slot:'off',sub:'shield', n:'鍋蓋', icon:'🍲', r:'rare', eff:[{"k":"block","v":20}],
+    dp:'阿嬤灶腳的傳家鍋蓋,擋下的菜刀比任何盾牌都多。',
+    ds:'阿嬤的鍋蓋,鏘!幫你擋住攻擊!', img:'鍋蓋.png' },
+  off_dictionary: { slot:'off',sub:'shield', n:'厚字典', icon:'📕', r:'rare', eff:[{"k":"dr","v":2},{"k":"atk","v":2}],
+    dp:'一千多頁的精裝大字典,知識就是最好的防禦。',
+    ds:'超厚字典,知識的力量幫你擋痛!', img:'厚字典.png' },
+  off_utility_knife: { slot:'off',sub:'weapon', n:'美工刀', icon:'🔪', r:'rare', eff:[{"k":"hit","v":5}],
+    dp:'文具店必買的美工刀,切割精準不差一毫米。',
+    ds:'美工刀咔咔,攻擊變得超準!', img:'美工刀.png' },
+  off_dart: { slot:'off',sub:'weapon', n:'飛鏢', icon:'🎯', r:'rare', eff:[{"k":"crit","v":5}],
+    dp:'夜市射飛鏢攤的標準配備,總能射中紅心。',
+    ds:'飛鏢咻咻咻,容易戳中痛點!', img:'飛鏢.png' },
+  off_trash_lid: { slot:'off',sub:'shield', n:'垃圾桶蓋', icon:'🗑️', r:'epic', eff:[{"k":"dr","v":4},{"k":"block","v":25}],
+    dp:'圓形金屬垃圾桶蓋,拿在手上意外地像面圓盾。',
+    ds:'桶蓋小圓盾,又擋痛又會格擋!', img:'垃圾桶蓋.png' },
+  off_umbrella: { slot:'off',sub:'shield', n:'雨傘', icon:'☂️', r:'epic', eff:[{"k":"dodge","v":9}],
+    dp:'一把黑色長柄傘,撐開一轉就把攻擊都撥開。',
+    ds:'雨傘轉呀轉,攻擊常常打不到你!', img:'雨傘.png' },
+  off_scissors: { slot:'off',sub:'weapon', n:'剪刀', icon:'✂️', r:'epic', eff:[{"k":"crit","v":8},{"k":"hit","v":8}],
+    dp:'媽媽的裁縫剪刀,又準又利,專剪關鍵處。',
+    ds:'喀嚓小剪刀,又準又會戳痛點!', img:'剪刀.png' },
+  off_cutting_board: { slot:'off',sub:'shield', n:'砧板', icon:'🪵', r:'legend', eff:[{"k":"dr","v":6},{"k":"block","v":30},{"k":"dodge","v":6}],
+    dp:'厚實的木砧板,千刀萬剁都沒在怕。',
+    ds:'厚厚砧板,擋痛、格擋、閃避一次滿足!', img:'砧板.png' },
+  off_screwdriver: { slot:'off',sub:'weapon', n:'螺絲起子', icon:'🪛', r:'legend', eff:[{"k":"pierceBlock","v":30},{"k":"crit","v":11}],
+    dp:'十字螺絲起子,再緊的防守也給你轉開。',
+    ds:'轉轉起子,對手想擋?幫他鬆開!', img:'螺絲起子.png' },
+  off_round_shield: { slot:'off',sub:'shield', n:'中世紀圓盾', icon:'🛡️', r:'mythic', eff:[{"k":"dr","v":7},{"k":"block","v":35},{"k":"hit","v":7},{"k":"crit","v":7}],
+    dp:'古代士兵用的木芯鐵邊圓盾,能攻能守樣樣通。',
+    ds:'古代小圓盾!攻擊防守都會的全能小幫手!', img:'中世紀圓盾.png' },
+  legs_flip_flops: { slot:'legs', n:'夾腳拖', icon:'🩴', r:'rare', eff:[{"k":"spd","v":2}],
+    dp:'啪嗒啪嗒的國民夾腳拖,穿脫超方便。',
+    ds:'啪嗒啪嗒小拖鞋,跑起來快一點!', img:'夾腳拖.png' },
+  legs_sneakers: { slot:'legs', n:'布鞋', icon:'👟', r:'rare', eff:[{"k":"spd","v":2},{"k":"dodge","v":3}],
+    dp:'白色小布鞋,上學運動都好穿。',
+    ds:'輕便小布鞋,跑得快還會小小閃!', img:'布鞋.png' },
+  legs_rain_boots: { slot:'legs', n:'雨靴', icon:'🥾', r:'rare', eff:[{"k":"dr","v":2},{"k":"spd","v":1}],
+    dp:'踩水窪專用的亮黃雨靴,鞋底厚實走路穩。',
+    ds:'踩水雨靴,穩穩地跑還能擋一點痛!', img:'雨靴.png' },
+  legs_leather_shoes: { slot:'legs', n:'皮鞋', icon:'👞', r:'rare', eff:[{"k":"dr","v":3}],
+    dp:'擦得發亮的黑色小皮鞋,踏出的每一步都穩重。',
+    ds:'亮亮小皮鞋,走路穩,痛痛少!', img:'皮鞋.png' },
+  legs_rollerblades: { slot:'legs', n:'直排輪', icon:'🛼', r:'epic', eff:[{"k":"spd","v":4}],
+    dp:'公園裡呼嘯而過的直排輪,滑起來超有速度感。',
+    ds:'直排輪咻咻,滑得超快超帥!', img:'直排輪.png' },
+  legs_work_boots: { slot:'legs', n:'工作靴', icon:'🥾', r:'epic', eff:[{"k":"dr","v":4},{"k":"spd","v":3}],
+    dp:'鋼頭工作靴,又硬又好走,工地日常。',
+    ds:'鋼頭硬靴子,又擋痛又好走!', img:'工作靴.png' },
+  legs_running_shoes: { slot:'legs', n:'跑步鞋', icon:'🏃', r:'epic', eff:[{"k":"spd","v":4},{"k":"dodge","v":4}],
+    dp:'輕量透氣的專業跑鞋,起步就是快。',
+    ds:'專業跑鞋,又快又難打中!', img:'跑步鞋.png' },
+  legs_riding_boots: { slot:'legs', n:'馬靴', icon:'🐴', r:'legend', eff:[{"k":"spd","v":5},{"k":"dr","v":4}],
+    dp:'騎馬用的長筒皮靴,護腿又帥氣。',
+    ds:'帥氣長筒靴!跑得快,腿腿也有保護!', img:'馬靴.png' },
+  legs_jogging_shoes: { slot:'legs', n:'慢跑鞋', icon:'👟', r:'legend', eff:[{"k":"spd","v":7}],
+    dp:'跑了千百公里依然可靠的慢跑鞋,越跑越輕盈。',
+    ds:'老朋友慢跑鞋,快到影子跟不上!', img:'慢跑鞋.png' },
+  legs_air_shoes: { slot:'legs', n:'氣墊運動鞋', icon:'☁️', r:'mythic', eff:[{"k":"spd","v":8},{"k":"dr","v":6},{"k":"dodge","v":6}],
+    dp:'鞋底藏著氣墊的頂級運動鞋,像踩在雲上跑。',
+    ds:'踩著氣墊咻咻跑!超快、會閃、還能擋痛!', img:'氣墊運動鞋.png' },
+  acc_keychain: { slot:'acc', n:'鑰匙圈', icon:'🔑', r:'rare', eff:[{"k":"openShield","v":7}],
+    dp:'掛著小公仔的鑰匙圈,叮叮噹噹讓人安心。',
+    ds:'叮噹鑰匙圈,開場送你一個小護盾!', img:'鑰匙圈.png' },
+  acc_bell: { slot:'acc', n:'小鈴鐺', icon:'🔔', r:'rare', eff:[{"k":"drop","v":7}],
+    dp:'清脆作響的黃銅小鈴,寶物聽見就忍不住跳出來。',
+    ds:'叮鈴鈴~寶物聽到鈴聲就掉出來!', img:'小鈴鐺.png' },
+  acc_handkerchief: { slot:'acc', n:'手帕', icon:'🧣', r:'rare', eff:[{"k":"healed","v":6}],
+    dp:'燙得平平整整的格子手帕,擦擦傷口就不痛了。',
+    ds:'乾淨小手帕,隊友幫你補血更有效!', img:'手帕.png' },
+  acc_coin_purse: { slot:'acc', n:'零錢包', icon:'👛', r:'rare', eff:[{"k":"gold","v":7}],
+    dp:'鼓鼓的小零錢包,銅板叮噹越裝越多。',
+    ds:'錢錢小包包,打完架撿到更多知識幣!', img:'零錢包.png' },
+  acc_notebook: { slot:'acc', n:'筆記本', icon:'📓', r:'epic', eff:[{"k":"exp","v":10}],
+    dp:'寫滿重點的隨身筆記本,學什麼都特別快。',
+    ds:'認真筆記本,經驗值蹭蹭往上漲!', img:'筆記本.png' },
+  acc_medal: { slot:'acc', n:'獎牌', icon:'🏅', r:'epic', eff:[{"k":"openBuff","b":"atkup","dur":2}],
+    dp:'運動會拿到的金色獎牌,掛上就熱血沸騰。',
+    ds:'亮晶晶獎牌,開場攻擊力UP!', img:'獎牌.png' },
+  acc_sewing_kit: { slot:'acc', n:'針線包', icon:'🪡', r:'epic', eff:[{"k":"heal","v":9}],
+    dp:'小小的隨身針線包,縫縫補補樣樣行。',
+    ds:'小小針線包,幫大家補血補更多!', img:'針線包.png' },
+  acc_bouquet: { slot:'acc', n:'花束', icon:'💐', r:'legend', eff:[{"k":"openBuff","b":"atkup","dur":2},{"k":"openBuff","b":"defup","dur":2}],
+    dp:'一束新鮮的向日葵,看著就充滿力量。',
+    ds:'漂亮花束,開場攻擊防禦一起變強!', img:'花束.png' },
+  acc_pocket_watch: { slot:'acc', n:'懷錶', icon:'🕰️', r:'legend', eff:[{"k":"skDmg","v":6},{"k":"heal","v":6}],
+    dp:'爺爺留下的老懷錶,滴答聲讓人格外專注。',
+    ds:'爺爺的懷錶滴答滴,招式和補血都變強!', img:'懷錶.png' },
+  acc_trophy: { slot:'acc', n:'冠軍獎盃', icon:'🏆', r:'mythic', eff:[{"k":"openBuff","b":"rand2","dur":2},{"k":"skDmg","v":8},{"k":"heal","v":8}],
+    dp:'閃閃發亮的大獎盃,捧著它整個人都是冠軍氣勢。',
+    ds:'大大冠軍盃!開場送兩個好狀態,招式還變強!', img:'冠軍獎盃.png' },
+};
+const GEAR_AFFIX_POOL = [
+  { id:'af_hp', n:'生命強化', t:'num', slot:'any', eff:{"k":"hp"}, min:4, max:12, unit:'點', w:10 },
+  { id:'af_atk', n:'攻擊強化', t:'num', slot:'any', eff:{"k":"atk"}, min:2, max:8, unit:'點', w:10 },
+  { id:'af_sp', n:'特技強化', t:'num', slot:'any', eff:{"k":"sp"}, min:2, max:8, unit:'點', w:10 },
+  { id:'af_spd', n:'速度強化', t:'num', slot:'any', eff:{"k":"spd"}, min:2, max:6, unit:'點', w:8 },
+  { id:'af_hit', n:'命中提升', t:'pct', slot:'any', eff:{"k":"hit"}, min:3, max:10, unit:'%', w:8 },
+  { id:'af_dodge', n:'迴避提升', t:'pct', slot:'any', eff:{"k":"dodge"}, min:3, max:8, unit:'%', w:6 },
+  { id:'af_crit', n:'暴擊提升', t:'pct', slot:'any', eff:{"k":"crit"}, min:3, max:10, unit:'%', w:6 },
+  { id:'af_dr', n:'減傷強化', t:'pct', slot:'any', eff:{"k":"dr"}, min:2, max:6, unit:'%', w:6 },
+  { id:'af_heal', n:'治癒強化', t:'pct', slot:'any', eff:{"k":"heal"}, min:3, max:10, unit:'%', w:8 },
+  { id:'af_healed', n:'受療強化', t:'pct', slot:'any', eff:{"k":"healed"}, min:3, max:10, unit:'%', w:8 },
+  { id:'af_na_dmg', n:'普攻強化', t:'pct', slot:'any', eff:{"k":"naDmg"}, min:3, max:10, unit:'%', w:6 },
+  { id:'af_sk_dmg', n:'特技傷害強化', t:'pct', slot:'any', eff:{"k":"skDmg"}, min:3, max:10, unit:'%', w:6 },
+  { id:'af_burst_dmg', n:'爆發強化', t:'pct', slot:'any', eff:{"k":"burstDmg"}, min:3, max:10, unit:'%', w:5 },
+  { id:'af_block', n:'格擋提升', t:'pct', slot:'any', eff:{"k":"block"}, min:3, max:8, unit:'%', w:6 },
+  { id:'af_resist', n:'抗性提升', t:'pct', slot:'any', eff:{"k":"resistAll"}, min:4, max:10, unit:'%', w:6 },
+  { id:'af_imm_poison', n:'免疫中毒', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"poison"}, w:3 },
+  { id:'af_imm_burn', n:'免疫燃燒', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"burn"}, w:3 },
+  { id:'af_imm_stun', n:'免疫暈眩', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"stun"}, w:3 },
+  { id:'af_imm_freeze', n:'免疫冰凍', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"freeze"}, w:3 },
+  { id:'af_imm_sleep', n:'免疫睡眠', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"sleep"}, w:3 },
+  { id:'af_imm_sealna', n:'免疫封印普攻', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"sealna"}, w:3 },
+  { id:'af_imm_healdown', n:'免疫減療', t:'imm', slot:'any', minR:'legend', eff:{"k":"imm","st":"healdown"}, w:3 },
+  { id:'af_drop', n:'尋寶直覺', t:'pct', slot:'any', eff:{"k":"drop"}, min:5, max:15, unit:'%', w:5 },
+  { id:'af_gold', n:'財運亨通', t:'pct', slot:'any', eff:{"k":"gold"}, min:5, max:15, unit:'%', w:5 },
+  { id:'af_exp', n:'學習天賦', t:'pct', slot:'any', eff:{"k":"exp"}, min:5, max:15, unit:'%', w:5 },
+  { id:'af_reflect', n:'荊棘之體', t:'pct', slot:'any', eff:{"k":"reflect"}, min:5, max:12, unit:'%', w:4 },
+  { id:'af_hit_poison', n:'淬毒之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"poison"}, min:8, max:15, unit:'%', dur:2, w:4 },
+  { id:'af_hit_burn', n:'燃焰之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"burn"}, min:8, max:15, unit:'%', dur:2, w:4 },
+  { id:'af_hit_bleed', n:'裂傷之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"bleed"}, min:8, max:15, unit:'%', dur:2, w:4 },
+  { id:'af_hit_blind', n:'蝕目之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"blind"}, min:8, max:12, unit:'%', dur:1, w:3 },
+  { id:'af_hit_slow', n:'遲滯之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"slow"}, min:8, max:12, unit:'%', dur:1, w:3 },
+  { id:'af_hit_weak', n:'削弱之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"weak"}, min:8, max:12, unit:'%', dur:1, w:3 },
+  { id:'af_hit_healdown', n:'蝕癒之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"healdown"}, min:8, max:12, unit:'%', dur:1, w:3 },
+  { id:'af_hit_para', n:'麻痺之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"para"}, min:5, max:8, unit:'%', dur:1, w:2 },
+  { id:'af_hit_stun', n:'震擊之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"stun"}, min:5, max:8, unit:'%', dur:1, w:2 },
+  { id:'af_hit_freeze', n:'霜寒之刃', t:'onhit', slot:'weapon', eff:{"k":"onHit","st":"freeze"}, min:5, max:8, unit:'%', dur:1, w:2 },
+  { id:'af_res_poison', n:'抗毒護紋', t:'res', slot:'head', eff:{"k":"res","st":"poison"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_burn', n:'抗燃護紋', t:'res', slot:'head', eff:{"k":"res","st":"burn"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_blind', n:'明目護紋', t:'res', slot:'head', eff:{"k":"res","st":"blind"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_stun', n:'定神護紋', t:'res', slot:'head', eff:{"k":"res","st":"stun"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_para', n:'舒絡護紋', t:'res', slot:'head', eff:{"k":"res","st":"para"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_freeze', n:'禦寒護紋', t:'res', slot:'head', eff:{"k":"res","st":"freeze"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_sleep', n:'醒神護紋', t:'res', slot:'head', eff:{"k":"res","st":"sleep"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_slow', n:'疾風護紋', t:'res', slot:'head', eff:{"k":"res","st":"slow"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_healdown', n:'癒守護紋', t:'res', slot:'head', eff:{"k":"res","st":"healdown"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_charm', n:'清心護紋', t:'res', slot:'head', eff:{"k":"res","st":"charm"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_res_seal', n:'破封護紋', t:'res', slot:'head', eff:{"k":"res","st":"seal"}, min:20, max:40, unit:'%', w:4 },
+  { id:'af_open_atkup', n:'出征戰吼', t:'open', slot:'acc', eff:{"k":"openBuff","b":"atkup"}, dur:2, w:4 },
+  { id:'af_open_spup', n:'靈感湧現', t:'open', slot:'acc', eff:{"k":"openBuff","b":"spup"}, dur:2, w:4 },
+  { id:'af_open_spdup', n:'搶跑起步', t:'open', slot:'acc', eff:{"k":"openBuff","b":"spdup"}, dur:2, w:4 },
+  { id:'af_open_regen', n:'晨光沐浴', t:'open', slot:'acc', eff:{"k":"openBuff","b":"regen"}, dur:2, w:4 },
+  { id:'af_open_shield', n:'守護結界', t:'open', slot:'acc', eff:{"k":"openShield"}, min:12, max:20, unit:'點', w:4 },
+  { id:'af_open_evade', n:'輕盈步伐', t:'open', slot:'acc', eff:{"k":"openBuff","b":"evade"}, dur:2, w:3 },
+  { id:'af_open_counter', n:'以牙還牙', t:'open', slot:'acc', eff:{"k":"openBuff","b":"counter"}, dur:2, w:3 },
+  { id:'af_open_crit', n:'銳眼鎖定', t:'open', slot:'acc', eff:{"k":"openBuff","b":"critup"}, dur:2, w:3 },
+  { id:'af_open_lifesteal', n:'汲取之印', t:'open', slot:'acc', eff:{"k":"openBuff","b":"lifesteal"}, dur:2, w:3 },
+  { id:'af_open_hide', n:'薄霧藏身', t:'open', slot:'acc', eff:{"k":"openBuff","b":"hide"}, dur:1, w:2 },
+];
+// ────────────────────────────────────────────────────────────────────
+// 共用查表
+const GEAR_RARITY = {
+  rare:   { name:'稀有', color:'#66ddff', affixN:1, price:1000 },
+  epic:   { name:'史詩', color:'#aa66ff', affixN:2, price:5000 },
+  legend: { name:'傳說', color:'#ffaa44', affixN:3, price:20000 },
+  mythic: { name:'神話', color:'#ff44ff', affixN:4, price:80000 }
+};
+const _GEAR_RARITY_ORDER = { rare:0, epic:1, legend:2, mythic:3 };
+const GEAR_SLOT_ORDER = ['head','body','main','off','legs','acc'];
+const GEAR_SLOT_INFO = {
+  head:{ n:'頭部', icon:'🪖' }, body:{ n:'身軀', icon:'🧥' }, main:{ n:'主手', icon:'🔨' },
+  off:{ n:'副手', icon:'🛡️' }, legs:{ n:'腿部', icon:'👟' }, acc:{ n:'飾品', icon:'🏅' }
+};
+const _GEAR_ST_LABEL = {
+  poison:'中毒', silence:'沉默', freeze:'冰凍', burn:'燃燒', charm:'魅惑與狂亂', blind:'失明',
+  stun:'暈眩', para:'麻痺', sleep:'睡眠', slow:'緩速', healdown:'減療與禁療', seal:'封印普攻與封印技能',
+  sealna:'封印普攻', bleed:'出血', weak:'弱化'
+};
+const _GEAR_EL_LABEL = { fire:'火', water:'水', wind:'風', earth:'土', grass:'草', light:'光', dark:'暗' };
+const _GEAR_BUFF_LABEL = {
+  atkup:'攻擊提升', defup:'防禦提升', spup:'特技提升', spdup:'加速', regen:'持續回復HP',
+  evade:'迴避提升', counter:'反擊', critup:'暴擊增加', lifesteal:'吸血', hide:'隱身', rand2:'隨機 2 種有利狀態'
+};
+// 免疫↔同狀態抵抗互斥(規則:同狀態免疫與抵抗不可同件並存)
+const _GEAR_CONFLICT = {
+  af_imm_poison:['af_res_poison'],   af_res_poison:['af_imm_poison'],
+  af_imm_burn:['af_res_burn'],       af_res_burn:['af_imm_burn'],
+  af_imm_stun:['af_res_stun'],       af_res_stun:['af_imm_stun'],
+  af_imm_freeze:['af_res_freeze'],   af_res_freeze:['af_imm_freeze'],
+  af_imm_sleep:['af_res_sleep'],     af_res_sleep:['af_imm_sleep'],
+  af_imm_healdown:['af_res_healdown'], af_res_healdown:['af_imm_healdown'],
+  af_imm_sealna:['af_res_seal'],     af_res_seal:['af_imm_sealna']
+};
+
+// ── 全域狀態(★ 雲端唯一權威·不做 localStorage 本機鏡像·換帳號由 _clearAccountLocalData 重置)──
+// ★ 測試期閘門(老師裁定 2026-08-11):true=學生完全看不到圖鑑「裝備欄位」區塊(GM 不受限);
+//   正式開放時改 false 即全員可見(比照 _MAINSTORY_ADMIN_ONLY / _AVATAR_ADMIN_ONLY 單一開關前例)。
+window._GEAR_ADMIN_ONLY = true;
+window._gearVisibleForMe = function(){
+  try{
+    if(!window._GEAR_ADMIN_ONLY) return true;
+    return (typeof window._isAdminUser === 'function' && window._isAdminUser());
+  }catch(_){ return false; }
+};
+window._gearData = { instances:{} };
+window._equipUnlockHistory = [];
+window._giftReceivedLedger = {};   // 受贈抵銷帳(Phase 4 給心計算用;Phase 1 先建立同步管線)
+window._gearHydrated = false;
+
+// ── 效果文字 ──
+function _gearEffText(e, rolled){
+  try{
+    const v = (rolled && typeof rolled.v === 'number') ? rolled.v : e.v;
+    switch(e.k){
+      case 'dr':           return '受到傷害 -' + v + '%';
+      case 'resistAll':    return '不利狀態抗性 +' + v + '%';
+      case 'res':          return '抵抗' + (_GEAR_ST_LABEL[e.st]||e.st) + ' +' + v + '%';
+      case 'imm':          return '免疫' + (_GEAR_ST_LABEL[e.st]||e.st);
+      case 'critDmgTaken': return '受到暴擊傷害 -' + v + '%';
+      case 'cleanse':      return '每回合開始 ' + v + '% 機率消除自身 1 個不利狀態';
+      case 'elemDr':       return '受到' + (_GEAR_EL_LABEL[e.el]||e.el) + '屬性傷害 -' + v + '%';
+      case 'allElemDr':    return '受到所有屬性傷害 -' + v + '%';
+      case 'hpMax':        return 'HP上限 +' + v;
+      case 'hp':           return 'HP +' + v;
+      case 'atk':          return '攻擊 +' + v;
+      case 'sp':           return '特技 +' + v;
+      case 'spd':          return '速度 +' + v;
+      case 'naDmg':        return '普攻傷害 +' + v + '%';
+      case 'skDmg':        return '特技傷害 +' + v + '%';
+      case 'burstDmg':     return '爆發傷害 +' + v + '%';
+      case 'allDmg':       return '造成的所有傷害 +' + v + '%';
+      case 'heal':         return '治療量 +' + v + '%';
+      case 'healed':       return '受到的治療量 +' + v + '%';
+      case 'block':        return '格擋率 +' + v + '%';
+      case 'dodge':        return '迴避率 +' + v + '%';
+      case 'hit':          return '命中率 +' + v + '%';
+      case 'crit':         return '暴擊率 +' + v + '%';
+      case 'pierceBlock':  return '貫穿格擋 ' + v + '%';
+      case 'reflect':      return '受傷時 ' + v + '% 機率反彈傷害';
+      case 'drop':         return '掉寶率 +' + v + '%';
+      case 'gold':         return '知識幣獲得 +' + v + '%';
+      case 'exp':          return '經驗獲得 +' + v + '%';
+      case 'onHit':        return '命中時 ' + v + '% 機率附加' + (_GEAR_ST_LABEL[e.st]||e.st) + '(' + (e.dur||1) + '回合)';
+      case 'openShield':   return '戰鬥開始獲得可承受 ' + v + ' 點傷害的護盾';
+      case 'openBuff':     return '戰鬥開始獲得' + (_GEAR_BUFF_LABEL[e.b]||e.b) + '(' + (e.dur||2) + ' 回合)';
+      default: return e.k + (typeof v === 'number' ? (' ' + v) : '');
+    }
+  }catch(_){ return ''; }
+}
+function _gearAffixText(af){
+  const def = GEAR_AFFIX_POOL.find(a => a.id === af.id);
+  if(!def) return af.id;
+  const e = Object.assign({}, def.eff);
+  if(typeof def.dur === 'number') e.dur = def.dur;
+  return _gearEffText(e, af);
+}
+
+// ── eqUid 產生 ──
+function _gearGenUid(){
+  return 'eq_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+// ── 詞條 roll 引擎(取得當下生成·永久固定;規則:同件不重複/免疫限傳說以上/同狀態免疫抵抗互斥/開場增益同件≤2/部位過濾/權重抽選)──
+function _gearRollAffixes(itemId){
+  const item = GEAR_DB[itemId];
+  if(!item) return [];
+  const rIdx = _GEAR_RARITY_ORDER[item.r] || 0;
+  const n = (GEAR_RARITY[item.r] && GEAR_RARITY[item.r].affixN) || 1;
+  const isWeapon = (item.slot === 'main') || (item.slot === 'off' && item.sub === 'weapon');
+  const eligible = GEAR_AFFIX_POOL.filter(a => {
+    if(a.slot === 'head' && item.slot !== 'head') return false;
+    if(a.slot === 'acc' && item.slot !== 'acc') return false;
+    if(a.slot === 'weapon' && !isWeapon) return false;
+    if(a.minR && rIdx < (_GEAR_RARITY_ORDER[a.minR] || 0)) return false;
+    return true;
+  });
+  const picked = [];
+  const excluded = {};
+  let openCount = 0;
+  for(let i = 0; i < n; i++){
+    const pool = eligible.filter(a => !excluded[a.id] && !(a.t === 'open' && openCount >= 2));
+    if(!pool.length) break;
+    let totalW = 0;
+    pool.forEach(a => { totalW += (a.w || 1); });
+    let roll = Math.random() * totalW;
+    let chosen = pool[pool.length - 1];
+    for(let j = 0; j < pool.length; j++){
+      roll -= (pool[j].w || 1);
+      if(roll <= 0){ chosen = pool[j]; break; }
+    }
+    const af = { id: chosen.id };
+    if(typeof chosen.min === 'number' && typeof chosen.max === 'number'){
+      af.v = chosen.min + Math.floor(Math.random() * (chosen.max - chosen.min + 1));
+    }
+    picked.push(af);
+    excluded[chosen.id] = 1;
+    if(chosen.t === 'open') openCount++;
+    const cf = _GEAR_CONFLICT[chosen.id];
+    if(cf) cf.forEach(x => { excluded[x] = 1; });
+  }
+  return picked;
+}
+
+// ── 帳本 ──
+function _gearWriteLedger(eqUid, itemId, src, giftFrom, sourceTag){
+  try{
+    if(!Array.isArray(window._equipUnlockHistory)) window._equipUnlockHistory = [];
+    const uid12 = (window._gUserId ? String(window._gUserId).slice(0, 12) : '');
+    const rec = { eqUid: eqUid, itemId: itemId, src: src, uid12: uid12, at: Date.now() };
+    if(giftFrom) rec.giftFrom = giftFrom;
+    if(sourceTag) rec.source = sourceTag;   // 稽核感知欄位(admin_delete / audit_error_recovered 前例同名)
+    window._equipUnlockHistory.push(rec);
+    if(window._equipUnlockHistory.length > 300) window._equipUnlockHistory = window._equipUnlockHistory.slice(-300);
+  }catch(_e){ console.warn('[裝備帳本] 寫入失敗', _e); }
+}
+
+// ── 取得(生成實例)──
+// ★ 老師裁定(2026-08-11):同名裝備可重複獲得(詞條各異)全部保留;
+//   全帳號持有上限 100 件(六部位合計),達上限不再獲得(玩家需賣出/贈送好友騰位·Phase 3/4 開通)。
+window._GEAR_MAX_OWNED = 100;
+function _gearOwnedCount(){
+  try{ return Object.keys((window._gearData && window._gearData.instances) || {}).length; }catch(_){ return 0; }
+}
+window._gearOwnedCount = _gearOwnedCount;
+function _gearGrant(itemId, src, opts){
+  try{
+    if(!GEAR_DB[itemId]){ console.warn('[裝備] 未知 itemId', itemId); return null; }
+    if(!window._gearData || typeof window._gearData !== 'object') window._gearData = { instances:{} };
+    if(!window._gearData.instances || typeof window._gearData.instances !== 'object') window._gearData.instances = {};
+    // 持有上限守門(GM 測試補發帶 ignoreCap 豁免;正式取得途徑一律受限)
+    if(!(opts && opts.ignoreCap) && _gearOwnedCount() >= window._GEAR_MAX_OWNED){
+      console.warn('[裝備] 已達持有上限 ' + window._GEAR_MAX_OWNED + ' 件,無法獲得', itemId);
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast(((window._artStyle === 'cute') ? '🎒 裝備背包滿了(100 件)!先賣掉或送給好友再來拿吧~' : '🎒 裝備持有已達上限 100 件,請先賣出或贈送好友'), '#ffaa66', 4000); }catch(_){}
+      return null;
+    }
+    const eqUid = _gearGenUid();
+    const now = Date.now();
+    const inst = { itemId: itemId, affixes: _gearRollAffixes(itemId), gifted: false,
+                   equippedTo: null, src: src || 'unknown', at: now, at2: now, rr: 0 };
+    window._gearData.instances[eqUid] = inst;
+    _gearWriteLedger(eqUid, itemId, src || 'unknown', opts && opts.giftFrom);
+    if(!(opts && opts.noSave)){ _gearRequestSave(); }
+    return eqUid;
+  }catch(_e){ console.warn('[裝備] 取得失敗', _e); return null; }
+}
+
+// ── GM 限定:重新 Roll 詞條(老師測試用·規則同取得時)──
+window._gearRerollAffixes = function(eqUid){
+  try{
+    if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())){
+      console.warn('[裝備重Roll] 僅限 GM'); return false;
+    }
+    const inst = window._gearData && window._gearData.instances && window._gearData.instances[eqUid];
+    if(!inst){ console.warn('[裝備重Roll] 找不到實例', eqUid); return false; }
+    inst.affixes = _gearRollAffixes(inst.itemId);
+    inst.rr = (inst.rr | 0) + 1;
+    inst.at2 = Date.now();
+    _gearRequestSave();
+    try{ console.log('[裝備重Roll] ' + eqUid + ' (' + inst.itemId + ') 第 ' + inst.rr + ' 次', inst.affixes); }catch(_){}
+    return true;
+  }catch(_e){ console.warn('[裝備重Roll] 失敗', _e); return false; }
+};
+
+// ── 查詢 ──
+function _gearGetInstance(eqUid){
+  return (window._gearData && window._gearData.instances && window._gearData.instances[eqUid]) || null;
+}
+function _gearListInstances(){
+  const out = [];
+  try{
+    const inst = (window._gearData && window._gearData.instances) || {};
+    Object.keys(inst).forEach(uid => {
+      const rec = inst[uid];
+      if(rec && rec.itemId && GEAR_DB[rec.itemId]) out.push({ eqUid: uid, inst: rec, def: GEAR_DB[rec.itemId] });
+    });
+  }catch(_){}
+  return out;
+}
+function _gearGetHeroEquipped(heroName){
+  return _gearListInstances().filter(x => x.inst.equippedTo === heroName);
+}
+function _gearGetHeroEquippedBySlot(heroName, slot){
+  return _gearGetHeroEquipped(heroName).find(x => x.def.slot === slot) || null;
+}
+
+// ── 髒資料自我修復:同英雄同部位僅保留 at2 最新一件(冪等)──
+function _gearRepairEquipped(){
+  try{
+    const byKey = {};
+    let fixed = 0;
+    _gearListInstances().forEach(x => {
+      if(!x.inst.equippedTo) return;
+      const key = x.inst.equippedTo + '|' + x.def.slot;
+      const prev = byKey[key];
+      if(!prev){ byKey[key] = x; return; }
+      const loser = ((x.inst.at2 || x.inst.at || 0) >= (prev.inst.at2 || prev.inst.at || 0)) ? prev : x;
+      const winner = (loser === prev) ? x : prev;
+      loser.inst.equippedTo = null;
+      loser.inst.at2 = Date.now();
+      byKey[key] = winner;
+      fixed++;
+    });
+    if(fixed > 0){ console.warn('[裝備修復] 同部位重複裝備,已自動卸下 ' + fixed + ' 件'); _gearRequestSave(); }
+  }catch(_e){ console.warn('[裝備修復] 失敗', _e); }
+}
+
+// ── 裝備 / 卸下 ──
+window._gearEquipToHero = function(eqUid, heroName){
+  try{
+    const inst = _gearGetInstance(eqUid);
+    if(!inst || !GEAR_DB[inst.itemId]) return false;
+    const slot = GEAR_DB[inst.itemId].slot;
+    // 同英雄同部位先卸舊
+    const cur = _gearGetHeroEquippedBySlot(heroName, slot);
+    if(cur && cur.eqUid !== eqUid){ cur.inst.equippedTo = null; cur.inst.at2 = Date.now(); }
+    // 本件若裝在別的英雄身上 → 轉裝(先卸)
+    inst.equippedTo = heroName;
+    inst.at2 = Date.now();
+    _gearRequestSave();
+    return true;
+  }catch(_e){ console.warn('[裝備] 裝備失敗', _e); return false; }
+};
+window._gearUnequip = function(eqUid){
+  try{
+    const inst = _gearGetInstance(eqUid);
+    if(!inst) return false;
+    inst.equippedTo = null;
+    inst.at2 = Date.now();
+    _gearRequestSave();
+    return true;
+  }catch(_e){ console.warn('[裝備] 卸下失敗', _e); return false; }
+};
+
+// ── 存檔(雲端唯一權威:直接觸發 gameCloudSave;無本機鏡像)──
+function _gearRequestSave(){
+  try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_e){ console.warn('[裝備] 存檔觸發失敗', _e); }
+}
+
+// ── 素質彙總(圖鑑/排序顯示用:僅數值型 hp/atk/sp/spd;hp=af_hp+HP上限)──
+function _gearInstanceNumericStats(x){
+  const total = { hp:0, atk:0, sp:0, spd:0 };
+  const addEff = function(e, rolled){
+    const v = (rolled && typeof rolled.v === 'number') ? rolled.v : e.v;
+    if(typeof v !== 'number') return;
+    if(e.k === 'atk') total.atk += v;
+    else if(e.k === 'sp') total.sp += v;
+    else if(e.k === 'spd') total.spd += v;
+    else if(e.k === 'hp' || e.k === 'hpMax') total.hp += v;
+  };
+  try{
+    (x.def.eff || []).forEach(e => addEff(e, null));
+    (x.inst.affixes || []).forEach(af => {
+      const adef = GEAR_AFFIX_POOL.find(a => a.id === af.id);
+      if(adef) addEff(adef.eff, af);
+    });
+  }catch(_){}
+  return total;
+}
+function _calcHeroGearBonus(heroName){
+  const total = { hp:0, atk:0, sp:0, spd:0 };
+  try{
+    _gearGetHeroEquipped(heroName).forEach(x => {
+      const s = _gearInstanceNumericStats(x);
+      total.hp += s.hp; total.atk += s.atk; total.sp += s.sp; total.spd += s.spd;
+    });
+  }catch(_){}
+  return total;
+}
+
+// ── 戰鬥套用引擎(比照 _applyTaiwanTreasureToHero;鬥技場路徑不呼叫=PVP 公平制)──
+// Phase 1:數值型(hp/atk/sp/spd)直接進素質;百分比與戰鬥鏈類效果彙總到 h._gearEff
+// (Phase 2 戰鬥機制輪才接 doDmg/格擋/抗性/免疫/開場增益引擎;上限 50/50/35 屆時一併生效)
+function _applyGearToHero(h){
+  if(!h) return;
+  if(h._isFriendHero){ h._gearEff = h._gearEff || {}; h._gearCount = 0; return; }
+  try{
+    if(typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero
+       && window._friendHeroInParty && _invitedFriendHero.name === h.name){
+      h._gearEff = h._gearEff || {}; h._gearCount = 0; return;
+    }
+  }catch(_){}
+  const equipped = _gearGetHeroEquipped(h.name);
+  h._gearCount = equipped.length;   // 鐵匠 S1/S2 改版(Phase 2)口徑:全隊裝備件數
+  const eff = { res:{}, imm:{}, elemDr:{}, onHit:[], open:[] };
+  let addHp = 0, addAtk = 0, addSp = 0, addSpd = 0;
+  const takeEff = function(e, rolled){
+    const v = (rolled && typeof rolled.v === 'number') ? rolled.v : e.v;
+    switch(e.k){
+      case 'hp': case 'hpMax': if(typeof v === 'number') addHp += v; break;
+      case 'atk': if(typeof v === 'number') addAtk += v; break;
+      case 'sp':  if(typeof v === 'number') addSp += v; break;
+      case 'spd': if(typeof v === 'number') addSpd += v; break;
+      case 'res': if(e.st && typeof v === 'number') eff.res[e.st] = (eff.res[e.st] || 0) + v; break;
+      case 'imm': if(e.st) eff.imm[e.st] = 1; break;
+      case 'elemDr': if(e.el && typeof v === 'number') eff.elemDr[e.el] = (eff.elemDr[e.el] || 0) + v; break;
+      case 'onHit': if(e.st && typeof v === 'number') eff.onHit.push({ st:e.st, chance:v, dur:(e.dur || 1) }); break;
+      case 'openShield': if(typeof v === 'number') eff.open.push({ b:'shield', v:v }); break;
+      case 'openBuff': if(e.b) eff.open.push({ b:e.b, dur:(e.dur || 2) }); break;
+      default:
+        if(typeof v === 'number') eff[e.k] = (eff[e.k] || 0) + v;
+    }
+  };
+  equipped.forEach(x => {
+    try{
+      (x.def.eff || []).forEach(e => takeEff(e, null));
+      (x.inst.affixes || []).forEach(af => {
+        const adef = GEAR_AFFIX_POOL.find(a => a.id === af.id);
+        if(!adef) return;
+        const e = Object.assign({}, adef.eff);
+        if(typeof adef.dur === 'number') e.dur = adef.dur;
+        takeEff(e, af);
+      });
+    }catch(_eOne){ console.warn('[裝備套用] 略過異常實例', x && x.eqUid, _eOne); }
+  });
+  if(addHp){ h.hp = (h.hp || 0) + addHp; h.curHp = h.hp; }
+  if(addAtk){ h.atk = (h.atk || 0) + addAtk; }
+  if(addSp){ h.sp = (h.sp || 0) + addSp; }
+  if(addSpd){ h.spd = (h.spd || 0) + addSpd; }
+  h._gearEff = eff;
+  if(equipped.length){
+    try{ console.log('[裝備套用] ' + h.name + ' 共 ' + equipped.length + ' 件', { hp:addHp, atk:addAtk, sp:addSp, spd:addSpd }, eff); }catch(_){}
+  }
+}
+
+// ── 雲端 hydrate(_applySafeData 呼叫;雲端唯一權威 → 整份採用,不與本機殘留合併)──
+function _gearHydrateFromCloud(data){
+  try{
+    const readObj = function(key){
+      try{
+        if(typeof data[key + '_s'] === 'string'){
+          const p = JSON.parse(data[key + '_s']);
+          if(p && typeof p === 'object' && !Array.isArray(p)) return p;
+        }
+      }catch(_){}
+      if(data[key] && typeof data[key] === 'object' && !Array.isArray(data[key])) return data[key];
+      return null;
+    };
+    const readArr = function(key){
+      try{
+        if(typeof data[key + '_s'] === 'string'){
+          const p = JSON.parse(data[key + '_s']);
+          if(Array.isArray(p)) return p;
+        }
+      }catch(_){}
+      if(Array.isArray(data[key])) return data[key];
+      return null;
+    };
+    const gd = readObj('equipmentData');
+    window._gearData = (gd && gd.instances && typeof gd.instances === 'object') ? gd : { instances:{} };
+    if(!window._gearData.instances || typeof window._gearData.instances !== 'object') window._gearData.instances = {};
+    // 剔除未知 itemId 的殘缺實例(防呆·不回寫刪除,只在記憶體忽略由 list 端過濾)
+    const hist = readArr('_equipUnlockHistory');
+    window._equipUnlockHistory = hist || [];
+    const grl = readObj('giftReceivedLedger');
+    window._giftReceivedLedger = grl || {};
+    window._gearHydrated = true;
+    _gearRepairEquipped();
+    const cnt = Object.keys(window._gearData.instances).length;
+    if(cnt > 0) console.log('[裝備系統] 已載入 ' + cnt + ' 件裝備(雲端唯一權威)');
+    // GM 測試組合:登入資料就緒後補發(冪等)
+    setTimeout(function(){ try{ _gearEnsureGmTestSet(); }catch(_){} }, 2500);
+  }catch(_e){ console.warn('[裝備系統] hydrate 失敗', _e); window._gearHydrated = true; }
+}
+
+// ── GM 測試發放:全部 60 件各 1 件(冪等·以 src=gm_grant 判定;老師裁定)──
+function _gearEnsureGmTestSet(){
+  try{
+    if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+    if(!window._gearHydrated) return;   // 未 hydrate 前不得發放(防重複)
+    if(!window._gearData || !window._gearData.instances) return;
+    const owned = {};
+    Object.keys(window._gearData.instances).forEach(uid => {
+      const rec = window._gearData.instances[uid];
+      if(rec && rec.src === 'gm_grant' && rec.itemId) owned[rec.itemId] = 1;
+    });
+    let granted = 0;
+    Object.keys(GEAR_DB).forEach(itemId => {
+      if(!owned[itemId]){ _gearGrant(itemId, 'gm_grant', { noSave:true, ignoreCap:true }); granted++; }
+    });
+    if(granted > 0){
+      _gearRequestSave();
+      console.log('[裝備系統] GM 測試組合補發 ' + granted + ' 件(全 60 件各 1 件·冪等)');
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast('🛡️ GM 測試裝備已發放 ' + granted + ' 件', '#88bbff', 3500); }catch(_){}
+    }
+  }catch(_e){ console.warn('[裝備系統] GM 發放失敗', _e); }
+}
+window._gearEnsureGmTestSet = _gearEnsureGmTestSet;
+
+// ────────────────────────────────────────────────────────────────────
+// UI:圖鑑英雄詳情「裝備欄位」(至寶下方)+ 部位選擇 modal(含 GM 重Roll)
+// ────────────────────────────────────────────────────────────────────
+function _gearItemLineHtml(x, showDesc){
+  const rc = (GEAR_RARITY[x.def.r] && GEAR_RARITY[x.def.r].color) || '#66ddff';
+  const rn = (GEAR_RARITY[x.def.r] && GEAR_RARITY[x.def.r].name) || '稀有';
+  const cute = (window._artStyle === 'cute');
+  const baseTxt = (x.def.eff || []).map(e => _gearEffText(e, null)).join('、');
+  const afTxt = (x.inst.affixes || []).map(af => '<span style="color:#aaddff;">◆ ' + _gearAffixText(af) + '</span>').join('<br>');
+  const desc = showDesc ? ('<div style="font-size:14px;color:#99aabb;margin-top:4px;line-height:1.45;">' + (cute ? (x.def.ds || '') : (x.def.dp || '')) + '</div>') : '';
+  return '<div style="line-height:1.4;">'
+    + '<div style="font-weight:900;color:' + rc + ';font-size:18px;">' + x.def.icon + ' ' + x.def.n
+    + ' <span style="font-size:13px;color:#ccc;font-weight:700;">' + rn + '</span>'
+    + (x.inst.gifted ? ' <span style="font-size:12px;color:#ffaacc;border:1px solid rgba(255,150,200,0.5);border-radius:6px;padding:0 5px;">好友贈禮</span>' : '')
+    + '</div>'
+    + '<div style="font-size:14px;color:#ffe8a0;margin-top:3px;">' + baseTxt + '</div>'
+    + (afTxt ? ('<div style="font-size:13px;margin-top:3px;">' + afTxt + '</div>') : '')
+    + desc + '</div>';
+}
+
+window._renderHeroGearSection = function(heroName){
+  try{
+    if(typeof GEAR_DB === 'undefined') return '';
+    if(!window._gearVisibleForMe()) return '';   // ★ 測試期閘門:學生不渲染整個區塊(老師裁定)
+    const nameEsc = String(heroName).replace(/'/g, "\\'");
+    const rows = GEAR_SLOT_ORDER.map(slot => {
+      const info = GEAR_SLOT_INFO[slot];
+      const eqd = _gearGetHeroEquippedBySlot(heroName, slot);
+      const click = 'onclick="event.stopPropagation();window._showGearSlotPicker(\'' + nameEsc + '\',\'' + slot + '\')"';
+      if(eqd){
+        const rc = (GEAR_RARITY[eqd.def.r] && GEAR_RARITY[eqd.def.r].color) || '#66ddff';
+        const rn = (GEAR_RARITY[eqd.def.r] && GEAR_RARITY[eqd.def.r].name) || '稀有';
+        return '<div ' + click + ' style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(0,0,0,0.45);border:2px solid ' + rc + ';border-radius:10px;margin-bottom:6px;box-shadow:0 0 10px ' + rc + '33;cursor:pointer;">'
+          + '<div style="width:44px;height:44px;border-radius:8px;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">' + eqd.def.icon + '</div>'
+          + '<div style="flex:1;min-width:0;line-height:1.3;overflow:hidden;">'
+          + '<div style="font-weight:900;color:' + rc + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:18px;">' + eqd.def.n + '</div>'
+          + '<div style="font-size:13px;color:#cccccc;margin-top:1px;">' + rn + '・詞條 ' + ((eqd.inst.affixes || []).length) + ' 條</div>'
+          + '</div>'
+          + '<span style="font-size:13px;color:#aaa;font-weight:700;flex-shrink:0;">' + info.n + ' <span style="color:#88bbff;">▾</span></span></div>';
+      }
+      return '<div ' + click + ' style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border:2px dashed rgba(140,180,255,0.28);border-radius:10px;margin-bottom:6px;color:#889;cursor:pointer;">'
+        + '<div style="width:44px;height:44px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;opacity:0.55;">' + info.icon + '</div>'
+        + '<div style="flex:1;font-size:16px;font-weight:700;letter-spacing:1px;">' + ((window._artStyle === 'cute') ? '點我穿上' + info.n + '裝備!' : '點此裝備' + info.n) + '</div>'
+        + '<span style="font-size:13px;color:#88bbff;font-weight:700;flex-shrink:0;">' + info.n + ' ▾</span></div>';
+    }).join('');
+    const ownedN = _gearListInstances().length;
+    return '<div id="_hut-anchor-gear" style="background:rgba(90,150,255,0.07);border-radius:14px;padding:14px 14px 10px;border:1.5px solid rgba(120,170,255,0.35);margin-top:8px;">'
+      + '<div style="font-size:20px;font-weight:900;color:#88bbff;margin-bottom:10px;letter-spacing:2px;">🛡️ 裝備欄位 <span style="font-size:13px;color:#99aacc;font-weight:700;">(持有 ' + ownedN + ' / ' + window._GEAR_MAX_OWNED + ' 件)</span></div>'
+      + rows + '</div>';
+  }catch(_e){ console.warn('[裝備UI] 區塊渲染失敗', _e); return ''; }
+};
+
+window._showGearSlotPicker = function(heroName, slot){
+  if(!window._gearVisibleForMe()) return;   // ★ 測試期閘門保險(區塊已不渲染,此為第二道)
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  try{ _gearRepairEquipped(); }catch(_){}
+  const old = document.getElementById('_hero-gear-picker-modal');
+  if(old) old.remove();
+  const info = GEAR_SLOT_INFO[slot] || { n:slot, icon:'🛡️' };
+  const isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+  const nameEsc = String(heroName).replace(/'/g, "\\'");
+  const list = _gearListInstances().filter(x => x.def.slot === slot)
+    .sort((a, b) => (_GEAR_RARITY_ORDER[b.def.r] - _GEAR_RARITY_ORDER[a.def.r]) || ((b.inst.at2 || 0) - (a.inst.at2 || 0)));
+  const cards = list.length ? list.map(x => {
+    const rc = (GEAR_RARITY[x.def.r] && GEAR_RARITY[x.def.r].color) || '#66ddff';
+    const mine = (x.inst.equippedTo === heroName);
+    const elsewhere = (x.inst.equippedTo && x.inst.equippedTo !== heroName) ? x.inst.equippedTo : null;
+    let btns = '';
+    if(mine){
+      btns += '<button onclick="window._gearPickerUnequip(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 14px;font-size:15px;font-weight:800;background:rgba(255,120,120,0.15);border:1.5px solid rgba(255,120,120,0.55);color:#ffb0b0;border-radius:8px;cursor:pointer;font-family:inherit;">卸下</button>';
+    } else {
+      btns += '<button onclick="window._gearPickerEquip(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 14px;font-size:15px;font-weight:800;background:rgba(90,180,255,0.18);border:1.5px solid rgba(120,180,255,0.6);color:#bbddff;border-radius:8px;cursor:pointer;font-family:inherit;">' + (elsewhere ? '轉裝到此' : '裝備') + '</button>';
+    }
+    if(isAdmin){
+      btns += '<button onclick="window._gearPickerReroll(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,200,80,0.14);border:1.5px solid rgba(255,200,80,0.55);color:#ffe8a0;border-radius:8px;cursor:pointer;font-family:inherit;">🎲 重Roll<span style="font-size:11px;color:#ccaa66;">(GM)</span></button>';
+    }
+    const badge = mine
+      ? '<span style="font-size:12px;color:#88ffbb;border:1px solid rgba(120,255,160,0.5);border-radius:6px;padding:1px 6px;">裝備中</span>'
+      : (elsewhere ? '<span style="font-size:12px;color:#ffcc88;border:1px solid rgba(255,200,120,0.5);border-radius:6px;padding:1px 6px;">裝備中:' + elsewhere + '</span>' : '');
+    return '<div style="background:rgba(0,0,0,0.4);border:1.5px solid ' + rc + '55;border-radius:12px;padding:12px 14px;margin-bottom:10px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+      + _gearItemLineHtml(x, true)
+      + '<div style="flex-shrink:0;text-align:right;">' + badge + '</div></div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">' + btns + '</div></div>';
+  }).join('') : '<div style="color:#8899aa;font-size:17px;padding:22px 8px;text-align:center;">' + ((window._artStyle === 'cute') ? '還沒有' + info.n + '裝備喔!打怪或去超商看看吧~(之後開放)' : '尚未擁有任何' + info.n + '裝備。取得途徑將於後續版本開放。') + '</div>';
+  const modal = document.createElement('div');
+  modal.id = '_hero-gear-picker-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:100050;background:rgba(0,0,10,0.78);display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML = '<div style="background:linear-gradient(160deg,#101a30,#1a2440);border:2px solid rgba(120,170,255,0.55);border-radius:16px;max-width:640px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.6);">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(120,170,255,0.25);">'
+    + '<div style="font-size:22px;font-weight:900;color:#aaccff;letter-spacing:1px;">' + info.icon + ' 為 ' + heroName + ' 選擇' + info.n + '裝備</div>'
+    + '<button onclick="document.getElementById(\'_hero-gear-picker-modal\').remove()" style="font-size:22px;background:none;border:none;color:#8899bb;cursor:pointer;font-family:inherit;">✕</button></div>'
+    + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px;">' + cards + '</div></div>';
+  modal.addEventListener('click', function(ev){ if(ev.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+};
+
+function _gearPickerRefresh(heroName, slot){
+  try{
+    const box = document.getElementById('hero-detail-content');
+    if(box && typeof _renderHeroDetail === 'function') _renderHeroDetail(heroName, box);
+  }catch(_){}
+  try{ window._showGearSlotPicker(heroName, slot); }catch(_){}
+}
+window._gearPickerEquip = function(eqUid, heroName, slot){
+  if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_equip', 800)) return;
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  const ok = window._gearEquipToHero(eqUid, heroName);
+  _gearPickerRefresh(heroName, slot);
+  if(ok){ try{ if(typeof bannerFX === 'function') bannerFX(null, '✅ 已裝備', '#66aaff', 1200); }catch(_){} }
+};
+window._gearPickerUnequip = function(eqUid, heroName, slot){
+  if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_unequip', 800)) return;
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  window._gearUnequip(eqUid);
+  _gearPickerRefresh(heroName, slot);
+};
+window._gearPickerReroll = function(eqUid, heroName, slot){
+  if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_reroll', 800)) return;
+  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  const ok = window._gearRerollAffixes(eqUid);
+  _gearPickerRefresh(heroName, slot);
+  if(ok){ try{ if(typeof bannerFX === 'function') bannerFX(null, '🎲 詞條已重新 Roll', '#ffcc66', 1400); }catch(_){} }
+};
+
+
 // 計算英雄裝備至寶後的總屬性加成
 function _calcHeroTreasureBonus(heroName){
   const equipped = _getHeroEquippedTreasures(heroName);
@@ -75302,7 +76171,15 @@ function _getHeroEffectiveStat(name, stat){
       tBonus = (tb && tb[stat]) || 0;
     }
   }catch(_){}
-  let total = base + invested + tBonus;
+  // ★ v5.27.0 — 裝備加成(數值型;比照至寶,HP 等級加成基底同樣不含裝備,避免雙重計算)
+  let gBonus = 0;
+  try{
+    if(typeof _calcHeroGearBonus === 'function'){
+      const gb = _calcHeroGearBonus(name);
+      gBonus = (gb && gb[stat]) || 0;
+    }
+  }catch(_){}
+  let total = base + invested + tBonus + gBonus;
   // HP 等級加成(+2%/級, Lv2 起戰鬥實際生效) — 依當前 Lv 推算
   if(stat === 'hp'){
     try{
@@ -86334,7 +87211,7 @@ ADV_SCENES.egypt = {
 };
 try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
 
-// ── 6. EQUIP_DB 擴充：12 隻日本主題寵物（★ v3.36.0 — 全新獨立效果，非複製台灣同名寵物）──
+// ── 6. CARRY_PET_DB 擴充：12 隻日本主題寵物（★ v3.36.0 — 全新獨立效果，非複製台灣同名寵物）──
 (function(){
   const TW_MAP = {
     '台灣黑熊':     {n:'月輪熊',       petDesc:'胸前白月牙印，日本山神的同族兄弟。',         icon:'🐻'},
@@ -86350,7 +87227,7 @@ try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
     '白頭翁':       {n:'白鼬',         petDesc:'冬天換上純白雪衣，靈巧躲避一切侵擾。',       icon:'🐀'},
     '黑冠麻鷺':     {n:'變化狸',       petDesc:'日本狸最著名的本領——拿葉子變身脫險。',       icon:'🦝'},
   };
-  // 複製 EQUIP_DB 中的台灣寵物，改名/改描述/改圖後推入成為日本寵物
+  // 複製 CARRY_PET_DB 中的台灣寵物，改名/改描述/改圖後推入成為日本寵物
   // 保留所有 onEquip/onRemove/healBonus/reflect 等函式邏輯完全不變
   const JP_BASE_URL = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
   const JP_IMG = {
@@ -86375,7 +87252,7 @@ try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
     '黑冠麻鷺':   { d:'每回合可免疫1次任何傷害（含多段）',    eff:{ jpImmuneOnce:true } },
   };
   Object.keys(TW_MAP).forEach(twName => {
-    const orig = EQUIP_DB.find(e => e.n === twName);
+    const orig = CARRY_PET_DB.find(e => e.n === twName);
     const info = TW_MAP[twName];
     const effDef = JP_EFF[twName] || { d:'', eff:{} };
     // 全新獨立物件：借 svg 保持視覺，完全不帶台灣寵物的 onEquip/onRemove/healBonus/reflect 等效果
@@ -86392,28 +87269,28 @@ try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
       _jpOrig:  twName,
     };
     Object.assign(petObj, effDef.eff);
-    EQUIP_DB.push(petObj);
+    CARRY_PET_DB.push(petObj);
   });
-  // 更新 EQUIP_NAMES Set（上方已宣告為 new Set）
-  EQUIP_DB.forEach(e => { if(typeof EQUIP_NAMES !== 'undefined') EQUIP_NAMES.add(e.n); });
-  // 更新 _EQUIP_SHORT 短描述
-  if(typeof _EQUIP_SHORT !== 'undefined'){
-    _EQUIP_SHORT['月輪熊']='暴擊率+30%';
-    _EQUIP_SHORT['雪猴']='攻擊必中';
-    _EQUIP_SHORT['對馬山貓']='30%閃避';
-    _EQUIP_SHORT['丹頂鶴']='水火風土草減傷+回能';
-    _EQUIP_SHORT['錦鯉']='治療技能省能量';
-    _EQUIP_SHORT['綠雉']='受傷機率回血';
-    _EQUIP_SHORT['日本大山椒魚']='每回合回20%HP';
-    _EQUIP_SHORT['翠鳥']='機率搶先行動';
-    _EQUIP_SHORT['日本鱟']='每回合+30護盾';
-    _EQUIP_SHORT['奈良神鹿']='光暗減傷+回能';
-    _EQUIP_SHORT['白鼬']='有利狀態+1回合';
-    _EQUIP_SHORT['變化狸']='每回合免疫1次傷害';
+  // 更新 CARRY_PET_NAMES Set（上方已宣告為 new Set）
+  CARRY_PET_DB.forEach(e => { if(typeof CARRY_PET_NAMES !== 'undefined') CARRY_PET_NAMES.add(e.n); });
+  // 更新 _CARRY_PET_SHORT 短描述
+  if(typeof _CARRY_PET_SHORT !== 'undefined'){
+    _CARRY_PET_SHORT['月輪熊']='暴擊率+30%';
+    _CARRY_PET_SHORT['雪猴']='攻擊必中';
+    _CARRY_PET_SHORT['對馬山貓']='30%閃避';
+    _CARRY_PET_SHORT['丹頂鶴']='水火風土草減傷+回能';
+    _CARRY_PET_SHORT['錦鯉']='治療技能省能量';
+    _CARRY_PET_SHORT['綠雉']='受傷機率回血';
+    _CARRY_PET_SHORT['日本大山椒魚']='每回合回20%HP';
+    _CARRY_PET_SHORT['翠鳥']='機率搶先行動';
+    _CARRY_PET_SHORT['日本鱟']='每回合+30護盾';
+    _CARRY_PET_SHORT['奈良神鹿']='光暗減傷+回能';
+    _CARRY_PET_SHORT['白鼬']='有利狀態+1回合';
+    _CARRY_PET_SHORT['變化狸']='每回合免疫1次傷害';
   }
 })();
 
-// ── EQUIP_DB 擴充：4 隻埃及主題寵物（★ v3.15.10 — 全新能力，非複製台灣/日本）──
+// ── CARRY_PET_DB 擴充：4 隻埃及主題寵物（★ v3.15.10 — 全新能力，非複製台灣/日本）──
 (function(){
   const EG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
   const EGYPT_PETS = [
@@ -86460,13 +87337,13 @@ try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
       _stage:'egypt', petThothQuiz:true,
     },
   ];
-  EGYPT_PETS.forEach(p => { EQUIP_DB.push(p); });
-  EQUIP_DB.forEach(e => { if(typeof EQUIP_NAMES !== 'undefined') EQUIP_NAMES.add(e.n); });
-  if(typeof _EQUIP_SHORT !== 'undefined'){
-    _EQUIP_SHORT['荷魯斯之鷹']='行動2次';
-    _EQUIP_SHORT['聖䗴神蟲']='重生+減傷+休息能量';
-    _EQUIP_SHORT['阿努比斯胡狼']='攻擊回能+減療';
-    _EQUIP_SHORT['托特聖䴉']='答對救援+省能';
+  EGYPT_PETS.forEach(p => { CARRY_PET_DB.push(p); });
+  CARRY_PET_DB.forEach(e => { if(typeof CARRY_PET_NAMES !== 'undefined') CARRY_PET_NAMES.add(e.n); });
+  if(typeof _CARRY_PET_SHORT !== 'undefined'){
+    _CARRY_PET_SHORT['荷魯斯之鷹']='行動2次';
+    _CARRY_PET_SHORT['聖䗴神蟲']='重生+減傷+休息能量';
+    _CARRY_PET_SHORT['阿努比斯胡狼']='攻擊回能+減療';
+    _CARRY_PET_SHORT['托特聖䴉']='答對救援+省能';
   }
 })();
 
@@ -86475,19 +87352,19 @@ window._getEquipPoolForStage = function(){
   const inAdv = (typeof _adventureMode !== 'undefined') && _adventureMode;
   if(inAdv && stage === 'japan'){
     // 日本關：只抽日本寵物
-    return EQUIP_DB.filter(e => e && e.n && e._stage === 'japan');
+    return CARRY_PET_DB.filter(e => e && e.n && e._stage === 'japan');
   }
   // ★ v3.15.10 — 埃及關：只抽埃及寵物
   if(inAdv && stage === 'egypt'){
-    return EQUIP_DB.filter(e => e && e.n && e._stage === 'egypt');
+    return CARRY_PET_DB.filter(e => e && e.n && e._stage === 'egypt');
   }
   // 其他情況(鬥技場/貓空關/未知關)：只抽台灣原本寵物(排除日本+埃及)
-  return EQUIP_DB.filter(e => e && e.n && e._stage !== 'japan' && e._stage !== 'egypt');
+  return CARRY_PET_DB.filter(e => e && e.n && e._stage !== 'japan' && e._stage !== 'egypt');
 };
 
 // ★ 動物學家專用池：永遠只抽台灣寵物
 window._getTaiwanEquipPool = function(){
-  return EQUIP_DB.filter(e => e && e.n && e._stage !== 'japan' && e._stage !== 'egypt');
+  return CARRY_PET_DB.filter(e => e && e.n && e._stage !== 'japan' && e._stage !== 'egypt');
 };
 
 
@@ -90125,7 +91002,7 @@ function advTgEvent_petEncounter(){
   // 隨機選一隻寵物（依關卡抽：貓空→台灣池、日本→日本池）
   const _petPool = (typeof window._getEquipPoolForStage === 'function')
     ? window._getEquipPoolForStage()
-    : EQUIP_DB;
+    : CARRY_PET_DB;
   const pet = _petPool[Math.floor(Math.random() * _petPool.length)];
   const petName = (pet && pet.pet) || (pet && pet.n) || '神秘野生動物';
   _tgShowDialog('🐾 野生動物', [
@@ -90261,7 +91138,7 @@ function _tgPetCorrect(pet, petName){
     document.body.appendChild(box);
     document.getElementById('_tg-pet-yes').onclick = () => {
       try{ playSfx('sfx-equip',0.6); }catch(_){}
-      window._pendingEventPet = pet.n;  // ★ 存 EQUIP_DB 的 n（名稱）作為 key
+      window._pendingEventPet = pet.n;  // ★ 存 CARRY_PET_DB 的 n（名稱）作為 key
       _showInGameToast(`🐾 ${petName} 已加入！BOSS 戰開場會自動放入物品格。`, '#88ffaa', 2800);
       box.remove();
       advTgAwardTreasureAndEnd();
@@ -91395,9 +92272,9 @@ function advStartBattle(){
     try{
       if(window._pendingEventPet){
         const _petName = window._pendingEventPet;
-        const _petData = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(e => e.n === _petName) : null;
+        const _petData = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(e => e.n === _petName) : null;
         if(_petData){
-          // 從 EQUIP_DB 直接複製完整物件（含 onEquip/onRemove 等回調）
+          // 從 CARRY_PET_DB 直接複製完整物件（含 onEquip/onRemove 等回調）
           G.inv[0] = Object.assign({}, _petData, { type:'equip', uid:'tgpet_'+Date.now() });
           log(`🐾 [野生動物事件] ${_petName} 已放入物品格 1，可在戰鬥中使用`);
         }
@@ -95169,7 +96046,7 @@ function advApplyReward(id) {
     } else if (id === 'get_pet') {
       const petEquips = (typeof window._getEquipPoolForStage === 'function')
         ? window._getEquipPoolForStage().filter(e=>e.pet)
-        : ((typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.filter(e=>e.pet) : []);
+        : ((typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.filter(e=>e.pet) : []);
       if(petEquips.length){
         // ★ v4.10.0(修正5) — 改依稀有度出現率 SSR15%/SR30%/R55% 抽 1 隻(單獨機率·
         //   不優先未收錄·排除教學必得的五色鳥);已馴養寵物照樣會出現(可攜帶+好感)。
@@ -95337,8 +96214,8 @@ function advApplyReward(id) {
           const _petIcon = (_t.equip.icon) || '🐾';
           try{
             // 先觸發 onRemove 清除天賦/狀態
-            if(typeof EQUIP_DB !== 'undefined'){
-              const _eqDef = EQUIP_DB.find(e => e.n === _t.equip.n);
+            if(typeof CARRY_PET_DB !== 'undefined'){
+              const _eqDef = CARRY_PET_DB.find(e => e.n === _t.equip.n);
               if(_eqDef && typeof _eqDef.onRemove === 'function') _eqDef.onRemove(_t);
             }
           }catch(_){}
@@ -95565,8 +96442,8 @@ function _advApplyPetToHero(targetHero, petEquip){
     var newPn = petEquip.pet || petEquip.n;
     // 換裝前先卸除舊寵 equip 效果(若有 onRemove),避免殘留(同引擎既有換裝慣例)
     try{
-      if(targetHero.equip && targetHero.equip.n && targetHero.equip.n !== newPn && typeof EQUIP_DB !== 'undefined'){
-        var _oldEq = EQUIP_DB.find(function(e){ return (e.pet || e.n) === targetHero.equip.n; });
+      if(targetHero.equip && targetHero.equip.n && targetHero.equip.n !== newPn && typeof CARRY_PET_DB !== 'undefined'){
+        var _oldEq = CARRY_PET_DB.find(function(e){ return (e.pet || e.n) === targetHero.equip.n; });
         if(_oldEq && _oldEq.onRemove){ try{ _oldEq.onRemove(targetHero); }catch(_e0){} }
       }
     }catch(_e1){}
@@ -95601,9 +96478,9 @@ function _advShowPetSwapCompareModal(h, oldPn, newPetEquip, onConfirm, onKeep){
     var _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
     var newPn = newPetEquip.pet || newPetEquip.n;
     function _effOf(pn){
-      var s = (typeof _EQUIP_SHORT !== 'undefined' && _EQUIP_SHORT[pn]) ? _EQUIP_SHORT[pn] : '';
+      var s = (typeof _CARRY_PET_SHORT !== 'undefined' && _CARRY_PET_SHORT[pn]) ? _CARRY_PET_SHORT[pn] : '';
       var full = '';
-      try{ var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(e){ return (e.pet||e.n) === pn; }) : null; if(eq && eq.d) full = eq.d; }catch(_){}
+      try{ var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(e){ return (e.pet||e.n) === pn; }) : null; if(eq && eq.d) full = eq.d; }catch(_){}
       return _cute ? (s || full || '—') : (full || s || '—');
     }
     function _burstOf(pn){
@@ -100605,6 +101482,11 @@ window._clearAccountLocalData = function(reason){
     try { window._friendshipHeart = 0; }catch(_){}
     try { window._giftHistory = { date:'', sentUids:[] }; }catch(_){}
     try { window._giftLog = []; }catch(_){}
+    // ★ v5.27.0 — 裝備系統全域變數(雲端唯一權威·無 localStorage 鍵需清;不清 → 前帳號裝備被 union 帶給下一位)
+    try { window._gearData = { instances:{} }; }catch(_){}
+    try { window._equipUnlockHistory = []; }catch(_){}
+    try { window._giftReceivedLedger = {}; }catch(_){}
+    try { window._gearHydrated = false; }catch(_){}
     try {
       if(window._kingChallenge && typeof window._kingChallenge === 'object'){
         window._kingChallenge._ssrStreakDays = 0;
@@ -101115,6 +101997,13 @@ function _buildSafeData() {
     // ★ v1.0.20260428.1700 — 台灣環島至寶資料(等級/經驗/裝備英雄)
     taiwanTreasureData: _taiwanTreasureData,
     taiwanTreasureData_s: JSON.stringify(_taiwanTreasureData||{}),
+    // ★ v5.27.0 — 裝備系統(雲端唯一權威·零本機鏡像;_s 字串版繞過 Firebase merge:true 深合併殘留)
+    equipmentData: (window._gearData && typeof window._gearData === 'object' && window._gearData.instances) ? window._gearData : { instances:{} },
+    equipmentData_s: (function(){ try{ return JSON.stringify((window._gearData && window._gearData.instances) ? window._gearData : { instances:{} }); }catch(_){ return JSON.stringify({ instances:{} }); } })(),
+    _equipUnlockHistory: Array.isArray(window._equipUnlockHistory) ? window._equipUnlockHistory.slice(-300) : [],
+    _equipUnlockHistory_s: (function(){ try{ return JSON.stringify((window._equipUnlockHistory||[]).slice(-300)); }catch(_){ return JSON.stringify([]); } })(),
+    giftReceivedLedger: (window._giftReceivedLedger && typeof window._giftReceivedLedger === 'object') ? window._giftReceivedLedger : {},
+    giftReceivedLedger_s: (function(){ try{ return JSON.stringify(window._giftReceivedLedger || {}); }catch(_){ return JSON.stringify({}); } })(),
     // ★ v1.0.20260501.4660 — 英雄第二件至寶欄位解鎖名單(打贏玉山我很會難度才能解鎖)
     heroSlot2Unlocked: (typeof _heroSlot2Unlocked !== 'undefined' && Array.isArray(_heroSlot2Unlocked)) ? _heroSlot2Unlocked : [],
     // ★ v1.0.20260501.4720 — 每日免費召喚記錄(YYYY/M/D 格式,台灣時區)
@@ -101263,6 +102152,12 @@ function _buildSafeData() {
           try{ Object.keys(_taiwanTreasureData||{}).forEach(id => { if(_taiwanTreasureData[id] && (_taiwanTreasureData[id].lv||0) >= 1) s++; }); }catch(_){}
           return s;
         })();
+        // ★ v5.27.0 — 裝備件數納入摘要(×30/件 參與三槽豐富度評分,防舊槽覆蓋謀殺新裝備;至寶 ×50 前例)
+        const _gearN = (function(){
+          let s = 0;
+          try{ Object.keys((window._gearData && window._gearData.instances) || {}).forEach(uid => { if(window._gearData.instances[uid] && window._gearData.instances[uid].itemId) s++; }); }catch(_){}
+          return s;
+        })();
         return {
           unlockedCount: _unlockedN,
           maxHeroLv:     _maxLv,
@@ -101271,6 +102166,7 @@ function _buildSafeData() {
           bagItems:      _bagItems,
           portraitCount: _portraitCount,
           treasureCount: _treasureN,
+          gearCount:     _gearN,
           ts:            Date.now()
         };
       }catch(_e){ return null; }
@@ -102320,6 +103216,10 @@ function _applySafeData(raw) {
       }catch(_){}
     }catch(_eTM){ console.warn('[台灣至寶 v3.14.17 合併] 失敗', _eTM); }
   })();
+  // ★ v5.27.0 — 裝備系統 hydrate(雲端唯一權威·整份採用不與本機殘留合併;無本機鏡像=零共用裝置汙染面)
+  //   多槽差異已在 _lxpsMergeSlots 以 eqUid union(at2 新者勝)+ 帳本稽核感知處理完,
+  //   這裡拿到的 data 已是權威合併結果,直接整份採用即可。
+  try{ if(typeof _gearHydrateFromCloud === 'function') _gearHydrateFromCloud(data); }catch(_eGH){ console.warn('[裝備系統] hydrate 呼叫失敗', _eGH); }
   // ★ v1.0.20260501.4660 — 載入英雄第二件至寶欄位解鎖名單
   if(Array.isArray(data.heroSlot2Unlocked)){
     _heroSlot2Unlocked = data.heroSlot2Unlocked.slice();
@@ -114171,7 +115071,7 @@ window._petSummonFullCardHtml = function(pn, tier){
   var _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
   var t  = tier || ((typeof window._petRarityOf === 'function') ? window._petRarityOf(pn) : 'R');
   var bc = t === 'SSR' ? '#ffcc55' : (t === 'SR' ? '#88bbff' : '#ccd4e8');
-  var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(x){ return (x.pet||x.n) === pn; }) : null;
+  var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(x){ return (x.pet||x.n) === pn; }) : null;
   var img = (typeof window._petNobgUrl === 'function') ? window._petNobgUrl(pn) : '';
   var fb  = (eq && eq.petImg) ? eq.petImg : '';
   var gt  = (window.PET_GROWTH_TYPE && window.PET_GROWTH_TYPE[pn]) || 'bal';
@@ -121505,6 +122405,8 @@ function _renderHeroDetail(name, box) {
         ${(()=>{
           // ★ v1.0.20260428.3730 — 計算至寶加成(基礎+投資點)
           const _treasureBonus = (typeof _calcHeroTreasureBonus === 'function') ? _calcHeroTreasureBonus(name) : {hp:0,atk:0,sp:0,spd:0};
+          // ★ v5.27.0 — 裝備數值加成(基礎+詞條的 hp/atk/sp/spd;比照至寶規格計入顯示總值·老師裁定)
+          const _gearBonusC = (typeof _calcHeroGearBonus === 'function') ? _calcHeroGearBonus(name) : {hp:0,atk:0,sp:0,spd:0};
           // ★ v1.0.20260501.5060 — 取得待投資 pending(批次分配模式)
           const _pending = (window._pendingStatInvest && window._pendingStatInvest[name]) || {hp:0,atk:0,sp:0,spd:0};
           const _pendingTotal = (_pending.hp||0) + (_pending.atk||0) + (_pending.sp||0) + (_pending.spd||0);
@@ -121545,14 +122447,19 @@ function _renderHeroDetail(name, box) {
             const petBonusHtml = petBonus > 0
               ? `<span style="font-size:13px;color:#7dffcf;font-weight:700;" title="跟隨寵物加成:${(_petFB && _petFB._pn) || ''}(含隨機素質·出戰時生效)"> +${petBonus} 🐾</span>`
               : '';
-            const totalDisplay = base + bonus + tBonus + capBonus + petBonus;
+            // ★ v5.27.0 — 裝備加成藍色 🛡️ 徽章(基礎功能+詞條的數值型素質·計入顯示總值·戰鬥出戰時實際生效)
+            const gearBonus = _gearBonusC[stat] || 0;
+            const gearBonusHtml = gearBonus > 0
+              ? `<span style="font-size:13px;color:#88bbff;font-weight:700;" title="裝備加成(含詞條·出戰時生效)"> +${gearBonus} 🛡️</span>`
+              : '';
+            const totalDisplay = base + bonus + tBonus + capBonus + petBonus + gearBonus;
             const capBonusHtml = capBonus > 0
               ? `<span style="font-size:13px;color:#c9a0ff;font-weight:700;" title="極限膠囊加成"> +${capBonus} 🧪</span>`
               : '';
             return `<div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:4px;${tBonus>0?'border:1.5px solid rgba(255,200,80,0.35);':''}">
               <span style="font-size:22px;cursor:pointer;line-height:1.25;" onclick="event.stopPropagation();toggleStatPopup(this,\'${stat}\',48)">${icon} ${lbl} <span style="font-size:14px;color:#aaa;vertical-align:middle;opacity:0.7;">?</span></span>
               <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;">
-                <span style="font-size:26px;font-weight:700;color:#ffe8a0;white-space:nowrap;">${totalDisplay}${bonus>0?`<span style="font-size:13px;color:#44ff88;"> +${bonus}</span>`:''}${lvBonusHtml}${tBonusHtml}${capBonusHtml}${petBonusHtml}</span>
+                <span style="font-size:26px;font-weight:700;color:#ffe8a0;white-space:nowrap;">${totalDisplay}${bonus>0?`<span style="font-size:13px;color:#44ff88;"> +${bonus}</span>`:''}${lvBonusHtml}${tBonusHtml}${capBonusHtml}${petBonusHtml}${gearBonusHtml}</span>
               ${(()=>{
                 // ★ v1.0.20260501.5060 — +/- 批次分配按鈕(取代原本的 +1 即時扣點)
                 const _pVal = _pending[stat] || 0;
@@ -121717,6 +122624,10 @@ function _renderHeroDetail(name, box) {
           </div>`;
         })()}
         ${(()=>{
+          // ★ v5.27.0 裝備系統 Phase 1 — 🛡️ 裝備欄位(至寶區塊下方·老師裁定位置;六部位裝/卸/GM重Roll)
+          try{ return (typeof window._renderHeroGearSection === 'function') ? window._renderHeroGearSection(name) : ''; }catch(_eGearSec){ return ''; }
+        })()}
+        ${(()=>{
           // ★ v3.37.0 寵物馴養 — 🐾 寵物槽位(至寶區塊下方;顯示跟隨寵物或空槽)
           // ★ v4.2.0 — GM 測試限定:非開放對象不顯示跟隨寵物槽
           if(window._petSysOpenForMe && !window._petSysOpenForMe()) return '';
@@ -121726,9 +122637,9 @@ function _renderHeroDetail(name, box) {
             let _inner = '';
             if(_pn){
               const _rec = (window._tamedPets && window._tamedPets[_pn]) || { lv:1 };
-              const _eqP = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(e => e.n === _pn) : null;
+              const _eqP = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(e => e.n === _pn) : null;
               const _bP = window._petStatBonusFull(_pn, _rec.lv, _rec);
-              const _effP = ((typeof _EQUIP_SHORT!=='undefined' && _EQUIP_SHORT[_pn]) || (_eqP && _eqP.d) || '—');
+              const _effP = ((typeof _CARRY_PET_SHORT!=='undefined' && _CARRY_PET_SHORT[_pn]) || (_eqP && _eqP.d) || '—');
               _inner = `
                 <div style="display:flex;gap:12px;align-items:center;">
                   <div style="flex:0 0 64px;height:64px;background:rgba(0,0,0,0.4);border-radius:10px;overflow:hidden;border:1.5px solid rgba(120,255,180,0.45);display:flex;align-items:center;justify-content:center;font-size:38px;">
@@ -121777,10 +122688,12 @@ function _renderHeroDetail(name, box) {
         ${(()=>{
           const _isP = (typeof _isPlayerHero === 'function') ? _isPlayerHero({name}) : true;
           const _tB = (typeof _calcHeroTreasureBonus === 'function') ? _calcHeroTreasureBonus(name) : {hp:0,atk:0,sp:0,spd:0};
-          const _atk = (hd.atk||0) + (inv.atk||0) + (_tB.atk||0);
-          const _sp  = (hd.sp ||0) + (inv.sp ||0) + (_tB.sp ||0);
-          const _spd = (hd.spd||0) + (inv.spd||0) + (_tB.spd||0);
-          let _hp  = (hd.hp ||0) + (inv.hp ||0) + (_tB.hp ||0);
+          // ★ v5.27.0 — 裝備數值加成一併計入右欄有效值(比照至寶)
+          const _gB = (typeof _calcHeroGearBonus === 'function') ? _calcHeroGearBonus(name) : {hp:0,atk:0,sp:0,spd:0};
+          const _atk = (hd.atk||0) + (inv.atk||0) + (_tB.atk||0) + (_gB.atk||0);
+          const _sp  = (hd.sp ||0) + (inv.sp ||0) + (_tB.sp ||0) + (_gB.sp ||0);
+          const _spd = (hd.spd||0) + (inv.spd||0) + (_tB.spd||0) + (_gB.spd||0);
+          let _hp  = (hd.hp ||0) + (inv.hp ||0) + (_tB.hp ||0) + (_gB.hp ||0);
           // HP 等級加成 +2%/級 (戰鬥時生效,跟著 lvBonusHtml 的算法一致)
           if(lv > 1){ _hp += Math.ceil(_hp * 0.02 * (lv - 1)); }
           // 計算各加成值(來自素質點)
@@ -133746,7 +134659,7 @@ window._togglePetMiniCodex = function(pn, heroName){
     if(old){ old.remove(); return; }                                 // toggle:再點一次關閉
     if(!pn) return;
     var _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
-    var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(e){ return e.n === pn; }) : null;
+    var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(e){ return e.n === pn; }) : null;
     var _rBadge = '';
     try{ if(typeof window._petRarityBadgeHtml === 'function') _rBadge = window._petRarityBadgeHtml(pn, 18) || ''; }catch(_){}
     var _rec = (window._tamedPets && window._tamedPets[pn]) ? window._tamedPets[pn] : null;
@@ -133755,7 +134668,7 @@ window._togglePetMiniCodex = function(pn, heroName){
     var _tameChip = _rec
       ? ('<span style="display:inline-block;background:rgba(40,120,70,0.85);border:1.5px solid rgba(120,255,180,0.8);color:#d8ffe8;border-radius:8px;padding:3px 12px;font-size:20px;font-weight:800;">🎓 已馴養 Lv.' + ((_rec.lv|0) || 1) + '　💞 好感 ' + ((_rec.aff|0) || 0) + (_affLabel ? ('(' + _affLabel + ')') : '') + '</span>')
       : ('<span style="display:inline-block;background:rgba(90,70,20,0.8);border:1.5px solid rgba(255,210,120,0.7);color:#ffe8b0;border-radius:8px;padding:3px 12px;font-size:20px;font-weight:800;">✨ ' + (_cute ? '還沒馴養(用飼料試試看!)' : '未馴養(可於戰鬥中以飼料嘗試馴養)') + '</span>');
-    var _eff = eq && eq.d ? eq.d : ((typeof _EQUIP_SHORT !== 'undefined' && _EQUIP_SHORT[pn]) || '');
+    var _eff = eq && eq.d ? eq.d : ((typeof _CARRY_PET_SHORT !== 'undefined' && _CARRY_PET_SHORT[pn]) || '');
     var _bio = eq && eq.petDesc ? eq.petDesc : '';
     var pb = (window.PET_BURST_DB && window.PET_BURST_DB[pn]) ? window.PET_BURST_DB[pn] : null;
     var _burstHtml = pb
@@ -133990,7 +134903,7 @@ window._applyFollowPetToHero = function(h){
     if(!h.equip){
       h.equip = { n: pn };
       try{
-        var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(e){ return e.n === pn; }) : null;
+        var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(e){ return e.n === pn; }) : null;
         if(eq && eq.onEquip) eq.onEquip(h);
       }catch(_eOE){}
     }
@@ -134699,7 +135612,7 @@ window._openFollowPetPicker = function(heroName){
   var cur = window._petFollowOf(heroName);
   var rows = tamed.length ? tamed.map(function(pn){
     var rec = window._tamedPets[pn];
-    var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(x){ return x.n === pn; }) : null;
+    var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(x){ return x.n === pn; }) : null;
     var b = window._petStatBonusFull(pn, rec.lv, rec);
     var busy = (rec.followTo && rec.followTo !== heroName) ? '(目前跟隨:'+rec.followTo+')' : '';
     var isCur = (pn === cur);
@@ -134717,7 +135630,7 @@ window._openFollowPetPicker = function(heroName){
     }catch(_){}
     return '<button onclick="playSfx(\'sfx-confirm\',0.6);window._petSetFollow(\''+pn.replace(/'/g,"\\'")+'\',\''+heroName.replace(/'/g,"\\'")+'\');document.getElementById(\'_pet-follow-modal\').remove();try{var _b=document.getElementById(\'hero-detail-content\');if(_b&&typeof _renderHeroDetail===\'function\')_renderHeroDetail(\''+heroName.replace(/'/g,"\\'")+'\',_b);}catch(_){}try{if(document.getElementById(\'pet-page-overlay\')&&document.getElementById(\'pet-page-overlay\').style.display!==\'none\'&&typeof _buildPetPage===\'function\')_buildPetPage();}catch(_){}" style="width:100%;margin:5px 0;padding:12px 14px;text-align:left;border-radius:12px;cursor:pointer;font-family:inherit;background:'+(isCur?'rgba(40,90,60,0.95)':'rgba(25,45,35,0.9)')+';border:2px solid '+(isCur?'rgba(120,255,180,0.9)':'rgba(80,220,140,0.45)')+';color:#ddffee;">'
       + '<div style="font-size:20px;font-weight:900;">'+(eq&&eq.icon?eq.icon:'🐾')+' '+pn+' '+window._petRarityBadgeHtml(pn,13)+' <span style="color:#ffee88;">Lv.'+rec.lv+'</span> <span style="font-size:14px;color:#ff9ac0;font-weight:800;">💖'+_aff+(_affLbl?('('+_affLbl+')'):'')+'</span>'+(isCur?' <span style="color:#99ffcc;">✅ 跟隨中</span>':'')+'</div>'
-      + '<div style="font-size:14px;color:#aaccbb;margin-top:3px;">素質 HP+'+b.hp+' 攻+'+b.atk+' 特+'+b.sp+' 速+'+b.spd+' ｜ 效果:'+((typeof _EQUIP_SHORT!=='undefined'&&_EQUIP_SHORT[pn])||(eq&&eq.d)||'—')+' <span style="color:#88aa99;">'+busy+'</span></div>'
+      + '<div style="font-size:14px;color:#aaccbb;margin-top:3px;">素質 HP+'+b.hp+' 攻+'+b.atk+' 特+'+b.sp+' 速+'+b.spd+' ｜ 效果:'+((typeof _CARRY_PET_SHORT!=='undefined'&&_CARRY_PET_SHORT[pn])||(eq&&eq.d)||'—')+' <span style="color:#88aa99;">'+busy+'</span></div>'
       + _pbHtml + '</button>';
   }).join('') : '<div style="font-size:17px;color:#99bbaa;padding:14px;text-align:center;">'+(_cute?'還沒有馴養的寵物。在戰鬥中攜帶寵物時按「🐾 馴養」試試!':'尚未馴養任何寵物。於戰鬥中攜帶未馴養寵物時,可使用「🐾 馴養」按鈕消耗飼料嘗試收服。')+'</div>';
   m.innerHTML = '<div style="background:linear-gradient(160deg,rgba(16,30,22,0.98),rgba(8,14,10,0.98));border:2px solid rgba(80,220,140,0.6);border-radius:18px;max-width:620px;width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px;">'
@@ -135724,7 +136637,7 @@ window._petHouseRender = function(){
         var rec = window._tamedPets[pn] || { lv:1, exp:0 };
         var aff = window._petAffection(pn);
         var day = window._petHouseDayRec(pn);
-        var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(x){ return (x.pet||x.n) === pn; }) : null;
+        var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(x){ return (x.pet||x.n) === pn; }) : null;
         var master = rec.followTo || '';
         var expPct = (rec.lv >= 20) ? 100 : Math.max(0, Math.min(100, Math.round((rec.exp||0))));
         var html = ''
@@ -135993,7 +136906,7 @@ window._checkPetMedals = function(){
 // ── 寵物圖 HTML(emoji 墊底 + petImg 蓋上;img 載入失敗自動露出 emoji 防破圖) ──
 window._petPlayImgHtml = function(pn){
   var eq = null;
-  try{ eq = EQUIP_DB.find(function(e){ return (e.pet || e.n) === pn; }); }catch(_){}
+  try{ eq = CARRY_PET_DB.find(function(e){ return (e.pet || e.n) === pn; }); }catch(_){}
   var ico = (eq && eq.icon) || '🐾';
   var img = (eq && eq.petImg) || '';
   return '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;">' + ico
@@ -136232,7 +137145,7 @@ window._petPlayHideSeek = function(pn, slotIdx){
     //   tier 0 很遠=冷藍 / 1 有點距離=綠 / 2 有點近=原色黃 / 3 非常近=火紅
     var STAR_FILTER = ['hue-rotate(175deg) saturate(1.7) brightness(1.1)', 'hue-rotate(75deg) saturate(1.5)', 'none', 'hue-rotate(-55deg) saturate(1.9) brightness(1.05)'];
     var eq = null;
-    try{ eq = EQUIP_DB.find(function(e){ return (e.pet || e.n) === pn; }); }catch(_){}
+    try{ eq = CARRY_PET_DB.find(function(e){ return (e.pet || e.n) === pn; }); }catch(_){}
     var fbImg = (eq && eq.petImg) || '';
     var ov = document.createElement('div');
     ov.id = 'pet-play-overlay';
@@ -136828,7 +137741,7 @@ window._usePetSummonTicket = function(){
     window._petRecordTame(pn, 'pet_ticket');   // 收錄馴養 Lv1(好感 0)·同步標記已相遇
     try{ window._recordTicketLedger && window._recordTicketLedger('use', 'pet_summon_ticket', 1, pick.r + ':' + pn); }catch(_){}
     // 收服慶祝視窗
-    var eq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(x){ return (x.pet||x.n) === pn; }) : null;
+    var eq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(x){ return (x.pet||x.n) === pn; }) : null;
     var m = document.createElement('div');
     m.id = '_pet-ticket-celebrate';
     m.style.cssText = 'position:fixed;inset:0;z-index:12100;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit;';
@@ -137607,8 +138520,8 @@ window._petT2Begin = function(){
     if(!hero){ hero = (G.p1||[]).find(function(h){ return h && h.curHp>0; }); }
     if(!hero) return;
     var birdEq = null;
-    try{ birdEq = (typeof EQUIP_DB !== 'undefined') ? EQUIP_DB.find(function(e){ return (e.pet||e.n) === '五色鳥'; }) : null; }catch(_){}
-    if(!birdEq){ console.warn('[petT2] 找不到五色鳥 EQUIP_DB 條目'); return; }
+    try{ birdEq = (typeof CARRY_PET_DB !== 'undefined') ? CARRY_PET_DB.find(function(e){ return (e.pet||e.n) === '五色鳥'; }) : null; }catch(_){}
+    if(!birdEq){ console.warn('[petT2] 找不到五色鳥 CARRY_PET_DB 條目'); return; }
     s.active = true; s.hero = hero;
     s.prevEquip = hero.equip || null;
     s._newTame = !(window._petIsTamed && window._petIsTamed('五色鳥'));
@@ -137867,12 +138780,12 @@ function closePetPage(){
 
 function _buildPetPage(){
   const el = document.getElementById('pet-page-content');
-  if(!el || typeof EQUIP_DB === 'undefined') return;
+  if(!el || typeof CARRY_PET_DB === 'undefined') return;
 
   // 依關卡分組
-  const twPets = EQUIP_DB.filter(e => !e._stage);  // 預設 = 台灣
-  const jpPets = EQUIP_DB.filter(e => e._stage === 'japan');
-  const egPets = EQUIP_DB.filter(e => e._stage === 'egypt');  // ★ v3.15.10 埃及寵物
+  const twPets = CARRY_PET_DB.filter(e => !e._stage);  // 預設 = 台灣
+  const jpPets = CARRY_PET_DB.filter(e => e._stage === 'japan');
+  const egPets = CARRY_PET_DB.filter(e => e._stage === 'egypt');  // ★ v3.15.10 埃及寵物
 
   // ★ v4.9.0 老師裁決 — 雙重狀態統計:👀 已相遇(出現並攜帶過·_isPetMet)/🎓 收錄馴養(_petIsTamed 權威)
   const _isTamedFn = (pn) => { try{ return !!(window._petIsTamed && window._petIsTamed(pn)); }catch(_){ return false; } };
@@ -138011,7 +138924,7 @@ function _showPetDetail(petName){
     try{ bannerFX(null, _cuteG3 ? '還沒遇過這隻寵物!' : '尚未相遇此寵物(冒險中遇到並攜帶後即可查看)', '#ff8866', 1600); }catch(_){}
     return;
   }
-  const eq = EQUIP_DB.find(e => (e.pet||e.n) === petName);
+  const eq = CARRY_PET_DB.find(e => (e.pet||e.n) === petName);
   if(!eq) return;
   const k = (typeof PET_KNOWLEDGE !== 'undefined') ? PET_KNOWLEDGE[petName] : null;
   // ★ v4.13.5(需求2)— cute/premium 雙版判定(用 bare _artStyle·鐵律 1.232);字少版一樣能進本頁看詳細介紹
@@ -138044,9 +138957,9 @@ function _showPetDetail(petName){
     ? ('<div style="display:inline-block;padding:0 48px;">' + _radarRaw.replace('<svg ', '<svg style="overflow:visible" ') + '</div>')
     : '';
 
-  // ★ v4.14.0(需求4)— 上一隻/下一隻翻頁:依 EQUIP_DB 圖鑑順序·僅在「已相遇」寵物間循環(與閱覽門檻一致)
-  const _navList = (typeof EQUIP_DB !== 'undefined')
-    ? EQUIP_DB.map(e => (e.pet || e.n)).filter(n => { try{ return _isPetCollected(n); }catch(_){ return false; } })
+  // ★ v4.14.0(需求4)— 上一隻/下一隻翻頁:依 CARRY_PET_DB 圖鑑順序·僅在「已相遇」寵物間循環(與閱覽門檻一致)
+  const _navList = (typeof CARRY_PET_DB !== 'undefined')
+    ? CARRY_PET_DB.map(e => (e.pet || e.n)).filter(n => { try{ return _isPetCollected(n); }catch(_){ return false; } })
     : [];
   const _navIdx = _navList.indexOf(petName);
   const _hasNav = _navList.length > 1 && _navIdx >= 0;
@@ -142483,8 +143396,8 @@ function _checkMedalJapanPet(){
 // 日本寵物圖鑑全解鎖
 function _checkMedalJapanPetFull(){
   try{
-    if(typeof EQUIP_DB === 'undefined') return;
-    const jpPets = Object.values(EQUIP_DB).filter(e => e && e._stage === 'japan');
+    if(typeof CARRY_PET_DB === 'undefined') return;
+    const jpPets = Object.values(CARRY_PET_DB).filter(e => e && e._stage === 'japan');
     if(jpPets.length < 12) return;
     const unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
     // 寵物解鎖改以 pet._stage === 'japan' 且玩家擁有（通關取得）來判斷。
@@ -148113,7 +149026,7 @@ window._filterChangelogForDisplay = function(entries){
   }catch(_ePGIU){ console.warn('[v4.90.0 主角技能繼承 UI 區塊] 初始化失敗', _ePGIU); }
 })();
 
-window._GAME_LOADED_VERSION = 'v5.26.0';
+window._GAME_LOADED_VERSION = 'v5.27.0';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
