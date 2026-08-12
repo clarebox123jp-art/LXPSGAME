@@ -20974,18 +20974,18 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <script>
 window._LXPS_FILE_VERSIONS = {
-  'index.html'         : 'v5.29.0',      // ★ v5.29.0(2026-08-12)— 裝備圖片顯示接線(第一批 body 槽 10 張上線):新增 _gearIconHtml helper(_GEAR_IMG_BASE+encodeURIComponent(img)+?v=_GEAR_IMG_VER 素材版本與遊戲版號脫鉤),裝備列表名稱行 30px+已裝備槽卡 42px 改讀 GEAR_DB img 插畫,圖片未上傳/載入失敗 onerror 自動退回 emoji → 後五批僅需上傳圖檔零程式改動;部位空槽/選擇器標題仍為部位 emoji ｜ ★ v5.28.0(2026-08-12)— 新玩家強制主線(丙案·老師裁定;本檔僅版號七點同步·機制全在 mainstory.js v5.28.0):「從來沒進過序章」的玩家登入必定連播 序章→第一章→第二章(_fg 旗標上雲跨裝置·GM 豁免),第二章完成前總鎖引導層蓋住遊戲禁止自由行動;進過序章的舊玩家維持原行為零影響 ｜ ★ v5.27.0(2026-08-11)— 裝備系統 Phase 1(老師需求·權威=設計表 v4.1+MEMORY_HANDOFF):①資料層 GEAR_DB 60 件(6 部位×10·生活物品命名·四階稀有度=詞條1/2/3/4·dp精緻+ds簡單雙版鐵律1.232)+GEAR_AFFIX_POOL 57 條(通用26/主副武附加10/頭部抵抗11/飾品開場10·免疫7條限傳說+·同狀態免疫抵抗互斥·開場≤2·權重抽選上下限roll取得當下永久固定) ②資料模型 equipmentData={instances:{eqUid:{itemId,affixes,gifted,equippedTo,src,at,at2,rr}}} 唯一實例碼為鍵隨主檔·零新collection rules免改 ③雲端同步總鐵則:槽計分 gearCount×30/件(_summaryRichnessScore+存檔/合併雙側摘要)·三槽合併 eqUid 整顆實例 union at2 新者勝(v3.16.67教訓)+_equipUnlockHistory 300筆帳本稽核感知 admin_delete/audit_error_recovered 排除·giftReceivedLedger 逐鍵max·★零本機鏡像雲端唯一權威(v3.13.93教訓)+_clearAccountLocalData 四全域重置 ④hydrate 於 _applySafeData 至寶合併後整份採用+_gearRepairEquipped 同部位冪等修復 ⑤套用 _applyGearToHero(冒險建隊至寶後同點·數值型直加素質·百分比彙總 h._gearEff 待 Phase 2 戰鬥機制·h._gearCount 供鐵匠改版·鬥技場不經此路徑=1.153 公平制) ⑥UI:圖鑑詳情至寶下方「🛡️裝備欄位」六槽裝/卸/轉裝 modal+素質卡/右欄/排序 _getHeroEffectiveStat 計入 🛡️藍徽章 ⑦GM(老師裁定):hydrate 後自動發放全 60 件各1件(src=gm_grant 冪等)+每件 🎲重Roll 鈕(rr++·GM限定) ⑧同版改名:舊寵物卡 EQUIP_DB→CARRY_PET_DB 全面改名 139 處(純識別字零行為·新系統 GEAR_ 前綴防靜默讀錯庫) ⑨老師四裁定同輪落實(2026-08-11):絕緣工作服=風屬性-25%+抵抗麻痺30%·厚字典=減傷2%+攻擊+2·同名裝備可重複獲得(詞條各異)全保留+全帳號持有上限100件(_GEAR_MAX_OWNED·_gearGrant 守門+滿載提示·GM 補發 ignoreCap 豁免·賣出/贈送騰位在 Phase 3/4)·測試期閘門 _GEAR_ADMIN_ONLY=true 學生完全看不到裝備欄位區塊(picker 雙守門·正式開放改 false 單一開關) ｜ ★ v5.26.0(2026-08-10)— 手機解析度適配(老師需求·排版/按鈕/視窗/文字完整呈現可捲動):主 style 區塊新增雙斷點 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中零影響):主線章節選單卡片可換行+標題字級縮/劇情對白框字級縮+max-height 可捲動長句不裁切/右上鈕貼齊瀏海 safe-area;造型工房直向改上預覽下選單堆疊+頁籤欄縮窄+說明列隱藏;寵物小屋直向槽位列取消 _phFitSlots 整列縮放改全尺寸橫向捲動(卡片按鈕維持好按)+頂列說明隱藏+食物面板縮;圖鑑三頁內距縮;選擇器錨點=mainstory.js v5.26.0 三處純加 class+工房/小屋 id+nth-of-type 結構選擇器(改頂層子元素順序需同步檢查);戰鬥引擎與其他系統不動 ｜ ★ v5.25.0(2026-08-10)— iPad 觸控優化(老師需求·主線劇情/造型工房/寵物小屋):主 style 區塊新增全域 CSS(overlay 根 id 作用域·三系統所有 button 補 touch-action:manipulation 消連點延遲/tap-highlight 透明/user-select+touch-callout none 防長按跳選單/min-height:44px 觸控目標達 Apple HIG 下限[寵物槽位鈕原35px·請出鈕原26px];捲動容器 mainstory-select-overlay/_av-tabs/_av-opts/_ph-food/_ph-pick-modal 補慣性捲動+overscroll-behavior:contain 橡皮筋外溢根治+pan-y);mainstory.js 因 CSS 作用域涵蓋完全不必改動免重傳;配套 avatar_db.js v5.25.0(直向 iPad 預覽 80vh 溢出修正一行) ｜ ★ v5.24.0(2026-08-09)— 主神奧汀天賦「奧汀之眼」注視機制改版(老師裁定):①doDmg ODIN-2 hook 被注視友方受對手直接攻擊時,由「免疫該次傷害(return 0)」改為「奧汀代為承受該次傷害」(return doDmg(奧汀, rawDmg, opts+_odinGazeRedirect 防遞迴;目標若是奧汀自己則不轉移·傷害照常結算)+奧汀以攻擊 100%(+10%/天賦級·乘算·不變)反擊+該次「注視」整顆移除;奧汀已倒下不觸發·DoT/反擊/治療不觸發 ②startTurn 施加段改「每人最多 1 層」(只挑尚未注視的最低 HP% 友方·不再疊第 2 層·配額 1+天賦級 max4 全數分散不同人) ③ignoreBuffs(無視有利)攻擊維持 v5.23.0「擋下一半」分支零改動(不轉移/不反擊/不消耗·龍王爆發 _wbBurstMinHalf 下限不受影響) ④文案同步:奧汀登場介紹卡+hero_db.js(HERO_TRAIT desc/fd·_TRAIT_LV_INFO·HERO_LORE·檔尾 sd 鐵律1.232/1.160)+hero_input.html trait ｜ ★ v5.23.0(2026-08-09)— 龍王爆發傷害規則裁定(老師:遇強大減傷/無敵技能至少保留一半傷害):①三免疫類(奧汀注視/幽幽暗行/科學發明家反應力場)vs 無視有利攻擊由 v5.22.1「完全貫穿」改「擋下一半」(rawDmg×0.5·免疫失效但仍抵擋 50%·不消耗層數/卡片·不反擊反彈·對齊火龍王天崩之炎「無敵改減傷 50%」原設計;未帶 ignoreBuffs 的一般攻擊維持原免疫/擋反行為零改動;反應力場拆前置擋半段+主 hook !ignoreBuffs 排除) ②doDmg 主扣血點前新增龍王爆發「至少保留原始一半」最終下限兜底(opts._wbBurstMinHalf+_wbBurstOrigDmg·各種免疫/減傷鏈疊完低於 50% 即補回 ceil(orig/2)·印貫穿 log;置於工匠魂等不倒類保命被動之前·保命仍可 HP 剩 1) ③配套 world-boss.js v5.23.0:六處龍王爆發 doDmg(草/土/水/風/火 hook 版/火預設天崩之炎)opts 加 _wbBurstMinHalf+_wbBurstOrigDmg;S1/S2/普攻不帶旗標·注視等免疫對其維持全額;world-boss-ui.html 本輪未動維持 v5.22.1 ｜ ★ v5.22.1(2026-08-09)— 世界龍王 LOG/爆發無傷害追修(老師+玩家 v5.22.0 實錘回報):①doDmg 龍王受傷 cap 三處 LOG「炎之意志」改依 HERO_TRAIT[當前龍王].name 動態(海龍王戰仍顯示火龍王天賦名) ②【爆發沒傷害根因②】奧汀「注視」(_odinGaze)免疫 hook 原無 ignoreBuffs 檢查——奧汀每回合幫最低 HP 隊友補注視·滿血隊層數遍佈全隊→龍王 AoE 爆發(無視有利·ignoreBuffs:true)四發全被 return 0·狀態照上 HP 全滿(玩家回報 G 狀態實錘);改尊重 opts.ignoreBuffs:貫穿時印 log·不消耗層數·S1/S2/普攻等未帶 ignoreBuffs 維持原免疫+反擊 ③同類病灶一次修:幽幽「暗行」全免疫+科學發明家「反應力場」擋反·同樣改尊重 ignoreBuffs(貫穿=不擋不反·buff/卡片保留) ④配套 world-boss.js v5.22.1(普攻「維蘇威炎爪」LOG 改依屬性:深淵冰爪/翠玉藤爪/山岳岩爪/風暴雷爪/黃泉冥爪/高天原聖爪/星辰幻爪)+world-boss-ui.html v5.22.1(舊引擎兩處寫死同步去除·保險) ｜ ★ v5.22.0(2026-08-09)— 世界龍王戰四合一修正(老師需求):①龍王戰背景 Y 65%→35%(全龍王下移露出龍頭·BOSS 血條不再蓋住頭部) ②acted 守門補涵蓋 _realAiAct 世界BOSS路徑(v5.21.0 守門在 WB 攔截之後→疊發重複呼叫直達 _wbAdvBossTurn→入口 clearTimeout 砍掉爆發「動畫後才生效」的傷害 timer=老師回報海龍王爆發沒傷害的根因鏈;_quizCbBypass 一次性旗標同語義放行·重複呼叫忽略不排 startTurn 防疊發) ③爆發時序重排擴及世界BOSS戰(老師需求「所有爆發技動畫結束後才生效傷害/治療·點跳過=立即生效」:移除 v4.33.0 _bvInWB 排除,WB 內有爆發影片英雄也改「影片結束/跳過才放 GIF 特效+傷害/治療」·補影片路徑 _wbFxCapture burstCinematic 廣播讓連線隊友端看得到演出;無影片英雄 else 原路徑零改動) ④配套:world-boss.js v5.22.0(補 4 龍王專屬開場咆哮/aiAct hook acted 守門/崩毀·擊敗訊息動態龍王名/_WB_BOSS_SKILL_NAMES 三招表/關卡文案去寫死)+world-boss-ui.html v5.22.0(R4 爆發預告與房間迷你預覽三招·屬性依當前龍王動態) ｜ ★ v5.21.0(2026-08-09)— 玩家 BUG「玩一半跳出遊戲」修復(甲+乙·老師裁定):甲=_realAiAct 一般路徑新增 p2 acted 守門(同一敵人單回合多次行動+多重 startTurn 疊發+新回合答題被孤兒清除秒判答錯 根治;世界BOSS 行動前答題 cb 以 _quizCbBypass 一次性旗標放行·追擊鐵律1.113 走 _wbAdvBossTurn 攔截零影響) 乙=_gpHeartbeatCheck 借既有 3 秒節拍新增冒險戰鬥全滅巡邏(任一方全滅未結算→立即走 startTurn v3.14.0/v3.14.4 保險同款正規收場·最長 20+ 秒凍結縮到 ≤3 秒;G._annihilationPatrolFired 每場一次latch·cutscene/小怪結算/答題中不介入·worldboss/鬥技場不適用) ｜ ★ v5.20.0(2026-08-08)— 主線活動介紹卡圖文並茂大改版(老師需求·純顯示層):buildMainStorySection ①序章封面大橫幅 ②「捏出你的主角」升級置頂主打區(雙月河堤場景圖+三步驟晶片+入口指路·鼓勵孩子創造自己的主角) ③七章封面縮圖帶(章節選單同組封面·零新圖檔) ④特色卡改圖+文(社團教室/黑暗球等場景圖·onerror 隱藏防缺圖破版) ⑤獎勵文案修正對齊實發(🔮×5+💰20,000) ⑥近期活動選單列補 2 張縮圖+sub 捏主角前置;文案 cute/premium 雙版鐵律1.232·零機制改動 ｜ ★ v5.19.0(2026-08-08)— 主線劇情+自訂主角系統正式開放(老師指示):本檔僅版號七點同步(_GAME_LOADED_VERSION+FILE_VERSIONS 五鍵 index/mainstory/avatar_db/admin/changelog);兩個閘門在 mainstory.js(_MAINSTORY_ADMIN_ONLY→false)與 avatar_db.js(_AVATAR_ADMIN_ONLY→false),index 既有連動全自動生效(關卡頁 📖 主線鈕+進度徽章全員顯示/近期活動卡自動切 NEW! 正式文案/遊戲指引主線+我的主角兩章自動出現/獎章·GM回溯·四道共用平板保護 v5.6.0-v5.9.0 早已就緒);遊戲程式碼零改動 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄(index 側七 hook:execSkill 玩家路徑[先設 _activeSkLvMult 再交引擎·doDmg 自動套等級引擎不重複乘]/aiUseSkill 鏈尾 else-if 分支[引擎手動乘等級·鏈尾統一收尾]/_runBurst 鏈首分支[BURST_GIF_DB 註冊即自動播動畫]/startBattle 戰開天賦 T1T2/startTurn 行動前天賦 T3T4/doDmg 受傷天賦 T5T6[逆鱗後同區·rawDmg·_isDynTrait 防遞迴]/載入器 ①c 開機套 lxps_dynHero_v1 快取+_dynContentSync 第三軌 heroVer/heroPacks 獨立比對·quota 滿靜默降級;引擎/資料層在 hero_db.js v5.18.0·GM 後台在 admin_panel.js v5.18.0) ｜ ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件(index 側=動態載入器擴充:_index 同讀 avatarVer/avatarPacks·開機套 lxps_dynAvatar_v1 快取·quota 滿靜默降級·_dynContentSync 題庫/配件雙軌獨立版本比對;主引擎在 avatar_db.js v5.17.0·GM 後台在 admin_panel.js) ｜ ★ v5.16.0(2026-08-06)— 動態內容層第一期・動態題庫:新增開機載入器(localStorage 快取先套→登入後只讀 dynamicContent/_index 一份比對版本→有更新才拉 quiz_N 題包→冪等合併進 ADV_QUIZ_DB id>=100000 專屬區段·所有消費端[冒險抽題/鬥技場/知識王/小博士]執行期翻表自動生效零接線·任何失敗靜默不影響遊戲);同輪救援:發現 repo 缺 mainstory.js(v5.12.0 拆檔後未上傳→主線入口全站失效)·自 git 歷史 0996239(v5.11.0)原段重建 4,111 行交付·內容一字不差·FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動 ｜ ★ v5.15.0(2026-08-05)— 主角圖鑑頭身位置跑掉根治(老師回報:每次重開遊戲,英雄圖鑑網格與詳情頁的主角「頭部+身體」組合位置錯位;開造型工房卻正常,按確認儲存才恢復,下次重開又壞):根因=啟動立繪 poll 常在 gameConfig/avatarPartDefaults 雲端預設表拉回前完成,且立繪簽章只含 cfg → 預設表稍後到貨也永遠不重畫,錯位整場鎖死;開工房是 inline 即時渲染(此時表已到)所以正常;按確認儲存會重畫是因為工房開啟時採用雲端卡(Firestore 鍵序不同)cfg 簽章碰巧改變。修法三保險全在 index.html:①立繪簽章納入預設表內容(表變=舊簽章自動失效)②新增預設表「到貨監看」(每 1.5s 廉價字串比對×60 次·偵測到內容變動即簽章歸零重畫·90 秒停·無變動零渲染成本)③世代守門 _lxpsProtagPortraitGen(舊輪 base64 內嵌抓圖在途完成一律作廢不回寫·一併根治既有 hydrate 歸零重畫與舊輪互蓋的競態)+_msHydrateFromCloud 對帳簽章改同組合格式;avatar_db.js 零更動不 bump(900 台不重抓部件圖) ｜ ★ v5.14.0(2026-08-04)— 圖片瘦身全面接管(老師裁定):sw.js v3.5.93 ①activate 一次性清可JPG化舊 png 快取鍵→已快取玩家自動換 jpg/webp ②precache 格式感知(舊 iPad 完整下載 297MB→43MB 級)③三 key 查詢;index 僅兩個 PRECACHE_URLS 發送點加 supportsWebp 提示欄位·其餘零改動 ｜ ★ v5.13.0(2026-08-04)— 圖片瘦身甲案(檔名不動·SW分流):根目錄 390 張 PNG 盤點→不透明 348 張(除 icon-*)產同名 .jpg q88(297MB→43MB 省85.5%)+補 13 張 .webp;34 張透明(寵物_去背/標題字/素體/body_×4)與 avatar_parts/ 保持 PNG;sw.js v3.5.92 舊機 png→jpg 分流·新機 png→webp 不變;本檔僅版號同步·遊戲程式碼零改動 ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:主線劇情引擎+MAINSTORY_DB(L144205-148311·4,107行/約228KB)整段拆出成 mainstory.js·原位 document.write(_lxpsFileSrc) 載入·零行為變更;FILE_VERSIONS 新增 mainstory.js 鍵·sw.js SHELL_URLS+SW_VERSION 連動·check_inline 基準 21→22 ｜ ★ v5.11.0(2026-08-03)— 世界龍王連線 Firestore 配額熔斷+降載(玩家回報「打龍王一直選角失敗」根治:resource-exhausted 配額耗盡時 ①心跳/離線監測熔斷暫停60秒停止每秒3次重試風暴 ②開房/加入/選角/準備失敗改雙版友善訊息不再直出英文錯誤碼 ③常態降載:心跳10s→20s·watchdog 5s→15s·離線判定20s→45s 讀寫量降約60%;全在 index.html WB net 層·world-boss.js/ui 未動;同版加碼:主角技能繼承(PGI)升級效果文字修正——升級確認視窗/升級書技能選擇視窗/一覽表可升級標籤 三處改用繼承後招式顯示與查表·戰鬥實際威力經檢驗本就正確吃主角自身技能等級 Q2甲·純顯示層) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動)
+  'index.html'         : 'v5.30.0',      // ★ v5.30.0(2026-08-12)— 裝備系統 Phase 2 戰鬥機制(dr/elemDr/critDmgTaken/格擋35/迴避命中/暴擊/onHit/反彈/反擊吸血/免疫抗性50/開場增益/淨化/drop/gold/exp)+丙案 BOSS 40% 下限+鐵匠 S1/S2 改版(裝備效果放大甲案)+推薦裝備/一鍵卸除+三上限提示 ｜ ★ v5.29.0(2026-08-12)— 裝備圖片顯示接線(第一批 body 槽 10 張上線):新增 _gearIconHtml helper(_GEAR_IMG_BASE+encodeURIComponent(img)+?v=_GEAR_IMG_VER 素材版本與遊戲版號脫鉤),裝備列表名稱行 30px+已裝備槽卡 42px 改讀 GEAR_DB img 插畫,圖片未上傳/載入失敗 onerror 自動退回 emoji → 後五批僅需上傳圖檔零程式改動;部位空槽/選擇器標題仍為部位 emoji ｜ ★ v5.28.0(2026-08-12)— 新玩家強制主線(丙案·老師裁定;本檔僅版號七點同步·機制全在 mainstory.js v5.28.0):「從來沒進過序章」的玩家登入必定連播 序章→第一章→第二章(_fg 旗標上雲跨裝置·GM 豁免),第二章完成前總鎖引導層蓋住遊戲禁止自由行動;進過序章的舊玩家維持原行為零影響 ｜ ★ v5.27.0(2026-08-11)— 裝備系統 Phase 1(老師需求·權威=設計表 v4.1+MEMORY_HANDOFF):①資料層 GEAR_DB 60 件(6 部位×10·生活物品命名·四階稀有度=詞條1/2/3/4·dp精緻+ds簡單雙版鐵律1.232)+GEAR_AFFIX_POOL 57 條(通用26/主副武附加10/頭部抵抗11/飾品開場10·免疫7條限傳說+·同狀態免疫抵抗互斥·開場≤2·權重抽選上下限roll取得當下永久固定) ②資料模型 equipmentData={instances:{eqUid:{itemId,affixes,gifted,equippedTo,src,at,at2,rr}}} 唯一實例碼為鍵隨主檔·零新collection rules免改 ③雲端同步總鐵則:槽計分 gearCount×30/件(_summaryRichnessScore+存檔/合併雙側摘要)·三槽合併 eqUid 整顆實例 union at2 新者勝(v3.16.67教訓)+_equipUnlockHistory 300筆帳本稽核感知 admin_delete/audit_error_recovered 排除·giftReceivedLedger 逐鍵max·★零本機鏡像雲端唯一權威(v3.13.93教訓)+_clearAccountLocalData 四全域重置 ④hydrate 於 _applySafeData 至寶合併後整份採用+_gearRepairEquipped 同部位冪等修復 ⑤套用 _applyGearToHero(冒險建隊至寶後同點·數值型直加素質·百分比彙總 h._gearEff 待 Phase 2 戰鬥機制·h._gearCount 供鐵匠改版·鬥技場不經此路徑=1.153 公平制) ⑥UI:圖鑑詳情至寶下方「🛡️裝備欄位」六槽裝/卸/轉裝 modal+素質卡/右欄/排序 _getHeroEffectiveStat 計入 🛡️藍徽章 ⑦GM(老師裁定):hydrate 後自動發放全 60 件各1件(src=gm_grant 冪等)+每件 🎲重Roll 鈕(rr++·GM限定) ⑧同版改名:舊寵物卡 EQUIP_DB→CARRY_PET_DB 全面改名 139 處(純識別字零行為·新系統 GEAR_ 前綴防靜默讀錯庫) ⑨老師四裁定同輪落實(2026-08-11):絕緣工作服=風屬性-25%+抵抗麻痺30%·厚字典=減傷2%+攻擊+2·同名裝備可重複獲得(詞條各異)全保留+全帳號持有上限100件(_GEAR_MAX_OWNED·_gearGrant 守門+滿載提示·GM 補發 ignoreCap 豁免·賣出/贈送騰位在 Phase 3/4)·測試期閘門 _GEAR_ADMIN_ONLY=true 學生完全看不到裝備欄位區塊(picker 雙守門·正式開放改 false 單一開關) ｜ ★ v5.26.0(2026-08-10)— 手機解析度適配(老師需求·排版/按鈕/視窗/文字完整呈現可捲動):主 style 區塊新增雙斷點 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中零影響):主線章節選單卡片可換行+標題字級縮/劇情對白框字級縮+max-height 可捲動長句不裁切/右上鈕貼齊瀏海 safe-area;造型工房直向改上預覽下選單堆疊+頁籤欄縮窄+說明列隱藏;寵物小屋直向槽位列取消 _phFitSlots 整列縮放改全尺寸橫向捲動(卡片按鈕維持好按)+頂列說明隱藏+食物面板縮;圖鑑三頁內距縮;選擇器錨點=mainstory.js v5.26.0 三處純加 class+工房/小屋 id+nth-of-type 結構選擇器(改頂層子元素順序需同步檢查);戰鬥引擎與其他系統不動 ｜ ★ v5.25.0(2026-08-10)— iPad 觸控優化(老師需求·主線劇情/造型工房/寵物小屋):主 style 區塊新增全域 CSS(overlay 根 id 作用域·三系統所有 button 補 touch-action:manipulation 消連點延遲/tap-highlight 透明/user-select+touch-callout none 防長按跳選單/min-height:44px 觸控目標達 Apple HIG 下限[寵物槽位鈕原35px·請出鈕原26px];捲動容器 mainstory-select-overlay/_av-tabs/_av-opts/_ph-food/_ph-pick-modal 補慣性捲動+overscroll-behavior:contain 橡皮筋外溢根治+pan-y);mainstory.js 因 CSS 作用域涵蓋完全不必改動免重傳;配套 avatar_db.js v5.25.0(直向 iPad 預覽 80vh 溢出修正一行) ｜ ★ v5.24.0(2026-08-09)— 主神奧汀天賦「奧汀之眼」注視機制改版(老師裁定):①doDmg ODIN-2 hook 被注視友方受對手直接攻擊時,由「免疫該次傷害(return 0)」改為「奧汀代為承受該次傷害」(return doDmg(奧汀, rawDmg, opts+_odinGazeRedirect 防遞迴;目標若是奧汀自己則不轉移·傷害照常結算)+奧汀以攻擊 100%(+10%/天賦級·乘算·不變)反擊+該次「注視」整顆移除;奧汀已倒下不觸發·DoT/反擊/治療不觸發 ②startTurn 施加段改「每人最多 1 層」(只挑尚未注視的最低 HP% 友方·不再疊第 2 層·配額 1+天賦級 max4 全數分散不同人) ③ignoreBuffs(無視有利)攻擊維持 v5.23.0「擋下一半」分支零改動(不轉移/不反擊/不消耗·龍王爆發 _wbBurstMinHalf 下限不受影響) ④文案同步:奧汀登場介紹卡+hero_db.js(HERO_TRAIT desc/fd·_TRAIT_LV_INFO·HERO_LORE·檔尾 sd 鐵律1.232/1.160)+hero_input.html trait ｜ ★ v5.23.0(2026-08-09)— 龍王爆發傷害規則裁定(老師:遇強大減傷/無敵技能至少保留一半傷害):①三免疫類(奧汀注視/幽幽暗行/科學發明家反應力場)vs 無視有利攻擊由 v5.22.1「完全貫穿」改「擋下一半」(rawDmg×0.5·免疫失效但仍抵擋 50%·不消耗層數/卡片·不反擊反彈·對齊火龍王天崩之炎「無敵改減傷 50%」原設計;未帶 ignoreBuffs 的一般攻擊維持原免疫/擋反行為零改動;反應力場拆前置擋半段+主 hook !ignoreBuffs 排除) ②doDmg 主扣血點前新增龍王爆發「至少保留原始一半」最終下限兜底(opts._wbBurstMinHalf+_wbBurstOrigDmg·各種免疫/減傷鏈疊完低於 50% 即補回 ceil(orig/2)·印貫穿 log;置於工匠魂等不倒類保命被動之前·保命仍可 HP 剩 1) ③配套 world-boss.js v5.23.0:六處龍王爆發 doDmg(草/土/水/風/火 hook 版/火預設天崩之炎)opts 加 _wbBurstMinHalf+_wbBurstOrigDmg;S1/S2/普攻不帶旗標·注視等免疫對其維持全額;world-boss-ui.html 本輪未動維持 v5.22.1 ｜ ★ v5.22.1(2026-08-09)— 世界龍王 LOG/爆發無傷害追修(老師+玩家 v5.22.0 實錘回報):①doDmg 龍王受傷 cap 三處 LOG「炎之意志」改依 HERO_TRAIT[當前龍王].name 動態(海龍王戰仍顯示火龍王天賦名) ②【爆發沒傷害根因②】奧汀「注視」(_odinGaze)免疫 hook 原無 ignoreBuffs 檢查——奧汀每回合幫最低 HP 隊友補注視·滿血隊層數遍佈全隊→龍王 AoE 爆發(無視有利·ignoreBuffs:true)四發全被 return 0·狀態照上 HP 全滿(玩家回報 G 狀態實錘);改尊重 opts.ignoreBuffs:貫穿時印 log·不消耗層數·S1/S2/普攻等未帶 ignoreBuffs 維持原免疫+反擊 ③同類病灶一次修:幽幽「暗行」全免疫+科學發明家「反應力場」擋反·同樣改尊重 ignoreBuffs(貫穿=不擋不反·buff/卡片保留) ④配套 world-boss.js v5.22.1(普攻「維蘇威炎爪」LOG 改依屬性:深淵冰爪/翠玉藤爪/山岳岩爪/風暴雷爪/黃泉冥爪/高天原聖爪/星辰幻爪)+world-boss-ui.html v5.22.1(舊引擎兩處寫死同步去除·保險) ｜ ★ v5.22.0(2026-08-09)— 世界龍王戰四合一修正(老師需求):①龍王戰背景 Y 65%→35%(全龍王下移露出龍頭·BOSS 血條不再蓋住頭部) ②acted 守門補涵蓋 _realAiAct 世界BOSS路徑(v5.21.0 守門在 WB 攔截之後→疊發重複呼叫直達 _wbAdvBossTurn→入口 clearTimeout 砍掉爆發「動畫後才生效」的傷害 timer=老師回報海龍王爆發沒傷害的根因鏈;_quizCbBypass 一次性旗標同語義放行·重複呼叫忽略不排 startTurn 防疊發) ③爆發時序重排擴及世界BOSS戰(老師需求「所有爆發技動畫結束後才生效傷害/治療·點跳過=立即生效」:移除 v4.33.0 _bvInWB 排除,WB 內有爆發影片英雄也改「影片結束/跳過才放 GIF 特效+傷害/治療」·補影片路徑 _wbFxCapture burstCinematic 廣播讓連線隊友端看得到演出;無影片英雄 else 原路徑零改動) ④配套:world-boss.js v5.22.0(補 4 龍王專屬開場咆哮/aiAct hook acted 守門/崩毀·擊敗訊息動態龍王名/_WB_BOSS_SKILL_NAMES 三招表/關卡文案去寫死)+world-boss-ui.html v5.22.0(R4 爆發預告與房間迷你預覽三招·屬性依當前龍王動態) ｜ ★ v5.21.0(2026-08-09)— 玩家 BUG「玩一半跳出遊戲」修復(甲+乙·老師裁定):甲=_realAiAct 一般路徑新增 p2 acted 守門(同一敵人單回合多次行動+多重 startTurn 疊發+新回合答題被孤兒清除秒判答錯 根治;世界BOSS 行動前答題 cb 以 _quizCbBypass 一次性旗標放行·追擊鐵律1.113 走 _wbAdvBossTurn 攔截零影響) 乙=_gpHeartbeatCheck 借既有 3 秒節拍新增冒險戰鬥全滅巡邏(任一方全滅未結算→立即走 startTurn v3.14.0/v3.14.4 保險同款正規收場·最長 20+ 秒凍結縮到 ≤3 秒;G._annihilationPatrolFired 每場一次latch·cutscene/小怪結算/答題中不介入·worldboss/鬥技場不適用) ｜ ★ v5.20.0(2026-08-08)— 主線活動介紹卡圖文並茂大改版(老師需求·純顯示層):buildMainStorySection ①序章封面大橫幅 ②「捏出你的主角」升級置頂主打區(雙月河堤場景圖+三步驟晶片+入口指路·鼓勵孩子創造自己的主角) ③七章封面縮圖帶(章節選單同組封面·零新圖檔) ④特色卡改圖+文(社團教室/黑暗球等場景圖·onerror 隱藏防缺圖破版) ⑤獎勵文案修正對齊實發(🔮×5+💰20,000) ⑥近期活動選單列補 2 張縮圖+sub 捏主角前置;文案 cute/premium 雙版鐵律1.232·零機制改動 ｜ ★ v5.19.0(2026-08-08)— 主線劇情+自訂主角系統正式開放(老師指示):本檔僅版號七點同步(_GAME_LOADED_VERSION+FILE_VERSIONS 五鍵 index/mainstory/avatar_db/admin/changelog);兩個閘門在 mainstory.js(_MAINSTORY_ADMIN_ONLY→false)與 avatar_db.js(_AVATAR_ADMIN_ONLY→false),index 既有連動全自動生效(關卡頁 📖 主線鈕+進度徽章全員顯示/近期活動卡自動切 NEW! 正式文案/遊戲指引主線+我的主角兩章自動出現/獎章·GM回溯·四道共用平板保護 v5.6.0-v5.9.0 早已就緒);遊戲程式碼零改動 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄(index 側七 hook:execSkill 玩家路徑[先設 _activeSkLvMult 再交引擎·doDmg 自動套等級引擎不重複乘]/aiUseSkill 鏈尾 else-if 分支[引擎手動乘等級·鏈尾統一收尾]/_runBurst 鏈首分支[BURST_GIF_DB 註冊即自動播動畫]/startBattle 戰開天賦 T1T2/startTurn 行動前天賦 T3T4/doDmg 受傷天賦 T5T6[逆鱗後同區·rawDmg·_isDynTrait 防遞迴]/載入器 ①c 開機套 lxps_dynHero_v1 快取+_dynContentSync 第三軌 heroVer/heroPacks 獨立比對·quota 滿靜默降級;引擎/資料層在 hero_db.js v5.18.0·GM 後台在 admin_panel.js v5.18.0) ｜ ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件(index 側=動態載入器擴充:_index 同讀 avatarVer/avatarPacks·開機套 lxps_dynAvatar_v1 快取·quota 滿靜默降級·_dynContentSync 題庫/配件雙軌獨立版本比對;主引擎在 avatar_db.js v5.17.0·GM 後台在 admin_panel.js) ｜ ★ v5.16.0(2026-08-06)— 動態內容層第一期・動態題庫:新增開機載入器(localStorage 快取先套→登入後只讀 dynamicContent/_index 一份比對版本→有更新才拉 quiz_N 題包→冪等合併進 ADV_QUIZ_DB id>=100000 專屬區段·所有消費端[冒險抽題/鬥技場/知識王/小博士]執行期翻表自動生效零接線·任何失敗靜默不影響遊戲);同輪救援:發現 repo 缺 mainstory.js(v5.12.0 拆檔後未上傳→主線入口全站失效)·自 git 歷史 0996239(v5.11.0)原段重建 4,111 行交付·內容一字不差·FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動 ｜ ★ v5.15.0(2026-08-05)— 主角圖鑑頭身位置跑掉根治(老師回報:每次重開遊戲,英雄圖鑑網格與詳情頁的主角「頭部+身體」組合位置錯位;開造型工房卻正常,按確認儲存才恢復,下次重開又壞):根因=啟動立繪 poll 常在 gameConfig/avatarPartDefaults 雲端預設表拉回前完成,且立繪簽章只含 cfg → 預設表稍後到貨也永遠不重畫,錯位整場鎖死;開工房是 inline 即時渲染(此時表已到)所以正常;按確認儲存會重畫是因為工房開啟時採用雲端卡(Firestore 鍵序不同)cfg 簽章碰巧改變。修法三保險全在 index.html:①立繪簽章納入預設表內容(表變=舊簽章自動失效)②新增預設表「到貨監看」(每 1.5s 廉價字串比對×60 次·偵測到內容變動即簽章歸零重畫·90 秒停·無變動零渲染成本)③世代守門 _lxpsProtagPortraitGen(舊輪 base64 內嵌抓圖在途完成一律作廢不回寫·一併根治既有 hydrate 歸零重畫與舊輪互蓋的競態)+_msHydrateFromCloud 對帳簽章改同組合格式;avatar_db.js 零更動不 bump(900 台不重抓部件圖) ｜ ★ v5.14.0(2026-08-04)— 圖片瘦身全面接管(老師裁定):sw.js v3.5.93 ①activate 一次性清可JPG化舊 png 快取鍵→已快取玩家自動換 jpg/webp ②precache 格式感知(舊 iPad 完整下載 297MB→43MB 級)③三 key 查詢;index 僅兩個 PRECACHE_URLS 發送點加 supportsWebp 提示欄位·其餘零改動 ｜ ★ v5.13.0(2026-08-04)— 圖片瘦身甲案(檔名不動·SW分流):根目錄 390 張 PNG 盤點→不透明 348 張(除 icon-*)產同名 .jpg q88(297MB→43MB 省85.5%)+補 13 張 .webp;34 張透明(寵物_去背/標題字/素體/body_×4)與 avatar_parts/ 保持 PNG;sw.js v3.5.92 舊機 png→jpg 分流·新機 png→webp 不變;本檔僅版號同步·遊戲程式碼零改動 ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:主線劇情引擎+MAINSTORY_DB(L144205-148311·4,107行/約228KB)整段拆出成 mainstory.js·原位 document.write(_lxpsFileSrc) 載入·零行為變更;FILE_VERSIONS 新增 mainstory.js 鍵·sw.js SHELL_URLS+SW_VERSION 連動·check_inline 基準 21→22 ｜ ★ v5.11.0(2026-08-03)— 世界龍王連線 Firestore 配額熔斷+降載(玩家回報「打龍王一直選角失敗」根治:resource-exhausted 配額耗盡時 ①心跳/離線監測熔斷暫停60秒停止每秒3次重試風暴 ②開房/加入/選角/準備失敗改雙版友善訊息不再直出英文錯誤碼 ③常態降載:心跳10s→20s·watchdog 5s→15s·離線判定20s→45s 讀寫量降約60%;全在 index.html WB net 層·world-boss.js/ui 未動;同版加碼:主角技能繼承(PGI)升級效果文字修正——升級確認視窗/升級書技能選擇視窗/一覽表可升級標籤 三處改用繼承後招式顯示與查表·戰鬥實際威力經檢驗本就正確吃主角自身技能等級 Q2甲·純顯示層) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動)
   'mainstory.js'       : 'v5.28.0',     // ★ v5.28.0(2026-08-12)— 丙案:新玩家強制主線 序章→第二章 連播+總鎖引導層(老師裁定):①分類=從來沒進過序章(序章未完成&&無 _sc_prologue&&無任何章 done)→首登 gate 寫 _fg 時間戳(上雲+hydrate 三來源 union 取最早·GM 豁免·_rst 回溯後重新分類) ②強制中連播引擎 _msForceChainRun 序章→ch1→ch2 onAllDone 串鏈零空窗·ch2 完成釋放+恭喜雙版 toast ③總鎖層 ms-force-gate-layer(z=9700·1.5s 輪詢·非劇情/戰鬥/銜接空窗/前置彈窗時全螢幕蓋住·▶鈕+約3秒自動續播·重整中離逃不掉) ④進過序章舊玩家維持 v4.65.0 原行為 ｜ ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點:三處純加 className(ms-sel-head/ms-ch-card×2/ms-dlg-wrap·對白框用 class 不用 id 避開 v4.89.0 拔 id 機制)零行為變更;版型規則全在 index.html v5.26.0 media query ｜ ★ v5.19.0(2026-08-08)— 主線劇情正式開放:_MAINSTORY_ADMIN_ONLY true→false(單一開關·全員可見);內容有變依鐵律 bump 本鍵破快取(900 台重抓) ｜ ★ v5.12.0(2026-08-04)— 新檔:主線劇情引擎+MAINSTORY_DB 自 index.html 拆出(額度瘦身丙案第一刀·零行為變更·document.write 原位載入) ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
   'main.css'           : 'v3.15.79',     // ★ v3.15.79(2026-06-22)— 知識王入口彈窗 .king-box-2col 加寬(max-width 1500→1680)+ scoped 字級/按鈕放大(.king-box-2col .king-title/.king-subtitle/.king-rules/.king-rule-row/.king-btn·僅入口彈窗·不影響 question/result)｜v3.14.5(2026-06-10)— 手機橫向 A+B 級可讀性補償(max-height:500px 區塊:戰鬥卡/冒險地圖/過場/相遇/選將/投降/技替/結算/四圖鑑/確認框/登入提示)｜前版 20260602-v3-13-24-arenabtn
   'adv_quiz_db.js'     : '20260620',     // ★ 20260620(v3.15.61)— 世界機關王大賽 ADV_QUIZ_GREENMECH(id 9601-9620)整批換成 STEAM 簡單機械題(斜面/槓桿/滑輪/齒輪/位能動能/系統思考)｜v3.14.18 — 修復四下自然 94 題誤放 TAIWAN_QUIZ_DB(玩家回報無題目);執行期搬移進 ADV_QUIZ_DB｜20260612a 世界機關王大賽 20 題
-  'hero_db.js'         : 'v5.24.0',     // ★ v5.24.0(2026-08-09)— 奧汀天賦「奧汀之眼」文案改版四處(HERO_TRAIT desc/fd:注視每人最多1層·被注視受傷改由奧汀代為承受並以攻擊100%反擊[失去注視]/_TRAIT_LV_INFO base·max·effect 同步[注視4人非5層]/HERO_LORE/檔尾 _LXPS_HERO_SD trait·鐵律1.232雙版+1.160只寫Lv1);⚠ 邏輯層(doDmg ODIN-2 代承+startTurn 每人1層)在 index.html 需同版 v5.24.0 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄引擎(檔尾 IIFE·零?.):_dynHeroApply 冪等套用(全拆重建·與既有英雄重名拒絕·off 停用仍完整註冊資料表只下架取得途徑=玩家資產永不損壞)·註冊 HERO_DB/BURST_DB/HERO_TRAIT/_TRAIT_LV_INFO/HERO_IMGS(b64)/AVATARS/HERO_BIO/HERO_LORE/CATEGORIES/PRIMARY_CLASS/HERO_SKILL_EFFECTS(標籤自動推導)/SKILL_UPGRADE_DEF(cat=dmg|heal 標準)/BURST_UPGRADE_DEF(五列自動生成)/SKILL_FORCE_ELEMENT/BURST_GIF_DB(現有 gif+sfx 套用)·grant 三途徑(summon 同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES 對齊 v3.15.43/gm/email 註冊 STUDENT_DESIGNER_HEROES)·雙版文字 d/fd/sd 依參數自動生成(1.160 只寫 Lv1/1.232 兩版齊備·GM 可覆寫·_dynHeroPreview 出口)·戰鬥引擎 _dynSkillEngine(玩家 setPending+endAction·傷害倍率=1)/_dynSkillEngineAI(手動乘 1+skLv×0.05)/_dynBurstEngine(1+burstLv×0.05)=一套引擎雙路徑滿足鐵律1.128·效果池不利15+強力_strong/有利8(僅收驗證過的通用路徑)·傷害三型全走 doDmg→5000cap/鐵律1.31 自動·即死/HP%/固定傷害不存在於引擎·天賦六模板三 hook 守門 _traitSeal/imprison/confused 機率+3%/天賦級 ｜ ★ v4.54.0(2026-07-17)— 兩合一(全在 index.html+hero_db.js+hero_input.html·無 ?.):①朱玥天賦「百草共鳴」新增效果(老師需求):每回合開始時用特技100%恢復我方 HP 最低的 1 名友方(★不可復活→只找存活且未滿血者)。★升級口徑(老師裁定「此效果的升級不用額外提升·隨著原有天賦提升即可」):不另設升級軌·治療基數固定特技100%,但走 doHeal 且 actor=朱玥 → 自動吃既有「百草共鳴治療加成 hook」(草屬性存活數×(4+天賦Lv×2)%·上限+50%)→ 天賦升級自然一起變強;_TRAIT_LV_INFO base/bonus/max 三軌完全不動(鐵律1.160 只寫Lv1基準)。hook 掛 nextRound 救醫馬「救馬本能」之後、冬卡速度還原之前=新回合開始治療類集中區(與春之戰場「每回合開始恢復20%HP」同函式·語感對齊);守門=朱玥存活+天賦未封(_traitSeal/imprison/confused);spv=floor(sp×(1+sp×0.01)) 同寄生/爆發口徑;純治療零傷害→不涉鐵律1.31。資料層四表同步(HERO_TRAIT desc/fd+_TRAIT_LV_INFO effect+檔尾 sd 簡單風+HERO_SKILL_EFFECTS 補「單體回復HP」)·hero_input.html 天賦同步 ②英雄🔍條件搜尋稽核修正(老師回報+全表稽核·純篩選顯示層):❶操偶師補「召喚物」(老師裁定召喚物=持久且卡牌有獨立HP條·_puppetHp 符合·且本就在 _foxStripSummon 消召喚物權威清單內)❷動物學家/水狐移除「召喚物」(動物召喚=給友方裝寵物無HP條/水精靈=一次性治療→依裁定不算)→ 召喚物精準剩 4 隻(操偶師/喚龍使/貓人族長/陰陽師)完全對齊 card-summon-bars❸貓人族長孤兒標籤「凍結」→「冰凍」(v4.48.0 錯字·DEFS 無「凍結」→雙重失效:勾冰凍搜不到牠、凍結永無勾選框=死碼;實際狀態 addStatus freeze)❹炎火超少女補「免死(HP剩1)」(爆發火神附體3回合不會倒下·同鐵匠/魔劍姬口徑)。幼兒園小孩「自身睡眠」依老師裁定不掛「睡眠」(讓對手睡眠才算)。SKILL_EFFECT_DEFS 零新增·稽核後 86 標籤零孤兒零空結果·100 隻與 HERO_PRIMARY_CLASS 完全對齊 ｜ ★ v4.53.0(2026-07-17)— 新英雄 麻吉喵‧Nico(5年5班 熊梓芸·SSR·🛡坦克);英雄編輯器補主分類欄位 ｜ ★ v4.52.0(2026-07-16)— 新增學生設計英雄「幽魂暗狐」(4年7班 于同學·SSR·⚔dmg+🛡ctrl) ｜ ★ v4.20.0(2026-07-05)— 主定位篩選(HERO_PRIMARY_CLASS)調整:動物學家 tank→other(其他);藝天使．克雷爾 v4.19.0 已 tank→heal 不變。只動篩選單一權威·雷達 HERO_CATEGORIES_OVERRIDE/HEX 不動。 ｜ ★ v4.5.0(2026-07-04)— 寵物馴養 Phase C:BURST_GIF_DB 新增 28 隻寵物爆發特效(重用既有 GIF·不同 key·仿大刀勇士·零上傳·key=寵物爆發招式名·dur 2000 全螢幕只播一段);邏輯層在 index.html v4.5.0。 ｜ ★ v3.34.0(2026-07-02)— 新增學生設計英雄「大刀勇士」資料層14表(HERO_DB hp78[=配點60×1.3]/atk25/sp5/spd10·S1霸道裂地斬c6/S2勇士決勝之力c6·BURST奧義‧勇士大刀滅絕斬·TRAIT愈戰愈勇·BURST_GIF劍神連斬.gif[既有]·HERO_IMGS大刀勇士.png·CATEGORIES dmg/heal·PRIMARY dmg·含 inline sd 鐵律1.232 cute+premium雙版·鐵律1.160 desc只寫Lv1);邏輯層在 index.html v3.34.0。 ｜ // ★ v3.31.0(2026-07-02)— 新增學生設計英雄「聖冥法師」資料層14表(HERO_DB hp78/atk8/sp24/spd8·S1死之轉刃c6/S2生與死的洗禮c6·BURST聖光與暗影的調停·TRAIT光暗共生☯️·BURST_GIF死神之鐮.gif·HEX heal6/ctrl4·PRIMARY dmg·SKILL_EFFECTS 13既有標籤·含 inline sd 鐵律1.232);邏輯層在 index.html v3.31.0。 ｜ // ★ v3.25.0(2026-07-01)— SSR+UR 53 隻圖鑑「簡單風」精簡說明:_LXPS_HERO_SD 表擴至 94 隻(41+53=376 條 sd)·全稀有度(R/SR/SSR/UR)完成。載入 attach 迴圈不變(存在才補·已有 sd 不覆蓋)。premium fd/desc 一字不改。鐵律1.232/1.160/1.207。 ｜ // ★ v3.24.0(2026-07-01)— R+SR 41 隻圖鑑「簡單風」精簡說明:檔尾新增 _LXPS_HERO_SD 表(41×trait/s1/s2/burst=164 條)+ 載入時 attach 迴圈把 sd 補進 HERO_TRAIT/HERO_DB.s1s2/BURST_DB(存在才補·已有 sd 不覆蓋→未來新英雄可寫 inline sd 優先)。原 fd/desc 一字不改·premium 沿用。鐵律1.232/1.160/1.207。 ｜ // ★ v3.17.9(2026-07-01)— 版號對齊主程式(本輪 hero_db.js 內容未改·冒險關卡答題科目過濾修復全在 index.html·免重傳) ｜ // ★ v3.17.8(2026-07-01)— 版號對齊主程式(本輪 hero_db.js 內容未改·帳號權威資料稽核全在 index.html·免重傳) ｜ // ★ v3.17.7(2026-07-01)— 版號對齊·內容未改·免重傳(本輪甲=至寶補償 uid + 丙=GM 活動查詢名冊真名列 全在 index.html + admin_panel.js) ｜ // ★ v3.17.6(2026-07-01)— 版號對齊·內容未改·免重傳(本輪 GM 送禮三需求全在 index.html + admin_panel.js) ｜ // ★ v3.17.1(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·更新流程友善化全在 index.html) ｜ ★ v3.17.0(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·逃走小怪卡死+無法同步/等級倒退根治全在 index.html·hero_db.js 免重傳) ｜ ★ v3.16.99(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·玩家端登入自動回收全在 index.html·hero_db.js 免重傳) ｜ ★ v3.16.98(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM補償批次回收全在 index.html + admin_panel.js·hero_db.js 免重傳) ｜ ★ v3.16.94(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM獎勵自選卷領取空轉/過度補償掃描查無紀錄/登入權威下載練英雄保底 全在 index.html + admin_panel.js·hero_db.js 免重傳) ｜ ★ v3.16.69(2026-06-28)— 版號對齊主程式(本輪 hero_db.js 內容未改·英雄圖鑑來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM獎勵視窗字級放大全在 index.html)
+  'hero_db.js'        : 'v5.30.0',     // ★ v5.30.0(2026-08-12)— 鐵匠 S1/S2 改版(老師甲案:武器精煉=攻擊面裝備效果+5%/級·防具精煉=防禦面裝備效果+5%/級,上限+50%·d/fd+檔尾 sd 雙版鐵律1.232) ｜ ★ v5.24.0(2026-08-09)— 奧汀天賦「奧汀之眼」文案改版四處(HERO_TRAIT desc/fd:注視每人最多1層·被注視受傷改由奧汀代為承受並以攻擊100%反擊[失去注視]/_TRAIT_LV_INFO base·max·effect 同步[注視4人非5層]/HERO_LORE/檔尾 _LXPS_HERO_SD trait·鐵律1.232雙版+1.160只寫Lv1);⚠ 邏輯層(doDmg ODIN-2 代承+startTurn 每人1層)在 index.html 需同版 v5.24.0 ｜ ★ v5.18.0(2026-08-07)— 動態內容層第三期:動態英雄引擎(檔尾 IIFE·零?.):_dynHeroApply 冪等套用(全拆重建·與既有英雄重名拒絕·off 停用仍完整註冊資料表只下架取得途徑=玩家資產永不損壞)·註冊 HERO_DB/BURST_DB/HERO_TRAIT/_TRAIT_LV_INFO/HERO_IMGS(b64)/AVATARS/HERO_BIO/HERO_LORE/CATEGORIES/PRIMARY_CLASS/HERO_SKILL_EFFECTS(標籤自動推導)/SKILL_UPGRADE_DEF(cat=dmg|heal 標準)/BURST_UPGRADE_DEF(五列自動生成)/SKILL_FORCE_ELEMENT/BURST_GIF_DB(現有 gif+sfx 套用)·grant 三途徑(summon 同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES 對齊 v3.15.43/gm/email 註冊 STUDENT_DESIGNER_HEROES)·雙版文字 d/fd/sd 依參數自動生成(1.160 只寫 Lv1/1.232 兩版齊備·GM 可覆寫·_dynHeroPreview 出口)·戰鬥引擎 _dynSkillEngine(玩家 setPending+endAction·傷害倍率=1)/_dynSkillEngineAI(手動乘 1+skLv×0.05)/_dynBurstEngine(1+burstLv×0.05)=一套引擎雙路徑滿足鐵律1.128·效果池不利15+強力_strong/有利8(僅收驗證過的通用路徑)·傷害三型全走 doDmg→5000cap/鐵律1.31 自動·即死/HP%/固定傷害不存在於引擎·天賦六模板三 hook 守門 _traitSeal/imprison/confused 機率+3%/天賦級 ｜ ★ v4.54.0(2026-07-17)— 兩合一(全在 index.html+hero_db.js+hero_input.html·無 ?.):①朱玥天賦「百草共鳴」新增效果(老師需求):每回合開始時用特技100%恢復我方 HP 最低的 1 名友方(★不可復活→只找存活且未滿血者)。★升級口徑(老師裁定「此效果的升級不用額外提升·隨著原有天賦提升即可」):不另設升級軌·治療基數固定特技100%,但走 doHeal 且 actor=朱玥 → 自動吃既有「百草共鳴治療加成 hook」(草屬性存活數×(4+天賦Lv×2)%·上限+50%)→ 天賦升級自然一起變強;_TRAIT_LV_INFO base/bonus/max 三軌完全不動(鐵律1.160 只寫Lv1基準)。hook 掛 nextRound 救醫馬「救馬本能」之後、冬卡速度還原之前=新回合開始治療類集中區(與春之戰場「每回合開始恢復20%HP」同函式·語感對齊);守門=朱玥存活+天賦未封(_traitSeal/imprison/confused);spv=floor(sp×(1+sp×0.01)) 同寄生/爆發口徑;純治療零傷害→不涉鐵律1.31。資料層四表同步(HERO_TRAIT desc/fd+_TRAIT_LV_INFO effect+檔尾 sd 簡單風+HERO_SKILL_EFFECTS 補「單體回復HP」)·hero_input.html 天賦同步 ②英雄🔍條件搜尋稽核修正(老師回報+全表稽核·純篩選顯示層):❶操偶師補「召喚物」(老師裁定召喚物=持久且卡牌有獨立HP條·_puppetHp 符合·且本就在 _foxStripSummon 消召喚物權威清單內)❷動物學家/水狐移除「召喚物」(動物召喚=給友方裝寵物無HP條/水精靈=一次性治療→依裁定不算)→ 召喚物精準剩 4 隻(操偶師/喚龍使/貓人族長/陰陽師)完全對齊 card-summon-bars❸貓人族長孤兒標籤「凍結」→「冰凍」(v4.48.0 錯字·DEFS 無「凍結」→雙重失效:勾冰凍搜不到牠、凍結永無勾選框=死碼;實際狀態 addStatus freeze)❹炎火超少女補「免死(HP剩1)」(爆發火神附體3回合不會倒下·同鐵匠/魔劍姬口徑)。幼兒園小孩「自身睡眠」依老師裁定不掛「睡眠」(讓對手睡眠才算)。SKILL_EFFECT_DEFS 零新增·稽核後 86 標籤零孤兒零空結果·100 隻與 HERO_PRIMARY_CLASS 完全對齊 ｜ ★ v4.53.0(2026-07-17)— 新英雄 麻吉喵‧Nico(5年5班 熊梓芸·SSR·🛡坦克);英雄編輯器補主分類欄位 ｜ ★ v4.52.0(2026-07-16)— 新增學生設計英雄「幽魂暗狐」(4年7班 于同學·SSR·⚔dmg+🛡ctrl) ｜ ★ v4.20.0(2026-07-05)— 主定位篩選(HERO_PRIMARY_CLASS)調整:動物學家 tank→other(其他);藝天使．克雷爾 v4.19.0 已 tank→heal 不變。只動篩選單一權威·雷達 HERO_CATEGORIES_OVERRIDE/HEX 不動。 ｜ ★ v4.5.0(2026-07-04)— 寵物馴養 Phase C:BURST_GIF_DB 新增 28 隻寵物爆發特效(重用既有 GIF·不同 key·仿大刀勇士·零上傳·key=寵物爆發招式名·dur 2000 全螢幕只播一段);邏輯層在 index.html v4.5.0。 ｜ ★ v3.34.0(2026-07-02)— 新增學生設計英雄「大刀勇士」資料層14表(HERO_DB hp78[=配點60×1.3]/atk25/sp5/spd10·S1霸道裂地斬c6/S2勇士決勝之力c6·BURST奧義‧勇士大刀滅絕斬·TRAIT愈戰愈勇·BURST_GIF劍神連斬.gif[既有]·HERO_IMGS大刀勇士.png·CATEGORIES dmg/heal·PRIMARY dmg·含 inline sd 鐵律1.232 cute+premium雙版·鐵律1.160 desc只寫Lv1);邏輯層在 index.html v3.34.0。 ｜ // ★ v3.31.0(2026-07-02)— 新增學生設計英雄「聖冥法師」資料層14表(HERO_DB hp78/atk8/sp24/spd8·S1死之轉刃c6/S2生與死的洗禮c6·BURST聖光與暗影的調停·TRAIT光暗共生☯️·BURST_GIF死神之鐮.gif·HEX heal6/ctrl4·PRIMARY dmg·SKILL_EFFECTS 13既有標籤·含 inline sd 鐵律1.232);邏輯層在 index.html v3.31.0。 ｜ // ★ v3.25.0(2026-07-01)— SSR+UR 53 隻圖鑑「簡單風」精簡說明:_LXPS_HERO_SD 表擴至 94 隻(41+53=376 條 sd)·全稀有度(R/SR/SSR/UR)完成。載入 attach 迴圈不變(存在才補·已有 sd 不覆蓋)。premium fd/desc 一字不改。鐵律1.232/1.160/1.207。 ｜ // ★ v3.24.0(2026-07-01)— R+SR 41 隻圖鑑「簡單風」精簡說明:檔尾新增 _LXPS_HERO_SD 表(41×trait/s1/s2/burst=164 條)+ 載入時 attach 迴圈把 sd 補進 HERO_TRAIT/HERO_DB.s1s2/BURST_DB(存在才補·已有 sd 不覆蓋→未來新英雄可寫 inline sd 優先)。原 fd/desc 一字不改·premium 沿用。鐵律1.232/1.160/1.207。 ｜ // ★ v3.17.9(2026-07-01)— 版號對齊主程式(本輪 hero_db.js 內容未改·冒險關卡答題科目過濾修復全在 index.html·免重傳) ｜ // ★ v3.17.8(2026-07-01)— 版號對齊主程式(本輪 hero_db.js 內容未改·帳號權威資料稽核全在 index.html·免重傳) ｜ // ★ v3.17.7(2026-07-01)— 版號對齊·內容未改·免重傳(本輪甲=至寶補償 uid + 丙=GM 活動查詢名冊真名列 全在 index.html + admin_panel.js) ｜ // ★ v3.17.6(2026-07-01)— 版號對齊·內容未改·免重傳(本輪 GM 送禮三需求全在 index.html + admin_panel.js) ｜ // ★ v3.17.1(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·更新流程友善化全在 index.html) ｜ ★ v3.17.0(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·逃走小怪卡死+無法同步/等級倒退根治全在 index.html·hero_db.js 免重傳) ｜ ★ v3.16.99(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·玩家端登入自動回收全在 index.html·hero_db.js 免重傳) ｜ ★ v3.16.98(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM補償批次回收全在 index.html + admin_panel.js·hero_db.js 免重傳) ｜ ★ v3.16.94(2026-06-30)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM獎勵自選卷領取空轉/過度補償掃描查無紀錄/登入權威下載練英雄保底 全在 index.html + admin_panel.js·hero_db.js 免重傳) ｜ ★ v3.16.69(2026-06-28)— 版號對齊主程式(本輪 hero_db.js 內容未改·英雄圖鑑來源帶字級放大全在 index.html) ｜ ★ v3.16.68(2026-06-28)— 版號對齊主程式(本輪 hero_db.js 內容未改·GM獎勵視窗字級放大全在 index.html)
   'student_roster.js'  : '20260628',
   'avatar_db.js'       : 'v5.25.0',     // ★ v5.25.0(2026-08-10)— iPad 直向預覽溢出修正(造型工房左預覽容器 height:80vh→min(80vh,60vw):直向 iPad 80vh=819px 遠超左欄 46% 寬·aspect-ratio 7/10 被顯式 height 鎖死導致人物變形/溢出;60vw 在所有橫向 iPad 情境取值仍為 80vh 行為零變更·只在直向生效;觸控 CSS 主體在 index.html v5.25.0) ｜ ★ v5.19.0(2026-08-08)— 自訂主角系統隨主線正式開放:_AVATAR_ADMIN_ONLY true→false(單一開關·全員可見);AVATAR_DB_VERSION 維持凍結 v4.95.2(未覆蓋任何同名素材檔)·靠本載入鍵破快取 ｜ ★ v5.17.0(2026-08-06)— 動態內容層第二期:動態造型配件主引擎(_dynAvatarApply 冪等合併·佔位停用制 id==index 不變量·_avAccLayer b64 支援·召喚池擴充四分類·VARF+mask 逐款獨立預設;AVATAR_DB_VERSION 維持凍結 v4.95.2·靠本載入鍵 v5.17.0 破快取) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v4.95.0(2026-07-25)— 造型工房新增 16 髮型頭件(P.hairhead id18~33)+8 便服身件(P.outfit id15~22·老師 16 張全身圖切件·運動服身件不重複只取髮型)+管理員命名/移除通道 gameConfig/avatarPieceMeta(✏️改名/🗑移除乙案·↩復原·免改 rules);尺寸/位置沿用 avatarPartDefaults·bump 破 ?v= 快取 ｜ ★ v4.89.0(2026-07-24)— 卡片背景圖「名稱↔圖片幾乎全錯位」修復:選單寫入 cfg.bg 的是 id 欄位值,_bgLayer 舊碼卻用 _pick(P.bg,cfg.bg)=陣列索引取圖(P.bg id 亂序→兩套座標系錯接,只有 id0/id1 碰巧正確);改按 id 查找(與解鎖帳本 bg:<id>/GM 上鎖/主線發放/舊存檔同一座標系·查無 id 退回純白不破圖)·AVATAR_DB_VERSION bump 破 ?v= 快取;同版第二項:背景選單「主線劇情章節封面/劇情圖」15 筆(id40~54·grp:story)整批移出(註解保留備查·章節解鎖函式恆回空·舊存檔防呆退純白) ｜ ★ v4.86.0(2026-07-23)— 造型工房三修(本輪唯一實質改動檔)：_avatarSetPart 新增 bg/bgC 分支、_bgLayer 漸層白帶依 portrait 分流、outfit 分支一律 cfg.hh=0 ｜ ★ v4.67.0(2026-07-21)— 主線劇情批次2a:act 分派器 _msRunAct(對白播完→執行 act→續播)+ 序章接線(捏臉開工房/名片展示/加入隊伍演出/次元裂縫改暗場穿越淡黑)+ 第一章 join_ch1 + MAINSTORY_DB 9 場景圖 .png→.jpg(配合 JPGq90)·只改 index.html 主線引擎+DB·avatar_db/admin_panel 僅版號同步 ｜ ★ v4.64.0(2026-07-20)— 自訂角色大改版:頭身新切法素材+頭飾/眼鏡/嘴飾+XY微調+音效+GM上鎖(全在 avatar_db.js) ｜ ★ v4.62.0(2026-07-19)— 自訂角色系統優化四合一(名片BGM 切入/還原·造型工房動態影片背景·特寫只放大人物背景不動[PNG 路徑人物 g transform 群組]·全部重置改遊戲內建確認視窗 _avShowConfirm)｜★ v4.61.0(2026-07-18)— 面板改版(十項直式選單/隨機組合/全部重置/上半身特寫放大/名片=戰鬥卡特寫構圖/髮型款式重新開放)｜★ v4.60.1(2026-07-18)— 兩BUG修復(gls/sh 頁籤短名映射根治體型選不到·去背臉區保護根治眼白透明·素材36件重產)｜★ v4.60.0(2026-07-18)— 自訂角色大優化(整頭/整身/上層渲染染色/服裝配色/背景14場景/髮型選單隱藏·素材32件)｜★ v4.59.0(2026-07-18)— 整套造型系統(P.full 12件·整張取代素體·隱藏基礎圖·雙版名稱)｜★ v4.55.3(2026-07-18)— 新髮型4款(妹妹頭/自然中捲髮/低馬尾/超長直髮 × 四體型)+眼神部件2款(冷酷=銳利鳳眼/溫柔=半月垂眼)、新增 P.hair id10/id11、眼渲染行 _avImgFor 體型解析;刺蝟頭PNG不採用維持SVG｜★ v4.55.2(2026-07-18)— 髮型 PNG 素材上線(短髮/自然長髮/高馬尾/雙馬尾 × 四體型 fImg 陣列,_avImgFor 依體型解析)+素體 v2 運動服(少年幼男淡藍/少女幼女粉紅,body_*.png 同名覆蓋)｜★ v4.55.1(2026-07-17)— PNG 部位換色引擎(膚/瞳/眉 canvas 色域+ROI 染色·髮色整層染色引擎就緒等髮型素材·色票第一格=原色)+ 新分類耳環/口罩/襪子模組佔位 + PNG 圖層序全就緒(21 層)｜★ v4.55.0(2026-07-17)— 全新檔案:主角捏臉系統 Phase 1(部件庫+渲染器+客製化面板+冒險者名片+players 主檔 avatarCard 雲端存取)
-  'admin_panel.js'     : 'v5.29.0',     // ★ v5.29.0(2026-08-12)— 版號對齊主程式(本輪 admin 無功能改動·裝備圖片接線全在 index.html) ｜ ★ v5.27.0(2026-08-11)— 版號對齊主程式(本輪 admin 無功能改動;裝備系統 Phase 1[GEAR_DB 60件+詞條池57條+雲端同步+圖鑑裝備欄位+GM 全套發放/重Roll]全在 index.html v5.27.0·GM 操作走遊戲內圖鑑 UI·GM 後台「裝備管理」區依分期計畫 Phase 4 再建;無真 optional chaining) ｜ ★ v5.26.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;手機解析度適配在 index.html/mainstory.js;無真 optional chaining) ｜ ★ v5.25.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;iPad 觸控優化在 index.html/avatar_db.js;無真 optional chaining) ｜ ★ v5.24.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;奧汀「注視」改版[代承+反擊·每人最多1層]在 index.html/hero_db.js;無真 optional chaining) ｜ ★ v5.23.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發「至少保留一半傷害」規則在 index.html/world-boss.js;無真 optional chaining) ｜ ★ v5.22.1(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發無傷害根因②[奧汀注視免疫漏 ignoreBuffs]與 LOG 動態化在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.22.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;世界龍王戰四合一修正在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.21.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;玩家 BUG「玩一半跳出遊戲」修復 甲 acted 守門+乙 全滅 3 秒巡邏 全在 index.html;無真 optional chaining) ｜ ★ v5.20.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線活動介紹卡圖文並茂改版全在 index.html) ｜ ★ v5.19.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線劇情+自訂主角正式開放·兩閘門在 mainstory.js/avatar_db.js) ｜ ★ v5.18.0(2026-08-07)— 新增「🦸 動態英雄」區段(三點同步:模板卡+SIDEBAR_ITEMS+掛『📚 內容擴充』群組+_initDynHeroSection IIFE):設計單表單(配點總和=100 驗證·HP發佈時×1.3 baked·立繪 canvas 壓縮≦120KB·天賦六模板·三技能參數[傷害三型/治療三型/有利8/不利15+強力+機率+回合或戰鬥結束]·爆發動畫 gif/音效 sfx 執行期自現有素材蒐集零硬編碼·文字預覽走 _dynHeroPreview)→待發佈→🚀發佈(先重讀防多GM互蓋·hero_N 依位元組分包≦700KB·bump heroVer·成功呼 _dynContentSync(true) GM 本機立即生效)·已發佈清單(⏸停用/▶啟用+取得三檔 召喚池/GM送禮/指定學生email)·技能名防碰撞(與全部靜態技能/爆發名比對防劫持派發)·永不刪只停用·無真 optional chaining ｜ ★ v5.17.0(2026-08-06)— 新增「🎩 動態造型配件」區段(上傳→canvas 壓縮 WebP/PNG base64→四體型試穿預覽→發佈至 dynamicContent·停用制永不刪·逐款鎖 開放/召喚1%/暫鎖·id=200+序號永不重用) ｜ ★ v5.16.0(2026-08-06)— 新增 GM「📚 動態題庫擴充」區段(三點同步+新側欄群組『📚 內容擴充』):讀雲端現況/單題新增表單/批次 JSON 匯入/待發佈清單/一鍵發佈(自動配發 id 自 quizNextId·自動分包每包1800題防 1MB 上限·bump quizVer)/現有動態題搜尋與勾選刪除;全走 window._fbDb+_fbFns 既有橋接·寫入限 isAdmin(firestore.rules 新增 dynamicContent 條款需部署)·無真 optional chaining ｜ ★ v5.15.0(2026-08-05)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主角圖鑑頭身位置跑掉根治[立繪簽章納入部件預設表+預設表到貨監看+世代守門]全在 index.html;無真 optional chaining) ｜ ★ v5.14.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身全面接管 sw v3.5.93;無真 optional chaining) ｜ ★ v5.13.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身甲案·sw.js JPG 分流;無真 optional chaining) ｜ ★ v5.12.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主線引擎拆出 mainstory.js 額度瘦身;無真 optional chaining) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 新增「⏪ 3.6 主線/主角回溯」工具(巢狀於急救區段免側欄三點同步):診斷(章節/旗標/標準應得量/夥伴來源/主角卡)→ updateDoc 整欄替換 mainStoryProgress={_rst:ts} + avatarCard=重置卡(保留非主線 unlock)+ _msRollbackLog 稽核;不動存檔三槽·收回獎勵導引既有回收工具;無真 optional chaining ｜ ★ v5.6.0(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線入口進度徽章與近期活動介紹卡全在 index.html;無真 optional chaining 運算子) ｜ ★ ★ v5.1.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第六章校隊教室開場對話全在 index.html;無 ?.) ｜ ★ v5.0.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第五章學校對話場景) ｜ ★ v4.99.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第四章補杏花妖本尊全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.99.0
+  'admin_panel.js'     : 'v5.30.0',     // ★ v5.30.0(2026-08-12)— 版號對齊主程式(本輪 admin 無功能改動·Phase 2 戰鬥機制全在 index.html/hero_db.js) ｜ ★ v5.29.0(2026-08-12)— 版號對齊主程式(本輪 admin 無功能改動·裝備圖片接線全在 index.html) ｜ ★ v5.27.0(2026-08-11)— 版號對齊主程式(本輪 admin 無功能改動;裝備系統 Phase 1[GEAR_DB 60件+詞條池57條+雲端同步+圖鑑裝備欄位+GM 全套發放/重Roll]全在 index.html v5.27.0·GM 操作走遊戲內圖鑑 UI·GM 後台「裝備管理」區依分期計畫 Phase 4 再建;無真 optional chaining) ｜ ★ v5.26.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;手機解析度適配在 index.html/mainstory.js;無真 optional chaining) ｜ ★ v5.25.0(2026-08-10)— 版號對齊主程式(本輪 admin 無功能改動;iPad 觸控優化在 index.html/avatar_db.js;無真 optional chaining) ｜ ★ v5.24.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;奧汀「注視」改版[代承+反擊·每人最多1層]在 index.html/hero_db.js;無真 optional chaining) ｜ ★ v5.23.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發「至少保留一半傷害」規則在 index.html/world-boss.js;無真 optional chaining) ｜ ★ v5.22.1(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;龍王爆發無傷害根因②[奧汀注視免疫漏 ignoreBuffs]與 LOG 動態化在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.22.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;世界龍王戰四合一修正在 index.html/world-boss.js/world-boss-ui.html;無真 optional chaining) ｜ ★ v5.21.0(2026-08-09)— 版號對齊主程式(本輪 admin 無功能改動;玩家 BUG「玩一半跳出遊戲」修復 甲 acted 守門+乙 全滅 3 秒巡邏 全在 index.html;無真 optional chaining) ｜ ★ v5.20.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線活動介紹卡圖文並茂改版全在 index.html) ｜ ★ v5.19.0(2026-08-08)— 版號對齊主程式(本輪 admin 無功能改動;主線劇情+自訂主角正式開放·兩閘門在 mainstory.js/avatar_db.js) ｜ ★ v5.18.0(2026-08-07)— 新增「🦸 動態英雄」區段(三點同步:模板卡+SIDEBAR_ITEMS+掛『📚 內容擴充』群組+_initDynHeroSection IIFE):設計單表單(配點總和=100 驗證·HP發佈時×1.3 baked·立繪 canvas 壓縮≦120KB·天賦六模板·三技能參數[傷害三型/治療三型/有利8/不利15+強力+機率+回合或戰鬥結束]·爆發動畫 gif/音效 sfx 執行期自現有素材蒐集零硬編碼·文字預覽走 _dynHeroPreview)→待發佈→🚀發佈(先重讀防多GM互蓋·hero_N 依位元組分包≦700KB·bump heroVer·成功呼 _dynContentSync(true) GM 本機立即生效)·已發佈清單(⏸停用/▶啟用+取得三檔 召喚池/GM送禮/指定學生email)·技能名防碰撞(與全部靜態技能/爆發名比對防劫持派發)·永不刪只停用·無真 optional chaining ｜ ★ v5.17.0(2026-08-06)— 新增「🎩 動態造型配件」區段(上傳→canvas 壓縮 WebP/PNG base64→四體型試穿預覽→發佈至 dynamicContent·停用制永不刪·逐款鎖 開放/召喚1%/暫鎖·id=200+序號永不重用) ｜ ★ v5.16.0(2026-08-06)— 新增 GM「📚 動態題庫擴充」區段(三點同步+新側欄群組『📚 內容擴充』):讀雲端現況/單題新增表單/批次 JSON 匯入/待發佈清單/一鍵發佈(自動配發 id 自 quizNextId·自動分包每包1800題防 1MB 上限·bump quizVer)/現有動態題搜尋與勾選刪除;全走 window._fbDb+_fbFns 既有橋接·寫入限 isAdmin(firestore.rules 新增 dynamicContent 條款需部署)·無真 optional chaining ｜ ★ v5.15.0(2026-08-05)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主角圖鑑頭身位置跑掉根治[立繪簽章納入部件預設表+預設表到貨監看+世代守門]全在 index.html;無真 optional chaining) ｜ ★ v5.14.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身全面接管 sw v3.5.93;無真 optional chaining) ｜ ★ v5.13.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=圖片瘦身甲案·sw.js JPG 分流;無真 optional chaining) ｜ ★ v5.12.0(2026-08-04)— 版號對齊主程式(本輪 admin 無功能改動;主程式=主線引擎拆出 mainstory.js 額度瘦身;無真 optional chaining) ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 新增「⏪ 3.6 主線/主角回溯」工具(巢狀於急救區段免側欄三點同步):診斷(章節/旗標/標準應得量/夥伴來源/主角卡)→ updateDoc 整欄替換 mainStoryProgress={_rst:ts} + avatarCard=重置卡(保留非主線 unlock)+ _msRollbackLog 稽核;不動存檔三槽·收回獎勵導引既有回收工具;無真 optional chaining ｜ ★ v5.6.0(2026-08-01)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線入口進度徽章與近期活動介紹卡全在 index.html;無真 optional chaining 運算子) ｜ ★ ★ v5.1.0(2026-07-29)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第六章校隊教室開場對話全在 index.html;無 ?.) ｜ ★ v5.0.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第五章學校對話場景) ｜ ★ v4.99.0(2026-07-28)— 版號對齊主程式(本輪 admin_panel.js 內容未改·主線第四章補杏花妖本尊全在 index.html;無 ?.)⚠ 需 index.html 同版 v4.99.0
   'world-boss.js'      : 'v5.23.0',     // ★ v5.23.0(2026-08-09)— 六處龍王爆發 doDmg(草/土/水/風/火 execSkill hook 版/火預設)opts 加 _wbBurstMinHalf:true+_wbBurstOrigDmg(index.html doDmg 尾端下限:最終傷害至少為原始一半;免疫類擋半在 index);S1/S2/普攻不帶旗標。⚠ 需 index.html 同版 v5.23.0 ｜ ★ v5.22.1(2026-08-09)— _wbAdvBossNormalAtk 普攻/追擊 LOG「維蘇威炎爪」改依當前龍王屬性動態(冰爪/藤爪/岩爪/雷爪/冥爪/聖爪/幻爪·MONSTER_ELEMENT 優先·LINEUP fallback)。⚠ 需 index.html 同版 v5.22.1 ｜ ★ v5.22.0(2026-08-09)— ①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補齊 海/暗/光/幻 4 隻龍王專屬開場咆哮+配色(原缺此筆→開場對白 fallback 成火龍王的,老師回報海龍王開場仍是火龍王台詞;同 v4.22.0 雷龍王前例) ②aiAct hook「直達 _wbAdvBossTurn」路徑加 acted=true 守門(對齊 index.html v5.21.0/v5.22.0 甲:疊發重複呼叫會重進 _wbAdvBossTurn→入口 clearTimeout 砍掉爆發傷害 timer=海龍王爆發沒傷害根因;守門忽略不排 startTurn) ③崩毀「最終滅絕」與勝利「已被擊敗」訊息改動態當前龍王名(原寫死火山炎龍王) ④新增 window._WB_BOSS_SKILL_NAMES 各龍王三招顯示表(房間迷你預覽用) ⑤ADV_STAGES.worldboss 關卡說明文案去火龍王/天崩之炎寫死改通用。⚠ 需 index.html 同版 v5.22.0 ｜ ★ v4.29.0(2026-07-06)【解凍】— 世界 BOSS 風暴雷龍王(taifeng_wind_dragon)S1/S2/爆發「雷電視覺特效」與「爆發技名稱」全部改正確(老師回報顯示成火龍王的):_WB_FX_URLS 新增 wind_s1(迅雷不及掩耳的攻擊.gif)/wind_s2(龍捲風.gif)/burst_wind(雷雨.gif)三個雷電風專屬 key(全用現有英雄爆發 GIF);_wbWindBossS1 特效 s1→wind_s1(原 s1=火雨.gif 火龍王火特效)、_wbWindBossS2 特效 s2→wind_s2(原集中效果線通用)、_wbWindBossBurst 由 _wbPlayBurstAnimation()【寫死播「火山炎龍王/天崩之炎」火特效+火爆發大字=名稱顯示火龍王的根因】改 _wbPlayFullscreenFx('burst_wind')(只播雷雨 GIF·爆發 log 本就正確輸出「雷神·萬雷殛世」);順修 _wbWaterBossS1 絕對零度 s1(火雨)→burst_water(冰椎爆裂·冰系正確)。連線戰/單人戰皆走本檔 dispatcher 一併修正。⚠ 需 index.html 同版 v4.29.0 ｜ ★ v4.22.0(2026-07-06)【解凍】— 世界 BOSS 風暴雷龍王(taifeng_wind_dragon)修正:①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補 taifeng 專屬開場咆哮+雷金配色(原缺此筆→開場對白 fallback 成火龍王)②新增 _wbWindBossS1/S2/Burst 專屬 AI + _wbWindClearBossDebuffs helper(雷霆貫穿=特技150%單體風傷+麻痺2/暴風肅清=特技120%全體風傷+解除自身不利/雷神·萬雷殛世=特技150%全體風傷+全體麻痺1+解除不利;麻痺用既有 status 'para'、element 'wind')③三 dispatcher(_wbAdvBossS1/S2/BossBurst)加風暴雷龍王分支(原無專屬分支→落預設火龍王的業火灼燒/龍吼震懾/天崩之炎)。⚠ 需 index.html 同版 v4.22.0 ｜ ★ v4.16.0(2026-07-05)— 星辰幻龍王三防禦被動已接入 index.html 引擎(本檔僅更新 header/天賦註解·天賦文本 v4.15.0 已就緒)。 ｜ ★ v4.15.0(2026-07-05)— 三龍王技能爆發正式實裝:暗(幽冥凋零/黃泉侵蝕/黃泉歸葬)光(神聖裁決/天罰之光/高天原審判)幻(星流閃擊/銀河潮汐/星辰湮滅·屬性每回合輪替);暗龍王每回合死亡宣告+光龍王每回合封印被動;HERO_DB/BURST_DB/TRAIT/LORE/BIO 去設計中;暗龍王復活設定取消(文本刪除)。幻龍王三防禦被動待引擎。 ｜ ★ v4.8.0(2026-07-04)— 龍王總HP 5,000,000→10,000,000:WORLD_BOSS_LINEUP 八龍 maxHp+HERO_DB 掛載八條 hp+開放新一輪/入口HP條 fallback×2+console。護盾回合制/單次5000·單場100000 固定值不受影響。 ｜ ★ v3.15.98(2026-06-24)— 深淵海龍王(水)完整實裝:HERO_DB/BURST_DB/HERO_TRAIT/LORE/BIO 正式化+3 AI(_wbWaterBossS1/S2/Burst)+dispatcher 三路由+天賦每回合封技(seal+_burstSeal)+冰凍三段弱點(_wbApplyBossDmgCap 有freeze→×1.3+冰中受擊 G.energy.p2+1+標記_wbWasFrozen·BOSS主行動hook解凍→_wbIceImmuneTurns=1冷卻)｜v3.15.86(2026-06-22)— _wbGrantDragonTreasure 該場 BOSS 龍王至寶重複獲得 fallback 卷軸 3→5(老師乙統一5,對齊自選券/未收錄至寶);排名分級獎勵 expScrollTreasure 5/3/2/1/1 不動(那是名次卷軸獎勵非重複轉換)｜v3.15.51(2026-06-19)— 甲+乙 BOSS 戰天賦對齊:校對 8 龍王圖鑑天賦文字一致 + 地龍王 combat 減傷由 -40% 對齊圖鑑 -30%(傷害 ×0.6→×0.7)｜v3.15.50(2026-06-19)— 8 龍王資料大補完｜v3.15.34 翠之意志棲地正名｜v3.15.17 山岳地龍王實裝
   'world-boss-ui.html' : 'v5.22.1',    // ★ v5.22.1(2026-08-09)— 舊引擎 fallback 路徑兩處寫死同步去除(_wbHostExecuteBossTurn 普攻「維蘇威炎爪」→ boss.name 之爪;cap log「炎之意志吸收」→「龍王之意志吸收」;現行戰鬥走主程式·純保險) ｜ ★ v5.22.0(2026-08-09)— ①戰鬥中 R4 爆發預告改依當前龍王動態顯示爆發技名(_wbAdvSyncOnce 讀 BURST_DB[boss.name]·原寫死火龍王「天崩之炎」,老師回報海龍王預告仍是火龍王招式) ②房間頭 BOSS 迷你預覽「屬性/三招名」改 _wbApplyCurrentBossSkin 動態(新增 .wb-curboss-elemline/.wb-curboss-skills 掛勾·三招讀 world-boss.js _WB_BOSS_SKILL_NAMES·查無顯示「招式情報收集中」)。⚠ 需 world-boss.js 同版 v5.22.0 ｜ ★ v4.25.0(2026-07-06)【解凍】— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處)。⚠ 需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)【解凍】— ①戰鬥畫面 BOSS 背景圖 Y 由 10%→-10%(全龍王下移·避開上半部被 HP 條遮住區;_wbRenderBattleScreen JS 動態設定 + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊(_wbUiStartBattle)補套跟隨寵物(需求3甲:對每個 p1 英雄呼叫 window._applyFollowPetToHero·唯一套用點不雙套·連線為房主寵物)。⚠ 需 index.html 同版 v4.22.0 ｜ ★ v4.8.0(2026-07-04)— ①HP 10M 全UI同步(靜態卡×2/超級血條/介紹彈窗/戰場血條fallback×3);②替補列表三升級:篩選列+🔍條件搜尋(wbswap·至寶modal自動隱藏)+📖圖鑑整備鈕(_wbOpenCodexFromSwap·已選英雄改保留可點只擋選角)+縮圖 object-position 50%→30%(排除33隻 _WB_SWAP_THUMB_KEEP)。 ｜ ★ v3.16.45(2026-06-27)— 龍王戰入口紫框頂部間距壓縮(標題84px下方+副標+紅龍王卡 margin/min-height 縮·紅卡不再被頂部撐開擠在一起)｜ ★ v3.15.87(2026-06-22)— 龍王戰背景圖 Y 值:火龍王(火山炎龍王)維持 center 10%,其餘 7 隻龍王 10%→-10%(_wbRenderBattleScreen L≈10539 在套 _lobby.style.background 前加 _bossBgY 依 _bossName 判定),把背景圖往下移露出更上方的龍頭(地龍王等龍頭偏上原被切掉看不到);CSS fallback L2001 用維蘇威=火龍王圖維持 10% 不動;頂部露出的少量背景由上方 gradient 壓暗｜v3.15.69(2026-06-21)— 排行榜名稱:移除「GM觀看顯示真名」分支(adminShowReal),所有觀看者(含GM)一律走_formatPlayerDisplayName遮罩格式(名冊「5408陳O彬」/lsps「137暱稱」);邀請好友列表同步走中央遮罩函式__完整姓名只在GM後台選單｜v3.15.68(2026-06-21)— 每日儲備入場卷上限顯示 5→10(彈窗持有/剩餘張數);世界BOSS戰績場次標籤正名:「GM補償場次」「入場券場次」一律改「🎁 每日儲備場次」,排行榜累計徽章合併兩來源(bonusBattleCount+bonusTicketCount)為單一「🎁 含N場每日儲備」(後端 wb_entry_ticket / wbBonusGrants 兩系統仍各自獨立、GM工具分開管理)｜v3.15.61(2026-06-20)— 世界 BOSS 頁龍王資訊資料驅動:(a)當前龍王大廳卡素質(攻擊/特技/速度)由寫死火龍王 49/50/15 改 _wbApplyCurrentBossSkin 讀 HERO_DB[當前龍王](HP 統一 5,000,000 不動);(b)「下一隻龍王搶先看」整卡改 _wbApplyNextBossPreview 資料驅動(依 _wbGetNextBossId 取輪替下一隻 → 名稱/立繪/屬性/素質/簡介=背景故事+自動護盾文案/主題色 + 能力詳細介紹鈕 _wbAdvOpenBossInfoPopup(nextId)),修寫死土龍王過時文案(額外減傷 40%→實際 30% 等)｜v3.15.50(2026-06-19)— 龍王戰背景圖 Y 由 center(50%) 減 40% → 10%,讓龍王臉露在畫面中央(全 8 龍王通用;隱藏戰鬥卡縮 1px 可點/點圖攻擊本就通用)。圖鑑彈窗資料驅動,自動反映 world-boss.js 新龍王素質/天賦/技能｜v3.15.48(2026-06-19)— 修龍王戰崩毀後 guest 卡死「無法離開」｜v3.15.21 搶先看改地龍王｜v3.14.25 BOSS能力詳細介紹彈窗
   'arena.js'           : 'v4.88.0',      // ★ v3.17.9(2026-07-01)— 讀取量控管:_arenaFetchTeamPool 原本無 limit() 全集合掃描 arenaTeams(500人×2hr/日用量稽核發現的最大讀取風險點),改加 limit(CLOUD_POOL_MAX_DOCS=150) 鎖死單次讀取上限 + 快取冷卻 60秒→5分鐘;⚠ 取捨:limit 後池子多樣性下降(每次讀到同一批文件ID排序在前的玩家陣容),非隨機取樣,可接受(功能不受影響,只是對手池不夠隨機,後續可用分片隨機欄位優化) ｜ // ★ v3.15.69(2026-06-21)— _getCurrentUserInfo displayLabel改走_formatPlayerDisplayName中央遮罩函式(原本只名冊內走_formatRosterLabel、名冊外fallback原始暱稱會洩真名;改後涵蓋lsps末3碼+真名中間字遮罩全情境,鬥技場對手名與排行榜統一)｜v3.15.60(2026-06-20)— 結算後呼叫主程式 window._checkMedalArena(新增鬥技場成就:首勝/10·30·50累積勝場/5連勝;平敗中斷連勝)｜v3.15.54(2026-06-19)— 結算時旁路寫「逐回合×逐英雄×技能」傷害明細到 arenaDamageDetail/{uid_ts}(聚合 G._arenaDmgSources;失敗靜默不影響戰鬥記錄與獎勵)｜v3.15.49(2026-06-19)— 鬥技場排名發獎正式上線:_arenaIsRankRewardEnabled 預設改 true(GM 仍可關)｜v3.15.37(2026-06-18)— 鬥技之證結算/扣證/發證後即時 gameCloudSave 上雲(跨裝置不消失)
-  'game_changelog.js'  : 'v5.29.0'       // ★ v5.29.0(2026-08-12)— 置頂 v5.29.0 裝備圖片第一批(adminOnly 測試期)·刪最舊 v5.10.0·恰 20 條 ｜ ★ v5.27.0(2026-08-11)— 置頂 v5.27.0 裝備系統 Phase 1(adminOnly 測試期)·刪最舊 v5.8.0·恰 20 條 ｜ ★ v5.26.0(2026-08-10)— 置頂 v5.26.0 手機解析度適配·刪最舊 v5.7.0·恰 20 條 ｜ ★ v5.25.0(2026-08-10)— 置頂 v5.25.0 iPad 觸控優化(主線/造型工房/寵物小屋)·刪最舊 v5.6.0·恰 20 條 ｜ ★ v5.24.0(2026-08-09)— 置頂 v5.24.0 奧汀「注視」機制改版(代承+反擊·每人最多1層)·刪最舊 v5.5.1·恰 20 條 ｜ ★ v5.23.0(2026-08-09)— 置頂 v5.23.0 龍王爆發至少保留一半傷害(免疫改擋半+最終下限)·刪最舊 v5.5.0·恰 20 條 ｜ ★ v5.22.1(2026-08-09)— 置頂 v5.22.1 龍王爆發無傷害根因②修復+龍王 LOG 動態化·刪最舊 v5.4.0·恰 20 條 ｜ ★ v5.22.0(2026-08-09)— 置頂 v5.22.0 世界龍王戰四合一修正(背景位置/開場咆哮/爆發傷害守門/爆發動畫時序)·刪最舊 v5.3.0·恰 20 條 ｜ ★ v5.21.0(2026-08-09)— 置頂 v5.21.0 戰鬥卡死修復(甲 acted 守門+乙 全滅 3 秒巡邏)·刪最舊 v5.2.0·恰 20 條 ｜ ★ v5.20.0(2026-08-08)— 置頂 v5.20.0 主線活動介紹卡圖文並茂改版·刪最舊 v5.1.0·恰 20 條 ｜ ★ v5.19.0(2026-08-08)— 置頂 v5.19.0 主線劇情+自訂主角正式開放玩家公告(不標 adminOnly)·刪最舊 v5.0.0·恰 20 條 ｜ ★ v5.18.0(2026-08-07)— 置頂 v5.18.0 動態英雄三期(adminOnly 測試期)·刪最舊 v4.99.0·恰 20 條 ｜ ★ v5.17.0(2026-08-06)— 置頂 v5.17.0 動態造型配件(adminOnly 測試期)·刪最舊 v4.98.0·恰 20 條 ｜ ★ v5.16.0(2026-08-06)— 置頂新增 v5.16.0 條目(動態題庫第一期+mainstory.js 缺檔救援)·刪最舊 v4.97.0 維持恰 20 條 ｜ ★ v5.15.0(2026-08-05)— 置頂新增 v5.15.0 條目(主角圖鑑位置修正)·刪最舊 v4.96.0 維持恰 20 條 ｜ ★ v5.14.0(2026-08-04)— 置頂新增 v5.14.0 條目(圖片瘦身全面接管)·刪最舊 v4.95.2 維持恰 20 條 ｜ ★ v5.13.0(2026-08-04)— 置頂新增 v5.13.0 條目(圖片瘦身)·刪最舊 v4.95.1 維持恰 20 條 ｜ ★ v5.12.0(2026-08-04)— 置頂新增 v5.12.0 條目(主線拆檔瘦身)·刪最舊 v4.95.0 維持恰 20 條 ｜ ★ v5.11.0(2026-08-03)— 置頂新增 v5.11.0 條目(龍王配額熔斷+主角繼承升級效果修正)·刪最舊維持恰 20 條 ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 置頂新增 v5.7.0 條目(GM 回溯工具·adminOnly)·刪最舊 v4.90.0 維持恰 20 條 ｜ ★ v5.6.0(2026-08-01)— 置頂新增 v5.6.0 公告(主線入口進度徽章+近期活動主線與主角系統介紹卡)·刪最舊 v4.89.0 維持恰 20 條 ｜ ★ ★ v5.1.0(2026-07-29)— 置頂新增 v5.1.0 公告(第六章校隊教室開場對話·次元裂縫快訊)·刪最舊 v4.80.0 維持恰 20 條 ｜ ★ v5.0.0(2026-07-28)— 置頂新增 v5.0.0 公告(第五章學校對話場景)·刪最舊 v4.79.0 維持恰 20 條
+  'game_changelog.js'  : 'v5.30.0'       // ★ v5.30.0(2026-08-12)— 置頂 v5.30.0 裝備 Phase 2(adminOnly 測試期)·刪最舊 v5.11.0·恰 20 條 ｜ ★ v5.29.0(2026-08-12)— 置頂 v5.29.0 裝備圖片第一批(adminOnly 測試期)·刪最舊 v5.10.0·恰 20 條 ｜ ★ v5.27.0(2026-08-11)— 置頂 v5.27.0 裝備系統 Phase 1(adminOnly 測試期)·刪最舊 v5.8.0·恰 20 條 ｜ ★ v5.26.0(2026-08-10)— 置頂 v5.26.0 手機解析度適配·刪最舊 v5.7.0·恰 20 條 ｜ ★ v5.25.0(2026-08-10)— 置頂 v5.25.0 iPad 觸控優化(主線/造型工房/寵物小屋)·刪最舊 v5.6.0·恰 20 條 ｜ ★ v5.24.0(2026-08-09)— 置頂 v5.24.0 奧汀「注視」機制改版(代承+反擊·每人最多1層)·刪最舊 v5.5.1·恰 20 條 ｜ ★ v5.23.0(2026-08-09)— 置頂 v5.23.0 龍王爆發至少保留一半傷害(免疫改擋半+最終下限)·刪最舊 v5.5.0·恰 20 條 ｜ ★ v5.22.1(2026-08-09)— 置頂 v5.22.1 龍王爆發無傷害根因②修復+龍王 LOG 動態化·刪最舊 v5.4.0·恰 20 條 ｜ ★ v5.22.0(2026-08-09)— 置頂 v5.22.0 世界龍王戰四合一修正(背景位置/開場咆哮/爆發傷害守門/爆發動畫時序)·刪最舊 v5.3.0·恰 20 條 ｜ ★ v5.21.0(2026-08-09)— 置頂 v5.21.0 戰鬥卡死修復(甲 acted 守門+乙 全滅 3 秒巡邏)·刪最舊 v5.2.0·恰 20 條 ｜ ★ v5.20.0(2026-08-08)— 置頂 v5.20.0 主線活動介紹卡圖文並茂改版·刪最舊 v5.1.0·恰 20 條 ｜ ★ v5.19.0(2026-08-08)— 置頂 v5.19.0 主線劇情+自訂主角正式開放玩家公告(不標 adminOnly)·刪最舊 v5.0.0·恰 20 條 ｜ ★ v5.18.0(2026-08-07)— 置頂 v5.18.0 動態英雄三期(adminOnly 測試期)·刪最舊 v4.99.0·恰 20 條 ｜ ★ v5.17.0(2026-08-06)— 置頂 v5.17.0 動態造型配件(adminOnly 測試期)·刪最舊 v4.98.0·恰 20 條 ｜ ★ v5.16.0(2026-08-06)— 置頂新增 v5.16.0 條目(動態題庫第一期+mainstory.js 缺檔救援)·刪最舊 v4.97.0 維持恰 20 條 ｜ ★ v5.15.0(2026-08-05)— 置頂新增 v5.15.0 條目(主角圖鑑位置修正)·刪最舊 v4.96.0 維持恰 20 條 ｜ ★ v5.14.0(2026-08-04)— 置頂新增 v5.14.0 條目(圖片瘦身全面接管)·刪最舊 v4.95.2 維持恰 20 條 ｜ ★ v5.13.0(2026-08-04)— 置頂新增 v5.13.0 條目(圖片瘦身)·刪最舊 v4.95.1 維持恰 20 條 ｜ ★ v5.12.0(2026-08-04)— 置頂新增 v5.12.0 條目(主線拆檔瘦身)·刪最舊 v4.95.0 維持恰 20 條 ｜ ★ v5.11.0(2026-08-03)— 置頂新增 v5.11.0 條目(龍王配額熔斷+主角繼承升級效果修正)·刪最舊維持恰 20 條 ｜ ★ v5.10.0(2026-08-03)— 動物面具 25 款上線(avatar_db.js 為主·老師 5×5 全圖切割去背 mask_01~25.png;全款召喚水晶鎖·每抽 1% 隨機獲得未擁有款不重複·比照卡片背景前例;併入頭戴頁第二分類·prop 引擎 mask 錨點眼線對位·蓋眼鏡不蓋帽;index.html 掛召喚點+版號;AVATAR_DB_VERSION 依 2乙凍結 v4.95.2·靠載入鍵破快取) ｜ ★ v5.9.0(2026-08-02)— 新增「主角」類 20 枚獎章(主線章節×7/主角成長×7/造型解鎖×6·_protagMedalSweep 冪等判定·_cloudLoadDone 守門防跨裝置重複發獎·頂級 2 枚 ms_all_done/protag_lv50) ｜ ★ v5.8.0(2026-08-02)— 主角技能繼承面板三修(介紹一律簡易版/勾選+確認繼承兩段式/圖鑑詳情顯示繼承後招式)+ 主角造型「登入卡片歸屬自檢 + up 對時採用/自癒 + 立繪完成即時同步圖鑑」(重開遊戲造型消失/縮圖不同步根治·avatar_db.js 零更動) ｜ ★ v5.7.0(2026-08-01)— 置頂新增 v5.7.0 條目(GM 回溯工具·adminOnly)·刪最舊 v4.90.0 維持恰 20 條 ｜ ★ v5.6.0(2026-08-01)— 置頂新增 v5.6.0 公告(主線入口進度徽章+近期活動主線與主角系統介紹卡)·刪最舊 v4.89.0 維持恰 20 條 ｜ ★ ★ v5.1.0(2026-07-29)— 置頂新增 v5.1.0 公告(第六章校隊教室開場對話·次元裂縫快訊)·刪最舊 v4.80.0 維持恰 20 條 ｜ ★ v5.0.0(2026-07-28)— 置頂新增 v5.0.0 公告(第五章學校對話場景)·刪最舊 v4.79.0 維持恰 20 條
 };
 // 破快取工具:把檔名 → 'file?v=版本' 字串。版本字串做白名單過濾,避免 URL 注入。
 window._lxpsFileSrc = function(name){
@@ -28955,6 +28955,26 @@ function addStatus(h,t,dur=1){
       return;
     }
   }
+  // ★ v5.30.0 — 裝備 Phase 2:免疫/抗性統一守門(strongTaunt 例外對齊引擎慣例)
+  //   免疫(imm·限傳說+詞條)先判 → 直接擋;抗性(resistAll+特定狀態 res,合計上限 50%·鐵匠 S2 放大)擲骰;
+  //   沉默映射(規則⑬):抵抗沉默同時參與 seal/封普攻/_burstSeal 判定;燃燒涵蓋 hellfire(至寶前例)。
+  if(t !== 'strongTaunt' && typeof _gearStatusGate === 'function'){
+    try{
+      const _gGate = _gearStatusGate(h, t);
+      if(_gGate === 'imm'){
+        try{ if(typeof showShieldVFX === 'function') showShieldVFX(h,'immune'); }catch(_){}
+        try{ log(`🛡️ [${h.name}] 裝備免疫!擋下 ${(typeof statusName==='function')?statusName(t):t}!`); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(h, '🛡️ 裝備免疫', '#a8ccff', 600); }catch(_){}
+        return;
+      }
+      if(_gGate === 'res'){
+        try{ if(typeof showShieldVFX === 'function') showShieldVFX(h,'immune'); }catch(_){}
+        try{ log(`🧿 [${h.name}] 裝備抗性發動!抵抗 ${(typeof statusName==='function')?statusName(t):t}!`); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(h, '🧿 抵抗成功', '#bbddff', 600); }catch(_){}
+        return;
+      }
+    }catch(_eGearGate){ console.warn('[裝備狀態守門 v5.30.0]', _eGearGate); }
+  }
   // ★ v3.11.19 — 幽幽「暗行」(_youyouDarkwalk):免疫所有不利狀態附加
   //   (例外:strongTaunt 強力挑釁仍不可被免疫,與引擎慣例一致)
   if(t !== 'strongTaunt'){
@@ -33686,6 +33706,8 @@ function _doConfirmSkillReplace(){
     });
     // ★ v5.18.0 — 動態英雄天賦引擎:戰開模板 T1(自身)/T2(全隊)(三期;守門 _traitSeal/imprison/confused 在引擎內)
     try{ if(typeof window._dynTraitBattleStart === 'function') window._dynTraitBattleStart(); }catch(_eDynT12){ console.warn('[動態英雄 戰開天賦 hook] 失敗', _eDynT12); }
+    // ★ v5.30.0 — 裝備開場效果(openBuff/openShield;飾品「開場增益」詞條與基礎功能)
+    try{ if(typeof _gearBattleOpen === 'function') _gearBattleOpen(); }catch(_eGearOpen){ console.warn('[裝備戰開 hook] 失敗', _eGearOpen); }
     // ★ v3.4.11 — 神槍手天賦「武裝守護」戰開自動觸發(5 年 4 班莊同學設計)
     //   戰開為全體友方附加 30 護盾(+5/級, Lv5=50)、速度永久提升(直到戰鬥結束)
     // ★ v3.13.23(2026-06-02)— 老師裁示加強:速度加成隨等級提升 Lv1=+3 / Lv2=+6 / Lv3=+9 / Lv4=+12 / Lv5=+15
@@ -34876,6 +34898,15 @@ function buffClass(t){
   _gmLinkStrong:'absorb',       // ★ v3.14.10 — 機關王雙人組爆發 強力連結 → 同上(強力金框由 _strong 旗標套用)
   _blkWeaponBuff:'dmgup',       // ★ v3.15.71 — 鐵匠 S1 武器精煉強化(全隊增傷+暴擊)→ 紅色 dmgup
   _blkArmorBuff:'shield',       // ★ v3.15.71 — 鐵匠 S2 防具精煉強化(全隊減傷+迴避)→ 藍色 shield
+  // ★ v5.30.0 — 鐵匠 S1/S2 改版(裝備效果放大)+ 裝備開場增益 buff 樣式
+  _gearBkWeapon:'dmgup',        // 鐵匠 S1 新版:攻擊面裝備效果放大 → 紅色 dmgup
+  _gearBkArmor:'shield',        // 鐵匠 S2 新版:防禦面裝備效果放大 → 藍色 shield
+  _gearSpUp:'dmgup',            // 開場:造成傷害 +15% → 紅色
+  _gearDefUp:'shield',          // 開場:受傷 -15% → 藍色
+  _gearSpdUp:'evasion',         // 開場:速度 +3 → 綠色
+  _gearCounter:'absorb',        // 開場:反擊 → absorb
+  _gearCritUp:'dmgup',          // 開場:暴擊率 +20% → 紅色
+  _gearLifesteal:'dmgup',       // 開場:吸血 → 紅色
   _catIceGuard:'shield',        // ★ v4.48.0 — 貓人族長 S2 冰精靈守護(全隊減傷+攻擊者緩速)→ 藍色 shield
   _soulSwap:'dmgup',            // ★ v4.52.0 — 幽魂暗狐 爆發「靈魂交換」換魂(互換攻特+奪招)→ dmgup 類
   firegodbody:'dmgup',          // ★ v4.46.0 — 炎火超少女 爆發「火神附體」自身增益 → 紅色 dmgup
@@ -34928,6 +34959,15 @@ function buffName(t){
   _gmLinkStrong:'🔗 強力連結',             // ★ v3.14.10 — 機關王雙人組爆發:同連結且不可消除/奪取/交換
   _blkWeaponBuff:'🔨 武器精煉',            // ★ v3.15.71 — 鐵匠 S1:全隊增傷 + 暴擊率+30%
   _blkArmorBuff:'🛡 防具精煉',             // ★ v3.15.71 — 鐵匠 S2:全隊減傷 + 迴避率+30%
+  // ★ v5.30.0 — 鐵匠 S1/S2 改版(裝備效果放大)+ 裝備開場增益 buff
+  _gearBkWeapon:'🔨 武器精煉',             // 鐵匠 S1 新版:攻擊面裝備效果 ×(1+N%)
+  _gearBkArmor:'🛡 防具精煉',              // 鐵匠 S2 新版:防禦面裝備效果 ×(1+N%)
+  _gearSpUp:'✨ 靈感湧現',                 // 裝備開場:造成傷害 +15%
+  _gearDefUp:'🛡 防禦提升',                // 裝備開場:受到傷害 -15%
+  _gearSpdUp:'💨 搶跑起步',                // 裝備開場:速度 +3(至戰鬥結束)
+  _gearCounter:'🥊 以牙還牙',              // 裝備開場:受攻擊 30% 機率反擊
+  _gearCritUp:'🎯 銳眼鎖定',               // 裝備開場:暴擊率 +20%
+  _gearLifesteal:'🩸 汲取之印',            // 裝備開場:造成傷害 20% 吸血
   _catIceGuard:'❄️ 冰精靈守護',           // ★ v4.48.0 — 貓人族長 S2:全隊減傷 + 攻擊者緩速
   _soulSwap:'🌀 換魂',                   // ★ v4.52.0 — 幽魂暗狐 爆發:互換攻擊/特技 + 暗狐可施展對手技能與爆發
 _odinGaze:'👁 注視',_odinGuard:'🛡 英靈殿守望',_iliyaBurst:'👑 魔尊覺醒',badimmune:'✨ 不利免疫',berserkViking:'🪓 狂暴',
@@ -42641,6 +42681,8 @@ function _blacksmithTgtMult(target, opts){
 }
 function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
+  // ★ v5.30.0 — 丙案 BOSS 傷害下限基準:進入 doDmg 的最原始傷害(在任何 hook 修改前快照)
+  if(typeof opts._gearBossOrig !== 'number') opts._gearBossOrig = rawDmg;
   // ★ v4.46.0 — 炎火超少女 爆發「火神附體」期間(actor 側,置於一切迴避/守護/有利判定之前):造成傷害必中、無視有利狀態。
   //   (不加 bypassShield → 世界BOSS 5000cap 仍生效,鐵律1.31);對命中目標套「禁益」(_buffSeal 3)在扣血後 hook 施加。
   try{
@@ -44020,16 +44062,23 @@ function doDmg(target, rawDmg, opts={}){
   if(!opts.ignoreEvasion && !opts.piercing && !opts.isRebound && target){
     const _tarEff = (target._treasureEff) || {};
     const _atkEff = (a && a._treasureEff) || {};
-    const _dodge = _tarEff.dodgeRate || 0;
-    const _hit   = _atkEff.hitRate   || 0;
+    // ★ v5.30.0 — 裝備迴避/命中併入至寶淨迴避算式(裝備 dodge 受鐵匠 S2 放大、hit 受 S1 放大)
+    const _dodge = (_tarEff.dodgeRate || 0) + ((typeof _gearVal === 'function') ? _gearVal(target, 'dodge', 'def') : 0);
+    const _hit   = (_atkEff.hitRate   || 0) + ((typeof _gearVal === 'function' && a) ? _gearVal(a, 'hit', 'atk') : 0);
     const _net = (_dodge - _hit) / 100;
     if(_net > 0 && Math.random() < Math.min(0.95, _net)){
       showShieldVFX(target, 'evade');
       showPopup(target, '✨MISS', 'miss');
-      log(`✨ [${target.name}] 至寶閃避(藍染雲袖)!`);
+      log(`✨ [${target.name}] 閃避(至寶/裝備)!`);
       _showMissOnActor(a);  // ★ v3.13.2 — 行動者卡片彈未命中 + 迴避音
       return 0;
     }
+  }
+  // ★ v5.30.0 — 裝備「格擋」判定(設計表規則⑥定稿:與迴避獨立、成功=後續傷害減半、
+  //   計算順位最優先、上限 35%;貫穿格擋=攻方機率使本次格擋失效)。
+  //   在 rawDmg 階段減半 → 之後所有減傷/護盾/下限鏈自然接續(丙案 BOSS 下限以更早的原始值為基準,不受影響)。
+  if(typeof _gearTryBlock === 'function' && rawDmg > 0 && _gearTryBlock(target, a, opts)){
+    rawDmg = Math.max(1, Math.floor(rawDmg * 0.5));
   }
 
   // ── 速度命中/迴避：速度差影響命中率（每1點速度+1%命中/迴避）──
@@ -45427,11 +45476,58 @@ function doDmg(target, rawDmg, opts={}){
       if(_bonus > 0) dmg += _bonus;
     }
   }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.30.0 — 裝備 Phase 2:攻方增傷(照上方至寶格式;鐵匠 S1 放大)
+  //   普攻判別=星鎧護體黃金口徑;爆發判別=_burstCastActive || opts.fromBurst;
+  //   allDmg 對三類全生效;排除 DoT/固定/反彈/連鎖(不涉鐵律 1.31:玩家增傷經既有 BOSS 5000 cap)
+  // ════════════════════════════════════════════════════════════════
+  try{
+    if(dmg > 0 && a && a._gearEff && !opts.isRebound && !opts.isReflect && !opts.isTraitShare
+       && !opts.isChaos && !opts.isHeal && !opts.fixedDmg && !opts._isDot && !opts._fromBurn){
+      const _gIsBurst = !!(window._burstCastActive || opts.fromBurst);
+      let _gOutPct = _gearVal(a, 'allDmg', 'atk');
+      if(_gIsBurst) _gOutPct += _gearVal(a, 'burstDmg', 'atk');
+      else if(opts.isSkill) _gOutPct += _gearVal(a, 'skDmg', 'atk');
+      else _gOutPct += _gearVal(a, 'naDmg', 'atk');
+      // 開場增益:_gearSpUp(特技湧現)加成所有造成傷害
+      const _gSpUpB = (a.buffs || []).find(function(b){ return b && b.type === '_gearSpUp'; });
+      if(_gSpUpB && typeof _gSpUpB._pct === 'number') _gOutPct += _gSpUpB._pct * 100;
+      if(_gOutPct > 0) dmg += Math.floor(dmg * (_gOutPct / 100));
+    }
+  }catch(_eGearOut){ console.warn('[裝備攻方增傷 v5.30.0]', _eGearOut); }
   // ★ v1.0.20260428.3730 — 至寶受傷減免(防禦者,玉山巔峰之盾)
   if(dmg > 0 && target && target._treasureEff && target._treasureEff.dmgReduce && !opts.isRebound){
     const _reduceRate = Math.min(0.85, target._treasureEff.dmgReduce / 100);
     dmg = Math.max(1, Math.floor(dmg * (1 - _reduceRate)));
   }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.30.0 — 裝備 Phase 2:受方減免(dr 上限 50%×鐵匠 S2 放大 + 屬性減免 + 開場防禦增益)
+  //   屬性判定仿寵物段口徑:opts.element/elem → SKILL_FORCE_ELEMENT[_curSkillName] → 攻方 element;
+  //   排除治療/反彈(與至寶 dmgReduce 同守門);ignoreBuffs 不穿透(裝備=素質非 buff,對齊至寶)。
+  // ════════════════════════════════════════════════════════════════
+  try{
+    if(dmg > 0 && target && target._gearEff && !opts.isRebound && !opts.isHeal){
+      let _gInPct = Math.min(50, _gearVal(target, 'dr', 'def'));   // ★ 減傷上限 50%
+      const _gElemNow = (opts && (opts.element || opts.elem))
+        ? (opts.element || opts.elem)
+        : ((typeof SKILL_FORCE_ELEMENT !== 'undefined' && window._curSkillName && SKILL_FORCE_ELEMENT[window._curSkillName])
+            ? SKILL_FORCE_ELEMENT[window._curSkillName]
+            : (a && a.element) || null);
+      if(_gElemNow){
+        let _gEl = _gearVal(target, 'allElemDr', 'def');
+        if(target._gearEff.elemDr && typeof target._gearEff.elemDr[_gElemNow] === 'number'){
+          _gEl += target._gearEff.elemDr[_gElemNow] * _gearBkMult(target, 'def');
+        }
+        if(_gEl > 0){
+          dmg = Math.max(1, Math.floor(dmg * (1 - Math.min(50, _gEl) / 100)));
+          try{ log('🛡️ [' + target.name + '] 裝備屬性抗衡!受' + ((typeof _GEAR_EL_LABEL !== 'undefined' && _GEAR_EL_LABEL[_gElemNow]) || _gElemNow) + '屬性傷害減免!'); }catch(_){}
+        }
+      }
+      const _gDefUpB = (target.buffs || []).find(function(b){ return b && b.type === '_gearDefUp'; });
+      if(_gDefUpB && typeof _gDefUpB._pct === 'number') _gInPct += _gDefUpB._pct * 100;
+      if(_gInPct > 0) dmg = Math.max(1, Math.floor(dmg * (1 - Math.min(65, _gInPct) / 100)));
+    }
+  }catch(_eGearIn){ console.warn('[裝備受方減免 v5.30.0]', _eGearIn); }
   const _mercyRainActive=hasBuff(target,'mercyRain') && dmg>0;
   // ── 裝備效果：鋼鐵鎧甲
   const teq=getEquip(target);
@@ -45715,6 +45811,25 @@ function doDmg(target, rawDmg, opts={}){
       }
     }
   }catch(_eWbMinHalf){ console.warn('[龍王爆發傷害下限 v5.23.0]', _eWbMinHalf); }
+
+  // ★ v5.30.0 — 丙案(設計表平衡檢查頁·老師裁定):世界龍王與冒險 BOSS 的「所有攻擊」
+  //   一律帶「至少保留原始 40%」傷害下限(爆發維持上方 50% 既有機制,優先已生效不再重疊)。
+  //   基準=doDmg 頂部快照的最原始傷害(opts._gearBossOrig,在任何寵物/天賦/裝備減傷 hook 之前);
+  //   擴充 _wbBurstMinHalf 引擎理念,對至寶/技能/裝備所有減傷來源一體適用,防全裝備隊無力化 BOSS。
+  //   排除:治療/反彈/DoT/固定傷害(固定值語義不縮放亦不抬升)/已走爆發 50% 下限者。
+  try{
+    if(dmg > 0 && !opts.isHeal && !opts.isRebound && !opts.isReflect && !opts.fixedDmg
+       && !opts._isDot && !opts._fromBurn && !opts._wbBurstMinHalf
+       && typeof opts._gearBossOrig === 'number' && opts._gearBossOrig > 0
+       && target && target.side === 'p1' && target.curHp > 0
+       && a && typeof _gearIsAdvBoss === 'function' && _gearIsAdvBoss(a)){
+      const _gBossFloor = Math.ceil(opts._gearBossOrig * 0.4);
+      if(dmg < _gBossFloor){
+        try{ log(`💥 [${target.name}] BOSS 之力貫穿層層防禦!傷害至少保留 40%(${dmg} → ${_gBossFloor})`); }catch(_){}
+        dmg = _gBossFloor;
+      }
+    }
+  }catch(_eGBossFloor){ console.warn('[BOSS 傷害下限丙案 v5.30.0]', _eGBossFloor); }
 
   // ★ v3.15.71 — 鐵匠 天賦「工匠魂」不倒(主路徑):受致命傷害時依至寶件數機率不倒(HP剩1)。只動 dmg。
   try{
@@ -46118,7 +46233,9 @@ function doDmg(target, rawDmg, opts={}){
                            + ((function(){ var _bd=target.status&&target.status.find(function(s){return s.type==='breakDef';}); return _bd?(_bd._strong?0.30:0.20):0; })())  // ★ v3.13.46 破防受暴擊 普通+20% / 強力+30%
                            + _firebrandCritBonus
                            + (fieldHas('summer', a && a.side) ? 0.20 : 0)  // ★ v3.13.0 朱玥夏戰場卡 +20% 暴擊率
-                           + ((a && Array.isArray(a.buffs) && a.buffs.some(function(b){ return b && b.type==='_blkWeaponBuff' && b._critUp; })) ? 0.30 : 0));  // ★ v3.15.71 鐵匠 S1 武器精煉強化:暴擊率+30%
+                           + ((a && Array.isArray(a.buffs) && a.buffs.some(function(b){ return b && b.type==='_blkWeaponBuff' && b._critUp; })) ? 0.30 : 0)  // ★ v3.15.71 鐵匠 S1 武器精煉強化:暴擊率+30%(舊版 buff·v5.30.0 後不再施加,保留消費零風險)
+                           + ((typeof _gearVal === 'function' && a) ? _gearVal(a, 'crit', 'atk') / 100 : 0)  // ★ v5.30.0 裝備暴擊率(鐵匠 S1 放大)
+                           + ((a && Array.isArray(a.buffs) && (function(){ var _gc=a.buffs.find(function(b){ return b && b.type==='_gearCritUp'; }); return _gc && typeof _gc._pct==='number' ? _gc._pct : 0; })()) || 0));  // ★ v5.30.0 裝備開場「銳眼鎖定」
   if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
     // ★ v3.4.0 — 暴擊額外傷害基數:0.3 + (玩家英雄 atk × 0.005)
     const _critMul = 0.3 + _atkCritBonus
@@ -46126,6 +46243,16 @@ function doDmg(target, rawDmg, opts={}){
           ? Math.min(0.30, 0.10 + ((typeof _getTraitLv==='function') ? (_getTraitLv('魔劍姬‧伊莉雅')||0) : 0) * 0.05)
           : 0);  // ★ v3.13.76 魔尊血脈:暴擊傷害額外 +10%(+5%/天賦級,MAX +30%)
     let _critExtra=Math.floor(dmg*_critMul);
+    // ★ v5.30.0 — 裝備「受到暴擊傷害 -X%」(critDmgTaken,橄欖球頭盔等;鐵匠 S2 放大;僅減爆擊額外傷害)
+    try{
+      if(_critExtra > 0 && target && typeof _gearVal === 'function'){
+        const _gCrtT = Math.min(90, _gearVal(target, 'critDmgTaken', 'def'));
+        if(_gCrtT > 0){
+          _critExtra = Math.max(0, Math.floor(_critExtra * (1 - _gCrtT / 100)));
+          try{ log('🪖 [' + target.name + '] 裝備護頭!受到暴擊傷害 -' + Math.round(_gCrtT) + '%'); }catch(_){}
+        }
+      }
+    }catch(_eGearCrtT){}
     // ★ v3.5.14 — 維蘇威單次受傷上限保護:爆擊額外傷害也要走 cap,
     //   不然「主傷害 5000 cap + 爆擊額外 1500」會造成單次受 6500 傷害,違反炎之意志設計。
     //   修法:_critExtra 對維蘇威重新跑一次 _wbApplyBossDmgCap,確保補扣值也被限制。
@@ -46230,18 +46357,48 @@ function doDmg(target, rawDmg, opts={}){
   // ★ v1.0.20260428.3730 — 至寶反彈(防禦者,日月潭靈鏡):受傷時 X% 機率反彈傷害給攻擊者
   // ★ v1.1.0 — 反彈傷害改成「相同傷害」(從 50% → 100%)
   if(dmg > 0 && a && a !== target && a.side !== target.side && a.curHp > 0
-     && target._treasureEff && target._treasureEff.reflectChance
+     && ((target._treasureEff && target._treasureEff.reflectChance)
+         || (typeof _gearVal === 'function' && _gearVal(target, 'reflect', 'def') > 0))
      && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && !opts.noReflect){
-    const _reflectRate = Math.min(0.95, target._treasureEff.reflectChance / 100);
+    // ★ v5.30.0 — 裝備「荊棘之體」反彈機率併入至寶反彈同判定(反彈量沿用 v1.1.0 前例=100% 相同傷害;鐵匠 S2 放大機率)
+    const _gRefPct = (typeof _gearVal === 'function') ? _gearVal(target, 'reflect', 'def') : 0;
+    const _reflectRate = Math.min(0.95, (((target._treasureEff && target._treasureEff.reflectChance) || 0) + _gRefPct) / 100);
     if(Math.random() < _reflectRate){
       const _refDmg = Math.max(1, dmg); // 反彈 100% 相同傷害
       try{ playSfx('sfx-reflect', 0.8); }catch(_){}
       try{ showPopup(target, '🪞反彈', 'miss'); }catch(_){}
-      try{ log(`🪞 [${target.name}] 至寶反彈(日月潭靈鏡)!對 [${a.name}] 造成 ${_refDmg} 相同傷害!`); }catch(_){}
+      try{ log(`🪞 [${target.name}] 反彈(至寶/裝備)!對 [${a.name}] 造成 ${_refDmg} 相同傷害!`); }catch(_){}
       // 用 noReflect:true 避免無限互相反彈
       doDmg(a, _refDmg, { noReflect:true, ignoreBuffs:true, isRebound:true, noEquip:true, isReflect:true });
     }
   }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.30.0 — 裝備開場增益觸發鏈(以牙還牙反擊 / 汲取之印吸血)+ 武器詞條 onHit 附加
+  //   反擊:受方 _gearCounter 機率以攻擊 100% 反擊(isRebound 防循環);吸血:攻方回復傷害 20%;
+  //   onHit:僅普攻/特技命中觸發(排除爆發/DoT/固定/反彈,見 _gearOnHitTry 守門)。
+  // ════════════════════════════════════════════════════════════════
+  try{
+    if(dmg > 0 && a && a !== target && a.side !== target.side
+       && !opts.isRebound && !opts.isReflect && !opts.isTraitShare && !opts.isChaos && !opts.isHeal){
+      // 以牙還牙(受方反擊)
+      const _gCtrB = (target.buffs || []).find(function(b){ return b && b.type === '_gearCounter'; });
+      if(_gCtrB && target.curHp > 0 && a.curHp > 0 && typeof _gCtrB._pct === 'number' && Math.random() < _gCtrB._pct){
+        const _gCtrDmg = Math.max(1, Math.floor(target.atk || 1));
+        try{ log('🥊 [' + target.name + '] 以牙還牙!反擊 [' + a.name + '] ' + _gCtrDmg + ' 傷害!'); }catch(_){}
+        try{ bannerFX(target, '🥊 反擊!', '#ffcc88', 700); }catch(_){}
+        doDmg(a, _gCtrDmg, { actor:target, isRebound:true, noReflect:true, noEquip:true, ignoreEvasion:true });
+      }
+      // 汲取之印(攻方吸血)
+      const _gLsB = (a.buffs || []).find(function(b){ return b && b.type === '_gearLifesteal'; });
+      if(_gLsB && a.curHp > 0 && typeof _gLsB._pct === 'number'){
+        const _gLsAmt = Math.max(1, Math.floor(dmg * _gLsB._pct));
+        try{ doHeal(a, _gLsAmt, { actor:a, isHeal:true, noDice:true }); }catch(_){}
+        try{ log('🩸 [' + a.name + '] 汲取之印!吸取 ' + _gLsAmt + ' HP'); }catch(_){}
+      }
+      // 武器詞條 onHit 附加
+      if(typeof _gearOnHitTry === 'function') _gearOnHitTry(a, target, opts);
+    }
+  }catch(_eGearChain){ console.warn('[裝備觸發鏈 v5.30.0]', _eGearChain); }
 
   // ════════════════════════════════════════════════════════════════
   // ★ v1.1.0 — 台灣 BOSS 天賦:造成傷害時觸發的效果(共 3 個)
@@ -47974,6 +48131,21 @@ function doHeal(target, rawAmt, opts={}){
     const _bonus = target._treasureEff.healReceived / 100;
     rawAmt = Math.ceil(rawAmt * (1 + _bonus));
   }
+  // ★ v5.30.0 — 裝備受療加成(healed,香火袋/受療詞條;鐵匠 S2 放大)+ 施方治療量加成(heal,急救箱等;鐵匠 S2 放大)
+  try{
+    if(target && typeof _gearVal === 'function'){
+      const _gHealed = _gearVal(target, 'healed', 'def');
+      if(_gHealed > 0) rawAmt = Math.ceil(rawAmt * (1 + _gHealed / 100));
+    }
+    const _gHealer = opts.actor || (typeof G !== 'undefined' && G && G.activeChar) || null;
+    if(_gHealer && _gHealer !== target && typeof _gearVal === 'function'){
+      const _gHealOut = _gearVal(_gHealer, 'heal', 'def');
+      if(_gHealOut > 0) rawAmt = Math.ceil(rawAmt * (1 + _gHealOut / 100));
+    } else if(_gHealer && _gHealer === target && typeof _gearVal === 'function'){
+      const _gHealSelf = _gearVal(_gHealer, 'heal', 'def');
+      if(_gHealSelf > 0) rawAmt = Math.ceil(rawAmt * (1 + _gHealSelf / 100));
+    }
+  }catch(_eGearHeal){ console.warn('[裝備治療加成 v5.30.0]', _eGearHeal); }
   if(target && typeof _isPlayerHero === 'function' && _isPlayerHero(target)
      && !(typeof _isBossVerStat === 'function' && _isBossVerStat(target))
      && !opts.isPctHeal){
@@ -52085,31 +52257,36 @@ function execSkill(a, sk, cost, stype){
   //   buff 自訂值由 doDmg 頂部 hooks(_blacksmithAtkBuffMult / _blacksmithTgtMult / BLK-A 迴避)讀取。
   // ════════════════════════════════════════════════════════════════
   else if(n==='武器精煉強化'){
+    // ★ v5.30.0 — 鐵匠 S1 改版(老師甲案·設計表定稿):全隊「攻擊面」裝備效果 ×(1+N%),2 回合。
+    //   N = 5% + 技能每級 +5%(Lv1=5%,Lv10=50%);放大範圍=普攻/特技/爆發/所有傷害%、命中、暴擊、onHit 附加機率。
+    //   免疫類不放大(設計表建議);消費點=_gearBkMult(h,'atk');無裝備者掛了也無效果(PVP 鬥技場鐵匠已排除上場)。
     const _bkAllies = G[a.side].filter(h=>h.curHp>0);
-    const _bkWpPct = (a.atk||0)*(0.5 + _activeSkLv*0.05)/100;   // 攻擊×50%(Lv1)→ 每升+攻擊×5%
-    log(`🔨 [${a.name}] 武器精煉強化!為全體友方淬鍊鋒利的兵刃!`);
+    const _bkWpPct = Math.min(0.50, 0.05 + _activeSkLv*0.05);   // Lv1=+5% → 每級+5%,上限+50%
+    log(`🔨 [${a.name}] 武器精煉強化!為全體友方的裝備淬鍊出鋒利之力!(攻擊面裝備效果 +${Math.round(_bkWpPct*100)}%)`);
     try{ bannerFX(a,'🔨 武器精煉強化!','#ffb347',1100); }catch(_){}
     try{ if(typeof playSkillFX==='function') playSkillFX('武器精煉強化',a,_bkAllies); }catch(_){}
     try{ playSfx('sfx-sword',0.7); }catch(_){}
     try{ playSfx('sfx-statup',0.6); }catch(_){}
     _bkAllies.forEach(t=>{
-      t.buffs = t.buffs.filter(b=>b.type!=='_blkWeaponBuff');
-      t.buffs.push({type:'_blkWeaponBuff',dur:2,_pct:_bkWpPct,_critUp:0.30});
+      t.buffs = t.buffs.filter(b=>b.type!=='_gearBkWeapon');
+      t.buffs.push({type:'_gearBkWeapon',dur:2,_pct:_bkWpPct});
       try{ if(typeof renderCard==='function') renderCard(t); }catch(_){}
     });
     endAction(a, cost);
     return;
   }
   else if(n==='防具精煉強化'){
+    // ★ v5.30.0 — 鐵匠 S2 改版(老師甲案):全隊「防禦面」裝備效果 ×(1+N%),2 回合。
+    //   放大範圍=減傷/屬性減免/受暴傷減/格擋/迴避/抗性/淨化/反彈機率/治療與受療%(上限 50/50/35 於各消費點夾制)。
     const _bkAllies2 = G[a.side].filter(h=>h.curHp>0);
-    const _bkArPct = Math.min(0.90, (a.atk||0)*(0.5 + _activeSkLv*0.05)/100);   // 攻擊×50%(Lv1)→ 每升+攻擊×5%,上限90%
-    log(`🛡️ [${a.name}] 防具精煉強化!為全體友方鍛造堅實的甲冑!`);
+    const _bkArPct = Math.min(0.50, 0.05 + _activeSkLv*0.05);   // Lv1=+5% → 每級+5%,上限+50%
+    log(`🛡️ [${a.name}] 防具精煉強化!為全體友方的裝備鍛造堅實守護!(防禦面裝備效果 +${Math.round(_bkArPct*100)}%)`);
     try{ bannerFX(a,'🛡️ 防具精煉強化!','#9fd4ff',1100); }catch(_){}
     try{ if(typeof playSkillFX==='function') playSkillFX('防具精煉強化',a,_bkAllies2); }catch(_){}
     try{ playSfx('sfx-statup',0.6); }catch(_){}
     _bkAllies2.forEach(t=>{
-      t.buffs = t.buffs.filter(b=>b.type!=='_blkArmorBuff');
-      t.buffs.push({type:'_blkArmorBuff',dur:2,_pct:_bkArPct,_evaUp:0.30});
+      t.buffs = t.buffs.filter(b=>b.type!=='_gearBkArmor');
+      t.buffs.push({type:'_gearBkArmor',dur:2,_pct:_bkArPct});
       try{ if(typeof renderCard==='function') renderCard(t); }catch(_){}
     });
     endAction(a, cost);
@@ -61664,6 +61841,8 @@ function nextRound(){
       log(`💚 持續恢復 [${h.name}] +${_amt}HP`);
     }
   });
+  // ★ v5.30.0 — 裝備淨化(cleanse,騎士頭盔等):每回合開始機率消除自身 1 個不利狀態(鐵匠 S2 放大)
+  try{ if(typeof _gearTurnCleanse === 'function') _gearTurnCleanse(); }catch(_eGearCl){ console.warn('[裝備淨化 tick] 失敗', _eGearCl); }
   // ── 爆發：無盡長眠→每個睡眠回合為我方全體恢復20%HP ──
   ['p1','p2'].forEach(side=>{
     const sleepFoes=G[side==='p1'?'p2':'p1'].filter(h=>h.curHp>0&&hasStatus(h,'sleep'));
@@ -64221,23 +64400,25 @@ function aiUseSkill(a,sk,cost,pref){
   // ★ v3.15.71 — 鐵匠 S1/S2 AI 版(鐵律 1.128 雙實作);同步執行,endAction 由外層 aiUseSkill 處理
   else if(n==='武器精煉強化'){
     const _bkS1LvA = (a._skLv) ? (((a.s1 && a.s1.n==='武器精煉強化') ? a._skLv.s1 : (a.s2 && a.s2.n==='武器精煉強化') ? a._skLv.s2 : 0)||0) : 0;
-    const _bkWpPctA = (a.atk||0)*(0.5 + _bkS1LvA*0.05)/100;
-    log(`🔨 [${a.name}] 武器精煉強化!為全體友方淬鍊鋒利的兵刃!`);
+    // ★ v5.30.0 — 鐵匠 S1 改版(AI 版·鐵律 1.128 雙實作同步):攻擊面裝備效果 ×(1+5%+5%/級,上限+50%)
+    const _bkWpPctA = Math.min(0.50, 0.05 + _bkS1LvA*0.05);
+    log(`🔨 [${a.name}] 武器精煉強化!為全體友方的裝備淬鍊出鋒利之力!(攻擊面裝備效果 +${Math.round(_bkWpPctA*100)}%)`);
     try{ bannerFX(a,'🔨 武器精煉強化!','#ffb347',1000); }catch(_){}
     allies.filter(h=>h.curHp>0).forEach(t=>{
-      t.buffs = t.buffs.filter(b=>b.type!=='_blkWeaponBuff');
-      t.buffs.push({type:'_blkWeaponBuff',dur:2,_pct:_bkWpPctA,_critUp:0.30});
+      t.buffs = t.buffs.filter(b=>b.type!=='_gearBkWeapon');
+      t.buffs.push({type:'_gearBkWeapon',dur:2,_pct:_bkWpPctA});
       try{ if(typeof renderCard==='function') renderCard(t); }catch(_){}
     });
   }
   else if(n==='防具精煉強化'){
     const _bkS2LvA = (a._skLv) ? (((a.s1 && a.s1.n==='防具精煉強化') ? a._skLv.s1 : (a.s2 && a.s2.n==='防具精煉強化') ? a._skLv.s2 : 0)||0) : 0;
-    const _bkArPctA = Math.min(0.90, (a.atk||0)*(0.5 + _bkS2LvA*0.05)/100);
-    log(`🛡️ [${a.name}] 防具精煉強化!為全體友方鍛造堅實的甲冑!`);
+    // ★ v5.30.0 — 鐵匠 S2 改版(AI 版·鐵律 1.128 雙實作同步):防禦面裝備效果 ×(1+5%+5%/級,上限+50%)
+    const _bkArPctA = Math.min(0.50, 0.05 + _bkS2LvA*0.05);
+    log(`🛡️ [${a.name}] 防具精煉強化!為全體友方的裝備鍛造堅實守護!(防禦面裝備效果 +${Math.round(_bkArPctA*100)}%)`);
     try{ bannerFX(a,'🛡️ 防具精煉強化!','#9fd4ff',1000); }catch(_){}
     allies.filter(h=>h.curHp>0).forEach(t=>{
-      t.buffs = t.buffs.filter(b=>b.type!=='_blkArmorBuff');
-      t.buffs.push({type:'_blkArmorBuff',dur:2,_pct:_bkArPctA,_evaUp:0.30});
+      t.buffs = t.buffs.filter(b=>b.type!=='_gearBkArmor');
+      t.buffs.push({type:'_gearBkArmor',dur:2,_pct:_bkArPctA});
       try{ if(typeof renderCard==='function') renderCard(t); }catch(_){}
     });
   }
@@ -75877,9 +76058,205 @@ function _calcHeroGearBonus(heroName){
   return total;
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v5.30.0 — 裝備系統 Phase 2 戰鬥機制引擎 helper 集(設計表 v4.1 已裁定規則全落實)
+//   三上限:減傷 50% / 抗性(通用+特定合計)50% / 格擋 35%;格擋成功=傷害減半(最優先);
+//   貫穿格擋=機率使目標本次格擋失效;反彈=100% 相同傷害(沿用至寶日月潭靈鏡前例);
+//   鐵匠 S1(_gearBkWeapon)放大攻擊面裝備效果 / S2(_gearBkArmor)放大防禦面(老師甲案);
+//   免疫類不放大(設計表建議);丙案 BOSS 40% 傷害下限另見 doDmg 兜底段。
+// ════════════════════════════════════════════════════════════════
+// ── 鐵匠精煉倍率:face='atk'(S1 武器精煉)/'def'(S2 防具精煉);無 buff 回 1 ──
+function _gearBkMult(h, face){
+  try{
+    if(!h || !Array.isArray(h.buffs)) return 1;
+    const _bt = (face === 'atk') ? '_gearBkWeapon' : '_gearBkArmor';
+    const _b = h.buffs.find(function(x){ return x && x.type === _bt; });
+    if(_b && typeof _b._pct === 'number' && _b._pct > 0) return 1 + _b._pct;
+    return 1;
+  }catch(_){ return 1; }
+}
+// ── 安全取裝備效果值(乘鐵匠倍率;免疫不經此) ──
+function _gearVal(h, key, face){
+  try{
+    if(!h || !h._gearEff || typeof h._gearEff[key] !== 'number' || h._gearEff[key] <= 0) return 0;
+    return h._gearEff[key] * _gearBkMult(h, face || 'def');
+  }catch(_){ return 0; }
+}
+// ── 引擎狀態鍵 → 可抵抗/免疫之裝備 st 標籤列表(沉默=封技+封爆發,老師規則⑬)──
+const _GEAR_ENGINE_ST_MAP = {
+  poison:['poison'], burn:['burn'], hellfire:['burn'], bleed:['bleed'],
+  blind:['blind'], forecast:['blind'], slow:['slow'], weakened:['weak'],
+  healReduced:['healdown'], noheal_curse:['healdown'],
+  para:['para'], stun:['stun'], freeze:['freeze'], sleep:['sleep'],
+  charm:['charm'], berserk:['charm'],
+  seal:['seal','silence'], noatk:['seal','sealna'], _burstSeal:['silence']
+};
+// ── addStatus 守門:免疫 → 'imm';抗性擲中 → 'res';未擋 → null ──
+function _gearStatusGate(h, t){
+  try{
+    if(!h || !h._gearEff || t === 'strongTaunt') return null;
+    const _sts = _GEAR_ENGINE_ST_MAP[t];
+    const _eff = h._gearEff;
+    if(_sts && _eff.imm){
+      for(let _i = 0; _i < _sts.length; _i++){ if(_eff.imm[_sts[_i]]) return 'imm'; }
+    }
+    if(typeof BAD_STATUS === 'undefined' || !BAD_STATUS.includes(t)) return null;
+    let _pct = _gearVal(h, 'resistAll', 'def');
+    if(_sts && _eff.res){
+      for(let _j = 0; _j < _sts.length; _j++){
+        if(typeof _eff.res[_sts[_j]] === 'number') _pct += _eff.res[_sts[_j]] * _gearBkMult(h, 'def');
+      }
+    }
+    _pct = Math.min(50, _pct);   // ★ 抗性上限 50%(設計表補充1)
+    if(_pct > 0 && Math.random() < _pct / 100) return 'res';
+    return null;
+  }catch(_){ return null; }
+}
+// ── 格擋判定(與迴避獨立;成功=後續傷害減半;35% 上限;貫穿格擋=攻方機率使其失效)──
+function _gearTryBlock(target, a, opts){
+  try{
+    if(!target || !target._gearEff || !opts || opts.ignoreEvasion || opts.mustHit || opts.piercing
+       || opts.isRebound || opts.isReflect || opts.isHeal || opts.fixedDmg
+       || opts._isDot || opts._fromBurn || window._burstCastActive) return false;
+    const _blk = Math.min(35, _gearVal(target, 'block', 'def'));   // ★ 格擋上限 35%
+    if(_blk <= 0) return false;
+    // 貫穿格擋:攻方 pierceBlock v% 機率使本次格擋整體失效
+    const _pierce = a ? _gearVal(a, 'pierceBlock', 'atk') : 0;
+    if(_pierce > 0 && Math.random() < _pierce / 100){
+      try{ log('🗡️ [' + (a && a.name || '?') + '] 貫穿格擋!無視 [' + target.name + '] 的格擋!'); }catch(_){}
+      return false;
+    }
+    if(Math.random() < _blk / 100){
+      try{ playSfx('sfx-reflect', 0.5); }catch(_){}
+      try{ showShieldVFX(target, 'block'); }catch(_){}
+      try{ bannerFX(target, '🛡 格擋!傷害減半', '#88bbff', 700); }catch(_){}
+      try{ log('🛡 [' + target.name + '] 格擋成功!受到傷害減半!'); }catch(_){}
+      return true;
+    }
+    return false;
+  }catch(_){ return false; }
+}
+// ── 攻方命中後 onHit 附加(僅普攻/特技;爆發/DoT/固定/反彈不觸發)──
+const _GEAR_ONHIT_ENGINE_KEY = {
+  poison:'poison', burn:'burn', bleed:'bleed', blind:'blind', slow:'slow',
+  weak:'weakened', healdown:'healReduced', para:'para', stun:'stun', freeze:'freeze'
+};
+function _gearOnHitTry(a, target, opts){
+  try{
+    if(!a || !target || !a._gearEff || !Array.isArray(a._gearEff.onHit) || !a._gearEff.onHit.length) return;
+    if(!opts || opts.isRebound || opts.isReflect || opts.isTraitShare || opts.isChaos
+       || opts.isHeal || opts.fixedDmg || opts._isDot || opts._fromBurn
+       || opts.fromBurst || window._burstCastActive) return;
+    if(a.side === target.side || target.curHp <= 0) return;
+    const _mul = _gearBkMult(a, 'atk');
+    a._gearEff.onHit.forEach(function(o){
+      try{
+        const _key = _GEAR_ONHIT_ENGINE_KEY[o.st];
+        if(!_key) return;
+        if(Math.random() < Math.min(0.95, (o.chance * _mul) / 100)){
+          addStatus(target, _key, o.dur || 1);
+          try{ log('⚔️ [' + a.name + '] 裝備詞條發動!對 [' + target.name + '] 附加' + ((typeof statusName === 'function') ? statusName(_key) : _key) + '!'); }catch(_){}
+        }
+      }catch(_e1){}
+    });
+  }catch(_){}
+}
+// ── 戰鬥開始:開場增益/護盾(掛既有已消費 buff 或裝備專屬 buff)──
+const _GEAR_OPEN_RAND2_POOL = ['atkup','spup','spdup','regen','evade','critup','lifesteal'];
+function _gearOpenOne(h, b, dur){
+  try{
+    const _d = dur || 2;
+    if(b === 'atkup'){ if(typeof addBuff === 'function') addBuff(h, 'dmgup', _d); }
+    else if(b === 'spup'){ h.buffs.push({ type:'_gearSpUp', dur:_d, _pct:0.15 }); }
+    else if(b === 'defup'){ h.buffs.push({ type:'_gearDefUp', dur:_d, _pct:0.15 }); }
+    else if(b === 'spdup'){ h.spd = (h.spd || 0) + 3; h.buffs.push({ type:'_gearSpdUp', dur:99 }); }
+    else if(b === 'regen'){ if(typeof addBuff === 'function'){ addBuff(h, 'hpRegen', _d); if(!h._hpRegenAmt || h._hpRegenAmt < 8) h._hpRegenAmt = 8; } }
+    else if(b === 'evade'){ if(typeof addBuff === 'function') addBuff(h, 'evasion', _d); }
+    else if(b === 'counter'){ h.buffs.push({ type:'_gearCounter', dur:_d, _pct:0.30 }); }
+    else if(b === 'critup'){ h.buffs.push({ type:'_gearCritUp', dur:_d, _pct:0.20 }); }
+    else if(b === 'lifesteal'){ h.buffs.push({ type:'_gearLifesteal', dur:_d, _pct:0.20 }); }
+    else if(b === 'hide'){ if(typeof addBuff === 'function') addBuff(h, 'hidden', dur || 1); }
+    else if(b === 'rand2'){
+      const _pool = _GEAR_OPEN_RAND2_POOL.slice();
+      for(let _i = 0; _i < 2 && _pool.length; _i++){
+        const _pick = _pool.splice(Math.floor(Math.random() * _pool.length), 1)[0];
+        _gearOpenOne(h, _pick, _d);
+      }
+    }
+  }catch(_e){ console.warn('[裝備開場增益] 施加失敗', b, _e); }
+}
+function _gearBattleOpen(){
+  try{
+    if(typeof G === 'undefined' || !G) return;
+    [].concat(G.p1 || [], G.p2 || []).forEach(function(h){
+      if(!h || h.curHp <= 0 || !h._gearEff || !Array.isArray(h._gearEff.open) || !h._gearEff.open.length) return;
+      let _shown = false;
+      h._gearEff.open.forEach(function(o){
+        if(o.b === 'shield'){
+          const _amt = Math.max(1, Math.floor(o.v || 0));
+          const _ex = (h.buffs || []).find(function(x){ return x.type === 'shield'; });
+          if(!_ex || (_ex._amt || 0) < _amt){
+            h.buffs = (h.buffs || []).filter(function(x){ return x.type !== 'shield'; });
+            h.buffs.push({ type:'shield', dur:99, _amt:_amt });
+          }
+        } else {
+          _gearOpenOne(h, o.b, o.dur);
+        }
+        _shown = true;
+      });
+      if(_shown){
+        try{ bannerFX(h, '🛡️ 裝備之力!', '#a8ccff', 800); }catch(_){}
+        try{ renderCard(h); }catch(_){}
+        try{ log('🛡️ [' + h.name + '] 裝備開場效果發動!'); }catch(_){}
+      }
+    });
+  }catch(_e){ console.warn('[裝備戰開] 失敗', _e); }
+}
+// ── 每回合開始:淨化(cleanse)機率消除自身 1 個不利狀態 ──
+function _gearTurnCleanse(){
+  try{
+    if(typeof G === 'undefined' || !G) return;
+    (G.p1 || []).concat(G.p2 || []).forEach(function(h){
+      if(!h || h.curHp <= 0) return;
+      const _pct = _gearVal(h, 'cleanse', 'def');
+      if(_pct <= 0 || !Array.isArray(h.status) || !h.status.length) return;
+      const _bad = h.status.filter(function(s){ return s && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type); });
+      if(!_bad.length) return;
+      if(Math.random() < Math.min(0.95, _pct / 100)){
+        const _pick = _bad[Math.floor(Math.random() * _bad.length)];
+        h.status = h.status.filter(function(s){ return s !== _pick; });
+        try{ log('✨ [' + h.name + '] 裝備淨化!消除了「' + ((typeof statusName === 'function') ? statusName(_pick.type) : _pick.type) + '」!'); }catch(_){}
+        try{ bannerFX(h, '✨ 裝備淨化', '#bbffcc', 700); }catch(_){}
+        try{ renderCard(h); }catch(_){}
+      }
+    });
+  }catch(_e){ console.warn('[裝備淨化] 失敗', _e); }
+}
+// ── 結算取值:上場隊伍 drop/gold/exp 取單一英雄合計最大值(比照至寶掉寶口徑)──
+function _gearTeamPct(key){
+  try{
+    if(typeof G === 'undefined' || !G || !Array.isArray(G.p1)) return 0;
+    let _mx = 0;
+    G.p1.forEach(function(h){
+      if(h && h._gearEff && typeof h._gearEff[key] === 'number' && h._gearEff[key] > _mx) _mx = h._gearEff[key];
+    });
+    return _mx;
+  }catch(_){ return 0; }
+}
+// ── 冒險 BOSS 判定(丙案下限用;世界BOSS另以 _isWorldBossTarget 判)──
+function _gearIsAdvBoss(h){
+  try{
+    if(!h || h.side !== 'p2') return false;
+    if(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(h)) return true;
+    if(typeof _ZEUS_TRUE_BOSSES !== 'undefined' && _ZEUS_TRUE_BOSSES
+       && (Array.isArray(_ZEUS_TRUE_BOSSES) ? _ZEUS_TRUE_BOSSES.includes(h.name)
+           : (_ZEUS_TRUE_BOSSES.has && _ZEUS_TRUE_BOSSES.has(h.name)))) return true;
+    return false;
+  }catch(_){ return false; }
+}
 // ── 戰鬥套用引擎(比照 _applyTaiwanTreasureToHero;鬥技場路徑不呼叫=PVP 公平制)──
 // Phase 1:數值型(hp/atk/sp/spd)直接進素質;百分比與戰鬥鏈類效果彙總到 h._gearEff
-// (Phase 2 戰鬥機制輪才接 doDmg/格擋/抗性/免疫/開場增益引擎;上限 50/50/35 屆時一併生效)
+// ★ Phase 2(v5.30.0)已接線:doDmg/doHeal/addStatus/戰開/回合淨化/結算 全數消費 h._gearEff
 function _applyGearToHero(h){
   if(!h) return;
   if(h._isFriendHero){ h._gearEff = h._gearEff || {}; h._gearCount = 0; return; }
@@ -76057,9 +76434,46 @@ window._renderHeroGearSection = function(heroName){
         + '<span style="font-size:13px;color:#88bbff;font-weight:700;flex-shrink:0;">' + info.n + ' ▾</span></div>';
     }).join('');
     const ownedN = _gearListInstances().length;
+    // ★ v5.30.0 — 三上限狀態行(設計表補充1「達上限提示」):此英雄裝備合計 減傷/抗性/格擋 與各自上限
+    let _capLine = '';
+    try{
+      const _eqAll = _gearGetHeroEquipped(heroName);
+      if(_eqAll.length){
+        let _sumDr = 0, _sumRes = 0, _sumBlk = 0;
+        const _accOne = function(e, rolled){
+          const _v = (rolled && typeof rolled.v === 'number') ? rolled.v : e.v;
+          if(typeof _v !== 'number') return;
+          if(e.k === 'dr') _sumDr += _v;
+          else if(e.k === 'resistAll') _sumRes += _v;
+          else if(e.k === 'block') _sumBlk += _v;
+        };
+        _eqAll.forEach(function(x){
+          (x.def.eff || []).forEach(function(e){ _accOne(e, null); });
+          (x.inst.affixes || []).forEach(function(af){
+            const _ad = GEAR_AFFIX_POOL.find(function(a){ return a.id === af.id; });
+            if(_ad && _ad.eff) _accOne(_ad.eff, af);
+          });
+        });
+        const _capTag = function(v, cap){
+          return (v >= cap)
+            ? ('<span style="color:#ffcc66;font-weight:800;">' + cap + '%(已達上限)</span>')
+            : ('<span style="color:#bbddff;font-weight:800;">' + v + '%</span><span style="color:#7788aa;">/' + cap + '%</span>');
+        };
+        _capLine = '<div style="font-size:13px;color:#99aacc;margin:2px 0 8px;letter-spacing:0.5px;">'
+          + '🛡 減傷 ' + _capTag(Math.min(50, _sumDr), 50)
+          + '　🧿 抗性 ' + _capTag(Math.min(50, _sumRes), 50)
+          + '　🥋 格擋 ' + _capTag(Math.min(35, _sumBlk), 35) + '</div>';
+      }
+    }catch(_eCap){}
+    // ★ v5.30.0 — 推薦裝備 / 一鍵卸除(老師需求:置於裝備欄位最下方)
+    const _btnRow = '<div style="display:flex;gap:8px;margin-top:8px;">'
+      + '<button onclick="window._gearAutoEquip(\'' + nameEsc + '\')" style="flex:1;padding:10px 8px;font-size:16px;font-weight:900;background:rgba(120,220,160,0.14);border:1.5px solid rgba(120,220,160,0.55);color:#aaf0c8;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🧭 推薦裝備</button>'
+      + '<button onclick="window._gearUnequipAll(\'' + nameEsc + '\')" style="flex:1;padding:10px 8px;font-size:16px;font-weight:900;background:rgba(255,150,120,0.12);border:1.5px solid rgba(255,160,120,0.5);color:#ffc8aa;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🧺 一鍵卸除</button>'
+      + '</div>';
     return '<div id="_hut-anchor-gear" style="background:rgba(90,150,255,0.07);border-radius:14px;padding:14px 14px 10px;border:1.5px solid rgba(120,170,255,0.35);margin-top:8px;">'
       + '<div style="font-size:20px;font-weight:900;color:#88bbff;margin-bottom:10px;letter-spacing:2px;">🛡️ 裝備欄位 <span style="font-size:13px;color:#99aacc;font-weight:700;">(持有 ' + ownedN + ' / ' + window._GEAR_MAX_OWNED + ' 件)</span></div>'
-      + rows + '</div>';
+      + _capLine
+      + rows + _btnRow + '</div>';
   }catch(_e){ console.warn('[裝備UI] 區塊渲染失敗', _e); return ''; }
 };
 
@@ -76115,16 +76529,91 @@ function _gearPickerRefresh(heroName, slot){
   }catch(_){}
   try{ window._showGearSlotPicker(heroName, slot); }catch(_){}
 }
+// ════════════════════════════════════════════════════════════════
+// ★ v5.30.0 — 推薦裝備 / 一鍵卸除(老師需求·圖鑑裝備欄位底部兩鈕)
+//   推薦:依英雄定位(HERO_PRIMARY_CLASS:dmg/heal/tank/ctrl/other)為「未被任何英雄使用」
+//   的裝備評分(稀有度+效果類型對應定位加權·含詞條),只自動填「空槽」,不動玩家已手動配置的槽位。
+//   一鍵卸除:卸下該英雄全部裝備(不含至寶),一次存檔。
+// ════════════════════════════════════════════════════════════════
+const _GEAR_CLASS_EFF_W = {
+  dmg:  { atk:3, sp:3, naDmg:3, skDmg:3, burstDmg:3, allDmg:4, crit:3, hit:2, onHit:1, spd:1, dodge:1 },
+  heal: { heal:4, healed:3, sp:3, hp:2, hpMax:2, dr:1, openShield:1, cleanse:1 },
+  tank: { dr:4, allElemDr:3, elemDr:2, block:3, critDmgTaken:2, hp:3, hpMax:3, res:1, resistAll:2, imm:2, cleanse:2, reflect:2, dodge:2, openShield:2 },
+  ctrl: { onHit:4, hit:3, spd:3, crit:1, dodge:2 },
+  other:{}
+};
+function _gearScoreForClass(x, cls){
+  try{
+    const _rScore = { mythic:40, legend:30, epic:20, rare:10 }[x.def.r] || 5;
+    const _w = _GEAR_CLASS_EFF_W[cls] || {};
+    let _s = _rScore;
+    const _addOne = function(k){ _s += (typeof _w[k] === 'number') ? _w[k] : 0.5; };
+    (x.def.eff || []).forEach(function(e){ _addOne(e.k); });
+    (x.inst.affixes || []).forEach(function(af){
+      const _ad = GEAR_AFFIX_POOL.find(function(a){ return a.id === af.id; });
+      if(_ad && _ad.eff) _addOne(_ad.eff.k);
+    });
+    return _s;
+  }catch(_){ return 0; }
+}
+window._gearAutoEquip = function(heroName){
+  if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_auto', 1200)) return;
+  try{
+    const _cls = (typeof HERO_PRIMARY_CLASS !== 'undefined' && HERO_PRIMARY_CLASS[heroName]) || 'other';
+    const _slots = ['head','body','main','off','legs','acc'];
+    const _free = _gearListInstances().filter(function(x){ return !x.inst.equippedTo; });
+    let _done = 0;
+    _slots.forEach(function(slot){
+      if(_gearGetHeroEquippedBySlot(heroName, slot)) return;   // 已有裝備的槽不動(尊重玩家手動配置)
+      const _cands = _free.filter(function(x){ return x.def.slot === slot && !x.inst.equippedTo; });
+      if(!_cands.length) return;
+      _cands.sort(function(p, q){ return _gearScoreForClass(q, _cls) - _gearScoreForClass(p, _cls); });
+      const _best = _cands[0];
+      _best.inst.equippedTo = heroName;
+      _best.inst.at2 = Date.now();
+      _done++;
+    });
+    if(_done > 0){
+      _gearRequestSave();
+      try{ playSfx('sfx-equip', 0.6); }catch(_){}   // ★ v5.30.0 — 裝備專屬音效
+      try{ bannerFX(null, '🧭 推薦裝備完成!自動裝上 ' + _done + ' 件', '#88ddaa', 1400); }catch(_){}
+    } else {
+      try{ bannerFX(null, ((window._artStyle === 'cute') ? '沒有可以自動裝上的裝備喔~' : '沒有可自動裝備的閒置裝備'), '#aabbcc', 1300); }catch(_){}
+    }
+    try{
+      const box = document.getElementById('hero-detail-content');
+      if(box && typeof _renderHeroDetail === 'function') _renderHeroDetail(heroName, box);
+    }catch(_){}
+  }catch(_e){ console.warn('[推薦裝備] 失敗', _e); }
+};
+window._gearUnequipAll = function(heroName){
+  if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_unequip_all', 1200)) return;
+  try{
+    const _eq = _gearGetHeroEquipped(heroName);
+    if(!_eq.length){
+      try{ bannerFX(null, ((window._artStyle === 'cute') ? '身上沒有裝備可以脫喔~' : '此英雄沒有已裝備的裝備'), '#aabbcc', 1200); }catch(_){}
+      return;
+    }
+    _eq.forEach(function(x){ x.inst.equippedTo = null; x.inst.at2 = Date.now(); });
+    _gearRequestSave();
+    try{ playSfx('sfx-cancel', 0.5); }catch(_){}   // ★ v5.30.0 — 卸下用取消/收回慣例音
+    try{ bannerFX(null, '🧺 已卸下全部 ' + _eq.length + ' 件裝備(至寶不受影響)', '#88bbff', 1400); }catch(_){}
+    try{
+      const box = document.getElementById('hero-detail-content');
+      if(box && typeof _renderHeroDetail === 'function') _renderHeroDetail(heroName, box);
+    }catch(_){}
+  }catch(_e){ console.warn('[一鍵卸除] 失敗', _e); }
+};
 window._gearPickerEquip = function(eqUid, heroName, slot){
   if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_equip', 800)) return;
-  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  try{ if(typeof playSfx === 'function') playSfx('sfx-equip', 0.6); }catch(_){}   // ★ v5.30.0 — 裝備專屬音效(原 sfx-sel)
   const ok = window._gearEquipToHero(eqUid, heroName);
   _gearPickerRefresh(heroName, slot);
   if(ok){ try{ if(typeof bannerFX === 'function') bannerFX(null, '✅ 已裝備', '#66aaff', 1200); }catch(_){} }
 };
 window._gearPickerUnequip = function(eqUid, heroName, slot){
   if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_unequip', 800)) return;
-  try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+  try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.5); }catch(_){}   // ★ v5.30.0 — 卸下用取消/收回慣例音(原 sfx-sel)
   window._gearUnequip(eqUid);
   _gearPickerRefresh(heroName, slot);
 };
@@ -76457,10 +76946,13 @@ window._onTaiwanBossDefeated = function(){
           if(h._treasureEff.dropRateBonus > _maxDropBonus) _maxDropBonus = h._treasureEff.dropRateBonus;
         }
       });
+      // ★ v5.30.0 — 裝備「掉寶率 +%」(幸運鈴鐺/尋寶直覺詞條):隊伍取單一英雄合計最大值,與至寶加成合計
+      const _gearDropBonus = (typeof _gearTeamPct === 'function') ? _gearTeamPct('drop') : 0;
+      _maxDropBonus += _gearDropBonus;
       if(_maxDropBonus > 0){
         const _origRate = _dropRate;
         _dropRate = Math.min(0.95, _dropRate * (1 + _maxDropBonus / 100));
-        try{ console.log('[掉寶率加成] 鳳梨酥幸運符 +' + _maxDropBonus + '% → ' + (Math.round(_origRate*1000)/10) + '% → ' + (Math.round(_dropRate*1000)/10) + '%'); }catch(_){}
+        try{ console.log('[掉寶率加成] 至寶+裝備 +' + _maxDropBonus + '% → ' + (Math.round(_origRate*1000)/10) + '% → ' + (Math.round(_dropRate*1000)/10) + '%'); }catch(_){}
       }
     }
   }catch(_){}
@@ -100147,7 +100639,9 @@ async function advStartWinSequence() {
     const _battleExpC = Math.round(_totalExpC * 1.5); // 出戰英雄 ×1.5
     // ★ v3.14.13(丙)— 龍王的祝福:全服知識幣 +25%
     const _blessMultCoin = (typeof window._gameBlessingMult === 'function') ? window._gameBlessingMult() : 1.0;
-    _bossCoins = Math.round(_battleExpC * 0.3 * _blessMultCoin);
+    // ★ v5.30.0 — 裝備「知識幣獲得 +%」(錢錢小包包/財運亨通詞條;隊伍取單一英雄合計最大值)
+    const _gearGoldMult = 1 + ((typeof _gearTeamPct === 'function') ? _gearTeamPct('gold') : 0) / 100;
+    _bossCoins = Math.round(_battleExpC * 0.3 * _blessMultCoin * _gearGoldMult);
   }catch(_coinE){ console.warn('[BOSS 結算金幣] 計算失敗:', _coinE); }
   if(_bossCoins > 0) addKnowledgeCoins(_bossCoins);
   // ★ 成就：BOSS打倒
@@ -111558,7 +112052,9 @@ async function grantBattleExp(win, stats) {
     totalMult: _totalMult.toFixed(3),
     blessMult: _blessMultExp.toFixed(2),
   });
-  const totalExpFinal = Math.round(baseExp * _totalMult * _blessMultExp);
+  // ★ v5.30.0 — 裝備「經驗獲得 +%」(筆記本/學習天賦詞條;上場隊伍取單一英雄合計最大值,比照至寶掉寶口徑)
+  const _gearExpMult = 1 + ((typeof _gearTeamPct === 'function') ? _gearTeamPct('exp') : 0) / 100;
+  const totalExpFinal = Math.round(baseExp * _totalMult * _blessMultExp * _gearExpMult);
   let battleHeroes;
   if(typeof window !== 'undefined' && Array.isArray(window._lastBattleP1Names) && window._lastBattleP1Names.length){
     battleHeroes = window._lastBattleP1Names;
@@ -117681,9 +118177,9 @@ const SKILL_UPGRADE_DEF = {
   '發明家的靈感':   { cat:'pct_buff', base:20, perLv:1, step:5, label:'生成新發明卡機率' },
   '螢幕廣播系統':   { cat:'no_upgrade', label:'固定效果(不可升級):敵全體暈眩1回合,對BOSS／菁英成功率減半' },
   '很難的五大任務攻擊': { cat:'dmg', label:'技能傷害+5%/lv(特技對隨機目標×5段80~120%+命中燃燒2回合)' },
-  // ★ v3.15.71 — 鐵匠 S1/S2
-  '武器精煉強化':   { cat:'special_blk_weapon', label:'友方全體增傷=攻擊×(50%+5%/lv) + 暴擊率+30%,2回合' },
-  '防具精煉強化':   { cat:'special_blk_armor', label:'友方全體減傷=攻擊×(50%+5%/lv)(上限90%) + 迴避率+30%,2回合' },
+  // ★ v3.15.71 — 鐵匠 S1/S2(★ v5.30.0 改版:老師甲案·裝備效果放大)
+  '武器精煉強化':   { cat:'special_blk_weapon', label:'友方全體「攻擊面」裝備效果+(5%+5%/lv,上限50%),2回合' },
+  '防具精煉強化':   { cat:'special_blk_armor', label:'友方全體「防禦面」裝備效果+(5%+5%/lv,上限50%),2回合' },
   // ★ v3.15.72 — 偵探 S1/S2
   '察覺蛛絲馬跡':   { cat:'no_upgrade', label:'固定效果(被動,不可升級):敵方無法連續使用相同的技能或極限爆發' },
   '名偵探的凝視':   { cat:'pct_buff', base:50, perLv:1, step:3, label:'封印極限爆發成功率' },
@@ -120458,13 +120954,13 @@ function buildSkillLvTable(skillName, currentLv) {
     }
     // ★ v3.15.71 — 鐵匠 S1 武器精煉強化:友方全體增傷=攻擊×(50%+5pp/級) + 暴擊率+30% 2回合
     else if(cat==='special_blk_weapon'){
-      const _bwPct = 50 + lv*5;
-      effectText = '友方全體增傷=攻擊×' + _bwPct + '% + 暴擊率+30%,2回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+      const _bwPct = Math.min(50, 5 + lv*5);
+      effectText = '友方全體「攻擊面」裝備效果 +' + _bwPct + '%(普攻/特技/爆發傷害・命中・暴擊・詞條附加機率),2回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
-    // ★ v3.15.71 — 鐵匠 S2 防具精煉強化:友方全體減傷=攻擊×(50%+5pp/級)(上限90%) + 迴避率+30% 2回合
+    // ★ v5.30.0 — 鐵匠 S2 改版:友方全體「防禦面」裝備效果 +(5%+5pp/級,上限50%)2回合
     else if(cat==='special_blk_armor'){
-      const _baPct = 50 + lv*5;
-      effectText = '友方全體減傷=攻擊×' + _baPct + '%(上限90%) + 迴避率+30%,2回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+      const _baPct = Math.min(50, 5 + lv*5);
+      effectText = '友方全體「防禦面」裝備效果 +' + _baPct + '%(減傷・屬性減免・格擋・迴避・抗性・治療%),2回合' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     // ★ v3.16.41 — 沐雲雪 S1 浮雲入夢:每名倒下隊友限喚醒次數,Lv10(MAX)由 1 次提升為 2 次
     else if(cat==='special_yunmeng'){
@@ -149041,7 +149537,7 @@ window._filterChangelogForDisplay = function(entries){
   }catch(_ePGIU){ console.warn('[v4.90.0 主角技能繼承 UI 區塊] 初始化失敗', _ePGIU); }
 })();
 
-window._GAME_LOADED_VERSION = 'v5.29.0';
+window._GAME_LOADED_VERSION = 'v5.30.0';
 // ★ v1.0.20260423.6000 — 自動同步首頁右下角版本顯示,免得手動忘記改
 try{
   const _vb = document.getElementById('version-badge');
