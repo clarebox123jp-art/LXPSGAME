@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-12  / 目前主程式版本:v5.33.1(裝備圖鑑字體放大·與至寶圖鑑同尺寸)
+//  最後更新:2026-08-12  / 目前主程式版本:v5.33.2(UI 三修:選單順序/裝備商品字級/英雄圖鑑導覽鈕)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,21 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.33.2 — UI 三修(老師截圖裁定;選單順序與圖鑑鈕為全員可見·不標 adminOnly)
+  {
+    ver: 'v5.33.2',
+    date: '2026-08-12',
+    brief: [
+      '🧭【選單順序更順手!】關卡頁下方的選單重新排列:召喚、英雄、至寶、寵物、背包、好友、魔物、獎章、GM獎勵、更新日誌——常用的寵物和背包往前移,找起來更快!',
+      '🔍【英雄圖鑑更清爽】英雄圖鑑詳細頁的「返回圖鑑/上一位/下一位」按鈕縮小成和魔物圖鑑一樣的大小,畫面更整齊、內容看得更多!',
+    ],
+    items: [
+      '★ v5.33.2【①選單順序】老師裁定新順序=召喚/英雄/至寶/寵物/背包/好友/魔物/獎章/GM獎勵/更新日誌(魔物由第 4 位移到好友後);nth-of-type 位置色為彩虹排列設計語意不隨鈕搬移;紅點 _setNavDot 以 label 文字比對、寵物教學聚光走 #adv-nav-pet-btn id、nth(9)(10) 4 字小字規則位置未變 → 全部零影響。',
+      '★ v5.33.2【②超商裝備商品卡字級】對齊其他分頁商品:名稱 18→20、稀有度/部位/效果/限購三段說明 13→16、價格 20→22、購買鈕 17→18、效果列 min-height 34→44(測試期僅 GM 可見裝備分頁)。',
+      '★ v5.33.2【③英雄圖鑑導覽鈕縮小】根因=英雄/魔物兩處 inline 尺寸本就相同(26px·10px 24px),差異來自英雄詳情整頁 _codexScaleFontSizes ×1.6 放大而魔物頁無 → 三鈕容器 div 加 data-noscale(沿用 v3.16.70 英雄名既有排除機制)即與魔物圖鑑同尺寸;頁面其餘內容維持 1.6 放大零影響。',
+      '★ v5.33.2【驗證】index inline 22 塊全過;0 孤立代理字元;版號同步(index/changelog=v5.33.2·admin_panel v5.32.0·mainstory v5.31.0·hero_db v5.30.0);changelog 恰 20 條(刪最舊 v5.16.0);CURRENT_BOOT_VER 未動;本輪僅動 index.html+game_changelog.js。',
+    ],
+  },
   // v5.33.1 — 裝備圖鑑字體放大(老師截圖裁定·GM 測試期)
   {
     ver: 'v5.33.1',
@@ -334,22 +349,6 @@ window.GAME_CHANGELOG = [
       '★ v5.17.0【avatar_db.js 主引擎】window._dynAvatarApply 冪等合併(截回靜態段→佔位補到 200→動態件放 index===id 槽位);_avAccLayer prop 路徑支援 item.b64 dataURI(天然免快取·AVATAR_DB_VERSION 維持凍結 v4.95.2);_avatarMaskUnlockOnSummon 池擴充:動態四分類 summon 鎖款與靜態面具同池(仍每抽 1%·index 召喚點零改動);VARF 加 mask 鍵=每款面具獨立管理員預設 + _avEffPos raw 鍵 fallback 相容舊值;summon 鎖款自動註冊雙版解鎖說明(鐵律 1.232)。',
       '★ v5.17.0【玩家端載入器・index.html】_dynContentSync 改雙軌:同一 _index 讀取內 quizVer/avatarVer 各自獨立比對(題庫沒更新也會檢查配件);開機套 lxps_dynAvatar_v1 快取;快取寫入容量滿時靜默降級(下次開機自雲端再拉)·任何失敗不影響遊戲。',
       '★ v5.17.0【定位流程】發佈後老師到造型工房用既有「位置/尺寸調整 → 📌設為預設」逐款調定位(gameConfig/avatarPartDefaults 全體套用);firestore.rules 免改(沿用 v5.16.0 dynamicContent 條款);版號七點 v5.17.0(mainstory 鍵維持 v5.12.0·CURRENT_BOOT_VER 凍結);changelog 刪最舊 v4.98.0 維持恰 20 條。',
-    ],
-  },
-  // v5.16.0 — 動態題庫第一期:GM 遊戲內直接新增題目(測試期 adminOnly)+ mainstory.js 缺檔救援
-  {
-    ver: 'v5.16.0',
-    date: '2026-08-06',
-    adminOnly: true,
-    brief: [
-      '📚 GM 後台新增「動態題庫擴充」:老師可以直接在遊戲裡新增題目,全體玩家下次開機自動載入,不用再改程式檔!',
-      '🛠 同時修好了主線劇情打不開的問題(缺了一個檔案,已經救回來)!',
-    ],
-    items: [
-      '★ v5.16.0【動態內容層第一期・動態題庫】GM 後台新增「📚 動態題庫擴充」(新側欄群組『📚 內容擴充』):單題表單/批次 JSON 匯入/待發佈清單/一鍵發佈/已發佈題目搜尋與勾選刪除。題目寫入 Firestore dynamicContent(_index 版本指標 + quiz_N 題包·每包 1800 題防 1MB 上限),id 自 100001 單調配發永不與靜態題庫(最大 34694)相撞、永不重用。',
-      '★ v5.16.0【玩家端載入器・index.html】開機先套 localStorage 快取(離線可用)→ 登入後只讀 _index 一份比對版本(900 台每次開機各 1 讀·版本相同即結束)→ 有更新才拉題包 → 冪等合併進 ADV_QUIZ_DB;冒險答題/鬥技場/知識王/小博士全是執行期翻表,自動生效零接線;任何失敗靜默不影響遊戲。',
-      '★ v5.16.0【mainstory.js 缺檔救援】開場 SOP 發現 repo 無 mainstory.js(v5.12.0 拆檔後未上傳→LIVE 主線入口全站失效·有 typeof 守門不崩潰):自 git 歷史 0996239(v5.11.0 拆檔前 index)原段 L144205-148311 重建 4,111 行,內容一字不差,node --check 過;FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動。',
-      '★ v5.16.0【部署】需部署 firestore.rules(新增 dynamicContent 條款:讀=登入玩家·寫=isAdmin);上傳順序:firestore.rules 先部署 → game_changelog.js → mainstory.js → admin_panel.js → index.html 最後;admin 無真 optional chaining;index inline 22 塊 node 全過。',
     ],
   },
 ];
