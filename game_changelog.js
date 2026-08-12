@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-12  / 目前主程式版本:v5.30.0(裝備系統 Phase 2 戰鬥機制+鐵匠改版+推薦裝備)
+//  最後更新:2026-08-12  / 目前主程式版本:v5.33.0(裝備圖鑑頁:與至寶圖鑑共用背景與 BGM)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,65 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.33.0 — 裝備圖鑑頁(裝備 Phase 5·GM 測試期)
+  {
+    ver: 'v5.33.0',
+    date: '2026-08-12',
+    adminOnly: true,
+    brief: [
+      '📖【裝備圖鑑登場!】至寶圖鑑左上角新增「🛡️ 裝備圖鑑」按鈕:全部 60 件裝備依 6 個部位一覽無遺,每件都有專屬插畫!收集過的會亮起來、還沒拿到的是神祕灰影,快來挑戰全收集!',
+      '🔍【點卡看詳情】點任何一件裝備:大張插畫、故事介紹、基礎效果、隨機詞條數、超商價格與取得管道通通看得到;你身上同名的每一件也會列出各自的詞條和穿在誰身上!',
+      '🎵【和至寶圖鑑是好朋友】裝備圖鑑與至寶圖鑑共用同一張華麗背景與同一首 BGM,兩頁之間一鍵互切、音樂不中斷!',
+      '🖼【60 張裝備插畫全數上線】老師繪製的 60 張裝備圖已全部上傳,裝備列表、已裝備欄位、圖鑑通通換上精美插畫!',
+    ],
+    items: [
+      '★ v5.33.0【openGearGalleryPage 新頁·鏡像至寶頁】同至寶背景.png+遮罩層疊·同 bgm-treasure-gallery;左側 60 件依部位 6 段(段標題+3 欄·768px 以下自動 2 欄)卡=插畫(onerror 退 emoji)+名稱+稀有度框色+持有×N/裝備中⚔/未收錄灰階;右側詳情=大圖+dp/ds 雙版說明(依 _artStyle·鐵律1.232 資料層已雙版)+基礎效果+隨機詞條數+定價/半價+取得管道(雙版)+「我的實例」清單(逐顆詞條/裝備中/受贈標記)。',
+      '★ v5.33.0【收錄口徑】現持有 ∪ 帳本曾獲得(賣掉/送好友仍算「曾獲得」;GM admin_delete 刪除筆不算=污染回收不計收錄);頂欄顯示 收錄 N/60 + 持有 N/100;純顯示層零寫入(鐵則⑧)。',
+      '★ v5.33.0【入口與互切】至寶圖鑑 header「🛡️ 裝備圖鑑」鈕(_gearVisibleForMe 守門=測試期僅 GM·正式開閘全員自動顯示)·裝備頁對稱「💎 至寶圖鑑」鈕;互切經 window._galleryBgmCarry 轉交「進圖鑑前的原 BGM」(openTaiwanTreasurePage BGM 記憶段補 carry 優先·根治互切後返回切錯 BGM)·同曲互切不重切不斷音·各頁返回正確切回。',
+      '★ v5.33.0【圖片】60 張裝備插畫老師已全上傳 repo;_GEAR_IMG_VER 維持 1(全部首抓免 bump·v5.29.0 接線零程式改動自動生效);裝備列表/已裝備槽卡/圖鑑三處同套 helper。',
+      '★ v5.33.0【驗證】index inline 22 塊全過;0 孤立代理字元;7 版號同步點(index/changelog=v5.33.0·admin_panel 維持 v5.32.0 檔鍵一致·mainstory v5.31.0·hero_db v5.30.0);changelog 恰 20 條(刪最舊 v5.14.0);CURRENT_BOOT_VER 未動;本輪僅動 index.html+game_changelog.js 兩檔。',
+    ],
+  },
+  // v5.32.0 — GM 後台裝備管理(裝備 Phase 4 後半·GM 測試期)
+  {
+    ver: 'v5.32.0',
+    date: '2026-08-12',
+    adminOnly: true,
+    brief: [
+      '🛡️【GM 後台新工具】管理員後台「🎁 獎勵與補償」群組新增「🛡️ 裝備管理」卡:輸入學生 email、學號或 uid,一鍵查詢他的裝備背包(逐件顯示詞條、裝備中的英雄、取得來源與時間,並附裝備帳本)!',
+      '🎁【指定發放】老師可以直接發放任何一件指定裝備給學生:詞條在發放當下隨機決定、永久固定(規則跟玩家自己取得完全一樣),並自動寄登入通知給學生!',
+      '🗑【異常刪除】發現異常裝備(共用平板污染等)可以逐件刪除:寫入稽核帳本後永遠不會復活,裝備中的會自動卸下,並通知學生。',
+    ],
+    items: [
+      '★ v5.32.0【admin_panel.js「🛡️ 裝備管理」卡·三點同步】模板卡+SIDEBAR_ITEMS+掛「🎁 獎勵與補償」群組+_initGearAdminSection IIFE:查詢(email/lsps學號/uid → 主檔 getDocFromServer 最新·依部位分組·持有 N/100·帳本近 40 筆標色 admin_delete紅/sold黃/gift_sent粉/admin_grant綠)/發放(部位+60 件下拉·confirm 兩段式)/逐件刪除(confirm 兩段式·不補償);無真 optional chaining。',
+      '★ v5.32.0【index.html 後端】①查表橋接 _fbAdminGearDbList(admin_panel 為獨立 script 讀不到 GEAR_DB const)②_fbAdminReadPlayerGear(instances/_equipUnlockHistory 皆 _s 字串優先·附詞條顯示文字)③_fbAdminGearGrantForUid(GM 端 _gearRollAffixes roll 一次→三槽同寫[主檔+live+safe·寵物重置 v4.14.0 前例]同一顆實例 src=admin_grant+每槽帳本 admin_grant[uid12=學生·grantedBy=GM]·豁免 100 件上限[Phase 1 ignoreCap 前例])④_fbAdminGearDeleteForUid(三槽同寫刪實例+每槽帳本 source:admin_delete → _lxpsLatestDeletedMap 稽核感知既有機制殘槽合併不復活·safe 槽留鐵證防在線覆寫)。',
+      '★ v5.32.0【在線互蓋防護】發放/刪除主檔皆蓋 _authoritativeRestoreAt → 學生在線時 piece3 機制自動乾淨重載採用最新資料,不會被學生下一次存檔洗掉;兩操作皆走 pendingAdminNotifications 寄登入通知。',
+      '★ v5.32.0【驗證】index inline 22 塊全過;admin_panel node --check 過·零真 optional chaining;0 孤立代理字元;7 版號同步點對齊 v5.32.0;changelog 恰 20 條(刪最舊 v5.13.0);CURRENT_BOOT_VER 未動;mainstory.js(v5.31.0)/hero_db.js(v5.30.0)/sw/world-boss 系列全未動。',
+    ],
+  },
+  // v5.31.0 — 裝備系統 Phase 3 取得途徑 + 第二章商店教學裝備版(GM 測試期)
+  {
+    ver: 'v5.31.0',
+    date: '2026-08-12',
+    adminOnly: true,
+    brief: [
+      '🎁【裝備拿得到了!(GM 測試中)】裝備取得途徑全面開通:打路邊小怪 10% 機率掉稀有/史詩裝備、特殊小怪(寶箱怪/小惡魔/二宮尊德像/座敷童子/聖甲蟲)50% 掉史詩/傳說、打贏冒險 BOSS 75% 掉傳說/神話!星空召喚也有 20% 機率召喚出裝備!',
+      '🛒【超商新分頁】不可思議超商新增「🛡️ 裝備」分頁:每天早上 8 點換一批 6 件(6 個部位各 1 件),稀有 1,000/史詩 5,000/傳說 20,000/神話 80,000 知識幣;買到的裝備詞條當場隨機決定、永久固定!',
+      '💰【半價賣出】不喜歡的裝備可以在裝備選擇視窗按「賣出(半價)」換回知識幣(定價的一半),幫背包騰出空間!',
+      '🎓【主線教學升級】第二章商店實戰教學改版:裝備系統開放後,改成親手「買一件裝備 → 開箱看隨機詞條 → 幫夥伴穿上」的做中學課程,由程式設計師用幽默的方式介紹稀有度與隨機詞條的祕密!',
+      '🎁【裝備也能送好友!】在裝備選擇視窗按「送好友」,把整件裝備(連同它的隨機詞條)原封不動送給好友!送出可獲得友情之心:稀有+2/史詩+3/傳說+5/神話+8;好友送你的裝備轉送出去不加心(禮物照送)。每位好友每天 1 份禮物的規則照舊。',
+      '📊【素質面板更好讀】英雄圖鑑的「素質點數效果」改版:文字縮小、兩欄整齊對齊一目了然,並新增「🥋 格擋率」與「⤵️ 貫穿格擋」兩項(來自裝備,格擋上限 35%)!',
+      '⏰【超商限購】裝備貨架每件每日限購 1 次(6 件都想要就每天報到!);召喚機率說明視窗也更新了:裝備開放時會誠實顯示「🛡️ 隨機裝備 20%」與其他獎勵 ×0.8 後的機率。',
+    ],
+    items: [
+      "★ v5.31.0【裝備 Phase 3 取得途徑(設計表老師規格+丙裁定)】①小怪掉落:特殊小怪 50%(史詩75/傳說25)、路邊/菁英 10%(稀有90/史詩10),advFinishMiniBattle 逐隻擲骰 ②冒險 BOSS 75%(傳說80/神話20),advStartWinSequence 結算點,世界BOSS/鬥技場不走此路徑 ③星空召喚 20% 前置擲骰(原池自動×0.8 重配·稀有度 60/25/11/4·裝備滿 100 件自動跳過走原池零損失) ④超商「🛡️ 裝備」分頁:日期種子每日 6 件(6 部位各 1·台灣 08:00 刷新·零寫入零污染鐵則⑧·購買當下 roll 詞條) ⑤半價賣出:刪實例+帳本 source:'sold',_lxpsLatestDeletedMap 稽核感知擴充(多槽合併殘槽不復活·英雄/至寶帳本零影響) ⑥閘門 _gearAcqEnabled=測試期僅 GM(隨 _GEAR_ADMIN_ONLY 單一開關)+hydrate 守門",
+      "★ v5.31.0【素質點數效果面板改版(老師需求+截圖裁定)】22px 流式換行 → 16px 單欄直列,每項一行「圖示+標籤靠左・數值靠右」對齊;★每個項目都要有圖示(老師截圖裁定):既有 ✨🗡️💨⚔️❤️ 不動,補齊 🌀 迴避率/💥 暴擊傷害/💚 受治療(受治療數值同步改綠色系);新增 🥋 格擋率(裝備合計·夾 35% 上限+達頂標示)與 ⤵️ 貫穿格擋 兩列,僅裝備閘門開放時顯示(測試期學生僅得到補圖示+縮字級的版面優化);★副註規則(老師裁定):「(含至寶 +X%)/(來自至寶)/(已達上限)」一律換到數值下方第二行 12px 右對齊,數值絕不溢出邊框",
+      "★ v5.31.0【超商每日限購 1 件/每件(老師 2026-08-12 裁定)】零新存儲:以裝備帳本判定(src='shop'+itemId+台灣今日 08:00 後),上雲跨裝置·共用 iPad 零污染;已購=按鈕灰+今日已購 1/1;當日賣掉不解鎖;教學配套=貨架 6 件全售完時教學直接補發最便宜一件不卡課",
+      "★ v5.31.0【召喚機率公告修正(老師 2026-08-12 需求)】機率說明視窗:裝備開放時置頂「🛡️ 隨機裝備 20%」列(含稀有度 60/25/11/4 與滿 100 件自動跳過說明),其餘各列如實顯示 ×0.8 後機率+表尾註記合計仍 100%;未開放(測試期學生)維持原公告零變更",
+      "★ v5.31.0【裝備 Phase 4 好友送禮(handoff 裁定)】走既有 pendingGifts 管道(deliver map 攜整顆實例·rules 免改·每日每好友 1 份共用額度):送出=先寫對方成功才刪本地(失敗零損失)+帳本 source:'gift_sent' 防殘槽復活;心數 稀有2/史詩3/傳說5/神話8·gifted 受贈品轉送 0 心(其餘功能不影響);收禮端驗證落地(詞條 id 需在池+數值夾回上下限防造假·滿 100 件轉 3,000 幣);堆疊物受贈抵銷帳 giftReceivedLedger 啟用(recv/__used 雙單調鍵相容逐鍵 max 合併·回送受贈同款堆疊物 0 心防互刷)",
+      "★ v5.31.0【主線第二章商店實戰教學裝備版(mainstory.js v5.31.0)】雙軌:裝備開放時改走 賣教材茶→買裝備(自動切裝備分頁·獎學金預支補足到今日貨架最低價)→開箱(動態展示實際詞條·稀有度=詞條數教學)→親手按「✨ 幫夥伴穿上!」(主角優先·_gearEquipToHero)→收尾卡;未開放維持召喚果實版零改動;冪等旗標 _r_shoptut2_gearbought/gearworn 上雲跨裝置·中斷續走·任何例外收尾絕不卡課;tutorial_king 收尾對白改果實/裝備通用句",
+    ],
+  },
   // v5.30.0 — 裝備系統 Phase 2 戰鬥機制(GM 測試期)
   {
     ver: 'v5.30.0',
@@ -293,52 +352,6 @@ window.GAME_CHANGELOG = [
       '★ v5.15.0【修法三保險·全在 index.html】①立繪簽章納入預設表內容(表一變舊簽章自動失效可重畫)②新增預設表「到貨監看」:每 1.5 秒廉價比對預設表 JSON 字串共 60 次,偵測到內容變動即簽章歸零重畫一次,90 秒後停;內容沒變時零渲染成本,舊 iPad 無感 ③世代守門 _lxpsProtagPortraitGen:舊輪 base64 內嵌抓圖在途完成一律作廢不回寫,一併根治既有 hydrate 歸零重畫與舊輪互蓋的競態;_msHydrateFromCloud 對帳簽章改用同一組合格式。',
       '★ v5.15.0【範圍】只改 index.html;avatar_db.js 零更動不 bump AVATAR_DB_VERSION(900 台不重抓部件圖);admin_panel.js/game_changelog.js 僅版號同步;sw.js/mainstory.js/hero_db.js 全未動。',
       '★ v5.15.0【驗證】index inline 22 塊 node --check 全過;admin/changelog node --check 過;0 孤立代理字元;admin 無真 optional chaining;7 版號同步點對齊 v5.15.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動。',
-    ],
-  },
-  // v5.14.0 — 圖片瘦身全面接管:所有玩家自動換用小圖
-  {
-    ver: 'v5.14.0',
-    date: '2026-08-04',
-    brief: [
-      '🧹 這次更新後,大家 iPad 裡原本存的大張圖片會自動換成新的小張圖片,幫 iPad 省下超多空間(最多可以省下 250MB)!',
-      '⚡ 「完整下載」也變快超多:圖片部分從快 300MB 變成只要 43MB,裝遊戲快很多!',
-      '✅ 畫面一樣漂亮,遊戲內容完全沒變,大家什麼都不用做,更新後自動完成!',
-    ],
-    items: [
-      '★ v5.14.0【activate 一次性遷移】老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG(去背圖除外)」:SW activate 清除 ASSET_CACHE 內可JPG化的 .png 快取鍵(排除 icon-*/avatar_parts//_去背/body_·規則同 _lxpsPngSlimEligible 三處共用),已快取大 PNG 的玩家下次載到該圖時自動改抓小 JPG(舊機)或 WebP(新機);遷移後鍵已是新格式,之後每版 activate 再跑同規則清不到東西=冪等零成本。',
-      '★ v5.14.0【precache 格式感知】完整下載/背景補抓改依機型抓對格式:webp 判定=fetch Accept 學習旗標優先、客端 canvas supportsWebp 提示次之(Safari canvas 不回 webp 也不怕,誤判為 jpg 仍全機型可解碼);偏好格式 404(透明圖)自動退回原 png;cache 鍵=實抓格式;已快取過濾查偏好/png/jpg 三鍵。舊 iPad 完整下載圖片 297MB 級→43MB 級。',
-      '★ v5.14.0【三 key 查詢】cacheFirstAsset 查快取 want→png→jpg 三鍵,任何機型/任何時期存下的格式鍵都能命中,precache 絕不白做;jpg 全機型可解碼,絕不會存出解不開的圖。',
-      '★ v5.14.0【範圍】sw.js v3.5.92→v3.5.93(_lxpsPngSlimEligible/_lxpsPickAssetUrlStr 抽共用+Accept 學習旗標+activate 遷移+precache 感知+三鍵);index.html 僅兩個 PRECACHE_URLS 發送點加 supportsWebp 欄位(舊 SW 收到多的欄位自動忽略·相容);admin/changelog 僅版號同步;圖包(348 JPG+13 WebP)與 v5.13.0 相同無新增。',
-      '★ v5.14.0【驗證】sw.js node --check 過;index inline 22 塊全過;0 孤立代理字元;無真 optional chaining;7 版號同步點對齊 v5.14.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動;mainstory.js(v5.12.0)/hero_db/avatar_db/world-boss 全未動。',
-    ],
-  },
-  // v5.13.0 — 遊戲圖片瘦身:舊 iPad 下載量大減·畫面不變
-  {
-    ver: 'v5.13.0',
-    date: '2026-08-04',
-    brief: [
-      '🖼 遊戲圖片大瘦身!圖片下載量從將近 300MB 變成只要 43MB,進入遊戲、完整下載都變快超多,也更省流量!',
-      '✅ 畫面看起來一模一樣漂亮,遊戲內容完全沒有改變,放心玩!',
-    ],
-    items: [
-      '★ v5.13.0【圖片瘦身甲案·檔名不動 SW 分流】全 repo 根目錄 390 張 PNG 逐張盤點+alpha 掃描:不透明 348 張(排除 icon-* 8 張)全數產出同名 .jpg(q88·297MB→43MB 省 85.5%)並補產 13 張缺漏 .webp;34 張真透明(寵物 _去背 30 張/標題字/素體預覽/body_×4)與 avatar_parts/ 321 張依老師裁定保持 PNG。掃描發現大量動態組檔名(寵物 名+_去背.png/日本英雄 n+.png/世界BOSS背景/hero_db petImg 完整 URL)→ 裁定不改檔名,規避漏改破圖風險。',
-      '★ v5.13.0【sw.js v3.5.92 舊機 JPG 分流】_lxpsPickAssetUrl 單點擴充:支援 webp 的新機維持 png→webp 完全不變;不支援 webp 的舊 iPad png 請求改試同名 .jpg,jpg 不存在(透明圖)由 cacheFirstAsset 既有機制 404 自動退回 png(v3.5.88/89 雙 key 快取+CORS 驗證全沿用零改動);排除 icon-*、avatar_parts/、_去背、body_ 免首抓無謂 404。遊戲程式碼零改動·AVATAR_DB_VERSION 不動。',
-      '★ v5.13.0【上傳順序鐵則】jpg/webp 圖包必須先全部上傳,sw.js(v3.5.92)最後上;順序顛倒會讓舊機把 png 回應快取進 jpg key(cache-first),之後吃不到新 jpg。',
-      '★ v5.13.0【驗證】sw.js node --check 過;index inline 22 塊全過;0 孤立代理字元;無真 optional chaining;7 版號同步點對齊 v5.13.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動;mainstory.js(v5.12.0)/hero_db/avatar_db/world-boss 系列全未動。',
-    ],
-  },
-  // v5.12.0 — 遊戲瘦身:主線劇情搬進獨立檔案·更新下載更快
-  {
-    ver: 'v5.12.0',
-    date: '2026-08-04',
-    brief: [
-      '🚀 遊戲更新變快了!我們把主線劇情搬進獨立的檔案,以後遊戲更新時要下載的東西變少,打開遊戲會更快、更省流量!',
-      '✅ 遊戲內容完全沒有改變:主線劇情、戰鬥、獎勵通通跟原本一模一樣,放心玩!',
-    ],
-    items: [
-      '★ v5.12.0【額度瘦身丙案第一刀】主線劇情引擎+MAINSTORY_DB(index.html L144205-148311·4,107 行/約 228KB)整段拆出成 mainstory.js;index.html 原位改 document.write(_lxpsFileSrc) 載入,傳統 script 共享全域 scope,執行順序維持原點(_advSystemReady 之後同步載入),零行為變更。',
-      '★ v5.12.0【連動】_LXPS_FILE_VERSIONS 新增 mainstory.js 載入鍵(?v= 破快取);sw.js SHELL_URLS 新增 ./mainstory.js + SW_VERSION v3.5.90→v3.5.91(隨核心檔快取·離線可用);check_inline 基準 21→22(新增 document.write 小包裝塊)。',
-      '★ v5.12.0【驗證】mainstory.js node --check 過;index inline 22 塊全過;0 孤立代理字元;無真 optional chaining;7 版號同步點對齊 v5.12.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動;hero_db/avatar_db/world-boss 系列全未動。',
     ],
   },
 ];
