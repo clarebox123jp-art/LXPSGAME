@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  mainstory.js — 主線劇情引擎 + MAINSTORY_DB(自 index.html 拆出)
-//  ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
+//  ★ v5.28.0(2026-08-12)— 丙案:新玩家強制主線 序章→第二章 連播+總鎖引導層(老師裁定):①分類=「從來沒進過序章」(序章未完成&&無 _sc_prologue 續播點&&無任何章 done)→ 首登 gate 寫入 _fg 時間戳(上雲+hydrate 三來源 union 取最早·跨裝置一致·GM 豁免·GM 回溯 _rst 作廢後重新分類) ②強制中(_fg && ch2 未 done):_msForceChainRun 從第一個未完成章連播 序章→ch1→ch2(onAllDone 串鏈零空窗),ch2 完成→釋放+恭喜 toast 雙版 ③總鎖引導層 ms-force-gate-layer(z=9700·1.5s 輪詢):非劇情/戰鬥/銜接空窗/前置彈窗時全螢幕蓋住,「▶ 繼續主線冒險」鈕+約 3 秒自動續播,重整中離逃不掉 ④進過序章的舊玩家維持 v4.65.0 原行為(progress 空只導序章一次·不鎖) ｜ ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
 // ════════════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════════
@@ -587,6 +587,17 @@
         });
         for(var _k2 in _rk){ if(Object.prototype.hasOwnProperty.call(_rk, _k2)) p[_k2] = _rk[_k2]; }
       }catch(_er){ console.warn("[主線] 獎勵旗標 union 失敗", _er); }
+      // ★ v5.28.0 丙案 — 新玩家強制主線旗標 _fg union(任一來源有值取最早·跨裝置一致;
+      //   值=首次被判定為新玩家的時間戳。ch2 完成後旗標自然失效(判定在 _msForceGateActive),不需刪除。
+      //   GM 回溯(_rst)整份作廢時 _fg 一併消失 → 被回溯的帳號重新分類再被強制,語義正確。
+      //   鍵名 "_fg" 不會被 _r_ 前綴掃描誤掃(indexOf("_r_")!==0),也不在 _sc_ 清理迴圈範圍內。)
+      try{
+        var _fgv = 0;
+        [src, local, p].forEach(function(o){
+          if(o && typeof o._fg === "number" && o._fg > 0){ if(!_fgv || o._fg < _fgv) _fgv = o._fg; }
+        });
+        if(_fgv) p._fg = _fgv;
+      }catch(_efg){}
       window._mainStoryProgress = p;
       // ★ v5.6.0 丙1 — 懶回寫對帳:union 後若本機鏡像/記憶體有「雲端沒有的鍵」(先前 fire-and-forget
       //   寫入失敗·校網斷線等),立即補寫一次(merge 深合併·每次登入最多一筆),
@@ -4099,10 +4110,158 @@
     }, { review: !!review });
   }
 
+  // ════════ v5.28.0 丙案 — 新玩家強制主線(序章→第一章→第二章 連播 + 總鎖引導層)════════
+  //   老師裁定(2026-08-12):新建立帳號的玩家進入遊戲必定先直接進主線序章至第二章,
+  //   第二章結束後才能自由行動;「從來沒進過主線序章」= 新玩家(已進過序章的舊玩家一律豁免)。
+  //   設計:
+  //   ①分類:登入 gate 判定「序章未完成 && 無序章續播點(_sc_prologue>0) && 無任何章 done」
+  //     → 寫入 _fg=Date.now() 進 mainStoryProgress(上雲+本機鏡像+hydrate union,跨裝置一致、只寫一次)。
+  //     GM(_isAdminUser)永久豁免,測試不受鎖。
+  //   ②強制中(_fg 存在且 ch2 未完成):連播引擎從第一個未完成章開始,onAllDone 自動串下一章,
+  //     直到 ch2 done → 釋放 + 恭喜提示(雙版·鐵律 1.232)。
+  //   ③總鎖引導層(id=ms-force-gate-layer·z=9700):輪詢 1.5s,只要「強制中 && 不在劇情/戰鬥/
+  //     章節銜接空窗/前置彈窗」就全螢幕蓋住遊戲,顯示「▶ 繼續主線冒險」;層連續在場 ≥2 tick(約 3 秒)
+  //     自動續播(= 首登直接導入的既有體驗),等不及可直接按鈕。重整/中離逃不掉:下次 tick 又蓋回。
+  //   ④舊玩家(進過序章者):維持 v4.65.0 原行為 —— progress 全空才自動導序章一次,不上鎖。
+  var _MS_FORCE_CHAIN = ["prologue", "ch1", "ch2"];
+  var _msForcePollT = null, _msForceChainRunning = false, _msForceIdleTicks = 0, _msForceReleased = false;
+  var _MS_FORCE_BLOCK_IDS = ["mainstory-overlay","mainstory-select-overlay","adv-cutscene-overlay",
+    "taiwan-cutscene-overlay","taiwan-dialog-overlay","style-onboarding-modal","_member-profile-modal",
+    "_member-hub-modal","_rescue-guide-modal","_audit-ov","adv-wb-crash-notice","adv-crash-recovery-box",
+    "login-gate-modal","_camp-overlay"];
+  function _msForceGateActive(){
+    try{
+      if(typeof window._isAdminUser === "function" && window._isAdminUser()) return false;  // GM 豁免
+      if(!window._msEntryAllowed()) return false;
+      var p = _msProgress();
+      if(p.ch2 === "done") return false;                       // 第二章完成 → 永久解鎖
+      return (typeof p._fg === "number" && p._fg > 0);
+    }catch(_){ return false; }
+  }
+  function _msForceNextChapter(){
+    try{
+      var p = _msProgress();
+      for(var i = 0; i < _MS_FORCE_CHAIN.length; i++){
+        if(p[_MS_FORCE_CHAIN[i]] !== "done") return _MS_FORCE_CHAIN[i];
+      }
+    }catch(_){}
+    return null;
+  }
+  function _msForceLayerHide(remove){
+    try{ var el = document.getElementById("ms-force-gate-layer");
+      if(el){ if(remove) el.remove(); else el.style.display = "none"; } }catch(_){}
+  }
+  function _msForceLayerShow(){
+    try{
+      var el = document.getElementById("ms-force-gate-layer");
+      if(el){ el.style.display = "flex"; return; }
+      el = document.createElement("div");
+      el.id = "ms-force-gate-layer";
+      el.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:9700;"
+        + "background:radial-gradient(ellipse at center,rgba(24,18,48,0.94),rgba(6,4,16,0.98));"
+        + "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;"
+        + "font-family:inherit;text-align:center;padding:24px;";
+      var _cid = _msForceNextChapter();
+      var _chName = "";
+      try{
+        var _chO = _cid && MAINSTORY_DB.chapters[_cid];
+        if(_chO) _chName = _msT(_chO.titleP || "", _chO.titleC || "") || "";
+      }catch(_){}
+      var _t1 = document.createElement("div");
+      _t1.style.cssText = "font-size:clamp(24px,4vw,38px);font-weight:900;color:#e8dcff;letter-spacing:4px;text-shadow:0 0 24px rgba(180,140,255,0.5);";
+      _t1.textContent = "📖 " + _msT("你的冒險故事還在等你", "你的冒險還沒講完喔!");
+      var _t2 = document.createElement("div");
+      _t2.style.cssText = "font-size:clamp(15px,2.2vw,19px);color:#b8aee0;letter-spacing:1px;line-height:1.7;max-width:560px;";
+      _t2.textContent = _msT("完成主線第二章後,即可自由探索整個世界。", "先打完前兩章,就可以自由玩全部的東西囉!")
+        + (_chName ? (" " + _msT("目前進度:", "現在到:") + _chName) : "");
+      var _btn = document.createElement("button");
+      _btn.style.cssText = "margin-top:6px;padding:16px 42px;font-size:clamp(20px,3vw,26px);font-weight:900;"
+        + "background:linear-gradient(135deg,rgba(150,90,255,0.92),rgba(90,50,180,0.92));border:2.5px solid #c9a0ff;"
+        + "color:#fff;border-radius:16px;cursor:pointer;font-family:inherit;letter-spacing:3px;"
+        + "box-shadow:0 0 28px rgba(160,100,255,0.5);min-height:44px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;";
+      _btn.textContent = "▶ " + _msT("繼續主線冒險", "繼續冒險!");
+      _btn.onclick = function(){
+        try{ if(typeof playSfx === "function") playSfx("sfx-confirm", 0.5); }catch(_){}
+        _msForceChainRun();
+      };
+      var _t3 = document.createElement("div");
+      _t3.style.cssText = "font-size:13px;color:#8a80b0;letter-spacing:1px;";
+      _t3.textContent = _msT("幾秒後將自動繼續…", "等一下下就自動開始囉~");
+      el.appendChild(_t1); el.appendChild(_t2); el.appendChild(_btn); el.appendChild(_t3);
+      document.body.appendChild(el);
+    }catch(_e){ console.warn("[主線強制] 引導層建立失敗", _e); }
+  }
+  function _msForceChainRun(){
+    if(_msForceChainRunning) return;                            // 防重入(連點鈕/自動觸發重疊)
+    var cid = _msForceNextChapter();
+    if(!cid){ _msForceGateRelease(true); return; }
+    _msForceChainRunning = true;
+    _msForceIdleTicks = 0;
+    _msForceLayerHide(true);                                    // 進劇情前整層移除(下次需要時重建,章名才會更新)
+    window._msRunChapter(cid, function(){
+      _msForceChainRunning = false;
+      var nx = _msForceNextChapter();
+      if(nx){ _msForceChainRun(); }                             // 章與章之間零空窗直接續播
+      else {
+        try{ _msExitStoryBgm(); }catch(_){}
+        _msForceGateRelease(true);
+      }
+    });
+  }
+  function _msForceGateRelease(celebrate){
+    try{ if(_msForcePollT){ clearInterval(_msForcePollT); _msForcePollT = null; } }catch(_){}
+    _msForceLayerHide(true);
+    if(celebrate && !_msForceReleased){
+      _msForceReleased = true;                                  // 本 session 只恭喜一次
+      try{
+        var msg = _msT("🎉 恭喜完成前兩章主線!整個世界開放自由探索囉!", "🎉 打完前兩章了!現在全部都可以自由玩囉!");
+        if(typeof _toast === "function") _toast(msg);
+        else if(typeof window._toast === "function") window._toast(msg);
+      }catch(_){}
+    }
+  }
+  function _msForceGateTick(){
+    try{
+      if(!_msForceGateActive()){ _msForceGateRelease(false); return; }   // 已解鎖/換帳號後不適用 → 收工
+      var uid = (window._fbUser && window._fbUser.uid) || window._gUserId || "";
+      if(!uid){ _msForceLayerHide(); _msForceIdleTicks = 0; return; }    // 未登入畫面不蓋
+      for(var i = 0; i < _MS_FORCE_BLOCK_IDS.length; i++){
+        var bel = document.getElementById(_MS_FORCE_BLOCK_IDS[i]);
+        if(bel && bel.offsetParent !== null){ _msForceLayerHide(); _msForceIdleTicks = 0; return; }
+      }
+      try{ if(typeof _isInBattleNow !== "undefined" && _isInBattleNow){ _msForceLayerHide(); _msForceIdleTicks = 0; return; } }catch(_){}
+      if(_msForceChainRunning){ _msForceLayerHide(); _msForceIdleTicks = 0; return; }  // 章節/場景銜接空窗
+      _msForceLayerShow();
+      _msForceIdleTicks++;
+      if(_msForceIdleTicks >= 2){ _msForceIdleTicks = 0; _msForceChainRun(); }         // 層在場約 3 秒 → 自動續播
+    }catch(_e){}
+  }
+  function _msForceGateStart(){
+    if(_msForcePollT) return;
+    _msForceIdleTicks = 0;
+    _msForcePollT = setInterval(_msForceGateTick, 1500);
+    _msForceGateTick();                                         // 立即評估一次(首登不必等 1.5s)
+  }
+
   // ════════ 首登自動導入 gate(排 onAuth 序列最後·防疊加)════════
   window._msMaybeFirstLogin = function(){
     try{
       if(!window._msEntryAllowed()) return; // 測試期僅管理員
+      // ★ v5.28.0 丙案 — 新玩家分類(只在 hydrate 完成後的本 gate 跑一次;寫入即上雲):
+      //   「從來沒進過序章」= 序章未完成 && 無序章續播點 && 無任何章完成。GM 不分類。
+      try{
+        var _pc = _msProgress();
+        var _isAdm = (typeof window._isAdminUser === "function" && window._isAdminUser());
+        if(!_isAdm && !(typeof _pc._fg === "number" && _pc._fg > 0)){
+          var _entered = (_pc.prologue === "done") || ((typeof _pc["_sc_prologue"] === "number") && _pc["_sc_prologue"] > 0);
+          var _anyDone = false;
+          MAINSTORY_DB.order.forEach(function(cid){ if(_pc[cid] === "done") _anyDone = true; });
+          if(!_entered && !_anyDone){ _pc._fg = Date.now(); _msPersist(_pc); }
+        }
+      }catch(_eCls){ console.warn("[主線強制] 新玩家分類失敗", _eCls); }
+      // ★ v5.28.0 — 強制中:交給輪詢守門(自帶防疊加/自動續播/總鎖),不走舊路徑
+      if(_msForceGateActive()){ _msForceGateStart(); return; }
+      // ── 以下為 v4.65.0 原行為(進過序章的舊玩家/GM):progress 全空才自動導序章一次 ──
       // 防疊加:任一前置彈窗/戰鬥/過場在場則不導入
       var block = ["mainstory-overlay","adv-cutscene-overlay","taiwan-cutscene-overlay","taiwan-dialog-overlay",
         "style-onboarding-modal","_member-profile-modal","_member-hub-modal","_rescue-guide-modal","_audit-ov",
