@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-12  / 目前主程式版本:v5.33.0(裝備圖鑑頁:與至寶圖鑑共用背景與 BGM)
+//  最後更新:2026-08-12  / 目前主程式版本:v5.33.1(裝備圖鑑字體放大·與至寶圖鑑同尺寸)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.33.1 — 裝備圖鑑字體放大(老師截圖裁定·GM 測試期)
+  {
+    ver: 'v5.33.1',
+    date: '2026-08-12',
+    adminOnly: true,
+    brief: [
+      '🔍【裝備圖鑑字變大了!】裝備圖鑑全頁字體放大,和至寶圖鑑一樣大又好讀:裝備名稱、稀有度、說明、效果、詞條通通看得更清楚!',
+    ],
+    items: [
+      '★ v5.33.1【裝備圖鑑字體放大】老師截圖裁定「與至寶圖鑑字體尺寸一樣」:_gear-gallery-page-kf 追加鏡像至寶頁 v1.1.0 的 !important 字級映射表(10→14/11→15/12→16/13→17/14→18/15→20/16→21/18→24/20→26/22→28,scope=#gear-gallery-page),補本頁專用 17→22 與 19→24 兩級(同比例),卡片名稱 min-height 34→48 配合放大不擠壓;純 CSS 顯示層,零機制改動;手機 768px 兩欄 RWD 沿用。',
+      '★ v5.33.1【驗證】index inline 22 塊全過;0 孤立代理字元;版號同步(index/changelog=v5.33.1·admin_panel 維持 v5.32.0·mainstory v5.31.0·hero_db v5.30.0);changelog 恰 20 條(刪最舊 v5.15.0);CURRENT_BOOT_VER 未動;本輪僅動 index.html+game_changelog.js。',
+    ],
+  },
   // v5.33.0 — 裝備圖鑑頁(裝備 Phase 5·GM 測試期)
   {
     ver: 'v5.33.0',
@@ -337,21 +350,6 @@ window.GAME_CHANGELOG = [
       '★ v5.16.0【玩家端載入器・index.html】開機先套 localStorage 快取(離線可用)→ 登入後只讀 _index 一份比對版本(900 台每次開機各 1 讀·版本相同即結束)→ 有更新才拉題包 → 冪等合併進 ADV_QUIZ_DB;冒險答題/鬥技場/知識王/小博士全是執行期翻表,自動生效零接線;任何失敗靜默不影響遊戲。',
       '★ v5.16.0【mainstory.js 缺檔救援】開場 SOP 發現 repo 無 mainstory.js(v5.12.0 拆檔後未上傳→LIVE 主線入口全站失效·有 typeof 守門不崩潰):自 git 歷史 0996239(v5.11.0 拆檔前 index)原段 L144205-148311 重建 4,111 行,內容一字不差,node --check 過;FILE_VERSIONS mainstory 鍵維持 v5.12.0 不動。',
       '★ v5.16.0【部署】需部署 firestore.rules(新增 dynamicContent 條款:讀=登入玩家·寫=isAdmin);上傳順序:firestore.rules 先部署 → game_changelog.js → mainstory.js → admin_panel.js → index.html 最後;admin 無真 optional chaining;index inline 22 塊 node 全過。',
-    ],
-  },
-  // v5.15.0 — 主角圖鑑位置修正:重開遊戲不再跑位
-  {
-    ver: 'v5.15.0',
-    date: '2026-08-05',
-    brief: [
-      '🧑‍🎨 修好了「重新打開遊戲後,英雄圖鑑裡的主角頭和身體位置跑掉」的問題!',
-      '✅ 現在每次打開遊戲,圖鑑和主角頁面都會自動顯示你儲存好的正確造型,不用再進造型工房重新按儲存了!',
-    ],
-    items: [
-      '★ v5.15.0【主角圖鑑頭身位置跑掉根治】老師回報:每次重開遊戲,英雄圖鑑網格卡與詳情頁的主角「頭部+身體」組合位置錯位;點進造型工房顯示正常,按確認儲存後才恢復,下次重開又壞。根因:啟動時的主角立繪產生常在 gameConfig/avatarPartDefaults(管理員部件預設位置表)從雲端拉回之前就完成,且立繪簽章只包含 cfg → 預設表稍後到貨也永遠不會重畫,錯位整場鎖死;造型工房是開啟當下即時渲染(此時表已到)所以正常。',
-      '★ v5.15.0【修法三保險·全在 index.html】①立繪簽章納入預設表內容(表一變舊簽章自動失效可重畫)②新增預設表「到貨監看」:每 1.5 秒廉價比對預設表 JSON 字串共 60 次,偵測到內容變動即簽章歸零重畫一次,90 秒後停;內容沒變時零渲染成本,舊 iPad 無感 ③世代守門 _lxpsProtagPortraitGen:舊輪 base64 內嵌抓圖在途完成一律作廢不回寫,一併根治既有 hydrate 歸零重畫與舊輪互蓋的競態;_msHydrateFromCloud 對帳簽章改用同一組合格式。',
-      '★ v5.15.0【範圍】只改 index.html;avatar_db.js 零更動不 bump AVATAR_DB_VERSION(900 台不重抓部件圖);admin_panel.js/game_changelog.js 僅版號同步;sw.js/mainstory.js/hero_db.js 全未動。',
-      '★ v5.15.0【驗證】index inline 22 塊 node --check 全過;admin/changelog node --check 過;0 孤立代理字元;admin 無真 optional chaining;7 版號同步點對齊 v5.15.0;changelog 恰 20 條;CURRENT_BOOT_VER 未動。',
     ],
   },
 ];
