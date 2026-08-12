@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-12  / 目前主程式版本:v5.33.2(UI 三修:選單順序/裝備商品字級/英雄圖鑑導覽鈕)
+//  最後更新:2026-08-12  / 目前主程式版本:v5.33.3(修補:審查中英雄「全部使用」經驗書被吃掉)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.33.3 — 修補:審查中英雄按「全部使用」經驗書被吃掉(玩家回報 22 本豪華書消失)
+  {
+    ver: 'v5.33.3',
+    date: '2026-08-12',
+    brief: [
+      '📚【經驗書不再被吃掉!】之前如果英雄正在「審查中」,按「全部使用」經驗之書,書會消失但英雄沒升級——現在修好了!審查中的英雄按下去會直接提醒你,一本書都不會扣。已經遇到這個狀況的同學請找老師,老師會把書補還給你!',
+    ],
+    items: [
+      '★ v5.33.3【根因】v3.16.30 為「待審查英雄凍結升級」在三個單本使用函式(_useExpBookForHero/_useExpBookDeluxeForHero/_useExpBookPremiumForHero)加了 _isAuditPending 守門(擋在扣書前),但兩個「全部使用」函式(_useAllExpBookForHero/_useAllExpBookPremiumForHero)漏加 → 書全數 backpackRemove 後 addHeroExp 開頭靜默 return 0(數字非陣列),EXP/等級零變化且 toast 仍顯示「獲得 N EXP!」假訊息。玩家 2026-08-12 回報 22 本豪華典藏版消失、且「之前也發生過」完全吻合。',
+      '★ v5.33.3【修補】三處補守門(全部擋在扣書之前·沿用單本版同一句 toast 文案):①_useAllExpBookForHero 開頭 ②_useAllExpBookPremiumForHero 開頭 ③_doApplyAllPremiumExp 開頭(雙保險:_customConfirm 為非同步,點擊到確認之間狀態可能改變)。純新增守門,原邏輯零改動。',
+      '★ v5.33.3【待補償】回報玩家的 22 本 hero_exp_book_premium 需 GM 後台補發(書已被舊版吃掉,程式修補不溯及既往);其 log 另見 safe 槽長期被 7/26 GM 補償 force 寫入的舊快照(coins 169048·ts 1785063183333)以「更豐富」壓過本地新資料 → 建議老師另案檢視該帳號 safe 槽。',
+      '★ v5.33.3【驗證】index inline 22 塊全過;0 孤立代理字元;版號同步(index/changelog/admin_panel=v5.33.3·mainstory v5.31.0·hero_db v5.30.0);changelog 恰 20 條(刪最舊 v5.17.0);CURRENT_BOOT_VER 未動;本輪動 index.html+game_changelog.js+admin_panel.js(僅版號)。',
+    ],
+  },
   // v5.33.2 — UI 三修(老師截圖裁定;選單順序與圖鑑鈕為全員可見·不標 adminOnly)
   {
     ver: 'v5.33.2',
@@ -332,23 +346,6 @@ window.GAME_CHANGELOG = [
       '★ v5.18.0【資料表全自動接線】_dynHeroApply 冪等註冊 HERO_DB/BURST_DB/HERO_TRAIT/_TRAIT_LV_INFO/HERO_IMGS(b64)/AVATARS/HERO_BIO/HERO_LORE/分類/主定位/HERO_SKILL_EFFECTS(編組 🔍 標籤自動推導·鐵律六④)/SKILL_UPGRADE_DEF(cat=dmg|heal 標準)/BURST_UPGRADE_DEF(五列自動生成)/SKILL_FORCE_ELEMENT/BURST_GIF_DB;雙版圖鑑文字依參數自動生成(鐵律 1.160 只寫 Lv1/1.232 兩版齊備·GM 可覆寫);升級口徑:技能與爆發傷害/治療每級 +5%·狀態機率固定不隨級(圖鑑不說謊)·天賦機率 +3%/天賦級。',
       '★ v5.18.0【天賦六模板】T1 開場自身強化/T2 開場全隊強化/T3 行動前機率回血/T4 行動前機率使隨機敵人異常/T5 受傷時機率回血/T6 受傷時反施異常;三 hook(startBattle/startTurn/doDmg 逆鱗同區)·守門 _traitSeal/禁錮/疑惑(對齊逆鱗慣例)·_isDynTrait 旗標防遞迴。',
       '★ v5.18.0【取得與保護鐵則】取得三檔:進召喚池(自動同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES·對齊 v3.15.43 防漏列)/僅 GM 送禮/指定學生 email 登入自動發(STUDENT_DESIGNER_HEROES);英雄發佈後永不刪除只能 ⏸停用(off 仍完整註冊資料表·已擁有玩家圖鑑/戰鬥照常·只下架取得途徑=玩家資產永不損壞);技能名防碰撞(動態 hook 在派發鏈之前·與全部靜態技能/爆發名比對·重名即擋防劫持);與既有英雄重名拒絕註冊;firestore.rules dynamicContent {docId} 已涵蓋 hero_N 免改;版號七點 v5.18.0·changelog 刪最舊 v4.99.0 維持恰 20 條。',
-    ],
-  },
-  // v5.17.0 — 動態造型配件第二期:GM 遊戲內直接上傳配件(測試期 adminOnly)
-  {
-    ver: 'v5.17.0',
-    date: '2026-08-06',
-    adminOnly: true,
-    brief: [
-      '🎩 GM 後台新增「動態造型配件」:老師可以直接在遊戲裡上傳新的帽子、眼鏡、面具、嘴部飾品,全體玩家下次開機就會出現在造型工房,不用再改程式檔!',
-      '🎲 每一款都能設定取得方式:直接開放、召喚水晶抽到(每抽 1% 機率)、或先暫時上鎖敬請期待!',
-    ],
-    items: [
-      '★ v5.17.0【動態內容層第二期・動態造型配件】GM 後台新增「🎩 動態造型配件」(掛『📚 內容擴充』群組):上傳去背圖→自動壓縮(WebP 優先·不支援退 PNG·最長邊 512·目標≦120KB base64)→四體型即場試穿預覽→發佈至 Firestore dynamicContent(_index.avatarVer/avatarPacks/avatarNext + avatar_N 配件包·每包≦700KB);id=200+分類序號單調配發永不重用;發佈前重讀雲端最新防多 GM 互蓋;成功即呼 _dynContentSync(true) GM 本機立即生效。',
-      '★ v5.17.0【永不刪只停用(老師裁定題1甲)】配件只能 ⏸停用/▶重新啟用,雲端清單永不移除;停用件在玩家端轉「佔位」(選單隱藏·穿戴中渲染為無不破圖),陣列索引永不位移 → 與選單寫入 id、_pick 按索引、解鎖帳本/GM上鎖/管理員預設『cat:id』四座標系維持 id==index 不變量(v4.89.0 卡背錯位事故的根治設計)。',
-      '★ v5.17.0【avatar_db.js 主引擎】window._dynAvatarApply 冪等合併(截回靜態段→佔位補到 200→動態件放 index===id 槽位);_avAccLayer prop 路徑支援 item.b64 dataURI(天然免快取·AVATAR_DB_VERSION 維持凍結 v4.95.2);_avatarMaskUnlockOnSummon 池擴充:動態四分類 summon 鎖款與靜態面具同池(仍每抽 1%·index 召喚點零改動);VARF 加 mask 鍵=每款面具獨立管理員預設 + _avEffPos raw 鍵 fallback 相容舊值;summon 鎖款自動註冊雙版解鎖說明(鐵律 1.232)。',
-      '★ v5.17.0【玩家端載入器・index.html】_dynContentSync 改雙軌:同一 _index 讀取內 quizVer/avatarVer 各自獨立比對(題庫沒更新也會檢查配件);開機套 lxps_dynAvatar_v1 快取;快取寫入容量滿時靜默降級(下次開機自雲端再拉)·任何失敗不影響遊戲。',
-      '★ v5.17.0【定位流程】發佈後老師到造型工房用既有「位置/尺寸調整 → 📌設為預設」逐款調定位(gameConfig/avatarPartDefaults 全體套用);firestore.rules 免改(沿用 v5.16.0 dynamicContent 條款);版號七點 v5.17.0(mainstory 鍵維持 v5.12.0·CURRENT_BOOT_VER 凍結);changelog 刪最舊 v4.98.0 維持恰 20 條。',
     ],
   },
 ];
