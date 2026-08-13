@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-12  / 目前主程式版本:v5.33.3(修補:審查中英雄「全部使用」經驗書被吃掉)
+//  最後更新:2026-08-13  / 目前主程式版本:v5.34.0(寵物馴養大系統介紹卡「圖文並茂」大改版)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.34.0 — 寵物馴養大系統介紹卡「圖文並茂」大改版(老師需求·蒐集與培育為核心)
+  {
+    ver: 'v5.34.0',
+    date: '2026-08-13',
+    brief: [
+      '🐾【寵物介紹頁大變身!】「近期活動」裡的寵物馴養大系統介紹,現在圖文並茂超好看:寵物小屋大封面、28 隻寵物頭像一字排開(SSR 金框/SR 紫框/R 綠框),每個玩法卡片都配上可愛寵物圖!',
+      '🏆【蒐集進度看得見!】已經收服的寵物是彩色加 ✓,還沒收服的是灰色剪影——快去把灰色的夥伴通通帶回家,填滿你的寵物圖鑑吧!',
+      '🎯【圖示更好懂!】英雄圖鑑「素質點數效果」的圖示換新:命中率變 🎯 標靶、格擋率變 🛡️ 盾牌、貫穿格擋變 🔫,一眼就看懂!',
+    ],
+    items: [
+      '★ v5.34.0【寵物介紹卡圖文改版】buildPetSystemSection 依主線卡 v5.20.0 前例全面改版(純顯示層·舊版純文字五格卡見 git v5.33.3):①頂部「寵物小屋.png」封面大橫幅+漸層遮罩標語 ②主打區「收服 28 隻夥伴」=稀有度統計晶片(SSR 8/SR 13/R 7)+全 28 隻頭像橫向捲動帶 ③五張特色卡全部配圖(台灣黑熊/台灣藍鵲/梅花鹿/寵物小屋/石虎)。',
+      '★ v5.34.0【蒐集感機制(純讀取零寫入)】頭像帶:_petSysOpenForMe 且 _petIsTamed 就緒時,已收服=全彩+綠✓、未收服=灰階剪影(filter:grayscale),並顯示「已收服 N/28」進度列;守門未就緒(含系統未開放)一律退全彩顯示不報錯。',
+      '★ v5.34.0【素材零新增】寵物圖 runtime 掃 CARRY_PET_DB petImg(台灣 12+日本 12+埃及 4 皆有),查無退 encodeURIComponent(名字.png) 再退 onerror 隱藏;全部 img 掛 loading=lazy(橫向帶僅載可視區,900 台流量友善)+onerror 防缺圖破版;cute/premium 雙版文案(鐵律 1.232);預告/正式雙態文案沿用 _petSysPublicOpen 自動切換,零機制改動。',
+      '★ v5.34.0【素質點數效果圖示】老師截圖裁定:命中率 💨→🎯 標靶、格擋率 🥋→🛡️ 盾牌、貫穿格擋 ⤵️→🔫 手槍(僅英雄圖鑑素質點數效果面板三處;裝備詳情頁「🥋 格擋」合計標籤未在指示範圍維持原樣)。',
+      '★ v5.34.0【驗證】index inline 22 塊全過;0 孤立代理字元;版號同步(index/changelog/admin_panel=v5.34.0·mainstory v5.31.0·hero_db v5.30.0);changelog 恰 20 條(刪最舊 v5.18.0);CURRENT_BOOT_VER 未動;本輪動 index.html+game_changelog.js+admin_panel.js(僅版號)。',
+    ],
+  },
   // v5.33.3 — 修補:審查中英雄按「全部使用」經驗書被吃掉(玩家回報 22 本豪華書消失)
   {
     ver: 'v5.33.3',
@@ -328,24 +345,6 @@ window.GAME_CHANGELOG = [
       '★ v5.19.0【開放前保護早已就緒(本輪零新碼)】章節獎勵 _r_bt_ 冪等綁 UID+雲端(換裝置/回顧不重發);v5.6.0 共用平板四道保護(旗標即時上雲/主角臉殘留根治/hydrate 懶回寫對帳/ch6 覺醒自我修復);v5.7.0 GM 主線/主角回溯工具;v5.9.0 主角 20 枚獎章 _protagMedalSweep 冪等。',
       '★ v5.19.0【破快取】mainstory.js 內容有變 → _LXPS_FILE_VERSIONS mainstory 鍵 v5.12.0→v5.19.0(結束「內容未變維持 v5.12.0」凍結);avatar_db.js 鍵 v5.17.0→v5.19.0;AVATAR_DB_VERSION 維持凍結 v4.95.2(未覆蓋任何同名素材·依凍結規則不 bump·900 台不重抓部件圖);sw.js/hero_db.js/adv_quiz_db.js 本輪未動。',
       '★ v5.19.0【版號】7 同步點全對齊 v5.19.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 五鍵 index/mainstory/avatar_db/admin_panel/game_changelog、ADMIN_PANEL_VERSION、changelog 檔頭 + 置頂 ver);hero_db.js 維持 v5.18.0 本輪未動;CURRENT_BOOT_VER 永久凍結未動;changelog 刪最舊 v5.0.0 維持恰 20 條。',
-    ],
-  },
-  // v5.18.0 — 動態英雄第三期:GM 遊戲內直接上架新英雄(測試期 adminOnly)
-  {
-    ver: 'v5.18.0',
-    date: '2026-08-07',
-    adminOnly: true,
-    brief: [
-      '🦸 GM 後台新增「動態英雄」:老師可以直接在遊戲裡設計新英雄——填數值、上傳立繪、挑天賦模板、設定技能效果,發佈後全體玩家下次開機自動出現在圖鑑、召喚和戰鬥,不用再改程式檔!',
-      '⚙️ 技能效果可自由組合:傷害三型(單體/全體分攤/隨機多段)、治療三型、有利狀態 8 種、不利狀態 15 種(可強力版),回合數或持續到戰鬥結束;爆發動畫和音效直接從現有素材挑選套用!',
-    ],
-    items: [
-      '★ v5.18.0【動態內容層第三期・動態英雄】GM 後台新增「🦸 動態英雄」(掛『📚 內容擴充』群組·三點同步):設計單表單(配點總和=100 即時驗證·HP 發佈時自動×1.3 baked·立繪 canvas 壓縮 WebP 優先≦120KB·天賦六模板·S1/S2/爆發三格參數·爆發 gif/sfx 下拉=執行期自現有素材蒐集零硬編碼)→👁 預覽自動生成的雙版圖鑑說明→📦 待發佈→🚀 發佈(先重讀雲端最新防多 GM 互蓋·寫入 dynamicContent _index.heroVer/heroPacks + hero_N 英雄包·依 JSON 位元組分包≦700KB 防 1MB 上限·成功即呼 _dynContentSync(true) GM 本機立即生效)。',
-      '★ v5.18.0【泛用參數化戰鬥引擎・hero_db.js】一套引擎同時服務玩家端(execSkill hook·setPending 選目標·doDmg 依 _activeSkLvMult 自動套技能等級不重複乘)與 AI 端(aiUseSkill 鏈尾分支·手動乘 1+skLv×0.05)與爆發(_runBurst 鏈首·1+burstLv×0.05)→ 鐵律 1.128 天生滿足;所有傷害一律走 doDmg → 世界 BOSS 5000 上限/鐵律 1.31 自動生效;即死/HP%傷害/固定傷害三類不存在於引擎能力(硬性安全排除)。',
-      '★ v5.18.0【效果池(僅收通用消費路徑已驗證者)】不利 15:暈眩/冰凍/睡眠/麻痺/封印技能/失明/遲緩/燃燒/中毒/出血/禁療/減療/受傷增加/魅惑/狂亂(可強力版=_strong 旗標·對齊強力失明/猛毒/強力易傷既有引擎);有利 8:無敵/減傷一半/迴避/隱身/免疫不利狀態/控制免疫/嘲諷/攻擊強化;回合 1~5 或戰鬥結束(999)。',
-      '★ v5.18.0【資料表全自動接線】_dynHeroApply 冪等註冊 HERO_DB/BURST_DB/HERO_TRAIT/_TRAIT_LV_INFO/HERO_IMGS(b64)/AVATARS/HERO_BIO/HERO_LORE/分類/主定位/HERO_SKILL_EFFECTS(編組 🔍 標籤自動推導·鐵律六④)/SKILL_UPGRADE_DEF(cat=dmg|heal 標準)/BURST_UPGRADE_DEF(五列自動生成)/SKILL_FORCE_ELEMENT/BURST_GIF_DB;雙版圖鑑文字依參數自動生成(鐵律 1.160 只寫 Lv1/1.232 兩版齊備·GM 可覆寫);升級口徑:技能與爆發傷害/治療每級 +5%·狀態機率固定不隨級(圖鑑不說謊)·天賦機率 +3%/天賦級。',
-      '★ v5.18.0【天賦六模板】T1 開場自身強化/T2 開場全隊強化/T3 行動前機率回血/T4 行動前機率使隨機敵人異常/T5 受傷時機率回血/T6 受傷時反施異常;三 hook(startBattle/startTurn/doDmg 逆鱗同區)·守門 _traitSeal/禁錮/疑惑(對齊逆鱗慣例)·_isDynTrait 旗標防遞迴。',
-      '★ v5.18.0【取得與保護鐵則】取得三檔:進召喚池(自動同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES·對齊 v3.15.43 防漏列)/僅 GM 送禮/指定學生 email 登入自動發(STUDENT_DESIGNER_HEROES);英雄發佈後永不刪除只能 ⏸停用(off 仍完整註冊資料表·已擁有玩家圖鑑/戰鬥照常·只下架取得途徑=玩家資產永不損壞);技能名防碰撞(動態 hook 在派發鏈之前·與全部靜態技能/爆發名比對·重名即擋防劫持);與既有英雄重名拒絕註冊;firestore.rules dynamicContent {docId} 已涵蓋 hero_N 免改;版號七點 v5.18.0·changelog 刪最舊 v4.99.0 維持恰 20 條。',
     ],
   },
 ];
