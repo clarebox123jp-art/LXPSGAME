@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-14  / 目前主程式版本:v5.36.0(預設陣容編輯器+主角免審查+主角造型改名)
+//  最後更新:2026-08-14  / 目前主程式版本:v5.37.0(功能鍵列收合+音量調整面板)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.37.0 — 右上功能鍵列可收合+音樂音效音量調整面板(老師需求)
+  {
+    ver: 'v5.37.0',
+    date: '2026-08-14',
+    brief: [
+      '🎛️【功能鍵可以收起來囉!】右上角的功能鍵列(全螢幕、音樂、音效、暫停…)最左邊多了一顆收合鈕!點一下整排收起來只剩一顆小按鈕,不再擋住後面的知識幣和資訊;再點一下就全部展開,你的選擇會被記住!',
+      '🎚️【音量自己調!】點 🎵 音樂或 🔊 音效按鈕,會跳出音量拉桿!想大聲、想小聲自己拉,拉到最左邊就是靜音;放開拉桿音效還會「叮」一聲讓你試聽大小聲,調好的音量會存起來,換 iPad 登入也一樣!',
+      '🎬【爆發動畫也聽話!】英雄爆發技的專屬動畫影片,聲音現在會跟著 🎵 音樂音量一起變大變小;音樂調成靜音,影片也會安靜播放,上課時間不吵人!',
+    ],
+    items: [
+      '★ v5.37.0【功能鍵列收合/展開】#ctrl-bar 最左新增「⏵/⚙」收合把手(#ctrl-collapse):收合時以內嵌 style「.lxps-collapsed > :not(#ctrl-collapse){display:none !important}」隱藏其餘全部按鈕(含戰鬥中才顯示的離開戰場鈕·!important 蓋過 inline display),main.css v3.15.79 本輪不動(內嵌覆寫 v3.15.28 前例);狀態存 localStorage lxps_ctrlbar_collapsed(裝置級 UI 偏好·零雲端寫入·開機 IIFE 還原);收合當下順手關閉音量面板。',
+      '★ v5.37.0【🎵/🔊 音量調整面板】點擊由「開/關」改為開啟 ctrlOpenVolumePanel(錨定功能鍵列下方·拉桿 0~100 步進 5·0=靜音·同鈕再點=關閉·點面板外側自動關閉·cute/premium 雙版文案鐵律1.232);台灣地圖專屬控制列 🎵🔊 同步改開面板;自動戰鬥點擊攔截 excluded 名單補 ctrl-vol-panel/ctrl-collapse(調音量不會誤觸「取消自動戰鬥」)。',
+      '★ v5.37.0【音量引擎】BGM_VOLUME 由 const 改 let(值=_BGM_BASE_VOLUME 0.4095 × window._bgmUserVol → 全檔十餘處既有消費點[bgmPlay/暫停50%/iPad 重試/淡入淡出]執行期讀取零改動自動生效);playSfx 音量乘 window._sfxUserVol;beep/noise 靜音 wrapper 一併乘(vol 參數位·預設值同原函式);使用者音量以 window 屬性存放(避開跨 script 區塊 let TDZ·極早期呼叫安全回退 1);拉桿跨越 0 邊界時沿用既有 ctrlToggleBgm/ctrlToggleSfx 完整靜音切換行為(場景 BGM 重啟/AC resume/圖示)·非邊界微調直接套用當前 BGM 元素並尊重暫停 50% 減量;ctrlToggleBgm/ctrlToggleSfx 零刪除保留。',
+      '★ v5.37.0【音量持久化】settings 補 bgmVol/sfxVol(0~100·載回夾值·隨既有 bgmMuted/sfxMuted 同欄位上雲跨裝置);放開拉桿=音效試聽一聲+gameCloudSave(3 秒冷卻防連拉狂寫·最終值隨後續正常存檔週期上雲漏存零風險);新增 _ctrlSyncAudioUi(settings 載回後重算音量/套用當前 BGM/同步 🎵🔊 按鈕圖示與 muted 樣式=順手根治「載入雲端靜音旗標後按鈕圖示不同步」既有小缺口)。',
+      '★ v5.37.0【爆發影片音量跟隨音樂】新增單一套用點 window._bvApplyBgmVol:影片音量 = 使用者音樂音量比例(刻意不乘 _BGM_BASE_VOLUME 0.4095 基準·維持影片歷來 1.0 全量出聲的響度基準,只跟拉桿縮放);音樂靜音(_bgmMuted 或拉桿 0)= 影片整支靜音。戰鬥爆發 _playBurstVideo 與圖鑑欣賞 _codexPlayHeroAnim 兩處「playing 解靜音」皆改呼 helper(iOS 靜音起播→playing 解靜音的 v4.39.0 穩健流程零改動);_SKILL_VIDEO_DB 技能影片與世界 BOSS burstCinematic 連線廣播同走 _playBurstVideo 自動涵蓋;音量拉桿(_ctrlVolInput)與 ctrlToggleBgm 對播放中影片即時套用,調到一半也立刻生效。',
+    ],
+  },
   // v5.36.0 — 預設陣容編輯器+主角免審查+「主角造型」改名(老師三需求)
   {
     ver: 'v5.36.0',
@@ -331,20 +348,6 @@ window.GAME_CHANGELOG = [
       '★ v5.22.0【爆發沒傷害根治】龍王爆發傷害本就設計「動畫 2.2 秒後才生效」(存於 boss._wbBossTid 排程);但疊發的重複 AI 呼叫會經由兩條無守門路徑(index.html _realAiAct 世界BOSS攔截段、world-boss.js aiAct hook 直達段)重進 _wbAdvBossTurn,其入口 clearTimeout 把爆發傷害排程整條砍掉 → 動畫播了卻無傷害無 log。兩條路徑皆補上 acted=true 守門(對齊 v5.21.0 甲:世界BOSS答題 cb 以 _quizCbBypass 一次性旗標放行;重複呼叫直接忽略、不排 startTurn 防疊發),並印 🛡 警示 log 供日後追蹤;火/草/土/雷/海全龍王技能與爆發同受保護。',
       '★ v5.22.0【爆發動畫時序】移除 v4.33.0 影片重排路徑的世界BOSS排除(_bvInWB):世界龍王戰中有爆發影片的英雄(天神宙斯/主神奧汀/藝天使/大天狗/玉藻前/酒吞童子/巫女/法老王/埃及豔后等)也改走「影片結束/跳過才放 GIF 特效+傷害/治療數字」;影片路徑補 _wbFxCapture burstCinematic 廣播,連線模式隊友端仍看得到爆發演出;無影片英雄與敵方 BOSS 維持原時序零改動(龍王自身爆發本就 GIF 播畢才生效,符合同一規則)。',
       '★ v5.22.0【版號】7 同步點對齊 v5.22.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 五鍵 index/admin_panel/game_changelog/world-boss.js/world-boss-ui.html、ADMIN_PANEL_VERSION、changelog 檔頭+置頂 ver);mainstory.js/avatar_db.js 維持 v5.19.0、hero_db.js 維持 v5.18.0、sw.js 本輪未動(world-boss 兩檔走 ?v= 破快取 network-first,無需 SW bump);CURRENT_BOOT_VER 永久凍結未動;changelog 刪最舊 v5.3.0 維持恰 20 條。',
-    ],
-  },
-  // v5.21.0 — 戰鬥卡死修復:敵人多次行動守門+全滅 3 秒巡邏(玩家 BUG 回報)
-  {
-    ver: 'v5.21.0',
-    date: '2026-08-09',
-    brief: [
-      '🛠️【戰鬥突然跳出修好了】有同學回報「打到一半突然被踢出戰鬥」——原因找到了:敵人偷偷在同一回合連續行動好幾次,還把新回合的答題視窗擠掉害你直接被判答錯,戰鬥卡住 20 幾秒後才被保險機制強制結束,感覺就像突然跳出遊戲。',
-      '🛡️ 現在敵人一回合只能行動一次,新回合答題不會再被擠掉;而且只要有一方全部倒下,3 秒內就會正常結算勝負——不會再卡住很久才突然跳出!',
-    ],
-    items: [
-      '★ v5.21.0【甲·acted 守門】_realAiAct 一般路徑新增 p2 已行動守門(a.acted=true → 跳過行動改排 startTurn 推進;根治同一敵人單回合多次行動+多重 startTurn 疊發+新回合答題被後到 startTurn 當孤兒清除秒判答錯);世界 BOSS 行動前答題 cb 刻意先設 acted=true 的路徑以 _quizCbBypass 一次性旗標放行(讀到即清);世界 BOSS 追擊(鐵律 1.113)走 _wbAdvBossTurn 攔截在守門之前,零影響;守門僅限 p2,p1 自動戰鬥維持原行為。',
-      '★ v5.21.0【乙·全滅 3 秒巡邏】借用 _gp heartbeat 既有 3 秒節拍新增冒險戰鬥全滅巡邏:任一方全滅且未結算 → 立即走與 startTurn v3.14.0/v3.14.4 保險完全相同的正規收場(checkWin 優先;敵方全滅且小怪戰中走 advFinishMiniBattle);最長 20+ 秒凍結縮到 ≤3 秒。安全閘:G._annihilationPatrolFired 每場一次(G 每場 initGame 全新物件天然歸零)/cutscene·小怪結算視窗顯示中不介入/答題進行中跳過本拍/世界 BOSS·鬥技場不適用,條件與 startTurn 保險完全對齊。',
-      '★ v5.21.0【版號】7 同步點對齊 v5.21.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 三鍵 index/admin_panel/game_changelog、ADMIN_PANEL_VERSION、changelog 檔頭+置頂 ver);mainstory.js/avatar_db.js 維持 v5.19.0、hero_db.js 維持 v5.18.0、sw.js 本輪未動;CURRENT_BOOT_VER 永久凍結未動;changelog 刪最舊 v5.2.0 維持恰 20 條。',
     ],
   },
 ];
