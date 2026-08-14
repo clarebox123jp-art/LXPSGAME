@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-14  / 目前主程式版本:v5.37.0(功能鍵列收合+音量調整面板)
+//  最後更新:2026-08-14  / 目前主程式版本:v5.38.0(可加入英雄清單縮圖化)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,17 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.38.0 — 關卡「可加入英雄清單」全面英雄縮圖化(老師需求)
+  {
+    ver: 'v5.38.0',
+    date: '2026-08-14',
+    brief: [
+      '🖼️【英雄清單大變身!】關卡介紹裡的「可加入英雄清單」彈窗,原本每位英雄只有小小的職業圖示,現在全部換成英雄本人的帥氣立繪縮圖!貓空、日本、埃及三關通通升級,還沒收錄的英雄會用灰色剪影神秘登場,快去把他們全部點亮吧!',
+    ],
+    items: [
+      '★ v5.38.0【可加入英雄清單縮圖化】_showStageHeroListModal 的 _heroCardHtml(主池已收/未收+子池學生設計系列已收/未收 四個網格唯一渲染點·改一處全生效)由 AVATARS 職業 emoji(42px)改為 HERO_IMGS 英雄立繪縮圖:96px 高 object-fit:cover+getHeroObjPos 個別裁切位(與 v5.36.0 預設陣容編輯器同款做法·時空法師/木靈使等客製頭位自動生效);未收錄維持灰階(filter:grayscale)+卡片半透明的「神秘剪影」語感;縮圖載入失敗 onerror 自動退回原 emoji 圖示(覆蓋層預設隱藏)·查無立繪的英雄直接走 emoji 舊路徑=永不空白;img loading=lazy(貓空關 30+24 位一次開啟不搶頻寬);已收錄/未相遇徽章補 z-index 防被縮圖蓋住;觸發 ? 鈕(rewards 🦸 列)與貓空/日本/埃及三關池子邏輯零改動·純顯示層。',
+    ],
+  },
   // v5.37.0 — 右上功能鍵列可收合+音樂音效音量調整面板(老師需求)
   {
     ver: 'v5.37.0',
@@ -330,24 +341,6 @@ window.GAME_CHANGELOG = [
       '★ v5.22.1【同類病灶一次修】幽幽「暗行」(_youyouDarkwalk 全免疫)與科學發明家「反應力場」(_inventCounter 擋下+反彈)同樣原無 ignoreBuffs 檢查 → 一併改尊重 ignoreBuffs(貫穿=不免疫/不擋不反,buff 與卡片保留);對齊貓人族長冰精靈守護/鐵匠迴避等既有慣例。變化狸障眼法為刻意設計的硬免疫,維持不動。',
       '★ v5.22.1【龍王 LOG 動態化】①world-boss.js _wbAdvBossNormalAtk(全龍王共用普攻/追擊)LOG「🦷 維蘇威炎爪」改依 MONSTER_ELEMENT/WORLD_BOSS_LINEUP 屬性動態:火=維蘇威炎爪/水=深淵冰爪/草=翠玉藤爪/土=山岳岩爪/風=風暴雷爪/暗=黃泉冥爪/光=高天原聖爪/幻=星辰幻爪 ②index.html doDmg 龍王受傷上限三處 LOG(主路徑/固定值/爆擊)「炎之意志」改讀 HERO_TRAIT[龍王名].name(深淵之意志/翠之意志/雷霆之意志…·查無 fallback「龍王之意志」)③world-boss-ui.html 舊引擎 fallback 兩處寫死同步去除(保險)。',
       '★ v5.22.1【版號】7 同步點對齊 v5.22.1(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 五鍵 index/admin_panel/game_changelog/world-boss.js/world-boss-ui.html、ADMIN_PANEL_VERSION、changelog 檔頭+置頂 ver);hero_db.js/avatar_db.js/mainstory.js/sw.js 本輪未動;CURRENT_BOOT_VER 永久凍結未動;changelog 刪最舊 v5.4.0 維持恰 20 條。',
-    ],
-  },
-  // v5.22.0 — 世界龍王戰四合一修正(背景位置/開場咆哮/爆發傷害/爆發動畫時序)
-  {
-    ver: 'v5.22.0',
-    date: '2026-08-09',
-    brief: [
-      '🐉【龍王的頭露出來了】世界龍王戰的背景圖往下移了一段,龍王的頭部不會再被上方的血條擋住,壯觀的龍王全貌看得更清楚!',
-      '❄️【每隻龍王都有自己的台詞了】深淵海龍王(還有之後登場的暗、光、幻龍王)開場咆哮換成自己專屬的台詞和配色,不會再借用火龍王的怒吼;戰鬥中「下回合將釋放爆發技」的預告、房間裡的招式介紹,也都會正確顯示牠自己的招式名稱!',
-      '💥【海龍王的爆發修好了】有時候海龍王放出「絕對零度·冰封終焉」,動畫播完卻沒有造成任何傷害——原因是戰鬥指令偶爾會「重複下達」,把爆發的傷害排程整條取消掉。現在加上了守門機制,所有龍王的技能和爆發都會確實生效!',
-      '🎬【爆發動畫先看完,傷害才登場】所有英雄的極限爆發改成「動畫播完才結算傷害和治療」,在世界龍王戰裡也一樣;趕時間的話按「跳過 ⏭」,動畫立刻收起、效果馬上生效,節奏由你決定!',
-    ],
-    items: [
-      '★ v5.22.0【背景位置】龍王戰背景圖垂直位置 65%→35%(index.html 戰鬥背景設定;圖高 175%,數值越小圖越往下移露出上方龍頭;全龍王一致,比照 v4.25.0 舊 UI 路徑同款調整口徑)。',
-      '★ v5.22.0【開場咆哮補齊】world-boss.js _WB_BOSS_ROAR_LINES/_ROAR_COLOR 補上 深淵海龍王/邪骨暗龍王/神聖光龍王/星辰幻龍王 四筆專屬開場台詞與配色(原缺此筆 → 開場對白 fallback 成火龍王的,與 v4.22.0 雷龍王同病一次補齊);戰鬥中 R4 爆發預告改讀 BURST_DB[當前龍王] 動態顯示爆發技名;崩毀「最終滅絕」與擊敗訊息改動態龍王名;房間迷你預覽的屬性與三招名改依當前龍王動態(新增 _WB_BOSS_SKILL_NAMES 三招表);世界戰關卡說明文案去火龍王寫死。',
-      '★ v5.22.0【爆發沒傷害根治】龍王爆發傷害本就設計「動畫 2.2 秒後才生效」(存於 boss._wbBossTid 排程);但疊發的重複 AI 呼叫會經由兩條無守門路徑(index.html _realAiAct 世界BOSS攔截段、world-boss.js aiAct hook 直達段)重進 _wbAdvBossTurn,其入口 clearTimeout 把爆發傷害排程整條砍掉 → 動畫播了卻無傷害無 log。兩條路徑皆補上 acted=true 守門(對齊 v5.21.0 甲:世界BOSS答題 cb 以 _quizCbBypass 一次性旗標放行;重複呼叫直接忽略、不排 startTurn 防疊發),並印 🛡 警示 log 供日後追蹤;火/草/土/雷/海全龍王技能與爆發同受保護。',
-      '★ v5.22.0【爆發動畫時序】移除 v4.33.0 影片重排路徑的世界BOSS排除(_bvInWB):世界龍王戰中有爆發影片的英雄(天神宙斯/主神奧汀/藝天使/大天狗/玉藻前/酒吞童子/巫女/法老王/埃及豔后等)也改走「影片結束/跳過才放 GIF 特效+傷害/治療數字」;影片路徑補 _wbFxCapture burstCinematic 廣播,連線模式隊友端仍看得到爆發演出;無影片英雄與敵方 BOSS 維持原時序零改動(龍王自身爆發本就 GIF 播畢才生效,符合同一規則)。',
-      '★ v5.22.0【版號】7 同步點對齊 v5.22.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 五鍵 index/admin_panel/game_changelog/world-boss.js/world-boss-ui.html、ADMIN_PANEL_VERSION、changelog 檔頭+置頂 ver);mainstory.js/avatar_db.js 維持 v5.19.0、hero_db.js 維持 v5.18.0、sw.js 本輪未動(world-boss 兩檔走 ?v= 破快取 network-first,無需 SW bump);CURRENT_BOOT_VER 永久凍結未動;changelog 刪最舊 v5.3.0 維持恰 20 條。',
     ],
   },
 ];
