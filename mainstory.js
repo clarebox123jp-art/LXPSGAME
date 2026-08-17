@@ -1,5 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  mainstory.js — 主線劇情引擎 + MAINSTORY_DB(自 index.html 拆出)
+//  ★ v5.57.0(2026-08-18)— 主線商店教學二修(老師回報 BUG):①召喚水晶持有滿 99 → shopBuyItem「背包已滿」擋購買 → 教學卡死第二課:buy 課進入點+防呆巡邏雙保險偵測 ≥99 → 視同完成本課(比照今日限購路徑)直跳召喚課(召喚消耗 1 顆恢復正常);②「略過教學」必定有用:略過鈕改教學條內建二次確認列(同元素同圖層 z9930 絕不被蓋·再按一次略過=直接跳),廢止 _customConfirm/原生 confirm 依賴(iPad PWA 靜默失敗案例·舊路徑留註解);_msShopTutFinish 硬化=先取 doneCb 再 cleanup,清理任何例外改走最小清理,劇情保證續播
 //  ★ v5.28.0(2026-08-12)— 丙案:新玩家強制主線 序章→第二章 連播+總鎖引導層(老師裁定):①分類=「從來沒進過序章」(序章未完成&&無 _sc_prologue 續播點&&無任何章 done)→ 首登 gate 寫入 _fg 時間戳(上雲+hydrate 三來源 union 取最早·跨裝置一致·GM 豁免·GM 回溯 _rst 作廢後重新分類) ②強制中(_fg && ch2 未 done):_msForceChainRun 從第一個未完成章連播 序章→ch1→ch2(onAllDone 串鏈零空窗),ch2 完成→釋放+恭喜 toast 雙版 ③總鎖引導層 ms-force-gate-layer(z=9700·1.5s 輪詢):非劇情/戰鬥/銜接空窗/前置彈窗時全螢幕蓋住,「▶ 繼續主線冒險」鈕+約 3 秒自動續播,重整中離逃不掉 ④進過序章的舊玩家維持 v4.65.0 原行為(progress 空只導序章一次·不鎖) ｜ ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
 // ════════════════════════════════════════════════════════════════════════
 
@@ -1348,10 +1349,36 @@
       _MS_SHOPTUT.ui = ui;
       var sk = document.getElementById("ms-shoptut-skip");
       if(sk) sk.onclick = function(){
+        // ★ v5.57.0 — 老師回報「按了略過教學也沒用」修正:略過不再依賴 _customConfirm / 原生 confirm
+        //   (iPad WKWebView PWA 原生 confirm 可能靜默失敗;_customConfirm 任何例外也會讓略過看似沒反應)。
+        //   改為教學條「內建」二次確認列——與略過鈕同一個元素同一圖層(z9930),按得到略過就一定按得到確認,
+        //   絕不可能被其他視窗蓋住;確認列開著時再按一次「⏭ 略過教學」= 直接視同確認略過(雙保險)。
+        //   舊路徑保留為註解(勿刪):
+        //   var go = function(){ _msShopTutFinish(); };
+        //   var q = _msT("要略過商店實戰教學嗎?(視同完成,之後不會再出現)", "要跳過商店教學嗎?(跳過後不會再教一次喔)");
+        //   try{ if(typeof _customConfirm === "function"){ _customConfirm(q, go); return; } }catch(_){}
+        //   try{ if(window.confirm(q)) go(); }catch(_e2){ go(); }
+        try{ if(typeof playSfx === "function") playSfx("sfx-sel", 0.5); }catch(_){}
         var go = function(){ _msShopTutFinish(); };
-        var q = _msT("要略過商店實戰教學嗎?(視同完成,之後不會再出現)", "要跳過商店教學嗎?(跳過後不會再教一次喔)");
-        try{ if(typeof _customConfirm === "function"){ _customConfirm(q, go); return; } }catch(_){}
-        try{ if(window.confirm(q)) go(); }catch(_e2){ go(); }
+        var host = _MS_SHOPTUT.ui || ui;
+        var oldRow = document.getElementById("ms-shoptut-skiprow");
+        if(oldRow){ go(); return; }                                   // 確認列已開著又按略過 → 直接略過
+        if(!host){ go(); return; }                                    // UI 異常 → 不擋,直接略過
+        var row = document.createElement("div");
+        row.id = "ms-shoptut-skiprow";
+        row.style.cssText = "display:flex;gap:12px;justify-content:center;margin-top:12px;";
+        row.innerHTML = ""
+          + "<span style=\"align-self:center;font-size:17px;font-weight:800;color:#ffd88a;\">"
+          +   _msT("確定要略過教學嗎?(視同完成,之後不會再出現)", "真的要跳過嗎?(跳過就不會再教囉)") + "</span>"
+          + "<button id=\"ms-shoptut-skip-yes\" style=\"padding:10px 22px;min-height:44px;font-size:18px;font-weight:900;border:none;border-radius:12px;"
+          +   "color:#fff;cursor:pointer;background:linear-gradient(135deg,#cc4444,#e86060);touch-action:manipulation;\">✅ 確定略過</button>"
+          + "<button id=\"ms-shoptut-skip-no\" style=\"padding:10px 22px;min-height:44px;font-size:18px;font-weight:800;border-radius:12px;"
+          +   "background:rgba(255,255,255,0.08);border:1.5px solid rgba(180,200,255,0.4);color:#bcd0ee;cursor:pointer;touch-action:manipulation;\">↩ 繼續上課</button>";
+        host.appendChild(row);
+        var yesB = document.getElementById("ms-shoptut-skip-yes");
+        var noB  = document.getElementById("ms-shoptut-skip-no");
+        if(yesB) yesB.onclick = function(){ try{ if(typeof playSfx === "function") playSfx("sfx-confirm2", 0.6); }catch(_){} go(); };
+        if(noB)  noB.onclick  = function(){ try{ if(typeof playSfx === "function") playSfx("sfx-cancel", 0.5); }catch(_){} try{ row.remove(); }catch(_){} };
       };
     }
     try{ document.getElementById("ms-shoptut-icon").textContent = tx.icon; }catch(_){}
@@ -1367,6 +1394,17 @@
   }
   function _msShopTutStep(step){
     if(step === "buy"){
+      // ★ v5.57.0 — 老師回報 BUG:召喚水晶持有已滿 99 顆時,shopBuyItem 的「🎒 背包已滿」守門直接 return,
+      //   購買永遠不會成功 → buy notify 永不觸發 → 教學卡死在第二課。
+      //   修法:滿載視同完成本課(比照下方「今日限購已買過」既有路徑),直跳召喚課(召喚會消耗 1 顆 → 99→98 正常)。
+      var _held99 = 0;
+      try{ if(typeof backpackGet === "function") _held99 = backpackGet("summon_crystal") || 0; }catch(_){}
+      if(_held99 >= 99){
+        _msShopTutMark("crystal");
+        _msShopTutToast(_msT("🔮 你的召喚水晶已經滿 99 顆,不用再買了!這一課直接算你通過。", "🔮 水晶已經滿 99 顆啦!這一課直接過!"));
+        _msShopTutStep("summon");
+        return;
+      }
       // 今日限購已買過 → 教學直接補發 1 顆略過本課;錢不足 → 獎學金預支補足(對白搞笑點·老師指定)
       var _prod = null;
       try{ if(typeof SHOP_PRODUCTS !== "undefined") _prod = SHOP_PRODUCTS.find(function(p){ return p.id === "summon_crystal"; }); }catch(_){}
@@ -1420,9 +1458,22 @@
     try{ if(window._msCurBgm && window._msCurBgm !== "none" && typeof bgmFadeTo === "function") bgmFadeTo(window._msCurBgm, 700); }catch(_){}
   }
   function _msShopTutFinish(){
-    _msShopTutCleanup(true);
+    // ★ v5.57.0 — 硬化(略過必定有用的最後保險):cleanup 內任何一步拋例外(如雲端旗標寫入失敗),
+    //   都不可以吞掉 doneCb 續播——先取出 cb,cleanup 失敗改走最小清理,劇情保證繼續。
     var cb = _MS_SHOPTUT.doneCb;
     _MS_SHOPTUT.doneCb = null;
+    try{
+      _msShopTutCleanup(true);
+    }catch(eClean){
+      console.error("[商店教學] 收尾清理例外(改走最小清理·劇情照常續播)", eClean);
+      try{ _MS_SHOPTUT.active = false; _MS_SHOPTUT.step = ""; }catch(_){}
+      try{ if(_MS_SHOPTUT.poll){ clearInterval(_MS_SHOPTUT.poll); _MS_SHOPTUT.poll = null; } }catch(_){}
+      try{ window._msShopTutForceFruit = false; }catch(_){}
+      try{ _msShopTutRestoreLayers(); }catch(_){}
+      try{ if(_MS_SHOPTUT.ui) _MS_SHOPTUT.ui.remove(); }catch(_){}
+      _MS_SHOPTUT.ui = null;
+      try{ _msShopTutMark("done"); }catch(_){}
+    }
     if(cb){ try{ cb(); }catch(e){ console.error("[商店教學] 續播例外", e); } }
   }
   // 商店/召喚系統回報教學事件(hook 掛在 shopSellItem / shopBuyItem / doSummon / _rollOneSummon;教學未啟動時為 no-op)
@@ -1477,6 +1528,13 @@
           if(!_MS_SHOPTUT.active){ if(_MS_SHOPTUT.poll){ clearInterval(_MS_SHOPTUT.poll); _MS_SHOPTUT.poll = null; } return; }
           var st = _MS_SHOPTUT.step;
           if(st === "sell" || st === "buy"){
+            // ★ v5.57.0 — 雙保險:巡邏節拍也偵測「buy 課且水晶已滿 99」→ 自動視同完成本課直跳召喚課
+            //   (涵蓋教學中途才變滿、或進入點守門因例外未生效的極端情形)
+            if(st === "buy"){
+              var _pH = 0;
+              try{ if(typeof backpackGet === "function") _pH = backpackGet("summon_crystal") || 0; }catch(_){}
+              if(_pH >= 99){ _msShopTutMark("crystal"); _msShopTutStep("summon"); return; }
+            }
             var so = document.getElementById("shop-overlay");
             if(so && so.style.display === "none"){
               try{ openShopOverlay(); }catch(_){}
