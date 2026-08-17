@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════════
 //  game_changelog.js  —  LXPSGAME 更新日誌
-//  最後更新:2026-08-18  / 目前主程式版本:v5.57.0(主線商店教學二修:水晶滿99卡死+略過教學必定有用)
+//  最後更新:2026-08-18  / 目前主程式版本:v5.58.0(孫悟空/諸葛亮爆發動畫上傳對接·中國關八爆發全到齊)
 //  ★ 永久規則(老師 2026-07-18):管理員測試期間的功能,更新日誌條目一律加 adminOnly: true
 //    (index.html _filterChangelogForDisplay 對非管理員整筆隱藏·不干擾學生);
 //    功能正式開放時,另發玩家版開放公告(新條目·不標 adminOnly)。
@@ -16,6 +16,15 @@
 // ════════════════════════════════════════════════════════════════════════
 
 window.GAME_CHANGELOG = [
+  // v5.58.0 — 孫悟空/諸葛亮爆發動畫上線(測試期 adminOnly·中國關尚未對學生開放)
+  {
+    ver: 'v5.58.0',
+    date: '2026-08-18',
+    adminOnly: true,
+    items: [
+      '🐒 中國關英雄「孫悟空」「諸葛亮」的極限爆發專屬動畫上線!發動極限爆發、以及在英雄圖鑑點「播放動畫」欣賞時都會播放全新動態演出(原本顯示「敬請期待」)。加上先前已對接的姜子牙,中國關八位 SSR 英雄的爆發動畫至此全部到齊。',
+    ],
+  },
   // v5.57.0 — 主線商店教學二修(玩家回報 BUG·主線全員開放中=玩家版條目)
   {
     ver: 'v5.57.0',
@@ -355,17 +364,6 @@ window.GAME_CHANGELOG = [
       '★ v5.39.0【BGM 接線 7 首】bgm-china-menu(繪卷開場/過場)/bgm-china-map(輿圖頁)/bgm-china-mob01+02(小怪兩首輪播·_chinaMobBattleCount 埃及範式戰中穩定)/bgm-china-boss(妲己/牛魔王/呂布共用)/bgm-china-boss-caocao/bgm-china-boss-chiyou(BOSS 依變體+陣容名 fallback);全部 preload=none(素材未上傳前零 404 流量·播放失敗自動靜默)·約定檔名上傳 repo 即自動生效零程式改動;選關/過場/場景/戰鬥 BGM 解析器全接線。',
       '★ v5.39.0【Phase 1 安全網】①advFinishCutscene 守門:_CHINA_BOSS_READY=false 期間場景三結束顯示「骨架驗收完成」彈窗+exitAdventureMode 安全退場,絕不進入缺 HERO_DB 資料的 BOSS 戰(Phase 3 實裝後改 true 單一開關自動失效)②小怪池:MINI_MONSTERS_CN(Phase 2 狐妖小卒等 9 隻+貔貅)上線前暫代埃及怪池,定義後自動切換零改動③題庫 subject=中國(Phase 6 上架前自動 fallback 全題庫·可走動態題庫 v5.16.0 免改版)。',
       '★ v5.39.0【版號】7 同步點對齊 v5.39.0(index.html _GAME_LOADED_VERSION + _LXPS_FILE_VERSIONS 三鍵 index/admin_panel/game_changelog、ADMIN_PANEL_VERSION、changelog 檔頭+置頂 ver);mainstory.js/hero_db.js/avatar_db.js/world-boss.js/sw.js 本輪未動;CURRENT_BOOT_VER 永久凍結未動;changelog 刪最舊 v5.22.1 維持恰 20 條。',
-    ],
-  },
-  // v5.38.0 — 關卡「可加入英雄清單」全面英雄縮圖化(老師需求)
-  {
-    ver: 'v5.38.0',
-    date: '2026-08-14',
-    brief: [
-      '🖼️【英雄清單大變身!】關卡介紹裡的「可加入英雄清單」彈窗,原本每位英雄只有小小的職業圖示,現在全部換成英雄本人的帥氣立繪縮圖!貓空、日本、埃及三關通通升級,還沒收錄的英雄會用灰色剪影神秘登場,快去把他們全部點亮吧!',
-    ],
-    items: [
-      '★ v5.38.0【可加入英雄清單縮圖化】_showStageHeroListModal 的 _heroCardHtml(主池已收/未收+子池學生設計系列已收/未收 四個網格唯一渲染點·改一處全生效)由 AVATARS 職業 emoji(42px)改為 HERO_IMGS 英雄立繪縮圖:96px 高 object-fit:cover+getHeroObjPos 個別裁切位(與 v5.36.0 預設陣容編輯器同款做法·時空法師/木靈使等客製頭位自動生效);未收錄維持灰階(filter:grayscale)+卡片半透明的「神秘剪影」語感;縮圖載入失敗 onerror 自動退回原 emoji 圖示(覆蓋層預設隱藏)·查無立繪的英雄直接走 emoji 舊路徑=永不空白;img loading=lazy(貓空關 30+24 位一次開啟不搶頻寬);已收錄/未相遇徽章補 z-index 防被縮圖蓋住;觸發 ? 鈕(rewards 🦸 列)與貓空/日本/埃及三關池子邏輯零改動·純顯示層。',
     ],
   },
 ];
