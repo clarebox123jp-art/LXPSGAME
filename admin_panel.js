@@ -1,5 +1,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 // admin_panel.js — LXPSGAME 管理員後台功能(獨立模組,lazy load)
+// ★ v5.69.2(2026-08-18)— 版號對齊主程式(本輪 admin 無功能改動;爆發卡死根治+圖鑑素質加成收合全在 index.html;無真 optional chaining)
+// ★ v5.69.1(2026-08-18)— 版號對齊主程式(本輪 admin 無功能改動;中國關妖王 BGM 根因修復+動畫預熱優化全在 index.html;無真 optional chaining)
+// ★ v5.69.0(2026-08-18)— 版號對齊主程式(本輪 admin 無功能改動;丹藥盒向上展開+中國小兵速度減半+菁英戰對白+極限爆發次數 ∞ 根治 全在 index.html/hero_db.js;無真 optional chaining)
 // ★ v5.68.0(2026-08-18)— 版號對齊主程式(本輪 admin 無功能改動;煉丹五行 QTE 小遊戲 + 小怪掉落垃圾賣價 ×3 全在 index.html;無真 optional chaining)
 // ★ v5.60.0(2026-08-18)— 版號同步(本輪內容未改·神農鼎 C輪全在 index.html+game_changelog.js·依慣例隨主版號 bump)
 // ★ v5.59.0(2026-08-18)— 版號同步(本輪內容未改·神農鼎 B輪全在 index.html+game_changelog.js·依慣例隨主版號 bump)
