@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.93';   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.5.94';   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -257,7 +257,22 @@ self.addEventListener('fetch', function(event){
   // 判斷是圖片/音訊資源 → cache-first
   var isAsset = /\.(png|jpg|jpeg|gif|webp|svg|mp3|m4a|wav|ogg|woff2?|ttf|otf)(\?|$)/i.test(req.url);
 
-  if(isAsset){
+  // ★★ v3.5.94（老師裁定甲·2026-08-19）— 影片(mp4/webm/mov)納入「素材」處理。
+  // 【舊行為的三個病灶】isAsset 的白名單**沒有 mp4** → 所有影片掉進 networkFirstShell：
+  //   ① 完全用不到 jsDelivr 鏡像（USE_CDN_REWRITE 只作用在 cacheFirstAsset）
+  //      → 全校同一個 NAT IP 直撞 raw.githubusercontent 吃 429，且 raw 只給 max-age=300（5 分鐘）。
+  //   ② <video> 發 Range 請求 → 回 206 → Cache API 不接受 206，cache.put 直接 throw（被 catch 吞掉）
+  //      ⇒ **影片從來沒有被 SW 成功快取過一次**。
+  //   ③ 每支影片每次播放都多跑一個 2.5s timer + res.clone() 的 body tee。
+  // 【修法】另立 cacheFirstVideo（刻意不併進 cacheFirstAsset，圖片路徑一行不動＝零風險隔離）：
+  //   jsDelivr 優先 → raw 兜底 → 重包成明確 Content-Type: video/mp4 的完整 200 回應
+  //   → 同時根治 v5.55.0/v5.66.0 一直在打的「raw 回 application/octet-stream + nosniff
+  //     導致 iPad Safari 時而拒絕解碼＝黑屏」根因，且存進 ASSET_CACHE 後永久命中、零網路。
+  var isVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(req.url);
+
+  if(isVideo){
+    event.respondWith(cacheFirstVideo(req));
+  } else if(isAsset){
     event.respondWith(cacheFirstAsset(req));
   } else {
     // ★ v3.5.34 — HTML/JS/CSS 改 network-first(線上一律最新, 逾時/離線 fallback 快取)
@@ -398,6 +413,55 @@ function cacheFirstAsset(req){
       return new Response('', { status: 504, statusText: 'Offline' });
     });
   });
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ★★ v3.5.94 — 影片專用 cache-first（老師裁定甲）
+//   與 cacheFirstAsset 分開實作，圖片路徑完全不受影響。
+//   流程：① 查 ASSET_CACHE（命中＝零網路，秒開）
+//        ② jsDelivr 優先（content-type 正確＝video/mp4、max-age 長、全球 CDN、無 raw 429）
+//        ③ raw 兜底（jsDelivr 未同步/掛掉時）
+//        ④ 一律 blob 重包成明確 video/mp4 的完整 200 回應 → 存快取 + 回給 <video>
+//   ⚠ 為什麼要重包：raw 回 application/octet-stream + x-content-type-options:nosniff，
+//     iPad Safari 對 MIME 嚴格會「時而拒絕解碼」＝黑屏（v5.55.0/v5.66.0 一路在打的根因）。
+//     在 SW 這一層修好，遊戲端的 blob 快取就退為純加速層，不必再負責修 MIME。
+//   ⚠ Range 請求：回完整 200 是合法的（等同 server 忽略 Range），影片短、不需 seek。
+//   ⚠ 配額不足時 cache.put 失敗 → catch 靜默，仍照常回傳影片（只是下次要重抓），絕不壞播放。
+//   ⚠ 全鏈路任一步失敗 → 最後一律退回 fetch(req) 原生行為＝等同本版修改前。
+// ══════════════════════════════════════════════════════════════════════
+function _lxpsVideoMime(url){
+  try{
+    if(/\.webm(\?|$)/i.test(url)) return 'video/webm';
+    if(/\.(mov|m4v)(\?|$)/i.test(url)) return 'video/quicktime';
+  }catch(e){}
+  return 'video/mp4';
+}
+function cacheFirstVideo(req){
+  var url = req.url;
+  function corsGet(u){
+    return fetch(u, { mode:'cors', credentials:'omit' })
+      .then(function(r){ return (r && r.ok) ? r : null; })
+      .catch(function(){ return null; });
+  }
+  return caches.match(url, { ignoreSearch:false }).then(function(hit){
+    if(hit) return hit;
+    var cdn = rewriteToJsDelivr(url);          // null = 不在白名單 repo → 直接走 raw
+    var first = cdn ? corsGet(cdn) : Promise.resolve(null);
+    return first.then(function(r){ return r || corsGet(url); }).then(function(res){
+      if(!res) return fetch(req);              // CDN 與 raw 都失敗 → 交還原生（不快取壞回應）
+      var mime = _lxpsVideoMime(url);
+      return res.blob().then(function(b){
+        var typed = new Blob([b], { type: mime });
+        var hdr = { 'Content-Type': mime, 'Cache-Control': 'public, max-age=31536000' };
+        try{
+          caches.open(ASSET_CACHE).then(function(cache){
+            cache.put(url, new Response(typed, { status:200, headers: hdr })).catch(function(){});
+          }).catch(function(){});
+        }catch(e){}
+        return new Response(typed, { status:200, headers: hdr });
+      }).catch(function(){ return fetch(req); });
+    });
+  }).catch(function(){ return fetch(req); });
 }
 
 // ★ v3.5.34 — network-first(程式碼類):線上一律先抓最新, 抓到就更新快取;
