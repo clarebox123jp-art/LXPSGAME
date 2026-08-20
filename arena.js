@@ -1,7 +1,13 @@
 // ════════════════════════════════════════════════════════════════════════
 //  arena.js  —  英雄鬥技場核心配置與邏輯
 //  建立日:2026-06-02   /   v3.13.15(2026-06-02)雲端陣容池系統
-//  最後更新:2026-07-24  /  v4.88.0 — 傷害明細 by 陣列補 m(最大單次傷害),
+//  最後更新:2026-08-20  /  v5.91.0 — 老師回報「有人用 UR 角色打鬥技場」根治:
+//                                     _arenaIsTeamValid 補上黑名單第 4 層 UR
+//                                     (本函式是「上雲前」與「抽對手池」的共同守門,
+//                                      原本三層黑名單獨缺 UR → 含 UR 陣容照樣上雲、
+//                                      也照樣被抽成別人的對手)。判定走 index.html 的
+//                                      單一真相 window._arenaHeroBannedUR。
+//           2026-07-24  /  v4.88.0 — 傷害明細 by 陣列補 m(最大單次傷害),
 //                                     供 GM「技能傷害排行(全校)」判斷過強技能/BUG。
 //                                     頂層欄位不變 → firestore.rules 零改動。
 //
@@ -320,6 +326,36 @@
         if (_jpBossWL.has(hname)) continue;
         if (_evtOnly.has(hname)) return false;
       }
+      // ★★ v5.91.0(老師 2026-08-20 回報「有人用 UR 角色打鬥技場」)— 防呆 6:黑名單第 4 層 UR ★★
+      //   【漏口】本函式自 v3.13.27 起有三層黑名單,但**從來沒有 UR 這層**;
+      //           而「UR 禁用於鬥技場」的規則(v3.13.71)只寫在 index.html 的英雄池過濾裡。
+      //           本函式是「上雲前(_arenaSaveTeam)」與「抽對手池(_arenaPickAITeam)」的共同守門
+      //           → 少了這層 = 含 UR 的陣容照樣上雲、也照樣被抽出來當別人的對手,
+      //           ★ 這正是老師在對戰中看到 UR 的最可能來源(尤其是 v3.13.71 立規之前存下的舊資料)。
+      //   【修法】比照前三層寫法,以 window._arenaHeroBannedUR(index.html v5.91.0 單一真相謂詞)判定;
+      //           謂詞內部走既有 _getHeroRarity → UR 名單 _RARITY_UR_HEROES 仍是唯一權威,
+      //           日後新增 UR 只要加進那個 Set,本層自動生效不必再改這裡。
+      //   ⚠ 讀不到謂詞時退回 window._LXPS_RARITY_UR 陣列(同一份資料的既有投影);兩者都無才略過本層
+      //     —— arena.js 比 index 主體早載入的極端情況下不誤殺,真正保險在 index 的兩個建隊點。
+      //   ⚠ 三妖怪白名單 _jpBossWL **刻意不套用於本層**:那份白名單是為了放行大天狗/酒吞童子/玉藻前
+      //     這三隻「BOSS 同名英雄版」,與 UR 無關;UR 一律不得放行,沒有例外。
+      try {
+        var _urBan = (typeof window !== 'undefined' && typeof window._arenaHeroBannedUR === 'function')
+          ? window._arenaHeroBannedUR
+          : null;
+        var _urList = (typeof window !== 'undefined' && Array.isArray(window._LXPS_RARITY_UR))
+          ? window._LXPS_RARITY_UR
+          : null;
+        if (_urBan || _urList) {
+          for (const hname of team.heroes) {
+            var _isUr = _urBan ? _urBan(hname) : (_urList.indexOf(hname) >= 0);
+            if (_isUr) {
+              try { console.warn('[arena v5.91.0] 陣容含 UR,判定不合法(鬥技場禁用 UR):', hname, team.name); } catch (_) {}
+              return false;
+            }
+          }
+        }
+      } catch (_eUr) { console.warn('[arena] UR 黑名單層例外(略過本層):', _eUr); }
       return true;
     } catch (e) { console.warn('[arena] _arenaIsTeamValid 例外:', e); return false; }
   };
