@@ -91578,7 +91578,7 @@ function _showNewHeroAnnouncement(forceShow){
       ['🌿', _aT('①　到處採藥草', '① 九州輿圖採集'), _aT('進到九州輿圖，地圖上會有三個一閃一閃的亮點，點下去就能採到藥材！每小時可以採 3 次。', '九州輿圖每小時提供 3 次採集機會（時間戳上雲，跨裝置共用額度）。稀有度分布：凡品 60%／上品 30%／極品 9%／仙品 1%。')],
       ['📜', _aT('②　收集丹方', '② 取得丹方'), _aT('第一次進輿圖時墨靈會送你 6 張丹方！打小怪也有機會掉，打贏每條路線的妖王還一定會拿到一張。', '初次進入輿圖由墨靈致贈 6 張基礎丹方（本次由 4 張增為 6 張）；小怪 10% 機率掉落，五條路線妖王首次通關各必得一張。')],
       ['🔥', _aT('③　五行共鳴小遊戲', '③ 煉丹・五行共鳴 QTE'), _aT('按下煉丹之後，神農鼎上會閃過 5 個五行符號（金木水火土），記起來再照順序點回去！每點對一個成功率就 +6%，最多 +30%。', '煉丹讀條為三段式 QTE：演示期 3 秒閃現 5 枚五行符文（並帶中國五聲音階聽音辨位），作答期 5 秒依序點回。每答對一枚成功率 +6%，累計上限 +30% ⇒ 仙品最高可達 90%。')],
-      ['🎒', _aT('④　打仗的時候吃丹藥', '④ 戰鬥中服用'), _aT('只有在中國古代關的戰鬥裡才能吃丹藥喔！點畫面下面物品欄的「丹藥盒」就會打開，吃丹藥不會用掉你的回合，但每場最多只能吃 3 顆。', '丹藥僅限中國古代關的冒險戰鬥使用。入口為物品欄第四格「丹藥盒」（就地向上展開）；服用屬額外行動、不消耗回合，每場戰鬥上限 3 顆。')]
+      ['🎒', _aT('④　打仗的時候吃丹藥', '④ 戰鬥中服用'), _aT('點畫面下面物品欄的「丹藥盒」就會打開！吃丹藥<b>不會用掉你的回合</b>，但每場最多只能吃 3 顆。一開始只有中國古代關能吃，不過⋯⋯（往下看 🪶）', '入口為物品欄第四格「丹藥盒」（就地向上展開）；服用屬額外行動、不消耗回合，每場戰鬥上限 3 顆。預設僅限中國古代關的冒險戰鬥；通關條件達成後可擴及台灣關、日本關與埃及關（見下方「臥龍改良」）。⚔ 鬥技場與 🐉 世界龍王戰一律不適用。')]
     ];
     _html += '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">';
     _steps.forEach(function(s){
@@ -91630,6 +91630,21 @@ function _showNewHeroAnnouncement(forceShow){
         _html += '</div>';
       }
     }catch(_eAP){ console.warn('[煉丹介紹卡・丹藥]', _eAP); }
+    // ── 🪶 臥龍改良：打通九州繪卷的最大獎勵（老師 2026-08-22 需求：放進介紹讓玩家積極通關） ──
+    _html += '<div style="margin-top:16px;padding:14px 17px;background:linear-gradient(135deg,rgba(90,60,140,0.32),rgba(40,70,40,0.28));'
+      + 'border:2px solid rgba(200,168,255,0.6);border-radius:12px;">'
+      + '<div style="font-size:clamp(20px,2.4vw,25px);font-weight:900;color:#c8a8ff;margin-bottom:8px;">🪶 '
+      +   _aT('打通九州繪卷的大獎勵：諸葛亮改良丹藥盒！', '通關獎勵・臥龍改良丹藥盒') + '</div>'
+      + '<div style="font-size:16px;color:#efe6ff;line-height:1.7;">'
+      +   _aT('把<b>五條路線全部打通一次</b>（封神・西遊・三國・官渡・涿鹿），千古軍師<b>諸葛亮</b>會 100% 加入你的隊伍——而且他會順手把你的丹藥盒<b>重新改良</b>！'
+             + '<br><br>改良之後，丹藥就不再只能在中國古代關吃了：<b>台灣關、日本關、埃及關</b>也通通都能打開丹藥盒服用！'
+             + '<br>（⚔ 鬥技場和 🐉 世界龍王戰除外喔——鬥技場大家都要公平比賽，龍王戰是大家一起連線打的大魔王戰。）'
+             + '<br><br>💡 <b>要注意：</b>丹藥和丹藥材<b>還是只能在中國古代關拿到</b>，所以煉好之後記得帶出去用！',
+             '五條路線（封神／西遊／三國／官渡／涿鹿）全數首次通關後，SSR 軍師<b>諸葛亮</b> 100% 保底加入，並同時解鎖<b>丹藥盒改良</b>：'
+             + '丹藥的可用範圍由「僅中國古代關」擴及<b>台灣關、日本關與埃及關</b>的冒險戰鬥。'
+             + '<br>⚔ <b>鬥技場不適用</b>（Lv1 公平賽制，不吃等級、裝備、至寶、寵物與丹藥）；🐉 <b>世界龍王戰亦不適用</b>。'
+             + '<br>⚠ <b>取得管道不變</b>：丹藥材與丹藥仍僅能於中國古代關取得（九州輿圖採集點／小怪與妖王掉落／神農鼎煉製），本次放寬的是「在哪裡用得掉」，不是「在哪裡拿得到」。')
+      + '</div></div>';
     // ── ⚠ 誠實提醒：材料池變大，指定丹方會比以前難湊 ──
     _html += '<div style="margin-top:14px;padding:11px 15px;background:rgba(120,90,30,0.25);border-left:4px solid #ffb36b;border-radius:8px;">'
       + '<div style="font-size:15px;color:#ffe9c8;line-height:1.65;">💡 '
@@ -101734,11 +101749,46 @@ window._alchOpenPanel = function(tab){
 //     (victim._alchMatStolen 旗標掛敵人物件·每場重建自然歸零)·中國關限定
 // ═══════════════════════════════════════════════════════════════════
 window._ALCH_BATTLE_MAX = 3;   // 老師裁定②:每場戰鬥丹藥上限 3 顆
+// ═══════════════════════════════════════════════════════════════════
+// ★ v5.109.0 同輪追加(老師 2026-08-22 需求)— 【諸葛亮改良丹藥盒:全冒險關卡與龍王戰通用】
+//   老師原話:「九州繪卷全通關獲得諸葛亮後,出現訊息提示 諸葛亮改良了丹藥盒變成可以在所有冒險關卡
+//   和龍王戰使用(競技場禁用)。這個說明也放在煉丹系統介紹中,讓玩家積極通關繪卷獲得丹藥盒。」
+//   ★★ 老師 2026-08-22 更正:「龍王戰不能使用丹藥盒。盜賊偷竊丹藥材料只在中國關。」★★
+//     ⇒ 可用範圍收斂為【台灣關／日本關／埃及關】三關(＋中國關本來就能用);
+//       世界龍王戰與鬥技場一律不可用。文案六處已全數同步(訊息/介紹卡/四步驟/changelog/UI 徽章/空盒)。
+//
+//   ★★ 判定權威刻意用「五枚路線通關獎章」而非「持有諸葛亮」★★
+//   —— 諸葛亮也可由**自選召喚卷**指名取得(v5.103.0 取得管道對表)。若以持有判定,
+//      沒打過繪卷的孩子拿一張自選卷就解鎖了 ⇒ 完全違背老師「讓玩家積極通關繪卷」的用意。
+//      改讀五枚既有雲端持久獎章(與諸葛亮保底發放**同一組條件**,見 _onChinaBossDefeated 尾段),
+//      零新增 chinaProgress 欄位、跨裝置自動同步、冪等。
+//   ⚠ 材料與丹藥的**取得**仍限中國關(九州輿圖採集點／中國關小怪與妖王掉落)——
+//      本次放寬的只有「在哪裡用得掉」,不是「在哪裡拿得到」。玩家仍必須回中國關補貨。
+window._ALCH_BOX_MEDALS = ['china_fengshen_clear','china_xiyou_clear','china_sanguo_clear','china_caocao_clear','china_chiyou_clear'];
+window._alchBoxUnlocked = function(){
+  try{
+    if(typeof _medals === 'undefined' || !_medals) return false;
+    return window._ALCH_BOX_MEDALS.every(function(_id){ return !!_medals[_id]; });
+  }catch(_){ return false; }
+};
+// ★ 丹藥可用場合(單一守門·全檔 9 個消費點共用,改這一支即全面生效)
+//   ⚠ 鬥技場天生排除:鬥技場建隊路徑不設 `_adventureMode` ⇒ 第二個條件就擋掉了,
+//     不必也不應另加黑名單(鐵律 1.153 公平制;多寫一層反而會有兩套口徑)。
+//   ⚠⚠ 世界龍王戰【明確排除】(老師 2026-08-22 更正:「龍王戰不能使用丹藥盒」)⚠⚠
+//     龍王戰是 `_adventureMode` 且 `_adventureStage === 'worldboss'`,若不明列會被下面那行
+//     「其餘冒險關卡一律放行」誤放進來 ⇒ 必須獨立一行擋掉,不可省略。
+//     ★ 這一行同時消除了「連線戰 G._alchFx 只存在本機、減傷類是否隨房主端 BOSS 回合生效」
+//       的未驗證風險(該風險本輪已因此完全不存在)。
 window._alchBattleActive = function(){
   try{
-    return !!(typeof G !== 'undefined' && G && G.p1 && G.p1.length
-      && typeof _adventureMode !== 'undefined' && _adventureMode
-      && typeof _adventureStage !== 'undefined' && _adventureStage === 'china');
+    if(!(typeof G !== 'undefined' && G && G.p1 && G.p1.length)) return false;
+    if(!(typeof _adventureMode !== 'undefined' && _adventureMode)) return false;   // ← 鬥技場在此擋下
+    if(typeof _adventureStage === 'undefined') return false;
+    if(_adventureStage === 'china') return true;                                    // 中國關:一律可用(原行為)
+    if(_adventureStage === 'worldboss') return false;                               // ← 世界龍王戰:老師更正·一律不可用
+    return !!window._alchBoxUnlocked();                                            // 其餘冒險關卡(台/日/埃):需諸葛亮改良版
+    // 舊行(v5.59.0～v5.109.0·備查勿刪):
+    // return !!(… && _adventureStage === 'china');
   }catch(_){ return false; }
 };
 // ═══════════════════════════════════════════════════════════════════
@@ -101878,6 +101928,11 @@ window._alchRenderBox = function(isP2Turn){
         '<span style="font-size:30px;flex-shrink:0;">🏺</span>' +
         '<span style="flex:1;min-width:0;">' +
           '<span style="font-size:24px;font-weight:900;color:#ffd9a8;letter-spacing:1px;">丹藥盒</span>' +
+          // ★ v5.109.0 同輪追加 — 非中國關能打開丹藥盒，一定是靠諸葛亮的改良版；
+          //   標一個小徽章讓孩子知道「這是打通九州繪卷才有的待遇」，也順便解釋為何這關也能吃丹藥。
+          ((typeof _adventureStage !== 'undefined' && _adventureStage !== 'china')
+            ? '<span style="font-size:18px;font-weight:800;color:#3a2408;background:#c8a8ff;border-radius:8px;padding:2px 9px;margin-left:8px;white-space:nowrap;">🪶 ' + (_cute ? '諸葛亮改良版' : '臥龍改良版') + '</span>'
+            : '') +
           '<span style="font-size:22px;color:#ffe0b0;margin-left:8px;">本場剩 ' + left + '/' + window._ALCH_BATTLE_MAX + ' 顆</span>' +
         '</span>' +
         '<span style="font-size:22px;font-weight:800;color:#ffe27a;flex-shrink:0;">' +
@@ -101889,8 +101944,14 @@ window._alchRenderBox = function(isP2Turn){
     if(expanded){
       var inner = '';
       if(!pillKeys.length){
+        // ★ v5.109.0 同輪追加 — 在其他關卡打開丹藥盒卻沒丹藥時，要明講「材料與丹藥仍只在中國關取得」，
+        //   否則孩子會在台灣/日本/埃及關的地圖上找神農鼎找半天（那裡本來就沒有）。
+        var _offCn = (typeof _adventureStage !== 'undefined' && _adventureStage !== 'china');
         inner = '<div style="padding:16px 14px;text-align:center;color:#c8a878;font-size:22px;line-height:1.6;">' +
-          (_cute ? '丹藥吃光光了!去九州輿圖上方的神農鼎再煉一些吧!' : '目前未持有丹藥,請至九州輿圖上方的神農鼎煉製。') + '</div>';
+          (_offCn
+            ? (_cute ? '丹藥吃光光了!丹藥只能在<b>中國古代關</b>的神農鼎煉喔——先回九州輿圖補一些再帶出來用!'
+                     : '目前未持有丹藥。丹藥與丹藥材僅能於<b>中國古代關</b>取得（九州輿圖採集點／神農鼎煉製），煉好後即可帶到本關使用。')
+            : (_cute ? '丹藥吃光光了!去九州輿圖上方的神農鼎再煉一些吧!' : '目前未持有丹藥,請至九州輿圖上方的神農鼎煉製。')) + '</div>';
       } else {
         var rows = '';
         pillKeys.forEach(function(pk){
@@ -102392,7 +102453,16 @@ window._alchBattleForceBurst = function(pid, pos){
 // 中國關限定·僅玩家側神偷·每隻敵人限 1 次(旗標掛敵人物件·每場 startBattle 重建自然歸零)
 window._alchThiefSteal = function(thief, victim){
   try{
-    if(!window._alchBattleActive()) return;
+    // ★ v5.109.0 同輪追加 — ⚠⚠ 本支刻意**不**跟著 `_alchBattleActive()` 一起放寬 ⚠⚠
+    //   丹藥盒放寬的是「在哪裡用得掉丹藥」；本支是「在哪裡**拿得到**煉丹材料」，語義完全不同。
+    //   若沿用被放寬的 `_alchBattleActive()`，神偷在台灣／日本／埃及關與世界龍王戰也會偷到煉丹材料，
+    //   直接打破「材料與丹藥僅能於中國古代關取得」的口徑 —— 而那正是介紹卡與丹藥盒空盒文案
+    //   對學生明講的規則，會變成程式與說明不一致。
+    //   ⇒ 改為明確要求中國關（即本支放寬前的原始語義，一字不減）。
+    if(!(typeof G !== 'undefined' && G && G.p1 && G.p1.length)) return;
+    if(!(typeof _adventureMode !== 'undefined' && _adventureMode)) return;
+    if(!(typeof _adventureStage !== 'undefined' && _adventureStage === 'china')) return;
+    // 舊行（v5.59.0～·備查勿刪）：if(!window._alchBattleActive()) return;
     if(!thief || thief.side !== 'p1' || thief.name !== '神偷') return;
     if(!victim || victim.side !== 'p2' || victim._alchMatStolen) return;
     victim._alchMatStolen = true;
@@ -104490,6 +104560,23 @@ window._onChinaBossDefeated = function(){
         setTimeout(function(){
           try{ _showInGameToast('🪶 千古軍師登場![諸葛亮] 加入夥伴!(五路線全通・必定獲得)', '#ffcc44', 6000); }catch(_){}
         }, 2200);
+        // ★ v5.109.0 同輪追加(老師 2026-08-22 需求)— 【諸葛亮改良丹藥盒】
+        //   五路線全通的同一刻,丹藥盒由「只能在中國關用」升級為「台灣關／日本關／埃及關也能用」。
+        //   ⚠ 老師 2026-08-22 更正:世界龍王戰**不可**使用丹藥盒(與鬥技場同列不適用),
+        //     守門在 `_alchBattleActive` 內以獨立一行明列 `worldboss` 擋下。
+        //   ⚠ 這裡只是**宣告**:真正的開關是 window._alchBoxUnlocked()(讀同一組五枚獎章),
+        //     所以就算玩家沒看到這則訊息(離線/中途關掉),功能一樣已經生效,不會有「沒收到通知就沒解鎖」。
+        //   ⚠ 排在諸葛亮 toast 之後 3.4 秒,避免兩則訊息疊在一起讓孩子看不完。
+        setTimeout(function(){
+          var _cuteZg = (typeof window._artStyle === 'string' && window._artStyle === 'cute');
+          try{
+            log(_cuteZg
+              ? '🏺 諸葛亮看了看你背上的丹藥盒,拿羽扇輕輕一敲——「這盒子的火候封得不夠緊,難怪出了九州就散了。」他重新改良了丹藥盒:從今以後,你在**台灣關、日本關、埃及關**也都能服用丹藥了!(⚔ 鬥技場和🐉世界龍王戰除外喔)'
+              : '🏺 臥龍先生端詳了背上的丹藥盒,以羽扇輕叩其蓋——「火候封存之法未臻,故出九州則藥性盡散。」諸葛亮親手改良了丹藥盒:自此丹藥可於**台灣關、日本關、埃及關**的冒險戰鬥中服用(⚔ 鬥技場維持 Lv1 公平制、🐉 世界龍王戰均不適用)。⚠ 丹藥與丹藥材仍僅能於中國古代關取得。');
+          }catch(_){}
+          try{ _showInGameToast('🏺🪶 諸葛亮改良了丹藥盒!台灣關、日本關、埃及關也都能吃丹藥了!(鬥技場與龍王戰除外)', '#c8a8ff', 7000); }catch(_){}
+          try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
+        }, 5600);
         try{ _setNavDot('英雄', true); }catch(_){}
       }
     }
@@ -136419,7 +136506,7 @@ const SKILL_UPGRADE_DEF = {
   // ★ v5.109.0 — 煉丹小藥童 S1/S2(皆為被動)
   //   S1 唯一成長是「可採品級範圍」,fd 完全不含隨等級變動的百分數 ⇒ 通用引擎抓不到,必須開專屬 cat(八易錯點⑦)。
   //   S2 純狀態附加、零數值成長 ⇒ no_upgrade(渲染器開頭已有 handler,只加 Lv 標籤)。
-  '百草採集':       { cat:'special_yaotong_gather', label:'可採品級範圍(Lv1～5 凡品·上品 → Lv6～9 加極品 → Lv10 加仙品;「必得1個+25%再1個」為固定值不隨等級變動)' },
+  '百草採集':       { cat:'special_yaotong_gather', label:'可採品級範圍' },   // ★ v5.109.0 同輪追加 — label 由整段長句縮短為短標籤（老師回報升級表每列複製貼上過於冗長）；逐級內容改由 buildSkillLvTable 的 special_yaotong_gather 分支逐級產生（舊 label 備查：'可採品級範圍(Lv1～5 凡品·上品 → Lv6～9 加極品 → Lv10 加仙品;「必得1個+25%再1個」為固定值不隨等級變動)'）
   '以毒攻毒':       { cat:'no_upgrade', label:'固定效果(被動,不可升級):我方使用丹藥時,敵方 HP 最高者中毒、自己免疫查封 1 回合' },
   '很難的五大任務攻擊': { cat:'dmg', label:'技能傷害+5%/lv(特技對隨機目標×5段80~120%+命中燃燒2回合)' },
   // ★ v3.15.71 — 鐵匠 S1/S2(★ v5.30.0 改版:老師甲案·裝備效果放大)
@@ -139104,6 +139191,15 @@ function buildSkillLvTable(skillName, currentLv) {
     } else if(cat==='special_zoo'){
       const pct = 10 + lv;
       effectText = def.label + ' ' + pct + '%（上限 ' + (40+lv*4) + '%）';
+    } else if(cat==='special_yaotong_gather'){
+      // ★ v5.109.0 同輪追加（老師 2026-08-22 回報：升級表每一列都把整段 label 複製貼上、冗長難讀）
+      //   本技能唯一的成長就是「可採品級範圍」，故逐級表只印該級實際採得到的品級，
+      //   「必得 1 個 + 25% 再 1 個」屬固定值 → 只在基礎列註記一次，其餘列不重複。
+      const _ytR = (lv >= 9) ? '凡品・上品・極品・仙品'
+                 : (lv >= 5) ? '凡品・上品・極品'
+                 :             '凡品・上品';
+      effectText = '可採 ' + _ytR
+        + (lv === 0 ? '（基礎・必得1個＋25%再1個）' : (lv === 5 ? '　★ 開放極品' : (lv === 9 ? '　★ 開放仙品（MAX）' : '')));
     } else if(cat==='special_tarot_sell'){
       const bonus = Math.floor(lv/3);
       if(lv===0) effectText = '抽1張物品卡（基礎）';
