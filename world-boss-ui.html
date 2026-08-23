@@ -1,6 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
 <!-- world-boss-ui.html — 世界 BOSS 討伐戰 UI Overlay (lazy load)            -->
-<!-- ★ v5.74.0(2026-08-18)【解凍】— 老師回報重大 BUG 根治(裁定丙):龍王戰「至寶 + 裝備」從未生效。連線戰(_wbUiStartBattle·WB-Host)與單人練習(WB-Solo)兩條 p1 組建路徑,自 v4.22.0/v4.28.0 起雖已補套跟隨寵物,但**至寶與裝備一直漏套**:至寶 id 有寫進 h._wbTreasureIds 卻沒有任何人呼叫 _applyTaiwanTreasureToHero 去消費,裝備則連 h._gearEff 都不存在 → 打神鞭對 BOSS +48%、青龍偃月刀暴擊、玉山盾減傷、裝備技能/爆發增傷與減傷 50% 等在龍王戰全數無效。修法:兩處改呼叫 index.html 新增的單一收口 helper window._applyBattlePrepToHero(h,tag)(至寶→裝備→寵物固定順序·內建 h._battlePrepApplied 冪等旗標防雙套·helper 不存在時退回原 _applyFollowPetToHero 呼叫);舊行全數保留為註解。⚠ 需 index.html 同版 v5.74.0(helper 定義在該檔) ｜ ★ v4.28.0(2026-07-06)【解凍】— 需求3(圖1「無寵物」根治):單人練習/一人龍王戰的「WB-Solo」p1 組建路徑(L≈12974·與連線戰 _wbUiStartBattle L9020 不同函式)原本漏呼叫 window._applyFollowPetToHero → 設了跟隨寵物的英雄一進單人龍王戰沒寵物(卡片浮圖/貓掌爆發槽/寵物爆發/英雄詳細預覽皆顯示「無寵物」),要到戰鬥中出現寵物並手動選擇後才顯示;比照連線戰在 p1.push 前補套跟隨寵物(素質加成 + 自動裝備該寵物 + 爆發旗標)·此路徑唯一套用點不雙套 → 一進場即自動讀取玩家已設定的跟隨寵物並顯示。另圖1 英雄預覽被超級血條蓋住/圖2 浮圖縮小下移 皆在 index.html。⚠ 需 index.html 同版 v4.28.0 ｜ ★ v4.25.0(2026-07-06)— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到龍頭;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處·硬編碼全龍王通用·無 _bossBgY)。需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)— ①戰鬥畫面 BOSS 背景圖 Y 10%→-10%(全龍王下移·避開上半部 HP 條;_wbRenderBattleScreen JS + CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊補套跟隨寵物(需求3甲·_applyFollowPetToHero·唯一套用點不雙套)。需 index.html 同版 v4.22.0 -->
+<!-- ★ v5.110.0(2026-08-23・老師裁定甲)— 【龍王戰禁用英雄:煉丹小藥童／神偷】老師原話①「龍王戰無法使用丹藥盒,所以煉丹小童排除龍王戰編組」②「龍王戰不會掉落物品,所以盜賊也排除編組」。新增**單一真相來源** window._WB_BANNED_HEROES(名稱→理由)＋ _wbIsHeroBanned()＋ _wbBanReasonText()(鐵律 1.232 雙版文案),八個排除點全部讀這一份:①_wbGetAvailableHeroes 主 filter(選角清單/替補 picker/房主代打槽三處共用同一支,一次到位)②該函式的 catch fallback ③_wbTcOpenSwapHero 的 fallback filter ④_wbTcGetMyDefaultLoadout(老師裁定②:代表英雄剛好是禁用角 ⇒ 龍王戰內丟棄改挑可出戰英雄,**刻意不動玩家主程式的代表英雄設定**,那在名片/好友榜/冒險關都合法)⑤_wbSoloLoadLoadout(單人練習隊伍存檔可能是禁用生效前存的)⑥單人「冒險預設陣容第一組」帶入(該槽留空,不替玩家亂選)⑦_wbTcHostStartBattle 房主開戰守門＋單人開戰守門(老師裁定①「開戰前強制換角」的最後一道,例外時保守放行)⑧_wbTcRenderTeamConfirm 我方槽位**就地強制換角**(擋得住「已經選好才上線」的情形,挑替補時避開隊友已選英雄,setMyHero 寫回＋_wbBanSwapBusy 旗標防迴圈)。⚠ 只影響龍王戰,冒險關(台/日/埃/中國)與鬥技場完全不受影響。⚠ 需 index.html 同版 v5.110.0 ｜ ★ v5.74.0(2026-08-18)【解凍】— 老師回報重大 BUG 根治(裁定丙):龍王戰「至寶 + 裝備」從未生效。連線戰(_wbUiStartBattle·WB-Host)與單人練習(WB-Solo)兩條 p1 組建路徑,自 v4.22.0/v4.28.0 起雖已補套跟隨寵物,但**至寶與裝備一直漏套**:至寶 id 有寫進 h._wbTreasureIds 卻沒有任何人呼叫 _applyTaiwanTreasureToHero 去消費,裝備則連 h._gearEff 都不存在 → 打神鞭對 BOSS +48%、青龍偃月刀暴擊、玉山盾減傷、裝備技能/爆發增傷與減傷 50% 等在龍王戰全數無效。修法:兩處改呼叫 index.html 新增的單一收口 helper window._applyBattlePrepToHero(h,tag)(至寶→裝備→寵物固定順序·內建 h._battlePrepApplied 冪等旗標防雙套·helper 不存在時退回原 _applyFollowPetToHero 呼叫);舊行全數保留為註解。⚠ 需 index.html 同版 v5.74.0(helper 定義在該檔) ｜ ★ v4.28.0(2026-07-06)【解凍】— 需求3(圖1「無寵物」根治):單人練習/一人龍王戰的「WB-Solo」p1 組建路徑(L≈12974·與連線戰 _wbUiStartBattle L9020 不同函式)原本漏呼叫 window._applyFollowPetToHero → 設了跟隨寵物的英雄一進單人龍王戰沒寵物(卡片浮圖/貓掌爆發槽/寵物爆發/英雄詳細預覽皆顯示「無寵物」),要到戰鬥中出現寵物並手動選擇後才顯示;比照連線戰在 p1.push 前補套跟隨寵物(素質加成 + 自動裝備該寵物 + 爆發旗標)·此路徑唯一套用點不雙套 → 一進場即自動讀取玩家已設定的跟隨寵物並顯示。另圖1 英雄預覽被超級血條蓋住/圖2 浮圖縮小下移 皆在 index.html。⚠ 需 index.html 同版 v4.28.0 ｜ ★ v4.25.0(2026-07-06)— 戰鬥畫面 BOSS 背景圖 Y -10%→-30%(全龍王再下移 20%·露出龍頭·老師回報 -10% 仍看不到龍頭;_wbRenderBattleScreen JS + #wb-lobby-overlay.wb-in-battle CSS fallback 兩處·硬編碼全龍王通用·無 _bossBgY)。需 index.html 同版 v4.25.0 ｜ ★ v4.22.0(2026-07-06)— ①戰鬥畫面 BOSS 背景圖 Y 10%→-10%(全龍王下移·避開上半部 HP 條;_wbRenderBattleScreen JS + CSS fallback 兩處)②世界 BOSS 連線戰 p1 組隊補套跟隨寵物(需求3甲·_applyFollowPetToHero·唯一套用點不雙套)。需 index.html 同版 v4.22.0 -->
 <!-- ★ v4.8.0(2026-07-04)— ① 龍王總 HP 5,000,000 → 10,000,000 全 UI 同步(靜態卡×2/超級血條預設/介紹彈窗/戰場血條 fallback×3/註解);② 替補英雄列表(_wbTcOpenSwapHero)三升級:(a)列表上方加「篩選列」(全部/⚔主傷害/💚主回復/🌀主控場/🛡主坦克/🎲其他/👑UR/🌈SSR/⭐SR/💎R + 🔍條件搜尋 openCondSearch('wbswap'),沿用主程式既有分類與條件搜尋口徑 window._wbSwapHeroPassFilter,至寶 modal 共用 grid 時自動隱藏);(b)每隻英雄名下加「📖 圖鑑整備」鈕(_wbOpenCodexFromSwap → 主程式 _openHeroCodexFromWbSwap 開該英雄圖鑑升級/裝至寶/裝寵物,關閉自動回到替補列表且等級即時刷新;已選英雄鈕改保留可點=只擋選角不擋整備);(c)替補縮圖 object-position 50%→30%(Y 下移 20%),排除 33 隻圖高已適當者(_WB_SWAP_THUMB_KEEP) -->
 <!-- ★ v3.15.61(2026-06-20)— 大廳「當前龍王」素質 + 「下一隻龍王搶先看」整卡改資料驅動,不再寫死,輪替推進自動跟上:(a)_wbApplyCurrentBossSkin 追加更新當前龍王卡的攻擊/特技/速度(由寫死火龍王 49/50/15 改讀 HERO_DB[當前龍王];HP 統一 5,000,000 不動);(b)新增 _wbApplyNextBossPreview(依 _wbGetNextBossId 取輪替下一隻龍王 → 名稱/立繪/--wb-boss-bg/屬性/攻擊·特技·速度/簡介=背景故事+自動護盾文案/主題色依屬性 + 「能力詳細介紹」鈕呼叫 _wbAdvOpenBossInfoPopup(nextId)),修正原寫死土龍王過時文案(額外減傷 40%→實際 30% 等);next-preview HTML 加 hooks(wb-nextboss-img/nm/desc/elem/atk/sp/spd + #wb-next-boss-preview/#wb-nextboss-badge + .wb-nextboss-info-btn),排程於 skin 旁 setTimeout 120/1850,index.html 雲端當前龍王解析兩處 re-apply 同步呼叫 -->
 <!-- ★ v3.15.48(2026-06-19)— 修世界 BOSS 龍王戰崩毀後 guest 端卡死「無法離開戰鬥」:根因=guest 端結算(_wbClientCheckEnded)只認房主廣播 meta.status==='ended' 才觸發,但房主第 11 回合崩毀(_wbForceCollapseAt11 廣播 force-collapse-at-11 把 p1 全歸 0)後「meta.status='ended'」的 sync 若沒送達 guest(網路丟包/房主端也卡),guest 死等 ended → 永久卡戰場。修:_wbClientApplyWire 套完狀態後偵測「p1 全員 curHp<=0(玩家方全滅)」且未結算 → 自主走 checkWin 進結算(設 _wbClientForceCheckWin 放行,不依賴房主再廣播 ended);世界 BOSS 無復活,p1 全滅=確定戰敗不誤判,_wbAdvBattleEnded/_wbClientForceCheckWin 雙旗標守門 -->
@@ -4775,6 +4775,56 @@ try{
   //          fallback 2: null(都失敗就不過濾,全部顯示)
   //   重點:不強制白名單任何英雄 — 嚴格按照玩家解鎖狀態決定能否選。
   //          沒解鎖的英雄(包含日本三大妖怪)就是看不到,這才是「已解鎖」原則。
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v5.110.0(2026-08-23・老師裁定甲)— 龍王戰「禁用英雄名單」(單一真相來源)
+  // ────────────────────────────────────────────────────────────────────
+  //   老師原話①:「龍王戰無法使用丹藥盒,所以煉丹小童排除龍王戰編組」
+  //   老師原話②:「龍王戰不會掉落物品,所以盜賊也排除編組」
+  //   ⇒ 這兩位的核心能力在龍王戰完全不生效,選下去等於自廢一格,故一律不開放出戰。
+  //
+  //   ★★ 名單全遊戲只有這一份 ★★ 所有排除點都讀這支,不得自建第二份:
+  //     ① _wbGetAvailableHeroes 主 filter(選角清單/替補 picker/代打槽三處共用同一支)
+  //     ② _wbGetAvailableHeroes 的 catch fallback
+  //     ③ _wbTcOpenSwapHero 的 fallback filter
+  //     ④ _wbTcGetMyDefaultLoadout(代表英雄預設)
+  //     ⑤ _wbSoloLoadLoadout(單人練習隊伍存檔還原)
+  //     ⑥ 單人練習「冒險預設陣容第一組」fallback
+  //     ⑦ _wbTcHostStartBattle(房主開戰守門)／單人開戰守門
+  //     ⑧ _wbTcRenderTeamConfirm(我方槽位就地強制換角)
+  //   ⚠ 本名單**只影響龍王戰**。冒險關卡(台/日/埃/中國)與鬥技場完全不受影響 ——
+  //     兩位在那些場合的能力都正常生效,不可把這份名單擴散到其他模式。
+  // ════════════════════════════════════════════════════════════════════
+  window._WB_BANNED_HEROES = {
+    '煉丹小藥童': '丹藥盒在龍王戰不能使用',
+    '神偷'      : '龍王戰不會掉落物品',
+  };
+  //   ⚠ 一律走 hasOwnProperty,不可寫成 `_WB_BANNED_HEROES[name]` ——
+  //     物件字面量帶著 Object.prototype,`obj['toString']` 會拿到繼承來的函式而判成 true,
+  //     日後只要有人取了 toString／constructor／valueOf 之類的名字就會被莫名其妙禁掉。
+  //     (沙箱實測:舊寫法對 'toString'／'constructor' 兩筆誤判為禁用)
+  window._wbIsHeroBanned = function(name){
+    try{
+      if(!name || !window._WB_BANNED_HEROES) return false;
+      return Object.prototype.hasOwnProperty.call(window._WB_BANNED_HEROES, name);
+    }catch(_){ return false; }
+  };
+  // 禁用理由文案(★ 鐵律 1.232:簡單風/精緻風雙版必須同時存在)
+  //   ⚠ _artStyle 是主程式的變數,本檔跨檔讀不到 → 一律走 window._artStyle 並加守門。
+  window._wbBanReasonText = function(name){
+    var _r = '';
+    try{
+      if(window._wbIsHeroBanned && window._wbIsHeroBanned(name)){
+        _r = window._WB_BANNED_HEROES[name] || '';
+      }
+    }catch(_){}
+    if(!_r || typeof _r !== 'string') return '';
+    var _cute = false;
+    try{ _cute = (window._artStyle === 'cute'); }catch(_){}
+    return _cute
+      ? ('「' + name + '」在龍王戰幫不上忙喔(' + _r + '),換一隻更能出力的英雄吧!')
+      : ('【' + name + '】的核心能力在龍王戰不生效(' + _r + '),因此不開放於龍王戰出戰。');
+  };
+
   function _wbGetAvailableHeroes(){
     if(typeof HERO_DB === 'undefined') return [];
     // ★ v3.4.8 — 召喚稀有英雄白名單(這幾隻雖然在 BOSS_NAMES,但解鎖後可作為玩家英雄)
@@ -4841,6 +4891,9 @@ try{
       }catch(_eInit){ console.warn('[v3.11.4 _wbGetAvailableHeroes] 補初始 8 隻失敗', _eInit); }
 
       return allNames.filter(function(n){
+        // 0. ★ v5.110.0(老師裁定甲)— 龍王戰禁用名單:能力在龍王戰完全不生效者不開放出戰
+        //    刻意排在最前面 = 不論解鎖與否、稀有度為何,一律看不到。
+        if(window._wbIsHeroBanned && window._wbIsHeroBanned(n)) return false;
         // 1. BOSS / 魔物過濾(BOSS_NAMES 內,但 SUMMON_RARES 豁免)
         if(isBoss(n)) return false;
         const h = HERO_DB[n];
@@ -4858,6 +4911,8 @@ try{
     }catch(e){
       console.warn('[WB-UI] _wbGetAvailableHeroes 失敗,fallback 簡易過濾', e);
       return Object.keys(HERO_DB).filter(function(name){
+        // ★ v5.110.0 — fallback 路徑同樣套用龍王戰禁用名單(漏這裡 = 主路徑一出錯禁用就失效)
+        if(window._wbIsHeroBanned && window._wbIsHeroBanned(name)) return false;
         const h = HERO_DB[name];
         if(!h || h.isBoss || h.isWorldBoss) return false;
         // fallback 也加入 SUMMON_RARES 白名單
@@ -6178,6 +6233,18 @@ try{
     try{
       if(window._myRepHero && window._myRepHero.name) heroName = window._myRepHero.name;
     }catch(_){}
+    // ★ v5.110.0(老師裁定②「代表英雄剛好是禁用角時強制移除該代表角色,重新選用代表英雄」)
+    //   代表英雄若在龍王戰禁用名單內 ⇒ 這裡直接丟棄,落到下面的 fallback 重新挑一隻
+    //   (fallback 讀的 _wbGetAvailableHeroes 已排除禁用角,不可能再挑到)。
+    //   ⚠ 刻意**只在龍王戰內改用別隻**,不動玩家在主程式設定的代表英雄本身 ——
+    //     代表英雄還要用在名片/好友榜/冒險關,那些場合這兩位完全合法,清掉會誤傷。
+    try{
+      if(heroName && window._wbIsHeroBanned && window._wbIsHeroBanned(heroName)){
+        window._wbRepHeroBannedName = heroName;   // 記下來供隊伍頁提示用
+        console.log('[WB-Ban v5.110.0] 代表英雄「' + heroName + '」為龍王戰禁用角,改挑可出戰英雄');
+        heroName = null;
+      }
+    }catch(_){}
     if(!heroName){
       // fallback:用第一個已解鎖英雄
       try{
@@ -6974,6 +7041,65 @@ try{
       }
     }catch(_){}
 
+    // ════════════════════════════════════════════════════════════════
+    // ★ v5.110.0(老師裁定①「開戰前強制換角」)— 我方槽位若是龍王戰禁用角 ⇒ 就地強制換掉
+    // ────────────────────────────────────────────────────────────────
+    //   會走到這裡的情形:(a)禁用上線前就已經在房間裡選好了 (b)雲端既存的 loadout
+    //   (c)代表英雄被禁但走了別條路徑帶入。清單過濾只能擋「還沒選」,擋不住「已經選了」。
+    //   ⚠ 換完呼叫 setMyHero 寫回 ⇒ 觸發 onRoomUpdate → 再 render 一次,但那時 heroName
+    //     已經合法、條件不成立 ⇒ 不會無限迴圈;另加 _wbBanSwapBusy 旗標當雙保險。
+    //   ⚠ 挑替補時避開隊友已選的英雄(沿用 v3.5.73「不重複英雄」規則),
+    //     否則自動換上去的那隻可能跟隊友撞角。
+    // ════════════════════════════════════════════════════════════════
+    try{
+      const _meBan = players.find(p => p && p.uid === myUid);
+      if(_meBan && _meBan.heroName && window._wbIsHeroBanned
+         && window._wbIsHeroBanned(_meBan.heroName) && !window._wbBanSwapBusy){
+        window._wbBanSwapBusy = true;
+        const _bannedWas = _meBan.heroName;
+        let _alt = null;
+        try{
+          const _pool = (typeof _wbGetAvailableHeroes === 'function') ? (_wbGetAvailableHeroes() || []) : [];
+          const _taken = new Set();
+          (players || []).forEach(function(p){
+            if(p && p.uid && p.uid !== myUid && p.heroName) _taken.add(p.heroName);
+          });
+          try{
+            const _asg = window._wbHostAssignedSlots || {};
+            Object.keys(_asg).forEach(function(k){
+              const _hn = _asg[k] && _asg[k].heroName;
+              if(_hn) _taken.add(_hn);
+            });
+          }catch(_){}
+          _alt = _pool.find(function(n){ return !_taken.has(n); }) || _pool[0] || null;
+        }catch(_ePool){ console.warn('[WB-Ban] 取替補英雄失敗', _ePool); }
+        if(_alt){
+          _meBan.heroName = _alt;   // 先改本地,畫面立刻不再顯示禁用角
+          let _extBan = {};
+          try{ _extBan = _wbTcParsePlayerExt(_meBan); }catch(_){ _extBan = { e:null, es:[], t:[] }; }
+          try{
+            Promise.resolve(window._wbNet.setMyHero(_alt, _wbTcStringifyExtWithGrowth(_extBan, _alt)))
+              .then(function(){ try{ _wbTcRenderTeamConfirm(); }catch(_){} })
+              .catch(function(_eW){ console.warn('[WB-Ban] 強制換角寫回失敗', _eW); })
+              .then(function(){ window._wbBanSwapBusy = false; });
+          }catch(_eSet){
+            window._wbBanSwapBusy = false;
+            console.warn('[WB-Ban] setMyHero 呼叫失敗', _eSet);
+          }
+          try{
+            const _why = (window._wbBanReasonText && window._wbBanReasonText(_bannedWas))
+                       || (_bannedWas + ' 不能參加龍王戰');
+            _wbGameAlert('⚠ ' + _why + '\n\n已自動改由「' + _alt + '」出戰,你可以按「🔄 換英雄」再挑別隻。');
+          }catch(_){}
+          console.warn('[WB-Ban v5.110.0] 我方槽位禁用角「' + _bannedWas + '」→ 強制換成「' + _alt + '」');
+        }else{
+          // 一隻可用英雄都挑不到(極端情況)→ 不硬改,交給開戰守門擋下,至少不會把玩家卡在空槽
+          window._wbBanSwapBusy = false;
+          console.warn('[WB-Ban] 找不到可替補的英雄,保留原狀,由開戰守門攔截');
+        }
+      }
+    }catch(_eBan){ console.warn('[WB-Ban] 我方槽位禁用角檢查失敗', _eBan); }
+
     // ★ FIX 20260517(q) — 計算覆蓋率時要把缺的元素「預先分配給 NPC 替補槽」,
     //   讓 UI 顯示「✅ 已覆蓋(NPC 將補上)」而不是「⚠ 還缺」。
     //   分配邏輯:遇到空槽 → 依序把 missing 元素塞進去。
@@ -7740,6 +7866,8 @@ try{
       if(heroes.length === 0 && typeof HERO_DB !== 'undefined'){
         const isBoss = (n) => (typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.includes(n));
         heroes = Object.keys(HERO_DB).filter(n => {
+          // ★ v5.110.0 — 替補 picker 的 fallback 也要套禁用名單
+          if(window._wbIsHeroBanned && window._wbIsHeroBanned(n)) return false;
           if(isBoss(n)) return false;
           const h = HERO_DB[n];
           if(!h || h.isBoss || h.isWorldBoss) return false;
@@ -8321,6 +8449,41 @@ try{
     }catch(eDcGate){
       console.warn('[WB-TC] 場次守門檢查例外', eDcGate);
       // 例外時保守放行(不阻擋,讓後續 client 端預檢 / 結算 bumpDailyCount 兜底)
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // ★ v5.110.0(老師裁定①)— 禁用角守門(最後一道):任一槽位仍是龍王戰禁用角 ⇒ 擋住開戰
+    // ────────────────────────────────────────────────────────────────
+    //   為什麼清單過濾 + 自動換角之外還要這一道:玩家端的自動換角只在
+    //   「隊伍確認頁有 render 到」時才會跑,隊友若卡在舊版 UI、沒重新整理、
+    //   或雲端資料晚到,還是可能帶著禁用角進場 —— 房主這道是全房唯一的收口點。
+    //   ⚠ 例外時保守放行(比照場次守門):禁用角進場只是那格自廢,不會壞資料,
+    //     不值得因為一個 try 例外就讓全房開不了戰。
+    // ════════════════════════════════════════════════════════════════
+    try{
+      const _banHit = [];
+      const _banPlayers = (snap && snap.players) || [];
+      _banPlayers.forEach(function(p){
+        if(p && p.heroName && window._wbIsHeroBanned && window._wbIsHeroBanned(p.heroName)){
+          _banHit.push('・' + (p.name || '隊員') + ' — ' + p.heroName);
+        }
+      });
+      const _banAssign = window._wbHostAssignedSlots || {};
+      Object.keys(_banAssign).forEach(function(k){
+        const _hn = _banAssign[k] && _banAssign[k].heroName;
+        if(_hn && window._wbIsHeroBanned && window._wbIsHeroBanned(_hn)){
+          _banHit.push('・代打槽 ' + (parseInt(k, 10) + 1) + ' — ' + _hn);
+        }
+      });
+      if(_banHit.length > 0){
+        _wbGameAlert('⛔ 下列英雄不能參加龍王戰,請先換角再開戰:\n\n' + _banHit.join('\n')
+          + '\n\n(煉丹小藥童:丹藥盒在龍王戰不能使用/神偷:龍王戰不會掉落物品\n'
+          + '　他們的本領在這裡發揮不出來,換一隻更能出力的英雄吧!)');
+        console.warn('[WB-Ban] 開戰被擋:仍有龍王戰禁用角', _banHit);
+        return;
+      }
+    }catch(eBanGate){
+      console.warn('[WB-Ban] 開戰禁用角守門例外(保守放行)', eBanGate);
     }
 
     // ★ FIX 20260517(bb) — 守門:重新計算元素覆蓋,沒齊不放行
@@ -12530,6 +12693,9 @@ try{
       // 否則(可能版本變動 / 英雄被改名)丟棄該槽
       const _isValidHero = (n) => {
         if(!n) return false;
+        // ★ v5.110.0 — 龍王戰禁用角不還原:這份存檔可能是禁用生效**之前**存下來的,
+        //   不擋掉的話,玩家一進單人練習就自動帶著禁用角回到場上(繞過選角清單)。
+        try{ if(window._wbIsHeroBanned && window._wbIsHeroBanned(n)) return false; }catch(_){}
         try{ if(typeof HERO_DB !== 'undefined' && HERO_DB[n]) return true; }catch(_){}
         return !!(window.HERO_DB && window.HERO_DB[n]);
       };
@@ -12611,6 +12777,14 @@ try{
             try{ if(typeof HERO_DB !== 'undefined' && HERO_DB[_hName]) _isValid = true; }catch(_){}
             if(!_isValid && window.HERO_DB && window.HERO_DB[_hName]) _isValid = true;
             if(!_isValid){ _slotsFromPreset.push(null); continue; }
+            // ★ v5.110.0 — 冒險預設陣容裡若有龍王戰禁用角,不帶進龍王戰:
+            //   該槽留空,由玩家自己指派或交給 NPC 自動補位(不會憑空替他選一隻)。
+            try{
+              if(window._wbIsHeroBanned && window._wbIsHeroBanned(_hName)){
+                console.log('[WB-Ban v5.110.0] 冒險預設陣容的「' + _hName + '」為龍王戰禁用角,該槽留空');
+                _slotsFromPreset.push(null); continue;
+              }
+            }catch(_){}
             // 從該英雄當前裝備的至寶清單抽出 ID
             let _heroTreasures = [];
             try{
@@ -12807,6 +12981,28 @@ try{
           });
         }
       }
+      // ★ v5.110.0(老師裁定①)— 單人練習同樣要擋:存檔還原/預設陣容雖已過濾,
+      //   但玩家可能在舊版存檔還沒被丟棄的空窗期進來,這裡是單人流程唯一的收口點。
+      try{
+        const _banHitSolo = [];
+        for(let _bi = 0; _bi < 4; _bi++){
+          const _bp = _wbSoloFakePlayers && _wbSoloFakePlayers[_bi];
+          if(_bp && _bp.heroName && window._wbIsHeroBanned && window._wbIsHeroBanned(_bp.heroName)){
+            _banHitSolo.push('・槽位 ' + (_bi + 1) + ' — ' + _bp.heroName);
+          }
+          const _ba = _hostAssign[_bi];
+          if(_ba && _ba.heroName && window._wbIsHeroBanned && window._wbIsHeroBanned(_ba.heroName)){
+            _banHitSolo.push('・代打槽 ' + (_bi + 1) + ' — ' + _ba.heroName);
+          }
+        }
+        if(_banHitSolo.length > 0){
+          _wbGameAlert('⛔ 下列英雄不能參加龍王戰,請先換角再開戰:\n\n' + _banHitSolo.join('\n')
+            + '\n\n(煉丹小藥童:丹藥盒在龍王戰不能使用/神偷:龍王戰不會掉落物品)');
+          console.warn('[WB-Ban] 單人開戰被擋:仍有龍王戰禁用角', _banHitSolo);
+          return;
+        }
+      }catch(_eBanSolo){ console.warn('[WB-Ban] 單人開戰禁用角守門例外(保守放行)', _eBanSolo); }
+
       const cov = _wbTcCalcCoverage(_coverPool);
       if(cov.missing.length > 0){
         const _missTxt = cov.missing.map(e => {
