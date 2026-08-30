@@ -11819,7 +11819,16 @@ try{
         return null;
       }
       // 從全部 ADV_QUIZ_DB 純隨機抽一題(開戰題只跑一次,不用考慮去重)
-      return ADV_QUIZ_DB[Math.floor(Math.random() * ADV_QUIZ_DB.length)];
+      // ★ v5.116.0(老師需求)— 先套用 GM「題庫可見性」的 'wb' 開關(單一真相在 index.html);
+      //   ⚠ 過濾後為空一律退回完整 ADV_QUIZ_DB(開戰題抽不到會讓開場流程走 fallback,體驗變差)。
+      var _wbPool = ADV_QUIZ_DB;
+      try{
+        if(typeof window._lxpsQuizItemVisible === 'function'){
+          var _wbVis = ADV_QUIZ_DB.filter(function(_q){ return window._lxpsQuizItemVisible(_q, 'wb'); });
+          if(_wbVis.length) _wbPool = _wbVis;
+        }
+      }catch(_){}
+      return _wbPool[Math.floor(Math.random() * _wbPool.length)];
     }catch(e){
       console.warn('[WB] _wbPickRandomQuestion 失敗', e);
       return null;

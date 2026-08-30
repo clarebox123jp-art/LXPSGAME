@@ -1,5 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
  * world-boss.js — 世界 BOSS 討伐戰獨立模組
+ * ★ v5.116.0(2026-08-30・老師需求)— _wbGetAllQuestionPool() 套用 GM「題庫可見性」的 'wb' 開關(單一真相 window._lxpsQuizItemVisible 在 index.html);全部被關掉時自動退回完整題庫,絕不讓龍王戰出不了題。需 index.html 同版 v5.116.0
  * ★ v5.23.0(2026-08-09)— 六處龍王爆發 doDmg 加 _wbBurstMinHalf+_wbBurstOrigDmg(老師裁定:爆發遇強大減傷/無敵至少保留一半傷害;下限引擎在 index.html doDmg 尾端)
  * ★ v5.22.1(2026-08-09)— 普攻/追擊 LOG「維蘇威炎爪」改依當前龍王屬性動態(海龍王戰出現火龍王爪修正);爆發沒傷害根因②(奧汀注視免疫漏 ignoreBuffs)修在 index.html v5.22.1
  * ★ v5.22.0(2026-08-09)— ①_WB_BOSS_ROAR_LINES/_ROAR_COLOR 補齊 海/暗/光/幻 4 龍王專屬開場咆哮+配色(原缺→fallback 火龍王,
@@ -1581,10 +1582,29 @@
           for(const q of arr){
             // 只收有 q 跟 a 欄位的題目(過濾掉設定資料)
             if(q && (q.q || q.question) && (q.a || q.answer || q.options)){
+              // ★ v5.116.0(老師需求)— 套用 GM「題庫可見性」的 'wb'(世界龍王戰)開關。
+              //   單一真相在 index.html:window._lxpsQuizItemVisible(q, scene)。
+              //   ⚠ 函式不存在(舊版 index / 載入順序)一律放行 = 舊行為零回歸。
+              if(typeof window._lxpsQuizItemVisible === 'function'
+                 && !window._lxpsQuizItemVisible(q, 'wb')) continue;
               pool.push(q);
             }
           }
         }
+      }catch(_){}
+    }
+    // ⚠ 全部被 GM 關掉時退回「不過濾」的完整池:龍王戰沒題目會直接卡住整場連線戰,
+    //   寧可多出幾題,也不能讓學生開了房間卻出不了題。
+    if(pool.length === 0){
+      try{
+        for(const name of sources){
+          const arr = window[name];
+          if(!Array.isArray(arr)) continue;
+          for(const q of arr){
+            if(q && (q.q || q.question) && (q.a || q.answer || q.options)) pool.push(q);
+          }
+        }
+        if(pool.length) console.warn('[WB] 題庫可見性把龍王戰題庫全關掉了 → 已自動退回完整題庫');
       }catch(_){}
     }
     return pool;
