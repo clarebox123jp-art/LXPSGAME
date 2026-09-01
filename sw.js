@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.5.97';   // ★ v3.5.97(對應遊戲 v5.117.0)— 版號 bump:admin_panel.js 選單分組與整併改版,必須讓已安裝 SW 的 iPad 重抓 shell 快取。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.96(對應遊戲 v5.116.0)— 版號 bump:world-boss.js / world-boss-ui.html 同輪接線「題庫可見性」的 'wb' 場景,必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則龍王戰會吃到沒有可見性守門的舊檔。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.95(對應遊戲 v5.115.0)— 版號 bump:adv_quiz_db.js 新增六上自然 200 題(檔案變大約 32KB),必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則學生會吃到沒有六上自然題庫的舊檔而在科目選單看不到四個新單元。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.5.98';   // ★ v3.5.98(對應遊戲 v5.126.0)— 【新裝置完整安裝卡很久根治·老師換新電腦實測回報】①install 只抓一次 index.html:'./' 與 './index.html' 是同一份檔(gz 約 3.2MB),舊碼兩個 key 各 fetch 一次白抓一趟,而 SW 必須等 install 全部跑完才 active/claim ⇒ 客端在那之前 controller 恆 null;改為抓一次 clone 塞兩個 key,shell 由約 7.6MB 降為約 4.4MB。②預載前的快取比對改分批(每批 60)並逐批回報 scanning 進度:舊碼一次丟出全部 URL 的 cache.match(每支最多 3 個候選 key)、全掃完才送第一筆 progress ⇒ 新裝置快取全空時讀條停在 0 不動。③並行數改吃客端提示 iosLike:原 UA 判定含 Macintosh,真 Mac 桌機被誤判成 iPad 砍到 3 條並行且每批多休 100ms(iPadOS 的 UA 同樣是 Macintosh,唯一分得開的 maxTouchPoints 只有主執行緒讀得到);沒帶 iosLike 的舊客端一律退回原 CONCURRENT,行為不變。★ 快取鍵格式、CDN 改寫、fetch 策略一行未動。 ｜前版   // ★ v3.5.97(對應遊戲 v5.117.0)— 版號 bump:admin_panel.js 選單分組與整併改版,必須讓已安裝 SW 的 iPad 重抓 shell 快取。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.96(對應遊戲 v5.116.0)— 版號 bump:world-boss.js / world-boss-ui.html 同輪接線「題庫可見性」的 'wb' 場景,必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則龍王戰會吃到沒有可見性守門的舊檔。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.95(對應遊戲 v5.115.0)— 版號 bump:adv_quiz_db.js 新增六上自然 200 題(檔案變大約 32KB),必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則學生會吃到沒有六上自然題庫的舊檔而在科目選單看不到四個新單元。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -52,6 +52,11 @@ const SHELL_URLS = [
 
 // 偵測 iPad/iOS — 限制並行 3 (桌機 8)
 // (SW 內 navigator.userAgent 仍可用, 但要保守)
+// ★ v3.5.98 — 這條 UA 判定含 Macintosh,所以「真正的 Mac 桌機」也會被當成 iPad,
+//   並行數被砍到 3 條 ⇒ 完整安裝慢一倍以上。iPadOS 的 UA 同樣是 Macintosh,
+//   唯一分得開的是 navigator.maxTouchPoints,而 SW 的 WorkerNavigator 讀不到它。
+//   ⇒ 保留本常數當「客端沒給提示時的保守預設」,實際並行數改由 index.html 傳來的
+//     iosLike 決定(見 precacheUrlsInBatches 的 conc)。
 const IS_IOS_LIKE = /iPad|iPhone|iPod|Macintosh/i.test(self.navigator.userAgent || '');
 const CONCURRENT = IS_IOS_LIKE ? 3 : 8;
 
@@ -168,9 +173,27 @@ self.addEventListener('install', function(event){
   console.log('[SW] install', SW_VERSION);
   event.waitUntil(
     caches.open(SHELL_CACHE).then(function(cache){
+      // ★ v3.5.98 — './' 與 './index.html' 是同一份檔案(壓縮後約 3.2MB)。
+      //   舊碼把它們當成兩個獨立 URL 各 fetch 一次(且 cache:'reload' 會繞過瀏覽器剛剛
+      //   為了顯示網頁而下載的那一份)⇒ 新裝置 install 白抓 3.2MB,
+      //   而 SW 必須等 install 全部跑完才會 active/claim ⇒ 這段就是老師回報
+      //   「新電腦點完整安裝卡很久才開始下載」的第二大塊。
+      //   修法:只抓一次,clone 之後塞進兩個 cache key(結果與舊碼完全一致,只是少抓一趟)。
+      var _INDEX_KEYS = ['./', './index.html'];
+      var _indexJob = fetch('./index.html', { cache: 'reload' }).then(function(res){
+        if(res && (res.ok || res.type === 'opaque')){
+          var res2 = res.clone();               // ⚠ 必須在 body 被 put 消費前先 clone
+          return cache.put('./index.html', res).then(function(){
+            return cache.put('./', res2);
+          });
+        }
+      }).catch(function(err){
+        console.warn('[SW] shell failed: ./index.html', err);
+      });
+      var _rest = SHELL_URLS.filter(function(u){ return _INDEX_KEYS.indexOf(u) === -1; });
       // 用 addAll 但允許部分失敗 — 改用 Promise.allSettled
       return Promise.allSettled(
-        SHELL_URLS.map(function(url){
+        [_indexJob].concat(_rest.map(function(url){
           return fetch(url, { cache: 'reload' }).then(function(res){
             if(res && (res.ok || res.type === 'opaque')){
               return cache.put(url, res);
@@ -178,7 +201,7 @@ self.addEventListener('install', function(event){
           }).catch(function(err){
             console.warn('[SW] shell failed:', url, err);
           });
-        })
+        }))
       );
     }).then(function(){
       // 不自動 skipWaiting — 由 client 發訊息決定 (避免戰鬥中斷線)
@@ -542,7 +565,11 @@ self.addEventListener('message', function(event){
     //    新機仍能靠三 key 查詢命中 jpg 鍵直接用,jpg 全機型可解碼,絕不存出解不開的格式)。
     var wantsWebp = (_lxpsAcceptWebp === true) || (_lxpsAcceptWebp === null && data.supportsWebp === true);
 
-    precacheUrlsInBatches(urls, client, batchId, wantsWebp);
+    // ★ v3.5.98 — 並行數由客端提示決定(SW 讀不到 maxTouchPoints,見檔頭 IS_IOS_LIKE 註記)。
+    //   沒帶 iosLike 的舊客端(例如吃到舊快取的分頁)維持原本的保守 CONCURRENT。
+    var conc = (typeof data.iosLike === 'boolean') ? (data.iosLike ? 3 : 8) : CONCURRENT;
+
+    precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc);
     return;
   }
 
@@ -579,7 +606,9 @@ self.addEventListener('message', function(event){
 // ★ v3.5.93 — 格式感知:每個 png URL 依 wantsWebp 換算偏好格式(webp/jpg),
 //   已快取過濾查「偏好鍵→原 png 鍵→jpg 鍵」;下載先抓偏好格式,404(透明圖無 jpg)退回原 png,
 //   cache key 用「實際抓到的格式 URL」— 舊 iPad 完整下載從 297MB 級縮到 43MB 級。
-function precacheUrlsInBatches(urls, client, batchId, wantsWebp){
+function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
+  // ★ v3.5.98 — conc 由客端提示決定;沒帶(舊客端)一律退回原本的 CONCURRENT,行為不變
+  var CONC = (typeof conc === 'number' && conc > 0) ? conc : CONCURRENT;
   var total = urls.length;
   var done = 0;
   var failed = 0;
@@ -633,13 +662,42 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp){
       });
     }
     // 先過濾掉已快取的 (避免重複下載;任一格式鍵命中即視為已有)
+    // ★ v3.5.98 — 舊碼是「一次丟出全部 URL 的 cache.match(每支最多 3 個候選 key),
+    //   全部掃完才送第一筆 progress」。新裝置快取全空 ⇒ 每支都要試滿 3 個 key 才確定沒有,
+    //   這整段完全沒有回報 ⇒ 玩家看到讀條停在 0 不動,以為當掉了。
+    //   修法:①掃描前先送一筆 scanning 進度 ②分批掃並逐批回報 ③不再一次丟出上千個 cache.match。
     var plans = urls.map(planFor);
-    return Promise.all(plans.map(function(pl){
-      return matchAny(pl.keys).then(function(hit){
-        return hit ? null : pl; // 已有快取 → null, 需要抓 → plan
+    var SCAN_CHUNK = 60;
+    var scanned = 0;
+    var toFetch = [];
+    function sendScanProgress(){
+      if(client){
+        client.postMessage({
+          type: 'PRECACHE_PROGRESS',
+          batchId: batchId,
+          scanning: true,      // ⚠ index.html 靠這個旗標走「正在檢查已有資源」文案(不動進度條)
+          scanned: scanned,
+          done: 0,
+          failed: 0,
+          total: total
+        });
+      }
+    }
+    sendScanProgress();
+    function scanNext(){
+      if(scanned >= plans.length) return Promise.resolve();
+      var slice = plans.slice(scanned, scanned + SCAN_CHUNK);
+      scanned += slice.length;
+      return Promise.all(slice.map(function(pl){
+        return matchAny(pl.keys).then(function(hit){
+          if(!hit) toFetch.push(pl);   // 已有快取 → 略過, 需要抓 → 收進待抓清單
+        });
+      })).then(function(){
+        sendScanProgress();
+        return scanNext();
       });
-    })).then(function(filtered){
-      var toFetch = filtered.filter(function(u){ return u !== null; });
+    }
+    return scanNext().then(function(){
       var alreadyCached = total - toFetch.length;
       done = alreadyCached;
       sendProgress();
@@ -650,7 +708,7 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp){
           sendComplete();
           return;
         }
-        var batch = toFetch.splice(0, CONCURRENT);
+        var batch = toFetch.splice(0, CONC);   // ★ v3.5.98 — 原為寫死的 CONCURRENT
         return Promise.all(batch.map(function(pl){
           // ★ v3.4.15 — 跨域走 CDN 改寫 (繞 GitHub 429), 同源照舊
           // ★ v3.5.89 — 改 CORS 驗證抓取:只快取確認 200,不再把 no-cors opaque 錯誤當成功圖存
@@ -684,7 +742,8 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp){
         })).then(function(){
           sendProgress();
           // iPad 間隔: 每批之間休 100ms 喘口氣
-          return new Promise(function(r){ setTimeout(r, IS_IOS_LIKE ? 150 : 50); });
+          // ★ v3.5.98 — 改跟著實際並行數走(原讀 IS_IOS_LIKE,真 Mac 桌機會被誤判成 iPad 每批多休 100ms)
+          return new Promise(function(r){ setTimeout(r, CONC <= 3 ? 150 : 50); });
         }).then(processBatch);
       }
 
