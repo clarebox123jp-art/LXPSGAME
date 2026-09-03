@@ -843,7 +843,41 @@ body.wb-in-worldboss-battle .popup {
 /* vignette removed */
 #overlay .title-wrap,#overlay .subtitle{position:relative;z-index:2}
 #overlay #game-info-btn{position:absolute;z-index:2;top:78%;left:50%;transform:translateX(-50%);white-space:nowrap;}
-#overlay #adventure-btn{position:absolute;z-index:2;top:67%;left:50%;transform:translateX(-50%)}
+/* ★ v5.140.0(2026-09-03・老師需求「小遊戲做成全新獨立遊戲·入口放在展開冒險故事的同層旁邊」)—
+   兩顆按鈕以畫面中線為軸「各自往外推 14px」⇒ 天然左右並排,
+   ⚠ 這個寫法刻意「不需要知道任一顆按鈕的寬度」:
+      展開冒險故事 translateX(calc(-100% - 14px)) ⇒ 右緣落在 中線-14px
+      迷你遊戲模式 translateX(14px)               ⇒ 左緣落在 中線+14px
+   字級、語言、字數怎麼變都不會互相重疊,比寫死 left/margin 穩健。
+   ⚠ :hover 的 transform 會整條覆寫,所以下方 #adventure-btn:hover 也必須帶同一個位移。 */
+#overlay #adventure-btn{position:absolute;z-index:2;top:67%;left:50%;transform:translateX(calc(-100% - 14px))}
+#overlay #minigame-btn{
+  position:absolute;z-index:2;top:67%;left:50%;transform:translateX(14px);
+  white-space:nowrap;text-decoration:none;display:inline-block;
+  padding:15px 30px;border-radius:16px;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-size:26px;font-weight:800;
+  color:#eafff4;background:linear-gradient(135deg,rgba(20,90,62,0.92),rgba(50,150,105,0.88));
+  border:3px solid rgba(140,230,185,0.75);
+  box-shadow:0 0 26px rgba(80,220,150,0.55),0 6px 0 rgba(0,0,0,0.35);
+  text-shadow:0 2px 4px rgba(0,0,0,0.55);
+  touch-action:manipulation;
+}
+#overlay #minigame-btn:hover{
+  background:linear-gradient(135deg,rgba(30,120,82,0.94),rgba(70,180,130,0.9));
+  border-color:#b6f5d6;color:#fff;
+  box-shadow:0 0 40px rgba(110,240,175,0.85),0 6px 0 rgba(0,0,0,0.35);
+  transform:translateX(14px) scale(1.04);
+}
+#overlay #minigame-btn:active{transform:translateX(14px) translateY(3px);box-shadow:0 0 26px rgba(80,220,150,0.55),0 3px 0 rgba(0,0,0,0.35);}
+/* 窄螢幕(手機直向/小平板)並排會太擠 ⇒ 自動改回「上下排列」:
+   展開冒險故事回到置中 67%,迷你遊戲模式移到它正下方 73.5%(start-btn 在 79%,不相撞)。 */
+@media (max-width:900px){
+  #overlay #adventure-btn{transform:translateX(-50%)}
+  #adventure-btn:hover{transform:translateX(-50%) scale(1.04) !important;}
+  #overlay #minigame-btn{top:73.5%;transform:translateX(-50%);font-size:21px;padding:11px 22px;}
+  #overlay #minigame-btn:hover{transform:translateX(-50%) scale(1.04);}
+  #overlay #minigame-btn:active{transform:translateX(-50%) translateY(3px);}
+}
 #overlay #start-btn{position:absolute;z-index:2;top:79%;left:50%;transform:translateX(-50%)}
 #overlay #chrome-hint-btn{position:absolute;z-index:2;top:91%;left:50%;transform:translateX(-50%);white-space:nowrap;}
 /* 主標題容器 */
@@ -1643,7 +1677,9 @@ body.wb-in-worldboss-battle .popup {
   background:linear-gradient(135deg,rgba(160,100,0,0.92),rgba(230,160,20,0.88));
   border-color:#ffe878;color:#fff8d0;
   box-shadow:0 0 40px rgba(255,200,60,0.9),0 0 80px rgba(200,130,0,0.5);
-  transform:translateX(-50%) scale(1.04);
+  /* ★ v5.140.0 — 與並排定位一致(見上方 #overlay #adventure-btn);
+     若只寫 translateX(-50%) 會在 hover 瞬間跳回中央並壓到迷你遊戲鈕。 */
+  transform:translateX(calc(-100% - 14px)) scale(1.04);
 }
 #adventure-btn:hover::before{transform:translateX(100%);}
 
