@@ -8,14 +8,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="小英雄小遊戲">
 <meta name="theme-color" content="#08090d">
-<meta name="description" content="力行國小・木柵與台灣九格小學堂 — 小英雄大對抗的獨立小遊戲版">
-<title>小英雄小遊戲 — 木柵・台灣九格小學堂</title>
+<meta name="description" content="力行國小・木柵與台灣小學堂 — 小英雄大對抗的獨立小遊戲版">
+<title>小英雄小遊戲 — 木柵・台灣小學堂</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.0.0(2026-09-03)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.3.0(2026-09-05)
+     ★ v1.3.0(老師裁定 1甲 2丙 3甲):每款專屬 BGM + 整頁場景背景 + 題卡橫幅 + 答對/結算特效
+       + 介面精緻化 + iPad 斷點放大;「九格小學堂」更名「小學堂」。細節見 CSS 檔尾 v1.3.0 區塊與各函式註記。
      ★ 與主程式 index.html 完全分離:不引用主程式任何 JS/CSS/全域變數/localStorage 鍵。
      ★ 存在目的(老師需求):平板老舊、校網太差而開不動「小英雄大對抗」的學生,
        至少能秒開這個小程式來玩 ⇒ 首載只有本檔 + minigame_db.js,無框架、無外部字型。
@@ -404,7 +406,7 @@ button[disabled]{opacity:.45;}
 #modal h3{margin:0 0 4px;font-size:21px;color:var(--gold);}
 #modal .tag{font-size:13px;opacity:.75;margin-bottom:12px;}
 #modal .sec{margin:12px 0;}
-#modal .sec b{display:block;font-size:14px;color:var(--gold);margin-bottom:2px;}
+#modal .sec b{display:block;font-size:14px;color:var(--gold);margin-bottom:2px;font-weight:700;}  /* v1.3.0 明寫 700:<b> 預設 bolder 會被字重自檢抓到 */
 #modal .row{display:flex;gap:10px;margin-top:16px;}
 #modal .row button{flex:1;}
 
@@ -430,6 +432,424 @@ button[disabled]{opacity:.45;}
   .cdiff{font-size:12px;}
   .card{font-size:17px;padding:15px 12px;}
   .opt{font-size:15px;padding:12px 6px;}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ★ v1.3.0(老師裁定 1甲 2丙 3甲)— 畫面精緻化:整頁場景背景 + 題卡橫幅 + 特效 + iPad 放大
+   ⚠ 這一段刻意放在檔尾:全部是「覆寫」既有規則,靠 cascade 順序生效,
+     舊規則一行不刪(要回退只要整段拿掉)。
+   ⚠ 顏色一律走最上面的 CSS 變數;字重只用 400/700/900(v1.2.1 鐵則)。
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 整頁場景背景(2丙:背景 + 橫幅都要)──
+   固定在最底層、用該款的場景圖(jpg 瘦身版,與縮圖同一張 ⇒ 圖只下載一次)。
+   ★ 壓暗 + 微模糊:字要能讀,場景只是「氣氛」不是主角。
+   ★ 用 opacity 過渡而不是換 src 閃一下:換遊戲時淡出淡入,不會白一下。 */
+#bgscene{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-size:cover;background-position:center 30%;background-repeat:no-repeat;
+  opacity:0;transition:opacity .6s ease;
+  filter:brightness(.42) saturate(1.1) blur(2px);
+  transform:scale(1.04);            /* 模糊會露出邊緣 2px 白邊,放大一點點吃掉 */
+}
+#bgscene.on{opacity:1;}
+/* 底部再壓一層漸層,讓下方按鈕區永遠有足夠對比 */
+#bgscene::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(8,9,13,.15) 0%,rgba(8,9,13,.35) 55%,rgba(8,9,13,.78) 100%);
+}
+.wrap{position:relative;z-index:1;}
+#toast,#modal,#paint-drag{z-index:120;}
+#modal{z-index:110;}
+
+/* ── 題卡上方的場景橫幅(2丙)──
+   關卡圖 + 遊戲名 + 一句主題文字(story 雙版),讓學生知道「我在哪裡玩什麼」。 */
+#scene-banner{
+  position:relative;height:118px;border-radius:18px;overflow:hidden;
+  margin:4px 0 10px;border:2px solid rgba(240,192,96,.45);
+  box-shadow:0 6px 18px rgba(0,0,0,.45);background:var(--ink2);
+}
+#scene-banner img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  filter:brightness(.72) saturate(1.05);
+}
+#scene-banner .sb-txt{
+  position:absolute;left:0;right:0;bottom:0;padding:10px 14px 9px;
+  background:linear-gradient(180deg,transparent,rgba(8,9,13,.88));
+  text-align:left;
+}
+#scene-banner .sb-name{
+  font-size:22px;font-weight:900;color:var(--gold);letter-spacing:1px;line-height:1.2;
+  text-shadow:0 2px 6px rgba(0,0,0,.9);
+}
+#scene-banner .sb-story{
+  font-size:14px;opacity:.92;line-height:1.5;margin-top:2px;
+  text-shadow:0 1px 4px rgba(0,0,0,.9);
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+
+/* ── 首頁:標題區與選單卡精緻化 ── */
+#page-home .sub{font-size:17px;color:var(--gold);letter-spacing:2px;opacity:.95;font-weight:700;}
+#grid{gap:12px;}
+.cell{
+  border:2px solid rgba(240,192,96,.28);
+  background:linear-gradient(180deg,rgba(14,16,24,.92),rgba(20,23,32,.92));
+  box-shadow:0 4px 0 rgba(0,0,0,.35),0 0 0 1px rgba(0,0,0,.4),0 10px 24px rgba(0,0,0,.35);
+  transition:transform .12s,box-shadow .12s,border-color .12s;
+}
+.cell:active{border-color:var(--gold);box-shadow:0 1px 0 rgba(0,0,0,.35),0 0 18px rgba(240,192,96,.35);}
+.cthumb{height:120px;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
+.cthumb img{filter:brightness(.9) saturate(1.1);}
+.cthumb-emo{font-size:46px;}
+.cell .cn{font-size:20px;}
+.cell .cbest{
+  top:8px;right:9px;background:rgba(8,9,13,.78);color:var(--gold);
+  padding:3px 9px;border-radius:999px;border:1px solid rgba(240,192,96,.5);font-size:13px;
+}
+.cell .cstar{font-size:16px;text-shadow:0 0 8px rgba(240,192,96,.6);}
+
+/* ── 遊戲中 HUD:大字晶片 + 倒數環 ── */
+#hud{gap:8px;margin:2px 0 8px;}
+.stat{font-size:17px;padding:8px 14px;min-height:44px;display:inline-flex;align-items:center;
+  border:1px solid rgba(232,228,216,.16);background:rgba(8,9,13,.62);}
+.stat:empty{display:none;}   /* 連擊晶片沒字時不要留一顆空膠囊 */
+/* 倒數環:conic-gradient 畫圓弧(iOS 12.2+ 支援;不支援時退回純圓底+數字,功能不變) */
+#timering{
+  width:52px;height:52px;border-radius:50%;flex:0 0 auto;
+  background:rgba(8,9,13,.62);border:1px solid rgba(232,228,216,.16);
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+#timering::before{
+  content:'';position:absolute;inset:4px;border-radius:50%;background:var(--ink2);
+}
+#timering .tnum{position:relative;font-size:19px;font-weight:900;color:var(--mist);line-height:1;}
+#timering.low .tnum{color:var(--brick);}
+#timebar-wrap{height:12px;background:rgba(8,9,13,.6);border:1px solid rgba(232,228,216,.12);}
+
+/* 題卡:加金框、稍微放大 */
+.card{
+  font-size:22px;border:3px solid rgba(240,192,96,.55);
+  box-shadow:0 5px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.45);
+}
+.card.shake{animation:cshake .4s;}
+@keyframes cshake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+.opt{background:rgba(14,16,24,.92);border-color:rgba(232,228,216,.3);}
+.opt.ok{box-shadow:0 4px 0 rgba(0,0,0,.28),0 0 22px rgba(62,200,122,.55);}
+
+/* 解說改成有標題列的卡片 */
+#feedback{
+  background:rgba(14,16,24,.92);border:2px solid rgba(232,228,216,.18);border-left-width:8px;
+  padding:0;overflow:hidden;font-size:17px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#feedback .fb-head{
+  display:block;font-size:20px;font-weight:900;padding:10px 16px;
+  background:rgba(255,255,255,.06);border-bottom:1px solid rgba(232,228,216,.12);
+}
+#feedback.ok .fb-head{color:var(--grass);}
+#feedback.ng .fb-head{color:var(--brick);}
+#feedback .fb-body{display:block;padding:12px 16px 14px;}
+#feedback .fb-body:empty{display:none;}
+
+/* 分數飄字(答對時從分數晶片飄上去) */
+.scorefloat{
+  position:fixed;z-index:115;pointer-events:none;
+  font-size:26px;font-weight:900;color:var(--gold);
+  text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 14px rgba(240,192,96,.6);
+  animation:sfl 1.1s ease-out forwards;
+}
+@keyframes sfl{0%{opacity:0;transform:translate(-50%,10px) scale(.7);}15%{opacity:1;transform:translate(-50%,0) scale(1.15);}100%{opacity:0;transform:translate(-50%,-70px) scale(1);}}
+/* GIF 特效層(沿用主程式素材 光暈亮星／點擊星星／金色光圈／彩色星星) */
+.fxgif{
+  position:fixed;z-index:114;pointer-events:none;
+  transform:translate(-50%,-50%);opacity:.95;
+  animation:fxin .25s ease-out;
+}
+@keyframes fxin{from{opacity:0;transform:translate(-50%,-50%) scale(.5);}to{opacity:.95;transform:translate(-50%,-50%) scale(1);}}
+
+/* ── 結算頁:獎狀風 ── */
+#result{
+  position:relative;margin-top:8px;padding:26px 18px 22px;border-radius:24px;
+  background:linear-gradient(180deg,rgba(14,16,24,.9),rgba(20,23,32,.94));
+  border:3px solid rgba(240,192,96,.6);
+  box-shadow:0 0 0 6px rgba(8,9,13,.6),0 0 40px rgba(240,192,96,.25),0 14px 40px rgba(0,0,0,.5);
+  overflow:hidden;
+}
+#result::before{
+  content:'';position:absolute;inset:8px;border-radius:18px;
+  border:1px dashed rgba(240,192,96,.35);pointer-events:none;
+}
+#result .r-title{font-size:15px;letter-spacing:6px;color:var(--gold);opacity:.85;font-weight:700;}
+#result .line{font-size:18px;position:relative;}
+#result #r-name{font-size:22px;font-weight:900;margin-top:2px;}
+#result .stars{position:relative;font-size:46px;letter-spacing:8px;margin:8px 0 2px;}
+#result .stars span{display:inline-block;opacity:0;transform:scale(.2);}
+#result .stars span.lit{animation:starpop .55s cubic-bezier(.2,1.6,.4,1) forwards;text-shadow:0 0 16px rgba(240,192,96,.8);}
+#result .stars span.dim{opacity:.22;transform:none;}
+@keyframes starpop{0%{opacity:0;transform:scale(.2) rotate(-40deg);}60%{opacity:1;transform:scale(1.35) rotate(8deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
+#result .big{position:relative;font-size:60px;text-shadow:0 0 22px rgba(240,192,96,.5);}
+#result .r-glow{
+  position:absolute;left:50%;top:44%;width:340px;height:340px;transform:translate(-50%,-50%);
+  pointer-events:none;opacity:0;transition:opacity .5s;
+}
+#result .r-glow.on{opacity:.75;}
+#result .newbest{font-size:24px;}
+#result button{min-height:56px;font-size:20px;}
+
+/* 玩法彈窗:放大、金框 */
+#modal .box{border-color:rgba(240,192,96,.5);max-width:600px;padding:22px 20px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+#modal h3{font-size:24px;}
+#modal .sec{font-size:17px;line-height:1.7;}
+#modal .sec b{font-size:15px;}
+#modal .row button{min-height:56px;font-size:20px;}
+
+/* 觸控目標:全站按鈕與晶片一律 ≥48px(iPad 再放大,見下方斷點) */
+button,.btn{min-height:52px;font-size:19px;}
+.chip{min-height:44px;font-size:15px;padding:8px 14px;display:inline-flex;align-items:center;}  /* inline-flex:<a> 也吃得到 min-height */
+#topbar{min-height:52px;}
+.opt{min-height:66px;font-size:18px;}
+.dbin{min-height:110px;font-size:17px;}
+.ocard{min-height:62px;font-size:18px;}
+.oslot{min-height:70px;}
+.mcard{min-height:82px;font-size:15px;}
+.pchip{width:58px;height:58px;}
+#playbtn{min-height:60px;font-size:22px;}
+#nextrow button{min-height:60px;font-size:21px;}
+
+/* ── v1.3.0 追加(老師:「檢查 repo 有多少圖片和特效沒用到,適當補上」)──
+   橫幅環境 GIF／解說卡圖片／吉祥物／獎盃／登入讀取。素材全為主程式既有檔,逐檔驗過 200。 */
+#scene-banner .sb-amb{
+  position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;
+  opacity:.55;pointer-events:none;mix-blend-mode:screen;
+}
+#feedback .fb-body{display:flex;gap:14px;align-items:flex-start;}
+#feedback .fb-body:empty{display:none;}
+#feedback .fb-img{
+  flex:0 0 118px;width:118px;height:118px;object-fit:cover;border-radius:12px;
+  border:2px solid rgba(240,192,96,.55);box-shadow:0 4px 12px rgba(0,0,0,.45);
+  background:var(--ink);
+}
+#feedback .fb-txt{flex:1;min-width:0;}
+.fxgif.full{left:0;top:0;width:100%;height:100%;transform:none;object-fit:cover;opacity:.5;animation:none;}
+/* 吉祥物(轉學生學霸)+ 對話泡泡:首頁與閘門頁共用 */
+.mascot{display:flex;align-items:center;gap:12px;margin:2px 0 12px;}
+.mascot img{
+  width:96px;height:96px;object-fit:cover;object-position:top;border-radius:50%;flex:0 0 auto;
+  border:3px solid rgba(240,192,96,.6);box-shadow:0 6px 16px rgba(0,0,0,.45);background:var(--ink2);
+}
+.mascot .bubble{
+  position:relative;flex:1;background:rgba(232,228,216,.96);color:#2b2b2b;
+  border-radius:16px;padding:10px 14px;font-size:16px;font-weight:700;line-height:1.55;
+  box-shadow:0 5px 0 rgba(0,0,0,.25);
+}
+.mascot .bubble::before{
+  content:'';position:absolute;left:-10px;top:38px;border:10px solid transparent;
+  border-right-color:rgba(232,228,216,.96);border-left:0;
+}
+#gate-card .mascot{text-align:left;margin-top:12px;}
+/* 結算獎盃／獎牌 */
+#result .r-trophy{
+  position:relative;width:140px;height:140px;object-fit:contain;display:block;margin:2px auto 0;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.6));opacity:0;transform:scale(.4);
+}
+#result .r-trophy.on{animation:starpop .6s cubic-bezier(.2,1.6,.4,1) forwards;}
+/* 登入讀取(貓咪讀取中) */
+#loading{
+  position:fixed;inset:0;z-index:130;background:rgba(8,9,13,.72);
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:6px;
+}
+#loading.show{display:flex;}
+#loading img{width:160px;height:160px;object-fit:contain;}
+#loading span{font-size:17px;font-weight:700;color:var(--gold);}
+/* 聽音:播放中的音符 */
+#earbox{position:relative;}
+#ear-notes{
+  position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:220px;height:90px;
+  object-fit:contain;pointer-events:none;display:none;
+}
+#ear-notes.on{display:block;}
+@media (min-width:1024px){
+  .mascot img{width:124px;height:124px;}
+  .mascot .bubble{font-size:20px;padding:14px 18px;}
+  .mascot .bubble::before{top:48px;}
+  #feedback .fb-img{flex-basis:150px;width:150px;height:150px;}
+  #result .r-trophy{width:180px;height:180px;}
+  #ear-notes{width:300px;height:120px;}
+}
+
+/* ══ iPad 斷點(老師需求「放大按鈕適配 iPad」)══
+   ⚠ 1024px 起算:iPad 橫式(1024/1080/1180/1366)全部命中;iPad 直式(768/810/820/834)走上面的預設值。
+   ⚠ 只放大不改版面結構,九宮格仍是 3 欄;字級跟著放大,不然按鈕大了字反而顯得小。 */
+@media (min-width:1024px){
+  body{font-size:20px;}
+  .wrap{max-width:1100px;padding:14px 22px 60px;}
+  button,.btn{min-height:64px;font-size:22px;padding:14px 26px;border-radius:16px;}
+  .chip{min-height:52px;font-size:18px;padding:10px 20px;}
+  #topbar{min-height:62px;gap:12px;}
+  #who{font-size:17px;}
+  #title-img{max-width:680px;}
+  #page-home .sub{font-size:20px;}
+  #grid{gap:16px;}
+  .cell{min-height:330px;padding:14px 10px 12px;border-radius:22px;}
+  .cthumb{height:170px;}
+  .cthumb-emo{font-size:60px;}
+  .cell .cn{font-size:24px;}
+  .cell .cs{font-size:15px;}
+  .cskill{font-size:14px;padding:3px 10px;}
+  .cdiff{font-size:16px;}
+  .cell .cstar{font-size:19px;}
+  .cell .cbest{font-size:15px;}
+  #scene-banner{height:160px;}
+  #scene-banner .sb-name{font-size:28px;}
+  #scene-banner .sb-story{font-size:17px;}
+  .stat{font-size:20px;padding:10px 18px;min-height:52px;}
+  #timering{width:62px;height:62px;}
+  #timering .tnum{font-size:23px;}
+  #timebar-wrap{height:14px;}
+  .card{font-size:27px;padding:24px 22px;min-height:120px;}
+  #qhint{font-size:17px;}
+  .opts{gap:14px;margin-top:18px;}
+  .opt{min-height:84px;font-size:22px;padding:16px 14px;border-radius:18px;}
+  .opt .oe{font-size:34px;}
+  #feedback{font-size:20px;}
+  #feedback .fb-head{font-size:24px;padding:12px 20px;}
+  #feedback .fb-body{padding:14px 20px 16px;}
+  #nextrow button{min-height:68px;font-size:24px;}
+  /* 各引擎 */
+  #drag-item{font-size:26px;padding:22px 18px;}
+  .dbin{min-height:140px;font-size:20px;}
+  .dbin .be{font-size:40px;}
+  .oslot{min-height:84px;font-size:18px;}
+  .ocard{min-height:76px;font-size:22px;}
+  #matchbox{gap:12px;}
+  .mcard{min-height:104px;font-size:19px;}
+  .mcard::after{font-size:38px;}
+  #reactbox{height:58vh;min-height:380px;}
+  .rdrop{font-size:22px;padding:12px 20px;min-height:54px;}
+  #react-hud{font-size:19px;}
+  #maze-grid{gap:7px;}
+  .mz{font-size:17px;border-radius:12px;}
+  .mz.ans,.mz.bad{font-size:16px;}
+  #maze-info{font-size:19px;}
+  .pcol h4{font-size:18px;}
+  .pchip{width:72px;height:72px;}
+  .pchip span{font-size:15px;}
+  #paint-drag{width:60px;height:60px;}
+  #paint-note{font-size:17px;}
+  #playbtn{min-height:72px;font-size:26px;padding:18px 44px;}
+  #playnote{font-size:17px;}
+  #tw-svg{max-height:62vh;}
+  .spotlbl{font-size:4.2px;}
+  /* 結算與彈窗 */
+  #result{padding:34px 26px 28px;}
+  #result .big{font-size:78px;}
+  #result .stars{font-size:60px;}
+  #result .line{font-size:21px;}
+  #result #r-name{font-size:27px;}
+  #result .newbest{font-size:28px;}
+  #modal .box{max-width:720px;padding:28px 26px;}
+  #modal h3{font-size:28px;}
+  #modal .sec{font-size:20px;}
+  #modal .sec b{font-size:17px;}
+  #modal .tag{font-size:16px;}
+  #gate-card{max-width:680px;}
+  #gate-card h2{font-size:32px;}
+  #gate-card p{font-size:20px;}
+  #toast{font-size:18px;padding:14px 24px;}
+}
+
+/* ══ v1.3.0 — iPad 全螢幕「不捲動」版面(老師需求)══
+   實測(headless Chrome 1024×768):原單欄版面首頁 2236px、答題後 1000~1300px,全部要捲。
+   對策:
+   ① 首頁(≥768px):選單卡改「圖片當底、文字疊在下緣」的緊湊卡,4 欄(橫式 5 欄),15 款一頁放完。
+   ② 遊戲頁(≥1024px 橫式):左欄 340px = 橫幅／HUD／倒數／解說／下一題,右欄 = 作答區;
+      作答後解說出現在左欄,右欄高度不變 ⇒ 不會把畫面撐長。
+   ③ 迷宮與調色的格子尺寸改由 JS 依「剩餘高度」計算(mgFitGrid / renderPaint),不再只看寬度。 */
+@media (min-width:768px){
+  #home-note{display:none;}                 /* 文字併入吉祥物泡泡 */
+  #grid{grid-template-columns:repeat(4,1fr);gap:12px;}
+  .cell{
+    min-height:0;height:176px;padding:0;overflow:hidden;justify-content:flex-end;gap:0;
+    border-radius:18px;
+  }
+  .cell::after{                             /* 下緣漸層,讓白字壓在圖上仍清楚 */
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(8,9,13,0) 25%,rgba(8,9,13,.55) 60%,rgba(8,9,13,.92) 100%);
+    pointer-events:none;
+  }
+  .cthumb{position:absolute;inset:0;height:100%;margin:0;border-radius:0;box-shadow:none;}
+  .cthumb img{filter:brightness(.8) saturate(1.1);}
+  .cthumb-emo{font-size:64px;}
+  .cell .cn,.cell .cs,.cskills,.cdiff,.cell .cstar,.cell .cbest{position:relative;z-index:1;}
+  .cell .cn{font-size:20px;text-shadow:0 2px 6px rgba(0,0,0,.95);line-height:1.2;padding:0 6px;}
+  .cell .cs{display:none;}                  /* 科目已在玩法彈窗顯示,卡上省掉 */
+  .cskills{margin:3px 0 0;}
+  .cskill{font-size:12px;padding:1px 7px;background:rgba(8,9,13,.55);}
+  .cdiff{font-size:13px;margin:2px 0 0;}
+  .cell .cstar{font-size:15px;min-height:0;margin-bottom:8px;}
+  .cell .cbest{position:absolute;top:8px;right:8px;}
+  #title-img{max-width:380px;margin-top:0;}
+  #page-home .sub{margin:2px 0 8px;font-size:16px;}
+  .mascot{margin:0 0 10px;}
+  .mascot img{width:84px;height:84px;}
+}
+@media (min-width:1024px){
+  #grid{grid-template-columns:repeat(5,1fr);gap:12px;}
+  .cell{height:172px;}
+  .cell .cn{font-size:21px;}
+}
+/* iPad 直式:地圖引擎作答後解說會把台灣圖往下推 ⇒ 圖高改依視窗計算(1024 高 ≈ 360px) */
+@media (min-width:768px) and (orientation:portrait){
+  #tw-svg{max-height:calc(100vh - 665px);}
+}
+/* iPad 橫式(1024×768 / 1180×820 / 1366×1024) */
+@media (min-width:1024px) and (orientation:landscape){
+  .wrap{max-width:1180px;padding:8px 22px 20px;}
+  /* 首頁:標題與吉祥物同一列,九宮格 3 列一頁放完 */
+  #page-home{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:22px;align-items:center;}
+  #title-img{grid-column:1;grid-row:1;max-width:340px;margin:0;}
+  #title-fallback{grid-column:1;grid-row:1;}
+  #page-home .sub{grid-column:1;grid-row:2;margin:0;font-size:15px;letter-spacing:1px;}
+  #home-mascot{grid-column:2;grid-row:1 / 3;margin:0;}
+  #grid{grid-column:1 / 3;grid-row:3;margin-top:10px;}
+  .cell{height:170px;}
+  /* 遊戲頁:左右兩欄 */
+  #page-play{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:20px;align-items:start;}
+  #play-left{grid-column:1;grid-row:1;}
+  #play-right{grid-column:2;grid-row:1 / 4;min-width:0;}
+  #page-play > #feedback{grid-column:1;grid-row:2;margin-top:12px;}
+  #page-play > #nextrow{grid-column:1;grid-row:3;margin-top:12px;}
+  #scene-banner{height:auto;margin:0 0 10px;}
+  #scene-banner #sb-img{height:150px;}
+  #scene-banner .sb-amb{height:150px;}
+  #scene-banner .sb-txt{position:static;background:var(--ink2);padding:10px 14px 12px;}
+  #scene-banner .sb-name{font-size:24px;}
+  #scene-banner .sb-story{font-size:16px;-webkit-line-clamp:3;opacity:.88;}
+  #hud{gap:8px;margin:0 0 8px;}
+  .stat{font-size:18px;padding:8px 14px;min-height:46px;}
+  #timering{width:56px;height:56px;}
+  #timering .tnum{font-size:21px;}
+  #feedback{font-size:18px;}
+  #feedback .fb-head{font-size:21px;padding:10px 14px;}
+  #feedback .fb-body{padding:12px 14px 14px;flex-direction:column;gap:10px;}
+  #feedback .fb-img{width:100%;height:150px;flex-basis:auto;}
+  #nextrow button{min-height:62px;font-size:22px;}
+  /* 右欄各引擎:高度以視窗為準 */
+  #card-area{margin-top:0;}
+  .card{min-height:104px;font-size:26px;padding:18px 20px;}
+  #qhint{margin:6px 0 0;}
+  .opts{margin-top:14px;}
+  .opt{min-height:78px;}
+  #mapbox{margin-top:8px;}
+  #tw-svg{max-height:calc(100vh - 300px);}
+  #reactbox{height:calc(100vh - 210px);min-height:320px;}
+  #dragbox,#orderbox,#matchbox,#mazebox,#paintbox{margin-top:0;}
+  #matchbox{grid-template-columns:repeat(4,1fr);}
+  .mcard{min-height:150px;font-size:21px;}   /* 只有 2 列,拉高填滿右欄 */
+  #maze-grid{gap:6px;}
+  #maze-act{margin-top:8px;}
+  #paint-palette{margin-top:10px;}
+  .pchip{width:62px;height:62px;}
+  #earbox{margin-top:14px;}
 }
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
@@ -475,6 +895,21 @@ button[disabled]{opacity:.45;}
 <audio id="bgm-home"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a"></audio>
 <audio id="bgm-play"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94.mp3"></audio>
 <audio id="bgm-result" preload="none"      src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Win.mp3"></audio>
+<!-- ★ v1.3.0(老師裁定 1甲「每款專屬 BGM」)— 新增七軌,同樣全部沿用主程式既有音樂,零新素材;
+       哪一款播哪一首寫在 minigame_db.js 各款的 bgm 欄位(值 = 這裡的 id)。
+     ⚠ 全部逐檔 curl -I 驗過 200(2026-09-05)。日後要加軌一律先驗 200。
+     ⚠ preload=none:同上,不拖慢首載;第一次切到該款才開始抓。
+     ⚠ bgmStop() 改成掃描所有 id 以 bgm- 開頭的 <audio>,這裡加軌不必回頭改 JS。 -->
+<audio id="bgm-adv-scene"       preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a"></audio>
+<audio id="bgm-taiwan-cutscene" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E9%97%9C%E5%8D%A1%E7%B0%A1%E4%BB%8B%E5%8A%87%E6%83%85BGM.m4a"></audio>
+<audio id="bgm-pet-house"       preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B5%E7%89%A9%E5%B0%8F%E5%B1%8BBGM.m4a"></audio>
+<audio id="bgm-shop"            preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a"></audio>
+<audio id="bgm-avatar-card"     preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%87%AA%E8%A8%82%E8%A7%92%E8%89%B2%E5%90%8D%E7%89%87.m4a"></audio>
+<audio id="bgm-adv-march"       preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%86%92%E9%9A%AA%E5%B0%8F%E9%9A%8A%E5%87%BA%E7%99%BC.m4a"></audio>
+<audio id="bgm-summon"          preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a"></audio>
+
+<!-- ★ v1.3.0(老師裁定 2丙)— 整頁場景背景層,固定在最底下;由 JS 依目前畫面換圖(mgSetScene)。 -->
+<div id="bgscene"></div>
 
 <div class="wrap">
 
@@ -510,6 +945,10 @@ button[disabled]{opacity:.45;}
       <div class="gate-emo">🚧</div>
       <h2 id="gate-h">小英雄小遊戲・製作中</h2>
       <p id="gate-p"></p>
+      <div class="mascot" id="gate-mascot">
+        <img src="" alt="" onerror="this.style.display='none';">
+        <div class="bubble" id="gate-bubble"></div>
+      </div>
       <div id="gate-preview"></div>
       <div class="gate-row">
         <a class="btn" href="../" onclick="try{playSfx('sfx-tap',0.35);}catch(_){}">🗺 回去玩大作戰</a>
@@ -526,16 +965,32 @@ button[disabled]{opacity:.45;}
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
-    <p class="sub">木柵 · 台灣 九格小學堂</p>
+    <p class="sub">木柵 · 台灣 小學堂</p>
+    <!-- ★ v1.3.0 — 吉祥物「轉學生學霸」(主程式既有立繪)+ 提示泡泡(雙版,renderGrid 填) -->
+    <div class="mascot" id="home-mascot">
+      <img src="" alt="" onerror="this.style.display='none';">
+      <div class="bubble" id="home-bubble"></div>
+    </div>
     <div id="grid"></div>
-    <p class="sub" style="margin-top:18px;font-size:13px;opacity:.6;">
+    <p class="sub" id="home-note" style="margin-top:18px;font-size:13px;opacity:.6;">
       力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端
     </p>
   </section>
 
   <!-- ══ 遊戲中 ══ -->
   <section id="page-play" class="hidden">
+    <!-- ★ v1.3.0(2丙)— 題卡上方的場景橫幅:關卡圖 + 遊戲名 + story 一句(雙版),由 startGame 填。 -->
+    <!-- ★ v1.3.0 — iPad 橫式改左右兩欄(#play-left 資訊欄／#play-right 作答區),直式與手機維持上下排列;
+         feedback 與 nextrow 留在 page 層,橫式時由 CSS grid 放到左欄下方 ⇒ 作答後不需要捲動。 -->
+    <div id="play-left">
+    <div id="scene-banner">
+      <img id="sb-img" src="" alt="" onerror="this.style.display='none';">
+      <img id="sb-amb" class="sb-amb" src="" alt="" onerror="this.style.display='none';">
+      <div class="sb-txt"><div class="sb-name" id="sb-name"></div><div class="sb-story" id="sb-story"></div></div>
+    </div>
     <div id="hud">
+      <!-- ★ v1.3.0 — 倒數環(秒數大字 + 圓弧),與 #timebar 同源(startTimer 一起更新) -->
+      <div id="timering"><span class="tnum" id="tnum"></span></div>
       <span class="stat" id="progress">1 / 12</span>
       <span class="stat" id="score">0 分</span>
       <span class="stat" id="combo"></span>
@@ -543,13 +998,16 @@ button[disabled]{opacity:.45;}
       <button class="chip" onclick="mgShowInfo(true)">玩法</button>
     </div>
     <div id="timebar-wrap"><div id="timebar"></div></div>
+    </div><!-- /play-left -->
 
+    <div id="play-right">
     <div id="card-area">
       <div class="card" id="qcard"></div>
       <p id="qhint"></p>
     </div>
     <div id="mapbox" class="hidden"></div>
     <div id="earbox" class="hidden">
+      <img id="ear-notes" src="" alt="">
       <button id="playbtn" onclick="mgEarPlay()">▶ 播放</button>
       <p id="playnote">可以重聽,不會扣分</p>
     </div>
@@ -592,6 +1050,7 @@ button[disabled]{opacity:.45;}
     </div>
 
     <div class="opts" id="opts"></div>
+    </div><!-- /play-right -->
     <div id="feedback"></div>
     <div id="nextrow" class="hidden"><button onclick="mgNext()">下一題 →</button></div>
   </section>
@@ -599,7 +1058,11 @@ button[disabled]{opacity:.45;}
   <!-- ══ 結算 ══ -->
   <section id="page-result" class="hidden">
     <div id="result">
+      <!-- ★ v1.3.0 — 獎狀風:金色光圈 gif 墊在分數後面(finishGame 點亮),三顆星逐顆彈出 -->
+      <img class="r-glow" id="r-glow" src="" alt="">
+      <div class="r-title">— 挑戰成績 —</div>
       <div class="line" id="r-name"></div>
+      <img class="r-trophy" id="r-trophy" src="" alt="" onerror="this.style.display='none';">
       <div class="stars" id="r-stars"></div>
       <div class="big" id="r-score"></div>
       <div class="line" id="r-detail"></div>
@@ -634,9 +1097,12 @@ button[disabled]{opacity:.45;}
        放在 wrap 內日後只要 wrap 加了動畫就會整顆跑掉。 -->
 <div id="paint-drag"></div>
 
+<!-- ★ v1.3.0 — 登入時載入 Firebase SDK 的讀取畫面(貓咪讀取中.gif) -->
+<div id="loading"><img src="" alt=""><span>讀取中…</span></div>
+
 <div id="toast"></div>
 
-<script src="minigame_db.js?v=v1.0.0"></script>
+<script src="minigame_db.js?v=v1.3.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -645,7 +1111,7 @@ button[disabled]{opacity:.45;}
 (function(){
 'use strict';
 
-var MG_VER = 'v1.2.1';
+var MG_VER = 'v1.3.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -771,6 +1237,9 @@ function renderGate(){
     ? '老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!'
     : '這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,'
     + '等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!';
+  mgMascot('gate-mascot', 'gate-bubble', (MG.style === 's')
+    ? '我是轉學生學霸,小學堂快做好了,再等一下下!'
+    : '我是轉學生學霸!小學堂還在最後調整,開放的時候我會在這裡等大家。');
   $('gate-note').textContent = (MG.style === 's')
     ? '(老師要測試請按上面的老師登入)'
     : '(這是老師的測試入口;學生不需要登入,直接回大作戰就好)';
@@ -792,6 +1261,7 @@ function applyGate(){
     if($('page-play').classList.contains('hidden')
        && $('page-result').classList.contains('hidden')) show('page-home');
     show('style-btn');
+    if(!$('page-home').classList.contains('hidden')) mgSetScene(MG_HOME_SCENE);   /* ★ v1.3.0 */
   }else{
     /* 測試期:非管理員一律停在閘門,連首頁都不給看到 */
     hide('page-home'); hide('page-play'); hide('page-result');
@@ -799,6 +1269,7 @@ function applyGate(){
     show('page-gate');
     renderGate();
     bgmStop();
+    mgSetScene('');               /* ★ v1.3.0 閘門頁不放場景,維持純色底 */
   }
 }
 
@@ -814,12 +1285,19 @@ var _bgmCur = '';       // 目前這一軌的 id
 var _bgmArmed = false;  // 是否已經拿到使用者手勢
 
 function bgmStop(){
-  var ids = ['bgm-home', 'bgm-play', 'bgm-result'], i, a;
-  for(i = 0; i < ids.length; i++){
-    a = $(ids[i]);
-    if(a){ try{ a.pause(); }catch(e){} }
+  /* ★ v1.3.0 — 改成掃描所有 id 以 bgm- 開頭的 <audio>:
+     每款專屬 BGM 加了七軌,若還是寫死清單,漏列的那一軌會「停不下來」跟新曲疊在一起。 */
+  var all = document.getElementsByTagName('audio'), i, a;
+  for(i = 0; i < all.length; i++){
+    a = all[i];
+    if(a.id && a.id.indexOf('bgm-') === 0){ try{ a.pause(); }catch(e){} }
   }
   _bgmCur = '';
+}
+/* ★ v1.3.0 — 遊戲中該播哪一軌:讀資料表 bgm 欄位;沒寫或那個 id 不存在就退回原本的知識王曲 */
+function mgGameBgm(x){
+  var id = (x && x.bgm) ? String(x.bgm) : '';
+  return (id && $(id)) ? id : 'bgm-play';
 }
 function bgmPlay(id, vol, once){
   if(!_bgmOn || !_bgmArmed) { _bgmCur = id; return; }   // 記住想播哪首,拿到手勢後補播
@@ -853,7 +1331,7 @@ window.mgToggleBgm = function(){
   else{
     toast('音樂已開啟');
     /* 依現在停在哪一頁,把對應那一軌接回去 */
-    if(!$('page-play').classList.contains('hidden')) bgmPlay('bgm-play');
+    if(!$('page-play').classList.contains('hidden')) bgmPlay(mgGameBgm(MG.cur));   /* ★ v1.3.0 每款專屬 */
     else if(!$('page-home').classList.contains('hidden')) bgmPlay('bgm-home');
   }
 };
@@ -882,7 +1360,108 @@ window.mgToggleStyle = function(){
      等於不必重新下載;改抓別的檔名反而會多一次網路來回。 */
 var MG_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
 function mgThumbUrl(x){
-  return x.thumb ? (MG_IMG_BASE + encodeURIComponent(x.thumb)) : '';
+  /* ★ v1.3.0 — 改抓 .jpg 瘦身版(v5.13.0 起 repo 每張場景圖都有同名 jpg,110~240KB;png 是 900KB 級)。
+     同一張 jpg 同時當「首頁縮圖」與「遊戲中整頁背景」⇒ 一款只下載一次。
+     ⚠ 15 張全部逐檔驗過 200(2026-09-05)。 */
+  return x.thumb ? (MG_IMG_BASE + encodeURIComponent(String(x.thumb).replace(/\.png$/i, '.jpg'))) : '';
+}
+/* ★ v1.3.0(老師裁定 2丙)— 整頁場景背景。url 為空 = 淡出成純色底(閘門頁用)。
+   ⚠ 先用 Image 預載、載到才換 background-image,否則低速校網下會先閃一片黑。 */
+var _sceneCur = '';
+function mgSetScene(url){
+  var el = $('bgscene'); if(!el) return;
+  if(!url){ el.classList.remove('on'); _sceneCur = ''; return; }
+  if(url === _sceneCur){ el.classList.add('on'); return; }
+  _sceneCur = url;
+  var im = new Image();
+  im.onload = function(){
+    if(_sceneCur !== url) return;              /* 載到時已經換去別款了,不要蓋回來 */
+    el.style.backgroundImage = 'url("' + url + '")';
+    el.classList.add('on');
+  };
+  im.onerror = function(){ if(_sceneCur === url) el.classList.remove('on'); };
+  im.src = url;
+}
+var MG_HOME_SCENE = MG_IMG_BASE + encodeURIComponent('台灣地圖.jpg');
+
+/* ★ v1.3.0 — GIF 特效(全部沿用主程式既有素材,逐檔驗過 200):
+     hit  = 光暈亮星(答對)   combo = 點擊星星(連擊 ≥3)
+     glow = 金色光圈(結算)   best  = 彩色星星(新紀錄)
+   ★ 掛在 body 最後、position:fixed、pointer-events:none ⇒ 不吃任何點擊、不影響版面。
+   ★ 到時間自動移除;同一時間最多 6 個(連擊快點也不會堆積成百個 img 拖慢 iPad)。 */
+var MG_FX = {
+  hit  : MG_IMG_BASE + encodeURIComponent('光暈亮星.gif'),
+  combo: MG_IMG_BASE + encodeURIComponent('點擊星星.gif'),
+  glow : MG_IMG_BASE + encodeURIComponent('金色光圈.gif'),
+  best : MG_IMG_BASE + encodeURIComponent('彩色星星.gif'),
+  /* 追加(老師:「repo 沒用到的特效適當補上」)*/
+  dizzy: MG_IMG_BASE + encodeURIComponent('暈眩.gif'),          /* 答錯:星星繞圈 */
+  focus: MG_IMG_BASE + encodeURIComponent('集中效果線.gif'),    /* 連擊 ≥5:全畫面集中線 */
+  spark: MG_IMG_BASE + encodeURIComponent('金色閃光炸開.gif'),  /* 知識幣大暴走:每接到一顆 */
+  tea  : MG_IMG_BASE + encodeURIComponent('泡好一杯茶.gif'),    /* 順序排列全對 */
+  clap : MG_IMG_BASE + encodeURIComponent('謝幕掌聲.gif'),      /* 結算三星 */
+  notes: MG_IMG_BASE + encodeURIComponent('音樂舞動.gif'),      /* 聽音播放中 */
+  load : MG_IMG_BASE + encodeURIComponent('貓咪讀取中.gif')     /* 登入讀取 */
+};
+var MG_MASCOT = MG_IMG_BASE + encodeURIComponent('轉學生學霸.jpg');
+var MG_TROPHY = { 3: MG_IMG_BASE + encodeURIComponent('冠軍獎盃.png'), 2: MG_IMG_BASE + encodeURIComponent('獎牌.png'), 1: MG_IMG_BASE + encodeURIComponent('獎牌.png') };
+function mgAssetUrl(name){ return name ? (MG_IMG_BASE + encodeURIComponent(String(name))) : ''; }
+/* 全畫面版特效(集中線):蓋滿視窗、半透明、到時自刪 */
+function mgFxFull(kind, ms){
+  try{
+    var im = document.createElement('img');
+    im.className = 'fxgif full';
+    im.src = MG_FX[kind] + '?v=' + MG_VER + '&t=' + Date.now();
+    document.body.appendChild(im);
+    setTimeout(function(){ if(im.parentNode) im.parentNode.removeChild(im); }, ms || 700);
+  }catch(e){}
+}
+var _fxPreloaded = false;
+function mgFxPreload(){
+  if(_fxPreloaded) return; _fxPreloaded = true;
+  /* 只預抓每題都會用到的三支;結算／登入等一次性的到時候再抓,不搶首載頻寬 */
+  var pre = ['hit','combo','dizzy'], k;
+  for(k = 0; k < pre.length; k++){ try{ var im = new Image(); im.src = MG_FX[pre[k]] + '?v=' + MG_VER; }catch(e){} }
+}
+function mgFx(kind, x, y, size, ms){
+  try{
+    var live = document.getElementsByClassName('fxgif');
+    if(live.length >= 6) return;
+    var im = document.createElement('img');
+    im.className = 'fxgif';
+    /* ★ 每次帶不同 query,強迫 GIF 從第一格重播(同 src 的 gif 瀏覽器會沿用播到一半的那份) */
+    im.src = MG_FX[kind] + '?v=' + MG_VER + '&t=' + Date.now();
+    im.style.left = x + 'px'; im.style.top = y + 'px';
+    im.style.width = size + 'px'; im.style.height = size + 'px';
+    document.body.appendChild(im);
+    setTimeout(function(){ if(im.parentNode) im.parentNode.removeChild(im); }, ms || 900);
+  }catch(e){}
+}
+/* 元素中心的視窗座標(fixed 用) */
+function mgCenterOf(id){
+  var el = $(id), r;
+  if(!el || el.classList.contains('hidden')) el = null;
+  if(el){ r = el.getBoundingClientRect(); if(r.width > 0) return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  return { x: window.innerWidth / 2, y: window.innerHeight * 0.42 };
+}
+/* 現在畫面上正在用的那個「作答區」是誰 —— 特效要打在它身上,不是永遠打在題卡上 */
+function mgActiveBox(){
+  var ids = ['reactbox','mazebox','paintbox','matchbox','orderbox','dragbox','mapbox','qcard'], i;
+  for(i = 0; i < ids.length; i++){
+    var el = $(ids[i]);
+    if(el && !el.classList.contains('hidden') && el.offsetWidth > 0) return ids[i];
+  }
+  return 'qcard';
+}
+function mgScoreFloat(txt){
+  try{
+    var c = mgCenterOf('score');
+    var d = document.createElement('div');
+    d.className = 'scorefloat'; d.textContent = txt;
+    d.style.left = c.x + 'px'; d.style.top = (c.y - 10) + 'px';
+    document.body.appendChild(d);
+    setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 1150);
+  }catch(e){}
 }
 
 function renderGrid(){
@@ -920,6 +1499,16 @@ function renderGrid(){
           + '</div>';
   }
   g.innerHTML = html;
+  /* ★ v1.3.0 — 吉祥物泡泡(雙版) */
+  mgMascot('home-mascot', 'home-bubble', (MG.style === 's')
+    ? '嗨!我是轉學生學霸。選一款來挑戰,答對越多、連擊越高分數越高喔!'
+    : '嗨,我是轉學生學霸!這裡有 ' + MG.games.length + ' 款木柵與台灣的小學堂,點卡片看玩法、再按開始;答對加分、連續答對還有連擊加成!不用登入就能玩,登入後最佳成績會存到雲端。');
+}
+function mgMascot(wrapId, bubbleId, text){
+  var w = $(wrapId), b = $(bubbleId); if(!w || !b) return;
+  var im = w.getElementsByTagName('img')[0];
+  if(im && !im.getAttribute('src')) im.src = MG_MASCOT;
+  b.textContent = text;
 }
 /* 縮圖抓不到就把圖藏起來,露出底下的 emoji ——
    ⚠ 不可以整塊 cthumb 隱藏:那樣卡片高度會參差不齊,九宮格會排得歪七扭八。 */
@@ -984,7 +1573,20 @@ function startGame(x){
      而 iPad standalone 的 confirm() 有靜默失敗前例(主程式 v5.57.0 教訓),不能靠二次確認擋。
      玩家仍可「← 回選單」再按回大作戰,只多一步。 */
   hide('toapp-btn');
-  bgmPlay('bgm-play');
+  /* ★ v1.3.0 — 每款專屬 BGM(1甲)+ 整頁場景背景 + 題卡橫幅(2丙) */
+  bgmPlay(mgGameBgm(x));
+  var _url = mgThumbUrl(x);
+  mgSetScene(_url);
+  var _bi = $('sb-img');
+  if(_bi){ _bi.style.display = ''; if(_bi.getAttribute('src') !== _url) _bi.src = _url; }
+  $('sb-name').textContent = x.icon + ' ' + tx(x.name);
+  $('sb-story').textContent = x.story ? tx(x.story) : '';
+  var _amb = $('sb-amb');
+  if(_amb){
+    if(x.amb){ _amb.style.display = ''; _amb.src = mgAssetUrl(x.amb) + '?v=' + MG_VER; }
+    else{ _amb.removeAttribute('src'); _amb.style.display = 'none'; }
+  }
+  mgFxPreload();
   playSfx('sfx-enter', 0.4);
   renderQuestion(false);
   window.scrollTo(0, 0);
@@ -997,6 +1599,7 @@ window.mgHome = function(){
   hide('page-play'); hide('page-result'); hide('back-btn'); show('page-home');
   show('toapp-btn');
   bgmPlay('bgm-home');
+  mgSetScene(MG_HOME_SCENE);      /* ★ v1.3.0 首頁背景 = 台灣地圖 */
   renderGrid();
   window.scrollTo(0, 0);
 };
@@ -1024,14 +1627,26 @@ function startTimer(sec){
   var total = sec, bar = $('timebar');
   bar.classList.remove('low');
   bar.style.width = '100%';
+  _ringPaint(100, sec);
   MG.timer = setInterval(function(){
     MG.tleft -= 0.1;
     if(MG.tleft < 0) MG.tleft = 0;
     var pct = (MG.tleft / total) * 100;
     bar.style.width = pct + '%';
     if(pct <= 30) bar.classList.add('low');
+    _ringPaint(pct, MG.tleft);
     if(MG.tleft <= 0){ stopTimer(); onTimeout(); }
   }, 100);
+}
+/* ★ v1.3.0 — 倒數環:與 #timebar 同一個計時器餵值,不另開 setInterval。
+   ⚠ conic-gradient 舊 iPad(iOS < 12.2)不支援 ⇒ 圓弧不畫、只剩底色 + 秒數,功能不受影響。 */
+function _ringPaint(pct, sec){
+  var r = $('timering'), n = $('tnum');
+  if(!r) return;
+  var col = (pct <= 30) ? '#e84040' : '#f0c060';
+  r.style.background = 'conic-gradient(' + col + ' ' + pct + '%, rgba(255,255,255,.12) 0)';
+  if(pct <= 30) r.classList.add('low'); else r.classList.remove('low');
+  if(n) n.textContent = Math.ceil(sec);
 }
 function onTimeout(){
   if(MG.answered) return;
@@ -1150,6 +1765,12 @@ window.mgEarPlay = function(){
     if(!MG.audioCtx) MG.audioCtx = new AC();
     if(MG.audioCtx.state === 'suspended' && MG.audioCtx.resume) MG.audioCtx.resume();
     var ctx = MG.audioCtx, t0 = ctx.currentTime + 0.05, i;
+    /* 追加:播放期間顯示音符動畫(音樂舞動.gif),播完自動收 */
+    try{
+      var _en = $('ear-notes');
+      if(_en){ _en.src = MG_FX.notes + '?v=' + MG_VER + '&t=' + Date.now(); _en.classList.add('on');
+        setTimeout(function(){ _en.classList.remove('on'); }, q.seq.length * 620 + 400); }
+    }catch(e){}
     for(i = 0; i < q.seq.length; i++){
       (function(freq, k){
         var osc = ctx.createOscillator(), g = ctx.createGain();
@@ -1344,6 +1965,7 @@ window.mgOrderSubmit = function(){
     _orderPaint(r);
   }
   scoreIt(ok);
+  if(ok){ var _oc = mgCenterOf('orderbox'); mgFx('tea', _oc.x, _oc.y, 200, 1400); }   /* 泡好一杯茶 */
   showFeedback(ok, ok ? '✅ 順序完全正確!' : '❌ 正確順序已經幫你排好了', tx(r.why));
 };
 
@@ -1411,6 +2033,7 @@ function _reactHit(d){
     _RC.got++;
     d.el.className = 'rdrop hit';
     playSfx('sfx-ok', 0.45);
+    try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, 120, 600); }catch(e){}
     _reactFloat(d, '+1', '#3ec87a');
   }else{
     _RC.wrong++;
@@ -1607,10 +2230,23 @@ function _mazeReach(i){
   var tr = Math.floor(i / w), tc = i % w;
   return (Math.abs(pr - tr) + Math.abs(pc - tc)) === 1;
 }
+/* ★ v1.3.0 — 方格引擎的「一頁放得下」尺寸:回傳整個 grid 該有的寬度(px)。
+   cell = min(容器寬 / 欄數, (視窗高 − grid 頂端 − 底下保留) / 列數),再夾最大格 maxCell。 */
+function mgFitGrid(g, cols, rows, gap, reserve, maxCell){
+  var parent = g.parentNode, pw = parent ? parent.clientWidth : window.innerWidth;
+  if(!pw) pw = window.innerWidth * 0.96;
+  var top = 0; try{ top = g.getBoundingClientRect().top; }catch(e){}
+  if(!top) top = 200;
+  var availH = Math.max(160, window.innerHeight - top - reserve);
+  var cell = Math.min((pw - gap * (cols - 1)) / cols, (availH - gap * (rows - 1)) / rows, maxCell);
+  cell = Math.max(38, Math.floor(cell));
+  return cell * cols + gap * (cols - 1);
+}
 function _mazePaint(){
   var g = $('maze-grid'), html = '', i, cell, cls, txt;
   g.style.gridTemplateColumns = 'repeat(' + _MZ.w + ',minmax(0,1fr))';
-  g.style.maxWidth = Math.min(96, _MZ.w * 15) + 'vw';
+  /* ★ v1.3.0 — 格子尺寸同時看「寬」與「剩餘高度」(iPad 橫式只看寬會撐到 1300px 要捲) */
+  g.style.maxWidth = mgFitGrid(g, _MZ.w, _MZ.h, 6, 130, 96) + 'px';
   g.style.margin = '0 auto';
   for(i = 0; i < _MZ.cells.length; i++){
     cell = _MZ.cells[i];
@@ -1755,6 +2391,16 @@ function renderPaint(x, pic){
           + 'style="background:' + p.c + ';"><span>' + p.n + '</span></div>';
   }
   $('paint-palette').innerHTML = html;
+  /* ★ v1.3.0 — 兩張 3:4 圖的寬度改依「剩餘高度」上限(iPad 橫式只看寬會撐到 1230px 要捲):
+     colW = min(欄本身寬, (視窗高 − stage 頂端 − 調色盤與提示保留 150px) × 3/4) */
+  try{
+    var _st = $('paint-stage'), _top = _st.getBoundingClientRect().top || 220;
+    var _availH = Math.max(220, window.innerHeight - _top - 150) - 30;   /* 30 = h4 標題列 */
+    var _cols = _st.getElementsByClassName('pcol'), _ci;
+    var _colW = Math.floor(_availH * 3 / 4);
+    for(_ci = 0; _ci < _cols.length; _ci++) _cols[_ci].style.maxWidth = _colW + 'px';
+    _st.style.justifyContent = 'center';
+  }catch(e){}
   _paintNote();
   _paintBind();
 }
@@ -1965,9 +2611,22 @@ function scoreIt(correct){
     var timeB = Math.round(MG.tleft * 2);
     MG.score += 100 + bonus + timeB;
     playSfx(MG.combo >= 3 ? 'sfx-coin' : 'sfx-ok', 0.5);
+    /* ★ v1.3.0 — 答對特效:光暈亮星打在作答區中央 + 分數飄字;連擊 ≥3 再加點擊星星 */
+    var _c = mgCenterOf(mgActiveBox());
+    mgFx('hit', _c.x, _c.y, 220, 900);
+    if(MG.combo >= 3) mgFx('combo', _c.x + 90, _c.y - 60, 150, 1000);
+    if(MG.combo >= 5) mgFxFull('focus', 650);      /* 連擊 ≥5:全畫面集中線 */
+    mgScoreFloat('+' + (100 + bonus + timeB));
   }else{
     MG.combo = 0;
     playSfx('sfx-ng', 0.4);
+    /* ★ v1.3.0 — 答錯:題卡左右抖一下(class 動畫,動畫結束自己拿掉,重複答錯還能再抖) */
+    try{
+      var _qc = $('qcard');
+      if(_qc){ _qc.classList.remove('shake'); void _qc.offsetWidth; _qc.classList.add('shake'); }
+      var _cw = mgCenterOf(mgActiveBox());
+      mgFx('dizzy', _cw.x, _cw.y - 20, 150, 1100);   /* 暈眩星星 */
+    }catch(e){}
   }
   $('score').textContent = MG.score + ' 分';
   $('combo').textContent = MG.combo >= 2 ? ('🔥 ' + MG.combo + ' 連') : '';
@@ -1976,7 +2635,14 @@ function showFeedback(ok, head, why){
   var f = $('feedback');
   f.className = 'feedback show ' + (ok ? 'ok' : 'ng');
   f.classList.add('show');
-  f.innerHTML = '<b>' + esc(head) + '</b><br>' + esc(why);
+  /* ★ v1.3.0 — 標題列 + 內文兩段(CSS .fb-head/.fb-body);why 為空時內文段自動隱藏 */
+  /* 追加:題目若帶 img(資料表選用欄位)就在解說旁放圖;全引擎共用(q 是 MG.order[MG.idx]) */
+  var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : '';
+  var _body = _img
+    ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
+      + '<span class="fb-txt">' + esc(why) + '</span>'
+    : esc(why);
+  f.innerHTML = '<b class="fb-head">' + esc(head) + '</b><span class="fb-body">' + _body + '</span>';
   var nr = $('nextrow');
   nr.classList.remove('hidden');
   nr.getElementsByTagName('button')[0].textContent =
@@ -2003,7 +2669,33 @@ function finishGame(){
   bgmPlay('bgm-result', 0.42, true);   /* 不 loop,播一次就好 */
 
   $('r-name').textContent = MG.cur.icon + ' ' + tx(MG.cur.name);
-  $('r-stars').textContent = stars > 0 ? new Array(stars + 1).join('★') : '☆';
+  /* ★ v1.3.0 — 三顆星逐顆彈出(拿到的亮、沒拿到的暗淡留位),金色光圈 gif 墊在後面 */
+  var _sh = '', _k;
+  for(_k = 1; _k <= 3; _k++) _sh += '<span class="' + (_k <= stars ? '' : 'dim') + '">★</span>';
+  $('r-stars').innerHTML = _sh;
+  (function(){
+    var sp = $('r-stars').getElementsByTagName('span'), i;
+    for(i = 0; i < stars && i < sp.length; i++){
+      (function(el, delay){
+        setTimeout(function(){ el.classList.add('lit'); playSfx('sfx-sel', 0.35); }, delay);
+      })(sp[i], 350 + i * 380);
+    }
+  })();
+  var _tr = $('r-trophy');
+  if(_tr){
+    _tr.classList.remove('on'); _tr.style.display = '';
+    if(stars > 0){ _tr.src = MG_TROPHY[stars]; setTimeout(function(){ _tr.classList.add('on'); }, 350 + stars * 380); }
+    else{ _tr.removeAttribute('src'); _tr.style.display = 'none'; }
+  }
+  if(stars === 3){
+    setTimeout(function(){ var c = mgCenterOf('r-trophy'); mgFx('clap', c.x, c.y + 40, 260, 1800); playSfx('sfx-clap', 0.45); }, 1600);
+  }
+  var _gl = $('r-glow');
+  if(_gl){
+    _gl.classList.remove('on');
+    _gl.src = MG_FX.glow + '?v=' + MG_VER + '&t=' + Date.now();
+    setTimeout(function(){ _gl.classList.add('on'); }, 250);
+  }
   $('r-score').textContent = MG.score + ' 分';
   $('r-detail').textContent = '答對 ' + MG.right + ' / ' + total
                             + ' 題(' + acc + '%) · 最高連擊 ' + MG.maxCombo;
@@ -2014,6 +2706,12 @@ function finishGame(){
     MG.best[MG.cur.id] = { score: MG.score, stars: stars, acc: acc };
     show('r-newbest');
     playSfx('sfx-clap', 0.5);
+    /* ★ v1.3.0 — 新紀錄:彩色星星從結算卡左右兩側各噴一次 */
+    setTimeout(function(){
+      var c = mgCenterOf('r-score');
+      mgFx('best', c.x - 150, c.y - 40, 200, 1500);
+      mgFx('best', c.x + 150, c.y - 40, 200, 1500);
+    }, 900);
   }else{
     hide('r-newbest');
     playSfx('sfx-coin', 0.4);
@@ -2086,15 +2784,29 @@ window.mgLoginTap = function(){
     }
     return;
   }
+  mgLoading(true);
   ensureFirebase().then(function(fb){
+    mgLoading(false);
     var prov = new window.firebase.auth.GoogleAuthProvider();
     prov.setCustomParameters({ prompt: 'select_account' });
     return fb.auth.signInWithPopup(prov)['catch'](function(err){
       // iPad standalone 常擋 popup ⇒ 退回 redirect
       return fb.auth.signInWithRedirect(prov);
     });
-  })['catch'](function(e){ /* ensureFirebase 內已提示 */ });
+  })['catch'](function(e){ mgLoading(false); /* ensureFirebase 內已提示 */ });
 };
+/* ★ v1.3.0 — 讀取畫面(貓咪讀取中.gif);SDK 抓不到也會關(catch),12 秒硬兜底絕不卡住畫面 */
+var _loadT = null;
+function mgLoading(on){
+  var l = $('loading'); if(!l) return;
+  if(_loadT){ clearTimeout(_loadT); _loadT = null; }
+  if(on){
+    var im = l.getElementsByTagName('img')[0];
+    if(im && !im.getAttribute('src')) im.src = MG_FX.load + '?v=' + MG_VER;
+    l.classList.add('show');
+    _loadT = setTimeout(function(){ l.classList.remove('show'); }, 12000);
+  }else l.classList.remove('show');
+}
 function onUser(u){
   MG.user = u || null;
   var btn = $('login-btn'), who = $('who');
