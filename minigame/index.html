@@ -50,6 +50,16 @@ body{
   color:var(--mist);
   font-family:"PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
   font-size:17px;line-height:1.65;
+  /* ★ v1.1.0(老師回報「小遊戲的字看不清楚,字都糊在一起」)— 根因是「合成粗體」:
+     繁體中文字型(PingFang TC／微軟正黑體)**沒有 800/900 這兩個字重的實體字面**,
+     瀏覽器只能自己把字往旁邊多描一次來假裝變粗 ⇒ 筆畫多的字(觀測鑑纜諺)整團黏在一起。
+     修法有三:①全檔 CJK 字重一律降到 700(真實存在的字面,不觸發合成)
+              ②字級加大並補字距(見 .cell .cn 等)
+              ③這裡開次像素平滑,讓細筆畫不糊成一坨。
+     ⚠ 日後新增樣式時,中文一律不要用 font-weight:800/900。 */
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   -webkit-text-size-adjust:100%;
   overscroll-behavior:none;
@@ -79,22 +89,69 @@ button[disabled]{opacity:.45;}
 
 /* ── 首頁 ───────────────────────────────── */
 #title-img{display:block;width:100%;max-width:560px;margin:2px auto 0;}
-#title-fallback{display:none;text-align:center;font-size:30px;font-weight:900;color:var(--gold);margin:10px 0;}
+#title-fallback{display:none;text-align:center;font-size:30px;font-weight:700;color:var(--gold);margin:10px 0;letter-spacing:1px;}
 .sub{text-align:center;font-size:15px;opacity:.85;margin:0 0 14px;}
 #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .cell{
   position:relative;background:linear-gradient(180deg,var(--ink2),#16382a);
   border:2px solid rgba(217,236,226,.16);border-radius:18px;
   padding:12px 6px 10px;text-align:center;cursor:pointer;
-  box-shadow:0 4px 0 rgba(0,0,0,.3);touch-action:manipulation;min-height:118px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  box-shadow:0 4px 0 rgba(0,0,0,.3);touch-action:manipulation;min-height:250px;
+  /* ★ v1.1.0 — 加了縮圖之後改「上對齊」:置中會讓縮圖跟著卡片高度浮動,
+     每張卡的圖高低不一,九宮格看起來就歪掉了。 */
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;
 }
 .cell:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3);}
+/* ── v1.1.0 選單卡改版(需求1 代表縮圖+大字名稱／需求4 難度+核心能力)── */
+.cthumb{
+  position:relative;width:100%;height:96px;border-radius:12px;overflow:hidden;
+  background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(0,0,0,.25));
+  display:flex;align-items:center;justify-content:center;margin-bottom:8px;
+}
+.cthumb img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  /* 場景圖偏亮,壓暗一點才襯得住上面的白字 */
+  filter:brightness(.82) saturate(1.05);
+}
+/* emoji 墊在圖底下:圖沒載到時由 mgThumbFail 把它顯出來 */
+.cthumb-emo{position:absolute;font-size:38px;line-height:1;opacity:0;}
 .cell .ce{font-size:34px;line-height:1.1;}
-.cell .cn{font-size:15px;font-weight:800;color:var(--mist);}
-.cell .cs{font-size:11px;opacity:.7;}
-.cell .cstar{font-size:12px;color:var(--gold);min-height:16px;letter-spacing:1px;}
-.cell .cbest{position:absolute;top:6px;right:8px;font-size:11px;opacity:.75;}
+.cskills{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:5px;}
+.cskill{
+  font-size:12px;font-weight:700;padding:2px 8px;border-radius:9px;
+  background:rgba(79,191,125,.22);border:1px solid rgba(127,216,160,.45);
+  color:var(--leaf);letter-spacing:.3px;
+}
+.cdiff{font-size:13px;color:var(--gold);letter-spacing:1px;margin-top:4px;opacity:.9;}
+/* ★ v1.1.0 — 原為 15px/字重800,是「字糊在一起」的直接原因(見 body 註解)。
+   改 18px/字重700 + 字距 0.5px;卡片名稱是全畫面最該看清楚的字,不要再往下調。 */
+.cell .cn{font-size:18px;font-weight:700;color:var(--mist);letter-spacing:.5px;line-height:1.35;}
+.cell .cs{font-size:13px;opacity:.75;letter-spacing:.5px;}
+.cell .cstar{font-size:14px;color:var(--gold);min-height:18px;letter-spacing:2px;}
+.cell .cbest{position:absolute;top:6px;right:8px;font-size:13px;opacity:.8;font-weight:700;}
+
+/* ── 測試期閘門頁(v1.1.0)──────────────── */
+#gate-title{display:block;width:100%;max-width:460px;margin:6px auto 0;opacity:.9;}
+#gate-card{
+  background:linear-gradient(180deg,var(--ink2),#16382a);
+  border:2px solid rgba(242,168,60,.35);border-radius:22px;
+  padding:22px 18px 20px;text-align:center;margin:14px auto 0;max-width:560px;
+  box-shadow:0 6px 0 rgba(0,0,0,.3);
+}
+#gate-card .gate-emo{font-size:54px;line-height:1;}
+#gate-card h2{font-size:24px;font-weight:700;color:var(--gold);margin:8px 0 10px;letter-spacing:1px;}
+#gate-card p{font-size:17px;line-height:1.8;margin:0 0 6px;}
+#gate-note{font-size:14px;opacity:.6;margin-top:14px !important;}
+.gate-row{display:flex;gap:10px;margin-top:14px;justify-content:center;}
+.gate-row .btn,.gate-row button{flex:1;max-width:260px;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;}
+/* 預告用的九款縮圖(只給看,不能點)—— 讓學生知道「快好了」而不是「壞掉了」 */
+#gate-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0 4px;}
+#gate-preview span{
+  font-size:26px;line-height:1;padding:10px 0;border-radius:12px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(217,236,226,.14);
+  filter:grayscale(1);opacity:.62;
+}
 
 /* ── 遊戲畫面 ───────────────────────────── */
 #hud{display:flex;align-items:center;gap:10px;margin:6px 0 10px;flex-wrap:wrap;}
@@ -145,12 +202,172 @@ button[disabled]{opacity:.45;}
 #playbtn{display:block;margin:14px auto 0;font-size:20px;padding:16px 34px;}
 #playnote{text-align:center;font-size:14px;opacity:.8;margin-top:8px;}
 
+/* ══ v1.1.0 新增六個引擎的樣式(老師需求 4「不要又是只有選擇題」)══
+   共同原則:
+   - 觸控目標一律 ≥44px(對齊 Apple HIG 下限,小學生手指才按得到)
+   - 一律 touch-action:none 或 manipulation,避免拖曳時整頁跟著捲
+   - 顏色一律走最上面的 CSS 變數,不寫死色碼 */
+
+/* ── 引擎 D:拖放分類 ─────────────────────── */
+#dragbox{margin-top:10px;}
+#drag-item{
+  background:var(--paper);color:#2b2b2b;border-radius:18px;padding:16px 14px;
+  font-size:21px;font-weight:700;text-align:center;box-shadow:0 5px 0 rgba(0,0,0,.25);
+  touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
+  position:relative;z-index:5;
+}
+#drag-item.dragging{cursor:grabbing;box-shadow:0 10px 22px rgba(0,0,0,.45);opacity:.95;}
+#drag-item .dgrip{display:block;font-size:13px;opacity:.55;font-weight:600;margin-top:2px;}
+#drag-bins{display:grid;gap:10px;margin-top:16px;}
+#drag-bins.two{grid-template-columns:1fr 1fr;}
+#drag-bins.three{grid-template-columns:repeat(3,1fr);}
+.dbin{
+  background:var(--ink2);border:2px dashed rgba(217,236,226,.35);border-radius:16px;
+  padding:16px 8px;text-align:center;font-size:16px;font-weight:700;min-height:96px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+.dbin .be{font-size:30px;line-height:1.1;}
+.dbin.hot{background:rgba(242,168,60,.28);border-color:var(--sun);transform:scale(1.05);}
+.dbin.ok{background:var(--grass);color:#0d2a18;border-color:var(--grass);border-style:solid;}
+.dbin.ng{background:var(--brick);color:#fff;border-color:var(--brick);border-style:solid;}
+
+/* ── 引擎 E:順序排列 ─────────────────────── */
+#orderbox{margin-top:10px;}
+#order-slots{display:flex;gap:8px;margin-bottom:14px;min-height:64px;}
+.oslot{
+  flex:1;border:2px dashed rgba(217,236,226,.3);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:15px;font-weight:700;padding:8px 4px;min-height:64px;
+  background:rgba(255,255,255,.05);
+}
+.oslot.filled{border-style:solid;background:var(--ink2);border-color:rgba(217,236,226,.5);}
+.oslot .onum{position:absolute;font-size:11px;opacity:.5;}
+#order-pool{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ocard{
+  background:var(--paper);color:#2b2b2b;border:0;border-radius:14px;
+  padding:14px 10px;font-size:17px;font-weight:700;min-height:56px;
+  box-shadow:0 4px 0 rgba(0,0,0,.25);
+}
+.ocard.used{opacity:.25;pointer-events:none;}
+#order-act{display:flex;gap:10px;margin-top:14px;}
+#order-act button{flex:1;}
+
+/* ── 引擎 F:翻牌配對 ─────────────────────── */
+#matchbox{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+.mcard{
+  position:relative;min-height:74px;border-radius:14px;border:2px solid rgba(217,236,226,.22);
+  background:linear-gradient(180deg,var(--ink2),#16382a);
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:14px;font-weight:700;padding:6px 4px;line-height:1.35;
+  color:transparent;box-shadow:0 4px 0 rgba(0,0,0,.28);
+  touch-action:manipulation;overflow:hidden;
+}
+.mcard::after{content:'🀄';position:absolute;font-size:30px;color:var(--mist);opacity:.5;}
+.mcard.open,.mcard.done{color:var(--mist);background:var(--tea);}
+.mcard.open::after,.mcard.done::after{display:none;}
+.mcard.done{background:var(--grass);color:#0d2a18;border-color:var(--grass);opacity:.75;}
+.mcard.miss{background:var(--brick);color:#fff;}
+
+/* ── 引擎 G:反應點擊(老師指定 A)────────────
+   天上掉下許多候選答案,點對加分、點錯扣分。 */
+#reactbox{
+  position:relative;height:56vh;min-height:300px;margin-top:10px;
+  border-radius:18px;overflow:hidden;
+  background:
+    radial-gradient(circle at 30% 8%,rgba(79,191,125,.14),transparent 60%),
+    radial-gradient(circle at 78% 4%,rgba(242,168,60,.12),transparent 55%),
+    rgba(255,255,255,.05);
+  border:2px solid rgba(217,236,226,.14);
+  touch-action:manipulation;
+}
+.rdrop{
+  position:absolute;padding:9px 14px;border-radius:14px;
+  font-size:17px;font-weight:700;white-space:nowrap;
+  background:var(--paper);color:#2b2b2b;box-shadow:0 4px 10px rgba(0,0,0,.4);
+  will-change:transform;min-height:44px;display:flex;align-items:center;
+}
+.rdrop.bad{background:#e8dff0;}
+.rdrop.hit{background:var(--grass);color:#0d2a18;}
+.rdrop.wrong{background:var(--brick);color:#fff;}
+#react-hud{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:15px;font-weight:700;margin-top:8px;padding:0 4px;
+}
+.rfloat{
+  position:absolute;font-size:20px;font-weight:700;pointer-events:none;
+  animation:rfl .8s ease-out forwards;z-index:9;
+}
+@keyframes rfl{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-46px);}}
+
+/* ── 引擎 H:走迷宮(老師指定 B)──────────────
+   走過的地方不能再走,而且要經過正確答案。 */
+#mazebox{margin-top:10px;}
+#maze-grid{display:grid;gap:5px;justify-content:center;}
+.mz{
+  width:100%;aspect-ratio:1/1;border-radius:10px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(217,236,226,.14);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;line-height:1.2;text-align:center;
+  padding:2px;overflow:hidden;touch-action:manipulation;
+}
+.mz.wall{background:rgba(0,0,0,.42);border-color:transparent;}
+.mz.ans{background:rgba(242,168,60,.22);border-color:var(--sun);color:var(--gold);font-size:12px;}
+.mz.bad{background:rgba(210,84,63,.18);border-color:rgba(210,84,63,.5);font-size:12px;}
+.mz.walked{background:var(--tea);border-color:var(--tea);color:#eaf5ef;}
+.mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
+.mz.here{outline:3px solid var(--gold);outline-offset:-3px;}
+.mz.goal{background:rgba(255,209,102,.2);border-color:var(--gold);}
+.mz.reach{box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);}
+#maze-info{font-size:15px;text-align:center;margin-top:10px;line-height:1.6;}
+#maze-act{display:flex;gap:10px;margin-top:10px;}
+#maze-act button{flex:1;}
+
+/* ── 引擎 I:調色考驗(老師指定 C)────────────
+   左邊彩色原圖,右邊同一張的黑白圖+顏料區,把顏色拖到正確格子上色。 */
+#paintbox{margin-top:10px;}
+#paint-stage{display:flex;gap:10px;align-items:flex-start;}
+.pcol{flex:1;min-width:0;}
+.pcol h4{font-size:14px;margin:0 0 6px;text-align:center;opacity:.85;font-weight:700;}
+#paint-ref,#paint-work{
+  position:relative;width:100%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;
+  background:#0a1810;border:2px solid rgba(217,236,226,.18);
+}
+#paint-work{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);gap:0;}
+#paint-ref img{width:100%;height:100%;object-fit:cover;display:block;}
+.pcell{
+  position:relative;background-size:300% 400%;background-repeat:no-repeat;
+  filter:grayscale(1) contrast(1.05);
+  outline:1px solid rgba(255,255,255,.18);outline-offset:-1px;
+  transition:filter .45s ease;touch-action:none;
+}
+.pcell.done{filter:none;}
+.pcell.hot{outline:3px solid var(--sun);outline-offset:-3px;}
+.pcell.err{animation:pshake .3s;}
+@keyframes pshake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+#paint-palette{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:14px;}
+.pchip{
+  width:52px;height:52px;border-radius:50%;border:3px solid rgba(255,255,255,.35);
+  box-shadow:0 4px 0 rgba(0,0,0,.3);touch-action:none;position:relative;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.pchip span{
+  font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);
+  margin-bottom:-2px;pointer-events:none;
+}
+.pchip.picked{border-color:var(--gold);transform:scale(1.14);}
+#paint-drag{
+  position:fixed;width:46px;height:46px;border-radius:50%;pointer-events:none;
+  z-index:120;border:3px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.5);display:none;
+}
+#paint-note{text-align:center;font-size:14px;opacity:.85;margin-top:10px;}
+
 /* ── 結算 ───────────────────────────────── */
 #result{text-align:center;padding-top:6px;}
 #result .big{font-size:52px;font-weight:900;color:var(--gold);line-height:1.2;}
 #result .stars{font-size:38px;letter-spacing:6px;color:var(--gold);margin:6px 0;}
 #result .line{font-size:16px;opacity:.9;margin:4px 0;}
-#result .newbest{color:var(--grass);font-weight:800;font-size:18px;margin-top:6px;}
+#result .newbest{color:var(--grass);font-weight:700;font-size:20px;margin-top:6px;letter-spacing:.5px;}
 
 /* ── 說明彈窗 ───────────────────────────── */
 #modal{
@@ -181,9 +398,15 @@ button[disabled]{opacity:.45;}
 /* 小螢幕 */
 @media (max-width:390px){
   body{font-size:16px;}
-  .cell{min-height:104px;padding:10px 4px;}
+  /* ★ v1.1.0 — 小螢幕分支若不同步放大,手機上會退回「字糊在一起」的舊尺寸。
+     min-height 一併加大,免得放大後的字把卡片撐爆。 */
+  .cell{min-height:206px;padding:9px 4px;}
   .cell .ce{font-size:29px;}
-  .cell .cn{font-size:13px;}
+  .cell .cn{font-size:16px;letter-spacing:.3px;}
+  /* ★ v1.1.0 — 手機上縮圖降到 72px,否則三欄併排會把卡片撐得太高需要一直捲 */
+  .cthumb{height:72px;margin-bottom:6px;}
+  .cskill{font-size:11px;padding:1px 6px;}
+  .cdiff{font-size:12px;}
   .card{font-size:17px;padding:15px 12px;}
   .opt{font-size:15px;padding:12px 6px;}
 }
@@ -198,19 +421,75 @@ button[disabled]{opacity:.45;}
 <audio id="sfx-enter"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%B2%E5%85%A5%E6%88%B0%E5%A0%B4.mp3"></audio>
 <audio id="sfx-clap"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%8E%8C%E8%81%B2.mp3"></audio>
 <audio id="sfx-coin"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/coin03.mp3"></audio>
+<!-- ★ v1.1.0(老師需求:所有遊戲都融入現有「小英雄大作戰」的音樂與音效)—
+     以下全部沿用主程式 repo 既有素材,**零新音檔、老師零上傳負擔**。 -->
+<audio id="sfx-sel"     preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%81%B8%E6%93%87%E4%B8%AD.mp3"></audio>
+<!-- ⚠ 原本想接主程式的 powerup02 (1).mp3,實測 raw 回 404(檔名含空格與括號,與主程式 <audio> 內的寫法對不上)
+     ⇒ 改用同樣是「正向強化」語感、且已逐檔驗證 200 的「角色屬性技能選擇.mp3」。
+     日後要加音效,一律先 curl -I 驗過 200 再寫進來。 -->
+<audio id="sfx-powerup" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E6%8A%80%E8%83%BD%E9%81%B8%E6%93%87.mp3"></audio>
+<audio id="sfx-medal"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8D%B2%E5%BE%97%E6%88%90%E5%B0%B1%E7%8D%8E%E7%AB%A0.mp3"></audio>
+<audio id="sfx-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/game_explosion2.mp3"></audio>
+<audio id="sfx-cancel"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%96%E6%B6%88.mp3"></audio>
+<audio id="sfx-recharge" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A3%9C%E5%85%85%E8%83%BD%E9%87%8F.mp3"></audio>
+
+<!-- ★ v1.1.0(老師需求 3「小遊戲模式要有 BGM」)— 三軌,同樣全部沿用主程式既有音樂:
+       首頁  = 台灣地圖BGM(最貼「木柵・台灣」主題)
+       遊戲中 = 知識王問答(答題節奏感,與主程式知識王同一首 ⇒ 學生一聽就知道是同一個世界)
+       結算  = Win(播一次,不 loop)
+     ⚠ preload="none":本小程式的存在目的就是「秒開」,絕不能為了 BGM 拖慢首載。
+     ⚠ iOS 一律禁止自動播放 ⇒ 只在使用者第一次觸碰畫面之後才起播(見 _bgmArm)。 -->
+<audio id="bgm-home"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a"></audio>
+<audio id="bgm-play"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94.mp3"></audio>
+<audio id="bgm-result" preload="none"      src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Win.mp3"></audio>
 
 <div class="wrap">
 
+  <!-- ★ v1.1.0(老師需求 2「小遊戲模式要有回到大作戰模式的按鈕」)
+       ⚠ 用 <a href="../"> 而不是 JS 導頁:與主程式那顆「🎮 迷你遊戲模式」入口同一個道理 ——
+         同 origin 同 scope,在 PWA standalone 視窗內導頁不會跳出 App。
+       ⚠ **刻意只在首頁顯示、遊戲中隱藏**(mgHome/startGame 各切一次):
+         遊戲中誤觸就是整局作廢,而 iPad standalone 的 confirm() 有靜默失敗前例
+         (主程式 v5.57.0 教訓),不能靠二次確認擋。遊戲中已有「← 回選單」,兩步就回得去。 -->
   <div id="topbar">
+    <a id="toapp-btn" class="chip" href="../"
+       onclick="try{playSfx('sfx-tap',0.35);}catch(_){}">🗺 回大作戰</a>
     <button id="back-btn" class="chip hidden" onclick="mgHome()">← 回選單</button>
     <span class="grow"></span>
     <span id="who"></span>
+    <!-- ★ v1.1.0(老師需求 3)— BGM 開關;偏好存 mg_bgm,與 mg_style 同層(只在本機,不上雲) -->
+    <button id="bgm-btn" class="chip" onclick="mgToggleBgm()">🎵</button>
     <button id="style-btn" class="chip" onclick="mgToggleStyle()">字</button>
     <button id="login-btn" class="chip" onclick="mgLoginTap()">登入</button>
   </div>
 
+  <!-- ══ 測試期閘門(老師裁定「丙」:暫時只給 GM 測試)══
+       ⚠⚠ 正式開放時,唯一要改的就是 JS 裡的 _MG_ADMIN_ONLY = false,其餘一行都不必動。⚠⚠
+       ★ 為什麼閘門一定要做在「小遊戲自己身上」,光藏主程式那顆按鈕不夠:
+         v5.140.0 已經上線,學生可能已經點過(網址留在歷史紀錄),
+         甚至已經在小遊戲畫面做過「加入主畫面」⇒ iPad 桌面上那個獨立圖示
+         根本不經過主程式首頁,藏按鈕對它完全無效。
+       ★ 丙案的重點是「學生看到的是預告卡,不是冷冰冰的擋門」——
+         不然小朋友會以為遊戲壞了,然後跑來問老師。 -->
+  <section id="page-gate" class="hidden">
+    <img id="gate-title" src="title.webp" alt="小英雄小遊戲" onerror="mgTitleFallback(this);">
+    <div id="gate-card">
+      <div class="gate-emo">🚧</div>
+      <h2 id="gate-h">小英雄小遊戲・製作中</h2>
+      <p id="gate-p"></p>
+      <div id="gate-preview"></div>
+      <div class="gate-row">
+        <a class="btn" href="../" onclick="try{playSfx('sfx-tap',0.35);}catch(_){}">🗺 回去玩大作戰</a>
+      </div>
+      <div class="gate-row">
+        <button class="btn-ghost" onclick="mgGateLogin()">🔑 老師登入</button>
+      </div>
+      <p id="gate-note"></p>
+    </div>
+  </section>
+
   <!-- ══ 首頁 ══ -->
-  <section id="page-home">
+  <section id="page-home" class="hidden">
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
@@ -240,6 +519,43 @@ button[disabled]{opacity:.45;}
     <div id="earbox" class="hidden">
       <button id="playbtn" onclick="mgEarPlay()">▶ 播放</button>
       <p id="playnote">可以重聽,不會扣分</p>
+    </div>
+
+    <!-- ★ v1.1.0 六個新引擎(老師需求 4)。每個都是獨立容器,由 renderQuestion 統一顯隱。 -->
+    <div id="dragbox" class="hidden">
+      <div id="drag-item"></div>
+      <div id="drag-bins"></div>
+    </div>
+
+    <div id="orderbox" class="hidden">
+      <div id="order-slots"></div>
+      <div id="order-pool"></div>
+      <div id="order-act">
+        <button class="btn-ghost" onclick="mgOrderUndo()">↩ 收回一張</button>
+        <button onclick="mgOrderSubmit()">✓ 就是這個順序</button>
+      </div>
+    </div>
+
+    <div id="matchbox" class="hidden"></div>
+
+    <div id="reactbox" class="hidden"></div>
+    <div id="react-hud" class="hidden">
+      <span id="react-got"></span><span id="react-tip"></span>
+    </div>
+
+    <div id="mazebox" class="hidden">
+      <div id="maze-grid"></div>
+      <p id="maze-info"></p>
+      <div id="maze-act"><button class="btn-ghost" onclick="mgMazeReset()">↺ 重走這一關</button></div>
+    </div>
+
+    <div id="paintbox" class="hidden">
+      <div id="paint-stage">
+        <div class="pcol"><h4>🎨 原本的樣子</h4><div id="paint-ref"></div></div>
+        <div class="pcol"><h4>⬜ 幫他上色</h4><div id="paint-work"></div></div>
+      </div>
+      <div id="paint-palette"></div>
+      <p id="paint-note"></p>
     </div>
 
     <div class="opts" id="opts"></div>
@@ -280,6 +596,11 @@ button[disabled]{opacity:.45;}
   </div>
 </div>
 
+<!-- ★ 調色引擎:跟著手指走的顏料球。
+     ⚠ 刻意放在 .wrap **外面**:position:fixed 的座標基準會被任何有 transform 的祖先劫持,
+       放在 wrap 內日後只要 wrap 加了動畫就會整顆跑掉。 -->
+<div id="paint-drag"></div>
+
 <div id="toast"></div>
 
 <script src="minigame_db.js?v=v1.0.0"></script>
@@ -291,7 +612,38 @@ button[disabled]{opacity:.45;}
 (function(){
 'use strict';
 
-var MG_VER = 'v1.0.0';
+var MG_VER = 'v1.1.0';
+
+/* ══════════════════════════════════════════════════════════
+ *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
+ *
+ *  ⚠⚠ 正式對學生開放時,把下面這一行改成 false 就好,其餘一行都不必動。⚠⚠
+ *
+ *  ★ 為什麼閘門要做在這裡,而不是只把主程式首頁那顆按鈕藏起來:
+ *    v5.140.0 已經上線,學生可能已經點進來過(網址留在瀏覽紀錄),
+ *    也可能已經在這個畫面做過「加入主畫面」⇒ iPad 桌面上會有一個
+ *    **完全不經過主程式首頁**的獨立圖示。只藏按鈕對那個圖示零效果。
+ *  ★ 這是「客戶端」把關,不是資安等級的鎖:會開 F12 的人擋不住。
+ *    但目的只是「暫時不要讓學生玩到半成品」,對小學生足夠。
+ *    真正的資料安全仍然由 firestore.rules 負責(小遊戲只寫得到自己的 minigameScores)。
+ * ══════════════════════════════════════════════════════════ */
+var _MG_ADMIN_ONLY = true;
+/* 與主程式 index.html 的 ADMIN_EMAILS 同一份名單(該名單本來就寫在公開的前端檔裡,
+   複製過來沒有新增任何資訊外洩)。日後主程式增減管理員,記得同步這裡。 */
+var MG_ADMIN_EMAILS = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
+
+function mgIsAdmin(u){
+  if(!u || !u.email) return false;
+  var e = String(u.email).toLowerCase(), i;
+  for(i = 0; i < MG_ADMIN_EMAILS.length; i++){
+    if(MG_ADMIN_EMAILS[i].toLowerCase() === e) return true;
+  }
+  return false;
+}
+/* 現在這個人可不可以看到九宮格? */
+function mgUnlocked(){
+  return (!_MG_ADMIN_ONLY) || mgIsAdmin(MG.user);
+}
 
 /* ── 全域狀態 ────────────────────────────────────────────── */
 var MG = {
@@ -366,6 +718,113 @@ window.mgTitleFallback = function(img){
   var f = $('title-fallback'); if(f) f.style.display = 'block';
 };
 
+/* ══════════════════════════════════════════════════════════
+ *  測試期閘門畫面(丙案:學生看到的是「預告卡」不是「擋門」)
+ * ══════════════════════════════════════════════════════════ */
+function renderGate(){
+  /* 九款縮圖只給看不能點,讓學生知道是「快好了」不是「壞掉了」 */
+  var g = $('gate-preview'), html = '', i;
+  if(g){
+    for(i = 0; i < MG.games.length && i < 10; i++){
+      html += '<span>' + MG.games[i].icon + '</span>';
+    }
+    g.innerHTML = html;
+  }
+  /* 雙版文案(鐵律 1.232:簡單風／精緻風兩版都要有) */
+  $('gate-h').textContent = (MG.style === 's')
+    ? '小遊戲還在做,再等一下!'
+    : '小英雄小遊戲・老師還在調整中';
+  $('gate-p').textContent = (MG.style === 's')
+    ? '老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!'
+    : '這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,'
+    + '等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!';
+  $('gate-note').textContent = (MG.style === 's')
+    ? '(老師要測試請按上面的老師登入)'
+    : '(這是老師的測試入口;學生不需要登入,直接回大作戰就好)';
+}
+
+/* 老師登入 → 通過就解鎖九宮格 */
+window.mgGateLogin = function(){
+  playSfx('sfx-tap', 0.35);
+  mgLoginTap();
+};
+
+/* 依「解鎖狀態」決定要顯示閘門還是九宮格。
+   ⚠ 這是單一收口點:boot / 登入成功 / 登出 三處都走它,不各寫一份切頁邏輯,
+     免得日後只改一邊、出現「登出後九宮格還留在畫面上」這種漏口。 */
+function applyGate(){
+  if(mgUnlocked()){
+    hide('page-gate');
+    /* 只有在沒有正在玩、也沒有停在結算頁時才把首頁叫出來 */
+    if($('page-play').classList.contains('hidden')
+       && $('page-result').classList.contains('hidden')) show('page-home');
+    show('style-btn');
+  }else{
+    /* 測試期:非管理員一律停在閘門,連首頁都不給看到 */
+    hide('page-home'); hide('page-play'); hide('page-result');
+    hide('back-btn');
+    show('page-gate');
+    renderGate();
+    bgmStop();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  BGM(老師需求 3)
+ *  ★ 全部沿用主程式既有音樂,零新素材。
+ *  ★ iOS/iPadOS 一律禁止「沒有使用者手勢」的自動播放 ⇒
+ *    只能在第一次觸碰畫面之後才起播(_bgmArm 掛一次性監聽)。
+ *    若不這樣做,play() 會被瀏覽器拒絕,而且是**靜默**拒絕 —— 老師會以為 BGM 沒做。
+ * ══════════════════════════════════════════════════════════ */
+var _bgmOn = true;      // 使用者偏好(存 localStorage mg_bgm)
+var _bgmCur = '';       // 目前這一軌的 id
+var _bgmArmed = false;  // 是否已經拿到使用者手勢
+
+function bgmStop(){
+  var ids = ['bgm-home', 'bgm-play', 'bgm-result'], i, a;
+  for(i = 0; i < ids.length; i++){
+    a = $(ids[i]);
+    if(a){ try{ a.pause(); }catch(e){} }
+  }
+  _bgmCur = '';
+}
+function bgmPlay(id, vol, once){
+  if(!_bgmOn || !_bgmArmed) { _bgmCur = id; return; }   // 記住想播哪首,拿到手勢後補播
+  if(_bgmCur === id && !once){
+    var cu = $(id);
+    if(cu && !cu.paused) return;                        // 同一首已經在播,不要重頭切
+  }
+  bgmStop();
+  _bgmCur = id;
+  var a = $(id); if(!a) return;
+  try{
+    a.volume = (vol == null ? 0.34 : vol);
+    if(once) a.currentTime = 0;
+    var p = a.play();
+    if(p && p['catch']) p['catch'](function(){});       // 被擋就算了,不影響玩遊戲
+  }catch(e){}
+}
+/* 第一次觸碰畫面 → 解除自動播放封鎖,並把「剛才想播的那一首」補播出來 */
+function _bgmArm(){
+  if(_bgmArmed) return;
+  _bgmArmed = true;
+  var want = _bgmCur; _bgmCur = '';
+  if(want) bgmPlay(want);
+}
+window.mgToggleBgm = function(){
+  _bgmOn = !_bgmOn;
+  try{ localStorage.setItem('mg_bgm', _bgmOn ? '1' : '0'); }catch(e){}
+  $('bgm-btn').textContent = _bgmOn ? '🎵' : '🔇';
+  playSfx('sfx-tap', 0.3);
+  if(!_bgmOn){ bgmStop(); toast('音樂已關閉'); }
+  else{
+    toast('音樂已開啟');
+    /* 依現在停在哪一頁,把對應那一軌接回去 */
+    if(!$('page-play').classList.contains('hidden')) bgmPlay('bgm-play');
+    else if(!$('page-home').classList.contains('hidden')) bgmPlay('bgm-home');
+  }
+};
+
 /* ── 字體風格切換(簡單風／精緻風)────────────────────── */
 window.mgToggleStyle = function(){
   MG.style = (MG.style === 'f' ? 's' : 'f');
@@ -375,6 +834,8 @@ window.mgToggleStyle = function(){
   playSfx('sfx-tap', 0.35);
   // 即時重繪目前畫面
   renderGrid();
+  /* ★ v1.1.0 — 閘門頁也有雙版文案,切字體時要一起重繪,不然學生切了沒反應 */
+  if(!$('page-gate').classList.contains('hidden')) renderGate();
   // ⚠ 已作答的題目不重繪:重繪會清掉解說與正解標示,下一題自然會套用新字體
   if(!$('page-play').classList.contains('hidden') && !MG.answered) renderQuestion(true);
   if($('modal').classList.contains('show') && MG.pendingGame) openInfo(MG.pendingGame, false);
@@ -383,23 +844,57 @@ window.mgToggleStyle = function(){
 /* ══════════════════════════════════════════════════════════
  *  首頁九宮格
  * ══════════════════════════════════════════════════════════ */
+/* ★ v1.1.0 — 代表縮圖一律沿用主程式 repo 既有的關卡場景圖(零新素材)。
+   ⚠ 用 .png:這些場景圖主程式本來就在用,學生的 Service Worker 多半已經快取過,
+     等於不必重新下載;改抓別的檔名反而會多一次網路來回。 */
+var MG_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+function mgThumbUrl(x){
+  return x.thumb ? (MG_IMG_BASE + encodeURIComponent(x.thumb)) : '';
+}
+
 function renderGrid(){
   var g = $('grid'); if(!g) return;
-  var html = '', i, x, b, stars;
+  var html = '', i, x, b, stars, url, k, sk;
   for(i = 0; i < MG.games.length; i++){
     x = MG.games[i];
     b = MG.best[x.id];
     stars = b ? new Array(b.stars + 1).join('★') : '';
+    url = mgThumbUrl(x);
+
+    /* 難度星(需求4):實心到 diff、其餘空心,一眼看得出深淺 */
+    var dh = '', d = x.diff || 0;
+    for(k = 1; k <= 5; k++) dh += (k <= d ? '★' : '☆');
+
+    /* 核心能力標籤(需求4) */
+    sk = '';
+    if(x.skills){
+      for(k = 0; k < x.skills.length; k++){
+        sk += '<span class="cskill">' + esc(x.skills[k]) + '</span>';
+      }
+    }
+
     html += '<div class="cell" onclick="mgOpenInfo(\'' + x.id + '\')">'
+          +   '<div class="cthumb">'
+          +     (url ? '<img src="' + url + '" alt="" loading="lazy" onerror="mgThumbFail(this);">' : '')
+          +     '<span class="cthumb-emo">' + x.icon + '</span>'
+          +   '</div>'
           +   (b ? '<span class="cbest">' + b.score + '</span>' : '')
-          +   '<span class="ce">' + x.icon + '</span>'
           +   '<span class="cn">' + esc(tx(x.name)) + '</span>'
           +   '<span class="cs">' + esc(x.subject.split(' · ')[0]) + '</span>'
+          +   '<div class="cskills">' + sk + '</div>'
+          +   '<div class="cdiff" title="難度">' + dh + '</div>'
           +   '<span class="cstar">' + stars + '</span>'
           + '</div>';
   }
   g.innerHTML = html;
 }
+/* 縮圖抓不到就把圖藏起來,露出底下的 emoji ——
+   ⚠ 不可以整塊 cthumb 隱藏:那樣卡片高度會參差不齊,九宮格會排得歪七扭八。 */
+window.mgThumbFail = function(img){
+  img.style.display = 'none';
+  var emo = img.parentNode && img.parentNode.getElementsByClassName('cthumb-emo')[0];
+  if(emo) emo.style.opacity = '1';
+};
 
 window.mgOpenInfo = function(id){
   playSfx('sfx-tap', 0.4);
@@ -431,12 +926,32 @@ window.mgStartFromModal = function(){
 /* ══════════════════════════════════════════════════════════
  *  一局的流程
  * ══════════════════════════════════════════════════════════ */
+/* ★ v1.1.0 — 各引擎的「題目陣列」放在哪個欄位,收攏成一張表。
+   ⚠ 這是單一真相:日後再加引擎只要在這裡補一行,不必回頭改 startGame。
+     舊寫法是一長串三元運算子,每加一個引擎就得改一次,是典型會漏掉的地方。 */
+var _POOL_FIELD = {
+  sort:'items',  quiz:'questions', map:'tasks',   ear:'questions',
+  drag:'items',  order:'rounds',   match:'rounds',
+  react:'rounds', maze:'levels',   paint:'pics'
+};
+function poolOf(x){
+  var f = _POOL_FIELD[x.engine];
+  var p = f ? x[f] : null;
+  return (p && p.length) ? p : [];
+}
+
 function startGame(x){
+  stopTimer();
+  stopEngines();          /* ★ v1.1.0 必要:重玩或換一款遊戲時,上一局的迴圈必須先停 */
   MG.cur = x;
   MG.idx = 0; MG.score = 0; MG.right = 0; MG.combo = 0; MG.maxCombo = 0;
-  var pool = (x.engine === 'sort') ? x.items : (x.engine === 'map' ? x.tasks : x.questions);
-  MG.order = shuffle(pool);
+  MG.order = shuffle(poolOf(x));
   hide('page-home'); hide('page-result'); show('page-play'); show('back-btn');
+  /* ★ v1.1.0 — 遊戲中把「🗺 回大作戰」收起來:誤觸就是整局作廢,
+     而 iPad standalone 的 confirm() 有靜默失敗前例(主程式 v5.57.0 教訓),不能靠二次確認擋。
+     玩家仍可「← 回選單」再按回大作戰,只多一步。 */
+  hide('toapp-btn');
+  bgmPlay('bgm-play');
   playSfx('sfx-enter', 0.4);
   renderQuestion(false);
   window.scrollTo(0, 0);
@@ -444,11 +959,30 @@ function startGame(x){
 window.mgRetry = function(){ if(MG.cur) startGame(MG.cur); };
 window.mgHome = function(){
   stopTimer();
+  stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   MG.cur = null;
   hide('page-play'); hide('page-result'); hide('back-btn'); show('page-home');
+  show('toapp-btn');
+  bgmPlay('bgm-home');
   renderGrid();
   window.scrollTo(0, 0);
 };
+
+/* ★ v1.1.0 — 引擎的共同清理點。
+   ⚠⚠ 這支**一定**要在每個離開遊戲畫面的路徑上被呼叫。⚠⚠
+     反應點擊引擎跑的是 requestAnimationFrame 無限迴圈,不取消的話:
+     玩家按「回選單」以後,那個迴圈**還在背景一直跑**,持續產生掉落物、
+     持續讀 DOM、持續耗電,而且下一次開遊戲會有兩個迴圈同時跑 ⇒ 速度變兩倍。
+     這種 bug 在畫面上看不出來(首頁一切正常),只會表現成「iPad 越玩越燙、越玩越慢」,
+     幾乎不可能從症狀反推原因,所以在這裡寫死提醒。 */
+function stopEngines(){
+  if(_RC){
+    if(_RC.raf) cancelAnimationFrame(_RC.raf);
+    _RC = null;
+  }
+  var pd = $('paint-drag'); if(pd) pd.style.display = 'none';
+  _PT = null; _MZ = null; _MC = null; _OD = null; _DG = null;
+}
 
 function stopTimer(){ if(MG.timer){ clearInterval(MG.timer); MG.timer = null; } }
 function startTimer(sec){
@@ -486,7 +1020,14 @@ function renderQuestion(keepState){
   $('score').textContent = MG.score + ' 分';
   $('combo').textContent = MG.combo >= 2 ? ('🔥 ' + MG.combo + ' 連') : '';
 
-  hide('mapbox'); hide('earbox'); show('card-area');
+  /* ★ v1.1.0 — 容器顯隱收攏成一份清單。
+     舊寫法是逐個 hide(),每加一個引擎就要記得補一行,漏掉的症狀是
+     「玩完 A 遊戲再玩 B,上一款的畫面還黏在下面」——很難聯想到原因。 */
+  var _BOXES = ['mapbox','earbox','dragbox','orderbox','matchbox',
+                'reactbox','react-hud','mazebox','paintbox'];
+  for(var _b = 0; _b < _BOXES.length; _b++) hide(_BOXES[_b]);
+  show('card-area');
+  $('opts').innerHTML = '';
   $('feedback').className = ''; $('feedback').classList.remove('show');
   hide('nextrow');
   $('qhint').textContent = x.hint ? tx(x.hint) : '';
@@ -495,8 +1036,16 @@ function renderQuestion(keepState){
   else if(x.engine === 'quiz') renderQuiz(x, q);
   else if(x.engine === 'map') renderMap(x, q);
   else if(x.engine === 'ear') renderEar(x, q);
+  else if(x.engine === 'drag') renderDrag(x, q);
+  else if(x.engine === 'order') renderOrder(x, q);
+  else if(x.engine === 'match') renderMatch(x, q);
+  else if(x.engine === 'react') renderReact(x, q);
+  else if(x.engine === 'maze') renderMaze(x, q);
+  else if(x.engine === 'paint') renderPaint(x, q);
 
-  if(!keepState) startTimer(x.time);
+  /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
+     三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
+  if(!keepState && x.engine !== 'react') startTimer(x.time);
 }
 
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
@@ -585,11 +1134,744 @@ window.mgEarPlay = function(){
   }catch(e){ toast('播放失敗,請再試一次'); }
 };
 
+/* ══════════════════════════════════════════════════════════
+ *  引擎 D:拖放分類(用手指真的把卡片拖進籃子)
+ *  ★ 與舊的 sort 引擎差別:sort 是「按一顆按鈕」,體感和選擇題一樣;
+ *    這裡是真的拖,小朋友的手要做出「歸類」這個動作,記憶會深得多。
+ *  ★ 用 Pointer Events 統一處理滑鼠與觸控;舊 iPad 沒有 PointerEvent
+ *    ⇒ 自動退回 touch/mouse 兩組監聽(見 _dragBind)。
+ * ══════════════════════════════════════════════════════════ */
+var _DG = null;   // { el, bins, startX, startY, dx, dy, hot }
+
+function renderDrag(x, it){
+  hide('card-area');
+  show('dragbox');
+  var d = $('drag-item');
+  d.innerHTML = esc(it.t) + '<span class="dgrip">用手指把它拖到正確的籃子</span>';
+  d.className = '';
+  d.style.transform = '';
+  var wrap = $('drag-bins'), html = '', i, b;
+  wrap.className = (x.bins.length === 2 ? 'two' : 'three');
+  for(i = 0; i < x.bins.length; i++){
+    b = x.bins[i];
+    html += '<div class="dbin" data-i="' + i + '">'
+          +   '<span class="be">' + b.e + '</span>' + esc(b.n) + '</div>';
+  }
+  wrap.innerHTML = html;
+  _dragBind(d);
+}
+
+function _dragBind(el){
+  var moved = false;
+  function down(e){
+    if(MG.answered) return;
+    var p = _pt(e);
+    _DG = { el: el, startX: p.x, startY: p.y, hot: -1 };
+    el.classList.add('dragging');
+    moved = false;
+    playSfx('sfx-tap', 0.28);
+    if(e.preventDefault) e.preventDefault();
+  }
+  function move(e){
+    if(!_DG) return;
+    var p = _pt(e);
+    var dx = p.x - _DG.startX, dy = p.y - _DG.startY;
+    moved = true;
+    el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(1.04)';
+    var hot = _binUnder(p.x, p.y);
+    if(hot !== _DG.hot){
+      _paintHot(hot);
+      _DG.hot = hot;
+      if(hot >= 0) playSfx('sfx-sel', 0.2);
+    }
+    if(e.preventDefault) e.preventDefault();
+  }
+  function up(e){
+    if(!_DG) return;
+    var hot = _DG.hot;
+    el.classList.remove('dragging');
+    _DG = null;
+    _paintHot(-1);
+    if(!moved || hot < 0){
+      /* 沒拖到任何籃子 ⇒ 彈回原位,不算答錯(小朋友常常拖到一半手滑) */
+      el.style.transform = '';
+      return;
+    }
+    el.style.transform = '';
+    mgAnswer(hot);
+  }
+  /* Pointer Events 優先;沒有的舊機退回 touch + mouse */
+  if(window.PointerEvent){
+    el.onpointerdown = function(e){ down(e); el.setPointerCapture && el.setPointerCapture(e.pointerId); };
+    el.onpointermove = move;
+    el.onpointerup = up;
+    el.onpointercancel = up;
+  }else{
+    el.ontouchstart = down; el.ontouchmove = move; el.ontouchend = up; el.ontouchcancel = up;
+    el.onmousedown = function(e){
+      down(e);
+      document.onmousemove = move;
+      document.onmouseup = function(ev){ up(ev); document.onmousemove = null; document.onmouseup = null; };
+    };
+  }
+}
+/* 取事件座標(觸控與滑鼠通用) */
+function _pt(e){
+  if(e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  if(e.changedTouches && e.changedTouches.length)
+    return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
+/* 這個座標落在第幾個籃子上?(用實際矩形判定,不用 elementFromPoint ——
+   拖曳中的卡片會蓋在指尖下面,elementFromPoint 會一直回傳卡片自己) */
+function _binUnder(cx, cy){
+  var bins = $('drag-bins').getElementsByClassName('dbin'), i, r;
+  for(i = 0; i < bins.length; i++){
+    r = bins[i].getBoundingClientRect();
+    if(cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom) return i;
+  }
+  return -1;
+}
+function _paintHot(idx){
+  var bins = $('drag-bins').getElementsByClassName('dbin'), i;
+  for(i = 0; i < bins.length; i++){
+    if(bins[i].className.indexOf('ok') >= 0 || bins[i].className.indexOf('ng') >= 0) continue;
+    bins[i].className = 'dbin' + (i === idx ? ' hot' : '');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  引擎 E:順序排列(把卡片依正確順序一張一張放上去)
+ *  ★ 教「先後關係」——節氣、製茶工序、溪流上下游、歷史年代,
+ *    這些用選擇題問只能問單點,用排序才問得出「整條順序」。
+ * ══════════════════════════════════════════════════════════ */
+var _OD = null;   // { picked:[原始索引], items:[...] }
+
+function renderOrder(x, r){
+  hide('card-area');
+  show('orderbox');
+  $('qcard').textContent = tx(r.q);
+  _OD = { picked: [], items: r.seq, shuffled: shuffle(_idxList(r.seq.length)) };
+  _orderPaint(r);
+}
+function _idxList(n){ var a = [], i; for(i = 0; i < n; i++) a.push(i); return a; }
+
+function _orderPaint(r){
+  var i, html = '';
+  /* 上排:順序格 */
+  for(i = 0; i < r.seq.length; i++){
+    var fi = _OD.picked[i];
+    html += '<div class="oslot' + (fi == null ? '' : ' filled') + '">'
+          + (fi == null ? '<span style="opacity:.45;">' + (i + 1) + '</span>'
+                        : esc(r.seq[fi]))
+          + '</div>';
+  }
+  $('order-slots').innerHTML = html;
+  /* 下排:待選卡 */
+  html = '';
+  for(i = 0; i < _OD.shuffled.length; i++){
+    var oi = _OD.shuffled[i];
+    var used = false, k;
+    for(k = 0; k < _OD.picked.length; k++){ if(_OD.picked[k] === oi) used = true; }
+    html += '<button class="ocard' + (used ? ' used' : '') + '" '
+          + 'onclick="mgOrderPick(' + oi + ')">' + esc(r.seq[oi]) + '</button>';
+  }
+  $('order-pool').innerHTML = html;
+}
+window.mgOrderPick = function(oi){
+  if(MG.answered || !_OD) return;
+  var r = MG.order[MG.idx];
+  if(_OD.picked.length >= r.seq.length) return;
+  _OD.picked.push(oi);
+  playSfx('sfx-tap', 0.3);
+  _orderPaint(r);
+};
+window.mgOrderUndo = function(){
+  if(MG.answered || !_OD || !_OD.picked.length) return;
+  _OD.picked.pop();
+  playSfx('sfx-cancel', 0.3);
+  _orderPaint(MG.order[MG.idx]);
+};
+window.mgOrderSubmit = function(){
+  if(MG.answered || !_OD) return;
+  var r = MG.order[MG.idx];
+  if(_OD.picked.length < r.seq.length){
+    toast('還有格子沒有放喔');
+    playSfx('sfx-cancel', 0.3);
+    return;
+  }
+  /* seq 在資料表裡就是「正確順序」,所以答對 = picked 剛好是 0,1,2,3… */
+  var ok = true, i;
+  for(i = 0; i < _OD.picked.length; i++){ if(_OD.picked[i] !== i) ok = false; }
+  MG.answered = true;
+  stopTimer();
+  if(!ok){
+    /* 錯了要把正解顯示出來,不然學生不知道正確順序長怎樣 = 沒學到東西 */
+    _OD.picked = _idxList(r.seq.length);
+    _orderPaint(r);
+  }
+  scoreIt(ok);
+  showFeedback(ok, ok ? '✅ 順序完全正確!' : '❌ 正確順序已經幫你排好了', tx(r.why));
+};
+
+/* ══════════════════════════════════════════════════════════
+ *  引擎 G:反應點擊(老師指定 A)
+ *  「天上掉下許多候選答案,點擊正確答案加分,點到錯的扣分。」
+ *
+ *  ★ 實作要點:
+ *    - 用 requestAnimationFrame 跑掉落,不用 CSS animation:
+ *      需要隨時知道每顆的座標才能判定「掉出畫面 = 漏接」。
+ *    - 位移一律走 transform(GPU 合成),不動 top/left ——
+ *      舊 iPad 上改 top 會每幀觸發 layout,掉幀會很明顯。
+ *    - **漏接正確答案不扣分**,只有「點到錯的」才扣。
+ *      小學生手速差異很大,漏接扣分會讓慢的孩子一路負分而放棄。
+ * ══════════════════════════════════════════════════════════ */
+var _RC = null;   // { drops:[], raf, last, spawnT, got, need, wrong, endAt }
+
+function renderReact(x, r){
+  hide('card-area');
+  show('reactbox'); show('react-hud');
+  $('qcard').textContent = tx(r.q);
+  var box = $('reactbox');
+  box.innerHTML = '';
+  var dur = (r.sec || x.time || 22) * 1000;
+  _RC = {
+    drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
+    need: (r.need || 6), r: r,
+    endAt: (new Date()).getTime() + dur, total: dur
+  };
+  _reactHud();
+  box.onclick = null;
+  _RC.raf = requestAnimationFrame(_reactTick);
+}
+function _reactHud(){
+  if(!_RC) return;
+  $('react-got').textContent = '✅ 接到 ' + _RC.got + ' / ' + _RC.need
+                             + (_RC.wrong ? ('　❌ 點錯 ' + _RC.wrong) : '');
+  $('react-tip').textContent = tx(_RC.r.tip || { f:'只點正確的,錯的不要碰!', s:'只點對的!' });
+}
+function _reactSpawn(){
+  var r = _RC.r, box = $('reactbox');
+  var isGood = Math.random() < 0.45;               // 好壞比約 45 / 55
+  var pool = isGood ? r.good : r.bad;
+  var txt = pool[Math.floor(Math.random() * pool.length)];
+  var el = document.createElement('div');
+  el.className = 'rdrop' + (isGood ? '' : ' bad');
+  el.textContent = txt;
+  el.style.left = '0px'; el.style.top = '0px';
+  box.appendChild(el);
+  var bw = box.clientWidth, ew = el.offsetWidth || 90;
+  var d = {
+    el: el, good: isGood,
+    x: Math.random() * Math.max(1, bw - ew - 8) + 4,
+    y: -54,
+    v: 62 + Math.random() * 52,                    // px/秒,慢到小學生追得上
+    dead: false
+  };
+  el.onclick = function(){ _reactHit(d); };
+  _RC.drops.push(d);
+}
+function _reactHit(d){
+  if(!_RC || d.dead) return;
+  d.dead = true;
+  if(d.good){
+    _RC.got++;
+    d.el.className = 'rdrop hit';
+    playSfx('sfx-ok', 0.45);
+    _reactFloat(d, '+1', '#4fbf7d');
+  }else{
+    _RC.wrong++;
+    d.el.className = 'rdrop wrong';
+    playSfx('sfx-ng', 0.4);
+    _reactFloat(d, '−1', '#d2543f');
+  }
+  _reactHud();
+  /* 被點到的那顆 0.35 秒後移走(留一下讓孩子看到回饋) */
+  var el = d.el;
+  setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 350);
+}
+function _reactFloat(d, txt, color){
+  var f = document.createElement('div');
+  f.className = 'rfloat';
+  f.textContent = txt;
+  f.style.color = color;
+  f.style.left = d.x + 'px';
+  f.style.top = d.y + 'px';
+  $('reactbox').appendChild(f);
+  setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 800);
+}
+function _reactTick(ts){
+  if(!_RC) return;
+  if(!_RC.last) _RC.last = ts;
+  var dt = Math.min(0.05, (ts - _RC.last) / 1000);   // 夾住 dt:切到背景再回來不會瞬移
+  _RC.last = ts;
+
+  /* 產生新的掉落物 */
+  _RC.spawnT -= dt;
+  if(_RC.spawnT <= 0){
+    _reactSpawn();
+    _RC.spawnT = 0.55 + Math.random() * 0.45;
+  }
+  /* 位移 + 掉出畫面就回收(漏接正確答案不扣分,見上方註解) */
+  var h = $('reactbox').clientHeight, i, d;
+  for(i = _RC.drops.length - 1; i >= 0; i--){
+    d = _RC.drops[i];
+    if(!d.el || !d.el.parentNode){ _RC.drops.splice(i, 1); continue; }
+    if(!d.dead){
+      d.y += d.v * dt;
+      d.el.style.transform = 'translate(' + d.x + 'px,' + d.y + 'px)';
+      if(d.y > h + 10){
+        d.el.parentNode.removeChild(d.el);
+        _RC.drops.splice(i, 1);
+      }
+    }
+  }
+  /* 進度條沿用既有那條(時間軸),不另做一條 */
+  var leftMs = _RC.endAt - (new Date()).getTime();
+  var pct = Math.max(0, leftMs / _RC.total) * 100;
+  var bar = $('timebar');
+  if(bar){
+    bar.style.width = pct + '%';
+    if(pct <= 30) bar.classList.add('low'); else bar.classList.remove('low');
+  }
+  if(leftMs <= 0 || _RC.got >= _RC.need){ _reactFinish(); return; }
+  _RC.raf = requestAnimationFrame(_reactTick);
+}
+function _reactFinish(){
+  if(!_RC || MG.answered) return;
+  if(_RC.raf) cancelAnimationFrame(_RC.raf);
+  MG.answered = true;
+  stopTimer();
+  var r = _RC.r, got = _RC.got, wrong = _RC.wrong, need = _RC.need;
+  $('reactbox').innerHTML = '';
+  var ok = (got >= need && wrong <= 1);
+  scoreIt(ok);
+  showFeedback(ok,
+    ok ? ('✅ 接到 ' + got + ' 個,點錯 ' + wrong + ' 次!')
+       : ('🔶 接到 ' + got + ' / ' + need + ' 個,點錯 ' + wrong + ' 次'),
+    tx(r.why));
+  _RC = null;
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  引擎 F:翻牌配對(記憶 + 配對)
+ *  ★ 一次翻兩張,配成一對才留著。考的是「記位置」加「知道誰跟誰是一組」。
+ * ══════════════════════════════════════════════════════════ */
+var _MC = null;   // { cards:[{txt,pair}], open:[i], done:0, tries:0, lock:false }
+
+function renderMatch(x, r){
+  hide('card-area');
+  show('matchbox');
+  $('qcard').textContent = tx(r.q);
+  var cards = [], i;
+  for(i = 0; i < r.pairs.length; i++){
+    cards.push({ txt: r.pairs[i][0], pair: i });
+    cards.push({ txt: r.pairs[i][1], pair: i });
+  }
+  _MC = { cards: shuffle(cards), open: [], done: 0, tries: 0, lock: false };
+  _matchPaint();
+}
+function _matchPaint(){
+  var html = '', i, c, cls;
+  for(i = 0; i < _MC.cards.length; i++){
+    c = _MC.cards[i];
+    cls = 'mcard';
+    if(c.done) cls += ' done';
+    else if(_MC.open.indexOf(i) >= 0) cls += ' open';
+    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + esc(c.txt) + '</div>';
+  }
+  $('matchbox').innerHTML = html;
+}
+window.mgMatchTap = function(i){
+  if(MG.answered || !_MC || _MC.lock) return;
+  var c = _MC.cards[i];
+  if(c.done || _MC.open.indexOf(i) >= 0) return;
+  _MC.open.push(i);
+  playSfx('sfx-tap', 0.3);
+  _matchPaint();
+  if(_MC.open.length < 2) return;
+
+  _MC.lock = true;
+  _MC.tries++;
+  var a = _MC.cards[_MC.open[0]], b = _MC.cards[_MC.open[1]];
+  if(a.pair === b.pair){
+    a.done = true; b.done = true;
+    _MC.done++;
+    _MC.open = [];
+    _MC.lock = false;
+    playSfx('sfx-ok', 0.45);
+    _matchPaint();
+    if(_MC.done >= _MC.cards.length / 2) _matchFinish();
+  }else{
+    /* 配錯:紅一下再蓋回去。0.75 秒剛好夠小朋友看清楚翻到什麼 */
+    var els = $('matchbox').getElementsByClassName('mcard');
+    if(els[_MC.open[0]]) els[_MC.open[0]].className = 'mcard miss';
+    if(els[_MC.open[1]]) els[_MC.open[1]].className = 'mcard miss';
+    playSfx('sfx-ng', 0.3);
+    setTimeout(function(){
+      _MC.open = []; _MC.lock = false; _matchPaint();
+    }, 750);
+  }
+};
+function _matchFinish(){
+  MG.answered = true;
+  stopTimer();
+  var r = MG.order[MG.idx];
+  /* 判定標準:翻牌次數不超過「對數 × 2」就算full marks。
+     ⚠ 刻意不要求「零失誤」——記憶遊戲第一輪本來就一定得先翻開來看,
+       要求零失誤等於逼小朋友用猜的,那就失去練記憶的意義了。 */
+  var perfect = (_MC.tries <= r.pairs.length * 2);
+  scoreIt(perfect);
+  showFeedback(perfect,
+    perfect ? ('✅ 全部配對成功!只用了 ' + _MC.tries + ' 次')
+            : ('🔶 全部配對完成,用了 ' + _MC.tries + ' 次(' + (r.pairs.length * 2) + ' 次以內可以拿滿分)'),
+    tx(r.why));
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  引擎 H:走迷宮(老師指定 B)
+ *  「走過的地方不能再走,且要經過正確答案。」
+ *
+ *  ★ 地圖用字串陣列描述,一行一列(在資料表裡看起來就是一張圖,好維護):
+ *      S = 起點   G = 終點   # = 牆   . = 空地
+ *      其他英文字母 = 一個「答案格」,內容查 marks 表(t 文字 / ok 對不對)
+ *  ★ 規則:
+ *      - 只能走上下左右相鄰、且沒走過、且不是牆的格子(走過的變綠色,不能回頭)
+ *      - 必須把所有 ok:true 的格子都踩過,再走到 G 才算過關
+ *      - 踩到 ok:false 的陷阱格會扣分,但**不會直接判失敗**
+ *        (小學生走錯一步就整關重來會很挫折,改成「還是能走完,只是分數低」)
+ *      - 走到死路(四周都不能走)會提示重走,不當作答錯
+ * ══════════════════════════════════════════════════════════ */
+var _MZ = null;
+
+function renderMaze(x, lv){
+  hide('card-area');
+  show('mazebox');
+  $('qcard').textContent = tx(lv.q);
+  _mazeInit(lv);
+}
+function _mazeInit(lv){
+  var h = lv.rows.length, w = lv.rows[0].length, r, c, ch, start = 0, needN = 0;
+  var cells = [];
+  for(r = 0; r < h; r++){
+    for(c = 0; c < w; c++){
+      ch = lv.rows[r].charAt(c);
+      var m = (lv.marks && lv.marks[ch]) ? lv.marks[ch] : null;
+      if(ch === 'S') start = r * w + c;
+      if(m && m.ok) needN++;
+      cells.push({ ch: ch, mark: m });
+    }
+  }
+  _MZ = { lv: lv, w: w, h: h, cells: cells, pos: start,
+          walked: [start], got: 0, need: needN, bad: 0, done: false };
+  _mazePaint();
+}
+function _mazeReach(i){
+  /* 相鄰(上下左右,不含斜角)且沒走過且不是牆 */
+  if(_MZ.walked.indexOf(i) >= 0) return false;
+  if(_MZ.cells[i].ch === '#') return false;
+  var w = _MZ.w, pr = Math.floor(_MZ.pos / w), pc = _MZ.pos % w;
+  var tr = Math.floor(i / w), tc = i % w;
+  return (Math.abs(pr - tr) + Math.abs(pc - tc)) === 1;
+}
+function _mazePaint(){
+  var g = $('maze-grid'), html = '', i, cell, cls, txt;
+  g.style.gridTemplateColumns = 'repeat(' + _MZ.w + ',minmax(0,1fr))';
+  g.style.maxWidth = Math.min(96, _MZ.w * 15) + 'vw';
+  g.style.margin = '0 auto';
+  for(i = 0; i < _MZ.cells.length; i++){
+    cell = _MZ.cells[i];
+    cls = 'mz'; txt = '';
+    if(cell.ch === '#') cls += ' wall';
+    else if(cell.ch === 'S'){ txt = '🚩'; }
+    else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; }
+    else if(cell.mark){
+      txt = cell.mark.t;
+      cls += cell.mark.ok ? ' ans' : ' bad';
+    }
+    if(_MZ.walked.indexOf(i) >= 0){
+      cls += (cell.mark && cell.mark.ok) ? ' got' : ' walked';
+    }else if(!_MZ.done && _mazeReach(i)){
+      cls += ' reach';
+    }
+    if(i === _MZ.pos) cls += ' here';
+    html += '<div class="' + cls + '" onclick="mgMazeStep(' + i + ')">' + esc(txt) + '</div>';
+  }
+  g.innerHTML = html;
+  $('maze-info').textContent =
+    '⭐ 收集 ' + _MZ.got + ' / ' + _MZ.need + ' 個正確答案'
+    + (_MZ.bad ? ('　💥 踩到 ' + _MZ.bad + ' 個陷阱') : '')
+    + '　|　白框的格子才走得過去';
+}
+window.mgMazeStep = function(i){
+  if(MG.answered || !_MZ || _MZ.done) return;
+  if(!_mazeReach(i)){
+    /* 不能走的格子:靜靜拒絕就好,不要跳提示轟炸小朋友 */
+    playSfx('sfx-cancel', 0.2);
+    return;
+  }
+  _MZ.pos = i;
+  _MZ.walked.push(i);
+  var cell = _MZ.cells[i];
+  if(cell.mark){
+    if(cell.mark.ok){ _MZ.got++; playSfx('sfx-ok', 0.42); }
+    else{ _MZ.bad++; playSfx('sfx-explode', 0.35); }
+  }else{
+    playSfx('sfx-tap', 0.22);
+  }
+  if(cell.ch === 'G'){ _mazePaint(); _mazeFinish(); return; }
+  _mazePaint();
+  /* 死路偵測:四周都走不了 ⇒ 提示重走(不判失敗) */
+  var k, alive = false;
+  for(k = 0; k < _MZ.cells.length; k++){ if(_mazeReach(k)) alive = true; }
+  if(!alive){
+    toast('走不下去了,按「重走這一關」再試一次');
+    playSfx('sfx-cancel', 0.4);
+  }
+};
+window.mgMazeReset = function(){
+  if(MG.answered || !_MZ) return;
+  playSfx('sfx-tap', 0.3);
+  _mazeInit(_MZ.lv);
+};
+function _mazeFinish(){
+  _MZ.done = true;
+  MG.answered = true;
+  stopTimer();
+  var lv = _MZ.lv;
+  var allGot = (_MZ.got >= _MZ.need);
+  var ok = allGot && _MZ.bad === 0;
+  scoreIt(ok);
+  var head;
+  if(ok) head = '✅ 全部答案都收集到,順利走出迷宮!';
+  else if(!allGot) head = '🔶 走到終點了,但漏掉 ' + (_MZ.need - _MZ.got) + ' 個正確答案';
+  else head = '🔶 答案都拿到了,不過踩到 ' + _MZ.bad + ' 個陷阱';
+  showFeedback(ok, head, tx(lv.why));
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  引擎 I:調色考驗(老師指定 C)
+ *  「左邊一張彩色圖片(用英雄圖鑑的圖片),右邊是同一張的黑白圖片+顏料區,
+ *    把顏色拖進去正確區域上色。」
+ *
+ *  ★ 怎麼做到「分區」——這裡是本引擎唯一的技術重點,日後不要改壞:
+ *    英雄立繪是**點陣圖**,程式沒辦法自動知道「哪一塊是頭髮、哪一塊是衣服」。
+ *    所以改用「格子」當作區域:同一張圖切成 3 欄 × 4 列 = 12 格
+ *    (12 格都用同一張 background-image + 不同的 background-position,
+ *     圖只會被下載一次,不是 12 次)。
+ *    每一格的正確顏色是**離線先算好**寫在 minigame_db.js 裡的
+ *    (calc_palette.py:取該格出現次數最多的顏料色)。
+ *    ⇒ 執行期完全不需要 canvas / getImageData / CORS,離線也能玩,舊 iPad 也不會卡。
+ *
+ *  ★ 灰階是 CSS filter:grayscale(1),上對色就把 filter 拿掉 ⇒
+ *    視覺上就是「顏色一格一格回來」,對小朋友很有成就感。
+ *
+ *  ★ 左邊刻意保留彩色原圖(老師的原始設計):
+ *    難度不在「背answer」,而在「看得出這一格到底是什麼顏色」——
+ *    這正是美術科要練的觀察與辨色。
+ * ══════════════════════════════════════════════════════════ */
+var PAINTS = {
+  red:   { n:'紅', c:'#e0453b' }, orange:{ n:'橙', c:'#f0862a' },
+  yellow:{ n:'黃', c:'#f2ce3c' }, green: { n:'綠', c:'#4cb050' },
+  blue:  { n:'藍', c:'#3b7de0' }, purple:{ n:'紫', c:'#8a5cd6' },
+  brown: { n:'棕', c:'#8b5a2b' }, skin:  { n:'膚', c:'#f0c9a0' },
+  black: { n:'黑', c:'#2f2f33' }, white: { n:'白', c:'#f2f2f0' }
+};
+var PAINT_COLS = 3, PAINT_ROWS = 4;
+/* 立繪一律走 repo 既有的瘦身版 .jpg(約 110~240KB),
+   ⚠ 不要改成 .png:同一張 png 是 900KB 級,本小程式的存在目的就是給網路差的學生秒開。 */
+var HERO_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+
+var _PT = null;   // { pic, url, cells, left, wrong, pick, dragging }
+
+function renderPaint(x, pic){
+  hide('card-area');
+  show('paintbox');
+  $('qcard').textContent = tx(pic.q);
+  var url = HERO_IMG_BASE + encodeURIComponent(pic.file);
+  _PT = { pic: pic, url: url, done: [], left: pic.cells.length,
+          wrong: 0, pick: null, dragging: false };
+
+  /* 左:彩色參考圖(載不到就顯示提示,不讓畫面開天窗) */
+  $('paint-ref').innerHTML =
+    '<img src="' + url + '" alt="" '
+    + 'onerror="this.parentNode.innerHTML=\'<div style=&quot;padding:14px;font-size:14px;opacity:.7;text-align:center;&quot;>圖片載入中或載入失敗<br>沒關係,還是可以憑感覺上色</div>\';">';
+
+  /* 右:12 格黑白圖 */
+  var html = '', i, c, r;
+  for(i = 0; i < pic.cells.length; i++){
+    c = i % PAINT_COLS; r = Math.floor(i / PAINT_COLS);
+    html += '<div class="pcell" data-i="' + i + '" style="'
+          + 'background-image:url(' + url + ');'
+          + 'background-position:' + (c * (100 / (PAINT_COLS - 1))) + '% '
+          + (r * (100 / (PAINT_ROWS - 1))) + '%;"></div>';
+  }
+  $('paint-work').innerHTML = html;
+
+  /* 顏料盤:只放這張圖真的用得到的顏色(全部十色會讓小朋友無從下手) */
+  var used = [], k;
+  for(i = 0; i < pic.cells.length; i++){
+    if(used.indexOf(pic.cells[i]) < 0) used.push(pic.cells[i]);
+  }
+  used = shuffle(used);
+  html = '';
+  for(k = 0; k < used.length; k++){
+    var p = PAINTS[used[k]];
+    if(!p) continue;
+    html += '<div class="pchip" data-p="' + used[k] + '" '
+          + 'style="background:' + p.c + ';"><span>' + p.n + '</span></div>';
+  }
+  $('paint-palette').innerHTML = html;
+  _paintNote();
+  _paintBind();
+}
+function _paintNote(){
+  if(!_PT) return;
+  $('paint-note').textContent =
+    '還有 ' + _PT.left + ' 格沒上色'
+    + (_PT.wrong ? ('　·　塗錯 ' + _PT.wrong + ' 次') : '')
+    + '　·　把顏料拖到右邊的格子,或先點顏料再點格子';
+}
+function _paintBind(){
+  var chips = $('paint-palette').getElementsByClassName('pchip'), i;
+  for(i = 0; i < chips.length; i++) _chipBind(chips[i]);
+  /* 「先點顏料、再點格子」是拖曳之外的第二條路:
+     有些孩子(或用滑鼠的 PC)拖不順,沒有這條會卡死玩不下去。 */
+  var cells = $('paint-work').getElementsByClassName('pcell');
+  for(i = 0; i < cells.length; i++){
+    cells[i].onclick = (function(el){
+      return function(){
+        if(!_PT || !_PT.pick || _PT.dragging) return;
+        _paintApply(parseInt(el.getAttribute('data-i'), 10), _PT.pick);
+      };
+    })(cells[i]);
+  }
+}
+function _chipBind(chip){
+  var pid = chip.getAttribute('data-p');
+  var ghost = $('paint-drag');
+  var moved = false;
+
+  function down(e){
+    if(MG.answered) return;
+    _PT.pick = pid;
+    _PT.dragging = true;
+    moved = false;
+    _paintPickPaint();
+    var p = _pt(e);
+    ghost.style.background = PAINTS[pid].c;
+    ghost.style.display = 'block';
+    ghost.style.left = (p.x - 23) + 'px';
+    ghost.style.top = (p.y - 23) + 'px';
+    playSfx('sfx-tap', 0.25);
+    if(e.preventDefault) e.preventDefault();
+  }
+  function move(e){
+    if(!_PT || !_PT.dragging) return;
+    moved = true;
+    var p = _pt(e);
+    ghost.style.left = (p.x - 23) + 'px';
+    ghost.style.top = (p.y - 23) + 'px';
+    _paintHotCell(_cellUnder(p.x, p.y));
+    if(e.preventDefault) e.preventDefault();
+  }
+  function up(e){
+    if(!_PT || !_PT.dragging) return;
+    var p = _pt(e);
+    var idx = _cellUnder(p.x, p.y);
+    ghost.style.display = 'none';
+    _paintHotCell(-1);
+    _PT.dragging = false;
+    /* 只是「點一下顏料」(沒有拖)⇒ 保持選取狀態,等他去點格子 */
+    if(!moved) return;
+    if(idx >= 0) _paintApply(idx, pid);
+  }
+  if(window.PointerEvent){
+    chip.onpointerdown = function(e){ down(e); chip.setPointerCapture && chip.setPointerCapture(e.pointerId); };
+    chip.onpointermove = move;
+    chip.onpointerup = up;
+    chip.onpointercancel = up;
+  }else{
+    chip.ontouchstart = down; chip.ontouchmove = move; chip.ontouchend = up; chip.ontouchcancel = up;
+    chip.onmousedown = function(e){
+      down(e);
+      document.onmousemove = move;
+      document.onmouseup = function(ev){ up(ev); document.onmousemove = null; document.onmouseup = null; };
+    };
+  }
+}
+function _paintPickPaint(){
+  var chips = $('paint-palette').getElementsByClassName('pchip'), i;
+  for(i = 0; i < chips.length; i++){
+    chips[i].className = 'pchip' + (chips[i].getAttribute('data-p') === _PT.pick ? ' picked' : '');
+  }
+}
+/* 同 _binUnder 的理由:拖曳中的顏料球會蓋在指尖下面,不能用 elementFromPoint */
+function _cellUnder(cx, cy){
+  var cells = $('paint-work').getElementsByClassName('pcell'), i, r;
+  for(i = 0; i < cells.length; i++){
+    r = cells[i].getBoundingClientRect();
+    if(cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom){
+      return parseInt(cells[i].getAttribute('data-i'), 10);
+    }
+  }
+  return -1;
+}
+function _paintHotCell(idx){
+  var cells = $('paint-work').getElementsByClassName('pcell'), i, di;
+  for(i = 0; i < cells.length; i++){
+    di = parseInt(cells[i].getAttribute('data-i'), 10);
+    if(_PT.done.indexOf(di) >= 0) continue;
+    cells[i].className = 'pcell' + (di === idx ? ' hot' : '');
+  }
+}
+function _paintApply(idx, pid){
+  if(MG.answered || !_PT) return;
+  if(_PT.done.indexOf(idx) >= 0) return;          // already coloured
+  var want = _PT.pic.cells[idx];
+  var cells = $('paint-work').getElementsByClassName('pcell'), el = null, i;
+  for(i = 0; i < cells.length; i++){
+    if(parseInt(cells[i].getAttribute('data-i'), 10) === idx) el = cells[i];
+  }
+  if(!el) return;
+  if(pid === want){
+    _PT.done.push(idx);
+    _PT.left--;
+    el.className = 'pcell done';
+    playSfx('sfx-ok', 0.4);
+    _paintNote();
+    if(_PT.left <= 0) _paintFinish();
+  }else{
+    _PT.wrong++;
+    el.className = 'pcell err';
+    playSfx('sfx-ng', 0.35);
+    /* 動畫跑完把 class 收回去,否則下次 hot 高亮會被 err 蓋掉 */
+    (function(e2){ setTimeout(function(){ if(e2.className === 'pcell err') e2.className = 'pcell'; }, 320); })(el);
+    _paintNote();
+  }
+}
+function _paintFinish(){
+  MG.answered = true;
+  stopTimer();
+  var pic = _PT.pic, wrong = _PT.wrong;
+  /* 允許少量失誤仍算滿分:12 格的辨色本來就會有一兩格猶豫,
+     零容忍會讓「顏色相近的格子」變成純運氣。 */
+  var ok = (wrong <= 2);
+  playSfx(ok ? 'sfx-powerup' : 'sfx-coin', 0.45);
+  scoreIt(ok);
+  showFeedback(ok,
+    ok ? ('✅ 上色完成!只塗錯 ' + wrong + ' 次') : ('🔶 上色完成,塗錯 ' + wrong + ' 次(2 次以內可以拿滿分)'),
+    tx(pic.why));
+}
+
 /* ── 作答判定 ───────────────────────────────────────── */
 window.mgAnswer = function(i){
   if(MG.answered) return;
   var x = MG.cur, q = MG.order[MG.idx], correct, ansIdx;
-  if(x.engine === 'sort'){
+  /* ★ v1.1.0 — drag(拖放分類)與 sort 用同一份 bins 資料格式,判定共用這一條分支。
+     ⚠ 不要為 drag 另寫一套:兩者的正解都是「q.b 這個籃子 id 排在第幾個」,
+       各寫一份日後改資料格式一定會漏掉其中一邊。 */
+  if(x.engine === 'sort' || x.engine === 'drag'){
     var ci = -1, k;
     for(k = 0; k < x.bins.length; k++){ if(x.bins[k].id === q.b) ci = k; }
     ansIdx = ci;
@@ -617,7 +1899,9 @@ window.mgAnswerMap = function(spotId){
 function finishAnswer(correct, ansIdx, q){
   MG.answered = true;
   stopTimer();
-  lockOptions(ansIdx, correct ? ansIdx : -2);
+  /* ★ v1.1.0 — drag 沒有 .opt 按鈕,要染的是籃子(答對綠、答錯把正解籃染綠) */
+  if(MG.cur && MG.cur.engine === 'drag') lockBins(ansIdx);
+  else lockOptions(ansIdx, correct ? ansIdx : -2);
   scoreIt(correct);
   showFeedback(correct, correct ? '✅ 答對了!' : '❌ 再想想看', q.why ? tx(q.why) : '');
 }
@@ -629,6 +1913,16 @@ function lockOptions(ansIdx, _sel){
     if(di === ansIdx) btns[i].className = 'opt ok';
   }
 }
+/* ★ v1.1.0 — 拖放分類作答後:正解籃子染綠、其餘鎖住不能再拖 */
+function lockBins(ansIdx){
+  var bins = $('drag-bins').getElementsByClassName('dbin'), i;
+  for(i = 0; i < bins.length; i++){
+    bins[i].className = 'dbin' + (i === ansIdx ? ' ok' : '');
+  }
+  var d = $('drag-item');
+  if(d){ d.onpointerdown = null; d.ontouchstart = null; d.onmousedown = null; }
+}
+
 function scoreIt(correct){
   if(correct){
     MG.right++;
@@ -657,6 +1951,7 @@ function showFeedback(ok, head, why){
 }
 window.mgNext = function(){
   playSfx('sfx-tap', 0.3);
+  stopEngines();          /* ★ v1.1.0:上一題的引擎狀態歸零,免得殘留影響下一題 */
   if(MG.idx >= MG.order.length - 1){ finishGame(); return; }
   MG.idx++;
   renderQuestion(false);
@@ -666,10 +1961,13 @@ window.mgNext = function(){
 /* ── 結算 ───────────────────────────────────────────── */
 function finishGame(){
   stopTimer();
+  stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   var total = MG.order.length;
   var acc = Math.round((MG.right / total) * 100);
   var stars = acc >= 90 ? 3 : (acc >= 70 ? 2 : (acc >= 50 ? 1 : 0));
   hide('page-play'); show('page-result');
+  show('toapp-btn');
+  bgmPlay('bgm-result', 0.42, true);   /* 不 loop,播一次就好 */
 
   $('r-name').textContent = MG.cur.icon + ' ' + tx(MG.cur.name);
   $('r-stars').textContent = stars > 0 ? new Array(stars + 1).join('★') : '☆';
@@ -775,6 +2073,24 @@ function onUser(u){
     btn.textContent = '登入';
     who.textContent = '';
   }
+  /* ★ v1.1.0 — 登入/登出都要重算閘門。
+     ⚠ 這裡刻意不寫「只在登入時解鎖」:登出後必須把九宮格收回去,
+       否則老師在共用平板上登出,下一位學生就直接看到測試中的半成品。 */
+  var wasLocked = !$('page-gate').classList.contains('hidden');
+  applyGate();
+  if(_MG_ADMIN_ONLY && u){
+    if(mgIsAdmin(u)){
+      if(wasLocked){
+        toast('老師你好,測試模式已解鎖');
+        playSfx('sfx-medal', 0.5);
+        bgmPlay('bgm-home');
+      }
+    }else{
+      /* 學生誤按了「老師登入」:明講原因,不要讓他以為自己按壞了 */
+      toast('這個帳號不是老師帳號,小遊戲還在測試中喔');
+      playSfx('sfx-cancel', 0.4);
+    }
+  }
 }
 function loadCloud(){
   if(!MG.fb || !MG.user) return;
@@ -810,6 +2126,20 @@ function boot(){
     var st = localStorage.getItem('mg_style');
     if(st === 's' || st === 'f') MG.style = st;
   }catch(e){}
+  /* ★ v1.1.0 — BGM 偏好(只存本機,不上雲;與 mg_style 同層) */
+  try{
+    var bs = localStorage.getItem('mg_bgm');
+    if(bs === '0') _bgmOn = false;
+  }catch(e){}
+  var bb = $('bgm-btn'); if(bb) bb.textContent = _bgmOn ? '🎵' : '🔇';
+  /* iOS 自動播放封鎖:第一次觸碰畫面才解得開(一次性,{once:true} 舊 Safari 不支援 ⇒ 自己移除) */
+  var _armOnce = function(){
+    _bgmArm();
+    document.removeEventListener('touchstart', _armOnce, true);
+    document.removeEventListener('mousedown', _armOnce, true);
+  };
+  document.addEventListener('touchstart', _armOnce, true);
+  document.addEventListener('mousedown', _armOnce, true);
 
   if(!window.MG_GAMES || !window.MG_GAMES.length){
     document.getElementById('grid').innerHTML =
@@ -819,6 +2149,9 @@ function boot(){
   }
   MG.games = window.MG_GAMES;
   renderGrid();
+  /* ★ v1.1.0 — 測試期閘門:非管理員停在預告頁(單一收口點 applyGate) */
+  applyGate();
+  if(mgUnlocked()) bgmPlay('bgm-home');
 
   // 若上次用 redirect 登入,回來時把結果接起來(不主動載 SDK)
   if(window.firebase && MG.fb){
