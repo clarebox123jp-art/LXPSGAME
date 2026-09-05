@@ -15,7 +15,11 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.3.1(2026-09-05)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.4.0(2026-09-05)
+     ★ v1.4.0(老師四點):①聽音坊新引擎 song/play/score/rhythm(動物琴鍵 唱名＋音名 可勾選隱藏、拍子鼓、WebAudio 鋼琴/鼓音色)
+       ②算數大進擊:砲台射擊光彈、hard 條目金框發光×2、誤擊爆炸炸掉半徑內掉落物(煙霧爆開.gif)
+       ③右上 ⏸ 暫停(倒數/掉落/BGM 停住;本局用時=牆鐘含暫停)+ 結算快手加成(≤30% 標準時間 +50%)+ 成績含 time
+       ④🎵/🔊 音量拉桿面板(同主程式設計;mg_vol_bgm/mg_vol_sfx;舊 mg_bgm 一次性遷移)
      ★ v1.3.1:答對一律 sfx-ok(答對.mp3)、答錯一律 sfx-ng(答錯音效.mp3),十個引擎全走同一組;scoreIt 連擊不再改播 coin、迷宮踩錯不再 explode
      ★ v1.3.0(老師裁定 1甲 2丙 3甲):每款專屬 BGM + 整頁場景背景 + 題卡橫幅 + 答對/結算特效
        + 介面精緻化 + iPad 斷點放大;「九格小學堂」更名「小學堂」。細節見 CSS 檔尾 v1.3.0 區塊與各函式註記。
@@ -1013,6 +1017,135 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #feedback .fb-head{font-size:19px;padding:8px 12px;}
   #nextrow button{min-height:54px;font-size:20px;}
 }
+
+/* ══════════════════════════════════════════════════════════
+ *  v1.4.0(老師四點:聽音坊演奏/拍子/經典旋律 ／ 算數大進擊射擊+爆炸+高難度雙倍 ／ 暫停+用時加成 ／ 音量拉桿)
+ *  ★ 純新增規則、舊規則零刪除;要回退整段拿掉即可。
+ * ══════════════════════════════════════════════════════════ */
+/* ── 音量面板(同主程式 ctrl-vol-panel 的樣子)── */
+#mg-vol-panel{
+  position:fixed;top:78px;right:16px;z-index:125;width:300px;
+  background:rgba(10,12,24,.96);border:1.5px solid rgba(255,255,255,.22);border-radius:14px;
+  padding:16px 18px;box-shadow:0 8px 28px rgba(0,0,0,.6);backdrop-filter:blur(8px);
+}
+#mg-vol-panel .mvp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+#mg-vol-panel .mvp-head b{font-size:20px;color:var(--gold);}
+#mg-vol-panel .mvp-x{padding:2px 10px;font-size:16px;min-height:0;background:rgba(60,10,10,.4);border:1.5px solid #e84040;color:#e84040;border-radius:7px;}
+#mg-vol-panel .mvp-row{display:flex;align-items:center;gap:10px;font-size:18px;}
+#mg-vol-panel input[type=range]{flex:1;width:100%;accent-color:var(--gold);height:30px;cursor:pointer;}
+#mg-vol-panel .mvp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+#mg-vol-panel .mvp-foot span{font-size:14px;color:#8a8a9a;}
+#mg-vol-panel .mvp-foot b{font-size:20px;color:#eee;min-width:64px;text-align:right;}
+/* ── 暫停遮罩 ── */
+#pausebox{
+  position:fixed;inset:0;z-index:118;display:none;align-items:center;justify-content:center;
+  background:rgba(6,8,14,.82);backdrop-filter:blur(3px);
+}
+#pausebox.on{display:flex;}
+#pausebox .pz{
+  text-align:center;background:var(--tea);border:2.5px solid var(--gold);border-radius:22px;
+  padding:30px 36px;max-width:420px;box-shadow:0 14px 40px rgba(0,0,0,.6);
+}
+#pausebox .pz h2{margin:0 0 8px;font-size:34px;color:var(--gold);}
+#pausebox .pz p{margin:6px 0 18px;font-size:17px;opacity:.85;line-height:1.5;}
+#pausebox .pz .pz-clock{font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}
+#pausebox .pz button{min-width:200px;font-size:22px;}
+#pause-btn.on{background:rgba(232,64,64,.22);border-color:#e84040;}
+/* ── 算數大進擊:射擊 ── */
+#reactbox{cursor:crosshair;}
+#reactbox .rgun{
+  position:absolute;left:50%;bottom:4px;transform:translateX(-50%);
+  font-size:34px;line-height:1;pointer-events:none;z-index:7;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));
+  transition:transform .08s ease-out;
+}
+#reactbox .rbullet{
+  position:absolute;width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle,#fff6c8 0%,var(--gold) 55%,rgba(240,192,96,0) 100%);
+  box-shadow:0 0 10px 3px rgba(240,192,96,.7);pointer-events:none;z-index:8;
+  transition:transform .13s linear;
+}
+.rdrop.hard{
+  border:2.5px solid var(--gold);
+  box-shadow:0 0 0 2px rgba(240,192,96,.35),0 0 18px 4px rgba(240,192,96,.75),0 4px 10px rgba(0,0,0,.4);
+  animation:rhardglow 1s ease-in-out infinite alternate;
+}
+.rdrop.hard .rx2{
+  position:absolute;top:-10px;right:-8px;font-size:12px;padding:1px 6px;border-radius:8px;
+  background:var(--gold);color:#2b2b2b;font-weight:700;
+}
+@keyframes rhardglow{from{box-shadow:0 0 0 2px rgba(240,192,96,.25),0 0 10px 2px rgba(240,192,96,.55);}to{box-shadow:0 0 0 3px rgba(240,192,96,.55),0 0 24px 6px rgba(240,192,96,.95);}}
+.rdrop.blown{animation:rblown .35s ease-in forwards;pointer-events:none;}
+@keyframes rblown{to{opacity:0;transform:scale(.2) rotate(30deg);}}
+#reactbox .rboom{
+  position:absolute;pointer-events:none;z-index:9;transform:translate(-50%,-50%);
+  width:220px;height:220px;object-fit:contain;
+}
+@media (min-width:1024px){ #reactbox .rgun{font-size:44px;} #reactbox .rboom{width:300px;height:300px;} }
+/* ── 聽音坊:動物琴鍵 ── */
+#earkb{display:none;margin-top:12px;}
+#earkb.on{display:block;}
+#earkb .kb-row{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;}
+#earkb .kkey{
+  min-height:98px;padding:6px 2px 8px;border-radius:14px;border:2px solid rgba(232,228,216,.22);
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;
+  font-size:15px;line-height:1.1;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+  transition:transform .08s,background .08s;
+}
+#earkb .kkey .kani{font-size:34px;line-height:1;margin-bottom:4px;}
+#earkb .kkey .kani img{width:44px;height:44px;object-fit:contain;display:block;}
+#earkb .kkey .klab{font-weight:700;color:var(--gold);}
+#earkb .kkey .klab small{display:block;font-size:12px;color:#ddd;opacity:.85;font-weight:400;}
+#earkb.nolabel .kkey .klab{visibility:hidden;}
+#earkb .kkey.lit{background:var(--gold);color:#2b2b2b;transform:translateY(-4px) scale(1.04);}
+#earkb .kkey.lit .klab,#earkb .kkey.lit .klab small{color:#2b2b2b;}
+#earkb .kkey.hint{outline:3px solid var(--grass);outline-offset:-3px;animation:mzpeek .5s ease-in-out infinite alternate;}
+#earkb .kb-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap;}
+#earkb .kb-tools label{display:inline-flex;align-items:center;gap:6px;font-size:15px;cursor:pointer;}
+#earkb .kb-tools input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);}
+#earkb .kb-tools .btn-ghost{min-height:44px;padding:8px 14px;font-size:15px;}
+#earkb .kb-input{
+  min-height:52px;margin-top:10px;padding:8px 12px;border-radius:12px;
+  background:rgba(0,0,0,.28);border:1.5px dashed rgba(232,228,216,.3);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:18px;font-weight:700;
+}
+#earkb .kb-input .kn{padding:4px 10px;border-radius:9px;background:rgba(240,192,96,.18);border:1px solid rgba(240,192,96,.5);}
+#earkb .kb-input .kn.ref{background:rgba(255,255,255,.08);border-style:dashed;opacity:.85;}
+#earkb .kb-input .kn.ok{background:rgba(79,191,125,.28);border-color:var(--grass);}
+#earkb .kb-input .kn.ng{background:rgba(210,84,63,.35);border-color:var(--brick);}
+#earkb .kb-input .kb-ph{opacity:.55;font-weight:400;font-size:15px;}
+#earkb .kb-score{margin-top:8px;text-align:center;font-size:16px;opacity:.9;}
+#earkb .kb-score .kn{padding:3px 8px;}
+/* ── 聽音坊:拍子鼓 ── */
+#eardrum{display:none;margin-top:12px;text-align:center;}
+#eardrum.on{display:block;}
+#eardrum .drum{
+  width:170px;height:170px;margin:6px auto;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,#f7e2b8 0%,#d4a45a 55%,#8b5a2b 100%);
+  border:6px solid #5b3a1a;box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 -8px 16px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;font-size:60px;cursor:pointer;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .06s;
+}
+#eardrum .drum img{width:120px;height:120px;object-fit:contain;pointer-events:none;}
+#eardrum .drum.hit{transform:scale(.93);}
+#eardrum .beats{display:flex;justify-content:center;gap:8px;min-height:36px;margin-top:6px;flex-wrap:wrap;}
+#eardrum .beats .bt{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(232,228,216,.35);}
+#eardrum .beats .bt.long{width:52px;border-radius:14px;}
+#eardrum .beats .bt.on{background:var(--gold);border-color:var(--gold);}
+#eardrum .beats .bt.me{background:var(--grass);border-color:var(--grass);}
+#eardrum .beats .bt.miss{background:var(--brick);border-color:var(--brick);}
+#eardrum .dnote{font-size:15px;opacity:.85;margin-top:6px;}
+#eardrum .dtools{display:flex;justify-content:center;gap:10px;margin-top:8px;}
+#eardrum .dtools .btn-ghost{min-height:44px;padding:8px 14px;font-size:15px;}
+@media (min-width:1024px){
+  #earkb .kkey{min-height:124px;font-size:18px;} #earkb .kkey .kani{font-size:44px;} #earkb .kkey .kani img{width:58px;height:58px;}
+  #earkb .kkey .klab small{font-size:14px;} #earkb .kb-input{font-size:22px;min-height:60px;}
+  #eardrum .drum{width:210px;height:210px;font-size:76px;} #eardrum .drum img{width:150px;height:150px;}
+  #eardrum .beats .bt{width:32px;height:32px;} #eardrum .beats .bt.long{width:64px;}
+}
+/* 結算頁用時列 */
+#r-time{font-size:15px;opacity:.9;margin-top:4px;}
+#r-time b{color:var(--gold);}
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -1090,7 +1223,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <span class="grow"></span>
     <span id="who"></span>
     <!-- ★ v1.1.0(老師需求 3)— BGM 開關;偏好存 mg_bgm,與 mg_style 同層(只在本機,不上雲) -->
-    <button id="bgm-btn" class="chip" onclick="mgToggleBgm()">🎵</button>
+    <!-- ★ v1.4.0 — 🎵/🔊 改為開啟音量拉桿面板(同主程式設計);⏸ 暫停鈕只在遊戲中顯示 -->
+    <button id="pause-btn" class="chip hidden" onclick="mgPauseToggle()" title="暫停">⏸ 暫停</button>
+    <button id="bgm-btn" class="chip" onclick="mgToggleBgm()" title="音樂音量">🎵</button>
+    <button id="sfx-btn" class="chip" onclick="mgToggleSfx()" title="音效音量">🔊</button>
     <button id="style-btn" class="chip" onclick="mgToggleStyle()" title="切換 字少／字多">字多</button>
     <!-- ★ v1.3.0 — 獨立網址分享(老師需求②):點了複製短網址,免登入即可直接玩 -->
     <button id="share-btn" class="chip" onclick="mgShareUrl()" title="複製小遊戲網址">📎 網址</button>
@@ -1176,6 +1312,25 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <img id="ear-notes" src="" alt="">
       <button id="playbtn" onclick="mgEarPlay()">▶ 播放</button>
       <p id="playnote">可以重聽,不會扣分</p>
+      <!-- ★ v1.4.0(老師需求①)— 動物琴鍵(聽音演奏／經典旋律)與拍子鼓(模仿拍子),由 renderEar 依題型顯示 -->
+      <div id="earkb">
+        <div class="kb-row" id="kb-row"></div>
+        <div class="kb-input" id="kb-input"></div>
+        <div class="kb-score" id="kb-score"></div>
+        <div class="kb-tools">
+          <label><input type="checkbox" id="kb-lbl" checked onchange="mgEarLabelToggle(this.checked)"> 顯示唱名＋音名</label>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-ghost" onclick="mgEarUndo()">↩ 刪一個</button>
+            <button class="btn-ghost" onclick="mgEarClear()">↺ 重來</button>
+          </div>
+        </div>
+      </div>
+      <div id="eardrum">
+        <div class="beats" id="dr-beats"></div>
+        <div class="drum" id="dr-pad" onclick="mgDrumTap(event)">🥁</div>
+        <div class="dnote" id="dr-note"></div>
+        <div class="dtools"><button class="btn-ghost" onclick="mgEarClear()">↺ 重來</button></div>
+      </div>
     </div>
 
     <!-- ★ v1.1.0 六個新引擎(老師需求 4)。每個都是獨立容器,由 renderQuestion 統一顯隱。 -->
@@ -1241,6 +1396,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="stars" id="r-stars"></div>
       <div class="big" id="r-score"></div>
       <div class="line" id="r-detail"></div>
+      <div class="line" id="r-time"></div><!-- ★ v1.4.0 用時 + 快手加成 -->
       <div class="newbest hidden" id="r-newbest">🎉 新紀錄!</div>
       <div class="line" id="r-cloud" style="font-size:14px;opacity:.75;margin-top:10px;"></div>
       <div style="display:flex;gap:10px;margin-top:22px;">
@@ -1277,7 +1433,18 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
 <div id="toast"></div>
 
-<script src="minigame_db.js?v=v1.3.1"></script>
+<!-- ★ v1.4.0 — 暫停遮罩(老師需求③):蓋住整個作答區,倒數與掉落停住;
+     ⚠ 但「本局用時」是牆鐘(startedAt→結算)⇒ 暫停期間照算,防止按暫停慢慢查答案。 -->
+<div id="pausebox" onclick="if(event.target===this)mgPauseToggle();">
+  <div class="pz">
+    <h2>⏸ 暫停中</h2>
+    <div class="pz-clock" id="pz-clock">⏱ 0:00</div>
+    <p id="pz-note">倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。</p>
+    <button onclick="mgPauseToggle()">▶ 繼續</button>
+  </div>
+</div>
+
+<script src="minigame_db.js?v=v1.4.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1286,7 +1453,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.3.1';
+var MG_VER = 'v1.4.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1359,8 +1526,9 @@ function tx(o){
 function playSfx(id, vol){
   try{
     var a = $(id); if(!a) return;
+    if(_mgVolSfx <= 0) return;                                            /* ★ v1.4.0 音效靜音 */
     a.currentTime = 0;
-    a.volume = (vol == null ? 0.55 : vol);
+    a.volume = Math.max(0, Math.min(1, (vol == null ? 0.55 : vol) * _mgVolSfx));   /* ★ v1.4.0 × 使用者音效音量 */
     var p = a.play();
     if(p && p['catch']) p['catch'](function(){});
   }catch(e){}
@@ -1458,6 +1626,42 @@ function applyGate(){
 var _bgmOn = true;      // 使用者偏好(存 localStorage mg_bgm)
 var _bgmCur = '';       // 目前這一軌的 id
 var _bgmArmed = false;  // 是否已經拿到使用者手勢
+/* ★ v1.4.0(老師需求④「音樂/音效音量調整,同小英雄大對抗的設計」)
+ *   使用者音量 0~1,存 localStorage mg_vol_bgm / mg_vol_sfx(裝置層偏好,不上雲)。
+ *   ★ 所有播放點只乘一次:bgmPlay 的 vol 參數 × _mgVolBgm;playSfx 的 vol × _mgVolSfx;
+ *     聽音坊 WebAudio 的 gain 亦乘 _mgVolSfx ⇒ 一顆拉桿管到所有聲音,不會有漏網。
+ *   ★ _bgmOn 保留為「音樂音量 > 0」的投影:舊 mg_bgm='0' 只在沒有 mg_vol_bgm 時才當成 0(一次性遷移)。 */
+var _mgVolBgm = 1, _mgVolSfx = 1;
+var _bgmBaseVol = 0.34;  // bgmPlay 未指定音量時的基準(原寫死值),供拉桿即時套用
+function _mgVolLoad(){
+  try{
+    var b = localStorage.getItem('mg_vol_bgm'), s = localStorage.getItem('mg_vol_sfx');
+    if(b !== null && b !== ''){ _mgVolBgm = Math.max(0, Math.min(1, parseInt(b, 10) / 100)); }
+    else if(localStorage.getItem('mg_bgm') === '0'){ _mgVolBgm = 0; }
+    if(s !== null && s !== ''){ _mgVolSfx = Math.max(0, Math.min(1, parseInt(s, 10) / 100)); }
+  }catch(e){}
+  if(isNaN(_mgVolBgm)) _mgVolBgm = 1;
+  if(isNaN(_mgVolSfx)) _mgVolSfx = 1;
+  _bgmOn = _mgVolBgm > 0;
+}
+function _mgVolSave(){
+  try{
+    localStorage.setItem('mg_vol_bgm', String(Math.round(_mgVolBgm * 100)));
+    localStorage.setItem('mg_vol_sfx', String(Math.round(_mgVolSfx * 100)));
+    localStorage.setItem('mg_bgm', _bgmOn ? '1' : '0');   /* 舊鍵同步,日後回退版本也讀得懂 */
+  }catch(e){}
+}
+function _mgVolBtnSync(){
+  var bb = $('bgm-btn'), sb = $('sfx-btn');
+  if(bb) bb.textContent = (_mgVolBgm <= 0) ? '🔇' : '🎵';
+  if(sb) sb.textContent = (_mgVolSfx <= 0) ? '🔕' : '🔊';
+}
+/* 音樂音量即時套到「正在播的那一軌」(不重頭播) */
+function _mgApplyBgmVolLive(){
+  if(!_bgmCur) return;
+  var a = $(_bgmCur); if(!a) return;
+  try{ a.volume = Math.max(0, Math.min(1, (a._mgBase || _bgmBaseVol) * _mgVolBgm)); }catch(e){}
+}
 
 function bgmStop(){
   /* ★ v1.3.0 — 改成掃描所有 id 以 bgm- 開頭的 <audio>:
@@ -1484,7 +1688,8 @@ function bgmPlay(id, vol, once){
   _bgmCur = id;
   var a = $(id); if(!a) return;
   try{
-    a.volume = (vol == null ? 0.34 : vol);
+    a._mgBase = (vol == null ? _bgmBaseVol : vol);                 /* ★ v1.4.0 記住基準,拉桿即時套用時用 */
+    a.volume = Math.max(0, Math.min(1, a._mgBase * _mgVolBgm));    /* ★ v1.4.0 × 使用者音樂音量 */
     if(once) a.currentTime = 0;
     var p = a.play();
     if(p && p['catch']) p['catch'](function(){});       // 被擋就算了,不影響玩遊戲
@@ -1497,18 +1702,73 @@ function _bgmArm(){
   var want = _bgmCur; _bgmCur = '';
   if(want) bgmPlay(want);
 }
-window.mgToggleBgm = function(){
-  _bgmOn = !_bgmOn;
-  try{ localStorage.setItem('mg_bgm', _bgmOn ? '1' : '0'); }catch(e){}
-  $('bgm-btn').textContent = _bgmOn ? '🎵' : '🔇';
-  playSfx('sfx-tap', 0.3);
-  if(!_bgmOn){ bgmStop(); toast('音樂已關閉'); }
-  else{
-    toast('音樂已開啟');
-    /* 依現在停在哪一頁,把對應那一軌接回去 */
-    if(!$('page-play').classList.contains('hidden')) bgmPlay(mgGameBgm(MG.cur));   /* ★ v1.3.0 每款專屬 */
-    else if(!$('page-home').classList.contains('hidden')) bgmPlay('bgm-home');
+/* ★ v1.4.0 — 🎵/🔊 由「開/關」改為開啟音量調整面板(同主程式 v5.37.0 ctrlOpenVolumePanel 的設計):
+ *   拉桿 0~100、步進 5、0 = 靜音;同一顆鈕再點一次 = 關閉面板;點面板外側自動關閉;
+ *   放開拉桿時音效試聽一聲。
+ *   ★ 舊 mgToggleBgm 名稱保留(HTML onclick 沿用),行為改為開面板。 */
+window.mgToggleBgm = function(){ mgOpenVolPanel('bgm'); };
+window.mgToggleSfx = function(){ mgOpenVolPanel('sfx'); };
+function mgOpenVolPanel(kind){
+  var old = $('mg-vol-panel');
+  if(old){
+    var same = (old.getAttribute('data-kind') === kind);
+    mgCloseVolPanel();
+    if(same) return;
   }
+  playSfx('sfx-tap', 0.3);
+  var isBgm = (kind === 'bgm');
+  var cur = Math.round((isBgm ? _mgVolBgm : _mgVolSfx) * 100);
+  var pv = document.createElement('div');
+  pv.id = 'mg-vol-panel';
+  pv.setAttribute('data-kind', kind);
+  pv.innerHTML = '<div class="mvp-head"><b>' + (isBgm ? (MG.style === 's' ? '🎵 音樂大小聲' : '🎵 音樂音量') : (MG.style === 's' ? '🔊 音效大小聲' : '🔊 音效音量')) + '</b>'
+    + '<button class="mvp-x" onclick="mgCloseVolPanel()">✕</button></div>'
+    + '<div class="mvp-row"><span>🔇</span>'
+    + '<input type="range" id="mg-vol-slider" min="0" max="100" step="5" value="' + cur + '"'
+    + ' oninput="mgVolInput(\'' + kind + '\',this.value)" onchange="mgVolDone(\'' + kind + '\',this.value)">'
+    + '<span>🔊</span></div>'
+    + '<div class="mvp-foot"><span>' + (MG.style === 's' ? '拉到最左邊就沒聲音囉' : '拉桿最左端 = 靜音') + '</span>'
+    + '<b id="mg-vol-pct">' + (cur <= 0 ? '靜音' : (cur + '%')) + '</b></div>';
+  document.body.appendChild(pv);
+  setTimeout(function(){ document.addEventListener('click', _mgVolOutside, true); }, 0);
+}
+function _mgVolOutside(e){
+  try{
+    var pv = $('mg-vol-panel');
+    if(!pv){ document.removeEventListener('click', _mgVolOutside, true); return; }
+    if(pv.contains(e.target)) return;
+    var b1 = $('bgm-btn'), b2 = $('sfx-btn');
+    if((b1 && b1.contains(e.target)) || (b2 && b2.contains(e.target))) return;
+    mgCloseVolPanel();
+  }catch(_){}
+}
+function mgCloseVolPanel(){
+  var pv = $('mg-vol-panel');
+  if(pv && pv.parentNode) pv.parentNode.removeChild(pv);
+  document.removeEventListener('click', _mgVolOutside, true);
+}
+window.mgVolInput = function(kind, v){
+  var pct = Math.max(0, Math.min(100, parseInt(v, 10) || 0));
+  var p = $('mg-vol-pct'); if(p) p.textContent = pct <= 0 ? '靜音' : (pct + '%');
+  if(kind === 'bgm'){
+    var wasOn = _bgmOn;
+    _mgVolBgm = pct / 100; _bgmOn = _mgVolBgm > 0;
+    if(!_bgmOn){ bgmStop(); }
+    else if(!wasOn){
+      /* 從靜音拉回來:依現在停在哪一頁把對應那一軌接回去 */
+      if(!$('page-play').classList.contains('hidden')) bgmPlay(mgGameBgm(MG.cur));
+      else if(!$('page-home').classList.contains('hidden')) bgmPlay('bgm-home');
+    }
+    else _mgApplyBgmVolLive();
+  }else{
+    _mgVolSfx = pct / 100;
+  }
+  _mgVolBtnSync();
+};
+window.mgVolDone = function(kind, v){
+  mgVolInput(kind, v);
+  _mgVolSave();
+  if(kind === 'sfx' && _mgVolSfx > 0) playSfx('sfx-ok', 0.5);   /* 試聽一聲 */
 };
 
 /* ── 字體風格切換(簡單風／精緻風)────────────────────── */
@@ -1576,6 +1836,7 @@ var MG_FX = {
   tea  : MG_IMG_BASE + encodeURIComponent('泡好一杯茶.gif'),    /* 順序排列全對 */
   clap : MG_IMG_BASE + encodeURIComponent('謝幕掌聲.gif'),      /* 結算三星 */
   notes: MG_IMG_BASE + encodeURIComponent('音樂舞動.gif'),      /* 聽音播放中 */
+  boom : MG_IMG_BASE + encodeURIComponent('煙霧爆開.gif'),      /* ★ v1.4.0 算數大進擊:誤擊爆炸(已驗 200) */
   load : MG_IMG_BASE + encodeURIComponent('貓咪讀取中.gif')     /* 登入讀取 */
 };
 var MG_MASCOT = MG_IMG_BASE + encodeURIComponent('轉學生學霸.jpg');
@@ -1695,7 +1956,7 @@ function renderGrid(){
           +     (url ? '<img src="' + url + '" alt="" loading="lazy" onerror="mgThumbFail(this);">' : '')
           +     '<span class="cthumb-emo">' + x.icon + '</span>'
           +   '</div>'
-          +   (b ? '<span class="cbest">' + b.score + '</span>' : '')
+          +   (b ? '<span class="cbest">' + b.score + ((typeof b.time === 'number' && b.time > 0) ? (' · ⏱' + mgFmtTime(b.time)) : '') + '</span>' : '')   /* ★ v1.4.0 成績含用時 */
           +   '<span class="cn">' + esc(tx(x.name)) + '</span>'
           +   '<span class="cs">' + esc(x.subject.split(' · ')[0]) + '</span>'
           +   '<div class="cskills">' + sk + '</div>'
@@ -1813,7 +2074,8 @@ function openInfo(x, withSfx){
   $('m-how').textContent = tx(x.how);
   var b = MG.best[x.id];
   $('m-best').textContent = b
-    ? (b.score + ' 分 · ' + new Array(b.stars + 1).join('★') + ' · 答對率 ' + b.acc + '%')
+    ? (b.score + ' 分 · ' + new Array(b.stars + 1).join('★') + ' · 答對率 ' + b.acc + '%'
+       + ((typeof b.time === 'number' && b.time > 0) ? (' · ⏱ ' + mgFmtTime(b.time)) : ''))   /* ★ v1.4.0 */
     : '還沒有紀錄,來挑戰看看!';
   $('modal').classList.add('show');
   if(withSfx) playSfx('sfx-tap', 0.3);
@@ -1850,7 +2112,9 @@ function startGame(x){
   MG.idx = 0; MG.score = 0; MG.right = 0; MG.combo = 0; MG.maxCombo = 0;
   /* ★ v1.3.1:迷宮 6 關是「由易到難」排好的(解法數 11→3),不打亂;其餘引擎照舊隨機 */
   MG.order = (x.engine === 'maze') ? poolOf(x).slice() : shuffle(poolOf(x));
-  hide('page-home'); hide('page-result'); show('page-play'); show('back-btn');
+  mgPauseReset();                                  /* ★ v1.4.0 */
+  MG.startedAt = (new Date()).getTime();           /* ★ v1.4.0 本局用時起點(牆鐘,暫停照算) */
+  hide('page-home'); hide('page-result'); show('page-play'); show('back-btn'); show('pause-btn');
   /* ★ v1.1.0 — 遊戲中把「🗺 回大作戰」收起來:誤觸就是整局作廢,
      而 iPad standalone 的 confirm() 有靜默失敗前例(主程式 v5.57.0 教訓),不能靠二次確認擋。
      玩家仍可「← 回選單」再按回大作戰,只多一步。 */
@@ -1878,6 +2142,7 @@ window.mgHome = function(){
   stopTimer();
   stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   MG.cur = null;
+  mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
   hide('page-play'); hide('page-result'); hide('back-btn'); show('page-home');
   show('toapp-btn');
   bgmPlay('bgm-home');
@@ -1900,16 +2165,25 @@ function stopEngines(){
   }
   var pd = $('paint-drag'); if(pd) pd.style.display = 'none';
   _PT = null; _MZ = null; _MC = null; _OD = null; _DG = null;
+  _EAR = null;   /* ★ v1.4.0 聽音坊演奏／拍子狀態 */
 }
 
 function stopTimer(){ if(MG.timer){ clearInterval(MG.timer); MG.timer = null; } }
 function startTimer(sec){
   stopTimer();
   MG.tleft = sec;
-  var total = sec, bar = $('timebar');
+  MG.ttotal = sec;   /* ★ v1.4.0 記住總長,暫停後續跑同一條 */
+  var bar = $('timebar');
   bar.classList.remove('low');
   bar.style.width = '100%';
   _ringPaint(100, sec);
+  _timerRun();
+}
+/* ★ v1.4.0 — 倒數的實際 interval 抽出來:startTimer(重頭)與 mgResume(接著跑)共用,
+   tleft 不重設 ⇒ 暫停多久都從停住的那一秒接下去。 */
+function _timerRun(){
+  stopTimer();
+  var total = MG.ttotal || 1, bar = $('timebar');
   MG.timer = setInterval(function(){
     MG.tleft -= 0.1;
     if(MG.tleft < 0) MG.tleft = 0;
@@ -1919,6 +2193,86 @@ function startTimer(sec){
     _ringPaint(pct, MG.tleft);
     if(MG.tleft <= 0){ stopTimer(); onTimeout(); }
   }, 100);
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.4.0 — 暫停(老師需求③)
+ *  - 右上「⏸ 暫停」只在遊戲中顯示;暫停 = 停倒數(interval 清掉、tleft 保留)+ 停掉落(rAF 取消、剩餘毫秒記住)
+ *    + 暫停 BGM + 蓋上 #pausebox;繼續 = 反向接回。
+ *  - ⚠ 本局用時 = 牆鐘 Date.now() − MG.startedAt,**刻意不扣掉暫停時間**(老師:避免按暫停慢慢查答案),
+ *    結算頁的快手加成就吃這個數字;暫停畫面上的時鐘每秒跳動,讓學生看見時間還在走。
+ *  - 每個離開遊戲畫面的路徑(startGame / mgHome / finishGame)都要 mgPauseReset(),否則遮罩會殘留。
+ * ══════════════════════════════════════════════════════════ */
+var _PZ = { on: false, hadTimer: false, reactLeft: 0, clockT: null };
+window.mgPauseToggle = function(){ if(_PZ.on) mgResume(); else mgPause(); };
+function mgPause(){
+  if(_PZ.on) return;
+  if($('page-play').classList.contains('hidden')) return;
+  _PZ.on = true;
+  _PZ.hadTimer = !!MG.timer;
+  if(MG.timer){ clearInterval(MG.timer); MG.timer = null; }   /* 不走 stopTimer 語意:tleft 保留 */
+  if(_RC){
+    if(_RC.raf) cancelAnimationFrame(_RC.raf);
+    _RC.raf = 0;
+    _PZ.reactLeft = Math.max(0, _RC.endAt - (new Date()).getTime());
+    _RC.paused = true;
+  }
+  try{ var a = _bgmCur ? $(_bgmCur) : null; if(a) a.pause(); }catch(e){}
+  var pb = $('pause-btn'); if(pb){ pb.textContent = '▶ 繼續'; pb.classList.add('on'); }
+  $('pausebox').classList.add('on');
+  _pzClock();
+  if(_PZ.clockT) clearInterval(_PZ.clockT);
+  _PZ.clockT = setInterval(_pzClock, 1000);
+  playSfx('sfx-tap', 0.3);
+}
+function mgResume(){
+  if(!_PZ.on) return;
+  _PZ.on = false;
+  if(_PZ.clockT){ clearInterval(_PZ.clockT); _PZ.clockT = null; }
+  $('pausebox').classList.remove('on');
+  var pb = $('pause-btn'); if(pb){ pb.textContent = '⏸ 暫停'; pb.classList.remove('on'); }
+  if(_PZ.hadTimer && !MG.answered && MG.tleft > 0) _timerRun();
+  if(_RC && _RC.paused){
+    _RC.paused = false;
+    _RC.endAt = (new Date()).getTime() + _PZ.reactLeft;
+    _RC.last = 0;
+    _RC.raf = requestAnimationFrame(_reactTick);
+  }
+  if(_bgmOn && _bgmCur){ try{ var a = $(_bgmCur); if(a && a.paused) a.play()['catch'](function(){}); }catch(e){} }
+  playSfx('sfx-tap', 0.3);
+}
+function mgPauseReset(){
+  _PZ.on = false;
+  if(_PZ.clockT){ clearInterval(_PZ.clockT); _PZ.clockT = null; }
+  var pz = $('pausebox'); if(pz) pz.classList.remove('on');
+  var pb = $('pause-btn'); if(pb){ pb.textContent = '⏸ 暫停'; pb.classList.remove('on'); }
+}
+function _pzClock(){
+  var c = $('pz-clock'); if(!c) return;
+  c.textContent = '⏱ ' + mgFmtTime(mgElapsedSec());
+}
+function mgElapsedSec(){ return MG.startedAt ? Math.max(0, ((new Date()).getTime() - MG.startedAt) / 1000) : 0; }
+function mgFmtTime(sec){
+  sec = Math.round(sec);
+  var m = Math.floor(sec / 60), s = sec % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+/* 本局「標準時間」= 每題倒數秒數加總(react 用各回合 sec、其他引擎可用 q.sec 覆寫);
+   用時 ≤ 30% 標準 ⇒ +50%,達標準時間以上 ⇒ +0%,中間線性。 */
+function mgParTime(x){
+  var pool = MG.order || [], sum = 0, i, q;
+  for(i = 0; i < pool.length; i++){
+    q = pool[i];
+    sum += (q && q.sec) ? q.sec : (x.time || 20);
+  }
+  return Math.max(10, sum);
+}
+function mgTimeBonusPct(elapsed, par){
+  if(!par || par <= 0) return 0;
+  var r = elapsed / par;
+  if(r <= 0.3) return 50;
+  if(r >= 1) return 0;
+  return Math.round(50 * (1 - r) / 0.7);
 }
 /* ★ v1.3.0 — 倒數環:與 #timebar 同一個計時器餵值,不另開 setInterval。
    ⚠ conic-gradient 舊 iPad(iOS < 12.2)不支援 ⇒ 圓弧不畫、只剩底色 + 秒數,功能不受影響。 */
@@ -1938,6 +2292,7 @@ function onTimeout(){
   var why = q.why ? tx(q.why) : '';
   showFeedback(false, '⏰ 時間到了!', why);
   lockOptions(-1);
+  try{ _earReveal(); }catch(e){}   /* ★ v1.4.0 聽音坊演奏／拍子題超時揭曉正解 */
 }
 
 /* ── 題目渲染(四引擎共用外框)────────────────────────── */
@@ -1976,7 +2331,8 @@ function renderQuestion(keepState){
 
   /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
      三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
-  if(!keepState && x.engine !== 'react') startTimer(x.time);
+  /* ★ v1.4.0 — 題目可用 q.sec 覆寫倒數(聽音坊「演奏／拍子」題需要比選擇題更長的時間) */
+  if(!keepState && x.engine !== 'react') startTimer((q && q.sec) ? q.sec : x.time);
 }
 
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
@@ -2028,47 +2384,299 @@ function renderMap(x, t){
 }
 
 /* ── 引擎 C2:聽音辨曲(Web Audio 即時合成,零音檔)──── */
+/* ══════════════════════════════════════════════════════════
+ *  引擎 C(v1.4.0 大改・老師需求①「聽音坊太單調」):
+ *    舊題型 hilo/dir/same/count/penta(選擇題)完整保留;
+ *    新增 song(聽旋律猜歌名・選擇題)/ play(聽音演奏:聽完用動物琴鍵彈回來)
+ *          / score(經典旋律:看簡譜跟著彈,不判拍子只判順序)/ rhythm(模仿拍子:聽鼓聲後照拍子敲鼓)。
+ *  ★ 音高一律用「唱名＋音名」(Do/C…)標在琴鍵上,勾選框可隱藏(偏好存 mg_ear_lbl)。
+ *  ★ 琴鍵=去背小動物代替音高按鍵:圖 music_key_do…music_key_do2(onerror 退 emoji),鼓 music_drum。
+ *  ★ seq 可寫頻率(舊題)或音名字串('do','re',…,'do2'),_earFreq 統一轉頻率。
+ *  ★ 所有聲音由 WebAudio 即時合成(零音檔),gain × _mgVolSfx 受音效拉桿控制。
+ * ══════════════════════════════════════════════════════════ */
+var EAR_NOTES = [
+  { k:'do',  sf:'Do',  pn:'C', hz:261.63, ani:'🐱' },
+  { k:'re',  sf:'Re',  pn:'D', hz:293.66, ani:'🐶' },
+  { k:'mi',  sf:'Mi',  pn:'E', hz:329.63, ani:'🐸' },
+  { k:'fa',  sf:'Fa',  pn:'F', hz:349.23, ani:'🐰' },
+  { k:'sol', sf:'Sol', pn:'G', hz:392.00, ani:'🐷' },
+  { k:'la',  sf:'La',  pn:'A', hz:440.00, ani:'🐔' },
+  { k:'si',  sf:'Si',  pn:'B', hz:493.88, ani:'🐵' },
+  { k:'do2', sf:'Do',  pn:'C', hz:523.25, ani:'🐮' }
+];
+function _earNote(k){ var i; for(i = 0; i < EAR_NOTES.length; i++){ if(EAR_NOTES[i].k === k) return EAR_NOTES[i]; } return null; }
+function _earFreq(v){ if(typeof v === 'number') return v; var n = _earNote(String(v)); return n ? n.hz : 440; }
+function _earLabel(k){ var n = _earNote(k); return n ? (n.sf + (k === 'do2' ? '⁺' : '')) : String(k); }
+var _EAR = null;   // { q, input:[], taps:[], done:false }
+var _earLblOn = true;
+try{ _earLblOn = (localStorage.getItem('mg_ear_lbl') !== '0'); }catch(e){}
+
+function _earCtx(){
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  if(!MG.audioCtx) MG.audioCtx = new AC();
+  if(MG.audioCtx.state === 'suspended' && MG.audioCtx.resume) MG.audioCtx.resume();
+  return MG.audioCtx;
+}
+/* 鋼琴感音色:三角波基音 + 正弦高八度,快起慢落 */
+function _earTone(ctx, freq, st, dur){
+  if(_mgVolSfx <= 0) return;
+  var g = ctx.createGain(), o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g2 = ctx.createGain();
+  dur = dur || 0.5;
+  o1.type = 'triangle'; o1.frequency.value = freq;
+  o2.type = 'sine'; o2.frequency.value = freq * 2; g2.gain.value = 0.25;
+  g.gain.setValueAtTime(0.0001, st);
+  g.gain.linearRampToValueAtTime(0.26 * _mgVolSfx, st + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.12 * _mgVolSfx, st + dur * 0.6);
+  g.gain.exponentialRampToValueAtTime(0.0001, st + dur);
+  o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(ctx.destination);
+  o1.start(st); o2.start(st); o1.stop(st + dur + 0.02); o2.stop(st + dur + 0.02);
+}
+/* 鼓聲:低頻正弦下滑 + 一小撮噪音 */
+function _earDrum(ctx, st){
+  if(_mgVolSfx <= 0) return;
+  var o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(180, st);
+  o.frequency.exponentialRampToValueAtTime(55, st + 0.14);
+  g.gain.setValueAtTime(0.7 * _mgVolSfx, st);
+  g.gain.exponentialRampToValueAtTime(0.0001, st + 0.22);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(st); o.stop(st + 0.25);
+  try{
+    var n = ctx.createBufferSource(), buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.06), ctx.sampleRate), d = buf.getChannelData(0), i;
+    for(i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    var ng = ctx.createGain(); ng.gain.value = 0.18 * _mgVolSfx;
+    n.buffer = buf; n.connect(ng); ng.connect(ctx.destination); n.start(st);
+  }catch(e){}
+}
+function _earKind(q){
+  var t = q.type || 'hilo';
+  if(t === 'play' || t === 'score') return 'kb';
+  if(t === 'rhythm') return 'drum';
+  return 'opt';
+}
 function renderEar(x, q){
   $('qcard').textContent = tx(q.q);
   show('earbox');
+  var kind = _earKind(q);
   var o = $('opts'), html = '', i;
-  o.className = 'opts ' + (q.o.length === 2 ? 'two' : (q.o.length === 3 ? 'three' : ''));
-  for(i = 0; i < q.o.length; i++){
-    html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
-          + mgPicTag(mgPicByText(q.o[i]), 'pic-opt') + esc(q.o[i]) + '</button>';   /* v1.3.0 預留選項插圖 */
-  }
+  if(!_EAR || _EAR.q !== q) _EAR = { q: q, input: [], taps: [], done: false };   /* 切字體重繪不清進度 */
+  /* 選擇題(舊 5 種 + song) */
+  if(kind === 'opt' && q.o){
+    o.className = 'opts ' + (q.o.length === 2 ? 'two' : (q.o.length === 3 ? 'three' : ''));
+    for(i = 0; i < q.o.length; i++){
+      html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
+            + mgPicTag(mgPicByText(q.o[i]), 'pic-opt') + esc(q.o[i]) + '</button>';
+    }
+  }else{ o.className = 'opts'; }
   o.innerHTML = html;
-  try{ var _pb = $('playbtn'); if(_pb && !_pb.getAttribute('data-pic')){ _pb.setAttribute('data-pic','1'); _pb.innerHTML = mgPicTag('music_mu_speaker','pic-opt') + '▶ 播放'; } }catch(e){}
+  /* 琴鍵 */
+  var kb = $('earkb'), dr = $('eardrum');
+  if(kind === 'kb'){
+    kb.className = 'on' + (_earLblOn ? '' : ' nolabel');
+    var row = $('kb-row'), kh = '', n;
+    for(i = 0; i < EAR_NOTES.length; i++){
+      n = EAR_NOTES[i];
+      kh += '<div class="kkey" id="kk-' + n.k + '" onclick="mgEarKey(\'' + n.k + '\',event)">'
+          + '<div class="kani">' + mgPicTag('music_key_' + n.k, '') + n.ani + '</div>'
+          + '<div class="klab">' + n.sf + (n.k === 'do2' ? '<sup>+</sup>' : '') + '<small>' + n.pn + (n.k === 'do2' ? '′' : '') + '</small></div>'
+          + '</div>';
+    }
+    row.innerHTML = kh;
+    var cb = $('kb-lbl'); if(cb) cb.checked = _earLblOn;
+    _earPaintInput();
+    $('playbtn').innerHTML = mgPicTag('music_mu_speaker', 'pic-opt') + (q.type === 'score' ? '▶ 聽示範' : '▶ 播放');
+    $('playnote').textContent = (q.type === 'score')
+      ? (MG.style === 's' ? '看上面的簡譜,照順序彈出來!' : '照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。')
+      : (MG.style === 's' ? '聽完再用小動物琴鍵彈回來!' : '仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。');
+  }else{
+    kb.className = '';
+    $('playbtn').innerHTML = mgPicTag('music_mu_speaker', 'pic-opt') + '▶ 播放';
+    $('playnote').textContent = (kind === 'drum')
+      ? (MG.style === 's' ? '聽鼓聲,再敲鼓敲出一樣的拍子!' : '聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。')
+      : '可以重聽,不會扣分';
+  }
+  /* 鼓 */
+  if(kind === 'drum'){
+    dr.className = 'on';
+    var pad = $('dr-pad'); pad.innerHTML = mgPicTag('music_drum', '') + '🥁';
+    _earPaintBeats();
+  }else{ dr.className = ''; }
+  try{ var _pb = $('playbtn'); _pb.setAttribute('data-pic','1'); }catch(e){}
+}
+/* 簡譜參考列 + 已按的音 */
+function _earPaintInput(){
+  if(!_EAR) return;
+  var q = _EAR.q, box = $('kb-input'), sc = $('kb-score'), h = '', i, k, ok;
+  var target = q.notes || q.seq || [];
+  if(q.type === 'score'){
+    h = '<span class="kb-ph">🎼 ' + esc(q.title || '') + ':</span>';
+    for(i = 0; i < target.length; i++){
+      k = String(target[i]);
+      var cls = 'kn ref';
+      if(_EAR.done){ cls = (_EAR.input[i] === k) ? 'kn ok' : 'kn ng'; }
+      else if(i < _EAR.input.length){ cls = (_EAR.input[i] === k) ? 'kn ok' : 'kn ng'; }
+      h += '<span class="' + cls + '">' + _earLabel(k) + '</span>';
+    }
+    sc.innerHTML = '';
+  }else{
+    if(!_EAR.input.length && !_EAR.done) h = '<span class="kb-ph">' + (MG.style === 's' ? '按琴鍵開始彈…' : '你彈的音會顯示在這裡(共 ' + target.length + ' 個音)') + '</span>';
+    for(i = 0; i < _EAR.input.length; i++){
+      k = _EAR.input[i];
+      ok = _EAR.done ? (String(target[i]) === k) : null;
+      h += '<span class="kn' + (ok === null ? '' : (ok ? ' ok' : ' ng')) + '">' + _earLabel(k) + '</span>';
+    }
+    if(_EAR.done){
+      var ref = '正確答案:';
+      for(i = 0; i < target.length; i++) ref += '<span class="kn ref">' + _earLabel(String(target[i])) + '</span> ';
+      sc.innerHTML = ref;
+    }else sc.innerHTML = _EAR.input.length + ' / ' + target.length;
+  }
+  box.innerHTML = h;
+  /* score 題:下一個該按的鍵亮綠框提示 */
+  var keys = $('kb-row').getElementsByClassName('kkey');
+  for(i = 0; i < keys.length; i++) keys[i].classList.remove('hint');
+  if(q.type === 'score' && !_EAR.done && _EAR.input.length < target.length){
+    var nk = $('kk-' + String(target[_EAR.input.length])); if(nk) nk.classList.add('hint');
+  }
+}
+window.mgEarLabelToggle = function(on){
+  _earLblOn = !!on;
+  try{ localStorage.setItem('mg_ear_lbl', _earLblOn ? '1' : '0'); }catch(e){}
+  var kb = $('earkb'); if(kb && kb.className.indexOf('on') >= 0) kb.className = 'on' + (_earLblOn ? '' : ' nolabel');
+  playSfx('sfx-tap', 0.25);
+};
+window.mgEarKey = function(k, ev){
+  try{ if(ev && ev.preventDefault) ev.preventDefault(); }catch(e){}
+  if(!_EAR || _EAR.done || MG.answered || _PZ.on) return;
+  var ctx = _earCtx(); if(!ctx){ toast('這台裝置不支援音效,請改玩其他關卡'); return; }
+  var n = _earNote(k); if(!n) return;
+  _earTone(ctx, n.hz, ctx.currentTime + 0.01, 0.5);
+  var el = $('kk-' + k);
+  if(el){ el.classList.add('lit'); setTimeout(function(){ el.classList.remove('lit'); }, 220); }
+  var target = _EAR.q.notes || _EAR.q.seq || [];
+  _EAR.input.push(k);
+  _earPaintInput();
+  if(_EAR.input.length >= target.length){
+    setTimeout(_earJudgeKeys, 350);
+  }
+};
+window.mgEarUndo = function(){
+  if(!_EAR || _EAR.done || MG.answered) return;
+  _EAR.input.pop(); _earPaintInput(); playSfx('sfx-tap', 0.25);
+};
+window.mgEarClear = function(){
+  if(!_EAR || _EAR.done || MG.answered) return;
+  _EAR.input = []; _EAR.taps = [];
+  _earPaintInput(); _earPaintBeats(); playSfx('sfx-cancel', 0.3);
+};
+function _earJudgeKeys(){
+  if(!_EAR || _EAR.done || MG.answered) return;
+  var q = _EAR.q, target = q.notes || q.seq || [], i, ok = true, hit = 0;
+  for(i = 0; i < target.length; i++){ if(_EAR.input[i] === String(target[i])) hit++; else ok = false; }
+  _EAR.done = true;
+  MG.answered = true; stopTimer();
+  _earPaintInput();
+  scoreIt(ok);
+  showFeedback(ok,
+    ok ? ('✅ 彈對了!' + (q.type === 'score' ? '一首「' + (q.title || '') + '」' : '')) : ('❌ 彈對 ' + hit + ' / ' + target.length + ' 個音'),
+    q.why ? tx(q.why) : '');
+}
+/* ── 拍子 ── */
+function _earPaintBeats(){
+  if(!_EAR) return;
+  var q = _EAR.q, pat = q.pattern || [], b = $('dr-beats'), h = '', i, cls;
+  for(i = 0; i < pat.length; i++){
+    cls = 'bt' + (pat[i] >= 2 ? ' long' : '');
+    if(_EAR.done && _EAR.judge){ cls += _EAR.judge[i] ? ' me' : ' miss'; }
+    else if(i < _EAR.taps.length) cls += ' me';
+    h += '<span class="' + cls + '" id="bt-' + i + '"></span>';
+  }
+  b.innerHTML = h;
+  var note = '', txt = '';
+  for(i = 0; i < pat.length; i++) txt += (pat[i] >= 2 ? '𝅗𝅥' : (pat[i] >= 1 ? '♩' : '♪')) + ' ';
+  note = (_EAR.done ? '' : ('已敲 ' + _EAR.taps.length + ' / ' + pat.length + '　')) + txt.trim();
+  $('dr-note').textContent = note;
+}
+window.mgDrumTap = function(ev){
+  try{ if(ev && ev.preventDefault) ev.preventDefault(); }catch(e){}
+  if(!_EAR || _EAR.done || MG.answered || _PZ.on) return;
+  var ctx = _earCtx(); if(!ctx){ toast('這台裝置不支援音效,請改玩其他關卡'); return; }
+  _earDrum(ctx, ctx.currentTime + 0.005);
+  var pad = $('dr-pad'); if(pad){ pad.classList.add('hit'); setTimeout(function(){ pad.classList.remove('hit'); }, 90); }
+  var pat = _EAR.q.pattern || [];
+  _EAR.taps.push((new Date()).getTime());
+  _earPaintBeats();
+  if(_EAR.taps.length >= pat.length) setTimeout(_earJudgeRhythm, 250);
+};
+/* 判定:拍數要一樣;各拍「間隔比例」與目標比例相差 ≤ 45% 算對(速度快慢不管,只看節奏)。
+   對小學生:只要拍數對、長短拍分得出來就過;每一拍逐一標綠/紅讓他知道哪一下不對。 */
+function _earJudgeRhythm(){
+  if(!_EAR || _EAR.done || MG.answered) return;
+  var q = _EAR.q, pat = q.pattern || [], taps = _EAR.taps, i, ok = true, judge = [];
+  if(pat.length < 2){ ok = taps.length === pat.length; judge = [ok]; }
+  else{
+    var tSum = 0, mSum = 0;
+    for(i = 0; i < pat.length - 1; i++){ tSum += pat[i]; mSum += (taps[i + 1] - taps[i]); }
+    judge.push(true);   /* 第一下永遠是對的(起拍) */
+    for(i = 0; i < pat.length - 1; i++){
+      var tr = pat[i] / tSum, mr = (taps[i + 1] - taps[i]) / (mSum || 1);
+      var good = Math.abs(mr - tr) <= tr * 0.45;
+      judge.push(good); if(!good) ok = false;
+    }
+  }
+  _EAR.done = true; _EAR.judge = judge;
+  MG.answered = true; stopTimer();
+  _earPaintBeats();
+  var nOk = 0; for(i = 0; i < judge.length; i++) if(judge[i]) nOk++;
+  scoreIt(ok);
+  showFeedback(ok, ok ? '✅ 拍子一模一樣!' : ('❌ 有 ' + (judge.length - nOk) + ' 拍節奏不對(紅色那幾拍)'), q.why ? tx(q.why) : '');
+}
+/* 超時揭曉:琴鍵題把正解列出來、拍子題把拍點全標紅 */
+function _earReveal(){
+  if(!_EAR || _EAR.done) return;
+  _EAR.done = true;
+  var k = _earKind(_EAR.q);
+  if(k === 'kb') _earPaintInput();
+  if(k === 'drum'){ var pat = _EAR.q.pattern || [], j = [], i; for(i = 0; i < pat.length; i++) j.push(false); _EAR.judge = j; _earPaintBeats(); }
 }
 window.mgEarPlay = function(){
   var q = MG.order[MG.idx];
-  if(!q || !q.seq) return;
+  if(!q) return;
+  if(_PZ.on) return;
   try{
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if(!AC){ toast('這台裝置不支援音效,請改玩其他關卡'); return; }
-    if(!MG.audioCtx) MG.audioCtx = new AC();
-    if(MG.audioCtx.state === 'suspended' && MG.audioCtx.resume) MG.audioCtx.resume();
-    var ctx = MG.audioCtx, t0 = ctx.currentTime + 0.05, i;
-    /* 追加:播放期間顯示音符動畫(音樂舞動.gif),播完自動收 */
+    var ctx = _earCtx();
+    if(!ctx){ toast('這台裝置不支援音效,請改玩其他關卡'); return; }
+    var t0 = ctx.currentTime + 0.05, i, totalMs = 0;
+    if(q.type === 'rhythm'){
+      var pat = q.pattern || [], bpm = q.bpm || 90, beat = 60 / bpm, acc = 0;
+      for(i = 0; i < pat.length; i++){
+        (function(k, st){
+          _earDrum(ctx, st);
+          setTimeout(function(){ var d = $('bt-' + k); if(d && _EAR && !_EAR.done){ d.classList.add('on'); setTimeout(function(){ d.classList.remove('on'); }, 180); } }, Math.max(0, (st - ctx.currentTime) * 1000));
+        })(i, t0 + acc);
+        acc += pat[i] * beat;
+      }
+      totalMs = acc * 1000 + 300;
+    }else{
+      var seq = q.notes || q.seq || [], gap = q.gap || 0.62, dur = (q.type === 'play' || q.type === 'score' || q.type === 'song') ? Math.min(0.55, gap * 0.9) : 0.5;
+      for(i = 0; i < seq.length; i++){
+        (function(v, k, st){
+          _earTone(ctx, _earFreq(v), st, dur);
+          if(typeof v === 'string' && _earKind(q) === 'kb'){
+            setTimeout(function(){ var el = $('kk-' + v); if(el && q.type === 'score'){ el.classList.add('lit'); setTimeout(function(){ el.classList.remove('lit'); }, 200); } }, Math.max(0, (st - ctx.currentTime) * 1000));
+          }
+        })(seq[i], i, t0 + i * gap);
+      }
+      totalMs = seq.length * gap * 1000 + 400;
+    }
+    /* 播放期間顯示音符動畫(音樂舞動.gif),播完自動收 */
     try{
       var _en = $('ear-notes');
       if(_en){ _en.src = MG_FX.notes + '?v=' + MG_VER + '&t=' + Date.now(); _en.classList.add('on');
-        setTimeout(function(){ _en.classList.remove('on'); }, q.seq.length * 620 + 400); }
+        setTimeout(function(){ _en.classList.remove('on'); }, totalMs); }
     }catch(e){}
-    for(i = 0; i < q.seq.length; i++){
-      (function(freq, k){
-        var osc = ctx.createOscillator(), g = ctx.createGain();
-        var st = t0 + k * 0.62;
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        g.gain.setValueAtTime(0.0001, st);
-        g.gain.linearRampToValueAtTime(0.22, st + 0.04);
-        g.gain.linearRampToValueAtTime(0.16, st + 0.36);
-        g.gain.linearRampToValueAtTime(0.0001, st + 0.52);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(st); osc.stop(st + 0.56);
-      })(q.seq[i], i);
-    }
   }catch(e){ toast('播放失敗,請再試一次'); }
 };
 
@@ -2272,10 +2880,12 @@ function renderReact(x, r){
   show('reactbox'); show('react-hud');
   $('qcard').textContent = tx(r.q);
   var box = $('reactbox');
-  box.innerHTML = '';
+  /* ★ v1.4.0(老師:「點擊特效改成射擊」)— 底部固定一座砲台,點到算式 = 從砲台射出一顆光彈飛過去命中 */
+  box.innerHTML = '<div class="rgun" id="rgun">' + mgPicTag('coinrush_gun', 'pic-coin') + '🔫</div>';
   var dur = (r.sec || x.time || 22) * 1000;
   _RC = {
     drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
+    hardHits: 0, blown: 0, paused: false,   /* ★ v1.4.0 高難度命中數／被炸掉的正確算式數 */
     need: (r.need || 6), r: r,
     endAt: (new Date()).getTime() + dur, total: dur
   };
@@ -2285,45 +2895,112 @@ function renderReact(x, r){
 }
 function _reactHud(){
   if(!_RC) return;
-  $('react-got').textContent = '✅ 接到 ' + _RC.got + ' / ' + _RC.need
-                             + (_RC.wrong ? ('　❌ 點錯 ' + _RC.wrong) : '');
-  $('react-tip').textContent = tx(_RC.r.tip || { f:'只點正確的,錯的不要碰!', s:'只點對的!' });
+  $('react-got').textContent = '🎯 擊中 ' + _RC.got + ' / ' + _RC.need
+                             + (_RC.wrong ? ('　💥 誤擊 ' + _RC.wrong) : '');
+  $('react-tip').textContent = tx(_RC.r.tip || { f:'只射正確的算式!發光的算兩倍,射錯會爆炸', s:'只射對的!發光的算兩倍' });
+}
+/* ★ v1.4.0 — 射擊:砲台轉向目標 → 光彈飛過去(CSS transition 130ms)→ 到達才結算命中/誤擊。
+   ⚠ 掉落物在飛行期間仍會往下掉幾個像素,光彈瞄準的是「按下當下」的位置,視覺上剛好。 */
+function _reactShoot(d){
+  if(!_RC || d.dead || d.locked || _RC.paused) return;
+  d.locked = true;
+  var box = $('reactbox'), bw = box.clientWidth, bh = box.clientHeight;
+  var ew = d.el.offsetWidth || 90, eh = d.el.offsetHeight || 44;
+  var tx0 = d.x + ew / 2, ty0 = d.y + eh / 2;
+  var gx = bw / 2, gy = bh - 26;
+  try{
+    var g = $('rgun');
+    if(g){
+      var ang = Math.atan2(ty0 - gy, tx0 - gx) * 180 / Math.PI + 90;
+      g.style.transform = 'translateX(-50%) rotate(' + ang + 'deg)';
+    }
+  }catch(e){}
+  var b = document.createElement('div');
+  b.className = 'rbullet';
+  b.style.left = '0px'; b.style.top = '0px';
+  b.style.transform = 'translate(' + (gx - 7) + 'px,' + (gy - 7) + 'px)';
+  box.appendChild(b);
+  playSfx('sfx-tap', 0.3);
+  /* 下一幀才設終點,transition 才會動 */
+  requestAnimationFrame(function(){
+    b.style.transform = 'translate(' + (tx0 - 7) + 'px,' + (ty0 - 7) + 'px)';
+  });
+  setTimeout(function(){
+    if(b.parentNode) b.parentNode.removeChild(b);
+    _reactHit(d);
+  }, 140);
+}
+/* ★ v1.4.0 — 誤擊爆炸:煙霧爆開.gif 在該顆位置炸開,半徑 R 內其他掉落物(含正確的)一起炸掉消失 */
+function _reactBlast(d){
+  var box = $('reactbox'), bw = box.clientWidth;
+  var ew = d.el.offsetWidth || 90, eh = d.el.offsetHeight || 44;
+  var cx = d.x + ew / 2, cy = d.y + eh / 2;
+  var R = bw >= 700 ? 190 : 150;
+  try{
+    var im = document.createElement('img');
+    im.className = 'rboom';
+    im.src = MG_FX.boom + '?v=' + MG_VER + '&t=' + Date.now();
+    im.style.left = cx + 'px'; im.style.top = cy + 'px';
+    im.onerror = function(){ if(im.parentNode) im.parentNode.removeChild(im); };
+    box.appendChild(im);
+    setTimeout(function(){ if(im.parentNode) im.parentNode.removeChild(im); }, 900);
+  }catch(e){}
+  var i, o, ox, oy;
+  for(i = 0; i < _RC.drops.length; i++){
+    o = _RC.drops[i];
+    if(o === d || o.dead || !o.el || !o.el.parentNode) continue;
+    ox = o.x + (o.el.offsetWidth || 90) / 2; oy = o.y + (o.el.offsetHeight || 44) / 2;
+    if(Math.sqrt((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy)) <= R){
+      o.dead = true;
+      if(o.good) _RC.blown++;
+      o.el.className += ' blown';
+      (function(el){ setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 380); })(o.el);
+    }
+  }
 }
 function _reactSpawn(){
   var r = _RC.r, box = $('reactbox');
   var isGood = Math.random() < 0.45;               // 好壞比約 45 / 55
   var pool = isGood ? r.good : r.bad;
-  var txt = pool[Math.floor(Math.random() * pool.length)];
+  var raw = pool[Math.floor(Math.random() * pool.length)];
+  /* ★ v1.4.0 — 資料表條目可為字串或 {t:'算式', hard:true}:hard = 較難題,金框發光、命中算兩倍 */
+  var txt = (typeof raw === 'string') ? raw : String(raw.t || '');
+  var hard = !!(isGood && raw && typeof raw === 'object' && raw.hard);
   var el = document.createElement('div');
-  el.className = 'rdrop' + (isGood ? '' : ' bad');
-  el.innerHTML = mgPicTag(isGood ? 'coinrush_coin_gold' : 'coinrush_coin_fake', 'pic-coin') + esc(txt);   /* v1.3.0 預留硬幣圖 */
+  el.className = 'rdrop' + (isGood ? '' : ' bad') + (hard ? ' hard' : '');
+  el.innerHTML = mgPicTag(isGood ? (hard ? 'coinrush_coin_bonus' : 'coinrush_coin_gold') : 'coinrush_coin_fake', 'pic-coin') + esc(txt)
+               + (hard ? '<span class="rx2">×2</span>' : '');   /* v1.3.0 預留硬幣圖 */
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
   var bw = box.clientWidth, ew = el.offsetWidth || 90;
   var d = {
-    el: el, good: isGood,
+    el: el, good: isGood, hard: hard,
     x: Math.random() * Math.max(1, bw - ew - 8) + 4,
     y: -54,
     v: 62 + Math.random() * 52,                    // px/秒,慢到小學生追得上
-    dead: false
+    dead: false, locked: false
   };
-  el.onclick = function(){ _reactHit(d); };
+  el.onclick = function(ev){ if(ev && ev.stopPropagation) ev.stopPropagation(); _reactShoot(d); };   /* ★ v1.4.0 改射擊 */
   _RC.drops.push(d);
 }
 function _reactHit(d){
   if(!_RC || d.dead) return;
   d.dead = true;
   if(d.good){
-    _RC.got++;
+    /* ★ v1.4.0 高難度(發光)命中算兩倍 */
+    var _gain = d.hard ? 2 : 1;
+    _RC.got += _gain;
+    if(d.hard) _RC.hardHits++;
     d.el.className = 'rdrop hit';
     playSfx('sfx-ok', 0.45);
-    try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, 120, 600); }catch(e){}
-    _reactFloat(d, '+1', '#3ec87a');
+    try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
+    _reactFloat(d, '+' + _gain, '#3ec87a');
   }else{
     _RC.wrong++;
     d.el.className = 'rdrop wrong';
     playSfx('sfx-ng', 0.4);
     _reactFloat(d, '−1', '#e84040');
+    _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
   }
   _reactHud();
   /* 被點到的那顆 0.35 秒後移走(留一下讓孩子看到回饋) */
@@ -2382,13 +3059,19 @@ function _reactFinish(){
   if(_RC.raf) cancelAnimationFrame(_RC.raf);
   MG.answered = true;
   stopTimer();
-  var r = _RC.r, got = _RC.got, wrong = _RC.wrong, need = _RC.need;
+  var r = _RC.r, got = _RC.got, wrong = _RC.wrong, need = _RC.need, hh = _RC.hardHits, blown = _RC.blown;
   $('reactbox').innerHTML = '';
   var ok = (got >= need && wrong <= 1);
   scoreIt(ok);
+  /* ★ v1.4.0 高難度命中另加分(每次 +40),寫回分數列 */
+  if(hh > 0){
+    MG.score += hh * 40;
+    $('score').textContent = MG.score + ' 分';
+  }
+  var _extra = (hh > 0 ? (',高難度 ×2 命中 ' + hh + ' 次') : '') + (blown > 0 ? (',被炸掉 ' + blown + ' 個正確算式') : '');
   showFeedback(ok,
-    ok ? ('✅ 接到 ' + got + ' 個,點錯 ' + wrong + ' 次!')
-       : ('🔶 接到 ' + got + ' / ' + need + ' 個,點錯 ' + wrong + ' 次'),
+    ok ? ('✅ 擊中 ' + got + ' 分,誤擊 ' + wrong + ' 次' + _extra + '!')
+       : ('🔶 擊中 ' + got + ' / ' + need + ',誤擊 ' + wrong + ' 次' + _extra),
     tx(r.why));
   _RC = null;
 }
@@ -3095,9 +3778,17 @@ window.mgNext = function(){
 function finishGame(){
   stopTimer();
   stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
+  mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
   var total = MG.order.length;
   var acc = Math.round((MG.right / total) * 100);
   var stars = acc >= 90 ? 3 : (acc >= 70 ? 2 : (acc >= 50 ? 1 : 0));
+  /* ★ v1.4.0(老師需求③)— 用時加成:本局牆鐘用時(含暫停)越短,最後得分加成越高(最多 +50%)。
+     ⚠ 只在有答對時才加成(0 分乘什麼都是 0,也避免全錯還拿加成的怪象)。 */
+  var _elapsed = mgElapsedSec(), _par = mgParTime(MG.cur);
+  var _bonusPct = (MG.right > 0) ? mgTimeBonusPct(_elapsed, _par) : 0;
+  var _base = MG.score;
+  MG.score = Math.round(_base * (1 + _bonusPct / 100));
+  MG.elapsed = Math.round(_elapsed);
   hide('page-play'); show('page-result');
   show('toapp-btn');
   bgmPlay('bgm-result', 0.42, true);   /* 不 loop,播一次就好 */
@@ -3133,11 +3824,19 @@ function finishGame(){
   $('r-score').textContent = MG.score + ' 分';
   $('r-detail').textContent = '答對 ' + MG.right + ' / ' + total
                             + ' 題(' + acc + '%) · 最高連擊 ' + MG.maxCombo;
+  /* ★ v1.4.0 用時列(雙版) */
+  var _rt = $('r-time');
+  if(_rt){
+    _rt.innerHTML = '⏱ ' + (MG.style === 's' ? '用了 ' : '本局用時 ') + '<b>' + mgFmtTime(_elapsed) + '</b>'
+      + (_bonusPct > 0
+          ? ('　· ' + (MG.style === 's' ? '快手加成' : '快手加成(含暫停時間)') + ' <b>+' + _bonusPct + '%</b>(' + _base + ' → ' + MG.score + ')')
+          : ('　· ' + (MG.style === 's' ? '再快一點就有加成!' : '用時未達加成門檻(標準 ' + mgFmtTime(_par) + ')')));
+  }
 
   var prev = MG.best[MG.cur.id];
   var isNew = (!prev || MG.score > prev.score);
   if(isNew){
-    MG.best[MG.cur.id] = { score: MG.score, stars: stars, acc: acc };
+    MG.best[MG.cur.id] = { score: MG.score, stars: stars, acc: acc, time: MG.elapsed };   /* ★ v1.4.0 成績含用時 */
     show('r-newbest');
     playSfx('sfx-clap', 0.5);
     /* ★ v1.3.0 — 新紀錄:彩色星星從結算卡左右兩側各噴一次 */
@@ -3290,7 +3989,8 @@ function saveCloud(gid, rec){
   if(!MG.fb || !MG.user) return;
   var payload = { uid: MG.user.uid, name: (MG.user.displayName || ''), games: {} };
   payload.games[gid] = {
-    score: rec.score, stars: rec.stars, acc: rec.acc, at: Date.now()
+    score: rec.score, stars: rec.stars, acc: rec.acc, at: Date.now(),
+    time: (typeof rec.time === 'number') ? rec.time : 0   /* ★ v1.4.0 成績含用時(秒) */
   };
   MG.fb.db.collection('minigameScores').doc(MG.user.uid)
     .set(payload, { merge: true })
@@ -3307,11 +4007,8 @@ function boot(){
     if(st === 's' || st === 'f') MG.style = st;
   }catch(e){}
   /* ★ v1.1.0 — BGM 偏好(只存本機,不上雲;與 mg_style 同層) */
-  try{
-    var bs = localStorage.getItem('mg_bgm');
-    if(bs === '0') _bgmOn = false;
-  }catch(e){}
-  var bb = $('bgm-btn'); if(bb) bb.textContent = _bgmOn ? '🎵' : '🔇';
+  _mgVolLoad();        /* ★ v1.4.0 音樂/音效音量(含舊 mg_bgm 一次性遷移) */
+  _mgVolBtnSync();
   try{ $('style-btn').textContent = (MG.style === 'f' ? '字多' : '字少'); }catch(e){}   /* ★ v1.3.0 開機依記住的模式顯示 字少／字多 */
   /* iOS 自動播放封鎖:第一次觸碰畫面才解得開(一次性,{once:true} 舊 Safari 不支援 ⇒ 自己移除) */
   var _armOnce = function(){
