@@ -15,7 +15,13 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.5.0(2026-09-05)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.7.1(2026-09-05)
+     ★ v1.7.1:首頁吉祥物介紹文重寫為活潑勵志,雙版各 5 句每次隨機
+     ★ v1.7.0:題庫三倍(9 款)+ 每局隨機抽 pick 題;迷宮每關 3 組題組隨機;關卡名活潑化+放大;卡片第二行星星移除
+     ★ v1.6.1:選擇題(quiz／猜歌名)選項每題隨機排序;資料表修掉括弧與長度暗示正解的選項
+     ★ v1.6.0:算數大進擊六關依序 加→加減→加減乘→加減乘除→+小數→+分數,題目即時隨機生成+本回合防重複,取消雙倍發光;
+       聽音坊題庫擴充並每局隨機抽 pick 題
+     ★ v1.5.1:答對閃光改 點擊星星.gif;解說文字移到「下一題」鈕正上方停靠區(橫式)並放大
      ★ v1.5.0:橫式滿版兩欄版面(iPad/PC/手機橫式皆鎖一個視窗高)、解說圖 contain 不裁切+圖文放大、地圖放大+圓點加大、
        右上 ⛶ 全螢幕(同主程式設計)、觸控直式強制橫式遮罩、回收大隊拖曳卡去底、「下一題」固定右下(iOS 安全區)
      ★ v1.4.1:算數大進擊 對錯算式同色同圖(不洩題)+ 掉落速度 ×0.5
@@ -1299,6 +1305,33 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #page-play > #nextrow button{min-height:46px;font-size:17px;padding:8px 20px;}
   #play-right{padding-bottom:60px;}
 }
+/* ── v1.5.1 解說文字停靠區:橫式固定在「下一題」鈕正上方、字放大;直式不顯示(文字留在左欄解說卡) ── */
+#fbdock{display:none;}
+@media (orientation:landscape){
+  #fbdock.show{
+    display:block;position:fixed;z-index:115;
+    right:18px;right:calc(18px + env(safe-area-inset-right,0px));
+    bottom:100px;bottom:calc(100px + env(safe-area-inset-bottom,0px));
+    width:min(52vw,760px);max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    background:rgba(8,10,16,.94);border:2.5px solid var(--gold);border-left-width:8px;border-radius:18px;
+    padding:16px 22px;box-shadow:0 14px 40px rgba(0,0,0,.65);
+    font-size:22px;font-size:clamp(19px,1.9vw,30px);line-height:1.6;color:var(--mist);
+  }
+  #fbdock.show.ok{border-color:var(--grass);}
+  #fbdock.show.ng{border-color:var(--brick);}
+  #fbdock.show b{color:var(--gold);}
+  #fbdock.show .fd-head{display:block;font-size:.85em;opacity:.8;margin-bottom:6px;}
+  /* 左欄解說卡只留標題+圖,內文交給停靠區 */
+  #feedback.docked .fb-txt{display:none;}
+  #feedback.docked .fb-body:not(:has(.fb-img)){display:none;}
+}
+@media (orientation:landscape) and (max-height:520px){
+  #fbdock.show{bottom:66px;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:min(56vw,600px);max-height:34vh;font-size:15px;padding:10px 14px;border-radius:12px;}
+}
+/* ★ v1.7.0 首頁卡片:關卡名放大、第二行最佳星星移除 */
+.cell .cstar{display:none !important;}
+.cell .cn{font-size:19px;font-size:clamp(17px,1.5vw,26px);line-height:1.25;}
+@media (orientation:landscape) and (min-width:1024px){ .cell .cn{font-size:clamp(20px,1.7vw,28px);} }
 /* PC 大螢幕(≥1366):左欄再寬一點、字再大一點 */
 @media (orientation:landscape) and (min-width:1366px){
   #page-play{grid-template-columns:minmax(380px,30vw) minmax(0,1fr);column-gap:24px;}
@@ -1428,7 +1461,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
-    <p class="sub">木柵 · 台灣 小學堂</p>
+    <p class="sub">木柵 · 台灣 小學堂 ── 每一局都是新挑戰!</p><!-- ★ v1.7.1 -->
     <!-- ★ v1.3.0 — 吉祥物「轉學生學霸」(主程式既有立繪)+ 提示泡泡(雙版,renderGrid 填) -->
     <div class="mascot" id="home-mascot">
       <img src="" alt="" onerror="this.style.display='none';">
@@ -1604,6 +1637,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
+<!-- ★ v1.5.1 — 解說文字停靠區(老師:「正確答案說明文字移到下一題按鈕上方,且放大」):
+     橫式時固定在右下「下一題」鈕正上方;由 showFeedback 填字、renderQuestion/mgNext/離場清空。左欄解說卡保留標題+圖。 -->
+<div id="fbdock"></div>
+
 <!-- ★ v1.4.0 — 暫停遮罩(老師需求③):蓋住整個作答區,倒數與掉落停住;
      ⚠ 但「本局用時」是牆鐘(startedAt→結算)⇒ 暫停期間照算,防止按暫停慢慢查答案。 -->
 <div id="pausebox" onclick="if(event.target===this)mgPauseToggle();">
@@ -1615,7 +1652,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.5.0"></script>
+<script src="minigame_db.js?v=v1.7.1"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1624,7 +1661,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.5.0';
+var MG_VER = 'v1.7.1';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2031,7 +2068,7 @@ var MG_HOME_SCENE = MG_IMG_BASE + encodeURIComponent('台灣地圖.jpg');
    ★ 掛在 body 最後、position:fixed、pointer-events:none ⇒ 不吃任何點擊、不影響版面。
    ★ 到時間自動移除;同一時間最多 6 個(連擊快點也不會堆積成百個 img 拖慢 iPad)。 */
 var MG_FX = {
-  hit  : MG_IMG_BASE + encodeURIComponent('光暈亮星.gif'),
+  hit  : MG_IMG_BASE + encodeURIComponent('點擊星星.gif'),   /* ★ v1.5.1 老師:答對閃光改 點擊星星.gif(原 光暈亮星.gif) */
   combo: MG_IMG_BASE + encodeURIComponent('點擊星星.gif'),
   glow : MG_IMG_BASE + encodeURIComponent('金色光圈.gif'),
   best : MG_IMG_BASE + encodeURIComponent('彩色星星.gif'),
@@ -2167,14 +2204,29 @@ function renderGrid(){
           +   '<span class="cs">' + esc(x.subject.split(' · ')[0]) + '</span>'
           +   '<div class="cskills">' + sk + '</div>'
           +   '<div class="cdiff" title="難度">' + dh + '</div>'
-          +   '<span class="cstar">' + stars + '</span>'
+          +   ''   /* ★ v1.7.0 老師:卡片第二行最佳成績星星移除(cstar 不再輸出;難度星 cdiff 保留) */
           + '</div>';
   }
   g.innerHTML = html;
   /* ★ v1.3.0 — 吉祥物泡泡(雙版) */
-  mgMascot('home-mascot', 'home-bubble', (MG.style === 's')
-    ? '嗨!我是轉學生學霸。選一款來挑戰,答對越多、連擊越高分數越高喔!'
-    : '嗨,我是轉學生學霸!這裡有 ' + MG.games.length + ' 款木柵與台灣的小學堂,點卡片看玩法、再按開始;答對加分、連續答對還有連擊加成!不用登入就能玩,登入後最佳成績會存到雲端。');
+  /* ★ v1.7.1 老師:「首頁介紹文重寫,更活潑勵志」—— 每次進首頁隨機一句(雙版各 5 句),重玩不無聊 */
+  var _n = MG.games.length;
+  var _linesS = [
+    '嗨!我是轉學生學霸!' + _n + ' 座小學堂等你來闖,答錯沒關係,再玩一次就更厲害!',
+    '每答對一題,你的大腦就升一級!連擊越長、分數越高,衝吧小英雄!',
+    '今天想挑戰哪一關?貓空、台灣、木柵的秘密都藏在卡片裡,點開就出發!',
+    '沒有人一開始就會,玩過三次的你會比第一次強很多!來吧!',
+    '快手有加成、暫停也算時間 —— 相信自己,直接答就對了!'
+  ];
+  var _linesF = [
+    '嗨,我是轉學生學霸!這裡有 ' + _n + ' 座木柵與台灣的小學堂,每一局題目都不一樣。點卡片看玩法、按開始就出發;答對加分、連續答對有連擊加成、越快完成加成越高。答錯不扣信心,那正是你要學的東西!登入後最佳成績會存到雲端。',
+    '學習就像爬貓空的步道:一步一步走,回頭一看已經在山頂。' + _n + ' 座小學堂由你選,每次都是新題目;先看玩法再按開始,答對加分、連擊加成、快手還有額外加成!不用登入就能玩,登入後成績自動存雲端。',
+    '你知道嗎?答錯的那一題,才是讓你變強的那一題!' + _n + ' 座小學堂涵蓋自然、數學、語文、音樂與木柵在地知識,每局隨機出題,越玩越熟。點卡片看玩法、按開始挑戰,登入後最佳成績會保存在雲端。',
+    '小英雄,準備好了嗎?' + _n + ' 座小學堂等你來闖:分類、地圖、聽音、射擊、迷宮……每一局題目都會換。答對有連擊加成、越快完成分數越高,答錯會告訴你為什麼。不用登入就能玩,登入後成績存雲端、隨時挑戰自己的紀錄!',
+    '今天的你,只要比昨天多會一題,就是進步!這裡有 ' + _n + ' 座小學堂,題目每局隨機、永遠玩不完。點卡片看玩法、按開始出發;連擊與快手都有加成。登入後最佳成績會存到雲端,和自己比賽最有趣!'
+  ];
+  var _pool = (MG.style === 's') ? _linesS : _linesF;
+  mgMascot('home-mascot', 'home-bubble', _pool[Math.floor(Math.random() * _pool.length)]);
 }
 function mgMascot(wrapId, bubbleId, text){
   var w = $(wrapId), b = $(bubbleId); if(!w || !b) return;
@@ -2318,6 +2370,19 @@ function startGame(x){
   MG.idx = 0; MG.score = 0; MG.right = 0; MG.combo = 0; MG.maxCombo = 0;
   /* ★ v1.3.1:迷宮 6 關是「由易到難」排好的(解法數 11→3),不打亂;其餘引擎照舊隨機 */
   MG.order = (x.engine === 'maze') ? poolOf(x).slice() : shuffle(poolOf(x));
+  if(x.pick && MG.order.length > x.pick) MG.order = MG.order.slice(0, x.pick);   /* ★ v1.6.0 題庫比每局題數多時隨機抽 pick 題(每局不同) */
+  /* ★ v1.7.0 迷宮:每關若有 variants(替代題組),隨機挑「原組或其中一組」,以淺拷貝覆蓋 marks/why(地圖 rows、hint 沿用),資料表本體不被改動 */
+  if(x.engine === 'maze'){
+    MG.order = MG.order.map(function(lv){
+      if(!lv.variants || !lv.variants.length) return lv;
+      var pickI = Math.floor(Math.random() * (lv.variants.length + 1));
+      if(pickI === 0) return lv;
+      var v = lv.variants[pickI - 1], cp = {}, k;
+      for(k in lv){ if(lv.hasOwnProperty(k) && k !== 'variants') cp[k] = lv[k]; }
+      cp.marks = v.marks; if(v.why) cp.why = v.why; if(v.hint) cp.hint = v.hint; if(v.q) cp.q = v.q;
+      return cp;
+    });
+  }
   mgPauseReset();                                  /* ★ v1.4.0 */
   MG.startedAt = (new Date()).getTime();           /* ★ v1.4.0 本局用時起點(牆鐘,暫停照算) */
   hide('page-home'); hide('page-result'); show('page-play'); show('back-btn'); show('pause-btn');
@@ -2349,6 +2414,7 @@ window.mgHome = function(){
   stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   MG.cur = null;
   mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
+  mgDockHide();                        /* ★ v1.5.1 */
   hide('page-play'); hide('page-result'); hide('back-btn'); show('page-home');
   show('toapp-btn');
   bgmPlay('bgm-home');
@@ -2505,7 +2571,7 @@ function onTimeout(){
 function renderQuestion(keepState){
   var x = MG.cur; if(!x) return;
   var q = MG.order[MG.idx];
-  if(!keepState){ MG.answered = false; }
+  if(!keepState){ MG.answered = false; if(q) q._perm = null; }   /* ★ v1.6.1 新題重抽選項順序 */
 
   $('progress').textContent = (MG.idx + 1) + ' / ' + MG.order.length;
   $('score').textContent = MG.score + ' 分';
@@ -2521,6 +2587,7 @@ function renderQuestion(keepState){
   $('opts').innerHTML = '';
   $('feedback').className = ''; $('feedback').classList.remove('show');
   hide('nextrow');
+  mgDockHide();   /* ★ v1.5.1 */
   $('qhint').textContent = x.hint ? tx(x.hint) : '';
 
   if(x.engine === 'sort') renderSort(x, q);
@@ -2556,13 +2623,23 @@ function renderSort(x, it){
 }
 
 /* ── 引擎 B:情境選擇題 ─────────────────────────────── */
+/* ★ v1.6.1(老師:「選擇題每次的答案順序要隨機改變」)— 每題一進場就抽一組顯示順序 q._perm(切字體重繪 keepState 不重抽);
+   按鈕的 data-i 與 onclick 仍是「原始索引」⇒ mgAnswer / lockOptions / 資料表 a 全部不必改。 */
+function _optPerm(q){
+  if(!q._perm || q._perm.length !== q.o.length){
+    var idx = [], i; for(i = 0; i < q.o.length; i++) idx.push(i);
+    q._perm = shuffle(idx);
+  }
+  return q._perm;
+}
 function renderQuiz(x, q){
   $('qcard').innerHTML = mgPicTag(q.pic, 'pic-q') + '<span>' + esc(tx(q.q)) + '</span>';   /* v1.3.0 預留題卡插圖 */
-  var o = $('opts'), html = '', i;
+  var o = $('opts'), html = '', i, pm = _optPerm(q), oi;
   o.className = 'opts';
-  for(i = 0; i < q.o.length; i++){
-    html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
-          + esc(q.o[i]) + '</button>';
+  for(i = 0; i < pm.length; i++){
+    oi = pm[i];
+    html += '<button class="opt" data-i="' + oi + '" onclick="mgAnswer(' + oi + ')">'
+          + esc(q.o[oi]) + '</button>';
   }
   o.innerHTML = html;
 }
@@ -2671,9 +2748,12 @@ function renderEar(x, q){
   /* 選擇題(舊 5 種 + song) */
   if(kind === 'opt' && q.o){
     o.className = 'opts ' + (q.o.length === 2 ? 'two' : (q.o.length === 3 ? 'three' : ''));
+    /* ★ v1.6.1 猜歌名題選項隨機順序;高低/走向/數音等自然序題維持原順序(選項本身有邏輯順序) */
+    var pm = (q.type === 'song') ? _optPerm(q) : null, oi;
     for(i = 0; i < q.o.length; i++){
-      html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
-            + mgPicTag(mgPicByText(q.o[i]), 'pic-opt') + esc(q.o[i]) + '</button>';
+      oi = pm ? pm[i] : i;
+      html += '<button class="opt" data-i="' + oi + '" onclick="mgAnswer(' + oi + ')">'
+            + mgPicTag(mgPicByText(q.o[oi]), 'pic-opt') + esc(q.o[oi]) + '</button>';
     }
   }else{ o.className = 'opts'; }
   o.innerHTML = html;
@@ -3091,7 +3171,7 @@ function renderReact(x, r){
   var dur = (r.sec || x.time || 22) * 1000;
   _RC = {
     drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
-    hardHits: 0, blown: 0, paused: false,   /* ★ v1.4.0 高難度命中數／被炸掉的正確算式數 */
+    hardHits: 0, blown: 0, paused: false, seen: {},   /* ★ v1.6.0 seen=本回合已出過的算式(防重複) */
     need: (r.need || 6), r: r,
     endAt: (new Date()).getTime() + dur, total: dur
   };
@@ -3103,7 +3183,7 @@ function _reactHud(){
   if(!_RC) return;
   $('react-got').textContent = '🎯 擊中 ' + _RC.got + ' / ' + _RC.need
                              + (_RC.wrong ? ('　💥 誤擊 ' + _RC.wrong) : '');
-  $('react-tip').textContent = tx(_RC.r.tip || { f:'只射正確的算式!發光的算兩倍,射錯會爆炸', s:'只射對的!發光的算兩倍' });
+  $('react-tip').textContent = tx(_RC.r.tip || { f:'只射正確的算式!射錯會爆炸', s:'只射對的!' });
 }
 /* ★ v1.4.0 — 射擊:砲台轉向目標 → 光彈飛過去(CSS transition 130ms)→ 到達才結算命中/誤擊。
    ⚠ 掉落物在飛行期間仍會往下掉幾個像素,光彈瞄準的是「按下當下」的位置,視覺上剛好。 */
@@ -3164,25 +3244,93 @@ function _reactBlast(d){
     }
   }
 }
+/* ★ v1.6.0(老師:「每一關題目和答案都即時隨機生成,避免寫死或重複;取消雙倍發光」)
+ *   資料表回合改寫 ops:['add','sub','mul','div','dec','frac'](六關依序累加),每次生成隨機挑一種運算即時出題;
+ *   `_RC.seen` 記本回合已出過的算式字串,重複就重抽(最多 30 次)⇒ 同一回合不出現重複題。
+ *   舊 good/bad 陣列仍相容(沒有 ops 的回合走舊路徑)。 */
+function _rInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+function _rPick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function _fmtDec(v){ return String(Math.round(v * 100) / 100); }
+function _reactGenOne(op, wantGood){
+  var a, b, c, ans, wrong, txt, k, d;
+  if(op === 'add'){
+    a = _rInt(6, 89); b = _rInt(5, 99 - a > 5 ? 99 - a : 9); ans = a + b;
+    wrong = ans + _rPick([-10, 10, -1, 1, -2, 2, 9, -9]); if(wrong < 0) wrong = ans + 10;
+    txt = a + ' + ' + b + ' = ';
+  }else if(op === 'sub'){
+    a = _rInt(20, 100); b = _rInt(3, a - 2); ans = a - b;
+    wrong = ans + _rPick([-10, 10, -1, 1, -2, 2, -9, 9]); if(wrong < 0) wrong = ans + 10;
+    txt = a + ' − ' + b + ' = ';
+  }else if(op === 'mul'){
+    a = _rInt(2, 12); b = _rInt(2, 9); ans = a * b;
+    wrong = _rPick([ans + a, ans - a, ans + b, ans - b, ans + 1, ans - 1, ans + 10]); if(wrong <= 0 || wrong === ans) wrong = ans + a;
+    txt = a + ' × ' + b + ' = ';
+  }else if(op === 'div'){
+    b = _rInt(2, 9); ans = _rInt(2, 12); a = b * ans;
+    wrong = _rPick([ans + 1, ans - 1, ans + 2, ans - 2, b]); if(wrong <= 0 || wrong === ans) wrong = ans + 1;
+    txt = a + ' ÷ ' + b + ' = ';
+  }else if(op === 'dec'){
+    k = _rInt(0, 2);
+    if(k === 0){ a = _rInt(1, 89) / 10; b = _rInt(1, 89) / 10; ans = Math.round((a + b) * 10) / 10; wrong = Math.round((ans + _rPick([0.1, -0.1, 1, -1, 0.2])) * 10) / 10; txt = _fmtDec(a) + ' + ' + _fmtDec(b) + ' = '; }
+    else if(k === 1){ a = _rInt(20, 99) / 10; b = _rInt(1, Math.floor(a * 10) - 1) / 10; ans = Math.round((a - b) * 10) / 10; wrong = Math.round((ans + _rPick([0.1, -0.1, 1, -1])) * 10) / 10; txt = _fmtDec(a) + ' − ' + _fmtDec(b) + ' = '; }
+    else { a = _rInt(11, 49) / 10; if(a % 1 === 0) a += 0.5; b = _rInt(2, 6); ans = Math.round(a * b * 10) / 10; wrong = Math.round((ans + _rPick([a, -a, 1, -1, 0.5])) * 10) / 10; txt = _fmtDec(a) + ' × ' + b + ' = '; }
+    if(wrong < 0 || wrong === ans) wrong = Math.round((ans + 1) * 10) / 10;
+    return txt + _fmtDec(wantGood ? ans : wrong);
+  }else if(op === 'frac'){
+    k = _rInt(0, 2);
+    if(k === 0){   /* 等值分數 a/b = ak/bk */
+      b = _rInt(2, 6); a = _rInt(1, b - 1); c = _rInt(2, 4);
+      var good = a + '/' + b + ' = ' + (a * c) + '/' + (b * c);
+      if(wantGood) return good;
+      /* 錯誤等值:分子或分母只改其一,並用交叉相乘確認真的不等值(避免 1/2 = 2/4 這種碰巧等值) */
+      var bn = a * c, bd = b * c, tries = 0;
+      do{ var pick = _rInt(0, 3); bn = a * c; bd = b * c;
+          if(pick === 0) bn += 1; else if(pick === 1) bd += 1; else if(pick === 2) bn = (a + 1) * c; else bd = b * (c + 1);
+      }while(bn * b === a * bd && tries++ < 10);
+      if(bn * b === a * bd){ bn = a * c + 1; }
+      return a + '/' + b + ' = ' + bn + '/' + bd;
+    }else if(k === 1){   /* 分數比大小 */
+      b = _rInt(2, 9); a = _rInt(1, b - 1); d = _rInt(2, 9); c = _rInt(1, d - 1);
+      var t2 = 0; while(a * d === c * b && t2++ < 20){ d = _rInt(2, 9); c = _rInt(1, d - 1); }
+      if(a * d === c * b){ if(c > 1) c -= 1; else d += 1; }   /* 極端保險 */
+      var gt = (a * d > c * b);
+      var sym = wantGood ? (gt ? '>' : '<') : (gt ? '<' : '>');
+      return a + '/' + b + ' ' + sym + ' ' + c + '/' + d;
+    }else{   /* 分數 = 小數 */
+      var tbl = [['1/2', '0.5'], ['1/4', '0.25'], ['3/4', '0.75'], ['1/5', '0.2'], ['2/5', '0.4'], ['3/5', '0.6'], ['4/5', '0.8'], ['1/8', '0.125'], ['3/8', '0.375'], ['1/10', '0.1'], ['7/10', '0.7'], ['9/10', '0.9']];
+      var t1 = _rPick(tbl), t2 = _rPick(tbl); if(t2[1] === t1[1]) t2 = tbl[(tbl.indexOf(t1) + 3) % tbl.length];
+      return t1[0] + ' = ' + (wantGood ? t1[1] : t2[1]);
+    }
+  }else{ return null; }
+  return txt + (wantGood ? ans : wrong);
+}
+function _reactGen(r, wantGood){
+  var ops = r.ops, tries = 0, t;
+  while(tries++ < 30){
+    t = _reactGenOne(_rPick(ops), wantGood);
+    if(t && !_RC.seen[t]){ _RC.seen[t] = true; return t; }
+  }
+  return t || '1 + 1 = ' + (wantGood ? 2 : 3);
+}
 function _reactSpawn(){
   var r = _RC.r, box = $('reactbox');
   var isGood = Math.random() < 0.45;               // 好壞比約 45 / 55
-  var pool = isGood ? r.good : r.bad;
-  var raw = pool[Math.floor(Math.random() * pool.length)];
-  /* ★ v1.4.0 — 資料表條目可為字串或 {t:'算式', hard:true}:hard = 較難題,金框發光、命中算兩倍 */
-  var txt = (typeof raw === 'string') ? raw : String(raw.t || '');
-  var hard = !!(isGood && raw && typeof raw === 'object' && raw.hard);
+  var txt;
+  if(r.ops && r.ops.length){ txt = _reactGen(r, isGood); }
+  else{
+    var pool = isGood ? r.good : r.bad;
+    var raw = pool[Math.floor(Math.random() * pool.length)];
+    txt = (typeof raw === 'string') ? raw : String(raw.t || '');
+  }
+  /* ★ v1.6.0 老師:取消雙倍發光/×2(送分);對錯同色同圖(v1.4.1) */
   var el = document.createElement('div');
-  /* ★ v1.4.1 老師:「答案太明顯,全部答案都要相同顏色」—— 對錯外觀完全一致(不再加 .bad、圖也同一張);
-     hard 金框仍保留(那是「難度」標示,不洩漏對錯:錯的不會發光但正確的也大多不發光)。 */
-  el.className = 'rdrop' + (hard ? ' hard' : '');
-  el.innerHTML = mgPicTag(hard ? 'coinrush_coin_bonus' : 'coinrush_coin_gold', 'pic-coin') + esc(txt)
-               + (hard ? '<span class="rx2">×2</span>' : '');   /* v1.3.0 預留硬幣圖 */
+  el.className = 'rdrop';
+  el.innerHTML = mgPicTag('coinrush_coin_gold', 'pic-coin') + esc(txt);
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
   var bw = box.clientWidth, ew = el.offsetWidth || 90;
   var d = {
-    el: el, good: isGood, hard: hard,
+    el: el, good: isGood, hard: false,
     x: Math.random() * Math.max(1, bw - ew - 8) + 4,
     y: -54,
     v: 31 + Math.random() * 26,                    // px/秒;★ v1.4.1 老師:「降落速度整體放慢 50%」(原 62+0~52)
@@ -3276,7 +3424,7 @@ function _reactFinish(){
     MG.score += hh * 40;
     $('score').textContent = MG.score + ' 分';
   }
-  var _extra = (hh > 0 ? (',高難度 ×2 命中 ' + hh + ' 次') : '') + (blown > 0 ? (',被炸掉 ' + blown + ' 個正確算式') : '');
+  var _extra = (blown > 0 ? (',被炸掉 ' + blown + ' 個正確算式') : '');   /* ★ v1.6.0 取消雙倍後不再顯示 */
   showFeedback(ok,
     ok ? ('✅ 擊中 ' + got + ' 分,誤擊 ' + wrong + ' 次' + _extra + '!')
        : ('🔶 擊中 ' + got + ' / ' + need + ',誤擊 ' + wrong + ' 次' + _extra),
@@ -3972,7 +4120,19 @@ function showFeedback(ok, head, why){
   nr.classList.remove('hidden');
   nr.getElementsByTagName('button')[0].textContent =
     (MG.idx >= MG.order.length - 1) ? '看成績 →' : '下一題 →';
+  /* ★ v1.5.1 解說文字停靠區(橫式顯示於下一題鈕上方,CSS 控制;直式時 dock 隱藏、左欄解說卡完整顯示) */
+  try{
+    var dk = $('fbdock');
+    if(dk){
+      if(why){
+        dk.className = 'show ' + (ok ? 'ok' : 'ng');
+        dk.innerHTML = '<b class="fd-head">' + esc(head) + '</b>' + esc(why);
+        f.classList.add('docked');
+      }else{ dk.className = ''; dk.innerHTML = ''; f.classList.remove('docked'); }
+    }
+  }catch(e){}
 }
+function mgDockHide(){ var dk = $('fbdock'); if(dk){ dk.className = ''; dk.innerHTML = ''; } var f = $('feedback'); if(f) f.classList.remove('docked'); }
 window.mgNext = function(){
   playSfx('sfx-tap', 0.3);
   stopEngines();          /* ★ v1.1.0:上一題的引擎狀態歸零,免得殘留影響下一題 */
@@ -3987,6 +4147,7 @@ function finishGame(){
   stopTimer();
   stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
+  mgDockHide();                        /* ★ v1.5.1 */
   var total = MG.order.length;
   var acc = Math.round((MG.right / total) * 100);
   var stars = acc >= 90 ? 3 : (acc >= 70 ? 2 : (acc >= 50 ? 1 : 0));
