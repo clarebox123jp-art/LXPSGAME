@@ -1,5 +1,5 @@
 /* ============================================================================
- * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.4.0(2026-09-05)
+ * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.5.0(2026-09-05)
  *
  * ★ scope 只在 /minigame/,比主程式 sw.js 的 './' 更具體
  *   ⇒ 瀏覽器自動讓本 SW 接管本目錄,不需要改主程式的 fetch 邏輯。
@@ -14,8 +14,8 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.4.0';
-var SHELL = 'lxps-mini-shell-v1.4.0';
+var MINI_VERSION = 'v1.5.0';
+var SHELL = 'lxps-mini-shell-v1.5.0';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [

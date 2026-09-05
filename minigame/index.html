@@ -15,7 +15,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.4.0(2026-09-05)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.5.0(2026-09-05)
+     ★ v1.5.0:橫式滿版兩欄版面(iPad/PC/手機橫式皆鎖一個視窗高)、解說圖 contain 不裁切+圖文放大、地圖放大+圓點加大、
+       右上 ⛶ 全螢幕(同主程式設計)、觸控直式強制橫式遮罩、回收大隊拖曳卡去底、「下一題」固定右下(iOS 安全區)
+     ★ v1.4.1:算數大進擊 對錯算式同色同圖(不洩題)+ 掉落速度 ×0.5
      ★ v1.4.0(老師四點):①聽音坊新引擎 song/play/score/rhythm(動物琴鍵 唱名＋音名 可勾選隱藏、拍子鼓、WebAudio 鋼琴/鼓音色)
        ②算數大進擊:砲台射擊光彈、hard 條目金框發光×2、誤擊爆炸炸掉半徑內掉落物(煙霧爆開.gif)
        ③右上 ⏸ 暫停(倒數/掉落/BGM 停住;本局用時=牆鐘含暫停)+ 結算快手加成(≤30% 標準時間 +50%)+ 成績含 time
@@ -1143,9 +1146,165 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #eardrum .drum{width:210px;height:210px;font-size:76px;} #eardrum .drum img{width:150px;height:150px;}
   #eardrum .beats .bt{width:32px;height:32px;} #eardrum .beats .bt.long{width:64px;}
 }
+/* ★ v1.4.1 錯誤算式不再另色(保險:即使日後有人補回 .bad 也同色) */
+.rdrop.bad{background:var(--paper);}
 /* 結算頁用時列 */
 #r-time{font-size:15px;opacity:.9;margin-top:4px;}
 #r-time b{color:var(--gold);}
+
+/* ══════════════════════════════════════════════════════════
+ *  v1.5.0(老師兩點:①地圖按鈕/地圖放大、解說圖文放大且圖片不裁切(全引擎共用) ②整體放大接近滿版、
+ *        不超出 iPad/PC/手機橫式解析度、右上全螢幕鈕、強制橫式)
+ *  ★ 純覆寫、舊規則零刪除;要回退整段拿掉即可。
+ *  ★ 尺寸一律「px 先寫、clamp() 後寫」:舊 iPad(iOS<13.4)不認 clamp 會沿用前一行 px,新機吃 clamp 依視窗伸縮。
+ * ══════════════════════════════════════════════════════════ */
+/* ── 強制橫式遮罩:只在「觸控裝置 + 直式」顯示;PC 視窗直式不觸發(同主程式 rotate-device-overlay 口徑)── */
+#rotate-overlay{
+  position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;text-align:center;
+  background:rgba(6,8,14,.97);padding:24px;
+}
+#rotate-overlay .ro-inner{max-width:420px;}
+#rotate-overlay .ro-icon{font-size:72px;line-height:1;animation:roturn 1.6s ease-in-out infinite;}
+@keyframes roturn{0%,20%{transform:rotate(0);}60%,100%{transform:rotate(90deg);}}
+#rotate-overlay h2{margin:14px 0 6px;font-size:28px;color:var(--gold);}
+#rotate-overlay p{margin:4px 0;font-size:17px;opacity:.85;line-height:1.5;}
+@media (orientation:portrait) and (hover:none) and (pointer:coarse){ #rotate-overlay{display:flex;} }
+
+/* ── 解說卡(全引擎共用):圖片不裁切、圖與字放大 ── */
+#feedback .fb-body{flex-direction:column;gap:10px;}
+#feedback .fb-img{
+  flex:0 0 auto;width:100%;height:auto;max-height:36vh;object-fit:contain;   /* ★ contain = 完整不裁切 */
+  background:rgba(0,0,0,.28);border-radius:14px;
+}
+#feedback .fb-txt{font-size:inherit;}
+
+/* ── 橫式(所有裝置):滿版兩欄、鎖一個視窗高 ── */
+@media (orientation:landscape){
+  .wrap{max-width:none;width:100%;box-sizing:border-box;padding:6px 16px 6px;}
+  #topbar{min-height:56px;gap:8px;padding:4px 2px 2px;}
+  .chip{min-height:48px;font-size:17px;font-size:clamp(15px,1.35vw,21px);padding:8px 16px;}
+  #page-play{
+    display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-columns:minmax(300px,31vw) minmax(0,1fr);
+    grid-template-rows:auto auto minmax(0,1fr);column-gap:18px;align-items:start;
+    height:calc(100vh - 78px);max-height:calc(100vh - 78px);
+  }
+  #play-left{grid-column:1;grid-row:1;order:0;}
+  #page-play > #nextrow{grid-column:1;grid-row:2;order:0;margin-top:10px;}
+  #page-play > #feedback{grid-column:1;grid-row:3;order:0;margin-top:10px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #play-right{grid-column:2;grid-row:1 / 4;order:0;min-height:0;max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #scene-banner{height:auto;margin:0 0 8px;}
+  #scene-banner #sb-img,#scene-banner .sb-amb{height:110px;height:clamp(84px,13vh,150px);}
+  #scene-banner .sb-txt{position:static;background:var(--ink2);padding:8px 14px 10px;}
+  #scene-banner .sb-name{font-size:22px;font-size:clamp(18px,1.7vw,28px);}
+  #scene-banner .sb-story{font-size:15px;font-size:clamp(13px,1.15vw,18px);-webkit-line-clamp:2;}
+  #hud{gap:6px;margin:0 0 6px;flex-wrap:wrap;}
+  .stat{font-size:17px;font-size:clamp(15px,1.35vw,21px);padding:6px 12px;min-height:44px;}
+  #timering{width:54px;height:54px;}
+  #timering .tnum{font-size:20px;}
+  #hud .chip{min-height:44px;}
+  #nextrow button{min-height:60px;font-size:22px;font-size:clamp(18px,1.7vw,26px);}
+  #feedback{font-size:17px;font-size:clamp(16px,1.4vw,23px);line-height:1.65;}
+  #feedback .fb-head{font-size:20px;font-size:clamp(18px,1.6vw,26px);padding:10px 14px;}
+  #feedback .fb-body{padding:12px 14px 14px;}
+  /* 右欄:題卡與選項放大 */
+  #card-area{margin-top:0;}
+  .card{min-height:96px;font-size:26px;font-size:clamp(20px,2.1vw,34px);padding:16px 20px;line-height:1.45;}
+  .opts{margin-top:12px;gap:12px;}
+  .opt{min-height:76px;min-height:clamp(60px,9.5vh,100px);font-size:21px;font-size:clamp(17px,1.65vw,27px);}
+  /* 地圖:整張圖吃滿右欄高度、圓點更大更好按 */
+  #mapbox{margin-top:6px;padding:6px;display:flex;justify-content:center;}
+  #tw-svg{display:block;height:calc(100vh - 235px);max-height:calc(100vh - 235px);width:auto;max-width:100%;}
+  .spot{stroke-width:.9;}
+  .spotlbl{font-size:4.1px;}
+  /* 其他引擎容器 */
+  #reactbox{height:calc(100vh - 215px);min-height:300px;}
+  #matchbox{grid-template-columns:repeat(4,1fr);}
+  .mcard{min-height:130px;min-height:clamp(96px,17vh,170px);font-size:20px;font-size:clamp(16px,1.6vw,24px);}
+  #earkb .kkey{min-height:110px;min-height:clamp(84px,17vh,130px);}
+  .cell{height:170px;}
+  #grid{grid-template-columns:repeat(5,1fr);gap:12px;}
+}
+/* ── 手機橫式(高 ≤ 520):橫幅收起、字級縮、頂列精簡 ── */
+@media (orientation:landscape) and (max-height:520px){
+  .wrap{padding:4px 10px 4px;}
+  #topbar{min-height:42px;gap:5px;}
+  .chip{min-height:38px;font-size:13px;padding:5px 10px;}
+  #share-btn,#who{display:none !important;}
+  #page-play{grid-template-columns:minmax(230px,32vw) minmax(0,1fr);column-gap:10px;height:calc(100vh - 54px);max-height:calc(100vh - 54px);}
+  #scene-banner #sb-img,#scene-banner .sb-amb,#scene-banner .sb-story{display:none;}
+  #scene-banner .sb-name{font-size:16px;}
+  #scene-banner .sb-txt{padding:4px 10px 6px;}
+  .stat{font-size:13px;padding:3px 8px;min-height:32px;}
+  #timering{width:40px;height:40px;}
+  #timering .tnum{font-size:15px;}
+  #hud .chip{min-height:32px;font-size:12px;padding:3px 8px;}
+  #timebar-wrap{margin-top:4px;}
+  #nextrow button{min-height:42px;font-size:16px;}
+  #page-play > #nextrow{margin-top:6px;}
+  #page-play > #feedback{margin-top:6px;}
+  #feedback{font-size:14px;line-height:1.5;}
+  #feedback .fb-head{font-size:16px;padding:6px 10px;}
+  #feedback .fb-body{padding:8px 10px 10px;gap:6px;}
+  #feedback .fb-img{max-height:22vh;}
+  .card{min-height:0;font-size:18px;padding:10px 14px;}
+  #qhint{margin:4px 0 0;font-size:12px;}
+  .opts{margin-top:8px;gap:8px;}
+  .opt{min-height:46px;font-size:15px;padding:6px 10px;}
+  #tw-svg{height:calc(100vh - 140px);max-height:calc(100vh - 140px);}
+  #reactbox{height:calc(100vh - 150px);min-height:200px;}
+  #reactbox .rgun{font-size:28px;}
+  .mcard{min-height:60px;font-size:14px;}
+  #earkb .kkey{min-height:64px;font-size:12px;}
+  #earkb .kkey .kani{font-size:24px;}
+  #eardrum .drum{width:110px;height:110px;font-size:40px;}
+  #playbtn{min-height:44px;font-size:16px;padding:8px 20px;margin-top:8px;}
+  #playnote{font-size:12px;margin:4px 0 0;}
+  .cell{height:120px;}
+  #grid{grid-template-columns:repeat(5,1fr);gap:8px;}
+  .cell .cn{font-size:14px;}
+  #pausebox .pz{padding:16px 22px;} #pausebox .pz h2{font-size:24px;} #pausebox .pz .pz-clock{font-size:18px;} #pausebox .pz p{font-size:13px;margin:4px 0 10px;}
+}
+/* ── 老師:「回收大隊上方垃圾圖片要去除背景」— 拖曳卡由米色大卡改成「只剩去背圖+一行字」,
+      拖曳中再縮到 62% 且完全透明底,手指下方的籃子看得清楚(全裝置) ── */
+#drag-item{
+  background:transparent !important;border:none !important;box-shadow:none !important;
+  padding:6px 8px 4px !important;color:var(--mist);text-shadow:0 2px 6px rgba(0,0,0,.85);
+  width:auto;max-width:360px;margin:0 auto;font-size:24px;
+}
+#drag-item .pic-drag{width:180px;height:180px;margin:0 auto 4px;}
+#drag-item .dgrip{color:var(--mist);opacity:.7;}
+#drag-item.dragging{opacity:1;}
+#drag-item.dragging .dgrip{visibility:hidden;}
+#drag-item.dragging .pic-drag{filter:drop-shadow(0 12px 18px rgba(0,0,0,.7));}
+#dragbox{margin-top:0;}
+#drag-bins{margin-top:8px;}
+@media (orientation:landscape) and (max-height:520px){ #drag-item{font-size:15px;} #drag-item .pic-drag{width:96px;height:96px;} #drag-item .dgrip{display:none;} .dbin{min-height:70px;font-size:13px;} .pic-bin{width:36px;height:36px;} }
+
+/* ── 老師:「所有關卡『下一題』鈕移到最右下(防 iPad 觸碰不到)」—
+      固定在視窗右下角,距底 22px + iOS 安全區(env(safe-area-inset-bottom)),距右 18px + 安全區;
+      z 116 低於暫停遮罩 118、toast 120;作答後才出現,蓋到已鎖定的作答區不影響操作。 ── */
+@media (orientation:landscape){
+  #page-play > #nextrow{
+    position:fixed;right:18px;bottom:22px;
+    right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));
+    z-index:116;margin:0;width:auto;min-width:240px;max-width:38vw;
+  }
+  #page-play > #nextrow button{min-height:66px;font-size:24px;font-size:clamp(20px,1.9vw,30px);padding:12px 34px;box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 0 3px rgba(240,192,96,.35);}
+  #page-play{grid-template-rows:auto minmax(0,1fr);}                 /* 原第 2 列(下一題)已抽離版面 */
+  #page-play > #feedback{grid-row:2;}
+  #play-right{grid-row:1 / 3;padding-bottom:90px;box-sizing:border-box;}   /* 右欄底部留高,最後一列選項不被固定鈕蓋住 */
+}
+@media (orientation:landscape) and (max-height:520px){
+  #page-play > #nextrow{min-width:170px;right:10px;bottom:10px;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));}
+  #page-play > #nextrow button{min-height:46px;font-size:17px;padding:8px 20px;}
+  #play-right{padding-bottom:60px;}
+}
+/* PC 大螢幕(≥1366):左欄再寬一點、字再大一點 */
+@media (orientation:landscape) and (min-width:1366px){
+  #page-play{grid-template-columns:minmax(380px,30vw) minmax(0,1fr);column-gap:24px;}
+  .cell{height:200px;}
+  .cell .cn{font-size:24px;}
+}
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -1231,6 +1390,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <!-- ★ v1.3.0 — 獨立網址分享(老師需求②):點了複製短網址,免登入即可直接玩 -->
     <button id="share-btn" class="chip" onclick="mgShareUrl()" title="複製小遊戲網址">📎 網址</button>
     <button id="login-btn" class="chip" onclick="mgLoginTap()">登入</button>
+    <!-- ★ v1.5.0 全螢幕(同主程式 ctrlFullscreen 設計:requestFullscreen 各前綴 → 不支援時退 orientation.lock 橫式) -->
+    <button id="fs-btn" class="chip" onclick="mgFullscreen()" title="全螢幕">⛶</button>
   </div>
 
   <!-- ══ 測試期閘門(老師裁定「丙」:暫時只給 GM 測試)══
@@ -1433,6 +1594,16 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
 <div id="toast"></div>
 
+<!-- ★ v1.5.0 — 強制橫式遮罩(老師需求②):觸控裝置直式時蓋住全畫面;純 CSS media query 控制顯示,零 JS -->
+<div id="rotate-overlay" aria-hidden="true">
+  <div class="ro-inner">
+    <div class="ro-icon">📱</div>
+    <h2>請把裝置轉成橫的</h2>
+    <p>小英雄小遊戲是橫式遊戲,<br>直立時畫面會太小、按鈕不好按。</p>
+    <p>💡 轉 90 度就可以開始玩囉!</p>
+  </div>
+</div>
+
 <!-- ★ v1.4.0 — 暫停遮罩(老師需求③):蓋住整個作答區,倒數與掉落停住;
      ⚠ 但「本局用時」是牆鐘(startedAt→結算)⇒ 暫停期間照算,防止按暫停慢慢查答案。 -->
 <div id="pausebox" onclick="if(event.target===this)mgPauseToggle();">
@@ -1444,7 +1615,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.4.0"></script>
+<script src="minigame_db.js?v=v1.5.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1453,7 +1624,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.4.0';
+var MG_VER = 'v1.5.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1770,6 +1941,41 @@ window.mgVolDone = function(kind, v){
   _mgVolSave();
   if(kind === 'sfx' && _mgVolSfx > 0) playSfx('sfx-ok', 0.5);   /* 試聽一聲 */
 };
+
+/* ★ v1.5.0 — 全螢幕(老師需求②「同小英雄大作戰的設計」):
+ *   已在全螢幕 → 離開;否則 requestFullscreen(各前綴,navigationUI:hide);
+ *   iPad Safari 不支援 requestFullscreen 時退 screen.orientation.lock('landscape');
+ *   fullscreenchange 同步圖示,進入時順手鎖橫式。⚠ iOS Safari 只有 PWA 安裝版才有真全螢幕,一般分頁按了會靜默無效(與主程式相同限制)。 */
+window.mgFullscreen = function(){
+  playSfx('sfx-tap', 0.3);
+  var el = document.documentElement;
+  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if(isFs){
+    var ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if(ex){ try{ var pe = ex.call(document); if(pe && pe['catch']) pe['catch'](function(){}); }catch(e){} }
+    return;
+  }
+  var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  var lock = function(){ try{ if(screen.orientation && screen.orientation.lock){ var pl = screen.orientation.lock('landscape'); if(pl && pl['catch']) pl['catch'](function(){}); } }catch(e){} };
+  if(req){
+    try{
+      var p = req.call(el, { navigationUI: 'hide' });
+      if(p && p['catch']) p['catch'](function(){ lock(); toast(MG.style === 's' ? '這台裝置要先「加入主畫面」才能全螢幕喔' : '此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟'); });
+    }catch(e){ lock(); }
+  }else{
+    lock();
+    toast(MG.style === 's' ? '這台裝置要先「加入主畫面」才能全螢幕喔' : '此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟');
+  }
+};
+(function(){
+  var evs = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange'], i;
+  function sync(){
+    var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+    var b = $('fs-btn'); if(b){ b.textContent = isFs ? '🡼' : '⛶'; b.title = isFs ? '離開全螢幕' : '全螢幕'; }
+    if(isFs){ try{ if(screen.orientation && screen.orientation.lock){ var pl = screen.orientation.lock('landscape'); if(pl && pl['catch']) pl['catch'](function(){}); } }catch(e){} }
+  }
+  for(i = 0; i < evs.length; i++) document.addEventListener(evs[i], sync);
+})();
 
 /* ── 字體風格切換(簡單風／精緻風)────────────────────── */
 window.mgToggleStyle = function(){
@@ -2375,7 +2581,7 @@ function renderMap(x, t){
   var i, sp;
   for(i = 0; i < x.spots.length; i++){
     sp = x.spots[i];
-    s += '<circle class="spot" id="sp-' + sp.id + '" cx="' + sp.x + '" cy="' + sp.y + '" r="4.2" '
+    s += '<circle class="spot" id="sp-' + sp.id + '" cx="' + sp.x + '" cy="' + sp.y + '" r="4.9" '   /* ★ v1.5.0 4.2→4.9 更好按(配合 db 座標微調不重疊) */
        + 'onclick="mgAnswerMap(\'' + sp.id + '\')"></circle>'
        + '<text class="spotlbl" x="' + sp.x + '" y="' + (sp.y + 1.6) + '">' + sp.n + '</text>';
   }
@@ -2723,7 +2929,7 @@ function _dragBind(el){
     var p = _pt(e);
     var dx = p.x - _DG.startX, dy = p.y - _DG.startY;
     moved = true;
-    el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(1.04)';
+    el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(0.62)';   /* ★ v1.5.0 拖曳中縮小(原 1.04),別把籃子整排蓋住 */
     var hot = _binUnder(p.x, p.y);
     if(hot !== _DG.hot){
       _paintHot(hot);
@@ -2967,8 +3173,10 @@ function _reactSpawn(){
   var txt = (typeof raw === 'string') ? raw : String(raw.t || '');
   var hard = !!(isGood && raw && typeof raw === 'object' && raw.hard);
   var el = document.createElement('div');
-  el.className = 'rdrop' + (isGood ? '' : ' bad') + (hard ? ' hard' : '');
-  el.innerHTML = mgPicTag(isGood ? (hard ? 'coinrush_coin_bonus' : 'coinrush_coin_gold') : 'coinrush_coin_fake', 'pic-coin') + esc(txt)
+  /* ★ v1.4.1 老師:「答案太明顯,全部答案都要相同顏色」—— 對錯外觀完全一致(不再加 .bad、圖也同一張);
+     hard 金框仍保留(那是「難度」標示,不洩漏對錯:錯的不會發光但正確的也大多不發光)。 */
+  el.className = 'rdrop' + (hard ? ' hard' : '');
+  el.innerHTML = mgPicTag(hard ? 'coinrush_coin_bonus' : 'coinrush_coin_gold', 'pic-coin') + esc(txt)
                + (hard ? '<span class="rx2">×2</span>' : '');   /* v1.3.0 預留硬幣圖 */
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
@@ -2977,7 +3185,7 @@ function _reactSpawn(){
     el: el, good: isGood, hard: hard,
     x: Math.random() * Math.max(1, bw - ew - 8) + 4,
     y: -54,
-    v: 62 + Math.random() * 52,                    // px/秒,慢到小學生追得上
+    v: 31 + Math.random() * 26,                    // px/秒;★ v1.4.1 老師:「降落速度整體放慢 50%」(原 62+0~52)
     dead: false, locked: false
   };
   el.onclick = function(ev){ if(ev && ev.stopPropagation) ev.stopPropagation(); _reactShoot(d); };   /* ★ v1.4.0 改射擊 */
