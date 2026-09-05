@@ -77,7 +77,12 @@ body{
      ⚠⚠ 字重連帶:M PLUS Rounded 1c 有 400/700/800/900 四級,可以用 800;
        但備援的 Noto Serif TC **沒有 800** ⇒ 為了「不管走到哪一支都不會合成粗體」,
        全檔字重一律只用 **400 / 700 / 900**(三支字型的交集),不要用 800。開機自檢會抓。 */
-  font-family:"M PLUS Rounded 1c","Nunito","Noto Serif TC","PingFang TC","Heiti TC","Microsoft JhengHei",sans-serif;
+  /* ★ v1.3.0(老師 2026-09-05 兩次裁定:「換成繁體中文字體」→「改霞鶩文楷 TC」)
+     字型=**LXGW WenKai TC(霞鶩文楷・繁體楷體,免費開源)**,備援=系統繁中字(iPad PingFang TC／Windows 微軟正黑體)。
+     ⚠⚠ 字重連帶:霞鶩文楷只有 300/400/700 **沒有 900** ⇒ 全檔 font-weight:700 一律改 700,
+        開機自檢允許清單改為 400/700(用到 900 會被抓)。
+     上面 v1.2.1 的圓體說明保留備查。 */
+  font-family:"LXGW WenKai TC","PingFang TC","Heiti TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;
   font-size:17px;line-height:1.65;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
@@ -111,7 +116,7 @@ button[disabled]{opacity:.45;}
 
 /* ── 首頁 ───────────────────────────────── */
 #title-img{display:block;width:100%;max-width:560px;margin:2px auto 0;}
-#title-fallback{display:none;text-align:center;font-size:32px;font-weight:900;color:var(--gold);margin:10px 0;letter-spacing:1px;}
+#title-fallback{display:none;text-align:center;font-size:32px;font-weight:700;color:var(--gold);margin:10px 0;letter-spacing:1px;}
 .sub{text-align:center;font-size:15px;opacity:.85;margin:0 0 14px;}
 #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .cell{
@@ -162,7 +167,7 @@ button[disabled]{opacity:.45;}
   box-shadow:0 6px 0 rgba(0,0,0,.3);
 }
 #gate-card .gate-emo{font-size:54px;line-height:1;}
-#gate-card h2{font-size:26px;font-weight:900;color:var(--gold);margin:8px 0 10px;letter-spacing:1px;}
+#gate-card h2{font-size:26px;font-weight:700;color:var(--gold);margin:8px 0 10px;letter-spacing:1px;}
 #gate-card p{font-size:17px;line-height:1.8;margin:0 0 6px;}
 #gate-note{font-size:14px;opacity:.6;margin-top:14px !important;}
 .gate-row{display:flex;gap:10px;margin-top:14px;justify-content:center;}
@@ -387,7 +392,7 @@ button[disabled]{opacity:.45;}
 
 /* ── 結算 ───────────────────────────────── */
 #result{text-align:center;padding-top:6px;}
-#result .big{font-size:52px;font-weight:900;color:var(--gold);line-height:1.2;}
+#result .big{font-size:52px;font-weight:700;color:var(--gold);line-height:1.2;}
 #result .stars{font-size:38px;letter-spacing:6px;color:var(--gold);margin:6px 0;}
 #result .line{font-size:16px;opacity:.9;margin:4px 0;}
 #result .newbest{color:var(--grass);font-weight:700;font-size:21px;margin-top:6px;letter-spacing:.5px;}
@@ -479,7 +484,7 @@ button[disabled]{opacity:.45;}
   text-align:left;
 }
 #scene-banner .sb-name{
-  font-size:22px;font-weight:900;color:var(--gold);letter-spacing:1px;line-height:1.2;
+  font-size:22px;font-weight:700;color:var(--gold);letter-spacing:1px;line-height:1.2;
   text-shadow:0 2px 6px rgba(0,0,0,.9);
 }
 #scene-banner .sb-story{
@@ -522,7 +527,7 @@ button[disabled]{opacity:.45;}
 #timering::before{
   content:'';position:absolute;inset:4px;border-radius:50%;background:var(--ink2);
 }
-#timering .tnum{position:relative;font-size:19px;font-weight:900;color:var(--mist);line-height:1;}
+#timering .tnum{position:relative;font-size:19px;font-weight:700;color:var(--mist);line-height:1;}
 #timering.low .tnum{color:var(--brick);}
 #timebar-wrap{height:12px;background:rgba(8,9,13,.6);border:1px solid rgba(232,228,216,.12);}
 
@@ -542,7 +547,7 @@ button[disabled]{opacity:.45;}
   padding:0;overflow:hidden;font-size:17px;box-shadow:0 8px 24px rgba(0,0,0,.4);
 }
 #feedback .fb-head{
-  display:block;font-size:20px;font-weight:900;padding:10px 16px;
+  display:block;font-size:20px;font-weight:700;padding:10px 16px;
   background:rgba(255,255,255,.06);border-bottom:1px solid rgba(232,228,216,.12);
 }
 #feedback.ok .fb-head{color:var(--grass);}
@@ -553,7 +558,7 @@ button[disabled]{opacity:.45;}
 /* 分數飄字(答對時從分數晶片飄上去) */
 .scorefloat{
   position:fixed;z-index:115;pointer-events:none;
-  font-size:26px;font-weight:900;color:var(--gold);
+  font-size:26px;font-weight:700;color:var(--gold);
   text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 14px rgba(240,192,96,.6);
   animation:sfl 1.1s ease-out forwards;
 }
@@ -580,7 +585,7 @@ button[disabled]{opacity:.45;}
 }
 #result .r-title{font-size:15px;letter-spacing:6px;color:var(--gold);opacity:.85;font-weight:700;}
 #result .line{font-size:18px;position:relative;}
-#result #r-name{font-size:22px;font-weight:900;margin-top:2px;}
+#result #r-name{font-size:22px;font-weight:700;margin-top:2px;}
 #result .stars{position:relative;font-size:46px;letter-spacing:8px;margin:8px 0 2px;}
 #result .stars span{display:inline-block;opacity:0;transform:scale(.2);}
 #result .stars span.lit{animation:starpop .55s cubic-bezier(.2,1.6,.4,1) forwards;text-shadow:0 0 16px rgba(240,192,96,.8);}
@@ -622,13 +627,13 @@ button,.btn{min-height:52px;font-size:19px;}
 .cell.off .cn::after{content:' 🚧';}
 .coff{
   position:absolute;left:0;right:0;top:44%;text-align:center;z-index:3;pointer-events:none;
-  background:rgba(232,64,64,.85);color:#fff;font-weight:900;font-size:15px;padding:5px 0;letter-spacing:2px;
+  background:rgba(232,64,64,.85);color:#fff;font-weight:700;font-size:15px;padding:5px 0;letter-spacing:2px;
   transform:rotate(-8deg);box-shadow:0 4px 12px rgba(0,0,0,.5);
 }
 .ctoggle{
   position:absolute;left:8px;top:8px;z-index:4;min-height:0;min-width:0;
   padding:4px 10px;font-size:14px;border-radius:999px;border:2px solid rgba(255,255,255,.5);
-  background:rgba(62,200,122,.92);color:#0b1a12;font-weight:900;box-shadow:0 2px 0 rgba(0,0,0,.4);
+  background:rgba(62,200,122,.92);color:#0b1a12;font-weight:700;box-shadow:0 2px 0 rgba(0,0,0,.4);
 }
 .ctoggle.isoff{background:rgba(232,64,64,.92);color:#fff;}
 #share-btn{background:rgba(74,158,255,.18);border-color:rgba(74,158,255,.5);}
@@ -721,12 +726,19 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .cq-stage{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;}
 .cq-pic{
   position:relative;width:320px;max-width:100%;flex:0 0 auto;
-  background:linear-gradient(180deg,#f4f1e6,#e2ded0);border-radius:18px;overflow:hidden;
+  /* ★ v1.3.0(老師:「這題會讓人想填白色,背景也要遮罩」)—
+     底色由米白漸層改為**深色透明格紋**(看起來就是「去背的格子」,不會被當成寵物的白色);
+     比例統計本來就只算不透明像素,這裡純顯示層。 */
+  background-color:#2a2d34;
+  background-image:linear-gradient(45deg,#353941 25%,transparent 25%,transparent 75%,#353941 75%),
+                   linear-gradient(45deg,#353941 25%,transparent 25%,transparent 75%,#353941 75%);
+  background-size:28px 28px;background-position:0 0,14px 14px;
+  border-radius:18px;overflow:hidden;
   border:3px solid rgba(240,192,96,.55);box-shadow:0 8px 24px rgba(0,0,0,.45);
 }
 .cq-pic::before{content:'';display:block;padding-top:133.333%;}   /* 3:4,舊 iPad 不吃 aspect-ratio */
 .cq-pic img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;display:block;}
-.cq-dim{position:absolute;width:50%;height:50%;background:rgba(8,9,13,.72);pointer-events:none;}
+.cq-dim{position:absolute;width:50%;height:50%;background:rgba(8,9,13,.82);pointer-events:none;}
 .cq-frame{
   position:absolute;border:4px solid var(--gold);border-radius:10px;pointer-events:none;
   box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 18px rgba(240,192,96,.7);
@@ -734,7 +746,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 @keyframes cqpulse{0%,100%{box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 14px rgba(240,192,96,.5);}50%{box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 26px rgba(240,192,96,.95);}}
 .cq-tag{
-  position:absolute;left:8px;top:8px;background:rgba(8,9,13,.8);color:var(--gold);font-weight:900;
+  position:absolute;left:8px;top:8px;background:rgba(8,9,13,.8);color:var(--gold);font-weight:700;
   font-size:15px;padding:4px 10px;border-radius:999px;border:1px solid rgba(240,192,96,.5);
 }
 .cq-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;flex:1 1 260px;max-width:380px;}
@@ -742,7 +754,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   min-height:92px;border-radius:18px;border:3px solid rgba(232,228,216,.35);cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   box-shadow:0 5px 0 rgba(0,0,0,.35),0 8px 18px rgba(0,0,0,.35);
-  font-size:20px;font-weight:900;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9);
+  font-size:20px;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9);
   transition:transform .1s;
 }
 .cq-opt:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35);}
@@ -952,7 +964,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      ⚠ 日後主程式若更換字型,這一行要跟著同步,否則兩邊會分岔、快取也不再共用。 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
+<!-- ★ v1.3.0 — 改載 LXGW WenKai TC(霞鶩文楷・繁體楷體)400/700;display=swap 先用系統繁中字顯示、到貨再換,不阻塞首屏。
+     ⚠ 與主程式的字型 <link> 不再相同(v1.1.2 的「共用快取」考量作廢):老師裁定小遊戲改用霞鶩文楷。 -->
+<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -1016,7 +1030,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <span id="who"></span>
     <!-- ★ v1.1.0(老師需求 3)— BGM 開關;偏好存 mg_bgm,與 mg_style 同層(只在本機,不上雲) -->
     <button id="bgm-btn" class="chip" onclick="mgToggleBgm()">🎵</button>
-    <button id="style-btn" class="chip" onclick="mgToggleStyle()">字</button>
+    <button id="style-btn" class="chip" onclick="mgToggleStyle()" title="切換 字少／字多">字多</button>
     <!-- ★ v1.3.0 — 獨立網址分享(老師需求②):點了複製短網址,免登入即可直接玩 -->
     <button id="share-btn" class="chip" onclick="mgShareUrl()" title="複製小遊戲網址">📎 網址</button>
     <button id="login-btn" class="chip" onclick="mgLoginTap()">登入</button>
@@ -1440,7 +1454,7 @@ window.mgToggleBgm = function(){
 window.mgToggleStyle = function(){
   MG.style = (MG.style === 'f' ? 's' : 'f');
   try{ localStorage.setItem('mg_style', MG.style); }catch(e){}
-  $('style-btn').textContent = (MG.style === 'f' ? '字' : '字ᐟ');
+  $('style-btn').textContent = (MG.style === 'f' ? '字多' : '字少');   /* ★ v1.3.0 老師裁定:直接顯示目前模式 */
   toast(MG.style === 's' ? '已切換:簡單說明' : '已切換:完整說明');
   playSfx('sfx-tap', 0.35);
   // 即時重繪目前畫面
@@ -2801,8 +2815,8 @@ function renderColorq(x, q){
   }
   $('cq-opts').innerHTML = html;
   $('cq-note').textContent = (MG.style === 's')
-    ? (q.t === 'second' ? '亮起來的地方,第二多的顏色是哪一個?' : '亮起來的地方,哪個顏色最多?')
-    : (q.t === 'second' ? '仔細看亮起來的區域:面積第二多的是哪個顏色?(最多的那個不算)' : '仔細看亮起來的區域:面積最多的是哪個顏色?');
+    ? (q.t === 'second' ? '亮起來的地方,第二多的顏色是哪一個?(後面的格子不算)' : '亮起來的地方,哪個顏色最多?(後面的格子不算)')
+    : (q.t === 'second' ? '仔細看亮起來的區域:面積第二多的是哪個顏色?(最多的那個不算;背景格紋不算)' : '仔細看亮起來的區域:面積最多的是哪個顏色?(只算寵物本身,背景格紋不算)');
   /* 圖高依剩餘高度夾一次(同 renderPaint 的口徑),iPad 橫式不捲動 */
   try{
     var _pic = $('cq-pic'), _top = _pic.getBoundingClientRect().top || 220;
@@ -3184,6 +3198,7 @@ function boot(){
     if(bs === '0') _bgmOn = false;
   }catch(e){}
   var bb = $('bgm-btn'); if(bb) bb.textContent = _bgmOn ? '🎵' : '🔇';
+  try{ $('style-btn').textContent = (MG.style === 'f' ? '字多' : '字少'); }catch(e){}   /* ★ v1.3.0 開機依記住的模式顯示 字少／字多 */
   /* iOS 自動播放封鎖:第一次觸碰畫面才解得開(一次性,{once:true} 舊 Safari 不支援 ⇒ 自己移除) */
   var _armOnce = function(){
     _bgmArm();
@@ -3226,8 +3241,8 @@ function boot(){
      取**交集** 400/700/900 才能保證不管缺字 fallback 到哪一支都不會合成粗體。
      這種問題在 code review 時很難用眼睛看出來,所以讓程式自己抓。 */
   try{
-    /* ★ v1.2.1 — 允許清單 = 整條字型鏈的交集 400/700/900(Noto Serif TC 沒有 800)*/
-    var _OKW = { '400':1, '700':1, '900':1, 'normal':1, 'bold':1, 'inherit':1, '':1 };
+    /* ★ v1.3.0 — 允許清單改 400/700:霞鶩文楷 TC 只有 300/400/700,900 會合成粗體 */
+    var _OKW = { '400':1, '700':1, 'normal':1, 'bold':1, 'inherit':1, '':1 };
     var _els = document.getElementsByTagName('*'), _bad = {}, _i, _w;
     for(_i = 0; _i < _els.length; _i++){
       _w = '';
