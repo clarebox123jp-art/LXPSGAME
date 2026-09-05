@@ -850,14 +850,19 @@ body.wb-in-worldboss-battle .popup {
       迷你遊戲模式 translateX(14px)               ⇒ 左緣落在 中線+14px
    字級、語言、字數怎麼變都不會互相重疊,比寫死 left/margin 穩健。
    ⚠ :hover 的 transform 會整條覆寫,所以下方 #adventure-btn:hover 也必須帶同一個位移。 */
-#overlay #adventure-btn{position:absolute;z-index:2;top:67%;left:50%;transform:translateX(calc(-100% - 14px))}
+#overlay #adventure-btn{position:absolute;z-index:2;top:67%;left:50%;transform:translateX(calc(-100% - 12px));min-width:496px;text-align:center}   /* v5.144.0:兩顆同 min-width 496 ⇒ 等寬等高、以中線精準對稱;間距 14→12 讓 1024 寬仍放得下 */
+/* ★ v5.144.0(2026-09-05・老師截圖裁定「迷你遊戲模式改成跟展開冒險故事一樣大,置中對齊」)—
+   尺寸整組對齊 #adventure-btn(padding 15px 52px／45px／字距 6px／700／圓角 8px／邊框 2.5px),
+   只留綠色配色當識別;兩顆同寬 ⇒ 既有「各往外推 14px」的定位公式天然以中線對稱＝置中。
+   舊值:padding 15px 30px／26px／800／圓角 16px／邊框 3px。
+   ⚠ 兩顆各約 490px,並排總寬約 1000px ⇒ 上下排列的斷點由 900 提到 1023(iPad 橫式 1024 仍並排)。 */
 #overlay #minigame-btn{
-  position:absolute;z-index:2;top:67%;left:50%;transform:translateX(14px);
+  position:absolute;z-index:2;top:67%;left:50%;transform:translateX(12px);min-width:496px;text-align:center;
   white-space:nowrap;text-decoration:none;display:inline-block;
-  padding:15px 30px;border-radius:16px;
-  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-size:26px;font-weight:800;
+  padding:15px 52px;border-radius:8px;letter-spacing:6px;line-height:normal;
+  font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-size:45px;font-weight:700;
   color:#eafff4;background:linear-gradient(135deg,rgba(20,90,62,0.92),rgba(50,150,105,0.88));
-  border:3px solid rgba(140,230,185,0.75);
+  border:2.5px solid rgba(140,230,185,0.75);
   box-shadow:0 0 26px rgba(80,220,150,0.55),0 6px 0 rgba(0,0,0,0.35);
   text-shadow:0 2px 4px rgba(0,0,0,0.55);
   touch-action:manipulation;
@@ -866,15 +871,18 @@ body.wb-in-worldboss-battle .popup {
   background:linear-gradient(135deg,rgba(30,120,82,0.94),rgba(70,180,130,0.9));
   border-color:#b6f5d6;color:#fff;
   box-shadow:0 0 40px rgba(110,240,175,0.85),0 6px 0 rgba(0,0,0,0.35);
-  transform:translateX(14px) scale(1.04);
+  transform:translateX(12px) scale(1.04);
 }
-#overlay #minigame-btn:active{transform:translateX(14px) translateY(3px);box-shadow:0 0 26px rgba(80,220,150,0.55),0 3px 0 rgba(0,0,0,0.35);}
+#overlay #minigame-btn:active{transform:translateX(12px) translateY(3px);box-shadow:0 0 26px rgba(80,220,150,0.55),0 3px 0 rgba(0,0,0,0.35);}
 /* 窄螢幕(手機直向/小平板)並排會太擠 ⇒ 自動改回「上下排列」:
    展開冒險故事回到置中 67%,迷你遊戲模式移到它正下方 73.5%(start-btn 在 79%,不相撞)。 */
-@media (max-width:900px){
-  #overlay #adventure-btn{transform:translateX(-50%)}
+@media (max-width:1023px){   /* v5.144.0:900→1023,兩顆放大後並排需約 1000px */
+  /* 上下排列時三顆改用「主鈕頂端 + 固定 px」堆疊,不再各自寫 %:
+     % 依視窗高度伸縮,直式 iPad(768×1024/820×1180)會互相壓到(v5.144.0 實測);主鈕 94px 高。 */
+  #overlay #adventure-btn{top:64%;transform:translateX(-50%);min-width:0;}
   #adventure-btn:hover{transform:translateX(-50%) scale(1.04) !important;}
-  #overlay #minigame-btn{top:73.5%;transform:translateX(-50%);font-size:21px;padding:11px 22px;}
+  #overlay #minigame-btn{top:calc(64% + 108px);transform:translateX(-50%);font-size:21px;padding:11px 22px;letter-spacing:2px;border-radius:12px;min-width:0;}
+  #overlay #game-info-btn{top:calc(64% + 176px);}
   #overlay #minigame-btn:hover{transform:translateX(-50%) scale(1.04);}
   #overlay #minigame-btn:active{transform:translateX(-50%) translateY(3px);}
 }
@@ -1679,7 +1687,7 @@ body.wb-in-worldboss-battle .popup {
   box-shadow:0 0 40px rgba(255,200,60,0.9),0 0 80px rgba(200,130,0,0.5);
   /* ★ v5.140.0 — 與並排定位一致(見上方 #overlay #adventure-btn);
      若只寫 translateX(-50%) 會在 hover 瞬間跳回中央並壓到迷你遊戲鈕。 */
-  transform:translateX(calc(-100% - 14px)) scale(1.04);
+  transform:translateX(calc(-100% - 12px)) scale(1.04);
 }
 #adventure-btn:hover::before{transform:translateX(100%);}
 

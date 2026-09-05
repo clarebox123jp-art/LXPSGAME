@@ -615,13 +615,51 @@ button,.btn{min-height:52px;font-size:19px;}
 #playbtn{min-height:60px;font-size:22px;}
 #nextrow button{min-height:60px;font-size:21px;}
 
+/* ── v1.3.0 追加(老師:「各關可單獨設定開啟／暫時關閉」)──
+   雲端 globalStats/minigame = { disabled:{gid:true/false}, updatedAt, updatedBy }
+   學生端讀:Firestore REST(公開讀、免登入、免 SDK);老師端寫:登入後 SDK。 */
+.cell.off .cthumb,.cell.off .cn,.cell.off .cskills,.cell.off .cdiff,.cell.off .cstar,.cell.off .cbest{opacity:.45;filter:grayscale(.85);}   /* 只淡化內容,🚧 標籤與老師的切換鈕維持全亮 */
+.cell.off .cn::after{content:' 🚧';}
+.coff{
+  position:absolute;left:0;right:0;top:44%;text-align:center;z-index:3;pointer-events:none;
+  background:rgba(232,64,64,.85);color:#fff;font-weight:900;font-size:15px;padding:5px 0;letter-spacing:2px;
+  transform:rotate(-8deg);box-shadow:0 4px 12px rgba(0,0,0,.5);
+}
+.ctoggle{
+  position:absolute;left:8px;top:8px;z-index:4;min-height:0;min-width:0;
+  padding:4px 10px;font-size:14px;border-radius:999px;border:2px solid rgba(255,255,255,.5);
+  background:rgba(62,200,122,.92);color:#0b1a12;font-weight:900;box-shadow:0 2px 0 rgba(0,0,0,.4);
+}
+.ctoggle.isoff{background:rgba(232,64,64,.92);color:#fff;}
+#share-btn{background:rgba(74,158,255,.18);border-color:rgba(74,158,255,.5);}
+@media (min-width:1024px){ .ctoggle{font-size:16px;padding:6px 12px;} .coff{font-size:18px;} }
+
+/* ── v1.3.0 追加(老師:「圖片全部生成中,先預留圖片掛接」)──
+   所有 .pic-* 都是「有檔才顯示」:onerror 把 img 藏起來,版面退回原本的純文字／emoji。 */
+.pic-q{display:block;width:120px;height:120px;object-fit:contain;margin:0 auto 8px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));}
+.pic-bin{display:block;width:56px;height:56px;object-fit:contain;margin:0 auto 4px;}
+img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示 emoji */
+#drag-bins.four{grid-template-columns:repeat(4,1fr);}
+.opts.four{grid-template-columns:repeat(4,1fr);}
+.pic-drag{display:block;width:140px;height:140px;object-fit:contain;margin:0 auto 6px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.55));}
+.pic-opt{display:block;width:60px;height:60px;object-fit:contain;margin:0 auto 4px;}
+.pic-card{width:44px;height:44px;object-fit:contain;vertical-align:middle;margin-right:8px;}
+.pic-mz{display:block;width:64%;height:56%;object-fit:contain;margin:0 auto 1px;}
+.mcard{position:relative;}
+.pic-back{position:absolute;inset:8%;width:84%;height:84%;object-fit:contain;pointer-events:none;}
+.mcard.open .pic-back,.mcard.done .pic-back{display:none;}
+.pic-coin{width:34px;height:34px;object-fit:contain;vertical-align:middle;margin-right:6px;}
+.pic-fbm{width:34px;height:34px;object-fit:contain;vertical-align:middle;margin-right:6px;}
+#playbtn .pic-opt{display:inline-block;width:32px;height:32px;margin:0 6px 0 0;}
+@media (min-width:1024px){ .pic-q{width:150px;height:150px;} .pic-drag{width:170px;height:170px;} .pic-bin{width:80px;height:80px;} .pic-opt{width:72px;height:72px;} }
+
 /* ── v1.3.0 追加(老師:「檢查 repo 有多少圖片和特效沒用到,適當補上」)──
    橫幅環境 GIF／解說卡圖片／吉祥物／獎盃／登入讀取。素材全為主程式既有檔,逐檔驗過 200。 */
 #scene-banner .sb-amb{
   position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;
   opacity:.55;pointer-events:none;mix-blend-mode:screen;
 }
-#feedback .fb-body{display:flex;gap:14px;align-items:flex-start;}
+#feedback .fb-body{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;}
 #feedback .fb-body:empty{display:none;}
 #feedback .fb-img{
   flex:0 0 118px;width:118px;height:118px;object-fit:cover;border-radius:12px;
@@ -674,6 +712,57 @@ button,.btn{min-height:52px;font-size:19px;}
   #feedback .fb-img{flex-basis:150px;width:150px;height:150px;}
   #result .r-trophy{width:180px;height:180px;}
   #ear-notes{width:300px;height:120px;}
+}
+
+/* ── v1.3.0 引擎 J:寵物調色工坊(colorq)——「區塊比例最多的顏色」 ──
+   老師回報舊 12 格塗色版難以理解 ⇒ 改為:一次一題、一個亮起來的區域、四個大色塊選一個;
+   答完顯示這一區真正的顏色比例長條。圖片全部改用 repo 既有「寵物名_去背.png」。 */
+#colorqbox{margin-top:8px;}
+.cq-stage{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.cq-pic{
+  position:relative;width:320px;max-width:100%;flex:0 0 auto;
+  background:linear-gradient(180deg,#f4f1e6,#e2ded0);border-radius:18px;overflow:hidden;
+  border:3px solid rgba(240,192,96,.55);box-shadow:0 8px 24px rgba(0,0,0,.45);
+}
+.cq-pic::before{content:'';display:block;padding-top:133.333%;}   /* 3:4,舊 iPad 不吃 aspect-ratio */
+.cq-pic img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;display:block;}
+.cq-dim{position:absolute;width:50%;height:50%;background:rgba(8,9,13,.72);pointer-events:none;}
+.cq-frame{
+  position:absolute;border:4px solid var(--gold);border-radius:10px;pointer-events:none;
+  box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 18px rgba(240,192,96,.7);
+  animation:cqpulse 1.4s ease-in-out infinite;
+}
+@keyframes cqpulse{0%,100%{box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 14px rgba(240,192,96,.5);}50%{box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 26px rgba(240,192,96,.95);}}
+.cq-tag{
+  position:absolute;left:8px;top:8px;background:rgba(8,9,13,.8);color:var(--gold);font-weight:900;
+  font-size:15px;padding:4px 10px;border-radius:999px;border:1px solid rgba(240,192,96,.5);
+}
+.cq-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;flex:1 1 260px;max-width:380px;}
+.cq-opt{
+  min-height:92px;border-radius:18px;border:3px solid rgba(232,228,216,.35);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  box-shadow:0 5px 0 rgba(0,0,0,.35),0 8px 18px rgba(0,0,0,.35);
+  font-size:20px;font-weight:900;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9);
+  transition:transform .1s;
+}
+.cq-opt:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35);}
+.cq-opt.ok{border-color:var(--grass);box-shadow:0 0 0 4px rgba(62,200,122,.55),0 0 24px rgba(62,200,122,.6);}
+.cq-opt.ng{border-color:var(--brick);opacity:.55;}
+.cq-opt.off{opacity:.35;}
+.cq-note{text-align:center;font-size:15px;opacity:.85;margin-top:10px;}
+/* 解說卡裡的比例長條 */
+.cq-bars{margin-top:8px;width:100%;flex:0 0 auto;}   /* width 而非 flex-basis:橫式 fb-body 是 column,basis 會變成高度 */
+.cq-bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:15px;}
+.cq-bar .cqb-name{width:34px;text-align:right;font-weight:700;}
+.cq-bar .cqb-track{display:block;flex:1;height:18px;background:rgba(255,255,255,.12);border-radius:9px;overflow:hidden;}
+.cq-bar .cqb-fill{display:block;height:100%;border-radius:9px;transition:width .6s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);}   /* 黑色條在深底也看得到 */
+.cq-bar .cqb-pct{width:44px;font-weight:700;}
+.cq-bar.win .cqb-name{color:var(--gold);}
+@media (min-width:1024px){
+  .cq-opt{min-height:110px;font-size:24px;}
+  .cq-tag{font-size:17px;}
+  .cq-bar{font-size:17px;}
+  .cq-bar .cqb-track{height:22px;}
 }
 
 /* ══ iPad 斷點(老師需求「放大按鈕適配 iPad」)══
@@ -928,6 +1017,8 @@ button,.btn{min-height:52px;font-size:19px;}
     <!-- ★ v1.1.0(老師需求 3)— BGM 開關;偏好存 mg_bgm,與 mg_style 同層(只在本機,不上雲) -->
     <button id="bgm-btn" class="chip" onclick="mgToggleBgm()">🎵</button>
     <button id="style-btn" class="chip" onclick="mgToggleStyle()">字</button>
+    <!-- ★ v1.3.0 — 獨立網址分享(老師需求②):點了複製短網址,免登入即可直接玩 -->
+    <button id="share-btn" class="chip" onclick="mgShareUrl()" title="複製小遊戲網址">📎 網址</button>
     <button id="login-btn" class="chip" onclick="mgLoginTap()">登入</button>
   </div>
 
@@ -1040,6 +1131,15 @@ button,.btn{min-height:52px;font-size:19px;}
       <div id="maze-act"><button class="btn-ghost" onclick="mgMazeReset()">↺ 重走這一關</button></div>
     </div>
 
+    <!-- ★ v1.3.0 引擎 J:寵物調色工坊(colorq) -->
+    <div id="colorqbox" class="hidden">
+      <div class="cq-stage">
+        <div class="cq-pic" id="cq-pic"></div>
+        <div class="cq-opts" id="cq-opts"></div>
+      </div>
+      <p class="cq-note" id="cq-note"></p>
+    </div>
+
     <div id="paintbox" class="hidden">
       <div id="paint-stage">
         <div class="pcol"><h4>🎨 原本的樣子</h4><div id="paint-ref"></div></div>
@@ -1126,7 +1226,7 @@ var MG_VER = 'v1.3.0';
  *    但目的只是「暫時不要讓學生玩到半成品」,對小學生足夠。
  *    真正的資料安全仍然由 firestore.rules 負責(小遊戲只寫得到自己的 minigameScores)。
  * ══════════════════════════════════════════════════════════ */
-var _MG_ADMIN_ONLY = true;
+var _MG_ADMIN_ONLY = false;   /* ★ v1.3.0(老師 2026-09-05)正式開放:玩家不用登入即可直接玩;測試期閘門程式碼保留,改回 true 即恢復 */
 /* 與主程式 index.html 的 ADMIN_EMAILS 同一份名單(該名單本來就寫在公開的前端檔裡,
    複製過來沒有新增任何資訊外洩)。日後主程式增減管理員,記得同步這裡。 */
 var MG_ADMIN_EMAILS = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
@@ -1406,6 +1506,26 @@ var MG_FX = {
 var MG_MASCOT = MG_IMG_BASE + encodeURIComponent('轉學生學霸.jpg');
 var MG_TROPHY = { 3: MG_IMG_BASE + encodeURIComponent('冠軍獎盃.png'), 2: MG_IMG_BASE + encodeURIComponent('獎牌.png'), 1: MG_IMG_BASE + encodeURIComponent('獎牌.png') };
 function mgAssetUrl(name){ return name ? (MG_IMG_BASE + encodeURIComponent(String(name))) : ''; }
+/* ★ v1.3.0 — 生成中素材的「預留掛接」(老師:圖片全部生成中,先預留)
+   檔名主體 = 素材需求清單的檔名(minigame/img/<pic>.png),同目錄相對路徑 ⇒ 走小遊戲自己的 SW scope。
+   ⚠ 一律 onerror 隱藏:圖還沒上傳前畫面完全等同現況(純文字／emoji),上傳即自動出現,程式不必再改。
+   ⚠ 版本靠 MG_IMG_VER 破快取,素材更新時只改這一個數字。 */
+var MG_IMG_VER = '1';
+function mgPicUrl(pic){ return 'img/' + encodeURIComponent(pic) + '.png?v=' + MG_IMG_VER; }
+function mgPicTag(pic, cls){
+  if(!pic) return '';
+  /* onerror 同時拿掉 class:CSS 用「img.pic-bin + .be」隱藏 emoji,圖失敗時 class 消失 ⇒ emoji 自動回來 */
+  return '<img class="' + cls + '" src="' + mgPicUrl(pic) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.className=\'\';">';
+}
+/* 依「文字」自動對照的圖(不必在資料表逐筆填):迷宮標記／童謠選項／格子與棋子 */
+var MG_PIC_MAP = {
+  '南投':'maze_mz_nantou', '花蓮':'maze_mz_hualien', '北海道':'maze_mz_hokkaido', '首爾':'maze_mz_seoul',
+  '台灣藍鵲':'maze_mz_bluemagpie', '櫻花鉤吻鮭':'maze_mz_salmon', '埃及聖䴉':'maze_mz_ibis', '綠鬣蜥':'maze_mz_iguana',
+  '貓空纜車':'maze_mz_gondola', '指南宮':'maze_mz_temple', '安平古堡':'maze_mz_anping', '日月潭':'maze_mz_lake',
+  '往上爬':'music_mu_up', '往下走':'music_mu_down', '一直一樣':'music_mu_same', '比較高':'music_mu_high', '比較低':'music_mu_low'
+};
+function mgPicByText(t){ return MG_PIC_MAP[t] || ''; }
+
 /* 全畫面版特效(集中線):蓋滿視窗、半透明、到時自刪 */
 function mgFxFull(kind, ms){
   try{
@@ -1446,7 +1566,7 @@ function mgCenterOf(id){
 }
 /* 現在畫面上正在用的那個「作答區」是誰 —— 特效要打在它身上,不是永遠打在題卡上 */
 function mgActiveBox(){
-  var ids = ['reactbox','mazebox','paintbox','matchbox','orderbox','dragbox','mapbox','qcard'], i;
+  var ids = ['reactbox','mazebox','colorqbox','paintbox','matchbox','orderbox','dragbox','mapbox','qcard'], i;
   for(i = 0; i < ids.length; i++){
     var el = $(ids[i]);
     if(el && !el.classList.contains('hidden') && el.offsetWidth > 0) return ids[i];
@@ -1485,7 +1605,11 @@ function renderGrid(){
       }
     }
 
-    html += '<div class="cell" onclick="mgOpenInfo(\'' + x.id + '\')">'
+    /* ★ v1.3.0 — 老師關閉的關卡:灰階 + 🚧 標籤;老師登入時每張卡左上有開／關切換鈕 */
+    var _off = mgGameOff(x.id), _adm = mgIsAdmin(MG.user);
+    html += '<div class="cell' + (_off ? ' off' : '') + '" onclick="mgOpenInfo(\'' + x.id + '\')">'
+          +   (_adm ? ('<button class="ctoggle' + (_off ? ' isoff' : '') + '" onclick="mgToggleGame(\'' + x.id + '\');event.stopPropagation();">' + (_off ? '🔴 已關閉' : '🟢 開放中') + '</button>') : '')
+          +   (_off ? '<div class="coff">🚧 暫時關閉</div>' : '')
           +   '<div class="cthumb">'
           +     (url ? '<img src="' + url + '" alt="" loading="lazy" onerror="mgThumbFail(this);">' : '')
           +     '<span class="cthumb-emo">' + x.icon + '</span>'
@@ -1523,7 +1647,82 @@ window.mgOpenInfo = function(id){
   var i, x = null;
   for(i = 0; i < MG.games.length; i++){ if(MG.games[i].id === id) x = MG.games[i]; }
   if(!x) return;
+  /* ★ v1.3.0 — 老師關閉中的關卡:學生不能進,老師可進(方便檢查) */
+  if(mgGameOff(id) && !mgIsAdmin(MG.user)){
+    toast('🚧 這一關老師暫時關閉了,先玩別的吧!');
+    playSfx('sfx-cancel', 0.4);
+    return;
+  }
   openInfo(x, true);
+};
+
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.3.0 — 各關開／關設定(老師需求①)
+ *  雲端文件:globalStats/minigame = { disabled:{ <gid>: true|false }, updatedAt, updatedBy }
+ *  ★ 為什麼用 globalStats:firestore.rules 既有「allow read: if true; allow write: if isAdmin()」
+ *    ⇒ 學生免登入就讀得到、只有老師寫得進、零 rules 改動。
+ *  ★ 學生端讀取走 Firestore REST(一支 fetch,免載 SDK ⇒ 不拖慢首載,舊 iPad 也輕);
+ *    老師端寫入走登入後的 SDK(set merge)。
+ *  ★ disabled 一律存布林(關=true、重新開=false),不用刪鍵:set merge 對 map 是深合併,刪不掉鍵。
+ *  ★ 本機快取 mg_cfg:先用快取畫、雲端到了再重畫;完全讀不到就當全部開放(寧可多開,不讓學生沒得玩)。
+ * ══════════════════════════════════════════════════════════ */
+var MG_CFG = { disabled: {} };
+var MG_CFG_REST = 'https://firestore.googleapis.com/v1/projects/lxpsgame/databases/(default)/documents/globalStats/minigame';
+function mgGameOff(id){ return !!(MG_CFG.disabled && MG_CFG.disabled[id] === true); }
+function mgCfgApply(dis, save){
+  MG_CFG.disabled = dis || {};
+  if(save){ try{ localStorage.setItem('mg_cfg', JSON.stringify(MG_CFG.disabled)); }catch(e){} }
+  try{ renderGrid(); }catch(e){}
+}
+function mgCfgLoad(){
+  try{ var c = localStorage.getItem('mg_cfg'); if(c){ MG_CFG.disabled = JSON.parse(c) || {}; } }catch(e){}
+  if(!window.fetch) return;
+  try{
+    fetch(MG_CFG_REST + '?t=' + Date.now(), { cache: 'no-store' }).then(function(r){
+      if(r.status === 404){ mgCfgApply({}, true); return null; }   /* 文件還沒建=全部開放 */
+      return r.ok ? r.json() : null;
+    }).then(function(j){
+      if(!j || !j.fields) return;
+      var dis = {}, f = j.fields.disabled, k;
+      if(f && f.mapValue && f.mapValue.fields){
+        for(k in f.mapValue.fields){
+          if(!f.mapValue.fields.hasOwnProperty(k)) continue;
+          dis[k] = (f.mapValue.fields[k].booleanValue === true);
+        }
+      }
+      mgCfgApply(dis, true);
+    })['catch'](function(){ /* 離線／校網擋住:沿用快取或全開 */ });
+  }catch(e){}
+}
+window.mgToggleGame = function(id){
+  playSfx('sfx-tap', 0.35);
+  if(!MG.user || !mgIsAdmin(MG.user)){ toast('只有老師帳號可以設定'); return; }
+  if(!MG.fb || !MG.fb.db){ toast('雲端還沒連上,請稍後再試'); return; }
+  var dis = {}, k;
+  for(k in MG_CFG.disabled){ if(MG_CFG.disabled.hasOwnProperty(k)) dis[k] = MG_CFG.disabled[k] === true; }
+  dis[id] = !dis[id];
+  var payload = { disabled: dis, updatedAt: Date.now(), updatedBy: (MG.user.email || '') };
+  MG.fb.db.collection('globalStats').doc('minigame').set(payload, { merge: true }).then(function(){
+    mgCfgApply(dis, true);
+    var nm = '';
+    for(k = 0; k < MG.games.length; k++){ if(MG.games[k].id === id) nm = tx(MG.games[k].name); }
+    toast((dis[id] ? '🔴 已關閉:' : '🟢 已開放:') + nm);
+    playSfx(dis[id] ? 'sfx-cancel' : 'sfx-ok', 0.45);
+  })['catch'](function(e){
+    toast('寫入失敗:' + ((e && e.message) || '請確認是老師帳號'));
+  });
+};
+
+/* ★ v1.3.0 — 獨立網址(老師需求②):repo 另有 play/index.html 轉址到本目錄,短網址較好唸好抄。 */
+var MG_SHARE_URL = 'https://clarebox123jp-art.github.io/LXPSGAME/play/';
+window.mgShareUrl = function(){
+  playSfx('sfx-tap', 0.35);
+  var done = function(){ toast('已複製網址:' + MG_SHARE_URL); };
+  var fail = function(){ try{ window.prompt('小遊戲網址(長按可複製):', MG_SHARE_URL); }catch(e){} };
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(MG_SHARE_URL).then(done, fail);
+    else fail();
+  }catch(e){ fail(); }
 };
 function openInfo(x, withSfx){
   MG.pendingGame = x;
@@ -1554,7 +1753,8 @@ window.mgStartFromModal = function(){
 var _POOL_FIELD = {
   sort:'items',  quiz:'questions', map:'tasks',   ear:'questions',
   drag:'items',  order:'rounds',   match:'rounds',
-  react:'rounds', maze:'levels',   paint:'pics'
+  react:'rounds', maze:'levels',   paint:'pics',
+  colorq:'qs'   /* ★ v1.3.0 寵物調色工坊 */
 };
 function poolOf(x){
   var f = _POOL_FIELD[x.engine];
@@ -1672,7 +1872,7 @@ function renderQuestion(keepState){
      舊寫法是逐個 hide(),每加一個引擎就要記得補一行,漏掉的症狀是
      「玩完 A 遊戲再玩 B,上一款的畫面還黏在下面」——很難聯想到原因。 */
   var _BOXES = ['mapbox','earbox','dragbox','orderbox','matchbox',
-                'reactbox','react-hud','mazebox','paintbox'];
+                'reactbox','react-hud','mazebox','paintbox','colorqbox'];
   for(var _b = 0; _b < _BOXES.length; _b++) hide(_BOXES[_b]);
   show('card-area');
   $('opts').innerHTML = '';
@@ -1690,6 +1890,7 @@ function renderQuestion(keepState){
   else if(x.engine === 'react') renderReact(x, q);
   else if(x.engine === 'maze') renderMaze(x, q);
   else if(x.engine === 'paint') renderPaint(x, q);
+  else if(x.engine === 'colorq') renderColorq(x, q);   /* ★ v1.3.0 */
 
   /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
      三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
@@ -1698,13 +1899,13 @@ function renderQuestion(keepState){
 
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
 function renderSort(x, it){
-  $('qcard').textContent = it.t;
+  $('qcard').innerHTML = mgPicTag(it.pic, 'pic-q') + '<span>' + esc(it.t) + '</span>';   /* v1.3.0 預留題卡插圖 */
   var o = $('opts'), html = '', i, b;
-  o.className = 'opts ' + (x.bins.length === 2 ? 'two' : 'three');
+  o.className = 'opts ' + (x.bins.length === 2 ? 'two' : (x.bins.length >= 4 ? 'four' : 'three'));
   for(i = 0; i < x.bins.length; i++){
     b = x.bins[i];
     html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
-          +   '<span class="oe">' + b.e + '</span>' + esc(b.n)
+          +   mgPicTag(b.pic, 'pic-bin') + '<span class="oe">' + b.e + '</span>' + esc(b.n)
           + '</button>';
   }
   o.innerHTML = html;
@@ -1712,7 +1913,7 @@ function renderSort(x, it){
 
 /* ── 引擎 B:情境選擇題 ─────────────────────────────── */
 function renderQuiz(x, q){
-  $('qcard').textContent = tx(q.q);
+  $('qcard').innerHTML = mgPicTag(q.pic, 'pic-q') + '<span>' + esc(tx(q.q)) + '</span>';   /* v1.3.0 預留題卡插圖 */
   var o = $('opts'), html = '', i;
   o.className = 'opts';
   for(i = 0; i < q.o.length; i++){
@@ -1724,7 +1925,7 @@ function renderQuiz(x, q){
 
 /* ── 引擎 C1:台灣地圖點位 ──────────────────────────── */
 function renderMap(x, t){
-  $('qcard').textContent = tx(t.q);
+  $('qcard').textContent = tx(t.q);   /* 地圖題的地標圖(tasks[].pic)在答對後的解說卡顯示,見 mgAnswerMap 尾端 */
   $('opts').innerHTML = '';
   show('mapbox');
   var s = '<svg id="tw-svg" viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">'
@@ -1752,9 +1953,10 @@ function renderEar(x, q){
   o.className = 'opts ' + (q.o.length === 2 ? 'two' : (q.o.length === 3 ? 'three' : ''));
   for(i = 0; i < q.o.length; i++){
     html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
-          + esc(q.o[i]) + '</button>';
+          + mgPicTag(mgPicByText(q.o[i]), 'pic-opt') + esc(q.o[i]) + '</button>';   /* v1.3.0 預留選項插圖 */
   }
   o.innerHTML = html;
+  try{ var _pb = $('playbtn'); if(_pb && !_pb.getAttribute('data-pic')){ _pb.setAttribute('data-pic','1'); _pb.innerHTML = mgPicTag('music_mu_speaker','pic-opt') + '▶ 播放'; } }catch(e){}
 }
 window.mgEarPlay = function(){
   var q = MG.order[MG.idx];
@@ -1801,15 +2003,15 @@ function renderDrag(x, it){
   hide('card-area');
   show('dragbox');
   var d = $('drag-item');
-  d.innerHTML = esc(it.t) + '<span class="dgrip">用手指把它拖到正確的籃子</span>';
+  d.innerHTML = mgPicTag(it.pic, 'pic-drag') + esc(it.t) + '<span class="dgrip">用手指把它拖到正確的籃子</span>';   /* v1.3.0 預留:圖來了就是「拖圖片」 */
   d.className = '';
   d.style.transform = '';
   var wrap = $('drag-bins'), html = '', i, b;
-  wrap.className = (x.bins.length === 2 ? 'two' : 'three');
+  wrap.className = (x.bins.length === 2 ? 'two' : (x.bins.length >= 4 ? 'four' : 'three'));   /* v1.3.0:4 桶一列(有圖才放得下) */
   for(i = 0; i < x.bins.length; i++){
     b = x.bins[i];
     html += '<div class="dbin" data-i="' + i + '">'
-          +   '<span class="be">' + b.e + '</span>' + esc(b.n) + '</div>';
+          +   mgPicTag(b.pic, 'pic-bin') + '<span class="be">' + b.e + '</span>' + esc(b.n) + '</div>';
   }
   wrap.innerHTML = html;
   _dragBind(d);
@@ -1917,7 +2119,7 @@ function _orderPaint(r){
     var fi = _OD.picked[i];
     html += '<div class="oslot' + (fi == null ? '' : ' filled') + '">'
           + (fi == null ? '<span style="opacity:.45;">' + (i + 1) + '</span>'
-                        : esc(r.seq[fi]))
+                        : (mgPicTag(r.pic && r.pic[fi], 'pic-card') + esc(r.seq[fi])))
           + '</div>';
   }
   $('order-slots').innerHTML = html;
@@ -1928,7 +2130,7 @@ function _orderPaint(r){
     var used = false, k;
     for(k = 0; k < _OD.picked.length; k++){ if(_OD.picked[k] === oi) used = true; }
     html += '<button class="ocard' + (used ? ' used' : '') + '" '
-          + 'onclick="mgOrderPick(' + oi + ')">' + esc(r.seq[oi]) + '</button>';
+          + 'onclick="mgOrderPick(' + oi + ')">' + mgPicTag(r.pic && r.pic[oi], 'pic-card') + esc(r.seq[oi]) + '</button>';
   }
   $('order-pool').innerHTML = html;
 }
@@ -2012,7 +2214,7 @@ function _reactSpawn(){
   var txt = pool[Math.floor(Math.random() * pool.length)];
   var el = document.createElement('div');
   el.className = 'rdrop' + (isGood ? '' : ' bad');
-  el.textContent = txt;
+  el.innerHTML = mgPicTag(isGood ? 'coinrush_coin_gold' : 'coinrush_coin_fake', 'pic-coin') + esc(txt);   /* v1.3.0 預留硬幣圖 */
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
   var bw = box.clientWidth, ew = el.offsetWidth || 90;
@@ -2134,7 +2336,7 @@ function _matchPaint(){
     cls = 'mcard';
     if(c.done) cls += ' done';
     else if(_MC.open.indexOf(i) >= 0) cls += ' open';
-    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + esc(c.txt) + '</div>';
+    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + mgPicTag('proverb_mc_back', 'pic-back') + esc(c.txt) + '</div>';   /* v1.3.0 預留卡背圖 */
   }
   $('matchbox').innerHTML = html;
 }
@@ -2251,20 +2453,23 @@ function _mazePaint(){
   for(i = 0; i < _MZ.cells.length; i++){
     cell = _MZ.cells[i];
     cls = 'mz'; txt = '';
-    if(cell.ch === '#') cls += ' wall';
-    else if(cell.ch === 'S'){ txt = '🚩'; }
-    else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; }
+    var _pic = '';   /* v1.3.0 預留:標記／起終點／陷阱／牆 圖 */
+    if(cell.ch === '#'){ cls += ' wall'; _pic = 'maze_mz_wall'; }
+    else if(cell.ch === 'S'){ txt = '🚩'; _pic = 'maze_mz_start'; }
+    else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; _pic = 'maze_mz_goal'; }
     else if(cell.mark){
       txt = cell.mark.t;
       cls += cell.mark.ok ? ' ans' : ' bad';
+      _pic = mgPicByText(cell.mark.t);
     }
+    if(i === _MZ.pos) _pic = 'maze_mz_player';
     if(_MZ.walked.indexOf(i) >= 0){
       cls += (cell.mark && cell.mark.ok) ? ' got' : ' walked';
     }else if(!_MZ.done && _mazeReach(i)){
       cls += ' reach';
     }
     if(i === _MZ.pos) cls += ' here';
-    html += '<div class="' + cls + '" onclick="mgMazeStep(' + i + ')">' + esc(txt) + '</div>';
+    html += '<div class="' + cls + '" onclick="mgMazeStep(' + i + ')">' + mgPicTag(_pic, 'pic-mz') + esc(txt) + '</div>';
   }
   g.innerHTML = html;
   $('maze-info').textContent =
@@ -2543,6 +2748,107 @@ function _paintFinish(){
     tx(pic.why));
 }
 
+/* ══════════════════════════════════════════════════════════
+ *  引擎 J(v1.3.0):寵物調色工坊 colorq —「找出各區塊比例最多的色彩」(老師改版指示)
+ *  ★ 舊 12 格塗色版(引擎 I)保留在上方不刪,但資料表已無人用 engine:'paint';
+ *    本引擎的資料在 minigame_db.js 的 qs:每題 = 一隻寵物 + 一個區域 + 最多/第二多 + 四個色選項 + 比例 bars。
+ *  ★ 區域切法必須與離線算法一致:圖以 object-fit:contain 放進 3:4 框,再以框的「中線」切半/切四。
+ *    (calc_regions.py 用同樣的 contain 放法算 bars;改成 cover 或裁切會對不上。)
+ *  ★ 執行期零 canvas:比例是算好的數字,舊 iPad 也不卡,離線也能玩。
+ * ══════════════════════════════════════════════════════════ */
+var PET_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+var CQ_REGION = {
+  all:    { x:0,   y:0,   w:1,   h:1,   n:'全身'   },
+  top:    { x:0,   y:0,   w:1,   h:0.5, n:'上半部' },
+  bottom: { x:0,   y:0.5, w:1,   h:0.5, n:'下半部' },
+  left:   { x:0,   y:0,   w:0.5, h:1,   n:'左半邊' },
+  right:  { x:0.5, y:0,   w:0.5, h:1,   n:'右半邊' },
+  tl:     { x:0,   y:0,   w:0.5, h:0.5, n:'左上角' },
+  tr:     { x:0.5, y:0,   w:0.5, h:0.5, n:'右上角' },
+  bl:     { x:0,   y:0.5, w:0.5, h:0.5, n:'左下角' },
+  br:     { x:0.5, y:0.5, w:0.5, h:0.5, n:'右下角' }
+};
+/* 顏料色與名字:沿用引擎 I 的 PAINTS,補上寵物常見的灰與粉 */
+PAINTS.gray = { n:'灰', c:'#9a9a9a' };
+PAINTS.pink = { n:'粉', c:'#f28fb8' };
+function cqColorName(k){ return (PAINTS[k] && PAINTS[k].n) ? PAINTS[k].n : k; }
+function cqColorHex(k){ return (PAINTS[k] && PAINTS[k].c) ? PAINTS[k].c : '#888'; }
+
+function renderColorq(x, q){
+  hide('card-area');
+  show('colorqbox');
+  $('qcard').textContent = tx(q.q);
+  var reg = CQ_REGION[q.r] || CQ_REGION.all;
+  var url = PET_IMG_BASE + encodeURIComponent(q.file);
+  /* 左:去背寵物 + 亮區(其餘四分之一格壓暗)+ 金框 + 區域標籤 */
+  var html = '<img src="' + url + '" alt="" onerror="this.style.display=\'none\';">';
+  var qd = [[0,0],[0.5,0],[0,0.5],[0.5,0.5]], i;
+  for(i = 0; i < 4; i++){
+    var qx = qd[i][0], qy = qd[i][1];
+    var inside = (qx >= reg.x - 0.001 && qx + 0.5 <= reg.x + reg.w + 0.001 &&
+                  qy >= reg.y - 0.001 && qy + 0.5 <= reg.y + reg.h + 0.001);
+    if(!inside) html += '<div class="cq-dim" style="left:' + (qx * 100) + '%;top:' + (qy * 100) + '%;"></div>';
+  }
+  html += '<div class="cq-frame" style="left:' + (reg.x * 100) + '%;top:' + (reg.y * 100) + '%;width:'
+        + (reg.w * 100) + '%;height:' + (reg.h * 100) + '%;"></div>';
+  html += '<div class="cq-tag">' + esc(q.pet) + ' · ' + reg.n + (q.t === 'second' ? ' · 第②多' : ' · 最多') + '</div>';
+  $('cq-pic').innerHTML = html;
+  /* 右:四個大色塊(順序由資料表固定,不在執行期洗牌,方便老師對答案) */
+  html = '';
+  for(i = 0; i < q.opts.length; i++){
+    html += '<div class="cq-opt" data-i="' + i + '" style="background:' + cqColorHex(q.opts[i]) + ';" '
+          + 'onclick="mgColorqPick(' + i + ')">' + esc(cqColorName(q.opts[i])) + '色</div>';
+  }
+  $('cq-opts').innerHTML = html;
+  $('cq-note').textContent = (MG.style === 's')
+    ? (q.t === 'second' ? '亮起來的地方,第二多的顏色是哪一個?' : '亮起來的地方,哪個顏色最多?')
+    : (q.t === 'second' ? '仔細看亮起來的區域:面積第二多的是哪個顏色?(最多的那個不算)' : '仔細看亮起來的區域:面積最多的是哪個顏色?');
+  /* 圖高依剩餘高度夾一次(同 renderPaint 的口徑),iPad 橫式不捲動 */
+  try{
+    var _pic = $('cq-pic'), _top = _pic.getBoundingClientRect().top || 220;
+    /* 橫式兩欄:解說在左欄,右欄只留 120px;直式單欄:解說+比例長條+下一題疊在圖下方,要預留 400px */
+    var _twoCol = (window.innerWidth >= 1024 && window.innerWidth > window.innerHeight);
+    var _availH = Math.max(220, window.innerHeight - _top - (_twoCol ? 120 : 440));
+    _pic.style.width = Math.min(340, Math.floor(_availH * 3 / 4)) + 'px';
+  }catch(e){}
+}
+window.mgColorqPick = function(i){
+  if(MG.answered) return;
+  var q = MG.order[MG.idx]; if(!q || !q.opts) return;
+  var pick = q.opts[i], ok = (pick === q.a);
+  MG.answered = true;
+  stopTimer();
+  var opts = $('cq-opts').getElementsByClassName('cq-opt'), k;
+  for(k = 0; k < opts.length; k++){
+    var key = q.opts[k];
+    if(key === q.a) opts[k].className = 'cq-opt ok';
+    else if(k === i) opts[k].className = 'cq-opt ng';
+    else opts[k].className = 'cq-opt off';
+  }
+  scoreIt(ok);   /* scoreIt 內已累計 MG.right,不另加 */
+  showFeedback(ok,
+    ok ? '✅ 答對了!' : ('❌ 答案是「' + cqColorName(q.a) + '色」'),
+    tx(q.why));
+  /* 解說卡尾端補上比例長條(這才是本題真正要學的東西:比例) */
+  try{
+    var body = $('feedback').getElementsByClassName('fb-body')[0];
+    if(body) body.insertAdjacentHTML('beforeend', cqBarsHtml(q));
+  }catch(e){}
+};
+function cqBarsHtml(q){
+  var h = '<div class="cq-bars">', i, mx = 0;
+  for(i = 0; i < q.bars.length; i++) if(q.bars[i][1] > mx) mx = q.bars[i][1];
+  for(i = 0; i < q.bars.length; i++){
+    var c = q.bars[i][0], p = q.bars[i][1];
+    var win = (c === q.a);
+    h += '<div class="cq-bar' + (win ? ' win' : '') + '">'
+       + '<span class="cqb-name">' + esc(cqColorName(c)) + '</span>'
+       + '<span class="cqb-track"><span class="cqb-fill" style="width:' + Math.round(p / mx * 100) + '%;background:' + cqColorHex(c) + ';"></span></span>'
+       + '<span class="cqb-pct">' + p + '%</span></div>';
+  }
+  return h + '</div>';
+}
+
 /* ── 作答判定 ───────────────────────────────────────── */
 window.mgAnswer = function(i){
   if(MG.answered) return;
@@ -2637,12 +2943,12 @@ function showFeedback(ok, head, why){
   f.classList.add('show');
   /* ★ v1.3.0 — 標題列 + 內文兩段(CSS .fb-head/.fb-body);why 為空時內文段自動隱藏 */
   /* 追加:題目若帶 img(資料表選用欄位)就在解說旁放圖;全引擎共用(q 是 MG.order[MG.idx]) */
-  var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : '';
+  var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : ((_q && _q.pic) ? mgPicUrl(_q.pic) : '');   /* v1.3.0:有 repo 照片優先,否則用生成素材 pic */
   var _body = _img
     ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
       + '<span class="fb-txt">' + esc(why) + '</span>'
     : esc(why);
-  f.innerHTML = '<b class="fb-head">' + esc(head) + '</b><span class="fb-body">' + _body + '</span>';
+  f.innerHTML = '<b class="fb-head">' + mgPicTag(ok ? 'common_mascot_happy' : 'common_mascot_sad', 'pic-fbm') + esc(head) + '</b><span class="fb-body">' + _body + '</span>';   /* v1.3.0 預留吉祥物表情 */
   var nr = $('nextrow');
   nr.classList.remove('hidden');
   nr.getElementsByTagName('button')[0].textContent =
@@ -2823,6 +3129,7 @@ function onUser(u){
        否則老師在共用平板上登出,下一位學生就直接看到測試中的半成品。 */
   var wasLocked = !$('page-gate').classList.contains('hidden');
   applyGate();
+  try{ renderGrid(); }catch(e){}   /* ★ v1.3.0 老師登入／登出後重畫:每張卡的開／關切換鈕只給老師看 */
   if(_MG_ADMIN_ONLY && u){
     if(mgIsAdmin(u)){
       if(wasLocked){
@@ -2894,6 +3201,7 @@ function boot(){
   }
   MG.games = window.MG_GAMES;
   renderGrid();
+  mgCfgLoad();   /* ★ v1.3.0 各關開／關設定(快取先畫、雲端到了重畫) */
   /* ★ v1.1.0 — 測試期閘門:非管理員停在預告頁(單一收口點 applyGate) */
   applyGate();
   if(mgUnlocked()) bgmPlay('bgm-home');
