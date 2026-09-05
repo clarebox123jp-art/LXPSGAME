@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.3.0(2026-09-05)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.3.1(2026-09-05)
+     ★ v1.3.1:答對一律 sfx-ok(答對.mp3)、答錯一律 sfx-ng(答錯音效.mp3),十個引擎全走同一組;scoreIt 連擊不再改播 coin、迷宮踩錯不再 explode
      ★ v1.3.0(老師裁定 1甲 2丙 3甲):每款專屬 BGM + 整頁場景背景 + 題卡橫幅 + 答對/結算特效
        + 介面精緻化 + iPad 斷點放大;「九格小學堂」更名「小學堂」。細節見 CSS 檔尾 v1.3.0 區塊與各函式註記。
      ★ 與主程式 index.html 完全分離:不引用主程式任何 JS/CSS/全域變數/localStorage 鍵。
@@ -952,6 +953,66 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .pchip{width:62px;height:62px;}
   #earbox{margin-top:14px;}
 }
+
+/* ══════════════════════════════════════════════════════════
+ *  v1.3.1(老師三點:縮圖去重／迷宮加難加提示／遊戲頁不要往下超出畫面)
+ *  ★ 純覆寫、舊規則零刪除;要回退整段拿掉即可。
+ * ══════════════════════════════════════════════════════════ */
+/* 迷宮:踩到之前正解與陷阱同一種「石板」外觀(不再金框／紅框洩題) */
+.mz.mark{
+  background:linear-gradient(180deg,rgba(214,196,160,.38),rgba(150,130,96,.38));
+  border:2px solid rgba(240,220,180,.55);color:#fff8e6;font-size:14px;
+  text-shadow:0 1px 2px rgba(0,0,0,.7);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);
+}
+.mz.mark.reach{border-color:rgba(255,255,255,.85);}
+@media (min-width:1024px){ .mz.mark{font-size:17px;} }
+.mz.trap{background:rgba(210,84,63,.6);border-color:rgba(210,84,63,.95);color:#fff;}
+.mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
+.mz.peek{outline:3px solid var(--gold);outline-offset:-3px;box-shadow:0 0 0 3px var(--gold),0 0 20px var(--gold);animation:mzpeek .55s ease-in-out infinite alternate;}
+@keyframes mzpeek{from{filter:brightness(1);}to{filter:brightness(1.7);}}
+#maze-info{white-space:pre-line;}
+#maze-act{gap:8px;}
+#maze-act button{flex:1;}
+
+/* 遊戲頁(直式 iPad／手機,上下排列):「下一題」鈕移到解說卡**上面**,答完不必往下捲才按得到 */
+#page-play{display:flex;flex-direction:column;}
+#play-left{order:1;}
+#play-right{order:2;}
+#page-play > #nextrow{order:3;margin-top:12px;}
+#page-play > #feedback{order:4;margin-top:10px;}
+
+/* 遊戲頁(iPad 橫式／PC):整頁鎖在一個視窗高度內,左欄=橫幅+HUD+下一題+解說(解說自己捲),右欄作答區自己捲 */
+@media (min-width:1024px) and (orientation:landscape){
+  .wrap{padding-bottom:8px;}
+  #page-play{
+    display:grid;grid-template-rows:auto auto minmax(0,1fr);
+    height:calc(100vh - 96px);max-height:calc(100vh - 96px);
+  }
+  #play-left{grid-column:1;grid-row:1;order:0;}
+  #page-play > #nextrow{grid-column:1;grid-row:2;order:0;margin-top:10px;}
+  #page-play > #feedback{grid-column:1;grid-row:3;order:0;margin-top:10px;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #play-right{grid-column:2;grid-row:1 / 4;order:0;min-height:0;max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #scene-banner #sb-img,#scene-banner .sb-amb{height:120px;}
+  #scene-banner .sb-story{-webkit-line-clamp:2;}
+  #hud{gap:6px;margin:0 0 6px;}
+  .stat{font-size:16px;padding:6px 11px;min-height:42px;}
+  #timering{width:50px;height:50px;}
+  #timering .tnum{font-size:19px;}
+  #hud .chip{min-height:42px;font-size:15px;padding:6px 11px;}
+  #feedback .fb-img{height:120px;}
+  #maze-info{font-size:16px;margin-top:6px;}
+}
+/* iPad 橫式(1024×768／1180×820)高度更吃緊:橫幅縮到 84px、story 收起 */
+@media (min-width:1024px) and (orientation:landscape) and (max-height:840px){
+  #scene-banner #sb-img,#scene-banner .sb-amb{height:84px;}
+  #scene-banner .sb-story{display:none;}
+  #scene-banner .sb-name{font-size:20px;}
+  #scene-banner .sb-txt{padding:6px 12px 8px;}
+  #feedback .fb-img{height:96px;}
+  #feedback{font-size:16px;}
+  #feedback .fb-head{font-size:19px;padding:8px 12px;}
+  #nextrow button{min-height:54px;font-size:20px;}
+}
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -1142,7 +1203,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="mazebox" class="hidden">
       <div id="maze-grid"></div>
       <p id="maze-info"></p>
-      <div id="maze-act"><button class="btn-ghost" onclick="mgMazeReset()">↺ 重走這一關</button></div>
+      <div id="maze-act"><button class="btn-ghost" onclick="mgMazeHint()">💡 提示</button><button class="btn-ghost" onclick="mgMazeReset()">↺ 重走這一關</button></div><!-- ★ v1.3.1 提示鈕 -->
     </div>
 
     <!-- ★ v1.3.0 引擎 J:寵物調色工坊(colorq) -->
@@ -1216,7 +1277,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
 <div id="toast"></div>
 
-<script src="minigame_db.js?v=v1.3.0"></script>
+<script src="minigame_db.js?v=v1.3.1"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1225,7 +1286,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.3.0';
+var MG_VER = 'v1.3.1';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1536,6 +1597,12 @@ var MG_PIC_MAP = {
   '南投':'maze_mz_nantou', '花蓮':'maze_mz_hualien', '北海道':'maze_mz_hokkaido', '首爾':'maze_mz_seoul',
   '台灣藍鵲':'maze_mz_bluemagpie', '櫻花鉤吻鮭':'maze_mz_salmon', '埃及聖䴉':'maze_mz_ibis', '綠鬣蜥':'maze_mz_iguana',
   '貓空纜車':'maze_mz_gondola', '指南宮':'maze_mz_temple', '安平古堡':'maze_mz_anping', '日月潭':'maze_mz_lake',
+  /* ★ v1.3.1 迷宮擴充 6 關的新標記(預留掛接;圖未上傳前 onerror 退回純文字) */
+  '雲林':'maze_mz_yunlin', '曼谷':'maze_mz_bangkok', '台灣黑熊':'maze_mz_bear', '福壽螺':'maze_mz_snail',
+  '動物園':'maze_mz_zoo', '台北101':'maze_mz_tp101',
+  '綠島':'maze_mz_greenisland', '蘭嶼':'maze_mz_lanyu', '澎湖':'maze_mz_penghu', '沖繩':'maze_mz_okinawa', '濟州島':'maze_mz_jeju', '夏威夷':'maze_mz_hawaii',
+  '玉山':'maze_mz_yushan', '雪山':'maze_mz_xueshan', '合歡山':'maze_mz_hehuan', '富士山':'maze_mz_fuji', '聖母峰':'maze_mz_everest', '阿爾卑斯山':'maze_mz_alps',
+  '淡水河':'maze_mz_tamsui', '濁水溪':'maze_mz_zhuoshui', '景美溪':'maze_mz_jingmei', '長江':'maze_mz_yangtze', '尼羅河':'maze_mz_nile', '亞馬遜河':'maze_mz_amazon',
   '往上爬':'music_mu_up', '往下走':'music_mu_down', '一直一樣':'music_mu_same', '比較高':'music_mu_high', '比較低':'music_mu_low'
 };
 function mgPicByText(t){ return MG_PIC_MAP[t] || ''; }
@@ -1781,7 +1848,8 @@ function startGame(x){
   stopEngines();          /* ★ v1.1.0 必要:重玩或換一款遊戲時,上一局的迴圈必須先停 */
   MG.cur = x;
   MG.idx = 0; MG.score = 0; MG.right = 0; MG.combo = 0; MG.maxCombo = 0;
-  MG.order = shuffle(poolOf(x));
+  /* ★ v1.3.1:迷宮 6 關是「由易到難」排好的(解法數 11→3),不打亂;其餘引擎照舊隨機 */
+  MG.order = (x.engine === 'maze') ? poolOf(x).slice() : shuffle(poolOf(x));
   hide('page-home'); hide('page-result'); show('page-play'); show('back-btn');
   /* ★ v1.1.0 — 遊戲中把「🗺 回大作戰」收起來:誤觸就是整局作廢,
      而 iPad standalone 的 confirm() 有靜默失敗前例(主程式 v5.57.0 教訓),不能靠二次確認擋。
@@ -2417,7 +2485,9 @@ function _matchFinish(){
 var _MZ = null;
 
 function renderMaze(x, lv){
-  hide('card-area');
+  /* ★ v1.3.1:原本 hide('card-area') 再寫 qcard ⇒ 題目「踩過所有○○」根本沒顯示過,
+     學生只看到一堆地名不知道要挑什麼(老師:「內容太單調、提示要加強」的根源之一)。改為顯示題卡。 */
+  show('card-area');
   show('mazebox');
   $('qcard').textContent = tx(lv.q);
   _mazeInit(lv);
@@ -2435,9 +2505,34 @@ function _mazeInit(lv){
     }
   }
   _MZ = { lv: lv, w: w, h: h, cells: cells, pos: start,
-          walked: [start], got: 0, need: needN, bad: 0, done: false };
+          walked: [start], got: 0, need: needN, bad: 0, done: false,
+          hintLv: 0, peek: -1, peekT: null };   /* ★ v1.3.1 提示狀態:hintLv 0/1/2、peek=亮出的正解格 */
   _mazePaint();
 }
+/* ★ v1.3.1(老師:「提示也要再加強」)— 💡 提示鈕:
+   第 1 下:在 #maze-info 顯示這一關的文字線索(資料表 lv.hint,雙版)
+   第 2 下起:亮出一格「還沒踩到、而且目前還走得到」的正解 3 秒(每按一次換下一格)
+   ⚠ 不扣分:對小學生來說提示是學習輔助,不是懲罰;結算標題會註明「有用提示」。 */
+window.mgMazeHint = function(){
+  if(MG.answered || !_MZ || _MZ.done) return;
+  playSfx('sfx-sel', 0.3);
+  if(_MZ.hintLv === 0 && _MZ.lv.hint){
+    _MZ.hintLv = 1; _mazePaint(); return;
+  }
+  _MZ.hintLv = 2;
+  var cand = [], k, cell;
+  for(k = 0; k < _MZ.cells.length; k++){
+    cell = _MZ.cells[k];
+    if(cell.mark && cell.mark.ok && _MZ.walked.indexOf(k) < 0) cand.push(k);
+  }
+  if(!cand.length){ toast('正確答案都找到了,快走到 🏁!'); return; }
+  var idx = cand.indexOf(_MZ.peek);
+  _MZ.peek = cand[(idx + 1) % cand.length];
+  _MZ.used = (_MZ.used || 0) + 1;
+  _mazePaint();
+  if(_MZ.peekT) clearTimeout(_MZ.peekT);
+  _MZ.peekT = setTimeout(function(){ if(_MZ){ _MZ.peek = -1; if(!_MZ.done) _mazePaint(); } }, 3000);
+};
 function _mazeReach(i){
   /* 相鄰(上下左右,不含斜角)且沒走過且不是牆 */
   if(_MZ.walked.indexOf(i) >= 0) return false;
@@ -2462,7 +2557,8 @@ function _mazePaint(){
   var g = $('maze-grid'), html = '', i, cell, cls, txt;
   g.style.gridTemplateColumns = 'repeat(' + _MZ.w + ',minmax(0,1fr))';
   /* ★ v1.3.0 — 格子尺寸同時看「寬」與「剩餘高度」(iPad 橫式只看寬會撐到 1300px 要捲) */
-  g.style.maxWidth = mgFitGrid(g, _MZ.w, _MZ.h, 6, 130, 96) + 'px';
+  /* v1.3.1:底下要放兩行提示文字 + 兩顆按鈕,保留 200px(原 130 會把按鈕擠出 iPad 橫式畫面) */
+  g.style.maxWidth = mgFitGrid(g, _MZ.w, _MZ.h, 6, 200, 96) + 'px';
   g.style.margin = '0 auto';
   for(i = 0; i < _MZ.cells.length; i++){
     cell = _MZ.cells[i];
@@ -2473,23 +2569,29 @@ function _mazePaint(){
     else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; _pic = 'maze_mz_goal'; }
     else if(cell.mark){
       txt = cell.mark.t;
-      cls += cell.mark.ok ? ' ans' : ' bad';
+      /* ★ v1.3.1(老師:「難度太低」):踩到之前正解與陷阱一律同一種「石板」外觀(.mark),
+         不再用金框／紅框分色 —— v1.3.0 之前等於把答案直接畫在地圖上。 */
+      cls += ' mark';
       _pic = mgPicByText(cell.mark.t);
     }
     if(i === _MZ.pos) _pic = 'maze_mz_player';
     if(_MZ.walked.indexOf(i) >= 0){
-      cls += (cell.mark && cell.mark.ok) ? ' got' : ' walked';
+      if(cell.mark && cell.mark.ok) cls += ' got';
+      else if(cell.mark) cls += ' trap';   /* 踩過的陷阱才變紅 */
+      else cls += ' walked';
     }else if(!_MZ.done && _mazeReach(i)){
       cls += ' reach';
     }
     if(i === _MZ.pos) cls += ' here';
+    if(_MZ.peek === i) cls += ' peek';   /* 💡 第二段提示:亮出一格正解 */
     html += '<div class="' + cls + '" onclick="mgMazeStep(' + i + ')">' + mgPicTag(_pic, 'pic-mz') + esc(txt) + '</div>';
   }
   g.innerHTML = html;
-  $('maze-info').textContent =
-    '⭐ 收集 ' + _MZ.got + ' / ' + _MZ.need + ' 個正確答案'
-    + (_MZ.bad ? ('　💥 踩到 ' + _MZ.bad + ' 個陷阱') : '')
-    + '　|　白框的格子才走得過去';
+  var info = '⭐ 收集 ' + _MZ.got + ' / ' + _MZ.need + ' 個正確答案'
+    + (_MZ.bad ? ('　💥 踩到 ' + _MZ.bad + ' 個陷阱') : '');
+  if(_MZ.hintLv >= 1 && _MZ.lv.hint) info += '\n💡 ' + tx(_MZ.lv.hint);
+  else info += '　|　白框的格子才走得過去,石板上的字要自己判斷對不對';
+  $('maze-info').textContent = info;
 }
 window.mgMazeStep = function(i){
   if(MG.answered || !_MZ || _MZ.done) return;
@@ -2498,12 +2600,23 @@ window.mgMazeStep = function(i){
     playSfx('sfx-cancel', 0.2);
     return;
   }
+  /* ★ v1.3.1 終點守門:答案還沒收齊時,只要旁邊還有別的路就不讓進終點(提示繼續找);
+     若終點已是唯一能走的格子才放行(照舊算「漏答」結束)。 */
+  if(_MZ.cells[i].ch === 'G' && _MZ.got < _MZ.need){
+    var k2, other = false;
+    for(k2 = 0; k2 < _MZ.cells.length; k2++){ if(k2 !== i && _mazeReach(k2)) other = true; }
+    if(other){
+      toast('還有 ' + (_MZ.need - _MZ.got) + ' 個正確答案沒踩到,終點會等你!');
+      playSfx('sfx-cancel', 0.35);
+      return;
+    }
+  }
   _MZ.pos = i;
   _MZ.walked.push(i);
   var cell = _MZ.cells[i];
   if(cell.mark){
     if(cell.mark.ok){ _MZ.got++; playSfx('sfx-ok', 0.42); }
-    else{ _MZ.bad++; playSfx('sfx-explode', 0.35); }
+    else{ _MZ.bad++; playSfx('sfx-ng', 0.35); }   /* ★ v1.3.1 老師:「答錯音效要統一」—— 原 explode 改 sfx-ng */
   }else{
     playSfx('sfx-tap', 0.22);
   }
@@ -2531,7 +2644,8 @@ function _mazeFinish(){
   var ok = allGot && _MZ.bad === 0;
   scoreIt(ok);
   var head;
-  if(ok) head = '✅ 全部答案都收集到,順利走出迷宮!';
+  if(_MZ.peekT){ clearTimeout(_MZ.peekT); _MZ.peekT = null; }
+  if(ok) head = '✅ 全部答案都收集到,順利走出迷宮!' + (_MZ.used ? '(用了 ' + _MZ.used + ' 次提示)' : '');
   else if(!allGot) head = '🔶 走到終點了,但漏掉 ' + (_MZ.need - _MZ.got) + ' 個正確答案';
   else head = '🔶 答案都拿到了,不過踩到 ' + _MZ.bad + ' 個陷阱';
   showFeedback(ok, head, tx(lv.why));
@@ -2755,7 +2869,7 @@ function _paintFinish(){
   /* 允許少量失誤仍算滿分:12 格的辨色本來就會有一兩格猶豫,
      零容忍會讓「顏色相近的格子」變成純運氣。 */
   var ok = (wrong <= 2);
-  playSfx(ok ? 'sfx-powerup' : 'sfx-coin', 0.45);
+  /* ★ v1.3.1 統一答對／答錯音效:scoreIt 內已播 sfx-ok／sfx-ng,這裡不再另播 powerup／coin(舊引擎 I 目前無人用,順修) */
   scoreIt(ok);
   showFeedback(ok,
     ok ? ('✅ 上色完成!只塗錯 ' + wrong + ' 次') : ('🔶 上色完成,塗錯 ' + wrong + ' 次(2 次以內可以拿滿分)'),
@@ -2930,7 +3044,7 @@ function scoreIt(correct){
     var bonus = Math.min(MG.combo - 1, 5) * 20;
     var timeB = Math.round(MG.tleft * 2);
     MG.score += 100 + bonus + timeB;
-    playSfx(MG.combo >= 3 ? 'sfx-coin' : 'sfx-ok', 0.5);
+    playSfx('sfx-ok', 0.5);   /* ★ v1.3.1 老師:「答對音效要統一」—— 原連擊 ≥3 改播 coin,現在一律 sfx-ok(連擊仍有 combo 特效與加分) */
     /* ★ v1.3.0 — 答對特效:光暈亮星打在作答區中央 + 分數飄字;連擊 ≥3 再加點擊星星 */
     var _c = mgCenterOf(mgActiveBox());
     mgFx('hit', _c.x, _c.y, 220, 900);
