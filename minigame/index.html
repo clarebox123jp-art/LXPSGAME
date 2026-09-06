@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.0(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.1(2026-09-06)
+     ★ v1.9.1:秤重 8 張 + 俗諺 9 張 + 聽音坊 8 張題圖(webp)掛接;本檔改:翻牌卡背 proverb_mc_back.webp、MG_PIC_MAP 高低/走向/同音 5 鍵 .webp、播放鈕 music_mu_speaker.webp、算數大進擊掉落幣 coinrush_coin_gold.webp、迷宮 16 張(牆/起點/終點/玩家/踩過陷阱/12 標記)、通用 12 張(學霸 5 表情:首頁加油/閘門思考/解說開心・連擊≥3 驚訝・答錯惋惜;HUD 連擊火焰)
      ★ v1.9.0:①聽音坊出題/作答期間自動暫停關卡 BGM、解說時恢復(_earDuck);②poolOf 支援資料表 gen 欄位 → 每局即時生成題(秤重/聽音坊/翻牌);③mgEng() 每題可覆寫引擎(分類關混入選擇題)、renderQuiz 2/3 選項排版、mgPicUrl 支援 '@根目錄檔名';④優化:缺圖名單 _MG_MISS(不再重打 404)、pic 自帶副檔名(.webp)、分類關分層抽題(一半分類一半選擇)、聽音坊整關靜音、答錯才顯示口訣 hintOnWrong、解說 8 秒自動下一題
      ★ v1.8.0:頂列版本徽章(目前/最新版號;過舊變紅+🔄更新鈕、最新淡綠),抓 sw.js 比對 MINI_VERSION
      ★ v1.7.1:首頁吉祥物介紹文重寫為活潑勵志,雙版各 5 句每次隨機
@@ -1665,7 +1666,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.9.0"></script>
+<script src="minigame_db.js?v=v1.9.1"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1674,7 +1675,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.9.0';
+var MG_VER = 'v1.9.1';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1803,7 +1804,7 @@ function renderGate(){
     + '等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!';
   mgMascot('gate-mascot', 'gate-bubble', (MG.style === 's')
     ? '我是轉學生學霸,小學堂快做好了,再等一下下!'
-    : '我是轉學生學霸!小學堂還在最後調整,開放的時候我會在這裡等大家。');
+    : '我是轉學生學霸!小學堂還在最後調整,開放的時候我會在這裡等大家。', 'common_mascot_think.webp');
   $('gate-note').textContent = (MG.style === 's')
     ? '(老師要測試請按上面的老師登入)'
     : '(這是老師的測試入口;學生不需要登入,直接回大作戰就好)';
@@ -2146,16 +2147,16 @@ function mgPicTag(pic, cls){
 }
 /* 依「文字」自動對照的圖(不必在資料表逐筆填):迷宮標記／童謠選項／格子與棋子 */
 var MG_PIC_MAP = {
-  '南投':'maze_mz_nantou', '花蓮':'maze_mz_hualien', '北海道':'maze_mz_hokkaido', '首爾':'maze_mz_seoul',
-  '台灣藍鵲':'maze_mz_bluemagpie', '櫻花鉤吻鮭':'maze_mz_salmon', '埃及聖䴉':'maze_mz_ibis', '綠鬣蜥':'maze_mz_iguana',
-  '貓空纜車':'maze_mz_gondola', '指南宮':'maze_mz_temple', '安平古堡':'maze_mz_anping', '日月潭':'maze_mz_lake',
+  '南投':'maze_mz_lake.webp', '花蓮':'maze_mz_hualien.webp', '北海道':'maze_mz_hokkaido.webp', '首爾':'maze_mz_seoul.webp',   /* ★ v1.9.1 改 webp;南投沿用日月潭圖 */
+  '台灣藍鵲':'maze_mz_bluemagpie.webp', '櫻花鉤吻鮭':'maze_mz_salmon.webp', '埃及聖䴉':'maze_mz_ibis.webp', '綠鬣蜥':'maze_mz_iguana.webp',
+  '貓空纜車':'maze_mz_gondola.webp', '指南宮':'maze_mz_temple.webp', '安平古堡':'maze_mz_anping', '日月潭':'maze_mz_lake.webp',
   /* ★ v1.3.1 迷宮擴充 6 關的新標記(預留掛接;圖未上傳前 onerror 退回純文字) */
   '雲林':'maze_mz_yunlin', '曼谷':'maze_mz_bangkok', '台灣黑熊':'maze_mz_bear', '福壽螺':'maze_mz_snail',
   '動物園':'maze_mz_zoo', '台北101':'maze_mz_tp101',
   '綠島':'maze_mz_greenisland', '蘭嶼':'maze_mz_lanyu', '澎湖':'maze_mz_penghu', '沖繩':'maze_mz_okinawa', '濟州島':'maze_mz_jeju', '夏威夷':'maze_mz_hawaii',
   '玉山':'maze_mz_yushan', '雪山':'maze_mz_xueshan', '合歡山':'maze_mz_hehuan', '富士山':'maze_mz_fuji', '聖母峰':'maze_mz_everest', '阿爾卑斯山':'maze_mz_alps',
   '淡水河':'maze_mz_tamsui', '濁水溪':'maze_mz_zhuoshui', '景美溪':'maze_mz_jingmei', '長江':'maze_mz_yangtze', '尼羅河':'maze_mz_nile', '亞馬遜河':'maze_mz_amazon',
-  '往上爬':'music_mu_up', '往下走':'music_mu_down', '一直一樣':'music_mu_same', '比較高':'music_mu_high', '比較低':'music_mu_low'
+  '往上爬':'music_mu_up.webp', '往下走':'music_mu_down.webp', '一直一樣':'music_mu_same.webp', '比較高':'music_mu_high.webp', '比較低':'music_mu_low.webp'   /* ★ v1.9.1 改 webp */
 };
 function mgPicByText(t){ return MG_PIC_MAP[t] || ''; }
 
@@ -2274,12 +2275,18 @@ function renderGrid(){
     '今天的你,只要比昨天多會一題,就是進步!這裡有 ' + _n + ' 座小學堂,題目每局隨機、永遠玩不完。點卡片看玩法、按開始出發;連擊與快手都有加成。登入後最佳成績會存到雲端,和自己比賽最有趣!'
   ];
   var _pool = (MG.style === 's') ? _linesS : _linesF;
-  mgMascot('home-mascot', 'home-bubble', _pool[Math.floor(Math.random() * _pool.length)]);
+  mgMascot('home-mascot', 'home-bubble', _pool[Math.floor(Math.random() * _pool.length)], 'common_mascot_cheer.webp');   /* ★ v1.9.1 首頁用「加油」表情 */
 }
-function mgMascot(wrapId, bubbleId, text){
+function mgMascot(wrapId, bubbleId, text, pic){
   var w = $(wrapId), b = $(bubbleId); if(!w || !b) return;
   var im = w.getElementsByTagName('img')[0];
-  if(im && !im.getAttribute('src')) im.src = MG_MASCOT;
+  /* ★ v1.9.1 有生成的轉學生學霸表情圖(pic)就優先用;抓不到(onerror 一次)退回主程式既有立繪 MG_MASCOT,再失敗才隱藏 */
+  if(im && !im.getAttribute('src')){
+    if(pic && !_MG_MISS[pic]){
+      im.onerror = function(){ im.onerror = function(){ im.style.display = 'none'; }; mgPicMiss({ style: {} }, pic); im.src = MG_MASCOT; };
+      im.src = mgPicUrl(pic);
+    }else{ im.src = MG_MASCOT; }
+  }
   b.textContent = text;
 }
 /* 縮圖抓不到就把圖藏起來,露出底下的 emoji ——
@@ -2649,7 +2656,7 @@ function renderQuestion(keepState){
 
   $('progress').textContent = (MG.idx + 1) + ' / ' + MG.order.length;
   $('score').textContent = MG.score + ' 分';
-  $('combo').textContent = MG.combo >= 2 ? ('🔥 ' + MG.combo + ' 連') : '';
+  $('combo').innerHTML = MG.combo >= 2 ? (mgPicTag('common_ui_combo.webp', 'pic-coin') + '🔥 ' + MG.combo + ' 連') : '';   /* ★ v1.9.1 連擊火焰圖(缺圖退 🔥) */
 
   /* ★ v1.1.0 — 容器顯隱收攏成一份清單。
      舊寫法是逐個 hide(),每加一個引擎就要記得補一行,漏掉的症狀是
@@ -2847,13 +2854,13 @@ function renderEar(x, q){
     row.innerHTML = kh;
     var cb = $('kb-lbl'); if(cb) cb.checked = _earLblOn;
     _earPaintInput();
-    $('playbtn').innerHTML = mgPicTag('music_mu_speaker', 'pic-opt') + (q.type === 'score' ? '▶ 聽示範' : '▶ 播放');
+    $('playbtn').innerHTML = mgPicTag('music_mu_speaker.webp', 'pic-opt') + (q.type === 'score' ? '▶ 聽示範' : '▶ 播放');
     $('playnote').textContent = (q.type === 'score')
       ? (MG.style === 's' ? '看上面的簡譜,照順序彈出來!' : '照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。')
       : (MG.style === 's' ? '聽完再用小動物琴鍵彈回來!' : '仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。');
   }else{
     kb.className = '';
-    $('playbtn').innerHTML = mgPicTag('music_mu_speaker', 'pic-opt') + '▶ 播放';
+    $('playbtn').innerHTML = mgPicTag('music_mu_speaker.webp', 'pic-opt') + '▶ 播放';
     $('playnote').textContent = (kind === 'drum')
       ? (MG.style === 's' ? '聽鼓聲,再敲鼓敲出一樣的拍子!' : '聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。')
       : '可以重聽,不會扣分';
@@ -3400,7 +3407,7 @@ function _reactSpawn(){
   /* ★ v1.6.0 老師:取消雙倍發光/×2(送分);對錯同色同圖(v1.4.1) */
   var el = document.createElement('div');
   el.className = 'rdrop';
-  el.innerHTML = mgPicTag('coinrush_coin_gold', 'pic-coin') + esc(txt);
+  el.innerHTML = mgPicTag('coinrush_coin_gold.webp', 'pic-coin') + esc(txt);
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
   var bw = box.clientWidth, ew = el.offsetWidth || 90;
@@ -3532,7 +3539,7 @@ function _matchPaint(){
     cls = 'mcard';
     if(c.done) cls += ' done';
     else if(_MC.open.indexOf(i) >= 0) cls += ' open';
-    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + mgPicTag('proverb_mc_back', 'pic-back') + esc(c.txt) + '</div>';   /* v1.3.0 預留卡背圖 */
+    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + mgPicTag('proverb_mc_back.webp', 'pic-back') + esc(c.txt) + '</div>';   /* v1.3.0 預留卡背圖 */
   }
   $('matchbox').innerHTML = html;
 }
@@ -3678,9 +3685,9 @@ function _mazePaint(){
     cell = _MZ.cells[i];
     cls = 'mz'; txt = '';
     var _pic = '';   /* v1.3.0 預留:標記／起終點／陷阱／牆 圖 */
-    if(cell.ch === '#'){ cls += ' wall'; _pic = 'maze_mz_wall'; }
-    else if(cell.ch === 'S'){ txt = '🚩'; _pic = 'maze_mz_start'; }
-    else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; _pic = 'maze_mz_goal'; }
+    if(cell.ch === '#'){ cls += ' wall'; _pic = 'maze_mz_wall.webp'; }
+    else if(cell.ch === 'S'){ txt = '🚩'; _pic = 'maze_mz_start.webp'; }
+    else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; _pic = 'maze_mz_goal.webp'; }
     else if(cell.mark){
       txt = cell.mark.t;
       /* ★ v1.3.1(老師:「難度太低」):踩到之前正解與陷阱一律同一種「石板」外觀(.mark),
@@ -3688,10 +3695,10 @@ function _mazePaint(){
       cls += ' mark';
       _pic = mgPicByText(cell.mark.t);
     }
-    if(i === _MZ.pos) _pic = 'maze_mz_player';
+    if(i === _MZ.pos) _pic = 'maze_mz_player.webp';
     if(_MZ.walked.indexOf(i) >= 0){
       if(cell.mark && cell.mark.ok) cls += ' got';
-      else if(cell.mark) cls += ' trap';   /* 踩過的陷阱才變紅 */
+      else if(cell.mark){ cls += ' trap'; if(i !== _MZ.pos) _pic = 'maze_mz_trap.webp'; }   /* 踩過的陷阱才變紅;★ v1.9.1 踩過後才換捕獸夾圖(未踩前仍與正解同石板外觀,不洩題) */
       else cls += ' walked';
     }else if(!_MZ.done && _mazeReach(i)){
       cls += ' reach';
@@ -4180,7 +4187,7 @@ function scoreIt(correct){
     }catch(e){}
   }
   $('score').textContent = MG.score + ' 分';
-  $('combo').textContent = MG.combo >= 2 ? ('🔥 ' + MG.combo + ' 連') : '';
+  $('combo').innerHTML = MG.combo >= 2 ? (mgPicTag('common_ui_combo.webp', 'pic-coin') + '🔥 ' + MG.combo + ' 連') : '';   /* ★ v1.9.1 連擊火焰圖(缺圖退 🔥) */
 }
 function showFeedback(ok, head, why){
   var f = $('feedback');
@@ -4193,7 +4200,7 @@ function showFeedback(ok, head, why){
     ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
       + '<span class="fb-txt">' + esc(why) + '</span>'
     : esc(why);
-  f.innerHTML = '<b class="fb-head">' + mgPicTag(ok ? 'common_mascot_happy' : 'common_mascot_sad', 'pic-fbm') + esc(head) + '</b><span class="fb-body">' + _body + '</span>';   /* v1.3.0 預留吉祥物表情 */
+  f.innerHTML = '<b class="fb-head">' + mgPicTag(ok ? (MG.combo >= 3 ? 'common_mascot_wow.webp' : 'common_mascot_happy.webp') : 'common_mascot_sad.webp', 'pic-fbm') + esc(head) + '</b><span class="fb-body">' + _body + '</span>';   /* v1.3.0 預留吉祥物表情 */
   var nr = $('nextrow');
   nr.classList.remove('hidden');
   nr.getElementsByTagName('button')[0].textContent =
