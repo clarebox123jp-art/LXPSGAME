@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.7(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.8(2026-09-06)
+     ★ v1.9.8:版號同步(排排站小達人改為真正的先後順序題:停用比大小生成器、+64 組順序題,內容在 minigame_db.js;本檔邏輯未改)
      ★ v1.9.7(老師):算數大進擊 ①射中正確 ⇒ CSS 煙火 + 清除半徑內錯誤目標(解重疊遮蔽)②射中錯誤加爆炸音效 ③正確比率 45%→50%;分類/拖曳引擎支援每題 bins 覆寫(mgBins);課堂複習題全面混入各關(見 minigame_db.js)。
      ★ v1.9.6:版號同步(迷宮 6 關各 +4 組跨領域題組在 minigame_db.js;variant 覆蓋 q/hint/why 機制 v1.7.0 既有)。
      ★ v1.9.5(老師):算數大進擊射擊改「紅色射擊線 + 槍口火光 + 目標紅框閃 + sfx-gunshot 發射子彈音效」(仿大對抗普攻 beamFX),移除底部手槍圖示;舊光彈/砲台碼留註解。
@@ -1739,7 +1740,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.9.7"></script>
+<script src="minigame_db.js?v=v1.9.8"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1748,7 +1749,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.9.7';
+var MG_VER = 'v1.9.8';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
