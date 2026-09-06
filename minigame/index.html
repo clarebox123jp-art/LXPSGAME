@@ -15,7 +15,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.4(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.7(2026-09-06)
+     ★ v1.9.7(老師):算數大進擊 ①射中正確 ⇒ CSS 煙火 + 清除半徑內錯誤目標(解重疊遮蔽)②射中錯誤加爆炸音效 ③正確比率 45%→50%;分類/拖曳引擎支援每題 bins 覆寫(mgBins);課堂複習題全面混入各關(見 minigame_db.js)。
+     ★ v1.9.6:版號同步(迷宮 6 關各 +4 組跨領域題組在 minigame_db.js;variant 覆蓋 q/hint/why 機制 v1.7.0 既有)。
+     ★ v1.9.5(老師):算數大進擊射擊改「紅色射擊線 + 槍口火光 + 目標紅框閃 + sfx-gunshot 發射子彈音效」(仿大對抗普攻 beamFX),移除底部手槍圖示;舊光彈/砲台碼留註解。
      ★ v1.9.4(老師截圖:迷宮關上方殘留連連看):#matchbox.link 的 display:grid !important 壓過 .hidden ⇒ 改只覆寫欄數 + .link.hidden 明確收起;_matchPaint 遇 hidden 不重畫;600ms 延遲回呼加 _MC 空值防護。全引擎圖層複查:10 個容器皆在 _BOXES 清單、無其他 id 級 !important display 規則。
      ★ v1.9.3(老師裁定):俗諺翻牌改「連連看」—— 左欄上半句、右欄下半句各自洗牌,先點左再點右,連對變綠並畫線,連錯紅一下重選;零失誤滿分(_ML_MAX_WRONG);舊翻牌版整段留註解。
      ★ v1.9.2(老師回報回收題物品沒圖・裁定甲):缺圖名單誤記根治 —— 名單鍵改含 MG_VER(改版自動歸零、清舊鍵、不重抓題圖)+ onerror 1.5 秒後重試一次才記入 + 24 小時自動重試;mgPicTag 補 data-cls。
@@ -1089,6 +1092,31 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   font-size:34px;line-height:1;pointer-events:none;z-index:7;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));
   transition:transform .08s ease-out;
 }
+/* ★ v1.9.5 紅色射擊線(仿主程式 beamFX)+ 槍口火光 + 目標紅框閃 */
+#reactbox .rbeam{
+  position:absolute;height:3px;transform-origin:0 50%;pointer-events:none;z-index:8;opacity:1;
+  background:linear-gradient(90deg,rgba(255,60,60,0) 0%,#ff3a3a 18%,#ffb0b0 50%,#ff3a3a 82%,rgba(255,60,60,0) 100%);
+  box-shadow:0 0 8px #ff3a3a,0 0 18px rgba(255,60,60,.65);
+  transition:opacity .22s ease-out;
+}
+#reactbox .rmuzzle{
+  position:absolute;width:26px;height:26px;border-radius:50%;pointer-events:none;z-index:9;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,#fff3c4 0%,#ff7a3a 45%,rgba(255,60,60,0) 72%);
+  animation:rmuzzle .14s ease-out forwards;
+}
+@keyframes rmuzzle{from{opacity:1;transform:translate(-50%,-50%) scale(.6);}to{opacity:0;transform:translate(-50%,-50%) scale(1.6);}}
+.rdrop.rhitflash{box-shadow:0 0 0 3px #ff3a3a,0 0 18px 4px rgba(255,60,60,.8),0 4px 10px rgba(0,0,0,.4) !important;}
+/* ★ v1.9.7 煙火粒子 */
+#reactbox .rfw{
+  position:absolute;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:9;
+  transform:translate(-50%,-50%);box-shadow:0 0 6px currentColor;
+  animation:rfw .72s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes rfw{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(1.2);}
+  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.3);}
+}
 #reactbox .rbullet{
   position:absolute;width:14px;height:14px;border-radius:50%;
   background:radial-gradient(circle,#fff6c8 0%,var(--gold) 55%,rgba(240,192,96,0) 100%);
@@ -1427,6 +1455,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <audio id="sfx-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/game_explosion2.mp3"></audio>
 <audio id="sfx-cancel"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%96%E6%B6%88.mp3"></audio>
 <audio id="sfx-recharge" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A3%9C%E5%85%85%E8%83%BD%E9%87%8F.mp3"></audio>
+<audio id="sfx-gunshot" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84%E5%AD%90%E5%BD%88.mp3"></audio><!-- ★ v1.9.5 算數大進擊射擊音效(=主程式 sfx-gunshot 發射子彈.mp3) -->
 
 <!-- ★ v1.1.0(老師需求 3「小遊戲模式要有 BGM」)— 三軌,同樣全部沿用主程式既有音樂:
        首頁  = 台灣地圖BGM(最貼「木柵・台灣」主題)
@@ -1710,7 +1739,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.9.4"></script>
+<script src="minigame_db.js?v=v1.9.7"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1719,7 +1748,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.9.4';
+var MG_VER = 'v1.9.7';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2496,6 +2525,8 @@ var _POOL_FIELD = {
 /* ★ v1.9.0(老師裁定「丙」):每題可覆寫引擎 —— 資料表題目帶 engine:'quiz' 時,分類關(sort/drag)也能混入「科學小博士」選擇題;
    只在派發(renderQuestion)、判定(mgAnswer/finishAnswer)三處用 mgEng() 取代 x.engine,其餘引擎零改動。 */
 function mgEng(x, q){ return (q && q.engine) ? q.engine : x.engine; }
+/* ★ v1.9.7 分類/拖曳題可自帶 bins(每題覆寫籃子;沒有就用關卡的 x.bins)⇒ 同一關可混入「導熱好/隔熱好」「磁鐵吸得住/吸不住」等新分類題組 */
+function mgBins(x, q){ return (q && q.bins && q.bins.length) ? q.bins : x.bins; }
 function poolOf(x){
   var f = _POOL_FIELD[x.engine];
   var p = f ? x[f] : null;
@@ -2774,10 +2805,10 @@ function renderQuestion(keepState){
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
 function renderSort(x, it){
   $('qcard').innerHTML = mgPicTag(it.pic, 'pic-q') + '<span>' + esc(it.t) + '</span>';   /* v1.3.0 預留題卡插圖 */
-  var o = $('opts'), html = '', i, b;
-  o.className = 'opts ' + (x.bins.length === 2 ? 'two' : (x.bins.length >= 4 ? 'four' : 'three'));
-  for(i = 0; i < x.bins.length; i++){
-    b = x.bins[i];
+  var o = $('opts'), html = '', i, b, bins = mgBins(x, it);   /* ★ v1.9.7 每題可覆寫 bins */
+  o.className = 'opts ' + (bins.length === 2 ? 'two' : (bins.length >= 4 ? 'four' : 'three'));
+  for(i = 0; i < bins.length; i++){
+    b = bins[i];
     html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
           +   mgPicTag(b.pic, 'pic-bin') + '<span class="oe">' + b.e + '</span>' + esc(b.n)
           + '</button>';
@@ -3145,10 +3176,10 @@ function renderDrag(x, it){
   d.innerHTML = mgPicTag(it.pic, 'pic-drag') + esc(it.t) + '<span class="dgrip">用手指把它拖到正確的籃子</span>';   /* v1.3.0 預留:圖來了就是「拖圖片」 */
   d.className = '';
   d.style.transform = '';
-  var wrap = $('drag-bins'), html = '', i, b;
-  wrap.className = (x.bins.length === 2 ? 'two' : (x.bins.length >= 4 ? 'four' : 'three'));   /* v1.3.0:4 桶一列(有圖才放得下) */
-  for(i = 0; i < x.bins.length; i++){
-    b = x.bins[i];
+  var wrap = $('drag-bins'), html = '', i, b, bins = mgBins(x, it);   /* ★ v1.9.7 每題可覆寫 bins */
+  wrap.className = (bins.length === 2 ? 'two' : (bins.length >= 4 ? 'four' : 'three'));   /* v1.3.0:4 桶一列(有圖才放得下) */
+  for(i = 0; i < bins.length; i++){
+    b = bins[i];
     html += '<div class="dbin" data-i="' + i + '">'
           +   mgPicTag(b.pic, 'pic-bin') + '<span class="be">' + b.e + '</span>' + esc(b.n) + '</div>';
   }
@@ -3330,7 +3361,9 @@ function renderReact(x, r){
   $('qcard').textContent = tx(r.q);
   var box = $('reactbox');
   /* ★ v1.4.0(老師:「點擊特效改成射擊」)— 底部固定一座砲台,點到算式 = 從砲台射出一顆光彈飛過去命中 */
-  box.innerHTML = '<div class="rgun" id="rgun">' + mgPicTag('coinrush_gun', 'pic-coin') + '🔫</div>';
+  /* ★ v1.9.5 老師:「移除下面那個多餘的手槍圖示」— 砲台元素不再放,射線仍從底部中央發出。
+     舊碼:box.innerHTML = '<div class="rgun" id="rgun">' + mgPicTag('coinrush_gun', 'pic-coin') + '🔫</div>'; */
+  box.innerHTML = '';
   var dur = (r.sec || x.time || 22) * 1000;
   _RC = {
     drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
@@ -3356,6 +3389,39 @@ function _reactShoot(d){
   var box = $('reactbox'), bw = box.clientWidth, bh = box.clientHeight;
   var ew = d.el.offsetWidth || 90, eh = d.el.offsetHeight || 44;
   var tx0 = d.x + ew / 2, ty0 = d.y + eh / 2;
+  var gx = bw / 2, gy = bh - 10;
+  /* ★ v1.9.5(老師:「新增子彈發射音效和紅色射擊線視覺特效,如同大對抗戰鬥中的普通攻擊」)
+     — 仿主程式 beamFX:從底部中央到目標中心拉一條 3px 紅色漸層光線(兩端透明、紅色外光暈),
+       50ms 後淡出 220ms;目標同時紅框閃一下;音效改 sfx-gunshot(發射子彈.mp3,與大對抗警長/機械師普攻同一支)。
+     ⚠ 舊金色光彈 .rbullet 版保留於下方註解;命中結算仍在 140ms 後(_reactHit),節奏不變。 */
+  var dx = tx0 - gx, dy = ty0 - gy;
+  var len = Math.sqrt(dx * dx + dy * dy), ang = Math.atan2(dy, dx) * 180 / Math.PI;
+  var b = document.createElement('div');
+  b.className = 'rbeam';
+  b.style.left = gx + 'px'; b.style.top = gy + 'px'; b.style.width = len + 'px';
+  b.style.transform = 'rotate(' + ang + 'deg) translateY(-1.5px)';
+  box.appendChild(b);
+  var fl = document.createElement('div');   /* 槍口火光 */
+  fl.className = 'rmuzzle';
+  fl.style.left = gx + 'px'; fl.style.top = gy + 'px';
+  box.appendChild(fl);
+  try{ d.el.classList.add('rhitflash'); }catch(e){}
+  playSfx('sfx-gunshot', 0.6);
+  setTimeout(function(){ b.style.opacity = '0'; }, 50);
+  setTimeout(function(){
+    if(b.parentNode) b.parentNode.removeChild(b);
+    if(fl.parentNode) fl.parentNode.removeChild(fl);
+    try{ d.el.classList.remove('rhitflash'); }catch(e){}
+    _reactHit(d);
+  }, 140);
+}
+/* ── 舊版(v1.4.0～v1.9.4)砲台光彈版,保留備查 ──
+function _reactShoot(d){
+  if(!_RC || d.dead || d.locked || _RC.paused) return;
+  d.locked = true;
+  var box = $('reactbox'), bw = box.clientWidth, bh = box.clientHeight;
+  var ew = d.el.offsetWidth || 90, eh = d.el.offsetHeight || 44;
+  var tx0 = d.x + ew / 2, ty0 = d.y + eh / 2;
   var gx = bw / 2, gy = bh - 26;
   try{
     var g = $('rgun');
@@ -3370,7 +3436,7 @@ function _reactShoot(d){
   b.style.transform = 'translate(' + (gx - 7) + 'px,' + (gy - 7) + 'px)';
   box.appendChild(b);
   playSfx('sfx-tap', 0.3);
-  /* 下一幀才設終點,transition 才會動 */
+  /* 下一幀才設終點,transition 才會動 * /
   requestAnimationFrame(function(){
     b.style.transform = 'translate(' + (tx0 - 7) + 'px,' + (ty0 - 7) + 'px)';
   });
@@ -3379,6 +3445,8 @@ function _reactShoot(d){
     _reactHit(d);
   }, 140);
 }
+
+── 舊版結束 ── */
 /* ★ v1.4.0 — 誤擊爆炸:煙霧爆開.gif 在該顆位置炸開,半徑 R 內其他掉落物(含正確的)一起炸掉消失 */
 function _reactBlast(d){
   var box = $('reactbox'), bw = box.clientWidth;
@@ -3477,7 +3545,7 @@ function _reactGen(r, wantGood){
 }
 function _reactSpawn(){
   var r = _RC.r, box = $('reactbox');
-  var isGood = Math.random() < 0.45;               // 好壞比約 45 / 55
+  var isGood = Math.random() < 0.5;                // ★ v1.9.7 老師:正確答案比率提高至 50%(原 0.45=45/55)
   var txt;
   if(r.ops && r.ops.length){ txt = _reactGen(r, isGood); }
   else{
@@ -3514,10 +3582,12 @@ function _reactHit(d){
     playSfx('sfx-ok', 0.45);
     try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
     _reactFloat(d, '+' + _gain, '#3ec87a');
+    _reactFirework(d);   /* ★ v1.9.7 老師:射中正確 ⇒ 煙火特效,把周圍「錯誤」的目標清掉(對的不動、不扣分)⇒ 解決重疊遮蔽射不到 */
   }else{
     _RC.wrong++;
     d.el.className = 'rdrop wrong';
     playSfx('sfx-ng', 0.4);
+    playSfx('sfx-explode', 0.5);   /* ★ v1.9.7 老師:射中錯誤新增爆炸音效(game_explosion2.mp3,本頁既有 <audio>) */
     _reactFloat(d, '−1', '#e84040');
     _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
   }
@@ -3525,6 +3595,38 @@ function _reactHit(d){
   /* 被點到的那顆 0.35 秒後移走(留一下讓孩子看到回饋) */
   var el = d.el;
   setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 350);
+}
+/* ★ v1.9.7 — 命中正確答案的煙火:純 CSS 粒子(14 顆彩色小球由目標中心向外炸開,0.7 秒淡出),
+   不用 召喚煙火.gif(2.4MB,且 mgFx 每次帶新 query 會重抓)。同時清除半徑 R 內所有「錯誤」目標(dead+blown 淡出,不扣分、不計 blown);
+   正確的保留 ⇒ 疊在一起的錯誤算式會被炸開,露出底下被遮住的目標。 */
+function _reactFirework(d){
+  try{
+    var box = $('reactbox'), bw = box.clientWidth;
+    var ew = d.el.offsetWidth || 90, eh = d.el.offsetHeight || 44;
+    var cx = d.x + ew / 2, cy = d.y + eh / 2;
+    var COLORS = ['#ffd23f', '#ff5c8a', '#4fd1ff', '#7cff6b', '#ff9f43', '#c77dff', '#ffffff'], i;
+    for(i = 0; i < 14; i++){
+      var p = document.createElement('div'), ang = (Math.PI * 2 / 14) * i + Math.random() * 0.4, dist = 55 + Math.random() * 50;
+      p.className = 'rfw';
+      p.style.left = cx + 'px'; p.style.top = cy + 'px';
+      p.style.background = COLORS[i % COLORS.length];
+      p.style.setProperty('--dx', Math.round(Math.cos(ang) * dist) + 'px');
+      p.style.setProperty('--dy', Math.round(Math.sin(ang) * dist) + 'px');
+      box.appendChild(p);
+      (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 760); })(p);
+    }
+    var R = bw >= 700 ? 200 : 160, o, ox, oy, k;
+    for(k = 0; k < _RC.drops.length; k++){
+      o = _RC.drops[k];
+      if(o === d || o.dead || o.good || !o.el || !o.el.parentNode) continue;
+      ox = o.x + (o.el.offsetWidth || 90) / 2; oy = o.y + (o.el.offsetHeight || 44) / 2;
+      if(Math.sqrt((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy)) <= R){
+        o.dead = true;
+        o.el.className += ' blown';
+        (function(el){ setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 380); })(o.el);
+      }
+    }
+  }catch(e){}
 }
 function _reactFloat(d, txt, color){
   var f = document.createElement('div');
@@ -4294,8 +4396,8 @@ window.mgAnswer = function(i){
        各寫一份日後改資料格式一定會漏掉其中一邊。 */
   var _eng = mgEng(x, q);   /* ★ v1.9.0 每題可覆寫引擎(分類關混入的選擇題走 q.a) */
   if(_eng === 'sort' || _eng === 'drag'){
-    var ci = -1, k;
-    for(k = 0; k < x.bins.length; k++){ if(x.bins[k].id === q.b) ci = k; }
+    var ci = -1, k, _bins = mgBins(x, q);   /* ★ v1.9.7 每題可覆寫 bins */
+    for(k = 0; k < _bins.length; k++){ if(_bins[k].id === q.b) ci = k; }
     ansIdx = ci;
   }else{
     ansIdx = q.a;

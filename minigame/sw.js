@@ -1,5 +1,8 @@
 /* ============================================================================
- * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.9.4(2026-09-06)
+ * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.9.7(2026-09-06)
+ * ★ v1.9.7:版號同步(算數大進擊煙火/爆炸音效/50%、mgBins、課堂複習題全面混入)
+ * ★ v1.9.6:版號同步(迷宮跨領域題組在 minigame_db.js)
+ * ★ v1.9.5:版號同步(算數大進擊射擊特效在 index.html)
  * ★ v1.9.4:版號同步(連連看殘留圖層修正在 index.html)
  * ★ v1.9.3:版號同步(俗諺連連看在 index.html/minigame_db.js)
  * ★ v1.9.2:版號同步(缺圖名單誤記根治在 index.html;題圖快取策略與 MG_IMG_VER 不動,不重抓)
@@ -18,8 +21,8 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.9.4';
-var SHELL = 'lxps-mini-shell-v1.9.4';
+var MINI_VERSION = 'v1.9.7';
+var SHELL = 'lxps-mini-shell-v1.9.7';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [
