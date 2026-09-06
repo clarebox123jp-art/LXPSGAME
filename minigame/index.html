@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
      小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.1(2026-09-06)
-     ★ v1.9.1:秤重 8 張 + 俗諺 9 張 + 聽音坊 8 張題圖(webp)掛接;本檔改:翻牌卡背 proverb_mc_back.webp、MG_PIC_MAP 高低/走向/同音 5 鍵 .webp、播放鈕 music_mu_speaker.webp、算數大進擊掉落幣 coinrush_coin_gold.webp、迷宮 16 張(牆/起點/終點/玩家/踩過陷阱/12 標記)、通用 12 張(學霸 5 表情:首頁加油/閘門思考/解說開心・連擊≥3 驚訝・答錯惋惜;HUD 連擊火焰)
+     ★ v1.9.1:秤重 8 張 + 俗諺 9 張 + 聽音坊 8 張題圖(webp)掛接;本檔改:吉祥物引導語「轉學生學霸」→「力行小博士」(4 句);橫式解說卡:學霸表情圖撐滿左下、題圖移到畫面正中央放大框 #fbzoom(不蓋停靠解說);翻牌卡背 proverb_mc_back.webp、MG_PIC_MAP 高低/走向/同音 5 鍵 .webp、播放鈕 music_mu_speaker.webp、算數大進擊掉落幣 coinrush_coin_gold.webp、迷宮 16 張(牆/起點/終點/玩家/踩過陷阱/12 標記)、通用 12 張(學霸 5 表情:首頁加油/閘門思考/解說開心・連擊≥3 驚訝・答錯惋惜;HUD 連擊火焰)
      ★ v1.9.0:①聽音坊出題/作答期間自動暫停關卡 BGM、解說時恢復(_earDuck);②poolOf 支援資料表 gen 欄位 → 每局即時生成題(秤重/聽音坊/翻牌);③mgEng() 每題可覆寫引擎(分類關混入選擇題)、renderQuiz 2/3 選項排版、mgPicUrl 支援 '@根目錄檔名';④優化:缺圖名單 _MG_MISS(不再重打 404)、pic 自帶副檔名(.webp)、分類關分層抽題(一半分類一半選擇)、聽音坊整關靜音、答錯才顯示口訣 hintOnWrong、解說 8 秒自動下一題
      ★ v1.8.0:頂列版本徽章(目前/最新版號;過舊變紅+🔄更新鈕、最新淡綠),抓 sw.js 比對 MINI_VERSION
      ★ v1.7.1:首頁吉祥物介紹文重寫為活潑勵志,雙版各 5 句每次隨機
@@ -690,7 +690,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 #feedback .fb-txt{flex:1;min-width:0;}
 .fxgif.full{left:0;top:0;width:100%;height:100%;transform:none;object-fit:cover;opacity:.5;animation:none;}
-/* 吉祥物(轉學生學霸)+ 對話泡泡:首頁與閘門頁共用 */
+/* 吉祥物(力行小博士,★ v1.9.1 老師改名;原「轉學生學霸」)+ 對話泡泡:首頁與閘門頁共用 */
 .mascot{display:flex;align-items:center;gap:12px;margin:2px 0 12px;}
 .mascot img{
   width:96px;height:96px;object-fit:cover;object-position:top;border-radius:50%;flex:0 0 auto;
@@ -1328,6 +1328,29 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #feedback.docked .fb-txt{display:none;}
   #feedback.docked .fb-body:not(:has(.fb-img)){display:none;}
 }
+/* ★ v1.9.1 老師:「回答後左下角小博士反饋圖放大佔滿左下;答案圖片改到畫面正中央放大顯示,不蓋住答案說明」
+   橫式:①左欄解說卡(docked)撐滿剩餘高度,標題列改直排、學霸表情圖 flex 撐滿、標題文字在圖下方;fb-body(原題圖+內文)隱藏。
+   ②題圖改放 #fbzoom:固定在視窗水平正中、頂端 70px,最大高度由 JS 依停靠解說區 #fbdock 的實際頂緣計算(永遠不重疊);
+     z 114 低於 #fbdock 115 / 下一題 116;pointer-events:none 不吃點擊。直式版面零改動(#fbzoom 不顯示、解說卡照舊)。 */
+#fbzoom{display:none;}
+@media (orientation:landscape){
+  #page-play > #feedback.docked{align-self:stretch;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+  #feedback.docked .fb-head{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;text-align:center;border-bottom:0;}
+  #feedback.docked .pic-fbm{flex:1 1 auto;min-height:0;width:100%;height:auto;max-height:100%;object-fit:contain;margin:0;}
+  #feedback.docked .fb-body{display:none;}
+  #fbzoom.show{
+    display:flex;position:fixed;z-index:114;left:50%;top:70px;transform:translateX(-50%);pointer-events:none;
+    align-items:center;justify-content:center;background:rgba(8,10,16,.55);border:2.5px solid var(--gold);border-radius:18px;
+    padding:8px;box-shadow:0 14px 40px rgba(0,0,0,.6);
+  }
+  #fbzoom.show.ok{border-color:var(--grass);}
+  #fbzoom.show.ng{border-color:var(--brick);}
+  #fbzoom.show img{display:block;width:auto;height:auto;max-width:60vw;max-height:45vh;object-fit:contain;border-radius:12px;}
+}
+@media (orientation:landscape) and (max-height:520px){
+  #fbzoom.show{top:56px;padding:5px;border-radius:12px;}
+  #fbzoom.show img{max-width:56vw;}
+}
 @media (orientation:landscape) and (max-height:520px){
   #fbdock.show{bottom:66px;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:min(56vw,600px);max-height:34vh;font-size:15px;padding:10px 14px;border-radius:12px;}
 }
@@ -1654,6 +1677,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <!-- ★ v1.5.1 — 解說文字停靠區(老師:「正確答案說明文字移到下一題按鈕上方,且放大」):
      橫式時固定在右下「下一題」鈕正上方;由 showFeedback 填字、renderQuestion/mgNext/離場清空。左欄解說卡保留標題+圖。 -->
 <div id="fbdock"></div>
+<!-- ★ v1.9.1 — 題圖放大框(橫式):固定在畫面正中央、位於停靠解說區上方;由 showFeedback 填圖、mgDockHide 清空 -->
+<div id="fbzoom"></div>
 
 <!-- ★ v1.4.0 — 暫停遮罩(老師需求③):蓋住整個作答區,倒數與掉落停住;
      ⚠ 但「本局用時」是牆鐘(startedAt→結算)⇒ 暫停期間照算,防止按暫停慢慢查答案。 -->
@@ -1803,8 +1828,8 @@ function renderGate(){
     : '這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,'
     + '等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!';
   mgMascot('gate-mascot', 'gate-bubble', (MG.style === 's')
-    ? '我是轉學生學霸,小學堂快做好了,再等一下下!'
-    : '我是轉學生學霸!小學堂還在最後調整,開放的時候我會在這裡等大家。', 'common_mascot_think.webp');
+    ? '我是力行小博士,小學堂快做好了,再等一下下!'
+    : '我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。', 'common_mascot_think.webp');
   $('gate-note').textContent = (MG.style === 's')
     ? '(老師要測試請按上面的老師登入)'
     : '(這是老師的測試入口;學生不需要登入,直接回大作戰就好)';
@@ -2261,14 +2286,14 @@ function renderGrid(){
   /* ★ v1.7.1 老師:「首頁介紹文重寫,更活潑勵志」—— 每次進首頁隨機一句(雙版各 5 句),重玩不無聊 */
   var _n = MG.games.length;
   var _linesS = [
-    '嗨!我是轉學生學霸!' + _n + ' 座小學堂等你來闖,答錯沒關係,再玩一次就更厲害!',
+    '嗨!我是力行小博士!' + _n + ' 座小學堂等你來闖,答錯沒關係,再玩一次就更厲害!',
     '每答對一題,你的大腦就升一級!連擊越長、分數越高,衝吧小英雄!',
     '今天想挑戰哪一關?貓空、台灣、木柵的秘密都藏在卡片裡,點開就出發!',
     '沒有人一開始就會,玩過三次的你會比第一次強很多!來吧!',
     '快手有加成、暫停也算時間 —— 相信自己,直接答就對了!'
   ];
   var _linesF = [
-    '嗨,我是轉學生學霸!這裡有 ' + _n + ' 座木柵與台灣的小學堂,每一局題目都不一樣。點卡片看玩法、按開始就出發;答對加分、連續答對有連擊加成、越快完成加成越高。答錯不扣信心,那正是你要學的東西!登入後最佳成績會存到雲端。',
+    '嗨,我是力行小博士!這裡有 ' + _n + ' 座木柵與台灣的小學堂,每一局題目都不一樣。點卡片看玩法、按開始就出發;答對加分、連續答對有連擊加成、越快完成加成越高。答錯不扣信心,那正是你要學的東西!登入後最佳成績會存到雲端。',
     '學習就像爬貓空的步道:一步一步走,回頭一看已經在山頂。' + _n + ' 座小學堂由你選,每次都是新題目;先看玩法再按開始,答對加分、連擊加成、快手還有額外加成!不用登入就能玩,登入後成績自動存雲端。',
     '你知道嗎?答錯的那一題,才是讓你變強的那一題!' + _n + ' 座小學堂涵蓋自然、數學、語文、音樂與木柵在地知識,每局隨機出題,越玩越熟。點卡片看玩法、按開始挑戰,登入後最佳成績會保存在雲端。',
     '小英雄,準備好了嗎?' + _n + ' 座小學堂等你來闖:分類、地圖、聽音、射擊、迷宮……每一局題目都會換。答對有連擊加成、越快完成分數越高,答錯會告訴你為什麼。不用登入就能玩,登入後成績存雲端、隨時挑戰自己的紀錄!',
@@ -4217,6 +4242,28 @@ function showFeedback(ok, head, why){
       }else{ dk.className = ''; dk.innerHTML = ''; f.classList.remove('docked'); }
     }
   }catch(e){}
+  /* ★ v1.9.1 題圖放大框:橫式且有題圖時,放到畫面正中央;最大高度 = 停靠解說區頂緣 − 框頂 − 12px(永不重疊) */
+  try{
+    var zb = $('fbzoom');
+    if(zb){
+      var _land = false; try{ _land = window.matchMedia && window.matchMedia('(orientation: landscape)').matches; }catch(e2){}
+      if(_img && _land){
+        zb.className = 'show ' + (ok ? 'ok' : 'ng');
+        zb.innerHTML = '<img src="' + _img + '" alt="" onerror="var p=this.parentNode;if(p){p.className=\'\';p.innerHTML=\'\';}">';
+        var _fit = function(){
+          try{
+            var dk2 = $('fbdock'), im2 = zb.getElementsByTagName('img')[0]; if(!im2) return;
+            var top = zb.getBoundingClientRect().top, lim = window.innerHeight - 120;
+            if(dk2 && dk2.className.indexOf('show') >= 0){ var r = dk2.getBoundingClientRect(); if(r.top > 0) lim = r.top; }
+            var mh = Math.max(120, lim - top - 12 - 16);
+            im2.style.maxHeight = mh + 'px';
+          }catch(e3){}
+        };
+        _fit();
+        if(window.requestAnimationFrame) window.requestAnimationFrame(_fit); else setTimeout(_fit, 30);
+      }else{ zb.className = ''; zb.innerHTML = ''; }
+    }
+  }catch(e){}
 }
 /* ★ v1.9.0 優化⑤:解說卡自動前進 —— 小朋友常忘了按「下一題」。8 秒倒數顯示在按鈕上,玩家按 ⏸ 時停住;
    mgNext / mgHome / finishGame 都會取消。用時計算是牆鐘,所以自動前進不會讓成績變差(反而少等)。 */
@@ -4240,7 +4287,7 @@ function mgAutoNextStop(){
   var b = $('nextrow') ? $('nextrow').getElementsByTagName('button')[0] : null;
   if(b && _AN.label) b.textContent = _AN.label;
 }
-function mgDockHide(){ var dk = $('fbdock'); if(dk){ dk.className = ''; dk.innerHTML = ''; } var f = $('feedback'); if(f) f.classList.remove('docked'); }
+function mgDockHide(){ var dk = $('fbdock'); if(dk){ dk.className = ''; dk.innerHTML = ''; } var zb = $('fbzoom'); if(zb){ zb.className = ''; zb.innerHTML = ''; } var f = $('feedback'); if(f) f.classList.remove('docked'); }   /* ★ v1.9.1 連題圖放大框一起清 */
 window.mgNext = function(){
   mgAutoNextStop();   /* ★ v1.9.0 */
   playSfx('sfx-tap', 0.3);
