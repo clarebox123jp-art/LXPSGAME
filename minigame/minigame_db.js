@@ -1,5 +1,6 @@
 /* ============================================================================
- * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.9.3(2026-09-06)
+ * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.9.4(2026-09-06)
+ * ★ v1.9.4:版號同步(本檔內容未改)
  * ★ v1.9.3:俗諺翻牌 → 連連看(老師裁定):第 12 款名稱/圖示/story/goal/how/skills 雙版文案改寫、rounds 與 MG_GEN.match 的回合標題「翻牌配對」→「連連看」;pairs 資料與引擎鍵 match 不動
  * ★ v1.9.2:版號同步(本檔內容未改;缺圖名單誤記根治在 index.html)
  * ★ v1.9.1:秤重 8 張題圖(webp)掛接:12 舊題副檔名改 .webp、24 題依題型補 pic、MG_GEN.scale 八題型各配固定圖(SCP);俗諺 8 張題圖(pv04/05/06/07/09/13 + 新編 pv37 少年袂曉想 / pv38 三分天註定)+ 翻牌卡背 proverb_mc_back.webp;pv01 食果子拜樹頭;天氣關 v1.7.0 分類題 11 題掛 weather_w13~w18/w20~w24.webp(w19 未生);排排站 teaorder_t01~t13(製茶 6 步/太陽 5 位/河流上游 2 站)改 .webp;聽音坊 8 張 music_mu_*(speaker/up/down/same/high/low 由 index.html MG_PIC_MAP/播放鈕引用;penta 掛五聲音階題、count 掛生成數音題)

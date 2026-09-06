@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.3(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.4(2026-09-06)
+     ★ v1.9.4(老師截圖:迷宮關上方殘留連連看):#matchbox.link 的 display:grid !important 壓過 .hidden ⇒ 改只覆寫欄數 + .link.hidden 明確收起;_matchPaint 遇 hidden 不重畫;600ms 延遲回呼加 _MC 空值防護。全引擎圖層複查:10 個容器皆在 _BOXES 清單、無其他 id 級 !important display 規則。
      ★ v1.9.3(老師裁定):俗諺翻牌改「連連看」—— 左欄上半句、右欄下半句各自洗牌,先點左再點右,連對變綠並畫線,連錯紅一下重選;零失誤滿分(_ML_MAX_WRONG);舊翻牌版整段留註解。
      ★ v1.9.2(老師回報回收題物品沒圖・裁定甲):缺圖名單誤記根治 —— 名單鍵改含 MG_VER(改版自動歸零、清舊鍵、不重抓題圖)+ onerror 1.5 秒後重試一次才記入 + 24 小時自動重試;mgPicTag 補 data-cls。
      ★ v1.9.1:秤重 8 張 + 俗諺 9 張 + 聽音坊 8 張題圖(webp)掛接;本檔改:吉祥物引導語「轉學生學霸」→「力行小博士」(4 句);橫式解說卡:學霸表情圖撐滿左下、題圖移到畫面正中央放大框 #fbzoom(不蓋停靠解說);翻牌卡背 proverb_mc_back.webp、MG_PIC_MAP 高低/走向/同音 5 鍵 .webp、播放鈕 music_mu_speaker.webp、算數大進擊掉落幣 coinrush_coin_gold.webp、迷宮 16 張(牆/起點/終點/玩家/踩過陷阱/12 標記)、通用 12 張(學霸 5 表情:首頁加油/閘門思考/解說開心・連擊≥3 驚訝・答錯惋惜;HUD 連擊火焰)
@@ -316,7 +317,10 @@ button[disabled]{opacity:.45;}
 .mcard.done{background:var(--grass);color:#0d2a18;border-color:var(--grass);opacity:.75;}
 .mcard.miss{background:var(--brick);color:#fff;}
 /* ★ v1.9.3 連連看版面:兩欄 + 中間畫線層;!important 壓過各 media query 裡的 repeat(4,1fr) */
-#matchbox.link{display:grid !important;grid-template-columns:1fr 1fr !important;gap:0 !important;position:relative;column-gap:0 !important;}
+/* ★ v1.9.4 修:原 display:grid !important 的 id 選擇器比 .hidden{display:none !important} 更特定 ⇒ hide() 失效、換關後連連看殘留在迷宮上方。
+   改為只覆寫欄數,display 交回基底 #matchbox{display:grid} 與 .hidden 決定;再加一條 .link.hidden 明確收起雙保險。 */
+#matchbox.link{grid-template-columns:1fr 1fr !important;gap:0 !important;position:relative;column-gap:0 !important;}
+#matchbox.link.hidden{display:none !important;}
 #matchbox.link .mlcol{display:flex;flex-direction:column;gap:10px;padding:0 44px 0 0;}
 #matchbox.link #ml-right{padding:0 0 0 44px;}
 #matchbox.link .mcard{color:var(--mist);background:linear-gradient(180deg,var(--ink2),var(--tea));cursor:pointer;min-height:60px;}
@@ -1706,7 +1710,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.9.3"></script>
+<script src="minigame_db.js?v=v1.9.4"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1715,7 +1719,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.9.3';
+var MG_VER = 'v1.9.4';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -3617,6 +3621,7 @@ function renderMatch(x, r){
 function _matchPaint(){
   if(!_MC) return;
   var box = $('matchbox'), html = '', i, c, cls;
+  if(box.classList.contains('hidden')) return;   /* ★ v1.9.4 容器已被 hide() 收起就不重畫(不可把 hidden 洗掉) */
   box.className = 'link';
   html += '<div class="mlcol" id="ml-left">';
   for(i = 0; i < _MC.L.length; i++){
@@ -3682,7 +3687,7 @@ window.mgMatchTap = function(side, i){
     if(el1) el1.className = 'mcard lft miss';
     if(el2) el2.className = 'mcard rgt miss';
     playSfx('sfx-ng', 0.3);
-    setTimeout(function(){ _MC.lock = false; _MC.sel = -1; _matchPaint(); }, 600);
+    setTimeout(function(){ if(!_MC) return; _MC.lock = false; _MC.sel = -1; _matchPaint(); }, 600);   /* ★ v1.9.4 600ms 內離開關卡 _MC 已被 stopEngines 清空,不可再碰 */
   }
 };
 function _matchFinish(){
