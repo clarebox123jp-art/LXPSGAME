@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.2(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.3(2026-09-06)
+     ★ v1.9.3(老師裁定):俗諺翻牌改「連連看」—— 左欄上半句、右欄下半句各自洗牌,先點左再點右,連對變綠並畫線,連錯紅一下重選;零失誤滿分(_ML_MAX_WRONG);舊翻牌版整段留註解。
      ★ v1.9.2(老師回報回收題物品沒圖・裁定甲):缺圖名單誤記根治 —— 名單鍵改含 MG_VER(改版自動歸零、清舊鍵、不重抓題圖)+ onerror 1.5 秒後重試一次才記入 + 24 小時自動重試;mgPicTag 補 data-cls。
      ★ v1.9.1:秤重 8 張 + 俗諺 9 張 + 聽音坊 8 張題圖(webp)掛接;本檔改:吉祥物引導語「轉學生學霸」→「力行小博士」(4 句);橫式解說卡:學霸表情圖撐滿左下、題圖移到畫面正中央放大框 #fbzoom(不蓋停靠解說);翻牌卡背 proverb_mc_back.webp、MG_PIC_MAP 高低/走向/同音 5 鍵 .webp、播放鈕 music_mu_speaker.webp、算數大進擊掉落幣 coinrush_coin_gold.webp、迷宮 16 張(牆/起點/終點/玩家/踩過陷阱/12 標記)、通用 12 張(學霸 5 表情:首頁加油/閘門思考/解說開心・連擊≥3 驚訝・答錯惋惜;HUD 連擊火焰)
      ★ v1.9.0:①聽音坊出題/作答期間自動暫停關卡 BGM、解說時恢復(_earDuck);②poolOf 支援資料表 gen 欄位 → 每局即時生成題(秤重/聽音坊/翻牌);③mgEng() 每題可覆寫引擎(分類關混入選擇題)、renderQuiz 2/3 選項排版、mgPicUrl 支援 '@根目錄檔名';④優化:缺圖名單 _MG_MISS(不再重打 404)、pic 自帶副檔名(.webp)、分類關分層抽題(一半分類一半選擇)、聽音坊整關靜音、答錯才顯示口訣 hintOnWrong、解說 8 秒自動下一題
@@ -314,6 +315,19 @@ button[disabled]{opacity:.45;}
 .mcard.open::after,.mcard.done::after{display:none;}
 .mcard.done{background:var(--grass);color:#0d2a18;border-color:var(--grass);opacity:.75;}
 .mcard.miss{background:var(--brick);color:#fff;}
+/* ★ v1.9.3 連連看版面:兩欄 + 中間畫線層;!important 壓過各 media query 裡的 repeat(4,1fr) */
+#matchbox.link{display:grid !important;grid-template-columns:1fr 1fr !important;gap:0 !important;position:relative;column-gap:0 !important;}
+#matchbox.link .mlcol{display:flex;flex-direction:column;gap:10px;padding:0 44px 0 0;}
+#matchbox.link #ml-right{padding:0 0 0 44px;}
+#matchbox.link .mcard{color:var(--mist);background:linear-gradient(180deg,var(--ink2),var(--tea));cursor:pointer;min-height:60px;}
+#matchbox.link .mcard::after{display:none;}
+#matchbox.link .mcard.lft{border-color:rgba(242,168,60,.55);}
+#matchbox.link .mcard.rgt{border-color:rgba(79,158,217,.55);}
+#matchbox.link .mcard.sel{background:var(--sun);color:#2b1d05;border-color:var(--gold);transform:scale(1.04);box-shadow:0 0 0 3px rgba(242,168,60,.35),0 4px 0 rgba(0,0,0,.28);}
+#matchbox.link .mcard.done{background:var(--grass);color:#0d2a18;border-color:var(--grass);opacity:.9;}
+#matchbox.link .mcard.miss{background:var(--brick);color:#fff;}
+#matchbox.link #ml-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+#matchbox.link #ml-svg line{stroke:var(--grass);stroke-width:5;stroke-linecap:round;}
 
 /* ── 引擎 G:反應點擊(老師指定 A)────────────
    天上掉下許多候選答案,點對加分、點錯扣分。 */
@@ -1692,7 +1706,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.9.2"></script>
+<script src="minigame_db.js?v=v1.9.3"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1701,7 +1715,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.9.2';
+var MG_VER = 'v1.9.3';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -3581,6 +3595,108 @@ function _reactFinish(){
  *  引擎 F:翻牌配對(記憶 + 配對)
  *  ★ 一次翻兩張,配成一對才留著。考的是「記位置」加「知道誰跟誰是一組」。
  * ══════════════════════════════════════════════════════════ */
+/* ★ v1.9.3(老師 2026-09-06 裁定)— 引擎 F 由「翻牌記憶」改為「連連看」:
+   左欄=上半句、右欄=下半句(各自洗牌),先點左再點右;配對正確兩張變綠並畫一條線連起來,
+   配錯紅一下重選。四對全連完就結算:零失誤=滿分(_ML_MAX_WRONG 可調)。
+   ⚠ 資料表 pairs 格式不變([上句,下句]),MG_GEN.match 生成器零改動。
+   ⚠ 舊翻牌版整段保留於下方註解備查(勿刪)。 */
+var _MC = null;   // { L:[{txt,pair,done}], R:[...], sel:-1, done:0, tries:0, wrong:0, lock:false, links:[{l,r}] }
+var _ML_MAX_WRONG = 0;   /* 滿分容許的錯誤次數 */
+function renderMatch(x, r){
+  hide('card-area');
+  show('matchbox');
+  $('qcard').textContent = tx(r.q);
+  var L = [], R = [], i;
+  for(i = 0; i < r.pairs.length; i++){
+    L.push({ txt: r.pairs[i][0], pair: i });
+    R.push({ txt: r.pairs[i][1], pair: i });
+  }
+  _MC = { L: shuffle(L), R: shuffle(R), sel: -1, done: 0, tries: 0, wrong: 0, lock: false, links: [] };
+  _matchPaint();
+}
+function _matchPaint(){
+  if(!_MC) return;
+  var box = $('matchbox'), html = '', i, c, cls;
+  box.className = 'link';
+  html += '<div class="mlcol" id="ml-left">';
+  for(i = 0; i < _MC.L.length; i++){
+    c = _MC.L[i]; cls = 'mcard lft' + (c.done ? ' done' : '') + (i === _MC.sel ? ' sel' : '');
+    html += '<div class="' + cls + '" id="ml-l' + i + '" onclick="mgMatchTap(0,' + i + ')">' + esc(c.txt) + '</div>';
+  }
+  html += '</div><svg id="ml-svg" aria-hidden="true"></svg><div class="mlcol" id="ml-right">';
+  for(i = 0; i < _MC.R.length; i++){
+    c = _MC.R[i]; cls = 'mcard rgt' + (c.done ? ' done' : '');
+    html += '<div class="' + cls + '" id="ml-r' + i + '" onclick="mgMatchTap(1,' + i + ')">' + esc(c.txt) + '</div>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+  _matchLines();
+}
+/* 已連成的對子畫線:左卡右緣中點 → 右卡左緣中點(座標相對 #matchbox;視窗改變時重畫) */
+function _matchLines(){
+  try{
+    if(!_MC) return;
+    var box = $('matchbox'), svg = $('ml-svg'); if(!box || !svg) return;
+    var bb = box.getBoundingClientRect(), i, h = '', a, b, ra, rb;
+    svg.setAttribute('viewBox', '0 0 ' + Math.max(1, Math.round(bb.width)) + ' ' + Math.max(1, Math.round(bb.height)));
+    for(i = 0; i < _MC.links.length; i++){
+      a = $('ml-l' + _MC.links[i].l); b = $('ml-r' + _MC.links[i].r);
+      if(!a || !b) continue;
+      ra = a.getBoundingClientRect(); rb = b.getBoundingClientRect();
+      h += '<line x1="' + (ra.right - bb.left) + '" y1="' + (ra.top + ra.height / 2 - bb.top) + '" x2="' + (rb.left - bb.left) + '" y2="' + (rb.top + rb.height / 2 - bb.top) + '"/>';
+    }
+    svg.innerHTML = h;
+  }catch(e){}
+}
+try{ window.addEventListener('resize', function(){ if(_MC && $('matchbox') && !$('matchbox').classList.contains('hidden')) _matchLines(); }); }catch(e){}
+window.mgMatchTap = function(side, i){
+  if(MG.answered || !_MC || _MC.lock) return;
+  if(side === 0){
+    if(_MC.L[i].done) return;
+    _MC.sel = (_MC.sel === i) ? -1 : i;   /* 再點一次取消;點另一張就換 */
+    playSfx('sfx-tap', 0.3);
+    _matchPaint();
+    return;
+  }
+  if(_MC.R[i].done) return;
+  if(_MC.sel < 0){
+    playSfx('sfx-tap', 0.3);
+    toast(MG.style === 's' ? '先點左邊的上半句!' : '請先點選左邊的上半句,再點右邊的下半句。');
+    return;
+  }
+  _MC.tries++;
+  var a = _MC.L[_MC.sel], b = _MC.R[i], li = _MC.sel;
+  if(a.pair === b.pair){
+    a.done = true; b.done = true;
+    _MC.done++;
+    _MC.links.push({ l: li, r: i });
+    _MC.sel = -1;
+    playSfx('sfx-ok', 0.45);
+    _matchPaint();
+    try{ var _c = mgCenterOf('ml-r' + i); mgFx('hit', _c.x, _c.y, 140, 600); }catch(e){}
+    if(_MC.done >= _MC.L.length) _matchFinish();
+  }else{
+    _MC.wrong++;
+    _MC.lock = true;
+    var el1 = $('ml-l' + li), el2 = $('ml-r' + i);
+    if(el1) el1.className = 'mcard lft miss';
+    if(el2) el2.className = 'mcard rgt miss';
+    playSfx('sfx-ng', 0.3);
+    setTimeout(function(){ _MC.lock = false; _MC.sel = -1; _matchPaint(); }, 600);
+  }
+};
+function _matchFinish(){
+  MG.answered = true;
+  stopTimer();
+  var r = MG.order[MG.idx];
+  var perfect = (_MC.wrong <= _ML_MAX_WRONG);
+  scoreIt(perfect);
+  showFeedback(perfect,
+    perfect ? ('✅ 全部連對了!一次都沒有錯')
+            : ('🔶 全部連完,配錯了 ' + _MC.wrong + ' 次(一次都不錯才有分數)'),
+    tx(r.why));
+}
+/* ── 舊版(v1.3.0～v1.9.2)翻牌記憶版,保留備查 ──
 var _MC = null;   // { cards:[{txt,pair}], open:[i], done:0, tries:0, lock:false }
 
 function renderMatch(x, r){
@@ -3602,7 +3718,7 @@ function _matchPaint(){
     cls = 'mcard';
     if(c.done) cls += ' done';
     else if(_MC.open.indexOf(i) >= 0) cls += ' open';
-    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + mgPicTag('proverb_mc_back.webp', 'pic-back') + esc(c.txt) + '</div>';   /* v1.3.0 預留卡背圖 */
+    html += '<div class="' + cls + '" onclick="mgMatchTap(' + i + ')">' + mgPicTag('proverb_mc_back.webp', 'pic-back') + esc(c.txt) + '</div>';   /* v1.3.0 預留卡背圖 * /
   }
   $('matchbox').innerHTML = html;
 }
@@ -3627,7 +3743,7 @@ window.mgMatchTap = function(i){
     _matchPaint();
     if(_MC.done >= _MC.cards.length / 2) _matchFinish();
   }else{
-    /* 配錯:紅一下再蓋回去。0.75 秒剛好夠小朋友看清楚翻到什麼 */
+    /* 配錯:紅一下再蓋回去。0.75 秒剛好夠小朋友看清楚翻到什麼 * /
     var els = $('matchbox').getElementsByClassName('mcard');
     if(els[_MC.open[0]]) els[_MC.open[0]].className = 'mcard miss';
     if(els[_MC.open[1]]) els[_MC.open[1]].className = 'mcard miss';
@@ -3643,7 +3759,7 @@ function _matchFinish(){
   var r = MG.order[MG.idx];
   /* 判定標準:翻牌次數不超過「對數 × 2」就算full marks。
      ⚠ 刻意不要求「零失誤」——記憶遊戲第一輪本來就一定得先翻開來看,
-       要求零失誤等於逼小朋友用猜的,那就失去練記憶的意義了。 */
+       要求零失誤等於逼小朋友用猜的,那就失去練記憶的意義了。 * /
   var perfect = (_MC.tries <= r.pairs.length * 2);
   scoreIt(perfect);
   showFeedback(perfect,
@@ -3651,6 +3767,9 @@ function _matchFinish(){
             : ('🔶 全部配對完成,用了 ' + _MC.tries + ' 次(' + (r.pairs.length * 2) + ' 次以內可以拿滿分)'),
     tx(r.why));
 }
+
+
+── 舊版結束 ── */
 
 /* ══════════════════════════════════════════════════════════
  *  引擎 H:走迷宮(老師指定 B)
