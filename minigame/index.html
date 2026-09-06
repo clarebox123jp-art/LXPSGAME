@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.7.1(2026-09-05)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.8.0(2026-09-06)
+     ★ v1.8.0:頂列版本徽章(目前/最新版號;過舊變紅+🔄更新鈕、最新淡綠),抓 sw.js 比對 MINI_VERSION
      ★ v1.7.1:首頁吉祥物介紹文重寫為活潑勵志,雙版各 5 句每次隨機
      ★ v1.7.0:題庫三倍(9 款)+ 每局隨機抽 pick 題;迷宮每關 3 組題組隨機;關卡名活潑化+放大;卡片第二行星星移除
      ★ v1.6.1:選擇題(quiz／猜歌名)選項每題隨機排序;資料表修掉括弧與長度暗示正解的選項
@@ -1338,6 +1339,14 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .cell{height:200px;}
   .cell .cn{font-size:24px;}
 }
+/* ★ v1.8.0 老師:「右上方新增當前版本號/最新版本號;偵測過舊 → 版號變紅 + 出現重新整理鈕;最新 → 淡綠」 */
+#ver-chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;min-height:30px;display:inline-flex;align-items:center;gap:4px;
+  background:rgba(62,200,122,.14);color:#9fe8be;border:1px solid rgba(62,200,122,.45);white-space:nowrap;letter-spacing:.3px;}
+#ver-chip.old{background:rgba(232,64,64,.16);color:#ff8f8f;border-color:rgba(232,64,64,.6);animation:verblink 1.2s ease-in-out infinite;}
+#ver-chip .vl{opacity:.7;font-weight:500;}
+@keyframes verblink{0%,100%{box-shadow:0 0 0 0 rgba(232,64,64,.0);}50%{box-shadow:0 0 0 4px rgba(232,64,64,.28);}}
+#ver-btn{background:var(--grass);color:#08090d;border-color:transparent;font-weight:900;}
+@media (orientation:landscape) and (max-height:520px){ #ver-chip{font-size:11px;min-height:28px;padding:3px 8px;} #ver-chip .vl{display:none;} }
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -1414,6 +1423,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <button id="back-btn" class="chip hidden" onclick="mgHome()">← 回選單</button>
     <span class="grow"></span>
     <span id="who"></span>
+    <!-- ★ v1.8.0 版本徽章:目前版號(淡綠=最新 / 紅=過舊)+ 過舊時出現「更新」鈕;偵測邏輯見 mgVerCheck -->
+    <span id="ver-chip" title="目前版本"><span class="vl">版本</span><span id="ver-cur"></span><span id="ver-new" class="hidden"></span></span>
+    <button id="ver-btn" class="chip hidden" onclick="mgVerReload()" title="重新整理更新到最新版">🔄 更新</button>
     <!-- ★ v1.1.0(老師需求 3)— BGM 開關;偏好存 mg_bgm,與 mg_style 同層(只在本機,不上雲) -->
     <!-- ★ v1.4.0 — 🎵/🔊 改為開啟音量拉桿面板(同主程式設計);⏸ 暫停鈕只在遊戲中顯示 -->
     <button id="pause-btn" class="chip hidden" onclick="mgPauseToggle()" title="暫停">⏸ 暫停</button>
@@ -1652,7 +1664,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.7.1"></script>
+<script src="minigame_db.js?v=v1.8.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1661,7 +1673,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.7.1';
+var MG_VER = 'v1.8.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -4413,6 +4425,69 @@ function boot(){
     });
   }
   console.log('[小英雄小遊戲]', MG_VER, '共', MG.games.length, '款');
+
+  /* ★ v1.8.0 版本徽章與更新提示(老師:「右上方顯示當前/最新版本號,過舊變紅並給重新整理鈕,最新亮淡綠」)
+     ★ 「最新版」怎麼知道:抓 sw.js(3KB、network-first、本目錄)用 cache:'no-store' + 時間戳繞過所有快取,
+       正規式取 MINI_VERSION;比對 MG_VER。不新增任何檔案、不動 manifest。
+     ★ 何時檢查:開頁 3 秒後、每 5 分鐘、切回前景(visibilitychange)。離線/失敗 ⇒ 靜默維持淡綠(不嚇小朋友)。
+     ★ 更新鈕:清掉 lxps-mini-* 快取 → SW update → reload;shell 本來就是 network-first,重整就拿到新檔。
+     ⚠ ES5 only(舊 iPad)。 */
+  function mgVerNum(v){
+    var m = String(v || '').match(/(\d+)\.(\d+)\.(\d+)/);
+    return m ? (+m[1]) * 1000000 + (+m[2]) * 1000 + (+m[3]) : 0;
+  }
+  function mgVerPaint(latest){
+    var chip = document.getElementById('ver-chip'), cur = document.getElementById('ver-cur'),
+        nw = document.getElementById('ver-new'), btn = document.getElementById('ver-btn');
+    if(!chip || !cur) return;
+    cur.textContent = MG_VER;
+    var old = latest && mgVerNum(latest) > mgVerNum(MG_VER);
+    if(old){
+      chip.classList.add('old'); chip.title = '你玩的是舊版,最新是 ' + latest + ',按「更新」就好';
+      if(nw){ nw.textContent = ' → ' + latest; nw.classList.remove('hidden'); }
+      if(btn) btn.classList.remove('hidden');
+    }else{
+      chip.classList.remove('old'); chip.title = '已是最新版';
+      if(nw){ nw.textContent = ''; nw.classList.add('hidden'); }
+      if(btn) btn.classList.add('hidden');
+    }
+  }
+  function mgVerCheck(){
+    if(!window.fetch) return;
+    try{
+      fetch('sw.js?ck=' + Date.now(), { cache: 'no-store' }).then(function(r){
+        if(!r || !r.ok) return null; return r.text();
+      }).then(function(t){
+        if(!t) return;
+        var m = t.match(/MINI_VERSION\s*=\s*['"]([^'"]+)['"]/);
+        if(m) mgVerPaint(m[1]);
+      })['catch'](function(){});
+    }catch(e){}
+  }
+  window.mgVerReload = function(){
+    try{ playSfx('sfx-tap', 0.35); }catch(_){}
+    var btn = document.getElementById('ver-btn');
+    if(btn){ btn.disabled = true; btn.textContent = '⏳ 更新中'; }
+    var done = false;
+    function go(){ if(done) return; done = true; try{ location.reload(); }catch(e){ location.href = location.pathname + '?r=' + Date.now(); } }
+    setTimeout(go, 4000);  // 硬兜底:任何一步卡住 4 秒後照樣重整
+    var p = Promise.resolve();
+    if(window.caches && caches.keys){
+      p = p.then(function(){ return caches.keys(); }).then(function(keys){
+        return Promise.all(keys.map(function(k){ return (k.indexOf('lxps-mini-') === 0) ? caches['delete'](k) : null; }));
+      })['catch'](function(){});
+    }
+    if('serviceWorker' in navigator && navigator.serviceWorker.getRegistration){
+      p = p.then(function(){ return navigator.serviceWorker.getRegistration(); }).then(function(reg){
+        if(reg && reg.update) return reg.update();
+      })['catch'](function(){});
+    }
+    p.then(go, go);
+  };
+  mgVerPaint(null);
+  setTimeout(mgVerCheck, 3000);
+  setInterval(mgVerCheck, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) mgVerCheck(); });
 
   /* ★ v1.1.1 — 字重自檢(只在 console 提示,不影響遊戲)。
      「字糊成一團」的真兇是**合成粗體**:當 CSS 要求的字重字型沒有實體字面時,
