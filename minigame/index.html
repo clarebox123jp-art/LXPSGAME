@@ -16,6 +16,7 @@
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
      小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.0(2026-09-07)
+     ★ v1.10.0(老師看圖裁定):首頁「說明面板」改為最上方大按鈕 #rank-btn(iPad 橫式 grid 第 1 列整列;原面板被自動排到九宮格下方看不到)→ 點開 #rank-modal 說明視窗(字體放大,含本週排行榜/上週得獎名單按鈕 #rk-nav);登出清 MG.best
      ★ v1.10.0 稽核:mgWeekSave 週文件未載入時先 SDK 讀自己那格再比較(防低分蓋高分)、寫入失敗退回原值;面板/彈窗名次改同分同名次;_optPerm 把「以上皆是」固定排最後
      ★ v1.10.0(老師需求 1):每週排行榜獎勵 —— 首頁上方 #rank-panel 說明面板(雙版)+「本週排行榜／上週得獎名單」彈窗(#rank-modal,免登入 REST 讀 stats/minigameWeekly);登入且非管理員每局把本週最高分寫入自己那一格(mgWeekSave,set merge);名字遮罩 mgMaskName;老師登入自動建檔 mgWeekBootstrap;結算/領獎在主程式 v5.146.0(_minigameRank)
      ★ v1.9.8:版號同步(排排站小達人改為真正的先後順序題:停用比大小生成器、+64 組順序題,內容在 minigame_db.js;本檔邏輯未改)
@@ -457,39 +458,43 @@ button[disabled]{opacity:.45;}
 #modal .row{display:flex;gap:10px;margin-top:16px;}
 #modal .row button{flex:1;}
 
-/* ★ v1.10.0 — 每週排行榜獎勵:首頁說明面板 + 排行彈窗 */
-#rank-panel{
-  background:linear-gradient(180deg,var(--ink2),var(--tea));border:2px solid rgba(240,192,96,.45);
-  border-radius:18px;padding:14px 16px;margin:0 0 16px;box-shadow:0 6px 18px rgba(0,0,0,.35);
+/* ★ v1.10.0 — 每週排行榜獎勵:首頁最上方大按鈕 + 說明/排行彈窗(老師:按鈕要清楚、視窗字體放大) */
+#rank-btn{
+  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;margin:0 0 12px;padding:14px 18px;
+  font-size:22px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;
+  background:linear-gradient(180deg,#ffe28a,var(--sun));border:3px solid rgba(255,255,255,.55);border-radius:18px;
+  box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(240,192,96,.35);touch-action:manipulation;
 }
-#rank-panel .rp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
-#rank-panel .rp-title{font-size:19px;font-weight:700;color:var(--gold);}
-#rank-panel .rp-week{font-size:13px;opacity:.7;}
-#rank-panel .rp-body{font-size:14px;line-height:1.7;opacity:.92;}
-#rank-panel .rp-body b{color:var(--gold);font-weight:700;}
-#rank-panel .rp-me{font-size:14px;line-height:1.6;margin-top:6px;color:var(--grass);font-weight:700;min-height:0;}
-#rank-panel .rp-me:empty{display:none;}
-#rank-panel .rp-row{display:flex;gap:10px;margin-top:10px;}
-#rank-panel .rp-row button{flex:1;padding:10px 8px;font-size:15px;}
+#rank-btn:active{transform:translateY(2px);}
+#rank-btn .rb-ico{font-size:28px;}
+#rank-btn .rb-sub{font-size:15px;font-weight:700;opacity:.8;}
+#rank-btn .rb-sub:empty{display:none;}
 #rank-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:81;display:none;align-items:center;justify-content:center;padding:18px;}
 #rank-modal.show{display:flex;}
-#rank-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.5);border-radius:20px;padding:20px 18px;max-width:640px;width:100%;max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-#rank-modal h3{margin:0 0 4px;font-size:21px;color:var(--gold);}
-#rank-modal .tag{font-size:13px;opacity:.75;margin-bottom:10px;line-height:1.6;}
+#rank-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.5);border-radius:20px;padding:22px 20px;max-width:720px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#rank-modal h3{margin:0 0 6px;font-size:26px;color:var(--gold);}
+#rank-modal .tag{font-size:17px;opacity:.85;margin-bottom:12px;line-height:1.7;}
+#rank-modal #rk-nav button{font-size:17px;padding:12px 8px;}
+.rk-info{font-size:19px;line-height:1.85;}
+.rk-info b{color:var(--gold);font-weight:700;}
+.rk-info .rk-me{margin-top:12px;padding:10px 14px;border-radius:12px;background:rgba(62,200,122,.12);color:var(--grass);font-weight:700;font-size:19px;}
+.rk-info .rk-award-tbl{margin:10px 0;border-collapse:collapse;width:100%;font-size:18px;}
+.rk-info .rk-award-tbl td{padding:6px 8px;border-bottom:1px dashed rgba(232,228,216,.2);}
+.rk-info .rk-award-tbl td:first-child{color:var(--gold);font-weight:700;white-space:nowrap;}
 #rank-modal .row{display:flex;gap:10px;margin-top:14px;}
 #rank-modal .row button{flex:1;}
 .rk-game{border:1px solid rgba(232,228,216,.18);border-radius:12px;margin:8px 0;overflow:hidden;}
-.rk-game summary{cursor:pointer;padding:10px 12px;font-size:16px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+.rk-game summary{cursor:pointer;padding:10px 12px;font-size:18px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;}
 .rk-game summary::-webkit-details-marker{display:none;}
 .rk-game summary .rk-mine{font-size:13px;color:var(--grass);font-weight:700;}
 .rk-game summary .rk-none{font-size:13px;opacity:.55;font-weight:400;}
-.rk-list{padding:0 12px 10px;font-size:14px;}
+.rk-list{padding:0 12px 10px;font-size:17px;}
 .rk-line{display:flex;gap:8px;padding:3px 0;border-top:1px dashed rgba(232,228,216,.12);}
 .rk-line .rk-rank{width:34px;color:var(--gold);font-weight:700;}
 .rk-line .rk-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rk-line .rk-score{font-weight:700;}
 .rk-line.me{color:var(--grass);}
-.rk-award{padding:8px 12px;font-size:14px;line-height:1.6;border-top:1px dashed rgba(232,228,216,.12);}
+.rk-award{padding:8px 12px;font-size:17px;line-height:1.6;border-top:1px dashed rgba(232,228,216,.12);}
 .rk-award b{color:var(--gold);font-weight:700;}
 
 /* 提示條 */
@@ -984,11 +989,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .wrap{max-width:1180px;padding:8px 22px 20px;}
   /* 首頁:標題與吉祥物同一列,九宮格 3 列一頁放完 */
   #page-home{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:22px;align-items:center;}
-  #title-img{grid-column:1;grid-row:1;max-width:340px;margin:0;}
-  #title-fallback{grid-column:1;grid-row:1;}
-  #page-home .sub{grid-column:1;grid-row:2;margin:0;font-size:15px;letter-spacing:1px;}
-  #home-mascot{grid-column:2;grid-row:1 / 3;margin:0;}
-  #grid{grid-column:1 / 3;grid-row:3;margin-top:10px;}
+  #rank-btn{grid-column:1 / 3;grid-row:1;margin:0 0 6px;}   /* ★ v1.10.0 大按鈕佔最上方整列(原面板被自動排到九宮格下方看不到 ⇒ 改列號) */
+  #title-img{grid-column:1;grid-row:2;max-width:340px;margin:0;}
+  #title-fallback{grid-column:1;grid-row:2;}
+  #page-home .sub{grid-column:1;grid-row:3;margin:0;font-size:15px;letter-spacing:1px;}
+  #home-mascot{grid-column:2;grid-row:2 / 4;margin:0;}
+  #grid{grid-column:1 / 3;grid-row:4;margin-top:10px;}
   .cell{height:170px;}
   /* 遊戲頁:左右兩欄 */
   #page-play{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:20px;align-items:start;}
@@ -1581,6 +1587,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
   <!-- ══ 首頁 ══ -->
   <section id="page-home" class="hidden">
+    <!-- ★ v1.10.0(老師看圖裁定)— 每週排行榜獎勵:首頁最上方一顆清楚的大按鈕,點開放大字體說明視窗(內含本週排行榜/上週得獎名單按鈕) -->
+    <button id="rank-btn" onclick="mgRankOpen('info')"><span class="rb-ico">🏆</span><span class="rb-txt" id="rank-btn-txt">每週排行榜獎勵</span><span class="rb-sub" id="rank-btn-sub"></span></button>
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
@@ -1590,16 +1598,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <img src="" alt="" onerror="this.style.display='none';">
       <div class="bubble" id="home-bubble"></div>
     </div>
-    <!-- ★ v1.10.0(老師需求 1)— 每週排行榜獎勵說明面板(首頁上方;雙版文案由 mgRankPanelRender 填) -->
-    <div id="rank-panel">
-      <div class="rp-head"><span class="rp-title" id="rp-title"></span><span class="rp-week" id="rp-week"></span></div>
-      <div class="rp-body" id="rp-body"></div>
-      <div class="rp-me" id="rp-me"></div>
-      <div class="rp-row">
-        <button class="btn-ghost" onclick="mgRankOpen('week')">🏆 本週排行榜</button>
-        <button class="btn-ghost" onclick="mgRankOpen('last')">🎁 上週得獎名單</button>
-      </div>
-    </div>
+    <!-- ★ v1.10.0 原「說明面板 #rank-panel」已改為最上方 #rank-btn + 說明視窗(老師看圖裁定);面板 DOM 移除 -->
     <div id="grid"></div>
     <p class="sub" id="home-note" style="margin-top:18px;font-size:13px;opacity:.6;">
       力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵
@@ -1756,6 +1755,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <h3 id="rk-title"></h3>
     <div class="tag" id="rk-sub"></div>
     <div id="rk-body"></div>
+    <div class="row" id="rk-nav"><button onclick="mgRankOpen('week')">🏆 本週排行榜</button><button onclick="mgRankOpen('last')">🎁 上週得獎名單</button></div>
     <div class="row"><button class="btn-ghost" onclick="mgRankClose()">關閉</button></div>
   </div>
 </div>
@@ -4809,6 +4809,7 @@ function onUser(u){
     btn.textContent = '登入';
     who.textContent = '';
     MG.wk.mine = {};   /* ★ v1.10.0 登出清掉本機週成績(共用平板不可殘留上一位) */
+    MG.best = {};      /* ★ v1.10.0 稽核(鐵律 1.41 共用裝置防污染):登出同時清掉記憶體最佳成績,下一位同學登入不會看到/合併到上一位的分數;雲端 minigameScores 已存,自己再登入即回來 */
   }
   /* ★ v1.1.0 — 登入/登出都要重算閘門。
      ⚠ 這裡刻意不寫「只在登入時解鎖」:登出後必須把九宮格收回去,
@@ -5012,51 +5013,70 @@ function mgWeekListOf(gid, wk){
   out.sort(function(a, b){ if(a.score !== b.score) return b.score - a.score; return a.at - b.at; });
   return out;
 }
-function mgRankPanelRender(){
-  var t = $('rp-title'), wkEl = $('rp-week'), body = $('rp-body'), me = $('rp-me');
-  if(!t) return;
-  var s = (MG.style === 's');
-  t.textContent = s ? '🏆 每週排行榜有獎品!' : '🏆 每週排行榜獎勵';
-  wkEl.textContent = (s ? '這週:' : '本週 ') + mgWeekKey() + (s ? '' : '(每週一 08:00 結算上週)');
-  body.innerHTML = s
-    ? '<b>登入</b>玩遊戲,分數就會記到<b>本週排行榜</b>。每個遊戲的<b>前 10 名</b>,下週一早上 8 點會在<b>小英雄大對抗</b>收到獎品:'
-      + '第 1 名 💰50000 知識幣 + 🔮10 召喚水晶 + 📖10 豪華經驗書;第 2~5 名 💰35000 + 🔮6 + 📖6;第 6~10 名 💰20000 + 🔮3 + 📖3。'
-      + '一個人一週<b>只會領一次</b>(拿最好的那個名次),讓出來的名次會給下一位。沒登入就不會有紀錄喔!'
-    : '<b>登入帳號</b>後每一局的分數都會記入<b>本週排行榜</b>(只記每個遊戲本週最高分)。每週一 08:00 結算上週,每個遊戲<b>前 10 名</b>可獲得與知識王排行榜相同的獎勵,'
-      + '登入<b>小英雄大對抗</b>時自動入帳:第 1 名 💰50000 知識幣・🔮10 召喚水晶・📖10 豪華經驗書;第 2~5 名 💰35000・🔮6・📖6;第 6~10 名 💰20000・🔮3・📖3。'
-      + '每位玩家每週<b>只領一次</b>(多個遊戲上榜時只算名次最好、同名次取分數最高的那一個),讓出的名次順延給下一位;同分以先達成者為前。'
-      + '成績綁定登入帳號,換裝置不會重複計算,獎勵也不會重複發放;未登入的成績不會列入排行榜。';
-  /* 我的本週摘要(登入才有) */
-  var html = '', i, x, list, rank, j, best = null;
-  if(MG.user && !mgIsAdmin(MG.user) && MG.wk.doc){
-    var wk = mgWeekKey();
-    for(i = 0; i < MG.games.length; i++){
-      x = MG.games[i];
-      if(!(MG.wk.mine[x.id] > 0)) continue;
-      list = mgWeekListOf(x.id, wk); rank = 0;
-      for(j = 0; j < list.length; j++){ if(list[j].uid === MG.user.uid){ rank = 1; for(var jj = 0; jj < list.length; jj++){ if(list[jj].score > list[j].score) rank++; } break; } }   /* ★ 稽核:同分同名次,與彈窗一致 */
-      if(rank && rank <= 10 && (!best || rank < best.rank || (rank === best.rank && MG.wk.mine[x.id] > best.score))) best = { rank: rank, name: tx(x.name), score: MG.wk.mine[x.id] };
-    }
-    if(best) html = (s ? '你現在:' : '你目前的最佳名次:') + '「' + esc(best.name) + '」第 ' + best.rank + ' 名(' + best.score + ' 分)' + (s ? ',加油保持!' : ' — 保持到週一 08:00 就有獎勵!');
-    else html = s ? '你這週還沒進前 10 名,快去挑戰!' : '你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!';
-  }else if(MG.user && mgIsAdmin(MG.user)){
-    html = '(老師帳號不列入排行榜)';
-  }else{
-    html = s ? '👉 先按右上角「登入」,分數才會算!' : '👉 請先按右上角「登入」,成績才會列入排行榜。';
+/* ★ v1.10.0(老師看圖裁定)— 原首頁面板改為:最上方大按鈕(只更新按鈕小字)+ 說明視窗(mgRankInfoHtml,字體放大)。
+   函式名 mgRankPanelRender 保留(renderGrid / 登入 / 寫入後都會呼叫)以免動到既有呼叫點。 */
+function mgRankMyBest(){
+  /* 我本週最佳名次(同分同名次);沒登入/老師/無成績 ⇒ null */
+  if(!MG.user || mgIsAdmin(MG.user) || !MG.wk.doc) return null;
+  var wk = mgWeekKey(), i, x, list, rank, j, jj, best = null;
+  for(i = 0; i < MG.games.length; i++){
+    x = MG.games[i];
+    if(!(MG.wk.mine[x.id] > 0)) continue;
+    list = mgWeekListOf(x.id, wk); rank = 0;
+    for(j = 0; j < list.length; j++){ if(list[j].uid === MG.user.uid){ rank = 1; for(jj = 0; jj < list.length; jj++){ if(list[jj].score > list[j].score) rank++; } break; } }
+    if(rank && rank <= 10 && (!best || rank < best.rank || (rank === best.rank && MG.wk.mine[x.id] > best.score))) best = { rank: rank, name: tx(x.name), score: MG.wk.mine[x.id] };
   }
-  me.innerHTML = html;
+  return best;
+}
+function mgRankPanelRender(){
+  var bt = $('rank-btn-txt'), bs = $('rank-btn-sub');
+  if(!bt) return;
+  var s = (MG.style === 's');
+  bt.textContent = s ? '每週排行榜有獎品!點我看' : '每週排行榜獎勵・點我看說明';
+  var best = mgRankMyBest();
+  if(best) bs.textContent = '你目前「' + best.name + '」第 ' + best.rank + ' 名';
+  else if(MG.user && !mgIsAdmin(MG.user)) bs.textContent = s ? '你這週還沒進前 10 名' : '本週尚未進入前 10 名';
+  else if(!MG.user) bs.textContent = s ? '要先登入才會算分喔' : '登入後成績才會列入';
+  else bs.textContent = '';
+  /* 說明視窗開著時同步重畫 */
+  try{ var m = $('rank-modal'); if(m && m.classList.contains('show') && m.getAttribute('data-kind') === 'info') mgRankModalRender('info'); }catch(e){}
+}
+function mgRankInfoHtml(){
+  var s = (MG.style === 's');
+  var tbl = '<table class="rk-award-tbl">'
+    + '<tr><td>🥇 第 1 名</td><td>💰 50000 知識幣 + 🔮 10 召喚水晶 + 📖 10 豪華經驗書</td></tr>'
+    + '<tr><td>🥈 第 2~5 名</td><td>💰 35000 知識幣 + 🔮 6 召喚水晶 + 📖 6 豪華經驗書</td></tr>'
+    + '<tr><td>🥉 第 6~10 名</td><td>💰 20000 知識幣 + 🔮 3 召喚水晶 + 📖 3 豪華經驗書</td></tr></table>';
+  var body = s
+    ? '<p><b>登入</b>後玩遊戲,分數會記到<b>本週排行榜</b>(每個遊戲只記你本週最高分)。</p>'
+      + '<p>每個遊戲的<b>前 10 名</b>,下週一早上 8 點會在<b>小英雄大對抗</b>自動收到獎品:</p>' + tbl
+      + '<p>一個人一週<b>只會領一次</b>(拿名次最好的那個);讓出來的名次會給下一位同學。同分的話,先到的排前面。</p>'
+      + '<p>分數跟著帳號走,<b>換 iPad 也不會重複算</b>;沒登入的分數不會進排行榜喔!</p>'
+    : '<p><b>登入帳號</b>後,每一局的分數都會記入<b>本週排行榜</b>(只記每個遊戲本週最高分)。</p>'
+      + '<p>每週一 08:00 結算上週,每個遊戲<b>前 10 名</b>可獲得與知識王排行榜相同的獎勵,登入<b>小英雄大對抗</b>時自動入帳:</p>' + tbl
+      + '<p>每位玩家每週<b>只領一次</b>:多個遊戲上榜時只算名次最好的一個(同名次取分數最高的那個遊戲),讓出的名次順延給下一位;同分以先達成者為前。</p>'
+      + '<p>成績綁定登入帳號,換裝置不會重複計算,獎勵也不會重複發放;未登入的成績不會列入排行榜。</p>';
+  var best = mgRankMyBest(), me;
+  if(best) me = (s ? '你現在:' : '你目前的最佳名次:') + '「' + esc(best.name) + '」第 ' + best.rank + ' 名(' + best.score + ' 分)' + (s ? ',加油保持!' : ' — 保持到週一 08:00 就有獎勵!');
+  else if(MG.user && mgIsAdmin(MG.user)) me = '(老師帳號不列入排行榜)';
+  else if(MG.user) me = s ? '你這週還沒進前 10 名,快去挑戰!' : '你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!';
+  else me = s ? '👉 先按右上角「登入」,分數才會算!' : '👉 請先按右上角「登入」,成績才會列入排行榜。';
+  return '<div class="rk-info">' + body + '<div class="rk-me">' + me + '</div></div>';
 }
 window.mgRankOpen = function(kind){
   playSfx('sfx-tap', 0.35);
   var m = $('rank-modal'); if(!m) return;
-  $('rk-title').textContent = (kind === 'last') ? '🎁 上週得獎名單' : '🏆 本週排行榜';
-  $('rk-sub').textContent = '讀取中…'; $('rk-body').innerHTML = '';
+  m.setAttribute('data-kind', kind);
+  $('rk-title').textContent = (kind === 'last') ? '🎁 上週得獎名單' : (kind === 'info' ? '🏆 每週排行榜獎勵' : '🏆 本週排行榜');
+  $('rk-sub').textContent = (kind === 'info') ? ((MG.style === 's' ? '這週:' : '本週 ') + mgWeekKey() + (MG.style === 's' ? '' : '(每週一 08:00 結算上週)')) : '讀取中…';
+  $('rk-body').innerHTML = (kind === 'info') ? mgRankInfoHtml() : '';
   m.classList.add('show');
-  mgWeekFetch(true, function(){ mgRankModalRender(kind); });
+  mgWeekFetch(kind !== 'info', function(){ mgRankModalRender(kind); });
 };
 window.mgRankClose = function(){ var m = $('rank-modal'); if(m) m.classList.remove('show'); };
 function mgRankModalRender(kind){
   var sub = $('rk-sub'), body = $('rk-body'), s = (MG.style === 's'), html = '', i, x, j, list, wk, me = MG.user ? MG.user.uid : '';
+  if(kind === 'info'){ body.innerHTML = mgRankInfoHtml(); return; }   /* ★ 說明視窗:不依賴週文件 */
   if(!MG.wk.doc){ sub.textContent = s ? '讀不到排行榜,等一下再試。' : '目前讀不到排行榜(離線或尚未建立),請稍後再試。'; return; }
   if(kind === 'last'){
     var lwk = mgLastWeekKey(), st = MG.wk.doc.settlement && MG.wk.doc.settlement[lwk];
