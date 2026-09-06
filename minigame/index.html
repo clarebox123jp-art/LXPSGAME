@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.8.0(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.0(2026-09-06)
+     ★ v1.9.0:①聽音坊出題/作答期間自動暫停關卡 BGM、解說時恢復(_earDuck);②poolOf 支援資料表 gen 欄位 → 每局即時生成題(秤重/聽音坊/翻牌);③mgEng() 每題可覆寫引擎(分類關混入選擇題)、renderQuiz 2/3 選項排版、mgPicUrl 支援 '@根目錄檔名';④優化:缺圖名單 _MG_MISS(不再重打 404)、pic 自帶副檔名(.webp)、分類關分層抽題(一半分類一半選擇)、聽音坊整關靜音、答錯才顯示口訣 hintOnWrong、解說 8 秒自動下一題
      ★ v1.8.0:頂列版本徽章(目前/最新版號;過舊變紅+🔄更新鈕、最新淡綠),抓 sw.js 比對 MINI_VERSION
      ★ v1.7.1:首頁吉祥物介紹文重寫為活潑勵志,雙版各 5 句每次隨機
      ★ v1.7.0:題庫三倍(9 款)+ 每局隨機抽 pick 題;迷宮每關 3 組題組隨機;關卡名活潑化+放大;卡片第二行星星移除
@@ -1664,7 +1665,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.8.0"></script>
+<script src="minigame_db.js?v=v1.9.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1673,7 +1674,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.8.0';
+var MG_VER = 'v1.9.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1893,6 +1894,22 @@ function bgmStop(){
   }
   _bgmCur = '';
 }
+/* ★ v1.9.0(老師:「音樂關卡在播放題目和作答時,要自動暫停關卡背景音樂」)
+ *   _earDuck=true 期間:關卡 BGM 暫停(不 stop、保留播放位置),bgmPlay/mgResume 都不會把它叫回來;
+ *   時機(v1.9.0 優化⑤ 定案):聽音坊 startGame 就暫停、整關靜音;finishGame 的 mgPauseReset 清旗標後才播結算曲。
+ *   非聽音坊關卡 _earDuck 永遠 false,行為零改動。 */
+var _earDuck = false;
+function mgBgmDuck(){
+  if(_earDuck) return;
+  _earDuck = true;
+  try{ var a = _bgmCur ? $(_bgmCur) : null; if(a && !a.paused) a.pause(); }catch(e){}
+}
+function mgBgmUnduck(){
+  if(!_earDuck) return;
+  _earDuck = false;
+  if(_PZ.on) return;   /* 玩家自己按了暫停:交給 mgResume 恢復 */
+  if(_bgmOn && _bgmArmed && _bgmCur){ try{ var a = $(_bgmCur); if(a && a.paused){ var p = a.play(); if(p && p['catch']) p['catch'](function(){}); } }catch(e){} }
+}
 /* ★ v1.3.0 — 遊戲中該播哪一軌:讀資料表 bgm 欄位;沒寫或那個 id 不存在就退回原本的知識王曲 */
 function mgGameBgm(x){
   var id = (x && x.bgm) ? String(x.bgm) : '';
@@ -1907,6 +1924,7 @@ function bgmPlay(id, vol, once){
   bgmStop();
   _bgmCur = id;
   var a = $(id); if(!a) return;
+  if(_earDuck && !$('page-play').classList.contains('hidden')) return;   /* ★ v1.9.0 聽音坊出題/作答期間 BGM 保持暫停(記住曲目,解說時再補播) */
   try{
     a._mgBase = (vol == null ? _bgmBaseVol : vol);                 /* ★ v1.4.0 記住基準,拉桿即時套用時用 */
     a.volume = Math.max(0, Math.min(1, a._mgBase * _mgVolBgm));    /* ★ v1.4.0 × 使用者音樂音量 */
@@ -2102,11 +2120,29 @@ function mgAssetUrl(name){ return name ? (MG_IMG_BASE + encodeURIComponent(Strin
    ⚠ 一律 onerror 隱藏:圖還沒上傳前畫面完全等同現況(純文字／emoji),上傳即自動出現,程式不必再改。
    ⚠ 版本靠 MG_IMG_VER 破快取,素材更新時只改這一個數字。 */
 var MG_IMG_VER = '1';
-function mgPicUrl(pic){ return 'img/' + encodeURIComponent(pic) + '.png?v=' + MG_IMG_VER; }
+function mgPicUrl(pic){
+  /* ★ v1.9.0 '@檔名.png' = 主程式 repo 根目錄既有素材(如寵物去背 png),動物分類關沿用 40 隻寵物圖不必再生圖 */
+  pic = String(pic);
+  if(pic.charAt(0) === '@') return MG_IMG_BASE + encodeURIComponent(pic.slice(1));
+  /* ★ v1.9.0 優化③:pic 自帶副檔名(如 animal_koi.webp)就不再補 .png */
+  if(/\.(webp|png|jpg|gif)$/i.test(pic)) return 'img/' + encodeURIComponent(pic) + '?v=' + MG_IMG_VER;
+  return 'img/' + encodeURIComponent(pic) + '.png?v=' + MG_IMG_VER;
+}
+/* ★ v1.9.0 優化②:缺圖名單 —— 第一次 onerror 就記住(記憶體 + localStorage,鍵含 MG_IMG_VER),
+   之後 mgPicTag 直接不輸出 <img>,不再每題重打 404(聽音坊一題 10 個、迷宮一關 6 個)。素材上傳後 bump MG_IMG_VER 即重試。 */
+var _MG_MISS = {};
+try{ var _mm = JSON.parse(localStorage.getItem('mg_miss_' + MG_IMG_VER) || '{}'); if(_mm && typeof _mm === 'object') _MG_MISS = _mm; }catch(e){}
+window.mgPicMiss = function(el, pic){
+  try{ el.style.display = 'none'; el.className = ''; }catch(e){}
+  if(!pic || _MG_MISS[pic]) return;
+  _MG_MISS[pic] = 1;
+  try{ localStorage.setItem('mg_miss_' + MG_IMG_VER, JSON.stringify(_MG_MISS)); }catch(e){}
+};
 function mgPicTag(pic, cls){
   if(!pic) return '';
   /* onerror 同時拿掉 class:CSS 用「img.pic-bin + .be」隱藏 emoji,圖失敗時 class 消失 ⇒ emoji 自動回來 */
-  return '<img class="' + cls + '" src="' + mgPicUrl(pic) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.className=\'\';">';
+  if(_MG_MISS[pic]) return '';   /* ★ v1.9.0 優化②:已知缺圖直接略過 */
+  return '<img class="' + cls + '" src="' + mgPicUrl(pic) + '" alt="" loading="lazy" data-pic="' + esc(String(pic)) + '" onerror="mgPicMiss(this,this.getAttribute(\'data-pic\'));">';
 }
 /* 依「文字」自動對照的圖(不必在資料表逐筆填):迷宮標記／童謠選項／格子與棋子 */
 var MG_PIC_MAP = {
@@ -2369,10 +2405,21 @@ var _POOL_FIELD = {
   react:'rounds', maze:'levels',   paint:'pics',
   colorq:'qs'   /* ★ v1.3.0 寵物調色工坊 */
 };
+/* ★ v1.9.0(老師裁定「丙」):每題可覆寫引擎 —— 資料表題目帶 engine:'quiz' 時,分類關(sort/drag)也能混入「科學小博士」選擇題;
+   只在派發(renderQuestion)、判定(mgAnswer/finishAnswer)三處用 mgEng() 取代 x.engine,其餘引擎零改動。 */
+function mgEng(x, q){ return (q && q.engine) ? q.engine : x.engine; }
 function poolOf(x){
   var f = _POOL_FIELD[x.engine];
   var p = f ? x[f] : null;
-  return (p && p.length) ? p : [];
+  p = (p && p.length) ? p : [];
+  /* ★ v1.9.0 資料表 gen 欄位 = window.MG_GEN 的生成器名稱:每局即時生成一批新題與原題合併(秤重/聽音坊/翻牌) */
+  try{
+    if(x.gen && window.MG_GEN && typeof window.MG_GEN[x.gen] === 'function'){
+      var extra = window.MG_GEN[x.gen](x);
+      if(extra && extra.length) p = p.concat(extra);
+    }
+  }catch(e){}
+  return p;
 }
 
 function startGame(x){
@@ -2382,7 +2429,19 @@ function startGame(x){
   MG.idx = 0; MG.score = 0; MG.right = 0; MG.combo = 0; MG.maxCombo = 0;
   /* ★ v1.3.1:迷宮 6 關是「由易到難」排好的(解法數 11→3),不打亂;其餘引擎照舊隨機 */
   MG.order = (x.engine === 'maze') ? poolOf(x).slice() : shuffle(poolOf(x));
-  if(x.pick && MG.order.length > x.pick) MG.order = MG.order.slice(0, x.pick);   /* ★ v1.6.0 題庫比每局題數多時隨機抽 pick 題(每局不同) */
+  if(x.pick && MG.order.length > x.pick){
+    /* ★ v1.9.0 優化④:分類關(sort/drag)混入的選擇題(q.engine)分層抽 —— 一半原引擎題、一半選擇題,再打亂;
+       避免隨機抽到 11 題選擇 1 題分類,失去「丟進籃子」的手感。純單一引擎關卡照舊隨機抽。 */
+    var _own = [], _mix = [], _k;
+    for(_k = 0; _k < MG.order.length; _k++){ (MG.order[_k].engine ? _mix : _own).push(MG.order[_k]); }
+    if(_mix.length && _own.length){
+      var _nm = Math.min(_mix.length, Math.floor(x.pick / 2)), _no = Math.min(_own.length, x.pick - _nm);
+      if(_no + _nm < x.pick) _nm = Math.min(_mix.length, x.pick - _no);
+      MG.order = shuffle(_own.slice(0, _no).concat(_mix.slice(0, _nm)));
+    }else{
+      MG.order = MG.order.slice(0, x.pick);   /* ★ v1.6.0 題庫比每局題數多時隨機抽 pick 題(每局不同) */
+    }
+  }
   /* ★ v1.7.0 迷宮:每關若有 variants(替代題組),隨機挑「原組或其中一組」,以淺拷貝覆蓋 marks/why(地圖 rows、hint 沿用),資料表本體不被改動 */
   if(x.engine === 'maze'){
     MG.order = MG.order.map(function(lv){
@@ -2404,6 +2463,7 @@ function startGame(x){
   hide('toapp-btn');
   /* ★ v1.3.0 — 每款專屬 BGM(1甲)+ 整頁場景背景 + 題卡橫幅(2丙) */
   bgmPlay(mgGameBgm(x));
+  if(x.engine === 'ear') mgBgmDuck();   /* ★ v1.9.0 優化⑤:聽音坊整關靜音(結算頁才有音樂),不再一題一停一播 */
   var _url = mgThumbUrl(x);
   mgSetScene(_url);
   var _bi = $('sb-img');
@@ -2422,6 +2482,7 @@ function startGame(x){
 }
 window.mgRetry = function(){ if(MG.cur) startGame(MG.cur); };
 window.mgHome = function(){
+  mgAutoNextStop();   /* ★ v1.9.0 */
   stopTimer();
   stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   MG.cur = null;
@@ -2522,11 +2583,12 @@ function mgResume(){
     _RC.last = 0;
     _RC.raf = requestAnimationFrame(_reactTick);
   }
-  if(_bgmOn && _bgmCur){ try{ var a = $(_bgmCur); if(a && a.paused) a.play()['catch'](function(){}); }catch(e){} }
+  if(_bgmOn && _bgmCur && !_earDuck){ try{ var a = $(_bgmCur); if(a && a.paused) a.play()['catch'](function(){}); }catch(e){} }   /* ★ v1.9.0 聽音坊作答中不恢復 BGM */
   playSfx('sfx-tap', 0.3);
 }
 function mgPauseReset(){
   _PZ.on = false;
+  _earDuck = false;   /* ★ v1.9.0 開局/回首頁/結算一律清聽音坊 BGM 暫停旗標 */
   if(_PZ.clockT){ clearInterval(_PZ.clockT); _PZ.clockT = null; }
   var pz = $('pausebox'); if(pz) pz.classList.remove('on');
   var pb = $('pause-btn'); if(pb){ pb.textContent = '⏸ 暫停'; pb.classList.remove('on'); }
@@ -2602,17 +2664,18 @@ function renderQuestion(keepState){
   mgDockHide();   /* ★ v1.5.1 */
   $('qhint').textContent = x.hint ? tx(x.hint) : '';
 
-  if(x.engine === 'sort') renderSort(x, q);
-  else if(x.engine === 'quiz') renderQuiz(x, q);
-  else if(x.engine === 'map') renderMap(x, q);
-  else if(x.engine === 'ear') renderEar(x, q);
-  else if(x.engine === 'drag') renderDrag(x, q);
-  else if(x.engine === 'order') renderOrder(x, q);
-  else if(x.engine === 'match') renderMatch(x, q);
-  else if(x.engine === 'react') renderReact(x, q);
-  else if(x.engine === 'maze') renderMaze(x, q);
-  else if(x.engine === 'paint') renderPaint(x, q);
-  else if(x.engine === 'colorq') renderColorq(x, q);   /* ★ v1.3.0 */
+  var _eng = mgEng(x, q);   /* ★ v1.9.0 每題可覆寫引擎 */
+  if(_eng === 'sort') renderSort(x, q);
+  else if(_eng === 'quiz') renderQuiz(x, q);
+  else if(_eng === 'map') renderMap(x, q);
+  else if(_eng === 'ear') renderEar(x, q);
+  else if(_eng === 'drag') renderDrag(x, q);
+  else if(_eng === 'order') renderOrder(x, q);
+  else if(_eng === 'match') renderMatch(x, q);
+  else if(_eng === 'react') renderReact(x, q);
+  else if(_eng === 'maze') renderMaze(x, q);
+  else if(_eng === 'paint') renderPaint(x, q);
+  else if(_eng === 'colorq') renderColorq(x, q);   /* ★ v1.3.0 */
 
   /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
      三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
@@ -2647,7 +2710,7 @@ function _optPerm(q){
 function renderQuiz(x, q){
   $('qcard').innerHTML = mgPicTag(q.pic, 'pic-q') + '<span>' + esc(tx(q.q)) + '</span>';   /* v1.3.0 預留題卡插圖 */
   var o = $('opts'), html = '', i, pm = _optPerm(q), oi;
-  o.className = 'opts';
+  o.className = 'opts' + (q.o.length === 2 ? ' two' : (q.o.length === 3 ? ' three' : ''));   /* ★ v1.9.0 二分法題(2 選項)用大按鈕排版 */
   for(i = 0; i < pm.length; i++){
     oi = pm[i];
     html += '<button class="opt" data-i="' + oi + '" onclick="mgAnswer(' + oi + ')">'
@@ -4035,7 +4098,8 @@ window.mgAnswer = function(i){
   /* ★ v1.1.0 — drag(拖放分類)與 sort 用同一份 bins 資料格式,判定共用這一條分支。
      ⚠ 不要為 drag 另寫一套:兩者的正解都是「q.b 這個籃子 id 排在第幾個」,
        各寫一份日後改資料格式一定會漏掉其中一邊。 */
-  if(x.engine === 'sort' || x.engine === 'drag'){
+  var _eng = mgEng(x, q);   /* ★ v1.9.0 每題可覆寫引擎(分類關混入的選擇題走 q.a) */
+  if(_eng === 'sort' || _eng === 'drag'){
     var ci = -1, k;
     for(k = 0; k < x.bins.length; k++){ if(x.bins[k].id === q.b) ci = k; }
     ansIdx = ci;
@@ -4064,10 +4128,12 @@ function finishAnswer(correct, ansIdx, q){
   MG.answered = true;
   stopTimer();
   /* ★ v1.1.0 — drag 沒有 .opt 按鈕,要染的是籃子(答對綠、答錯把正解籃染綠) */
-  if(MG.cur && MG.cur.engine === 'drag') lockBins(ansIdx);
+  if(MG.cur && mgEng(MG.cur, q) === 'drag') lockBins(ansIdx);   /* ★ v1.9.0 混入的選擇題走 lockOptions */
   else lockOptions(ansIdx, correct ? ansIdx : -2);
   scoreIt(correct);
-  showFeedback(correct, correct ? '✅ 答對了!' : '❌ 再想想看', q.why ? tx(q.why) : '');
+  var _why = q.why ? tx(q.why) : '';
+  if(!correct && MG.cur && MG.cur.hintOnWrong) _why += (_why ? ' ' : '') + '💡 ' + tx(MG.cur.hintOnWrong);   /* ★ v1.9.0 優化⑤:答錯才給口訣(動物關) */
+  showFeedback(correct, correct ? '✅ 答對了!' : '❌ 再想想看', _why);
 }
 function lockOptions(ansIdx, _sel){
   var btns = $('opts').getElementsByTagName('button'), i, di;
@@ -4122,7 +4188,7 @@ function showFeedback(ok, head, why){
   f.classList.add('show');
   /* ★ v1.3.0 — 標題列 + 內文兩段(CSS .fb-head/.fb-body);why 為空時內文段自動隱藏 */
   /* 追加:題目若帶 img(資料表選用欄位)就在解說旁放圖;全引擎共用(q 是 MG.order[MG.idx]) */
-  var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : ((_q && _q.pic) ? mgPicUrl(_q.pic) : '');   /* v1.3.0:有 repo 照片優先,否則用生成素材 pic */
+  var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : ((_q && _q.pic && !_MG_MISS[_q.pic]) ? mgPicUrl(_q.pic) : '');   /* v1.3.0:有 repo 照片優先,否則用生成素材 pic;★ v1.9.0 已知缺圖略過 */
   var _body = _img
     ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
       + '<span class="fb-txt">' + esc(why) + '</span>'
@@ -4132,6 +4198,7 @@ function showFeedback(ok, head, why){
   nr.classList.remove('hidden');
   nr.getElementsByTagName('button')[0].textContent =
     (MG.idx >= MG.order.length - 1) ? '看成績 →' : '下一題 →';
+  mgAutoNextStart();   /* ★ v1.9.0 優化⑤:解說 8 秒後自動前進(鈕上倒數;暫停時停住;按鈕/回首頁即取消) */
   /* ★ v1.5.1 解說文字停靠區(橫式顯示於下一題鈕上方,CSS 控制;直式時 dock 隱藏、左欄解說卡完整顯示) */
   try{
     var dk = $('fbdock');
@@ -4144,8 +4211,31 @@ function showFeedback(ok, head, why){
     }
   }catch(e){}
 }
+/* ★ v1.9.0 優化⑤:解說卡自動前進 —— 小朋友常忘了按「下一題」。8 秒倒數顯示在按鈕上,玩家按 ⏸ 時停住;
+   mgNext / mgHome / finishGame 都會取消。用時計算是牆鐘,所以自動前進不會讓成績變差(反而少等)。 */
+var _AN = { t: null, left: 0, label: '' };
+var MG_AUTO_NEXT_SEC = 8;
+function mgAutoNextStart(){
+  mgAutoNextStop();
+  var b = $('nextrow').getElementsByTagName('button')[0]; if(!b) return;
+  _AN.label = b.textContent; _AN.left = MG_AUTO_NEXT_SEC;
+  b.textContent = _AN.label + ' (' + _AN.left + ')';
+  _AN.t = setInterval(function(){
+    if(_PZ.on) return;
+    if(!MG.cur || $('page-play').classList.contains('hidden')){ mgAutoNextStop(); return; }
+    _AN.left--;
+    if(_AN.left <= 0){ mgAutoNextStop(); try{ window.mgNext(); }catch(e){} return; }
+    var bb = $('nextrow').getElementsByTagName('button')[0]; if(bb) bb.textContent = _AN.label + ' (' + _AN.left + ')';
+  }, 1000);
+}
+function mgAutoNextStop(){
+  if(_AN.t){ clearInterval(_AN.t); _AN.t = null; }
+  var b = $('nextrow') ? $('nextrow').getElementsByTagName('button')[0] : null;
+  if(b && _AN.label) b.textContent = _AN.label;
+}
 function mgDockHide(){ var dk = $('fbdock'); if(dk){ dk.className = ''; dk.innerHTML = ''; } var f = $('feedback'); if(f) f.classList.remove('docked'); }
 window.mgNext = function(){
+  mgAutoNextStop();   /* ★ v1.9.0 */
   playSfx('sfx-tap', 0.3);
   stopEngines();          /* ★ v1.1.0:上一題的引擎狀態歸零,免得殘留影響下一題 */
   if(MG.idx >= MG.order.length - 1){ finishGame(); return; }

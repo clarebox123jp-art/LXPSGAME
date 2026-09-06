@@ -1,5 +1,6 @@
 /* ============================================================================
- * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.8.0(2026-09-06)
+ * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.9.0(2026-09-06)
+ * ★ v1.9.0:/minigame/img/ 題圖改 cache-first(URL 帶 ?v=MG_IMG_VER 破快取),其餘 shell 仍 network-first
  *
  * ★ scope 只在 /minigame/,比主程式 sw.js 的 './' 更具體
  *   ⇒ 瀏覽器自動讓本 SW 接管本目錄,不需要改主程式的 fetch 邏輯。
@@ -14,8 +15,8 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.8.0';
-var SHELL = 'lxps-mini-shell-v1.8.0';
+var MINI_VERSION = 'v1.9.0';
+var SHELL = 'lxps-mini-shell-v1.9.0';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [
@@ -70,6 +71,24 @@ self.addEventListener('fetch', function(e){
   var sameOrigin = (url.origin === self.location.origin);
   var inScope = sameOrigin && url.pathname.indexOf('/minigame/') >= 0;
 
+  // ── ★ v1.9.0 優化①:題圖 /minigame/img/ 一律 cache-first ──
+  //    URL 已帶 ?v=MG_IMG_VER(素材更新只改那個數字 ⇒ 新 URL 自然重抓),所以不需要 network-first;
+  //    舊寫法每題都重新下載(校網慢時先卡 2.5s 才退快取)。404 不進快取(index.html 另有缺圖名單擋重打)。
+  if(sameOrigin && url.pathname.indexOf('/minigame/img/') >= 0){
+    e.respondWith(
+      caches.match(req).then(function(hit){
+        if(hit) return hit;
+        return fetch(req).then(function(res){
+          if(res && res.ok){
+            var copy = res.clone();
+            caches.open(ASSET).then(function(c){ c.put(req, copy); })['catch'](function(){});
+          }
+          return res;
+        })['catch'](function(){ return new Response('', { status: 504 }); });
+      })
+    );
+    return;
+  }
   // ── 本目錄 shell:network-first(2.5s 逾時)→ 快取 ──
   if(inScope || req.mode === 'navigate'){
     e.respondWith(
