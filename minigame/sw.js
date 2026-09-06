@@ -1,5 +1,6 @@
 /* ============================================================================
- * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.9.1(2026-09-06)
+ * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.9.2(2026-09-06)
+ * ★ v1.9.2:版號同步(缺圖名單誤記根治在 index.html;題圖快取策略與 MG_IMG_VER 不動,不重抓)
  * ★ v1.9.0:/minigame/img/ 題圖改 cache-first(URL 帶 ?v=MG_IMG_VER 破快取),其餘 shell 仍 network-first
  *
  * ★ scope 只在 /minigame/,比主程式 sw.js 的 './' 更具體
@@ -15,8 +16,8 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.9.1';
-var SHELL = 'lxps-mini-shell-v1.9.1';
+var MINI_VERSION = 'v1.9.2';
+var SHELL = 'lxps-mini-shell-v1.9.2';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [

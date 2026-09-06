@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.1(2026-09-06)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.9.2(2026-09-06)
+     ★ v1.9.2(老師回報回收題物品沒圖・裁定甲):缺圖名單誤記根治 —— 名單鍵改含 MG_VER(改版自動歸零、清舊鍵、不重抓題圖)+ onerror 1.5 秒後重試一次才記入 + 24 小時自動重試;mgPicTag 補 data-cls。
      ★ v1.9.1:秤重 8 張 + 俗諺 9 張 + 聽音坊 8 張題圖(webp)掛接;本檔改:吉祥物引導語「轉學生學霸」→「力行小博士」(4 句);橫式解說卡:學霸表情圖撐滿左下、題圖移到畫面正中央放大框 #fbzoom(不蓋停靠解說);翻牌卡背 proverb_mc_back.webp、MG_PIC_MAP 高低/走向/同音 5 鍵 .webp、播放鈕 music_mu_speaker.webp、算數大進擊掉落幣 coinrush_coin_gold.webp、迷宮 16 張(牆/起點/終點/玩家/踩過陷阱/12 標記)、通用 12 張(學霸 5 表情:首頁加油/閘門思考/解說開心・連擊≥3 驚訝・答錯惋惜;HUD 連擊火焰)
      ★ v1.9.0:①聽音坊出題/作答期間自動暫停關卡 BGM、解說時恢復(_earDuck);②poolOf 支援資料表 gen 欄位 → 每局即時生成題(秤重/聽音坊/翻牌);③mgEng() 每題可覆寫引擎(分類關混入選擇題)、renderQuiz 2/3 選項排版、mgPicUrl 支援 '@根目錄檔名';④優化:缺圖名單 _MG_MISS(不再重打 404)、pic 自帶副檔名(.webp)、分類關分層抽題(一半分類一半選擇)、聽音坊整關靜音、答錯才顯示口訣 hintOnWrong、解說 8 秒自動下一題
      ★ v1.8.0:頂列版本徽章(目前/最新版號;過舊變紅+🔄更新鈕、最新淡綠),抓 sw.js 比對 MINI_VERSION
@@ -1691,7 +1692,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.9.1"></script>
+<script src="minigame_db.js?v=v1.9.2"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1700,7 +1701,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.9.1';
+var MG_VER = 'v1.9.2';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2156,19 +2157,56 @@ function mgPicUrl(pic){
 }
 /* ★ v1.9.0 優化②:缺圖名單 —— 第一次 onerror 就記住(記憶體 + localStorage,鍵含 MG_IMG_VER),
    之後 mgPicTag 直接不輸出 <img>,不再每題重打 404(聽音坊一題 10 個、迷宮一關 6 個)。素材上傳後 bump MG_IMG_VER 即重試。 */
+/* ★ v1.9.2(老師 2026-09-06 回報「回收題有些物品沒有圖片」・裁定甲)— 根因:舊版 onerror 一次就永久記入名單,
+   但 onerror 也會在校網瞬斷／逾時／SW 未接管／iPad 切背景時觸發 ⇒ 存在的圖被誤記成「缺圖」,直到 MG_IMG_VER 改號才會回來。
+   修法三道:①名單鍵含遊戲版號 MG_VER ⇒ 每次改版自動歸零(不必 bump MG_IMG_VER、不重抓題圖),並清掉舊鍵;
+   ②onerror 先隱藏,1.5 秒後用 new Image() 重試同一 URL 一次,成功就把原 <img> 復原(class 一併還原,籃子 emoji 會再度隱藏),
+     第二次也失敗才記入名單;③名單值改存時間戳,超過 24 小時自動重試。
+   (舊寫法保留備查:
+   var _MG_MISS = {};
+   try{ var _mm = JSON.parse(localStorage.getItem('mg_miss_' + MG_IMG_VER) || '{}'); if(_mm && typeof _mm === 'object') _MG_MISS = _mm; }catch(e){}
+   window.mgPicMiss = function(el, pic){ try{ el.style.display = 'none'; el.className = ''; }catch(e){} if(!pic || _MG_MISS[pic]) return; _MG_MISS[pic] = 1; try{ localStorage.setItem('mg_miss_' + MG_IMG_VER, JSON.stringify(_MG_MISS)); }catch(e){} };
+   ) */
 var _MG_MISS = {};
-try{ var _mm = JSON.parse(localStorage.getItem('mg_miss_' + MG_IMG_VER) || '{}'); if(_mm && typeof _mm === 'object') _MG_MISS = _mm; }catch(e){}
+var _MG_MISS_KEY = 'mg_miss_' + MG_IMG_VER + '_' + MG_VER;
+var _MG_MISS_TTL = 24 * 60 * 60 * 1000;
+var _MG_MISS_RETRY = {};
+try{
+  var _mm = JSON.parse(localStorage.getItem(_MG_MISS_KEY) || '{}'), _mk, _mnow = Date.now();
+  if(_mm && typeof _mm === 'object'){ for(_mk in _mm){ if(typeof _mm[_mk] === 'number' && (_mnow - _mm[_mk]) < _MG_MISS_TTL) _MG_MISS[_mk] = _mm[_mk]; } }
+}catch(e){}
+try{   /* 清掉其他版本留下的舊名單(含 v1.9.0/v1.9.1 的 mg_miss_1) */
+  var _mi, _mrm = [];
+  for(_mi = 0; _mi < localStorage.length; _mi++){ var _mkk = localStorage.key(_mi); if(_mkk && _mkk.indexOf('mg_miss_') === 0 && _mkk !== _MG_MISS_KEY) _mrm.push(_mkk); }
+  for(_mi = 0; _mi < _mrm.length; _mi++) localStorage.removeItem(_mrm[_mi]);
+}catch(e){}
 window.mgPicMiss = function(el, pic){
-  try{ el.style.display = 'none'; el.className = ''; }catch(e){}
-  if(!pic || _MG_MISS[pic]) return;
-  _MG_MISS[pic] = 1;
-  try{ localStorage.setItem('mg_miss_' + MG_IMG_VER, JSON.stringify(_MG_MISS)); }catch(e){}
+  var _cls = '';
+  try{ _cls = el.getAttribute('data-cls') || el.className || ''; el.style.display = 'none'; el.className = ''; }catch(e){}
+  if(!pic || _MG_MISS[pic] || _MG_MISS_RETRY[pic]) return;
+  _MG_MISS_RETRY[pic] = 1;
+  var _src = '';
+  try{ _src = el.getAttribute('src') || ''; }catch(e){}
+  if(!_src) _src = mgPicUrl(pic);
+  setTimeout(function(){
+    var im = new Image();
+    im.onload = function(){
+      delete _MG_MISS_RETRY[pic];
+      try{ if(el && el.isConnected !== false){ el.className = _cls; el.style.display = ''; el.src = _src; } }catch(e){}
+    };
+    im.onerror = function(){
+      delete _MG_MISS_RETRY[pic];
+      _MG_MISS[pic] = Date.now();
+      try{ localStorage.setItem(_MG_MISS_KEY, JSON.stringify(_MG_MISS)); }catch(e){}
+    };
+    im.src = _src;
+  }, 1500);
 };
 function mgPicTag(pic, cls){
   if(!pic) return '';
   /* onerror 同時拿掉 class:CSS 用「img.pic-bin + .be」隱藏 emoji,圖失敗時 class 消失 ⇒ emoji 自動回來 */
   if(_MG_MISS[pic]) return '';   /* ★ v1.9.0 優化②:已知缺圖直接略過 */
-  return '<img class="' + cls + '" src="' + mgPicUrl(pic) + '" alt="" loading="lazy" data-pic="' + esc(String(pic)) + '" onerror="mgPicMiss(this,this.getAttribute(\'data-pic\'));">';
+  return '<img class="' + cls + '" data-cls="' + cls + '" src="' + mgPicUrl(pic) + '" alt="" loading="lazy" data-pic="' + esc(String(pic)) + '" onerror="mgPicMiss(this,this.getAttribute(\'data-pic\'));">';   /* ★ v1.9.2 data-cls 供重試成功時還原 class */
 }
 /* 依「文字」自動對照的圖(不必在資料表逐筆填):迷宮標記／童謠選項／格子與棋子 */
 var MG_PIC_MAP = {
