@@ -15,7 +15,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.2(2026-09-07)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.11.0(2026-09-07)
+     ★ v1.11.0(老師需求):語系切換 —— 右上角 #lang-btn(EN/中,localStorage mg_lang);T()/MG_EN/MG_EN_PAT 對照表 + mgLangApply 文字節點替換;tx() 支援 en 欄、txq/txw/mgOpt/mgStr/mgSeq 讀題庫英文欄;英→中直接 reload
+     ★ v1.10.4(老師):首頁卡片左上角科目小標籤 .ctag(資料表 tag 欄);專注模式單元標籤下移到 top:32px
+     ★ v1.10.3(老師需求):專注模式「相關關卡才亮」—— mgCrGameUnits(某單元在該關 ≥ MG_CR_MIN=50 題才算相關)、無關關卡 .crmask 遮罩「與本單元無關」且 mgOpenInfo 擋入、相關關卡 .crlit 發光+單元標籤;勾選視窗每單元列出達標關卡;結算頁 #r-cr 列單元/課堂題/答對數/玩家(老師登記用);儲存後立刻 renderGrid
      ★ v1.10.2(老師看圖):專注課堂複習視窗 —— 勾任一單元/年級全選就自動勾「啟用」(mgCrAutoOn),全部取消自動關閉;儲存不再擋「沒勾單元」(視為關閉)
      ★ v1.10.1(老師看圖):①勾選視窗空白 = 裝置抓到舊 db(同版號 ?v= 未失效)⇒ 版號 bump + 視窗防呆提示 ②排排站加 #order-q 題卡顯示題目(原寫在隱藏的 #qcard)③排排站名稱/說明改在 db
      ★ v1.10.0(老師需求・專注課堂複習):首頁 #top-btns 第二顆大按鈕 #cr-btn → #cr-modal 勾選年級(全選)/單元(顯示題數)+ 啟用開關;localStorage mg_cr;startGame 先抽勾選單元「本輪未出」課堂題(mgCrPick;mg_cr_seen:<gid>),出完一輪清單歸零重洗;題卡右上角 .cr-tag「年級・科目・單元」(mgCrTagApply;拖曳題在 #drag-item);迷宮 variants 優先勾選單元;「重新開始一輪」按鈕
@@ -496,6 +499,13 @@ button[disabled]{opacity:.45;}
 .cr-grade .cr-gh{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--gold);cursor:pointer;}
 .cr-unit{display:flex;align-items:center;gap:10px;font-size:17px;padding:6px 4px 6px 34px;cursor:pointer;}
 .cr-unit .cr-n{opacity:.6;font-size:14px;margin-left:auto;white-space:nowrap;}
+.cell.crmask .cthumb,.cell.crmask .cn,.cell.crmask .cskills,.cell.crmask .cdiff,.cell.crmask .cbest{opacity:.28;filter:grayscale(1);}
+.cell.crmask{pointer-events:auto;}
+.crmask-lbl{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:3;font-size:16px;font-weight:700;color:var(--mist);background:rgba(20,26,22,.85);border:2px solid rgba(232,228,216,.35);border-radius:999px;padding:8px 16px;white-space:nowrap;}
+.cell.crlit{box-shadow:0 0 0 3px var(--grass),0 0 22px rgba(62,200,122,.7);}
+.ctag{position:absolute;left:8px;top:6px;z-index:3;font-size:12px;font-weight:700;letter-spacing:.5px;color:#2b2b2b;background:linear-gradient(180deg,#ffe28a,var(--sun));border-radius:999px;padding:3px 10px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;}   /* ★ v1.10.4 科目小標籤 */
+.cell.crmask .ctag{opacity:.5;}
+.crlit-lbl{position:absolute;left:8px;top:32px;z-index:3;font-size:13px;font-weight:700;color:#1f6b45;background:rgba(125,211,168,.95);border-radius:999px;padding:3px 10px;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .card{position:relative;}
 .cr-tag{position:absolute;top:6px;right:8px;font-size:12px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;}
 #drag-item{position:relative;}
@@ -746,13 +756,13 @@ button,.btn{min-height:52px;font-size:19px;}
   transform:rotate(-8deg);box-shadow:0 4px 12px rgba(0,0,0,.5);
 }
 .ctoggle{
-  position:absolute;left:8px;top:8px;z-index:4;min-height:0;min-width:0;
+  position:absolute;right:8px;top:30px;z-index:4;   /* ★ v1.10.4 老師的開關鈕改右上(最佳成績下方),左上讓給科目標籤 */min-height:0;min-width:0;
   padding:4px 10px;font-size:14px;border-radius:999px;border:2px solid rgba(255,255,255,.5);
   background:rgba(62,200,122,.92);color:#0b1a12;font-weight:700;box-shadow:0 2px 0 rgba(0,0,0,.4);
 }
 .ctoggle.isoff{background:rgba(232,64,64,.92);color:#fff;}
 #share-btn{background:rgba(74,158,255,.18);border-color:rgba(74,158,255,.5);}
-@media (min-width:1024px){ .ctoggle{font-size:16px;padding:6px 12px;} .coff{font-size:18px;} }
+@media (min-width:1024px){ .ctoggle{font-size:16px;padding:6px 12px;} .coff{font-size:18px;} .ctag{font-size:14px;padding:4px 12px;} .crlit-lbl{top:36px;} }
 
 /* ── v1.3.0 追加(老師:「圖片全部生成中,先預留圖片掛接」)──
    所有 .pic-* 都是「有檔才顯示」:onerror 把 img 藏起來,版面退回原本的純文字／emoji。 */
@@ -1582,6 +1592,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <button id="bgm-btn" class="chip" onclick="mgToggleBgm()" title="音樂音量">🎵</button>
     <button id="sfx-btn" class="chip" onclick="mgToggleSfx()" title="音效音量">🔊</button>
     <button id="style-btn" class="chip" onclick="mgToggleStyle()" title="切換 字少／字多">字多</button>
+    <button id="lang-btn" class="chip" onclick="mgToggleLang()" title="切換語言 中／EN">EN</button><!-- ★ v1.11.0 語系切換 -->
     <!-- ★ v1.3.0 — 獨立網址分享(老師需求②):點了複製短網址,免登入即可直接玩 -->
     <button id="share-btn" class="chip" onclick="mgShareUrl()" title="複製小遊戲網址">📎 網址</button>
     <button id="login-btn" class="chip" onclick="mgLoginTap()">登入</button>
@@ -1762,6 +1773,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="line" id="r-detail"></div>
       <div class="line" id="r-time"></div><!-- ★ v1.4.0 用時 + 快手加成 -->
       <div class="newbest hidden" id="r-newbest">🎉 新紀錄!</div>
+      <div class="line" id="r-cr" style="font-size:16px;font-weight:700;color:var(--grass);margin-top:8px;"></div><!-- ★ v1.10.3 專注課堂複習:單元/課堂題數/答對數,老師登記用 -->
       <div class="line" id="r-cloud" style="font-size:14px;opacity:.75;margin-top:10px;"></div>
       <div style="display:flex;gap:10px;margin-top:22px;">
         <button style="flex:1;" onclick="mgRetry()">再玩一次</button>
@@ -1846,7 +1858,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.10.2"></script>
+<script src="minigame_db.js?v=v1.11.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1855,7 +1867,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.10.2';
+var MG_VER = 'v1.11.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1920,11 +1932,19 @@ function esc(s){
 /* 依目前字體風格取雙版文字;只給字串時直接回傳 */
 function tx(o){
   if(o == null) return '';
-  if(typeof o === 'string') return o;
+  if(typeof o === 'string') return (MG.lang === 'en') ? T(o) : o;
+  /* ★ v1.11.0 英文版:物件帶 en(字串或 {s,f})就用它;沒有就退回中文(題庫尚未翻譯的部分) */
+  if(MG.lang === 'en' && o.en != null){ if(typeof o.en === 'string') return o.en; var ve = o.en[MG.style]; if(ve == null) ve = (o.en.f != null ? o.en.f : o.en.s); if(ve != null) return ve; }
   var v = o[MG.style];
   if(v == null) v = (o.f != null ? o.f : o.s);
   return v == null ? '' : v;
 }
+/* ★ v1.11.0 題目/選項/解說的英文欄位:qen / oen / wen / ten / nen / seqen;沒有就退回中文 */
+function txq(q){ return (MG.lang === 'en' && q && q.qen) ? q.qen : tx(q && q.q); }
+function txw(q){ return (MG.lang === 'en' && q && q.wen) ? q.wen : (q && txw(q)); }
+function mgOpt(q, i){ return (MG.lang === 'en' && q.oen && q.oen[i] != null) ? q.oen[i] : q.o[i]; }
+function mgStr(o, key){ if(!o) return ''; var en = o[key + 'en']; if(en == null) en = o[key + 'En']; return (MG.lang === 'en' && en != null) ? en : (o[key] == null ? '' : o[key]); }
+function mgSeq(r, i){ return (MG.lang === 'en' && r.seqen && r.seqen[i] != null) ? r.seqen[i] : r.seq[i]; }
 function playSfx(id, vol){
   try{
     var a = $(id); if(!a) return;
@@ -1938,7 +1958,7 @@ function playSfx(id, vol){
 var _toastT = null;
 function toast(msg){
   var t = $('toast'); if(!t) return;
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = T(msg); t.classList.add('show');   /* ★ v1.11.0 英文版自動翻譯 */
   if(_toastT) clearTimeout(_toastT);
   _toastT = setTimeout(function(){ t.classList.remove('show'); }, 2600);
 }
@@ -2452,22 +2472,27 @@ function renderGrid(){
     sk = '';
     if(x.skills){
       for(k = 0; k < x.skills.length; k++){
-        sk += '<span class="cskill">' + esc(x.skills[k]) + '</span>';
+        sk += '<span class="cskill">' + esc((MG.lang === 'en' && x.skillsEn && x.skillsEn[k]) ? x.skillsEn[k] : x.skills[k]) + '</span>';   /* ★ v1.11.0 */
       }
     }
 
     /* ★ v1.3.0 — 老師關閉的關卡:灰階 + 🚧 標籤;老師登入時每張卡左上有開／關切換鈕 */
     var _off = mgGameOff(x.id), _adm = mgIsAdmin(MG.user);
-    html += '<div class="cell' + (_off ? ' off' : '') + '" onclick="mgOpenInfo(\'' + x.id + '\')">'
+    /* ★ v1.10.3 專注模式:與勾選單元無關的關卡遮罩;相關的關卡亮起並標示單元 */
+    var _crOn = mgCrActive(), _crRel = _crOn && mgCrGameRelevant(x), _crMask = _crOn && !_crRel, _crSel = _crRel ? mgCrGameSelectedUnits(x) : [];
+    html += '<div class="cell' + (_off ? ' off' : '') + (_crMask ? ' crmask' : '') + (_crRel ? ' crlit' : '') + '" onclick="mgOpenInfo(\'' + x.id + '\')">'
           +   (_adm ? ('<button class="ctoggle' + (_off ? ' isoff' : '') + '" onclick="mgToggleGame(\'' + x.id + '\');event.stopPropagation();">' + (_off ? '🔴 已關閉' : '🟢 開放中') + '</button>') : '')
           +   (_off ? '<div class="coff">🚧 暫時關閉</div>' : '')
+          +   (_crMask ? '<div class="crmask-lbl">' + (MG.style === 's' ? '與這個單元無關' : '與本單元無關') + '</div>' : '')
+          +   (x.tag ? '<div class="ctag">' + esc(mgStr(x, 'tag')) + '</div>' : '')   /* ★ v1.10.4 科目小標籤(左上角);★ v1.11.0 tagEn */
+          +   (_crRel ? '<div class="crlit-lbl">📚 ' + esc(_crSel.map(mgCrLabelShort).join('、')) + '</div>' : '')
           +   '<div class="cthumb">'
           +     (url ? '<img src="' + url + '" alt="" loading="lazy" onerror="mgThumbFail(this);">' : '')
           +     '<span class="cthumb-emo">' + x.icon + '</span>'
           +   '</div>'
           +   (b ? '<span class="cbest">' + b.score + ((typeof b.time === 'number' && b.time > 0) ? (' · ⏱' + mgFmtTime(b.time)) : '') + '</span>' : '')   /* ★ v1.4.0 成績含用時 */
           +   '<span class="cn">' + esc(tx(x.name)) + '</span>'
-          +   '<span class="cs">' + esc(x.subject.split(' · ')[0]) + '</span>'
+          +   '<span class="cs">' + esc(mgStr(x, 'subject').split(' · ')[0]) + '</span>'
           +   '<div class="cskills">' + sk + '</div>'
           +   '<div class="cdiff" title="難度">' + dh + '</div>'
           +   ''   /* ★ v1.7.0 老師:卡片第二行最佳成績星星移除(cstar 不再輸出;難度星 cdiff 保留) */
@@ -2495,6 +2520,7 @@ function renderGrid(){
   mgMascot('home-mascot', 'home-bubble', _pool[Math.floor(Math.random() * _pool.length)], 'common_mascot_cheer.webp');   /* ★ v1.9.1 首頁用「加油」表情 */
   try{ mgRankPanelRender(); }catch(e){}   /* ★ v1.10.0 週排行榜面板(雙版,隨字少/字多重畫) */
   try{ mgCrBtnRender(); }catch(e){}       /* ★ v1.10.0 專注課堂複習按鈕(雙版) */
+  try{ mgLangApply($('page-home')); }catch(e){}   /* ★ v1.11.0 */
 }
 function mgMascot(wrapId, bubbleId, text, pic){
   var w = $(wrapId), b = $(bubbleId); if(!w || !b) return;
@@ -2524,6 +2550,12 @@ window.mgOpenInfo = function(id){
   /* ★ v1.3.0 — 老師關閉中的關卡:學生不能進,老師可進(方便檢查) */
   if(mgGameOff(id) && !mgIsAdmin(MG.user)){
     toast('🚧 這一關老師暫時關閉了,先玩別的吧!');
+    playSfx('sfx-cancel', 0.4);
+    return;
+  }
+  /* ★ v1.10.3 專注模式:無關的關卡不能進(老師帳號也一樣,避免示範時誤開) */
+  if(!mgCrGameRelevant(x)){
+    toast(MG.style === 's' ? '這一關和你勾的單元沒關係,玩亮起來的那幾關吧!' : '這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元');
     playSfx('sfx-cancel', 0.4);
     return;
   }
@@ -2601,7 +2633,7 @@ window.mgShareUrl = function(){
 function openInfo(x, withSfx){
   MG.pendingGame = x;
   $('m-name').textContent = x.icon + ' ' + tx(x.name);
-  $('m-subject').textContent = x.subject;
+  $('m-subject').textContent = mgStr(x, 'subject');   /* ★ v1.11.0 */
   $('m-goal').textContent = tx(x.goal);
   $('m-how').textContent = tx(x.how);
   var b = MG.best[x.id];
@@ -2610,6 +2642,7 @@ function openInfo(x, withSfx){
        + ((typeof b.time === 'number' && b.time > 0) ? (' · ⏱ ' + mgFmtTime(b.time)) : ''))   /* ★ v1.4.0 */
     : '還沒有紀錄,來挑戰看看!';
   $('modal').classList.add('show');
+  try{ mgLangApply($('modal')); }catch(e){}   /* ★ v1.11.0 */
   if(withSfx) playSfx('sfx-tap', 0.3);
 }
 window.mgShowInfo = function(){ if(MG.cur) openInfo(MG.cur, true); };
@@ -2882,7 +2915,7 @@ function onTimeout(){
   MG.answered = true;
   MG.combo = 0;
   var q = MG.order[MG.idx];
-  var why = q.why ? tx(q.why) : '';
+  var why = txw(q);
   showFeedback(false, '⏰ 時間到了!', why);
   lockOptions(-1);
   try{ _earReveal(); }catch(e){}   /* ★ v1.4.0 聽音坊演奏／拍子題超時揭曉正解 */
@@ -2926,6 +2959,7 @@ function renderQuestion(keepState){
   /* ★ v1.10.0 課堂複習題角落標籤 + 記入本輪已出清單(專注模式時) */
   mgCrTagApply(q);
   if(!keepState && q && q.cr && mgCrActive()) mgCrSeenAdd(x.id, q);
+  try{ mgLangApply($('page-play')); }catch(_el){}   /* ★ v1.11.0 */
 
   /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
      三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
@@ -2935,13 +2969,13 @@ function renderQuestion(keepState){
 
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
 function renderSort(x, it){
-  $('qcard').innerHTML = mgPicTag(it.pic, 'pic-q') + '<span>' + esc(it.t) + '</span>';   /* v1.3.0 預留題卡插圖 */
+  $('qcard').innerHTML = mgPicTag(it.pic, 'pic-q') + '<span>' + esc(mgStr(it, 't')) + '</span>';   /* v1.3.0 預留題卡插圖;★ v1.11.0 ten */
   var o = $('opts'), html = '', i, b, bins = mgBins(x, it);   /* ★ v1.9.7 每題可覆寫 bins */
   o.className = 'opts ' + (bins.length === 2 ? 'two' : (bins.length >= 4 ? 'four' : 'three'));
   for(i = 0; i < bins.length; i++){
     b = bins[i];
     html += '<button class="opt" data-i="' + i + '" onclick="mgAnswer(' + i + ')">'
-          +   mgPicTag(b.pic, 'pic-bin') + '<span class="oe">' + b.e + '</span>' + esc(b.n)
+          +   mgPicTag(b.pic, 'pic-bin') + '<span class="oe">' + b.e + '</span>' + esc(mgStr(b, 'n'))   /* ★ v1.11.0 nen */
           + '</button>';
   }
   o.innerHTML = html;
@@ -2964,13 +2998,13 @@ function _optPerm(q){
   return q._perm;
 }
 function renderQuiz(x, q){
-  $('qcard').innerHTML = mgPicTag(q.pic, 'pic-q') + '<span>' + esc(tx(q.q)) + '</span>';   /* v1.3.0 預留題卡插圖 */
+  $('qcard').innerHTML = mgPicTag(q.pic, 'pic-q') + '<span>' + esc(txq(q)) + '</span>';   /* v1.3.0 預留題卡插圖;★ v1.11.0 qen */
   var o = $('opts'), html = '', i, pm = _optPerm(q), oi;
   o.className = 'opts' + (q.o.length === 2 ? ' two' : (q.o.length === 3 ? ' three' : ''));   /* ★ v1.9.0 二分法題(2 選項)用大按鈕排版 */
   for(i = 0; i < pm.length; i++){
     oi = pm[i];
     html += '<button class="opt" data-i="' + oi + '" onclick="mgAnswer(' + oi + ')">'
-          + esc(q.o[oi]) + '</button>';
+          + esc(mgOpt(q, oi)) + '</button>';   /* ★ v1.11.0 oen */
   }
   o.innerHTML = html;
 }
@@ -3198,7 +3232,7 @@ function _earJudgeKeys(){
   scoreIt(ok);
   showFeedback(ok,
     ok ? ('✅ 彈對了!' + (q.type === 'score' ? '一首「' + (q.title || '') + '」' : '')) : ('❌ 彈對 ' + hit + ' / ' + target.length + ' 個音'),
-    q.why ? tx(q.why) : '');
+    txw(q));
 }
 /* ── 拍子 ── */
 function _earPaintBeats(){
@@ -3248,7 +3282,7 @@ function _earJudgeRhythm(){
   _earPaintBeats();
   var nOk = 0; for(i = 0; i < judge.length; i++) if(judge[i]) nOk++;
   scoreIt(ok);
-  showFeedback(ok, ok ? '✅ 拍子一模一樣!' : ('❌ 有 ' + (judge.length - nOk) + ' 拍節奏不對(紅色那幾拍)'), q.why ? tx(q.why) : '');
+  showFeedback(ok, ok ? '✅ 拍子一模一樣!' : ('❌ 有 ' + (judge.length - nOk) + ' 拍節奏不對(紅色那幾拍)'), txw(q));
 }
 /* 超時揭曉:琴鍵題把正解列出來、拍子題把拍點全標紅 */
 function _earReveal(){
@@ -3310,7 +3344,7 @@ function renderDrag(x, it){
   hide('card-area');
   show('dragbox');
   var d = $('drag-item');
-  d.innerHTML = mgPicTag(it.pic, 'pic-drag') + esc(it.t) + '<span class="dgrip">用手指把它拖到正確的籃子</span>';   /* v1.3.0 預留:圖來了就是「拖圖片」 */
+  d.innerHTML = mgPicTag(it.pic, 'pic-drag') + esc(mgStr(it, 't')) + '<span class="dgrip">' + T('用手指把它拖到正確的籃子') + '</span>';   /* ★ v1.11.0 */   /* v1.3.0 預留:圖來了就是「拖圖片」 */
   d.className = '';
   d.style.transform = '';
   var wrap = $('drag-bins'), html = '', i, b, bins = mgBins(x, it);   /* ★ v1.9.7 每題可覆寫 bins */
@@ -3318,7 +3352,7 @@ function renderDrag(x, it){
   for(i = 0; i < bins.length; i++){
     b = bins[i];
     html += '<div class="dbin" data-i="' + i + '">'
-          +   mgPicTag(b.pic, 'pic-bin') + '<span class="be">' + b.e + '</span>' + esc(b.n) + '</div>';
+          +   mgPicTag(b.pic, 'pic-bin') + '<span class="be">' + b.e + '</span>' + esc(mgStr(b, 'n')) + '</div>';   /* ★ v1.11.0 nen */
   }
   wrap.innerHTML = html;
   _dragBind(d);
@@ -3414,7 +3448,7 @@ function renderOrder(x, r){
   hide('card-area');
   show('orderbox');
   $('qcard').textContent = tx(r.q);
-  var _oq = $('order-q'); if(_oq) _oq.innerHTML = '<span>' + esc(tx(r.q)) + '</span>';   /* ★ v1.10.1 題目顯示在排排站自己的題卡 */
+  var _oq = $('order-q'); if(_oq) _oq.innerHTML = '<span>' + esc(txq(r)) + '</span>';   /* ★ v1.10.1 題目顯示在排排站自己的題卡 */
   _OD = { picked: [], items: r.seq, shuffled: shuffle(_idxList(r.seq.length)) };
   _orderPaint(r);
 }
@@ -3427,7 +3461,7 @@ function _orderPaint(r){
     var fi = _OD.picked[i];
     html += '<div class="oslot' + (fi == null ? '' : ' filled') + '">'
           + (fi == null ? '<span style="opacity:.45;">' + (i + 1) + '</span>'
-                        : (mgPicTag(r.pic && r.pic[fi], 'pic-card') + esc(r.seq[fi])))
+                        : (mgPicTag(r.pic && r.pic[fi], 'pic-card') + esc(mgSeq(r, fi))))   /* ★ v1.11.0 */
           + '</div>';
   }
   $('order-slots').innerHTML = html;
@@ -3438,7 +3472,7 @@ function _orderPaint(r){
     var used = false, k;
     for(k = 0; k < _OD.picked.length; k++){ if(_OD.picked[k] === oi) used = true; }
     html += '<button class="ocard' + (used ? ' used' : '') + '" '
-          + 'onclick="mgOrderPick(' + oi + ')">' + mgPicTag(r.pic && r.pic[oi], 'pic-card') + esc(r.seq[oi]) + '</button>';
+          + 'onclick="mgOrderPick(' + oi + ')">' + mgPicTag(r.pic && r.pic[oi], 'pic-card') + esc(mgSeq(r, oi)) + '</button>';   /* ★ v1.11.0 */
   }
   $('order-pool').innerHTML = html;
 }
@@ -4504,7 +4538,7 @@ window.mgColorqPick = function(i){
   scoreIt(ok);   /* scoreIt 內已累計 MG.right,不另加 */
   showFeedback(ok,
     ok ? '✅ 答對了!' : ('❌ 答案是「' + cqColorName(q.a) + '色」'),
-    tx(q.why));
+    txw(q));
   /* 解說卡尾端補上比例長條(這才是本題真正要學的東西:比例) */
   try{
     var body = $('feedback').getElementsByClassName('fb-body')[0];
@@ -4555,7 +4589,7 @@ window.mgAnswerMap = function(spotId){
     if(right) right.setAttribute('class', 'spot reveal');
   }
   scoreIt(correct);
-  showFeedback(correct, correct ? '✅ 答對了!' : '❌ 正確位置已標出來', tx(q.why));
+  showFeedback(correct, correct ? '✅ 答對了!' : '❌ 正確位置已標出來', txw(q));
 };
 
 function finishAnswer(correct, ansIdx, q){
@@ -4565,7 +4599,7 @@ function finishAnswer(correct, ansIdx, q){
   if(MG.cur && mgEng(MG.cur, q) === 'drag') lockBins(ansIdx);   /* ★ v1.9.0 混入的選擇題走 lockOptions */
   else lockOptions(ansIdx, correct ? ansIdx : -2);
   scoreIt(correct);
-  var _why = q.why ? tx(q.why) : '';
+  var _why = txw(q);
   if(!correct && MG.cur && MG.cur.hintOnWrong) _why += (_why ? ' ' : '') + '💡 ' + tx(MG.cur.hintOnWrong);   /* ★ v1.9.0 優化⑤:答錯才給口訣(動物關) */
   showFeedback(correct, correct ? '✅ 答對了!' : '❌ 再想想看', _why);
 }
@@ -4617,6 +4651,7 @@ function scoreIt(correct){
   $('combo').innerHTML = MG.combo >= 2 ? (mgPicTag('common_ui_combo.webp', 'pic-coin') + '🔥 ' + MG.combo + ' 連') : '';   /* ★ v1.9.1 連擊火焰圖(缺圖退 🔥) */
 }
 function showFeedback(ok, head, why){
+  try{ if(typeof head === 'string') head = T(head); }catch(_e){}   /* ★ v1.11.0 英文版標題列 */
   var f = $('feedback');
   f.className = 'feedback show ' + (ok ? 'ok' : 'ng');
   f.classList.add('show');
@@ -4718,6 +4753,17 @@ function finishGame(){
   MG.elapsed = Math.round(_elapsed);
   hide('page-play'); show('page-result');
   show('toapp-btn');
+  setTimeout(function(){ try{ mgLangApply($('page-result')); }catch(e){} }, 0);   /* ★ v1.11.0 */
+  /* ★ v1.10.3 專注模式成績列(老師登記表現分數用):單元 · 課堂題 n 題 · 答對 x/total */
+  try{
+    var _rc = $('r-cr');
+    if(_rc){
+      if(MG.crInfo && mgCrActive()){
+        var _us = mgCrGameSelectedUnits(MG.cur).map(mgCrLabelShort).join('、');
+        _rc.textContent = '📚 專注課堂複習|' + _us + '|本局課堂題 ' + MG.crInfo.n + '/' + total + ' 題|答對 ' + MG.right + ' 題|' + (MG.user ? mgMaskName(MG.user.displayName || MG.user.email || '') : '未登入');
+      }else{ _rc.textContent = ''; }
+    }
+  }catch(_ecr){}
   bgmPlay('bgm-result', 0.42, true);   /* 不 loop,播一次就好 */
 
   $('r-name').textContent = MG.cur.icon + ' ' + tx(MG.cur.name);
@@ -5116,6 +5162,23 @@ function mgRankPanelRender(){
 }
 function mgRankInfoHtml(){
   var s = (MG.style === 's');
+  /* ★ v1.11.0 英文版整段(含 HTML 標籤,無法逐字節點翻譯) */
+  if(MG.lang === 'en'){
+    var tblE = '<table class="rk-award-tbl">'
+      + '<tr><td>🥇 1st</td><td>💰 50000 coins + 🔮 10 summon crystals + 📖 10 deluxe EXP books</td></tr>'
+      + '<tr><td>🥈 2nd–5th</td><td>💰 35000 coins + 🔮 6 crystals + 📖 6 books</td></tr>'
+      + '<tr><td>🥉 6th–10th</td><td>💰 20000 coins + 🔮 3 crystals + 📖 3 books</td></tr></table>';
+    var bodyE = '<p><b>Log in</b> and play. Your scores go on <b>this week\'s ranking</b> (only your best score per game this week).</p>'
+      + '<p>The <b>top 10</b> of each game get prizes in <b>Little Hero Battle</b> next Monday at 8:00:</p>' + tblE
+      + '<p>Each player gets <b>one prize per week</b> (your best rank). Ranks you give up go to the next player. Ties: first come first.</p>'
+      + '<p>Scores follow your account, so <b>changing iPads does not count twice</b>. Scores without login are not ranked.</p>';
+    var bestE = mgRankMyBest(), meE;
+    if(bestE) meE = 'Your best now: #' + bestE.rank + ' in ' + esc(bestE.name) + ' (' + bestE.score + ' pts). Keep it until Monday 08:00!';
+    else if(MG.user && mgIsAdmin(MG.user)) meE = '(Teacher accounts are not ranked)';
+    else if(MG.user) meE = 'You are not in any top 10 yet. Go for it!';
+    else meE = '👉 Tap Log in (top right) so your score counts!';
+    return '<div class="rk-info">' + bodyE + '<div class="rk-me">' + meE + '</div></div>';
+  }
   var tbl = '<table class="rk-award-tbl">'
     + '<tr><td>🥇 第 1 名</td><td>💰 50000 知識幣 + 🔮 10 召喚水晶 + 📖 10 豪華經驗書</td></tr>'
     + '<tr><td>🥈 第 2~5 名</td><td>💰 35000 知識幣 + 🔮 6 召喚水晶 + 📖 6 豪華經驗書</td></tr>'
@@ -5144,7 +5207,8 @@ window.mgRankOpen = function(kind){
   $('rk-sub').textContent = (kind === 'info') ? ((MG.style === 's' ? '這週:' : '本週 ') + mgWeekKey() + (MG.style === 's' ? '' : '(每週一 08:00 結算上週)')) : '讀取中…';
   $('rk-body').innerHTML = (kind === 'info') ? mgRankInfoHtml() : '';
   m.classList.add('show');
-  mgWeekFetch(kind !== 'info', function(){ mgRankModalRender(kind); });
+  mgWeekFetch(kind !== 'info', function(){ mgRankModalRender(kind); try{ mgLangApply($('rank-modal')); }catch(e){} });
+  try{ mgLangApply($('rank-modal')); }catch(e){}   /* ★ v1.11.0 */
 };
 window.mgRankClose = function(){ var m = $('rank-modal'); if(m) m.classList.remove('show'); };
 function mgRankModalRender(kind){
@@ -5217,8 +5281,24 @@ function mgCrStore(){
 }
 function mgCrActive(){ return !!(MG.cr.on && Object.keys(MG.cr.units).length); }
 function mgCrKey(q){ return q ? String((q.q && (q.q.s || q.q)) || q.t || '') : ''; }
-function mgCrLabel(k){ var u = mgCrUnits()[k]; return u ? (u.g + '・' + u.s + '・' + u.u) : ''; }
-function mgCrLabelShort(k){ var u = mgCrUnits()[k]; return u ? (u.g + ' ' + u.u.replace(/\(.*$/, '')) : ''; }
+function mgCrLabel(k){ var u = mgCrUnits()[k]; if(!u) return ''; return (MG.lang === 'en' && u.uEn) ? (u.gEn + ' · ' + u.sEn + ' · ' + u.uEn) : (u.g + '・' + u.s + '・' + u.u); }
+function mgCrLabelShort(k){ var u = mgCrUnits()[k]; if(!u) return ''; return (MG.lang === 'en' && u.uEn) ? (u.gEn + ' ' + u.uEn.replace(/\(.*$/, '')) : (u.g + ' ' + u.u.replace(/\(.*$/, '')); }
+/* ★ v1.10.3 各關「相關單元」判定:某單元在該關題數 ≥ MG_CR_MIN 才算相關(老師:每關至少 50 個不同題目);
+   啟用專注模式時,勾選單元裡沒有任何一個在該關達標 ⇒ 該關遮罩「與本單元無關」不能進。 */
+var MG_CR_MIN = 50;
+function mgCrGameCounts(x){
+  var c = {}, arr = poolOf(x), i, it;
+  for(i = 0; i < arr.length; i++){ it = arr[i]; if(it && it.cr) c[it.cr] = (c[it.cr] || 0) + 1; }
+  return c;
+}
+function mgCrGameUnits(x){   /* 該關達標的單元鍵陣列(不看勾選) */
+  var c = mgCrGameCounts(x), out = [], k; for(k in c){ if(c.hasOwnProperty(k) && c[k] >= MG_CR_MIN && mgCrUnits()[k]) out.push(k); } return out;
+}
+function mgCrGameRelevant(x){   /* 專注模式下:勾選單元中有任一在該關達標 */
+  if(!mgCrActive()) return true;
+  var us = mgCrGameUnits(x), i; for(i = 0; i < us.length; i++){ if(MG.cr.units[us[i]]) return true; } return false;
+}
+function mgCrGameSelectedUnits(x){ var us = mgCrGameUnits(x), out = [], i; for(i = 0; i < us.length; i++){ if(MG.cr.units[us[i]]) out.push(us[i]); } return out; }
 /* 每單元題數(quiz/分類題 + 迷宮題組),顯示在勾選視窗 */
 function mgCrCounts(){
   var c = {}, i, g, arr, j, it, lv, v;
@@ -5271,8 +5351,8 @@ window.mgCrOpen = function(){
   var m = $('cr-modal'); if(!m) return;
   var s = (MG.style === 's');
   $('cr-desc').textContent = s
-    ? '勾選要複習的年級和單元。開啟後每個遊戲會先出這些課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。'
-    : '勾選要複習的年級與單元。啟用後每款遊戲都會優先出這些課堂複習題(題卡角落顯示「年級・科目・單元」),直到該遊戲的課堂題全部出完,才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。課堂題不夠一局時,其餘以一般題補滿。';
+    ? '勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。'
+    : '勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。';
   $('cr-on').checked = MG.cr.on;
   $('cr-on-txt').textContent = s ? '專注模式:勾單元就會自動打開' : '啟用專注課堂複習模式(勾選單元後自動啟用)';
   var units = mgCrUnits(), counts = mgCrCounts(), byG = {}, order = [], k, u, html = '', gi, ui, gk;
@@ -5282,15 +5362,19 @@ window.mgCrOpen = function(){
   for(gi = 0; gi < order.length; gi++){
     gk = order[gi];
     var allOn = byG[gk].every(function(kk){ return !!MG.cr.units[kk]; });
-    html += '<div class="cr-grade"><label class="cr-gh"><input type="checkbox" data-g="' + esc(gk) + '"' + (allOn ? ' checked' : '') + ' onchange="mgCrGradeToggle(this)"> ' + esc(gk) + '(全選)</label>';
+    var gkDisp = gk; if(MG.lang === 'en'){ var _u0 = units[byG[gk][0]]; if(_u0 && _u0.gEn) gkDisp = _u0.gEn; }   /* ★ v1.11.0 */
+    html += '<div class="cr-grade"><label class="cr-gh"><input type="checkbox" data-g="' + esc(gk) + '"' + (allOn ? ' checked' : '') + ' onchange="mgCrGradeToggle(this)"> ' + esc(gkDisp) + (MG.lang === 'en' ? ' (select all)' : '(全選)') + '</label>';
     for(ui = 0; ui < byG[gk].length; ui++){
       k = byG[gk][ui]; u = units[k];
-      html += '<label class="cr-unit"><input type="checkbox" data-k="' + esc(k) + '"' + (MG.cr.units[k] ? ' checked' : '') + ' onchange="mgCrUnitToggle(this)"> ' + esc(u.s + '・' + u.u) + '<span class="cr-n">' + (counts[k] || 0) + ' 題</span></label>';
+      var _gs = [], gi2; for(gi2 = 0; gi2 < MG.games.length; gi2++){ if(mgCrGameUnits(MG.games[gi2]).indexOf(k) >= 0) _gs.push(MG.games[gi2].icon + tx(MG.games[gi2].name)); }
+      var uDisp = (MG.lang === 'en' && u.uEn) ? (u.sEn + ' · ' + u.uEn) : (u.s + '・' + u.u);   /* ★ v1.11.0 */
+      html += '<label class="cr-unit"><input type="checkbox" data-k="' + esc(k) + '"' + (MG.cr.units[k] ? ' checked' : '') + ' onchange="mgCrUnitToggle(this)"> ' + esc(uDisp) + '<span class="cr-n">' + (counts[k] || 0) + (MG.lang === 'en' ? ' questions · ' : ' 題 · ') + esc(_gs.join(' ') || T('尚無達標關卡')) + '</span></label>';
     }
     html += '</div>';
   }
   $('cr-list').innerHTML = html;
   m.classList.add('show');
+  try{ mgLangApply($('cr-modal')); }catch(e){}   /* ★ v1.11.0 */
 };
 window.mgCrClose = function(){ var m = $('cr-modal'); if(m) m.classList.remove('show'); };
 window.mgCrToggleOn = function(){
@@ -5320,7 +5404,7 @@ window.mgCrGradeToggle = function(el){
 window.mgCrSave = function(){
   playSfx('sfx-tap', 0.35);
   if(!Object.keys(MG.cr.units).length) MG.cr.on = false;   /* ★ v1.10.2 沒勾單元 = 關閉,直接存(不再擋儲存) */
-  mgCrStore(); mgCrBtnRender(); mgCrClose();
+  mgCrStore(); mgCrBtnRender(); mgCrClose(); try{ renderGrid(); }catch(_eg){}   /* ★ v1.10.3 立刻重畫九宮格(亮/遮) */
   toast(mgCrActive() ? ((MG.style === 's') ? '專注模式開了!先出課堂題' : '專注課堂複習已啟用,各遊戲優先出課堂題') : ((MG.style === 's') ? '專注模式關了' : '專注課堂複習已關閉'));
 };
 window.mgCrInfo = function(){ return MG.crInfo ? { n: MG.crInfo.n, reset: MG.crInfo.reset, total: MG.crInfo.total, left: MG.crInfo.left, order: MG.order.length, cr: MG.order.filter(function(q){ return !!q.cr; }).length } : null; };   /* 除錯/測試用 */
@@ -5328,6 +5412,92 @@ window.mgCrReset = function(){
   var i; for(i = 0; i < MG.games.length; i++) mgCrSeenSet(MG.games[i].id, []);
   toast(MG.style === 's' ? '已重新開始,課堂題會從頭再出一輪' : '已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始');
 };
+
+
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.11.0(老師需求)— 語系切換(中文／英文,小學生程度英文)
+ *  ・MG.lang = 'zh' | 'en',localStorage mg_lang;右上角 #lang-btn 切換
+ *  ・靜態/動態 UI 文字:MG_EN 對照表(精確比對)+ MG_EN_PAT(含數字的組合句樣式)⇒ T(s)
+ *    mgLangApply(root) 走訪文字節點與 title 屬性做替換;每次重畫(首頁/題目/結算/視窗)後呼叫
+ *  ・題庫:tx() 支援 en 欄;題目 qen、選項 oen、解說 wen、分類卡 ten、籃子 nen、排序 seqen;
+ *    沒有英文欄位的題目退回中文(目前已翻譯:15 款關卡介紹/籃子/單元表 + 動物特徵二選一 167 題)
+ * ══════════════════════════════════════════════════════════ */
+MG.lang = 'zh';
+var MG_EN = {"小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
+var MG_EN_PAT = [
+  ["^答對 (\\d+) 題\\((\\d+)%\\) · 最高連擊 (\\d+)$", "$1 correct ($2%) · best combo $3"],
+  ["^(\\d+) 分$", "$1 pts"],
+  ["^(\\d+) 分 · (.*)$", "$1 pts · $2"],
+  ["^🔥 (\\d+) 連$", "🔥 $1 combo"],
+  ["^本局用時 (.*)$", "Time $1"],
+  ["^快手加成 \\+(\\d+)%$", "Speed bonus +$1%"],
+  ["^快手加成\\(含暫停時間\\)(.*)$", "Speed bonus (pauses count)$1"],
+  ["^用時未達加成門檻\\(標準 (.*)\\)$", "No speed bonus (target $1)"],
+  ["^已切換:(.*)$", "Switched: $1"],
+  ["^🔴 已關閉:(.*)$", "🔴 Closed: $1"],
+  ["^🟢 已開放:(.*)$", "🟢 Open: $1"],
+  ["^已複製網址:(.*)$", "Link copied: $1"],
+  ["^小遊戲網址\\(長按可複製\\):(.*)$", "Mini game link (long press to copy): $1"],
+  ["^你目前「(.*)」第 (\\d+) 名$", "You are #$2 in $1"],
+  ["^(\\d+) 人上榜$", "$1 players"],
+  ["^你第 (\\d+) 名 · (\\d+) 分$", "You: #$1 · $2 pts"],
+  ["^(.*)個單元$", "$1 units"],
+  ["^(\\d+) 題 · (.*)$", "$1 questions · $2"],
+  ["^(.*)\\(全選\\)$", "$1 (select all)"],
+  ["^✅ 擊中 (\\d+) 分,誤擊 (\\d+) 次$", "✅ Hit $1 pts, missed $2 times"],
+  ["^⭐ 收集 (\\d+) 個正確答案$", "⭐ Collected $1 correct answers"],
+  ["^💥 踩到 (\\d+) 個陷阱$", "💥 Stepped on $1 traps"],
+  ["^還有 (\\d+) 個正確答案沒踩到,終點會等你!$", "$1 correct answers left. The goal is waiting!"],
+  ["^❌ 答案是「(.*)」$", "❌ The answer is $1"],
+  ["^正確答案:(.*)$", "Correct answer: $1"],
+  ["^❌ 彈對 (\\d+)/(\\d+) 個音$", "❌ $1/$2 notes right"],
+  ["^已敲 (\\d+)/(\\d+)$", "Tapped $1/$2"],
+  ["^❌ 有 (\\d+) 拍節奏不對\\(紅色那幾拍\\)$", "❌ $1 beats were off (the red ones)"],
+  ["^你玩的是舊版,最新是 (.*),按「更新」就好$", "You have an old version. Latest is $1. Tap Update."],
+  ["^上週\\((.*)\\)還沒結算,週一早上 8 點以後打開大作戰就會結算。$", "Last week ($1) is not settled yet. Open the main game after Monday 8:00."],
+  ["^上週\\((.*)\\)尚未結算:.*$", "Last week ($1) is not settled yet. The first player to log in to the main game after Monday 08:00 settles it."],
+  ["^上週 (.*):(\\d+) 人得獎!獎品在大作戰登入時自動入帳。$", "Last week $1: $2 winners! Prizes arrive when you log in to the main game."],
+  ["^上週\\((.*)\\)共 (\\d+) 位得獎,.*$", "Last week ($1): $2 winners. Prizes arrive when you log in to the main game (once per player)."],
+  ["^本週\\((.*)\\)各遊戲前 10 名,.*$", "This week ($1): top 10 per game. Tap a game to open. Ties: first come first."],
+  ["^本週 (.*)\\(每週一 08:00 結算上週\\)$", "This week $1 (settled Monday 08:00)"],
+  ["^這週:(.*)$", "This week: $1"],
+  ["^📚 專注課堂複習\\|(.*)\\|本局課堂題 (\\d+)/(\\d+) 題\\|答對 (\\d+) 題\\|(.*)$", "📚 Class Review | $1 | class questions $2/$3 | correct $4 | $5"],
+  ["^(.*)\\((\\d+) 題\\)$", "$1 ($2 questions)"]
+];
+
+var _MG_EN_PAT_RE = MG_EN_PAT.map(function(p){ return [new RegExp(p[0]), p[1]]; });
+function T(s){
+  if(MG.lang !== 'en' || s == null) return s;
+  var str = String(s), k = str.trim();
+  if(!k || !/[\u4e00-\u9fff]/.test(k)) return s;
+  if(MG_EN.hasOwnProperty(k)) return str.replace(k, MG_EN[k]);
+  var i; for(i = 0; i < _MG_EN_PAT_RE.length; i++){ if(_MG_EN_PAT_RE[i][0].test(k)) return str.replace(k, k.replace(_MG_EN_PAT_RE[i][0], _MG_EN_PAT_RE[i][1])); }
+  return s;
+}
+function mgLangApply(root){
+  if(MG.lang !== 'en') return;
+  try{
+    root = root || document.body;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, list = [];
+    while((n = walker.nextNode())){ if(n.nodeValue && /[\u4e00-\u9fff]/.test(n.nodeValue) && n.parentNode && n.parentNode.tagName !== 'SCRIPT' && n.parentNode.tagName !== 'STYLE') list.push(n); }
+    var i; for(i = 0; i < list.length; i++){ var v = T(list[i].nodeValue); if(v !== list[i].nodeValue) list[i].nodeValue = v; }
+    var els = root.querySelectorAll('[title]'); for(i = 0; i < els.length; i++){ var tt = els[i].getAttribute('title'); if(tt && /[\u4e00-\u9fff]/.test(tt)) els[i].setAttribute('title', T(tt)); }
+  }catch(e){}
+}
+function mgLangBtnRender(){ var b = $('lang-btn'); if(b){ b.textContent = (MG.lang === 'en') ? '中' : 'EN'; b.title = (MG.lang === 'en') ? 'Switch to Chinese' : '切換成英文'; } }
+window.mgToggleLang = function(){
+  MG.lang = (MG.lang === 'en') ? 'zh' : 'en';
+  try{ localStorage.setItem('mg_lang', MG.lang); }catch(e){}
+  playSfx('sfx-tap', 0.35);
+  mgLangBtnRender();
+  /* 中→英:重畫目前畫面;英→中:文字節點無法還原,直接重新整理最乾淨 */
+  if(MG.lang === 'zh'){ try{ location.reload(); }catch(e){} return; }
+  try{ renderGrid(); }catch(e){}
+  try{ if(MG.cur && !$('page-play').classList.contains('hidden')) renderQuestion(true); }catch(e){}
+  mgLangApply(document.body);
+  toast('English mode. Some questions may still show Chinese.');
+};
+function mgLangLoad(){ try{ var v = localStorage.getItem('mg_lang'); if(v === 'en') MG.lang = 'en'; }catch(e){} mgLangBtnRender(); }
 
 /* ══════════════════════════════════════════════════════════
  *  開機
@@ -5364,6 +5534,7 @@ function boot(){
   if(mgUnlocked()) bgmPlay('bgm-home');
   try{ mgWeekFetch(false, null); }catch(_ew){}   /* ★ v1.10.0 開機讀週排行榜文件(免登入 REST;面板/彈窗用) */
   try{ mgCrLoad(); mgCrBtnRender(); }catch(_ec){}   /* ★ v1.10.0 專注課堂複習偏好 */
+  try{ mgLangLoad(); if(MG.lang === 'en'){ renderGrid(); mgLangApply(document.body); } }catch(_el){}   /* ★ v1.11.0 語系 */
 
   // 若上次用 redirect 登入,回來時把結果接起來(不主動載 SDK)
   if(window.firebase && MG.fb){
