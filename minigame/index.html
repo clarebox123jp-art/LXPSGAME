@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.0(2026-09-07)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.1(2026-09-07)
+     ★ v1.10.1(老師看圖):①勾選視窗空白 = 裝置抓到舊 db(同版號 ?v= 未失效)⇒ 版號 bump + 視窗防呆提示 ②排排站加 #order-q 題卡顯示題目(原寫在隱藏的 #qcard)③排排站名稱/說明改在 db
      ★ v1.10.0(老師需求・專注課堂複習):首頁 #top-btns 第二顆大按鈕 #cr-btn → #cr-modal 勾選年級(全選)/單元(顯示題數)+ 啟用開關;localStorage mg_cr;startGame 先抽勾選單元「本輪未出」課堂題(mgCrPick;mg_cr_seen:<gid>),出完一輪清單歸零重洗;題卡右上角 .cr-tag「年級・科目・單元」(mgCrTagApply;拖曳題在 #drag-item);迷宮 variants 優先勾選單元;「重新開始一輪」按鈕
      ★ v1.10.0(老師看圖裁定):首頁「說明面板」改為最上方大按鈕 #rank-btn(iPad 橫式 grid 第 1 列整列;原面板被自動排到九宮格下方看不到)→ 點開 #rank-modal 說明視窗(字體放大,含本週排行榜/上週得獎名單按鈕 #rk-nav);登出清 MG.best
      ★ v1.10.0 稽核:mgWeekSave 週文件未載入時先 SDK 讀自己那格再比較(防低分蓋高分)、寫入失敗退回原值;面板/彈窗名次改同分同名次;_optPerm 把「以上皆是」固定排最後
@@ -290,6 +291,7 @@ button[disabled]{opacity:.45;}
 
 /* ── 引擎 E:順序排列 ─────────────────────── */
 #orderbox{margin-top:10px;}
+#order-q{margin-bottom:12px;min-height:72px;}   /* ★ v1.10.1 排排站題卡 */
 #order-slots{display:flex;gap:8px;margin-bottom:14px;min-height:64px;}
 .oslot{
   flex:1;border:2px dashed rgba(232,228,216,.3);border-radius:14px;
@@ -1700,6 +1702,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     </div>
 
     <div id="orderbox" class="hidden">
+      <div id="order-q" class="card"></div>   <!-- ★ v1.10.1 老師看圖:排排站題目本來寫在被隱藏的 #qcard,玩家看不到題目 ⇒ 加專用題卡 -->
       <div id="order-slots"></div>
       <div id="order-pool"></div>
       <div id="order-act">
@@ -1842,7 +1845,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.10.0"></script>
+<script src="minigame_db.js?v=v1.10.1"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1851,7 +1854,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.10.0';
+var MG_VER = 'v1.10.1';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -3410,6 +3413,7 @@ function renderOrder(x, r){
   hide('card-area');
   show('orderbox');
   $('qcard').textContent = tx(r.q);
+  var _oq = $('order-q'); if(_oq) _oq.innerHTML = '<span>' + esc(tx(r.q)) + '</span>';   /* ★ v1.10.1 題目顯示在排排站自己的題卡 */
   _OD = { picked: [], items: r.seq, shuffled: shuffle(_idxList(r.seq.length)) };
   _orderPaint(r);
 }
@@ -5245,8 +5249,10 @@ function mgCrTagApply(q){
   try{
     var old = document.querySelectorAll('.cr-tag'), i; for(i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
     if(!q || !q.cr || !mgCrUnits()[q.cr]) return;
-    var host = null, di = $('drag-item'), db = $('dragbox');
-    if(db && !db.classList.contains('hidden') && di) host = di; else host = $('qcard');
+    var host = null, di = $('drag-item'), db = $('dragbox'), ob = $('orderbox'), oq = $('order-q');
+    if(db && !db.classList.contains('hidden') && di) host = di;
+    else if(ob && !ob.classList.contains('hidden') && oq) host = oq;   /* ★ v1.10.1 排排站題卡 */
+    else host = $('qcard');
     if(!host) return;
     var sp = document.createElement('span'); sp.className = 'cr-tag'; sp.textContent = mgCrLabel(q.cr); host.appendChild(sp);
   }catch(e){}
@@ -5269,6 +5275,8 @@ window.mgCrOpen = function(){
   $('cr-on').checked = MG.cr.on;
   $('cr-on-txt').textContent = s ? '打開專注模式' : '啟用專注課堂複習模式';
   var units = mgCrUnits(), counts = mgCrCounts(), byG = {}, order = [], k, u, html = '', gi, ui, gk;
+  /* ★ v1.10.1 防呆:資料表舊版(沒有 MG_CR_UNITS)時明講,不要留一片空白 */
+  if(!Object.keys(units).length){ $('cr-list').innerHTML = '<div class="tag" style="color:var(--gold);">⚠ 題庫資料表版本過舊(沒有單元對照表),請重新整理頁面或關掉再開一次小遊戲。</div>'; m.classList.add('show'); return; }
   for(k in units){ if(!units.hasOwnProperty(k)) continue; u = units[k]; if(!byG[u.g]){ byG[u.g] = []; order.push(u.g); } byG[u.g].push(k); }
   for(gi = 0; gi < order.length; gi++){
     gk = order[gi];
