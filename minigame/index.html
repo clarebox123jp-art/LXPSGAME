@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.1(2026-09-07)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.2(2026-09-07)
+     ★ v1.10.2(老師看圖):專注課堂複習視窗 —— 勾任一單元/年級全選就自動勾「啟用」(mgCrAutoOn),全部取消自動關閉;儲存不再擋「沒勾單元」(視為關閉)
      ★ v1.10.1(老師看圖):①勾選視窗空白 = 裝置抓到舊 db(同版號 ?v= 未失效)⇒ 版號 bump + 視窗防呆提示 ②排排站加 #order-q 題卡顯示題目(原寫在隱藏的 #qcard)③排排站名稱/說明改在 db
      ★ v1.10.0(老師需求・專注課堂複習):首頁 #top-btns 第二顆大按鈕 #cr-btn → #cr-modal 勾選年級(全選)/單元(顯示題數)+ 啟用開關;localStorage mg_cr;startGame 先抽勾選單元「本輪未出」課堂題(mgCrPick;mg_cr_seen:<gid>),出完一輪清單歸零重洗;題卡右上角 .cr-tag「年級・科目・單元」(mgCrTagApply;拖曳題在 #drag-item);迷宮 variants 優先勾選單元;「重新開始一輪」按鈕
      ★ v1.10.0(老師看圖裁定):首頁「說明面板」改為最上方大按鈕 #rank-btn(iPad 橫式 grid 第 1 列整列;原面板被自動排到九宮格下方看不到)→ 點開 #rank-modal 說明視窗(字體放大,含本週排行榜/上週得獎名單按鈕 #rk-nav);登出清 MG.best
@@ -1845,7 +1846,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.10.1"></script>
+<script src="minigame_db.js?v=v1.10.2"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1854,7 +1855,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.10.1';
+var MG_VER = 'v1.10.2';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -5273,7 +5274,7 @@ window.mgCrOpen = function(){
     ? '勾選要複習的年級和單元。開啟後每個遊戲會先出這些課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。'
     : '勾選要複習的年級與單元。啟用後每款遊戲都會優先出這些課堂複習題(題卡角落顯示「年級・科目・單元」),直到該遊戲的課堂題全部出完,才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。課堂題不夠一局時,其餘以一般題補滿。';
   $('cr-on').checked = MG.cr.on;
-  $('cr-on-txt').textContent = s ? '打開專注模式' : '啟用專注課堂複習模式';
+  $('cr-on-txt').textContent = s ? '專注模式:勾單元就會自動打開' : '啟用專注課堂複習模式(勾選單元後自動啟用)';
   var units = mgCrUnits(), counts = mgCrCounts(), byG = {}, order = [], k, u, html = '', gi, ui, gk;
   /* ★ v1.10.1 防呆:資料表舊版(沒有 MG_CR_UNITS)時明講,不要留一片空白 */
   if(!Object.keys(units).length){ $('cr-list').innerHTML = '<div class="tag" style="color:var(--gold);">⚠ 題庫資料表版本過舊(沒有單元對照表),請重新整理頁面或關掉再開一次小遊戲。</div>'; m.classList.add('show'); return; }
@@ -5292,9 +5293,20 @@ window.mgCrOpen = function(){
   m.classList.add('show');
 };
 window.mgCrClose = function(){ var m = $('cr-modal'); if(m) m.classList.remove('show'); };
-window.mgCrToggleOn = function(){ MG.cr.on = !!$('cr-on').checked; };
+window.mgCrToggleOn = function(){
+  MG.cr.on = !!$('cr-on').checked;
+  /* ★ v1.10.2 手動打開但沒勾任何單元 ⇒ 提示並退回 */
+  if(MG.cr.on && !Object.keys(MG.cr.units).length){ MG.cr.on = false; $('cr-on').checked = false; toast(MG.style === 's' ? '先勾一個單元,就會自動打開喔' : '請先勾選單元,勾了就會自動啟用'); }
+};
+/* ★ v1.10.2 老師:勾了任一單元就自動啟用;全部取消就自動關閉(啟用框只是狀態顯示,也可手動關) */
+function mgCrAutoOn(){
+  var n = Object.keys(MG.cr.units).length, box = $('cr-on');
+  if(n){ MG.cr.on = true; } else { MG.cr.on = false; }
+  if(box) box.checked = MG.cr.on;
+}
 window.mgCrUnitToggle = function(el){
   var k = el.getAttribute('data-k'); if(el.checked) MG.cr.units[k] = true; else delete MG.cr.units[k];
+  mgCrAutoOn();
   /* 同步年級全選框 */
   try{ var u = mgCrUnits()[k], g = u && u.g, boxes = document.querySelectorAll('#cr-list input[data-k]'), all = true, i, kk;
     for(i = 0; i < boxes.length; i++){ kk = boxes[i].getAttribute('data-k'); if(mgCrUnits()[kk].g === g && !boxes[i].checked) all = false; }
@@ -5303,10 +5315,11 @@ window.mgCrUnitToggle = function(el){
 window.mgCrGradeToggle = function(el){
   var g = el.getAttribute('data-g'), on = el.checked, boxes = document.querySelectorAll('#cr-list input[data-k]'), i, k;
   for(i = 0; i < boxes.length; i++){ k = boxes[i].getAttribute('data-k'); if(mgCrUnits()[k].g === g){ boxes[i].checked = on; if(on) MG.cr.units[k] = true; else delete MG.cr.units[k]; } }
+  mgCrAutoOn();   /* ★ v1.10.2 */
 };
 window.mgCrSave = function(){
   playSfx('sfx-tap', 0.35);
-  if(MG.cr.on && !Object.keys(MG.cr.units).length){ toast(MG.style === 's' ? '至少勾一個單元喔!' : '請至少勾選一個單元'); return; }
+  if(!Object.keys(MG.cr.units).length) MG.cr.on = false;   /* ★ v1.10.2 沒勾單元 = 關閉,直接存(不再擋儲存) */
   mgCrStore(); mgCrBtnRender(); mgCrClose();
   toast(mgCrActive() ? ((MG.style === 's') ? '專注模式開了!先出課堂題' : '專注課堂複習已啟用,各遊戲優先出課堂題') : ((MG.style === 's') ? '專注模式關了' : '專注課堂複習已關閉'));
 };
