@@ -16,6 +16,7 @@
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
      小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.10.0(2026-09-07)
+     ★ v1.10.0(老師需求・專注課堂複習):首頁 #top-btns 第二顆大按鈕 #cr-btn → #cr-modal 勾選年級(全選)/單元(顯示題數)+ 啟用開關;localStorage mg_cr;startGame 先抽勾選單元「本輪未出」課堂題(mgCrPick;mg_cr_seen:<gid>),出完一輪清單歸零重洗;題卡右上角 .cr-tag「年級・科目・單元」(mgCrTagApply;拖曳題在 #drag-item);迷宮 variants 優先勾選單元;「重新開始一輪」按鈕
      ★ v1.10.0(老師看圖裁定):首頁「說明面板」改為最上方大按鈕 #rank-btn(iPad 橫式 grid 第 1 列整列;原面板被自動排到九宮格下方看不到)→ 點開 #rank-modal 說明視窗(字體放大,含本週排行榜/上週得獎名單按鈕 #rk-nav);登出清 MG.best
      ★ v1.10.0 稽核:mgWeekSave 週文件未載入時先 SDK 讀自己那格再比較(防低分蓋高分)、寫入失敗退回原值;面板/彈窗名次改同分同名次;_optPerm 把「以上皆是」固定排最後
      ★ v1.10.0(老師需求 1):每週排行榜獎勵 —— 首頁上方 #rank-panel 說明面板(雙版)+「本週排行榜／上週得獎名單」彈窗(#rank-modal,免登入 REST 讀 stats/minigameWeekly);登入且非管理員每局把本週最高分寫入自己那一格(mgWeekSave,set merge);名字遮罩 mgMaskName;老師登入自動建檔 mgWeekBootstrap;結算/領獎在主程式 v5.146.0(_minigameRank)
@@ -466,6 +467,35 @@ button[disabled]{opacity:.45;}
   box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(240,192,96,.35);touch-action:manipulation;
 }
 #rank-btn:active{transform:translateY(2px);}
+#top-btns{display:flex;gap:10px;margin:0 0 12px;}
+#top-btns button{flex:1;margin:0;}
+#cr-btn{
+  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 18px;
+  font-size:22px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer;
+  background:linear-gradient(180deg,#7dd3a8,var(--grass));border:3px solid rgba(255,255,255,.55);border-radius:18px;
+  box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(62,200,122,.35);touch-action:manipulation;
+}
+#cr-btn:active{transform:translateY(2px);}
+#cr-btn .rb-ico{font-size:28px;}
+#cr-btn .rb-sub{font-size:15px;font-weight:700;opacity:.9;}
+#cr-btn .rb-sub:empty{display:none;}
+#cr-btn.on{background:linear-gradient(180deg,#ffb86b,#ff8c42);box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(255,140,66,.45);}
+#cr-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:82;display:none;align-items:center;justify-content:center;padding:18px;}
+#cr-modal.show{display:flex;}
+#cr-modal .box{background:var(--ink2);border:2px solid rgba(62,200,122,.55);border-radius:20px;padding:22px 20px;max-width:720px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#cr-modal h3{margin:0 0 6px;font-size:26px;color:var(--grass);}
+#cr-modal .tag{font-size:17px;opacity:.85;margin-bottom:12px;line-height:1.7;}
+#cr-modal .row{display:flex;gap:10px;margin-top:14px;}
+#cr-modal .row button{flex:1;font-size:17px;padding:12px 8px;}
+#cr-modal .cr-master{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;padding:10px 12px;border-radius:12px;background:rgba(62,200,122,.12);margin-bottom:10px;cursor:pointer;}
+#cr-modal input[type=checkbox]{width:24px;height:24px;accent-color:var(--grass);}
+.cr-grade{border:1px solid rgba(232,228,216,.2);border-radius:12px;margin:8px 0;padding:8px 12px;}
+.cr-grade .cr-gh{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--gold);cursor:pointer;}
+.cr-unit{display:flex;align-items:center;gap:10px;font-size:17px;padding:6px 4px 6px 34px;cursor:pointer;}
+.cr-unit .cr-n{opacity:.6;font-size:14px;margin-left:auto;white-space:nowrap;}
+.card{position:relative;}
+.cr-tag{position:absolute;top:6px;right:8px;font-size:12px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;}
+#drag-item{position:relative;}
 #rank-btn .rb-ico{font-size:28px;}
 #rank-btn .rb-sub{font-size:15px;font-weight:700;opacity:.8;}
 #rank-btn .rb-sub:empty{display:none;}
@@ -989,7 +1019,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .wrap{max-width:1180px;padding:8px 22px 20px;}
   /* 首頁:標題與吉祥物同一列,九宮格 3 列一頁放完 */
   #page-home{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:22px;align-items:center;}
-  #rank-btn{grid-column:1 / 3;grid-row:1;margin:0 0 6px;}   /* ★ v1.10.0 大按鈕佔最上方整列(原面板被自動排到九宮格下方看不到 ⇒ 改列號) */
+  #top-btns{grid-column:1 / 3;grid-row:1;margin:0 0 6px;}   /* ★ v1.10.0 兩顆大按鈕佔最上方整列(原面板被自動排到九宮格下方看不到 ⇒ 改列號) */
   #title-img{grid-column:1;grid-row:2;max-width:340px;margin:0;}
   #title-fallback{grid-column:1;grid-row:2;}
   #page-home .sub{grid-column:1;grid-row:3;margin:0;font-size:15px;letter-spacing:1px;}
@@ -1588,7 +1618,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   <!-- ══ 首頁 ══ -->
   <section id="page-home" class="hidden">
     <!-- ★ v1.10.0(老師看圖裁定)— 每週排行榜獎勵:首頁最上方一顆清楚的大按鈕,點開放大字體說明視窗(內含本週排行榜/上週得獎名單按鈕) -->
-    <button id="rank-btn" onclick="mgRankOpen('info')"><span class="rb-ico">🏆</span><span class="rb-txt" id="rank-btn-txt">每週排行榜獎勵</span><span class="rb-sub" id="rank-btn-sub"></span></button>
+    <div id="top-btns">
+      <button id="rank-btn" onclick="mgRankOpen('info')"><span class="rb-ico">🏆</span><span class="rb-txt" id="rank-btn-txt">每週排行榜獎勵</span><span class="rb-sub" id="rank-btn-sub"></span></button>
+      <!-- ★ v1.10.0(老師需求)— 專注課堂複習:勾選年級/單元,優先出課堂複習題,出完一輪才重來 -->
+      <button id="cr-btn" onclick="mgCrOpen()"><span class="rb-ico">📚</span><span class="rb-txt" id="cr-btn-txt">專注課堂複習</span><span class="rb-sub" id="cr-btn-sub"></span></button>
+    </div>
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
@@ -1746,6 +1780,17 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <button id="m-go" onclick="mgStartFromModal()">開始</button>
       <button class="btn-ghost" onclick="mgCloseInfo()">關閉</button>
     </div>
+  </div>
+</div>
+
+<!-- ★ v1.10.0(老師需求)— 專注課堂複習設定視窗 -->
+<div id="cr-modal" onclick="if(event.target===this)mgCrClose();">
+  <div class="box">
+    <h3>📚 專注課堂複習</h3>
+    <div class="tag" id="cr-desc"></div>
+    <label class="cr-master"><input type="checkbox" id="cr-on" onchange="mgCrToggleOn()"> <span id="cr-on-txt">啟用專注模式</span></label>
+    <div id="cr-list"></div>
+    <div class="row"><button class="btn-ghost" onclick="mgCrReset()">🔄 重新開始一輪</button><button onclick="mgCrSave()">✓ 儲存</button></div>
   </div>
 </div>
 
@@ -2445,6 +2490,7 @@ function renderGrid(){
   var _pool = (MG.style === 's') ? _linesS : _linesF;
   mgMascot('home-mascot', 'home-bubble', _pool[Math.floor(Math.random() * _pool.length)], 'common_mascot_cheer.webp');   /* ★ v1.9.1 首頁用「加油」表情 */
   try{ mgRankPanelRender(); }catch(e){}   /* ★ v1.10.0 週排行榜面板(雙版,隨字少/字多重畫) */
+  try{ mgCrBtnRender(); }catch(e){}       /* ★ v1.10.0 專注課堂複習按鈕(雙版) */
 }
 function mgMascot(wrapId, bubbleId, text, pic){
   var w = $(wrapId), b = $(bubbleId); if(!w || !b) return;
@@ -2607,7 +2653,20 @@ function startGame(x){
   MG.idx = 0; MG.score = 0; MG.right = 0; MG.combo = 0; MG.maxCombo = 0;
   /* ★ v1.3.1:迷宮 6 關是「由易到難」排好的(解法數 11→3),不打亂;其餘引擎照舊隨機 */
   MG.order = (x.engine === 'maze') ? poolOf(x).slice() : shuffle(poolOf(x));
-  if(x.pick && MG.order.length > x.pick){
+  /* ★ v1.10.0 專注課堂複習:先抽勾選單元的課堂題(本輪未出過),不足再補一般題;迷宮走 variants 優先(見下) */
+  MG.crInfo = null;
+  if(mgCrActive() && x.engine !== 'maze'){
+    var _need = x.pick || MG.order.length, _cp = mgCrPick(x, MG.order, _need);
+    if(_cp.list.length){
+      var _pickedKeys = {}, _rest = [], _r;
+      for(_r = 0; _r < _cp.list.length; _r++) _pickedKeys[mgCrKey(_cp.list[_r])] = true;
+      for(_r = 0; _r < MG.order.length; _r++){ if(!_pickedKeys[mgCrKey(MG.order[_r])] && !(MG.order[_r].cr && MG.cr.units[MG.order[_r].cr])) _rest.push(MG.order[_r]); }
+      MG.order = _cp.list.concat(shuffle(_rest).slice(0, Math.max(0, _need - _cp.list.length)));
+      MG.crInfo = { n: _cp.list.length, reset: _cp.reset, total: _cp.total, left: _cp.left };
+      if(_cp.reset) setTimeout(function(){ toast(MG.style === 's' ? '課堂題都出完了,重新洗牌再來一輪!' : '這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪'); }, 600);
+    }
+  }
+  if(x.pick && MG.order.length > x.pick && !MG.crInfo){
     /* ★ v1.9.0 優化④:分類關(sort/drag)混入的選擇題(q.engine)分層抽 —— 一半原引擎題、一半選擇題,再打亂;
        避免隨機抽到 11 題選擇 1 題分類,失去「丟進籃子」的手感。純單一引擎關卡照舊隨機抽。 */
     var _own = [], _mix = [], _k;
@@ -2624,11 +2683,17 @@ function startGame(x){
   if(x.engine === 'maze'){
     MG.order = MG.order.map(function(lv){
       if(!lv.variants || !lv.variants.length) return lv;
-      var pickI = Math.floor(Math.random() * (lv.variants.length + 1));
-      if(pickI === 0) return lv;
-      var v = lv.variants[pickI - 1], cp = {}, k;
+      var v, pickI, cp = {}, k;
+      /* ★ v1.10.0 專注課堂複習:有勾選單元的 variants 就只在那些裡面隨機 */
+      var _crv = mgCrActive() ? lv.variants.filter(function(vv){ return vv.cr && MG.cr.units[vv.cr]; }) : [];
+      if(_crv.length){ v = _crv[Math.floor(Math.random() * _crv.length)]; }
+      else{
+        pickI = Math.floor(Math.random() * (lv.variants.length + 1));
+        if(pickI === 0) return lv;
+        v = lv.variants[pickI - 1];
+      }
       for(k in lv){ if(lv.hasOwnProperty(k) && k !== 'variants') cp[k] = lv[k]; }
-      cp.marks = v.marks; if(v.why) cp.why = v.why; if(v.hint) cp.hint = v.hint; if(v.q) cp.q = v.q;
+      cp.marks = v.marks; if(v.why) cp.why = v.why; if(v.hint) cp.hint = v.hint; if(v.q) cp.q = v.q; if(v.cr) cp.cr = v.cr;
       return cp;
     });
   }
@@ -2854,6 +2919,9 @@ function renderQuestion(keepState){
   else if(_eng === 'maze') renderMaze(x, q);
   else if(_eng === 'paint') renderPaint(x, q);
   else if(_eng === 'colorq') renderColorq(x, q);   /* ★ v1.3.0 */
+  /* ★ v1.10.0 課堂複習題角落標籤 + 記入本輪已出清單(專注模式時) */
+  mgCrTagApply(q);
+  if(!keepState && q && q.cr && mgCrActive()) mgCrSeenAdd(x.id, q);
 
   /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
      三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
@@ -5119,6 +5187,127 @@ function mgRankModalRender(kind){
   body.innerHTML = html;
 }
 
+
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.10.0(老師需求)— 專注課堂複習模式
+ *  ・資料:minigame_db.js 課堂複習題帶 cr:'鍵'(對照 window.MG_CR_UNITS = { 鍵:{g:年級,s:科目,u:單元} })
+ *  ・設定:localStorage mg_cr = { on:true/false, units:['6a1',...] }(裝置級偏好,不上雲端)
+ *  ・出題:啟用時每款遊戲先抽「勾選單元且本輪還沒出過」的課堂題,不足 pick 再補一般題;
+ *          本輪已出清單存 mg_cr_seen:<gid>(鍵=題幹字串);全部出完 ⇒ 清單歸零重來一輪,
+ *          第二輪題目順序重新洗牌、選項順序 _perm 重抽(renderQuestion 本來就每題重抽)。
+ *  ・標籤:題卡右上角小字「年級・科目・單元」(mgCrTagApply;quiz/sort/drag/order 等共用 #qcard,拖曳題在 #drag-item)。
+ *  ・迷宮:每關若有帶 cr 的 variants 且在勾選單元內,優先挑那些(仍隨機)。
+ * ══════════════════════════════════════════════════════════ */
+MG.cr = { on: false, units: {} };
+function mgCrUnits(){ return window.MG_CR_UNITS || {}; }
+function mgCrLoad(){
+  try{
+    var raw = localStorage.getItem('mg_cr'); if(!raw) return;
+    var o = JSON.parse(raw) || {}; MG.cr.on = !!o.on; MG.cr.units = {};
+    (o.units || []).forEach(function(k){ if(mgCrUnits()[k]) MG.cr.units[k] = true; });
+  }catch(e){}
+}
+function mgCrStore(){
+  try{ localStorage.setItem('mg_cr', JSON.stringify({ on: MG.cr.on, units: Object.keys(MG.cr.units) })); }catch(e){}
+}
+function mgCrActive(){ return !!(MG.cr.on && Object.keys(MG.cr.units).length); }
+function mgCrKey(q){ return q ? String((q.q && (q.q.s || q.q)) || q.t || '') : ''; }
+function mgCrLabel(k){ var u = mgCrUnits()[k]; return u ? (u.g + '・' + u.s + '・' + u.u) : ''; }
+function mgCrLabelShort(k){ var u = mgCrUnits()[k]; return u ? (u.g + ' ' + u.u.replace(/\(.*$/, '')) : ''; }
+/* 每單元題數(quiz/分類題 + 迷宮題組),顯示在勾選視窗 */
+function mgCrCounts(){
+  var c = {}, i, g, arr, j, it, lv, v;
+  for(i = 0; i < MG.games.length; i++){
+    g = MG.games[i]; arr = poolOf(g);
+    for(j = 0; j < arr.length; j++){ it = arr[j]; if(it && it.cr) c[it.cr] = (c[it.cr] || 0) + 1; }
+    if(g.levels){ for(j = 0; j < g.levels.length; j++){ lv = g.levels[j]; if(lv.variants){ for(v = 0; v < lv.variants.length; v++){ if(lv.variants[v].cr) c[lv.variants[v].cr] = (c[lv.variants[v].cr] || 0) + 1; } } } }
+  }
+  return c;
+}
+function mgCrSeenGet(gid){ try{ var r = localStorage.getItem('mg_cr_seen:' + gid); return r ? (JSON.parse(r) || []) : []; }catch(e){ return []; } }
+function mgCrSeenSet(gid, arr){ try{ localStorage.setItem('mg_cr_seen:' + gid, JSON.stringify(arr)); }catch(e){} }
+function mgCrSeenAdd(gid, q){
+  var k = mgCrKey(q); if(!k) return;
+  var arr = mgCrSeenGet(gid); if(arr.indexOf(k) < 0){ arr.push(k); mgCrSeenSet(gid, arr); }
+}
+/* 從題庫挑「本輪未出過」的課堂題;全部出過就重來一輪(回傳 {list, reset}) */
+function mgCrPick(x, pool, need){
+  var sel = MG.cr.units, cand = [], i, it;
+  for(i = 0; i < pool.length; i++){ it = pool[i]; if(it && it.cr && sel[it.cr]) cand.push(it); }
+  if(!cand.length) return { list: [], reset: false, total: 0 };
+  var seen = mgCrSeenGet(x.id), unseen = [], reset = false;
+  for(i = 0; i < cand.length; i++){ if(seen.indexOf(mgCrKey(cand[i])) < 0) unseen.push(cand[i]); }
+  if(!unseen.length){ mgCrSeenSet(x.id, []); unseen = cand.slice(); reset = true; for(i = 0; i < unseen.length; i++) unseen[i]._perm = null; }
+  unseen = shuffle(unseen);
+  return { list: unseen.slice(0, need), reset: reset, total: cand.length, left: unseen.length };
+}
+function mgCrTagApply(q){
+  try{
+    var old = document.querySelectorAll('.cr-tag'), i; for(i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+    if(!q || !q.cr || !mgCrUnits()[q.cr]) return;
+    var host = null, di = $('drag-item'), db = $('dragbox');
+    if(db && !db.classList.contains('hidden') && di) host = di; else host = $('qcard');
+    if(!host) return;
+    var sp = document.createElement('span'); sp.className = 'cr-tag'; sp.textContent = mgCrLabel(q.cr); host.appendChild(sp);
+  }catch(e){}
+}
+function mgCrBtnRender(){
+  var bt = $('cr-btn-txt'), bs = $('cr-btn-sub'), btn = $('cr-btn'); if(!bt) return;
+  var s = (MG.style === 's'), keys = Object.keys(MG.cr.units);
+  if(btn){ if(mgCrActive()) btn.classList.add('on'); else btn.classList.remove('on'); }   /* 不用 toggle(第二參數舊 Safari 不支援) */
+  bt.textContent = mgCrActive() ? (s ? '專注課堂複習:開' : '專注課堂複習:啟用中') : (s ? '專注課堂複習' : '專注課堂複習(點我設定)');
+  if(mgCrActive()) bs.textContent = keys.map(mgCrLabelShort).slice(0, 3).join('、') + (keys.length > 3 ? '…等 ' + keys.length + ' 個單元' : '');
+  else bs.textContent = s ? '勾年級和單元,先出課堂題' : '勾選年級與單元,優先出課堂複習題';
+}
+window.mgCrOpen = function(){
+  playSfx('sfx-tap', 0.35);
+  var m = $('cr-modal'); if(!m) return;
+  var s = (MG.style === 's');
+  $('cr-desc').textContent = s
+    ? '勾選要複習的年級和單元。開啟後每個遊戲會先出這些課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。'
+    : '勾選要複習的年級與單元。啟用後每款遊戲都會優先出這些課堂複習題(題卡角落顯示「年級・科目・單元」),直到該遊戲的課堂題全部出完,才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。課堂題不夠一局時,其餘以一般題補滿。';
+  $('cr-on').checked = MG.cr.on;
+  $('cr-on-txt').textContent = s ? '打開專注模式' : '啟用專注課堂複習模式';
+  var units = mgCrUnits(), counts = mgCrCounts(), byG = {}, order = [], k, u, html = '', gi, ui, gk;
+  for(k in units){ if(!units.hasOwnProperty(k)) continue; u = units[k]; if(!byG[u.g]){ byG[u.g] = []; order.push(u.g); } byG[u.g].push(k); }
+  for(gi = 0; gi < order.length; gi++){
+    gk = order[gi];
+    var allOn = byG[gk].every(function(kk){ return !!MG.cr.units[kk]; });
+    html += '<div class="cr-grade"><label class="cr-gh"><input type="checkbox" data-g="' + esc(gk) + '"' + (allOn ? ' checked' : '') + ' onchange="mgCrGradeToggle(this)"> ' + esc(gk) + '(全選)</label>';
+    for(ui = 0; ui < byG[gk].length; ui++){
+      k = byG[gk][ui]; u = units[k];
+      html += '<label class="cr-unit"><input type="checkbox" data-k="' + esc(k) + '"' + (MG.cr.units[k] ? ' checked' : '') + ' onchange="mgCrUnitToggle(this)"> ' + esc(u.s + '・' + u.u) + '<span class="cr-n">' + (counts[k] || 0) + ' 題</span></label>';
+    }
+    html += '</div>';
+  }
+  $('cr-list').innerHTML = html;
+  m.classList.add('show');
+};
+window.mgCrClose = function(){ var m = $('cr-modal'); if(m) m.classList.remove('show'); };
+window.mgCrToggleOn = function(){ MG.cr.on = !!$('cr-on').checked; };
+window.mgCrUnitToggle = function(el){
+  var k = el.getAttribute('data-k'); if(el.checked) MG.cr.units[k] = true; else delete MG.cr.units[k];
+  /* 同步年級全選框 */
+  try{ var u = mgCrUnits()[k], g = u && u.g, boxes = document.querySelectorAll('#cr-list input[data-k]'), all = true, i, kk;
+    for(i = 0; i < boxes.length; i++){ kk = boxes[i].getAttribute('data-k'); if(mgCrUnits()[kk].g === g && !boxes[i].checked) all = false; }
+    var gb = document.querySelector('#cr-list input[data-g="' + g + '"]'); if(gb) gb.checked = all; }catch(e){}
+};
+window.mgCrGradeToggle = function(el){
+  var g = el.getAttribute('data-g'), on = el.checked, boxes = document.querySelectorAll('#cr-list input[data-k]'), i, k;
+  for(i = 0; i < boxes.length; i++){ k = boxes[i].getAttribute('data-k'); if(mgCrUnits()[k].g === g){ boxes[i].checked = on; if(on) MG.cr.units[k] = true; else delete MG.cr.units[k]; } }
+};
+window.mgCrSave = function(){
+  playSfx('sfx-tap', 0.35);
+  if(MG.cr.on && !Object.keys(MG.cr.units).length){ toast(MG.style === 's' ? '至少勾一個單元喔!' : '請至少勾選一個單元'); return; }
+  mgCrStore(); mgCrBtnRender(); mgCrClose();
+  toast(mgCrActive() ? ((MG.style === 's') ? '專注模式開了!先出課堂題' : '專注課堂複習已啟用,各遊戲優先出課堂題') : ((MG.style === 's') ? '專注模式關了' : '專注課堂複習已關閉'));
+};
+window.mgCrInfo = function(){ return MG.crInfo ? { n: MG.crInfo.n, reset: MG.crInfo.reset, total: MG.crInfo.total, left: MG.crInfo.left, order: MG.order.length, cr: MG.order.filter(function(q){ return !!q.cr; }).length } : null; };   /* 除錯/測試用 */
+window.mgCrReset = function(){
+  var i; for(i = 0; i < MG.games.length; i++) mgCrSeenSet(MG.games[i].id, []);
+  toast(MG.style === 's' ? '已重新開始,課堂題會從頭再出一輪' : '已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始');
+};
+
 /* ══════════════════════════════════════════════════════════
  *  開機
  * ══════════════════════════════════════════════════════════ */
@@ -5153,6 +5342,7 @@ function boot(){
   applyGate();
   if(mgUnlocked()) bgmPlay('bgm-home');
   try{ mgWeekFetch(false, null); }catch(_ew){}   /* ★ v1.10.0 開機讀週排行榜文件(免登入 REST;面板/彈窗用) */
+  try{ mgCrLoad(); mgCrBtnRender(); }catch(_ec){}   /* ★ v1.10.0 專注課堂複習偏好 */
 
   // 若上次用 redirect 登入,回來時把結果接起來(不主動載 SDK)
   if(window.firebase && MG.fb){
