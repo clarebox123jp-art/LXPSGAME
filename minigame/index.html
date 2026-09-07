@@ -15,7 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.11.0(2026-09-07)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.12.0(2026-09-07)
+     ★ v1.12.0(老師 2026-09-07):③算數大進擊正確比率真 50%:_reactSpawn 平衡袋(每 2 個必 1 對 1 錯)+畫面守門(活著的正確數>錯誤數就強制出錯誤)。①修 BUG:v1.11.0 txw() 誤呼叫自己 ⇒ 無限遞迴,答完題解說與「下一題」鈕不出現(中文模式全關卡);改回 tx(q.why)。②英文版專有名詞附中文:MG_EN_GLOSS 對照表 + mgGloss() 掛在所有英文出口,小學生不會的字第一次出現補「(中文)」。
      ★ v1.11.0(老師需求):語系切換 —— 右上角 #lang-btn(EN/中,localStorage mg_lang);T()/MG_EN/MG_EN_PAT 對照表 + mgLangApply 文字節點替換;tx() 支援 en 欄、txq/txw/mgOpt/mgStr/mgSeq 讀題庫英文欄;英→中直接 reload
      ★ v1.10.4(老師):首頁卡片左上角科目小標籤 .ctag(資料表 tag 欄);專注模式單元標籤下移到 top:32px
      ★ v1.10.3(老師需求):專注模式「相關關卡才亮」—— mgCrGameUnits(某單元在該關 ≥ MG_CR_MIN=50 題才算相關)、無關關卡 .crmask 遮罩「與本單元無關」且 mgOpenInfo 擋入、相關關卡 .crlit 發光+單元標籤;勾選視窗每單元列出達標關卡;結算頁 #r-cr 列單元/課堂題/答對數/玩家(老師登記用);儲存後立刻 renderGrid
@@ -1858,7 +1859,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.11.0"></script>
+<script src="minigame_db.js?v=v1.12.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1867,7 +1868,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.11.0';
+var MG_VER = 'v1.12.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -1934,17 +1935,20 @@ function tx(o){
   if(o == null) return '';
   if(typeof o === 'string') return (MG.lang === 'en') ? T(o) : o;
   /* ★ v1.11.0 英文版:物件帶 en(字串或 {s,f})就用它;沒有就退回中文(題庫尚未翻譯的部分) */
-  if(MG.lang === 'en' && o.en != null){ if(typeof o.en === 'string') return o.en; var ve = o.en[MG.style]; if(ve == null) ve = (o.en.f != null ? o.en.f : o.en.s); if(ve != null) return ve; }
+  if(MG.lang === 'en' && o.en != null){ if(typeof o.en === 'string') return mgGloss(o.en); var ve = o.en[MG.style]; if(ve == null) ve = (o.en.f != null ? o.en.f : o.en.s); if(ve != null) return mgGloss(ve); }   /* ★ v1.12.0 英文專有名詞附中文 */
   var v = o[MG.style];
   if(v == null) v = (o.f != null ? o.f : o.s);
   return v == null ? '' : v;
 }
 /* ★ v1.11.0 題目/選項/解說的英文欄位:qen / oen / wen / ten / nen / seqen;沒有就退回中文 */
-function txq(q){ return (MG.lang === 'en' && q && q.qen) ? q.qen : tx(q && q.q); }
-function txw(q){ return (MG.lang === 'en' && q && q.wen) ? q.wen : (q && txw(q)); }
-function mgOpt(q, i){ return (MG.lang === 'en' && q.oen && q.oen[i] != null) ? q.oen[i] : q.o[i]; }
-function mgStr(o, key){ if(!o) return ''; var en = o[key + 'en']; if(en == null) en = o[key + 'En']; return (MG.lang === 'en' && en != null) ? en : (o[key] == null ? '' : o[key]); }
-function mgSeq(r, i){ return (MG.lang === 'en' && r.seqen && r.seqen[i] != null) ? r.seqen[i] : r.seq[i]; }
+function txq(q){ return (MG.lang === 'en' && q && q.qen) ? mgGloss(q.qen) : tx(q && q.q); }
+/* ★ v1.12.0 修 BUG(老師回報「答完一題解答說明和下一題鈕都消失」):v1.11.0 這行誤寫成 txw(q) 呼叫自己 ⇒ 無限遞迴 RangeError,
+   showFeedback 從未被呼叫(解說與下一題鈕都不出現、自動前進也不跑),中文模式所有用 txw 的關卡全中;英文模式有 wen 的題才逃過。 */
+/* function txw(q){ return (MG.lang === 'en' && q && q.wen) ? q.wen : (q && txw(q)); }   ← v1.11.0 原行(錯誤,備查) */
+function txw(q){ return (MG.lang === 'en' && q && q.wen) ? mgGloss(q.wen) : ((q && q.why) ? tx(q.why) : ''); }
+function mgOpt(q, i){ return (MG.lang === 'en' && q.oen && q.oen[i] != null) ? mgGloss(q.oen[i]) : q.o[i]; }
+function mgStr(o, key){ if(!o) return ''; var en = o[key + 'en']; if(en == null) en = o[key + 'En']; return (MG.lang === 'en' && en != null) ? mgGloss(en) : (o[key] == null ? '' : o[key]); }
+function mgSeq(r, i){ return (MG.lang === 'en' && r.seqen && r.seqen[i] != null) ? mgGloss(r.seqen[i]) : r.seq[i]; }
 function playSfx(id, vol){
   try{
     var a = $(id); if(!a) return;
@@ -2472,7 +2476,7 @@ function renderGrid(){
     sk = '';
     if(x.skills){
       for(k = 0; k < x.skills.length; k++){
-        sk += '<span class="cskill">' + esc((MG.lang === 'en' && x.skillsEn && x.skillsEn[k]) ? x.skillsEn[k] : x.skills[k]) + '</span>';   /* ★ v1.11.0 */
+        sk += '<span class="cskill">' + esc((MG.lang === 'en' && x.skillsEn && x.skillsEn[k]) ? mgGloss(x.skillsEn[k]) : x.skills[k]) + '</span>';   /* ★ v1.12.0 mgGloss */   /* ★ v1.11.0 */
       }
     }
 
@@ -3540,6 +3544,7 @@ function renderReact(x, r){
   _RC = {
     drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
     hardHits: 0, blown: 0, paused: false, seen: {},   /* ★ v1.6.0 seen=本回合已出過的算式(防重複) */
+    bag: null,   /* ★ v1.12.0 正確/錯誤平衡袋(見 _reactSpawn) */
     need: (r.need || 6), r: r,
     endAt: (new Date()).getTime() + dur, total: dur
   };
@@ -3717,7 +3722,22 @@ function _reactGen(r, wantGood){
 }
 function _reactSpawn(){
   var r = _RC.r, box = $('reactbox');
-  var isGood = Math.random() < 0.5;                // ★ v1.9.7 老師:正確答案比率提高至 50%(原 0.45=45/55)
+  /* ★ v1.12.0 老師:「正確選項太多,常常亂打都全對;正確比率降至 50%」
+     v1.9.7 的 Math.random()<0.5 只是「平均 50%」——連續抽到 4~5 個正確很常見,加上 v1.9.7 命中正確會把周圍的錯誤算式一起清掉,
+     畫面上剩下的幾乎都是正確的 ⇒ 亂射也全對。改為兩層保證:
+       ① 平衡袋:每兩次生成必定「1 正確 + 1 錯誤」(順序隨機),任何連續 2N 個掉落物正確恰為 N 個,不再有連續正確的手氣;
+       ② 畫面守門:畫面上活著的正確數 > 錯誤數 ⇒ 這次強制出錯誤(煙火清掉錯誤後會立刻補回);錯誤數 > 正確數+1 ⇒ 強制出正確(避免久久沒得射)。
+     ⇒ 畫面任一時刻正確算式 ≤ 50%,亂射會踩到錯誤而爆炸。 */
+  var _ga = 0, _ba = 0, _i;
+  for(_i = 0; _i < _RC.drops.length; _i++){ var _o = _RC.drops[_i]; if(_o && !_o.dead && _o.el && _o.el.parentNode){ if(_o.good) _ga++; else _ba++; } }
+  var isGood;
+  if(_ga > _ba){ isGood = false; }
+  else if(_ba > _ga + 1){ isGood = true; }
+  else{
+    if(!_RC.bag || !_RC.bag.length){ _RC.bag = (Math.random() < 0.5) ? [true, false] : [false, true]; }
+    isGood = _RC.bag.shift();
+  }
+  /* var isGood = Math.random() < 0.5;                // ★ v1.9.7 老師:正確答案比率提高至 50%(原 0.45=45/55)— v1.12.0 改平衡袋,備查 */
   var txt;
   if(r.ops && r.ops.length){ txt = _reactGen(r, isGood); }
   else{
@@ -5367,7 +5387,7 @@ window.mgCrOpen = function(){
     for(ui = 0; ui < byG[gk].length; ui++){
       k = byG[gk][ui]; u = units[k];
       var _gs = [], gi2; for(gi2 = 0; gi2 < MG.games.length; gi2++){ if(mgCrGameUnits(MG.games[gi2]).indexOf(k) >= 0) _gs.push(MG.games[gi2].icon + tx(MG.games[gi2].name)); }
-      var uDisp = (MG.lang === 'en' && u.uEn) ? (u.sEn + ' · ' + u.uEn) : (u.s + '・' + u.u);   /* ★ v1.11.0 */
+      var uDisp = (MG.lang === 'en' && u.uEn) ? (mgGloss(u.sEn) + ' · ' + mgGloss(u.uEn)) :   /* ★ v1.12.0 mgGloss */ (u.s + '・' + u.u);   /* ★ v1.11.0 */
       html += '<label class="cr-unit"><input type="checkbox" data-k="' + esc(k) + '"' + (MG.cr.units[k] ? ' checked' : '') + ' onchange="mgCrUnitToggle(this)"> ' + esc(uDisp) + '<span class="cr-n">' + (counts[k] || 0) + (MG.lang === 'en' ? ' questions · ' : ' 題 · ') + esc(_gs.join(' ') || T('尚無達標關卡')) + '</span></label>';
     }
     html += '</div>';
@@ -5470,9 +5490,73 @@ function T(s){
   if(MG.lang !== 'en' || s == null) return s;
   var str = String(s), k = str.trim();
   if(!k || !/[\u4e00-\u9fff]/.test(k)) return s;
-  if(MG_EN.hasOwnProperty(k)) return str.replace(k, MG_EN[k]);
-  var i; for(i = 0; i < _MG_EN_PAT_RE.length; i++){ if(_MG_EN_PAT_RE[i][0].test(k)) return str.replace(k, k.replace(_MG_EN_PAT_RE[i][0], _MG_EN_PAT_RE[i][1])); }
+  if(/[A-Za-z]{3}/.test(k) && /\([\u4e00-\u9fff・]+\)/.test(k) && !MG_EN.hasOwnProperty(k)) return s;   /* ★ v1.12.0 已附中文註解的英文句子(mgLangApply 重走文字節點時)不再處理 */
+  if(MG_EN.hasOwnProperty(k)) return mgGloss(str.replace(k, MG_EN[k]));   /* ★ v1.12.0 專有名詞附中文 */
+  var i; for(i = 0; i < _MG_EN_PAT_RE.length; i++){ if(_MG_EN_PAT_RE[i][0].test(k)) return mgGloss(str.replace(k, k.replace(_MG_EN_PAT_RE[i][0], _MG_EN_PAT_RE[i][1]))); }   /* ★ v1.12.0 */
   return s;
+}
+/* ★ v1.12.0(老師需求 2026-09-07):英文版專有名詞附加「(中文)」——小學生比較不會的英文字,第一次出現時在後面補中文翻譯。
+   單一真相 MG_EN_GLOSS(英→中,小寫鍵;單複數各列一筆但中文相同,同一句只標一次);mgGloss(s) 掛在所有「回傳英文」的出口:
+   T()(UI 文字)/ tx() en 欄位 / txq、txw、mgOpt、mgStr、mgSeq(題庫英文欄位)/ 首頁技能標籤 / 專注複習單元名。
+   ⚠ 規則:①一句話裡同一個中文只標第一次 ②後面已經接「(」的不再標(避免重畫時重複) ③含 HTML 標籤的字串整段跳過(排行榜說明視窗)
+   ④長片語優先(warm-blooded 先於 blooded;live birth 先於 birth)⑤只認整個單字(\b),不會把 fishing 標成 fish。
+   要增修名詞只改下表;中文模式完全不經過本函式。 */
+var MG_EN_GLOSS = {
+  'aborigines':'原住民','account':'帳號','amphibian':'兩生類','amphibians':'兩生類','antenna':'觸角','antennae':'觸角','antlers':'鹿角','arthropod':'節肢動物',
+  'arthropods':'節肢動物','backbone':'脊椎骨','barbet':'五色鳥','barometer':'氣壓計','basket':'籃子','beak':'鳥喙','beat':'拍子','beetle':'甲蟲','behavior':'行為',
+  'bird':'鳥類','bone':'骨頭','bones':'骨頭','bonus':'加成','breed':'繁殖','breeds':'繁殖','bristles':'剛毛','browser':'瀏覽器','bulbul':'白頭翁',
+  'capillary action':'毛細現象','carbon dioxide':'二氧化碳','carnivore':'肉食動物','cartilage':'軟骨','category':'分類','caterpillar':'毛毛蟲','catty':'台斤',
+  'challenge':'挑戰','cicada':'蟬','claws':'爪子','cloud':'雲端','cockroach':'蟑螂','cocoon':'繭','cold-blooded':'變溫動物','colonial':'殖民的','combo':'連擊',
+  'combustion':'燃燒','complete metamorphosis':'完全變態','compost':'堆肥','condensation':'凝結','condense':'凝結','conduct':'傳導','conduction':'傳導',
+  'conductor':'導體','conducts':'傳導','confirm':'確認','contract':'收縮','contracts':'收縮','convection':'對流','countdown':'倒數','counties':'縣','county':'縣',
+  'courtship':'求偶','crane':'鶴','crustacean':'甲殼類','crustaceans':'甲殼類','deposit':'堆積','deposition':'堆積','device':'裝置','difficulty':'難度','digest':'消化',
+  'digests':'消化','dolphin':'海豚','dolphins':'海豚','dorsal fin':'背鰭','dynasty':'朝代','earthworm':'蚯蚓','earthworms':'蚯蚓','ecology':'生態','egg cell':'卵',
+  'egg-laying':'卵生','electromagnet':'電磁鐵','electromagnets':'電磁鐵','endemic':'特有種','endemic species':'特有種','erosion':'侵蝕','evaporate':'蒸發',
+  'evaporates':'蒸發','evaporation':'蒸發','exoskeleton':'外骨骼','explode':'爆炸','fangs':'尖牙','feather':'羽毛','feathers':'羽毛','fertilized':'受精的',
+  'festival':'節日','festivals':'節日','fiber':'纖維','fin':'鰭','fins':'鰭','firefly':'螢火蟲','fireworks':'煙火','fish':'魚類','forecast':'天氣預報','formosan':'台灣的',
+  'fur':'毛皮','geography':'地理','gills':'鰓','gram':'公克','grams':'公克','grasshopper':'蚱蜢','grasshoppers':'蚱蜢','habitat':'棲地','hatch':'孵化','hatched':'孵化',
+  'hatches':'孵化','herbivore':'草食動物','heron':'鷺','hibernate':'冬眠','hibernates':'冬眠','history':'歷史','horns':'角','horseshoe crab':'鱟','humidity':'濕度',
+  'igneous':'火成岩','iguana':'鬣蜥','incomplete metamorphosis':'不完全變態','indigenous':'原住民的','inherited':'遺傳的','insect':'昆蟲','insects':'昆蟲','insulate':'隔熱',
+  'insulates':'隔熱','insulation':'隔熱','insulator':'絕緣體','intestine':'腸','invasive':'外來種','invasive species':'外來種','invertebrate':'無脊椎動物',
+  'invertebrates':'無脊椎動物','jackal':'胡狼','jackals':'胡狼','joint':'關節','joints':'關節','kangaroo':'袋鼠','kangaroos':'袋鼠','kingfisher':'翠鳥','landscape':'橫式',
+  'larva':'幼蟲','larvae':'幼蟲','lays eggs':'產卵','leopard cat':'石虎','ligament':'韌帶','live birth':'胎生','live-birth':'胎生','lizard':'蜥蜴','lizards':'蜥蜴',
+  'logic':'邏輯','lung':'肺','lungs':'肺','macaque':'獼猴','macaques':'獼猴','magnet':'磁鐵','magnetic':'磁性的','magpie':'藍鵲','mammal':'哺乳類','mammals':'哺乳類',
+  'mate':'配偶','maze':'迷宮','measurement':'測量','melody':'旋律','metamorphic':'變質岩','metamorphosis':'變態','migrate':'遷徙','migrates':'遷徙','migrating':'遷徙',
+  'mineral':'礦物','minerals':'礦物','molars':'臼齒','monsoon':'季風','muscle':'肌肉','muscles':'肌肉','mute':'靜音','native':'原生種','native species':'原生種',
+  'nocturnal':'夜行性','nutrients':'養分','nymph':'若蟲','offline':'離線','offspring':'後代','omnivore':'雜食動物','ostrich':'鴕鳥','ostriches':'鴕鳥','otter':'水獺',
+  'otters':'水獺','oxygen':'氧氣','panda':'貓熊','peacock':'孔雀','pectoral fin':'胸鰭','pelvic fin':'腹鰭','penguin':'企鵝','penguins':'企鵝','pheasant':'雉雞',
+  'pitch':'音高','portrait':'直式','pouch':'育兒袋','predator':'掠食者','pressure':'氣壓','prey':'獵物','proverb':'諺語','proverbs':'諺語','pupa':'蛹','pupae':'蛹',
+  'radiation':'輻射','ranking':'排行榜','record':'紀錄','recycle':'回收','recycling':'資源回收','red-eared slider':'紅耳龜','refresh':'重新整理','relax':'放鬆',
+  'relaxes':'放鬆','reptile':'爬蟲類','reptiles':'爬蟲類','review':'複習','rhinoceros beetle':'獨角仙','rhythm':'節奏','rust':'生鏽','rusts':'生鏽','salamander':'山椒魚',
+  'salmon':'鮭魚','saying':'俗語','sayings':'俗語','scales':'鱗片','sedimentary':'沉積岩','sequence':'順序','settled':'結算','settlement':'聚落','shell':'殼',
+  'shrimp':'蝦','siphon':'虹吸','skeleton':'骨骼','skin':'皮膚','slider':'紅耳龜','snail':'蝸牛','sparrow':'麻雀','species':'物種','sperm':'精子','spine':'脊椎',
+  'stoat':'鼬','stomach':'胃','tadpole':'蝌蚪','tadpoles':'蝌蚪','tael':'台兩','tail fin':'尾鰭','temperature':'溫度','temple':'廟','tempo':'速度','tendon':'肌腱',
+  'thermometer':'溫度計','tilapia':'吳郭魚','toad':'蟾蜍','toads':'蟾蜍','trait':'特徵','traits':'特徵','tusks':'長牙','typhoon':'颱風','umbilical cord':'臍帶',
+  'version':'版本','vertebrate':'脊椎動物','vertebrates':'脊椎動物','vibrate':'振動','vibrates':'振動','vibration':'振動','volume':'音量','warm-blooded':'恆溫動物',
+  'weathering':'風化','whale':'鯨魚','whales':'鯨魚','wings':'翅膀','woodpecker':'啄木鳥',
+};
+var _MG_GLOSS_RE = null;
+function _mgGlossBuild(){
+  var keys = [], k;
+  for(k in MG_EN_GLOSS){ if(MG_EN_GLOSS.hasOwnProperty(k)) keys.push(k); }
+  keys.sort(function(a, b){ return b.length - a.length; });
+  var esc2 = function(t){ return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+  _MG_GLOSS_RE = new RegExp('\\b(' + keys.map(esc2).join('|') + ')\\b(?!\\s*\\()', 'gi');
+}
+function mgGloss(s){
+  if(MG.lang !== 'en' || s == null) return s;
+  var str = String(s);
+  if(!str || str.indexOf('<') >= 0) return str;
+  try{
+    if(!_MG_GLOSS_RE) _mgGlossBuild();
+    var seen = {};
+    return str.replace(_MG_GLOSS_RE, function(m){
+      var zh = MG_EN_GLOSS[m.toLowerCase()];
+      if(!zh || seen[zh]) return m;
+      seen[zh] = 1;
+      return m + ' (' + zh + ')';
+    });
+  }catch(e){ return str; }
 }
 function mgLangApply(root){
   if(MG.lang !== 'en') return;
