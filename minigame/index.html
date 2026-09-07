@@ -15,8 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.12.0(2026-09-07)
-     ★ v1.12.0(老師 2026-09-07):③算數大進擊正確比率真 50%:_reactSpawn 平衡袋(每 2 個必 1 對 1 錯)+畫面守門(活著的正確數>錯誤數就強制出錯誤)。①修 BUG:v1.11.0 txw() 誤呼叫自己 ⇒ 無限遞迴,答完題解說與「下一題」鈕不出現(中文模式全關卡);改回 tx(q.why)。②英文版專有名詞附中文:MG_EN_GLOSS 對照表 + mgGloss() 掛在所有英文出口,小學生不會的字第一次出現補「(中文)」。
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.15.0(2026-09-07)
+     ★ v1.15.0(老師「繼續」完成小遊戲英文版第三批):台灣飛飛飛(map)92 題全數補上 q/why 的 en(18 縣市地理知識,含地標/古蹟/物產/氣候等);地圖上的縣市文字標籤(spots[].n)刻意維持中文不譯——英文縣市名普遍比中文長,SVG 地圖上 18 個小圓點緊鄰,強行換英文會重疊看不清,學生仍可依位置/形狀點選,不影響遊戲性。jsdom 15 次隨機起局實測,題目與答對解說全為英文(僅剩故意的 mgGloss 附註)。 ｜ ★ v1.14.0(老師「繼續」完成小遊戲英文版第二批):①俗諺連連看(proverb_match)9 回合的 q/why 全數補上 en(俗諺本身是台語,刻意不翻,只翻回合說明與意思,對齊老師「俗諺兩關本質是台語,英文版只翻意思」原則)。②迷宮探險王(maze)全面完成:renderMaze 新增 mark.ten 支援(mgStr 讀取,單一真相);504 個石板標記(地名/動物/物質…)全數建立英中對照表補上 ten;42 個回合(6 關主題 + 36 個帶 q 的替代題組)的 q/hint/why 全數補上 en,另 6 個純 marks+why 的替代題組以模板自動生成 en(格式「A、B、C 正確;D、E、F 不正確」)。jsdom 8 次隨機起局實測,q 與石板文字全為英文(中文僅剩故意的 mgGloss 附註,如 counties (縣))。⚠ 本輪修法途中一度因字串切片寫錯導致 39 筆資料重複/漏逗號,已完整揪出並修復,修復後重新以 node --check 全數驗證通過。 ｜ ★ v1.13.0(老師「小遊戲還有哪裡沒完成英文版,完成他」):算數大進擊(coinrush)6 關的關卡標題/提示/解說全數補上 en;秤重小老闆(scale)固定 36 題(題目/4 選項/解說)全數補上 qen/oen/wen。⚠ 範圍說明:scale 每局另有 40 題「即時生成」(MG_GEN.scale,minigame_db.js)本輪未譯,英文模式抽到時退回中文(既有設計:沒有 en 就退中文,不會出錯,只是那幾題還是中文);其餘 11 款(weather/rock/species/heat/map/history/proverb/music/recycle/teaorder,animal 已於 v1.11.0 完成、proverb_match 與 maze 已於本輪 v1.14.0 完成)題庫本體(qen/oen/wen/seqen)尚未翻譯,經估算共約 950 道題、5500+ 字串,規模遠大於本輪,留待下一輪比照本輪方式分批完成。 ｜ ★ v1.12.0(老師 2026-09-07):③算數大進擊正確比率真 50%:_reactSpawn 平衡袋(每 2 個必 1 對 1 錯)+畫面守門(活著的正確數>錯誤數就強制出錯誤)。①修 BUG:v1.11.0 txw() 誤呼叫自己 ⇒ 無限遞迴,答完題解說與「下一題」鈕不出現(中文模式全關卡);改回 tx(q.why)。②英文版專有名詞附中文:MG_EN_GLOSS 對照表 + mgGloss() 掛在所有英文出口,小學生不會的字第一次出現補「(中文)」。
      ★ v1.11.0(老師需求):語系切換 —— 右上角 #lang-btn(EN/中,localStorage mg_lang);T()/MG_EN/MG_EN_PAT 對照表 + mgLangApply 文字節點替換;tx() 支援 en 欄、txq/txw/mgOpt/mgStr/mgSeq 讀題庫英文欄;英→中直接 reload
      ★ v1.10.4(老師):首頁卡片左上角科目小標籤 .ctag(資料表 tag 欄);專注模式單元標籤下移到 top:32px
      ★ v1.10.3(老師需求):專注模式「相關關卡才亮」—— mgCrGameUnits(某單元在該關 ≥ MG_CR_MIN=50 題才算相關)、無關關卡 .crmask 遮罩「與本單元無關」且 mgOpenInfo 擋入、相關關卡 .crlit 發光+單元標籤;勾選視窗每單元列出達標關卡;結算頁 #r-cr 列單元/課堂題/答對數/玩家(老師登記用);儲存後立刻 renderGrid
@@ -1859,7 +1859,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.12.0"></script>
+<script src="minigame_db.js?v=v1.15.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1868,7 +1868,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.12.0';
+var MG_VER = 'v1.15.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -4170,7 +4170,7 @@ function _mazePaint(){
     else if(cell.ch === 'S'){ txt = '🚩'; _pic = 'maze_mz_start.webp'; }
     else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; _pic = 'maze_mz_goal.webp'; }
     else if(cell.mark){
-      txt = cell.mark.t;
+      txt = mgStr(cell.mark, 't');   /* ★ v1.14.0 英文版:mark.ten 有值時走英文(mgGloss 附中文附註) */
       /* ★ v1.3.1(老師:「難度太低」):踩到之前正解與陷阱一律同一種「石板」外觀(.mark),
          不再用金框／紅框分色 —— v1.3.0 之前等於把答案直接畫在地圖上。 */
       cls += ' mark';
