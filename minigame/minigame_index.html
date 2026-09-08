@@ -15,6 +15,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.41.0(2026-09-08)
+     ★ v1.41.0(老師需求「重新排版小遊戲選單頁」):
+       ①每週排行榜/專注課堂複習兩顆按鈕縮短(移除 width:100%、字級/padding縮小、拿掉 flex:1 拉伸),
+         橫式版面從原本佔滿最上方整列,移到標題「小英雄小遊戲」logo 右方同一列(#top-btns 改 grid-column:2/row1)。
+       ②移除首頁「選一位英雄,答對就出招──每一局都是一場新的英雄對戰!」介紹文,以及原本常駐在吉祥物泡泡
+         裡的遊戲提示說明(每次進首頁隨機一句雙版文案);改成標題正下方一顆「💡 遊戲簡介」按鈕,點了才開啟
+         泡泡視窗(#intro-modal,沿用既有 cr-modal/rank-modal 遮罩樣式+點背景任意位置關閉),每次點開重新隨機
+         一句提示(原文字內容一字未改,只是移到獨立函式 mgIntroTip 供按需呼叫,不再綁在 renderGrid 裡)。
+     -->
+<!-- ============================================================================
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.40.0(2026-09-08)
      ★ v1.40.0(老師截圖回報「40%答對率+被打倒還拿4星」不合理)—【星等評分制度重做】:
        根因:舊制是「勝負+HP門檻+爆發節制」東拼西湊(勝+2/敗答對≥5+1、HP≥40+1、HP≥70+1、爆發≤1次+1),
@@ -643,25 +653,25 @@ button[disabled]{opacity:.45;}
 
 /* ★ v1.10.0 — 每週排行榜獎勵:首頁最上方大按鈕 + 說明/排行彈窗(老師:按鈕要清楚、視窗字體放大) */
 #rank-btn{
-  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;margin:0 0 12px;padding:14px 18px;
-  font-size:22px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;
-  background:linear-gradient(180deg,#ffe28a,var(--sun));border:3px solid rgba(255,255,255,.55);border-radius:18px;
-  box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(240,192,96,.35);touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:8px 14px;
+  font-size:15px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.55);border-radius:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 2px rgba(240,192,96,.3);touch-action:manipulation;
 }
 #rank-btn:active{transform:translateY(2px);}
-#top-btns{display:flex;gap:10px;margin:0 0 12px;}
-#top-btns button{flex:1;margin:0;}
+#top-btns{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap;}
+#top-btns button{flex:0 0 auto;margin:0;}
 #cr-btn{
-  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 18px;
-  font-size:22px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer;
-  background:linear-gradient(180deg,#7dd3a8,var(--grass));border:3px solid rgba(255,255,255,.55);border-radius:18px;
-  box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(62,200,122,.35);touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 14px;
+  font-size:15px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(180deg,#7dd3a8,var(--grass));border:2px solid rgba(255,255,255,.55);border-radius:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 2px rgba(62,200,122,.3);touch-action:manipulation;
 }
 #cr-btn:active{transform:translateY(2px);}
-#cr-btn .rb-ico{font-size:28px;}
-#cr-btn .rb-sub{font-size:15px;font-weight:700;opacity:.9;}
+#cr-btn .rb-ico{font-size:20px;}
+#cr-btn .rb-sub{font-size:12px;font-weight:700;opacity:.9;}
 #cr-btn .rb-sub:empty{display:none;}
-#cr-btn.on{background:linear-gradient(180deg,#ffb86b,#ff8c42);box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 3px rgba(255,140,66,.45);}
+#cr-btn.on{background:linear-gradient(180deg,#ffb86b,#ff8c42);box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 2px rgba(255,140,66,.3);}
 #cr-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:82;display:none;align-items:center;justify-content:center;padding:18px;}
 #cr-modal.show{display:flex;}
 #cr-modal .box{background:var(--ink2);border:2px solid rgba(62,200,122,.55);border-radius:20px;padding:22px 20px;max-width:720px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -685,12 +695,22 @@ button[disabled]{opacity:.45;}
 .card{position:relative;}
 .cr-tag{position:absolute;top:6px;right:8px;font-size:12px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;}
 #drag-item{position:relative;}
-#rank-btn .rb-ico{font-size:28px;}
-#rank-btn .rb-sub{font-size:15px;font-weight:700;opacity:.8;}
+#rank-btn .rb-ico{font-size:20px;}
+#rank-btn .rb-sub{font-size:12px;font-weight:700;opacity:.8;}
 #rank-btn .rb-sub:empty{display:none;}
 #rank-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:81;display:none;align-items:center;justify-content:center;padding:18px;}
 #rank-modal.show{display:flex;}
 #rank-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.5);border-radius:20px;padding:22px 20px;max-width:720px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+/* ★ v1.41.0(老師需求)— 首頁「遊戲簡介」泡泡視窗(取代原本首頁常駐的吉祥物泡泡),沿用 cr-modal/rank-modal 同一套遮罩+點背景關閉寫法 */
+#intro-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:83;display:none;align-items:center;justify-content:center;padding:18px;}
+#intro-modal.show{display:flex;}
+#intro-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.5);border-radius:20px;padding:22px 20px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#intro-modal .mascot{margin:0;}
+#intro-modal .row{display:flex;gap:10px;margin-top:16px;}
+#intro-modal .row button{flex:1;font-size:17px;padding:12px 8px;}
+/* ★ v1.41.0 — 首頁標題正下方的「遊戲簡介」按鈕 */
+#intro-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;font-size:16px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.5);border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:manipulation;margin:0 0 10px;}
+#intro-btn:active{transform:translateY(2px);}
 #rank-modal h3{margin:0 0 6px;font-size:26px;color:var(--gold);}
 #rank-modal .tag{font-size:17px;opacity:.85;margin-bottom:12px;line-height:1.7;}
 #rank-modal #rk-nav button{font-size:17px;padding:12px 8px;}
@@ -1210,13 +1230,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (min-width:1024px) and (orientation:landscape){
   .wrap{max-width:1180px;padding:8px 22px 20px;}
   /* 首頁:標題與吉祥物同一列,九宮格 3 列一頁放完 */
-  #page-home{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:22px;align-items:center;}
-  #top-btns{grid-column:1 / 3;grid-row:1;margin:0 0 6px;}   /* ★ v1.10.0 兩顆大按鈕佔最上方整列(原面板被自動排到九宮格下方看不到 ⇒ 改列號) */
-  #title-img{grid-column:1;grid-row:2;max-width:340px;margin:0;}
-  #title-fallback{grid-column:1;grid-row:2;}
-  #page-home .sub{grid-column:1;grid-row:3;margin:0;font-size:15px;letter-spacing:1px;}
-  #home-mascot{grid-column:2;grid-row:2 / 4;margin:0;}
-  #grid{grid-column:1 / 3;grid-row:4;margin-top:10px;}
+  #page-home{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:22px;align-items:start;}
+  #top-btns{grid-column:2;grid-row:1;margin:0;align-self:center;}   /* ★ v1.41.0(老師需求)— 兩顆按鈕縮短後移到標題右方,不再佔滿最上方整列 */
+  #title-img{grid-column:1;grid-row:1;max-width:340px;margin:0;}
+  #title-fallback{grid-column:1;grid-row:1;}
+  #intro-btn{grid-column:1;grid-row:2;margin:8px 0 0;}   /* ★ v1.41.0 — 遊戲簡介按鈕,標題正下方 */
+  #grid{grid-column:1 / 3;grid-row:3;margin-top:10px;}
   .cell{height:170px;}
   /* 遊戲頁:左右兩欄 */
   #page-play{display:grid;grid-template-columns:340px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:20px;align-items:start;}
@@ -2027,12 +2046,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
-    <p class="sub">選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!</p><!-- ★ v1.30.0(老師需求)改為英雄對戰主題(原「木柵 · 台灣 小學堂 ── 每一局都是新挑戰!」) -->
-    <!-- ★ v1.3.0 — 吉祥物「轉學生學霸」(主程式既有立繪)+ 提示泡泡(雙版,renderGrid 填) -->
-    <div class="mascot" id="home-mascot">
-      <img src="" alt="" onerror="this.style.display='none';">
-      <div class="bubble" id="home-bubble"></div>
-    </div>
+    <!-- ★ v1.41.0(老師需求)— 原「選一位英雄,答對就出招...」介紹文 + 常駐吉祥物泡泡,改成一顆按鈕,點了才開啟泡泡視窗(#intro-modal) -->
+    <button id="intro-btn" onclick="mgIntroOpen()">💡 遊戲簡介</button>
     <!-- ★ v1.10.0 原「說明面板 #rank-panel」已改為最上方 #rank-btn + 說明視窗(老師看圖裁定);面板 DOM 移除 -->
     <div id="grid"></div>
     <p class="sub" id="home-note" style="margin-top:18px;font-size:13px;opacity:.6;">
@@ -2250,6 +2265,17 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
+<!-- ★ v1.41.0(老師需求)— 首頁「遊戲簡介」按鈕點開的泡泡視窗:點背景任意位置關閉(同 cr-modal/rank-modal 既有寫法) -->
+<div id="intro-modal" onclick="if(event.target===this)mgIntroClose();">
+  <div class="box">
+    <div class="mascot" id="intro-mascot">
+      <img src="" alt="" onerror="this.style.display='none';">
+      <div class="bubble" id="intro-bubble"></div>
+    </div>
+    <div class="row"><button class="btn-ghost" onclick="mgIntroClose()">關閉</button></div>
+  </div>
+</div>
+
 <!-- ★ v1.10.0(老師需求 1)— 每週排行榜／上週得獎名單彈窗(內容由 mgRankOpen 填) -->
 <div id="rank-modal" onclick="if(event.target===this)mgRankClose();">
   <div class="box">
@@ -2298,7 +2324,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.40.0"></script>
+<script src="minigame_db.js?v=v1.41.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2307,7 +2333,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.40.0';
+var MG_VER = 'v1.41.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2962,8 +2988,14 @@ function renderGrid(){
           + '</div>';
   }
   g.innerHTML = html;
-  /* ★ v1.3.0 — 吉祥物泡泡(雙版) */
-  /* ★ v1.30.0(老師需求)— 文案改與英雄對戰有關:每次進首頁隨機一句(雙版各 5 句)(原 v1.7.1「首頁介紹文…更活潑勵志」版本整段保留於下方註解備查) */
+  try{ mgRankPanelRender(); }catch(e){}   /* ★ v1.10.0 週排行榜面板(雙版,隨字少/字多重畫) */
+  try{ mgCrBtnRender(); }catch(e){}       /* ★ v1.10.0 專注課堂複習按鈕(雙版) */
+  try{ mgLangApply($('page-home')); }catch(e){}   /* ★ v1.11.0 */
+}
+/* ★ v1.41.0(老師需求)— 原本每次進首頁隨機挑一句、常駐顯示在吉祥物泡泡裡的提示文字(雙版各 5 句),
+   改成點「遊戲簡介」鈕才開啟(見 mgIntroOpen),所以從 renderGrid 移出來成獨立函式,每次點開再重新隨機一句。
+   文字內容本身完全不變(原 v1.30.0 版);舊 v1.7.1 legacy 版本整段保留備查。 */
+function mgIntroTip(){
   var _n = MG.games.length;
   var _linesS = [
     '嗨!我是力行小博士!選一位英雄,答對就出招打對手,答錯換你挨打!' + _n + ' 場對戰等你來闖!',
@@ -2996,11 +3028,14 @@ function renderGrid(){
   ];
   */
   var _pool = (MG.style === 's') ? _linesS : _linesF;
-  mgMascot('home-mascot', 'home-bubble', _pool[Math.floor(Math.random() * _pool.length)], 'common_mascot_cheer.webp');   /* ★ v1.9.1 首頁用「加油」表情 */
-  try{ mgRankPanelRender(); }catch(e){}   /* ★ v1.10.0 週排行榜面板(雙版,隨字少/字多重畫) */
-  try{ mgCrBtnRender(); }catch(e){}       /* ★ v1.10.0 專注課堂複習按鈕(雙版) */
-  try{ mgLangApply($('page-home')); }catch(e){}   /* ★ v1.11.0 */
+  return _pool[Math.floor(Math.random() * _pool.length)];
 }
+/* ★ v1.41.0 — 首頁「遊戲簡介」按鈕:開啟泡泡視窗,每次點開重新隨機一句提示(沿用既有 mgMascot 元件填內容) */
+window.mgIntroOpen = function(){
+  try{ mgMascot('intro-mascot', 'intro-bubble', mgIntroTip(), 'common_mascot_cheer.webp'); }catch(e){}
+  var m = $('intro-modal'); if(m) m.classList.add('show');
+};
+window.mgIntroClose = function(){ var m = $('intro-modal'); if(m) m.classList.remove('show'); };
 function mgMascot(wrapId, bubbleId, text, pic){
   var w = $(wrapId), b = $(bubbleId); if(!w || !b) return;
   var im = w.getElementsByTagName('img')[0];
@@ -6822,7 +6857,7 @@ window.mgCrReset = function(){
  *    沒有英文欄位的題目退回中文(目前已翻譯:15 款關卡介紹/籃子/單元表 + 動物特徵二選一 167 題)
  * ══════════════════════════════════════════════════════════ */
 MG.lang = 'zh';
-var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
+var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
 /* ★ v1.29.0 戰鬥模式 UI 字串英文版(補進 MG_EN;題庫/爆發說明走 tx() 的 en 欄位) */
 (function(){
   var _add = { "出戰英雄": "Your hero", "🔁 換英雄": "🔁 Change hero", "🦸 選一名英雄出戰": "🦸 Pick a hero to battle", "✓ 就是這一位": "✓ Choose this hero",
