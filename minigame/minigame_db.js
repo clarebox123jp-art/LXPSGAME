@@ -288,7 +288,7 @@ window.MG_GAMES = [
     en: 'A weather card appears in the middle. Tap the correct basket below.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'sort',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 12,
   bins: [
     { id: 'fog',     n: '起霧', nen: 'Fog',     e: '🌫', pic: 'weather_bin_fog' },
@@ -623,7 +623,7 @@ window.MG_GAMES = [
     en: 'Read the rock card and tap its type.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'sort',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 14,
   bins: [
     { id: 'ig',  n: '火成岩', nen: 'Igneous', e: '🌋', pic: 'rock_bin_ig' },
@@ -960,7 +960,7 @@ window.MG_GAMES = [
     en: 'Read the animal card and tap which kind it is.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'sort',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 13,
   bins: [
     { id: 'endemic', n: '台灣特有種', nen: 'Taiwan endemic', e: '🏝', pic: 'species_bin_endemic' },
@@ -1242,7 +1242,7 @@ window.MG_GAMES = [
     en: 'Read the card and tap how the heat moves.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'sort',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 12,
   bins: [
     { id: 'cond', n: '傳導', nen: 'Conduction', e: '🥄', pic: 'heat_bin_cond' },
@@ -1585,7 +1585,7 @@ window.MG_GAMES = [
     en: 'Read the clue and tap the place on the map.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'map',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 15,
   spots: [
     /* ★ v1.16.0 老師「檢查中英文是否重疊,適度縮小文字」:新增 nen(英文縣市名)與 tier(英文標籤字級 1=最小 2=中 3=正常)。
@@ -1828,7 +1828,7 @@ window.MG_GAMES = [
     en: 'Read the question and pick the right answer.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'quiz',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 20,
   questions: [
     /* ★ v1.9.0 老師裁定「丙」第 3 批(各關 +50):以下 51 題,題圖依主題沿用既有 hi01~hi12 */
@@ -2122,7 +2122,7 @@ window.MG_GAMES = [
     en: 'Work out the answer and tap the right number.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'quiz',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   gen: 'scale',   /* ★ v1.9.0 每局另即時生成 40 題(MG_GEN.scale)與原題合併後抽 pick */
   time: 30,
   hint: { s: '1 台斤 = 16 兩 = 600 公克', f: '換算基準:1 台斤 = 16 兩 = 600 公克;1 兩 = 37.5 公克' },
@@ -2291,7 +2291,7 @@ window.MG_GAMES = [
     en: 'Read a proverb and pick its meaning.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'quiz',
-  pick: 12,   /* ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 12 題(每次玩到的不同) */
   time: 20,
   questions: [
     /* ★ v1.9.0 第 3 批:以下 61 題取自翻牌俗諺池(選項為完整等長句,干擾項刻意字面直譯) */
@@ -2595,7 +2595,7 @@ window.MG_GAMES = [
   engine: 'ear',
   gen: 'music',   /* ★ v1.9.0 每局另即時生成 36 題(高低/走向/同音/數音/彈回來/拍子,MG_GEN.music)與原題合併後抽 pick */
   time: 30,   /* 選擇題;演奏／拍子題各自用 sec 覆寫 */
-  pick: 14,   /* ★ v1.6.0 題庫 30 題,每局隨機抽 14 題(每次玩到的不一樣) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(原 pick:14) ｜ ★ v1.6.0 題庫 30 題,每局隨機抽 14 題(每次玩到的不一樣) */
   questions: [
     /* ── 舊題型:選擇題(v1.4.0 保留 6 題) ── */
     { type: 'hilo', q: { s: '第二個音比第一個音高還是低?', f: '請聆聽兩個音,判斷第二個音相對於第一個音是高還是低。' , en: 'Is the second note higher or lower than the first?' },
@@ -2788,7 +2788,7 @@ window.MG_GAMES = [
     en: 'Drag the item in the middle to the correct bin.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'drag',
-  pick: 10,   /* ★ v1.7.0 題庫擴充後每局隨機抽 10 題(每次玩到的不同) */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(原 pick:10) ｜ ★ v1.7.0 題庫擴充後每局隨機抽 10 題(每次玩到的不同) */
   time: 15,
   bins: [
     { id: 'paper',  n: '紙類', nen: 'Paper',   e: '📄', pic: 'recycle_bin_paper' },
@@ -3055,8 +3055,8 @@ window.MG_GAMES = [
   },
   engine: 'order',
   /* gen: 'order', */   /* ★ v1.9.8 老師:比大小不是順序題 ⇒ 停用即時生成器(原 ★ v1.9.0 每局即時生成 20 組數字/單位/時間排序(MG_GEN.order)與原題合併後抽 pick) */
-  pick: 6,   /* ★ v1.9.8 手寫順序題擴充到 100+ 組,每局抽 6(原 ★ v1.7.0 pick:5) */
-  time: 45,
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每回合排對=1 命中,每局抽 15 回合(原 pick:6) ｜ ★ v1.9.8 手寫順序題擴充到 100+ 組,每局抽 6(原 ★ v1.7.0 pick:5) */
+  time: 30,   /* ★ v1.29.0 戰鬥模式:回合數增加,每回合 45→30 秒 */
   rounds: [
     /* ★ v1.9.0 第 3 批:以下 30 組手寫序列(無圖);另有 MG_GEN.order 每局即時生成 20 組數字/單位/時間序列 */
     { q: { s: '青蛙是怎麼長大的?', f: '把青蛙的生長階段排出正確順序。' , en: 'How does a frog grow up?' }, seq: ['卵', '蝌蚪', '長出後腳', '長出前腳', '青蛙'], seqen: ['Egg', 'Tadpole', 'Grows hind legs', 'Grows front legs', 'Frog'],
@@ -3393,7 +3393,7 @@ window.MG_GAMES = [
     en: 'Tap left, then tap right. A match turns green!'   /* ★ v1.11.0 英文版 */
   },
   engine: 'match',
-  pick: 3,   /* ★ v1.7.0 題庫擴充後每局隨機抽 3 題(每次玩到的不同) */
+  pick: 3,   /* ★ v1.29.0 戰鬥模式:逐配對判定(連對 NPC−10、連錯玩家−10),3 回合×4 對=12 命中格,維持 3 ｜ ★ v1.7.0 題庫擴充後每局隨機抽 3 題(每次玩到的不同) */
   time: 90,
   /* ★ v1.9.0 老師裁定「甲・各關 +50」:俗諺池 70 句(上半|下半|意思),MG_GEN.match 每局從池隨機組 12 回合(每回合 4 對),再與原回合合併抽 pick */
   gen: 'match',
@@ -3567,27 +3567,27 @@ window.MG_GAMES = [
      本回合不重複;取消雙倍發光。ops 鍵值:add/sub/mul/div/dec/frac。 */
   rounds: [
     { q: { s: '第一關:射下算對的加法!', f: '第一關:加法。射中結果正確的算式,錯的不要碰。', en: 'Round 1: Shoot the correct addition sums!' },   /* ★ v1.13.0 英文版 */
-      sec: 26, need: 7, ops: ['add'],
+      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:26 need:7) */ ops: ['add'],
       tip: { s: '只射對的!', f: '算錯的不要射,會爆炸扣分', en: 'Only shoot the correct ones!' },
       why: { s: '個位加起來超過 10 要進位。', f: '兩位數加法先算個位,滿十進一;例如 47+35:7+5=12 進一位,4+3+1=8 ⇒ 82。', en: "When the ones digits add to more than 10, carry the extra 1." } },
     { q: { s: '第二關:加法＋減法!', f: '第二關:加法與減法混合,注意進位與退位。', en: 'Round 2: Addition and subtraction!' },
-      sec: 26, need: 7, ops: ['add', 'sub'],
+      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:26 need:7) */ ops: ['add', 'sub'],
       tip: { s: '看清楚是加還是減', f: '先看符號,再算個位', en: 'Watch the sign — plus or minus?' },
       why: { s: '減法個位不夠減要向十位借。', f: '52−18:個位 2 不夠減 8,向十位借 1 變 12−8=4,十位 4−1=3 ⇒ 34。', en: 'When the ones digit is not enough to subtract, borrow 1 from the tens.' } },
     { q: { s: '第三關:加、減、乘!', f: '第三關:加減乘混合,乘法口訣要反射出來。', en: 'Round 3: Add, subtract, multiply!' },
-      sec: 26, need: 7, ops: ['add', 'sub', 'mul'],
+      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:26 need:7) */ ops: ['add', 'sub', 'mul'],
       tip: { s: '乘法口訣要熟', f: '看到 6×7 直接反射 42', en: 'Know your times tables!' },
       why: { s: '乘法口訣背熟,判斷就快。', f: '乘法口訣熟練後判斷正誤比重算快很多;兩位數乘一位數可以拆開:12×6 = 10×6 + 2×6 = 72。', en: 'Know your multiplication facts well and you can judge faster than recalculating.' } },
     { q: { s: '第四關:加減乘除全上!', f: '第四關:四則運算全部登場,除法想成乘法反過來。', en: 'Round 4: All four operations!' },
-      sec: 28, need: 7, ops: ['add', 'sub', 'mul', 'div'],
+      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:28 need:7) */ ops: ['add', 'sub', 'mul', 'div'],
       tip: { s: '除法想成「幾個幾」', f: '45÷5 想成 5 乘幾等於 45', en: 'Think of division as "how many groups of".' },
       why: { s: '除法就是乘法反過來。', f: '45÷5 想成「5 乘幾等於 45」;超過九九乘法先湊整數:96÷8 → 80÷8=10,再 16÷8=2,合起來 12。', en: 'Division is just multiplication in reverse.' } },
     { q: { s: '第五關:加上小數!', f: '第五關:四則運算加入小數,小數點要對齊。', en: 'Round 5: Add decimals!' },
-      sec: 28, need: 6, ops: ['add', 'sub', 'mul', 'div', 'dec'],
+      sec: 15, need: 2, /* ★ v1.29.0(原 sec:28 need:6) */ ops: ['add', 'sub', 'mul', 'div', 'dec'],
       tip: { s: '小數點對齊再算', f: '小數加減要對齊小數點', en: 'Line up the decimal points first.' },
       why: { s: '小數加減要把小數點對齊。', f: '小數加減先對齊小數點再像整數一樣算;小數乘整數先當整數算,最後再點回小數點(2.5×3:25×3=75 → 7.5)。', en: 'Line up the decimal points before adding or subtracting.' } },
     { q: { s: '第六關:加上分數!', f: '第六關:四則運算加入分數,等值分數與分數比大小。', en: 'Round 6: Add fractions!' },
-      sec: 30, need: 6, ops: ['add', 'sub', 'mul', 'div', 'frac'],
+      sec: 15, need: 2, /* ★ v1.29.0(原 sec:30 need:6) */ ops: ['add', 'sub', 'mul', 'div', 'frac'],
       tip: { s: '分母越大一份越小', f: '等值分數=分子分母同乘一數', en: 'The bigger the denominator, the smaller each piece.' },
       why: { s: '分母越大,一份反而越小喔!', f: '等值分數是分子分母同乘(或同除)一個數:1/2 = 2/4 = 3/6;比大小要通分或交叉相乘:1/2 vs 1/3 → 1×3 > 1×2,所以 1/2 較大。3/8 = 0.375。', en: 'The bigger the denominator, the smaller each piece is!' } }
   ]
@@ -4043,7 +4043,7 @@ window.MG_GAMES = [
     en: 'Look at the picture and pick one of two answers.'   /* ★ v1.11.0 英文版 */
   },
   engine: 'quiz',
-  pick: 12,   /* 題庫 68 題,每局隨機抽 12 題 */
+  pick: 15,   /* ★ v1.29.0 戰鬥模式:每局抽 15 題(KO=答對 10,留 5 題容錯)(原 pick:12) ｜ 題庫 68 題,每局隨機抽 12 題 */
   time: 20,
   /* ★ v1.9.0 優化⑤:口訣改為「答錯才顯示」(hintOnWrong),不再掛在題目上等於送答案 */
   hintOnWrong: { s: '想一想:有羽毛=鳥、有鱗片=魚或爬蟲、皮膚濕=兩生、有毛+喝奶=哺乳', f: '二分法線索:羽毛→鳥類;毛髮+胎生+哺乳→哺乳類;乾鱗片+卵生→爬蟲類;濕皮膚+蝌蚪→兩生類;鰓+鱗片→魚類;6 隻腳→昆蟲', en: 'Clues: feathers = bird; fur + milk = mammal; dry scales + eggs = reptile; wet skin + tadpole = amphibian; gills + scales = fish; 6 legs = insect' },
@@ -4356,3 +4356,94 @@ try {
 } catch (e) { console.warn('[MG_DB] 自檢例外', e); }
 
 })();
+
+/* ══════════════════════════════════════════════════════════════════════
+ * ★ v1.29.0(老師需求 2026-09-08)— 小遊戲「英雄卡 VS NPC」戰鬥模式資料層
+ *   MG_HEROES:由主程式 hero_db.js 以腳本抽出的精簡表(name/立繪/職能/爆發名/爆發 GIF+音效+tint+dur),
+ *   小遊戲鐵律「不引用主程式任何 JS」⇒ 這裡是複本,主程式新增英雄後需重跑 gen_mg_heroes.js(驗證腳本包)。
+ *   cls 對應主程式 HERO_PRIMARY_CLASS:dmg→atk(攻擊型)/heal→heal(回復型)/tank→shd(護盾型)/ctrl→ctrl(控場型);
+ *   other 依 HERO_CATEGORIES_OVERRIDE 副分類判(有 heal→回復、有 ctrl→控場、其餘攻擊)(老師裁定「乙」)。
+ *   img/gif 為相對 raw 根目錄的路徑(已 encodeURIComponent);以 http 開頭者為完整網址。gif 為空 ⇒ 用 MG_BURST_DEF[cls].gif 通用特效。
+ *   全部 64 隻(老師裁定:只收 SSR 英雄,不含 UR/SR/R;來源主程式 SUMMON_RARE_HEROES 扣除 _RARITY_UR_HEROES)立繪與 GIF 皆已 curl -I 驗證 200(2026-09-08)。 */
+window.MG_HERO_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+window.MG_HEROES = [
+  { n:'哪吒', cls:'atk', img:'%E5%93%AA%E5%90%92.webp', bn:'三頭六臂‧蓮華滅世', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-explode',1],['sfx-burst',0.85],['sfx-crit',0.7]], tint:'rgba(255,90,40,0.22)', dur:2470 },
+  { n:'孫悟空', cls:'atk', img:'%E5%AD%AB%E6%82%9F%E7%A9%BA.webp', bn:'大鬧天宮', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-punch',1],['sfx-explode',0.85],['sfx-powerup',0.7]], tint:'rgba(255,215,120,0.20)', dur:1440 },
+  { n:'關羽', cls:'atk', img:'%E9%97%9C%E7%BE%BD.webp', bn:'青龍偃月‧武聖降臨', gif:'%E5%88%80%E5%85%89.gif', sfx:[['sfx-sword',1],['sfx-crit',0.85]], tint:'rgba(120,255,180,0.20)', dur:2400 },
+  { n:'姜子牙', cls:'ctrl', img:'%E5%A7%9C%E5%AD%90%E7%89%99.webp', bn:'封神台‧眾神歸位', gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', sfx:[['sfx-athena-burst',1]], tint:'rgba(255,216,102,0.20)' },
+  { n:'牛魔王', cls:'shd', img:'%E7%89%9B%E9%AD%94%E7%8E%8B.webp', bn:'牛魔真火・焚天蹄', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-explode',1],['sfx-punch',0.85]], tint:'rgba(255,110,40,0.22)', dur:2000 },
+  { n:'呂布', cls:'atk', img:'%E5%91%82%E5%B8%83.webp', bn:'無雙・戟舞八方', gif:'%E8%BF%85%E9%9B%B7%E4%B8%8D%E5%8F%8A%E6%8E%A9%E8%80%B3%E7%9A%84%E6%94%BB%E6%93%8A.gif', sfx:[['sfx-sword',1],['sfx-crit',0.8]], tint:'rgba(150,255,190,0.20)', dur:2000 },
+  { n:'蚩尤', cls:'atk', img:'%E8%9A%A9%E5%B0%A4.webp', bn:'涿鹿風暴', gif:'%E4%B8%89%E9%81%93%E5%9C%B0%E8%A3%82.gif', sfx:[['sfx-explode',1],['sfx-burst',0.8]], tint:'rgba(210,170,90,0.22)', dur:2000 },
+  { n:'諸葛亮', cls:'atk', img:'%E8%AB%B8%E8%91%9B%E4%BA%AE.webp', bn:'借東風・火燒赤壁', gif:'%E5%A4%AA%E9%99%BD%E7%81%AB%E7%90%83.gif', sfx:[['sfx-explode',1],['sfx-powerup',0.75]], tint:'rgba(255,140,60,0.22)', dur:2000 },
+  { n:'喚龍使‧蜜鶴林', cls:'atk', img:'%E5%96%9A%E9%BE%8D%E4%BD%BF_%E8%9C%9C%E9%B6%B4%E6%9E%97.png', bn:'魂芳雲魄', gif:'%E5%8F%AC%E5%96%9A.gif', sfx:[['sfx-summon-reveal',1],['sfx-aso-burst',0.9],['sfx-explode',0.6]], tint:'rgba(125,249,255,0.18)' },
+  { n:'熔岩巨人', cls:'atk', img:'%E7%86%94%E5%B2%A9%E5%B7%A8%E4%BA%BA.png', bn:'火山之怒', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-earthquake',1],['sfx-explode',0.9]], tint:'rgba(255,72,0,0.20)', dur:910 },
+  { n:'炎火超少女', cls:'atk', img:'%E7%82%8E%E7%81%AB%E8%B6%85%E5%B0%91%E5%A5%B3.png', bn:'火神附體', gif:'%E7%A5%9E%E6%9C%A8%E5%BE%A9%E4%BB%87%E4%B9%8B%E7%81%AB.gif', sfx:[['sfx-explode',0.9]], tint:'rgba(255,72,0,0.22)', dur:910 },
+  { n:'幽魂暗狐', cls:'atk', img:'%E5%B9%BD%E9%AD%82%E6%9A%97%E7%8B%90.webp', bn:'靈魂交換', gif:'%E7%B4%AB%E5%85%89%E7%B1%A0%E7%BD%A9%E5%90%B8%E6%94%B6.gif', sfx:[['sfx-darkorb-burst',1],['sfx-youyou-burst',0.85]], tint:'rgba(153,102,255,0.22)', dur:1120 },
+  { n:'麻吉喵‧Nico', cls:'shd', img:'%E9%BA%BB%E5%90%89%E5%96%B5Nico.webp', bn:'怎麼樣?看看我的厲害!', gif:'%E7%94%9F%E6%B0%A3%E7%9A%84%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6.gif', sfx:[['sfx-punch',1],['sfx-crit',0.85]], tint:'rgba(255,158,196,0.22)', dur:900 },
+  { n:'貓人族長', cls:'atk', img:'%E8%B2%93%E4%BA%BA%E6%97%8F%E9%95%B7.png', bn:'上級元素精靈‧引爆', gif:'%E6%91%A9%E5%A4%A9%E7%88%86%E7%A0%B4%E7%85%99%E7%81%AB%E7%A5%AD.gif', sfx:[['sfx-explode',1],['sfx-burst',0.85]], tint:'rgba(140,190,255,0.22)' },
+  { n:'拘留者', cls:'atk', img:'%E6%8B%98%E7%95%99%E8%80%85.png', bn:'時空罰罪‧天手力', gif:'%E6%99%82%E7%A9%BA%E7%A9%BF%E6%A2%AD.gif', sfx:[['sfx-detain-burst',1]], tint:'rgba(124,77,255,0.22)', dur:450 },
+  { n:'御雲使‧沐雲雪', cls:'heal', img:'%E5%BE%A1%E9%9B%B2%E4%BD%BF_%E6%B2%90%E9%9B%B2%E9%9B%AA.png', bn:'霞蔚雲蒸', gif:'%E5%A4%A7%E5%BC%B7%E5%8C%96.gif', sfx:[['sfx-goddess',0.9],['sfx-heal',0.95]], tint:'rgba(180,225,255,0.18)', dur:910 },
+  { n:'科學發明家', cls:'heal', img:'%E7%A7%91%E5%AD%B8%E7%99%BC%E6%98%8E%E5%AE%B6.png', bn:'醫學界的發明奇蹟', gif:'%E5%9F%BA%E5%9B%A0%E7%B5%90%E6%A7%8B.gif', sfx:[['sfx-goddess',0.9],['sfx-heal',0.95]], tint:'rgba(120,220,160,0.20)', dur:2730 },
+  { n:'電腦老師', cls:'ctrl', img:'%E9%9B%BB%E8%85%A6%E8%80%81%E5%B8%AB.png', bn:'系統還原', gif:'%E6%95%B8%E4%BD%8D%E4%BB%A3%E7%A2%BC.gif', sfx:[['sfx-powerdown',0.85],['sfx-powerup',1]], tint:'rgba(80,180,255,0.16)', dur:1600 },
+  { n:'魔術師', cls:'ctrl', img:'%E9%AD%94%E8%A1%93%E5%B8%AB.png', bn:'禁錮牢籠', gif:'%E7%A6%81%E9%8C%AE.gif', sfx:[['sfx-imprison-burst',1]], tint:'rgba(140,80,200,0.20)' },
+  { n:'聖冥法師', cls:'atk', img:'%E8%81%96%E5%86%A5%E6%B3%95%E5%B8%AB.png', bn:'聖光與暗影的調停', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-shoot',0.85],['sfx-heal',0.7]], tint:'rgba(150,90,220,0.20)' },
+  { n:'大刀勇士', cls:'atk', img:'%E5%A4%A7%E5%88%80%E5%8B%87%E5%A3%AB.png', bn:'奧義‧勇士大刀滅絕斬', gif:'%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif', sfx:[['sfx-sword',1],['sfx-crit',0.9]], tint:'rgba(255,150,60,0.16)' },
+  { n:'巫女', cls:'heal', img:'Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png', bn:'神樂舞', gif:'', sfx:[] },
+  { n:'大天狗', cls:'atk', img:'%E5%A4%A7%E5%A4%A9%E7%8B%97.png', bn:'神威風獵', gif:'%E7%A5%9E%E5%A8%81%E9%A2%A8%E7%8D%B5.gif', sfx:[['sfx-tengu-strike',1]], tint:'rgba(170,220,255,0.18)' },
+  { n:'酒吞童子', cls:'atk', img:'%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90.png', bn:'鬼王酒宴', gif:'%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif', sfx:[['sfx-explode',1],['sfx-punch',0.9],['sfx-heal',0.7]], tint:'rgba(255,100,60,0.18)' },
+  { n:'玉藻前', cls:'atk', img:'%E7%8E%89%E8%97%BB%E5%89%8D.png', bn:'禍世邪魅', gif:'%E7%A6%8D%E4%B8%96%E9%82%AA%E9%AD%85.gif', sfx:[['sfx-fantasy',1],['sfx-fantasy',0.9],['sfx-explode',0.6]], tint:'rgba(255,150,80,0.18)' },
+  { n:'窮奇', cls:'atk', img:'%E7%AA%AE%E5%A5%87.png', bn:'召喚上古四凶獸', gif:'%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.gif', sfx:[['sfx-qiongqi-burst',1]], tint:'rgba(180,40,40,0.22)', dur:2400 },
+  { n:'科技生化人', cls:'atk', img:'%E7%94%9F%E5%8C%96%E4%BA%BA.png', bn:'輻射核砲', gif:'%E8%BC%BB%E5%B0%84%E6%A0%B8%E7%A0%B2.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-burst',0.7]], tint:'rgba(180,220,40,0.22)', dur:2400 },
+  { n:'鋁合金暴龍', cls:'atk', img:'%E9%8B%81%E5%90%88%E9%87%91%E6%9A%B4%E9%BE%8D.png', bn:'死神龍王登場', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-sword',0.85]], tint:'rgba(200,0,50,0.18)' },
+  { n:'超鬼神王', cls:'ctrl', img:'%E8%B6%85%E9%AC%BC%E7%A5%9E%E7%8E%8B.png', bn:'大嘴吸入', gif:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%90%B8%E5%85%A5%E6%BC%A9%E6%B8%A6%E9%96%80.gif', sfx:[['sfx-fantasy',1],['sfx-powerup',0.8]], tint:'rgba(50,255,200,0.12)' },
+  { n:'雙星姊妹', cls:'heal', img:'%E9%9B%99%E6%98%9F%E5%A7%8A%E5%A6%B9.png', bn:'同生共死', gif:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E9%87%91%E8%89%B2%E9%96%83%E5%85%89%E7%82%B8%E9%96%8B.gif', sfx:[['sfx-explode',1],['sfx-powerup',0.8]], tint:'rgba(255,220,80,0.22)' },
+  { n:'暗魔將·血', cls:'atk', img:'%E6%9A%97%E9%AD%94%E5%B0%87_%E8%A1%80.png', bn:'血劍·爆破', gif:'%E9%A3%9B%E5%8A%8D.gif', sfx:[['sfx-explode',0.9],['sfx-crit',0.85]], tint:'rgba(180,30,30,0.20)' },
+  { n:'死靈法師', cls:'heal', img:'5%E5%B9%B42%E7%8F%AD%E8%A8%B1%E5%90%8C%E5%AD%B8%E8%A8%AD%E8%A8%88%20%E6%AD%BB%E9%9D%88%E6%B3%95%E5%B8%AB.png', bn:'亡靈怨念一擊', gif:'%E9%9D%88%E9%AD%82%E6%94%B6%E5%89%B2.gif', sfx:[['sfx-summon-smoke',1],['sfx-explode',0.85],['sfx-heal',0.8]], tint:'rgba(180,180,220,0.22)' },
+  { n:'布奶鳥獸', cls:'heal', img:'%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6%E7%8D%B8.png', bn:'生氣的布丁&奶茶', gif:'', sfx:[] },
+  { n:'炸彈客', cls:'atk', img:'%E7%82%B8%E5%BD%88%E5%AE%A2.png', bn:'超級大爆炸', gif:'%E5%85%AB%E9%BE%8D%E9%A0%AD%E6%BB%85%E4%B8%96.gif', sfx:[['sfx-explode',1],['sfx-burst',0.9],['sfx-powerup',0.7]], tint:'rgba(255,100,40,0.22)', dur:2400 },
+  { n:'紅色玩家', cls:'atk', img:'%E7%B4%85%E8%89%B2%E7%8E%A9%E5%AE%B6.png', bn:'超頻爆發', gif:'%E6%95%B8%E4%BD%8D%E6%95%B8%E5%AD%97%E9%A3%9B%E8%88%9E.gif', sfx:[['sfx-powerup',1],['sfx-fantasy',0.85],['sfx-burst',0.9]], tint:'rgba(255,40,40,0.22)', dur:2400 },
+  { n:'地府酋長', cls:'atk', img:'%E5%9C%B0%E5%BA%9C%E9%85%8B%E9%95%B7.png', bn:'刀山火海', gif:'%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif', sfx:[['sfx-burst',1],['sfx-explode',0.9],['sfx-fantasy',0.7]], tint:'rgba(120,0,40,0.25)', dur:2400 },
+  { n:'救醫馬', cls:'heal', img:'%E6%95%91%E9%86%AB%E9%A6%AC.png', bn:'救救昏倒夥', gif:'%E6%95%91%E6%95%91%E6%98%8F%E5%80%92%E5%A4%A5.gif', sfx:[['sfx-heal',1],['sfx-powerup',0.85]], tint:'rgba(255,220,180,0.22)', dur:2400 },
+  { n:'水狐', cls:'heal', img:'%E6%B0%B4%E7%8B%90.png', bn:'萬流歸宗·神龍降臨', gif:'%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.gif', sfx:[['sfx-fantasy',0.85],['sfx-heal',0.7]], tint:'rgba(80,180,255,0.22)', dur:2400 },
+  { n:'米鈴', cls:'heal', img:'%E5%A5%B3%E5%83%95%E8%B2%93%20%E7%B1%B3%E9%88%B4.png', bn:'夢幻的茶會', gif:'%E6%B3%A1%E5%A5%BD%E4%B8%80%E6%9D%AF%E8%8C%B6.gif', sfx:[['sfx-heal',1],['sfx-gentle',0.9],['sfx-fantasy',0.7]], tint:'rgba(255,200,230,0.22)', dur:800 },
+  { n:'學霸(轉學生)', cls:'atk', img:'%E8%BD%89%E5%AD%B8%E7%94%9F%E5%AD%B8%E9%9C%B8.png', bn:'壓力轉移', gif:'%E8%81%9A%E6%B0%A3.gif', sfx:[['sfx-powerup',1],['sfx-burst',0.9],['sfx-fantasy',0.7]], tint:'rgba(180,200,255,0.22)', dur:2400 },
+  { n:'天神宙斯', cls:'atk', img:'%E5%AE%99%E6%96%AF.png', bn:'天降雷罰', gif:'%E5%A4%A9%E9%9B%B7.gif', sfx:[['sfx-thunder-fury',1]], tint:'rgba(220,255,80,0.20)', dur:2400 },
+  { n:'維京海盜船長', cls:'atk', img:'%E7%B6%AD%E4%BA%AC%E6%B5%B7%E7%9B%9C%E8%88%B9%E9%95%B7.png', bn:'海盜威能', gif:'%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif', sfx:[['sfx-explode',1],['sfx-gunshot-big',0.9],['sfx-powerup',0.7]], tint:'rgba(80,40,180,0.22)', dur:1600 },
+  { n:'武器精靈', cls:'atk', img:'%E6%AD%A6%E5%99%A8%E7%B2%BE%E9%9D%88.png', bn:'銀齒迴力鏢旋風', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-sword',1],['sfx-crit',0.85],['sfx-powerup',0.7]], tint:'rgba(200,220,255,0.18)', dur:1440 },
+  { n:'神槍手', cls:'shd', img:'%E7%A5%9E%E6%A7%8D%E6%89%8B.png', bn:'火焰神槍', gif:'%E5%8D%83%E5%B9%B4%E7%99%BC%E9%85%B5%E6%A0%B8%E7%88%86.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-gunshot-big',0.9],['sfx-explode',0.85],['sfx-gunshot-big',0.8],['sfx-explode',0.75]], tint:'rgba(255,80,30,0.22)', dur:2400 },
+  { n:'火柴人', cls:'atk', img:'%E7%81%AB%E6%9F%B4%E4%BA%BA.png', bn:'燃燒自己,照亮別人', gif:'', sfx:[] },
+  { n:'青炎龍王', cls:'heal', img:'%E9%9D%92%E7%82%8E%E9%BE%8D%E7%8E%8B.png', bn:'青炎之舞', gif:'', sfx:[] },
+  { n:'鳳凰', cls:'atk', img:'%E9%B3%B3%E5%87%B0.png', bn:'神炎之翼', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-explode',0.85],['sfx-burst',0.7]], tint:'rgba(255,80,20,0.22)', dur:2470 },
+  { n:'操偶師', cls:'shd', img:'%E6%93%8D%E5%81%B6%E5%B8%AB.png', bn:'魁儡城牆', gif:'%E9%91%BD%E7%9F%B3.gif', sfx:[['sfx-powerup',0.85]], tint:'rgba(180,200,255,0.25)', dur:2400 },
+  { n:'菇女', cls:'heal', img:'%E8%8F%87%E5%A5%B3.png', bn:'天女散花菇', gif:'%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif', sfx:[['sfx-heal',0.85]], tint:'rgba(255,153,204,0.22)', dur:2400 },
+  { n:'小丑', cls:'ctrl', img:'%E5%B0%8F%E4%B8%91.png', bn:'致命笑氣罐', gif:'%E7%85%99%E9%9C%A7%E7%88%86%E9%96%8B.gif', sfx:[['sfx-explode',1],['sfx-burst',0.7]], tint:'rgba(170,68,255,0.22)', dur:2400 },
+  { n:'美人魚‧角角', cls:'atk', img:'%E7%BE%8E%E4%BA%BA%E9%AD%9A_%E8%A7%92%E8%A7%92.png', bn:'百萬水箭共鳴曲', gif:'%E8%90%AC%E9%8F%A1%E6%98%A0%E8%99%9B%E7%8D%84.gif', sfx:[['sfx-heal',0.7]], tint:'rgba(60,170,255,0.22)', dur:2600 },
+  { n:'火爆女', cls:'atk', img:'%E7%81%AB%E7%88%86%E5%A5%B3%E5%AD%A9.png', bn:'三刀射擊', gif:'%E4%B8%89%E9%81%93%E5%9C%B0%E8%A3%82.gif', sfx:[['sfx-sword',1],['sfx-crit',0.7]], tint:'rgba(255,80,40,0.22)', dur:840 },
+  { n:'幽幽', cls:'atk', img:'%E5%B9%BD%E5%B9%BD.png', bn:'惡夢遊魂', gif:'%E6%AD%BB%E4%BA%A1%E5%AE%A3%E5%91%8A.gif', sfx:[['sfx-youyou-burst',1]], tint:'rgba(120,60,180,0.24)' },
+  { n:'網路駭客', cls:'ctrl', img:'%E7%B6%B2%E8%B7%AF%E9%A7%AD%E5%AE%A2.png', bn:'超極密檔案GET!', gif:'%E9%A7%AD%E5%AE%A2%E7%A8%8B%E5%BC%8F%E7%A2%BC.gif', sfx:[['sfx-burst',1],['sfx-crit',0.8],['sfx-heal',0.6]], tint:'rgba(60,220,120,0.20)' },
+  { n:'風術士', cls:'heal', img:'%E9%A2%A8%E8%A1%93%E5%A3%AB.png', bn:'風之脈動', gif:'', sfx:[] },
+  { n:'我的豚豚', cls:'atk', img:'%E6%88%91%E7%9A%84%E8%B1%9A%E8%B1%9A.png', bn:'超可愛暴擊', gif:'%E6%9A%88%E7%9C%A9.gif', sfx:[['sfx-crit',1],['sfx-punch',0.9],['sfx-cantmove',0.85]], tint:'rgba(120,200,255,0.18)' },
+  { n:'雅典娜', cls:'heal', img:'%E9%9B%85%E5%85%B8%E5%A8%9C.png', bn:'戰爭女神的權威', gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', sfx:[['sfx-athena-burst',1]], tint:'rgba(255,216,102,0.20)' },
+  { n:'阿蘇火山龍王', cls:'atk', img:'%E9%98%BF%E8%98%87%E7%81%AB%E5%B1%B1%E9%BE%8D%E7%8E%8B.png', bn:'超光速衝擊波', gif:'%E8%BC%BB%E5%B0%84%E6%A0%B8%E7%A0%B2.gif', sfx:[['sfx-aso-burst',1]], tint:'rgba(255,90,40,0.22)' },
+  { n:'死神', cls:'atk', img:'%E6%AD%BB%E7%A5%9E.png', bn:'死亡審判', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-sword',0.85]], tint:'rgba(180,0,40,0.22)' },
+  { n:'地獄將軍', cls:'atk', img:'%E5%9C%B0%E7%8D%84%E5%B0%87%E8%BB%8D.png', bn:'死亡怒火', gif:'%E7%88%86%E7%82%B8%E7%85%99%E9%9C%A72.gif', sfx:[], tint:'rgba(170,0,0,0.20)', dur:2900 },
+  { n:'魔界花使‧朱玥', cls:'heal', img:'%E9%AD%94%E7%95%8C%E8%8A%B1%E4%BD%BF_%E6%9C%B1%E7%8E%A5.png', bn:'百花盛開', gif:'%E8%8A%B1%E8%8D%89%E6%90%96%E6%9B%B3.gif', sfx:[['sfx-heal',0.85]], tint:'rgba(136,221,102,0.22)', dur:2400 },
+  { n:'小鬼貓與兔', cls:'atk', img:'%E5%B0%8F%E9%AC%BC%E8%B2%93%E5%85%94.png', bn:'貓兔齊抓咬', gif:'%E5%88%80%E5%85%89.gif', sfx:[['sfx-sword',1],['sfx-crit',0.7]], tint:'rgba(255,220,140,0.22)', dur:2400 },
+  { n:'法老王', cls:'atk', img:'%E6%B3%95%E8%80%81%E7%8E%8BBOSS.png', bn:'太陽神的審判', gif:'%E5%A4%AA%E9%99%BD%E7%81%AB%E7%90%83.gif', sfx:[['sfx-pharaoh-burst',1]], tint:'rgba(255,204,68,0.20)' },
+  { n:'埃及豔后', cls:'ctrl', img:'%E5%9F%83%E5%8F%8A%E8%B1%94%E5%90%8E.png', bn:'尼羅河的詛咒', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-cleopatra-burst',1]], tint:'rgba(60,110,170,0.20)' }
+];
+/* 四型爆發定義(雙版文案 鐵律 1.232 + 英文):玩家版效果 / NPC 版效果 / 通用備援 GIF(皆為 repo 既有素材) */
+window.MG_BURST_DEF = {
+  heal: { icon:'💚', name:{ s:'回復型', f:'回復型', en:'Healer' }, gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', tint:'rgba(120,255,160,0.22)',
+          p:{ s:'自己的血補回 30!', f:'使自己的 HP 恢復 30', en:'Restore 30 of your own HP' },
+          npc:{ s:'對手把血補回 30', f:'對手 HP 恢復 30', en:'Opponent restores 30 HP' } },
+  shd:  { icon:'🛡', name:{ s:'護盾型', f:'護盾型', en:'Guardian' }, gif:'%E9%87%91%E8%89%B2%E5%85%89%E5%9C%88.gif', tint:'rgba(120,200,255,0.22)',
+          p:{ s:'接下來答錯 3 次都不會扣血!', f:'使自己免疫接下來 3 次答錯的傷害', en:'Block the damage from your next 3 wrong answers' },
+          npc:{ s:'對手接下來 3 次不會被你打到', f:'對手免疫你接下來 3 次答對的傷害', en:'Opponent blocks your next 3 hits' } },
+  atk:  { icon:'⚔', name:{ s:'攻擊型', f:'攻擊型', en:'Attacker' }, gif:'%E5%88%80%E5%85%89.gif', tint:'rgba(255,120,80,0.22)',
+          p:{ s:'把 3 個錯的答案打掉!', f:'立即刪除 3 個錯誤答案', en:'Instantly remove 3 wrong answers' },
+          npc:{ s:'對手直接打你 10 滴血', f:'對手立即對你造成 10 點傷害', en:'Opponent deals 10 damage to you' } },
+  ctrl: { icon:'⏳', name:{ s:'控場型', f:'控場型', en:'Controller' }, gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', tint:'rgba(200,160,255,0.22)',
+          p:{ s:'倒數停 10 秒!', f:'使闖關計時器暫停 10 秒', en:'Pause the timer for 10 seconds' },
+          npc:{ s:'對手偷走你 10 秒', f:'對手使你的倒數減少 10 秒', en:'Opponent steals 10 seconds from your timer' } }
+};

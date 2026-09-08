@@ -15,7 +15,21 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.27.0(2026-09-08)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.29.0(2026-09-08)
+     ★ v1.29.0(2026-09-08・老師五項需求+評分追加「戰鬥模式:英雄卡 VS NPC」):
+       ①每關左下(移除小博士解說圖)新增 #mgbattle:玩家英雄卡(開始前視窗可選 1 名,只收 SSR 64 隻,不驗持有,localStorage._mgHero)
+         VS NPC 隨機英雄卡 + 雙方 HP 條(基礎 100);答對 NPC −10、答錯/超時 玩家 −10;攻擊光束+音效+受傷震動(vibrate,iPad 無此 API 靜默)。
+       ②四型極限爆發(主程式 HERO_PRIMARY_CLASS:dmg→攻擊/heal→回復/tank→護盾/ctrl→控場;other 依副分類判〔老師裁定乙〕):
+         回復 +30 HP/護盾免疫 3 次答錯傷害/攻擊立即刪 3 個錯誤答案(逐引擎:quiz·sort·drag·map 淡掉錯誤選項;order 鎖定前 3 張;
+         match 同號金框提示 3 對;ear 自動填前 3 音;maze 拆 3 個陷阱;react 炸掉 3 個錯誤算式)/控場計時暫停 10 秒(選擇題倒數不扣;
+         算數大進擊回合時鐘順延、掉落物照掉〔裁定甲〕)。答對 3 題充能 1 次;NPC 充能=玩家答錯 3 次,自動施放(NPC 攻擊型=玩家 −10、控場型=倒數 −10 秒)。
+         特效直接套主程式 BURST_GIF_DB(GIF+音效+tint+dur,不用影片),補 37 支主程式爆發 <audio>。資料層 MG_HEROES/MG_BURST_DEF 在 minigame_db.js。
+       ③算數大進擊改逐射擊接 HP:射錯 −10、射對 NPC −10 且充能;移除 v1.28.0 冷卻 5 秒/時間暫停鈕(舊碼註解備查);6 回合各 need 2、sec 15。
+       ④KO=答對 10 次(NPC HP 0);玩家 HP 0 立刻結算敗;題目出完沒人 KO ⇒ 剩餘 HP 高者勝。題數:11 款 pick 15、排排站 15 回合×30 秒、連連看 3 回合逐配對、迷宮 6 關逐格。
+       ⑤單一扣血入口 mgBattleHit;scoreIt(correct, noBattle) 一題一判引擎統一接入;連連看/迷宮/算數大進擊逐事件自呼叫並以 noBattle 跳過結算重扣;
+         迷宮同格只算一次(重走不重複)。KO 後不顯示下一題/不自動前進,1.7 秒後結算。
+       評分(老師追加):用時加成後 + 剩餘 HP×5(≤500)+ 爆發節制(0/1/2 次=+300/+200/+100)+ KO/勝利 +200;敗北無用時加成。
+       星等改 5 星制:勝 +2(敗答對≥5 +1)、HP≥40 +1、HP≥70 +1、爆發≤1 次 +1;MG_TROPHY 補 4/5 星;結算頁新增 #r-battle 明細列。
      ★ v1.27.0(老師回報「25 台 iPad 同時登入很困難」，修完主程式後接著修小遊戲的登入流程):
        小遊戲原本已經比主程式精簡很多(沒有維修/休息/停權三道閘門、不寫全校共用熱門文件)，
        稽核找到兩個真正拖慢登入的點：①ensureFirebase 舊碼三支 Firebase compat SDK 一支接一支
@@ -1496,9 +1510,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     z-index:116;margin:0;width:auto;min-width:240px;max-width:38vw;
   }
   #page-play > #nextrow button{min-height:66px;font-size:24px;font-size:clamp(20px,1.9vw,30px);padding:12px 34px;box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 0 3px rgba(240,192,96,.35);}
-  #page-play{grid-template-rows:auto minmax(0,1fr);}                 /* 原第 2 列(下一題)已抽離版面 */
+  #page-play{grid-template-rows:auto auto minmax(0,1fr);}                 /* 原第 2 列(下一題)已抽離版面;★ v1.29.0 第 3 列 = 戰鬥面板(貼底)(原 auto minmax(0,1fr)) */
   #page-play > #feedback{grid-row:2;}
-  #play-right{grid-row:1 / 3;padding-bottom:90px;box-sizing:border-box;}   /* 右欄底部留高,最後一列選項不被固定鈕蓋住 */
+  #play-right{grid-row:1 / 4;padding-bottom:90px;box-sizing:border-box;}   /* 右欄底部留高,最後一列選項不被固定鈕蓋住;★ v1.29.0 跨 3 列(原 1 / 3) */
 }
 @media (orientation:landscape) and (max-height:520px){
   #page-play > #nextrow{min-width:170px;right:10px;bottom:10px;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));}
@@ -1569,6 +1583,101 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @keyframes verblink{0%,100%{box-shadow:0 0 0 0 rgba(232,64,64,.0);}50%{box-shadow:0 0 0 4px rgba(232,64,64,.28);}}
 #ver-btn{background:var(--grass);color:#08090d;border-color:transparent;font-weight:900;}
 @media (orientation:landscape) and (max-height:520px){ #ver-chip{font-size:11px;min-height:28px;padding:3px 8px;} #ver-chip .vl{display:none;} }
+/* ★★ v1.29.0(老師需求 2026-09-08)— 戰鬥面板「玩家英雄卡 VS NPC 英雄卡 + 雙方 HP 條 + 極限爆發鈕」
+   直式:接在 #play-left 之後的一列(兩張橫向小卡);橫式:grid 第 3 列貼底(取代原本撐滿左下的小博士解說圖)。
+   iPad 觸控:自補 touch-action / tap-highlight / user-select;爆發鈕 min-height ≥ 44px(橫式)。 */
+#mgbattle{display:flex;align-items:stretch;gap:8px;margin:8px 0 0;padding:8px;border-radius:16px;background:rgba(8,10,16,.72);border:2px solid rgba(240,192,96,.35);box-shadow:0 8px 24px rgba(0,0,0,.45);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+#mgbattle.hidden{display:none;}
+.bt-card{flex:1 1 0;min-width:0;display:flex;gap:8px;align-items:center;padding:6px;border-radius:12px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;}
+.bt-card.p{border-color:rgba(62,200,122,.55);}
+.bt-card.n{border-color:rgba(232,64,64,.55);flex-direction:row-reverse;text-align:right;}
+.bt-card.hurt{animation:bthurt .45s;}
+@keyframes bthurt{0%,100%{transform:translateX(0);}15%{transform:translateX(-10px);}30%{transform:translateX(10px);}45%{transform:translateX(-7px);}60%{transform:translateX(7px);}75%{transform:translateX(-3px);}}
+.bt-card.ko{filter:grayscale(1) brightness(.45);transform:rotate(-6deg) translateY(8px);transition:transform .6s,filter .6s;}
+.bt-card.win{box-shadow:0 0 26px rgba(240,192,96,.85);}
+.bt-card.casting{box-shadow:0 0 26px rgba(255,255,255,.8);}
+.bt-img{width:64px;height:64px;flex:0 0 64px;border-radius:10px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:30px;}
+.bt-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+.bt-info{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.bt-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-name .bt-cls{font-size:11px;opacity:.8;margin-left:4px;font-weight:400;}
+.bt-hpbar{position:relative;height:16px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;}
+.bt-hp{height:100%;width:100%;background:linear-gradient(90deg,#3ec87a,#9fe8be);transition:width .35s;}
+.bt-card.n .bt-hp{background:linear-gradient(90deg,#e84040,#ff8f8f);margin-left:auto;}
+.bt-hp.low{background:linear-gradient(90deg,#e84040,#f0c060) !important;animation:verblink 1s infinite;}
+.bt-hpn{position:absolute;left:0;right:0;top:0;line-height:16px;font-size:11px;font-weight:700;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
+.bt-sh{font-size:11px;color:#9fd0ff;min-height:14px;line-height:14px;}
+.bt-burst{min-height:36px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:12px;font-weight:700;padding:3px 8px;display:flex;align-items:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.bt-card.n .bt-burst{flex-direction:row-reverse;}
+.bt-burst.ready{opacity:1;cursor:pointer;border-color:var(--gold);background:rgba(240,192,96,.18);animation:btpulse 1s ease-in-out infinite;}
+@keyframes btpulse{0%,100%{box-shadow:0 0 8px rgba(240,192,96,.45);}50%{box-shadow:0 0 22px rgba(240,192,96,.95);}}
+.bt-burst .bt-charge{letter-spacing:2px;color:var(--gold);}
+.bt-burst .bt-bname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-vs{align-self:center;font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.8);flex:0 0 auto;}
+.bt-frz{position:absolute;left:50%;top:-14px;transform:translateX(-50%);background:rgba(120,200,255,.92);color:#08090d;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;display:none;white-space:nowrap;z-index:2;}
+.bt-frz.on{display:block;}
+/* 攻擊光束(仿算數大進擊 .rbeam):玩家攻擊綠、NPC 攻擊紅;傷害飄字沿用 sfl 動畫 */
+.bt-beam{position:fixed;z-index:117;height:4px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,80,80,0),#ff4040 40%,#ffd0d0 60%,rgba(255,80,80,0));box-shadow:0 0 10px #ff4040;pointer-events:none;opacity:1;transition:opacity .25s;}
+.bt-beam.p{background:linear-gradient(90deg,rgba(80,255,160,0),#3ec87a 40%,#d0ffe0 60%,rgba(80,255,160,0));box-shadow:0 0 10px #3ec87a;}
+.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:26px;font-weight:900;color:#ff6060;text-shadow:0 2px 8px rgba(0,0,0,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
+.bt-dmg.heal{color:#9fe8be;}
+.bt-dmg.block{color:#9fd0ff;font-size:20px;}
+/* 爆發全螢幕:tint 底 + 主程式 BURST_GIF_DB 的 GIF + 英雄名/招式名/效果(不用影片) */
+#bt-burstfx{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;animation:btfxin .25s;}
+#bt-burstfx img.gif{max-width:70vw;max-height:58vh;object-fit:contain;}
+#bt-burstfx .bt-bfname{font-size:clamp(22px,3.4vw,44px);font-weight:900;color:var(--gold);text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 20px rgba(240,192,96,.7);margin-top:6px;text-align:center;padding:0 12px;}
+#bt-burstfx .bt-bfname.npc{color:#ff8f8f;}
+#bt-burstfx .bt-bfeff{font-size:clamp(14px,1.8vw,24px);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.95);margin-top:4px;text-align:center;padding:0 12px;}
+@keyframes btfxin{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
+#bt-ko{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:clamp(60px,14vw,160px);font-weight:900;color:var(--gold);text-shadow:0 6px 20px rgba(0,0,0,.95),0 0 40px rgba(240,192,96,.8);animation:btko .5s cubic-bezier(.2,1.6,.4,1);}
+#bt-ko.lose{color:#ff8f8f;}
+@keyframes btko{from{opacity:0;transform:scale(3);}to{opacity:1;transform:scale(1);}}
+/* 攻擊型爆發「刪除錯誤答案」後的樣式:選項/籃子/地圖點淡出且不可點;連連看給配對提示標記 */
+.opt.bt-out,.dbin.bt-out,.mcard.bt-out{opacity:.18 !important;pointer-events:none;filter:grayscale(1);}
+.spot.bt-out{opacity:.1;pointer-events:none;}
+.mcard.bt-pair{box-shadow:inset 0 0 0 3px var(--gold);position:relative;}
+.mcard.bt-pair::after{content:attr(data-bt);position:absolute;right:4px;top:2px;font-size:13px;font-weight:700;color:var(--gold);}
+.rdrop.bt-out{opacity:0;transition:opacity .35s;}
+@media (orientation:landscape){
+  #page-play > #mgbattle{grid-column:1;grid-row:3;align-self:end;margin:0;flex-direction:column;gap:4px;padding:6px;}
+  #page-play > #mgbattle .bt-vs{margin:-4px 0;font-size:16px;}
+  #page-play > #mgbattle .bt-card.n{flex-direction:row;text-align:left;}
+  #page-play > #mgbattle .bt-card.n .bt-burst{flex-direction:row;}
+  #page-play > #mgbattle .bt-card.n .bt-hp{margin-left:0;}
+  #page-play > #feedback.docked{align-self:start;display:block;overflow:visible;}
+  #feedback.docked .fb-head{display:block;text-align:left;font-size:16px;padding:8px 12px;border-bottom:0;}
+  .bt-img{width:76px;height:76px;flex-basis:76px;}
+  .bt-name{font-size:16px;}
+  .bt-burst{min-height:44px;font-size:14px;}
+  .bt-hpbar{height:18px;} .bt-hpn{line-height:18px;font-size:12px;}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .bt-img{width:48px;height:48px;flex-basis:48px;} .bt-name{font-size:12px;} .bt-burst{min-height:34px;font-size:11px;padding:2px 6px;}
+  #page-play > #mgbattle{padding:4px;gap:2px;} .bt-card{padding:4px;gap:5px;} .bt-hpbar{height:14px;} .bt-hpn{line-height:14px;font-size:10px;} .bt-sh{min-height:12px;font-size:10px;}
+}
+/* 開始前選英雄:#modal 內的英雄列 + 獨立選角視窗 #hero-modal(名字清單,只顯示目前選中的一張立繪 —— 立繪平均 600KB,不能整排載入) */
+#m-hero{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(62,200,122,.1);border:1px solid rgba(62,200,122,.35);}
+#m-hero .bt-img{width:56px;height:56px;flex-basis:56px;}
+#m-hero .mh-txt{flex:1 1 auto;min-width:0;font-size:14px;line-height:1.4;}
+#m-hero .mh-txt b{color:var(--gold);font-weight:700;}
+#m-hero button{min-height:40px;font-size:14px;padding:6px 12px;flex:0 0 auto;}
+#hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:84;display:none;align-items:center;justify-content:center;padding:14px;}
+#hero-modal.show{display:flex;}
+#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:16px;max-width:820px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:10px;}
+#hero-modal h3{margin:0;font-size:22px;color:var(--gold);}
+#hero-modal .hm-top{display:flex;gap:12px;align-items:center;}
+#hero-modal .hm-top .bt-img{width:110px;height:110px;flex-basis:110px;}
+#hero-modal .hm-top .hm-desc{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.5;}
+#hero-modal .hm-top .hm-desc b{color:var(--gold);font-weight:700;font-size:18px;}
+#hero-modal .hm-filter{display:flex;gap:6px;flex-wrap:wrap;}
+#hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
+#hero-modal .hm-list{flex:1 1 auto;min-height:120px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;padding:2px;}
+#hero-modal .hm-list button{min-height:44px;font-size:14px;padding:6px 8px;background:rgba(255,255,255,.06);border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:10px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+#hero-modal .hm-list button.on{border-color:var(--gold);background:rgba(240,192,96,.2);}
+#hero-modal .row{display:flex;gap:10px;}
+#hero-modal .row button{flex:1;min-height:46px;}
+#r-battle{font-size:15px;line-height:1.7;margin-top:6px;}
+#r-battle b{color:var(--gold);font-weight:700;}
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -1606,6 +1715,44 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <audio id="sfx-cancel"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%96%E6%B6%88.mp3"></audio>
 <audio id="sfx-recharge" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A3%9C%E5%85%85%E8%83%BD%E9%87%8F.mp3"></audio>
 <audio id="sfx-gunshot" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84%E5%AD%90%E5%BD%88.mp3"></audio><!-- ★ v1.9.5 算數大進擊射擊音效(=主程式 sfx-gunshot 發射子彈.mp3) -->
+<!-- ★ v1.29.0 戰鬥模式:各英雄極限爆發音效(全部沿用主程式 index.html 同 id 同 src,preload=none 不影響首載;已逐檔 curl -I 驗證 200;主程式的 sfx-waterfox-burst 因 raw 404 未收錄) -->
+<audio id="sfx-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
+<audio id="sfx-crit" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E6%93%8A.mp3"></audio>
+<audio id="sfx-punch" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/short_punch1.mp3"></audio>
+<audio id="sfx-sword" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/sword2.mp3"></audio>
+<audio id="sfx-athena-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A9%E4%BD%BF%E7%9A%84%E5%91%BC%E8%81%B2.mp3"></audio>
+<audio id="sfx-summon-reveal" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.mp3"></audio>
+<audio id="sfx-aso-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%A3%E7%BA%8C%E7%99%BC%E5%B0%84.mp3"></audio>
+<audio id="sfx-earthquake" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%9C%87.mp3"></audio>
+<audio id="sfx-darkorb-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%93%8E%E5%A4%A9%E7%88%86%E9%96%83%E9%9F%B3%E6%95%88.m4a"></audio>
+<audio id="sfx-youyou-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%83%A1%E5%A4%A2%E9%81%8A%E9%AD%82.mp3"></audio>
+<audio id="sfx-detain-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E7%A9%BF%E6%A2%AD.mp3"></audio>
+<audio id="sfx-goddess" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/7-6%E5%A5%B3%E7%A5%9E%E6%B6%88%E5%A4%B1%E7%99%BC%E5%85%891.mp3"></audio>
+<audio id="sfx-heal" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B2%BB%E7%99%92%E9%AD%94%E6%B3%95.mp3"></audio>
+<audio id="sfx-powerdown" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/powerdown07.mp3"></audio>
+<audio id="sfx-detective-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BF%83%E7%90%86%E9%9C%87%E9%A9%9A.mp3"></audio>
+<audio id="sfx-imprison-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A6%81%E9%8C%AE.mp3"></audio>
+<audio id="sfx-ko" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/knocking_out.mp3"></audio>
+<audio id="sfx-shoot" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84.mp3"></audio>
+<audio id="sfx-revive" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BE%A9%E6%B4%BB.mp3"></audio>
+<audio id="sfx-statup" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%83%BD%E5%8A%9B%E4%B8%8A%E5%8D%87.mp3"></audio>
+<audio id="sfx-fantasy" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/fantasy_fly.mp3"></audio>
+<audio id="sfx-rapidfire-gun" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%A3%E7%BA%8C%E5%B0%84%E6%93%8A.mp3"></audio>
+<audio id="sfx-confirm" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/2-1%E5%82%B3%E9%80%81.mp3"></audio>
+<audio id="sfx-gentle" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BC%95%E6%9F%94%E9%81%B8%E5%8F%96.mp3"></audio>
+<audio id="sfx-passive" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A2%AB%E5%8B%95%E6%8A%80%E8%83%BD%E8%A7%B8%E7%99%BC.mp3"></audio>
+<audio id="sfx-tengu-strike" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BE%8D%E6%8D%B2%E9%A2%A8%E9%9F%B3%E6%95%88.m4a"></audio>
+<audio id="sfx-qiongqi-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.mp3"></audio>
+<audio id="sfx-gunshot-big" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84%E5%A4%A7%E5%AD%90%E5%BD%88.mp3"></audio>
+<audio id="sfx-summon-smoke" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
+<audio id="sfx-thunder-fury" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2%E9%9F%B3%E6%95%88.m4a"></audio>
+<audio id="sfx-cantmove" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E8%83%BD%E5%8B%95.mp3"></audio>
+<audio id="sfx-bomb-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%9A%E6%99%82%E7%82%B8%E5%BD%88%E7%88%86%E7%82%B8.mp3"></audio>
+<audio id="sfx-ice2" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9A%B4%E9%A2%A8%E9%9B%AA.mp3"></audio>
+<audio id="sfx-ice1" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%96%AE%E9%AB%94%E5%86%B0%E5%87%8D.mp3"></audio>
+<audio id="sfx-applause" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%8E%8C%E8%81%B2.mp3"></audio>
+<audio id="sfx-pharaoh-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A7%E7%88%86%E7%82%B8.mp3"></audio>
+<audio id="sfx-cleopatra-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B2%B3%E6%B0%B4%E6%9A%B4%E6%BC%B2.mp3"></audio>
 
 <!-- ★ v1.1.0(老師需求 3「小遊戲模式要有 BGM」)— 三軌,同樣全部沿用主程式既有音樂:
        首頁  = 台灣地圖BGM(最貼「木柵・台灣」主題)
@@ -1739,6 +1886,31 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="timebar-wrap"><div id="timebar"></div></div>
     </div><!-- /play-left -->
 
+    <!-- ★ v1.29.0(老師需求)— 戰鬥面板:玩家英雄卡 VS NPC 英雄卡 + HP 條(基礎 100)+ 極限爆發鈕(答對 3 題充能 1 次)。
+         橫式時由 CSS 放到左欄第 3 列貼底(取代原本撐滿左下的小博士圖);直式接在資訊欄下方。內容由 mgBattlePaint 填。 -->
+    <div id="mgbattle" class="hidden">
+      <div class="bt-frz" id="bt-frz">❄ 計時暫停</div>
+      <div class="bt-card p" id="bt-p">
+        <div class="bt-img" id="bt-p-imgw"><img id="bt-p-img" src="" alt="" onerror="this.style.display='none';"></div>
+        <div class="bt-info">
+          <div class="bt-name" id="bt-p-name"></div>
+          <div class="bt-hpbar"><div class="bt-hp" id="bt-p-hp"></div><span class="bt-hpn" id="bt-p-hpn"></span></div>
+          <div class="bt-sh" id="bt-p-sh"></div>
+          <button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-charge" id="bt-p-ch"></span><span class="bt-bname" id="bt-p-bn"></span></button>
+        </div>
+      </div>
+      <div class="bt-vs">VS</div>
+      <div class="bt-card n" id="bt-n">
+        <div class="bt-img" id="bt-n-imgw"><img id="bt-n-img" src="" alt="" onerror="this.style.display='none';"></div>
+        <div class="bt-info">
+          <div class="bt-name" id="bt-n-name"></div>
+          <div class="bt-hpbar"><div class="bt-hp" id="bt-n-hp"></div><span class="bt-hpn" id="bt-n-hpn"></span></div>
+          <div class="bt-sh" id="bt-n-sh"></div>
+          <div class="bt-burst" id="bt-n-burst"><span class="bt-charge" id="bt-n-ch"></span><span class="bt-bname" id="bt-n-bn"></span></div>
+        </div>
+      </div>
+    </div>
+
     <div id="play-right">
     <div id="card-area">
       <div class="card" id="qcard"></div>
@@ -1835,6 +2007,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="big" id="r-score"></div>
       <div class="line" id="r-detail"></div>
       <div class="line" id="r-time"></div><!-- ★ v1.4.0 用時 + 快手加成 -->
+      <div class="line" id="r-battle"></div><!-- ★ v1.29.0 戰鬥結果:勝負/剩餘 HP 加成/爆發節制加成/KO 獎勵 -->
       <div class="newbest hidden" id="r-newbest">🎉 新紀錄!</div>
       <div class="line" id="r-cr" style="font-size:16px;font-weight:700;color:var(--grass);margin-top:8px;"></div><!-- ★ v1.10.3 專注課堂複習:單元/課堂題數/答對數,老師登記用 -->
       <div class="line" id="r-cloud" style="font-size:14px;opacity:.75;margin-top:10px;"></div>
@@ -1855,10 +2028,32 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div class="sec"><b>學什麼</b><span id="m-goal"></span></div>
     <div class="sec"><b>怎麼玩</b><span id="m-how"></span></div>
     <div class="sec" id="m-best-sec"><b>你的最佳成績</b><span id="m-best"></span></div>
+    <!-- ★ v1.29.0 出戰英雄(1 名):顯示目前選的英雄 + 職能 + 爆發效果;「換英雄」開 #hero-modal -->
+    <div class="sec" id="m-hero-sec"><b>出戰英雄</b>
+      <div id="m-hero">
+        <div class="bt-img"><img id="m-hero-img" src="" alt="" onerror="this.style.display='none';"></div>
+        <div class="mh-txt" id="m-hero-txt"></div>
+        <button class="btn-ghost" type="button" onclick="mgHeroOpen()">🔁 換英雄</button>
+      </div>
+    </div>
     <div class="row">
       <button id="m-go" onclick="mgStartFromModal()">開始</button>
       <button class="btn-ghost" onclick="mgCloseInfo()">關閉</button>
     </div>
+  </div>
+</div>
+
+<!-- ★ v1.29.0 — 選出戰英雄視窗:上方大立繪 + 職能/爆發說明,下方名字清單(可依四型過濾);只載入目前選中的一張立繪 -->
+<div id="hero-modal" onclick="if(event.target===this)mgHeroClose();">
+  <div class="box">
+    <h3>🦸 選一名英雄出戰</h3>
+    <div class="hm-top">
+      <div class="bt-img"><img id="hm-img" src="" alt="" onerror="this.style.display='none';"></div>
+      <div class="hm-desc" id="hm-desc"></div>
+    </div>
+    <div class="hm-filter" id="hm-filter"></div>
+    <div class="hm-list" id="hm-list"></div>
+    <div class="row"><button class="btn-ghost" type="button" onclick="mgHeroClose()">關閉</button><button type="button" onclick="mgHeroConfirm()">✓ 就是這一位</button></div>
   </div>
 </div>
 
@@ -1921,7 +2116,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.26.0"></script>
+<script src="minigame_db.js?v=v1.29.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -1930,7 +2125,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.28.0';
+var MG_VER = 'v1.29.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2399,7 +2594,7 @@ var MG_FX = {
   load : MG_IMG_BASE + encodeURIComponent('貓咪讀取中.gif')     /* 登入讀取 */
 };
 var MG_MASCOT = MG_IMG_BASE + encodeURIComponent('轉學生學霸.jpg');
-var MG_TROPHY = { 3: MG_IMG_BASE + encodeURIComponent('冠軍獎盃.png'), 2: MG_IMG_BASE + encodeURIComponent('獎牌.png'), 1: MG_IMG_BASE + encodeURIComponent('獎牌.png') };
+var MG_TROPHY = { 5: MG_IMG_BASE + encodeURIComponent('冠軍獎盃.png'), 4: MG_IMG_BASE + encodeURIComponent('冠軍獎盃.png'), 3: MG_IMG_BASE + encodeURIComponent('冠軍獎盃.png'), 2: MG_IMG_BASE + encodeURIComponent('獎牌.png'), 1: MG_IMG_BASE + encodeURIComponent('獎牌.png') };   /* ★ v1.29.0 5 星制:4/5 星同用冠軍獎盃(原僅 1~3) */
 function mgAssetUrl(name){ return name ? (MG_IMG_BASE + encodeURIComponent(String(name))) : ''; }
 /* ★ v1.3.0 — 生成中素材的「預留掛接」(老師:圖片全部生成中,先預留)
    檔名主體 = 素材需求清單的檔名(minigame/img/<pic>.png),同目錄相對路徑 ⇒ 走小遊戲自己的 SW scope。
@@ -2726,6 +2921,7 @@ function openInfo(x, withSfx){
     ? (b.score + ' 分 · ' + new Array(b.stars + 1).join('★') + ' · 答對率 ' + b.acc + '%'
        + ((typeof b.time === 'number' && b.time > 0) ? (' · ⏱ ' + mgFmtTime(b.time)) : ''))   /* ★ v1.4.0 */
     : '還沒有紀錄,來挑戰看看!';
+  try{ mgHeroPaintModal(); }catch(_eh){}   /* ★ v1.29.0 出戰英雄列 */
   $('modal').classList.add('show');
   try{ mgLangApply($('modal')); }catch(e){}   /* ★ v1.11.0 */
   if(withSfx) playSfx('sfx-tap', 0.3);
@@ -2841,6 +3037,7 @@ function startGame(x){
     else{ _amb.removeAttribute('src'); _amb.style.display = 'none'; }
   }
   mgFxPreload();
+  mgBattleClear(); mgBattleInit(x);   /* ★ v1.29.0 戰鬥面板:選定英雄 VS 隨機 NPC,雙方 HP 100 */
   playSfx('sfx-enter', 0.4);
   renderQuestion(false);
   window.scrollTo(0, 0);
@@ -2853,6 +3050,7 @@ window.mgHome = function(){
   MG.cur = null;
   mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
   mgDockHide();                        /* ★ v1.5.1 */
+  mgBattleClear();                     /* ★ v1.29.0 */
   hide('page-play'); hide('page-result'); hide('back-btn'); show('page-home');
   show('toapp-btn');
   bgmPlay('bgm-home');
@@ -2895,6 +3093,7 @@ function _timerRun(){
   stopTimer();
   var total = MG.ttotal || 1, bar = $('timebar');
   MG.timer = setInterval(function(){
+    if(mgBattleFrozen()) return;   /* ★ v1.29.0 控場型爆發:計時暫停 10 秒(倒數不扣、環不動) */
     MG.tleft -= 0.1;
     if(MG.tleft < 0) MG.tleft = 0;
     var pct = (MG.tleft / total) * 100;
@@ -2919,6 +3118,7 @@ function mgPause(){
   if(_PZ.on) return;
   if($('page-play').classList.contains('hidden')) return;
   _PZ.on = true;
+  _PZ.at = (new Date()).getTime();   /* ★ v1.29.0 記暫停起點:恢復時把控場「計時暫停」的到期時間往後平移 */
   _PZ.hadTimer = !!MG.timer;
   if(MG.timer){ clearInterval(MG.timer); MG.timer = null; }   /* 不走 stopTimer 語意:tleft 保留 */
   if(_RC){
@@ -2942,6 +3142,14 @@ function mgResume(){
   $('pausebox').classList.remove('on');
   var pb = $('pause-btn'); if(pb){ pb.textContent = '⏸ 暫停'; pb.classList.remove('on'); }
   if(_PZ.hadTimer && !MG.answered && MG.tleft > 0) _timerRun();
+  /* ★ v1.29.0 控場「計時暫停」若橫跨手動暫停:到期時間往後平移暫停時長,不讓暫停吃掉爆發效果 */
+  try{
+    var _pd = _PZ.at ? ((new Date()).getTime() - _PZ.at) : 0;
+    if(_pd > 0){
+      if(_BT && _BT.freezeUntil) _BT.freezeUntil += _pd;
+      if(_RC && _RC.ctrlUntil){ _RC.ctrlUntil += _pd; _RC.ctrlLast = (new Date()).getTime(); }
+    }
+  }catch(_epz){}
   if(_RC && _RC.paused){
     _RC.paused = false;
     _RC.endAt = (new Date()).getTime() + _PZ.reactLeft;
@@ -2999,6 +3207,7 @@ function onTimeout(){
   if(MG.answered) return;
   MG.answered = true;
   MG.combo = 0;
+  mgBattleHit(false);   /* ★ v1.29.0 超時 = 答錯:玩家 −10 */
   var q = MG.order[MG.idx];
   var why = txw(q);
   showFeedback(false, '⏰ 時間到了!', why);
@@ -3010,7 +3219,7 @@ function onTimeout(){
 function renderQuestion(keepState){
   var x = MG.cur; if(!x) return;
   var q = MG.order[MG.idx];
-  if(!keepState){ MG.answered = false; if(q) q._perm = null; }   /* ★ v1.6.1 新題重抽選項順序 */
+  if(!keepState){ MG.answered = false; if(q){ q._perm = null; q._bth = null; } }   /* ★ v1.6.1 新題重抽選項順序;★ v1.29.0 清迷宮逐格扣血紀錄 */
 
   $('progress').textContent = (MG.idx + 1) + ' / ' + MG.order.length;
   $('score').textContent = MG.score + ' 分';
@@ -3638,6 +3847,7 @@ function renderReact(x, r){
     freezeReady: false, freezeUntil: 0
   };
   /* ★ v1.27.0 — 冷卻徽章 + 時間暫停鈕,掛在 box 內(box.innerHTML 只在這裡清一次,本回合會一直留著) */
+  /* ★ v1.29.0 移除 v1.28.0 的冷卻徽章與時間暫停鈕(機制已由戰鬥面板的極限爆發取代);舊碼備查:
   var _cd = document.createElement('div');
   _cd.id = 'react-cooldown';
   box.appendChild(_cd);
@@ -3647,7 +3857,7 @@ function renderReact(x, r){
   _fz.disabled = true;
   _fz.textContent = (MG.lang === 'en') ? '⏱ Freeze' : '⏱ 時間暫停';
   _fz.onclick = _reactUseFreeze;
-  box.appendChild(_fz);
+  box.appendChild(_fz); */
   _reactHud();
   box.onclick = null;
   _RC.raf = requestAnimationFrame(_reactTick);
@@ -3876,13 +4086,14 @@ function _reactHit(d){
     try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
     _reactFloat(d, '+' + _gain, '#3ec87a');
     _reactFirework(d);   /* ★ v1.9.7 老師:射中正確 ⇒ 煙火特效,把周圍「錯誤」的目標清掉(對的不動、不扣分)⇒ 解決重疊遮蔽射不到 */
-    /* ★ v1.27.0(老師需求)— 連續命中 5 次 ⇒ 時間暫停鈕亮起(可用一次;達標後歸零重新累計,避免連按觸發) */
+    mgBattleHit(true);   /* ★ v1.29.0 老師需求三:射對 ⇒ NPC −10、充能 +1(發光高難度仍只算 1 次命中,傷害固定 10) */
+    /* ★ v1.29.0 移除 v1.28.0「連續命中 5 次 ⇒ 時間暫停鈕」(改由控場型爆發取代);舊碼備查:
     _RC.wrongStreak = 0;
     _RC.rightStreak++;
     if(_RC.rightStreak >= 5 && !_RC.freezeReady){
       _RC.rightStreak = 0;
       _reactFreezeArm();
-    }
+    } */
   }else{
     _RC.wrong++;
     d.el.className = 'rdrop wrong';
@@ -3890,13 +4101,14 @@ function _reactHit(d){
     playSfx('sfx-explode', 0.5);   /* ★ v1.9.7 老師:射中錯誤新增爆炸音效(game_explosion2.mp3,本頁既有 <audio>) */
     _reactFloat(d, '−1', '#e84040');
     _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
-    /* ★ v1.27.0(老師需求)— 連續誤擊 3 次 ⇒ 5 秒射擊冷卻(避免學生亂射);達標後歸零重新累計 */
+    mgBattleHit(false);   /* ★ v1.29.0 老師需求三:射錯 ⇒ 玩家 −10(護盾可擋) */
+    /* ★ v1.29.0 移除 v1.28.0「連續誤擊 3 次 ⇒ 5 秒射擊冷卻」;舊碼備查:
     _RC.rightStreak = 0;
     _RC.wrongStreak++;
     if(_RC.wrongStreak >= 3){
       _RC.wrongStreak = 0;
       _reactStartCooldown();
-    }
+    } */
   }
   _reactHud();
   /* 被點到的那顆 0.35 秒後移走(留一下讓孩子看到回饋) */
@@ -4003,6 +4215,13 @@ function _reactTick(ts){
   var dt = Math.min(0.05, (ts - _RC.last) / 1000);   // 夾住 dt:切到背景再回來不會瞬移
   _RC.last = ts;
 
+  /* ★ v1.29.0 控場型爆發(老師裁定甲):回合時鐘暫停 10 秒 —— endAt 逐幀順延,掉落物照常掉落與生成 */
+  if(_RC.ctrlUntil){
+    var _nowc = (new Date()).getTime();
+    if(_nowc < _RC.ctrlUntil){ _RC.endAt += (_nowc - (_RC.ctrlLast || _nowc)); _RC.ctrlLast = _nowc; }
+    else{ _RC.endAt += Math.max(0, _RC.ctrlUntil - (_RC.ctrlLast || _RC.ctrlUntil)); _RC.ctrlUntil = 0; _RC.ctrlLast = 0; }
+  }
+
   /* ★ v1.27.0 — 時間暫停鈕效果:凍結期間內(freezeUntil 未到)畫面上所有掉落物完全靜止不動、
      也不再生成新的(讓玩家能從容清空目前這批),freezeUntil 一到自動解凍、拿掉凍結濾鏡 class。 */
   var _frozen = _RC.freezeUntil && Date.now() < _RC.freezeUntil;
@@ -4058,7 +4277,7 @@ function _reactFinish(){
   var r = _RC.r, got = _RC.got, wrong = _RC.wrong, need = _RC.need, hh = _RC.hardHits, blown = _RC.blown;
   $('reactbox').innerHTML = '';
   var ok = (got >= need && wrong <= 1);
-  scoreIt(ok);
+  scoreIt(ok, true);   /* ★ v1.29.0 HP 已在 _reactHit 逐射擊扣過,回合結算不再扣 */
   /* ★ v1.4.0 高難度命中另加分(每次 +40),寫回分數列 */
   if(hh > 0){
     MG.score += hh * 40;
@@ -4102,13 +4321,13 @@ function _matchPaint(){
   box.className = 'link';
   html += '<div class="mlcol" id="ml-left">';
   for(i = 0; i < _MC.L.length; i++){
-    c = _MC.L[i]; cls = 'mcard lft' + (c.done ? ' done' : '') + (i === _MC.sel ? ' sel' : '');
-    html += '<div class="' + cls + '" id="ml-l' + i + '" onclick="mgMatchTap(0,' + i + ')">' + esc(c.txt) + '</div>';
+    c = _MC.L[i]; cls = 'mcard lft' + (c.done ? ' done' : '') + (i === _MC.sel ? ' sel' : '') + ((c.bt && !c.done) ? ' bt-pair' : '');   /* ★ v1.29.0 攻擊型爆發:同號金框 = 這兩張是一對 */
+    html += '<div class="' + cls + '" id="ml-l' + i + '"' + ((c.bt && !c.done) ? (' data-bt="' + c.bt + '"') : '') + ' onclick="mgMatchTap(0,' + i + ')">' + esc(c.txt) + '</div>';
   }
   html += '</div><svg id="ml-svg" aria-hidden="true"></svg><div class="mlcol" id="ml-right">';
   for(i = 0; i < _MC.R.length; i++){
-    c = _MC.R[i]; cls = 'mcard rgt' + (c.done ? ' done' : '');
-    html += '<div class="' + cls + '" id="ml-r' + i + '" onclick="mgMatchTap(1,' + i + ')">' + esc(c.txt) + '</div>';
+    c = _MC.R[i]; cls = 'mcard rgt' + (c.done ? ' done' : '') + ((c.bt && !c.done) ? ' bt-pair' : '');
+    html += '<div class="' + cls + '" id="ml-r' + i + '"' + ((c.bt && !c.done) ? (' data-bt="' + c.bt + '"') : '') + ' onclick="mgMatchTap(1,' + i + ')">' + esc(c.txt) + '</div>';
   }
   html += '</div>';
   box.innerHTML = html;
@@ -4156,6 +4375,8 @@ window.mgMatchTap = function(side, i){
     playSfx('sfx-ok', 0.45);
     _matchPaint();
     try{ var _c = mgCenterOf('ml-r' + i); mgFx('hit', _c.x, _c.y, 140, 600); }catch(e){}
+    mgBattleHit(true);   /* ★ v1.29.0 逐配對:連對 ⇒ NPC −10 */
+    if(_BT && _BT.over) return;   /* KO 時交給 mgBattleEnd 結算 */
     if(_MC.done >= _MC.L.length) _matchFinish();
   }else{
     _MC.wrong++;
@@ -4164,6 +4385,7 @@ window.mgMatchTap = function(side, i){
     if(el1) el1.className = 'mcard lft miss';
     if(el2) el2.className = 'mcard rgt miss';
     playSfx('sfx-ng', 0.3);
+    mgBattleHit(false);   /* ★ v1.29.0 逐配對:連錯 ⇒ 玩家 −10 */
     setTimeout(function(){ if(!_MC) return; _MC.lock = false; _MC.sel = -1; _matchPaint(); }, 600);   /* ★ v1.9.4 600ms 內離開關卡 _MC 已被 stopEngines 清空,不可再碰 */
   }
 };
@@ -4172,7 +4394,7 @@ function _matchFinish(){
   stopTimer();
   var r = MG.order[MG.idx];
   var perfect = (_MC.wrong <= _ML_MAX_WRONG);
-  scoreIt(perfect);
+  scoreIt(perfect, true);   /* ★ v1.29.0 HP 已逐配對扣過,回合結算不再扣 */
   showFeedback(perfect,
     perfect ? ('✅ 全部連對了!一次都沒有錯')
             : ('🔶 全部連完,配錯了 ' + _MC.wrong + ' 次(一次都不錯才有分數)'),
@@ -4402,6 +4624,10 @@ window.mgMazeStep = function(i){
   if(cell.mark){
     if(cell.mark.ok){ _MZ.got++; playSfx('sfx-ok', 0.42); }
     else{ _MZ.bad++; playSfx('sfx-ng', 0.35); }   /* ★ v1.3.1 老師:「答錯音效要統一」—— 原 explode 改 sfx-ng */
+    /* ★ v1.29.0 逐答案格接 HP:撿到正解 NPC −10、踩陷阱玩家 −10;同一關同一格只算一次(「重走這一關」不重複扣血/充能),紀錄掛在關卡物件 */
+    var _lvo = _MZ.lv; _lvo._bth = _lvo._bth || {};
+    if(!_lvo._bth[i]){ _lvo._bth[i] = true; mgBattleHit(!!cell.mark.ok); }
+    if(_BT && _BT.over){ _mazePaint(); return; }   /* KO:交給 mgBattleEnd 結算 */
   }else{
     playSfx('sfx-tap', 0.22);
   }
@@ -4427,7 +4653,7 @@ function _mazeFinish(){
   var lv = _MZ.lv;
   var allGot = (_MZ.got >= _MZ.need);
   var ok = allGot && _MZ.bad === 0;
-  scoreIt(ok);
+  scoreIt(ok, true);   /* ★ v1.29.0 HP 已在 mgMazeStep 逐格扣過,關卡結算不再扣 */
   var head;
   if(_MZ.peekT){ clearTimeout(_MZ.peekT); _MZ.peekT = null; }
   if(ok) head = '✅ 全部答案都收集到,順利走出迷宮!' + (_MZ.used ? '(用了 ' + _MZ.used + ' 次提示)' : '');
@@ -4824,7 +5050,10 @@ function lockBins(ansIdx){
   if(d){ d.onpointerdown = null; d.ontouchstart = null; d.onmousedown = null; }
 }
 
-function scoreIt(correct){
+function scoreIt(correct, noBattle){
+  /* ★ v1.29.0 戰鬥模式:一題一判的引擎由這裡統一接 HP;逐事件引擎(連連看/迷宮/算數大進擊)自己逐筆呼叫 mgBattleHit,
+     結算時傳 noBattle=true 跳過,避免同一次作答扣兩次血。⚠ 放在最前面:KO 時 mgBattleEnd 會設 MG.answered/停計時,後面的分數照算。 */
+  if(!noBattle) mgBattleHit(!!correct);
   if(correct){
     MG.right++;
     MG.combo++;
@@ -4865,12 +5094,15 @@ function showFeedback(ok, head, why){
     ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
       + '<span class="fb-txt">' + esc(why) + '</span>'
     : esc(why);
-  f.innerHTML = '<b class="fb-head">' + mgPicTag(ok ? (MG.combo >= 3 ? 'common_mascot_wow.webp' : 'common_mascot_happy.webp') : 'common_mascot_sad.webp', 'pic-fbm') + esc(head) + '</b><span class="fb-body">' + _body + '</span>';   /* v1.3.0 預留吉祥物表情 */
+  /* ★ v1.29.0 老師:「移除原本的小老師插圖」— 標題列不再放小博士表情圖(左下空間改給戰鬥面板);舊寫法備查:
+     mgPicTag(ok ? (MG.combo >= 3 ? 'common_mascot_wow.webp' : 'common_mascot_happy.webp') : 'common_mascot_sad.webp', 'pic-fbm') */
+  f.innerHTML = '<b class="fb-head">' + esc(head) + '</b><span class="fb-body">' + _body + '</span>';
   var nr = $('nextrow');
-  nr.classList.remove('hidden');
+  var _ko = !!(_BT && _BT.over);   /* ★ v1.29.0 KO 已發生:不顯示下一題鈕、不自動前進,交給 mgBattleEnd 的結算計時器 */
+  if(_ko) nr.classList.add('hidden'); else nr.classList.remove('hidden');
   nr.getElementsByTagName('button')[0].textContent =
     (MG.idx >= MG.order.length - 1) ? '看成績 →' : '下一題 →';
-  mgAutoNextStart();   /* ★ v1.9.0 優化⑤:解說 8 秒後自動前進(鈕上倒數;暫停時停住;按鈕/回首頁即取消) */
+  if(!_ko) mgAutoNextStart();   /* ★ v1.9.0 優化⑤:解說 8 秒後自動前進(鈕上倒數;暫停時停住;按鈕/回首頁即取消) */
   /* ★ v1.5.1 解說文字停靠區(橫式顯示於下一題鈕上方,CSS 控制;直式時 dock 隱藏、左欄解說卡完整顯示) */
   try{
     var dk = $('fbdock');
@@ -4932,6 +5164,7 @@ window.mgNext = function(){
   mgAutoNextStop();   /* ★ v1.9.0 */
   playSfx('sfx-tap', 0.3);
   stopEngines();          /* ★ v1.1.0:上一題的引擎狀態歸零,免得殘留影響下一題 */
+  if(_BT && _BT.over){ finishGame(); return; }   /* ★ v1.29.0 KO 後不再出題 */
   if(MG.idx >= MG.order.length - 1){ finishGame(); return; }
   MG.idx++;
   renderQuestion(false);
@@ -4944,15 +5177,26 @@ function finishGame(){
   stopEngines();          /* ★ v1.1.0 必要:見 stopEngines 註解 */
   mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
   mgDockHide();                        /* ★ v1.5.1 */
-  var total = MG.order.length;
-  var acc = Math.round((MG.right / total) * 100);
-  var stars = acc >= 90 ? 3 : (acc >= 70 ? 2 : (acc >= 50 ? 1 : 0));
+  /* ★ v1.29.0 戰鬥模式:題目出完雙方都沒 KO ⇒ 剩餘 HP 高者勝;結算後把 KO 字幕/計時器收掉(面板本身隨 page-play 隱藏) */
+  if(_BT && !_BT.over) mgBattleSettle();
+  var _bs = mgBattleScore();
+  if(_BT){ if(_BT.endT){ clearTimeout(_BT.endT); _BT.endT = null; } if(_BT.npcT){ clearTimeout(_BT.npcT); _BT.npcT = null; } try{ var _kk = $('bt-ko'); if(_kk && _kk.parentNode) _kk.parentNode.removeChild(_kk); var _bf = $('bt-burstfx'); if(_bf && _bf.parentNode) _bf.parentNode.removeChild(_bf); }catch(_ek){} }
+  var total = _bs ? Math.max(1, _bs.hits + _bs.miss) : MG.order.length;   /* ★ v1.29.0 戰鬥模式以實際作答/事件數計答對率(KO 提前結束不再吃滿題數) */
+  var _rightShown = _bs ? _bs.hits : MG.right;
+  var acc = Math.round((_rightShown / total) * 100);
+  var stars = _bs ? _bs.stars : (acc >= 90 ? 3 : (acc >= 70 ? 2 : (acc >= 50 ? 1 : 0)));   /* ★ v1.29.0 戰鬥模式 5 星制(mgBattleScore);無英雄資料時退回舊 3 星制 */
   /* ★ v1.4.0(老師需求③)— 用時加成:本局牆鐘用時(含暫停)越短,最後得分加成越高(最多 +50%)。
      ⚠ 只在有答對時才加成(0 分乘什麼都是 0,也避免全錯還拿加成的怪象)。 */
   var _elapsed = mgElapsedSec(), _par = mgParTime(MG.cur);
   var _bonusPct = (MG.right > 0) ? mgTimeBonusPct(_elapsed, _par) : 0;
   var _base = MG.score;
   MG.score = Math.round(_base * (1 + _bonusPct / 100));
+  /* ★ v1.29.0(老師追加)— 戰鬥加成:剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;敗北(HP 0)沒有用時加成 */
+  var _timed = MG.score;
+  if(_bs){
+    if(!_bs.win && _bs.hp <= 0){ MG.score = _base; _bonusPct = 0; _timed = _base; }
+    MG.score += _bs.total;
+  }
   MG.elapsed = Math.round(_elapsed);
   hide('page-play'); show('page-result');
   show('toapp-btn');
@@ -4963,7 +5207,7 @@ function finishGame(){
     if(_rc){
       if(MG.crInfo && mgCrActive()){
         var _us = mgCrGameSelectedUnits(MG.cur).map(mgCrLabelShort).join('、');
-        _rc.textContent = '📚 專注課堂複習|' + _us + '|本局課堂題 ' + MG.crInfo.n + '/' + total + ' 題|答對 ' + MG.right + ' 題|' + (MG.user ? mgMaskName(MG.user.displayName || MG.user.email || '') : '未登入');
+        _rc.textContent = '📚 專注課堂複習|' + _us + '|本局課堂題 ' + MG.crInfo.n + '/' + MG.order.length + ' 題|答對 ' + MG.right + ' 題|' + (MG.user ? mgMaskName(MG.user.displayName || MG.user.email || '') : '未登入');
       }else{ _rc.textContent = ''; }
     }
   }catch(_ecr){}
@@ -4972,7 +5216,8 @@ function finishGame(){
   $('r-name').textContent = MG.cur.icon + ' ' + tx(MG.cur.name);
   /* ★ v1.3.0 — 三顆星逐顆彈出(拿到的亮、沒拿到的暗淡留位),金色光圈 gif 墊在後面 */
   var _sh = '', _k;
-  for(_k = 1; _k <= 3; _k++) _sh += '<span class="' + (_k <= stars ? '' : 'dim') + '">★</span>';
+  var _maxStars = _bs ? 5 : 3;   /* ★ v1.29.0 戰鬥模式 5 星制 */
+  for(_k = 1; _k <= _maxStars; _k++) _sh += '<span class="' + (_k <= stars ? '' : 'dim') + '">★</span>';
   $('r-stars').innerHTML = _sh;
   (function(){
     var sp = $('r-stars').getElementsByTagName('span'), i;
@@ -4988,7 +5233,7 @@ function finishGame(){
     if(stars > 0){ _tr.src = MG_TROPHY[stars]; setTimeout(function(){ _tr.classList.add('on'); }, 350 + stars * 380); }
     else{ _tr.removeAttribute('src'); _tr.style.display = 'none'; }
   }
-  if(stars === 3){
+  if(stars === _maxStars){   /* ★ v1.29.0 滿星(戰鬥模式 5 星)才鼓掌 */
     setTimeout(function(){ var c = mgCenterOf('r-trophy'); mgFx('clap', c.x, c.y + 40, 260, 1800); playSfx('sfx-clap', 0.45); }, 1600);
   }
   var _gl = $('r-glow');
@@ -4998,16 +5243,30 @@ function finishGame(){
     setTimeout(function(){ _gl.classList.add('on'); }, 250);
   }
   $('r-score').textContent = MG.score + ' 分';
-  $('r-detail').textContent = '答對 ' + MG.right + ' / ' + total
-                            + ' 題(' + acc + '%) · 最高連擊 ' + MG.maxCombo;
+  $('r-detail').textContent = '答對 ' + _rightShown + ' / ' + total
+                            + ' 題(' + acc + '%) · 最高連擊 ' + MG.maxCombo;   /* ★ v1.29.0 戰鬥模式:答對數/事件數(KO 提前結束) */
   /* ★ v1.4.0 用時列(雙版) */
   var _rt = $('r-time');
   if(_rt){
     _rt.innerHTML = '⏱ ' + (MG.style === 's' ? '用了 ' : '本局用時 ') + '<b>' + mgFmtTime(_elapsed) + '</b>'
       + (_bonusPct > 0
-          ? ('　· ' + (MG.style === 's' ? '快手加成' : '快手加成(含暫停時間)') + ' <b>+' + _bonusPct + '%</b>(' + _base + ' → ' + MG.score + ')')
+          ? ('　· ' + (MG.style === 's' ? '快手加成' : '快手加成(含暫停時間)') + ' <b>+' + _bonusPct + '%</b>(' + _base + ' → ' + _timed + ')')   /* ★ v1.29.0 顯示到用時加成為止(戰鬥加成另列) */
           : ('　· ' + (MG.style === 's' ? '再快一點就有加成!' : '用時未達加成門檻(標準 ' + mgFmtTime(_par) + ')')));
   }
+  /* ★ v1.29.0 戰鬥結果列(老師追加評分):勝負 · 剩餘 HP × 5 · 爆發次數節制 · KO 獎勵 */
+  try{
+    var _rb = $('r-battle');
+    if(_rb){
+      if(_bs){
+        var _en = (MG.lang === 'en');
+        _rb.innerHTML = (_bs.win ? (_en ? '🏆 <b>Victory</b>' : '🏆 <b>勝利</b>') : (_en ? '💀 <b>Defeated</b>' : '💀 <b>被打倒了</b>'))
+          + '　· ' + (_en ? 'HP left ' : '剩餘 HP ') + '<b>' + _bs.hp + '</b>(+' + _bs.hpB + ')'
+          + '　· ' + (_en ? 'Bursts used ' : '爆發用了 ') + '<b>' + _bs.used + '</b>' + (_en ? ' times' : ' 次') + '(+' + _bs.bB + ')'
+          + (_bs.wB ? ('　· ' + (_en ? 'K.O. bonus' : 'KO 獎勵') + '(+' + _bs.wB + ')') : '')
+          + '　⇒ <b>' + MG.score + (_en ? ' pts' : ' 分') + '</b>';
+      }else{ _rb.innerHTML = ''; }
+    }
+  }catch(_erb){}
 
   var prev = MG.best[MG.cur.id];
   var isNew = (!prev || MG.score > prev.score);
@@ -5038,6 +5297,382 @@ function finishGame(){
   window.scrollTo(0, 0);
 }
 
+/* ══════════════════════════════════════════════════════════
+ *  ★★ v1.29.0(老師需求 2026-09-08)— 戰鬥模式:玩家英雄卡 VS NPC 英雄卡
+ *  規則(老師五點需求):
+ *   一、每關左下新增玩家英雄卡(開始前可選 1 名)VS NPC 隨機英雄卡 + 雙方 HP 條(基礎 100);
+ *       答對 1 題 ⇒ NPC −10、答錯(含超時)⇒ 玩家 −10;攻擊光束特效 + 音效 + 受傷震動(navigator.vibrate,iPad 無此 API 會靜默略過)。
+ *   二、四型極限爆發(依主程式職能):回復型自己 +30 HP / 護盾型免疫 3 次答錯傷害 / 攻擊型立即刪除 3 個錯誤答案 / 控場型計時器暫停 10 秒;
+ *       累積答對 3 題充能 1 次;特效直接套主程式 BURST_GIF_DB(GIF+音效,不用影片)。NPC 的充能 = 玩家答錯 3 次,自動施放(NPC 版效果見 MG_BURST_DEF[cls].npc)。
+ *   三、算數大進擊:射錯 −10 玩家 HP、射對 NPC −10、射對 3 次充能;移除 v1.28.0 的「射錯 3 次冷卻 5 秒 / 射對 5 次時間暫停鈕」。
+ *   四、KO = 答對 10 次(NPC HP 0);玩家 HP 0 也立刻結算(敗);題目出完雙方都沒 KO ⇒ 剩餘 HP 高者勝、同 HP 平手(算勝)。
+ *   五、逐配對(連連看)/ 逐答案格(迷宮)/ 逐射擊(算數大進擊)改為單發判定接 HP;其餘引擎一題一判經 scoreIt 單一入口。
+ *  評分(老師追加):用時加成照舊 → 再加「剩餘 HP × 5(最多 +500)」+「爆發節制:0 次 +300 / 1 次 +200 / 2 次 +100 / 3 次以上 +0」+「KO 勝利 +200」。
+ *  星等改依戰果:勝且剩 HP ≥70 ⇒ 3 星、≥40 ⇒ 2 星、>0 ⇒ 1 星;敗 ⇒ 0 星(舊:依答對率)。
+ *  單一真相:mgBattleHit(ok) 是唯一的扣血入口;scoreIt(correct) 預設會呼叫它,逐事件引擎自己呼叫並以 scoreIt(x, true) 跳過,避免重複扣血。
+ * ══════════════════════════════════════════════════════════ */
+var MG_BT = { HP: 100, DMG: 10, CHARGE: 3, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3 };
+var _BT = null;
+function mgHeroList(){ return (window.MG_HEROES && window.MG_HEROES.length) ? window.MG_HEROES : []; }
+function mgHeroByName(n){ var L = mgHeroList(), i; for(i = 0; i < L.length; i++){ if(L[i].n === n) return L[i]; } return null; }
+function mgHeroUrl(p){ if(!p) return ''; return (p.indexOf('http') === 0) ? p : ((window.MG_HERO_BASE || MG_IMG_BASE) + p); }
+function mgBurstDef(cls){ var D = window.MG_BURST_DEF || {}; return D[cls] || D.atk || { icon:'⚔', name:{ s:'攻擊型' }, p:{ s:'' }, npc:{ s:'' }, gif:'', tint:'rgba(255,255,255,.15)' }; }
+function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
+/* 目前選的英雄:localStorage._mgHero(非關鍵資料,共用 iPad 遺失無害);沒選過或名字已不存在 ⇒ 隨機一位並記住 */
+function mgHeroCur(){
+  var n = null, h = null; try{ n = localStorage.getItem('_mgHero'); }catch(e){}
+  if(n) h = mgHeroByName(n);
+  if(!h){ var L = mgHeroList(); if(!L.length) return null; h = L[Math.floor(Math.random() * L.length)]; mgHeroSet(h.n); }
+  return h;
+}
+function mgHeroSet(n){ try{ localStorage.setItem('_mgHero', n); }catch(e){} }
+function mgHeroLabel(h){ if(!h) return ''; var d = mgBurstDef(mgHeroCls(h)); return d.icon + ' ' + tx(d.name); }
+/* 開始前視窗的英雄列 */
+function mgHeroPaintModal(){
+  var h = mgHeroCur(), im = $('m-hero-img'), t = $('m-hero-txt'); if(!t) return;
+  if(!h){ hide('m-hero-sec'); return; }
+  show('m-hero-sec');
+  if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
+  var d = mgBurstDef(mgHeroCls(h));
+  t.innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name)) + ' — ' + tx(d.p));
+}
+/* ── 選角視窗 ── */
+var _HM = { sel: null, filter: '' };
+window.mgHeroOpen = function(){
+  playSfx('sfx-tap', 0.35);
+  var h = mgHeroCur(); if(!h) return;
+  _HM.sel = h.n; _HM.filter = '';
+  mgHeroPaintPicker();
+  $('hero-modal').classList.add('show');
+  try{ mgLangApply($('hero-modal')); }catch(e){}
+};
+window.mgHeroClose = function(){ $('hero-modal').classList.remove('show'); };
+window.mgHeroConfirm = function(){
+  if(_HM.sel){ mgHeroSet(_HM.sel); playSfx('sfx-ok', 0.45); }
+  $('hero-modal').classList.remove('show');
+  mgHeroPaintModal();
+};
+window.mgHeroFilter = function(c){ _HM.filter = (_HM.filter === c) ? '' : c; mgHeroPaintPicker(); playSfx('sfx-tap', 0.25); };
+window.mgHeroPick = function(n){ _HM.sel = n; mgHeroPaintPicker(); playSfx('sfx-sel', 0.3); };
+function mgHeroPaintPicker(){
+  var L = mgHeroList(), h = mgHeroByName(_HM.sel) || L[0], i, html = '', keys = ['atk', 'heal', 'shd', 'ctrl'], k;
+  if(!h) return;
+  var im = $('hm-img'); if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
+  var d = mgBurstDef(mgHeroCls(h));
+  $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p));
+  for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
+  $('hm-filter').innerHTML = html;
+  html = '';
+  for(i = 0; i < L.length; i++){
+    if(_HM.filter && mgHeroCls(L[i]) !== _HM.filter) continue;
+    html += '<button type="button" class="' + (L[i].n === h.n ? 'on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')">' + mgBurstDef(mgHeroCls(L[i])).icon + ' ' + esc(L[i].n) + '</button>';
+  }
+  $('hm-list').innerHTML = html;
+}
+/* ── 一局開始:建立戰鬥狀態 ── */
+function mgBattleInit(x){
+  _BT = null;
+  var L = mgHeroList(); if(!L.length){ hide('mgbattle'); return; }
+  var ph = mgHeroCur(), pool = [], i;
+  for(i = 0; i < L.length; i++){ if(L[i] !== ph) pool.push(L[i]); }
+  var nh = pool.length ? pool[Math.floor(Math.random() * pool.length)] : ph;
+  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0 },
+          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0 },
+          over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
+  var pi = $('bt-p-img'), ni = $('bt-n-img');
+  if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
+  if(ni){ ni.style.display = ''; ni.src = mgHeroUrl(nh.img); }
+  var pc = $('bt-p'), nc = $('bt-n');
+  if(pc) pc.className = 'bt-card p'; if(nc) nc.className = 'bt-card n';
+  $('bt-p-name').innerHTML = esc(ph.n) + '<span class="bt-cls">' + esc(mgHeroLabel(ph)) + '</span>';
+  $('bt-n-name').innerHTML = esc(nh.n) + '<span class="bt-cls">' + esc(mgHeroLabel(nh)) + '</span>';
+  $('bt-p-bn').textContent = ph.bn || tx(mgBurstDef(mgHeroCls(ph)).name);
+  $('bt-n-bn').textContent = nh.bn || tx(mgBurstDef(mgHeroCls(nh)).name);
+  var fz = $('bt-frz'); if(fz) fz.classList.remove('on');
+  show('mgbattle');
+  mgBattlePaint();
+  /* 預抓雙方爆發 GIF(小圖)與立繪已在上面觸發 */
+  try{ var g1 = new Image(); g1.src = mgBurstGifUrl(ph); var g2 = new Image(); g2.src = mgBurstGifUrl(nh); }catch(e){}
+}
+function mgBurstGifUrl(h){ var d = mgBurstDef(mgHeroCls(h)); return mgHeroUrl((h && h.gif) ? h.gif : d.gif); }
+function mgBattleClear(){
+  if(_BT){ if(_BT.npcT) clearTimeout(_BT.npcT); if(_BT.endT) clearTimeout(_BT.endT); }
+  _BT = null;
+  var fx = $('bt-burstfx'); if(fx && fx.parentNode) fx.parentNode.removeChild(fx);
+  var ko = $('bt-ko'); if(ko && ko.parentNode) ko.parentNode.removeChild(ko);
+  hide('mgbattle');
+}
+function mgBattlePaint(){
+  if(!_BT) return;
+  var sides = ['p', 'n'], s, S, i;
+  for(i = 0; i < 2; i++){
+    s = sides[i]; S = _BT[s];
+    var bar = $('bt-' + s + '-hp'), num = $('bt-' + s + '-hpn'), sh = $('bt-' + s + '-sh'), ch = $('bt-' + s + '-ch'), bb = $('bt-' + s + '-burst');
+    if(bar){ bar.style.width = S.hp + '%'; if(S.hp <= 30) bar.classList.add('low'); else bar.classList.remove('low'); }
+    if(num) num.textContent = S.hp + ' / ' + MG_BT.HP;
+    if(sh) sh.textContent = S.shield > 0 ? ('🛡×' + S.shield + (MG.lang === 'en' ? ' shield' : ' 護盾')) : '';
+    var dots = '', k; for(k = 0; k < MG_BT.CHARGE; k++) dots += (k < S.charge) ? '●' : '○';
+    if(ch) ch.textContent = dots;
+    if(bb){
+      var ready = (S.charge >= MG_BT.CHARGE) && !_BT.over;
+      if(ready) bb.classList.add('ready'); else bb.classList.remove('ready');
+      if(s === 'p') bb.disabled = !ready;
+    }
+  }
+}
+/* 受傷震動(老師需求):iPad Safari 沒有 vibrate API ⇒ try/catch 靜默;Android/桌機 Chrome 會震 */
+function mgBattleVibe(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms || 120); }catch(e){} }
+/* 攻擊光束:from 卡 → to 卡(fixed 座標);傷害飄字;被打的卡震一下 */
+function mgBattleFxAttack(from, dmgText, cls){
+  try{
+    var a = $('bt-' + from + '-imgw'), b = $('bt-' + (from === 'p' ? 'n' : 'p') + '-imgw'); if(!a || !b) return;
+    var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    if(ra.width === 0 || rb.width === 0) return;
+    var x1 = ra.left + ra.width / 2, y1 = ra.top + ra.height / 2, x2 = rb.left + rb.width / 2, y2 = rb.top + rb.height / 2;
+    var dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx * dx + dy * dy), ang = Math.atan2(dy, dx) * 180 / Math.PI;
+    var el = document.createElement('div'); el.className = 'bt-beam ' + from;
+    el.style.left = x1 + 'px'; el.style.top = y1 + 'px'; el.style.width = len + 'px'; el.style.transform = 'rotate(' + ang + 'deg) translateY(-2px)';
+    document.body.appendChild(el);
+    setTimeout(function(){ el.style.opacity = '0'; }, 120);
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 420);
+    var card = $('bt-' + (from === 'p' ? 'n' : 'p'));
+    if(card){ card.classList.remove('hurt'); void card.offsetWidth; card.classList.add('hurt'); setTimeout(function(){ card.classList.remove('hurt'); }, 500); }
+    mgBattleFloat(x2, y2 - 10, dmgText, cls);
+    mgFx('spark', x2, y2, 110, 600);
+  }catch(e){}
+}
+function mgBattleFloat(x, y, text, cls){
+  try{
+    var f = document.createElement('div'); f.className = 'bt-dmg' + (cls ? (' ' + cls) : '');
+    f.style.left = x + 'px'; f.style.top = y + 'px'; f.textContent = text;
+    document.body.appendChild(f);
+    setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 1100);
+  }catch(e){}
+}
+function mgBattleFloatOn(side, text, cls){ try{ var el = $('bt-' + side + '-imgw'); var r = el.getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + r.height / 2 - 10, text, cls); }catch(e){} }
+/* ★ 唯一扣血入口 */
+function mgBattleHit(ok){
+  if(!_BT || _BT.over) return;
+  var P = _BT.p, N = _BT.n;
+  if(ok){
+    _BT.hits++;
+    if(N.shield > 0){ N.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('n', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
+    else{ N.hp = Math.max(0, N.hp - MG_BT.DMG); playSfx('sfx-gunshot', 0.5); mgBattleFxAttack('p', '−' + MG_BT.DMG); }
+    if(P.charge < MG_BT.CHARGE){
+      P.charge++;
+      if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-recharge', 0.6); try{ var r = $('bt-p-burst').getBoundingClientRect(); mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 120, 700); }catch(e){} }
+    }
+  }else{
+    _BT.miss++;
+    if(P.shield > 0){ P.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
+    else{ P.hp = Math.max(0, P.hp - MG_BT.DMG); playSfx('sfx-explode', 0.4); mgBattleFxAttack('n', '−' + MG_BT.DMG); mgBattleVibe(120); }
+    if(N.charge < MG_BT.CHARGE){
+      N.charge++;
+      if(N.charge >= MG_BT.CHARGE){ mgBattlePaint(); if(_BT.npcT) clearTimeout(_BT.npcT); _BT.npcT = setTimeout(mgBattleNpcBurst, 700); }
+    }
+  }
+  mgBattlePaint();
+  mgBattleCheckKO();
+}
+function mgBattleCheckKO(){
+  if(!_BT || _BT.over) return;
+  if(_BT.n.hp <= 0) mgBattleEnd('win');
+  else if(_BT.p.hp <= 0) mgBattleEnd('lose');
+}
+/* 題目出完沒人 KO(finishGame 走到時呼叫):剩餘 HP 高者勝、同 HP 算勝 */
+function mgBattleSettle(){
+  if(!_BT || _BT.over) return;
+  _BT.over = true;
+  _BT.result = (_BT.p.hp >= _BT.n.hp) ? 'win' : 'lose';
+  var pc = $('bt-p'), nc = $('bt-n');
+  if(_BT.result === 'win'){ if(pc) pc.classList.add('win'); } else { if(nc) nc.classList.add('win'); }
+}
+function mgBattleEnd(res){
+  if(!_BT || _BT.over) return;
+  _BT.over = true; _BT.result = res;
+  MG.answered = true;
+  stopTimer();
+  mgAutoNextStop();
+  hide('nextrow');
+  if(_RC){ if(_RC.raf) cancelAnimationFrame(_RC.raf); _RC.raf = 0; _RC.paused = true; }
+  mgBattlePaint();
+  var loser = $(res === 'win' ? 'bt-n' : 'bt-p'), winner = $(res === 'win' ? 'bt-p' : 'bt-n');
+  if(loser) loser.classList.add('ko'); if(winner) winner.classList.add('win');
+  try{ var ko = document.createElement('div'); ko.id = 'bt-ko'; ko.className = (res === 'win') ? '' : 'lose'; ko.textContent = (res === 'win') ? 'K.O.!' : (MG.lang === 'en' ? 'DOWN…' : '被打倒了…'); document.body.appendChild(ko); }catch(e){}
+  playSfx($('sfx-ko') ? 'sfx-ko' : 'sfx-explode', 0.7);
+  if(res === 'win'){ mgFxFull('focus', 900); playSfx('sfx-clap', 0.4); }
+  else mgBattleVibe(300);
+  if(_BT.endT) clearTimeout(_BT.endT);
+  _BT.endT = setTimeout(function(){ try{ var k = $('bt-ko'); if(k && k.parentNode) k.parentNode.removeChild(k); }catch(e){} if(MG.cur && !$('page-play').classList.contains('hidden')) finishGame(); }, 1700);
+}
+/* ── 玩家極限爆發 ── */
+window.mgBattleBurst = function(){
+  if(!_BT || _BT.over || _PZ.on) return;
+  var P = _BT.p; if(P.charge < MG_BT.CHARGE) return;
+  var cls = mgHeroCls(P.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
+  /* 攻擊型/控場型只在「作答中」有意義;答完題等下一題時按了等於浪費 ⇒ 擋下並提示 */
+  if((cls === 'atk' || cls === 'ctrl') && eng !== 'react' && MG.answered){ toast(MG.style === 's' ? '等下一題開始再用!' : '這一型的爆發要在作答中使用,等下一題開始再按'); playSfx('sfx-cancel', 0.35); return; }
+  if(cls === 'atk' && !mgBurstAtkApply(eng)){ toast(MG.style === 's' ? '這裡沒有可以打掉的錯誤答案' : '目前畫面沒有可刪除的錯誤答案,先留著'); playSfx('sfx-cancel', 0.35); return; }
+  P.charge = 0; P.used++;
+  if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
+  else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
+  else if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
+  mgBurstFx('p', P.h, d, tx(d.p));
+  mgBattlePaint();
+};
+/* ── NPC 自動爆發(玩家答錯 3 次充滿) ── */
+function mgBattleNpcBurst(){
+  if(!_BT || _BT.over) return;
+  var N = _BT.n, P = _BT.p; if(N.charge < MG_BT.CHARGE) return;
+  var cls = mgHeroCls(N.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
+  N.charge = 0; N.used++;
+  if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
+  else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
+  else if(cls === 'atk'){ P.hp = Math.max(0, P.hp - MG_BT.DMG); mgBattleFxAttack('n', '−' + MG_BT.DMG); mgBattleVibe(200); }
+  else if(cls === 'ctrl'){
+    if(eng === 'react'){ if(_RC && !_RC.paused) _RC.endAt = Math.max((new Date()).getTime() + 1000, _RC.endAt - MG_BT.CTRL_MS); }
+    else if(MG.timer && !MG.answered){ MG.tleft = Math.max(1, MG.tleft - MG_BT.CTRL_MS / 1000); }
+    mgBattleFloatOn('p', '−10s', 'block');
+  }
+  mgBurstFx('n', N.h, d, tx(d.npc));
+  mgBattlePaint();
+  mgBattleCheckKO();
+}
+/* 控場型:計時器暫停(選擇題型 = 倒數 interval 跳過扣秒;算數大進擊 = 回合時鐘 endAt 順延,掉落物照掉〔老師裁定甲〕) */
+function mgBurstFreeze(ms, eng){
+  if(!_BT) return;
+  _BT.freezeUntil = (new Date()).getTime() + ms;
+  if(eng === 'react' && _RC){ _RC.ctrlUntil = _BT.freezeUntil; _RC.ctrlLast = (new Date()).getTime(); }
+  var fz = $('bt-frz'); if(fz){ fz.classList.add('on'); }
+  mgBurstFreezeTick();
+}
+function mgBattleFrozen(){ return !!(_BT && _BT.freezeUntil && (new Date()).getTime() < _BT.freezeUntil); }
+function mgBurstFreezeTick(){
+  var fz = $('bt-frz'); if(!fz) return;
+  if(!mgBattleFrozen()){ fz.classList.remove('on'); if(_BT) _BT.freezeUntil = 0; return; }
+  var left = Math.ceil((_BT.freezeUntil - (new Date()).getTime()) / 1000);
+  fz.textContent = (MG.lang === 'en') ? ('❄ Timer paused ' + left + 's') : ('❄ 計時暫停 ' + left + ' 秒');
+  setTimeout(mgBurstFreezeTick, 250);
+}
+/* 攻擊型:立即刪除 3 個錯誤答案 —— 逐引擎對應(回傳 false = 此刻沒東西可刪,不消耗充能) */
+function mgBurstAtkApply(eng){
+  var q = MG.order[MG.idx], n = MG_BT.ATK_N, i, k = 0, x = MG.cur;
+  try{
+    if(eng === 'quiz' || eng === 'sort' || eng === 'colorq'){
+      var ansIdx;
+      if(eng === 'sort'){ var bins = mgBins(x, q); ansIdx = -1; for(i = 0; i < bins.length; i++){ if(bins[i].id === q.b) ansIdx = i; } }
+      else ansIdx = q.a;
+      var btns = (eng === 'colorq') ? $('cq-opts').getElementsByClassName('cq-opt') : $('opts').getElementsByTagName('button');
+      var cand = [];
+      for(i = 0; i < btns.length; i++){
+        var di = (eng === 'colorq') ? i : parseInt(btns[i].getAttribute('data-i'), 10);
+        var isAns = (eng === 'colorq') ? (q.opts[i] === q.a) : (di === ansIdx);
+        if(!isAns && !btns[i].disabled && btns[i].className.indexOf('bt-out') < 0) cand.push(btns[i]);
+      }
+      cand = shuffle(cand);
+      for(i = 0; i < cand.length && k < n; i++){ cand[i].className += ' bt-out'; cand[i].disabled = true; k++; }
+      return k > 0;
+    }
+    if(eng === 'drag'){
+      var bins2 = mgBins(x, q), dbins = $('drag-bins').getElementsByClassName('dbin'), c2 = [];
+      for(i = 0; i < dbins.length; i++){ if(bins2[i] && bins2[i].id !== q.b && dbins[i].className.indexOf('bt-out') < 0) c2.push(dbins[i]); }
+      c2 = shuffle(c2);
+      for(i = 0; i < c2.length && k < n; i++){ c2[i].className += ' bt-out'; k++; }
+      return k > 0;
+    }
+    if(eng === 'map'){
+      var sp = $('mapbox').getElementsByClassName('spot'), c3 = [];
+      for(i = 0; i < sp.length; i++){ if(sp[i].id !== ('sp-' + q.a) && String(sp[i].getAttribute('class') || '').indexOf('bt-out') < 0) c3.push(sp[i]); }
+      c3 = shuffle(c3);
+      for(i = 0; i < c3.length && k < n; i++){ c3[i].setAttribute('class', 'spot bt-out'); k++; }
+      return k > 0;
+    }
+    if(eng === 'order'){
+      if(!_OD || !q || !q.seq) return false;
+      var want = Math.min(n, q.seq.length - 1), cur = _OD.picked.length, fixed = [], j;
+      /* 從頭鎖定正確的前 want 張:已擺對的保留、擺錯的收回重排 */
+      for(j = 0; j < want; j++) fixed.push(j);
+      var same = true; for(j = 0; j < want; j++){ if(_OD.picked[j] !== j) same = false; }
+      if(same && cur >= want) return false;
+      _OD.picked = fixed;
+      _orderPaint(q);
+      return true;
+    }
+    if(eng === 'match'){
+      if(!_MC) return false;
+      var used = {}, tag = 1, li, ri;
+      for(li = 0; li < _MC.L.length && k < n; li++){
+        if(_MC.L[li].done || _MC.L[li].bt) continue;
+        for(ri = 0; ri < _MC.R.length; ri++){ if(_MC.R[ri].pair === _MC.L[li].pair && !_MC.R[ri].done){ _MC.L[li].bt = tag; _MC.R[ri].bt = tag; tag++; k++; break; } }
+      }
+      if(k > 0) _matchPaint();
+      return k > 0;
+    }
+    if(eng === 'ear'){
+      if(!_EAR || _EAR.done || !_EAR.q) return false;
+      var target = _EAR.q.notes || _EAR.q.seq || []; if(!target.length) return false;
+      var m = Math.min(n, target.length), inp = [];
+      for(i = 0; i < m; i++) inp.push(String(target[i]));
+      _EAR.input = inp; _earPaintInput();
+      return true;
+    }
+    if(eng === 'maze'){
+      if(!_MZ || _MZ.done) return false;
+      var bad = [], ci;
+      for(ci = 0; ci < _MZ.cells.length; ci++){ var c = _MZ.cells[ci]; if(c.mark && !c.mark.ok && _MZ.walked.indexOf(ci) < 0) bad.push(ci); }
+      bad = shuffle(bad);
+      for(i = 0; i < bad.length && k < n; i++){ _MZ.cells[bad[i]].mark = null; _MZ.cells[bad[i]].ch = '.'; k++; }
+      if(k > 0) _mazePaint();
+      return k > 0;
+    }
+    if(eng === 'react'){
+      if(!_RC) return false;
+      var d, wr = [];
+      for(i = 0; i < _RC.drops.length; i++){ d = _RC.drops[i]; if(d && !d.dead && !d.good && d.el && d.el.parentNode) wr.push(d); }
+      wr = shuffle(wr);
+      for(i = 0; i < wr.length && k < n; i++){
+        d = wr[i]; d.dead = true;
+        (function(el){ el.className += ' blown bt-out'; setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 380); })(d.el);
+        try{ var r2 = d.el.getBoundingClientRect(); mgFx('boom', r2.left + r2.width / 2, r2.top + r2.height / 2, 120, 600); }catch(e){}
+        k++;
+      }
+      return k > 0;
+    }
+  }catch(e){}
+  return false;
+}
+/* 爆發演出:tint 全螢幕 + 主程式 GIF + 音效組(playSfx 各支)+ 英雄名/招式名/效果字幕;dur 由主程式表帶入,預設 2000ms */
+function mgBurstFx(side, h, d, effText){
+  try{
+    var old = $('bt-burstfx'); if(old && old.parentNode) old.parentNode.removeChild(old);
+    var dur = (h && h.dur) ? Math.min(3500, Math.max(1200, h.dur)) : 2000;
+    var wrap = document.createElement('div'); wrap.id = 'bt-burstfx';
+    wrap.style.background = (h && h.tint) ? h.tint : (d.tint || 'rgba(255,255,255,.15)');
+    var url = mgBurstGifUrl(h) + '?t=' + Date.now();
+    wrap.innerHTML = '<img class="gif" src="' + url + '" alt="" onerror="this.style.display=\'none\';">'
+                   + '<div class="bt-bfname' + (side === 'n' ? ' npc' : '') + '">' + esc(h.n) + '　' + esc(h.bn || tx(d.name)) + '</div>'
+                   + '<div class="bt-bfeff">' + esc(effText || '') + '</div>';
+    document.body.appendChild(wrap);
+    var card = $('bt-' + side); if(card){ card.classList.add('casting'); setTimeout(function(){ card.classList.remove('casting'); }, dur); }
+    var sfx = (h && h.sfx && h.sfx.length) ? h.sfx : [['sfx-powerup', 0.7]], i;
+    for(i = 0; i < sfx.length; i++){ if($(sfx[i][0])) playSfx(sfx[i][0], Math.min(1, (sfx[i][1] || 0.8) * 0.8)); }
+    if(!sfx.length || !$(sfx[0][0])) playSfx('sfx-powerup', 0.7);
+    setTimeout(function(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }, dur);
+  }catch(e){}
+}
+/* 結算加成(老師追加):剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;回傳明細供 finishGame 顯示 */
+function mgBattleScore(){
+  if(!_BT) return null;
+  var hpB = Math.min(500, _BT.p.hp * 5), u = _BT.p.used, bB = (u === 0) ? 300 : (u === 1 ? 200 : (u === 2 ? 100 : 0)), wB = (_BT.result === 'win') ? 200 : 0;
+  /* ★ 表現評分 5 星制(老師裁定「最高提高至 5 星,重新安排」):
+       勝利 +2(敗但答對 ≥5 題 +1)、剩餘 HP ≥40 +1、剩餘 HP ≥70 +1、爆發使用 ≤1 次 +1 ⇒ 最高 5 星;敗最高 2 星。 */
+  var stars = (_BT.result === 'win') ? 2 : ((_BT.hits >= 5) ? 1 : 0);
+  if(_BT.p.hp >= 40) stars++;
+  if(_BT.p.hp >= 70) stars++;
+  if(u <= 1) stars++;
+  if(stars > 5) stars = 5;
+  return { hp: _BT.p.hp, hpB: hpB, used: u, bB: bB, wB: wB, total: hpB + bB + wB, stars: stars, win: (_BT.result === 'win'), hits: _BT.hits, miss: _BT.miss };
+}
 /* ══════════════════════════════════════════════════════════
  *  Firebase — 只在按「登入」時才動態載入
  *  ★ 獨立 app 名稱 'minigame' + SESSION persistence:
@@ -5666,6 +6301,15 @@ window.mgCrReset = function(){
  * ══════════════════════════════════════════════════════════ */
 MG.lang = 'zh';
 var MG_EN = {"小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
+/* ★ v1.29.0 戰鬥模式 UI 字串英文版(補進 MG_EN;題庫/爆發說明走 tx() 的 en 欄位) */
+(function(){
+  var _add = { "出戰英雄": "Your hero", "🔁 換英雄": "🔁 Change hero", "🦸 選一名英雄出戰": "🦸 Pick a hero to battle", "✓ 就是這一位": "✓ Choose this hero",
+    "❄ 計時暫停": "❄ Timer paused", "極限爆發": "Ultimate burst", "爆發:": "Burst: ", "極限爆發:": "Ultimate burst: ",
+    "等下一題開始再用!": "Use it when the next question starts!", "這一型的爆發要在作答中使用,等下一題開始再按": "This burst works while answering. Tap it after the next question starts.",
+    "這裡沒有可以打掉的錯誤答案": "No wrong answers to remove here", "目前畫面沒有可刪除的錯誤答案,先留著": "There are no wrong answers to remove right now. Keep it for later.",
+    "K.O.!": "K.O.!", "被打倒了…": "Knocked out…", "勝利": "Victory", "被打倒了": "Knocked out", "剩餘 HP ": "HP left ", "爆發用了 ": "Bursts used ", "KO 獎勵": "K.O. bonus" };
+  var k; for(k in _add){ if(_add.hasOwnProperty(k) && !MG_EN.hasOwnProperty(k)) MG_EN[k] = _add[k]; }
+})();
 var MG_EN_PAT = [
   ["^答對 (\\d+) 題\\((\\d+)%\\) · 最高連擊 (\\d+)$", "$1 correct ($2%) · best combo $3"],
   ["^(\\d+) 分$", "$1 pts"],
