@@ -15,6 +15,37 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.40.0(2026-09-08)
+     ★ v1.40.0(老師截圖回報「40%答對率+被打倒還拿4星」不合理)—【星等評分制度重做】:
+       根因:舊制是「勝負+HP門檻+爆發節制」東拼西湊(勝+2/敗答對≥5+1、HP≥40+1、HP≥70+1、爆發≤1次+1),
+       這兩道 HP 門檻(40/70)是 v1.35.0 把 HP 上限從 100 調到 200 之前訂的,上限改 200 後幾乎每場都會
+       輕鬆超過,等於變相白送 2 顆星——這正是截圖「答對 6/15(40%)、被打倒了」還能拿 4 星的根因。
+       改為老師裁定的作法:依「本關可能的最低分(0)到理論最高分」的百分比評分,≥90% 才五星。
+       新增 `mgBattleMaxScore()`:用本局實際題目清單(`MG.order`)逐題還原「全對+連擊拉滿+每題近乎瞬間
+       答對」的理論最高基礎分(公式對齊 `scoreIt` 的 100+combo加成+時間加成),再乘上最高 50% 用時加成、
+       加上戰鬥加成封頂值(HP滿血×5封頂500+爆發0次+300+勝利+200=1000)。`finishGame` 的星等判定改到
+       `MG.score` 疊完用時加成與戰鬥加成之後才算(舊制在疊加前就定案,順序本身也是問題之一):
+       百分比 ≥90% 五星/≥70% 四星/≥50% 三星/≥30% 二星/≥10% 一星,否則 0 星。`mgBattleScore()` 移除舊版
+       湊星等邏輯,只留下戰鬥加成的原始明細(hpB/bB/wB/total)供結算頁明細列使用;無英雄資料的舊 3 星制
+       (答對率 ≥90/70/50)維持不變、未受影響。
+     -->
+<!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.39.0(2026-09-08)
+     ★ v1.39.0(老師截圖回報+四項需求):
+       ①【HP 條比例修正】`bar.style.width = S.hp + '%'` 是 v1.35.0 把 HP 上限從 100 改成 200 之前留下的舊寫法——
+         當年 HP 上限剛好=100,直接拿血量數字當百分比用碰巧是對的;上限改 200 後,190 血會被當成
+         寬度190%,血條視覺完全不成比例。改為 `S.hp/MG_BT.HP*100`;低血警示門檻(原寫死30)同步改比例
+         (MG_BT.HP*0.3)。
+       ②【爆發次數/充能點移位】原本充能點(●●●●●)與剩餘次數擠在爆發鈕內,滿槽時會壓縮技能名稱的顯示空間;
+         改為在 HP 條下方(爆發鈕上方)新增獨立一列 `.bt-chgrow`,鈕內只留技能名稱,滿槽/未滿槽都完整顯示。
+         剩餘次數由星星符號(⭐☆)改為文字「剩餘爆發次數：N」。
+       ③【戰鬥模式移除左下角答對/再想想文字】`showFeedback` 新增戰鬥模式偵測(`#mgbattle` 未隱藏即算),戰鬥
+         模式下不再顯示 `#feedback`/`#fbdock` 的對錯文字面板(對錯已由戰鬥卡受擊特效+HP變化呈現,不必重複);
+         下一題按鈕與自動前進計時器不受影響,非戰鬥引擎(若有)維持原樣顯示。
+       ④【職能標籤上色】`.bt-cls`(卡片名稱旁的「攻擊型/回復型/護盾型/控場型」小標籤)依職能分色:
+         攻擊型橘紅 #ff6a3d、回復型亮綠 #4dff8a、護盾型淡藍 #7fd4ff、控場型紫 #c58aff。
+     -->
+<!-- ============================================================================
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.38.0(2026-09-08)
      ★ v1.38.0(老師需求「檔名直接改成新的,舊的會和大對抗主程式混淆」)— 檔名正式改名(永久,非本機暫用):
        `index.html`→`minigame_index.html`、`sw.js`→`minigame_sw.js`(`minigame_db.js` 本來就是這個名字不動)。
@@ -1691,21 +1722,26 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
 .bt-info{width:100%;min-width:0;display:flex;flex-direction:column;gap:6px;}
 .bt-name{font-size:19px;font-weight:900;letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bt-name .bt-cls{font-size:13px;opacity:.8;margin-left:4px;font-weight:400;}
 .bt-hpbar{position:relative;height:22px;border-radius:11px;background:rgba(255,255,255,.12);overflow:hidden;}
 .bt-hp{height:100%;width:100%;background:linear-gradient(90deg,#3ec87a,#9fe8be);transition:width .35s;}
 .bt-card.n .bt-hp{background:linear-gradient(90deg,#e84040,#ff8f8f);}
 .bt-hp.low{background:linear-gradient(90deg,#e84040,#f0c060) !important;animation:verblink 1s infinite;}
 .bt-hpn{position:absolute;left:0;right:0;top:0;line-height:22px;font-size:15px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
 .bt-sh{font-size:12.5px;color:#9fd0ff;min-height:16px;line-height:16px;text-align:center;}
+/* ★ v1.39.0 — 充能點/爆發次數移到HP條下方獨立一列(不再擠在爆發鈕內),按鈕騰出完整空間顯示技能名稱 */
+.bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;min-height:16px;}
+.bt-chgrow .bt-charge{letter-spacing:2px;color:var(--gold);}
+.bt-chgrow .bt-star{letter-spacing:.5px;color:var(--gold);opacity:.9;}
 .bt-burst{min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:14px;font-weight:700;padding:4px 10px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
 .bt-burst.ready{opacity:1;cursor:pointer;border:none;background:linear-gradient(90deg,#ff8a00,#ffb238 50%,#ff8a00);background-size:200% 100%;color:#2b1400;font-size:16px;font-weight:900;letter-spacing:1px;text-shadow:0 1px 2px rgba(255,255,255,.35);box-shadow:0 0 16px rgba(255,140,0,.7);animation:btpulse 1.1s ease-in-out infinite;}
-.bt-burst.ready .bt-charge{display:none;}
 @keyframes btpulse{0%,100%{box-shadow:0 0 10px rgba(255,140,0,.55);background-position:0% 0;}50%{box-shadow:0 0 26px rgba(255,180,60,1);background-position:100% 0;}}
-.bt-burst .bt-charge{letter-spacing:2px;color:var(--gold);}
-.bt-burst .bt-star{letter-spacing:1px;font-size:12px;color:var(--gold);}
-.bt-burst.ready .bt-star{color:#2b1400;}
 .bt-burst .bt-bname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ★ v1.39.0 — 職能分類標籤依型別上色:攻擊型橘紅/回復型亮綠/護盾型淡藍/控場型紫 */
+.bt-name .bt-cls{font-size:13px;margin-left:4px;font-weight:700;opacity:1;}
+.bt-name .bt-cls.cls-atk{color:#ff6a3d;}
+.bt-name .bt-cls.cls-heal{color:#4dff8a;}
+.bt-name .bt-cls.cls-shd{color:#7fd4ff;}
+.bt-name .bt-cls.cls-ctrl{color:#c58aff;}
 /* ★ v1.32.0 新增——爆發效果說明(取代原本大對抗卡片的等級/攻擊特技速度/S1S2,只留這行文字) */
 .bt-eff{font-size:12.5px;line-height:1.42;color:var(--mist);opacity:.82;text-align:center;padding:0 2px;}
 .bt-vs{align-self:center;font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.8);flex:0 0 auto;}
@@ -2036,8 +2072,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
         <div class="bt-info">
           <div class="bt-name" id="bt-p-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-p-hp"></div><span class="bt-hpn" id="bt-p-hpn"></span></div>
+          <div class="bt-chgrow"><span class="bt-charge" id="bt-p-ch"></span><span class="bt-star" id="bt-p-st"></span></div>
           <div class="bt-sh" id="bt-p-sh"></div>
-          <button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-charge" id="bt-p-ch"></span><span class="bt-star" id="bt-p-st"></span><span class="bt-bname" id="bt-p-bn"></span></button>
+          <button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-bname" id="bt-p-bn"></span></button>
           <div class="bt-eff" id="bt-p-eff"></div>
         </div>
       </div>
@@ -2047,8 +2084,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
         <div class="bt-info">
           <div class="bt-name" id="bt-n-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-n-hp"></div><span class="bt-hpn" id="bt-n-hpn"></span></div>
+          <div class="bt-chgrow"><span class="bt-charge" id="bt-n-ch"></span><span class="bt-star" id="bt-n-st"></span></div>
           <div class="bt-sh" id="bt-n-sh"></div>
-          <div class="bt-burst" id="bt-n-burst"><span class="bt-charge" id="bt-n-ch"></span><span class="bt-star" id="bt-n-st"></span><span class="bt-bname" id="bt-n-bn"></span></div>
+          <div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span></div>
           <div class="bt-eff" id="bt-n-eff"></div>
         </div>
       </div>
@@ -2260,7 +2298,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.38.0"></script>
+<script src="minigame_db.js?v=v1.40.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2269,7 +2307,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.38.0';
+var MG_VER = 'v1.40.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -5318,18 +5356,25 @@ function scoreIt(correct, noBattle){
 function showFeedback(ok, head, why){
   try{ if(typeof head === 'string') head = T(head); }catch(_e){}   /* ★ v1.11.0 英文版標題列 */
   var f = $('feedback');
-  f.className = 'feedback show ' + (ok ? 'ok' : 'ng');
-  f.classList.add('show');
-  /* ★ v1.3.0 — 標題列 + 內文兩段(CSS .fb-head/.fb-body);why 為空時內文段自動隱藏 */
-  /* 追加:題目若帶 img(資料表選用欄位)就在解說旁放圖;全引擎共用(q 是 MG.order[MG.idx]) */
-  var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : ((_q && _q.pic && !_MG_MISS[_q.pic]) ? mgPicUrl(_q.pic) : '');   /* v1.3.0:有 repo 照片優先,否則用生成素材 pic;★ v1.9.0 已知缺圖略過 */
-  var _body = _img
-    ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
-      + '<span class="fb-txt">' + esc(why) + '</span>'
-    : esc(why);
-  /* ★ v1.29.0 老師:「移除原本的小老師插圖」— 標題列不再放小博士表情圖(左下空間改給戰鬥面板);舊寫法備查:
-     mgPicTag(ok ? (MG.combo >= 3 ? 'common_mascot_wow.webp' : 'common_mascot_happy.webp') : 'common_mascot_sad.webp', 'pic-fbm') */
-  f.innerHTML = '<b class="fb-head">' + esc(head) + '</b><span class="fb-body">' + _body + '</span>';
+  var _mb = $('mgbattle');
+  var _battleOn = !!(_mb && !_mb.classList.contains('hidden'));   /* ★ v1.39.0 老師需求:戰鬥卡模式下移除左下角「答對了/再想想」文字面板,對錯已由戰鬥卡受擊特效呈現,不必重複顯示 */
+  if(_battleOn){
+    f.className = 'feedback';
+    f.innerHTML = '';
+  }else{
+    f.className = 'feedback show ' + (ok ? 'ok' : 'ng');
+    f.classList.add('show');
+    /* ★ v1.3.0 — 標題列 + 內文兩段(CSS .fb-head/.fb-body);why 為空時內文段自動隱藏 */
+    /* 追加:題目若帶 img(資料表選用欄位)就在解說旁放圖;全引擎共用(q 是 MG.order[MG.idx]) */
+    var _q = MG.order[MG.idx], _img = (_q && _q.img) ? mgAssetUrl(_q.img) : ((_q && _q.pic && !_MG_MISS[_q.pic]) ? mgPicUrl(_q.pic) : '');   /* v1.3.0:有 repo 照片優先,否則用生成素材 pic;★ v1.9.0 已知缺圖略過 */
+    var _body = _img
+      ? '<img class="fb-img" src="' + _img + '" alt="" loading="lazy" onerror="this.style.display=\'none\';">'
+        + '<span class="fb-txt">' + esc(why) + '</span>'
+      : esc(why);
+    /* ★ v1.29.0 老師:「移除原本的小老師插圖」— 標題列不再放小博士表情圖(左下空間改給戰鬥面板);舊寫法備查:
+       mgPicTag(ok ? (MG.combo >= 3 ? 'common_mascot_wow.webp' : 'common_mascot_happy.webp') : 'common_mascot_sad.webp', 'pic-fbm') */
+    f.innerHTML = '<b class="fb-head">' + esc(head) + '</b><span class="fb-body">' + _body + '</span>';
+  }
   var nr = $('nextrow');
   var _ko = !!(_BT && _BT.over);   /* ★ v1.29.0 KO 已發生:不顯示下一題鈕、不自動前進,交給 mgBattleEnd 的結算計時器 */
   if(_ko) nr.classList.add('hidden'); else nr.classList.remove('hidden');
@@ -5340,7 +5385,7 @@ function showFeedback(ok, head, why){
   try{
     var dk = $('fbdock');
     if(dk){
-      if(why){
+      if(!_battleOn && why){
         dk.className = 'show ' + (ok ? 'ok' : 'ng');
         dk.innerHTML = '<b class="fd-head">' + esc(head) + '</b>' + esc(why);
         f.classList.add('docked');
@@ -5417,7 +5462,7 @@ function finishGame(){
   var total = _bs ? Math.max(1, _bs.hits + _bs.miss) : MG.order.length;   /* ★ v1.29.0 戰鬥模式以實際作答/事件數計答對率(KO 提前結束不再吃滿題數) */
   var _rightShown = _bs ? _bs.hits : MG.right;
   var acc = Math.round((_rightShown / total) * 100);
-  var stars = _bs ? _bs.stars : (acc >= 90 ? 3 : (acc >= 70 ? 2 : (acc >= 50 ? 1 : 0)));   /* ★ v1.29.0 戰鬥模式 5 星制(mgBattleScore);無英雄資料時退回舊 3 星制 */
+  /* ★ v1.40.0 — stars 改到 MG.score 算完(用時加成+戰鬥加成都疊完)之後才判定,見下方;此處先不設值 */
   /* ★ v1.4.0(老師需求③)— 用時加成:本局牆鐘用時(含暫停)越短,最後得分加成越高(最多 +50%)。
      ⚠ 只在有答對時才加成(0 分乘什麼都是 0,也避免全錯還拿加成的怪象)。 */
   var _elapsed = mgElapsedSec(), _par = mgParTime(MG.cur);
@@ -5429,6 +5474,17 @@ function finishGame(){
   if(_bs){
     if(!_bs.win && _bs.hp <= 0){ MG.score = _base; _bonusPct = 0; _timed = _base; }
     MG.score += _bs.total;
+  }
+  /* ★ v1.40.0(老師裁定)— 星等改依「本關最低分(0)到理論最高分」的百分比評分,不再用「勝負+HP+爆發次數」東拼西湊
+     (舊制在 HP 上限從 100 改 200 後,HP≥40/70 兩道門檻幾乎必過,導致 40% 答對率+被打倒還能拿 4 星的荒謬結果)。
+     戰鬥模式:百分比 ≥90% 五星/≥70% 四星/≥50% 三星/≥30% 二星/≥10% 一星,否則 0 星;
+     無英雄資料退回舊 3 星制(答對率 ≥90/70/50)維持不變。 */
+  var stars;
+  if(_bs){
+    var _bMax = mgBattleMaxScore(), _bPct = (_bMax > 0) ? (MG.score / _bMax * 100) : 0;
+    stars = (_bPct >= 90) ? 5 : (_bPct >= 70) ? 4 : (_bPct >= 50) ? 3 : (_bPct >= 30) ? 2 : (_bPct >= 10) ? 1 : 0;
+  }else{
+    stars = (acc >= 90) ? 3 : (acc >= 70) ? 2 : (acc >= 50) ? 1 : 0;
   }
   MG.elapsed = Math.round(_elapsed);
   hide('page-play'); show('page-result');
@@ -5700,8 +5756,8 @@ function mgBattleInit(x){
   if(ni){ ni.style.display = ''; ni.src = mgHeroUrl(nh.img); }
   var pc = $('bt-p'), nc = $('bt-n');
   if(pc) pc.className = 'bt-card p'; if(nc) nc.className = 'bt-card n';
-  $('bt-p-name').innerHTML = esc(ph.n) + '<span class="bt-cls">' + esc(mgHeroLabel(ph)) + '</span>';
-  $('bt-n-name').innerHTML = esc(nh.n) + '<span class="bt-cls">' + esc(mgHeroLabel(nh)) + '</span>';
+  $('bt-p-name').innerHTML = esc(ph.n) + '<span class="bt-cls cls-' + mgHeroCls(ph) + '">' + esc(mgHeroLabel(ph)) + '</span>';
+  $('bt-n-name').innerHTML = esc(nh.n) + '<span class="bt-cls cls-' + mgHeroCls(nh) + '">' + esc(mgHeroLabel(nh)) + '</span>';
   $('bt-p-bn').textContent = ph.bn || tx(mgBurstDef(mgHeroCls(ph)).name);
   $('bt-n-bn').textContent = nh.bn || tx(mgBurstDef(mgHeroCls(nh)).name);
   /* ★ v1.32.0 — 直式大卡新增效果說明(取代等級/攻擊特技速度/S1S2);玩家看 p 版文案、NPC 看 npc 版文案 */
@@ -5728,7 +5784,7 @@ function mgBattlePaint(){
   for(i = 0; i < 2; i++){
     s = sides[i]; S = _BT[s];
     var bar = $('bt-' + s + '-hp'), num = $('bt-' + s + '-hpn'), sh = $('bt-' + s + '-sh'), ch = $('bt-' + s + '-ch'), bb = $('bt-' + s + '-burst'), st = $('bt-' + s + '-st');
-    if(bar){ bar.style.width = S.hp + '%'; if(S.hp <= 30) bar.classList.add('low'); else bar.classList.remove('low'); }
+    if(bar){ var _hpPct = Math.max(0, Math.min(100, S.hp / MG_BT.HP * 100)); bar.style.width = _hpPct + '%'; if(S.hp <= MG_BT.HP * 0.3) bar.classList.add('low'); else bar.classList.remove('low'); }   /* ★ v1.39.0 — 修正:S.hp 直接當百分比用在 HP上限=200 後會爆版(190就變寬度190%),改除以 MG_BT.HP 算真正比例;低血警示門檻同步改比例(原本寫死 30 只對舊版HP上限100正確) */
     if(num) num.textContent = S.hp + ' / ' + MG_BT.HP;
     /* v1.31.0 — 第二效果狀態顯示:護盾優先顯示;沒護盾時輪流顯示減傷/易傷/回血加成剩餘次數,讓玩家看得到還在生效 */
     if(sh){
@@ -5742,8 +5798,8 @@ function mgBattlePaint(){
     }
     var dots = '', k; for(k = 0; k < MG_BT.CHARGE; k++) dots += (k < S.charge) ? '●' : '○';
     if(ch) ch.textContent = dots;
-    var stars = '', si; for(si = 0; si < MG_BT.MAX_BURST; si++) stars += (si < S.used) ? '☆' : '⭐';   /* ★ v1.37.0 — 用掉的星星變空心,剩餘用實心⭐ */
-    if(st) st.textContent = stars;
+    var _remain = MG_BT.MAX_BURST - S.used;
+    if(st) st.textContent = (MG.lang === 'en' ? 'Bursts left: ' : '剩餘爆發次數：') + _remain;   /* ★ v1.39.0 — 星星符號改文字顯示,並移出爆發鈕外(見 .bt-chgrow) */
     if(bb){
       var ready = (S.charge >= MG_BT.CHARGE) && !_BT.over && (S.used < MG_BT.MAX_BURST) && (S.sealLeft <= 0);   /* ★ v1.36.0 — 封印中不算 ready */
       if(ready) bb.classList.add('ready'); else bb.classList.remove('ready');
@@ -6113,17 +6169,28 @@ function mgBurstFx(side, h, d, effText){
   }catch(e){}
 }
 /* 結算加成(老師追加):剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;回傳明細供 finishGame 顯示 */
+/* ★ v1.40.0(老師裁定「星等改依該關最低分到最高分評分,接近滿分90%以上才五星」)— 算出本關「理論最高分」:
+   假設全對+連擊拉滿+每題都在時限內近乎瞬間答對(拿到最高的逐題用時加分)+全程用時最短拿到最高 50% 用時加成
+   +戰鬥加成拉滿(HP滿血×5封頂500+爆發0次+300+勝利+200=1000)。最低分視為 0(全錯必定是 0 分,不必另外算)。
+   逐題用時上限抓 (q.sec||該關預設秒數)×2,與 scoreIt 的 timeB=round(tleft×2) 公式對齊;連擊加分比照 scoreIt
+   的 min(combo-1,5)×20。任何例外一律回 0(呼叫端會退回舊制,不卡結算)。 */
+function mgBattleMaxScore(){
+  try{
+    var list = MG.order || [], defT = (MG.cur && MG.cur.time) || 15, i, comboN = 0, maxBase = 0, q, sec;
+    for(i = 0; i < list.length; i++){
+      comboN++;
+      q = list[i]; sec = (q && q.sec) ? q.sec : defT;
+      maxBase += 100 + Math.min(comboN - 1, 5) * 20 + Math.round(sec * 2);
+    }
+    return Math.round(maxBase * 1.5) + 1000;
+  }catch(e){ return 0; }
+}
 function mgBattleScore(){
   if(!_BT) return null;
   var hpB = Math.min(500, _BT.p.hp * 5), u = _BT.p.used, bB = (u === 0) ? 300 : (u === 1 ? 200 : (u === 2 ? 100 : 0)), wB = (_BT.result === 'win') ? 200 : 0;
-  /* ★ 表現評分 5 星制(老師裁定「最高提高至 5 星,重新安排」):
-       勝利 +2(敗但答對 ≥5 題 +1)、剩餘 HP ≥40 +1、剩餘 HP ≥70 +1、爆發使用 ≤1 次 +1 ⇒ 最高 5 星;敗最高 2 星。 */
-  var stars = (_BT.result === 'win') ? 2 : ((_BT.hits >= 5) ? 1 : 0);
-  if(_BT.p.hp >= 40) stars++;
-  if(_BT.p.hp >= 70) stars++;
-  if(u <= 1) stars++;
-  if(stars > 5) stars = 5;
-  return { hp: _BT.p.hp, hpB: hpB, used: u, bB: bB, wB: wB, total: hpB + bB + wB, stars: stars, win: (_BT.result === 'win'), hits: _BT.hits, miss: _BT.miss };
+  /* ★ v1.40.0 — 舊版「勝負+HP門檻+爆發節制」湊星等的算法已移除(HP上限改200後幾乎必過,見上方 mgBattleMaxScore
+     與 finishGame 的新星等判定);本函式只留下戰鬥加成的原始數字(hpB/bB/wB/total),不再回傳 stars 欄位。 */
+  return { hp: _BT.p.hp, hpB: hpB, used: u, bB: bB, wB: wB, total: hpB + bB + wB, win: (_BT.result === 'win'), hits: _BT.hits, miss: _BT.miss };
 }
 /* ══════════════════════════════════════════════════════════
  *  Firebase — 只在按「登入」時才動態載入
