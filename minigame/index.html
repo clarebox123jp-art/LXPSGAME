@@ -117,7 +117,7 @@
        --brick ← --red    #e84040   --grass← --green  #3ec87a
        --line  ← --border #2a2d3a   --muted← --muted  #7a7a8a */
 :root{
-  --mgb-h:150px;   /* ★ v1.29.0 戰鬥面板(#mgbattle)貼底高度,矮螢幕媒體查詢覆寫為 104px;供 nextrow/fbdock/play-right 連動留白 */
+  --mgb-h:150px;   /* ★ v1.29.0 戰鬥面板貼底高度用的變數;v1.32.3 改回佔格線列後不再需要,保留變數本身不刪(誤刪是大忌),沒有任何 CSS 消費點在讀它了 */
   --ink:#08090d;        /* 主程式 --bg     底色 */
   --ink2:#0e1018;       /* 主程式 --panel  面板 */
   --tea:#141720;        /* 主程式 --panel2 次面板 */
@@ -1519,22 +1519,22 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       z 116 低於暫停遮罩 118、toast 120;作答後才出現,蓋到已鎖定的作答區不影響操作。 ── */
 @media (orientation:landscape){
   #page-play > #nextrow{
-    position:fixed;right:18px;bottom:calc(22px + var(--mgb-h,150px));
-    right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + var(--mgb-h,150px) + env(safe-area-inset-bottom,0px));
+    position:fixed;right:18px;bottom:22px;
+    right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));
     z-index:116;margin:0;width:auto;min-width:240px;max-width:38vw;
   }
   #page-play > #nextrow button{min-height:66px;font-size:24px;font-size:clamp(20px,1.9vw,30px);padding:12px 34px;box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 0 3px rgba(240,192,96,.35);}
-  #page-play{grid-template-rows:auto minmax(0,1fr);}                 /* 原第 2 列(下一題)已抽離版面;★ v1.29.0 戰鬥面板改 position:fixed 貼滿視窗底部,不再佔用格線列(回復為原本兩列) */
-  #page-play > #feedback{grid-row:2;}
-  #play-right{grid-row:1 / 3;padding-bottom:calc(90px + var(--mgb-h,150px));box-sizing:border-box;}   /* 右欄底部留高:原 90px(不被下一題鈕蓋住)+★ v1.29.0 戰鬥面板高度(不被戰鬥面板蓋住) */
-  #page-play{padding-bottom:var(--mgb-h,150px);box-sizing:border-box;}   /* ★ v1.29.0 左欄同讓出戰鬥面板高度,場景橫幅/HUD 不被蓋住 */
+  /* ★ v1.32.3 — #mgbattle 改回佔一個格線列(左欄第2列,緊接在場景橫幅/HUD/倒數條之後),不再是貼底浮動層,
+     故 nextrow/play-right/page-play 都不必再為它預留 --mgb-h 高度的留白(舊版三處 padding-bottom 一併移除)。
+     格線列改回三列:①play-left ②mgbattle(彈性填滿) ③feedback(答題後才出現的說明卡)。 */
+  #page-play{grid-template-rows:auto minmax(160px,1fr) auto;}
+  #page-play > #feedback{grid-row:3;}
+  #play-right{grid-row:1 / 4;padding-bottom:90px;box-sizing:border-box;}   /* 右欄底部留高:不被下一題鈕蓋住 */
 }
 @media (orientation:landscape) and (max-height:520px){
-  :root{--mgb-h:104px;}   /* ★ v1.29.0 矮螢幕戰鬥面板較矮,連動下一題鈕/右欄留白同步縮 */
-  #page-play > #nextrow{min-width:170px;right:10px;bottom:calc(10px + var(--mgb-h,104px));right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + var(--mgb-h,104px) + env(safe-area-inset-bottom,0px));}
+  #page-play > #nextrow{min-width:170px;right:10px;bottom:10px;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));}
   #page-play > #nextrow button{min-height:46px;font-size:17px;padding:8px 20px;}
-  #play-right{padding-bottom:calc(60px + var(--mgb-h,104px));}
-  #page-play{padding-bottom:var(--mgb-h,104px);}
+  #play-right{padding-bottom:60px;}
 }
 /* ── v1.5.1 解說文字停靠區:橫式固定在「下一題」鈕正上方、字放大;直式不顯示(文字留在左欄解說卡) ── */
 #fbdock{display:none;}
@@ -1542,7 +1542,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #fbdock.show{
     display:block;position:fixed;z-index:115;
     right:18px;right:calc(18px + env(safe-area-inset-right,0px));
-    bottom:calc(100px + var(--mgb-h,150px));bottom:calc(100px + var(--mgb-h,150px) + env(safe-area-inset-bottom,0px));
+    bottom:100px;bottom:calc(100px + env(safe-area-inset-bottom,0px));
     width:min(52vw,760px);max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
     background:rgba(8,10,16,.94);border:2.5px solid var(--gold);border-left-width:8px;border-radius:18px;
     padding:16px 22px;box-shadow:0 14px 40px rgba(0,0,0,.65);
@@ -1580,7 +1580,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #fbzoom.show img{max-width:56vw;}
 }
 @media (orientation:landscape) and (max-height:520px){
-  #fbdock.show{bottom:calc(66px + var(--mgb-h,104px));bottom:calc(66px + var(--mgb-h,104px) + env(safe-area-inset-bottom,0px));width:min(56vw,600px);max-height:34vh;font-size:15px;padding:10px 14px;border-radius:12px;}
+  #fbdock.show{bottom:66px;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:min(56vw,600px);max-height:34vh;font-size:15px;padding:10px 14px;border-radius:12px;}
 }
 /* ★ v1.7.0 首頁卡片:關卡名放大、第二行最佳星星移除 */
 .cell .cstar{display:none !important;}
@@ -1688,37 +1688,24 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .mcard.bt-pair::after{content:attr(data-bt);position:absolute;right:4px;top:2px;font-size:13px;font-weight:700;color:var(--gold);}
 .rdrop.bt-out{opacity:0;transition:opacity .35s;}
 @media (orientation:landscape){
-  /* ★ v1.29.0(老師需求)— 戰鬥面板改貼滿視窗底部整條(不再擠在左欄窄格),玩家卡在最左、NPC卡在最右、VS置中,
-     比照大對抗戰鬥卡片「圖片+資訊橫向並排」的設計語彙,圖片與文字大幅放大。與 #nextrow/#fbdock/#play-right
-     的留白透過 --mgb-h 變數連動(見 :root),矮螢幕媒體查詢覆寫為 104px。 */
+  /* ★ v1.32.3(老師需求「不要放在畫面底部，是左下方，計時條下方，玩家/對手卡片放大填滿該區域，中間隔VS」)—
+     推翻 v1.29.0 的貼底整條橫幅設計:改回放進左欄第 2 列(緊接在場景橫幅/HUD/倒數條之後),不再 position:fixed。
+     卡片樣式改沿用直式(v1.32.0)已核准的「大對抗直向大卡」語彙(立繪佔滿卡寬→名稱→HP→爆發鈕→效果說明),
+     橫式不再另外做一套小卡橫排——左欄夠寬(31vw)、夠高(填滿到 feedback 之前),直向大卡放得下也更有份量。 */
   #page-play > #mgbattle{
-    position:fixed;left:0;right:0;bottom:0;
-    left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);bottom:env(safe-area-inset-bottom,0px);
-    z-index:90;margin:0;border-radius:0;border-width:0;border-top:3px solid rgba(240,192,96,.4);
-    background:rgba(6,8,13,.92);box-shadow:0 -8px 24px rgba(0,0,0,.5);
-    flex-direction:row;align-items:center;justify-content:space-between;gap:18px;
-    padding:12px 26px;height:var(--mgb-h,150px);box-sizing:border-box;
+    grid-column:1;grid-row:2;margin:8px 0 0;min-height:0;overflow:hidden;
+    display:flex;align-items:stretch;
   }
-  #page-play > #mgbattle .bt-card{flex:0 1 480px;flex-direction:row;align-items:center;}   /* ★ v1.32.0 — 橫式維持原本圖+文橫排小卡,不用新的直式大卡 */
-  #page-play > #mgbattle .bt-card.n{flex-direction:row-reverse;text-align:right;}
-  #page-play > #mgbattle .bt-card.n .bt-hp{margin-left:auto;}
-  #page-play > #mgbattle .bt-card.n .bt-burst{flex-direction:row-reverse;}
-  #page-play > #mgbattle .bt-info{flex:1 1 auto;}
-  #page-play > #mgbattle .bt-eff{display:none;}   /* 橫式貼底小卡空間有限,效果說明只在直式大卡顯示 */
-  #page-play > #mgbattle .bt-vs{flex:0 0 auto;font-size:30px;}
+  #page-play > #mgbattle .bt-card{min-height:0;}
+  #page-play > #mgbattle .bt-img{flex:1 1 auto;min-height:0;aspect-ratio:auto;}   /* 橫式改讓立繪用彈性高度填滿卡片剩餘空間,不鎖 3:4(那是直式窄卡才需要的固定比例) */
   #page-play > #feedback.docked{align-self:start;display:block;overflow:visible;}
   #feedback.docked .fb-head{display:block;text-align:left;font-size:16px;padding:8px 12px;border-bottom:0;}
-  .bt-img{width:112px;height:112px;flex-basis:112px;aspect-ratio:auto;}
-  .bt-name{font-size:22px;text-align:left;}
-  .bt-name .bt-cls{font-size:15px;}
-  .bt-burst{min-height:44px;font-size:16px;justify-content:flex-start;width:auto;}
-  .bt-hpbar{height:24px;} .bt-hpn{line-height:24px;font-size:16px;}
-  .bt-sh{font-size:14px;min-height:17px;text-align:left;}
 }
 @media (orientation:landscape) and (max-height:520px){
-  :root{--mgb-h:104px;}
-  .bt-img{width:76px;height:76px;flex-basis:76px;} .bt-name{font-size:16px;} .bt-burst{min-height:34px;font-size:12px;padding:2px 7px;}
-  #page-play > #mgbattle{padding:6px 16px;gap:10px;} .bt-card{padding:5px;gap:7px;} .bt-hpbar{height:17px;} .bt-hpn{line-height:17px;font-size:12px;} .bt-sh{min-height:12px;font-size:10px;}
+  #page-play > #mgbattle{margin-top:6px;}
+  #page-play > #mgbattle .bt-name{font-size:15px;} #page-play > #mgbattle .bt-burst{min-height:32px;font-size:12px;}
+  #page-play > #mgbattle .bt-card{padding:5px;gap:5px;} #page-play > #mgbattle .bt-hpbar{height:16px;} #page-play > #mgbattle .bt-hpn{line-height:16px;font-size:11px;}
+  #page-play > #mgbattle .bt-eff{font-size:10.5px;}
 }
 /* 開始前選英雄:#modal 內的英雄列 + 獨立選角視窗 #hero-modal(名字清單,只顯示目前選中的一張立繪 —— 立繪平均 600KB,不能整排載入) */
 #m-hero{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(62,200,122,.1);border:1px solid rgba(62,200,122,.35);}
@@ -2213,7 +2200,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.32.2';
+var MG_VER = 'v1.33.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -5457,6 +5444,31 @@ function mgLoadUnlockedHeroes(){
 function mgHeroByName(n){ var L = mgHeroList(), i; for(i = 0; i < L.length; i++){ if(L[i].n === n) return L[i]; } return null; }
 function mgHeroUrl(p){ if(!p) return ''; return (p.indexOf('http') === 0) ? p : ((window.MG_HERO_BASE || MG_IMG_BASE) + p); }
 function mgBurstDef(cls){ var D = window.MG_BURST_DEF || {}; return D[cls] || D.atk || { icon:'⚔', name:{ s:'攻擊型' }, p:{ s:'' }, npc:{ s:'' }, gif:'', tint:'rgba(255,255,255,.15)' }; }
+/* ★ v1.33.0 — 逐英雄第二效果文案(取代舊版 cls 共用文案)。h.eff2={t,v};isNpc 決定「自己/對手」代名詞。
+   六型:heal(自己出手回血)/dmgred(受傷減半)/bleed(對手易傷)/drain(對手爆發條倒退)/shield(護盾+N格)/charge(自己爆發條+N格) */
+function mgEff2Text(h, isNpc){
+  var e = h && h.eff2; if(!e) return { s:'', f:'', en:'' };
+  var self_ = isNpc ? '對手' : '自己', foe = isNpc ? '你' : '對手', selfEn = isNpc ? 'the opponent' : 'you', foeEn = isNpc ? 'you' : 'the opponent';
+  if(e.t === 'heal') return {
+    s: '接下來' + self_ + '出手 3 次,每次還會多回 ' + e.v + ' 滴血', f: '並使接下來' + self_ + '造成傷害的 3 次判定,每次額外恢復 ' + e.v + ' 點 HP',
+    en: '; ' + selfEn + "'s next 3 hits each also heal " + (isNpc ? 'them' : 'you') + ' ' + e.v + ' extra HP' };
+  if(e.t === 'dmgred') return {
+    s: '接下來' + self_ + '受傷 3 次,傷害都會減半', f: '並使' + self_ + '接下來受到傷害的 3 次判定,傷害減少 50%',
+    en: "; " + selfEn + "'s next 3 hits taken deal 50% less damage" };
+  if(e.t === 'bleed') return {
+    s: '還讓' + foe + '易傷,接下來受傷 3 次都多痛 ' + e.v + ' 滴血', f: '並使' + foe + '陷入易傷,接下來受到傷害的 3 次判定每次額外多扣 ' + e.v + ' 點 HP',
+    en: '; ' + foeEn + ' is left vulnerable, taking ' + e.v + ' extra damage on the next 3 hits taken' };
+  if(e.t === 'drain') return {
+    s: '還會讓' + foe + '的爆發條倒退 ' + e.v + ' 格', f: '並使' + foe + '的爆發充能倒退 ' + e.v + ' 格',
+    en: "; also knocks " + e.v + " charge off " + foeEn + "'s burst gauge" };
+  if(e.t === 'shield') return {
+    s: '護盾格數額外多 ' + e.v + ' 格', f: '並使護盾格數額外增加 ' + e.v + ' 格',
+    en: '; also grants ' + e.v + ' extra shield charges' };
+  if(e.t === 'charge') return {
+    s: '使用後爆發條會先前進 ' + e.v + ' 格', f: '並使自己的爆發充能立即前進 ' + e.v + ' 格',
+    en: "; also advances " + self_ + "'s burst gauge by " + e.v };
+  return { s:'', f:'', en:'' };
+}
 function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
 /* 目前選的英雄:localStorage._mgHero(非關鍵資料,共用 iPad 遺失無害);沒選過或名字已不存在 ⇒ 隨機一位並記住 */
 function mgHeroCur(){
@@ -5479,7 +5491,7 @@ function mgHeroPaintModal(){
   show('m-hero-sec');
   if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
   var d = mgBurstDef(mgHeroCls(h));
-  t.innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name)) + ' — ' + tx(d.p));
+  t.innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name)) + ' — ' + tx(d.p) + tx(mgEff2Text(h, false)));
 }
 /* ── 選角視窗 ── */
 var _HM = { sel: null, filter: '' };
@@ -5510,7 +5522,7 @@ function mgHeroPaintPicker(){
   }catch(e0){}
   var im = $('hm-img'); if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
   var d = mgBurstDef(mgHeroCls(h));
-  $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p));
+  $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p) + tx(mgEff2Text(h, false)));
   for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
   $('hm-filter').innerHTML = html;
   html = '';
@@ -5528,8 +5540,9 @@ function mgBattleInit(x){
   for(i = 0; i < L.length; i++){ if(L[i] !== ph) pool.push(L[i]); }
   var nh = pool.length ? pool[Math.floor(Math.random() * pool.length)] : ph;
   /* healBuff/dmgReduceLeft/dotLeft:v1.31.0 四型爆發第二效果(見 MG_BURST_DEF 註解)的計數狀態,初始 0 */
-  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0 },
-          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0 },
+  /* healBuff/dmgReduceLeft/dotLeft/healAmt/dotAmt:v1.33.0 逐英雄第二效果(見 MG_HEROES.eff2)的計數與數值狀態,初始 0 */
+  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0 },
+          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -5542,8 +5555,8 @@ function mgBattleInit(x){
   $('bt-n-bn').textContent = nh.bn || tx(mgBurstDef(mgHeroCls(nh)).name);
   /* ★ v1.32.0 — 直式大卡新增效果說明(取代等級/攻擊特技速度/S1S2);玩家看 p 版文案、NPC 看 npc 版文案 */
   var peff = $('bt-p-eff'), neff = $('bt-n-eff');
-  if(peff) peff.textContent = tx(mgBurstDef(mgHeroCls(ph)).p);
-  if(neff) neff.textContent = tx(mgBurstDef(mgHeroCls(nh)).npc);
+  if(peff) peff.textContent = tx(mgBurstDef(mgHeroCls(ph)).p) + tx(mgEff2Text(ph, false));
+  if(neff) neff.textContent = tx(mgBurstDef(mgHeroCls(nh)).npc) + tx(mgEff2Text(nh, true));
   var fz = $('bt-frz'); if(fz) fz.classList.remove('on');
   show('mgbattle');
   mgBattlePaint();
@@ -5636,9 +5649,9 @@ function mgBattleHit(ok){
     else{
       var dmgP = MG_BT.DMG;
       if(N.dmgReduceLeft > 0){ N.dmgReduceLeft--; dmgP = Math.round(dmgP / 2); }               /* 護盾型第二效果:護盾耗盡後再減傷 */
-      if(N.dotLeft > 0){ N.dotLeft--; dmgP += MG_BT.DOT; }                                       /* 攻擊型第二效果:對手易傷/出血,受傷加深 */
+      if(N.dotLeft > 0){ N.dotLeft--; dmgP += (N.dotAmt || MG_BT.DOT); }                        /* 逐英雄第二效果(易傷):數值取該英雄自己的 eff2.v */
       N.hp = Math.max(0, N.hp - dmgP); playSfx('sfx-gunshot', 0.5); mgBattleFxAttack('p', '−' + dmgP);
-      if(P.healBuff > 0){ P.healBuff--; P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEALBUFF); mgBattleFloatOn('p', '+' + MG_BT.HEALBUFF, 'heal'); }   /* 回復型第二效果:自己出手順便回血 */
+      if(P.healBuff > 0){ P.healBuff--; var _ha = P.healAmt || MG_BT.HEALBUFF; P.hp = Math.min(MG_BT.HP, P.hp + _ha); mgBattleFloatOn('p', '+' + _ha, 'heal'); }   /* 逐英雄第二效果(回血):數值取該英雄自己的 eff2.v */
     }
     if(P.charge < MG_BT.CHARGE){
       P.charge++;
@@ -5650,9 +5663,9 @@ function mgBattleHit(ok){
     else{
       var dmgN = MG_BT.DMG;
       if(P.dmgReduceLeft > 0){ P.dmgReduceLeft--; dmgN = Math.round(dmgN / 2); }
-      if(P.dotLeft > 0){ P.dotLeft--; dmgN += MG_BT.DOT; }
+      if(P.dotLeft > 0){ P.dotLeft--; dmgN += (P.dotAmt || MG_BT.DOT); }
       P.hp = Math.max(0, P.hp - dmgN); playSfx('sfx-explode', 0.4); mgBattleFxAttack('n', '−' + dmgN); mgBattleVibe(120);
-      if(N.healBuff > 0){ N.healBuff--; N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEALBUFF); mgBattleFloatOn('n', '+' + MG_BT.HEALBUFF, 'heal'); }
+      if(N.healBuff > 0){ N.healBuff--; var _hb = N.healAmt || MG_BT.HEALBUFF; N.hp = Math.min(MG_BT.HP, N.hp + _hb); mgBattleFloatOn('n', '+' + _hb, 'heal'); }
     }
     if(N.charge < MG_BT.CHARGE){
       N.charge++;
@@ -5693,6 +5706,16 @@ function mgBattleEnd(res){
   if(_BT.endT) clearTimeout(_BT.endT);
   _BT.endT = setTimeout(function(){ try{ var k = $('bt-ko'); if(k && k.parentNode) k.parentNode.removeChild(k); }catch(e){} if(MG.cur && !$('page-play').classList.contains('hidden')) finishGame(); }, 1700);
 }
+/* ★ v1.33.0 — 逐英雄第二效果套用(取代舊版 cls 共用套用),caster=施放方狀態物件,foe=對手狀態物件 */
+function mgApplyEff2(caster, foe){
+  var e = caster.h && caster.h.eff2; if(!e) return;
+  if(e.t === 'heal'){ caster.healBuff = MG_BT.EFF2_N; caster.healAmt = e.v; }
+  else if(e.t === 'dmgred') caster.dmgReduceLeft = MG_BT.EFF2_N;
+  else if(e.t === 'bleed'){ foe.dotLeft = MG_BT.EFF2_N; foe.dotAmt = e.v; }
+  else if(e.t === 'drain') foe.charge = Math.max(0, foe.charge - e.v);
+  else if(e.t === 'shield') caster.shield = (caster.shield || 0) + e.v;
+  else if(e.t === 'charge') caster.charge = Math.min(MG_BT.CHARGE - 1, caster.charge + e.v);   /* 剛歸零後立刻前進,但不能因此直接又是滿的(那等於免費爆發) */
+}
 /* ── 玩家極限爆發 ── */
 window.mgBattleBurst = function(){
   if(!_BT || _BT.over || _PZ.on) return;
@@ -5702,18 +5725,13 @@ window.mgBattleBurst = function(){
   if((cls === 'atk' || cls === 'ctrl') && eng !== 'react' && MG.answered){ toast(MG.style === 's' ? '等下一題開始再用!' : '這一型的爆發要在作答中使用,等下一題開始再按'); playSfx('sfx-cancel', 0.35); return; }
   if(cls === 'atk' && !mgBurstAtkApply(eng)){ toast(MG.style === 's' ? '這裡沒有可以打掉的錯誤答案' : '目前畫面沒有可刪除的錯誤答案,先留著'); playSfx('sfx-cancel', 0.35); return; }
   P.charge = 0; P.used++;
-  /* v1.31.0 第二效果:heal→接下來自己出手順便回血 / shd→護盾用完後再減傷 / atk→對手中招陷入易傷 / ctrl→對手爆發條倒退 */
-  if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); P.healBuff = MG_BT.EFF2_N; mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
-  else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; P.dmgReduceLeft = MG_BT.EFF2_N; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
-  else if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); N.charge = Math.max(0, N.charge - 1); mgBattlePaint(); }
-  /* ★ v1.31.1(老師修正)— 攻擊型玩家版:原本只刪 3 個錯答,改成「刪 3 個錯答 + 直接扣對手 10 HP」;
-     立即刪錯答的效果在 mgBurstAtkApply 已處理,這裡補「直接傷害」+ 沿用既有「對手易傷」第二效果 */
-  if(cls === 'atk'){
-    N.dotLeft = MG_BT.EFF2_N;
-    N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P);
-    mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P);
-  }
-  mgBurstCinematic('p', P.h, d, tx(d.p));
+  /* 基礎效果(4 型共用,不隨英雄變):heal→自己 +30HP / shd→護盾×3 / atk→直接傷害10(+已在 mgBurstAtkApply 刪錯答) / ctrl→暫停10秒 */
+  if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
+  else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
+  else if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
+  else if(cls === 'atk'){ N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P); mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P); }
+  mgApplyEff2(P, N);   /* ★ v1.33.0 — 逐英雄第二效果,64 隻各自不同(見 MG_HEROES.eff2) */
+  mgBurstCinematic('p', P.h, d, tx(d.p) + tx(mgEff2Text(P.h, false)));
   mgBattlePaint();
   mgBattleCheckKO();   /* ★ v1.31.1 — 攻擊型現在會直接扣血,補上結算檢查(過去這型不會直接傷血,漏掉沒事;現在會) */
 };
@@ -5723,21 +5741,19 @@ function mgBattleNpcBurst(){
   var N = _BT.n, P = _BT.p; if(N.charge < MG_BT.CHARGE) return;
   var cls = mgHeroCls(N.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
   N.charge = 0; N.used++;
-  /* v1.31.0 第二效果(NPC 版,與玩家版對稱):heal→接下來自己出手順便回血 / shd→護盾用完後再減傷 /
-     atk→對手(玩家)中招陷入易傷 / ctrl→對手(玩家)爆發條倒退 */
-  if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); N.healBuff = MG_BT.EFF2_N; mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
-  else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; N.dmgReduceLeft = MG_BT.EFF2_N; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
+  if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
+  else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
   else if(cls === 'atk'){
     /* ★ v1.31.1(老師修正)— 攻擊型 NPC 版:直接傷害 10→20(NPC 版較痛) */
-    P.hp = Math.max(0, P.hp - MG_BT.ATK_BURST_N); P.dotLeft = MG_BT.EFF2_N; mgBattleFxAttack('n', '−' + MG_BT.ATK_BURST_N); mgBattleVibe(200);
+    P.hp = Math.max(0, P.hp - MG_BT.ATK_BURST_N); mgBattleFxAttack('n', '−' + MG_BT.ATK_BURST_N); mgBattleVibe(200);
   }
   else if(cls === 'ctrl'){
     if(eng === 'react'){ if(_RC && !_RC.paused) _RC.endAt = Math.max((new Date()).getTime() + 1000, _RC.endAt - MG_BT.CTRL_MS); }
     else if(MG.timer && !MG.answered){ MG.tleft = Math.max(1, MG.tleft - MG_BT.CTRL_MS / 1000); }
-    P.charge = Math.max(0, P.charge - 1);
     mgBattleFloatOn('p', '−10s', 'block');
   }
-  mgBurstCinematic('n', N.h, d, tx(d.npc));
+  mgApplyEff2(N, P);   /* ★ v1.33.0 — 逐英雄第二效果(NPC 版,與玩家版對稱共用同一支 helper) */
+  mgBurstCinematic('n', N.h, d, tx(d.npc) + tx(mgEff2Text(N.h, true)));
   mgBattlePaint();
   mgBattleCheckKO();
 }
