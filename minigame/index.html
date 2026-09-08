@@ -1603,33 +1603,48 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* ★★ v1.29.0(老師需求 2026-09-08)— 戰鬥面板「玩家英雄卡 VS NPC 英雄卡 + 雙方 HP 條 + 極限爆發鈕」
    直式:接在 #play-left 之後的一列(兩張橫向小卡);橫式:grid 第 3 列貼底(取代原本撐滿左下的小博士解說圖)。
    iPad 觸控:自補 touch-action / tap-highlight / user-select;爆發鈕 min-height ≥ 44px(橫式)。 */
-#mgbattle{display:flex;align-items:stretch;gap:8px;margin:8px 0 0;padding:8px;border-radius:16px;background:rgba(8,10,16,.72);border:2px solid rgba(240,192,96,.35);box-shadow:0 8px 24px rgba(0,0,0,.45);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
+/* ★ v1.32.0(老師需求「直式時把玩家/對手卡片放大成大對抗戰鬥卡片的格式,只留立繪/HP/爆發技能+效果說明」)—
+   直式(預設)改直向大卡:立繪佔滿卡寬(3:4 直式),下面依序 名稱／HP條／爆發鈕／效果說明,不放等級與攻擊特技速度、
+   不放 S1/S2(小遊戲沒有那些資料,爆發是唯一技能)。橫式(iPad 橫放)維持 v1.29.0 既有貼底橫排小卡設計不變,
+   相關鏡像/尺寸覆寫搬到下面 @media(orientation:landscape) 區塊裡,避免直橫互相打架。 */
+#mgbattle{display:flex;align-items:stretch;gap:10px;margin:10px 0 0;padding:10px;border-radius:16px;background:rgba(8,10,16,.72);border:2px solid rgba(240,192,96,.35);box-shadow:0 8px 24px rgba(0,0,0,.45);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
 #mgbattle.hidden{display:none;}
-.bt-card{flex:1 1 0;min-width:0;display:flex;gap:8px;align-items:center;padding:6px;border-radius:12px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;}
+.bt-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;}
 .bt-card.p{border-color:rgba(62,200,122,.55);}
-.bt-card.n{border-color:rgba(232,64,64,.55);flex-direction:row-reverse;text-align:right;}
+.bt-card.n{border-color:rgba(232,64,64,.55);}
+/* ★ v1.32.1(老師需求「完美保留大對抗的戰鬥打擊快感」)— 受擊回饋升級為三件套(震動+閃色+立繪頓挫縮放)，
+   比照大對抗 flashCard/spawnParticles 的打擊語彙；原本只有卡片震動，這次補上「打中瞬間立繪往內縮一下再彈回」
+   (impact squash·打擊遊戲常見手法)+ 卡片邊框瞬間泛紅光，兩者跟震動同時觸發，讓「打到了」更有份量。 */
 .bt-card.hurt{animation:bthurt .45s;}
 @keyframes bthurt{0%,100%{transform:translateX(0);}15%{transform:translateX(-10px);}30%{transform:translateX(10px);}45%{transform:translateX(-7px);}60%{transform:translateX(7px);}75%{transform:translateX(-3px);}}
+.bt-card.hurt::before{content:'';position:absolute;inset:-2px;border-radius:inherit;background:rgba(255,60,60,.35);opacity:0;animation:bthurtflash .38s ease-out;pointer-events:none;z-index:1;}
+@keyframes bthurtflash{0%{opacity:.85;}100%{opacity:0;}}
+.bt-card.hurt .bt-img{animation:bthurtpunch .38s ease-out;}
+@keyframes bthurtpunch{0%{transform:scale(1);}25%{transform:scale(.93);}55%{transform:scale(1.03);}100%{transform:scale(1);}}
+/* 我方出手命中的瞬間,自己這張卡也給個輕微得意頓挫(比受擊弱一階,區分「打人」跟「被打」的手感) */
+.bt-card.hitpunch .bt-img{animation:bthitpunch .3s ease-out;}
+@keyframes bthitpunch{0%{transform:scale(1);}30%{transform:scale(1.05);}100%{transform:scale(1);}}
 .bt-card.ko{filter:grayscale(1) brightness(.45);transform:rotate(-6deg) translateY(8px);transition:transform .6s,filter .6s;}
 .bt-card.win{box-shadow:0 0 26px rgba(240,192,96,.85);}
 .bt-card.casting{box-shadow:0 0 26px rgba(255,255,255,.8);}
-.bt-img{width:80px;height:80px;flex:0 0 80px;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:34px;}
+.bt-img{width:100%;aspect-ratio:3/4;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:48px;}
 .bt-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
-.bt-info{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;}
-.bt-name{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.bt-name .bt-cls{font-size:12px;opacity:.8;margin-left:4px;font-weight:400;}
-.bt-hpbar{position:relative;height:19px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;}
+.bt-info{width:100%;min-width:0;display:flex;flex-direction:column;gap:6px;}
+.bt-name{font-size:19px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-name .bt-cls{font-size:13px;opacity:.8;margin-left:4px;font-weight:400;}
+.bt-hpbar{position:relative;height:22px;border-radius:11px;background:rgba(255,255,255,.12);overflow:hidden;}
 .bt-hp{height:100%;width:100%;background:linear-gradient(90deg,#3ec87a,#9fe8be);transition:width .35s;}
-.bt-card.n .bt-hp{background:linear-gradient(90deg,#e84040,#ff8f8f);margin-left:auto;}
+.bt-card.n .bt-hp{background:linear-gradient(90deg,#e84040,#ff8f8f);}
 .bt-hp.low{background:linear-gradient(90deg,#e84040,#f0c060) !important;animation:verblink 1s infinite;}
-.bt-hpn{position:absolute;left:0;right:0;top:0;line-height:19px;font-size:13px;font-weight:700;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
-.bt-sh{font-size:12px;color:#9fd0ff;min-height:15px;line-height:15px;}
-.bt-burst{min-height:38px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:13px;font-weight:700;padding:3px 9px;display:flex;align-items:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-.bt-card.n .bt-burst{flex-direction:row-reverse;}
+.bt-hpn{position:absolute;left:0;right:0;top:0;line-height:22px;font-size:14px;font-weight:700;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
+.bt-sh{font-size:12.5px;color:#9fd0ff;min-height:16px;line-height:16px;text-align:center;}
+.bt-burst{min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:14px;font-weight:700;padding:4px 10px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
 .bt-burst.ready{opacity:1;cursor:pointer;border-color:var(--gold);background:rgba(240,192,96,.18);animation:btpulse 1s ease-in-out infinite;}
 @keyframes btpulse{0%,100%{box-shadow:0 0 8px rgba(240,192,96,.45);}50%{box-shadow:0 0 22px rgba(240,192,96,.95);}}
 .bt-burst .bt-charge{letter-spacing:2px;color:var(--gold);}
 .bt-burst .bt-bname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ★ v1.32.0 新增——爆發效果說明(取代原本大對抗卡片的等級/攻擊特技速度/S1S2,只留這行文字) */
+.bt-eff{font-size:12.5px;line-height:1.42;color:var(--mist);opacity:.82;text-align:center;padding:0 2px;}
 .bt-vs{align-self:center;font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.8);flex:0 0 auto;}
 .bt-frz{position:absolute;left:50%;top:-14px;transform:translateX(-50%);background:rgba(120,200,255,.92);color:#08090d;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;display:none;white-space:nowrap;z-index:2;}
 .bt-frz.on{display:block;}
@@ -1684,16 +1699,21 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     flex-direction:row;align-items:center;justify-content:space-between;gap:18px;
     padding:12px 26px;height:var(--mgb-h,150px);box-sizing:border-box;
   }
-  #page-play > #mgbattle .bt-card{flex:0 1 480px;}
+  #page-play > #mgbattle .bt-card{flex:0 1 480px;flex-direction:row;align-items:center;}   /* ★ v1.32.0 — 橫式維持原本圖+文橫排小卡,不用新的直式大卡 */
+  #page-play > #mgbattle .bt-card.n{flex-direction:row-reverse;text-align:right;}
+  #page-play > #mgbattle .bt-card.n .bt-hp{margin-left:auto;}
+  #page-play > #mgbattle .bt-card.n .bt-burst{flex-direction:row-reverse;}
+  #page-play > #mgbattle .bt-info{flex:1 1 auto;}
+  #page-play > #mgbattle .bt-eff{display:none;}   /* 橫式貼底小卡空間有限,效果說明只在直式大卡顯示 */
   #page-play > #mgbattle .bt-vs{flex:0 0 auto;font-size:30px;}
   #page-play > #feedback.docked{align-self:start;display:block;overflow:visible;}
   #feedback.docked .fb-head{display:block;text-align:left;font-size:16px;padding:8px 12px;border-bottom:0;}
-  .bt-img{width:112px;height:112px;flex-basis:112px;}
-  .bt-name{font-size:22px;}
+  .bt-img{width:112px;height:112px;flex-basis:112px;aspect-ratio:auto;}
+  .bt-name{font-size:22px;text-align:left;}
   .bt-name .bt-cls{font-size:15px;}
-  .bt-burst{min-height:44px;font-size:16px;}
+  .bt-burst{min-height:44px;font-size:16px;justify-content:flex-start;width:auto;}
   .bt-hpbar{height:24px;} .bt-hpn{line-height:24px;font-size:16px;}
-  .bt-sh{font-size:14px;min-height:17px;}
+  .bt-sh{font-size:14px;min-height:17px;text-align:left;}
 }
 @media (orientation:landscape) and (max-height:520px){
   :root{--mgb-h:104px;}
@@ -1702,22 +1722,27 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 /* 開始前選英雄:#modal 內的英雄列 + 獨立選角視窗 #hero-modal(名字清單,只顯示目前選中的一張立繪 —— 立繪平均 600KB,不能整排載入) */
 #m-hero{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(62,200,122,.1);border:1px solid rgba(62,200,122,.35);}
-#m-hero .bt-img{width:56px;height:56px;flex-basis:56px;}
-#m-hero .mh-txt{flex:1 1 auto;min-width:0;font-size:14px;line-height:1.4;}
+#m-hero .bt-img{width:84px;height:84px;flex-basis:84px;}
+#m-hero .mh-txt{flex:1 1 auto;min-width:0;font-size:16px;line-height:1.5;}
 #m-hero .mh-txt b{color:var(--gold);font-weight:700;}
 #m-hero button{min-height:40px;font-size:14px;padding:6px 12px;flex:0 0 auto;}
-#hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:84;display:none;align-items:center;justify-content:center;padding:14px;}
+#hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:111;display:none;align-items:center;justify-content:center;padding:14px;}
 #hero-modal.show{display:flex;}
-#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:16px;max-width:820px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:10px;}
-#hero-modal h3{margin:0;font-size:22px;color:var(--gold);}
-#hero-modal .hm-top{display:flex;gap:12px;align-items:center;}
-#hero-modal .hm-top .bt-img{width:110px;height:110px;flex-basis:110px;}
-#hero-modal .hm-top .hm-desc{flex:1 1 auto;min-width:0;font-size:15px;line-height:1.5;}
-#hero-modal .hm-top .hm-desc b{color:var(--gold);font-weight:700;font-size:18px;}
-#hero-modal .hm-filter{display:flex;gap:6px;flex-wrap:wrap;}
+#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1020px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;}
+#hero-modal h3{margin:0;font-size:27px;color:var(--gold);}
+#hero-modal .hm-top{display:flex;gap:16px;align-items:center;}
+#hero-modal .hm-top .bt-img{width:170px;height:170px;flex-basis:170px;}
+#hero-modal .hm-top .hm-desc{flex:1 1 auto;min-width:0;font-size:18px;line-height:1.6;}
+#hero-modal .hm-top .hm-desc b{color:var(--gold);font-weight:700;font-size:23px;}
+#hero-modal .hm-filter{display:flex;gap:8px;flex-wrap:wrap;}
+#hero-modal .hm-filter .chip{min-height:52px;font-size:17px;padding:10px 18px;}
 #hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
-#hero-modal .hm-list{flex:1 1 auto;min-height:120px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;padding:2px;}
-#hero-modal .hm-list button{min-height:44px;font-size:14px;padding:6px 8px;background:rgba(255,255,255,.06);border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:10px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+/* ★ v1.31.0(老師回報「按篩選鈕/選最下面那排會跑掉」)— 根因:.hm-list 舊碼用 flex:1 1 auto 純內容撐高,
+   換篩選時項目數一變(例如控場型只剩7張),整個 .box 高度跟著變,而 #hero-modal 又是
+   align-items:center 置中 ⇒ box 整個上下彈動、剛按完篩選鈕手指還沒離開,下一下「選英雄」就點歪了。
+   改成固定高度(不隨內容増減),box 尺寸永遠不變,篩選只換裡面捲動內容,不會再帶動整個視窗跳動。 */
+#hero-modal .hm-list{height:min(50vh,440px);min-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:2px;}
+#hero-modal .hm-list button{min-height:60px;font-size:17px;padding:12px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:10px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 #hero-modal .hm-list button.on{border-color:var(--gold);background:rgba(240,192,96,.2);}
 #hero-modal .row{display:flex;gap:10px;}
 #hero-modal .row button{flex:1;min-height:46px;}
@@ -1957,6 +1982,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
           <div class="bt-hpbar"><div class="bt-hp" id="bt-p-hp"></div><span class="bt-hpn" id="bt-p-hpn"></span></div>
           <div class="bt-sh" id="bt-p-sh"></div>
           <button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-charge" id="bt-p-ch"></span><span class="bt-bname" id="bt-p-bn"></span></button>
+          <div class="bt-eff" id="bt-p-eff"></div>
         </div>
       </div>
       <div class="bt-vs">VS</div>
@@ -1967,6 +1993,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
           <div class="bt-hpbar"><div class="bt-hp" id="bt-n-hp"></div><span class="bt-hpn" id="bt-n-hpn"></span></div>
           <div class="bt-sh" id="bt-n-sh"></div>
           <div class="bt-burst" id="bt-n-burst"><span class="bt-charge" id="bt-n-ch"></span><span class="bt-bname" id="bt-n-bn"></span></div>
+          <div class="bt-eff" id="bt-n-eff"></div>
         </div>
       </div>
     </div>
@@ -2111,6 +2138,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="bt-img"><img id="hm-img" src="" alt="" onerror="this.style.display='none';"></div>
       <div class="hm-desc" id="hm-desc"></div>
     </div>
+    <div id="hm-lockhint" style="display:none;font-size:12.5px;color:var(--gold,#f0c060);opacity:.85;margin:-2px 0 2px;">🔒 只顯示你帳號已解鎖的 SSR 英雄</div>
     <div class="hm-filter" id="hm-filter"></div>
     <div class="hm-list" id="hm-list"></div>
     <div class="row"><button class="btn-ghost" type="button" onclick="mgHeroClose()">關閉</button><button type="button" onclick="mgHeroConfirm()">✓ 就是這一位</button></div>
@@ -2185,7 +2213,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.30.0';
+var MG_VER = 'v1.32.2';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2237,7 +2265,8 @@ var MG = {
   fb    : null,   // { app, auth, db }
   fbLoading : false,
   audioCtx : null,
-  pendingGame : null
+  pendingGame : null,
+  unlockedHeroes : null   // ★ v1.31.0 — 登入後才讀 players/{uid}.unlockedHeroes(唯讀);null=未知/訪客,Array=已解鎖清單
 };
 
 /* ── 小工具 ──────────────────────────────────────────────── */
@@ -5387,9 +5416,44 @@ function finishGame(){
  *  星等改依戰果:勝且剩 HP ≥70 ⇒ 3 星、≥40 ⇒ 2 星、>0 ⇒ 1 星;敗 ⇒ 0 星(舊:依答對率)。
  *  單一真相:mgBattleHit(ok) 是唯一的扣血入口;scoreIt(correct) 預設會呼叫它,逐事件引擎自己呼叫並以 scoreIt(x, true) 跳過,避免重複扣血。
  * ══════════════════════════════════════════════════════════ */
-var MG_BT = { HP: 100, DMG: 10, CHARGE: 3, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3 };
+/* DOT/HEALBUFF/EFF2_N:v1.31.0 四型爆發第二效果數值——小遊戲獨立設計,不綁大對抗倍率(老師裁定) */
+/* DOT/HEALBUFF/EFF2_N:v1.31.0 四型爆發第二效果數值——小遊戲獨立設計,不綁大對抗倍率(老師裁定)
+   ATK_BURST_P/ATK_BURST_N:v1.31.1(老師修正)攻擊型爆發改附帶直接傷害——玩家 10 / NPC 20(不對稱,NPC 較痛)
+   ★ DOT 更名說明(老師 v1.31.2 訂正術語):這個數值是「受到傷害時額外多扣血」= 出血/易傷/增傷,
+     不是「每回合固定扣血、不看有沒有被打中」的中毒(那種需要獨立回合計時器,本遊戲是逐題判定制沒有回合,
+     故未實作 中毒/燃燒 那種無視護盾的獨立扣血;若日後要做,需另開一個不看 shield 的扣血入口)。數值 3→5。 */
+var MG_BT = { HP: 100, DMG: 10, CHARGE: 3, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3, DOT: 5, HEALBUFF: 3, EFF2_N: 3, ATK_BURST_P: 10, ATK_BURST_N: 20 };
 var _BT = null;
 function mgHeroList(){ return (window.MG_HEROES && window.MG_HEROES.length) ? window.MG_HEROES : []; }
+/* ★ v1.31.0(老師需求「登入時只能選已解鎖SSR」)— 玩家可選清單:
+   訪客(MG.user 為空)或雲端還沒讀回來(MG.unlockedHeroes 還是 null)⇒ 不受限,64 隻全開放(老師裁定);
+   已登入且讀到清單 ⇒ 過濾成只剩 unlockedHeroes 交集;交集意外掃成 0(新帳號還沒解鎖任何SSR)⇒
+   退回全部,避免卡住新玩家(硬兜底原則,絕不讓選角視窗開出空清單)。
+   ⚠ NPC 對手不受此限,mgBattleInit 仍用 mgHeroList() 全池抽,只有「玩家自己能選誰」受限。 */
+function mgHeroSelectableList(){
+  var L = mgHeroList();
+  if(MG.user && Array.isArray(MG.unlockedHeroes)){
+    var S = {}, i; for(i = 0; i < MG.unlockedHeroes.length; i++){ S[MG.unlockedHeroes[i]] = 1; }
+    var F = []; for(i = 0; i < L.length; i++){ if(S[L[i].n]) F.push(L[i]); }
+    if(F.length) return F;
+  }
+  return L;
+}
+/* 讀 players/{uid}.unlockedHeroes(唯讀,不寫)。失敗/沒有該欄位 ⇒ 視同「還沒讀到」,選角維持不受限,絕不卡流程 */
+function mgLoadUnlockedHeroes(){
+  if(!MG.user || !MG.fb || !MG.fb.db){ return; }
+  MG.fb.db.collection('players').doc(MG.user.uid).get().then(function(snap){
+    var d = snap && snap.exists ? snap.data() : null;
+    MG.unlockedHeroes = (d && Array.isArray(d.unlockedHeroes)) ? d.unlockedHeroes : [];
+    /* 目前選的英雄若不在解鎖清單內(例如訪客時選了、登入後才發現沒解鎖)⇒ 換一隻已解鎖的 */
+    try{
+      var cur = null; var n = localStorage.getItem('_mgHero'); if(n) cur = mgHeroByName(n);
+      if(cur){ var SL = mgHeroSelectableList(), ok = false, i; for(i = 0; i < SL.length; i++){ if(SL[i].n === cur.n){ ok = true; break; } } if(!ok){ localStorage.removeItem('_mgHero'); } }
+    }catch(e2){}
+    try{ if($('hero-modal') && $('hero-modal').classList.contains('show')){ _HM.sel = null; mgHeroPaintPicker(); } }catch(e3){}
+    try{ mgHeroPaintModal(); }catch(e4){}
+  })['catch'](function(){ /* 讀失敗:維持 null=不受限,不卡玩家 */ });
+}
 function mgHeroByName(n){ var L = mgHeroList(), i; for(i = 0; i < L.length; i++){ if(L[i].n === n) return L[i]; } return null; }
 function mgHeroUrl(p){ if(!p) return ''; return (p.indexOf('http') === 0) ? p : ((window.MG_HERO_BASE || MG_IMG_BASE) + p); }
 function mgBurstDef(cls){ var D = window.MG_BURST_DEF || {}; return D[cls] || D.atk || { icon:'⚔', name:{ s:'攻擊型' }, p:{ s:'' }, npc:{ s:'' }, gif:'', tint:'rgba(255,255,255,.15)' }; }
@@ -5398,7 +5462,12 @@ function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' |
 function mgHeroCur(){
   var n = null, h = null; try{ n = localStorage.getItem('_mgHero'); }catch(e){}
   if(n) h = mgHeroByName(n);
-  if(!h){ var L = mgHeroList(); if(!L.length) return null; h = L[Math.floor(Math.random() * L.length)]; mgHeroSet(h.n); }
+  var SL = mgHeroSelectableList();
+  if(h && MG.user && Array.isArray(MG.unlockedHeroes)){
+    var ok = false, i; for(i = 0; i < SL.length; i++){ if(SL[i].n === h.n){ ok = true; break; } }
+    if(!ok) h = null;   /* 已登入且已讀到清單,但存的英雄不在已解鎖清單裡 ⇒ 換一隻 */
+  }
+  if(!h){ if(!SL.length) return null; h = SL[Math.floor(Math.random() * SL.length)]; mgHeroSet(h.n); }
   return h;
 }
 function mgHeroSet(n){ try{ localStorage.setItem('_mgHero', n); }catch(e){} }
@@ -5431,8 +5500,14 @@ window.mgHeroConfirm = function(){
 window.mgHeroFilter = function(c){ _HM.filter = (_HM.filter === c) ? '' : c; mgHeroPaintPicker(); playSfx('sfx-tap', 0.25); };
 window.mgHeroPick = function(n){ _HM.sel = n; mgHeroPaintPicker(); playSfx('sfx-sel', 0.3); };
 function mgHeroPaintPicker(){
-  var L = mgHeroList(), h = mgHeroByName(_HM.sel) || L[0], i, html = '', keys = ['atk', 'heal', 'shd', 'ctrl'], k;
+  var L = mgHeroSelectableList(), h = mgHeroByName(_HM.sel) || L[0], i, html = '', keys = ['atk', 'heal', 'shd', 'ctrl'], k;
   if(!h) return;
+  /* ★ v1.31.0 — 已登入且清單確實受限時,提示一下(避免玩家以為英雄變少是bug) */
+  try{
+    var hint = $('hm-lockhint');
+    var limited = !!(MG.user && Array.isArray(MG.unlockedHeroes) && MG.unlockedHeroes.length && L.length < mgHeroList().length);
+    if(hint) hint.style.display = limited ? '' : 'none';
+  }catch(e0){}
   var im = $('hm-img'); if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
   var d = mgBurstDef(mgHeroCls(h));
   $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p));
@@ -5452,8 +5527,9 @@ function mgBattleInit(x){
   var ph = mgHeroCur(), pool = [], i;
   for(i = 0; i < L.length; i++){ if(L[i] !== ph) pool.push(L[i]); }
   var nh = pool.length ? pool[Math.floor(Math.random() * pool.length)] : ph;
-  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0 },
-          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0 },
+  /* healBuff/dmgReduceLeft/dotLeft:v1.31.0 四型爆發第二效果(見 MG_BURST_DEF 註解)的計數狀態,初始 0 */
+  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0 },
+          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -5464,6 +5540,10 @@ function mgBattleInit(x){
   $('bt-n-name').innerHTML = esc(nh.n) + '<span class="bt-cls">' + esc(mgHeroLabel(nh)) + '</span>';
   $('bt-p-bn').textContent = ph.bn || tx(mgBurstDef(mgHeroCls(ph)).name);
   $('bt-n-bn').textContent = nh.bn || tx(mgBurstDef(mgHeroCls(nh)).name);
+  /* ★ v1.32.0 — 直式大卡新增效果說明(取代等級/攻擊特技速度/S1S2);玩家看 p 版文案、NPC 看 npc 版文案 */
+  var peff = $('bt-p-eff'), neff = $('bt-n-eff');
+  if(peff) peff.textContent = tx(mgBurstDef(mgHeroCls(ph)).p);
+  if(neff) neff.textContent = tx(mgBurstDef(mgHeroCls(nh)).npc);
   var fz = $('bt-frz'); if(fz) fz.classList.remove('on');
   show('mgbattle');
   mgBattlePaint();
@@ -5486,13 +5566,30 @@ function mgBattlePaint(){
     var bar = $('bt-' + s + '-hp'), num = $('bt-' + s + '-hpn'), sh = $('bt-' + s + '-sh'), ch = $('bt-' + s + '-ch'), bb = $('bt-' + s + '-burst');
     if(bar){ bar.style.width = S.hp + '%'; if(S.hp <= 30) bar.classList.add('low'); else bar.classList.remove('low'); }
     if(num) num.textContent = S.hp + ' / ' + MG_BT.HP;
-    if(sh) sh.textContent = S.shield > 0 ? ('🛡×' + S.shield + (MG.lang === 'en' ? ' shield' : ' 護盾')) : '';
+    /* v1.31.0 — 第二效果狀態顯示:護盾優先顯示;沒護盾時輪流顯示減傷/易傷/回血加成剩餘次數,讓玩家看得到還在生效 */
+    if(sh){
+      if(S.shield > 0) sh.textContent = '🛡×' + S.shield + (MG.lang === 'en' ? ' shield' : ' 護盾');
+      else if(S.dmgReduceLeft > 0) sh.textContent = '🛡½×' + S.dmgReduceLeft + (MG.lang === 'en' ? ' dmg-50%' : ' 減傷');
+      else if(S.dotLeft > 0) sh.textContent = '🩸×' + S.dotLeft + (MG.lang === 'en' ? ' bleed' : ' 易傷');
+      else if(S.healBuff > 0) sh.textContent = '💚×' + S.healBuff + (MG.lang === 'en' ? ' regen' : ' 回血');
+      else sh.textContent = '';
+    }
     var dots = '', k; for(k = 0; k < MG_BT.CHARGE; k++) dots += (k < S.charge) ? '●' : '○';
     if(ch) ch.textContent = dots;
     if(bb){
       var ready = (S.charge >= MG_BT.CHARGE) && !_BT.over;
       if(ready) bb.classList.add('ready'); else bb.classList.remove('ready');
       if(s === 'p') bb.disabled = !ready;
+    }
+    /* ★ v1.32.2(老師需求「就是依照大對抗的極限爆發那種呈現方式」)— 大對抗爆發鍵充滿時,字樣改成通用的
+       「⚡ 極限爆發」召喚字樣(不是招式名),搭配既有 .ready 金色脈動發光一起吸睛,充滿前仍照舊顯示招式名預告。
+       只套用在玩家自己可按的鈕(bt-p-bn);NPC 卡是純資訊顯示,維持一律顯示招式名不切換。 */
+    if(s === 'p'){
+      var bn = $('bt-p-bn');
+      if(bn){
+        var readyTxt = (MG.lang === 'en') ? '⚡ ULTIMATE READY!' : (MG.style === 's' ? '⚡ 可以爆發了!' : '⚡ 極限爆發');
+        bn.textContent = ready ? readyTxt : ((_BT.p.h && _BT.p.h.bn) || tx(mgBurstDef(mgHeroCls(_BT.p.h)).name));
+      }
     }
   }
 }
@@ -5513,8 +5610,11 @@ function mgBattleFxAttack(from, dmgText, cls){
     setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 420);
     var card = $('bt-' + (from === 'p' ? 'n' : 'p'));
     if(card){ card.classList.remove('hurt'); void card.offsetWidth; card.classList.add('hurt'); setTimeout(function(){ card.classList.remove('hurt'); }, 500); }
+    /* ★ v1.32.1 — 出手方自己也給個輕頓挫,「打人」跟「被打」手感要分得出來 */
+    var atkCard = $('bt-' + from);
+    if(atkCard){ atkCard.classList.remove('hitpunch'); void atkCard.offsetWidth; atkCard.classList.add('hitpunch'); setTimeout(function(){ atkCard.classList.remove('hitpunch'); }, 350); }
     mgBattleFloat(x2, y2 - 10, dmgText, cls);
-    mgFx('spark', x2, y2, 110, 600);
+    mgFx('spark', x2, y2, 130, 650);
   }catch(e){}
 }
 function mgBattleFloat(x, y, text, cls){
@@ -5533,7 +5633,13 @@ function mgBattleHit(ok){
   if(ok){
     _BT.hits++;
     if(N.shield > 0){ N.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('n', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
-    else{ N.hp = Math.max(0, N.hp - MG_BT.DMG); playSfx('sfx-gunshot', 0.5); mgBattleFxAttack('p', '−' + MG_BT.DMG); }
+    else{
+      var dmgP = MG_BT.DMG;
+      if(N.dmgReduceLeft > 0){ N.dmgReduceLeft--; dmgP = Math.round(dmgP / 2); }               /* 護盾型第二效果:護盾耗盡後再減傷 */
+      if(N.dotLeft > 0){ N.dotLeft--; dmgP += MG_BT.DOT; }                                       /* 攻擊型第二效果:對手易傷/出血,受傷加深 */
+      N.hp = Math.max(0, N.hp - dmgP); playSfx('sfx-gunshot', 0.5); mgBattleFxAttack('p', '−' + dmgP);
+      if(P.healBuff > 0){ P.healBuff--; P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEALBUFF); mgBattleFloatOn('p', '+' + MG_BT.HEALBUFF, 'heal'); }   /* 回復型第二效果:自己出手順便回血 */
+    }
     if(P.charge < MG_BT.CHARGE){
       P.charge++;
       if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-recharge', 0.6); try{ var r = $('bt-p-burst').getBoundingClientRect(); mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 120, 700); }catch(e){} }
@@ -5541,7 +5647,13 @@ function mgBattleHit(ok){
   }else{
     _BT.miss++;
     if(P.shield > 0){ P.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
-    else{ P.hp = Math.max(0, P.hp - MG_BT.DMG); playSfx('sfx-explode', 0.4); mgBattleFxAttack('n', '−' + MG_BT.DMG); mgBattleVibe(120); }
+    else{
+      var dmgN = MG_BT.DMG;
+      if(P.dmgReduceLeft > 0){ P.dmgReduceLeft--; dmgN = Math.round(dmgN / 2); }
+      if(P.dotLeft > 0){ P.dotLeft--; dmgN += MG_BT.DOT; }
+      P.hp = Math.max(0, P.hp - dmgN); playSfx('sfx-explode', 0.4); mgBattleFxAttack('n', '−' + dmgN); mgBattleVibe(120);
+      if(N.healBuff > 0){ N.healBuff--; N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEALBUFF); mgBattleFloatOn('n', '+' + MG_BT.HEALBUFF, 'heal'); }
+    }
     if(N.charge < MG_BT.CHARGE){
       N.charge++;
       if(N.charge >= MG_BT.CHARGE){ mgBattlePaint(); if(_BT.npcT) clearTimeout(_BT.npcT); _BT.npcT = setTimeout(mgBattleNpcBurst, 700); }
@@ -5584,17 +5696,26 @@ function mgBattleEnd(res){
 /* ── 玩家極限爆發 ── */
 window.mgBattleBurst = function(){
   if(!_BT || _BT.over || _PZ.on) return;
-  var P = _BT.p; if(P.charge < MG_BT.CHARGE) return;
+  var P = _BT.p, N = _BT.n; if(P.charge < MG_BT.CHARGE) return;
   var cls = mgHeroCls(P.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
   /* 攻擊型/控場型只在「作答中」有意義;答完題等下一題時按了等於浪費 ⇒ 擋下並提示 */
   if((cls === 'atk' || cls === 'ctrl') && eng !== 'react' && MG.answered){ toast(MG.style === 's' ? '等下一題開始再用!' : '這一型的爆發要在作答中使用,等下一題開始再按'); playSfx('sfx-cancel', 0.35); return; }
   if(cls === 'atk' && !mgBurstAtkApply(eng)){ toast(MG.style === 's' ? '這裡沒有可以打掉的錯誤答案' : '目前畫面沒有可刪除的錯誤答案,先留著'); playSfx('sfx-cancel', 0.35); return; }
   P.charge = 0; P.used++;
-  if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
-  else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
-  else if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
+  /* v1.31.0 第二效果:heal→接下來自己出手順便回血 / shd→護盾用完後再減傷 / atk→對手中招陷入易傷 / ctrl→對手爆發條倒退 */
+  if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); P.healBuff = MG_BT.EFF2_N; mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
+  else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; P.dmgReduceLeft = MG_BT.EFF2_N; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
+  else if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); N.charge = Math.max(0, N.charge - 1); mgBattlePaint(); }
+  /* ★ v1.31.1(老師修正)— 攻擊型玩家版:原本只刪 3 個錯答,改成「刪 3 個錯答 + 直接扣對手 10 HP」;
+     立即刪錯答的效果在 mgBurstAtkApply 已處理,這裡補「直接傷害」+ 沿用既有「對手易傷」第二效果 */
+  if(cls === 'atk'){
+    N.dotLeft = MG_BT.EFF2_N;
+    N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P);
+    mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P);
+  }
   mgBurstCinematic('p', P.h, d, tx(d.p));
   mgBattlePaint();
+  mgBattleCheckKO();   /* ★ v1.31.1 — 攻擊型現在會直接扣血,補上結算檢查(過去這型不會直接傷血,漏掉沒事;現在會) */
 };
 /* ── NPC 自動爆發(玩家答錯 3 次充滿) ── */
 function mgBattleNpcBurst(){
@@ -5602,12 +5723,18 @@ function mgBattleNpcBurst(){
   var N = _BT.n, P = _BT.p; if(N.charge < MG_BT.CHARGE) return;
   var cls = mgHeroCls(N.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
   N.charge = 0; N.used++;
-  if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
-  else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
-  else if(cls === 'atk'){ P.hp = Math.max(0, P.hp - MG_BT.DMG); mgBattleFxAttack('n', '−' + MG_BT.DMG); mgBattleVibe(200); }
+  /* v1.31.0 第二效果(NPC 版,與玩家版對稱):heal→接下來自己出手順便回血 / shd→護盾用完後再減傷 /
+     atk→對手(玩家)中招陷入易傷 / ctrl→對手(玩家)爆發條倒退 */
+  if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); N.healBuff = MG_BT.EFF2_N; mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
+  else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; N.dmgReduceLeft = MG_BT.EFF2_N; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
+  else if(cls === 'atk'){
+    /* ★ v1.31.1(老師修正)— 攻擊型 NPC 版:直接傷害 10→20(NPC 版較痛) */
+    P.hp = Math.max(0, P.hp - MG_BT.ATK_BURST_N); P.dotLeft = MG_BT.EFF2_N; mgBattleFxAttack('n', '−' + MG_BT.ATK_BURST_N); mgBattleVibe(200);
+  }
   else if(cls === 'ctrl'){
     if(eng === 'react'){ if(_RC && !_RC.paused) _RC.endAt = Math.max((new Date()).getTime() + 1000, _RC.endAt - MG_BT.CTRL_MS); }
     else if(MG.timer && !MG.answered){ MG.tleft = Math.max(1, MG.tleft - MG_BT.CTRL_MS / 1000); }
+    P.charge = Math.max(0, P.charge - 1);
     mgBattleFloatOn('p', '−10s', 'block');
   }
   mgBurstCinematic('n', N.h, d, tx(d.npc));
@@ -5731,6 +5858,17 @@ function mgBurstCinematic(side, h, d, effText){
     var img = document.createElement('div');
     img.className = 'bt-cine-img';
     img.style.backgroundImage = 'url("' + mgHeroUrl(h && h.img) + '")';
+    /* ★ v1.31.0(老師需求「圖片顯示要完整置中」)— 舊碼全英雄共用固定 14% 裁切,身形較高/構圖不同的
+       立繪(如巫女)頭腳被裁掉。分兩種:
+       ① 主程式 HERO_IMG_POS 有調過的英雄(53隻)→ 沿用該值,比照大對抗 getHeroObjPos() 邏輯 cover+定位裁切;
+       ② 只在小遊戲出現、主程式沒有調過位置資料的英雄(11隻,如巫女)→ 沒有依據可裁,改用 contain 完整顯示
+          全身不裁切(背景漸層仍在,不會露白),避免用猜的位置又裁到別的部位。 */
+    if(h && h.full){
+      img.style.backgroundSize = 'contain';
+      img.style.backgroundPosition = (isNpc ? 'right center' : 'left center');
+    }else{
+      img.style.backgroundPosition = 'center ' + ((h && h.pos) || '14%');
+    }
     wrap.appendChild(img);
     var grad = document.createElement('div'); grad.className = 'bt-cine-grad'; wrap.appendChild(grad);
     var lines = document.createElement('div');
@@ -5790,7 +5928,8 @@ function mgBattleScore(){
  *  Firebase — 只在按「登入」時才動態載入
  *  ★ 獨立 app 名稱 'minigame' + SESSION persistence:
  *    讀不到主程式殘留 token、關掉 App 就忘記 ⇒ 共用平板不會記到別人頭上。
- *  ★ 只寫 minigameScores/{uid},絕不碰 players/。
+ *  ★ 只寫 minigameScores/{uid};players/ 維持絕不寫入(v1.31.0 起新增一個唯讀例外——
+ *    戰鬥模式選角讀 players/{uid}.unlockedHeroes 決定可選英雄範圍,純讀取,不影響此鐵律)。
  * ══════════════════════════════════════════════════════════ */
 var FB_CFG = {
   apiKey: "AIzaSyDTsWozvDMoJyDhPmiYi1QZ31rlyy7fxZc",
@@ -5902,11 +6041,13 @@ function mgLoading(on){
 }
 function onUser(u){
   MG.user = u || null;
+  MG.unlockedHeroes = null;   /* ★ v1.31.0 — 每次登入/登出狀態改變都重置,避免殘留上一個帳號的解鎖清單 */
   var btn = $('login-btn'), who = $('who');
   if(u){
     btn.textContent = '登出';
     who.textContent = (u.displayName || u.email || '已登入');
     loadCloud();
+    mgLoadUnlockedHeroes();   /* ★ v1.31.0 — 唯讀 players/{uid}.unlockedHeroes,決定戰鬥模式選角範圍 */
     /* ★ v1.10.0 週排行榜:重抓週文件同步「我本週各遊戲最高分」;老師登入順便建檔 */
     MG.wk.mine = {};
     /* ★ v1.27.0 — 舊碼 force:true 每次登入都重新 REST 讀一次全校共用的 stats/minigameWeekly，
