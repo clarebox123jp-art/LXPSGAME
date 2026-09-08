@@ -1,5 +1,9 @@
 /* ============================================================================
- * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.32.1(2026-09-08)
+ * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.33.1(2026-09-08)
+ * ★ v1.33.1(老師截圖回報):台灣飛飛飛(map)嘉義題簡單風問法「嘉義最有名的小吃是?」跟點地圖答題機制
+ *   對不起來(答案該是地名不是小吃名),改為「哪個城市的火雞肉飯最有名?」;掃過其餘 65 題確認無同型問題。
+ * ★ v1.33.0(老師需求):MG_HEROES 64 隻補 eff2:{t,v}(逐英雄爆發第二效果,依主程式 BURST_DB 真實爆發技能
+ *   特色分配 heal/dmgred/bleed/drain/shield/charge 六種機制,64 筆全不同);MG_BURST_DEF 只留 4 型基礎效果文案。
  * ★ v1.32.1(老師需求):MG_HEROES 64 隻補 pos(逐英雄立繪裁切位置,取自主程式 HERO_IMG_POS)/full(無資料
  *   者改完整顯示不裁切)兩欄位;MG_BURST_DEF 四型爆發文案改寫(各追加第二效果+攻擊型直接傷害改版+易傷術語訂正)。
  * ★ v1.26.0(2026-09-07):版號同步(資料未改)
@@ -1679,7 +1683,7 @@ window.MG_GAMES = [
       why: { s: '阿里山在嘉義。', f: '阿里山森林鐵路從嘉義市開到阿里山,是世界知名的高山鐵路。', en: 'The Alishan Forest Railway runs from Chiayi City up to Alishan — a world-famous mountain railway.' } },
     { a: 'chiayi', q: { s: '北回歸線經過哪個縣?', f: '北回歸線標誌塔位於嘉義和哪裡?', en: 'Which county does the Tropic of Cancer pass through?' },
       why: { s: '北回歸線經過嘉義。', f: '北回歸線通過嘉義縣水上鄉和花蓮,以南是熱帶、以北是副熱帶。', en: 'The Tropic of Cancer runs through Chiayi\'s Shuishang Township and Hualien, marking the line between tropical and subtropical climate.' } },
-    { a: 'chiayi', q: { s: '嘉義最有名的小吃是?', f: '以火雞肉飯聞名的城市是?', en: 'Which city is famous for turkey rice?' },
+    { a: 'chiayi', q: { s: '哪個城市的火雞肉飯最有名?', f: '以火雞肉飯聞名的城市是?', en: 'Which city is famous for turkey rice?' },
       why: { s: '嘉義火雞肉飯。', f: '嘉義市的火雞肉飯全台聞名,嘉義縣有阿里山和東石漁港。', en: 'Chiayi City\'s turkey rice is famous islandwide; Chiayi County is home to Alishan and Dongshi Fishing Port.' } },
     { a: 'tainan', pic: 'map_lm_tainan', q: { s: '安平古堡、赤崁樓在哪裡?', f: '荷蘭人建的熱蘭遮城(安平古堡)位於?', en: 'Which city are Anping Fort and Chihkan Tower in?' },
       why: { s: '台南。', f: '台南是台灣最早開發的城市,古蹟最多,清代是台灣府所在地。', en: 'Tainan, Taiwan\'s earliest-developed city, has the most historic sites and was the seat of Taiwan Prefecture in the Qing era.' } },

@@ -1656,7 +1656,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-dmg.block{color:#9fd0ff;font-size:20px;}
 /* 爆發全螢幕:tint 底 + 主程式 BURST_GIF_DB 的 GIF + 英雄名/招式名/效果(不用影片) */
 #bt-burstfx{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;animation:btfxin .25s;}
-#bt-burstfx img.gif{max-width:70vw;max-height:58vh;object-fit:contain;}
+#bt-burstfx img.gif{max-width:100vw;max-height:100vh;width:100vw;height:100vh;object-fit:contain;}
 #bt-burstfx .bt-bfname{font-size:clamp(22px,3.4vw,44px);font-weight:900;color:var(--gold);text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 20px rgba(240,192,96,.7);margin-top:6px;text-align:center;padding:0 12px;}
 #bt-burstfx .bt-bfname.npc{color:#ff8f8f;}
 #bt-burstfx .bt-bfeff{font-size:clamp(14px,1.8vw,24px);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.95);margin-top:4px;text-align:center;padding:0 12px;}
@@ -1771,6 +1771,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <audio id="sfx-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/game_explosion2.mp3"></audio>
 <audio id="sfx-cancel"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%96%E6%B6%88.mp3"></audio>
 <audio id="sfx-recharge" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A3%9C%E5%85%85%E8%83%BD%E9%87%8F.mp3"></audio>
+<!-- ★ v1.34.0(老師需求)— 爆發技能使用時(mgBurstCinematic 施放瞬間)/爆發充滿可用時(mgBattleHit 充能滿) 各自專屬音效 -->
+<audio id="sfx-burst-use"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
+<audio id="sfx-burst-ready" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A5%B5%E9%99%90%E7%88%86%E7%99%BC%E5%87%BA%E7%8F%BE.mp3"></audio>
 <audio id="sfx-gunshot" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84%E5%AD%90%E5%BD%88.mp3"></audio><!-- ★ v1.9.5 算數大進擊射擊音效(=主程式 sfx-gunshot 發射子彈.mp3) -->
 <!-- ★ v1.29.0 戰鬥模式:各英雄極限爆發音效(全部沿用主程式 index.html 同 id 同 src,preload=none 不影響首載;已逐檔 curl -I 驗證 200;主程式的 sfx-waterfox-burst 因 raw 404 未收錄) -->
 <audio id="sfx-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
@@ -1819,6 +1822,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      ⚠ iOS 一律禁止自動播放 ⇒ 只在使用者第一次觸碰畫面之後才起播(見 _bgmArm)。 -->
 <audio id="bgm-home"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a"></audio>
 <audio id="bgm-play"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94.mp3"></audio>
+<!-- ★ v1.34.0(老師需求「被擊倒要放鬥技場戰鬥失敗的BGM」)— 沿用主程式同一支「戰鬥失敗.mp3」 -->
+<audio id="bgm-lose"    preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
 <audio id="bgm-result" preload="none"      src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Win.mp3"></audio>
 <!-- ★ v1.3.0(老師裁定 1甲「每款專屬 BGM」)— 新增七軌,同樣全部沿用主程式既有音樂,零新素材;
        哪一款播哪一首寫在 minigame_db.js 各款的 bgm 欄位(值 = 這裡的 id)。
@@ -2191,7 +2196,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.30.0"></script>
+<script src="minigame_db.js?v=v1.34.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2200,7 +2205,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.33.0';
+var MG_VER = 'v1.34.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -3090,20 +3095,27 @@ function startGame(x){
     }
   }
   /* ★ v1.7.0 迷宮:每關若有 variants(替代題組),隨機挑「原組或其中一組」,以淺拷貝覆蓋 marks/why(地圖 rows、hint 沿用),資料表本體不被改動 */
+  /* ★ v1.34.0(老師需求「迷宮探險王的地圖走法要隨機生成排列」)— 上面只換「內容」(哪些字是正解/陷阱),
+     地圖「走法」(rows)過去 6 關永遠固定不變,每次玩起來路線都一樣。這輪不管有沒有換到 variant,
+     每一關的 rows 都改由 mgMazeGenRandom() 依當下選定的 marks 即時生成一份新地圖,內容題庫、
+     hint、why 等文字資料完全不動,只有「牆長在哪裡、路怎麼走」是隨機的。 */
   if(x.engine === 'maze'){
     MG.order = MG.order.map(function(lv){
-      if(!lv.variants || !lv.variants.length) return lv;
-      var v, pickI, cp = {}, k;
-      /* ★ v1.10.0 專注課堂複習:有勾選單元的 variants 就只在那些裡面隨機 */
-      var _crv = mgCrActive() ? lv.variants.filter(function(vv){ return vv.cr && MG.cr.units[vv.cr]; }) : [];
-      if(_crv.length){ v = _crv[Math.floor(Math.random() * _crv.length)]; }
-      else{
-        pickI = Math.floor(Math.random() * (lv.variants.length + 1));
-        if(pickI === 0) return lv;
-        v = lv.variants[pickI - 1];
+      var cp, k, v, pickI;
+      if(lv.variants && lv.variants.length){
+        cp = {};
+        var _crv = mgCrActive() ? lv.variants.filter(function(vv){ return vv.cr && MG.cr.units[vv.cr]; }) : [];
+        if(_crv.length){ v = _crv[Math.floor(Math.random() * _crv.length)]; }
+        else{
+          pickI = Math.floor(Math.random() * (lv.variants.length + 1));
+          v = (pickI === 0) ? null : lv.variants[pickI - 1];
+        }
+        for(k in lv){ if(lv.hasOwnProperty(k) && k !== 'variants') cp[k] = lv[k]; }
+        if(v){ cp.marks = v.marks; if(v.why) cp.why = v.why; if(v.hint) cp.hint = v.hint; if(v.q) cp.q = v.q; if(v.cr) cp.cr = v.cr; }
+      }else{
+        cp = {}; for(k in lv){ if(lv.hasOwnProperty(k)) cp[k] = lv[k]; }
       }
-      for(k in lv){ if(lv.hasOwnProperty(k) && k !== 'variants') cp[k] = lv[k]; }
-      cp.marks = v.marks; if(v.why) cp.why = v.why; if(v.hint) cp.hint = v.hint; if(v.q) cp.q = v.q; if(v.cr) cp.cr = v.cr;
+      try{ var gen = mgMazeGenRandom(cp.marks); if(gen) cp.rows = gen.rows; }catch(_eMaze){}   /* 生成失敗一律退回原本固定地圖,絕不卡流程 */
       return cp;
     });
   }
@@ -4583,6 +4595,71 @@ function _matchFinish(){
  * ══════════════════════════════════════════════════════════ */
 var _MZ = null;
 
+/* ★ v1.34.0(老師需求「迷宮探險王的地圖走法要隨機生成排列」)— 依當下選定的 marks(3 個正解+3 個陷阱字)
+   即時生成一份新地圖:固定 6×6 格,S/G 隨機挑對角兩個角落,6 個標記字隨機灑在其餘格子,
+   接著從「全部都是地板」開始,逐格隨機嘗試變成牆(#),每次都先確認「S、G、6個標記字」彼此仍然連通
+   (BFS 檢查)才真的變牆,連通會斷掉就放棄那一格改地板 ⇒ 保證這份地圖一定走得通,不會生出無解地圖。
+   牆的密度抓約 22%(比照舊版 6 關手工地圖大約的疏密感)。任何例外由呼叫端 try/catch 接住退回原地圖。 */
+function mgMazeGenRandom(marks){
+  if(!marks) return null;
+  var W = 6, H = 6, total = W * H, i, r, c, k;
+  var okKeys = [], badKeys = [];
+  for(k in marks){ if(marks.hasOwnProperty(k)){ if(marks[k] && marks[k].ok) okKeys.push(k); else badKeys.push(k); } }
+  if(!okKeys.length && !badKeys.length) return null;
+  function idx(rr, cc){ return rr * W + cc; }
+  var corners = [[0, 0], [0, W - 1], [H - 1, 0], [H - 1, W - 1]];
+  var ci = Math.floor(Math.random() * 4);
+  var sPos = corners[ci], gPos = corners[3 - ci];
+  var sIdx = idx(sPos[0], sPos[1]), gIdx = idx(gPos[0], gPos[1]);
+  var pool = [];
+  for(i = 0; i < total; i++){ if(i !== sIdx && i !== gIdx) pool.push(i); }
+  for(i = pool.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+  var markKeys = okKeys.concat(badKeys);
+  var needCells = Math.min(markKeys.length, pool.length);
+  var markCells = pool.slice(0, needCells);
+  var special = [sIdx, gIdx].concat(markCells);
+  var grid = []; for(i = 0; i < total; i++) grid.push(true);   /* true=地板 false=牆 */
+  function connected(){
+    var seen = {}, stack = [sIdx]; seen[sIdx] = true;
+    while(stack.length){
+      var cur = stack.pop(), rr = Math.floor(cur / W), cc = cur % W;
+      var dirs = [[rr - 1, cc], [rr + 1, cc], [rr, cc - 1], [rr, cc + 1]], d;
+      for(d = 0; d < 4; d++){
+        var nr = dirs[d][0], nc = dirs[d][1];
+        if(nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
+        var ni = idx(nr, nc);
+        if(grid[ni] && !seen[ni]){ seen[ni] = true; stack.push(ni); }
+      }
+    }
+    var s2; for(s2 = 0; s2 < special.length; s2++){ if(!seen[special[s2]]) return false; }
+    return true;
+  }
+  var wallCand = [];
+  for(i = 0; i < pool.length; i++){ if(markCells.indexOf(pool[i]) < 0) wallCand.push(pool[i]); }
+  for(i = wallCand.length - 1; i > 0; i--){ var j2 = Math.floor(Math.random() * (i + 1)); var t2 = wallCand[i]; wallCand[i] = wallCand[j2]; wallCand[j2] = t2; }
+  var targetWalls = Math.floor(total * 0.22), wallsSet = 0;
+  for(i = 0; i < wallCand.length && wallsSet < targetWalls; i++){
+    var cand = wallCand[i];
+    grid[cand] = false;
+    if(!connected()) grid[cand] = true; else wallsSet++;
+  }
+  var markMap = {};
+  for(i = 0; i < markCells.length; i++) markMap[markCells[i]] = markKeys[i];
+  var rowsArr = [];
+  for(r = 0; r < H; r++){
+    var line = '';
+    for(c = 0; c < W; c++){
+      var ii = idx(r, c);
+      if(ii === sIdx) line += 'S';
+      else if(ii === gIdx) line += 'G';
+      else if(markMap[ii]) line += markMap[ii];
+      else if(grid[ii]) line += '.';
+      else line += '#';
+    }
+    rowsArr.push(line);
+  }
+  return { rows: rowsArr };
+}
 function renderMaze(x, lv){
   /* ★ v1.3.1:原本 hide('card-area') 再寫 qcard ⇒ 題目「踩過所有○○」根本沒顯示過,
      學生只看到一堆地名不知道要挑什麼(老師:「內容太單調、提示要加強」的根源之一)。改為顯示題卡。 */
@@ -5655,7 +5732,7 @@ function mgBattleHit(ok){
     }
     if(P.charge < MG_BT.CHARGE){
       P.charge++;
-      if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-recharge', 0.6); try{ var r = $('bt-p-burst').getBoundingClientRect(); mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 120, 700); }catch(e){} }
+      if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-burst-ready', 0.65); try{ var r = $('bt-p-burst').getBoundingClientRect(); mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 120, 700); }catch(e){} }   /* ★ v1.34.0 — 爆發充滿可用時的專屬音效 */
     }
   }else{
     _BT.miss++;
@@ -5702,7 +5779,7 @@ function mgBattleEnd(res){
   try{ var ko = document.createElement('div'); ko.id = 'bt-ko'; ko.className = (res === 'win') ? '' : 'lose'; ko.textContent = (res === 'win') ? 'K.O.!' : (MG.lang === 'en' ? 'DOWN…' : '被打倒了…'); document.body.appendChild(ko); }catch(e){}
   playSfx($('sfx-ko') ? 'sfx-ko' : 'sfx-explode', 0.7);
   if(res === 'win'){ mgFxFull('focus', 900); playSfx('sfx-clap', 0.4); }
-  else mgBattleVibe(300);
+  else{ mgBattleVibe(300); bgmPlay('bgm-lose', 0.5, true); }   /* ★ v1.34.0 — 被擊倒(HP歸零/剩餘HP較低雙敗)時換播戰鬥失敗BGM */
   if(_BT.endT) clearTimeout(_BT.endT);
   _BT.endT = setTimeout(function(){ try{ var k = $('bt-ko'); if(k && k.parentNode) k.parentNode.removeChild(k); }catch(e){} if(MG.cur && !$('page-play').classList.contains('hidden')) finishGame(); }, 1700);
 }
@@ -5898,7 +5975,7 @@ function mgBurstCinematic(side, h, d, effText){
     document.body.appendChild(wrap);
     void wrap.offsetWidth;
     wrap.className += ' show';
-    playSfx('sfx-enter', 0.4);
+    playSfx('sfx-burst-use', 0.6);   /* ★ v1.34.0(老師需求)— 爆發技能使用時的專屬音效 */
     setTimeout(function(){
       try{
         wrap.className = wrap.className.replace(' show', '') + ' fadeout';
