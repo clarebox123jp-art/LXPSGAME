@@ -15,7 +15,20 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.26.0(2026-09-07)
+     小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.27.0(2026-09-08)
+     ★ v1.27.0(老師回報「25 台 iPad 同時登入很困難」，修完主程式後接著修小遊戲的登入流程):
+       小遊戲原本已經比主程式精簡很多(沒有維修/休息/停權三道閘門、不寫全校共用熱門文件)，
+       稽核找到兩個真正拖慢登入的點：①ensureFirebase 舊碼三支 Firebase compat SDK 一支接一支
+       序列下載(app→auth→firestore)，按下「登入」要等三次網路來回才彈出 Google 帳號選擇；改成
+       app-compat 到位後 auth-compat 與 firestore-compat 併發下載(兩者互不依賴、都只依賴 app 先到)，
+       省一次來回。②開機閒置後在背景把 SDK 預先載好+初始化好(不主動登入、不讀寫 Firestore)，
+       真正按登入時 SDK 多半早就備妥，近乎秒開跳出 Google 視窗；隨附修好一個潛在 bug——舊碼「已有
+       載入中就直接 reject」，只要背景預載還沒完成、學生這時按登入就會被靜默打回(登入鈕像按了沒
+       反應)，改成大家共用同一個進行中的 promise，不會有人被打回。③登入後重新讀「本週排行榜」
+       共用文件(stats/minigameWeekly)舊碼強制無視快取重讀，但開機時已經讀過一次(60 秒快取)、
+       登入通常緊接在開機幾秒內，幾乎每次都是重複讀同一份全校共用文件；改成尊重既有 60 秒快取，
+       25 台同時登入時不會疊加一批重複讀取在開機那批之上。三點皆純前端優化，minigameScores／
+       stats/minigameWeekly 的資料結構與寫入規則一行未動。
      ★ v1.26.0(老師「繼續」完成小遊戲英文版,weather 100% 完成 ⇒ 15 款小遊戲題庫本體全數 100% 英文化!):天氣小偵探(weather)188/188 項全數補上英文:36 個天氣情境分類卡(起霧/颱風/梅雨/東北季風)、50 題天氣科學小博士選擇題(霧/雲/露/霜/雨/水循環/溫度計/颱風/土石流)、cr:'6a1' 水循環與天氣系統 52 題(雲霧露霜雨雪雹成因/衛星雲圖/等壓線/鋒面/颱風構造)、cr:'4b3' 虹吸毛細表面張力水壓 50 題。直接對 g.items 全部 188 筆逐一驗證,零錯誤。至此 animal/coinrush/scale/proverb_match/maze/map/history/music/recycle/species/teaorder/proverb/heat/rock/weather 共 15 款遊戲題庫本體全數完成英文化,僅剩 scale/music 兩個「即時生成器」(MG_GEN)本輪未譯,退回中文不影響遊戲運作。 ｜ ★ v1.25.0(老師「繼續」完成小遊戲英文版,rock 100% 完成):石頭鑑定王(rock)190/190 項全數補上英文:39 個岩石鑑定卡(火成岩/沉積岩/變質岩分類)、51 題岩石科學小博士選擇題(砂岩/頁岩/玄武岩/大理岩/片麻岩/花崗岩/化石/板岩/礫岩/浮石/煤/石英岩)、cr:'6a3' 河流海岸地形與礦物基礎 50 題(侵蝕搬運堆積/河流地形/海岸地形/岩石三大類/礦物特徵)、cr:'4b4' 地震防災與地表地形 50 題(地震準備/土石流/地形分類/雨水對地表影響)。過程中又抓到 2 題因行內註解卡在 s/f 之間漏翻的題目,已修復。直接對 g.items 全部 190 筆逐一驗證,零錯誤。rock 關卡至此 100% 完成英文化。 ｜ ★ v1.24.0(老師「繼續」完成小遊戲英文版,heat 全部完成):保溫魔法師(heat)196/196 項全數補上英文,補完上一輪剩下的兩批重用複習題——cr:'6a2' 熱脹冷縮 50 題(溫度計原理/鐵軌縫隙/銅球銅環/氣球脹縮/酒精燈安全)、cr:'5b1' 燃燒與生鏽 44 題(燃燒三要素/滅火方法/氧化生鏽/防鏽/不鏽鋼)。過程中額外抓到並修復 1 題因行內註解卡在 s/f 之間而漏翻的保溫瓶真空題。直接對 g.items 全部 196 筆逐一呼叫 txq/mgOpt/txw/mgStr 驗證(非隨機抽樣),零錯誤。heat 關卡至此 100% 完成英文化。 ｜ ★ v1.23.0(老師「繼續」完成小遊戲英文版第十批,heat 第一階段):保溫魔法師(heat)101 項補上英文:36 個情境分類卡(傳導/對流/輻射)、49 題熱學科學小博士選擇題、16 個「哪個傳熱好/哪個助燃」迷你分類項目(_B_HEATCOND 導熱良導體 vs 絕熱體、_B_BURN 助燃氣體 vs 不助燃氣體)。⚠ 範圍說明:heat 另有兩批重用複習題尚未翻譯——cr:'6a2' 熱脹冷縮 50 題、cr:'5b1' 燃燒與生鏽 44 題,共 95 題留待下一輪,英文模式抽到時退回中文。直接對 g.items 逐筆呼叫 txq/mgOpt/txw/mgStr 驗證,101 個已譯項目全數正確顯示英文,零錯誤。 ｜ ★ v1.22.0(老師「繼續」完成小遊戲英文版第九批):俗諺解謎王(proverb)97 題全數補上英文。★ 沿用既有原則(俗諺本質是台語,英文版只翻『意思』選項,不硬翻俗諺本身):qen 保留台語俗諺原文(用引號),前後文框改英文「What does '「XXX」' mean?」;4 個選項與解說完整譯成英文。jsdom 25 次隨機起局實測,英文問句框架、選項、解說皆正確顯示(僅剩故意的 mgGloss 附註如蝦/廟)。 ｜ ★ v1.21.0(老師「繼續」完成小遊戲英文版第八批):排排站小達人(teaorder)116 個活躍回合全數補上英文(q/seqen/why),涵蓋急救安全(滅火器/燙傷/地震/溺水/119/AED)、生活技能(刷牙/洗衣/煮飯/搭車/借書/投票)、自然生物(蝌蚪/蝴蝶/蠶/蟬/消化道/食物鏈)、歷史(荷蘭/鄭氏/清朝/日治/交通建設演進)、節日與地理路線(火車站/捷運站/節氣)等。5 組已停用的「比大小」回合(保留註解未刪除)未譯,本就不會被玩到。jsdom 25 次隨機起局實測(選單/題卡)皆為英文。 ｜ ★ v1.20.0(老師「繼續」完成小遊戲英文版第七批):特有種大冒險(species)140 項全數補上英文:36 個分類卡(ten+why en,台灣特有種/原生種/外來入侵種)、51 題物種科學選擇題(台灣藍鵲/櫻花鉤吻鮭/紅耳龜/福壽螺/綠鬣蜥/黑熊/水獺等)、53 題生態行為複習選擇題(cr:'5b3',擬態/保護色/遷移/冬眠/食物鏈/保育觀念)。3 個回收桶(endemic/native/alien)已於 v1.11.0 完成 nen。jsdom 30 次隨機起局實測,題目/選項/物種卡/解說皆為英文。 ｜ ★ v1.19.0(老師「繼續」完成小遊戲英文版第六批):回收小英雄(recycle)130 項全數補上英文:30 個拖曳分類項目(ten+why en)、50 題回收科學選擇題、40 題電磁鐵/磁鐵複習選擇題、10 個磁鐵吸得住/吸不住拖曳項目,含 4 個回收桶(bins,已於 v1.11.0 完成 nen)。jsdom 30 次隨機起局實測(混合 quiz 與 drag 兩種引擎),題目/選項/物品名稱/籃子/解說皆為英文。 ｜ ★ v1.18.0(老師「繼續」完成小遊戲英文版第五批):音樂小精靈(music)靜態題庫 82 題全數補上 en(30 題聽力核心題型 hilo/dir/same/count/penta/song/play/score/rhythm + 52 題聲音物理選擇題),涵蓋音高音量音色、噪音防治、共鳴、樂器發聲原理等。⚠ 範圍說明:music 每局另有 `gen:'music'` 即時生成約 36 題(MG_GEN.music,minigame_db.js)本輪未譯,英文模式抽到時退回中文(既有設計,同 scale 的 MG_GEN.scale),jsdom 25 次隨機起局約 8 成命中生成題故顯示中文,靜態題庫本身逐條核對 82/83(僅 1 題死碼註解未算)皆已是英文。 ｜ ★ v1.17.0(老師「繼續」完成小遊戲英文版第四批):時光小旅人(history)87 題全數補上 qen/oen/wen,涵蓋木柵地名由來、貓空茶產業、指南宮、荷治/明鄭/清代/日治歷史、原住民族、古蹟保存等。jsdom 20 次隨機起局實測,題目/選項/解說皆為英文。 ｜ ★ v1.16.0(老師「檢查中英文是否重疊,適度縮小文字」):map 地圖上 18 個縣市標籤改為可切換英文(spots[].nen)+ 3 級縮小字級(spots[].tier,依實測與最近鄰居距離分級:tier1 2.0px 最小/tier2 2.7px 中/tier3 3.3px 較大,另兩個版面斷點同比例縮放),數學驗證北中部密集縣市(如新北/台北)標籤半寬相加後仍小於實際圓點間距,不會互相重疊;中文模式(.spotlbl 固定 4.6/4.2/4.1px)完全不受影響。 ｜ ★ v1.15.0(老師「繼續」完成小遊戲英文版第三批):台灣飛飛飛(map)92 題全數補上 q/why 的 en(18 縣市地理知識,含地標/古蹟/物產/氣候等);地圖上的縣市文字標籤(spots[].n)刻意維持中文不譯——英文縣市名普遍比中文長,SVG 地圖上 18 個小圓點緊鄰,強行換英文會重疊看不清,學生仍可依位置/形狀點選,不影響遊戲性。jsdom 15 次隨機起局實測,題目與答對解說全為英文(僅剩故意的 mgGloss 附註)。 ｜ ★ v1.14.0(老師「繼續」完成小遊戲英文版第二批):①俗諺連連看(proverb_match)9 回合的 q/why 全數補上 en(俗諺本身是台語,刻意不翻,只翻回合說明與意思,對齊老師「俗諺兩關本質是台語,英文版只翻意思」原則)。②迷宮探險王(maze)全面完成:renderMaze 新增 mark.ten 支援(mgStr 讀取,單一真相);504 個石板標記(地名/動物/物質…)全數建立英中對照表補上 ten;42 個回合(6 關主題 + 36 個帶 q 的替代題組)的 q/hint/why 全數補上 en,另 6 個純 marks+why 的替代題組以模板自動生成 en(格式「A、B、C 正確;D、E、F 不正確」)。jsdom 8 次隨機起局實測,q 與石板文字全為英文(中文僅剩故意的 mgGloss 附註,如 counties (縣))。⚠ 本輪修法途中一度因字串切片寫錯導致 39 筆資料重複/漏逗號,已完整揪出並修復,修復後重新以 node --check 全數驗證通過。 ｜ ★ v1.13.0(老師「小遊戲還有哪裡沒完成英文版,完成他」):算數大進擊(coinrush)6 關的關卡標題/提示/解說全數補上 en;秤重小老闆(scale)固定 36 題(題目/4 選項/解說)全數補上 qen/oen/wen。⚠ 範圍說明:scale 每局另有 40 題「即時生成」(MG_GEN.scale,minigame_db.js)本輪未譯,英文模式抽到時退回中文(既有設計:沒有 en 就退中文,不會出錯,只是那幾題還是中文);其餘 11 款(weather/rock/species/heat/map/history/proverb/music/recycle/teaorder,animal 已於 v1.11.0 完成、proverb_match 與 maze 已於本輪 v1.14.0 完成)題庫本體(qen/oen/wen/seqen)尚未翻譯,經估算共約 950 道題、5500+ 字串,規模遠大於本輪,留待下一輪比照本輪方式分批完成。 ｜ ★ v1.12.0(老師 2026-09-07):③算數大進擊正確比率真 50%:_reactSpawn 平衡袋(每 2 個必 1 對 1 錯)+畫面守門(活著的正確數>錯誤數就強制出錯誤)。①修 BUG:v1.11.0 txw() 誤呼叫自己 ⇒ 無限遞迴,答完題解說與「下一題」鈕不出現(中文模式全關卡);改回 tx(q.why)。②英文版專有名詞附中文:MG_EN_GLOSS 對照表 + mgGloss() 掛在所有英文出口,小學生不會的字第一次出現補「(中文)」。
      ★ v1.11.0(老師需求):語系切換 —— 右上角 #lang-btn(EN/中,localStorage mg_lang);T()/MG_EN/MG_EN_PAT 對照表 + mgLangApply 文字節點替換;tx() 支援 en 欄、txq/txw/mgOpt/mgStr/mgSeq 讀題庫英文欄;英→中直接 reload
      ★ v1.10.4(老師):首頁卡片左上角科目小標籤 .ctag(資料表 tag 欄);專注模式單元標籤下移到 top:32px
@@ -1878,7 +1891,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.26.0';
+var MG_VER = 'v1.27.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -4885,36 +4898,70 @@ var FB_CFG = {
 var FB_BASE = 'https://www.gstatic.com/firebasejs/10.12.0/';
 
 function loadScript(url){
-  return new Promise(function(res, rej){
+  /* ★ v1.27.0 — 同一支 script 若已經(或正在)注入過,回傳同一個 promise,
+     不會重複插入 <script> 標籤;preload 與登入按鈕同時呼叫時只載一次。 */
+  MG._scriptCache = MG._scriptCache || {};
+  if(MG._scriptCache[url]) return MG._scriptCache[url];
+  var p = new Promise(function(res, rej){
     var s = document.createElement('script');
     s.src = url; s.async = true;
     s.onload = function(){ res(); };
     s.onerror = function(){ rej(new Error('load fail: ' + url)); };
     document.head.appendChild(s);
   });
+  MG._scriptCache[url] = p;
+  return p;
 }
+/* ══════════════════════════════════════════════════════════
+ * ★ v1.27.0(2026-09-08・老師回報「25 台 iPad 同時登入很困難」修完主程式後接著修小遊戲)
+ * ─────────────────────────────────────────────────────────
+ *   小遊戲登入本來就比主程式精簡(沒有維修/休息/停權三道閘門、沒有寫全校共用熱門文件),
+ *   稽核找到的兩個真正拖慢點:
+ *   ①【SDK 三支 script 序列載入】舊碼 app→auth→firestore 一支接一支下載,登入當下
+ *     要等三次網路來回才能彈出 Google 帳號選擇視窗;auth-compat 與 firestore-compat
+ *     其實互不依賴、都只依賴 app-compat 先到位 ⇒ 改成 app 到位後兩支併發下載,省一次來回。
+ *   ②【按下登入才臨時載 SDK】舊設計是「省流量」考量(沒點登入的學生完全不載 Firebase),
+ *     但開學第一堂課全班幾乎都會登入,校網塞車時「按登入才開始下載三支 SDK」正是卡住的
+ *     那幾秒。改為開機閒置後(idle,不搶關鍵渲染)在背景**預先**把 SDK 載好、初始化好
+ *     (只載入+建立 auth/db 物件,不送出任何登入請求、不讀寫 Firestore),真正按登入時
+ *     SDK 多半早就備妥,近乎秒開跳出 Google 視窗。
+ *   ⚠ 修正隨附一顆潛在 bug:舊碼「若 MG.fbLoading 為 true 則直接 reject」,只要背景預載
+ *     還沒完成、學生這時剛好按登入,就會被靜默打回(catch 裡什麼都不做,登入鈕看起來像
+ *     按了沒反應)。現在改成「已有載入中的 promise 就回傳同一個」,不論誰先發起,大家都
+ *     等到同一份結果,不會有人被打回。
+ * ══════════════════════════════════════════════════════════ */
 function ensureFirebase(){
   if(MG.fb) return Promise.resolve(MG.fb);
-  if(MG.fbLoading) return Promise.reject(new Error('loading'));
+  if(MG.fbPromise) return MG.fbPromise;   // ★ v1.27.0（舊：if(MG.fbLoading) return Promise.reject(...)）
   MG.fbLoading = true;
-  toast('連線中,請稍等…');
-  return loadScript(FB_BASE + 'firebase-app-compat.js')
-    .then(function(){ return loadScript(FB_BASE + 'firebase-auth-compat.js'); })
-    .then(function(){ return loadScript(FB_BASE + 'firebase-firestore-compat.js'); })
+  var p = loadScript(FB_BASE + 'firebase-app-compat.js')
+    .then(function(){
+      return Promise.all([                 // ★ v1.27.0 auth 與 firestore 併發下載，省一次序列來回
+        loadScript(FB_BASE + 'firebase-auth-compat.js'),
+        loadScript(FB_BASE + 'firebase-firestore-compat.js')
+      ]);
+    })
     .then(function(){
       var app = window.firebase.initializeApp(FB_CFG, 'minigame');
       var auth = window.firebase.auth(app);
       var db = window.firebase.firestore(app);
       MG.fb = { app: app, auth: auth, db: db };
       MG.fbLoading = false;
+      MG.fbPromise = null;
       try{ auth.setPersistence(window.firebase.auth.Auth.Persistence.SESSION); }catch(e){}
       auth.onAuthStateChanged(function(u){ onUser(u); });
       return MG.fb;
     })['catch'](function(e){
       MG.fbLoading = false;
-      toast('連線失敗,不過不影響玩遊戲');
+      MG.fbPromise = null;
       throw e;
     });
+  MG.fbPromise = p;
+  return p;
+}
+/* ★ v1.27.0 — 開機閒置後背景預載 SDK(不主動登入、不讀寫 Firestore，見上方說明) */
+function _mgPreloadFirebase(){
+  ensureFirebase()['catch'](function(){ /* 離線/校網擋住:靜默,學生真的按登入時會再試一次 */ });
 }
 window.mgLoginTap = function(){
   playSfx('sfx-tap', 0.35);
@@ -4925,6 +4972,7 @@ window.mgLoginTap = function(){
     return;
   }
   mgLoading(true);
+  if(!MG.fb) toast('連線中,請稍等…');   // ★ v1.27.0 SDK 已預載好時（多數情況）不再多顯示這則提示
   ensureFirebase().then(function(fb){
     mgLoading(false);
     var prov = new window.firebase.auth.GoogleAuthProvider();
@@ -4933,7 +4981,7 @@ window.mgLoginTap = function(){
       // iPad standalone 常擋 popup ⇒ 退回 redirect
       return fb.auth.signInWithRedirect(prov);
     });
-  })['catch'](function(e){ mgLoading(false); /* ensureFirebase 內已提示 */ });
+  })['catch'](function(e){ mgLoading(false); toast('連線失敗,不過不影響玩遊戲'); });   // ★ v1.27.0 提示移來這裡（舊在 ensureFirebase 內，預載時不該跳提示）
 };
 /* ★ v1.3.0 — 讀取畫面(貓咪讀取中.gif);SDK 抓不到也會關(catch),12 秒硬兜底絕不卡住畫面 */
 var _loadT = null;
@@ -4956,7 +5004,11 @@ function onUser(u){
     loadCloud();
     /* ★ v1.10.0 週排行榜:重抓週文件同步「我本週各遊戲最高分」;老師登入順便建檔 */
     MG.wk.mine = {};
-    try{ mgWeekFetch(true, null); mgWeekBootstrap(); }catch(_ew){}
+    /* ★ v1.27.0 — 舊碼 force:true 每次登入都重新 REST 讀一次全校共用的 stats/minigameWeekly，
+       但 boot() 開機時已經讀過一次(60 秒快取)，登入通常緊接在開機幾秒內發生 ⇒ 幾乎每次都
+       是重複讀同一份共用文件。25 台同時登入 = 25 次多餘的重複讀取疊在開機那批之上，改成
+       force:false 尊重既有 60 秒快取，開機那次讀到的資料直接沿用；真的超過 60 秒才會重讀。 */
+    try{ mgWeekFetch(false, null); mgWeekBootstrap(); }catch(_ew){}   // ★ v1.27.0（舊：mgWeekFetch(true, null)）
   }else{
     btn.textContent = '登入';
     who.textContent = '';
@@ -5632,6 +5684,20 @@ function boot(){
   try{ mgWeekFetch(false, null); }catch(_ew){}   /* ★ v1.10.0 開機讀週排行榜文件(免登入 REST;面板/彈窗用) */
   try{ mgCrLoad(); mgCrBtnRender(); }catch(_ec){}   /* ★ v1.10.0 專注課堂複習偏好 */
   try{ mgLangLoad(); if(MG.lang === 'en'){ renderGrid(); mgLangApply(document.body); } }catch(_el){}   /* ★ v1.11.0 語系 */
+
+  /* ★ v1.27.0 — 開機閒置後背景預載 Firebase SDK(見 ensureFirebase 上方說明)。
+     ⚠ 刻意加 0～2.5 秒隨機延遲：25 台裝置同時開機時，SDK 檔案本身放在 Google 的
+     gstatic CDN(不是校內/Firestore 資源，理論上扛得住併發)，這裡延遲主要是把
+     「開機當下」真正要緊的畫面渲染、題庫/設定讀取排在前面，SDK 預載不搶頻寬。 */
+  try{
+    var _preloadFn = function(){ _mgPreloadFirebase(); };
+    var _preloadDelay = 400 + Math.floor(Math.random() * 2100);
+    if(window.requestIdleCallback){
+      requestIdleCallback(function(){ setTimeout(_preloadFn, _preloadDelay); }, { timeout: 4000 });
+    } else {
+      setTimeout(_preloadFn, _preloadDelay);
+    }
+  }catch(_epf){}
 
   // 若上次用 redirect 登入,回來時把結果接起來(不主動載 SDK)
   if(window.firebase && MG.fb){
