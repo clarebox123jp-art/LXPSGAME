@@ -377,6 +377,14 @@ button[disabled]{opacity:.45;}
   border:2px solid rgba(232,228,216,.14);
   touch-action:manipulation;
 }
+#reactbox.rshake{animation:rboxShake .4s ease-in-out;}
+@keyframes rboxShake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-6px);}
+  40%{transform:translateX(6px);}
+  60%{transform:translateX(-4px);}
+  80%{transform:translateX(4px);}
+}
 .rdrop{
   position:absolute;padding:9px 14px;border-radius:14px;
   font-size:17px;font-weight:700;white-space:nowrap;
@@ -395,6 +403,37 @@ button[disabled]{opacity:.45;}
   animation:rfl .8s ease-out forwards;z-index:9;
 }
 @keyframes rfl{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-46px);}}
+
+/* ★ v1.27.0(老師需求)— 算數大進擊:連續答錯 3 次冷卻徽章 + 連續答對 5 次時間暫停鈕
+   （皆掛在 #reactbox 內、position:absolute，box 有 position:relative 天然當定位祖先）。 */
+#react-cooldown{
+  position:absolute;left:50%;top:10px;transform:translateX(-50%);
+  background:rgba(220,60,60,.92);color:#fff;font-weight:900;font-size:15px;
+  padding:6px 16px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);
+  z-index:8;pointer-events:none;display:none;white-space:nowrap;
+}
+#react-cooldown.on{display:block;animation:rcdPulse .5s ease-in-out infinite alternate;}
+@keyframes rcdPulse{from{opacity:.85;}to{opacity:1;}}
+#react-freeze-btn{
+  position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
+  padding:10px 22px;border-radius:26px;font-size:16px;font-weight:900;
+  border:2.5px solid #666;background:rgba(80,80,80,.55);color:#999;
+  cursor:not-allowed;z-index:8;touch-action:manipulation;
+  transition:background .3s,border-color .3s,color .3s,box-shadow .3s;
+}
+#react-freeze-btn.ready{
+  border-color:#4fd1ff;background:linear-gradient(135deg,rgba(79,209,255,.5),rgba(120,110,255,.5));
+  color:#fff;cursor:pointer;box-shadow:0 0 18px rgba(79,209,255,.85);
+  animation:rfzGlow 0.9s ease-in-out infinite alternate;
+}
+@keyframes rfzGlow{from{box-shadow:0 0 10px rgba(79,209,255,.6);}to{box-shadow:0 0 26px rgba(79,209,255,1);}}
+.rdrop.rfrozen{filter:brightness(1.35) saturate(0.4) hue-rotate(150deg);box-shadow:0 0 10px rgba(120,220,255,.9);}
+#react-freeze-flash{
+  position:fixed;inset:0;z-index:9997;pointer-events:none;
+  background:radial-gradient(circle at 50% 40%,rgba(150,225,255,.35),rgba(60,140,220,.18) 60%,transparent 85%);
+  animation:rfzFlash 3s ease-out forwards;
+}
+@keyframes rfzFlash{0%{opacity:0;}8%{opacity:1;}80%{opacity:.6;}100%{opacity:0;}}
 
 /* ── 引擎 H:走迷宮(老師指定 B)──────────────
    走過的地方不能再走,而且要經過正確答案。 */
@@ -1891,7 +1930,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.27.0';
+var MG_VER = 'v1.28.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2250,6 +2289,8 @@ window.mgFullscreen = function(){
     if(ex){ try{ var pe = ex.call(document); if(pe && pe['catch']) pe['catch'](function(){}); }catch(e){} }
     return;
   }
+  window._mgFsTransitioning = true;   /* ★ v1.27.0 全螢幕切換瞬間偶發假 visibilitychange 的排除旗標(同大對抗 _lxpsFsTransitioning 設計) */
+  setTimeout(function(){ window._mgFsTransitioning = false; }, 600);
   var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   var lock = function(){ try{ if(screen.orientation && screen.orientation.lock){ var pl = screen.orientation.lock('landscape'); if(pl && pl['catch']) pl['catch'](function(){}); } }catch(e){} };
   if(req){
@@ -2271,6 +2312,23 @@ window.mgFullscreen = function(){
   }
   for(i = 0; i < evs.length; i++) document.addEventListener(evs[i], sync);
 })();
+
+/* ★ v1.27.0(老師需求「小遊戲視窗縮到最小(後台)時所有聲音也要靜音,恢復畫面時聲音恢復,如同大對抗的設計」)
+ *   完全比照大對抗 index.html 的 visibilitychange 音訊處理:切到背景時暫停全部 <audio>(記下誰原本在播),
+ *   回到前景只恢復那些原本在播的;全螢幕切換瞬間(_mgFsTransitioning)偶發的假 visibilitychange 不當一回事。
+ *   ⚠ 涵蓋 BGM(<audio id^=bgm->)與各種 sfx/音效元素,不必分開處理——document.querySelectorAll('audio') 全部一次掃過。 */
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden && !window._mgFsTransitioning){
+    document.querySelectorAll('audio').forEach(function(el){
+      if(!el.paused){ el._mgWasPlaying = true; el.pause(); }
+      else{ el._mgWasPlaying = false; }
+    });
+  }else if(!document.hidden){
+    document.querySelectorAll('audio').forEach(function(el){
+      if(el._mgWasPlaying){ var pp = el.play(); if(pp && pp['catch']) pp['catch'](function(){}); el._mgWasPlaying = false; }
+    });
+  }
+});
 
 /* ── 字體風格切換(簡單風／精緻風)────────────────────── */
 window.mgToggleStyle = function(){
@@ -3572,8 +3630,24 @@ function renderReact(x, r){
     hardHits: 0, blown: 0, paused: false, seen: {},   /* ★ v1.6.0 seen=本回合已出過的算式(防重複) */
     bag: null,   /* ★ v1.12.0 正確/錯誤平衡袋(見 _reactSpawn) */
     need: (r.need || 6), r: r,
-    endAt: (new Date()).getTime() + dur, total: dur
+    endAt: (new Date()).getTime() + dur, total: dur,
+    /* ★ v1.27.0(老師需求)— 連續答錯/答對雙軌計數:
+       wrongStreak 連續 3 次誤擊 ⇒ shootLockUntil 5 秒射擊冷卻(不清空畫面,只是打不出子彈);
+       rightStreak 連續 5 次命中 ⇒ freezeReady 亮起「時間暫停」鈕,按下凍結全畫面掉落物 3 秒。 */
+    wrongStreak: 0, rightStreak: 0, shootLockUntil: 0,
+    freezeReady: false, freezeUntil: 0
   };
+  /* ★ v1.27.0 — 冷卻徽章 + 時間暫停鈕,掛在 box 內(box.innerHTML 只在這裡清一次,本回合會一直留著) */
+  var _cd = document.createElement('div');
+  _cd.id = 'react-cooldown';
+  box.appendChild(_cd);
+  var _fz = document.createElement('button');
+  _fz.id = 'react-freeze-btn';
+  _fz.type = 'button';
+  _fz.disabled = true;
+  _fz.textContent = (MG.lang === 'en') ? '⏱ Freeze' : '⏱ 時間暫停';
+  _fz.onclick = _reactUseFreeze;
+  box.appendChild(_fz);
   _reactHud();
   box.onclick = null;
   _RC.raf = requestAnimationFrame(_reactTick);
@@ -3588,6 +3662,7 @@ function _reactHud(){
    ⚠ 掉落物在飛行期間仍會往下掉幾個像素,光彈瞄準的是「按下當下」的位置,視覺上剛好。 */
 function _reactShoot(d){
   if(!_RC || d.dead || d.locked || _RC.paused) return;
+  if(_RC.shootLockUntil && Date.now() < _RC.shootLockUntil) return;   /* ★ v1.27.0 連續誤擊 3 次的 5 秒射擊冷卻(冷卻徽章已顯示原因,這裡靜默不開槍) */
   d.locked = true;
   var box = $('reactbox'), bw = box.clientWidth, bh = box.clientHeight;
   var ew = d.el.offsetWidth || 90, eh = d.el.offsetHeight || 44;
@@ -3801,6 +3876,13 @@ function _reactHit(d){
     try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
     _reactFloat(d, '+' + _gain, '#3ec87a');
     _reactFirework(d);   /* ★ v1.9.7 老師:射中正確 ⇒ 煙火特效,把周圍「錯誤」的目標清掉(對的不動、不扣分)⇒ 解決重疊遮蔽射不到 */
+    /* ★ v1.27.0(老師需求)— 連續命中 5 次 ⇒ 時間暫停鈕亮起(可用一次;達標後歸零重新累計,避免連按觸發) */
+    _RC.wrongStreak = 0;
+    _RC.rightStreak++;
+    if(_RC.rightStreak >= 5 && !_RC.freezeReady){
+      _RC.rightStreak = 0;
+      _reactFreezeArm();
+    }
   }else{
     _RC.wrong++;
     d.el.className = 'rdrop wrong';
@@ -3808,12 +3890,71 @@ function _reactHit(d){
     playSfx('sfx-explode', 0.5);   /* ★ v1.9.7 老師:射中錯誤新增爆炸音效(game_explosion2.mp3,本頁既有 <audio>) */
     _reactFloat(d, '−1', '#e84040');
     _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
+    /* ★ v1.27.0(老師需求)— 連續誤擊 3 次 ⇒ 5 秒射擊冷卻(避免學生亂射);達標後歸零重新累計 */
+    _RC.rightStreak = 0;
+    _RC.wrongStreak++;
+    if(_RC.wrongStreak >= 3){
+      _RC.wrongStreak = 0;
+      _reactStartCooldown();
+    }
   }
   _reactHud();
   /* 被點到的那顆 0.35 秒後移走(留一下讓孩子看到回饋) */
   var el = d.el;
   setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 350);
 }
+/* ★ v1.27.0 — 連續誤擊 3 次:5 秒射擊冷卻(掉落物照常生成/掉落,只是打不出子彈,見 _reactShoot 守門) */
+function _reactStartCooldown(){
+  if(!_RC) return;
+  _RC.shootLockUntil = Date.now() + 5000;
+  try{ playSfx('sfx-cancel', 0.4); }catch(e){}
+  try{
+    var box = $('reactbox'); if(box && box.parentNode) box.classList.add('rshake');
+    setTimeout(function(){ if(box) box.classList.remove('rshake'); }, 400);
+  }catch(e){}
+}
+/* ★ v1.27.0 — 冷卻徽章倒數顯示(掛在 _reactTick 每幀更新,不另開 interval 省資源) */
+function _reactCooldownPaint(){
+  var cd = $('react-cooldown'); if(!cd || !_RC) return;
+  var left = _RC.shootLockUntil - Date.now();
+  if(left > 0){
+    cd.classList.add('on');
+    var secs = Math.ceil(left / 1000);
+    cd.textContent = (MG.lang === 'en') ? ('❄ Cooldown ' + secs + 's') : ('❄ 冷卻中 ' + secs + ' 秒');
+  }else{
+    cd.classList.remove('on');
+  }
+}
+/* ★ v1.27.0 — 連續命中 5 次:時間暫停鈕亮起(特效+音效),按下才真正凍結畫面 */
+function _reactFreezeArm(){
+  if(!_RC) return;
+  _RC.freezeReady = true;
+  var btn = $('react-freeze-btn');
+  if(btn){ btn.disabled = false; btn.classList.add('ready'); }
+  try{ playSfx('sfx-recharge', 0.7); }catch(e){}
+  try{ var r = btn && btn.getBoundingClientRect(); if(r) mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 140, 700); }catch(e){}
+}
+/* ★ v1.27.0 — 按下時間暫停鈕:全畫面掉落物凍結 3 秒(見 _reactTick 守門),鈕熄滅回灰 */
+window._reactUseFreeze = function(){
+  if(!_RC || !_RC.freezeReady || _RC.paused) return;
+  _RC.freezeReady = false;
+  _RC.freezeUntil = Date.now() + 3000;
+  var btn = $('react-freeze-btn');
+  if(btn){ btn.disabled = true; btn.classList.remove('ready'); }
+  try{ playSfx('sfx-powerup', 0.7); }catch(e){}
+  try{ mgFxFull('focus', 900); }catch(e){}
+  try{
+    var fl = document.createElement('div');
+    fl.id = 'react-freeze-flash';
+    document.body.appendChild(fl);
+    setTimeout(function(){ if(fl.parentNode) fl.parentNode.removeChild(fl); }, 3000);
+  }catch(e){}
+  try{
+    var i, d, arr = _RC.drops;
+    for(i = 0; i < arr.length; i++){ d = arr[i]; if(d && !d.dead && d.el) d.el.classList.add('rfrozen'); }
+  }catch(e){}
+};
+
 /* ★ v1.9.7 — 命中正確答案的煙火:純 CSS 粒子(14 顆彩色小球由目標中心向外炸開,0.7 秒淡出),
    不用 召喚煙火.gif(2.4MB,且 mgFx 每次帶新 query 會重抓)。同時清除半徑 R 內所有「錯誤」目標(dead+blown 淡出,不扣分、不計 blown);
    正確的保留 ⇒ 疊在一起的錯誤算式會被炸開,露出底下被遮住的目標。 */
@@ -3862,23 +4003,39 @@ function _reactTick(ts){
   var dt = Math.min(0.05, (ts - _RC.last) / 1000);   // 夾住 dt:切到背景再回來不會瞬移
   _RC.last = ts;
 
-  /* 產生新的掉落物 */
-  _RC.spawnT -= dt;
-  if(_RC.spawnT <= 0){
-    _reactSpawn();
-    _RC.spawnT = 0.55 + Math.random() * 0.45;
+  /* ★ v1.27.0 — 時間暫停鈕效果:凍結期間內(freezeUntil 未到)畫面上所有掉落物完全靜止不動、
+     也不再生成新的(讓玩家能從容清空目前這批),freezeUntil 一到自動解凍、拿掉凍結濾鏡 class。 */
+  var _frozen = _RC.freezeUntil && Date.now() < _RC.freezeUntil;
+  if(_RC.freezeUntil && !_frozen){
+    _RC.freezeUntil = 0;
+    try{
+      var _fi, _fd;
+      for(_fi = 0; _fi < _RC.drops.length; _fi++){ _fd = _RC.drops[_fi]; if(_fd && _fd.el) _fd.el.classList.remove('rfrozen'); }
+    }catch(e){}
   }
-  /* 位移 + 掉出畫面就回收(漏接正確答案不扣分,見上方註解) */
+  _reactCooldownPaint();   /* ★ v1.27.0 冷卻徽章倒數,每幀更新一次比另開 interval 省事 */
+
+  /* 產生新的掉落物 */
+  if(!_frozen){
+    _RC.spawnT -= dt;
+    if(_RC.spawnT <= 0){
+      _reactSpawn();
+      _RC.spawnT = 0.55 + Math.random() * 0.45;
+    }
+  }
+  /* 位移 + 掉出畫面就回收(漏接正確答案不扣分,見上方註解);凍結中整段跳過,掉落物原地不動 */
   var h = $('reactbox').clientHeight, i, d;
-  for(i = _RC.drops.length - 1; i >= 0; i--){
-    d = _RC.drops[i];
-    if(!d.el || !d.el.parentNode){ _RC.drops.splice(i, 1); continue; }
-    if(!d.dead){
-      d.y += d.v * dt;
-      d.el.style.transform = 'translate(' + d.x + 'px,' + d.y + 'px)';
-      if(d.y > h + 10){
-        d.el.parentNode.removeChild(d.el);
-        _RC.drops.splice(i, 1);
+  if(!_frozen){
+    for(i = _RC.drops.length - 1; i >= 0; i--){
+      d = _RC.drops[i];
+      if(!d.el || !d.el.parentNode){ _RC.drops.splice(i, 1); continue; }
+      if(!d.dead){
+        d.y += d.v * dt;
+        d.el.style.transform = 'translate(' + d.x + 'px,' + d.y + 'px)';
+        if(d.y > h + 10){
+          d.el.parentNode.removeChild(d.el);
+          _RC.drops.splice(i, 1);
+        }
       }
     }
   }
