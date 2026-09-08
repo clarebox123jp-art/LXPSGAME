@@ -270,7 +270,7 @@ window.MG_GAMES = [
   diff: 2,
   skills: ['觀察', '閱讀理解'], skillsEn: ['Observe', 'Reading'],
   thumb: '玉山頂.png',   /* ★ v1.3.1 老師:「所有題目的縮圖不重複」—— 原與製茶工坊同圖,改主程式玉山關卡圖(玉山頂.jpg 已驗 200) */
-  bgm: 'bgm-adv-scene',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-battle-01',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—貓空天氣小偵探(Taiwan科普)配 Q戰鬥音樂01(原 bgm-adv-scene 貓空冒險) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '茶葉飛舞.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '天氣觀測站的紀錄卡被風吹亂了,幫忙分類回去。',
@@ -605,7 +605,7 @@ window.MG_GAMES = [
   diff: 3,
   skills: ['觀察', '分類'], skillsEn: ['Observe', 'Sort'],
   thumb: '景美溪河堤(精美版).png',
-  bgm: 'bgm-taiwan-cutscene',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-taiwan-boss-yushan',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—台灣岩石地質(玉山/澎湖/金門)配玉山戰鬥BGM(原 bgm-taiwan-cutscene) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '泡泡升起.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '在指南溪撿到好多石頭,它們是怎麼形成的?',
@@ -942,7 +942,7 @@ window.MG_GAMES = [
   diff: 3,
   skills: ['觀察', '分類'], skillsEn: ['Observe', 'Sort'],
   thumb: '阿里山.png',   /* ★ v1.3.1 縮圖去重:原與步道迷宮同圖,改主程式阿里山關卡圖(阿里山.jpg 已驗 200) */
-  bgm: 'bgm-pet-house',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-battle-03',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—台灣特有種生態配戰鬥03(原 bgm-pet-house 寵物小屋) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '動物大軍.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '步道上遇到好多動植物,哪些是台灣才有的?',
@@ -1224,7 +1224,7 @@ window.MG_GAMES = [
   diff: 2,
   skills: ['閱讀理解', '觀察'], skillsEn: ['Reading', 'Observe'],
   thumb: '貓空茶園.png',
-  bgm: 'bgm-adv-scene',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-battle-04',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—熱的傳播一般科學配戰鬥04(原 bgm-adv-scene) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '茶葉飛舞.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '泡茶的時候,熱是怎麼跑的?',
@@ -1567,7 +1567,7 @@ window.MG_GAMES = [
   diff: 2,
   skills: ['空間方位', '記憶'], skillsEn: ['Space', 'Memory'],
   thumb: '台灣地圖.png',
-  bgm: 'bgm-home',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-taiwan-boss',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—台灣縣市地理配台灣BOSS戰鬥BGM(原 bgm-home 台灣地圖) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '漣漪.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '從貓空出發,在台灣地圖上找地方!',
@@ -1810,7 +1810,7 @@ window.MG_GAMES = [
   diff: 3,
   skills: ['閱讀理解', '記憶'], skillsEn: ['Reading', 'Memory'],
   thumb: '日月潭.png',
-  bgm: 'bgm-taiwan-cutscene',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-taiwan-boss-2',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—台灣歷史文化資產(荷治/明鄭/清代/日治)配台灣BOSS戰鬥BGM2(原 bgm-taiwan-cutscene) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '時空穿梭.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '坐上時光機,回到台灣的過去。',
@@ -2104,7 +2104,7 @@ window.MG_GAMES = [
   diff: 3,
   skills: ['心算', '邏輯推理'], skillsEn: ['Mental math', 'Logic'],
   thumb: '深坑老街.png',
-  bgm: 'bgm-shop',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-arena-battle-01',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—量與實測無特定文化配鬥技場戰鬥BGM01(原 bgm-shop) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '數位數字飛舞.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '茶行的秤壞了,幫老闆算一算。',
@@ -2273,7 +2273,7 @@ window.MG_GAMES = [
   diff: 2,
   skills: ['閱讀理解'], skillsEn: ['Reading'],
   thumb: '三峽老街.png',
-  bgm: 'bgm-avatar-card',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-battle-02',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—台灣本土語俗諺配 Q戰鬥音樂02(原 bgm-avatar-card) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '花瓣飛起.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '阿嬤說的台灣話是什麼意思?',
@@ -2575,7 +2575,7 @@ window.MG_GAMES = [
   diff: 4,
   skills: ['音感', '節奏'], skillsEn: ['Pitch', 'Rhythm'],   /* ★ v1.4.0 加入演奏／拍子 */
   thumb: '力行走廊.png',
-  bgm: 'bgm-avatar-card',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-arena-battle-02',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—音樂聽力無特定文化配鬥技場戰鬥BGM02(原 bgm-avatar-card) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '舞動音符.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '用耳朵聽,再用小動物琴鍵彈回來!',
@@ -2770,7 +2770,7 @@ window.MG_GAMES = [
   diff: 1,
   skills: ['分類', '觀察'], skillsEn: ['Sort', 'Observe'],
   thumb: '力行操場.png',   /* ★ v1.3.1 縮圖去重:原與童謠聽音坊同圖,改主程式力行操場(力行操場.jpg 已驗 200) */
-  bgm: 'bgm-play',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-arena-battle-03',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—資源回收無特定文化配鬥技場戰鬥BGM03(原 bgm-play) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '花草搖曳.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '打掃時間到了!把回收物丟到正確的桶子。',
@@ -3036,7 +3036,7 @@ window.MG_GAMES = [
   diff: 3,
   skills: ['順序概念', '閱讀理解'], skillsEn: ['Sequence', 'Reading'],
   thumb: '貓空茶園(精美版).png',
-  bgm: 'bgm-adv-scene',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-battle-05',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—跨領域先後順序(急救/生活技能,取材貓空製茶)配戰鬥05(原 bgm-adv-scene) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '茶葉飛舞.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '每件事都有先後順序,把卡片排對吧!',   /* ★ v1.10.1 老師:說明貼近關卡內容(原「茶師傅要考考你:茶葉是怎麼做出來的?」) */
@@ -3375,7 +3375,7 @@ window.MG_GAMES = [
   diff: 3,
   skills: ['閱讀理解', '語文'], skillsEn: ['Reading', 'Language'],   /* ★ v1.9.3 不再考記憶 */
   thumb: '彰化老街.png',
-  bgm: 'bgm-avatar-card',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-play',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—台灣俗諺連連看配知識王問答(原 bgm-avatar-card) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '花瓣飛起.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '阿嬤說的話,你記得幾句?',
@@ -3544,7 +3544,7 @@ window.MG_GAMES = [
   diff: 4,
   skills: ['反應', '心算'], skillsEn: ['Reflex', 'Mental math'],
   thumb: '不可思議超商.png',
-  bgm: 'bgm-shop',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-king-challenge-2',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—心算判斷無特定文化配知識王問答第二軌(原 bgm-shop) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '鑽石.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '算式從天上掉下來,瞄準算對的射下去!',
@@ -3613,7 +3613,7 @@ window.MG_GAMES = [
   diff: 5,
   skills: ['邏輯推理', '空間方位'], skillsEn: ['Logic', 'Space'],
   thumb: '樟湖步道(精美版).png',
-  bgm: 'bgm-adv-march',   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
+  bgm: 'bgm-boss-02',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—跨國地理(台/日/韓/泰/埃及/世界河川山岳)不專屬單一文化,配中性 BOSS戰02(原 bgm-adv-march) */   /* ★ v1.3.0 遊戲中 BGM(index.html 的 <audio id>,沿用主程式既有曲) */
   amb: '秋天楓葉飄落.gif',   /* ★ v1.3.0 題卡橫幅上的環境動態 GIF(沿用主程式素材,已驗 200) */
   story: {
     s: '走上指南宮的階梯,別走回頭路!',
@@ -4025,7 +4025,7 @@ window.MG_GAMES = [
   diff: 2,
   skills: ['觀察', '分類推理'], skillsEn: ['Observe', 'Sort'],
   thumb: '寵物小屋.png',
-  bgm: 'bgm-summon',
+  bgm: 'bgm-boss-01',   /* ★ v1.30.0 老師需求:15 款各換不同戰鬥曲,依文化適宜性挑選—動物特徵通識無特定文化,配奇幻貓怪BOSS戰BGM(原 bgm-summon) */
   amb: '動物大軍.gif',
   story: {
     s: '小英雄的動物朋友排隊來了,看圖說出牠的特徵!',
