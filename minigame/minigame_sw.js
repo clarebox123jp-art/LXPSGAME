@@ -28,6 +28,7 @@
  *   說明蓋住)⑤選角視窗篩選跳版問題修正(.hm-list 改固定高度)+英雄圖片/文字/視窗放大⑥戰鬥卡片改版
  *   (直式=大對抗式直向大卡只留立繪/HP/爆發技能+效果說明,橫式維持 v1.29.0 貼底小卡)。
  *   本檔僅版號同步(SHELL 改名讓舊快取失效)。邏輯與資料全在 index.html／minigame_db.js(本輪皆需重傳)。
+ * ★ v1.38.0(2026-09-08・老師需求「檔名改成新的避免跟大對抗混淆」)：本檔正式改名 sw.js→minigame_sw.js；SHELL_URLS 快取清單、離線導覽退回頁改指 minigame_index.html；SHELL 改名讓舊快取失效。⚠ 主程式 index.html 的入口連結需同步改指 minigame/minigame_index.html，見本輪對話說明，不在本次小遊戲更新包內。
  * ★ v1.37.0(2026-09-08・老師需求)：爆發鈕新增兩顆星星次數指示(比照充能點同一套呈現邏輯)；本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.36.0(2026-09-08・老師需求)：受擊音效/特效比照大對抗普攻+新增seal/confuse/revive三型爆發第二效果
  *   +爆發滿槽卡片橘色橫幅視覺；本檔僅版號同步(SHELL 改名讓舊快取失效)。
@@ -69,13 +70,12 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.37.0';
-var SHELL = 'lxps-mini-shell-v1.37.0';
+var MINI_VERSION = 'v1.38.0';
+var SHELL = 'lxps-mini-shell-v1.38.0';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [
-  './',
-  './index.html',
+  './minigame_index.html',
   './minigame_db.js',
   './manifest.json',
   './title.webp',
@@ -157,7 +157,7 @@ self.addEventListener('fetch', function(e){
           return caches.match(req).then(function(hit){
             if(hit) return hit;
             // 導覽請求退回首頁,避免離線時出現瀏覽器錯誤頁
-            if(req.mode === 'navigate') return caches.match('./index.html');
+            if(req.mode === 'navigate') return caches.match('./minigame_index.html');
             return new Response('', { status: 504 });
           });
         })

@@ -15,6 +15,23 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.38.0(2026-09-08)
+     ★ v1.38.0(老師需求「檔名直接改成新的,舊的會和大對抗主程式混淆」)— 檔名正式改名(永久,非本機暫用):
+       `index.html`→`minigame_index.html`、`sw.js`→`minigame_sw.js`(`minigame_db.js` 本來就是這個名字不動)。
+       目的:小遊戲跟大對抗主程式各自有一份 index.html/sw.js,老師在自己電腦上同時管理兩包檔案時容易對錯資料夾/蓋錯檔案,
+       全部加上 `minigame_` 前綴後兩邊看名字就分得清楚。
+       改名後同步修正 4 處自我參照(否則會 404 打不開):
+       ①`navigator.serviceWorker.register('sw.js?v=...')`→`register('minigame_sw.js?v=...')`
+       ②版號比對 `fetch('sw.js?ck=...')`→`fetch('minigame_sw.js?ck=...')`
+       ③`minigame_sw.js` 的 `SHELL_URLS` 快取清單 `'./index.html'`→`'./minigame_index.html'`(並移除已無意義的 `'./'`)
+       ④`minigame_sw.js` 離線導覽退回頁 `caches.match('./index.html')`→`caches.match('./minigame_index.html')`
+       ⑤`manifest.json` 的 `start_url` 同步改 `./minigame_index.html`(否則已安裝到主畫面的捷徑會打不開)。
+       ⚠⚠【需要老師知悉·主程式也要動一行】主程式首頁「🎮 迷你遊戲模式」入口目前寫 `href="minigame/"`
+       (靠伺服器預設抓資料夾裡的 index.html),資料夾裡已經沒有 index.html 了 ⇒ 這顆按鈕現在會打不開,
+       必須把 href 改成 `href="minigame/minigame_index.html"`。這是**主程式** index.html 的異動,不在本次小遊戲
+       更新包裡(主程式版本更新頻繁,不宜用本次抓到的舊快照覆蓋),需另外處理,見本輪對話說明。
+     -->
+<!-- ============================================================================
      小英雄小遊戲 — 獨立 PWA(minigame/index.html)v1.37.0(2026-09-08)
      ★ v1.37.0(老師需求「爆發技能也用兩顆星星代表只能用兩次」):
        爆發鈕新增 `bt-star` 星星次數指示(比照充能點 `bt-charge` 同一套呈現邏輯):MAX_BURST=2,尚未用掉
@@ -2243,7 +2260,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.37.0"></script>
+<script src="minigame_db.js?v=v1.38.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2252,7 +2269,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.37.0';
+var MG_VER = 'v1.38.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -6946,7 +6963,7 @@ function boot(){
   // Service Worker(只註冊本目錄,scope 比主程式更具體)
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js?v=' + MG_VER)['catch'](function(){});
+      navigator.serviceWorker.register('minigame_sw.js?v=' + MG_VER)['catch'](function(){});
     });
   }
   console.log('[小英雄小遊戲]', MG_VER, '共', MG.games.length, '款');
@@ -6980,7 +6997,7 @@ function boot(){
   function mgVerCheck(){
     if(!window.fetch) return;
     try{
-      fetch('sw.js?ck=' + Date.now(), { cache: 'no-store' }).then(function(r){
+      fetch('minigame_sw.js?ck=' + Date.now(), { cache: 'no-store' }).then(function(r){
         if(!r || !r.ok) return null; return r.text();
       }).then(function(t){
         if(!t) return;

@@ -2,7 +2,7 @@
   "name": "小英雄小遊戲",
   "short_name": "小英雄小遊戲",
   "description": "力行國小・木柵與台灣小學堂 — 小英雄大對抗的獨立小遊戲版,不用登入就能玩",
-  "start_url": "./index.html",
+  "start_url": "./minigame_index.html",
   "scope": "./",
   "id": "/LXPSGAME/minigame/",
   "display": "standalone",
