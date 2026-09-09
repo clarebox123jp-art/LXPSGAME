@@ -1,5 +1,11 @@
 /* ============================================================================
- * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.37.0(2026-09-09)
+ * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.38.0(2026-09-09)
+ * ★ v1.38.0(2026-09-09・老師需求「布奶鳥獸/水狐/牛魔王/超鬼神王第二效果修正」)—
+ *   布奶鳥獸 healatk:v 由 0(未使用,固定扣15)改 20(改吃 e.v);水狐 revive 由被動(爆發槽滿才生效)改為
+ *   主動(施放當下補自己10HP扣對手10HP,再開3回合復活保護窗),v 維持20(復活回血量);牛魔王 bleed:6
+ *   改 bleedcounter2:5(易傷+反擊合併成一種效果,固定2次,不吃全域EFF2_N);超鬼神王 bleed:6 改
+ *   poison5x6:6(易傷改中毒,固定5回合)。四種新/改效果的判定邏輯在 index.html v1.65.2
+ *   (mgEff2Text/mgApplyEff2/mgTryRevive/mgTickRegenPoison/MG_STATUS_DEFS),本檔僅改資料值。
  * ★ v1.37.0(2026-09-09・老師需求「四隻護盾角色+三隻控場角色第二效果改版」)—
  *   牛魔王 shield:2→bleed:6(易傷3回合)／麻吉喵‧Nico shield:2→healnow:20(立即恢復自己20HP)／
  *   神槍手 shield:2→truedmg:20(直接扣對手20HP,無視護盾)／操偶師 shield:2 維持不變。
@@ -4284,7 +4290,7 @@ window.MG_HEROES = [
   { n:'孫悟空', cls:'atk', img:'%E5%AD%AB%E6%82%9F%E7%A9%BA.webp', bn:'大鬧天宮', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-punch',1],['sfx-explode',0.85],['sfx-powerup',0.7]], tint:'rgba(255,215,120,0.20)', dur:1440 , pos:'20%' , eff2:{t:'dodgechance3',v:0} },
   { n:'關羽', cls:'atk', img:'%E9%97%9C%E7%BE%BD.webp', bn:'青龍偃月‧武聖降臨', gif:'%E5%88%80%E5%85%89.gif', sfx:[['sfx-sword',1],['sfx-crit',0.85]], tint:'rgba(120,255,180,0.20)', dur:2400 , pos:'18%' , eff2:{t:'critboost3',v:0} },
   { n:'姜子牙', cls:'ctrl', img:'%E5%A7%9C%E5%AD%90%E7%89%99.webp', bn:'封神台‧眾神歸位', gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', sfx:[['sfx-athena-burst',1]], tint:'rgba(255,216,102,0.20)' , pos:'20%' , eff2:{t:'seal',v:3} },
-  { n:'牛魔王', cls:'shd', img:'%E7%89%9B%E9%AD%94%E7%8E%8B.webp', bn:'牛魔真火・焚天蹄', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-explode',1],['sfx-punch',0.85]], tint:'rgba(255,110,40,0.22)', dur:2000 , pos:'18%' , eff2:{t:'bleed',v:6} },
+  { n:'牛魔王', cls:'shd', img:'%E7%89%9B%E9%AD%94%E7%8E%8B.webp', bn:'牛魔真火・焚天蹄', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-explode',1],['sfx-punch',0.85]], tint:'rgba(255,110,40,0.22)', dur:2000 , pos:'18%' , eff2:{t:'bleedcounter2',v:5} },   /* ★v1.65.2老師需求改版:易傷+反擊合併,固定2次/各5點 */
   { n:'呂布', cls:'atk', img:'%E5%91%82%E5%B8%83.webp', bn:'無雙・戟舞八方', gif:'%E8%BF%85%E9%9B%B7%E4%B8%8D%E5%8F%8A%E6%8E%A9%E8%80%B3%E7%9A%84%E6%94%BB%E6%93%8A.gif', sfx:[['sfx-sword',1],['sfx-crit',0.8]], tint:'rgba(150,255,190,0.20)', dur:2000 , pos:'18%' , eff2:{t:'lowhp_dmgup',v:0} },
   { n:'蚩尤', cls:'atk', img:'%E8%9A%A9%E5%B0%A4.webp', bn:'涿鹿風暴', gif:'%E4%B8%89%E9%81%93%E5%9C%B0%E8%A3%82.gif', sfx:[['sfx-explode',1],['sfx-burst',0.8]], tint:'rgba(210,170,90,0.22)', dur:2000 , pos:'18%' , eff2:{t:'counter',v:10} },
   { n:'諸葛亮', cls:'atk', img:'%E8%AB%B8%E8%91%9B%E4%BA%AE.webp', bn:'借東風・火燒赤壁', gif:'%E5%A4%AA%E9%99%BD%E7%81%AB%E7%90%83.gif', sfx:[['sfx-explode',1],['sfx-powerup',0.75]], tint:'rgba(255,140,60,0.22)', dur:2000 , pos:'20%' , eff2:{t:'seal',v:0} },
@@ -4308,11 +4314,11 @@ window.MG_HEROES = [
   { n:'窮奇', cls:'atk', img:'%E7%AA%AE%E5%A5%87.png', bn:'召喚上古四凶獸', gif:'%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.gif', sfx:[['sfx-qiongqi-burst',1]], tint:'rgba(180,40,40,0.22)', dur:2400 , pos:'57%' , eff2:{t:'bleed',v:6} },
   { n:'科技生化人', cls:'atk', img:'%E7%94%9F%E5%8C%96%E4%BA%BA.png', bn:'輻射核砲', gif:'%E8%BC%BB%E5%B0%84%E6%A0%B8%E7%A0%B2.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-burst',0.7]], tint:'rgba(180,220,40,0.22)', dur:2400 , full:true , eff2:{t:'weaken3',v:0} },
   { n:'鋁合金暴龍', cls:'atk', img:'%E9%8B%81%E5%90%88%E9%87%91%E6%9A%B4%E9%BE%8D.png', bn:'死神龍王登場', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-sword',0.85]], tint:'rgba(200,0,50,0.18)' , full:true , eff2:{t:'stealcharge1',v:0} },
-  { n:'超鬼神王', cls:'ctrl', img:'%E8%B6%85%E9%AC%BC%E7%A5%9E%E7%8E%8B.png', bn:'大嘴吸入', gif:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%90%B8%E5%85%A5%E6%BC%A9%E6%B8%A6%E9%96%80.gif', sfx:[['sfx-fantasy',1],['sfx-powerup',0.8]], tint:'rgba(50,255,200,0.12)' , full:true , eff2:{t:'bleed',v:6} },
+  { n:'超鬼神王', cls:'ctrl', img:'%E8%B6%85%E9%AC%BC%E7%A5%9E%E7%8E%8B.png', bn:'大嘴吸入', gif:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E5%90%B8%E5%85%A5%E6%BC%A9%E6%B8%A6%E9%96%80.gif', sfx:[['sfx-fantasy',1],['sfx-powerup',0.8]], tint:'rgba(50,255,200,0.12)' , full:true , eff2:{t:'poison5x6',v:6} },   /* ★v1.65.2老師需求改版:易傷改中毒,5回合每回合6滴血 */
   { n:'雙星姊妹', cls:'heal', img:'%E9%9B%99%E6%98%9F%E5%A7%8A%E5%A6%B9.png', bn:'同生共死', gif:'https://github.com/clarebox123jp-art/LXPSGAME/raw/main/%E9%87%91%E8%89%B2%E9%96%83%E5%85%89%E7%82%B8%E9%96%8B.gif', sfx:[['sfx-explode',1],['sfx-powerup',0.8]], tint:'rgba(255,220,80,0.22)' , pos:'50%' , eff2:{t:'averagehp',v:0} },
   { n:'暗魔將·血', cls:'atk', img:'%E6%9A%97%E9%AD%94%E5%B0%87_%E8%A1%80.png', bn:'血劍·爆破', gif:'%E9%A3%9B%E5%8A%8D.gif', sfx:[['sfx-explode',0.9],['sfx-crit',0.85]], tint:'rgba(180,30,30,0.20)' , full:true , eff2:{t:'fullimmune2',v:0} },
   { n:'死靈法師', cls:'heal', img:'5%E5%B9%B42%E7%8F%AD%E8%A8%B1%E5%90%8C%E5%AD%B8%E8%A8%AD%E8%A8%88%20%E6%AD%BB%E9%9D%88%E6%B3%95%E5%B8%AB.png', bn:'亡靈怨念一擊', gif:'%E9%9D%88%E9%AD%82%E6%94%B6%E5%89%B2.gif', sfx:[['sfx-summon-smoke',1],['sfx-explode',0.85],['sfx-heal',0.8]], tint:'rgba(180,180,220,0.22)' , pos:'25%' , eff2:{t:'lifesteal3',v:0} },
-  { n:'布奶鳥獸', cls:'heal', img:'%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6%E7%8D%B8.png', bn:'生氣的布丁&奶茶', gif:'', sfx:[] , pos:'45%' , eff2:{t:'healatk',v:0} },
+  { n:'布奶鳥獸', cls:'heal', img:'%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6%E7%8D%B8.png', bn:'生氣的布丁&奶茶', gif:'', sfx:[] , pos:'45%' , eff2:{t:'healatk',v:20} },   /* ★v1.65.2老師需求改版:扣血由固定15改20 */
   { n:'炸彈客', cls:'atk', img:'%E7%82%B8%E5%BD%88%E5%AE%A2.png', bn:'超級大爆炸', gif:'%E5%85%AB%E9%BE%8D%E9%A0%AD%E6%BB%85%E4%B8%96.gif', sfx:[['sfx-explode',1],['sfx-burst',0.9],['sfx-powerup',0.7]], tint:'rgba(255,100,40,0.22)', dur:2400 , pos:'15%' , eff2:{t:'shieldbreak',v:0} },
   { n:'紅色玩家', cls:'atk', img:'%E7%B4%85%E8%89%B2%E7%8E%A9%E5%AE%B6.png', bn:'超頻爆發', gif:'%E6%95%B8%E4%BD%8D%E6%95%B8%E5%AD%97%E9%A3%9B%E8%88%9E.gif', sfx:[['sfx-powerup',1],['sfx-fantasy',0.85],['sfx-burst',0.9]], tint:'rgba(255,40,40,0.22)', dur:2400 , pos:'18%' , eff2:{t:'halfreflect3',v:0} },
   { n:'地府酋長', cls:'atk', img:'%E5%9C%B0%E5%BA%9C%E9%85%8B%E9%95%B7.png', bn:'刀山火海', gif:'%E7%A5%9E%E9%AC%BC%E7%9B%A1%E6%BB%85.gif', sfx:[['sfx-burst',1],['sfx-explode',0.9],['sfx-fantasy',0.7]], tint:'rgba(120,0,40,0.25)', dur:2400 , pos:'12%' , eff2:{t:'noatk2',v:0} },

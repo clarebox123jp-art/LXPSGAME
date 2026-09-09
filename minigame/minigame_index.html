@@ -15,7 +15,19 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.1(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.2(2026-09-09)
+     ★ v1.65.2(2026-09-09・老師需求「布奶鳥獸/水狐/牛魔王/超鬼神王第二效果修正」)—
+       ①布奶鳥獸(healatk):扣血由固定15改吃 e.v(20),補血仍固定10,文案與 mgApplyEff2 同步改用 e.v。
+       ②水狐(revive):由「被動,爆發槽滿時倒下自動復活HP20」全面改版為「主動,施放當下先補自己10HP、
+       扣對手10HP,同時開啟一段3回合的復活保護窗(reviveWinLeft,mgApplyEff2 設定/mgTickRegenPoison
+       每回合倒數/mgTryRevive 消費),3回合內若倒下立即復活回20HP,過了3回合沒觸發就失效」;
+       MG_STATUS_DEFS 新增 reviveWinLeft 徽章顯示剩餘保護回合數。
+       ③牛魔王:易傷(bleed:6)改為新型 bleedcounter2:5——固定2次(不吃全域EFF2_N=3)「對手受傷多痛5滴血
+       ＋自己受到攻擊反擊5滴血」合併效果;counterLeft 機制新增 counterAmt 欄位讓蚩尤(固定10)與
+       牛魔王(5)共用同一套倒數邏輯但各自數值不同。
+       ④超鬼神王:易傷(bleed:6)改為 poison5x6:6——沿用既有 poisonLeft/poisonAmt 中毒機制,固定5回合、
+       每回合流失6滴血(跟小鬼貓與兔/熔岩巨人同一套機制,只是數值不同)。
+       ⑤四隻英雄的 eff2 資料值異動同步在 minigame_db.js v1.38.0。
      ★ v1.65.1(2026-09-09・老師需求「極限爆發附加說明文字刪除『並使』/『並』」)—
        mgEff2Text() 內全部 s/f 兩版效果說明文字,逐一刪除文字中的「並使」(53 筆 f 欄位)以及所有殘留
        單獨的「並」字(8 行/10 處,涵蓋 s 與 f 欄位),讓「附加:」標籤(mgEff2Html 產生)接續的說明文字
@@ -3083,7 +3095,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.65.1';
+var MG_VER = 'v1.65.2';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -6611,8 +6623,12 @@ function mgEff2Text(h, isNpc){
     s: '還會魅惑' + foe + ',接下來 3 次出手攻擊會打到自己', f: '' + foe + '陷入魅惑,接下來 3 次出手攻擊改攻擊自己',
     en: '; also charms ' + foeEn + ' — ' + (isNpc ? 'your' : "the opponent's") + ' next 3 attacks will hit themself instead' };
   if(e.t === 'revive') return {
-    s: '(被動)只要爆發條是滿的,倒下時會立刻復活 HP 20!', f: '(被動)自身被擊倒時,若爆發充能已滿,立即復活回復 HP 20',
-    en: '(passive) if knocked out while your burst gauge is full, you instantly revive with 20 HP' };
+    /* ★ v1.65.2(老師需求「水狐第二效果修正」)— 由被動(爆發槽滿才生效)改為主動:使用當下先補血扣血,
+       再開一段 3 回合內的復活保護窗,消費點在 mgTryRevive(獨立欄位 reviveWinLeft,倒數點在
+       mgTickRegenPoison,不佔用爆發充能)。 */
+    s: '使用當下幫' + self_ + '補 10 滴血,同時扣' + foe + ' 10 滴血,接下來 3 回合內若' + self_ + '倒下,立即復活回 ' + e.v + ' 滴血',
+    f: '' + self_ + '恢復 10 點 HP,同時對' + foe + '造成 10 點傷害,接下來 3 回合內若' + self_ + ' HP 歸零,立即復活回 ' + e.v + ' 點 HP',
+    en: '; also heals ' + (isNpc ? 'them' : 'you') + ' 10 HP and deals 10 damage to ' + foeEn + '; if knocked out within the next 3 rounds, revives with ' + e.v + ' HP' };
   /* ★ v1.55.0 — 老師裁定「四隻護盾角色+三隻控場角色」第二效果改版新增的五種文案 */
   if(e.t === 'healnow') return {
     s: '使用當下立刻幫' + self_ + '多補 ' + e.v + ' 滴血', f: '' + self_ + '立即恢復 ' + e.v + ' 點 HP',
@@ -6682,8 +6698,8 @@ function mgEff2Text(h, isNpc){
     en: '; also cleanses all debuffs and leaves ' + foeEn + ' vulnerable, taking 6 extra damage on the next 3 hits' };
   if(e.t === 'averagehp') return { s: '使用當下讓雙方 HP 立刻拉平,各為原本兩人的平均值', f: '雙方 HP 立即均分為兩者平均值',
     en: '; also instantly averages both HP totals' };
-  if(e.t === 'healatk') return { s: '使用當下幫' + self_ + '補 10 滴血,連續攻擊' + foe + '共扣 15 滴血', f: '' + self_ + '恢復 10 點 HP,同時對' + foe + '造成共 15 點傷害',
-    en: '; also heals ' + selfEn + ' 10 HP and deals 15 total damage to ' + foeEn };
+  if(e.t === 'healatk') return { s: '使用當下幫' + self_ + '補 10 滴血,同時扣' + foe + ' ' + e.v + ' 滴血', f: '' + self_ + '恢復 10 點 HP,同時對' + foe + '造成 ' + e.v + ' 點傷害',
+    en: '; also heals ' + selfEn + ' 10 HP and deals ' + e.v + ' damage to ' + foeEn };
   if(e.t === 'maxhp20heal20') return { s: '使用當下' + self_ + 'HP 上限永久提升 20,立刻補滿這 20 滴血', f: '' + self_ + 'HP 上限永久增加 20,同時立即恢復 20 點 HP',
     en: "; also permanently raises " + selfEn + "'s max HP by 20 and heals 20 HP" };
   if(e.t === 'cleansethorndmg3') return { s: '解除' + self_ + '所有不利狀態,接下來 3 次再被下不利狀態,都會反彈給' + foe + '追加 10 滴血傷害', f: '' + self_ + '立即解除不利狀態,接下來 3 次受到不利狀態時同步反彈給' + foe + '追加 10 點傷害',
@@ -6717,6 +6733,17 @@ function mgEff2Text(h, isNpc){
     en: '; also shatters all of ' + foeEn + "'s shields" };
   if(e.t === 'executelow15') return { s: '若' + foe + 'HP 低於 30%,直接再扣 15 滴血', f: '' + foe + '若目前 HP 低於 30%,直接額外損失 15 點 HP',
     en: "; if " + foeEn + "'s HP is below 30%, also deals 15 direct damage" };
+  /* ★ v1.65.2(老師需求「牛魔王/超鬼神王第二效果修正」)— 牛魔王易傷+反擊合併成一種新效果,持續次數固定 2 次
+     (不沿用其他效果共用的 EFF2_N=3),跟蚩尤共用的 counterLeft 欄位靠新增 counterAmt 區分傷害量;
+     超鬼神王從易傷(bleed)改中毒(poison),沿用 poisonLeft/poisonAmt 機制,固定 5 回合、每回合 e.v 滴血。 */
+  if(e.t === 'bleedcounter2') return {
+    s: '接下來 2 次' + foe + '受傷都會多痛 ' + e.v + ' 滴血,' + self_ + '接下來 2 次被攻擊也會反擊 ' + e.v + ' 滴血',
+    f: '' + foe + '接下來 2 次受到傷害的判定,每次額外多扣 ' + e.v + ' 點 HP,同時' + self_ + '接下來 2 次受到攻擊時,同步反擊' + foe + ' ' + e.v + ' 點 HP',
+    en: '; ' + foeEn + "'s next 2 hits taken deal " + e.v + ' extra damage, and ' + selfEn + "'s next 2 hits taken counter " + foeEn + ' for ' + e.v + ' HP' };
+  if(e.t === 'poison5x6') return {
+    s: '還讓' + foe + '中毒 5 回合,每回合流失 ' + e.v + ' 滴血',
+    f: '' + foe + '陷入中毒,接下來 5 回合每回合流失 ' + e.v + ' 點 HP',
+    en: '; also poisons ' + foeEn + ' for 5 rounds, losing ' + e.v + ' HP each round' };
   return { s:'', f:'', en:'' };
 }
 /* ★ v1.65.0(老師需求「附加後面整段都用黃色,附加前面空2格跟基本效果段落做區分」)—
@@ -6824,9 +6851,9 @@ function mgBattleInit(x){
      phoenixUsed(鳳凰:無條件10HP自動復活,整場限用一次)。 */
   /* statusPopupOpen:v1.64.0 新增,點角色立繪開關該側的狀態說明小視窗,初始 false(關閉) */
   _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
-            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false },
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false, reviveWinLeft: 0, reviveAmt: 0, counterAmt: 0 },
           n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
-            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false },
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false, reviveWinLeft: 0, reviveAmt: 0, counterAmt: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -6912,7 +6939,7 @@ var MG_STATUS_DEFS = [
     desc: function(){ return '自身HP每少 10%,攻擊傷害就多 10%(整場都有效)'; } },
   { f: 'counterLeft', kind: 'buff', icon: '↩', zh: '反擊', en: 'Counter',
     active: function(S){ return S.counterLeft > 0; }, n: function(S){ return S.counterLeft; },
-    desc: function(S){ return '接下來 ' + S.counterLeft + ' 次受到攻擊,會反擊對手 10 滴血'; } },
+    desc: function(S){ return '接下來 ' + S.counterLeft + ' 次受到攻擊,會反擊對手 ' + (S.counterAmt || 10) + ' 滴血'; } },
   { f: 'chargeLockLeft', kind: 'bad', icon: '🚫⚡', zh: '充能被鎖', en: 'Charge Locked',
     active: function(S){ return S.chargeLockLeft > 0; }, n: function(S){ return S.chargeLockLeft; },
     desc: function(S){ return '接下來答對 ' + S.chargeLockLeft + ' 次都不會累積爆發充能'; } },
@@ -6960,7 +6987,10 @@ var MG_STATUS_DEFS = [
     desc: function(S){ return '接下來 ' + S.surviveLeft + ' 次就算血量會歸零,也會固定留下 1 滴血不倒下'; } },
   { f: 'maxHpBonus', kind: 'buff', icon: '📈', zh: 'HP上限+', en: 'Max HP+',
     active: function(S){ return S.maxHpBonus > 0; }, permanent: true,
-    desc: function(S){ return 'HP 上限永久提升 ' + S.maxHpBonus + '(整場都有效)'; } }
+    desc: function(S){ return 'HP 上限永久提升 ' + S.maxHpBonus + '(整場都有效)'; } },
+  { f: 'reviveWinLeft', kind: 'buff', icon: '💫', zh: '復活保護', en: 'Revive Window',
+    active: function(S){ return S.reviveWinLeft > 0; }, n: function(S){ return S.reviveWinLeft; },
+    desc: function(S){ return '接下來 ' + S.reviveWinLeft + ' 回合內,若 HP 歸零會立即復活回 ' + (S.reviveAmt || 20) + ' HP'; } }
 ];
 function mgStatusActiveList(S){
   var out = [], i, d;
@@ -7130,7 +7160,7 @@ function mgDealDamage(atk, def, base, fxFrom, rawFixed){
     def.dmgBankLeft--; def.dmgBankAmt = (def.dmgBankAmt || 0) + dmg;
     if(def.dmgBankLeft === 0 && def.dmgBankAmt > 0){ var _bk = def.dmgBankAmt; atk.hp = Math.max(0, atk.hp - _bk); mgBattleFloatOn(atkSide, '−' + _bk, 'block'); def.dmgBankAmt = 0; }
   }
-  if(def.counterLeft > 0){ def.counterLeft--; var _cv = 10; atk.hp = Math.max(0, atk.hp - _cv); mgBattleFxAttack(defSide, '−' + _cv); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'COUNTER' : '反擊!'), 'block'); }   /* 蚩尤 */
+  if(def.counterLeft > 0){ def.counterLeft--; var _cv = def.counterAmt || 10; atk.hp = Math.max(0, atk.hp - _cv); mgBattleFxAttack(defSide, '−' + _cv); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'COUNTER' : '反擊!'), 'block'); }   /* 蚩尤(固定10,counterAmt未設走預設)/牛魔王(★v1.65.2改版,counterAmt:5) */
   if(atk.lifestealLeft > 0){ atk.lifestealLeft--; var _ls = Math.round(dmg * 0.5); atk.hp = Math.min(mgHpCap(atk), atk.hp + _ls); mgBattleFloatOn(atkSide, '+' + _ls, 'heal'); }   /* 幽幽/死靈法師/酒吞童子 */
   if(atk.multiHitLeft > 0){ atk.multiHitLeft--; def.hp = Math.max(0, def.hp - dmg); mgBattleFxAttack(fxFrom, '−' + dmg); }   /* 哪吒:原封不動追加同傷害一次,不重新跑上面判定避免鏈式無限 */
 }
@@ -7141,6 +7171,7 @@ function mgTickRegenPoison(S, sideKey){
   if(!S) return;
   if(S.regenLeft > 0){ S.regenLeft--; var _rg = S.regenAmt || 5; S.hp = Math.min(mgHpCap(S), S.hp + _rg); mgBattleFloatOn(sideKey, '+' + _rg, 'heal'); }
   if(S.poisonLeft > 0){ S.poisonLeft--; var _ps = S.poisonAmt || 5; S.hp = Math.max(0, S.hp - _ps); mgBattleFloatOn(sideKey, '−' + _ps, 'block'); }
+  if(S.reviveWinLeft > 0) S.reviveWinLeft--;   /* ★ v1.65.2 — 水狐復活保護窗每回合倒數,純計時不觸發HP變化,過期即失效 */
 }
 /* ★ v1.63.0(老師需求「算數大進擊改成射對不反擊、射錯才反擊,且反擊只算一次」)— mgBattleHit 新增
    可選第三參數 skipTurnDmg:true 時跳過函式尾端「不論答對答錯都固定反擊一次」的全域安全網(v1.42.0
@@ -7246,13 +7277,15 @@ function mgBattleNpcBurstSafety(){
   N.sealLeft = 0;   /* 安全網優先於封印,避免玩家的封印技能讓 NPC 整場放不出來 */
   mgBattleNpcBurst();
 }
-/* ★ v1.36.0 — revive(滿槽重生)被動判定:S 為 _BT.p 或 _BT.n。條件=eff2 是 revive 且爆發充能已滿;
-   成立則消耗充能(歸零)並回滿 HP=20,擋下這次擊倒,回傳 true 讓 mgBattleCheckKO 不結算勝負。 */
+/* ★ v1.65.2(老師需求「水狐第二效果修正」)— revive 判定由「爆發槽是否已滿」改為「reviveWinLeft 復活保護窗
+   是否還有剩」:S 為 _BT.p 或 _BT.n。成立則消耗保護窗(歸零)並回 S.reviveAmt(預設20)HP,擋下這次擊倒,
+   回傳 true 讓 mgBattleCheckKO 不結算勝負。reviveWinLeft 由 mgApplyEff2 施放當下設定,倒數點在
+   mgTickRegenPoison,過期(倒數到0)未觸發則保護失效,不再是舊版的「只要槽滿隨時可救」。 */
 function mgTryRevive(S){
   var e = S.h && S.h.eff2; if(!e) return false;
   if(e.t === 'revive'){
-    if(S.charge < MG_BT.CHARGE) return false;
-    S.charge = 0; S.hp = 20;
+    if(!(S.reviveWinLeft > 0)) return false;
+    S.reviveWinLeft = 0; S.hp = S.reviveAmt || 20;
     mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '💫 REVIVE!' : '💫 復活!'), 'heal');
     mgBattlePaint();
     return true;
@@ -7396,7 +7429,16 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'potion15'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 15); foe.hp = Math.max(0, foe.hp - 15); try{ mgBattleFloatOn(mgSideOf(caster), '+15', 'heal'); mgBattleFxAttack(mgSideOf(caster), '−15'); }catch(_e6){} }   /* 科學發明家 */
   else if(e.t === 'cleansebleed6'){ mgBattleCleanseBad(caster); mgEff2ApplyBad(caster, foe, 'dot', 6); }   /* 巫女 */
   else if(e.t === 'averagehp'){ var _avg = Math.round((caster.hp + foe.hp) / 2); caster.hp = _avg; foe.hp = _avg; try{ mgBattlePaint(); }catch(_e7){} }   /* 雙星姊妹 */
-  else if(e.t === 'healatk'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); foe.hp = Math.max(0, foe.hp - 15); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); mgBattleFxAttack(mgSideOf(caster), '−15'); }catch(_e8){} }   /* 布奶鳥獸 */
+  else if(e.t === 'healatk'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); foe.hp = Math.max(0, foe.hp - e.v); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); mgBattleFxAttack(mgSideOf(caster), '−' + e.v); }catch(_e8){} }   /* ★ v1.65.2 布奶鳥獸改版:傷害由固定15改吃 e.v(20) */
+  /* ★ v1.65.2(老師需求)— 水狐 revive 改主動:施放當下先補血扣血,再開 3 回合復活保護窗(reviveWinLeft,
+     消費點在 mgTryRevive,倒數點在 mgTickRegenPoison),不再依賴爆發槽是否全滿。 */
+  else if(e.t === 'revive'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); foe.hp = Math.max(0, foe.hp - 10); caster.reviveWinLeft = 3; caster.reviveAmt = e.v; try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); mgBattleFxAttack(mgSideOf(caster), '−10'); }catch(_e17){} }   /* 水狐 */
+  /* ★ v1.65.2(老師需求)— 牛魔王:易傷+反擊合併成一種效果,固定 2 次(不吃 EFF2_N),counterAmt 讓
+     counterLeft 機制能跟蚩尤的固定10共用同一套但各自數值不同。 */
+  else if(e.t === 'bleedcounter2'){ foe.dotLeft = 2; foe.dotAmt = e.v; caster.counterLeft = 2; caster.counterAmt = e.v; }   /* 牛魔王 */
+  /* ★ v1.65.2(老師需求)— 超鬼神王:易傷(bleed)改中毒(poison),固定5回合、每回合 e.v 滴血,沿用既有
+     poisonLeft/poisonAmt 機制(跟小鬼貓與兔/熔岩巨人同一套,只是數值不同)。 */
+  else if(e.t === 'poison5x6'){ foe.poisonLeft = 5; foe.poisonAmt = e.v; }   /* 超鬼神王 */
   else if(e.t === 'maxhp20heal20'){ caster.maxHpBonus = (caster.maxHpBonus || 0) + 20; caster.hp = Math.min(mgHpCap(caster), caster.hp + 20); try{ mgBattleFloatOn(mgSideOf(caster), '+20', 'heal'); }catch(_e9){} }   /* 救醫馬 */
   else if(e.t === 'cleansethorndmg3'){ mgBattleCleanseBad(caster); caster.thornDmgLeft = 3; }   /* 米鈴 */
   else if(e.t === 'regenpoison3x5'){ caster.regenLeft = 3; caster.regenAmt = 5; foe.poisonLeft = 3; foe.poisonAmt = 5; }   /* 青炎龍王／魔界花使‧朱玥(共用同一機制,數值相同) */
