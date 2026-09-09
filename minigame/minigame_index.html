@@ -15,7 +15,58 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.57.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.62.0(2026-09-09)
+     ★ v1.62.0(2026-09-09・老師需求「木柵回收小英雄整題改成磁鐵電流單元,回收題目移到迷宮探險」)—
+       ①原本「回收小英雄」(id:'recycle')關卡混合 130 題:50題回收科學quiz+30題回收拖曳分類(佔80題)、
+       以及已經存在的六上自然第四單元「電磁鐵」複習題 40題quiz+10題拖曳(佔50題,cr:'6a4')。這輪把
+       80題回收相關內容整批移出,只留原本就有的50題電磁鐵內容當本關唯一題庫,關卡改名「電與磁的
+       研究室」、icon 🧲、bins 改成既有的 _B_MAGNET(磁鐵吸得住/吸不住),story/goal/how 全部改寫成
+       磁鐵與電流實驗室主題;id 維持 'recycle' 不變(避免打斷雲端最佳成績/收藏/成就等既有依賴此 id
+       的系統)。
+       ②被移出的 80 題回收內容裡,挑了 3 組「紙類回收/塑膠類回收/可以回收(不是一般垃圾)」共 18 格
+       答案,搬進迷宮探險王(id:'maze')第一關的 variants,沿用同一張 6x6 地圖;新增 mark.pic 欄位
+       支援(_mazePaint 改成 cell.mark.pic || mgPicByText(...),逐格圖片優先於原本的文字對照表),
+       10 個回收物石板都用既有已驗證的 10 張 recycle_* 圖(未新增任何素材),沒有圖的格子(如「嚼過的
+       口香糖」)自動退回純文字石板,不影響遊戲。其餘 50 題(挑剩的回收 quiz)本輪未安排去處,先不動。
+     ★ v1.61.0(2026-09-09・老師需求「按錯選項要有紅底+答錯了標示+震動,解說視窗要跳出來在畫面中央」)—
+       ①根因:lockOptions(ansIdx,_sel) 從一開始就沒用到 _sel 這個參數,只會把正解那顆按鈕染綠,
+       玩家按錯的那顆完全沒有任何視覺標示(CSS .opt.ng 紅底其實老早就定義好了,只是從沒被套用過)。
+       mgAnswer 補傳玩家實際點的索引 i 給 finishAnswer,finishAnswer 答錯時把它轉交 lockOptions,
+       lockOptions 找到那顆按鈕染紅(.opt ng)+ 附加「❌ 答錯了」小字 + 借用既有 cshake keyframe 震一下;
+       答錯音效 sfx-ng 本來就有播(scoreIt 既有邏輯),這輪不重複加。
+       ②解說視窗(#fbdock)原本橫式(iPad/PC 常駐的橫式模式)是釘在右下角「下一題」鈕正上方,改成
+       left/top 50%+translate 置中在螢幕正中央,矮螢幕媒體查詢同步移除舊的 bottom 定位改用同一套置中。
+     ★ v1.60.0(2026-09-09・老師四項需求:答案解說視窗復原 ＋ 玩法鈕移位 ＋ 附加:黃字 ＋ 爆發動畫文字置中+精簡)—
+       ①【答案解說視窗復原】拿掉 v1.39.0 那段「戰鬥模式下隱藏 #feedback/#fbdock」的判斷分支——戰鬥模式從
+       v1.29.0 起就是預設玩法,等於解說文字一直被藏著;showFeedback 一律照舊顯示解說面板,不受戰鬥卡
+       是否開啟影響。
+       ②【玩法鈕移位】原本在 #hud(關卡內答題區右側)的「玩法」鈕搬到 #topbar,緊接在「← 回選單」右邊,
+       新增 id=howto-btn,顯示/隱藏邏輯完全比照 back-btn(mgHome/startGame/測試期閘門三處同步 show/hide),
+       首頁不顯示、進關卡才顯示。
+       ③【附加:黃字】新增共用 mgEff2Html(effStr) 入口,凡是顯示「基礎爆發說明+第二效果說明」的四個地方
+       (選角視窗 #hm-desc、開始前 #m-hero-txt、戰鬥卡 #bt-p-eff/#bt-n-eff)全部改用這支,有第二效果內容時
+       前面插入黃色(#ffe066)「附加:」文字;沒有第二效果則維持原樣不多顯示東西。#bt-p-eff/#bt-n-eff 因為
+       要套色,從 textContent 改 innerHTML(base 說明部分維持 esc() 逃逸,無 XSS 風險)。
+       ④【爆發動畫文字置中+只顯示招式名稱】根因:#bt-burstfx 的 img.gif 原本是 flex 直排第一個子元素且
+       max-height:100vh 撐滿整個視窗高度,後面的招式名稱文字被擠到視窗範圍外(iPad 尤其明顯)。改法:
+       img 改 position:absolute 蓋滿容器當背景,脫離 flex 排版流程,文字才能真正吃到 justify-content:center
+       置中在螢幕正中央;同時拿掉 .bt-bfeff(效果說明)整段不再生成,只保留 .bt-bfname(英雄名+招式名稱)。
+     ★ v1.59.0(2026-09-09・老師三項需求:剩餘19隻攻擊型+死靈法師確認用提議表 ＋ PC版圓體字太粗 ＋ 爆發音效停不下來)—
+       ①【剩餘19隻攻擊型+死靈法師確認用提議表】孫悟空/關羽/諸葛亮/熔岩巨人/炎火超少女/幽魂暗狐/大天狗/
+       酒吞童子/鋁合金暴龍/炸彈客/火柴人/美人魚‧角角/火爆女/我的豚豚/死神(以上15隻)eff2 改為提議表指定
+       效果,新增10種機制(dodgechance3/critboost3/poison3x5/undying3/swaphp/breakdef3/lifesteal3/
+       stealcharge1/shieldbreak/executelow15);喚龍使‧蜜鶴林/大刀勇士/窮奇/武器精靈維持原樣不動;
+       死靈法師(回復型)改用 lifesteal3;水狐維持原樣不動。攻擊型39隻全數互不重複,回復型14隻僅
+       青炎龍王/魔界花使‧朱玥因老師原指定內容完全相同而共用同一機制(非本輪造成的重複)。
+       ②【PC版圓體字太粗】新增 `@media (hover:hover) and (pointer:fine)`(比照本檔既有判斷觸控裝置的
+       反向邏輯)只鎖定滑鼠/觸控板裝置,把 .bt-name/.bt-hpn/.bt-sh/.bt-burst/.bt-dmg/.hm-burst 字重從
+       700~900 降到 400(.bt-burst.ready 維持 700 保留按鈕視覺重量),iPad 手指觸控預設 hover:none 不會
+       命中此媒體查詢,完全不受影響。
+       ③【爆發音效停不下來】mgBurstCinematic/mgBurstFx 補上明確 mgSfxStop/mgSfxStopList 收尾(新一輪爆發前
+       先切斷上一輪的 sfx-burst-use;畫面消失同一刻停止這次用到的所有 sfx,不再依賴音檔自己播完);
+       另補上 mgBattleClear 中途離開戰鬥的收尾(新增全域 _mgBurstSfxIds 追蹤目前爆發用到的 sfx id,
+       離開時連同 sfx-burst-use、#bt-cine 開場疊層一併清掉),涵蓋「玩到一半就換題/離開」這種原本會讓
+       殘留音效繼續播完自己長度的情境。
      ★ v1.57.0(2026-09-09・老師需求:26隻攻擊/回復型英雄第二效果完整指定,一次到位不再走候選池草案)—
        貓人族長/拘留者/聖冥法師/玉藻前/科技生化人/暗魔將·血/紅色玩家/地府酋長/學霸(轉學生)/天神宙斯/
        維京海盜船長/鳳凰/幽幽/阿蘇火山龍王/地獄將軍/小鬼貓與兔/法老王(以上攻擊型17隻)+
@@ -566,7 +617,12 @@ button[disabled]{opacity:.45;}
 }
 .opt .oe{display:block;font-size:26px;line-height:1.2;}
 .opt.ok{background:var(--grass);color:#0d2a18;border-color:var(--grass);}
-.opt.ng{background:var(--brick);color:#fff;border-color:var(--brick);}
+.opt.ng{background:var(--brick);color:#fff;border-color:var(--brick);animation:cshake .4s;}
+/* ★ v1.61.0(老師需求「按錯答案時,錯的答案用紅底顯示並標示答錯了,選項震動一下」)—
+   .opt.ng 沿用既有紅底樣式(本來就有,只是從沒被套用過,見 lockOptions 修法),animation 借用題卡
+   答錯時已經在用的 cshake keyframe(見 .card.shake 那行,同一份不重複定義);.opt-wrong-badge 是附加在
+   按鈕文字下方的「❌ 答錯了」小字,不覆蓋原本的選項文字。 */
+.opt-wrong-badge{display:block;font-size:.7em;font-weight:900;margin-top:4px;opacity:.95;letter-spacing:.5px;}
 #feedback{
   margin-top:14px;border-radius:16px;padding:14px 16px;font-size:16px;line-height:1.7;
   background:rgba(255,255,255,.10);border-left:6px solid var(--gold);display:none;
@@ -1860,14 +1916,16 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #page-play > #nextrow button{min-height:46px;font-size:17px;padding:8px 20px;}
   #play-right{padding-bottom:60px;}
 }
-/* ── v1.5.1 解說文字停靠區:橫式固定在「下一題」鈕正上方、字放大;直式不顯示(文字留在左欄解說卡) ── */
+/* ── v1.5.1 解說文字停靠區:橫式固定在「下一題」鈕正上方、字放大;直式不顯示(文字留在左欄解說卡) ──
+   ★ v1.61.0(老師需求「正確答案解說視窗要跳出來在畫面中央」)— 原本釘在右下角(下一題鈕正上方)的定位改成
+   螢幕正中央(left/top 50% + translate 置中),不再跟著 nextrow 貼右下;寬度/高度上限沿用原本數值,
+   只是改用置中的方式呈現「跳出視窗」的觀感,不擋住下一題鈕(z-index 仍低於 nextrow 的 116)。 */
 #fbdock{display:none;}
 @media (orientation:landscape){
   #fbdock.show{
     display:block;position:fixed;z-index:115;
-    right:18px;right:calc(18px + env(safe-area-inset-right,0px));
-    bottom:100px;bottom:calc(100px + env(safe-area-inset-bottom,0px));
-    width:min(52vw,760px);max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(52vw,760px);max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
     background:rgba(8,10,16,.94);border:2.5px solid var(--gold);border-left-width:8px;border-radius:18px;
     padding:16px 22px;box-shadow:0 14px 40px rgba(0,0,0,.65);
     font-size:22px;font-size:clamp(19px,1.9vw,30px);line-height:1.6;color:var(--mist);
@@ -1904,7 +1962,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #fbzoom.show img{max-width:56vw;}
 }
 @media (orientation:landscape) and (max-height:520px){
-  #fbdock.show{bottom:66px;bottom:calc(66px + env(safe-area-inset-bottom,0px));width:min(56vw,600px);max-height:34vh;font-size:15px;padding:10px 14px;border-radius:12px;}
+  #fbdock.show{width:min(56vw,600px);max-height:50vh;font-size:15px;padding:10px 14px;border-radius:12px;}
 }
 /* ★ v1.7.0 首頁卡片:關卡名放大、第二行最佳星星移除 */
 .cell .cstar{display:none !important;}
@@ -2015,6 +2073,24 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    改成白底/彩色字 + 黑色偏移陰影(比照 .popup 的 2px 2px 0 #000)+ 彩色光暈,字級同步放大,字型也換成
    跟卡片一致的圓體/黑體家族(見上方 .bt-card 說明),animation 沿用既有 sfl 飄浮動畫不變(只換視覺,不換位移邏輯)。 */
 .bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:26px;font-size:clamp(26px,3.6vw,40px);font-weight:900;font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;color:#fff;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,80,80,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
+/* ★ v1.58.0(老師回報「PC 版戰鬥卡的圓體字太粗,iPad 版正常不用改」)—
+   根因猜測:M PLUS Rounded 1c 是可變字重字型,同一個 font-weight 數值在不同作業系統的字型渲染引擎
+   (PC 常見的 ClearType/DirectWrite 等)下,實際描邊粗細觀感可能比 iPadOS 的渲染更重,尤其戰鬥卡片
+   這批文字原本大量使用 700~900 高字重(.bt-name/.bt-hpn/.bt-sh/.bt-burst/.bt-dmg)。
+   用 `(hover:hover) and (pointer:fine)`(真滑鼠/觸控板裝置的訊號,比照本檔既有 v1.x 用
+   `(hover:none) and (pointer:coarse)` 判斷觸控裝置的同一套邏輯反過來用)只鎖定 PC,
+   iPad 手指直接觸控預設是 hover:none+pointer:coarse,不會命中這個媒體查詢,維持原樣不受影響。
+   只調降字重數字,不動字級/顏色/陰影等其他樣式;.bt-burst.ready(可以按的爆發鈕)保留 700 而非降到
+   .bt-burst 原本未進 ready 狀態的字重,維持按鈕本身仍有足夠視覺重量提示「可以按」。 */
+@media (hover:hover) and (pointer:fine){
+  .bt-name{font-weight:400;}
+  .bt-hpn{font-weight:400;}
+  .bt-sh{font-weight:400;}
+  .bt-burst{font-weight:400;}
+  .bt-burst.ready{font-weight:700;}
+  .bt-dmg{font-weight:400;}
+  .hm-burst{font-weight:400;}
+}
 .bt-dmg.heal{color:#eafff2;text-shadow:2px 2px 0 #000,0 0 14px rgba(60,220,100,.9);}
 .bt-dmg.block{color:#eaf6ff;font-size:20px;font-size:clamp(18px,2.6vw,28px);text-shadow:2px 2px 0 #000,0 0 12px rgba(80,160,255,.9);}
 /* ★ v1.47.0(老師需求「combo 文字放大並改得更明顯,亮色字體+黑襯底,用圓體字更有動感」)—
@@ -2034,10 +2110,17 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 /* 爆發全螢幕:tint 底 + 主程式 BURST_GIF_DB 的 GIF + 英雄名/招式名/效果(不用影片) */
 #bt-burstfx{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;animation:btfxin .25s;}
-#bt-burstfx img.gif{max-width:100vw;max-height:100vh;width:100vw;height:100vh;object-fit:contain;}
-#bt-burstfx .bt-bfname{font-size:clamp(22px,3.4vw,44px);font-weight:900;color:var(--gold);text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 20px rgba(240,192,96,.7);margin-top:6px;text-align:center;padding:0 12px;}
+/* ★ v1.60.0(老師回報「爆發動畫文字跑到螢幕底部畫面外了(iPad)」)—
+   根因:img.gif 原本是 flex 直排的第一個子元素,且 max-height:100vh 讓它自己就撐滿一整個視窗高度;
+   後面的 .bt-bfname(招式名稱)被擠成 flex 排在圖片「之後」,可用空間已經是負的,只能溢出到
+   #bt-burstfx(position:fixed,沒有 overflow 處理)的視窗範圍外,肉眼看起來就是「文字跑到螢幕底部
+   畫面外」。改法:圖片改 position:absolute 蓋滿整個容器背景,脫離 flex 排版流程,不再擠壓文字;
+   容器本身的 justify-content:center 這下才會真正讓文字置中在螢幕正中央,而不是被圖片推到最後面。
+   同一輪老師也要求「只顯示招式名稱,不用顯示效果說明」,原本的 .bt-bfeff(效果說明,含剛加上的
+   「附加:」第二效果文字)整段拿掉不生成,只保留 .bt-bfname。 */
+#bt-burstfx img.gif{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;z-index:0;}
+#bt-burstfx .bt-bfname{font-size:clamp(22px,3.4vw,44px);font-weight:900;color:var(--gold);text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 20px rgba(240,192,96,.7);margin-top:6px;text-align:center;padding:0 12px;position:relative;z-index:1;}
 #bt-burstfx .bt-bfname.npc{color:#ff8f8f;}
-#bt-burstfx .bt-bfeff{font-size:clamp(14px,1.8vw,24px);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.95);margin-top:4px;text-align:center;padding:0 12px;}
 @keyframes btfxin{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
 #bt-ko{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:clamp(60px,14vw,160px);font-weight:900;color:var(--gold);text-shadow:0 6px 20px rgba(0,0,0,.95),0 0 40px rgba(240,192,96,.8);animation:btko .5s cubic-bezier(.2,1.6,.4,1);}
 #bt-ko.lose{color:#ff8f8f;}
@@ -2561,6 +2644,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <a id="toapp-btn" class="chip" href="../"
        onclick="try{playSfx('sfx-tap',0.35);}catch(_){}">🗺 回大作戰</a>
     <button id="back-btn" class="chip hidden" onclick="mgHome()">← 回選單</button>
+    <!-- ★ v1.60.0(老師需求「玩法按鈕移到左上方回選單右邊」)— 從 #hud 搬到這裡,固定跟著回選單一起在左上角;
+         onclick 邏輯完全不動(mgShowInfo(true)),只是換了個容器位置。 -->
+    <button id="howto-btn" class="chip hidden" onclick="mgShowInfo(true)">玩法</button>
     <span class="grow"></span>
     <span id="who"></span>
     <!-- ★ v1.8.0 版本徽章:目前版號(淡綠=最新 / 紅=過舊)+ 過舊時出現「更新」鈕;偵測邏輯見 mgVerCheck -->
@@ -2654,7 +2740,6 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <span class="stat" id="score">0 分</span>
       <span class="stat" id="combo"></span>
       <span class="grow"></span>
-      <button class="chip" onclick="mgShowInfo(true)">玩法</button>
     </div>
     <div id="timebar-wrap"><div id="timebar"></div></div>
     </div><!-- /play-left -->
@@ -2919,7 +3004,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.57.0"></script>
+<script src="minigame_db.js?v=v1.62.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2928,7 +3013,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.57.0';
+var MG_VER = 'v1.62.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -3027,6 +3112,24 @@ function playSfx(id, vol){
     if(p && p['catch']) p['catch'](function(){});
   }catch(e){}
 }
+/* ★ v1.58.0(老師回報「爆發技能特效的音效播放會停不下來,持續發出聲音」)—
+   根因:mgBurstFx 只在 dur 到時把「畫面」(wrap 這個 div)移除,從沒對「聲音」做任何停止動作。
+   playSfx 只負責「播放」,音效檔案本身的長度跟畫面 dur 完全脫鉤——如果某支 sfx 檔案(例如連續射擊/地震
+   這類長音效)比英雄的 dur 還長,畫面消失後那個 <audio> 元素還在背景繼續播完自己的長度,聽起來就像
+   「卡住停不下來」;更糟的是如果下一次爆發又剛好用到同一支音效,playSfx 會 currentTime=0 重新播放,
+   而前一次那個 play() 承諾(Promise)還沒解決,在部分瀏覽器(尤其 iPad Safari)上會造成播放狀態錯亂,
+   使命令看起來像「怎麼按都關不掉」。
+   修法:新增 mgSfxStop(id)/mgSfxStopList(ids) 明確 pause()+currentTime 歸零;
+   ① mgBurstCinematic 開始播放新一輪爆發音效前,先停掉「上一輪爆發可能還在響的」sfx-burst-use;
+   ② mgBurstFx 的 dur 到時 cleanup,除了原本移除畫面,新增明確停止這次用到的所有 sfx(h.sfx 陣列 +
+      fallback 的 sfx-powerup),不再依賴音檔自己播完,徹底切斷「畫面沒了、聲音還在」的可能性。 */
+function mgSfxStop(id){
+  try{ var a = $(id); if(a){ a.pause(); a.currentTime = 0; } }catch(e){}
+}
+function mgSfxStopList(ids){
+  var i; for(i = 0; i < (ids ? ids.length : 0); i++){ mgSfxStop(ids[i]); }
+}
+var _mgBurstSfxIds = [];   /* ★ v1.58.0 — 目前這輪爆發特效正在用的 sfx id 清單,供 mgBattleClear 中途離開時收尾停音效用 */
 var _toastT = null;
 function toast(msg){
   var t = $('toast'); if(!t) return;
@@ -3102,7 +3205,7 @@ function applyGate(){
   }else{
     /* 測試期:非管理員一律停在閘門,連首頁都不給看到 */
     hide('page-home'); hide('page-play'); hide('page-result');
-    hide('back-btn');
+    hide('back-btn'); hide('howto-btn');
     show('page-gate');
     renderGate();
     bgmStop();
@@ -3940,7 +4043,7 @@ function startGame(x){
   }
   mgPauseReset();                                  /* ★ v1.4.0 */
   MG.startedAt = (new Date()).getTime();           /* ★ v1.4.0 本局用時起點(牆鐘,暫停照算) */
-  hide('page-home'); hide('page-result'); show('page-play'); show('back-btn'); show('pause-btn');
+  hide('page-home'); hide('page-result'); show('page-play'); show('back-btn'); show('pause-btn'); show('howto-btn');
   /* ★ v1.1.0 — 遊戲中把「🗺 回大作戰」收起來:誤觸就是整局作廢,
      而 iPad standalone 的 confirm() 有靜默失敗前例(主程式 v5.57.0 教訓),不能靠二次確認擋。
      玩家仍可「← 回選單」再按回大作戰,只多一步。 */
@@ -3974,7 +4077,7 @@ window.mgHome = function(){
   mgPauseReset(); hide('pause-btn');   /* ★ v1.4.0 */
   mgDockHide();                        /* ★ v1.5.1 */
   mgBattleClear();                     /* ★ v1.29.0 */
-  hide('page-play'); hide('page-result'); hide('back-btn'); show('page-home');
+  hide('page-play'); hide('page-result'); hide('back-btn'); hide('howto-btn'); show('page-home');
   show('toapp-btn');
   bgmPlay('bgm-home');
   mgSetScene(MG_HOME_SCENE);      /* ★ v1.3.0 首頁背景 = 台灣地圖 */
@@ -5576,7 +5679,7 @@ function _mazePaint(){
       /* ★ v1.3.1(老師:「難度太低」):踩到之前正解與陷阱一律同一種「石板」外觀(.mark),
          不再用金框／紅框分色 —— v1.3.0 之前等於把答案直接畫在地圖上。 */
       cls += ' mark';
-      _pic = mgPicByText(cell.mark.t);
+      _pic = cell.mark.pic || mgPicByText(cell.mark.t);   /* ★ v1.62.0(老師需求「迷宮答案格子可放回收物的圖片」)— mark.pic 逐格指定時優先,沒指定才退回舊有的文字對照表 mgPicByText */
     }
     if(i === _MZ.pos) _pic = 'maze_mz_player.webp';
     if(_MZ.walked.indexOf(i) >= 0){
@@ -6001,7 +6104,7 @@ window.mgAnswer = function(i){
     ansIdx = q.a;
   }
   correct = (i === ansIdx);
-  finishAnswer(correct, ansIdx, q);
+  finishAnswer(correct, ansIdx, q, i);
 };
 window.mgAnswerMap = function(spotId){
   if(MG.answered) return;
@@ -6018,12 +6121,12 @@ window.mgAnswerMap = function(spotId){
   showFeedback(correct, correct ? '✅ 答對了!' : '❌ 正確位置已標出來', txw(q));
 };
 
-function finishAnswer(correct, ansIdx, q){
+function finishAnswer(correct, ansIdx, q, selIdx){
   MG.answered = true;
   stopTimer();
   /* ★ v1.1.0 — drag 沒有 .opt 按鈕,要染的是籃子(答對綠、答錯把正解籃染綠) */
   if(MG.cur && mgEng(MG.cur, q) === 'drag') lockBins(ansIdx);   /* ★ v1.9.0 混入的選擇題走 lockOptions */
-  else lockOptions(ansIdx, correct ? ansIdx : -2);
+  else lockOptions(ansIdx, correct ? -2 : selIdx);   /* ★ v1.61.0 — 答錯時把玩家實際點的那個選項索引(selIdx)傳進去,讓 lockOptions 染紅+標示;答對時不需要標示錯誤,傳 -2 沿用原本的「不標記」語意 */
   scoreIt(correct);
   var _why = txw(q);
   if(!correct && MG.cur && MG.cur.hintOnWrong) _why += (_why ? ' ' : '') + '💡 ' + tx(MG.cur.hintOnWrong);   /* ★ v1.9.0 優化⑤:答錯才給口訣(動物關) */
@@ -6035,6 +6138,14 @@ function lockOptions(ansIdx, _sel){
     btns[i].disabled = true;
     di = parseInt(btns[i].getAttribute('data-i'), 10);
     if(di === ansIdx) btns[i].className = 'opt ok';
+    /* ★ v1.61.0(老師需求「按錯答案時,錯的答案用紅底顯示並標示答錯了,播放答錯音效且選項震動一下」)—
+       sfx-ng 音效本來就會播(scoreIt 既有邏輯,這裡不重複播);震動沿用既有 .card.shake 同一顆 cshake
+       keyframe(見上方 CSS .opt.ng{animation:cshake .4s}),「答錯了」文字直接附加在按鈕內文字下方,
+       不影響 disabled 狀態與既有的 data-i/onclick 屬性(反正已經 disabled,onclick 不會再觸發)。 */
+    else if(_sel != null && _sel >= 0 && di === _sel){
+      btns[i].className = 'opt ng';
+      btns[i].innerHTML += '<span class="opt-wrong-badge">❌ 答錯了</span>';
+    }
   }
 }
 /* ★ v1.1.0 — 拖放分類作答後:正解籃子染綠、其餘鎖住不能再拖 */
@@ -6082,12 +6193,11 @@ function scoreIt(correct, noBattle){
 function showFeedback(ok, head, why){
   try{ if(typeof head === 'string') head = T(head); }catch(_e){}   /* ★ v1.11.0 英文版標題列 */
   var f = $('feedback');
-  var _mb = $('mgbattle');
-  var _battleOn = !!(_mb && !_mb.classList.contains('hidden'));   /* ★ v1.39.0 老師需求:戰鬥卡模式下移除左下角「答對了/再想想」文字面板,對錯已由戰鬥卡受擊特效呈現,不必重複顯示 */
-  if(_battleOn){
-    f.className = 'feedback';
-    f.innerHTML = '';
-  }else{
+  /* ★ v1.60.0(老師回報「答案解說視窗不見了,請復原」)— v1.39.0 曾裁定戰鬥模式下隱藏這個面板(理由是
+     對錯已由戰鬥卡受擊特效+HP變化呈現,不必重複),但戰鬥模式從 v1.29.0 起就是預設玩法,等於解說文字
+     從此消失不見,學生看不到「為什麼答錯/這題在教什麼」的說明。老師這輪明確要求復原,拿掉 v1.39.0
+     那段戰鬥模式判斷分支,面板一律照舊顯示,不受戰鬥卡是否開啟影響。 */
+  {
     f.className = 'feedback show ' + (ok ? 'ok' : 'ng');
     f.classList.add('show');
     /* ★ v1.3.0 — 標題列 + 內文兩段(CSS .fb-head/.fb-body);why 為空時內文段自動隱藏 */
@@ -6111,7 +6221,7 @@ function showFeedback(ok, head, why){
   try{
     var dk = $('fbdock');
     if(dk){
-      if(!_battleOn && why){
+      if(why){
         dk.className = 'show ' + (ok ? 'ok' : 'ng');
         dk.innerHTML = '<b class="fd-head">' + esc(head) + '</b>' + esc(why);
         f.classList.add('docked');
@@ -6485,7 +6595,36 @@ function mgEff2Text(h, isNpc){
     en: '; also fully dodges the next 2 hits taken and heals ' + selfEn + ' 10 HP' };
   if(e.t === 'dmgimmune3') return { s: '接下來 3 次' + self_ + '受到的傷害完全免疫', f: '並使' + self_ + '接下來 3 次受到的傷害完全免疫',
     en: "; " + selfEn + "'s next 3 hits taken deal zero damage" };
+  /* ★ v1.59.0 — 剩餘19隻攻擊型+死靈法師確認提議表後的文案(2026-09-09) */
+  if(e.t === 'dodgechance3') return { s: '接下來' + self_ + '被攻擊 3 次,每次都有 50% 機率完全免疫', f: '並使' + self_ + '接下來 3 次受到攻擊,各有 50% 機率完全免疫傷害',
+    en: "; " + selfEn + "'s next 3 hits taken each have a 50% chance to be fully dodged" };
+  if(e.t === 'critboost3') return { s: '接下來' + self_ + '出手 3 次都必定爆擊,傷害多 50%', f: '並使' + self_ + '接下來 3 次造成傷害的判定必定爆擊,傷害提升 50%',
+    en: "; " + selfEn + "'s next 3 hits always crit for 50% more damage" };
+  if(e.t === 'poison3x5') return { s: '還讓' + foe + '灼燒 3 回合,每回合流失 5 滴血', f: '並使' + foe + '陷入灼燒,接下來 3 回合每回合流失 5 點 HP',
+    en: "; also burns " + foeEn + " for 3 rounds, losing 5 HP each round" };
+  if(e.t === 'undying3') return { s: '接下來 3 次' + self_ + '就算血歸零也不會倒下,固定留 1 滴血', f: '並使' + self_ + '接下來 3 次即使傷害會讓 HP 歸零,也固定留下 1 點 HP 不倒下',
+    en: "; for " + selfEn + "'s next 3 lethal hits, HP is held at 1 instead of reaching 0" };
+  if(e.t === 'swaphp') return { s: '使用當下立刻和' + foe + '交換血量!', f: '並使' + self_ + '與' + foe + '的目前 HP 立即互換',
+    en: '; also instantly swaps current HP with ' + foeEn };
+  if(e.t === 'breakdef3') return { s: '接下來 3 次' + foe + '受到的傷害會多 50%', f: '並使' + foe + '接下來 3 次受到傷害的判定,傷害提升 50%',
+    en: "; " + foeEn + "'s next 3 hits taken deal 50% more damage" };
+  if(e.t === 'lifesteal3') return { s: '接下來' + self_ + '出手命中 3 次,都會吸取傷害的一半回血', f: '並使' + self_ + '接下來 3 次造成傷害的判定,各吸取該次傷害 50% 回復自身 HP',
+    en: "; " + selfEn + "'s next 3 hits each heal for 50% of the damage dealt" };
+  if(e.t === 'stealcharge1') return { s: '使用當下直接從' + foe + '爆發條奪走 1 格,補給自己', f: '並使' + self_ + '從' + foe + '的爆發條奪取 1 格,轉移到自己的爆發條',
+    en: "; also steals 1 charge from " + foeEn + "'s burst gauge onto " + (isNpc ? 'their' : 'your') + ' own' };
+  if(e.t === 'shieldbreak') return { s: '使用當下直接打碎' + foe + '身上所有的護盾!', f: '並使' + foe + '身上的護盾格數立即歸零',
+    en: '; also shatters all of ' + foeEn + "'s shields" };
+  if(e.t === 'executelow15') return { s: '若' + foe + 'HP 低於 30%,直接再扣 15 滴血', f: '並使' + foe + '若目前 HP 低於 30%,直接額外損失 15 點 HP',
+    en: "; if " + foeEn + "'s HP is below 30%, also deals 15 direct damage" };
   return { s:'', f:'', en:'' };
+}
+/* ★ v1.60.0(老師需求「所有爆發技能文字說明中,第二效果說明開頭加上『附加:』,並改用黃色文字」)—
+   統一入口:傳入已經 tx() 過的第二效果純文字,沒有內容就回傳空字串(維持原本「沒有第二效果就不多顯示
+   任何東西」的行為);有內容則包一段黃色 `附加:` 前綴 + esc 過的效果文字。呼叫端都要從 textContent
+   改 innerHTML(套色必須用 HTML),base 說明部分維持外面自己 esc()。 */
+function mgEff2Html(effStr){
+  if(!effStr) return '';
+  return '<span style="color:#ffe066;">附加:</span>' + esc(effStr);
 }
 function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
 /* 目前選的英雄:localStorage._mgHero(非關鍵資料,共用 iPad 遺失無害);沒選過或名字已不存在 ⇒ 隨機一位並記住 */
@@ -6509,7 +6648,8 @@ function mgHeroPaintModal(){
   show('m-hero-sec');
   if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
   var d = mgBurstDef(mgHeroCls(h));
-  t.innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name)) + ' — ' + tx(d.p) + tx(mgEff2Text(h, false)));
+  var _e1 = tx(mgEff2Text(h, false));
+  t.innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name)) + ' — ' + tx(d.p)) + mgEff2Html(_e1);
 }
 /* ── 選角視窗 ── */
 var _HM = { sel: null, filter: '' };
@@ -6542,8 +6682,9 @@ function mgHeroPaintPicker(){
   var d = mgBurstDef(mgHeroCls(h)), hCls = mgHeroCls(h);
   /* ★ v1.56.0(老師需求「選角視窗極限爆發名稱與技能效果用中圓體+依職能上色」)—
      招式名+效果說明包一層 .hm-burst.cls-XX(見上方 CSS),英雄名/職能標籤維持原樣不變動。 */
+  var _e2 = tx(mgEff2Text(h, false));
   $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' +
-    '<span class="hm-burst cls-' + hCls + '">' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p) + tx(mgEff2Text(h, false))) + '</span>';
+    '<span class="hm-burst cls-' + hCls + '">' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p)) + mgEff2Html(_e2) + '</span>';
   for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
   $('hm-filter').innerHTML = html;
   html = '';
@@ -6581,9 +6722,9 @@ function mgBattleInit(x){
      maxHpBonus(救醫馬:HP上限永久+20,整場持續,不做3回合到期復原以避免HP卡在超過上限的邊界問題)、
      phoenixUsed(鳳凰:無條件10HP自動復活,整場限用一次)。 */
   _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
-            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false },
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0 },
           n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
-            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false },
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -6596,8 +6737,8 @@ function mgBattleInit(x){
   $('bt-n-bn').textContent = nh.bn || tx(mgBurstDef(mgHeroCls(nh)).name);
   /* ★ v1.32.0 — 直式大卡新增效果說明(取代等級/攻擊特技速度/S1S2);玩家看 p 版文案、NPC 看 npc 版文案 */
   var peff = $('bt-p-eff'), neff = $('bt-n-eff');
-  if(peff) peff.textContent = tx(mgBurstDef(mgHeroCls(ph)).p) + tx(mgEff2Text(ph, false));
-  if(neff) neff.textContent = tx(mgBurstDef(mgHeroCls(nh)).npc) + tx(mgEff2Text(nh, true));
+  if(peff){ var _pe1 = tx(mgEff2Text(ph, false)); peff.innerHTML = esc(tx(mgBurstDef(mgHeroCls(ph)).p)) + mgEff2Html(_pe1); }
+  if(neff){ var _ne1 = tx(mgEff2Text(nh, true)); neff.innerHTML = esc(tx(mgBurstDef(mgHeroCls(nh)).npc)) + mgEff2Html(_ne1); }
   var fz = $('bt-frz'); if(fz) fz.classList.remove('on');
   show('mgbattle');
   mgBattlePaint();
@@ -6610,6 +6751,15 @@ function mgBattleClear(){
   _BT = null;
   var fx = $('bt-burstfx'); if(fx && fx.parentNode) fx.parentNode.removeChild(fx);
   var ko = $('bt-ko'); if(ko && ko.parentNode) ko.parentNode.removeChild(ko);
+  /* ★ v1.58.0(老師回報「爆發技能特效的音效播放會停不下來」)— 補上離開戰鬥時的收尾:
+     若玩家在爆發演出播到一半時就換題/離開(例如答完最後一題直接進下一關),原本這裡只清畫面元素,
+     完全沒停音效,殘留的 sfx-burst-use / 英雄自己那組 h.sfx 會繼續放完自己的長度,聽起來就是「怎麼還在響」。
+     mgBurstFx 開始播放時會把用到的 sfx id 記進全域 _mgBurstSfxIds,這裡連同 sfx-burst-use 一併停掉;
+     開場的 #bt-cine(名稱大字+立繪淡入)如果還沒淡出完也一併移除,避免下一場戰鬥開場時畫面疊影。 */
+  var cine = $('bt-cine'); if(cine && cine.parentNode) cine.parentNode.removeChild(cine);
+  mgSfxStop('sfx-burst-use');
+  mgSfxStopList(_mgBurstSfxIds);
+  _mgBurstSfxIds = [];
   hide('mgbattle');
 }
 function mgBattlePaint(){
@@ -6718,16 +6868,21 @@ function mgBattleFloatOn(side, text, cls){ try{ var el = $('bt-' + side + '-imgw
 function mgHpCap(S){ return MG_BT.HP + (S && S.maxHpBonus ? S.maxHpBonus : 0); }
 function mgDealDamage(atk, def, base, fxFrom, rawFixed){
   var dmg = base;
-  if(!rawFixed){   /* ★ v1.57.0 — rawFixed=true 用於 NPC_TURN_DMG 全域固定回合傷害,鐵律「不可被護盾/減傷擋下」維持不變,跳過下面四行常規加成/減傷計算 */
+  if(!rawFixed){   /* ★ v1.57.0 — rawFixed=true 用於 NPC_TURN_DMG 全域固定回合傷害,鐵律「不可被護盾/減傷擋下」維持不變,跳過下面幾行常規加成/減傷計算 */
     if(atk.lowhpScale){ var _miss = 1 - (atk.hp / MG_BT.HP); dmg = Math.round(dmg * (1 + Math.floor(_miss * 10) * 0.1)); }   /* 呂布 */
-    if(atk.dmgUpLeft > 0){ atk.dmgUpLeft--; dmg = Math.round(dmg * 1.5); }   /* 菇女:接下來3次攻擊+50% */
+    if(atk.dmgUpLeft > 0){ atk.dmgUpLeft--; dmg = Math.round(dmg * 1.5); }   /* 菇女/關羽:接下來3次攻擊+50% */
     if(atk.dmgDownLeft > 0){ atk.dmgDownLeft--; dmg = Math.round(dmg * 0.5); }   /* 科技生化人:對手3回合造成傷害-50% */
+    if(def.dmgTakenUpLeft > 0){ def.dmgTakenUpLeft--; dmg = Math.round(dmg * 1.5); }   /* ★ v1.58.0 — 大天狗:對手3回合受到傷害+50%(乘算,跟易傷的固定值不同) */
     if(def.dmgReduceLeft > 0){ def.dmgReduceLeft--; dmg = Math.round(dmg / 2); }
     if(def.dotLeft > 0){ def.dotLeft--; dmg += (def.dotAmt || MG_BT.DOT); }
   }
   var defSide = mgSideOf(def), atkSide = mgSideOf(atk);
   if(def.dmgImmuneLeft > 0){ def.dmgImmuneLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); return; }   /* 暗魔將/雅典娜 */
   if(def.dodgeLeft > 0){ def.dodgeLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'DODGE' : '迴避!'), 'block'); return; }   /* 風術士 */
+  if(def.dodgeChanceLeft > 0){   /* ★ v1.58.0 — 孫悟空:接下來3次受到攻擊,50%機率完全免疫(用量照扣,機率沒中就繼續往下算正常傷害) */
+    def.dodgeChanceLeft--;
+    if(Math.random() < 0.5){ playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'DODGE' : '迴避!'), 'block'); return; }
+  }
   if(def.reflectHealLeft > 0){   /* 沐雲雪:一半反彈給對手、一半轉成自己回血,完全不扣自己血 */
     def.reflectHealLeft--; var _rf = Math.round(dmg * 0.5), _hl = dmg - _rf;
     def.hp = Math.min(mgHpCap(def), def.hp + _hl); atk.hp = Math.max(0, atk.hp - _rf);
@@ -6735,14 +6890,15 @@ function mgDealDamage(atk, def, base, fxFrom, rawFixed){
     return;
   }
   playSfx('sfx-normalatk', 0.7); mgBattleFxAttack(fxFrom, '−' + dmg);
-  def.hp = Math.max(0, def.hp - dmg);
+  if(def.hp - dmg <= 0 && def.surviveLeft > 0){ def.surviveLeft--; def.hp = 1; mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'SURVIVE!' : '挺住了!'), 'block'); }   /* ★ v1.58.0 — 炎火超少女:HP≤10時接下來3次不會被打死,固定留1HP */
+  else{ def.hp = Math.max(0, def.hp - dmg); }
   if(def.reflectHalfLeft > 0){ def.reflectHalfLeft--; atk.hp = Math.max(0, atk.hp - dmg); mgBattleFloatOn(atkSide, '−' + dmg, 'block'); }   /* 紅色玩家:剩下的一半反彈回去 */
   if(def.dmgBankLeft > 0){   /* 學霸:累積3次受到的傷害,倒數到0時一次還給對手 */
     def.dmgBankLeft--; def.dmgBankAmt = (def.dmgBankAmt || 0) + dmg;
     if(def.dmgBankLeft === 0 && def.dmgBankAmt > 0){ var _bk = def.dmgBankAmt; atk.hp = Math.max(0, atk.hp - _bk); mgBattleFloatOn(atkSide, '−' + _bk, 'block'); def.dmgBankAmt = 0; }
   }
   if(def.counterLeft > 0){ def.counterLeft--; var _cv = 10; atk.hp = Math.max(0, atk.hp - _cv); mgBattleFxAttack(defSide, '−' + _cv); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'COUNTER' : '反擊!'), 'block'); }   /* 蚩尤 */
-  if(atk.lifestealLeft > 0){ atk.lifestealLeft--; var _ls = Math.round(dmg * 0.5); atk.hp = Math.min(mgHpCap(atk), atk.hp + _ls); mgBattleFloatOn(atkSide, '+' + _ls, 'heal'); }   /* 幽幽/死靈法師 */
+  if(atk.lifestealLeft > 0){ atk.lifestealLeft--; var _ls = Math.round(dmg * 0.5); atk.hp = Math.min(mgHpCap(atk), atk.hp + _ls); mgBattleFloatOn(atkSide, '+' + _ls, 'heal'); }   /* 幽幽/死靈法師/酒吞童子 */
   if(atk.multiHitLeft > 0){ atk.multiHitLeft--; def.hp = Math.max(0, def.hp - dmg); mgBattleFxAttack(fxFrom, '−' + dmg); }   /* 哪吒:原封不動追加同傷害一次,不重新跑上面判定避免鏈式無限 */
 }
 /* ★ v1.57.0 — 地獄將軍(regen 5回合+6)/小鬼貓與兔(poison 5回合−5)/青炎龍王與魔界花使(regen+poison 3回合±5)這類
@@ -7009,6 +7165,21 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'heal20dmgup3'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 20); caster.dmgUpLeft = 3; try{ mgBattleFloatOn(mgSideOf(caster), '+20', 'heal'); }catch(_e10){} }   /* 菇女 */
   else if(e.t === 'dodge2heal10'){ caster.dodgeLeft = 2; caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); }catch(_e11){} }   /* 風術士 */
   else if(e.t === 'dmgimmune3') caster.dmgImmuneLeft = 3;   /* 雅典娜 */
+  /* ★ v1.58.0(老師需求「剩餘19隻攻擊型+死靈法師/水狐確認用提議表」)—
+     水狐維持原樣(revive)不動;下面10種是提議表裡沒有既有機制可以直接沿用、需要新開分支的效果;
+     其餘的孫悟空以外的英雄(諸葛亮/喚龍使‧蜜鶴林/大刀勇士/武器精靈/火柴人/美人魚‧角角/窮奇/火爆女/我的豚豚)
+     全部直接沿用既有的 seal/confuse/heal/charge/revive/immune/bleed 機制,只改 MG_HEROES 的 eff2 數值,
+     這裡不需要新增分支。 */
+  else if(e.t === 'dodgechance3') caster.dodgeChanceLeft = 3;   /* 孫悟空:接下來3次受到攻擊,50%機率完全免疫 */
+  else if(e.t === 'critboost3') caster.dmgUpLeft = 3;   /* 關羽:接下來3次攻擊必定爆擊(+50%傷害),跟 dmgUpLeft 是同一套加成邏輯,只是文案不同 */
+  else if(e.t === 'poison3x5'){ foe.poisonLeft = 3; foe.poisonAmt = 5; }   /* 熔岩巨人:對手3回合每回合流失5HP,跟小鬼貓與兔的5回合5血是同一套機制不同數值 */
+  else if(e.t === 'undying3') caster.surviveLeft = 3;   /* 炎火超少女:接下來3次瀕死不會被打死,固定留1HP */
+  else if(e.t === 'swaphp'){ var _sw = caster.hp; caster.hp = foe.hp; foe.hp = _sw; try{ mgBattlePaint(); }catch(_e12){} }   /* 幽魂暗狐:立即與對手交換HP */
+  else if(e.t === 'breakdef3') foe.dmgTakenUpLeft = 3;   /* 大天狗:對手3回合受到傷害+50%(乘算) */
+  else if(e.t === 'lifesteal3') caster.lifestealLeft = 3;   /* 酒吞童子/死靈法師:接下來3次攻擊命中,吸取造成傷害50%回復自己 */
+  else if(e.t === 'stealcharge1'){ foe.charge = Math.max(0, foe.charge - 1); caster.charge = Math.min(MG_BT.CHARGE - 1, caster.charge + 1); try{ mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? 'STOLEN' : '奪取!'), 'block'); }catch(_e13){} }   /* 鋁合金暴龍:立即從對手爆發條奪1格加給自己 */
+  else if(e.t === 'shieldbreak'){ foe.shield = 0; try{ mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? 'BREAK!' : '破盾!'), 'block'); }catch(_e14){} }   /* 炸彈客:立即清空對手所有護盾格 */
+  else if(e.t === 'executelow15'){ if(foe.hp < MG_BT.HP * 0.3){ foe.hp = Math.max(0, foe.hp - 15); try{ mgBattleFxAttack(mgSideOf(caster), '−15'); }catch(_e15){} } }   /* 死神:HP低於30%的對手直接扣15HP,沒到門檻則這次爆發不觸發額外傷害 */
 }
 /* ★ v1.54.0(老師需求「小遊戲的回復型英雄,把大對抗巫女/米鈴這類解除不利狀態的效果也加進去」)—
    小遊戲目前會落在「自己身上」的不利狀態只有三種(全部是對手 eff2 打過來的第二效果):
@@ -7643,6 +7814,7 @@ function mgBurstCinematic(side, h, d, effText, cb){
     document.body.appendChild(wrap);
     void wrap.offsetWidth;
     wrap.className += ' show';
+    mgSfxStop('sfx-burst-use');   /* ★ v1.58.0 — 先切斷上一輪可能還在響的爆發音效,再播這一輪,避免疊播聽起來像「停不下來」 */
     playSfx('sfx-burst-use', 0.6);   /* ★ v1.34.0(老師需求)— 爆發技能使用時的專屬音效 */
     setTimeout(function(){
       try{
@@ -7665,14 +7837,21 @@ function mgBurstFx(side, h, d, effText, cb){
     wrap.style.background = (h && h.tint) ? h.tint : (d.tint || 'rgba(255,255,255,.15)');
     var url = mgBurstGifUrl(h) + '?t=' + Date.now();
     wrap.innerHTML = '<img class="gif" src="' + url + '" alt="" onerror="this.style.display=\'none\';">'
-                   + '<div class="bt-bfname' + (side === 'n' ? ' npc' : '') + '">' + esc(h.n) + '　' + esc(h.bn || tx(d.name)) + '</div>'
-                   + '<div class="bt-bfeff">' + esc(effText || '') + '</div>';
+                   + '<div class="bt-bfname' + (side === 'n' ? ' npc' : '') + '">' + esc(h.n) + '　' + esc(h.bn || tx(d.name)) + '</div>';
     document.body.appendChild(wrap);
     var card = $('bt-' + side); if(card){ card.classList.add('casting'); setTimeout(function(){ card.classList.remove('casting'); }, dur); }
     var sfx = (h && h.sfx && h.sfx.length) ? h.sfx : [['sfx-powerup', 0.7]], i;
     for(i = 0; i < sfx.length; i++){ if($(sfx[i][0])) playSfx(sfx[i][0], Math.min(1, (sfx[i][1] || 0.8) * 0.8)); }
     if(!sfx.length || !$(sfx[0][0])) playSfx('sfx-powerup', 0.7);
-    setTimeout(function(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(typeof cb === 'function'){ try{ cb(); }catch(ecb){} } }, dur);
+    _mgBurstSfxIds = []; for(i = 0; i < sfx.length; i++){ _mgBurstSfxIds.push(sfx[i][0]); } _mgBurstSfxIds.push('sfx-powerup');   /* ★ v1.58.0 — 記錄這輪用到的 sfx id,供中途離開戰鬥時 mgBattleClear 收尾停用 */
+    setTimeout(function(){
+      if(wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      var _stopIds = [], _si; for(_si = 0; _si < sfx.length; _si++){ _stopIds.push(sfx[_si][0]); }
+      _stopIds.push('sfx-powerup');
+      mgSfxStopList(_stopIds);   /* ★ v1.58.0 — 畫面消失的同一刻,明確停止這次爆發用到的所有音效,不管音檔本身還剩多長 */
+      _mgBurstSfxIds = [];
+      if(typeof cb === 'function'){ try{ cb(); }catch(ecb){} }
+    }, dur);
   }catch(e){ if(typeof cb === 'function'){ try{ cb(); }catch(ecb2){} } }
 }
 /* 結算加成(老師追加):剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;回傳明細供 finishGame 顯示 */
