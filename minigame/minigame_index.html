@@ -494,6 +494,25 @@ button[disabled]{opacity:.45;}
 #matchbox.link #ml-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
 #matchbox.link #ml-svg line{stroke:var(--grass);stroke-width:5;stroke-linecap:round;}
 
+/* ── 引擎 K:元素消消樂(match3,神魔之塔玩法)★ v1.42.0 ── */
+#match3box{display:none;flex-direction:column;align-items:center;gap:10px;margin-top:10px;}
+#match3box:not(.hidden){display:flex;}
+.m3-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);
+  gap:4px;width:min(88vw,340px);aspect-ratio:1/1;
+  touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;
+}
+.m3-cell{
+  position:relative;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(1.1rem,5vw,1.6rem);line-height:1;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 3px 0 rgba(0,0,0,.25);
+  transition:transform .12s ease;
+}
+.m3-cell.drag{transform:scale(1.12);z-index:2;box-shadow:0 0 0 3px #fff,0 4px 10px rgba(0,0,0,.4);}
+.m3-cell.match{animation:m3flash .5s ease;}
+@keyframes m3flash{0%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 0 0 0 var(--gold);}50%{box-shadow:inset 0 0 0 2px #fff,0 0 20px 6px var(--gold);}100%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 0 0 0 transparent;}}
+.m3-hint{font-size:12px;color:var(--mist);opacity:.75;text-align:center;max-width:340px;margin:0;}
+
 /* ── 引擎 G:反應點擊(老師指定 A)────────────
    天上掉下許多候選答案,點對加分、點錯扣分。 */
 #reactbox{
@@ -2156,6 +2175,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
     <div id="matchbox" class="hidden"></div>
 
+    <!-- ★ v1.42.0 引擎 K:元素消消樂(match3,神魔之塔玩法) -->
+    <div id="match3box" class="hidden">
+      <div id="m3grid" class="m3-grid"></div>
+      <p class="m3-hint">拖一顆寶石,10 秒內滑動交換,湊出橫排或直排 3 個以上同元素就會消除!</p>
+    </div>
+
     <div id="reactbox" class="hidden"></div>
     <div id="react-hud" class="hidden">
       <span id="react-got"></span><span id="react-tip"></span>
@@ -2926,7 +2951,7 @@ function mgCenterOf(id){
 }
 /* 現在畫面上正在用的那個「作答區」是誰 —— 特效要打在它身上,不是永遠打在題卡上 */
 function mgActiveBox(){
-  var ids = ['reactbox','mazebox','colorqbox','paintbox','matchbox','orderbox','dragbox','mapbox','qcard'], i;
+  var ids = ['match3box','reactbox','mazebox','colorqbox','paintbox','matchbox','orderbox','dragbox','mapbox','qcard'], i;
   for(i = 0; i < ids.length; i++){
     var el = $(ids[i]);
     if(el && !el.classList.contains('hidden') && el.offsetWidth > 0) return ids[i];
@@ -3177,7 +3202,8 @@ var _POOL_FIELD = {
   sort:'items',  quiz:'questions', map:'tasks',   ear:'questions',
   drag:'items',  order:'rounds',   match:'rounds',
   react:'rounds', maze:'levels',   paint:'pics',
-  colorq:'qs'   /* ★ v1.3.0 寵物調色工坊 */
+  colorq:'qs',   /* ★ v1.3.0 寵物調色工坊 */
+  match3:'rounds'   /* ★ v1.42.0 元素消消樂:連續型玩法,只需 1 筆佔位資料撐住進度顯示,實際盤面由 _M3 自己管理 */
 };
 /* ★ v1.9.0(老師裁定「丙」):每題可覆寫引擎 —— 資料表題目帶 engine:'quiz' 時,分類關(sort/drag)也能混入「科學小博士」選擇題;
    只在派發(renderQuestion)、判定(mgAnswer/finishAnswer)三處用 mgEng() 取代 x.engine,其餘引擎零改動。 */
@@ -3315,6 +3341,7 @@ function stopEngines(){
   var pd = $('paint-drag'); if(pd) pd.style.display = 'none';
   _PT = null; _MZ = null; _MC = null; _OD = null; _DG = null;
   _EAR = null;   /* ★ v1.4.0 聽音坊演奏／拍子狀態 */
+  mgM3Teardown();   /* ★ v1.42.0 元素消消樂:清回合計時器＋拿掉 document 級拖曳監聽,道理同 _RC 的 raf 取消 */
 }
 
 function stopTimer(){ if(MG.timer){ clearInterval(MG.timer); MG.timer = null; } }
@@ -3470,7 +3497,7 @@ function renderQuestion(keepState){
      舊寫法是逐個 hide(),每加一個引擎就要記得補一行,漏掉的症狀是
      「玩完 A 遊戲再玩 B,上一款的畫面還黏在下面」——很難聯想到原因。 */
   var _BOXES = ['mapbox','earbox','dragbox','orderbox','matchbox',
-                'reactbox','react-hud','mazebox','paintbox','colorqbox'];
+                'reactbox','react-hud','mazebox','paintbox','colorqbox','match3box'];
   for(var _b = 0; _b < _BOXES.length; _b++) hide(_BOXES[_b]);
   show('card-area');
   $('opts').innerHTML = '';
@@ -3491,15 +3518,16 @@ function renderQuestion(keepState){
   else if(_eng === 'maze') renderMaze(x, q);
   else if(_eng === 'paint') renderPaint(x, q);
   else if(_eng === 'colorq') renderColorq(x, q);   /* ★ v1.3.0 */
+  else if(_eng === 'match3') renderMatch3(x, q);   /* ★ v1.42.0 元素消消樂(神魔之塔玩法) */
   /* ★ v1.10.0 課堂複習題角落標籤 + 記入本輪已出清單(專注模式時) */
   mgCrTagApply(q);
   if(!keepState && q && q.cr && mgCrActive()) mgCrSeenAdd(x.id, q);
   try{ mgLangApply($('page-play')); }catch(_el){}   /* ★ v1.11.0 */
 
-  /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,
-     三者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
+  /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,match3 是每回合 10 秒自己管理的拖曳迴圈,
+     四者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
   /* ★ v1.4.0 — 題目可用 q.sec 覆寫倒數(聽音坊「演奏／拍子」題需要比選擇題更長的時間) */
-  if(!keepState && x.engine !== 'react') startTimer((q && q.sec) ? q.sec : x.time);
+  if(!keepState && x.engine !== 'react' && x.engine !== 'match3') startTimer((q && q.sec) ? q.sec : x.time);
 }
 
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
@@ -5641,7 +5669,10 @@ function finishGame(){
    ★ DOT 更名說明(老師 v1.31.2 訂正術語):這個數值是「受到傷害時額外多扣血」= 出血/易傷/增傷,
      不是「每回合固定扣血、不看有沒有被打中」的中毒(那種需要獨立回合計時器,本遊戲是逐題判定制沒有回合,
      故未實作 中毒/燃燒 那種無視護盾的獨立扣血;若日後要做,需另開一個不看 shield 的扣血入口)。數值 3→5。 */
-var MG_BT = { HP: 200, DMG: 10, CHARGE: 5, MAX_BURST: 2, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3, DOT: 5, HEALBUFF: 3, EFF2_N: 3, ATK_BURST_P: 10, ATK_BURST_N: 20 };
+/* ★ v1.42.0(老師裁定 2026-09-09,全域新規則,套用全部小遊戲關卡)—
+   NPC_TURN_DMG:對手每回合固定額外對玩家造成的傷害,不看答對/答錯、不可被護盾/減傷擋下(視為對手固定出手,跟答題結果無關),
+   實作在 mgBattleHit 尾端,對所有引擎一體適用,不需逐款遊戲各自加。 */
+var MG_BT = { HP: 200, DMG: 10, CHARGE: 5, MAX_BURST: 2, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3, DOT: 5, HEALBUFF: 3, EFF2_N: 3, ATK_BURST_P: 10, ATK_BURST_N: 20, NPC_TURN_DMG: 10 };
 var _BT = null;
 function mgHeroList(){ return (window.MG_HEROES && window.MG_HEROES.length) ? window.MG_HEROES : []; }
 /* ★ v1.31.0(老師需求「登入時只能選已解鎖SSR」)— 玩家可選清單:
@@ -5885,8 +5916,10 @@ function mgBattleFloat(x, y, text, cls){
   }catch(e){}
 }
 function mgBattleFloatOn(side, text, cls){ try{ var el = $('bt-' + side + '-imgw'); var r = el.getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + r.height / 2 - 10, text, cls); }catch(e){} }
-/* ★ 唯一扣血入口 */
-function mgBattleHit(ok){
+/* ★ 唯一扣血入口
+   ★ v1.42.0(老師需求「元素消消樂」)— 新增可選第二參數 customDmg:成功時若有帶正數,取代 MG_BT.DMG 當作對敵傷害基數
+   (其餘 8 款既有引擎呼叫時都只傳 1 個參數,customDmg 為 undefined,行為完全不變)。 */
+function mgBattleHit(ok, customDmg){
   if(!_BT || _BT.over) return;
   var P = _BT.p, N = _BT.n;
   if(P.sealLeft > 0) P.sealLeft--;   /* ★ v1.36.0 — 封印爆發技能:每題判定倒數一次,不分答對答錯 */
@@ -5899,7 +5932,7 @@ function mgBattleHit(ok){
     }
     else if(N.shield > 0){ N.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('n', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
     else{
-      var dmgP = MG_BT.DMG;
+      var dmgP = (typeof customDmg === 'number' && customDmg > 0) ? Math.round(customDmg) : MG_BT.DMG;   /* ★ v1.42.0 元素消消樂:依消除顆數+combo 算出的傷害取代固定值 */
       if(N.dmgReduceLeft > 0){ N.dmgReduceLeft--; dmgP = Math.round(dmgP / 2); }               /* 護盾型第二效果:護盾耗盡後再減傷 */
       if(N.dotLeft > 0){ N.dotLeft--; dmgP += (N.dotAmt || MG_BT.DOT); }                        /* 逐英雄第二效果(易傷):數值取該英雄自己的 eff2.v */
       N.hp = Math.max(0, N.hp - dmgP); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('p', '−' + dmgP);
@@ -5928,15 +5961,38 @@ function mgBattleHit(ok){
       if(N.charge >= MG_BT.CHARGE){ mgBattlePaint(); if(_BT.npcT) clearTimeout(_BT.npcT); _BT.npcT = setTimeout(mgBattleNpcBurst, 700); }
     }
   }
+  /* ★ v1.42.0(老師裁定,全域新規則,套用全部小遊戲)— 對手每回合固定額外攻擊玩家一次,不論這回合答對/答錯,
+     也不可被玩家的護盾/減傷擋下(視為對手固定出手,跟這回合判定結果無關)。視覺上延遲一點播放,
+     避免跟上面「答錯扣血」的特效在同一瞬間疊在一起,看起來像連續兩下攻擊。 */
+  if(P.hp > 0){
+    P.hp = Math.max(0, P.hp - MG_BT.NPC_TURN_DMG);
+    setTimeout(function(){ mgBattleFxAttack('n', '−' + MG_BT.NPC_TURN_DMG); }, ok ? 60 : 450);
+  }
   mgBattlePaint();
   mgBattleCheckKO();
 }
 function mgBattleCheckKO(){
   if(!_BT || _BT.over) return;
+  mgBattleNpcBurstSafety();   /* ★ v1.42.0 — 對手HP≤50%且全場尚未放過任何一次爆發 ⇒ 強制觸發1次,見該函式註解 */
   if(_BT.n.hp <= 0 && mgTryRevive(_BT.n)) return;   /* ★ v1.36.0 — revive:滿槽重生,先判 NPC 再判玩家 */
   if(_BT.p.hp <= 0 && mgTryRevive(_BT.p)) return;
   if(_BT.n.hp <= 0) mgBattleEnd('win');
   else if(_BT.p.hp <= 0) mgBattleEnd('lose');
+}
+/* ★ v1.42.0(老師裁定 2026-09-09,全域新規則,套用全部小遊戲關卡)—
+   對手(NPC)HP 降到 50% 或以下時,若對手全場「一次爆發技能都還沒放過」,強制立即施展 1 次
+   (不看目前爆發條/封印狀態,直接視為已充滿並解除封印再觸發),確保 NPC 不會因為手氣好(玩家一直沒答錯/沒漏消)
+   而整場都放不出技能。只影響 NPC,不影響玩家(玩家爆發仍需自己手動按鈕)。
+   ⚠ 會遞迴呼叫 mgBattleNpcBurst()→mgBattleCheckKO(),但 mgBattleNpcBurst 一開頭就會把 N.used 設為 ≥1,
+   下一層進來時本函式第一行 N.used>0 就會直接返回,遞迴只會發生 1 層,不會無限迴圈。 */
+function mgBattleNpcBurstSafety(){
+  if(!_BT || _BT.over) return;
+  var N = _BT.n;
+  if(!N || N.used > 0) return;
+  if(N.hp <= 0 || N.hp > MG_BT.HP * 0.5) return;
+  N.charge = MG_BT.CHARGE;
+  N.sealLeft = 0;   /* 安全網優先於封印,避免玩家的封印技能讓 NPC 整場放不出來 */
+  mgBattleNpcBurst();
 }
 /* ★ v1.36.0 — revive(滿槽重生)被動判定:S 為 _BT.p 或 _BT.n。條件=eff2 是 revive 且爆發充能已滿;
    成立則消耗充能(歸零)並回滿 HP=20,擋下這次擊倒,回傳 true 讓 mgBattleCheckKO 不結算勝負。 */
@@ -6133,9 +6189,289 @@ function mgBurstAtkApply(eng){
       }
       return k > 0;
     }
+    if(eng === 'match3'){
+      /* ★ v1.42.0(老師裁定)— 這款沒有「錯誤答案」可刪,攻擊型基礎效果在此關改成:
+         隨機把場上 3 個顏色互不相同的元素,變成目前場上數量最多的元素(後半「直接對對手造成 10 傷害」仍照舊套用,不在這支處理)。
+         實際改色與後續連鎖消除交給 mgM3SkillAtk() 處理。 */
+      return mgM3SkillAtk();
+    }
   }catch(e){}
   return false;
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.42.0 元素消消樂(神魔之塔玩法)— 木柵茶行秤重 主題與玩法重作
+ * 老師需求(2026-09-09)全套規格:5×5 棋盤七元素、10 秒/回合拖曳沿路徑連續交換相鄰格、
+ * 只認橫/直 3 連(不算斜線)、消除後重力下落+頂部隨機補齊、補齊後再連鎖算 combo、
+ * 消 3/4/5 顆基礎傷害 10/12/15,combo 每層 +10%(上限100%)疊加在該層傷害上,
+ * 沒消除(含逾時未動)→ 玩家受到對手 10 傷害(既有 mgBattleHit 答錯分支照舊)。
+ * 對戰面板/HP/爆發/勝負沿用既有 _BT 共用戰鬥模型,傷害改走 mgBattleHit(ok, customDmg)。
+ * ══════════════════════════════════════════════════════════════════════════ */
+var MG_M3_ELEMS = [
+  { sym:'🔥', col:'#c0432a' },
+  { sym:'💧', col:'#2f7cc2' },
+  { sym:'🌪', col:'#3f9e82' },
+  { sym:'⛰', col:'#a9793a' },
+  { sym:'🌿', col:'#4f9a35' },
+  { sym:'☀', col:'#d9a83a' },
+  { sym:'🌑', col:'#6a4bb0' }
+];
+var _M3 = null;   /* { grid[25], busy, dragIdx, moved, timerId, tLeft, turnMs, docBound } */
+function mgM3RandCell(){ return Math.floor(Math.random() * MG_M3_ELEMS.length); }
+function mgM3Adjacent(a, b){
+  var ra = Math.floor(a / 5), ca = a % 5, rb = Math.floor(b / 5), cb = b % 5;
+  return (Math.abs(ra - rb) + Math.abs(ca - cb)) === 1;
+}
+/* 開局檢查:候選色是否會讓 (r,c) 這格一放下去就形成現成 3 連(只需看左邊/上邊,因為右邊/下邊還沒填) */
+function mgM3CreatesMatchAt(g, r, c){
+  var v = g[r * 5 + c];
+  if(c >= 2 && g[r * 5 + c - 1] === v && g[r * 5 + c - 2] === v) return true;
+  if(r >= 2 && g[(r - 1) * 5 + c] === v && g[(r - 2) * 5 + c] === v) return true;
+  return false;
+}
+function mgM3TrySwapMatches(g, i, j){
+  var t = g[i]; g[i] = g[j]; g[j] = t;
+  var m = mgM3FindMatches(g).length > 0;
+  t = g[i]; g[i] = g[j]; g[j] = t;
+  return m;
+}
+function mgM3HasMove(g){
+  var r, c;
+  for(r = 0; r < 5; r++){
+    for(c = 0; c < 5; c++){
+      if(c < 4 && mgM3TrySwapMatches(g, r * 5 + c, r * 5 + c + 1)) return true;
+      if(r < 4 && mgM3TrySwapMatches(g, r * 5 + c, (r + 1) * 5 + c)) return true;
+    }
+  }
+  return false;
+}
+/* 產生開局:不可現成 3 連,且盡量保證至少有一步合法交換可消(極端無解機率極低,兜底不強求完美) */
+function mgM3FillNoMatch(){
+  var g = [], r, c, tries;
+  for(r = 0; r < 5; r++){
+    for(c = 0; c < 5; c++){
+      tries = 0;
+      do{ g[r * 5 + c] = mgM3RandCell(); tries++; }
+      while(tries < 40 && mgM3CreatesMatchAt(g, r, c));
+    }
+  }
+  if(!mgM3HasMove(g)) g[6] = g[0];   /* 極罕見兜底:讓 (1,1) 跟 (0,0) 同色,製造至少一個交換機會,不追求嚴謹證明 */
+  return g;
+}
+/* 找出全盤橫/直 ≥3 連續同色的「組」,每組各自算一次(4連=1組size4,不拆成重疊的size3) */
+function mgM3FindMatches(g){
+  var matches = [], r, c, k, cells, v, len;
+  for(r = 0; r < 5; r++){
+    c = 0;
+    while(c < 5){
+      v = g[r * 5 + c]; len = 1;
+      while(c + len < 5 && g[r * 5 + c + len] === v) len++;
+      if(len >= 3){ cells = []; for(k = 0; k < len; k++) cells.push(r * 5 + c + k); matches.push({ cells:cells, size:len }); }
+      c += len;
+    }
+  }
+  for(c = 0; c < 5; c++){
+    r = 0;
+    while(r < 5){
+      v = g[r * 5 + c]; len = 1;
+      while(r + len < 5 && g[(r + len) * 5 + c] === v) len++;
+      if(len >= 3){ cells = []; for(k = 0; k < len; k++) cells.push((r + k) * 5 + c); matches.push({ cells:cells, size:len }); }
+      r += len;
+    }
+  }
+  return matches;
+}
+function mgM3DmgForSize(n){ if(n >= 5) return 15; if(n === 4) return 12; return 10; }   /* ★ 老師裁定數值:3顆10/4顆12/5顆(含以上)15 */
+function mgM3Swap(a, b){ var g = _M3.grid, t = g[a]; g[a] = g[b]; g[b] = t; playSfx('sfx-sel', 0.25); }
+
+function renderMatch3(x, q){
+  show('match3box');
+  if(!_M3){
+    _M3 = { grid: mgM3FillNoMatch(), busy:false, dragIdx:-1, moved:false, timerId:null, tLeft:10000, turnMs:10000, docBound:false };
+    mgM3BindDocEvents();
+    mgM3Paint();
+    mgM3TurnStart();
+  }
+}
+/* document 級的 move/up 監聽只綁一次(綁在 body 上比每格各自綁划算,手指滑出格子邊界也追得到);
+   離開遊戲時務必 mgM3Teardown() 拆掉,否則跟 _RC 的 rAF 同一種「背景一直跑」隱患。 */
+function mgM3BindDocEvents(){
+  if(_M3.docBound) return;
+  _M3.docBound = true;
+  document.addEventListener('touchmove', mgM3DocMove, { passive:false });
+  document.addEventListener('touchend', mgM3DocUp);
+  document.addEventListener('touchcancel', mgM3DocUp);
+  document.addEventListener('mousemove', mgM3DocMove);
+  document.addEventListener('mouseup', mgM3DocUp);
+}
+function mgM3UnbindDocEvents(){
+  document.removeEventListener('touchmove', mgM3DocMove, { passive:false });
+  document.removeEventListener('touchend', mgM3DocUp);
+  document.removeEventListener('touchcancel', mgM3DocUp);
+  document.removeEventListener('mousemove', mgM3DocMove);
+  document.removeEventListener('mouseup', mgM3DocUp);
+}
+function mgM3Teardown(){
+  if(_M3){
+    if(_M3.timerId) clearInterval(_M3.timerId);
+    mgM3UnbindDocEvents();
+  }
+  _M3 = null;
+}
+function mgM3Paint(){
+  if(!_M3) return;
+  var i, html = '', e;
+  for(i = 0; i < 25; i++){
+    e = MG_M3_ELEMS[_M3.grid[i]];
+    html += '<div class="m3-cell" data-i="' + i + '" style="background:' + e.col + '" '
+          + 'ontouchstart="mgM3Down(event,' + i + ')" onmousedown="mgM3Down(event,' + i + ')">' + e.sym + '</div>';
+  }
+  var g = $('m3grid');
+  if(g){ g.innerHTML = html; if(_M3.dragIdx >= 0 && g.children[_M3.dragIdx]) g.children[_M3.dragIdx].classList.add('drag'); }
+}
+window.mgM3Down = function(e, i){
+  if(!_M3 || _M3.busy || (_BT && _BT.over)) return;
+  _M3.dragIdx = i; _M3.moved = false;
+  var g = $('m3grid'); if(g && g.children[i]) g.children[i].classList.add('drag');
+  try{ e.preventDefault(); }catch(_e){}
+};
+function mgM3DocMove(e){
+  if(!_M3 || _M3.dragIdx < 0 || _M3.busy) return;
+  var t = (e.touches && e.touches[0]) ? e.touches[0] : e;
+  var el = document.elementFromPoint(t.clientX, t.clientY);
+  while(el && !el.hasAttribute('data-i') && el.parentNode) el = el.parentNode;
+  if(el && el.hasAttribute('data-i')){
+    var idxUnder = parseInt(el.getAttribute('data-i'), 10);
+    if(idxUnder !== _M3.dragIdx && mgM3Adjacent(idxUnder, _M3.dragIdx)){
+      mgM3Swap(idxUnder, _M3.dragIdx);
+      _M3.dragIdx = idxUnder; _M3.moved = true;
+      mgM3Paint();
+    }
+  }
+  try{ e.preventDefault(); }catch(_e){}
+}
+function mgM3DocUp(){
+  if(!_M3 || _M3.dragIdx < 0 || _M3.busy) return;
+  if(_M3.timerId){ clearInterval(_M3.timerId); _M3.timerId = null; }
+  mgM3EndTurnAttempt();
+}
+/* 回合結束(放開手指,或 10 秒到強制結束):moved=true 才進消除判定,否則直接算「沒有消除」 */
+function mgM3EndTurnAttempt(){
+  if(!_M3 || _M3.busy) return;
+  var g = $('m3grid'); if(g){ var cs = g.getElementsByClassName('drag'); while(cs.length) cs[0].classList.remove('drag'); }
+  _M3.dragIdx = -1;
+  if(_M3.moved){ mgM3Resolve(); }
+  else{
+    mgBattleHit(false);
+    mgM3Paint();
+    if(_BT && !_BT.over) mgM3TurnStart();
+  }
+}
+function mgM3TurnStart(){
+  if(!_M3) return;
+  if(_M3.timerId) clearInterval(_M3.timerId);
+  _M3.tLeft = _M3.turnMs; _M3.moved = false;
+  var bar = $('timebar'); if(bar){ bar.classList.remove('low'); bar.style.width = '100%'; }
+  _ringPaint(100, _M3.tLeft / 1000);
+  _M3.timerId = setInterval(function(){
+    if(!_M3) return;
+    if(_PZ && _PZ.on) return;         /* 暫停中不倒數,比照其他引擎 */
+    if(mgBattleFrozen()) return;      /* 控場型爆發:計時暫停 */
+    _M3.tLeft -= 100;
+    var pct = Math.max(0, _M3.tLeft / _M3.turnMs * 100);
+    var bar2 = $('timebar'); if(bar2){ bar2.style.width = pct + '%'; if(pct <= 30) bar2.classList.add('low'); }
+    _ringPaint(pct, _M3.tLeft / 1000);
+    if(_M3.tLeft <= 0){
+      clearInterval(_M3.timerId); _M3.timerId = null;
+      mgM3EndTurnAttempt();
+    }
+  }, 100);
+}
+/* 結算:遞迴逐層檢查消除→算傷害→掉落補齊→再檢查,直到補齊後盤面不再產生新消除為止(combo 逐層 +10%,上限100%) */
+function mgM3Resolve(){
+  _M3.busy = true;
+  var comboLevel = 0, totalDmg = 0, anyMatch = false;
+  function wave(){
+    var matches = mgM3FindMatches(_M3.grid);
+    if(!matches.length){ mgM3FinishTurn(anyMatch, totalDmg); return; }
+    anyMatch = true;
+    var mult = 1 + Math.min(comboLevel, 10) * 0.1, waveDmg = 0, i;
+    for(i = 0; i < matches.length; i++) waveDmg += mgM3DmgForSize(matches[i].size);
+    waveDmg = Math.round(waveDmg * mult);
+    totalDmg += waveDmg;
+    mgM3PlayMatchFx(matches, comboLevel);
+    mgM3RemoveAndDrop(matches, function(){
+      comboLevel++;
+      setTimeout(wave, 260);
+    });
+  }
+  wave();
+}
+function mgM3PlayMatchFx(matches, comboLevel){
+  try{
+    var i, j, g = $('m3grid'); if(g){ for(i = 0; i < matches.length; i++){ for(j = 0; j < matches[i].cells.length; j++){ var el = g.children[matches[i].cells[j]]; if(el) el.classList.add('match'); } } }
+  }catch(e){}
+  playSfx(comboLevel > 0 ? 'sfx-magic' : 'sfx-quiz-correct', 0.6);
+  if(comboLevel > 0){
+    try{ var r = $('m3grid').getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + 10, 'Combo ×' + (comboLevel + 1), 'heal'); }catch(e2){}
+  }
+}
+function mgM3RemoveAndDrop(matches, cb){
+  var removed = {}, i, j;
+  for(i = 0; i < matches.length; i++){ for(j = 0; j < matches[i].cells.length; j++) removed[matches[i].cells[j]] = true; }
+  setTimeout(function(){
+    var c, r, col, g = _M3.grid;
+    for(c = 0; c < 5; c++){
+      col = [];
+      for(r = 0; r < 5; r++){ var idx = r * 5 + c; if(!removed[idx]) col.push(g[idx]); }
+      while(col.length < 5) col.unshift(mgM3RandCell());
+      for(r = 0; r < 5; r++) g[r * 5 + c] = col[r];
+    }
+    playSfx('sfx-sel', 0.3);
+    mgM3Paint();
+    setTimeout(cb, 260);
+  }, 260);
+}
+function mgM3FinishTurn(anyMatch, totalDmg){
+  _M3.busy = false;
+  if(anyMatch) mgBattleHit(true, totalDmg);
+  else mgBattleHit(false);
+  mgM3Paint();
+  if(_BT && !_BT.over) mgM3TurnStart();
+}
+/* 攻擊型爆發技能在本關的特化版(取代「刪3個錯誤答案」,見 mgBurstAtkApply 呼叫點):
+   隨機挑 3 格顏色互不相同的元素,變成目前場上數量最多的元素;佔用本回合(停掉目前的10秒倒數),
+   但不算「沒有消除」懲罰——技能後若連帶消除則照常結算(算成功),沒有連帶消除也直接開新回合,不扣分。 */
+function mgM3SkillAtk(){
+  if(!_M3 || _M3.busy) return false;
+  if(_M3.timerId){ clearInterval(_M3.timerId); _M3.timerId = null; }
+  var g = $('m3grid'); if(g){ var cs = g.getElementsByClassName('drag'); while(cs.length) cs[0].classList.remove('drag'); }
+  _M3.dragIdx = -1; _M3.moved = false;
+  var grid = _M3.grid, i, counts = [0, 0, 0, 0, 0, 0, 0];
+  for(i = 0; i < 25; i++) counts[grid[i]]++;
+  var maj = 0; for(i = 1; i < MG_M3_ELEMS.length; i++){ if(counts[i] > counts[maj]) maj = i; }
+  var idxs = [], used = {}, tries = 0;
+  while(idxs.length < 3 && tries < 200){
+    tries++;
+    var r = Math.floor(Math.random() * 25);
+    if(used[r]) continue;
+    var v = grid[r], dup = false, k;
+    for(k = 0; k < idxs.length; k++){ if(grid[idxs[k]] === v) dup = true; }
+    if(dup) continue;
+    idxs.push(r); used[r] = true;
+  }
+  if(!idxs.length) return false;
+  for(i = 0; i < idxs.length; i++) grid[idxs[i]] = maj;
+  mgM3Paint();
+  _M3.busy = true;
+  setTimeout(function(){
+    _M3.busy = false;
+    var matches = mgM3FindMatches(_M3.grid);
+    if(matches.length) mgM3Resolve();
+    else if(_BT && !_BT.over) mgM3TurnStart();
+  }, 300);
+  return true;
+}
+
 /* ★ v1.30.0(老師需求 2026-09-08)— 爆發完整演出,仿大對抗 _showBurstCinematic:
    ①角色全身立繪蓋滿該側半個畫面(玩家左/NPC右)+向中央淡出的漸層 ②集中效果線 GIF 全螢幕疊加
    ③招式名巨字(震動+發光動畫,玩家金色/NPC紅色) —— 三者同時淡入,維持約 0.95 秒後一起淡出,
