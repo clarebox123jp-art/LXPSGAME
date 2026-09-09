@@ -15,7 +15,40 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.47.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.52.0(2026-09-09)
+     ★ v1.52.0(2026-09-09・老師需求兩項:攻擊時序改先後＋爆發演示比照大對抗)—
+       ①【攻擊時序】原本玩家攻擊立即生效,對手固定反擊只延遲 60ms(答對)/450ms(答錯)才播特效但扣血
+       是立刻的,視覺上像同時互毆;改為對手固定反擊的扣血/攻擊特效/血條刷新三者統一延後 500ms 一起發生,
+       玩家自己的攻擊維持立即,呈現「玩家先攻擊,間隔0.5秒,對手才攻擊」的先後順序。
+       ②【爆發演示比照大對抗】招式名稱大字字型改用大對抗同款 "Noto Serif TC"/明朝serif(原本吃 inherit
+       會落到毛筆字),抖動/光暈兩個 keyframes 也換成大對抗原始寫法(2D位移+旋轉、text-shadow 補間光暈,
+       原本是簡化過的水平抖動+濾鏡亮度)。★ 更關鍵的一項:原本按下爆發鈕後,扣血/回血/護盾/逐英雄第二效果
+       與飄出的傷害治療數字全部是「立即」生效,爆發動畫(名稱大字+全螢幕GIF,共約2~4.5秒)只是疊在上面播;
+       改為 mgBurstCinematic/mgBurstFx 新增完成回呼(cb),把 heal/shd/atk 的實際數值變化、mgApplyEff2 second
+       effect、mgBattlePaint、mgBattleCheckKO 全部移到動畫完整播完(蓋板移除)那一刻才觸發,飄出的數字
+       字級/黑陰影/彩色光暈也是上一輪(v1.50.0)已經比照大對抗改過的樣式,兩輪疊加後才是完整的「動畫播完
+       才生效+數字格式比照大對抗」。控場型(暫停計時)維持立即生效不受影響(動畫播放期間計時器不能繼續倒數)。
+     ★ v1.51.0(2026-09-09・老師需求「算數射擊,打中正確答案不再消除周圍的錯誤目標」)—
+       _reactFirework(命中正確答案的煙火特效)原本(v1.9.7)會順便清除半徑 R 內所有「錯誤」目標,
+       本輪停用該清除迴圈(整段註解保留備查,不刪),只留煙火粒子視覺特效;_reactSpawn 既有的兩層
+       正確率平衡機制(平衡袋+畫面守門)只看畫面上目前存活的正確/錯誤數量,不依賴這段清除,零需調整。
+     ★ v1.50.0(2026-09-09・老師需求「戰鬥角色卡片字體改中文圓體/黑體,傷害數字與狀態呈現方式比照大對抗」)—
+       查證大對抗本身的字型策略:body 全域用 'M PLUS Rounded 1c','Nunito',sans-serif(圓體涵蓋數字/英文,
+       中文沒對應字符時退回系統黑體),傷害飄字(.popup.dmg/.heal/.miss)走「白/彩字+黑色偏移陰影+彩色光暈+
+       較大字級」。小遊戲原本戰鬥卡片吃全站預設的「LXGW WenKai TC」毛筆手寫字,不是圓體也不是黑體。
+       ①.bt-card 新增 font-family 覆寫(圓體優先,中文退系統黑體 PingFang TC/Heiti TC/Microsoft JhengHei/
+       Noto Sans TC,跳過毛筆字),經 CSS 繼承涵蓋卡片內名稱/HP數字/爆發鈕/效果說明/剩餘次數全部文字。
+       ②.bt-dmg(傷害飄字)比照大對抗 .popup 手感:字級放大+白/彩字改黑色偏移陰影+彩色光暈,字型同步換新家族。
+       ③.bt-sh(護盾/減傷/易傷/封印/魅惑等狀態列)由 12.5px 淡色小字改深色底徽章+加粗放大,無狀態時不佔版面。
+     ★ v1.49.0(2026-09-09・老師需求「消消樂四連消/五連消/combo 1~5 都要額外加分」)—
+       舊碼消除只換算戰鬥傷害(mgM3DmgForSize 進 mgBattleHit 扣血),完全沒有進 MG.score(畫面右上角分數/
+       周排行榜/星等最終都是看 MG.score);比照其他 8 款小遊戲既有的 scoreIt() combo 加分手感,在
+       mgM3PlayMatchFx 新增:①每組 4 連消 +30 分、5 連消(含以上)+60 分(3 連消維持無額外加分)
+       ②本波若屬 combo(補齊後又連鎖消除,comboLevel>0)額外 +min(comboLevel,5)×20 分,連鎖越多層加越多;
+       疊加後同步刷新 #score 顯示並飄出 +N 提示(mgScoreFloat),不影響原本的戰鬥傷害計算。
+     ★ v1.48.0(2026-09-09・老師需求「移除卡片受到攻擊時原本的金色閃光炸開特效」)—
+       mgBattleFxAttack 原本疊播的 mgFx('spark',...) 金色閃光炸開.gif 整條移除,受擊特效只剩 v1.47.0
+       換上的 點擊星星.gif 一種,不再兩種特效疊在一起。
      ★ v1.47.0(2026-09-09・老師需求:消消樂三項＋全體小遊戲兩項)—
        【消消樂】①iPad拖曳寶石不順暢/一次只能動一格/已排成一線沒有立即消除:根因＝mgM3DocMove 每次
        交換後呼叫的 mgM3Paint() 會把手指正按著的 .m3-cell 整顆 DOM 節點連同全盤 25 格重灌,iOS Safari
@@ -1837,7 +1870,14 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    相關鏡像/尺寸覆寫搬到下面 @media(orientation:landscape) 區塊裡,避免直橫互相打架。 */
 #mgbattle{display:flex;align-items:stretch;gap:10px;margin:10px 0 0;padding:10px;border-radius:16px;background:rgba(8,10,16,.72);border:2px solid rgba(240,192,96,.35);box-shadow:0 8px 24px rgba(0,0,0,.45);position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;}
 #mgbattle.hidden{display:none;}
-.bt-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;}
+/* ★ v1.50.0(老師需求「戰鬥角色卡片中所有字體改成中文的圓體或黑體」)— 卡片原本吃全站預設字型
+   "LXGW WenKai TC"(霞鶩文楷,毛筆手寫風),不是圓體也不是黑體;大對抗本身的字型策略是「數字/英文用
+   圓體 M PLUS Rounded 1c、中文交給系統黑體」,這裡直接比照:第一順位放大對抗同款圓體(涵蓋數字/英文,
+   跟傷害數字、combo 一樣的字感),中文字沒有對應字符時退到系統黑體(PingFang TC / Heiti TC 本身就是
+   macOS/iOS 的「黑體」字族、Microsoft JhengHei 是 Windows 對應黑體、最後 Noto Sans TC 兜底),
+   刻意跳過全站預設的毛筆字。掛在 .bt-card 上經由 CSS 繼承涵蓋卡片內所有文字(名稱/HP數字/爆發鈕/
+   效果說明/剩餘次數等),不需要逐個子元素分別覆寫。 */
+.bt-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;}
 .bt-card.p{border-color:rgba(62,200,122,.55);}
 .bt-card.n{border-color:rgba(232,64,64,.55);}
 /* ★ v1.32.1(老師需求「完美保留大對抗的戰鬥打擊快感」)— 受擊回饋升級為三件套(震動+閃色+立繪頓挫縮放)，
@@ -1871,7 +1911,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-card.n .bt-hp{background:linear-gradient(90deg,#e84040,#ff8f8f);}
 .bt-hp.low{background:linear-gradient(90deg,#e84040,#f0c060) !important;animation:verblink 1s infinite;}
 .bt-hpn{position:absolute;left:0;right:0;top:0;line-height:22px;font-size:15px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
-.bt-sh{font-size:12.5px;color:#9fd0ff;min-height:16px;line-height:16px;text-align:center;}
+/* ★ v1.50.0(老師需求「狀態也要像大對抗一樣的呈現方式」)— 原本只是一行 12.5px 淡藍色小字,幾乎不會被
+   注意到;改成小圓角底色徽章(黑底半透明+彩色文字+細邊框),比照傷害飄字同一套「深色底、彩色字更醒目」
+   語彙,字級放大、加粗;顏色維持原本淡藍(=護盾)不變,個別狀態(封印/魅惑/易傷)的顏色差異本來就交給
+   emoji 圖示辨識,這裡只加強「看得到、看得清楚」,不動色彩語意。 */
+.bt-sh{font-size:12.5px;font-size:13.5px;font-weight:700;color:#cfe9ff;min-height:20px;line-height:20px;text-align:center;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid rgba(159,208,255,.4);}
+.bt-sh:empty{background:transparent;border-color:transparent;padding:0;min-height:16px;line-height:16px;}
 /* ★ v1.43.0 — 充能點+爆發鈕移到卡片頭頂(.bt-top),與立繪/HP/剩餘次數分開一列;剩餘次數(.bt-star)獨立留在HP條下方並縮小字級。
    舊 .bt-chgrow 規則保留給更早版本相容(目前已無元素套用它,不刪除以防其他分支頁面仍有殘留引用)。 */
 .bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;min-height:16px;}
@@ -1897,9 +1942,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 攻擊光束(仿算數大進擊 .rbeam):玩家攻擊綠、NPC 攻擊紅;傷害飄字沿用 sfl 動畫 */
 .bt-beam{position:fixed;z-index:117;height:4px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,80,80,0),#ff4040 40%,#ffd0d0 60%,rgba(255,80,80,0));box-shadow:0 0 10px #ff4040;pointer-events:none;opacity:1;transition:opacity .25s;}
 .bt-beam.p{background:linear-gradient(90deg,rgba(80,255,160,0),#3ec87a 40%,#d0ffe0 60%,rgba(80,255,160,0));box-shadow:0 0 10px #3ec87a;}
-.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:26px;font-weight:900;color:#ff6060;text-shadow:0 2px 8px rgba(0,0,0,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
-.bt-dmg.heal{color:#9fe8be;}
-.bt-dmg.block{color:#9fd0ff;font-size:20px;}
+/* ★ v1.50.0(老師需求「傷害數字、狀態也要像大對抗一樣的呈現方式」)— 大對抗的飄字(.popup.dmg/.heal/.miss)
+   走「白字/彩字+黑色陰影描邊+較大字級」的手感,原本這裡只有 26px 純色字+單純黑色模糊光暈,明顯太素;
+   改成白底/彩色字 + 黑色偏移陰影(比照 .popup 的 2px 2px 0 #000)+ 彩色光暈,字級同步放大,字型也換成
+   跟卡片一致的圓體/黑體家族(見上方 .bt-card 說明),animation 沿用既有 sfl 飄浮動畫不變(只換視覺,不換位移邏輯)。 */
+.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:26px;font-size:clamp(26px,3.6vw,40px);font-weight:900;font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;color:#fff;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,80,80,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
+.bt-dmg.heal{color:#eafff2;text-shadow:2px 2px 0 #000,0 0 14px rgba(60,220,100,.9);}
+.bt-dmg.block{color:#eaf6ff;font-size:20px;font-size:clamp(18px,2.6vw,28px);text-shadow:2px 2px 0 #000,0 0 12px rgba(80,160,255,.9);}
 /* ★ v1.47.0(老師需求「combo 文字放大並改得更明顯,亮色字體+黑襯底,用圓體字更有動感」)—
    沿用既有 .bt-dmg 的 sfl 飄浮淡出動畫(位移/縮放/動感已有),只加大字級、換亮黃字色、
    用 paint-order+多方向陰影疊出黑色襯底描邊(比 -webkit-text-stroke 相容性更好,不支援的瀏覽器
@@ -1935,12 +1984,26 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-cine-grad{position:absolute;inset:0;background:linear-gradient(to right,rgba(8,9,13,.05) 0%,rgba(8,9,13,.6) 46%,rgba(8,9,13,.97) 62%,#08090d 100%);}
 #bt-cine.npc .bt-cine-grad{background:linear-gradient(to left,rgba(30,4,4,.05) 0%,rgba(30,4,4,.6) 46%,rgba(30,4,4,.97) 62%,#1e0404 100%);}
 .bt-cine-lines{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;opacity:.7;}
+/* ★ v1.52.0(老師需求「爆發中央演示技能名稱直接用大對抗呈現的字體和演示方式」)— 查證大對抗
+   _showBurstCinematic 的招式名字元素:font-family 用 "Noto Serif TC","Times New Roman","明朝",serif
+   (刻意跳過大對抗自己全站慣用的圓體,爆發大字走的是明朝／宋體式的戲劇感),抖動用 2D 位移+微旋轉
+   (translate+rotate 四點循環),光暈用 text-shadow 在兩組深淺色階間補間(不是簡單的濾鏡亮度切換)。
+   這裡把字型與兩個 keyframes 換成與大對抗完全一致的寫法,顏色/NPC 紅色版式沿用小遊戲既有設計。 */
 .bt-cine-name{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:clamp(30px,6.4vw,88px);font-weight:900;letter-spacing:3px;padding:0 16px;
   color:#ffee00;text-shadow:0 0 30px rgba(255,220,0,1),0 0 60px rgba(255,150,0,.9),0 0 90px rgba(255,100,0,.6),3px 3px 0 rgba(0,0,0,.9);
-  animation:btCineShake .12s ease-in-out infinite,btCineGlow .6s ease-in-out infinite alternate;font-family:inherit;}
+  animation:btCineShake .12s ease-in-out infinite,btCineGlow .6s ease-in-out infinite alternate;font-family:"Noto Serif TC","Times New Roman","明朝",serif;}
 #bt-cine.npc .bt-cine-name{color:#ff4422;text-shadow:0 0 30px rgba(255,60,0,.9),0 0 60px rgba(255,0,0,.5),3px 3px 0 rgba(0,0,0,.9);}
-@keyframes btCineShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
-@keyframes btCineGlow{from{filter:brightness(1);}to{filter:brightness(1.4);}}
+@keyframes btCineShake{
+  0%{transform:translate(-3px,-2px) rotate(-0.5deg);}
+  25%{transform:translate(3px,2px) rotate(0.5deg);}
+  50%{transform:translate(-2px,3px) rotate(-0.3deg);}
+  75%{transform:translate(2px,-3px) rotate(0.3deg);}
+  100%{transform:translate(-3px,-2px) rotate(-0.5deg);}
+}
+@keyframes btCineGlow{
+  from{text-shadow:0 0 20px rgba(255,200,0,.8),0 0 40px rgba(255,150,0,.5),3px 3px 0 rgba(0,0,0,.9);}
+  to{text-shadow:0 0 50px rgba(255,230,0,1),0 0 100px rgba(255,180,0,.9),3px 3px 0 rgba(0,0,0,.9);}
+}
 @media (max-width:640px){ .bt-cine-img{width:100%;} .bt-cine-grad{background:linear-gradient(to top,rgba(8,9,13,.97) 0%,rgba(8,9,13,.55) 45%,rgba(8,9,13,.05) 100%);} #bt-cine.npc .bt-cine-grad{background:linear-gradient(to top,rgba(30,4,4,.97) 0%,rgba(30,4,4,.55) 45%,rgba(30,4,4,.05) 100%);} .bt-cine-name{top:8%;font-size:clamp(24px,7vw,44px);} }
 /* 攻擊型爆發「刪除錯誤答案」後的樣式:選項/籃子/地圖點淡出且不可點;連連看給配對提示標記 */
 .opt.bt-out,.dbin.bt-out,.mcard.bt-out{opacity:.18 !important;pointer-events:none;filter:grayscale(1);}
@@ -2768,7 +2831,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.47.0';
+var MG_VER = 'v1.52.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -4808,7 +4871,7 @@ function _reactHit(d){
     playSfx('sfx-ok', 0.45);
     try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
     _reactFloat(d, '+' + _gain, '#3ec87a');
-    _reactFirework(d);   /* ★ v1.9.7 老師:射中正確 ⇒ 煙火特效,把周圍「錯誤」的目標清掉(對的不動、不扣分)⇒ 解決重疊遮蔽射不到 */
+    _reactFirework(d);   /* ★ v1.9.7 射中正確 ⇒ 煙火特效;★ v1.51.0 老師需求:不再連帶清除周圍「錯誤」目標,只留視覺特效 */
     mgBattleHit(true);   /* ★ v1.29.0 老師需求三:射對 ⇒ NPC −10、充能 +1(發光高難度仍只算 1 次命中,傷害固定 10) */
     /* ★ v1.29.0 移除 v1.28.0「連續命中 5 次 ⇒ 時間暫停鈕」(改由控場型爆發取代);舊碼備查:
     _RC.wrongStreak = 0;
@@ -4891,8 +4954,13 @@ window._reactUseFreeze = function(){
 };
 
 /* ★ v1.9.7 — 命中正確答案的煙火:純 CSS 粒子(14 顆彩色小球由目標中心向外炸開,0.7 秒淡出),
-   不用 召喚煙火.gif(2.4MB,且 mgFx 每次帶新 query 會重抓)。同時清除半徑 R 內所有「錯誤」目標(dead+blown 淡出,不扣分、不計 blown);
-   正確的保留 ⇒ 疊在一起的錯誤算式會被炸開,露出底下被遮住的目標。 */
+   不用 召喚煙火.gif(2.4MB,且 mgFx 每次帶新 query 會重抓)。★ v1.51.0 更新:原本這裡「同時清除半徑 R
+   內所有錯誤目標」的行為已依老師需求停用,見下方函式內保留的註解舊碼。 */
+/* ★ v1.51.0(老師需求「算數射擊,打中正確答案不再消除周圍的錯誤目標」)— 原本(v1.9.7)命中正確答案時,
+   會順便清除半徑 R 內所有「錯誤」目標(見下方保留的舊迴圈,整段停用不刪,方便老師要恢復時直接解註解)。
+   本輪照老師指示,命中正確只保留煙火視覺特效,不再連帶清掉周圍的錯誤目標;_reactSpawn 的兩層正確率
+   平衡機制(平衡袋+畫面守門)本來就只看畫面上「目前存活」的正確/錯誤數量,不依賴這段清除也能正常運作,
+   不需要另外調整。 */
 function _reactFirework(d){
   try{
     var box = $('reactbox'), bw = box.clientWidth;
@@ -4909,6 +4977,7 @@ function _reactFirework(d){
       box.appendChild(p);
       (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 760); })(p);
     }
+    /* ★ v1.51.0 — 以下「清除半徑 R 內錯誤目標」整段停用(老師需求),bw/R 兩個變數連帶保留註解避免未使用警告:
     var R = bw >= 700 ? 200 : 160, o, ox, oy, k;
     for(k = 0; k < _RC.drops.length; k++){
       o = _RC.drops[k];
@@ -4920,6 +4989,7 @@ function _reactFirework(d){
         (function(el){ setTimeout(function(){ if(el && el.parentNode) el.parentNode.removeChild(el); }, 380); })(o.el);
       }
     }
+    */
   }catch(e){}
 }
 function _reactFloat(d, txt, color){
@@ -6362,7 +6432,8 @@ function mgBattleFxAttack(from, dmgText, cls){
     var atkCard = $('bt-' + from);
     if(atkCard){ atkCard.classList.remove('hitpunch'); void atkCard.offsetWidth; atkCard.classList.add('hitpunch'); setTimeout(function(){ atkCard.classList.remove('hitpunch'); }, 350); }
     mgBattleFloat(x2, y2 - 10, dmgText, cls);
-    mgFx('spark', x2, y2, 130, 650);
+    /* ★ v1.48.0(老師需求「移除原本的金色閃光炸開特效」)— 受擊特效已在上面改用 點擊星星.gif(v1.47.0),
+       這裡原本疊播的 金色閃光炸開.gif(spark)整條移除,不再兩種特效疊在一起。 */
   }catch(e){}
 }
 function mgBattleFloat(x, y, text, cls){
@@ -6419,12 +6490,19 @@ function mgBattleHit(ok, customDmg){
       if(N.charge >= MG_BT.CHARGE){ mgBattlePaint(); if(_BT.npcT) clearTimeout(_BT.npcT); _BT.npcT = setTimeout(mgBattleNpcBurst, 700); }
     }
   }
-  /* ★ v1.42.0(老師裁定,全域新規則,套用全部小遊戲)— 對手每回合固定額外攻擊玩家一次,不論這回合答對/答錯,
-     也不可被玩家的護盾/減傷擋下(視為對手固定出手,跟這回合判定結果無關)。視覺上延遲一點播放,
-     避免跟上面「答錯扣血」的特效在同一瞬間疊在一起,看起來像連續兩下攻擊。 */
+  /* ★ v1.52.0(老師需求「小遊戲戰鬥角色卡的互相攻擊,改成玩家先攻擊,間隔0.5秒,對手才攻擊」)—
+     v1.42.0 的固定額外攻擊原本只延遲 60ms(答對)/450ms(答錯)才播特效,但扣血與 mgBattlePaint()
+     卻是「立刻」執行,血條瞬間就掉了,視覺上跟玩家自己那下攻擊幾乎黏在一起、感覺像同時互毆。
+     改為扣血、攻擊特效、血條刷新三者統一延後 500ms 一起發生,玩家自己的攻擊(上面 ok/!ok 分支)維持
+     immediate 不動,兩下攻擊才會真正看起來是「先玩家、隔 0.5 秒、後對手」的先後順序。 */
   if(P.hp > 0){
-    P.hp = Math.max(0, P.hp - MG_BT.NPC_TURN_DMG);
-    setTimeout(function(){ mgBattleFxAttack('n', '−' + MG_BT.NPC_TURN_DMG); }, ok ? 60 : 450);
+    setTimeout(function(){
+      if(!_BT || _BT.over) return;
+      P.hp = Math.max(0, P.hp - MG_BT.NPC_TURN_DMG);
+      mgBattleFxAttack('n', '−' + MG_BT.NPC_TURN_DMG);
+      mgBattlePaint();
+      mgBattleCheckKO();
+    }, 500);
   }
   mgBattlePaint();
   mgBattleCheckKO();
@@ -6517,15 +6595,20 @@ window.mgBattleBurst = function(){
   if((cls === 'atk' || cls === 'ctrl') && eng !== 'react' && MG.answered){ toast(MG.style === 's' ? '等下一題開始再用!' : '這一型的爆發要在作答中使用,等下一題開始再按'); playSfx('sfx-cancel', 0.35); return; }
   if(cls === 'atk' && !mgBurstAtkApply(eng)){ toast(MG.style === 's' ? '這裡沒有可以打掉的錯誤答案' : '目前畫面沒有可刪除的錯誤答案,先留著'); playSfx('sfx-cancel', 0.35); return; }
   P.charge = 0; P.used++;
-  /* 基礎效果(4 型共用,不隨英雄變):heal→自己 +30HP / shd→護盾×3 / atk→直接傷害10(+已在 mgBurstAtkApply 刪錯答) / ctrl→暫停10秒 */
-  if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
-  else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
-  else if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
-  else if(cls === 'atk'){ N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P); mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P); }
-  mgApplyEff2(P, N);   /* ★ v1.33.0 — 逐英雄第二效果,64 隻各自不同(見 MG_HEROES.eff2) */
-  mgBurstCinematic('p', P.h, d, tx(d.p) + tx(mgEff2Text(P.h, false)));
+  /* ★ v1.52.0(老師需求「傷害和治療、狀態都在爆發動畫演示結束後才生效」)— 比照大對抗:控場型(暫停計時)
+     維持立即生效(不然動畫播的這幾秒計時器會白白繼續倒數,失去暫停的意義);heal/shd/atk 的實際扣血/回血/
+     護盾與逐英雄第二效果(mgApplyEff2)全部搬進 mgBurstCinematic 的完成回呼,動畫(名稱大字+全螢幕GIF)播完
+     才真正生效並飄出數字,mgBattlePaint/mgBattleCheckKO 也跟著延後。用量(charge/used)與 UI 立即刷新不受影響。 */
+  if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
   mgBattlePaint();
-  mgBattleCheckKO();   /* ★ v1.31.1 — 攻擊型現在會直接扣血,補上結算檢查(過去這型不會直接傷血,漏掉沒事;現在會) */
+  mgBurstCinematic('p', P.h, d, tx(d.p) + tx(mgEff2Text(P.h, false)), function(){
+    if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
+    else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
+    else if(cls === 'atk'){ N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P); mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P); }
+    mgApplyEff2(P, N);   /* ★ v1.33.0 — 逐英雄第二效果,64 隻各自不同(見 MG_HEROES.eff2) */
+    mgBattlePaint();
+    mgBattleCheckKO();   /* ★ v1.31.1 — 攻擊型現在會直接扣血,補上結算檢查(過去這型不會直接傷血,漏掉沒事;現在會) */
+  });
 };
 /* ── NPC 自動爆發(玩家答錯 3 次充滿) ── */
 function mgBattleNpcBurst(){
@@ -6535,21 +6618,24 @@ function mgBattleNpcBurst(){
   if(N.sealLeft > 0) return;   /* ★ v1.36.0 — 封印爆發技能,NPC 版直接不觸發 */
   var cls = mgHeroCls(N.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
   N.charge = 0; N.used++;
-  if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
-  else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
-  else if(cls === 'atk'){
-    /* ★ v1.31.1(老師修正)— 攻擊型 NPC 版:直接傷害 10→20(NPC 版較痛) */
-    P.hp = Math.max(0, P.hp - MG_BT.ATK_BURST_N); mgBattleFxAttack('n', '−' + MG_BT.ATK_BURST_N); mgBattleVibe(200);
-  }
-  else if(cls === 'ctrl'){
+  /* ★ v1.52.0 — 同玩家版,控場型(扣玩家剩餘時間)維持立即生效,其餘效果延到動畫播完見下方回呼 */
+  if(cls === 'ctrl'){
     if(eng === 'react'){ if(_RC && !_RC.paused) _RC.endAt = Math.max((new Date()).getTime() + 1000, _RC.endAt - MG_BT.CTRL_MS); }
     else if(MG.timer && !MG.answered){ MG.tleft = Math.max(1, MG.tleft - MG_BT.CTRL_MS / 1000); }
     mgBattleFloatOn('p', '−10s', 'block');
   }
-  mgApplyEff2(N, P);   /* ★ v1.33.0 — 逐英雄第二效果(NPC 版,與玩家版對稱共用同一支 helper) */
-  mgBurstCinematic('n', N.h, d, tx(d.npc) + tx(mgEff2Text(N.h, true)));
   mgBattlePaint();
-  mgBattleCheckKO();
+  mgBurstCinematic('n', N.h, d, tx(d.npc) + tx(mgEff2Text(N.h, true)), function(){
+    if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
+    else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
+    else if(cls === 'atk'){
+      /* ★ v1.31.1(老師修正)— 攻擊型 NPC 版:直接傷害 10→20(NPC 版較痛) */
+      P.hp = Math.max(0, P.hp - MG_BT.ATK_BURST_N); mgBattleFxAttack('n', '−' + MG_BT.ATK_BURST_N); mgBattleVibe(200);
+    }
+    mgApplyEff2(N, P);   /* ★ v1.33.0 — 逐英雄第二效果(NPC 版,與玩家版對稱共用同一支 helper) */
+    mgBattlePaint();
+    mgBattleCheckKO();
+  });
 }
 /* 控場型:計時器暫停(選擇題型 = 倒數 interval 跳過扣秒;算數大進擊 = 回合時鐘 endAt 順延,掉落物照掉〔老師裁定甲〕) */
 function mgBurstFreeze(ms, eng){
@@ -6969,6 +7055,22 @@ function mgM3PlayMatchFx(matches, comboLevel){
   }catch(e){}
   playSfx(comboLevel > 0 ? 'sfx-magic' : 'sfx-quiz-correct', 0.6);
   mgM3ComboTone(comboLevel);   /* ★ v1.43.0(老師需求「COMBO 時追加不同的音階,越來越高」)— Combo 1=Do、Combo 2=Re…依序升高 */
+  /* ★ v1.49.0(老師需求「四連消、五連消、combo 1~5 都要額外加分」)— 舊碼消除只換算戰鬥傷害(mgM3DmgForSize),
+     完全不進 MG.score;本輪比照其他 8 款小遊戲既有的 scoreIt() combo 加分手感(每級 +20、上限 combo5=+100),
+     額外疊加:①每組 4 連消 +30、5 連消(含以上)+60 分(3 連消維持無額外加分,傷害本身已有基礎值);
+     ②本波若是 combo(comboLevel>0,即補齊後又連鎖消除)額外 +min(comboLevel,5)*20 分,一場消消樂裡連鎖越多層加越多。
+     計分與畫面右上角 #score 同步、飄出 +N 提示(mgScoreFloat,沿用其他款既有樣式),不影響原本的戰鬥傷害計算。 */
+  var _scoreBonus = 0, _mk;
+  for(_mk = 0; _mk < matches.length; _mk++){
+    if(matches[_mk].size === 4) _scoreBonus += 30;
+    else if(matches[_mk].size >= 5) _scoreBonus += 60;
+  }
+  if(comboLevel > 0) _scoreBonus += Math.min(comboLevel, 5) * 20;
+  if(_scoreBonus > 0){
+    MG.score += _scoreBonus;
+    var _sc = $('score'); if(_sc) _sc.textContent = MG.score + ' 分';
+    mgScoreFloat('+' + _scoreBonus);
+  }
   if(comboLevel > 0){
     try{ var r = $('m3grid').getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + 10, 'Combo ×' + (comboLevel + 1), 'combo'); }catch(e2){}
   }
@@ -7063,7 +7165,7 @@ function mgM3SkillAtk(){
    ①角色全身立繪蓋滿該側半個畫面(玩家左/NPC右)+向中央淡出的漸層 ②集中效果線 GIF 全螢幕疊加
    ③招式名巨字(震動+發光動畫,玩家金色/NPC紅色) —— 三者同時淡入,維持約 0.95 秒後一起淡出,
    淡出後才接原本的 tint+GIF+音效(mgBurstFx,不變)。任何例外一律直接跳到 mgBurstFx,絕不卡流程。 */
-function mgBurstCinematic(side, h, d, effText){
+function mgBurstCinematic(side, h, d, effText, cb){
   try{
     var old = $('bt-cine'); if(old && old.parentNode) old.parentNode.removeChild(old);
     var isNpc = (side === 'n');
@@ -7103,12 +7205,15 @@ function mgBurstCinematic(side, h, d, effText){
         wrap.className = wrap.className.replace(' show', '') + ' fadeout';
         setTimeout(function(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }, 360);
       }catch(e1){}
-      mgBurstFx(side, h, d, effText);
+      mgBurstFx(side, h, d, effText, cb);
     }, 950);
-  }catch(e){ mgBurstFx(side, h, d, effText); }
+  }catch(e){ mgBurstFx(side, h, d, effText, cb); }
 }
-/* 爆發演出:tint 全螢幕 + 主程式 GIF + 音效組(playSfx 各支)+ 英雄名/招式名/效果字幕;dur 由主程式表帶入,預設 2000ms */
-function mgBurstFx(side, h, d, effText){
+/* 爆發演出:tint 全螢幕 + 主程式 GIF + 音效組(playSfx 各支)+ 英雄名/招式名/效果字幕;dur 由主程式表帶入,預設 2000ms
+   ★ v1.52.0 — 新增第 5 參數 cb:整段(名稱大字+這裡的全螢幕 GIF)播完、蓋板移除之後才呼叫,
+   讓 mgBattleBurst/mgBattleNpcBurst 把「真正扣血/回血/上狀態+飄出數字」都遞延到這個時間點才生效
+   (老師需求「比照大對抗,傷害/治療/狀態動畫演示結束後才生效」);任何例外也一定呼叫 cb,絕不讓效果卡住不生效。 */
+function mgBurstFx(side, h, d, effText, cb){
   try{
     var old = $('bt-burstfx'); if(old && old.parentNode) old.parentNode.removeChild(old);
     var dur = (h && h.dur) ? Math.min(3500, Math.max(1200, h.dur)) : 2000;
@@ -7123,8 +7228,8 @@ function mgBurstFx(side, h, d, effText){
     var sfx = (h && h.sfx && h.sfx.length) ? h.sfx : [['sfx-powerup', 0.7]], i;
     for(i = 0; i < sfx.length; i++){ if($(sfx[i][0])) playSfx(sfx[i][0], Math.min(1, (sfx[i][1] || 0.8) * 0.8)); }
     if(!sfx.length || !$(sfx[0][0])) playSfx('sfx-powerup', 0.7);
-    setTimeout(function(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); }, dur);
-  }catch(e){}
+    setTimeout(function(){ if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(typeof cb === 'function'){ try{ cb(); }catch(ecb){} } }, dur);
+  }catch(e){ if(typeof cb === 'function'){ try{ cb(); }catch(ecb2){} } }
 }
 /* 結算加成(老師追加):剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;回傳明細供 finishGame 顯示 */
 /* ★ v1.40.0(老師裁定「星等改依該關最低分到最高分評分,接近滿分90%以上才五星」)— 算出本關「理論最高分」:
