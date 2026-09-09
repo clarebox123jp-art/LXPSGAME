@@ -15,7 +15,20 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.41.0(2026-09-08)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.43.0(2026-09-09)
+     ★ v1.43.0(2026-09-09・老師需求六項＋版號漂移修復)—
+       ①戰鬥卡片改版(全部 9 款小遊戲共用同一份卡片標記,一次改全部生效):爆發鈕+能量點移到卡片頭頂(立繪之上),
+         剩餘爆發次數縮小移到HP條下方,爆發技能說明維持在卡片最底部。
+       ②元素消消樂 5×5 棋盤放大(.m3-grid 上限 340px→560px)。
+       ③修正元素消消樂「每題解答說明消失」:根因是共用的 renderQuestion() 一律 show('card-area') 給各引擎的題卡用,
+         但 renderMatch3() 從來沒有寫入過題卡內容,留下一個空白但仍顯示的框(老師截圖裡的空白米色方塊);
+         renderMatch3() 開頭明確補上 hide('card-area')。
+       ④元素消消樂新增交換位移滑動動畫(FLIP 手法)、補齊新元素從上方掉落的動畫。
+       ⑤元素消消樂 COMBO 疊加時追加音階音效,越疊越高(Combo1=Do·Combo2=Re…直接沿用聽音坊既有鋼琴音色引擎)。
+       ⑥全站音效整體降低跟大對抗一致:playSfx 補上大對抗同款 0.49 總量折減。
+       ★ 版號漂移修復:上一輪「木柵茶行秤重→元素消消樂」重作的程式碼(match3 引擎)其實早已交付,
+         但 MG_VER／MINI_VERSION 兩處版號常數當時忘記同步 bump,卡在 v1.41.0——這與主程式那邊發現的
+         「版號戳健康檢查漂移」是同一種錯,這次直接跳號到 v1.43.0 一併補上,往後每輪照樣同步版號。
      ★ v1.41.0(老師需求「重新排版小遊戲選單頁」):
        ①每週排行榜/專注課堂複習兩顆按鈕縮短(移除 width:100%、字級/padding縮小、拿掉 flex:1 拉伸),
          橫式版面從原本佔滿最上方整列,移到標題「小英雄小遊戲」logo 右方同一列(#top-btns 改 grid-column:2/row1)。
@@ -494,24 +507,29 @@ button[disabled]{opacity:.45;}
 #matchbox.link #ml-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
 #matchbox.link #ml-svg line{stroke:var(--grass);stroke-width:5;stroke-linecap:round;}
 
-/* ── 引擎 K:元素消消樂(match3,神魔之塔玩法)★ v1.42.0 ── */
+/* ── 引擎 K:元素消消樂(match3,神魔之塔玩法)★ v1.42.0；★ v1.43.0(老師需求「題目區域都放大」)棋盤與提示文字放大 ── */
 #match3box{display:none;flex-direction:column;align-items:center;gap:10px;margin-top:10px;}
 #match3box:not(.hidden){display:flex;}
 .m3-grid{
   display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);
-  gap:4px;width:min(88vw,340px);aspect-ratio:1/1;
+  gap:6px;width:min(80vw,560px);aspect-ratio:1/1;
   touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;
 }
 .m3-cell{
   position:relative;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:clamp(1.1rem,5vw,1.6rem);line-height:1;
+  font-size:clamp(1.4rem,7vw,2.4rem);line-height:1;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 3px 0 rgba(0,0,0,.25);
   transition:transform .12s ease;
 }
 .m3-cell.drag{transform:scale(1.12);z-index:2;box-shadow:0 0 0 3px #fff,0 4px 10px rgba(0,0,0,.4);}
 .m3-cell.match{animation:m3flash .5s ease;}
 @keyframes m3flash{0%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 0 0 0 var(--gold);}50%{box-shadow:inset 0 0 0 2px #fff,0 0 20px 6px var(--gold);}100%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 0 0 0 transparent;}}
-.m3-hint{font-size:12px;color:var(--mist);opacity:.75;text-align:center;max-width:340px;margin:0;}
+/* ★ v1.43.0(老師需求)— 交換位移動態:格子在原生 grid 佈局上疊加 translate 位移(以格子邊長估算,drop 補齊沿用同一套),
+   transition 交給 JS 動態指定的 transform 值,搭配下面的 .m3-cell.swaping/.m3-cell.dropping 兩個過渡類。 */
+.m3-cell.swaping{transition:transform .16s ease;z-index:3;}
+.m3-cell.dropping{animation:m3drop .28s ease-out;}
+@keyframes m3drop{from{transform:translateY(-120%);opacity:.4;}to{transform:translateY(0);opacity:1;}}
+.m3-hint{font-size:14px;color:var(--mist);opacity:.75;text-align:center;max-width:560px;margin:0;}
 
 /* ── 引擎 G:反應點擊(老師指定 A)────────────
    天上掉下許多候選答案,點對加分、點錯扣分。 */
@@ -1766,10 +1784,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-hp.low{background:linear-gradient(90deg,#e84040,#f0c060) !important;animation:verblink 1s infinite;}
 .bt-hpn{position:absolute;left:0;right:0;top:0;line-height:22px;font-size:15px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
 .bt-sh{font-size:12.5px;color:#9fd0ff;min-height:16px;line-height:16px;text-align:center;}
-/* ★ v1.39.0 — 充能點/爆發次數移到HP條下方獨立一列(不再擠在爆發鈕內),按鈕騰出完整空間顯示技能名稱 */
+/* ★ v1.43.0 — 充能點+爆發鈕移到卡片頭頂(.bt-top),與立繪/HP/剩餘次數分開一列;剩餘次數(.bt-star)獨立留在HP條下方並縮小字級。
+   舊 .bt-chgrow 規則保留給更早版本相容(目前已無元素套用它,不刪除以防其他分支頁面仍有殘留引用)。 */
 .bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;min-height:16px;}
-.bt-chgrow .bt-charge{letter-spacing:2px;color:var(--gold);}
-.bt-chgrow .bt-star{letter-spacing:.5px;color:var(--gold);opacity:.9;}
+.bt-top{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;}
+.bt-top .bt-burst{flex:1 1 auto;min-height:34px;}
+.bt-charge{letter-spacing:2px;color:var(--gold);font-size:13px;white-space:nowrap;flex:0 0 auto;}
+.bt-star{display:block;text-align:center;font-size:10.5px;letter-spacing:.2px;color:var(--gold);opacity:.85;margin-top:-2px;}
 .bt-burst{min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:14px;font-weight:700;padding:4px 10px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
 .bt-burst.ready{opacity:1;cursor:pointer;border:none;background:linear-gradient(90deg,#ff8a00,#ffb238 50%,#ff8a00);background-size:200% 100%;color:#2b1400;font-size:16px;font-weight:900;letter-spacing:1px;text-shadow:0 1px 2px rgba(255,255,255,.35);box-shadow:0 0 16px rgba(255,140,0,.7);animation:btpulse 1.1s ease-in-out infinite;}
 @keyframes btpulse{0%,100%{box-shadow:0 0 10px rgba(255,140,0,.55);background-position:0% 0;}50%{box-shadow:0 0 26px rgba(255,180,60,1);background-position:100% 0;}}
@@ -1841,6 +1862,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (orientation:landscape) and (max-height:520px){
   #page-play > #mgbattle{margin-top:6px;}
   #page-play > #mgbattle .bt-name{font-size:15px;} #page-play > #mgbattle .bt-burst{min-height:32px;font-size:12px;}
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:26px;}   /* ★ v1.43.0 — 矮螢幕下頭頂列進一步縮小,不吃掉太多垂直空間 */
+  #page-play > #mgbattle .bt-charge{font-size:11px;}
   #page-play > #mgbattle .bt-card{padding:5px;gap:5px;} #page-play > #mgbattle .bt-hpbar{height:16px;} #page-play > #mgbattle .bt-hpn{line-height:16px;font-size:11px;}
   #page-play > #mgbattle .bt-eff{font-size:10.5px;}
 }
@@ -2099,28 +2122,31 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
     <!-- ★ v1.29.0(老師需求)— 戰鬥面板:玩家英雄卡 VS NPC 英雄卡 + HP 條(基礎 200)+ 極限爆發鈕(答對 5 題充能 1 次,每場最多用 2 次)。
          橫式時由 CSS 放到左欄第 3 列貼底(取代原本撐滿左下的小博士圖);直式接在資訊欄下方。內容由 mgBattlePaint 填。 -->
+    <!-- ★ v1.43.0(2026-09-09・老師需求「爆發技能按鈕和能量一起移到角色卡頭頂上方,剩餘爆發次數縮小寫在HP下方,爆發技能說明留在卡片底部」)—
+         卡片內部順序改為:①頭頂 .bt-top(爆發鈕+能量點,取代原本擠在立繪下方) ②立繪 ③名稱 ④HP條 ⑤剩餘次數(.bt-star,縮小字級) ⑥狀態列 ⑦爆發技能說明(.bt-eff,維持在最底部)。
+         ★ 純版面搬移:所有 id 一個沒少,mgBattlePaint 的 $('bt-'+s+'-ch')／-st／-burst／-bn 全部原封讀取同一批元素,JS 邏輯零改動。 -->
     <div id="mgbattle" class="hidden">
       <div class="bt-frz" id="bt-frz">❄ 計時暫停</div>
       <div class="bt-card p" id="bt-p">
+        <div class="bt-top"><button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-bname" id="bt-p-bn"></span></button><span class="bt-charge" id="bt-p-ch"></span></div>
         <div class="bt-img" id="bt-p-imgw"><img id="bt-p-img" src="" alt="" onerror="this.style.display='none';"></div>
         <div class="bt-info">
           <div class="bt-name" id="bt-p-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-p-hp"></div><span class="bt-hpn" id="bt-p-hpn"></span></div>
-          <div class="bt-chgrow"><span class="bt-charge" id="bt-p-ch"></span><span class="bt-star" id="bt-p-st"></span></div>
+          <span class="bt-star" id="bt-p-st"></span>
           <div class="bt-sh" id="bt-p-sh"></div>
-          <button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-bname" id="bt-p-bn"></span></button>
           <div class="bt-eff" id="bt-p-eff"></div>
         </div>
       </div>
       <div class="bt-vs">VS</div>
       <div class="bt-card n" id="bt-n">
+        <div class="bt-top"><div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span></div><span class="bt-charge" id="bt-n-ch"></span></div>
         <div class="bt-img" id="bt-n-imgw"><img id="bt-n-img" src="" alt="" onerror="this.style.display='none';"></div>
         <div class="bt-info">
           <div class="bt-name" id="bt-n-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-n-hp"></div><span class="bt-hpn" id="bt-n-hpn"></span></div>
-          <div class="bt-chgrow"><span class="bt-charge" id="bt-n-ch"></span><span class="bt-star" id="bt-n-st"></span></div>
+          <span class="bt-star" id="bt-n-st"></span>
           <div class="bt-sh" id="bt-n-sh"></div>
-          <div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span></div>
           <div class="bt-eff" id="bt-n-eff"></div>
         </div>
       </div>
@@ -2349,7 +2375,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.41.0"></script>
+<script src="minigame_db.js?v=v1.43.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2358,7 +2384,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.41.0';
+var MG_VER = 'v1.43.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2440,12 +2466,17 @@ function txw(q){ return (MG.lang === 'en' && q && q.wen) ? mgGloss(q.wen) : ((q 
 function mgOpt(q, i){ return (MG.lang === 'en' && q.oen && q.oen[i] != null) ? mgGloss(q.oen[i]) : q.o[i]; }
 function mgStr(o, key){ if(!o) return ''; var en = o[key + 'en']; if(en == null) en = o[key + 'En']; return (MG.lang === 'en' && en != null) ? mgGloss(en) : (o[key] == null ? '' : o[key]); }
 function mgSeq(r, i){ return (MG.lang === 'en' && r.seqen && r.seqen[i] != null) ? mgGloss(r.seqen[i]) : r.seq[i]; }
+/* ★ v1.43.0(2026-09-09・老師需求「小遊戲的音效預設音量調整降低跟大對抗一樣」)—
+   大對抗主程式 playSfx 的實際播放音量 = 呼叫端 vol × 0.49(固定總音量折減) × 使用者音效音量;
+   小遊戲原本沒有這道 0.49 折減,同樣 vol 參數在小遊戲會比大對抗大聲近一倍。補上同一個常數,
+   兩邊「呼叫端傳差不多的 vol 值」時聽感一致;使用者音效音量拉桿與靜音邏輯不受影響。 */
+var MG_SFX_BASE = 0.49;
 function playSfx(id, vol){
   try{
     var a = $(id); if(!a) return;
     if(_mgVolSfx <= 0) return;                                            /* ★ v1.4.0 音效靜音 */
     a.currentTime = 0;
-    a.volume = Math.max(0, Math.min(1, (vol == null ? 0.55 : vol) * _mgVolSfx));   /* ★ v1.4.0 × 使用者音效音量 */
+    a.volume = Math.max(0, Math.min(1, (vol == null ? 0.55 : vol) * MG_SFX_BASE * _mgVolSfx));   /* ★ v1.4.0 × 使用者音效音量;★ v1.43.0 × 大對抗同款總量折減 */
     var p = a.play();
     if(p && p['catch']) p['catch'](function(){});
   }catch(e){}
@@ -6281,10 +6312,14 @@ function mgM3FindMatches(g){
   return matches;
 }
 function mgM3DmgForSize(n){ if(n >= 5) return 15; if(n === 4) return 12; return 10; }   /* ★ 老師裁定數值:3顆10/4顆12/5顆(含以上)15 */
-function mgM3Swap(a, b){ var g = _M3.grid, t = g[a]; g[a] = g[b]; g[b] = t; playSfx('sfx-sel', 0.25); }
+function mgM3Swap(a, b){ var g = _M3.grid, t = g[a]; g[a] = g[b]; g[b] = t; playSfx('sfx-sel', 0.25); _M3.animSwap = { a:a, b:b }; }   /* ★ v1.43.0(老師需求「交換位置時顯示交換位移的動態」)— 記下這次交換的兩個格子,repaint 後由 mgM3AnimateSwap 補上位移動畫 */
 
 function renderMatch3(x, q){
   show('match3box');
+  hide('card-area');   /* ★ v1.43.0(老師回報「每題解答說明不見了」)— 根因：renderQuestion 一律先 show('card-area') 供各引擎的 #qcard 使用，
+                          但 renderMatch3 從來沒有寫入過 $('qcard').innerHTML(這款玩法沒有逐題文字題目)，於是老師看到的是一個「空白但仍顯示」的題卡框，
+                          正是老師截圖裡那個空白米色方塊。本款遊戲的玩法說明走 #match3box 內建的 .m3-hint(拖一顆寶石…)，
+                          不需要通用題卡，故在此明確補上 hide('card-area') 蓋掉那個殘留的空框；.m3-hint 本身不受影響。 */
   if(!_M3){
     _M3 = { grid: mgM3FillNoMatch(), busy:false, dragIdx:-1, moved:false, timerId:null, tLeft:10000, turnMs:10000, docBound:false };
     mgM3BindDocEvents();
@@ -6326,7 +6361,31 @@ function mgM3Paint(){
           + 'ontouchstart="mgM3Down(event,' + i + ')" onmousedown="mgM3Down(event,' + i + ')">' + e.sym + '</div>';
   }
   var g = $('m3grid');
-  if(g){ g.innerHTML = html; if(_M3.dragIdx >= 0 && g.children[_M3.dragIdx]) g.children[_M3.dragIdx].classList.add('drag'); }
+  if(g){
+    g.innerHTML = html;
+    if(_M3.dragIdx >= 0 && g.children[_M3.dragIdx]) g.children[_M3.dragIdx].classList.add('drag');
+    if(_M3.animSwap){ mgM3AnimateSwap(g, _M3.animSwap.a, _M3.animSwap.b); _M3.animSwap = null; }   /* ★ v1.43.0 交換位移動態 */
+  }
+}
+/* ★ v1.43.0(老師需求「元素移動交換位置時，顯示交換位移的動態」)— FLIP 手法:repaint 後兩顆新格子已經是「交換完的最終樣子」，
+   先用 transform 把它們瞬間挪回「交換前」的視覺位置(不觸發 transition)，下一影格再把 transform 歸零並交給 .swaping 的
+   transition 補間，看起來就像兩顆元素真的滑過去交換了。位移量以「一格=100%」估算(忽略 gap 誤差極小，肉眼無感)。 */
+function mgM3AnimateSwap(g, a, b){
+  try{
+    var ra = Math.floor(a / 5), ca = a % 5, rb = Math.floor(b / 5), cb = b % 5;
+    var dx = (cb - ca) * 100, dy = (rb - ra) * 100;
+    var elA = g.children[a], elB = g.children[b];
+    if(elA){ elA.style.transition = 'none'; elA.style.transform = 'translate(' + dx + '%,' + dy + '%)'; }
+    if(elB){ elB.style.transition = 'none'; elB.style.transform = 'translate(' + (-dx) + '%,' + (-dy) + '%)'; }
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        try{
+          if(elA){ elA.classList.add('swaping'); elA.style.transform = 'translate(0,0)'; }
+          if(elB){ elB.classList.add('swaping'); elB.style.transform = 'translate(0,0)'; }
+        }catch(e2){}
+      });
+    });
+  }catch(e){}
 }
 window.mgM3Down = function(e, i){
   if(!_M3 || _M3.busy || (_BT && _BT.over)) return;
@@ -6411,25 +6470,55 @@ function mgM3PlayMatchFx(matches, comboLevel){
     var i, j, g = $('m3grid'); if(g){ for(i = 0; i < matches.length; i++){ for(j = 0; j < matches[i].cells.length; j++){ var el = g.children[matches[i].cells[j]]; if(el) el.classList.add('match'); } } }
   }catch(e){}
   playSfx(comboLevel > 0 ? 'sfx-magic' : 'sfx-quiz-correct', 0.6);
+  mgM3ComboTone(comboLevel);   /* ★ v1.43.0(老師需求「COMBO 時追加不同的音階,越來越高」)— Combo 1=Do、Combo 2=Re…依序升高 */
   if(comboLevel > 0){
     try{ var r = $('m3grid').getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + 10, 'Combo ×' + (comboLevel + 1), 'heal'); }catch(e2){}
   }
+}
+/* ★ v1.43.0 — 直接沿用聽音坊既有的鋼琴音色引擎(_earCtx/_earTone/EAR_NOTES,見上方引擎 F 區塊)，
+   不另外重造一套 WebAudio 合成，comboLevel 從 0 起算對到 Do(索引0)，每多一層 combo 往上一個音，
+   超過 Si→高音Do(索引7)之後同一個音重複，不會出現不存在的音高。 */
+function mgM3ComboTone(comboLevel){
+  try{
+    var ctx = _earCtx(); if(!ctx) return;
+    var idx = Math.max(0, Math.min(comboLevel, EAR_NOTES.length - 1));
+    _earTone(ctx, EAR_NOTES[idx].hz, ctx.currentTime, 0.3);
+  }catch(e){}
 }
 function mgM3RemoveAndDrop(matches, cb){
   var removed = {}, i, j;
   for(i = 0; i < matches.length; i++){ for(j = 0; j < matches[i].cells.length; j++) removed[matches[i].cells[j]] = true; }
   setTimeout(function(){
-    var c, r, col, g = _M3.grid;
+    var c, r, col, g = _M3.grid, dropCounts = [];
     for(c = 0; c < 5; c++){
       col = [];
       for(r = 0; r < 5; r++){ var idx = r * 5 + c; if(!removed[idx]) col.push(g[idx]); }
+      dropCounts[c] = 5 - col.length;   /* ★ v1.43.0 記下這欄補了幾顆新元素,補齊後由 mgM3AnimateDrop 讓最上面那幾格播放掉落動態 */
       while(col.length < 5) col.unshift(mgM3RandCell());
       for(r = 0; r < 5; r++) g[r * 5 + c] = col[r];
     }
     playSfx('sfx-sel', 0.3);
     mgM3Paint();
+    mgM3AnimateDrop(dropCounts);
     setTimeout(cb, 260);
   }, 260);
+}
+/* ★ v1.43.0(老師需求「從上方補充元素時也顯示掉落的動態」)— 每欄前 dropCounts[c] 格就是剛從上方補進來的新元素,
+   套用 .dropping(見上方 CSS @keyframes m3drop:從上方淡入滑落到定位),既有元素往下移動的部分視覺上與掉落動畫融為一體,
+   不需要逐格精算真實下落距離。 */
+function mgM3AnimateDrop(dropCounts){
+  try{
+    var gEl = $('m3grid'); if(!gEl) return;
+    var c, r, n, idx, el;
+    for(c = 0; c < 5; c++){
+      n = dropCounts[c];
+      for(r = 0; r < n; r++){
+        idx = r * 5 + c;
+        el = gEl.children[idx];
+        if(el) el.classList.add('dropping');
+      }
+    }
+  }catch(e){}
 }
 function mgM3FinishTurn(anyMatch, totalDmg){
   _M3.busy = false;
