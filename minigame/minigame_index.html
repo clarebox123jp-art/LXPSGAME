@@ -15,7 +15,22 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.2(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.4(2026-09-10)
+     ★ v1.65.4(2026-09-10・老師需求「算數大進擊三項修正」)—
+       ①爆發技能不再變相放棄剩餘射擊機會:新增 _reactBurstPause/_reactBurstResume,非控場型爆發
+       (heal/shd/atk,含玩家與 NPC 雙方)在演出(名稱卡+全螢幕特效 GIF,常近 3 秒)期間整段暫停回合
+       (掉落物凍結、不生成新的、回合時鐘不倒數),演出播完立即把暫停掉的真實時間補回 endAt 再恢復,
+       一秒都不會少;控場型(ctrl)原本就有自己的 endAt 順延補償,維持不變、不重複補償。
+       ②計分過低兩個根因一起修:(a) 拿掉 `wrong<=1` 門檻,只要射到 need 個正確就算這回合成功——原本
+       誤擊已經用 mgBattleHit 逐次扣過 HP,再讓整回合 scoreIt 判定失敗等於同一件事罰兩次;(b) react
+       引擎不跑 startTimer,MG.tleft 從未被算數大進擊自己更新,scoreIt 的時間加成吃到的是別的引擎
+       留下的舊值——改為結算當下把「回合剩餘秒數」寫回 MG.tleft 再呼叫 scoreIt,越快達標時間加成
+       越高,補回原本應有卻拿不到的分數,全對應可拿到接近 mgBattleMaxScore 理論滿分的四星以上。
+       ③新增「三數混合連續加減乘除」題型(_reactGenCombo3,考先乘除後加減,錯誤選項刻意算成由左到右
+       依序計算的常見錯誤):每回合開局的 comboQueue(3 true+5 false 洗牌)保證前 8 次生成內 3 題必出,
+       不受 got>=need 提早結束回合影響;畫面借用既有 .hard 金框發光樣式+右上角「×2」徽章標示,命中對
+       NPC 造成雙倍傷害(20)並額外 +60 分,誤擊對玩家造成雙倍傷害(20);mgBattleHit 新增第 4 參數
+       customMissDmg 支援誤擊自訂傷害。
      ★ v1.65.2(2026-09-09・老師需求「布奶鳥獸/水狐/牛魔王/超鬼神王第二效果修正」)—
        ①布奶鳥獸(healatk):扣血由固定15改吃 e.v(20),補血仍固定10,文案與 mgApplyEff2 同步改用 e.v。
        ②水狐(revive):由「被動,爆發槽滿時倒下自動復活HP20」全面改版為「主動,施放當下先補自己10HP、
@@ -3095,7 +3110,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.65.2';
+var MG_VER = 'v1.65.4';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -4948,6 +4963,12 @@ function renderReact(x, r){
     drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
     hardHits: 0, blown: 0, paused: false, seen: {},   /* ★ v1.6.0 seen=本回合已出過的算式(防重複) */
     bag: null,   /* ★ v1.12.0 正確/錯誤平衡袋(見 _reactSpawn) */
+    /* ★ v1.65.4(老師需求「增加三數混合運算題,每關隨機出現3題」)— comboQueue 是本回合前 8 次生成的
+       強制排程(洗牌後 3 個 true + 5 個 false),_reactSpawn 依序消耗;true 時這次生成改用
+       _reactGenCombo3 出「三個數字連續加減乘除」的題目(考先乘除後加減),並標記 d.combo=true
+       (命中/誤擊都是雙倍傷害,見 _reactHit)。8 個插槽在 15 秒回合內幾乎必定會被消耗到,確保
+       3 題都真的出現,不受 got>=need 提早結束回合影響(need 通常只要 2~3 題就達標)。 */
+    comboQueue: shuffle([true, true, true, false, false, false, false, false]), comboHits: 0,
     need: (r.need || 6), r: r,
     endAt: (new Date()).getTime() + dur, total: dur,
     /* ★ v1.27.0(老師需求)— 連續答錯/答對雙軌計數:
@@ -4976,7 +4997,10 @@ function _reactHud(){
   if(!_RC) return;
   $('react-got').textContent = '🎯 擊中 ' + _RC.got + ' / ' + _RC.need
                              + (_RC.wrong ? ('　💥 誤擊 ' + _RC.wrong) : '');
-  $('react-tip').textContent = tx(_RC.r.tip || { f:'只射正確的算式!射錯會爆炸', s:'只射對的!' });
+  /* ★ v1.65.4 — 提示文字尾巴固定加一句金框×2 題的說明,不管該回合原本的 tip 寫什麼都會看到,
+     讓學生知道金色發光的題目命中/誤擊都是雙倍傷害。 */
+  var _tipExtra = (MG.lang === 'en') ? '  ⚡ Gold-glow ×2 tiles: double damage either way!' : '　⚡ 金框×2題:命中或射錯都是雙倍傷害!';
+  $('react-tip').textContent = tx(_RC.r.tip || { f:'只射正確的算式!射錯會爆炸', s:'只射對的!' }) + _tipExtra;
 }
 /* ★ v1.4.0 — 射擊:砲台轉向目標 → 光彈飛過去(CSS transition 130ms)→ 到達才結算命中/誤擊。
    ⚠ 掉落物在飛行期間仍會往下掉幾個像素,光彈瞄準的是「按下當下」的位置,視覺上剛好。 */
@@ -5141,6 +5165,40 @@ function _reactGen(r, wantGood){
   }
   return t || '1 + 1 = ' + (wantGood ? 2 : 3);
 }
+/* ★ v1.65.4(老師需求「增加三個數字的連續加減乘除,考驗先乘除後加減」)— 出「a op1 b op2 c」形式的題目,
+   op 一定含一個乘或除、一個加或減,正解照數學規則先算乘除;錯誤選項刻意算成「從左到右依序計算」
+   (小學生最常見的誤解),讓題目本身就在教「先乘除後加減」這件事。除法一律確保整除,不出小數。 */
+function _reactGenCombo3(wantGood){
+  var pat = _rInt(0, 5), a, b, c, correct, naive, txt, wrong;
+  if(pat === 0){                          /* a + b×c */
+    a = _rInt(2, 30); b = _rInt(2, 9); c = _rInt(2, 9);
+    correct = a + b * c; naive = (a + b) * c;
+    txt = a + ' + ' + b + ' × ' + c + ' = ';
+  }else if(pat === 1){                    /* a − b×c(保正) */
+    b = _rInt(2, 9); c = _rInt(2, 9); a = _rInt(b * c + 2, b * c + 30);
+    correct = a - b * c; naive = (a - b) * c;
+    txt = a + ' − ' + b + ' × ' + c + ' = ';
+  }else if(pat === 2){                    /* a×b + c */
+    a = _rInt(2, 9); b = _rInt(2, 9); c = _rInt(2, 30);
+    correct = a * b + c; naive = a * (b + c);
+    txt = a + ' × ' + b + ' + ' + c + ' = ';
+  }else if(pat === 3){                    /* a×b − c(保正) */
+    a = _rInt(2, 9); b = _rInt(2, 9); c = _rInt(2, Math.max(2, a * b - 2));
+    correct = a * b - c; naive = a * (b - c);
+    txt = a + ' × ' + b + ' − ' + c + ' = ';
+  }else if(pat === 4){                    /* a + b÷c(b 保證整除 c) */
+    c = _rInt(2, 9); b = c * _rInt(2, 9); a = _rInt(2, 30);
+    correct = a + b / c; naive = Math.round((a + b) / c);
+    txt = a + ' + ' + b + ' ÷ ' + c + ' = ';
+  }else{                                  /* a − b÷c(b 保證整除 c,且 a 夠大) */
+    c = _rInt(2, 9); b = c * _rInt(2, 9); a = _rInt(Math.floor(b / c) + 2, Math.floor(b / c) + 30);
+    correct = a - b / c; naive = Math.round((a - b) / c);
+    txt = a + ' − ' + b + ' ÷ ' + c + ' = ';
+  }
+  wrong = (naive !== correct && naive > 0) ? naive : (correct + _rPick([1, -1, 2, -2, 5]));
+  if(wrong < 0 || wrong === correct) wrong = correct + _rPick([1, 2, 3]);
+  return txt + (wantGood ? correct : wrong);
+}
 function _reactSpawn(){
   var r = _RC.r, box = $('reactbox');
   /* ★ v1.12.0 老師:「正確選項太多,常常亂打都全對;正確比率降至 50%」
@@ -5159,22 +5217,27 @@ function _reactSpawn(){
     isGood = _RC.bag.shift();
   }
   /* var isGood = Math.random() < 0.5;                // ★ v1.9.7 老師:正確答案比率提高至 50%(原 0.45=45/55)— v1.12.0 改平衡袋,備查 */
+  /* ★ v1.65.4 — 消耗本回合的 comboQueue 排程,決定這次是不是「三數混合運算題」(見 renderReact 的 _RC 初始化) */
+  var isCombo = false;
+  if(_RC.comboQueue && _RC.comboQueue.length){ isCombo = _RC.comboQueue.shift(); }
   var txt;
-  if(r.ops && r.ops.length){ txt = _reactGen(r, isGood); }
+  if(isCombo){ txt = _reactGenCombo3(isGood); }
+  else if(r.ops && r.ops.length){ txt = _reactGen(r, isGood); }
   else{
     var pool = isGood ? r.good : r.bad;
     var raw = pool[Math.floor(Math.random() * pool.length)];
     txt = (typeof raw === 'string') ? raw : String(raw.t || '');
   }
-  /* ★ v1.6.0 老師:取消雙倍發光/×2(送分);對錯同色同圖(v1.4.1) */
+  /* ★ v1.6.0 老師:取消雙倍發光/×2(送分);對錯同色同圖(v1.4.1)。★ v1.65.4 — combo3 題重新借用舊有
+     的 .hard 金框發光樣式 + 右上角 .rx2「×2」徽章,提醒學生這題命中/誤擊都是雙倍傷害。 */
   var el = document.createElement('div');
-  el.className = 'rdrop';
-  el.innerHTML = mgPicTag('coinrush_coin_gold.webp', 'pic-coin') + esc(txt);
+  el.className = isCombo ? 'rdrop hard' : 'rdrop';
+  el.innerHTML = mgPicTag('coinrush_coin_gold.webp', 'pic-coin') + esc(txt) + (isCombo ? '<span class="rx2">×2</span>' : '');
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
   var bw = box.clientWidth, ew = el.offsetWidth || 90;
   var d = {
-    el: el, good: isGood, hard: false,
+    el: el, good: isGood, hard: false, combo: isCombo,
     x: Math.random() * Math.max(1, bw - ew - 8) + 4,
     y: -54,
     v: 31 + Math.random() * 26,                    // px/秒;★ v1.4.1 老師:「降落速度整體放慢 50%」(原 62+0~52)
@@ -5187,16 +5250,19 @@ function _reactHit(d){
   if(!_RC || d.dead) return;
   d.dead = true;
   if(d.good){
-    /* ★ v1.4.0 高難度(發光)命中算兩倍 */
-    var _gain = d.hard ? 2 : 1;
+    /* ★ v1.4.0 高難度(發光)命中算兩倍;★ v1.65.4 三數混合運算題(combo3)命中同樣算兩倍,並額外加分 */
+    var _gain = (d.hard || d.combo) ? 2 : 1;
     _RC.got += _gain;
     if(d.hard) _RC.hardHits++;
+    if(d.combo) _RC.comboHits++;
     d.el.className = 'rdrop hit';
     playSfx('sfx-ok', 0.45);
-    try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
+    try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, (d.hard || d.combo) ? 170 : 120, 600); }catch(e){}
     _reactFloat(d, '+' + _gain, '#3ec87a');
     _reactFirework(d);   /* ★ v1.9.7 射中正確 ⇒ 煙火特效;★ v1.51.0 老師需求:不再連帶清除周圍「錯誤」目標,只留視覺特效 */
-    mgBattleHit(true, undefined, true);   /* ★ v1.29.0 老師需求三:射對 ⇒ NPC −10、充能 +1(發光高難度仍只算 1 次命中,傷害固定 10);★ v1.63.0 第三參數 true:射對這次對手不反擊 */
+    /* ★ v1.65.4(老師需求「三數混合運算題正確射擊傷害加倍」)— combo3 命中對 NPC 造成 2×MG_BT.DMG,
+       其餘(含舊有 hard,目前生成端已不再標記 hard)一律沿用固定傷害。 */
+    mgBattleHit(true, d.combo ? (MG_BT.DMG * 2) : undefined, true);   /* ★ v1.29.0 老師需求三:射對 ⇒ NPC −10、充能 +1;★ v1.63.0 第三參數 true:射對這次對手不反擊 */
     /* ★ v1.29.0 移除 v1.28.0「連續命中 5 次 ⇒ 時間暫停鈕」(改由控場型爆發取代);舊碼備查:
     _RC.wrongStreak = 0;
     _RC.rightStreak++;
@@ -5211,7 +5277,8 @@ function _reactHit(d){
     playSfx('sfx-explode', 0.5);   /* ★ v1.9.7 老師:射中錯誤新增爆炸音效(game_explosion2.mp3,本頁既有 <audio>) */
     _reactFloat(d, '−1', '#e84040');
     _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
-    mgBattleHit(false, undefined, true);   /* ★ v1.29.0 老師需求三:射錯 ⇒ 玩家 −10(護盾可擋);★ v1.63.0 第三參數 true:跳過全域安全網,這一下攻擊只算一次(不然會被反擊兩次) */
+    /* ★ v1.65.4(老師需求「三數混合運算題錯誤射擊也受兩倍傷害」)— combo3 誤擊時玩家受 2×MG_BT.DMG。 */
+    mgBattleHit(false, undefined, true, d.combo ? (MG_BT.DMG * 2) : undefined);   /* ★ v1.29.0 老師需求三:射錯 ⇒ 玩家 −10(護盾可擋);★ v1.63.0 第三參數 true:跳過全域安全網,這一下攻擊只算一次(不然會被反擊兩次) */
     /* ★ v1.29.0 移除 v1.28.0「連續誤擊 3 次 ⇒ 5 秒射擊冷卻」;舊碼備查:
     _RC.rightStreak = 0;
     _RC.wrongStreak++;
@@ -5326,6 +5393,33 @@ function _reactFloat(d, txt, color){
   $('reactbox').appendChild(f);
   setTimeout(function(){ if(f.parentNode) f.parentNode.removeChild(f); }, 800);
 }
+/* ★ v1.65.4(老師需求「算數大進擊:使用爆發技能後還可以繼續射完剩餘次數」)— 根因:爆發演出(名稱卡
+   ~0.95 秒 + 全螢幕特效 GIF ~1.2~3.5 秒,合計常常快 3 秒)全螢幕蓋板期間,_RC 的 raf 並沒有暫停,
+   掉落物照常掉落/生成、回合時鐘 endAt 照常倒數,學生卻完全看不到也點不到畫面——15 秒的回合被
+   這樣「看不見地」偷走 2~3 秒,遇到需要的正確題數本來就不多(need 通常 2~3),常常等演出播完、
+   時間已經所剩無幾甚至已經 0,等於這次爆發等同放棄了這回合剩下的射擊機會。控場型(ctrl)爆發原本
+   就有自己一套「endAt 隨真實時間順延」的補償(見 mgBurstFreeze/_reactTick 的 ctrlUntil 分支),
+   本來就不會少秒,所以這裡刻意跳過 ctrl,只補其餘三型(heal/shd/atk)的空缺,避免雙重補償。
+   做法比照 mgPause/mgResume 的手法,但只暫停「爆發演出」這一小段:cancelAnimationFrame 讓 tick
+   完全停住(掉落物原地不動、不生成新的),演出真正播完(cb 開始執行)那一刻再把暫停期間經過的
+   真實毫秒數加回 endAt 並重新掛上 raf,學生拿回畫面時回合時鐘與掉落物完全就是暫停前的樣子,
+   一秒都沒少。 */
+function _reactBurstPause(){
+  if(!_RC || _RC.paused) return;
+  if(_RC.raf) cancelAnimationFrame(_RC.raf);
+  _RC.raf = 0;
+  _RC.paused = true;
+  _RC._burstPauseAt = (new Date()).getTime();
+}
+function _reactBurstResume(){
+  if(!_RC || !_RC.paused || !_RC._burstPauseAt) return;
+  var elapsed = (new Date()).getTime() - _RC._burstPauseAt;
+  _RC.endAt += elapsed;
+  _RC._burstPauseAt = 0;
+  _RC.paused = false;
+  _RC.last = 0;   /* 讓下一幀重新起算 dt,暫停期間的時間差不會被誤算成一大步位移 */
+  _RC.raf = requestAnimationFrame(_reactTick);
+}
 function _reactTick(ts){
   if(!_RC) return;
   if(!_RC.last) _RC.last = ts;
@@ -5398,17 +5492,31 @@ function _reactFinish(){
      路徑,第三參數同樣傳 true 跳過全域安全網,確保這一次也只算一次反擊。 */
   if(got < need){ try{ mgBattleHit(false, undefined, true); }catch(_ertm){} }
   $('reactbox').innerHTML = '';
-  var ok = (got >= need && wrong <= 1);
+  /* ★ v1.65.4(老師需求「計分過低,全對應接近四星以上」)— 拿掉原本「wrong<=1」的門檻:誤擊本來就已經
+     用 mgBattleHit 逐次扣過玩家 HP 了,達標(got>=need)卻只因為手忙腳亂多誤擊 1、2 次就讓整回合的
+     scoreIt 判定成「失敗」(0級距分),等於同一件事被罰兩次,是分數偏低的主因之一;現在只看有沒有
+     達標。 */
+  var ok = (got >= need);
+  /* ★ v1.65.4 — 另一個分數偏低的原因:react 引擎完全不跑 startTimer(見 renderQuestion 的排除清單),
+     MG.tleft 從頭到尾不會被算數大進擊自己更新,scoreIt 內部的時間加成 Math.round(MG.tleft*2) 因此吃到
+     的是別的引擎留下的舊值(常態接近 0),跟 mgBattleMaxScore 算理論滿分時假設「秒殺答對拿滿時間加成」
+     完全對不上,導致算數大進擊的實際分數天花板遠低於理論滿分。改為結算當下,把「這回合結束時實際
+     剩餘的秒數」寫回 MG.tleft 再呼叫 scoreIt——越快集滿 need 顆、剩的時間越多,時間加成越高,跟其他
+     引擎「越快答對分數越高」的邏輯一致,也符合理論滿分公式的假設。 */
+  MG.tleft = Math.max(0, (_RC.endAt - (new Date()).getTime()) / 1000);
   scoreIt(ok, true);   /* ★ v1.29.0 HP 已在 _reactHit 逐射擊扣過,回合結算不再扣 */
-  /* ★ v1.4.0 高難度命中另加分(每次 +40),寫回分數列 */
-  if(hh > 0){
-    MG.score += hh * 40;
+  /* ★ v1.4.0 高難度命中另加分(每次 +40);★ v1.65.4 三數混合運算題(combo3)命中另加分(每次 +60,
+     比高難度多,呼應老師「適量增加許多分數」),兩者獨立疊加,寫回分數列 */
+  var ch = _RC.comboHits;
+  if(hh > 0 || ch > 0){
+    MG.score += hh * 40 + ch * 60;
     $('score').textContent = MG.score + ' 分';
   }
   var _extra = (blown > 0 ? (',被炸掉 ' + blown + ' 個正確算式') : '');   /* ★ v1.6.0 取消雙倍後不再顯示 */
+  var _comboTxt = (ch > 0 ? ('　🔢 三數混合題命中 ' + ch + ' 次(雙倍加分)') : '');
   showFeedback(ok,
-    ok ? ('✅ 擊中 ' + got + ' 分,誤擊 ' + wrong + ' 次' + _extra + '!')
-       : ('🔶 擊中 ' + got + ' / ' + need + ',誤擊 ' + wrong + ' 次' + _extra),
+    ok ? ('✅ 擊中 ' + got + ' 分,誤擊 ' + wrong + ' 次' + _extra + _comboTxt + '!')
+       : ('🔶 擊中 ' + got + ' / ' + need + ',誤擊 ' + wrong + ' 次' + _extra + _comboTxt),
     tx(r.why));
   _RC = null;
 }
@@ -7178,7 +7286,7 @@ function mgTickRegenPoison(S, sideKey){
    NPC_TURN_DMG),只留 ok/miss 分支自己內建的那一下攻擊。刻意設計成「選用」而非改全域行為——
    v1.42.0 的固定回合傷害是套用全部 15 款小遊戲的安全網,只有算數大進擊(逐次射擊,需要「射對不挨打、
    射錯才挨打」這種精準的一擊換一擊手感)才需要跳過,其餘 14 款引擎呼叫時不傳第三參數,行為完全不變。 */
-function mgBattleHit(ok, customDmg, skipTurnDmg){
+function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
   if(!_BT || _BT.over) return;
   var P = _BT.p, N = _BT.n;
   if(P.sealLeft > 0) P.sealLeft--;   /* ★ v1.36.0 — 封印爆發技能:每題判定倒數一次,不分答對答錯 */
@@ -7214,7 +7322,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg){
     else if(P.shield > 0){ P.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
     else if(N.noAtkLeft > 0){ N.noAtkLeft--; mgBattleFloatOn('n', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 同上,答錯時 NPC 的反擊也可能被魔術師封住 */
     else{
-      var dmgN = MG_BT.DMG;
+      var dmgN = (typeof customMissDmg === 'number' && customMissDmg > 0) ? Math.round(customMissDmg) : MG_BT.DMG;   /* ★ v1.65.4 算數大進擊三數混合運算題:射錯時對玩家造成雙倍傷害 */
       mgDealDamage(N, P, dmgN, 'n');   /* ★ v1.57.0 — NPC 版同款,見 mgDealDamage 註解 */
       mgBattleVibe(120);
       if(N.healBuff > 0){
@@ -7487,8 +7595,10 @@ window.mgBattleBurst = function(){
      護盾與逐英雄第二效果(mgApplyEff2)全部搬進 mgBurstCinematic 的完成回呼,動畫(名稱大字+全螢幕GIF)播完
      才真正生效並飄出數字,mgBattlePaint/mgBattleCheckKO 也跟著延後。用量(charge/used)與 UI 立即刷新不受影響。 */
   if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
+  else if(eng === 'react'){ _reactBurstPause(); }   /* ★ v1.65.4 — 非控場型爆發:演出期間暫停算數大進擊回合,見 _reactBurstPause 註解 */
   mgBattlePaint();
   mgBurstCinematic('p', P.h, d, tx(d.p) + tx(mgEff2Text(P.h, false)), function(){
+    if(eng === 'react') _reactBurstResume();
     if(cls === 'heal'){
       P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal');
       /* ★ v1.54.0 — 回復型英雄比照大對抗巫女/米鈴,順手淨化自己身上的易傷/封印/魅惑 */
@@ -7515,8 +7625,10 @@ function mgBattleNpcBurst(){
     else if(MG.timer && !MG.answered){ MG.tleft = Math.max(1, MG.tleft - MG_BT.CTRL_MS / 1000); }
     mgBattleFloatOn('p', '−10s', 'block');
   }
+  else if(eng === 'react'){ _reactBurstPause(); }   /* ★ v1.65.4 — NPC 非控場型爆發同樣暫停算數大進擊回合,避免玩家被 NPC 爆發的演出動畫偷走寶貴的射擊時間 */
   mgBattlePaint();
   mgBurstCinematic('n', N.h, d, tx(d.npc) + tx(mgEff2Text(N.h, true)), function(){
+    if(eng === 'react') _reactBurstResume();
     if(cls === 'heal'){
       N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal');
       /* ★ v1.54.0 — NPC 版同步淨化,對稱玩家版 */
