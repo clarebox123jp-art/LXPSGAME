@@ -1,5 +1,11 @@
 /* ============================================================================
- * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.36.0(2026-09-08)
+ * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.37.0(2026-09-09)
+ * ★ v1.37.0(2026-09-09・老師需求「四隻護盾角色+三隻控場角色第二效果改版」)—
+ *   牛魔王 shield:2→bleed:6(易傷3回合)／麻吉喵‧Nico shield:2→healnow:20(立即恢復自己20HP)／
+ *   神槍手 shield:2→truedmg:20(直接扣對手20HP,無視護盾)／操偶師 shield:2 維持不變。
+ *   網路駭客 heal:5→thorn:0(受到不利狀態時反彈給對手+回血5)／電腦老師 heal:8→immune:0(解除並免疫不利狀態
+ *   3回合)／魔術師 drain:2→silence:10(扣對手10HP+對手3回合無法普通攻擊)。五種新 eff2 型別的實際判定邏輯
+ *   全在 index.html v1.55.0(mgApplyEff2/mgEff2ApplyBad/mgBattleHit),本檔僅改資料值。
  * ★ v1.36.0(老師裁定2-5:新增seal/confuse/revive三型第二效果):
  *   孫悟空 charge→confuse(狂亂=魅惑攻擊自己)、姜子牙 drain→seal(封印技能天賦→封印爆發技能)、
  *   喚龍使‧蜜鶴林 bleed→confuse(魅惑)、水狐 heal→revive(復活→滿槽重生HP20)、
@@ -4434,7 +4440,7 @@ window.MG_HEROES = [
   { n:'孫悟空', cls:'atk', img:'%E5%AD%AB%E6%82%9F%E7%A9%BA.webp', bn:'大鬧天宮', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-punch',1],['sfx-explode',0.85],['sfx-powerup',0.7]], tint:'rgba(255,215,120,0.20)', dur:1440 , pos:'20%' , eff2:{t:'confuse',v:3} },
   { n:'關羽', cls:'atk', img:'%E9%97%9C%E7%BE%BD.webp', bn:'青龍偃月‧武聖降臨', gif:'%E5%88%80%E5%85%89.gif', sfx:[['sfx-sword',1],['sfx-crit',0.85]], tint:'rgba(120,255,180,0.20)', dur:2400 , pos:'18%' , eff2:{t:'dmgred',v:50} },
   { n:'姜子牙', cls:'ctrl', img:'%E5%A7%9C%E5%AD%90%E7%89%99.webp', bn:'封神台‧眾神歸位', gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', sfx:[['sfx-athena-burst',1]], tint:'rgba(255,216,102,0.20)' , pos:'20%' , eff2:{t:'seal',v:3} },
-  { n:'牛魔王', cls:'shd', img:'%E7%89%9B%E9%AD%94%E7%8E%8B.webp', bn:'牛魔真火・焚天蹄', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-explode',1],['sfx-punch',0.85]], tint:'rgba(255,110,40,0.22)', dur:2000 , pos:'18%' , eff2:{t:'shield',v:2} },
+  { n:'牛魔王', cls:'shd', img:'%E7%89%9B%E9%AD%94%E7%8E%8B.webp', bn:'牛魔真火・焚天蹄', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-explode',1],['sfx-punch',0.85]], tint:'rgba(255,110,40,0.22)', dur:2000 , pos:'18%' , eff2:{t:'bleed',v:6} },
   { n:'呂布', cls:'atk', img:'%E5%91%82%E5%B8%83.webp', bn:'無雙・戟舞八方', gif:'%E8%BF%85%E9%9B%B7%E4%B8%8D%E5%8F%8A%E6%8E%A9%E8%80%B3%E7%9A%84%E6%94%BB%E6%93%8A.gif', sfx:[['sfx-sword',1],['sfx-crit',0.8]], tint:'rgba(150,255,190,0.20)', dur:2000 , pos:'18%' , eff2:{t:'bleed',v:6} },
   { n:'蚩尤', cls:'atk', img:'%E8%9A%A9%E5%B0%A4.webp', bn:'涿鹿風暴', gif:'%E4%B8%89%E9%81%93%E5%9C%B0%E8%A3%82.gif', sfx:[['sfx-explode',1],['sfx-burst',0.8]], tint:'rgba(210,170,90,0.22)', dur:2000 , pos:'18%' , eff2:{t:'drain',v:2} },
   { n:'諸葛亮', cls:'atk', img:'%E8%AB%B8%E8%91%9B%E4%BA%AE.webp', bn:'借東風・火燒赤壁', gif:'%E5%A4%AA%E9%99%BD%E7%81%AB%E7%90%83.gif', sfx:[['sfx-explode',1],['sfx-powerup',0.75]], tint:'rgba(255,140,60,0.22)', dur:2000 , pos:'20%' , eff2:{t:'charge',v:2} },
@@ -4442,13 +4448,13 @@ window.MG_HEROES = [
   { n:'熔岩巨人', cls:'atk', img:'%E7%86%94%E5%B2%A9%E5%B7%A8%E4%BA%BA.png', bn:'火山之怒', gif:'%E5%9C%B0%E7%81%AB%E7%88%86%E7%82%B8.gif', sfx:[['sfx-earthquake',1],['sfx-explode',0.9]], tint:'rgba(255,72,0,0.20)', dur:910 , pos:'22%' , eff2:{t:'bleed',v:6} },
   { n:'炎火超少女', cls:'atk', img:'%E7%82%8E%E7%81%AB%E8%B6%85%E5%B0%91%E5%A5%B3.png', bn:'火神附體', gif:'%E7%A5%9E%E6%9C%A8%E5%BE%A9%E4%BB%87%E4%B9%8B%E7%81%AB.gif', sfx:[['sfx-explode',0.9]], tint:'rgba(255,72,0,0.22)', dur:910 , pos:'22%' , eff2:{t:'dmgred',v:50} },
   { n:'幽魂暗狐', cls:'atk', img:'%E5%B9%BD%E9%AD%82%E6%9A%97%E7%8B%90.webp', bn:'靈魂交換', gif:'%E7%B4%AB%E5%85%89%E7%B1%A0%E7%BD%A9%E5%90%B8%E6%94%B6.gif', sfx:[['sfx-darkorb-burst',1],['sfx-youyou-burst',0.85]], tint:'rgba(153,102,255,0.22)', dur:1120 , pos:'26%' , eff2:{t:'charge',v:2} },
-  { n:'麻吉喵‧Nico', cls:'shd', img:'%E9%BA%BB%E5%90%89%E5%96%B5Nico.webp', bn:'怎麼樣?看看我的厲害!', gif:'%E7%94%9F%E6%B0%A3%E7%9A%84%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6.gif', sfx:[['sfx-punch',1],['sfx-crit',0.85]], tint:'rgba(255,158,196,0.22)', dur:900 , pos:'40%' , eff2:{t:'shield',v:2} },
+  { n:'麻吉喵‧Nico', cls:'shd', img:'%E9%BA%BB%E5%90%89%E5%96%B5Nico.webp', bn:'怎麼樣?看看我的厲害!', gif:'%E7%94%9F%E6%B0%A3%E7%9A%84%E5%B8%83%E4%B8%81%E5%A5%B6%E8%8C%B6.gif', sfx:[['sfx-punch',1],['sfx-crit',0.85]], tint:'rgba(255,158,196,0.22)', dur:900 , pos:'40%' , eff2:{t:'healnow',v:20} },
   { n:'貓人族長', cls:'atk', img:'%E8%B2%93%E4%BA%BA%E6%97%8F%E9%95%B7.png', bn:'上級元素精靈‧引爆', gif:'%E6%91%A9%E5%A4%A9%E7%88%86%E7%A0%B4%E7%85%99%E7%81%AB%E7%A5%AD.gif', sfx:[['sfx-explode',1],['sfx-burst',0.85]], tint:'rgba(140,190,255,0.22)' , pos:'18%' , eff2:{t:'drain',v:2} },
   { n:'拘留者', cls:'atk', img:'%E6%8B%98%E7%95%99%E8%80%85.png', bn:'時空罰罪‧天手力', gif:'%E6%99%82%E7%A9%BA%E7%A9%BF%E6%A2%AD.gif', sfx:[['sfx-detain-burst',1]], tint:'rgba(124,77,255,0.22)', dur:450 , pos:'25%' , eff2:{t:'bleed',v:5} },
   { n:'御雲使‧沐雲雪', cls:'heal', img:'%E5%BE%A1%E9%9B%B2%E4%BD%BF_%E6%B2%90%E9%9B%B2%E9%9B%AA.png', bn:'霞蔚雲蒸', gif:'%E5%A4%A7%E5%BC%B7%E5%8C%96.gif', sfx:[['sfx-goddess',0.9],['sfx-heal',0.95]], tint:'rgba(180,225,255,0.18)', dur:910 , pos:'22%' , eff2:{t:'charge',v:2} },
   { n:'科學發明家', cls:'heal', img:'%E7%A7%91%E5%AD%B8%E7%99%BC%E6%98%8E%E5%AE%B6.png', bn:'醫學界的發明奇蹟', gif:'%E5%9F%BA%E5%9B%A0%E7%B5%90%E6%A7%8B.gif', sfx:[['sfx-goddess',0.9],['sfx-heal',0.95]], tint:'rgba(120,220,160,0.20)', dur:2730 , pos:'28%' , eff2:{t:'dmgred',v:50} },
-  { n:'電腦老師', cls:'ctrl', img:'%E9%9B%BB%E8%85%A6%E8%80%81%E5%B8%AB.png', bn:'系統還原', gif:'%E6%95%B8%E4%BD%8D%E4%BB%A3%E7%A2%BC.gif', sfx:[['sfx-powerdown',0.85],['sfx-powerup',1]], tint:'rgba(80,180,255,0.16)', dur:1600 , pos:'28%' , eff2:{t:'heal',v:8} },
-  { n:'魔術師', cls:'ctrl', img:'%E9%AD%94%E8%A1%93%E5%B8%AB.png', bn:'禁錮牢籠', gif:'%E7%A6%81%E9%8C%AE.gif', sfx:[['sfx-imprison-burst',1]], tint:'rgba(140,80,200,0.20)' , pos:'25%' , eff2:{t:'drain',v:2} },
+  { n:'電腦老師', cls:'ctrl', img:'%E9%9B%BB%E8%85%A6%E8%80%81%E5%B8%AB.png', bn:'系統還原', gif:'%E6%95%B8%E4%BD%8D%E4%BB%A3%E7%A2%BC.gif', sfx:[['sfx-powerdown',0.85],['sfx-powerup',1]], tint:'rgba(80,180,255,0.16)', dur:1600 , pos:'28%' , eff2:{t:'immune',v:0} },
+  { n:'魔術師', cls:'ctrl', img:'%E9%AD%94%E8%A1%93%E5%B8%AB.png', bn:'禁錮牢籠', gif:'%E7%A6%81%E9%8C%AE.gif', sfx:[['sfx-imprison-burst',1]], tint:'rgba(140,80,200,0.20)' , pos:'25%' , eff2:{t:'silence',v:10} },
   { n:'聖冥法師', cls:'atk', img:'%E8%81%96%E5%86%A5%E6%B3%95%E5%B8%AB.png', bn:'聖光與暗影的調停', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-shoot',0.85],['sfx-heal',0.7]], tint:'rgba(150,90,220,0.20)' , pos:'25%' , eff2:{t:'heal',v:5} },
   { n:'大刀勇士', cls:'atk', img:'%E5%A4%A7%E5%88%80%E5%8B%87%E5%A3%AB.png', bn:'奧義‧勇士大刀滅絕斬', gif:'%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif', sfx:[['sfx-sword',1],['sfx-crit',0.9]], tint:'rgba(255,150,60,0.16)' , pos:'12%' , eff2:{t:'heal',v:5} },
   { n:'巫女', cls:'heal', img:'Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png', bn:'神樂舞', gif:'', sfx:[] , full:true , eff2:{t:'heal',v:8} },
@@ -4473,7 +4479,7 @@ window.MG_HEROES = [
   { n:'天神宙斯', cls:'atk', img:'%E5%AE%99%E6%96%AF.png', bn:'天降雷罰', gif:'%E5%A4%A9%E9%9B%B7.gif', sfx:[['sfx-thunder-fury',1]], tint:'rgba(220,255,80,0.20)', dur:2400 , pos:'18%' , eff2:{t:'drain',v:2} },
   { n:'維京海盜船長', cls:'atk', img:'%E7%B6%AD%E4%BA%AC%E6%B5%B7%E7%9B%9C%E8%88%B9%E9%95%B7.png', bn:'海盜威能', gif:'%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif', sfx:[['sfx-explode',1],['sfx-gunshot-big',0.9],['sfx-powerup',0.7]], tint:'rgba(80,40,180,0.22)', dur:1600 , pos:'15%' , eff2:{t:'charge',v:2} },
   { n:'武器精靈', cls:'atk', img:'%E6%AD%A6%E5%99%A8%E7%B2%BE%E9%9D%88.png', bn:'銀齒迴力鏢旋風', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-sword',1],['sfx-crit',0.85],['sfx-powerup',0.7]], tint:'rgba(200,220,255,0.18)', dur:1440 , pos:'30%' , eff2:{t:'charge',v:2} },
-  { n:'神槍手', cls:'shd', img:'%E7%A5%9E%E6%A7%8D%E6%89%8B.png', bn:'火焰神槍', gif:'%E5%8D%83%E5%B9%B4%E7%99%BC%E9%85%B5%E6%A0%B8%E7%88%86.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-gunshot-big',0.9],['sfx-explode',0.85],['sfx-gunshot-big',0.8],['sfx-explode',0.75]], tint:'rgba(255,80,30,0.22)', dur:2400 , pos:'25%' , eff2:{t:'shield',v:2} },
+  { n:'神槍手', cls:'shd', img:'%E7%A5%9E%E6%A7%8D%E6%89%8B.png', bn:'火焰神槍', gif:'%E5%8D%83%E5%B9%B4%E7%99%BC%E9%85%B5%E6%A0%B8%E7%88%86.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-gunshot-big',0.9],['sfx-explode',0.85],['sfx-gunshot-big',0.8],['sfx-explode',0.75]], tint:'rgba(255,80,30,0.22)', dur:2400 , pos:'25%' , eff2:{t:'truedmg',v:20} },
   { n:'火柴人', cls:'atk', img:'%E7%81%AB%E6%9F%B4%E4%BA%BA.png', bn:'燃燒自己,照亮別人', gif:'', sfx:[] , pos:'25%' , eff2:{t:'bleed',v:6} },
   { n:'青炎龍王', cls:'heal', img:'%E9%9D%92%E7%82%8E%E9%BE%8D%E7%8E%8B.png', bn:'青炎之舞', gif:'', sfx:[] , pos:'15%' , eff2:{t:'heal',v:8} },
   { n:'鳳凰', cls:'atk', img:'%E9%B3%B3%E5%87%B0.png', bn:'神炎之翼', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-explode',0.85],['sfx-burst',0.7]], tint:'rgba(255,80,20,0.22)', dur:2470 , pos:'25%' , eff2:{t:'bleed',v:6} },
@@ -4483,7 +4489,7 @@ window.MG_HEROES = [
   { n:'美人魚‧角角', cls:'atk', img:'%E7%BE%8E%E4%BA%BA%E9%AD%9A_%E8%A7%92%E8%A7%92.png', bn:'百萬水箭共鳴曲', gif:'%E8%90%AC%E9%8F%A1%E6%98%A0%E8%99%9B%E7%8D%84.gif', sfx:[['sfx-heal',0.7]], tint:'rgba(60,170,255,0.22)', dur:2600 , pos:'15%' , eff2:{t:'dmgred',v:50} },
   { n:'火爆女', cls:'atk', img:'%E7%81%AB%E7%88%86%E5%A5%B3%E5%AD%A9.png', bn:'三刀射擊', gif:'%E4%B8%89%E9%81%93%E5%9C%B0%E8%A3%82.gif', sfx:[['sfx-sword',1],['sfx-crit',0.7]], tint:'rgba(255,80,40,0.22)', dur:840 , pos:'20%' , eff2:{t:'bleed',v:6} },
   { n:'幽幽', cls:'atk', img:'%E5%B9%BD%E5%B9%BD.png', bn:'惡夢遊魂', gif:'%E6%AD%BB%E4%BA%A1%E5%AE%A3%E5%91%8A.gif', sfx:[['sfx-youyou-burst',1]], tint:'rgba(120,60,180,0.24)' , pos:'40%' , eff2:{t:'dmgred',v:50} },
-  { n:'網路駭客', cls:'ctrl', img:'%E7%B6%B2%E8%B7%AF%E9%A7%AD%E5%AE%A2.png', bn:'超極密檔案GET!', gif:'%E9%A7%AD%E5%AE%A2%E7%A8%8B%E5%BC%8F%E7%A2%BC.gif', sfx:[['sfx-burst',1],['sfx-crit',0.8],['sfx-heal',0.6]], tint:'rgba(60,220,120,0.20)' , pos:'15%' , eff2:{t:'heal',v:5} },
+  { n:'網路駭客', cls:'ctrl', img:'%E7%B6%B2%E8%B7%AF%E9%A7%AD%E5%AE%A2.png', bn:'超極密檔案GET!', gif:'%E9%A7%AD%E5%AE%A2%E7%A8%8B%E5%BC%8F%E7%A2%BC.gif', sfx:[['sfx-burst',1],['sfx-crit',0.8],['sfx-heal',0.6]], tint:'rgba(60,220,120,0.20)' , pos:'15%' , eff2:{t:'thorn',v:0} },
   { n:'風術士', cls:'heal', img:'%E9%A2%A8%E8%A1%93%E5%A3%AB.png', bn:'風之脈動', gif:'', sfx:[] , pos:'10%' , eff2:{t:'heal',v:6} },
   { n:'我的豚豚', cls:'atk', img:'%E6%88%91%E7%9A%84%E8%B1%9A%E8%B1%9A.png', bn:'超可愛暴擊', gif:'%E6%9A%88%E7%9C%A9.gif', sfx:[['sfx-crit',1],['sfx-punch',0.9],['sfx-cantmove',0.85]], tint:'rgba(120,200,255,0.18)' , pos:'25%' , eff2:{t:'drain',v:2} },
   { n:'雅典娜', cls:'heal', img:'%E9%9B%85%E5%85%B8%E5%A8%9C.png', bn:'戰爭女神的權威', gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', sfx:[['sfx-athena-burst',1]], tint:'rgba(255,216,102,0.20)' , pos:'18%' , eff2:{t:'charge',v:2} },

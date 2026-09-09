@@ -15,7 +15,34 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.52.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.55.0(2026-09-09)
+     ★ v1.55.0(2026-09-09・老師三項需求:護盾型/控場型第二效果改版＋對手爆發預告標籤)—
+       ①【護盾型四隻】操偶師維持額外 +2 格護盾不變;麻吉喵‧Nico 改為「立即恢復自己 20 HP」(eff2 新型
+       'healnow');神槍手改為「直接扣對手 20 HP,無視護盾」(新型 'truedmg',不走 mgBattleHit 的護盾判定,
+       直接改 foe.hp);牛魔王改為「使對手易傷 3 回合」(沿用既有 'bleed' 型,v:6 對齊其他易傷英雄的慣用值)。
+       ②【控場型三隻】網路駭客改為「接下來 3 次受到不利狀態時,複製給對手並恢復自己 5 HP」(新型 'thorn',
+       實際反彈邏輯集中在新 helper mgEff2ApplyBad,每次有人要對他施加易傷/封印/魅惑時觸發);電腦老師改為
+       「立即解除不利狀態,接下來 3 次免疫不利狀態」(新型 'immune',施放當下呼叫既有 mgBattleCleanseBad
+       淨化自己,再設 immuneLeft 倒數,mgEff2ApplyBad 判定 foe.immuneLeft>0 就直接免疫不施加);魔術師改為
+       「直接扣對手 10 HP,接下來 3 次對手無法普通攻擊」(新型 'silence',新增 noAtkLeft 倒數狀態,在
+       mgBattleHit 的三個出手點——玩家攻擊/答錯反擊/NPC每回合固定攻擊——各補一道判定,命中就沒收該次
+       傷害並倒數,不影響 hits/miss/charge 的既有計算)。mgEff2Text 補齊五種新效果的雙版文案。
+       ③【對手爆發預告標籤】呼應既有 v1.42.0「對手HP≤50%且全場未放過爆發強制觸發1次」的安全網規則,
+       新增 mgBattlePaint 尾端判定:HP 落在 (100,120] 這個「快到但還沒到」的區間且對手全場還沒用過爆發、
+       戰鬥未結束,就在對手卡片右上角亮起「⚠ 即將爆發」小標籤(橘紅色+輕微縮放脈動動畫,跟藍色的
+       「❄ 計時暫停」標籤區分),讓玩家提早知道對手快要暴走、有心理準備;HP 掉到 100 以下(安全網觸發
+       或直接被打死)標籤自動熄滅。
+     ★ v1.54.0(2026-09-09・老師需求「回復型英雄比照大對抗巫女/米鈴,加上解除不利狀態」)—
+       新增 mgBattleCleanseBad(S):小遊戲會落在「自己身上」的不利狀態只有三種(全部是對手 eff2 打過來的
+       第二效果)易傷(dotLeft/dotAmt)/封印(sealLeft)/魅惑(confuseLeft),回復型英雄的爆發基礎效果(+30HP)
+       之後順手清空這三個(不動 dmgReduceLeft/healBuff/shield 這三個自己的增益,淨化不能連自己buff都清掉);
+       有清到東西才多飄一個「淨化!」提示(260ms 後,跟 +30 的飄字錯開不疊在一起),玩家版/NPC版對稱處理。
+     ★ v1.53.0(2026-09-09・老師需求「登入後小遊戲選單各關新增最愛,最多10個;新增只顯示最愛的切換」)—
+       ①每張關卡卡片右上角新增空心/實心愛心圖示(僅登入後顯示),點擊切換收藏狀態,最多 10 個(超過提示);
+       收藏清單存 minigameScores/{uid}.favs(沿用既有「只能寫自己這份文件」的既有規則與寫入路徑,零 rules
+       改動)。②頂端「💡 遊玩提示」縮窄(flex:0 0 auto 不再跟排行榜/課堂複習按鈕平分寬度),右邊新增
+       「♥ 只顯示最愛」切換鈕(僅登入後顯示),開啟後首頁只列出收藏的關卡,清單全空時顯示提示文字引導收藏。
+       ③登出/共用裝置防護:比照既有 MG.best 稽核口徑,登出清空 MG.favs/MG.favOnly,下一位同學登入不會殘留。
      ★ v1.52.0(2026-09-09・老師需求兩項:攻擊時序改先後＋爆發演示比照大對抗)—
        ①【攻擊時序】原本玩家攻擊立即生效,對手固定反擊只延遲 60ms(答對)/450ms(答錯)才播特效但扣血
        是立刻的,視覺上像同時互毆;改為對手固定反擊的扣血/攻擊特效/血條刷新三者統一延後 500ms 一起發生,
@@ -454,7 +481,15 @@ button[disabled]{opacity:.45;}
 .cell .cn{font-size:19px;font-weight:700;color:var(--mist);letter-spacing:.5px;line-height:1.35;}
 .cell .cs{font-size:13px;opacity:.75;letter-spacing:.5px;}
 .cell .cstar{font-size:14px;color:var(--gold);min-height:18px;letter-spacing:2px;}
-.cell .cbest{position:absolute;top:6px;right:8px;font-size:13px;opacity:.8;font-weight:700;}
+.cell .cbest{position:absolute;top:32px;right:8px;font-size:13px;opacity:.8;font-weight:700;}
+/* ★ v1.53.0(老師需求「選單各關右上角新增一個空心的愛心圖示,點擊後空心→實心,代表加入最愛」)—
+   固定在卡片右上角(比原本的 .cbest 成績標籤高一層),.cbest 三個斷點的 top 值同步往下讓出空間(見各處註記)。
+   未收藏=空心愛心+半透明白底;已收藏(.on)=實心紅色愛心+紅底,一眼看出差異。 */
+.cfav{position:absolute;top:5px;right:6px;z-index:4;width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;
+  background:rgba(8,9,13,.55);border:1.5px solid rgba(255,255,255,.4);color:#fff;
+  cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0;}
+.cfav.on{background:rgba(232,64,64,.85);border-color:rgba(255,255,255,.6);color:#fff;}
 
 /* ── 測試期閘門頁(v1.1.0)──────────────── */
 #gate-title{display:block;width:100%;max-width:460px;margin:6px auto 0;opacity:.9;}
@@ -980,7 +1015,7 @@ button[disabled]{opacity:.45;}
 .cthumb-emo{font-size:46px;}
 .cell .cn{font-size:20px;}
 .cell .cbest{
-  top:8px;right:9px;background:rgba(8,9,13,.78);color:var(--gold);
+  top:34px;right:9px;background:rgba(8,9,13,.78);color:var(--gold);
   padding:3px 9px;border-radius:999px;border:1px solid rgba(240,192,96,.5);font-size:13px;
 }
 .cell .cstar{font-size:16px;text-shadow:0 0 8px rgba(240,192,96,.6);}
@@ -1362,7 +1397,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .cskill{font-size:12px;padding:1px 7px;background:rgba(8,9,13,.55);}
   .cdiff{font-size:13px;margin:2px 0 0;}
   .cell .cstar{font-size:15px;min-height:0;margin-bottom:8px;}
-  .cell .cbest{position:absolute;top:8px;right:8px;}
+  .cell .cbest{position:absolute;top:34px;right:8px;}
   #title-img{max-width:380px;margin-top:0;}
   #page-home .sub{margin:2px 0 8px;font-size:16px;}
   .mascot{margin:0 0 10px;}
@@ -1939,6 +1974,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-vs{align-self:center;font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.8);flex:0 0 auto;}
 .bt-frz{position:absolute;left:50%;top:-14px;transform:translateX(-50%);background:rgba(120,200,255,.92);color:#08090d;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;display:none;white-space:nowrap;z-index:2;}
 .bt-frz.on{display:block;}
+/* ★ v1.55.0 — 對手 HP 快接近 50% 強制爆發門檻的預告標籤,掛在 .bt-card.n 右上角(不佔版面,絕對定位疊在卡片上),
+   顏色故意用警示紅橙色跟 .bt-frz 的藍色系分開,一眼區分「計時暫停」跟「對手快爆了」是兩件事。 */
+.bt-warn{position:absolute;right:6px;top:-12px;background:rgba(255,120,0,.95);color:#08090d;font-size:11px;font-weight:900;padding:2px 9px;border-radius:999px;display:none;white-space:nowrap;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.4);animation:btWarnPulse 1s ease-in-out infinite;}
+.bt-warn.on{display:block;}
+@keyframes btWarnPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.7;transform:scale(1.06);}}
 /* 攻擊光束(仿算數大進擊 .rbeam):玩家攻擊綠、NPC 攻擊紅;傷害飄字沿用 sfl 動畫 */
 .bt-beam{position:fixed;z-index:117;height:4px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(255,80,80,0),#ff4040 40%,#ffd0d0 60%,rgba(255,80,80,0));box-shadow:0 0 10px #ff4040;pointer-events:none;opacity:1;transition:opacity .25s;}
 .bt-beam.p{background:linear-gradient(90deg,rgba(80,255,160,0),#3ec87a 40%,#d0ffe0 60%,rgba(80,255,160,0));box-shadow:0 0 10px #3ec87a;}
@@ -2085,10 +2125,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:23px;}
 #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:17px;font-weight:900;}
 #rank-btn .rb-sub,#cr-btn .rb-sub{flex:0 0 100%;text-align:center;font-size:13px;line-height:1.3;}
+/* ★ v1.53.0(老師需求「遊玩提示按鈕縮短,右邊新增只顯示最愛」)— rank-btn/cr-btn 維持原本 flex:1 1 0 平分寬度不動,
+   intro-btn 與新的 favonly-btn 改 flex:0 0 auto 只吃內容需要的寬度,不再跟前兩顆搶等寬份額,讓第 4 顆按鈕擠得下。 */
+#intro-btn.short,#top-btns #favonly-btn{flex:0 0 auto;padding:10px 12px;font-size:15px;white-space:nowrap;}
+#favonly-btn{display:flex;align-items:center;gap:6px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.5);border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:manipulation;margin:0 0 10px;}
+#favonly-btn.on{background:linear-gradient(180deg,#ff8fae,#e8405a);color:#fff;}
 /* iPad 橫式／PC:標題右邊那條夠寬,再放大一級並確保絕不換行成第二列 */
 @media (min-width:1024px) and (orientation:landscape){
   #top-btns{flex-wrap:nowrap;width:100%;gap:12px;}
-  #rank-btn,#cr-btn,#intro-btn{padding:12px 14px;font-size:19px;border-radius:16px;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:12px 14px;font-size:19px;border-radius:16px;}
   #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:26px;}
   #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:19px;}
   #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:14px;}
@@ -2242,7 +2287,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #title-fallback{grid-column:1;grid-row:1;font-size:16px;margin:0;}
   #top-btns{grid-column:2;grid-row:1;flex-wrap:nowrap;gap:6px;margin:0;width:100%;align-self:center;}
   #top-btns button{flex:1 1 0;min-width:0;}
-  #rank-btn,#cr-btn,#intro-btn{padding:6px 8px;font-size:13px;border-radius:11px;row-gap:0;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:6px 8px;font-size:13px;border-radius:11px;row-gap:0;}
   #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:16px;}
   #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:13px;}
   #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:10px;line-height:1.15;}
@@ -2253,6 +2298,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .cell{height:auto;min-height:0;padding:6px 4px 5px;border-radius:12px;}
   .cell .cn{font-size:11.5px;line-height:1.2;}
   .cell .cskills,.cell .cdiff,.cell .cbest{font-size:9px;}
+  .cell .cbest{top:24px;}
+  .cfav{width:19px;height:19px;font-size:11px;top:3px;right:3px;}
   .cell .ctag{font-size:9px;padding:2px 6px;left:5px;top:4px;}
   .crmask-lbl{font-size:11px;padding:4px 9px;}
   #home-note{display:none;}
@@ -2260,7 +2307,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 超矮(iPhone SE 橫式 320~375px 高):標題再縮、關卡名只留一行 */
 @media (orientation:landscape) and (max-height:400px){
   #title-img{max-height:48px;}
-  #rank-btn,#cr-btn,#intro-btn{font-size:12px;padding:5px 6px;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:12px;padding:5px 6px;}
   #rank-btn .rb-sub,#cr-btn .rb-sub{display:none;}   /* 高度不夠時副標讓位,主標仍看得懂 */
   .cell .cn{font-size:10.5px;}
   .cell .cskills,.cell .cdiff{display:none;}
@@ -2532,7 +2579,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
            與另外兩顆並列成同一排。⚠ 按鈕 id 一律不改(#intro-btn / mgIntroOpen 的既有呼叫點與 CSS 全部沿用),
            只搬 DOM 位置與可見文字;搬進 #top-btns 後父層變 flex,舊的 landscape grid 定位規則自動失效,
            但仍一併移除避免日後誤導。 -->
-      <button id="intro-btn" onclick="mgIntroOpen()">💡 遊玩提示</button>
+      <button id="intro-btn" class="short" onclick="mgIntroOpen()">💡 遊玩提示</button>
+      <!-- ★ v1.53.0(老師需求「只顯示最愛的遊戲」)— 上面 intro-btn 加 .short 縮窄字距/內距讓出空間;
+           本鈕預設 inline-block(display:none 由 mgFavOnlyBtnRender 依登入狀態控制,避免未登入時先閃一下才被藏起來),
+           .on 樣式(見 CSS)標示目前是否已開啟篩選。 -->
+      <button id="favonly-btn" style="display:none;" onclick="mgToggleFavOnly()">♥ 只顯示最愛</button>
     </div>
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
@@ -2587,6 +2638,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       </div>
       <div class="bt-vs">VS</div>
       <div class="bt-card n" id="bt-n">
+        <!-- ★ v1.55.0(老師需求「對手HP接近50%前,發出簡短的爆發技能預告標籤在目標頭上」)—
+             呼應既有 mgBattleNpcBurstSafety(HP≤50%且全場未放過爆發強制觸發1次)的安全網規則,
+             這裡是「還沒到,但快到了」的預告:HP 落在 100~120(50%~60%)區間、且對手全場還沒放過爆發,
+             就亮起這顆小標籤,讓玩家提早知道對手快要暴走、可以先有心理準備。CSS/JS 見 mgBattleNpcWarnPaint。 -->
+        <div class="bt-warn" id="bt-n-warn">⚠ 即將爆發</div>
         <div class="bt-top"><div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span></div><span class="bt-charge" id="bt-n-ch"></span></div>
         <div class="bt-img" id="bt-n-imgw"><img id="bt-n-img" src="" alt="" onerror="this.style.display='none';"></div>
         <div class="bt-info">
@@ -2822,7 +2878,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.43.0"></script>
+<script src="minigame_db.js?v=v1.55.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2831,7 +2887,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.52.0';
+var MG_VER = 'v1.55.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2879,6 +2935,8 @@ var MG = {
   timer : null,
   tleft : 0,
   best  : {},     // { gameId: {score,stars,acc} } — 未登入時只活在記憶體
+  favs  : [],     // ★ v1.53.0(老師需求「最愛關卡,登入後才有,最多10個」)— 最愛的 game id 陣列,登入後從 minigameScores/{uid}.favs 讀回,未登入永遠是空陣列
+  favOnly : false,   // ★ v1.53.0 — 「只顯示最愛的遊戲」篩選開關,純本機顯示狀態,不上雲
   user  : null,
   fb    : null,   // { app, auth, db }
   fbLoading : false,
@@ -3495,6 +3553,10 @@ function renderGrid(){
     stars = b ? new Array(b.stars + 1).join('★') : '';
     url = mgThumbUrl(x);
 
+    /* ★ v1.53.0(老師需求「最愛關卡」)— 只有登入才有收藏功能;「只顯示最愛」開啟時,非最愛關卡整張跳過不輸出。 */
+    var _isFav = !!MG.user && MG.favs.indexOf(x.id) >= 0;
+    if(MG.favOnly && MG.user && !_isFav) continue;
+
     /* 難度星(需求4):實心到 diff、其餘空心,一眼看得出深淺 */
     var dh = '', d = x.diff || 0;
     for(k = 1; k <= 5; k++) dh += (k <= d ? '★' : '☆');
@@ -3517,6 +3579,7 @@ function renderGrid(){
           +   (_crMask ? '<div class="crmask-lbl">' + (MG.style === 's' ? '與這個單元無關' : '與本單元無關') + '</div>' : '')
           +   (x.tag ? '<div class="ctag">' + esc(mgStr(x, 'tag')) + '</div>' : '')   /* ★ v1.10.4 科目小標籤(左上角);★ v1.11.0 tagEn */
           +   (_crRel ? '<div class="crlit-lbl">📚 ' + esc(_crSel.map(mgCrLabelShort).join('、')) + '</div>' : '')
+          +   (MG.user ? ('<button class="cfav' + (_isFav ? ' on' : '') + '" onclick="mgToggleFav(\'' + x.id + '\');event.stopPropagation();" title="' + (_isFav ? (MG.style === 's' ? '移除最愛' : '從最愛移除') : (MG.style === 's' ? '加入最愛' : '加入最愛(最多10個)')) + '">' + (_isFav ? '♥' : '♡') + '</button>') : '')   /* ★ v1.53.0 */
           +   '<div class="cthumb">'
           +     (url ? '<img src="' + url + '" alt="" loading="lazy" onerror="mgThumbFail(this);">' : '')
           +     '<span class="cthumb-emo">' + x.icon + '</span>'
@@ -3529,10 +3592,45 @@ function renderGrid(){
           +   ''   /* ★ v1.7.0 老師:卡片第二行最佳成績星星移除(cstar 不再輸出;難度星 cdiff 保留) */
           + '</div>';
   }
+  if(MG.favOnly && MG.user && !html){
+    html = '<p style="grid-column:1/-1;text-align:center;opacity:.8;padding:20px 10px;">'
+         + (MG.style === 's' ? '還沒有收藏最愛的遊戲,先去卡片右上角點 ♡ 收藏吧!' : '目前沒有收藏任何最愛的遊戲,可以到各關卡卡片右上角點選 ♡ 加入最愛。')
+         + '</p>';
+  }
   g.innerHTML = html;
   try{ mgRankPanelRender(); }catch(e){}   /* ★ v1.10.0 週排行榜面板(雙版,隨字少/字多重畫) */
   try{ mgCrBtnRender(); }catch(e){}       /* ★ v1.10.0 專注課堂複習按鈕(雙版) */
   try{ mgLangApply($('page-home')); }catch(e){}   /* ★ v1.11.0 */
+}
+/* ★ v1.53.0(老師需求「登入後小遊戲選單各關新增最愛,最多10個;上方新增只顯示最愛的切換」)—
+   mgToggleFav:切換單一關卡的收藏狀態;mgToggleFavOnly:切換首頁篩選開關。
+   兩者都只是改 MG.favs/MG.favOnly 後 renderGrid() 重畫,不重新整理整頁;收藏異動才需要上雲(mgSaveFavsCloud),
+   篩選開關純顯示層不上雲。未登入時兩顆按鈕在 renderGrid/mgFavOnlyBtnRender 就不會出現,這裡仍加一層防呆。 */
+window.mgToggleFav = function(id){
+  if(!MG.user){ toast(MG.style === 's' ? '要先登入才能收藏最愛喔' : '請先登入才能使用最愛收藏功能'); return; }
+  var i = MG.favs.indexOf(id);
+  if(i >= 0){
+    MG.favs.splice(i, 1);
+    playSfx('sfx-cancel', 0.35);
+  }else{
+    if(MG.favs.length >= 10){ toast(MG.style === 's' ? '最多只能收藏 10 個喔' : '最愛最多只能收藏 10 個關卡'); playSfx('sfx-cancel', 0.35); return; }
+    MG.favs.push(id);
+    playSfx('sfx-tap', 0.4);
+  }
+  renderGrid();
+  mgSaveFavsCloud();
+};
+window.mgToggleFavOnly = function(){
+  if(!MG.user){ toast(MG.style === 's' ? '要先登入才能用這個功能喔' : '請先登入才能篩選最愛的遊戲'); return; }
+  MG.favOnly = !MG.favOnly;
+  playSfx('sfx-tap', 0.35);
+  mgFavOnlyBtnRender();
+  renderGrid();
+};
+function mgFavOnlyBtnRender(){
+  var b = $('favonly-btn'); if(!b) return;
+  b.classList.toggle('on', !!MG.favOnly);
+  b.style.display = MG.user ? '' : 'none';   /* ★ v1.53.0 — 未登入整顆藏起來,而不是禁用態,避免學生誤以為壞掉 */
 }
 /* ★ v1.41.0(老師需求)— 原本每次進首頁隨機挑一句、常駐顯示在吉祥物泡泡裡的提示文字(雙版各 5 句),
    改成點「遊戲簡介」鈕才開啟(見 mgIntroOpen),所以從 renderGrid 移出來成獨立函式,每次點開再重新隨機一句。
@@ -6263,6 +6361,22 @@ function mgEff2Text(h, isNpc){
   if(e.t === 'revive') return {
     s: '(被動)只要爆發條是滿的,倒下時會立刻復活 HP 20!', f: '(被動)自身被擊倒時,若爆發充能已滿,立即復活並回復 HP 20',
     en: '(passive) if knocked out while your burst gauge is full, you instantly revive with 20 HP' };
+  /* ★ v1.55.0 — 老師裁定「四隻護盾角色+三隻控場角色」第二效果改版新增的五種文案 */
+  if(e.t === 'healnow') return {
+    s: '使用當下立刻幫' + self_ + '多補 ' + e.v + ' 滴血', f: '並使' + self_ + '立即恢復 ' + e.v + ' 點 HP',
+    en: '; also instantly heals ' + (isNpc ? 'them' : 'you') + ' ' + e.v + ' HP' };
+  if(e.t === 'truedmg') return {
+    s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,護盾也擋不住', f: '並使' + foe + '直接損失 ' + e.v + ' 點 HP,無視護盾',
+    en: '; also deals ' + e.v + ' direct damage to ' + foeEn + ', ignoring shields' };
+  if(e.t === 'thorn') return {
+    s: '接下來 3 次' + self_ + '被下不利狀態,都會反彈回去給' + foe + '、還幫' + self_ + '補 5 滴血', f: '並使' + self_ + '接下來 3 次受到不利狀態時,同步反彈給' + foe + '並恢復自身 5 點 HP',
+    en: "; " + selfEn + "'s next 3 debuffs received are mirrored onto " + foeEn + ", healing " + (isNpc ? 'them' : 'you') + ' 5 HP each time' };
+  if(e.t === 'immune') return {
+    s: '使用當下先解除' + self_ + '身上的不利狀態,接下來 3 次也不怕再被下' + '不利狀態', f: '並使' + self_ + '立即解除不利狀態,接下來 3 次不利狀態判定完全免疫',
+    en: '; also cleanses ' + (isNpc ? 'their' : 'your') + ' debuffs and grants immunity to the next 3 debuffs' };
+  if(e.t === 'silence') return {
+    s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,接下來 3 次' + foe + '都打不到人!', f: '並使' + foe + '損失 ' + e.v + ' 點 HP,接下來 3 次普通攻擊判定完全沒收',
+    en: '; also deals ' + e.v + ' damage to ' + foeEn + ' and silences their next 3 normal attacks' };
   return { s:'', f:'', en:'' };
 }
 function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
@@ -6338,8 +6452,10 @@ function mgBattleInit(x){
   /* healBuff/dmgReduceLeft/dotLeft:v1.31.0 四型爆發第二效果(見 MG_BURST_DEF 註解)的計數狀態,初始 0 */
   /* healBuff/dmgReduceLeft/dotLeft/healAmt/dotAmt:v1.33.0 逐英雄第二效果(見 MG_HEROES.eff2)的計數與數值狀態,初始 0 */
   /* sealLeft/confuseLeft:v1.36.0 新增「封印爆發技能」/「魅惑(攻擊自己)」兩型第二效果的計數狀態,初始 0 */
-  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0 },
-          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0 },
+  /* thornLeft/immuneLeft/noAtkLeft:v1.55.0 新增「受到不利狀態時反彈+回血」/「解除並免疫不利狀態」/
+     「對手無法普通攻擊」三型第二效果的計數狀態,初始 0(見 mgApplyEff2/mgEff2ApplyBad 與 mgBattleHit 消費點) */
+  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0 },
+          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -6406,6 +6522,15 @@ function mgBattlePaint(){
       }
     }
   }
+  /* ★ v1.55.0(老師需求「對手HP接近50%前,發出簡短的爆發技能預告標籤在目標頭上」)—
+     呼應 mgBattleNpcBurstSafety 的既有規則(HP≤50%且全場未放過爆發 ⇒ 強制觸發1次):
+     HP 落在 (100,120] 這個「快到但還沒到」的區間、且對手全場還沒用過爆發、戰鬥還沒結束,就亮起標籤,
+     讓玩家提早知道對手快要暴走;HP 一旦真的掉到 100 以下(安全網觸發或直接被打死)就自動熄滅。 */
+  var _nw = $('bt-n-warn');
+  if(_nw){
+    var _willBurst = !_BT.over && _BT.n.used === 0 && _BT.n.hp > 100 && _BT.n.hp <= 120;
+    _nw.classList.toggle('on', _willBurst);
+  }
 }
 /* 受傷震動(老師需求):iPad Safari 沒有 vibrate API ⇒ try/catch 靜默;Android/桌機 Chrome 會震 */
 function mgBattleVibe(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms || 120); }catch(e){} }
@@ -6460,6 +6585,7 @@ function mgBattleHit(ok, customDmg){
       P.hp = Math.max(0, P.hp - dmgSelfP); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('n', '−' + dmgSelfP); mgBattleFloatOn('p', (MG.lang === 'en' ? 'CONFUSED' : '魅惑!'), 'block');
     }
     else if(N.shield > 0){ N.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('n', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
+    else if(P.noAtkLeft > 0){ P.noAtkLeft--; mgBattleFloatOn('p', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 魔術師新第二效果:被封的一方普通攻擊直接沒收,不扣血也不算落空,單純沒有這次傷害 */
     else{
       var dmgP = (typeof customDmg === 'number' && customDmg > 0) ? Math.round(customDmg) : MG_BT.DMG;   /* ★ v1.42.0 元素消消樂:依消除顆數+combo 算出的傷害取代固定值 */
       if(N.dmgReduceLeft > 0){ N.dmgReduceLeft--; dmgP = Math.round(dmgP / 2); }               /* 護盾型第二效果:護盾耗盡後再減傷 */
@@ -6478,6 +6604,7 @@ function mgBattleHit(ok, customDmg){
       N.hp = Math.max(0, N.hp - dmgSelfN); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('p', '−' + dmgSelfN); mgBattleFloatOn('n', (MG.lang === 'en' ? 'CONFUSED' : '魅惑!'), 'block');
     }
     else if(P.shield > 0){ P.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
+    else if(N.noAtkLeft > 0){ N.noAtkLeft--; mgBattleFloatOn('n', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 同上,答錯時 NPC 的反擊也可能被魔術師封住 */
     else{
       var dmgN = MG_BT.DMG;
       if(P.dmgReduceLeft > 0){ P.dmgReduceLeft--; dmgN = Math.round(dmgN / 2); }
@@ -6498,6 +6625,13 @@ function mgBattleHit(ok, customDmg){
   if(P.hp > 0){
     setTimeout(function(){
       if(!_BT || _BT.over) return;
+      if(N.noAtkLeft > 0){   /* ★ v1.55.0 — 魔術師封住的是「對手的普通攻擊」,這條每回合固定攻擊也算在內,一併沒收 */
+        N.noAtkLeft--;
+        mgBattleFloatOn('p', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block');
+        mgBattlePaint();
+        mgBattleCheckKO();
+        return;
+      }
       P.hp = Math.max(0, P.hp - MG_BT.NPC_TURN_DMG);
       mgBattleFxAttack('n', '−' + MG_BT.NPC_TURN_DMG);
       mgBattlePaint();
@@ -6573,16 +6707,65 @@ function mgBattleEnd(res){
 /* ★ v1.33.0 — 逐英雄第二效果套用(取代舊版 cls 共用套用),caster=施放方狀態物件,foe=對手狀態物件 */
 /* ★ v1.36.0 新增 seal(封印對手爆發技能)/confuse(魅惑對手接下來攻擊改打自己)兩型;revive(滿槽重生)為被動型,
    不在施放當下套用,而是在 mgBattleCheckKO 判定擊倒瞬間直接讀 h.eff2 檢查,見該函式註解。 */
+/* ★ v1.55.0 — 取得 P/N 狀態物件對應的卡片側('p'/'n'),供飄字/攻擊特效呼叫用,判斷式只認物件參照。 */
+function mgSideOf(S){ return (S === _BT.p) ? 'p' : 'n'; }
+/* ★ v1.55.0(老師需求「牛魔王/神槍手/麻吉喵改效果、網路駭客/電腦老師/魔術師改效果」)—
+   把「對 foe 施加一個壞狀態(易傷/封印/魅惑)」抽成單一入口,原因是現在多了兩個新機制要在施加壞狀態
+   這個節點插隊:①foe 若有 immuneLeft(電腦老師)→ 直接免疫、不施加,immuneLeft 倒數一次;
+   ②foe 若有 thornLeft(網路駭客)→ 照常施加之外,額外把同一種壞狀態「複製」回敬給 caster,
+   並讓 foe(帶刺甲的那一方)回血 5,thornLeft 倒數一次。kind 只認 'dot'(易傷)/'seal'(封印)/'confuse'(魅惑)三種,
+   跟 mgBattleCleanseBad 清得掉的清單完全對應。 */
+function mgEff2ApplyBad(caster, foe, kind, val){
+  if(foe.immuneLeft > 0){
+    foe.immuneLeft--;
+    try{ mgBattleFloatOn(mgSideOf(foe), (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); }catch(_ei){}
+    return;
+  }
+  if(kind === 'dot'){ foe.dotLeft = MG_BT.EFF2_N; foe.dotAmt = val; }
+  else if(kind === 'seal'){ foe.sealLeft = MG_BT.EFF2_N; }
+  else if(kind === 'confuse'){ foe.confuseLeft = MG_BT.EFF2_N; }
+  if(foe.thornLeft > 0){
+    foe.thornLeft--;
+    if(kind === 'dot'){ caster.dotLeft = MG_BT.EFF2_N; caster.dotAmt = val; }
+    else if(kind === 'seal'){ caster.sealLeft = MG_BT.EFF2_N; }
+    else if(kind === 'confuse'){ caster.confuseLeft = MG_BT.EFF2_N; }
+    var _hb = 5;
+    foe.hp = Math.min(MG_BT.HP, foe.hp + _hb);
+    try{ mgBattleFloatOn(mgSideOf(foe), '+' + _hb, 'heal'); }catch(_et){}
+  }
+}
 function mgApplyEff2(caster, foe){
   var e = caster.h && caster.h.eff2; if(!e) return;
   if(e.t === 'heal'){ caster.healBuff = MG_BT.EFF2_N; caster.healAmt = e.v; }
   else if(e.t === 'dmgred') caster.dmgReduceLeft = MG_BT.EFF2_N;
-  else if(e.t === 'bleed'){ foe.dotLeft = MG_BT.EFF2_N; foe.dotAmt = e.v; }
+  else if(e.t === 'bleed') mgEff2ApplyBad(caster, foe, 'dot', e.v);
   else if(e.t === 'drain') foe.charge = Math.max(0, foe.charge - e.v);
   else if(e.t === 'shield') caster.shield = (caster.shield || 0) + e.v;
   else if(e.t === 'charge') caster.charge = Math.min(MG_BT.CHARGE - 1, caster.charge + e.v);   /* 剛歸零後立刻前進,但不能因此直接又是滿的(那等於免費爆發) */
-  else if(e.t === 'seal') foe.sealLeft = MG_BT.EFF2_N;                                          /* ★ v1.36.0 — 對手接下來 EFF2_N 題內無法使用極限爆發 */
-  else if(e.t === 'confuse') foe.confuseLeft = MG_BT.EFF2_N;                                    /* ★ v1.36.0 — 對手接下來 EFF2_N 次「出手攻擊」改打自己 */
+  else if(e.t === 'seal') mgEff2ApplyBad(caster, foe, 'seal', 0);                                /* ★ v1.36.0 — 對手接下來 EFF2_N 題內無法使用極限爆發 */
+  else if(e.t === 'confuse') mgEff2ApplyBad(caster, foe, 'confuse', 0);                          /* ★ v1.36.0 — 對手接下來 EFF2_N 次「出手攻擊」改打自己 */
+  /* ★ v1.55.0(老師需求「四隻護盾角色的第二效果改版」)— 麻吉喵改「立即恢復自己 HP」、神槍手改「直接扣對手 HP,
+     無視護盾(不走 mgBattleHit 的護盾判定,直接改 foe.hp)」;操偶師維持原本的額外 +2 格護盾(仍走上面的 'shield' 分支)。 */
+  else if(e.t === 'healnow'){ caster.hp = Math.min(MG_BT.HP, caster.hp + e.v); try{ mgBattleFloatOn(mgSideOf(caster), '+' + e.v, 'heal'); }catch(_eh){} }
+  else if(e.t === 'truedmg'){ foe.hp = Math.max(0, foe.hp - e.v); try{ mgBattleFxAttack(mgSideOf(caster), '−' + e.v); }catch(_ed){} }
+  /* ★ v1.55.0(老師需求「控場型三隻改版」)— 網路駭客「受到不利狀態時反彈+回血」單純只是設定 thornLeft 倒數,
+     實際反彈邏輯集中在上面的 mgEff2ApplyBad(每次有人要對 foe 施加壞狀態時才會觸發,不必另開監聽);
+     電腦老師「解除+免疫」=施放當下先淨化自己,再設 immuneLeft 倒數,免疫判定同樣集中在 mgEff2ApplyBad;
+     魔術師「打10HP+對手3回合內無法普通攻擊」=施放當下先扣血,再設 noAtkLeft 倒數,實際攔截「普通攻擊」
+     在 mgBattleHit 的三個出手點(玩家攻擊/答錯反擊/NPC固定攻擊)判斷,見該函式 v1.55.0 註解。 */
+  else if(e.t === 'thorn') caster.thornLeft = MG_BT.EFF2_N;
+  else if(e.t === 'immune'){ mgBattleCleanseBad(caster); caster.immuneLeft = MG_BT.EFF2_N; }
+  else if(e.t === 'silence'){ foe.hp = Math.max(0, foe.hp - e.v); try{ mgBattleFxAttack(mgSideOf(caster), '−' + e.v); }catch(_es){} foe.noAtkLeft = MG_BT.EFF2_N; }
+}
+/* ★ v1.54.0(老師需求「小遊戲的回復型英雄,把大對抗巫女/米鈴這類解除不利狀態的效果也加進去」)—
+   小遊戲目前會落在「自己身上」的不利狀態只有三種(全部是對手 eff2 打過來的第二效果):
+   dotLeft/dotAmt=易傷(接下來受傷會多痛)、sealLeft=封印(爆發技能被鎖)、confuseLeft=魅惑(下次攻擊打自己);
+   dmgReduceLeft/healBuff/shield 三個是「自己的」增益,淨化不能連自己的buff都清掉,所以不動這三個。
+   回傳 true 代表這次真的清到東西,供呼叫端決定要不要多飄一次「淨化!」提示(沒清到東西就不必多此一舉)。 */
+function mgBattleCleanseBad(S){
+  var had = (S.dotLeft > 0) || (S.sealLeft > 0) || (S.confuseLeft > 0);
+  S.dotLeft = 0; S.dotAmt = 0; S.sealLeft = 0; S.confuseLeft = 0;
+  return had;
 }
 /* ── 玩家極限爆發 ── */
 window.mgBattleBurst = function(){
@@ -6602,7 +6785,11 @@ window.mgBattleBurst = function(){
   if(cls === 'ctrl'){ mgBurstFreeze(MG_BT.CTRL_MS, eng); }
   mgBattlePaint();
   mgBurstCinematic('p', P.h, d, tx(d.p) + tx(mgEff2Text(P.h, false)), function(){
-    if(cls === 'heal'){ P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal'); }
+    if(cls === 'heal'){
+      P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal');
+      /* ★ v1.54.0 — 回復型英雄比照大對抗巫女/米鈴,順手淨化自己身上的易傷/封印/魅惑 */
+      if(mgBattleCleanseBad(P)) setTimeout(function(){ mgBattleFloatOn('p', (MG.lang === 'en' ? 'CLEANSED' : '淨化!'), 'heal'); }, 260);
+    }
     else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
     else if(cls === 'atk'){ N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P); mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P); }
     mgApplyEff2(P, N);   /* ★ v1.33.0 — 逐英雄第二效果,64 隻各自不同(見 MG_HEROES.eff2) */
@@ -6626,7 +6813,11 @@ function mgBattleNpcBurst(){
   }
   mgBattlePaint();
   mgBurstCinematic('n', N.h, d, tx(d.npc) + tx(mgEff2Text(N.h, true)), function(){
-    if(cls === 'heal'){ N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal'); }
+    if(cls === 'heal'){
+      N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal');
+      /* ★ v1.54.0 — NPC 版同步淨化,對稱玩家版 */
+      if(mgBattleCleanseBad(N)) setTimeout(function(){ mgBattleFloatOn('n', (MG.lang === 'en' ? 'CLEANSED' : '淨化!'), 'heal'); }, 260);
+    }
     else if(cls === 'shd'){ N.shield = MG_BT.SHIELD; mgBattleFloatOn('n', '🛡×' + MG_BT.SHIELD, 'block'); }
     else if(cls === 'atk'){
       /* ★ v1.31.1(老師修正)— 攻擊型 NPC 版:直接傷害 10→20(NPC 版較痛) */
@@ -7391,12 +7582,15 @@ function onUser(u){
     who.textContent = '';
     MG.wk.mine = {};   /* ★ v1.10.0 登出清掉本機週成績(共用平板不可殘留上一位) */
     MG.best = {};      /* ★ v1.10.0 稽核(鐵律 1.41 共用裝置防污染):登出同時清掉記憶體最佳成績,下一位同學登入不會看到/合併到上一位的分數;雲端 minigameScores 已存,自己再登入即回來 */
+    MG.favs = [];      /* ★ v1.53.0 — 同上稽核口徑:登出清掉最愛清單,不讓下一位共用裝置的同學看到/誤改上一位的收藏 */
+    MG.favOnly = false;
   }
   /* ★ v1.1.0 — 登入/登出都要重算閘門。
      ⚠ 這裡刻意不寫「只在登入時解鎖」:登出後必須把九宮格收回去,
        否則老師在共用平板上登出,下一位學生就直接看到測試中的半成品。 */
   var wasLocked = !$('page-gate').classList.contains('hidden');
   applyGate();
+  try{ mgFavOnlyBtnRender(); }catch(_ef){}   /* ★ v1.53.0 — 登入/登出都要重算最愛按鈕的顯示/隱藏與勾選態 */
   try{ renderGrid(); }catch(e){}   /* ★ v1.3.0 老師登入／登出後重畫:每張卡的開／關切換鈕只給老師看 */
   if(_MG_ADMIN_ONLY && u){
     if(mgIsAdmin(u)){
@@ -7422,6 +7616,9 @@ function loadCloud(){
       if(!g.hasOwnProperty(k)) continue;
       if(!MG.best[k] || (g[k] && g[k].score > MG.best[k].score)) MG.best[k] = g[k];
     }
+    /* ★ v1.53.0(老師需求「最愛關卡」)— 讀回收藏清單;雲端整包取代本機(裝置層不留鏡像,同一份權威),
+       陣列型式簡單、沒有逐項合併的必要;夾 10 筆防禦(理論上寫入端已守門,這裡多一層保險)。 */
+    if(Array.isArray(d.favs)) MG.favs = d.favs.slice(0, 10);
     renderGrid();
     toast('已讀取雲端最佳成績');
   })['catch'](function(){ /* 讀不到就算了,不影響遊玩 */ });
@@ -7437,6 +7634,15 @@ function saveCloud(gid, rec){
     .set(payload, { merge: true })
     .then(function(){ $('r-cloud').textContent = '☁ 已存到雲端'; })
     ['catch'](function(){ $('r-cloud').textContent = '☁ 雲端存檔失敗(成績仍保留在這次遊戲中)'; });
+}
+/* ★ v1.53.0(老師需求「登入後選單各關新增最愛,最多10個」)— 只寫 minigameScores/{uid}.favs 這一個欄位,
+   跟 saveCloud 寫同一份文件(merge:true 只動這個 key,games 欄位不受影響),符合小遊戲「只寫得到自己的
+   minigameScores」鐵律,不必新增任何 collection、不必動 firestore.rules。 */
+function mgSaveFavsCloud(){
+  if(!MG.fb || !MG.user) return;
+  MG.fb.db.collection('minigameScores').doc(MG.user.uid)
+    .set({ uid: MG.user.uid, favs: MG.favs }, { merge: true })
+    ['catch'](function(){ /* 存收藏失敗不影響遊玩,下次登入重試即可,不特別提示打擾 */ });
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -7889,7 +8095,7 @@ var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小�
 /* ★ v1.29.0 戰鬥模式 UI 字串英文版(補進 MG_EN;題庫/爆發說明走 tx() 的 en 欄位) */
 (function(){
   var _add = { "出戰英雄": "Your hero", "🔁 換英雄": "🔁 Change hero", "🦸 選一名英雄出戰": "🦸 Pick a hero to battle", "✓ 就是這一位": "✓ Choose this hero",
-    "❄ 計時暫停": "❄ Timer paused", "極限爆發": "Ultimate burst", "爆發:": "Burst: ", "極限爆發:": "Ultimate burst: ",
+    "❄ 計時暫停": "❄ Timer paused", "⚠ 即將爆發": "⚠ Incoming burst", "極限爆發": "Ultimate burst", "爆發:": "Burst: ", "極限爆發:": "Ultimate burst: ",
     "等下一題開始再用!": "Use it when the next question starts!", "這一型的爆發要在作答中使用,等下一題開始再按": "This burst works while answering. Tap it after the next question starts.",
     "這裡沒有可以打掉的錯誤答案": "No wrong answers to remove here", "目前畫面沒有可刪除的錯誤答案,先留著": "There are no wrong answers to remove right now. Keep it for later.",
     "K.O.!": "K.O.!", "被打倒了…": "Knocked out…", "勝利": "Victory", "被打倒了": "Knocked out", "剩餘 HP ": "HP left ", "爆發用了 ": "Bursts used ", "KO 獎勵": "K.O. bonus" };
