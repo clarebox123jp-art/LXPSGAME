@@ -15,7 +15,72 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.43.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.46.0(2026-09-09)
+     ★ v1.46.0(2026-09-09・老師需求:手機版遊玩版面優化＋切背景/關閉一律靜音)—
+       版面改動集中在 <style> 尾端「v1.46.0」整段(純新增覆寫,舊規則一行未刪);斷點一律是
+       orientation:landscape + max-height:520px(小遊戲在觸控裝置強制橫式,故手機版＝橫式矮螢幕;
+       iPad 橫式最矮 768px 不會命中 ⇒ 對 iPad/PC 零波及)。
+       ①【100vh → 100dvh】iOS Safari 的 100vh 是「網址列收起後」的高度,實際可視區更矮 ⇒ 舊版面會
+         超出下緣逼出捲動、底部「下一題」鈕還會被網址列蓋住。改用 dvh;不支援的舊瀏覽器整條宣告
+         無效自動退回既有 vh 版本,零風險。
+       ②【功能列壓成一行】10 顆 chip 在 667~932px 寬的手機上原本會換兩行吃掉高度,改 nowrap+縮字,
+         「回大作戰」收成純 🗺 圖示。
+       ③【首頁一頁看完 16 關】手機橫式原本走直向堆疊(標題→按鈕→九宮格,5欄4列必定溢出),改為比照
+         iPad/PC 的兩欄結構縮小版:第一列左=標題右=三顆按鈕、第二列=九宮格改 6 欄 ⇒ 16 關剛好 3 列放完,
+         底部說明文字隱藏;≤400px 高再降一級(副標與技能標籤讓位)。
+       ④【關卡頁塞進一頁】選項/題卡/翻牌/順序卡/籃子/消消樂棋盤/調色盤再壓一級;右欄底部保留浮動
+         「下一題」鈕的高度(含 env(safe-area-inset-bottom))不被蓋住。
+       ⑤【戰鬥卡同步壓縮】v1.45.0 依老師需求把爆發鈕與計量槽拆成兩行,手機矮螢幕要一併縮小,
+         否則多出來那一行會把立繪擠沒。
+       ⑥【彈窗一定按得到】所有彈窗的動作列(.row)改 position:sticky 釘在底部,內容再長也按得到;
+         彈窗高度改吃 dvh 並補 iOS 安全區;英雄選單清單改窄欄位。
+       ⑦【切到後台／關閉遊戲一律靜音】舊碼只掛 visibilitychange,手機上不夠:iOS 把 App 切走常只發
+         pagehide、Android 凍結發 freeze,且 WebAudio(聽音坊音階/節奏鼓)pause 管不到會繼續響。
+         抽單一真相 mgSilenceAll()(暫停全部 <audio> + suspend AudioContext),pagehide／freeze／
+         visibilitychange 三者共用;回前景先 resume AudioContext 再走既有的 BGM 恢復流程。
+         ⚠ pagehide 刻意不判斷 persisted:不論進 bfcache 或真的關掉,當下都該停聲音。
+     ★ v1.45.0(2026-09-09・老師看圖三項:iPad／PC 版面修正)— 全部改動集中在 <style> 最尾端一整段
+       「v1.45.0」註記區(純新增覆寫,舊規則一行未刪;要整批回退把那段拿掉即可),HTML 標記零改動。
+       ①【首頁三顆按鈕同一行】老師看圖:每週排行榜／專注課堂複習／遊玩提示原本會換行擠成 2~3 列、字又小。
+         改為 #top-btns 在 iPad 橫式/PC 下 flex-wrap:nowrap、三顆 flex:1 等寬平分標題右邊整條;
+         按鈕內改可換行(圖示+主標一列、副標第二列),副標「登入後成績才會列入」等白話字不再被 nowrap 擠掉;
+         字級 15→19px、圖示 20→26px、副標 12→14px,圓角與內距同步放大。
+       ②【關卡頁三項】
+         ❶右欄作答區垂直置中並放大:#play-right 改 flex 直向 + 頭尾各一個彈性空白(::before/::after,
+           flex:1 1 auto) ⇒ 內容不滿一頁自動置中、內容超過一頁時空白被壓成 0 不會擋住捲動
+           (刻意不用 justify-content:center — 那個寫法在內容超高時會把上緣切掉捲不到,是經典陷阱);
+           題卡 26→30px、選項 78→86px 高且字 23px、翻牌 21→24px、順序卡 ocard/oslot 一併放大。
+         ❷英雄卡頭頂爆發鈕與計量槽拆成兩行:.bt-top 加 flex-wrap,鈕與充能點各佔滿整行(原本並排把鈕壓窄
+           所以字只能縮小);鈕高 34→48px、字 14→18px(ready 態 20px),HP 條與名稱、效果說明同步放大。
+         ❸極限爆發特效:滿槽時招式名加「呼吸光芒」(btBreathTxt 文字光暈明暗循環)+ 按鈕內火焰粒子
+           (btEmber,::after 以 radial-gradient 畫 6 顆火苗往上飄)。★ 純 CSS 零 JS、只用 transform/opacity,
+           不碰戰鬥邏輯也不增加計時器;prefers-reduced-motion 下自動關閉。
+       ③【PC/iPad 全面複查】彈窗改 align-items:safe center(內容過長時上緣不會被切掉而捲不到;
+         舊瀏覽器不認 safe 會整條無效自動退回原本的 center,零風險);≥1024 彈窗寬 720→820px 且
+         說明/選項/清單字級整體放大一級;音量面板 z-index 提到 130 確保不被彈窗蓋住而點不到;
+         首頁九宮格卡片名稱 20px、技能標籤與最佳成績字級放大。
+     ★ v1.44.0(2026-09-09・老師三項需求)—
+       ①首頁「💡 遊戲簡介」改名「💡 遊玩提示」,並由標題正下方移到「專注課堂複習」右邊,與排行榜/課堂複習
+         三顆並列同一排(id #intro-btn 與 mgIntroOpen 全部沿用,只搬 DOM 位置與可見文字;landscape 的
+         grid 定位規則一併移除,搬進 flex 容器後本來就不生效);MG_EN 補「💡 遊玩提示」英文對照。
+       ②【元素消消樂 拖曳跳針根治】老師回報「拖曳寶石時會來回快速移動、無法就定位導致交換失敗」。
+         根因＝舊碼只要 elementFromPoint 落在相鄰格任一像素就立刻交換,手指停在兩格交界時取樣點會在
+         A/B 之間反覆跳(觸控本有 1~2px 抖動)⇒ 交換/換回每秒數十次,而且每次都重畫盤面又疊一次動畫,
+         互相打斷 ⇒ 永遠停不到玩家要的位置。修法兩道:❶中心區判定——改以棋盤幾何自行換算格子,
+         且手指必須真的進到鄰格「中央區」(M3_ENTER=0.28)才算數,交界一圈是死區,不再有左右難判定的跳針;
+         ❷單次位移鎖——每次交換後鎖 M3_SWAP_LOCK=170ms(≥動畫時間),保證「同時位移交換 1 次」且動畫必定播完。
+         視覺同步改版:被拖曳的寶石走 .m3-top 疊在上層、被交換的走 .m3-under 在其下,兩顆同時往單一方向
+         交疊互換(舊寫法兩顆同 z-index 互相打架)。交換音效由 sfx-sel 改為老師指定的「迴避」(新增 sfx-evade,
+         沿用大對抗同一支 迴避.mp3)。★ 刻意不禁止往回走:老師要求「移回來任意方向都如此」,回頭同樣是
+         合法的一次交換,只是一樣要過中心區判定與單次鎖。上方掉落補充的落下動畫維持原樣未動。
+       ③【關卡戰鬥 BGM 重複堆疊根治】老師回報遊戲結束時戰鬥 BGM 沒停、會疊著播。根因＝visibilitychange
+         切背景時把「當下在播的每支 audio」記成 _mgWasPlaying 再暫停,回前景無條件全部 play() 回來;
+         而 bgmStop()(我們主動要停某軌的語意)只 pause 卻沒清那個旗標 ⇒ 學生在戰鬥中切出去、期間遊戲結束
+         換成結算/失敗曲,切回來時關卡戰鬥曲被旗標復活,和結算曲同時播。修法三道:❶bgmStop 停掉誰就
+         同時清誰的 _mgWasPlaying(主動停掉的軌絕不可能被復活)❷前景恢復時 BGM 類只認 _bgmCur
+         (背景期間已換曲的舊軌不再被叫回)❸勝利路徑補 bgmStop()——原本只有失敗路徑會換曲,勝利時戰鬥曲
+         要一路播到 1.7 秒後 finishGame 才被結算曲換掉,現在 K.O. 當下就乾淨收尾(失敗路徑的
+         bgmPlay('bgm-lose') 內部本就先 bgmStop,不重複停以免把剛要播的失敗曲一起停掉)。
      ★ v1.43.0(2026-09-09・老師需求六項＋版號漂移修復)—
        ①戰鬥卡片改版(全部 9 款小遊戲共用同一份卡片標記,一次改全部生效):爆發鈕+能量點移到卡片頭頂(立繪之上),
          剩餘爆發次數縮小移到HP條下方,爆發技能說明維持在卡片最底部。
@@ -526,7 +591,12 @@ button[disabled]{opacity:.45;}
 @keyframes m3flash{0%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 0 0 0 var(--gold);}50%{box-shadow:inset 0 0 0 2px #fff,0 0 20px 6px var(--gold);}100%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 0 0 0 transparent;}}
 /* ★ v1.43.0(老師需求)— 交換位移動態:格子在原生 grid 佈局上疊加 translate 位移(以格子邊長估算,drop 補齊沿用同一套),
    transition 交給 JS 動態指定的 transform 值,搭配下面的 .m3-cell.swaping/.m3-cell.dropping 兩個過渡類。 */
-.m3-cell.swaping{transition:transform .16s ease;z-index:3;}
+/* ★ v1.44.0(老師回報「拖曳寶石時會來回快速移動、無法就定位導致交換失敗」)— 交換動畫改為明確分上下兩層:
+   被拖曳的那顆走 .m3-top(在上層)、被交換掉的那顆走 .m3-under(在下層),兩顆同時往「單一方向」互換位置。
+   舊寫法兩顆同為 z-index:3 互相打架、看起來像是黏在一起抖動。 */
+.m3-cell.swaping{transition:transform .16s ease;}
+.m3-cell.swaping.m3-top{z-index:7;}
+.m3-cell.swaping.m3-under{z-index:4;}
 .m3-cell.dropping{animation:m3drop .28s ease-out;}
 @keyframes m3drop{from{transform:translateY(-120%);opacity:.4;}to{transform:translateY(0);opacity:1;}}
 .m3-hint{font-size:14px;color:var(--mist);opacity:.75;text-align:center;max-width:560px;margin:0;}
@@ -1271,7 +1341,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #top-btns{grid-column:2;grid-row:1;margin:0;align-self:center;}   /* ★ v1.41.0(老師需求)— 兩顆按鈕縮短後移到標題右方,不再佔滿最上方整列 */
   #title-img{grid-column:1;grid-row:1;max-width:340px;margin:0;}
   #title-fallback{grid-column:1;grid-row:1;}
-  #intro-btn{grid-column:1;grid-row:2;margin:8px 0 0;}   /* ★ v1.41.0 — 遊戲簡介按鈕,標題正下方 */
+  /* ★ v1.44.0 — 「遊玩提示」按鈕已移入 #top-btns 與另兩顆並列,原本標題正下方的 grid 定位規則移除(舊值 grid-column:1;grid-row:2;margin:8px 0 0) */
   #grid{grid-column:1 / 3;grid-row:3;margin-top:10px;}
   .cell{height:170px;}
   /* 遊戲頁:左右兩欄 */
@@ -1895,6 +1965,278 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .row button{flex:1;min-height:46px;}
 #r-battle{font-size:15px;line-height:1.7;margin-top:6px;}
 #r-battle b{color:var(--gold);font-weight:700;}
+
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.45.0(2026-09-09・老師看圖三項:iPad/PC 版面修正)
+ *  ★ 純新增覆寫規則、舊規則一行未刪;要整批回退把本段拿掉即可。
+ *  ★ 放在 <style> 最尾端 ⇒ 同權重時本段勝出,不必到處補 !important。
+ * ══════════════════════════════════════════════════════════ */
+
+/* ── ①【首頁三顆按鈕排成同一行·字體放大】老師看圖:排行榜/課堂複習/遊玩提示原本會換行擠成 2~3 列,
+      字又小。改為不換行、三顆等寬平分標題右邊那一整條,字級整體放大。
+      ⚠ 三顆都可能帶副標(.rb-sub「登入後成績才會列入」等),所以按鈕內改直向排列
+      (圖示+主標一列、副標第二列),白話字不必再被 nowrap 擠出去。 ── */
+#top-btns{gap:10px;}
+#top-btns button{flex:1 1 0;min-width:0;}
+#rank-btn,#cr-btn,#intro-btn{
+  flex-wrap:wrap;row-gap:2px;padding:10px 12px;font-size:17px;white-space:normal;line-height:1.25;
+}
+#rank-btn .rb-ico,#cr-btn .rb-ico{font-size:23px;}
+#rank-btn .rb-txt,#cr-btn .rb-txt{font-size:17px;font-weight:900;}
+#rank-btn .rb-sub,#cr-btn .rb-sub{flex:0 0 100%;text-align:center;font-size:13px;line-height:1.3;}
+/* iPad 橫式／PC:標題右邊那條夠寬,再放大一級並確保絕不換行成第二列 */
+@media (min-width:1024px) and (orientation:landscape){
+  #top-btns{flex-wrap:nowrap;width:100%;gap:12px;}
+  #rank-btn,#cr-btn,#intro-btn{padding:12px 14px;font-size:19px;border-radius:16px;}
+  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:26px;}
+  #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:19px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:14px;}
+  /* 標題列改為靠上對齊並讓按鈕條吃滿右欄寬度(原 align-self:center 在按鈕變高後會浮在半空) */
+  #top-btns{align-self:start;margin-top:6px;}
+}
+
+/* ── ②-A【右欄作答區垂直置中·文字放大】老師看圖:題目下方空一大片,按鈕全擠在上緣。
+      #play-right 在 iPad 橫式是 grid-row:1/4 佔滿整個右欄高度且可捲動,內容卻是靠上對齊。
+      改為 flex 直向 + justify-content:center ⇒ 內容不滿一頁時自動垂直置中;
+      ⚠ 內容超過一頁時 justify-content:center 會把頂端切掉捲不到,所以同時用
+      `margin:auto 0` 的等效寫法(min-height:min-content + auto margin)避免那個經典陷阱。 ── */
+@media (min-width:1024px) and (orientation:landscape){
+  #play-right{display:flex;flex-direction:column;}
+  #play-right > *{flex:0 0 auto;}
+  /* 頭尾各塞一個自動撐開的彈性空白 ⇒ 內容少時往中間靠、內容多時空白被壓成 0 不擋捲動 */
+  #play-right::before,#play-right::after{content:'';flex:1 1 auto;min-height:0;}
+  /* 作答區整體放大(老師:再放大文字) */
+  .card{min-height:120px;font-size:30px;padding:20px 22px;}
+  #qhint{font-size:19px;}
+  .opts{margin-top:18px;gap:14px;}
+  .opt{min-height:86px;font-size:23px;padding:14px 18px;}
+  .mcard{min-height:158px;font-size:24px;}
+  .dbin{font-size:20px;}
+  #drag-item{font-size:22px;}
+  .ocard{min-height:82px;font-size:23px;}
+  .oslot{min-height:90px;font-size:20px;}
+}
+
+/* ── ②-B【英雄卡頭頂:爆發鈕與計量槽分成兩行·爆發字放大】
+      舊 .bt-top 是「鈕 + 充能點」同一列並排,鈕被壓窄、字只好縮小。
+      改為 flex-wrap 強制各佔滿整行:第一行=爆發技能鈕(字放大)、第二行=充能計量槽(置中)。 ── */
+.bt-top{flex-wrap:wrap;row-gap:4px;}
+.bt-top .bt-burst{flex:0 0 100%;min-height:42px;font-size:16px;}
+.bt-top .bt-charge{flex:0 0 100%;text-align:center;font-size:16px;letter-spacing:3px;}
+.bt-burst .bt-bname{font-size:1em;}
+@media (min-width:1024px) and (orientation:landscape){
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:48px;font-size:18px;}
+  #page-play > #mgbattle .bt-top .bt-charge{font-size:18px;}
+  #page-play > #mgbattle .bt-burst.ready{font-size:20px;}
+  #page-play > #mgbattle .bt-name{font-size:19px;}
+  #page-play > #mgbattle .bt-hpbar{height:26px;}
+  #page-play > #mgbattle .bt-hpn{line-height:26px;font-size:17px;}
+  #page-play > #mgbattle .bt-star{font-size:13px;}
+  #page-play > #mgbattle .bt-eff{font-size:14.5px;line-height:1.5;}
+  #page-play > #mgbattle .bt-vs{font-size:26px;}
+}
+
+/* ── ②-C【極限爆發:文字呼吸光芒 + 火焰粒子】老師需求。
+      ★ 純 CSS,不加任何 JS/計時器 ⇒ 不影響戰鬥邏輯,舊 iPad 也吃得動(只有 transform/opacity 動畫)。
+      ★ ::after 的火苗用 radial-gradient 畫 6 顆小光點往上飄;overflow:hidden 只裁子元素,
+        按鈕本體的 box-shadow 外發光不受影響。 ── */
+.bt-burst.ready{position:relative;overflow:hidden;}
+.bt-burst.ready .bt-bname{
+  position:relative;z-index:2;
+  animation:btBreathTxt 1.15s ease-in-out infinite;
+}
+@keyframes btBreathTxt{
+  0%,100%{text-shadow:0 1px 2px rgba(255,255,255,.35);filter:brightness(1);}
+  50%{text-shadow:0 0 8px #fff,0 0 18px #ffd08a,0 0 30px rgba(255,140,0,.9),0 1px 2px rgba(255,255,255,.6);filter:brightness(1.28);}
+}
+.bt-burst.ready::after{
+  content:'';position:absolute;left:0;right:0;bottom:-10%;height:150%;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(circle at 10% 100%,rgba(255,246,214,.95) 0 2.6px,rgba(255,246,214,0) 3.4px),
+    radial-gradient(circle at 26% 100%,rgba(255,196,90,.9) 0 2px,rgba(255,196,90,0) 2.8px),
+    radial-gradient(circle at 42% 100%,rgba(255,150,40,.9) 0 2.4px,rgba(255,150,40,0) 3.2px),
+    radial-gradient(circle at 60% 100%,rgba(255,240,200,.9) 0 1.8px,rgba(255,240,200,0) 2.6px),
+    radial-gradient(circle at 76% 100%,rgba(255,176,60,.9) 0 2.4px,rgba(255,176,60,0) 3.2px),
+    radial-gradient(circle at 91% 100%,rgba(255,214,120,.9) 0 2px,rgba(255,214,120,0) 2.8px);
+  animation:btEmber 1.5s linear infinite;
+}
+@keyframes btEmber{
+  0%{transform:translateY(12%) scale(1);opacity:0;}
+  18%{opacity:1;}
+  75%{opacity:.85;}
+  100%{transform:translateY(-62%) scale(1.15);opacity:0;}
+}
+/* 使用者偏好減少動態時關掉粒子與呼吸(無障礙,同時省掉舊機的重繪) */
+@media (prefers-reduced-motion:reduce){
+  .bt-burst.ready::after{display:none;}
+  .bt-burst.ready .bt-bname{animation:none;}
+}
+
+/* ── ③【PC／iPad 共通:視窗置中 + 文字再放大 + 不重疊不誤點】老師第三點的全面複查結果 ── */
+/* 所有彈窗本來就是 flex 置中,但內容過長時 align-items:center 會把上緣切掉捲不到 ⇒ 改 safe 寫法 */
+#modal,#rank-modal,#cr-modal,#intro-modal,#hero-modal{align-items:safe center;}
+@media (min-width:1024px){
+  /* 彈窗字級放大一級(老師:盡量放大所有文字) */
+  #rank-modal .box,#cr-modal .box,#intro-modal .box,#hero-modal .box{max-width:820px;}
+  #intro-modal .bubble{font-size:19px;line-height:1.75;}
+  .rk-info{font-size:20px;}
+  #cr-modal .cr-master{font-size:21px;}
+  .cr-grade .cr-gh{font-size:20px;}
+  .cr-unit{font-size:18px;}
+  #hero-modal .hm-list button{font-size:18px;min-height:64px;}
+}
+/* 右上功能列與音量面板:確保永遠壓在遊戲內容之上、且不被彈窗蓋住而點不到 */
+#mg-vol-panel{z-index:130;}
+/* 首頁九宮格卡片:字放大並保證標題兩行內不溢出(iPad 橫式一頁 3 列) */
+@media (min-width:1024px) and (orientation:landscape){
+  .cell .cn{font-size:20px;line-height:1.3;}
+  .cell .cskills{font-size:13px;}
+  .cell .cbest{font-size:14px;}
+  .crmask-lbl{font-size:18px;padding:9px 18px;}
+}
+
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.46.0(2026-09-09・老師需求:手機版遊玩版面優化)
+ *  目標:①所有畫面塞進手機一個視窗內、不必捲動 ②按鈕都按得到(含 iOS 安全區)
+ *  ★ 純新增覆寫、舊規則一行未刪;要整批回退把本段拿掉即可。
+ *  ★ 斷點語意:小遊戲在觸控裝置強制橫式(#rotate-overlay),所以「手機版」＝
+ *    orientation:landscape 且高度很矮。以 max-height:520px 為手機橫式主斷點
+ *    (iPhone 橫式高度 375~430px;iPad 橫式最矮 768px 不會命中,零波及)。
+ * ══════════════════════════════════════════════════════════ */
+
+/* ── ⓪【視窗高度用 dvh 才準】iOS Safari 的 100vh 是「網址列收起後」的高度,
+      實際可視區比它矮 ⇒ 用 100vh 算出來的版面會超出畫面下緣、逼出捲動,
+      底部的「下一題」鈕也會被網址列蓋住。改用 dvh(動態視窗高度)。
+      ⚠ 不支援 dvh 的舊瀏覽器會整條宣告無效、自動退回前面既有的 vh 版本,零風險。 ── */
+@media (orientation:landscape){
+  #page-play{height:calc(100dvh - 78px);max-height:calc(100dvh - 78px);}
+}
+@media (orientation:landscape) and (max-height:520px){
+  #page-play{height:calc(100dvh - 50px);max-height:calc(100dvh - 50px);}
+}
+
+/* ── ①【手機橫式・功能列壓成一行且不換行】原本 10 顆 chip 在 667~932px 寬的手機上會換成兩行,
+      吃掉寶貴高度、還可能蓋到下面的內容。改為不換行、縮字縮距,並把「回大作戰」收成純圖示。 ── */
+@media (orientation:landscape) and (max-height:520px){
+  #topbar{flex-wrap:nowrap;min-height:38px;gap:4px;padding:2px 0 1px;}
+  #topbar .chip,#topbar #ver-chip{flex:0 0 auto;}
+  .chip{min-height:34px;font-size:12px;padding:4px 8px;border-radius:10px;}
+  #toapp-btn{font-size:0;padding:4px 9px;}            /* 文字收掉只留 🗺,省一大截寬度 */
+  #toapp-btn::before{content:'🗺';font-size:15px;}
+  #back-btn{font-size:12px;padding:4px 8px;}
+  .wrap{padding:3px 8px 2px;padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px));}
+}
+
+/* ── ②【手機橫式・首頁一頁看完 16 關,不必捲動】
+      手機橫式原本走的是「直向堆疊」版面(標題→按鈕→九宮格),16 關 5 欄 4 列必定超出畫面。
+      改為比照 iPad/PC 的兩欄結構縮小版:第一列左=標題、右=三顆按鈕;第二列=九宮格改 6 欄 ⇒
+      16 關剛好 3 列放完。底部說明文字在手機上隱藏(資訊已在按鈕與關卡卡片上)。 ── */
+@media (orientation:landscape) and (max-height:520px){
+  #page-home{
+    display:grid;grid-template-columns:minmax(120px,20vw) minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr);column-gap:10px;row-gap:6px;
+    align-items:center;height:calc(100dvh - 46px);max-height:calc(100dvh - 46px);overflow:hidden;
+  }
+  #title-img{grid-column:1;grid-row:1;max-width:100%;max-height:62px;width:auto;margin:0;object-fit:contain;}
+  #title-fallback{grid-column:1;grid-row:1;font-size:16px;margin:0;}
+  #top-btns{grid-column:2;grid-row:1;flex-wrap:nowrap;gap:6px;margin:0;width:100%;align-self:center;}
+  #top-btns button{flex:1 1 0;min-width:0;}
+  #rank-btn,#cr-btn,#intro-btn{padding:6px 8px;font-size:13px;border-radius:11px;row-gap:0;}
+  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:16px;}
+  #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:13px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:10px;line-height:1.15;}
+  #grid{
+    grid-column:1 / 3;grid-row:2;grid-template-columns:repeat(6,1fr);gap:6px;margin:0;
+    min-height:0;align-content:stretch;
+  }
+  .cell{height:auto;min-height:0;padding:6px 4px 5px;border-radius:12px;}
+  .cell .cn{font-size:11.5px;line-height:1.2;}
+  .cell .cskills,.cell .cdiff,.cell .cbest{font-size:9px;}
+  .cell .ctag{font-size:9px;padding:2px 6px;left:5px;top:4px;}
+  .crmask-lbl{font-size:11px;padding:4px 9px;}
+  #home-note{display:none;}
+}
+/* 超矮(iPhone SE 橫式 320~375px 高):標題再縮、關卡名只留一行 */
+@media (orientation:landscape) and (max-height:400px){
+  #title-img{max-height:48px;}
+  #rank-btn,#cr-btn,#intro-btn{font-size:12px;padding:5px 6px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{display:none;}   /* 高度不夠時副標讓位,主標仍看得懂 */
+  .cell .cn{font-size:10.5px;}
+  .cell .cskills,.cell .cdiff{display:none;}
+}
+
+/* ── ③【手機橫式・關卡頁塞進一頁】右欄本來就可捲動,但老師要的是「不必捲」⇒ 把作答區整體再壓一級,
+      讓常見題型(4 選項 / 4 籃子 / 5×5 消消樂)一頁放得下。 ── */
+@media (orientation:landscape) and (max-height:520px){
+  .opt{min-height:40px;font-size:14px;padding:5px 9px;}
+  .opts{margin-top:6px;gap:6px;}
+  .card{font-size:16px;padding:8px 12px;}
+  .mcard{min-height:64px;font-size:14px;}
+  .ocard{min-height:44px;font-size:14px;}
+  .oslot{min-height:48px;}
+  .dbin{min-height:58px;font-size:12px;}
+  .m3-grid{width:min(46vw,300px);gap:4px;}
+  .m3-cell{font-size:clamp(1rem,3.4vw,1.5rem);border-radius:7px;}
+  .m3-hint{font-size:11px;}
+  #maze-grid{gap:4px;}
+  #paint-palette{margin-top:6px;}
+  .pchip{width:40px;height:40px;}
+  /* 右欄底部保留給浮動的「下一題」鈕(含 iOS 安全區),按鈕不會蓋住最後一個選項 */
+  #play-right{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px));}
+}
+
+/* ── ④【手機橫式・英雄戰鬥卡】v1.45.0 把爆發鈕與計量槽拆成兩行(老師需求),
+      在手機的矮螢幕上要同步壓縮,否則多出來的那一行會把立繪擠沒。 ── */
+@media (orientation:landscape) and (max-height:520px){
+  #page-play > #mgbattle .bt-top{row-gap:2px;}
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;font-size:12px;padding:2px 6px;}
+  #page-play > #mgbattle .bt-top .bt-charge{font-size:12px;letter-spacing:2px;}
+  #page-play > #mgbattle .bt-star{font-size:9px;}
+  #page-play > #mgbattle .bt-eff{font-size:10px;line-height:1.35;}
+  #page-play > #mgbattle .bt-name{font-size:13px;}
+  #page-play > #mgbattle .bt-card{padding:4px;gap:4px;}
+}
+
+/* ── ⑤【手機橫式・彈窗一定按得到】彈窗內容長時,底部的「開始／儲存／關閉」列會被捲到看不見。
+      改為把 .row 動作列釘在彈窗底部(sticky),不管內容多長都按得到;
+      同時把彈窗高度改吃 dvh 並補 iOS 安全區。 ── */
+@media (orientation:landscape) and (max-height:520px){
+  #modal,#rank-modal,#cr-modal,#intro-modal,#hero-modal{padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+  #modal .box,#rank-modal .box,#cr-modal .box,#intro-modal .box,#hero-modal .box{
+    max-height:92dvh;padding:12px 14px;border-radius:14px;
+  }
+  #modal .row,#rank-modal .row,#cr-modal .row,#intro-modal .row,#hero-modal .row{
+    position:sticky;bottom:-12px;z-index:3;margin-top:10px;padding:8px 0 4px;
+    background:var(--ink2);box-shadow:0 -8px 12px -6px rgba(0,0,0,.85);
+  }
+  #modal .row button,#rank-modal .row button,#cr-modal .row button,
+  #intro-modal .row button,#hero-modal .row button{min-height:42px;font-size:15px;padding:8px 6px;}
+  #rank-modal h3,#cr-modal h3{font-size:19px;}
+  #rank-modal .tag,#cr-modal .tag{font-size:13px;margin-bottom:8px;line-height:1.5;}
+  .rk-info{font-size:14px;line-height:1.6;}
+  #cr-modal .cr-master{font-size:15px;padding:7px 10px;}
+  .cr-grade .cr-gh{font-size:14px;}
+  .cr-unit{font-size:13px;padding:4px 4px 4px 26px;}
+  #intro-modal .bubble{font-size:14px;line-height:1.6;}
+  #hero-modal .hm-list{height:min(42dvh,300px);min-height:150px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;}
+  #hero-modal .hm-list button{min-height:44px;font-size:13px;padding:8px 10px;}
+  #mg-vol-panel{top:46px;right:10px;width:min(74vw,260px);padding:10px 12px;}
+  #mg-vol-panel .mvp-head b{font-size:16px;}
+  #mg-vol-panel .mvp-row{font-size:14px;}
+  /* 結算頁:一頁看完不必捲 */
+  #page-result{padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));}
+  #r-stars{font-size:26px;}
+  #r-battle{font-size:12px;line-height:1.5;}
+}
+
+/* ── ⑥【按鈕都按得到】手機橫式下,凡是可點元素一律保底 34px 觸控高並關掉點擊延遲。
+      ⚠ 刻意用 34px 而非 Apple HIG 的 44px:手機橫式只有 375~430px 高,
+      關卡頁同時要放橫幅/HUD/戰鬥卡/作答區,全部 44px 會直接超出畫面反而更難按。
+      真正的主要動作鈕(下一題/彈窗動作列/選項)在上面各段已個別給到 40~46px。 ── */
+@media (orientation:landscape) and (max-height:520px){
+  button,.chip,a.chip,.cell,.opt,.ocard,.dbin,.mcard{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+  #topbar .chip{min-height:34px;}
+}
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -1928,6 +2270,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      日後要加音效,一律先 curl -I 驗過 200 再寫進來。 -->
 <audio id="sfx-powerup" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E6%8A%80%E8%83%BD%E9%81%B8%E6%93%87.mp3"></audio>
 <audio id="sfx-medal"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8D%B2%E5%BE%97%E6%88%90%E5%B0%B1%E7%8D%8E%E7%AB%A0.mp3"></audio>
+<audio id="sfx-evade"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BF%B4%E9%81%BF.mp3"></audio><!-- ★ v1.44.0 元素消消樂交換音效(老師指定「迴避」，沿用大對抗同一支迴避.mp3) -->
 <audio id="sfx-normalatk" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%AE%E9%80%9A%E6%94%BB%E6%93%8A.mp3"></audio><!-- ★ v1.35.0 戰鬥卡受擊音效改比照大對抗普攻(裁定1) -->
 <audio id="sfx-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/game_explosion2.mp3"></audio>
 <audio id="sfx-cancel"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%96%E6%B6%88.mp3"></audio>
@@ -2084,12 +2427,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <button id="rank-btn" onclick="mgRankOpen('info')"><span class="rb-ico">🏆</span><span class="rb-txt" id="rank-btn-txt">每週排行榜獎勵</span><span class="rb-sub" id="rank-btn-sub"></span></button>
       <!-- ★ v1.10.0(老師需求)— 專注課堂複習:勾選年級/單元,優先出課堂複習題,出完一輪才重來 -->
       <button id="cr-btn" onclick="mgCrOpen()"><span class="rb-ico">📚</span><span class="rb-txt" id="cr-btn-txt">專注課堂複習</span><span class="rb-sub" id="cr-btn-sub"></span></button>
+      <!-- ★ v1.44.0(老師看圖需求)— 原本掛在標題正下方的「💡 遊戲簡介」改名「💡 遊玩提示」並移到專注課堂複習右邊,
+           與另外兩顆並列成同一排。⚠ 按鈕 id 一律不改(#intro-btn / mgIntroOpen 的既有呼叫點與 CSS 全部沿用),
+           只搬 DOM 位置與可見文字;搬進 #top-btns 後父層變 flex,舊的 landscape grid 定位規則自動失效,
+           但仍一併移除避免日後誤導。 -->
+      <button id="intro-btn" onclick="mgIntroOpen()">💡 遊玩提示</button>
     </div>
     <img id="title-img" src="title.webp" alt="小英雄小遊戲"
          onerror="mgTitleFallback(this);">
     <div id="title-fallback">🎮 小英雄小遊戲</div>
-    <!-- ★ v1.41.0(老師需求)— 原「選一位英雄,答對就出招...」介紹文 + 常駐吉祥物泡泡,改成一顆按鈕,點了才開啟泡泡視窗(#intro-modal) -->
-    <button id="intro-btn" onclick="mgIntroOpen()">💡 遊戲簡介</button>
     <!-- ★ v1.10.0 原「說明面板 #rank-panel」已改為最上方 #rank-btn + 說明視窗(老師看圖裁定);面板 DOM 移除 -->
     <div id="grid"></div>
     <p class="sub" id="home-note" style="margin-top:18px;font-size:13px;opacity:.6;">
@@ -2384,7 +2730,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.43.0';
+var MG_VER = 'v1.46.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -2617,7 +2963,17 @@ function bgmStop(){
   var all = document.getElementsByTagName('audio'), i, a;
   for(i = 0; i < all.length; i++){
     a = all[i];
-    if(a.id && a.id.indexOf('bgm-') === 0){ try{ a.pause(); }catch(e){} }
+    if(a.id && a.id.indexOf('bgm-') === 0){
+      try{ a.pause(); }catch(e){}
+      /* ★★ v1.44.0(老師回報「關卡內戰鬥BGM在遊戲結束時沒停,會重複堆疊BGM」)★★
+         【根因】visibilitychange 處理器在切到背景時，會把「當下正在播的每一支 audio」記成
+         _mgWasPlaying=true 再暫停，回到前景時無條件把有旗標的全部 play() 回來。
+         但 bgmStop() 是「我們主動要停掉這一軌」的意思，舊碼只 pause 卻沒清掉那個旗標 ⇒
+         學生只要在戰鬥中切出去(共用 iPad 上極常見)，期間遊戲結束換播了結算/失敗曲，
+         再切回來時關卡戰鬥 BGM 會被旗標復活，和結算曲**同時**播 ⇒ 就是老師聽到的疊在一起。
+         修法：bgmStop 停掉誰，就同時把誰的 _mgWasPlaying 清掉，被主動停掉的軌絕不可能被復活。 */
+      try{ a._mgWasPlaying = false; }catch(e){}
+    }
   }
   _bgmCur = '';
 }
@@ -2777,15 +3133,44 @@ window.mgFullscreen = function(){
  *   完全比照大對抗 index.html 的 visibilitychange 音訊處理:切到背景時暫停全部 <audio>(記下誰原本在播),
  *   回到前景只恢復那些原本在播的;全螢幕切換瞬間(_mgFsTransitioning)偶發的假 visibilitychange 不當一回事。
  *   ⚠ 涵蓋 BGM(<audio id^=bgm->)與各種 sfx/音效元素,不必分開處理——document.querySelectorAll('audio') 全部一次掃過。 */
-document.addEventListener('visibilitychange', function(){
-  if(document.hidden && !window._mgFsTransitioning){
+/* ★★ v1.46.0(老師需求「縮小到後台或關閉遊戲時也會停止所有聲音播放」)★★
+   舊碼只掛 visibilitychange 一種事件,實測在手機上不夠:
+     ①iOS Safari／主畫面安裝版把 App 切走時,常常只發 `pagehide` 而不發 visibilitychange
+       (這正是主程式鐵律「iOS Safari + PWA:beforeunload 不可靠,要用 pagehide + visibilitychange→hidden」的同一件事);
+     ②Chrome/Android 進入凍結(bfcache 前置)時發的是 `freeze`;
+     ③關掉分頁/切走頁面時若只 pause <audio>,WebAudio 的 AudioContext(聽音坊音階、節奏鼓)
+       仍可能繼續輸出 ⇒ 聲音「關掉了還在響」。
+   ⇒ 抽成單一真相 mgSilenceAll(),三種事件共用;WebAudio 一併 suspend,回前景才 resume。
+   ⚠ 全螢幕切換瞬間的假 visibilitychange 仍由既有 _mgFsTransitioning 排除,行為不變。 */
+function mgSilenceAll(){
+  try{
     document.querySelectorAll('audio').forEach(function(el){
       if(!el.paused){ el._mgWasPlaying = true; el.pause(); }
       else{ el._mgWasPlaying = false; }
     });
+  }catch(e){}
+  /* WebAudio(聽音坊/節奏鼓合成音):pause 管不到它,必須 suspend */
+  try{ if(MG.audioCtx && MG.audioCtx.state === 'running' && MG.audioCtx.suspend) MG.audioCtx.suspend(); }catch(e){}
+}
+window.mgSilenceAll = mgSilenceAll;
+/* 切走／關閉頁面:一律靜音。★ pagehide 不判斷 persisted —— 不論是進 bfcache 還是真的關掉,
+   當下都該停聲音;若之後又從 bfcache 回來,pageshow/visibilitychange 會走既有恢復流程。 */
+window.addEventListener('pagehide', function(){ mgSilenceAll(); });
+document.addEventListener('freeze', function(){ mgSilenceAll(); });
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden && !window._mgFsTransitioning){
+    mgSilenceAll();
   }else if(!document.hidden){
+    /* ★ v1.46.0 — 回到前景先把 WebAudio 叫醒,否則聽音坊按了沒聲音 */
+    try{ if(MG.audioCtx && MG.audioCtx.state === 'suspended' && MG.audioCtx.resume) MG.audioCtx.resume(); }catch(e){}
     document.querySelectorAll('audio').forEach(function(el){
-      if(el._mgWasPlaying){ var pp = el.play(); if(pp && pp['catch']) pp['catch'](function(){}); el._mgWasPlaying = false; }
+      if(!el._mgWasPlaying) return;
+      el._mgWasPlaying = false;
+      /* ★ v1.44.0 第二道保險:BGM 類只恢復「現在真的該播的那一軌」(_bgmCur)。
+         切到背景期間曲目可能已經換過(例如戰鬥→結算)，照舊碼無差別 play() 會把舊那軌一起叫回來疊著播。
+         非 bgm- 的音效元素維持原行為不動。 */
+      if(el.id && el.id.indexOf('bgm-') === 0 && el.id !== _bgmCur) return;
+      var pp = el.play(); if(pp && pp['catch']) pp['catch'](function(){});
     });
   }
 });
@@ -6056,7 +6441,11 @@ function mgBattleEnd(res){
   if(loser) loser.classList.add('ko'); if(winner) winner.classList.add('win');
   try{ var ko = document.createElement('div'); ko.id = 'bt-ko'; ko.className = (res === 'win') ? '' : 'lose'; ko.textContent = (res === 'win') ? 'K.O.!' : (MG.lang === 'en' ? 'DOWN…' : '被打倒了…'); document.body.appendChild(ko); }catch(e){}
   playSfx($('sfx-ko') ? 'sfx-ko' : 'sfx-explode', 0.7);
-  if(res === 'win'){ mgFxFull('focus', 900); playSfx('sfx-clap', 0.4); }
+  /* ★ v1.44.0(老師需求「關卡內戰鬥BGM在遊戲結束時要停止撥放」)— 勝利路徑原本完全沒有停 BGM，
+     關卡戰鬥曲會一路播到 1.7 秒後 finishGame() 才被結算曲的 bgmStop 換掉；改為 K.O. 當下立刻停，
+     讓「戰鬥結束」這件事在聽覺上乾淨收尾。失敗路徑的 bgmPlay('bgm-lose') 內部本就會先 bgmStop，
+     不必也不可重複停(會把剛要播的失敗曲一起停掉)。 */
+  if(res === 'win'){ bgmStop(); mgFxFull('focus', 900); playSfx('sfx-clap', 0.4); }
   else{ mgBattleVibe(300); bgmPlay('bgm-lose', 0.5, true); }   /* ★ v1.34.0 — 被擊倒(HP歸零/剩餘HP較低雙敗)時換播戰鬥失敗BGM */
   if(_BT.endT) clearTimeout(_BT.endT);
   _BT.endT = setTimeout(function(){ try{ var k = $('bt-ko'); if(k && k.parentNode) k.parentNode.removeChild(k); }catch(e){} if(MG.cur && !$('page-play').classList.contains('hidden')) finishGame(); }, 1700);
@@ -6312,7 +6701,15 @@ function mgM3FindMatches(g){
   return matches;
 }
 function mgM3DmgForSize(n){ if(n >= 5) return 15; if(n === 4) return 12; return 10; }   /* ★ 老師裁定數值:3顆10/4顆12/5顆(含以上)15 */
-function mgM3Swap(a, b){ var g = _M3.grid, t = g[a]; g[a] = g[b]; g[b] = t; playSfx('sfx-sel', 0.25); _M3.animSwap = { a:a, b:b }; }   /* ★ v1.43.0(老師需求「交換位置時顯示交換位移的動態」)— 記下這次交換的兩個格子,repaint 後由 mgM3AnimateSwap 補上位移動畫 */
+/* ★ v1.44.0(老師回報「拖曳寶石時會來回快速移動、無法就定位導致交換失敗」)—
+   `to` = 手指移進去的那一格(交換後「被拖曳的寶石」會停在這裡)，`from` = 手指原本所在那一格。
+   animSwap 額外記下 top 是哪一格，讓 mgM3AnimateSwap 把被拖曳的那顆疊在上層。
+   音效由 sfx-sel 改為老師指定的「迴避」(沿用大對抗同一支迴避.mp3)。 */
+function mgM3Swap(to, from){
+  var g = _M3.grid, t = g[to]; g[to] = g[from]; g[from] = t;
+  playSfx('sfx-evade', 0.5);
+  _M3.animSwap = { a:to, b:from, top:to };   /* top = 交換後被拖曳寶石所在格 ⇒ 那顆疊上層 */
+}
 
 function renderMatch3(x, q){
   show('match3box');
@@ -6321,7 +6718,7 @@ function renderMatch3(x, q){
                           正是老師截圖裡那個空白米色方塊。本款遊戲的玩法說明走 #match3box 內建的 .m3-hint(拖一顆寶石…)，
                           不需要通用題卡，故在此明確補上 hide('card-area') 蓋掉那個殘留的空框；.m3-hint 本身不受影響。 */
   if(!_M3){
-    _M3 = { grid: mgM3FillNoMatch(), busy:false, dragIdx:-1, moved:false, timerId:null, tLeft:10000, turnMs:10000, docBound:false };
+    _M3 = { grid: mgM3FillNoMatch(), busy:false, dragIdx:-1, moved:false, timerId:null, tLeft:10000, turnMs:10000, docBound:false, swapLockUntil:0 };   /* ★ v1.44.0 swapLockUntil = 單次位移鎖(防跨格跳針) */
     mgM3BindDocEvents();
     mgM3Paint();
     mgM3TurnStart();
@@ -6364,19 +6761,21 @@ function mgM3Paint(){
   if(g){
     g.innerHTML = html;
     if(_M3.dragIdx >= 0 && g.children[_M3.dragIdx]) g.children[_M3.dragIdx].classList.add('drag');
-    if(_M3.animSwap){ mgM3AnimateSwap(g, _M3.animSwap.a, _M3.animSwap.b); _M3.animSwap = null; }   /* ★ v1.43.0 交換位移動態 */
+    if(_M3.animSwap){ mgM3AnimateSwap(g, _M3.animSwap.a, _M3.animSwap.b, _M3.animSwap.top); _M3.animSwap = null; }   /* ★ v1.43.0 交換位移動態；★ v1.44.0 多傳 top 分上下層 */
   }
 }
 /* ★ v1.43.0(老師需求「元素移動交換位置時，顯示交換位移的動態」)— FLIP 手法:repaint 後兩顆新格子已經是「交換完的最終樣子」，
    先用 transform 把它們瞬間挪回「交換前」的視覺位置(不觸發 transition)，下一影格再把 transform 歸零並交給 .swaping 的
    transition 補間，看起來就像兩顆元素真的滑過去交換了。位移量以「一格=100%」估算(忽略 gap 誤差極小，肉眼無感)。 */
-function mgM3AnimateSwap(g, a, b){
+function mgM3AnimateSwap(g, a, b, topIdx){
   try{
     var ra = Math.floor(a / 5), ca = a % 5, rb = Math.floor(b / 5), cb = b % 5;
     var dx = (cb - ca) * 100, dy = (rb - ra) * 100;
     var elA = g.children[a], elB = g.children[b];
-    if(elA){ elA.style.transition = 'none'; elA.style.transform = 'translate(' + dx + '%,' + dy + '%)'; }
-    if(elB){ elB.style.transition = 'none'; elB.style.transform = 'translate(' + (-dx) + '%,' + (-dy) + '%)'; }
+    /* ★ v1.44.0 — 被拖曳的那顆(topIdx)加 .m3-top 疊上層、被交換掉的那顆加 .m3-under 在其下，
+       兩顆的位移量互為相反數 ⇒ 同時往單一方向交疊互換，不再是兩顆同層互相打架的抖動。 */
+    if(elA){ elA.style.transition = 'none'; elA.style.transform = 'translate(' + dx + '%,' + dy + '%)'; elA.classList.add(a === topIdx ? 'm3-top' : 'm3-under'); }
+    if(elB){ elB.style.transition = 'none'; elB.style.transform = 'translate(' + (-dx) + '%,' + (-dy) + '%)'; elB.classList.add(b === topIdx ? 'm3-top' : 'm3-under'); }
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
         try{
@@ -6393,23 +6792,51 @@ window.mgM3Down = function(e, i){
   var g = $('m3grid'); if(g && g.children[i]) g.children[i].classList.add('drag');
   try{ e.preventDefault(); }catch(_e){}
 };
+/* ★★ v1.44.0(老師回報「玩家拖曳寶石時會看到寶石來回快速移動、無法就定位導致交換失敗」)★★
+   【根因】舊碼只要 elementFromPoint 落在相鄰格「任何一個像素」上就立刻交換。手指停在兩格交界處時，
+   每一次 pointermove 事件的取樣點都可能在 A、B 之間來回跳(觸控本來就有 1~2px 抖動)，於是
+   交換 → 換回 → 交換 → 換回…每秒數十次，畫面上就是寶石在原地瘋狂跳針、永遠停不到玩家要的位置，
+   而且每次交換都重畫整個盤面又疊一次 FLIP 動畫，動畫互相打斷更看不出到底換到哪去了。
+   ⇒ 這正是老師說的「無法就定位導致交換失敗」，也是「移到中間無法判定左右方向」的來源。
+
+   【修法一・中心區判定(消除交界抖動)】改用棋盤幾何自己算格子，且**手指必須真的進到鄰格的中央區**
+   (內縮到該格的中間 ~56%，M3_ENTER=0.28 是離中心的容許半徑比例)才算數。交界處那一圈死區內
+   一律不動作 ⇒ 手指停在兩格中間時畫面完全穩定，不會再左右跳針。
+   【修法二・單次位移鎖(一次只換一格)】每次交換後上 M3_SWAP_LOCK 毫秒的鎖(＝動畫時間)，
+   鎖住期間不再受理任何交換 ⇒ 保證「同時位移交換 1 次」，動畫必定播完才可能有下一次。
+   ★ 刻意不禁止「換回原來的方向」:老師要求「移回來任意方向都如此」，所以回頭走也是合法的一次交換，
+     只是同樣要走完中心區判定 + 單次鎖，不會變成跳針。 */
+var M3_ENTER = 0.28;      /* 進入鄰格中心區的容許半徑(相對格寬);越小越難觸發、越穩 */
+var M3_SWAP_LOCK = 170;   /* 一次交換後的冷卻(ms)，需 ≥ .swaping 的 .16s transition */
 function mgM3DocMove(e){
   if(!_M3 || _M3.dragIdx < 0 || _M3.busy) return;
-  var t = (e.touches && e.touches[0]) ? e.touches[0] : e;
-  var el = document.elementFromPoint(t.clientX, t.clientY);
-  while(el && !el.hasAttribute('data-i') && el.parentNode) el = el.parentNode;
-  if(el && el.hasAttribute('data-i')){
-    var idxUnder = parseInt(el.getAttribute('data-i'), 10);
-    if(idxUnder !== _M3.dragIdx && mgM3Adjacent(idxUnder, _M3.dragIdx)){
-      mgM3Swap(idxUnder, _M3.dragIdx);
-      _M3.dragIdx = idxUnder; _M3.moved = true;
-      mgM3Paint();
-    }
-  }
   try{ e.preventDefault(); }catch(_e){}
+  /* 單次位移鎖:上一次交換的動畫還沒播完就完全不受理,保證一次只換一格 */
+  if(_M3.swapLockUntil && Date.now() < _M3.swapLockUntil) return;
+  var g = $('m3grid'); if(!g) return;
+  var t = (e.touches && e.touches[0]) ? e.touches[0] : e;
+  var rect = g.getBoundingClientRect();
+  if(!rect || !rect.width || !rect.height) return;
+  var cw = rect.width / 5, ch = rect.height / 5;
+  var fx = (t.clientX - rect.left) / cw;      /* 以「格」為單位的座標 */
+  var fy = (t.clientY - rect.top) / ch;
+  if(fx < 0 || fy < 0 || fx >= 5 || fy >= 5) return;   /* 手指移出棋盤外:不動作 */
+  var col = Math.floor(fx), row = Math.floor(fy);
+  var idxUnder = row * 5 + col;
+  if(idxUnder === _M3.dragIdx) return;
+  if(!mgM3Adjacent(idxUnder, _M3.dragIdx)) return;      /* 只允許上下左右相鄰(斜角/跨格不算) */
+  /* ★ 中心區判定:離該格中心的距離要夠近才算「真的進去了」,交界一圈是死區 */
+  if(Math.abs((fx - col) - 0.5) > M3_ENTER) return;
+  if(Math.abs((fy - row) - 0.5) > M3_ENTER) return;
+  mgM3Swap(idxUnder, _M3.dragIdx);
+  _M3.dragIdx = idxUnder; _M3.moved = true;
+  _M3.swapLockUntil = Date.now() + M3_SWAP_LOCK;
+  mgM3Paint();
 }
 function mgM3DocUp(){
-  if(!_M3 || _M3.dragIdx < 0 || _M3.busy) return;
+  if(!_M3) return;
+  _M3.swapLockUntil = 0;   /* ★ v1.44.0 放開手指一律解鎖,不讓冷卻殘留到下一回合 */
+  if(_M3.dragIdx < 0 || _M3.busy) return;
   if(_M3.timerId){ clearInterval(_M3.timerId); _M3.timerId = null; }
   mgM3EndTurnAttempt();
 }
@@ -6428,7 +6855,7 @@ function mgM3EndTurnAttempt(){
 function mgM3TurnStart(){
   if(!_M3) return;
   if(_M3.timerId) clearInterval(_M3.timerId);
-  _M3.tLeft = _M3.turnMs; _M3.moved = false;
+  _M3.tLeft = _M3.turnMs; _M3.moved = false; _M3.swapLockUntil = 0;   /* ★ v1.44.0 新回合一律解鎖 */
   var bar = $('timebar'); if(bar){ bar.classList.remove('low'); bar.style.width = '100%'; }
   _ringPaint(100, _M3.tLeft / 1000);
   _M3.timerId = setInterval(function(){
@@ -7282,7 +7709,7 @@ window.mgCrReset = function(){
  *    沒有英文欄位的題目退回中文(目前已翻譯:15 款關卡介紹/籃子/單元表 + 動物特徵二選一 167 題)
  * ══════════════════════════════════════════════════════════ */
 MG.lang = 'zh';
-var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
+var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊玩提示": "💡 Play Tips", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
 /* ★ v1.29.0 戰鬥模式 UI 字串英文版(補進 MG_EN;題庫/爆發說明走 tx() 的 en 欄位) */
 (function(){
   var _add = { "出戰英雄": "Your hero", "🔁 換英雄": "🔁 Change hero", "🦸 選一名英雄出戰": "🦸 Pick a hero to battle", "✓ 就是這一位": "✓ Choose this hero",
