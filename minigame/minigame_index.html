@@ -15,7 +15,35 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.55.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.57.0(2026-09-09)
+     ★ v1.57.0(2026-09-09・老師需求:26隻攻擊/回復型英雄第二效果完整指定,一次到位不再走候選池草案)—
+       貓人族長/拘留者/聖冥法師/玉藻前/科技生化人/暗魔將·血/紅色玩家/地府酋長/學霸(轉學生)/天神宙斯/
+       維京海盜船長/鳳凰/幽幽/阿蘇火山龍王/地獄將軍/小鬼貓與兔/法老王(以上攻擊型17隻)+
+       御雲使‧沐雲雪/科學發明家/巫女/雙星姊妹/布奶鳥獸/救醫馬/米鈴/青炎龍王/菇女/風術士/雅典娜/
+       魔界花使‧朱玥(以上回復型12隻)共29隻,eff2 全數改為老師逐隻指定的最終效果(不再是提案表)。
+       新增19個狀態欄位(chargeLockLeft/dmgDownLeft/dmgImmuneLeft/dodgeLeft/reflectHealLeft/
+       reflectHalfLeft/dmgBankLeft+Amt/healRedirectLeft+To/lifestealLeft/dmgUpLeft/regenLeft+Amt/
+       poisonLeft+Amt/thornDmgLeft/maxHpBonus/phoenixUsed),把「造成一次傷害」抽成單一入口
+       mgDealDamage(atk,def,base,fxFrom,rawFixed)取代原本 ok/miss/NPC固定傷害三處各自重複的計算,
+       新增 mgTickRegenPoison 掛在既有 500ms 全域節拍上結算「每回合」型效果,mgTryRevive 補上鳳凰
+       的無條件10HP自動復活分支(整場限一次)。已知簡化:救醫馬的HP上限+20做成整場永久生效,不做
+       3回合到期復原(避免HP卡在超過上限邊界的問題);鳳凰的回血轉移只攔截標準heal型第二效果觸發的
+       那筆回血,不含healnow等其他回血來源。攻擊型剩餘19隻(孫悟空/關羽/諸葛亮/喚龍使‧蜜鶴林/熔岩巨人/
+       炎火超少女/幽魂暗狐/大刀勇士/大天狗/酒吞童子/窮奇/鋁合金暴龍/炸彈客/武器精靈/火柴人/美人魚‧角角/
+       火爆女/我的豚豚/死神)與回復型死靈法師/水狐仍維持先前提案表狀態,尚未動工。
+     ★ v1.56.0(2026-09-09・老師需求三項:選角視窗四型底色區分+攻擊型三隻第二效果去重)—
+       ①【選角視窗】.hm-list 英雄名字按鈕改依職能上底色(攻擊紅/回復綠/護盾藍/控場紫)+統一黃字(#ffe066),
+       選中時疊加金色外框(box-shadow inset,不蓋掉底色);.hm-desc 內「極限爆發」招式名+效果說明改包一層
+       .hm-burst,字型比照戰鬥卡(v1.50.0)改中圓體(M PLUS Rounded 1c 系列),並沿用既有 .bt-cls 四色配色。
+       ②【攻擊型三隻第二效果去重,老師裁定案例】哪吒 dmgred(自己減傷50%)→新機制 multihit(3回合內自己造成
+       傷害變2下,每次成功攻擊追加一次同傷害攻擊判定);呂布 bleed(對手易傷)→新機制 lowhp_dmgup(自身HP每
+       少10%攻擊傷害+10%,不倒數、整場常駐,依當下HP動態計算);蚩尤 drain(對手爆發條倒退)→新機制 counter
+       (3回合內受到攻擊時反擊對手固定10HP,涵蓋自己攻擊/答錯反擊/全域固定回合傷害三個受傷害點)。三型狀態
+       (multiHitLeft/lowhpScale/counterLeft)初始化在 _BT.p/_BT.n,消費點集中在 mgBattleHit,套用點在
+       mgApplyEff2,文案新增在 mgEff2Text。
+       ③【設計中,尚未落地】老師同輪要求「所有攻擊型/回復型英雄第二效果去重,每種效果只留1隻」的完整方案,
+       規模達 39(攻擊)+14(回復)隻、需新增約30種engine機制,已提出完整分配表待老師確認後再分批實作與交付,
+       本輪暫不改動除哪吒/呂布/蚩尤以外的其餘英雄 eff2。
      ★ v1.55.0(2026-09-09・老師三項需求:護盾型/控場型第二效果改版＋對手爆發預告標籤)—
        ①【護盾型四隻】操偶師維持額外 +2 格護盾不變;麻吉喵‧Nico 改為「立即恢復自己 20 HP」(eff2 新型
        'healnow');神槍手改為「直接扣對手 20 HP,無視護盾」(新型 'truedmg',不走 mgBattleHit 的護盾判定,
@@ -2101,7 +2129,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    改成固定高度(不隨內容増減),box 尺寸永遠不變,篩選只換裡面捲動內容,不會再帶動整個視窗跳動。 */
 #hero-modal .hm-list{height:min(50vh,440px);min-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:2px;}
 #hero-modal .hm-list button{min-height:60px;font-size:17px;padding:12px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:10px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-#hero-modal .hm-list button.on{border-color:var(--gold);background:rgba(240,192,96,.2);}
+/* ★ v1.56.0(老師需求「選角視窗四型底色區分」)— 英雄名字按鈕依職能上底色+黃字,選中時額外套金色外框(不搶底色)。
+   顏色刻意選飽和度較低的底色(而非純紅/純綠等刺眼色)搭配亮黃字,兼顧可讀性與 iPad 螢幕辨識度。 */
+#hero-modal .hm-list button.cls-atk{background:rgba(196,42,42,.62);border-color:rgba(255,150,120,.4);color:#ffe066;}
+#hero-modal .hm-list button.cls-heal{background:rgba(30,140,70,.62);border-color:rgba(140,255,180,.4);color:#ffe066;}
+#hero-modal .hm-list button.cls-shd{background:rgba(30,90,190,.62);border-color:rgba(140,200,255,.4);color:#ffe066;}
+#hero-modal .hm-list button.cls-ctrl{background:rgba(110,50,190,.62);border-color:rgba(210,170,255,.4);color:#ffe066;}
+#hero-modal .hm-list button.on{border-color:var(--gold);box-shadow:0 0 0 2px rgba(240,192,96,.55) inset;}
+/* ★ v1.56.0 — 描述區的「極限爆發」招式名 + 技能效果說明,改用中圓體字家族(比照戰鬥卡 v1.50.0 同款字型),
+   並依英雄職能上色(沿用 .bt-cls.cls-* 既有配色),讓玩家一眼分辨「這是哪型英雄的爆發說明」。 */
+#hero-modal .hm-top .hm-desc .hm-burst{font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;font-weight:400;}
+#hero-modal .hm-top .hm-desc .hm-burst.cls-atk{color:#ff6a3d;}
+#hero-modal .hm-top .hm-desc .hm-burst.cls-heal{color:#4dff8a;}
+#hero-modal .hm-top .hm-desc .hm-burst.cls-shd{color:#7fd4ff;}
+#hero-modal .hm-top .hm-desc .hm-burst.cls-ctrl{color:#c58aff;}
 #hero-modal .row{display:flex;gap:10px;}
 #hero-modal .row button{flex:1;min-height:46px;}
 #r-battle{font-size:15px;line-height:1.7;margin-top:6px;}
@@ -2878,7 +2919,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.55.0"></script>
+<script src="minigame_db.js?v=v1.57.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -2887,7 +2928,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.55.0';
+var MG_VER = 'v1.57.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -6377,6 +6418,73 @@ function mgEff2Text(h, isNpc){
   if(e.t === 'silence') return {
     s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,接下來 3 次' + foe + '都打不到人!', f: '並使' + foe + '損失 ' + e.v + ' 點 HP,接下來 3 次普通攻擊判定完全沒收',
     en: '; also deals ' + e.v + ' damage to ' + foeEn + ' and silences their next 3 normal attacks' };
+  /* ★ v1.56.0 — 攻擊型三隻獨立第二效果新文案(哪吒/呂布/蚩尤,老師 2026-09-09 需求「重複效果去重」第一批) */
+  if(e.t === 'multihit') return {
+    s: '接下來' + self_ + '出手 3 次,每次都會多打一下,等於連打 2 下!', f: '並使' + self_ + '接下來 3 次成功攻擊,每次都會追加一次同傷害的攻擊判定',
+    en: "; " + selfEn + "'s next 3 successful hits each strike twice" };
+  if(e.t === 'lowhp_dmgup') return {
+    s: '自己血量每少 10%,攻擊傷害就會多 10%(整場都有效)', f: '並使' + self_ + '每損失 10% 最大 HP,攻擊造成的傷害即提升 10%,效果持續整場戰鬥',
+    en: "; " + selfEn + "'s attack damage rises 10% for every 10% max HP " + (isNpc ? 'they have' : 'you have') + ' lost, for the rest of the battle' };
+  if(e.t === 'counter') return {
+    s: '接下來' + self_ + '被攻擊 3 次,每次都會反擊對手 10 滴血', f: '並使' + self_ + '接下來 3 次受到攻擊時,同步反擊' + foe + ' 10 點 HP',
+    en: "; for " + selfEn + "'s next 3 hits taken, " + (isNpc ? 'they' : 'you') + ' counterattack ' + foeEn + ' for 10 HP' };
+  /* ★ v1.57.0 — 26隻攻擊/回復型英雄第二效果精修文案(老師 2026-09-09 完整改版指定內容) */
+  if(e.t === 'noatk2dmg') return { s: '還會直接扣' + foe + ' 5 滴血,接下來 2 次' + foe + '都無法普通攻擊', f: '並使' + foe + '損失 5 點 HP,接下來 2 次普通攻擊判定完全沒收',
+    en: '; also deals 5 damage to ' + foeEn + ' and silences their next 2 normal attacks' };
+  if(e.t === 'chargelock3') return { s: '接下來' + foe + '答對 3 次都不會計入爆發充能', f: '並使' + foe + '接下來 3 次答對判定不計入爆發充能',
+    en: "; " + foeEn + "'s next 3 correct answers don't build their burst gauge" };
+  if(e.t === 'cleanseheal15') return { s: '使用當下清除' + self_ + '身上的不利狀態,並多補 15 滴血', f: '並使' + self_ + '立即解除不利狀態並恢復 15 點 HP',
+    en: '; also cleanses debuffs and heals 15 HP' };
+  if(e.t === 'blindseal3') return { s: '接下來 3 次' + foe + '出手攻擊或用爆發技能都會完全落空', f: '並使' + foe + '接下來 3 次普通攻擊與爆發技能判定完全沒收',
+    en: "; " + foeEn + "'s next 3 attacks or burst attempts all miss" };
+  if(e.t === 'weaken3') return { s: '接下來 3 次' + foe + '出手攻擊,造成的傷害都會少一半', f: '並使' + foe + '接下來 3 次造成傷害的判定,傷害減少 50%',
+    en: "; " + foeEn + "'s next 3 hits dealt do 50% less damage" };
+  if(e.t === 'fullimmune2') return { s: '接下來 2 次' + self_ + '受到攻擊或不利狀態都完全免疫', f: '並使' + self_ + '接下來 2 次受到的傷害與不利狀態完全免疫',
+    en: "; " + selfEn + "'s next 2 hits taken and debuffs are fully immune" };
+  if(e.t === 'halfreflect3') return { s: '接下來 3 次' + self_ + '受傷減半,剩下一半還會反彈回去給' + foe, f: '並使' + self_ + '接下來 3 次受到傷害減少 50%,剩餘傷害同步反彈給' + foe,
+    en: "; " + selfEn + "'s next 3 hits taken are halved, with the rest reflected back to " + foeEn };
+  if(e.t === 'noatk2') return { s: '接下來 2 次' + foe + '都無法出手攻擊', f: '並使' + foe + '接下來 2 次普通攻擊判定完全沒收',
+    en: "; " + foeEn + "'s next 2 attacks are silenced" };
+  if(e.t === 'dmgbank3') return { s: '接下來' + self_ + '受傷 3 次都先記著,滿 3 次後一次全部還給' + foe, f: '並使' + self_ + '接下來 3 次受到的傷害累積起來,倒數歸零時一次性反擊給' + foe,
+    en: "; " + selfEn + "'s next 3 hits taken are banked and unleashed on " + foeEn + ' all at once' };
+  if(e.t === 'jam2seal') return { s: '接下來 2 次' + foe + '答對不計入充能,也不能用爆發技能', f: '並使' + foe + '接下來 2 次答對不計入充能,且爆發技能被封印',
+    en: "; " + foeEn + "'s next 2 correct answers don't charge their burst, and their burst is sealed" };
+  if(e.t === 'stealbuff') return { s: '使用當下直接奪走' + foe + '身上的有利狀態,變成自己的!', f: '並使' + self_ + '奪取' + foe + '目前持有的有利狀態(護盾/回血/減傷擇一)',
+    en: "; also steals " + foeEn + "'s current buff (shield/regen/damage-reduction) for " + (isNpc ? 'them' : 'you') };
+  if(e.t === 'phoenix') return { s: '接下來 3 次' + foe + '回的血都會轉移過來給' + self_ + ',且自己倒下時會以 10 血自動復活一次!', f: '並使' + foe + '接下來 3 次回復的 HP 轉移給' + self_ + ',倒下時無條件以 10 HP 自動復活(整場限一次)',
+    en: "; " + foeEn + "'s next 3 heals are redirected to " + (isNpc ? 'them' : 'you') + ", and " + (isNpc ? 'they' : 'you') + ' auto-revive once with 10 HP if knocked out' };
+  if(e.t === 'noatk2lifesteal') return { s: '接下來 2 次' + foe + '無法攻擊' + self_ + ',且這段期間' + self_ + '造成傷害的一半會變成血補回來', f: '並使' + foe + '接下來 2 次無法攻擊' + self_ + ',同時' + self_ + '造成傷害的 50% 轉為恢復自身 HP',
+    en: "; " + foeEn + "'s next 2 attacks on " + (isNpc ? 'them' : 'you') + ' are blocked, and 50% of damage dealt heals ' + (isNpc ? 'them' : 'you') };
+  if(e.t === 'selfcost1030') return { s: '用' + self_ + '10 滴血為代價,讓' + foe + '直接損失 30 滴血', f: '並使' + self_ + '付出 10 點 HP 為代價,對' + foe + '造成 30 點直接傷害',
+    en: "; " + selfEn + ' spends 10 HP to deal 30 direct damage to ' + foeEn };
+  if(e.t === 'regen5x6') return { s: '接下來 5 回合,' + self_ + '每回合自動多回 6 滴血', f: '並使' + self_ + '接下來 5 回合,每回合恢復 6 點 HP',
+    en: "; " + selfEn + " regens 6 HP each round for the next 5 rounds" };
+  if(e.t === 'poison5x5') return { s: '還讓' + foe + '中毒 5 回合,每回合流失 5 滴血', f: '並使' + foe + '中毒,接下來 5 回合每回合流失 5 點 HP',
+    en: "; also poisons " + foeEn + " for 5 rounds, losing 5 HP each round" };
+  if(e.t === 'siphon15') return { s: '還會直接扣' + foe + ' 15 滴血,同時幫' + self_ + '補 15 滴血', f: '並使' + foe + '損失 15 點 HP,同時' + self_ + '恢復 15 點 HP',
+    en: "; also deals 15 damage to " + foeEn + ' and heals ' + selfEn + ' 15 HP' };
+  if(e.t === 'reflectheal3') return { s: '接下來 3 次' + self_ + '受到攻擊,一半反彈給' + foe + '、一半變成自己回血', f: '並使' + self_ + '接下來 3 次受到攻擊時,傷害一半反彈給' + foe + ',另一半轉為自身回復',
+    en: "; " + selfEn + "'s next 3 hits taken split half as reflected damage to " + foeEn + ' and half as self-healing' };
+  if(e.t === 'potion15') return { s: '使用當下幫' + self_ + '補 15 滴血,同時扣' + foe + ' 15 滴血', f: '並使' + self_ + '立即恢復 15 點 HP,同時對' + foe + '造成 15 點傷害',
+    en: '; also heals ' + selfEn + ' 15 HP and deals 15 damage to ' + foeEn };
+  if(e.t === 'cleansebleed6') return { s: '解除' + self_ + '所有不利狀態,還讓' + foe + '易傷 3 回合(多痛 6 滴血)', f: '並使' + self_ + '立即解除所有不利狀態,同時使' + foe + '陷入易傷,接下來 3 次受傷多扣 6 點 HP',
+    en: '; also cleanses all debuffs and leaves ' + foeEn + ' vulnerable, taking 6 extra damage on the next 3 hits' };
+  if(e.t === 'averagehp') return { s: '使用當下讓雙方 HP 立刻拉平,各為原本兩人的平均值', f: '並使雙方 HP 立即均分為兩者平均值',
+    en: '; also instantly averages both HP totals' };
+  if(e.t === 'healatk') return { s: '使用當下幫' + self_ + '補 10 滴血,並連續攻擊' + foe + '共扣 15 滴血', f: '並使' + self_ + '恢復 10 點 HP,同時對' + foe + '造成共 15 點傷害',
+    en: '; also heals ' + selfEn + ' 10 HP and deals 15 total damage to ' + foeEn };
+  if(e.t === 'maxhp20heal20') return { s: '使用當下' + self_ + 'HP 上限永久提升 20,並立刻補滿這 20 滴血', f: '並使' + self_ + 'HP 上限永久增加 20,同時立即恢復 20 點 HP',
+    en: "; also permanently raises " + selfEn + "'s max HP by 20 and heals 20 HP" };
+  if(e.t === 'cleansethorndmg3') return { s: '解除' + self_ + '所有不利狀態,接下來 3 次再被下不利狀態,都會反彈給' + foe + '並追加 10 滴血傷害', f: '並使' + self_ + '立即解除不利狀態,接下來 3 次受到不利狀態時同步反彈給' + foe + '並追加 10 點傷害',
+    en: '; also cleanses debuffs, and the next 3 debuffs received are mirrored onto ' + foeEn + ' with 10 extra damage' };
+  if(e.t === 'regenpoison3x5') return { s: '接下來 3 回合,' + self_ + '每回合回 5 滴血,' + foe + '每回合流失 5 滴血', f: '並使' + self_ + '接下來 3 回合每回合恢復 5 點 HP,同時' + foe + '每回合流失 5 點 HP',
+    en: "; for the next 3 rounds, " + selfEn + ' regens 5 HP and ' + foeEn + ' loses 5 HP each round' };
+  if(e.t === 'heal20dmgup3') return { s: '使用當下幫' + self_ + '補 20 滴血,接下來 3 次攻擊傷害都多 50%', f: '並使' + self_ + '恢復 20 點 HP,接下來 3 次造成傷害提升 50%',
+    en: '; also heals ' + selfEn + ' 20 HP and boosts ' + selfEn + "'s next 3 hits by 50% damage" };
+  if(e.t === 'dodge2heal10') return { s: '接下來完全迴避 2 次攻擊,並幫' + self_ + '補 10 滴血', f: '並使' + self_ + '完全迴避接下來 2 次受到的攻擊,同時恢復 10 點 HP',
+    en: '; also fully dodges the next 2 hits taken and heals ' + selfEn + ' 10 HP' };
+  if(e.t === 'dmgimmune3') return { s: '接下來 3 次' + self_ + '受到的傷害完全免疫', f: '並使' + self_ + '接下來 3 次受到的傷害完全免疫',
+    en: "; " + selfEn + "'s next 3 hits taken deal zero damage" };
   return { s:'', f:'', en:'' };
 }
 function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
@@ -6431,14 +6539,18 @@ function mgHeroPaintPicker(){
     if(hint) hint.style.display = limited ? '' : 'none';
   }catch(e0){}
   var im = $('hm-img'); if(im){ im.style.display = ''; if(im.getAttribute('src') !== mgHeroUrl(h.img)) im.src = mgHeroUrl(h.img); }
-  var d = mgBurstDef(mgHeroCls(h));
-  $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p) + tx(mgEff2Text(h, false)));
+  var d = mgBurstDef(mgHeroCls(h)), hCls = mgHeroCls(h);
+  /* ★ v1.56.0(老師需求「選角視窗極限爆發名稱與技能效果用中圓體+依職能上色」)—
+     招式名+效果說明包一層 .hm-burst.cls-XX(見上方 CSS),英雄名/職能標籤維持原樣不變動。 */
+  $('hm-desc').innerHTML = '<b>' + esc(h.n) + '</b>　' + esc(mgHeroLabel(h)) + '<br>' +
+    '<span class="hm-burst cls-' + hCls + '">' + esc((MG.style === 's' ? '爆發:' : '極限爆發:') + (h.bn || tx(d.name))) + '<br>' + esc(tx(d.p) + tx(mgEff2Text(h, false))) + '</span>';
   for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
   $('hm-filter').innerHTML = html;
   html = '';
   for(i = 0; i < L.length; i++){
     if(_HM.filter && mgHeroCls(L[i]) !== _HM.filter) continue;
-    html += '<button type="button" class="' + (L[i].n === h.n ? 'on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')">' + mgBurstDef(mgHeroCls(L[i])).icon + ' ' + esc(L[i].n) + '</button>';
+    /* ★ v1.56.0(老師需求「攻擊/回復/護盾/控場四型用不同底色+黃字區分英雄名字」)— cls-XX 決定底色(見上方 CSS),on 疊加金色外框表示目前選中 */
+    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')">' + mgBurstDef(mgHeroCls(L[i])).icon + ' ' + esc(L[i].n) + '</button>';
   }
   $('hm-list').innerHTML = html;
 }
@@ -6454,8 +6566,24 @@ function mgBattleInit(x){
   /* sealLeft/confuseLeft:v1.36.0 新增「封印爆發技能」/「魅惑(攻擊自己)」兩型第二效果的計數狀態,初始 0 */
   /* thornLeft/immuneLeft/noAtkLeft:v1.55.0 新增「受到不利狀態時反彈+回血」/「解除並免疫不利狀態」/
      「對手無法普通攻擊」三型第二效果的計數狀態,初始 0(見 mgApplyEff2/mgEff2ApplyBad 與 mgBattleHit 消費點) */
-  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0 },
-          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0 },
+  /* multiHitLeft/lowhpScale/counterLeft:v1.56.0 新增「3回合內造成傷害變2下」(哪吒)/「自身HP每少10%造成傷害+10%」
+     (呂布,無倒數,持續整場)/「3回合內受到攻擊時反擊對手10HP」(蚩尤)三型第二效果的狀態,見 mgApplyEff2 與 mgBattleHit 消費點 */
+  /* ★ v1.57.0 — 26隻攻擊/回復型英雄第二效果精修新增欄位,依用途分組(見 mgDealDamage/mgTickRegenPoison/
+     mgEff2ApplyBad/mgApplyEff2/mgBattleHit 各處的 v1.57.0 註解):
+     chargeLockLeft(拘留者/天神宙斯:對手答對不計入充能)、dmgDownLeft(科技生化人:對手攻擊傷害-50%)、
+     dmgImmuneLeft(暗魔將/雅典娜:完全免疫傷害)、dodgeLeft(風術士:完全迴避)、
+     reflectHealLeft(沐雲雪:傷害轉一半反彈一半回血)、reflectHalfLeft(紅色玩家:扣血後再反彈同額)、
+     dmgBankLeft/dmgBankAmt(學霸:累積傷害倒數到0一次還給對手)、
+     healRedirectLeft/healRedirectTo(鳳凰:對手回的血轉給自己)、lifestealLeft(幽幽:自己造成傷害的50%回血)、
+     dmgUpLeft(菇女:自己攻擊傷害+50%)、regenLeft/regenAmt(地獄將軍/青炎龍王/魔界花使:每回合自己回血)、
+     poisonLeft/poisonAmt(小鬼貓與兔/青炎龍王/魔界花使:對手每回合中毒扣血)、
+     thornDmgLeft(米鈴:不利狀態反彈+追加10傷,跟既有thornLeft差在沒有回血)、
+     maxHpBonus(救醫馬:HP上限永久+20,整場持續,不做3回合到期復原以避免HP卡在超過上限的邊界問題)、
+     phoenixUsed(鳳凰:無條件10HP自動復活,整場限用一次)。 */
+  _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false },
+          n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -6573,6 +6701,58 @@ function mgBattleFloatOn(side, text, cls){ try{ var el = $('bt-' + side + '-imgw
 /* ★ 唯一扣血入口
    ★ v1.42.0(老師需求「元素消消樂」)— 新增可選第二參數 customDmg:成功時若有帶正數,取代 MG_BT.DMG 當作對敵傷害基數
    (其餘 8 款既有引擎呼叫時都只傳 1 個參數,customDmg 為 undefined,行為完全不變)。 */
+/* ★ v1.57.0(老師需求「26隻攻擊/回復型英雄第二效果精修」)—
+   把「造成一次傷害」抽成單一入口 mgDealDamage(atk, def, base, fxFrom),原因是這輪新增的效果
+   (dmgUpLeft/dmgDownLeft/dmgImmuneLeft/dodgeLeft/reflectHealLeft/reflectHalfLeft/dmgBankLeft/
+   lifestealLeft/counterLeft/multiHitLeft)全部集中在「傷害怎麼算、怎麼扣」這個節點,原本散在
+   ok/miss/NPC固定傷害三處各寫一份會三倍維護成本、也容易漏改。呼叫端(mgBattleHit 三處)只需先
+   判斷 shield/confuse/noAtkLeft 這種「整次攻擊直接沒收」的情況,真的要扣血才呼叫這支。
+   計算順序:①攻方 lowhpScale(呂布)②攻方 dmgUpLeft(菇女)③攻方 dmgDownLeft(被科技生化人削弱)
+   ④守方 dmgReduceLeft(既有減傷)⑤守方 dotLeft(既有易傷)——到此算出最終傷害數字 dmg——
+   ⑥守方 dmgImmuneLeft(暗魔將/雅典娜,完全免疫直接 return)⑦守方 dodgeLeft(風術士,完全迴避直接 return)
+   ⑧守方 reflectHealLeft(沐雲雪,傷害轉一半回擊一半回血,直接 return,不進入下面的正常扣血)
+   ⑨正常扣血 ⑩守方 reflectHalfLeft(紅色玩家,扣完血後把同樣數字反彈回攻方)
+   ⑪守方 dmgBankLeft/dmgBankAmt(學霸,累積到 0 才一次噴給攻方)⑫守方 counterLeft(蚩尤,固定反擊10)
+   ⑬攻方 lifestealLeft(幽幽/死靈法師,按最終傷害的50%回血)⑭攻方 multiHitLeft(哪吒,原封不動追加同傷害一次,
+   不重新走⑥~⑬避免無限鏈)。 */
+function mgHpCap(S){ return MG_BT.HP + (S && S.maxHpBonus ? S.maxHpBonus : 0); }
+function mgDealDamage(atk, def, base, fxFrom, rawFixed){
+  var dmg = base;
+  if(!rawFixed){   /* ★ v1.57.0 — rawFixed=true 用於 NPC_TURN_DMG 全域固定回合傷害,鐵律「不可被護盾/減傷擋下」維持不變,跳過下面四行常規加成/減傷計算 */
+    if(atk.lowhpScale){ var _miss = 1 - (atk.hp / MG_BT.HP); dmg = Math.round(dmg * (1 + Math.floor(_miss * 10) * 0.1)); }   /* 呂布 */
+    if(atk.dmgUpLeft > 0){ atk.dmgUpLeft--; dmg = Math.round(dmg * 1.5); }   /* 菇女:接下來3次攻擊+50% */
+    if(atk.dmgDownLeft > 0){ atk.dmgDownLeft--; dmg = Math.round(dmg * 0.5); }   /* 科技生化人:對手3回合造成傷害-50% */
+    if(def.dmgReduceLeft > 0){ def.dmgReduceLeft--; dmg = Math.round(dmg / 2); }
+    if(def.dotLeft > 0){ def.dotLeft--; dmg += (def.dotAmt || MG_BT.DOT); }
+  }
+  var defSide = mgSideOf(def), atkSide = mgSideOf(atk);
+  if(def.dmgImmuneLeft > 0){ def.dmgImmuneLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); return; }   /* 暗魔將/雅典娜 */
+  if(def.dodgeLeft > 0){ def.dodgeLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'DODGE' : '迴避!'), 'block'); return; }   /* 風術士 */
+  if(def.reflectHealLeft > 0){   /* 沐雲雪:一半反彈給對手、一半轉成自己回血,完全不扣自己血 */
+    def.reflectHealLeft--; var _rf = Math.round(dmg * 0.5), _hl = dmg - _rf;
+    def.hp = Math.min(mgHpCap(def), def.hp + _hl); atk.hp = Math.max(0, atk.hp - _rf);
+    mgBattleFloatOn(defSide, '+' + _hl, 'heal'); mgBattleFloatOn(atkSide, '−' + _rf, 'block');
+    return;
+  }
+  playSfx('sfx-normalatk', 0.7); mgBattleFxAttack(fxFrom, '−' + dmg);
+  def.hp = Math.max(0, def.hp - dmg);
+  if(def.reflectHalfLeft > 0){ def.reflectHalfLeft--; atk.hp = Math.max(0, atk.hp - dmg); mgBattleFloatOn(atkSide, '−' + dmg, 'block'); }   /* 紅色玩家:剩下的一半反彈回去 */
+  if(def.dmgBankLeft > 0){   /* 學霸:累積3次受到的傷害,倒數到0時一次還給對手 */
+    def.dmgBankLeft--; def.dmgBankAmt = (def.dmgBankAmt || 0) + dmg;
+    if(def.dmgBankLeft === 0 && def.dmgBankAmt > 0){ var _bk = def.dmgBankAmt; atk.hp = Math.max(0, atk.hp - _bk); mgBattleFloatOn(atkSide, '−' + _bk, 'block'); def.dmgBankAmt = 0; }
+  }
+  if(def.counterLeft > 0){ def.counterLeft--; var _cv = 10; atk.hp = Math.max(0, atk.hp - _cv); mgBattleFxAttack(defSide, '−' + _cv); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'COUNTER' : '反擊!'), 'block'); }   /* 蚩尤 */
+  if(atk.lifestealLeft > 0){ atk.lifestealLeft--; var _ls = Math.round(dmg * 0.5); atk.hp = Math.min(mgHpCap(atk), atk.hp + _ls); mgBattleFloatOn(atkSide, '+' + _ls, 'heal'); }   /* 幽幽/死靈法師 */
+  if(atk.multiHitLeft > 0){ atk.multiHitLeft--; def.hp = Math.max(0, def.hp - dmg); mgBattleFxAttack(fxFrom, '−' + dmg); }   /* 哪吒:原封不動追加同傷害一次,不重新跑上面判定避免鏈式無限 */
+}
+/* ★ v1.57.0 — 地獄將軍(regen 5回合+6)/小鬼貓與兔(poison 5回合−5)/青炎龍王與魔界花使(regen+poison 3回合±5)這類
+   「每回合」型效果,統一在 mgBattleHit 的 500ms 全域節拍(NPC_TURN_DMG 那個 setTimeout)一併結算,
+   不看答對答錯、不可被護盾/減傷/免疫擋下(視為體質效果,跟戰鬥判定無關)。 */
+function mgTickRegenPoison(S, sideKey){
+  if(!S) return;
+  if(S.regenLeft > 0){ S.regenLeft--; var _rg = S.regenAmt || 5; S.hp = Math.min(mgHpCap(S), S.hp + _rg); mgBattleFloatOn(sideKey, '+' + _rg, 'heal'); }
+  if(S.poisonLeft > 0){ S.poisonLeft--; var _ps = S.poisonAmt || 5; S.hp = Math.max(0, S.hp - _ps); mgBattleFloatOn(sideKey, '−' + _ps, 'block'); }
+}
 function mgBattleHit(ok, customDmg){
   if(!_BT || _BT.over) return;
   var P = _BT.p, N = _BT.n;
@@ -6588,12 +6768,15 @@ function mgBattleHit(ok, customDmg){
     else if(P.noAtkLeft > 0){ P.noAtkLeft--; mgBattleFloatOn('p', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 魔術師新第二效果:被封的一方普通攻擊直接沒收,不扣血也不算落空,單純沒有這次傷害 */
     else{
       var dmgP = (typeof customDmg === 'number' && customDmg > 0) ? Math.round(customDmg) : MG_BT.DMG;   /* ★ v1.42.0 元素消消樂:依消除顆數+combo 算出的傷害取代固定值 */
-      if(N.dmgReduceLeft > 0){ N.dmgReduceLeft--; dmgP = Math.round(dmgP / 2); }               /* 護盾型第二效果:護盾耗盡後再減傷 */
-      if(N.dotLeft > 0){ N.dotLeft--; dmgP += (N.dotAmt || MG_BT.DOT); }                        /* 逐英雄第二效果(易傷):數值取該英雄自己的 eff2.v */
-      N.hp = Math.max(0, N.hp - dmgP); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('p', '−' + dmgP);
-      if(P.healBuff > 0){ P.healBuff--; var _ha = P.healAmt || MG_BT.HEALBUFF; P.hp = Math.min(MG_BT.HP, P.hp + _ha); mgBattleFloatOn('p', '+' + _ha, 'heal'); }   /* 逐英雄第二效果(回血):數值取該英雄自己的 eff2.v */
+      mgDealDamage(P, N, dmgP, 'p');   /* ★ v1.57.0 — 傷害計算與各種新第二效果全部集中在 mgDealDamage,見該函式註解 */
+      if(P.healBuff > 0){   /* 逐英雄第二效果(回血):數值取該英雄自己的 eff2.v */
+        P.healBuff--; var _ha = P.healAmt || MG_BT.HEALBUFF;
+        if(P.healRedirectLeft > 0){ P.healRedirectLeft--; var _tgtHa = (P.healRedirectTo === 'n') ? N : P; _tgtHa.hp = Math.min(mgHpCap(_tgtHa), _tgtHa.hp + _ha); mgBattleFloatOn(P.healRedirectTo, '+' + _ha, 'heal'); }   /* ★ v1.57.0 — 鳳凰:對手回的血轉移到自己身上 */
+        else{ P.hp = Math.min(mgHpCap(P), P.hp + _ha); mgBattleFloatOn('p', '+' + _ha, 'heal'); }
+      }
     }
-    if(P.charge < MG_BT.CHARGE){
+    if(P.chargeLockLeft > 0){ P.chargeLockLeft--; mgBattleFloatOn('p', (MG.lang === 'en' ? 'LOCKED' : '充能被鎖!'), 'block'); }   /* ★ v1.57.0 — 拘留者/天神宙斯:對手答對不計入充能 */
+    else if(P.charge < MG_BT.CHARGE){
       P.charge++;
       if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-burst-ready', 0.65); try{ var r = $('bt-p-burst').getBoundingClientRect(); mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 120, 700); }catch(e){} }   /* ★ v1.34.0 — 爆發充滿可用時的專屬音效 */
     }
@@ -6607,12 +6790,16 @@ function mgBattleHit(ok, customDmg){
     else if(N.noAtkLeft > 0){ N.noAtkLeft--; mgBattleFloatOn('n', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 同上,答錯時 NPC 的反擊也可能被魔術師封住 */
     else{
       var dmgN = MG_BT.DMG;
-      if(P.dmgReduceLeft > 0){ P.dmgReduceLeft--; dmgN = Math.round(dmgN / 2); }
-      if(P.dotLeft > 0){ P.dotLeft--; dmgN += (P.dotAmt || MG_BT.DOT); }
-      P.hp = Math.max(0, P.hp - dmgN); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('n', '−' + dmgN); mgBattleVibe(120);
-      if(N.healBuff > 0){ N.healBuff--; var _hb = N.healAmt || MG_BT.HEALBUFF; N.hp = Math.min(MG_BT.HP, N.hp + _hb); mgBattleFloatOn('n', '+' + _hb, 'heal'); }
+      mgDealDamage(N, P, dmgN, 'n');   /* ★ v1.57.0 — NPC 版同款,見 mgDealDamage 註解 */
+      mgBattleVibe(120);
+      if(N.healBuff > 0){
+        N.healBuff--; var _hb = N.healAmt || MG_BT.HEALBUFF;
+        if(N.healRedirectLeft > 0){ N.healRedirectLeft--; var _tgtHb = (N.healRedirectTo === 'p') ? P : N; _tgtHb.hp = Math.min(mgHpCap(_tgtHb), _tgtHb.hp + _hb); mgBattleFloatOn(N.healRedirectTo, '+' + _hb, 'heal'); }
+        else{ N.hp = Math.min(mgHpCap(N), N.hp + _hb); mgBattleFloatOn('n', '+' + _hb, 'heal'); }
+      }
     }
-    if(N.charge < MG_BT.CHARGE){
+    if(N.chargeLockLeft > 0){ N.chargeLockLeft--; mgBattleFloatOn('n', (MG.lang === 'en' ? 'LOCKED' : '充能被鎖!'), 'block'); }
+    else if(N.charge < MG_BT.CHARGE){
       N.charge++;
       if(N.charge >= MG_BT.CHARGE){ mgBattlePaint(); if(_BT.npcT) clearTimeout(_BT.npcT); _BT.npcT = setTimeout(mgBattleNpcBurst, 700); }
     }
@@ -6625,6 +6812,8 @@ function mgBattleHit(ok, customDmg){
   if(P.hp > 0){
     setTimeout(function(){
       if(!_BT || _BT.over) return;
+      mgTickRegenPoison(P, 'p'); mgTickRegenPoison(N, 'n');   /* ★ v1.57.0 — 地獄將軍/青炎龍王/魔界花使(regen)、小鬼貓與兔/青炎龍王/魔界花使(poison)這類「每回合」型效果,統一在這個每題必經一次的節拍點結算 */
+      if(_BT.over || P.hp <= 0 || N.hp <= 0){ mgBattlePaint(); mgBattleCheckKO(); return; }
       if(N.noAtkLeft > 0){   /* ★ v1.55.0 — 魔術師封住的是「對手的普通攻擊」,這條每回合固定攻擊也算在內,一併沒收 */
         N.noAtkLeft--;
         mgBattleFloatOn('p', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block');
@@ -6632,8 +6821,7 @@ function mgBattleHit(ok, customDmg){
         mgBattleCheckKO();
         return;
       }
-      P.hp = Math.max(0, P.hp - MG_BT.NPC_TURN_DMG);
-      mgBattleFxAttack('n', '−' + MG_BT.NPC_TURN_DMG);
+      mgDealDamage(N, P, MG_BT.NPC_TURN_DMG, 'n', true);   /* ★ v1.57.0 — rawFixed=true:傷害數字固定不受一般加成/減傷影響,但新增的免疫/迴避/反彈/累積/反擊等「受到攻擊」類效果仍會生效 */
       mgBattlePaint();
       mgBattleCheckKO();
     }, 500);
@@ -6667,12 +6855,22 @@ function mgBattleNpcBurstSafety(){
 /* ★ v1.36.0 — revive(滿槽重生)被動判定:S 為 _BT.p 或 _BT.n。條件=eff2 是 revive 且爆發充能已滿;
    成立則消耗充能(歸零)並回滿 HP=20,擋下這次擊倒,回傳 true 讓 mgBattleCheckKO 不結算勝負。 */
 function mgTryRevive(S){
-  var e = S.h && S.h.eff2; if(!e || e.t !== 'revive') return false;
-  if(S.charge < MG_BT.CHARGE) return false;
-  S.charge = 0; S.hp = 20;
-  mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '💫 REVIVE!' : '💫 復活!'), 'heal');
-  mgBattlePaint();
-  return true;
+  var e = S.h && S.h.eff2; if(!e) return false;
+  if(e.t === 'revive'){
+    if(S.charge < MG_BT.CHARGE) return false;
+    S.charge = 0; S.hp = 20;
+    mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '💫 REVIVE!' : '💫 復活!'), 'heal');
+    mgBattlePaint();
+    return true;
+  }
+  /* ★ v1.57.0 — 鳳凰(phoenix):不看爆發槽,倒下時無條件以10HP自動復活,但整場只會發生一次(phoenixUsed 旗標擋第二次) */
+  if(e.t === 'phoenix' && !S.phoenixUsed){
+    S.phoenixUsed = true; S.hp = 10;
+    mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '🔥 REBORN!' : '🔥 浴火重生!'), 'heal');
+    mgBattlePaint();
+    return true;
+  }
+  return false;
 }
 /* 題目出完沒人 KO(finishGame 走到時呼叫):剩餘 HP 高者勝、同 HP 算勝 */
 function mgBattleSettle(){
@@ -6733,6 +6931,17 @@ function mgEff2ApplyBad(caster, foe, kind, val){
     foe.hp = Math.min(MG_BT.HP, foe.hp + _hb);
     try{ mgBattleFloatOn(mgSideOf(foe), '+' + _hb, 'heal'); }catch(_et){}
   }
+  /* ★ v1.57.0 — 米鈴:解除自己不利狀態後,接下來3次「再被下不利狀態」除了照常反彈給對手,還額外倒扣對手10HP
+     (跟既有 thornLeft 的差別是沒有回血這個附帶效果,單純多一段固定傷害,所以獨立開一個 thornDmgLeft 欄位)。 */
+  if(foe.thornDmgLeft > 0){
+    foe.thornDmgLeft--;
+    if(kind === 'dot'){ caster.dotLeft = MG_BT.EFF2_N; caster.dotAmt = val; }
+    else if(kind === 'seal'){ caster.sealLeft = MG_BT.EFF2_N; }
+    else if(kind === 'confuse'){ caster.confuseLeft = MG_BT.EFF2_N; }
+    var _tdv = 10;
+    caster.hp = Math.max(0, caster.hp - _tdv);
+    try{ mgBattleFloatOn(mgSideOf(caster), '−' + _tdv, 'block'); }catch(_etd){}
+  }
 }
 function mgApplyEff2(caster, foe){
   var e = caster.h && caster.h.eff2; if(!e) return;
@@ -6756,6 +6965,50 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'thorn') caster.thornLeft = MG_BT.EFF2_N;
   else if(e.t === 'immune'){ mgBattleCleanseBad(caster); caster.immuneLeft = MG_BT.EFF2_N; }
   else if(e.t === 'silence'){ foe.hp = Math.max(0, foe.hp - e.v); try{ mgBattleFxAttack(mgSideOf(caster), '−' + e.v); }catch(_es){} foe.noAtkLeft = MG_BT.EFF2_N; }
+  /* ★ v1.56.0(老師需求「攻擊型重複效果去重」第一批:哪吒/呂布/蚩尤)—
+     multihit:接下來 EFF2_N 次自己成功攻擊都追加一次同傷害攻擊,消費點在 mgBattleHit 的 P/N 造成傷害兩處;
+     lowhp_dmgup:不設倒數,只設一個常駐旗標,實際加成在 mgBattleHit 算傷害時依當下 HP 動態計算,整場持續;
+     counter:接下來 EFF2_N 次自己受到攻擊都反擊對手固定 10 HP,消費點同樣在 mgBattleHit 的兩個受傷分支。 */
+  else if(e.t === 'multihit') caster.multiHitLeft = MG_BT.EFF2_N;
+  else if(e.t === 'lowhp_dmgup') caster.lowhpScale = true;
+  else if(e.t === 'counter') caster.counterLeft = MG_BT.EFF2_N;
+  /* ★ v1.57.0(老師需求「26隻攻擊/回復型英雄第二效果精修」,2026-09-09 完整改版指定內容)—
+     以下每一型都是老師逐隻指定的最終效果,不再套用去重規則的「候選池」草案,直接照描述實作。
+     倒數類欄位的消費點集中在 mgDealDamage/mgTickRegenPoison/mgEff2ApplyBad/mgBattleHit 充能判定四處,
+     見各自函式內的 v1.57.0 註解;這裡只負責「啟動」。 */
+  else if(e.t === 'noatk2dmg'){ foe.noAtkLeft = 2; foe.hp = Math.max(0, foe.hp - 5); try{ mgBattleFxAttack(mgSideOf(caster), '−5'); }catch(_e1){} }   /* 貓人族長 */
+  else if(e.t === 'chargelock3') foe.chargeLockLeft = 3;   /* 拘留者 */
+  else if(e.t === 'cleanseheal15'){ mgBattleCleanseBad(caster); caster.hp = Math.min(mgHpCap(caster), caster.hp + 15); try{ mgBattleFloatOn(mgSideOf(caster), '+15', 'heal'); }catch(_e2){} }   /* 聖冥法師 */
+  else if(e.t === 'blindseal3'){ foe.noAtkLeft = 3; foe.sealLeft = 3; }   /* 玉藻前 */
+  else if(e.t === 'weaken3') foe.dmgDownLeft = 3;   /* 科技生化人 */
+  else if(e.t === 'fullimmune2'){ caster.dmgImmuneLeft = 2; caster.immuneLeft = 2; }   /* 暗魔將·血 */
+  else if(e.t === 'halfreflect3'){ caster.dmgReduceLeft = 3; caster.reflectHalfLeft = 3; }   /* 紅色玩家 */
+  else if(e.t === 'noatk2') foe.noAtkLeft = 2;   /* 地府酋長 */
+  else if(e.t === 'dmgbank3'){ caster.dmgBankLeft = 3; caster.dmgBankAmt = 0; }   /* 學霸(轉學生) */
+  else if(e.t === 'jam2seal'){ foe.chargeLockLeft = 2; foe.sealLeft = 2; }   /* 天神宙斯 */
+  else if(e.t === 'stealbuff'){   /* 維京海盜船長:依序偷護盾→回血中→減傷中,都沒有就順手給自己衝1格能量 */
+    if(foe.shield > 0){ foe.shield--; caster.shield = (caster.shield || 0) + 1; try{ mgBattleFloatOn(mgSideOf(caster), '🛡+1', 'block'); }catch(_e3a){} }
+    else if(foe.healBuff > 0){ foe.healBuff--; caster.healBuff = (caster.healBuff || 0) + 1; caster.healAmt = foe.healAmt || MG_BT.HEALBUFF; try{ mgBattleFloatOn(mgSideOf(caster), '💚+1', 'heal'); }catch(_e3b){} }
+    else if(foe.dmgReduceLeft > 0){ foe.dmgReduceLeft--; caster.dmgReduceLeft = (caster.dmgReduceLeft || 0) + 1; try{ mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? 'STOLEN' : '奪取!'), 'block'); }catch(_e3c){} }
+    else{ caster.charge = Math.min(MG_BT.CHARGE - 1, caster.charge + 1); }
+  }
+  else if(e.t === 'phoenix'){ foe.healRedirectLeft = 3; foe.healRedirectTo = mgSideOf(caster); }   /* 鳳凰:對手接下來3次回血轉給自己;倒下自動復活邏輯在 mgBattleCheckKO */
+  else if(e.t === 'noatk2lifesteal'){ foe.noAtkLeft = 2; caster.lifestealLeft = 2; }   /* 幽幽 */
+  else if(e.t === 'selfcost1030'){ caster.hp = Math.max(0, caster.hp - 10); foe.hp = Math.max(0, foe.hp - 30); try{ mgBattleFloatOn(mgSideOf(caster), '−10', 'block'); mgBattleFxAttack(mgSideOf(caster), '−30'); }catch(_e4){} }   /* 阿蘇火山龍王 */
+  else if(e.t === 'regen5x6'){ caster.regenLeft = 5; caster.regenAmt = 6; }   /* 地獄將軍 */
+  else if(e.t === 'poison5x5') { foe.poisonLeft = 5; foe.poisonAmt = 5; }   /* 小鬼貓與兔 */
+  else if(e.t === 'siphon15'){ foe.hp = Math.max(0, foe.hp - 15); caster.hp = Math.min(mgHpCap(caster), caster.hp + 15); try{ mgBattleFxAttack(mgSideOf(caster), '−15'); mgBattleFloatOn(mgSideOf(caster), '+15', 'heal'); }catch(_e5){} }   /* 法老王 */
+  else if(e.t === 'reflectheal3') caster.reflectHealLeft = 3;   /* 御雲使‧沐雲雪 */
+  else if(e.t === 'potion15'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 15); foe.hp = Math.max(0, foe.hp - 15); try{ mgBattleFloatOn(mgSideOf(caster), '+15', 'heal'); mgBattleFxAttack(mgSideOf(caster), '−15'); }catch(_e6){} }   /* 科學發明家 */
+  else if(e.t === 'cleansebleed6'){ mgBattleCleanseBad(caster); mgEff2ApplyBad(caster, foe, 'dot', 6); }   /* 巫女 */
+  else if(e.t === 'averagehp'){ var _avg = Math.round((caster.hp + foe.hp) / 2); caster.hp = _avg; foe.hp = _avg; try{ mgBattlePaint(); }catch(_e7){} }   /* 雙星姊妹 */
+  else if(e.t === 'healatk'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); foe.hp = Math.max(0, foe.hp - 15); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); mgBattleFxAttack(mgSideOf(caster), '−15'); }catch(_e8){} }   /* 布奶鳥獸 */
+  else if(e.t === 'maxhp20heal20'){ caster.maxHpBonus = (caster.maxHpBonus || 0) + 20; caster.hp = Math.min(mgHpCap(caster), caster.hp + 20); try{ mgBattleFloatOn(mgSideOf(caster), '+20', 'heal'); }catch(_e9){} }   /* 救醫馬 */
+  else if(e.t === 'cleansethorndmg3'){ mgBattleCleanseBad(caster); caster.thornDmgLeft = 3; }   /* 米鈴 */
+  else if(e.t === 'regenpoison3x5'){ caster.regenLeft = 3; caster.regenAmt = 5; foe.poisonLeft = 3; foe.poisonAmt = 5; }   /* 青炎龍王／魔界花使‧朱玥(共用同一機制,數值相同) */
+  else if(e.t === 'heal20dmgup3'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 20); caster.dmgUpLeft = 3; try{ mgBattleFloatOn(mgSideOf(caster), '+20', 'heal'); }catch(_e10){} }   /* 菇女 */
+  else if(e.t === 'dodge2heal10'){ caster.dodgeLeft = 2; caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); }catch(_e11){} }   /* 風術士 */
+  else if(e.t === 'dmgimmune3') caster.dmgImmuneLeft = 3;   /* 雅典娜 */
 }
 /* ★ v1.54.0(老師需求「小遊戲的回復型英雄,把大對抗巫女/米鈴這類解除不利狀態的效果也加進去」)—
    小遊戲目前會落在「自己身上」的不利狀態只有三種(全部是對手 eff2 打過來的第二效果):
