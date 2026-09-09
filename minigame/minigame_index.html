@@ -15,7 +15,11 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.1(2026-09-09)
+     ★ v1.65.1(2026-09-09・老師需求「極限爆發附加說明文字刪除『並使』/『並』」)—
+       mgEff2Text() 內全部 s/f 兩版效果說明文字,逐一刪除文字中的「並使」(53 筆 f 欄位)以及所有殘留
+       單獨的「並」字(8 行/10 處,涵蓋 s 與 f 欄位),讓「附加:」標籤(mgEff2Html 產生)接續的說明文字
+       不再出現「附加:並使…」這種重複語感;seal 效果原本的「並封印」不受影響(不含「並使」)。
      ★ v1.65.0(2026-09-09・老師四項需求:超時懲罰稽核 ＋ 附加文字全黃+空兩格 ＋ 戰敗灰星+再接再厲 ＋ 解說視窗貼齊下一題鈕)—
        ①【超時懲罰稽核,已確認全部合規,無需改動】逐一稽核 15 款小遊戲的計時機制:除 react(算數大進擊)
        和 match3(元素消消樂)外的 12 款引擎全部共用 startTimer/onTimeout(renderQuestion 第 4336 行的排除條件只排除這兩款),onTimeout 本來就無條件呼叫 mgBattleHit(false)(玩家 −10、
@@ -3079,7 +3083,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.65.0';
+var MG_VER = 'v1.65.1';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -6583,135 +6587,135 @@ function mgEff2Text(h, isNpc){
   var e = h && h.eff2; if(!e) return { s:'', f:'', en:'' };
   var self_ = isNpc ? '對手' : '自己', foe = isNpc ? '你' : '對手', selfEn = isNpc ? 'the opponent' : 'you', foeEn = isNpc ? 'you' : 'the opponent';
   if(e.t === 'heal') return {
-    s: '接下來' + self_ + '出手 3 次,每次還會多回 ' + e.v + ' 滴血', f: '並使接下來' + self_ + '造成傷害的 3 次判定,每次額外恢復 ' + e.v + ' 點 HP',
+    s: '接下來' + self_ + '出手 3 次,每次還會多回 ' + e.v + ' 滴血', f: '接下來' + self_ + '造成傷害的 3 次判定,每次額外恢復 ' + e.v + ' 點 HP',
     en: '; ' + selfEn + "'s next 3 hits each also heal " + (isNpc ? 'them' : 'you') + ' ' + e.v + ' extra HP' };
   if(e.t === 'dmgred') return {
-    s: '接下來' + self_ + '受傷 3 次,傷害都會減半', f: '並使' + self_ + '接下來受到傷害的 3 次判定,傷害減少 50%',
+    s: '接下來' + self_ + '受傷 3 次,傷害都會減半', f: '' + self_ + '接下來受到傷害的 3 次判定,傷害減少 50%',
     en: "; " + selfEn + "'s next 3 hits taken deal 50% less damage" };
   if(e.t === 'bleed') return {
-    s: '還讓' + foe + '易傷,接下來受傷 3 次都多痛 ' + e.v + ' 滴血', f: '並使' + foe + '陷入易傷,接下來受到傷害的 3 次判定每次額外多扣 ' + e.v + ' 點 HP',
+    s: '還讓' + foe + '易傷,接下來受傷 3 次都多痛 ' + e.v + ' 滴血', f: '' + foe + '陷入易傷,接下來受到傷害的 3 次判定每次額外多扣 ' + e.v + ' 點 HP',
     en: '; ' + foeEn + ' is left vulnerable, taking ' + e.v + ' extra damage on the next 3 hits taken' };
   if(e.t === 'drain') return {
-    s: '還會讓' + foe + '的爆發條倒退 ' + e.v + ' 格', f: '並使' + foe + '的爆發充能倒退 ' + e.v + ' 格',
+    s: '還會讓' + foe + '的爆發條倒退 ' + e.v + ' 格', f: '' + foe + '的爆發充能倒退 ' + e.v + ' 格',
     en: "; also knocks " + e.v + " charge off " + foeEn + "'s burst gauge" };
   if(e.t === 'shield') return {
-    s: '護盾格數額外多 ' + e.v + ' 格', f: '並使護盾格數額外增加 ' + e.v + ' 格',
+    s: '護盾格數額外多 ' + e.v + ' 格', f: '護盾格數額外增加 ' + e.v + ' 格',
     en: '; also grants ' + e.v + ' extra shield charges' };
   if(e.t === 'charge') return {
-    s: '使用後爆發條會先前進 ' + e.v + ' 格', f: '並使自己的爆發充能立即前進 ' + e.v + ' 格',
+    s: '使用後爆發條會先前進 ' + e.v + ' 格', f: '自己的爆發充能立即前進 ' + e.v + ' 格',
     en: "; also advances " + self_ + "'s burst gauge by " + e.v };
   if(e.t === 'seal') return {
-    s: '還會封印' + foe + '的爆發技能,接下來 3 題都不能用', f: '並封印' + foe + '的極限爆發,接下來 3 次判定內無法使用',
+    s: '還會封印' + foe + '的爆發技能,接下來 3 題都不能用', f: '封印' + foe + '的極限爆發,接下來 3 次判定內無法使用',
     en: '; also seals ' + foeEn + "'s ultimate burst for the next 3 questions" };
   if(e.t === 'confuse') return {
-    s: '還會魅惑' + foe + ',接下來 3 次出手攻擊會打到自己', f: '並使' + foe + '陷入魅惑,接下來 3 次出手攻擊改攻擊自己',
+    s: '還會魅惑' + foe + ',接下來 3 次出手攻擊會打到自己', f: '' + foe + '陷入魅惑,接下來 3 次出手攻擊改攻擊自己',
     en: '; also charms ' + foeEn + ' — ' + (isNpc ? 'your' : "the opponent's") + ' next 3 attacks will hit themself instead' };
   if(e.t === 'revive') return {
-    s: '(被動)只要爆發條是滿的,倒下時會立刻復活 HP 20!', f: '(被動)自身被擊倒時,若爆發充能已滿,立即復活並回復 HP 20',
+    s: '(被動)只要爆發條是滿的,倒下時會立刻復活 HP 20!', f: '(被動)自身被擊倒時,若爆發充能已滿,立即復活回復 HP 20',
     en: '(passive) if knocked out while your burst gauge is full, you instantly revive with 20 HP' };
   /* ★ v1.55.0 — 老師裁定「四隻護盾角色+三隻控場角色」第二效果改版新增的五種文案 */
   if(e.t === 'healnow') return {
-    s: '使用當下立刻幫' + self_ + '多補 ' + e.v + ' 滴血', f: '並使' + self_ + '立即恢復 ' + e.v + ' 點 HP',
+    s: '使用當下立刻幫' + self_ + '多補 ' + e.v + ' 滴血', f: '' + self_ + '立即恢復 ' + e.v + ' 點 HP',
     en: '; also instantly heals ' + (isNpc ? 'them' : 'you') + ' ' + e.v + ' HP' };
   if(e.t === 'truedmg') return {
-    s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,護盾也擋不住', f: '並使' + foe + '直接損失 ' + e.v + ' 點 HP,無視護盾',
+    s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,護盾也擋不住', f: '' + foe + '直接損失 ' + e.v + ' 點 HP,無視護盾',
     en: '; also deals ' + e.v + ' direct damage to ' + foeEn + ', ignoring shields' };
   if(e.t === 'thorn') return {
-    s: '接下來 3 次' + self_ + '被下不利狀態,都會反彈回去給' + foe + '、還幫' + self_ + '補 5 滴血', f: '並使' + self_ + '接下來 3 次受到不利狀態時,同步反彈給' + foe + '並恢復自身 5 點 HP',
+    s: '接下來 3 次' + self_ + '被下不利狀態,都會反彈回去給' + foe + '、還幫' + self_ + '補 5 滴血', f: '' + self_ + '接下來 3 次受到不利狀態時,同步反彈給' + foe + '恢復自身 5 點 HP',
     en: "; " + selfEn + "'s next 3 debuffs received are mirrored onto " + foeEn + ", healing " + (isNpc ? 'them' : 'you') + ' 5 HP each time' };
   if(e.t === 'immune') return {
-    s: '使用當下先解除' + self_ + '身上的不利狀態,接下來 3 次也不怕再被下' + '不利狀態', f: '並使' + self_ + '立即解除不利狀態,接下來 3 次不利狀態判定完全免疫',
+    s: '使用當下先解除' + self_ + '身上的不利狀態,接下來 3 次也不怕再被下' + '不利狀態', f: '' + self_ + '立即解除不利狀態,接下來 3 次不利狀態判定完全免疫',
     en: '; also cleanses ' + (isNpc ? 'their' : 'your') + ' debuffs and grants immunity to the next 3 debuffs' };
   if(e.t === 'silence') return {
-    s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,接下來 3 次' + foe + '都打不到人!', f: '並使' + foe + '損失 ' + e.v + ' 點 HP,接下來 3 次普通攻擊判定完全沒收',
+    s: '還會直接扣' + foe + ' ' + e.v + ' 滴血,接下來 3 次' + foe + '都打不到人!', f: '' + foe + '損失 ' + e.v + ' 點 HP,接下來 3 次普通攻擊判定完全沒收',
     en: '; also deals ' + e.v + ' damage to ' + foeEn + ' and silences their next 3 normal attacks' };
   /* ★ v1.56.0 — 攻擊型三隻獨立第二效果新文案(哪吒/呂布/蚩尤,老師 2026-09-09 需求「重複效果去重」第一批) */
   if(e.t === 'multihit') return {
-    s: '接下來' + self_ + '出手 3 次,每次都會多打一下,等於連打 2 下!', f: '並使' + self_ + '接下來 3 次成功攻擊,每次都會追加一次同傷害的攻擊判定',
+    s: '接下來' + self_ + '出手 3 次,每次都會多打一下,等於連打 2 下!', f: '' + self_ + '接下來 3 次成功攻擊,每次都會追加一次同傷害的攻擊判定',
     en: "; " + selfEn + "'s next 3 successful hits each strike twice" };
   if(e.t === 'lowhp_dmgup') return {
-    s: '自己血量每少 10%,攻擊傷害就會多 10%(整場都有效)', f: '並使' + self_ + '每損失 10% 最大 HP,攻擊造成的傷害即提升 10%,效果持續整場戰鬥',
+    s: '自己血量每少 10%,攻擊傷害就會多 10%(整場都有效)', f: '' + self_ + '每損失 10% 最大 HP,攻擊造成的傷害即提升 10%,效果持續整場戰鬥',
     en: "; " + selfEn + "'s attack damage rises 10% for every 10% max HP " + (isNpc ? 'they have' : 'you have') + ' lost, for the rest of the battle' };
   if(e.t === 'counter') return {
-    s: '接下來' + self_ + '被攻擊 3 次,每次都會反擊對手 10 滴血', f: '並使' + self_ + '接下來 3 次受到攻擊時,同步反擊' + foe + ' 10 點 HP',
+    s: '接下來' + self_ + '被攻擊 3 次,每次都會反擊對手 10 滴血', f: '' + self_ + '接下來 3 次受到攻擊時,同步反擊' + foe + ' 10 點 HP',
     en: "; for " + selfEn + "'s next 3 hits taken, " + (isNpc ? 'they' : 'you') + ' counterattack ' + foeEn + ' for 10 HP' };
   /* ★ v1.57.0 — 26隻攻擊/回復型英雄第二效果精修文案(老師 2026-09-09 完整改版指定內容) */
-  if(e.t === 'noatk2dmg') return { s: '還會直接扣' + foe + ' 5 滴血,接下來 2 次' + foe + '都無法普通攻擊', f: '並使' + foe + '損失 5 點 HP,接下來 2 次普通攻擊判定完全沒收',
+  if(e.t === 'noatk2dmg') return { s: '還會直接扣' + foe + ' 5 滴血,接下來 2 次' + foe + '都無法普通攻擊', f: '' + foe + '損失 5 點 HP,接下來 2 次普通攻擊判定完全沒收',
     en: '; also deals 5 damage to ' + foeEn + ' and silences their next 2 normal attacks' };
-  if(e.t === 'chargelock3') return { s: '接下來' + foe + '答對 3 次都不會計入爆發充能', f: '並使' + foe + '接下來 3 次答對判定不計入爆發充能',
+  if(e.t === 'chargelock3') return { s: '接下來' + foe + '答對 3 次都不會計入爆發充能', f: '' + foe + '接下來 3 次答對判定不計入爆發充能',
     en: "; " + foeEn + "'s next 3 correct answers don't build their burst gauge" };
-  if(e.t === 'cleanseheal15') return { s: '使用當下清除' + self_ + '身上的不利狀態,並多補 15 滴血', f: '並使' + self_ + '立即解除不利狀態並恢復 15 點 HP',
+  if(e.t === 'cleanseheal15') return { s: '使用當下清除' + self_ + '身上的不利狀態,多補 15 滴血', f: '' + self_ + '立即解除不利狀態恢復 15 點 HP',
     en: '; also cleanses debuffs and heals 15 HP' };
-  if(e.t === 'blindseal3') return { s: '接下來 3 次' + foe + '出手攻擊或用爆發技能都會完全落空', f: '並使' + foe + '接下來 3 次普通攻擊與爆發技能判定完全沒收',
+  if(e.t === 'blindseal3') return { s: '接下來 3 次' + foe + '出手攻擊或用爆發技能都會完全落空', f: '' + foe + '接下來 3 次普通攻擊與爆發技能判定完全沒收',
     en: "; " + foeEn + "'s next 3 attacks or burst attempts all miss" };
-  if(e.t === 'weaken3') return { s: '接下來 3 次' + foe + '出手攻擊,造成的傷害都會少一半', f: '並使' + foe + '接下來 3 次造成傷害的判定,傷害減少 50%',
+  if(e.t === 'weaken3') return { s: '接下來 3 次' + foe + '出手攻擊,造成的傷害都會少一半', f: '' + foe + '接下來 3 次造成傷害的判定,傷害減少 50%',
     en: "; " + foeEn + "'s next 3 hits dealt do 50% less damage" };
-  if(e.t === 'fullimmune2') return { s: '接下來 2 次' + self_ + '受到攻擊或不利狀態都完全免疫', f: '並使' + self_ + '接下來 2 次受到的傷害與不利狀態完全免疫',
+  if(e.t === 'fullimmune2') return { s: '接下來 2 次' + self_ + '受到攻擊或不利狀態都完全免疫', f: '' + self_ + '接下來 2 次受到的傷害與不利狀態完全免疫',
     en: "; " + selfEn + "'s next 2 hits taken and debuffs are fully immune" };
-  if(e.t === 'halfreflect3') return { s: '接下來 3 次' + self_ + '受傷減半,剩下一半還會反彈回去給' + foe, f: '並使' + self_ + '接下來 3 次受到傷害減少 50%,剩餘傷害同步反彈給' + foe,
+  if(e.t === 'halfreflect3') return { s: '接下來 3 次' + self_ + '受傷減半,剩下一半還會反彈回去給' + foe, f: '' + self_ + '接下來 3 次受到傷害減少 50%,剩餘傷害同步反彈給' + foe,
     en: "; " + selfEn + "'s next 3 hits taken are halved, with the rest reflected back to " + foeEn };
-  if(e.t === 'noatk2') return { s: '接下來 2 次' + foe + '都無法出手攻擊', f: '並使' + foe + '接下來 2 次普通攻擊判定完全沒收',
+  if(e.t === 'noatk2') return { s: '接下來 2 次' + foe + '都無法出手攻擊', f: '' + foe + '接下來 2 次普通攻擊判定完全沒收',
     en: "; " + foeEn + "'s next 2 attacks are silenced" };
-  if(e.t === 'dmgbank3') return { s: '接下來' + self_ + '受傷 3 次都先記著,滿 3 次後一次全部還給' + foe, f: '並使' + self_ + '接下來 3 次受到的傷害累積起來,倒數歸零時一次性反擊給' + foe,
+  if(e.t === 'dmgbank3') return { s: '接下來' + self_ + '受傷 3 次都先記著,滿 3 次後一次全部還給' + foe, f: '' + self_ + '接下來 3 次受到的傷害累積起來,倒數歸零時一次性反擊給' + foe,
     en: "; " + selfEn + "'s next 3 hits taken are banked and unleashed on " + foeEn + ' all at once' };
-  if(e.t === 'jam2seal') return { s: '接下來 2 次' + foe + '答對不計入充能,也不能用爆發技能', f: '並使' + foe + '接下來 2 次答對不計入充能,且爆發技能被封印',
+  if(e.t === 'jam2seal') return { s: '接下來 2 次' + foe + '答對不計入充能,也不能用爆發技能', f: '' + foe + '接下來 2 次答對不計入充能,且爆發技能被封印',
     en: "; " + foeEn + "'s next 2 correct answers don't charge their burst, and their burst is sealed" };
-  if(e.t === 'stealbuff') return { s: '使用當下直接奪走' + foe + '身上的有利狀態,變成自己的!', f: '並使' + self_ + '奪取' + foe + '目前持有的有利狀態(護盾/回血/減傷擇一)',
+  if(e.t === 'stealbuff') return { s: '使用當下直接奪走' + foe + '身上的有利狀態,變成自己的!', f: '' + self_ + '奪取' + foe + '目前持有的有利狀態(護盾/回血/減傷擇一)',
     en: "; also steals " + foeEn + "'s current buff (shield/regen/damage-reduction) for " + (isNpc ? 'them' : 'you') };
-  if(e.t === 'phoenix') return { s: '接下來 3 次' + foe + '回的血都會轉移過來給' + self_ + ',且自己倒下時會以 10 血自動復活一次!', f: '並使' + foe + '接下來 3 次回復的 HP 轉移給' + self_ + ',倒下時無條件以 10 HP 自動復活(整場限一次)',
+  if(e.t === 'phoenix') return { s: '接下來 3 次' + foe + '回的血都會轉移過來給' + self_ + ',且自己倒下時會以 10 血自動復活一次!', f: '' + foe + '接下來 3 次回復的 HP 轉移給' + self_ + ',倒下時無條件以 10 HP 自動復活(整場限一次)',
     en: "; " + foeEn + "'s next 3 heals are redirected to " + (isNpc ? 'them' : 'you') + ", and " + (isNpc ? 'they' : 'you') + ' auto-revive once with 10 HP if knocked out' };
-  if(e.t === 'noatk2lifesteal') return { s: '接下來 2 次' + foe + '無法攻擊' + self_ + ',且這段期間' + self_ + '造成傷害的一半會變成血補回來', f: '並使' + foe + '接下來 2 次無法攻擊' + self_ + ',同時' + self_ + '造成傷害的 50% 轉為恢復自身 HP',
+  if(e.t === 'noatk2lifesteal') return { s: '接下來 2 次' + foe + '無法攻擊' + self_ + ',且這段期間' + self_ + '造成傷害的一半會變成血補回來', f: '' + foe + '接下來 2 次無法攻擊' + self_ + ',同時' + self_ + '造成傷害的 50% 轉為恢復自身 HP',
     en: "; " + foeEn + "'s next 2 attacks on " + (isNpc ? 'them' : 'you') + ' are blocked, and 50% of damage dealt heals ' + (isNpc ? 'them' : 'you') };
-  if(e.t === 'selfcost1030') return { s: '用' + self_ + '10 滴血為代價,讓' + foe + '直接損失 30 滴血', f: '並使' + self_ + '付出 10 點 HP 為代價,對' + foe + '造成 30 點直接傷害',
+  if(e.t === 'selfcost1030') return { s: '用' + self_ + '10 滴血為代價,讓' + foe + '直接損失 30 滴血', f: '' + self_ + '付出 10 點 HP 為代價,對' + foe + '造成 30 點直接傷害',
     en: "; " + selfEn + ' spends 10 HP to deal 30 direct damage to ' + foeEn };
-  if(e.t === 'regen5x6') return { s: '接下來 5 回合,' + self_ + '每回合自動多回 6 滴血', f: '並使' + self_ + '接下來 5 回合,每回合恢復 6 點 HP',
+  if(e.t === 'regen5x6') return { s: '接下來 5 回合,' + self_ + '每回合自動多回 6 滴血', f: '' + self_ + '接下來 5 回合,每回合恢復 6 點 HP',
     en: "; " + selfEn + " regens 6 HP each round for the next 5 rounds" };
-  if(e.t === 'poison5x5') return { s: '還讓' + foe + '中毒 5 回合,每回合流失 5 滴血', f: '並使' + foe + '中毒,接下來 5 回合每回合流失 5 點 HP',
+  if(e.t === 'poison5x5') return { s: '還讓' + foe + '中毒 5 回合,每回合流失 5 滴血', f: '' + foe + '中毒,接下來 5 回合每回合流失 5 點 HP',
     en: "; also poisons " + foeEn + " for 5 rounds, losing 5 HP each round" };
-  if(e.t === 'siphon15') return { s: '還會直接扣' + foe + ' 15 滴血,同時幫' + self_ + '補 15 滴血', f: '並使' + foe + '損失 15 點 HP,同時' + self_ + '恢復 15 點 HP',
+  if(e.t === 'siphon15') return { s: '還會直接扣' + foe + ' 15 滴血,同時幫' + self_ + '補 15 滴血', f: '' + foe + '損失 15 點 HP,同時' + self_ + '恢復 15 點 HP',
     en: "; also deals 15 damage to " + foeEn + ' and heals ' + selfEn + ' 15 HP' };
-  if(e.t === 'reflectheal3') return { s: '接下來 3 次' + self_ + '受到攻擊,一半反彈給' + foe + '、一半變成自己回血', f: '並使' + self_ + '接下來 3 次受到攻擊時,傷害一半反彈給' + foe + ',另一半轉為自身回復',
+  if(e.t === 'reflectheal3') return { s: '接下來 3 次' + self_ + '受到攻擊,一半反彈給' + foe + '、一半變成自己回血', f: '' + self_ + '接下來 3 次受到攻擊時,傷害一半反彈給' + foe + ',另一半轉為自身回復',
     en: "; " + selfEn + "'s next 3 hits taken split half as reflected damage to " + foeEn + ' and half as self-healing' };
-  if(e.t === 'potion15') return { s: '使用當下幫' + self_ + '補 15 滴血,同時扣' + foe + ' 15 滴血', f: '並使' + self_ + '立即恢復 15 點 HP,同時對' + foe + '造成 15 點傷害',
+  if(e.t === 'potion15') return { s: '使用當下幫' + self_ + '補 15 滴血,同時扣' + foe + ' 15 滴血', f: '' + self_ + '立即恢復 15 點 HP,同時對' + foe + '造成 15 點傷害',
     en: '; also heals ' + selfEn + ' 15 HP and deals 15 damage to ' + foeEn };
-  if(e.t === 'cleansebleed6') return { s: '解除' + self_ + '所有不利狀態,還讓' + foe + '易傷 3 回合(多痛 6 滴血)', f: '並使' + self_ + '立即解除所有不利狀態,同時使' + foe + '陷入易傷,接下來 3 次受傷多扣 6 點 HP',
+  if(e.t === 'cleansebleed6') return { s: '解除' + self_ + '所有不利狀態,還讓' + foe + '易傷 3 回合(多痛 6 滴血)', f: '' + self_ + '立即解除所有不利狀態,同時使' + foe + '陷入易傷,接下來 3 次受傷多扣 6 點 HP',
     en: '; also cleanses all debuffs and leaves ' + foeEn + ' vulnerable, taking 6 extra damage on the next 3 hits' };
-  if(e.t === 'averagehp') return { s: '使用當下讓雙方 HP 立刻拉平,各為原本兩人的平均值', f: '並使雙方 HP 立即均分為兩者平均值',
+  if(e.t === 'averagehp') return { s: '使用當下讓雙方 HP 立刻拉平,各為原本兩人的平均值', f: '雙方 HP 立即均分為兩者平均值',
     en: '; also instantly averages both HP totals' };
-  if(e.t === 'healatk') return { s: '使用當下幫' + self_ + '補 10 滴血,並連續攻擊' + foe + '共扣 15 滴血', f: '並使' + self_ + '恢復 10 點 HP,同時對' + foe + '造成共 15 點傷害',
+  if(e.t === 'healatk') return { s: '使用當下幫' + self_ + '補 10 滴血,連續攻擊' + foe + '共扣 15 滴血', f: '' + self_ + '恢復 10 點 HP,同時對' + foe + '造成共 15 點傷害',
     en: '; also heals ' + selfEn + ' 10 HP and deals 15 total damage to ' + foeEn };
-  if(e.t === 'maxhp20heal20') return { s: '使用當下' + self_ + 'HP 上限永久提升 20,並立刻補滿這 20 滴血', f: '並使' + self_ + 'HP 上限永久增加 20,同時立即恢復 20 點 HP',
+  if(e.t === 'maxhp20heal20') return { s: '使用當下' + self_ + 'HP 上限永久提升 20,立刻補滿這 20 滴血', f: '' + self_ + 'HP 上限永久增加 20,同時立即恢復 20 點 HP',
     en: "; also permanently raises " + selfEn + "'s max HP by 20 and heals 20 HP" };
-  if(e.t === 'cleansethorndmg3') return { s: '解除' + self_ + '所有不利狀態,接下來 3 次再被下不利狀態,都會反彈給' + foe + '並追加 10 滴血傷害', f: '並使' + self_ + '立即解除不利狀態,接下來 3 次受到不利狀態時同步反彈給' + foe + '並追加 10 點傷害',
+  if(e.t === 'cleansethorndmg3') return { s: '解除' + self_ + '所有不利狀態,接下來 3 次再被下不利狀態,都會反彈給' + foe + '追加 10 滴血傷害', f: '' + self_ + '立即解除不利狀態,接下來 3 次受到不利狀態時同步反彈給' + foe + '追加 10 點傷害',
     en: '; also cleanses debuffs, and the next 3 debuffs received are mirrored onto ' + foeEn + ' with 10 extra damage' };
-  if(e.t === 'regenpoison3x5') return { s: '接下來 3 回合,' + self_ + '每回合回 5 滴血,' + foe + '每回合流失 5 滴血', f: '並使' + self_ + '接下來 3 回合每回合恢復 5 點 HP,同時' + foe + '每回合流失 5 點 HP',
+  if(e.t === 'regenpoison3x5') return { s: '接下來 3 回合,' + self_ + '每回合回 5 滴血,' + foe + '每回合流失 5 滴血', f: '' + self_ + '接下來 3 回合每回合恢復 5 點 HP,同時' + foe + '每回合流失 5 點 HP',
     en: "; for the next 3 rounds, " + selfEn + ' regens 5 HP and ' + foeEn + ' loses 5 HP each round' };
-  if(e.t === 'heal20dmgup3') return { s: '使用當下幫' + self_ + '補 20 滴血,接下來 3 次攻擊傷害都多 50%', f: '並使' + self_ + '恢復 20 點 HP,接下來 3 次造成傷害提升 50%',
+  if(e.t === 'heal20dmgup3') return { s: '使用當下幫' + self_ + '補 20 滴血,接下來 3 次攻擊傷害都多 50%', f: '' + self_ + '恢復 20 點 HP,接下來 3 次造成傷害提升 50%',
     en: '; also heals ' + selfEn + ' 20 HP and boosts ' + selfEn + "'s next 3 hits by 50% damage" };
-  if(e.t === 'dodge2heal10') return { s: '接下來完全迴避 2 次攻擊,並幫' + self_ + '補 10 滴血', f: '並使' + self_ + '完全迴避接下來 2 次受到的攻擊,同時恢復 10 點 HP',
+  if(e.t === 'dodge2heal10') return { s: '接下來完全迴避 2 次攻擊,幫' + self_ + '補 10 滴血', f: '' + self_ + '完全迴避接下來 2 次受到的攻擊,同時恢復 10 點 HP',
     en: '; also fully dodges the next 2 hits taken and heals ' + selfEn + ' 10 HP' };
-  if(e.t === 'dmgimmune3') return { s: '接下來 3 次' + self_ + '受到的傷害完全免疫', f: '並使' + self_ + '接下來 3 次受到的傷害完全免疫',
+  if(e.t === 'dmgimmune3') return { s: '接下來 3 次' + self_ + '受到的傷害完全免疫', f: '' + self_ + '接下來 3 次受到的傷害完全免疫',
     en: "; " + selfEn + "'s next 3 hits taken deal zero damage" };
   /* ★ v1.59.0 — 剩餘19隻攻擊型+死靈法師確認提議表後的文案(2026-09-09) */
-  if(e.t === 'dodgechance3') return { s: '接下來' + self_ + '被攻擊 3 次,每次都有 50% 機率完全免疫', f: '並使' + self_ + '接下來 3 次受到攻擊,各有 50% 機率完全免疫傷害',
+  if(e.t === 'dodgechance3') return { s: '接下來' + self_ + '被攻擊 3 次,每次都有 50% 機率完全免疫', f: '' + self_ + '接下來 3 次受到攻擊,各有 50% 機率完全免疫傷害',
     en: "; " + selfEn + "'s next 3 hits taken each have a 50% chance to be fully dodged" };
-  if(e.t === 'critboost3') return { s: '接下來' + self_ + '出手 3 次都必定爆擊,傷害多 50%', f: '並使' + self_ + '接下來 3 次造成傷害的判定必定爆擊,傷害提升 50%',
+  if(e.t === 'critboost3') return { s: '接下來' + self_ + '出手 3 次都必定爆擊,傷害多 50%', f: '' + self_ + '接下來 3 次造成傷害的判定必定爆擊,傷害提升 50%',
     en: "; " + selfEn + "'s next 3 hits always crit for 50% more damage" };
-  if(e.t === 'poison3x5') return { s: '還讓' + foe + '灼燒 3 回合,每回合流失 5 滴血', f: '並使' + foe + '陷入灼燒,接下來 3 回合每回合流失 5 點 HP',
+  if(e.t === 'poison3x5') return { s: '還讓' + foe + '灼燒 3 回合,每回合流失 5 滴血', f: '' + foe + '陷入灼燒,接下來 3 回合每回合流失 5 點 HP',
     en: "; also burns " + foeEn + " for 3 rounds, losing 5 HP each round" };
-  if(e.t === 'undying3') return { s: '接下來 3 次' + self_ + '就算血歸零也不會倒下,固定留 1 滴血', f: '並使' + self_ + '接下來 3 次即使傷害會讓 HP 歸零,也固定留下 1 點 HP 不倒下',
+  if(e.t === 'undying3') return { s: '接下來 3 次' + self_ + '就算血歸零也不會倒下,固定留 1 滴血', f: '' + self_ + '接下來 3 次即使傷害會讓 HP 歸零,也固定留下 1 點 HP 不倒下',
     en: "; for " + selfEn + "'s next 3 lethal hits, HP is held at 1 instead of reaching 0" };
-  if(e.t === 'swaphp') return { s: '使用當下立刻和' + foe + '交換血量!', f: '並使' + self_ + '與' + foe + '的目前 HP 立即互換',
+  if(e.t === 'swaphp') return { s: '使用當下立刻和' + foe + '交換血量!', f: '' + self_ + '與' + foe + '的目前 HP 立即互換',
     en: '; also instantly swaps current HP with ' + foeEn };
-  if(e.t === 'breakdef3') return { s: '接下來 3 次' + foe + '受到的傷害會多 50%', f: '並使' + foe + '接下來 3 次受到傷害的判定,傷害提升 50%',
+  if(e.t === 'breakdef3') return { s: '接下來 3 次' + foe + '受到的傷害會多 50%', f: '' + foe + '接下來 3 次受到傷害的判定,傷害提升 50%',
     en: "; " + foeEn + "'s next 3 hits taken deal 50% more damage" };
-  if(e.t === 'lifesteal3') return { s: '接下來' + self_ + '出手命中 3 次,都會吸取傷害的一半回血', f: '並使' + self_ + '接下來 3 次造成傷害的判定,各吸取該次傷害 50% 回復自身 HP',
+  if(e.t === 'lifesteal3') return { s: '接下來' + self_ + '出手命中 3 次,都會吸取傷害的一半回血', f: '' + self_ + '接下來 3 次造成傷害的判定,各吸取該次傷害 50% 回復自身 HP',
     en: "; " + selfEn + "'s next 3 hits each heal for 50% of the damage dealt" };
-  if(e.t === 'stealcharge1') return { s: '使用當下直接從' + foe + '爆發條奪走 1 格,補給自己', f: '並使' + self_ + '從' + foe + '的爆發條奪取 1 格,轉移到自己的爆發條',
+  if(e.t === 'stealcharge1') return { s: '使用當下直接從' + foe + '爆發條奪走 1 格,補給自己', f: '' + self_ + '從' + foe + '的爆發條奪取 1 格,轉移到自己的爆發條',
     en: "; also steals 1 charge from " + foeEn + "'s burst gauge onto " + (isNpc ? 'their' : 'your') + ' own' };
-  if(e.t === 'shieldbreak') return { s: '使用當下直接打碎' + foe + '身上所有的護盾!', f: '並使' + foe + '身上的護盾格數立即歸零',
+  if(e.t === 'shieldbreak') return { s: '使用當下直接打碎' + foe + '身上所有的護盾!', f: '' + foe + '身上的護盾格數立即歸零',
     en: '; also shatters all of ' + foeEn + "'s shields" };
-  if(e.t === 'executelow15') return { s: '若' + foe + 'HP 低於 30%,直接再扣 15 滴血', f: '並使' + foe + '若目前 HP 低於 30%,直接額外損失 15 點 HP',
+  if(e.t === 'executelow15') return { s: '若' + foe + 'HP 低於 30%,直接再扣 15 滴血', f: '' + foe + '若目前 HP 低於 30%,直接額外損失 15 點 HP',
     en: "; if " + foeEn + "'s HP is below 30%, also deals 15 direct damage" };
   return { s:'', f:'', en:'' };
 }
