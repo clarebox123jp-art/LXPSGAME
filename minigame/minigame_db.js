@@ -3290,27 +3290,27 @@ window.MG_GAMES = [
      本回合不重複;取消雙倍發光。ops 鍵值:add/sub/mul/div/dec/frac。 */
   rounds: [
     { q: { s: '第一關:射下算對的加法!', f: '第一關:加法。射中結果正確的算式,錯的不要碰。', en: 'Round 1: Shoot the correct addition sums!' },   /* ★ v1.13.0 英文版 */
-      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:26 need:7) */ ops: ['add'],
+      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:26 need:7,v1.29.0 曾改為 2) */ ops: ['add'],
       tip: { s: '只射對的!', f: '算錯的不要射,會爆炸扣分', en: 'Only shoot the correct ones!' },
       why: { s: '個位加起來超過 10 要進位。', f: '兩位數加法先算個位,滿十進一;例如 47+35:7+5=12 進一位,4+3+1=8 ⇒ 82。', en: "When the ones digits add to more than 10, carry the extra 1." } },
     { q: { s: '第二關:加法＋減法!', f: '第二關:加法與減法混合,注意進位與退位。', en: 'Round 2: Addition and subtraction!' },
-      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:26 need:7) */ ops: ['add', 'sub'],
+      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:26 need:7,v1.29.0 曾改為 2) */ ops: ['add', 'sub'],
       tip: { s: '看清楚是加還是減', f: '先看符號,再算個位', en: 'Watch the sign — plus or minus?' },
       why: { s: '減法個位不夠減要向十位借。', f: '52−18:個位 2 不夠減 8,向十位借 1 變 12−8=4,十位 4−1=3 ⇒ 34。', en: 'When the ones digit is not enough to subtract, borrow 1 from the tens.' } },
     { q: { s: '第三關:加、減、乘!', f: '第三關:加減乘混合,乘法口訣要反射出來。', en: 'Round 3: Add, subtract, multiply!' },
-      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:26 need:7) */ ops: ['add', 'sub', 'mul'],
+      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:26 need:7,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul'],
       tip: { s: '乘法口訣要熟', f: '看到 6×7 直接反射 42', en: 'Know your times tables!' },
       why: { s: '乘法口訣背熟,判斷就快。', f: '乘法口訣熟練後判斷正誤比重算快很多;兩位數乘一位數可以拆開:12×6 = 10×6 + 2×6 = 72。', en: 'Know your multiplication facts well and you can judge faster than recalculating.' } },
     { q: { s: '第四關:加減乘除全上!', f: '第四關:四則運算全部登場,除法想成乘法反過來。', en: 'Round 4: All four operations!' },
-      sec: 15, need: 2, /* ★ v1.29.0 戰鬥模式:逐射擊計 HP,6 回合各 2 命中(原 sec:28 need:7) */ ops: ['add', 'sub', 'mul', 'div'],
+      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:28 need:7,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul', 'div'],
       tip: { s: '除法想成「幾個幾」', f: '45÷5 想成 5 乘幾等於 45', en: 'Think of division as "how many groups of".' },
       why: { s: '除法就是乘法反過來。', f: '45÷5 想成「5 乘幾等於 45」;超過九九乘法先湊整數:96÷8 → 80÷8=10,再 16÷8=2,合起來 12。', en: 'Division is just multiplication in reverse.' } },
     { q: { s: '第五關:加上小數!', f: '第五關:四則運算加入小數,小數點要對齊。', en: 'Round 5: Add decimals!' },
-      sec: 15, need: 2, /* ★ v1.29.0(原 sec:28 need:6) */ ops: ['add', 'sub', 'mul', 'div', 'dec'],
+      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:28 need:6,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul', 'div', 'dec'],
       tip: { s: '小數點對齊再算', f: '小數加減要對齊小數點', en: 'Line up the decimal points first.' },
       why: { s: '小數加減要把小數點對齊。', f: '小數加減先對齊小數點再像整數一樣算;小數乘整數先當整數算,最後再點回小數點(2.5×3:25×3=75 → 7.5)。', en: 'Line up the decimal points before adding or subtracting.' } },
     { q: { s: '第六關:加上分數!', f: '第六關:四則運算加入分數,等值分數與分數比大小。', en: 'Round 6: Add fractions!' },
-      sec: 15, need: 2, /* ★ v1.29.0(原 sec:30 need:6) */ ops: ['add', 'sub', 'mul', 'div', 'frac'],
+      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:30 need:6,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul', 'div', 'frac'],
       tip: { s: '分母越大一份越小', f: '等值分數=分子分母同乘一數', en: 'The bigger the denominator, the smaller each piece.' },
       why: { s: '分母越大,一份反而越小喔!', f: '等值分數是分子分母同乘(或同除)一個數:1/2 = 2/4 = 3/6;比大小要通分或交叉相乘:1/2 vs 1/3 → 1×3 > 1×2,所以 1/2 較大。3/8 = 0.375。', en: 'The bigger the denominator, the smaller each piece is!' } }
   ]

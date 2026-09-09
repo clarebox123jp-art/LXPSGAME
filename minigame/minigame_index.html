@@ -15,7 +15,42 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.62.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.0(2026-09-09)
+     ★ v1.65.0(2026-09-09・老師四項需求:超時懲罰稽核 ＋ 附加文字全黃+空兩格 ＋ 戰敗灰星+再接再厲 ＋ 解說視窗貼齊下一題鈕)—
+       ①【超時懲罰稽核,已確認全部合規,無需改動】逐一稽核 15 款小遊戲的計時機制:除 react(算數大進擊)
+       和 match3(元素消消樂)外的 12 款引擎全部共用 startTimer/onTimeout(renderQuestion 第 4336 行的排除條件只排除這兩款),onTimeout 本來就無條件呼叫 mgBattleHit(false)(玩家 −10、
+       對手 +1 充能);match3 的 mgM3EndTurnAttempt(沒有任何操作)與 mgM3FinishTurn 的 else 分支(有操作
+       但沒消除)都已呼叫 mgBattleHit(false);react 在 v1.63.0 已補上「過時未達標額外補一次懲罰」。
+       三條路徑逐一確認過,全部符合「沒有做出任何選擇或沒有完成目標任務就受到對手1次10HP攻擊」。
+       ②【附加文字全黃+前面空兩格】mgEff2Html 改成整段(「附加:」標籤+後面的效果說明文字)都包進同一個
+       黃色(#ffe066)<span>,並在最前面加兩個全形空格(空格本身不上色),跟前面的基本效果文字段落
+       做出視覺區隔。
+       ③【戰敗灰星+再接再厲,已預先做好】finishGame 的 _lost 判斷(取自 _bs.win)、星星 .lost 灰階
+       CSS、#r-encourage「再接再厲…」置中蓋在星星正上方的動畫與定位、評分頁 bgm 戰敗時沿用
+       bgm-lose——全部核對過已經到位,這輪沒有再改動。
+       ④【解說視窗貼齊下一題鈕】#fbdock 從 v1.61.0 的螢幕正中央置中,改回貼底(bottom 值跟 #nextrow
+       同步),right 改在 showFeedback 內用 JS 讀 #nextrow 的實際 getBoundingClientRect 動態計算
+       (視窗寬度−nextrow左緣+12px間距),不管「下一題→」/「看成績→」字數不同造成的按鈕寬度差異,
+       永遠貼在鈕的正左邊;KO 已發生、nextrow 隱藏時不重新計算,交給 CSS 預設值。
+     ★ v1.64.0(2026-09-09・老師需求「所有有利/不利狀態都要有標籤顯示,點角色卡開狀態說明小視窗」)—
+       新增 MG_STATUS_DEFS 登記表(約 28 種目前可能存在的第二效果狀態欄位,逐一定義圖示/buff綠框或
+       bad紅框/一句話說明),取代原本 .bt-sh 只用優先權判斷式一次只顯示 1 個狀態的舊寫法;
+       mgBattlePaint 改成把 mgStatusActiveList(S) 掃出的全部生效中狀態畫成多個小徽章。新增
+       #bt-p-pop/#bt-n-pop 小視窗(蓋在立繪正中央),點擊角色立繪(.bt-img,跟頭頂爆發鈕分開不會搶
+       點擊事件)呼叫 mgStatusPopupToggle 開關,列出每個生效狀態的完整說明,再點一次關閉;
+       _BT.p/_BT.n 新增 statusPopupOpen 欄位(初始 false)。新增狀態欄位時只需要在 MG_STATUS_DEFS
+       加一筆,不必再去 mgBattlePaint 加判斷式。
+     ★ v1.63.0(2026-09-09・老師需求「算數大進擊改版:每關目標3個、射對不反擊/射錯才反擊、過時未達標補罰」)—
+       ①6 關 need 全由 2 改 3(每關目標射對 3 個答案)。
+       ②mgBattleHit 新增可選第三參數 skipTurnDmg:true 時跳過函式尾端「不論答對答錯都固定反擊一次」的
+       全域安全網(v1.42.0 NPC_TURN_DMG),只留 ok/miss 分支自己內建的那一下攻擊;_reactHit 的兩個
+       mgBattleHit 呼叫都改傳第三參數 true——射對:玩家攻擊對手10HP+玩家充能+1,對手這次不反擊;
+       射錯:對手反擊玩家10HP+對手充能+1,只算一次(不會被全域安全網再補一刀)。刻意做成「選用」而非
+       改全域行為,其餘 14 款引擎呼叫時不傳第三參數,行為完全不變。
+       ③_reactFinish 新增:時間到但還沒集滿 need 個正確答案時,額外補一次跟射錯同一條路徑的戰鬥懲罰
+       (對手反擊+對手充能),跟每次真的射錯的懲罰各自獨立疊加,不是互相替代。
+       ④「直到雙方任一方倒下才結束」不需要額外改動——KO 判定(mgBattleCheckKO)本來就掛在每次
+       mgBattleHit 呼叫之後,任一方 HP 見底會立即結算,是既有的全域機制,本來就會這樣運作。
      ★ v1.62.0(2026-09-09・老師需求「木柵回收小英雄整題改成磁鐵電流單元,回收題目移到迷宮探險」)—
        ①原本「回收小英雄」(id:'recycle')關卡混合 130 題:50題回收科學quiz+30題回收拖曳分類(佔80題)、
        以及已經存在的六上自然第四單元「電磁鐵」複習題 40題quiz+10題拖曳(佔50題,cr:'6a4')。這輪把
@@ -1181,6 +1216,13 @@ button[disabled]{opacity:.45;}
 #result .stars span{display:inline-block;opacity:0;transform:scale(.2);}
 #result .stars span.lit{animation:starpop .55s cubic-bezier(.2,1.6,.4,1) forwards;text-shadow:0 0 16px rgba(240,192,96,.8);}
 #result .stars span.dim{opacity:.22;transform:none;}
+/* ★ v1.65.0(老師需求「英雄被打倒,星級改灰色」)— 戰敗時星星整排改用這個 class(取代 lit/dim),
+   不用金色系,一律灰色且不做彈出動畫,一眼看出跟正常有拿到星星的成功結算不一樣。 */
+#result .stars span.lost{opacity:.55;transform:none;color:#8a8a8a;text-shadow:none;}
+#result .stars-wrap{position:relative;}
+/* ★ v1.65.0 — 蓋在星星正上方的「再接再厲…」大字,只在戰敗時加 show 顯示;pointer-events:none 不擋任何按鈕 */
+#result .r-encourage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-size:30px;font-weight:900;color:#ffb238;text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 18px rgba(255,140,0,.6);letter-spacing:2px;z-index:2;}
+#result .r-encourage.show{display:block;animation:starpop .5s cubic-bezier(.2,1.6,.4,1) forwards;}
 @keyframes starpop{0%{opacity:0;transform:scale(.2) rotate(-40deg);}60%{opacity:1;transform:scale(1.35) rotate(8deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
 #result .big{position:relative;font-size:60px;text-shadow:0 0 22px rgba(240,192,96,.5);}
 #result .r-glow{
@@ -1917,15 +1959,18 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #play-right{padding-bottom:60px;}
 }
 /* ── v1.5.1 解說文字停靠區:橫式固定在「下一題」鈕正上方、字放大;直式不顯示(文字留在左欄解說卡) ──
-   ★ v1.61.0(老師需求「正確答案解說視窗要跳出來在畫面中央」)— 原本釘在右下角(下一題鈕正上方)的定位改成
-   螢幕正中央(left/top 50% + translate 置中),不再跟著 nextrow 貼右下;寬度/高度上限沿用原本數值,
-   只是改用置中的方式呈現「跳出視窗」的觀感,不擋住下一題鈕(z-index 仍低於 nextrow 的 116)。 */
+   ★ v1.61.0(老師需求「正確答案解說視窗要跳出來在畫面中央」)— 一度改成螢幕正中央置中。
+   ★ v1.65.0(老師需求「正確答案說明視窗移到畫面下方置中(下一題按鈕的左邊貼齊)」)— 改回貼底,
+   跟 #nextrow 同一個 bottom 值(視覺上下緣切齊),right 改由 JS(showFeedback 內)依 #nextrow 實際
+   渲染寬度動態算,永遠貼在下一題鈕的正左邊,不管鈕本身文字長短(「下一題→」/「看成績→」寬度不同)
+   或 min-width/max-width 造成的實際寬度變化;CSS 這裡只留一個保守預設值當 JS 算不出來時的退路。 */
 #fbdock{display:none;}
 @media (orientation:landscape){
   #fbdock.show{
     display:block;position:fixed;z-index:115;
-    left:50%;top:50%;transform:translate(-50%,-50%);
-    width:min(52vw,760px);max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    right:280px;right:calc(280px + env(safe-area-inset-right,0px));   /* JS 算出實際值前的退路,約等於下一題鈕最小寬度+間距 */
+    bottom:22px;bottom:calc(22px + env(safe-area-inset-bottom,0px));
+    width:min(46vw,640px);max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
     background:rgba(8,10,16,.94);border:2.5px solid var(--gold);border-left-width:8px;border-radius:18px;
     padding:16px 22px;box-shadow:0 14px 40px rgba(0,0,0,.65);
     font-size:22px;font-size:clamp(19px,1.9vw,30px);line-height:1.6;color:var(--mist);
@@ -1962,7 +2007,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #fbzoom.show img{max-width:56vw;}
 }
 @media (orientation:landscape) and (max-height:520px){
-  #fbdock.show{width:min(56vw,600px);max-height:50vh;font-size:15px;padding:10px 14px;border-radius:12px;}
+  #fbdock.show{width:min(56vw,600px);max-height:50vh;font-size:15px;padding:10px 14px;border-radius:12px;bottom:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:210px;right:calc(210px + env(safe-area-inset-right,0px));}   /* ★ v1.65.0 — 矮螢幕下 bottom 改跟 #nextrow 的矮螢幕版本(10px)同值;right 退路值同步縮小 */
 }
 /* ★ v1.7.0 首頁卡片:關卡名放大、第二行最佳星星移除 */
 .cell .cstar{display:none !important;}
@@ -2023,8 +2068,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    aspect-ratio 由 3/4 改 3/2.8(＝同寬度下高度縮減 30%),搭配下面既有的 object-fit:cover +
    object-position:top,裁掉的是立繪下半部(腿部/下擺),臉與上半身保留;圖片變矮讓下方名稱／HP／
    爆發鈕／效果說明整體往上縮、可用高度變多,效果說明不會再被擠出可視範圍。橫式(iPad)覆寫同步處理見下方。 */
-.bt-img{width:100%;aspect-ratio:3/2.8;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:48px;}
+.bt-img{width:100%;aspect-ratio:3/2.8;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .bt-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+/* ★ v1.64.0(老師需求「點擊角色卡會顯示狀態效果的說明小視窗(再點一次關閉)」)—
+   點擊目標是立繪(.bt-img),跟頭頂的爆發鈕(.bt-top)分開,不會互相搶點擊事件;小視窗用 position:absolute
+   蓋在立繪正中央(z-index 6,高於立繪本身但低於受擊特效層),不佔版面空間、不影響卡片本身高度。 */
+.bt-pop{display:none;position:absolute;inset:4px;z-index:6;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(8,10,16,.94);border:2px solid var(--gold);border-radius:10px;padding:8px 10px;text-align:left;}
+.bt-pop.show{display:block;}
+.bt-pop-empty{font-size:13px;color:var(--mist);opacity:.8;text-align:center;padding:10px 0;}
+.bt-pop-row{margin-bottom:8px;}
+.bt-pop-row:last-child{margin-bottom:0;}
+.bt-pop-row b{display:block;font-size:13px;margin-bottom:2px;}
+.bt-pop-row span{display:block;font-size:12px;line-height:1.4;color:var(--mist);opacity:.9;}
+.bt-pop-row.buff b{color:#4dff8a;}
+.bt-pop-row.bad b{color:#ff6a6a;}
 .bt-info{width:100%;min-width:0;display:flex;flex-direction:column;gap:6px;}
 .bt-name{font-size:19px;font-weight:900;letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bt-hpbar{position:relative;height:22px;border-radius:11px;background:rgba(255,255,255,.12);overflow:hidden;}
@@ -2036,8 +2093,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    注意到;改成小圓角底色徽章(黑底半透明+彩色文字+細邊框),比照傷害飄字同一套「深色底、彩色字更醒目」
    語彙,字級放大、加粗;顏色維持原本淡藍(=護盾)不變,個別狀態(封印/魅惑/易傷)的顏色差異本來就交給
    emoji 圖示辨識,這裡只加強「看得到、看得清楚」,不動色彩語意。 */
-.bt-sh{font-size:12.5px;font-size:13.5px;font-weight:700;color:#cfe9ff;min-height:20px;line-height:20px;text-align:center;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid rgba(159,208,255,.4);}
-.bt-sh:empty{background:transparent;border-color:transparent;padding:0;min-height:16px;line-height:16px;}
+.bt-sh{font-size:12.5px;font-size:13.5px;font-weight:700;min-height:20px;line-height:20px;text-align:center;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;}
+.bt-sh:empty{min-height:16px;}
+/* ★ v1.64.0 — 多狀態徽章:buff 綠框、bad(不利狀態)紅框,取代舊版單一優先權文字;每個徽章各自小圓角底色框 */
+.bt-badge{display:inline-block;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid rgba(159,208,255,.4);color:#cfe9ff;white-space:nowrap;}
+.bt-badge.buff{border-color:rgba(77,255,138,.55);color:#c8ffdd;}
+.bt-badge.bad{border-color:rgba(255,106,106,.55);color:#ffd6d6;}
 /* ★ v1.43.0 — 充能點+爆發鈕移到卡片頭頂(.bt-top),與立繪/HP/剩餘次數分開一列;剩餘次數(.bt-star)獨立留在HP條下方並縮小字級。
    舊 .bt-chgrow 規則保留給更早版本相容(目前已無元素套用它,不刪除以防其他分支頁面仍有殘留引用)。 */
 .bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;min-height:16px;}
@@ -2753,7 +2814,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="bt-frz" id="bt-frz">❄ 計時暫停</div>
       <div class="bt-card p" id="bt-p">
         <div class="bt-top"><button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-bname" id="bt-p-bn"></span></button><span class="bt-charge" id="bt-p-ch"></span></div>
-        <div class="bt-img" id="bt-p-imgw"><img id="bt-p-img" src="" alt="" onerror="this.style.display='none';"></div>
+        <div class="bt-img" id="bt-p-imgw" onclick="mgStatusPopupToggle('p')"><img id="bt-p-img" src="" alt="" onerror="this.style.display='none';"><div class="bt-pop" id="bt-p-pop"></div></div>
         <div class="bt-info">
           <div class="bt-name" id="bt-p-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-p-hp"></div><span class="bt-hpn" id="bt-p-hpn"></span></div>
@@ -2770,7 +2831,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
              就亮起這顆小標籤,讓玩家提早知道對手快要暴走、可以先有心理準備。CSS/JS 見 mgBattleNpcWarnPaint。 -->
         <div class="bt-warn" id="bt-n-warn">⚠ 即將爆發</div>
         <div class="bt-top"><div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span></div><span class="bt-charge" id="bt-n-ch"></span></div>
-        <div class="bt-img" id="bt-n-imgw"><img id="bt-n-img" src="" alt="" onerror="this.style.display='none';"></div>
+        <div class="bt-img" id="bt-n-imgw" onclick="mgStatusPopupToggle('n')"><img id="bt-n-img" src="" alt="" onerror="this.style.display='none';"><div class="bt-pop" id="bt-n-pop"></div></div>
         <div class="bt-info">
           <div class="bt-name" id="bt-n-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-n-hp"></div><span class="bt-hpn" id="bt-n-hpn"></span></div>
@@ -2879,7 +2940,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="r-title">— 挑戰成績 —</div>
       <div class="line" id="r-name"></div>
       <img class="r-trophy" id="r-trophy" src="" alt="" onerror="this.style.display='none';">
-      <div class="stars" id="r-stars"></div>
+      <div class="stars-wrap" id="r-stars-wrap">
+        <div class="stars" id="r-stars"></div>
+        <!-- ★ v1.65.0(老師需求「英雄被打倒,星級改灰色並覆蓋顯示再接再厲的大字」)— 蓋在星星正上方,
+             finishGame 判定戰敗時才加 show class 顯示;預設 display:none 不佔版面。 -->
+        <div class="r-encourage" id="r-encourage">再接再厲…</div>
+      </div>
       <div class="big" id="r-score"></div>
       <div class="line" id="r-detail"></div>
       <div class="line" id="r-time"></div><!-- ★ v1.4.0 用時 + 快手加成 -->
@@ -3004,7 +3070,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.62.0"></script>
+<script src="minigame_db.js?v=v1.65.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -3013,7 +3079,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.62.0';
+var MG_VER = 'v1.65.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -5114,7 +5180,7 @@ function _reactHit(d){
     try{ var _r = d.el.getBoundingClientRect(); mgFx('spark', _r.left + _r.width / 2, _r.top + _r.height / 2, d.hard ? 170 : 120, 600); }catch(e){}
     _reactFloat(d, '+' + _gain, '#3ec87a');
     _reactFirework(d);   /* ★ v1.9.7 射中正確 ⇒ 煙火特效;★ v1.51.0 老師需求:不再連帶清除周圍「錯誤」目標,只留視覺特效 */
-    mgBattleHit(true);   /* ★ v1.29.0 老師需求三:射對 ⇒ NPC −10、充能 +1(發光高難度仍只算 1 次命中,傷害固定 10) */
+    mgBattleHit(true, undefined, true);   /* ★ v1.29.0 老師需求三:射對 ⇒ NPC −10、充能 +1(發光高難度仍只算 1 次命中,傷害固定 10);★ v1.63.0 第三參數 true:射對這次對手不反擊 */
     /* ★ v1.29.0 移除 v1.28.0「連續命中 5 次 ⇒ 時間暫停鈕」(改由控場型爆發取代);舊碼備查:
     _RC.wrongStreak = 0;
     _RC.rightStreak++;
@@ -5129,7 +5195,7 @@ function _reactHit(d){
     playSfx('sfx-explode', 0.5);   /* ★ v1.9.7 老師:射中錯誤新增爆炸音效(game_explosion2.mp3,本頁既有 <audio>) */
     _reactFloat(d, '−1', '#e84040');
     _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
-    mgBattleHit(false);   /* ★ v1.29.0 老師需求三:射錯 ⇒ 玩家 −10(護盾可擋) */
+    mgBattleHit(false, undefined, true);   /* ★ v1.29.0 老師需求三:射錯 ⇒ 玩家 −10(護盾可擋);★ v1.63.0 第三參數 true:跳過全域安全網,這一下攻擊只算一次(不然會被反擊兩次) */
     /* ★ v1.29.0 移除 v1.28.0「連續誤擊 3 次 ⇒ 5 秒射擊冷卻」;舊碼備查:
     _RC.rightStreak = 0;
     _RC.wrongStreak++;
@@ -5310,6 +5376,11 @@ function _reactFinish(){
   MG.answered = true;
   stopTimer();
   var r = _RC.r, got = _RC.got, wrong = _RC.wrong, need = _RC.need, hh = _RC.hardHits, blown = _RC.blown;
+  /* ★ v1.63.0(老師需求「過時沒有射完3個正確答案就受到對手1次攻擊並使對手獲得1充能」)—
+     時間到但還沒集滿 need 個正確答案時,額外補一次「射錯」等級的戰鬥懲罰(對手反擊+對手充能),
+     跟每次真的射錯時的懲罰是各自獨立疊加的兩件事,不是互相替代。走跟射錯完全同一條 mgBattleHit(false)
+     路徑,第三參數同樣傳 true 跳過全域安全網,確保這一次也只算一次反擊。 */
+  if(got < need){ try{ mgBattleHit(false, undefined, true); }catch(_ertm){} }
   $('reactbox').innerHTML = '';
   var ok = (got >= need && wrong <= 1);
   scoreIt(ok, true);   /* ★ v1.29.0 HP 已在 _reactHit 逐射擊扣過,回合結算不再扣 */
@@ -6225,7 +6296,22 @@ function showFeedback(ok, head, why){
         dk.className = 'show ' + (ok ? 'ok' : 'ng');
         dk.innerHTML = '<b class="fd-head">' + esc(head) + '</b>' + esc(why);
         f.classList.add('docked');
-      }else{ dk.className = ''; dk.innerHTML = ''; f.classList.remove('docked'); }
+        /* ★ v1.65.0(老師需求「正確答案說明視窗移到畫面下方置中(下一題按鈕的左邊貼齊)」)—
+           #nextrow 是 right 定位、寬度依文字內容(下一題/看成績)與 min/max-width 浮動,沒辦法用固定
+           CSS right 值精準貼齊,所以在這裡讀 #nextrow 實際渲染後的 getBoundingClientRect,把 #fbdock
+           的 right 設成「視窗寬度 − nextrow 左緣 + 間距」,兩者的 bottom 已經在 CSS 給同一個值對齊,
+           右緣貼著下一題鈕左邊,不管鈕多寬都跟得上。_ko(KO 已發生)時 nextrow 隱藏,不重新計算,
+           讓 CSS 預設值頂著,反正這個情境很快就會被 mgBattleEnd 的結算計時器接手換頁。 */
+        var _posDock = function(){
+          try{
+            if(_ko || !nr || nr.classList.contains('hidden')) return;
+            var _nrRect = nr.getBoundingClientRect();
+            if(_nrRect.width > 0){ dk.style.right = (window.innerWidth - _nrRect.left + 12) + 'px'; }
+          }catch(_epd){}
+        };
+        _posDock();
+        if(window.requestAnimationFrame) window.requestAnimationFrame(_posDock); else setTimeout(_posDock, 30);
+      }else{ dk.className = ''; dk.innerHTML = ''; dk.style.right = ''; f.classList.remove('docked'); }
     }
   }catch(e){}
   /* ★ v1.9.1 題圖放大框:橫式且有題圖時,放到畫面正中央;最大高度 = 停靠解說區頂緣 − 框頂 − 12px(永不重疊) */
@@ -6336,15 +6422,26 @@ function finishGame(){
       }else{ _rc.textContent = ''; }
     }
   }catch(_ecr){}
-  bgmPlay('bgm-result', 0.42, true);   /* 不 loop,播一次就好 */
+  /* ★ v1.65.0(老師需求「英雄被打倒,評分音樂沿用戰敗的、星級改灰色並覆蓋再接再厲大字」)—
+     _lost 沿用跟 mgBattleEnd 判斷戰敗同一個範圍(_BT.result==='lose',涵蓋 HP 歸零的真正被擊倒,
+     以及題目出完雙方沒 KO、時間到剩餘 HP 較低的雙敗),不只是打倒。 */
+  var _lost = !!(_bs && !_bs.win);
+  bgmPlay(_lost ? 'bgm-lose' : 'bgm-result', _lost ? 0.5 : 0.42, true);   /* 不 loop,播一次就好;戰敗沿用戰鬥中同一首失敗曲 */
 
   $('r-name').textContent = MG.cur.icon + ' ' + tx(MG.cur.name);
-  /* ★ v1.3.0 — 三顆星逐顆彈出(拿到的亮、沒拿到的暗淡留位),金色光圈 gif 墊在後面 */
+  /* ★ v1.3.0 — 三顆星逐顆彈出(拿到的亮、沒拿到的暗淡留位),金色光圈 gif 墊在後面
+     ★ v1.65.0 — 戰敗時星星全部改成灰色(.lost class,不分是否原本拿得到),不做彈出動畫、不播音效,
+     直接一次性顯示,搭配 #r-encourage「再接再厲…」蓋在正上方,一眼看出這局是輸的。 */
   var _sh = '', _k;
   var _maxStars = _bs ? 5 : 3;   /* ★ v1.29.0 戰鬥模式 5 星制 */
-  for(_k = 1; _k <= _maxStars; _k++) _sh += '<span class="' + (_k <= stars ? '' : 'dim') + '">★</span>';
+  for(_k = 1; _k <= _maxStars; _k++) _sh += '<span class="' + (_lost ? 'lost' : (_k <= stars ? '' : 'dim')) + '">★</span>';
   $('r-stars').innerHTML = _sh;
-  (function(){
+  var _enc = $('r-encourage');
+  if(_enc){
+    if(_lost){ _enc.textContent = (MG.lang === 'en') ? 'Keep trying…' : '再接再厲…'; _enc.classList.add('show'); }
+    else{ _enc.classList.remove('show'); _enc.textContent = ''; }
+  }
+  if(!_lost)(function(){
     var sp = $('r-stars').getElementsByTagName('span'), i;
     for(i = 0; i < stars && i < sp.length; i++){
       (function(el, delay){
@@ -6355,10 +6452,10 @@ function finishGame(){
   var _tr = $('r-trophy');
   if(_tr){
     _tr.classList.remove('on'); _tr.style.display = '';
-    if(stars > 0){ _tr.src = MG_TROPHY[stars]; setTimeout(function(){ _tr.classList.add('on'); }, 350 + stars * 380); }
+    if(!_lost && stars > 0){ _tr.src = MG_TROPHY[stars]; setTimeout(function(){ _tr.classList.add('on'); }, 350 + stars * 380); }
     else{ _tr.removeAttribute('src'); _tr.style.display = 'none'; }
   }
-  if(stars === _maxStars){   /* ★ v1.29.0 滿星(戰鬥模式 5 星)才鼓掌 */
+  if(!_lost && stars === _maxStars){   /* ★ v1.29.0 滿星(戰鬥模式 5 星)才鼓掌;★ v1.65.0 戰敗不鼓掌 */
     setTimeout(function(){ var c = mgCenterOf('r-trophy'); mgFx('clap', c.x, c.y + 40, 260, 1800); playSfx('sfx-clap', 0.45); }, 1600);
   }
   var _gl = $('r-glow');
@@ -6618,13 +6715,13 @@ function mgEff2Text(h, isNpc){
     en: "; if " + foeEn + "'s HP is below 30%, also deals 15 direct damage" };
   return { s:'', f:'', en:'' };
 }
-/* ★ v1.60.0(老師需求「所有爆發技能文字說明中,第二效果說明開頭加上『附加:』,並改用黃色文字」)—
-   統一入口:傳入已經 tx() 過的第二效果純文字,沒有內容就回傳空字串(維持原本「沒有第二效果就不多顯示
-   任何東西」的行為);有內容則包一段黃色 `附加:` 前綴 + esc 過的效果文字。呼叫端都要從 textContent
-   改 innerHTML(套色必須用 HTML),base 說明部分維持外面自己 esc()。 */
+/* ★ v1.65.0(老師需求「附加後面整段都用黃色,附加前面空2格跟基本效果段落做區分」)—
+   原本只有「附加:」四個字是黃色,後面的效果說明文字是預設色,老師要求整段(標籤+說明)都黃色;
+   另外在最前面加兩個全形空格,讓「附加:」跟前面的基本效果文字有視覺區隔(空格本身不上色,放在
+   <span> 外面)。 */
 function mgEff2Html(effStr){
   if(!effStr) return '';
-  return '<span style="color:#ffe066;">附加:</span>' + esc(effStr);
+  return '　　<span style="color:#ffe066;">附加:' + esc(effStr) + '</span>';
 }
 function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
 /* 目前選的英雄:localStorage._mgHero(非關鍵資料,共用 iPad 遺失無害);沒選過或名字已不存在 ⇒ 隨機一位並記住 */
@@ -6721,10 +6818,11 @@ function mgBattleInit(x){
      thornDmgLeft(米鈴:不利狀態反彈+追加10傷,跟既有thornLeft差在沒有回血)、
      maxHpBonus(救醫馬:HP上限永久+20,整場持續,不做3回合到期復原以避免HP卡在超過上限的邊界問題)、
      phoenixUsed(鳳凰:無條件10HP自動復活,整場限用一次)。 */
+  /* statusPopupOpen:v1.64.0 新增,點角色立繪開關該側的狀態說明小視窗,初始 false(關閉) */
   _BT = { p: { h: ph, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
-            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0 },
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false },
           n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
-            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0 },
+            chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
@@ -6762,6 +6860,117 @@ function mgBattleClear(){
   _mgBurstSfxIds = [];
   hide('mgbattle');
 }
+/* ★ v1.64.0(老師需求「角色使用爆發技能後附加在自己或對手身上的有利/不利狀態都要有標籤顯示,
+   點擊角色卡會顯示狀態效果的說明小視窗(再點一次關閉)」)—
+   全庫目前總共約 28 種可能同時存在的第二效果狀態欄位(v1.33.0~v1.58.0 陸續新增),原本 .bt-sh
+   只用「誰優先權高就顯示誰」的寫死判斷式一次只顯示 1 個,玩家看不到全部正在生效的狀態。
+   改用「登記表」模式:MG_STATUS_DEFS 逐一定義每個欄位的圖示/顏色類別(buff綠框/debuff紅框)/
+   一句話說明(desc 函式,吃 S 整包狀態物件方便讀 amt 這類搭配數值);mgStatusActiveList(S) 掃過
+   登記表回傳「這個角色身上目前真的生效中」的清單,mgBattlePaint 用它畫出多個小徽章(取代舊的
+   單一優先權文字),點擊角色立繪呼叫 mgStatusPopupToggle 開關一個列出所有生效狀態+說明的小視窗。
+   ⚠ 新增狀態欄位時只需要在這張表裡加一筆,不必再去 mgBattlePaint 加判斷式。 */
+var MG_STATUS_DEFS = [
+  { f: 'shield', kind: 'buff', icon: '🛡', zh: '護盾', en: 'Shield',
+    active: function(S){ return S.shield > 0; }, n: function(S){ return S.shield; },
+    desc: function(S){ return '還有 ' + S.shield + ' 格護盾,可以擋下接下來的攻擊'; } },
+  { f: 'healBuff', kind: 'buff', icon: '💚', zh: '回血', en: 'Regen',
+    active: function(S){ return S.healBuff > 0; }, n: function(S){ return S.healBuff; },
+    desc: function(S){ return '接下來自己出手 ' + S.healBuff + ' 次,每次都會多回 ' + (S.healAmt || MG_BT.HEALBUFF) + ' 滴血'; } },
+  { f: 'dmgReduceLeft', kind: 'buff', icon: '🛡½', zh: '減傷', en: 'Dmg Reduce',
+    active: function(S){ return S.dmgReduceLeft > 0; }, n: function(S){ return S.dmgReduceLeft; },
+    desc: function(S){ return '接下來受傷 ' + S.dmgReduceLeft + ' 次,傷害都會減半'; } },
+  { f: 'dotLeft', kind: 'bad', icon: '🩸', zh: '易傷', en: 'Bleed',
+    active: function(S){ return S.dotLeft > 0; }, n: function(S){ return S.dotLeft; },
+    desc: function(S){ return '接下來受傷 ' + S.dotLeft + ' 次,每次都會多痛 ' + (S.dotAmt || MG_BT.DOT) + ' 滴血'; } },
+  { f: 'sealLeft', kind: 'bad', icon: '🔒', zh: '封印', en: 'Sealed',
+    active: function(S){ return S.sealLeft > 0; }, n: function(S){ return S.sealLeft; },
+    desc: function(S){ return '接下來 ' + S.sealLeft + ' 題內無法使用極限爆發'; } },
+  { f: 'confuseLeft', kind: 'bad', icon: '💫', zh: '魅惑', en: 'Charmed',
+    active: function(S){ return S.confuseLeft > 0; }, n: function(S){ return S.confuseLeft; },
+    desc: function(S){ return '接下來 ' + S.confuseLeft + ' 次出手攻擊,會打到自己'; } },
+  { f: 'noAtkLeft', kind: 'bad', icon: '🤐', zh: '無法攻擊', en: 'Silenced',
+    active: function(S){ return S.noAtkLeft > 0; }, n: function(S){ return S.noAtkLeft; },
+    desc: function(S){ return '接下來 ' + S.noAtkLeft + ' 次普通攻擊會直接沒收,不會造成傷害'; } },
+  { f: 'thornLeft', kind: 'buff', icon: '🌵', zh: '反彈', en: 'Thorns',
+    active: function(S){ return S.thornLeft > 0; }, n: function(S){ return S.thornLeft; },
+    desc: function(S){ return '接下來 ' + S.thornLeft + ' 次被下不利狀態,會反彈給對方並幫自己回 5 滴血'; } },
+  { f: 'thornDmgLeft', kind: 'buff', icon: '🌵', zh: '反彈+', en: 'Thorns+',
+    active: function(S){ return S.thornDmgLeft > 0; }, n: function(S){ return S.thornDmgLeft; },
+    desc: function(S){ return '接下來 ' + S.thornDmgLeft + ' 次被下不利狀態,會反彈給對方並追加 10 滴血傷害'; } },
+  { f: 'immuneLeft', kind: 'buff', icon: '✨', zh: '狀態免疫', en: 'Debuff Immune',
+    active: function(S){ return S.immuneLeft > 0; }, n: function(S){ return S.immuneLeft; },
+    desc: function(S){ return '接下來 ' + S.immuneLeft + ' 次不利狀態判定完全免疫'; } },
+  { f: 'multiHitLeft', kind: 'buff', icon: '⚔⚔', zh: '連擊', en: 'Multi-hit',
+    active: function(S){ return S.multiHitLeft > 0; }, n: function(S){ return S.multiHitLeft; },
+    desc: function(S){ return '接下來 ' + S.multiHitLeft + ' 次成功攻擊,都會追加一次同傷害攻擊'; } },
+  { f: 'lowhpScale', kind: 'buff', icon: '🔥', zh: '血少爆發', en: 'Berserk',
+    active: function(S){ return !!S.lowhpScale; }, permanent: true,
+    desc: function(){ return '自身HP每少 10%,攻擊傷害就多 10%(整場都有效)'; } },
+  { f: 'counterLeft', kind: 'buff', icon: '↩', zh: '反擊', en: 'Counter',
+    active: function(S){ return S.counterLeft > 0; }, n: function(S){ return S.counterLeft; },
+    desc: function(S){ return '接下來 ' + S.counterLeft + ' 次受到攻擊,會反擊對手 10 滴血'; } },
+  { f: 'chargeLockLeft', kind: 'bad', icon: '🚫⚡', zh: '充能被鎖', en: 'Charge Locked',
+    active: function(S){ return S.chargeLockLeft > 0; }, n: function(S){ return S.chargeLockLeft; },
+    desc: function(S){ return '接下來答對 ' + S.chargeLockLeft + ' 次都不會累積爆發充能'; } },
+  { f: 'dmgDownLeft', kind: 'bad', icon: '⬇⚔', zh: '攻擊減弱', en: 'Weakened',
+    active: function(S){ return S.dmgDownLeft > 0; }, n: function(S){ return S.dmgDownLeft; },
+    desc: function(S){ return '接下來 ' + S.dmgDownLeft + ' 次攻擊,造成的傷害會少一半'; } },
+  { f: 'dmgTakenUpLeft', kind: 'bad', icon: '⬆🩹', zh: '易傷+', en: 'Vulnerable',
+    active: function(S){ return S.dmgTakenUpLeft > 0; }, n: function(S){ return S.dmgTakenUpLeft; },
+    desc: function(S){ return '接下來 ' + S.dmgTakenUpLeft + ' 次受到的傷害會多 50%'; } },
+  { f: 'dmgImmuneLeft', kind: 'buff', icon: '🚷', zh: '完全免疫', en: 'Invincible',
+    active: function(S){ return S.dmgImmuneLeft > 0; }, n: function(S){ return S.dmgImmuneLeft; },
+    desc: function(S){ return '接下來 ' + S.dmgImmuneLeft + ' 次受到的傷害完全免疫'; } },
+  { f: 'dodgeLeft', kind: 'buff', icon: '💨', zh: '迴避', en: 'Dodge',
+    active: function(S){ return S.dodgeLeft > 0; }, n: function(S){ return S.dodgeLeft; },
+    desc: function(S){ return '接下來 ' + S.dodgeLeft + ' 次攻擊會完全迴避,不受傷害'; } },
+  { f: 'dodgeChanceLeft', kind: 'buff', icon: '💨½', zh: '機率迴避', en: 'Dodge Chance',
+    active: function(S){ return S.dodgeChanceLeft > 0; }, n: function(S){ return S.dodgeChanceLeft; },
+    desc: function(S){ return '接下來 ' + S.dodgeChanceLeft + ' 次受到攻擊,各有 50% 機率完全迴避'; } },
+  { f: 'reflectHealLeft', kind: 'buff', icon: '🔁💚', zh: '反傷回血', en: 'Reflect+Heal',
+    active: function(S){ return S.reflectHealLeft > 0; }, n: function(S){ return S.reflectHealLeft; },
+    desc: function(S){ return '接下來 ' + S.reflectHealLeft + ' 次受到攻擊,一半反彈給對方、一半轉為自己回血'; } },
+  { f: 'reflectHalfLeft', kind: 'buff', icon: '🔁', zh: '傷害反彈', en: 'Reflect',
+    active: function(S){ return S.reflectHalfLeft > 0; }, n: function(S){ return S.reflectHalfLeft; },
+    desc: function(S){ return '接下來 ' + S.reflectHalfLeft + ' 次受傷後,會把同樣的傷害反彈回去給對方'; } },
+  { f: 'dmgBankLeft', kind: 'buff', icon: '🏦', zh: '傷害累積', en: 'Dmg Bank',
+    active: function(S){ return S.dmgBankLeft > 0; }, n: function(S){ return S.dmgBankLeft; },
+    desc: function(S){ return '接下來 ' + S.dmgBankLeft + ' 次受到的傷害會先記著,倒數到 0 時一次還給對方'; } },
+  { f: 'healRedirectLeft', kind: 'bad', icon: '🔀💔', zh: '回血被奪', en: 'Heal Stolen',
+    active: function(S){ return S.healRedirectLeft > 0; }, n: function(S){ return S.healRedirectLeft; },
+    desc: function(S){ return '接下來 ' + S.healRedirectLeft + ' 次自己該回的血,會被轉移給對方'; } },
+  { f: 'lifestealLeft', kind: 'buff', icon: '🧛', zh: '吸血', en: 'Lifesteal',
+    active: function(S){ return S.lifestealLeft > 0; }, n: function(S){ return S.lifestealLeft; },
+    desc: function(S){ return '接下來 ' + S.lifestealLeft + ' 次攻擊命中,會吸取傷害的一半回復自己'; } },
+  { f: 'dmgUpLeft', kind: 'buff', icon: '⬆⚔', zh: '攻擊提升', en: 'Dmg Up',
+    active: function(S){ return S.dmgUpLeft > 0; }, n: function(S){ return S.dmgUpLeft; },
+    desc: function(S){ return '接下來 ' + S.dmgUpLeft + ' 次攻擊,造成的傷害會多 50%'; } },
+  { f: 'regenLeft', kind: 'buff', icon: '💗', zh: '每回合回血', en: 'Regen/Turn',
+    active: function(S){ return S.regenLeft > 0; }, n: function(S){ return S.regenLeft; },
+    desc: function(S){ return '接下來 ' + S.regenLeft + ' 回合,每回合自動恢復 ' + (S.regenAmt || 5) + ' 滴血'; } },
+  { f: 'poisonLeft', kind: 'bad', icon: '☠', zh: '中毒', en: 'Poisoned',
+    active: function(S){ return S.poisonLeft > 0; }, n: function(S){ return S.poisonLeft; },
+    desc: function(S){ return '中毒中,接下來 ' + S.poisonLeft + ' 回合,每回合流失 ' + (S.poisonAmt || 5) + ' 滴血'; } },
+  { f: 'surviveLeft', kind: 'buff', icon: '💪', zh: '挺住', en: 'Undying',
+    active: function(S){ return S.surviveLeft > 0; }, n: function(S){ return S.surviveLeft; },
+    desc: function(S){ return '接下來 ' + S.surviveLeft + ' 次就算血量會歸零,也會固定留下 1 滴血不倒下'; } },
+  { f: 'maxHpBonus', kind: 'buff', icon: '📈', zh: 'HP上限+', en: 'Max HP+',
+    active: function(S){ return S.maxHpBonus > 0; }, permanent: true,
+    desc: function(S){ return 'HP 上限永久提升 ' + S.maxHpBonus + '(整場都有效)'; } }
+];
+function mgStatusActiveList(S){
+  var out = [], i, d;
+  for(i = 0; i < MG_STATUS_DEFS.length; i++){ d = MG_STATUS_DEFS[i]; if(d.active(S)) out.push(d); }
+  return out;
+}
+/* 點擊角色立繪:開關該側的狀態說明小視窗;點對手側不影響玩家側,各自獨立記憶開關狀態 */
+window.mgStatusPopupToggle = function(side){
+  if(!_BT) return;
+  var S = _BT[side]; if(!S) return;
+  S.statusPopupOpen = !S.statusPopupOpen;
+  playSfx('sfx-tap', 0.3);
+  mgBattlePaint();
+};
 function mgBattlePaint(){
   if(!_BT) return;
   var sides = ['p', 'n'], s, S, i;
@@ -6770,15 +6979,35 @@ function mgBattlePaint(){
     var bar = $('bt-' + s + '-hp'), num = $('bt-' + s + '-hpn'), sh = $('bt-' + s + '-sh'), ch = $('bt-' + s + '-ch'), bb = $('bt-' + s + '-burst'), st = $('bt-' + s + '-st');
     if(bar){ var _hpPct = Math.max(0, Math.min(100, S.hp / MG_BT.HP * 100)); bar.style.width = _hpPct + '%'; if(S.hp <= MG_BT.HP * 0.3) bar.classList.add('low'); else bar.classList.remove('low'); }   /* ★ v1.39.0 — 修正:S.hp 直接當百分比用在 HP上限=200 後會爆版(190就變寬度190%),改除以 MG_BT.HP 算真正比例;低血警示門檻同步改比例(原本寫死 30 只對舊版HP上限100正確) */
     if(num) num.textContent = S.hp + ' / ' + MG_BT.HP;
-    /* v1.31.0 — 第二效果狀態顯示:護盾優先顯示;沒護盾時輪流顯示減傷/易傷/回血加成剩餘次數,讓玩家看得到還在生效 */
+    /* ★ v1.64.0(老師需求「所有有利/不利狀態都要有標籤顯示」)— 原本 .bt-sh 只用優先權判斷式顯示 1 個,
+       改成把 mgStatusActiveList 掃出來的全部生效中狀態都畫成小徽章(buff 綠框/bad 紅框),
+       徽章本身不能點(避免跟下面的立繪點擊搶事件),要看說明得點角色立繪開小視窗。 */
     if(sh){
-      if(S.shield > 0) sh.textContent = '🛡×' + S.shield + (MG.lang === 'en' ? ' shield' : ' 護盾');
-      else if(S.dmgReduceLeft > 0) sh.textContent = '🛡½×' + S.dmgReduceLeft + (MG.lang === 'en' ? ' dmg-50%' : ' 減傷');
-      else if(S.dotLeft > 0) sh.textContent = '🩸×' + S.dotLeft + (MG.lang === 'en' ? ' bleed' : ' 易傷');
-      else if(S.healBuff > 0) sh.textContent = '💚×' + S.healBuff + (MG.lang === 'en' ? ' regen' : ' 回血');
-      else if(S.sealLeft > 0) sh.textContent = '🔒×' + S.sealLeft + (MG.lang === 'en' ? ' sealed' : ' 封印');
-      else if(S.confuseLeft > 0) sh.textContent = '💫×' + S.confuseLeft + (MG.lang === 'en' ? ' confused' : ' 魅惑');
-      else sh.textContent = '';
+      var _stList = mgStatusActiveList(S), _shHtml = '', _si;
+      for(_si = 0; _si < _stList.length; _si++){
+        var _sd = _stList[_si];
+        _shHtml += '<span class="bt-badge ' + _sd.kind + '">' + _sd.icon + (_sd.permanent ? '' : ('×' + _sd.n(S))) + '</span>';
+      }
+      sh.innerHTML = _shHtml;
+    }
+    /* 狀態說明小視窗:點角色立繪(mgStatusPopupToggle)開關,內容列出 mgStatusActiveList 每一項的圖示/名稱/說明 */
+    var pop = $('bt-' + s + '-pop');
+    if(pop){
+      if(S.statusPopupOpen){
+        var _stList2 = mgStatusActiveList(S), _popHtml = '', _pi;
+        if(!_stList2.length){ _popHtml = '<div class="bt-pop-empty">' + (MG.lang === 'en' ? 'No active status' : '目前沒有生效中的狀態') + '</div>'; }
+        else{
+          for(_pi = 0; _pi < _stList2.length; _pi++){
+            var _pd = _stList2[_pi];
+            _popHtml += '<div class="bt-pop-row ' + _pd.kind + '"><b>' + _pd.icon + ' ' + esc(tx({ s: _pd.zh, en: _pd.en })) + '</b><span>' + esc(_pd.desc(S)) + '</span></div>';
+          }
+        }
+        pop.innerHTML = _popHtml;
+        pop.classList.add('show');
+      }else{
+        pop.classList.remove('show');
+        pop.innerHTML = '';
+      }
     }
     var dots = '', k; for(k = 0; k < MG_BT.CHARGE; k++) dots += (k < S.charge) ? '●' : '○';
     if(ch) ch.textContent = dots;
@@ -6909,7 +7138,12 @@ function mgTickRegenPoison(S, sideKey){
   if(S.regenLeft > 0){ S.regenLeft--; var _rg = S.regenAmt || 5; S.hp = Math.min(mgHpCap(S), S.hp + _rg); mgBattleFloatOn(sideKey, '+' + _rg, 'heal'); }
   if(S.poisonLeft > 0){ S.poisonLeft--; var _ps = S.poisonAmt || 5; S.hp = Math.max(0, S.hp - _ps); mgBattleFloatOn(sideKey, '−' + _ps, 'block'); }
 }
-function mgBattleHit(ok, customDmg){
+/* ★ v1.63.0(老師需求「算數大進擊改成射對不反擊、射錯才反擊,且反擊只算一次」)— mgBattleHit 新增
+   可選第三參數 skipTurnDmg:true 時跳過函式尾端「不論答對答錯都固定反擊一次」的全域安全網(v1.42.0
+   NPC_TURN_DMG),只留 ok/miss 分支自己內建的那一下攻擊。刻意設計成「選用」而非改全域行為——
+   v1.42.0 的固定回合傷害是套用全部 15 款小遊戲的安全網,只有算數大進擊(逐次射擊,需要「射對不挨打、
+   射錯才挨打」這種精準的一擊換一擊手感)才需要跳過,其餘 14 款引擎呼叫時不傳第三參數,行為完全不變。 */
+function mgBattleHit(ok, customDmg, skipTurnDmg){
   if(!_BT || _BT.over) return;
   var P = _BT.p, N = _BT.n;
   if(P.sealLeft > 0) P.sealLeft--;   /* ★ v1.36.0 — 封印爆發技能:每題判定倒數一次,不分答對答錯 */
@@ -6965,7 +7199,7 @@ function mgBattleHit(ok, customDmg){
      卻是「立刻」執行,血條瞬間就掉了,視覺上跟玩家自己那下攻擊幾乎黏在一起、感覺像同時互毆。
      改為扣血、攻擊特效、血條刷新三者統一延後 500ms 一起發生,玩家自己的攻擊(上面 ok/!ok 分支)維持
      immediate 不動,兩下攻擊才會真正看起來是「先玩家、隔 0.5 秒、後對手」的先後順序。 */
-  if(P.hp > 0){
+  if(P.hp > 0 && !skipTurnDmg){
     setTimeout(function(){
       if(!_BT || _BT.over) return;
       mgTickRegenPoison(P, 'p'); mgTickRegenPoison(N, 'n');   /* ★ v1.57.0 — 地獄將軍/青炎龍王/魔界花使(regen)、小鬼貓與兔/青炎龍王/魔界花使(poison)這類「每回合」型效果,統一在這個每題必經一次的節拍點結算 */
