@@ -15,7 +15,18 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.46.0(2026-09-09)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.47.0(2026-09-09)
+     ★ v1.47.0(2026-09-09・老師需求:消消樂三項＋全體小遊戲兩項)—
+       【消消樂】①iPad拖曳寶石不順暢/一次只能動一格/已排成一線沒有立即消除:根因＝mgM3DocMove 每次
+       交換後呼叫的 mgM3Paint() 會把手指正按著的 .m3-cell 整顆 DOM 節點連同全盤 25 格重灌,iOS Safari
+       對「觸控中的節點被移出文件」極不穩定,常見後續 touchmove/touchend 直接停止派送(PC 滑鼠沒有這個
+       限制故完全正常)；改為新增 mgM3PaintSwapped 只更新交換到的兩格內容,手指按著的節點全程不被銷毀,
+       交換位移動畫沿用既有 mgM3AnimateSwap 不變。②元素總數量 7→5(移除🌿草/🌑暗,留土水火風光)。
+       ③combo 飄字文字放大(30~50px)+ 亮黃字色+黑色描邊(paint-order+多方向陰影兜底)+ 圓體字家族,
+       沿用既有 sfl 飄浮動畫的動感不變。【全體小遊戲】④左下戰鬥角色卡立繪由「完整顯示」改「裁掉下半部
+       30%」(aspect-ratio 3/4→3/2.8,同大對抗戰鬥卡牌裁切語彙),橫式(iPad)另修掉舊碼立繪無上限撐高
+       擠壓效果說明文字的根因(flex:1 1 auto→0 0 auto 固定比例),直橫兩版同步。⑤卡片受擊特效由白色閃光
+       ::before 改疊播 點擊星星.gif(repo 既有素材,答對題目同款),白閃 CSS 保留為註解備查。
      ★ v1.46.0(2026-09-09・老師需求:手機版遊玩版面優化＋切背景/關閉一律靜音)—
        版面改動集中在 <style> 尾端「v1.46.0」整段(純新增覆寫,舊規則一行未刪);斷點一律是
        orientation:landscape + max-height:520px(小遊戲在觸控裝置強制橫式,故手機版＝橫式矮螢幕;
@@ -1834,8 +1845,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    (impact squash·打擊遊戲常見手法)+ 卡片邊框瞬間泛紅光，兩者跟震動同時觸發，讓「打到了」更有份量。 */
 .bt-card.hurt{animation:bthurt .45s;}
 @keyframes bthurt{0%,100%{transform:translateX(0);}15%{transform:translateX(-10px);}30%{transform:translateX(10px);}45%{transform:translateX(-7px);}60%{transform:translateX(7px);}75%{transform:translateX(-3px);}}
+/* ★ v1.47.0(老師需求「卡片受到攻擊的特效替換成 點擊星星.gif」)— 原本的白色閃光 ::before 疊層停用,
+   改在 JS(mgBattleFxAttack)於卡片正中央疊播 MG_FX.hit(點擊星星.gif,repo 既有素材,答對題目時也是
+   用這支);規則與 keyframes 保留原樣註解在此備查,只是不再套用,方便日後老師想換回白閃可直接復原。
 .bt-card.hurt::before{content:'';position:absolute;inset:-2px;border-radius:inherit;background:rgba(255,255,255,.35);opacity:0;animation:bthurtflash .38s ease-out;pointer-events:none;z-index:1;}
-@keyframes bthurtflash{0%{opacity:.85;}100%{opacity:0;}}
+@keyframes bthurtflash{0%{opacity:.85;}100%{opacity:0;}} */
 .bt-card.hurt .bt-img{animation:bthurtpunch .38s ease-out;}
 @keyframes bthurtpunch{0%{transform:scale(1);}25%{transform:scale(.93);}55%{transform:scale(1.03);}100%{transform:scale(1);}}
 /* 我方出手命中的瞬間,自己這張卡也給個輕微得意頓挫(比受擊弱一階,區分「打人」跟「被打」的手感) */
@@ -1844,7 +1858,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-card.ko{filter:grayscale(1) brightness(.45);transform:rotate(-6deg) translateY(8px);transition:transform .6s,filter .6s;}
 .bt-card.win{box-shadow:0 0 26px rgba(240,192,96,.85);}
 .bt-card.casting{box-shadow:0 0 26px rgba(255,255,255,.8);}
-.bt-img{width:100%;aspect-ratio:3/4;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:48px;}
+/* ★ v1.47.0(老師需求「左下戰鬥角色卡圖片從完整改成下半部30%裁切,同大對抗的戰鬥卡牌格式」)—
+   aspect-ratio 由 3/4 改 3/2.8(＝同寬度下高度縮減 30%),搭配下面既有的 object-fit:cover +
+   object-position:top,裁掉的是立繪下半部(腿部/下擺),臉與上半身保留;圖片變矮讓下方名稱／HP／
+   爆發鈕／效果說明整體往上縮、可用高度變多,效果說明不會再被擠出可視範圍。橫式(iPad)覆寫同步處理見下方。 */
+.bt-img{width:100%;aspect-ratio:3/2.8;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:48px;}
 .bt-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
 .bt-info{width:100%;min-width:0;display:flex;flex-direction:column;gap:6px;}
 .bt-name{font-size:19px;font-weight:900;letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1882,6 +1900,21 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:26px;font-weight:900;color:#ff6060;text-shadow:0 2px 8px rgba(0,0,0,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
 .bt-dmg.heal{color:#9fe8be;}
 .bt-dmg.block{color:#9fd0ff;font-size:20px;}
+/* ★ v1.47.0(老師需求「combo 文字放大並改得更明顯,亮色字體+黑襯底,用圓體字更有動感」)—
+   沿用既有 .bt-dmg 的 sfl 飄浮淡出動畫(位移/縮放/動感已有),只加大字級、換亮黃字色、
+   用 paint-order+多方向陰影疊出黑色襯底描邊(比 -webkit-text-stroke 相容性更好,不支援的瀏覽器
+   也有 text-shadow 兜底一樣看得到黑邊),字型換成圓體字家族(系統沒有對應字型時降回預設字重字體)。 */
+.bt-dmg.combo{
+  font-size:26px;font-size:clamp(30px,4.4vw,50px);
+  font-weight:900;
+  font-family:'Arial Rounded MT Bold','Baloo 2','Varela Round','Chalkboard SE','Segoe UI Rounded',system-ui,sans-serif;
+  color:#fff23c;
+  letter-spacing:1px;
+  -webkit-text-stroke:3px #000;
+  paint-order:stroke fill;
+  text-shadow:0 0 14px rgba(255,190,0,.95),0 0 28px rgba(255,120,0,.7),
+    2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,0 3px 0 #000;
+}
 /* 爆發全螢幕:tint 底 + 主程式 BURST_GIF_DB 的 GIF + 英雄名/招式名/效果(不用影片) */
 #bt-burstfx{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;animation:btfxin .25s;}
 #bt-burstfx img.gif{max-width:100vw;max-height:100vh;width:100vw;height:100vh;object-fit:contain;}
@@ -1925,7 +1958,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     display:flex;align-items:stretch;
   }
   #page-play > #mgbattle .bt-card{min-height:0;}
-  #page-play > #mgbattle .bt-img{flex:1 1 auto;min-height:0;aspect-ratio:auto;}   /* 橫式改讓立繪用彈性高度填滿卡片剩餘空間,不鎖 3:4(那是直式窄卡才需要的固定比例) */
+  /* ★ v1.47.0(老師回報「左下戰鬥角色卡圖片完整顯示,擠壓效果說明文字」)— 根因:舊碼在橫式讓立繪
+     flex:1 1 auto 無上限地撐滿卡片剩餘高度,螢幕夠高時盒子高度會超過立繪原生比例,object-fit:cover
+     這時反而不再裁切上下(改裁左右)⇒ 立繪整張「完整」露出,把下面的名稱／HP／爆發鈕／效果說明擠出
+     #mgbattle 的 overflow:hidden 可視範圍。改回固定 aspect-ratio(同上方直式改動的 3/2.8,裁掉下半部
+     30%)+ flex:0 0 auto 不再無限撐高,立繪高度改由寬度反推,可預期、不再吃光剩餘空間。 */
+  #page-play > #mgbattle .bt-img{flex:0 0 auto;min-height:0;aspect-ratio:3/2.8;}
   #page-play > #feedback.docked{align-self:start;display:block;overflow:visible;}
   #feedback.docked .fb-head{display:block;text-align:left;font-size:16px;padding:8px 12px;border-bottom:0;}
 }
@@ -2730,7 +2768,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.46.0';
+var MG_VER = 'v1.47.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -6315,7 +6353,11 @@ function mgBattleFxAttack(from, dmgText, cls){
     setTimeout(function(){ el.style.opacity = '0'; }, 120);
     setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 420);
     var card = $('bt-' + (from === 'p' ? 'n' : 'p'));
-    if(card){ card.classList.remove('hurt'); void card.offsetWidth; card.classList.add('hurt'); setTimeout(function(){ card.classList.remove('hurt'); }, 500); }
+    if(card){
+      card.classList.remove('hurt'); void card.offsetWidth; card.classList.add('hurt'); setTimeout(function(){ card.classList.remove('hurt'); }, 500);
+      /* ★ v1.47.0 — 卡片受擊特效由白色閃光改疊播 點擊星星.gif,尺寸貼近卡片本身、蓋在卡片正中央 */
+      try{ var _hr = card.getBoundingClientRect(); if(_hr.width > 0) mgFx('hit', _hr.left + _hr.width / 2, _hr.top + _hr.height / 2, Math.max(_hr.width, _hr.height) * 0.92, 500); }catch(_e){}
+    }
     /* ★ v1.32.1 — 出手方自己也給個輕頓挫,「打人」跟「被打」手感要分得出來 */
     var atkCard = $('bt-' + from);
     if(atkCard){ atkCard.classList.remove('hitpunch'); void atkCard.offsetWidth; atkCard.classList.add('hitpunch'); setTimeout(function(){ atkCard.classList.remove('hitpunch'); }, 350); }
@@ -6626,14 +6668,15 @@ function mgBurstAtkApply(eng){
  * 沒消除(含逾時未動)→ 玩家受到對手 10 傷害(既有 mgBattleHit 答錯分支照舊)。
  * 對戰面板/HP/爆發/勝負沿用既有 _BT 共用戰鬥模型,傷害改走 mgBattleHit(ok, customDmg)。
  * ══════════════════════════════════════════════════════════════════════════ */
+/* ★ v1.47.0(老師需求「元素總數量縮減為5個」)— 七元素(火水風土草光暗)砍為五元素(土水火風光),
+   移除 🌿草 與 🌑暗 兩色;MG_M3_ELEMS.length 全檔皆動態讀取(mgM3RandCell/mgM3SkillAtk 的 counts 陣列
+   已一併同步),棋盤仍是 5×5 只是可選顏色變少 ⇒ 平均連線機率提高、盤面更容易消除,難度略降屬預期。 */
 var MG_M3_ELEMS = [
-  { sym:'🔥', col:'#c0432a' },
-  { sym:'💧', col:'#2f7cc2' },
-  { sym:'🌪', col:'#3f9e82' },
   { sym:'⛰', col:'#a9793a' },
-  { sym:'🌿', col:'#4f9a35' },
-  { sym:'☀', col:'#d9a83a' },
-  { sym:'🌑', col:'#6a4bb0' }
+  { sym:'💧', col:'#2f7cc2' },
+  { sym:'🔥', col:'#c0432a' },
+  { sym:'🌪', col:'#3f9e82' },
+  { sym:'☀', col:'#d9a83a' }
 ];
 var _M3 = null;   /* { grid[25], busy, dragIdx, moved, timerId, tLeft, turnMs, docBound } */
 function mgM3RandCell(){ return Math.floor(Math.random() * MG_M3_ELEMS.length); }
@@ -6786,6 +6829,33 @@ function mgM3AnimateSwap(g, a, b, topIdx){
     });
   }catch(e){}
 }
+/* ★ v1.47.0(老師回報「iPad拖曳寶石不順暢,一次只能動一格,已排成一線卻沒有立即消除」)—
+   【根因】mgM3DocMove 每次交換後呼叫的 mgM3Paint() 是「整個 25 格 g.innerHTML = html 重灌」,
+   會把手指目前正按著的那個 .m3-cell DOM 節點整顆銷毀重建。iOS Safari 對「觸控中的節點被移出文件」
+   非常不穩定:同一根手指後續的 touchmove/touchend 經常直接停止派送(節點沒了、事件追蹤跟著斷)——
+   PC 用滑鼠沒有這個機制所以完全正常,正是老師觀察到「PC 版沒這問題」的根本原因。
+   ⇒ 使用者體感=拖一下就卡住(只換了一格就再也滑不動)、放開手指的 touchend 事件也可能一併消失,
+   於是明明已經連成一線,mgM3EndTurnAttempt 的消除判定卻遲遲沒有被觸發,要等 10 秒逾時強制結算才會消。
+   【修法】新增 mgM3PaintSwapped:只更新「這次交換到的兩格」的內容(textContent/背景色)與 drag 樣式,
+   絕不重灌 innerHTML,原本手指按著的節點全程保留在文件中不被銷毀;交換位移動畫 mgM3AnimateSwap
+   本來就只操作既有節點的 transform,不受影響。mgM3DocMove 的呼叫點同步由 mgM3Paint() 改為此函式,
+   mgM3Down/mgM3Paint(整盤重繪,僅用於開局/消除補齊等本就會整批換內容的時機)維持不動。 */
+function mgM3UpdateCellDom(g, i){
+  if(!_M3) return;
+  var el = g.children[i]; if(!el) return;
+  var e = MG_M3_ELEMS[_M3.grid[i]];
+  el.style.background = e.col;
+  el.textContent = e.sym;
+}
+function mgM3PaintSwapped(a, b){
+  if(!_M3) return;
+  var g = $('m3grid'); if(!g) return;
+  mgM3UpdateCellDom(g, a);
+  mgM3UpdateCellDom(g, b);
+  var cs = g.getElementsByClassName('drag'); while(cs.length) cs[0].classList.remove('drag');
+  if(_M3.dragIdx >= 0 && g.children[_M3.dragIdx]) g.children[_M3.dragIdx].classList.add('drag');
+  if(_M3.animSwap){ mgM3AnimateSwap(g, _M3.animSwap.a, _M3.animSwap.b, _M3.animSwap.top); _M3.animSwap = null; }
+}
 window.mgM3Down = function(e, i){
   if(!_M3 || _M3.busy || (_BT && _BT.over)) return;
   _M3.dragIdx = i; _M3.moved = false;
@@ -6828,10 +6898,11 @@ function mgM3DocMove(e){
   /* ★ 中心區判定:離該格中心的距離要夠近才算「真的進去了」,交界一圈是死區 */
   if(Math.abs((fx - col) - 0.5) > M3_ENTER) return;
   if(Math.abs((fy - row) - 0.5) > M3_ENTER) return;
-  mgM3Swap(idxUnder, _M3.dragIdx);
+  var _fromIdx = _M3.dragIdx;
+  mgM3Swap(idxUnder, _fromIdx);
   _M3.dragIdx = idxUnder; _M3.moved = true;
   _M3.swapLockUntil = Date.now() + M3_SWAP_LOCK;
-  mgM3Paint();
+  mgM3PaintSwapped(idxUnder, _fromIdx);   /* ★ v1.47.0 — 不重灌整盤,見上方 mgM3PaintSwapped 註解 */
 }
 function mgM3DocUp(){
   if(!_M3) return;
@@ -6899,7 +6970,7 @@ function mgM3PlayMatchFx(matches, comboLevel){
   playSfx(comboLevel > 0 ? 'sfx-magic' : 'sfx-quiz-correct', 0.6);
   mgM3ComboTone(comboLevel);   /* ★ v1.43.0(老師需求「COMBO 時追加不同的音階,越來越高」)— Combo 1=Do、Combo 2=Re…依序升高 */
   if(comboLevel > 0){
-    try{ var r = $('m3grid').getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + 10, 'Combo ×' + (comboLevel + 1), 'heal'); }catch(e2){}
+    try{ var r = $('m3grid').getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + 10, 'Combo ×' + (comboLevel + 1), 'combo'); }catch(e2){}
   }
 }
 /* ★ v1.43.0 — 直接沿用聽音坊既有的鋼琴音色引擎(_earCtx/_earTone/EAR_NOTES,見上方引擎 F 區塊)，
@@ -6962,7 +7033,7 @@ function mgM3SkillAtk(){
   if(_M3.timerId){ clearInterval(_M3.timerId); _M3.timerId = null; }
   var g = $('m3grid'); if(g){ var cs = g.getElementsByClassName('drag'); while(cs.length) cs[0].classList.remove('drag'); }
   _M3.dragIdx = -1; _M3.moved = false;
-  var grid = _M3.grid, i, counts = [0, 0, 0, 0, 0, 0, 0];
+  var grid = _M3.grid, i, counts = []; for(i = 0; i < MG_M3_ELEMS.length; i++) counts.push(0);
   for(i = 0; i < 25; i++) counts[grid[i]]++;
   var maj = 0; for(i = 1; i < MG_M3_ELEMS.length; i++){ if(counts[i] > counts[maj]) maj = i; }
   var idxs = [], used = {}, tries = 0;
