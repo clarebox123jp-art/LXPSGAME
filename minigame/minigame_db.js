@@ -1,5 +1,9 @@
 /* ============================================================================
- * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.38.0(2026-09-09)
+ * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.39.0(2026-09-10)
+ * ★ v1.39.0(2026-09-10・老師需求「青炎龍王祭附加效果修改」)—
+ *   青炎龍王 eff2 由 regenpoison3x5(與魔界花使‧朱玥共用,雙方各3回合緩慢回血/中毒)改為
+ *   專屬的 healdrain3:使用當下立即幫自己補 10 HP、扣對手 3 格爆發充能;魔界花使‧朱玥維持
+ *   原本 regenpoison3x5 不動。healdrain3 的判定邏輯(mgEff2Text/mgApplyEff2)在 index.html v1.70.0。
  * ★ v1.38.0(2026-09-09・老師需求「布奶鳥獸/水狐/牛魔王/超鬼神王第二效果修正」)—
  *   布奶鳥獸 healatk:v 由 0(未使用,固定扣15)改 20(改吃 e.v);水狐 revive 由被動(爆發槽滿才生效)改為
  *   主動(施放當下補自己10HP扣對手10HP,再開3回合復活保護窗),v 維持20(復活回血量);牛魔王 bleed:6
@@ -4331,7 +4335,7 @@ window.MG_HEROES = [
   { n:'武器精靈', cls:'atk', img:'%E6%AD%A6%E5%99%A8%E7%B2%BE%E9%9D%88.png', bn:'銀齒迴力鏢旋風', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-sword',1],['sfx-crit',0.85],['sfx-powerup',0.7]], tint:'rgba(200,220,255,0.18)', dur:1440 , pos:'30%' , eff2:{t:'charge',v:2} },
   { n:'神槍手', cls:'shd', img:'%E7%A5%9E%E6%A7%8D%E6%89%8B.png', bn:'火焰神槍', gif:'%E5%8D%83%E5%B9%B4%E7%99%BC%E9%85%B5%E6%A0%B8%E7%88%86.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-gunshot-big',0.9],['sfx-explode',0.85],['sfx-gunshot-big',0.8],['sfx-explode',0.75]], tint:'rgba(255,80,30,0.22)', dur:2400 , pos:'25%' , eff2:{t:'truedmg',v:20} },
   { n:'火柴人', cls:'atk', img:'%E7%81%AB%E6%9F%B4%E4%BA%BA.png', bn:'燃燒自己,照亮別人', gif:'', sfx:[] , pos:'25%' , eff2:{t:'revive',v:20} },
-  { n:'青炎龍王', cls:'heal', img:'%E9%9D%92%E7%82%8E%E9%BE%8D%E7%8E%8B.png', bn:'青炎之舞', gif:'', sfx:[] , pos:'15%' , eff2:{t:'regenpoison3x5',v:0} },
+  { n:'青炎龍王', cls:'heal', img:'%E9%9D%92%E7%82%8E%E9%BE%8D%E7%8E%8B.png', bn:'青炎之舞', gif:'', sfx:[] , pos:'15%' , eff2:{t:'healdrain3',v:0} },   /* ★ v1.39.0(老師需求「青炎龍王祭附加效果修改」)— 由原本與魔界花使‧朱玥共用的 regenpoison3x5 改成專屬的 healdrain3(自己補10HP+扣對手3格爆發充能),判定邏輯見 index.html v1.70.0 mgApplyEff2/mgEff2Text */
   { n:'鳳凰', cls:'atk', img:'%E9%B3%B3%E5%87%B0.png', bn:'神炎之翼', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-explode',0.85],['sfx-burst',0.7]], tint:'rgba(255,80,20,0.22)', dur:2470 , pos:'25%' , eff2:{t:'phoenix',v:0} },
   { n:'操偶師', cls:'shd', img:'%E6%93%8D%E5%81%B6%E5%B8%AB.png', bn:'魁儡城牆', gif:'%E9%91%BD%E7%9F%B3.gif', sfx:[['sfx-powerup',0.85]], tint:'rgba(180,200,255,0.25)', dur:2400 , pos:'25%' , eff2:{t:'shield',v:2} },
   { n:'菇女', cls:'heal', img:'%E8%8F%87%E5%A5%B3.png', bn:'天女散花菇', gif:'%E5%BD%A9%E8%89%B2%E6%98%9F%E6%98%9F.gif', sfx:[['sfx-heal',0.85]], tint:'rgba(255,153,204,0.22)', dur:2400 , pos:'25%' , eff2:{t:'heal20dmgup3',v:0} },

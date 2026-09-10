@@ -929,7 +929,8 @@ button[disabled]{opacity:.45;}
 .mz.bad{background:rgba(210,84,63,.18);border-color:rgba(210,84,63,.5);font-size:12px;}
 .mz.walked{background:var(--tea);border-color:var(--tea);color:var(--mist);}
 .mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
-.mz.here{outline:3px solid var(--gold);outline-offset:-3px;}
+.mz.here{outline:3px solid #fff;outline-offset:-3px;box-shadow:0 0 6px 2px rgba(255,255,255,.5);animation:mzherewhite 1.1s ease-in-out infinite alternate;}   /* ★ v1.70.0(老師需求「起點的小人物保持白色呼吸光暈」)— 原本目前位置只有一圈固定的金色外框,改成白色呼吸光暈(outline+box-shadow明暗循環),整場迷宮進行中(不只在起點)都跟著玩家目前位置持續呼吸 */
+@keyframes mzherewhite{from{box-shadow:0 0 6px 2px rgba(255,255,255,.45);}to{box-shadow:0 0 18px 7px rgba(255,255,255,.95);}}
 .mz.goal{background:rgba(255,209,102,.2);border-color:var(--gold);}
 .mz.reach{box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);}
 #maze-info{font-size:15px;text-align:center;margin-top:10px;line-height:1.6;}
@@ -2649,6 +2650,127 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   button,.chip,a.chip,.cell,.opt,.ocard,.dbin,.mcard{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
   #topbar .chip{min-height:34px;}
 }
+
+/* ══════════════════════════════════════════════════════════
+ *  ★★ v1.71.0(2026-09-10・老師需求「PC版、iPad版、手機版版面仔細檢查:所有圖片、文字、
+ *     按鈕、視窗的尺寸,是否都對齊、字體又大又清晰不會被裁切或超出欄位、盡量剛好滿版;
+ *     有超出一定要可以捲動」)— 三平台版面稽核後的補丁 ★★
+ *
+ *  ⚠ 全段皆為「純新增覆寫」,前面任何一條舊規則都沒有刪改;要整批回退把本段拿掉即可。
+ *  ⚠ 為什麼放在 <style> 最末:本段多數選擇器與前面既有規則同權重,靠「後者勝」生效,
+ *    不必為了壓過舊規則而堆 !important 或加無意義的祖先選擇器。
+ * ══════════════════════════════════════════════════════════ */
+
+/* ── (a)【dvh 補完・PC 與 iPad 版底部被裁切的根治】
+      v1.46.0 已把 iOS 的 100vh 問題改成 dvh,但**只改了兩個 #page-play 斷點與首頁**,
+      其餘吃 100vh 算高度的容器整批漏掉:
+        - #page-play (min-width:1024px 橫式 那一份)
+        - #tw-svg    (台灣地圖 SVG,三個斷點各一份)
+        - #reactbox  (算數大進擊射擊區,三個斷點各一份)
+      在 PWA 安裝版(無網址列)看不出來,但 iPad/PC **用瀏覽器直接開**時網址列會佔掉高度,
+      100vh 比實際可視區高 => 地圖與射擊區的下緣、以及右欄底部的內容被切在畫面外,
+      正是老師講的「被裁切/超出欄位」。dvh 是動態視窗高度,永遠等於當下真正看得到的高度。
+      注意:不支援 dvh 的舊瀏覽器會整條宣告無效、自動退回前面既有的 vh 版本,零風險(同 v1.46.0 口徑)。 ── */
+@media (orientation:landscape){
+  #tw-svg{height:calc(100dvh - 235px);max-height:calc(100dvh - 235px);}
+  #reactbox{height:calc(100dvh - 215px);}
+}
+@media (min-width:1024px) and (orientation:landscape){
+  #page-play{height:calc(100dvh - 96px);max-height:calc(100dvh - 96px);}
+}
+@media (orientation:landscape) and (max-height:520px){
+  #tw-svg{height:calc(100dvh - 140px);max-height:calc(100dvh - 140px);}
+  #reactbox{height:calc(100dvh - 150px);}
+}
+@media (orientation:portrait){
+  #tw-svg{max-height:calc(100dvh - 300px);}
+  #reactbox{height:calc(100dvh - 210px);}
+}
+
+/* ── (b)【暫停視窗一定按得到「繼續」】#pausebox .pz 是全站唯一**沒有** max-height 也沒有
+      overflow 的浮動卡片(其餘 #modal/#rank-modal/#cr-modal/#intro-modal/#hero-modal
+      早就都有)。它的內容是 34px 標題 + 26px 計時 + 說明段 + 22px 按鈕,在手機橫式
+      (可視高度僅 375~430px)加上 30px 內距後很容易高過畫面 => 底部的「繼續」被推出視窗、
+      按不到 => 學生等於被鎖在暫停畫面裡。補上與其他彈窗同一套的 max-height + 內捲。 ── */
+#pausebox .pz{
+  max-height:88vh;max-height:88dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;box-sizing:border-box;
+}
+@media (orientation:landscape) and (max-height:520px){
+  #pausebox{padding:8px;}
+  #pausebox .pz{max-height:92dvh;padding:14px 18px;border-radius:16px;}
+  #pausebox .pz h2{font-size:22px;margin-bottom:4px;}
+  #pausebox .pz .pz-clock{font-size:18px;margin-bottom:8px;}
+  #pausebox .pz p{font-size:13px;margin:4px 0 10px;line-height:1.45;}
+  #pausebox .pz button{min-width:150px;min-height:42px;font-size:17px;}
+}
+
+/* ── (c)【彈窗高度全平台改吃 dvh】v1.46.0 只在手機橫式那一段把彈窗改成 92dvh,
+      PC 與 iPad 走的仍是基礎規則的 82vh/88vh/90vh => 一樣會在瀏覽器模式(有網址列)
+      算出比實際可視區更高的卡片,底部動作列被推到畫面外。這裡把五個彈窗的基礎高度
+      一次補上 dvh 版本(數值刻意維持原本的 82/88/90,只換單位,不改視覺比例)。 ── */
+#modal .box{max-height:82dvh;}
+#rank-modal .box,#cr-modal .box,#intro-modal .box{max-height:88dvh;}
+#hero-modal .box{max-height:90dvh;}
+
+/* ── (d)【動作列釘底擴及 PC 與 iPad】前面第5段的 sticky 動作列原本只給手機橫式,
+      但 PC 視窗被拉窄拉矮、或 iPad 直式時同樣會發生「內容太長->按鈕被捲到看不見」。
+      改為全平台通用(手機橫式那一份的縮字縮距維持不變,只是不再是唯一有 sticky 的斷點)。 ── */
+#modal .row,#rank-modal .row,#cr-modal .row,#intro-modal .row,#hero-modal .row{
+  position:sticky;bottom:-12px;z-index:3;padding:8px 0 4px;
+  background:var(--ink2);box-shadow:0 -8px 12px -6px rgba(0,0,0,.85);
+}
+
+/* ── (e)【瀏海/圓角安全區全平台生效】.wrap 的 env(safe-area-inset-*) 內距原本只寫在
+      手機橫式那一段。iPad Pro 與新款 iPhone 在**任何**斷點橫放時,左右都有圓角與
+      Home Indicator 區域會吃掉內容;PC 上 env() 一律回 0,加了完全沒有副作用。 ── */
+.wrap{
+  padding-left:calc(14px + env(safe-area-inset-left,0px));
+  padding-right:calc(14px + env(safe-area-inset-right,0px));
+  padding-bottom:calc(40px + env(safe-area-inset-bottom,0px));
+}
+@media (orientation:landscape){
+  .wrap{
+    padding-left:calc(16px + env(safe-area-inset-left,0px));
+    padding-right:calc(16px + env(safe-area-inset-right,0px));
+    padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));
+  }
+}
+@media (orientation:landscape) and (max-height:520px){
+  .wrap{
+    padding-left:calc(8px + env(safe-area-inset-left,0px));
+    padding-right:calc(8px + env(safe-area-inset-right,0px));
+    padding-bottom:calc(2px + env(safe-area-inset-bottom,0px));
+  }
+}
+
+/* ── (f)【左欄與右欄都要能捲】橫式版面把 #page-play 鎖成固定高度的兩欄 grid:右欄
+      (#play-right)早就有 overflow-y:auto,但**左欄的 #play-left 沒有** —— 左欄放的是
+      場景橫幅 + HUD + 戰鬥角色卡,戰鬥卡在 v1.69.0 加高之後,iPad 橫式最矮的 768px
+      機型會讓左欄整體高過格線列 => 超出的部分直接被 grid 切掉、也捲不到。
+      補上與右欄同一套的內捲設定(min-height:0 是 grid 子項可捲的必要條件)。 ── */
+@media (orientation:landscape){
+  #play-left{min-height:0;max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+}
+
+/* ── (g)【文字不被裁切:長英雄名與長招式名】.bt-name/.bt-bname 目前是
+      white-space:nowrap + ellipsis,長名字(例:喚龍使-蜜鶴林、魔界花使-朱玥)
+      在窄卡片上會被切成「喚龍使-蜜...」。刻意**不改成換行**(換行會把戰鬥卡撐高、
+      連鎖破壞 v1.69.0 才排好的版面),改用 clamp 讓字級隨欄寬自動縮到剛好放得下,
+      放不下時仍保留 ellipsis 當最後保險 => 絕大多數名字現在完整顯示。 ── */
+@media (orientation:landscape){
+  #page-play > #mgbattle .bt-name{font-size:clamp(13px,1.25vw,19px);}
+  #page-play > #mgbattle .bt-burst .bt-bname{font-size:clamp(11px,1.05vw,16px);}
+}
+
+/* ── (h)【最後保險:任何情況都捲得到】老師的原則是「有超出一定要可以捲動」。
+      #page-play 被鎖成固定高度,萬一未來新增內容超出格線,內容會被靜靜切掉。
+      這裡讓它在真的超出時可以整體內捲(沒超出時完全不影響版面,也不會出現捲軸)。
+      注意:刻意不動 #page-home 手機橫式那份的 overflow:hidden —— 那是為了
+      「一頁看完 16 關」刻意鎖死的設計,改掉會讓首頁又變成要捲。 ── */
+@media (orientation:landscape){
+  #page-play{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+}
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
      ⚠ 這一行必須與主程式 index.html 的 <link> **一字不差**,不要為了精簡而自己改 URL:
@@ -2782,7 +2904,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
          (主程式 v5.57.0 教訓),不能靠二次確認擋。遊戲中已有「← 回選單」,兩步就回得去。 -->
   <div id="topbar">
     <a id="toapp-btn" class="chip" href="../"
-       onclick="try{playSfx('sfx-tap',0.35);}catch(_){}">🗺 回大作戰</a>
+       onclick="try{playSfx('sfx-tap',0.35);}catch(_){} try{if(typeof window._mgMarkAppHandoff==='function')window._mgMarkAppHandoff();}catch(_){}">🗺 回大作戰</a>
     <button id="back-btn" class="chip hidden" onclick="mgHome()">← 回選單</button>
     <!-- ★ v1.60.0(老師需求「玩法按鈕移到左上方回選單右邊」)— 從 #hud 搬到這裡,固定跟著回選單一起在左上角;
          onclick 邏輯完全不動(mgShowInfo(true)),只是換了個容器位置。 -->
@@ -2826,7 +2948,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       </div>
       <div id="gate-preview"></div>
       <div class="gate-row">
-        <a class="btn" href="../" onclick="try{playSfx('sfx-tap',0.35);}catch(_){}">🗺 回去玩大作戰</a>
+        <a class="btn" href="../" onclick="try{playSfx('sfx-tap',0.35);}catch(_){} try{if(typeof window._mgMarkAppHandoff==='function')window._mgMarkAppHandoff();}catch(_){}">🗺 回去玩大作戰</a>
       </div>
       <div class="gate-row">
         <button class="btn-ghost" onclick="mgGateLogin()">🔑 老師登入</button>
@@ -3149,7 +3271,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.65.0"></script>
+<script src="minigame_db.js?v=v1.39.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -3158,7 +3280,34 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.69.0';
+var MG_VER = 'v1.71.0';
+/* ★ v1.71.0(2026-09-10・老師兩項需求)—
+   ①【登入後大對抗與小遊戲自由進出、不必重登】根治兩個獨立根因:
+     (a) 小遊戲原本用具名 Firebase app 'minigame' + SESSION 持久化,登入狀態的儲存鍵
+         (firebase:authUser:{apiKey}:{appName})與大對抗的 '[DEFAULT]' + LOCAL 完全是
+         兩份不同的東西 => 兩邊的登入從頭到尾就沒共用過。本輪改為預設 app 名稱 + LOCAL,
+         兩邊共用同一份登入狀態(見 ensureFirebase)。
+     (b) 大對抗的共用裝置攔截器(index.html v3.10.1)會把「離開頁面再回來」判成自動還原
+         強制登出。兩邊各新增一把一次性的跨程式交接鑰匙(sessionStorage lxps_app_handoff,
+         + localStorage 120 秒短效副本),只在按下入口連結那一刻寫入、讀到即刪、要求 uid
+         相符、夾 120 秒時效 => 只涵蓋一次導航,涵蓋不到任何換人使用的情境。
+     (c) 因為 (a) 讓小遊戲也會自動還原上一位留下的帳號,同步補上與大對抗同口徑的
+         共用裝置攔截器(見 onUser),缺這一段就是把共用 iPad 的破口搬進小遊戲。
+     ⚠ 30 分鐘閒置確認視窗(大對抗 v5.162.0)完全未動,依老師指示保留。
+   ②【PC/iPad/手機三平台版面稽核】dvh 補完(地圖 SVG、射擊區、iPad 橫式 #page-play)、
+     暫停視窗補可捲動、五個彈窗高度改吃 dvh、動作列釘底擴及全平台、安全區內距全平台、
+     左欄補內捲、長英雄名/招式名改 clamp 自動縮字不再被切;全為 <style> 末段純新增覆寫。 */
+/* ★ v1.70.0(2026-09-10・老師兩項需求)—
+   ①【迷宮陷阱字偶爾全部消失】mgMazeGenRandom 原本陷阱字接不上死巷就直接放棄那一個陷阱字
+   (「寧缺勿濫」),代價是偶爾整關 0 個陷阱字、只剩正確答案。改成:陷阱字沒有全部接上就視為
+   本次生成失敗,重新抽一次主線路徑再試(最多重試 10 次),10 次都接不滿才真的放棄回傳 null
+   退回固定地圖;不影響既有 mgMazeVerifySolvable 一定有解的保證。
+   ②【起點小人物白色呼吸光暈】.mz.here(迷宮玩家目前位置)原本只有一圈固定金色外框,改成白色
+   outline+box-shadow 明暗循環的呼吸光暈(新增 keyframes mzherewhite),迷宮進行全程跟著玩家
+   目前位置持續呼吸,不只出現在起點。
+   ③【青炎龍王祭附加效果】青炎龍王原本與魔界花使‧朱玥共用 regenpoison3x5(雙方各3回合緩慢
+   回血/中毒),拆開改成專屬的新機制 healdrain3:使用當下立即幫自己補 10 HP、扣對手 3 格爆發
+   充能;魔界花使‧朱玥維持原本 regenpoison3x5 不動。對應資料值改在 minigame_db.js v1.39.0。 */
 /* ★ v1.67.0(2026-09-10・老師需求「迷宮探險又變得太簡單了,幾乎只有一條路」)—
    根因:mgMazeGenRandom 只算出「一條主線+陷阱死巷」,其餘全部是牆,地圖上真的就只有
    一條路可走,走法隨機化再多次也還是「唯一直線+幾條死巷」的觀感。本輪三項改動:
@@ -5805,8 +5954,9 @@ var _MZ = null;
    走廊長度(含 S/G)隨機落在「正解字數+2」到「+22」之間,讓每次生成的地圖大小/形狀仍有變化;
    陷阱字若找不到可用的死巷接點(地圖太小、空間不夠)就放棄那一個陷阱字,寧可少放,也不犧牲
    「一定有解」的保證。 */
-function mgMazeGenRandom(marks){
+function mgMazeGenRandom(marks, _mgRetry){
   if(!marks) return null;
+  var _retryN = _mgRetry || 0;   /* ★ v1.70.0 — 陷阱字沒接滿時的重試計數,見下方「陷阱字全接上」檢查 */
   try{
     /* ★ v1.67.0(老師需求「迷宮探險又變得太簡單了,幾乎只有一條路」)— 盤面由 6×6(36格)
        放大為 10×6(60格),給後面的「打通額外通路」與「神秘方塊」留夠空間。 */
@@ -5874,7 +6024,7 @@ function mgMazeGenRandom(marks){
        (它自己不能跟路徑上其他格相鄰,確保死巷不會意外連回主線或連到別的死巷) */
     var usedSpur = {};
     var pathOrder = shuffle(path.slice(1, path.length - 1));   /* 排除 S/G,順序打亂,平均分散接點 */
-    var bi;
+    var bi, attachedBad = 0;
     for(bi = 0; bi < badKeys.length; bi++){
       var attached = false, pi;
       for(pi = 0; pi < pathOrder.length && !attached; pi++){
@@ -5888,7 +6038,20 @@ function mgMazeGenRandom(marks){
           usedSpur[spur] = anchor; markMap[spur] = badKeys[bi]; attached = true; break;
         }
       }
+      if(attached) attachedBad++;
       /* 找不到接點就放棄這一個陷阱字(地圖空間不夠),寧缺勿濫 */
+    }
+    /* ★ v1.70.0(老師回報「迷宮有些關卡只出現三個正確答案,沒有填入錯誤答案」)—
+       根因:上面的舊邏輯只要有陷阱字接不上死巷,就單獨放棄那一個陷阱字(註解寫「寧缺勿濫」),
+       立意是不犧牲「一定有解」的保證,但代價是偶爾整關 0 個陷阱字被接受過關,變成地圖上
+       只看得到正確答案、完全沒有陷阱可踩錯,失去迷宮「小心走錯路」的挑戰性。改成:只要
+       這一輪沒有把全部陷阱字都接上,就整個視為這次生成失敗,重新抽一次起點/終點/主線路徑
+       再試一遍(遞迴呼叫自己並帶入重試計數),最多重試 10 次;10 次都接不滿陷阱字,才真的
+       放棄回傳 null,交由呼叫端退回原本手工設計的固定地圖(既有 SOP,絕不會把「缺陷阱」的
+       地圖派上場)。 */
+    if(attachedBad < badKeys.length){
+      if(_retryN < 10) return mgMazeGenRandom(marks, _retryN + 1);
+      return null;
     }
     /* 組出開放格集合:主線+死巷是原本唯一的開放格 */
     var openSet = {}; for(i = 0; i < path.length; i++) openSet[path[i]] = true;
@@ -7086,6 +7249,13 @@ function mgEff2Text(h, isNpc){
     s: '還讓' + foe + '中毒 5 回合,每回合流失 ' + e.v + ' 滴血',
     f: '' + foe + '陷入中毒,接下來 5 回合每回合流失 ' + e.v + ' 點 HP',
     en: '; also poisons ' + foeEn + ' for 5 rounds, losing ' + e.v + ' HP each round' };
+  /* ★ v1.70.0(老師需求「青炎龍王祭附加效果修改」)— 青炎龍王由原本跟魔界花使‧朱玥共用的
+     regenpoison3x5(雙方各3回合緩慢回血/中毒)改成使用當下立即生效的一次性效果:自己回復
+     10 HP,同時扣對手 3 格爆發充能;魔界花使‧朱玥維持原本的 regenpoison3x5 不受影響。 */
+  if(e.t === 'healdrain3') return {
+    s: '使用當下幫' + self_ + '補 10 滴血,同時扣' + foe + ' 3 格爆發充能',
+    f: '' + self_ + '恢復 10 點 HP,同時扣除' + foe + ' 3 格爆發充能',
+    en: '; also heals ' + selfEn + ' 10 HP and drains 3 charge from ' + foeEn };
   return { s:'', f:'', en:'' };
 }
 /* ★ v1.65.0(老師需求「附加後面整段都用黃色,附加前面空2格跟基本效果段落做區分」)—
@@ -7786,7 +7956,8 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'poison5x6'){ foe.poisonLeft = 5; foe.poisonAmt = e.v; }   /* 超鬼神王 */
   else if(e.t === 'maxhp20heal20'){ caster.maxHpBonus = (caster.maxHpBonus || 0) + 20; caster.hp = Math.min(mgHpCap(caster), caster.hp + 20); try{ mgBattleFloatOn(mgSideOf(caster), '+20', 'heal'); }catch(_e9){} }   /* 救醫馬 */
   else if(e.t === 'cleansethorndmg3'){ mgBattleCleanseBad(caster); caster.thornDmgLeft = 3; }   /* 米鈴 */
-  else if(e.t === 'regenpoison3x5'){ caster.regenLeft = 3; caster.regenAmt = 5; foe.poisonLeft = 3; foe.poisonAmt = 5; }   /* 青炎龍王／魔界花使‧朱玥(共用同一機制,數值相同) */
+  else if(e.t === 'regenpoison3x5'){ caster.regenLeft = 3; caster.regenAmt = 5; foe.poisonLeft = 3; foe.poisonAmt = 5; }   /* 魔界花使‧朱玥 */
+  else if(e.t === 'healdrain3'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); foe.charge = Math.max(0, foe.charge - 3); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); }catch(_e18){} }   /* ★ v1.70.0 青炎龍王:regenpoison3x5(與魔界花使共用)拆開改版,自己補10HP+扣對手3格爆發充能 */
   else if(e.t === 'heal20dmgup3'){ caster.hp = Math.min(mgHpCap(caster), caster.hp + 20); caster.dmgUpLeft = 3; try{ mgBattleFloatOn(mgSideOf(caster), '+20', 'heal'); }catch(_e10){} }   /* 菇女 */
   else if(e.t === 'dodge2heal10'){ caster.dodgeLeft = 2; caster.hp = Math.min(mgHpCap(caster), caster.hp + 10); try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); }catch(_e11){} }   /* 風術士 */
   else if(e.t === 'dmgimmune3') caster.dmgImmuneLeft = 3;   /* 雅典娜 */
@@ -8564,6 +8735,44 @@ function loadScript(url){
  *     按了沒反應)。現在改成「已有載入中的 promise 就回傳同一個」,不論誰先發起,大家都
  *     等到同一份結果,不會有人被打回。
  * ══════════════════════════════════════════════════════════ */
+/* ★★ v1.71.0(老師需求「登入後大對抗和小遊戲都可以自由進出，不需要再重登」)★★
+   小遊戲側的三支共用 helper，與大對抗 index.html v5.175.0 的同名函式**完全同一套規格、
+   同一組 key**(sessionStorage `lxps_app_handoff` + localStorage 短效副本 `_ls`)，兩支程式
+   才能互相認得對方發出的交接鑰匙。改任何一邊的 key 名稱或 TTL 都必須同步改另一邊。
+   ⚠ 為什麼需要這把鑰匙：本版把小遊戲的 Firebase app 名稱與持久化改成與大對抗同一份
+     (見 ensureFirebase v1.71.0 註解)，登入狀態終於共用了，但同時也代表小遊戲**也會**
+     自動還原「上一位同學沒登出就關掉 App」留下的帳號。大對抗那邊自 v3.10.1 就有攔截器
+     擋這件事，小遊戲以前因為儲存區獨立所以不需要，現在必須補上同一道防線(見 onUser)。
+   鑰匙的安全性質(與大對抗完全一致)：sessionStorage 為主(App 視窗關掉即消失)、只有按下
+   入口連結那一刻才寫、讀到就立刻刪除(一次性)、要求 uid 相符、再夾 120 秒時效
+   ⇒ 只涵蓋「按下連結 → 另一支程式開起來」那幾百毫秒，涵蓋不到任何換人使用的情境。 */
+var MG_HANDOFF_KEY = 'lxps_app_handoff';
+var MG_HANDOFF_TTL = 120000;
+var _mgActiveSignInThisPageload = false;   /* 本次頁載玩家真的按過登入鈕(含 redirect 回程) */
+window._mgMarkAppHandoff = function(){
+  var _u = '';
+  try{ _u = (MG.user && MG.user.uid) || ''; }catch(_){}
+  if(!_u) return;   /* 沒登入就沒有東西需要被放行，不留無用痕跡 */
+  var _payload = '';
+  try{ _payload = JSON.stringify({ uid: String(_u), ts: Date.now() }); }catch(_){ return; }
+  try{ sessionStorage.setItem(MG_HANDOFF_KEY, _payload); }catch(_){}
+  try{ localStorage.setItem(MG_HANDOFF_KEY + '_ls', _payload); }catch(_){}
+};
+function mgConsumeAppHandoff(uid){
+  var _ok = false, _raw = null;
+  try{ _raw = sessionStorage.getItem(MG_HANDOFF_KEY); }catch(_){}
+  if(!_raw){ try{ _raw = localStorage.getItem(MG_HANDOFF_KEY + '_ls'); }catch(_){} }
+  try{ sessionStorage.removeItem(MG_HANDOFF_KEY); }catch(_){}
+  try{ localStorage.removeItem(MG_HANDOFF_KEY + '_ls'); }catch(_){}
+  if(!_raw) return false;
+  try{
+    var _o = JSON.parse(_raw);
+    if(_o && _o.uid && _o.ts
+       && (Date.now() - (parseInt(_o.ts, 10) || 0) < MG_HANDOFF_TTL)
+       && (!uid || String(_o.uid) === String(uid))){ _ok = true; }
+  }catch(_){}
+  return _ok;
+}
 function ensureFirebase(){
   if(MG.fb) return Promise.resolve(MG.fb);
   if(MG.fbPromise) return MG.fbPromise;   // ★ v1.27.0（舊：if(MG.fbLoading) return Promise.reject(...)）
@@ -8576,13 +8785,28 @@ function ensureFirebase(){
       ]);
     })
     .then(function(){
-      var app = window.firebase.initializeApp(FB_CFG, 'minigame');
+      /* ★★ v1.71.0(老師需求「登入後大對抗和小遊戲都可以自由進出，不需要再重登」)★★
+         【根因１・app 名稱】舊碼 initializeApp(FB_CFG, 'minigame') 用了具名 app。Firebase 的
+         登入狀態儲存鍵是 `firebase:authUser:{apiKey}:{appName}` —— 大對抗那邊是預設的
+         '[DEFAULT]'，小遊戲是 'minigame'，**兩邊的 auth 儲存區從頭到尾就是兩份不同的東西**，
+         所以在大對抗登入完，小遊戲怎麼查都查不到帳號，一定要再登一次(反之亦然)。
+         當初取名 'minigame' 的用意是「跟主程式分開避免混淆」，但小遊戲是獨立的一頁、
+         同一頁裡根本不會有第二個 Firebase app 跟它撞名(主程式那顆隱藏 iframe 預載小遊戲資源
+         時，iframe 是獨立的 JS 環境，也不會互相干擾)，具名帶來的只有「登入狀態不共用」這一個
+         副作用。本輪改回預設 app 名稱，兩邊即共用同一份登入狀態。
+         【根因２・持久化層級】舊碼 setPersistence(SESSION) 把登入狀態存在 sessionStorage，
+         大對抗那邊用的是預設的 LOCAL(IndexedDB)。就算 app 名稱對上了，儲存層不同一樣讀不到。
+         本輪改 LOCAL 與大對抗同一份。
+         ⚠⚠ 這兩項合起來讓小遊戲**也會自動還原上一位留下的帳號**，等於把大對抗那邊 v3.10.1
+           一直嚴防的共用裝置破口原封不動搬過來 ⇒ 必須同時補上 onUser() 內的攔截器
+           (見該函式 v1.71.0 註解)，兩者是一組的，**不可以只改這裡不改那裡**。 */
+      var app = window.firebase.initializeApp(FB_CFG);   /* ★ v1.71.0（舊：initializeApp(FB_CFG, 'minigame')） */
       var auth = window.firebase.auth(app);
       var db = window.firebase.firestore(app);
       MG.fb = { app: app, auth: auth, db: db };
       MG.fbLoading = false;
       MG.fbPromise = null;
-      try{ auth.setPersistence(window.firebase.auth.Auth.Persistence.SESSION); }catch(e){}
+      try{ auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL); }catch(e){}   /* ★ v1.71.0（舊：Persistence.SESSION） */
       auth.onAuthStateChanged(function(u){ onUser(u); });
       return MG.fb;
     })['catch'](function(e){
@@ -8626,6 +8850,10 @@ window.mgLoginTap = function(){
       if(_email && _ts && (Date.now() - _ts) < 30 * 60 * 1000) _params.login_hint = _email;
     }catch(_){}
     prov.setCustomParameters(_params);
+    /* ★ v1.71.0 — 標記「本次頁載玩家真的按過登入鈕」，供 onUser 的共用裝置攔截器放行；
+       redirect 路徑會整頁跳走(runtime 旗標歸零)，另寫一份 5 分鐘時效的 sessionStorage 旗標。 */
+    _mgActiveSignInThisPageload = true;
+    try{ sessionStorage.setItem('lxps_mg_pending_redirect', String(Date.now())); }catch(_){}
     return fb.auth.signInWithPopup(prov)['catch'](function(err){
       // iPad standalone 常擋 popup ⇒ 退回 redirect
       return fb.auth.signInWithRedirect(prov);
@@ -8645,6 +8873,43 @@ function mgLoading(on){
   }else l.classList.remove('show');
 }
 function onUser(u){
+  /* ★★ v1.71.0 — 共用裝置自動還原攔截器(比照大對抗 index.html v3.10.1 同一套判定)★★
+     本版讓小遊戲與大對抗共用同一份 Firebase 登入狀態(見 ensureFirebase 註解)，好處是
+     「登入一次兩邊自由進出」，代價是小遊戲**也會**自動還原上一位同學留下的帳號 ——
+     學生 A 玩完直接關 App(沒人會乖乖按登出) ⇒ 學生 B 打開小遊戲 ⇒ Firebase 從 IndexedDB
+     還原 A 的 token ⇒ B 的成績、最愛、週排行榜全部記到 A 頭上。必須擋。
+     放行條件三選一，缺一不可(與大對抗完全同口徑)：
+       ① _mgActiveSignInThisPageload = 本次頁載玩家真的按過登入鈕
+       ② lxps_mg_pending_redirect    = 本次頁載發起過 redirect 登入(整頁跳走再回來，runtime 旗標會被清掉)
+       ③ mgConsumeAppHandoff()       = 自家入口連結發起的「大對抗 ⇄ 小遊戲」跨程式導航鑰匙
+     三者皆無 ⇒ 判定為自動還原 ⇒ 靜默 signOut(小遊戲不登入本來就能玩，不必像大對抗那樣
+     跳一張「請重新登入」的卡把小朋友嚇到，右上角登入鈕仍在，要存成績自己按即可)。
+     ⚠ 一併清掉共用登入戳記，比照大對抗 v5.166.0：剛被判定不可信的帳號不可以留給下一位
+       同學在登入視窗看到「繼續使用 XXX」的快速按鈕。 */
+  if(u){
+    var _mgPendingRedirect = false;
+    try{
+      var _pr = sessionStorage.getItem('lxps_mg_pending_redirect');
+      if(_pr){
+        if(Date.now() - (parseInt(_pr, 10) || 0) < 5 * 60 * 1000) _mgPendingRedirect = true;
+        sessionStorage.removeItem('lxps_mg_pending_redirect');   /* 一次性 */
+      }
+    }catch(_){}
+    var _mgHandoff = false;
+    try{ _mgHandoff = mgConsumeAppHandoff(u.uid); }catch(_){}
+    if(!_mgActiveSignInThisPageload && !_mgPendingRedirect && !_mgHandoff){
+      try{ console.warn('[小遊戲・禁止自動登入 v1.71.0] 偵測到自動還原的帳號且無交接鑰匙 → 靜默登出'); }catch(_){}
+      try{
+        localStorage.removeItem('lxps_shared_login_ts');
+        localStorage.removeItem('lxps_shared_login_uid');
+        localStorage.removeItem('lxps_shared_login_email');
+      }catch(_){}
+      try{ if(MG.fb) MG.fb.auth.signOut(); }catch(_){}
+      return;   /* 交給隨後那次 onUser(null) 走未登入分支，不在這裡重複做清理 */
+    }
+    /* 通過放行 ⇒ 標記為本頁主動登入，讓之後若再觸發一次 onUser 不會被自己攔下 */
+    _mgActiveSignInThisPageload = true;
+  }
   MG.user = u || null;
   MG.unlockedHeroes = null;   /* ★ v1.31.0 — 每次登入/登出狀態改變都重置,避免殘留上一個帳號的解鎖清單 */
   var btn = $('login-btn'), who = $('who');
