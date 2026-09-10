@@ -15,7 +15,42 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.5(2026-09-10)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.72.0(2026-09-10)
+     ★ v1.72.0(2026-09-10・老師 8 項版面回報 + 2 項補充修正,一次交付)—
+       ①【PC 版主畫面太小】新開 min-width:1440px 專屬斷點(最大的 iPad 橫式 1366px 不會命中,
+         不影響既有已調好的 iPad 比例);.wrap 加寬到 1640px,標題圖／關卡格／格內文字全面放大一級。
+       ②【手機版標題與 15 關排列】題庫目前剛好 15 款,原本的 6 欄(18 格)反而讓每格更窄、字級被迫縮到
+         11.5px;改回 5 欄 × 3 列恰好滿版,格子變寬、內距與字級同步放大,標題圖 62px→78px。
+       ③【選英雄視窗】.box 統一套上戰鬥卡(.bt-card)同一套中圓字體家族(原本只有招式說明那一小段有);
+         標題/描述/篩選鈕/英雄清單文字全面放大;縮圖由 34px 放大到 60px(桌機 68px),填滿加高後的
+         名字列高度。
+       ④【手機戰鬥畫面卡片被裁切】左欄(戰鬥卡)寬度由 32vw 改為 50%,右欄(題目)相應收窄為 50%;
+         卡片變寬,既有 aspect-ratio 換算出的高度等比降低,下半部(HP條/爆發鈕/效果說明)不再超出
+         #mgbattle 的 overflow:hidden 可視範圍。
+       ⑤【複習單元綠色標籤與題目重疊】.cr-tag 原本 position:absolute 貼右上角、不佔版面高度,跟題目
+         文字天生疊在一起;改回一般文件流的 block 元素並改用 insertBefore 插成題卡第一個子節點,
+         新增 .card.has-crtag 讓有標籤的題卡改直向排列(標籤第一行、題目第二行起);沒有標籤的題卡
+         (絕大多數)完全不受影響。
+       ⑥【台灣地圖按鈕太小太難按】新增 🔍放大/縮小 切換鈕(renderMap 每題重繪,MG_MAP_ZOOM 狀態跨題
+         保留);放大狀態下 #mapbox 可捲動、SVG 寬度拉到 210%,縣市圓點與文字隨整張圖等比放大;
+         用 #mapbox.zoomed #tw-svg 的選擇器特異度直接蓋過所有既有斷點,PC／iPad／手機同步生效,
+         不必逐斷點各寫一次。
+       ⑦【結算視窗太長要捲動】把獎盃/星星(左欄,維持置中)跟分數/明細/用時/戰鬥結果/新紀錄
+         (右欄,改左對齊)拆成左右兩欄並排,總高度大幅縮短;#r-cr/#r-cloud/按鈕列維持原本滿版寬度
+         不進兩欄。
+       ⑧【順序排排站確認鈕被擋在畫面外】手機橫式斷點下,#order-slots 容器與 .oslot 自身的
+         min-height/padding 疊加撐回原本高度,單改 .oslot 一處不夠;這輪把容器、插槽、#order-act
+         留白一併壓低,按鈕列才真的往上移進畫面。
+       ⑨【戰鬥失敗評分】_bs.win 為 false(真正被擊倒或題目出完剩餘 HP 較低的軟輸)時,最終總分
+         (含已加總的戰鬥加成)統一砍半,再拿砍半後的分數去算星等百分比與 $('r-score') 顯示,
+         不必為戰敗另開一條算法。
+       ⑩【答對不再被反擊 + 選擇題 10 秒】scoreIt 呼叫 mgBattleHit 時,答對(correct 為 true)一併傳入
+         第三參數 skipTurnDmg=true,跳過函式尾端「不論答對答錯,對手每回合固定反擊一次」那段(v1.42.0
+         既有機制),答錯維持不變;與 v1.63.0 算數大進擊「射對這次對手不反擊」同一套邏輯,本輪推廣到
+         共用 scoreIt 的一般選擇題等引擎。quiz 引擎(_eng==='quiz')的 startTimer 秒數改寫死 10,
+         不再吃各關資料表 x.time 或單題 q.sec 覆寫;其餘引擎(drag/sort/ear/order/map/colorq/paint…)
+         時間邏輯零改動。
+       ★ 本輪純新增覆寫與少量既有函式參數擴充,舊規則/舊呼叫點一律保留可對照,未刪除任何既有邏輯分支。
      ★ v1.65.5(2026-09-10・老師需求「迷宮探險王的隨機路線重新設計,很多無法滿分通過的路線或必須踏進
        錯誤答案的安排」)— 根因:v1.34.0 的隨機地圖生成只檢查「S、G、6個標記字彼此連通」(單純 BFS
        連通性),完全沒管這款遊戲的核心規則(不能走回頭路、必須不踩陷阱字收集全部正解字才算滿分),
@@ -685,6 +720,11 @@ button[disabled]{opacity:.45;}
   font-size:20px;line-height:1.7;font-weight:700;box-shadow:0 5px 0 rgba(0,0,0,.25);
   min-height:96px;display:flex;align-items:center;justify-content:center;text-align:center;
 }
+/* ★ v1.72.0(接續上方 .cr-tag 改版)— .card 平常是「單一內容水平置中」的 flex row,只有一個題目文字
+   當作內容;有 .cr-tag 時題卡多了一個子節點,若還是 row 會變成標籤與題目「左右並排」而非「上下兩行」。
+   .has-crtag 只在有標籤時把這一張卡改成 column 且靠左起排(標籤天生就在左上角第一行,題目接在下一行
+   起排),沒有標籤的題卡(絕大多數)完全不受影響、維持原本置中排版。 */
+.card.has-crtag{flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;}
 #qhint{font-size:14px;text-align:center;opacity:.85;margin:8px 0 0;}
 .opts{display:grid;gap:10px;margin-top:14px;}
 .opts.two{grid-template-columns:1fr 1fr;}
@@ -714,8 +754,15 @@ button[disabled]{opacity:.45;}
 #nextrow button{flex:1;}
 
 /* ── 地圖引擎 ───────────────────────────── */
-#mapbox{background:rgba(255,255,255,.06);border-radius:18px;padding:8px;margin-top:12px;}
+#mapbox{background:rgba(255,255,255,.06);border-radius:18px;padding:8px;margin-top:12px;position:relative;}
 #tw-svg{display:block;width:100%;height:auto;max-height:56vh;}
+.map-zoom-btn{position:absolute;top:8px;right:8px;z-index:5;min-height:36px;font-size:13px;font-weight:700;padding:6px 12px;border-radius:11px;background:rgba(8,9,13,.75);color:var(--mist);border:1px solid rgba(240,192,96,.45);touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;font-family:inherit;}
+/* ★ v1.72.0 — 放大狀態:容器改可捲動(手指/滑鼠拖曳看不同區域),SVG 寬度直接超過容器 100%,
+   縣市圓點與文字隨整張圖等比放大,不必另外調每個 .spot 的半徑。用**比 #tw-svg 任何單一斷點更高的
+   選擇器特異度**(#mapbox.zoomed #tw-svg = 2 個 id + 1 個 class)蓋過前面所有斷點各自的寬高宣告,
+   不論 PC／iPad／手機哪個斷點命中都同樣生效,不必逐一斷點各寫一次。 */
+#mapbox.zoomed{overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
+#mapbox.zoomed #tw-svg{width:210%;max-width:none;height:auto;max-height:none;}
 .spot{fill:rgba(232,228,216,.30);stroke:rgba(255,255,255,.5);stroke-width:.7;cursor:pointer;}
 .spot.ok{fill:var(--grass);}
 .spot.ng{fill:var(--brick);}
@@ -1043,7 +1090,12 @@ button[disabled]{opacity:.45;}
 .cell.crmask .ctag{opacity:.5;}
 .crlit-lbl{position:absolute;left:8px;top:32px;z-index:3;font-size:13px;font-weight:700;color:#1f6b45;background:rgba(125,211,168,.95);border-radius:999px;padding:3px 10px;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .card{position:relative;}
-.cr-tag{position:absolute;top:6px;right:8px;font-size:12px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;}
+/* ★ v1.72.0(老師回報「選擇類型題目右上角的複習單元綠色標籤和題目重疊在一起了」)— 根因:.cr-tag 原本
+   position:absolute 貼在題卡右上角,浮在題目文字上層而不佔版面高度,題目文字本身從題卡最上緣開始排,
+   兩者天生就疊在同一塊。改回一般文件流的 block 元素,配合 JS(mgCrTagApply)把它插成題卡的第一個子
+   節點(insertBefore 取代 appendChild),標籤自然佔第一行、左上角起排,題目文字接在它後面自動換到
+   第二行開始,不必再靠絕對定位計算留白。 */
+.cr-tag{display:block;text-align:left;margin:0 0 6px;font-size:12px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;width:fit-content;}
 #drag-item{position:relative;}
 #rank-btn .rb-ico{font-size:20px;}
 #rank-btn .rb-sub{font-size:12px;font-weight:700;opacity:.8;}
@@ -1276,6 +1328,20 @@ button[disabled]{opacity:.45;}
 }
 #result .r-glow.on{opacity:.75;}
 #result .newbest{font-size:24px;}
+/* ★ v1.72.0 — 左欄(獎盃+星星)維持置中觀感、右欄(分數/明細/用時/戰鬥結果/新紀錄)改左對齊由上往下排;
+   兩欄同高並排(align-items:center 讓右欄內容整體垂直置中對齊左欄獎盃的高度),右欄內距原本繼承
+   #result 的 text-align:center 必須在這裡明確蓋回 left,否則每一行文字仍會置中、看起來仍然雜亂。 */
+#result .r-body{display:flex;align-items:center;gap:18px;margin-top:2px;text-align:left;}
+#result .r-left{flex:0 0 auto;text-align:center;}
+#result .r-right{flex:1 1 auto;min-width:0;text-align:left;}
+#result .r-right .big{font-size:38px;margin:0 0 4px;}
+#result .r-right .line{font-size:15px;}
+#result .r-right .newbest{font-size:18px;margin-top:4px;}
+@media (min-width:1024px){
+  #result .r-right .big{font-size:48px;}
+  #result .r-right .line{font-size:17px;}
+  #result .r-right .newbest{font-size:21px;}
+}
 #result button{min-height:56px;font-size:20px;}
 
 /* 玩法彈窗:放大、金框 */
@@ -1934,7 +2000,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #topbar{min-height:42px;gap:5px;}
   .chip{min-height:38px;font-size:13px;padding:5px 10px;}
   #share-btn,#who{display:none !important;}
-  #page-play{grid-template-columns:minmax(230px,32vw) minmax(0,1fr);column-gap:10px;height:calc(100vh - 54px);max-height:calc(100vh - 54px);}
+  /* ★ v1.72.0(老師需求「左下角戰鬥卡牌的長度和戰鬥卡片區域的長度增加至畫面長度的50%,右側題目區
+     的長度減少至畫面長度的50%,讓戰鬥卡牌的下半部不會超出手機螢幕畫面」)— 原本左欄只佔 32vw,
+     戰鬥卡片(#mgbattle,grid-column:1,與 #play-left 同欄)被壓得很窄,立繪照既有 aspect-ratio 換算出
+     的實際卡片高度反而超出這欄能給的垂直空間,下半部(HP條/爆發鈕/效果說明)被 overflow:hidden 裁在
+     畫面外。左欄改成 50%,卡片變寬,同一組 aspect-ratio 換算出的高度隨之等比降低,不必動任何 JS
+     或卡片內部規則就能讓下半部整個收進畫面。 */
+  #page-play{grid-template-columns:minmax(230px,50%) minmax(0,1fr);column-gap:10px;height:calc(100vh - 54px);max-height:calc(100vh - 54px);}
   #scene-banner #sb-img,#scene-banner .sb-amb,#scene-banner .sb-story{display:none;}
   #scene-banner .sb-name{font-size:16px;}
   #scene-banner .sb-txt{padding:4px 10px 6px;}
@@ -2312,7 +2384,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #m-hero button{min-height:40px;font-size:14px;padding:6px 12px;flex:0 0 auto;}
 #hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:111;display:none;align-items:center;justify-content:center;padding:14px;}
 #hero-modal.show{display:flex;}
-#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1020px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1020px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  /* ★ v1.72.0(老師需求「選英雄的視窗，所有英雄(包含戰鬥中)相關文字都用大對抗英雄圖鑑的中圓字體」)—
+     整個 .box 統一套上戰鬥卡(.bt-card)同一套中圓字體家族，原本只有 .hm-burst 單一元素有這個字型，
+     其餘標題/描述/篩選鈕/英雄清單按鈕都是全站預設的 LXGW WenKai TC；改在容器上宣告一次，
+     子孫元素靠 CSS 字型天生會繼承（.hm-list button 本來就寫 font-family:inherit）全部自動吃到，
+     不必逐一補寫。*/
+  font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;}
 /* ★ v1.68.0(老師回報「手機版選英雄的視窗還是無法捲動、選不到別的英雄」)— 根因:.box 本身完全沒有
    overflow 設定(預設 visible),當立繪(170px)+說明文字+篩選鈕列+英雄清單+底部按鈕列 加總高度超過
    max-height:90vh 時,瀏覽器不會讓 .box 變高,超出的內容就直接畫到 .box 邊框外面、視覺上被裁在螢幕
@@ -2321,20 +2399,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    修法:.box 本身也開 overflow-y:auto,不論螢幕多矮,只要內容加總超出 max-height,整個 .box(含立繪、
    篩選鈕、英雄清單)都能一起被手指捲上捲下,保證英雄清單永遠捲得到、選得到,不再依賴精算各斷點的
    vh 尺寸「剛好塞得下」。.hm-list 自己的 overflow-y:auto 保留(桌面/大螢幕下清單本身仍可獨立捲動)。 */
-#hero-modal h3{margin:0;font-size:27px;color:var(--gold);}
+#hero-modal h3{margin:0;font-size:32px;color:var(--gold);}
 #hero-modal .hm-top{display:flex;gap:16px;align-items:center;}
 #hero-modal .hm-top .bt-img{width:170px;height:170px;flex-basis:170px;}
-#hero-modal .hm-top .hm-desc{flex:1 1 auto;min-width:0;font-size:18px;line-height:1.6;}
-#hero-modal .hm-top .hm-desc b{color:var(--gold);font-weight:700;font-size:23px;}
+#hero-modal .hm-top .hm-desc{flex:1 1 auto;min-width:0;font-size:21px;line-height:1.6;}
+#hero-modal .hm-top .hm-desc b{color:var(--gold);font-weight:700;font-size:27px;}
 #hero-modal .hm-filter{display:flex;gap:8px;flex-wrap:wrap;}
-#hero-modal .hm-filter .chip{min-height:52px;font-size:17px;padding:10px 18px;}
+#hero-modal .hm-filter .chip{min-height:56px;font-size:19px;padding:10px 18px;}
 #hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
 /* ★ v1.31.0(老師回報「按篩選鈕/選最下面那排會跑掉」)— 根因:.hm-list 舊碼用 flex:1 1 auto 純內容撐高,
    換篩選時項目數一變(例如控場型只剩7張),整個 .box 高度跟著變,而 #hero-modal 又是
    align-items:center 置中 ⇒ box 整個上下彈動、剛按完篩選鈕手指還沒離開,下一下「選英雄」就點歪了。
    改成固定高度(不隨內容増減),box 尺寸永遠不變,篩選只換裡面捲動內容,不會再帶動整個視窗跳動。 */
-#hero-modal .hm-list{height:min(50vh,440px);min-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:2px;}
-#hero-modal .hm-list button{min-height:60px;font-size:17px;padding:12px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:10px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+#hero-modal .hm-list{height:min(50vh,440px);min-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:2px;}
+#hero-modal .hm-list button{min-height:76px;font-size:19px;padding:8px 14px;background:rgba(255,255,255,.06);border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:10px;font-family:inherit;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 /* ★ v1.56.0(老師需求「選角視窗四型底色區分」)— 英雄名字按鈕依職能上底色+黃字,選中時額外套金色外框(不搶底色)。
    顏色刻意選飽和度較低的底色(而非純紅/純綠等刺眼色)搭配亮黃字,兼顧可讀性與 iPad 螢幕辨識度。 */
 #hero-modal .hm-list button.cls-atk{background:rgba(196,42,42,.62);border-color:rgba(255,150,120,.4);color:#ffe066;}
@@ -2348,8 +2426,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    center top)——效果等同只裁出原圖最上面 25% 高度(臉部一帶)去填滿這顆小方框,一眼就認得出英雄長相。
    button 本身改 flex 顯示、文字不再吃滿整行,縮圖 flex-shrink:0 不被文字擠壓;圖片路徑缺檔時 background
    本就不顯示,不影響按鈕本身可點擊/可讀名字,零風險退回純文字外觀。 */
-#hero-modal .hm-list button{display:flex;align-items:center;gap:8px;white-space:normal;}
-#hero-modal .hm-list button .hm-thumb{width:34px;height:34px;flex:0 0 auto;border-radius:7px;background-repeat:no-repeat;background-size:auto 400%;background-position:center top;background-color:rgba(0,0,0,.25);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset;}
+#hero-modal .hm-list button{display:flex;align-items:center;gap:10px;white-space:normal;}
+/* ★ v1.72.0(老師需求「縮圖也要再放大到填滿名字框的高度」)— 縮圖由 34px 放大到 60px，
+   與上面 button min-height:76px（扣掉 8px 上下內距＝60px 內容高）對齊，縮圖高度剛好填滿整個名字列。 */
+#hero-modal .hm-list button .hm-thumb{width:60px;height:60px;flex:0 0 auto;border-radius:9px;background-repeat:no-repeat;background-size:auto 400%;background-position:center top;background-color:rgba(0,0,0,.25);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset;}
 #hero-modal .hm-list button .hm-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* ★ v1.56.0 — 描述區的「極限爆發」招式名 + 技能效果說明,改用中圓體字家族(比照戰鬥卡 v1.50.0 同款字型),
    並依英雄職能上色(沿用 .bt-cls.cls-* 既有配色),讓玩家一眼分辨「這是哪型英雄的爆發說明」。 */
@@ -2487,7 +2567,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #cr-modal .cr-master{font-size:21px;}
   .cr-grade .cr-gh{font-size:20px;}
   .cr-unit{font-size:18px;}
-  #hero-modal .hm-list button{font-size:18px;min-height:64px;}
+  #hero-modal .hm-list button{font-size:22px;min-height:84px;}
+  #hero-modal .hm-list button .hm-thumb{width:68px;height:68px;}
 }
 /* 右上功能列與音量面板:確保永遠壓在遊戲內容之上、且不被彈窗蓋住而點不到 */
 #mg-vol-panel{z-index:130;}
@@ -2531,43 +2612,48 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .wrap{padding:3px 8px 2px;padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px));}
 }
 
-/* ── ②【手機橫式・首頁一頁看完 16 關,不必捲動】
+/* ── ②【手機橫式・首頁一頁看完 15 關,不必捲動】
       手機橫式原本走的是「直向堆疊」版面(標題→按鈕→九宮格),16 關 5 欄 4 列必定超出畫面。
       改為比照 iPad/PC 的兩欄結構縮小版:第一列左=標題、右=三顆按鈕;第二列=九宮格改 6 欄 ⇒
-      16 關剛好 3 列放完。底部說明文字在手機上隱藏(資訊已在按鈕與關卡卡片上)。 ── */
+      16 關剛好 3 列放完。底部說明文字在手機上隱藏(資訊已在按鈕與關卡卡片上)。
+      ★ v1.72.0(老師需求「15個關卡要用5X3、放大排列、加高讓文字不會擠在一起」+「標題圖片再放大」)—
+      題庫目前剛好 15 款,6 欄反而多出 3 個空位、還把每欄擠得很窄逼得字級縮到 11.5px;改回 5 欄 ×
+      3 列恰好 15 格滿版,每格變寬(少 1 欄、多分到約 20% 寬度)文字自然不擠;同時把整段內距/字級
+      放大一級(padding/cn/cskills/cdiff/ctag),並把頂列按鈕的內距略收一點,騰出來的高度讓標題圖與
+      關卡格都能再加高。 ── */
 @media (orientation:landscape) and (max-height:520px){
   #page-home{
     display:grid;grid-template-columns:minmax(120px,20vw) minmax(0,1fr);
     grid-template-rows:auto minmax(0,1fr);column-gap:10px;row-gap:6px;
     align-items:center;height:calc(100dvh - 46px);max-height:calc(100dvh - 46px);overflow:hidden;
   }
-  #title-img{grid-column:1;grid-row:1;max-width:100%;max-height:62px;width:auto;margin:0;object-fit:contain;}
-  #title-fallback{grid-column:1;grid-row:1;font-size:16px;margin:0;}
+  #title-img{grid-column:1;grid-row:1;max-width:100%;max-height:78px;width:auto;margin:0;object-fit:contain;}
+  #title-fallback{grid-column:1;grid-row:1;font-size:18px;margin:0;}
   #top-btns{grid-column:2;grid-row:1;flex-wrap:nowrap;gap:6px;margin:0;width:100%;align-self:center;}
   #top-btns button{flex:1 1 0;min-width:0;}
-  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:6px 8px;font-size:13px;border-radius:11px;row-gap:0;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:5px 8px;font-size:13px;border-radius:11px;row-gap:0;}
   #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:16px;}
   #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:13px;}
   #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:10px;line-height:1.15;}
   #grid{
-    grid-column:1 / 3;grid-row:2;grid-template-columns:repeat(6,1fr);gap:6px;margin:0;
+    grid-column:1 / 3;grid-row:2;grid-template-columns:repeat(5,1fr);gap:8px;margin:0;
     min-height:0;align-content:stretch;
   }
-  .cell{height:auto;min-height:0;padding:6px 4px 5px;border-radius:12px;}
-  .cell .cn{font-size:11.5px;line-height:1.2;}
-  .cell .cskills,.cell .cdiff,.cell .cbest{font-size:9px;}
-  .cell .cbest{top:24px;}
-  .cfav{width:19px;height:19px;font-size:11px;top:3px;right:3px;}
-  .cell .ctag{font-size:9px;padding:2px 6px;left:5px;top:4px;}
-  .crmask-lbl{font-size:11px;padding:4px 9px;}
+  .cell{height:auto;min-height:0;padding:9px 7px 8px;border-radius:14px;}
+  .cell .cn{font-size:14px;line-height:1.25;}
+  .cell .cskills,.cell .cdiff,.cell .cbest{font-size:10.5px;}
+  .cell .cbest{top:26px;}
+  .cfav{width:21px;height:21px;font-size:12px;top:3px;right:3px;}
+  .cell .ctag{font-size:10.5px;padding:2px 7px;left:5px;top:4px;}
+  .crmask-lbl{font-size:12px;padding:5px 10px;}
   #home-note{display:none;}
 }
 /* 超矮(iPhone SE 橫式 320~375px 高):標題再縮、關卡名只留一行 */
 @media (orientation:landscape) and (max-height:400px){
-  #title-img{max-height:48px;}
+  #title-img{max-height:56px;}
   #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:12px;padding:5px 6px;}
   #rank-btn .rb-sub,#cr-btn .rb-sub{display:none;}   /* 高度不夠時副標讓位,主標仍看得懂 */
-  .cell .cn{font-size:10.5px;}
+  .cell .cn{font-size:12.5px;}
   .cell .cskills,.cell .cdiff{display:none;}
 }
 
@@ -2578,8 +2664,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .opts{margin-top:6px;gap:6px;}
   .card{font-size:16px;padding:8px 12px;}
   .mcard{min-height:64px;font-size:14px;}
-  .ocard{min-height:44px;font-size:14px;}
-  .oslot{min-height:48px;}
+  .ocard{min-height:42px;font-size:14px;}
+  /* ★ v1.72.0(老師需求「順序排排站的空格答案欄位高度縮減,讓下方的確認按鈕可以往上移不會超出畫面」)—
+     .oslot 本身縮小還不夠:#order-slots 容器自己另外寫死 min-height:64px、.oslot 自己的 padding
+     還是 8px 4px,兩者疊加會把 min-height:48px 的宣告直接撐回原本的高度;這裡把容器與內距一併壓低,
+     並把 #order-act(確認/收回按鈕列)的頂部留白也收窄,才會真正讓按鈕整排往上移。 */
+  #order-slots{min-height:34px;margin-bottom:8px;}
+  .oslot{min-height:34px;padding:4px 3px;font-size:12px;}
+  #order-act{margin-top:6px;}
+  #order-act button{min-height:38px;font-size:14px;}
   .dbin{min-height:58px;font-size:12px;}
   .m3-grid{width:min(46vw,300px);gap:4px;}
   .m3-cell{font-size:clamp(1rem,3.4vw,1.5rem);border-radius:7px;}
@@ -2626,12 +2719,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .cr-grade .cr-gh{font-size:14px;}
   .cr-unit{font-size:13px;padding:4px 4px 4px 26px;}
   #intro-modal .bubble{font-size:14px;line-height:1.6;}
-  #hero-modal .hm-list{height:min(42dvh,300px);min-height:150px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;}
-  #hero-modal .hm-list button{min-height:44px;font-size:13px;padding:8px 10px;}
-  #hero-modal .hm-list button .hm-thumb{width:26px;height:26px;}
+  #hero-modal .hm-list{height:min(42dvh,300px);min-height:150px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;}
+  #hero-modal .hm-list button{min-height:56px;font-size:16px;padding:6px 10px;}
+  #hero-modal .hm-list button .hm-thumb{width:44px;height:44px;}
   #hero-modal .hm-top .bt-img{width:64px;height:64px;flex-basis:64px;}
-  #hero-modal .hm-top .hm-desc{font-size:13px;}
-  #hero-modal .hm-top .hm-desc b{font-size:16px;}
+  #hero-modal .hm-top .hm-desc{font-size:15px;}
+  #hero-modal .hm-top .hm-desc b{font-size:18px;}
   #hero-modal .hm-filter .chip{min-height:36px;font-size:13px;padding:6px 10px;}
   #mg-vol-panel{top:46px;right:10px;width:min(74vw,260px);padding:10px 12px;}
   #mg-vol-panel .mvp-head b{font-size:16px;}
@@ -2640,6 +2733,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #page-result{padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));}
   #r-stars{font-size:26px;}
   #r-battle{font-size:12px;line-height:1.5;}
+  #result .r-body{gap:10px;}
+  #result .r-trophy{width:88px;height:88px;}
+  #result .r-right .big{font-size:26px;}
+  #result .r-right .line{font-size:12px;}
 }
 
 /* ── ⑥【按鈕都按得到】手機橫式下,凡是可點元素一律保底 34px 觸控高並關掉點擊延遲。
@@ -2770,6 +2867,31 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       「一頁看完 16 關」刻意鎖死的設計,改掉會讓首頁又變成要捲。 ── */
 @media (orientation:landscape){
   #page-play{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+}
+/* ══════════════════════════════════════════════════════════
+ *  ★ v1.72.0(老師需求「PC版的小遊戲主畫面,圖片、視窗和文字都太小了,尤其是文字比例都再放更大」)
+ *  ⚠ 刻意另開 min-width:1440px(最大的 iPad 橫式 1366px 都不會命中)而不是直接改動既有的
+ *    min-width:1024px 規則 —— 那組數值是給「1024~1366px 的 iPad」量身調的,如果直接放大,
+ *    iPad 反而會被撐爆版面;真正的桌機螢幕通常 ≥1440px,獨立一個更寬的斷點才能只加大 PC
+ *    不動到 iPad 既有已經調好的比例。純新增覆寫,放在檔尾靠 cascade 後者勝生效。
+ * ══════════════════════════════════════════════════════════ */
+@media (min-width:1440px) and (orientation:landscape){
+  .wrap{max-width:1640px;}
+  #page-home{grid-template-columns:440px minmax(0,1fr);column-gap:32px;}
+  #title-img{max-width:440px;}
+  #page-home .sub{font-size:20px;}
+  #top-btns{gap:14px;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:19px;padding:12px 22px;border-radius:16px;}
+  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:24px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:14px;}
+  #grid{gap:20px;}
+  .cell{height:236px;border-radius:22px;}
+  .cell .cn{font-size:29px;line-height:1.25;padding:0 8px;}
+  .cell .cskill{font-size:15px;padding:2px 10px;}
+  .cell .cdiff{font-size:16px;}
+  .cell .cstar{font-size:19px;margin-bottom:10px;}
+  .cell .cbest{font-size:15px;top:46px;right:10px;}
+  .cfav{width:28px;height:28px;font-size:16px;}
 }
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
@@ -3140,18 +3262,29 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <img class="r-glow" id="r-glow" src="" alt="">
       <div class="r-title">— 挑戰成績 —</div>
       <div class="line" id="r-name"></div>
-      <img class="r-trophy" id="r-trophy" src="" alt="" onerror="this.style.display='none';">
-      <div class="stars-wrap" id="r-stars-wrap">
-        <div class="stars" id="r-stars"></div>
-        <!-- ★ v1.65.0(老師需求「英雄被打倒,星級改灰色並覆蓋顯示再接再厲的大字」)— 蓋在星星正上方,
-             finishGame 判定戰敗時才加 show class 顯示;預設 display:none 不佔版面。 -->
-        <div class="r-encourage" id="r-encourage">再接再厲…</div>
+      <!-- ★ v1.72.0(老師需求「戰鬥勝利的視窗太長了下面看不到,把星星下方的評分訊息全部移到獎盃右側整齊
+           顯示(獎盃和星級靠左,評分細節靠右)」)— 原本獎盃/星星/分數/明細/用時/戰鬥結果/新紀錄全部
+           垂直堆疊一整條,內容一多就超出視窗高度要捲動;改成左右兩欄:左欄放獎盃+星星(視覺主角維持
+           置中),右欄收攏分數與所有評分細節(靠左對齊由上往下排),兩欄同高並排,總高度大幅縮短。
+           #r-cr(課堂複習登記)、#r-cloud(雲端狀態)與最下面的按鈕列刻意不放進兩欄,維持原本滿版寬度。 -->
+      <div class="r-body">
+        <div class="r-left">
+          <img class="r-trophy" id="r-trophy" src="" alt="" onerror="this.style.display='none';">
+          <div class="stars-wrap" id="r-stars-wrap">
+            <div class="stars" id="r-stars"></div>
+            <!-- ★ v1.65.0(老師需求「英雄被打倒,星級改灰色並覆蓋顯示再接再厲的大字」)— 蓋在星星正上方,
+                 finishGame 判定戰敗時才加 show class 顯示;預設 display:none 不佔版面。 -->
+            <div class="r-encourage" id="r-encourage">再接再厲…</div>
+          </div>
+        </div>
+        <div class="r-right">
+          <div class="big" id="r-score"></div>
+          <div class="line" id="r-detail"></div>
+          <div class="line" id="r-time"></div><!-- ★ v1.4.0 用時 + 快手加成 -->
+          <div class="line" id="r-battle"></div><!-- ★ v1.29.0 戰鬥結果:勝負/剩餘 HP 加成/爆發節制加成/KO 獎勵 -->
+          <div class="newbest hidden" id="r-newbest">🎉 新紀錄!</div>
+        </div>
       </div>
-      <div class="big" id="r-score"></div>
-      <div class="line" id="r-detail"></div>
-      <div class="line" id="r-time"></div><!-- ★ v1.4.0 用時 + 快手加成 -->
-      <div class="line" id="r-battle"></div><!-- ★ v1.29.0 戰鬥結果:勝負/剩餘 HP 加成/爆發節制加成/KO 獎勵 -->
-      <div class="newbest hidden" id="r-newbest">🎉 新紀錄!</div>
       <div class="line" id="r-cr" style="font-size:16px;font-weight:700;color:var(--grass);margin-top:8px;"></div><!-- ★ v1.10.3 專注課堂複習:單元/課堂題數/答對數,老師登記用 -->
       <div class="line" id="r-cloud" style="font-size:14px;opacity:.75;margin-top:10px;"></div>
       <div style="display:flex;gap:10px;margin-top:22px;">
@@ -3280,7 +3413,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.71.0';
+var MG_VER = 'v1.72.0';
 /* ★ v1.71.0(2026-09-10・老師兩項需求)—
    ①【登入後大對抗與小遊戲自由進出、不必重登】根治兩個獨立根因:
      (a) 小遊戲原本用具名 Firebase app 'minigame' + SESSION 持久化,登入狀態的儲存鍵
@@ -4594,7 +4727,10 @@ function renderQuestion(keepState){
   /* ⚠ react 自己跑掉落迴圈、maze 與 paint 是慢慢想的關卡型玩法,match3 是每回合 10 秒自己管理的拖曳迴圈,
      四者都由各自的 render 決定計時方式,不吃這裡的統一倒數。 */
   /* ★ v1.4.0 — 題目可用 q.sec 覆寫倒數(聽音坊「演奏／拍子」題需要比選擇題更長的時間) */
-  if(!keepState && x.engine !== 'react' && x.engine !== 'match3') startTimer((q && q.sec) ? q.sec : x.time);
+  /* ★ v1.72.0(老師需求「把選擇題類型的玩家思考時間改到10秒」)— quiz 引擎(_eng==='quiz')一律固定
+     10 秒,不再吃各關資料表各自設定的 x.time 或單題 q.sec 覆寫;其餘引擎(drag/sort/ear/order/map/
+     colorq/paint…)的既有時間邏輯完全不動。 */
+  if(!keepState && x.engine !== 'react' && x.engine !== 'match3') startTimer(_eng === 'quiz' ? 10 : ((q && q.sec) ? q.sec : x.time));
 }
 
 /* ── 引擎 A:分類衝刺 ───────────────────────────────── */
@@ -4640,11 +4776,27 @@ function renderQuiz(x, q){
 }
 
 /* ── 引擎 C1:台灣地圖點位 ──────────────────────────── */
+/* ★ v1.72.0(老師需求「台灣地圖的各縣市按鈕在手機上太小了太難按,改成可以按 放大/縮小 切換地圖和
+   按鈕的尺寸,且放大後可以捲動地圖,讓玩家比較好點擊」+「這個設計也套用到PC、IPAD」)—
+   單一狀態變數 MG_MAP_ZOOM(不隨題目重置,只在切到別款遊戲/重整頁面時歸零),renderMap 每次重繪
+   時讀這個狀態決定要不要套 .zoomed;按鈕本身也隨 renderMap 一起重繪(整個 #mapbox.innerHTML 每題
+   都會整包換新),故不需要額外的「重繪後把按鈕找回來」邏輯。 */
+var MG_MAP_ZOOM = false;
+window.mgMapToggleZoom = function(){
+  MG_MAP_ZOOM = !MG_MAP_ZOOM;
+  var mb = $('mapbox');
+  if(mb){ if(MG_MAP_ZOOM) mb.classList.add('zoomed'); else mb.classList.remove('zoomed'); }
+  var bt = $('map-zoom-btn');
+  if(bt) bt.textContent = MG_MAP_ZOOM ? tx('🔍－ 縮小地圖') : tx('🔍＋ 放大地圖');
+  playSfx('sfx-tap', 0.35);
+};
 function renderMap(x, t){
   $('qcard').textContent = tx(t.q);   /* 地圖題的地標圖(tasks[].pic)在答對後的解說卡顯示,見 mgAnswerMap 尾端 */
   $('opts').innerHTML = '';
   show('mapbox');
-  var s = '<svg id="tw-svg" viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">'
+  var s = '<button type="button" id="map-zoom-btn" class="map-zoom-btn" onclick="mgMapToggleZoom()">'
+        + esc(MG_MAP_ZOOM ? tx('🔍－ 縮小地圖') : tx('🔍＋ 放大地圖')) + '</button>'
+        + '<svg id="tw-svg" viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">'
         + '<path d="M52 8 L60 12 L64 20 L66 30 L67 42 L64 56 L61 70 L57 84 L51 100 L46 114 '
         + 'L42 121 L37 114 L32 100 L28 86 L25 70 L26 55 L29 42 L34 30 L41 18 L47 11 Z" '
         + 'fill="rgba(79,191,125,.18)" stroke="rgba(232,228,216,.55)" stroke-width="1"/>'
@@ -4662,6 +4814,7 @@ function renderMap(x, t){
   }
   s += '</svg>';
   $('mapbox').innerHTML = s;
+  if(MG_MAP_ZOOM) $('mapbox').classList.add('zoomed'); else $('mapbox').classList.remove('zoomed');
 }
 
 /* ── 引擎 C2:聽音辨曲(Web Audio 即時合成,零音檔)──── */
@@ -6752,8 +6905,13 @@ function lockBins(ansIdx){
 
 function scoreIt(correct, noBattle){
   /* ★ v1.29.0 戰鬥模式:一題一判的引擎由這裡統一接 HP;逐事件引擎(連連看/迷宮/算數大進擊)自己逐筆呼叫 mgBattleHit,
-     結算時傳 noBattle=true 跳過,避免同一次作答扣兩次血。⚠ 放在最前面:KO 時 mgBattleEnd 會設 MG.answered/停計時,後面的分數照算。 */
-  if(!noBattle) mgBattleHit(!!correct);
+     結算時傳 noBattle=true 跳過,避免同一次作答扣兩次血。⚠ 放在最前面:KO 時 mgBattleEnd 會設 MG.answered/停計時,後面的分數照算。
+     ★ v1.72.0(老師需求「原本玩家答對時攻擊1次、對手也反擊1次,改成答對時對手不會反擊」)— mgBattleHit
+     第三參數 skipTurnDmg 為 true 時會跳過函式尾端「不論答對答錯,對手每回合固定反擊一次」那段(見該函式
+     v1.42.0 註解)。答對時傳 true 跳過反擊(只留玩家自己那下攻擊);答錯維持原樣不傳(對手仍會反擊,
+     答錯的處罰不變)——與 v1.63.0 算數大進擊「射對這次對手不反擊」同一套邏輯,本輪推廣到一般選擇題等
+     共用 scoreIt 的引擎。 */
+  if(!noBattle) mgBattleHit(!!correct, undefined, !!correct);
   if(correct){
     MG.right++;
     MG.combo++;
@@ -6918,6 +7076,11 @@ function finishGame(){
     if(!_bs.win && _bs.hp <= 0){ MG.score = _base; _bonusPct = 0; _timed = _base; }
     MG.score += _bs.total;
   }
+  /* ★ v1.72.0(老師需求「小遊戲中戰鬥失敗,最後總評分減半,才給星等」)— _bs.win 為 false 涵蓋兩種
+     戰敗:真正被打倒(HP 歸零,上面那行已先拿掉用時加成)、以及題目出完雙方都沒 KO、時間到但剩餘 HP
+     較低的「軟輸」。不論哪一種,這裡統一把最終總分(含已加總的戰鬥加成 _bs.total)砍半,再往下讓
+     stars/百分比評分與 $('r-score') 顯示都直接讀這個砍半後的 MG.score,不必另外開一條分支算法。 */
+  if(_bs && !_bs.win) MG.score = Math.round(MG.score / 2);
   /* ★ v1.40.0(老師裁定)— 星等改依「本關最低分(0)到理論最高分」的百分比評分,不再用「勝負+HP+爆發次數」東拼西湊
      (舊制在 HP 上限從 100 改 200 後,HP≥40/70 兩道門檻幾乎必過,導致 40% 答對率+被打倒還能拿 4 星的荒謬結果)。
      戰鬥模式:百分比 ≥90% 五星/≥70% 四星/≥50% 三星/≥30% 二星/≥10% 一星,否則 0 星;
@@ -9351,13 +9514,18 @@ function mgCrPick(x, pool, need){
 function mgCrTagApply(q){
   try{
     var old = document.querySelectorAll('.cr-tag'), i; for(i = 0; i < old.length; i++) old[i].parentNode.removeChild(old[i]);
+    var _diE = $('drag-item'), _oqE = $('order-q'), _qcE = $('qcard');
+    if(_diE) _diE.classList.remove('has-crtag');
+    if(_oqE) _oqE.classList.remove('has-crtag');
+    if(_qcE) _qcE.classList.remove('has-crtag');
     if(!q || !q.cr || !mgCrUnits()[q.cr]) return;
     var host = null, di = $('drag-item'), db = $('dragbox'), ob = $('orderbox'), oq = $('order-q');
     if(db && !db.classList.contains('hidden') && di) host = di;
     else if(ob && !ob.classList.contains('hidden') && oq) host = oq;   /* ★ v1.10.1 排排站題卡 */
     else host = $('qcard');
     if(!host) return;
-    var sp = document.createElement('span'); sp.className = 'cr-tag'; sp.textContent = mgCrLabel(q.cr); host.appendChild(sp);
+    host.classList.add('has-crtag');
+    var sp = document.createElement('span'); sp.className = 'cr-tag'; sp.textContent = mgCrLabel(q.cr); host.insertBefore(sp, host.firstChild);
   }catch(e){}
 }
 function mgCrBtnRender(){
