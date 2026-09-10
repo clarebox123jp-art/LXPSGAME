@@ -2493,6 +2493,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* ★ v1.76.0 — 職能徽章搬到左上角(取代大對抗的稀有度徽章位置)，圖示沿用既有 mgBurstDef(cls).icon。 */
 #hero-modal .hm-list button .hm-typebadge{position:absolute;top:6px;left:6px;font-size:14px;line-height:1;
   padding:3px 6px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;z-index:2;pointer-events:none;}
+/* ★ v1.77.0 — 天賦標籤藥丸,疊在職能徽章正下方(比照大對抗效果標籤堆疊在稀有度徽章下方的排法)。 */
+#hero-modal .hm-list button .hm-tag{position:absolute;top:32px;left:6px;font-size:11px;font-weight:700;line-height:1.3;
+  padding:2px 7px;border-radius:7px;background:rgba(20,60,70,.85);color:#7ee8fa;z-index:2;pointer-events:none;
+  border:1px solid rgba(126,232,250,.4);white-space:nowrap;}
 #hero-modal .hm-list button .hm-name{padding:7px 4px 8px;font-size:18px;font-weight:700;line-height:1.2;
   color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #hero-modal .row{display:flex;gap:10px;}
@@ -2626,9 +2630,19 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #cr-modal .cr-master{font-size:21px;}
   .cr-grade .cr-gh{font-size:20px;}
   .cr-unit{font-size:18px;}
-  #hero-modal .hm-list button{width:175px;}
-  #hero-modal .hm-list button .hm-thumb{height:135px;}
-  #hero-modal .hm-list button .hm-name{font-size:19px;padding:8px 6px 10px;}
+  /* ★ v1.77.0(老師需求「完全用大對抗的隊伍編組頁的版面設計，包括圖片調整過的高度和比例，不要自己做新的」)—
+     查證大對抗 main.css 第 3516~3588 行,隊伍編組頁左右版面是 #hero-pick-arena{flex:1;min-width:600px}
+     與 #hpick-panel{flex:1} 兩邊「等分」,不是像素寬度固定;卡片本身 .hpick-adv-node 是 width:155px(全站
+     只有這一個尺寸,大對抗自己也沒有「桌機再放大」這種寫法)。上一版(v1.76.0/v1.76.1)自己把卡片放大到
+     165~175px、又把左右欄硬寫死 48%/52%,兩者都是自創的數字,跟大對抗原始設計不一樣——這就是老師覺得
+     「還是不對」的根本原因。本輪把桌機大螢幕(≥1024px)斷點下的 .hm-split 改成跟大對抗一模一樣的
+     flex:1/flex:1 等分 + .hm-left min-width:600px(不夠寬時優先保證清單邊,詳情卡讓出空間),.box 上限
+     配合加寬到 1560px 才撐得起兩邊各 600px+ 起跳,卡片尺寸完全不改(維持 base 規則的 155px/120px/18px,
+     與大對抗一字不差),不再另外放大。 */
+  #hero-modal .box{max-width:1900px;}
+  #hero-modal .hm-split{align-items:stretch;}
+  #hero-modal .hm-left{flex:1 1 0;min-width:600px;}
+  #hero-modal .hm-right{flex:1 1 0;min-width:0;}
 }
 /* 右上功能列與音量面板:確保永遠壓在遊戲內容之上、且不被彈窗蓋住而點不到 */
 #mg-vol-panel{z-index:130;}
@@ -2785,6 +2799,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #hero-modal .hm-list button{width:82px;}
   #hero-modal .hm-list button .hm-thumb{height:64px;}
   #hero-modal .hm-list button .hm-typebadge{font-size:10px;padding:2px 4px;top:3px;left:3px;}
+  #hero-modal .hm-list button .hm-tag{display:none;}
   #hero-modal .hm-list button .hm-name{font-size:11.5px;padding:4px 3px 5px;}
   #hero-modal .hm-banner{height:76px;}
   #hero-modal .hm-name{font-size:18px;padding:8px 12px 0;gap:6px;}
@@ -3497,7 +3512,35 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.76.0';
+var MG_VER = 'v1.77.0';
+/* ★ v1.77.0(2026-09-11・老師「完全用大對抗的隊伍編組頁的版面設計...不要自己做新的」)—
+   查了大對抗 main.css(第3516~3588行)隊伍編組頁的實際版面比例:左側英雄清單 #hero-pick-arena 與右側
+   詳情 #hpick-panel 是 flex:1/flex:1「等分」(不是像素寬度),清單邊另外加 min-width:600px 兜底;英雄卡片
+   .hpick-adv-node 全站只有 width:155px 這一種尺寸,大對抗自己也沒有「桌機再放大」的寫法。
+   v1.76.0/v1.76.1 把卡片自己放大到165~175px、左右欄自己寫死48%/52%,兩者都是老師沒有要求、自己發明的
+   數字——這正是「還是不對」的根本原因。本輪桌機大螢幕(min-width:1024px)斷點內改成跟大對抗一模一樣的
+   flex:1/flex:1 + .hm-left min-width:600px,.box 上限配合加寬到1560px(兩邊各600px+起跳需要這個寬度
+   才撐得住);卡片尺寸完全比照 base 規則(155px寬/120px縮圖/18px金字姓名),不再另外放大,忠實複製而非
+   自創比例。算過:1560px 扣版面內距後左右各得約749px,155px卡片配14px間距可以穩定排出4欄。1024px以下
+   (含手機橫式既有的34%欄寬+82px卡片)維持原樣不受影響。
+   ★ 同輪老師再補一張大對抗實際畫面截圖(5欄卡片+稀有度徽章下方效果標籤+右側「+邀請加入」等元素)並
+   明確要求「完全用大對抗這個畫面中的元素,只要改成小遊戲專用版本的內容,別浪費額度去生新的版型」,
+   兩處追加調整(同輪一次做完,不另外 bump 版號):
+   ①`.box` 上限再加寬到 1900px(1560px 仍偏保守,5 欄卡片需要更多寬度)——算過:1900px 扣版面內距後
+   左右各得約 919px,155px 卡片配 14px 間距可以穩定排出 **5 欄**,與老師截圖的大對抗畫面欄數一致。
+   ②新增 `.hm-tag` 效果標籤藥丸(比照大對抗卡片稀有度徽章下方的效果標籤位置)——大對抗那邊的標籤讀的
+   是敵情威脅分析引擎(小遊戲沒有這一整套系統,不重建),改用小遊戲自己既有的天賦家族資料
+   (`MG_HEROES.tr.t`,經 `MG_TR_TAG_ZH` 對照成中文短標籤)當標籤內容,是「照著大對抗的元素位置,換成
+   小遊戲有的內容」的做法,不是另外設計新系統。「+邀請加入」(好友助戰)/等級徽章/人物介紹長文三項
+   大對抗獨有、小遊戲沒有對應資料或系統的元素不強行複製,右側預覽卡維持既有的橫幅+姓名+爆發技能+
+   天賦說明四段結構。 */
+/* ★ v1.76.1(2026-09-11・老師截圖回報「還是不對」)—
+   v1.76.0 把卡片直接搬用大對抗的 155px(桌機大螢幕 175px)寬度，但大對抗的英雄選擇區是整頁寬的獨立
+   區塊，小遊戲這裡的清單卻是塞在彈窗左側 38% 欄位裡，同樣寬度在小遊戲的窄欄位下只排得出 2 欄，看起來
+   跟老師要的「密集網格」參考圖差很多。本輪兩處調整：①`.hm-left` 欄寬 38%→48%（`.hm-right` 預覽卡
+   相應收窄，原本設計就是彈性寬度，內容不會被壓到）②桌機大螢幕斷點卡寬 175px→165px(縮圖 135→127px)。
+   算過欄寬：.box 最大 1200px，扣掉版面內距後 .hm-left 約 555px，3 張 165px 卡片＋2 個 14px 間距＝523px，
+   穩定排出 3 欄（原本 2 欄）。卡片本身尺寸與字級(縮圖/姓名字級/深色底/邊框分職能)沿用 v1.76.0 不變。 */
 /* ★ v1.76.0(2026-09-11・老師兩項需求)—
    ①【天賦剩餘 3 種家族補完】上一輪(v1.75.0)有 9 種家族生效、3 種(hintclear/resourcesave/autoclear)
    資料已寫入但引擎沒接;本輪逐一處理:
@@ -7688,7 +7731,7 @@ function mgHeroPaintPicker(){
        同一行」改直式:縮圖滿版貼頂(.hm-thumb 撐滿卡片寬度)、名字置中貼在縮圖下方(比照
        _buildHeroPickNodes 的 .hpick-adv-node:圖在上、金色粗體名字置中在下)；cls-XX 底色與 on 選中外框
        邏輯不變。 */
-    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb" style="background-image:url(\'' + mgHeroUrl(L[i].img) + '\')"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span><span class="hm-name">' + esc(L[i].n) + '</span></button>';
+    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb" style="background-image:url(\'' + mgHeroUrl(L[i].img) + '\')"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span>' + mgTraitTagShort(L[i]) + '<span class="hm-name">' + esc(L[i].n) + '</span></button>';
   }
   $('hm-list').innerHTML = html;
 }
@@ -8316,6 +8359,14 @@ function mgTraitText(h){
   return { s:'', f:'', en:'' };
 }
 function mgTraitHtml(txt){ return txt ? ('<br><span style="color:#7ee8fa;">' + esc(txt) + '</span>') : ''; }   /* ★ v1.75.0 — 跟 mgEff2Html 的黃色(#ffe066,爆發第二效果)區分,天賦被動改用青色,文字本身已含「天賦:」開頭不必再加「附加:」 */
+/* ★ v1.77.0(老師需求「完全用大對抗隊伍編組頁的元素,只要改成小遊戲專用版本的內容」)— 大對抗清單卡片在
+   稀有度徽章下方會有 1~2 個效果標籤小藥丸(讀敵情分析引擎產生);小遊戲沒有那一整套威脅分析系統,改用
+   「內容改成小遊戲有的」思路:直接讀該英雄自己的天賦家族(MG_HEROES.tr.t)當短標籤,不重建新系統。 */
+var MG_TR_TAG_ZH = { headstart:'搶跑充能', mistakeshield:'容錯', streakbonus:'連擊加成', scoreboost:'分數加成', secondchance:'續命機會', timebonus:'時間加成', trapimmune:'陷阱免疫', randomvariant:'隨機加成', hintclear:'提示清除', autoclear:'即刻過關' };
+function mgTraitTagShort(h){
+  var t = h && h.tr, label = t && MG_TR_TAG_ZH[t.t]; if(!label) return '';
+  return '<span class="hm-tag">' + esc(label) + '</span>';
+}
 function mgApplyEff2(caster, foe){
   var e = caster.h && caster.h.eff2; if(!e) return;
   if(e.t === 'heal'){ caster.healBuff = MG_BT.EFF2_N; caster.healAmt = e.v; }
