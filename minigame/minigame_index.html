@@ -15,7 +15,20 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.4(2026-09-10)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.65.5(2026-09-10)
+     ★ v1.65.5(2026-09-10・老師需求「迷宮探險王的隨機路線重新設計,很多無法滿分通過的路線或必須踏進
+       錯誤答案的安排」)— 根因:v1.34.0 的隨機地圖生成只檢查「S、G、6個標記字彼此連通」(單純 BFS
+       連通性),完全沒管這款遊戲的核心規則(不能走回頭路、必須不踩陷阱字收集全部正解字才算滿分),
+       隨機拆牆留下大量地板常讓陷阱字剛好卡在唯一能通往某個正解字或終點的必經位置上,那一關無論
+       重走幾次都不可能滿分。改用「主走廊+死巷」構造式生成:①隨機化 DFS 找一條「無捷徑」的簡單
+       路徑(induced path,新格子除了緊鄰的前一格外不能跟路徑上任何格子相鄰,避免兩段路線意外貼在
+       一起變成非預期捷徑)從 S 到 G,長度依正解字數留夠緩衝;②正解字依序放在路徑中段,必經;
+       ③每個陷阱字接成一條獨立死巷(同樣套用無捷徑檢查,保證不會意外連回主線或連到別的死巷),
+       純屬玩家自己選擇要不要繞進去的岔路;④其餘格子一律封成牆,避免額外開放地板意外接通造成
+       非預期路線;⑤生成完再跑 mgMazeVerifySolvable 窮舉驗證「存在一條不踩陷阱、收集全部正解、
+       走到終點」的合法路線,驗證不過就整個放棄改回原本手工地圖,絕不會把驗證失敗的地圖派上場。
+       500 次隨機生成(3正解+3陷阱,實際題庫規格)全數驗證通過,額外測試 1~6 個正解/陷阱組合共
+       1400+ 次亦全數通過;效能實測 1000 次生成僅 71ms,可忽略不計。
      ★ v1.65.4(2026-09-10・老師需求「算數大進擊三項修正」)—
        ①爆發技能不再變相放棄剩餘射擊機會:新增 _reactBurstPause/_reactBurstResume,非控場型爆發
        (heal/shd/atk,含玩家與 NPC 雙方)在演出(名稱卡+全螢幕特效 GIF,常近 3 秒)期間整段暫停回合
@@ -3110,7 +3123,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.65.4';
+var MG_VER = 'v1.65.5';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -5721,70 +5734,166 @@ function _matchFinish(){
  * ══════════════════════════════════════════════════════════ */
 var _MZ = null;
 
-/* ★ v1.34.0(老師需求「迷宮探險王的地圖走法要隨機生成排列」)— 依當下選定的 marks(3 個正解+3 個陷阱字)
-   即時生成一份新地圖:固定 6×6 格,S/G 隨機挑對角兩個角落,6 個標記字隨機灑在其餘格子,
-   接著從「全部都是地板」開始,逐格隨機嘗試變成牆(#),每次都先確認「S、G、6個標記字」彼此仍然連通
-   (BFS 檢查)才真的變牆,連通會斷掉就放棄那一格改地板 ⇒ 保證這份地圖一定走得通,不會生出無解地圖。
-   牆的密度抓約 22%(比照舊版 6 關手工地圖大約的疏密感)。任何例外由呼叫端 try/catch 接住退回原地圖。 */
+/* ★ v1.65.5(老師需求「迷宮探險王的隨機路線重新設計,很多無法滿分通過的路線或必須踏進錯誤答案的安排」)—
+   根因:舊版(v1.34.0)只保證「S、G、6個標記字彼此連通」(單純 BFS 連通性),完全沒管這款遊戲的核心規則
+   ——玩家不能走回頭路(每格只能踩一次)、且必須在不踩任何陷阱字的前提下把所有正解字都收集到才算滿分。
+   隨機拆牆留下 78% 地板,常常兩條路在格子上「平行貼著」卻沒被判定成同一條路,導致陷阱字剛好卡在
+   唯一能通往某個正解字(或終點)的必經位置上,那一關無論重走幾次都不可能滿分。
+
+   新解法徹底換掉生成方式,改成「主走廊 + 死巷」的構造式作法,structurally 保證有解:
+   ① 用隨機化 DFS 在 6×6 格內找出一條「無捷徑」的簡單路徑(induced path):從 S 走到 G,長度夠放下
+      全部正解字再加一點緩衝;「無捷徑」是關鍵——新加入路徑的格子,除了跟它相鄰的前一格之外,
+      不能跟路徑上任何其他格子相鄰,這樣兩段路線就不會意外貼在一起變成非預期的捷徑或分岔。
+   ② 全部正解字按路徑順序放在路徑中段的格子上(必經)。
+   ③ 每個陷阱字各自接成一條長度 1 的死巷,從路徑上某一格側面岔出去,同樣套用「無捷徑」檢查,
+      確保死巷只跟它唯一的接點相鄰,絕不會意外連回主線或連到另一條死巷變成通道。
+   ④ 其餘沒用到的格子一律設成牆(#)——這款遊戲的引擎是「格子本身決定能不能走」而非「格子之間的
+      牆」,只有把不需要的格子都封死,才能保證上面兩點的「無捷徑」保證在遊戲裡也成立,不會被
+      其他開放地板意外接通。
+   ⑤ 生成完再跑一次 mgMazeVerifySolvable 窮舉驗證:確認「存在一條不踩任何陷阱字、依序收集全部
+      正解字、最後走到終點」的合法路線,驗證不過就整個放棄(回傳 null),呼叫端會自動退回原本
+      手工設計的固定地圖,絕不會把驗證失敗的地圖派上場。
+   走廊長度(含 S/G)隨機落在「正解字數+2」到「+22」之間,讓每次生成的地圖大小/形狀仍有變化;
+   陷阱字若找不到可用的死巷接點(地圖太小、空間不夠)就放棄那一個陷阱字,寧可少放,也不犧牲
+   「一定有解」的保證。 */
 function mgMazeGenRandom(marks){
   if(!marks) return null;
-  var W = 6, H = 6, total = W * H, i, r, c, k;
-  var okKeys = [], badKeys = [];
-  for(k in marks){ if(marks.hasOwnProperty(k)){ if(marks[k] && marks[k].ok) okKeys.push(k); else badKeys.push(k); } }
-  if(!okKeys.length && !badKeys.length) return null;
-  function idx(rr, cc){ return rr * W + cc; }
-  var corners = [[0, 0], [0, W - 1], [H - 1, 0], [H - 1, W - 1]];
-  var ci = Math.floor(Math.random() * 4);
-  var sPos = corners[ci], gPos = corners[3 - ci];
-  var sIdx = idx(sPos[0], sPos[1]), gIdx = idx(gPos[0], gPos[1]);
-  var pool = [];
-  for(i = 0; i < total; i++){ if(i !== sIdx && i !== gIdx) pool.push(i); }
-  for(i = pool.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-  var markKeys = okKeys.concat(badKeys);
-  var needCells = Math.min(markKeys.length, pool.length);
-  var markCells = pool.slice(0, needCells);
-  var special = [sIdx, gIdx].concat(markCells);
-  var grid = []; for(i = 0; i < total; i++) grid.push(true);   /* true=地板 false=牆 */
-  function connected(){
-    var seen = {}, stack = [sIdx]; seen[sIdx] = true;
-    while(stack.length){
-      var cur = stack.pop(), rr = Math.floor(cur / W), cc = cur % W;
-      var dirs = [[rr - 1, cc], [rr + 1, cc], [rr, cc - 1], [rr, cc + 1]], d;
-      for(d = 0; d < 4; d++){
-        var nr = dirs[d][0], nc = dirs[d][1];
-        if(nr < 0 || nr >= H || nc < 0 || nc >= W) continue;
-        var ni = idx(nr, nc);
-        if(grid[ni] && !seen[ni]){ seen[ni] = true; stack.push(ni); }
+  try{
+    var W = 6, H = 6, total = W * H, i, k;
+    var okKeys = [], badKeys = [];
+    for(k in marks){ if(marks.hasOwnProperty(k)){ if(marks[k] && marks[k].ok) okKeys.push(k); else badKeys.push(k); } }
+    if(!okKeys.length && !badKeys.length) return null;
+    function idx(rr, cc){ return rr * W + cc; }
+    function neighborsOf(i2){
+      var rr = Math.floor(i2 / W), cc = i2 % W, res = [];
+      if(rr > 0) res.push(i2 - W);
+      if(rr < H - 1) res.push(i2 + W);
+      if(cc > 0) res.push(i2 - 1);
+      if(cc < W - 1) res.push(i2 + 1);
+      return res;
+    }
+    var corners = [[0, 0], [0, W - 1], [H - 1, 0], [H - 1, W - 1]];
+    var ci = Math.floor(Math.random() * 4);
+    var sPos = corners[ci], gPos = corners[3 - ci];
+    var sIdx = idx(sPos[0], sPos[1]), gIdx = idx(gPos[0], gPos[1]);
+    var minLen = okKeys.length + 2 + Math.floor(Math.random() * 5) + 2;   /* 正解字數+2(S/G)再加一點緩衝(2~6) */
+    minLen = Math.min(minLen, 24);
+    /* 隨機化 DFS 找一條無捷徑的簡單路徑 S→G,長度 >= minLen;步數設上限避免極端情況卡住 */
+    var path = [sIdx], inPath = {}; inPath[sIdx] = true;
+    var stepBudget = 40000;
+    function extendOk(cand, from){
+      if(inPath[cand]) return false;
+      var nb = neighborsOf(cand), j;
+      for(j = 0; j < nb.length; j++){ if(nb[j] !== from && inPath[nb[j]]) return false; }
+      return true;
+    }
+    function dfsPath(cur){
+      stepBudget--; if(stepBudget <= 0) return false;
+      if(cur === gIdx) return path.length >= minLen;
+      var nb = shuffle(neighborsOf(cur)), j, n2;
+      for(j = 0; j < nb.length; j++){
+        n2 = nb[j];
+        if(n2 === gIdx && path.length + 1 < minLen) continue;   /* 太早碰到終點:先跳過,留著繼續繞遠路湊長度 */
+        if(!extendOk(n2, cur)) continue;
+        path.push(n2); inPath[n2] = true;
+        if(dfsPath(n2)) return true;
+        path.pop(); delete inPath[n2];
       }
+      return false;
     }
-    var s2; for(s2 = 0; s2 < special.length; s2++){ if(!seen[special[s2]]) return false; }
-    return true;
-  }
-  var wallCand = [];
-  for(i = 0; i < pool.length; i++){ if(markCells.indexOf(pool[i]) < 0) wallCand.push(pool[i]); }
-  for(i = wallCand.length - 1; i > 0; i--){ var j2 = Math.floor(Math.random() * (i + 1)); var t2 = wallCand[i]; wallCand[i] = wallCand[j2]; wallCand[j2] = t2; }
-  var targetWalls = Math.floor(total * 0.22), wallsSet = 0;
-  for(i = 0; i < wallCand.length && wallsSet < targetWalls; i++){
-    var cand = wallCand[i];
-    grid[cand] = false;
-    if(!connected()) grid[cand] = true; else wallsSet++;
-  }
-  var markMap = {};
-  for(i = 0; i < markCells.length; i++) markMap[markCells[i]] = markKeys[i];
-  var rowsArr = [];
-  for(r = 0; r < H; r++){
-    var line = '';
-    for(c = 0; c < W; c++){
-      var ii = idx(r, c);
-      if(ii === sIdx) line += 'S';
-      else if(ii === gIdx) line += 'G';
-      else if(markMap[ii]) line += markMap[ii];
-      else if(grid[ii]) line += '.';
-      else line += '#';
+    var found = dfsPath(sIdx);
+    if(!found){
+      /* 湊不到 minLen 長度就退而求其次:只求「有一條路連到 G」,不強求長度(地圖會偏小但仍保證有解) */
+      path = [sIdx]; inPath = {}; inPath[sIdx] = true; stepBudget = 40000;
+      minLen = Math.min(minLen, okKeys.length + 2);
+      found = dfsPath(sIdx);
     }
-    rowsArr.push(line);
+    if(!found || path.length < okKeys.length + 2) return null;
+    /* 正解字依路徑順序放在中段格子(排除頭尾 S/G) */
+    var midCount = path.length - 2;
+    var slots = []; for(i = 1; i <= midCount; i++) slots.push(i);
+    /* 平均取樣,讓正解字大致分散在路徑上,不會全部擠在最前面 */
+    var chosen = [];
+    if(okKeys.length > 0){
+      for(i = 0; i < okKeys.length; i++){ chosen.push(slots[Math.floor((i + 0.5) * midCount / okKeys.length)]); }
+    }
+    var markMap = {};   /* cellIndex -> markKey */
+    for(i = 0; i < okKeys.length; i++){ markMap[path[chosen[i]]] = okKeys[i]; }
+    /* 陷阱字各自接一條死巷:從路徑上(排除 S/G/已用格)找一個側面鄰格,side 鄰格也要通過 extendOk 檢查
+       (它自己不能跟路徑上其他格相鄰,確保死巷不會意外連回主線或連到別的死巷) */
+    var usedSpur = {};
+    var pathOrder = shuffle(path.slice(1, path.length - 1));   /* 排除 S/G,順序打亂,平均分散接點 */
+    var bi;
+    for(bi = 0; bi < badKeys.length; bi++){
+      var attached = false, pi;
+      for(pi = 0; pi < pathOrder.length && !attached; pi++){
+        var anchor = pathOrder[pi];
+        if(markMap[anchor]) continue;   /* 已經是正解字的格子就不重複當死巷接點,分散視覺 */
+        var cand2 = shuffle(neighborsOf(anchor)), cj;
+        for(cj = 0; cj < cand2.length; cj++){
+          var spur = cand2[cj];
+          if(inPath[spur] || usedSpur[spur]) continue;
+          if(!extendOk(spur, anchor)) continue;
+          usedSpur[spur] = anchor; markMap[spur] = badKeys[bi]; attached = true; break;
+        }
+      }
+      /* 找不到接點就放棄這一個陷阱字(地圖空間不夠),寧缺勿濫 */
+    }
+    /* 組出 ASCII 地圖:路徑+死巷是唯一開放格,其餘一律是牆 */
+    var openSet = {}; for(i = 0; i < path.length; i++) openSet[path[i]] = true;
+    for(k in usedSpur){ if(usedSpur.hasOwnProperty(k)) openSet[k] = true; }
+    var rowsArr = [], r, c, cellsForVerify = [];
+    for(r = 0; r < H; r++){
+      var line = '';
+      for(c = 0; c < W; c++){
+        var ii = idx(r, c), ch2;
+        if(ii === sIdx) ch2 = 'S';
+        else if(ii === gIdx) ch2 = 'G';
+        else if(markMap[ii]) ch2 = markMap[ii];
+        else if(openSet[ii]) ch2 = '.';
+        else ch2 = '#';
+        line += ch2;
+        cellsForVerify.push({ ch: ch2, mark: (marks[ch2]) ? marks[ch2] : null });
+      }
+      rowsArr.push(line);
+    }
+    /* 最後一道保險:窮舉驗證真的存在「不踩陷阱、收集全部正解、走到終點」的合法路線 */
+    if(!mgMazeVerifySolvable(cellsForVerify, W, H, sIdx, gIdx, okKeys.length)) return null;
+    return { rows: rowsArr };
+  }catch(_eGenMaze){ return null; }
+}
+/* ★ v1.65.5 — 窮舉驗證器:對生成好的地圖做一次「假裝真的在玩」的搜尋,確認存在至少一條路線
+   可以不踩任何陷阱字(mark.ok===false)、依序踩過全部正解字、最後走到 G(且不會被迷宮引擎的
+   「答案沒收集完不能提早進終點」規則卡住)。地圖夠小(通常 <30 格開放格),窮舉搜尋很快。 */
+function mgMazeVerifySolvable(cells, w, h, sIdx, gIdx, needGood){
+  var visited = {}; visited[sIdx] = true;
+  var found = false;
+  function nbrs(i2){
+    var rr = Math.floor(i2 / w), cc = i2 % w, res = [];
+    if(rr > 0) res.push(i2 - w);
+    if(rr < h - 1) res.push(i2 + w);
+    if(cc > 0) res.push(i2 - 1);
+    if(cc < w - 1) res.push(i2 + 1);
+    return res;
   }
-  return { rows: rowsArr };
+  function dfs(pos, got){
+    if(found) return;
+    if(pos === gIdx && got === needGood){ found = true; return; }
+    var nb = nbrs(pos), j;
+    for(j = 0; j < nb.length; j++){
+      var ni = nb[j];
+      if(visited[ni]) continue;
+      if(cells[ni].ch === '#') continue;
+      if(cells[ni].mark && cells[ni].mark.ok === false) continue;   /* 驗證的是「滿分路線」,不能踩陷阱 */
+      if(ni === gIdx && got < needGood) continue;                   /* 比照 mgMazeStep 的終點守門規則 */
+      visited[ni] = true;
+      dfs(ni, got + ((cells[ni].mark && cells[ni].mark.ok) ? 1 : 0));
+      visited[ni] = false;
+      if(found) return;
+    }
+  }
+  dfs(sIdx, 0);
+  return found;
 }
 function renderMaze(x, lv){
   /* ★ v1.3.1:原本 hide('card-area') 再寫 qcard ⇒ 題目「踩過所有○○」根本沒顯示過,
