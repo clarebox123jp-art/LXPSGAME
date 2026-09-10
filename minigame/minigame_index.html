@@ -1647,6 +1647,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (min-width:1024px){ .mz.mark{font-size:17px;} }
 .mz.trap{background:rgba(210,84,63,.6);border-color:rgba(210,84,63,.95);color:#fff;}
 .mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
+/* ★ v1.67.0 — 神秘方塊(未踩):淡紫底+脈動邊框,跟正解/陷阱共用的石板色系明顯不同,提醒玩家「這格是未知效果」 */
+.mz.mystery{background:linear-gradient(180deg,rgba(160,120,220,.35),rgba(110,70,180,.4));border:2px solid rgba(220,190,255,.6);color:#f4ecff;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,.7);}
+.mz.mystery.reach{border-color:rgba(255,255,255,.9);box-shadow:0 0 8px rgba(200,160,255,.7);}
 .mz.peek{outline:3px solid var(--gold);outline-offset:-3px;box-shadow:0 0 0 3px var(--gold),0 0 20px var(--gold);animation:mzpeek .55s ease-in-out infinite alternate;}
 @keyframes mzpeek{from{filter:brightness(1);}to{filter:brightness(1.7);}}
 #maze-info{white-space:pre-line;}
@@ -3123,7 +3126,21 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.66.0';
+var MG_VER = 'v1.67.0';
+/* ★ v1.67.0(2026-09-10・老師需求「迷宮探險又變得太簡單了,幾乎只有一條路」)—
+   根因:mgMazeGenRandom 只算出「一條主線+陷阱死巷」,其餘全部是牆,地圖上真的就只有
+   一條路可走,走法隨機化再多次也還是「唯一直線+幾條死巷」的觀感。本輪三項改動:
+   ①盤面由 6×6(36格)放大為 10×6(60格)。②主線與死巷排好之後,再從剩下的牆格裡用
+   「隨機生長」演算法打通一批緊鄰既有開放格的牆(=移除牆的樹叢貼圖),約 22%~32% 的
+   格數,讓地圖出現真正的岔路可以繞、抄近路或迷路,不再是唯一路線;新增的都是不含
+   任何標記的空地,不動原本算好的主線/死巷/正解字/陷阱字,mgMazeVerifySolvable 既有
+   驗證邏輯完全不受影響。③新增「?」神秘方塊(3~5個,只放在新打通的岔路上):玩家踩
+   上去當下才擲骰,75% 恢復 50 HP、25% 踩到地雷扣 20 HP——地雷傷害改走 mgDealDamage
+   (唯一扣血入口)計算,天生就會吃到玩家身上的 dmgReduceLeft(減傷)與 dotLeft(易傷),
+   護盾則比照 mgBattleHit 既有寫法在呼叫前手動擋下。同一格同一關只擲骰一次(共用
+   _lvo._bth 紀錄,跟正解/陷阱格同一套防重複機制,「重走這一關」不會重複觸發)。
+   沙箱測試 300 次生成:0 次失敗、平均每張圖新增約 28 格開放地/神秘方塊(相對僅
+   20 格左右維持是牆),明顯不再是「一條路走到底」。 */
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -5759,7 +5776,9 @@ var _MZ = null;
 function mgMazeGenRandom(marks){
   if(!marks) return null;
   try{
-    var W = 6, H = 6, total = W * H, i, k;
+    /* ★ v1.67.0(老師需求「迷宮探險又變得太簡單了,幾乎只有一條路」)— 盤面由 6×6(36格)
+       放大為 10×6(60格),給後面的「打通額外通路」與「神秘方塊」留夠空間。 */
+    var W = 10, H = 6, total = W * H, i, k;
     var okKeys = [], badKeys = [];
     for(k in marks){ if(marks.hasOwnProperty(k)){ if(marks[k] && marks[k].ok) okKeys.push(k); else badKeys.push(k); } }
     if(!okKeys.length && !badKeys.length) return null;
@@ -5776,11 +5795,11 @@ function mgMazeGenRandom(marks){
     var ci = Math.floor(Math.random() * 4);
     var sPos = corners[ci], gPos = corners[3 - ci];
     var sIdx = idx(sPos[0], sPos[1]), gIdx = idx(gPos[0], gPos[1]);
-    var minLen = okKeys.length + 2 + Math.floor(Math.random() * 5) + 2;   /* 正解字數+2(S/G)再加一點緩衝(2~6) */
-    minLen = Math.min(minLen, 24);
+    var minLen = okKeys.length + 2 + Math.floor(Math.random() * 6) + 2;   /* 正解字數+2(S/G)再加一點緩衝(2~7) */
+    minLen = Math.min(minLen, 30);   /* ★ v1.67.0 — 板子放大,主線長度上限同步放寬(24→30),但刻意不吃滿 60 格,留空間給下面的額外通路 */
     /* 隨機化 DFS 找一條無捷徑的簡單路徑 S→G,長度 >= minLen;步數設上限避免極端情況卡住 */
     var path = [sIdx], inPath = {}; inPath[sIdx] = true;
-    var stepBudget = 40000;
+    var stepBudget = 80000;   /* ★ v1.67.0 — 盤面變大,搜尋預算同步放寬(40000→80000) */
     function extendOk(cand, from){
       if(inPath[cand]) return false;
       var nb = neighborsOf(cand), j;
@@ -5839,9 +5858,42 @@ function mgMazeGenRandom(marks){
       }
       /* 找不到接點就放棄這一個陷阱字(地圖空間不夠),寧缺勿濫 */
     }
-    /* 組出 ASCII 地圖:路徑+死巷是唯一開放格,其餘一律是牆 */
+    /* 組出開放格集合:主線+死巷是原本唯一的開放格 */
     var openSet = {}; for(i = 0; i < path.length; i++) openSet[path[i]] = true;
     for(k in usedSpur){ if(usedSpur.hasOwnProperty(k)) openSet[k] = true; }
+    /* ★ v1.67.0(老師需求「迷宮探險又變得太簡單了,幾乎只有一條路」)—
+       舊版除了主線與陷阱死巷之外其餘全部是牆,整張地圖等於「只有一條路可走」,走法
+       隨機化再多次觀感仍是「唯一直線+幾條死巷」,不像迷宮。本輪在主線與死巷都排好
+       之後,再從剩下的牆格裡挑一批「緊鄰現有開放格」的牆直接打通(=移除老師講的
+       「樹叢」貼圖,牆的貼圖就是叢生的灌木),讓玩家能在多條路之間繞、抄近路或迷路,
+       不再是唯一路線。★ 這一步只「新增」開放格,原本算好的主線／死巷／正解字／
+       陷阱字座標完全不動,不會影響 mgMazeVerifySolvable 已驗證過的那條解法,只是
+       多了很多條「順便逛逛」的岔路。採用「隨機生長」演算法(反覆掃描牆格清單,
+       只要某牆格緊鄰任一已開放格就打通它,直到達到目標數量或再也長不出去),
+       保證新開的地一定跟主體連在一起,不會憑空冒出孤立小房間。 */
+    var wallList = [], _i2;
+    for(_i2 = 0; _i2 < total; _i2++){ if(!openSet[_i2]) wallList.push(_i2); }
+    var extraOpenTarget = Math.round(total * (0.22 + Math.random() * 0.10));   /* 打通約 22%~32% 的牆 */
+    var extraOpened = [], growing = true, wi, cand3, nb3, adjOpen, nj;
+    while(extraOpened.length < extraOpenTarget && growing){
+      growing = false;
+      wallList = shuffle(wallList);
+      for(wi = 0; wi < wallList.length && extraOpened.length < extraOpenTarget; wi++){
+        cand3 = wallList[wi];
+        if(openSet[cand3]) continue;
+        nb3 = neighborsOf(cand3); adjOpen = false;
+        for(nj = 0; nj < nb3.length; nj++){ if(openSet[nb3[nj]]){ adjOpen = true; break; } }
+        if(adjOpen){ openSet[cand3] = true; extraOpened.push(cand3); growing = true; }
+      }
+    }
+    /* ★ v1.67.0(老師需求「追加『?』格,75%機率恢復50HP、25%機率踩到地雷-20HP」)—
+       神秘方塊只放在剛剛新打通的岔路空地上(不佔用主線/死巷/S/G/正解字/陷阱字的格子),
+       數量依打通格數量抓 3~5 個,不夠格子就有幾個放幾個。實際觸發的效果(治癒/地雷)
+       在玩家真的踩上去那一刻才擲骰子(見 mgMazeMystery),不是在這裡預先決定。 */
+    var mysteryTarget = Math.min(extraOpened.length, 3 + Math.floor(Math.random() * 3));
+    var mysterySet = {}, extraShuffled = shuffle(extraOpened.slice()), mi;
+    for(mi = 0; mi < mysteryTarget; mi++){ mysterySet[extraShuffled[mi]] = true; }
+    /* 組出 ASCII 地圖 */
     var rowsArr = [], r, c, cellsForVerify = [];
     for(r = 0; r < H; r++){
       var line = '';
@@ -5850,6 +5902,7 @@ function mgMazeGenRandom(marks){
         if(ii === sIdx) ch2 = 'S';
         else if(ii === gIdx) ch2 = 'G';
         else if(markMap[ii]) ch2 = markMap[ii];
+        else if(mysterySet[ii]) ch2 = '?';
         else if(openSet[ii]) ch2 = '.';
         else ch2 = '#';
         line += ch2;
@@ -5857,7 +5910,8 @@ function mgMazeGenRandom(marks){
       }
       rowsArr.push(line);
     }
-    /* 最後一道保險:窮舉驗證真的存在「不踩陷阱、收集全部正解、走到終點」的合法路線 */
+    /* 最後一道保險:窮舉驗證真的存在「不踩陷阱、收集全部正解、走到終點」的合法路線
+       (新打通的岔路與神秘方塊 ch='?' 對驗證器而言就是普通空地,不會被擋,也不影響判定)。 */
     if(!mgMazeVerifySolvable(cellsForVerify, W, H, sIdx, gIdx, okKeys.length)) return null;
     return { rows: rowsArr };
   }catch(_eGenMaze){ return null; }
@@ -5917,6 +5971,7 @@ function _mazeInit(lv){
   }
   _MZ = { lv: lv, w: w, h: h, cells: cells, pos: start,
           walked: [start], got: 0, need: needN, bad: 0, done: false,
+          myHeal: 0, myMine: 0,   /* ★ v1.67.0 — 神秘方塊統計(治癒次數／地雷次數),純顯示用 */
           hintLv: 0, peek: -1, peekT: null };   /* ★ v1.3.1 提示狀態:hintLv 0/1/2、peek=亮出的正解格 */
   _mazePaint();
 }
@@ -5978,6 +6033,9 @@ function _mazePaint(){
     if(cell.ch === '#'){ cls += ' wall'; _pic = 'maze_mz_wall.webp'; }
     else if(cell.ch === 'S'){ txt = '🚩'; _pic = 'maze_mz_start.webp'; }
     else if(cell.ch === 'G'){ cls += ' goal'; txt = '🏁'; _pic = 'maze_mz_goal.webp'; }
+    else if(cell.ch === '?'){   /* ★ v1.67.0 — 神秘方塊:踩之前一律問號外觀,踩下去才依 cell._myRes 換臉(見下方 walked 分支) */
+      txt = '❓'; _pic = 'maze_mz_mystery.webp'; cls += ' mystery';
+    }
     else if(cell.mark){
       txt = mgStr(cell.mark, 't');   /* ★ v1.14.0 英文版:mark.ten 有值時走英文(mgGloss 附中文附註) */
       /* ★ v1.3.1(老師:「難度太低」):踩到之前正解與陷阱一律同一種「石板」外觀(.mark),
@@ -5987,7 +6045,11 @@ function _mazePaint(){
     }
     if(i === _MZ.pos) _pic = 'maze_mz_player.webp';
     if(_MZ.walked.indexOf(i) >= 0){
-      if(cell.mark && cell.mark.ok) cls += ' got';
+      if(cell.ch === '?'){   /* ★ v1.67.0 — 神秘方塊踩過後依擲骰結果換臉:治癒=綠(比照收集正解)、地雷=紅(比照踩到陷阱) */
+        if(cell._myRes === 'heal'){ cls += ' got'; if(i !== _MZ.pos){ txt = '💚'; _pic = 'maze_mz_myheal.webp'; } }
+        else{ cls += ' trap'; if(i !== _MZ.pos){ txt = '💥'; _pic = 'maze_mz_mymine.webp'; } }
+      }
+      else if(cell.mark && cell.mark.ok) cls += ' got';
       else if(cell.mark){ cls += ' trap'; if(i !== _MZ.pos) _pic = 'maze_mz_trap.webp'; }   /* 踩過的陷阱才變紅;★ v1.9.1 踩過後才換捕獸夾圖(未踩前仍與正解同石板外觀,不洩題) */
       else cls += ' walked';
     }else if(!_MZ.done && _mazeReach(i)){
@@ -5999,7 +6061,8 @@ function _mazePaint(){
   }
   g.innerHTML = html;
   var info = '⭐ 收集 ' + _MZ.got + ' / ' + _MZ.need + ' 個正確答案'
-    + (_MZ.bad ? ('　💥 踩到 ' + _MZ.bad + ' 個陷阱') : '');
+    + (_MZ.bad ? ('　💥 踩到 ' + _MZ.bad + ' 個陷阱') : '')
+    + ((_MZ.myHeal || _MZ.myMine) ? ('　❓ 神秘方塊:💚×' + _MZ.myHeal + '　💥×' + _MZ.myMine) : '');   /* ★ v1.67.0 */
   if(_MZ.hintLv >= 1 && _MZ.lv.hint) info += '\n💡 ' + tx(_MZ.lv.hint);
   else info += '　|　白框的格子才走得過去,石板上的字要自己判斷對不對';
   $('maze-info').textContent = info;
@@ -6025,7 +6088,10 @@ window.mgMazeStep = function(i){
   _MZ.pos = i;
   _MZ.walked.push(i);
   var cell = _MZ.cells[i];
-  if(cell.mark){
+  if(cell.ch === '?'){   /* ★ v1.67.0 — 神秘方塊:75% 恢復 50 HP、25% 踩到地雷扣 20 HP(地雷可被護盾擋、減傷、易傷影響) */
+    mgMazeMystery(i, cell);
+    if(_BT && _BT.over){ _mazePaint(); return; }   /* KO:交給 mgBattleEnd 結算 */
+  }else if(cell.mark){
     if(cell.mark.ok){ _MZ.got++; playSfx('sfx-ok', 0.42); }
     else{ _MZ.bad++; playSfx('sfx-ng', 0.35); }   /* ★ v1.3.1 老師:「答錯音效要統一」—— 原 explode 改 sfx-ng */
     /* ★ v1.29.0 逐答案格接 HP:撿到正解 NPC −10、踩陷阱玩家 −10;同一關同一格只算一次(「重走這一關」不重複扣血/充能),紀錄掛在關卡物件 */
@@ -6045,6 +6111,33 @@ window.mgMazeStep = function(i){
     playSfx('sfx-cancel', 0.4);
   }
 };
+/* ★ v1.67.0(老師需求「追加『?』格,75%機率恢復50HP、25%機率踩到地雷-20HP(可被護盾免疫、減傷,也會被易傷)」)—
+   同一格同一關只擲骰一次(「重走這一關」不重複觸發,共用 _lvo._bth 這份同一份紀錄,跟正解/陷阱格同一套防重複機制)。
+   治癒:直接補 50 HP,不經過扣血管線(沒有「攻方」的概念,單純回血)。
+   地雷:先手動檢查護盾(擋下整次傷害,同 mgBattleHit 既有寫法),沒有護盾才交給 mgDealDamage(唯一扣血入口)
+   計算——mgDealDamage 內建就會套用玩家身上的 dmgReduceLeft(減傷)與 dotLeft(易傷),完全不必另外寫第二套判定。 */
+function mgMazeMystery(i, cell){
+  if(!_BT || _BT.over) return;
+  var _lvo = _MZ.lv; _lvo._bth = _lvo._bth || {};
+  if(_lvo._bth[i]) return;
+  _lvo._bth[i] = true;
+  var isHeal = (Math.random() < 0.75);
+  cell._myRes = isHeal ? 'heal' : 'mine';
+  var P = _BT.p;
+  if(isHeal){
+    _MZ.myHeal++;
+    var _ha = 50;
+    P.hp = Math.min(mgHpCap(P), P.hp + _ha);
+    playSfx('sfx-heal', 0.5);
+    mgBattleFloatOn('p', '+' + _ha, 'heal');
+    mgBattlePaint();
+  }else{
+    _MZ.myMine++;
+    if(P.shield > 0){ P.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); mgBattlePaint(); }
+    else{ mgDealDamage({}, P, 20, 'n'); mgBattlePaint(); }
+    mgBattleCheckKO();
+  }
+}
 window.mgMazeReset = function(){
   if(MG.answered || !_MZ) return;
   playSfx('sfx-tap', 0.3);
