@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.74.0(2026-09-10)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.78.0(2026-09-11)
      ★ v1.74.0(2026-09-10・老師兩項需求)—
        ①【戰鬥勝利評分視窗移除發光GIF特效】#r-glow 原本在星星彈出時墊一張會後製發光的 gif 在分數後面
          (finishGame 尾端 src+'.on' class 觸發);本輪直接不再觸發(元素與 CSS 動畫保留不刪,舊三行
@@ -617,13 +617,17 @@ body{
      ⚠⚠ 字重連帶:M PLUS Rounded 1c 有 400/700/800/900 四級,可以用 800;
        但備援的 Noto Serif TC **沒有 800** ⇒ 為了「不管走到哪一支都不會合成粗體」,
        全檔字重一律只用 **400 / 700 / 900**(三支字型的交集),不要用 800。開機自檢會抓。 */
-  /* ★ v1.3.0(老師 2026-09-05 兩次裁定:「換成繁體中文字體」→「改霞鶩文楷 TC」)
-     字型=**LXGW WenKai TC(霞鶩文楷・繁體楷體,免費開源)**,備援=系統繁中字(iPad PingFang TC／Windows 微軟正黑體)。
-     ⚠⚠ 字重連帶:霞鶩文楷只有 300/400/700 **沒有 900** ⇒ 全檔 font-weight:700 一律改 700,
-        開機自檢允許清單改為 400/700(用到 900 會被抓)。
-     上面 v1.2.1 的圓體說明保留備查。 */
-  font-family:"LXGW WenKai TC","PingFang TC","Heiti TC","Microsoft JhengHei","Noto Sans CJK TC",sans-serif;
-  font-size:17px;line-height:1.65;
+  /* ★ v1.78.0(老師 2026-09-11「大對抗的字體那麼好看,全部用來取代現在小遊戲的字體」)—
+     字型改回與大對抗完全一致:**M PLUS Rounded 1c(圓體)+ Nunito**,備援同大對抗
+     (iPad PingFang TC／Windows 微軟正黑體);上面 v1.3.0(霞鶩文楷)與 v1.2.1(圓體)兩輪裁定
+     至此由本輪最終取代——與大對抗 main.css `body{font-family}` 一字不差,.bt-card/.hm-list
+     等既有局部覆寫(早已是這支字)現在與全站預設相同,不再是特例。
+     ⚠⚠ 字重連帶:M PLUS Rounded 1c 有 400/700/800/900 四級,恢復可用 900;
+        開機自檢允許清單同步改回 400/700/900。老師同輪並要求「小遊戲字體都適當放大」—
+        本輪同步把全檔 font-size(含 clamp 上下限)一律 ×1.15 放大(四捨五入,至少 +1px),
+        body 基準 17px→20px 隨全檔比例調整;版面用 flex/百分比等彈性寫法,吃得下文字變大。 */
+  font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;
+  font-size:20px;line-height:1.65;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
   text-rendering:optimizeLegibility;
@@ -633,7 +637,7 @@ body{
 }
 .wrap{max-width:820px;margin:0 auto;padding:10px 14px 40px;}
 button,.btn{
-  font-family:inherit;font-size:18px;font-weight:700;color:#3a2a10;
+  font-family:inherit;font-size:21px;font-weight:700;color:#3a2a10;
   background:var(--sun);border:0;border-radius:14px;
   padding:13px 18px;min-height:48px;cursor:pointer;
   box-shadow:var(--shadow);touch-action:manipulation;
@@ -648,16 +652,16 @@ button[disabled]{opacity:.45;}
 #topbar{display:flex;align-items:center;gap:8px;padding:6px 2px 2px;min-height:46px;}
 #topbar .grow{flex:1;}
 .chip{
-  font-size:14px;font-weight:700;padding:7px 12px;border-radius:999px;min-height:38px;
+  font-size:16px;font-weight:700;padding:7px 12px;border-radius:999px;min-height:38px;
   background:rgba(255,255,255,.10);color:var(--mist);border:1px solid rgba(232,228,216,.22);
   box-shadow:none;
 }
-#who{font-size:14px;opacity:.9;max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#who{font-size:16px;opacity:.9;max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* ── 首頁 ───────────────────────────────── */
 #title-img{display:block;width:100%;max-width:560px;margin:2px auto 0;}
-#title-fallback{display:none;text-align:center;font-size:32px;font-weight:700;color:var(--gold);margin:10px 0;letter-spacing:1px;}
-.sub{text-align:center;font-size:15px;opacity:.85;margin:0 0 14px;}
+#title-fallback{display:none;text-align:center;font-size:37px;font-weight:700;color:var(--gold);margin:10px 0;letter-spacing:1px;}
+.sub{text-align:center;font-size:17px;opacity:.85;margin:0 0 14px;}
 #grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .cell{
   position:relative;background:linear-gradient(180deg,var(--ink2),var(--tea));
@@ -681,27 +685,27 @@ button[disabled]{opacity:.45;}
   filter:brightness(.82) saturate(1.05);
 }
 /* emoji 墊在圖底下:圖沒載到時由 mgThumbFail 把它顯出來 */
-.cthumb-emo{position:absolute;font-size:38px;line-height:1;opacity:0;}
-.cell .ce{font-size:34px;line-height:1.1;}
+.cthumb-emo{position:absolute;font-size:44px;line-height:1;opacity:0;}
+.cell .ce{font-size:39px;line-height:1.1;}
 .cskills{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:5px;}
 .cskill{
-  font-size:12px;font-weight:700;padding:2px 8px;border-radius:9px;
+  font-size:14px;font-weight:700;padding:2px 8px;border-radius:9px;
   background:rgba(79,191,125,.22);border:1px solid rgba(127,216,160,.45);
   color:var(--grass);letter-spacing:.3px;
 }
-.cdiff{font-size:13px;color:var(--gold);letter-spacing:1px;margin-top:4px;opacity:.9;}
+.cdiff{font-size:15px;color:var(--gold);letter-spacing:1px;margin-top:4px;opacity:.9;}
 /* ★ v1.1.1 — 載入 M PLUS Rounded 1c 之後,800 是真實字面(不再是合成粗體)⇒ 調回 800,
    字級再加大到 19px,對齊主程式封面按鈕那種清晰有力的觀感。
    ⚠ 只能用字型有的字重:400/700/800/900。 */
-.cell .cn{font-size:19px;font-weight:700;color:var(--mist);letter-spacing:.5px;line-height:1.35;}
-.cell .cs{font-size:13px;opacity:.75;letter-spacing:.5px;}
-.cell .cstar{font-size:14px;color:var(--gold);min-height:18px;letter-spacing:2px;}
-.cell .cbest{position:absolute;top:32px;right:8px;font-size:13px;opacity:.8;font-weight:700;}
+.cell .cn{font-size:22px;font-weight:700;color:var(--mist);letter-spacing:.5px;line-height:1.35;}
+.cell .cs{font-size:15px;opacity:.75;letter-spacing:.5px;}
+.cell .cstar{font-size:16px;color:var(--gold);min-height:18px;letter-spacing:2px;}
+.cell .cbest{position:absolute;top:32px;right:8px;font-size:15px;opacity:.8;font-weight:700;}
 /* ★ v1.53.0(老師需求「選單各關右上角新增一個空心的愛心圖示,點擊後空心→實心,代表加入最愛」)—
    固定在卡片右上角(比原本的 .cbest 成績標籤高一層),.cbest 三個斷點的 top 值同步往下讓出空間(見各處註記)。
    未收藏=空心愛心+半透明白底;已收藏(.on)=實心紅色愛心+紅底,一眼看出差異。 */
 .cfav{position:absolute;top:5px;right:6px;z-index:4;width:26px;height:26px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;
+  display:flex;align-items:center;justify-content:center;font-size:17px;line-height:1;
   background:rgba(8,9,13,.55);border:1.5px solid rgba(255,255,255,.4);color:#fff;
   cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0;}
 .cfav.on{background:rgba(232,64,64,.85);border-color:rgba(255,255,255,.6);color:#fff;}
@@ -714,24 +718,24 @@ button[disabled]{opacity:.45;}
   padding:22px 18px 20px;text-align:center;margin:14px auto 0;max-width:560px;
   box-shadow:0 6px 0 rgba(0,0,0,.3);
 }
-#gate-card .gate-emo{font-size:54px;line-height:1;}
-#gate-card h2{font-size:26px;font-weight:700;color:var(--gold);margin:8px 0 10px;letter-spacing:1px;}
-#gate-card p{font-size:17px;line-height:1.8;margin:0 0 6px;}
-#gate-note{font-size:14px;opacity:.6;margin-top:14px !important;}
+#gate-card .gate-emo{font-size:62px;line-height:1;}
+#gate-card h2{font-size:30px;font-weight:700;color:var(--gold);margin:8px 0 10px;letter-spacing:1px;}
+#gate-card p{font-size:20px;line-height:1.8;margin:0 0 6px;}
+#gate-note{font-size:16px;opacity:.6;margin-top:14px !important;}
 .gate-row{display:flex;gap:10px;margin-top:14px;justify-content:center;}
 .gate-row .btn,.gate-row button{flex:1;max-width:260px;text-decoration:none;
   display:flex;align-items:center;justify-content:center;}
 /* 預告用的九款縮圖(只給看,不能點)—— 讓學生知道「快好了」而不是「壞掉了」 */
 #gate-preview{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0 4px;}
 #gate-preview span{
-  font-size:26px;line-height:1;padding:10px 0;border-radius:12px;
+  font-size:30px;line-height:1;padding:10px 0;border-radius:12px;
   background:rgba(255,255,255,.07);border:1px solid rgba(232,228,216,.14);
   filter:grayscale(1);opacity:.62;
 }
 
 /* ── 遊戲畫面 ───────────────────────────── */
 #hud{display:flex;align-items:center;gap:10px;margin:6px 0 10px;flex-wrap:wrap;}
-.stat{background:rgba(255,255,255,.09);border-radius:12px;padding:6px 12px;font-size:15px;font-weight:700;}
+.stat{background:rgba(255,255,255,.09);border-radius:12px;padding:6px 12px;font-size:17px;font-weight:700;}
 #combo{color:var(--gold);}
 #timebar-wrap{height:10px;background:rgba(255,255,255,.12);border-radius:999px;overflow:hidden;margin-bottom:12px;}
 #timebar{height:100%;width:100%;background:linear-gradient(90deg,var(--grass),var(--gold));transition:width .25s linear;}
@@ -739,7 +743,7 @@ button[disabled]{opacity:.45;}
 
 .card{
   background:var(--paper);color:#2b2b2b;border-radius:18px;padding:18px 16px;
-  font-size:20px;line-height:1.7;font-weight:700;box-shadow:0 5px 0 rgba(0,0,0,.25);
+  font-size:23px;line-height:1.7;font-weight:700;box-shadow:0 5px 0 rgba(0,0,0,.25);
   min-height:96px;display:flex;align-items:center;justify-content:center;text-align:center;
 }
 /* ★ v1.72.0(接續上方 .cr-tag 改版)— .card 平常是「單一內容水平置中」的 flex row,只有一個題目文字
@@ -747,16 +751,16 @@ button[disabled]{opacity:.45;}
    .has-crtag 只在有標籤時把這一張卡改成 column 且靠左起排(標籤天生就在左上角第一行,題目接在下一行
    起排),沒有標籤的題卡(絕大多數)完全不受影響、維持原本置中排版。 */
 .card.has-crtag{flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;}
-#qhint{font-size:14px;text-align:center;opacity:.85;margin:8px 0 0;}
+#qhint{font-size:16px;text-align:center;opacity:.85;margin:8px 0 0;}
 .opts{display:grid;gap:10px;margin-top:14px;}
 .opts.two{grid-template-columns:1fr 1fr;}
 .opts.three{grid-template-columns:repeat(3,1fr);}
 .opt{
   background:var(--ink2);color:var(--mist);border:2px solid rgba(232,228,216,.25);
-  border-radius:16px;padding:14px 10px;font-size:17px;font-weight:700;min-height:58px;
+  border-radius:16px;padding:14px 10px;font-size:20px;font-weight:700;min-height:58px;
   box-shadow:0 4px 0 rgba(0,0,0,.28);
 }
-.opt .oe{display:block;font-size:26px;line-height:1.2;}
+.opt .oe{display:block;font-size:30px;line-height:1.2;}
 .opt.ok{background:var(--grass);color:#0d2a18;border-color:var(--grass);}
 .opt.ng{background:var(--brick);color:#fff;border-color:var(--brick);animation:cshake .4s;}
 /* ★ v1.61.0(老師需求「按錯答案時,錯的答案用紅底顯示並標示答錯了,選項震動一下」)—
@@ -765,7 +769,7 @@ button[disabled]{opacity:.45;}
    按鈕文字下方的「❌ 答錯了」小字,不覆蓋原本的選項文字。 */
 .opt-wrong-badge{display:block;font-size:.7em;font-weight:900;margin-top:4px;opacity:.95;letter-spacing:.5px;}
 #feedback{
-  margin-top:14px;border-radius:16px;padding:14px 16px;font-size:16px;line-height:1.7;
+  margin-top:14px;border-radius:16px;padding:14px 16px;font-size:18px;line-height:1.7;
   background:rgba(255,255,255,.10);border-left:6px solid var(--gold);display:none;
 }
 #feedback.show{display:block;}
@@ -778,7 +782,7 @@ button[disabled]{opacity:.45;}
 /* ── 地圖引擎 ───────────────────────────── */
 #mapbox{background:rgba(255,255,255,.06);border-radius:18px;padding:8px;margin-top:12px;position:relative;}
 #tw-svg{display:block;width:100%;height:auto;max-height:56vh;}
-.map-zoom-btn{position:absolute;top:8px;right:8px;z-index:5;min-height:36px;font-size:13px;font-weight:700;padding:6px 12px;border-radius:11px;background:rgba(8,9,13,.75);color:var(--mist);border:1px solid rgba(240,192,96,.45);touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;font-family:inherit;}
+.map-zoom-btn{position:absolute;top:8px;right:8px;z-index:5;min-height:36px;font-size:15px;font-weight:700;padding:6px 12px;border-radius:11px;background:rgba(8,9,13,.75);color:var(--mist);border:1px solid rgba(240,192,96,.45);touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer;font-family:inherit;}
 /* ★ v1.72.0 — 放大狀態:容器改可捲動(手指/滑鼠拖曳看不同區域),SVG 寬度直接超過容器 100%,
    縣市圓點與文字隨整張圖等比放大,不必另外調每個 .spot 的半徑。用**比 #tw-svg 任何單一斷點更高的
    選擇器特異度**(#mapbox.zoomed #tw-svg = 2 個 id + 1 個 class)蓋過前面所有斷點各自的寬高宣告,
@@ -789,15 +793,15 @@ button[disabled]{opacity:.45;}
 .spot.ok{fill:var(--grass);}
 .spot.ng{fill:var(--brick);}
 .spot.reveal{fill:var(--gold);stroke:#fff;stroke-width:1.4;}
-.spotlbl{font-size:4.6px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
+.spotlbl{font-size:5px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
 /* ★ v1.16.0 老師「檢查中英文是否重疊,適度縮小文字」:英文縣市名比中文長,依 spots[].tier 分三級縮小字級,避免和最近的鄰居標籤重疊;中文 .spotlbl 完全不動。tier1(新北/桃園/新竹/台中/彰化,鄰居最近)最小,tier3(宜蘭/花蓮/台東/澎湖,鄰居較遠)可維持接近正常大小。 */
-.spotlbl-en1{font-size:2.0px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
-.spotlbl-en2{font-size:2.7px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
-.spotlbl-en3{font-size:3.3px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
+.spotlbl-en1{font-size:3px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
+.spotlbl-en2{font-size:3px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
+.spotlbl-en3{font-size:4px;fill:var(--mist);pointer-events:none;text-anchor:middle;font-weight:700;}
 
 /* ── 聽音引擎 ───────────────────────────── */
-#playbtn{display:block;margin:14px auto 0;font-size:20px;padding:16px 34px;}
-#playnote{text-align:center;font-size:14px;opacity:.8;margin-top:8px;}
+#playbtn{display:block;margin:14px auto 0;font-size:23px;padding:16px 34px;}
+#playnote{text-align:center;font-size:16px;opacity:.8;margin-top:8px;}
 
 /* ══ v1.1.0 新增六個引擎的樣式(老師需求 4「不要又是只有選擇題」)══
    共同原則:
@@ -809,22 +813,22 @@ button[disabled]{opacity:.45;}
 #dragbox{margin-top:10px;}
 #drag-item{
   background:var(--paper);color:#2b2b2b;border-radius:18px;padding:16px 14px;
-  font-size:21px;font-weight:700;text-align:center;box-shadow:0 5px 0 rgba(0,0,0,.25);
+  font-size:24px;font-weight:700;text-align:center;box-shadow:0 5px 0 rgba(0,0,0,.25);
   touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;
   position:relative;z-index:5;
 }
 #drag-item.dragging{cursor:grabbing;box-shadow:0 10px 22px rgba(0,0,0,.45);opacity:.95;}
-#drag-item .dgrip{display:block;font-size:13px;opacity:.55;font-weight:400;margin-top:2px;}
+#drag-item .dgrip{display:block;font-size:15px;opacity:.55;font-weight:400;margin-top:2px;}
 #drag-bins{display:grid;gap:10px;margin-top:16px;}
 #drag-bins.two{grid-template-columns:1fr 1fr;}
 #drag-bins.three{grid-template-columns:repeat(3,1fr);}
 .dbin{
   background:var(--ink2);border:2px dashed rgba(232,228,216,.35);border-radius:16px;
-  padding:16px 8px;text-align:center;font-size:16px;font-weight:700;min-height:96px;
+  padding:16px 8px;text-align:center;font-size:18px;font-weight:700;min-height:96px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   transition:background .15s,border-color .15s,transform .15s;
 }
-.dbin .be{font-size:30px;line-height:1.1;}
+.dbin .be{font-size:34px;line-height:1.1;}
 .dbin.hot{background:rgba(242,168,60,.28);border-color:var(--sun);transform:scale(1.05);}
 .dbin.ok{background:var(--grass);color:#0d2a18;border-color:var(--grass);border-style:solid;}
 .dbin.ng{background:var(--brick);color:#fff;border-color:var(--brick);border-style:solid;}
@@ -836,15 +840,15 @@ button[disabled]{opacity:.45;}
 .oslot{
   flex:1;border:2px dashed rgba(232,228,216,.3);border-radius:14px;
   display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:15px;font-weight:700;padding:8px 4px;min-height:64px;
+  font-size:17px;font-weight:700;padding:8px 4px;min-height:64px;
   background:rgba(255,255,255,.05);
 }
 .oslot.filled{border-style:solid;background:var(--ink2);border-color:rgba(232,228,216,.5);}
-.oslot .onum{position:absolute;font-size:11px;opacity:.5;}
+.oslot .onum{position:absolute;font-size:13px;opacity:.5;}
 #order-pool{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .ocard{
   background:var(--paper);color:#2b2b2b;border:0;border-radius:14px;
-  padding:14px 10px;font-size:17px;font-weight:700;min-height:56px;
+  padding:14px 10px;font-size:20px;font-weight:700;min-height:56px;
   box-shadow:0 4px 0 rgba(0,0,0,.25);
 }
 .ocard.used{opacity:.25;pointer-events:none;}
@@ -857,11 +861,11 @@ button[disabled]{opacity:.45;}
   position:relative;min-height:74px;border-radius:14px;border:2px solid rgba(232,228,216,.22);
   background:linear-gradient(180deg,var(--ink2),var(--tea));
   display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:14px;font-weight:700;padding:6px 4px;line-height:1.35;
+  font-size:16px;font-weight:700;padding:6px 4px;line-height:1.35;
   color:transparent;box-shadow:0 4px 0 rgba(0,0,0,.28);
   touch-action:manipulation;overflow:hidden;
 }
-.mcard::after{content:'🀄';position:absolute;font-size:30px;color:var(--mist);opacity:.5;}
+.mcard::after{content:'🀄';position:absolute;font-size:34px;color:var(--mist);opacity:.5;}
 .mcard.open,.mcard.done{color:var(--mist);background:var(--tea);}
 .mcard.open::after,.mcard.done::after{display:none;}
 .mcard.done{background:var(--grass);color:#0d2a18;border-color:var(--grass);opacity:.75;}
@@ -893,7 +897,7 @@ button[disabled]{opacity:.45;}
 }
 .m3-cell{
   position:relative;border-radius:10px;display:flex;align-items:center;justify-content:center;
-  font-size:clamp(1.4rem,7vw,2.4rem);line-height:1;
+  font-size:clamp(1.6rem,7vw,2.8rem);line-height:1;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.15),0 3px 0 rgba(0,0,0,.25);
   transition:transform .12s ease;
 }
@@ -910,7 +914,7 @@ button[disabled]{opacity:.45;}
 .m3-cell.swaping.m3-under{z-index:4;}
 .m3-cell.dropping{animation:m3drop .28s ease-out;}
 @keyframes m3drop{from{transform:translateY(-120%);opacity:.4;}to{transform:translateY(0);opacity:1;}}
-.m3-hint{font-size:14px;color:var(--mist);opacity:.75;text-align:center;max-width:560px;margin:0;}
+.m3-hint{font-size:16px;color:var(--mist);opacity:.75;text-align:center;max-width:560px;margin:0;}
 
 /* ── 引擎 G:反應點擊(老師指定 A)────────────
    天上掉下許多候選答案,點對加分、點錯扣分。 */
@@ -934,7 +938,7 @@ button[disabled]{opacity:.45;}
 }
 .rdrop{
   position:absolute;padding:9px 14px;border-radius:14px;
-  font-size:17px;font-weight:700;white-space:nowrap;
+  font-size:20px;font-weight:700;white-space:nowrap;
   background:var(--paper);color:#2b2b2b;box-shadow:0 4px 10px rgba(0,0,0,.4);
   will-change:transform;min-height:44px;display:flex;align-items:center;
 }
@@ -943,10 +947,10 @@ button[disabled]{opacity:.45;}
 .rdrop.wrong{background:var(--brick);color:#fff;}
 #react-hud{
   display:flex;justify-content:space-between;align-items:center;
-  font-size:15px;font-weight:700;margin-top:8px;padding:0 4px;
+  font-size:17px;font-weight:700;margin-top:8px;padding:0 4px;
 }
 .rfloat{
-  position:absolute;font-size:20px;font-weight:700;pointer-events:none;
+  position:absolute;font-size:23px;font-weight:700;pointer-events:none;
   animation:rfl .8s ease-out forwards;z-index:9;
 }
 @keyframes rfl{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(-46px);}}
@@ -955,7 +959,7 @@ button[disabled]{opacity:.45;}
    （皆掛在 #reactbox 內、position:absolute，box 有 position:relative 天然當定位祖先）。 */
 #react-cooldown{
   position:absolute;left:50%;top:10px;transform:translateX(-50%);
-  background:rgba(220,60,60,.92);color:#fff;font-weight:900;font-size:15px;
+  background:rgba(220,60,60,.92);color:#fff;font-weight:900;font-size:17px;
   padding:6px 16px;border-radius:20px;box-shadow:0 4px 12px rgba(0,0,0,.4);
   z-index:8;pointer-events:none;display:none;white-space:nowrap;
 }
@@ -963,7 +967,7 @@ button[disabled]{opacity:.45;}
 @keyframes rcdPulse{from{opacity:.85;}to{opacity:1;}}
 #react-freeze-btn{
   position:absolute;left:50%;bottom:10px;transform:translateX(-50%);
-  padding:10px 22px;border-radius:26px;font-size:16px;font-weight:900;
+  padding:10px 22px;border-radius:26px;font-size:18px;font-weight:900;
   border:2.5px solid #666;background:rgba(80,80,80,.55);color:#999;
   cursor:not-allowed;z-index:8;touch-action:manipulation;
   transition:background .3s,border-color .3s,color .3s,box-shadow .3s;
@@ -990,19 +994,19 @@ button[disabled]{opacity:.45;}
   width:100%;aspect-ratio:1/1;border-radius:10px;
   background:rgba(255,255,255,.07);border:1px solid rgba(232,228,216,.14);
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;line-height:1.2;text-align:center;
+  font-size:15px;font-weight:700;line-height:1.2;text-align:center;
   padding:2px;overflow:hidden;touch-action:manipulation;
 }
 .mz.wall{background:rgba(0,0,0,.42);border-color:transparent;}
-.mz.ans{background:rgba(242,168,60,.22);border-color:var(--sun);color:var(--gold);font-size:12px;}
-.mz.bad{background:rgba(210,84,63,.18);border-color:rgba(210,84,63,.5);font-size:12px;}
+.mz.ans{background:rgba(242,168,60,.22);border-color:var(--sun);color:var(--gold);font-size:14px;}
+.mz.bad{background:rgba(210,84,63,.18);border-color:rgba(210,84,63,.5);font-size:14px;}
 .mz.walked{background:var(--tea);border-color:var(--tea);color:var(--mist);}
 .mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
 .mz.here{outline:3px solid #fff;outline-offset:-3px;box-shadow:0 0 6px 2px rgba(255,255,255,.5);animation:mzherewhite 1.1s ease-in-out infinite alternate;}   /* ★ v1.70.0(老師需求「起點的小人物保持白色呼吸光暈」)— 原本目前位置只有一圈固定的金色外框,改成白色呼吸光暈(outline+box-shadow明暗循環),整場迷宮進行中(不只在起點)都跟著玩家目前位置持續呼吸 */
 @keyframes mzherewhite{from{box-shadow:0 0 6px 2px rgba(255,255,255,.45);}to{box-shadow:0 0 18px 7px rgba(255,255,255,.95);}}
 .mz.goal{background:rgba(255,209,102,.2);border-color:var(--gold);}
 .mz.reach{box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);}
-#maze-info{font-size:15px;text-align:center;margin-top:10px;line-height:1.6;}
+#maze-info{font-size:17px;text-align:center;margin-top:10px;line-height:1.6;}
 #maze-act{display:flex;gap:10px;margin-top:10px;}
 #maze-act button{flex:1;}
 
@@ -1011,7 +1015,7 @@ button[disabled]{opacity:.45;}
 #paintbox{margin-top:10px;}
 #paint-stage{display:flex;gap:10px;align-items:flex-start;}
 .pcol{flex:1;min-width:0;}
-.pcol h4{font-size:14px;margin:0 0 6px;text-align:center;opacity:.85;font-weight:700;}
+.pcol h4{font-size:16px;margin:0 0 6px;text-align:center;opacity:.85;font-weight:700;}
 #paint-ref,#paint-work{
   position:relative;width:100%;aspect-ratio:3/4;border-radius:14px;overflow:hidden;
   background:var(--ink);border:2px solid var(--line);
@@ -1035,7 +1039,7 @@ button[disabled]{opacity:.45;}
   display:flex;align-items:flex-end;justify-content:center;
 }
 .pchip span{
-  font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);
+  font-size:14px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);
   margin-bottom:-2px;pointer-events:none;
 }
 .pchip.picked{border-color:var(--gold);transform:scale(1.14);}
@@ -1043,14 +1047,14 @@ button[disabled]{opacity:.45;}
   position:fixed;width:46px;height:46px;border-radius:50%;pointer-events:none;
   z-index:120;border:3px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.5);display:none;
 }
-#paint-note{text-align:center;font-size:14px;opacity:.85;margin-top:10px;}
+#paint-note{text-align:center;font-size:16px;opacity:.85;margin-top:10px;}
 
 /* ── 結算 ───────────────────────────────── */
 #result{text-align:center;padding-top:6px;}
-#result .big{font-size:52px;font-weight:700;color:var(--gold);line-height:1.2;}
-#result .stars{font-size:38px;letter-spacing:6px;color:var(--gold);margin:6px 0;}
-#result .line{font-size:16px;opacity:.9;margin:4px 0;}
-#result .newbest{color:var(--grass);font-weight:700;font-size:21px;margin-top:6px;letter-spacing:.5px;}
+#result .big{font-size:60px;font-weight:700;color:var(--gold);line-height:1.2;}
+#result .stars{font-size:44px;letter-spacing:6px;color:var(--gold);margin:6px 0;}
+#result .line{font-size:18px;opacity:.9;margin:4px 0;}
+#result .newbest{color:var(--grass);font-weight:700;font-size:24px;margin-top:6px;letter-spacing:.5px;}
 
 /* ── 說明彈窗 ───────────────────────────── */
 #modal{
@@ -1063,17 +1067,17 @@ button[disabled]{opacity:.45;}
   padding:20px 18px;max-width:520px;width:100%;max-height:82vh;overflow-y:auto;
   -webkit-overflow-scrolling:touch;
 }
-#modal h3{margin:0 0 4px;font-size:21px;color:var(--gold);}
-#modal .tag{font-size:13px;opacity:.75;margin-bottom:12px;}
+#modal h3{margin:0 0 4px;font-size:24px;color:var(--gold);}
+#modal .tag{font-size:15px;opacity:.75;margin-bottom:12px;}
 #modal .sec{margin:12px 0;}
-#modal .sec b{display:block;font-size:14px;color:var(--gold);margin-bottom:2px;font-weight:700;}  /* v1.3.0 明寫 700:<b> 預設 bolder 會被字重自檢抓到 */
+#modal .sec b{display:block;font-size:16px;color:var(--gold);margin-bottom:2px;font-weight:700;}  /* v1.3.0 明寫 700:<b> 預設 bolder 會被字重自檢抓到 */
 #modal .row{display:flex;gap:10px;margin-top:16px;}
 #modal .row button{flex:1;}
 
 /* ★ v1.10.0 — 每週排行榜獎勵:首頁最上方大按鈕 + 說明/排行彈窗(老師:按鈕要清楚、視窗字體放大) */
 #rank-btn{
   display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:8px 14px;
-  font-size:15px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;white-space:nowrap;
+  font-size:17px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;white-space:nowrap;
   background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.55);border-radius:14px;
   box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 2px rgba(240,192,96,.3);touch-action:manipulation;
 }
@@ -1082,45 +1086,45 @@ button[disabled]{opacity:.45;}
 #top-btns button{flex:0 0 auto;margin:0;}
 #cr-btn{
   display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 14px;
-  font-size:15px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer;white-space:nowrap;
+  font-size:17px;font-weight:700;color:#fff;font-family:inherit;cursor:pointer;white-space:nowrap;
   background:linear-gradient(180deg,#7dd3a8,var(--grass));border:2px solid rgba(255,255,255,.55);border-radius:14px;
   box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 2px rgba(62,200,122,.3);touch-action:manipulation;
 }
 #cr-btn:active{transform:translateY(2px);}
-#cr-btn .rb-ico{font-size:20px;}
-#cr-btn .rb-sub{font-size:12px;font-weight:700;opacity:.9;}
+#cr-btn .rb-ico{font-size:23px;}
+#cr-btn .rb-sub{font-size:14px;font-weight:700;opacity:.9;}
 #cr-btn .rb-sub:empty{display:none;}
 #cr-btn.on{background:linear-gradient(180deg,#ffb86b,#ff8c42);box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 0 2px rgba(255,140,66,.3);}
 #cr-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:82;display:none;align-items:center;justify-content:center;padding:18px;}
 #cr-modal.show{display:flex;}
 #cr-modal .box{background:var(--ink2);border:2px solid rgba(62,200,122,.55);border-radius:20px;padding:22px 20px;max-width:720px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-#cr-modal h3{margin:0 0 6px;font-size:26px;color:var(--grass);}
-#cr-modal .tag{font-size:17px;opacity:.85;margin-bottom:12px;line-height:1.7;}
+#cr-modal h3{margin:0 0 6px;font-size:30px;color:var(--grass);}
+#cr-modal .tag{font-size:20px;opacity:.85;margin-bottom:12px;line-height:1.7;}
 #cr-modal .row{display:flex;gap:10px;margin-top:14px;}
-#cr-modal .row button{flex:1;font-size:17px;padding:12px 8px;}
-#cr-modal .cr-master{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;padding:10px 12px;border-radius:12px;background:rgba(62,200,122,.12);margin-bottom:10px;cursor:pointer;}
+#cr-modal .row button{flex:1;font-size:20px;padding:12px 8px;}
+#cr-modal .cr-master{display:flex;align-items:center;gap:10px;font-size:23px;font-weight:700;padding:10px 12px;border-radius:12px;background:rgba(62,200,122,.12);margin-bottom:10px;cursor:pointer;}
 #cr-modal input[type=checkbox]{width:24px;height:24px;accent-color:var(--grass);}
 .cr-grade{border:1px solid rgba(232,228,216,.2);border-radius:12px;margin:8px 0;padding:8px 12px;}
-.cr-grade .cr-gh{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;color:var(--gold);cursor:pointer;}
-.cr-unit{display:flex;align-items:center;gap:10px;font-size:17px;padding:6px 4px 6px 34px;cursor:pointer;}
-.cr-unit .cr-n{opacity:.6;font-size:14px;margin-left:auto;white-space:nowrap;}
+.cr-grade .cr-gh{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:700;color:var(--gold);cursor:pointer;}
+.cr-unit{display:flex;align-items:center;gap:10px;font-size:20px;padding:6px 4px 6px 34px;cursor:pointer;}
+.cr-unit .cr-n{opacity:.6;font-size:16px;margin-left:auto;white-space:nowrap;}
 .cell.crmask .cthumb,.cell.crmask .cn,.cell.crmask .cskills,.cell.crmask .cdiff,.cell.crmask .cbest{opacity:.28;filter:grayscale(1);}
 .cell.crmask{pointer-events:auto;}
-.crmask-lbl{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:3;font-size:16px;font-weight:700;color:var(--mist);background:rgba(20,26,22,.85);border:2px solid rgba(232,228,216,.35);border-radius:999px;padding:8px 16px;white-space:nowrap;}
+.crmask-lbl{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:3;font-size:18px;font-weight:700;color:var(--mist);background:rgba(20,26,22,.85);border:2px solid rgba(232,228,216,.35);border-radius:999px;padding:8px 16px;white-space:nowrap;}
 .cell.crlit{box-shadow:0 0 0 3px var(--grass),0 0 22px rgba(62,200,122,.7);}
-.ctag{position:absolute;left:8px;top:6px;z-index:3;font-size:12px;font-weight:700;letter-spacing:.5px;color:#2b2b2b;background:linear-gradient(180deg,#ffe28a,var(--sun));border-radius:999px;padding:3px 10px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;}   /* ★ v1.10.4 科目小標籤 */
+.ctag{position:absolute;left:8px;top:6px;z-index:3;font-size:14px;font-weight:700;letter-spacing:.5px;color:#2b2b2b;background:linear-gradient(180deg,#ffe28a,var(--sun));border-radius:999px;padding:3px 10px;box-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;}   /* ★ v1.10.4 科目小標籤 */
 .cell.crmask .ctag{opacity:.5;}
-.crlit-lbl{position:absolute;left:8px;top:32px;z-index:3;font-size:13px;font-weight:700;color:#1f6b45;background:rgba(125,211,168,.95);border-radius:999px;padding:3px 10px;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.crlit-lbl{position:absolute;left:8px;top:32px;z-index:3;font-size:15px;font-weight:700;color:#1f6b45;background:rgba(125,211,168,.95);border-radius:999px;padding:3px 10px;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .card{position:relative;}
 /* ★ v1.72.0(老師回報「選擇類型題目右上角的複習單元綠色標籤和題目重疊在一起了」)— 根因:.cr-tag 原本
    position:absolute 貼在題卡右上角,浮在題目文字上層而不佔版面高度,題目文字本身從題卡最上緣開始排,
    兩者天生就疊在同一塊。改回一般文件流的 block 元素,配合 JS(mgCrTagApply)把它插成題卡的第一個子
    節點(insertBefore 取代 appendChild),標籤自然佔第一行、左上角起排,題目文字接在它後面自動換到
    第二行開始,不必再靠絕對定位計算留白。 */
-.cr-tag{display:block;text-align:left;margin:0 0 6px;font-size:12px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;width:fit-content;}
+.cr-tag{display:block;text-align:left;margin:0 0 6px;font-size:14px;font-weight:700;line-height:1.3;padding:3px 8px;border-radius:999px;background:rgba(62,200,122,.18);color:#1f6b45;border:1px solid rgba(62,200,122,.5);pointer-events:none;width:fit-content;}
 #drag-item{position:relative;}
-#rank-btn .rb-ico{font-size:20px;}
-#rank-btn .rb-sub{font-size:12px;font-weight:700;opacity:.8;}
+#rank-btn .rb-ico{font-size:23px;}
+#rank-btn .rb-sub{font-size:14px;font-weight:700;opacity:.8;}
 #rank-btn .rb-sub:empty{display:none;}
 #rank-modal{position:fixed;inset:0;background:rgba(5,15,11,.82);z-index:81;display:none;align-items:center;justify-content:center;padding:18px;}
 #rank-modal.show{display:flex;}
@@ -1131,57 +1135,57 @@ button[disabled]{opacity:.45;}
 #intro-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.5);border-radius:20px;padding:22px 20px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 #intro-modal .mascot{margin:0;}
 #intro-modal .row{display:flex;gap:10px;margin-top:16px;}
-#intro-modal .row button{flex:1;font-size:17px;padding:12px 8px;}
+#intro-modal .row button{flex:1;font-size:20px;padding:12px 8px;}
 /* ★ v1.41.0 — 首頁標題正下方的「遊戲簡介」按鈕 */
-#intro-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;font-size:16px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.5);border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:manipulation;margin:0 0 10px;}
+#intro-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;font-size:18px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.5);border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:manipulation;margin:0 0 10px;}
 #intro-btn:active{transform:translateY(2px);}
-#rank-modal h3{margin:0 0 6px;font-size:26px;color:var(--gold);}
-#rank-modal .tag{font-size:17px;opacity:.85;margin-bottom:12px;line-height:1.7;}
-#rank-modal #rk-nav button{font-size:17px;padding:12px 8px;}
-.rk-info{font-size:19px;line-height:1.85;}
+#rank-modal h3{margin:0 0 6px;font-size:30px;color:var(--gold);}
+#rank-modal .tag{font-size:20px;opacity:.85;margin-bottom:12px;line-height:1.7;}
+#rank-modal #rk-nav button{font-size:20px;padding:12px 8px;}
+.rk-info{font-size:22px;line-height:1.85;}
 .rk-info b{color:var(--gold);font-weight:700;}
-.rk-info .rk-me{margin-top:12px;padding:10px 14px;border-radius:12px;background:rgba(62,200,122,.12);color:var(--grass);font-weight:700;font-size:19px;}
-.rk-info .rk-award-tbl{margin:10px 0;border-collapse:collapse;width:100%;font-size:18px;}
+.rk-info .rk-me{margin-top:12px;padding:10px 14px;border-radius:12px;background:rgba(62,200,122,.12);color:var(--grass);font-weight:700;font-size:22px;}
+.rk-info .rk-award-tbl{margin:10px 0;border-collapse:collapse;width:100%;font-size:21px;}
 .rk-info .rk-award-tbl td{padding:6px 8px;border-bottom:1px dashed rgba(232,228,216,.2);}
 .rk-info .rk-award-tbl td:first-child{color:var(--gold);font-weight:700;white-space:nowrap;}
 #rank-modal .row{display:flex;gap:10px;margin-top:14px;}
 #rank-modal .row button{flex:1;}
 .rk-game{border:1px solid rgba(232,228,216,.18);border-radius:12px;margin:8px 0;overflow:hidden;}
-.rk-game summary{cursor:pointer;padding:10px 12px;font-size:18px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+.rk-game summary{cursor:pointer;padding:10px 12px;font-size:21px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;}
 .rk-game summary::-webkit-details-marker{display:none;}
-.rk-game summary .rk-mine{font-size:13px;color:var(--grass);font-weight:700;}
-.rk-game summary .rk-none{font-size:13px;opacity:.55;font-weight:400;}
-.rk-list{padding:0 12px 10px;font-size:17px;}
+.rk-game summary .rk-mine{font-size:15px;color:var(--grass);font-weight:700;}
+.rk-game summary .rk-none{font-size:15px;opacity:.55;font-weight:400;}
+.rk-list{padding:0 12px 10px;font-size:20px;}
 .rk-line{display:flex;gap:8px;padding:3px 0;border-top:1px dashed rgba(232,228,216,.12);}
 .rk-line .rk-rank{width:34px;color:var(--gold);font-weight:700;}
 .rk-line .rk-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rk-line .rk-score{font-weight:700;}
 .rk-line.me{color:var(--grass);}
-.rk-award{padding:8px 12px;font-size:17px;line-height:1.6;border-top:1px dashed rgba(232,228,216,.12);}
+.rk-award{padding:8px 12px;font-size:20px;line-height:1.6;border-top:1px dashed rgba(232,228,216,.12);}
 .rk-award b{color:var(--gold);font-weight:700;}
 
 /* 提示條 */
 #toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
   background:rgba(0,0,0,.86);color:#fff;padding:11px 18px;border-radius:999px;
-  font-size:15px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center;
+  font-size:17px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center;
 }
 #toast.show{opacity:1;}
 
 /* 小螢幕 */
 @media (max-width:390px){
-  body{font-size:16px;}
+  body{font-size:18px;}
   /* ★ v1.1.0 — 小螢幕分支若不同步放大,手機上會退回「字糊在一起」的舊尺寸。
      min-height 一併加大,免得放大後的字把卡片撐爆。 */
   .cell{min-height:206px;padding:9px 4px;}
-  .cell .ce{font-size:29px;}
-  .cell .cn{font-size:16px;letter-spacing:.3px;}
+  .cell .ce{font-size:33px;}
+  .cell .cn{font-size:18px;letter-spacing:.3px;}
   /* ★ v1.1.0 — 手機上縮圖降到 72px,否則三欄併排會把卡片撐得太高需要一直捲 */
   .cthumb{height:72px;margin-bottom:6px;}
-  .cskill{font-size:11px;padding:1px 6px;}
-  .cdiff{font-size:12px;}
-  .card{font-size:17px;padding:15px 12px;}
-  .opt{font-size:15px;padding:12px 6px;}
+  .cskill{font-size:13px;padding:1px 6px;}
+  .cdiff{font-size:14px;}
+  .card{font-size:20px;padding:15px 12px;}
+  .opt{font-size:17px;padding:12px 6px;}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1229,17 +1233,17 @@ button[disabled]{opacity:.45;}
   text-align:left;
 }
 #scene-banner .sb-name{
-  font-size:22px;font-weight:700;color:var(--gold);letter-spacing:1px;line-height:1.2;
+  font-size:25px;font-weight:700;color:var(--gold);letter-spacing:1px;line-height:1.2;
   text-shadow:0 2px 6px rgba(0,0,0,.9);
 }
 #scene-banner .sb-story{
-  font-size:14px;opacity:.92;line-height:1.5;margin-top:2px;
+  font-size:16px;opacity:.92;line-height:1.5;margin-top:2px;
   text-shadow:0 1px 4px rgba(0,0,0,.9);
   overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
 }
 
 /* ── 首頁:標題區與選單卡精緻化 ── */
-#page-home .sub{font-size:17px;color:var(--gold);letter-spacing:2px;opacity:.95;font-weight:700;}
+#page-home .sub{font-size:20px;color:var(--gold);letter-spacing:2px;opacity:.95;font-weight:700;}
 #grid{gap:12px;}
 .cell{
   border:2px solid rgba(240,192,96,.28);
@@ -1250,17 +1254,17 @@ button[disabled]{opacity:.45;}
 .cell:active{border-color:var(--gold);box-shadow:0 1px 0 rgba(0,0,0,.35),0 0 18px rgba(240,192,96,.35);}
 .cthumb{height:120px;border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
 .cthumb img{filter:brightness(.9) saturate(1.1);}
-.cthumb-emo{font-size:46px;}
-.cell .cn{font-size:20px;}
+.cthumb-emo{font-size:53px;}
+.cell .cn{font-size:23px;}
 .cell .cbest{
   top:34px;right:9px;background:rgba(8,9,13,.78);color:var(--gold);
-  padding:3px 9px;border-radius:999px;border:1px solid rgba(240,192,96,.5);font-size:13px;
+  padding:3px 9px;border-radius:999px;border:1px solid rgba(240,192,96,.5);font-size:15px;
 }
-.cell .cstar{font-size:16px;text-shadow:0 0 8px rgba(240,192,96,.6);}
+.cell .cstar{font-size:18px;text-shadow:0 0 8px rgba(240,192,96,.6);}
 
 /* ── 遊戲中 HUD:大字晶片 + 倒數環 ── */
 #hud{gap:8px;margin:2px 0 8px;}
-.stat{font-size:17px;padding:8px 14px;min-height:44px;display:inline-flex;align-items:center;
+.stat{font-size:20px;padding:8px 14px;min-height:44px;display:inline-flex;align-items:center;
   border:1px solid rgba(232,228,216,.16);background:rgba(8,9,13,.62);}
 .stat:empty{display:none;}   /* 連擊晶片沒字時不要留一顆空膠囊 */
 /* 倒數環:conic-gradient 畫圓弧(iOS 12.2+ 支援;不支援時退回純圓底+數字,功能不變) */
@@ -1272,13 +1276,13 @@ button[disabled]{opacity:.45;}
 #timering::before{
   content:'';position:absolute;inset:4px;border-radius:50%;background:var(--ink2);
 }
-#timering .tnum{position:relative;font-size:19px;font-weight:700;color:var(--mist);line-height:1;}
+#timering .tnum{position:relative;font-size:22px;font-weight:700;color:var(--mist);line-height:1;}
 #timering.low .tnum{color:var(--brick);}
 #timebar-wrap{height:12px;background:rgba(8,9,13,.6);border:1px solid rgba(232,228,216,.12);}
 
 /* 題卡:加金框、稍微放大 */
 .card{
-  font-size:22px;border:3px solid rgba(240,192,96,.55);
+  font-size:25px;border:3px solid rgba(240,192,96,.55);
   box-shadow:0 5px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.45);
 }
 .card.shake{animation:cshake .4s;}
@@ -1289,10 +1293,10 @@ button[disabled]{opacity:.45;}
 /* 解說改成有標題列的卡片 */
 #feedback{
   background:rgba(14,16,24,.92);border:2px solid rgba(232,228,216,.18);border-left-width:8px;
-  padding:0;overflow:hidden;font-size:17px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  padding:0;overflow:hidden;font-size:20px;box-shadow:0 8px 24px rgba(0,0,0,.4);
 }
 #feedback .fb-head{
-  display:block;font-size:20px;font-weight:700;padding:10px 16px;
+  display:block;font-size:23px;font-weight:700;padding:10px 16px;
   background:rgba(255,255,255,.06);border-bottom:1px solid rgba(232,228,216,.12);
 }
 #feedback.ok .fb-head{color:var(--grass);}
@@ -1303,7 +1307,7 @@ button[disabled]{opacity:.45;}
 /* 分數飄字(答對時從分數晶片飄上去) */
 .scorefloat{
   position:fixed;z-index:115;pointer-events:none;
-  font-size:26px;font-weight:700;color:var(--gold);
+  font-size:30px;font-weight:700;color:var(--gold);
   text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 14px rgba(240,192,96,.6);
   animation:sfl 1.1s ease-out forwards;
 }
@@ -1328,10 +1332,10 @@ button[disabled]{opacity:.45;}
   content:'';position:absolute;inset:8px;border-radius:18px;
   border:1px dashed rgba(240,192,96,.35);pointer-events:none;
 }
-#result .r-title{font-size:15px;letter-spacing:6px;color:var(--gold);opacity:.85;font-weight:700;}
-#result .line{font-size:18px;position:relative;}
-#result #r-name{font-size:22px;font-weight:700;margin-top:2px;}
-#result .stars{position:relative;font-size:46px;letter-spacing:8px;margin:8px 0 2px;}
+#result .r-title{font-size:17px;letter-spacing:6px;color:var(--gold);opacity:.85;font-weight:700;}
+#result .line{font-size:21px;position:relative;}
+#result #r-name{font-size:25px;font-weight:700;margin-top:2px;}
+#result .stars{position:relative;font-size:53px;letter-spacing:8px;margin:8px 0 2px;}
 #result .stars span{display:inline-block;opacity:0;transform:scale(.2);}
 #result .stars span.lit{animation:starpop .55s cubic-bezier(.2,1.6,.4,1) forwards;text-shadow:0 0 16px rgba(240,192,96,.8);}
 #result .stars span.dim{opacity:.22;transform:none;}
@@ -1340,51 +1344,51 @@ button[disabled]{opacity:.45;}
 #result .stars span.lost{opacity:.55;transform:none;color:#8a8a8a;text-shadow:none;}
 #result .stars-wrap{position:relative;}
 /* ★ v1.65.0 — 蓋在星星正上方的「再接再厲…」大字,只在戰敗時加 show 顯示;pointer-events:none 不擋任何按鈕 */
-#result .r-encourage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-size:30px;font-weight:900;color:#ffb238;text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 18px rgba(255,140,0,.6);letter-spacing:2px;z-index:2;}
+#result .r-encourage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-size:34px;font-weight:900;color:#ffb238;text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 18px rgba(255,140,0,.6);letter-spacing:2px;z-index:2;}
 #result .r-encourage.show{display:block;animation:starpop .5s cubic-bezier(.2,1.6,.4,1) forwards;}
 @keyframes starpop{0%{opacity:0;transform:scale(.2) rotate(-40deg);}60%{opacity:1;transform:scale(1.35) rotate(8deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
-#result .big{position:relative;font-size:60px;text-shadow:0 0 22px rgba(240,192,96,.5);}
+#result .big{position:relative;font-size:69px;text-shadow:0 0 22px rgba(240,192,96,.5);}
 #result .r-glow{
   position:absolute;left:50%;top:44%;width:340px;height:340px;transform:translate(-50%,-50%);
   pointer-events:none;opacity:0;transition:opacity .5s;
 }
 #result .r-glow.on{opacity:.75;}
-#result .newbest{font-size:24px;}
+#result .newbest{font-size:28px;}
 /* ★ v1.72.0 — 左欄(獎盃+星星)維持置中觀感、右欄(分數/明細/用時/戰鬥結果/新紀錄)改左對齊由上往下排;
    兩欄同高並排(align-items:center 讓右欄內容整體垂直置中對齊左欄獎盃的高度),右欄內距原本繼承
    #result 的 text-align:center 必須在這裡明確蓋回 left,否則每一行文字仍會置中、看起來仍然雜亂。 */
 #result .r-body{display:flex;align-items:center;gap:18px;margin-top:2px;text-align:left;}
 #result .r-left{flex:0 0 auto;text-align:center;}
 #result .r-right{flex:1 1 auto;min-width:0;text-align:left;}
-#result .r-right .big{font-size:38px;margin:0 0 4px;}
-#result .r-right .line{font-size:15px;}
-#result .r-right .newbest{font-size:18px;margin-top:4px;}
+#result .r-right .big{font-size:44px;margin:0 0 4px;}
+#result .r-right .line{font-size:17px;}
+#result .r-right .newbest{font-size:21px;margin-top:4px;}
 @media (min-width:1024px){
-  #result .r-right .big{font-size:48px;}
-  #result .r-right .line{font-size:17px;}
-  #result .r-right .newbest{font-size:21px;}
+  #result .r-right .big{font-size:55px;}
+  #result .r-right .line{font-size:20px;}
+  #result .r-right .newbest{font-size:24px;}
 }
-#result button{min-height:56px;font-size:20px;}
+#result button{min-height:56px;font-size:23px;}
 
 /* 玩法彈窗:放大、金框 */
 #modal .box{border-color:rgba(240,192,96,.5);max-width:600px;padding:22px 20px;box-shadow:0 20px 60px rgba(0,0,0,.6);}
-#modal h3{font-size:24px;}
-#modal .sec{font-size:17px;line-height:1.7;}
-#modal .sec b{font-size:15px;}
-#modal .row button{min-height:56px;font-size:20px;}
+#modal h3{font-size:28px;}
+#modal .sec{font-size:20px;line-height:1.7;}
+#modal .sec b{font-size:17px;}
+#modal .row button{min-height:56px;font-size:23px;}
 
 /* 觸控目標:全站按鈕與晶片一律 ≥48px(iPad 再放大,見下方斷點) */
-button,.btn{min-height:52px;font-size:19px;}
-.chip{min-height:44px;font-size:15px;padding:8px 14px;display:inline-flex;align-items:center;}  /* inline-flex:<a> 也吃得到 min-height */
+button,.btn{min-height:52px;font-size:22px;}
+.chip{min-height:44px;font-size:17px;padding:8px 14px;display:inline-flex;align-items:center;}  /* inline-flex:<a> 也吃得到 min-height */
 #topbar{min-height:52px;}
-.opt{min-height:66px;font-size:18px;}
-.dbin{min-height:110px;font-size:17px;}
-.ocard{min-height:62px;font-size:18px;}
+.opt{min-height:66px;font-size:21px;}
+.dbin{min-height:110px;font-size:20px;}
+.ocard{min-height:62px;font-size:21px;}
 .oslot{min-height:70px;}
-.mcard{min-height:82px;font-size:15px;}
+.mcard{min-height:82px;font-size:17px;}
 .pchip{width:58px;height:58px;}
-#playbtn{min-height:60px;font-size:22px;}
-#nextrow button{min-height:60px;font-size:21px;}
+#playbtn{min-height:60px;font-size:25px;}
+#nextrow button{min-height:60px;font-size:24px;}
 
 /* ── v1.3.0 追加(老師:「各關可單獨設定開啟／暫時關閉」)──
    雲端 globalStats/minigame = { disabled:{gid:true/false}, updatedAt, updatedBy }
@@ -1393,17 +1397,17 @@ button,.btn{min-height:52px;font-size:19px;}
 .cell.off .cn::after{content:' 🚧';}
 .coff{
   position:absolute;left:0;right:0;top:44%;text-align:center;z-index:3;pointer-events:none;
-  background:rgba(232,64,64,.85);color:#fff;font-weight:700;font-size:15px;padding:5px 0;letter-spacing:2px;
+  background:rgba(232,64,64,.85);color:#fff;font-weight:700;font-size:17px;padding:5px 0;letter-spacing:2px;
   transform:rotate(-8deg);box-shadow:0 4px 12px rgba(0,0,0,.5);
 }
 .ctoggle{
   position:absolute;right:8px;top:30px;z-index:4;   /* ★ v1.10.4 老師的開關鈕改右上(最佳成績下方),左上讓給科目標籤 */min-height:0;min-width:0;
-  padding:4px 10px;font-size:14px;border-radius:999px;border:2px solid rgba(255,255,255,.5);
+  padding:4px 10px;font-size:16px;border-radius:999px;border:2px solid rgba(255,255,255,.5);
   background:rgba(62,200,122,.92);color:#0b1a12;font-weight:700;box-shadow:0 2px 0 rgba(0,0,0,.4);
 }
 .ctoggle.isoff{background:rgba(232,64,64,.92);color:#fff;}
 #share-btn{background:rgba(74,158,255,.18);border-color:rgba(74,158,255,.5);}
-@media (min-width:1024px){ .ctoggle{font-size:16px;padding:6px 12px;} .coff{font-size:18px;} .ctag{font-size:14px;padding:4px 12px;} .crlit-lbl{top:36px;} }
+@media (min-width:1024px){ .ctoggle{font-size:18px;padding:6px 12px;} .coff{font-size:21px;} .ctag{font-size:16px;padding:4px 12px;} .crlit-lbl{top:36px;} }
 
 /* ── v1.3.0 追加(老師:「圖片全部生成中,先預留圖片掛接」)──
    所有 .pic-* 都是「有檔才顯示」:onerror 把 img 藏起來,版面退回原本的純文字／emoji。 */
@@ -1447,7 +1451,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 .mascot .bubble{
   position:relative;flex:1;background:rgba(232,228,216,.96);color:#2b2b2b;
-  border-radius:16px;padding:10px 14px;font-size:16px;font-weight:700;line-height:1.55;
+  border-radius:16px;padding:10px 14px;font-size:18px;font-weight:700;line-height:1.55;
   box-shadow:0 5px 0 rgba(0,0,0,.25);
 }
 .mascot .bubble::before{
@@ -1468,7 +1472,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 #loading.show{display:flex;}
 #loading img{width:160px;height:160px;object-fit:contain;}
-#loading span{font-size:17px;font-weight:700;color:var(--gold);}
+#loading span{font-size:20px;font-weight:700;color:var(--gold);}
 /* 聽音:播放中的音符 */
 #earbox{position:relative;}
 #ear-notes{
@@ -1478,7 +1482,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #ear-notes.on{display:block;}
 @media (min-width:1024px){
   .mascot img{width:124px;height:124px;}
-  .mascot .bubble{font-size:20px;padding:14px 18px;}
+  .mascot .bubble{font-size:23px;padding:14px 18px;}
   .mascot .bubble::before{top:48px;}
   #feedback .fb-img{flex-basis:150px;width:150px;height:150px;}
   #result .r-trophy{width:180px;height:180px;}
@@ -1513,33 +1517,33 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @keyframes cqpulse{0%,100%{box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 14px rgba(240,192,96,.5);}50%{box-shadow:0 0 0 2px rgba(8,9,13,.6),0 0 26px rgba(240,192,96,.95);}}
 .cq-tag{
   position:absolute;left:8px;top:8px;background:rgba(8,9,13,.8);color:var(--gold);font-weight:700;
-  font-size:15px;padding:4px 10px;border-radius:999px;border:1px solid rgba(240,192,96,.5);
+  font-size:17px;padding:4px 10px;border-radius:999px;border:1px solid rgba(240,192,96,.5);
 }
 .cq-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;flex:1 1 260px;max-width:380px;}
 .cq-opt{
   min-height:92px;border-radius:18px;border:3px solid rgba(232,228,216,.35);cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   box-shadow:0 5px 0 rgba(0,0,0,.35),0 8px 18px rgba(0,0,0,.35);
-  font-size:20px;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9);
+  font-size:23px;font-weight:700;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 3px rgba(0,0,0,.9);
   transition:transform .1s;
 }
 .cq-opt:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35);}
 .cq-opt.ok{border-color:var(--grass);box-shadow:0 0 0 4px rgba(62,200,122,.55),0 0 24px rgba(62,200,122,.6);}
 .cq-opt.ng{border-color:var(--brick);opacity:.55;}
 .cq-opt.off{opacity:.35;}
-.cq-note{text-align:center;font-size:15px;opacity:.85;margin-top:10px;}
+.cq-note{text-align:center;font-size:17px;opacity:.85;margin-top:10px;}
 /* 解說卡裡的比例長條 */
 .cq-bars{margin-top:8px;width:100%;flex:0 0 auto;}   /* width 而非 flex-basis:橫式 fb-body 是 column,basis 會變成高度 */
-.cq-bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:15px;}
+.cq-bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:17px;}
 .cq-bar .cqb-name{width:34px;text-align:right;font-weight:700;}
 .cq-bar .cqb-track{display:block;flex:1;height:18px;background:rgba(255,255,255,.12);border-radius:9px;overflow:hidden;}
 .cq-bar .cqb-fill{display:block;height:100%;border-radius:9px;transition:width .6s ease;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);}   /* 黑色條在深底也看得到 */
 .cq-bar .cqb-pct{width:44px;font-weight:700;}
 .cq-bar.win .cqb-name{color:var(--gold);}
 @media (min-width:1024px){
-  .cq-opt{min-height:110px;font-size:24px;}
-  .cq-tag{font-size:17px;}
-  .cq-bar{font-size:17px;}
+  .cq-opt{min-height:110px;font-size:28px;}
+  .cq-tag{font-size:20px;}
+  .cq-bar{font-size:20px;}
   .cq-bar .cqb-track{height:22px;}
 }
 
@@ -1547,84 +1551,84 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    ⚠ 1024px 起算:iPad 橫式(1024/1080/1180/1366)全部命中;iPad 直式(768/810/820/834)走上面的預設值。
    ⚠ 只放大不改版面結構,九宮格仍是 3 欄;字級跟著放大,不然按鈕大了字反而顯得小。 */
 @media (min-width:1024px){
-  body{font-size:20px;}
+  body{font-size:23px;}
   .wrap{max-width:1100px;padding:14px 22px 60px;}
-  button,.btn{min-height:64px;font-size:22px;padding:14px 26px;border-radius:16px;}
-  .chip{min-height:52px;font-size:18px;padding:10px 20px;}
+  button,.btn{min-height:64px;font-size:25px;padding:14px 26px;border-radius:16px;}
+  .chip{min-height:52px;font-size:21px;padding:10px 20px;}
   #topbar{min-height:62px;gap:12px;}
-  #who{font-size:17px;}
+  #who{font-size:20px;}
   #title-img{max-width:680px;}
-  #page-home .sub{font-size:20px;}
+  #page-home .sub{font-size:23px;}
   #grid{gap:16px;}
   .cell{min-height:330px;padding:14px 10px 12px;border-radius:22px;}
   .cthumb{height:170px;}
-  .cthumb-emo{font-size:60px;}
-  .cell .cn{font-size:24px;}
-  .cell .cs{font-size:15px;}
-  .cskill{font-size:14px;padding:3px 10px;}
-  .cdiff{font-size:16px;}
-  .cell .cstar{font-size:19px;}
-  .cell .cbest{font-size:15px;}
+  .cthumb-emo{font-size:69px;}
+  .cell .cn{font-size:28px;}
+  .cell .cs{font-size:17px;}
+  .cskill{font-size:16px;padding:3px 10px;}
+  .cdiff{font-size:18px;}
+  .cell .cstar{font-size:22px;}
+  .cell .cbest{font-size:17px;}
   #scene-banner{height:160px;}
-  #scene-banner .sb-name{font-size:28px;}
-  #scene-banner .sb-story{font-size:17px;}
-  .stat{font-size:20px;padding:10px 18px;min-height:52px;}
+  #scene-banner .sb-name{font-size:32px;}
+  #scene-banner .sb-story{font-size:20px;}
+  .stat{font-size:23px;padding:10px 18px;min-height:52px;}
   #timering{width:62px;height:62px;}
-  #timering .tnum{font-size:23px;}
+  #timering .tnum{font-size:26px;}
   #timebar-wrap{height:14px;}
-  .card{font-size:27px;padding:24px 22px;min-height:120px;}
-  #qhint{font-size:17px;}
+  .card{font-size:31px;padding:24px 22px;min-height:120px;}
+  #qhint{font-size:20px;}
   .opts{gap:14px;margin-top:18px;}
-  .opt{min-height:84px;font-size:22px;padding:16px 14px;border-radius:18px;}
-  .opt .oe{font-size:34px;}
-  #feedback{font-size:20px;}
-  #feedback .fb-head{font-size:24px;padding:12px 20px;}
+  .opt{min-height:84px;font-size:25px;padding:16px 14px;border-radius:18px;}
+  .opt .oe{font-size:39px;}
+  #feedback{font-size:23px;}
+  #feedback .fb-head{font-size:28px;padding:12px 20px;}
   #feedback .fb-body{padding:14px 20px 16px;}
-  #nextrow button{min-height:68px;font-size:24px;}
+  #nextrow button{min-height:68px;font-size:28px;}
   /* 各引擎 */
-  #drag-item{font-size:26px;padding:22px 18px;}
-  .dbin{min-height:140px;font-size:20px;}
-  .dbin .be{font-size:40px;}
-  .oslot{min-height:84px;font-size:18px;}
-  .ocard{min-height:76px;font-size:22px;}
+  #drag-item{font-size:30px;padding:22px 18px;}
+  .dbin{min-height:140px;font-size:23px;}
+  .dbin .be{font-size:46px;}
+  .oslot{min-height:84px;font-size:21px;}
+  .ocard{min-height:76px;font-size:25px;}
   #matchbox{gap:12px;}
-  .mcard{min-height:104px;font-size:19px;}
-  .mcard::after{font-size:38px;}
+  .mcard{min-height:104px;font-size:22px;}
+  .mcard::after{font-size:44px;}
   #reactbox{height:58vh;min-height:380px;}
-  .rdrop{font-size:22px;padding:12px 20px;min-height:54px;}
-  #react-hud{font-size:19px;}
+  .rdrop{font-size:25px;padding:12px 20px;min-height:54px;}
+  #react-hud{font-size:22px;}
   #maze-grid{gap:7px;}
-  .mz{font-size:17px;border-radius:12px;}
-  .mz.ans,.mz.bad{font-size:16px;}
-  #maze-info{font-size:19px;}
-  .pcol h4{font-size:18px;}
+  .mz{font-size:20px;border-radius:12px;}
+  .mz.ans,.mz.bad{font-size:18px;}
+  #maze-info{font-size:22px;}
+  .pcol h4{font-size:21px;}
   .pchip{width:72px;height:72px;}
-  .pchip span{font-size:15px;}
+  .pchip span{font-size:17px;}
   #paint-drag{width:60px;height:60px;}
-  #paint-note{font-size:17px;}
-  #playbtn{min-height:72px;font-size:26px;padding:18px 44px;}
-  #playnote{font-size:17px;}
+  #paint-note{font-size:20px;}
+  #playbtn{min-height:72px;font-size:30px;padding:18px 44px;}
+  #playnote{font-size:20px;}
   #tw-svg{max-height:62vh;}
-  .spotlbl{font-size:4.2px;}
-  .spotlbl-en1{font-size:1.8px;}
-  .spotlbl-en2{font-size:2.4px;}
-  .spotlbl-en3{font-size:2.95px;}
+  .spotlbl{font-size:5px;}
+  .spotlbl-en1{font-size:2px;}
+  .spotlbl-en2{font-size:3px;}
+  .spotlbl-en3{font-size:3px;}
   /* 結算與彈窗 */
   #result{padding:34px 26px 28px;}
-  #result .big{font-size:78px;}
-  #result .stars{font-size:60px;}
-  #result .line{font-size:21px;}
-  #result #r-name{font-size:27px;}
-  #result .newbest{font-size:28px;}
+  #result .big{font-size:90px;}
+  #result .stars{font-size:69px;}
+  #result .line{font-size:24px;}
+  #result #r-name{font-size:31px;}
+  #result .newbest{font-size:32px;}
   #modal .box{max-width:720px;padding:28px 26px;}
-  #modal h3{font-size:28px;}
-  #modal .sec{font-size:20px;}
-  #modal .sec b{font-size:17px;}
-  #modal .tag{font-size:16px;}
+  #modal h3{font-size:32px;}
+  #modal .sec{font-size:23px;}
+  #modal .sec b{font-size:20px;}
+  #modal .tag{font-size:18px;}
   #gate-card{max-width:680px;}
-  #gate-card h2{font-size:32px;}
-  #gate-card p{font-size:20px;}
-  #toast{font-size:18px;padding:14px 24px;}
+  #gate-card h2{font-size:37px;}
+  #gate-card p{font-size:23px;}
+  #toast{font-size:21px;padding:14px 24px;}
 }
 
 /* ══ v1.3.0 — iPad 全螢幕「不捲動」版面(老師需求)══
@@ -1648,24 +1652,24 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   }
   .cthumb{position:absolute;inset:0;height:100%;margin:0;border-radius:0;box-shadow:none;}
   .cthumb img{filter:brightness(.8) saturate(1.1);}
-  .cthumb-emo{font-size:64px;}
+  .cthumb-emo{font-size:74px;}
   .cell .cn,.cell .cs,.cskills,.cdiff,.cell .cstar,.cell .cbest{position:relative;z-index:1;}
-  .cell .cn{font-size:20px;text-shadow:0 2px 6px rgba(0,0,0,.95);line-height:1.2;padding:0 6px;}
+  .cell .cn{font-size:23px;text-shadow:0 2px 6px rgba(0,0,0,.95);line-height:1.2;padding:0 6px;}
   .cell .cs{display:none;}                  /* 科目已在玩法彈窗顯示,卡上省掉 */
   .cskills{margin:3px 0 0;}
-  .cskill{font-size:12px;padding:1px 7px;background:rgba(8,9,13,.55);}
-  .cdiff{font-size:13px;margin:2px 0 0;}
-  .cell .cstar{font-size:15px;min-height:0;margin-bottom:8px;}
+  .cskill{font-size:14px;padding:1px 7px;background:rgba(8,9,13,.55);}
+  .cdiff{font-size:15px;margin:2px 0 0;}
+  .cell .cstar{font-size:17px;min-height:0;margin-bottom:8px;}
   .cell .cbest{position:absolute;top:34px;right:8px;}
   #title-img{max-width:380px;margin-top:0;}
-  #page-home .sub{margin:2px 0 8px;font-size:16px;}
+  #page-home .sub{margin:2px 0 8px;font-size:18px;}
   .mascot{margin:0 0 10px;}
   .mascot img{width:84px;height:84px;}
 }
 @media (min-width:1024px){
   #grid{grid-template-columns:repeat(5,1fr);gap:12px;}
   .cell{height:172px;}
-  .cell .cn{font-size:21px;}
+  .cell .cn{font-size:24px;}
 }
 /* iPad 直式:地圖引擎作答後解說會把台灣圖往下推 ⇒ 圖高改依視窗計算(1024 高 ≈ 360px) */
 @media (min-width:768px) and (orientation:portrait){
@@ -1692,20 +1696,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #scene-banner #sb-img{height:150px;}
   #scene-banner .sb-amb{height:150px;}
   #scene-banner .sb-txt{position:static;background:var(--ink2);padding:10px 14px 12px;}
-  #scene-banner .sb-name{font-size:24px;}
-  #scene-banner .sb-story{font-size:16px;-webkit-line-clamp:3;opacity:.88;}
+  #scene-banner .sb-name{font-size:28px;}
+  #scene-banner .sb-story{font-size:18px;-webkit-line-clamp:3;opacity:.88;}
   #hud{gap:8px;margin:0 0 8px;}
-  .stat{font-size:18px;padding:8px 14px;min-height:46px;}
+  .stat{font-size:21px;padding:8px 14px;min-height:46px;}
   #timering{width:56px;height:56px;}
-  #timering .tnum{font-size:21px;}
-  #feedback{font-size:18px;}
-  #feedback .fb-head{font-size:21px;padding:10px 14px;}
+  #timering .tnum{font-size:24px;}
+  #feedback{font-size:21px;}
+  #feedback .fb-head{font-size:24px;padding:10px 14px;}
   #feedback .fb-body{padding:12px 14px 14px;flex-direction:column;gap:10px;}
   #feedback .fb-img{width:100%;height:150px;flex-basis:auto;}
-  #nextrow button{min-height:62px;font-size:22px;}
+  #nextrow button{min-height:62px;font-size:25px;}
   /* 右欄各引擎:高度以視窗為準 */
   #card-area{margin-top:0;}
-  .card{min-height:104px;font-size:26px;padding:18px 20px;}
+  .card{min-height:104px;font-size:30px;padding:18px 20px;}
   #qhint{margin:6px 0 0;}
   .opts{margin-top:14px;}
   .opt{min-height:78px;}
@@ -1714,7 +1718,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #reactbox{height:calc(100vh - 210px);min-height:320px;}
   #dragbox,#orderbox,#matchbox,#mazebox,#paintbox{margin-top:0;}
   #matchbox{grid-template-columns:repeat(4,1fr);}
-  .mcard{min-height:150px;font-size:21px;}   /* 只有 2 列,拉高填滿右欄 */
+  .mcard{min-height:150px;font-size:24px;}   /* 只有 2 列,拉高填滿右欄 */
   #maze-grid{gap:6px;}
   #maze-act{margin-top:8px;}
   #paint-palette{margin-top:10px;}
@@ -1729,15 +1733,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 迷宮:踩到之前正解與陷阱同一種「石板」外觀(不再金框／紅框洩題) */
 .mz.mark{
   background:linear-gradient(180deg,rgba(214,196,160,.38),rgba(150,130,96,.38));
-  border:2px solid rgba(240,220,180,.55);color:#fff8e6;font-size:14px;
+  border:2px solid rgba(240,220,180,.55);color:#fff8e6;font-size:16px;
   text-shadow:0 1px 2px rgba(0,0,0,.7);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);
 }
 .mz.mark.reach{border-color:rgba(255,255,255,.85);}
-@media (min-width:1024px){ .mz.mark{font-size:17px;} }
+@media (min-width:1024px){ .mz.mark{font-size:20px;} }
 .mz.trap{background:rgba(210,84,63,.6);border-color:rgba(210,84,63,.95);color:#fff;}
 .mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
 /* ★ v1.67.0 — 神秘方塊(未踩):淡紫底+脈動邊框,跟正解/陷阱共用的石板色系明顯不同,提醒玩家「這格是未知效果」 */
-.mz.mystery{background:linear-gradient(180deg,rgba(160,120,220,.35),rgba(110,70,180,.4));border:2px solid rgba(220,190,255,.6);color:#f4ecff;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,.7);}
+.mz.mystery{background:linear-gradient(180deg,rgba(160,120,220,.35),rgba(110,70,180,.4));border:2px solid rgba(220,190,255,.6);color:#f4ecff;font-size:18px;text-shadow:0 1px 2px rgba(0,0,0,.7);}
 .mz.mystery.reach{border-color:rgba(255,255,255,.9);box-shadow:0 0 8px rgba(200,160,255,.7);}
 .mz.peek{outline:3px solid var(--gold);outline-offset:-3px;box-shadow:0 0 0 3px var(--gold),0 0 20px var(--gold);animation:mzpeek .55s ease-in-out infinite alternate;}
 @keyframes mzpeek{from{filter:brightness(1);}to{filter:brightness(1.7);}}
@@ -1766,23 +1770,23 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #scene-banner #sb-img,#scene-banner .sb-amb{height:120px;}
   #scene-banner .sb-story{-webkit-line-clamp:2;}
   #hud{gap:6px;margin:0 0 6px;}
-  .stat{font-size:16px;padding:6px 11px;min-height:42px;}
+  .stat{font-size:18px;padding:6px 11px;min-height:42px;}
   #timering{width:50px;height:50px;}
-  #timering .tnum{font-size:19px;}
-  #hud .chip{min-height:42px;font-size:15px;padding:6px 11px;}
+  #timering .tnum{font-size:22px;}
+  #hud .chip{min-height:42px;font-size:17px;padding:6px 11px;}
   #feedback .fb-img{height:120px;}
-  #maze-info{font-size:16px;margin-top:6px;}
+  #maze-info{font-size:18px;margin-top:6px;}
 }
 /* iPad 橫式(1024×768／1180×820)高度更吃緊:橫幅縮到 84px、story 收起 */
 @media (min-width:1024px) and (orientation:landscape) and (max-height:840px){
   #scene-banner #sb-img,#scene-banner .sb-amb{height:84px;}
   #scene-banner .sb-story{display:none;}
-  #scene-banner .sb-name{font-size:20px;}
+  #scene-banner .sb-name{font-size:23px;}
   #scene-banner .sb-txt{padding:6px 12px 8px;}
   #feedback .fb-img{height:96px;}
-  #feedback{font-size:16px;}
-  #feedback .fb-head{font-size:19px;padding:8px 12px;}
-  #nextrow button{min-height:54px;font-size:20px;}
+  #feedback{font-size:18px;}
+  #feedback .fb-head{font-size:22px;padding:8px 12px;}
+  #nextrow button{min-height:54px;font-size:23px;}
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1796,13 +1800,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   padding:16px 18px;box-shadow:0 8px 28px rgba(0,0,0,.6);backdrop-filter:blur(8px);
 }
 #mg-vol-panel .mvp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-#mg-vol-panel .mvp-head b{font-size:20px;color:var(--gold);}
-#mg-vol-panel .mvp-x{padding:2px 10px;font-size:16px;min-height:0;background:rgba(60,10,10,.4);border:1.5px solid #e84040;color:#e84040;border-radius:7px;}
-#mg-vol-panel .mvp-row{display:flex;align-items:center;gap:10px;font-size:18px;}
+#mg-vol-panel .mvp-head b{font-size:23px;color:var(--gold);}
+#mg-vol-panel .mvp-x{padding:2px 10px;font-size:18px;min-height:0;background:rgba(60,10,10,.4);border:1.5px solid #e84040;color:#e84040;border-radius:7px;}
+#mg-vol-panel .mvp-row{display:flex;align-items:center;gap:10px;font-size:21px;}
 #mg-vol-panel input[type=range]{flex:1;width:100%;accent-color:var(--gold);height:30px;cursor:pointer;}
 #mg-vol-panel .mvp-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
-#mg-vol-panel .mvp-foot span{font-size:14px;color:#8a8a9a;}
-#mg-vol-panel .mvp-foot b{font-size:20px;color:#eee;min-width:64px;text-align:right;}
+#mg-vol-panel .mvp-foot span{font-size:16px;color:#8a8a9a;}
+#mg-vol-panel .mvp-foot b{font-size:23px;color:#eee;min-width:64px;text-align:right;}
 /* ── 暫停遮罩 ── */
 #pausebox{
   position:fixed;inset:0;z-index:118;display:none;align-items:center;justify-content:center;
@@ -1813,16 +1817,16 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   text-align:center;background:var(--tea);border:2.5px solid var(--gold);border-radius:22px;
   padding:30px 36px;max-width:420px;box-shadow:0 14px 40px rgba(0,0,0,.6);
 }
-#pausebox .pz h2{margin:0 0 8px;font-size:34px;color:var(--gold);}
-#pausebox .pz p{margin:6px 0 18px;font-size:17px;opacity:.85;line-height:1.5;}
-#pausebox .pz .pz-clock{font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}
-#pausebox .pz button{min-width:200px;font-size:22px;}
+#pausebox .pz h2{margin:0 0 8px;font-size:39px;color:var(--gold);}
+#pausebox .pz p{margin:6px 0 18px;font-size:20px;opacity:.85;line-height:1.5;}
+#pausebox .pz .pz-clock{font-size:30px;font-weight:700;color:#fff;margin-bottom:14px;}
+#pausebox .pz button{min-width:200px;font-size:25px;}
 #pause-btn.on{background:rgba(232,64,64,.22);border-color:#e84040;}
 /* ── 算數大進擊:射擊 ── */
 #reactbox{cursor:crosshair;}
 #reactbox .rgun{
   position:absolute;left:50%;bottom:4px;transform:translateX(-50%);
-  font-size:34px;line-height:1;pointer-events:none;z-index:7;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));
+  font-size:39px;line-height:1;pointer-events:none;z-index:7;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));
   transition:transform .08s ease-out;
 }
 /* ★ v1.9.5 紅色射擊線(仿主程式 beamFX)+ 槍口火光 + 目標紅框閃 */
@@ -1862,7 +1866,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   animation:rhardglow 1s ease-in-out infinite alternate;
 }
 .rdrop.hard .rx2{
-  position:absolute;top:-10px;right:-8px;font-size:12px;padding:1px 6px;border-radius:8px;
+  position:absolute;top:-10px;right:-8px;font-size:14px;padding:1px 6px;border-radius:8px;
   background:var(--gold);color:#2b2b2b;font-weight:700;
 }
 @keyframes rhardglow{from{box-shadow:0 0 0 2px rgba(240,192,96,.25),0 0 10px 2px rgba(240,192,96,.55);}to{box-shadow:0 0 0 3px rgba(240,192,96,.55),0 0 24px 6px rgba(240,192,96,.95);}}
@@ -1872,7 +1876,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   position:absolute;pointer-events:none;z-index:9;transform:translate(-50%,-50%);
   width:220px;height:220px;object-fit:contain;
 }
-@media (min-width:1024px){ #reactbox .rgun{font-size:44px;} #reactbox .rboom{width:300px;height:300px;} }
+@media (min-width:1024px){ #reactbox .rgun{font-size:51px;} #reactbox .rboom{width:300px;height:300px;} }
 /* ── 聽音坊:動物琴鍵 ── */
 #earkb{display:none;margin-top:12px;}
 #earkb.on{display:block;}
@@ -1881,32 +1885,32 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   min-height:98px;padding:6px 2px 8px;border-radius:14px;border:2px solid rgba(232,228,216,.22);
   background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
   display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;
-  font-size:15px;line-height:1.1;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+  font-size:17px;line-height:1.1;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;
   transition:transform .08s,background .08s;
 }
-#earkb .kkey .kani{font-size:34px;line-height:1;margin-bottom:4px;}
+#earkb .kkey .kani{font-size:39px;line-height:1;margin-bottom:4px;}
 #earkb .kkey .kani img{width:44px;height:44px;object-fit:contain;display:block;}
 #earkb .kkey .klab{font-weight:700;color:var(--gold);}
-#earkb .kkey .klab small{display:block;font-size:12px;color:#ddd;opacity:.85;font-weight:400;}
+#earkb .kkey .klab small{display:block;font-size:14px;color:#ddd;opacity:.85;font-weight:400;}
 #earkb.nolabel .kkey .klab{visibility:hidden;}
 #earkb .kkey.lit{background:var(--gold);color:#2b2b2b;transform:translateY(-4px) scale(1.04);}
 #earkb .kkey.lit .klab,#earkb .kkey.lit .klab small{color:#2b2b2b;}
 #earkb .kkey.hint{outline:3px solid var(--grass);outline-offset:-3px;animation:mzpeek .5s ease-in-out infinite alternate;}
 #earkb .kb-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;flex-wrap:wrap;}
-#earkb .kb-tools label{display:inline-flex;align-items:center;gap:6px;font-size:15px;cursor:pointer;}
+#earkb .kb-tools label{display:inline-flex;align-items:center;gap:6px;font-size:17px;cursor:pointer;}
 #earkb .kb-tools input[type=checkbox]{width:22px;height:22px;accent-color:var(--gold);}
-#earkb .kb-tools .btn-ghost{min-height:44px;padding:8px 14px;font-size:15px;}
+#earkb .kb-tools .btn-ghost{min-height:44px;padding:8px 14px;font-size:17px;}
 #earkb .kb-input{
   min-height:52px;margin-top:10px;padding:8px 12px;border-radius:12px;
   background:rgba(0,0,0,.28);border:1.5px dashed rgba(232,228,216,.3);
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:18px;font-weight:700;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:21px;font-weight:700;
 }
 #earkb .kb-input .kn{padding:4px 10px;border-radius:9px;background:rgba(240,192,96,.18);border:1px solid rgba(240,192,96,.5);}
 #earkb .kb-input .kn.ref{background:rgba(255,255,255,.08);border-style:dashed;opacity:.85;}
 #earkb .kb-input .kn.ok{background:rgba(79,191,125,.28);border-color:var(--grass);}
 #earkb .kb-input .kn.ng{background:rgba(210,84,63,.35);border-color:var(--brick);}
-#earkb .kb-input .kb-ph{opacity:.55;font-weight:400;font-size:15px;}
-#earkb .kb-score{margin-top:8px;text-align:center;font-size:16px;opacity:.9;}
+#earkb .kb-input .kb-ph{opacity:.55;font-weight:400;font-size:17px;}
+#earkb .kb-score{margin-top:8px;text-align:center;font-size:18px;opacity:.9;}
 #earkb .kb-score .kn{padding:3px 8px;}
 /* ── 聽音坊:拍子鼓 ── */
 #eardrum{display:none;margin-top:12px;text-align:center;}
@@ -1915,7 +1919,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   width:170px;height:170px;margin:6px auto;border-radius:50%;
   background:radial-gradient(circle at 50% 40%,#f7e2b8 0%,#d4a45a 55%,#8b5a2b 100%);
   border:6px solid #5b3a1a;box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 -8px 16px rgba(0,0,0,.25);
-  display:flex;align-items:center;justify-content:center;font-size:60px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:69px;cursor:pointer;
   user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .06s;
 }
 #eardrum .drum img{width:120px;height:120px;object-fit:contain;pointer-events:none;}
@@ -1926,19 +1930,19 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #eardrum .beats .bt.on{background:var(--gold);border-color:var(--gold);}
 #eardrum .beats .bt.me{background:var(--grass);border-color:var(--grass);}
 #eardrum .beats .bt.miss{background:var(--brick);border-color:var(--brick);}
-#eardrum .dnote{font-size:15px;opacity:.85;margin-top:6px;}
+#eardrum .dnote{font-size:17px;opacity:.85;margin-top:6px;}
 #eardrum .dtools{display:flex;justify-content:center;gap:10px;margin-top:8px;}
-#eardrum .dtools .btn-ghost{min-height:44px;padding:8px 14px;font-size:15px;}
+#eardrum .dtools .btn-ghost{min-height:44px;padding:8px 14px;font-size:17px;}
 @media (min-width:1024px){
-  #earkb .kkey{min-height:124px;font-size:18px;} #earkb .kkey .kani{font-size:44px;} #earkb .kkey .kani img{width:58px;height:58px;}
-  #earkb .kkey .klab small{font-size:14px;} #earkb .kb-input{font-size:22px;min-height:60px;}
-  #eardrum .drum{width:210px;height:210px;font-size:76px;} #eardrum .drum img{width:150px;height:150px;}
+  #earkb .kkey{min-height:124px;font-size:21px;} #earkb .kkey .kani{font-size:51px;} #earkb .kkey .kani img{width:58px;height:58px;}
+  #earkb .kkey .klab small{font-size:16px;} #earkb .kb-input{font-size:25px;min-height:60px;}
+  #eardrum .drum{width:210px;height:210px;font-size:87px;} #eardrum .drum img{width:150px;height:150px;}
   #eardrum .beats .bt{width:32px;height:32px;} #eardrum .beats .bt.long{width:64px;}
 }
 /* ★ v1.4.1 錯誤算式不再另色(保險:即使日後有人補回 .bad 也同色) */
 .rdrop.bad{background:var(--paper);}
 /* 結算頁用時列 */
-#r-time{font-size:15px;opacity:.9;margin-top:4px;}
+#r-time{font-size:17px;opacity:.9;margin-top:4px;}
 #r-time b{color:var(--gold);}
 
 /* ══════════════════════════════════════════════════════════
@@ -1953,10 +1957,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   background:rgba(6,8,14,.97);padding:24px;
 }
 #rotate-overlay .ro-inner{max-width:420px;}
-#rotate-overlay .ro-icon{font-size:72px;line-height:1;animation:roturn 1.6s ease-in-out infinite;}
+#rotate-overlay .ro-icon{font-size:83px;line-height:1;animation:roturn 1.6s ease-in-out infinite;}
 @keyframes roturn{0%,20%{transform:rotate(0);}60%,100%{transform:rotate(90deg);}}
-#rotate-overlay h2{margin:14px 0 6px;font-size:28px;color:var(--gold);}
-#rotate-overlay p{margin:4px 0;font-size:17px;opacity:.85;line-height:1.5;}
+#rotate-overlay h2{margin:14px 0 6px;font-size:32px;color:var(--gold);}
+#rotate-overlay p{margin:4px 0;font-size:20px;opacity:.85;line-height:1.5;}
 @media (orientation:portrait) and (hover:none) and (pointer:coarse){ #rotate-overlay{display:flex;} }
 
 /* ── 解說卡(全引擎共用):圖片不裁切、圖與字放大 ── */
@@ -1971,7 +1975,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (orientation:landscape){
   .wrap{max-width:none;width:100%;box-sizing:border-box;padding:6px 16px 6px;}
   #topbar{min-height:56px;gap:8px;padding:4px 2px 2px;}
-  .chip{min-height:48px;font-size:17px;font-size:clamp(15px,1.35vw,21px);padding:8px 16px;}
+  .chip{min-height:48px;font-size:20px;font-size:clamp(17px,1.35vw,24px);padding:8px 16px;}
   #page-play{
     display:grid;grid-template-columns:320px minmax(0,1fr);grid-template-columns:minmax(300px,31vw) minmax(0,1fr);
     grid-template-rows:auto auto minmax(0,1fr);column-gap:18px;align-items:start;
@@ -1984,34 +1988,34 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #scene-banner{height:auto;margin:0 0 8px;}
   #scene-banner #sb-img,#scene-banner .sb-amb{height:110px;height:clamp(84px,13vh,150px);}
   #scene-banner .sb-txt{position:static;background:var(--ink2);padding:8px 14px 10px;}
-  #scene-banner .sb-name{font-size:22px;font-size:clamp(18px,1.7vw,28px);}
-  #scene-banner .sb-story{font-size:15px;font-size:clamp(13px,1.15vw,18px);-webkit-line-clamp:2;}
+  #scene-banner .sb-name{font-size:25px;font-size:clamp(21px,1.7vw,32px);}
+  #scene-banner .sb-story{font-size:17px;font-size:clamp(15px,1.15vw,21px);-webkit-line-clamp:2;}
   #hud{gap:6px;margin:0 0 6px;flex-wrap:wrap;}
-  .stat{font-size:17px;font-size:clamp(15px,1.35vw,21px);padding:6px 12px;min-height:44px;}
+  .stat{font-size:20px;font-size:clamp(17px,1.35vw,24px);padding:6px 12px;min-height:44px;}
   #timering{width:54px;height:54px;}
-  #timering .tnum{font-size:20px;}
+  #timering .tnum{font-size:23px;}
   #hud .chip{min-height:44px;}
-  #nextrow button{min-height:60px;font-size:22px;font-size:clamp(18px,1.7vw,26px);}
-  #feedback{font-size:17px;font-size:clamp(16px,1.4vw,23px);line-height:1.65;}
-  #feedback .fb-head{font-size:20px;font-size:clamp(18px,1.6vw,26px);padding:10px 14px;}
+  #nextrow button{min-height:60px;font-size:25px;font-size:clamp(21px,1.7vw,30px);}
+  #feedback{font-size:20px;font-size:clamp(18px,1.4vw,26px);line-height:1.65;}
+  #feedback .fb-head{font-size:23px;font-size:clamp(21px,1.6vw,30px);padding:10px 14px;}
   #feedback .fb-body{padding:12px 14px 14px;}
   /* 右欄:題卡與選項放大 */
   #card-area{margin-top:0;}
-  .card{min-height:96px;font-size:26px;font-size:clamp(20px,2.1vw,34px);padding:16px 20px;line-height:1.45;}
+  .card{min-height:96px;font-size:30px;font-size:clamp(23px,2.1vw,39px);padding:16px 20px;line-height:1.45;}
   .opts{margin-top:12px;gap:12px;}
-  .opt{min-height:76px;min-height:clamp(60px,9.5vh,100px);font-size:21px;font-size:clamp(17px,1.65vw,27px);}
+  .opt{min-height:76px;min-height:clamp(60px,9.5vh,100px);font-size:24px;font-size:clamp(20px,1.65vw,31px);}
   /* 地圖:整張圖吃滿右欄高度、圓點更大更好按 */
   #mapbox{margin-top:6px;padding:6px;display:flex;justify-content:center;}
   #tw-svg{display:block;height:calc(100vh - 235px);max-height:calc(100vh - 235px);width:auto;max-width:100%;}
   .spot{stroke-width:.9;}
-  .spotlbl{font-size:4.1px;}
-  .spotlbl-en1{font-size:1.75px;}
-  .spotlbl-en2{font-size:2.45px;}
-  .spotlbl-en3{font-size:3.0px;}
+  .spotlbl{font-size:5px;}
+  .spotlbl-en1{font-size:2px;}
+  .spotlbl-en2{font-size:3px;}
+  .spotlbl-en3{font-size:4px;}
   /* 其他引擎容器 */
   #reactbox{height:calc(100vh - 215px);min-height:300px;}
   #matchbox{grid-template-columns:repeat(4,1fr);}
-  .mcard{min-height:130px;min-height:clamp(96px,17vh,170px);font-size:20px;font-size:clamp(16px,1.6vw,24px);}
+  .mcard{min-height:130px;min-height:clamp(96px,17vh,170px);font-size:23px;font-size:clamp(18px,1.6vw,28px);}
   #earkb .kkey{min-height:110px;min-height:clamp(84px,17vh,130px);}
   .cell{height:170px;}
   #grid{grid-template-columns:repeat(5,1fr);gap:12px;}
@@ -2020,7 +2024,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (orientation:landscape) and (max-height:520px){
   .wrap{padding:4px 10px 4px;}
   #topbar{min-height:42px;gap:5px;}
-  .chip{min-height:38px;font-size:13px;padding:5px 10px;}
+  .chip{min-height:38px;font-size:15px;padding:5px 10px;}
   #share-btn,#who{display:none !important;}
   /* ★ v1.72.0(老師需求「左下角戰鬥卡牌的長度和戰鬥卡片區域的長度增加至畫面長度的50%,右側題目區
      的長度減少至畫面長度的50%,讓戰鬥卡牌的下半部不會超出手機螢幕畫面」)— 原本左欄只佔 32vw,
@@ -2030,44 +2034,44 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      或卡片內部規則就能讓下半部整個收進畫面。 */
   #page-play{grid-template-columns:minmax(230px,50%) minmax(0,1fr);column-gap:10px;height:calc(100vh - 54px);max-height:calc(100vh - 54px);}
   #scene-banner #sb-img,#scene-banner .sb-amb,#scene-banner .sb-story{display:none;}
-  #scene-banner .sb-name{font-size:16px;}
+  #scene-banner .sb-name{font-size:18px;}
   #scene-banner .sb-txt{padding:4px 10px 6px;}
-  .stat{font-size:13px;padding:3px 8px;min-height:32px;}
+  .stat{font-size:15px;padding:3px 8px;min-height:32px;}
   #timering{width:40px;height:40px;}
-  #timering .tnum{font-size:15px;}
-  #hud .chip{min-height:32px;font-size:12px;padding:3px 8px;}
+  #timering .tnum{font-size:17px;}
+  #hud .chip{min-height:32px;font-size:14px;padding:3px 8px;}
   #timebar-wrap{margin-top:4px;}
-  #nextrow button{min-height:42px;font-size:16px;}
+  #nextrow button{min-height:42px;font-size:18px;}
   #page-play > #nextrow{margin-top:6px;}
   #page-play > #feedback{margin-top:6px;}
-  #feedback{font-size:14px;line-height:1.5;}
-  #feedback .fb-head{font-size:16px;padding:6px 10px;}
+  #feedback{font-size:16px;line-height:1.5;}
+  #feedback .fb-head{font-size:18px;padding:6px 10px;}
   #feedback .fb-body{padding:8px 10px 10px;gap:6px;}
   #feedback .fb-img{max-height:22vh;}
-  .card{min-height:0;font-size:18px;padding:10px 14px;}
-  #qhint{margin:4px 0 0;font-size:12px;}
+  .card{min-height:0;font-size:21px;padding:10px 14px;}
+  #qhint{margin:4px 0 0;font-size:14px;}
   .opts{margin-top:8px;gap:8px;}
-  .opt{min-height:46px;font-size:15px;padding:6px 10px;}
+  .opt{min-height:46px;font-size:17px;padding:6px 10px;}
   #tw-svg{height:calc(100vh - 140px);max-height:calc(100vh - 140px);}
   #reactbox{height:calc(100vh - 150px);min-height:200px;}
-  #reactbox .rgun{font-size:28px;}
-  .mcard{min-height:60px;font-size:14px;}
-  #earkb .kkey{min-height:64px;font-size:12px;}
-  #earkb .kkey .kani{font-size:24px;}
-  #eardrum .drum{width:110px;height:110px;font-size:40px;}
-  #playbtn{min-height:44px;font-size:16px;padding:8px 20px;margin-top:8px;}
-  #playnote{font-size:12px;margin:4px 0 0;}
+  #reactbox .rgun{font-size:32px;}
+  .mcard{min-height:60px;font-size:16px;}
+  #earkb .kkey{min-height:64px;font-size:14px;}
+  #earkb .kkey .kani{font-size:28px;}
+  #eardrum .drum{width:110px;height:110px;font-size:46px;}
+  #playbtn{min-height:44px;font-size:18px;padding:8px 20px;margin-top:8px;}
+  #playnote{font-size:14px;margin:4px 0 0;}
   .cell{height:120px;}
   #grid{grid-template-columns:repeat(5,1fr);gap:8px;}
-  .cell .cn{font-size:14px;}
-  #pausebox .pz{padding:16px 22px;} #pausebox .pz h2{font-size:24px;} #pausebox .pz .pz-clock{font-size:18px;} #pausebox .pz p{font-size:13px;margin:4px 0 10px;}
+  .cell .cn{font-size:16px;}
+  #pausebox .pz{padding:16px 22px;} #pausebox .pz h2{font-size:28px;} #pausebox .pz .pz-clock{font-size:21px;} #pausebox .pz p{font-size:15px;margin:4px 0 10px;}
 }
 /* ── 老師:「回收大隊上方垃圾圖片要去除背景」— 拖曳卡由米色大卡改成「只剩去背圖+一行字」,
       拖曳中再縮到 62% 且完全透明底,手指下方的籃子看得清楚(全裝置) ── */
 #drag-item{
   background:transparent !important;border:none !important;box-shadow:none !important;
   padding:6px 8px 4px !important;color:var(--mist);text-shadow:0 2px 6px rgba(0,0,0,.85);
-  width:auto;max-width:360px;margin:0 auto;font-size:24px;
+  width:auto;max-width:360px;margin:0 auto;font-size:28px;
 }
 #drag-item .pic-drag{width:180px;height:180px;margin:0 auto 4px;}
 #drag-item .dgrip{color:var(--mist);opacity:.7;}
@@ -2076,7 +2080,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #drag-item.dragging .pic-drag{filter:drop-shadow(0 12px 18px rgba(0,0,0,.7));}
 #dragbox{margin-top:0;}
 #drag-bins{margin-top:8px;}
-@media (orientation:landscape) and (max-height:520px){ #drag-item{font-size:15px;} #drag-item .pic-drag{width:96px;height:96px;} #drag-item .dgrip{display:none;} .dbin{min-height:70px;font-size:13px;} .pic-bin{width:36px;height:36px;} }
+@media (orientation:landscape) and (max-height:520px){ #drag-item{font-size:17px;} #drag-item .pic-drag{width:96px;height:96px;} #drag-item .dgrip{display:none;} .dbin{min-height:70px;font-size:15px;} .pic-bin{width:36px;height:36px;} }
 
 /* ── 老師:「所有關卡『下一題』鈕移到最右下(防 iPad 觸碰不到)」—
       固定在視窗右下角,距底 22px + iOS 安全區(env(safe-area-inset-bottom)),距右 18px + 安全區;
@@ -2087,7 +2091,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));
     z-index:116;margin:0;width:auto;min-width:240px;max-width:38vw;
   }
-  #page-play > #nextrow button{min-height:66px;font-size:24px;font-size:clamp(20px,1.9vw,30px);padding:12px 34px;box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 0 3px rgba(240,192,96,.35);}
+  #page-play > #nextrow button{min-height:66px;font-size:28px;font-size:clamp(23px,1.9vw,34px);padding:12px 34px;box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 0 3px rgba(240,192,96,.35);}
   /* ★ v1.32.3 — #mgbattle 改回佔一個格線列(左欄第2列,緊接在場景橫幅/HUD/倒數條之後),不再是貼底浮動層,
      故 nextrow/play-right/page-play 都不必再為它預留 --mgb-h 高度的留白(舊版三處 padding-bottom 一併移除)。
      格線列改回三列:①play-left ②mgbattle(彈性填滿) ③feedback(答題後才出現的說明卡)。 */
@@ -2097,7 +2101,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 @media (orientation:landscape) and (max-height:520px){
   #page-play > #nextrow{min-width:170px;right:10px;bottom:10px;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));}
-  #page-play > #nextrow button{min-height:46px;font-size:17px;padding:8px 20px;}
+  #page-play > #nextrow button{min-height:46px;font-size:20px;padding:8px 20px;}
   #play-right{padding-bottom:60px;}
 }
 /* ── v1.5.1 解說文字停靠區:橫式固定在「下一題」鈕正上方、字放大;直式不顯示(文字留在左欄解說卡) ──
@@ -2115,7 +2119,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     width:min(46vw,640px);max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
     background:rgba(8,10,16,.94);border:2.5px solid var(--gold);border-left-width:8px;border-radius:18px;
     padding:16px 22px;box-shadow:0 14px 40px rgba(0,0,0,.65);
-    font-size:22px;font-size:clamp(19px,1.9vw,30px);line-height:1.6;color:var(--mist);
+    font-size:25px;font-size:clamp(22px,1.9vw,34px);line-height:1.6;color:var(--mist);
   }
   #fbdock.show.ok{border-color:var(--grass);}
   #fbdock.show.ng{border-color:var(--brick);}
@@ -2149,26 +2153,26 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #fbzoom.show img{max-width:56vw;}
 }
 @media (orientation:landscape) and (max-height:520px){
-  #fbdock.show{width:min(56vw,600px);max-height:50vh;font-size:15px;padding:10px 14px;border-radius:12px;bottom:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:210px;right:calc(210px + env(safe-area-inset-right,0px));}   /* ★ v1.65.0 — 矮螢幕下 bottom 改跟 #nextrow 的矮螢幕版本(10px)同值;right 退路值同步縮小 */
+  #fbdock.show{width:min(56vw,600px);max-height:50vh;font-size:17px;padding:10px 14px;border-radius:12px;bottom:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:210px;right:calc(210px + env(safe-area-inset-right,0px));}   /* ★ v1.65.0 — 矮螢幕下 bottom 改跟 #nextrow 的矮螢幕版本(10px)同值;right 退路值同步縮小 */
 }
 /* ★ v1.7.0 首頁卡片:關卡名放大、第二行最佳星星移除 */
 .cell .cstar{display:none !important;}
-.cell .cn{font-size:19px;font-size:clamp(17px,1.5vw,26px);line-height:1.25;}
-@media (orientation:landscape) and (min-width:1024px){ .cell .cn{font-size:clamp(20px,1.7vw,28px);} }
+.cell .cn{font-size:22px;font-size:clamp(20px,1.5vw,30px);line-height:1.25;}
+@media (orientation:landscape) and (min-width:1024px){ .cell .cn{font-size:clamp(23px,1.7vw,32px);} }
 /* PC 大螢幕(≥1366):左欄再寬一點、字再大一點 */
 @media (orientation:landscape) and (min-width:1366px){
   #page-play{grid-template-columns:minmax(380px,30vw) minmax(0,1fr);column-gap:24px;}
   .cell{height:200px;}
-  .cell .cn{font-size:24px;}
+  .cell .cn{font-size:28px;}
 }
 /* ★ v1.8.0 老師:「右上方新增當前版本號/最新版本號;偵測過舊 → 版號變紅 + 出現重新整理鈕;最新 → 淡綠」 */
-#ver-chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;min-height:30px;display:inline-flex;align-items:center;gap:4px;
+#ver-chip{font-size:14px;font-weight:700;padding:5px 10px;border-radius:999px;min-height:30px;display:inline-flex;align-items:center;gap:4px;
   background:rgba(62,200,122,.14);color:#9fe8be;border:1px solid rgba(62,200,122,.45);white-space:nowrap;letter-spacing:.3px;}
 #ver-chip.old{background:rgba(232,64,64,.16);color:#ff8f8f;border-color:rgba(232,64,64,.6);animation:verblink 1.2s ease-in-out infinite;}
 #ver-chip .vl{opacity:.7;font-weight:500;}
 @keyframes verblink{0%,100%{box-shadow:0 0 0 0 rgba(232,64,64,.0);}50%{box-shadow:0 0 0 4px rgba(232,64,64,.28);}}
 #ver-btn{background:var(--grass);color:#08090d;border-color:transparent;font-weight:900;}
-@media (orientation:landscape) and (max-height:520px){ #ver-chip{font-size:11px;min-height:28px;padding:3px 8px;} #ver-chip .vl{display:none;} }
+@media (orientation:landscape) and (max-height:520px){ #ver-chip{font-size:13px;min-height:28px;padding:3px 8px;} #ver-chip .vl{display:none;} }
 /* ★★ v1.29.0(老師需求 2026-09-08)— 戰鬥面板「玩家英雄卡 VS NPC 英雄卡 + 雙方 HP 條 + 極限爆發鈕」
    直式:接在 #play-left 之後的一列(兩張橫向小卡);橫式:grid 第 3 列貼底(取代原本撐滿左下的小博士解說圖)。
    iPad 觸控:自補 touch-action / tap-highlight / user-select;爆發鈕 min-height ≥ 44px(橫式)。 */
@@ -2210,32 +2214,32 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    aspect-ratio 由 3/4 改 3/2.8(＝同寬度下高度縮減 30%),搭配下面既有的 object-fit:cover +
    object-position:top,裁掉的是立繪下半部(腿部/下擺),臉與上半身保留;圖片變矮讓下方名稱／HP／
    爆發鈕／效果說明整體往上縮、可用高度變多,效果說明不會再被擠出可視範圍。橫式(iPad)覆寫同步處理見下方。 */
-.bt-img{width:100%;aspect-ratio:3/2.8;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.bt-img{width:100%;aspect-ratio:3/2.8;flex:0 0 auto;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:55px;position:relative;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .bt-img img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
 /* ★ v1.64.0(老師需求「點擊角色卡會顯示狀態效果的說明小視窗(再點一次關閉)」)—
    點擊目標是立繪(.bt-img),跟頭頂的爆發鈕(.bt-top)分開,不會互相搶點擊事件;小視窗用 position:absolute
    蓋在立繪正中央(z-index 6,高於立繪本身但低於受擊特效層),不佔版面空間、不影響卡片本身高度。 */
 .bt-pop{display:none;position:absolute;inset:4px;z-index:6;overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(8,10,16,.94);border:2px solid var(--gold);border-radius:10px;padding:8px 10px;text-align:left;}
 .bt-pop.show{display:block;}
-.bt-pop-empty{font-size:13px;color:var(--mist);opacity:.8;text-align:center;padding:10px 0;}
+.bt-pop-empty{font-size:15px;color:var(--mist);opacity:.8;text-align:center;padding:10px 0;}
 .bt-pop-row{margin-bottom:8px;}
 .bt-pop-row:last-child{margin-bottom:0;}
-.bt-pop-row b{display:block;font-size:13px;margin-bottom:2px;}
-.bt-pop-row span{display:block;font-size:12px;line-height:1.4;color:var(--mist);opacity:.9;}
+.bt-pop-row b{display:block;font-size:15px;margin-bottom:2px;}
+.bt-pop-row span{display:block;font-size:14px;line-height:1.4;color:var(--mist);opacity:.9;}
 .bt-pop-row.buff b{color:#4dff8a;}
 .bt-pop-row.bad b{color:#ff6a6a;}
 .bt-info{width:100%;min-width:0;display:flex;flex-direction:column;gap:6px;}
-.bt-name{font-size:19px;font-weight:900;letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bt-name{font-size:22px;font-weight:900;letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .bt-hpbar{position:relative;height:22px;border-radius:11px;background:rgba(255,255,255,.12);overflow:hidden;}
 .bt-hp{height:100%;width:100%;background:linear-gradient(90deg,#3ec87a,#9fe8be);transition:width .35s;}
 .bt-card.n .bt-hp{background:linear-gradient(90deg,#e84040,#ff8f8f);}
 .bt-hp.low{background:linear-gradient(90deg,#e84040,#f0c060) !important;animation:verblink 1s infinite;}
-.bt-hpn{position:absolute;left:0;right:0;top:0;line-height:22px;font-size:15px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
+.bt-hpn{position:absolute;left:0;right:0;top:0;line-height:22px;font-size:17px;font-weight:900;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);}
 /* ★ v1.50.0(老師需求「狀態也要像大對抗一樣的呈現方式」)— 原本只是一行 12.5px 淡藍色小字,幾乎不會被
    注意到;改成小圓角底色徽章(黑底半透明+彩色文字+細邊框),比照傷害飄字同一套「深色底、彩色字更醒目」
    語彙,字級放大、加粗;顏色維持原本淡藍(=護盾)不變,個別狀態(封印/魅惑/易傷)的顏色差異本來就交給
    emoji 圖示辨識,這裡只加強「看得到、看得清楚」,不動色彩語意。 */
-.bt-sh{font-size:12.5px;font-size:13.5px;font-weight:700;min-height:20px;line-height:20px;text-align:center;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;}
+.bt-sh{font-size:14px;font-size:16px;font-weight:700;min-height:20px;line-height:20px;text-align:center;display:flex;flex-wrap:wrap;justify-content:center;gap:4px;}
 .bt-sh:empty{min-height:16px;}
 /* ★ v1.64.0 — 多狀態徽章:buff 綠框、bad(不利狀態)紅框,取代舊版單一優先權文字;每個徽章各自小圓角底色框 */
 .bt-badge{display:inline-block;padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid rgba(159,208,255,.4);color:#cfe9ff;white-space:nowrap;}
@@ -2243,7 +2247,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-badge.bad{border-color:rgba(255,106,106,.55);color:#ffd6d6;}
 /* ★ v1.43.0 — 充能點+爆發鈕移到卡片頭頂(.bt-top),與立繪/HP/剩餘次數分開一列;剩餘次數(.bt-star)獨立留在HP條下方並縮小字級。
    舊 .bt-chgrow 規則保留給更早版本相容(目前已無元素套用它,不刪除以防其他分支頁面仍有殘留引用)。 */
-.bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;min-height:16px;}
+.bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;min-height:16px;}
 .bt-top{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;}
 .bt-top .bt-burst{flex:1 1 auto;min-height:34px;}
 /* ★ v1.69.0(老師需求「五顆充能槽移到爆發技能按鈕內部靠底線,縮短戰鬥角色卡整體長度」)—
@@ -2252,26 +2256,26 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    (HTML 改為按鈕的子元素而非 .bt-top 的手足),改用 position:absolute 貼在按鈕底邊,
    不再佔用文件流高度 ⇒ .bt-top 只剩爆發鈕一個元素,整張卡片自然變矮;.bt-burst 需要
    position:relative 當定位基準,並在下緣留一點 padding 讓充能點不會蓋住招式名稱文字。 */
-.bt-charge{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);letter-spacing:2px;color:var(--gold);font-size:9px;white-space:nowrap;line-height:1;pointer-events:none;}
-.bt-star{display:block;text-align:center;font-size:10.5px;letter-spacing:.2px;color:var(--gold);opacity:.85;margin-top:-2px;}
-.bt-burst{position:relative;min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:14px;font-weight:700;padding:4px 10px 13px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
-.bt-burst.ready{opacity:1;cursor:pointer;border:none;background:linear-gradient(90deg,#ff8a00,#ffb238 50%,#ff8a00);background-size:200% 100%;color:#2b1400;font-size:16px;font-weight:900;letter-spacing:1px;text-shadow:0 1px 2px rgba(255,255,255,.35);box-shadow:0 0 16px rgba(255,140,0,.7);animation:btpulse 1.1s ease-in-out infinite;}
+.bt-charge{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);letter-spacing:2px;color:var(--gold);font-size:10px;white-space:nowrap;line-height:1;pointer-events:none;}
+.bt-star{display:block;text-align:center;font-size:12px;letter-spacing:.2px;color:var(--gold);opacity:.85;margin-top:-2px;}
+.bt-burst{position:relative;min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:16px;font-weight:700;padding:4px 10px 13px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
+.bt-burst.ready{opacity:1;cursor:pointer;border:none;background:linear-gradient(90deg,#ff8a00,#ffb238 50%,#ff8a00);background-size:200% 100%;color:#2b1400;font-size:18px;font-weight:900;letter-spacing:1px;text-shadow:0 1px 2px rgba(255,255,255,.35);box-shadow:0 0 16px rgba(255,140,0,.7);animation:btpulse 1.1s ease-in-out infinite;}
 @keyframes btpulse{0%,100%{box-shadow:0 0 10px rgba(255,140,0,.55);background-position:0% 0;}50%{box-shadow:0 0 26px rgba(255,180,60,1);background-position:100% 0;}}
 .bt-burst .bt-bname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* ★ v1.39.0 — 職能分類標籤依型別上色:攻擊型橘紅/回復型亮綠/護盾型淡藍/控場型紫 */
-.bt-name .bt-cls{font-size:13px;margin-left:4px;font-weight:700;opacity:1;}
+.bt-name .bt-cls{font-size:15px;margin-left:4px;font-weight:700;opacity:1;}
 .bt-name .bt-cls.cls-atk{color:#ff6a3d;}
 .bt-name .bt-cls.cls-heal{color:#4dff8a;}
 .bt-name .bt-cls.cls-shd{color:#7fd4ff;}
 .bt-name .bt-cls.cls-ctrl{color:#c58aff;}
 /* ★ v1.32.0 新增——爆發效果說明(取代原本大對抗卡片的等級/攻擊特技速度/S1S2,只留這行文字) */
-.bt-eff{font-size:12.5px;line-height:1.42;color:var(--mist);opacity:.82;text-align:center;padding:0 2px;}
-.bt-vs{align-self:center;font-size:20px;font-weight:900;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.8);flex:0 0 auto;}
-.bt-frz{position:absolute;left:50%;top:-14px;transform:translateX(-50%);background:rgba(120,200,255,.92);color:#08090d;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;display:none;white-space:nowrap;z-index:2;}
+.bt-eff{font-size:14px;line-height:1.42;color:var(--mist);opacity:.82;text-align:center;padding:0 2px;}
+.bt-vs{align-self:center;font-size:23px;font-weight:900;color:var(--gold);text-shadow:0 2px 8px rgba(0,0,0,.8);flex:0 0 auto;}
+.bt-frz{position:absolute;left:50%;top:-14px;transform:translateX(-50%);background:rgba(120,200,255,.92);color:#08090d;font-size:14px;font-weight:700;padding:2px 10px;border-radius:999px;display:none;white-space:nowrap;z-index:2;}
 .bt-frz.on{display:block;}
 /* ★ v1.55.0 — 對手 HP 快接近 50% 強制爆發門檻的預告標籤,掛在 .bt-card.n 右上角(不佔版面,絕對定位疊在卡片上),
    顏色故意用警示紅橙色跟 .bt-frz 的藍色系分開,一眼區分「計時暫停」跟「對手快爆了」是兩件事。 */
-.bt-warn{position:absolute;right:6px;top:-12px;background:rgba(255,120,0,.95);color:#08090d;font-size:11px;font-weight:900;padding:2px 9px;border-radius:999px;display:none;white-space:nowrap;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.4);animation:btWarnPulse 1s ease-in-out infinite;}
+.bt-warn{position:absolute;right:6px;top:-12px;background:rgba(255,120,0,.95);color:#08090d;font-size:13px;font-weight:900;padding:2px 9px;border-radius:999px;display:none;white-space:nowrap;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.4);animation:btWarnPulse 1s ease-in-out infinite;}
 .bt-warn.on{display:block;}
 @keyframes btWarnPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.7;transform:scale(1.06);}}
 /* 攻擊光束(仿算數大進擊 .rbeam):玩家攻擊綠、NPC 攻擊紅;傷害飄字沿用 sfl 動畫 */
@@ -2281,7 +2285,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    走「白字/彩字+黑色陰影描邊+較大字級」的手感,原本這裡只有 26px 純色字+單純黑色模糊光暈,明顯太素;
    改成白底/彩色字 + 黑色偏移陰影(比照 .popup 的 2px 2px 0 #000)+ 彩色光暈,字級同步放大,字型也換成
    跟卡片一致的圓體/黑體家族(見上方 .bt-card 說明),animation 沿用既有 sfl 飄浮動畫不變(只換視覺,不換位移邏輯)。 */
-.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:26px;font-size:clamp(26px,3.6vw,40px);font-weight:900;font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;color:#fff;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,80,80,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
+.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:30px;font-size:clamp(30px,3.6vw,46px);font-weight:900;font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;color:#fff;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,80,80,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
 /* ★ v1.58.0(老師回報「PC 版戰鬥卡的圓體字太粗,iPad 版正常不用改」)—
    根因猜測:M PLUS Rounded 1c 是可變字重字型,同一個 font-weight 數值在不同作業系統的字型渲染引擎
    (PC 常見的 ClearType/DirectWrite 等)下,實際描邊粗細觀感可能比 iPadOS 的渲染更重,尤其戰鬥卡片
@@ -2301,13 +2305,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .hm-burst{font-weight:400;}
 }
 .bt-dmg.heal{color:#eafff2;text-shadow:2px 2px 0 #000,0 0 14px rgba(60,220,100,.9);}
-.bt-dmg.block{color:#eaf6ff;font-size:20px;font-size:clamp(18px,2.6vw,28px);text-shadow:2px 2px 0 #000,0 0 12px rgba(80,160,255,.9);}
+.bt-dmg.block{color:#eaf6ff;font-size:23px;font-size:clamp(21px,2.6vw,32px);text-shadow:2px 2px 0 #000,0 0 12px rgba(80,160,255,.9);}
 /* ★ v1.47.0(老師需求「combo 文字放大並改得更明顯,亮色字體+黑襯底,用圓體字更有動感」)—
    沿用既有 .bt-dmg 的 sfl 飄浮淡出動畫(位移/縮放/動感已有),只加大字級、換亮黃字色、
    用 paint-order+多方向陰影疊出黑色襯底描邊(比 -webkit-text-stroke 相容性更好,不支援的瀏覽器
    也有 text-shadow 兜底一樣看得到黑邊),字型換成圓體字家族(系統沒有對應字型時降回預設字重字體)。 */
 .bt-dmg.combo{
-  font-size:26px;font-size:clamp(30px,4.4vw,50px);
+  font-size:30px;font-size:clamp(34px,4.4vw,57px);
   font-weight:900;
   font-family:'Arial Rounded MT Bold','Baloo 2','Varela Round','Chalkboard SE','Segoe UI Rounded',system-ui,sans-serif;
   color:#fff23c;
@@ -2328,10 +2332,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    同一輪老師也要求「只顯示招式名稱,不用顯示效果說明」,原本的 .bt-bfeff(效果說明,含剛加上的
    「附加:」第二效果文字)整段拿掉不生成,只保留 .bt-bfname。 */
 #bt-burstfx img.gif{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;z-index:0;}
-#bt-burstfx .bt-bfname{font-size:clamp(22px,3.4vw,44px);font-weight:900;color:var(--gold);text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 20px rgba(240,192,96,.7);margin-top:6px;text-align:center;padding:0 12px;position:relative;z-index:1;}
+#bt-burstfx .bt-bfname{font-size:clamp(25px,3.4vw,51px);font-weight:900;color:var(--gold);text-shadow:0 3px 12px rgba(0,0,0,.95),0 0 20px rgba(240,192,96,.7);margin-top:6px;text-align:center;padding:0 12px;position:relative;z-index:1;}
 #bt-burstfx .bt-bfname.npc{color:#ff8f8f;}
 @keyframes btfxin{from{opacity:0;transform:scale(.9);}to{opacity:1;transform:scale(1);}}
-#bt-ko{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:clamp(60px,14vw,160px);font-weight:900;color:var(--gold);text-shadow:0 6px 20px rgba(0,0,0,.95),0 0 40px rgba(240,192,96,.8);animation:btko .5s cubic-bezier(.2,1.6,.4,1);}
+#bt-ko{position:fixed;left:0;top:0;right:0;bottom:0;z-index:119;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:clamp(69px,14vw,184px);font-weight:900;color:var(--gold);text-shadow:0 6px 20px rgba(0,0,0,.95),0 0 40px rgba(240,192,96,.8);animation:btko .5s cubic-bezier(.2,1.6,.4,1);}
 #bt-ko.lose{color:#ff8f8f;}
 @keyframes btko{from{opacity:0;transform:scale(3);}to{opacity:1;transform:scale(1);}}
 /* ★ v1.30.0 — 爆發完整演出:角色立繪半屏+集中效果線+震動發光巨字(仿大對抗 _showBurstCinematic,z 120 高於 bt-burstfx 119) */
@@ -2349,7 +2353,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    (刻意跳過大對抗自己全站慣用的圓體,爆發大字走的是明朝／宋體式的戲劇感),抖動用 2D 位移+微旋轉
    (translate+rotate 四點循環),光暈用 text-shadow 在兩組深淺色階間補間(不是簡單的濾鏡亮度切換)。
    這裡把字型與兩個 keyframes 換成與大對抗完全一致的寫法,顏色/NPC 紅色版式沿用小遊戲既有設計。 */
-.bt-cine-name{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:clamp(30px,6.4vw,88px);font-weight:900;letter-spacing:3px;padding:0 16px;
+.bt-cine-name{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:clamp(34px,6.4vw,101px);font-weight:900;letter-spacing:3px;padding:0 16px;
   color:#ffee00;text-shadow:0 0 30px rgba(255,220,0,1),0 0 60px rgba(255,150,0,.9),0 0 90px rgba(255,100,0,.6),3px 3px 0 rgba(0,0,0,.9);
   animation:btCineShake .12s ease-in-out infinite,btCineGlow .6s ease-in-out infinite alternate;font-family:"Noto Serif TC","Times New Roman","明朝",serif;}
 #bt-cine.npc .bt-cine-name{color:#ff4422;text-shadow:0 0 30px rgba(255,60,0,.9),0 0 60px rgba(255,0,0,.5),3px 3px 0 rgba(0,0,0,.9);}
@@ -2364,12 +2368,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   from{text-shadow:0 0 20px rgba(255,200,0,.8),0 0 40px rgba(255,150,0,.5),3px 3px 0 rgba(0,0,0,.9);}
   to{text-shadow:0 0 50px rgba(255,230,0,1),0 0 100px rgba(255,180,0,.9),3px 3px 0 rgba(0,0,0,.9);}
 }
-@media (max-width:640px){ .bt-cine-img{width:100%;} .bt-cine-grad{background:linear-gradient(to top,rgba(8,9,13,.97) 0%,rgba(8,9,13,.55) 45%,rgba(8,9,13,.05) 100%);} #bt-cine.npc .bt-cine-grad{background:linear-gradient(to top,rgba(30,4,4,.97) 0%,rgba(30,4,4,.55) 45%,rgba(30,4,4,.05) 100%);} .bt-cine-name{top:8%;font-size:clamp(24px,7vw,44px);} }
+@media (max-width:640px){ .bt-cine-img{width:100%;} .bt-cine-grad{background:linear-gradient(to top,rgba(8,9,13,.97) 0%,rgba(8,9,13,.55) 45%,rgba(8,9,13,.05) 100%);} #bt-cine.npc .bt-cine-grad{background:linear-gradient(to top,rgba(30,4,4,.97) 0%,rgba(30,4,4,.55) 45%,rgba(30,4,4,.05) 100%);} .bt-cine-name{top:8%;font-size:clamp(28px,7vw,51px);} }
 /* 攻擊型爆發「刪除錯誤答案」後的樣式:選項/籃子/地圖點淡出且不可點;連連看給配對提示標記 */
 .opt.bt-out,.dbin.bt-out,.mcard.bt-out{opacity:.18 !important;pointer-events:none;filter:grayscale(1);}
 .spot.bt-out{opacity:.1;pointer-events:none;}
 .mcard.bt-pair{box-shadow:inset 0 0 0 3px var(--gold);position:relative;}
-.mcard.bt-pair::after{content:attr(data-bt);position:absolute;right:4px;top:2px;font-size:13px;font-weight:700;color:var(--gold);}
+.mcard.bt-pair::after{content:attr(data-bt);position:absolute;right:4px;top:2px;font-size:15px;font-weight:700;color:var(--gold);}
 .rdrop.bt-out{opacity:0;transition:opacity .35s;}
 @media (orientation:landscape){
   /* ★ v1.32.3(老師需求「不要放在畫面底部，是左下方，計時條下方，玩家/對手卡片放大填滿該區域，中間隔VS」)—
@@ -2388,22 +2392,22 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      30%)+ flex:0 0 auto 不再無限撐高,立繪高度改由寬度反推,可預期、不再吃光剩餘空間。 */
   #page-play > #mgbattle .bt-img{flex:0 0 auto;min-height:0;aspect-ratio:3/2.8;}
   #page-play > #feedback.docked{align-self:start;display:block;overflow:visible;}
-  #feedback.docked .fb-head{display:block;text-align:left;font-size:16px;padding:8px 12px;border-bottom:0;}
+  #feedback.docked .fb-head{display:block;text-align:left;font-size:18px;padding:8px 12px;border-bottom:0;}
 }
 @media (orientation:landscape) and (max-height:520px){
   #page-play > #mgbattle{margin-top:6px;}
-  #page-play > #mgbattle .bt-name{font-size:15px;} #page-play > #mgbattle .bt-burst{min-height:32px;font-size:12px;}
+  #page-play > #mgbattle .bt-name{font-size:17px;} #page-play > #mgbattle .bt-burst{min-height:32px;font-size:14px;}
   #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;padding-bottom:11px;}   /* ★ v1.43.0 — 矮螢幕下頭頂列進一步縮小,不吃掉太多垂直空間;★ v1.69.0 微加高+留底部空間,避免貼底充能點蓋住招式名稱文字 */
-  #page-play > #mgbattle .bt-charge{font-size:8px;bottom:1px;}
-  #page-play > #mgbattle .bt-card{padding:5px;gap:5px;} #page-play > #mgbattle .bt-hpbar{height:16px;} #page-play > #mgbattle .bt-hpn{line-height:16px;font-size:11px;}
-  #page-play > #mgbattle .bt-eff{font-size:10.5px;}
+  #page-play > #mgbattle .bt-charge{font-size:9px;bottom:1px;}
+  #page-play > #mgbattle .bt-card{padding:5px;gap:5px;} #page-play > #mgbattle .bt-hpbar{height:16px;} #page-play > #mgbattle .bt-hpn{line-height:16px;font-size:13px;}
+  #page-play > #mgbattle .bt-eff{font-size:12px;}
 }
 /* 開始前選英雄:#modal 內的英雄列 + 獨立選角視窗 #hero-modal(名字清單,只顯示目前選中的一張立繪 —— 立繪平均 600KB,不能整排載入) */
 #m-hero{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(62,200,122,.1);border:1px solid rgba(62,200,122,.35);}
 #m-hero .bt-img{width:84px;height:84px;flex-basis:84px;}
-#m-hero .mh-txt{flex:1 1 auto;min-width:0;font-size:16px;line-height:1.5;}
+#m-hero .mh-txt{flex:1 1 auto;min-width:0;font-size:18px;line-height:1.5;}
 #m-hero .mh-txt b{color:var(--gold);font-weight:700;}
-#m-hero button{min-height:40px;font-size:14px;padding:6px 12px;flex:0 0 auto;}
+#m-hero button{min-height:40px;font-size:16px;padding:6px 12px;flex:0 0 auto;}
 #hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:111;display:none;align-items:center;justify-content:center;padding:14px;}
 #hero-modal.show{display:flex;}
 #hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1200px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
@@ -2421,7 +2425,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    修法:.box 本身也開 overflow-y:auto,不論螢幕多矮,只要內容加總超出 max-height,整個 .box(含立繪、
    篩選鈕、英雄清單)都能一起被手指捲上捲下,保證英雄清單永遠捲得到、選得到,不再依賴精算各斷點的
    vh 尺寸「剛好塞得下」。.hm-list 自己的 overflow-y:auto 保留(桌面/大螢幕下清單本身仍可獨立捲動)。 */
-#hero-modal h3{margin:0;font-size:32px;color:var(--gold);}
+#hero-modal h3{margin:0;font-size:37px;color:var(--gold);}
 /* ★ v1.72.0(老師需求「選英雄視窗分左右兩區,右半部比照大對抗隊伍編成頁左側[showHeroPreview]格式與
    字體框架:完整圖片/名稱/類型/爆發技能名稱及效果說明,並預留天賦(被動)欄位」)—
    .hm-top(小縮圖+文字擠成一列)整段改為 .hm-split 左右兩欄,右欄仿 showHeroPreview 的預覽卡結構
@@ -2436,9 +2440,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-banner::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(to bottom,rgba(0,0,0,0) 55%,rgba(14,16,24,.95) 100%);}
 /* 姓名+類型徽章(比照 showHeroPreview「名稱+lore」區塊字級與金色) */
-#hero-modal .hm-name{padding:12px 20px 0;font-size:30px;font-weight:800;color:var(--gold2,var(--gold));
+#hero-modal .hm-name{padding:12px 20px 0;font-size:34px;font-weight:800;color:var(--gold2,var(--gold));
   letter-spacing:1px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
-#hero-modal .hm-name .hm-type{font-size:15px;font-weight:700;padding:3px 12px;border-radius:999px;
+#hero-modal .hm-name .hm-type{font-size:17px;font-weight:700;padding:3px 12px;border-radius:999px;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:var(--mist);}
 #hero-modal .hm-name .hm-type.cls-atk{color:#ff9966;border-color:rgba(255,150,120,.4);}
 #hero-modal .hm-name .hm-type.cls-heal{color:#88ffaa;border-color:rgba(140,255,180,.4);}
@@ -2447,20 +2451,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 極限爆發卡(比照 showHeroPreview「爆發」金框橘漸層卡:標籤/招式名/說明三行,中圓字體) */
 #hero-modal .hm-burstbox{margin:10px 20px 0;padding:10px 14px;border-radius:10px;
   background:linear-gradient(135deg,rgba(255,150,0,.15),rgba(255,80,0,.08));border:1.5px solid rgba(255,180,0,.6);}
-#hero-modal .hm-burstbox .hb-tag{font-size:14px;color:#ffcc00;letter-spacing:2px;}
-#hero-modal .hm-burstbox .hb-name{font-size:23px;font-weight:700;color:#ffe066;margin:3px 0;}
-#hero-modal .hm-burstbox .hb-desc{font-size:17px;color:#ffe8a0;line-height:1.55;}
+#hero-modal .hm-burstbox .hb-tag{font-size:16px;color:#ffcc00;letter-spacing:2px;}
+#hero-modal .hm-burstbox .hb-name{font-size:26px;font-weight:700;color:#ffe066;margin:3px 0;}
+#hero-modal .hm-burstbox .hb-desc{font-size:20px;color:#ffe8a0;line-height:1.55;}
 /* 天賦(被動)卡:預設(dashed,還沒有內容或引擎尚未串接的3型)沿用舊版「之後設計」外觀；
    ★ v1.75.0 — 新增 .filled(已有天賦內容且引擎已生效的56隻)比照 .hm-burstbox 實色卡片,改用青色系與「⚡爆發」的橘黃色區分。 */
 #hero-modal .hm-traitbox{margin:8px 20px 16px;padding:10px 14px;border-radius:10px;
   background:linear-gradient(135deg,rgba(255,200,30,.08),rgba(255,150,0,.04));border:1.5px dashed rgba(255,200,30,.35);
-  color:rgba(255,240,200,.45);font-size:15px;text-align:center;}
+  color:rgba(255,240,200,.45);font-size:17px;text-align:center;}
 #hero-modal .hm-traitbox.filled{background:linear-gradient(135deg,rgba(60,220,255,.14),rgba(30,140,255,.07));
   border:1.5px solid rgba(126,232,250,.55);color:inherit;text-align:left;}
-#hero-modal .hm-traitbox .hb-tag{font-size:14px;color:#7ee8fa;letter-spacing:2px;}
-#hero-modal .hm-traitbox .hb-desc{font-size:16px;color:#d6f7ff;line-height:1.5;}
+#hero-modal .hm-traitbox .hb-tag{font-size:16px;color:#7ee8fa;letter-spacing:2px;}
+#hero-modal .hm-traitbox .hb-desc{font-size:18px;color:#d6f7ff;line-height:1.5;}
 #hero-modal .hm-filter{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap;}
-#hero-modal .hm-filter .chip{min-height:56px;font-size:19px;padding:10px 18px;}
+#hero-modal .hm-filter .chip{min-height:56px;font-size:22px;padding:10px 18px;}
 #hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
 /* ★ v1.31.0(老師回報「按篩選鈕/選最下面那排會跑掉」)— 根因:.hm-list 舊碼用 flex:1 1 auto 純內容撐高,
    換篩選時項目數一變(例如控場型只剩7張),整個 .box 高度跟著變,而 #hero-modal 又是
@@ -2491,17 +2495,17 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   background-repeat:no-repeat;background-size:auto 400%;background-position:center top;
   background-color:rgba(0,0,0,.25);}
 /* ★ v1.76.0 — 職能徽章搬到左上角(取代大對抗的稀有度徽章位置)，圖示沿用既有 mgBurstDef(cls).icon。 */
-#hero-modal .hm-list button .hm-typebadge{position:absolute;top:6px;left:6px;font-size:14px;line-height:1;
+#hero-modal .hm-list button .hm-typebadge{position:absolute;top:6px;left:6px;font-size:16px;line-height:1;
   padding:3px 6px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;z-index:2;pointer-events:none;}
 /* ★ v1.77.0 — 天賦標籤藥丸,疊在職能徽章正下方(比照大對抗效果標籤堆疊在稀有度徽章下方的排法)。 */
-#hero-modal .hm-list button .hm-tag{position:absolute;top:32px;left:6px;font-size:11px;font-weight:700;line-height:1.3;
+#hero-modal .hm-list button .hm-tag{position:absolute;top:32px;left:6px;font-size:13px;font-weight:700;line-height:1.3;
   padding:2px 7px;border-radius:7px;background:rgba(20,60,70,.85);color:#7ee8fa;z-index:2;pointer-events:none;
   border:1px solid rgba(126,232,250,.4);white-space:nowrap;}
-#hero-modal .hm-list button .hm-name{padding:7px 4px 8px;font-size:18px;font-weight:700;line-height:1.2;
+#hero-modal .hm-list button .hm-name{padding:7px 4px 8px;font-size:21px;font-weight:700;line-height:1.2;
   color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #hero-modal .row{display:flex;gap:10px;}
 #hero-modal .row button{flex:1;min-height:46px;}
-#r-battle{font-size:15px;line-height:1.7;margin-top:6px;}
+#r-battle{font-size:17px;line-height:1.7;margin-top:6px;}
 #r-battle b{color:var(--gold);font-weight:700;}
 
 /* ══════════════════════════════════════════════════════════
@@ -2517,23 +2521,23 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #top-btns{gap:10px;}
 #top-btns button{flex:1 1 0;min-width:0;}
 #rank-btn,#cr-btn,#intro-btn{
-  flex-wrap:wrap;row-gap:2px;padding:10px 12px;font-size:17px;white-space:normal;line-height:1.25;
+  flex-wrap:wrap;row-gap:2px;padding:10px 12px;font-size:20px;white-space:normal;line-height:1.25;
 }
-#rank-btn .rb-ico,#cr-btn .rb-ico{font-size:23px;}
-#rank-btn .rb-txt,#cr-btn .rb-txt{font-size:17px;font-weight:900;}
-#rank-btn .rb-sub,#cr-btn .rb-sub{flex:0 0 100%;text-align:center;font-size:13px;line-height:1.3;}
+#rank-btn .rb-ico,#cr-btn .rb-ico{font-size:26px;}
+#rank-btn .rb-txt,#cr-btn .rb-txt{font-size:20px;font-weight:900;}
+#rank-btn .rb-sub,#cr-btn .rb-sub{flex:0 0 100%;text-align:center;font-size:15px;line-height:1.3;}
 /* ★ v1.53.0(老師需求「遊玩提示按鈕縮短,右邊新增只顯示最愛」)— rank-btn/cr-btn 維持原本 flex:1 1 0 平分寬度不動,
    intro-btn 與新的 favonly-btn 改 flex:0 0 auto 只吃內容需要的寬度,不再跟前兩顆搶等寬份額,讓第 4 顆按鈕擠得下。 */
-#intro-btn.short,#top-btns #favonly-btn{flex:0 0 auto;padding:10px 12px;font-size:15px;white-space:nowrap;}
+#intro-btn.short,#top-btns #favonly-btn{flex:0 0 auto;padding:10px 12px;font-size:17px;white-space:nowrap;}
 #favonly-btn{display:flex;align-items:center;gap:6px;font-weight:700;color:#2b2b2b;font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#ffe28a,var(--sun));border:2px solid rgba(255,255,255,.5);border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.35);touch-action:manipulation;margin:0 0 10px;}
 #favonly-btn.on{background:linear-gradient(180deg,#ff8fae,#e8405a);color:#fff;}
 /* iPad 橫式／PC:標題右邊那條夠寬,再放大一級並確保絕不換行成第二列 */
 @media (min-width:1024px) and (orientation:landscape){
   #top-btns{flex-wrap:nowrap;width:100%;gap:12px;}
-  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:12px 14px;font-size:19px;border-radius:16px;}
-  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:26px;}
-  #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:19px;}
-  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:14px;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:12px 14px;font-size:22px;border-radius:16px;}
+  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:30px;}
+  #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:22px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:16px;}
   /* 標題列改為靠上對齊並讓按鈕條吃滿右欄寬度(原 align-self:center 在按鈕變高後會浮在半空) */
   #top-btns{align-self:start;margin-top:6px;}
 }
@@ -2549,15 +2553,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   /* 頭尾各塞一個自動撐開的彈性空白 ⇒ 內容少時往中間靠、內容多時空白被壓成 0 不擋捲動 */
   #play-right::before,#play-right::after{content:'';flex:1 1 auto;min-height:0;}
   /* 作答區整體放大(老師:再放大文字) */
-  .card{min-height:120px;font-size:30px;padding:20px 22px;}
-  #qhint{font-size:19px;}
+  .card{min-height:120px;font-size:34px;padding:20px 22px;}
+  #qhint{font-size:22px;}
   .opts{margin-top:18px;gap:14px;}
-  .opt{min-height:86px;font-size:23px;padding:14px 18px;}
-  .mcard{min-height:158px;font-size:24px;}
-  .dbin{font-size:20px;}
-  #drag-item{font-size:22px;}
-  .ocard{min-height:82px;font-size:23px;}
-  .oslot{min-height:90px;font-size:20px;}
+  .opt{min-height:86px;font-size:26px;padding:14px 18px;}
+  .mcard{min-height:158px;font-size:28px;}
+  .dbin{font-size:23px;}
+  #drag-item{font-size:25px;}
+  .ocard{min-height:82px;font-size:26px;}
+  .oslot{min-height:90px;font-size:23px;}
 }
 
 /* ── ②-B【英雄卡頭頂:爆發鈕】
@@ -2565,20 +2569,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       不再需要 flex-wrap 把鈕跟充能點拆成兩行——現在 .bt-top 底下只剩爆發鈕一個元素,
       單純讓它撐滿整行、字放大即可;舊 .bt-top .bt-charge 選擇器留著純粹相容(目前已無
       元素會命中,DOM 裡的 .bt-charge 现在是 .bt-burst 的子元素,交由下面新規則接手)。 ── */
-.bt-top .bt-burst{flex:0 0 100%;min-height:42px;font-size:16px;}
-.bt-top .bt-charge{flex:0 0 100%;text-align:center;font-size:16px;letter-spacing:3px;}
+.bt-top .bt-burst{flex:0 0 100%;min-height:42px;font-size:18px;}
+.bt-top .bt-charge{flex:0 0 100%;text-align:center;font-size:18px;letter-spacing:3px;}
 .bt-burst .bt-bname{font-size:1em;}
-.bt-burst .bt-charge{font-size:11px;}
+.bt-burst .bt-charge{font-size:13px;}
 @media (min-width:1024px) and (orientation:landscape){
-  #page-play > #mgbattle .bt-top .bt-burst{min-height:48px;font-size:18px;}
-  #page-play > #mgbattle .bt-burst .bt-charge{font-size:14px;bottom:3px;}
-  #page-play > #mgbattle .bt-burst.ready{font-size:20px;}
-  #page-play > #mgbattle .bt-name{font-size:19px;}
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:48px;font-size:21px;}
+  #page-play > #mgbattle .bt-burst .bt-charge{font-size:16px;bottom:3px;}
+  #page-play > #mgbattle .bt-burst.ready{font-size:23px;}
+  #page-play > #mgbattle .bt-name{font-size:22px;}
   #page-play > #mgbattle .bt-hpbar{height:26px;}
-  #page-play > #mgbattle .bt-hpn{line-height:26px;font-size:17px;}
-  #page-play > #mgbattle .bt-star{font-size:13px;}
-  #page-play > #mgbattle .bt-eff{font-size:14.5px;line-height:1.5;}
-  #page-play > #mgbattle .bt-vs{font-size:26px;}
+  #page-play > #mgbattle .bt-hpn{line-height:26px;font-size:20px;}
+  #page-play > #mgbattle .bt-star{font-size:15px;}
+  #page-play > #mgbattle .bt-eff{font-size:17px;line-height:1.5;}
+  #page-play > #mgbattle .bt-vs{font-size:30px;}
 }
 
 /* ── ②-C【極限爆發:文字呼吸光芒 + 火焰粒子】老師需求。
@@ -2625,11 +2629,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #rank-modal .box,#cr-modal .box,#intro-modal .box{max-width:820px;}
   /* ★ v1.72.0 — #hero-modal 改左右分欄後不再套 820px 上限(維持 .box 本身的 1200px),否則右欄的
      大對抗式預覽卡(橫幅圖+爆發金框卡)會被壓得太窄,失去「完整圖片」的效果。 */
-  #intro-modal .bubble{font-size:19px;line-height:1.75;}
-  .rk-info{font-size:20px;}
-  #cr-modal .cr-master{font-size:21px;}
-  .cr-grade .cr-gh{font-size:20px;}
-  .cr-unit{font-size:18px;}
+  #intro-modal .bubble{font-size:22px;line-height:1.75;}
+  .rk-info{font-size:23px;}
+  #cr-modal .cr-master{font-size:24px;}
+  .cr-grade .cr-gh{font-size:23px;}
+  .cr-unit{font-size:21px;}
   /* ★ v1.77.0(老師需求「完全用大對抗的隊伍編組頁的版面設計，包括圖片調整過的高度和比例，不要自己做新的」)—
      查證大對抗 main.css 第 3516~3588 行,隊伍編組頁左右版面是 #hero-pick-arena{flex:1;min-width:600px}
      與 #hpick-panel{flex:1} 兩邊「等分」,不是像素寬度固定;卡片本身 .hpick-adv-node 是 width:155px(全站
@@ -2648,10 +2652,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #mg-vol-panel{z-index:130;}
 /* 首頁九宮格卡片:字放大並保證標題兩行內不溢出(iPad 橫式一頁 3 列) */
 @media (min-width:1024px) and (orientation:landscape){
-  .cell .cn{font-size:20px;line-height:1.3;}
-  .cell .cskills{font-size:13px;}
-  .cell .cbest{font-size:14px;}
-  .crmask-lbl{font-size:18px;padding:9px 18px;}
+  .cell .cn{font-size:23px;line-height:1.3;}
+  .cell .cskills{font-size:15px;}
+  .cell .cbest{font-size:16px;}
+  .crmask-lbl{font-size:21px;padding:9px 18px;}
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -2679,10 +2683,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (orientation:landscape) and (max-height:520px){
   #topbar{flex-wrap:nowrap;min-height:38px;gap:4px;padding:2px 0 1px;}
   #topbar .chip,#topbar #ver-chip{flex:0 0 auto;}
-  .chip{min-height:34px;font-size:12px;padding:4px 8px;border-radius:10px;}
+  .chip{min-height:34px;font-size:14px;padding:4px 8px;border-radius:10px;}
   #toapp-btn{font-size:0;padding:4px 9px;}            /* 文字收掉只留 🗺,省一大截寬度 */
-  #toapp-btn::before{content:'🗺';font-size:15px;}
-  #back-btn{font-size:12px;padding:4px 8px;}
+  #toapp-btn::before{content:'🗺';font-size:17px;}
+  #back-btn{font-size:14px;padding:4px 8px;}
   .wrap{padding:3px 8px 2px;padding-left:calc(8px + env(safe-area-inset-left,0px));padding-right:calc(8px + env(safe-area-inset-right,0px));}
 }
 
@@ -2702,55 +2706,55 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     align-items:center;height:calc(100dvh - 46px);max-height:calc(100dvh - 46px);overflow:hidden;
   }
   #title-img{grid-column:1;grid-row:1;max-width:100%;max-height:78px;width:auto;margin:0;object-fit:contain;}
-  #title-fallback{grid-column:1;grid-row:1;font-size:18px;margin:0;}
+  #title-fallback{grid-column:1;grid-row:1;font-size:21px;margin:0;}
   #top-btns{grid-column:2;grid-row:1;flex-wrap:nowrap;gap:6px;margin:0;width:100%;align-self:center;}
   #top-btns button{flex:1 1 0;min-width:0;}
-  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:5px 8px;font-size:13px;border-radius:11px;row-gap:0;}
-  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:16px;}
-  #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:13px;}
-  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:10px;line-height:1.15;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{padding:5px 8px;font-size:15px;border-radius:11px;row-gap:0;}
+  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:18px;}
+  #rank-btn .rb-txt,#cr-btn .rb-txt{font-size:15px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:12px;line-height:1.15;}
   #grid{
     grid-column:1 / 3;grid-row:2;grid-template-columns:repeat(5,1fr);gap:8px;margin:0;
     min-height:0;align-content:stretch;
   }
   .cell{height:auto;min-height:0;padding:9px 7px 8px;border-radius:14px;}
-  .cell .cn{font-size:14px;line-height:1.25;}
-  .cell .cskills,.cell .cdiff,.cell .cbest{font-size:10.5px;}
+  .cell .cn{font-size:16px;line-height:1.25;}
+  .cell .cskills,.cell .cdiff,.cell .cbest{font-size:12px;}
   .cell .cbest{top:26px;}
-  .cfav{width:21px;height:21px;font-size:12px;top:3px;right:3px;}
-  .cell .ctag{font-size:10.5px;padding:2px 7px;left:5px;top:4px;}
-  .crmask-lbl{font-size:12px;padding:5px 10px;}
+  .cfav{width:21px;height:21px;font-size:14px;top:3px;right:3px;}
+  .cell .ctag{font-size:12px;padding:2px 7px;left:5px;top:4px;}
+  .crmask-lbl{font-size:14px;padding:5px 10px;}
   #home-note{display:none;}
 }
 /* 超矮(iPhone SE 橫式 320~375px 高):標題再縮、關卡名只留一行 */
 @media (orientation:landscape) and (max-height:400px){
   #title-img{max-height:56px;}
-  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:12px;padding:5px 6px;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:14px;padding:5px 6px;}
   #rank-btn .rb-sub,#cr-btn .rb-sub{display:none;}   /* 高度不夠時副標讓位,主標仍看得懂 */
-  .cell .cn{font-size:12.5px;}
+  .cell .cn{font-size:14px;}
   .cell .cskills,.cell .cdiff{display:none;}
 }
 
 /* ── ③【手機橫式・關卡頁塞進一頁】右欄本來就可捲動,但老師要的是「不必捲」⇒ 把作答區整體再壓一級,
       讓常見題型(4 選項 / 4 籃子 / 5×5 消消樂)一頁放得下。 ── */
 @media (orientation:landscape) and (max-height:520px){
-  .opt{min-height:40px;font-size:14px;padding:5px 9px;}
+  .opt{min-height:40px;font-size:16px;padding:5px 9px;}
   .opts{margin-top:6px;gap:6px;}
-  .card{font-size:16px;padding:8px 12px;}
-  .mcard{min-height:64px;font-size:14px;}
-  .ocard{min-height:42px;font-size:14px;}
+  .card{font-size:18px;padding:8px 12px;}
+  .mcard{min-height:64px;font-size:16px;}
+  .ocard{min-height:42px;font-size:16px;}
   /* ★ v1.72.0(老師需求「順序排排站的空格答案欄位高度縮減,讓下方的確認按鈕可以往上移不會超出畫面」)—
      .oslot 本身縮小還不夠:#order-slots 容器自己另外寫死 min-height:64px、.oslot 自己的 padding
      還是 8px 4px,兩者疊加會把 min-height:48px 的宣告直接撐回原本的高度;這裡把容器與內距一併壓低,
      並把 #order-act(確認/收回按鈕列)的頂部留白也收窄,才會真正讓按鈕整排往上移。 */
   #order-slots{min-height:34px;margin-bottom:8px;}
-  .oslot{min-height:34px;padding:4px 3px;font-size:12px;}
+  .oslot{min-height:34px;padding:4px 3px;font-size:14px;}
   #order-act{margin-top:6px;}
-  #order-act button{min-height:38px;font-size:14px;}
-  .dbin{min-height:58px;font-size:12px;}
+  #order-act button{min-height:38px;font-size:16px;}
+  .dbin{min-height:58px;font-size:14px;}
   .m3-grid{width:min(46vw,300px);gap:4px;}
-  .m3-cell{font-size:clamp(1rem,3.4vw,1.5rem);border-radius:7px;}
-  .m3-hint{font-size:11px;}
+  .m3-cell{font-size:clamp(1.15rem,3.4vw,1.7rem);border-radius:7px;}
+  .m3-hint{font-size:13px;}
   #maze-grid{gap:4px;}
   #paint-palette{margin-top:6px;}
   .pchip{width:40px;height:40px;}
@@ -2764,11 +2768,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       不會再命中任何元素,改用 .bt-burst .bt-charge;.bt-burst 的 padding 補回底部留白,
       避免貼底充能點蓋住招式名稱文字。 ── */
 @media (orientation:landscape) and (max-height:520px){
-  #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;font-size:12px;padding:2px 6px 10px;}
-  #page-play > #mgbattle .bt-burst .bt-charge{font-size:8px;bottom:1px;letter-spacing:1px;}
-  #page-play > #mgbattle .bt-star{font-size:9px;}
-  #page-play > #mgbattle .bt-eff{font-size:10px;line-height:1.35;}
-  #page-play > #mgbattle .bt-name{font-size:13px;}
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;font-size:14px;padding:2px 6px 10px;}
+  #page-play > #mgbattle .bt-burst .bt-charge{font-size:9px;bottom:1px;letter-spacing:1px;}
+  #page-play > #mgbattle .bt-star{font-size:10px;}
+  #page-play > #mgbattle .bt-eff{font-size:12px;line-height:1.35;}
+  #page-play > #mgbattle .bt-name{font-size:15px;}
   #page-play > #mgbattle .bt-card{padding:4px;gap:4px;}
 }
 
@@ -2785,44 +2789,44 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     background:var(--ink2);box-shadow:0 -8px 12px -6px rgba(0,0,0,.85);
   }
   #modal .row button,#rank-modal .row button,#cr-modal .row button,
-  #intro-modal .row button,#hero-modal .row button{min-height:42px;font-size:15px;padding:8px 6px;}
-  #rank-modal h3,#cr-modal h3{font-size:19px;}
-  #rank-modal .tag,#cr-modal .tag{font-size:13px;margin-bottom:8px;line-height:1.5;}
-  .rk-info{font-size:14px;line-height:1.6;}
-  #cr-modal .cr-master{font-size:15px;padding:7px 10px;}
-  .cr-grade .cr-gh{font-size:14px;}
-  .cr-unit{font-size:13px;padding:4px 4px 4px 26px;}
-  #intro-modal .bubble{font-size:14px;line-height:1.6;}
+  #intro-modal .row button,#hero-modal .row button{min-height:42px;font-size:17px;padding:8px 6px;}
+  #rank-modal h3,#cr-modal h3{font-size:22px;}
+  #rank-modal .tag,#cr-modal .tag{font-size:15px;margin-bottom:8px;line-height:1.5;}
+  .rk-info{font-size:16px;line-height:1.6;}
+  #cr-modal .cr-master{font-size:17px;padding:7px 10px;}
+  .cr-grade .cr-gh{font-size:16px;}
+  .cr-unit{font-size:15px;padding:4px 4px 4px 26px;}
+  #intro-modal .bubble{font-size:16px;line-height:1.6;}
   #hero-modal .hm-split{gap:10px;}
   #hero-modal .hm-left{flex-basis:34%;gap:6px;}
   #hero-modal .hm-list{flex:1 1 auto;height:auto;min-height:100px;gap:6px;}
   #hero-modal .hm-list button{width:82px;}
   #hero-modal .hm-list button .hm-thumb{height:64px;}
-  #hero-modal .hm-list button .hm-typebadge{font-size:10px;padding:2px 4px;top:3px;left:3px;}
+  #hero-modal .hm-list button .hm-typebadge{font-size:12px;padding:2px 4px;top:3px;left:3px;}
   #hero-modal .hm-list button .hm-tag{display:none;}
-  #hero-modal .hm-list button .hm-name{font-size:11.5px;padding:4px 3px 5px;}
+  #hero-modal .hm-list button .hm-name{font-size:13px;padding:4px 3px 5px;}
   #hero-modal .hm-banner{height:76px;}
-  #hero-modal .hm-name{font-size:18px;padding:8px 12px 0;gap:6px;}
-  #hero-modal .hm-name .hm-type{font-size:11px;padding:2px 8px;}
+  #hero-modal .hm-name{font-size:21px;padding:8px 12px 0;gap:6px;}
+  #hero-modal .hm-name .hm-type{font-size:13px;padding:2px 8px;}
   #hero-modal .hm-burstbox{margin:6px 12px 0;padding:6px 10px;}
-  #hero-modal .hm-burstbox .hb-tag{font-size:10px;}
-  #hero-modal .hm-burstbox .hb-name{font-size:14px;margin:2px 0;}
-  #hero-modal .hm-burstbox .hb-desc{font-size:11.5px;line-height:1.4;}
-  #hero-modal .hm-traitbox{margin:5px 12px 10px;padding:5px 10px;font-size:11px;}
-  #hero-modal .hm-traitbox.filled .hb-tag{font-size:10px;}
-  #hero-modal .hm-traitbox.filled .hb-desc{font-size:11px;line-height:1.4;}
-  #hero-modal .hm-filter .chip{min-height:36px;font-size:13px;padding:6px 10px;}
+  #hero-modal .hm-burstbox .hb-tag{font-size:12px;}
+  #hero-modal .hm-burstbox .hb-name{font-size:16px;margin:2px 0;}
+  #hero-modal .hm-burstbox .hb-desc{font-size:13px;line-height:1.4;}
+  #hero-modal .hm-traitbox{margin:5px 12px 10px;padding:5px 10px;font-size:13px;}
+  #hero-modal .hm-traitbox.filled .hb-tag{font-size:12px;}
+  #hero-modal .hm-traitbox.filled .hb-desc{font-size:13px;line-height:1.4;}
+  #hero-modal .hm-filter .chip{min-height:36px;font-size:15px;padding:6px 10px;}
   #mg-vol-panel{top:46px;right:10px;width:min(74vw,260px);padding:10px 12px;}
-  #mg-vol-panel .mvp-head b{font-size:16px;}
-  #mg-vol-panel .mvp-row{font-size:14px;}
+  #mg-vol-panel .mvp-head b{font-size:18px;}
+  #mg-vol-panel .mvp-row{font-size:16px;}
   /* 結算頁:一頁看完不必捲 */
   #page-result{padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));}
-  #r-stars{font-size:26px;}
-  #r-battle{font-size:12px;line-height:1.5;}
+  #r-stars{font-size:30px;}
+  #r-battle{font-size:14px;line-height:1.5;}
   #result .r-body{gap:10px;}
   #result .r-trophy{width:88px;height:88px;}
-  #result .r-right .big{font-size:26px;}
-  #result .r-right .line{font-size:12px;}
+  #result .r-right .big{font-size:30px;}
+  #result .r-right .line{font-size:14px;}
 }
 
 /* ── ⑥【按鈕都按得到】手機橫式下,凡是可點元素一律保底 34px 觸控高並關掉點擊延遲。
@@ -2882,10 +2886,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (orientation:landscape) and (max-height:520px){
   #pausebox{padding:8px;}
   #pausebox .pz{max-height:92dvh;padding:14px 18px;border-radius:16px;}
-  #pausebox .pz h2{font-size:22px;margin-bottom:4px;}
-  #pausebox .pz .pz-clock{font-size:18px;margin-bottom:8px;}
-  #pausebox .pz p{font-size:13px;margin:4px 0 10px;line-height:1.45;}
-  #pausebox .pz button{min-width:150px;min-height:42px;font-size:17px;}
+  #pausebox .pz h2{font-size:25px;margin-bottom:4px;}
+  #pausebox .pz .pz-clock{font-size:21px;margin-bottom:8px;}
+  #pausebox .pz p{font-size:15px;margin:4px 0 10px;line-height:1.45;}
+  #pausebox .pz button{min-width:150px;min-height:42px;font-size:20px;}
 }
 
 /* ── (c)【彈窗高度全平台改吃 dvh】v1.46.0 只在手機橫式那一段把彈窗改成 92dvh,
@@ -2942,8 +2946,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       連鎖破壞 v1.69.0 才排好的版面),改用 clamp 讓字級隨欄寬自動縮到剛好放得下,
       放不下時仍保留 ellipsis 當最後保險 => 絕大多數名字現在完整顯示。 ── */
 @media (orientation:landscape){
-  #page-play > #mgbattle .bt-name{font-size:clamp(13px,1.25vw,19px);}
-  #page-play > #mgbattle .bt-burst .bt-bname{font-size:clamp(11px,1.05vw,16px);}
+  #page-play > #mgbattle .bt-name{font-size:clamp(15px,1.25vw,22px);}
+  #page-play > #mgbattle .bt-burst .bt-bname{font-size:clamp(13px,1.05vw,18px);}
 }
 
 /* ── (h)【最後保險:任何情況都捲得到】老師的原則是「有超出一定要可以捲動」。
@@ -2965,19 +2969,19 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .wrap{max-width:1640px;}
   #page-home{grid-template-columns:440px minmax(0,1fr);column-gap:32px;}
   #title-img{max-width:440px;}
-  #page-home .sub{font-size:20px;}
+  #page-home .sub{font-size:23px;}
   #top-btns{gap:14px;}
-  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:19px;padding:12px 22px;border-radius:16px;}
-  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:24px;}
-  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:14px;}
+  #rank-btn,#cr-btn,#intro-btn,#favonly-btn{font-size:22px;padding:12px 22px;border-radius:16px;}
+  #rank-btn .rb-ico,#cr-btn .rb-ico{font-size:28px;}
+  #rank-btn .rb-sub,#cr-btn .rb-sub{font-size:16px;}
   #grid{gap:20px;}
   .cell{height:236px;border-radius:22px;}
-  .cell .cn{font-size:29px;line-height:1.25;padding:0 8px;}
-  .cell .cskill{font-size:15px;padding:2px 10px;}
-  .cell .cdiff{font-size:16px;}
-  .cell .cstar{font-size:19px;margin-bottom:10px;}
-  .cell .cbest{font-size:15px;top:46px;right:10px;}
-  .cfav{width:28px;height:28px;font-size:16px;}
+  .cell .cn{font-size:33px;line-height:1.25;padding:0 8px;}
+  .cell .cskill{font-size:17px;padding:2px 10px;}
+  .cell .cdiff{font-size:18px;}
+  .cell .cstar{font-size:22px;margin-bottom:10px;}
+  .cell .cbest{font-size:17px;top:46px;right:10px;}
+  .cfav{width:28px;height:28px;font-size:18px;}
 }
 </style>
 <!-- ★ v1.1.2(老師:「用小英雄大作戰現有的字型就好了」)
@@ -2991,9 +2995,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      ⚠ 日後主程式若更換字型,這一行要跟著同步,否則兩邊會分岔、快取也不再共用。 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- ★ v1.3.0 — 改載 LXGW WenKai TC(霞鶩文楷・繁體楷體)400/700;display=swap 先用系統繁中字顯示、到貨再換,不阻塞首屏。
-     ⚠ 與主程式的字型 <link> 不再相同(v1.1.2 的「共用快取」考量作廢):老師裁定小遊戲改用霞鶩文楷。 -->
-<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
+<!-- ★ v1.78.0(老師 2026-09-11「大對抗的字體那麼好看,全部用來取代現在小遊戲的字體」)—
+     v1.3.0 改載的 LXGW WenKai TC(霞鶩文楷)本輪作廢,改回與主程式 index.html **一字不差**的字型
+     <link>(見上方 v1.1.2 註解的共用快取考量,本輪重新成立):M PLUS Rounded 1c + Nunito +
+     Noto Serif TC + Share Tech Mono。開過主程式的學生連這份 CSS 都直接命中快取,零下載。 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -3187,7 +3193,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="title-fallback">🎮 小英雄小遊戲</div>
     <!-- ★ v1.10.0 原「說明面板 #rank-panel」已改為最上方 #rank-btn + 說明視窗(老師看圖裁定);面板 DOM 移除 -->
     <div id="grid"></div>
-    <p class="sub" id="home-note" style="margin-top:18px;font-size:13px;opacity:.6;">
+    <p class="sub" id="home-note" style="margin-top:18px;font-size:15px;opacity:.6;">
       力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵
     </p><!-- ★ v1.30.0 老師需求:文案改與英雄對戰有關(原「木柵國小 · 不用登入就能玩…」) -->
   </section>
@@ -3371,8 +3377,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
           <div class="newbest hidden" id="r-newbest">🎉 新紀錄!</div>
         </div>
       </div>
-      <div class="line" id="r-cr" style="font-size:16px;font-weight:700;color:var(--grass);margin-top:8px;"></div><!-- ★ v1.10.3 專注課堂複習:單元/課堂題數/答對數,老師登記用 -->
-      <div class="line" id="r-cloud" style="font-size:14px;opacity:.75;margin-top:10px;"></div>
+      <div class="line" id="r-cr" style="font-size:18px;font-weight:700;color:var(--grass);margin-top:8px;"></div><!-- ★ v1.10.3 專注課堂複習:單元/課堂題數/答對數,老師登記用 -->
+      <div class="line" id="r-cloud" style="font-size:16px;opacity:.75;margin-top:10px;"></div>
       <div style="display:flex;gap:10px;margin-top:22px;">
         <button style="flex:1;" onclick="mgRetry()">再玩一次</button>
         <button class="btn-ghost" style="flex:1;" onclick="mgHome()">回選單</button>
@@ -3409,7 +3415,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <div id="hero-modal" onclick="if(event.target===this)mgHeroClose();">
   <div class="box">
     <h3>🦸 選一名英雄出戰</h3>
-    <div id="hm-lockhint" style="display:none;font-size:12.5px;color:var(--gold,#f0c060);opacity:.85;margin:-2px 0 2px;">🔒 只顯示你帳號已解鎖的 SSR 英雄</div>
+    <div id="hm-lockhint" style="display:none;font-size:14px;color:var(--gold,#f0c060);opacity:.85;margin:-2px 0 2px;">🔒 只顯示你帳號已解鎖的 SSR 英雄</div>
     <!-- ★ v1.72.0(老師需求「英雄選擇視窗分成左右兩區：右半部比照大對抗隊伍編成頁左側[showHeroPreview]的
          完整圖片/名稱/類型/爆發技能格式與字體框架，並預留天賦(被動)欄位；左半部類型篩選標籤置頂、
          下方為所有英雄縮圖與名稱，同樣比照大對抗隊伍編成頁左側格式」)—
@@ -3512,7 +3518,17 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.77.0';
+var MG_VER = 'v1.78.0';
+/* ★ v1.78.0(2026-09-11・老師「大對抗的字體那麼好看，全部用來取代現在小遊戲的字體。小遊戲字體都適當放大」)—
+   ①【字型】全檔預設字型由 v1.3.0 的 LXGW WenKai TC(霞鶩文楷)改回與大對抗完全一致的
+   M PLUS Rounded 1c + Nunito(<head> 字型 <link> 也改回與主程式 index.html 一字不差，重新享有
+   HTTP 快取共用——開過主程式的學生這份字型 CSS 直接命中快取零下載，同 v1.1.2 舊裁定的理由）；
+   .bt-card／.hm-list 等原本為了跳脫霞鶩文楷而局部覆寫成這支字的地方維持不動，現在只是與全站
+   預設相同、不再是特例。字重自檢允許清單同步由 400/700 改回 400/700/900。
+   ②【字級全面放大】老師裁定「適當放大」，全檔 CSS 的 font-size(含 clamp() 上下限、含兩處
+   rem 單位)一律 ×1.15(四捨五入，至少 +1px)：body 基準 17px→20px，其餘 470 處 px 字級與
+   23 處 px-clamp、2 處 rem-clamp 同步套用；版面本就以 flex/百分比彈性寫法為主，吃得下文字
+   放大。純顯示層，遊戲邏輯與資料零改動。 */
 /* ★ v1.77.0(2026-09-11・老師「完全用大對抗的隊伍編組頁的版面設計...不要自己做新的」)—
    查了大對抗 main.css(第3516~3588行)隊伍編組頁的實際版面比例:左側英雄清單 #hero-pick-arena 與右側
    詳情 #hpick-panel 是 flex:1/flex:1「等分」(不是像素寬度),清單邊另外加 min-width:600px 兜底;英雄卡片
@@ -6747,7 +6763,7 @@ function renderPaint(x, pic){
   /* 左:彩色參考圖(載不到就顯示提示,不讓畫面開天窗) */
   $('paint-ref').innerHTML =
     '<img src="' + url + '" alt="" '
-    + 'onerror="this.parentNode.innerHTML=\'<div style=&quot;padding:14px;font-size:14px;opacity:.7;text-align:center;&quot;>圖片載入中或載入失敗<br>沒關係,還是可以憑感覺上色</div>\';">';
+    + 'onerror="this.parentNode.innerHTML=\'<div style=&quot;padding:14px;font-size:16px;opacity:.7;text-align:center;&quot;>圖片載入中或載入失敗<br>沒關係,還是可以憑感覺上色</div>\';">';
 
   /* 右:12 格黑白圖 */
   var html = '', i, c, r;
@@ -10225,8 +10241,9 @@ function boot(){
      取**交集** 400/700/900 才能保證不管缺字 fallback 到哪一支都不會合成粗體。
      這種問題在 code review 時很難用眼睛看出來,所以讓程式自己抓。 */
   try{
-    /* ★ v1.3.0 — 允許清單改 400/700:霞鶩文楷 TC 只有 300/400/700,900 會合成粗體 */
-    var _OKW = { '400':1, '700':1, 'normal':1, 'bold':1, 'inherit':1, '':1 };
+    /* ★ v1.78.0 — 字型改回 M PLUS Rounded 1c 後,允許清單改回 400/700/900(v1.3.0 霞鶩文楷
+       時代收窄成 400/700 的限制隨字型一併作廢)。 */
+    var _OKW = { '400':1, '700':1, '900':1, 'normal':1, 'bold':1, 'inherit':1, '':1 };
     var _els = document.getElementsByTagName('*'), _bad = {}, _i, _w;
     for(_i = 0; _i < _els.length; _i++){
       _w = '';
