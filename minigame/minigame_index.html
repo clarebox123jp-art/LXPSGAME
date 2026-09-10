@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.78.0(2026-09-11)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.80.0(2026-09-11)
      ★ v1.74.0(2026-09-10・老師兩項需求)—
        ①【戰鬥勝利評分視窗移除發光GIF特效】#r-glow 原本在星星彈出時墊一張會後製發光的 gif 在分數後面
          (finishGame 尾端 src+'.on' class 觸發);本輪直接不再觸發(元素與 CSS 動畫保留不刪,舊三行
@@ -2396,11 +2396,26 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 @media (orientation:landscape) and (max-height:520px){
   #page-play > #mgbattle{margin-top:6px;}
+  /* ★ v1.80.0(老師回報附截圖「左下兩隻英雄卡圖片太高導致下方爆發技能和天賦訊息都超出畫面」)—
+     根因:上面(較寬的)@media(orientation:landscape) 那條規則是 aspect-ratio:3/2.8,圖片高度
+     跟著卡片寬度走(卡片越寬圖越高,手機橫式卡片可能比 iPad 還寬,圖片反而更高);矮螢幕手機下這樣
+     一張圖就把名稱/HP/爆發鈕/效果說明全擠出畫面。改成跟英雄選擇頁右側橫幅(hm-banner)同一種做法:
+     不用 aspect-ratio,直接給一個「跟寬度無關、只看螢幕高度」的固定矮高度(clamp 17vh,50~90px)+
+     裁切位置改用 center 20%(同 hm-banner 的臉部裁切),不再用 object-position:top。 */
+  #page-play > #mgbattle .bt-img{aspect-ratio:auto;height:clamp(50px,17vh,90px);}
+  #page-play > #mgbattle .bt-img img{object-position:center 20%;}
   #page-play > #mgbattle .bt-name{font-size:17px;} #page-play > #mgbattle .bt-burst{min-height:32px;font-size:14px;}
   #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;padding-bottom:11px;}   /* ★ v1.43.0 — 矮螢幕下頭頂列進一步縮小,不吃掉太多垂直空間;★ v1.69.0 微加高+留底部空間,避免貼底充能點蓋住招式名稱文字 */
   #page-play > #mgbattle .bt-charge{font-size:9px;bottom:1px;}
   #page-play > #mgbattle .bt-card{padding:5px;gap:5px;} #page-play > #mgbattle .bt-hpbar{height:16px;} #page-play > #mgbattle .bt-hpn{line-height:16px;font-size:13px;}
   #page-play > #mgbattle .bt-eff{font-size:12px;}
+}
+/* ★ v1.80.0 — 同上方 #hero-modal 的道理:高度斷點(max-height:520px)若在某些手機上沒命中,
+   立繪還是會吃到 aspect-ratio:3/2.8 隨卡寬變高的舊行為;補一道只看寬度的安全網,threshold 同上
+   (max-width:960px,強制橫式後手機最寬約930px、iPad最窄橫放1024px起跳,不會誤傷 iPad)。 */
+@media (max-width:960px){
+  #page-play > #mgbattle .bt-img{aspect-ratio:auto;height:clamp(50px,17vh,90px);}
+  #page-play > #mgbattle .bt-img img{object-position:center 20%;}
 }
 /* 開始前選英雄:#modal 內的英雄列 + 獨立選角視窗 #hero-modal(名字清單,只顯示目前選中的一張立繪 —— 立繪平均 600KB,不能整排載入) */
 #m-hero{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(62,200,122,.1);border:1px solid rgba(62,200,122,.35);}
@@ -2410,7 +2425,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #m-hero button{min-height:40px;font-size:16px;padding:6px 12px;flex:0 0 auto;}
 #hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:111;display:none;align-items:center;justify-content:center;padding:14px;}
 #hero-modal.show{display:flex;}
-#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1200px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:clamp(10px,3vh,22px);max-width:1200px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:clamp(6px,1.6vh,12px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   /* ★ v1.72.0(老師需求「選英雄的視窗，所有英雄(包含戰鬥中)相關文字都用大對抗英雄圖鑑的中圓字體」)—
      整個 .box 統一套上戰鬥卡(.bt-card)同一套中圓字體家族，原本只有 .hm-burst 單一元素有這個字型，
      其餘標題/描述/篩選鈕/英雄清單按鈕都是全站預設的 LXGW WenKai TC；改在容器上宣告一次，
@@ -2425,7 +2440,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    修法:.box 本身也開 overflow-y:auto,不論螢幕多矮,只要內容加總超出 max-height,整個 .box(含立繪、
    篩選鈕、英雄清單)都能一起被手指捲上捲下,保證英雄清單永遠捲得到、選得到,不再依賴精算各斷點的
    vh 尺寸「剛好塞得下」。.hm-list 自己的 overflow-y:auto 保留(桌面/大螢幕下清單本身仍可獨立捲動)。 */
-#hero-modal h3{margin:0;font-size:37px;color:var(--gold);}
+/* ★ v1.80.0(老師需求「手機和iPad比例不同,要仔細計算最佳版面」)— 字級改用 clamp(vh 為主) 而非
+   固定 px:不論實際裝置的 orientation/max-height media query 有沒有精準命中,矮螢幕都會自動按
+   視窗高度比例縮小,不必每次都靠新增/加寬斷點补救。 */
+#hero-modal h3{margin:0;font-size:clamp(20px,5.2vh,37px);color:var(--gold);}
 /* ★ v1.72.0(老師需求「選英雄視窗分左右兩區,右半部比照大對抗隊伍編成頁左側[showHeroPreview]格式與
    字體框架:完整圖片/名稱/類型/爆發技能名稱及效果說明,並預留天賦(被動)欄位」)—
    .hm-top(小縮圖+文字擠成一列)整段改為 .hm-split 左右兩欄,右欄仿 showHeroPreview 的預覽卡結構
@@ -2433,14 +2451,21 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-split{display:flex;gap:18px;align-items:stretch;min-height:0;}
 #hero-modal .hm-left{flex:0 0 38%;min-width:0;display:flex;flex-direction:column;gap:10px;}
 #hero-modal .hm-right{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;
-  background:rgba(10,12,25,.55);border:2px solid rgba(212,168,67,.4);border-radius:16px;overflow:hidden;}
-/* 頂部橫幅圖(比照 showHeroPreview「頂部橫幅圖片」區塊:滿版寬度、固定高度、底部漸層讓文字更清楚) */
-#hero-modal .hm-banner{width:100%;height:210px;position:relative;overflow:hidden;flex-shrink:0;background:rgba(20,22,36,.9);}
+  background:rgba(10,12,25,.55);border:2px solid rgba(212,168,67,.4);border-radius:16px;
+  /* ★ v1.79.0(老師回報「右方的英雄天賦被裁掉看不見」)— 根因:.hm-split 有 min-height:0,矮螢幕/字級
+     放大後(v1.78.0 全檔字級 ×1.15)內容總高度會被 flex 引擎「擠壓變矮」而不是讓 .box 整體捲動,
+     這裡原本的 overflow:hidden 就把擠壓後裝不下的天賦說明直接隱形裁掉,連捲動都碰不到。
+     改 overflow-y:auto(裝不下時這一欄自己可以獨立捲動,保底看得到)+ overflow-x:hidden(橫幅圖不外溢)。 */
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+/* 頂部橫幅圖(比照 showHeroPreview「頂部橫幅圖片」區塊:滿版寬度、固定高度、底部漸層讓文字更清楚)
+   ★ v1.79.0 — 210px→150px:騰出高度給下面的爆發技能與天賦說明兩張卡,讓兩者「同時可見」不必捲動
+   (原尺寸在字級放大後常把天賦卡整張擠出可視範圍)。 */
+#hero-modal .hm-banner{width:100%;height:clamp(56px,17vh,150px);position:relative;overflow:hidden;flex-shrink:0;background:rgba(20,22,36,.9);}
 #hero-modal .hm-banner img{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block;}
 #hero-modal .hm-banner::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(to bottom,rgba(0,0,0,0) 55%,rgba(14,16,24,.95) 100%);}
-/* 姓名+類型徽章(比照 showHeroPreview「名稱+lore」區塊字級與金色) */
-#hero-modal .hm-name{padding:12px 20px 0;font-size:34px;font-weight:800;color:var(--gold2,var(--gold));
+/* 姓名+類型徽章(比照 showHeroPreview「名稱+lore」區塊字級與金色)★ v1.79.0 — padding-top 12→8px 省空間 */
+#hero-modal .hm-name{padding:clamp(4px,1.2vh,8px) 20px 0;font-size:clamp(18px,4.6vh,34px);font-weight:800;color:var(--gold2,var(--gold));
   letter-spacing:1px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
 #hero-modal .hm-name .hm-type{font-size:17px;font-weight:700;padding:3px 12px;border-radius:999px;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:var(--mist);}
@@ -2448,21 +2473,23 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-name .hm-type.cls-heal{color:#88ffaa;border-color:rgba(140,255,180,.4);}
 #hero-modal .hm-name .hm-type.cls-shd{color:#88ccff;border-color:rgba(140,200,255,.4);}
 #hero-modal .hm-name .hm-type.cls-ctrl{color:#d4a8ff;border-color:rgba(210,170,255,.4);}
-/* 極限爆發卡(比照 showHeroPreview「爆發」金框橘漸層卡:標籤/招式名/說明三行,中圓字體) */
-#hero-modal .hm-burstbox{margin:10px 20px 0;padding:10px 14px;border-radius:10px;
+/* 極限爆發卡(比照 showHeroPreview「爆發」金框橘漸層卡:標籤/招式名/說明三行,中圓字體)
+   ★ v1.79.0 — margin-top 10→6px、padding 10 14→8 12,省下的高度分給下面的天賦卡。 */
+#hero-modal .hm-burstbox{margin:clamp(3px,1vh,6px) 20px 0;padding:clamp(4px,1vh,8px) 12px;border-radius:10px;
   background:linear-gradient(135deg,rgba(255,150,0,.15),rgba(255,80,0,.08));border:1.5px solid rgba(255,180,0,.6);}
-#hero-modal .hm-burstbox .hb-tag{font-size:16px;color:#ffcc00;letter-spacing:2px;}
-#hero-modal .hm-burstbox .hb-name{font-size:26px;font-weight:700;color:#ffe066;margin:3px 0;}
-#hero-modal .hm-burstbox .hb-desc{font-size:20px;color:#ffe8a0;line-height:1.55;}
+#hero-modal .hm-burstbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#ffcc00;letter-spacing:2px;}
+#hero-modal .hm-burstbox .hb-name{font-size:clamp(15px,3.6vh,26px);font-weight:700;color:#ffe066;margin:3px 0;}
+#hero-modal .hm-burstbox .hb-desc{font-size:clamp(12px,2.6vh,20px);color:#ffe8a0;line-height:1.3;}
 /* 天賦(被動)卡:預設(dashed,還沒有內容或引擎尚未串接的3型)沿用舊版「之後設計」外觀；
-   ★ v1.75.0 — 新增 .filled(已有天賦內容且引擎已生效的56隻)比照 .hm-burstbox 實色卡片,改用青色系與「⚡爆發」的橘黃色區分。 */
-#hero-modal .hm-traitbox{margin:8px 20px 16px;padding:10px 14px;border-radius:10px;
+   ★ v1.75.0 — 新增 .filled(已有天賦內容且引擎已生效的56隻)比照 .hm-burstbox 實色卡片,改用青色系與「⚡爆發」的橘黃色區分。
+   ★ v1.79.0 — margin 8/16→6/10、padding 10 14→8 12,與上面爆發卡同步收緊,兩張卡才「同時可見」。 */
+#hero-modal .hm-traitbox{margin:clamp(3px,1vh,6px) 20px clamp(4px,1.4vh,10px);padding:clamp(4px,1vh,8px) 12px;border-radius:10px;
   background:linear-gradient(135deg,rgba(255,200,30,.08),rgba(255,150,0,.04));border:1.5px dashed rgba(255,200,30,.35);
-  color:rgba(255,240,200,.45);font-size:17px;text-align:center;}
+  color:rgba(255,240,200,.45);font-size:clamp(12px,2.4vh,17px);text-align:center;}
 #hero-modal .hm-traitbox.filled{background:linear-gradient(135deg,rgba(60,220,255,.14),rgba(30,140,255,.07));
   border:1.5px solid rgba(126,232,250,.55);color:inherit;text-align:left;}
-#hero-modal .hm-traitbox .hb-tag{font-size:16px;color:#7ee8fa;letter-spacing:2px;}
-#hero-modal .hm-traitbox .hb-desc{font-size:18px;color:#d6f7ff;line-height:1.5;}
+#hero-modal .hm-traitbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#7ee8fa;letter-spacing:2px;}
+#hero-modal .hm-traitbox .hb-desc{font-size:clamp(11px,2.4vh,18px);color:#d6f7ff;line-height:1.25;}
 #hero-modal .hm-filter{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap;}
 #hero-modal .hm-filter .chip{min-height:56px;font-size:22px;padding:10px 18px;}
 #hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
@@ -2491,9 +2518,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-list button.cls-shd{border-color:rgba(120,180,255,.65);}
 #hero-modal .hm-list button.cls-ctrl{border-color:rgba(200,150,255,.65);}
 #hero-modal .hm-list button.on{border-color:rgba(100,220,100,.9);background:rgba(20,60,20,.9);box-shadow:none;}
-#hero-modal .hm-list button .hm-thumb{width:100%;height:120px;flex:0 0 auto;
-  background-repeat:no-repeat;background-size:auto 400%;background-position:center top;
-  background-color:rgba(0,0,0,.25);}
+/* ★ v1.79.0 — 縮圖由「CSS 背景 400% 統一放大裁切」改成大對抗同款寫法:<img>+object-fit:cover+
+   逐英雄 object-position(見上方 MG_THUMB_POS/mgHeroThumbY),.hm-thumb 本身只當容器(背景色墊底防
+   圖片未載入時露白,同 .bt-img 既有容器/圖片分離寫法)。 */
+#hero-modal .hm-list button .hm-thumb{width:100%;height:120px;flex:0 0 auto;position:relative;
+  overflow:hidden;background-color:rgba(0,0,0,.25);}
+#hero-modal .hm-list button .hm-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
 /* ★ v1.76.0 — 職能徽章搬到左上角(取代大對抗的稀有度徽章位置)，圖示沿用既有 mgBurstDef(cls).icon。 */
 #hero-modal .hm-list button .hm-typebadge{position:absolute;top:6px;left:6px;font-size:16px;line-height:1;
   padding:3px 6px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;z-index:2;pointer-events:none;}
@@ -2507,6 +2537,25 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .row button{flex:1;min-height:46px;}
 #r-battle{font-size:17px;line-height:1.7;margin-top:6px;}
 #r-battle b{color:var(--gold);font-weight:700;}
+
+/* ★ v1.80.0(老師回報「手機版英雄選擇視窗整個格式都錯了」附截圖,畫面看起來完全是桌機/iPad尺寸)—
+   既有手機版覆寫全部掛在 @media(orientation:landscape) and (max-height:520px),只認「螢幕高度」;
+   老師這張截圖看起來這條件在他手機上沒有命中(卡片、橫幅都還是桌機尺寸),可能是瀏覽器/機型回報的
+   landscape 高度比預期高。改用「寬度」當第二道判斷:小遊戲一律強制橫式(#rotate-overlay),真正的手機
+   橫放寬度最大約 930px(iPhone 14 Pro Max),而最小的 iPad 橫放寬度是 1024px 起跳──兩者中間有安全
+   margin,用 max-width:960px 幾乎不可能誤傷 iPad,卻能在「高度覆寫沒命中」時仍然抓到手機。
+   不依賴 orientation(強制橫式後寬本來就會大於高,不必再判斷)。 */
+@media (max-width:960px){
+  #hero-modal .hm-split{gap:10px;}
+  #hero-modal .hm-left{flex-basis:38%;gap:6px;}
+  #hero-modal .hm-list{min-height:100px;gap:6px;}
+  #hero-modal .hm-list button{width:104px;}
+  #hero-modal .hm-list button .hm-thumb{height:80px;}
+  #hero-modal .hm-list button .hm-typebadge{font-size:12px;padding:2px 4px;top:3px;left:3px;}
+  #hero-modal .hm-list button .hm-tag{display:none;}
+  #hero-modal .hm-list button .hm-name{font-size:14px;padding:4px 3px 5px;}
+  #hero-modal .hm-filter .chip{min-height:38px;font-size:15px;padding:6px 10px;}
+}
 
 /* ══════════════════════════════════════════════════════════
  *  ★ v1.45.0(2026-09-09・老師看圖三項:iPad/PC 版面修正)
@@ -3396,16 +3445,14 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div class="sec"><b>學什麼</b><span id="m-goal"></span></div>
     <div class="sec"><b>怎麼玩</b><span id="m-how"></span></div>
     <div class="sec" id="m-best-sec"><b>你的最佳成績</b><span id="m-best"></span></div>
-    <!-- ★ v1.29.0 出戰英雄(1 名):顯示目前選的英雄 + 職能 + 爆發效果;「換英雄」開 #hero-modal -->
-    <div class="sec" id="m-hero-sec"><b>出戰英雄</b>
-      <div id="m-hero">
-        <div class="bt-img"><img id="m-hero-img" src="" alt="" onerror="this.style.display='none';"></div>
-        <div class="mh-txt" id="m-hero-txt"></div>
-        <button class="btn-ghost" type="button" onclick="mgHeroOpen()">🔁 換英雄</button>
-      </div>
-    </div>
+    <!-- ★ v1.79.0(老師需求「介紹視窗最下面的出戰英雄移除，改成按下『選擇英雄開始闖關』後進到英雄選擇頁」)—
+         原本這裡先顯示「目前出戰英雄」小卡(圖片+文字+🔁換英雄鈕)，玩家常常沒注意到就直接按「開始」，
+         結果用的是自己沒特別選過的舊英雄出戰；整段移除，只留一顆主行動鈕，按下才進選角頁 #hero-modal，
+         選好、按「✓ 就是這一位」後直接關掉兩層視窗開始闖關(見下方 mgHeroConfirm 尾端新增的
+         startGame 呼叫)。原 #m-hero-sec／#m-hero 相關 CSS(#m-hero、.mh-txt 等)保留不刪,只是不再
+         被用到,mgHeroPaintModal()/mgHeroCur() 等函式維持原樣供其他地方沿用。 -->
     <div class="row">
-      <button id="m-go" onclick="mgStartFromModal()">開始</button>
+      <button id="m-go" onclick="mgHeroOpen()">🦸 選擇英雄開始闖關</button>
       <button class="btn-ghost" onclick="mgCloseInfo()">關閉</button>
     </div>
   </div>
@@ -3518,7 +3565,37 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.78.0';
+var MG_VER = 'v1.80.0';
+/* ★ v1.80.0(2026-09-11・老師手機版兩張截圖回報，並指示「手機畫面比例和iPad不同,要仔細計算」)—
+   ①【選英雄視窗手機版整個格式跑掉】既有手機版覆寫全部掛在
+   @media(orientation:landscape) and (max-height:520px)，只靠「螢幕高度」判斷是不是手機；老師截圖
+   看起來這個高度斷點在他的手機上沒有命中(卡片/橫幅都還是桌機尺寸)。本輪兩道修法：
+   (a) 把 .box/h3/.hm-banner/.hm-name/.hm-burstbox/.hm-traitbox 的字級與留白全部改成
+   clamp(vh為主,桌機值為上限)——不論任何斷點有沒有精準命中，矮螢幕都會自動按視窗高度比例縮小；
+   (b) 新增一道只看「寬度」的安全網 @media(max-width:960px)(強制橫式後，手機最寬約930px～iPad最
+   窄橫放1024px起跳，中間留足安全邊界不會誤傷 iPad)，把左側清單卡片再縮小一級(155px→104px)。
+   ②【戰鬥畫面左下英雄卡圖片太高，把爆發技能和天賦說明擠出畫面】根因＝手機橫式沿用 iPad 那條
+   aspect-ratio:3/2.8，圖片高度跟著卡片寬度走(卡片越寬圖越高)；改成跟英雄選擇頁右側橫幅
+   (hm-banner)同一種做法──不看寬度、只看螢幕高度的固定矮高度(clamp 17vh，50~90px)，裁切位置也
+   改用 hm-banner 同款的 center 20%(臉部裁切)，取代原本的 object-position:top。同上，高度斷點與
+   寬度斷點(max-width:960px)雙軌並存。
+   ⚠ 以上全部只加在既有手機/矮螢幕斷點與新增的寬度斷點內，iPad／PC 沿用的一般 landscape 規則
+   (aspect-ratio:3/2.8、固定 px 字級)一行未動,不影響已經調校過的桌機/iPad版面。 */
+/* ★ v1.79.0(2026-09-11・老師三項需求，附截圖回報)—
+   ①【選英雄視窗右側天賦被裁掉看不見】根因＝.hm-split 有 min-height:0，矮螢幕/v1.78.0 全檔字級
+   放大後內容總高度會被 flex 引擎「擠壓變矮」而非讓 .box 整體捲動，.hm-right 原本 overflow:hidden
+   就把裝不下的天賦說明直接隱形裁掉。改 .hm-right 為 overflow-y:auto(裝不下時自己可獨立捲動，保底
+   看得到)；同時 .hm-banner 高度 210px→150px、.hm-name/.hm-burstbox/.hm-traitbox 的 margin/padding
+   一併收緊，多數情況下兩張卡「同時可見」不必捲動。
+   ②【左側英雄清單縮圖比照大對抗隊伍編組頁】縮圖尺寸(155×120)本就與大對抗一致，但裁切位置一直是
+   通用的 background-size:auto 400%;background-position:center top，跟大對抗實際逐英雄裁切臉部的
+   構圖對不上。新增 MG_THUMB_POS(直接搬大對抗 hero_db.js 的 HERO_THUMB_POS + index.html
+   _teamFormAdjustObjPos() grid 分支微調值,逐一核對 64 隻小遊戲英雄算出)；.hm-thumb 由 CSS 背景改
+   <img>+object-fit:cover+逐英雄 object-position,構圖與大對抗一致。
+   ③【關卡介紹視窗移除「出戰英雄」列】原本先顯示「目前出戰英雄」小卡+「🔁 換英雄」鈕，玩家常沒
+   注意到就直接按「開始」，用了自己沒特別選過的英雄；整段移除，只留一顆「🦸 選擇英雄開始闖關」鈕，
+   按下才進選角頁，選好、按「✓ 就是這一位」後 mgHeroConfirm() 直接關掉兩層視窗並 startGame()，
+   不必再多按一次「開始」。 */
 /* ★ v1.78.0(2026-09-11・老師「大對抗的字體那麼好看，全部用來取代現在小遊戲的字體。小遊戲字體都適當放大」)—
    ①【字型】全檔預設字型由 v1.3.0 的 LXGW WenKai TC(霞鶩文楷)改回與大對抗完全一致的
    M PLUS Rounded 1c + Nunito(<head> 字型 <link> 也改回與主程式 index.html 一字不差，重新享有
@@ -4566,13 +4643,17 @@ function openInfo(x, withSfx){
     ? (b.score + ' 分 · ' + new Array(b.stars + 1).join('★') + ' · 答對率 ' + b.acc + '%'
        + ((typeof b.time === 'number' && b.time > 0) ? (' · ⏱ ' + mgFmtTime(b.time)) : ''))   /* ★ v1.4.0 */
     : '還沒有紀錄,來挑戰看看!';
-  try{ mgHeroPaintModal(); }catch(_eh){}   /* ★ v1.29.0 出戰英雄列 */
+  try{ mgHeroPaintModal(); }catch(_eh){}   /* ★ v1.29.0 出戰英雄列;★ v1.79.0 該區塊 DOM 已移除,
+     mgHeroPaintModal() 內部 $('m-hero-txt') 抓不到元素會直接 return,此行變成安全的空操作,保留不刪。 */
   $('modal').classList.add('show');
   try{ mgLangApply($('modal')); }catch(e){}   /* ★ v1.11.0 */
   if(withSfx) playSfx('sfx-tap', 0.3);
 }
 window.mgShowInfo = function(){ if(MG.cur) openInfo(MG.cur, true); };
 window.mgCloseInfo = function(){ $('modal').classList.remove('show'); };
+/* ★ v1.79.0 — 原本 #modal 的「開始」鈕呼叫這支(直接用目前選的英雄開始,不進選角頁);
+   該鈕已改名「🦸 選擇英雄開始闖關」並改呼叫 mgHeroOpen(),真正的開始邏輯搬到
+   mgHeroConfirm() 尾端(選好英雄後才觸發)。本函式目前沒有任何呼叫點,保留不刪供之後參考。 */
 window.mgStartFromModal = function(){
   $('modal').classList.remove('show');
   if(MG.pendingGame) startGame(MG.pendingGame);
@@ -7664,6 +7745,74 @@ function mgEff2Html(effStr){
   if(!effStr) return '';
   return '　　<span style="color:#ffe066;">附加:' + esc(effStr) + '</span>';
 }
+/* ★ v1.79.0(老師需求「左方英雄清單縮圖要採用大對抗隊伍編組頁的圖片,尺寸和高度都複製」)—
+   尺寸/高度(155px 寬×120px 高)v1.76.0/v1.77.0 已對齊,但縮圖裁切位置一直是通用的
+   background-size:auto 400%;background-position:center top(見下方 .hm-thumb 舊 CSS,已改),
+   跟大對抗隊伍編組頁實際用的「每隻英雄各自的臉部裁切 Y 位」完全是兩回事,構圖跟主程式對不上。
+   本表 = 直接搬大對抗 hero_db.js 的 HERO_THUMB_POS(縮圖基準 Y%)疊加 index.html
+   _teamFormAdjustObjPos() 的 grid 分支微調值(兩者加總,逐一核對 64 隻小遊戲英雄名字算出),
+   沒有對應資料的英雄維持大對抗同款預設值 50(center center)。日後主程式若調整這兩張表,
+   這裡要跟著手動同步(小遊戲是獨立 PWA,不共用主程式的 JS 全域)。 */
+var MG_THUMB_POS = {
+  '哪吒':30,
+  '孫悟空':30,
+  '關羽':30,
+  '姜子牙':30,
+  '牛魔王':30,
+  '呂布':30,
+  '蚩尤':30,
+  '諸葛亮':20,
+  '炎火超少女':30,
+  '幽魂暗狐':30,
+  '貓人族長':30,
+  '拘留者':30,
+  '科學發明家':30,
+  '電腦老師':30,
+  '魔術師':30,
+  '聖冥法師':10,
+  '大刀勇士':10,
+  '大天狗':30,
+  '酒吞童子':30,
+  '玉藻前':30,
+  '科技生化人':20,
+  '鋁合金暴龍':20,
+  '超鬼神王':30,
+  '雙星姊妹':70,
+  '暗魔將·血':30,
+  '布奶鳥獸':40,
+  '炸彈客':35,
+  '紅色玩家':30,
+  '地府酋長':12,
+  '救醫馬':25,
+  '水狐':30,
+  '米鈴':25,
+  '學霸(轉學生)':22,
+  '天神宙斯':20,
+  '維京海盜船長':30,
+  '武器精靈':30,
+  '神槍手':25,
+  '火柴人':25,
+  '青炎龍王':25,
+  '鳳凰':25,
+  '操偶師':25,
+  '菇女':25,
+  '小丑':25,
+  '美人魚‧角角':25,
+  '火爆女':30,
+  '幽幽':25,
+  '網路駭客':25,
+  '風術士':30,
+  '我的豚豚':30,
+  '雅典娜':20,
+  '阿蘇火山龍王':18,
+  '死神':25,
+  '地獄將軍':25,
+  '魔界花使‧朱玥':25,
+  '小鬼貓與兔':25,
+  '法老王':30,
+  '埃及豔后':30
+};
+function mgHeroThumbY(name){ var v = MG_THUMB_POS[name]; return (typeof v === 'number') ? v : 50; }
 function mgHeroCls(h){ var c = h && h.cls; return (c === 'heal' || c === 'shd' || c === 'atk' || c === 'ctrl') ? c : 'atk'; }
 /* 目前選的英雄:localStorage._mgHero(非關鍵資料,共用 iPad 遺失無害);沒選過或名字已不存在 ⇒ 隨機一位並記住 */
 function mgHeroCur(){
@@ -7703,7 +7852,12 @@ window.mgHeroClose = function(){ $('hero-modal').classList.remove('show'); };
 window.mgHeroConfirm = function(){
   if(_HM.sel){ mgHeroSet(_HM.sel); playSfx('sfx-ok', 0.45); }
   $('hero-modal').classList.remove('show');
-  mgHeroPaintModal();
+  /* ★ v1.79.0(老師需求「選好英雄後直接進關卡」)— #hero-modal 現在只有一個入口(#modal 的
+     「🦸 選擇英雄開始闖關」鈕),不再有其他地方會單獨打開它;原本這裡呼叫 mgHeroPaintModal()
+     回填 #modal 的「出戰英雄」小卡,該區塊已整段移除(見上方 HTML 註解),選好英雄 = 玩家已經
+     表達要出戰的意思,改為直接關掉關卡介紹視窗、啟動這一關,不必再多按一次「開始」。 */
+  $('modal').classList.remove('show');
+  if(MG.pendingGame) startGame(MG.pendingGame);
 };
 window.mgHeroFilter = function(c){ _HM.filter = (_HM.filter === c) ? '' : c; mgHeroPaintPicker(); playSfx('sfx-tap', 0.25); };
 window.mgHeroPick = function(n){ _HM.sel = n; mgHeroPaintPicker(); playSfx('sfx-sel', 0.3); };
@@ -7747,7 +7901,7 @@ function mgHeroPaintPicker(){
        同一行」改直式:縮圖滿版貼頂(.hm-thumb 撐滿卡片寬度)、名字置中貼在縮圖下方(比照
        _buildHeroPickNodes 的 .hpick-adv-node:圖在上、金色粗體名字置中在下)；cls-XX 底色與 on 選中外框
        邏輯不變。 */
-    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb" style="background-image:url(\'' + mgHeroUrl(L[i].img) + '\')"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span>' + mgTraitTagShort(L[i]) + '<span class="hm-name">' + esc(L[i].n) + '</span></button>';
+    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb"><img src="' + mgHeroUrl(L[i].img) + '" alt="" style="object-position:center ' + mgHeroThumbY(L[i].n) + '%" onerror="this.style.display=\'none\'"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span>' + mgTraitTagShort(L[i]) + '<span class="hm-name">' + esc(L[i].n) + '</span></button>';
   }
   $('hm-list').innerHTML = html;
 }
