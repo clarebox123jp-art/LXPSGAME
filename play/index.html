@@ -1,18 +1,21 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<title>小英雄小遊戲 — 小學堂</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- ★ v1.3.0(2026-09-05・老師需求「迷你遊戲頁新增獨立網址,玩家不用登入就能直接遊玩」)
-     這是短網址轉址頁:https://clarebox123jp-art.github.io/LXPSGAME/play/ → ../minigame/
-     ⚠ 小遊戲本體仍在 minigame/(自己的 manifest／SW),這裡只做轉址,不放任何遊戲程式。
-     ⚠ 用 <meta refresh> + JS 雙保險:舊 iPad 關 JS 也會轉。 -->
-<meta http-equiv="refresh" content="0; url=../minigame/">
-<style>body{margin:0;background:#08090d;color:#e8e4d8;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;font-size:20px}a{color:#f0c060}</style>
+<title>小英雄小遊戲 — 小學堂</title>
+<!-- ★ v1.0.1（2026-09-10・老師回報「複製小遊戲網址有錯誤 404」）—
+     根因：v5.157.0 把小遊戲檔名正式改為 minigame_index.html / minigame_sw.js
+     （避免跟主程式自己的 index.html/sw.js 混淆），資料夾裡不再有預設的
+     index.html 可被 GitHub Pages 自動抓；本頁原本的轉址目標是資料夾根目錄
+     .../LXPSGAME/minigame/（依賴預設 index.html），改名後這個網址本身就是
+     404，短網址 https://clarebox123jp-art.github.io/LXPSGAME/play/ 因此
+     失效。修法：轉址目標改成明確指向 minigame_index.html，與首頁「🎮 迷你
+     遊戲模式」入口（v5.157.0 已修過的同一條路徑）對齊。 -->
+<meta http-equiv="refresh" content="0; url=https://clarebox123jp-art.github.io/LXPSGAME/minigame/minigame_index.html">
+<script>location.replace('https://clarebox123jp-art.github.io/LXPSGAME/minigame/minigame_index.html');</script>
 </head>
 <body>
-<p>正在前往小學堂… <a href="../minigame/">如果沒有自動跳轉,請點這裡</a></p>
-<script>try{location.replace('../minigame/');}catch(e){}</script>
+正在前往小學堂… <a href="https://clarebox123jp-art.github.io/LXPSGAME/minigame/minigame_index.html">如果沒有自動跳轉，請點這裡</a>
 </body>
 </html>
