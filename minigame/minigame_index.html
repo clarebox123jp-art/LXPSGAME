@@ -15,7 +15,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.73.0(2026-09-10)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.74.0(2026-09-10)
+     ★ v1.74.0(2026-09-10・老師兩項需求)—
+       ①【戰鬥勝利評分視窗移除發光GIF特效】#r-glow 原本在星星彈出時墊一張會後製發光的 gif 在分數後面
+         (finishGame 尾端 src+'.on' class 觸發);本輪直接不再觸發(元素與 CSS 動畫保留不刪,舊三行
+         整段註解備查,之後要恢復解開註解即可)。
+       ②【台灣地圖挑戰關:放大後點答案自動縮回原尺寸】v1.72.0 新增的地圖放大/縮小功能,放大後常把
+         玩家的捲動位置留在畫面中下段;答完一題若不縮回,下一題文字出現在頂端反而被擋住看不到。修法:
+         mgAnswerMap() 判定答對答錯當下(MG.answered=true 那一刻)立刻把 MG_MAP_ZOOM 歸零並移除
+         #mapbox 的 .zoomed class,不必等下一題 renderMap 重繪才生效——點下答案的瞬間地圖就縮回原尺寸
+         與捲動位置,下一題保證從最上緣看起。
      ★ v1.73.0(2026-09-10・老師需求「英雄選擇視窗版面修改，分成左右兩個區域」)—
        ①【右半部】比照大對抗隊伍編成頁左側(showHeroPreview)的完整格式與字體框架重製:原本擠成一列的
          小縮圖+文字說明(.hm-top/.hm-desc)整段拆成 .hm-right 預覽卡——頂部滿版橫幅圖(.hm-banner,
@@ -3476,7 +3485,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.73.0';
+var MG_VER = 'v1.74.0';
 /* ★ v1.71.0(2026-09-10・老師兩項需求)—
    ①【登入後大對抗與小遊戲自由進出、不必重登】根治兩個獨立根因:
      (a) 小遊戲原本用具名 Firebase app 'minigame' + SESSION 持久化,登入狀態的儲存鍵
@@ -6919,6 +6928,14 @@ window.mgAnswerMap = function(spotId){
   var q = MG.order[MG.idx];
   var correct = (spotId === q.a);
   MG.answered = true; stopTimer();
+  /* ★ v1.74.0(老師需求「台灣地圖挑戰關放大地圖後,點擊答案後自動縮回原尺寸,避免因為放大拉到下面去
+     看不到頂端新的題目」)— 答題當下立刻復原:MG_MAP_ZOOM 狀態歸零 + 移除 #mapbox 的 .zoomed class,
+     不必等到下一題 renderMap 重繪才生效;玩家點下答案的瞬間地圖就縮回原尺寸與捲動位置,下一題出現時
+     保證從最上緣看起,不會被剛才放大時的捲動位置擋住。 */
+  if(MG_MAP_ZOOM){
+    MG_MAP_ZOOM = false;
+    var _mzb = $('mapbox'); if(_mzb) _mzb.classList.remove('zoomed');
+  }
   var el = $('sp-' + spotId);
   if(el) el.setAttribute('class', 'spot ' + (correct ? 'ok' : 'ng'));
   if(!correct){
@@ -7205,12 +7222,16 @@ function finishGame(){
   if(!_lost && stars === _maxStars){   /* ★ v1.29.0 滿星(戰鬥模式 5 星)才鼓掌;★ v1.65.0 戰敗不鼓掌 */
     setTimeout(function(){ var c = mgCenterOf('r-trophy'); mgFx('clap', c.x, c.y + 40, 260, 1800); playSfx('sfx-clap', 0.45); }, 1600);
   }
-  var _gl = $('r-glow');
-  if(_gl){
-    _gl.classList.remove('on');
-    _gl.src = MG_FX.glow + '?v=' + MG_VER + '&t=' + Date.now();
-    setTimeout(function(){ _gl.classList.add('on'); }, 250);
-  }
+  /* ★ v1.74.0(老師需求「小遊戲戰鬥勝利評分視窗的發光GIF特效移除」)— #r-glow 原本在星星彈出時墊一張
+     會後製發光的 gif 在分數後面;本輪直接不再觸發(class 'on' 永不加上,.r-glow 預設 opacity:0 天生
+     不會顯示),元素與 CSS 動畫保留不刪,之後要恢復只要把下面三行解註解即可。 */
+  // 舊行備查：
+  // var _gl = $('r-glow');
+  // if(_gl){
+  //   _gl.classList.remove('on');
+  //   _gl.src = MG_FX.glow + '?v=' + MG_VER + '&t=' + Date.now();
+  //   setTimeout(function(){ _gl.classList.add('on'); }, 250);
+  // }
   $('r-score').textContent = MG.score + ' 分';
   $('r-detail').textContent = '答對 ' + _rightShown + ' / ' + total
                             + ' 題(' + acc + '%) · 最高連擊 ' + MG.maxCombo;   /* ★ v1.29.0 戰鬥模式:答對數/事件數(KO 提前結束) */
