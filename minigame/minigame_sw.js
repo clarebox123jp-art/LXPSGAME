@@ -104,8 +104,8 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.55.0';
-var SHELL = 'lxps-mini-shell-v1.55.0';
+var MINI_VERSION = 'v1.56.0';
+var SHELL = 'lxps-mini-shell-v1.56.0';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [

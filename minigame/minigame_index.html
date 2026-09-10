@@ -3123,7 +3123,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.65.5';
+var MG_VER = 'v1.66.0';
 
 /* ══════════════════════════════════════════════════════════
  *  測試期閘門(老師 2026-09-04 裁定「丙」:小遊戲暫時只給 GM 測試)
@@ -8467,6 +8467,12 @@ window.mgLoginTap = function(){
   if(MG.user){
     if(confirm('要登出嗎?登出後成績就不會存到雲端。')){
       if(MG.fb) MG.fb.auth.signOut();
+      /* ★ v1.66.0 — 手動登出清共用登入戳記，不留給下一位共用裝置的同學撿到 */
+      try{
+        localStorage.removeItem('lxps_shared_login_ts');
+        localStorage.removeItem('lxps_shared_login_uid');
+        localStorage.removeItem('lxps_shared_login_email');
+      }catch(_){}
     }
     return;
   }
@@ -8475,7 +8481,16 @@ window.mgLoginTap = function(){
   ensureFirebase().then(function(fb){
     mgLoading(false);
     var prov = new window.firebase.auth.GoogleAuthProvider();
-    prov.setCustomParameters({ prompt: 'select_account' });
+    /* ★ v1.66.0(老師需求「大對抗和小遊戲登入任一邊，30分鐘內都不用再重新登入」)—
+       同源共用 localStorage 讀大對抗那邊 30 分鐘內的登入戳記，帶 login_hint 幫忙把游標
+       對準同一個帳號(Google 仍會問、該輸密碼還是要輸)，不是跳過驗證的後門。 */
+    var _params = { prompt: 'select_account' };
+    try{
+      var _ts = parseInt(localStorage.getItem('lxps_shared_login_ts') || '0', 10);
+      var _email = localStorage.getItem('lxps_shared_login_email') || '';
+      if(_email && _ts && (Date.now() - _ts) < 30 * 60 * 1000) _params.login_hint = _email;
+    }catch(_){}
+    prov.setCustomParameters(_params);
     return fb.auth.signInWithPopup(prov)['catch'](function(err){
       // iPad standalone 常擋 popup ⇒ 退回 redirect
       return fb.auth.signInWithRedirect(prov);
@@ -8501,6 +8516,12 @@ function onUser(u){
   if(u){
     btn.textContent = '登出';
     who.textContent = (u.displayName || u.email || '已登入');
+    /* ★ v1.66.0 — 寫共用登入戳記，供大對抗那邊 30 分鐘內快速帶入 login_hint */
+    try{
+      localStorage.setItem('lxps_shared_login_ts', String(Date.now()));
+      localStorage.setItem('lxps_shared_login_uid', u.uid || '');
+      localStorage.setItem('lxps_shared_login_email', u.email || '');
+    }catch(_){}
     loadCloud();
     mgLoadUnlockedHeroes();   /* ★ v1.31.0 — 唯讀 players/{uid}.unlockedHeroes,決定戰鬥模式選角範圍 */
     /* ★ v1.10.0 週排行榜:重抓週文件同步「我本週各遊戲最高分」;老師登入順便建檔 */
@@ -9201,6 +9222,16 @@ function boot(){
     return;
   }
   MG.games = window.MG_GAMES;
+  /* ★ v1.66.0(老師需求「30分鐘內共用登入」)— 開機時若偵測到大對抗那邊 30 分鐘內的
+     新鮮登入戳記，登入鈕文字提示一下，點下去會自動帶 login_hint(見 mgLoginTap)。 */
+  try{
+    var _sTs = parseInt(localStorage.getItem('lxps_shared_login_ts') || '0', 10);
+    var _sEmail = localStorage.getItem('lxps_shared_login_email') || '';
+    if(!MG.user && _sEmail && _sTs && (Date.now() - _sTs) < 30 * 60 * 1000){
+      var _lb = document.getElementById('login-btn');
+      if(_lb){ _lb.textContent = '✅ 繼續登入'; _lb.title = '剛才在大對抗用過「' + _sEmail + '」，點一下快速繼續'; }
+    }
+  }catch(_esl){}
   renderGrid();
   mgCfgLoad();   /* ★ v1.3.0 各關開／關設定(快取先畫、雲端到了重畫) */
   /* ★ v1.1.0 — 測試期閘門:非管理員停在預告頁(單一收口點 applyGate) */
