@@ -2151,9 +2151,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .bt-chgrow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;min-height:16px;}
 .bt-top{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;}
 .bt-top .bt-burst{flex:1 1 auto;min-height:34px;}
-.bt-charge{letter-spacing:2px;color:var(--gold);font-size:13px;white-space:nowrap;flex:0 0 auto;}
+/* ★ v1.69.0(老師需求「五顆充能槽移到爆發技能按鈕內部靠底線,縮短戰鬥角色卡整體長度」)—
+   根因:v1.45.0 曾把 .bt-charge 從「跟鈕並排」改成 .bt-top flex-wrap 各佔滿一整行(鈕一行、
+   充能點另佔一行),卡片因此多出一整行高度。本輪把 .bt-charge 搬進 .bt-burst 按鈕內部
+   (HTML 改為按鈕的子元素而非 .bt-top 的手足),改用 position:absolute 貼在按鈕底邊,
+   不再佔用文件流高度 ⇒ .bt-top 只剩爆發鈕一個元素,整張卡片自然變矮;.bt-burst 需要
+   position:relative 當定位基準,並在下緣留一點 padding 讓充能點不會蓋住招式名稱文字。 */
+.bt-charge{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);letter-spacing:2px;color:var(--gold);font-size:9px;white-space:nowrap;line-height:1;pointer-events:none;}
 .bt-star{display:block;text-align:center;font-size:10.5px;letter-spacing:.2px;color:var(--gold);opacity:.85;margin-top:-2px;}
-.bt-burst{min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:14px;font-weight:700;padding:4px 10px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
+.bt-burst{position:relative;min-height:40px;border-radius:10px;border:2px solid rgba(232,228,216,.25);background:rgba(255,255,255,.06);color:var(--mist);font-size:14px;font-weight:700;padding:4px 10px 13px;display:flex;align-items:center;justify-content:center;gap:6px;opacity:.55;cursor:default;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;width:100%;}
 .bt-burst.ready{opacity:1;cursor:pointer;border:none;background:linear-gradient(90deg,#ff8a00,#ffb238 50%,#ff8a00);background-size:200% 100%;color:#2b1400;font-size:16px;font-weight:900;letter-spacing:1px;text-shadow:0 1px 2px rgba(255,255,255,.35);box-shadow:0 0 16px rgba(255,140,0,.7);animation:btpulse 1.1s ease-in-out infinite;}
 @keyframes btpulse{0%,100%{box-shadow:0 0 10px rgba(255,140,0,.55);background-position:0% 0;}50%{box-shadow:0 0 26px rgba(255,180,60,1);background-position:100% 0;}}
 .bt-burst .bt-bname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2292,8 +2298,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (orientation:landscape) and (max-height:520px){
   #page-play > #mgbattle{margin-top:6px;}
   #page-play > #mgbattle .bt-name{font-size:15px;} #page-play > #mgbattle .bt-burst{min-height:32px;font-size:12px;}
-  #page-play > #mgbattle .bt-top .bt-burst{min-height:26px;}   /* ★ v1.43.0 — 矮螢幕下頭頂列進一步縮小,不吃掉太多垂直空間 */
-  #page-play > #mgbattle .bt-charge{font-size:11px;}
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;padding-bottom:11px;}   /* ★ v1.43.0 — 矮螢幕下頭頂列進一步縮小,不吃掉太多垂直空間;★ v1.69.0 微加高+留底部空間,避免貼底充能點蓋住招式名稱文字 */
+  #page-play > #mgbattle .bt-charge{font-size:8px;bottom:1px;}
   #page-play > #mgbattle .bt-card{padding:5px;gap:5px;} #page-play > #mgbattle .bt-hpbar{height:16px;} #page-play > #mgbattle .bt-hpn{line-height:16px;font-size:11px;}
   #page-play > #mgbattle .bt-eff{font-size:10.5px;}
 }
@@ -2305,7 +2311,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #m-hero button{min-height:40px;font-size:14px;padding:6px 12px;flex:0 0 auto;}
 #hero-modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(5,15,11,.86);z-index:111;display:none;align-items:center;justify-content:center;padding:14px;}
 #hero-modal.show{display:flex;}
-#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1020px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;}
+#hero-modal .box{background:var(--ink2);border:2px solid rgba(240,192,96,.55);border-radius:20px;padding:22px;max-width:1020px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+/* ★ v1.68.0(老師回報「手機版選英雄的視窗還是無法捲動、選不到別的英雄」)— 根因:.box 本身完全沒有
+   overflow 設定(預設 visible),當立繪(170px)+說明文字+篩選鈕列+英雄清單+底部按鈕列 加總高度超過
+   max-height:90vh 時,瀏覽器不會讓 .box 變高,超出的內容就直接畫到 .box 邊框外面、視覺上被裁在螢幕
+   看不到的地方——.hm-list 自己雖然有 overflow-y:auto,但如果它本身已經被擠到可視範圍之外,手指根本碰
+   不到它去觸發那段內部捲動,摸到的是 .box 之外「什麼都不會動」的空白,誤以為整個視窗都不能捲。
+   修法:.box 本身也開 overflow-y:auto,不論螢幕多矮,只要內容加總超出 max-height,整個 .box(含立繪、
+   篩選鈕、英雄清單)都能一起被手指捲上捲下,保證英雄清單永遠捲得到、選得到,不再依賴精算各斷點的
+   vh 尺寸「剛好塞得下」。.hm-list 自己的 overflow-y:auto 保留(桌面/大螢幕下清單本身仍可獨立捲動)。 */
 #hero-modal h3{margin:0;font-size:27px;color:var(--gold);}
 #hero-modal .hm-top{display:flex;gap:16px;align-items:center;}
 #hero-modal .hm-top .bt-img{width:170px;height:170px;flex-basis:170px;}
@@ -2327,6 +2341,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-list button.cls-shd{background:rgba(30,90,190,.62);border-color:rgba(140,200,255,.4);color:#ffe066;}
 #hero-modal .hm-list button.cls-ctrl{background:rgba(110,50,190,.62);border-color:rgba(210,170,255,.4);color:#ffe066;}
 #hero-modal .hm-list button.on{border-color:var(--gold);box-shadow:0 0 0 2px rgba(240,192,96,.55) inset;}
+/* ★ v1.68.0(老師需求「選英雄清單新增縮圖,只保留臉部高度約25%,貼在名字旁邊」)— 清單按鈕原本純文字(職能只靠
+   底色區分),改為 flex 排列:左側一顆小縮圖 + 右側名字。縮圖不是整張立繪等比縮小(那樣臉只佔一丁點、認不出是
+   誰),而是用 background-image + background-size:auto 400% 把圖「放大 4 倍」再貼齊頂端(background-position:
+   center top)——效果等同只裁出原圖最上面 25% 高度(臉部一帶)去填滿這顆小方框,一眼就認得出英雄長相。
+   button 本身改 flex 顯示、文字不再吃滿整行,縮圖 flex-shrink:0 不被文字擠壓;圖片路徑缺檔時 background
+   本就不顯示,不影響按鈕本身可點擊/可讀名字,零風險退回純文字外觀。 */
+#hero-modal .hm-list button{display:flex;align-items:center;gap:8px;white-space:normal;}
+#hero-modal .hm-list button .hm-thumb{width:34px;height:34px;flex:0 0 auto;border-radius:7px;background-repeat:no-repeat;background-size:auto 400%;background-position:center top;background-color:rgba(0,0,0,.25);box-shadow:0 0 0 1px rgba(255,255,255,.25) inset;}
+#hero-modal .hm-list button .hm-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* ★ v1.56.0 — 描述區的「極限爆發」招式名 + 技能效果說明,改用中圓體字家族(比照戰鬥卡 v1.50.0 同款字型),
    並依英雄職能上色(沿用 .bt-cls.cls-* 既有配色),讓玩家一眼分辨「這是哪型英雄的爆發說明」。 */
 #hero-modal .hm-top .hm-desc .hm-burst{font-family:'M PLUS Rounded 1c','Nunito','PingFang TC','Heiti TC','Microsoft JhengHei','Noto Sans TC',sans-serif;font-weight:400;}
@@ -2395,16 +2418,18 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .oslot{min-height:90px;font-size:20px;}
 }
 
-/* ── ②-B【英雄卡頭頂:爆發鈕與計量槽分成兩行·爆發字放大】
-      舊 .bt-top 是「鈕 + 充能點」同一列並排,鈕被壓窄、字只好縮小。
-      改為 flex-wrap 強制各佔滿整行:第一行=爆發技能鈕(字放大)、第二行=充能計量槽(置中)。 ── */
-.bt-top{flex-wrap:wrap;row-gap:4px;}
+/* ── ②-B【英雄卡頭頂:爆發鈕】
+      ★ v1.69.0 更新:充能點已於 v1.69.0 搬進按鈕內部(.bt-burst .bt-charge,絕對定位貼底),
+      不再需要 flex-wrap 把鈕跟充能點拆成兩行——現在 .bt-top 底下只剩爆發鈕一個元素,
+      單純讓它撐滿整行、字放大即可;舊 .bt-top .bt-charge 選擇器留著純粹相容(目前已無
+      元素會命中,DOM 裡的 .bt-charge 现在是 .bt-burst 的子元素,交由下面新規則接手)。 ── */
 .bt-top .bt-burst{flex:0 0 100%;min-height:42px;font-size:16px;}
 .bt-top .bt-charge{flex:0 0 100%;text-align:center;font-size:16px;letter-spacing:3px;}
 .bt-burst .bt-bname{font-size:1em;}
+.bt-burst .bt-charge{font-size:11px;}
 @media (min-width:1024px) and (orientation:landscape){
   #page-play > #mgbattle .bt-top .bt-burst{min-height:48px;font-size:18px;}
-  #page-play > #mgbattle .bt-top .bt-charge{font-size:18px;}
+  #page-play > #mgbattle .bt-burst .bt-charge{font-size:14px;bottom:3px;}
   #page-play > #mgbattle .bt-burst.ready{font-size:20px;}
   #page-play > #mgbattle .bt-name{font-size:19px;}
   #page-play > #mgbattle .bt-hpbar{height:26px;}
@@ -2566,11 +2591,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 }
 
 /* ── ④【手機橫式・英雄戰鬥卡】v1.45.0 把爆發鈕與計量槽拆成兩行(老師需求),
-      在手機的矮螢幕上要同步壓縮,否則多出來的那一行會把立繪擠沒。 ── */
+      在手機的矮螢幕上要同步壓縮,否則多出來的那一行會把立繪擠沒。
+      ★ v1.69.0:充能點已搬進按鈕內部貼底(不再佔獨立一行),.bt-top .bt-charge 選擇器
+      不會再命中任何元素,改用 .bt-burst .bt-charge;.bt-burst 的 padding 補回底部留白,
+      避免貼底充能點蓋住招式名稱文字。 ── */
 @media (orientation:landscape) and (max-height:520px){
-  #page-play > #mgbattle .bt-top{row-gap:2px;}
-  #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;font-size:12px;padding:2px 6px;}
-  #page-play > #mgbattle .bt-top .bt-charge{font-size:12px;letter-spacing:2px;}
+  #page-play > #mgbattle .bt-top .bt-burst{min-height:30px;font-size:12px;padding:2px 6px 10px;}
+  #page-play > #mgbattle .bt-burst .bt-charge{font-size:8px;bottom:1px;letter-spacing:1px;}
   #page-play > #mgbattle .bt-star{font-size:9px;}
   #page-play > #mgbattle .bt-eff{font-size:10px;line-height:1.35;}
   #page-play > #mgbattle .bt-name{font-size:13px;}
@@ -2600,6 +2627,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #intro-modal .bubble{font-size:14px;line-height:1.6;}
   #hero-modal .hm-list{height:min(42dvh,300px);min-height:150px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;}
   #hero-modal .hm-list button{min-height:44px;font-size:13px;padding:8px 10px;}
+  #hero-modal .hm-list button .hm-thumb{width:26px;height:26px;}
+  #hero-modal .hm-top .bt-img{width:64px;height:64px;flex-basis:64px;}
+  #hero-modal .hm-top .hm-desc{font-size:13px;}
+  #hero-modal .hm-top .hm-desc b{font-size:16px;}
+  #hero-modal .hm-filter .chip{min-height:36px;font-size:13px;padding:6px 10px;}
   #mg-vol-panel{top:46px;right:10px;width:min(74vw,260px);padding:10px 12px;}
   #mg-vol-panel .mvp-head b{font-size:16px;}
   #mg-vol-panel .mvp-row{font-size:14px;}
@@ -2860,14 +2892,14 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="mgbattle" class="hidden">
       <div class="bt-frz" id="bt-frz">❄ 計時暫停</div>
       <div class="bt-card p" id="bt-p">
-        <div class="bt-top"><button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-bname" id="bt-p-bn"></span></button><span class="bt-charge" id="bt-p-ch"></span></div>
+        <div class="bt-top"><button class="bt-burst" id="bt-p-burst" type="button" onclick="mgBattleBurst()" title="極限爆發"><span class="bt-bname" id="bt-p-bn"></span><span class="bt-charge" id="bt-p-ch"></span></button></div>
         <div class="bt-img" id="bt-p-imgw" onclick="mgStatusPopupToggle('p')"><img id="bt-p-img" src="" alt="" onerror="this.style.display='none';"><div class="bt-pop" id="bt-p-pop"></div></div>
         <div class="bt-info">
           <div class="bt-name" id="bt-p-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-p-hp"></div><span class="bt-hpn" id="bt-p-hpn"></span></div>
           <span class="bt-star" id="bt-p-st"></span>
-          <div class="bt-sh" id="bt-p-sh"></div>
           <div class="bt-eff" id="bt-p-eff"></div>
+          <div class="bt-sh" id="bt-p-sh"></div>
         </div>
       </div>
       <div class="bt-vs">VS</div>
@@ -2877,14 +2909,14 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
              這裡是「還沒到,但快到了」的預告:HP 落在 100~120(50%~60%)區間、且對手全場還沒放過爆發,
              就亮起這顆小標籤,讓玩家提早知道對手快要暴走、可以先有心理準備。CSS/JS 見 mgBattleNpcWarnPaint。 -->
         <div class="bt-warn" id="bt-n-warn">⚠ 即將爆發</div>
-        <div class="bt-top"><div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span></div><span class="bt-charge" id="bt-n-ch"></span></div>
+        <div class="bt-top"><div class="bt-burst" id="bt-n-burst"><span class="bt-bname" id="bt-n-bn"></span><span class="bt-charge" id="bt-n-ch"></span></div></div>
         <div class="bt-img" id="bt-n-imgw" onclick="mgStatusPopupToggle('n')"><img id="bt-n-img" src="" alt="" onerror="this.style.display='none';"><div class="bt-pop" id="bt-n-pop"></div></div>
         <div class="bt-info">
           <div class="bt-name" id="bt-n-name"></div>
           <div class="bt-hpbar"><div class="bt-hp" id="bt-n-hp"></div><span class="bt-hpn" id="bt-n-hpn"></span></div>
           <span class="bt-star" id="bt-n-st"></span>
-          <div class="bt-sh" id="bt-n-sh"></div>
           <div class="bt-eff" id="bt-n-eff"></div>
+          <div class="bt-sh" id="bt-n-sh"></div>
         </div>
       </div>
     </div>
@@ -3126,7 +3158,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.67.0';
+var MG_VER = 'v1.69.0';
 /* ★ v1.67.0(2026-09-10・老師需求「迷宮探險又變得太簡單了,幾乎只有一條路」)—
    根因:mgMazeGenRandom 只算出「一條主線+陷阱死巷」,其餘全部是牆,地圖上真的就只有
    一條路可走,走法隨機化再多次也還是「唯一直線+幾條死巷」的觀感。本輪三項改動:
@@ -7129,7 +7161,10 @@ function mgHeroPaintPicker(){
   for(i = 0; i < L.length; i++){
     if(_HM.filter && mgHeroCls(L[i]) !== _HM.filter) continue;
     /* ★ v1.56.0(老師需求「攻擊/回復/護盾/控場四型用不同底色+黃字區分英雄名字」)— cls-XX 決定底色(見上方 CSS),on 疊加金色外框表示目前選中 */
-    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')">' + mgBurstDef(mgHeroCls(L[i])).icon + ' ' + esc(L[i].n) + '</button>';
+    /* ★ v1.68.0(老師需求「選英雄清單新增縮圖,只保留臉部高度約25%」)— .hm-thumb 用 background-image
+       (background-size:auto 400% + position:center top,見上方 CSS 註解)只露出立繪最上面約 25% 高度
+       (臉部一帶),讓玩家滑清單時光看小縮圖就認得出英雄,不必逐一點開才知道長相。 */
+    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb" style="background-image:url(\'' + mgHeroUrl(L[i].img) + '\')"></span><span class="hm-name">' + mgBurstDef(mgHeroCls(L[i])).icon + ' ' + esc(L[i].n) + '</span></button>';
   }
   $('hm-list').innerHTML = html;
 }
@@ -8038,7 +8073,7 @@ function mgM3FindMatches(g){
   }
   return matches;
 }
-function mgM3DmgForSize(n){ if(n >= 5) return 15; if(n === 4) return 12; return 10; }   /* ★ 老師裁定數值:3顆10/4顆12/5顆(含以上)15 */
+function mgM3DmgForSize(n){ if(n >= 5) return 10; if(n === 4) return 7; return 5; }   /* ★ v1.69.0 老師裁定新數值(降為約舊值 50%):3顆5/4顆7/5顆(含以上)10 */
 /* ★ v1.44.0(老師回報「拖曳寶石時會來回快速移動、無法就定位導致交換失敗」)—
    `to` = 手指移進去的那一格(交換後「被拖曳的寶石」會停在這裡)，`from` = 手指原本所在那一格。
    animSwap 額外記下 top 是哪一格，讓 mgM3AnimateSwap 把被拖曳的那顆疊在上層。
@@ -8246,7 +8281,14 @@ function mgM3Resolve(){
     var matches = mgM3FindMatches(_M3.grid);
     if(!matches.length){ mgM3FinishTurn(anyMatch, totalDmg); return; }
     anyMatch = true;
-    var mult = 1 + Math.min(comboLevel, 10) * 0.1, waveDmg = 0, i;
+    /* ★ v1.69.0(老師回報「確定有四五連消combo但結算畫面最高連擊是0」)— 根因:結算畫面「最高連擊」
+       文字讀的是 MG.maxCombo(#6817),但這個變數只有在一般問答型小遊戲的 scoreIt() 連續答對邏輯裡
+       才會更新(#6587),消消樂走的是完全獨立的 comboLevel 連鎖計數(補齊後又消除才 +1),從頭到尾沒有
+       任何一行寫回 MG.maxCombo ⇒ 不管消消樂裡連了幾段 combo,結算畫面永遠讀到初始值 0。
+       修法:每一波消除都把「這一波是第幾段 combo」(comboLevel+1,跟畫面飄字 Combo ×N 同一個數字)
+       拿去更新 MG.maxCombo,取全場最大值即可,不需要遞減或歸零(maxCombo 本來就是「全場最高紀錄」語意)。 */
+    if(comboLevel + 1 > MG.maxCombo) MG.maxCombo = comboLevel + 1;
+    var mult = 1 + Math.min(comboLevel, 5) * 0.2, waveDmg = 0, i;   /* ★ v1.69.0 老師裁定:combo 每段 +20%,最高 5 段 +100%(原每段 +10%、上限 10 段 +100%) */
     for(i = 0; i < matches.length; i++) waveDmg += mgM3DmgForSize(matches[i].size);
     waveDmg = Math.round(waveDmg * mult);
     totalDmg += waveDmg;
