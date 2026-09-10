@@ -2450,10 +2450,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-burstbox .hb-tag{font-size:14px;color:#ffcc00;letter-spacing:2px;}
 #hero-modal .hm-burstbox .hb-name{font-size:23px;font-weight:700;color:#ffe066;margin:3px 0;}
 #hero-modal .hm-burstbox .hb-desc{font-size:17px;color:#ffe8a0;line-height:1.55;}
-/* 天賦(被動)預留卡(比照 showHeroPreview「天賦」金框卡框架,內容之後設計時再填入) */
+/* 天賦(被動)卡:預設(dashed,還沒有內容或引擎尚未串接的3型)沿用舊版「之後設計」外觀；
+   ★ v1.75.0 — 新增 .filled(已有天賦內容且引擎已生效的56隻)比照 .hm-burstbox 實色卡片,改用青色系與「⚡爆發」的橘黃色區分。 */
 #hero-modal .hm-traitbox{margin:8px 20px 16px;padding:10px 14px;border-radius:10px;
   background:linear-gradient(135deg,rgba(255,200,30,.08),rgba(255,150,0,.04));border:1.5px dashed rgba(255,200,30,.35);
   color:rgba(255,240,200,.45);font-size:15px;text-align:center;}
+#hero-modal .hm-traitbox.filled{background:linear-gradient(135deg,rgba(60,220,255,.14),rgba(30,140,255,.07));
+  border:1.5px solid rgba(126,232,250,.55);color:inherit;text-align:left;}
+#hero-modal .hm-traitbox .hb-tag{font-size:14px;color:#7ee8fa;letter-spacing:2px;}
+#hero-modal .hm-traitbox .hb-desc{font-size:16px;color:#d6f7ff;line-height:1.5;}
 #hero-modal .hm-filter{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap;}
 #hero-modal .hm-filter .chip{min-height:56px;font-size:19px;padding:10px 18px;}
 #hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
@@ -2463,30 +2468,33 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    改成固定高度(不隨內容増減),box 尺寸永遠不變,篩選只換裡面捲動內容,不會再帶動整個視窗跳動。
    ★ v1.72.0 — 現在嵌在 .hm-left 直向欄位內,改用 flex:1 1 auto 吃滿左欄剩餘高度(左欄本身由
    .hm-split 的 align-items:stretch 撐到與右欄等高),不再需要自己算 vh 固定值。 */
+/* ★ v1.76.0(老師需求「小遊戲英雄卡片字體都用大對抗裡的卡牌字體，大又清楚；左邊選單排版完全比照大對抗
+   隊伍編成頁（_buildHeroPickNodes 的 .hpick-adv-node），內容改成只有小遊戲中有的」)—
+   整段改為 flex-wrap + 固定 155px 卡片(不再用 CSS Grid 的 auto-fill 欄寬,避免欄寬計算在部分視窗尺寸下
+   誤判成單欄或極窄欄，這正是老師截圖回報「全部壓成一條線看不出名字和圖片」的根因)：
+   縮圖 120px(與大對抗一致，原 90px 太小)+ 姓名 18px 金字(#ffe8a0，原 16px)，深色底(rgba(10,12,25,.92))
+   + 邊框色分職能(取代原本整塊上底色，比照大對抗用邊框/發光區分稀有度的做法)。 */
 #hero-modal .hm-list{flex:1 1 auto;height:auto;min-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:2px;align-content:start;}
-/* ★ v1.72.0(老師需求「左半部縮圖和名稱比照大對抗隊伍編成頁左側格式」)— 按鈕由「橫式:小縮圖+名字同一
-   行」改直式卡片(比照 _buildHeroPickNodes 的 .hpick-adv-node:縮圖滿版貼頂、名字置中貼在下方),
-   font-size/padding/文字截斷等由下面 .hm-thumb/.hm-name 兩個子元素各自負責。 */
-#hero-modal .hm-list button{min-height:0;font-size:16px;padding:0;background:rgba(255,255,255,.06);
-  border:2px solid rgba(232,228,216,.2);color:var(--mist);border-radius:12px;font-family:inherit;
+  display:flex;flex-wrap:wrap;gap:14px;padding:4px;align-content:flex-start;}
+#hero-modal .hm-list button{min-height:0;padding:0;background:rgba(10,12,25,.92);
+  border:2.5px solid rgba(212,168,67,.4);color:var(--mist);border-radius:14px;font-family:inherit;
   text-align:center;white-space:normal;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-  display:flex;flex-direction:column;align-items:stretch;gap:0;}
-/* ★ v1.56.0(老師需求「選角視窗四型底色區分」)— 英雄名字按鈕依職能上底色+黃字,選中時額外套金色外框(不搶底色)。
-   顏色刻意選飽和度較低的底色(而非純紅/純綠等刺眼色)搭配亮黃字,兼顧可讀性與 iPad 螢幕辨識度。 */
-#hero-modal .hm-list button.cls-atk{background:rgba(196,42,42,.62);border-color:rgba(255,150,120,.4);color:#ffe066;}
-#hero-modal .hm-list button.cls-heal{background:rgba(30,140,70,.62);border-color:rgba(140,255,180,.4);color:#ffe066;}
-#hero-modal .hm-list button.cls-shd{background:rgba(30,90,190,.62);border-color:rgba(140,200,255,.4);color:#ffe066;}
-#hero-modal .hm-list button.cls-ctrl{background:rgba(110,50,190,.62);border-color:rgba(210,170,255,.4);color:#ffe066;}
-#hero-modal .hm-list button.on{border-color:var(--gold);box-shadow:0 0 0 2px rgba(240,192,96,.55) inset;}
-/* ★ v1.72.0 — 縮圖滿版貼在卡片頂端(寬度=卡片寬,固定高度),沿用既有 background-image+
-   background-size:auto 400%+position:center top「只裁臉部上緣」技巧,只是畫布從一顆小方框放大成
-   一整條橫幅,比照 _buildHeroPickNodes 的立繪縮圖比例更好辨識。 */
-#hero-modal .hm-list button .hm-thumb{width:100%;height:90px;flex:0 0 auto;border-radius:10px 10px 0 0;
+  display:flex;flex-direction:column;align-items:stretch;gap:0;width:155px;flex-shrink:0;position:relative;
+  transition:transform .15s,border-color .15s;}
+/* ★ v1.76.0 — 職能改成邊框色區分(比照大對抗稀有度外框做法)，底色統一深色不再整塊上色。 */
+#hero-modal .hm-list button.cls-atk{border-color:rgba(255,120,90,.65);}
+#hero-modal .hm-list button.cls-heal{border-color:rgba(120,255,160,.65);}
+#hero-modal .hm-list button.cls-shd{border-color:rgba(120,180,255,.65);}
+#hero-modal .hm-list button.cls-ctrl{border-color:rgba(200,150,255,.65);}
+#hero-modal .hm-list button.on{border-color:rgba(100,220,100,.9);background:rgba(20,60,20,.9);box-shadow:none;}
+#hero-modal .hm-list button .hm-thumb{width:100%;height:120px;flex:0 0 auto;
   background-repeat:no-repeat;background-size:auto 400%;background-position:center top;
-  background-color:rgba(0,0,0,.25);box-shadow:0 1px 0 rgba(255,255,255,.15) inset;}
-#hero-modal .hm-list button .hm-name{padding:6px 4px 8px;font-size:16px;font-weight:700;line-height:1.2;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  background-color:rgba(0,0,0,.25);}
+/* ★ v1.76.0 — 職能徽章搬到左上角(取代大對抗的稀有度徽章位置)，圖示沿用既有 mgBurstDef(cls).icon。 */
+#hero-modal .hm-list button .hm-typebadge{position:absolute;top:6px;left:6px;font-size:14px;line-height:1;
+  padding:3px 6px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;z-index:2;pointer-events:none;}
+#hero-modal .hm-list button .hm-name{padding:7px 4px 8px;font-size:18px;font-weight:700;line-height:1.2;
+  color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #hero-modal .row{display:flex;gap:10px;}
 #hero-modal .row button{flex:1;min-height:46px;}
 #r-battle{font-size:15px;line-height:1.7;margin-top:6px;}
@@ -2618,9 +2626,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #cr-modal .cr-master{font-size:21px;}
   .cr-grade .cr-gh{font-size:20px;}
   .cr-unit{font-size:18px;}
-  #hero-modal .hm-list button{font-size:18px;}
-  #hero-modal .hm-list button .hm-thumb{height:110px;}
-  #hero-modal .hm-list button .hm-name{font-size:18px;padding:8px 6px 10px;}
+  #hero-modal .hm-list button{width:175px;}
+  #hero-modal .hm-list button .hm-thumb{height:135px;}
+  #hero-modal .hm-list button .hm-name{font-size:19px;padding:8px 6px 10px;}
 }
 /* 右上功能列與音量面板:確保永遠壓在遊戲內容之上、且不被彈窗蓋住而點不到 */
 #mg-vol-panel{z-index:130;}
@@ -2773,8 +2781,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #intro-modal .bubble{font-size:14px;line-height:1.6;}
   #hero-modal .hm-split{gap:10px;}
   #hero-modal .hm-left{flex-basis:34%;gap:6px;}
-  #hero-modal .hm-list{flex:1 1 auto;height:auto;min-height:100px;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;}
-  #hero-modal .hm-list button .hm-thumb{height:52px;}
+  #hero-modal .hm-list{flex:1 1 auto;height:auto;min-height:100px;gap:6px;}
+  #hero-modal .hm-list button{width:82px;}
+  #hero-modal .hm-list button .hm-thumb{height:64px;}
+  #hero-modal .hm-list button .hm-typebadge{font-size:10px;padding:2px 4px;top:3px;left:3px;}
   #hero-modal .hm-list button .hm-name{font-size:11.5px;padding:4px 3px 5px;}
   #hero-modal .hm-banner{height:76px;}
   #hero-modal .hm-name{font-size:18px;padding:8px 12px 0;gap:6px;}
@@ -2784,6 +2794,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #hero-modal .hm-burstbox .hb-name{font-size:14px;margin:2px 0;}
   #hero-modal .hm-burstbox .hb-desc{font-size:11.5px;line-height:1.4;}
   #hero-modal .hm-traitbox{margin:5px 12px 10px;padding:5px 10px;font-size:11px;}
+  #hero-modal .hm-traitbox.filled .hb-tag{font-size:10px;}
+  #hero-modal .hm-traitbox.filled .hb-desc{font-size:11px;line-height:1.4;}
   #hero-modal .hm-filter .chip{min-height:36px;font-size:13px;padding:6px 10px;}
   #mg-vol-panel{top:46px;right:10px;width:min(74vw,260px);padding:10px 12px;}
   #mg-vol-panel .mvp-head b{font-size:16px;}
@@ -3476,7 +3488,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   </div>
 </div>
 
-<script src="minigame_db.js?v=v1.39.0"></script>
+<script src="minigame_db.js?v=v1.76.0"></script>
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -3485,7 +3497,50 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.74.0';
+var MG_VER = 'v1.76.0';
+/* ★ v1.76.0(2026-09-11・老師兩項需求)—
+   ①【天賦剩餘 3 種家族補完】上一輪(v1.75.0)有 9 種家族生效、3 種(hintclear/resourcesave/autoclear)
+   資料已寫入但引擎沒接;本輪逐一處理:
+     resourcesave 查證後確認目前 9 款遊戲都沒有「會用完的消耗資源」可掛(迷宮提示無上限、算數大進擊的
+     射擊冷卻機制 v1.29.0 就已整段移除),4 隻(蚩尤/麻吉喵‧Nico/酒吞童子/米鈴)全數改派 mistakeshield
+     (老師已確認),mistakeshield 家族由 11 隻增為 15 隻。
+     hintclear(炎火超少女/玉藻前/操偶師)→ 重構 mgBurstAtkApply(新增可選 nOverride 參數)並在
+     renderQuestion 尾端掛勾:每一題渲染完自動排除 1 個錯誤選項(不再只有第一題),白名單 8 引擎見
+     MG_HINTCLEAR_ENGINES。
+     autoclear(關羽)→ _timerRun 每 0.1 秒的 tick 新增判斷:剩餘時間低於門檻 25% 時,若引擎在
+     MG_AUTOCLEAR_ENGINES 白名單(quiz/sort/drag/map/colorq 共 5 種,排除多步驟才算完成的
+     order/match/ear)內,直接呼叫 scoreIt(true) 視為本題答對,整關限用 1 次。
+   → 11 種天賦家族至此全數生效,64 隻天賦被動 100% 上線。戰鬥卡與英雄選角視窗的天賦文字說明同步補上
+   hintclear/autoclear 兩型描述。
+   ②【英雄選角視窗左側清單重製】老師截圖回報「英雄卡片字體都用大對抗裡的卡牌字體，大又清楚；左邊選單
+   排版完全比照大對抗隊伍編成頁，內容改成只有小遊戲中有的」——.hm-list 整段由 CSS Grid(auto-fill 欄寬
+   計算在此次回報的視窗尺寸下出狀況,卡片全部壓成一條線)改為 flex-wrap + 固定 155px 卡片,完全比照大對抗
+   `_buildHeroPickNodes` 的 `.hpick-adv-node`:縮圖 120px(原 90px)+ 姓名 18px 金字 #ffe8a0(原 16px)+
+   深色底 rgba(10,12,25,.92)+ 邊框色分職能(取代原本整塊上底色,比照大對抗用邊框區分稀有度的做法)+
+   職能圖示徽章移到左上角(取代大對抗稀有度徽章的位置);桌機大螢幕(min-width:1024px)與手機橫式兩個既有
+   斷點同步調整為配合 flex-wrap 的固定卡寬(175px／82px)而非 grid-template-columns。字體家族本來就已是
+   'M PLUS Rounded 1c'(v1.1.1 起全站套用),這輪不必再改。 */
+/* ★ v1.75.0(2026-09-10・老師需求「英雄能力新增天賦,作為全新被動技能」)—
+   新增獨立於 eff2(爆發第二效果)的第二層英雄被動:天賦(tr)。
+   核心差異:eff2 只在按下極限爆發那一刻觸發一次性效果(見 mgApplyEff2);
+   天賦是「一整關從頭到尾都在生效」的被動,幫玩家把這一關過得更順,不是幫玩家打贏NPC戰鬥卡。
+   資料來源:MG_HEROES 逐英雄新增 tr:{t,v,m?} 欄位(見 minigame_db.js 設計提案 v2),
+   只作用在玩家自己這側(_BT.p),NPC 不套用(NPC 沒有 tr 資料,天然不受影響)。
+   本輪完成 9 種家族的引擎掛勾(56 隻英雄生效):
+     headstart(搶跑充能)→ mgBattleInit 進場直接加值 P.charge
+     mistakeshield(容錯,答錯懲罰減 N%)→ mgDealDamage 一般傷害計算段
+     streakbonus(連擊加成,每滿N題加M%分數)→ scoreIt 答對分支
+     scoreboost(分數加成,結算+N%)→ finishGame 時間加成合併計算
+     secondchance(續命機會,倒下時N%機率原地滿血 30% 復活,整場限1次)→ mgTryRevive
+     timebonus(時間加成,每題倒數+N秒)→ startTimer
+     trapimmune(陷阱免疫,對迷宮神秘方塊加N%機率變好結果)→ mgMazeMystery(⚠ 目前僅迷宮探險王一款遊戲有「陷阱」概念,其餘8款暫時沒有對應場景可觸發,等其他遊戲之後若加類似機制再串)
+     randomvariant(孫悟空七十二變:進場50/50抽timebonus+6秒或scoreboost+12%)→ mgApplyTrait 內直接擲骰
+   尚未串接(資料已寫入 MG_HEROES.tr,但引擎還沒有對應分支,暫不生效,下一輪再做):
+     hintclear(炎火超少女/玉藻前/操偶師,開局排除1個錯誤選項)→ 需要跟 mgBurstAtkApply 共用的「移除選項」邏輯串接,且要確認哪些引擎(quiz/sort/drag/map/order/match/ear)支援、哪些(react/maze/m3)不支援,先不倉促動工
+     resourcesave(蚩尤/麻吉喵‧Nico/酒吞童子/米鈴,消耗資源N%機率不減少)→ 各款遊戲的「消耗資源」定義不同(算數大進擊的子彈、資源回收的籃子…),需要逐款各自掛勾
+     autoclear(關羽,計時剩不到25%時本題直接視為答對過關)→ 要在每一種引擎各自的「送出答案」路徑插入攔截點,風險較高,先不動
+   同步小改:mgTryRevive 原本 e=null(該英雄沒有 eff2)就整支函式直接 return false,
+   現在改成天賦這條路徑獨立判斷,沒有 eff2 但有 tr:secondchance 的英雄(例如哪吒/貓人族長)也能正常觸發。 */
 /* ★ v1.71.0(2026-09-10・老師兩項需求)—
    ①【登入後大對抗與小遊戲自由進出、不必重登】根治兩個獨立根因:
      (a) 小遊戲原本用具名 Firebase app 'minigame' + SESSION 持久化,登入狀態的儲存鍵
@@ -4619,6 +4674,8 @@ function stopEngines(){
 function stopTimer(){ if(MG.timer){ clearInterval(MG.timer); MG.timer = null; } }
 function startTimer(sec){
   stopTimer();
+  var _trTb = (_BT && _BT.p && _BT.p.trTimeBonus) ? _BT.p.trTimeBonus : 0;   /* ★ v1.75.0 — 天賦「時間加成」:每一題都加,不是只有第一題(整關持續生效才有感) */
+  sec = sec + _trTb;
   MG.tleft = sec;
   MG.ttotal = sec;   /* ★ v1.4.0 記住總長,暫停後續跑同一條 */
   var bar = $('timebar');
@@ -4640,6 +4697,21 @@ function _timerRun(){
     bar.style.width = pct + '%';
     if(pct <= 30) bar.classList.add('low');
     _ringPaint(pct, MG.tleft);
+    /* ★ v1.76.0 — 天賦「即刻過關」(目前只有關羽):剩餘時間低於門檻 v% 時,若引擎在 MG_AUTOCLEAR_ENGINES
+       白名單內,直接視為這一題答對,整關限用 1 次(trAutoClearUsed 擋第二次)。刻意放在 mgBattleFrozen
+       早退之後(控場型爆發凍結期間不觸發)、MG.tleft<=0 超時判定之前(搶在真正超時前生效)。 */
+    if(!MG.answered && _BT && _BT.p && _BT.p.trAutoClearPct > 0 && !_BT.p.trAutoClearUsed && pct <= _BT.p.trAutoClearPct){
+      var _aceEng = mgEng(MG.cur, MG.order[MG.idx]);
+      if(MG_AUTOCLEAR_ENGINES[_aceEng]){
+        _BT.p.trAutoClearUsed = true;
+        stopTimer();
+        MG.answered = true;
+        try{ mgBattleFloatOn('p', (MG.lang === 'en' ? '⚡ AUTO CLEAR!' : '⚡ 直接過關!'), 'heal'); }catch(_eAc){}
+        scoreIt(true);
+        try{ showFeedback(true, (MG.lang === 'en' ? '⚡ Auto-cleared!' : '⚡ 天賦發動,直接算你答對!'), txw(MG.order[MG.idx])); lockOptions(-1); }catch(_eAc2){}
+        return;
+      }
+    }
     if(MG.tleft <= 0){ stopTimer(); onTimeout(); }
   }, 100);
 }
@@ -4791,6 +4863,12 @@ function renderQuestion(keepState){
   else if(_eng === 'paint') renderPaint(x, q);
   else if(_eng === 'colorq') renderColorq(x, q);   /* ★ v1.3.0 */
   else if(_eng === 'match3') renderMatch3(x, q);   /* ★ v1.42.0 元素消消樂(神魔之塔玩法) */
+  /* ★ v1.76.0 — 天賦「提示清除」:每一題渲染完後自動排除 1 個錯誤選項(不是只有第一題,整關持續才有感)。
+     只支援 mgBurstAtkApply 認得的 8 種「有選項/答案格」引擎,react(算數大進擊)/maze(迷宮)/paint(調色)/
+     match3(元素消消樂)這四款沒有「選項」可刪,天賦這關不生效(比照陷阱免疫只在迷宮生效的同一種限制)。 */
+  if(_BT && _BT.p && _BT.p.trHintClear && MG_HINTCLEAR_ENGINES[_eng]){
+    try{ mgBurstAtkApply(_eng, 1); }catch(_eHc){}
+  }
   /* ★ v1.10.0 課堂複習題角落標籤 + 記入本輪已出清單(專注模式時) */
   mgCrTagApply(q);
   if(!keepState && q && q.cr && mgCrActive()) mgCrSeenAdd(x.id, q);
@@ -6541,9 +6619,10 @@ function mgMazeMystery(i, cell){
   var _lvo = _MZ.lv; _lvo._bth = _lvo._bth || {};
   if(_lvo._bth[i]) return;
   _lvo._bth[i] = true;
-  var isHeal = (Math.random() < 0.75);
-  cell._myRes = isHeal ? 'heal' : 'mine';
   var P = _BT.p;
+  var _trapPct = (P.trTrapPct > 0) ? P.trTrapPct : 0;   /* ★ v1.75.0 — 天賦「陷阱免疫」:基礎75%回復機率再疊加,上限98%(留一點點運氣成分,不做成絕對保證) */
+  var isHeal = (Math.random() < Math.min(0.98, 0.75 + _trapPct / 100));
+  cell._myRes = isHeal ? 'heal' : 'mine';
   if(isHeal){
     _MZ.myHeal++;
     var _ha = 50;
@@ -6998,14 +7077,19 @@ function scoreIt(correct, noBattle){
     if(MG.combo > MG.maxCombo) MG.maxCombo = MG.combo;
     var bonus = Math.min(MG.combo - 1, 5) * 20;
     var timeB = Math.round(MG.tleft * 2);
-    MG.score += 100 + bonus + timeB;
+    var gain = 100 + bonus + timeB;
+    var trGain = 0;
+    if(_BT && _BT.p && _BT.p.trStreakN > 0 && _BT.p.trStreakPct > 0 && (MG.combo % _BT.p.trStreakN === 0)){   /* ★ v1.75.0 — 天賦「連擊加成」:連續答對每滿 N 題,這一題的得分再加 M% */
+      trGain = Math.round(gain * _BT.p.trStreakPct / 100);
+    }
+    MG.score += gain + trGain;
     playSfx('sfx-ok', 0.5);   /* ★ v1.3.1 老師:「答對音效要統一」—— 原連擊 ≥3 改播 coin,現在一律 sfx-ok(連擊仍有 combo 特效與加分) */
     /* ★ v1.3.0 — 答對特效:光暈亮星打在作答區中央 + 分數飄字;連擊 ≥3 再加點擊星星 */
     var _c = mgCenterOf(mgActiveBox());
     mgFx('hit', _c.x, _c.y, 220, 900);
     if(MG.combo >= 3) mgFx('combo', _c.x + 90, _c.y - 60, 150, 1000);
     if(MG.combo >= 5) mgFxFull('focus', 650);      /* 連擊 ≥5:全畫面集中線 */
-    mgScoreFloat('+' + (100 + bonus + timeB));
+    mgScoreFloat('+' + (gain + trGain));
   }else{
     MG.combo = 0;
     playSfx('sfx-ng', 0.4);
@@ -7148,8 +7232,9 @@ function finishGame(){
      ⚠ 只在有答對時才加成(0 分乘什麼都是 0,也避免全錯還拿加成的怪象)。 */
   var _elapsed = mgElapsedSec(), _par = mgParTime(MG.cur);
   var _bonusPct = (MG.right > 0) ? mgTimeBonusPct(_elapsed, _par) : 0;
+  var _trScorePct = (_BT && _BT.p && _BT.p.trScorePct) ? _BT.p.trScorePct : 0;   /* ★ v1.75.0 — 天賦「分數加成」:併入用時加成同一個乘數,不論輸贏都算(下面戰敗砍半邏輯會再處理一次,天賦加成一樣被砍半,跟用時加成待遇一致) */
   var _base = MG.score;
-  MG.score = Math.round(_base * (1 + _bonusPct / 100));
+  MG.score = Math.round(_base * (1 + (_bonusPct + _trScorePct) / 100));
   /* ★ v1.29.0(老師追加)— 戰鬥加成:剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;敗北(HP 0)沒有用時加成 */
   var _timed = MG.score;
   if(_bs){
@@ -7311,6 +7396,13 @@ function finishGame(){
    NPC_TURN_DMG:對手每回合固定額外對玩家造成的傷害,不看答對/答錯、不可被護盾/減傷擋下(視為對手固定出手,跟答題結果無關),
    實作在 mgBattleHit 尾端,對所有引擎一體適用,不需逐款遊戲各自加。 */
 var MG_BT = { HP: 200, DMG: 10, CHARGE: 5, MAX_BURST: 2, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3, DOT: 5, HEALBUFF: 3, EFF2_N: 3, ATK_BURST_P: 10, ATK_BURST_N: 20, NPC_TURN_DMG: 10 };
+/* ★ v1.76.0 — 天賦「提示清除」支援的引擎白名單:跟 mgBurstAtkApply 認得的「有選項/答案格可刪」引擎完全一致
+   (quiz/sort/colorq/drag/map/order/match/ear 共 8 種);react/maze/paint/match3 沒有「選項」概念不列入。 */
+var MG_HINTCLEAR_ENGINES = { quiz: 1, sort: 1, colorq: 1, drag: 1, map: 1, order: 1, match: 1, ear: 1 };
+/* ★ v1.76.0 — 天賦「即刻過關」支援的引擎白名單:只收「一次點擊就送出答案」的 5 種(quiz/sort/drag/map/
+   colorq),排除 order(排序)/match(連連看)/ear(聽音坊)三種「多步驟才算完成」的引擎——強制在半路判定
+   答對會讓畫面卡在配對到一半的怪狀態,故刻意收窄(比提示清除的白名單更小)。 */
+var MG_AUTOCLEAR_ENGINES = { quiz: 1, sort: 1, drag: 1, map: 1, colorq: 1 };
 var _BT = null;
 function mgHeroList(){ return (window.MG_HEROES && window.MG_HEROES.length) ? window.MG_HEROES : []; }
 /* ★ v1.31.0(老師需求「登入時只能選已解鎖SSR」)— 玩家可選清單:
@@ -7578,6 +7670,15 @@ function mgHeroPaintPicker(){
   if(_bbEl) _bbEl.innerHTML = '<div class="hb-tag">⚡ ' + esc(MG.style === 's' ? '爆發' : '極限爆發') + '</div>'
     + '<div class="hb-name cls-' + hCls + '">' + esc(h.bn || tx(d.name)) + '</div>'
     + '<div class="hb-desc">' + esc(tx(d.p)) + mgEff2Html(_e2) + '</div>';
+  /* ★ v1.75.0(老師 v1.73.0 就預留的「天賦(被動)」欄位,本輪正式填入內容)—
+     mgTraitText 只對已經串接引擎、真的會生效的類型回傳文字(見該函式註解);還沒串接的
+     hintclear/resourcesave/autoclear(或根本沒有 tr 資料)一律回傳空字串,維持原本的
+     dashed「之後設計」外觀,不誤導玩家以為有效果。 */
+  var _trEl = $('hm-traitbox'), _trTxt = tx(mgTraitText(h));
+  if(_trEl){
+    if(_trTxt){ _trEl.className = 'hm-traitbox filled'; _trEl.innerHTML = '<div class="hb-tag">✦ ' + esc(MG.style === 's' ? '天賦' : '天賦(被動)') + '</div><div class="hb-desc">' + esc(_trTxt) + '</div>'; }
+    else{ _trEl.className = 'hm-traitbox'; _trEl.textContent = '✦ 天賦(被動)——之後設計'; }
+  }
   for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
   $('hm-filter').innerHTML = html;
   html = '';
@@ -7587,7 +7688,7 @@ function mgHeroPaintPicker(){
        同一行」改直式:縮圖滿版貼頂(.hm-thumb 撐滿卡片寬度)、名字置中貼在縮圖下方(比照
        _buildHeroPickNodes 的 .hpick-adv-node:圖在上、金色粗體名字置中在下)；cls-XX 底色與 on 選中外框
        邏輯不變。 */
-    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb" style="background-image:url(\'' + mgHeroUrl(L[i].img) + '\')"></span><span class="hm-name">' + mgBurstDef(mgHeroCls(L[i])).icon + ' ' + esc(L[i].n) + '</span></button>';
+    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb" style="background-image:url(\'' + mgHeroUrl(L[i].img) + '\')"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span><span class="hm-name">' + esc(L[i].n) + '</span></button>';
   }
   $('hm-list').innerHTML = html;
 }
@@ -7623,6 +7724,7 @@ function mgBattleInit(x){
           n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
             chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false, reviveWinLeft: 0, reviveAmt: 0, counterAmt: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
+  mgApplyTrait(_BT.p);   /* ★ v1.75.0 — 天賦被動(tr):只作用在玩家自己這側,整關從頭生效到尾,見函式註解 */
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
   if(ni){ ni.style.display = ''; ni.src = mgHeroUrl(nh.img); }
@@ -7634,7 +7736,7 @@ function mgBattleInit(x){
   $('bt-n-bn').textContent = nh.bn || tx(mgBurstDef(mgHeroCls(nh)).name);
   /* ★ v1.32.0 — 直式大卡新增效果說明(取代等級/攻擊特技速度/S1S2);玩家看 p 版文案、NPC 看 npc 版文案 */
   var peff = $('bt-p-eff'), neff = $('bt-n-eff');
-  if(peff){ var _pe1 = tx(mgEff2Text(ph, false)); peff.innerHTML = esc(tx(mgBurstDef(mgHeroCls(ph)).p)) + mgEff2Html(_pe1); }
+  if(peff){ var _pe1 = tx(mgEff2Text(ph, false)); var _ptr = tx(mgTraitText(ph)); peff.innerHTML = esc(tx(mgBurstDef(mgHeroCls(ph)).p)) + mgEff2Html(_pe1) + mgTraitHtml(_ptr); }   /* ★ v1.75.0 — 天賦文字接在爆發第二效果後面,只有玩家這側有 */
   if(neff){ var _ne1 = tx(mgEff2Text(nh, true)); neff.innerHTML = esc(tx(mgBurstDef(mgHeroCls(nh)).npc)) + mgEff2Html(_ne1); }
   var fz = $('bt-frz'); if(fz) fz.classList.remove('on');
   show('mgbattle');
@@ -7906,6 +8008,7 @@ function mgDealDamage(atk, def, base, fxFrom, rawFixed){
     if(def.dmgTakenUpLeft > 0){ def.dmgTakenUpLeft--; dmg = Math.round(dmg * 1.5); }   /* ★ v1.58.0 — 大天狗:對手3回合受到傷害+50%(乘算,跟易傷的固定值不同) */
     if(def.dmgReduceLeft > 0){ def.dmgReduceLeft--; dmg = Math.round(dmg / 2); }
     if(def.dotLeft > 0){ def.dotLeft--; dmg += (def.dotAmt || MG_BT.DOT); }
+    if(def.trMistakePct > 0) dmg = Math.round(dmg * (1 - def.trMistakePct / 100));   /* ★ v1.75.0 — 天賦「容錯」:整關持續生效,跟上面 dmgReduceLeft(3次到期)是不同機制,兩者可疊加 */
   }
   var defSide = mgSideOf(def), atkSide = mgSideOf(atk);
   if(def.dmgImmuneLeft > 0){ def.dmgImmuneLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); return; }   /* 暗魔將/雅典娜 */
@@ -8050,20 +8153,35 @@ function mgBattleNpcBurstSafety(){
    回傳 true 讓 mgBattleCheckKO 不結算勝負。reviveWinLeft 由 mgApplyEff2 施放當下設定,倒數點在
    mgTickRegenPoison,過期(倒數到0)未觸發則保護失效,不再是舊版的「只要槽滿隨時可救」。 */
 function mgTryRevive(S){
-  var e = S.h && S.h.eff2; if(!e) return false;
-  if(e.t === 'revive'){
-    if(!(S.reviveWinLeft > 0)) return false;
-    S.reviveWinLeft = 0; S.hp = S.reviveAmt || 20;
-    mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '💫 REVIVE!' : '💫 復活!'), 'heal');
-    mgBattlePaint();
-    return true;
+  var e = S.h && S.h.eff2;
+  if(e){
+    if(e.t === 'revive'){
+      if(S.reviveWinLeft > 0){
+        S.reviveWinLeft = 0; S.hp = S.reviveAmt || 20;
+        mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '💫 REVIVE!' : '💫 復活!'), 'heal');
+        mgBattlePaint();
+        return true;
+      }
+    }
+    /* ★ v1.57.0 — 鳳凰(phoenix):不看爆發槽,倒下時無條件以10HP自動復活,但整場只會發生一次(phoenixUsed 旗標擋第二次) */
+    else if(e.t === 'phoenix' && !S.phoenixUsed){
+      S.phoenixUsed = true; S.hp = 10;
+      mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '🔥 REBORN!' : '🔥 浴火重生!'), 'heal');
+      mgBattlePaint();
+      return true;
+    }
   }
-  /* ★ v1.57.0 — 鳳凰(phoenix):不看爆發槽,倒下時無條件以10HP自動復活,但整場只會發生一次(phoenixUsed 旗標擋第二次) */
-  if(e.t === 'phoenix' && !S.phoenixUsed){
-    S.phoenixUsed = true; S.hp = 10;
-    mgBattleFloatOn(S === _BT.p ? 'p' : 'n', (MG.lang === 'en' ? '🔥 REBORN!' : '🔥 浴火重生!'), 'heal');
-    mgBattlePaint();
-    return true;
+  /* ★ v1.75.0 — 天賦「續命機會」:只在玩家自己這側判斷(NPC 沒有 tr 資料,天然不會誤觸發),
+     整場限 1 次(trSecondUsed 擋第二次,不論這次機率有沒有中都算用掉),原地回到 30% HP 繼續打。
+     跟上面 eff2 的 revive/phoenix 是各自獨立的復活來源,同一隻英雄理論上可能兩種都有(一個是爆發帶的、一個是天賦帶的),互不影響。 */
+  if(S === _BT.p && !S.trSecondUsed && S.trSecondChance > 0){
+    S.trSecondUsed = true;
+    if(Math.random() * 100 < S.trSecondChance){
+      S.hp = Math.round(MG_BT.HP * 0.3);
+      mgBattleFloatOn('p', (MG.lang === 'en' ? '💫 ONE MORE TRY!' : '💫 再拚一次!'), 'heal');
+      mgBattlePaint();
+      return true;
+    }
   }
   return false;
 }
@@ -8138,6 +8256,66 @@ function mgEff2ApplyBad(caster, foe, kind, val){
     try{ mgBattleFloatOn(mgSideOf(caster), '−' + _tdv, 'block'); }catch(_etd){}
   }
 }
+/* ★ v1.75.0 — 天賦被動(tr):進入戰鬥卡當下呼叫一次(見 mgBattleInit),只傳玩家 P,NPC 不套用。
+   跟 mgApplyEff2 的差異:eff2 是「按爆發那一刻」觸發的一次性效果;天賦是「設好一個常駐狀態」,
+   之後在各自的消費點(mgDealDamage/scoreIt/finishGame/mgTryRevive/startTimer/mgMazeMystery)
+   整關持續生效,不會用完、不會倒數。P 身上新增的欄位(trMistakePct/trStreakN/trStreakPct/
+   trScorePct/trSecondChance/trSecondUsed/trTimeBonus/trTrapPct)平常不存在,消費點一律用
+   `P.xxx > 0` 或 `P.xxx &&` 判斷,沒有天賦或天賦不是對應類型時自然是 undefined,判斷式安全。 */
+function mgApplyTrait(P){
+  var t = P.h && P.h.tr; if(!t) return;
+  if(t.t === 'headstart') P.charge = Math.min(MG_BT.CHARGE - 1, (P.charge || 0) + t.v);   /* 進場直接視同已充能+v格,但不能因此直接滿槽免費爆發 */
+  else if(t.t === 'mistakeshield') P.trMistakePct = t.v;   /* 消費點:mgDealDamage,答錯挨打的傷害減 v% */
+  else if(t.t === 'streakbonus'){ P.trStreakN = t.v; P.trStreakPct = t.m; }   /* 消費點:scoreIt,連續答對每滿v題,那一題得分再加 m% */
+  else if(t.t === 'scoreboost') P.trScorePct = t.v;   /* 消費點:finishGame,結算分數併入時間加成的乘數 */
+  else if(t.t === 'secondchance') P.trSecondChance = t.v;   /* 消費點:mgTryRevive,倒下時 v% 機率原地半血復活,整場限1次 */
+  else if(t.t === 'timebonus') P.trTimeBonus = t.v;   /* 消費點:startTimer,每一題倒數起始秒數 +v */
+  else if(t.t === 'trapimmune') P.trTrapPct = t.v;   /* 消費點:mgMazeMystery,踩到「?」神秘方塊時變好結果的機率 +v 個百分點 */
+  else if(t.t === 'randomvariant'){   /* 孫悟空「七十二變」:進場當下擲一次骰,50/50 套用 timebonus+6秒 或 scoreboost+12% */
+    if(Math.random() < 0.5) P.trTimeBonus = 6; else P.trScorePct = 12;
+  }
+  else if(t.t === 'hintclear') P.trHintClear = true;   /* ★ v1.76.0 — 消費點:renderQuestion 尾端,每題渲染完自動排除 1 個錯誤選項(僅 MG_HINTCLEAR_ENGINES 白名單引擎) */
+  else if(t.t === 'autoclear') P.trAutoClearPct = t.v;   /* ★ v1.76.0 — 消費點:_timerRun 計時器每 0.1 秒的 tick,剩餘時間低於 v% 且引擎在 MG_AUTOCLEAR_ENGINES 白名單內時,直接視為本題答對(整關限 1 次) */
+  /* resourcesave 已於 v1.76.0 全數改派給 mistakeshield(見設計提案調整紀錄),MG_HEROES.tr 不會再出現這個 type,此分支保留註解供日後若重新啟用參考。 */
+}
+/* ★ v1.76.0 — 天賦被動文案:11 種家族全數已串接引擎生效(hintclear/autoclear 本輪補上),
+   沒有 tr 的英雄一律回傳空字串,不顯示。只給玩家看(mgBattleInit 只傳 ph 這一份,NPC 沒有對應顯示欄位,
+   天賦本來就只對玩家有意義)。 */
+function mgTraitText(h){
+  var t = h && h.tr; if(!t) return { s:'', f:'', en:'' };
+  if(t.t === 'headstart') return {
+    s: '天賦:一上場爆發條就先衝 ' + t.v + ' 格', f: '天賦:進入戰鬥時,爆發條視同已充能 ' + t.v + ' 格',
+    en: 'Trait: burst gauge starts ' + t.v + ' charge(s) ahead' };
+  if(t.t === 'mistakeshield') return {
+    s: '天賦:答錯扣的血減少 ' + t.v + '%', f: '天賦:本關答錯造成的傷害減少 ' + t.v + '%',
+    en: 'Trait: damage taken from wrong answers reduced by ' + t.v + '%' };
+  if(t.t === 'streakbonus') return {
+    s: '天賦:連續答對每滿 ' + t.v + ' 題,那一題分數多 ' + t.m + '%', f: '天賦:連續答對每滿 ' + t.v + ' 題,當題得分額外 +' + t.m + '%',
+    en: 'Trait: every ' + t.v + ' correct answers in a row, that answer scores +' + t.m + '%' };
+  if(t.t === 'scoreboost') return {
+    s: '天賦:這一關結算分數多 ' + t.v + '%', f: '天賦:本關結算分數額外 +' + t.v + '%',
+    en: 'Trait: final level score +' + t.v + '%' };
+  if(t.t === 'secondchance') return {
+    s: '天賦:倒下時有機會原地滿血一半復活(整場1次)', f: '天賦:HP 歸零時,有 ' + t.v + '% 機率原地以 30% HP 復活(整場限 1 次)',
+    en: 'Trait: ' + t.v + '% chance to revive at 30% HP when knocked out (once per level)' };
+  if(t.t === 'timebonus') return {
+    s: '天賦:每一題倒數多 ' + t.v + ' 秒', f: '天賦:每一題倒數起始時間額外 +' + t.v + ' 秒',
+    en: 'Trait: +' + t.v + ' seconds on every question timer' };
+  if(t.t === 'trapimmune') return {
+    s: '天賦:踩到迷宮神秘方塊,變好結果的機率多 ' + t.v + '%', f: '天賦:對迷宮神秘方塊,觸發好結果的機率額外 +' + t.v + '%',
+    en: 'Trait: +' + t.v + '% chance the maze mystery tile turns out good' };
+  if(t.t === 'randomvariant') return {
+    s: '天賦:七十二變!一上場隨機獲得時間或分數加成其中一種', f: '天賦:進入戰鬥時隨機套用「時間加成」或「分數加成」其中一種',
+    en: 'Trait: randomly grants either a time bonus or a score bonus on entry' };
+  if(t.t === 'hintclear') return {
+    s: '天賦:每一題自動排除 1 個錯誤選項(部分玩法不支援)', f: '天賦:每一題渲染完自動排除 1 個錯誤選項(僅選擇題類玩法支援)',
+    en: 'Trait: automatically removes 1 wrong option each question (some game modes not supported)' };
+  if(t.t === 'autoclear') return {
+    s: '天賦:計時只剩不到 ' + t.v + '% 時直接算你答對(整關限1次,部分玩法不支援)', f: '天賦:倒數剩餘不到 ' + t.v + '% 時,直接視為這一題答對(整關限 1 次,僅單次送出答案的玩法支援)',
+    en: 'Trait: when the timer drops below ' + t.v + '%, this question is auto-cleared as correct (once per level, some game modes not supported)' };
+  return { s:'', f:'', en:'' };
+}
+function mgTraitHtml(txt){ return txt ? ('<br><span style="color:#7ee8fa;">' + esc(txt) + '</span>') : ''; }   /* ★ v1.75.0 — 跟 mgEff2Html 的黃色(#ffe066,爆發第二效果)區分,天賦被動改用青色,文字本身已含「天賦:」開頭不必再加「附加:」 */
 function mgApplyEff2(caster, foe){
   var e = caster.h && caster.h.eff2; if(!e) return;
   if(e.t === 'heal'){ caster.healBuff = MG_BT.EFF2_N; caster.healAmt = e.v; }
@@ -8322,8 +8500,8 @@ function mgBurstFreezeTick(){
   setTimeout(mgBurstFreezeTick, 250);
 }
 /* 攻擊型:立即刪除 3 個錯誤答案 —— 逐引擎對應(回傳 false = 此刻沒東西可刪,不消耗充能) */
-function mgBurstAtkApply(eng){
-  var q = MG.order[MG.idx], n = MG_BT.ATK_N, i, k = 0, x = MG.cur;
+function mgBurstAtkApply(eng, nOverride){
+  var q = MG.order[MG.idx], n = nOverride || MG_BT.ATK_N, i, k = 0, x = MG.cur;   /* ★ v1.76.0 — nOverride 供天賦「提示清除」傳 1(只刪1個),不傳時沿用爆發原本的 MG_BT.ATK_N(3) */
   try{
     if(eng === 'quiz' || eng === 'sort' || eng === 'colorq'){
       var ansIdx;
