@@ -3616,7 +3616,22 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.84.0';
+var MG_VER = 'v1.85.0';
+/* ★ v1.85.0(2026-09-11・老師回報「登入有些人要試很多次才會成功登入(選了帳號後，回到的小遊戲首頁是沒登入狀態)」)—
+ * 【redirect 登入回程訊號不足根治】根因與主程式 index.html 早期歷史版本(FIX 20260517 系列／v3.3.7／v5.148.0)
+ * 完全同一類問題：iOS Safari 的 Storage Partitioning 會在「本站→Google 帳號選擇頁(跨網域 authDomain)→
+ * 導回本站」這趟 cross-origin redirect 途中機率性清掉 sessionStorage(甚至有時連 localStorage 也會)，
+ * 舊碼只認 sessionStorage 單一個 'lxps_mg_pending_redirect' 旗標，一旦被清掉，onUser() 就把「redirect
+ * 剛登入成功的合法登入」誤判成「共用裝置自動還原的舊帳號」而靜默登出——玩家看到的就是選完帳號、回到
+ * 首頁卻完全沒登入，只能整個重新再試(兩個 storage 剛好都沒被清才會一次成功，體感就是「有些人/有時候
+ * 要試很多次」)。修法比照主程式：①新增 _mgRedirectEvidence()，同時檢查 localStorage 旗標／sessionStorage
+ * 旗標／firebase 自己寫的 'firebase:pendingRedirect' key／URL hash 或 search 裡的 OAuth 回程線索，四選一
+ * 命中即視為「這次頁載真的有 redirect 登入回程」，不再賭單一個可能被清掉的 key；②開機時偵測到任一訊號就
+ * 立刻搶先載入 Firebase SDK(不等原本 400~2500ms 的 idle 延遲)，並明確呼叫 getRedirectResult()(舊碼這行
+ * 卡在 `if(window.firebase && MG.fb)` 條件內，此時 MG.fb 幾乎必定還是 null，等於從未真正執行過)，沒拿到
+ * 結果補一次 1.5 秒後重試。login 按鈕發起 redirect 時同步寫 localStorage+sessionStorage 兩份旗標。
+ * 本輪未動任何戰鬥/題庫/UI 邏輯，範圍限定在登入 redirect 回程的訊號偵測與時機。
+ */
 /* ★ v1.84.0(2026-09-11・老師「檢查REPO小遊戲中所有圖片是否都正確接好」)—
    全檔圖片參照大稽核(比對 clone 下來的 repo 實際檔案,非憑印象):①img/gif/thumb/amb 四個欄位
    (走 MG_IMG_BASE=repo 根目錄,148 筆)全數存在,零缺漏;②index.html 內 15 處 encodeURIComponent
@@ -9589,6 +9604,53 @@ function loadScript(url){
 var MG_HANDOFF_KEY = 'lxps_app_handoff';
 var MG_HANDOFF_TTL = 120000;
 var _mgActiveSignInThisPageload = false;   /* 本次頁載玩家真的按過登入鈕(含 redirect 回程) */
+/* ★★ v1.72.0(2026-09-11・老師回報「小遊戲登入有些人要試很多次才會成功,選了帳號後回到首頁是沒登入狀態」)★★
+   根因與主程式 index.html 早期版本(FIX 20260517 系列／v3.3.7／v5.148.0)完全同一類問題,只是小遊戲
+   還沒補上主程式後來的修法:iOS 17+ Safari 的 Storage Partitioning 會在「本站 → Google 帳號選擇頁
+   (跨網域 authDomain)→ 導回本站」這趟 cross-origin redirect 途中,不保證保留 sessionStorage(有時連
+   localStorage 也會被清,視裝置/版本而定,機率性——這就是「有些人/有時候要試很多次」的原因)。
+   舊碼只認一個訊號:sessionStorage 的 'lxps_mg_pending_redirect'。這個訊號一旦被清掉,onUser() 就會
+   把「redirect 剛登入成功、真正的合法登入」誤判成「共用裝置自動還原的舊帳號」而靜默登出,玩家點開
+   小遊戲首頁看起來就是完全沒登入,連登入鈕都沒反應過的樣子——只能整個重新再試一次(有時候運氣好
+   兩個 storage 都沒被清就一次成功,才會出現「試很多次才成功」的隨機感)。
+   修法比照主程式:①訊號來源從「只認一個 sessionStorage key」擴充為「localStorage 旗標 +
+   sessionStorage 旗標 + 掃描 firebase 自己寫的 'firebase:pendingRedirect' key + URL hash/search
+   裡的 OAuth 回程線索(access_token/id_token/state)」,四選一命中就視為「這次頁載真的有 redirect
+   登入回程」,不再只賭單一個可能被清掉的 key。②開機時如果偵測到任一訊號,立刻(不等待原本
+   400~2500ms 的 idle 延遲)搶先載入 Firebase SDK,讓 onAuthStateChanged 盡快接手、外加明確呼叫一次
+   getRedirectResult()(原碼這行掛在 `if(window.firebase && MG.fb)` 條件內,但 MG.fb 這時候幾乎必定
+   還是 null,等於這行事實上從來沒真的執行過)。 */
+function _mgRedirectEvidence(){
+  var _ev = { any: false, local: false, session: false, fbKey: false, url: false };
+  try{
+    var _lt = parseInt(localStorage.getItem('lxps_mg_pending_redirect_local') || '0', 10) || 0;
+    if(_lt && (Date.now() - _lt) < 300000) _ev.local = true;
+  }catch(_){}
+  try{
+    var _st = parseInt(sessionStorage.getItem('lxps_mg_pending_redirect') || '0', 10) || 0;
+    if(_st && (Date.now() - _st) < 300000) _ev.session = true;
+  }catch(_){}
+  try{
+    var i, _k;
+    for(i = 0; i < sessionStorage.length; i++){
+      _k = sessionStorage.key(i);
+      if(_k && _k.indexOf('firebase:pendingRedirect') === 0){ _ev.fbKey = true; break; }
+    }
+    if(!_ev.fbKey){
+      for(i = 0; i < localStorage.length; i++){
+        _k = localStorage.key(i);
+        if(_k && _k.indexOf('firebase:pendingRedirect') === 0){ _ev.fbKey = true; break; }
+      }
+    }
+  }catch(_){}
+  try{
+    var _h = window.location.hash || '', _s = window.location.search || '';
+    if((_h && (_h.indexOf('access_token') >= 0 || _h.indexOf('id_token') >= 0 || _h.indexOf('state=') >= 0))
+       || (_s && _s.indexOf('state=') >= 0)) _ev.url = true;
+  }catch(_){}
+  _ev.any = _ev.local || _ev.session || _ev.fbKey || _ev.url;
+  return _ev;
+}
 window._mgMarkAppHandoff = function(){
   var _u = '';
   try{ _u = (MG.user && MG.user.uid) || ''; }catch(_){}
@@ -9694,6 +9756,7 @@ window.mgLoginTap = function(){
        redirect 路徑會整頁跳走(runtime 旗標歸零)，另寫一份 5 分鐘時效的 sessionStorage 旗標。 */
     _mgActiveSignInThisPageload = true;
     try{ sessionStorage.setItem('lxps_mg_pending_redirect', String(Date.now())); }catch(_){}
+    try{ localStorage.setItem('lxps_mg_pending_redirect_local', String(Date.now())); }catch(_){}   /* ★ v1.72.0 — localStorage 較不易被跨網域 redirect 的 storage partitioning 清掉,雙軌並存 */
     return fb.auth.signInWithPopup(prov)['catch'](function(err){
       // iPad standalone 常擋 popup ⇒ 退回 redirect
       return fb.auth.signInWithRedirect(prov);
@@ -9728,13 +9791,16 @@ function onUser(u){
        同學在登入視窗看到「繼續使用 XXX」的快速按鈕。 */
   if(u){
     var _mgPendingRedirect = false;
+    /* ★ v1.72.0 — 改用四訊號合一的 _mgRedirectEvidence()(見上方定義),取代舊碼只認
+       sessionStorage 單一 key 的判定;任一訊號命中(local/session/firebase 自家 key/URL)
+       都視為「這次頁載真的有 redirect 登入回程」,不再因為單一 key 被 iOS storage
+       partitioning 清掉就整段誤判成「共用裝置自動還原」而被靜默登出。 */
     try{
-      var _pr = sessionStorage.getItem('lxps_mg_pending_redirect');
-      if(_pr){
-        if(Date.now() - (parseInt(_pr, 10) || 0) < 5 * 60 * 1000) _mgPendingRedirect = true;
-        sessionStorage.removeItem('lxps_mg_pending_redirect');   /* 一次性 */
-      }
+      var _ev = _mgRedirectEvidence();
+      _mgPendingRedirect = _ev.any;
     }catch(_){}
+    try{ sessionStorage.removeItem('lxps_mg_pending_redirect'); }catch(_){}   /* 一次性 */
+    try{ localStorage.removeItem('lxps_mg_pending_redirect_local'); }catch(_){}   /* 一次性 */
     var _mgHandoff = false;
     try{ _mgHandoff = mgConsumeAppHandoff(u.uid); }catch(_){}
     if(!_mgActiveSignInThisPageload && !_mgPendingRedirect && !_mgHandoff){
@@ -10489,7 +10555,35 @@ function boot(){
   /* ★ v1.27.0 — 開機閒置後背景預載 Firebase SDK(見 ensureFirebase 上方說明)。
      ⚠ 刻意加 0～2.5 秒隨機延遲：25 台裝置同時開機時，SDK 檔案本身放在 Google 的
      gstatic CDN(不是校內/Firestore 資源，理論上扛得住併發)，這裡延遲主要是把
-     「開機當下」真正要緊的畫面渲染、題庫/設定讀取排在前面，SDK 預載不搶頻寬。 */
+     「開機當下」真正要緊的畫面渲染、題庫/設定讀取排在前面，SDK 預載不搶頻寬。
+     ★ v1.72.0 — 但如果偵測到「這次頁載像是 redirect 登入回程」(見 _mgRedirectEvidence)，
+       不能再等 idle+隨機延遲(最壞情況要等好幾秒)，必須搶快載入，讓 onAuthStateChanged
+       盡快接手 Firebase 內部已經完成的 redirect 登入結果，避免拖久了訊號過期或玩家等到
+       不耐煩以為登入沒反應。 */
+  var _mgBootRedirectEvidence = null;
+  try{ _mgBootRedirectEvidence = _mgRedirectEvidence(); }catch(_erE){}
+  if(_mgBootRedirectEvidence && _mgBootRedirectEvidence.any){
+    try{ console.log('[小遊戲 v1.72.0] 偵測到 redirect 登入回程訊號，搶先載入 Firebase', _mgBootRedirectEvidence); }catch(_){}
+    ensureFirebase().then(function(fb){
+      /* ★ v1.72.0 — 明確呼叫一次 getRedirectResult(舊碼這行卡在 `if(MG.fb)` 條件內，
+         這裡 fb 剛剛才 resolve，一定有值，確保真的會執行到);沒拿到就補一次 1.5 秒後重試
+         (Firebase 內部處理 OAuth credential 有時較慢，一次拿不到不代表沒有)。 */
+      function _tryMgRedirectResult(label){
+        try{
+          fb.auth.getRedirectResult().then(function(result){
+            if(result && result.user){
+              console.log('[小遊戲 v1.72.0] ' + label + ' getRedirectResult 拿到登入結果', result.user.email);
+            } else if(label === 'first'){
+              setTimeout(function(){ _tryMgRedirectResult('retry'); }, 1500);
+            }
+          })['catch'](function(e){
+            try{ console.warn('[小遊戲 v1.72.0] getRedirectResult 例外(' + label + ')', e); }catch(_){}
+          });
+        }catch(_eTry){}
+      }
+      _tryMgRedirectResult('first');
+    })['catch'](function(){ /* 離線/校網擋住:靜默 */ });
+  }
   try{
     var _preloadFn = function(){ _mgPreloadFirebase(); };
     var _preloadDelay = 400 + Math.floor(Math.random() * 2100);
@@ -10500,7 +10594,12 @@ function boot(){
     }
   }catch(_epf){}
 
-  // 若上次用 redirect 登入,回來時把結果接起來(不主動載 SDK)
+  // 若上次用 redirect 登入,回來時把結果接起來
+  // ★ v1.72.0 — 舊碼 `if(window.firebase && MG.fb)` 這個條件在這個時間點幾乎必定是 false
+  //   (Firebase 這時候通常都還沒開始載入,更別說初始化完成),等於這行從未真正執行過；
+  //   真正的 getRedirectResult 呼叫已經移到上面「偵測到 redirect 證據就搶先載入」那段，
+  //   這裡保留一份極簡的向下相容:萬一 MG.fb 剛好已經備妥(例如極快的重複開機)才補呼叫一次，
+  //   不重複也不會出錯(Firebase 官方保證重複呼叫安全)。
   if(window.firebase && MG.fb){
     try{ MG.fb.auth.getRedirectResult(); }catch(e){}
   }
