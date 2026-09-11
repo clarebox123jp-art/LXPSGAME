@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.80.0(2026-09-11)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.83.0(2026-09-11)
      ★ v1.74.0(2026-09-10・老師兩項需求)—
        ①【戰鬥勝利評分視窗移除發光GIF特效】#r-glow 原本在星星彈出時墊一張會後製發光的 gif 在分數後面
          (finishGame 尾端 src+'.on' class 觸發);本輪直接不再觸發(元素與 CSS 動畫保留不刪,舊三行
@@ -1009,6 +1009,18 @@ button[disabled]{opacity:.45;}
 #maze-info{font-size:17px;text-align:center;margin-top:10px;line-height:1.6;}
 #maze-act{display:flex;gap:10px;margin-top:10px;}
 #maze-act button{flex:1;}
+/* ★ v1.82.0(老師需求「點一下答案格子彈出完整答案名稱+圖片的小視窗,再點一下就關閉」)—
+   全螢幕半透明背景 + 置中卡片,卡片內圖在上、完整文字在下、附一顆「關閉」鈕(手機沒有滑鼠hover提示,
+   多給一顆明確能按的鈕比較保險);背景與卡片各自 onclick 分開(卡片內 stopPropagation 防止點卡片
+   內容也觸發背景的關閉，但兩者最終效果一樣是關閉,只是給卡片本身之後如果加互動元件時預留安全)。 */
+#mz-info-ov{display:none;position:fixed;inset:0;z-index:130;background:rgba(5,8,14,.82);align-items:center;justify-content:center;padding:20px;}
+#mz-info-ov.show{display:flex;}
+.mz-info-card{background:var(--ink2);border:2px solid rgba(240,192,96,.6);border-radius:16px;padding:18px;max-width:320px;width:100%;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.6);}
+.mz-info-pic{width:120px;height:120px;margin:0 auto 10px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;}
+.mz-info-pic img{width:100%;height:100%;object-fit:contain;}
+.mz-info-txt{font-size:22px;font-weight:700;color:#fff8e6;line-height:1.35;margin-bottom:14px;word-break:break-word;}
+.mz-info-btns{display:flex;gap:10px;}
+.mz-info-btns button{min-height:42px;font-size:17px;flex:1;}
 
 /* ── 引擎 I:調色考驗(老師指定 C)────────────
    左邊彩色原圖,右邊同一張的黑白圖+顏料區,把顏色拖到正確格子上色。 */
@@ -1344,7 +1356,9 @@ button[disabled]{opacity:.45;}
 #result .stars span.lost{opacity:.55;transform:none;color:#8a8a8a;text-shadow:none;}
 #result .stars-wrap{position:relative;}
 /* ★ v1.65.0 — 蓋在星星正上方的「再接再厲…」大字,只在戰敗時加 show 顯示;pointer-events:none 不擋任何按鈕 */
-#result .r-encourage{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-size:34px;font-weight:900;color:#ffb238;text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 18px rgba(255,140,0,.6);letter-spacing:2px;z-index:2;}
+/* ★ v1.82.0(老師需求「移到五星的上方」)— 原本 position:absolute 置中蓋在星星正上方(視覺上蓋住星星);
+   改為星星前面的一般區塊,置中對齊、下方留白跟星星分開,不再遮擋星等。 */
+#result .r-encourage{display:none;text-align:center;white-space:nowrap;font-size:22px;font-weight:900;color:#ffb238;text-shadow:0 2px 8px rgba(0,0,0,.9),0 0 12px rgba(255,140,0,.5);letter-spacing:1px;margin-bottom:6px;}
 #result .r-encourage.show{display:block;animation:starpop .5s cubic-bezier(.2,1.6,.4,1) forwards;}
 @keyframes starpop{0%{opacity:0;transform:scale(.2) rotate(-40deg);}60%{opacity:1;transform:scale(1.35) rotate(8deg);}100%{opacity:1;transform:scale(1) rotate(0);}}
 #result .big{position:relative;font-size:69px;text-shadow:0 0 22px rgba(240,192,96,.5);}
@@ -2416,6 +2430,15 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @media (max-width:960px){
   #page-play > #mgbattle .bt-img{aspect-ratio:auto;height:clamp(50px,17vh,90px);}
   #page-play > #mgbattle .bt-img img{object-position:center 20%;}
+  /* ★ v1.82.0(老師回報附截圖「迷宮關選項超過2個字要縮小調整成兩行(如同PC版)」)— 根因:.mz.mark
+     手機上沒有隨字數縮放的機制,3~4 字的答案跟 2 字用同一個字級,格子又小(overflow:hidden)⇒
+     長一點的答案被直接垂直裁掉只剩半截字,PC 版格子夠大所以看起來正常。改成依文字實際字數分級縮小
+     (mz-len3/mz-len4/mz-len5,由 _mazePaint 依 mgStr 文字長度打上對應 class),字級越小、
+     line-height 越緊，2 字维持原尺寸單行，3 字以上兩行都塞得進格子。 */
+  .mz.mark{font-size:14px;line-height:1.15;}
+  .mz.mark.mz-len3{font-size:11.5px;}
+  .mz.mark.mz-len4{font-size:10px;}
+  .mz.mark.mz-len5{font-size:9px;}
 }
 /* 開始前選英雄:#modal 內的英雄列 + 獨立選角視窗 #hero-modal(名字清單,只顯示目前選中的一張立繪 —— 立繪平均 600KB,不能整排載入) */
 #m-hero{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(62,200,122,.1);border:1px solid rgba(62,200,122,.35);}
@@ -2477,9 +2500,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    ★ v1.79.0 — margin-top 10→6px、padding 10 14→8 12,省下的高度分給下面的天賦卡。 */
 #hero-modal .hm-burstbox{margin:clamp(3px,1vh,6px) 20px 0;padding:clamp(4px,1vh,8px) 12px;border-radius:10px;
   background:linear-gradient(135deg,rgba(255,150,0,.15),rgba(255,80,0,.08));border:1.5px solid rgba(255,180,0,.6);}
-#hero-modal .hm-burstbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#ffcc00;letter-spacing:2px;}
-#hero-modal .hm-burstbox .hb-name{font-size:clamp(15px,3.6vh,26px);font-weight:700;color:#ffe066;margin:3px 0;}
+#hero-modal .hm-burstbox .hb-line1{line-height:1.35;}
+#hero-modal .hm-burstbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#ffcc00;letter-spacing:1px;}
+#hero-modal .hm-burstbox .hb-name{font-size:clamp(14px,3vh,22px);font-weight:700;color:#ffe066;margin-right:4px;}
 #hero-modal .hm-burstbox .hb-desc{font-size:clamp(12px,2.6vh,20px);color:#ffe8a0;line-height:1.3;}
+#hero-modal .hm-burstbox .hb-eff2{font-size:clamp(11px,2.4vh,18px);color:#ffe066;line-height:1.3;margin-top:3px;}
 /* 天賦(被動)卡:預設(dashed,還沒有內容或引擎尚未串接的3型)沿用舊版「之後設計」外觀；
    ★ v1.75.0 — 新增 .filled(已有天賦內容且引擎已生效的56隻)比照 .hm-burstbox 實色卡片,改用青色系與「⚡爆發」的橘黃色區分。
    ★ v1.79.0 — margin 8/16→6/10、padding 10 14→8 12,與上面爆發卡同步收緊,兩張卡才「同時可見」。 */
@@ -2488,10 +2513,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   color:rgba(255,240,200,.45);font-size:clamp(12px,2.4vh,17px);text-align:center;}
 #hero-modal .hm-traitbox.filled{background:linear-gradient(135deg,rgba(60,220,255,.14),rgba(30,140,255,.07));
   border:1.5px solid rgba(126,232,250,.55);color:inherit;text-align:left;}
-#hero-modal .hm-traitbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#7ee8fa;letter-spacing:2px;}
+#hero-modal .hm-traitbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#7ee8fa;letter-spacing:1px;margin-right:2px;}
 #hero-modal .hm-traitbox .hb-desc{font-size:clamp(11px,2.4vh,18px);color:#d6f7ff;line-height:1.25;}
 #hero-modal .hm-filter{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap;}
-#hero-modal .hm-filter .chip{min-height:56px;font-size:22px;padding:10px 18px;}
+/* ★ v1.82.0(老師需求「四個篩選按鈕長度縮短些,集中在同1行」)— 桌機斷點(min-width:1024px)下
+   hm-left 最窄只有 600px,舊尺寸(56px高/22px字/10px 18px內距)四顆常態擠成 2+2 兩行；
+   縮小尺寸讓四顆在 600px 內穩定排成一行,不必再等內容換行。 */
+#hero-modal .hm-filter .chip{min-height:44px;font-size:17px;padding:7px 12px;}
 #hero-modal .hm-filter .chip.on{background:var(--gold);color:#08090d;border-color:transparent;}
 /* ★ v1.31.0(老師回報「按篩選鈕/選最下面那排會跑掉」)— 根因:.hm-list 舊碼用 flex:1 1 auto 純內容撐高,
    換篩選時項目數一變(例如控場型只剩7張),整個 .box 高度跟著變,而 #hero-modal 又是
@@ -2805,6 +2833,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   .m3-cell{font-size:clamp(1.15rem,3.4vw,1.7rem);border-radius:7px;}
   .m3-hint{font-size:13px;}
   #maze-grid{gap:4px;}
+  /* ★ v1.82.0 — 同 max-width:960px 那組規則,雙軌並存(見該處註解)。 */
+  .mz.mark{font-size:14px;line-height:1.15;}
+  .mz.mark.mz-len3{font-size:11.5px;}
+  .mz.mark.mz-len4{font-size:10px;}
+  .mz.mark.mz-len5{font-size:9px;}
   #paint-palette{margin-top:6px;}
   .pchip{width:40px;height:40px;}
   /* 右欄底部保留給浮動的「下一題」鈕(含 iOS 安全區),按鈕不會蓋住最後一個選項 */
@@ -2859,8 +2892,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #hero-modal .hm-name .hm-type{font-size:13px;padding:2px 8px;}
   #hero-modal .hm-burstbox{margin:6px 12px 0;padding:6px 10px;}
   #hero-modal .hm-burstbox .hb-tag{font-size:12px;}
-  #hero-modal .hm-burstbox .hb-name{font-size:16px;margin:2px 0;}
+  #hero-modal .hm-burstbox .hb-name{font-size:16px;margin-right:4px;}
   #hero-modal .hm-burstbox .hb-desc{font-size:13px;line-height:1.4;}
+  #hero-modal .hm-burstbox .hb-eff2{font-size:12px;line-height:1.35;}
   #hero-modal .hm-traitbox{margin:5px 12px 10px;padding:5px 10px;font-size:13px;}
   #hero-modal .hm-traitbox.filled .hb-tag{font-size:12px;}
   #hero-modal .hm-traitbox.filled .hb-desc{font-size:13px;line-height:1.4;}
@@ -3370,6 +3404,21 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div id="maze-grid"></div>
       <p id="maze-info"></p>
       <div id="maze-act"><button class="btn-ghost" onclick="mgMazeHint()">💡 提示</button><button class="btn-ghost" onclick="mgMazeReset()">↺ 重走這一關</button></div><!-- ★ v1.3.1 提示鈕 -->
+      <!-- ★ v1.83.0(老師回報「迷宮關閉視窗，讓玩家繼續移動而不是直接走進那格」)— 上一輪「同一格再點
+           一下=關閉視窗+順便真的踏出去」的設計被老師否決:關閉這個動作不該連帶強制移動,關掉之後
+           玩家應該可以自由決定接下來要不要走這一步、還是先看別格。改成視窗內兩顆按鈕分工:
+           「關閉」只關視窗、什麼都不做;「🚶 走這一步」才會真的呼叫 mgMazeStep 踏出去(只有這格
+           走得到時才顯示,走不到就不出現這顆鈕，只留「關閉」)。點背景空白處等同按「關閉」。 -->
+      <div id="mz-info-ov" onclick="mgMazeInfoClose()">
+        <div class="mz-info-card" onclick="event.stopPropagation()">
+          <div class="mz-info-pic" id="mz-info-pic"></div>
+          <div class="mz-info-txt" id="mz-info-txt"></div>
+          <div class="mz-info-btns">
+            <button class="btn-ghost" type="button" onclick="mgMazeInfoClose()">關閉</button>
+            <button type="button" id="mz-info-go" onclick="mgMazeInfoConfirm()">🚶 走這一步</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ★ v1.3.0 引擎 J:寵物調色工坊(colorq) -->
@@ -3411,11 +3460,13 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div class="r-body">
         <div class="r-left">
           <img class="r-trophy" id="r-trophy" src="" alt="" onerror="this.style.display='none';">
+          <!-- ★ v1.82.0(老師回報「再接再厲的文字蓋住了星星,看不出星等」)— 原本用 position:absolute 蓋在
+               星星正中央,老師要求移到星星「上方」而不是蓋住星星;改為星星列前面的一般文字列(不再絕對定位),
+               文案也改成「被打倒了…再接再厲！」把原本另外顯示在 r-battle 區塊的「💀被打倒了」合併進來,
+               一行講清楚戰敗+鼓勵,不必分兩處看。 -->
+          <div class="r-encourage" id="r-encourage">被打倒了…再接再厲！</div>
           <div class="stars-wrap" id="r-stars-wrap">
             <div class="stars" id="r-stars"></div>
-            <!-- ★ v1.65.0(老師需求「英雄被打倒,星級改灰色並覆蓋顯示再接再厲的大字」)— 蓋在星星正上方,
-                 finishGame 判定戰敗時才加 show class 顯示;預設 display:none 不佔版面。 -->
-            <div class="r-encourage" id="r-encourage">再接再厲…</div>
           </div>
         </div>
         <div class="r-right">
@@ -3565,7 +3616,53 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.80.0';
+var MG_VER = 'v1.83.0';
+/* ★ v1.83.0(2026-09-11・老師兩項需求,推翻/取代上一輪對應設計)—
+   ①【迷宮:關閉視窗要讓玩家繼續移動,不是直接走進那格】v1.82.0 的「同一格再點一下=關閉視窗+順便
+   踏出那一步」被老師否決;改成視窗內兩顆按鈕分工——「關閉」只關窗、什麼都不做,「🚶 走這一步」
+   才會真的移動(只有這格走得到時才出現這顆鈕);點視窗背景空白處等同「關閉」。石板格改成點一下
+   就開預覽(不再判斷「是不是第二次點」)，反正視窗蓋滿全螢幕時底下格子本來就點不到。
+   ②【算術大進擊:回合結束改看「總出手次數」,第六回合無上限直到分出勝負】完全取代 v1.82.0 的
+   「need 3→15」設計:
+   - 第 1~5 回合:sec 30 秒、need(現在的意思是「出手次數上限」,不分對錯)3 次,兩者任一先到就
+     結束這回合——不再是「集滿 N 個正確答案」。
+   - 第 6 回合:need 給 9999(事實上沒有次數上限),sec 給 180 秒當保底安全網;真正的結束交給
+     既有、完全獨立運作的 HP 歸零判定(mgBattleHit→mgBattleCheckKO→mgBattleEnd),打到任一方
+     倒下當場結束戰鬥,不看這裡的秒數或次數,符合「直到任一方倒下」的規格。
+   - 新增 _RC.shots(本回合總出手次數,_reactHit 內不分對錯都 +1),_reactTick 的回合結束判定
+     由 got>=need 改 shots>=need;HUD 主數字改顯示「已出手 X / 上限」+ 對/錯細項;_reactFinish
+     的「時間到還沒完成」懲罰判定與 ok(算不算打得好)判定都跟著從「正確次數目標」改口徑——
+     ok 改成「射對次數多於射錯次數」,懲罰改成「時間到了、出手次數卻還沒用完」。
+   六回合原本「加法→加減→加減乘→加減乘除→+小數→+分數」由淺入深的難度設計(ops 陣列)完全不變,
+   只有 sec/need 兩個數字跟著新規格調整。 */
+/* ★ v1.82.0(2026-09-11・老師附三張截圖,五項需求)—
+   ①【選英雄視窗篩選鈕+爆發排版】4 顆篩選鈕(攻擊/回復/護盾/控場型)桌機尺寸縮小(56px/22px→
+   44px/17px),桌機斷點下 hm-left 最窄 600px 也能穩定排成一行;爆發卡與天賦卡改成老師指定的
+   「三行」版面——第一行標籤+招式名+主效果說明合併同一行(hb-tag/hb-name 由 <div> 改 <span> 讓
+   它們天生行內排列)，第二行「附加:...」拆成獨立區塊(.hb-eff2)不再黏在主效果段落尾巴,
+   第三行天賦標籤+說明也合併同一行;三行合計比舊版(6~8 行堆疊)矮很多,連帶讓 v1.79.0 修過的
+   「天賦被裁掉」問題更不容易在小螢幕重現。
+   ②【結算頁「再接再厲」擋住星星】原本 position:absolute 置中蓋在星星正上方,改為星星前面的一般
+   文字列(不再遮擋星等),文案由單獨的「再接再厲…」改成「被打倒了…再接再厲！」一次講清楚戰敗+鼓勵。
+   ③【手機版迷宮選項字被裁】.mz.mark 石板格依答案文字實際字數分級縮小字級(2字內不變,3/4/5字
+   依序縮小,line-height 收緊讓兩行塞得進小格子);同時新增「點一下彈出全字+圖預覽、再點一下(或點
+   背景)關閉並真的踏出那一步」的兩段式互動(mgMazeCellClick,新增 #mz-info-ov 全螢幕小卡),
+   手機格子雖小,文字看不清楚時隨時能點開放大看。
+   ④【台灣地圖答題後沒有復位到頂端】v1.74.0 只復原了放大的 CSS class,沒有連帶重置捲動位置;
+   新增 mgMapResetScroll(),答題當下把 #mapbox／#play-left／#play-right／#page-play 逐一嘗試
+   歸零捲動位置(不存在或本來沒捲動也不會報錯)+ window.scrollTo(0,0) 保底,確保下一題從最上緣看起。
+   ⑤【算術大進擊只有6關太少】6 個回合的 need(目標擊中題數)全數由 3 提升到 15,sec(回合秒數)
+   等比例由 15 拉長到 60 秒,維持接近原本的節奏(換算下來每題可用時間只從 5 秒縮成 4 秒,對能
+   心算的學生仍合理可達成),整場遊戲時長與內容量大幅增加。 */
+/* ★ v1.81.0(2026-09-11・老師「小遊戲的英雄圖片,使用原始Q版的日本關卡英雄全部換成LV20的精緻版圖片」)—
+   日本關四位英雄(巫女／大天狗／酒吞童子／玉藻前)的 img 全數改指主程式既有的 LV20 精緻版立繪
+   (巫女LV20.png／大天狗LV20.png／酒吞童子LV20.png／玉藻前LV20.png,四檔皆已在 repo 根目錄驗證 200)。
+   ⚠ 連帶必改:這四位原本都帶 full:true —— 那是 v1.31.0 為「主程式沒有裁切位置資料的英雄」設的權宜作法
+   (爆發演出改 contain 完整顯示、不裁切)。LV20 是主程式圖鑑肖像那一批的正規直式立繪、臉都在上方,
+   繼續 contain 會在爆發特寫留一大片空白 ⇒ 四位一律移除 full:true 改帶 pos(20/18/17/18%,逐張比對構圖),
+   與其餘 60 位同一套裁切邏輯;左側清單縮圖的 MG_THUMB_POS 四筆同步改成同一組數值
+   (舊值 30 是主程式對「舊版 Q 版立繪」調的,套到 LV20 全身圖會裁到胸口)。
+   純素材與顯示層改動,技能／爆發／第二效果／天賦數值一行未動。 */
 /* ★ v1.80.0(2026-09-11・老師手機版兩張截圖回報，並指示「手機畫面比例和iPad不同,要仔細計算」)—
    ①【選英雄視窗手機版整個格式跑掉】既有手機版覆寫全部掛在
    @media(orientation:landscape) and (max-height:520px)，只靠「螢幕高度」判斷是不是手機；老師截圖
@@ -5614,8 +5711,8 @@ function renderReact(x, r){
   box.innerHTML = '';
   var dur = (r.sec || x.time || 22) * 1000;
   _RC = {
-    drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0,
-    hardHits: 0, blown: 0, paused: false, seen: {},   /* ★ v1.6.0 seen=本回合已出過的算式(防重複) */
+    drops: [], raf: 0, last: 0, spawnT: 0, got: 0, wrong: 0, shots: 0,
+    hardHits: 0, blown: 0, paused: false, seen: {},   /* ★ v1.6.0 seen=本回合已出過的算式(防重複);★ v1.83.0 新增 shots=本回合總出手次數(不分對錯,見 _reactHit) */
     bag: null,   /* ★ v1.12.0 正確/錯誤平衡袋(見 _reactSpawn) */
     /* ★ v1.65.4(老師需求「增加三數混合運算題,每關隨機出現3題」)— comboQueue 是本回合前 8 次生成的
        強制排程(洗牌後 3 個 true + 5 個 false),_reactSpawn 依序消耗;true 時這次生成改用
@@ -5623,6 +5720,10 @@ function renderReact(x, r){
        (命中/誤擊都是雙倍傷害,見 _reactHit)。8 個插槽在 15 秒回合內幾乎必定會被消耗到,確保
        3 題都真的出現,不受 got>=need 提早結束回合影響(need 通常只要 2~3 題就達標)。 */
     comboQueue: shuffle([true, true, true, false, false, false, false, false]), comboHits: 0,
+    /* ★ v1.83.0(老師需求「每回合共射擊3次(無論正確或錯誤)就結束,第六回合沒有射擊次數上限」)—
+       need 由「目標正確次數」改為「本回合總出手次數上限」(不分對錯,見下方 _reactTick 的結束判定
+       改讀 _RC.shots 而非 _RC.got);第六回合資料表給一個極大值(9999)當「事實上沒有上限」,
+       真正的收尾交給既有的 HP 歸零判定(mgBattleHit → mgBattleCheckKO,兩者本來就完全獨立運作)。 */
     need: (r.need || 6), r: r,
     endAt: (new Date()).getTime() + dur, total: dur,
     /* ★ v1.27.0(老師需求)— 連續答錯/答對雙軌計數:
@@ -5649,8 +5750,9 @@ function renderReact(x, r){
 }
 function _reactHud(){
   if(!_RC) return;
-  $('react-got').textContent = '🎯 擊中 ' + _RC.got + ' / ' + _RC.need
-                             + (_RC.wrong ? ('　💥 誤擊 ' + _RC.wrong) : '');
+  /* ★ v1.83.0 — 主數字改「已出手 X / 上限」(對應新的回合結束判定),擊中/誤擊細項另外列出來給玩家參考。 */
+  $('react-got').textContent = '🎯 已出手 ' + _RC.shots + ' / ' + (_RC.need >= 999 ? '∞' : _RC.need)
+                             + '　(✅ ' + _RC.got + '　💥 ' + _RC.wrong + ')';
   /* ★ v1.65.4 — 提示文字尾巴固定加一句金框×2 題的說明,不管該回合原本的 tip 寫什麼都會看到,
      讓學生知道金色發光的題目命中/誤擊都是雙倍傷害。 */
   var _tipExtra = (MG.lang === 'en') ? '  ⚡ Gold-glow ×2 tiles: double damage either way!' : '　⚡ 金框×2題:命中或射錯都是雙倍傷害!';
@@ -5903,6 +6005,9 @@ function _reactSpawn(){
 function _reactHit(d){
   if(!_RC || d.dead) return;
   d.dead = true;
+  /* ★ v1.83.0(老師需求「共射擊3次(無論正確或錯誤)就結束」)— 這裡是唯一的「命中判定」入口(對/錯
+     兩支分支都會先走到這),每次命中(不管對錯、也不管 combo/hard 雙倍加分)一律只算 1 次出手。 */
+  _RC.shots++;
   if(d.good){
     /* ★ v1.4.0 高難度(發光)命中算兩倍;★ v1.65.4 三數混合運算題(combo3)命中同樣算兩倍,並額外加分 */
     var _gain = (d.hard || d.combo) ? 2 : 1;
@@ -6131,7 +6236,7 @@ function _reactTick(ts){
     bar.style.width = pct + '%';
     if(pct <= 30) bar.classList.add('low'); else bar.classList.remove('low');
   }
-  if(leftMs <= 0 || _RC.got >= _RC.need){ _reactFinish(); return; }
+  if(leftMs <= 0 || _RC.shots >= _RC.need){ _reactFinish(); return; }
   _RC.raf = requestAnimationFrame(_reactTick);
 }
 function _reactFinish(){
@@ -6139,23 +6244,23 @@ function _reactFinish(){
   if(_RC.raf) cancelAnimationFrame(_RC.raf);
   MG.answered = true;
   stopTimer();
-  var r = _RC.r, got = _RC.got, wrong = _RC.wrong, need = _RC.need, hh = _RC.hardHits, blown = _RC.blown;
-  /* ★ v1.63.0(老師需求「過時沒有射完3個正確答案就受到對手1次攻擊並使對手獲得1充能」)—
-     時間到但還沒集滿 need 個正確答案時,額外補一次「射錯」等級的戰鬥懲罰(對手反擊+對手充能),
-     跟每次真的射錯時的懲罰是各自獨立疊加的兩件事,不是互相替代。走跟射錯完全同一條 mgBattleHit(false)
-     路徑,第三參數同樣傳 true 跳過全域安全網,確保這一次也只算一次反擊。 */
-  if(got < need){ try{ mgBattleHit(false, undefined, true); }catch(_ertm){} }
+  var r = _RC.r, got = _RC.got, wrong = _RC.wrong, shots = _RC.shots, need = _RC.need, hh = _RC.hardHits, blown = _RC.blown;
+  /* ★ v1.83.0(老師需求「每回合共射擊3次(無論正確或錯誤)就結束」,取代 v1.63.0 的舊「集滿N個正確
+     答案」設計)— need 現在是「本回合出手次數上限」,不再是「正確次數目標」。原本這裡的懲罰是專門
+     罰「時間到了卻還沒集滿目標」;新設計下「用完所有出手次數」本身就是正常結束(不是沒達標),
+     只有「時間到了、出手次數卻還沒用完」(玩家太猶豫/來不及出手)才維持舊有的懲罰語意,判定條件
+     由 got<need 改為 shots<need(shots 才是跟 need 同一單位的東西)。 */
+  if(shots < need){ try{ mgBattleHit(false, undefined, true); }catch(_ertm){} }
   $('reactbox').innerHTML = '';
-  /* ★ v1.65.4(老師需求「計分過低,全對應接近四星以上」)— 拿掉原本「wrong<=1」的門檻:誤擊本來就已經
-     用 mgBattleHit 逐次扣過玩家 HP 了,達標(got>=need)卻只因為手忙腳亂多誤擊 1、2 次就讓整回合的
-     scoreIt 判定成「失敗」(0級距分),等於同一件事被罰兩次,是分數偏低的主因之一;現在只看有沒有
-     達標。 */
-  var ok = (got >= need);
+  /* ★ v1.83.0 — 舊版「ok = got>=need」是「達到正確次數目標」;新設計沒有這種目標了(回合本來就只是
+     用完 3 次出手就結束),改成「射對的次數比射錯的多」當這回合算不算打得好的判定,盡量口徑簡單、
+     玩家一看就懂,不特別去猜測老師沒明講的細節規則。 */
+  var ok = (got > wrong);
   /* ★ v1.65.4 — 另一個分數偏低的原因:react 引擎完全不跑 startTimer(見 renderQuestion 的排除清單),
      MG.tleft 從頭到尾不會被算數大進擊自己更新,scoreIt 內部的時間加成 Math.round(MG.tleft*2) 因此吃到
      的是別的引擎留下的舊值(常態接近 0),跟 mgBattleMaxScore 算理論滿分時假設「秒殺答對拿滿時間加成」
      完全對不上,導致算數大進擊的實際分數天花板遠低於理論滿分。改為結算當下,把「這回合結束時實際
-     剩餘的秒數」寫回 MG.tleft 再呼叫 scoreIt——越快集滿 need 顆、剩的時間越多,時間加成越高,跟其他
+     剩餘的秒數」寫回 MG.tleft 再呼叫 scoreIt——越快用完出手次數、剩的時間越多,時間加成越高,跟其他
      引擎「越快答對分數越高」的邏輯一致,也符合理論滿分公式的假設。 */
   MG.tleft = Math.max(0, (_RC.endAt - (new Date()).getTime()) / 1000);
   scoreIt(ok, true);   /* ★ v1.29.0 HP 已在 _reactHit 逐射擊扣過,回合結算不再扣 */
@@ -6169,8 +6274,7 @@ function _reactFinish(){
   var _extra = (blown > 0 ? (',被炸掉 ' + blown + ' 個正確算式') : '');   /* ★ v1.6.0 取消雙倍後不再顯示 */
   var _comboTxt = (ch > 0 ? ('　🔢 三數混合題命中 ' + ch + ' 次(雙倍加分)') : '');
   showFeedback(ok,
-    ok ? ('✅ 擊中 ' + got + ' 分,誤擊 ' + wrong + ' 次' + _extra + _comboTxt + '!')
-       : ('🔶 擊中 ' + got + ' / ' + need + ',誤擊 ' + wrong + ' 次' + _extra + _comboTxt),
+    '🎯 出手 ' + shots + ' 次(✅ 對 ' + got + '　💥 錯 ' + wrong + ')' + _extra + _comboTxt,
     tx(r.why));
   _RC = null;
 }
@@ -6679,6 +6783,12 @@ function _mazePaint(){
       /* ★ v1.3.1(老師:「難度太低」):踩到之前正解與陷阱一律同一種「石板」外觀(.mark),
          不再用金框／紅框分色 —— v1.3.0 之前等於把答案直接畫在地圖上。 */
       cls += ' mark';
+      /* ★ v1.82.0(老師回報手機版「選項超過2個字被裁掉」)— 依實際字數分級,手機斷點內縮小字級+
+         允許兩行(見 CSS .mz-len3/4/5),2 字以內維持原尺寸不受影響。 */
+      var _tlen = txt.replace(/\s+/g, '').length;
+      if(_tlen >= 5) cls += ' mz-len5';
+      else if(_tlen === 4) cls += ' mz-len4';
+      else if(_tlen === 3) cls += ' mz-len3';
       _pic = cell.mark.pic || mgPicByText(cell.mark.t);   /* ★ v1.62.0(老師需求「迷宮答案格子可放回收物的圖片」)— mark.pic 逐格指定時優先,沒指定才退回舊有的文字對照表 mgPicByText */
     }
     if(i === _MZ.pos) _pic = 'maze_mz_player.webp';
@@ -6695,7 +6805,11 @@ function _mazePaint(){
     }
     if(i === _MZ.pos) cls += ' here';
     if(_MZ.peek === i) cls += ' peek';   /* 💡 第二段提示:亮出一格正解 */
-    html += '<div class="' + cls + '" onclick="mgMazeStep(' + i + ')">' + mgPicTag(_pic, 'pic-mz') + esc(txt) + '</div>';
+    /* ★ v1.83.0(老師回報「關閉視窗要讓玩家繼續移動,而不是直接走進那格」)— 石板格(.mark)點一下
+       一律開全字+圖預覽(不判斷是不是「已經開過」,反正視窗蓋滿全螢幕時底下格子本來就點不到);
+       是否要真的踏出去交給視窗裡的「🚶 走這一步」鈕,「關閉」或點視窗背景都只關窗不移動,
+       玩家可以先看好幾格再決定;沒有 mark 的格子(起點/終點/牆/神秘方塊/已走過)維持原本一點就走。 */
+    html += '<div class="' + cls + '" onclick="mgMazeCellClick(' + i + ')">' + mgPicTag(_pic, 'pic-mz') + esc(txt) + '</div>';
   }
   g.innerHTML = html;
   var info = '⭐ 收集 ' + _MZ.got + ' / ' + _MZ.need + ' 個正確答案'
@@ -6705,6 +6819,36 @@ function _mazePaint(){
   else info += '　|　白框的格子才走得過去,石板上的字要自己判斷對不對';
   $('maze-info').textContent = info;
 }
+/* ★ v1.83.0 — 石板格(答案)一律先開全字+圖預覽,關閉視窗只是關閉(玩家可以自由繼續移動/再看別格),
+   要不要真的踏出這一步交給視窗裡的「🚶 走這一步」鈕(mgMazeInfoConfirm)另外觸發。
+   沒有 mark 的格子(起點/終點/牆/神秘方塊/已走過)直接呼叫既有 mgMazeStep,行為零改動。 */
+var _mzInfoIdx = -1;
+window.mgMazeCellClick = function(i){
+  if(MG.answered || !_MZ || _MZ.done){ return; }
+  var cell = _MZ.cells[i];
+  if(cell && cell.mark){
+    _mzInfoIdx = i;
+    var _pic = cell.mark.pic || mgPicByText(cell.mark.t);
+    var _picEl = $('mz-info-pic'), _txtEl = $('mz-info-txt'), _ov = $('mz-info-ov'), _goBtn = $('mz-info-go');
+    if(_picEl) _picEl.innerHTML = mgPicTag(_pic, 'pic-mz-info');
+    if(_txtEl) _txtEl.textContent = mgStr(cell.mark, 't');
+    /* 走不到的格子(不相鄰/已走過)不出現「走這一步」鈕,只留「關閉」,避免按了卻靜靜沒反應 */
+    if(_goBtn) _goBtn.style.display = _mazeReach(i) ? '' : 'none';
+    if(_ov) _ov.classList.add('show');
+    playSfx('sfx-tap', 0.25);
+    return;
+  }
+  mgMazeStep(i);
+};
+window.mgMazeInfoConfirm = function(){
+  var i = _mzInfoIdx;
+  mgMazeInfoClose();
+  if(i >= 0) mgMazeStep(i);
+};
+window.mgMazeInfoClose = function(){
+  _mzInfoIdx = -1;
+  var _ov = $('mz-info-ov'); if(_ov) _ov.classList.remove('show');
+};
 window.mgMazeStep = function(i){
   if(MG.answered || !_MZ || _MZ.done) return;
   if(!_mazeReach(i)){
@@ -7142,6 +7286,15 @@ window.mgAnswer = function(i){
   correct = (i === ansIdx);
   finishAnswer(correct, ansIdx, q, i);
 };
+/* ★ v1.82.0 — 逐一嘗試重置每一個可能捲動的容器(依現在的斷點,實際生效的可能是其中一個或兩個,
+   其餘元素不存在/本來沒捲動時,設 scrollTop 也不會報錯,直接略過即可)。 */
+function mgMapResetScroll(){
+  try{
+    var ids = ['mapbox', 'play-left', 'play-right', 'page-play'], i, el;
+    for(i = 0; i < ids.length; i++){ el = $(ids[i]); if(el){ el.scrollTop = 0; el.scrollLeft = 0; } }
+    window.scrollTo(0, 0);
+  }catch(_e){}
+}
 window.mgAnswerMap = function(spotId){
   if(MG.answered) return;
   var q = MG.order[MG.idx];
@@ -7155,6 +7308,12 @@ window.mgAnswerMap = function(spotId){
     MG_MAP_ZOOM = false;
     var _mzb = $('mapbox'); if(_mzb) _mzb.classList.remove('zoomed');
   }
+  /* ★ v1.82.0(老師需求「地圖區自動復位到頂部題目看得見的位置」)— 上面只復原了縮放尺寸(class),
+     但玩家放大時可能已經把「#mapbox 自己的內部捲動」「#play-left/#play-right(直式左右欄各自可捲動)」
+     或「#page-play 整頁(某些斷點下改頁面本身捲動)」捲到別的位置,尺寸縮回去不會連帶把捲動位置也
+     歸零。逐一嘗試重置每一個可能是捲動容器的元素(不存在或本來就沒捲動也不會報錯),確保下一題出現時
+     題目文字與地圖都從最上緣看起。 */
+  mgMapResetScroll();
   var el = $('sp-' + spotId);
   if(el) el.setAttribute('class', 'spot ' + (correct ? 'ok' : 'ng'));
   if(!correct){
@@ -7427,7 +7586,7 @@ function finishGame(){
   $('r-stars').innerHTML = _sh;
   var _enc = $('r-encourage');
   if(_enc){
-    if(_lost){ _enc.textContent = (MG.lang === 'en') ? 'Keep trying…' : '再接再厲…'; _enc.classList.add('show'); }
+    if(_lost){ _enc.textContent = (MG.lang === 'en') ? 'Defeated… keep trying!' : '被打倒了…再接再厲！'; _enc.classList.add('show'); }
     else{ _enc.classList.remove('show'); _enc.textContent = ''; }
   }
   if(!_lost)(function(){
@@ -7741,9 +7900,12 @@ function mgEff2Text(h, isNpc){
    原本只有「附加:」四個字是黃色,後面的效果說明文字是預設色,老師要求整段(標籤+說明)都黃色;
    另外在最前面加兩個全形空格,讓「附加:」跟前面的基本效果文字有視覺區隔(空格本身不上色,放在
    <span> 外面)。 */
+/* ★ v1.82.0(老師需求「排版改成第二行-附加」)— 原本回傳一段「前面兩個全形空格+黃字」的行內文字，
+   接在 hb-desc 段落尾巴，會不固定地擠成半行或另起一行；改回傳獨立的區塊 <div>，保證附加效果
+   永遠自成一行(.hb-eff2)，跟第一行(標籤+招式名+主效果)、第三行(天賦)三行整齊對齊。 */
 function mgEff2Html(effStr){
   if(!effStr) return '';
-  return '　　<span style="color:#ffe066;">附加:' + esc(effStr) + '</span>';
+  return '<div class="hb-eff2">附加:' + esc(effStr) + '</div>';
 }
 /* ★ v1.79.0(老師需求「左方英雄清單縮圖要採用大對抗隊伍編組頁的圖片,尺寸和高度都複製」)—
    尺寸/高度(155px 寬×120px 高)v1.76.0/v1.77.0 已對齊,但縮圖裁切位置一直是通用的
@@ -7771,9 +7933,14 @@ var MG_THUMB_POS = {
   '魔術師':30,
   '聖冥法師':10,
   '大刀勇士':10,
-  '大天狗':30,
-  '酒吞童子':30,
-  '玉藻前':30,
+  /* ★ v1.81.0 — 日本關四英雄改用 LV20 精緻版立繪(見 minigame_db.js),圖換了裁切位置就要跟著換:
+     舊值(大天狗/酒吞童子/玉藻前 各 30)是主程式對「舊版 Q 版立繪」調的,對 LV20 直式全身圖會裁到胸口;
+     LV20 是主程式圖鑑肖像(HERO_PORTRAIT_LIBRARY)那一批,主程式對這批的預設 objPos 就是 center 20%,
+     這裡逐一比對實際構圖微調到臉部(巫女 20／大天狗 18／酒吞童子 17／玉藻前 18)。 */
+  '巫女':20,
+  '大天狗':18,
+  '酒吞童子':17,
+  '玉藻前':18,
   '科技生化人':20,
   '鋁合金暴龍':20,
   '超鬼神王':30,
@@ -7880,16 +8047,21 @@ function mgHeroPaintPicker(){
   var _nmEl = $('hm-name');
   if(_nmEl) _nmEl.innerHTML = esc(h.n) + '<span class="hm-type cls-' + hCls + '">' + esc(mgHeroLabel(h)) + '</span>';
   var _bbEl = $('hm-burstbox');
-  if(_bbEl) _bbEl.innerHTML = '<div class="hb-tag">⚡ ' + esc(MG.style === 's' ? '爆發' : '極限爆發') + '</div>'
-    + '<div class="hb-name cls-' + hCls + '">' + esc(h.bn || tx(d.name)) + '</div>'
-    + '<div class="hb-desc">' + esc(tx(d.p)) + mgEff2Html(_e2) + '</div>';
+  /* ★ v1.82.0(老師需求「爆發文字排版改成：第一行-極限爆發+招式名+效果，第二行-附加，第三行-天賦」)—
+     原本 hb-tag/hb-name 各自獨立一個 <div>(區塊元素天生換行)，即使內文很短也要佔滿 3 行起跳；
+     改成 <span> 塞進同一行(標籤+招式名+主效果說明放一起)，「附加」效果拆成獨立一行(.hb-eff2)，
+     跟下面天賦欄位合計正好對齊老師要的「三行」版面，同時也讓爆發卡整體變矮，天賦欄位更不容易被擠出畫面。 */
+  if(_bbEl) _bbEl.innerHTML = '<div class="hb-line1"><span class="hb-tag">⚡ ' + esc(MG.style === 's' ? '爆發' : '極限爆發') + '</span> '
+    + '<span class="hb-name cls-' + hCls + '">' + esc(h.bn || tx(d.name)) + '</span>　'
+    + '<span class="hb-desc">' + esc(tx(d.p)) + '</span></div>'
+    + mgEff2Html(_e2);
   /* ★ v1.75.0(老師 v1.73.0 就預留的「天賦(被動)」欄位,本輪正式填入內容)—
      mgTraitText 只對已經串接引擎、真的會生效的類型回傳文字(見該函式註解);還沒串接的
      hintclear/resourcesave/autoclear(或根本沒有 tr 資料)一律回傳空字串,維持原本的
      dashed「之後設計」外觀,不誤導玩家以為有效果。 */
   var _trEl = $('hm-traitbox'), _trTxt = tx(mgTraitText(h));
   if(_trEl){
-    if(_trTxt){ _trEl.className = 'hm-traitbox filled'; _trEl.innerHTML = '<div class="hb-tag">✦ ' + esc(MG.style === 's' ? '天賦' : '天賦(被動)') + '</div><div class="hb-desc">' + esc(_trTxt) + '</div>'; }
+    if(_trTxt){ _trEl.className = 'hm-traitbox filled'; _trEl.innerHTML = '<span class="hb-tag">✦ ' + esc(MG.style === 's' ? '天賦' : '天賦(被動)') + '</span>　<span class="hb-desc">' + esc(_trTxt) + '</span>'; }
     else{ _trEl.className = 'hm-traitbox'; _trEl.textContent = '✦ 天賦(被動)——之後設計'; }
   }
   for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
