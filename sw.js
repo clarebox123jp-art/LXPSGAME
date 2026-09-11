@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.7.1';   // ★ v3.7.1(對應遊戲 v5.178.0・2026-09-11・老師回報「小遊戲都能一次下載成功，主程式卻要等很久然後突然重新啟動跳回首頁」)— 【v3.7.0 IndexedDB 連線洩漏根治】根因：v3.7.0 新增的 _lxpsIdbOpen() 每次呼叫都用 indexedDB.open() 開一條全新連線且從未 close()；主程式下載批次掃描(每 60 筆一批)與批次下載(每批進度)都各自呼叫 _saveJob() 寫一次佇列，資源數遠多於小遊戲，短時間內會開出大量從未關閉的 IndexedDB 連線，疊加既有的 Cache Storage 操作，容易在記憶體有限裝置(尤其 iPad)上拖慢分頁甚至被系統判定過度占用資源而強制重載——就是老師看到的「等很久、然後突然重新啟動、跳回首頁」。修法：①_lxpsIdbOpen() 改為整個 SW 生命週期只開一條連線並快取重複使用(標準 IndexedDB 用法)，連線意外關閉時才清快取重開；②_saveJob() 加節流(至少間隔 400ms 才真的寫一次)，降低主程式資源數多時的 IndexedDB 交易量。★ v3.7.0 的三項修法(waitUntil 包住下載鏈/續傳佇列/廣播所有分頁/PRECACHE_STATUS)本身邏輯不變，只修正資源管理疏漏。 ｜前版 ★ v3.7.0(對應遊戲 v5.177.0・2026-09-11・老師需求「完整下載安裝時保留下載連線,避免遊戲一直自己重新啟動中斷下載」)— 【下載安裝可續傳・不擋人 第一階段:SW 端續傳佇列】根因=舊碼 PRECACHE_URLS 訊息處理完全沒有 event.waitUntil(),下載這條 promise 鏈只是「剛好」在瀏覽器認定 SW 閒置前跑完;頁面重整/背景切走/瀏覽器記憶體壓力回收 SW 時,下載會被腰斬,下次只能整個重新開始掃描(雖然已快取的部分不必重抓,但校網慢、幾百個檔案逐一 cache.match 掃描本身也要時間,體感就是「一直自己重新啟動中斷下載」)。修法三件事:①PRECACHE_URLS 處理改用 event.waitUntil(precacheUrlsInBatches(...)) 包住,明確告訴瀏覽器「這個下載還沒做完,先不要回收我」,大幅降低下載途中被腰斬的機率。②新增 IndexedDB 續傳佇列(_lxpsIdbOpen/_lxpsIdbGet/_lxpsIdbPut,db 名 lxps-precache-db,store 'job'):開始下載時把 urls/wantsWebp/conc 存進去,每批下載完更新最新 done/failed/total 進度,全部完成才清除;即使 SW 真的被整個終止重啟(不是只重整頁面,是連 SW 都被系統殺掉),下次 activate 時會自動檢查佇列,有未完成的工作就自動在背景繼續抓,不必等玩家重新按下載鈕。③進度回報改為同時廣播給「所有已開啟的分頁」(clients.matchAll)而不只是當初按下載鈕的那個分頁 client——玩家如果在下載中重整頁面,新頁面一樣收得到後續進度,不會看起來像「斷線」。★ 新增 PRECACHE_STATUS 訊息類型,頁面可隨時查詢目前續傳佇列的進度(done/total/active),不必重新送出完整 urls 清單才能知道現況,為下一階段「頁面改查詢式進度小卡、不再全螢幕遮罩鎖畫面」鋪路。★ 本輪刻意不做:容量重估(仍用舊估算文字)、頁面 UI 改版(仍是全螢幕遮罩)——下一階段再做,避免一次改動範圍過大難以驗證。舊有的批次掃描/下載/格式感知(webp/jpg)/CDN 改寫/並行數判定邏輯一行未動。 ｜前版 ★ v3.6.0(對應遊戲 v5.149.0・2026-09-07)— 【根目錄 sw.js 誤傳修復】2026-09-06 小遊戲 v1.7.2 交付時 minigame/sw.js 被誤傳到根目錄覆蓋本檔(小遊戲 SW 不認 PRECACHE_URLS/GET_VERSION ⇒ 主程式「首次安裝中」讀條永遠 0/435;老師 PC 與新電腦皆卡住)。本檔由 git 歷史 ece00e08(v3.5.99・2026-09-04)一字不差復原,只 bump 版號讓所有裝置重抓 shell 並汰換掉錯誤的 SW。⚠⚠ 上傳鐵則:根目錄 sw.js 檔頭必為「小英雄大對抗 — Service Worker」;minigame/sw.js 檔頭為「小英雄小遊戲」,兩檔絕不可互換。SW 邏輯零改動。 ｜前版 ★ v3.5.99(對應遊戲 v5.140.0)— 首頁新增「🎮 迷你遊戲模式」入口(minigame/ 獨立 PWA)⇒ shell 必須更新才拿得到新的 index.html/main.css;同時本版於 activate 加入 'lxps-mini-' 快取白名單(見下方),避免主程式每次更版就把小遊戲的離線快取清空。 ｜ ★ v3.5.98(對應遊戲 v5.126.0)— 【新裝置完整安裝卡很久根治·老師換新電腦實測回報】①install 只抓一次 index.html:'./' 與 './index.html' 是同一份檔(gz 約 3.2MB),舊碼兩個 key 各 fetch 一次白抓一趟,而 SW 必須等 install 全部跑完才 active/claim ⇒ 客端在那之前 controller 恆 null;改為抓一次 clone 塞兩個 key,shell 由約 7.6MB 降為約 4.4MB。②預載前的快取比對改分批(每批 60)並逐批回報 scanning 進度:舊碼一次丟出全部 URL 的 cache.match(每支最多 3 個候選 key)、全掃完才送第一筆 progress ⇒ 新裝置快取全空時讀條停在 0 不動。③並行數改吃客端提示 iosLike:原 UA 判定含 Macintosh,真 Mac 桌機被誤判成 iPad 砍到 3 條並行且每批多休 100ms(iPadOS 的 UA 同樣是 Macintosh,唯一分得開的 maxTouchPoints 只有主執行緒讀得到);沒帶 iosLike 的舊客端一律退回原 CONCURRENT,行為不變。★ 快取鍵格式、CDN 改寫、fetch 策略一行未動。 ｜前版   // ★ v3.5.97(對應遊戲 v5.117.0)— 版號 bump:admin_panel.js 選單分組與整併改版,必須讓已安裝 SW 的 iPad 重抓 shell 快取。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.96(對應遊戲 v5.116.0)— 版號 bump:world-boss.js / world-boss-ui.html 同輪接線「題庫可見性」的 'wb' 場景,必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則龍王戰會吃到沒有可見性守門的舊檔。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.95(對應遊戲 v5.115.0)— 版號 bump:adv_quiz_db.js 新增六上自然 200 題(檔案變大約 32KB),必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則學生會吃到沒有六上自然題庫的舊檔而在科目選單看不到四個新單元。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.8.0';   // ★ v3.8.0(對應遊戲 v5.179.0・2026-09-11・老師需求「有辦法加快大對抗完整下載安裝的速度嗎」，裁定乙案「不猜型號，實測自動調速」)— 【並行下載數 AIMD 自動調速】舊碼並行數整趟下載固定(桌機8/iPad3)，是靠 UA 猜裝置等級的保守值，猜低了浪費網路餘裕、猜高了弱網舊機會失敗當機，且蘋果不開放讀取精確 iPad 型號無從查起。改法比照 TCP 壅塞控制 AIMD(加法增、乘法減)精神，不猜型號改靠實測：每批下載完看這批耗時與有無失敗，零失敗+平均每檔<800ms⇒並行數+1(加法增，穩穩試探)；有失敗或平均每檔>3000ms⇒並行數直接砍半(乘法減，比慢慢降更快脫離撐不住的狀態)；介於中間維持不變。上下界仍以 client 提示的裝置等級(conc 參數)當起點：地板=起點一半(至少2)、天花板=起點2倍(iOS-like 最高封頂6，避免網路好到誤判成桌機等級硬衝爆舊 iPad 記憶體)。當下調速後的 CONC 同步寫進續傳佇列，SW 重啟續傳從上次調到的值接著跑，不會每次都打回起點重新摸索。批次間隔(iPad 150ms/桌機 50ms)改吃「當初是否 iOS-like 起點」而非當下 CONC 數字，避免調高後誤判成桌機少了喘息間隔。★ 掃描/下載/格式感知/CDN 改寫/v3.7.x 續傳佇列邏輯一行未動。 ｜前版 ★ v3.7.1(對應遊戲 v5.178.0・2026-09-11・老師回報「小遊戲都能一次下載成功，主程式卻要等很久然後突然重新啟動跳回首頁」)— 【v3.7.0 IndexedDB 連線洩漏根治】根因：v3.7.0 新增的 _lxpsIdbOpen() 每次呼叫都用 indexedDB.open() 開一條全新連線且從未 close()；主程式下載批次掃描(每 60 筆一批)與批次下載(每批進度)都各自呼叫 _saveJob() 寫一次佇列，資源數遠多於小遊戲，短時間內會開出大量從未關閉的 IndexedDB 連線，疊加既有的 Cache Storage 操作，容易在記憶體有限裝置(尤其 iPad)上拖慢分頁甚至被系統判定過度占用資源而強制重載——就是老師看到的「等很久、然後突然重新啟動、跳回首頁」。修法：①_lxpsIdbOpen() 改為整個 SW 生命週期只開一條連線並快取重複使用(標準 IndexedDB 用法)，連線意外關閉時才清快取重開；②_saveJob() 加節流(至少間隔 400ms 才真的寫一次)，降低主程式資源數多時的 IndexedDB 交易量。★ v3.7.0 的三項修法(waitUntil 包住下載鏈/續傳佇列/廣播所有分頁/PRECACHE_STATUS)本身邏輯不變，只修正資源管理疏漏。 ｜前版 ★ v3.7.0(對應遊戲 v5.177.0・2026-09-11・老師需求「完整下載安裝時保留下載連線,避免遊戲一直自己重新啟動中斷下載」)— 【下載安裝可續傳・不擋人 第一階段:SW 端續傳佇列】根因=舊碼 PRECACHE_URLS 訊息處理完全沒有 event.waitUntil(),下載這條 promise 鏈只是「剛好」在瀏覽器認定 SW 閒置前跑完;頁面重整/背景切走/瀏覽器記憶體壓力回收 SW 時,下載會被腰斬,下次只能整個重新開始掃描(雖然已快取的部分不必重抓,但校網慢、幾百個檔案逐一 cache.match 掃描本身也要時間,體感就是「一直自己重新啟動中斷下載」)。修法三件事:①PRECACHE_URLS 處理改用 event.waitUntil(precacheUrlsInBatches(...)) 包住,明確告訴瀏覽器「這個下載還沒做完,先不要回收我」,大幅降低下載途中被腰斬的機率。②新增 IndexedDB 續傳佇列(_lxpsIdbOpen/_lxpsIdbGet/_lxpsIdbPut,db 名 lxps-precache-db,store 'job'):開始下載時把 urls/wantsWebp/conc 存進去,每批下載完更新最新 done/failed/total 進度,全部完成才清除;即使 SW 真的被整個終止重啟(不是只重整頁面,是連 SW 都被系統殺掉),下次 activate 時會自動檢查佇列,有未完成的工作就自動在背景繼續抓,不必等玩家重新按下載鈕。③進度回報改為同時廣播給「所有已開啟的分頁」(clients.matchAll)而不只是當初按下載鈕的那個分頁 client——玩家如果在下載中重整頁面,新頁面一樣收得到後續進度,不會看起來像「斷線」。★ 新增 PRECACHE_STATUS 訊息類型,頁面可隨時查詢目前續傳佇列的進度(done/total/active),不必重新送出完整 urls 清單才能知道現況,為下一階段「頁面改查詢式進度小卡、不再全螢幕遮罩鎖畫面」鋪路。★ 本輪刻意不做:容量重估(仍用舊估算文字)、頁面 UI 改版(仍是全螢幕遮罩)——下一階段再做,避免一次改動範圍過大難以驗證。舊有的批次掃描/下載/格式感知(webp/jpg)/CDN 改寫/並行數判定邏輯一行未動。 ｜前版 ★ v3.6.0(對應遊戲 v5.149.0・2026-09-07)— 【根目錄 sw.js 誤傳修復】2026-09-06 小遊戲 v1.7.2 交付時 minigame/sw.js 被誤傳到根目錄覆蓋本檔(小遊戲 SW 不認 PRECACHE_URLS/GET_VERSION ⇒ 主程式「首次安裝中」讀條永遠 0/435;老師 PC 與新電腦皆卡住)。本檔由 git 歷史 ece00e08(v3.5.99・2026-09-04)一字不差復原,只 bump 版號讓所有裝置重抓 shell 並汰換掉錯誤的 SW。⚠⚠ 上傳鐵則:根目錄 sw.js 檔頭必為「小英雄大對抗 — Service Worker」;minigame/sw.js 檔頭為「小英雄小遊戲」,兩檔絕不可互換。SW 邏輯零改動。 ｜前版 ★ v3.5.99(對應遊戲 v5.140.0)— 首頁新增「🎮 迷你遊戲模式」入口(minigame/ 獨立 PWA)⇒ shell 必須更新才拿得到新的 index.html/main.css;同時本版於 activate 加入 'lxps-mini-' 快取白名單(見下方),避免主程式每次更版就把小遊戲的離線快取清空。 ｜ ★ v3.5.98(對應遊戲 v5.126.0)— 【新裝置完整安裝卡很久根治·老師換新電腦實測回報】①install 只抓一次 index.html:'./' 與 './index.html' 是同一份檔(gz 約 3.2MB),舊碼兩個 key 各 fetch 一次白抓一趟,而 SW 必須等 install 全部跑完才 active/claim ⇒ 客端在那之前 controller 恆 null;改為抓一次 clone 塞兩個 key,shell 由約 7.6MB 降為約 4.4MB。②預載前的快取比對改分批(每批 60)並逐批回報 scanning 進度:舊碼一次丟出全部 URL 的 cache.match(每支最多 3 個候選 key)、全掃完才送第一筆 progress ⇒ 新裝置快取全空時讀條停在 0 不動。③並行數改吃客端提示 iosLike:原 UA 判定含 Macintosh,真 Mac 桌機被誤判成 iPad 砍到 3 條並行且每批多休 100ms(iPadOS 的 UA 同樣是 Macintosh,唯一分得開的 maxTouchPoints 只有主執行緒讀得到);沒帶 iosLike 的舊客端一律退回原 CONCURRENT,行為不變。★ 快取鍵格式、CDN 改寫、fetch 策略一行未動。 ｜前版   // ★ v3.5.97(對應遊戲 v5.117.0)— 版號 bump:admin_panel.js 選單分組與整併改版,必須讓已安裝 SW 的 iPad 重抓 shell 快取。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.96(對應遊戲 v5.116.0)— 版號 bump:world-boss.js / world-boss-ui.html 同輪接線「題庫可見性」的 'wb' 場景,必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則龍王戰會吃到沒有可見性守門的舊檔。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.95(對應遊戲 v5.115.0)— 版號 bump:adv_quiz_db.js 新增六上自然 200 題(檔案變大約 32KB),必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則學生會吃到沒有六上自然題庫的舊檔而在科目選單看不到四個新單元。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -748,7 +748,7 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
     if(!force && (now - _lastSaveAt) < 400) return;
     _lastSaveAt = now;
     _lxpsIdbPut('job', {
-      urls: urls, wantsWebp: wantsWebp, conc: conc, batchId: batchId,
+      urls: urls, wantsWebp: wantsWebp, conc: CONC, batchId: batchId,   // ★ v3.8.0 — 存當下自動調速後的 CONC(非固定起點值),續傳才會接著上次調到的速度跑
       done: done, failed: failed, total: total, scanning: _scanningNow,
       startedAt: (_lxpsJobStartedAt || Date.now()), updatedAt: now
     });
@@ -849,13 +849,36 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
       done = alreadyCached;
       sendProgress();
 
+      // ★ v3.8.0(2026-09-11・老師需求「有辦法加快主程式完整下載安裝的速度嗎」，裁定乙案)
+      //   ─────────────────────────────────────────────────────────────────
+      //   舊碼：並行數 CONC 整趟下載固定不變（桌機 8／iPad 3），是「猜」出來的保守值，
+      //   猜錯兩種方向都不好——猜低了，網路和裝置明明撐得住卻白白等；猜高了，遇到弱網或
+      //   舊機記憶體撐不住反而下載失敗/當機。而且蘋果不開放讀取精確 iPad 型號，光憑 UA
+      //   猜不出裝置等級。
+      //   改法(比照 TCP 壅塞控制的 AIMD「加法增、乘法減」精神，不靠猜型號，靠**實測**)：
+      //   每批下載完，看這批「花多久、有沒有失敗」來決定下一批要不要調並行數——
+      //     ①這批零失敗 + 平均每檔耗時夠快(<800ms) ⇒ 判斷網路/裝置還有餘裕，並行數 +1。
+      //     ②這批有任何真實失敗、或平均每檔耗時過慢(>3000ms) ⇒ 判斷已經撐不住，
+      //       並行數立刻砍掉一半(乘法減，比加法增猛得多，避免"already 卡住還慢慢降"拖更久)。
+      //     ③介於中間 ⇒ 維持不變，不需要每批都在調整。
+      //   上下界仍以client 提示的裝置等級(conc 參數，iOS-like 給3／桌機給8)當起點去算，
+      //   不是無上限亂長：地板=起點的一半(至少2)，天花板=起點的2倍(iOS-like 最高封頂6，
+      //   避免萬一網路好到誤判成"桌機等級"還硬衝爆舊 iPad 記憶體)。
+      //   目前 CONC 值同步寫進續傳佇列(_saveJob)，SW 重啟續傳時從上次調到的值接著跑，
+      //   不會每次都打回起點重新摸索。
+      var _concFloor = Math.max(2, Math.floor(CONC / 2));
+      var _concCeil  = (CONC <= 3) ? 6 : (CONC * 2);
+      var _concIsIosLike = (CONC <= 3);   // 起點就是保守值 ⇒ 視為 iOS-like 裝置,天花板加倍保護
+
       // 批次處理
       function processBatch(){
         if(toFetch.length === 0){
           sendComplete();
           return;
         }
-        var batch = toFetch.splice(0, CONC);   // ★ v3.5.98 — 原為寫死的 CONCURRENT
+        var batch = toFetch.splice(0, CONC);   // ★ v3.5.98 — 原為寫死的 CONCURRENT；v3.8.0 起 CONC 會逐批自動調整
+        var _batchStart = Date.now();
+        var _batchFailBefore = failed;
         return Promise.all(batch.map(function(pl){
           // ★ v3.4.15 — 跨域走 CDN 改寫 (繞 GitHub 429), 同源照舊
           // ★ v3.5.89 — 改 CORS 驗證抓取:只快取確認 200,不再把 no-cors opaque 錯誤當成功圖存
@@ -887,10 +910,22 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
             failed++;
           });
         })).then(function(){
+          // ★ v3.8.0 — AIMD 自動調速:依這批「耗時／有無失敗」決定下一批並行數
+          var _batchElapsed = Date.now() - _batchStart;
+          var _batchFailCount = failed - _batchFailBefore;
+          var _avgPerFile = batch.length > 0 ? (_batchElapsed / batch.length) : 0;
+          if(_batchFailCount > 0 || _avgPerFile > 3000){
+            // 乘法減:立刻砍半,比加法增猛,避免"已經撐不住還慢慢降"拖更久
+            CONC = Math.max(_concFloor, Math.floor(CONC / 2));
+          } else if(_avgPerFile < 800 && CONC < _concCeil){
+            // 加法增:一次只加 1,穩穩試探還有沒有餘裕
+            CONC = CONC + 1;
+          }
           sendProgress();
           // iPad 間隔: 每批之間休 100ms 喘口氣
           // ★ v3.5.98 — 改跟著實際並行數走(原讀 IS_IOS_LIKE,真 Mac 桌機會被誤判成 iPad 每批多休 100ms)
-          return new Promise(function(r){ setTimeout(r, CONC <= 3 ? 150 : 50); });
+          // ★ v3.8.0 — 改吃「當初是否 iOS-like 起點」而非當下 CONC(調高後也該維持 iPad 的喘息間隔,不是只看數字大小)
+          return new Promise(function(r){ setTimeout(r, _concIsIosLike ? 150 : 50); });
         }).then(processBatch);
       }
 
