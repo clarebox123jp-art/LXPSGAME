@@ -18,7 +18,7 @@
  *   但 ASSET_CACHE 保留,圖片音訊不會重抓。
  * ============================================================ */
 
-const SW_VERSION = 'v3.6.0';   // ★ v3.6.0(對應遊戲 v5.149.0・2026-09-07)— 【根目錄 sw.js 誤傳修復】2026-09-06 小遊戲 v1.7.2 交付時 minigame/sw.js 被誤傳到根目錄覆蓋本檔(小遊戲 SW 不認 PRECACHE_URLS/GET_VERSION ⇒ 主程式「首次安裝中」讀條永遠 0/435;老師 PC 與新電腦皆卡住)。本檔由 git 歷史 ece00e08(v3.5.99・2026-09-04)一字不差復原,只 bump 版號讓所有裝置重抓 shell 並汰換掉錯誤的 SW。⚠⚠ 上傳鐵則:根目錄 sw.js 檔頭必為「小英雄大對抗 — Service Worker」;minigame/sw.js 檔頭為「小英雄小遊戲」,兩檔絕不可互換。SW 邏輯零改動。 ｜前版 ★ v3.5.99(對應遊戲 v5.140.0)— 首頁新增「🎮 迷你遊戲模式」入口(minigame/ 獨立 PWA)⇒ shell 必須更新才拿得到新的 index.html/main.css;同時本版於 activate 加入 'lxps-mini-' 快取白名單(見下方),避免主程式每次更版就把小遊戲的離線快取清空。 ｜ ★ v3.5.98(對應遊戲 v5.126.0)— 【新裝置完整安裝卡很久根治·老師換新電腦實測回報】①install 只抓一次 index.html:'./' 與 './index.html' 是同一份檔(gz 約 3.2MB),舊碼兩個 key 各 fetch 一次白抓一趟,而 SW 必須等 install 全部跑完才 active/claim ⇒ 客端在那之前 controller 恆 null;改為抓一次 clone 塞兩個 key,shell 由約 7.6MB 降為約 4.4MB。②預載前的快取比對改分批(每批 60)並逐批回報 scanning 進度:舊碼一次丟出全部 URL 的 cache.match(每支最多 3 個候選 key)、全掃完才送第一筆 progress ⇒ 新裝置快取全空時讀條停在 0 不動。③並行數改吃客端提示 iosLike:原 UA 判定含 Macintosh,真 Mac 桌機被誤判成 iPad 砍到 3 條並行且每批多休 100ms(iPadOS 的 UA 同樣是 Macintosh,唯一分得開的 maxTouchPoints 只有主執行緒讀得到);沒帶 iosLike 的舊客端一律退回原 CONCURRENT,行為不變。★ 快取鍵格式、CDN 改寫、fetch 策略一行未動。 ｜前版   // ★ v3.5.97(對應遊戲 v5.117.0)— 版號 bump:admin_panel.js 選單分組與整併改版,必須讓已安裝 SW 的 iPad 重抓 shell 快取。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.96(對應遊戲 v5.116.0)— 版號 bump:world-boss.js / world-boss-ui.html 同輪接線「題庫可見性」的 'wb' 場景,必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則龍王戰會吃到沒有可見性守門的舊檔。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.95(對應遊戲 v5.115.0)— 版號 bump:adv_quiz_db.js 新增六上自然 200 題(檔案變大約 32KB),必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則學生會吃到沒有六上自然題庫的舊檔而在科目選單看不到四個新單元。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
+const SW_VERSION = 'v3.7.0';   // ★ v3.7.0(對應遊戲 v5.177.0・2026-09-11・老師需求「完整下載安裝時保留下載連線,避免遊戲一直自己重新啟動中斷下載」)— 【下載安裝可續傳・不擋人 第一階段:SW 端續傳佇列】根因=舊碼 PRECACHE_URLS 訊息處理完全沒有 event.waitUntil(),下載這條 promise 鏈只是「剛好」在瀏覽器認定 SW 閒置前跑完;頁面重整/背景切走/瀏覽器記憶體壓力回收 SW 時,下載會被腰斬,下次只能整個重新開始掃描(雖然已快取的部分不必重抓,但校網慢、幾百個檔案逐一 cache.match 掃描本身也要時間,體感就是「一直自己重新啟動中斷下載」)。修法三件事:①PRECACHE_URLS 處理改用 event.waitUntil(precacheUrlsInBatches(...)) 包住,明確告訴瀏覽器「這個下載還沒做完,先不要回收我」,大幅降低下載途中被腰斬的機率。②新增 IndexedDB 續傳佇列(_lxpsIdbOpen/_lxpsIdbGet/_lxpsIdbPut,db 名 lxps-precache-db,store 'job'):開始下載時把 urls/wantsWebp/conc 存進去,每批下載完更新最新 done/failed/total 進度,全部完成才清除;即使 SW 真的被整個終止重啟(不是只重整頁面,是連 SW 都被系統殺掉),下次 activate 時會自動檢查佇列,有未完成的工作就自動在背景繼續抓,不必等玩家重新按下載鈕。③進度回報改為同時廣播給「所有已開啟的分頁」(clients.matchAll)而不只是當初按下載鈕的那個分頁 client——玩家如果在下載中重整頁面,新頁面一樣收得到後續進度,不會看起來像「斷線」。★ 新增 PRECACHE_STATUS 訊息類型,頁面可隨時查詢目前續傳佇列的進度(done/total/active),不必重新送出完整 urls 清單才能知道現況,為下一階段「頁面改查詢式進度小卡、不再全螢幕遮罩鎖畫面」鋪路。★ 本輪刻意不做:容量重估(仍用舊估算文字)、頁面 UI 改版(仍是全螢幕遮罩)——下一階段再做,避免一次改動範圍過大難以驗證。舊有的批次掃描/下載/格式感知(webp/jpg)/CDN 改寫/並行數判定邏輯一行未動。 ｜前版 ★ v3.6.0(對應遊戲 v5.149.0・2026-09-07)— 【根目錄 sw.js 誤傳修復】2026-09-06 小遊戲 v1.7.2 交付時 minigame/sw.js 被誤傳到根目錄覆蓋本檔(小遊戲 SW 不認 PRECACHE_URLS/GET_VERSION ⇒ 主程式「首次安裝中」讀條永遠 0/435;老師 PC 與新電腦皆卡住)。本檔由 git 歷史 ece00e08(v3.5.99・2026-09-04)一字不差復原,只 bump 版號讓所有裝置重抓 shell 並汰換掉錯誤的 SW。⚠⚠ 上傳鐵則:根目錄 sw.js 檔頭必為「小英雄大對抗 — Service Worker」;minigame/sw.js 檔頭為「小英雄小遊戲」,兩檔絕不可互換。SW 邏輯零改動。 ｜前版 ★ v3.5.99(對應遊戲 v5.140.0)— 首頁新增「🎮 迷你遊戲模式」入口(minigame/ 獨立 PWA)⇒ shell 必須更新才拿得到新的 index.html/main.css;同時本版於 activate 加入 'lxps-mini-' 快取白名單(見下方),避免主程式每次更版就把小遊戲的離線快取清空。 ｜ ★ v3.5.98(對應遊戲 v5.126.0)— 【新裝置完整安裝卡很久根治·老師換新電腦實測回報】①install 只抓一次 index.html:'./' 與 './index.html' 是同一份檔(gz 約 3.2MB),舊碼兩個 key 各 fetch 一次白抓一趟,而 SW 必須等 install 全部跑完才 active/claim ⇒ 客端在那之前 controller 恆 null;改為抓一次 clone 塞兩個 key,shell 由約 7.6MB 降為約 4.4MB。②預載前的快取比對改分批(每批 60)並逐批回報 scanning 進度:舊碼一次丟出全部 URL 的 cache.match(每支最多 3 個候選 key)、全掃完才送第一筆 progress ⇒ 新裝置快取全空時讀條停在 0 不動。③並行數改吃客端提示 iosLike:原 UA 判定含 Macintosh,真 Mac 桌機被誤判成 iPad 砍到 3 條並行且每批多休 100ms(iPadOS 的 UA 同樣是 Macintosh,唯一分得開的 maxTouchPoints 只有主執行緒讀得到);沒帶 iosLike 的舊客端一律退回原 CONCURRENT,行為不變。★ 快取鍵格式、CDN 改寫、fetch 策略一行未動。 ｜前版   // ★ v3.5.97(對應遊戲 v5.117.0)— 版號 bump:admin_panel.js 選單分組與整併改版,必須讓已安裝 SW 的 iPad 重抓 shell 快取。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.96(對應遊戲 v5.116.0)— 版號 bump:world-boss.js / world-boss-ui.html 同輪接線「題庫可見性」的 'wb' 場景,必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則龍王戰會吃到沒有可見性守門的舊檔。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.95(對應遊戲 v5.115.0)— 版號 bump:adv_quiz_db.js 新增六上自然 200 題(檔案變大約 32KB),必須讓已安裝 SW 的 iPad 重抓 shell 快取,否則學生會吃到沒有六上自然題庫的舊檔而在科目選單看不到四個新單元。本輪 SW 邏輯零改動。 ｜前版   // ★ v3.5.93(對應遊戲 v5.14.0)— 圖片瘦身全面接管(老師裁定「更新後的玩家全部自動用 JPG 取代舊 348 張 PNG」):①activate 一次性清 ASSET_CACHE 可JPG化的舊 png 鍵(冪等)→已快取玩家下次載圖自動改抓 jpg/webp ②precache 格式感知(Accept 學習旗標+客端 supportsWebp 提示;偏好格式 404 退回 png·鍵用實抓格式)→舊 iPad 完整下載 297MB 級→43MB 級 ③cacheFirstAsset 三 key 查詢(want→png→jpg)防格式錯配白做 ｜前版 ★ v3.5.92(對應遊戲 v5.13.0)— 圖片瘦身甲案:_lxpsPickAssetUrl 舊機(不支援 webp)png 請求改試同名 .jpg(q88·404 自動退回 png·雙 key 快取沿用 v3.5.88/89 零改動);新機 png→webp 完全不變;排除 icon-*/avatar_parts//_去背/body_。⚠上傳順序鐵則:jpg/webp 圖包先上、本檔最後上 ｜前版 ★ v3.5.91(對應遊戲 v5.12.0)— SHELL_URLS 新增 './mainstory.js'(主線劇情引擎自 index.html 拆檔·隨核心檔快取,離線可用)｜前版 ★ v3.5.90(對應遊戲 v4.55.0)— SHELL_URLS 新增 './avatar_db.js'(主角捏臉系統 Phase 1 新檔,隨核心檔快取,離線可用)｜前版 ★ v3.5.89 — 資源圖快取根治:fallback 全改 CORS(讀得到 status)、只快取確認 200、錯誤(403/429)一律不快取;修掉 v3.5.88「no-cors opaque 錯誤被當成功圖快取」造成的永久壞圖(只有高頻載入的主角/機關王/初始隊先存到正確圖才正常);ASSET_CACHE 一次性 v1→v2 清中毒快取;cacheFirstAsset 雙 key 查詢(webp 未命中再查 png,讓 precache 不再白做);precache 同步去 opaque-bug 改 CORS｜前版 v3.5.88 — WebP 自動改寫(cacheFirstAsset:支援的瀏覽器 png→webp·舊 iPad 與 /icon-*.png 維持 png·webp 404 自動退回 png)，新機圖片傳輸大減、舊機與離線行為不變；cache key 改用實際抓取 URL(webp/png 各存各的)｜前版 v3.5.87(對應遊戲 v3.15.94)— 載入可靠性強化:SHELL_CACHE 改固定不綁版本(跨版本保留「上次成功版」當 fallback)→ 解決「改版後新 shell 快取尚未填好、慢校網撈不到 fallback 而卡住進不去」;networkFirstShell 逾時 5s→2.5s + fallback 改全快取庫比對(caches.match)→ 慢網更快回快取、回頭裝置幾乎一定進得去。仍為 network-first(線上先抓最新,更新即時生效不變)｜前版 v3.5.86 jsDelivr CDN 改寫
 // ★ v3.5.87 — SHELL_CACHE 改「固定不綁版本」(原 'lxps-shell-'+SW_VERSION):
 //   原設計每次 bump SW_VERSION → 新 SHELL_CACHE 是空的,activate 又把舊版 shell 快取刪掉,
 //   慢校網下 networkFirstShell 逾時想 fallback 時「新快取空、舊快取已刪」→ 撈不到 → 卡住下載不完。
@@ -30,6 +30,77 @@ const SHELL_CACHE = 'lxps-shell-v1';
 //   這是「ASSET_CACHE 永不改」鐵則的單次例外;改完每台裝置下次只重抓「用到的」圖一次,
 //   有 raw + jsDelivr 雙來源 × webp/png 共四重備援,校網短暫 429 也會自己救回。日後不再動此名。
 const ASSET_CACHE = 'lxps-assets-v2';
+
+// ─────────────────────────────────────────────
+// ★ v3.7.0 — 下載續傳佇列(IndexedDB)
+//   只存一筆「目前進行中的下載工作」(key 固定 'job'),不做多工作排隊(目前只有一種下載任務)。
+//   job = { urls, wantsWebp, conc, batchId, done, failed, total, scanning, startedAt, updatedAt }
+//   全部完成或發生致命錯誤時整筆刪除,避免殘留佇列讓下次 activate 誤判成「還沒做完」而重抓。
+// ─────────────────────────────────────────────
+var _LXPS_IDB_NAME = 'lxps-precache-db';
+var _LXPS_IDB_STORE = 'job';
+
+function _lxpsIdbOpen(){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open(_LXPS_IDB_NAME, 1);
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if(!db.objectStoreNames.contains(_LXPS_IDB_STORE)){
+        db.createObjectStore(_LXPS_IDB_STORE);
+      }
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error); };
+  });
+}
+function _lxpsIdbGet(key){
+  return _lxpsIdbOpen().then(function(db){
+    return new Promise(function(resolve){
+      try{
+        var tx = db.transaction(_LXPS_IDB_STORE, 'readonly');
+        var st = tx.objectStore(_LXPS_IDB_STORE);
+        var req = st.get(key);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ resolve(null); };
+      }catch(e){ resolve(null); }
+    });
+  }).catch(function(){ return null; });
+}
+function _lxpsIdbPut(key, val){
+  return _lxpsIdbOpen().then(function(db){
+    return new Promise(function(resolve){
+      try{
+        var tx = db.transaction(_LXPS_IDB_STORE, 'readwrite');
+        var st = tx.objectStore(_LXPS_IDB_STORE);
+        var req = st.put(val, key);
+        req.onsuccess = function(){ resolve(true); };
+        req.onerror = function(){ resolve(false); };
+      }catch(e){ resolve(false); }
+    });
+  }).catch(function(){ return false; });
+}
+function _lxpsIdbDelete(key){
+  return _lxpsIdbOpen().then(function(db){
+    return new Promise(function(resolve){
+      try{
+        var tx = db.transaction(_LXPS_IDB_STORE, 'readwrite');
+        var st = tx.objectStore(_LXPS_IDB_STORE);
+        var req = st.delete(key);
+        req.onsuccess = function(){ resolve(true); };
+        req.onerror = function(){ resolve(false); };
+      }catch(e){ resolve(false); }
+    });
+  }).catch(function(){ return false; });
+}
+// 廣播訊息給「目前所有開啟的分頁」(不只是當初送出下載指令的那個 client)
+// ⇒ 玩家下載中重整/切分頁,新分頁一樣收得到後續進度,不會看起來像斷線。
+function _lxpsBroadcastAll(msg){
+  return self.clients.matchAll({ includeUncontrolled: true }).then(function(list){
+    list.forEach(function(c){
+      try{ c.postMessage(msg); }catch(e){}
+    });
+  }).catch(function(){});
+}
 
 // 同層核心檔案 — SW 安裝時自動抓 (這些一定要快取)
 const SHELL_URLS = [
@@ -246,6 +317,17 @@ self.addEventListener('activate', function(event){
       }).catch(function(){});
     }).then(function(){
       return self.clients.claim();
+    }).then(function(){
+      // ★ v3.7.0 — 續傳佇列自動接續:如果上次下載中途 SW 被整個終止(不只是頁面重整,
+      //   而是連 SW 都被系統回收重啟),這裡會發現 IndexedDB 裡還留著一份未完成的工作,
+      //   不必等玩家重新按下載鈕,背景直接接著抓(client=null → 進度用 _lxpsBroadcastAll
+      //   廣播給屆時所有開啟的分頁,沒有分頁開著也沒關係,反正快取本身才是真正的成果)。
+      return _lxpsIdbGet('job').then(function(job){
+        if(job && job.urls && job.urls.length && job.total > 0){
+          console.log('[SW] v3.7.0 發現未完成的下載佇列,自動接續:', job.done + '/' + job.total);
+          precacheUrlsInBatches(job.urls, null, job.batchId || 'resume', job.wantsWebp, job.conc);
+        }
+      }).catch(function(){});
     })
   );
 });
@@ -575,7 +657,27 @@ self.addEventListener('message', function(event){
     //   沒帶 iosLike 的舊客端(例如吃到舊快取的分頁)維持原本的保守 CONCURRENT。
     var conc = (typeof data.iosLike === 'boolean') ? (data.iosLike ? 3 : 8) : CONCURRENT;
 
-    precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc);
+    // ★ v3.7.0 — event.waitUntil() 包住整個下載鏈:告訴瀏覽器這個 SW 還有工作在做,
+    //   不要在頁面重整/背景切走的瞬間就把它回收掉,是「保留下載連線」的關鍵一行。
+    event.waitUntil(precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc));
+    return;
+  }
+
+  // ★ v3.7.0 — 頁面查詢目前續傳佇列的進度(不必重送整包 urls 才能知道現況)
+  if(data.type === 'PRECACHE_STATUS'){
+    var _statusClient = event.source;
+    event.waitUntil(_lxpsIdbGet('job').then(function(job){
+      if(_statusClient){
+        _statusClient.postMessage({
+          type: 'PRECACHE_STATUS_REPLY',
+          active: !!job,
+          done: job ? job.done : 0,
+          failed: job ? job.failed : 0,
+          total: job ? job.total : 0,
+          scanning: job ? !!job.scanning : false
+        });
+      }
+    }));
     return;
   }
 
@@ -619,36 +721,50 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
   var done = 0;
   var failed = 0;
 
+  // ★ v3.7.0 — 每次進度更新同步寫回續傳佇列(IndexedDB),供 SW 重啟後自動接續、
+  //   以及頁面用 PRECACHE_STATUS 查詢現況;_scanningNow 供 job 記錄目前是掃描還是下載階段。
+  var _scanningNow = false;
+  function _saveJob(){
+    _lxpsIdbPut('job', {
+      urls: urls, wantsWebp: wantsWebp, conc: conc, batchId: batchId,
+      done: done, failed: failed, total: total, scanning: _scanningNow,
+      startedAt: (_lxpsJobStartedAt || Date.now()), updatedAt: Date.now()
+    });
+  }
+  var _lxpsJobStartedAt = Date.now();
+
   function sendProgress(){
-    if(client){
-      client.postMessage({
-        type: 'PRECACHE_PROGRESS',
-        batchId: batchId,
-        done: done,
-        failed: failed,
-        total: total
-      });
-    }
+    var msg = {
+      type: 'PRECACHE_PROGRESS',
+      batchId: batchId,
+      done: done,
+      failed: failed,
+      total: total
+    };
+    if(client){ client.postMessage(msg); }
+    else { _lxpsBroadcastAll(msg); }   // ★ v3.7.0 — 續傳時已無原始 client,廣播給所有分頁
+    _saveJob();
   }
 
   function sendComplete(){
-    if(client){
-      client.postMessage({
-        type: 'PRECACHE_COMPLETE',
-        batchId: batchId,
-        done: done,
-        failed: failed,
-        total: total
-      });
-    }
+    var msg = {
+      type: 'PRECACHE_COMPLETE',
+      batchId: batchId,
+      done: done,
+      failed: failed,
+      total: total
+    };
+    if(client){ client.postMessage(msg); }
+    else { _lxpsBroadcastAll(msg); }
+    _lxpsIdbDelete('job');   // ★ v3.7.0 — 完成即清除佇列,避免下次 activate 誤判成還沒做完
   }
 
   if(total === 0){
     sendComplete();
-    return;
+    return Promise.resolve();
   }
 
-  caches.open(ASSET_CACHE).then(function(cache){
+  return caches.open(ASSET_CACHE).then(function(cache){
     // ★ v3.5.93 — 每個 URL 的偏好格式與候選快取鍵(偏好→原 png→jpg,去重)
     function planFor(url){
       var wantU = _lxpsPickAssetUrlStr(url, wantsWebp);
@@ -676,18 +792,20 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
     var SCAN_CHUNK = 60;
     var scanned = 0;
     var toFetch = [];
+    _scanningNow = true;
     function sendScanProgress(){
-      if(client){
-        client.postMessage({
-          type: 'PRECACHE_PROGRESS',
-          batchId: batchId,
-          scanning: true,      // ⚠ index.html 靠這個旗標走「正在檢查已有資源」文案(不動進度條)
-          scanned: scanned,
-          done: 0,
-          failed: 0,
-          total: total
-        });
-      }
+      var msg = {
+        type: 'PRECACHE_PROGRESS',
+        batchId: batchId,
+        scanning: true,      // ⚠ index.html 靠這個旗標走「正在檢查已有資源」文案(不動進度條)
+        scanned: scanned,
+        done: 0,
+        failed: 0,
+        total: total
+      };
+      if(client){ client.postMessage(msg); }
+      else { _lxpsBroadcastAll(msg); }
+      _saveJob();
     }
     sendScanProgress();
     function scanNext(){
@@ -704,6 +822,7 @@ function precacheUrlsInBatches(urls, client, batchId, wantsWebp, conc){
       });
     }
     return scanNext().then(function(){
+      _scanningNow = false;
       var alreadyCached = total - toFetch.length;
       done = alreadyCached;
       sendProgress();
