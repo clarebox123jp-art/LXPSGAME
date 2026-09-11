@@ -1753,6 +1753,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .mz.mark.reach{border-color:rgba(255,255,255,.85);}
 @media (min-width:1024px){ .mz.mark{font-size:20px;} }
 .mz.trap{background:rgba(210,84,63,.6);border-color:rgba(210,84,63,.95);color:#fff;}
+.mz.trapmark{border-color:#ffcc33;box-shadow:0 0 10px rgba(255,204,51,.8);}   /* ★ v1.78.0 — 天賦「陷阱標記」現形格,金黃邊框+外光暈,與踩過才變紅的 .trap 區分(這格還沒踩) */
 .mz.got{background:var(--grass);border-color:var(--grass);color:#0d2a18;}
 /* ★ v1.67.0 — 神秘方塊(未踩):淡紫底+脈動邊框,跟正解/陷阱共用的石板色系明顯不同,提醒玩家「這格是未知效果」 */
 .mz.mystery{background:linear-gradient(180deg,rgba(160,120,220,.35),rgba(110,70,180,.4));border:2px solid rgba(220,190,255,.6);color:#f4ecff;font-size:18px;text-shadow:0 1px 2px rgba(0,0,0,.7);}
@@ -3616,7 +3617,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.85.0';
+var MG_VER = 'v1.86.0';   /* ★ v1.86.0(老師需求「重新設計15關卡有幫助的第二效果」)— 新增6種天賦家族(healoncorrect/timeoncorrect/chargeoncorrect 全關卡通用,50%機率;mazetrap/m3merge/reactclear 分別對應迷宮/消消樂/算數大進擊);聽音關卡「演奏題」預設提示改為 hintclear 天賦限定;攻擊型爆發基礎傷害 10→20(玩家/NPC對稱);28位英雄天賦重新分配,詳見 minigame_db.js 逐筆註解。舊值 v1.85.0 備查。 */
 /* ★ v1.85.0(2026-09-11・老師回報「登入有些人要試很多次才會成功登入(選了帳號後，回到的小遊戲首頁是沒登入狀態)」)—
  * 【redirect 登入回程訊號不足根治】根因與主程式 index.html 早期歷史版本(FIX 20260517 系列／v3.3.7／v5.148.0)
  * 完全同一類問題：iOS Safari 的 Storage Partitioning 會在「本站→Google 帳號選擇頁(跨網域 authDomain)→
@@ -5389,10 +5390,11 @@ function _earPaintInput(){
     }else sc.innerHTML = _EAR.input.length + ' / ' + target.length;
   }
   box.innerHTML = h;
-  /* score 題:下一個該按的鍵亮綠框提示 */
+  /* ★ v1.78.0(老師回報「聽音關卡的提示太多了」)— 下一個該按的鍵亮綠框提示,原本 score 題無條件顯示;
+     改為天賦「提示清除」(hintclear)專屬:沒有這個天賦的玩家一律看不到,直接調高預設難度。 */
   var keys = $('kb-row').getElementsByClassName('kkey');
   for(i = 0; i < keys.length; i++) keys[i].classList.remove('hint');
-  if(q.type === 'score' && !_EAR.done && _EAR.input.length < target.length){
+  if(q.type === 'score' && !_EAR.done && _EAR.input.length < target.length && _BT && _BT.p && _BT.p.trHintClear){
     var nk = $('kk-' + String(target[_EAR.input.length])); if(nk) nk.classList.add('hint');
   }
 }
@@ -6077,6 +6079,21 @@ function _reactHit(d){
       _reactStartCooldown();
     } */
   }
+  /* ★ v1.78.0(老師需求「重新設計15關卡有幫助的第二效果」)— 天賦「額外刪錯」(reactclear):
+     射到任意答案(對或錯,都算一次「射到答案」)時,p% 機率額外刪掉畫面上 1 個目前還活著的錯誤答案掉落物(不算出手次數/不加分,單純清場)。
+     老師原話規格:射到任意答案時觸發,不限定射中的是對是錯。 */
+  if(_BT && _BT.p && _BT.p.trReactClearPct > 0 && Math.random() * 100 < _BT.p.trReactClearPct){
+    try{
+      var _rcCand = [], _rcI, _rcD;
+      for(_rcI = 0; _rcI < _RC.drops.length; _rcI++){ _rcD = _RC.drops[_rcI]; if(_rcD && !_rcD.dead && _rcD !== d && !_rcD.good) _rcCand.push(_rcD); }
+      if(_rcCand.length){
+        var _rcPick = _rcCand[Math.floor(Math.random() * _rcCand.length)];
+        _rcPick.dead = true;
+        if(_rcPick.el){ _rcPick.el.className = 'rdrop wrong'; (function(_elRef){ setTimeout(function(){ if(_elRef && _elRef.parentNode) _elRef.parentNode.removeChild(_elRef); }, 200); })(_rcPick.el); }
+        try{ mgBattleFloatOn('p', (MG.lang === 'en' ? 'CLEARED!' : '天賦清除!'), 'heal'); }catch(_eRcFx){}
+      }
+    }catch(_eRc){}
+  }
   _reactHud();
   /* 被點到的那顆 0.35 秒後移走(留一下讓孩子看到回饋) */
   var el = d.el;
@@ -6745,7 +6762,18 @@ function _mazeInit(lv){
   _MZ = { lv: lv, w: w, h: h, cells: cells, pos: start,
           walked: [start], got: 0, need: needN, bad: 0, done: false,
           myHeal: 0, myMine: 0,   /* ★ v1.67.0 — 神秘方塊統計(治癒次數／地雷次數),純顯示用 */
-          hintLv: 0, peek: -1, peekT: null };   /* ★ v1.3.1 提示狀態:hintLv 0/1/2、peek=亮出的正解格 */
+          hintLv: 0, peek: -1, peekT: null,   /* ★ v1.3.1 提示狀態:hintLv 0/1/2、peek=亮出的正解格 */
+          trapReveal: -1 };   /* ★ v1.78.0 — 天賦「陷阱標記」用,見下方 */
+  /* ★ v1.78.0(老師需求「重新設計15關卡有幫助的第二效果」)— 天賦「陷阱標記」(mazetrap):
+     開局直接從所有陷阱格(mark.ok===false)裡隨機挑 1 個永久標記現形,不像 💡提示鈕的 3 秒閃現、也不扣「有用提示」的稱號判定(那個只認 mgMazeHint)。
+     只在有天賦的玩家生效,查無 _BT 或非玩家自己這關(圖鑑預覽等)一律靜默不做。 */
+  try{
+    if(_BT && _BT.p && _BT.p.trMazeTrap){
+      var _mzTrapCand = [], _mzK;
+      for(_mzK = 0; _mzK < cells.length; _mzK++){ if(cells[_mzK].mark && cells[_mzK].mark.ok === false) _mzTrapCand.push(_mzK); }
+      if(_mzTrapCand.length) _MZ.trapReveal = _mzTrapCand[Math.floor(Math.random() * _mzTrapCand.length)];
+    }
+  }catch(_eMzTr){}
   _mazePaint();
 }
 /* ★ v1.3.1(老師:「提示也要再加強」)— 💡 提示鈕:
@@ -6821,6 +6849,8 @@ function _mazePaint(){
       else if(_tlen === 4) cls += ' mz-len4';
       else if(_tlen === 3) cls += ' mz-len3';
       _pic = cell.mark.pic || mgPicByText(cell.mark.t);   /* ★ v1.62.0(老師需求「迷宮答案格子可放回收物的圖片」)— mark.pic 逐格指定時優先,沒指定才退回舊有的文字對照表 mgPicByText */
+      /* ★ v1.78.0 — 天賦「陷阱標記」:_MZ.trapReveal 指到的那一格(還沒踩過的話)加 ⚠ 前綴與專屬樣式,提醒玩家別走這格;其餘陷阱/正解格維持完全同外觀,不洩題。 */
+      if(_MZ.trapReveal === i && _MZ.walked.indexOf(i) < 0){ cls += ' trapmark'; txt = '⚠ ' + txt; }
     }
     if(i === _MZ.pos) _pic = 'maze_mz_player.webp';
     if(_MZ.walked.indexOf(i) >= 0){
@@ -7725,7 +7755,7 @@ function finishGame(){
 /* ★ v1.42.0(老師裁定 2026-09-09,全域新規則,套用全部小遊戲關卡)—
    NPC_TURN_DMG:對手每回合固定額外對玩家造成的傷害,不看答對/答錯、不可被護盾/減傷擋下(視為對手固定出手,跟答題結果無關),
    實作在 mgBattleHit 尾端,對所有引擎一體適用,不需逐款遊戲各自加。 */
-var MG_BT = { HP: 200, DMG: 10, CHARGE: 5, MAX_BURST: 2, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3, DOT: 5, HEALBUFF: 3, EFF2_N: 3, ATK_BURST_P: 10, ATK_BURST_N: 20, NPC_TURN_DMG: 10 };
+var MG_BT = { HP: 200, DMG: 10, CHARGE: 5, MAX_BURST: 2, HEAL: 30, SHIELD: 3, CTRL_MS: 10000, ATK_N: 3, DOT: 5, HEALBUFF: 3, EFF2_N: 3, ATK_BURST_P: 20, ATK_BURST_N: 20, NPC_TURN_DMG: 10 };   /* ★ v1.68.0(老師裁定「攻擊型爆發技能的基礎效果傷害從10提升至20」)— ATK_BURST_P 10→20,與 NPC 端對稱;舊值 10 見下行註解備查 */
 /* ★ v1.76.0 — 天賦「提示清除」支援的引擎白名單:跟 mgBurstAtkApply 認得的「有選項/答案格可刪」引擎完全一致
    (quiz/sort/colorq/drag/map/order/match/ear 共 8 種);react/maze/paint/match3 沒有「選項」概念不列入。 */
 var MG_HINTCLEAR_ENGINES = { quiz: 1, sort: 1, colorq: 1, drag: 1, map: 1, order: 1, match: 1, ear: 1 };
@@ -8487,10 +8517,24 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
         else{ P.hp = Math.min(mgHpCap(P), P.hp + _ha); mgBattleFloatOn('p', '+' + _ha, 'heal'); }
       }
     }
+    /* ★ v1.78.0(老師需求「重新設計15關卡有幫助的第二效果」)— 3 種天賦「答對時 xxx」,對全部15款關卡通用生效(此函式是全部引擎共用的唯一答對入口)。
+       刻意放在 eff2 回血段之後、爆發充能段之前:與既有 P.healBuff(逐英雄爆發第二效果)各自獨立疊加,不互相覆蓋。 */
+    if(P.trHealOnCorrectV > 0 && Math.random() * 100 < (P.trHealOnCorrectPct || 100)){
+      P.hp = Math.min(mgHpCap(P), P.hp + P.trHealOnCorrectV); mgBattleFloatOn('p', '+' + P.trHealOnCorrectV, 'heal');
+    }
+    if(P.trTimeOnCorrectV > 0 && Math.random() * 100 < (P.trTimeOnCorrectPct || 100)){
+      if(MG.timer){ MG.tleft += P.trTimeOnCorrectV; MG.ttotal += P.trTimeOnCorrectV; }   /* 統一倒數(quiz/sort/map/drag/order/match/ear/colorq)延長剩餘與總長,%進度條不會爆表 */
+      else if(_RC && typeof _RC.endAt === 'number'){ _RC.endAt += P.trTimeOnCorrectV * 1000; }   /* 算數大進擊自有時鐘,延長結束時間戳 */
+      try{ mgBattleFloatOn('p', (MG.lang === 'en' ? '+' + P.trTimeOnCorrectV + 's' : '+' + P.trTimeOnCorrectV + '秒'), 'heal'); }catch(_eToc){}
+    }
     if(P.chargeLockLeft > 0){ P.chargeLockLeft--; mgBattleFloatOn('p', (MG.lang === 'en' ? 'LOCKED' : '充能被鎖!'), 'block'); }   /* ★ v1.57.0 — 拘留者/天神宙斯:對手答對不計入充能 */
     else if(P.charge < MG_BT.CHARGE){
       P.charge++;
       if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-burst-ready', 0.65); try{ var r = $('bt-p-burst').getBoundingClientRect(); mgFx('spark', r.left + r.width / 2, r.top + r.height / 2, 120, 700); }catch(e){} }   /* ★ v1.34.0 — 爆發充滿可用時的專屬音效 */
+      if(P.trChargeOnCorrectV > 0 && P.charge < MG_BT.CHARGE && Math.random() * 100 < (P.trChargeOnCorrectPct || 50)){   /* ★ v1.78.0 老師裁定:固定機率制,且不能讓充能超過上限(下方 min 夾值) */
+        P.charge = Math.min(MG_BT.CHARGE, P.charge + P.trChargeOnCorrectV);
+        if(P.charge >= MG_BT.CHARGE){ playSfx('sfx-burst-ready', 0.65); }
+      }
     }
   }else{
     _BT.miss++;
@@ -8690,9 +8734,19 @@ function mgApplyTrait(P){
   else if(t.t === 'randomvariant'){   /* 孫悟空「七十二變」:進場當下擲一次骰,50/50 套用 timebonus+6秒 或 scoreboost+12% */
     if(Math.random() < 0.5) P.trTimeBonus = 6; else P.trScorePct = 12;
   }
-  else if(t.t === 'hintclear') P.trHintClear = true;   /* ★ v1.76.0 — 消費點:renderQuestion 尾端,每題渲染完自動排除 1 個錯誤選項(僅 MG_HINTCLEAR_ENGINES 白名單引擎) */
+  else if(t.t === 'hintclear') P.trHintClear = true;   /* ★ v1.76.0 — 消費點:renderQuestion 尾端,每題渲染完自動排除 1 個錯誤選項(僅 MG_HINTCLEAR_ENGINES 白名單引擎);★ v1.78.0 擴充:ear 引擎的「演奏/拍子」題(無選項)改為點亮下一個該按的音符,見 renderQuestion 尾端與 _earPaintInput */
   else if(t.t === 'autoclear') P.trAutoClearPct = t.v;   /* ★ v1.76.0 — 消費點:_timerRun 計時器每 0.1 秒的 tick,剩餘時間低於 v% 且引擎在 MG_AUTOCLEAR_ENGINES 白名單內時,直接視為本題答對(整關限 1 次) */
   /* resourcesave 已於 v1.76.0 全數改派給 mistakeshield(見設計提案調整紀錄),MG_HEROES.tr 不會再出現這個 type,此分支保留註解供日後若重新啟用參考。 */
+  /* ★ v1.78.0(老師需求「重新設計15關卡有幫助的第二效果」)— 新增4種「關卡有幫助」天賦家族,核心差異:
+     healoncorrect/timeoncorrect/chargeoncorrect 三種掛在 mgBattleHit 答對分支,對全部15款關卡通用生效;
+     mazetrap/m3merge/reactclear 三種各自只對迷宮/消消樂/算數大進擊生效,取代那三款不支援 hintclear 的空缺。
+     老師裁定:chargeoncorrect 與「部分可能過強的效果」一律改機率制(50%),見各分支 P.trXxxPct。 */
+  else if(t.t === 'healoncorrect'){ P.trHealOnCorrectV = t.v; P.trHealOnCorrectPct = (typeof t.p === 'number') ? t.p : 100; }   /* 消費點:mgBattleHit 答對分支,p% 機率恢復自己 v 點 HP */
+  else if(t.t === 'timeoncorrect'){ P.trTimeOnCorrectV = t.v; P.trTimeOnCorrectPct = (typeof t.p === 'number') ? t.p : 100; }   /* 消費點:mgBattleHit 答對分支,p% 機率倒數/關卡時鐘 +v 秒(僅使用統一倒數或 react 自有時鐘的關卡有效) */
+  else if(t.t === 'chargeoncorrect'){ P.trChargeOnCorrectV = t.v; P.trChargeOnCorrectPct = (typeof t.p === 'number') ? t.p : 50; }   /* 消費點:mgBattleHit 答對分支,p% 機率額外 +v 格爆發充能(老師裁定固定機率制) */
+  else if(t.t === 'mazetrap') P.trMazeTrap = true;   /* 消費點:_mazeInit,開局直接標記出 1 個陷阱格現形(僅迷宮探險王生效) */
+  else if(t.t === 'm3merge') P.trM3Merge = true;   /* 消費點:renderMatch3 開局,把棋盤上數量最少的顏色其中一顆轉成鄰近數量最多的顏色(僅元素消消樂生效) */
+  else if(t.t === 'reactclear'){ P.trReactClearPct = (typeof t.p === 'number') ? t.p : 50; }   /* 消費點:算數大進擊射擊命中處理,射到任意答案(對或錯)時 p% 機率額外刪掉畫面上 1 個錯誤答案掉落物(僅算數大進擊生效) */
 }
 /* ★ v1.76.0 — 天賦被動文案:11 種家族全數已串接引擎生效(hintclear/autoclear 本輪補上),
    沒有 tr 的英雄一律回傳空字串,不顯示。只給玩家看(mgBattleInit 只傳 ph 這一份,NPC 沒有對應顯示欄位,
@@ -8729,13 +8783,31 @@ function mgTraitText(h){
   if(t.t === 'autoclear') return {
     s: '天賦:計時只剩不到 ' + t.v + '% 時直接算你答對(整關限1次,部分玩法不支援)', f: '天賦:倒數剩餘不到 ' + t.v + '% 時,直接視為這一題答對(整關限 1 次,僅單次送出答案的玩法支援)',
     en: 'Trait: when the timer drops below ' + t.v + '%, this question is auto-cleared as correct (once per level, some game modes not supported)' };
+  if(t.t === 'healoncorrect'){ var _hocP = (typeof t.p === 'number') ? t.p : 100; return {
+    s: '天賦:答對有 ' + _hocP + '% 機率補回 ' + t.v + ' 滴血', f: '天賦:答對時有 ' + _hocP + '% 機率恢復自己 ' + t.v + ' 點 HP',
+    en: 'Trait: ' + _hocP + '% chance to restore ' + t.v + ' HP on a correct answer' }; }
+  if(t.t === 'timeoncorrect'){ var _tocP = (typeof t.p === 'number') ? t.p : 100; return {
+    s: '天賦:答對有 ' + _tocP + '% 機率多 ' + t.v + ' 秒', f: '天賦:答對時有 ' + _tocP + '% 機率讓倒數/關卡時間額外 +' + t.v + ' 秒',
+    en: 'Trait: ' + _tocP + '% chance to gain +' + t.v + ' seconds on a correct answer' }; }
+  if(t.t === 'chargeoncorrect'){ var _cocP = (typeof t.p === 'number') ? t.p : 50; return {
+    s: '天賦:答對有 ' + _cocP + '% 機率多充 ' + t.v + ' 格爆發', f: '天賦:答對時有 ' + _cocP + '% 機率額外 +' + t.v + ' 格爆發充能',
+    en: 'Trait: ' + _cocP + '% chance for +' + t.v + ' extra burst charge on a correct answer' }; }
+  if(t.t === 'mazetrap') return {
+    s: '天賦:一進迷宮就先幫你標出 1 個陷阱', f: '天賦:進入迷宮探險王時,直接標記出 1 個陷阱格(僅迷宮探險王生效)',
+    en: 'Trait: reveals 1 trap tile at the start of the maze (Maze Adventure only)' };
+  if(t.t === 'm3merge') return {
+    s: '天賦:開局幫最少的顏色併去旁邊最多的顏色', f: '天賦:進入元素消消樂時,把盤面上數量最少的顏色其中一顆自動轉成鄰近數量最多的顏色(僅元素消消樂生效)',
+    en: 'Trait: at the start of Element Match, merges one of the rarest colour tiles into its most common neighbouring colour (Element Match only)' };
+  if(t.t === 'reactclear'){ var _rcP = (typeof t.p === 'number') ? t.p : 50; return {
+    s: '天賦:射到答案時有 ' + _rcP + '% 機率多刪 1 個錯的', f: '天賦:射到任意答案(對或錯)時有 ' + _rcP + '% 機率額外刪除畫面上 1 個錯誤答案(僅算數大進擊生效)',
+    en: 'Trait: ' + _rcP + '% chance to also clear 1 wrong falling answer whenever you shoot anything (Coin Rush only)' }; }
   return { s:'', f:'', en:'' };
 }
 function mgTraitHtml(txt){ return txt ? ('<br><span style="color:#7ee8fa;">' + esc(txt) + '</span>') : ''; }   /* ★ v1.75.0 — 跟 mgEff2Html 的黃色(#ffe066,爆發第二效果)區分,天賦被動改用青色,文字本身已含「天賦:」開頭不必再加「附加:」 */
 /* ★ v1.77.0(老師需求「完全用大對抗隊伍編組頁的元素,只要改成小遊戲專用版本的內容」)— 大對抗清單卡片在
    稀有度徽章下方會有 1~2 個效果標籤小藥丸(讀敵情分析引擎產生);小遊戲沒有那一整套威脅分析系統,改用
    「內容改成小遊戲有的」思路:直接讀該英雄自己的天賦家族(MG_HEROES.tr.t)當短標籤,不重建新系統。 */
-var MG_TR_TAG_ZH = { headstart:'搶跑充能', mistakeshield:'容錯', streakbonus:'連擊加成', scoreboost:'分數加成', secondchance:'續命機會', timebonus:'時間加成', trapimmune:'陷阱免疫', randomvariant:'隨機加成', hintclear:'提示清除', autoclear:'即刻過關' };
+var MG_TR_TAG_ZH = { headstart:'搶跑充能', mistakeshield:'容錯', streakbonus:'連擊加成', scoreboost:'分數加成', secondchance:'續命機會', timebonus:'時間加成', trapimmune:'陷阱免疫', randomvariant:'隨機加成', hintclear:'提示清除', autoclear:'即刻過關', healoncorrect:'答對回血', timeoncorrect:'答對加時', chargeoncorrect:'答對加充能', mazetrap:'陷阱標記', m3merge:'顏色合併', reactclear:'額外刪錯' };   /* ★ v1.78.0 — 6 種「關卡有幫助」新天賦短標籤 */
 function mgTraitTagShort(h){
   var t = h && h.tr, label = t && MG_TR_TAG_ZH[t.t]; if(!label) return '';
   return '<span class="hm-tag">' + esc(label) + '</span>';
@@ -9063,6 +9135,25 @@ function mgM3HasMove(g){
   }
   return false;
 }
+/* ★ v1.78.0(老師需求「重新設計15關卡有幫助的第二效果」)— 天賦「顏色合併」(m3merge):
+   開局把棋盤上數量最少的顏色其中一顆,轉成它上下左右鄰居裡數量最多的顏色,降低盤面複雜度(老師原話規格)。
+   只轉 1 顆、只在開局做 1 次;鄰居全空(理論不可能,25格5色)或鄰居最多色剛好等於稀有色本身就不動,靜默略過不報錯。 */
+function mgM3ApplyMergeTalent(g){
+  try{
+    var counts = [0, 0, 0, 0, 0], i;
+    for(i = 0; i < g.length; i++) counts[g[i]]++;
+    var minIdx = 0; for(i = 1; i < counts.length; i++){ if(counts[i] < counts[minIdx]) minIdx = i; }
+    var cand = []; for(i = 0; i < g.length; i++){ if(g[i] === minIdx) cand.push(i); }
+    if(!cand.length) return;
+    var pick = cand[Math.floor(Math.random() * cand.length)];
+    var r = Math.floor(pick / 5), c = pick % 5, nb = [];
+    if(r > 0) nb.push(g[pick - 5]); if(r < 4) nb.push(g[pick + 5]); if(c > 0) nb.push(g[pick - 1]); if(c < 4) nb.push(g[pick + 1]);
+    var nbCounts = [0, 0, 0, 0, 0];
+    for(i = 0; i < nb.length; i++) nbCounts[nb[i]]++;
+    var maxIdx = 0; for(i = 1; i < nbCounts.length; i++){ if(nbCounts[i] > nbCounts[maxIdx]) maxIdx = i; }
+    if(nbCounts[maxIdx] > 0 && maxIdx !== minIdx) g[pick] = maxIdx;
+  }catch(_eM3m){}
+}
 /* 產生開局:不可現成 3 連,且盡量保證至少有一步合法交換可消(極端無解機率極低,兜底不強求完美) */
 function mgM3FillNoMatch(){
   var g = [], r, c, tries;
@@ -9118,6 +9209,7 @@ function renderMatch3(x, q){
                           不需要通用題卡，故在此明確補上 hide('card-area') 蓋掉那個殘留的空框；.m3-hint 本身不受影響。 */
   if(!_M3){
     _M3 = { grid: mgM3FillNoMatch(), busy:false, dragIdx:-1, moved:false, timerId:null, tLeft:10000, turnMs:10000, docBound:false, swapLockUntil:0 };   /* ★ v1.44.0 swapLockUntil = 單次位移鎖(防跨格跳針) */
+    if(_BT && _BT.p && _BT.p.trM3Merge) mgM3ApplyMergeTalent(_M3.grid);   /* ★ v1.78.0 — 天賦「顏色合併」,見函式註解 */
     mgM3BindDocEvents();
     mgM3Paint();
     mgM3TurnStart();
