@@ -3202,7 +3202,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
          (主程式 v5.57.0 教訓),不能靠二次確認擋。遊戲中已有「← 回選單」,兩步就回得去。 -->
   <div id="topbar">
     <a id="toapp-btn" class="chip" href="../"
-       onclick="try{playSfx('sfx-tap',0.35);}catch(_){} try{if(typeof window._mgMarkAppHandoff==='function')window._mgMarkAppHandoff();}catch(_){}">🗺 回大作戰</a>
+       onclick="try{playSfx('sfx-tap',0.35);}catch(_){} try{if(typeof window._mgMarkAppHandoff==='function')window._mgMarkAppHandoff();}catch(_){}">🗺 回大對抗</a>
     <button id="back-btn" class="chip hidden" onclick="mgHome()">← 回選單</button>
     <!-- ★ v1.60.0(老師需求「玩法按鈕移到左上方回選單右邊」)— 從 #hud 搬到這裡,固定跟著回選單一起在左上角;
          onclick 邏輯完全不動(mgShowInfo(true)),只是換了個容器位置。 -->
@@ -3617,7 +3617,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.86.0';   /* ★ v1.86.0(老師需求「重新設計15關卡有幫助的第二效果」)— 新增6種天賦家族(healoncorrect/timeoncorrect/chargeoncorrect 全關卡通用,50%機率;mazetrap/m3merge/reactclear 分別對應迷宮/消消樂/算數大進擊);聽音關卡「演奏題」預設提示改為 hintclear 天賦限定;攻擊型爆發基礎傷害 10→20(玩家/NPC對稱);28位英雄天賦重新分配,詳見 minigame_db.js 逐筆註解。舊值 v1.85.0 備查。 */
+var MG_VER = 'v1.89.0';   /* ★ v1.89.0(老師自行設計,指定給神槍手)— 新增天賦「危機反射」(reactdodgeonmiss):算數大進擊每回合第1次打中錯誤目標時,可以完全閃過那次的反擊傷害;武裝點在 _reactHit 射錯分支(_RC.dodgeUsed 每回合重置),消耗點在 mgDealDamage(跟神龍護體的離散護盾同一段一次性早退判斷)。舊值 v1.88.0 備查。 */
 /* ★ v1.85.0(2026-09-11・老師回報「登入有些人要試很多次才會成功登入(選了帳號後，回到的小遊戲首頁是沒登入狀態)」)—
  * 【redirect 登入回程訊號不足根治】根因與主程式 index.html 早期歷史版本(FIX 20260517 系列／v3.3.7／v5.148.0)
  * 完全同一類問題：iOS Safari 的 Storage Partitioning 會在「本站→Google 帳號選擇頁(跨網域 authDomain)→
@@ -4945,6 +4945,7 @@ function startTimer(sec){
   stopTimer();
   var _trTb = (_BT && _BT.p && _BT.p.trTimeBonus) ? _BT.p.trTimeBonus : 0;   /* ★ v1.75.0 — 天賦「時間加成」:每一題都加,不是只有第一題(整關持續生效才有感) */
   sec = sec + _trTb;
+  if(_BT && _BT.p && _BT.p.trStartTimeBonusV > 0 && !_BT.p.trStartTimeBonusUsed){ _BT.p.trStartTimeBonusUsed = true; sec += _BT.p.trStartTimeBonusV; }   /* ★ v1.87.0 — 天賦「東風助力」(諸葛亮):進入關卡第一題一次性額外加秒,整場限1次 */
   MG.tleft = sec;
   MG.ttotal = sec;   /* ★ v1.4.0 記住總長,暫停後續跑同一條 */
   var bar = $('timebar');
@@ -5137,6 +5138,19 @@ function renderQuestion(keepState){
      match3(元素消消樂)這四款沒有「選項」可刪,天賦這關不生效(比照陷阱免疫只在迷宮生效的同一種限制)。 */
   if(_BT && _BT.p && _BT.p.trHintClear && MG_HINTCLEAR_ENGINES[_eng]){
     try{ mgBurstAtkApply(_eng, 1); }catch(_eHc){}
+  }
+  /* ★ v1.87.0 — 天賦「未卜先知」(姜子牙):進入關卡第一題一次性直接排除2個錯誤選項,整場限1次 */
+  if(_BT && _BT.p && _BT.p.trHintOnce2 && !_BT.p.trHintOnce2Used && MG_HINTCLEAR_ENGINES[_eng]){
+    _BT.p.trHintOnce2Used = true;
+    try{ mgBurstAtkApply(_eng, 2); }catch(_eH2){}
+  }
+  /* ★ v1.87.0 — 天賦「幻術迷蹤」(魔術師):每題機率制額外排除1個錯誤選項 */
+  if(_BT && _BT.p && _BT.p.trIllusionPct > 0 && MG_HINTCLEAR_ENGINES[_eng] && Math.random() * 100 < _BT.p.trIllusionPct){
+    try{ mgBurstAtkApply(_eng, 1); }catch(_eIll){}
+  }
+  /* ★ v1.88.0 — 天賦「神樂淨路」(巫女):台灣地圖每一題自動排除v個錯誤地點,只認 map 引擎,跟上面8引擎共用的提示清除各自獨立 */
+  if(_BT && _BT.p && _BT.p.trMapClear5 > 0 && _eng === 'map'){
+    try{ mgBurstAtkApply('map', _BT.p.trMapClear5); }catch(_eMc){}
   }
   /* ★ v1.10.0 課堂複習題角落標籤 + 記入本輪已出清單(專注模式時) */
   mgCrTagApply(q);
@@ -5763,7 +5777,8 @@ function renderReact(x, r){
        wrongStreak 連續 3 次誤擊 ⇒ shootLockUntil 5 秒射擊冷卻(不清空畫面,只是打不出子彈);
        rightStreak 連續 5 次命中 ⇒ freezeReady 亮起「時間暫停」鈕,按下凍結全畫面掉落物 3 秒。 */
     wrongStreak: 0, rightStreak: 0, shootLockUntil: 0,
-    freezeReady: false, freezeUntil: 0
+    freezeReady: false, freezeUntil: 0,
+    dodgeUsed: false   /* ★ v1.89.0 — 天賦「危機反射」(神槍手)每回合用量重置,見 _reactHit 消費點 */
   };
   /* ★ v1.27.0 — 冷卻徽章 + 時間暫停鈕,掛在 box 內(box.innerHTML 只在這裡清一次,本回合會一直留著) */
   /* ★ v1.29.0 移除 v1.28.0 的冷卻徽章與時間暫停鈕(機制已由戰鬥面板的極限爆發取代);舊碼備查:
@@ -6025,13 +6040,43 @@ function _reactSpawn(){
   el.style.left = '0px'; el.style.top = '0px';
   box.appendChild(el);
   var bw = box.clientWidth, ew = el.offsetWidth || 90;
+  /* ★ v1.88.0(老師需求「射擊小遊戲的目標各自獨立掉落軌道,且避免重疊覆蓋」)— 原本 x 是純隨機(Math.random()*
+     可用寬度),新舊掉落物常常疊在同一個x附近,畫面上會互相蓋住看不清楚題目。改成「車道(lane)」制:
+     依畫面寬度切出固定車道,生成時只挑「這條車道目前沒有掉落物,或車道裡最深的那顆已經掉夠遠(離頂端超過
+     _RC_LANE_CLEAR_PX)」的車道,同一車道前後兩顆掉落物之間一定留有安全間距,不會互相覆蓋;若所有車道當下
+     都被卡住(理論上少見,畫面掉落物很密集時才會發生),退而求其次挑「目前掉最深」的那條車道,把重疊風險降到最低。 */
+  var _laneW = ew + 14, _laneN = Math.max(1, Math.floor(bw / _laneW));
+  var _laneDeepestY = [], _li, _di2, _dd2, _lx;
+  for(_li = 0; _li < _laneN; _li++) _laneDeepestY[_li] = -99999;
+  for(_di2 = 0; _di2 < _RC.drops.length; _di2++){
+    _dd2 = _RC.drops[_di2];
+    if(_dd2 && !_dd2.dead){
+      _lx = Math.max(0, Math.min(_laneN - 1, Math.round(_dd2.x / _laneW)));
+      if(_dd2.y > _laneDeepestY[_lx]) _laneDeepestY[_lx] = _dd2.y;
+    }
+  }
+  var _freeLanes = [], _RC_LANE_CLEAR_PX = 190;
+  for(_li = 0; _li < _laneN; _li++){ if(_laneDeepestY[_li] < -_RC_LANE_CLEAR_PX) _freeLanes.push(_li); }
+  var _chosenLane;
+  if(_freeLanes.length){ _chosenLane = _freeLanes[Math.floor(Math.random() * _freeLanes.length)]; }
+  else{
+    _chosenLane = 0; var _maxY = _laneDeepestY[0];
+    for(_li = 1; _li < _laneN; _li++){ if(_laneDeepestY[_li] > _maxY){ _maxY = _laneDeepestY[_li]; _chosenLane = _li; } }
+  }
+  var _laneX = _chosenLane * _laneW + (_laneW - ew) / 2;
+  _laneX = Math.max(4, Math.min(bw - ew - 4, _laneX));
   var d = {
     el: el, good: isGood, hard: false, combo: isCombo,
-    x: Math.random() * Math.max(1, bw - ew - 8) + 4,
+    x: _laneX,
     y: -54,
     v: 31 + Math.random() * 26,                    // px/秒;★ v1.4.1 老師:「降落速度整體放慢 50%」(原 62+0~52)
     dead: false, locked: false
   };
+  /* ★ v1.88.0 — 天賦「死亡凝視」(死神):回合開始前N秒內生成的掉落物,下墜速度打折;跟上面 v1.4.1 的整體放慢是不同機制,兩者疊乘 */
+  if(_BT && _BT.p && _BT.p.trReactSlowSec > 0 && _RC && typeof _RC.endAt === 'number' && typeof _RC.total === 'number'){
+    var _rcStart = _RC.endAt - _RC.total;
+    if((new Date()).getTime() - _rcStart < _BT.p.trReactSlowSec * 1000) d.v = d.v * (1 - _BT.p.trReactSlowPct / 100);
+  }
   el.onclick = function(ev){ if(ev && ev.stopPropagation) ev.stopPropagation(); _reactShoot(d); };   /* ★ v1.4.0 改射擊 */
   _RC.drops.push(d);
 }
@@ -6069,6 +6114,8 @@ function _reactHit(d){
     playSfx('sfx-explode', 0.5);   /* ★ v1.9.7 老師:射中錯誤新增爆炸音效(game_explosion2.mp3,本頁既有 <audio>) */
     _reactFloat(d, '−1', '#e84040');
     _reactBlast(d);   /* ★ v1.4.0 誤擊 = 爆炸,附近的算式一起炸消失 */
+    /* ★ v1.89.0 — 天賦「危機反射」(神槍手):每回合第1次打中錯誤目標,武裝1次完全閃避,實際消耗在 mgDealDamage */
+    if(_BT && _BT.p && _BT.p.trReactDodgeOnMiss && _RC && !_RC.dodgeUsed){ _RC.dodgeUsed = true; _BT.p.trReactDodgeArm = true; }
     /* ★ v1.65.4(老師需求「三數混合運算題錯誤射擊也受兩倍傷害」)— combo3 誤擊時玩家受 2×MG_BT.DMG。 */
     mgBattleHit(false, undefined, true, d.combo ? (MG_BT.DMG * 2) : undefined);   /* ★ v1.29.0 老師需求三:射錯 ⇒ 玩家 −10(護盾可擋);★ v1.63.0 第三參數 true:跳過全域安全網,這一下攻擊只算一次(不然會被反擊兩次) */
     /* ★ v1.29.0 移除 v1.28.0「連續誤擊 3 次 ⇒ 5 秒射擊冷卻」;舊碼備查:
@@ -6803,7 +6850,10 @@ window.mgMazeHint = function(){
 function _mazeReach(i){
   /* 相鄰(上下左右,不含斜角)且沒走過且不是牆 */
   if(_MZ.walked.indexOf(i) >= 0) return false;
-  if(_MZ.cells[i].ch === '#') return false;
+  if(_MZ.cells[i].ch === '#'){
+    /* ★ v1.88.0 — 天賦「破解穿牆」(網路駭客):整場限1次視牆為可走,實際扣次數在 mgMazeStep 真正踏上去那一刻,這裡只判斷「還沒用過」就放行,避免探測時誤耗用量 */
+    if(!(_BT && _BT.p && _BT.p.trMazePhase && !_BT.p.trMazePhaseUsed)) return false;
+  }
   var w = _MZ.w, pr = Math.floor(_MZ.pos / w), pc = _MZ.pos % w;
   var tr = Math.floor(i / w), tc = i % w;
   return (Math.abs(pr - tr) + Math.abs(pc - tc)) === 1;
@@ -6931,6 +6981,11 @@ window.mgMazeStep = function(i){
   _MZ.pos = i;
   _MZ.walked.push(i);
   var cell = _MZ.cells[i];
+  /* ★ v1.88.0 — 天賦「破解穿牆」(網路駭客):真正踏上牆壁那一步才消耗整場限1次的用量,_mazeReach 只負責放行判斷 */
+  if(cell.ch === '#' && _BT && _BT.p && _BT.p.trMazePhase && !_BT.p.trMazePhaseUsed){
+    _BT.p.trMazePhaseUsed = true;
+    try{ mgBattleFloatOn('p', (MG.lang === 'en' ? 'PHASE!' : '穿越!'), 'block'); }catch(_eMp){}
+  }
   if(cell.ch === '?'){   /* ★ v1.67.0 — 神秘方塊:75% 恢復 50 HP、25% 踩到地雷扣 20 HP(地雷可被護盾擋、減傷、易傷影響) */
     mgMazeMystery(i, cell);
     if(_BT && _BT.over){ _mazePaint(); return; }   /* KO:交給 mgBattleEnd 結算 */
@@ -7442,6 +7497,10 @@ function scoreIt(correct, noBattle){
     if(_BT && _BT.p && _BT.p.trStreakN > 0 && _BT.p.trStreakPct > 0 && (MG.combo % _BT.p.trStreakN === 0)){   /* ★ v1.75.0 — 天賦「連擊加成」:連續答對每滿 N 題,這一題的得分再加 M% */
       trGain = Math.round(gain * _BT.p.trStreakPct / 100);
     }
+    /* ★ v1.87.0 — 天賦「猛獸直覺」(窮奇):連續答對每滿N題,額外對對手造成固定傷害,跟連擊加成同一個MG.combo消費點(已遞增) */
+    if(_BT && _BT.p && _BT.p.trAtkStreakN > 0 && (MG.combo % _BT.p.trAtkStreakN === 0)){
+      _BT.n.hp = Math.max(0, _BT.n.hp - _BT.p.trAtkStreakV); try{ mgBattleFxAttack('p', '−' + _BT.p.trAtkStreakV); mgBattleCheckKO(); }catch(_eAos){}
+    }
     MG.score += gain + trGain;
     playSfx('sfx-ok', 0.5);   /* ★ v1.3.1 老師:「答對音效要統一」—— 原連擊 ≥3 改播 coin,現在一律 sfx-ok(連擊仍有 combo 特效與加分) */
     /* ★ v1.3.0 — 答對特效:光暈亮星打在作答區中央 + 分數飄字;連擊 ≥3 再加點擊星星 */
@@ -7593,6 +7652,7 @@ function finishGame(){
   var _elapsed = mgElapsedSec(), _par = mgParTime(MG.cur);
   var _bonusPct = (MG.right > 0) ? mgTimeBonusPct(_elapsed, _par) : 0;
   var _trScorePct = (_BT && _BT.p && _BT.p.trScorePct) ? _BT.p.trScorePct : 0;   /* ★ v1.75.0 — 天賦「分數加成」:併入用時加成同一個乘數,不論輸贏都算(下面戰敗砍半邏輯會再處理一次,天賦加成一樣被砍半,跟用時加成待遇一致) */
+  if(_BT && _BT.p && _BT.p.trLowHpScoreMaxPct > 0){ var _hpPct = _BT.p.hp / mgHpCap(_BT.p); _trScorePct += Math.round(_BT.p.trLowHpScoreMaxPct * (1 - _hpPct)); }   /* ★ v1.87.0 — 天賦「燭火燃盡」(火柴人):剩餘HP越低,結算分數加成越高,併入同一個乘數 */
   var _base = MG.score;
   MG.score = Math.round(_base * (1 + (_bonusPct + _trScorePct) / 100));
   /* ★ v1.29.0(老師追加)— 戰鬥加成:剩餘 HP × 5(≤500)+ 爆發節制(0/1/2 次 = +300/+200/+100)+ KO/勝利 +200;敗北(HP 0)沒有用時加成 */
@@ -8455,8 +8515,12 @@ function mgDealDamage(atk, def, base, fxFrom, rawFixed){
     if(def.dmgReduceLeft > 0){ def.dmgReduceLeft--; dmg = Math.round(dmg / 2); }
     if(def.dotLeft > 0){ def.dotLeft--; dmg += (def.dotAmt || MG_BT.DOT); }
     if(def.trMistakePct > 0) dmg = Math.round(dmg * (1 - def.trMistakePct / 100));   /* ★ v1.75.0 — 天賦「容錯」:整關持續生效,跟上面 dmgReduceLeft(3次到期)是不同機制,兩者可疊加 */
+    if(def.trDamageCap > 0 && dmg > def.trDamageCap) dmg = def.trDamageCap;   /* ★ v1.87.0 — 天賦「熔火護甲」(牛魔王):單次受到的傷害封頂,跟上面%系減傷不同機制,可疊加 */
   }
   var defSide = mgSideOf(def), atkSide = mgSideOf(atk);
+  if(def.trDodgePct > 0 && Math.random() * 100 < def.trDodgePct){ playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); return; }   /* ★ v1.87.0 — 天賦「血色屏障」(暗魔將·血):機率制完全免疫,次數不限,持續整場 */
+  if(def.trShieldLeft > 0){ def.trShieldLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); return; }   /* ★ v1.87.0 — 天賦「神龍護體」(喚龍使‧蜜鶴林):離散護盾格,獨立於爆發型 shield 欄位 */
+  if(def.trReactDodgeArm){ def.trReactDodgeArm = false; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'DODGE' : '閃過!'), 'block'); return; }   /* ★ v1.89.0 — 天賦「危機反射」(神槍手):每回合限1次,武裝點在 _reactHit 射錯分支 */
   if(def.dmgImmuneLeft > 0){ def.dmgImmuneLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); return; }   /* 暗魔將/雅典娜 */
   if(def.dodgeLeft > 0){ def.dodgeLeft--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'DODGE' : '迴避!'), 'block'); return; }   /* 風術士 */
   if(def.dodgeChanceLeft > 0){   /* ★ v1.58.0 — 孫悟空:接下來3次受到攻擊,50%機率完全免疫(用量照扣,機率沒中就繼續往下算正常傷害) */
@@ -8498,6 +8562,7 @@ function mgTickRegenPoison(S, sideKey){
 function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
   if(!_BT || _BT.over) return;
   var P = _BT.p, N = _BT.n;
+  if(P.trPassiveHealV > 0 && P.hp > 0){ P.hp = Math.min(mgHpCap(P), P.hp + P.trPassiveHealV); mgBattleFloatOn('p', '+' + P.trPassiveHealV, 'heal'); }   /* ★ v1.87.0 — 天賦「生生不息」(水狐):不分答對答錯,每題固定回血 */
   if(P.sealLeft > 0) P.sealLeft--;   /* ★ v1.36.0 — 封印爆發技能:每題判定倒數一次,不分答對答錯 */
   if(N.sealLeft > 0) N.sealLeft--;
   if(ok){
@@ -8510,6 +8575,21 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
     else if(P.noAtkLeft > 0){ P.noAtkLeft--; mgBattleFloatOn('p', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 魔術師新第二效果:被封的一方普通攻擊直接沒收,不扣血也不算落空,單純沒有這次傷害 */
     else{
       var dmgP = (typeof customDmg === 'number' && customDmg > 0) ? Math.round(customDmg) : MG_BT.DMG;   /* ★ v1.42.0 元素消消樂:依消除顆數+combo 算出的傷害取代固定值 */
+      /* ★ v1.87.0 — 天賦「血債血還」(蚩尤):消耗累積的答錯怒氣層數,依層數加傷後歸零 */
+      if(P.trCounterStackMax > 0 && (P.trCounterStack || 0) > 0){
+        dmgP = Math.round(dmgP * (1 + P.trCounterStack * P.trCounterBonusPct / 100));
+        try{ mgBattleFloatOn('p', (MG.lang === 'en' ? 'RAGE!' : '怒氣爆發!'), 'block'); }catch(_eCu){}
+        P.trCounterStack = 0;
+      }
+      /* ★ v1.87.0 — 天賦「地獄業火」(地府酋長):永久疊層,不歸零,每層固定加傷 */
+      if(P.trAtkStackMax > 0){
+        if(P.trAtkStack > 0) dmgP = Math.round(dmgP * (1 + P.trAtkStack * P.trAtkStackPct / 100));
+        if((P.trAtkStack || 0) < P.trAtkStackMax) P.trAtkStack = (P.trAtkStack || 0) + 1;
+      }
+      /* ★ v1.87.0 — 天賦「無雙氣勢」(呂布):自己HP低於門檻%時固定加傷 */
+      if(P.trLowHpBoostPct > 0 && P.hp / mgHpCap(P) * 100 < P.trLowHpBoostThreshold){
+        dmgP = Math.round(dmgP * (1 + P.trLowHpBoostPct / 100));
+      }
       mgDealDamage(P, N, dmgP, 'p');   /* ★ v1.57.0 — 傷害計算與各種新第二效果全部集中在 mgDealDamage,見該函式註解 */
       if(P.healBuff > 0){   /* 逐英雄第二效果(回血):數值取該英雄自己的 eff2.v */
         P.healBuff--; var _ha = P.healAmt || MG_BT.HEALBUFF;
@@ -8527,6 +8607,37 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
       else if(_RC && typeof _RC.endAt === 'number'){ _RC.endAt += P.trTimeOnCorrectV * 1000; }   /* 算數大進擊自有時鐘,延長結束時間戳 */
       try{ mgBattleFloatOn('p', (MG.lang === 'en' ? '+' + P.trTimeOnCorrectV + 's' : '+' + P.trTimeOnCorrectV + '秒'), 'heal'); }catch(_eToc){}
     }
+    /* ★ v1.87.0 — 天賦「神龍護體」(喚龍使‧蜜鶴林):每答對N題累積1格護盾,消費點在 mgDealDamage(trShieldLeft) */
+    if(P.trShieldEveryN > 0){
+      P.trShieldCount = (P.trShieldCount || 0) + 1;
+      if(P.trShieldCount >= P.trShieldEveryN && (P.trShieldLeft || 0) < P.trShieldMax){
+        P.trShieldCount = 0; P.trShieldLeft = (P.trShieldLeft || 0) + 1;
+        try{ mgBattleFloatOn('p', '🛡+1', 'block'); }catch(_eSs){}
+      }
+    }
+    /* ★ v1.87.0 — 天賦「掠奪核心」(鋁合金暴龍):機率制直接扣對手爆發條 */
+    if(P.trDrainPct > 0 && Math.random() * 100 < P.trDrainPct && N.charge > 0){
+      N.charge--; try{ mgBattleFloatOn('n', (MG.lang === 'en' ? 'STOLEN' : '奪取!'), 'block'); }catch(_eDr){}
+    }
+    /* ★ v1.87.0 — 天賦「鬼王豪飲」(酒吞童子):機率制扣對手HP並補自己同額 */
+    if(P.trLifestealPct > 0 && Math.random() * 100 < P.trLifestealPct){
+      N.hp = Math.max(0, N.hp - P.trLifestealV); P.hp = Math.min(mgHpCap(P), P.hp + P.trLifestealV);
+      try{ mgBattleFxAttack('p', '−' + P.trLifestealV); mgBattleFloatOn('p', '+' + P.trLifestealV, 'heal'); mgBattleCheckKO(); }catch(_eLs){}
+    }
+    /* ★ v1.87.0 — 天賦「吞噬漩渦」(超鬼神王):機率制直接扣對手固定HP,無視護盾/減傷 */
+    if(P.trDmgOnCorrectPct > 0 && Math.random() * 100 < P.trDmgOnCorrectPct){
+      N.hp = Math.max(0, N.hp - P.trDmgOnCorrectV); try{ mgBattleFxAttack('p', '−' + P.trDmgOnCorrectV); mgBattleCheckKO(); }catch(_eDoc){}
+    }
+    /* ★ v1.87.0 — 天賦「掠奪成性」(維京海盜船長):機率制同時扣對手爆發條、補給自己 */
+    if(P.trStealChancePct > 0 && Math.random() * 100 < P.trStealChancePct){
+      if(N.charge > 0) N.charge--;
+      if(P.charge < MG_BT.CHARGE) P.charge = Math.min(MG_BT.CHARGE - 1, P.charge + 1);
+      try{ mgBattleFloatOn('p', (MG.lang === 'en' ? 'STOLEN' : '奪取!'), 'block'); }catch(_eSb){}
+    }
+    /* ★ v1.87.0 — 天賦「核污染擴散」(科技生化人):機率制讓對手接下來2次攻擊傷害減半 */
+    if(P.trWeakenPct > 0 && Math.random() * 100 < P.trWeakenPct){
+      N.dmgDownLeft = 2; try{ mgBattleFloatOn('n', (MG.lang === 'en' ? 'WEAKENED' : '削弱!'), 'block'); }catch(_eWk){}
+    }
     if(P.chargeLockLeft > 0){ P.chargeLockLeft--; mgBattleFloatOn('p', (MG.lang === 'en' ? 'LOCKED' : '充能被鎖!'), 'block'); }   /* ★ v1.57.0 — 拘留者/天神宙斯:對手答對不計入充能 */
     else if(P.charge < MG_BT.CHARGE){
       P.charge++;
@@ -8538,6 +8649,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
     }
   }else{
     _BT.miss++;
+    if(P.trCounterStackMax > 0 && (P.trCounterStack || 0) < P.trCounterStackMax) P.trCounterStack = (P.trCounterStack || 0) + 1;   /* ★ v1.87.0 — 天賦「血債血還」(蚩尤):答錯累積怒氣層數,消費點在上面 ok 分支 */
     if(N.confuseLeft > 0){   /* ★ v1.36.0 — 魅惑:出手方(NPC)被魅惑,這次攻擊改打自己 */
       N.confuseLeft--; var dmgSelfN = MG_BT.DMG;
       N.hp = Math.max(0, N.hp - dmgSelfN); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('p', '−' + dmgSelfN); mgBattleFloatOn('n', (MG.lang === 'en' ? 'CONFUSED' : '魅惑!'), 'block');
@@ -8747,6 +8859,35 @@ function mgApplyTrait(P){
   else if(t.t === 'mazetrap') P.trMazeTrap = true;   /* 消費點:_mazeInit,開局直接標記出 1 個陷阱格現形(僅迷宮探險王生效) */
   else if(t.t === 'm3merge') P.trM3Merge = true;   /* 消費點:renderMatch3 開局,把棋盤上數量最少的顏色其中一顆轉成鄰近數量最多的顏色(僅元素消消樂生效) */
   else if(t.t === 'reactclear'){ P.trReactClearPct = (typeof t.p === 'number') ? t.p : 50; }   /* 消費點:算數大進擊射擊命中處理,射到任意答案(對或錯)時 p% 機率額外刪掉畫面上 1 個錯誤答案掉落物(僅算數大進擊生效) */
+  /* ★ v1.87.0(老師需求「重複但數值不同的天賦,弱的全部換成全新效果」)— 新增20種全新天賦機制,
+     取代同家族內非最高值的20隻英雄(mistakeshield/streakbonus/headstart/trapimmune/scoreboost 五家族
+     只各留1隻數值最高的原樣,其餘20隻換掉),見各消費點註解。 */
+  else if(t.t === 'counterup'){ P.trCounterStackMax = t.v; P.trCounterBonusPct = t.m; }   /* 蚩尤「血債血還」消費點:mgBattleHit,答錯疊層(上限v),下次答對依層數*m%加傷後歸零 */
+  else if(t.t === 'damagecap'){ P.trDamageCap = t.v; }   /* 牛魔王「熔火護甲」消費點:mgDealDamage,自己單次受到的傷害封頂為v點 */
+  else if(t.t === 'shieldstack'){ P.trShieldEveryN = t.v; P.trShieldMax = t.m; }   /* 喚龍使‧蜜鶴林「神龍護體」消費點:mgBattleHit累積答對次數/mgDealDamage消耗,每答對v題+1格離散護盾,上限m格同時存在 */
+  else if(t.t === 'drainoncorrect'){ P.trDrainPct = t.v; }   /* 鋁合金暴龍「掠奪核心」消費點:mgBattleHit答對分支,v%機率直接扣NPC 1格爆發條 */
+  else if(t.t === 'atkonstreak'){ P.trAtkStreakN = t.v; P.trAtkStreakV = t.m; }   /* 窮奇「猛獸直覺」消費點:mgBattleHit答對分支,每連續答對滿v題,額外對NPC造成m點固定傷害 */
+  else if(t.t === 'lifestealoncorrect'){ P.trLifestealPct = t.v; P.trLifestealV = t.m; }   /* 酒吞童子「鬼王豪飲」消費點:mgBattleHit答對分支,v%機率扣NPC m點HP並補自己同額 */
+  else if(t.t === 'twinbonus'){ P.trTimeOnCorrectV = t.v; P.trTimeOnCorrectPct = 100; P.trScorePct = t.m; }   /* 雙星姊妹「心靈相通」:合併沿用既有答對必定+v秒與結算分數+m%兩個消費點,同時生效呼應雙子共享 */
+  else if(t.t === 'atkstack'){ P.trAtkStackMax = t.v; P.trAtkStackPct = t.m; }   /* 地府酋長「地獄業火」消費點:mgBattleHit答對分支,每答對一次疊1層(上限v層),每層自己攻擊傷害+m%,不歸零 */
+  else if(t.t === 'lowhpboost'){ P.trLowHpBoostPct = t.v; P.trLowHpBoostThreshold = t.m; }   /* 呂布「無雙氣勢」消費點:mgBattleHit答對分支,自己HP低於m%時,攻擊傷害固定+v% */
+  else if(t.t === 'passiveheal'){ P.trPassiveHealV = t.v; }   /* 水狐「生生不息」消費點:mgBattleHit開頭,不論答對答錯,每題固定回復v點HP */
+  else if(t.t === 'stealbuffoncorrect'){ P.trStealChancePct = t.v; }   /* 維京海盜船長「掠奪成性」消費點:mgBattleHit答對分支,v%機率同時扣NPC 1格爆發條並補給自己1格 */
+  else if(t.t === 'weakenoncorrect'){ P.trWeakenPct = t.v; }   /* 科技生化人「核污染擴散」消費點:mgBattleHit答對分支,v%機率讓NPC接下來2次攻擊傷害-50% */
+  else if(t.t === 'hintonce2'){ P.trHintOnce2 = true; }   /* 姜子牙「未卜先知」消費點:renderQuestion,進場第一題一次性直接排除2個錯誤選項,整場限1次 */
+  else if(t.t === 'dmgoncorrect'){ P.trDmgOnCorrectPct = t.v; P.trDmgOnCorrectV = t.m; }   /* 超鬼神王「吞噬漩渦」消費點:mgBattleHit答對分支,v%機率直接扣NPC m點HP(不經過一般傷害計算,不可被對方減傷/護盾擋) */
+  else if(t.t === 'illusiononcorrect'){ P.trIllusionPct = t.v; }   /* 魔術師「幻術迷蹤」消費點:renderQuestion,每題v%機率額外排除1個錯誤選項(機率制版本的提示清除) */
+  else if(t.t === 'starttimebonus'){ P.trStartTimeBonusV = t.v; }   /* 諸葛亮「東風助力」消費點:startTimer,進入關卡第一題計時器一次性額外+v秒,整場限1次 */
+  else if(t.t === 'dodgechance'){ P.trDodgePct = t.v; }   /* 暗魔將·血「血色屏障」消費點:mgDealDamage,自己每次受到攻擊有v%機率完全無視傷害(次數不限,持續整場) */
+  else if(t.t === 'burstscorebonus'){ P.trBurstScoreBonusV = t.v; }   /* 炸彈客「引爆連鎖」消費點:mgBattleBurst動畫完成回呼,每次發動極限爆發額外直接+v分 */
+  else if(t.t === 'lowhpscoreup'){ P.trLowHpScoreMaxPct = t.v; }   /* 火柴人「燭火燃盡」消費點:finishGame,自己剩餘HP百分比越低,結算分數額外加成越高(上限v%) */
+  else if(t.t === 'speedstrike'){ P.trTimeOnCorrectV = t.v; P.trTimeOnCorrectPct = 100; }   /* 大天狗「疾風連斬」消費點:沿用 mgBattleHit 答對分支既有的 trTimeOnCorrectV/Pct,但機率固定100%(必定觸發,跟 timeoncorrect 家族的機率制英雄區分) */
+  /* ★ v1.88.0(老師自行設計4種天賦,分別指定給死神/巫女/網路駭客/風術士)— 皆為單一小遊戲專屬,見各消費點註解 */
+  else if(t.t === 'reactslowstart'){ P.trReactSlowSec = t.v; P.trReactSlowPct = t.m; }   /* 死神「死亡凝視」消費點:_reactSpawn,回合開始前v秒內生成的掉落物,下墜速度-m%(僅算數大進擊生效) */
+  else if(t.t === 'mapclear5'){ P.trMapClear5 = t.v; }   /* 巫女「神樂淨路」消費點:renderQuestion,台灣地圖每一題自動排除v個錯誤地點(僅台灣地圖生效) */
+  else if(t.t === 'mazephase'){ P.trMazePhase = true; }   /* 網路駭客「破解穿牆」消費點:_mazeReach/mgMazeStep,整場限1次可直接穿越迷宮牆壁(僅迷宮探險王生效) */
+  else if(t.t === 'm3healoncombo'){ P.trM3HealPct = t.v; P.trM3HealMult = t.m; }   /* 風術士「元素治癒」消費點:mgM3PlayMatchFx,每組消除有v%機率回復(消除顆數×m)點HP(僅元素消消樂生效) */
+  else if(t.t === 'reactdodgeonmiss') P.trReactDodgeOnMiss = true;   /* 神槍手「危機反射」消費點:_reactHit武裝/mgDealDamage消耗,每回合第1次打中錯誤目標時,可以完全閃過那次的反擊傷害(僅算數大進擊生效) */
 }
 /* ★ v1.76.0 — 天賦被動文案:11 種家族全數已串接引擎生效(hintclear/autoclear 本輪補上),
    沒有 tr 的英雄一律回傳空字串,不顯示。只給玩家看(mgBattleInit 只傳 ph 這一份,NPC 沒有對應顯示欄位,
@@ -8754,53 +8895,128 @@ function mgApplyTrait(P){
 function mgTraitText(h){
   var t = h && h.tr; if(!t) return { s:'', f:'', en:'' };
   if(t.t === 'headstart') return {
-    s: '天賦:一上場爆發條就先衝 ' + t.v + ' 格', f: '天賦:進入戰鬥時,爆發條視同已充能 ' + t.v + ' 格',
+    s: '疾風先發:一上場爆發條就先衝 ' + t.v + ' 格', f: '疾風先發:進入戰鬥時,爆發條視同已充能 ' + t.v + ' 格',
     en: 'Trait: burst gauge starts ' + t.v + ' charge(s) ahead' };
   if(t.t === 'mistakeshield') return {
-    s: '天賦:答錯扣的血減少 ' + t.v + '%', f: '天賦:本關答錯造成的傷害減少 ' + t.v + '%',
+    s: '金剛護體:答錯扣的血減少 ' + t.v + '%', f: '金剛護體:本關答錯造成的傷害減少 ' + t.v + '%',
     en: 'Trait: damage taken from wrong answers reduced by ' + t.v + '%' };
   if(t.t === 'streakbonus') return {
-    s: '天賦:連續答對每滿 ' + t.v + ' 題,那一題分數多 ' + t.m + '%', f: '天賦:連續答對每滿 ' + t.v + ' 題,當題得分額外 +' + t.m + '%',
+    s: '連戰連捷:連續答對每滿 ' + t.v + ' 題,那一題分數多 ' + t.m + '%', f: '連戰連捷:連續答對每滿 ' + t.v + ' 題,當題得分額外 +' + t.m + '%',
     en: 'Trait: every ' + t.v + ' correct answers in a row, that answer scores +' + t.m + '%' };
   if(t.t === 'scoreboost') return {
-    s: '天賦:這一關結算分數多 ' + t.v + '%', f: '天賦:本關結算分數額外 +' + t.v + '%',
+    s: '豐收凱旋:這一關結算分數多 ' + t.v + '%', f: '豐收凱旋:本關結算分數額外 +' + t.v + '%',
     en: 'Trait: final level score +' + t.v + '%' };
   if(t.t === 'secondchance') return {
-    s: '天賦:倒下時有機會原地滿血一半復活(整場1次)', f: '天賦:HP 歸零時,有 ' + t.v + '% 機率原地以 30% HP 復活(整場限 1 次)',
+    s: '不屈之魂:倒下時有機會原地滿血一半復活(整場1次)', f: '不屈之魂:HP 歸零時,有 ' + t.v + '% 機率原地以 30% HP 復活(整場限 1 次)',
     en: 'Trait: ' + t.v + '% chance to revive at 30% HP when knocked out (once per level)' };
   if(t.t === 'timebonus') return {
-    s: '天賦:每一題倒數多 ' + t.v + ' 秒', f: '天賦:每一題倒數起始時間額外 +' + t.v + ' 秒',
+    s: '從容不迫:每一題倒數多 ' + t.v + ' 秒', f: '從容不迫:每一題倒數起始時間額外 +' + t.v + ' 秒',
     en: 'Trait: +' + t.v + ' seconds on every question timer' };
   if(t.t === 'trapimmune') return {
-    s: '天賦:踩到迷宮神秘方塊,變好結果的機率多 ' + t.v + '%', f: '天賦:對迷宮神秘方塊,觸發好結果的機率額外 +' + t.v + '%',
+    s: '趨吉避凶:踩到迷宮神秘方塊,變好結果的機率多 ' + t.v + '%', f: '趨吉避凶:對迷宮神秘方塊,觸發好結果的機率額外 +' + t.v + '%',
     en: 'Trait: +' + t.v + '% chance the maze mystery tile turns out good' };
   if(t.t === 'randomvariant') return {
-    s: '天賦:七十二變!一上場隨機獲得時間或分數加成其中一種', f: '天賦:進入戰鬥時隨機套用「時間加成」或「分數加成」其中一種',
+    s: '七十二變:一上場隨機獲得時間或分數加成其中一種', f: '七十二變:進入戰鬥時隨機套用「時間加成」或「分數加成」其中一種',
     en: 'Trait: randomly grants either a time bonus or a score bonus on entry' };
   if(t.t === 'hintclear') return {
-    s: '天賦:每一題自動排除 1 個錯誤選項(部分玩法不支援)', f: '天賦:每一題渲染完自動排除 1 個錯誤選項(僅選擇題類玩法支援)',
+    s: '明鏡慧眼:每一題自動排除 1 個錯誤選項(部分玩法不支援)', f: '明鏡慧眼:每一題渲染完自動排除 1 個錯誤選項(僅選擇題類玩法支援)',
     en: 'Trait: automatically removes 1 wrong option each question (some game modes not supported)' };
   if(t.t === 'autoclear') return {
-    s: '天賦:計時只剩不到 ' + t.v + '% 時直接算你答對(整關限1次,部分玩法不支援)', f: '天賦:倒數剩餘不到 ' + t.v + '% 時,直接視為這一題答對(整關限 1 次,僅單次送出答案的玩法支援)',
+    s: '絕處逢生:計時只剩不到 ' + t.v + '% 時直接算你答對(整關限1次,部分玩法不支援)', f: '絕處逢生:倒數剩餘不到 ' + t.v + '% 時,直接視為這一題答對(整關限 1 次,僅單次送出答案的玩法支援)',
     en: 'Trait: when the timer drops below ' + t.v + '%, this question is auto-cleared as correct (once per level, some game modes not supported)' };
   if(t.t === 'healoncorrect'){ var _hocP = (typeof t.p === 'number') ? t.p : 100; return {
-    s: '天賦:答對有 ' + _hocP + '% 機率補回 ' + t.v + ' 滴血', f: '天賦:答對時有 ' + _hocP + '% 機率恢復自己 ' + t.v + ' 點 HP',
+    s: '妙手回春:答對有 ' + _hocP + '% 機率補回 ' + t.v + ' 滴血', f: '妙手回春:答對時有 ' + _hocP + '% 機率恢復自己 ' + t.v + ' 點 HP',
     en: 'Trait: ' + _hocP + '% chance to restore ' + t.v + ' HP on a correct answer' }; }
   if(t.t === 'timeoncorrect'){ var _tocP = (typeof t.p === 'number') ? t.p : 100; return {
-    s: '天賦:答對有 ' + _tocP + '% 機率多 ' + t.v + ' 秒', f: '天賦:答對時有 ' + _tocP + '% 機率讓倒數/關卡時間額外 +' + t.v + ' 秒',
+    s: '爭分奪秒:答對有 ' + _tocP + '% 機率多 ' + t.v + ' 秒', f: '爭分奪秒:答對時有 ' + _tocP + '% 機率讓倒數/關卡時間額外 +' + t.v + ' 秒',
     en: 'Trait: ' + _tocP + '% chance to gain +' + t.v + ' seconds on a correct answer' }; }
   if(t.t === 'chargeoncorrect'){ var _cocP = (typeof t.p === 'number') ? t.p : 50; return {
-    s: '天賦:答對有 ' + _cocP + '% 機率多充 ' + t.v + ' 格爆發', f: '天賦:答對時有 ' + _cocP + '% 機率額外 +' + t.v + ' 格爆發充能',
+    s: '蓄勢待發:答對有 ' + _cocP + '% 機率多充 ' + t.v + ' 格爆發', f: '蓄勢待發:答對時有 ' + _cocP + '% 機率額外 +' + t.v + ' 格爆發充能',
     en: 'Trait: ' + _cocP + '% chance for +' + t.v + ' extra burst charge on a correct answer' }; }
   if(t.t === 'mazetrap') return {
-    s: '天賦:一進迷宮就先幫你標出 1 個陷阱', f: '天賦:進入迷宮探險王時,直接標記出 1 個陷阱格(僅迷宮探險王生效)',
+    s: '識途老馬:一進迷宮就先幫你標出 1 個陷阱', f: '識途老馬:進入迷宮探險王時,直接標記出 1 個陷阱格(僅迷宮探險王生效)',
     en: 'Trait: reveals 1 trap tile at the start of the maze (Maze Adventure only)' };
   if(t.t === 'm3merge') return {
-    s: '天賦:開局幫最少的顏色併去旁邊最多的顏色', f: '天賦:進入元素消消樂時,把盤面上數量最少的顏色其中一顆自動轉成鄰近數量最多的顏色(僅元素消消樂生效)',
+    s: '巧奪天工:開局幫最少的顏色併去旁邊最多的顏色', f: '巧奪天工:進入元素消消樂時,把盤面上數量最少的顏色其中一顆自動轉成鄰近數量最多的顏色(僅元素消消樂生效)',
     en: 'Trait: at the start of Element Match, merges one of the rarest colour tiles into its most common neighbouring colour (Element Match only)' };
   if(t.t === 'reactclear'){ var _rcP = (typeof t.p === 'number') ? t.p : 50; return {
-    s: '天賦:射到答案時有 ' + _rcP + '% 機率多刪 1 個錯的', f: '天賦:射到任意答案(對或錯)時有 ' + _rcP + '% 機率額外刪除畫面上 1 個錯誤答案(僅算數大進擊生效)',
+    s: '一石二鳥:射到答案時有 ' + _rcP + '% 機率多刪 1 個錯的', f: '一石二鳥:射到任意答案(對或錯)時有 ' + _rcP + '% 機率額外刪除畫面上 1 個錯誤答案(僅算數大進擊生效)',
     en: 'Trait: ' + _rcP + '% chance to also clear 1 wrong falling answer whenever you shoot anything (Coin Rush only)' }; }
+  if(t.t === 'counterup') return {
+    s: '血債血還:答錯會累積怒氣,累積滿後下次答對傷害更痛', f: '血債血還:每答錯1次累積1層怒氣(上限 ' + t.v + ' 層),下次答對時依層數每層攻擊傷害+' + t.m + '%,觸發後歸零',
+    en: 'Trait: each wrong answer builds 1 stack (max ' + t.v + '); next correct answer deals +' + t.m + '% damage per stack, then resets' };
+  if(t.t === 'damagecap') return {
+    s: '熔火護甲:自己單次受到的傷害有上限', f: '熔火護甲:自己單次受到的傷害封頂為 ' + t.v + ' 點,超過的部分直接無效',
+    en: 'Trait: damage taken in a single hit is capped at ' + t.v };
+  if(t.t === 'shieldstack') return {
+    s: '神龍護體:連續答對會獲得護盾格', f: '神龍護體:每答對 ' + t.v + ' 題獲得 1 格護盾(可完全擋下 1 次傷害),同時最多疊 ' + t.m + ' 格',
+    en: 'Trait: every ' + t.v + ' correct answers grants 1 shield charge (blocks 1 hit), up to ' + t.m + ' at once' };
+  if(t.t === 'drainoncorrect') return {
+    s: '掠奪核心:答對有機率扣對手爆發條', f: '掠奪核心:答對時有 ' + t.v + '% 機率直接扣除對手 1 格爆發充能',
+    en: 'Trait: ' + t.v + '% chance to drain 1 burst charge from the opponent on a correct answer' };
+  if(t.t === 'atkonstreak') return {
+    s: '猛獸直覺:連續答對會額外重擊對手', f: '猛獸直覺:連續答對每滿 ' + t.v + ' 題,額外對對手造成 ' + t.m + ' 點固定傷害',
+    en: 'Trait: every ' + t.v + ' correct answers in a row, deal an extra ' + t.m + ' fixed damage to the opponent' };
+  if(t.t === 'lifestealoncorrect') return {
+    s: '鬼王豪飲:答對有機率吸取對手HP補自己', f: '鬼王豪飲:答對時有 ' + t.v + '% 機率扣除對手 ' + t.m + ' 點HP並補回自己同額',
+    en: 'Trait: ' + t.v + '% chance to drain ' + t.m + ' HP from the opponent and heal yourself the same amount on a correct answer' };
+  if(t.t === 'twinbonus') return {
+    s: '心靈相通:答對必定多秒,結算分數也加成', f: '心靈相通:答對時必定倒數/關卡時間+' + t.v + '秒,結算分數同時額外+' + t.m + '%',
+    en: 'Trait: every correct answer grants +' + t.v + 's, and final score gets an extra +' + t.m + '%' };
+  if(t.t === 'atkstack') return {
+    s: '地獄業火:每答對一次攻擊力就疊高一層', f: '地獄業火:每答對一次疊1層(上限 ' + t.v + ' 層,不歸零),每層自己攻擊傷害+' + t.m + '%',
+    en: 'Trait: each correct answer adds 1 permanent stack (max ' + t.v + '); each stack gives +' + t.m + '% damage' };
+  if(t.t === 'lowhpboost') return {
+    s: '無雙氣勢:HP偏低時攻擊傷害提升', f: '無雙氣勢:自己HP低於 ' + t.m + '% 時,攻擊傷害固定+' + t.v + '%',
+    en: 'Trait: when your own HP is below ' + t.m + '%, your attack damage is fixed +' + t.v + '%' };
+  if(t.t === 'passiveheal') return {
+    s: '生生不息:不論答對答錯,每題都會回一點血', f: '生生不息:不論答對答錯,每一題固定回復自己 ' + t.v + ' 點HP',
+    en: 'Trait: regardless of right or wrong, restore ' + t.v + ' HP every question' };
+  if(t.t === 'stealbuffoncorrect') return {
+    s: '掠奪成性:答對有機率把對手的爆發條搶過來', f: '掠奪成性:答對時有 ' + t.v + '% 機率同時扣對手1格爆發條、補給自己1格',
+    en: 'Trait: ' + t.v + '% chance to steal 1 burst charge from the opponent to yourself on a correct answer' };
+  if(t.t === 'weakenoncorrect') return {
+    s: '核污染擴散:答對有機率讓對手接下來攻擊變弱', f: '核污染擴散:答對時有 ' + t.v + '% 機率讓對手接下來2次攻擊傷害-50%',
+    en: 'Trait: ' + t.v + '% chance to halve the opponent\'s next 2 attacks on a correct answer' };
+  if(t.t === 'hintonce2') return {
+    s: '未卜先知:進場當下一次直接刪掉2個錯的', f: '未卜先知:進入關卡第一題時,一次性直接排除2個錯誤選項(整場限1次)',
+    en: 'Trait: on the first question, instantly removes 2 wrong options (once per level)' };
+  if(t.t === 'dmgoncorrect') return {
+    s: '吞噬漩渦:答對有機率直接咬對手一口', f: '吞噬漩渦:答對時有 ' + t.v + '% 機率直接扣對手 ' + t.m + ' 點HP(無視護盾與減傷)',
+    en: 'Trait: ' + t.v + '% chance to deal ' + t.m + ' direct HP damage to the opponent on a correct answer (ignores shield/reduction)' };
+  if(t.t === 'illusiononcorrect') return {
+    s: '幻術迷蹤:每題都有機率多刪1個錯的', f: '幻術迷蹤:每一題有 ' + t.v + '% 機率額外排除1個錯誤選項',
+    en: 'Trait: ' + t.v + '% chance each question to also remove 1 wrong option' };
+  if(t.t === 'starttimebonus') return {
+    s: '東風助力:進場第一題直接多一大筆時間', f: '東風助力:進入關卡第一題時,計時器一次性額外+' + t.v + '秒(整場限1次)',
+    en: 'Trait: on the first question, instantly grants +' + t.v + 's on the timer (once per level)' };
+  if(t.t === 'dodgechance') return {
+    s: '血色屏障:每次挨打都有機率完全沒事', f: '血色屏障:自己每次受到攻擊有 ' + t.v + '% 機率完全無視傷害(不限次數,持續整場)',
+    en: 'Trait: ' + t.v + '% chance to fully negate any incoming damage (unlimited uses, all level)' };
+  if(t.t === 'burstscorebonus') return {
+    s: '引爆連鎖:每次發動爆發直接多得分', f: '引爆連鎖:每次發動極限爆發,額外直接+' + t.v + '分',
+    en: 'Trait: using your ultimate burst instantly grants +' + t.v + ' bonus points' };
+  if(t.t === 'lowhpscoreup') return {
+    s: '燭火燃盡:HP剩越少,結算分數加成越高', f: '燭火燃盡:結算時,自己剩餘HP百分比越低,分數加成越高(上限+' + t.v + '%)',
+    en: 'Trait: the lower your remaining HP%, the bigger your final score bonus (up to +' + t.v + '%)' };
+  if(t.t === 'speedstrike') return {
+    s: '疾風連斬:答對必定倒數多秒', f: '疾風連斬:答對時必定(100%)讓倒數/關卡時間額外+' + t.v + '秒',
+    en: 'Trait: every correct answer guarantees +' + t.v + 's on the timer' };
+  if(t.t === 'reactslowstart') return {
+    s: '死亡凝視:回合開始前幾秒,目標掉落變慢', f: '死亡凝視:回合開始前 ' + t.v + ' 秒內生成的目標,下墜速度-' + t.m + '%(僅算數大進擊生效)',
+    en: 'Trait: falling targets spawned within the first ' + t.v + 's of the round fall ' + t.m + '% slower (Coin Rush only)' };
+  if(t.t === 'mapclear5') return {
+    s: '神樂淨路:台灣地圖每題自動刪掉一堆錯的', f: '神樂淨路:台灣地圖每一題自動排除 ' + t.v + ' 個錯誤地點(僅台灣地圖生效)',
+    en: 'Trait: on the Taiwan map, automatically removes ' + t.v + ' wrong locations each question (Taiwan Map only)' };
+  if(t.t === 'mazephase') return {
+    s: '破解穿牆:整場可以直接穿過1次迷宮牆壁', f: '破解穿牆:整場限1次,可以直接穿越迷宮牆壁走過去(僅迷宮探險王生效)',
+    en: 'Trait: once per level, walk straight through a maze wall (Maze Adventure only)' };
+  if(t.t === 'm3healoncombo') return {
+    s: '元素治癒:消除寶石有機率回血', f: '元素治癒:每組消除有 ' + t.v + '% 機率回復(消除顆數×' + t.m + ')點HP(僅元素消消樂生效)',
+    en: 'Trait: ' + t.v + '% chance each match heals (matched gems×' + t.m + ') HP (Element Match only)' };
+  if(t.t === 'reactdodgeonmiss') return {
+    s: '危機反射:每回合第1次射錯可以閃過反擊', f: '危機反射:每回合第1次打中錯誤目標時,可以完全閃過那次的反擊傷害(僅算數大進擊生效)',
+    en: 'Trait: the first wrong hit each round fully dodges the counter-damage (Coin Rush only)' };
   return { s:'', f:'', en:'' };
 }
 function mgTraitHtml(txt){ return txt ? ('<br><span style="color:#7ee8fa;">' + esc(txt) + '</span>') : ''; }   /* ★ v1.75.0 — 跟 mgEff2Html 的黃色(#ffe066,爆發第二效果)區分,天賦被動改用青色,文字本身已含「天賦:」開頭不必再加「附加:」 */
@@ -8942,6 +9158,7 @@ window.mgBattleBurst = function(){
     else if(cls === 'shd'){ P.shield = MG_BT.SHIELD; mgBattleFloatOn('p', '🛡×' + MG_BT.SHIELD, 'block'); }
     else if(cls === 'atk'){ N.hp = Math.max(0, N.hp - MG_BT.ATK_BURST_P); mgBattleFxAttack('p', '−' + MG_BT.ATK_BURST_P); }
     mgApplyEff2(P, N);   /* ★ v1.33.0 — 逐英雄第二效果,64 隻各自不同(見 MG_HEROES.eff2) */
+    if(P.trBurstScoreBonusV > 0){ MG.score += P.trBurstScoreBonusV; try{ $('score').textContent = MG.score + ' 分'; mgScoreFloat('+' + P.trBurstScoreBonusV); }catch(_eBsb){} }   /* ★ v1.87.0 — 天賦「引爆連鎖」(炸彈客):每次發動極限爆發直接加分 */
     mgBattlePaint();
     mgBattleCheckKO();   /* ★ v1.31.1 — 攻擊型現在會直接扣血,補上結算檢查(過去這型不會直接傷血,漏掉沒事;現在會) */
   });
@@ -9442,6 +9659,17 @@ function mgM3PlayMatchFx(matches, comboLevel){
   }
   if(comboLevel > 0){
     try{ var r = $('m3grid').getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + 10, 'Combo ×' + (comboLevel + 1), 'combo'); }catch(e2){}
+  }
+  /* ★ v1.88.0 — 天賦「元素治癒」(風術士):每一組消除各自獨立判定機率回血,只對玩家自己生效 */
+  if(_BT && _BT.p && _BT.p.trM3HealPct > 0){
+    var _m3h;
+    for(_m3h = 0; _m3h < matches.length; _m3h++){
+      if(Math.random() * 100 < _BT.p.trM3HealPct){
+        var _healAmt = matches[_m3h].size * _BT.p.trM3HealMult;
+        _BT.p.hp = Math.min(mgHpCap(_BT.p), _BT.p.hp + _healAmt);
+        try{ mgBattleFloatOn('p', '+' + _healAmt, 'heal'); }catch(_eM3h){}
+      }
+    }
   }
 }
 /* ★ v1.43.0 — 直接沿用聽音坊既有的鋼琴音色引擎(_earCtx/_earTone/EAR_NOTES,見上方引擎 F 區塊)，
@@ -10448,7 +10676,7 @@ window.mgCrReset = function(){
  *    沒有英文欄位的題目退回中文(目前已翻譯:15 款關卡介紹/籃子/單元表 + 動物特徵二選一 167 題)
  * ══════════════════════════════════════════════════════════ */
 MG.lang = 'zh';
-var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大作戰": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊玩提示": "💡 Play Tips", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
+var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大對抗": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊玩提示": "💡 Play Tips", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
 /* ★ v1.29.0 戰鬥模式 UI 字串英文版(補進 MG_EN;題庫/爆發說明走 tx() 的 en 欄位) */
 (function(){
   var _add = { "出戰英雄": "Your hero", "🔁 換英雄": "🔁 Change hero", "🦸 選一名英雄出戰": "🦸 Pick a hero to battle", "✓ 就是這一位": "✓ Choose this hero",
