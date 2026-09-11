@@ -3300,27 +3300,27 @@ window.MG_GAMES = [
      本回合不重複;取消雙倍發光。ops 鍵值:add/sub/mul/div/dec/frac。 */
   rounds: [
     { q: { s: '第一關:射下算對的加法!', f: '第一關:加法。射中結果正確的算式,錯的不要碰。', en: 'Round 1: Shoot the correct addition sums!' },   /* ★ v1.13.0 英文版 */
-      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:26 need:7,v1.29.0 曾改為 2) */ ops: ['add'],
+      sec: 30, need: 3, /* ★ v1.83.0(老師需求「每回合給30秒,共射擊3次(無論正確或錯誤)就結束」,取代 v1.82.0 的 sec:60/need:15)— need 現在的單位是「總出手次數」不分對錯(見 index.html _reactHit/_reactFinish 的改動),不是「正確次數」;老師六回合「依照原本設計不同難度」指的是 ops(運算子組合由淺入深),與 sec/need 這兩個數字無關,六回合這兩個數字統一。 */ ops: ['add'],
       tip: { s: '只射對的!', f: '算錯的不要射,會爆炸扣分', en: 'Only shoot the correct ones!' },
       why: { s: '個位加起來超過 10 要進位。', f: '兩位數加法先算個位,滿十進一;例如 47+35:7+5=12 進一位,4+3+1=8 ⇒ 82。', en: "When the ones digits add to more than 10, carry the extra 1." } },
     { q: { s: '第二關:加法＋減法!', f: '第二關:加法與減法混合,注意進位與退位。', en: 'Round 2: Addition and subtraction!' },
-      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:26 need:7,v1.29.0 曾改為 2) */ ops: ['add', 'sub'],
+      sec: 30, need: 3, /* ★ v1.83.0(老師需求「每回合給30秒,共射擊3次(無論正確或錯誤)就結束」,取代 v1.82.0 的 sec:60/need:15)— need 現在的單位是「總出手次數」不分對錯(見 index.html _reactHit/_reactFinish 的改動),不是「正確次數」;老師六回合「依照原本設計不同難度」指的是 ops(運算子組合由淺入深),與 sec/need 這兩個數字無關,六回合這兩個數字統一。 */ ops: ['add', 'sub'],
       tip: { s: '看清楚是加還是減', f: '先看符號,再算個位', en: 'Watch the sign — plus or minus?' },
       why: { s: '減法個位不夠減要向十位借。', f: '52−18:個位 2 不夠減 8,向十位借 1 變 12−8=4,十位 4−1=3 ⇒ 34。', en: 'When the ones digit is not enough to subtract, borrow 1 from the tens.' } },
     { q: { s: '第三關:加、減、乘!', f: '第三關:加減乘混合,乘法口訣要反射出來。', en: 'Round 3: Add, subtract, multiply!' },
-      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:26 need:7,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul'],
+      sec: 30, need: 3, /* ★ v1.83.0(老師需求「每回合給30秒,共射擊3次(無論正確或錯誤)就結束」,取代 v1.82.0 的 sec:60/need:15)— need 現在的單位是「總出手次數」不分對錯(見 index.html _reactHit/_reactFinish 的改動),不是「正確次數」;老師六回合「依照原本設計不同難度」指的是 ops(運算子組合由淺入深),與 sec/need 這兩個數字無關,六回合這兩個數字統一。 */ ops: ['add', 'sub', 'mul'],
       tip: { s: '乘法口訣要熟', f: '看到 6×7 直接反射 42', en: 'Know your times tables!' },
       why: { s: '乘法口訣背熟,判斷就快。', f: '乘法口訣熟練後判斷正誤比重算快很多;兩位數乘一位數可以拆開:12×6 = 10×6 + 2×6 = 72。', en: 'Know your multiplication facts well and you can judge faster than recalculating.' } },
     { q: { s: '第四關:加減乘除全上!', f: '第四關:四則運算全部登場,除法想成乘法反過來。', en: 'Round 4: All four operations!' },
-      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:28 need:7,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul', 'div'],
+      sec: 30, need: 3, /* ★ v1.83.0(老師需求「每回合給30秒,共射擊3次(無論正確或錯誤)就結束」,取代 v1.82.0 的 sec:60/need:15)— need 現在的單位是「總出手次數」不分對錯(見 index.html _reactHit/_reactFinish 的改動),不是「正確次數」;老師六回合「依照原本設計不同難度」指的是 ops(運算子組合由淺入深),與 sec/need 這兩個數字無關,六回合這兩個數字統一。 */ ops: ['add', 'sub', 'mul', 'div'],
       tip: { s: '除法想成「幾個幾」', f: '45÷5 想成 5 乘幾等於 45', en: 'Think of division as "how many groups of".' },
       why: { s: '除法就是乘法反過來。', f: '45÷5 想成「5 乘幾等於 45」;超過九九乘法先湊整數:96÷8 → 80÷8=10,再 16÷8=2,合起來 12。', en: 'Division is just multiplication in reverse.' } },
     { q: { s: '第五關:加上小數!', f: '第五關:四則運算加入小數,小數點要對齊。', en: 'Round 5: Add decimals!' },
-      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:28 need:6,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul', 'div', 'dec'],
+      sec: 30, need: 3, /* ★ v1.83.0(老師需求「每回合給30秒,共射擊3次(無論正確或錯誤)就結束」,取代 v1.82.0 的 sec:60/need:15)— need 現在的單位是「總出手次數」不分對錯(見 index.html _reactHit/_reactFinish 的改動),不是「正確次數」;老師六回合「依照原本設計不同難度」指的是 ops(運算子組合由淺入深),與 sec/need 這兩個數字無關,六回合這兩個數字統一。 */ ops: ['add', 'sub', 'mul', 'div', 'dec'],
       tip: { s: '小數點對齊再算', f: '小數加減要對齊小數點', en: 'Line up the decimal points first.' },
       why: { s: '小數加減要把小數點對齊。', f: '小數加減先對齊小數點再像整數一樣算;小數乘整數先當整數算,最後再點回小數點(2.5×3:25×3=75 → 7.5)。', en: 'Line up the decimal points before adding or subtracting.' } },
     { q: { s: '第六關:加上分數!', f: '第六關:四則運算加入分數,等值分數與分數比大小。', en: 'Round 6: Add fractions!' },
-      sec: 15, need: 3, /* ★ v1.63.0(老師需求「每關目標射對3個答案」)由 2 改 3(原 sec:30 need:6,v1.29.0 曾改為 2) */ ops: ['add', 'sub', 'mul', 'div', 'frac'],
+      sec: 180, need: 9999, /* ★ v1.83.0(老師需求「第六回合沒有射擊次數上限,直到任一方倒下」,取代 v1.82.0 的 need:15)— need 給極大值(9999)當「事實上沒有出手次數上限」;sec 給 180 秒當保底安全網(避免真的卡住開發環境),正常情況下這個安全網幾乎用不到——真正的結束交給既有、完全獨立運作的 HP 歸零判定(mgBattleHit→mgBattleCheckKO→mgBattleEnd),打到任一方倒下當場結束,不看這裡的秒數或次數。 */ ops: ['add', 'sub', 'mul', 'div', 'frac'],
       tip: { s: '分母越大一份越小', f: '等值分數=分子分母同乘一數', en: 'The bigger the denominator, the smaller each piece.' },
       why: { s: '分母越大,一份反而越小喔!', f: '等值分數是分子分母同乘(或同除)一個數:1/2 = 2/4 = 3/6;比大小要通分或交叉相乘:1/2 vs 1/3 → 1×3 > 1×2,所以 1/2 較大。3/8 = 0.375。', en: 'The bigger the denominator, the smaller each piece is!' } }
   ]
@@ -4311,10 +4311,10 @@ window.MG_HEROES = [
   { n:'魔術師', cls:'ctrl', img:'%E9%AD%94%E8%A1%93%E5%B8%AB.png', bn:'禁錮牢籠', gif:'%E7%A6%81%E9%8C%AE.gif', sfx:[['sfx-imprison-burst',1]], tint:'rgba(140,80,200,0.20)' , pos:'25%' , eff2:{t:'silence',v:10}, tr:{t:'trapimmune',v:60} },
   { n:'聖冥法師', cls:'atk', img:'%E8%81%96%E5%86%A5%E6%B3%95%E5%B8%AB.png', bn:'聖光與暗影的調停', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-shoot',0.85],['sfx-heal',0.7]], tint:'rgba(150,90,220,0.20)' , pos:'25%' , eff2:{t:'cleanseheal15',v:0}, tr:{t:'mistakeshield',v:35} },
   { n:'大刀勇士', cls:'atk', img:'%E5%A4%A7%E5%88%80%E5%8B%87%E5%A3%AB.png', bn:'奧義‧勇士大刀滅絕斬', gif:'%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif', sfx:[['sfx-sword',1],['sfx-crit',0.9]], tint:'rgba(255,150,60,0.16)' , pos:'12%' , eff2:{t:'heal',v:5}, tr:{t:'streakbonus',v:3,m:7} },
-  { n:'巫女', cls:'heal', img:'Q%E5%B7%AB%E5%A5%B3(%E7%B8%AE%E5%9C%96).png', bn:'神樂舞', gif:'', sfx:[] , full:true , eff2:{t:'cleansebleed6',v:0}, tr:{t:'headstart',v:2} },
-  { n:'大天狗', cls:'atk', img:'%E5%A4%A7%E5%A4%A9%E7%8B%97.png', bn:'神威風獵', gif:'%E7%A5%9E%E5%A8%81%E9%A2%A8%E7%8D%B5.gif', sfx:[['sfx-tengu-strike',1]], tint:'rgba(170,220,255,0.18)' , full:true , eff2:{t:'breakdef3',v:0}, tr:{t:'streakbonus',v:2,m:6} },
-  { n:'酒吞童子', cls:'atk', img:'%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90.png', bn:'鬼王酒宴', gif:'%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif', sfx:[['sfx-explode',1],['sfx-punch',0.9],['sfx-heal',0.7]], tint:'rgba(255,100,60,0.18)' , full:true , eff2:{t:'lifesteal3',v:0}, tr:{t:'mistakeshield',v:40} },
-  { n:'玉藻前', cls:'atk', img:'%E7%8E%89%E8%97%BB%E5%89%8D.png', bn:'禍世邪魅', gif:'%E7%A6%8D%E4%B8%96%E9%82%AA%E9%AD%85.gif', sfx:[['sfx-fantasy',1],['sfx-fantasy',0.9],['sfx-explode',0.6]], tint:'rgba(255,150,80,0.18)' , full:true , eff2:{t:'blindseal3',v:0}, tr:{t:'hintclear',v:1} },
+  { n:'巫女', cls:'heal', img:'%E5%B7%AB%E5%A5%B3LV20.png', bn:'神樂舞', gif:'', sfx:[] , pos:'20%' , eff2:{t:'cleansebleed6',v:0}, tr:{t:'headstart',v:2} },   /* ★v1.81.0老師需求「原始Q版的日本關卡英雄全部換成LV20的精緻版圖片」:img 由 Q巫女(縮圖).png 改主程式 LV20 立繪;原 full:true(contain 完整顯示)是 v1.31.0 為「主程式沒有裁切位置資料的英雄」設的權宜作法,LV20 是正規直式立繪、臉在上方 ⇒ 改回 pos 裁切與其餘英雄一致 */
+  { n:'大天狗', cls:'atk', img:'%E5%A4%A7%E5%A4%A9%E7%8B%97LV20.png', bn:'神威風獵', gif:'%E7%A5%9E%E5%A8%81%E9%A2%A8%E7%8D%B5.gif', sfx:[['sfx-tengu-strike',1]], tint:'rgba(170,220,255,0.18)' , pos:'18%' , eff2:{t:'breakdef3',v:0}, tr:{t:'streakbonus',v:2,m:6} },   /* ★v1.81.0 同上:改 LV20 精緻版立繪 + pos 裁切,移除 full:true */
+  { n:'酒吞童子', cls:'atk', img:'%E9%85%92%E5%90%9E%E7%AB%A5%E5%AD%90LV20.png', bn:'鬼王酒宴', gif:'%E9%AC%BC%E7%8E%8B%E9%A5%97%E5%AE%B4.gif', sfx:[['sfx-explode',1],['sfx-punch',0.9],['sfx-heal',0.7]], tint:'rgba(255,100,60,0.18)' , pos:'17%' , eff2:{t:'lifesteal3',v:0}, tr:{t:'mistakeshield',v:40} },   /* ★v1.81.0 同上:改 LV20 精緻版立繪 + pos 裁切,移除 full:true */
+  { n:'玉藻前', cls:'atk', img:'%E7%8E%89%E8%97%BB%E5%89%8DLV20.png', bn:'禍世邪魅', gif:'%E7%A6%8D%E4%B8%96%E9%82%AA%E9%AD%85.gif', sfx:[['sfx-fantasy',1],['sfx-fantasy',0.9],['sfx-explode',0.6]], tint:'rgba(255,150,80,0.18)' , pos:'18%' , eff2:{t:'blindseal3',v:0}, tr:{t:'hintclear',v:1} },   /* ★v1.81.0 同上:改 LV20 精緻版立繪 + pos 裁切,移除 full:true */
   { n:'窮奇', cls:'atk', img:'%E7%AA%AE%E5%A5%87.png', bn:'召喚上古四凶獸', gif:'%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.gif', sfx:[['sfx-qiongqi-burst',1]], tint:'rgba(180,40,40,0.22)', dur:2400 , pos:'57%' , eff2:{t:'bleed',v:6}, tr:{t:'mistakeshield',v:45} },
   { n:'科技生化人', cls:'atk', img:'%E7%94%9F%E5%8C%96%E4%BA%BA.png', bn:'輻射核砲', gif:'%E8%BC%BB%E5%B0%84%E6%A0%B8%E7%A0%B2.gif', sfx:[['sfx-gunshot-big',1],['sfx-explode',0.95],['sfx-burst',0.7]], tint:'rgba(180,220,40,0.22)', dur:2400 , full:true , eff2:{t:'weaken3',v:0}, tr:{t:'streakbonus',v:3,m:10} },
   { n:'鋁合金暴龍', cls:'atk', img:'%E9%8B%81%E5%90%88%E9%87%91%E6%9A%B4%E9%BE%8D.png', bn:'死神龍王登場', gif:'%E6%AD%BB%E7%A5%9E%E4%B9%8B%E9%90%AE.gif', sfx:[['sfx-ko',1],['sfx-sword',0.85]], tint:'rgba(200,0,50,0.18)' , full:true , eff2:{t:'stealcharge1',v:0}, tr:{t:'mistakeshield',v:50} },
