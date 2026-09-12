@@ -15,6 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.110.0(2026-09-12)
+     ★ v1.110.0(2026-09-12・接續好友連線合作)— 拜訪好友的島完工:加好友碼列表「🚪拜訪」→ 轉場交易 slotUids(最多4人)→ 讀好友名片取得已解鎖區域/簡化建築清單 → 進地圖只顯示島主的區域 → 心跳回報位置+onSnapshot 畫出其他來訪者 → 離線/切背景自動標 npc,島主開機讀 notices 顯示。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.109.0(2026-09-12)
      ★ v1.109.0(2026-09-12・老師四項修正)— 主角改像素 sprite/移動左右鏡像修正/水域全面禁止進入(重畫 valley+8點位移)/採集簡化1題+QTE放大圖/字體改中黑體+整體放大。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.107.0(2026-09-12)
@@ -3789,6 +3791,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-char .shadow{position:absolute;left:14px;bottom:0;width:36px;height:12px;border-radius:50%;background:rgba(0,0,0,.35);}
 .isl-chibi{position:absolute;left:0;top:0;width:64px;height:64px;}
 .isl-pixchar{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;background-size:768px 384px;background-position:0 0;image-rendering:pixelated;}   /* ★ v1.109.0 靜態像素風主角(取代手繪 CSS 小人),各處肖像統一用正面 idle 幀 */
+.isl-coop-peer{position:absolute;width:64px;height:64px;margin-left:-32px;margin-top:-56px;pointer-events:none;z-index:3;opacity:.92;transition:left .5s linear,top .5s linear;}   /* ★ v1.108.0 拜訪合作:場上其他玩家的小人(唯讀顯示,不可互動) */
+.isl-coop-peer .pn{position:absolute;left:50%;top:-16px;transform:translateX(-50%);font-size:12px;background:rgba(0,0,0,.55);color:#fff;padding:1px 6px;border-radius:8px;white-space:nowrap;}
 .isl-chibi .hd{position:absolute;left:18px;top:8px;width:28px;height:26px;border-radius:12px 12px 10px 10px;}
 .isl-chibi .hr{position:absolute;left:16px;top:4px;width:32px;height:16px;border-radius:14px 14px 4px 4px;}
 .isl-chibi .hr.twin::before,.isl-chibi .hr.twin::after{content:'';position:absolute;top:8px;width:8px;height:20px;border-radius:4px;background:inherit;}
@@ -4191,7 +4195,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.109.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.110.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4200,7 +4204,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.109.0';   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.110.0';   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -11895,6 +11899,7 @@ function islOnUser(u){
   if(_IS.lastUid === undefined){ _IS.lastUid = uid; return; }   /* 開機第一次 onUser(null) 不是登出 */
   if(uid === _IS.lastUid) return;
   _IS.lastUid = uid;
+  if(_IS.coop) islCoopTeardown();   /* ★ v1.108.0 換帳號時若還在拜訪別人的島,先退出(那份 session 屬於舊帳號) */
   if(_IS.saveT){ clearTimeout(_IS.saveT); _IS.saveT = null; }
   _IS.conflict = null; _IS.cloudSeen = false;
   if(!_IS.on){ ISL = null; return; }   /* 不在荒島模式:下次進入 islEnter 會重新讀 */
@@ -12098,10 +12103,12 @@ window.islEnter = function(){
     if(!ISL.char){ islCreateOpen(); }
     else { islGoMap(); }
     if(MG.user) islMailRefresh(function(){});   /* ★ v1.106.0 開機先抓一次信箱數量(供側欄徽章) */
+    if(MG.user) islCoopNoticesCheck();   /* ★ v1.108.0 開機順便看看有沒有人拜訪過/走了/離線的留言 */
     if(!MG.user && !ISL.flags.guestTold){ ISL.flags.guestTold = true; toast('這座島是這台裝置所有未登入的人共用的、跟這台裝置綁在一起;登入後你會有自己專屬的雲端島,不會把這座訪客島的進度帶進去(裁定 S)。'); }   /* ★ v1.106.0 強調訪客島獨立、不可匯入(裁定 S) */
   });
 };
 window.islExitNow = function(){   /* ★ v1.103.0 抽出供雲端讀檔失敗視窗「離開」使用 */
+  if(_IS.coop){ islCoopHeartbeatSend(true); islCoopTeardown(); }   /* ★ v1.108.0 離開整個荒島模式時,若還在拜訪也要退出 */
   if(ISL) islSave('exit');
   islZoneStop();
   _IS.on = false; _IS.loading = false;
@@ -12116,8 +12123,8 @@ window.islExit = function(){
 };
 /* 切到背景:停 rAF、存檔(pagehide/visibilitychange 依鐵律不靠 beforeunload) */
 try{ islInstallBtnPaint(); }catch(_ib){}   /* ★ v1.105.0 首頁安裝鈕狀態 */
-document.addEventListener('visibilitychange', function(){ if(document.hidden && _IS.on && ISL){ islSave('hide'); if(_IS.raf){ cancelAnimationFrame(_IS.raf); _IS.raf = 0; } } else if(!document.hidden && _IS.on && _IS.screen === 'zone' && !_IS.raf){ _IS.lastT = 0; _IS.raf = requestAnimationFrame(islTick); } });
-window.addEventListener('pagehide', function(){ if(_IS.on && ISL){ islLocalWrite(); } });
+document.addEventListener('visibilitychange', function(){ if(document.hidden && _IS.on && ISL){ islSave('hide'); if(_IS.coop) islCoopHeartbeatSend(true);   /* ★ v1.108.0 切到背景先標記自己在拜訪的島上變成 NPC,不用等逾時 */ if(_IS.raf){ cancelAnimationFrame(_IS.raf); _IS.raf = 0; } } else if(!document.hidden && _IS.on && _IS.screen === 'zone' && !_IS.raf){ _IS.lastT = 0; _IS.raf = requestAnimationFrame(islTick); if(_IS.coop) islCoopHeartbeatSend(); } });
+window.addEventListener('pagehide', function(){ if(_IS.on && ISL){ islLocalWrite(); if(_IS.coop) islCoopHeartbeatSend(true); } });
 /* ── 創角(35.2):膚色 / 髮型 / 髮色 / 瞳色 / 體型 / 起步風格 / 名字;登入可一鍵套用主程式主角(players/{uid}.avatarCard) ── */
 /* ★ v1.108.0 無人島命名:形容詞+名詞隨機組合,創角時先抽一個,可隨時重抽或手打改名 */
 function islRandIslandName(){ var db = islDB(), rnd = islRng((islHash('isl_name|' + islNow() + '|' + Math.random()) >>> 0)); return db.ISLAND_ADJ[Math.floor(rnd() * db.ISLAND_ADJ.length)] + db.ISLAND_NOUN[Math.floor(rnd() * db.ISLAND_NOUN.length)]; }
@@ -12265,7 +12272,9 @@ window.islGoMap = function(){
   islAmbAttach('map');   /* ★ v1.100.0 雲影+飄葉 */
 };
 function islZoneState(z){
-  var db = islDB(), zs = ISL.zones[z.id], maxOpen = 0, i;
+  var db = islDB(), zs, maxOpen = 0, i;
+  if(_IS.coop) return (_IS.coop.ownerZones.indexOf(z.id) >= 0) ? 'open' : 'lock';   /* ★ v1.108.0 拜訪模式:讀島主已解鎖區域清單(名片快取),不看自己的存檔 */
+  zs = ISL.zones[z.id];
   if(zs.unlocked) return 'open';
   for(i = 0; i < db.ZONES.length; i++){ if(ISL.zones[db.ZONES[i].id].unlocked && db.ZONES[i].order > maxOpen) maxOpen = db.ZONES[i].order; }
   return (z.order <= maxOpen + 1) ? 'lock' : 'unknown';
@@ -12278,7 +12287,7 @@ function islMapPaint(){
     z = db.ZONES[i]; st = islZoneState(z);
     h += '<button class="isl-zone-spot ' + st + '" data-z="' + z.id + '" style="left:' + z.map.x + '%;top:' + z.map.y + '%">' + (st === 'unknown' ? '❓' : z.e) + '<span class="zn">' + islEsc(z.n) + '</span>' + (st === 'lock' ? '<span class="lk">🔒</span>' : '') + '</button>';
   }
-  h += '<button id="isl-map-camp" data-z="__camp" style="left:33%;top:83%">🏕<span class="zn">營地</span></button>';
+  h += _IS.coop ? '<button id="isl-map-camp" data-z="__leave" style="left:33%;top:83%">🚪<span class="zn">離開拜訪</span></button>' : '<button id="isl-map-camp" data-z="__camp" style="left:33%;top:83%">🏕<span class="zn">營地</span></button>';   /* ★ v1.108.0 拜訪模式:回營鈕換成離開拜訪 */
   h += '<div id="isl-map-char" style="left:' + cur.map.x + '%;top:' + cur.map.y + '%">' + islChibiHtml(ISL.char, 'idle') + '</div>';
   m.innerHTML = h;
   islMapDrawFallback($('isl-map-cv'));
@@ -12288,6 +12297,7 @@ function islMapPaint(){
     var t = ev.target; while(t && t !== m && !(t.getAttribute && t.getAttribute('data-z'))) t = t.parentNode;
     if(!t || t === m || _IS.mapMoved) return;
     var id = t.getAttribute('data-z');
+    if(id === '__leave'){ playSfx('sfx-tap', 0.3); islCoopLeave(); return; }
     if(id === '__camp'){ playSfx('sfx-tap', 0.3); islGoCamp(); return; }
     islMapZoneTap(db.zone(id));
   };
@@ -12444,6 +12454,7 @@ function islEnterZone(zoneId, cb){
   }
   _IS.lastT = 0; if(_IS.raf) cancelAnimationFrame(_IS.raf); _IS.raf = requestAnimationFrame(islTick);
   islCamera(true);
+  if(_IS.coop){ islCoopHeartbeatSend(); islCoopPeersRender(); }   /* ★ v1.108.0 拜訪模式:一進場景立刻回報位置+畫出場上其他人,不用等下個心跳 */
   if(cb) cb();
 }
 function islNodeHtml(n, i){
@@ -13048,8 +13059,8 @@ function islActResult(){
     gain.push({ id: node.gives, n: put, q: stars });
     if(put < n) note = '🎒 物品包滿了,' + (n - put) + ' 個沒帶走(先回營放東西)';
     if(A.id === 'gather' && A.ctx.node.kind !== 'palm'){ put = islBagAdd('seed', 1, 1); if(put) gain.push({ id: 'seed', n: 1, q: 1 }); }
-    node.taken = true; ISL.zones[_IS.zone].daily.taken.push(node.idx);
-    ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);
+    node.taken = true; islDailyFor(_IS.zone).taken.push(node.idx);
+    if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔 */
     islCodexAdd(node.kind);   /* ★ v1.98.0 圖鑑自動收錄(kind 別名見 CODEX_ALIAS) */
   }
   /* ★ v1.94.0 P2-b:馴養(動物進畜欄)、烹飪(扣食材出料理)、播種(寫入田地)、水道(Grid 拼圖蓋建築) */
@@ -13057,8 +13068,8 @@ function islActResult(){
     node = A.ctx.node;
     if(A.tamed){ ISL.camp.pen.animals.push({ k: node.gives, q: stars, fed: false }); gain.push({ id: node.gives, n: 1, q: stars, animal: true }); note = '🐾 ' + db.ANIMALS[node.gives].n + '跟你回營地了!記得每天餵牠。'; }
     else note = '牠被嚇跑了……下次慢一點靠近。(AP 照扣)';
-    node.taken = true; ISL.zones[_IS.zone].daily.taken.push(node.idx);
-    ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);
+    node.taken = true; islDailyFor(_IS.zone).taken.push(node.idx);
+    if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔 */
     islCodexAdd(node.kind);   /* ★ v1.98.0 觀察過就收錄(跑掉也算) */
   }
   if(A.id === 'cook'){
@@ -13162,6 +13173,7 @@ function islCampHasBld(id){ var s = ISL.camp.slots, i; for(i = 0; i < s.length; 
 window.islGoCamp = function(silent){
   var db = islDB(), zs;
   if(!ISL || !ISL.char) return;
+  if(_IS.coop){ islCoopLeave(); return; }   /* ★ v1.108.0 拜訪模式按「回營」等同離開拜訪,回自己的島 */
   if(!_IS.pre.camp){ islPreloadSet('camp', ['camp', 'camp_night'], 'camp', '🏕 營地', function(){ islGoCamp(silent); }); return; }   /* ★ v1.105.0 */
   islZoneRemember();
   islShowScreen('camp');
@@ -13889,9 +13901,11 @@ function islPublishCard(){   /* 雲端存檔成功後呼叫;5 分鐘最多一次
   var now = islNow();
   if(_IS.pubAt && now - _IS.pubAt < 300000 && _IS.pubDay === ISL.day) return;
   _IS.pubAt = now; _IS.pubDay = ISL.day;
-  MG.fb.db.collection('minigameIslandPublic').doc(MG.user.uid).set({ uid: MG.user.uid, name: (ISL.char.name || ISL.name || '島民').slice(0, 12), islandName: (ISL.islandName || '').slice(0, islDB().ISLAND_NAME_MAX), code: islFriendCode(MG.user.uid), char: ISL.char, day: ISL.day, defLv: ISL.skill.defense.lv, campLv: ISL.camp.lv, codex: Object.keys(ISL.codex || {}).length, updatedAt: now })['catch'](function(e){ try{ console.warn('[island card]', e && e.message); }catch(_){} });   /* ★ v1.108.0 名片加上島名,供好友列表與拜訪顯示 */
+  var zu = [], zk; for(zk in ISL.zones){ if(ISL.zones.hasOwnProperty(zk) && ISL.zones[zk].unlocked) zu.push(zk); }   /* ★ v1.108.0 拜訪合作:訪客讀不到私人存檔 minigameIsland/{uid},只能靠這張公開名片取得島主的解鎖區域與簡化建築清單 */
+  var cs = [], ci; for(ci = 0; ci < ISL.camp.slots.length; ci++){ cs.push(ISL.camp.slots[ci] ? { bld: ISL.camp.slots[ci].bld, lv: ISL.camp.slots[ci].lv } : null); }
+  MG.fb.db.collection('minigameIslandPublic').doc(MG.user.uid).set({ uid: MG.user.uid, name: (ISL.char.name || ISL.name || '島民').slice(0, 12), islandName: (ISL.islandName || '').slice(0, islDB().ISLAND_NAME_MAX), code: islFriendCode(MG.user.uid), char: ISL.char, day: ISL.day, defLv: ISL.skill.defense.lv, campLv: ISL.camp.lv, codex: Object.keys(ISL.codex || {}).length, zonesUnlocked: zu, campSlots: cs, updatedAt: now })['catch'](function(e){ try{ console.warn('[island card]', e && e.message); }catch(_){} });   /* ★ v1.108.0 名片加上島名/已解鎖區域/簡化建築清單,供好友列表與拜訪顯示 */
 }
-function islFriendCacheSet(d){ if(!d || !d.uid) return; ISL.friendCache[d.uid] = { name: d.name || '', islandName: d.islandName || '', defLv: d.defLv || 1, char: d.char || null, day: d.day || 1, campLv: d.campLv || 1, codex: d.codex || 0, at: islNow() }; }   /* ★ v1.108.0 +islandName */
+function islFriendCacheSet(d){ if(!d || !d.uid) return; ISL.friendCache[d.uid] = { name: d.name || '', islandName: d.islandName || '', defLv: d.defLv || 1, char: d.char || null, day: d.day || 1, campLv: d.campLv || 1, codex: d.codex || 0, zonesUnlocked: d.zonesUnlocked || ['beach'], campSlots: d.campSlots || [], at: islNow() }; }   /* ★ v1.108.0 +islandName/zonesUnlocked/campSlots(拜訪合作用) */
 function islFriendsRefresh(cb){   /* 重抓所有好友名片(最多 FRIEND_MAX 次 get) */
   var i, left = 0, done = function(){ left--; if(left <= 0 && cb) cb(); };
   if(!MG.user || !MG.fb || !ISL.friends.length){ if(cb) cb(); return; }
@@ -13935,6 +13949,148 @@ function islFriendAdd(code){
     islSave('friends'); islCampPaint(); islFriendsOpen();
   })['catch'](function(e){ mgLoading(false); toast('加好友失敗(需要老師先更新 firestore 規則)'); try{ console.warn('[island friend]', e && e.message); }catch(_){} });
 }
+/* ── 丙延伸 v1.108.0:好友連線合作(拜訪好友的島/邀請好友來自己的島,一座島最多 COOP_MAX 人) ── */
+function islCoopTopRef(uid){ return MG.fb.db.collection('minigameIslandVisit').doc(uid); }
+function islCoopPlayersRef(uid){ return islCoopTopRef(uid).collection('players'); }
+window.islCoopVisitAsk = function(idx){
+  var f = ISL.friends[idx], c = ISL.friendCache[f.uid];
+  if(!f) return;
+  if(!MG.user || !MG.fb){ toast('登入後才能拜訪好友的島'); return; }
+  if(_IS.coop){ toast('先離開目前拜訪的島,才能去別的地方'); return; }
+  playSfx('sfx-tap', 0.3);
+  islModal('<h3>🚪 拜訪 ' + islEsc(c ? c.name : f.name) + ' 的島' + (c && c.islandName ? '「' + islEsc(c.islandName) + '」' : '') + '</h3><p style="font-size:14px;opacity:.85">在那裡採集、探索一樣有完整收穫,你的小人會顯示在島上(同時最多 ' + islDB().COOP_MAX + ' 人)。想回家時按地圖上的「🚪 離開拜訪」。</p>', [
+    { t: '取消', cls: 'ghost' },
+    { t: '出發!', cls: 'gold', cb: function(){ islCoopJoin(f); } }
+  ]);
+};
+function islCoopJoin(f){
+  if(!MG.user || !MG.fb || _IS.coop) return;
+  mgLoading(true);
+  var ref = islCoopTopRef(f.uid), myUid = MG.user.uid;
+  MG.fb.db.runTransaction(function(tx){
+    return tx.get(ref).then(function(snap){
+      var d = snap.exists ? (snap.data() || {}) : {}, slots = d.slotUids || [];
+      if(slots.indexOf(myUid) < 0){
+        if(slots.length >= islDB().COOP_MAX){ var e = new Error('full'); e.code = 'isl-coop-full'; throw e; }
+        slots = slots.concat([myUid]);
+      }
+      tx.set(ref, { ownerUid: f.uid, slotUids: slots, updatedAt: islNow() }, { merge: true });
+    });
+  }).then(function(){
+    return MG.fb.db.collection('minigameIslandPublic').doc(f.uid).get();
+  }).then(function(snap){
+    mgLoading(false);
+    if(!snap.exists){ toast('對方還沒有可拜訪的島資料(尚未上雲端存檔)'); islCoopSlotRelease(f.uid); return; }
+    var d = snap.data() || {};
+    _IS.coop = { ownerUid: f.uid, ownerName: d.name || f.name || '好友', ownerIslandName: d.islandName || '', ownerZones: d.zonesUnlocked || ['beach'], ownerCampSlots: d.campSlots || [], ownerCampLv: d.campLv || 1, ownerDay: d.day || 1, hbT: null, staleT: null, unsubPlayers: null };
+    _IS.coopPeers = {}; _IS.coopDaily = {};
+    islCoopHeartbeatSend();
+    _IS.coop.hbT = setInterval(islCoopHeartbeatSend, islDB().COOP_HEARTBEAT_SEC * 1000);
+    _IS.coop.staleT = setInterval(islCoopStaleCheck, 8000);
+    _IS.coop.unsubPlayers = islCoopPlayersRef(f.uid).onSnapshot(islCoopPeersSnap, function(){});
+    islCoopNotice(f.uid, '🚪 ' + ((ISL.char && ISL.char.name) || ISL.name || '好友') + ' 來拜訪你的島了');
+    playSfx('sfx-enter', 0.4);
+    toast('🚪 來到' + (d.name ? ' ' + d.name : '') + ' 的島' + (d.islandName ? '「' + d.islandName + '」' : ''));
+    islModalClose();
+    islGoMap();
+  })['catch'](function(e){
+    mgLoading(false);
+    if(e && e.code === 'isl-coop-full') toast('這座島上人滿了(' + islDB().COOP_MAX + '/' + islDB().COOP_MAX + '),晚點再試');
+    else { toast('拜訪失敗'); try{ console.warn('[island coop join]', e && e.message); }catch(_){} }
+  });
+}
+function islCoopSlotRelease(ownerUid){
+  if(!MG.user || !MG.fb) return;
+  var ref = islCoopTopRef(ownerUid), myUid = MG.user.uid;
+  MG.fb.db.runTransaction(function(tx){
+    return tx.get(ref).then(function(snap){
+      if(!snap.exists) return;
+      var d = snap.data() || {}, slots = (d.slotUids || []).filter(function(u){ return u !== myUid; });
+      tx.set(ref, { slotUids: slots, updatedAt: islNow() }, { merge: true });
+    });
+  })['catch'](function(){});
+}
+function islCoopNotice(ownerUid, text){
+  if(!MG.user || !MG.fb || !window.firebase) return;
+  islCoopTopRef(ownerUid).set({ notices: window.firebase.firestore.FieldValue.arrayUnion(String(text).slice(0, 60)) }, { merge: true })['catch'](function(){});
+}
+function islCoopNoticesCheck(){   /* 島主自己開機/換日時讀一次「有人來過/走了/離線」的留言,顯示後清空 */
+  if(!MG.user || !MG.fb) return;
+  var ref = islCoopTopRef(MG.user.uid);
+  ref.get().then(function(snap){
+    if(!snap.exists) return;
+    var d = snap.data() || {}, notices = d.notices || [], i;
+    if(!notices.length) return;
+    for(i = 0; i < notices.length && i < 5; i++){ toast(String(notices[i])); islLog(String(notices[i]), null); }
+    ref.set({ notices: [] }, { merge: true })['catch'](function(){});
+  })['catch'](function(){});
+}
+function islCoopHeartbeatSend(leaving){
+  if(!_IS.coop || !MG.user || !MG.fb) return;
+  var payload = { uid: MG.user.uid, name: (ISL.char && ISL.char.name) || ISL.name || '訪客', char: ISL.char, zone: (_IS.screen === 'zone' && _IS.zone) ? _IS.zone : '__camp', x: _IS.cx || 0, y: _IS.cy || 0, dir: _IS.dir || 'd', npc: !!leaving, at: islNow() };
+  islCoopPlayersRef(_IS.coop.ownerUid).doc(MG.user.uid).set(payload, { merge: true })['catch'](function(){});
+}
+function islCoopStaleCheck(){
+  if(!_IS.coop || !MG.user || !MG.fb) return;
+  var now = islNow(), uid, d, db = islDB();
+  for(uid in _IS.coopPeers){
+    if(!_IS.coopPeers.hasOwnProperty(uid)) continue;
+    d = _IS.coopPeers[uid];
+    if(!d.npc && now - (d.at || 0) > db.COOP_STALE_SEC * 1000){
+      islCoopPlayersRef(_IS.coop.ownerUid).doc(uid).set({ npc: true }, { merge: true })['catch'](function(){});
+      islCoopNotice(_IS.coop.ownerUid, '🧍 ' + (d.name || '好友') + ' 已離線,他的小人先留在你的島上');
+    } else if(d.npc && now - (d.at || 0) > db.COOP_GONE_SEC * 1000){
+      islCoopPlayersRef(_IS.coop.ownerUid).doc(uid)['delete']()['catch'](function(){});
+    }
+  }
+}
+function islCoopPeersSnap(qs){
+  var seen = {}, myUid = MG.user && MG.user.uid;
+  qs.forEach(function(doc){ var d = doc.data(); if(!d || d.uid === myUid) return; seen[d.uid] = d; });
+  _IS.coopPeers = seen;
+  islCoopPeersRender();
+}
+function islCoopPeersRender(){
+  var zm = $('isl-zone-map'), uid, d, el, live = {};
+  if(!zm || _IS.screen !== 'zone') return;
+  for(uid in _IS.coopPeers){
+    if(!_IS.coopPeers.hasOwnProperty(uid)) continue;
+    d = _IS.coopPeers[uid];
+    if(d.zone !== _IS.zone || d.npc) continue;
+    live[uid] = true;
+    el = zm.querySelector('.isl-coop-peer[data-u="' + uid + '"]');
+    if(!el){ el = document.createElement('div'); el.className = 'isl-coop-peer'; el.setAttribute('data-u', uid); el.innerHTML = islChibiHtml(d.char, 'idle') + '<span class="pn"></span>'; zm.appendChild(el); }
+    el.style.left = (d.x || 0) + 'px'; el.style.top = (d.y || 0) + 'px';
+    el.querySelector('.pn').textContent = d.name || '訪客';
+  }
+  var olds = zm.querySelectorAll('.isl-coop-peer'), i, u2;
+  for(i = 0; i < olds.length; i++){ u2 = olds[i].getAttribute('data-u'); if(!live[u2] && olds[i].parentNode) olds[i].parentNode.removeChild(olds[i]); }
+}
+function islCoopPeersClearDom(){
+  var zm = $('isl-zone-map'), olds, i; if(!zm) return;
+  olds = zm.querySelectorAll('.isl-coop-peer'); for(i = 0; i < olds.length; i++){ if(olds[i].parentNode) olds[i].parentNode.removeChild(olds[i]); }
+}
+function islCoopTeardown(){
+  if(!_IS.coop) return;
+  if(_IS.coop.hbT) clearInterval(_IS.coop.hbT);
+  if(_IS.coop.staleT) clearInterval(_IS.coop.staleT);
+  if(_IS.coop.unsubPlayers){ try{ _IS.coop.unsubPlayers(); }catch(_e){} }
+  if(MG.user && MG.fb){ try{ islCoopPlayersRef(_IS.coop.ownerUid).doc(MG.user.uid)['delete']()['catch'](function(){}); }catch(_e2){} }
+  islCoopPeersClearDom();
+  _IS.coop = null; _IS.coopPeers = {}; _IS.coopDaily = {};
+}
+window.islCoopLeave = function(){
+  if(!_IS.coop) return;
+  var ownerUid = _IS.coop.ownerUid;
+  islCoopHeartbeatSend(true);
+  islCoopTeardown();
+  islCoopSlotRelease(ownerUid);
+  islCoopNotice(ownerUid, '🚪 ' + ((ISL.char && ISL.char.name) || ISL.name || '好友') + ' 離開了你的島');
+  playSfx('sfx-tap', 0.3);
+  toast('已離開拜訪,回到自己的島');
+  islGoCamp();
+};
+
 /* ── 丙延伸 v1.106.0:好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合) ── */
 function islMailRef(uid){ return MG.fb.db.collection('minigameIsland').doc(uid).collection('mail'); }
 function islMailRefresh(cb){
