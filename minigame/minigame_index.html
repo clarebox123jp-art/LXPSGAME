@@ -15,6 +15,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.116.0(2026-09-13)
+     ★ v1.116.0(2026-09-13・老師六項)— 🏝 ①「⬇ 完整下載荒島求生主程式」:安裝面板移到 body 層(?mode=island 直入也開得到),右上 ⚙ 設定選單新增此鈕;安裝清單加入主程式檔(minigame_index.html/minigame_db.js/minigame_island_db.js/manifest/icon)+ 全部音效音樂(108 支 audio)+ 荒島全部圖片,分層造型 24 張列為選配(沒上傳不算失敗)②島名詞庫 70×62,創角與改名改為「形容詞/名詞」兩個可捲動下拉選單+自由輸入+🎲 ③主角造型新增 髮型/髮色/膚色/服裝(分層 sprite:base_<body>_s0~3 + hair_<body>_h0~3(灰階,髮色 16 色 CSS filter 染)+ cloth_<body>_c0~3,基底圖上傳即自動切換、缺圖退回整張 sheet;存檔 char.cloth)④四維上限 20→50、技能等級上限 10→50(甜蜜點/走速/產量加成在舊上限處封頂,不因高等級失衡)⑤水面動態白色閃爍波光(islAmb lo 層每格 2~3 顆十字星光,銳利閃爍+隨風漂)⑥戰鬥系統說明(純文字)。對應 sw v1.86.0、island_db v1.19.0。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.115.0(2026-09-13)
      ★ v1.115.0(2026-09-13・老師兩批需求)— 🏝 ①地圖未探索區域深色迷霧 ②所有視窗右上角 ✕ + ESC 關閉;建造/物品包/倉庫/烹飪/裝飾/製作/研究/治療/畜欄/送禮/信箱/委託全部改用 repo 圖片 ③倉庫每種物品三列同圖標 ★/★★/★★★ ④動物 NPC 對話角色圖 4 倍放框外左側 ⑤修角色重疊(藏 .isl-pixchar)+ 走路幀依實測中心逐幀定位 ⑥11 區遮罩重建(巨石/樹木/崖壁真的擋路)⑦地圖 11 區地標位置依實圖重標、營地鈕移到沙灘右上空地 ⑧營地 UI 重整:側欄 4 大項目(角色/營地/商店/探索)→細項選單→內容視窗,舒適度/營地 Lv 移到頂端大藥丸,右上 ⚙ 設定(動態背景/音樂/音效/全螢幕),主角放大移到椰子樹旁;二、15 款小遊戲字體改 Noto Sans TC 中黑體。對應 sw v1.85.0、island_db v1.18.0。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.114.0(2026-09-12)
@@ -3408,10 +3410,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="mode-tabs" style="display:flex;justify-content:center;gap:10px;margin:6px 0 4px;">
       <button class="chip" style="font-size:18px;padding:8px 18px;border-color:#ffd166;background:rgba(255,209,102,.18);" onclick="try{playSfx('sfx-tap',0.3);}catch(_){}" title="目前模式">⚔ 大對抗小遊戲</button>
       <button class="chip" style="font-size:18px;padding:8px 18px;border-color:#5fb3d9;" onclick="islEnter()" title="生存建造與探索解謎,用自然課知識活下去">🏝 荒島求生記 <span style="font-size:12px;opacity:.8">NEW</span></button>
-      <button class="chip" id="isl-install-btn" style="font-size:15px;padding:8px 14px;border-color:#7bed9f;" onclick="islInstallOpen()" title="一次把荒島所有場景圖片與音樂存進這台裝置,之後進場景不用等下載">⬇ 完整下載安裝荒島求生</button>
+      <button class="chip" id="isl-install-btn" style="font-size:15px;padding:8px 14px;border-color:#7bed9f;" onclick="islInstallOpen()" title="一次把荒島求生主程式、所有圖片與音效音樂存進這台裝置,之後離線也能開、進場景不用等下載">⬇ 完整下載荒島求生主程式</button>
     </div>
     <!-- ★ v1.105.0 荒島完整安裝(老師需求):平常進場景才下載該場景圖+音樂;這顆鈕一次全抓進 Cache 'lxps-mini-island-v1'(SW 各策略都會先查快取) -->
-    <div id="isl-install" class="hidden" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:#14202e;border:3px solid #7bed9f;border-radius:18px;padding:18px 22px;max-width:460px;width:100%;color:#fff;text-align:center"><h3 style="margin:0 0 8px">⬇ 完整下載安裝荒島求生</h3><p id="isl-install-txt" style="font-size:15px;margin:6px 0"></p><div style="height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:8px 0"><div id="isl-install-bar" style="height:100%;width:0%;background:#7bed9f;transition:width .2s"></div></div><div id="isl-install-btns" style="display:flex;gap:8px;justify-content:center;margin-top:10px"></div></div></div>
     <!-- ★ v1.10.0(老師看圖裁定)— 每週排行榜獎勵:首頁最上方一顆清楚的大按鈕,點開放大字體說明視窗(內含本週排行榜/上週得獎名單按鈕) -->
     <div id="top-btns">
       <button id="rank-btn" onclick="mgRankOpen('info')"><span class="rb-ico">🏆</span><span class="rb-txt" id="rank-btn-txt">每週排行榜獎勵</span><span class="rb-sub" id="rank-btn-sub"></span></button>
@@ -3847,6 +3848,9 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-char .sp.d{background-position:0 0;} #isl-char .sp.u{background-position:0 -64px;} #isl-char .sp.s{background-position:0 -128px;}
 /* ★ v1.115.0 走路幀改由 JS(islCharPaint)依實測幀中心逐幀設定 background-position,不再用 CSS steps 動畫(sheet 每幀不是 64px 等距,硬切會左右漂) */
 #isl-char .sp.flip{transform:scaleX(-1);}
+/* ★ v1.116.0 分層造型:.ly 容器不畫底圖,三層子 div 各自一張 sheet(384×192 = 64px 格),同一個 background-position;髮色用 filter */
+.isl-pixchar.ly,#isl-char .sp.ly{background-image:none;overflow:visible;}
+.isl-pixchar.ly>.ly,#isl-char .sp.ly>.ly{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;background-size:384px 192px;image-rendering:pixelated;pointer-events:none;}
 @keyframes islSpWalk{from{background-position:-128px 0}to{background-position:-384px 0}}
 @keyframes islSpWalkU{from{background-position:-128px -64px}to{background-position:-384px -64px}}
 @keyframes islSpWalkS{from{background-position:-128px -128px}to{background-position:-384px -128px}}
@@ -4257,6 +4261,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-create .prev{overflow-y:auto;justify-content:flex-start;padding:10px 0;}
 #isl-create .prev > :first-child{margin-top:auto;} #isl-create .prev > :last-child{margin-bottom:auto;}   /* 高度夠時置中、不夠時從頂端排起可捲 */
 #isl-create .prev input{max-width:300px;}
+/* ★ v1.116.0 島名選擇器(創角/改名共用):兩個原生 select 可捲動 */
+.isl-namepick{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+.isl-namepick select{font-size:18px;padding:7px 8px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;font-family:inherit;max-width:150px;min-height:0;}
+#isl-modal .isl-namepick + div input{font-size:18px;padding:7px 10px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;font-family:inherit;min-width:0;}
 #isl-create .prev > *{flex-shrink:0;}   /* 左欄可捲動後,flex 子項不可再被壓扁(預覽框 64px 被壓成 43px 讓小人蓋到名字輸入框) */
 #isl-act-body{min-height:0;overflow-y:auto;justify-content:flex-start;}
 #isl-act-body > :first-child{margin-top:auto;} #isl-act-body > :last-child{margin-bottom:auto;}   /* 活動內容高度夠時置中,太高時(方格拼圖/釘子陣)改從頂端排起並可上下捲動,不再被切 */
@@ -4290,7 +4298,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <button class="ih btn" id="isl-hud-save" onclick="islSaveTap()" title="存檔">💾</button>
     <button class="ih btn" id="isl-hud-gear" onclick="islGearToggle()" title="設定">⚙</button><!-- ★ v1.115.0 設定選單(動態背景/音樂/全螢幕)移到右上角 -->
     <button class="ih btn" onclick="islExit()">✕ 離開</button>
-    <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button></div>
+    <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button></div><!-- ★ v1.116.0 老師:完整下載荒島求生主程式 -->
   </div>
   <div id="isl-submenu" class="hidden" onclick="if(event.target===this)islSubClose()"><div class="sm-box"><div class="sm-title" id="isl-sub-title"></div><div class="sm-grid" id="isl-sub-grid"></div></div></div><!-- ★ v1.115.0 營地大項目 → 細項按鈕(如主程式關卡選擇頁下方選單) -->
   <div class="isl-screen">
@@ -4323,6 +4331,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="isl-modal" class="hidden"></div>
   </div>
 </div>
+<!-- ★ v1.116.0 荒島完整安裝面板改放 body 層(原本在 #page-home 內,?mode=island 直入或在荒島 ⚙ 設定裡按都打不開) -->
+    <div id="isl-install" class="hidden" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:#14202e;border:3px solid #7bed9f;border-radius:18px;padding:18px 22px;max-width:460px;width:100%;color:#fff;text-align:center"><h3 style="margin:0 0 8px">⬇ 完整下載荒島求生主程式</h3><p id="isl-install-txt" style="font-size:15px;margin:6px 0"></p><div style="height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:8px 0"><div id="isl-install-bar" style="height:100%;width:0%;background:#7bed9f;transition:width .2s"></div></div><div id="isl-install-btns" style="display:flex;gap:8px;justify-content:center;margin-top:10px"></div></div></div>
 <div id="toast"></div>
 
 <!-- ★ v1.5.0 — 強制橫式遮罩(老師需求②):觸控裝置直式時蓋住全畫面;純 CSS media query 控制顯示,零 JS -->
@@ -4353,7 +4363,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.115.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.116.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4362,7 +4372,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.115.0';   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.116.0';   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -11889,6 +11899,7 @@ function islNormalize(d){
   for(k in def.stats){ if(def.stats.hasOwnProperty(k) && typeof d.stats[k] !== 'number') d.stats[k] = def.stats[k]; if(typeof d.statXp[k] !== 'number') d.statXp[k] = 0; }
   for(i = 0; i < db.ZONES.length; i++){ z = db.ZONES[i].id; if(!d.zones[z]) d.zones[z] = def.zones[z]; if(!d.zones[z].daily) d.zones[z].daily = { day: 0, taken: [], picked: [], acts: {} }; if(typeof d.zones[z].damage !== 'number') d.zones[z].damage = 0; }
   if(typeof d.hp !== 'number') d.hp = def.hp;   /* ★ v1.92.0 */
+  if(d.char && typeof d.char === 'object' && typeof d.char.cloth !== 'number') d.char.cloth = 0;   /* ★ v1.116.0 舊存檔補服裝 */
   if(typeof d.hpMax !== 'number') d.hpMax = def.hpMax;
   if(typeof d.hurt !== 'boolean') d.hurt = false;
   if(typeof d.camp.lv !== 'number' || !db.CAMP_LV[d.camp.lv]) d.camp.lv = 1;   /* ★ v1.94.0 營地 Lv1~3:格數 9/12/16,缺的補 null(不再因長度 ≠9 整個重置) */
@@ -12128,7 +12139,7 @@ function islStatGain(k, n){
 function islSkillGain(k, n){
   var db = islDB(), sk = ISL.skill[k];
   sk.xp += n;
-  if(sk.lv < 10 && sk.xp >= db.SKILL_XP_NEED(sk.lv)){ sk.xp -= db.SKILL_XP_NEED(sk.lv); sk.lv += 1; return true; }
+  if(sk.lv < (db.SKILL_MAX || 10) && sk.xp >= db.SKILL_XP_NEED(sk.lv)){ sk.xp -= db.SKILL_XP_NEED(sk.lv); sk.lv += 1; return true; }   /* ★ v1.116.0 上限 SKILL_MAX=50 */
   return false;
 }
 
@@ -12141,6 +12152,75 @@ var ISL_PAL = {
   shorts: '#3a4a6b'
 };
 var ISL_HAIRS = [ { k:'short', n:'短髮' }, { k:'twin', n:'雙馬尾' }, { k:'long', n:'自然長髮' }, { k:'pony', n:'高馬尾' } ];
+/* ★ v1.116.0 分層造型(老師:主角造型新增 髮型/髮色/膚色/服裝)
+ *   三層 sprite 疊圖:base_<body>_s<膚色0~3>(光頭基底身體)→ cloth_<body>_c<服裝0~3> → hair_<body>_h<髮型0~3>(灰階 #909090,髮色用 CSS filter 染成 ISL_PAL.hair 16 色)。
+ *   每張 768×384、6 欄×3 列、128px 格;顯示時 background-size 384×192(縮一半)→ 64px 格,與既有整張 sheet 的座標系相同。
+ *   基底 base_<body>_s0 探測存在 → 該性別切分層模式;個別變體缺圖 → 膚色退 s0、衣服/頭髮該層不畫;基底也缺 → 退回既有整張 sheet_boy/girl(v1.109.0 行為)。
+ *   ISL_HAIR_FILTER:以 #909090 為底、在 Chromium 實測擬合 16 色(誤差 ≤40/765),髮色圖只要畫成中灰帶明暗即可。 */
+var ISL_HAIR_FILTER = ['sepia(1) saturate(1.00) hue-rotate(-37deg) brightness(0.26)', 'sepia(1) saturate(1.00) hue-rotate(185deg) brightness(0.11)', 'sepia(1) saturate(2.00) hue-rotate(-19deg) brightness(0.43)', 'sepia(1) saturate(2.00) hue-rotate(-16deg) brightness(0.71)', 'sepia(1) saturate(3.00) hue-rotate(1deg) brightness(0.98)', 'sepia(1) saturate(2.00) hue-rotate(-1deg) brightness(1.26)', 'sepia(1) saturate(20.00) hue-rotate(-30deg) brightness(0.72)', 'sepia(1) saturate(20.00) hue-rotate(-34deg) brightness(0.90)', 'sepia(1) saturate(16.00) hue-rotate(223deg) brightness(0.62)', 'sepia(1) saturate(20.00) hue-rotate(193deg) brightness(0.75)', 'sepia(1) saturate(16.00) hue-rotate(185deg) brightness(0.86)', 'sepia(1) saturate(2.00) hue-rotate(99deg) brightness(0.93)', 'sepia(1) saturate(2.00) hue-rotate(78deg) brightness(0.59)', 'sepia(1) saturate(10.00) hue-rotate(296deg) brightness(0.84)', 'brightness(1.43) saturate(0)', 'brightness(1.65) saturate(0)'];
+var _islPicOk = {}, _islPicWait = {}, _islLyMeas = {};
+function islPicProbe(key, cb){   /* 任一 IMG 鍵探測存在與否(結果快取;同 URL 併發只抓一次) */
+  var url = islImgUrl(key), im;
+  if(!url){ cb(false); return; }
+  if(_islPicOk[url] !== undefined){ cb(_islPicOk[url]); return; }
+  if(_islPicWait[url]){ _islPicWait[url].push(cb); return; }
+  _islPicWait[url] = [cb];
+  im = new Image();
+  im.onload = function(){ _islPicOk[url] = true; islPicDone(url); };
+  im.onerror = function(){ _islPicOk[url] = false; islPicDone(url); };
+  im.src = url;
+}
+function islPicDone(url){ var q = _islPicWait[url] || [], i; delete _islPicWait[url]; for(i = 0; i < q.length; i++){ try{ q[i](_islPicOk[url]); }catch(e){} } }
+function islPicOkSync(key){ var url = islImgUrl(key); return url ? _islPicOk[url] : false; }   /* true/false/undefined(未探測) */
+function islLayerKeys(c){
+  var body = (c && c.body === 'girl') ? 'girl' : 'boy', si = islClamp(Math.floor(((c && c.skin) | 0) / 2), 0, 3), hi = islClamp((c && c.hair) | 0, 0, 3), ci = islClamp((c && c.cloth) | 0, 0, 3);
+  return { body: body, base: 'base_' + body + '_s' + si, base0: 'base_' + body + '_s0', hair: 'hair_' + body + '_h' + hi, cloth: 'cloth_' + body + '_c' + ci, hairC: islClamp((c && c.hairC) | 0, 0, ISL_HAIR_FILTER.length - 1) };
+}
+function islLayerOk(body){ return islPicOkSync('base_' + ((body === 'girl') ? 'girl' : 'boy') + '_s0') === true; }
+function islLayerProbe(body, cb){   /* 探測基底;存在就順便量幀中心 + 預探該性別全部 11 張變體(之後 islChibiHtml 同步查得到) */
+  body = (body === 'girl') ? 'girl' : 'boy';
+  islPicProbe('base_' + body + '_s0', function(ok){
+    var j;
+    if(ok){ islLayerMeasure(body); for(j = 0; j < 4; j++){ if(j) islPicProbe('base_' + body + '_s' + j, islLayerRepaint); islPicProbe('hair_' + body + '_h' + j, islLayerRepaint); islPicProbe('cloth_' + body + '_c' + j, islLayerRepaint); } }
+    cb(ok);
+  });
+}
+function islLayerRepaint(){   /* 變體探測結果晚到 → 重畫目前畫面的小人 */
+  var ch, sp;
+  if(!_IS.on) return;
+  try{
+    if(_IS.screen === 'create' && _islCr) islCreatePaint();
+    else if(_IS.screen === 'camp') islCampPaint();
+    else if(_IS.screen === 'zone'){ ch = $('isl-char'); sp = ch && ch.querySelector('.sp.ly'); if(sp && ISL && ISL.char) sp.innerHTML = islLayersHtml(ISL.char, 0, 0); }
+  }catch(e){}
+}
+function islLayerMeasure(body){   /* 用 canvas 量基底圖每格(3 列×6 欄,128px 格)的人形中心 x 與腳底 y(÷2 換成 64 座標系);量不到(canvas 汙染等)就用格中心 */
+  if(_islLyMeas[body]) return;
+  var im = new Image(), M = { ok: false, cx: [], by: [] };
+  _islLyMeas[body] = M;
+  im.onload = function(){
+    try{
+      var cv = document.createElement('canvas'), x, d, r, c, px, py, minx, maxx, maxy, i, W = im.naturalWidth, H = im.naturalHeight, cw = Math.floor(W / 6), chh = Math.floor(H / 3), k = 64 / cw;
+      cv.width = W; cv.height = H; x = cv.getContext('2d'); x.drawImage(im, 0, 0); d = x.getImageData(0, 0, W, H).data;
+      for(r = 0; r < 3; r++){ M.cx[r] = []; M.by[r] = [];
+        for(c = 0; c < 6; c++){ minx = 1e9; maxx = -1; maxy = -1;
+          for(py = r * chh; py < (r + 1) * chh; py++){ for(px = c * cw; px < (c + 1) * cw; px++){ i = (py * W + px) * 4 + 3; if(d[i] > 40){ if(px < minx) minx = px; if(px > maxx) maxx = px; if(py > maxy) maxy = py; } } }
+          if(maxx < 0){ M.cx[r][c] = c * 64 + 32; M.by[r][c] = 60; } else { M.cx[r][c] = ((minx + maxx) / 2) * k; M.by[r][c] = (maxy - r * chh) * k; } } }
+      M.ok = true;
+      islLayerRepaint();
+    }catch(e){ M.ok = false; }
+  };
+  im.src = islImgUrl('base_' + body + '_s0');
+}
+function islLyPos(body, row, col){ var m = _islLyMeas[body], cx = col * 64 + 32, by = 60; if(m && m.ok && m.cx[row]){ cx = m.cx[row][col]; by = m.by[row][col]; } return (-(cx - 32)) + 'px ' + (-(row * 64 + by - 60)) + 'px'; }
+function islLayersHtml(c, row, col){   /* 三層 div(基底/衣服/頭髮);同一個 background-position;髮色用 filter */
+  var L = islLayerKeys(c), pos = islLyPos(L.body, row, col), h = '';
+  function lay(k, cls, extra){ return '<div class="ly ' + cls + '" style="background-image:url(\'' + islImgUrl(k) + '\');background-position:' + pos + ';' + (extra || '') + '"></div>'; }
+  h += lay(islPicOkSync(L.base) === true ? L.base : L.base0, 'b');
+  if(islPicOkSync(L.cloth) === true) h += lay(L.cloth, 'c');
+  if(islPicOkSync(L.hair) === true) h += lay(L.hair, 'h', 'filter:' + ISL_HAIR_FILTER[L.hairC]);
+  return h;
+}
 var ISL_HIDDEN_SKIN = { 6: 1 };   /* 主程式 v4.82.0 隱藏最深膚色 skin[6] */
 var _islSheetCache = {};   /* ★ v1.109.0 sprite sheet 快取改依性別分開記(boy/girl 各自 url|false),不再共用一個布林值 */
 function islSheetUrlFor(body){ body = (body === 'girl') ? 'girl' : 'boy'; var v = _islSheetCache[body]; return v || false; }
@@ -12156,6 +12236,7 @@ function islSheetProbe(body, cb){
 function islChibiHtml(c, cls){   /* ★ v1.109.0 有像素 sprite 可用時一律顯示像素圖(靜態正面 idle 幀),不再畫 CSS 手繪小人;sprite 缺圖才退回手繪當保險 */
   c = c || { body:'boy', skin:0, hair:0, hairC:0, eyeC:0 };
   var body = (c.body === 'girl') ? 'girl' : 'boy', url = islSheetUrlFor(body);
+  if(islLayerOk(body)) return '<div class="isl-pixchar ly ' + (cls || 'idle') + '">' + islLayersHtml(c, 0, 0) + '</div>';   /* ★ v1.116.0 分層造型(膚色/髮型/髮色/服裝) */
   if(url) return '<div class="isl-pixchar ' + (cls || 'idle') + '" style="background-image:url(\'' + url + '\');background-position:' + (-((ISL_SHEET_CX[body] || ISL_SHEET_CX.boy)[0] - 32)) + 'px 0"></div>';   /* ★ v1.115.0 肖像也對齊實測幀中心 */
   var sk = ISL_PAL.skin[c.skin] || ISL_PAL.skin[0], hc = ISL_PAL.hair[c.hairC] || ISL_PAL.hair[0], ec = ISL_PAL.eye[c.eyeC] || ISL_PAL.eye[0];
   var hk = (ISL_HAIRS[c.hair] || ISL_HAIRS[0]).k, uni = ISL_PAL.uniform[c.body] || ISL_PAL.uniform.boy;
@@ -12271,6 +12352,7 @@ window.islEnter = function(){
   /* ★ v1.109.0 提早探測兩種性別的像素 sprite,盡量避免玩家先看到一瞬間的手繪版才切換成像素圖 */
   islSheetProbe('boy', function(){ if(_IS.screen === 'create') islCreatePaint(); else if(_IS.screen === 'camp') islCampPaint(); });
   islSheetProbe('girl', function(){ if(_IS.screen === 'create') islCreatePaint(); else if(_IS.screen === 'camp') islCampPaint(); });
+  islLayerProbe('boy', islLayerRepaint); islLayerProbe('girl', islLayerRepaint);   /* ★ v1.116.0 分層造型基底也提早探測 */
   mgLoading(true);
   islLoad(function(){
     mgLoading(false);
@@ -12314,7 +12396,7 @@ window.addEventListener('pagehide', function(){ if(_IS.on && ISL){ islLocalWrite
 function islRandIslandName(){ var db = islDB(), rnd = islRng((islHash('isl_name|' + islNow() + '|' + Math.random()) >>> 0)); return db.ISLAND_ADJ[Math.floor(rnd() * db.ISLAND_ADJ.length)] + db.ISLAND_NOUN[Math.floor(rnd() * db.ISLAND_NOUN.length)]; }
 var _islCr = null;
 function islCreateOpen(){
-  _islCr = { name: (MG.user && MG.user.displayName ? String(MG.user.displayName).slice(0, 8) : '小島民'), body: 'boy', skin: 1, hair: 0, hairC: 0, eyeC: 0, style: 'balance', islandName: islRandIslandName() };
+  _islCr = { name: (MG.user && MG.user.displayName ? String(MG.user.displayName).slice(0, 8) : '小島民'), body: 'boy', skin: 1, hair: 0, hairC: 0, eyeC: 0, cloth: 0, style: 'balance', islandName: islRandIslandName() };   /* ★ v1.116.0 +cloth */
   islShowScreen('create');
   bgmPlay('bgm-avatar-card');
   islCreatePaint();
@@ -12340,11 +12422,16 @@ function islCreatePaint(){
   h += '<div class="prev"><div class="nm">捏出你在島上的樣子</div><div class="pv" id="isl-cr-prev">' + islChibiHtml(c, 'idle') + '</div>';
   h += '<input id="isl-cr-name" maxlength="8" placeholder="幫角色取個名字" value="' + islEsc(c.name) + '">';
   if(MG.user) h += '<button class="isl-btn ghost" onclick="islCreateApplyMain()">👤 一鍵套用我的主角造型</button>';
-  h += '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:6px"><input id="isl-cr-island" maxlength="' + db.ISLAND_NAME_MAX + '" placeholder="島的名字" value="' + islEsc(c.islandName) + '" style="flex:1;max-width:180px"><button class="isl-btn ghost" style="padding:6px 10px;font-size:14px" onclick="islCreateRerollName()">🎲 換一個</button></div><div style="font-size:12px;opacity:.75;margin:2px 0 6px">這座無人島的名字,登島後角色面板還能改</div>'
+  h += islIslandNamePickHtml('isl-cr', c.islandName) + '<div style="font-size:12px;opacity:.75;margin:2px 0 6px">用「形容詞＋名詞」兩個選單組合島名(可捲動,' + (db.ISLAND_ADJ.length * db.ISLAND_NOUN.length) + ' 種),也可以自己打;登島後角色面板還能改</div>'   /* ★ v1.116.0 老師:島名詞庫 70×62 下拉選單 */
   h += '<button class="isl-btn gold big" onclick="islCreateConfirm()">✅ 就是這樣!</button></div>';
   h += '<div class="opts">';
   h += '<div class="sec"><h4>體型 / 運動服</h4><div class="sw"><button data-k="body" data-v="boy" class="' + (c.body === 'boy' ? 'on' : '') + '">少年(淡藍)</button><button data-k="body" data-v="girl" class="' + (c.body === 'girl' ? 'on' : '') + '">少女(粉紅)</button></div></div>';
-  if(!islSheetUrlFor(c.body)){   /* ★ v1.109.0 只有 sprite 缺圖(退回手繪版)時才需要這些顏色選項;像素圖是固定美術,顏色選了也不會顯示 */
+  if(islLayerOk(c.body)){   /* ★ v1.116.0 分層造型可用:膚色 4 / 髮型 4 / 髮色 16 / 服裝 4(瞳色像素圖看不出來,不列) */
+  h += '<div class="sec"><h4>膚色</h4><div class="sw">'; for(i = 0; i < db.SKINS4.length; i++){ h += '<button class="col ' + (Math.floor(c.skin / 2) === i ? 'on' : '') + '" data-k="skin" data-v="' + (i * 2 + 1) + '" style="background:' + db.SKINS4[i].c + '" title="' + islEsc(db.SKINS4[i].n) + '"></button>'; } h += '</div></div>';
+  h += '<div class="sec"><h4>髮型</h4><div class="sw">'; for(i = 0; i < ISL_HAIRS.length; i++){ h += '<button class="' + (c.hair === i ? 'on' : '') + '" data-k="hair" data-v="' + i + '"' + (islPicOkSync('hair_' + c.body + '_h' + i) === false ? ' disabled title="這款髮型圖還沒上傳"' : '') + '>' + ISL_HAIRS[i].n + '</button>'; } h += '</div></div>';
+  h += '<div class="sec"><h4>髮色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.hair.length; i++){ h += '<button class="col ' + (c.hairC === i ? 'on' : '') + '" data-k="hairC" data-v="' + i + '" style="background:' + ISL_PAL.hair[i] + '"></button>'; } h += '</div></div>';
+  h += '<div class="sec"><h4>服裝</h4><div class="sw">'; for(i = 0; i < db.CLOTHES.length; i++){ h += '<button class="' + ((c.cloth | 0) === i ? 'on' : '') + '" data-k="cloth" data-v="' + i + '"' + (islPicOkSync('cloth_' + c.body + '_c' + i) === false ? ' disabled title="這款服裝圖還沒上傳"' : '') + '>' + db.CLOTHES[i].e + ' ' + db.CLOTHES[i].n + '</button>'; } h += '</div></div>';
+  } else if(!islSheetUrlFor(c.body)){   /* ★ v1.109.0 只有 sprite 缺圖(退回手繪版)時才需要這些顏色選項;像素圖是固定美術,顏色選了也不會顯示 */
   h += '<div class="sec"><h4>膚色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.skin.length; i++){ if(ISL_HIDDEN_SKIN[i]) continue; h += '<button class="col ' + (c.skin === i ? 'on' : '') + '" data-k="skin" data-v="' + i + '" style="background:' + ISL_PAL.skin[i] + '"></button>'; } h += '</div></div>';
   h += '<div class="sec"><h4>髮型</h4><div class="sw">'; for(i = 0; i < ISL_HAIRS.length; i++){ h += '<button class="' + (c.hair === i ? 'on' : '') + '" data-k="hair" data-v="' + i + '">' + ISL_HAIRS[i].n + '</button>'; } h += '</div></div>';
   h += '<div class="sec"><h4>髮色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.hair.length; i++){ h += '<button class="col ' + (c.hairC === i ? 'on' : '') + '" data-k="hairC" data-v="' + i + '" style="background:' + ISL_PAL.hair[i] + '"></button>'; } h += '</div></div>';
@@ -12354,12 +12441,14 @@ function islCreatePaint(){
   for(i = 0; i < db.STYLES.length; i++){ sw = db.STYLES[i]; h += '<button class="' + (c.style === sw.id ? 'on' : '') + '" data-k="style" data-v="' + sw.id + '"><b>' + sw.e + ' ' + sw.n + '</b><i>🖐' + sw.s.dex + ' 👣' + sw.s.mov + ' 💪' + sw.s.pow + ' 🧠' + sw.s.wit + '</i><br>' + islEsc(sw.d) + '</button>'; }
   h += '</div></div></div>';
   var root = $('isl-create'); root.innerHTML = h;
+  islIslandNamePickBind('isl-cr');
   root.onclick = function(ev){
     var t = ev.target; while(t && t !== root && !(t.getAttribute && t.getAttribute('data-k'))) t = t.parentNode;
     if(!t || t === root) return;
     var k = t.getAttribute('data-k'), v = t.getAttribute('data-v');
     playSfx('sfx-sel', 0.3);
     var nm = $('isl-cr-name'); if(nm) _islCr.name = nm.value;
+    var inm = $('isl-cr-island'); if(inm) _islCr.islandName = inm.value;   /* ★ v1.116.0 重繪前先記住島名(舊版換個選項就把打到一半的島名洗掉) */
     _islCr[k] = (k === 'body' || k === 'style') ? v : parseInt(v, 10);
     islCreatePaint();
   };
@@ -12387,7 +12476,7 @@ window.islCreateConfirm = function(){
   var db = islDB(), nm = $('isl-cr-name'), name = (nm && nm.value.trim()) || '小島民', in2 = $('isl-cr-island'), islandName = (in2 && in2.value.replace(/^\s+|\s+$/g, '')) || _islCr.islandName || islRandIslandName(), st = null, i;
   for(i = 0; i < db.STYLES.length; i++){ if(db.STYLES[i].id === _islCr.style) st = db.STYLES[i]; }
   if(!st) st = db.STYLES[5];
-  ISL.char = { name: name.slice(0, 8), body: _islCr.body, skin: _islCr.skin, hair: _islCr.hair, hairC: _islCr.hairC, eyeC: _islCr.eyeC, style: st.id };
+  ISL.char = { name: name.slice(0, 8), body: _islCr.body, skin: _islCr.skin, hair: _islCr.hair, hairC: _islCr.hairC, eyeC: _islCr.eyeC, cloth: _islCr.cloth | 0, style: st.id };   /* ★ v1.116.0 +cloth */
   ISL.stats = { dex: st.s.dex, mov: st.s.mov, pow: st.s.pow, wit: st.s.wit };
   ISL.islandName = islandName.slice(0, db.ISLAND_NAME_MAX);   /* ★ v1.108.0 無人島命名 */
   playSfx('sfx-summon-reveal', 0.5);
@@ -12396,7 +12485,37 @@ window.islCreateConfirm = function(){
   islHud();
   islPrologue();
 };
-window.islCreateRerollName = function(){ if(!_islCr) return; _islCr.islandName = islRandIslandName(); var e = $('isl-cr-island'); if(e) e.value = _islCr.islandName; playSfx('sfx-sel', 0.3); };
+window.islCreateRerollName = function(){ if(!_islCr) return; _islCr.islandName = islRandIslandName(); islIslandNamePickSet('isl-cr', _islCr.islandName); playSfx('sfx-sel', 0.3); };
+/* ★ v1.116.0 島名選擇器(創角與改名共用):形容詞/名詞兩個原生 <select>(iPad 開啟即是可捲動清單)+ 自由輸入 + 🎲;選單改動即組合寫進輸入框,輸入框仍可自己打 */
+function islIslandNamePickHtml(pf, cur){
+  var db = islDB(), h = '', i, ai = -1, ni = -1, rest;
+  cur = cur || '';
+  for(i = 0; i < db.ISLAND_ADJ.length; i++){ if(cur.indexOf(db.ISLAND_ADJ[i]) === 0 && (ai < 0 || db.ISLAND_ADJ[i].length > db.ISLAND_ADJ[ai].length)) ai = i; }
+  rest = ai >= 0 ? cur.slice(db.ISLAND_ADJ[ai].length) : cur;
+  for(i = 0; i < db.ISLAND_NOUN.length; i++){ if(rest === db.ISLAND_NOUN[i]) ni = i; }
+  h += '<div class="isl-namepick"><select id="' + pf + '-adj" title="形容詞">';
+  for(i = 0; i < db.ISLAND_ADJ.length; i++) h += '<option value="' + i + '"' + (i === ai ? ' selected' : '') + '>' + islEsc(db.ISLAND_ADJ[i]) + '</option>';
+  h += '</select><select id="' + pf + '-noun" title="名詞">';
+  for(i = 0; i < db.ISLAND_NOUN.length; i++) h += '<option value="' + i + '"' + (i === ni ? ' selected' : '') + '>' + islEsc(db.ISLAND_NOUN[i]) + '</option>';
+  h += '</select><button type="button" class="isl-btn ghost" id="' + pf + '-roll" style="padding:6px 10px;font-size:14px">🎲</button></div>';
+  h += '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px"><span style="font-size:14px;opacity:.85">島名</span><input id="' + pf + '-island" maxlength="' + db.ISLAND_NAME_MAX + '" placeholder="島的名字" value="' + islEsc(cur) + '" style="flex:1;max-width:180px"></div>';
+  return h;
+}
+function islIslandNamePickBind(pf){
+  var db = islDB(), a = $(pf + '-adj'), n = $(pf + '-noun'), r = $(pf + '-roll'), inp = $(pf + '-island');
+  if(!a || !n || !inp) return;
+  function comb(){ inp.value = db.ISLAND_ADJ[a.selectedIndex] + db.ISLAND_NOUN[n.selectedIndex]; if(_islCr && pf === 'isl-cr') _islCr.islandName = inp.value; playSfx('sfx-sel', 0.25); }
+  a.onchange = comb; n.onchange = comb;
+  a.onclick = n.onclick = inp.onclick = function(ev){ ev.stopPropagation(); };
+  if(r) r.onclick = function(ev){ ev.stopPropagation(); ev.preventDefault(); islIslandNamePickSet(pf, islRandIslandName()); if(_islCr && pf === 'isl-cr') _islCr.islandName = inp.value; playSfx('sfx-sel', 0.3); };
+}
+function islIslandNamePickSet(pf, name){
+  var db = islDB(), a = $(pf + '-adj'), n = $(pf + '-noun'), inp = $(pf + '-island'), i, ai = -1;
+  if(inp) inp.value = name;
+  if(!a || !n) return;
+  for(i = 0; i < db.ISLAND_ADJ.length; i++){ if(name.indexOf(db.ISLAND_ADJ[i]) === 0 && (ai < 0 || db.ISLAND_ADJ[i].length > db.ISLAND_ADJ[ai].length)) ai = i; }
+  if(ai >= 0){ a.selectedIndex = ai; for(i = 0; i < db.ISLAND_NOUN.length; i++){ if(name.slice(db.ISLAND_ADJ[ai].length) === db.ISLAND_NOUN[i]) n.selectedIndex = i; } }
+}
 /* 序章(主角內心話)→ 進沙灘 → 小白登場 → 教學(可跳過) */
 function islPrologue(){
   var db = islDB();
@@ -12651,7 +12770,12 @@ function islEnterZone(zoneId, cb){
   _IS.cx = (first ? first.x : sc.spawn0.x) * 64 + 32; _IS.cy = (first ? first.y : sc.spawn0.y) * 64 + 40;
   if(!islWalkable(_IS.cx, _IS.cy)){ _IS.cx = sc.spawn0.x * 64 + 32; _IS.cy = sc.spawn0.y * 64 + 40; }
   _IS.dir = 'd'; _IS.path = null; _IS.joy = null; _IS.near = null;
-  islSheetProbe(ISL.char.body, function(url){ var ch = $('isl-char'); if(!ch) return; if(url){ ch.classList.add('sheet'); ch.querySelector('.sp').style.backgroundImage = 'url("' + url + '")'; } });   /* ★ v1.109.0 依角色性別探測正確的 sheet */
+  islLayerProbe(ISL.char.body, function(ok){   /* ★ v1.116.0 先試分層造型;基底缺圖才退回整張 sheet */
+    var ch = $('isl-char'), sp;
+    if(!ch) return;
+    if(ok){ sp = ch.querySelector('.sp'); sp.classList.add('ly'); sp.style.backgroundImage = ''; sp.innerHTML = islLayersHtml(ISL.char, 0, 0); ch.classList.add('sheet'); return; }
+    islSheetProbe(ISL.char.body, function(url){ var ch2 = $('isl-char'); if(!ch2) return; if(url){ ch2.classList.add('sheet'); ch2.querySelector('.sp').style.backgroundImage = 'url("' + url + '")'; } });   /* ★ v1.109.0 依角色性別探測正確的 sheet */
+  });
   islZoneBind();
   islZoneTopInfo();
   zs.explore = zs.explore || 0;
@@ -12760,7 +12884,7 @@ function islTick(t){
   d = Math.sqrt(vx * vx + vy * vy); if(d > 1){ vx /= d; vy /= d; }
   moving = (vx || vy) ? true : false;
   if(moving){
-    spd = 192 * (1 + (ISL.stats.mov - 2) * 0.03);
+    spd = 192 * (1 + (Math.min(30, ISL.stats.mov) - 2) * 0.03);   /* ★ v1.116.0 腳程 30 以上不再加速(上限 50 會飆到 2.4 倍) */
     c = islMaskAt(Math.floor(_IS.cx / 64), Math.floor(_IS.cy / 64));   /* ★ v1.109.0 水域已由 islWalkable 完全擋下,這裡不會再讀到 '~' */
     if(islWeather() === 'typhoon') spd *= 0.8;   /* ★ v1.100.0 逆風 */
     nx = _IS.cx + vx * spd * dt; ny = _IS.cy + vy * spd * dt;
@@ -12782,13 +12906,14 @@ function islCharPaint(anim){
   cb = ch.querySelector('.isl-chibi'); sp = ch.querySelector('.sp');
   dirCls = (_IS.dir === 'u') ? 'back' : ((_IS.dir === 'l' || _IS.dir === 'r') ? 'side' : ''); flip = (_IS.dir === 'l');   /* ★ v1.109.0 side sprite 預設面朝右(已放大實查 island_body_sheet_boy/girl.png 確認),原本判斷相反,改成朝左移動才鏡像 */
   if(cb){ cb.className = 'isl-chibi ' + anim + ' ' + dirCls + (flip ? ' flip' : ''); }
-  if(sp){ sp.className = 'sp ' + (_IS.dir === 'u' ? 'u' : (_IS.dir === 'd' ? 'd' : 's')) + (anim === 'walk' ? ' walk' : '') + (flip ? ' flip' : ''); islSpFrame(sp, anim); }
+  if(sp){ sp.className = 'sp ' + (sp.children.length ? 'ly ' : '') + (_IS.dir === 'u' ? 'u' : (_IS.dir === 'd' ? 'd' : 's')) + (anim === 'walk' ? ' walk' : '') + (flip ? ' flip' : ''); islSpFrame(sp, anim); }   /* ★ v1.116.0 分層模式保留 .ly */
 }
 /* ★ v1.115.0 sprite 幀定位:實測 island_body_sheet_boy/girl.png 每欄人形中心(px),不是 64px 等距;走路幀 2→5 每 150ms 一幀循環、idle 幀 0/1 每 700ms 交替 */
 var ISL_SHEET_CX = { boy: [38, 97, 160, 220, 281, 343], girl: [44, 104, 163, 220, 278, 337] };
 function islSpFrame(sp, anim){
   var body = (ISL && ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', cx = ISL_SHEET_CX[body], row = (_IS.dir === 'u') ? 1 : (_IS.dir === 'd' ? 0 : 2), t = Date.now(), f;
   if(anim === 'walk'){ f = 2 + (Math.floor(t / 150) % 4); } else { f = Math.floor(t / 700) % 2; }
+  if(sp.children.length){ var kids = sp.children, pos = islLyPos(body, row, f), i; for(i = 0; i < kids.length; i++){ if(kids[i].style.backgroundPosition !== pos) kids[i].style.backgroundPosition = pos; } return; }   /* ★ v1.116.0 分層造型:三層一起換幀 */
   sp.style.backgroundPosition = (-(cx[f] - 32)) + 'px ' + (-(row * 64)) + 'px';
 }
 function islCamera(snap){
@@ -12967,7 +13092,7 @@ function islQualityIntro(cb){
   $('isl-q-go').onclick = function(){ playSfx('sfx-confirm', 0.4); cb(); };
 }
 /* 甜蜜點寬度:基礎 + 對應維度 ×2%(31.1)+ 技能 Lv ×1% */
-function islSweetWidth(base){ var a = islDB().ACTS[_IS.act.id]; return base + (ISL.stats[a.stat] || 0) * 2 + (ISL.skill[a.skill].lv - 1) * 1 + (_IS.sweetBonus || 0); }   /* ★ v1.94.0 sweetBonus=營火 Lv3 烹飪/畜牧 Lv5 加寬 */
+function islSweetWidth(base){ var a = islDB().ACTS[_IS.act.id]; return base + Math.min(20, ISL.stats[a.stat] || 0) * 2 + Math.min(9, ISL.skill[a.skill].lv - 1) * 1 + (_IS.sweetBonus || 0); }   /* ★ v1.116.0 上限改 50 後,甜蜜點加寬在舊上限(四維 20/技能 Lv10)處封頂,避免整條都是綠區 */   /* ★ v1.94.0 sweetBonus=營火 Lv3 烹飪/畜牧 Lv5 加寬 */
 
 /* ═══ 活動 1:採集植物(Tap:點正確部位 + 種子傳播拖曳 + 1 題) → 品質「輕輕摘」(長按 QTE) ═══ */
 function islActGather(){   /* ★ v1.109.0 簡化:採集只問 1 題知識題(移除部位連環點+種子傳播拖曳兩段),直接進品質 QTE */
@@ -13263,7 +13388,7 @@ function islActResult(){
     else n = 2 + Math.round(ratio * 2);
     if((A.id === 'chop' || A.id === 'quarry') && A.know >= 1) n += 1;
     if((A.id === 'gather' || A.id === 'fish') && ratio < 0.34) n = 1;
-    n = Math.round(n * (1 + (sk.lv - 1) * 0.1));
+    n = Math.round(n * Math.min(3, 1 + (sk.lv - 1) * 0.1));   /* ★ v1.116.0 技能上限 50:產量倍率 Lv21 起封頂 ×3(物品包一格 20 個,再高會一次爆格) */
     if(sk.lv >= 7) n += 1;
     var raftB = islCampHasBld('raft');   /* ★ v1.95.0 木筏 Lv2~3 海廢 +1、Lv4~5 +2、Lv5 魚 +1 */
     if(A.id === 'trash' && raftB) n += (raftB.lv >= 4 ? 2 : (raftB.lv >= 2 ? 1 : 0));
@@ -13633,16 +13758,15 @@ window.islCharOpen = function(){
   h += '<div style="display:flex;gap:12px;align-items:center"><div style="width:64px;height:64px;transform:scale(1.6);transform-origin:0 0;margin:0 40px 40px 0">' + islChibiHtml(ISL.char, 'idle') + '</div><div style="flex:1">';
   for(i = 0; i < db.STATS.length; i++){ s = db.STATS[i]; h += '<div class="isl-stat-row"><span style="width:82px">' + s.e + s.n + '</span><b style="width:36px">' + ISL.stats[s.k] + '</b><div class="bar"><i style="width:' + (ISL.stats[s.k] / db.STAT_MAX * 100) + '%"></i></div><span style="font-size:13px;opacity:.7">練 ' + (ISL.statXp[s.k] || 0) + '/' + db.STAT_XP_NEED + '</span></div>'; }
   h += '</div></div><h4 style="margin:10px 0 4px;color:#ffd166">生存技能(用了才長)</h4>';
-  for(k in db.SKILLS){ if(!db.SKILLS.hasOwnProperty(k)) continue; sk = ISL.skill[k]; h += '<div class="isl-stat-row"><span style="width:82px">' + db.SKILLS[k].e + db.SKILLS[k].n + '</span><b style="width:44px">Lv' + sk.lv + '</b><div class="bar"><i style="width:' + (sk.lv >= 10 ? 100 : sk.xp / db.SKILL_XP_NEED(sk.lv) * 100) + '%;background:#ffd166"></i></div><span style="font-size:13px;opacity:.8">' + islEsc(sk.lv < 3 ? 'Lv3:' + db.SKILLS[k].lv3 : (sk.lv < 5 ? 'Lv5:' + db.SKILLS[k].lv5 : (sk.lv < 7 ? 'Lv7:' + db.SKILLS[k].lv7 : '已達高階'))) + '</span></div>'; }
+  for(k in db.SKILLS){ if(!db.SKILLS.hasOwnProperty(k)) continue; sk = ISL.skill[k]; h += '<div class="isl-stat-row"><span style="width:82px">' + db.SKILLS[k].e + db.SKILLS[k].n + '</span><b style="width:44px">Lv' + sk.lv + '</b><div class="bar"><i style="width:' + (sk.lv >= db.SKILL_MAX ? 100 : sk.xp / db.SKILL_XP_NEED(sk.lv) * 100) + '%;background:#ffd166"></i></div><span style="font-size:13px;opacity:.8">' + islEsc(sk.lv < 3 ? 'Lv3:' + db.SKILLS[k].lv3 : (sk.lv < 5 ? 'Lv5:' + db.SKILLS[k].lv5 : (sk.lv < 7 ? 'Lv7:' + db.SKILLS[k].lv7 : (sk.lv >= db.SKILL_MAX ? '已達頂級 Lv' + db.SKILL_MAX : '高階(上限 Lv' + db.SKILL_MAX + ',每級產量再 +10%)')))) + '</span></div>'; }   /* ★ v1.116.0 上限 50 */
   h += '<p style="font-size:14px;opacity:.75;margin-top:8px">四維能力:做對應活動每 ' + db.STAT_XP_NEED + ' 次 +1(上限 ' + db.STAT_MAX + ');向動物 NPC 訓練師學習(下一階段)也能 +1。</p>';
   h += '<p style="font-size:14px;opacity:.75">📅 第 ' + ISL.day + ' 天　🌿 活動 ' + ISL.counters.acts + ' 次　🎁 撿到 ' + ISL.counters.picks + ' 個　🏗 建造 ' + ISL.counters.builds + ' 棟</p></div>';
   islPanel(h, function(t){ if(t.getAttribute('data-act') === 'close') islModalClose(); else if(t.getAttribute('data-act') === 'rename') islIslandRenameOpen(); });
 };
 function islIslandRenameOpen(){   /* ★ v1.108.0 隨時改島名(手打或重抽) */
-  var h = '<h3>🏝 幫島取個名字</h3><div style="display:flex;gap:6px;align-items:center;justify-content:center;margin:8px 0"><input id="isl-rn-island" maxlength="' + islDB().ISLAND_NAME_MAX + '" value="' + islEsc(ISL.islandName || '') + '" style="flex:1;max-width:180px"><button class="isl-btn ghost" style="padding:6px 10px;font-size:14px" data-act="roll">🎲 換一個</button></div>';
+  var h = '<h3>🏝 幫島取個名字</h3>' + islIslandNamePickHtml('isl-rn', ISL.islandName || '') + '<p style="font-size:13px;opacity:.75;margin:6px 0 0">用兩個選單組合,或直接在島名欄自己打(最多 ' + islDB().ISLAND_NAME_MAX + ' 字)</p>';   /* ★ v1.116.0 改名也用選單 */
   islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islCharOpen(); } }, { t: '確定', cls: 'gold', cb: function(){ var v = ($('isl-rn-island') || {}).value; var nm = (v || '').replace(/^\s+|\s+$/g, '').slice(0, islDB().ISLAND_NAME_MAX); if(!nm) nm = islRandIslandName(); ISL.islandName = nm; playSfx('sfx-ok', 0.4); toast('🏝 島名改成「' + nm + '」了'); islSave('rename'); islCharOpen(); } }]);
-  var m = $('isl-modal'), rb = m.querySelector('[data-act="roll"]');
-  if(rb) rb.onclick = function(ev){ ev.stopPropagation(); $('isl-rn-island').value = islRandIslandName(); };
+  islIslandNamePickBind('isl-rn');
 }
 /* ══════════════════════════════════════════════════════════════════════════
  * ★ v1.91.0(2026-09-12・老師「繼續下階段」)— 🏝 像素荒島求生記 P2-a:區域解鎖判定、捕魚/打撈海廢/採石、防衛戰(第五章)
@@ -13928,49 +14052,54 @@ function islPreloadSet(key, imgKeys, bgmKey, label, cb){
   }
 }
 function islPreloadZone(zoneId, cb){
-  var db = islDB(), sc = db.SCENE[zoneId], keys = [sc.bg, 'gull_normal', (ISL.char && ISL.char.body === 'girl') ? 'sheet_girl' : 'sheet_boy', 'node_stump', 'node_bush_empty'], k, tr;
+  var db = islDB(), sc = db.SCENE[zoneId], keys = [sc.bg, 'gull_normal', (ISL.char && ISL.char.body === 'girl') ? 'sheet_girl' : 'sheet_boy', 'node_stump', 'node_bush_empty'], k, tr, L;
+  if(ISL.char && islLayerOk(ISL.char.body)){ L = islLayerKeys(ISL.char); keys.push(L.base, L.cloth, L.hair); }   /* ★ v1.116.0 分層造型三張也預載 */
   for(k in sc.spawn){ if(sc.spawn.hasOwnProperty(k) && sc.spawn[k].node) keys.push(sc.spawn[k].node); }
   if(sc.trainer && db.trainer(sc.trainer)){ tr = db.trainer(sc.trainer); keys.push(tr.img); }
   islPreloadSet('zone_' + zoneId, keys, zoneId, db.zone(zoneId).e + db.zone(zoneId).n, cb);
 }
 /* ── ② 首頁「完整下載安裝」:IMG 表全部圖片 + 全部 bgm-isl-* 音樂 → Cache 'lxps-mini-island-v1'(與 minigame_sw.js ISLAND 同名;SW 各策略 caches.match 查所有快取) ── */
 var ISL_CACHE = 'lxps-mini-island-v1', _islInst = null;
-function islInstallUrls(){
-  var db = islDB(), urls = [], seen = {}, k, u, as, i;
+function islInstallUrls(){   /* ★ v1.116.0 老師:「完整下載荒島求生主程式」— 主程式檔 + 全部音效音樂 + 荒島全部圖片(分層造型 24 張列為 opt:沒上傳不算失敗) */
+  var db = islDB(), urls = [], seen = {}, k, u, as, i, sc, src;
   if(!db) return urls;
-  for(k in db.IMG){ if(db.IMG.hasOwnProperty(k)){ u = mgPicUrl(db.IMG[k]); if(!seen[u]){ seen[u] = true; urls.push({ u: u, cross: false }); } } }
-  as = document.querySelectorAll('audio[id^="bgm-isl-"]');
-  for(i = 0; i < as.length; i++){ u = as[i].getAttribute('src'); if(u && !seen[u]){ seen[u] = true; urls.push({ u: u, cross: true }); } }
+  function add(u, cross, opt){ if(u && !seen[u]){ seen[u] = true; urls.push({ u: u, cross: !!cross, opt: !!opt }); } }
+  add('./minigame_index.html'); add('./manifest.json'); add('./title.webp'); add('./icon-192.png'); add('./icon-180.png');
+  sc = document.querySelectorAll('script[src]');
+  for(i = 0; i < sc.length; i++){ src = sc[i].getAttribute('src') || ''; if(src.indexOf('minigame_') === 0) add('./' + src); }   /* minigame_db.js?v= / minigame_island_db.js?v=(與頁面實際請求同 URL,SW caches.match 才會命中) */
+  for(k in db.IMG){ if(db.IMG.hasOwnProperty(k)){ add(mgPicUrl(db.IMG[k]), false, /^(base|hair|cloth)_/.test(k)); } }
+  as = document.querySelectorAll('audio[src]');
+  for(i = 0; i < as.length; i++){ u = as[i].getAttribute('src'); add(u, /^https?:/i.test(u) && u.indexOf(location.origin) !== 0); }
   return urls;
 }
 function islInstallState(){ try{ return localStorage.getItem('isl_installed') || ''; }catch(e){ return ''; } }
-function islInstallBtnPaint(){ var b = $('isl-install-btn'); if(!b) return; b.textContent = (islInstallState() === MG_IMG_VER ? '✓ 荒島已完整安裝' : '⬇ 完整下載安裝荒島求生'); }
+function islInstallBtnPaint(){ var b = $('isl-install-btn'); if(!b) return; b.textContent = (islInstallState() === MG_IMG_VER + '|' + MG_VER ? '✓ 荒島主程式已完整安裝' : '⬇ 完整下載荒島求生主程式');   /* ★ v1.116.0 安裝記號含程式版號,改版後要重裝 */ }
 window.islInstallOpen = function(){
   var urls = islInstallUrls(), box = $('isl-install'), txt = $('isl-install-txt'), btns = $('isl-install-btns'), bar = $('isl-install-bar');
   try{ playSfx('sfx-tap', 0.3); }catch(e){}
   if(!window.caches || !window.fetch){ toast('這個瀏覽器不支援離線安裝(需要 https 與 Cache API)'); return; }
   show('isl-install'); bar.style.width = '0%';
-  txt.innerHTML = '把荒島求生的 <b>' + urls.length + ' 個檔案</b>(11 區場景、地圖、營地、建築、資源、NPC、魔物圖片 + ' + document.querySelectorAll('audio[id^="bgm-isl-"]').length + ' 首音樂)一次存進這台裝置。<br><span style="font-size:13px;opacity:.8">約 40~60 MB,建議接 Wi-Fi。之後進每個場景都不用等下載;安裝過的圖片版本 v' + MG_IMG_VER + (islInstallState() === MG_IMG_VER ? ' ✓ 已安裝(可重新安裝)' : '') + '</span>';
+  txt.innerHTML = '把荒島求生<b>主程式</b>(網頁+資料表+設定檔)、全部 ' + document.querySelectorAll('audio[src]').length + ' 支音效音樂、荒島全部圖片(11 區場景、地圖、營地、建築、資源、NPC、魔物、造型)共 <b>' + urls.length + ' 個檔案</b>一次存進這台裝置。<br><span style="font-size:13px;opacity:.8">約 60~120 MB,建議接 Wi-Fi。裝好後離線也能開荒島、進場景不用等下載;版本 ' + MG_VER + ' / 圖片 v' + MG_IMG_VER + (islInstallState() === MG_IMG_VER + '|' + MG_VER ? ' ✓ 已安裝(可重新安裝)' : '') + '</span>';
   btns.innerHTML = '<button class="chip" id="isl-install-go" style="border-color:#7bed9f">開始下載</button><button class="chip" id="isl-install-x">關閉</button>';
   $('isl-install-x').onclick = function(){ if(_islInst) _islInst.stop = true; hide('isl-install'); islInstallBtnPaint(); };
   $('isl-install-go').onclick = function(){ islInstallRun(urls); };
 };
 function islInstallRun(urls){
-  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, running = 0, CONC = 3, cache = null, go = $('isl-install-go');
+  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, optN = 0, running = 0, CONC = 3, cache = null, go = $('isl-install-go');
   _islInst = { stop: false };
   if(go){ go.disabled = true; go.textContent = '下載中…'; }
   function next(){
     if(_islInst.stop) return;
     while(running < CONC && i < urls.length){ (function(it){ running++; i++;
       var req = it.cross ? fetch(it.u, { mode: 'cors' }) : fetch(it.u);
-      req.then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(it.u, r); }).then(function(){ okN++; }, function(){ failN++; })
-        .then(function(){ running--; bar.style.width = Math.round((okN + failN) / urls.length * 100) + '%'; txt.textContent = '下載中 ' + (okN + failN) + ' / ' + urls.length + (failN ? '(失敗 ' + failN + ')' : ''); if(okN + failN >= urls.length) fin(); else next(); });
+      req.then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(it.u, r); }).then(function(){ okN++; }, function(){ if(it.opt) optN++; else failN++; })
+        .then(function(){ running--; bar.style.width = Math.round((okN + failN + optN) / urls.length * 100) + '%'; txt.textContent = '下載中 ' + (okN + failN + optN) + ' / ' + urls.length + (failN ? '(失敗 ' + failN + ')' : ''); if(okN + failN + optN >= urls.length) fin(); else next(); });
     })(urls[i]); }
   }
   function fin(){
     var all = (failN === 0);
-    if(all){ try{ localStorage.setItem('isl_installed', MG_IMG_VER); }catch(e){} }
-    txt.innerHTML = (all ? '✅ 全部安裝完成!' : '⚠ 完成,但有 ' + failN + ' 個檔案沒抓到(可能還沒上傳或網路不穩),可以再按一次只補缺的。') + '<br><span style="font-size:13px;opacity:.8">成功 ' + okN + ' / ' + urls.length + '</span>';
+    if(all){ try{ localStorage.setItem('isl_installed', MG_IMG_VER + '|' + MG_VER); }catch(e){} }   /* ★ v1.116.0 記號含程式版號 */
+    txt.innerHTML = (all ? '✅ 全部安裝完成!離線也能開荒島了。' : '⚠ 完成,但有 ' + failN + ' 個檔案沒抓到(可能還沒上傳或網路不穩),可以再按一次只補缺的。') + '<br><span style="font-size:13px;opacity:.8">成功 ' + okN + ' / ' + urls.length + (optN ? '(選配造型圖 ' + optN + ' 張尚未上傳,不影響)' : '') + '</span>';
     if(go){ go.disabled = false; go.textContent = all ? '重新安裝' : '再試一次'; }
     try{ playSfx(all ? 'sfx-applause' : 'sfx-cancel', 0.4); }catch(e){}
     islInstallBtnPaint();
@@ -15438,7 +15567,7 @@ window.islWxTip = function(){
   islModal('<h3>' + w.e + ' 今天:' + islEsc(w.n) + '</h3><p>' + islEsc(w.d) + '</p><p style="color:#ffd166;font-size:15px">今日影響:' + islEsc(w.fx) + '</p><p style="font-size:15px;opacity:.85">🦉 領角鴞博士的觀察:明天大概是 ' + tw.e + islEsc(tw.n) + '。(看雲的高低和風向就能猜到天氣)</p>');
 };
 /* ── 動態背景 ── */
-var _islAmb = { raf: 0, last: 0, host: null, cv: {}, ctx: {}, W: 2048, H: 1536, sc: 0.25, water: [], foam: [], deep: [], parts: [], clouds: [], rain: [], t: 0, mode: '', flash: 0, nextFlash: 6 };
+var _islAmb = { raf: 0, last: 0, host: null, cv: {}, ctx: {}, W: 2048, H: 1536, sc: 0.25, water: [], foam: [], deep: [], spark: [], parts: [], clouds: [], rain: [], t: 0, mode: '', flash: 0, nextFlash: 6 };
 function islAmbDetach(){ var k; if(_islAmb.raf){ cancelAnimationFrame(_islAmb.raf); _islAmb.raf = 0; } for(k in _islAmb.cv){ if(_islAmb.cv.hasOwnProperty(k) && _islAmb.cv[k] && _islAmb.cv[k].parentNode) _islAmb.cv[k].parentNode.removeChild(_islAmb.cv[k]); } _islAmb.cv = {}; _islAmb.ctx = {}; _islAmb.host = null; _islAmb.mode = ''; }
 function islAmbMk(host, name, W, H, sc, css){ var c = document.createElement('canvas'), x; c.className = 'isl-amb isl-amb-' + name; c.width = Math.round(W * sc); c.height = Math.round(H * sc); c.style.cssText = css; x = c.getContext('2d'); return { c: c, x: x }; }
 function islAmbAttach(mode){
@@ -15459,15 +15588,17 @@ function islAmbAttach(mode){
   m = islAmbMk(host, 'sh', W, H, sc, css + 'mix-blend-mode:multiply;z-index:30;'); A.cv.sh = m.c; A.ctx.sh = m.x; host.appendChild(m.c);
   m = islAmbMk(host, 'pt', W, H, sc, css + 'z-index:31;'); A.cv.pt = m.c; A.ctx.pt = m.x; host.appendChild(m.c);
   /* 水面格:'~' 淺水(反光+浪花),deepWater 的 '#'(深水/熔岩波紋) */
-  A.water = []; A.foam = []; A.deep = [];
+  A.water = []; A.foam = []; A.deep = []; A.spark = [];   /* ★ v1.116.0 +spark 閃爍波光 */
   if(mask){
     for(r = 0; r < mask.length; r++){ for(c = 0; c < mask[r].length; c++){ ch = mask[r].charAt(c);
       if(ch === '~'){ A.water.push({ x: c * 64, y: r * 64, h: islHash(c + ',' + r) % 1000 / 1000 });
+        for(j = 0; j < 3; j++){ A.spark.push({ x: c * 64 + 6 + (islHash('s' + j + ',' + c + ',' + r) % 52), y: r * 64 + 6 + (islHash('t' + j + ',' + c + ',' + r) % 52), ph: islHash('p' + j + ',' + c + ',' + r) % 628 / 100, sp: 2.2 + (islHash('q' + j + ',' + c + ',' + r) % 100) / 40, sz: 3 + (islHash('z' + j + ',' + c + ',' + r) % 3) }); }   /* ★ v1.116.0 每格淺水 3 顆閃爍白光 */
         wall = [];
         if(r > 0 && mask[r - 1].charAt(c) === '.') wall.push('u'); if(r < mask.length - 1 && mask[r + 1].charAt(c) === '.') wall.push('d');
         if(c > 0 && mask[r].charAt(c - 1) === '.') wall.push('l'); if(c < mask[r].length - 1 && mask[r].charAt(c + 1) === '.') wall.push('r');
         for(j = 0; j < wall.length; j++) A.foam.push({ x: c * 64, y: r * 64, d: wall[j], h: islHash(c + ',' + r + wall[j]) % 1000 / 1000 }); }
-      else if(ch === '#' && deepC && r > 0 && r < mask.length - 1 && c > 0 && c < mask[r].length - 1){ A.deep.push({ x: c * 64, y: r * 64, h: islHash('d' + c + ',' + r) % 1000 / 1000 }); }
+      else if(ch === '#' && deepC && r > 0 && r < mask.length - 1 && c > 0 && c < mask[r].length - 1){ A.deep.push({ x: c * 64, y: r * 64, h: islHash('d' + c + ',' + r) % 1000 / 1000 });
+        if(deepC !== '#ff7a1a'){ for(j = 0; j < 2; j++){ A.spark.push({ x: c * 64 + 6 + (islHash('s' + j + ',' + c + ',' + r) % 52), y: r * 64 + 6 + (islHash('t' + j + ',' + c + ',' + r) % 52), ph: islHash('p' + j + ',' + c + ',' + r) % 628 / 100, sp: 1.6 + (islHash('q' + j + ',' + c + ',' + r) % 100) / 50, sz: 3 + (islHash('z' + j + ',' + c + ',' + r) % 3) }); } } }   /* ★ v1.116.0 深水 2 顆(熔岩不閃) */
     } }
   }
   /* 雲影:3~4 團,隨風漂 */
@@ -15506,6 +15637,11 @@ function islAmbTick(ts){
       x.stroke(); }
     x.lineWidth = 3; x.strokeStyle = _IS.scene && _IS.scene.deepWater === '#ff7a1a' ? '#ffd166' : '#dff3ff';
     for(i = 0; i < A.deep.length; i++){ p = A.deep[i]; ph = Math.sin(t * 0.9 + p.x * 0.02 + p.h * 3) * 5; x.globalAlpha = 0.12 + 0.12 * (0.5 + 0.5 * Math.sin(t * 1.3 + p.h * 12)); x.beginPath(); x.moveTo(p.x + 6, p.y + 32 + ph); x.quadraticCurveTo(p.x + 32, p.y + 24 + ph, p.x + 58, p.y + 32 + ph); x.stroke(); }
+    /* ★ v1.116.0 老師:水面動態白色閃爍波光 —— 每顆是一個十字星光,亮度用 sin^6 做「一閃一閃」的銳利閃爍(大部分時間暗、瞬間亮),隨風慢慢漂、在格內繞回 */
+    x.strokeStyle = '#ffffff'; x.fillStyle = '#ffffff'; x.lineWidth = 1.6;
+    for(i = 0; i < A.spark.length; i++){ p = A.spark[i]; a = Math.sin(t * p.sp + p.ph); if(a <= 0.35) continue; a = Math.pow(a, 6); ph = ((p.x + t * 9 * wind) % 64 + 64) % 64; cx = (p.x - (p.x % 64)) + ph; len = p.sz * (0.6 + a) * (1 + 0.3 * (wind - 1));
+      x.globalAlpha = a * 0.95; x.beginPath(); x.moveTo(cx - len, p.y); x.lineTo(cx + len, p.y); x.moveTo(cx, p.y - len * 0.7); x.lineTo(cx, p.y + len * 0.7); x.stroke();
+      x.globalAlpha = a * 0.7; x.beginPath(); x.arc(cx, p.y, 1.3, 0, 6.2832); x.fill(); }
     x.globalAlpha = 1;
   }
   /* sh:雲影 + 天氣色調(multiply) */
