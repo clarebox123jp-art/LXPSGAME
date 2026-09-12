@@ -1,6 +1,7 @@
 /* ============================================================================
  * 🏝 像素荒島求生記 — 資料表(minigame/minigame_island_db.js)
  * ============================================================================
+ * ★ v1.14.0(2026-09-12・老師「繼續完成荒島求生」)— 📋 營地留言板常數 BOARD_MAX/BOARD_TEXT_MAX + 📜 阿獺委託板 QUEST(perDay/pool 24 種含 need 條件與阿獺科學小語/hardGive/MS 里程碑/intro/thanks)。對應 minigame_index.html v1.107.0。
  * ★ v1.13.0(2026-09-12・老師「請繼續」,裁定 R=自由創角、S=訪客島獨立存檔不可匯入 已確認)— 好友信箱資料:MAIL_GIFT_ITEMS(可送資源白名單)、MAIL_QTY_MAX、MAIL_NOTE_MAX。對應 minigame_index.html v1.106.0。
  * ★ v1.12.0(2026-09-12・老師四項:場景懶載入/首頁完整安裝鈕/raid+raid2 輪流/帆船結局)— BUILDINGS.ship(最終目標,tech:30、needZone volcano、noUpgrade、final)、BUILD_ORDER +ship、IMG bld_ship/ending_sail、STORY.shipBuilt/endingHome、ENDING(結局文案與節奏)、LOG_MAX(回憶紀錄上限)。對應 minigame_index.html v1.105.0。
  * ★ v1.11.0(2026-09-12・老師「甲乙丙全做」)— 甲:MONSTERS 4→8(黏泥怪/火精/石化蛇/雷精,各綁科學概念,from=出現天數,每隻加 q 一題)、DEF_TOOLS 4→8、DEF_STAT_BONUS(四維加成)、DEF_BITE_HP、瞭望台 tower 建築;乙:DUNGEON(遺跡地下層 3 層+守墓石像 boss);丙:FRIEND_MAX/FRIEND_HELPERS/FRIEND_HIT_SEC、STORY.friendWatch/towerFirst;IMG +6、CODEX +5(57→62)。對應 minigame_index.html v1.104.0。
@@ -25,7 +26,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.13.0';   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
+  D.VER = 'v1.14.0';   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
   D.SAVE_VER = 1;          /* 存檔結構版本(缺欄位一律補預設值,絕不因存檔壞掉卡流程) */
   D.CELL = 64;             /* 一格 px */
   D.COLS = 32; D.ROWS = 24;
@@ -1428,6 +1429,49 @@ window.ISL_DB = (function(){
   D.WEATHER_ORDER = ['sunny', 'rain', 'typhoon'];
   D.STORY.typhoon = [ '風好大……樹整棵在搖,雨是橫著打過來的。', '自然課說過:颱風是海上的巨大低氣壓,逆時針轉,中心叫颱風眼。', '今天不能去溪邊,也不能去海邊。先把營地的東西綁好。' ];
   D.STORY.rainFirst = '滴滴答答……是毛毛雨。雨水會幫我澆田,可是動物們都躲起來了。';
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * ★ v1.14.0(2026-09-12・老師「繼續完成荒島求生」)— 📋 營地留言板 + 📜 阿獺委託板
+   *   留言板(第三十七章「營地留言板」常駐展示版):存 ISL.board=[{n,t,at,day,own}],上限 BOARD_MAX,自己寫的與好友信件「📌 釘上」的都留著,不即讀即刪。
+   *   委託板(第二十九章 NPC 委託):每遊戲日 seed=hash(uid|day|quest) 抽 QUEST.perDay 張;前兩張只從 basic 池抽,第三張(困難)從全部可接池抽、數量 ×hardMul、
+   *   額外給 hardGive 之一;報酬貝幣 = round(SHOP.sell 單價 × 數量 × rewardMul) + rewardFlat;完成存 ISL.quest={day,done:{id:1},total};累計里程碑 QUEST.MS。
+   *   need:{zone}|{bld}|{any:[…]} 決定「玩家現在有辦法取得」才會抽到(避免抽到還沒開的區域的東西)。
+   * ══════════════════════════════════════════════════════════════════════════ */
+  D.BOARD_MAX = 20;
+  D.BOARD_TEXT_MAX = 40;
+  D.QUEST = {
+    perDay: 3, hardMul: 1.5, rewardMul: 1.6, rewardFlat: 2,
+    pool: [
+      { item:'wood',     min:4, max:8, basic:true,  why:'阿獺想修補河邊的小木橋——木材輕又能浮在水上,是天然的建材。' },
+      { item:'stone',    min:3, max:6, basic:true,  why:'水獺會用石頭當工具敲開貝殼,這是少數會用工具的哺乳類喔。' },
+      { item:'fiber',    min:4, max:8, basic:true,  why:'林投葉的纖維又長又韌,阿獺想編一張新的漁網。' },
+      { item:'leaf',     min:3, max:6, basic:true,  why:'大片的葉子可以包食物、擋雨,葉子上的蠟質層讓水珠會滾走。' },
+      { item:'berry',    min:3, max:6, basic:true,  why:'構樹的果實鳥和松鼠都愛吃,吃下去再把種子帶到別處——這叫種子傳播。' },
+      { item:'shell',    min:2, max:4, basic:true,  why:'貝殼是碳酸鈣做的,阿獺收集起來磨成貝幣。' },
+      { item:'pebble',   min:3, max:6, basic:true,  why:'卵石被溪水滾了幾百年才變圓,阿獺想拿來鋪店門口。' },
+      { item:'feather',  min:2, max:4, basic:true,  why:'羽毛中空又輕,鳥才飛得起來;阿獺拿來當筆寫帳本。' },
+      { item:'fish',     min:2, max:4, basic:true,  why:'水獺一天要吃掉體重 15% 的魚!阿獺今天想吃鮮的。' },
+      { item:'mushroom', min:2, max:4, need:{zone:'forest'}, why:'野菇不是植物是真菌,不會行光合作用,靠分解落葉長大。' },
+      { item:'reed',     min:3, max:6, need:{zone:'river'},  why:'蘆葦的莖裡有空氣通道,長在水邊也不會悶死,拿來鋪水道最好。' },
+      { item:'trash',    min:3, max:6, need:{zone:'rock'},   why:'阿獺會把海廢分類回收,塑膠在海裡幾百年都不會消失。' },
+      { item:'seed',     min:2, max:4, need:{zone:'forest'}, why:'一顆種子裡有胚和養分,阿獺想在店後面種一小片田。' },
+      { item:'egg',      min:2, max:3, need:{any:[{zone:'cliff'},{bld:'pen'}]}, why:'蛋殼有幾千個小氣孔讓小雞呼吸,阿獺想做煎蛋。' },
+      { item:'milk',     min:1, max:3, need:{bld:'pen'},      why:'羊奶要煮過才安全,加熱能殺死細菌——這叫巴斯德殺菌法。' },
+      { item:'grain',    min:2, max:4, need:{any:[{zone:'valley'},{bld:'farm'}]}, why:'小米很耐旱,是台灣原住民最早種的穀物之一。' },
+      { item:'d_fish',   min:1, max:2, need:{bld:'campfire'}, why:'烤魚用的是「輻射」和「傳導」把熱送進魚肉裡。' },
+      { item:'d_soup',   min:1, max:2, need:{bld:'campfire'}, why:'湯裡的熱靠「對流」上下翻滾,每一口都熱呼呼。' },
+      { item:'d_jam',    min:1, max:2, need:{bld:'campfire'}, why:'果醬糖分高,細菌吸不到水就長不了,所以能放很久。' },
+      { item:'ore',      min:2, max:4, need:{zone:'cave'},    why:'鐵礦要用高溫把氧拿掉才變成鐵,這叫還原反應。' },
+      { item:'crystal',  min:1, max:2, need:{zone:'cave'},    why:'水晶是石英慢慢結晶成的,六角柱是它天生的形狀。' },
+      { item:'herb',     min:1, max:3, need:{zone:'cliff'},   why:'艾草的葉子背面有白絨毛,能減少水分蒸發,才長得住懸崖。' },
+      { item:'honey',    min:1, max:2, need:{zone:'valley'},  why:'蜜蜂用翅膀搧風把花蜜的水分蒸發掉,才變成濃濃的蜂蜜。' },
+      { item:'relic',    min:1, max:1, need:{zone:'ruins'},   why:'遺物是古人留下的線索,阿獺想放在店裡當展示品。' }
+    ],
+    hardGive: [ { item:'seed', n:2 }, { item:'water', n:3 }, { kind:'tech', n:1 }, { item:'herb', n:1 }, { item:'d_soup', n:1 } ],
+    MS: [ { at:5, shell:20 }, { at:15, shell:50 }, { at:30, shell:100 }, { at:50, shell:200 } ],
+    intro: [ '這是我的「委託板」——島上大家有需要的東西都會貼在這裡。', '幫忙送來,我付貝幣;每天都會換新的三張委託。', '第三張比較難,但報酬也比較好,還會多送一樣東西喔!' ],
+    thanks: [ '太好了,謝謝你!', '正是我要的!', '有你在這座島真好。', '這批品質不錯喔!' ]
+  };
 
   /* ── 結算文案 ── */
   D.STAR_TEXT = { 1:'還可以', 2:'不錯喔', 3:'完美!' };

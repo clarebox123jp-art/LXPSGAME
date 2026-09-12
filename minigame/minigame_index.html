@@ -15,7 +15,13 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.106.0(2026-09-12)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.107.0(2026-09-12)
+     ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)— 🏝 📋 營地留言板 + 📜 阿獺委託板:
+       留言板:存檔新欄位 board=[{n,t,at,day,own}](上限 BOARD_MAX 20,滿了丟最舊),自己「✏ 寫一則」(≤40 字)或把好友信件的留言「📌 釘上」
+       (信件仍刪除、內容留板上),營地右上角告示牌 #isl-camp-board 常駐顯示最新一則、側欄「📋 留言板 n」開整塊板,任何一則可 🗑;訪客島也有,不需新規則。
+       委託板:阿獺雜貨鋪第三分頁「📜 委託」,每遊戲日 seed 抽 3 張(前兩張基本資源、第三張困難:數量 ×1.5、報酬 ×1.25、多送一樣),need 條件只抽「現在拿得到」的;
+       交付=islConsume 扣物 → 🐚 報酬(單價×數量×1.6+2)+ 累計 quest.total,里程碑 5/15/30/50 件加送貝幣;側欄「🦦 商店 📜n」顯示未完成數。
+       存檔 quest={day,done,total,ms},islNormalize 自動補;對應 island_db v1.14.0(BOARD_*/QUEST)、sw v1.78.0。
      ★ v1.106.0(2026-09-12・老師「請繼續」;裁定 R=自由創角、S=訪客島獨立存檔不可匯入,已確認)— 🏝 好友信箱:
        好友面板新增「🎁送禮」(從物品包/倉庫送出白名單資源,islConsume 扣除)「💌留言」(≤40 字),寫入對方
        minigameIsland/{uid}/mail/{autoId};營地側欄「📬 信箱」顯示未讀數,開啟後逐筆「收下」(物資進包)/「已讀」(刪除)。
@@ -3883,6 +3889,20 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-camp-side button:disabled{opacity:.45;}
 #isl-camp-side button:active{transform:scale(.96);}
 #isl-camp-char{position:absolute;left:14px;bottom:14px;width:64px;height:64px;transform:scale(1.6);transform-origin:0 100%;pointer-events:none;}
+#isl-camp-board{position:absolute;right:12px;top:10px;max-width:46%;background:rgba(92,58,24,.92);border:2px solid #d9a066;border-radius:10px;padding:5px 9px;font-size:13px;line-height:1.3;color:#fff3d6;box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:3;cursor:pointer;}   /* ★ v1.107.0 營地留言板告示牌 */
+#isl-camp-board b{color:#ffd166;font-weight:700;}
+#isl-camp-board .who{display:block;font-size:11px;opacity:.8;margin-top:2px;}
+#isl-camp-board:active{transform:scale(.97);}
+.isl-board-row{display:flex;align-items:flex-start;gap:8px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.15);font-size:15px;text-align:left;}
+.isl-board-row .bd{flex:1;background:rgba(255,255,255,.08);border-radius:10px;padding:6px 10px;word-break:break-all;}
+.isl-board-row .bd small{display:block;opacity:.7;font-size:12px;margin-top:2px;}
+.isl-board-row .bd.own{background:rgba(255,209,102,.16);}
+.isl-quest-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.15);font-size:16px;}
+.isl-quest-row .ic{font-size:30px;width:40px;text-align:center;}
+.isl-quest-row .nm{flex:1;text-align:left;line-height:1.3;}
+.isl-quest-row .nm .st{font-size:13px;opacity:.8;display:block;}
+.isl-quest-row.hard .nm b{color:#ffd166;}
+.isl-quest-row.done{opacity:.55;}
 /* ── 活動畫面 ── */
 #isl-act{width:100%;height:100%;display:flex;flex-direction:column;background:#152a3a;position:relative;}
 #isl-act-top{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:6px 12px;background:rgba(0,0,0,.35);font-size:17px;font-weight:700;}
@@ -4119,7 +4139,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     </div>
     <div id="isl-camp" class="hidden">
       <img id="isl-camp-bg" src="" alt="" onerror="this.style.display='none';">
-      <div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char"></div></div><!-- ★ v1.94.0 isl-camp-deco=可拖曳裝飾層 -->
+      <div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char"></div><div id="isl-camp-board" class="hidden" onclick="islBoardOpen()"></div></div><!-- ★ v1.94.0 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) -->
       <div id="isl-camp-side"></div>
     </div>
     <div id="isl-act" class="hidden">
@@ -4165,7 +4185,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.106.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.107.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4174,7 +4194,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.106.0';   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.107.0';   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -11683,6 +11703,7 @@ function islDefaultSave(){
     tools: [],
     shop: { bagUp: 0, day: 0, sold: 0 }, codex: {}, codexMs: 0, train: {},
     dungeon: { day: 0, runs: 0, clears: 0, best: 0 }, friends: [], friendCache: {},
+    board: [], quest: { day: 0, done: {}, total: 0, ms: 0 },   /* ★ v1.107.0 營地留言板 [{n,t,at,day,own}](上限 BOARD_MAX);阿獺委託板 {day:今日已抽的日序,done:{questId:1},total:累計完成,ms:已領里程碑階數} */
     log: [],   /* ★ v1.105.0 回憶紀錄 [{d:'YYYY-MM-DD',day,t,img}](結局幻燈片素材,上限 LOG_MAX) */   /* ★ v1.104.0 乙 地下層紀錄;丙 好友 [{uid,name,day}] 與名片快取 {uid:{name,defLv,char,day,at}} */   /* ★ v1.99.0 train={trainerId:上次受訓週序} */   /* ★ v1.98.0 商店擴格次數/累計賣出;圖鑑 {id:收錄日};已領里程碑階數 */
     flags: { prologue: false, tut: false, tutStep: 0, firstCamp: false, forestTold: false, shopTold: false },
     counters: { acts: 0, picks: 0, builds: 0, days: 1 },
@@ -11723,6 +11744,11 @@ function islNormalize(d){
   if(!d.friends || !(d.friends instanceof Array)) d.friends = [];
   if(!d.friendCache || typeof d.friendCache !== 'object') d.friendCache = {};
   if(!d.log || !(d.log instanceof Array)) d.log = [];   /* ★ v1.105.0 */
+  if(!d.board || !(d.board instanceof Array)) d.board = [];   /* ★ v1.107.0 */
+  if(!d.quest || typeof d.quest !== 'object') d.quest = { day: 0, done: {}, total: 0, ms: 0 };
+  if(!d.quest.done || typeof d.quest.done !== 'object') d.quest.done = {};
+  if(typeof d.quest.total !== 'number') d.quest.total = 0;
+  if(typeof d.quest.ms !== 'number') d.quest.ms = 0;
   d.ver = db.SAVE_VER;
   return d;
 }
@@ -13134,6 +13160,7 @@ function islCampPaint(){
   cells.onclick = function(ev){ var t = ev.target; while(t && t !== cells && !(t.getAttribute && t.getAttribute('data-i'))) t = t.parentNode; if(!t || t === cells) return; islCampCellTap(parseInt(t.getAttribute('data-i'), 10)); };
   $('isl-camp-char').innerHTML = islChibiHtml(ISL.char, 'idle');
   islDecoPaint();   /* ★ v1.94.0 裝飾層 */
+  islBoardSignPaint();   /* ★ v1.107.0 告示牌顯示最新一則留言 */
   side.innerHTML =
     '<div style="font-size:13px;text-align:center;color:#ffd166;padding:2px 0" onclick="islComfortTip()">😊 舒適 ' + comfort + '<br><span style="opacity:.8">🏕 營地 Lv' + ISL.camp.lv + '</span></div>' +   /* ★ v1.94.0 */
     '<button onclick="islCampBuildMenu(-1)">🔨 建造</button>' +
@@ -13146,7 +13173,8 @@ function islCampPaint(){
     (islCampHasBld('bench') ? '<button onclick="islCraftOpen()">🛠 製作</button>' : '') +   /* ★ v1.96.0 */
     (ISL.camp.lv < db.CAMP_MAX_LV ? '<button onclick="islCampExpand()">🏕 擴建</button>' : '') +
     (ISL.hp < ISL.hpMax ? '<button class="warn" onclick="islTreatOpen()">🩹 治療</button>' : '') +   /* ★ v1.92.0 */
-    '<button onclick="islShopOpen()">🦦 商店</button>' +   /* ★ v1.98.0 阿獺雜貨鋪 */
+    '<button onclick="islShopOpen()">🦦 商店' + (islQuestOpenCount() ? '<span style="font-size:12px;opacity:.85"> 📜' + islQuestOpenCount() + '</span>' : '') + '</button>' +   /* ★ v1.98.0 阿獺雜貨鋪;★ v1.107.0 尾巴顯示今天還沒完成的委託數 */
+    '<button onclick="islBoardOpen()">📋 留言板' + (ISL.board && ISL.board.length ? '<span style="font-size:12px;opacity:.8"> ' + ISL.board.length + '</span>' : '') + '</button>' +   /* ★ v1.107.0 營地留言板(常駐) */
     '<button onclick="islFriendsOpen()">👥 好友' + (ISL.friends && ISL.friends.length ? '<span style="font-size:12px;opacity:.8"> ' + ISL.friends.length + '</span>' : '') + '</button>' +   /* ★ v1.104.0 丙 */
     '<button onclick="islCodexOpen()">📖 圖鑑<span style="font-size:12px;opacity:.8"> ' + islCodexCount() + '</span></button>' +
     '<button onclick="islBagOpen()">🎒 物品包</button>' +
@@ -13889,16 +13917,17 @@ function islMailPaint(){
   else { for(i = 0; i < _IS.mail.length; i++){ m = _IS.mail[i];
     if(m.type === 'gift'){ it = null; for(var k in m.items){ if(m.items.hasOwnProperty(k)) it = { id: k, n: m.items[k] }; }
       h += '<div class="isl-store-row" style="align-items:center"><span class="st" style="flex:1;text-align:left">🎁 ' + islEsc(m.fromName || '好友') + ' 送你' + (it ? '　' + islItemDef(it.id).e + islItemDef(it.id).n + ' ×' + it.n : '') + '</span><button class="isl-btn gold" data-m="' + i + '" style="font-size:13px">收下</button></div>';
-    } else { h += '<div class="isl-store-row" style="align-items:center"><span class="st" style="flex:1;text-align:left">💌 ' + islEsc(m.fromName || '好友') + '：「' + islEsc(m.text || '') + '」</span><button class="isl-btn ghost" data-m="' + i + '" style="font-size:13px">已讀</button></div>'; }
+    } else { h += '<div class="isl-store-row" style="align-items:center"><span class="st" style="flex:1;text-align:left">💌 ' + islEsc(m.fromName || '好友') + '：「' + islEsc(m.text || '') + '」</span><button class="isl-btn gold" data-m="' + i + '" data-pin="1" style="font-size:13px">📌 釘上</button><button class="isl-btn ghost" data-m="' + i + '" style="font-size:13px;margin-left:4px">已讀</button></div>'; }   /* ★ v1.107.0 留言可「📌 釘上」營地留言板長期展示 */
   } }
   islModal(h, [{ t: '關閉', cls: 'ghost' }]);
   var bs = $('isl-modal').querySelectorAll('button[data-m]'), j;
-  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); islMailClaim(parseInt(this.getAttribute('data-m'), 10)); }; }
+  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); islMailClaim(parseInt(this.getAttribute('data-m'), 10), !!this.getAttribute('data-pin')); }; }
 }
-function islMailClaim(i){
+function islMailClaim(i, pin){
   var m = _IS.mail[i], it, k, put;
   if(!m) return;
   if(m.type === 'gift'){ for(k in m.items){ if(m.items.hasOwnProperty(k)){ put = islBagAdd(k, 1, m.items[k]); if(put < m.items[k]) islStoreAdd(k, 1, m.items[k] - put); it = k; } } playSfx('sfx-coin', 0.4); toast('🎁 收下了 ' + islItemDef(it).e + islItemDef(it).n + ' ×' + m.items[it]); islLog('🎁 收到 ' + (m.fromName || '好友') + ' 送的 ' + islItemDef(it).e + islItemDef(it).n, null); islHud(); }
+  else if(pin){ islBoardAdd(m.fromName || '好友', m.text || '', false); playSfx('sfx-powerup', 0.35); toast('📌 釘上留言板了'); }   /* ★ v1.107.0 */
   else { playSfx('sfx-tap', 0.3); }
   islMailRef(MG.user.uid).doc(m._id)['delete']()['catch'](function(){});
   _IS.mail.splice(i, 1);
@@ -13936,6 +13965,124 @@ function islMailSendNote(f, txt){
   islMailRef(f.uid).add({ from: MG.user.uid, fromName: (ISL.char && ISL.char.name) || ISL.name || '好友', type: 'note', text: txt, at: islNow() })
     .then(function(){ playSfx('sfx-tap', 0.3); toast('💌 留言送出去了'); islLog('💌 給 ' + (f.name || '好友') + ' 留了言', null); islFriendsOpen(); })
     ['catch'](function(e){ toast('送出失敗(需要老師更新 firestore 規則)'); try{ console.warn('[island mail]', e && e.message); }catch(_){} islFriendsOpen(); });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)— 📋 營地留言板(常駐展示)+ 📜 阿獺委託板
+ * ══════════════════════════════════════════════════════════════════════════
+ * 留言板(第三十七章):ISL.board=[{n,t,at,day,own}] 存在自己的存檔裡(訪客島也有;不上 minigameIslandPublic,不需新規則)。
+ *   來源二:①自己「✏ 寫一則」(≤BOARD_TEXT_MAX 字,署名=角色名)②好友信件的留言按「📌 釘上」(信件照舊刪除,內容改留在板上)。
+ *   上限 BOARD_MAX,滿了自動丟最舊;任何一則都可「🗑」拿掉。營地右上角有告示牌 #isl-camp-board 常駐顯示最新一則,點了開整塊板。
+ * 委託板(第二十九章 NPC 委託):純本機推導——seed=hash(uid|day|quest) 抽今天 perDay 張(前兩張 basic 池、第三張困難:全部可接池、數量 ×hardMul、多送 hardGive);
+ *   need 條件(區域已解鎖/已蓋某建築)決定「現在拿得到」才會被抽到。完成:islHave ≥ 數量 → islConsume(先扣低品質)→ 🐚 報酬 + 困難加碼物 + 累計 total;
+ *   里程碑 QUEST.MS 依 total 一次補發;done 依 quest.day 換日自動歸零。資料在 ISL_DB.QUEST(island_db v1.14.0)。
+ */
+function islBoardSignPaint(){
+  var el = $('isl-camp-board'), b, last;
+  if(!el) return;
+  b = ISL.board || [];
+  if(!b.length){ el.classList.add('hidden'); el.innerHTML = ''; return; }
+  last = b[b.length - 1];
+  el.innerHTML = '📋 <b>' + islEsc(last.t) + '</b><span class="who">— ' + islEsc(last.n) + '　第 ' + (last.day || '?') + ' 天' + (b.length > 1 ? '　(共 ' + b.length + ' 則)' : '') + '</span>';
+  el.classList.remove('hidden');
+}
+function islBoardAdd(name, text, own){
+  var db = islDB();
+  if(!ISL.board) ISL.board = [];
+  text = String(text || '').slice(0, db.BOARD_TEXT_MAX);
+  if(!text) return false;
+  ISL.board.push({ n: String(name || '無名').slice(0, 16), t: text, at: islNow(), day: ISL.day, own: !!own });
+  while(ISL.board.length > db.BOARD_MAX) ISL.board.shift();
+  islSave('board');
+  try{ islBoardSignPaint(); }catch(_bs){}
+  return true;
+}
+window.islBoardOpen = function(){
+  var db = islDB(), b = ISL.board || [], h = '', i, e;
+  if(!ISL) return;
+  playSfx('sfx-tap', 0.3);
+  h += '<div class="isl-bagbox"><h3>📋 營地留言板 <span style="font-size:14px;opacity:.8">' + b.length + '/' + db.BOARD_MAX + '</span><span class="grow"></span><button data-act="close">✕</button></h3>';
+  h += '<p style="font-size:14px;opacity:.8;margin:0 0 6px">寫給自己的、好友信件釘上來的,都會一直留在這裡。滿 ' + db.BOARD_MAX + ' 則會擠掉最舊的。</p>';
+  h += '<div style="text-align:center;margin:0 0 8px"><button class="isl-btn gold" data-act="write" style="font-size:15px">✏ 寫一則</button></div>';
+  if(!b.length) h += '<p style="opacity:.7">板子還是空的。今天做了什麼、明天想做什麼,寫下來吧!</p>';
+  for(i = b.length - 1; i >= 0; i--){ e = b[i];
+    h += '<div class="isl-board-row"><div class="bd' + (e.own ? ' own' : '') + '">' + islEsc(e.t) + '<small>— ' + islEsc(e.n) + (e.own ? '(我)' : '') + '　第 ' + (e.day || '?') + ' 天</small></div><button class="isl-btn ghost" data-act="rm" data-i="' + i + '" style="font-size:13px;padding:4px 8px;margin:0">🗑</button></div>';
+  }
+  h += '</div>';
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act'), k;
+    if(a === 'close'){ islModalClose(); return; }
+    if(a === 'write'){ islBoardWrite(); return; }
+    if(a === 'rm'){ k = parseInt(t.getAttribute('data-i'), 10); if(ISL.board[k]){ ISL.board.splice(k, 1); playSfx('sfx-cancel', 0.3); islSave('board'); islCampPaint(); islBoardOpen(); } }
+  });
+};
+window.islBoardWrite = function(){
+  var db = islDB(), h;
+  h = '<h3>✏ 寫一則留言</h3><p style="font-size:13px;opacity:.8">最多 ' + db.BOARD_TEXT_MAX + ' 字,署名「' + islEsc((ISL.char && ISL.char.name) || ISL.name || '我') + '」</p><textarea id="isl-board-txt" maxlength="' + db.BOARD_TEXT_MAX + '" rows="2" style="width:100%;border-radius:8px;border:2px solid #d9a066;padding:6px;font-size:15px;box-sizing:border-box"></textarea>';
+  islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islBoardOpen(); } }, { t: '釘上去', cls: 'gold', cb: function(){ } }]);
+  var send = $('isl-modal').querySelectorAll('button.isl-btn')[1];
+  send.onclick = function(ev){ ev.stopPropagation(); var txt = String(($('isl-board-txt') || {}).value || '').slice(0, db.BOARD_TEXT_MAX).replace(/^\s+|\s+$/g, ''); if(!txt){ toast('先寫點什麼吧'); return; } islModalClose(); if(islBoardAdd((ISL.char && ISL.char.name) || ISL.name || '我', txt, true)){ playSfx('sfx-powerup', 0.35); toast('📌 釘上留言板了'); } islCampPaint(); islBoardOpen(); };
+};
+/* ── 委託板 ── */
+function islQuestNeedOk(need){
+  var i;
+  if(!need) return true;
+  if(need.any){ for(i = 0; i < need.any.length; i++){ if(islQuestNeedOk(need.any[i])) return true; } return false; }
+  if(need.zone) return !!(ISL.zones[need.zone] && ISL.zones[need.zone].unlocked);
+  if(need.bld) return !!islCampHasBld(need.bld);
+  return true;
+}
+function islQuestSync(){ if(!ISL.quest) ISL.quest = { day: 0, done: {}, total: 0, ms: 0 }; if(ISL.quest.day !== ISL.day){ ISL.quest.day = ISL.day; ISL.quest.done = {}; } }
+function islQuestList(){
+  var db = islDB(), Q = db.QUEST, rnd, basic = [], all = [], out = [], i, q, pick, n, used = {}, hard, hg;
+  if(!ISL || !Q) return [];
+  islQuestSync();
+  rnd = islRng(islHash(ISL.uid + '|' + ISL.day + '|quest'));
+  for(i = 0; i < Q.pool.length; i++){ q = Q.pool[i]; if(!islQuestNeedOk(q.need)) continue; all.push(q); if(q.basic) basic.push(q); }
+  function take(src, isHard){
+    var cand = [], j, c, n2, id;
+    for(j = 0; j < src.length; j++){ if(!used[src[j].item]) cand.push(src[j]); }
+    if(!cand.length) return null;
+    c = cand[Math.floor(rnd() * cand.length)]; used[c.item] = 1;
+    n2 = c.min + Math.floor(rnd() * (c.max - c.min + 1));
+    if(isHard) n2 = Math.max(c.min, Math.round(n2 * Q.hardMul));
+    id = 'q' + ISL.day + '_' + c.item;
+    return { id: id, item: c.item, n: n2, why: c.why, hard: !!isHard, shell: Math.round(((db.SHOP.sell[c.item] || 1) * n2 * Q.rewardMul) + Q.rewardFlat), give: null, done: !!ISL.quest.done[id] };
+  }
+  for(i = 0; i < Q.perDay - 1; i++){ pick = take(basic.length ? basic : all, false); if(pick) out.push(pick); }
+  hard = take(all, true);
+  if(hard){ hg = Q.hardGive[Math.floor(rnd() * Q.hardGive.length)]; hard.give = hg; hard.shell = Math.round(hard.shell * 1.25); out.push(hard); }
+  return out;
+}
+function islQuestOpenCount(){ var l, i, n = 0; try{ l = islQuestList(); }catch(_q){ return 0; } for(i = 0; i < l.length; i++){ if(!l[i].done) n++; } return n; }
+function islQuestGiveText(g){ if(!g) return ''; if(g.kind === 'tech') return '🔬 科技點 +' + g.n; return islItemDef(g.item).e + islItemDef(g.item).n + ' ×' + g.n; }
+function islQuestPaint(){
+  var db = islDB(), Q = db.QUEST, list = islQuestList(), h = '', i, q, d, have, can, ms = null, k;
+  for(k = 0; k < Q.MS.length; k++){ if(ISL.quest.total < Q.MS[k].at){ ms = Q.MS[k]; break; } }
+  h += '<p style="font-size:14px;opacity:.85;margin:0 0 6px;text-align:left">📜 今天的委託(每天換新)　累計完成 <b>' + ISL.quest.total + '</b>' + (ms ? '　下一個里程碑:' + ms.at + ' 件 → 🐚+' + ms.shell : '　里程碑全部達成!') + '</p>';
+  if(!list.length) h += '<p style="opacity:.7">今天沒有委託。</p>';
+  for(i = 0; i < list.length; i++){ q = list[i]; d = islItemDef(q.item); have = islHave(q.item); can = !q.done && have >= q.n;
+    h += '<div class="isl-quest-row' + (q.hard ? ' hard' : '') + (q.done ? ' done' : '') + '"><span class="ic">' + d.e + '</span><span class="nm"><b>' + (q.hard ? '⭐ 困難:' : '') + islEsc(d.n) + ' ×' + q.n + '</b>　<span style="font-size:13px;opacity:.85">現有 ' + have + '</span><span class="st">' + islEsc(q.why) + '</span><span class="st" style="color:' + (q.done ? '#9bd' : '#7bed9f') + '">報酬 🐚 ' + q.shell + (q.give ? '　+ ' + islQuestGiveText(q.give) : '') + '</span></span>' + (q.done ? '<span style="font-size:14px;color:#7bed9f;white-space:nowrap">✔ 已完成</span>' : '<button class="isl-btn ' + (can ? 'gold' : '') + '" style="padding:6px 10px;font-size:15px;margin:0;white-space:nowrap" data-act="quest" data-k="' + q.id + '"' + (can ? '' : ' disabled') + '>交付</button>') + '</div>';
+  }
+  return h;
+}
+function islQuestDeliver(id){
+  var db = islDB(), Q = db.QUEST, list = islQuestList(), i, q = null, d, put, k, msg;
+  for(i = 0; i < list.length; i++){ if(list[i].id === id) q = list[i]; }
+  if(!q || q.done) return;
+  if(islHave(q.item) < q.n){ toast('數量還不夠'); return; }
+  if(!islConsume(q.item, q.n)){ toast('數量還不夠'); return; }
+  d = islItemDef(q.item);
+  ISL.quest.done[q.id] = 1; ISL.quest.total += 1;
+  ISL.shell += q.shell;
+  msg = '📜 交付 ' + d.e + d.n + ' ×' + q.n + ' → 🐚+' + q.shell;
+  if(q.give){ if(q.give.kind === 'tech'){ ISL.tech += q.give.n; } else { put = islBagAdd(q.give.item, 2, q.give.n); if(put < q.give.n) islStoreAdd(q.give.item, 2, q.give.n - put); } msg += '、' + islQuestGiveText(q.give); }
+  playSfx('sfx-coin', 0.45);
+  toast(msg);
+  islLog('📜 完成阿獺的委託:' + d.e + d.n + ' ×' + q.n, null);
+  for(k = 0; k < Q.MS.length; k++){ if(ISL.quest.total >= Q.MS[k].at && ISL.quest.ms < k + 1){ ISL.quest.ms = k + 1; ISL.shell += Q.MS[k].shell; islLog('🏅 委託里程碑 ' + Q.MS[k].at + ' 件!🐚+' + Q.MS[k].shell, null); setTimeout((function(m){ return function(){ playSfx('sfx-powerup', 0.5); toast('🏅 委託累計 ' + m.at + ' 件!阿獺加送 🐚 ' + m.shell); }; })(Q.MS[k]), 900); } }
+  islHud(); islSave('quest');
+  islDialog([Q.thanks[(ISL.quest.total + ISL.day) % Q.thanks.length]], { who: 'npc', img: db.SHOP.npc.img, e: db.SHOP.npc.e }, function(){ islShopOpen('quest'); });
 }
 
 /* ── 乙 遺跡地下層(探索戰鬥=工具配對+一題) ── */
@@ -14656,8 +14803,10 @@ window.islShopOpen = function(tab){
   if(first){ ISL.flags.shopTold = true; islLog('🦦 認識了阿獺雜貨鋪', S.npc.img); islDialog(S.npc.hello, { who: 'npc', img: S.npc.img, e: S.npc.e }, function(){ islShopOpen(tab); }); islSave('shop'); return; }
   h += '<div class="isl-bagbox"><h3>' + S.npc.e + ' 阿獺雜貨鋪 <span style="font-size:15px;opacity:.85">🐚 ' + ISL.shell + '</span><span class="grow"></span><button data-act="close">✕</button></h3>';
   h += '<div class="isl-shop-npc">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span style=&quot;font-size:40px&quot;>' + S.npc.e + '</span>\');">' : '<span style="font-size:40px">' + S.npc.e + '</span>') + '<div class="say">' + islEsc(S.npc.tips[(ISL.day + islCodexCount()) % S.npc.tips.length]) + '</div></div>';
-  h += '<div class="isl-tabs"><button class="' + (tab === 'buy' ? 'on' : '') + '" data-act="tab" data-k="buy">🛒 買東西</button><button class="' + (tab === 'sell' ? 'on' : '') + '" data-act="tab" data-k="sell">💰 賣東西</button></div>';
-  if(tab === 'buy'){
+  h += '<div class="isl-tabs"><button class="' + (tab === 'buy' ? 'on' : '') + '" data-act="tab" data-k="buy">🛒 買東西</button><button class="' + (tab === 'sell' ? 'on' : '') + '" data-act="tab" data-k="sell">💰 賣東西</button><button class="' + (tab === 'quest' ? 'on' : '') + '" data-act="tab" data-k="quest">📜 委託' + (islQuestOpenCount() ? ' <span style="font-size:12px;opacity:.85">' + islQuestOpenCount() + '</span>' : '') + '</button></div>';   /* ★ v1.107.0 委託板分頁 */
+  if(tab === 'quest' && !ISL.flags.questTold){ ISL.flags.questTold = true; islSave('quest'); islModalClose(); islDialog(db.QUEST.intro, { who: 'npc', img: S.npc.img, e: S.npc.e }, function(){ islShopOpen('quest'); }); return; }   /* ★ v1.107.0 第一次看委託板:阿獺介紹 */
+  if(tab === 'quest'){ h += islQuestPaint(); }
+  else if(tab === 'buy'){
     for(i = 0; i < S.buy.length; i++){
       it = S.buy[i];
       if(it.needZone && !ISL.zones[it.needZone].unlocked) continue;
@@ -14679,6 +14828,7 @@ window.islShopOpen = function(tab){
     var a = t.getAttribute('data-act'), kk = t.getAttribute('data-k'), def = null, pp, j, r, nn;
     if(a === 'close'){ islModalClose(); return; }
     if(a === 'tab'){ islShopOpen(kk); return; }
+    if(a === 'quest'){ islQuestDeliver(kk); return; }   /* ★ v1.107.0 */
     if(a === 'sell'){ nn = t.getAttribute('data-n') === 'all' ? islHave(kk) : 1; r = islSellTake(kk, nn); if(r.n <= 0){ toast('沒有可以賣的'); return; } ISL.shell += r.val; ISL.shop.sold += r.n; playSfx('sfx-coin', 0.4); toast('💰 賣出 ' + islItemDef(kk).e + islItemDef(kk).n + ' ×' + r.n + ' → 🐚+' + r.val); islHud(); islShopOpen('sell'); islSave('shop'); return; }
     if(a === 'buy'){
       for(j = 0; j < S.buy.length; j++){ if(S.buy[j].id === kk) def = S.buy[j]; }
