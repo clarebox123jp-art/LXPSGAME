@@ -1,6 +1,7 @@
 /* ============================================================================
  * 🏝 像素荒島求生記 — 資料表(minigame/minigame_island_db.js)
  * ============================================================================
+ * ★ v1.21.0(2026-09-13・老師四項)— ACTS.gather.n「採集植物」→「採集」;漂流木/礁岩碎石改用專屬圖鍵 node_drift/node_beachrock(island_node_drift.png/island_node_beachrock.png,缺圖退 emoji);7 道料理 ITEMS.img 接 res_d_<id>(island_res_d_*.png);12 種裝飾加 img:deco_<id>(island_deco_*.png);皆為選配,圖上傳即生效。
  * ★ v1.20.0(2026-09-13・老師七項)— ①SHOP.sell 品質倍率改 ★ ×1、★★ ×2、★★★ ×3(index islSellTake)③沙灘新增「漂流木」(gives wood)與「礁岩碎石」(gives stone)兩種每日資源點 + 撿取物加 wood/stone(遊戲初期營火要木 5 石 3,舊版沙灘只出纖維/野果,森林又要營火才開 → 死鎖)④AP 基礎 10、各活動 AP 不同(ACTS.ap:採集/捕魚/打撈/生火/烹飪/播種 1,伐木/採石/建造/馴養/鋪水道/研究/製作 2)+ AP_EXTRA 清單(上課/工程修復/地下層)⑤採集 QTE 依資源分輕/中/重(GATHER_FORCE:輕=野果/野菇/葉/草藥/種子/羽毛/貝殼/小石;重=木材/石頭/鐵礦/水晶/遺物;其餘中)⑥AP 用完的角色泡泡 TIRED_LINES
  * ★ v1.19.0(2026-09-13・老師六項)— ①島名詞庫擴充:ISLAND_ADJ 20→60、ISLAND_NOUN 18→60(60×60=3600 種組合,創角/改名改為兩個可捲動下拉選單+自由輸入) ②STAT_MAX 20→50、新增 SKILL_MAX=50(技能等級上限) ③IMG 表新增分層造型 24 張(膚色×4 基底身體 base_<body>_s0~3 / 髮型×4 hair_<body>_h0~3 / 服裝×4 cloth_<body>_c0~3,皆 768×384、6 欄×3 列 128px 格;缺圖自動退回既有整張 sheet),對應 minigame_index.html v1.116.0。
  * ★ v1.18.0(2026-09-13・老師兩批需求)— 11 區 SCENE.mask 依場景圖重建障礙(巨石/樹木/崖壁 '#',固定點強制可走,BFS 驗證 0 退步);ZONES.map 依 island_map_base.jpg 實圖重新標位。對應 minigame_index.html v1.115.0。
@@ -32,7 +33,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.20.0';   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
+  D.VER = 'v1.21.0';   /* ★ v1.21.0(2026-09-13):採集改名、漂流木/礁岩/料理/裝飾圖鍵。 */   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
   D.SAVE_VER = 1;          /* 存檔結構版本(缺欄位一律補預設值,絕不因存檔壞掉卡流程) */
   D.CELL = 64;             /* 一格 px */
   D.COLS = 32; D.ROWS = 24;
@@ -68,7 +69,11 @@ window.ISL_DB = (function(){
     gull_normal: 'island_npc_gull_normal.png', gull_happy: 'island_npc_gull_happy.png', gull_worry: 'island_npc_gull_worry.png',
     ui_dialog: 'island_ui_dialog.png', ui_bag: 'island_ui_bag.png',
     sheet_boy: 'island_body_sheet_boy.png', sheet_girl: 'island_body_sheet_girl.png',
-    ending_sail: 'island_ending_sail.jpg'   /* ★ v1.20.0 大地圖外圍海面底圖(已在 repo) */
+    ending_sail: 'island_ending_sail.jpg',   /* ★ v1.20.0 大地圖外圍海面底圖(已在 repo) */
+    /* ★ v1.21.0 選配(尚未上傳,缺圖退 emoji):沙灘漂流木/礁岩碎石資源點(192)、7 道料理(128)、12 種裝飾(128) */
+    node_drift: 'island_node_drift.png', node_beachrock: 'island_node_beachrock.png',
+    res_d_fish: 'island_res_d_fish.png', res_d_jam: 'island_res_d_jam.png', res_d_soup: 'island_res_d_soup.png', res_d_stew: 'island_res_d_stew.png', res_d_egg: 'island_res_d_egg.png', res_d_bread: 'island_res_d_bread.png', res_d_pudding: 'island_res_d_pudding.png',
+    deco_pot: 'island_deco_pot.png', deco_fence: 'island_deco_fence.png', deco_lamp: 'island_deco_lamp.png', deco_rug: 'island_deco_rug.png', deco_chime: 'island_deco_chime.png', deco_flower: 'island_deco_flower.png', deco_table: 'island_deco_table.png', deco_bed: 'island_deco_bed.png', deco_statue: 'island_deco_statue.png', deco_koinobori: 'island_deco_koinobori.png', deco_mirror: 'island_deco_mirror.png', deco_vase: 'island_deco_vase.png'
   };
   /* ★ v1.19.0 分層造型(老師:主角造型新增 髮型/髮色/膚色/服裝)—— 每張 768×384、6 欄×3 列(正面/背面/側面朝右)、128px 格、角色置中、腳底貼格底:
    *   base_<boy|girl>_s0~s3  = 光頭基底身體(4 種膚色:淺/自然/小麥/深),只穿內搭背心短褲;
@@ -99,13 +104,13 @@ window.ISL_DB = (function(){
     egg:      { n:'蛋',     e:'🥚', img:'res_egg',      cat:'food' },
     milk:     { n:'羊奶',   e:'🥛', img:'res_milk',     cat:'food' },
     grain:    { n:'小米',   e:'🌾', img:'res_grain',    cat:'food' },
-    d_fish:   { n:'烤魚',     e:'🐟', img:'', cat:'dish', eat:{hp:30, ap:0} },
-    d_jam:    { n:'野果醬',   e:'🫙', img:'', cat:'dish', eat:{hp:10, ap:1} },
-    d_soup:   { n:'野菇湯',   e:'🍲', img:'', cat:'dish', eat:{hp:40, ap:0} },
-    d_stew:   { n:'鮮魚菇湯', e:'🥘', img:'', cat:'dish', eat:{hp:30, ap:1} },
-    d_egg:    { n:'煎蛋',     e:'🍳', img:'', cat:'dish', eat:{hp:25, ap:0} },
-    d_bread:  { n:'小米餅',   e:'🥞', img:'', cat:'dish', eat:{hp:20, ap:1} },
-    d_pudding:{ n:'羊奶布丁', e:'🍮', img:'', cat:'dish', eat:{hp:20, ap:2} },
+    d_fish:   { n:'烤魚',     e:'🐟', img:'res_d_fish', cat:'dish', eat:{hp:30, ap:0} },
+    d_jam:    { n:'野果醬',   e:'🫙', img:'res_d_jam', cat:'dish', eat:{hp:10, ap:1} },
+    d_soup:   { n:'野菇湯',   e:'🍲', img:'res_d_soup', cat:'dish', eat:{hp:40, ap:0} },
+    d_stew:   { n:'鮮魚菇湯', e:'🥘', img:'res_d_stew', cat:'dish', eat:{hp:30, ap:1} },
+    d_egg:    { n:'煎蛋',     e:'🍳', img:'res_d_egg', cat:'dish', eat:{hp:25, ap:0} },
+    d_bread:  { n:'小米餅',   e:'🥞', img:'res_d_bread', cat:'dish', eat:{hp:20, ap:1} },
+    d_pudding:{ n:'羊奶布丁', e:'🍮', img:'res_d_pudding', cat:'dish', eat:{hp:20, ap:2} },
     ore:      { n:'鐵礦',   e:'🟫', img:'res_ore',      cat:'res' },    /* ★ P3-a 洞窟採石產;電路研究材料 */
     crystal:  { n:'水晶',   e:'💎', img:'res_crystal',  cat:'misc' },
     herb:     { n:'草藥',   e:'🍀', img:'res_herb',     cat:'res' },    /* ★ P3-b 懸崖;治療替代材料 */
@@ -230,9 +235,9 @@ window.ISL_DB = (function(){
       bush:  { n:3, minGap:2, act:'gather', node:'node_bush', e:'🌳', gives:'berry', label:'構樹果叢',
                pool:[{x:8,y:5},{x:19,y:6},{x:25,y:8},{x:6,y:14},{x:17,y:14},{x:29,y:6}] },
       /* ★ v1.20.0 老師:遊戲初期拿不到木材/石頭(營火要木 5 石 3,森林又要營火才開)→ 沙灘岸邊每天有漂流木與礁岩碎石可採(重力道 QTE) */
-      drift: { n:2, minGap:2, act:'gather', node:'node_stump', e:'🪵', gives:'wood', label:'漂流木',
+      drift: { n:2, minGap:2, act:'gather', node:'node_drift', e:'🪵', gives:'wood', label:'漂流木',
                pool:[{x:5,y:13},{x:12,y:13},{x:20,y:13},{x:27,y:13}] },
-      rocks: { n:2, minGap:2, act:'gather', node:'node_stone', e:'🪨', gives:'stone', label:'礁岩碎石',
+      rocks: { n:2, minGap:2, act:'gather', node:'node_beachrock', e:'🪨', gives:'stone', label:'礁岩碎石',
                pool:[{x:12,y:6},{x:22,y:5},{x:15,y:10},{x:26,y:10}] }
     },
     pick:{ n:[4,6], minGap:3, items:['shell','pebble','feather','berry','wood','stone','wood','stone'] },   /* ★ v1.20.0 沙灘上的樹枝(木材)與石頭也可撿 */
@@ -723,21 +728,21 @@ window.ISL_DB = (function(){
 
   /* ── ★ P2-b 裝飾(第十五/二十二章):舒適度=各裝飾 comfort 總和 + 帳篷加成;可在營地自由拖曳擺放 ── */
   D.DECOS = [
-    { id:'pot',    n:'盆栽',     e:'🪴', comfort:2, cost:{fiber:2, seed:1},           d:'植物會行光合作用,還能讓人心情好。' },
-    { id:'fence',  n:'小柵欄',   e:'🚧', comfort:2, cost:{wood:3},                    d:'把營地圍出邊界。' },
-    { id:'lamp',   n:'路燈',     e:'🏮', comfort:3, cost:{wood:2, fiber:1, shell:1},  d:'夜裡的一點光,像家。' },
-    { id:'rug',    n:'地毯',     e:'🧶', comfort:3, cost:{fiber:6},                   d:'纖維編織,踩起來不硌腳。' },
-    { id:'chime',  n:'貝殼風鈴', e:'🐚', comfort:3, cost:{shell:5, fiber:1},          d:'風吹過就叮叮響——聲音是振動傳來的。' },
-    { id:'flower', n:'花圃',     e:'🌸', comfort:3, cost:{seed:3, water:1},           d:'花吸引蜜蜂蝴蝶來傳粉。' },
-    { id:'table',  n:'桌椅',     e:'🪑', comfort:4, cost:{wood:8},                    d:'終於可以好好坐著吃飯。' },
-    { id:'bed',    n:'床',       e:'🛏', comfort:5, cost:{wood:6, fiber:6, leaf:3},   d:'睡得好,明天才有力氣。' },
-    { id:'statue', n:'貝殼雕像', e:'🗿', comfort:5, cost:{stone:12, shell:8},         d:'島上的紀念碑。' }
+    { id:'pot',    n:'盆栽',     e:'🪴', img:'deco_pot', comfort:2, cost:{fiber:2, seed:1},           d:'植物會行光合作用,還能讓人心情好。' },
+    { id:'fence',  n:'小柵欄',   e:'🚧', img:'deco_fence', comfort:2, cost:{wood:3},                    d:'把營地圍出邊界。' },
+    { id:'lamp',   n:'路燈',     e:'🏮', img:'deco_lamp', comfort:3, cost:{wood:2, fiber:1, shell:1},  d:'夜裡的一點光,像家。' },
+    { id:'rug',    n:'地毯',     e:'🧶', img:'deco_rug', comfort:3, cost:{fiber:6},                   d:'纖維編織,踩起來不硌腳。' },
+    { id:'chime',  n:'貝殼風鈴', e:'🐚', img:'deco_chime', comfort:3, cost:{shell:5, fiber:1},          d:'風吹過就叮叮響——聲音是振動傳來的。' },
+    { id:'flower', n:'花圃',     e:'🌸', img:'deco_flower', comfort:3, cost:{seed:3, water:1},           d:'花吸引蜜蜂蝴蝶來傳粉。' },
+    { id:'table',  n:'桌椅',     e:'🪑', img:'deco_table', comfort:4, cost:{wood:8},                    d:'終於可以好好坐著吃飯。' },
+    { id:'bed',    n:'床',       e:'🛏', img:'deco_bed', comfort:5, cost:{wood:6, fiber:6, leaf:3},   d:'睡得好,明天才有力氣。' },
+    { id:'statue', n:'貝殼雕像', e:'🗿', img:'deco_statue', comfort:5, cost:{stone:12, shell:8},         d:'島上的紀念碑。' }
   ];
   D.COMFORT_TIERS = [ { at:10, t:'睡覺多回 10 體力' }, { at:20, t:'明日 AP +1' }, { at:35, t:'夜襲機率 −10%' }, { at:50, t:'睡覺體力全滿' } ];
 
   /* ── 活動定義(第四章＋第十六章):knowledge(知識操作)＋quality(品質小遊戲) ── */
   D.ACTS = {
-    gather: { n:'採集植物', e:'🌿', skill:'gather', stat:'dex', ap:1, sec:30, bgm:'bgm-play',
+    gather: { n:'採集', e:'🌿', skill:'gather', stat:'dex', ap:1, sec:30, bgm:'bgm-play',
               qualityName:'輕輕摘', qualityHint:'長按拉扯,在果實掉下前的黃區放手!太用力果實會壓爛。' },
     chop:   { n:'伐木',     e:'🪓', skill:'chop',   stat:'pow', ap:2, sec:30, bgm:'bgm-play',
               qualityName:'連續三斧', qualityHint:'斧頭來回擺,在綠色甜蜜點時點下!三次綠區越來越窄。' },
@@ -1312,9 +1317,9 @@ window.ISL_DB = (function(){
             d_fish:4, d_jam:3, d_soup:5, d_stew:6, d_egg:4, d_bread:4, d_pudding:6 }
   };
   /* 商店限定裝飾:shop:true → 裝飾面板不列入製作清單(cost 空),只能向阿獺購買 */
-  D.DECOS.push({ id:'koi',    n:'鯉魚旗',   e:'🎏', comfort:4, cost:{}, shop:true, d:'風一吹就鼓起來——風是流動的空氣。' });
-  D.DECOS.push({ id:'mirror', n:'貝殼鏡',   e:'🪞', comfort:5, cost:{}, shop:true, d:'光遇到平滑的面會反射,所以照得到自己。' });
-  D.DECOS.push({ id:'vase',   n:'古代花瓶', e:'🏺', comfort:6, cost:{}, shop:true, d:'黏土燒過變成陶,不怕水也不會爛。' });
+  D.DECOS.push({ id:'koi',    n:'鯉魚旗',   e:'🎏', img:'deco_koinobori', comfort:4, cost:{}, shop:true, d:'風一吹就鼓起來——風是流動的空氣。' });
+  D.DECOS.push({ id:'mirror', n:'貝殼鏡',   e:'🪞', img:'deco_mirror', comfort:5, cost:{}, shop:true, d:'光遇到平滑的面會反射,所以照得到自己。' });
+  D.DECOS.push({ id:'vase',   n:'古代花瓶', e:'🏺', img:'deco_vase', comfort:6, cost:{}, shop:true, d:'黏土燒過變成陶,不怕水也不會爛。' });
 
   /* ── 📖 自然圖鑑(29.7):id 對應 spawn 的 kind(別名見 CODEX_ALIAS)、撿取物品、puzzle 區、tech id、料理 id、魔物 k ── */
   D.CODEX_CATS = [
