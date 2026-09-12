@@ -15,6 +15,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.112.0(2026-09-12)
+     ★ v1.112.0(2026-09-12・老師「檢測 iPad 版所有介面尺寸/位置/字體/捲動」)— 🏝 用真 Chromium 以 iPad 1024×768/1180×820 逐畫面截圖量測:
+       ①重大:island-style 內 @media (max-height:520px){ 自 v1.90.0 起沒關,v1.91.0 之後追加的所有規則(防衛戰/捕魚/打撈/預載/結局/v1.111.0 放大覆寫)在 iPad 上全部沒生效 → 補 }。
+       ②HUD 改固定兩列(狀態列/功能列靠右),不再把回營/地圖/存檔/離開擠出畫面;主程式全域 button/.btn min-height 與 padding 不再命中荒島按鈕(HUD 大圓、色票橢圓)。
+       ③創角:.prev .big 誤放大確認鈕(改名 .pv)、左欄可捲+子項不壓扁;④活動區 min-height:0+可捲、水道/釘子方陣以高度為準、提示條小人不再垂出;
+       ⑤營地側欄改雙欄格線、營地格不再用 vh;⑥留言板署名/圖鑑出處字級 +1.5px。對應 island_db v1.16.0(零改動)、sw v1.82.0。
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.111.0(2026-09-12)
+     ★ v1.111.0(2026-09-12・老師「繼續優化荒島求生,仔細檢查除錯,視窗和字體全部放大」)— 🏝 ①修 zoom 座標 bug:v1.109.0 加 zoom 後搖桿/點地走/地圖拖曳縮放/拖曳分身/飄字全差一個倍數,
+       新增 islZk()(根容器真實寬÷版面寬)換算 8 處;②zoom 1.2→1.3 + island-style 尾端整段放大覆寫(彈窗/對白框/題目卡/結算卡/物品包/商店/創角/HUD/側欄/防衛/結局,寬 +12~15%、字 +2~4px)、
+       vw 全改 %;③除錯:營地未知建築 id 守門、離開荒島時活動計時器/拖曳監聽收尾、知識題回呼與釣魚排程加守門、islActBody 換畫面清舊 onclick。對應 island_db v1.16.0(零改動)、sw v1.81.0。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.110.0(2026-09-12)
      ★ v1.110.0(2026-09-12・接續好友連線合作)— 拜訪好友的島完工:加好友碼列表「🚪拜訪」→ 轉場交易 slotUids(最多4人)→ 讀好友名片取得已解鎖區域/簡化建築清單 → 進地圖只顯示島主的區域 → 心跳回報位置+onSnapshot 畫出其他來訪者 → 離線/切背景自動標 npc,島主開機讀 notices 顯示。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.109.0(2026-09-12)
@@ -3724,7 +3734,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      ⚠ 容器層一律用 .hidden 切換,不寫 display:…!important(鐵律)。z-index 60 < #toast 99,toast 仍蓋得住。 -->
 <style id="island-style">
 #island-root{position:fixed;left:0;top:0;right:0;bottom:0;z-index:60;background:#0b1e2c;color:#fff;display:flex;flex-direction:column;overflow:hidden;
-  zoom:1.2;   /* ★ v1.109.0 老師需求「字體、按鈕介面都再放大」:整個荒島畫面統一放大 20%(fonts/padding/圖示等比放大),觸控座標與畫面渲染一致,不逐一改每條 px 數值 */
+  zoom:1.3;   /* ★ v1.111.0 老師「視窗和字體全部放大」:1.2→1.3(座標換算見 islZk) */   /* ★ v1.109.0 老師需求「字體、按鈕介面都再放大」:整個荒島畫面統一放大 20%(fonts/padding/圖示等比放大),觸控座標與畫面渲染一致,不逐一改每條 px 數值 */
   font-family:'Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','M PLUS Rounded 1c','Nunito',sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}   /* ★ v1.109.0 中文字一律先吃『Noto Sans TC』(中黑體、經 Google Fonts 載入、字集完整不缺字),圓體字型退到最後只給拉丁字母/數字用 */
 #island-root *{box-sizing:border-box;}
 #island-root button{font-family:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
@@ -3850,7 +3860,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-camp{width:100%;height:100%;display:flex;background:radial-gradient(ellipse at 50% 30%,#3d7a3f,#1f4a2b 70%);position:relative;}
 #isl-camp-bg{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;opacity:.85;}
 #isl-camp-grid{position:relative;flex:1;display:flex;align-items:center;justify-content:center;padding:10px;}
-#isl-camp-cells{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(92vw,420px,80vh);aspect-ratio:1;}
+#isl-camp-cells{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(92%,420px,80vh);aspect-ratio:1;}
 .isl-cell{border:3px dashed rgba(255,255,255,.4);border-radius:14px;background:rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:46px;color:#fff;position:relative;padding:0;overflow:hidden;}
 .isl-cell.empty{font-size:30px;opacity:.7;}
 .isl-cell.built{border-style:solid;border-color:#ffd166;background:rgba(255,209,102,.12);}
@@ -3874,7 +3884,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .isl-pen-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.15);font-size:17px;}
 .isl-pen-row .an{font-size:38px;width:50px;text-align:center;}
 .isl-pen-row .nm{flex:1;line-height:1.3;}
-.isl-pipes{display:grid;gap:4px;width:min(90vw,400px);margin:6px auto;background:rgba(0,0,0,.3);padding:6px;border-radius:14px;}
+.isl-pipes{display:grid;gap:4px;width:min(90%,400px);margin:6px auto;background:rgba(0,0,0,.3);padding:6px;border-radius:14px;}
 .isl-pipe{aspect-ratio:1;border-radius:8px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);position:relative;padding:0;overflow:hidden;transition:transform .12s;}
 .isl-pipe:active{transform:scale(.94);}
 .isl-pipe i{position:absolute;background:#9ecbf0;}
@@ -3884,7 +3894,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .isl-pipe .c{left:38%;top:38%;width:24%;height:24%;border-radius:4px;}
 .isl-pipe .pe{position:absolute;font-size:16px;line-height:1;pointer-events:none;}
 .isl-pipe .pe.src{left:2px;top:1px;} .isl-pipe .pe.dst{right:2px;bottom:1px;}
-.isl-recipe{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;width:min(92vw,560px);color:#fff;border:2px solid rgba(255,255,255,.2);}
+.isl-recipe{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;width:min(96%,560px);color:#fff;border:2px solid rgba(255,255,255,.2);}
 .isl-recipe.can{border-color:#ffd166;}
 .isl-recipe .re{font-size:38px;}
 .isl-recipe .rn{flex:1;font-size:16px;line-height:1.35;}
@@ -3926,7 +3936,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .isl-act-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:8px;text-shadow:0 2px 4px #000;}
 .isl-act-sub{font-size:17px;text-align:center;opacity:.9;margin-bottom:10px;}
 /* Tap 引擎:植物部位 */
-.isl-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(92vw,560px);}
+.isl-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(96%,560px);}
 .isl-part{background:rgba(255,255,255,.1);border:3px solid rgba(255,255,255,.3);border-radius:16px;padding:10px 6px;font-size:44px;text-align:center;color:#fff;line-height:1.1;animation:islSway 2.6s ease-in-out infinite;}
 .isl-part small{display:block;font-size:17px;font-weight:700;margin-top:4px;}
 .isl-part:active{transform:scale(.95);}
@@ -3936,7 +3946,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @keyframes islSway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 @keyframes islShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 /* 題目卡 */
-.isl-quiz{width:min(94vw,640px);background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);border-radius:18px;padding:14px;}
+.isl-quiz{width:min(96%,640px);background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);border-radius:18px;padding:14px;}
 .isl-quiz .q{font-size:22px;font-weight:700;margin-bottom:12px;line-height:1.35;}
 .isl-quiz .hintbtn{float:right;background:#8a6d1e;border:2px solid #ffd166;color:#fff;border-radius:999px;padding:4px 12px;font-size:15px;font-weight:700;}
 .isl-quiz .opts button.hintglow{box-shadow:0 0 16px #ffd166;border-color:#ffd166;}
@@ -3947,7 +3957,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .isl-quiz .opts button:disabled{opacity:.9;}
 .isl-quiz .why{margin-top:10px;font-size:17px;color:#ffd166;min-height:24px;}
 /* QTE 條 */
-.isl-qte{width:min(92vw,620px);text-align:center;}
+.isl-qte{width:min(96%,620px);text-align:center;}
 .isl-qte-obj{font-size:88px;line-height:1;margin:2px 0 8px;}   /* ★ v1.109.0 QTE 畫面的採集物資放大圖 */
 .isl-qte-obj img{width:132px;height:132px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));}
 .isl-qte .bar{position:relative;height:46px;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);border-radius:23px;overflow:hidden;margin:14px 0;}
@@ -3956,14 +3966,14 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .isl-qte .bar .zone.crit{background:rgba(255,255,255,.55);}
 .isl-qte .bar .ptr{position:absolute;top:-4px;width:10px;height:54px;margin-left:-5px;background:#fff;border-radius:4px;box-shadow:0 0 8px #fff;}
 .isl-qte .bar .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7bed9f,#ffd166,#ff7b7b);}
-.isl-qte .big{width:min(80vw,320px);height:88px;border-radius:44px;background:#ffd166;color:#333;border:5px solid #fff;font-size:30px;font-weight:900;box-shadow:0 6px 16px rgba(0,0,0,.45);}
+.isl-qte .big{width:min(80%,320px);height:88px;border-radius:44px;background:#ffd166;color:#333;border:5px solid #fff;font-size:30px;font-weight:900;box-shadow:0 6px 16px rgba(0,0,0,.45);}
 .isl-qte .big:active{transform:scale(.96);}
 .isl-qte .cnt{font-size:20px;margin-top:8px;}
 .isl-qte .fx{font-size:32px;font-weight:900;min-height:40px;color:#7bed9f;text-shadow:0 2px 4px #000;}
 .isl-qte .tree{font-size:110px;line-height:1;transition:transform .15s;}
 .isl-qte .tree.hit{transform:rotate(-6deg) scale(1.05);}
 /* 拖曳引擎 */
-.isl-drag{width:min(96vw,700px);display:flex;flex-direction:column;gap:10px;align-items:center;}
+.isl-drag{width:min(100%,700px);display:flex;flex-direction:column;gap:10px;align-items:center;}
 .isl-slots{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
 .isl-slot{width:150px;min-height:110px;border:3px dashed rgba(255,255,255,.45);border-radius:16px;background:rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:30px;position:relative;padding:6px;}
 .isl-slot small{font-size:15px;font-weight:700;display:block;}
@@ -3979,12 +3989,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 火苗 */
 .isl-flame{font-size:120px;line-height:1;transition:transform .2s;transform-origin:50% 100%;}
 /* 釘子 */
-.isl-nails{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:min(80vw,420px);}
+.isl-nails{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:min(80%,420px);}
 .isl-nail{aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);font-size:48px;display:flex;align-items:center;justify-content:center;}
 .isl-nail.on{background:#ffd166;color:#333;box-shadow:0 0 18px #ffd166;}
 .isl-nail.done{background:rgba(123,237,159,.4);border-color:#7bed9f;}
 /* 結算 */
-.isl-result{width:min(92vw,560px);background:rgba(255,255,255,.08);border:2px solid #ffd166;border-radius:20px;padding:16px;text-align:center;}
+.isl-result{width:min(96%,560px);background:rgba(255,255,255,.08);border:2px solid #ffd166;border-radius:20px;padding:16px;text-align:center;}
 .isl-result .stars{font-size:44px;letter-spacing:6px;margin:6px 0;}
 .isl-result .gain{font-size:24px;font-weight:900;color:#ffd166;margin:6px 0;}
 .isl-result .kc{background:rgba(0,0,0,.35);border-radius:12px;padding:10px;font-size:17px;text-align:left;margin:8px 0;line-height:1.4;}
@@ -3998,22 +4008,22 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 .isl-btn:disabled{opacity:.45;}
 /* ── 通用彈窗 / 對白 ── */
 #isl-modal{position:absolute;left:0;top:0;right:0;bottom:0;z-index:40;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:14px;}
-#isl-modal .box{width:min(94vw,600px);max-height:90%;overflow-y:auto;background:#17364b;border:3px solid #5fb3d9;border-radius:22px;padding:18px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6);}
+#isl-modal .box{width:min(96%,600px);max-height:90%;overflow-y:auto;background:#17364b;border:3px solid #5fb3d9;border-radius:22px;padding:18px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.6);}
 #isl-modal .box h3{margin:0 0 10px;font-size:24px;}
 #isl-modal .box p{font-size:18px;line-height:1.45;margin:6px 0;}
 #isl-modal .box .row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px;}
 #isl-dialog{position:absolute;left:0;right:0;bottom:0;z-index:38;padding:10px 12px 14px;background:linear-gradient(transparent,rgba(0,0,0,.75) 30%);}
-#isl-dialog .dbox{position:relative;width:min(96vw,760px);margin:0 auto;background:#5a3b1e;border:4px solid #d9a441;border-radius:18px;padding:14px 18px 14px 110px;min-height:104px;font-size:21px;line-height:1.45;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.5);}
+#isl-dialog .dbox{position:relative;width:min(98%,760px);margin:0 auto;background:#5a3b1e;border:4px solid #d9a441;border-radius:18px;padding:14px 18px 14px 110px;min-height:104px;font-size:21px;line-height:1.45;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.5);}
 #isl-dialog .dbox .por{position:absolute;left:12px;top:10px;width:84px;height:84px;font-size:60px;line-height:84px;text-align:center;}
 #isl-dialog .dbox .por img{width:84px;height:84px;object-fit:contain;}
 #isl-dialog .dbox .nxt{position:absolute;right:14px;bottom:8px;font-size:15px;opacity:.85;animation:islBounce .6s ease-in-out infinite alternate;}
 #isl-dialog .dbox .skip{position:absolute;right:12px;top:-40px;background:rgba(0,0,0,.6);color:#fff;border:2px solid rgba(255,255,255,.5);border-radius:999px;padding:4px 12px;font-size:15px;}
-#isl-tut{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:37;background:rgba(255,209,102,.95);color:#333;border-radius:14px;padding:8px 16px;font-size:17px;font-weight:700;max-width:92vw;box-shadow:0 4px 12px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;}
+#isl-tut{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:37;background:rgba(255,209,102,.95);color:#333;border-radius:14px;padding:8px 16px;font-size:17px;font-weight:700;max-width:92%;box-shadow:0 4px 12px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;}
 #isl-tut button{background:#333;color:#fff;border:0;border-radius:999px;padding:4px 12px;font-size:14px;}
 /* ── 創角 ── */
 #isl-create{width:100%;height:100%;display:flex;background:#0f2a3c;}
 #isl-create .prev{width:38%;flex:0 0 38%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 40%,#2a6f97,#0f2a3c 70%);}
-#isl-create .prev .big{width:64px;height:64px;transform:scale(3);transform-origin:50% 50%;margin:70px 0;}
+#isl-create .prev .pv{width:64px;height:64px;transform:scale(3);transform-origin:50% 50%;margin:72px 0;}   /* ★ v1.112.0 由 .big 改名 .pv:原本選擇器 .prev .big 也命中確認鈕 .isl-btn.big,把「✅ 就是這樣!」放大 3 倍撐爆創角左欄(iPad 橫式實測鈕被切掉) */
 #isl-create .prev .nm{font-size:22px;font-weight:900;}
 #isl-create .prev input{font-size:20px;padding:8px 12px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;width:80%;text-align:center;font-family:inherit;}
 #isl-create .opts{flex:1;overflow-y:auto;padding:12px;}
@@ -4029,7 +4039,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-create .styles b{font-size:18px;display:block;}
 #isl-create .styles i{font-style:normal;color:#ffd166;}
 /* ── 物品包 / 倉庫 ── */
-.isl-bagbox{width:min(96vw,640px);background:#17364b;border:3px solid #5fb3d9;border-radius:22px;padding:14px;max-height:92%;overflow-y:auto;}
+.isl-bagbox{width:min(96%,640px);background:#17364b;border:3px solid #5fb3d9;border-radius:22px;padding:14px;max-height:92%;overflow-y:auto;}
 .isl-bagbox h3{margin:0 0 8px;font-size:22px;display:flex;align-items:center;gap:8px;}
 .isl-bagbox h3 .grow{flex:1;}
 .isl-bagbox h3 button{background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 10px;font-size:15px;}
@@ -4068,15 +4078,19 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
   #isl-hud{font-size:14px;gap:4px;padding:4px 6px;}
   #isl-hud .ih{padding:3px 7px;}
   #isl-camp-side{width:96px;flex-basis:96px;} #isl-camp-side button{font-size:13px;padding:6px 3px;}
-  #isl-create{flex-direction:column;} #isl-create .prev{width:100%;flex:0 0 40%;} #isl-create .prev .big{margin:40px 0;transform:scale(2.2);}
+  #isl-create{flex-direction:column;} #isl-create .prev{width:100%;flex:0 0 40%;} #isl-create .prev .pv{margin:40px 0;transform:scale(2.2);}
   .isl-quiz .q{font-size:19px;} .isl-quiz .opts button{font-size:17px;}
   #isl-dialog .dbox{font-size:18px;padding-left:96px;}
 }
 @media (max-height:520px){
   #isl-hud{min-height:38px;font-size:14px;}
-  #isl-create .prev .big{margin:36px 0;transform:scale(2);}
+  #isl-create .prev .pv{margin:36px 0;transform:scale(2);}
   .isl-part{font-size:34px;padding:6px;} .isl-part small{font-size:14px;}
   .isl-quiz .q{font-size:18px;} .isl-quiz .opts button{min-height:44px;font-size:16px;padding:8px;}
+}   /* ★ v1.112.0 重大修正:上面這個 @media (max-height:520px){ 自 v1.90.0 起從來沒有被關起來,導致 v1.91.0 以後追加在本 <style> 後面的所有規則
+       (防衛戰 #isl-def 系列/魔物/捕魚/打撈/預載進度/結局幻燈片與字幕/v1.111.0 全域放大覆寫……)全部被包在「螢幕高度 ≤520px」的條件裡,
+       iPad(768/820px 高)與桌機一律吃不到——防衛戰畫面在 iPad 上其實一直是無樣式狀態、v1.111.0 的字級放大在 iPad 上也從沒生效。
+       用真的 Chromium 量測 document.styleSheets 才發現(最後一條規則是整個 @media,裡面包了 330 條中的 200 多條)。補上這個 } 之後一切歸位。 */
 /* ── ★ v1.91.0 P2-a:防衛戰 / 捕魚 / 打撈 ── */
 #isl-def{width:100%;height:100%;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 55%,#3b2a12 0,#0a0f1a 55%);}
 #isl-def-fire{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px;font-size:90px;line-height:120px;text-align:center;filter:drop-shadow(0 0 30px #ffb347);}
@@ -4104,17 +4118,105 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 @keyframes islMonDie{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}
 #isl-def-wave{position:absolute;left:0;right:0;top:34%;text-align:center;font-size:40px;font-weight:900;text-shadow:0 3px 8px #000;pointer-events:none;z-index:5;animation:islBanner 1.6s ease forwards;}
 /* 捕魚 */
-.isl-fishbox{position:relative;width:min(92vw,560px);height:220px;background:linear-gradient(#4aa3df,#1c6aa6);border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.3);}
+.isl-fishbox{position:relative;width:min(96%,560px);height:220px;background:linear-gradient(#4aa3df,#1c6aa6);border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.3);}
 .isl-fishbox .bob{position:absolute;left:50%;top:40px;width:36px;height:36px;margin-left:-18px;font-size:32px;line-height:36px;text-align:center;transition:top .15s;}
 .isl-fishbox .bob.dip{top:110px;}
 .isl-fishbox .line{position:absolute;left:50%;top:0;width:2px;height:60px;background:rgba(255,255,255,.7);}
 .isl-fishbox .fishimg{position:absolute;font-size:38px;transition:left .8s linear,top .8s linear;}
-.isl-tension{position:relative;height:56px;width:min(92vw,560px);background:rgba(255,255,255,.12);border-radius:28px;border:3px solid rgba(255,255,255,.35);overflow:hidden;margin:10px auto;touch-action:none;}
+.isl-tension{position:relative;height:56px;width:min(96%,560px);background:rgba(255,255,255,.12);border-radius:28px;border:3px solid rgba(255,255,255,.35);overflow:hidden;margin:10px auto;touch-action:none;}
 .isl-tension .zone{position:absolute;top:0;bottom:0;background:rgba(123,237,159,.4);}
 .isl-tension .ndl{position:absolute;top:0;bottom:0;width:14px;margin-left:-7px;background:#fff;border-radius:7px;box-shadow:0 0 8px #fff;}
 /* 打撈 */
-.isl-sea{position:relative;width:min(96vw,700px);height:150px;background:linear-gradient(#5fb3d9,#2a6f97);border-radius:16px;overflow:hidden;border:3px solid rgba(255,255,255,.3);}
+.isl-sea{position:relative;width:min(100%,700px);height:150px;background:linear-gradient(#5fb3d9,#2a6f97);border-radius:16px;overflow:hidden;border:3px solid rgba(255,255,255,.3);}
 .isl-sea .isl-item{position:absolute;top:26px;transition:left .1s linear;}
+
+/* ══ ★ v1.111.0(2026-09-12・老師「視窗和字體全部放大」)— 荒島全域放大第二階段:純覆寫、舊規則一行未刪,放在本 <style> 最尾端靠「後者勝」生效。
+   ①#island-root zoom 1.2→1.3(整體再 +8%) ②所有彈窗/對白框/題目卡/結算卡/物品包/商店寬度上限 +12~15%、字級 +2~4px(合計約 1.25 倍於 v1.110.0)
+   ③寬度一律改用 % 不再用 vw(vw 在 zoom 容器內各瀏覽器解讀不一,可能超出畫面被切邊;% 永遠對容器算,安全)
+   ④手機/矮螢幕斷點原本的縮小值同步等比放大(仍比桌機小一級,但不再縮回 v1.110.0 以前的尺寸)。 ══ */
+#isl-hud{font-size:18px;min-height:52px;gap:7px;padding:6px 12px;}
+#isl-hud .ih{padding:5px 12px;} #isl-hud .ih.res{padding:5px 9px;} #isl-hud .ih.btn{font-size:17px;}
+#isl-zone-topinfo{font-size:17px;padding:7px 14px;}
+#isl-map-hint{font-size:17px;}
+#isl-act-btn{width:108px;height:108px;font-size:48px;} #isl-act-btn small{font-size:16px;}
+.isl-node .nl,.isl-poi .nl{font-size:15px;padding:2px 9px;}
+#isl-act-top{font-size:19px;padding:7px 14px;} #isl-act-hint{font-size:19px;min-height:60px;padding:9px 14px;}
+.isl-act-title{font-size:30px;} .isl-act-sub{font-size:19px;}
+.isl-part small{font-size:19px;}
+.isl-quiz{width:min(96%,720px);padding:16px;} .isl-quiz .q{font-size:25px;} .isl-quiz .opts button{font-size:22px;min-height:66px;padding:14px 10px;} .isl-quiz .why{font-size:19px;min-height:26px;} .isl-quiz .hintbtn{font-size:17px;padding:5px 14px;}
+.isl-qte{width:min(96%,680px);} .isl-qte .cnt{font-size:22px;} .isl-qte .fx{font-size:36px;min-height:44px;} .isl-qte .big{height:96px;border-radius:48px;font-size:33px;}
+.isl-slot{width:164px;min-height:120px;} .isl-slot small{font-size:17px;} .isl-slot .d{font-size:14.5px;}
+.isl-item{width:104px;height:104px;} .isl-item small{font-size:14.5px;}
+.isl-result{width:min(96%,640px);padding:18px;} .isl-result .gain{font-size:27px;} .isl-result .kc{font-size:19px;} .isl-result .exp{font-size:18px;} .isl-result .stars{font-size:48px;}
+.isl-btn{font-size:22px;padding:13px 24px;} .isl-btn.big{font-size:26px;padding:15px 32px;}
+#isl-modal .box{width:min(96%,700px);padding:20px;} #isl-modal .box h3{font-size:28px;} #isl-modal .box p{font-size:21px;} #isl-modal .box .row{gap:8px;margin-top:12px;}
+#isl-dialog .dbox{width:min(98%,860px);font-size:24px;min-height:118px;padding:16px 20px 18px 124px;} #isl-dialog .dbox .por{width:96px;height:96px;font-size:68px;line-height:96px;} #isl-dialog .dbox .por img{width:96px;height:96px;} #isl-dialog .dbox .nxt{font-size:17px;} #isl-dialog .dbox .skip{font-size:17px;padding:5px 14px;top:-44px;}
+#isl-tut{font-size:19px;padding:10px 18px;} #isl-tut button{font-size:16px;padding:5px 14px;}
+.isl-bagbox{width:min(96%,720px);padding:16px;} .isl-bagbox h3{font-size:25px;} .isl-bagbox h3 button{font-size:17px;padding:7px 12px;} .isl-bag-tools{font-size:18px;} .isl-bag-slot{font-size:40px;} .isl-bag-slot .n{font-size:17px;} .isl-bag-slot .q{font-size:13px;}
+.isl-store-row{font-size:19px;padding:7px 4px;} .isl-store-row .st{font-size:15px;} .isl-store-row .ic{font-size:32px;width:44px;}
+.isl-tabs button{font-size:17px;padding:9px 6px;min-width:96px;} .isl-tabs button small{font-size:13px;}
+.isl-codex-grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));} .isl-codex-card .nm{font-size:16px;} .isl-codex-card .wh{font-size:12.5px;} .isl-codex-card .ic{font-size:38px;height:54px;} .isl-codex-card .ic img{width:54px;height:54px;}
+.isl-shop-npc .say{font-size:16px;} .isl-shop-npc img{width:72px;height:72px;} .isl-sale{font-size:13px;}
+.isl-stat-row{font-size:19px;}
+.isl-pen-row{font-size:19px;} .isl-pen-row .an{font-size:42px;width:54px;}
+.isl-recipe{width:min(96%,600px);} .isl-recipe .rn{font-size:18px;} .isl-recipe .re{font-size:42px;}
+.isl-plot .pl{font-size:14.5px;}
+.isl-quest-row{font-size:18px;} .isl-quest-row .nm .st{font-size:14.5px;} .isl-quest-row .ic{font-size:33px;width:44px;}
+.isl-board-row{font-size:17px;} .isl-board-row .bd small{font-size:13px;} #isl-camp-board{font-size:15px;padding:7px 11px;line-height:1.35;} #isl-camp-board .who{font-size:12.5px;}
+#isl-camp-side{width:134px;flex-basis:134px;gap:7px;} #isl-camp-side button{font-size:17px;padding:9px 4px;}
+#isl-camp-cells{width:auto;height:min(100%,460px);max-width:92%;}   /* ★ v1.112.0 不再用 vh(zoom 容器內 vh 不縮放,80vh 在 iPad 會算成 614 版面 px 超出畫面);改以父容器高度為準 */
+.isl-cell .bn{font-size:15px;} .isl-cell .lv{font-size:14.5px;} .isl-cell.empty{font-size:33px;}
+#isl-create .prev .nm{font-size:24px;} #isl-create .prev input{font-size:22px;padding:9px 12px;} #isl-create .sec h4{font-size:20px;} #isl-create .sw button{font-size:20px;min-width:56px;height:56px;} #isl-create .sw button.col{width:48px;min-width:48px;height:48px;} #isl-create .styles button{font-size:16.5px;padding:9px 11px;} #isl-create .styles b{font-size:20px;}
+#isl-def-top{font-size:19px;} #isl-def-tools button small{font-size:14px;} #isl-def-tools.many button small{font-size:12px;}
+.isl-mon .hint{font-size:13px;} .isl-mon .cnt{font-size:15px;}
+.isl-helper .hn{font-size:13px;}
+#isl-preload .t{font-size:24px;}
+#isl-ending-cap{font-size:24px;} #isl-ending-cap small{font-size:16px;} #isl-ending .op{font-size:28px;} #isl-ending-credits{font-size:22px;} #isl-ending-credits h2{font-size:37px;} #isl-ending-credits .sub{font-size:17px;} #isl-ending-skip{font-size:15px;}
+.isl-float{font-size:24px;} .isl-hurt{font-size:24px;}
+.isl-coop-peer .pn{font-size:13px;}
+.isl-item.dragging{position:fixed;z-index:80;}   /* 拖曳分身 v1.111.0 起掛在 #island-root 內(吃同一個 zoom),z-index 在 root 堆疊脈絡裡 80 > 彈窗 40 */
+/* 手機直式 / 矮螢幕:仍比桌機小一級,但比 v1.110.0 的縮小值再放大 */
+@media (max-width:620px){
+  #isl-hud{font-size:15.5px;gap:4px;padding:4px 6px;} #isl-hud .ih{padding:3px 8px;} #isl-hud .ih.btn{font-size:15px;}
+  #isl-camp-side{width:108px;flex-basis:108px;} #isl-camp-side button{font-size:14.5px;padding:7px 3px;}
+  .isl-quiz .q{font-size:21px;} .isl-quiz .opts button{font-size:19px;}
+  #isl-dialog .dbox{font-size:20px;padding-left:108px;} #isl-dialog .dbox .por{width:84px;height:84px;font-size:60px;line-height:84px;} #isl-dialog .dbox .por img{width:84px;height:84px;}
+  .isl-slot{width:140px;min-height:104px;} .isl-item{width:88px;height:88px;}
+}
+@media (max-height:520px){
+  #isl-hud{min-height:40px;font-size:15.5px;}
+  .isl-part{font-size:34px;padding:6px;} .isl-part small{font-size:15px;}
+  .isl-quiz .q{font-size:20px;} .isl-quiz .opts button{min-height:48px;font-size:18px;padding:8px;}
+  #isl-act-btn{width:88px;height:88px;font-size:40px;}
+}
+
+/* ══ ★ v1.112.0(2026-09-12・老師「檢測 iPad 版所有介面尺寸/位置/字體/捲動」)— 用真的 Chromium(iPad 1024×768 / 1180×820,zoom 1.3)逐畫面截圖+量測後修正:
+   ①HUD 在 iPad 橫式塞不下(第1天/天氣/AP/HP/貝幣/資源/物品包 就佔滿 788 版面 px,回營/地圖/存檔/音樂/離開全被擠到畫面外,只能左右滑才看得到)
+     → 改成固定兩列:第一列狀態、第二列功能鈕靠右(.grow 改成整列斷行器),不再 overflow-x 捲動。
+   ②創角左欄:確認鈕被 .prev .big 的 scale(3) 誤放大(見上方 .pv 註解)+ 左欄超出畫面不能捲 → .prev 可捲動、內容用 auto margin 置中(不足高度時自動改從頂端排起)。
+   ③活動畫面 #isl-act-body 缺 min-height:0 ⇒ 內容一高就把底部提示條擠出畫面 6px(小人腳被切);營地側欄 18 顆鈕單欄要捲 3 個畫面 → 改雙欄格線。
+   ④留言板告示牌署名、圖鑑卡出處 12.5px(實際 16px)偏小 → 14/14.5px。 ══ */
+#island-root button{min-height:0;}   /* 主程式全域 button{min-height:52~64px} 會把荒島所有按鈕撐高(HUD 藥丸變成大圓、創角色票變橢圓),荒島按鈕各自有自己的高度 */
+#isl-hud button.ih,#isl-hud .ih.btn{box-shadow:none;min-height:40px;padding:5px 12px;}   /* 主程式全域 .btn/button 的 min-height 與 padding 也會命中 HUD 藥丸(天氣鈕是 span.btn) */
+#isl-hud{flex-wrap:wrap;overflow:visible;white-space:normal;row-gap:5px;column-gap:7px;padding:6px 10px;min-height:0;}
+#isl-hud .ih{white-space:nowrap;}
+#isl-hud .grow{flex:0 0 100%;height:0;margin:-3px 0 0;}   /* 整列斷行器:第一列狀態 / 第二列功能鈕 */
+#isl-hud-bag{margin-left:auto;}   /* 第二列靠右 */
+#isl-create .prev{overflow-y:auto;justify-content:flex-start;padding:10px 0;}
+#isl-create .prev > :first-child{margin-top:auto;} #isl-create .prev > :last-child{margin-bottom:auto;}   /* 高度夠時置中、不夠時從頂端排起可捲 */
+#isl-create .prev input{max-width:300px;}
+#isl-create .prev > *{flex-shrink:0;}   /* 左欄可捲動後,flex 子項不可再被壓扁(預覽框 64px 被壓成 43px 讓小人蓋到名字輸入框) */
+#isl-act-body{min-height:0;overflow-y:auto;justify-content:flex-start;}
+#isl-act-body > :first-child{margin-top:auto;} #isl-act-body > :last-child{margin-bottom:auto;}   /* 活動內容高度夠時置中,太高時(方格拼圖/釘子陣)改從頂端排起並可上下捲動,不再被切 */
+.isl-pipes{width:auto;height:min(100%,400px);max-width:90%;aspect-ratio:1;}   /* 水道 5×5 以可用高度為準(iPad 橫式活動區只剩約 380 版面 px) */
+.isl-nails{width:auto;height:min(100%,420px);max-width:80%;aspect-ratio:1;}
+#isl-act-hint .who{width:64px;height:64px;flex:0 0 64px;overflow:hidden;}
+#isl-act-hint .who .isl-chibi,#isl-act-hint .who .isl-pixchar{transform:scale(.9);transform-origin:50% 50%;}   /* 提示條小人(像素圖或手繪)縮 .9 置中,不再垂到畫面外 */
+#isl-camp-side{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;align-content:start;column-gap:6px;row-gap:6px;width:264px;flex-basis:264px;padding:8px 6px;}
+#isl-camp-side > div:first-child{grid-column:1 / -1;font-size:15px !important;}
+#isl-camp-side button{padding:9px 2px;font-size:16px;}
+#isl-camp-board .who{font-size:14px;} .isl-codex-card .wh{font-size:14.5px;}
+@media (max-width:620px){ #isl-camp-side{grid-template-columns:1fr;width:108px;flex-basis:108px;} }
 </style>
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
      層級(設計書 2.1):#isl-hud 固定頂欄 → 各畫面(#isl-create / #isl-map-wrap / #isl-zone / #isl-camp / #isl-act)
@@ -4195,7 +4297,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.110.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.112.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4204,7 +4306,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.110.0';   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.112.0';   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -12060,6 +12162,11 @@ function islDialog(lines, opts, cb){
 }
 function islDialogEnd(){ var d = $('isl-dialog'); d.classList.add('hidden'); d.innerHTML = ''; d.onclick = null; _IS.dlgQ = null; }
 window.islDialogSkip = function(){ if(_IS.dlgQ) _IS.dlgQ.skip(); };
+/* ★ v1.111.0 zoom 座標換算:#island-root 有 CSS zoom(整體放大),觸控/滑鼠事件的 clientX/Y 與 getBoundingClientRect() 都是「真實視窗 px」,
+   但 style.left/top、clientWidth、camera 位移全是「版面 px」(= 真實 px ÷ zoom)。v1.109.0 加 zoom 後搖桿/點地走/地圖拖曳/縮放的座標
+   全部差了一個 zoom 倍數(搖桿圓圈離手指 20%、地圖拖得比手指快、點地板走到旁邊去)。這裡用「根容器真實寬 ÷ 版面寬」當下量測倍率,
+   任何瀏覽器只要 rect 是視窗座標(Safari 一向如此、Chrome 128+ 標準化後亦然)都正確;沒有 zoom 時回 1,零副作用。 */
+function islZk(){ var r = $('island-root'), w, k; if(!r) return 1; w = r.offsetWidth; if(!w) return 1; k = r.getBoundingClientRect().width / w; return (k > 0.25 && k < 4) ? k : 1; }
 /* 飄字(HUD 旁 / 場景內) */
 function islFloatText(parent, x, y, txt){
   var e = document.createElement('div'); e.className = 'isl-float'; e.style.left = x + 'px'; e.style.top = y + 'px'; e.textContent = txt; parent.appendChild(e);
@@ -12111,6 +12218,7 @@ window.islExitNow = function(){   /* ★ v1.103.0 抽出供雲端讀檔失敗視
   if(_IS.coop){ islCoopHeartbeatSend(true); islCoopTeardown(); }   /* ★ v1.108.0 離開整個荒島模式時,若還在拜訪也要退出 */
   if(ISL) islSave('exit');
   islZoneStop();
+  islActTimerStop(); islDragTeardown(); _IS.act = null;   /* ★ v1.111.0 活動進行中按「離開」:計時器/拖曳監聽一併收掉,不留孤兒 setInterval 對已清空的畫面寫字 */
   _IS.on = false; _IS.loading = false;
   hide('island-root'); show('topbar');
   mgHome();
@@ -12153,7 +12261,7 @@ function islCreateAutoApplyMain(){
 }
 function islCreatePaint(){
   var db = islDB(), c = _islCr, h = '', i, sw;
-  h += '<div class="prev"><div class="nm">捏出你在島上的樣子</div><div class="big" id="isl-cr-prev">' + islChibiHtml(c, 'idle') + '</div>';
+  h += '<div class="prev"><div class="nm">捏出你在島上的樣子</div><div class="pv" id="isl-cr-prev">' + islChibiHtml(c, 'idle') + '</div>';
   h += '<input id="isl-cr-name" maxlength="8" placeholder="幫角色取個名字" value="' + islEsc(c.name) + '">';
   if(MG.user) h += '<button class="isl-btn ghost" onclick="islCreateApplyMain()">👤 一鍵套用我的主角造型</button>';
   h += '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:6px"><input id="isl-cr-island" maxlength="' + db.ISLAND_NAME_MAX + '" placeholder="島的名字" value="' + islEsc(c.islandName) + '" style="flex:1;max-width:180px"><button class="isl-btn ghost" style="padding:6px 10px;font-size:14px" onclick="islCreateRerollName()">🎲 換一個</button></div><div style="font-size:12px;opacity:.75;margin:2px 0 6px">這座無人島的名字,登島後角色面板還能改</div>'
@@ -12329,14 +12437,14 @@ function islMapApply(){
 function islMapBindDrag(){
   var w = $('isl-map-wrap'), st = null;
   if(w._islBound) return; w._islBound = true;
-  function pts(ev){ var a = [], i, t = ev.touches; if(t){ for(i = 0; i < t.length; i++) a.push({ x: t[i].clientX, y: t[i].clientY }); } else a.push({ x: ev.clientX, y: ev.clientY }); return a; }
+  function pts(ev){ var a = [], i, t = ev.touches, k = islZk(); if(t){ for(i = 0; i < t.length; i++) a.push({ x: t[i].clientX / k, y: t[i].clientY / k }); } else a.push({ x: ev.clientX / k, y: ev.clientY / k }); return a; }   /* ★ v1.111.0 ÷zoom → 版面 px */
   function down(ev){ var p = pts(ev); st = { p: p, x: _IS.mapX, y: _IS.mapY, s: _IS.mapScale, d: p.length === 2 ? Math.sqrt(Math.pow(p[0].x - p[1].x, 2) + Math.pow(p[0].y - p[1].y, 2)) : 0 }; _IS.mapMoved = false; }
   function move(ev){
-    if(!st) return; var p = pts(ev), dx, dy, d, ns, r = w.getBoundingClientRect();
+    if(!st) return; var p = pts(ev), dx, dy, d, ns, r = w.getBoundingClientRect(), k = islZk();
     if(p.length === 2 && st.p.length === 2){
       d = Math.sqrt(Math.pow(p[0].x - p[1].x, 2) + Math.pow(p[0].y - p[1].y, 2));
       ns = islClamp(st.s * (d / (st.d || 1)), _IS.mapMin, _IS.mapMin * 2.5);
-      var cx = (st.p[0].x + st.p[1].x) / 2 - r.left, cy = (st.p[0].y + st.p[1].y) / 2 - r.top;
+      var cx = (st.p[0].x + st.p[1].x) / 2 - r.left / k, cy = (st.p[0].y + st.p[1].y) / 2 - r.top / k;
       _IS.mapX = cx - (cx - st.x) * (ns / st.s); _IS.mapY = cy - (cy - st.y) * (ns / st.s); _IS.mapScale = ns; _IS.mapMoved = true;
     }else{
       dx = p[0].x - st.p[0].x; dy = p[0].y - st.p[0].y;
@@ -12348,7 +12456,7 @@ function islMapBindDrag(){
   function up(){ st = null; setTimeout(function(){ _IS.mapMoved = false; }, 50); }
   w.addEventListener('touchstart', down, { passive: true }); w.addEventListener('touchmove', move, { passive: false }); w.addEventListener('touchend', up); w.addEventListener('touchcancel', up);
   w.addEventListener('mousedown', function(ev){ if(ev.button !== 0) return; down(ev); }); window.addEventListener('mousemove', function(ev){ if(st && !ev.touches) move(ev); }); window.addEventListener('mouseup', up);
-  w.addEventListener('wheel', function(ev){ var ns = islClamp(_IS.mapScale * (ev.deltaY < 0 ? 1.1 : 0.9), _IS.mapMin, _IS.mapMin * 2.5), r = w.getBoundingClientRect(), cx = ev.clientX - r.left, cy = ev.clientY - r.top; _IS.mapX = cx - (cx - _IS.mapX) * (ns / _IS.mapScale); _IS.mapY = cy - (cy - _IS.mapY) * (ns / _IS.mapScale); _IS.mapScale = ns; islMapApply(); ev.preventDefault(); }, { passive: false });
+  w.addEventListener('wheel', function(ev){ var ns = islClamp(_IS.mapScale * (ev.deltaY < 0 ? 1.1 : 0.9), _IS.mapMin, _IS.mapMin * 2.5), r = w.getBoundingClientRect(), k = islZk(), cx = (ev.clientX - r.left) / k, cy = (ev.clientY - r.top) / k; _IS.mapX = cx - (cx - _IS.mapX) * (ns / _IS.mapScale); _IS.mapY = cy - (cy - _IS.mapY) * (ns / _IS.mapScale); _IS.mapScale = ns; islMapApply(); ev.preventDefault(); }, { passive: false });
 }
 function islMapZoneTap(z){
   var st = islZoneState(z), db = islDB();
@@ -12482,7 +12590,7 @@ function islZoneStop(){ if(_IS.raf){ cancelAnimationFrame(_IS.raf); _IS.raf = 0;
 function islZoneBind(){
   var z = $('isl-zone'), joy = $('isl-joy');
   if(z._islBound) return; z._islBound = true;
-  function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; var r = z.getBoundingClientRect(); return { x: t.clientX - r.left, y: t.clientY - r.top, id: ev.changedTouches ? t.identifier : 'm' }; }
+  function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; var r = z.getBoundingClientRect(), k = islZk(); return { x: (t.clientX - r.left) / k, y: (t.clientY - r.top) / k, id: ev.changedTouches ? t.identifier : 'm' }; }   /* ★ v1.111.0 ÷zoom:搖桿圓圈貼手指、點地走到正確格 */
   function down(ev){
     if(ev.target && ev.target.id === 'isl-act-btn') return;
     var p = pos(ev), r = z.getBoundingClientRect();
@@ -12715,6 +12823,7 @@ function islActTimer(sec, onEnd){
   islActTimerStop();
   A.timer = setInterval(function(){
     var left = Math.max(0, (end - islNow()) / 1000);
+    if(_IS.act !== A || !$('isl-act-tbar')){ clearInterval(A.timer); A.timer = null; return; }   /* ★ v1.111.0 活動已換/已離開:自我終止 */
     A.tleft = left;
     $('isl-act-tbar').style.width = (left / sec * 100) + '%';
     $('isl-act-tnum').textContent = Math.ceil(left) + 's';
@@ -12722,7 +12831,7 @@ function islActTimer(sec, onEnd){
   }, 100);
 }
 function islActTimerStop(){ if(_IS.act && _IS.act.timer){ clearInterval(_IS.act.timer); _IS.act.timer = null; } }
-function islActBody(html){ $('isl-act-body').innerHTML = html; return $('isl-act-body'); }
+function islActBody(html){ var b = $('isl-act-body'); b.onclick = null; b.innerHTML = html; return b; }   /* ★ v1.111.0 換畫面時順手清掉上一段(知識題)掛在容器上的 onclick,避免下一段的按鈕誤觸發舊處理器(isl-quiz-why 已不存在 → TypeError) */
 function islActFxCenter(key){ var b = $('isl-act-body'); islFxAt(b, b.clientWidth / 2, b.clientHeight / 2, key); }
 /* 一題知識題(從題庫隨機,E=甲 三~六年級全包隨機),答完呼叫 cb(correct) */
 function islQuizOne(actId, cb){
@@ -12742,7 +12851,7 @@ function islQuizOne(actId, cb){
     if(oi === q.a){ playSfx('sfx-ok', 0.5); islActFxCenter('hit'); } else { t.classList.add('ng'); playSfx('sfx-ng', 0.5); }
     $('isl-quiz-why').textContent = (oi === q.a ? '✓ ' : '✗ ') + q.why;
     _IS.act.notes.push((oi === q.a ? '✓ ' : '✗ ') + q.q + ' → ' + q.o[q.a] + '。' + q.why);
-    setTimeout(function(){ cb(oi === q.a); }, 1500);
+    setTimeout(function(){ if(_IS.on && _IS.screen === 'act' && _IS.act) cb(oi === q.a); }, 1500);   /* ★ v1.111.0 離開荒島後不再續跑 */
   };
 }
 /* 品質小遊戲通用:結束時 cb(stars 1~3, crit) */
@@ -13003,16 +13112,17 @@ function islDragInit(judge, after){
   var body = $('isl-act-body');
   islDragTeardown();
   _islDrag = { judge: judge, after: after, cur: null, ghost: null };
-  function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }
+  function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }   /* 真實 px(給 islSlotAt 比對 rect 用) */
   function down(ev){
     var t = ev.target; while(t && t !== body && !(t.classList && t.classList.contains('isl-item'))) t = t.parentNode;
     if(!t || t === body || t.classList.contains('used') || _islDrag.cur) return;
-    var p = pos(ev), r = t.getBoundingClientRect(), g = t.cloneNode(true);
-    g.classList.add('dragging'); g.style.left = (p.x - r.width / 2) + 'px'; g.style.top = (p.y - r.height / 2) + 'px'; g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
-    document.body.appendChild(g); _islDrag.cur = t; _islDrag.ghost = g; t.style.opacity = '.35';
+    var p = pos(ev), r = t.getBoundingClientRect(), g = t.cloneNode(true), k = islZk();
+    /* ★ v1.111.0 拖曳分身改掛在 #island-root 內(吃同一個 zoom,字體/圖示大小跟原件一致),position:fixed 的 left/top 與寬高都要 ÷zoom */
+    g.classList.add('dragging'); g.style.left = (p.x / k - r.width / k / 2) + 'px'; g.style.top = (p.y / k - r.height / k / 2) + 'px'; g.style.width = (r.width / k) + 'px'; g.style.height = (r.height / k) + 'px';
+    ($('island-root') || document.body).appendChild(g); _islDrag.cur = t; _islDrag.ghost = g; t.style.opacity = '.35';
     playSfx('sfx-sel', 0.25); ev.preventDefault();
   }
-  function move(ev){ if(!_islDrag || !_islDrag.cur) return; var p = pos(ev), g = _islDrag.ghost, s = islSlotAt(p.x, p.y), all = body.querySelectorAll('.isl-slot'), i; g.style.left = (p.x - g.offsetWidth / 2) + 'px'; g.style.top = (p.y - g.offsetHeight / 2) + 'px'; for(i = 0; i < all.length; i++){ all[i].classList.remove('over'); } if(s) s.classList.add('over'); ev.preventDefault(); }
+  function move(ev){ if(!_islDrag || !_islDrag.cur) return; var p = pos(ev), g = _islDrag.ghost, s = islSlotAt(p.x, p.y), all = body.querySelectorAll('.isl-slot'), i; var k = islZk(); g.style.left = (p.x / k - g.offsetWidth / 2) + 'px'; g.style.top = (p.y / k - g.offsetHeight / 2) + 'px'; for(i = 0; i < all.length; i++){ all[i].classList.remove('over'); } if(s) s.classList.add('over'); ev.preventDefault(); }
   function up(ev){
     if(!_islDrag || !_islDrag.cur) return;
     var p = pos(ev), s = islSlotAt(p.x, p.y), it = _islDrag.cur, ok = false, all = body.querySelectorAll('.isl-slot'), i;
@@ -13199,6 +13309,7 @@ function islCampPaint(){
   while(ISL.camp.slots.length < nSlot) ISL.camp.slots.push(null);
   for(i = 0; i < nSlot; i++){
     s = ISL.camp.slots[i];
+    if(s && !db.BUILDINGS[s.bld]) s = null;   /* ★ v1.111.0 守門:存檔裡的建築 id 已不存在(資料表改名/移除)時當空格,不讓整個營地畫面炸掉 */
     if(s){ b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1')); h += '<button class="isl-cell built' + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') + '" data-i="' + i + '">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span><span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span></button>'; }
     else h += '<button class="isl-cell empty" data-i="' + i + '">➕<span class="bn">空地</span></button>';
   }
@@ -13427,7 +13538,7 @@ function islActFish(){
   islActHint((refract ? '湖水清澈,看到的魚影其實比真正位置淺——光從水進到空氣會折射!要往更深處拉。' : '魚咬餌時浮標會被拉下去,太早或太晚都釣不到。') + (ISL.skill.fish.lv >= 5 ? '(Lv5:魚影會先靠近浮標)' : ''));
   islActTimer(islActSec(db.ACTS.fish.sec), function(){ finish(); });
   function schedule(){ var wait = 1500 + Math.random() * 3000; if(ISL.skill.fish.lv >= 5){ setTimeout(function(){ fishEl.style.left = '45%'; fishEl.style.top = '120px'; }, Math.max(0, wait - 900)); } timer = setTimeout(function(){ dipping = true; dipAt = islNow(); bob.classList.add('dip'); playSfx('sfx-tap', 0.35); timer = setTimeout(function(){ if(dipping){ dipping = false; bob.classList.remove('dip'); fx.textContent = '跑掉了…'; fx.style.color = '#ff7b7b'; next(false); } }, win); }, wait); }
-  function next(ok){ round++; if(ok){ hits++; A.know++; } fishEl.style.left = (60 + Math.random() * 30) + '%'; fishEl.style.top = '150px'; $('isl-q-cnt').textContent = round < 3 ? '第 ' + (round + 1) + ' 條' : '收竿'; if(round >= 3){ setTimeout(finish, 600); } else schedule(); }
+  function next(ok){ if(!_IS.act || _IS.act !== A || !$('isl-q-cnt')) return;   /* ★ v1.111.0 活動已結束/離開時不再續跑 */ round++; if(ok){ hits++; A.know++; } fishEl.style.left = (60 + Math.random() * 30) + '%'; fishEl.style.top = '150px'; $('isl-q-cnt').textContent = round < 3 ? '第 ' + (round + 1) + ' 條' : '收竿'; if(round >= 3){ setTimeout(finish, 600); } else schedule(); }
   btn.onclick = function(){
     if(round >= 3) return;
     if(dipping){ dipping = false; clearTimeout(timer); bob.classList.remove('dip'); fx.textContent = '🐟 釣到了!'; fx.style.color = '#7bed9f'; playSfx('sfx-coin', 0.45); islCharPaintAct('cheer'); next(true); }
@@ -14696,9 +14807,9 @@ function islActTame(){
   body.onclick = function(ev){
     var t = ev.target; while(t && t !== body && !(t.classList && t.classList.contains('isl-part'))) t = t.parentNode;
     if(!t || t === body || A.done || t.id === 'isl-hintbtn' || t.classList.contains('ok')) return;
-    var c = cards[parseInt(t.getAttribute('data-k'), 10)], r = body.getBoundingClientRect();
-    if(c.cls.indexOf(task.tag) >= 0){ got++; t.classList.add('ok'); playSfx('sfx-coin', 0.4); islFloatText(body, ev.clientX - r.left, ev.clientY - r.top, '+1'); $('isl-g-cnt').textContent = ' ' + got + '/' + need; if(got >= need){ A.done = true; setTimeout(finish, 400); } }
-    else { wrong++; t.classList.remove('ng'); void t.offsetWidth; t.classList.add('ng'); playSfx('sfx-ng', 0.4); islActHint('哎呀,' + islEsc(c.n) + '不是。' + islEsc(task.why)); islHurt(2, '認錯動物,被啄了一下', body, ev.clientX - r.left, ev.clientY - r.top); }
+    var c = cards[parseInt(t.getAttribute('data-k'), 10)], r = body.getBoundingClientRect(), zk = islZk(), fxx = (ev.clientX - r.left) / zk, fxy = (ev.clientY - r.top) / zk;   /* ★ v1.111.0 ÷zoom */
+    if(c.cls.indexOf(task.tag) >= 0){ got++; t.classList.add('ok'); playSfx('sfx-coin', 0.4); islFloatText(body, fxx, fxy, '+1'); $('isl-g-cnt').textContent = ' ' + got + '/' + need; if(got >= need){ A.done = true; setTimeout(finish, 400); } }
+    else { wrong++; t.classList.remove('ng'); void t.offsetWidth; t.classList.add('ng'); playSfx('sfx-ng', 0.4); islActHint('哎呀,' + islEsc(c.n) + '不是。' + islEsc(task.why)); islHurt(2, '認錯動物,被啄了一下', body, fxx, fxy); }
   };
   function finish(){
     islActTimerStop(); A.done = true; body.onclick = null;
