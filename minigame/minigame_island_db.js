@@ -1,6 +1,7 @@
 /* ============================================================================
  * 🏝 像素荒島求生記 — 資料表(minigame/minigame_island_db.js)
  * ============================================================================
+ * ★ v1.20.0(2026-09-13・老師七項)— ①SHOP.sell 品質倍率改 ★ ×1、★★ ×2、★★★ ×3(index islSellTake)③沙灘新增「漂流木」(gives wood)與「礁岩碎石」(gives stone)兩種每日資源點 + 撿取物加 wood/stone(遊戲初期營火要木 5 石 3,舊版沙灘只出纖維/野果,森林又要營火才開 → 死鎖)④AP 基礎 10、各活動 AP 不同(ACTS.ap:採集/捕魚/打撈/生火/烹飪/播種 1,伐木/採石/建造/馴養/鋪水道/研究/製作 2)+ AP_EXTRA 清單(上課/工程修復/地下層)⑤採集 QTE 依資源分輕/中/重(GATHER_FORCE:輕=野果/野菇/葉/草藥/種子/羽毛/貝殼/小石;重=木材/石頭/鐵礦/水晶/遺物;其餘中)⑥AP 用完的角色泡泡 TIRED_LINES
  * ★ v1.19.0(2026-09-13・老師六項)— ①島名詞庫擴充:ISLAND_ADJ 20→60、ISLAND_NOUN 18→60(60×60=3600 種組合,創角/改名改為兩個可捲動下拉選單+自由輸入) ②STAT_MAX 20→50、新增 SKILL_MAX=50(技能等級上限) ③IMG 表新增分層造型 24 張(膚色×4 基底身體 base_<body>_s0~3 / 髮型×4 hair_<body>_h0~3 / 服裝×4 cloth_<body>_c0~3,皆 768×384、6 欄×3 列 128px 格;缺圖自動退回既有整張 sheet),對應 minigame_index.html v1.116.0。
  * ★ v1.18.0(2026-09-13・老師兩批需求)— 11 區 SCENE.mask 依場景圖重建障礙(巨石/樹木/崖壁 '#',固定點強制可走,BFS 驗證 0 退步);ZONES.map 依 island_map_base.jpg 實圖重新標位。對應 minigame_index.html v1.115.0。
  * ★ v1.17.0(2026-09-12・老師「一先做」=好友營地唯讀畫面)— 名片公開欄位常數 COOP_BOARD_PUB/COOP_DECO_PUB(訪客參觀營地:看擺設、讀留言板、留言給島主)。對應 minigame_index.html v1.114.0。
@@ -31,7 +32,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.19.0';   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
+  D.VER = 'v1.20.0';   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
   D.SAVE_VER = 1;          /* 存檔結構版本(缺欄位一律補預設值,絕不因存檔壞掉卡流程) */
   D.CELL = 64;             /* 一格 px */
   D.COLS = 32; D.ROWS = 24;
@@ -66,7 +67,8 @@ window.ISL_DB = (function(){
     node_mushroom: 'island_node_mushroom.png',
     gull_normal: 'island_npc_gull_normal.png', gull_happy: 'island_npc_gull_happy.png', gull_worry: 'island_npc_gull_worry.png',
     ui_dialog: 'island_ui_dialog.png', ui_bag: 'island_ui_bag.png',
-    sheet_boy: 'island_body_sheet_boy.png', sheet_girl: 'island_body_sheet_girl.png'
+    sheet_boy: 'island_body_sheet_boy.png', sheet_girl: 'island_body_sheet_girl.png',
+    ending_sail: 'island_ending_sail.jpg'   /* ★ v1.20.0 大地圖外圍海面底圖(已在 repo) */
   };
   /* ★ v1.19.0 分層造型(老師:主角造型新增 髮型/髮色/膚色/服裝)—— 每張 768×384、6 欄×3 列(正面/背面/側面朝右)、128px 格、角色置中、腳底貼格底:
    *   base_<boy|girl>_s0~s3  = 光頭基底身體(4 種膚色:淺/自然/小麥/深),只穿內搭背心短褲;
@@ -159,6 +161,17 @@ window.ISL_DB = (function(){
     build:  { n:'建造', e:'🔨', stat:'dex', lv3:'藍圖部位有提示',       lv5:'釘子節奏放慢',     lv7:'升級材料 −20%' }
   };
   D.SKILL_XP_NEED = function(lv){ return 5 * lv; };
+  /* ★ v1.20.0 老師:AP 基礎 10;各活動 AP 不同(ACTS[].ap);點 HUD 的 AP 藥丸顯示這份清單 */
+  D.AP_BASE = 10;
+  D.AP_EXTRA = [ { e:'🎓', n:'向訓練師上課', ap:1 }, { e:'🔧', n:'環境工程修復', ap:1 }, { e:'🕳', n:'遺跡地下層探索', ap:1 } ];
+  /* ★ v1.20.0 老師:採集 QTE 輕/中/重位置不同 —— 輕(偏左,較快放手)/中(中間)/重(偏右,按較久);依資源決定 */
+  D.GATHER_FORCE = { berry:'light', mushroom:'light', leaf:'light', herb:'light', seed:'light', feather:'light', shell:'light', pebble:'light', honey:'light',
+                     wood:'heavy', stone:'heavy', ore:'heavy', crystal:'heavy', relic:'heavy' };
+  D.GATHER_FORCE_UI = { light: { title:'🍃 輕輕摘', hint:'這種東西很脆弱——拉一下下就要放手!黃區在左邊(偏快),白色正中央=暴擊。', over:'太用力,弄壞了…', low:'還沒摘下來' },
+                        mid:   { title:'👐 適中的力道', hint:'不快不慢——黃區在中間,白色正中央=暴擊。', over:'太用力了', low:'力道不夠' },
+                        heavy: { title:'💪 用力拔起', hint:'這個很重——要按久一點!黃區在右邊(偏久),白色正中央=暴擊。', over:'太猛,扭到了…', low:'還拔不動' } };
+  /* ★ v1.20.0 老師:AP 用完時角色頭上的泡泡,每 3 秒隨機換一句 */
+  D.TIRED_LINES = ['好累…今天就先這樣吧。', '體力不支了…回去休息。', '時間過得好快,差不多該休息了。'];
 
   /* ── 11 區域(第三章)。P1 只有 beach/forest 有場景;其餘只在大島地圖顯示解鎖條件。 ── */
   /* ★ v1.18.0 老師:依 island_map_base.jpg 實圖重新辨識各區地標位置(%):沙灘=南岸沙灘、營地鈕=沙灘右上的空地(index 端)、森林=西側密林、草原=中央花草地、溪流=瀑布下的西北溪流、湖泊=中央湖、洞窟=西北岩壁洞口、懸崖=東側橙色台地、山谷=湖與台地之間的溪谷、岩岸=東北石拱與礁岩、遺跡=東北石柱遺跡、火山=北方火山 */
@@ -215,9 +228,14 @@ window.ISL_DB = (function(){
       palm:  { n:4, minGap:2, act:'gather', node:'node_palm', e:'🌴', gives:'fiber', label:'林投樹',
                pool:[{x:3,y:3},{x:10,y:2},{x:16,y:3},{x:22,y:2},{x:28,y:3},{x:4,y:12},{x:13,y:11},{x:26,y:12}] },
       bush:  { n:3, minGap:2, act:'gather', node:'node_bush', e:'🌳', gives:'berry', label:'構樹果叢',
-               pool:[{x:8,y:5},{x:19,y:6},{x:25,y:8},{x:6,y:14},{x:17,y:14},{x:29,y:6}] }
+               pool:[{x:8,y:5},{x:19,y:6},{x:25,y:8},{x:6,y:14},{x:17,y:14},{x:29,y:6}] },
+      /* ★ v1.20.0 老師:遊戲初期拿不到木材/石頭(營火要木 5 石 3,森林又要營火才開)→ 沙灘岸邊每天有漂流木與礁岩碎石可採(重力道 QTE) */
+      drift: { n:2, minGap:2, act:'gather', node:'node_stump', e:'🪵', gives:'wood', label:'漂流木',
+               pool:[{x:5,y:13},{x:12,y:13},{x:20,y:13},{x:27,y:13}] },
+      rocks: { n:2, minGap:2, act:'gather', node:'node_stone', e:'🪨', gives:'stone', label:'礁岩碎石',
+               pool:[{x:12,y:6},{x:22,y:5},{x:15,y:10},{x:26,y:10}] }
     },
-    pick:{ n:[3,5], minGap:3, items:['shell','pebble','feather','berry'] },
+    pick:{ n:[4,6], minGap:3, items:['shell','pebble','feather','berry','wood','stone','wood','stone'] },   /* ★ v1.20.0 沙灘上的樹枝(木材)與石頭也可撿 */
     gullSpot:{x:8,y:9}
   };
   D.SCENE.forest = {
@@ -721,18 +739,18 @@ window.ISL_DB = (function(){
   D.ACTS = {
     gather: { n:'採集植物', e:'🌿', skill:'gather', stat:'dex', ap:1, sec:30, bgm:'bgm-play',
               qualityName:'輕輕摘', qualityHint:'長按拉扯,在果實掉下前的黃區放手!太用力果實會壓爛。' },
-    chop:   { n:'伐木',     e:'🪓', skill:'chop',   stat:'pow', ap:1, sec:30, bgm:'bgm-play',
+    chop:   { n:'伐木',     e:'🪓', skill:'chop',   stat:'pow', ap:2, sec:30, bgm:'bgm-play',
               qualityName:'連續三斧', qualityHint:'斧頭來回擺,在綠色甜蜜點時點下!三次綠區越來越窄。' },
     fire:   { n:'生火',     e:'🔥', skill:'fire',   stat:'wit', ap:1, sec:40, bgm:'bgm-play',
               qualityName:'吹氣', qualityHint:'火苗變小就點「吹」,吹太多會熄、太少會滅,維持在綠區 5 秒!' },
-    build:  { n:'建造',     e:'🔨', skill:'build',  stat:'dex', ap:1, sec:40, bgm:'bgm-play',
+    build:  { n:'建造',     e:'🔨', skill:'build',  stat:'dex', ap:2, sec:40, bgm:'bgm-play',
               qualityName:'敲釘子', qualityHint:'釘子會依序閃,照順序快點敲完!' },
     /* ★ P2-a */
     fish:   { n:'捕魚',     e:'🎣', skill:'fish',   stat:'mov', ap:1, sec:30, bgm:'bgm-play',
               qualityName:'拉竿', qualityHint:'魚上鉤了!按住往左右拖,把張力指針維持在中間 3 秒。' },
     trash:  { n:'打撈海廢', e:'♻', skill:'trash',  stat:'dex', ap:1, sec:35, bgm:'bgm-play',
               qualityName:'快分', qualityHint:'最後幾樣會漂得更快,全部分對就是 ★★★!' },
-    quarry: { n:'採石',     e:'⛏', skill:'quarry', stat:'pow', ap:1, sec:30, bgm:'bgm-play',
+    quarry: { n:'採石',     e:'⛏', skill:'quarry', stat:'pow', ap:2, sec:30, bgm:'bgm-play',
               qualityName:'三鎬', qualityHint:'鎬子擺到綠色甜蜜點時敲下!三次綠區越來越窄。' }
   };
   D.SKILLS.fish   = { n:'捕魚', e:'🎣', stat:'mov', lv3:'浮標下沉窗口變長', lv5:'魚影提示', lv7:'折射位置畫虛線' };
@@ -745,9 +763,9 @@ window.ISL_DB = (function(){
                    qualityName:'翻面', qualityHint:'鍋子熱了!在綠色甜蜜點時翻面 3 次,太用力油會噴出來。' };
   D.ACTS.plant = { n:'播種',   e:'🌱', skill:'farm',  stat:'dex', ap:1, sec:30, bgm:'bgm-play',
                    qualityName:'埋種子', qualityHint:'長按把種子壓進土裡,在黃區放手:太淺會被鳥吃掉,太深發不了芽。' };
-  D.ACTS.tame  = { n:'馴養',   e:'🐾', skill:'ranch', stat:'mov', ap:1, sec:30, bgm:'bgm-play',
+  D.ACTS.tame  = { n:'馴養',   e:'🐾', skill:'ranch', stat:'mov', ap:2, sec:30, bgm:'bgm-play',
                    qualityName:'慢慢靠近', qualityHint:'長按慢慢靠近,在黃區放手伸手摸牠;太快會把牠嚇跑!' };
-  D.ACTS.canal = { n:'鋪水道', e:'💧', skill:'water', stat:'wit', ap:1, sec:75, bgm:'bgm-play',
+  D.ACTS.canal = { n:'鋪水道', e:'💧', skill:'water', stat:'wit', ap:2, sec:75, bgm:'bgm-play',
                    qualityName:'放水', qualityHint:'水道接通後放水!剩越多時間,水流越順,品質越高。' };
   D.SKILLS.cook  = { n:'烹飪', e:'🍳', stat:'wit', lv3:'火力提示',       lv5:'翻面甜蜜點更寬', lv7:'料理效果 +20%' };
   D.SKILLS.farm  = { n:'種植', e:'🌱', stat:'dex', lv3:'生長需求提示',   lv5:'收成 +1',        lv7:'作物快 1 天成熟' };
@@ -821,7 +839,7 @@ window.ISL_DB = (function(){
     { id:'rod',      n:'好釣竿', e:'🎣', cost:{wood:4, fiber:6, shell:2}, eff:{fish:1},   d:'有彈性的竿子和結實的線,捕魚多 1 條。', parts:[ {k:'pole', n:'竿身', need:'wood', hint:'要有彈性,魚拉才不會斷', e:'🪵'}, {k:'line', n:'釣線', need:'fiber', hint:'細又韌', e:'🌿'}, {k:'hook', n:'魚鉤', need:'shell', hint:'貝殼磨尖當鉤', e:'🐚'} ] }
   ];
   D.tool = function(id){ var i; for(i=0;i<D.TOOLS.length;i++){ if(D.TOOLS[i].id===id) return D.TOOLS[i]; } return null; };
-  D.ACTS.craft = { n:'製作工具', e:'🛠', skill:'craft', stat:'dex', ap:1, sec:40, bgm:'bgm-play',
+  D.ACTS.craft = { n:'製作工具', e:'🛠', skill:'craft', stat:'dex', ap:2, sec:40, bgm:'bgm-play',
                    qualityName:'敲打組裝', qualityHint:'零件依序閃,照順序敲!敲對越多工具越牢。' };
   D.SKILLS.craft = { n:'製作', e:'🛠', stat:'dex', lv3:'藍圖部位有提示', lv5:'組裝節奏放慢', lv7:'製作材料 −20%' };
   D.QUIZ = D.QUIZ || {};
@@ -847,7 +865,7 @@ window.ISL_DB = (function(){
     { id:'circuit', n:'電路',   e:'💡', tech:20, cost:{ore:6, trash:6, crystal:2},       unlocks:'ruins',  src:'🔋', dst:'💡', d:'電池→導線→燈泡→回到電池,形成通路燈才會亮;鐵礦煉的鐵、海廢的金屬都能導電。', pz:'把電池、導線、燈泡接成通路' }
   ];
   D.tech = function(id){ var i; for(i=0;i<D.TECHS.length;i++){ if(D.TECHS[i].id===id) return D.TECHS[i]; } return null; };
-  D.ACTS.research = { n:'科技研究', e:'🔬', skill:'research', stat:'wit', ap:1, sec:75, bgm:'bgm-play',
+  D.ACTS.research = { n:'科技研究', e:'🔬', skill:'research', stat:'wit', ap:2, sec:75, bgm:'bgm-play',
                       qualityName:'零件接線', qualityHint:'點零件轉方向,把起點接到終點!剩越多時間品質越高。' };
   D.SKILLS.research = { n:'研究', e:'🔬', stat:'wit', lv3:'接線拼圖多 15 秒', lv5:'研究材料 −20%', lv7:'研究成功科技點退還一半' };
   D.QUIZ = D.QUIZ || {};
