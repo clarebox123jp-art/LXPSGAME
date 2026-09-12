@@ -15,7 +15,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.104.0(2026-09-12)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.106.0(2026-09-12)
+     ★ v1.106.0(2026-09-12・老師「請繼續」;裁定 R=自由創角、S=訪客島獨立存檔不可匯入,已確認)— 🏝 好友信箱:
+       好友面板新增「🎁送禮」(從物品包/倉庫送出白名單資源,islConsume 扣除)「💌留言」(≤40 字),寫入對方
+       minigameIsland/{uid}/mail/{autoId};營地側欄「📬 信箱」顯示未讀數,開啟後逐筆「收下」(物資進包)/「已讀」(刪除)。
+       每日與開機各刷新一次信箱數量。訪客島相關文案強化「不會匯入任何帳號」(裁定 S)。對應 island_db v1.13.0、sw v1.77.0。
+     ★ v1.105.0(2026-09-12・老師四項)— ①場景懶載入:進場景/地圖/營地前 islPreloadZone/islPreloadSet 先抓該畫面圖片+BGM(有進度條,逾時照進);
+       ②首頁「⬇ 完整下載安裝荒島求生」鈕 islInstall*:一次把 IMG 表全部圖片+bgm-isl-* 全部音樂抓進 Cache 'lxps-mini-island-v1'(SW 各策略先查快取;
+       activate 白名單保留);③防衛戰 BGM raid/raid2 輪流(地下層同);④最終目標帆船(BUILDINGS.ship,tech 30+火山解鎖)→ 蓋好即結局 islEndingPlay:
+       bgm-isl-ending + 回憶幻燈片(ISL.log 遊玩紀錄:日期/第幾天/事件/圖片,淡入淡出+Ken Burns)+ 電影捲動字幕(統計/圖鑑/好友/致謝),
+       舊存檔無 log 由 islLogBackfill 依狀態補;結局後仍可留在島上(K 甲),側欄「🎬 回憶」重看。對應 island_db v1.12.0、sw v1.76.0。
      ★ v1.104.0(2026-09-12・老師「甲乙丙全做,輸出」;v1.103.0 併入本包)— 🏝 戰鬥擴充:
        甲 防衛戰:魔物 4→8(黏泥怪🧂鹽/火精💧水/石化蛇🪞鏡/雷精🧤手套,第 5/9 天起,每晚最多 2 種新的)、工具列依今晚名單(>4 顆縮小)、
          夜襲改種子擲骰 islRaidRoll + 🗼 瞭望台建築睡前預告(Lv1 有無/Lv2 種類波數/Lv3-4 −5%/−10%/Lv5 首波 −1)、四維加成(力氣→野豬連點 3/2/1、
@@ -3284,6 +3293,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <audio id="bgm-isl-camp" preload="none" loop data-fb="bgm-pet-house" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_camp.m4a"></audio>
 <audio id="bgm-isl-act" preload="none" loop data-fb="bgm-play" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_act.m4a"></audio>
 <audio id="bgm-isl-raid" preload="none" loop data-fb="bgm-boss-01" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_raid.m4a"></audio>
+<audio id="bgm-isl-raid2" preload="none" loop data-fb="bgm-boss-02" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_raid2.m4a"></audio><!-- ★ v1.105.0 防衛戰第二首,與 raid 輪流 -->
+<audio id="bgm-isl-ending" preload="none" loop data-fb="bgm-avatar-card" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_ending.m4a"></audio><!-- ★ v1.105.0 結局回憶幻燈片 -->
 <audio id="bgm-isl-beach" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_beach.m4a"></audio>
 <audio id="bgm-isl-forest" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_forest.m4a"></audio>
 <audio id="bgm-isl-grass" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_grass.m4a"></audio>
@@ -3371,7 +3382,10 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <div id="mode-tabs" style="display:flex;justify-content:center;gap:10px;margin:6px 0 4px;">
       <button class="chip" style="font-size:18px;padding:8px 18px;border-color:#ffd166;background:rgba(255,209,102,.18);" onclick="try{playSfx('sfx-tap',0.3);}catch(_){}" title="目前模式">⚔ 大對抗小遊戲</button>
       <button class="chip" style="font-size:18px;padding:8px 18px;border-color:#5fb3d9;" onclick="islEnter()" title="生存建造與探索解謎,用自然課知識活下去">🏝 荒島求生記 <span style="font-size:12px;opacity:.8">NEW</span></button>
+      <button class="chip" id="isl-install-btn" style="font-size:15px;padding:8px 14px;border-color:#7bed9f;" onclick="islInstallOpen()" title="一次把荒島所有場景圖片與音樂存進這台裝置,之後進場景不用等下載">⬇ 完整下載安裝荒島求生</button>
     </div>
+    <!-- ★ v1.105.0 荒島完整安裝(老師需求):平常進場景才下載該場景圖+音樂;這顆鈕一次全抓進 Cache 'lxps-mini-island-v1'(SW 各策略都會先查快取) -->
+    <div id="isl-install" class="hidden" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:#14202e;border:3px solid #7bed9f;border-radius:18px;padding:18px 22px;max-width:460px;width:100%;color:#fff;text-align:center"><h3 style="margin:0 0 8px">⬇ 完整下載安裝荒島求生</h3><p id="isl-install-txt" style="font-size:15px;margin:6px 0"></p><div style="height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:8px 0"><div id="isl-install-bar" style="height:100%;width:0%;background:#7bed9f;transition:width .2s"></div></div><div id="isl-install-btns" style="display:flex;gap:8px;justify-content:center;margin-top:10px"></div></div></div>
     <!-- ★ v1.10.0(老師看圖裁定)— 每週排行榜獎勵:首頁最上方一顆清楚的大按鈕,點開放大字體說明視窗(內含本週排行榜/上週得獎名單按鈕) -->
     <div id="top-btns">
       <button id="rank-btn" onclick="mgRankOpen('info')"><span class="rb-ico">🏆</span><span class="rb-txt" id="rank-btn-txt">每週排行榜獎勵</span><span class="rb-sub" id="rank-btn-sub"></span></button>
@@ -4043,6 +4057,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #isl-def-tools{position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:10px;z-index:4;}
 #isl-def-tools button{width:84px;height:84px;border-radius:20px;border:4px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:34px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 #isl-def-tools button small{font-size:13px;margin-top:3px;}
+#isl-preload{position:absolute;inset:0;z-index:60;background:rgba(6,12,20,.92);display:flex;align-items:center;justify-content:center;}#isl-preload .box{width:min(420px,86%);text-align:center;color:#fff;}#isl-preload .t{font-size:22px;font-weight:900;margin-bottom:10px;}#isl-preload .bar{height:12px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;}#isl-preload .bar div{height:100%;width:0;background:#5fb3d9;transition:width .25s;}#isl-preload .s{font-size:14px;opacity:.8;margin-top:8px;}   /* ★ v1.105.0 */
+#isl-ending{position:absolute;inset:0;z-index:70;background:#000;color:#fff;overflow:hidden;}#isl-ending-stage{position:absolute;inset:0;}#isl-ending .sl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 1.2s ease;}#isl-ending .sl.on{opacity:1;}#isl-ending .sl img{max-width:86%;max-height:70%;object-fit:contain;border-radius:14px;box-shadow:0 0 40px rgba(0,0,0,.8);animation:islKen 6s ease-in-out forwards;}#isl-ending .sl .em{font-size:120px;animation:islKen 6s ease-in-out forwards;}@keyframes islKen{from{transform:scale(1);}to{transform:scale(1.08);}}
+#isl-ending-cap{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-size:22px;font-weight:900;text-shadow:0 2px 8px #000;padding:0 20px;opacity:0;transition:opacity 1.2s ease;}#isl-ending-cap.on{opacity:1;}#isl-ending-cap small{display:block;font-size:15px;font-weight:400;opacity:.8;margin-top:4px;}
+#isl-ending .op{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:26px;font-weight:900;text-align:center;padding:0 24px;opacity:0;transition:opacity 1.4s ease;}#isl-ending .op.on{opacity:1;}
+#isl-ending-credits{position:absolute;left:0;right:0;top:100%;text-align:center;font-size:20px;line-height:2;padding:0 20px;}#isl-ending-credits.roll{animation:islCredits linear forwards;}#isl-ending-credits h2{font-size:34px;margin:0 0 4px;color:#ffd166;}#isl-ending-credits .sub{opacity:.85;font-size:16px;margin-bottom:24px;}#isl-ending-credits .k{color:#7bed9f;}@keyframes islCredits{from{transform:translateY(0);}to{transform:translateY(calc(-100% - 100vh));}}
+#isl-ending-skip{position:absolute;right:12px;top:12px;z-index:2;font-size:14px;}#isl-ending .fin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;opacity:0;transition:opacity 1.2s;}#isl-ending .fin.on{opacity:1;}
 #isl-def-tools.many{gap:6px;flex-wrap:wrap;padding:0 6px;}#isl-def-tools.many button{width:64px;height:64px;font-size:26px;border-radius:14px;}#isl-def-tools.many button small{font-size:11px;}   /* ★ v1.104.0 今晚工具 5~6 顆時縮小 */
 .isl-helper{position:absolute;z-index:3;pointer-events:none;text-align:center;}.isl-helper .isl-chibi{transform:scale(.8);transform-origin:bottom center;}.isl-helper .hn{display:block;font-size:12px;color:#ffd166;text-shadow:0 1px 3px #000;white-space:nowrap;}   /* ★ v1.104.0 丙 好友小人 */
 #isl-def-tools button.on{border-color:#ffd166;background:rgba(255,209,102,.25);box-shadow:0 0 16px #ffd166;}
@@ -4108,6 +4128,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
       <div id="isl-act-hint"><div class="who" id="isl-act-who"></div><div class="txt" id="isl-act-hinttxt"></div></div>
     </div>
     <div id="isl-def" class="hidden"></div><!-- ★ v1.91.0 防衛戰(第五章) -->
+<div id="isl-preload" class="hidden"><div class="box"><div class="t" id="isl-preload-t">🏝 載入中…</div><div class="bar"><div id="isl-preload-bar"></div></div><div class="s" id="isl-preload-s"></div></div></div><!-- ★ v1.105.0 進場景前先抓該場景圖片+音樂 -->
+<div id="isl-ending" class="hidden"><div id="isl-ending-stage"></div><div id="isl-ending-cap"></div><div id="isl-ending-credits"></div><button id="isl-ending-skip" class="isl-btn ghost" onclick="islEndingSkip()">跳過 ▶</button></div><!-- ★ v1.105.0 結局:回憶幻燈片+電影捲動字幕 -->
     <div id="isl-tut" class="hidden"></div>
     <div id="isl-dialog" class="hidden"></div>
     <div id="isl-modal" class="hidden"></div>
@@ -4143,7 +4165,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.104.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.106.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4152,7 +4174,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.104.0';   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.106.0';   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -11621,7 +11643,9 @@ var _IS = {          /* 執行期狀態(不存檔) */
   cx:0, cy:0, dir:'d', moving:false, path:null, joy:null, keys:{}, raf:0, lastT:0,
   near:null, saveT:null, dirty:false, act:null, tut:0, tutOn:false, mapScale:1, mapX:0, mapY:0,
   sheetOk:null, wasHome:false, dlgQ:null, prevBgm:null,
-  loading:false, loadSeq:0, cloudSeen:false, cloudAt:0, conflict:null   /* ★ v1.103.0 存檔守門狀態:讀檔中/讀檔序號/是否成功讀過雲端/最後看到的雲端 updatedAt/衝突 */
+  loading:false, loadSeq:0, cloudSeen:false, cloudAt:0, conflict:null,
+  pre:{},   /* ★ v1.105.0 本次開啟已預載過的畫面(zone_<id>/map/camp) */
+  mail:[], mailAt:0   /* ★ v1.106.0 好友信箱快取(登入者,不存檔) */   /* ★ v1.103.0 存檔守門狀態:讀檔中/讀檔序號/是否成功讀過雲端/最後看到的雲端 updatedAt/衝突 */
 };
 var ISL_LS_GUEST = '_islSave';
 var ISL_LS_USER  = '_islSave_u_';
@@ -11658,7 +11682,8 @@ function islDefaultSave(){
     store: { lv: 1, items: {} },                                    /* {wood:{s1,s2,s3}} */
     tools: [],
     shop: { bagUp: 0, day: 0, sold: 0 }, codex: {}, codexMs: 0, train: {},
-    dungeon: { day: 0, runs: 0, clears: 0, best: 0 }, friends: [], friendCache: {},   /* ★ v1.104.0 乙 地下層紀錄;丙 好友 [{uid,name,day}] 與名片快取 {uid:{name,defLv,char,day,at}} */   /* ★ v1.99.0 train={trainerId:上次受訓週序} */   /* ★ v1.98.0 商店擴格次數/累計賣出;圖鑑 {id:收錄日};已領里程碑階數 */
+    dungeon: { day: 0, runs: 0, clears: 0, best: 0 }, friends: [], friendCache: {},
+    log: [],   /* ★ v1.105.0 回憶紀錄 [{d:'YYYY-MM-DD',day,t,img}](結局幻燈片素材,上限 LOG_MAX) */   /* ★ v1.104.0 乙 地下層紀錄;丙 好友 [{uid,name,day}] 與名片快取 {uid:{name,defLv,char,day,at}} */   /* ★ v1.99.0 train={trainerId:上次受訓週序} */   /* ★ v1.98.0 商店擴格次數/累計賣出;圖鑑 {id:收錄日};已領里程碑階數 */
     flags: { prologue: false, tut: false, tutStep: 0, firstCamp: false, forestTold: false, shopTold: false },
     counters: { acts: 0, picks: 0, builds: 0, days: 1 },
     updatedAt: islNow()
@@ -11697,6 +11722,7 @@ function islNormalize(d){
   if(!d.dungeon || typeof d.dungeon.runs !== 'number') d.dungeon = { day: 0, runs: 0, clears: 0, best: 0 };   /* ★ v1.104.0 */
   if(!d.friends || !(d.friends instanceof Array)) d.friends = [];
   if(!d.friendCache || typeof d.friendCache !== 'object') d.friendCache = {};
+  if(!d.log || !(d.log instanceof Array)) d.log = [];   /* ★ v1.105.0 */
   d.ver = db.SAVE_VER;
   return d;
 }
@@ -11825,7 +11851,7 @@ function islConflictModal(){
 function islSavedFlash(){ playSfx('sfx-ok', 0.4); var b = $('isl-hud-save'); if(b){ b.textContent = '已儲存 ✓'; setTimeout(function(){ b.textContent = '💾'; }, 1500); } }
 window.islSaveTap = function(){
   if(!ISL) return;
-  if(!MG.user){ toast('已存在這台裝置。未登入的人共用這座島;登入才會存到自己的雲端帳號'); islLocalWrite(); return; }
+  if(!MG.user){ toast('已存在這台裝置。未登入的人共用這座島;登入後你會開始一座全新的雲端島,這份訪客進度不會被帶過去(裁定 S)'); islLocalWrite(); return; }
   islSave('manual');
 };
 /* 登入／登出狀態改變(由 onUser 呼叫):記憶體先清空(不再清訪客存檔);荒島模式進行中則停掉場景、重新讀檔 */
@@ -12028,7 +12054,8 @@ window.islEnter = function(){
     islHud();
     if(!ISL.char){ islCreateOpen(); }
     else { islGoMap(); }
-    if(!MG.user && !ISL.flags.guestTold){ ISL.flags.guestTold = true; toast('這座島是這台裝置所有未登入的人共用的;登入後會有自己的雲端島'); }   /* ★ v1.103.0 訪客共用島 */
+    if(MG.user) islMailRefresh(function(){});   /* ★ v1.106.0 開機先抓一次信箱數量(供側欄徽章) */
+    if(!MG.user && !ISL.flags.guestTold){ ISL.flags.guestTold = true; toast('這座島是這台裝置所有未登入的人共用的、跟這台裝置綁在一起;登入後你會有自己專屬的雲端島,不會把這座訪客島的進度帶進去(裁定 S)。'); }   /* ★ v1.106.0 強調訪客島獨立、不可匯入(裁定 S) */
   });
 };
 window.islExitNow = function(){   /* ★ v1.103.0 抽出供雲端讀檔失敗視窗「離開」使用 */
@@ -12045,6 +12072,7 @@ window.islExit = function(){
   ]);
 };
 /* 切到背景:停 rAF、存檔(pagehide/visibilitychange 依鐵律不靠 beforeunload) */
+try{ islInstallBtnPaint(); }catch(_ib){}   /* ★ v1.105.0 首頁安裝鈕狀態 */
 document.addEventListener('visibilitychange', function(){ if(document.hidden && _IS.on && ISL){ islSave('hide'); if(_IS.raf){ cancelAnimationFrame(_IS.raf); _IS.raf = 0; } } else if(!document.hidden && _IS.on && _IS.screen === 'zone' && !_IS.raf){ _IS.lastT = 0; _IS.raf = requestAnimationFrame(islTick); } });
 window.addEventListener('pagehide', function(){ if(_IS.on && ISL){ islLocalWrite(); } });
 /* ── 創角(35.2):膚色 / 髮型 / 髮色 / 瞳色 / 體型 / 起步風格 / 名字;登入可一鍵套用主程式主角(players/{uid}.avatarCard) ── */
@@ -12107,6 +12135,7 @@ window.islCreateConfirm = function(){
   ISL.char = { name: name.slice(0, 8), body: _islCr.body, skin: _islCr.skin, hair: _islCr.hair, hairC: _islCr.hairC, eyeC: _islCr.eyeC, style: st.id };
   ISL.stats = { dex: st.s.dex, mov: st.s.mov, pow: st.s.pow, wit: st.s.wit };
   playSfx('sfx-summon-reveal', 0.5);
+  islLog('🏝 漂流到荒島,展開求生生活', 'zone_beach');   /* ★ v1.105.0 */
   islSave('create');
   islHud();
   islPrologue();
@@ -12162,6 +12191,7 @@ function islBgm(key){
 }
 window.islGoMap = function(){
   if(!ISL || !ISL.char) return;
+  if(!_IS.pre.map){ islPreloadSet('map', ['map_base'], 'map', '🗺 大島地圖', function(){ islGoMap(); }); return; }   /* ★ v1.105.0 */
   islZoneRemember();
   islShowScreen('map');
   islBgm('map');
@@ -12301,6 +12331,7 @@ function islSpawnDaily(zoneId){
 function islEnterZone(zoneId, cb){
   var db = islDB(), sc = db.SCENE[zoneId], zs = ISL.zones[zoneId], zm = $('isl-zone-map'), h = '', u, i, n, sp, first;
   if(!sc){ toast('這個區域還沒開放'); return; }
+  if(!_IS.pre['zone_' + zoneId]){ islPreloadZone(zoneId, function(){ islEnterZone(zoneId, cb); }); return; }   /* ★ v1.105.0 進場景前先抓該場景圖片+音樂 */
   _IS.zone = zoneId; _IS.scene = sc; ISL.curZone = zoneId;
   islShowScreen('zone');
   islBgm(zoneId);
@@ -12333,7 +12364,7 @@ function islEnterZone(zoneId, cb){
   islZoneBind();
   islZoneTopInfo();
   zs.explore = zs.explore || 0;
-  if(!zs.visited){ zs.visited = true; islBanner('探索!' + db.zone(zoneId).e + ' ' + db.zone(zoneId).n); playSfx('sfx-fantasy', 0.45); zs.explore = Math.min(100, zs.explore + 10); islSave('zone');
+  if(!zs.visited){ zs.visited = true; islLog('🔍 第一次踏進 ' + db.zone(zoneId).e + db.zone(zoneId).n, sc.bg); islBanner('探索!' + db.zone(zoneId).e + ' ' + db.zone(zoneId).n); playSfx('sfx-fantasy', 0.45); zs.explore = Math.min(100, zs.explore + 10); islSave('zone');
     if(db.STORY.zoneIntro && db.STORY.zoneIntro[zoneId] && zoneId !== 'beach'){ setTimeout(function(){ if(_IS.screen === 'zone' && _IS.zone === zoneId){ islZoneStop(); islDialog([db.STORY.zoneIntro[zoneId]].concat(db.STORY.gullZone && db.STORY.gullZone[zoneId] ? [db.STORY.gullZone[zoneId]] : []), { who: 'me' }, function(){ _IS.lastT = 0; if(!_IS.raf) _IS.raf = requestAnimationFrame(islTick); islZoneBind(); }); } }, 900); }   /* ★ v1.97.0 每區首次內心話 */
   }
   _IS.lastT = 0; if(_IS.raf) cancelAnimationFrame(_IS.raf); _IS.raf = requestAnimationFrame(islTick);
@@ -12547,7 +12578,7 @@ function islTrainerTalk(id){
   function finish(){
     var passed = right >= db.TRAIN_NEED, lvup = false;
     ISL.train[id] = wk;
-    if(passed){ ISL.stats[tr.stat] = Math.min(db.STAT_MAX, ISL.stats[tr.stat] + 1); lvup = islSkillGain(tr.skill, 5); playSfx('sfx-statup', 0.5); islFxAt($('isl-zone'), 200, 200, 'glow'); }
+    if(passed){ ISL.stats[tr.stat] = Math.min(db.STAT_MAX, ISL.stats[tr.stat] + 1); lvup = islSkillGain(tr.skill, 5); islLog('🎓 跟 ' + tr.e + tr.n + ' 上課,' + st.e + st.n + ' +1', tr.img); playSfx('sfx-statup', 0.5); islFxAt($('isl-zone'), 200, 200, 'glow'); }
     else playSfx('sfx-cancel', 0.4);
     islModal('<h3>' + (passed ? '🎓 學會了!' : '📚 再多練練') + '</h3><p>答對 ' + right + '/3 題' + (passed ? '　' + st.e + islEsc(st.n) + ' +1(現在 ' + ISL.stats[tr.stat] + ')　' + db.SKILLS[tr.skill].e + islEsc(db.SKILLS[tr.skill].n) + ' EXP +5' + (lvup ? ' ⬆ Lv' + ISL.skill[tr.skill].lv : '') : '，這週的課先上到這裡,下週再來挑戰。') + '</p><p style="font-size:14px;opacity:.85">💡 ' + islEsc(tr.lesson) + '</p>', [{ t: passed ? '太好了' : '好', cls: 'gold', cb: function(){ islResume(); } }]);
     islHud(); islSave('train');
@@ -13000,7 +13031,7 @@ function islActResult(){
     if(A.built){
       for(i in rcost){ if(rcost.hasOwnProperty(i)) islConsume(i, rcost[i]); }
       ISL.tech -= (ISL.skill.research.lv >= 7 ? Math.ceil(tk.tech / 2) : tk.tech);
-      ISL.techs[tk.id] = true; islCodexAdd(tk.id);   /* ★ v1.98.0 */
+      ISL.techs[tk.id] = true; islCodexAdd(tk.id); islLog('🔬 研究成功:' + tk.e + tk.n, null);   /* ★ v1.98.0;★ v1.105.0 log */
       note = tk.e + ' 科技「' + tk.n + '」研究成功!' + (tk.unlocks ? ' → ' + db.zone(tk.unlocks).e + db.zone(tk.unlocks).n + ' 解鎖' : '');
     } else note = '零件沒接通,研究失敗……材料與科技點沒扣,再試一次。';
   }
@@ -13015,7 +13046,7 @@ function islActResult(){
     } else note = '時間到了還沒接通,水流不過來……材料沒扣,再試一次。';
   }
   if(A.id === 'fire'){
-    if(A.lit){ islConsume('wood', 2); islConsume('fiber', 1); ISL.camp.fireLit = true; ISL.camp.fireDay = ISL.day; if(!ISL.flags.fireTold){ ISL.flags.fireTold = true; note = db.STORY.fireLit; } }
+    if(A.lit){ islConsume('wood', 2); islConsume('fiber', 1); ISL.camp.fireLit = true; ISL.camp.fireDay = ISL.day; if(!ISL.flags.fireTold){ ISL.flags.fireTold = true; note = db.STORY.fireLit; islLog('🔥 第一次生起營火', 'bld_campfire'); } }
     else note = '沒點著……三要素要放對才燒得起來。(AP 照扣,材料沒扣)';
   }
   if(A.id === 'build'){
@@ -13025,6 +13056,9 @@ function islActResult(){
       if(A.ctx.upgrade){ ISL.camp.slots[slotIdx].lv = A.ctx.upgrade; ISL.camp.slots[slotIdx].hp = 100 + 25 * (A.ctx.upgrade - 1); }
       else { ISL.camp.slots[slotIdx] = { bld: A.ctx.bld, lv: 1, hp: 100, q: stars }; ISL.counters.builds += 1; }
       for(i in A.ctx.cost){ if(A.ctx.cost.hasOwnProperty(i)) islConsume(i, A.ctx.cost[i]); }
+      islLog((A.ctx.upgrade ? '⬆ ' + bld.e + bld.n + ' 升到 Lv' + A.ctx.upgrade : '🏗 蓋好了 ' + bld.e + bld.n), bld.img);   /* ★ v1.105.0 */
+      if(bld.tech && !A.ctx.upgrade) ISL.tech = Math.max(0, ISL.tech - bld.tech);   /* ★ v1.105.0 帆船扣科技點 */
+      if(bld.final && !A.ctx.upgrade && !ISL.flags.shipBuilt){ ISL.flags.shipBuilt = true; ISL.flags.shipDate = islToday(); islLog('⛵ 帆船完成!具備離開荒島的條件', 'bld_ship'); note = db.STORY.shipBuilt[0]; }
       if(A.ctx.bld === 'campfire' && !ISL.zones.forest.unlocked){ ISL.zones.forest.unlocked = true; note = db.STORY.forestOpen + ' 🌲 森林解鎖!'; }
       if(A.ctx.bld === 'campfire') islTutDone('campfire');
     } else note = '材料放錯太多,蓋不起來……材料沒扣,再試一次吧。';
@@ -13059,6 +13093,7 @@ window.islActClose = function(){
   var A = _IS.act;
   playSfx('sfx-tap', 0.3);
   _IS.act = null;
+  if(A && A.id === 'build' && A.built && A.ctx && A.ctx.bld === 'ship' && !A.ctx.upgrade){ islGoCamp(true); islDialog(islDB().STORY.shipBuilt, { who: 'me' }, function(){ islEndingPlay(); }); return; }   /* ★ v1.105.0 帆船完成 → 結局 */
   if(A && (A.id === 'build' || A.id === 'fire' || A.id === 'cook' || A.id === 'plant' || A.id === 'canal' || A.id === 'research' || A.id === 'craft')) islGoCamp(true);   /* ★ v1.94.0 烹飪/播種/水道都在營地 */
   else islEnterZone(_IS.zone || ISL.curZone);
 };
@@ -13067,6 +13102,7 @@ function islCampHasBld(id){ var s = ISL.camp.slots, i; for(i = 0; i < s.length; 
 window.islGoCamp = function(silent){
   var db = islDB(), zs;
   if(!ISL || !ISL.char) return;
+  if(!_IS.pre.camp){ islPreloadSet('camp', ['camp', 'camp_night'], 'camp', '🏕 營地', function(){ islGoCamp(silent); }); return; }   /* ★ v1.105.0 */
   islZoneRemember();
   islShowScreen('camp');
   islBgm('camp');   /* ★ v1.97.0 */
@@ -13074,7 +13110,7 @@ window.islGoCamp = function(silent){
   islCampPaint();
   islAmbAttach('camp');   /* ★ v1.100.0 */
   islTutDone('camped');
-  if(!ISL.flags.firstCamp){ ISL.flags.firstCamp = true; islDialog([db.STORY.firstCamp], { who: 'me' }, function(){ islCampDepositAsk(); }); islSave('camp'); return; }
+  if(!ISL.flags.firstCamp){ ISL.flags.firstCamp = true; islLog('🏕 在空地上設立營地', 'camp'); islDialog([db.STORY.firstCamp], { who: 'me' }, function(){ islCampDepositAsk(); }); islSave('camp'); return; }
   if(!silent) islCampDepositAsk();
 };
 function islCampDepositAsk(){
@@ -13116,6 +13152,8 @@ function islCampPaint(){
     '<button onclick="islBagOpen()">🎒 物品包</button>' +
     '<button onclick="islStoreOpen()">🏚 倉庫</button>' +
     '<button onclick="islCharOpen()">👤 角色</button>' +
+    (ISL.flags.shipBuilt ? '<button onclick="islEndingPlay()">🎬 回憶</button>' : '') +   /* ★ v1.105.0 帆船完成後可重看結局 */
+    (MG.user ? '<button onclick="islMailOpen()">📬 信箱' + (islMailCount() ? '<span style="font-size:12px;opacity:.8"> ' + islMailCount() + '</span>' : '') + '</button>' : '') +   /* ★ v1.106.0 好友信箱 */
     '<button onclick="islGoMap()">🗺 出發</button>' +
     '<button class="ghost" onclick="islAmbToggle()">🍃 動態背景' + (ISL.flags.ambOff ? ':關' : '') + '</button>' +   /* ★ v1.100.0 */
     '<button class="gold" onclick="islSaveTap()">💾 存檔</button>' +
@@ -13152,7 +13190,7 @@ window.islCampBuildMenu = function(slot){
   if(slot < 0){ for(i = 0; i < nSlot; i++){ if(!ISL.camp.slots[i]){ free = i; break; } } if(free < 0){ islModal('<h3>沒有空地了</h3><p>按「🏕 擴建」升級營地,格子會變多。</p>'); return; } slot = free; }
   for(i = 0; i < db.BUILD_ORDER.length; i++){
     id = db.BUILD_ORDER[i]; b = db.BUILDINGS[id]; can = islCanAfford(b.cost); s = islCampHasBld(id);
-    lockTxt = (b.needZone && !ISL.zones[b.needZone].unlocked) ? '(要先解鎖' + db.zone(b.needZone).e + db.zone(b.needZone).n + ')' : '';
+    lockTxt = (b.needZone && !ISL.zones[b.needZone].unlocked) ? '(要先解鎖' + db.zone(b.needZone).e + db.zone(b.needZone).n + ')' : (b.tech && ISL.tech < b.tech ? '(需要 🔬 科技點 ' + b.tech + ',現在 ' + ISL.tech + ')' : '');   /* ★ v1.105.0 帆船需科技點 */
     if(lockTxt) can = false;
     h += '<div style="text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;' + (s ? 'opacity:.5' : '') + '"><b style="font-size:20px">' + b.e + ' ' + islEsc(b.n) + '</b>' + (s ? '(已蓋)' : '') + '<br><span style="font-size:15px">' + islEsc(b.desc) + '</span><br><span style="font-size:15px;color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostText(b.cost) + '</span>' + (s ? '' : '<div style="text-align:right">' + (lockTxt ? '<span style="font-size:14px;color:#ff9f43">' + lockTxt + '</span> ' : '') + '<button class="isl-btn ' + (can ? 'gold' : '') + '" data-b="' + id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '開始建造 ⚡1' : 'AP 不足') + '</button></div>') + '</div>';
   }
@@ -13163,6 +13201,7 @@ window.islCampBuildMenu = function(slot){
 function islCampUpgrade(i){
   var db = islDB(), s = ISL.camp.slots[i], cost;
   if(!s) return;
+  if(db.BUILDINGS[s.bld] && db.BUILDINGS[s.bld].noUpgrade){ toast('帆船已經完成,不需要升級'); return; }   /* ★ v1.105.0 */
   if(s.lv >= db.BLD_MAX_LV){ toast('已經是最高 Lv' + db.BLD_MAX_LV); return; }   /* ★ v1.94.0 全建築可升到 Lv5 */
   cost = islBldCost(s.bld, s.lv + 1);
   if(!islCanAfford(cost)){ islModal('<h3>材料不夠</h3><p>' + islCostText(cost) + '</p>'); return; }
@@ -13188,6 +13227,7 @@ window.islRest = function(){
 };
 function islNewDay(){
   try{ if(MG.user && ISL.friends && ISL.friends.length) islFriendsRefresh(); }catch(_f){}   /* ★ v1.104.0 丙 每日更新好友名片(≤5 次讀取) */
+  try{ if(MG.user) islMailRefresh(function(){ islCampPaint(); }); }catch(_ml){}   /* ★ v1.106.0 每日更新信箱數量 */
   var db = islDB(), root = $('island-root'), ov = document.createElement('div'), k;
   playSfx('sfx-gentle', 0.45);
   ov.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;background:#000;z-index:50;display:flex;align-items:center;justify-content:center;font-size:24px;text-align:center;padding:20px;opacity:0;transition:opacity .6s';
@@ -13400,7 +13440,7 @@ function islDefStart(roll){
   for(k in B){ if(B.hasOwnProperty(k)){ if(st[k] >= 14) bonus.push(B[k].e + B[k].t14); else if(st[k] >= 8) bonus.push(B[k].e + B[k].t8); } }
   for(i = 0; i < roll.kinds.length; i++){ m = db.monster(roll.kinds[i]); if(m){ legend += (i ? '　' : '') + m.e + islEsc(m.n) + '→' + db.defTool(m.tool).e + (m.k === 'boar' ? '連點 ' + _islDef.boarTaps + ' 下' : islEsc(db.defTool(m.tool).n)); } }
   islShowScreen('def');
-  islBgm('raid');   /* ★ v1.97.0 */
+  islBgm(((ISL.raids.won + ISL.raids.lost) % 2) ? 'raid2' : 'raid');   /* ★ v1.105.0 raid / raid2 輪流(依第幾次夜襲) */
   islDefPaint();
   islDefHelpersInit();   /* ★ v1.104.0 丙 好友小人守夜 */
   islModal('<h3>🌙 夜襲!</h3><p>魔物朝營火爬過來了!先在下方選工具,再點魔物:<br>' + legend + '</p><p>營火血 ' + _islDef.hp + '　共 ' + _islDef.waves + ' 波,每波 15 秒。魔物咬到營火時,守在旁邊的你也會受傷 ❤️−' + db.DEF_BITE_HP + '(體力 ' + ISL.hp + '/' + ISL.hpMax + ')。' + (ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? '' : '<br>⚠ 營火沒點,今晚特別危險!') + '</p>' + (bonus.length ? '<p style="font-size:14px;color:#7bed9f">能力加成:' + bonus.join('、') + '</p>' : '') + (_islDef.helpers.length ? '<p style="font-size:14px;color:#ffd166">👥 ' + _islDef.helpers.length + ' 位好友的小人在營火旁一起守夜!</p>' : ''), [{ t: '守住營地!', cls: 'gold', cb: function(){ islDefWave(); islDefHelpersStart(); } }]);
@@ -13516,10 +13556,10 @@ function islDefEnd(win){
   bgmStop();
   xp = win ? 3 : 1;
   if(win){
-    ISL.tech += 5; ISL.raids.won++;
+    ISL.tech += 5; ISL.raids.won++; islLog('🌙 守住了夜襲,擊退 ' + D.kills + ' 隻魔物', 'camp_night');
     playSfx('sfx-applause', 0.45); islFxAt($('isl-def'), ($('isl-def').clientWidth || 800) / 2, ($('isl-def').clientHeight || 500) / 2, 'clap');
   }else{
-    ISL.raids.lost++;
+    ISL.raids.lost++; islLog(D.fell ? '🤕 夜襲中倒下了…' : '💥 營地被夜襲翻了…', 'camp_night');
     /* D=甲:未加工資源 −30% + 隨機 1 棟建築耐久 −50 */
     for(i = 0; i < raw.length; i++){ k = raw[i]; it = ISL.store.items[k]; if(it){ cut = Math.floor((it.s1 + it.s2 + it.s3) * 0.3); if(cut > 0){ lost.push(islItemDef(k).e + '−' + cut); islConsume(k, cut); } } }
     for(i = 0; i < 9; i++){ s = ISL.camp.slots[i]; if(s) built.push(s); }
@@ -13530,6 +13570,187 @@ function islDefEnd(win){
   islSave('raid');
   if(D.helpers.length && !ISL.flags.friendWatchTold){ ISL.flags.friendWatchTold = true; setTimeout(function(){ toast('💭 ' + db.STORY.friendWatch); }, 1200); }
   islModal('<h3>' + (win ? '🎉 守住了!' : (D.fell ? '🤕 你倒下了…' : '💥 營地被翻了…')) + '</h3><p>擊退 ' + D.kills + ' 隻魔物' + (D.helpKills ? '(好友幫忙 ' + D.helpKills + ' 隻)' : '') + (win ? '　🔬 科技點 +5' : '') + (D.fell ? '<br>被魔物撞得體力用完,天亮後記得治療。' : '') + '</p>' + (lost.length ? '<p style="color:#ff7b7b">損失:' + islEsc(lost.join('、')) + '</p>' : '') + '<p style="font-size:15px;opacity:.85">影魔怕光、鐵甲蟲被磁鐵吸、夜蝠怕巨響——用對方法比用力重要。' + (win ? '' : ' 記得每天點營火、蓋圍牆和火把!') + '</p>', [{ t: '天亮了', cls: 'gold', cb: function(){ _islDef = null; islShowScreen('camp'); bgmPlay('bgm-pet-house'); islNewDay(); } }]);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.105.0(2026-09-12・老師四項)— ①場景懶載入 ②首頁完整安裝 ③raid/raid2 輪流(見 islDefStart) ④帆船結局
+ * ══════════════════════════════════════════════════════════════════════════ */
+/* ── ① 進場景前先抓該畫面的圖片與 BGM(本來 <img>/<audio preload=none> 就是進了才抓;這裡改成「先抓完再進」+ 進度條,逾時 9 秒照進) ── */
+function islPreloadSet(key, imgKeys, bgmKey, label, cb){
+  var db = islDB(), urls = [], i, u, seen = {}, total, done = 0, ended = false, tm, bar = $('isl-preload-bar'), st = $('isl-preload-s'), a;
+  for(i = 0; i < imgKeys.length; i++){ if(!imgKeys[i]) continue; u = islImgUrl(imgKeys[i]); if(u && !seen[u] && !(_MG_MISS && _MG_MISS[db.IMG[imgKeys[i]]])){ seen[u] = true; urls.push(u); } }
+  total = urls.length + (bgmKey ? 1 : 0);
+  function fin(){ if(ended) return; ended = true; clearTimeout(tm); _IS.pre[key] = true; hide('isl-preload'); cb(); }
+  function step(){ done++; if(bar) bar.style.width = Math.round(done / Math.max(1, total) * 100) + '%'; if(st) st.textContent = done + ' / ' + total; if(done >= total) fin(); }
+  if(!total){ _IS.pre[key] = true; cb(); return; }
+  $('isl-preload-t').textContent = '🏝 載入 ' + label + '…'; if(bar) bar.style.width = '0%'; if(st) st.textContent = '0 / ' + total;
+  show('isl-preload');
+  tm = setTimeout(fin, 9000);
+  for(i = 0; i < urls.length; i++){ (function(url){ var im = new Image(); im.onload = step; im.onerror = step; im.src = url; })(urls[i]); }
+  if(bgmKey){
+    a = $('bgm-isl-' + bgmKey);
+    if(!a || _islBgmBad[bgmKey] || a.readyState >= 3){ step(); }
+    else {
+      var once = false, ok = function(){ if(once) return; once = true; a.removeEventListener('canplaythrough', ok); a.removeEventListener('error', ok); step(); };
+      a.addEventListener('canplaythrough', ok); a.addEventListener('error', ok);
+      try{ a.preload = 'auto'; a.load(); }catch(e){ ok(); }
+      setTimeout(ok, 6000);   /* 音樂抓太久不擋人 */
+    }
+  }
+}
+function islPreloadZone(zoneId, cb){
+  var db = islDB(), sc = db.SCENE[zoneId], keys = [sc.bg, 'gull_normal', (ISL.char && ISL.char.body === 'girl') ? 'sheet_girl' : 'sheet_boy', 'node_stump', 'node_bush_empty'], k, tr;
+  for(k in sc.spawn){ if(sc.spawn.hasOwnProperty(k) && sc.spawn[k].node) keys.push(sc.spawn[k].node); }
+  if(sc.trainer && db.trainer(sc.trainer)){ tr = db.trainer(sc.trainer); keys.push(tr.img); }
+  islPreloadSet('zone_' + zoneId, keys, zoneId, db.zone(zoneId).e + db.zone(zoneId).n, cb);
+}
+/* ── ② 首頁「完整下載安裝」:IMG 表全部圖片 + 全部 bgm-isl-* 音樂 → Cache 'lxps-mini-island-v1'(與 minigame_sw.js ISLAND 同名;SW 各策略 caches.match 查所有快取) ── */
+var ISL_CACHE = 'lxps-mini-island-v1', _islInst = null;
+function islInstallUrls(){
+  var db = islDB(), urls = [], seen = {}, k, u, as, i;
+  if(!db) return urls;
+  for(k in db.IMG){ if(db.IMG.hasOwnProperty(k)){ u = mgPicUrl(db.IMG[k]); if(!seen[u]){ seen[u] = true; urls.push({ u: u, cross: false }); } } }
+  as = document.querySelectorAll('audio[id^="bgm-isl-"]');
+  for(i = 0; i < as.length; i++){ u = as[i].getAttribute('src'); if(u && !seen[u]){ seen[u] = true; urls.push({ u: u, cross: true }); } }
+  return urls;
+}
+function islInstallState(){ try{ return localStorage.getItem('isl_installed') || ''; }catch(e){ return ''; } }
+function islInstallBtnPaint(){ var b = $('isl-install-btn'); if(!b) return; b.textContent = (islInstallState() === MG_IMG_VER ? '✓ 荒島已完整安裝' : '⬇ 完整下載安裝荒島求生'); }
+window.islInstallOpen = function(){
+  var urls = islInstallUrls(), box = $('isl-install'), txt = $('isl-install-txt'), btns = $('isl-install-btns'), bar = $('isl-install-bar');
+  try{ playSfx('sfx-tap', 0.3); }catch(e){}
+  if(!window.caches || !window.fetch){ toast('這個瀏覽器不支援離線安裝(需要 https 與 Cache API)'); return; }
+  show('isl-install'); bar.style.width = '0%';
+  txt.innerHTML = '把荒島求生的 <b>' + urls.length + ' 個檔案</b>(11 區場景、地圖、營地、建築、資源、NPC、魔物圖片 + ' + document.querySelectorAll('audio[id^="bgm-isl-"]').length + ' 首音樂)一次存進這台裝置。<br><span style="font-size:13px;opacity:.8">約 40~60 MB,建議接 Wi-Fi。之後進每個場景都不用等下載;安裝過的圖片版本 v' + MG_IMG_VER + (islInstallState() === MG_IMG_VER ? ' ✓ 已安裝(可重新安裝)' : '') + '</span>';
+  btns.innerHTML = '<button class="chip" id="isl-install-go" style="border-color:#7bed9f">開始下載</button><button class="chip" id="isl-install-x">關閉</button>';
+  $('isl-install-x').onclick = function(){ if(_islInst) _islInst.stop = true; hide('isl-install'); islInstallBtnPaint(); };
+  $('isl-install-go').onclick = function(){ islInstallRun(urls); };
+};
+function islInstallRun(urls){
+  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, running = 0, CONC = 3, cache = null, go = $('isl-install-go');
+  _islInst = { stop: false };
+  if(go){ go.disabled = true; go.textContent = '下載中…'; }
+  function next(){
+    if(_islInst.stop) return;
+    while(running < CONC && i < urls.length){ (function(it){ running++; i++;
+      var req = it.cross ? fetch(it.u, { mode: 'cors' }) : fetch(it.u);
+      req.then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(it.u, r); }).then(function(){ okN++; }, function(){ failN++; })
+        .then(function(){ running--; bar.style.width = Math.round((okN + failN) / urls.length * 100) + '%'; txt.textContent = '下載中 ' + (okN + failN) + ' / ' + urls.length + (failN ? '(失敗 ' + failN + ')' : ''); if(okN + failN >= urls.length) fin(); else next(); });
+    })(urls[i]); }
+  }
+  function fin(){
+    var all = (failN === 0);
+    if(all){ try{ localStorage.setItem('isl_installed', MG_IMG_VER); }catch(e){} }
+    txt.innerHTML = (all ? '✅ 全部安裝完成!' : '⚠ 完成,但有 ' + failN + ' 個檔案沒抓到(可能還沒上傳或網路不穩),可以再按一次只補缺的。') + '<br><span style="font-size:13px;opacity:.8">成功 ' + okN + ' / ' + urls.length + '</span>';
+    if(go){ go.disabled = false; go.textContent = all ? '重新安裝' : '再試一次'; }
+    try{ playSfx(all ? 'sfx-applause' : 'sfx-cancel', 0.4); }catch(e){}
+    islInstallBtnPaint();
+  }
+  caches.open(ISL_CACHE).then(function(c){ cache = c; next(); })['catch'](function(){ txt.textContent = '無法開啟快取(需要 https)'; if(go){ go.disabled = false; go.textContent = '再試一次'; } });
+}
+/* ── ④ 回憶紀錄(結局幻燈片素材) ── */
+function islLog(t, img){
+  var db = islDB();
+  if(!ISL) return;
+  if(!ISL.log) ISL.log = [];
+  ISL.log.push({ d: islToday(), day: ISL.day, t: t, img: img || null });
+  if(ISL.log.length > db.LOG_MAX) ISL.log.splice(0, ISL.log.length - db.LOG_MAX);
+}
+function islDateText(d){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? (parseInt(m[1], 10) + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日') : '某一天'; }
+/* 舊存檔沒有 log:依現狀補一份(日期用開島日,第幾天不詳) */
+function islLogBackfill(){
+  var db = islDB(), d0 = new Date(ISL.created || islNow()), d = d0.getFullYear() + '-' + ('0' + (d0.getMonth() + 1)).slice(-2) + '-' + ('0' + d0.getDate()).slice(-2), out = [], i, z, s, k;
+  function add(t, img){ out.push({ d: d, day: 0, t: t, img: img || null }); }
+  add('🏝 漂流到荒島,展開求生生活', 'zone_beach');
+  for(i = 0; i < db.ZONES.length; i++){ z = db.ZONES[i]; if(ISL.zones[z.id] && ISL.zones[z.id].visited) add('🔍 探索了 ' + z.e + z.n, db.SCENE[z.id] ? db.SCENE[z.id].bg : null); }
+  for(i = 0; i < ISL.camp.slots.length; i++){ s = ISL.camp.slots[i]; if(s && db.BUILDINGS[s.bld]) add('🏗 蓋了 ' + db.BUILDINGS[s.bld].e + db.BUILDINGS[s.bld].n + (s.lv > 1 ? ' Lv' + s.lv : ''), db.BUILDINGS[s.bld].img); }
+  for(k in ISL.techs){ if(ISL.techs.hasOwnProperty(k) && db.tech(k)) add('🔬 研究了 ' + db.tech(k).e + db.tech(k).n, null); }
+  for(k in ISL.puzzles){ if(ISL.puzzles.hasOwnProperty(k) && db.PUZZLES[k]) add('🧩 解開了 ' + db.PUZZLES[k].e + db.PUZZLES[k].n, db.SCENE[k] ? db.SCENE[k].bg : null); }
+  if(ISL.raids.won) add('🌙 守住了 ' + ISL.raids.won + ' 次夜襲', 'camp_night');
+  if(ISL.raids.lost) add('💥 營地被夜襲翻了 ' + ISL.raids.lost + ' 次', 'camp_night');
+  if(ISL.dungeon && ISL.dungeon.clears) add('🏆 通關遺跡地下層 ' + ISL.dungeon.clears + ' 次', 'mon_guardian');
+  if(islCodexCount()) add('📖 自然圖鑑收錄了 ' + islCodexCount() + ' 筆', null);
+  for(i = 0; i < (ISL.friends || []).length; i++) add('👥 和 ' + (ISL.friends[i].name || '好友') + ' 成為好友', null);
+  return out;
+}
+/* ── ④ 結局:回憶幻燈片(淡入淡出 + Ken Burns)→ 電影捲動字幕 → 留在島上 ── */
+var _islEnd = null;
+window.islEndingPlay = function(){
+  var db = islDB(), E = db.ENDING, root = $('isl-ending'), stage = $('isl-ending-stage'), cap = $('isl-ending-cap'), cr = $('isl-ending-credits'), log, slides = [], i, step, n;
+  if(!ISL || !ISL.char) return;
+  log = (ISL.log && ISL.log.length) ? ISL.log.slice() : islLogBackfill();
+  if(log.length > E.maxSlides){ step = log.length / E.maxSlides; for(i = 0; i < E.maxSlides; i++) slides.push(log[Math.floor(i * step)]); if(slides[slides.length - 1] !== log[log.length - 1]) slides[slides.length - 1] = log[log.length - 1]; }
+  else slides = log;
+  islZoneStop(); islAmbDetach(); islModalClose();
+  _islEnd = { i: -1, timers: [], done: false, slides: slides };
+  stage.innerHTML = ''; cap.innerHTML = ''; cap.className = ''; cr.innerHTML = ''; cr.className = ''; cr.style.animationDuration = '';
+  show('isl-ending');
+  islBgm('ending');
+  /* 開場三句 */
+  var op = document.createElement('div'); op.className = 'op'; op.innerHTML = E.opening.join('<br>'); stage.appendChild(op);
+  _islEnd.timers.push(setTimeout(function(){ op.classList.add('on'); }, 100));
+  _islEnd.timers.push(setTimeout(function(){ op.classList.remove('on'); }, 4200));
+  _islEnd.timers.push(setTimeout(function(){ if(op.parentNode) op.parentNode.removeChild(op); islEndingSlide(); }, 5600));
+};
+function islEndingSlide(){
+  var db = islDB(), E = db.ENDING, S = _islEnd, stage = $('isl-ending-stage'), cap = $('isl-ending-cap'), it, el, u, prev;
+  if(!S || S.done) return;
+  S.i++;
+  if(S.i >= S.slides.length){ islEndingCredits(); return; }
+  it = S.slides[S.i];
+  prev = stage.querySelector('.sl.on'); if(prev){ prev.classList.remove('on'); (function(p){ setTimeout(function(){ if(p.parentNode) p.parentNode.removeChild(p); }, E.fadeSec * 1000 + 100); })(prev); }
+  el = document.createElement('div'); el.className = 'sl';
+  u = it.img ? islImgUrl(it.img) : '';
+  el.innerHTML = u ? '<img src="' + u + '" alt="" onerror="this.parentNode.innerHTML=\'<div class=em>' + islEsc((it.t || '').charAt(0)) + '</div>\'">' : '<div class="em">' + islEsc((it.t || '🏝').charAt(0)) + '</div>';
+  stage.appendChild(el);
+  cap.classList.remove('on');
+  S.timers.push(setTimeout(function(){ el.classList.add('on'); cap.innerHTML = islEsc(it.t) + '<small>' + islDateText(it.d) + (it.day ? '　第 ' + it.day + ' 天' : '') + '</small>'; cap.classList.add('on'); }, 60));
+  S.timers.push(setTimeout(islEndingSlide, (E.slideSec + E.fadeSec) * 1000));
+}
+function islEndingCredits(){
+  var db = islDB(), E = db.ENDING, S = _islEnd, stage = $('isl-ending-stage'), cap = $('isl-ending-cap'), cr = $('isl-ending-credits'), h = '', i, lines = [], prev, secs, bl = 0, s;
+  if(!S || S.done) return;
+  prev = stage.querySelector('.sl.on'); if(prev) prev.classList.remove('on'); cap.classList.remove('on');
+  for(i = 0; i < ISL.camp.slots.length; i++){ if(ISL.camp.slots[i]) bl++; }
+  h += '<h2>' + islEsc(E.title) + '</h2><div class="sub">' + islEsc(E.subtitle) + '</div>';
+  lines.push('<span class="k">島民</span>　' + islEsc(ISL.char.name || ISL.name || '小島民'));
+  lines.push('<span class="k">登島</span>　' + islDateText(new Date(ISL.created || islNow()).toISOString().slice(0, 10)) + '　<span class="k">造出帆船</span>　' + islDateText(ISL.flags.shipDate || islToday()));
+  lines.push('<span class="k">在島上度過</span>　' + ISL.day + ' 天　<span class="k">活動</span> ' + ISL.counters.acts + ' 次　<span class="k">撿到</span> ' + ISL.counters.picks + ' 個');
+  lines.push('<span class="k">建築</span>　' + bl + ' 棟(營地 Lv' + ISL.camp.lv + ')　<span class="k">科技</span>　' + Object.keys(ISL.techs || {}).length + ' 項　<span class="k">解謎</span>　' + Object.keys(ISL.puzzles || {}).length + ' 處');
+  lines.push('<span class="k">夜襲</span>　守住 ' + ISL.raids.won + ' 次／失守 ' + ISL.raids.lost + ' 次　<span class="k">地下層</span>　通關 ' + (ISL.dungeon ? ISL.dungeon.clears : 0) + ' 次');
+  lines.push('<span class="k">自然圖鑑</span>　' + islCodexCount() + ' / ' + db.CODEX.length + ' 筆');
+  s = ''; for(i in ISL.stats){ if(ISL.stats.hasOwnProperty(i)) s += islStatE(i) + ISL.stats[i] + '　'; } lines.push('<span class="k">四維</span>　' + s);
+  if(ISL.friends && ISL.friends.length){ s = []; for(i = 0; i < ISL.friends.length; i++) s.push(islEsc(ISL.friends[i].name || '好友')); lines.push('<span class="k">一起守夜的朋友</span>　' + s.join('、')); }
+  lines.push('&nbsp;');
+  for(i = 0; i < E.creditsTail.length; i++) lines.push(islEsc(E.creditsTail[i]));
+  h += lines.join('<br>');
+  cr.innerHTML = h;
+  secs = 14 + lines.length * 1.6;
+  cr.style.animationDuration = secs + 's';
+  cr.className = 'roll';
+  S.timers.push(setTimeout(islEndingFinal, secs * 1000 + 300));
+}
+function islEndingFinal(){
+  var S = _islEnd, stage = $('isl-ending-stage'), cr = $('isl-ending-credits'), db = islDB(), fin, i;
+  if(!S || S.done) return; S.done = true;
+  for(i = 0; i < S.timers.length; i++) clearTimeout(S.timers[i]);
+  cr.className = ''; cr.innerHTML = ''; stage.innerHTML = '';
+  fin = document.createElement('div'); fin.className = 'fin';
+  fin.innerHTML = '<div style="font-size:60px">⛵</div><div style="font-size:22px;font-weight:900;text-align:center;padding:0 24px">' + islEsc(db.STORY.endingHome) + '</div>';
+  var b1 = document.createElement('button'); b1.className = 'isl-btn gold big'; b1.textContent = '留在島上繼續生活'; b1.onclick = function(){ islEndingClose(); };
+  var b2 = document.createElement('button'); b2.className = 'isl-btn ghost'; b2.textContent = '再看一次回憶'; b2.onclick = function(){ hide('isl-ending'); islEndingPlay(); };
+  fin.appendChild(b1); fin.appendChild(b2); stage.appendChild(fin);
+  setTimeout(function(){ fin.classList.add('on'); }, 60);
+}
+window.islEndingSkip = function(){ var S = _islEnd; if(!S) return; if(S.done){ islEndingClose(); return; } islEndingFinal(); };
+function islEndingClose(){
+  var S = _islEnd, i;
+  if(S){ for(i = 0; i < S.timers.length; i++) clearTimeout(S.timers[i]); }
+  _islEnd = null;
+  hide('isl-ending'); $('isl-ending-stage').innerHTML = ''; $('isl-ending-credits').innerHTML = '';
+  if(!ISL.flags.endingSeen){ ISL.flags.endingSeen = true; islLog('🎬 看完了這座島的回憶', null); }
+  islSave('ending');
+  islGoCamp(true);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -13614,13 +13835,17 @@ window.islFriendsOpen = function(){
   h = '<h3>👥 好友 ' + ISL.friends.length + '/' + db.FRIEND_MAX + '</h3>';
   h += '<p style="font-size:15px">我的好友碼:<b style="font-size:22px;letter-spacing:2px;color:#ffd166">' + islFriendCode(MG.user.uid) + '</b><br><span style="font-size:13px;opacity:.8">把好友碼告訴同學,對方輸入就能加你(不用同意)。好友小人會在夜襲時自動幫忙守夜,最多 ' + db.FRIEND_HELPERS + ' 位上場。</span></p>';
   h += '<div style="display:flex;gap:6px;justify-content:center;margin:6px 0"><input id="isl-fcode" maxlength="6" placeholder="輸入好友碼" style="width:130px;font-size:18px;text-align:center;letter-spacing:2px;text-transform:uppercase;border-radius:8px;border:2px solid #5fb3d9;padding:4px"><button class="isl-btn gold" data-a="add" style="font-size:15px">➕ 加好友</button></div>';
-  if(ISL.friends.length){ for(i = 0; i < ISL.friends.length; i++){ f = ISL.friends[i]; c = ISL.friendCache[f.uid]; h += '<div class="isl-store-row" style="align-items:center"><span style="width:44px;height:44px;display:inline-block;overflow:hidden">' + (c && c.char ? '<div style="transform:scale(.55);transform-origin:top left">' + islChibiHtml(c.char, 'idle') + '</div>' : '🧑') + '</span><span class="st" style="flex:1;text-align:left">' + islEsc(c ? c.name : f.name) + '<br><small style="opacity:.8">' + (c ? '第 ' + c.day + ' 天・🛡 防衛 Lv' + c.defLv + '・每 ' + db.FRIEND_HIT_SEC(c.defLv).toFixed(1) + ' 秒趕走 1 隻' : '尚未取得名片') + '</small></span><button class="isl-btn ghost" data-a="rm" data-i="' + i + '" style="font-size:13px">移除</button></div>'; } }
+  if(ISL.friends.length){ for(i = 0; i < ISL.friends.length; i++){ f = ISL.friends[i]; c = ISL.friendCache[f.uid]; h += '<div class="isl-store-row" style="align-items:center"><span style="width:44px;height:44px;display:inline-block;overflow:hidden">' + (c && c.char ? '<div style="transform:scale(.55);transform-origin:top left">' + islChibiHtml(c.char, 'idle') + '</div>' : '🧑') + '</span><span class="st" style="flex:1;text-align:left">' + islEsc(c ? c.name : f.name) + '<br><small style="opacity:.8">' + (c ? '第 ' + c.day + ' 天・🛡 防衛 Lv' + c.defLv + '・每 ' + db.FRIEND_HIT_SEC(c.defLv).toFixed(1) + ' 秒趕走 1 隻' : '尚未取得名片') + '</small></span><button class="isl-btn ghost" data-a="gift" data-i="' + i + '" style="font-size:13px">🎁送禮</button><button class="isl-btn ghost" data-a="note" data-i="' + i + '" style="font-size:13px">💌留言</button><button class="isl-btn ghost" data-a="rm" data-i="' + i + '" style="font-size:13px">移除</button></div>'; } }
   else h += '<p style="opacity:.75;font-size:14px">還沒有好友。</p>';
   islModal(h, [{ t: '關閉', cls: 'ghost' }, { t: '🔄 更新名片', cb: function(){ mgLoading(true); islFriendsRefresh(function(){ mgLoading(false); islSave('friends'); islFriendsOpen(); }); } }]);
   var m = $('isl-modal');
   m.querySelector('[data-a="add"]').onclick = function(ev){ ev.stopPropagation(); var code = String($('isl-fcode').value || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); if(code.length !== 6){ toast('好友碼是 6 碼'); return; } islFriendAdd(code); };
   var rms = m.querySelectorAll('[data-a="rm"]'), j;
   for(j = 0; j < rms.length; j++){ rms[j].onclick = function(ev){ ev.stopPropagation(); var k = parseInt(this.getAttribute('data-i'), 10), ff = ISL.friends[k]; ISL.friends.splice(k, 1); if(ff) delete ISL.friendCache[ff.uid]; playSfx('sfx-cancel', 0.3); islSave('friends'); islCampPaint(); islFriendsOpen(); }; }
+  var gfs = m.querySelectorAll('[data-a="gift"]'), k2;   /* ★ v1.106.0 */
+  for(k2 = 0; k2 < gfs.length; k2++){ gfs[k2].onclick = function(ev){ ev.stopPropagation(); islMailGiftOpen(parseInt(this.getAttribute('data-i'), 10)); }; }
+  var nfs = m.querySelectorAll('[data-a="note"]');
+  for(k2 = 0; k2 < nfs.length; k2++){ nfs[k2].onclick = function(ev){ ev.stopPropagation(); islMailNoteOpen(parseInt(this.getAttribute('data-i'), 10)); }; }
 };
 function islFriendAdd(code){
   var db = islDB(), i;
@@ -13633,11 +13858,86 @@ function islFriendAdd(code){
     if(qs.empty){ toast('找不到這個好友碼(對方要先登入玩過荒島並存檔)'); return; }
     var d = qs.docs[0].data();
     if(!d || !d.uid || d.uid === MG.user.uid){ toast('找不到這個好友碼'); return; }
-    ISL.friends.push({ uid: d.uid, name: d.name || '好友', day: ISL.day }); islFriendCacheSet(d);
+    ISL.friends.push({ uid: d.uid, name: d.name || '好友', day: ISL.day }); islFriendCacheSet(d); islLog('👥 和 ' + (d.name || '好友') + ' 成為好友', null);
     playSfx('sfx-powerup', 0.4); toast('👥 加了好友 ' + (d.name || '') + '!今晚起小人會來幫你守夜');
     islSave('friends'); islCampPaint(); islFriendsOpen();
   })['catch'](function(e){ mgLoading(false); toast('加好友失敗(需要老師先更新 firestore 規則)'); try{ console.warn('[island friend]', e && e.message); }catch(_){} });
 }
+/* ── 丙延伸 v1.106.0:好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合) ── */
+function islMailRef(uid){ return MG.fb.db.collection('minigameIsland').doc(uid).collection('mail'); }
+function islMailRefresh(cb){
+  if(!MG.user || !MG.fb){ _IS.mail = []; if(cb) cb(); return; }
+  islMailRef(MG.user.uid).get().then(function(qs){
+    var arr = [], i;
+    qs.forEach(function(doc){ var d = doc.data(); d._id = doc.id; arr.push(d); });
+    arr.sort(function(a, b){ return (a.at || 0) - (b.at || 0); });
+    _IS.mail = arr; _IS.mailAt = islNow();
+    if(cb) cb();
+  })['catch'](function(){ if(cb) cb(); });
+}
+function islMailCount(){ return (_IS.mail || []).length; }
+window.islMailOpen = function(){
+  if(!MG.user){ islModal('<h3>📬 信箱</h3><p>登入後才有信箱,可以收到好友送的物資與留言。</p>'); return; }
+  playSfx('sfx-tap', 0.3);
+  mgLoading(true);
+  islMailRefresh(function(){ mgLoading(false); islMailPaint(); });
+};
+function islMailPaint(){
+  var db = islDB(), h, i, m, it;
+  h = '<h3>📬 信箱 ' + islMailCount() + '</h3>';
+  if(!(_IS.mail || []).length) h += '<p style="opacity:.75;font-size:14px">目前沒有信件。加好友後互相送物資、留言,都會出現在這裡。</p>';
+  else { for(i = 0; i < _IS.mail.length; i++){ m = _IS.mail[i];
+    if(m.type === 'gift'){ it = null; for(var k in m.items){ if(m.items.hasOwnProperty(k)) it = { id: k, n: m.items[k] }; }
+      h += '<div class="isl-store-row" style="align-items:center"><span class="st" style="flex:1;text-align:left">🎁 ' + islEsc(m.fromName || '好友') + ' 送你' + (it ? '　' + islItemDef(it.id).e + islItemDef(it.id).n + ' ×' + it.n : '') + '</span><button class="isl-btn gold" data-m="' + i + '" style="font-size:13px">收下</button></div>';
+    } else { h += '<div class="isl-store-row" style="align-items:center"><span class="st" style="flex:1;text-align:left">💌 ' + islEsc(m.fromName || '好友') + '：「' + islEsc(m.text || '') + '」</span><button class="isl-btn ghost" data-m="' + i + '" style="font-size:13px">已讀</button></div>'; }
+  } }
+  islModal(h, [{ t: '關閉', cls: 'ghost' }]);
+  var bs = $('isl-modal').querySelectorAll('button[data-m]'), j;
+  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); islMailClaim(parseInt(this.getAttribute('data-m'), 10)); }; }
+}
+function islMailClaim(i){
+  var m = _IS.mail[i], it, k, put;
+  if(!m) return;
+  if(m.type === 'gift'){ for(k in m.items){ if(m.items.hasOwnProperty(k)){ put = islBagAdd(k, 1, m.items[k]); if(put < m.items[k]) islStoreAdd(k, 1, m.items[k] - put); it = k; } } playSfx('sfx-coin', 0.4); toast('🎁 收下了 ' + islItemDef(it).e + islItemDef(it).n + ' ×' + m.items[it]); islLog('🎁 收到 ' + (m.fromName || '好友') + ' 送的 ' + islItemDef(it).e + islItemDef(it).n, null); islHud(); }
+  else { playSfx('sfx-tap', 0.3); }
+  islMailRef(MG.user.uid).doc(m._id)['delete']()['catch'](function(){});
+  _IS.mail.splice(i, 1);
+  islSave('mail');
+  islMailPaint();
+}
+window.islMailGiftOpen = function(idx){
+  var db = islDB(), f = ISL.friends[idx], h, i, id, n;
+  if(!f) return;
+  h = '<h3>🎁 送物資給 ' + islEsc((ISL.friendCache[f.uid] || {}).name || f.name) + '</h3><p style="font-size:14px;opacity:.8">選一種資源,從你的物品包/倉庫扣除,對方下次開信箱就能收到。</p>';
+  for(i = 0; i < db.MAIL_GIFT_ITEMS.length; i++){ id = db.MAIL_GIFT_ITEMS[i]; n = islHave(id); h += '<div style="display:flex;align-items:center;gap:8px;justify-content:center;margin:4px 0"><span style="width:110px;text-align:left">' + islItemDef(id).e + islItemDef(id).n + '(現有 ' + n + ')</span><button class="isl-btn ghost" data-g="' + id + '" data-n="1" style="font-size:13px"' + (n < 1 ? ' disabled' : '') + '>送 1</button><button class="isl-btn ghost" data-g="' + id + '" data-n="5" style="font-size:13px"' + (n < 5 ? ' disabled' : '') + '>送 5</button></div>'; }
+  islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islFriendsOpen(); } }]);
+  var bs = $('isl-modal').querySelectorAll('button[data-g]'), j;
+  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); var id2 = this.getAttribute('data-g'), n2 = parseInt(this.getAttribute('data-n'), 10); islMailSendGift(f, id2, n2); }; }
+};
+function islMailSendGift(f, id, n){
+  var items = {};
+  if(islHave(id) < n){ toast('資源不夠'); return; }
+  if(!islConsume(id, n)){ toast('資源不夠'); return; }
+  items[id] = n;
+  islHud(); islSave('gift');
+  islMailRef(f.uid).add({ from: MG.user.uid, fromName: (ISL.char && ISL.char.name) || ISL.name || '好友', type: 'gift', items: items, at: islNow() })
+    .then(function(){ playSfx('sfx-powerup', 0.4); toast('🎁 送出去了!'); islLog('🎁 送給 ' + (f.name || '好友') + ' ' + islItemDef(id).e + islItemDef(id).n + ' ×' + n, null); islFriendsOpen(); })
+    ['catch'](function(e){ toast('送出失敗(需要老師更新 firestore 規則)'); try{ console.warn('[island mail]', e && e.message); }catch(_){} islFriendsOpen(); });
+}
+window.islMailNoteOpen = function(idx){
+  var db = islDB(), f = ISL.friends[idx];
+  if(!f) return;
+  var h = '<h3>💌 留言給 ' + islEsc((ISL.friendCache[f.uid] || {}).name || f.name) + '</h3><p style="font-size:13px;opacity:.8">最多 ' + db.MAIL_NOTE_MAX + ' 字</p><textarea id="isl-note-txt" maxlength="' + db.MAIL_NOTE_MAX + '" rows="2" style="width:100%;border-radius:8px;border:2px solid #5fb3d9;padding:6px;font-size:15px;box-sizing:border-box"></textarea>';
+  islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islFriendsOpen(); } }, { t: '送出', cls: 'gold', cb: function(){ } }]);
+  var send = $('isl-modal').querySelectorAll('button.isl-btn')[1];
+  send.onclick = function(ev){ ev.stopPropagation(); var txt = String(($('isl-note-txt') || {}).value || '').slice(0, db.MAIL_NOTE_MAX).replace(/^\s+|\s+$/g, ''); if(!txt){ toast('先寫點什麼吧'); return; } islModalClose(); islMailSendNote(f, txt); };
+};
+function islMailSendNote(f, txt){
+  islMailRef(f.uid).add({ from: MG.user.uid, fromName: (ISL.char && ISL.char.name) || ISL.name || '好友', type: 'note', text: txt, at: islNow() })
+    .then(function(){ playSfx('sfx-tap', 0.3); toast('💌 留言送出去了'); islLog('💌 給 ' + (f.name || '好友') + ' 留了言', null); islFriendsOpen(); })
+    ['catch'](function(e){ toast('送出失敗(需要老師更新 firestore 規則)'); try{ console.warn('[island mail]', e && e.message); }catch(_){} islFriendsOpen(); });
+}
+
 /* ── 乙 遺跡地下層(探索戰鬥=工具配對+一題) ── */
 var _islDg = null;
 window.islDungeonOpen = function(){
@@ -13649,7 +13949,7 @@ window.islDungeonOpen = function(){
   islZoneStop();
   islModal('<h3>🕳 遺跡地下層</h3><p>' + G.floors + ' 層,每層都有魔物。遇到魔物要先想「它怕什麼」選對工具,再答一題;選錯或答錯會受傷 ❤️−5,體力用完就得撤退。<br>體力 ' + ISL.hp + '/' + ISL.hpMax + '　⚡ 花 ' + G.ap + ' AP</p>', [
     { t: '先不下去', cls: 'ghost', cb: function(){ islDgResume(); } },
-    { t: '⚡' + G.ap + ' 下去!', cls: 'gold', cb: function(){ ISL.ap -= G.ap; ISL.dungeon.day = ISL.day; ISL.dungeon.runs++; islHud(); islSave('dungeon'); islBgm('raid'); _islDg = { floor: 0, enc: 0, kills: 0, loot: [] }; if(!ISL.flags.dungeonTold){ ISL.flags.dungeonTold = true; islDialog(G.intro, { who: 'me' }, function(){ islDgFloor(); }); } else islDgFloor(); } }
+    { t: '⚡' + G.ap + ' 下去!', cls: 'gold', cb: function(){ ISL.ap -= G.ap; ISL.dungeon.day = ISL.day; ISL.dungeon.runs++; islHud(); islSave('dungeon'); islBgm((ISL.dungeon.runs % 2) ? 'raid2' : 'raid'); _islDg = { floor: 0, enc: 0, kills: 0, loot: [] }; if(!ISL.flags.dungeonTold){ ISL.flags.dungeonTold = true; islDialog(G.intro, { who: 'me' }, function(){ islDgFloor(); }); } else islDgFloor(); } }
   ]);
 };
 function islDgResume(){ islBgm(_IS.zone); if(_IS.screen === 'zone' && !_IS.raf){ _IS.lastT = 0; _IS.raf = requestAnimationFrame(islTick); } }
@@ -13670,9 +13970,8 @@ function islDgEncounter(){
 function islDgMonHtml(m){ var u = islImgUrl('mon_' + m.k); return '<div style="font-size:64px;line-height:1.1;margin:4px 0">' + (u ? '<img src="' + u + '" alt="" style="width:120px;height:120px;object-fit:contain" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + '</div>'; }
 function islDgToolPick(){
   var db = islDB(), S = _islDg, C = S.cur, m = C.m, opts = [m.tool], i, k, h, order, correctT = db.defTool(m.tool), pool = [];
-  for(i = 0; i < db.DEF_TOOLS.length; i++){ k = db.DEF_TOOLS[i].k; if(k !== m.tool) pool.push(k); }
-  pool = shuffle(pool); while(opts.length < 4) opts.push(pool.pop());
-  order = shuffle(opts);
+  if(!C.opts){ for(i = 0; i < db.DEF_TOOLS.length; i++){ k = db.DEF_TOOLS[i].k; if(k !== m.tool) pool.push(k); } pool = shuffle(pool); while(opts.length < 4) opts.push(pool.pop()); C.opts = shuffle(opts); }   /* ★ v1.105.0 同一隻魔物的四個選項固定,選錯重選時位置與停用狀態不變 */
+  order = C.opts;
   h = '<h3>' + (C.boss ? '👑 ' : '⚔ ') + islEsc(m.n) + ' 出現!</h3>' + islDgMonHtml(m) + '<p style="font-size:15px">它怕什麼?選一個工具。' + (ISL.stats.wit >= 8 ? '<br><span style="color:#ffd166;font-size:13px">💡 ' + islEsc(m.hint) + '</span>' : '') + '</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   for(i = 0; i < order.length; i++){ var t = db.defTool(order[i]); h += '<button class="isl-recipe' + (C.wrongTool[order[i]] ? '' : ' can') + '" data-t="' + order[i] + '"' + (C.wrongTool[order[i]] ? ' disabled' : '') + ' style="min-width:96px"><span style="font-size:30px">' + t.e + '</span><span class="rn">' + islEsc(t.n) + '</span></button>'; }
   h += '</div><p style="font-size:13px;opacity:.8">體力 ' + ISL.hp + '/' + ISL.hpMax + '</p>';
@@ -13712,7 +14011,7 @@ function islDgLoot(){
 function islDgEnd(cleared){
   var db = islDB(), G = db.DUNGEON, S = _islDg, first = cleared && !ISL.dungeon.clears, done;
   if(!S) return;
-  if(cleared){ ISL.dungeon.clears++; if(S.floor > ISL.dungeon.best) ISL.dungeon.best = S.floor; }
+  if(cleared){ ISL.dungeon.clears++; if(S.floor > ISL.dungeon.best) ISL.dungeon.best = S.floor; islLog((ISL.dungeon.clears === 1 ? '🏆 第一次通關遺跡地下層,打敗守墓石像' : '🕳 再次通關遺跡地下層'), 'mon_guardian'); }
   else if(S.floor > ISL.dungeon.best) ISL.dungeon.best = S.floor;
   ISL.zones.ruins.explore = Math.min(100, (ISL.zones.ruins.explore || 0) + (cleared ? 15 : 5));
   _islDg = null; islSave('dungeon'); islHud();
@@ -14211,7 +14510,7 @@ function islPuzzleOpen(zoneId){
   }
   function solve(){
     var k, txt = [];
-    ISL.puzzles[zoneId] = true; islCodexAdd('pz_' + zoneId);   /* ★ v1.98.0 */
+    ISL.puzzles[zoneId] = true; islCodexAdd('pz_' + zoneId); islLog('🧩 解開了 ' + pz.e + pz.n, islDB().SCENE[zoneId] ? islDB().SCENE[zoneId].bg : null);   /* ★ v1.98.0;★ v1.105.0 */
     for(k in pz.reward){ if(pz.reward.hasOwnProperty(k)){ if(k === 'shell') ISL.shell += pz.reward[k]; else if(k === 'tech') ISL.tech += pz.reward[k]; txt.push((k === 'shell' ? '🐚 貝幣 +' : '🔬 科技點 +') + pz.reward[k]); } }
     ISL.zones[zoneId].explore = Math.min(100, (ISL.zones[zoneId].explore || 0) + 20);
     islStatGain('wit', 2);
@@ -14293,7 +14592,7 @@ function islCodexAdd(id){
   /* 里程碑:依已收錄總數自動發放(codexMs=已領到第幾階) */
   ms = db.CODEX_MS;
   for(i = ISL.codexMs; i < ms.length; i++){
-    if(islCodexCount() >= ms[i].at){ ISL.codexMs = i + 1; ISL.shell += ms[i].shell; ISL.tech += ms[i].tech; txt = '📖 圖鑑 ' + ms[i].at + ' 筆達成!🐚 貝幣 +' + ms[i].shell + '　🔬 科技點 +' + ms[i].tech; (function(t){ setTimeout(function(){ toast(t); playSfx('sfx-powerup', 0.4); }, 1400); })(txt); }
+    if(islCodexCount() >= ms[i].at){ ISL.codexMs = i + 1; islLog('📖 自然圖鑑收錄達 ' + ms[i].at + ' 筆', null); ISL.shell += ms[i].shell; ISL.tech += ms[i].tech; txt = '📖 圖鑑 ' + ms[i].at + ' 筆達成!🐚 貝幣 +' + ms[i].shell + '　🔬 科技點 +' + ms[i].tech; (function(t){ setTimeout(function(){ toast(t); playSfx('sfx-powerup', 0.4); }, 1400); })(txt); }
     else break;
   }
   if(_IS.screen === 'camp' || _IS.screen === 'zone') islHud();
@@ -14354,7 +14653,7 @@ window.islShopOpen = function(tab){
   tab = tab || _IS.shopTab || 'buy'; _IS.shopTab = tab;
   playSfx('sfx-tap', 0.3);
   islCodexAdd('otter');
-  if(first){ ISL.flags.shopTold = true; islDialog(S.npc.hello, { who: 'npc', img: S.npc.img, e: S.npc.e }, function(){ islShopOpen(tab); }); islSave('shop'); return; }
+  if(first){ ISL.flags.shopTold = true; islLog('🦦 認識了阿獺雜貨鋪', S.npc.img); islDialog(S.npc.hello, { who: 'npc', img: S.npc.img, e: S.npc.e }, function(){ islShopOpen(tab); }); islSave('shop'); return; }
   h += '<div class="isl-bagbox"><h3>' + S.npc.e + ' 阿獺雜貨鋪 <span style="font-size:15px;opacity:.85">🐚 ' + ISL.shell + '</span><span class="grow"></span><button data-act="close">✕</button></h3>';
   h += '<div class="isl-shop-npc">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span style=&quot;font-size:40px&quot;>' + S.npc.e + '</span>\');">' : '<span style="font-size:40px">' + S.npc.e + '</span>') + '<div class="say">' + islEsc(S.npc.tips[(ISL.day + islCodexCount()) % S.npc.tips.length]) + '</div></div>';
   h += '<div class="isl-tabs"><button class="' + (tab === 'buy' ? 'on' : '') + '" data-act="tab" data-k="buy">🛒 買東西</button><button class="' + (tab === 'sell' ? 'on' : '') + '" data-act="tab" data-k="sell">💰 賣東西</button></div>';

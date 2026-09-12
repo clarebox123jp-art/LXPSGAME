@@ -1,6 +1,8 @@
 /* ============================================================================
  * 🏝 像素荒島求生記 — 資料表(minigame/minigame_island_db.js)
  * ============================================================================
+ * ★ v1.13.0(2026-09-12・老師「請繼續」,裁定 R=自由創角、S=訪客島獨立存檔不可匯入 已確認)— 好友信箱資料:MAIL_GIFT_ITEMS(可送資源白名單)、MAIL_QTY_MAX、MAIL_NOTE_MAX。對應 minigame_index.html v1.106.0。
+ * ★ v1.12.0(2026-09-12・老師四項:場景懶載入/首頁完整安裝鈕/raid+raid2 輪流/帆船結局)— BUILDINGS.ship(最終目標,tech:30、needZone volcano、noUpgrade、final)、BUILD_ORDER +ship、IMG bld_ship/ending_sail、STORY.shipBuilt/endingHome、ENDING(結局文案與節奏)、LOG_MAX(回憶紀錄上限)。對應 minigame_index.html v1.105.0。
  * ★ v1.11.0(2026-09-12・老師「甲乙丙全做」)— 甲:MONSTERS 4→8(黏泥怪/火精/石化蛇/雷精,各綁科學概念,from=出現天數,每隻加 q 一題)、DEF_TOOLS 4→8、DEF_STAT_BONUS(四維加成)、DEF_BITE_HP、瞭望台 tower 建築;乙:DUNGEON(遺跡地下層 3 層+守墓石像 boss);丙:FRIEND_MAX/FRIEND_HELPERS/FRIEND_HIT_SEC、STORY.friendWatch/towerFirst;IMG +6、CODEX +5(57→62)。對應 minigame_index.html v1.104.0。
  * ★ v1.10.0(2026-09-12・老師「場景幫我壓縮成 JPG」)— 11 區場景 + 大島地圖 + 營地日/夜 共 14 張改讀 .jpg(全部無透明,品質 85,71 MB → 10 MB);mgPicUrl 自帶副檔名不補 .png。對應 minigame_index.html v1.102.0。
  * ★ v1.9.0(2026-09-12・第二批 35 張圖上線)— 依實際場景圖重校 5 區遮罩(river 淺水帶改貼畫中溪流+魚群池改到水上、rock 下半海域補 ~/深水 #、grass 小池塘、cave 依畫中洞室重繪、lake 淺水環擴到畫中湖岸);seed 圖接上。對應 minigame_index.html v1.101.0。
@@ -23,7 +25,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.11.0';   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
+  D.VER = 'v1.13.0';   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
   D.SAVE_VER = 1;          /* 存檔結構版本(缺欄位一律補預設值,絕不因存檔壞掉卡流程) */
   D.CELL = 64;             /* 一格 px */
   D.COLS = 32; D.ROWS = 24;
@@ -42,7 +44,7 @@ window.ISL_DB = (function(){
     node_fish: 'island_node_fish.png', node_reed: 'island_node_reed.png', node_pebble: 'island_node_pebble.png', node_stone: 'island_node_stone.png',
     node_trash: 'island_node_trash.png', node_shell: 'island_node_shell.png', node_seedgrass: 'island_node_seedgrass.png', node_fibergrass: 'island_node_fibergrass.png',
     camp_night: 'island_camp_night.jpg', mon_shadow: 'island_mon_shadow.png', mon_beetle: 'island_mon_beetle.png', mon_bat: 'island_mon_bat.png', mon_boar: 'island_mon_boar.png',
-    mon_slime: 'island_mon_slime.png', mon_ember: 'island_mon_ember.png', mon_basilisk: 'island_mon_basilisk.png', mon_spark: 'island_mon_spark.png', mon_guardian: 'island_mon_guardian.png', bld_tower: 'island_bld_tower.png',   /* ★ v1.11.0 四魔物+守墓石像+瞭望台(缺圖退 emoji) */
+    mon_slime: 'island_mon_slime.png', mon_ember: 'island_mon_ember.png', mon_basilisk: 'island_mon_basilisk.png', mon_spark: 'island_mon_spark.png', mon_guardian: 'island_mon_guardian.png', bld_tower: 'island_bld_tower.png', bld_ship: 'island_bld_ship.png', ending_sail: 'island_ending_sail.jpg',   /* ★ v1.12.0 帆船建築/結局揚帆圖(缺圖退 emoji) */   /* ★ v1.11.0 四魔物+守墓石像+瞭望台(缺圖退 emoji) */
     map:      'island_map_base.jpg',            /* 2048×1536 大島底圖 */
     zone_beach:  'island_zone_beach.jpg',       /* 2048×1536 區域場景 */
     zone_forest: 'island_zone_forest.jpg',
@@ -647,11 +649,19 @@ window.ISL_DB = (function(){
                 parts:[ { k:'leg', n:'高腳架', need:'wood', hint:'要高,才看得遠(視線不被擋住)', e:'🪵' },
                         { k:'base', n:'基座', need:'stone', hint:'又重又穩,風吹不倒', e:'🪨' },
                         { k:'ladder', n:'繩梯', need:'fiber', hint:'要韌,爬上去才安全', e:'🌿' } ] },
+    /* ★ v1.12.0 最終目標:帆船 — 蓋好即達成離島條件並播放結局(K 甲:之後仍可留在島上家園模式);不可升級、需火山已解鎖+科技點 30 */
+    ship:     { n:'帆船', e:'⛵', img:'bld_ship', cost:{wood:80, reed:30, fiber:40, ore:6, crystal:2}, tech:30, needZone:'volcano', noUpgrade:true, final:true,
+                desc:'最終目標!造出能出海的帆船,就具備離開荒島的條件(也可以留下來繼續生活)。',
+                lvText:['可以出海了'],
+                parts:[ { k:'hull', n:'船身', need:'wood', hint:'密度比水小、又要夠硬,才浮得起來又撐得住', e:'🪵' },
+                        { k:'sail', n:'船帆', need:'reed', hint:'編得密、又輕,才能兜住風', e:'🌾' },
+                        { k:'rope', n:'帆索', need:'fiber', hint:'要韌,拉緊了帆才轉得動', e:'🌿' },
+                        { k:'keel', n:'龍骨配重', need:'ore', hint:'又重又硬,放在船底才不會翻', e:'🟫' } ] },
     canal:    { n:'水道', e:'💧', img:'bld_canal', cost:{stone:10, reed:6, wood:4}, act:'canal', needZone:'river',
                 desc:'把溪水引到營地:農田自動澆水、淡水 +3/日。(建造 = 水道拼圖)', lvText:['自動澆水、淡水 +3/日','淡水 +5/日','淡水 +7/日','淡水 +9/日','淡水 +12/日、作物快 1 天'],
                 parts:[] }
   };
-  D.BUILD_ORDER = ['campfire','tent','storage','bucket','raft','wall','torch','tower','farm','pen','canal','bench'];   /* ★ v1.11.0 +tower */
+  D.BUILD_ORDER = ['campfire','tent','storage','bucket','raft','wall','torch','tower','farm','pen','canal','bench','ship'];   /* ★ v1.11.0 +tower;★ v1.12.0 +ship(最終目標) */
   D.BLD_MAX_LV = 5;
   D.BLD_MAX_LV_P1 = 5;   /* 舊名相容(P2-b 起全建築可升到 Lv5) */
   /* 營地 Lv1~3 擴建(第十二章):格數 9→12→16;cost 由「🏕 擴建」鈕消耗(tech=科技點) */
@@ -980,6 +990,18 @@ window.ISL_DB = (function(){
     clearStory: ['守墓石像碎成一堆石塊,牆上露出一幅壁畫:古人用銅棒、水晶和……閃電,點亮了整座遺跡。', '(原來這座島的祕密,是「電」。)']
   };
   /* ★ v1.11.0 丙:好友守夜(H 甲互加不需同意、I 甲不在線也守夜);名片 minigameIslandPublic/{uid},好友清單存在自己存檔 friends[] */
+  /* ★ v1.12.0 結局(建造帆船後):回憶幻燈片 + 電影捲動字幕;字幕內容由 index 端依存檔生成,這裡放固定文案 */
+  D.ENDING = {
+    title: '像素荒島求生記', subtitle: '— 一段用自然課知識活下來的日子 —',
+    opening: ['帆船造好了。', '在離開之前,讓我們回頭看看——', '這座島記得的每一天。'],
+    slideSec: 3.6, fadeSec: 1.2, maxSlides: 28,
+    creditsTail: ['島上的植物、動物與礦石　　全部是台灣的物種', '自然知識　　小學三～六年級自然科學', '美術風格　　HD-2D 像素風', '製作　　力行國小', '謝謝你,守護了這座島。', '(想留下來的話,島一直都在。)']
+  };
+  D.LOG_MAX = 150;
+  /* ★ v1.13.0 好友信箱:送物資限這幾種原始資源、單次數量上限、留言字數上限 */
+  D.MAIL_GIFT_ITEMS = ['wood', 'stone', 'fiber', 'leaf', 'reed', 'pebble'];
+  D.MAIL_QTY_MAX = 20;
+  D.MAIL_NOTE_MAX = 40;
   D.FRIEND_MAX = 5;
   D.FRIEND_HELPERS = 3;       /* 夜襲時最多 3 位好友小人在營火旁 */
   D.FRIEND_HIT_SEC = function(defLv){ return Math.max(3, 7 - 0.4 * (defLv || 1)); };   /* 好友每隔幾秒趕走一隻(防衛技能越高越快) */
@@ -1162,6 +1184,8 @@ window.ISL_DB = (function(){
     wake: '島上的東西又長回來了……新的一天,新的機會。',
     firstCamp: '這塊空地離海不遠,又有樹擋風——就把營地設在這裡吧。',
     friendWatch: '有朋友的小人在營火旁守夜,晚上安心多了。原來一起生活,就是這種感覺。',   /* ★ v1.11.0 丙 */
+    shipBuilt: ['帆升起來了。風一吹,整艘船微微晃了一下——它真的能出海。', '回頭看看營地、田、還有那些朋友……原來我在這座島上,做了這麼多事。'],   /* ★ v1.12.0 */
+    endingHome: '船就停在岸邊,想走的時候隨時可以走。今天,先回營地吧。',
     towerFirst: '從瞭望台看出去,整片草原都在腳下。原來看得高、看得遠,才能提早準備。',   /* ★ v1.11.0 甲 */
     fireLit: '火,燒起來了。有光、有暖,今晚不用怕了。',
     forestOpen: '有了營火,我敢往森林裡走了。那裡一定有木材。',
