@@ -15,6 +15,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.118.0(2026-09-13)
+     ★ v1.118.0(2026-09-13・老師三項)— 🏝 ①採集/播種/馴養(islQtePull)與伐木/採石/烹飪(islQteSwing)的「第 N 次/暴擊採集!」訊息移到活動畫面右側紀錄欄(#isl-q-side,逐次列出、暴擊列金色跳動),暴擊多疊一聲 sfx-summon-reveal,金色閃光改 MG_FX.hit(點擊星星.gif)放大 220px ②走路幀序改 [2,0,3,1,4,0,5,1]:每個跨步幀之間插一格站立幀(sheet 第 2~5 欄全是跨步姿勢,連續播沒有手腳伸直的過渡)③iPad(觸控且短邊 ≥700)#island-root 加 .ipad,選單名稱/物品名稱/說明文字類字級 ×2(#isl-submenu 細項、分類大鈕、彈窗 h3/p、面板列、物品包/倉庫/商店/圖鑑/委託/留言板/技能列、對話框、提示條、題目解說…,容器本來就可捲)。對應 sw v1.88.0、island_db v1.19.0(零改動)。
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.117.0(2026-09-13)
+     ★ v1.117.0(2026-09-13・老師看圖)— 大廳標題字下方三顆放錯位置的模式鈕(#mode-tabs)整組移除;「完整下載荒島求生主程式」改由主程式首頁左上第三顆鈕(index v5.187.0,以 iframe 呼叫本頁 window.islInstallUrls() 取清單自行下載進 lxps-mini-island-v1)與荒島 ⚙ 設定選單提供。islInstallUrls 改掛 window 供主程式讀。對應 sw v1.87.0、island_db v1.19.0(零改動)。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.116.0(2026-09-13)
      ★ v1.116.0(2026-09-13・老師六項)— 🏝 ①「⬇ 完整下載荒島求生主程式」:安裝面板移到 body 層(?mode=island 直入也開得到),右上 ⚙ 設定選單新增此鈕;安裝清單加入主程式檔(minigame_index.html/minigame_db.js/minigame_island_db.js/manifest/icon)+ 全部音效音樂(108 支 audio)+ 荒島全部圖片,分層造型 24 張列為選配(沒上傳不算失敗)②島名詞庫 70×62,創角與改名改為「形容詞/名詞」兩個可捲動下拉選單+自由輸入+🎲 ③主角造型新增 髮型/髮色/膚色/服裝(分層 sprite:base_<body>_s0~3 + hair_<body>_h0~3(灰階,髮色 16 色 CSS filter 染)+ cloth_<body>_c0~3,基底圖上傳即自動切換、缺圖退回整張 sheet;存檔 char.cloth)④四維上限 20→50、技能等級上限 10→50(甜蜜點/走速/產量加成在舊上限處封頂,不因高等級失衡)⑤水面動態白色閃爍波光(islAmb lo 層每格 2~3 顆十字星光,銳利閃爍+隨風漂)⑥戰鬥系統說明(純文字)。對應 sw v1.86.0、island_db v1.19.0。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.115.0(2026-09-13)
@@ -3404,14 +3408,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 
   <!-- ══ 首頁 ══ -->
   <section id="page-home" class="hidden">
-    <!-- ★ v1.90.0(2026-09-12)— 🏝 像素荒島求生記:大廳頂端模式切換 Tab(設計書 0.2 / 裁定 A=甲「同一 PWA 內第二模式」)。
-         「⚔ 大對抗小遊戲」= 現況(本頁),「🏝 荒島求生記」→ islEnter() 開啟 #island-root(位於 .wrap 之外的全畫面容器)。
-         既有 15 款關卡與 #grid 一行未動;荒島有自己的 HUD/離開鈕,離開時走 mgHome() 回到本頁。 -->
-    <div id="mode-tabs" style="display:flex;justify-content:center;gap:10px;margin:6px 0 4px;">
-      <button class="chip" style="font-size:18px;padding:8px 18px;border-color:#ffd166;background:rgba(255,209,102,.18);" onclick="try{playSfx('sfx-tap',0.3);}catch(_){}" title="目前模式">⚔ 大對抗小遊戲</button>
-      <button class="chip" style="font-size:18px;padding:8px 18px;border-color:#5fb3d9;" onclick="islEnter()" title="生存建造與探索解謎,用自然課知識活下去">🏝 荒島求生記 <span style="font-size:12px;opacity:.8">NEW</span></button>
-      <button class="chip" id="isl-install-btn" style="font-size:15px;padding:8px 14px;border-color:#7bed9f;" onclick="islInstallOpen()" title="一次把荒島求生主程式、所有圖片與音效音樂存進這台裝置,之後離線也能開、進場景不用等下載">⬇ 完整下載荒島求生主程式</button>
-    </div>
+    <!-- ★ v1.117.0(2026-09-13・老師看圖)— 標題字下方的三顆模式鈕(⚔ 大對抗小遊戲/🏝 荒島求生記/⬇ 完整下載)整組移除:荒島入口已在主程式首頁(?mode=island 直入),完整下載荒島主程式鈕改放主程式首頁左上(v5.187.0)與荒島內 ⚙ 設定選單。#mode-tabs 與 #isl-install-btn 不再存在,islInstallBtnPaint 對空值直接略過。 -->
     <!-- ★ v1.105.0 荒島完整安裝(老師需求):平常進場景才下載該場景圖+音樂;這顆鈕一次全抓進 Cache 'lxps-mini-island-v1'(SW 各策略都會先查快取) -->
     <!-- ★ v1.10.0(老師看圖裁定)— 每週排行榜獎勵:首頁最上方一顆清楚的大按鈕,點開放大字體說明視窗(內含本週排行榜/上週得獎名單按鈕) -->
     <div id="top-btns">
@@ -4252,6 +4249,47 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    ②創角左欄:確認鈕被 .prev .big 的 scale(3) 誤放大(見上方 .pv 註解)+ 左欄超出畫面不能捲 → .prev 可捲動、內容用 auto margin 置中(不足高度時自動改從頂端排起)。
    ③活動畫面 #isl-act-body 缺 min-height:0 ⇒ 內容一高就把底部提示條擠出畫面 6px(小人腳被切);營地側欄 18 顆鈕單欄要捲 3 個畫面 → 改雙欄格線。
    ④留言板告示牌署名、圖鑑卡出處 12.5px(實際 16px)偏小 → 14/14.5px。 ══ */
+/* ★ v1.118.0 QTE 右側紀錄欄(老師:「第 N 次/暴擊採集」訊息移到畫面右側) */
+.isl-qte .cnt.hide,.isl-qte .fx.hide{display:none;}
+#isl-q-side{position:absolute;right:10px;top:10px;width:200px;max-height:calc(100% - 20px);overflow-y:auto;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.35);border-radius:16px;padding:10px 12px;z-index:6;font-size:17px;}
+#isl-q-side .sh{font-weight:900;color:#ffd166;font-size:19px;margin-bottom:6px;}
+#isl-q-side ul{list-style:none;margin:0;padding:0;}
+#isl-q-side li{display:flex;flex-direction:column;gap:1px;padding:5px 0;border-top:1px solid rgba(255,255,255,.18);font-weight:700;line-height:1.25;}
+#isl-q-side li b{font-size:14px;opacity:.85;color:#fff;font-weight:700;}
+#isl-q-side li.crit{color:#ffd166;text-shadow:0 0 10px #ffd166,0 2px 3px #000;animation:islCritPop .6s ease-out;}
+@keyframes islCritPop{0%{transform:scale(.6);opacity:0;}50%{transform:scale(1.15);opacity:1;}100%{transform:scale(1);}}
+#isl-q-side .nx{margin-top:8px;text-align:center;font-weight:900;color:#7bed9f;font-size:18px;}
+#isl-act-body.qside .isl-qte{width:calc(96% - 216px);max-width:680px;margin-right:216px;}
+#isl-act-body.qside .isl-fx{width:220px;height:220px;margin-left:-110px;margin-top:-110px;}
+@media (max-width:620px){ #isl-q-side{width:140px;font-size:14px;padding:6px 8px;} #isl-act-body.qside .isl-qte{width:calc(96% - 150px);margin-right:150px;} }
+/* ══ ★ v1.118.0(2026-09-13・老師「iPad 版荒島所有選單名稱、物品名稱、說明文字再放大 100%」)— #island-root.ipad(觸控裝置且螢幕短邊 ≥700,islEnter 判定)下,
+   選單名稱/物品名稱/說明文字類全部 ×2;HUD、地圖、場景資源點標籤、活動主標題與大按鈕不在老師指定範圍,維持原尺寸。容器(彈窗 .box/面板 .isl-bagbox/細項選單/活動區)本來就可捲動。 ══ */
+#island-root.ipad #isl-submenu .sm-title{font-size:40px;} #island-root.ipad #isl-submenu .sm-grid{grid-template-columns:repeat(2,1fr);} #island-root.ipad #isl-submenu .sm-grid button{font-size:32px;min-height:112px;white-space:nowrap;} #island-root.ipad #isl-submenu .sm-grid button .ci{font-size:44px;} #island-root.ipad #isl-submenu .sm-box{width:min(520px,66%);max-height:94%;overflow-y:auto;}
+#island-root.ipad #isl-camp-side button.cat{font-size:34px;} #island-root.ipad #isl-camp-side{width:300px;flex-basis:300px;}
+#island-root.ipad #isl-gear button{font-size:34px;}
+#island-root.ipad #isl-modal .box h3{font-size:56px;} #island-root.ipad #isl-modal .box p{font-size:42px;} #island-root.ipad #isl-modal .box li{font-size:42px;} #island-root.ipad #isl-modal .box{width:min(96%,900px);max-height:94%;overflow-y:auto;}
+#island-root.ipad .isl-btn{font-size:36px;} #island-root.ipad .isl-btn.big{font-size:40px;}
+#island-root.ipad .isl-bagbox{width:min(98%,960px);} #island-root.ipad .isl-bagbox h3{font-size:50px;} #island-root.ipad .isl-bagbox p{font-size:34px;} #island-root.ipad .isl-bagbox h3 button{font-size:30px;} #island-root.ipad .isl-bag-tools{font-size:36px;}
+#island-root.ipad .isl-bag-slot .n{font-size:34px;} #island-root.ipad .isl-bag-slot .q{font-size:26px;} #island-root.ipad .isl-bag-slot small{font-size:28px;}
+#island-root.ipad .isl-store-row{font-size:38px;} #island-root.ipad .isl-store-row .st{font-size:30px;} #island-root.ipad .isl-store-item .qs{font-size:30px;}
+#island-root.ipad .isl-tabs button{font-size:34px;} #island-root.ipad .isl-tabs button small{font-size:26px;}
+#island-root.ipad .isl-codex-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));} #island-root.ipad .isl-codex-card .nm{font-size:32px;} #island-root.ipad .isl-codex-card .wh{font-size:26px;}
+#island-root.ipad .isl-shop-npc .say{font-size:32px;} #island-root.ipad .isl-sale{font-size:26px;}
+#island-root.ipad .isl-stat-row{font-size:38px;} #island-root.ipad .isl-pen-row{font-size:38px;} #island-root.ipad .isl-recipe .rn{font-size:36px;} #island-root.ipad .isl-plot .pl{font-size:29px;}
+#island-root.ipad .isl-quest-row{font-size:36px;} #island-root.ipad .isl-quest-row .nm .st{font-size:29px;}
+#island-root.ipad .isl-board-row{font-size:34px;} #island-root.ipad .isl-board-row .bd small{font-size:26px;} #island-root.ipad #isl-camp-board{font-size:30px;} #island-root.ipad #isl-camp-board .who{font-size:25px;}
+#island-root.ipad .isl-cell .bn{font-size:30px;} #island-root.ipad .isl-cell .lv{font-size:29px;}
+#island-root.ipad .isl-slot small{font-size:34px;} #island-root.ipad .isl-slot .d{font-size:29px;} #island-root.ipad .isl-item small{font-size:29px;}
+#island-root.ipad #isl-dialog .dbox{font-size:48px;width:min(98%,1000px);} #island-root.ipad #isl-dialog .dbox .nxt{font-size:30px;}
+#island-root.ipad #isl-tut{font-size:26px;} #island-root.ipad #isl-tut button{font-size:22px;}   /* 教學氣泡浮在畫面上,×2 會蓋住整個營地,只放大 1.4 倍 */
+#island-root.ipad #isl-act-hint{font-size:27px;min-height:64px;} #island-root.ipad .isl-act-sub{font-size:27px;} #island-root.ipad #isl-act-top{font-size:24px;}   /* 活動畫面高度有限(iPad 橫式活動區約 380 版面 px),提示條只放大 1.4 倍,否則會把拉力條/大按鈕擠出畫面 */
+#island-root.ipad .isl-quiz .q{font-size:50px;} #island-root.ipad .isl-quiz .opts button{font-size:44px;min-height:100px;} #island-root.ipad .isl-quiz .why{font-size:38px;} #island-root.ipad .isl-quiz .hintbtn{font-size:34px;} #island-root.ipad .isl-quiz{width:min(96%,900px);}
+#island-root.ipad .isl-result .kc{font-size:38px;} #island-root.ipad .isl-result .exp{font-size:36px;} #island-root.ipad .isl-result .gain{font-size:54px;}
+#island-root.ipad #isl-q-side{width:230px;font-size:24px;} #island-root.ipad #isl-q-side .sh{font-size:24px;} #island-root.ipad #isl-q-side li b{font-size:19px;} #island-root.ipad #isl-q-side .nx{font-size:24px;} #island-root.ipad #isl-act-body.qside .isl-qte{width:calc(96% - 246px);margin-right:246px;}
+#island-root.ipad #isl-map-hint{font-size:34px;} #island-root.ipad #isl-zone-topinfo{font-size:34px;}
+#island-root.ipad .isl-namepick select{font-size:36px;} #island-root.ipad #isl-create .sec h4{font-size:40px;} #island-root.ipad #isl-create .sw button{font-size:40px;} #island-root.ipad #isl-create .styles button{font-size:32px;} #island-root.ipad #isl-create .prev .nm{font-size:48px;} #island-root.ipad #isl-create .prev input{font-size:44px;}
+#island-root.ipad .isl-mon .hint{font-size:26px;} #island-root.ipad .isl-mon .cnt{font-size:30px;} #island-root.ipad #isl-def-top{font-size:38px;} #island-root.ipad #isl-def-tools button small{font-size:28px;}
+#island-root.ipad .isl-float{font-size:48px;} #island-root.ipad .isl-hurt{font-size:48px;}
 #island-root button{min-height:0;}   /* 主程式全域 button{min-height:52~64px} 會把荒島所有按鈕撐高(HUD 藥丸變成大圓、創角色票變橢圓),荒島按鈕各自有自己的高度 */
 #isl-hud button.ih,#isl-hud .ih.btn{box-shadow:none;min-height:40px;padding:5px 12px;}   /* 主程式全域 .btn/button 的 min-height 與 padding 也會命中 HUD 藥丸(天氣鈕是 span.btn) */
 #isl-hud{flex-wrap:wrap;overflow:visible;white-space:normal;row-gap:5px;column-gap:7px;padding:6px 10px;min-height:0;}
@@ -4363,7 +4401,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.116.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.118.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4372,7 +4410,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.116.0';   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.118.0';   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -12349,6 +12387,7 @@ window.islEnter = function(){
   _IS.on = true;
   hide('page-home'); hide('topbar');
   show('island-root');
+  try{ var _ipad = (navigator.maxTouchPoints > 1 || 'ontouchstart' in window) && Math.min(screen.width, screen.height) >= 700; $('island-root').classList.toggle('ipad', !!_ipad); }catch(e){}   /* ★ v1.118.0 iPad(觸控且短邊 ≥700)文字 ×2 */
   /* ★ v1.109.0 提早探測兩種性別的像素 sprite,盡量避免玩家先看到一瞬間的手繪版才切換成像素圖 */
   islSheetProbe('boy', function(){ if(_IS.screen === 'create') islCreatePaint(); else if(_IS.screen === 'camp') islCampPaint(); });
   islSheetProbe('girl', function(){ if(_IS.screen === 'create') islCreatePaint(); else if(_IS.screen === 'camp') islCampPaint(); });
@@ -12910,9 +12949,10 @@ function islCharPaint(anim){
 }
 /* ★ v1.115.0 sprite 幀定位:實測 island_body_sheet_boy/girl.png 每欄人形中心(px),不是 64px 等距;走路幀 2→5 每 150ms 一幀循環、idle 幀 0/1 每 700ms 交替 */
 var ISL_SHEET_CX = { boy: [38, 97, 160, 220, 281, 343], girl: [44, 104, 163, 220, 278, 337] };
+var ISL_WALK_SEQ = [2, 0, 3, 1, 4, 0, 5, 1];   /* ★ v1.118.0 老師:左右連續移動少了「原地站直」的影格 —— 實查 sheet 第 2~5 欄全是跨步姿勢(沒有手腳伸直的過渡幀),連續播四張腳一直是張開的;改成每個跨步幀之間插一格站立幀(第 0/1 欄),三個方向同一套 */
 function islSpFrame(sp, anim){
   var body = (ISL && ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', cx = ISL_SHEET_CX[body], row = (_IS.dir === 'u') ? 1 : (_IS.dir === 'd' ? 0 : 2), t = Date.now(), f;
-  if(anim === 'walk'){ f = 2 + (Math.floor(t / 150) % 4); } else { f = Math.floor(t / 700) % 2; }
+  if(anim === 'walk'){ f = ISL_WALK_SEQ[Math.floor(t / 130) % ISL_WALK_SEQ.length]; } else { f = Math.floor(t / 700) % 2; }   /* ★ v1.118.0 跨步幀之間插站立幀 */
   if(sp.children.length){ var kids = sp.children, pos = islLyPos(body, row, f), i; for(i = 0; i < kids.length; i++){ if(kids[i].style.backgroundPosition !== pos) kids[i].style.backgroundPosition = pos; } return; }   /* ★ v1.116.0 分層造型:三層一起換幀 */
   sp.style.backgroundPosition = (-(cx[f] - 32)) + 'px ' + (-(row * 64)) + 'px';
 }
@@ -13061,8 +13101,26 @@ function islActTimer(sec, onEnd){
   }, 100);
 }
 function islActTimerStop(){ if(_IS.act && _IS.act.timer){ clearInterval(_IS.act.timer); _IS.act.timer = null; } }
-function islActBody(html){ var b = $('isl-act-body'); b.onclick = null; b.innerHTML = html; return b; }   /* ★ v1.111.0 換畫面時順手清掉上一段(知識題)掛在容器上的 onclick,避免下一段的按鈕誤觸發舊處理器(isl-quiz-why 已不存在 → TypeError) */
+function islActBody(html){ var b = $('isl-act-body'); b.onclick = null; b.classList.remove('qside'); b.innerHTML = html; return b; }   /* ★ v1.118.0 順手清右側紀錄欄狀態 */   /* ★ v1.111.0 換畫面時順手清掉上一段(知識題)掛在容器上的 onclick,避免下一段的按鈕誤觸發舊處理器(isl-quiz-why 已不存在 → TypeError) */
 function islActFxCenter(key){ var b = $('isl-act-body'); islFxAt(b, b.clientWidth / 2, b.clientHeight / 2, key); }
+/* ★ v1.118.0 老師:「第 N 次/暴擊採集」訊息移到活動畫面右側 —— 右側常駐紀錄欄,每次放手/揮擊追加一列;暴擊列金色跳動 + 點擊星星特效(MG_FX.hit)+ 疊一聲音效 */
+function islQteSideReset(title){
+  var b = $('isl-act-body'), sd = $('isl-q-side');
+  if(!b) return null;
+  if(!sd){ sd = document.createElement('div'); sd.id = 'isl-q-side'; b.appendChild(sd); }
+  sd.innerHTML = '<div class="sh">' + islEsc(title || '📋 紀錄') + '</div><ul id="isl-q-side-ul"></ul><div class="nx" id="isl-q-side-nx">第 1 次</div>';
+  b.classList.add('qside');
+  return sd;
+}
+function islQteSideAdd(n, text, color, crit, total){
+  var ul = $('isl-q-side-ul'), nx = $('isl-q-side-nx'), li, sd;
+  if(!ul) return;
+  li = document.createElement('li'); li.className = crit ? 'crit' : ''; li.style.color = color || '#fff';
+  li.innerHTML = '<b>第 ' + n + ' 次</b><span>' + islEsc(text) + '</span>';
+  ul.appendChild(li);
+  if(nx) nx.textContent = (total && n >= total) ? '完成' : '第 ' + (n + 1) + ' 次';
+  if(crit){ playSfx('sfx-crit', 0.55); setTimeout(function(){ playSfx('sfx-summon-reveal', 0.45); }, 60); islActFxCenter('hit'); sd = $('isl-q-side'); if(sd) islFxAt(sd, sd.clientWidth / 2, 34 + ul.children.length * 40, 'hit'); }
+}
 /* 一題知識題(從題庫隨機,E=甲 三~六年級全包隨機),答完呼叫 cb(correct) */
 function islQuizOne(actId, cb){
   var db = islDB(), bank = db.QUIZ[actId], q = bank[Math.floor(Math.random() * bank.length)], order = shuffle([0,1,2,3]), h = '', i, body, done = false;
@@ -13131,19 +13189,22 @@ function islQtePull(cb, opts){   /* ★ v1.94.0 opts:{title,btn,hint,over,ok,low
   opts = opts || {};
   var w = islSweetWidth(18), lo = 62, hi = lo + w, cen = (lo + hi) / 2, tries = 0, hits = 0, crit = false, v = 0, hold = false, raf = 0, h, body, btn, fill, fx, cnt, over = false;
   var qNode = _IS.act.ctx && _IS.act.ctx.node, qImg = qNode && qNode.node ? islImgUrl(qNode.node) : '', qE = qNode ? qNode.e : '';   /* ★ v1.109.0 QTE 畫面放採集物資放大圖 */
-  h = '<div class="isl-qte">' + ((qImg || qE) ? '<div class="isl-qte-obj">' + (qImg ? '<img src="' + qImg + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + qE + '\');">' : qE) + '</div>' : '') + '<div class="isl-act-title">' + (opts.title || '🍓 輕輕摘(3 次)') + '</div><div class="bar"><div class="zone y" style="left:' + lo + '%;width:' + w + '%"></div><div class="zone crit" style="left:' + (cen - 2) + '%;width:4%"></div><div class="fill" id="isl-q-fill" style="width:0%"></div></div><button class="big" id="isl-q-btn">' + (opts.btn || '按住拉…放手!') + '</button><div class="cnt" id="isl-q-cnt">第 1 次</div><div class="fx" id="isl-q-fx"></div></div>';
+  h = '<div class="isl-qte">' + ((qImg || qE) ? '<div class="isl-qte-obj">' + (qImg ? '<img src="' + qImg + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + qE + '\');">' : qE) + '</div>' : '') + '<div class="isl-act-title">' + (opts.title || '🍓 輕輕摘(3 次)') + '</div><div class="bar"><div class="zone y" style="left:' + lo + '%;width:' + w + '%"></div><div class="zone crit" style="left:' + (cen - 2) + '%;width:4%"></div><div class="fill" id="isl-q-fill" style="width:0%"></div></div><button class="big" id="isl-q-btn">' + (opts.btn || '按住拉…放手!') + '</button><div class="cnt hide" id="isl-q-cnt">第 1 次</div><div class="fx hide" id="isl-q-fx"></div></div>';
   body = islActBody(h); btn = $('isl-q-btn'); fill = $('isl-q-fill'); fx = $('isl-q-fx'); cnt = $('isl-q-cnt');
+  islQteSideReset('📋 ' + String(opts.title || '輕輕摘').replace(/\(.*$/, '').replace(/^[^\u4e00-\u9fff]*/, '') + '紀錄');   /* ★ v1.118.0 次數/結果改列在右側紀錄欄(.cnt/.fx 隱藏) */
   islActHint(opts.hint || '黃區放手 = 成功;白色正中央 = 暴擊,品質直接 +1 ★!');
   function loop(){ if(hold && !over){ v += 1.4; if(v >= 100){ v = 100; over = true; release(); } fill.style.width = v + '%'; } raf = requestAnimationFrame(loop); }
   function press(ev){ if(tries >= 3 || hold) return; hold = true; v = 0; over = false; fill.style.width = '0%'; ev.preventDefault(); }   /* ★ v1.94.0 按下即歸零(視覺一致) */
   function release(){
     if(!hold) return; hold = false; tries++;
-    if(v >= 100){ fx.textContent = opts.over || '壓爛了…'; fx.style.color = '#ff7b7b'; playSfx('sfx-ng', 0.4); }
-    else if(v >= cen - 2 && v <= cen + 2){ hits++; crit = true; fx.textContent = '✨ ' + (opts.crit || '暴擊採集!'); fx.style.color = '#fff'; playSfx('sfx-crit', 0.5); islActFxCenter('spark'); }
-    else if(v >= lo && v <= hi){ hits++; fx.textContent = '👍 ' + (opts.ok || '剛剛好'); fx.style.color = '#7bed9f'; playSfx('sfx-coin', 0.4); }
-    else if(v > hi){ fx.textContent = opts.over || '太用力了'; fx.style.color = '#ff7b7b'; playSfx('sfx-ng', 0.4); }
-    else { fx.textContent = opts.low || '還沒摘下來'; fx.style.color = '#ffd166'; playSfx('sfx-cancel', 0.3); }
-    cnt.textContent = tries < 3 ? '第 ' + (tries + 1) + ' 次' : '完成';
+    var tx, tc, isCrit = false;   /* ★ v1.118.0 結果改寫到右側紀錄欄;暴擊音效/特效由 islQteSideAdd 統一處理 */
+    if(v >= 100){ tx = opts.over || '壓爛了…'; tc = '#ff7b7b'; playSfx('sfx-ng', 0.4); }
+    else if(v >= cen - 2 && v <= cen + 2){ hits++; crit = true; isCrit = true; tx = '✨ ' + (opts.crit || '暴擊採集!'); tc = '#ffd166'; }
+    else if(v >= lo && v <= hi){ hits++; tx = '👍 ' + (opts.ok || '剛剛好'); tc = '#7bed9f'; playSfx('sfx-coin', 0.4); }
+    else if(v > hi){ tx = opts.over || '太用力了'; tc = '#ff7b7b'; playSfx('sfx-ng', 0.4); }
+    else { tx = opts.low || '還沒摘下來'; tc = '#ffd166'; playSfx('sfx-cancel', 0.3); }
+    fx.textContent = tx; fx.style.color = tc; cnt.textContent = tries < 3 ? '第 ' + (tries + 1) + ' 次' : '完成';
+    islQteSideAdd(tries, tx, tc, isCrit, 3);
     if(tries >= 3){ cancelAnimationFrame(raf); btn.disabled = true; setTimeout(function(){ cb(Math.max(1, hits), crit); }, 700); }
   }
   btn.addEventListener('touchstart', press, { passive: false }); btn.addEventListener('mousedown', press);
@@ -13166,6 +13227,7 @@ function islQteSwing(rounds, cb, opts){   /* ★ v1.91.0 opts:{icon,btn,done} �
   var widths = [islSweetWidth(26), islSweetWidth(18), islSweetWidth(12)], r = 0, hits = 0, crit = false, pos = 0, dirv = 1, raf = 0, h, body, ptr, zone, czone, fx, tree, cnt, busy = false;
   h = '<div class="isl-qte"><div class="tree" id="isl-q-tree">' + (opts.icon || '🌲') + '</div><div class="bar"><div class="zone" id="isl-q-zone"></div><div class="zone crit" id="isl-q-crit"></div><div class="ptr" id="isl-q-ptr"></div></div><button class="big" id="isl-q-btn">' + (opts.btn || '🪓 砍!') + '</button><div class="cnt" id="isl-q-cnt">第 1 ' + (opts.unit || '斧') + '</div><div class="fx" id="isl-q-fx"></div></div>';
   body = islActBody(h); ptr = $('isl-q-ptr'); zone = $('isl-q-zone'); czone = $('isl-q-crit'); fx = $('isl-q-fx'); tree = $('isl-q-tree'); cnt = $('isl-q-cnt');
+  fx.classList.add('hide'); cnt.classList.add('hide'); islQteSideReset('📋 ' + (opts.unit ? '每' + opts.unit + '紀錄' : '每斧紀錄'));   /* ★ v1.118.0 次數/結果改列在右側紀錄欄 */
   islActHint('斧頭在綠色甜蜜點時點下才砍得深!握在斧柄尾端最省力(槓桿)。');
   function setZone(){ var w = widths[r], lo = 20 + Math.random() * (60 - w); zone.style.left = lo + '%'; zone.style.width = w + '%'; czone.style.left = (lo + w / 2 - 1.5) + '%'; czone.style.width = '3%'; zone._lo = lo; zone._hi = lo + w; zone._c = lo + w / 2; }
   setZone();
@@ -13174,11 +13236,12 @@ function islQteSwing(rounds, cb, opts){   /* ★ v1.91.0 opts:{icon,btn,done} �
     if(busy || r >= rounds) return; busy = true;
     var ok = pos >= zone._lo && pos <= zone._hi, isCrit = Math.abs(pos - zone._c) <= 1.5;
     tree.classList.add('hit'); playSfx('sfx-sword', 0.45); islCharPaintAct('work');
-    if(isCrit){ hits++; crit = true; fx.textContent = '✨ 暴擊!正中甜蜜點'; fx.style.color = '#fff'; playSfx('sfx-crit', 0.5); islActFxCenter('spark'); }
+    if(isCrit){ hits++; crit = true; fx.textContent = '✨ 暴擊!正中甜蜜點'; fx.style.color = '#ffd166'; }   /* ★ v1.118.0 音效/特效改在 islQteSideAdd */
     else if(ok){ hits++; fx.textContent = '👍 砍得深!'; fx.style.color = '#7bed9f'; }
     else if(pos > zone._hi){ fx.textContent = '太用力,' + (opts.hurtMsg || '手滑了一下,擦傷了!'); fx.style.color = '#ff6b6b'; playSfx('sfx-ng', 0.35); islHurt(3, opts.hurtMsg || (opts.icon === '🪨' ? '碎石飛濺,擦傷了' : '斧頭滑掉,傷到手'), body, 50, 40); }   /* ★ v1.92.0 過度用力=受傷 */
     else { fx.textContent = '滑掉了…'; fx.style.color = '#ff7b7b'; playSfx('sfx-ng', 0.35); }
     r++; cnt.textContent = r < rounds ? '第 ' + (r + 1) + ' ' + (opts.unit || '斧') : (opts.doneText || '砍倒了!');
+    islQteSideAdd(r, fx.textContent, fx.style.color, isCrit, rounds);
     setTimeout(function(){ tree.classList.remove('hit'); busy = false; if(r >= rounds){ cancelAnimationFrame(raf); tree.textContent = (opts.done || '🪵'); setTimeout(function(){ cb(hits, crit); }, 600); } else setZone(); }, 350);
   };
   raf = requestAnimationFrame(loop);
@@ -14060,6 +14123,7 @@ function islPreloadZone(zoneId, cb){
 }
 /* ── ② 首頁「完整下載安裝」:IMG 表全部圖片 + 全部 bgm-isl-* 音樂 → Cache 'lxps-mini-island-v1'(與 minigame_sw.js ISLAND 同名;SW 各策略 caches.match 查所有快取) ── */
 var ISL_CACHE = 'lxps-mini-island-v1', _islInst = null;
+window.islInstallUrls = islInstallUrls;   /* ★ v1.117.0 主程式首頁「完整下載荒島求生主程式」鈕用隱藏 iframe 載入本頁後讀這份清單 */
 function islInstallUrls(){   /* ★ v1.116.0 老師:「完整下載荒島求生主程式」— 主程式檔 + 全部音效音樂 + 荒島全部圖片(分層造型 24 張列為 opt:沒上傳不算失敗) */
   var db = islDB(), urls = [], seen = {}, k, u, as, i, sc, src;
   if(!db) return urls;
