@@ -1,5 +1,12 @@
 /* ============================================================================
  * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.34.0(2026-09-08)
+ * ★ v1.75.0(2026-09-12)：對應 minigame_index.html v1.104.0(🏝 戰鬥擴充 甲乙丙)+ island_db v1.11.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。
+ * ★ v1.74.0(2026-09-12)：對應 minigame_index.html v1.103.0(🏝 荒島存檔三道守門)+ island_db v1.10.0(零改動)。本檔僅版號同步(SHELL 改名讓舊快取失效)。
+ * ★ v1.73.0(2026-09-12)：對應 minigame_index.html v1.102.0(場景改 .jpg)+ island_db v1.10.0。本檔僅版號同步。
+ * ★ v1.72.0(2026-09-12)：對應 minigame_index.html v1.101.0(MG_IMG_VER 4、遮罩重校)+ island_db v1.9.0。本檔僅版號同步。
+ * ★ v1.71.0(2026-09-12)：對應 minigame_index.html v1.100.0(荒島 動態背景+天氣+台灣化)+ minigame_island_db.js v1.8.0。本檔僅版號同步。
+ * ★ v1.70.0(2026-09-12)：對應 minigame_index.html v1.99.0(荒島 P4-b 動物訓練師)+ minigame_island_db.js v1.7.0。本檔僅版號同步。
+ * ★ v1.69.0(2026-09-12)：對應 minigame_index.html v1.98.0(荒島 P4-a 貝幣商店+自然圖鑑)+ minigame_island_db.js v1.6.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.55.0(2026-09-09・老師需求)：護盾型/控場型英雄第二效果改版＋對手爆發預告標籤。本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.54.0(2026-09-09・老師需求)：回復型英雄爆發追加淨化易傷/封印/魅惑,比照大對抗巫女/米鈴。本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.53.0(2026-09-09・老師需求)：登入後小遊戲選單新增最愛收藏(上限10)+只顯示最愛切換。本檔僅版號同步(SHELL 改名讓舊快取失效)。
@@ -104,13 +111,14 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.60.0';   /* ★ v1.60.0(2026-09-11)：對應 minigame_index.html v1.86.0(重新設計15關卡有幫助的第二效果+攻擊型爆發基礎傷害10→20)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.59.0(2026-09-11)：對應 minigame_index.html v1.85.0(登入 redirect 回程訊號不足根治)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.71.0(2026-09-10)：大對抗⇄小遊戲免重登(共用同一份 Firebase 登入狀態＋跨程式交接鑰匙＋小遊戲側共用裝置攔截器)＋PC/iPad/手機三平台版面稽核補丁。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.70.0(2026-09-10)：迷宮陷阱字重試補滿／起點小人物白色呼吸光暈／青炎龍王祭附加效果改版。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */
-var SHELL = 'lxps-mini-shell-v1.56.0';
+var MINI_VERSION = 'v1.75.0';   /* ★ v1.75.0(2026-09-12)：對應 minigame_index.html v1.104.0 + island_db v1.11.0。 */   /* ★ v1.74.0(2026-09-12)：對應 minigame_index.html v1.103.0 + island_db v1.10.0。 */   /* ★ v1.73.0(2026-09-12)：對應 minigame_index.html v1.102.0 + island_db v1.10.0。 */   /* ★ v1.72.0(2026-09-12)：對應 minigame_index.html v1.101.0 + island_db v1.9.0。 */   /* ★ v1.71.0(2026-09-12)：對應 minigame_index.html v1.100.0 + minigame_island_db.js v1.8.0。 */   /* ★ v1.70.0(2026-09-12)：對應 minigame_index.html v1.99.0 + minigame_island_db.js v1.7.0。 */   /* ★ v1.69.0(2026-09-12)：對應 minigame_index.html v1.98.0 + minigame_island_db.js v1.6.0。本檔僅版號同步。 */   /* ★ v1.68.0(2026-09-12)：對應 minigame_index.html v1.97.0(MG_IMG_VER 3、荒島 BGM 掛點、各區內心話)+ minigame_island_db.js v1.5.0。本檔僅版號同步。 */   /* ★ v1.67.0(2026-09-12)：對應 minigame_index.html v1.96.0(🏝 荒島 P3-b:四區場景+製作台工具)+ minigame_island_db.js v1.4.0。本檔僅版號同步。 */   /* ★ v1.66.0(2026-09-12)：對應 minigame_index.html v1.95.0(🏝 荒島 P3-a:科技研究/解謎點/湖泊+洞窟)+ minigame_island_db.js v1.3.0。本檔僅版號同步。 */   /* ★ v1.65.0(2026-09-12)：對應 minigame_index.html v1.94.0(🏝 荒島 P2-b:烹飪/播種/馴養/鋪水道+農田/畜欄/水道+建築 Lv5+營地擴建+裝飾舒適度)+ minigame_island_db.js v1.2.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.64.0(2026-09-12・老師回報主控台錯誤)：對應 minigame_index.html v1.93.0。①fetch 監聽器最前端加守門,非 http(s)(如瀏覽器擴充功能的 chrome-extension:// 請求)一律不攔截——Cache API 只支援 http(s),硬攔截會在 cache.put() 拋出「Request scheme 'chrome-extension' is unsupported」②三處 caches.open().then(function(c){c.put(...)}) 補上 return,c.put() 的 promise 才接得回外層 .catch(舊寫法失敗會變成主控台外的 Uncaught rejection,同一根因的另一半)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.63.0(2026-09-12)：對應 minigame_index.html v1.92.0(🏝 荒島安全/教育回饋:角色受傷治療、環境受損修復、提示鈕)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.62.0(2026-09-12)：對應 minigame_index.html v1.91.0(🏝 荒島 P2-a:三區/三活動/四建築/防衛戰)+ minigame_island_db.js v1.1.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.61.0(2026-09-12)：對應 minigame_index.html v1.90.0(🏝 像素荒島求生記 P1 骨架)。SHELL_URLS 新增 './minigame_island_db.js'(荒島資料表,離線也要抓得到);SHELL 改名讓舊快取失效。 */   /* ★ v1.60.0(2026-09-11)：對應 minigame_index.html v1.86.0(重新設計15關卡有幫助的第二效果+攻擊型爆發基礎傷害10→20)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.59.0(2026-09-11)：對應 minigame_index.html v1.85.0(登入 redirect 回程訊號不足根治)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.71.0(2026-09-10)：大對抗⇄小遊戲免重登(共用同一份 Firebase 登入狀態＋跨程式交接鑰匙＋小遊戲側共用裝置攔截器)＋PC/iPad/手機三平台版面稽核補丁。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.70.0(2026-09-10)：迷宮陷阱字重試補滿／起點小人物白色呼吸光暈／青炎龍王祭附加效果改版。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */
+var SHELL = 'lxps-mini-shell-v1.75.0';
 var ASSET = 'lxps-mini-assets-v1';
 
 var SHELL_URLS = [
   './minigame_index.html',
   './minigame_db.js',
+  './minigame_island_db.js',   /* ★ v1.61.0 — 🏝 像素荒島求生記資料表 */
   './manifest.json',
   './title.webp',
   './icon-192.png',
@@ -155,6 +163,10 @@ self.addEventListener('fetch', function(e){
 
   var url;
   try{ url = new URL(req.url); }catch(err){ return; }
+  if(url.protocol !== 'http:' && url.protocol !== 'https:') return;   /* ★ v1.93.0 老師回報主控台報錯「Request scheme 'chrome-extension' is unsupported」:
+     Cache API 只支援 http(s) 請求,某些瀏覽器擴充功能會發出 chrome-extension:// 請求並被本 SW 攔截,
+     嘗試 cache.put() 會拋出未接住的 rejection(下方 caches.open().then() 內沒有把 c.put() 的 promise
+     接回外層 .catch,是同一個 bug 的另一半,一併修好見下方)。非 http(s) 一律不攔截,交回瀏覽器預設處理。 */
 
   var sameOrigin = (url.origin === self.location.origin);
   var inScope = sameOrigin && url.pathname.indexOf('/minigame/') >= 0;
@@ -169,7 +181,7 @@ self.addEventListener('fetch', function(e){
         return fetch(req).then(function(res){
           if(res && res.ok){
             var copy = res.clone();
-            caches.open(ASSET).then(function(c){ c.put(req, copy); })['catch'](function(){});
+            caches.open(ASSET).then(function(c){ return c.put(req, copy); })['catch'](function(){});   /* ★ v1.93.0 c.put() 的 promise 接回鏈中,外層 .catch 才接得住(舊寫法未 return,c.put 失敗會變成主控台的 Uncaught rejection,同一 bug) */
           }
           return res;
         })['catch'](function(){ return new Response('', { status: 504 }); });
@@ -184,7 +196,7 @@ self.addEventListener('fetch', function(e){
         .then(function(res){
           if(res && res.ok){
             var copy = res.clone();
-            caches.open(SHELL).then(function(c){ c.put(req, copy); })['catch'](function(){});
+            caches.open(SHELL).then(function(c){ return c.put(req, copy); })['catch'](function(){});   /* ★ v1.93.0 同上,接回 promise 鏈 */
           }
           return res;
         })['catch'](function(){
@@ -207,7 +219,7 @@ self.addEventListener('fetch', function(e){
         return fetch(req).then(function(res){
           if(res && res.ok){
             var copy = res.clone();
-            caches.open(ASSET).then(function(c){ c.put(req, copy); })['catch'](function(){});
+            caches.open(ASSET).then(function(c){ return c.put(req, copy); })['catch'](function(){});   /* ★ v1.93.0 c.put() 的 promise 接回鏈中,外層 .catch 才接得住(舊寫法未 return,c.put 失敗會變成主控台的 Uncaught rejection,同一 bug) */
           }
           return res;
         })['catch'](function(){ return new Response('', { status: 504 }); });
