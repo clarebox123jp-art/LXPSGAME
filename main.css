@@ -5987,3 +5987,53 @@ body.wb-in-worldboss-battle #adv-reward-subtitle {
 
 
 
+
+/* ══ ★ v5.186.0(2026-09-12・老師「首頁的荒島求生入口還沒改」)— 首頁三顆入口同尺寸並排 ══
+   展開冒險故事 / 迷你遊戲模式 / 荒島求生 三顆等寬(同 min-width、同 padding、同字級),以畫面中線為軸:
+     展開冒險故事 translateX(calc(-150% - 24px)) ⇒ 落在中線左邊(自己寬度的 1.5 倍再往外 24px)
+     迷你遊戲模式 translateX(-50%)               ⇒ 正中央
+     荒島求生     translateX(calc(50% + 24px))   ⇒ 落在中線右邊
+   一樣「不需要知道按鈕寬度」;三顆同寬 ⇒ 天然以中線對稱。
+   ⚠ 三顆並排的總寬 = 3×min-width + 48:iPad 橫式 1024 只放得下 3×316,所以 ≥1024 用 316px/30px 字;≥1500(桌機)放大回 456px/42px。
+   ⚠ 這整段包在 @media 裡 ⇒ 不會蓋掉上方既有 ≤1023 的堆疊規則;堆疊模式另在下方補「荒島求生」第三層(+170px)並把遊戲說明往下移(+232px)。
+   ⚠ 顏色互換(老師裁定):迷你遊戲模式改「藍」,荒島求生用原本迷你遊戲的「綠」。
+   ⚠ :hover / :active 的 transform 會整條覆寫,三顆都必須帶自己的位移(同 v5.140.0 的教訓)。 */
+@media (min-width:1024px){
+  #overlay #adventure-btn{transform:translateX(calc(-150% - 24px));min-width:316px;padding:12px 24px;font-size:30px;letter-spacing:3px;}
+  #overlay #adventure-btn:hover{transform:translateX(calc(-150% - 24px)) scale(1.04);}
+  #overlay #minigame-btn{transform:translateX(-50%);min-width:316px;padding:12px 24px;font-size:30px;letter-spacing:3px;
+    color:#eaf4ff;background:linear-gradient(135deg,rgba(20,60,110,0.92),rgba(50,110,180,0.88));
+    border:2.5px solid rgba(140,195,255,0.75);box-shadow:0 0 26px rgba(80,160,255,0.55),0 6px 0 rgba(0,0,0,0.35);}
+  #overlay #minigame-btn:hover{transform:translateX(-50%) scale(1.04);background:linear-gradient(135deg,rgba(30,85,150,0.94),rgba(70,140,220,0.9));border-color:#bfe0ff;color:#fff;box-shadow:0 0 40px rgba(110,180,255,0.85),0 6px 0 rgba(0,0,0,0.35);}
+  #overlay #minigame-btn:active{transform:translateX(-50%) translateY(3px);box-shadow:0 0 26px rgba(80,160,255,0.55),0 3px 0 rgba(0,0,0,0.35);}
+  #overlay #island-btn{
+    position:absolute;z-index:2;top:67%;left:50%;transform:translateX(calc(50% + 24px));min-width:316px;text-align:center;
+    white-space:nowrap;text-decoration:none;display:inline-block;
+    padding:12px 24px;border-radius:8px;letter-spacing:3px;line-height:normal;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-size:30px;font-weight:700;
+    color:#eafff4;background:linear-gradient(135deg,rgba(20,90,62,0.92),rgba(50,150,105,0.88));
+    border:2.5px solid rgba(140,230,185,0.75);
+    box-shadow:0 0 26px rgba(80,220,150,0.55),0 6px 0 rgba(0,0,0,0.35);
+    text-shadow:0 2px 4px rgba(0,0,0,0.55);touch-action:manipulation;}
+  #overlay #island-btn:hover{background:linear-gradient(135deg,rgba(30,120,82,0.94),rgba(70,180,130,0.9));border-color:#b6f5d6;color:#fff;box-shadow:0 0 40px rgba(110,240,175,0.85),0 6px 0 rgba(0,0,0,0.35);transform:translateX(calc(50% + 24px)) scale(1.04);}
+  #overlay #island-btn:active{transform:translateX(calc(50% + 24px)) translateY(3px);box-shadow:0 0 26px rgba(80,220,150,0.55),0 3px 0 rgba(0,0,0,0.35);}
+}
+@media (min-width:1500px){
+  #overlay #adventure-btn,#overlay #minigame-btn,#overlay #island-btn{min-width:456px;padding:15px 40px;font-size:42px;letter-spacing:5px;}
+}
+/* 堆疊模式(≤1023):第三顆放在迷你遊戲模式正下方(+170px),遊戲說明再往下(+232px);尺寸比照堆疊版迷你遊戲 21px */
+@media (max-width:1023px){
+  #overlay #minigame-btn{color:#eaf4ff;background:linear-gradient(135deg,rgba(20,60,110,0.92),rgba(50,110,180,0.88));border:2.5px solid rgba(140,195,255,0.75);box-shadow:0 0 26px rgba(80,160,255,0.55),0 6px 0 rgba(0,0,0,0.35);}
+  #overlay #minigame-btn:hover{background:linear-gradient(135deg,rgba(30,85,150,0.94),rgba(70,140,220,0.9));border-color:#bfe0ff;box-shadow:0 0 40px rgba(110,180,255,0.85),0 6px 0 rgba(0,0,0,0.35);}
+  #overlay #island-btn{
+    position:absolute;z-index:2;top:calc(64% + 170px);left:50%;transform:translateX(-50%);min-width:0;text-align:center;
+    white-space:nowrap;text-decoration:none;display:inline-block;
+    font-size:21px;padding:11px 22px;letter-spacing:2px;border-radius:12px;line-height:normal;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif;font-weight:700;
+    color:#eafff4;background:linear-gradient(135deg,rgba(20,90,62,0.92),rgba(50,150,105,0.88));
+    border:2.5px solid rgba(140,230,185,0.75);box-shadow:0 0 26px rgba(80,220,150,0.55),0 6px 0 rgba(0,0,0,0.35);
+    text-shadow:0 2px 4px rgba(0,0,0,0.55);touch-action:manipulation;}
+  #overlay #island-btn:hover{transform:translateX(-50%) scale(1.04);}
+  #overlay #island-btn:active{transform:translateX(-50%) translateY(3px);}
+  #overlay #game-info-btn{top:calc(64% + 232px);}
+}
