@@ -20070,9 +20070,9 @@ window._lxpsConsumeAppHandoff = function(uid){
       window._gUserId = null;
       const btnWrap = document.getElementById('google-login-btn-wrap');
       const userInfo = document.getElementById('google-user-info');
-      // ★ v5.136.0 — 舊碼為 btnWrap.style.display = ''(登出後把左上登入鈕還原顯示)。
-      //   老師裁定左上角登入鈕一律隱藏,登入入口只留「開始遊戲」那顆 ⇒ 登出後維持隱藏。
-      if(btnWrap) btnWrap.style.display = 'none';   // ★ v5.136.0（舊:''）
+      // ★ v5.195.0(老師「左上角恢復帳號登入的按鈕」)— 登出後還原顯示(舊 v5.136.0 裁定「一律隱藏」作廢)。
+      //   ⚠ 這顆是休息時段唯一不經入口的登入路徑,老師要靠它登入管理員帳號解除休息閘門。
+      if(btnWrap) btnWrap.style.display = '';   // 舊行備查:v5.136.0 曾改成 'none'(左上登入鈕永久隱藏),本輪作廢
       if(userInfo) userInfo.style.display = 'none';
       try{ if(typeof window._lxpsSyncAdventureBtnState === 'function') window._lxpsSyncAdventureBtnState(); }catch(_){}
       // ★ v5.165.0 — 手動登出清掉 30 分鐘共用登入戳記，不留給下一位共用裝置的同學撿到
@@ -26866,7 +26866,12 @@ window._lxpsFileSrc = function(name){
          #google-user-info(頭像/暱稱/🔄 切換帳號/登出/📲 加入主畫面/下載安裝)是它的兄弟節點,
          整條 bar 藏掉會連「登出」一起消失。
        ⚠ 對應的 onAuth 登出分支(display='') 也已改為 'none',否則登出當下會又冒出來。 -->
-  <div id="google-login-btn-wrap" style="display:none;">
+  <!-- ★ v5.195.0(2026-09-14・老師「大家都能進到首頁，左上角恢復帳號登入的按鈕」)— 本顆恢復顯示。
+       ⚠ 為什麼要恢復:休息排程閘門上線後,三顆入口對非 GM 一律擋下,而 v5.136.0 把登入入口收斂成
+         「開始冒險 → 登入視窗」單一路徑 ⇒ 老師(GM)自己也會被擋在入口外、連登入的機會都沒有
+         (實測回報「連 GM 都擋了」的真因)。左上角這顆是**不經過任何入口**的登入路徑,必須留著。
+       ⚠ 登入後仍由 onAuth 兩個分支把本顆設回 none(帳號列 #google-user-info 取代它),行為不變。 -->
+  <div id="google-login-btn-wrap" style="display:block;">
     <button onclick="playSfx('sfx-confirm',0.5);window._fbSignIn && window._fbSignIn()"
       style="display:flex;align-items:center;gap:10px;padding:8px 20px;
       background:rgba(255,255,255,0.95);border:none;border-radius:24px;
@@ -173977,9 +173982,18 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
 (function(){
   const _REST_DEV_EMAILS = ['clarebox123@gmail.com','clarebox123@lsps.tp.edu.tw','asemia@gmail.com'];
   function _restIsAdmin(){
+    /* ★ v5.195.0 — 三路判定(舊版只看 window._fbUser 一路):onAuth 還沒跑完時 _fbUser 仍是 null,
+       老師按下入口會被判成一般玩家而擋下 ⇒ 補上 Firebase 當下的 currentUser 與既有 _isAdminUser()。
+       ⚠ 仍以「信箱在白名單內」為唯一依據,沒有放寬成「這台裝置登入過老師帳號」之類的旁路。 */
     try{
-      const _e = ((window._fbUser && window._fbUser.email) || '').toLowerCase();
-      return !!_e && _REST_DEV_EMAILS.indexOf(_e) >= 0;
+      const _emails = [];
+      try{ if(window._fbUser && window._fbUser.email) _emails.push(window._fbUser.email); }catch(_e1){}
+      try{ if(window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.email) _emails.push(window._fbAuth.currentUser.email); }catch(_e2){}
+      for(let i = 0; i < _emails.length; i++){
+        if(_REST_DEV_EMAILS.indexOf(String(_emails[i]).toLowerCase()) >= 0) return true;
+      }
+      try{ if(typeof window._isAdminUser === 'function' && window._isAdminUser() === true) return true; }catch(_e3){}
+      return false;
     }catch(_){ return false; }
   }
   function _restParseHHMM(s){
@@ -174058,18 +174072,16 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
     } else {
       const _m = document.getElementById('_restOverlay-msg'); if(_m) _m.innerHTML = msg;
     }
-    /* ★ v5.195.0(老師「三個入口都要被休息排程阻擋」)— 入口攔截版多一顆「✕ 回首頁」。
-       ⚠ 刻意只在 opts.closable 時才給：遊戲進行到一半撞上休息時段的既有全螢幕鎖**不給**這顆鈕
-         (那是「時間到就該收工」的硬鎖，給了等於可以按掉繼續玩)；入口攔截是「還沒進去就被擋下」，
-         學生應該能退回首頁看說明、看公告，不該被鎖在一片黑畫面前。 */
+    /* ★ v5.195.0(老師「伺服器休息畫面左上角新增返回首頁的按鈕」)— 固定在左上角,所有休息畫面都有。
+       ⚠ 一律顯示(不再分 opts.closable):老師要的是「大家都能回到首頁,只是任何入口都進不去」。
+         按下只收掉這張畫面、不動任何登入旗標;玩到一半撞上休息時段的既有硬鎖仍由 20 秒 ticker
+         自動再蓋回來(時間到就該收工的語意不變),學生不可能靠這顆鈕把休息時段按掉繼續玩。
+       ⚠ 回到首頁後左上角有「使用 Google 登入」(v5.195.0 恢復),老師可在那裡登入管理員帳號解除限制。 */
     try{
-      if(opts && opts.closable && !document.getElementById('_restOverlay-close')){
-        const _wrap = pop.firstElementChild;
-        if(_wrap){
-          _wrap.insertAdjacentHTML('beforeend', '<div style="margin-top:20px;"><button id="_restOverlay-close" style="font-size:20px;padding:10px 26px;border-radius:14px;border:2px solid rgba(180,190,255,0.55);background:rgba(120,130,255,0.16);color:#dde;font-weight:700;cursor:pointer;">✕ 回首頁</button></div>');
-          const _cb = document.getElementById('_restOverlay-close');
-          if(_cb) _cb.onclick = function(){ try{ window._hideRestOverlay(); }catch(_){} };
-        }
+      if(!document.getElementById('_restOverlay-home')){
+        pop.insertAdjacentHTML('afterbegin', '<button id="_restOverlay-home" style="position:absolute;top:16px;left:16px;z-index:5;font-size:19px;padding:10px 22px;border-radius:14px;border:2px solid rgba(180,190,255,0.55);background:rgba(120,130,255,0.18);color:#dde;font-weight:700;cursor:pointer;font-family:inherit;">← 返回首頁</button>');
+        const _hb = document.getElementById('_restOverlay-home');
+        if(_hb) _hb.onclick = function(){ try{ window._hideRestOverlay(); }catch(_){} };
       }
     }catch(_){}
     pop.dataset.bootAt = String(bootAtMs || 0);
@@ -174228,7 +174240,7 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
       const ev  = window._restEvalState(sch, new Date());     // ★ 直接用既有純函式，不另立第二套時間判斷
       if(!ev || ev.state !== 'rest') return false;
       try{ if(window._progressLoaded && typeof window._lxpsInstantPersist === 'function') window._lxpsInstantPersist('休息排程·入口攔截'); }catch(_){}
-      window._showRestOverlay(sch, ev.bootAtMs, { closable:true });
+      window._showRestOverlay(sch, ev.bootAtMs);
       return true;
     }catch(_e){ return false; }   // 任何例外一律放行（同上：不可誤鎖）
   };

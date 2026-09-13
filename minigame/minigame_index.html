@@ -11362,7 +11362,17 @@ function mgRestEval(sch, now){
   }catch(e){ return open; }
 }
 function mgRestIsGm(){
-  try{ return !!(MG.user && MG.user.email && ISL_GM_EMAILS.indexOf(String(MG.user.email).toLowerCase()) >= 0); }catch(e){ return false; }
+  /* ★ v5.195.0/v1.144.0 — 兩路判定:MG.user 要等 onAuth 才有值,只看它會讓老師在登入完成前被自己的
+     閘門擋住(主程式 v5.195.0 同一個教訓);補上 Firebase 當下的 currentUser。判定依據仍只有信箱白名單。 */
+  try{
+    var es = [];
+    if(MG.user && MG.user.email) es.push(MG.user.email);
+    try{ if(MG.fb && MG.fb.auth && MG.fb.auth.currentUser && MG.fb.auth.currentUser.email) es.push(MG.fb.auth.currentUser.email); }catch(e1){}
+    for(var i = 0; i < es.length; i++){
+      if(ISL_GM_EMAILS.indexOf(String(es[i]).toLowerCase()) >= 0) return true;
+    }
+    return false;
+  }catch(e){ return false; }
 }
 function mgRestFmt(ms){
   if(ms < 0) ms = 0;
@@ -11379,14 +11389,14 @@ function mgRestShow(sch, bootAt){
     ov = document.createElement('div');
     ov.id = 'mg-rest-overlay';
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:radial-gradient(circle at 50% 30%,#1b2350 0%,#0a0e23 60%,#05060f 100%);display:flex;align-items:center;justify-content:center;font-family:"Noto Sans TC","M PLUS Rounded 1c",sans-serif;';
-    ov.innerHTML = '<div style="text-align:center;max-width:min(92vw,560px);padding:40px 44px;">'
+    ov.innerHTML = '<button id="mg-rest-home" style="position:absolute;top:16px;left:16px;z-index:5;font-size:19px;padding:10px 22px;border-radius:14px;border:2px solid rgba(180,190,255,0.55);background:rgba(120,130,255,0.18);color:#dde;font-weight:700;font-family:inherit;">← 返回首頁</button>'
+      + '<div style="text-align:center;max-width:min(92vw,560px);padding:40px 44px;">'
       + '<div style="font-size:76px;margin-bottom:8px;">🌙</div>'
       + '<div style="font-size:30px;font-weight:900;color:#aab4ff;letter-spacing:3px;margin-bottom:16px;">伺服器休息中</div>'
       + '<div id="mg-rest-msg" style="font-size:18px;color:#dde;line-height:1.8;padding:16px;background:rgba(120,130,255,0.08);border:1px solid rgba(150,160,255,0.3);border-radius:14px;white-space:pre-wrap;word-break:break-word;margin-bottom:20px;">' + msg + '</div>'
       + '<div style="font-size:14px;color:#8890c0;margin-bottom:6px;">距離開機還有</div>'
       + '<div id="mg-rest-cd" style="font-size:44px;font-weight:900;color:#fff;letter-spacing:2px;">--:--</div>'
-      + '<div style="font-size:13px;color:#6a72a0;margin-top:16px;line-height:1.6;">時間到會自動回到遊戲,先去睡覺、看書或動一動吧！<br>(老師的管理員帳號不受此限)</div>'
-      + '<div style="margin-top:18px;"><button id="mg-rest-home" style="font-size:19px;padding:10px 26px;border-radius:14px;border:2px solid rgba(180,190,255,0.55);background:rgba(120,130,255,0.16);color:#dde;font-weight:700;">← 回首頁</button></div>'
+      + '<div style="font-size:13px;color:#6a72a0;margin-top:16px;line-height:1.6;">時間到會自動回到遊戲,先去睡覺、看書或動一動吧！<br>(老師的管理員帳號不受此限,可在首頁左上角登入)</div>'
       + '</div>';
     document.body.appendChild(ov);
     try{ var as = document.getElementsByTagName('audio'); for(var i = 0; i < as.length; i++){ try{ as[i].pause(); }catch(e2){} } }catch(e3){}
