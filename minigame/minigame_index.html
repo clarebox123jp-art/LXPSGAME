@@ -15,7 +15,43 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.128.0(2026-09-13)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.131.0(2026-09-13)
+     ★ v1.131.0(2026-09-13・老師四項)—
+       ①溪流/瀑布/洞穴滴水/草原 四支環境音接上(實查 repo:全在 minigame/audio/,⚠ 溪流是 .m4a、其餘三支 .mp3)。
+         區域重新分配:🌊海浪=沙灘/岩岸/懸崖 🐦鳥叫=森林 🌾草原=草原 🏞溪流=溪流/湖泊 💦瀑布=山谷 💧滴水=洞窟(v1.126.0 留白的那區);遺跡/火山仍刻意不掛。
+         水聲距離調節(老師指定三階段):距離直接讀**場景遮罩的水域格 '~'**(不另標水源座標,遮罩本來就是『哪裡是水』的唯一真相),
+         ≤2 格 +30%、≤4 格 +20%、≤7 格 +10%,再遠每格 −7% 線性衰減、地板 0.35;只對水聲類生效,海浪/鳥叫/草原維持固定音量。
+         ⚠ 每 220ms 才重算一次音量(不是每幀):每幀寫 audio.volume 在 iPad Safari 會有雜音且完全沒必要。
+       ②戰鬥系統:排查後**本來就是接好的**,老師覺得沒啟用的真正原因有二 ——(a)v1.130.0 修掉的 islWeaponAtk 徒手 null 例外
+         (徒手踩到遇敵點時 islBtPlayerStats() 直接拋錯,戰鬥畫面永遠開不起來,這是主因);(b)沙灘 ENC.from 原本是 3,
+         前兩天在起始區怎麼走都不會遇敵 → 本輪改 1。另加 ⚙ 設定選單的「⚔ 測試戰鬥(GM)」隨時驗收(學生看不到)。
+       ③武器 5 階段外觀:Lv1~4 原圖 / Lv5~9 _t2 / Lv10~14 _t3 / Lv15~19 _t4 / Lv20 _t5(30 個圖鍵在 island_db v1.27.0)。
+         缺圖自動退回上一階(islPicOkSync===false 才判缺),⇒ 一張新圖都還沒生成時完全維持現狀;跨階升級會多一聲提示。
+       ④缺圖一律「保留圖片欄位 + 破圖佔位」(虛線框 + 🖼 角標 + 原 emoji + 檔名 tooltip),不再塌成一顆 emoji 讓版面縮掉。
+       對應 minigame_sw.js v1.101.0、minigame_island_db.js v1.27.0。
+     ★ v1.130.0(2026-09-13・老師五項)—
+       ①建造/研究/裝飾/製作/武器 五個視窗改成「三欄大卡片」(圖 128px、名稱 25px、說明 18px),框放大到 1180px、92% 高,內容多就捲。
+         ⚠ 這類視窗刻意**不吃 islFitBox 的等比縮小**(islModal 新增 opts.wide 會跳過):那支是「縮到不用捲」,
+           對放大後的卡片只會把字再縮回去,與老師的需求正好相反。
+       ②👤 角色狀態 / 🗡 武器 點了沒視窗的**根因不是圖層**:islWeaponAtk() 把 `var lv = inst.lv|0` 寫在 `if(!w)` 守門之前,
+         徒手(還沒做出武器)時 inst=null → 第一行就拋 TypeError,而 islBtPlayerStats() 一定會呼叫它 ⇒ 兩個視窗在開局狀態必定建不出來。
+         同一條路徑也會讓「徒手進入回合制戰鬥」拋錯,一併根治。(已用本機 Chromium 實跑複驗,0 例外)
+       ③所有視窗的 ✕ 移到框線外右上角(-19px、46px、iPad 58px):.box/.isl-bagbox/.sm-box 改 overflow:visible,
+         捲動責任交給內層 .bd(islPanel 新增 islBoxWrapBd 自動包一層,只認直系子元素以免誤判武器卡本來就有的 .bd)。
+       ④材料不足 → 卡片左下角「⚠ 資源不足」,點了開「這些材料去哪裡拿」視窗。來源清單一律**即時從既有資料表推導**
+         (SCENE.spawn 的 gives/bonus 與 pick / RECIPES / CROPS / ANIMALS / SHOP.buy / MON_BT),刻意不另建第二份會過期的對照表;
+         區域沒解鎖會一併標出解鎖條件。建築升級/修理的材料不夠彈窗也掛 inline 版徽章。
+       ⑤造型工房涵蓋主角**全部 36 張圖**:分層 24(舊)+ 整張 sprite sheet 2 + 戰鬥立繪 bt_p_* 10(新)。
+         sheet 沿用分層那條數學(sx=sy=1/dx=dy=0 時算出來與舊值完全相同);戰鬥立繪改用 transform 且 transform-origin:50% 100%
+         (腳底中心)⇒ 縮放時腳不離地,⚠ 刻意套在 img.pic 而非外層 .fig(.fig 身上有呼吸/受擊/倒下的 CSS animation,也是 transform,會整條覆寫)。
+         匯出(📋 複製設定值)一次吐出全部 36 張,沒調過的不輸出。對應 minigame_sw.js v1.100.0、minigame_island_db.js v1.26.0(零改動)。
+     ★ v1.129.0(2026-09-13・老師兩項:①荒島求生入口不要先閃過小遊戲首頁,直接開荒島 ②左上角「回大對抗」改成「回到首頁」)—
+       ①?mode=island 直入不再閃小遊戲大廳:根因是 v1.113.0 的自動進場要輪詢等 MG.games/islDB()/MG.user 就緒(最多 10 秒),
+         而 boot() 早就把 #page-home + #topbar 畫出來了。修法不動 boot() 順序(會牽連 15 款小遊戲的既有啟動流程),
+         改為最早的時機就在 <html> 掛 .isl-direct 用 !important 遮掉大廳 + 顯示「正在進入荒島求生…」簾幕;
+         三個拆簾時機缺一不可:islEnter() 真的進場 / GM 閘門攔截(否則「回小遊戲大廳」按不到) / 輪詢 10 秒逾時(寧可退回大廳也不留黑畫面)。
+       ②#toapp-btn 文字「🗺 回大對抗」→「🗺 回到首頁」(href 與交接鑰匙邏輯一行未動);MG_EN 補新 key,舊 key 保留。
+       對應 minigame_sw.js v1.99.0、minigame_island_db.js v1.26.0(零改動)、主程式 index.html v5.190.0。
      ★ v1.128.0(2026-09-13・老師兩項:①GM 要能調整頭髮和衣服的尺寸和座標,如同造型工房,調好存成預設值 ②雙馬尾/高馬尾/長髮 改女生限定,男生另給 3 款新髮型)—
        🏝 ①根因(已用 Python 逐格量 24 張分層圖的實際輪廓 alpha>120 確認,不是程式對位邏輯壞掉):衣服 c1~c3 是照比較高瘦的身體畫的,整件比基底身體大 1.3~1.6 倍、領口畫到 y26(基底下巴在 y53)⇒ 整顆頭被吃掉;假髮頭圍又比基底的頭大一圈,且少女基底的頭比少年高 5px(少女頭頂 y0/少年 y5)而髮際線都畫在 y4 ⇒ 瀏海壓到眼睛。
        ②解法不重畫圖:每張圖各自帶一組修正值 { sx, sy, dx, dy }(island_db 的 D.LAYER_ADJ 是預設值、GM 微調暫存 localStorage.isl_lyadj),islLyGeo() 換算成 background-size/background-position,基準固定「水平中心線＋腳底線」⇒ 縮放後人不會飄,三層與走路各幀永遠同步;sx=sy=1、dx=dy=0 時與 v1.124.0 的 islLyPos 算出完全相同的值(舊行為不變)。預設值是用實際輪廓自動擬合的(衣服縮到領口剛好落在脖子、頭髮縮到髮量寬≈頭寬×1.12 並把髮際線對到頭頂)。
@@ -3239,6 +3275,44 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </head>
 <body>
 
+<!-- ══ ★ v1.129.0(2026-09-13・老師「荒島求生入口進去現在會先到小遊戲首頁然後才跳去荒島的首頁,
+     修改成直接開啟荒島大地圖頁(不要顯示小遊戲首頁,已經不相關)」)══
+     【根因】v1.113.0 的 ?mode=island 自動進場是「輪詢等 MG.games/islDB()/MG.user 就緒(最多 10 秒)
+     才呼叫 islEnter()」,而 boot() 在那之前早就把小遊戲大廳(#page-home + #topbar)畫出來了 ——
+     所以學生一定會先看到小遊戲首頁閃一下(校網慢時可以閃好幾秒)才跳進荒島。
+     【修法】不去動 boot() 的順序(動它會牽連 15 款小遊戲的既有啟動流程),改成在**最早**的時機
+     就把大廳整個遮起來:網址一帶 ?mode=island 就在 <html> 掛 .isl-direct,用 !important 蓋掉大廳,
+     同時顯示一張「正在進入荒島求生…」的等待簾幕。
+     ⚠ .isl-direct 一定要在三個時機拆掉,否則大廳會被永久鎖住:
+       ①islEnter() 真的進場時(它自己也會 hide('page-home')) ②GM 閘門攔截時(要讓「回小遊戲大廳」有效)
+       ③輪詢逾時(10 秒沒等到) —— 寧可退回大廳,也不可以留一片黑畫面給學生。 -->
+<style>
+html.isl-direct #page-home, html.isl-direct #topbar{ display:none !important; }
+#isl-direct-veil{
+  position:fixed; inset:0; z-index:99990; display:none;
+  align-items:center; justify-content:center; flex-direction:column; gap:16px;
+  background:linear-gradient(160deg,#0d2233,#164a63);
+  color:#eafff4; font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  font-size:22px; font-weight:700; letter-spacing:1px; text-align:center; padding:20px;
+}
+html.isl-direct #isl-direct-veil{ display:flex; }
+#isl-direct-veil .dot{ font-size:52px; animation:islDirectPulse 1.1s ease-in-out infinite; }
+@keyframes islDirectPulse{ 0%,100%{ transform:scale(1); opacity:.75 } 50%{ transform:scale(1.15); opacity:1 } }
+</style>
+<div id="isl-direct-veil"><div class="dot">🏝</div><div>正在進入荒島求生…</div></div>
+<script>
+/* 只認 ?mode=island;任何例外都不可以影響一般小遊戲的開機 */
+try{
+  if(/[?&]mode=island(?:&|$)/.test(location.search)){
+    document.documentElement.classList.add('isl-direct');
+  }
+}catch(_islv){}
+/* 單一收口:三個拆簾時機都呼叫這一支,不各寫各的 */
+window.islDirectVeilOff = function(){
+  try{ document.documentElement.classList.remove('isl-direct'); }catch(_){}
+};
+</script>
+
 <!-- 音效:全部沿用主程式 repo 內既有素材(GitHub raw 絕對路徑),preload=none 不影響開機速度 -->
 <audio id="sfx-ok"     preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D.mp3"></audio>
 <audio id="sfx-ng"     preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
@@ -3352,6 +3426,11 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      日後老師若把森林鳥叫也搬進 minigame/audio/,只要改這一行的路徑即可。 -->
 <audio id="amb-isl-wave" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E6%B5%B7%E6%B5%AA%E8%81%B2.mp3"></audio>
 <audio id="amb-isl-bird" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A3%AE%E6%9E%97%E9%B3%A5%E5%8F%AB.mp3"></audio>
+<!-- ★ v1.131.0(2026-09-13・老師:溪流/瀑布/洞穴滴水/草原 環境音已上傳)— 實查 repo 確認四支都在 minigame/audio/,注意 溪流是 .m4a、其餘三支是 .mp3。 -->
+<audio id="amb-isl-river" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E6%BA%AA%E6%B5%81.m4a"></audio>
+<audio id="amb-isl-fall"  preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E7%80%91%E5%B8%83.mp3"></audio>
+<audio id="amb-isl-drip"  preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E6%B4%9E%E7%A9%B4%E6%BB%B4%E6%B0%B4.mp3"></audio>
+<audio id="amb-isl-grass" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E8%8D%89%E5%8E%9F.mp3"></audio>
 <audio id="bgm-isl-forest" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_forest.m4a"></audio>
 <audio id="bgm-isl-grass" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_grass.m4a"></audio>
 <audio id="bgm-isl-river" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_river.m4a"></audio>
@@ -3377,7 +3456,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
          (主程式 v5.57.0 教訓),不能靠二次確認擋。遊戲中已有「← 回選單」,兩步就回得去。 -->
   <div id="topbar">
     <a id="toapp-btn" class="chip" href="../"
-       onclick="try{playSfx('sfx-tap',0.35);}catch(_){} try{if(typeof window._mgMarkAppHandoff==='function')window._mgMarkAppHandoff();}catch(_){}">🗺 回大對抗</a>
+       onclick="try{playSfx('sfx-tap',0.35);}catch(_){} try{if(typeof window._mgMarkAppHandoff==='function')window._mgMarkAppHandoff();}catch(_){}">🗺 回到首頁</a>
     <button id="back-btn" class="chip hidden" onclick="mgHome()">← 回選單</button>
     <!-- ★ v1.60.0(老師需求「玩法按鈕移到左上方回選單右邊」)— 從 #hud 搬到這裡,固定跟著回選單一起在左上角;
          onclick 邏輯完全不動(mgShowInfo(true)),只是換了個容器位置。 -->
@@ -4478,6 +4557,61 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 武器面板:熟練值條 */
 .isl-wp .xp{display:block;height:6px;background:rgba(255,255,255,.2);border-radius:3px;margin:4px 0 2px;overflow:hidden;}
 .isl-wp .xp i{display:block;height:100%;background:linear-gradient(90deg,#5fb3d9,#7bed9f);border-radius:3px;}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v1.130.0(2026-09-13・老師五項)— 純新增覆寫段,放在本 <style> 最尾端靠「後者勝」生效,舊規則一行未刪。
+   ①【建造/研究/裝飾/製作/武器 視窗放大成三欄卡片、可捲動】
+      舊版是一整排窄長條(框寬只有 409px、圖 76px、說明 15px),老師要「文字圖片視窗都放大、3 個設施一行、可捲動」。
+      ⚠ 這類卡片視窗**刻意不吃 islFitBox 的等比縮小**(islModal 的 opts.wide 會跳過):
+        那支是為「一眼看完不用捲」設計的,對放大後的卡片只會把字再縮回去,和老師的需求正好相反;
+        改成「框放大到 92% 高 + .bd 內捲」⇒ 字維持大,內容多就捲。
+   ②【✕ 一律移到框線外的右上角】老師:放內側會擋到內容與按鈕。
+      ⚠ 要真的浮在框外,框本身就不能裁切 ⇒ .box/.isl-bagbox/.sm-box 改 overflow:visible,
+        捲動責任整個交給裡面的 .bd(islPanel 會自動把面板內容包進 .bd,見 islBoxWrapBd)。
+      ⚠ #isl-modal 的 padding 一併加大,否則 ✕ 移到框外會被畫面邊緣切掉。
+   ③【資源不足徽章】卡片左下角的 ⚠ 資源不足;點了開「這些材料哪裡拿」小視窗。
+══════════════════════════════════════════════════════════════════════════ */
+#isl-modal{ padding:30px 32px; }
+#isl-modal .box, .isl-bagbox, #isl-submenu .sm-box{ overflow:visible; }
+#isl-modal .box > .bd, .isl-bagbox > .bd{ overflow-y:auto; overflow-x:hidden; min-height:0; flex:1 1 auto; }
+.isl-bagbox{ display:flex; flex-direction:column; }
+.isl-x{ right:-19px; top:-19px; width:46px; height:46px; font-size:23px; background:#17364b; border:3px solid #7cc4e8; box-shadow:0 4px 14px rgba(0,0,0,.65); z-index:6; }
+#isl-submenu .sm-title .isl-x{ position:absolute; right:-19px; top:-19px; margin-left:0; }
+#island-root.ipad .isl-x{ width:58px; height:58px; font-size:28px; right:-24px; top:-24px; }
+
+/* 三欄卡片視窗 */
+#isl-modal .box.wide{ width:min(98%,1180px); max-height:92%; }
+.isl-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:8px 0 2px; }
+.isl-card{ position:relative; display:flex; flex-direction:column; align-items:center; text-align:center;
+  background:rgba(0,0,0,.30); border:2px solid rgba(255,255,255,.18); border-radius:16px; padding:12px 10px 46px; }
+.isl-card.done{ opacity:.5; }
+.isl-card.on{ border-color:#7bed9f; background:rgba(46,158,91,.22); }
+.isl-card .ci{ width:128px; height:128px; display:flex; align-items:center; justify-content:center; font-size:78px; line-height:1; }
+.isl-card .ci img{ width:128px; height:128px; object-fit:contain; }
+.isl-card .cn{ font-size:25px; font-weight:900; margin:6px 0 2px; line-height:1.2; }
+.isl-card .cd{ font-size:18px; line-height:1.45; opacity:.93; }
+.isl-card .cc{ font-size:19px; font-weight:700; margin-top:6px; line-height:1.5; }
+.isl-card .cb{ position:absolute; left:8px; right:8px; bottom:8px; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+.isl-card .cb .isl-btn{ font-size:19px; padding:9px 16px; margin:0; }
+.isl-card .lk{ font-size:16px; color:#ff9f43; }
+/* ⚠ 資源不足:固定在卡片左下角(老師指定位置),點了開材料來源小視窗 */
+.isl-lack{ position:absolute; left:8px; bottom:8px; background:#7a2f2f; color:#ffdede; border:2px solid #ff7b7b;
+  border-radius:999px; padding:6px 12px; font-size:16px; font-weight:900; font-family:inherit; line-height:1; }
+.isl-lack:active{ transform:scale(.94); }
+.isl-lack.inline{ position:static; display:inline-block; margin-left:6px; vertical-align:middle; }
+/* ★ v1.131.0 缺圖佔位(網頁常見的破圖樣式):保留原本欄位大小,不讓版面塌掉 */
+.isl-noimg{ position:relative; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle;
+  border:2px dashed rgba(255,255,255,.38); border-radius:10px; background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 6px,rgba(255,255,255,.10) 6px 12px);
+  box-sizing:border-box; overflow:hidden; }
+.isl-noimg .em{ line-height:1; opacity:.9; }
+.isl-noimg .tag{ position:absolute; right:1px; bottom:0; font-size:11px; opacity:.75; line-height:1; }
+.isl-src-row{ display:flex; gap:10px; align-items:flex-start; text-align:left; background:rgba(0,0,0,.25);
+  border-radius:12px; padding:8px 10px; margin:6px 0; font-size:18px; line-height:1.45; }
+.isl-src-row .se{ font-size:30px; flex:0 0 auto; }
+.isl-src-row .sl{ color:#ff9f43; font-size:15px; }
+.isl-src-h{ display:flex; gap:10px; align-items:center; font-size:22px; font-weight:900; color:#ffd166; margin:12px 0 2px; }
+@media (max-width:1000px){ .isl-cards{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:640px){ .isl-cards{ grid-template-columns:1fr; } }
 </style>
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
      層級(設計書 2.1):#isl-hud 固定頂欄 → 各畫面(#isl-create / #isl-map-wrap / #isl-zone / #isl-camp / #isl-act)
@@ -4501,7 +4635,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <button class="ih btn" id="isl-hud-save" onclick="islSaveTap()" title="存檔">💾</button>
     <button class="ih btn" id="isl-hud-gear" onclick="islGearToggle()" title="設定">⚙</button><!-- ★ v1.115.0 設定選單(動態背景/音樂/全螢幕)移到右上角 -->
     <button class="ih btn" onclick="islExit()" title="離開荒島,回主程式首頁">✕</button>
-    <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islAmbToggle2()" id="isl-gear-ambsfx">🌊 環境音</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button><button onclick="islGearToggle();islLabOpen()" id="isl-gear-lab" style="border-color:#ffd166;display:none">🎨 造型工房(GM)</button></div><!-- ★ v1.116.0 老師:完整下載荒島求生主程式 -->
+    <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islAmbToggle2()" id="isl-gear-ambsfx">🌊 環境音</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button><button onclick="islGearToggle();islLabOpen()" id="isl-gear-lab" style="border-color:#ffd166;display:none">🎨 造型工房(GM)</button><button onclick="islGearToggle();islBtTest()" id="isl-gear-bt" style="border-color:#ff9f43;display:none">⚔ 測試戰鬥(GM)</button></div><!-- ★ v1.116.0 老師:完整下載荒島求生主程式 -->
   </div>
   <div id="isl-hud-tip" class="hidden"></div>
   <div id="isl-notify"></div><!-- ★ v1.125.0 右下角完工通知(建造完成) --><!-- ★ v1.124.0 HUD 藥丸的文字說明小視窗(掛 root 直下,避免被 HUD 橫向捲動裁掉) -->
@@ -4580,7 +4714,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.128.0';   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.131.0';   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -11682,7 +11816,7 @@ window.mgCrReset = function(){
  *    沒有英文欄位的題目退回中文(目前已翻譯:15 款關卡介紹/籃子/單元表 + 動物特徵二選一 167 題)
  * ══════════════════════════════════════════════════════════ */
 MG.lang = 'zh';
-var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回大對抗": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊玩提示": "💡 Play Tips", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
+var MG_EN = {"力行國小・選一位英雄,答對就出招!木柵與台灣小學堂的英雄對戰小遊戲": "Lixing Elementary · Pick a hero and answer correctly to attack! A hero-battle mini-game hub for Muzha and Taiwan.", "小英雄小遊戲 — 英雄對戰小學堂": "Little Hero Mini Games — Hero Battle Classrooms", "選一位英雄,答對就出招 ── 每一局都是一場新的英雄對戰!": "Pick a hero and answer correctly to attack — every round is a brand-new hero battle!", "力行國小 · 答題就是攻擊,答錯會挨打 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Answering is attacking — get it wrong and you take a hit · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "小遊戲還在做,再等一下!": "The mini games are still being made. Please wait!", "小英雄小遊戲・老師還在調整中": "Little Hero Mini Games · Teacher is still adjusting", "老師正在把小遊戲做得更好玩。做好就會開放,先回去玩大作戰吧!": "The teacher is making the mini games more fun. Go back to the main game for now!", "這裡以後會有很多款木柵與台灣的小遊戲。老師正在加入新玩法、調整畫面和音樂,": "Many mini games about Muzha and Taiwan will be here. The teacher is adding new ways to play,", "等調整好就會開放給大家玩,先回「小英雄大對抗」繼續冒險吧!": "They will open when ready. Go back to Little Hero Battle for now!", "我是力行小博士,小學堂快做好了,再等一下下!": "I am Dr. Lixing! The classrooms are almost ready. Please wait a little!", "我是力行小博士!小學堂還在最後調整,開放的時候我會在這裡等大家。": "I am Dr. Lixing! We are doing the last checks. I will wait for you here when it opens.", "(老師要測試請按上面的老師登入)": "(Teachers: tap Teacher Login above to test)", "(這是老師的測試入口;學生不需要登入,直接回大作戰就好)": "(This is the teacher test entrance. Students can just go back to the main game.)", "🎵 音樂大小聲": "🎵 Music volume", "🎵 音樂音量": "🎵 Music volume", "🔊 音效大小聲": "🔊 Sound volume", "🔊 音效音量": "🔊 Sound volume", "拉到最左邊就沒聲音囉": "Drag all the way left to mute", "拉桿最左端 = 靜音": "Far left = mute", "靜音": "Mute", "這台裝置要先「加入主畫面」才能全螢幕喔": "Add to Home Screen first to use full screen", "此裝置瀏覽器不支援全螢幕;請用「加入主畫面」安裝後開啟": "This browser cannot go full screen. Install with Add to Home Screen first.", "離開全螢幕": "Exit full screen", "全螢幕": "Full screen", "字多": "More text", "字少": "Less text", "已切換:簡單說明": "Switched: simple text", "已切換:完整說明": "Switched: full text", "🔴 已關閉": "🔴 Closed", "🟢 開放中": "🟢 Open", "🚧 暫時關閉": "🚧 Closed for now", "與這個單元無關": "Not this unit", "與本單元無關": "Not this unit", "難度": "Difficulty", "🚧 這一關老師暫時關閉了,先玩別的吧!": "🚧 The teacher closed this game for now. Try another one!", "這一關和你勾的單元沒關係,玩亮起來的那幾關吧!": "This game is not about the units you picked. Play the glowing ones!", "這一關與勾選的單元無關;請玩亮起的關卡,或到「專注課堂複習」調整單元": "This game is not related to the units you picked. Play a glowing game, or change units in Class Review.", "只有老師帳號可以設定": "Only the teacher account can change this", "雲端還沒連上,請稍後再試": "Cloud is not connected yet. Try again later.", "請確認是老師帳號": "Please use the teacher account", "還沒有紀錄,來挑戰看看!": "No record yet. Give it a try!", "課堂題都出完了,重新洗牌再來一輪!": "All class questions were used. Shuffling for a new round!", "這款遊戲的課堂複習題已全部出過,重新洗牌開始新的一輪": "All class review questions in this game were used. Starting a new shuffled round.", "▶ 繼續": "▶ Continue", "⏸ 暫停": "⏸ Pause", "⏰ 時間到了!": "⏰ Time is up!", "▶ 聽示範": "▶ Listen", "▶ 播放": "▶ Play", "看上面的簡譜,照順序彈出來!": "Look at the notes above and play them in order!", "照著簡譜的順序按琴鍵(不看拍子,只看順序);可以先聽示範。": "Press the keys in the order shown (order only, not rhythm). You can listen first.", "聽完再用小動物琴鍵彈回來!": "Listen, then play it back on the animal keys!", "仔細聽這段旋律,再用琴鍵依序彈出來;可以重聽,不會扣分。": "Listen carefully, then play the notes in order. You can replay it for free.", "聽鼓聲,再敲鼓敲出一樣的拍子!": "Listen to the drum, then tap the same rhythm!", "聽完鼓聲的節奏,用同樣的拍子敲鼓(快一點慢一點沒關係,節奏要一樣);敲夠次數就自動判定。": "Listen to the beat, then tap the drum with the same rhythm. Speed does not matter. It checks when you tap enough times.", "可以重聽,不會扣分": "Replay is free", "按琴鍵開始彈…": "Press a key to start…", "正確答案:": "Correct answer:", "這台裝置不支援音效,請改玩其他關卡": "This device cannot play sound. Try another game.", "✅ 彈對了!": "✅ You played it right!", "✅ 拍子一模一樣!": "✅ Same rhythm!", "播放失敗,請再試一次": "Could not play. Try again.", "用手指把它拖到正確的籃子": "Drag it to the correct basket", "還有格子沒有放喔": "Some slots are still empty", "✅ 順序完全正確!": "✅ Perfect order!", "❌ 正確順序已經幫你排好了": "❌ Here is the correct order", "只射正確的算式!射錯會爆炸": "Shoot only correct sums! Wrong ones explode", "只射對的!": "Shoot only correct ones!", "先點左邊的上半句!": "Tap the left half first!", "請先點選左邊的上半句,再點右邊的下半句。": "Tap the first half on the left, then the second half on the right.", "✅ 全部連對了!一次都沒有錯": "✅ All matched with no mistakes!", "正確答案都找到了,快走到 🏁!": "You found all the answers. Go to 🏁!", "走不下去了,按「重走這一關」再試一次": "You are stuck. Tap Restart to try again", "✅ 全部答案都收集到,順利走出迷宮!": "✅ You collected every answer and escaped the maze!", "紅": "Red", "橙": "Orange", "黃": "Yellow", "綠": "Green", "藍": "Blue", "紫": "Purple", "棕": "Brown", "膚": "Skin", "黑": "Black", "白": "White", "灰": "Gray", "粉": "Pink", "全身": "Whole body", "上半部": "Top half", "下半部": "Bottom half", "左半邊": "Left half", "右半邊": "Right half", "左上角": "Top left", "右上角": "Top right", "左下角": "Bottom left", "右下角": "Bottom right", "✅ 答對了!": "✅ Correct!", "❌ 正確位置已標出來": "❌ The correct place is marked", "❌ 再想想看": "❌ Think again", "看成績 →": "See score →", "下一題 →": "Next →", "未登入": "Not logged in", "再快一點就有加成!": "A little faster for a bonus!", "☁ 存到雲端中…": "☁ Saving to cloud…", "☁ 這次沒有超過最佳成績,雲端保持原紀錄": "☁ Not a new best. Cloud record unchanged.", "目前沒有登入,成績只留在這一次(關掉就不見)": "Not logged in. This score is not saved.", "連線中,請稍等…": "Connecting…", "連線失敗,不過不影響玩遊戲": "Connection failed, but you can still play", "要登出嗎?登出後成績就不會存到雲端。": "Log out? Scores will not be saved to the cloud.", "登出": "Log out", "已登入": "Logged in", "登入": "Log in", "老師你好,測試模式已解鎖": "Hello teacher, test mode unlocked", "這個帳號不是老師帳號,小遊戲還在測試中喔": "This is not a teacher account. Mini games are still in testing.", "已讀取雲端最佳成績": "Cloud best scores loaded", "☁ 已存到雲端": "☁ Saved to cloud", "☁ 雲端存檔失敗(成績仍保留在這次遊戲中)": "☁ Cloud save failed (score kept for this game)", "玩家": "Player", "已建立小遊戲週排行榜文件": "Weekly ranking file created", "🏆 本週排行榜也更新了!": "🏆 Weekly ranking updated!", "🏆 已計入本週排行榜": "🏆 Added to this week's ranking", "每週排行榜有獎品!點我看": "Weekly ranking prizes! Tap me", "每週排行榜獎勵・點我看說明": "Weekly Ranking Rewards · Tap for info", "你這週還沒進前 10 名": "Not in the top 10 yet this week", "本週尚未進入前 10 名": "Not in the top 10 yet this week", "要先登入才會算分喔": "Log in so your score counts", "登入後成績才會列入": "Log in so your score counts", "你這週還沒進前 10 名,快去挑戰!": "You are not in any top 10 yet. Go for it!", "你本週尚未進入任何遊戲的前 10 名,快去挑戰吧!": "You are not in any top 10 yet. Go for it!", "(老師帳號不列入排行榜)": "(Teacher accounts are not ranked)", "👉 先按右上角「登入」,分數才會算!": "👉 Tap Log in (top right) so your score counts!", "👉 請先按右上角「登入」,成績才會列入排行榜。": "👉 Tap Log in (top right) so your score goes on the ranking.", "🎁 上週得獎名單": "🎁 Last Week's Winners", "🏆 每週排行榜獎勵": "🏆 Weekly Ranking Rewards", "🏆 本週排行榜": "🏆 This Week's Ranking", "讀取中…": "Loading…", "讀不到排行榜,等一下再試。": "Cannot load the ranking. Try again later.", "目前讀不到排行榜(離線或尚未建立),請稍後再試。": "Cannot load the ranking (offline or not created yet). Try again later.", "上週沒有人上榜。": "Nobody was ranked last week.", "上週沒有登入成績,無人得獎。": "No logged-in scores last week, so no winners.", "每個遊戲前 10 名(點遊戲名字展開)。同分先到的排前面。": "Top 10 for each game (tap a game to open). Ties: first come first.", "還沒有人": "Nobody yet", "尚無成績": "No scores yet", "你可以當第一個!": "You can be the first!", "本週尚無登入成績,你可以成為第一個!": "No scores yet this week. You can be the first!", "專注課堂複習:開": "Class Review: ON", "專注課堂複習:啟用中": "Class Review: ON", "專注課堂複習": "Class Review", "專注課堂複習(點我設定)": "Class Review (tap to set up)", "勾年級和單元,先出課堂題": "Pick grade and units to get class questions first", "勾選年級與單元,優先出課堂複習題": "Pick grade and units to get class questions first", "勾選要複習的年級和單元。開啟後只有和單元有關的關卡會亮起來,先出課堂題(題目角落有小標籤),全部出完才會重新再出一輪(順序會重排)。": "Pick the grade and units to review. Only related games will glow. They show class questions first (with a small tag). When all are used, a new shuffled round starts.", "勾選要複習的年級與單元。啟用後只有「該單元題目 ≥ 50 題」的關卡會亮起(其餘遮罩「與本單元無關」),亮起的關卡優先出課堂複習題(題卡角落顯示「年級・科目・單元」),直到課堂題全部出完才重新洗牌開始第二輪(題目與選項順序皆重新隨機)。結算頁會列出單元、課堂題數與答對數,方便老師登記。": "Pick the grade and units to review. Only games with 50 or more questions for that unit will glow; others are masked. Glowing games show class questions first (tagged grade · subject · unit). When all are used, a new shuffled round starts. The result page lists the unit, question count and correct answers for the teacher.", "專注模式:勾單元就會自動打開": "Class Review turns on when you pick a unit", "啟用專注課堂複習模式(勾選單元後自動啟用)": "Enable Class Review (turns on when you pick a unit)", "尚無達標關卡": "no game has 50 yet", "先勾一個單元,就會自動打開喔": "Pick a unit first and it turns on by itself", "請先勾選單元,勾了就會自動啟用": "Pick a unit first and it turns on by itself", "專注模式開了!先出課堂題": "Class Review is ON! Class questions come first", "專注課堂複習已啟用,各遊戲優先出課堂題": "Class Review is ON. Games show class questions first.", "專注模式關了": "Class Review is OFF", "專注課堂複習已關閉": "Class Review is OFF", "已重新開始,課堂題會從頭再出一輪": "Restarted. Class questions start from round one.", "已清除所有遊戲的本輪紀錄,課堂題將重新從第一輪開始": "Cleared all round records. Class questions start from round one.", "🗺 回到首頁": "🏠 Home", "🗺 回大對抗": "🗺 Main game", "← 回選單": "← Menu", "版本": "Version", "🔄 更新": "🔄 Update", "📎 網址": "📎 Link", "小英雄小遊戲・製作中": "Little Hero Mini Games · in progress", "🗺 回去玩大作戰": "🗺 Back to main game", "🔑 老師登入": "🔑 Teacher login", "每週排行榜獎勵": "Weekly Ranking Rewards", "🎮 小英雄小遊戲": "🎮 Little Hero Mini Games", "木柵 · 台灣 小學堂 ── 每一局都是新挑戰!": "Muzha · Taiwan classrooms — every round is a new challenge!", "力行國小 · 不用登入就能玩 · 登入後最佳成績會存到雲端,並計入每週排行榜獎勵": "Lixing Elementary · Play without login · Log in to save best scores to the cloud and join the weekly ranking", "0 分": "0 pts", "玩法": "How", "顯示唱名＋音名": "Show note names", "↩ 刪一個": "↩ Delete one", "↺ 重來": "↺ Redo", "↩ 收回一張": "↩ Take back", "✓ 就是這個順序": "✓ This is the order", "💡 提示": "💡 Hint", "💡 遊玩提示": "💡 Play Tips", "💡 遊戲簡介": "💡 Game Intro", "↺ 重走這一關": "↺ Restart", "🎨 原本的樣子": "🎨 Original", "⬜ 幫他上色": "⬜ Color it", "— 挑戰成績 —": "— Your Result —", "🎉 新紀錄!": "🎉 New record!", "再玩一次": "Play again", "回選單": "Menu", "學什麼": "What you learn", "怎麼玩": "How to play", "你的最佳成績": "Your best", "開始": "Start", "關閉": "Close", "📚 專注課堂複習": "📚 Class Review", "啟用專注模式": "Enable Class Review", "🔄 重新開始一輪": "🔄 Restart round", "✓ 儲存": "✓ Save", "請把裝置轉成橫的": "Please turn your device sideways", "小英雄小遊戲是橫式遊戲,": "Mini games are played in landscape.", "直立時畫面會太小、按鈕不好按。": "In portrait the screen is too small.", "💡 轉 90 度就可以開始玩囉!": "💡 Turn it 90 degrees to play!", "⏸ 暫停中": "⏸ Paused", "倒數停住了,但本局用時還在計算喔!用時越短,最後的加成越高。": "The countdown stopped, but total time still counts! Faster means a bigger bonus.", "目前版本": "Current version", "重新整理更新到最新版": "Refresh to update", "暫停": "Pause", "音樂音量": "Music volume", "音效音量": "Sound volume", "切換 字少／字多": "Less / more text", "複製小遊戲網址": "Copy link", "小英雄小遊戲": "Little Hero Mini Games", "已是最新版": "Already up to date", "⏳ 更新中": "⏳ Updating", "上週": "Last week", "本週": "This week", "(每週一 08:00 結算上週)": "(settled every Monday 08:00)", "這週:": "This week:", "你現在:": "Now:", "你目前的最佳名次:": "Your best rank:", ",加油保持!": ", keep it up!", "— 保持到週一 08:00 就有獎勵!": "— keep it until Monday 08:00 for a prize!", "啟用專注課堂複習模式": "Enable Class Review", "切換語言 中／EN": "Language 中 / EN", "語言": "Language"};
 /* ★ v1.29.0 戰鬥模式 UI 字串英文版(補進 MG_EN;題庫/爆發說明走 tx() 的 en 欄位) */
 (function(){
   var _add = { "出戰英雄": "Your hero", "🔁 換英雄": "🔁 Change hero", "🦸 選一名英雄出戰": "🦸 Pick a hero to battle", "✓ 就是這一位": "✓ Choose this hero",
@@ -12362,9 +12496,97 @@ function islConsume(id, need){
 }
 function islCanAfford(cost){ var k; for(k in cost){ if(cost.hasOwnProperty(k) && islHave(k) < cost[k]) return false; } return true; }
 function islCostHtml(cost){ var k, a = []; for(k in cost){ if(cost.hasOwnProperty(k)) a.push('<span class="isl-cost">' + islItemIco(k, 26) + islEsc(islItemDef(k).n) + ' ' + islHave(k) + '/' + cost[k] + '</span>'); } return a.join(' '); }   /* ★ v1.115.0 帶圖片版材料清單(視窗用;toast 仍用純文字 islCostText) */
-function islIcoHtml(key, e, px){ var u = key ? islImgUrl(key) : ''; px = px || 32; return u ? '<img class="isl-ico" src="' + u + '" alt="" style="width:' + px + 'px;height:' + px + 'px" onerror="this.outerHTML=this.getAttribute(\'data-e\')" data-e="' + islEsc(e || '') + '">' : (e || ''); }   /* ★ v1.115.0 有圖用圖、缺圖退 emoji */
+/* ══ ★ v1.131.0(老師需求④「所有應該有圖片但我還沒上傳的都先保留圖片欄位,暫時顯示網路上常用的替代提示」)══
+   舊行為:圖片鍵查無、或圖片 404 → 直接塌成一顆 emoji ⇒ 版面會縮掉,老師也看不出「這裡本來該有圖」。
+   新行為:一律保留**原本的圖片欄位大小**,畫成網頁上最常見的那種「破圖佔位」——虛線框 + 🖼 角標 + 中間放原本的 emoji(遊戲照樣看得懂),
+          滑鼠移上去(或長按)會顯示該圖的檔名,老師一眼知道要生成哪一張。
+   ⚠ onerror 刻意改呼叫 window.islImgFail(this) 而不是把整段 HTML 塞進 data- 屬性:
+     佔位 HTML 內含引號與中文,硬塞進屬性一定會踩到跳脫問題(而且每張圖都重複一份字串)。 */
+function islNoImgHtml(e, px, key){
+  var db = islDB(), f = (db && db.IMG && key) ? db.IMG[key] : '';
+  px = px || 32;
+  return '<span class="isl-noimg" style="width:' + px + 'px;height:' + px + 'px" title="' + islEsc('圖片還沒上傳' + (f ? ':' + f : (key ? '(圖鍵 ' + key + ')' : ''))) + '">' +
+         '<span class="em" style="font-size:' + Math.max(12, Math.round(px * 0.46)) + 'px">' + (e || '') + '</span>' +
+         '<span class="tag">🖼</span></span>';
+}
+window.islImgFail = function(img){
+  try{ img.outerHTML = islNoImgHtml(img.getAttribute('data-e'), parseInt(img.getAttribute('data-px'), 10) || 32, img.getAttribute('data-k')); }catch(e){ try{ img.style.display = 'none'; }catch(_){} }
+};
+function islIcoHtml(key, e, px){
+  var u = key ? islImgUrl(key) : '';
+  px = px || 32;
+  if(!u) return islNoImgHtml(e, px, key);   /* 連圖鍵都還沒登記 → 一樣保留欄位 */
+  return '<img class="isl-ico" src="' + u + '" alt="" style="width:' + px + 'px;height:' + px + 'px" onerror="islImgFail(this)" data-e="' + islEsc(e || '') + '" data-px="' + px + '" data-k="' + islEsc(key) + '">';
+}   /* ★ v1.115.0 有圖用圖;★ v1.131.0 缺圖改「保留欄位 + 破圖佔位」而不是塌成 emoji */
 function islItemIco(id, px){ var d = islItemDef(id); return islIcoHtml(d.img, d.e, px); }
 function islCostText(cost){ var k, a = []; for(k in cost){ if(cost.hasOwnProperty(k)) a.push(islItemDef(k).e + islItemDef(k).n + ' ' + islHave(k) + '/' + cost[k]); } return a.join('　'); }
+/* ══ ★ v1.130.0(老師需求④「製作任何東西有任意材料不足時,在該欄位左下標示『資源不足』;
+   點擊該標示出現小視窗提示所有材料的來源和取得方式」)══
+   ★★ 來源清單一律「即時從既有資料表推導」,刻意不另外手寫一張對照表 ★★
+     手寫表一定會跟資料表走散(日後加一個資源點/食譜/商品就漏一筆,而且不會有人發現)。
+     掃描來源:各區 SCENE.spawn(gives/bonus)與 pick.items / RECIPES 烹飪 / CROPS 種植 /
+     ANIMALS 畜欄產物 / SHOP.buy 阿獺商品 / MON_BT 魔物掉落。
+   ★ 區域若還沒解鎖,會一併標出解鎖條件(ZONES.unlockText)—— 小朋友最常卡的就是「那個東西在還沒開的區」。 */
+function islLackList(cost){ var k, out = []; for(k in cost){ if(cost.hasOwnProperty(k) && islHave(k) < cost[k]) out.push(k); } return out; }
+function islLackBadge(cost, inline){
+  var L = islLackList(cost);
+  if(!L.length) return '';
+  /* inline=true:不是卡片版面(一般彈窗)時改成隨文排列的按鈕,不做絕對定位 */
+  return '<button class="isl-lack' + (inline ? ' inline' : '') + '" data-lack="' + L.join(',') + '">⚠ 資源不足</button>';
+}
+function islActNameOf(actId){ var db = islDB(), a = db.ACTS && db.ACTS[actId]; return (a && a.n) ? a.n : '採集'; }
+function islItemSources(key){
+  var db = islDB(), out = [], i, k, z, sc, sp, hit, un, r, c, an, b, mo;
+  /* ① 各區資源點與地上的撿取物 */
+  for(i = 0; i < db.ZONES.length; i++){
+    z = db.ZONES[i]; sc = db.SCENE ? db.SCENE[z.id] : null; if(!sc) continue;
+    hit = [];
+    if(sc.spawn){ for(k in sc.spawn){ if(!sc.spawn.hasOwnProperty(k)) continue; sp = sc.spawn[k];
+      if(sp.gives === key) hit.push((sp.label || k) + '(' + islActNameOf(sp.act) + ')');
+      else if(sp.bonus === key) hit.push((sp.label || k) + '(採集時附帶)'); } }
+    if(sc.pick && sc.pick.items && sc.pick.items.indexOf(key) >= 0) hit.push('地上的撿取物');
+    if(!hit.length) continue;
+    un = !!(ISL && ISL.zones && ISL.zones[z.id] && ISL.zones[z.id].unlocked);
+    out.push({ e: z.e, t: z.n + ':' + hit.join('、'), lock: un ? '' : ('🔒 這一區還沒解鎖 —— ' + (z.unlockText || '')) });
+  }
+  /* ② 烹飪 */
+  if(db.RECIPES){ for(i = 0; i < db.RECIPES.length; i++){ r = db.RECIPES[i]; if(r.id !== key) continue;
+    out.push({ e: '🍳', t: '營地「烹飪」做得出來:' + islCostText(r.need), lock: islCampHasBld('campfire') ? '' : '🔒 要先蓋「營火」' }); } }
+  /* ③ 種植 */
+  if(db.CROPS){ for(k in db.CROPS){ if(!db.CROPS.hasOwnProperty(k)) continue; c = db.CROPS[k];
+    if(c.gives === key) out.push({ e: '🌱', t: '農田種「' + c.n + '」,' + c.days + ' 天成熟(每天要澆水或接水道)', lock: islCampHasBld('farm') ? '' : '🔒 要先蓋「農田」' }); } }
+  /* ④ 畜欄 */
+  if(db.ANIMALS){ for(k in db.ANIMALS){ if(!db.ANIMALS.hasOwnProperty(k)) continue; an = db.ANIMALS[k];
+    if(an.make === key) out.push({ e: an.e, t: '畜欄養「' + an.n + '」,每天產 ' + an.out + ' 個(要餵 ' + islItemDef(an.food).n + ')', lock: islCampHasBld('pen') ? '' : '🔒 要先蓋「畜欄」' }); } }
+  /* ⑤ 阿獺雜貨鋪 */
+  if(db.SHOP && db.SHOP.buy){ for(i = 0; i < db.SHOP.buy.length; i++){ b = db.SHOP.buy[i];
+    if(b.give && b.give.item === key) out.push({ e: '🦦', t: '阿獺雜貨鋪買得到:' + b.n + '(' + ((b.price && b.price.shell) || '?') + ' 🐚 貝幣)', lock: '' }); } }
+  /* ⑥ 魔物掉落 */
+  if(db.MON_BT){ for(k in db.MON_BT){ if(!db.MON_BT.hasOwnProperty(k)) continue;
+    if(db.MON_BT[k].drop && db.MON_BT[k].drop.item === key){ mo = db.monster ? db.monster(k) : null;
+      out.push({ e: (mo && mo.e) || '👾', t: '打贏魔物「' + ((mo && mo.n) || k) + '」有機會掉落', lock: '' }); } } }
+  return out;
+}
+window.islLackOpen = function(keys){
+  var ks = String(keys || '').split(','), h = '', i, j, k, src, d;
+  playSfx('sfx-tap', 0.3);
+  h += '<h3>⚠ 這些材料還不夠</h3><p style="font-size:17px;opacity:.9;margin:0 0 4px">下面列出每一種缺的材料<b>可以去哪裡拿</b>。</p>';
+  for(i = 0; i < ks.length; i++){
+    k = ks[i]; if(!k) continue; d = islItemDef(k); src = islItemSources(k);
+    h += '<div class="isl-src-h">' + islItemIco(k, 40) + islEsc(d.n) + ' <span style="font-size:17px;font-weight:700;opacity:.85">(目前 ' + islHave(k) + ' 個)</span></div>';
+    if(!src.length){ h += '<div class="isl-src-row"><span class="se">❓</span><span>這個材料目前只能從特殊事件取得(遺跡地下層、委託獎勵或劇情),多探索看看!</span></div>'; continue; }
+    for(j = 0; j < src.length; j++){
+      h += '<div class="isl-src-row"><span class="se">' + src[j].e + '</span><span>' + islEsc(src[j].t) + (src[j].lock ? '<br><span class="sl">' + islEsc(src[j].lock) + '</span>' : '') + '</span></div>';
+    }
+  }
+  h += '<p style="font-size:16px;opacity:.8;margin-top:8px">💡 小提醒:島上的資源點<b>每個遊戲日會重新長出來</b>,位置也會換;睡一覺(🌙 休息)就會刷新。</p>';
+  islModal(h, [{ t: '知道了', cls: 'gold' }], { wide: true });
+};
+/* 卡片上的 ⚠ 資源不足 是各面板共用的:統一在這裡吃掉點擊,各面板的 onclick 不必各寫一次 */
+function islLackBind(root){
+  var bs = (root || $('isl-modal')).querySelectorAll('button[data-lack]'), i;
+  for(i = 0; i < bs.length; i++){ bs[i].onclick = function(ev){ ev.stopPropagation(); islLackOpen(this.getAttribute('data-lack')); }; }
+}
 /* 回營一鍵全放(27.1) */
 function islDepositAll(){
   var s = ISL.bag.slots, i, left = [], put, cat;
@@ -12527,6 +12749,27 @@ function islLyGeo(body, row, col, key){
            bp: (Math.round(px * 10) / 10) + 'px ' + (Math.round(py * 10) / 10) + 'px' };
 }
 function islLyCss(body, row, col, key){ var g = islLyGeo(body, row, col, key); return 'background-size:' + g.bs + ';background-position:' + g.bp + ';'; }
+/* ══ ★ v1.130.0(老師需求⑤「荒島的主角所有相關圖片都讓我 GM 來調整尺寸和位置」)══
+   盤點主角相關圖片共 36 張:分層 24(base/hair/cloth,v1.128.0 已可調)+ 整張 sprite sheet 2 + 戰鬥立繪 10。
+   本輪把後面 12 張也納入同一套 { sx, sy, dx, dy } 修正值,造型工房一次調完、一次匯出。
+   ① 整張 sheet:沿用分層那條數學(基準=水平中心線 + 腳底線),sx=sy=1、dx=dy=0 時算出來的
+      background-position 與 v1.115.0 舊碼完全相同(舊行為零變化)。key = 'sheet_<body>'。 */
+function islShGeo(body, row, col){
+  var cxs = ISL_SHEET_CX[body] || ISL_SHEET_CX.boy, cx = cxs[col] || cxs[0], by = row * 64 + 60, a = islLyAdj('sheet_' + body), px, py;
+  px = 32 + a.dx - cx * a.sx; py = 60 + a.dy - by * a.sy;
+  return { bs: (Math.round(384 * a.sx * 10) / 10) + 'px ' + (Math.round(192 * a.sy * 10) / 10) + 'px',
+           bp: (Math.round(px * 10) / 10) + 'px ' + (Math.round(py * 10) / 10) + 'px' };
+}
+function islShCss(body, row, col){ var g = islShGeo(body, row, col); return 'background-size:' + g.bs + ';background-position:' + g.bp + ';'; }
+/* ② 戰鬥立繪(bt_p_*):不是 sprite 而是整張 <img>,改用 transform 縮放位移;
+      transform-origin 固定 50% 100%(腳底中心)⇒ 放大縮小時腳不會離地。
+   ⚠ 刻意套在 img.pic 本身而不是外層 .fig:.fig 身上有呼吸/受擊/倒下等 CSS animation(也是 transform),
+      套上去會被 animation 整條覆寫。 */
+function islBtAdjStyle(key){
+  var a = islLyAdj(key);
+  if(a.sx === 1 && a.sy === 1 && !a.dx && !a.dy) return '';
+  return 'transform:translate(' + a.dx + 'px,' + a.dy + 'px) scale(' + a.sx + ',' + a.sy + ');transform-origin:50% 100%;';
+}
 function islLyApply(el, body, row, col, key){   /* 走路換幀:只改位置(尺寸不變才不會每幀重算重繪) */
   var g = islLyGeo(body, row, col, key);
   if(el.style.backgroundPosition !== g.bp) el.style.backgroundPosition = g.bp;
@@ -12560,18 +12803,33 @@ function islLayerThumb(c, kind){
 var _islLab = null, _islLabT = null;
 var ISL_LAB_ROWS = [{ r: 0, n: '正面' }, { r: 1, n: '背面' }, { r: 2, n: '側面' }];
 function islLabChar(){ var L = _islLab; return { body: L.body, skin: L.skin * 2, hair: L.hair, hairC: L.hairC, cloth: L.cloth }; }
-function islLabKey(){ var L = _islLab; return (L.kind === 'cloth') ? ('cloth_' + L.body + '_c' + L.cloth) : ((L.kind === 'hair') ? ('hair_' + L.body + '_h' + L.hair) : ('base_' + L.body + '_s' + L.skin)); }
-function islLabName(){ var L = _islLab, db = islDB();
+/* ★ v1.130.0 造型工房涵蓋主角全部 36 張圖:分層 24 + 整張 sheet 2 + 戰鬥立繪 10 */
+var ISL_LAB_BTST = [{ v: 'idle', n: '待機' }, { v: 'atk', n: '攻擊' }, { v: 'hit', n: '受擊' }, { v: 'stun', n: '暈眩' }, { v: 'down', n: '倒下' }];
+function islLabKey(){ var L = _islLab;
+  if(L.kind === 'cloth') return 'cloth_' + L.body + '_c' + L.cloth;
+  if(L.kind === 'hair')  return 'hair_'  + L.body + '_h' + L.hair;
+  if(L.kind === 'sheet') return 'sheet_' + L.body;
+  if(L.kind === 'btp')   return 'bt_p_'  + L.body + '_' + (L.state || 'idle');
+  return 'base_' + L.body + '_s' + L.skin;
+}
+function islLabName(){ var L = _islLab, db = islDB(), i;
   if(L.kind === 'cloth') return '👕 服裝 ' + ((db && db.CLOTHES && db.CLOTHES[L.cloth]) ? db.CLOTHES[L.cloth].n : ('c' + L.cloth));
   if(L.kind === 'hair') return '💇 髮型 ' + ((islHairs(L.body)[L.hair] || {}).n || ('h' + L.hair));
+  if(L.kind === 'sheet') return '🧍 整張 sprite sheet(' + (L.body === 'girl' ? '少女' : '少年') + ')';
+  if(L.kind === 'btp'){ for(i = 0; i < ISL_LAB_BTST.length; i++){ if(ISL_LAB_BTST[i].v === (L.state || 'idle')) return '⚔ 戰鬥立繪 ' + ISL_LAB_BTST[i].n; } return '⚔ 戰鬥立繪'; }
   return '🧍 基底身體 ' + ((db && db.SKINS4 && db.SKINS4[L.skin]) ? db.SKINS4[L.skin].n : ('s' + L.skin));
+}
+/* 工房左側預覽:整張 sheet 版(不走分層,直接吃 islShCss) */
+function islLabSheetHtml(body, row, col){
+  var u = islSheetUrlFor(body) || islImgUrl(body === 'girl' ? 'sheet_girl' : 'sheet_boy');
+  return '<div class="isl-pixchar" data-shrow="' + row + '" style="background-image:url(\'' + u + '\');' + islShCss(body, row, col) + '"></div>';
 }
 function islLabOpen(){
   var c = (ISL && ISL.char) || {}, p = $('isl-lylab');
   if(!islIsGm()){ toast('這是老師專用的工具,請先用管理員帳號登入'); return; }
   if(!p) return;
   _islLab = { body: (c.body === 'girl') ? 'girl' : 'boy', skin: islClamp(Math.floor(((c.skin) | 0) / 2), 0, 3), hair: islClamp((c.hair) | 0, 0, 3),
-              cloth: islClamp((c.cloth) | 0, 0, 3), hairC: islClamp((c.hairC) | 0, 0, ISL_HAIR_FILTER.length - 1), kind: 'cloth', walk: false, lock: true };
+              cloth: islClamp((c.cloth) | 0, 0, 3), hairC: islClamp((c.hairC) | 0, 0, ISL_HAIR_FILTER.length - 1), kind: 'cloth', state: 'idle', walk: false, lock: true };   /* ★ v1.130.0 +state(戰鬥立繪 5 態) */
   islLayerProbe(_islLab.body, function(){ islLabPaint(); });
   p.classList.remove('hidden');
   playSfx('sfx-tap', 0.3);
@@ -12598,24 +12856,39 @@ function islLabPaint(){
       '<button onclick="islLabClose()" style="background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 12px;font-weight:700">✕ 關閉</button></div>';
   h += '<div style="font-size:13px;opacity:.85;margin:-4px 0 8px">調好的值會立刻套用在這台裝置(重開也還在);按「📋 複製設定值」把整段貼回聊天室,就能存成全部裝置的預設值。</div>';
   h += '<div style="display:flex;gap:14px;flex-wrap:wrap">';
-  /* 左:三個方向的即時預覽 */
+  /* 左:即時預覽。★ v1.130.0 依 kind 分流 —— 分層/整張 sheet=三個方向;戰鬥立繪=五種狀態 */
   h += '<div style="flex:0 0 auto">';
-  for(i = 0; i < ISL_LAB_ROWS.length; i++){
-    h += '<div style="display:inline-block;text-align:center;margin:0 6px 6px 0">' +
-         '<div style="width:150px;height:150px;background:#0d1a26;border:2px solid #2a6f97;border-radius:12px;position:relative;overflow:hidden">' +
-         '<div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(255,209,102,.35)"></div>' +
-         '<div style="position:absolute;left:0;bottom:9px;width:100%;height:1px;background:rgba(255,209,102,.35)"></div>' +
-         '<div class="isl-lab-p" data-row="' + ISL_LAB_ROWS[i].r + '" style="position:absolute;left:0;top:0;width:64px;height:64px;transform:scale(2.34);transform-origin:0 0">' +
-         '<div class="isl-pixchar ly">' + islLayersHtml(ch, ISL_LAB_ROWS[i].r, 0) + '</div></div></div>' +
-         '<div style="font-size:13px;opacity:.85;margin-top:2px">' + ISL_LAB_ROWS[i].n + '</div></div>';
+  if(L.kind === 'btp'){
+    for(i = 0; i < ISL_LAB_BTST.length; i++){
+      var _bk = 'bt_p_' + L.body + '_' + ISL_LAB_BTST[i].v, _bu = islImgUrl(_bk);
+      h += '<div style="display:inline-block;text-align:center;margin:0 6px 6px 0">' +
+           '<div style="width:150px;height:150px;background:#0d1a26;border:2px solid ' + (ISL_LAB_BTST[i].v === (L.state || 'idle') ? '#ffd166' : '#2a6f97') + ';border-radius:12px;position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:center">' +
+           '<div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(255,209,102,.35)"></div>' +
+           '<div style="position:absolute;left:0;bottom:0;width:100%;height:1px;background:rgba(255,209,102,.35)"></div>' +
+           '<img src="' + _bu + '" alt="" style="max-width:100%;max-height:100%;image-rendering:pixelated;' + islBtAdjStyle(_bk) + '" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'beforeend\',\'<span style=&quot;font-size:13px;opacity:.7&quot;>(還沒上傳這張圖)</span>\');">' +
+           '</div><div style="font-size:13px;opacity:.85;margin-top:2px">' + ISL_LAB_BTST[i].n + '</div></div>';
+    }
+    h += '<div style="font-size:13px;opacity:.8;margin-top:2px">⚔ 戰鬥立繪用「腳底中心」當基準點縮放,調大調小腳都不會離地。</div></div>';
+  } else {
+    for(i = 0; i < ISL_LAB_ROWS.length; i++){
+      h += '<div style="display:inline-block;text-align:center;margin:0 6px 6px 0">' +
+           '<div style="width:150px;height:150px;background:#0d1a26;border:2px solid #2a6f97;border-radius:12px;position:relative;overflow:hidden">' +
+           '<div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(255,209,102,.35)"></div>' +
+           '<div style="position:absolute;left:0;bottom:9px;width:100%;height:1px;background:rgba(255,209,102,.35)"></div>' +
+           '<div class="isl-lab-p" data-row="' + ISL_LAB_ROWS[i].r + '" data-kind="' + L.kind + '" style="position:absolute;left:0;top:0;width:64px;height:64px;transform:scale(2.34);transform-origin:0 0">' +
+           (L.kind === 'sheet' ? islLabSheetHtml(L.body, ISL_LAB_ROWS[i].r, 0) : '<div class="isl-pixchar ly">' + islLayersHtml(ch, ISL_LAB_ROWS[i].r, 0) + '</div>') + '</div></div>' +
+           '<div style="font-size:13px;opacity:.85;margin-top:2px">' + ISL_LAB_ROWS[i].n + '</div></div>';
+    }
+    h += '<div style="margin-top:4px"><button onclick="islLabSet(\'walk\',' + (L.walk ? 'false' : 'true') + ')" style="background:' + (L.walk ? '#2e9e5b' : '#2a6f97') + ';color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 12px;font-weight:700">' + (L.walk ? '⏸ 停止走路' : '🚶 走路動畫') + '</button></div></div>';
   }
-  h += '<div style="margin-top:4px"><button onclick="islLabSet(\'walk\',' + (L.walk ? 'false' : 'true') + ')" style="background:' + (L.walk ? '#2e9e5b' : '#2a6f97') + ';color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 12px;font-weight:700">' + (L.walk ? '⏸ 停止走路' : '🚶 走路動畫') + '</button></div></div>';
   /* 右:選圖 + 四個欄位 */
   h += '<div style="flex:1 1 300px;min-width:280px">';
   h += islLabRow('體型', [{ v: 'boy', n: '少年' }, { v: 'girl', n: '少女' }], 'body', L.body);
-  h += islLabRow('要調哪一層', [{ v: 'cloth', n: '👕 服裝' }, { v: 'hair', n: '💇 髮型' }, { v: 'base', n: '🧍 基底' }], 'kind', L.kind);
+  h += islLabRow('要調哪一張圖', [{ v: 'cloth', n: '👕 服裝' }, { v: 'hair', n: '💇 髮型' }, { v: 'base', n: '🧍 基底' }, { v: 'sheet', n: '🧍 整張 sheet' }, { v: 'btp', n: '⚔ 戰鬥立繪' }], 'kind', L.kind);   /* ★ v1.130.0 主角 36 張圖全涵蓋 */
   if(L.kind === 'cloth'){ a = []; for(i = 0; i < 4; i++) a.push({ v: i, n: (db && db.CLOTHES && db.CLOTHES[i]) ? db.CLOTHES[i].n : ('c' + i) }); h += islLabRow('服裝', a, 'cloth', L.cloth); }
   else if(L.kind === 'hair'){ a = []; for(i = 0; i < 4; i++) a.push({ v: i, n: (islHairs(L.body)[i] || {}).n || ('h' + i) }); h += islLabRow('髮型', a, 'hair', L.hair); }
+  else if(L.kind === 'sheet'){ h += '<div style="font-size:13px;opacity:.8;margin-top:6px">整張 sprite sheet 是「分層造型缺圖時」的備援美術,一個體型一張,沒有子項目。</div>'; }
+  else if(L.kind === 'btp'){ a = []; for(i = 0; i < ISL_LAB_BTST.length; i++) a.push({ v: ISL_LAB_BTST[i].v, n: ISL_LAB_BTST[i].n }); h += islLabRow('狀態', a, 'state', L.state || 'idle'); }
   else { a = []; for(i = 0; i < 4; i++) a.push({ v: i, n: (db && db.SKINS4 && db.SKINS4[i]) ? db.SKINS4[i].n : ('s' + i) }); h += islLabRow('膚色', a, 'skin', L.skin); }
   a = islLyAdj(key);
   h += '<div style="background:rgba(255,209,102,.12);border:2px solid #ffd166;border-radius:12px;padding:8px 10px;margin-top:8px">' +
@@ -12664,7 +12937,7 @@ function islLabAdd(field, d){
   ov[key] = o;
   islLabStore();
   islLabPaint();
-  islLayerRepaint();
+  islLayerRepaint();   /* 分層/sheet:場景裡走動的小人同步更新;戰鬥立繪下次開戰時重畫即可 */
 }
 function islLabStore(){ try{ localStorage.setItem('isl_lyadj', JSON.stringify(islLyOv())); }catch(e){} }
 function islLabReset(all){
@@ -12676,10 +12949,14 @@ function islLabReset(all){
 function islLabCopy(){
   var bodies = ['boy', 'girl'], out = 'D.LAYER_ADJ = {\n', lines = [], i, j, key, a, ta;
   function push(key){ a = islLyAdj(key); lines.push('    ' + key + ': { sx:' + a.sx.toFixed(3) + ', sy:' + a.sy.toFixed(3) + ', dx:' + (Math.round(a.dx * 10) / 10) + ', dy:' + (Math.round(a.dy * 10) / 10) + ' }'); }
+  function pushIfSet(key){ a = islLyAdj(key); if(a.sx !== 1 || a.sy !== 1 || a.dx !== 0 || a.dy !== 0) push(key); }
   for(i = 0; i < 2; i++){
     for(j = 0; j < 4; j++) push('cloth_' + bodies[i] + '_c' + j);
     for(j = 0; j < 4; j++) push('hair_' + bodies[i] + '_h' + j);
-    for(j = 0; j < 4; j++){ key = 'base_' + bodies[i] + '_s' + j; a = islLyAdj(key); if(a.sx !== 1 || a.sy !== 1 || a.dx !== 0 || a.dy !== 0) push(key); }
+    for(j = 0; j < 4; j++) pushIfSet('base_' + bodies[i] + '_s' + j);
+    /* ★ v1.130.0 主角另外 12 張圖(整張 sheet 2 + 戰鬥立繪 10):沒調過的不輸出,保持清單乾淨 */
+    pushIfSet('sheet_' + bodies[i]);
+    for(j = 0; j < ISL_LAB_BTST.length; j++) pushIfSet('bt_p_' + bodies[i] + '_' + ISL_LAB_BTST[j].v);
   }
   out += lines.join(',\n') + '\n  };';
   ta = $('isl-lab-out');
@@ -12691,13 +12968,20 @@ function islLabCopy(){
 }
 window.islLabOpen = islLabOpen; window.islLabClose = islLabClose; window.islLabSet = islLabSet; window.islLabAdd = islLabAdd; window.islLabReset = islLabReset; window.islLabCopy = islLabCopy;
 function islLabTick(){
-  var L = _islLab, ps, i, j, kids, f, row, t = Date.now();
-  if(!L) return;
+  var L = _islLab, ps, i, j, kids, f, row, t = Date.now(), g, el;
+  if(!L || L.kind === 'btp') return;   /* ★ v1.130.0 戰鬥立繪是靜態 <img>,不需要換幀 */
   ps = document.querySelectorAll('#isl-lylab .isl-lab-p');
   if(!ps || !ps.length) return;
   f = L.walk ? ISL_WALK_SEQ[Math.floor(t / 130) % ISL_WALK_SEQ.length] : (Math.floor(t / 700) % 2);
   for(i = 0; i < ps.length; i++){
     row = parseInt(ps[i].getAttribute('data-row'), 10) || 0;
+    if(L.kind === 'sheet'){   /* ★ v1.130.0 整張 sheet 預覽:直接換 background-size/position */
+      el = ps[i].firstChild; if(!el || !el.style) continue;
+      g = islShGeo(L.body, row, f);
+      if(el.style.backgroundPosition !== g.bp) el.style.backgroundPosition = g.bp;
+      if(el.style.backgroundSize !== g.bs) el.style.backgroundSize = g.bs;
+      continue;
+    }
     kids = ps[i].firstChild ? ps[i].firstChild.children : null;
     if(!kids) continue;
     for(j = 0; j < kids.length; j++) islLyApply(kids[j], L.body, row, f, kids[j].getAttribute('data-lk'));
@@ -12719,7 +13003,7 @@ function islChibiHtml(c, cls){   /* ★ v1.109.0 有像素 sprite 可用時一�
   c = c || { body:'boy', skin:0, hair:0, hairC:0, eyeC:0 };
   var body = (c.body === 'girl') ? 'girl' : 'boy', url = islSheetUrlFor(body);
   if(islLayerOk(body)) return '<div class="isl-pixchar ly ' + (cls || 'idle') + '">' + islLayersHtml(c, 0, 0) + '</div>';   /* ★ v1.116.0 分層造型(膚色/髮型/髮色/服裝) */
-  if(url) return '<div class="isl-pixchar ' + (cls || 'idle') + '" style="background-image:url(\'' + url + '\');background-position:' + (-((ISL_SHEET_CX[body] || ISL_SHEET_CX.boy)[0] - 32)) + 'px 0"></div>';   /* ★ v1.115.0 肖像也對齊實測幀中心 */
+  if(url) return '<div class="isl-pixchar ' + (cls || 'idle') + '" style="background-image:url(\'' + url + '\');' + islShCss(body, 0, 0) + '"></div>';   /* ★ v1.115.0 肖像也對齊實測幀中心;★ v1.130.0 改走 islShCss,整張 sheet 也吃 GM 造型工房的尺寸/座標修正 */
   var sk = ISL_PAL.skin[c.skin] || ISL_PAL.skin[0], hc = ISL_PAL.hair[c.hairC] || ISL_PAL.hair[0], ec = ISL_PAL.eye[c.eyeC] || ISL_PAL.eye[0];
   var hk = (islHairs(c.body)[c.hair] || islHairs(c.body)[0]).k, uni = ISL_PAL.uniform[c.body] || ISL_PAL.uniform.boy;
   return '<div class="isl-chibi ' + (cls || 'idle') + '">' +
@@ -12869,13 +13153,16 @@ function islFitBox(wrap, box){
 }
 function islFitModal(){ var m = $('isl-modal'); if(m && !m.classList.contains('hidden')) islFitBox(m, m.firstElementChild); }
 /* ── 通用彈窗(掛 root 頂層) ── */
-function islModal(html, btns){
-  var m = $('isl-modal'), i, h = '<div class="box"><button class="isl-x" data-i="-1" aria-label="關閉">✕</button><div class="bd">' + html + '</div><div class="row">';   /* ★ v1.115.0 所有視窗右上角 ✕(data-i=-1 直接關閉,不跑任何按鈕回呼);★ v1.124.0 內容包進 .bd,按鈕列 .row 才能永遠釘在框底看得到 */
+function islModal(html, btns, opts){
+  var m = $('isl-modal'), i, wide = !!(opts && opts.wide),
+      h = '<div class="box' + (wide ? ' wide' : '') + '"><button class="isl-x" data-i="-1" aria-label="關閉">✕</button><div class="bd">' + html + '</div><div class="row">';   /* ★ v1.115.0 所有視窗右上角 ✕(data-i=-1 直接關閉,不跑任何按鈕回呼);★ v1.124.0 內容包進 .bd,按鈕列 .row 才能永遠釘在框底看得到;★ v1.130.0 opts.wide=三欄卡片版 */
   btns = btns || [{ t: '好', cls: '' }];
   for(i = 0; i < btns.length; i++){ h += '<button class="isl-btn ' + (btns[i].cls || '') + '" data-i="' + i + '">' + islEsc(btns[i].t) + '</button>'; }
   h += '</div></div>';
   m.innerHTML = h; m.classList.remove('hidden');
-  islFitBox(m, m.firstElementChild);   /* ★ v1.124.0 太高就整框等比縮小,不必捲動 */
+  /* ★ v1.130.0 wide(三欄卡片)刻意不跑 islFitBox:那支是「等比縮小到不用捲」,會把老師要求放大的字再縮回去;
+     wide 版改為「框吃滿 92% 高 + .bd 內捲」,字維持大、內容多就捲。 */
+  if(!wide) islFitBox(m, m.firstElementChild);   /* ★ v1.124.0 太高就整框等比縮小,不必捲動 */
   m.onclick = function(ev){
     var t = ev.target, i;
     while(t && t !== m && !(t.getAttribute && t.getAttribute('data-i'))) t = t.parentNode;
@@ -12946,10 +13233,47 @@ function islShowScreen(name){
    音量吃「🔊 音效」拉桿(_mgVolSfx):音效靜音時環境音一起靜音;另外在 ⚙ 設定選單給一個獨立開關(存檔 flags.ambSfxOff),
    想專心聽音樂的人可以單獨關掉環境音而不必把音效整個關掉。
    ⚠ 自動播放封鎖:第一次觸碰畫面之前瀏覽器不讓聲音播,這裡比照 BGM 記住「想播哪一支」,_bgmArmed 之後再補播。 */
+/* ★ v1.131.0 四支新環境音上線後的重新分配:
+   🌊 海浪=沙灘/岩岸/懸崖(+營地/大地圖) 🐦 鳥叫=森林 🌾 草原=草原
+   🏞 溪流=溪流/湖泊 💦 瀑布=山谷(山谷就是湖與台地之間的溪谷,水往下沖) 💧 洞穴滴水=洞窟(v1.126.0 刻意留白的那一區,滴水正合適)
+   ⚠ 遺跡/火山 仍然刻意不掛:那兩區是無生物的密閉/高熱環境,掛水聲或鳥叫都很怪。 */
 var ISL_AMB_SFX = { beach:['amb-isl-wave',0.55], rock:['amb-isl-wave',0.5], cliff:['amb-isl-wave',0.45],
-                    forest:['amb-isl-bird',0.5], grass:['amb-isl-bird',0.45], valley:['amb-isl-bird',0.4],
-                    river:['amb-isl-bird',0.4], lake:['amb-isl-bird',0.4] };
-var ISL_AMB_IDS = ['amb-isl-wave', 'amb-isl-bird'];
+                    forest:['amb-isl-bird',0.5], grass:['amb-isl-grass',0.5], valley:['amb-isl-fall',0.45],
+                    river:['amb-isl-river',0.5], lake:['amb-isl-river',0.42], cave:['amb-isl-drip',0.5] };
+var ISL_AMB_IDS = ['amb-isl-wave', 'amb-isl-bird', 'amb-isl-river', 'amb-isl-fall', 'amb-isl-drip', 'amb-isl-grass'];
+/* ══ ★ v1.131.0(老師需求①「環境水流音效自動調節大小聲:靠近溪流、瀑布時以 +10、+20、+30 三個階段漸漸大聲,距離越遠聲音越小」)══
+   ★ 距離的來源直接用**場景遮罩裡的水域格 '~'**(SCENE.mask),不另外標一組水源座標 ——
+     遮罩本來就是「哪裡是水」的唯一真相(v1.109.0 起水域全面禁止進入也是讀它),另外標一份一定會走散。
+   三階段(老師指定):≤2 格 +30%、≤4 格 +20%、≤7 格 +10%;再遠就每格 −7% 線性衰減,地板 0.35(不會完全消失,遠遠還聽得到一點水聲)。
+   ⚠ 只對「水聲類」環境音生效(溪流/瀑布/洞穴滴水),海浪/鳥叫/草原維持固定音量 —— 那三支不是「某個點發出來的聲音」。
+   ⚠ 音量每 220ms 才重算一次(不是每幀):每幀寫 audio.volume 在 iPad Safari 上會有雜音,而且完全沒必要。 */
+var ISL_AMB_WATER = { 'amb-isl-river': 1, 'amb-isl-fall': 1, 'amb-isl-drip': 1 };
+function islWaterCells(sc){
+  var out = [], y, x, row;
+  if(!sc || !sc.mask) return out;
+  for(y = 0; y < sc.mask.length; y++){ row = sc.mask[y]; for(x = 0; x < row.length; x++){ if(row.charAt(x) === '~') out.push({ x: x, y: y }); } }
+  return out;
+}
+function islAmbWaterMul(){
+  var w = _IS.water || [], c, i, d, best = 1e9, dx, dy;
+  if(!w.length) return 1;
+  c = islCell(_IS.cx, _IS.cy);
+  for(i = 0; i < w.length; i++){ dx = w[i].x - c.x; dy = w[i].y - c.y; d = dx * dx + dy * dy; if(d < best) best = d; }
+  best = Math.sqrt(best);
+  if(best <= 2) return 1.30;
+  if(best <= 4) return 1.20;
+  if(best <= 7) return 1.10;
+  return Math.max(0.35, 1.10 - (best - 7) * 0.07);
+}
+function islAmbWaterTick(){
+  var t = islNow(), a, v, id = _IS.ambSfx;
+  if(!id || !ISL_AMB_WATER[id] || _IS.screen !== 'zone') return;
+  if(_IS.ambWT && (t - _IS.ambWT) < 220) return;
+  _IS.ambWT = t;
+  a = $(id); if(!a || a.paused || _mgVolSfx <= 0) return;
+  v = Math.max(0, Math.min(1, (_IS.ambVol || 0.4) * islAmbWaterMul() * _mgVolSfx));
+  try{ if(Math.abs(a.volume - v) > 0.01) a.volume = v; }catch(e){}
+}
 function islAmbSfxWant(){
   var s = _IS.screen, z = _IS.zone || (ISL && ISL.curZone);
   if(!_IS.on || !ISL || (ISL.flags && ISL.flags.ambSfxOff)) return null;
@@ -12972,7 +13296,7 @@ function islAmbSfxUpdate(){
   a = $(id); if(!a) return;
   if(_mgVolSfx <= 0){ try{ if(!a.paused) a.pause(); }catch(e){} return; }   /* 音效靜音 = 環境音也靜音 */
   try{
-    a.volume = Math.max(0, Math.min(1, vol * _mgVolSfx));
+    a.volume = Math.max(0, Math.min(1, vol * (ISL_AMB_WATER[id] && _IS.screen === 'zone' ? islAmbWaterMul() : 1) * _mgVolSfx));   /* ★ v1.131.0 一進場就依距離給對的音量,不必等第一次 tick */
     if(a.paused){ p = a.play(); if(p && p['catch']) p['catch'](function(){}); }   /* 還沒拿到使用者手勢就會被擋,之後 islAmbSfxUpdate 會再被呼叫到 */
   }catch(e){}
 }
@@ -13005,6 +13329,7 @@ function islGateOk(){ return ISL_ADMIN_ONLY !== true || islIsGm(); }
 window.islGateOk = islGateOk;
 function islGateBlock(){
   _IS.gateWait = true;
+  try{ if(window.islDirectVeilOff) window.islDirectVeilOff(); }catch(e){}   /* ★ v1.129.0 被閘門擋下:一定要先拆掉 ?mode=island 的簾幕,否則攔截視窗底下是一片遮罩、「回小遊戲大廳」也按不出東西 */
   islModal('<h3>🏝 荒島求生 <span style="font-size:15px;font-weight:700;background:rgba(60,60,60,.92);border:2px solid rgba(255,255,255,.5);color:#ffd166;border-radius:999px;padding:2px 9px">🚧 敬請期待</span></h3>' +
     '<p>這個模式還在<b style="color:#ffd166">最後測試</b>中,先由老師試玩、把問題修好,<br>等準備好了就會開放給大家,請再等一下下!🙂</p>' +
     '<p style="font-size:14px;opacity:.8">(老師:請先用管理員帳號登入,登入後會自動進入荒島)</p>',
@@ -13015,6 +13340,7 @@ window.islEnter = function(){
   var db = islDB();
   if(!db){ toast('荒島資料檔還沒載入,請重新整理'); return; }
   if(!islGateOk()){ islGateBlock(); return; }   /* ★ v1.127.0 只有 GM 進得來(含直接打 ?mode=island 網址) */
+  try{ if(window.islDirectVeilOff) window.islDirectVeilOff(); }catch(e){}   /* ★ v1.129.0 真的進場了 ⇒ 收掉 ?mode=island 的等待簾幕(下面本來就會 hide 大廳) */
   _IS.gateWait = false;
   playSfx('sfx-enter', 0.45);
   _IS.on = true;
@@ -13060,7 +13386,7 @@ window.islExit = function(){
    等 boot() 把 MG.games 準備好再呼叫 islEnter();最多等 10 秒。登入狀態沿用既有跨程式交接(v1.71.0),islLoad 自己會分訪客/帳號。 */
 try{
   if(/[?&]mode=island(?:&|$)/.test(location.search)){
-    (function(){ var n = 0, t = setInterval(function(){ n++; if(MG.games && islDB() && !_IS.on && document.readyState !== 'loading' && (MG.user || n > 40)){ clearInterval(t); try{ islEnter(); }catch(e){} } else if(n > 50){ clearInterval(t); } }, 200); })();
+    (function(){ var n = 0, t = setInterval(function(){ n++; if(MG.games && islDB() && !_IS.on && document.readyState !== 'loading' && (MG.user || n > 40)){ clearInterval(t); try{ islEnter(); }catch(e){ try{ if(window.islDirectVeilOff) window.islDirectVeilOff(); }catch(_){} } } else if(n > 50){ clearInterval(t); try{ if(window.islDirectVeilOff) window.islDirectVeilOff(); }catch(_){}   /* ★ v1.129.0 10 秒還等不到 ⇒ 拆簾退回小遊戲大廳,絕不留一片黑畫面 */ } }, 200); })();
   }
 }catch(_mi){}
 try{ islInstallBtnPaint(); }catch(_ib){}   /* ★ v1.105.0 首頁安裝鈕狀態 */
@@ -13462,6 +13788,7 @@ function islEnterZone(zoneId, cb){
   if(!sc){ toast('這個區域還沒開放'); return; }
   if(!_IS.pre['zone_' + zoneId]){ islPreloadZone(zoneId, function(){ islEnterZone(zoneId, cb); }); return; }   /* ★ v1.105.0 進場景前先抓該場景圖片+音樂 */
   _IS.zone = zoneId; _IS.scene = sc; ISL.curZone = zoneId;
+  _IS.water = islWaterCells(sc); _IS.ambWT = 0;   /* ★ v1.131.0 水聲距離調節:進場先把水域格掃出來(一次),之後每 220ms 只算最近距離 */
   islShowScreen('zone');
   islBgm(zoneId);
   sp = islSpawnDaily(zoneId); _IS.nodes = sp.nodes; _IS.picks = sp.picks; _IS.mines = sp.mines || [];   /* ★ v1.121.0 遇敵點(隱藏) */
@@ -13619,6 +13946,7 @@ function islTick(t){
   islCharPaint(moving ? 'walk' : 'idle');
   islCamera(false);
   islNearCheck();
+  islAmbWaterTick();   /* ★ v1.131.0 走近/走遠水邊 → 水聲跟著大小聲 */
   if(moving && islMineCheck()) return;   /* ★ v1.121.0 踩到遇敵點 → 魔物跳出 → 回合制戰鬥(islMineCheck 內已停 rAF) */
   _IS.raf = requestAnimationFrame(islTick);
 }
@@ -13638,7 +13966,9 @@ function islSpFrame(sp, anim){
   var body = (ISL && ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', cx = ISL_SHEET_CX[body], row = (_IS.dir === 'u') ? 1 : (_IS.dir === 'd' ? 0 : 2), t = Date.now(), f;
   if(anim === 'walk'){ f = ISL_WALK_SEQ[Math.floor(t / 130) % ISL_WALK_SEQ.length]; } else { f = Math.floor(t / 700) % 2; }   /* ★ v1.118.0 跨步幀之間插站立幀 */
   if(sp.children.length){ var kids = sp.children, i; for(i = 0; i < kids.length; i++){ islLyApply(kids[i], body, row, f, kids[i].getAttribute('data-lk')); } return; }   /* ★ v1.116.0 分層造型:三層一起換幀;★ v1.128.0 每層各自吃自己的尺寸/座標修正值 */
-  sp.style.backgroundPosition = (-(cx[f] - 32)) + 'px ' + (-(row * 64)) + 'px';
+  var _g = islShGeo(body, row, f);   /* ★ v1.130.0 整張 sheet 也吃修正值(sx=sy=1/dx=dy=0 時與舊值完全相同) */
+  if(sp.style.backgroundPosition !== _g.bp) sp.style.backgroundPosition = _g.bp;
+  if(sp.style.backgroundSize !== _g.bs) sp.style.backgroundSize = _g.bs;
 }
 function islCamera(snap){
   var z = $('isl-zone'), w = z.clientWidth, h = z.clientHeight, s = (w < 620) ? 0.8 : 1, tx, ty;
@@ -14381,7 +14711,7 @@ window.islSubOpen = function(cat){
 };
 window.islSubClose = function(){ var sm = $('isl-submenu'); if(sm) sm.classList.add('hidden'); };
 window.islGearToggle = function(){ var g = $('isl-gear'); if(!g) return; playSfx('sfx-tap', 0.25); g.classList.toggle('hidden'); islGearPaint(); };
-window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.textContent = '🍃 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.textContent = '🌊 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = islIsGm() ? '' : 'none'; };   /* ★ v1.128.0 造型工房只有 GM 看得到 */
+window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.textContent = '🍃 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.textContent = '🌊 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = islIsGm() ? '' : 'none'; var bt = $('isl-gear-bt'); if(bt) bt.style.display = islIsGm() ? '' : 'none'; };   /* ★ v1.128.0 造型工房只有 GM 看得到;★ v1.131.0 測試戰鬥同樣只給 GM */
 window.islAmbToggle2 = function(){ islAmbSfxToggle(); };   /* ★ v1.126.0 ⚙ 設定選單裡的環境音開關(名稱與既有 islAmbToggle 動態背景區隔) */
 function islCampCellTap(i){
   var db = islDB(), s = ISL.camp.slots[i], b, maxHp, btns;
@@ -14399,13 +14729,14 @@ function islCampCellTap(i){
     { t: '⬆ 升級', cls: 'gold', cb: function(){ islCampUpgrade(i); } }
   ];
   if(s.hp < maxHp) btns.push({ t: '🔧 修理', cls: 'warn', cb: function(){ islBldRepair(i); } });   /* ★ v1.92.0 結構受損 → 工程修復(耗半份材料,恢復滿耐久) */
-  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' + (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
+  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' + (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + ' ' + islLackBadge(islBldCost(s.bld, s.lv + 1), true) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
+  islLackBind($('isl-modal'));   /* ★ v1.130.0 */
 }
 /* ★ v1.92.0 工程修復:耗一半原始建材,結構立即恢復滿耐久(不需重蓋) */
 function islBldRepair(i){
   var db = islDB(), s = ISL.camp.slots[i], b = db.BUILDINGS[s.bld], cost = {}, k, maxHp = 100 + 25 * (s.lv - 1);
   for(k in b.cost){ if(b.cost.hasOwnProperty(k)) cost[k] = Math.max(1, Math.ceil(b.cost[k] / 2)); }
-  if(!islCanAfford(cost)){ islModal('<h3>材料不夠</h3><p>修理需要:' + islCostHtml(cost) + '</p>'); return; }
+  if(!islCanAfford(cost)){ islModal('<h3>材料不夠</h3><p>修理需要:' + islCostHtml(cost) + ' ' + islLackBadge(cost, true) + '</p>'); islLackBind($('isl-modal')); return; }   /* ★ v1.130.0 */
   for(k in cost){ if(cost.hasOwnProperty(k)) islConsume(k, cost[k]); }
   s.hp = maxHp;
   playSfx('sfx-powerup', 0.45); toast('🔧 ' + b.n + ' 修好了!');
@@ -14416,15 +14747,27 @@ window.islCampBuildMenu = function(slot){
   var db = islDB(), h = '<h3>🔨 建造</h3>', i, id, b, can, s, free = -1;
   var nSlot = (db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1]).n, lockTxt;   /* ★ v1.94.0 */
   if(slot < 0){ for(i = 0; i < nSlot; i++){ if(!ISL.camp.slots[i]){ free = i; break; } } if(free < 0){ islModal('<h3>沒有空地了</h3><p>按「🏕 擴建」升級營地,格子會變多。</p>'); return; } slot = free; }
+  /* ★ v1.130.0 老師:改成三欄大卡片(圖 128px、名稱 25px、說明 18px),框放大到 1180px 可捲動;材料不足時左下角掛 ⚠ 資源不足 */
+  h += '<div class="isl-cards">';
   for(i = 0; i < db.BUILD_ORDER.length; i++){
     id = db.BUILD_ORDER[i]; b = db.BUILDINGS[id]; can = islCanAfford(b.cost); s = islCampHasBld(id);
     lockTxt = (b.needZone && !ISL.zones[b.needZone].unlocked) ? '(要先解鎖' + db.zone(b.needZone).e + db.zone(b.needZone).n + ')' : (b.tech && ISL.tech < b.tech ? '(需要 🔬 科技點 ' + b.tech + ',現在 ' + ISL.tech + ')' : '');   /* ★ v1.105.0 帆船需科技點 */
     if(lockTxt) can = false;
-    h += '<div style="text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;' + (s ? 'opacity:.5' : '') + '"><div style="display:flex;gap:10px;align-items:center"><span style="flex:0 0 76px;text-align:center;font-size:44px">' + islIcoHtml(b.img + '_1', b.e, 76) + '</span><span style="flex:1"><b style="font-size:20px">' + islEsc(b.n) + '</b>' + (s ? '(已蓋)' : '') + '<br><span style="font-size:15px">' + islEsc(b.desc) + '</span><br><span style="font-size:15px;color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(b.cost) + '</span></span></div>' + (s ? '' : '<div style="text-align:right">' + (lockTxt ? '<span style="font-size:14px;color:#ff9f43">' + lockTxt + '</span> ' : '') + '<button class="isl-btn ' + (can ? 'gold' : '') + '" data-b="' + id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '開始建造 ⚡1' : 'AP 不足') + '</button></div>') + '</div>';
+    h += '<div class="isl-card' + (s ? ' done' : '') + '">' +
+         '<div class="ci">' + islIcoHtml(b.img + '_1', b.e, 128) + '</div>' +
+         '<div class="cn">' + islEsc(b.n) + (s ? ' <span style="font-size:18px;color:#7bed9f">✅ 已蓋</span>' : '') + '</div>' +
+         '<div class="cd">' + islEsc(b.desc) + '</div>' +
+         (s ? '' : '<div class="cc" style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(b.cost) + '</div>' +
+              (lockTxt ? '<div class="lk">' + islEsc(lockTxt) + '</div>' : '') +
+              islLackBadge(b.cost) +
+              '<div class="cb"><button class="isl-btn ' + (can ? 'gold' : '') + '" data-b="' + id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '建造 ⚡1' : 'AP 不足') + '</button></div>') +
+         '</div>';
   }
-  islModal(h, [{ t: '關閉', cls: 'ghost' }]);
+  h += '</div>';
+  islModal(h, [{ t: '關閉', cls: 'ghost' }], { wide: true });
   var m = $('isl-modal');
-  var bs = m.querySelectorAll('button[data-b]'); for(i = 0; i < bs.length; i++){ bs[i].onclick = function(ev){ ev.stopPropagation(); var bid = this.getAttribute('data-b'); if(ISL.ap <= 0){ toast('AP 用完了,先休息'); return; } islModalClose(); playSfx('sfx-confirm', 0.4); islActStart(islDB().BUILDINGS[bid].act || 'build', { bld: bid, slot: slot, cost: islDB().BUILDINGS[bid].cost }); }; }   /* ★ v1.94.0 水道走 canal 拼圖 */
+  islLackBind(m);
+  var bs = m.querySelectorAll('button[data-b]');
 };
 function islCampUpgrade(i){
   var db = islDB(), s = ISL.camp.slots[i], cost;
@@ -14432,7 +14775,7 @@ function islCampUpgrade(i){
   if(db.BUILDINGS[s.bld] && db.BUILDINGS[s.bld].noUpgrade){ toast('帆船已經完成,不需要升級'); return; }   /* ★ v1.105.0 */
   if(s.lv >= db.BLD_MAX_LV){ toast('已經是最高 Lv' + db.BLD_MAX_LV); return; }   /* ★ v1.94.0 全建築可升到 Lv5 */
   cost = islBldCost(s.bld, s.lv + 1);
-  if(!islCanAfford(cost)){ islModal('<h3>材料不夠</h3><p>' + islCostHtml(cost) + '</p>'); return; }
+  if(!islCanAfford(cost)){ islModal('<h3>材料不夠</h3><p>' + islCostHtml(cost) + ' ' + islLackBadge(cost, true) + '</p>'); islLackBind($('isl-modal')); return; }   /* ★ v1.130.0 */
   if(ISL.ap <= 0){ toast('AP 用完了,先休息'); return; }
   playSfx('sfx-confirm', 0.4);
   islActStart(db.BUILDINGS[s.bld].act || 'build', { bld: s.bld, slot: i, cost: cost, upgrade: s.lv + 1 });   /* ★ v1.94.0 水道升級也走拼圖 */
@@ -14509,12 +14852,26 @@ window.islBagOpen = function(){
     if(i != null){ it = s[parseInt(i, 10)]; d = islItemDef(it.id); var bts = [{ t: '關閉', cls: 'ghost', cb: function(){ islBagOpen(); } }]; if(d.cat === 'dish') bts.push({ t: '🍽 吃 1 個', cls: 'gold', cb: function(){ islEatDish(it, s); } }); bts.push({ t: '🗑 丟掉 1 個', cls: 'warn', cb: function(){ it.n -= 1; if(it.n <= 0) s.splice(s.indexOf(it), 1); playSfx('sfx-cancel', 0.3); islHud(); islBagOpen(); islSave('bag'); } }); islModal('<h3>' + d.e + ' ' + islEsc(d.n) + (it.q > 1 ? ' ' + (it.q === 3 ? '★★★' : '★★') : '') + ' ×' + it.n + '</h3><p>' + (d.cat === 'dish' ? islDishText(d, it.q) : (it.q === 3 ? '品質極佳,建造時 1 個當 2 個!' : (it.q === 2 ? '品質不錯。' : '普通品質。'))) + '</p>', bts); }   /* ★ v1.94.0 料理可吃 */
   });
 };
+/* ★ v1.130.0 把面板內容收進可捲動的 .bd(只包一次):框本身改 overflow:visible 讓 ✕ 浮在框外,
+   捲動責任交給 .bd。⚠ 只認「直系子元素」的 .bd —— 內容裡面本來就有 .bd 的(例如武器卡 .isl-wp > .bd)不能誤判。 */
+function islBoxWrapBd(bx){
+  var i, d, ch = bx.children;
+  for(i = 0; i < ch.length; i++){ if((' ' + (ch[i].className || '') + ' ').indexOf(' bd ') >= 0) return; }
+  d = document.createElement('div'); d.className = 'bd';
+  while(bx.firstChild) d.appendChild(bx.firstChild);
+  bx.appendChild(d);
+}
 /* 面板通用:內容 html 掛在 #isl-modal,點擊委派 */
-function islPanel(html, onTap){
-  var m = $('isl-modal'), bx;
+function islPanel(html, onTap, opts){
+  var m = $('isl-modal'), bx, wide = !!(opts && opts.wide);
   m.innerHTML = html; m.classList.remove('hidden');
-  bx = m.firstElementChild; if(bx && !bx.querySelector('.isl-x')){ bx.insertAdjacentHTML('afterbegin', '<button class="isl-x" data-act="close" aria-label="關閉">✕</button>'); }
-  islFitBox(m, bx);   /* ★ v1.124.0 營地各面板(物品包/倉庫/建造/裝飾/商店/委託…)太高時整框等比縮小,按鈕不再被切掉 */   /* ★ v1.115.0 面板一律補右上角 ✕(data-act=close 走各面板既有的關閉分支;h3 內原本的 ✕ 由 CSS 隱藏) */
+  bx = m.firstElementChild;
+  if(bx){
+    if(wide) bx.classList.add('wide');
+    islBoxWrapBd(bx);
+    if(!bx.querySelector('.isl-x')) bx.insertAdjacentHTML('afterbegin', '<button class="isl-x" data-act="close" aria-label="關閉">✕</button>');
+  }
+  if(!wide) islFitBox(m, bx);   /* ★ v1.124.0 營地各面板(物品包/倉庫/建造/裝飾/商店/委託…)太高時整框等比縮小,按鈕不再被切掉 */   /* ★ v1.115.0 面板一律補右上角 ✕(data-act=close 走各面板既有的關閉分支;h3 內原本的 ✕ 由 CSS 隱藏);★ v1.130.0 wide 版不縮放改內捲 */
   m.onclick = function(ev){ var t = ev.target; while(t && t !== m && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-i') != null))) t = t.parentNode; if(!t || t === m){ if(ev.target === m) islModalClose(); return; } playSfx('sfx-tap', 0.25); onTap(t); };
 }
 /* ── 倉庫(27.3):種類制,每種上限隨 Lv;顯示 ★ 分佈 ── */
@@ -15862,21 +16219,32 @@ window.islComfortTip = function(){
 window.islDecoOpen = function(){
   var db = islDB(), h = '', i, d, can, own = ISL.camp.deco;
   playSfx('sfx-tap', 0.3);
-  h += '<div class="isl-bagbox"><h3>🪴 裝飾 <span style="font-size:15px;opacity:.85">😊 舒適 ' + islComfort() + '</span><span class="grow"></span><button data-act="close">✕</button></h3>';
-  h += '<p style="font-size:14px;opacity:.8;margin:0 0 6px">做好的裝飾會出現在營地,用手指拖著它就能換位置。</p>';
+  /* ★ v1.130.0 三欄大卡片(比照建造視窗);圖改用 islIcoHtml 讀 deco_* 實圖,缺圖才退 emoji */
+  h += '<div class="isl-bagbox"><h3>🪴 裝飾 <span style="font-size:17px;opacity:.85">😊 舒適 ' + islComfort() + '</span><span class="grow"></span><button data-act="close">✕</button></h3>';
+  h += '<p style="font-size:17px;opacity:.85;margin:0 0 6px">做好的裝飾會出現在營地,用手指拖著它就能換位置。</p>';
+  h += '<div class="isl-cards">';
   for(i = 0; i < db.DECOS.length; i++){
     d = db.DECOS[i]; if(d.shop) continue;   /* ★ v1.98.0 商店限定裝飾只能向阿獺買 */
     can = islCanAfford(d.cost);
-    h += '<div class="isl-store-row"><span class="ic">' + d.e + '</span><span class="nm">' + islEsc(d.n) + ' <span style="color:#ffd166">😊+' + d.comfort + '</span><br><span class="st">' + islEsc(d.d) + '<br><span style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(d.cost) + '</span></span></span><button class="isl-btn ' + (can ? 'gold' : '') + '" style="padding:6px 10px;font-size:15px;margin:0" data-act="buy" data-k="' + d.id + '" ' + (can ? '' : 'disabled') + '>製作</button></div>';
+    h += '<div class="isl-card">' +
+         '<div class="ci">' + islIcoHtml(d.img, d.e, 128) + '</div>' +
+         '<div class="cn">' + islEsc(d.n) + ' <span style="font-size:18px;color:#ffd166">😊+' + d.comfort + '</span></div>' +
+         '<div class="cd">' + islEsc(d.d) + '</div>' +
+         '<div class="cc" style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(d.cost) + '</div>' +
+         islLackBadge(d.cost) +
+         '<div class="cb"><button class="isl-btn ' + (can ? 'gold' : '') + '" data-act="buy" data-k="' + d.id + '" ' + (can ? '' : 'disabled') + '>製作</button></div>' +
+         '</div>';
   }
-  if(own.length){ h += '<h4 style="margin:10px 0 4px;color:#ffd166">已擺放(' + own.length + ')</h4>'; for(i = 0; i < own.length; i++){ d = islDecoDef(own[i].id); h += '<div class="isl-store-row"><span class="ic">' + d.e + '</span><span class="nm">' + islEsc(d.n) + '</span><button class="isl-btn warn" style="padding:6px 10px;font-size:15px;margin:0" data-act="rm" data-i="' + i + '">移除</button></div>'; } }
+  h += '</div>';
+  if(own.length){ h += '<h4 style="margin:12px 0 4px;color:#ffd166;font-size:22px">已擺放(' + own.length + ')</h4><div class="isl-cards">'; for(i = 0; i < own.length; i++){ d = islDecoDef(own[i].id); h += '<div class="isl-card on"><div class="ci">' + islIcoHtml(d.img, d.e, 128) + '</div><div class="cn">' + islEsc(d.n) + '</div><div class="cb"><button class="isl-btn warn" data-act="rm" data-i="' + i + '">移除</button></div></div>'; } h += '</div>'; }
   h += '</div>';
   islPanel(h, function(t){
     var a = t.getAttribute('data-act'), k, def, j;
     if(a === 'close'){ islModalClose(); return; }
     if(a === 'buy'){ k = t.getAttribute('data-k'); def = islDecoDef(k); if(!islCanAfford(def.cost)){ toast('材料不夠'); return; } for(j in def.cost){ if(def.cost.hasOwnProperty(j)) islConsume(j, def.cost[j]); } ISL.camp.deco.push({ id: k, x: 30 + Math.round(Math.random() * 40), y: 20 + Math.round(Math.random() * 60) }); playSfx('sfx-powerup', 0.4); toast(def.e + ' ' + def.n + ' 做好了!拖它可以換位置'); islHud(); islModalClose(); islCampPaint(); islSave('deco'); return; }
     if(a === 'rm'){ j = parseInt(t.getAttribute('data-i'), 10); ISL.camp.deco.splice(j, 1); playSfx('sfx-cancel', 0.3); islModalClose(); islCampPaint(); islSave('deco'); }
-  });
+  }, { wide: true });
+  islLackBind($('isl-modal'));
 };
 function islDecoDef(id){ var db = islDB(), i; for(i = 0; i < db.DECOS.length; i++){ if(db.DECOS[i].id === id) return db.DECOS[i]; } return { id: id, n: id, e: '❓', comfort: 0, cost: {} }; }
 function islDecoPaint(){
@@ -16214,13 +16582,26 @@ function islNewDayFarmPen(wxOld){   /* ★ v1.100.0 wxOld=昨天天氣:毛毛雨
 window.islResearchOpen = function(){
   var db = islDB(), h = '<h3>🔬 科技研究 <span style="font-size:15px;opacity:.85">科技點 ' + ISL.tech + '</span></h3><p style="font-size:14px;opacity:.8;margin:0 0 6px">科技點:夜襲守住營地 +5、解開各區解謎點也有。研究 = 2 題知識 + 零件接線拼圖,失敗不扣材料。</p>', i, t, done, can, cost, lock;
   playSfx('sfx-tap', 0.3);
+  /* ★ v1.130.0 三欄大卡片(比照建造視窗) */
+  h += '<div class="isl-cards">';
   for(i = 0; i < db.TECHS.length; i++){
     t = db.TECHS[i]; done = !!ISL.techs[t.id]; cost = islResearchCost(t); can = islCanAfford(cost) && ISL.tech >= t.tech;
     lock = (t.needBld && !islCampHasBld(t.needBld)) ? '(要先蓋' + db.BUILDINGS[t.needBld].e + db.BUILDINGS[t.needBld].n + ')' : '';
     if(lock) can = false;
-    h += '<div style="text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;' + (done ? 'opacity:.55' : '') + '"><b style="font-size:20px">' + t.e + ' ' + islEsc(t.n) + '</b>' + (done ? ' ✅ 已研究' : '') + (t.unlocks ? ' <span style="font-size:14px;color:#ffd166">→ 解鎖 ' + db.zone(t.unlocks).e + db.zone(t.unlocks).n + '</span>' : '') + '<br><span style="font-size:15px">' + islEsc(t.d) + '</span>' + (done ? '' : '<br><span style="font-size:15px;color:' + (can ? '#7bed9f' : '#ff7b7b') + '">🔬 ' + ISL.tech + '/' + t.tech + '　' + islCostHtml(cost) + '</span><div style="text-align:right">' + (lock ? '<span style="font-size:14px;color:#ff9f43">' + lock + '</span> ' : '') + '<button class="isl-btn ' + (can ? 'gold' : '') + '" data-t="' + t.id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '開始研究 ⚡1' : 'AP 不足') + '</button></div>') + '</div>';
+    h += '<div class="isl-card' + (done ? ' done' : '') + '">' +
+         '<div class="ci">' + t.e + '</div>' +
+         '<div class="cn">' + islEsc(t.n) + (done ? ' <span style="font-size:18px;color:#7bed9f">✅ 已研究</span>' : '') + '</div>' +
+         (t.unlocks ? '<div class="cd" style="color:#ffd166">→ 解鎖 ' + db.zone(t.unlocks).e + db.zone(t.unlocks).n + '</div>' : '') +
+         '<div class="cd">' + islEsc(t.d) + '</div>' +
+         (done ? '' : '<div class="cc" style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">🔬 ' + ISL.tech + '/' + t.tech + '　' + islCostHtml(cost) + '</div>' +
+              (lock ? '<div class="lk">' + islEsc(lock) + '</div>' : '') +
+              islLackBadge(cost) +
+              '<div class="cb"><button class="isl-btn ' + (can ? 'gold' : '') + '" data-t="' + t.id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '研究 ⚡1' : 'AP 不足') + '</button></div>') +
+         '</div>';
   }
-  islModal(h, [{ t: '關閉', cls: 'ghost' }]);
+  h += '</div>';
+  islModal(h, [{ t: '關閉', cls: 'ghost' }], { wide: true });
+  islLackBind($('isl-modal'));
   var bs = $('isl-modal').querySelectorAll('button[data-t]');
   for(i = 0; i < bs.length; i++){ bs[i].onclick = function(ev){ ev.stopPropagation(); var tk = islDB().tech(this.getAttribute('data-t')); if(ISL.ap <= 0){ toast('AP 用完了,先休息'); return; } islModalClose(); playSfx('sfx-confirm', 0.4); islActStart('research', { tech: tk, cost: islResearchCost(tk) }); }; }
 };
@@ -16279,11 +16660,22 @@ window.islCraftOpen = function(){
   playSfx('sfx-tap', 0.3);
   if(!islCampHasBld('bench')){ toast('先蓋製作台'); return; }
   h += '<div style="text-align:right"><button class="isl-btn gold" data-tl="__weapon">🗡 武器製作 / 升級</button></div>';   /* ★ v1.121.0 */
+  /* ★ v1.130.0 三欄大卡片(比照建造視窗) */
+  h += '<div class="isl-cards">';
   for(i = 0; i < db.TOOLS.length; i++){
     t = db.TOOLS[i]; own = ISL.tools.indexOf(t.id) >= 0; cost = islCraftCost(t); can = islCanAfford(cost);
-    h += '<div style="text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;' + (own ? 'opacity:.55' : '') + '"><b style="font-size:20px">' + t.e + ' ' + islEsc(t.n) + '</b>' + (own ? ' ✅ 已擁有' : '') + '<br><span style="font-size:15px">' + islEsc(t.d) + '</span>' + (own ? '' : '<br><span style="font-size:15px;color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(cost) + '</span><div style="text-align:right"><button class="isl-btn ' + (can ? 'gold' : '') + '" data-tl="' + t.id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '開始製作 ⚡1' : 'AP 不足') + '</button></div>') + '</div>';
+    h += '<div class="isl-card' + (own ? ' done' : '') + '">' +
+         '<div class="ci">' + islIcoHtml(t.img, t.e, 128) + '</div>' +
+         '<div class="cn">' + islEsc(t.n) + (own ? ' <span style="font-size:18px;color:#7bed9f">✅ 已擁有</span>' : '') + '</div>' +
+         '<div class="cd">' + islEsc(t.d) + '</div>' +
+         (own ? '' : '<div class="cc" style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(cost) + '</div>' +
+              islLackBadge(cost) +
+              '<div class="cb"><button class="isl-btn ' + (can ? 'gold' : '') + '" data-tl="' + t.id + '" ' + (can ? '' : 'disabled') + '>' + (ISL.ap > 0 ? '製作 ⚡1' : 'AP 不足') + '</button></div>') +
+         '</div>';
   }
-  islModal(h, [{ t: '關閉', cls: 'ghost' }]);
+  h += '</div>';
+  islModal(h, [{ t: '關閉', cls: 'ghost' }], { wide: true });
+  islLackBind($('isl-modal'));
   var bs = $('isl-modal').querySelectorAll('button[data-tl]');
   for(i = 0; i < bs.length; i++){ bs[i].onclick = function(ev){ ev.stopPropagation(); if(this.getAttribute('data-tl') === '__weapon'){ islModalClose(); islWeaponOpen(); return; } var tl = islDB().tool(this.getAttribute('data-tl')); if(ISL.ap <= 0){ toast('AP 用完了,先休息'); return; } islModalClose(); playSfx('sfx-confirm', 0.4); islActStart('craft', { tool: tl, cost: islCraftCost(tl) }); }; }
 };
@@ -16644,10 +17036,16 @@ window.islTowerTip = function(){ playSfx('sfx-tap', 0.25); islModal('<h3>🗼 �
 var _islBt = null;
 function islWeaponCur(){ var i = ISL && ISL.equip ? ISL.equip.weapon : -1; return (i >= 0 && ISL.weapons[i]) ? ISL.weapons[i] : null; }
 function islWeaponDef(inst){ return inst ? islDB().weapon(inst.id) : null; }
-function islWeaponAtk(inst){ var w = islWeaponDef(inst), db = islDB(), lv = inst.lv | 0;
-  /* ★ v1.125.0 等級上限 5 → 20:Lv1~5 的倍率與舊版一模一樣(+20%/級,Lv5=×1.8),Lv6 起改 +10%/級,
-     Lv20 = ×3.3。刻意不沿用 +20%/級 一路到 20(那會變 ×4.8,火山區的魔物直接被秒,後期完全沒有挑戰)。 */
+function islWeaponAtk(inst){ var w = islWeaponDef(inst), db = islDB(), lv;
+  /* ★★ v1.130.0(老師回報「角色狀態和武器點了沒有出現視窗」根因)★★
+     舊碼把 `var lv = inst.lv | 0;` 寫在 `if(!w)` 守門**之前** ⇒ 徒手(ISL.equip.weapon = -1,islWeaponCur() 回 null)
+     時第一行就拋 TypeError「Cannot read properties of null (reading 'lv')」。
+     而 islBtPlayerStats() 一定會呼叫本函式 ⇒ 👤 角色狀態 / 🗡 武器 兩個視窗在「還沒做出任何武器」的
+     開局狀態下**必定**整支函式中斷、視窗永遠建不出來(不是圖層被蓋住,z-index 一直是對的)。
+     ⚠ 同一條路徑也會讓「徒手進入回合制戰鬥」時 islBtPlayerStats() 拋錯 ⇒ 一併根治。
+     修法:把 lv 的取值移到守門之後。 */
   if(!w) return db.BT.FIST_ATK;
+  lv = inst.lv | 0;
   return Math.round(w.atk * (1 + 0.25 * (inst.q - 1)) * (1 + 0.2 * Math.min(lv - 1, 4) + 0.1 * Math.max(0, lv - 5)));
 }
 /* ★ v1.125.0 武器熟練值:裝備著那把武器打贏魔物才會累積(每把武器各自獨立) */
@@ -16671,6 +17069,21 @@ function islWeaponXpGain(monLv){
   if(inst.xp >= need) toast('🗡 ' + islWeaponLabel(inst) + ' 熟練值滿了!回營地就能升級');
   return n;
 }
+/* ══ ★ v1.131.0(老師需求③「武器每升到 5、10、15、20 級時更換圖片,使武器看起來更厲害」)══
+   5 個外觀階段:Lv1~4 原圖 / Lv5~9 _t2 / Lv10~14 _t3 / Lv15~19 _t4 / Lv20 _t5(圖鍵在 island_db v1.27.0)。
+   ⚠ 缺圖自動退回上一階(islPicOkSync === false 才判定缺圖;undefined=還沒探測,先用著並在背景探測)
+     ⇒ 老師一張新圖都還沒生成時,全部武器維持現在的樣子,不會變成一排破圖。 */
+function islWeaponTier(lv){ lv = lv | 0; return lv >= 20 ? 4 : (lv >= 15 ? 3 : (lv >= 10 ? 2 : (lv >= 5 ? 1 : 0))); }
+var ISL_WP_SUF = ['', '_t2', '_t3', '_t4', '_t5'];
+function islWeaponImgKey(w, lv){
+  var t, k;
+  if(!w || !w.img) return '';
+  t = islWeaponTier(lv);
+  if(t > 0) islPicProbe(w.img + ISL_WP_SUF[t], function(){});   /* 背景探測:下次重畫就知道有沒有這張 */
+  for(; t > 0; t--){ k = w.img + ISL_WP_SUF[t]; if(islPicOkSync(k) !== false) return k; }
+  return w.img;
+}
+function islWeaponInstImgKey(inst){ var w = islWeaponDef(inst); return w ? islWeaponImgKey(w, inst ? inst.lv : 1) : ''; }
 function islWeaponLabel(inst){ var w = islWeaponDef(inst); if(!w) return '👊 徒手'; return w.e + w.n + ' ' + '★★★'.slice(0, inst.q) + ' Lv' + inst.lv; }
 function islBtPlayerStats(){
   var db = islDB(), inst = islWeaponCur(), w = islWeaponDef(inst), st = ISL.stats, dlv = ISL.skill.defense ? ISL.skill.defense.lv : 1;
@@ -16691,6 +17104,21 @@ function islMineCheck(){
   _IS.onMine = -1; _IS.safeCell = c;
   return false;
 }
+/* ★ v1.131.0(老師需求②「戰鬥系統啟用」)— GM 專用:在目前所在的場景立刻開一場戰鬥。
+   ⚠ 排查結果:戰鬥系統本來就是接好的(islSpawnDaily 每區依 seed 藏 ENC[zone].n 個看不見的遇敵點 → islTick 踩到 → islBattleStart),
+     老師之所以覺得「沒啟用」,實際上是兩件事:
+       ①v1.130.0 修掉的 islWeaponAtk 徒手 null 例外 —— 徒手踩到遇敵點時 islBtPlayerStats() 直接拋錯,戰鬥畫面永遠開不起來(這才是主因);
+       ②沙灘(起始區)的 ENC.from 原本是 3,前兩天在沙灘上怎麼走都不會遇敵。本輪 from 改 1,第一天起全島都會遇敵。
+   這顆按鈕是給老師隨時驗收用的,不影響學生(非管理員看不到)。 */
+window.islBtTest = function(){
+  var db = islDB(), z = _IS.zone, E, k, zdef;
+  if(!ISL){ toast('還沒進到荒島'); return; }
+  if(_IS.screen !== 'zone' || !z){ toast('⚔ 請先進入任何一個場景(不是營地或大地圖)再按一次'); return; }
+  if(_islBt){ toast('已經在戰鬥中了'); return; }
+  E = db.ENC && db.ENC[z]; zdef = db.zone(z);
+  k = (E && E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : 'boar';
+  islBattleStart({ idx: -1, x: -1, y: -1, k: k, lv: (zdef && zdef.order) || 1, done: false });
+};
 window.islBattleStart = function(mine){
   var db = islDB(), zm = $('isl-zone-map'), pop, u, m;
   islZoneStop(); if(!mine.dg) islZoneRemember();
@@ -16725,8 +17153,8 @@ function islBtFigHtml(side, state){
   var B = _islBt, body = (ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', key, idle, u, w;
   if(side === 'p'){
     key = 'bt_p_' + body + '_' + state; idle = 'bt_p_' + body + '_idle';
-    if(islPicOkSync(key)) return '<img class="pic" src="' + islImgUrl(key) + '" alt="">';
-    if(islPicOkSync(idle)) return '<img class="pic" src="' + islImgUrl(idle) + '" alt="">';
+    if(islPicOkSync(key)) return '<img class="pic" src="' + islImgUrl(key) + '" alt="" style="' + islBtAdjStyle(key) + '">';   /* ★ v1.130.0 吃 GM 造型工房的尺寸/座標修正 */
+    if(islPicOkSync(idle)) return '<img class="pic" src="' + islImgUrl(idle) + '" alt="" style="' + islBtAdjStyle(idle) + '">';
     return '<div class="chibi">' + islChibiHtml(ISL.char, 'idle') + '</div>';   /* 缺圖:既有 sprite 正面幀放大 + CSS 動作 */
   }
   key = 'bt_m_' + B.m.k + '_' + state; idle = 'bt_m_' + B.m.k + '_idle';
@@ -16745,7 +17173,8 @@ function islBtSetState(side, state, ms){   /* 換立繪 + 動作 class;ms 後自
   if(B['_st_' + side]) clearTimeout(B['_st_' + side]);
   if(state !== 'idle' && state !== 'down' && ms !== 0){ B['_st_' + side] = setTimeout(function(){ if(_islBt && !_islBt.over){ var s = (side === 'p' ? _islBt.p.stun : _islBt.m.stun) > 0 ? 'stun' : 'idle'; islBtSetState(side, s, 0); } }, ms || 500); }
 }
-function islBtWeaponPaint(){ var el = $('isl-bt-p'), w = islBtPlayerStats().w, wp; if(!el) return; wp = el.querySelector('.wp'); if(!wp) return; if(!w){ wp.innerHTML = ''; return; } wp.innerHTML = islPicOkSync(w.img) ? '<img src="' + islImgUrl(w.img) + '" alt="">' : '<span>' + w.e + '</span>'; }
+function islBtWeaponPaint(){ var el = $('isl-bt-p'), w = islBtPlayerStats().w, wp; if(!el) return; wp = el.querySelector('.wp'); if(!wp) return; if(!w){ wp.innerHTML = ''; return; } var _wk = islWeaponImgKey(w, (islBtPlayerStats().inst || {}).lv || 1);   /* ★ v1.131.0 戰鬥中也用該等級的外觀 */
+  wp.innerHTML = islPicOkSync(_wk) ? '<img src="' + islImgUrl(_wk) + '" alt="">' : '<span>' + w.e + '</span>'; }
 function islBtOpen(){
   var B = _islBt, db = islDB(), h = '', ps = islBtPlayerStats(), m = B.m, w = ps.w;
   if(!B) return;
@@ -16932,26 +17361,34 @@ window.islWeaponOpen = function(){
   playSfx('sfx-tap', 0.3);
   for(i = 0; i < ISL.weapons.length; i++){ own[ISL.weapons[i].id] = i; }
   h += '<h3>🗡 武器</h3><p style="font-size:14px;opacity:.85;margin:0 0 6px">目前裝備:<b>' + islEsc(islWeaponLabel(ps.inst)) + '</b>　⚔ 攻擊 ' + ps.atk + '(含力氣)　🛡 防禦 ' + ps.def + '　💨 速度 ' + ps.spd + '<br>製作 = 拖材料到零件 + 1 題 + 敲打組裝(品質 ★ 看結算);升級花材料不花 AP。' + (bench ? '' : '<span style="color:#ffd166"> 沒有製作台:只能做棍棒與石斧。</span>') + '</p>';
+  /* ★ v1.130.0 老師「武器視窗是否也需要放大比照建造視窗」→ 改成同一套三欄大卡片 */
+  h += '<div class="isl-cards">';
   for(i = 0; i < db.WEAPONS.length; i++){
     w = db.WEAPONS[i]; idx = own[w.id]; inst = idx != null ? ISL.weapons[idx] : null; cost = islCraftCost(w); can = islCanAfford(cost);
-    h += '<div class="isl-wp' + (inst && ISL.equip.weapon === idx ? ' on' : '') + '"><div class="ic">' + islIcoHtml(w.img, w.e, 56) + '</div><div class="bd"><b>' + w.e + ' ' + islEsc(w.n) + (inst ? ' ' + '★★★'.slice(0, inst.q) + ' Lv' + inst.lv : '') + '</b>' + (inst && ISL.equip.weapon === idx ? ' <span style="color:#7bed9f">✅ 裝備中</span>' : '') + '<br><span style="font-size:14px">' + islEsc(w.d) + ' <i style="opacity:.75">' + islEsc(w.sci) + '</i></span><br><span style="font-size:13px;opacity:.85">⚔' + (inst ? islWeaponAtk(inst) : w.atk) + ' 🛡' + w.def + ' 💨' + (w.spd >= 0 ? '+' : '') + w.spd + ' 甜蜜點×' + w.zone + ' 暴擊×' + w.crit + (w.hits > 1 ? ' ' + w.hits + '段' : '') + (w.first ? ' 必先手' : '') + (w.stunP ? ' 暈眩' + w.stunP + '%' : '') + '</span>';
-    if(!inst){ h += '<br><span style="font-size:14px;color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(cost) + '</span>'; }
+    h += '<div class="isl-card' + (inst && ISL.equip.weapon === idx ? ' on' : '') + '">' +
+         '<div class="ci">' + islIcoHtml(islWeaponImgKey(w, inst ? inst.lv : 1), w.e, 128) + '</div>' +   /* ★ v1.131.0 依等級換外觀 */
+         '<div class="cn">' + islEsc(w.n) + (inst ? ' <span style="font-size:18px;color:#ffd166">' + '★★★'.slice(0, inst.q) + ' Lv' + inst.lv + '</span>' : '') + (inst && ISL.equip.weapon === idx ? ' <span style="font-size:18px;color:#7bed9f">✅ 裝備中</span>' : '') + '</div>' +
+         '<div class="cd">' + islEsc(w.d) + '<br><i style="opacity:.75">' + islEsc(w.sci) + '</i></div>' +
+         '<div class="cc">⚔' + (inst ? islWeaponAtk(inst) : w.atk) + '　🛡' + w.def + '　💨' + (w.spd >= 0 ? '+' : '') + w.spd + '<br>甜蜜點×' + w.zone + '　暴擊×' + w.crit + (w.hits > 1 ? '　' + w.hits + '段' : '') + (w.first ? '　必先手' : '') + (w.stunP ? '　暈眩' + w.stunP + '%' : '') + '</div>';
+    if(!inst){ h += '<div class="cc" style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(cost) + '</div>' + islLackBadge(cost); }
     else if(inst.lv < db.WEAPON_MAX_LV){   /* ★ v1.125.0 升級需要:熟練值 + 該階段素材 */
       up = islWeaponUpCost(inst); upCan = islCanAfford(up);
       var wNeed = islWeaponXpNeed(inst), wHave = inst.xp | 0, wOk = wHave >= wNeed, wTier = islWeaponUpTier(inst.lv + 1);
-      h += '<span class="xp"><i style="width:' + Math.min(100, Math.round(wHave / wNeed * 100)) + '%"></i></span>';
-      h += '<span style="font-size:13px;color:' + (wOk ? '#7bed9f' : '#ffd166') + '">🗡 熟練 ' + wHave + '/' + wNeed + (wOk ? '(可升級)' : '(裝備它去打魔物就會增加)') + '</span>';
-      h += '<br><span style="font-size:14px;color:' + (upCan ? '#7bed9f' : '#ff7b7b') + '">升 Lv' + (inst.lv + 1) + (wTier ? '・' + islEsc(wTier.n) : '') + ':' + islCostHtml(up) + '</span>';
+      h += '<span class="xp" style="display:block;height:8px;background:rgba(255,255,255,.2);border-radius:4px;margin:6px 0 2px;overflow:hidden;width:100%"><i style="display:block;height:100%;background:linear-gradient(90deg,#5fb3d9,#7bed9f);width:' + Math.min(100, Math.round(wHave / wNeed * 100)) + '%"></i></span>';
+      h += '<div class="cc" style="color:' + (wOk ? '#7bed9f' : '#ffd166') + '">🗡 熟練 ' + wHave + '/' + wNeed + (wOk ? '(可升級)' : '(裝備它去打魔物就會增加)') + '</div>';
+      h += '<div class="cc" style="color:' + (upCan ? '#7bed9f' : '#ff7b7b') + '">升 Lv' + (inst.lv + 1) + (wTier ? '・' + islEsc(wTier.n) : '') + ':' + islCostHtml(up) + '</div>' + islLackBadge(up);
       upCan = upCan && wOk;
     }
-    else h += '<br><span style="font-size:14px;color:#ffd166">已達 Lv' + db.WEAPON_MAX_LV + '</span>';
-    h += '</div><div class="ac">';
+    else h += '<div class="cc" style="color:#ffd166">已達 Lv' + db.WEAPON_MAX_LV + '</div>';
+    h += '<div class="cb">';
     if(!inst) h += '<button class="isl-btn ' + (can ? 'gold' : '') + '" data-wc="' + w.id + '" ' + (can && (w.hand || bench) ? '' : 'disabled') + '>' + (!w.hand && !bench ? '要製作台' : (ISL.ap >= (db.ACTS.craft.ap || 2) ? '製作 ⚡' + (db.ACTS.craft.ap || 2) : 'AP 不足')) + '</button>';
     else { h += (ISL.equip.weapon === idx ? '<button class="isl-btn ghost" data-wu="' + idx + '">卸下</button>' : '<button class="isl-btn gold" data-we="' + idx + '">裝備</button>'); if(inst.lv < db.WEAPON_MAX_LV) h += '<button class="isl-btn ' + (upCan ? '' : 'ghost') + '" data-wl="' + idx + '" ' + (upCan ? '' : 'disabled') + '>⬆ 升級</button>'; }
     h += '</div></div>';
   }
-  islModal(h, [{ t: '關閉', cls: 'ghost' }]);
+  h += '</div>';
+  islModal(h, [{ t: '關閉', cls: 'ghost' }], { wide: true });
   var m = $('isl-modal'), bs = m.querySelectorAll('button[data-wc],button[data-we],button[data-wu],button[data-wl]');
+  islLackBind(m);
   for(i = 0; i < bs.length; i++){ bs[i].onclick = function(ev){ ev.stopPropagation(); var d = islDB(), id = this.getAttribute('data-wc'), e = this.getAttribute('data-we'), u = this.getAttribute('data-wu'), l = this.getAttribute('data-wl'), wd, inst, up, kk;
     if(id){ wd = d.weapon(id); if(ISL.ap < (d.ACTS.craft.ap || 2)){ toast('AP 不夠,先休息'); return; } islModalClose(); playSfx('sfx-confirm', 0.4); var tl = { id: wd.id, n: wd.n, e: wd.e, d: wd.d, parts: wd.parts, cost: wd.cost, eff: {}, weapon: true }; islActStart('craft', { tool: tl, cost: islCraftCost(wd) }); return; }
     if(e != null){ ISL.equip.weapon = parseInt(e, 10); playSfx('sfx-statup', 0.45); toast('🗡 裝備 ' + islWeaponLabel(islWeaponCur())); islSave('equip'); islWeaponOpen(); return; }
@@ -16959,7 +17396,9 @@ window.islWeaponOpen = function(){
     if(l != null){ inst = ISL.weapons[parseInt(l, 10)]; wd = d.weapon(inst.id); up = islWeaponUpCost(inst);
       if((inst.xp | 0) < islWeaponXpNeed(inst)){ toast('🗡 熟練值不夠,裝備它去打魔物練功'); return; }
       if(!islCanAfford(up)){ toast('材料不夠'); return; } for(kk in up){ if(up.hasOwnProperty(kk)) islConsume(kk, up[kk]); }
-      inst.xp = (inst.xp | 0) - islWeaponXpNeed(inst); inst.lv++; playSfx('sfx-powerup', 0.5); toast('⬆ ' + wd.e + wd.n + ' 升到 Lv' + inst.lv + '!攻擊 ' + islWeaponAtk(inst)); islSkillGain('craft', 1); islSave('weapon'); islWeaponOpen(); return; }
+      var _t0 = islWeaponTier(inst.lv); inst.xp = (inst.xp | 0) - islWeaponXpNeed(inst); inst.lv++; playSfx('sfx-powerup', 0.5);
+      toast('⬆ ' + wd.e + wd.n + ' 升到 Lv' + inst.lv + '!攻擊 ' + islWeaponAtk(inst));
+      if(islWeaponTier(inst.lv) > _t0){ playSfx('sfx-summon-reveal', 0.5); toast('✨ ' + wd.n + ' 的做工更講究了,外觀升級!'); }   /* ★ v1.131.0 跨 5/10/15/20 換圖 */ islSkillGain('craft', 1); islSave('weapon'); islWeaponOpen(); return; }
   }; }
 };
 

@@ -1,6 +1,7 @@
 /* ============================================================================
  * 🏝 像素荒島求生記 — 資料表(minigame/minigame_island_db.js)
  * ============================================================================
+ * ★ v1.27.0(2026-09-13・老師需求③)— 武器外觀分 5 階段(Lv1~4 / 5~9 / 10~14 / 15~19 / 20),新增 30 個 D.IMG.wp_* 圖鍵;全部選配,缺圖自動退回上一階、再缺退 emoji ⇒ 一張都還沒生成也不會壞。對應 minigame_index.html v1.131.0。
  * ★ v1.26.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標,如同造型工房)— 新增 D.LAYER_ADJ:24 張分層造型圖各自的尺寸(sx/sy)與座標(dx/dy)修正值,並附一組用實際輪廓量測自動擬合出來的預設值(衣服 c1~c3 原本比基底身體大 1.3~1.6 倍把整顆頭吃掉、髮型假髮頭圍偏大且少女基底頭頂高 5px 導致瀏海壓到眼睛)。index 端 islLyGeo() 依本表換算 background-size/background-position,GM 可在「🎨 造型工房(GM)」即時微調並複製設定值回填本表。對應 minigame_index.html v1.128.0。
  * ★ v1.25.0(2026-09-13・老師七項:休息分頁/AP0泡泡/營地泡泡/存檔回饋/日曆/建造等待時間/武器20級)— 新增 BUILD_SECS(每棟建築的真實施工秒數)+ BUILD_SECS_DEFAULT;WEAPON_MAX_LV 5 → 20,新增 WEAPON_XP_NEED(每級所需熟練值)、WEAPON_XP_WIN(打贏一隻的基礎熟練值)、WEAPON_UP_TIER(五個階段的專屬升級素材,越後面越需要後期資源)。對應 minigame_index.html v1.125.0。
  * ★ v1.24.0(2026-09-13・老師四項:HUD 縮一行/視窗免捲動/採集題庫 200 題/創角圖層對齊)— D.QUIZ.gather 由 15 題擴充為 200 題(主題:採集各種有用的自然資源——植物構造與部位、種子傳播、樹木與木材、纖維與編織、水資源與淨水、岩石礦物與土壤、菇類與保存、海邊與潮間帶資源、台灣生態與物種、野外辨識、動物性資源、槓桿滑輪等省力原理、永續採集原則;不必與當前採集物有關)。出題順序控制在 minigame_index.html 的 islQuizPick:第一輪照本表順序 200 題不重複出完,第二輪起依 seed(uid|actId|輪次) 重新洗牌,選項每題即時打亂。對應 minigame_index.html v1.124.0。
@@ -38,7 +39,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.26.0';   /* ★ v1.26.0(2026-09-13):分層造型微調表 D.LAYER_ADJ(GM 造型工房的預設值)。 */   /* ★ v1.25.0(2026-09-13):建築施工秒數 BUILD_SECS;武器上限 20 級 + 熟練值 + 分階段升級素材。 */   /* ★ v1.24.0(2026-09-13):採集題庫 15 → 200 題。 */   /* ★ v1.23.0(2026-09-13):地下層改回合制,DUNGEON.intro 改寫。 */   /* ★ v1.22.0(2026-09-13):回合制遇敵戰鬥(MON_BT/ENC/BT)+ 6 種武器(WEAPONS)+ 大葉來源(森林月桃葉叢/林投附帶)+ 戰鬥立繪 IMG 鍵。 */   /* ★ v1.21.0(2026-09-13):採集改名、漂流木/礁岩/料理/裝飾圖鍵。 */   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
+  D.VER = 'v1.27.0';   /* ★ v1.27.0(2026-09-13):武器 6 種 × 5 階段外觀圖鍵 wp_*(Lv5/10/15/20 換圖)。 */   /* ★ v1.26.0(2026-09-13):分層造型微調表 D.LAYER_ADJ(GM 造型工房的預設值)。 */   /* ★ v1.25.0(2026-09-13):建築施工秒數 BUILD_SECS;武器上限 20 級 + 熟練值 + 分階段升級素材。 */   /* ★ v1.24.0(2026-09-13):採集題庫 15 → 200 題。 */   /* ★ v1.23.0(2026-09-13):地下層改回合制,DUNGEON.intro 改寫。 */   /* ★ v1.22.0(2026-09-13):回合制遇敵戰鬥(MON_BT/ENC/BT)+ 6 種武器(WEAPONS)+ 大葉來源(森林月桃葉叢/林投附帶)+ 戰鬥立繪 IMG 鍵。 */   /* ★ v1.21.0(2026-09-13):採集改名、漂流木/礁岩/料理/裝飾圖鍵。 */   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
   D.SAVE_VER = 1;          /* 存檔結構版本(缺欄位一律補預設值,絕不因存檔壞掉卡流程) */
   D.CELL = 64;             /* 一格 px */
   D.COLS = 32; D.ROWS = 24;
@@ -1777,7 +1778,7 @@ window.ISL_DB = (function(){
   };
   /* 各區「踩地雷式」遇敵:每遊戲日依 seed 在可走格藏 n 個遇敵點(離出生/出口/資源點 ≥3 格),踩到就跳出魔物;from=第幾天起才有;lv=魔物等級(= 區域 order) */
   D.ENC = {
-    beach:   { n:1, from:3,  mons:['boar'] },
+    beach:   { n:1, from:1,  mons:['boar'] },   /* ★ v1.27.0 老師「戰鬥系統啟用」:起始區原本第 3 天才會遇敵,前兩天在沙灘怎麼走都碰不到 → 改第 1 天就會遇到(只有 1 個遇敵點,不會太兇) */
     forest:  { n:2, from:1,  mons:['boar','beetle'] },
     grass:   { n:2, from:1,  mons:['boar','slime'] },
     river:   { n:2, from:1,  mons:['slime','bat'] },
@@ -1805,6 +1806,41 @@ window.ISL_DB = (function(){
    * atk=基礎攻擊;zone=甜蜜點寬度倍率(長槍寬、錘窄);spd=先手加成;crit=暴擊倍率;hits=一回合命中次數(迴力鏢 2 段);first=必先手(弓);stunP=命中時暈眩機率%(錘);def=防禦
    * hand=true 不用製作台就能做(棍棒/石斧:初期沒蓋製作台也能自保);up=每升 1 級的材料(× 當前 Lv)
    * 攻擊 = round((atk × (1 + 0.25×(★−1)) × (1 + 0.2×(Lv−1))) + 力氣×POW_ATK) */
+  /* ══ ★ v1.27.0(2026-09-13・老師需求③「武器每升到 5/10/15/20 級時更換圖片,使武器看起來更厲害(仍以島上的素材做出來為原則)」)══
+     6 種武器 × 5 個外觀階段 = 30 張(全部選配,缺圖自動退回上一階、再缺退 emoji;檔名 island_wp_<id>[_t2..t5].png)。
+       無階(Lv1~4)=剛做好的樣子 / _t2(Lv5~9) / _t3(Lv10~14) / _t4(Lv15~19) / _t5(Lv20 滿級)。
+     ⚠ 美術原則(老師指定):**只能用島上採得到的素材**(木、石、纖維、貝殼、羽毛、蘆葦、鐵礦、水晶、遺物、草藥),
+        不可以出現鋼鐵鑄造、魔法發光劍那種「不屬於這座島」的東西;越後期是「做工更講究、綁得更紮實、鑲嵌更多島上珍稀素材」。 */
+  D.IMG.wp_club = 'island_wp_club.png';
+  D.IMG.wp_club_t2 = 'island_wp_club_t2.png';
+  D.IMG.wp_club_t3 = 'island_wp_club_t3.png';
+  D.IMG.wp_club_t4 = 'island_wp_club_t4.png';
+  D.IMG.wp_club_t5 = 'island_wp_club_t5.png';
+  D.IMG.wp_stoneaxe = 'island_wp_stoneaxe.png';
+  D.IMG.wp_stoneaxe_t2 = 'island_wp_stoneaxe_t2.png';
+  D.IMG.wp_stoneaxe_t3 = 'island_wp_stoneaxe_t3.png';
+  D.IMG.wp_stoneaxe_t4 = 'island_wp_stoneaxe_t4.png';
+  D.IMG.wp_stoneaxe_t5 = 'island_wp_stoneaxe_t5.png';
+  D.IMG.wp_spear = 'island_wp_spear.png';
+  D.IMG.wp_spear_t2 = 'island_wp_spear_t2.png';
+  D.IMG.wp_spear_t3 = 'island_wp_spear_t3.png';
+  D.IMG.wp_spear_t4 = 'island_wp_spear_t4.png';
+  D.IMG.wp_spear_t5 = 'island_wp_spear_t5.png';
+  D.IMG.wp_bow = 'island_wp_bow.png';
+  D.IMG.wp_bow_t2 = 'island_wp_bow_t2.png';
+  D.IMG.wp_bow_t3 = 'island_wp_bow_t3.png';
+  D.IMG.wp_bow_t4 = 'island_wp_bow_t4.png';
+  D.IMG.wp_bow_t5 = 'island_wp_bow_t5.png';
+  D.IMG.wp_hammer = 'island_wp_hammer.png';
+  D.IMG.wp_hammer_t2 = 'island_wp_hammer_t2.png';
+  D.IMG.wp_hammer_t3 = 'island_wp_hammer_t3.png';
+  D.IMG.wp_hammer_t4 = 'island_wp_hammer_t4.png';
+  D.IMG.wp_hammer_t5 = 'island_wp_hammer_t5.png';
+  D.IMG.wp_boomerang = 'island_wp_boomerang.png';
+  D.IMG.wp_boomerang_t2 = 'island_wp_boomerang_t2.png';
+  D.IMG.wp_boomerang_t3 = 'island_wp_boomerang_t3.png';
+  D.IMG.wp_boomerang_t4 = 'island_wp_boomerang_t4.png';
+  D.IMG.wp_boomerang_t5 = 'island_wp_boomerang_t5.png';
   D.WEAPONS = [
     { id:'club',      n:'棍棒',   e:'🏏', img:'wp_club',      atk:7,  def:1, zone:1.0, spd:0, crit:1.5, hits:1, hand:true,  cost:{wood:4, fiber:2},              up:{wood:3, fiber:1},
       d:'最簡單的武器,一根硬木頭。',   sci:'木頭有彈性又不會太重,揮起來不震手。',
