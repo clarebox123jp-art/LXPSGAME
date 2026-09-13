@@ -1,6 +1,8 @@
 /* ============================================================================
  * 🏝 像素荒島求生記 — 資料表(minigame/minigame_island_db.js)
  * ============================================================================
+ * ★ v1.23.0(2026-09-13・老師「繼續」)— DUNGEON.intro 改寫(地下層改回合制戰鬥,守墓石像共振題);其餘零改動。對應 minigame_index.html v1.122.0。
+ * ★ v1.22.0(2026-09-13・老師四項:通關稽核/回合制遇敵戰鬥/多樣武器/圖片清單)— ①通關稽核:「🍃 大葉」全島沒有任何來源(帳篷/水桶架/床都要)→ 森林新增每日資源點「月桃葉叢」(gives leaf,node_bigleaf 圖選配)+ 沙灘林投採集附帶 +1 大葉(spawn.bonus)+ 森林撿取物加 leaf;②MON_BT(9 種魔物戰鬥數值/掉落)+ ENC(11 區踩地雷式遇敵點:每日 n 個、from 第幾天起、魔物池)+ BT(戰鬥常數:徒手攻擊/防禦/逃跑/智取/魔物成長/打贏科技點上限)+ STORY.firstBattle;③WEAPONS 6 種(棍棒/石斧 徒手可做;長槍/弓箭/錘/迴力鏢需製作台)各有 atk/def/甜蜜點寬度/先手/暴擊倍率/段數/暈眩率、製作藍圖 parts、升級材料 up,WEAPON_MAX_LV=5;QUIZ.weapon 8 題;④IMG 新增 bt_p_*(主角 5 態×2)/bt_m_*(9 魔物×5 態)/wp_*(6 武器)/node_bigleaf,全部選配缺圖自動退回。對應 minigame_index.html v1.121.0。
  * ★ v1.21.0(2026-09-13・老師四項)— ACTS.gather.n「採集植物」→「採集」;漂流木/礁岩碎石改用專屬圖鍵 node_drift/node_beachrock(island_node_drift.png/island_node_beachrock.png,缺圖退 emoji);7 道料理 ITEMS.img 接 res_d_<id>(island_res_d_*.png);12 種裝飾加 img:deco_<id>(island_deco_*.png);皆為選配,圖上傳即生效。
  * ★ v1.20.0(2026-09-13・老師七項)— ①SHOP.sell 品質倍率改 ★ ×1、★★ ×2、★★★ ×3(index islSellTake)③沙灘新增「漂流木」(gives wood)與「礁岩碎石」(gives stone)兩種每日資源點 + 撿取物加 wood/stone(遊戲初期營火要木 5 石 3,舊版沙灘只出纖維/野果,森林又要營火才開 → 死鎖)④AP 基礎 10、各活動 AP 不同(ACTS.ap:採集/捕魚/打撈/生火/烹飪/播種 1,伐木/採石/建造/馴養/鋪水道/研究/製作 2)+ AP_EXTRA 清單(上課/工程修復/地下層)⑤採集 QTE 依資源分輕/中/重(GATHER_FORCE:輕=野果/野菇/葉/草藥/種子/羽毛/貝殼/小石;重=木材/石頭/鐵礦/水晶/遺物;其餘中)⑥AP 用完的角色泡泡 TIRED_LINES
  * ★ v1.19.0(2026-09-13・老師六項)— ①島名詞庫擴充:ISLAND_ADJ 20→60、ISLAND_NOUN 18→60(60×60=3600 種組合,創角/改名改為兩個可捲動下拉選單+自由輸入) ②STAT_MAX 20→50、新增 SKILL_MAX=50(技能等級上限) ③IMG 表新增分層造型 24 張(膚色×4 基底身體 base_<body>_s0~3 / 髮型×4 hair_<body>_h0~3 / 服裝×4 cloth_<body>_c0~3,皆 768×384、6 欄×3 列 128px 格;缺圖自動退回既有整張 sheet),對應 minigame_index.html v1.116.0。
@@ -33,7 +35,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.21.0';   /* ★ v1.21.0(2026-09-13):採集改名、漂流木/礁岩/料理/裝飾圖鍵。 */   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
+  D.VER = 'v1.23.0';   /* ★ v1.23.0(2026-09-13):地下層改回合制,DUNGEON.intro 改寫。 */   /* ★ v1.22.0(2026-09-13):回合制遇敵戰鬥(MON_BT/ENC/BT)+ 6 種武器(WEAPONS)+ 大葉來源(森林月桃葉叢/林投附帶)+ 戰鬥立繪 IMG 鍵。 */   /* ★ v1.21.0(2026-09-13):採集改名、漂流木/礁岩/料理/裝飾圖鍵。 */   /* ★ v1.20.0(2026-09-13):賣價倍率/沙灘木石/AP 10 與各活動 AP/採集輕中重/疲勞泡泡。 */   /* ★ v1.19.0(2026-09-13):島名 60×60、STAT_MAX/SKILL_MAX 50、分層造型 IMG 24 張。 */   /* ★ v1.18.0(2026-09-13):11 區遮罩重建 + 地標重標。 */   /* ★ v1.17.0(2026-09-12):好友營地唯讀畫面常數 COOP_BOARD_PUB/COOP_DECO_PUB。 */   /* ★ v1.16.0(2026-09-12・老師四項修正):重畫 valley 遮罩(石橋過河,水域真的不可走)+ river/rock/lake/cave 共 8 個資源點位移到岸上,全 11 區水域全面禁止進入後仍 100% 可達(BFS 驗證)。 */   /* ★ v1.15.0(2026-09-12):無人島命名(ISLAND_ADJ/ISLAND_NOUN)+好友連線合作資料常數(COOP_MAX/COOP_HEARTBEAT_SEC/COOP_STALE_SEC/COOP_GONE_SEC)。 */   /* ★ v1.14.0(2026-09-12):留言板 BOARD_* + 阿獺委託板 QUEST。 */   /* ★ v1.13.0(2026-09-12):好友信箱資料常數。 */   /* ★ v1.12.0(2026-09-12):帆船+結局+回憶紀錄資料。 */   /* ★ v1.11.0(2026-09-12):甲乙丙 — 8 魔物/瞭望台/地下層/好友守夜資料。 */   /* ★ v1.10.0(2026-09-12):14 張場景改 .jpg。 */   /* ★ v1.9.0(2026-09-12):遮罩重校 + seed 圖。 */   /* ★ v1.8.0(2026-09-12):WEATHER + 台灣化。 */   /* ★ v1.7.0(2026-09-12 P4-b):TRAINERS。 */   /* ★ v1.6.0(2026-09-12 P4-a):SHOP + CODEX。 */   /* ★ v1.5.0(2026-09-12 P3-c):11 區首次進入內心話(STORY.zoneIntro)、小白各區提示(STORY.gullZone);BGM 由 index 端 islBgm 控制 */   /* ★ v1.4.0(2026-09-12 P3-b):懸崖/山谷/遺跡/火山四區、製作台與工具(鐵斧/鐵鎬/好釣竿/藤籃)、草藥/蜂蜜/遺物物品、四區解謎點、製作題庫 */   /* ★ v1.3.0(2026-09-12 P3-a):湖泊/洞窟兩區、科技研究(火把/滑輪/水車/電路)、各區解謎點題組、鐵礦/水晶物品、研究題庫 */   /* ★ v1.2.0(2026-09-12 P2-b):烹飪/種植/畜牧/水利(Grid 引擎首用)資料、農田/畜欄/水道三棟、全建築 Lv1~5、營地 Lv1~3 擴建、裝飾與舒適度、料理/蛋/奶/穀物物品、四庫新題 */   /* ★ v1.1.0(2026-09-12 P2-a):溪流/岩岸/草原、捕魚/打撈/採石、水桶架/木筏/圍牆/火把、防衛戰資料 */
   D.SAVE_VER = 1;          /* 存檔結構版本(缺欄位一律補預設值,絕不因存檔壞掉卡流程) */
   D.CELL = 64;             /* 一格 px */
   D.COLS = 32; D.ROWS = 24;
@@ -81,6 +83,15 @@ window.ISL_DB = (function(){
    *   cloth_<boy|girl>_c0~c3 = 只有衣服(力行運動服/探險背心裝/島民草編裝/海洋工作服)。
    *   三層同一張版面疊起來才對得齊,所以髮型/衣服要用「以基底身體圖為底圖加畫」的方式產出(見圖片提示詞清單)。任何一張缺圖 → index 端自動退回既有整張 sheet_boy/sheet_girl。 */
   (function(){ var bs = ['boy','girl'], i, j; for(i = 0; i < 2; i++){ for(j = 0; j < 4; j++){ D.IMG['base_' + bs[i] + '_s' + j] = 'island_body_base_' + bs[i] + '_s' + j + '.png'; D.IMG['hair_' + bs[i] + '_h' + j] = 'island_hair_' + bs[i] + '_h' + j + '.png'; D.IMG['cloth_' + bs[i] + '_c' + j] = 'island_cloth_' + bs[i] + '_c' + j + '.png'; } } })();
+  /* ★ v1.22.0 回合制戰鬥與武器(全部選配,缺圖自動退回:主角=既有 sprite 幀 + CSS 動作、魔物=既有 island_mon_<k>.png + CSS 動作、武器=emoji):
+   *   bt_p_<boy|girl>_<idle|atk|hit|stun|down> = 主角戰鬥立繪 5 態(island_bt_p_boy_idle.png …,512×512 透明底、側面朝右、腳底貼底);
+   *   bt_m_<魔物k>_<idle|atk|hit|stun|down>     = 9 種魔物(8 隻 + 守墓石像)戰鬥立繪 5 態(island_bt_m_shadow_idle.png …,512×512 透明底、側面朝左);
+   *   wp_<武器id>                                = 6 種武器圖(island_wp_club.png …,256×256 透明底,品質★由程式加框色、等級由程式加角標);
+   *   node_bigleaf                               = 森林月桃葉叢資源點(192)。 */
+  D.IMG.node_bigleaf = 'island_node_bigleaf.png';
+  (function(){ var st = ['idle','atk','hit','stun','down'], ms = ['shadow','beetle','bat','boar','slime','ember','basilisk','spark','guardian'], ws = ['club','spear','bow','hammer','boomerang','stoneaxe'], i, j;
+    for(i = 0; i < st.length; i++){ D.IMG['bt_p_boy_' + st[i]] = 'island_bt_p_boy_' + st[i] + '.png'; D.IMG['bt_p_girl_' + st[i]] = 'island_bt_p_girl_' + st[i] + '.png'; for(j = 0; j < ms.length; j++){ D.IMG['bt_m_' + ms[j] + '_' + st[i]] = 'island_bt_m_' + ms[j] + '_' + st[i] + '.png'; } }
+    for(i = 0; i < ws.length; i++){ D.IMG['wp_' + ws[i]] = 'island_wp_' + ws[i] + '.png'; } })();
   D.SKINS4 = [ { n:'淺', c:'#ffe3cf' }, { n:'自然', c:'#f5c9a5' }, { n:'小麥', c:'#d99e6f' }, { n:'深', c:'#8f5a38' } ];   /* 分層造型的 4 種膚色(對應 base_*_s0~s3;主程式 8 色膚色索引 ÷2 取整對應) */
   D.CLOTHES = [ { n:'力行運動服', e:'👕' }, { n:'探險背心裝', e:'🦺' }, { n:'島民草編裝', e:'🌿' }, { n:'海洋工作服', e:'🧥' } ];
 
@@ -230,7 +241,7 @@ window.ISL_DB = (function(){
     ],
     /* 每日隨機資源點(25.2) */
     spawn:{
-      palm:  { n:4, minGap:2, act:'gather', node:'node_palm', e:'🌴', gives:'fiber', label:'林投樹',
+      palm:  { n:4, minGap:2, act:'gather', node:'node_palm', e:'🌴', gives:'fiber', bonus:'leaf', label:'林投樹',   /* ★ v1.22.0 bonus:採集成功另附 +1(林投葉=大葉;大葉原本全島無來源) */
                pool:[{x:3,y:3},{x:10,y:2},{x:16,y:3},{x:22,y:2},{x:28,y:3},{x:4,y:12},{x:13,y:11},{x:26,y:12}] },
       bush:  { n:3, minGap:2, act:'gather', node:'node_bush', e:'🌳', gives:'berry', label:'構樹果叢',
                pool:[{x:8,y:5},{x:19,y:6},{x:25,y:8},{x:6,y:14},{x:17,y:14},{x:29,y:6}] },
@@ -278,9 +289,12 @@ window.ISL_DB = (function(){
       bush:  { n:3, minGap:2, act:'gather', node:'node_bush', e:'🌳', gives:'berry', label:'野果叢',
                pool:[{x:11,y:7},{x:24,y:14},{x:4,y:14},{x:18,y:14},{x:29,y:6},{x:12,y:19}] },
       mush:  { n:2, minGap:2, act:'gather', node:'node_mushroom', e:'🍄', gives:'mushroom', label:'野菇圈', chance:0.85,
-               pool:[{x:3,y:7},{x:19,y:8},{x:29,y:16},{x:10,y:14},{x:25,y:19}] }
+               pool:[{x:3,y:7},{x:19,y:8},{x:29,y:16},{x:10,y:14},{x:25,y:19}] },
+      /* ★ v1.22.0 通關稽核發現「🍃 大葉」全島沒有任何來源(帳篷 4/水桶架 3/床 3 都要大葉 → 溪流→湖泊→水道→水車→山谷整條鏈卡死)→ 森林每天長月桃葉叢;沙灘林投採集也附帶 +1 大葉(index islActResult bonus) */
+      bigleaf:{ n:3, minGap:2, act:'gather', node:'node_bigleaf', e:'🍃', gives:'leaf', label:'月桃葉叢',
+               pool:[{x:17,y:5},{x:26,y:7},{x:9,y:10},{x:25,y:10},{x:13,y:13},{x:18,y:17},{x:7,y:20},{x:22,y:20}] }
     },
-    pick:{ n:[3,5], minGap:3, items:['feather','pebble','berry','seed'] },
+    pick:{ n:[3,5], minGap:3, items:['feather','pebble','berry','seed','leaf'] },
     puzzle:{x:12,y:10, n:'年輪樹樁', e:'🪵'}   /* 解謎點(P3 才實作互動,P1 只顯示) */
   };
   /* ★ P2-a(v1.91.0):溪流／岩岸／草原三區。act 'fish'=捕魚、'trash'=打撈海廢、'quarry'=採石(沿用伐木 QTE 引擎) */
@@ -1033,7 +1047,7 @@ window.ISL_DB = (function(){
   /* ★ v1.11.0 乙:遺跡地下層(探索戰鬥=工具配對 + 一題,不是動作戰鬥;每天可下一次,遺跡機關解開後開放) */
   D.DUNGEON = {
     floors: 3, ap: 1, entry:{x:16, y:17, n:'地下入口', e:'🕳'},
-    intro: ['石板下面有階梯,黑漆漆的……解開機關後,門真的開了。', '(地下層每天可以探一次。遇到魔物要先想「它怕什麼」,再回答一題;答錯會受傷,體力用完就得撤退。)'],
+    intro: ['石板下面有階梯,黑漆漆的……解開機關後,門真的開了。', '(地下層每天可以探一次。裡面的魔物比地面的強,是回合制戰鬥;帶好武器和料理,打不過就撤退。守墓石像會共振——答對牠的問題,開戰時牠會先暈一回合。)'],   /* ★ v1.22.0→v1.23.0 地下層改回合制 */
     floorNames: ['B1 石廊', 'B2 水晶室', 'B3 守墓者之間'],
     perFloor: [2, 2, 1],   /* 每層遇敵數(第 3 層 = 守墓者) */
     loot: [ {shell:4, relic:1}, {shell:6, crystal:1}, {shell:15, tech:6, crystal:2} ],
@@ -1525,6 +1539,84 @@ window.ISL_DB = (function(){
     intro: [ '這是我的「委託板」——島上大家有需要的東西都會貼在這裡。', '幫忙送來,我付貝幣;每天都會換新的三張委託。', '第三張比較難,但報酬也比較好,還會多送一樣東西喔!' ],
     thanks: [ '太好了,謝謝你!', '正是我要的!', '有你在這座島真好。', '這批品質不錯喔!' ]
   };
+
+  /* ══════════════ ★ v1.22.0(2026-09-13・老師四項):回合制遇敵戰鬥 + 多樣武器 ══════════════ */
+  /* 魔物戰鬥數值(基準=第 1 級,依區域 order 逐級成長:hp +18%/級、atk +12%/級;def/spd 固定)。fear=怕的工具(沿用 MONSTERS.tool,🧠 智取用) */
+  D.MON_BT = {
+    boar:     { hp:26, atk:6,  def:1, spd:6,  crit:10, drop:{ shell:[2,4], item:'fiber',   p:0.5 }, d:'橫衝直撞的野豬,皮厚但笨。' },
+    beetle:   { hp:30, atk:5,  def:3, spd:3,  crit:5,  drop:{ shell:[2,4], item:'ore',     p:0.25 }, d:'鐵甲很硬,普通攻擊會被彈掉一些。' },
+    slime:    { hp:22, atk:5,  def:0, spd:4,  crit:5,  drop:{ shell:[1,3], item:'water',   p:0.5 }, d:'軟軟的,打起來不痛不癢,但會黏住你。' },
+    bat:      { hp:20, atk:7,  def:1, spd:9,  crit:15, drop:{ shell:[2,5], item:'feather', p:0.6 }, d:'飛得快,常常先手。' },
+    shadow:   { hp:28, atk:8,  def:1, spd:7,  crit:15, drop:{ shell:[3,6], item:'crystal', p:0.2 }, d:'影子怪,怕光。' },
+    ember:    { hp:32, atk:9,  def:2, spd:5,  crit:10, drop:{ shell:[3,6], item:'ore',     p:0.4 }, d:'火精,碰到會燙傷。' },
+    basilisk: { hp:36, atk:8,  def:3, spd:5,  crit:20, drop:{ shell:[4,7], item:'relic',   p:0.3 }, d:'石化蛇,被牠瞪到會暈眩。' },
+    spark:    { hp:30, atk:10, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛。' },
+    guardian: { hp:80, atk:12, def:4, spd:3,  crit:10, drop:{ shell:[10,15], item:'relic', p:1 },  d:'守墓石像。' }
+  };
+  /* 各區「踩地雷式」遇敵:每遊戲日依 seed 在可走格藏 n 個遇敵點(離出生/出口/資源點 ≥3 格),踩到就跳出魔物;from=第幾天起才有;lv=魔物等級(= 區域 order) */
+  D.ENC = {
+    beach:   { n:1, from:3,  mons:['boar'] },
+    forest:  { n:2, from:1,  mons:['boar','beetle'] },
+    grass:   { n:2, from:1,  mons:['boar','slime'] },
+    river:   { n:2, from:1,  mons:['slime','bat'] },
+    rock:    { n:2, from:1,  mons:['beetle','slime'] },
+    lake:    { n:3, from:1,  mons:['slime','bat'] },
+    cave:    { n:3, from:1,  mons:['bat','shadow','beetle'] },
+    cliff:   { n:3, from:1,  mons:['spark','boar'] },
+    valley:  { n:3, from:1,  mons:['ember','beetle'] },
+    ruins:   { n:4, from:1,  mons:['shadow','basilisk','spark'] },
+    volcano: { n:4, from:1,  mons:['ember','basilisk'] }
+  };
+  D.BT = {
+    FIST_ATK: 4, BASE_DEF: 0, POW_ATK: 0.5, DEX_HIT: 0.6, MOV_SPD: 1, WIT_STUN: 14,   /* 徒手攻擊 4;力氣每點 +0.5 攻;巧手每點甜蜜點 +0.6%;巧思 ≥14 智取免答 */
+    DEFEND_CUT: 0.5, DEFEND_HEAL: 3,          /* 🛡 防禦:下一次受傷減半 + 回 3 */
+    ESCAPE_BASE: 40, ESCAPE_MOV: 2,           /* 🏃 逃跑成功率 = 40% + 腳程×2%(上限 90%) */
+    OUTWIT_DMG: 12, OUTWIT_STUN: 1,           /* 🧠 智取:選對它怕的工具 → 固定傷害 + 暈 1 回合;選錯 → 被反擊 */
+    MON_LV_HP: 0.18, MON_LV_ATK: 0.12,        /* 魔物每級成長 */
+    PLAYER_STUN_ON_CRIT: true,                /* 魔物暴擊 → 主角暈眩 1 回合 */
+    TECH_PER_WIN: 1, TECH_DAY_CAP: 3,         /* 打贏 🔬+1(每天最多 3;補足科技點不足的通關鏈) */
+    XP_WIN: 2, XP_LOSE: 1,                    /* 防衛技能 EXP */
+    QTE_SPEED: 1.5,                           /* 攻擊甜蜜點指針速度 */
+    lines: { open: ['有東西跳出來了!', '小心——是魔物!', '牠擋在路上……'], win: ['趕跑了!', '太棒了!', '這一區安全多了。'], lose: ['眼前一黑……', '……好痛,撐不住了。'], flee: ['溜掉了!', '先躲一下再說。'], fleeFail: ['沒逃掉!', '被追上了!'] }
+  };
+  /* 武器(第三批需求):6 種,各有 ★1~3 品質(製作 QTE 決定)與 Lv1~5(製作台升級)。
+   * atk=基礎攻擊;zone=甜蜜點寬度倍率(長槍寬、錘窄);spd=先手加成;crit=暴擊倍率;hits=一回合命中次數(迴力鏢 2 段);first=必先手(弓);stunP=命中時暈眩機率%(錘);def=防禦
+   * hand=true 不用製作台就能做(棍棒/石斧:初期沒蓋製作台也能自保);up=每升 1 級的材料(× 當前 Lv)
+   * 攻擊 = round((atk × (1 + 0.25×(★−1)) × (1 + 0.2×(Lv−1))) + 力氣×POW_ATK) */
+  D.WEAPONS = [
+    { id:'club',      n:'棍棒',   e:'🏏', img:'wp_club',      atk:7,  def:1, zone:1.0, spd:0, crit:1.5, hits:1, hand:true,  cost:{wood:4, fiber:2},              up:{wood:3, fiber:1},
+      d:'最簡單的武器,一根硬木頭。',   sci:'木頭有彈性又不會太重,揮起來不震手。',
+      parts:[ {k:'body', n:'棒身', need:'wood', hint:'又直又硬的木頭', e:'🪵'}, {k:'grip', n:'握把', need:'fiber', hint:'纏一圈纖維才不會滑手', e:'🌿'} ] },
+    { id:'stoneaxe',  n:'石斧',   e:'🪓', img:'wp_stoneaxe',  atk:9,  def:0, zone:0.9, spd:0, crit:2.0, hits:1, hand:true,  cost:{stone:3, wood:3, fiber:2},     up:{stone:2, wood:2, fiber:1},
+      d:'磨尖的石頭綁在木柄上,暴擊特別痛。', sci:'石頭磨出刃口,受力面積小→壓力大,砍得進去。',
+      parts:[ {k:'head', n:'石刃', need:'stone', hint:'磨出刃口的硬石頭', e:'🪨'}, {k:'shaft', n:'斧柄', need:'wood', hint:'木柄是槓桿,越長越省力', e:'🪵'}, {k:'bind', n:'綁繩', need:'fiber', hint:'綁緊石刃不飛出去', e:'🌿'} ] },
+    { id:'spear',     n:'長槍',   e:'🔱', img:'wp_spear',     atk:10, def:1, zone:1.4, spd:1, crit:1.5, hits:1, hand:false, cost:{wood:6, stone:2, fiber:3},     up:{wood:3, stone:1, fiber:1},
+      d:'又長又準,甜蜜點特別寬。',     sci:'長槍離魔物遠,也能先刺到——距離就是安全。',
+      parts:[ {k:'shaft', n:'槍桿', need:'wood', hint:'長而直,才刺得遠', e:'🪵'}, {k:'tip', n:'槍尖', need:'stone', hint:'尖尖的,受力面積小', e:'🪨'}, {k:'bind', n:'綁繩', need:'fiber', hint:'把槍尖綁牢', e:'🌿'} ] },
+    { id:'bow',       n:'弓箭',   e:'🏹', img:'wp_bow',       atk:8,  def:0, zone:1.0, spd:4, crit:1.8, hits:1, first:true, hand:false, cost:{wood:5, fiber:6, feather:2}, up:{wood:2, fiber:3, feather:1},
+      d:'遠遠射過去,永遠先出手。',     sci:'拉弓把「彈性位能」存進弓身,放手變成箭的動能。',
+      parts:[ {k:'limb', n:'弓身', need:'wood', hint:'要有彈性,彎了會彈回來', e:'🪵'}, {k:'string', n:'弓弦', need:'fiber', hint:'細又韌,拉緊不斷', e:'🌿'}, {k:'fletch', n:'箭羽', need:'feather', hint:'羽毛讓箭飛得直', e:'🪶'} ] },
+    { id:'hammer',    n:'錘',     e:'🔨', img:'wp_hammer',    atk:14, def:2, zone:0.7, spd:-2, crit:1.5, hits:1, stunP:35, hand:false, cost:{stone:6, wood:4, fiber:2}, up:{stone:3, wood:2, fiber:1},
+      d:'又重又慢,打中有機會把魔物打暈。', sci:'質量大、速度快 → 動量大,一錘下去魔物站不穩。',
+      parts:[ {k:'head', n:'錘頭', need:'stone', hint:'又重又硬的大石頭', e:'🪨'}, {k:'shaft', n:'錘柄', need:'wood', hint:'長柄=長施力臂,更省力', e:'🪵'}, {k:'bind', n:'綁繩', need:'fiber', hint:'綁緊錘頭', e:'🌿'} ] },
+    { id:'boomerang', n:'迴力鏢', e:'🪃', img:'wp_boomerang', atk:5,  def:0, zone:1.1, spd:2, crit:1.5, hits:2, hand:false, cost:{wood:5, fiber:2, shell:1},   up:{wood:3, fiber:1, shell:1},
+      d:'丟出去打一下、飛回來再打一下(一回合兩段)。', sci:'彎彎的翼面像機翼,旋轉時產生升力才會轉一圈飛回來。',
+      parts:[ {k:'wing', n:'翼身', need:'wood', hint:'兩片彎翼,像機翼一樣', e:'🪵'}, {k:'edge', n:'刃緣', need:'shell', hint:'貝殼磨利當刃', e:'🐚'}, {k:'grip', n:'握把', need:'fiber', hint:'纏纖維才好握', e:'🌿'} ] }
+  ];
+  D.WEAPON_MAX_LV = 5;
+  D.weapon = function(id){ var i; for(i = 0; i < D.WEAPONS.length; i++){ if(D.WEAPONS[i].id === id) return D.WEAPONS[i]; } return null; };
+  D.QUIZ = D.QUIZ || {};
+  D.QUIZ.weapon = [
+    { q:'拉開的弓把箭射出去,弓身裡存的是哪一種能量?', o:['彈性位能','熱能','光能','聲能'], a:0, why:'彎曲的弓身像壓縮的彈簧,存的是彈性位能,放手變成箭的動能。' },
+    { q:'錘柄做得長一點,敲下去比較省力,是因為?', o:['施力臂變長(槓桿)','錘子變輕','石頭變軟','手變大'], a:0, why:'柄越長施力臂越長,同樣的力產生更大的力矩。' },
+    { q:'石斧的刃要磨得薄,是為了?', o:['受力面積小,壓力大','比較好看','比較輕','不會生鏽'], a:0, why:'同樣的力,面積越小壓力越大,越容易砍進去。' },
+    { q:'迴力鏢能飛回來,和飛機翅膀一樣靠?', o:['翼面產生升力','磁力','引力','聲音'], a:0, why:'彎翼旋轉時空氣流過產生升力,讓它轉彎飛回來。' },
+    { q:'長槍比棍棒安全,主要因為?', o:['離魔物比較遠','比較輕','比較亮','比較短'], a:0, why:'武器越長,攻擊距離越遠,魔物碰不到你。' },
+    { q:'箭尾要黏羽毛,是為了?', o:['讓箭飛得直','讓箭變重','讓箭發光','裝飾用'], a:0, why:'羽毛像尾翼,穩定箭的方向不翻滾。' },
+    { q:'錘子敲東西「動量」大,是因為?', o:['質量大又揮得快','顏色深','很長','會發熱'], a:0, why:'動量=質量×速度,又重又快的錘頭衝擊力最大。' },
+    { q:'木棒握把要纏一圈纖維,是為了?', o:['增加摩擦力不滑手','變重','變漂亮','防蟲'], a:0, why:'粗糙的表面摩擦力大,握得住才揮得穩。' }
+  ];
+  D.STORY.firstBattle = ['什麼東西從草叢裡跳出來了!', '(遇到魔物時:⚔ 攻擊要在指針經過綠色甜蜜點時按下;🧠 智取是選出「牠怕什麼」;打不過就 🛡 防禦或 🏃 逃跑。)', '(受傷要回營地治療;體力歸零會倒下,魔物就在原地,明天再來報仇。)'];
 
   /* ── 結算文案 ── */
   D.STAR_TEXT = { 1:'還可以', 2:'不錯喔', 3:'完美!' };
