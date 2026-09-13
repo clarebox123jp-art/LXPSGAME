@@ -15,7 +15,12 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.127.0(2026-09-13)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.128.0(2026-09-13)
+     ★ v1.128.0(2026-09-13・老師兩項:①GM 要能調整頭髮和衣服的尺寸和座標,如同造型工房,調好存成預設值 ②雙馬尾/高馬尾/長髮 改女生限定,男生另給 3 款新髮型)—
+       🏝 ①根因(已用 Python 逐格量 24 張分層圖的實際輪廓 alpha>120 確認,不是程式對位邏輯壞掉):衣服 c1~c3 是照比較高瘦的身體畫的,整件比基底身體大 1.3~1.6 倍、領口畫到 y26(基底下巴在 y53)⇒ 整顆頭被吃掉;假髮頭圍又比基底的頭大一圈,且少女基底的頭比少年高 5px(少女頭頂 y0/少年 y5)而髮際線都畫在 y4 ⇒ 瀏海壓到眼睛。
+       ②解法不重畫圖:每張圖各自帶一組修正值 { sx, sy, dx, dy }(island_db 的 D.LAYER_ADJ 是預設值、GM 微調暫存 localStorage.isl_lyadj),islLyGeo() 換算成 background-size/background-position,基準固定「水平中心線＋腳底線」⇒ 縮放後人不會飄,三層與走路各幀永遠同步;sx=sy=1、dx=dy=0 時與 v1.124.0 的 islLyPos 算出完全相同的值(舊行為不變)。預設值是用實際輪廓自動擬合的(衣服縮到領口剛好落在脖子、頭髮縮到髮量寬≈頭寬×1.12 並把髮際線對到頭頂)。
+       ③🎨 造型工房(GM):⚙ 設定選單(只有管理員信箱看得到)→ 正面/背面/側面三向即時預覽(可切走路動畫)+ 選體型/層(服裝 c0~c3·髮型 h0~h3·基底 s0~s3)+ 四欄位 寬 sx/高 sy/左右 dx/上下 dy(各兩段步進、可鎖等比),每按一下立刻套用並寫 localStorage,場景裡的小人同步更新;⟲ 這一張回預設 / ♻ 全部回預設 / 📋 複製設定值(輸出成 D.LAYER_ADJ 整段,貼回聊天室就能寫成全裝置預設值)。ESC 可關,面板放 body 層不吃 #island-root 的 zoom。
+       ④髮型改依性別:ISL_HAIRS_B(少年:短髮/刺蝟短髮/西瓜皮/捲毛蓬鬆)、ISL_HAIRS_G(少女:短髮/雙馬尾/自然長髮/高馬尾),統一走 islHairs(body);索引 h0~h3 與檔名不變 ⇒ 舊存檔 char.hair 不必轉換。少年 h1~h3 由老師依《圖片生成需求清單_第八份》重新生成同名覆蓋,因此 MG_IMG_VER 4→5。新圖上線後 D.LAYER_ADJ 內 hair_boy_h1~h3 的值要用造型工房重調(現值是舊圖量出來的)。對應 minigame_sw.js v1.98.0、minigame_island_db.js v1.26.0。
      ★ v1.127.0(2026-09-13・老師「目前確認只有 GM 可以進荒島」)— 🏝 小遊戲端補上與主程式同一道 GM 閘門(雙保險):`ISL_ADMIN_ONLY=true` + `ISL_GM_EMAILS`(與主程式同一份管理員信箱白名單)+ `islGateOk()`;`islEnter` 最前面就擋,連「記得網址直接開 ?mode=island」也進不來,改顯示「🚧 敬請期待」攔截視窗(附「🔑 我是老師,先登入」與「回小遊戲大廳」兩顆鈕)。⚠ 登入狀態是非同步的:`?mode=island` 的自動進場等待條件加上「MG.user 已就緒或已等 8 秒」,另外 `islOnUser` 偵測到剛登入的是 GM 會自動放行進場,老師不必再按一次。正式開放時 ISL_ADMIN_ONLY 與主程式 _LXPS_ISLAND_ADMIN_ONLY 兩個開關都要改 false。同輪新增 `window.islInstallMark()` 供主程式首頁「🏝 完整下載荒島求生主程式」鈕在下載完成後寫入同一個 `localStorage.isl_installed` 記號。對應 minigame_sw.js v1.97.0、island_db v1.25.0(零改動)、主程式 index.html v5.189.0。
      ★ v1.126.0(2026-09-13・老師:已在 REPO 上傳海浪聲、森林鳥叫,掛到沙灘與森林地圖持續循環播放)— 🏝 新增「場景環境音」第二層音軌(疊在 BGM 之上,不是換 BGM):兩支 <audio loop> amb-isl-wave(海浪聲.mp3)/amb-isl-bird(森林鳥叫.mp3)+ ISL_AMB_SFX 對照表 + islAmbSfxUpdate/islAmbSfxStop/islAmbSfxWant。🌊 海浪=沙灘/岩岸/懸崖/營地/大地圖(營地 0.3、地圖 0.25 音量放小不搶對白),🐦 鳥叫=森林/草原/山谷/溪流/湖泊;洞窟·遺跡·火山刻意不掛(密閉或無生物環境放這兩支會很怪)。音量吃「🔊 音效」拉桿(_mgVolSfx,拉到 0 一起靜音、拉桿變動即時套用),⚙ 設定選單另給獨立開關「🌊 環境音」(存檔 flags.ambSfxOff),想專心聽音樂的人可單獨關掉。掛點:islShowScreen(換畫面)、islEnterZone(同畫面換區域)、_bgmArm(拿到使用者手勢後補播被自動播放封鎖擋掉的那一次)、islExitNow(離開荒島一併收掉不殘留)。⚠ 實查 repo 兩個檔案位置不一樣:海浪聲.mp3 在 minigame/audio/、森林鳥叫.mp3 在 repo 根目錄,兩個 src 各自指對地方(檔名走 URL 編碼)。對應 minigame_sw.js v1.96.0;minigame_island_db.js 本輪零改動(仍 v1.25.0)。
      ★ v1.125.0(2026-09-13・老師七項)— 🏝 ①營地側欄新增第 5 顆大項目「🌙 休息」(睡覺/存檔/重新開始從「探索」搬出來獨立一頁;探索改放 出發/圖鑑/島上日誌)。②AP 用完的頭上泡泡改成「每個畫面只講一次、持續 5 秒」,換畫面才會再講一次而且刻意換一句(islTiredCheck 以 螢幕|區域|天 當記號,不再每 3 秒輪播)。③營地主角的泡泡超出畫面根治:#isl-camp-char 在左下角又被 scale(2.2),原本 left:50%+translateX(-50%) 置中會往左伸出畫面 → 改成從角色左緣往右展開 + 可換行 + 限寬。④存檔按鈕一定有回應:islSaveTap 改為 先寫本機 → toast「儲存中…」→ 成功/失敗各彈一個明確視窗(9 秒沒回報成功即視為失敗並說明「已先存在這台裝置」);未登入也會明確告知已存到本機;休息分頁裡的存檔走同一支。HUD 的 🐚 貝幣與資源欄在 v1.124.0 已可點開說明。⑤左上角 📅 改成開「島上日誌」放大版日曆:一頁一個月(30 個遊戲日)、有事件的格子亮金框並顯示事件數、點格子放大看那天的完整履歷;資料來源就是結局回憶用的同一份 ISL.log。⑥所有建造/升級都要等真實時間(BUILD_SECS:營火 30 秒、日常 1~2 分、大型 3~5 分、帆船 10 分;升級=新建×0.6×等級):材料與 AP 動工當下就扣,營地那一格顯示工地底紋與倒數,完工時右下角跳通知小卡 islNotify + 音效;新建施工中不算「已經有」(islCampHasBld 跳過)以免提早解鎖,升級中則維持舊等級照常可用;帆船結局改由完工那一刻觸發。⑦所有武器可升到 Lv20:新增武器熟練值(裝備著打贏魔物才累積,每把獨立),升級 = 熟練值 + 分階段素材(基礎強化/野外改良+大葉小石/金屬補強+鐵礦貝殼/工藝精修+水晶海廢/遺跡傳承+遺物水晶蜂蜜);攻擊倍率 Lv1~5 與舊版完全相同,Lv6 起改 +10%/級(Lv20=×3.3,不讓後期變成一刀秒殺)。對應 minigame_island_db.js v1.25.0、minigame_sw.js v1.95.0。
@@ -4496,7 +4501,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
     <button class="ih btn" id="isl-hud-save" onclick="islSaveTap()" title="存檔">💾</button>
     <button class="ih btn" id="isl-hud-gear" onclick="islGearToggle()" title="設定">⚙</button><!-- ★ v1.115.0 設定選單(動態背景/音樂/全螢幕)移到右上角 -->
     <button class="ih btn" onclick="islExit()" title="離開荒島,回主程式首頁">✕</button>
-    <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islAmbToggle2()" id="isl-gear-ambsfx">🌊 環境音</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button></div><!-- ★ v1.116.0 老師:完整下載荒島求生主程式 -->
+    <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islAmbToggle2()" id="isl-gear-ambsfx">🌊 環境音</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button><button onclick="islGearToggle();islLabOpen()" id="isl-gear-lab" style="border-color:#ffd166;display:none">🎨 造型工房(GM)</button></div><!-- ★ v1.116.0 老師:完整下載荒島求生主程式 -->
   </div>
   <div id="isl-hud-tip" class="hidden"></div>
   <div id="isl-notify"></div><!-- ★ v1.125.0 右下角完工通知(建造完成) --><!-- ★ v1.124.0 HUD 藥丸的文字說明小視窗(掛 root 直下,避免被 HUD 橫向捲動裁掉) -->
@@ -4534,6 +4539,8 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 <!-- ★ v1.116.0 荒島完整安裝面板改放 body 層(原本在 #page-home 內,?mode=island 直入或在荒島 ⚙ 設定裡按都打不開) -->
     <div id="isl-install" class="hidden" style="position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px"><div style="background:#14202e;border:3px solid #7bed9f;border-radius:18px;padding:18px 22px;max-width:460px;width:100%;color:#fff;text-align:center"><h3 style="margin:0 0 8px">⬇ 完整下載荒島求生主程式</h3><p id="isl-install-txt" style="font-size:15px;margin:6px 0"></p><div style="height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:8px 0"><div id="isl-install-bar" style="height:100%;width:0%;background:#7bed9f;transition:width .2s"></div></div><div id="isl-install-btns" style="display:flex;gap:8px;justify-content:center;margin-top:10px"></div></div></div>
+<!-- ★ v1.128.0 🎨 造型工房(GM 專用:調整頭髮/衣服/基底的尺寸與座標);放 body 層才不吃 #island-root 的 zoom,座標換算單純 -->
+    <div id="isl-lylab" class="hidden" style="position:fixed;inset:0;z-index:9100;background:rgba(4,10,18,.9);display:flex;align-items:center;justify-content:center;padding:10px"><div style="background:#14202e;border:3px solid #ffd166;border-radius:18px;padding:12px 14px;max-width:1120px;width:100%;max-height:96%;overflow:auto;color:#fff;font-size:16px"><div id="isl-lylab-bd"></div></div></div>
 <div id="toast"></div>
 
 <!-- ★ v1.5.0 — 強制橫式遮罩(老師需求②):觸控裝置直式時蓋住全畫面;純 CSS media query 控制顯示,零 JS -->
@@ -4564,7 +4571,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.125.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.128.0"></script><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4573,7 +4580,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 (function(){
 'use strict';
 
-var MG_VER = 'v1.127.0';   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.128.0';   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -5357,7 +5364,7 @@ function mgAssetUrl(name){ return name ? (MG_IMG_BASE + encodeURIComponent(Strin
    檔名主體 = 素材需求清單的檔名(minigame/img/<pic>.png),同目錄相對路徑 ⇒ 走小遊戲自己的 SW scope。
    ⚠ 一律 onerror 隱藏:圖還沒上傳前畫面完全等同現況(純文字／emoji),上傳即自動出現,程式不必再改。
    ⚠ 版本靠 MG_IMG_VER 破快取,素材更新時只改這一個數字。 */
-var MG_IMG_VER = '4';   /* ★ v1.101.0 第二批 35 張(六區/農田畜欄水道製作台/資源/資源點)已上傳 → bump */   /* ★ v1.97.0 老師已上傳荒島第一批 57 張(v1.93.0 清單)→ bump 重抓 */
+var MG_IMG_VER = '5';   /* ★ v1.128.0 少年專屬 3 款髮型(island_hair_boy_h1~h3.png)同名覆蓋 → 必須 bump 才不會吃到舊快取 */   /* ★ v1.101.0 第二批 35 張(六區/農田畜欄水道製作台/資源/資源點)已上傳 → bump */   /* ★ v1.97.0 老師已上傳荒島第一批 57 張(v1.93.0 清單)→ bump 重抓 */
 function mgPicUrl(pic){
   /* ★ v1.9.0 '@檔名.png' = 主程式 repo 根目錄既有素材(如寵物去背 png),動物分類關沿用 40 隻寵物圖不必再生圖 */
   pic = String(pic);
@@ -12388,7 +12395,13 @@ var ISL_PAL = {
   uniform: { boy: '#9ecbf0', girl: '#f7b6cf' },   /* 力行國小運動服兩色(avatar_db top_uniform_boy/girl) */
   shorts: '#3a4a6b'
 };
-var ISL_HAIRS = [ { k:'short', n:'短髮' }, { k:'twin', n:'雙馬尾' }, { k:'long', n:'自然長髮' }, { k:'pony', n:'高馬尾' } ];
+/* ★ v1.128.0 老師裁定:雙馬尾／自然長髮／高馬尾 是少女限定,少年另外生成 3 款專屬髮型(刺蝟短髮/西瓜皮/捲毛蓬鬆)。
+   兩邊都是 4 款、共用 h0~h3 檔名(island_hair_boy_h1~h3.png 由老師重新生成覆蓋),索引不變 ⇒ 存檔 char.hair 不必轉換。
+   k 欄只有「sprite 全部缺圖時的 CSS 手繪備援」在用,少年新款一律沿用既有的 short 造型類別,不必再加 CSS。 */
+var ISL_HAIRS_B = [ { k:'short', n:'短髮' }, { k:'short', n:'刺蝟短髮' }, { k:'short', n:'西瓜皮' }, { k:'short', n:'捲毛蓬鬆' } ];
+var ISL_HAIRS_G = [ { k:'short', n:'短髮' }, { k:'twin', n:'雙馬尾' }, { k:'long', n:'自然長髮' }, { k:'pony', n:'高馬尾' } ];
+function islHairs(body){ return (body === 'girl') ? ISL_HAIRS_G : ISL_HAIRS_B; }
+var ISL_HAIRS = ISL_HAIRS_G;   /* 舊名保留(相容);新程式一律用 islHairs(body) */
 /* ★ v1.116.0 分層造型(老師:主角造型新增 髮型/髮色/膚色/服裝)
  *   三層 sprite 疊圖:base_<body>_s<膚色0~3>(光頭基底身體)→ cloth_<body>_c<服裝0~3> → hair_<body>_h<髮型0~3>(灰階 #909090,髮色用 CSS filter 染成 ISL_PAL.hair 16 色)。
  *   每張 768×384、6 欄×3 列、128px 格;顯示時 background-size 384×192(縮一半)→ 64px 格,與既有整張 sheet 的座標系相同。
@@ -12478,9 +12491,50 @@ function islLyPos(body, row, col){
   if(m && m.ok){ cx += (m.dx || 0); by += (m.dy || 0); }
   return (-(Math.round(cx) - 32)) + 'px ' + (-(row * 64 + Math.round(by) - 60)) + 'px';
 }
-function islLayersHtml(c, row, col){   /* 三層 div(基底/衣服/頭髮);同一個 background-position;髮色用 filter */
-  var L = islLayerKeys(c), pos = islLyPos(L.body, row, col), h = '';
-  function lay(k, cls, extra){ return '<div class="ly ' + cls + '" style="background-image:url(\'' + islImgUrl(k) + '\');background-position:' + pos + ';' + (extra || '') + '"></div>'; }
+/* ══ ★ v1.128.0(老師:GM 要能調整頭髮和衣服的尺寸和座標,如同造型工房)══
+   24 張分層圖是各自生成的,實際量測後比例並不一致(衣服 c1~c3 比基底身體大 1.3~1.6 倍、領口畫到臉上把整顆頭吃掉;
+   假髮頭圍比基底的頭大一圈,少女基底的頭又比少年高 5px ⇒ 瀏海壓到眼睛)。
+   解法不是重畫圖,而是每張圖各自帶一組修正值 { sx, sy, dx, dy }(island_db 的 D.LAYER_ADJ 是預設值,
+   GM 在「🎨 造型工房」調的暫存在 localStorage.isl_lyadj,覆蓋預設值)。
+     sx/sy = 寬/高倍率;dx/dy = 顯示用 64px 座標系的位移(正 = 右/下)。
+   換算基準點固定兩條:①水平中心線 ②腳底那條線(by) ⇒ 縮放時人不會飄走,三層與走路各幀永遠對得齊。
+     background-size     = 384×sx  ×  192×sy
+     background-position = (32 + dx − 幀中心x × sx) , (60 + dy − 腳底y × sy)
+   sx=sy=1、dx=dy=0 時算出來的值與 v1.124.0 的 islLyPos 完全相同(舊行為不變)。 */
+var _islLyOvC = null;
+function islLyOv(){   /* GM 本機微調覆寫(localStorage) */
+  if(_islLyOvC) return _islLyOvC;
+  _islLyOvC = {};
+  try{ var s = localStorage.getItem('isl_lyadj'), o = s ? JSON.parse(s) : null; if(o && typeof o === 'object') _islLyOvC = o; }catch(e){ _islLyOvC = {}; }
+  return _islLyOvC;
+}
+function islLyAdj(key){
+  var db = islDB(), a = { sx: 1, sy: 1, dx: 0, dy: 0 }, i, src, k, ks = ['sx', 'sy', 'dx', 'dy'];
+  for(i = 0; i < 2; i++){
+    src = i ? islLyOv()[key] : (db && db.LAYER_ADJ ? db.LAYER_ADJ[key] : null);
+    if(!src) continue;
+    for(k = 0; k < 4; k++){ if(typeof src[ks[k]] === 'number' && isFinite(src[ks[k]])) a[ks[k]] = src[ks[k]]; }
+  }
+  a.sx = islClamp(a.sx, 0.3, 2); a.sy = islClamp(a.sy, 0.3, 2);
+  a.dx = islClamp(a.dx, -40, 40); a.dy = islClamp(a.dy, -40, 40);
+  return a;
+}
+function islLyGeo(body, row, col, key){
+  var m = _islLyMeas[body], cx = col * 64 + 32, by = row * 64 + 60, a = islLyAdj(key), px, py;
+  if(m && m.ok){ cx += (m.dx || 0); by += (m.dy || 0); }
+  px = 32 + a.dx - cx * a.sx; py = 60 + a.dy - by * a.sy;
+  return { bs: (Math.round(384 * a.sx * 10) / 10) + 'px ' + (Math.round(192 * a.sy * 10) / 10) + 'px',
+           bp: (Math.round(px * 10) / 10) + 'px ' + (Math.round(py * 10) / 10) + 'px' };
+}
+function islLyCss(body, row, col, key){ var g = islLyGeo(body, row, col, key); return 'background-size:' + g.bs + ';background-position:' + g.bp + ';'; }
+function islLyApply(el, body, row, col, key){   /* 走路換幀:只改位置(尺寸不變才不會每幀重算重繪) */
+  var g = islLyGeo(body, row, col, key);
+  if(el.style.backgroundPosition !== g.bp) el.style.backgroundPosition = g.bp;
+  if(el.style.backgroundSize !== g.bs) el.style.backgroundSize = g.bs;
+}
+function islLayersHtml(c, row, col){   /* 三層 div(基底/衣服/頭髮);★ v1.128.0 每層各自吃自己的尺寸/座標修正值;髮色用 filter */
+  var L = islLayerKeys(c), h = '';
+  function lay(k, cls, extra){ return '<div class="ly ' + cls + '" data-lk="' + k + '" style="background-image:url(\'' + islImgUrl(k) + '\');' + islLyCss(L.body, row, col, k) + (extra || '') + '"></div>'; }
   h += lay(islPicOkSync(L.base) === true ? L.base : L.base0, 'b');
   if(islPicOkSync(L.cloth) === true) h += lay(L.cloth, 'c');
   if(islPicOkSync(L.hair) === true) h += lay(L.hair, 'h', 'filter:' + ISL_HAIR_FILTER[L.hairC]);
@@ -12489,13 +12543,165 @@ function islLayersHtml(c, row, col){   /* 三層 div(基底/衣服/頭髮);同�
 /* ★ v1.124.0 造型選項用的小預覽圖(臉/髮型/服裝/體型共用同一個 64×64 外框 ⇒ 四組按鈕的尺寸與高度完全一致)
    kind: 'face'=只有身體基底,看得到膚色與臉(頭部放大 2 倍) / 'hair'=身體+髮型(頭部放大 2 倍) / 'body'=整個人(身體+服裝+髮型) */
 function islLayerThumb(c, kind){
-  var L = islLayerKeys(c), pos = islLyPos(L.body, 0, 0), h = '', tf;
-  function lay2(k, extra){ return '<div class="ly" style="background-image:url(\'' + islImgUrl(k) + '\');background-position:' + pos + ';' + (extra || '') + '"></div>'; }
+  var L = islLayerKeys(c), h = '', tf;
+  function lay2(k, extra){ return '<div class="ly" style="background-image:url(\'' + islImgUrl(k) + '\');' + islLyCss(L.body, 0, 0, k) + (extra || '') + '"></div>'; }
   h += lay2(islPicOkSync(L.base) === true ? L.base : L.base0);
   if(kind === 'body' && islPicOkSync(L.cloth) === true) h += lay2(L.cloth);
   if(kind !== 'face' && islPicOkSync(L.hair) === true) h += lay2(L.hair, 'filter:' + ISL_HAIR_FILTER[L.hairC]);
   tf = (kind === 'body') ? 'translate(-5px,-5px) scale(1.15)' : 'translate(-32px,0px) scale(2)';   /* 頭部放大時把 (32,16) 這個點對到框中心 (32,32) */
   return '<div class="isl-opt-th"><div class="th-in"><div class="isl-pixchar ly" style="transform:' + tf + ';transform-origin:0 0">' + h + '</div></div></div>';
+}
+/* ══ ★ v1.128.0 🎨 造型工房(GM 專用)══
+   老師:「讓我 GM 可以調整頭髮和衣服的尺寸和座標(如同造型工房),設定好之後你再存起來作為預設值。」
+   ⚙ 設定 → 🎨 造型工房(GM)(只有管理員信箱看得到)。左邊三個方向(正面/背面/側面)同時預覽、可切走路動畫;
+   右邊選「要調哪一張圖」(服裝 c0~c3 / 髮型 h0~h3 / 基底身體 s0~s3),四個欄位:寬、高、左右、上下。
+   每按一下就立刻套用並存進 localStorage.isl_lyadj(這台裝置立即生效,連場景裡走動的小人也同步更新),
+   調好按「📋 複製設定值」→ 把整段貼回聊天室,我再把它寫成 island_db 的 D.LAYER_ADJ 預設值(全部裝置生效)。 */
+var _islLab = null, _islLabT = null;
+var ISL_LAB_ROWS = [{ r: 0, n: '正面' }, { r: 1, n: '背面' }, { r: 2, n: '側面' }];
+function islLabChar(){ var L = _islLab; return { body: L.body, skin: L.skin * 2, hair: L.hair, hairC: L.hairC, cloth: L.cloth }; }
+function islLabKey(){ var L = _islLab; return (L.kind === 'cloth') ? ('cloth_' + L.body + '_c' + L.cloth) : ((L.kind === 'hair') ? ('hair_' + L.body + '_h' + L.hair) : ('base_' + L.body + '_s' + L.skin)); }
+function islLabName(){ var L = _islLab, db = islDB();
+  if(L.kind === 'cloth') return '👕 服裝 ' + ((db && db.CLOTHES && db.CLOTHES[L.cloth]) ? db.CLOTHES[L.cloth].n : ('c' + L.cloth));
+  if(L.kind === 'hair') return '💇 髮型 ' + ((islHairs(L.body)[L.hair] || {}).n || ('h' + L.hair));
+  return '🧍 基底身體 ' + ((db && db.SKINS4 && db.SKINS4[L.skin]) ? db.SKINS4[L.skin].n : ('s' + L.skin));
+}
+function islLabOpen(){
+  var c = (ISL && ISL.char) || {}, p = $('isl-lylab');
+  if(!islIsGm()){ toast('這是老師專用的工具,請先用管理員帳號登入'); return; }
+  if(!p) return;
+  _islLab = { body: (c.body === 'girl') ? 'girl' : 'boy', skin: islClamp(Math.floor(((c.skin) | 0) / 2), 0, 3), hair: islClamp((c.hair) | 0, 0, 3),
+              cloth: islClamp((c.cloth) | 0, 0, 3), hairC: islClamp((c.hairC) | 0, 0, ISL_HAIR_FILTER.length - 1), kind: 'cloth', walk: false, lock: true };
+  islLayerProbe(_islLab.body, function(){ islLabPaint(); });
+  p.classList.remove('hidden');
+  playSfx('sfx-tap', 0.3);
+  islLabPaint();
+  if(_islLabT) clearInterval(_islLabT);
+  _islLabT = setInterval(islLabTick, 130);
+}
+function islLabClose(){
+  var p = $('isl-lylab');
+  if(_islLabT){ clearInterval(_islLabT); _islLabT = null; }
+  if(p){ p.classList.add('hidden'); $('isl-lylab-bd').innerHTML = ''; }
+  playSfx('sfx-cancel', 0.25);
+  islLayerRepaint();
+}
+function islLabPaint(){
+  var L = _islLab, bd = $('isl-lylab-bd'), a, i, h, ch, db = islDB(), key;
+  if(!L || !bd) return;
+  key = islLabKey(); a = islLyAdj(key); ch = islLabChar();
+  h = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px"><h3 style="margin:0;font-size:20px;color:#ffd166">🎨 造型工房(GM)</h3>' +
+      '<span style="margin-left:auto"></span>' +
+      '<button onclick="islLabReset(0)" style="background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 10px;font-weight:700">⟲ 這一張回預設</button>' +
+      '<button onclick="islLabReset(1)" style="background:#7a3b3b;color:#fff;border:2px solid #d98a8a;border-radius:10px;padding:6px 10px;font-weight:700">♻ 全部回預設</button>' +
+      '<button onclick="islLabCopy()" style="background:#c98a1e;color:#fff;border:2px solid #ffd166;border-radius:10px;padding:6px 10px;font-weight:700">📋 複製設定值</button>' +
+      '<button onclick="islLabClose()" style="background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 12px;font-weight:700">✕ 關閉</button></div>';
+  h += '<div style="font-size:13px;opacity:.85;margin:-4px 0 8px">調好的值會立刻套用在這台裝置(重開也還在);按「📋 複製設定值」把整段貼回聊天室,就能存成全部裝置的預設值。</div>';
+  h += '<div style="display:flex;gap:14px;flex-wrap:wrap">';
+  /* 左:三個方向的即時預覽 */
+  h += '<div style="flex:0 0 auto">';
+  for(i = 0; i < ISL_LAB_ROWS.length; i++){
+    h += '<div style="display:inline-block;text-align:center;margin:0 6px 6px 0">' +
+         '<div style="width:150px;height:150px;background:#0d1a26;border:2px solid #2a6f97;border-radius:12px;position:relative;overflow:hidden">' +
+         '<div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(255,209,102,.35)"></div>' +
+         '<div style="position:absolute;left:0;bottom:9px;width:100%;height:1px;background:rgba(255,209,102,.35)"></div>' +
+         '<div class="isl-lab-p" data-row="' + ISL_LAB_ROWS[i].r + '" style="position:absolute;left:0;top:0;width:64px;height:64px;transform:scale(2.34);transform-origin:0 0">' +
+         '<div class="isl-pixchar ly">' + islLayersHtml(ch, ISL_LAB_ROWS[i].r, 0) + '</div></div></div>' +
+         '<div style="font-size:13px;opacity:.85;margin-top:2px">' + ISL_LAB_ROWS[i].n + '</div></div>';
+  }
+  h += '<div style="margin-top:4px"><button onclick="islLabSet(\'walk\',' + (L.walk ? 'false' : 'true') + ')" style="background:' + (L.walk ? '#2e9e5b' : '#2a6f97') + ';color:#fff;border:2px solid #5fb3d9;border-radius:10px;padding:6px 12px;font-weight:700">' + (L.walk ? '⏸ 停止走路' : '🚶 走路動畫') + '</button></div></div>';
+  /* 右:選圖 + 四個欄位 */
+  h += '<div style="flex:1 1 300px;min-width:280px">';
+  h += islLabRow('體型', [{ v: 'boy', n: '少年' }, { v: 'girl', n: '少女' }], 'body', L.body);
+  h += islLabRow('要調哪一層', [{ v: 'cloth', n: '👕 服裝' }, { v: 'hair', n: '💇 髮型' }, { v: 'base', n: '🧍 基底' }], 'kind', L.kind);
+  if(L.kind === 'cloth'){ a = []; for(i = 0; i < 4; i++) a.push({ v: i, n: (db && db.CLOTHES && db.CLOTHES[i]) ? db.CLOTHES[i].n : ('c' + i) }); h += islLabRow('服裝', a, 'cloth', L.cloth); }
+  else if(L.kind === 'hair'){ a = []; for(i = 0; i < 4; i++) a.push({ v: i, n: (islHairs(L.body)[i] || {}).n || ('h' + i) }); h += islLabRow('髮型', a, 'hair', L.hair); }
+  else { a = []; for(i = 0; i < 4; i++) a.push({ v: i, n: (db && db.SKINS4 && db.SKINS4[i]) ? db.SKINS4[i].n : ('s' + i) }); h += islLabRow('膚色', a, 'skin', L.skin); }
+  a = islLyAdj(key);
+  h += '<div style="background:rgba(255,209,102,.12);border:2px solid #ffd166;border-radius:12px;padding:8px 10px;margin-top:8px">' +
+       '<div style="font-weight:700;margin-bottom:6px">正在調整:' + islLabName() + '　<small style="opacity:.7">(' + key + ')</small></div>';
+  h += islLabField('寬 sx', 'sx', a.sx, 0.01, 0.05) + islLabField('高 sy', 'sy', a.sy, 0.01, 0.05) +
+       islLabField('左右 dx', 'dx', a.dx, 0.5, 2) + islLabField('上下 dy', 'dy', a.dy, 0.5, 2);
+  h += '<label style="display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-top:4px"><input type="checkbox" ' + (L.lock ? 'checked' : '') + ' onchange="islLabSet(\'lock\',this.checked)"> 寬高等比一起調</label>';
+  h += '</div>';
+  h += '<textarea id="isl-lab-out" readonly style="width:100%;height:120px;margin-top:8px;background:#0d1a26;color:#cfe9ff;border:2px solid #2a6f97;border-radius:10px;font-size:12px;padding:6px;display:none"></textarea>';
+  h += '</div></div>';
+  bd.innerHTML = h;
+}
+function islLabRow(label, opts, field, cur){
+  var h = '<div style="margin-top:6px"><div style="font-size:13px;opacity:.8">' + label + '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:3px">', i, v, on;
+  for(i = 0; i < opts.length; i++){
+    v = opts[i].v; on = (String(v) === String(cur));
+    h += '<button onclick="islLabSet(\'' + field + '\',' + (typeof v === 'string' ? ('\'' + v + '\'') : v) + ')" style="background:' + (on ? '#2e9e5b' : '#23384c') + ';color:#fff;border:2px solid ' + (on ? '#7bed9f' : '#3d5a74') + ';border-radius:10px;padding:7px 11px;font-weight:700;font-size:15px">' + islEsc(opts[i].n) + '</button>';
+  }
+  return h + '</div></div>';
+}
+function islLabField(label, field, val, st, bg){
+  function b(d, t){ return '<button onclick="islLabAdd(\'' + field + '\',' + d + ')" style="background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:9px;padding:6px 10px;font-weight:700;min-width:44px">' + t + '</button>'; }
+  return '<div style="display:flex;align-items:center;gap:5px;margin:4px 0"><span style="width:74px;font-size:14px">' + label + '</span>' +
+         b(-bg, '≪') + b(-st, '−') +
+         '<span style="min-width:66px;text-align:center;font-weight:700;color:#ffd166">' + islLabNum(val) + '</span>' +
+         b(st, '＋') + b(bg, '≫') + '</div>';
+}
+function islLabNum(v){ var s = (Math.round(v * 1000) / 1000).toFixed(3); return s.replace(/0+$/, '').replace(/\.$/, '.0'); }
+function islLabSet(field, v){
+  if(!_islLab) return;
+  _islLab[field] = v;
+  playSfx('sfx-tap', 0.2);
+  if(field === 'body') islLayerProbe(v, function(){ islLabPaint(); });
+  islLabPaint();
+}
+function islLabAdd(field, d){
+  var key = islLabKey(), a = islLyAdj(key), ov = islLyOv(), o = ov[key] || { sx: a.sx, sy: a.sy, dx: a.dx, dy: a.dy };
+  o.sx = a.sx; o.sy = a.sy; o.dx = a.dx; o.dy = a.dy;
+  if(field === 'sx' || field === 'sy'){
+    if(_islLab.lock){ o.sx = islClamp(a.sx + d, 0.3, 2); o.sy = islClamp(a.sy + d, 0.3, 2); }
+    else o[field] = islClamp(a[field] + d, 0.3, 2);
+    o.sx = Math.round(o.sx * 1000) / 1000; o.sy = Math.round(o.sy * 1000) / 1000;
+  } else {
+    o[field] = Math.round(islClamp(a[field] + d, -40, 40) * 10) / 10;
+  }
+  ov[key] = o;
+  islLabStore();
+  islLabPaint();
+  islLayerRepaint();
+}
+function islLabStore(){ try{ localStorage.setItem('isl_lyadj', JSON.stringify(islLyOv())); }catch(e){} }
+function islLabReset(all){
+  var ov = islLyOv(), k;
+  if(all){ for(k in ov){ if(ov.hasOwnProperty(k)) delete ov[k]; } toast('全部圖層都回到程式內建的預設值'); }
+  else { delete ov[islLabKey()]; toast(islLabName() + ' 回到預設值'); }
+  islLabStore(); islLabPaint(); islLayerRepaint();
+}
+function islLabCopy(){
+  var bodies = ['boy', 'girl'], out = 'D.LAYER_ADJ = {\n', lines = [], i, j, key, a, ta;
+  function push(key){ a = islLyAdj(key); lines.push('    ' + key + ': { sx:' + a.sx.toFixed(3) + ', sy:' + a.sy.toFixed(3) + ', dx:' + (Math.round(a.dx * 10) / 10) + ', dy:' + (Math.round(a.dy * 10) / 10) + ' }'); }
+  for(i = 0; i < 2; i++){
+    for(j = 0; j < 4; j++) push('cloth_' + bodies[i] + '_c' + j);
+    for(j = 0; j < 4; j++) push('hair_' + bodies[i] + '_h' + j);
+    for(j = 0; j < 4; j++){ key = 'base_' + bodies[i] + '_s' + j; a = islLyAdj(key); if(a.sx !== 1 || a.sy !== 1 || a.dx !== 0 || a.dy !== 0) push(key); }
+  }
+  out += lines.join(',\n') + '\n  };';
+  ta = $('isl-lab-out');
+  if(ta){
+    ta.style.display = 'block'; ta.value = out;
+    try{ if(ta.scrollIntoView) ta.scrollIntoView(); ta.readOnly = false; ta.focus(); ta.setSelectionRange(0, out.length); document.execCommand('copy'); ta.readOnly = true; toast('已複製!貼到聊天室給 Claude 存成預設值'); }
+    catch(e){ toast('請長按下方文字框全選複製,再貼到聊天室'); }
+  }
+}
+window.islLabOpen = islLabOpen; window.islLabClose = islLabClose; window.islLabSet = islLabSet; window.islLabAdd = islLabAdd; window.islLabReset = islLabReset; window.islLabCopy = islLabCopy;
+function islLabTick(){
+  var L = _islLab, ps, i, j, kids, f, row, t = Date.now();
+  if(!L) return;
+  ps = document.querySelectorAll('#isl-lylab .isl-lab-p');
+  if(!ps || !ps.length) return;
+  f = L.walk ? ISL_WALK_SEQ[Math.floor(t / 130) % ISL_WALK_SEQ.length] : (Math.floor(t / 700) % 2);
+  for(i = 0; i < ps.length; i++){
+    row = parseInt(ps[i].getAttribute('data-row'), 10) || 0;
+    kids = ps[i].firstChild ? ps[i].firstChild.children : null;
+    if(!kids) continue;
+    for(j = 0; j < kids.length; j++) islLyApply(kids[j], L.body, row, f, kids[j].getAttribute('data-lk'));
+  }
 }
 var ISL_HIDDEN_SKIN = { 6: 1 };   /* 主程式 v4.82.0 隱藏最深膚色 skin[6] */
 var _islSheetCache = {};   /* ★ v1.109.0 sprite sheet 快取改依性別分開記(boy/girl 各自 url|false),不再共用一個布林值 */
@@ -12515,7 +12721,7 @@ function islChibiHtml(c, cls){   /* ★ v1.109.0 有像素 sprite 可用時一�
   if(islLayerOk(body)) return '<div class="isl-pixchar ly ' + (cls || 'idle') + '">' + islLayersHtml(c, 0, 0) + '</div>';   /* ★ v1.116.0 分層造型(膚色/髮型/髮色/服裝) */
   if(url) return '<div class="isl-pixchar ' + (cls || 'idle') + '" style="background-image:url(\'' + url + '\');background-position:' + (-((ISL_SHEET_CX[body] || ISL_SHEET_CX.boy)[0] - 32)) + 'px 0"></div>';   /* ★ v1.115.0 肖像也對齊實測幀中心 */
   var sk = ISL_PAL.skin[c.skin] || ISL_PAL.skin[0], hc = ISL_PAL.hair[c.hairC] || ISL_PAL.hair[0], ec = ISL_PAL.eye[c.eyeC] || ISL_PAL.eye[0];
-  var hk = (ISL_HAIRS[c.hair] || ISL_HAIRS[0]).k, uni = ISL_PAL.uniform[c.body] || ISL_PAL.uniform.boy;
+  var hk = (islHairs(c.body)[c.hair] || islHairs(c.body)[0]).k, uni = ISL_PAL.uniform[c.body] || ISL_PAL.uniform.boy;
   return '<div class="isl-chibi ' + (cls || 'idle') + '">' +
     '<div class="hr ' + hk + '" style="background:' + hc + '"></div>' +
     '<div class="hd" style="background:' + sk + '"></div>' +
@@ -12780,7 +12986,8 @@ window.islAmbSfxToggle = function(){
 /* ── 模式進出(A=甲:同 PWA 第二模式 Tab) ── */
 window.addEventListener('keydown', function(ev){   /* ★ v1.115.0 ESC 關閉任何開著的視窗/面板/分類選單/設定選單(與右上角 ✕ 同效);全域註冊,不必先進過場景 */
   if(!_IS.on || (ev.key !== 'Escape' && ev.key !== 'Esc')) return;
-  var m = $('isl-modal'), sm = $('isl-submenu'), g = $('isl-gear');
+  var m = $('isl-modal'), sm = $('isl-submenu'), g = $('isl-gear'), lb = $('isl-lylab');
+  if(lb && !lb.classList.contains('hidden')){ islLabClose(); ev.preventDefault(); return; }   /* ★ v1.128.0 造型工房(GM) */
   if(m && !m.classList.contains('hidden')){ playSfx('sfx-cancel', 0.25); islModalClose(); ev.preventDefault(); return; }
   if(sm && !sm.classList.contains('hidden')){ islSubClose(); ev.preventDefault(); return; }
   if(g && !g.classList.contains('hidden')){ g.classList.add('hidden'); ev.preventDefault(); }
@@ -12907,7 +13114,7 @@ function islLookSecsHtml(c, scope){
   for(i = 0; i < db.SKINS4.length; i++) h += picBtn('skin', i * 2 + 1, Math.floor(c.skin / 2) === i, mix({ skin: i * 2 + 1 }), 'face', db.SKINS4[i].n);
   h += '</div></div>';
   h += '<div class="sec"><h4>髮型</h4><div class="sw">';
-  for(i = 0; i < ISL_HAIRS.length; i++){ ok = islPicOkSync('hair_' + c.body + '_h' + i) !== false; h += picBtn('hair', i, c.hair === i, mix({ hair: i }), 'hair', ISL_HAIRS[i].n, !ok, ok ? '' : '這款髮型圖還沒上傳'); }
+  for(i = 0; i < islHairs(c.body).length; i++){ ok = islPicOkSync('hair_' + c.body + '_h' + i) !== false; h += picBtn('hair', i, c.hair === i, mix({ hair: i }), 'hair', islHairs(c.body)[i].n, !ok, ok ? '' : '這款髮型圖還沒上傳'); }
   h += '</div></div>';
   h += '<div class="sec"><h4>髮色</h4><div class="sw">';
   for(i = 0; i < ISL_PAL.hair.length; i++) h += '<button class="col ' + (c.hairC === i ? 'on' : '') + '" data-k="hairC" data-v="' + i + '" style="background:' + ISL_PAL.hair[i] + '"></button>';
@@ -12929,7 +13136,7 @@ function islCreatePaint(){
   if(islLayerOk(c.body)){ /* 分層造型的四組已由 islLookSecsHtml 畫好 */ }
   else if(!islSheetUrlFor(c.body)){   /* ★ v1.109.0 只有 sprite 缺圖(退回手繪版)時才需要這些顏色選項;像素圖是固定美術,顏色選了也不會顯示 */
   h += '<div class="sec"><h4>膚色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.skin.length; i++){ if(ISL_HIDDEN_SKIN[i]) continue; h += '<button class="col ' + (c.skin === i ? 'on' : '') + '" data-k="skin" data-v="' + i + '" style="background:' + ISL_PAL.skin[i] + '"></button>'; } h += '</div></div>';
-  h += '<div class="sec"><h4>髮型</h4><div class="sw">'; for(i = 0; i < ISL_HAIRS.length; i++){ h += '<button class="' + (c.hair === i ? 'on' : '') + '" data-k="hair" data-v="' + i + '">' + ISL_HAIRS[i].n + '</button>'; } h += '</div></div>';
+  h += '<div class="sec"><h4>髮型</h4><div class="sw">'; for(i = 0; i < islHairs(c.body).length; i++){ h += '<button class="' + (c.hair === i ? 'on' : '') + '" data-k="hair" data-v="' + i + '">' + islHairs(c.body)[i].n + '</button>'; } h += '</div></div>';
   h += '<div class="sec"><h4>髮色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.hair.length; i++){ h += '<button class="col ' + (c.hairC === i ? 'on' : '') + '" data-k="hairC" data-v="' + i + '" style="background:' + ISL_PAL.hair[i] + '"></button>'; } h += '</div></div>';
   h += '<div class="sec"><h4>瞳色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.eye.length; i++){ h += '<button class="col ' + (c.eyeC === i ? 'on' : '') + '" data-k="eyeC" data-v="' + i + '" style="background:' + ISL_PAL.eye[i] + '"></button>'; } h += '</div></div>';
   } else { h += '<p style="font-size:14px;opacity:.8;text-align:center">已使用像素風造型圖,依「體型/運動服」自動決定外觀。</p>'; }
@@ -13430,7 +13637,7 @@ var ISL_WALK_SEQ = [2, 0, 3, 1, 4, 0, 5, 1];   /* ★ v1.118.0 老師:左右連�
 function islSpFrame(sp, anim){
   var body = (ISL && ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', cx = ISL_SHEET_CX[body], row = (_IS.dir === 'u') ? 1 : (_IS.dir === 'd' ? 0 : 2), t = Date.now(), f;
   if(anim === 'walk'){ f = ISL_WALK_SEQ[Math.floor(t / 130) % ISL_WALK_SEQ.length]; } else { f = Math.floor(t / 700) % 2; }   /* ★ v1.118.0 跨步幀之間插站立幀 */
-  if(sp.children.length){ var kids = sp.children, pos = islLyPos(body, row, f), i; for(i = 0; i < kids.length; i++){ if(kids[i].style.backgroundPosition !== pos) kids[i].style.backgroundPosition = pos; } return; }   /* ★ v1.116.0 分層造型:三層一起換幀 */
+  if(sp.children.length){ var kids = sp.children, i; for(i = 0; i < kids.length; i++){ islLyApply(kids[i], body, row, f, kids[i].getAttribute('data-lk')); } return; }   /* ★ v1.116.0 分層造型:三層一起換幀;★ v1.128.0 每層各自吃自己的尺寸/座標修正值 */
   sp.style.backgroundPosition = (-(cx[f] - 32)) + 'px ' + (-(row * 64)) + 'px';
 }
 function islCamera(snap){
@@ -14174,7 +14381,7 @@ window.islSubOpen = function(cat){
 };
 window.islSubClose = function(){ var sm = $('isl-submenu'); if(sm) sm.classList.add('hidden'); };
 window.islGearToggle = function(){ var g = $('isl-gear'); if(!g) return; playSfx('sfx-tap', 0.25); g.classList.toggle('hidden'); islGearPaint(); };
-window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'); if(a && ISL) a.textContent = '🍃 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.textContent = '🌊 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); };
+window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.textContent = '🍃 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.textContent = '🌊 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = islIsGm() ? '' : 'none'; };   /* ★ v1.128.0 造型工房只有 GM 看得到 */
 window.islAmbToggle2 = function(){ islAmbSfxToggle(); };   /* ★ v1.126.0 ⚙ 設定選單裡的環境音開關(名稱與既有 islAmbToggle 動態背景區隔) */
 function islCampCellTap(i){
   var db = islDB(), s = ISL.camp.slots[i], b, maxHp, btns;
@@ -16391,7 +16598,7 @@ function islLookPaint(){
   if(islLayerOk(c.body)){ /* 分層造型四組已由 islLookSecsHtml 畫好 */ }
   else if(!islSheetUrlFor(c.body)){
     h += '<div class="sec"><h4>膚色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.skin.length; i++){ if(ISL_HIDDEN_SKIN[i]) continue; h += '<button class="col ' + (c.skin === i ? 'on' : '') + '" data-k="skin" data-v="' + i + '" style="background:' + ISL_PAL.skin[i] + '"></button>'; } h += '</div></div>';
-    h += '<div class="sec"><h4>髮型</h4><div class="sw">'; for(i = 0; i < ISL_HAIRS.length; i++){ h += '<button class="' + (c.hair === i ? 'on' : '') + '" data-k="hair" data-v="' + i + '">' + ISL_HAIRS[i].n + '</button>'; } h += '</div></div>';
+    h += '<div class="sec"><h4>髮型</h4><div class="sw">'; for(i = 0; i < islHairs(c.body).length; i++){ h += '<button class="' + (c.hair === i ? 'on' : '') + '" data-k="hair" data-v="' + i + '">' + islHairs(c.body)[i].n + '</button>'; } h += '</div></div>';
     h += '<div class="sec"><h4>髮色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.hair.length; i++){ h += '<button class="col ' + (c.hairC === i ? 'on' : '') + '" data-k="hairC" data-v="' + i + '" style="background:' + ISL_PAL.hair[i] + '"></button>'; } h += '</div></div>';
     h += '<div class="sec"><h4>瞳色</h4><div class="sw">'; for(i = 0; i < ISL_PAL.eye.length; i++){ h += '<button class="col ' + (c.eyeC === i ? 'on' : '') + '" data-k="eyeC" data-v="' + i + '" style="background:' + ISL_PAL.eye[i] + '"></button>'; } h += '</div></div>';
   } else h += '<p style="font-size:14px;opacity:.8">目前用像素風造型圖,只能換體型;上傳分層造型圖後就能換膚色/髮型/髮色/服裝。</p>';
