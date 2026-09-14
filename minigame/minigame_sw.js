@@ -1,5 +1,6 @@
 /* ============================================================================
  * 小英雄小遊戲 — 獨立 Service Worker(minigame/sw.js)v1.34.0(2026-09-08)
+ * ★ v1.126.0(2026-09-14・老師四項:NPC 名牌高度 / 敲釘子 6×6 / 採集與砲樹 QTE 拉桿與按鈕放大延長)：對應 minigame_index.html v1.158.0 + island_db v1.158.0(零改動)。本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.117.0(2026-09-14・老師截圖回報三項：視窗標題應顯示「荒島求生」/ 商店買東西分頁被縮太小 / GM 造型工房調校值寫入)：對應 minigame_index.html v1.149.0 + island_db v1.149.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.115.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復)：對應 minigame_index.html v1.146.0——islEnterZone() 整個函式缺一行 var 宣告(db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告),第一行讀取未宣告的 sc 就丟 ReferenceError 中斷,導致點任何區域 700ms 後一律靜默失敗進不去。補回 var 宣告即修復。本檔僅版號同步(SHELL 改名讓舊快取失效)。
  * ★ v1.106.0(2026-09-13・老師:量集答對特效把題目視窗推下去修正)：對應 minigame_index.html v1.136.0 + island_db v1.29.0(零改動)。本檔僅版號同步。
@@ -141,8 +142,8 @@
  *       (更新即時生效;校網很慢或離線時仍然一定進得去 —— 這正是本小程式的存在目的)
  *     - 跨域素材(音效等)= cache-first,只存成功回應
  * ============================================================================ */
-var MINI_VERSION = 'v1.116.0';   /* ★ v1.116.0(2026-09-14):對應 minigame_index.html v1.147.0(荒島求生地圖畫面與場景疊在一起的緊急修復:六個畫面容器改 position:absolute 互相覆蓋、islEnterZone 補雙保險 hide)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.115.0(2026-09-14):對應 minigame_index.html v1.146.0(老師回報荒島求生點地圖區域沒反應緊急修復:islEnterZone() 補回缺的 var 宣告)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.114.0(2026-09-14):對應 minigame_index.html v1.145.0(十二星神進小遊戲＋本關推薦)與 minigame_db.js v1.45.0。本檔僅版號同步。 */   /* ★ v1.113.0(2026-09-14):對應 minigame_index.html v1.144.0(休息排程閘門)+ island_db 零改動仍 v1.31.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。★ 順修版號漂移:本常數自 v1.110.0 起未跟上,SHELL 卻已走到 v1.112.0,本輪一起對齊到 v1.113.0。 */   /* ★ v1.110.0(2026-09-13):對應 minigame_index.html v1.140.0(拜訪營地側欄併入 .cat 分類選單視覺)+ island_db 零改動仍 v1.30.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */      /* ★ v1.109.0(2026-09-13):對應 minigame_index.html v1.139.0(水域資源點執行期可走格濾網 + food1/friend1 章節呼叫點補齊)+ island_db 零改動仍 v1.30.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */      /* ★ v1.108.0(2026-09-13):對應 minigame_index.html v1.138.0(戰鬥立繪三層渲染+服裝染色+運動服改名)+ island_db v1.30.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.107.0(2026-09-13):對應 minigame_index.html v1.137.0(撿取閃亮特效+社交敬請期待占位)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.106.0(2026-09-13):對應 minigame_index.html v1.136.0。 */   /* ★ v1.105.0(2026-09-13):對應 minigame_index.html v1.135.0。 */   /* ★ v1.104.0(2026-09-13):對應 minigame_index.html v1.134.0。 */   /* ★ v1.103.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):對應 minigame_index.html v1.133.0 + island_db v1.29.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.102.0(2026-09-13・老師:造型工房涵蓋全部角色圖 + 創角預設樣貌匯出):對應 minigame_index.html v1.132.0 + island_db v1.28.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.101.0(2026-09-13):對應 minigame_index.html v1.131.0 + island_db v1.27.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.100.0(2026-09-13):對應 minigame_index.html v1.130.0 + island_db v1.26.0(零改動)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.99.0(2026-09-13):對應 minigame_index.html v1.129.0 + island_db v1.26.0(零改動)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.98.0(2026-09-13):對應 minigame_index.html v1.128.0 + island_db v1.26.0。 */   /* ★ v1.97.0(2026-09-13)：對應 minigame_index.html v1.127.0。 */   /* ★ v1.96.0(2026-09-13)：對應 minigame_index.html v1.126.0。 */   /* ★ v1.95.0(2026-09-13)：對應 minigame_index.html v1.125.0 + island_db v1.25.0。 */   /* ★ v1.94.0(2026-09-13)：對應 minigame_index.html v1.124.0 + island_db v1.24.0。 */   /* ★ v1.93.0(2026-09-13)：對應 minigame_index.html v1.123.0 + island_db v1.23.0。 */   /* ★ v1.92.0(2026-09-13)：對應 minigame_index.html v1.122.0 + island_db v1.23.0。 */   /* ★ v1.91.0(2026-09-13)：對應 minigame_index.html v1.121.0 + island_db v1.22.0。 */   /* ★ v1.90.0(2026-09-13)：對應 minigame_index.html v1.120.0 + island_db v1.21.0。 */   /* ★ v1.89.0(2026-09-13)：對應 minigame_index.html v1.119.0 + island_db v1.20.0。 */   /* ★ v1.88.0(2026-09-13)：對應 minigame_index.html v1.118.0。 */   /* ★ v1.87.0(2026-09-13)：對應 minigame_index.html v1.117.0。 */   /* ★ v1.86.0(2026-09-13)：對應 minigame_index.html v1.116.0 + island_db v1.19.0。 */   /* ★ v1.85.0(2026-09-13)：對應 minigame_index.html v1.115.0 + island_db v1.18.0。 */   /* ★ v1.84.0(2026-09-12)：對應 minigame_index.html v1.114.0 + island_db v1.17.0。 */   /* ★ v1.83.0(2026-09-12)：對應 minigame_index.html v1.113.0。 */   /* ★ v1.82.0(2026-09-12)：對應 minigame_index.html v1.112.0 + island_db v1.16.0。 */   /* ★ v1.81.0(2026-09-12)：對應 minigame_index.html v1.111.0 + island_db v1.16.0。 */   /* ★ v1.78.0(2026-09-12)：對應 minigame_index.html v1.107.0 + island_db v1.14.0。 */   /* ★ v1.77.0(2026-09-12)：對應 minigame_index.html v1.106.0 + island_db v1.13.0。 */   /* ★ v1.76.0(2026-09-12)：對應 minigame_index.html v1.105.0 + island_db v1.12.0;+ISLAND 快取白名單。 */   /* ★ v1.75.0(2026-09-12)：對應 minigame_index.html v1.104.0 + island_db v1.11.0。 */   /* ★ v1.74.0(2026-09-12)：對應 minigame_index.html v1.103.0 + island_db v1.10.0。 */   /* ★ v1.73.0(2026-09-12)：對應 minigame_index.html v1.102.0 + island_db v1.10.0。 */   /* ★ v1.72.0(2026-09-12)：對應 minigame_index.html v1.101.0 + island_db v1.9.0。 */   /* ★ v1.71.0(2026-09-12)：對應 minigame_index.html v1.100.0 + minigame_island_db.js v1.8.0。 */   /* ★ v1.70.0(2026-09-12)：對應 minigame_index.html v1.99.0 + minigame_island_db.js v1.7.0。 */   /* ★ v1.69.0(2026-09-12)：對應 minigame_index.html v1.98.0 + minigame_island_db.js v1.6.0。本檔僅版號同步。 */   /* ★ v1.68.0(2026-09-12)：對應 minigame_index.html v1.97.0(MG_IMG_VER 3、荒島 BGM 掛點、各區內心話)+ minigame_island_db.js v1.5.0。本檔僅版號同步。 */   /* ★ v1.67.0(2026-09-12)：對應 minigame_index.html v1.96.0(🏝 荒島 P3-b:四區場景+製作台工具)+ minigame_island_db.js v1.4.0。本檔僅版號同步。 */   /* ★ v1.66.0(2026-09-12)：對應 minigame_index.html v1.95.0(🏝 荒島 P3-a:科技研究/解謎點/湖泊+洞窟)+ minigame_island_db.js v1.3.0。本檔僅版號同步。 */   /* ★ v1.65.0(2026-09-12)：對應 minigame_index.html v1.94.0(🏝 荒島 P2-b:烹飪/播種/馴養/鋪水道+農田/畜欄/水道+建築 Lv5+營地擴建+裝飾舒適度)+ minigame_island_db.js v1.2.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.64.0(2026-09-12・老師回報主控台錯誤)：對應 minigame_index.html v1.93.0。①fetch 監聽器最前端加守門,非 http(s)(如瀏覽器擴充功能的 chrome-extension:// 請求)一律不攔截——Cache API 只支援 http(s),硬攔截會在 cache.put() 拋出「Request scheme 'chrome-extension' is unsupported」②三處 caches.open().then(function(c){c.put(...)}) 補上 return,c.put() 的 promise 才接得回外層 .catch(舊寫法失敗會變成主控台外的 Uncaught rejection,同一根因的另一半)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.63.0(2026-09-12)：對應 minigame_index.html v1.92.0(🏝 荒島安全/教育回饋:角色受傷治療、環境受損修復、提示鈕)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.62.0(2026-09-12)：對應 minigame_index.html v1.91.0(🏝 荒島 P2-a:三區/三活動/四建築/防衛戰)+ minigame_island_db.js v1.1.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.61.0(2026-09-12)：對應 minigame_index.html v1.90.0(🏝 像素荒島求生記 P1 骨架)。SHELL_URLS 新增 './minigame_island_db.js'(荒島資料表,離線也要抓得到);SHELL 改名讓舊快取失效。 */   /* ★ v1.60.0(2026-09-11)：對應 minigame_index.html v1.86.0(重新設計15關卡有幫助的第二效果+攻擊型爆發基礎傷害10→20)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.59.0(2026-09-11)：對應 minigame_index.html v1.85.0(登入 redirect 回程訊號不足根治)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.71.0(2026-09-10)：大對抗⇄小遊戲免重登(共用同一份 Firebase 登入狀態＋跨程式交接鑰匙＋小遊戲側共用裝置攔截器)＋PC/iPad/手機三平台版面稽核補丁。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.70.0(2026-09-10)：迷宮陷阱字重試補滿／起點小人物白色呼吸光暈／青炎龍王祭附加效果改版。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */
-var SHELL = 'lxps-mini-shell-v1.125.0';   /* ★ v1.125.0 — 隨 index v1.157.0／island_db v1.157.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.124.0 — 隨 index v1.156.0／island_db v1.156.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.123.0 — 隨 index v1.155.0／island_db v1.155.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.122.0 — 隨 index v1.154.0／island_db v1.154.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.121.0 — 隨 index v1.153.0／island_db v1.153.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.120.0 — 隨 index v1.152.0／island_db v1.152.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.119.0 — 隨 index v1.151.0／island_db v1.151.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.118.0 — 隨 index v1.150.0／island_db v1.150.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.117.0 — 隨 index v1.149.0／island_db v1.149.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.115.0 — 隨 index v1.146.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.113.0 — 隨 index v1.144.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.110.0 — 隨 index v1.141.0／island_db v1.31.0 bump,讓所有裝置重抓新版 shell */
+var MINI_VERSION = 'v1.159.0';   /* ★ v1.159.0(2026-09-14)—【根治】本常數往後一律跟 minigame_index.html 的 MG_VER 同號。頁面的「版本徽章」是用 mgVerNum(MINI_VERSION) > mgVerNum(MG_VER) 判定「你玩的是舊版」，而本常數自 v1.110.0 起就漂移落後(停在 v1.116/v1.126，index 已走到 v1.15x)，因此不管老師傳了幾次新版，學生端的徽章永遠不會轉紅、永遠不會提示更新⇒ 舊程式與舊素材版號一直被留在平板上。本輪對齊後徽章才真的會作用。 */   /* ★ SW 快取策略本輪改版：同源素材 cache-first、帶 ?v= 版號的檔案 cache-first、minigame_index.html 改 stale-while-revalidate。對應 minigame_index.html v1.159.0。 */   /* ★ v1.116.0(2026-09-14):對應 minigame_index.html v1.147.0(荒島求生地圖畫面與場景疊在一起的緊急修復:六個畫面容器改 position:absolute 互相覆蓋、islEnterZone 補雙保險 hide)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.115.0(2026-09-14):對應 minigame_index.html v1.146.0(老師回報荒島求生點地圖區域沒反應緊急修復:islEnterZone() 補回缺的 var 宣告)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.114.0(2026-09-14):對應 minigame_index.html v1.145.0(十二星神進小遊戲＋本關推薦)與 minigame_db.js v1.45.0。本檔僅版號同步。 */   /* ★ v1.113.0(2026-09-14):對應 minigame_index.html v1.144.0(休息排程閘門)+ island_db 零改動仍 v1.31.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。★ 順修版號漂移:本常數自 v1.110.0 起未跟上,SHELL 卻已走到 v1.112.0,本輪一起對齊到 v1.113.0。 */   /* ★ v1.110.0(2026-09-13):對應 minigame_index.html v1.140.0(拜訪營地側欄併入 .cat 分類選單視覺)+ island_db 零改動仍 v1.30.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */      /* ★ v1.109.0(2026-09-13):對應 minigame_index.html v1.139.0(水域資源點執行期可走格濾網 + food1/friend1 章節呼叫點補齊)+ island_db 零改動仍 v1.30.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */      /* ★ v1.108.0(2026-09-13):對應 minigame_index.html v1.138.0(戰鬥立繪三層渲染+服裝染色+運動服改名)+ island_db v1.30.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.107.0(2026-09-13):對應 minigame_index.html v1.137.0(撿取閃亮特效+社交敬請期待占位)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.106.0(2026-09-13):對應 minigame_index.html v1.136.0。 */   /* ★ v1.105.0(2026-09-13):對應 minigame_index.html v1.135.0。 */   /* ★ v1.104.0(2026-09-13):對應 minigame_index.html v1.134.0。 */   /* ★ v1.103.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):對應 minigame_index.html v1.133.0 + island_db v1.29.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.102.0(2026-09-13・老師:造型工房涵蓋全部角色圖 + 創角預設樣貌匯出):對應 minigame_index.html v1.132.0 + island_db v1.28.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.101.0(2026-09-13):對應 minigame_index.html v1.131.0 + island_db v1.27.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.100.0(2026-09-13):對應 minigame_index.html v1.130.0 + island_db v1.26.0(零改動)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.99.0(2026-09-13):對應 minigame_index.html v1.129.0 + island_db v1.26.0(零改動)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.98.0(2026-09-13):對應 minigame_index.html v1.128.0 + island_db v1.26.0。 */   /* ★ v1.97.0(2026-09-13)：對應 minigame_index.html v1.127.0。 */   /* ★ v1.96.0(2026-09-13)：對應 minigame_index.html v1.126.0。 */   /* ★ v1.95.0(2026-09-13)：對應 minigame_index.html v1.125.0 + island_db v1.25.0。 */   /* ★ v1.94.0(2026-09-13)：對應 minigame_index.html v1.124.0 + island_db v1.24.0。 */   /* ★ v1.93.0(2026-09-13)：對應 minigame_index.html v1.123.0 + island_db v1.23.0。 */   /* ★ v1.92.0(2026-09-13)：對應 minigame_index.html v1.122.0 + island_db v1.23.0。 */   /* ★ v1.91.0(2026-09-13)：對應 minigame_index.html v1.121.0 + island_db v1.22.0。 */   /* ★ v1.90.0(2026-09-13)：對應 minigame_index.html v1.120.0 + island_db v1.21.0。 */   /* ★ v1.89.0(2026-09-13)：對應 minigame_index.html v1.119.0 + island_db v1.20.0。 */   /* ★ v1.88.0(2026-09-13)：對應 minigame_index.html v1.118.0。 */   /* ★ v1.87.0(2026-09-13)：對應 minigame_index.html v1.117.0。 */   /* ★ v1.86.0(2026-09-13)：對應 minigame_index.html v1.116.0 + island_db v1.19.0。 */   /* ★ v1.85.0(2026-09-13)：對應 minigame_index.html v1.115.0 + island_db v1.18.0。 */   /* ★ v1.84.0(2026-09-12)：對應 minigame_index.html v1.114.0 + island_db v1.17.0。 */   /* ★ v1.83.0(2026-09-12)：對應 minigame_index.html v1.113.0。 */   /* ★ v1.82.0(2026-09-12)：對應 minigame_index.html v1.112.0 + island_db v1.16.0。 */   /* ★ v1.81.0(2026-09-12)：對應 minigame_index.html v1.111.0 + island_db v1.16.0。 */   /* ★ v1.78.0(2026-09-12)：對應 minigame_index.html v1.107.0 + island_db v1.14.0。 */   /* ★ v1.77.0(2026-09-12)：對應 minigame_index.html v1.106.0 + island_db v1.13.0。 */   /* ★ v1.76.0(2026-09-12)：對應 minigame_index.html v1.105.0 + island_db v1.12.0;+ISLAND 快取白名單。 */   /* ★ v1.75.0(2026-09-12)：對應 minigame_index.html v1.104.0 + island_db v1.11.0。 */   /* ★ v1.74.0(2026-09-12)：對應 minigame_index.html v1.103.0 + island_db v1.10.0。 */   /* ★ v1.73.0(2026-09-12)：對應 minigame_index.html v1.102.0 + island_db v1.10.0。 */   /* ★ v1.72.0(2026-09-12)：對應 minigame_index.html v1.101.0 + island_db v1.9.0。 */   /* ★ v1.71.0(2026-09-12)：對應 minigame_index.html v1.100.0 + minigame_island_db.js v1.8.0。 */   /* ★ v1.70.0(2026-09-12)：對應 minigame_index.html v1.99.0 + minigame_island_db.js v1.7.0。 */   /* ★ v1.69.0(2026-09-12)：對應 minigame_index.html v1.98.0 + minigame_island_db.js v1.6.0。本檔僅版號同步。 */   /* ★ v1.68.0(2026-09-12)：對應 minigame_index.html v1.97.0(MG_IMG_VER 3、荒島 BGM 掛點、各區內心話)+ minigame_island_db.js v1.5.0。本檔僅版號同步。 */   /* ★ v1.67.0(2026-09-12)：對應 minigame_index.html v1.96.0(🏝 荒島 P3-b:四區場景+製作台工具)+ minigame_island_db.js v1.4.0。本檔僅版號同步。 */   /* ★ v1.66.0(2026-09-12)：對應 minigame_index.html v1.95.0(🏝 荒島 P3-a:科技研究/解謎點/湖泊+洞窟)+ minigame_island_db.js v1.3.0。本檔僅版號同步。 */   /* ★ v1.65.0(2026-09-12)：對應 minigame_index.html v1.94.0(🏝 荒島 P2-b:烹飪/播種/馴養/鋪水道+農田/畜欄/水道+建築 Lv5+營地擴建+裝飾舒適度)+ minigame_island_db.js v1.2.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.64.0(2026-09-12・老師回報主控台錯誤)：對應 minigame_index.html v1.93.0。①fetch 監聽器最前端加守門,非 http(s)(如瀏覽器擴充功能的 chrome-extension:// 請求)一律不攔截——Cache API 只支援 http(s),硬攔截會在 cache.put() 拋出「Request scheme 'chrome-extension' is unsupported」②三處 caches.open().then(function(c){c.put(...)}) 補上 return,c.put() 的 promise 才接得回外層 .catch(舊寫法失敗會變成主控台外的 Uncaught rejection,同一根因的另一半)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.63.0(2026-09-12)：對應 minigame_index.html v1.92.0(🏝 荒島安全/教育回饋:角色受傷治療、環境受損修復、提示鈕)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.62.0(2026-09-12)：對應 minigame_index.html v1.91.0(🏝 荒島 P2-a:三區/三活動/四建築/防衛戰)+ minigame_island_db.js v1.1.0。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.61.0(2026-09-12)：對應 minigame_index.html v1.90.0(🏝 像素荒島求生記 P1 骨架)。SHELL_URLS 新增 './minigame_island_db.js'(荒島資料表,離線也要抓得到);SHELL 改名讓舊快取失效。 */   /* ★ v1.60.0(2026-09-11)：對應 minigame_index.html v1.86.0(重新設計15關卡有幫助的第二效果+攻擊型爆發基礎傷害10→20)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.59.0(2026-09-11)：對應 minigame_index.html v1.85.0(登入 redirect 回程訊號不足根治)。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.71.0(2026-09-10)：大對抗⇄小遊戲免重登(共用同一份 Firebase 登入狀態＋跨程式交接鑰匙＋小遊戲側共用裝置攔截器)＋PC/iPad/手機三平台版面稽核補丁。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */   /* ★ v1.70.0(2026-09-10)：迷宮陷阱字重試補滿／起點小人物白色呼吸光暈／青炎龍王祭附加效果改版。本檔僅版號同步(SHELL 改名讓舊快取失效)。 */
+var SHELL = 'lxps-mini-shell-v1.127.0';   /* ★ v1.127.0 — 隨 index v1.159.0／island_db v1.159.0 bump，讓所有裝置重抓新版 shell */   /* ★ v1.126.0 — 隨 index v1.158.0／island_db v1.158.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.125.0 — 隨 index v1.157.0／island_db v1.157.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.124.0 — 隨 index v1.156.0／island_db v1.156.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.123.0 — 隨 index v1.155.0／island_db v1.155.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.122.0 — 隨 index v1.154.0／island_db v1.154.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.121.0 — 隨 index v1.153.0／island_db v1.153.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.120.0 — 隨 index v1.152.0／island_db v1.152.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.119.0 — 隨 index v1.151.0／island_db v1.151.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.118.0 — 隨 index v1.150.0／island_db v1.150.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.117.0 — 隨 index v1.149.0／island_db v1.149.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.115.0 — 隨 index v1.146.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.113.0 — 隨 index v1.144.0 bump,讓所有裝置重抓新版 shell */   /* ★ v1.110.0 — 隨 index v1.141.0／island_db v1.31.0 bump,讓所有裝置重抓新版 shell */
 var ASSET = 'lxps-mini-assets-v1';
 var ISLAND = 'lxps-mini-island-v1';   /* ★ v1.76.0 荒島完整安裝快取(頁面端 islInstall 寫入),與 index.html 的 ISL_CACHE 同名 */
 
@@ -188,6 +189,66 @@ function timeoutAfter(ms){
   });
 }
 
+/* ══ ★ v1.127.0(2026-09-14・老師:「已經完整下載遊戲了,開遊戲讀取圖片還是很慢,常常看不到圖片或聽不到音樂音效」)══
+   三個根因對應三支新 helper:
+   ① 同源素材(../答對.mp3 這種落在 /minigame/ 以外的檔案)以前完全沒被本 SW 攔截 ⇒ 每次都走網路。
+      改成 cache-first,第一次抓到就永久留著。
+   ② 帶 ?v= 版號的檔案(minigame_db.js / minigame_island_db.js)以前跑 network-first,
+      每次開機都先等網路最多 2.5 秒才退快取——可是版號本身就是快取破壞鍵,URL 沒變就代表內容沒變,
+      根本不需要問網路。改成 cache-first(與 /minigame/img/ 同一套邏輯)。
+   ③ minigame_index.html(1.6 MB)以前也是 network-first ⇒ 校網慢的時候整整卡 2.5 秒才開始畫面。
+      改成 stale-while-revalidate:先用快取秒開,網路在背景更新;背景發現內容真的變了才通知頁面,
+      由頁面既有的「版本徽章」轉紅提示重新整理(minigame_sw.js 本身維持 network-first,徽章才驗得到新版)。 */
+function cacheFirst(req, bucket){
+  return caches.match(req).then(function(hit){
+    if(hit) return hit;
+    return fetch(req).then(function(res){
+      if(res && res.ok){
+        var copy = res.clone();
+        caches.open(bucket).then(function(c){ return c.put(req, copy); })['catch'](function(){});
+      }
+      return res;
+    })['catch'](function(){ return new Response('', { status: 504 }); });
+  });
+}
+function swrTag(res){
+  if(!res) return '';
+  return (res.headers.get('etag') || '') + '|' + (res.headers.get('last-modified') || '') + '|' + (res.headers.get('content-length') || '');
+}
+function swrNotify(){
+  try{
+    self.clients.matchAll({ type: 'window' }).then(function(cs){
+      var i; for(i = 0; i < cs.length; i++){ try{ cs[i].postMessage({ type: 'MG_SHELL_UPDATED' }); }catch(e){} }
+    })['catch'](function(){});
+  }catch(e){}
+}
+/* ⚠ 一律用「正規鍵」./minigame_index.html 讀寫,不用 req 本身當鍵:
+   荒島是 ?mode=island 直入、訪客是 ?guest=1、從大廳進來沒有 query ——
+   Cache API 是「整條 URL(含 query)當鍵」,拿 req 當鍵會變成三種進場方式各自一份快取、
+   而且完整下載存進去的那一份(無 query)永遠對不上 ⇒ 等於沒有快取。
+   index.html 的內容跟 query 無關(query 是 JS 執行期自己讀的),共用一把鍵才正確。 */
+function staleWhileRevalidate(req){
+  var KEY = './minigame_index.html';
+  return caches.match(KEY).then(function(hit){
+    var net = fetch(req).then(function(res){
+      if(res && res.ok){
+        var copy = res.clone(), oldTag = swrTag(hit), newTag = swrTag(res);
+        caches.open(SHELL).then(function(c){ return c.put(KEY, copy); })['catch'](function(){});
+        if(hit && oldTag && newTag && oldTag !== newTag) swrNotify();
+      }
+      return res;
+    })['catch'](function(){ return null; });
+    if(hit) return hit;   /* 有快取 ⇒ 立刻回應,網路更新在背景自己跑完 */
+    return net.then(function(r){
+      if(r) return r;
+      if(req.mode === 'navigate') return caches.match('./minigame_index.html').then(function(h){ return h || new Response('', { status: 504 }); });
+      return new Response('', { status: 504 });
+    });
+  });
+}
+/* 同源媒體素材(音效/音樂/圖片/影片)—— 副檔名判定,不看目錄 */
+function isAssetPath(p){ return /\.(mp3|m4a|wav|ogg|aac|png|jpe?g|webp|gif|mp4|svg)$/i.test(p); }
+
 self.addEventListener('fetch', function(e){
   var req = e.request;
   if(req.method !== 'GET') return;
@@ -206,21 +267,34 @@ self.addEventListener('fetch', function(e){
   //    URL 已帶 ?v=MG_IMG_VER(素材更新只改那個數字 ⇒ 新 URL 自然重抓),所以不需要 network-first;
   //    舊寫法每題都重新下載(校網慢時先卡 2.5s 才退快取)。404 不進快取(index.html 另有缺圖名單擋重打)。
   if(sameOrigin && url.pathname.indexOf('/minigame/img/') >= 0){
-    e.respondWith(
-      caches.match(req).then(function(hit){
-        if(hit) return hit;
-        return fetch(req).then(function(res){
-          if(res && res.ok){
-            var copy = res.clone();
-            caches.open(ASSET).then(function(c){ return c.put(req, copy); })['catch'](function(){});   /* ★ v1.93.0 c.put() 的 promise 接回鏈中,外層 .catch 才接得住(舊寫法未 return,c.put 失敗會變成主控台的 Uncaught rejection,同一 bug) */
-          }
-          return res;
-        })['catch'](function(){ return new Response('', { status: 504 }); });
-      })
-    );
+    e.respondWith(cacheFirst(req, ASSET));   /* ★ v1.127.0 抽成共用 cacheFirst(),行為與舊版完全相同 */
     return;
   }
-  // ── 本目錄 shell:network-first(2.5s 逾時)→ 快取 ──
+
+  // ── ★ v1.127.0 優化①:同源素材,但落在 /minigame/ 以外(音效音樂改同源後的 ../答對.mp3、../遊戲封面.png…)──
+  //    這些以前完全沒有被攔截 ⇒ 每次都走網路。一律 cache-first。
+  //    ⚠ 帶 Range 標頭的媒體請求(iPad Safari 串流 <audio>/<video> 會發)一律交還瀏覽器原生處理:
+  //      SW 拿快取裡的整包 200 去回應 206 請求,Safari 會播不出來或卡住。
+  if(sameOrigin && !inScope && isAssetPath(url.pathname)){
+    if(req.headers && req.headers.get && req.headers.get('range')) return;
+    e.respondWith(cacheFirst(req, ASSET));
+    return;
+  }
+
+  // ── ★ v1.127.0 優化②:本目錄帶 ?v= 版號的檔案(minigame_db.js / minigame_island_db.js)改 cache-first ──
+  //    版號就是快取破壞鍵:URL 一樣 = 內容一樣,不需要每次先問網路再等 2.5 秒逾時。
+  if(inScope && url.search.indexOf('v=') >= 0 && url.pathname.indexOf('minigame_sw.js') < 0){
+    e.respondWith(cacheFirst(req, SHELL));
+    return;
+  }
+
+  // ── ★ v1.127.0 優化③:minigame_index.html(1.6 MB)改 stale-while-revalidate,先秒開再背景更新 ──
+  if(req.mode === 'navigate' || (inScope && url.pathname.indexOf('minigame_index.html') >= 0)){
+    e.respondWith(staleWhileRevalidate(req));
+    return;
+  }
+
+  // ── 本目錄 shell(其餘:minigame_sw.js/manifest/圖示):network-first(2.5s 逾時)→ 快取 ──
   if(inScope || req.mode === 'navigate'){
     e.respondWith(
       Promise.race([ fetch(req), timeoutAfter(2500) ])

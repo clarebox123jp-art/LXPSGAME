@@ -15,7 +15,52 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.157.0(2026-09-14)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.159.0(2026-09-14)
+     ★ v1.159.0(2026-09-14・老師：「已經完整下載遊戲了，開遊戲讀取圖片還是很慢，常常看不到圖片或聽不到音樂音效，要等他慢慢開出來」)—【載入效能根治】
+       【根因一・最大單一元凶】右上角「更新」鈕(mgVerReload)舊寫法是「凡是 lxps-mini- 開頭的快取一律破掉」，
+         而完整下載安裝的 60~120MB 素材就放在 lxps-mini-island-v1、平常隨手快取的圖音放在 lxps-mini-assets-v1，
+         兩個都一起被清掉 ⇒ 學生每按一次更新，整包完整下載就白裝了，下次開遊戲當然又要一張一張慢慢抓。
+         (minigame_sw.js 的 activate 特地寫了「保留 ISLAND」，結果被頁面端這一行全部抹掉。)
+         改成只清 lxps-mini-shell-*(程式碼本體)，素材與完整下載快取一律留著。
+       【根因二】115 支音效音樂中的 102 支、以及英雄/寵物/場景縮圖三組圖庫，全部挂在 raw.githubusercontent.com。
+         raw 是「原始檔案端點」不是 CDN，會依來源 IP 限流；一個班 25 台 iPad 共用學校同一個對外 IP，
+         一齊開機就是幾千個請求從同一 IP 打出去 ⇒ 被限流/斷線就是老師看到的「圖出不來、音效沒聲音」；
+         而且跨網域要另開一次 DNS+TLS，不能與頁面共用 HTTP/2 連線。
+         同一個 repo 的 GitHub Pages 本來就有這些檔案 ⇒ 全部改成同源相對路徑(../xxx.mp3)，
+         走 Pages 的 CDN、並且才輪得到本程式自己的 SW 幫它快取。
+         ⚠ 保險：新增 mgCdnFallback——document 捕獲階段的 error 監聽器，同源抳不到時自動換回 raw 舊網址重試一次，
+           因此即使 Pages 某個檔案真的不在，也不會整組死掉；退路也失敗時才輪到原本的缺圖處理。
+       【根因三】minigame_sw.js 的 MINI_VERSION 自 v1.110.0 起就漂移落後(停在 v1.116，index 已走到 v1.15x)，
+         而頁面的版本徽章是用 MINI_VERSION > MG_VER 判定「你玩的是舊版」⇒ 永遠不成立、永遠不提示更新，
+         學生平板上的舊程式與舊素材版號就一直留著。本輪對齊，往後 MINI_VERSION 一律跟 MG_VER 同號。
+       【SW 快取策略改版】①同源素材(落在 /minigame/ 以外的 ../xxx.mp3 這類)以前完全沒被攔截 ⇒ 每次都走網路，
+         改 cache-first(帶 Range 標頭的串流請求一律交還瀏覽器原生處理，否則 Safari 會播不出來)；
+         ②帶 ?v= 版號的檔案(minigame_db.js/minigame_island_db.js)以前跑 network-first，每次開機先等網路最多 2.5 秒，
+         可是版號本身就是快取破壞鍵、URL 沒變就代表內容沒變 ⇒ 改 cache-first；
+         ③minigame_index.html(1.6MB)改 stale-while-revalidate：先用快取秒開、網路在背景更新，
+         背景發現內容真的換了才 postMessage 通知頁面，由既有的版本徽章轉紅提示重新整理。
+       【其餘】①音效預熱 mgWarmSfx：全部 <audio> 都是 preload="none"(必要，115 支一起預載會把校網塞爆)，
+         代價是「第一次用到才開始下載」⇒ 按下去半天沒聲音；改成拿到使用者手勢後，只把最常用的 14 支分批惄惄預載。
+         ②navigator.storage.persist()：iPad Safari 對一般網站的快取是「空間不夠或七天沒用就整包清掉」，
+         申請持久化後完整下載的內容才真的留得住。③完整下載：已在快取裡的直接跳過(「再試一次」不必重抓整包)、
+         並行數 3→6、空間不足(QuotaExceededError)單獨計數並在結果頁明講，不再跟「檔案抓不到」混在一起。
+       對應 minigame_sw.js v1.127.0(MINI_VERSION 一併對齊 v1.159.0)、minigame_island_db.js v1.159.0(零改動，僅版號同步)。
+     ★ v1.158.0(2026-09-14・老師四項)—
+       ①🏷 荒島 NPC 頭上的名牌高度修正:根因是 v1.152.0 起 NPC 尺寸改由 JS 逐隻 inline 指定,
+         那串 style 裡同時寫了 `line-height:<身高>px`(給缺圖時 emoji 置中用),而名牌 `.nl` 自己從來沒宣告 line-height,
+         於是整個繼承了 NPC 的身高當行高 ⇒ 台灣黑熊的名牌一格就有 192px 高(字才 14px)。
+         釘死 `line-height:1.25` + `padding:2px 11px` 後,名牌高度只跟字級走,跟 NPC 多大完全無關。
+       ②🔨 敲釘子由 3×2(6 格)改成 6×6(36 格):舊版「每一格都會輪到一次」,等於只是把 6 格都點過一輪,位置毫無懸念;
+         改成 36 格中隨機取 8 格當順序(ROUNDS=8)⇒ 每次亮起的位置都不一樣、也不保證平均分布,眼睛要真的找。
+         ⚠ 星等門檻必須跟著改:舊版是「6 下全中=3★、4~5 下=2★」,若沿用 6/4 門檻,8 下裡中 6 下(75%)
+           就給滿星,反而比改版前更容易。改成 7/5(87.5%/62.5%)維持原本的手感比例。
+       ③④📏 採集與砲樹 QTE 的拉桿與大按鈕整組放大延長(兩者共用 `.isl-qte`,一改兩邊都生效):
+         延長 = QTE 框上限 980 → 1280px(拉桿寬度就是框寬)、側欄要扣的寬度 340/380 → 330/360;
+         放大 = 拉桿高 46 → 78px(指針/圓角/外框等比)、大按鈕高 96 → 124px、字 33 → 38px、樹圖示 110 → 130px。
+         字不超出 = 按鈕改 inline-flex 置中 + `line-height:1`(否則高度配預設行高會把中文上下切掉),
+         左右內距改 clamp 窄螢幕自動收;≤1100px 的既有媒體查詢再收一段(後宣告者勝)。
+         ⚠ 拉桿內的黃區/暴擊區都是百分比定位,框變長 = 甜蜜點的實際 px 也變長(判定標準不變,只是更好按)。
+       對應 minigame_sw.js v1.126.0、minigame_island_db.js v1.158.0(零改動,僅版號同步)。
      ★ v1.157.0(2026-09-14・老師三項)—
        ①🚶 營地走路的主角改用野外的走路動作模組:新增共用函式 islCharSpriteInit(rootId),
          zone 的 #isl-char 與營地的 #isl-camp-char 都呼叫它裝上走路動畫(先試分層造型,基底缺圖才退回整張 sheet)。
@@ -3487,67 +3532,67 @@ window.islDirectVeilOff = function(){
 </script>
 
 <!-- 音效:全部沿用主程式 repo 內既有素材(GitHub raw 絕對路徑),preload=none 不影響開機速度 -->
-<audio id="sfx-ok"     preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E5%B0%8D.mp3"></audio>
-<audio id="sfx-ng"     preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
-<audio id="sfx-tap"    preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BC%95%E6%9F%94%E9%81%B8%E5%8F%96.mp3"></audio>
-<audio id="sfx-enter"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%B2%E5%85%A5%E6%88%B0%E5%A0%B4.mp3"></audio>
-<audio id="sfx-clap"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%8E%8C%E8%81%B2.mp3"></audio>
-<audio id="sfx-coin"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/coin03.mp3"></audio>
+<audio id="sfx-ok"     preload="none" src="../%E7%AD%94%E5%B0%8D.mp3"></audio>
+<audio id="sfx-ng"     preload="none" src="../%E7%AD%94%E9%8C%AF%E9%9F%B3%E6%95%88.mp3"></audio>
+<audio id="sfx-tap"    preload="none" src="../%E8%BC%95%E6%9F%94%E9%81%B8%E5%8F%96.mp3"></audio>
+<audio id="sfx-enter"  preload="none" src="../%E9%80%B2%E5%85%A5%E6%88%B0%E5%A0%B4.mp3"></audio>
+<audio id="sfx-clap"   preload="none" src="../%E6%8E%8C%E8%81%B2.mp3"></audio>
+<audio id="sfx-coin"   preload="none" src="../coin03.mp3"></audio>
 <!-- ★ v1.1.0(老師需求:所有遊戲都融入現有「小英雄大作戰」的音樂與音效)—
      以下全部沿用主程式 repo 既有素材,**零新音檔、老師零上傳負擔**。 -->
-<audio id="sfx-sel"     preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%81%B8%E6%93%87%E4%B8%AD.mp3"></audio>
+<audio id="sfx-sel"     preload="none" src="../%E9%81%B8%E6%93%87%E4%B8%AD.mp3"></audio>
 <!-- ⚠ 原本想接主程式的 powerup02 (1).mp3,實測 raw 回 404(檔名含空格與括號,與主程式 <audio> 內的寫法對不上)
      ⇒ 改用同樣是「正向強化」語感、且已逐檔驗證 200 的「角色屬性技能選擇.mp3」。
      日後要加音效,一律先 curl -I 驗過 200 再寫進來。 -->
-<audio id="sfx-powerup" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E6%8A%80%E8%83%BD%E9%81%B8%E6%93%87.mp3"></audio>
-<audio id="sfx-medal"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8D%B2%E5%BE%97%E6%88%90%E5%B0%B1%E7%8D%8E%E7%AB%A0.mp3"></audio>
-<audio id="sfx-evade"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BF%B4%E9%81%BF.mp3"></audio><!-- ★ v1.44.0 元素消消樂交換音效(老師指定「迴避」，沿用大對抗同一支迴避.mp3) -->
-<audio id="sfx-normalatk" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%AE%E9%80%9A%E6%94%BB%E6%93%8A.mp3"></audio><!-- ★ v1.35.0 戰鬥卡受擊音效改比照大對抗普攻(裁定1) -->
-<audio id="sfx-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/game_explosion2.mp3"></audio>
-<audio id="sfx-cancel"  preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%96%E6%B6%88.mp3"></audio>
-<audio id="sfx-recharge" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A3%9C%E5%85%85%E8%83%BD%E9%87%8F.mp3"></audio>
+<audio id="sfx-powerup" preload="none" src="../%E8%A7%92%E8%89%B2%E5%B1%AC%E6%80%A7%E6%8A%80%E8%83%BD%E9%81%B8%E6%93%87.mp3"></audio>
+<audio id="sfx-medal"   preload="none" src="../%E7%8D%B2%E5%BE%97%E6%88%90%E5%B0%B1%E7%8D%8E%E7%AB%A0.mp3"></audio>
+<audio id="sfx-evade"  preload="none" src="../%E8%BF%B4%E9%81%BF.mp3"></audio><!-- ★ v1.44.0 元素消消樂交換音效(老師指定「迴避」，沿用大對抗同一支迴避.mp3) -->
+<audio id="sfx-normalatk" preload="none" src="../%E6%99%AE%E9%80%9A%E6%94%BB%E6%93%8A.mp3"></audio><!-- ★ v1.35.0 戰鬥卡受擊音效改比照大對抗普攻(裁定1) -->
+<audio id="sfx-explode" preload="none" src="../game_explosion2.mp3"></audio>
+<audio id="sfx-cancel"  preload="none" src="../%E5%8F%96%E6%B6%88.mp3"></audio>
+<audio id="sfx-recharge" preload="none" src="../%E8%A3%9C%E5%85%85%E8%83%BD%E9%87%8F.mp3"></audio>
 <!-- ★ v1.34.0(老師需求)— 爆發技能使用時(mgBurstCinematic 施放瞬間)/爆發充滿可用時(mgBattleHit 充能滿) 各自專屬音效 -->
-<audio id="sfx-burst-use"   preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
-<audio id="sfx-burst-ready" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A5%B5%E9%99%90%E7%88%86%E7%99%BC%E5%87%BA%E7%8F%BE.mp3"></audio>
-<audio id="sfx-gunshot" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84%E5%AD%90%E5%BD%88.mp3"></audio><!-- ★ v1.9.5 算數大進擊射擊音效(=主程式 sfx-gunshot 發射子彈.mp3) -->
+<audio id="sfx-burst-use"   preload="none" src="../%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
+<audio id="sfx-burst-ready" preload="none" src="../%E6%A5%B5%E9%99%90%E7%88%86%E7%99%BC%E5%87%BA%E7%8F%BE.mp3"></audio>
+<audio id="sfx-gunshot" preload="none" src="../%E7%99%BC%E5%B0%84%E5%AD%90%E5%BD%88.mp3"></audio><!-- ★ v1.9.5 算數大進擊射擊音效(=主程式 sfx-gunshot 發射子彈.mp3) -->
 <!-- ★ v1.29.0 戰鬥模式:各英雄極限爆發音效(全部沿用主程式 index.html 同 id 同 src,preload=none 不影響首載;已逐檔 curl -I 驗證 200;主程式的 sfx-waterfox-burst 因 raw 404 未收錄) -->
-<audio id="sfx-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
-<audio id="sfx-crit" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%88%86%E6%93%8A.mp3"></audio>
-<audio id="sfx-punch" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/short_punch1.mp3"></audio>
-<audio id="sfx-sword" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/sword2.mp3"></audio>
-<audio id="sfx-athena-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A9%E4%BD%BF%E7%9A%84%E5%91%BC%E8%81%B2.mp3"></audio>
-<audio id="sfx-summon-reveal" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.mp3"></audio>
-<audio id="sfx-aso-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%A3%E7%BA%8C%E7%99%BC%E5%B0%84.mp3"></audio>
-<audio id="sfx-earthquake" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%9C%87.mp3"></audio>
-<audio id="sfx-darkorb-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%93%8E%E5%A4%A9%E7%88%86%E9%96%83%E9%9F%B3%E6%95%88.m4a"></audio>
-<audio id="sfx-youyou-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%83%A1%E5%A4%A2%E9%81%8A%E9%AD%82.mp3"></audio>
-<audio id="sfx-detain-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%99%82%E7%A9%BA%E7%A9%BF%E6%A2%AD.mp3"></audio>
-<audio id="sfx-goddess" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/7-6%E5%A5%B3%E7%A5%9E%E6%B6%88%E5%A4%B1%E7%99%BC%E5%85%891.mp3"></audio>
-<audio id="sfx-heal" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B2%BB%E7%99%92%E9%AD%94%E6%B3%95.mp3"></audio>
-<audio id="sfx-powerdown" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/powerdown07.mp3"></audio>
-<audio id="sfx-detective-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BF%83%E7%90%86%E9%9C%87%E9%A9%9A.mp3"></audio>
-<audio id="sfx-imprison-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%A6%81%E9%8C%AE.mp3"></audio>
-<audio id="sfx-ko" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/knocking_out.mp3"></audio>
-<audio id="sfx-shoot" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84.mp3"></audio>
-<audio id="sfx-revive" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%BE%A9%E6%B4%BB.mp3"></audio>
-<audio id="sfx-statup" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%83%BD%E5%8A%9B%E4%B8%8A%E5%8D%87.mp3"></audio>
-<audio id="sfx-fantasy" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/fantasy_fly.mp3"></audio>
-<audio id="sfx-rapidfire-gun" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%80%A3%E7%BA%8C%E5%B0%84%E6%93%8A.mp3"></audio>
-<audio id="sfx-confirm" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/2-1%E5%82%B3%E9%80%81.mp3"></audio>
-<audio id="sfx-gentle" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%BC%95%E6%9F%94%E9%81%B8%E5%8F%96.mp3"></audio>
-<audio id="sfx-passive" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%A2%AB%E5%8B%95%E6%8A%80%E8%83%BD%E8%A7%B8%E7%99%BC.mp3"></audio>
-<audio id="sfx-tengu-strike" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%BE%8D%E6%8D%B2%E9%A2%A8%E9%9F%B3%E6%95%88.m4a"></audio>
-<audio id="sfx-qiongqi-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.mp3"></audio>
-<audio id="sfx-gunshot-big" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%99%BC%E5%B0%84%E5%A4%A7%E5%AD%90%E5%BD%88.mp3"></audio>
-<audio id="sfx-summon-smoke" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
-<audio id="sfx-thunder-fury" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2%E9%9F%B3%E6%95%88.m4a"></audio>
-<audio id="sfx-cantmove" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E8%83%BD%E5%8B%95.mp3"></audio>
-<audio id="sfx-bomb-explode" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AE%9A%E6%99%82%E7%82%B8%E5%BD%88%E7%88%86%E7%82%B8.mp3"></audio>
-<audio id="sfx-ice2" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%9A%B4%E9%A2%A8%E9%9B%AA.mp3"></audio>
-<audio id="sfx-ice1" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%96%AE%E9%AB%94%E5%86%B0%E5%87%8D.mp3"></audio>
-<audio id="sfx-applause" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%8E%8C%E8%81%B2.mp3"></audio>
-<audio id="sfx-pharaoh-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%A4%A7%E7%88%86%E7%82%B8.mp3"></audio>
-<audio id="sfx-cleopatra-burst" preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%B2%B3%E6%B0%B4%E6%9A%B4%E6%BC%B2.mp3"></audio>
+<audio id="sfx-burst" preload="none" src="../%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
+<audio id="sfx-crit" preload="none" src="../%E7%88%86%E6%93%8A.mp3"></audio>
+<audio id="sfx-punch" preload="none" src="../short_punch1.mp3"></audio>
+<audio id="sfx-sword" preload="none" src="../sword2.mp3"></audio>
+<audio id="sfx-athena-burst" preload="none" src="../%E5%A4%A9%E4%BD%BF%E7%9A%84%E5%91%BC%E8%81%B2.mp3"></audio>
+<audio id="sfx-summon-reveal" preload="none" src="../%E5%8F%AC%E5%96%9A%E8%A7%92%E8%89%B2.mp3"></audio>
+<audio id="sfx-aso-burst" preload="none" src="../%E9%80%A3%E7%BA%8C%E7%99%BC%E5%B0%84.mp3"></audio>
+<audio id="sfx-earthquake" preload="none" src="../%E5%9C%B0%E9%9C%87.mp3"></audio>
+<audio id="sfx-darkorb-burst" preload="none" src="../%E6%93%8E%E5%A4%A9%E7%88%86%E9%96%83%E9%9F%B3%E6%95%88.m4a"></audio>
+<audio id="sfx-youyou-burst" preload="none" src="../%E6%83%A1%E5%A4%A2%E9%81%8A%E9%AD%82.mp3"></audio>
+<audio id="sfx-detain-burst" preload="none" src="../%E6%99%82%E7%A9%BA%E7%A9%BF%E6%A2%AD.mp3"></audio>
+<audio id="sfx-goddess" preload="none" src="../7-6%E5%A5%B3%E7%A5%9E%E6%B6%88%E5%A4%B1%E7%99%BC%E5%85%891.mp3"></audio>
+<audio id="sfx-heal" preload="none" src="../%E6%B2%BB%E7%99%92%E9%AD%94%E6%B3%95.mp3"></audio>
+<audio id="sfx-powerdown" preload="none" src="../powerdown07.mp3"></audio>
+<audio id="sfx-detective-burst" preload="none" src="../%E5%BF%83%E7%90%86%E9%9C%87%E9%A9%9A.mp3"></audio>
+<audio id="sfx-imprison-burst" preload="none" src="../%E7%A6%81%E9%8C%AE.mp3"></audio>
+<audio id="sfx-ko" preload="none" src="../knocking_out.mp3"></audio>
+<audio id="sfx-shoot" preload="none" src="../%E7%99%BC%E5%B0%84.mp3"></audio>
+<audio id="sfx-revive" preload="none" src="../%E5%BE%A9%E6%B4%BB.mp3"></audio>
+<audio id="sfx-statup" preload="none" src="../%E8%83%BD%E5%8A%9B%E4%B8%8A%E5%8D%87.mp3"></audio>
+<audio id="sfx-fantasy" preload="none" src="../fantasy_fly.mp3"></audio>
+<audio id="sfx-rapidfire-gun" preload="none" src="../%E9%80%A3%E7%BA%8C%E5%B0%84%E6%93%8A.mp3"></audio>
+<audio id="sfx-confirm" preload="none" src="../2-1%E5%82%B3%E9%80%81.mp3"></audio>
+<audio id="sfx-gentle" preload="none" src="../%E8%BC%95%E6%9F%94%E9%81%B8%E5%8F%96.mp3"></audio>
+<audio id="sfx-passive" preload="none" src="../%E8%A2%AB%E5%8B%95%E6%8A%80%E8%83%BD%E8%A7%B8%E7%99%BC.mp3"></audio>
+<audio id="sfx-tengu-strike" preload="none" src="../%E9%BE%8D%E6%8D%B2%E9%A2%A8%E9%9F%B3%E6%95%88.m4a"></audio>
+<audio id="sfx-qiongqi-burst" preload="none" src="../%E5%8F%AC%E5%96%9A%E4%B8%8A%E5%8F%A4%E5%9B%9B%E5%87%B6%E7%8D%B8.mp3"></audio>
+<audio id="sfx-gunshot-big" preload="none" src="../%E7%99%BC%E5%B0%84%E5%A4%A7%E5%AD%90%E5%BD%88.mp3"></audio>
+<audio id="sfx-summon-smoke" preload="none" src="../%E5%8F%AC%E5%96%9A%E7%85%99%E7%81%AB.mp3"></audio>
+<audio id="sfx-thunder-fury" preload="none" src="../%E6%80%92%E9%9B%B7%E7%8B%82%E8%A5%B2%E9%9F%B3%E6%95%88.m4a"></audio>
+<audio id="sfx-cantmove" preload="none" src="../%E4%B8%8D%E8%83%BD%E5%8B%95.mp3"></audio>
+<audio id="sfx-bomb-explode" preload="none" src="../%E5%AE%9A%E6%99%82%E7%82%B8%E5%BD%88%E7%88%86%E7%82%B8.mp3"></audio>
+<audio id="sfx-ice2" preload="none" src="../%E6%9A%B4%E9%A2%A8%E9%9B%AA.mp3"></audio>
+<audio id="sfx-ice1" preload="none" src="../%E5%96%AE%E9%AB%94%E5%86%B0%E5%87%8D.mp3"></audio>
+<audio id="sfx-applause" preload="none" src="../%E6%8E%8C%E8%81%B2.mp3"></audio>
+<audio id="sfx-pharaoh-burst" preload="none" src="../%E5%A4%A7%E7%88%86%E7%82%B8.mp3"></audio>
+<audio id="sfx-cleopatra-burst" preload="none" src="../%E6%B2%B3%E6%B0%B4%E6%9A%B4%E6%BC%B2.mp3"></audio>
 
 <!-- ★ v1.1.0(老師需求 3「小遊戲模式要有 BGM」)— 三軌,同樣全部沿用主程式既有音樂:
        首頁  = 台灣地圖BGM(最貼「木柵・台灣」主題)
@@ -3555,66 +3600,66 @@ window.islDirectVeilOff = function(){
        結算  = Win(播一次,不 loop)
      ⚠ preload="none":本小程式的存在目的就是「秒開」,絕不能為了 BGM 拖慢首載。
      ⚠ iOS 一律禁止自動播放 ⇒ 只在使用者第一次觸碰畫面之後才起播(見 _bgmArm)。 -->
-<audio id="bgm-home"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a"></audio>
-<audio id="bgm-play"   preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94.mp3"></audio>
+<audio id="bgm-home"   preload="none" loop src="../%E5%8F%B0%E7%81%A3%E5%9C%B0%E5%9C%96BGM.m4a"></audio>
+<audio id="bgm-play"   preload="none" loop src="../%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94.mp3"></audio>
 <!-- ★ v1.34.0(老師需求「被擊倒要放鬥技場戰鬥失敗的BGM」)— 沿用主程式同一支「戰鬥失敗.mp3」 -->
-<audio id="bgm-lose"    preload="none" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
-<audio id="bgm-result" preload="none"      src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Win.mp3"></audio>
+<audio id="bgm-lose"    preload="none" src="../%E6%88%B0%E9%AC%A5%E5%A4%B1%E6%95%97.mp3"></audio>
+<audio id="bgm-result" preload="none"      src="../Win.mp3"></audio>
 <!-- ★ v1.3.0(老師裁定 1甲「每款專屬 BGM」)— 新增七軌,同樣全部沿用主程式既有音樂,零新素材;
        哪一款播哪一首寫在 minigame_db.js 各款的 bgm 欄位(值 = 這裡的 id)。
      ⚠ 全部逐檔 curl -I 驗過 200(2026-09-05)。日後要加軌一律先驗 200。
      ⚠ preload=none:同上,不拖慢首載;第一次切到該款才開始抓。
      ⚠ bgmStop() 改成掃描所有 id 以 bgm- 開頭的 <audio>,這裡加軌不必回頭改 JS。 -->
-<audio id="bgm-adv-scene"       preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a"></audio>
-<audio id="bgm-taiwan-cutscene" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3%E9%97%9C%E5%8D%A1%E7%B0%A1%E4%BB%8B%E5%8A%87%E6%83%85BGM.m4a"></audio>
-<audio id="bgm-pet-house"       preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%AF%B5%E7%89%A9%E5%B0%8F%E5%B1%8BBGM.m4a"></audio>
-<audio id="bgm-shop"            preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a"></audio>
-<audio id="bgm-avatar-card"     preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E8%87%AA%E8%A8%82%E8%A7%92%E8%89%B2%E5%90%8D%E7%89%87.m4a"></audio>
-<audio id="bgm-adv-march"       preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%86%92%E9%9A%AA%E5%B0%8F%E9%9A%8A%E5%87%BA%E7%99%BC.m4a"></audio>
-<audio id="bgm-summon"          preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a"></audio>
+<audio id="bgm-adv-scene"       preload="none" loop src="../%E8%B2%93%E7%A9%BA%E5%86%92%E9%9A%AA.m4a"></audio>
+<audio id="bgm-taiwan-cutscene" preload="none" loop src="../%E5%8F%B0%E7%81%A3%E9%97%9C%E5%8D%A1%E7%B0%A1%E4%BB%8B%E5%8A%87%E6%83%85BGM.m4a"></audio>
+<audio id="bgm-pet-house"       preload="none" loop src="../%E5%AF%B5%E7%89%A9%E5%B0%8F%E5%B1%8BBGM.m4a"></audio>
+<audio id="bgm-shop"            preload="none" loop src="../%E4%B8%8D%E5%8F%AF%E6%80%9D%E8%AD%B0%E8%B6%85%E5%95%86BGM.m4a"></audio>
+<audio id="bgm-avatar-card"     preload="none" loop src="../%E8%87%AA%E8%A8%82%E8%A7%92%E8%89%B2%E5%90%8D%E7%89%87.m4a"></audio>
+<audio id="bgm-adv-march"       preload="none" loop src="../%E5%86%92%E9%9A%AA%E5%B0%8F%E9%9A%8A%E5%87%BA%E7%99%BC.m4a"></audio>
+<audio id="bgm-summon"          preload="none" loop src="../%E5%8F%AC%E5%96%9A%E6%98%9F%E7%A9%BA.m4a"></audio>
 <!-- ★ v1.30.0(老師需求 2026-09-08)— 15 款小遊戲各配一首「不同的」戰鬥音樂(依科目文化屬性挑選;全部沿用主程式既有素材,已逐檔驗證 200,preload=none) -->
-<audio id="bgm-battle-01" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E6%88%B0%E9%AC%A5%E9%9F%B3%E6%A8%8201.mp3"></audio>
-<audio id="bgm-battle-02" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/Q%E6%88%B0%E9%AC%A5%E9%9F%B3%E6%A8%8202.mp3"></audio>
-<audio id="bgm-battle-03" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%88%B0%E9%AC%A503.mp3"></audio>
-<audio id="bgm-battle-04" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%88%B0%E9%AC%A504.mp3"></audio>
-<audio id="bgm-battle-05" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%88%B0%E9%AC%A505.m4a"></audio>
-<audio id="bgm-taiwan-boss" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS.m4a"></audio>
-<audio id="bgm-taiwan-boss-2" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%8F%B0%E7%81%A3BOSS%E6%88%B0%E9%AC%A5BGM2.m4a"></audio>
-<audio id="bgm-taiwan-boss-yushan" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%8E%89%E5%B1%B1%E6%88%B0%E9%AC%A5BGM.m4a"></audio>
-<audio id="bgm-arena-battle-01" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%A5%E6%8A%80%E5%A0%B4%E6%88%B0%E9%AC%A5BGM01.mp3"></audio>
-<audio id="bgm-arena-battle-02" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%A5%E6%8A%80%E5%A0%B4%E6%88%B0%E9%AC%A5BGM02.m4a"></audio>
-<audio id="bgm-arena-battle-03" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E9%AC%A5%E6%8A%80%E5%A0%B4%E6%88%B0%E9%AC%A5BGM03.m4a"></audio>
-<audio id="bgm-king-challenge-2" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94%20(1).mp3"></audio>
-<audio id="bgm-boss-01" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a"></audio>
+<audio id="bgm-battle-01" preload="none" loop src="../Q%E6%88%B0%E9%AC%A5%E9%9F%B3%E6%A8%8201.mp3"></audio>
+<audio id="bgm-battle-02" preload="none" loop src="../Q%E6%88%B0%E9%AC%A5%E9%9F%B3%E6%A8%8202.mp3"></audio>
+<audio id="bgm-battle-03" preload="none" loop src="../%E6%88%B0%E9%AC%A503.mp3"></audio>
+<audio id="bgm-battle-04" preload="none" loop src="../%E6%88%B0%E9%AC%A504.mp3"></audio>
+<audio id="bgm-battle-05" preload="none" loop src="../%E6%88%B0%E9%AC%A505.m4a"></audio>
+<audio id="bgm-taiwan-boss" preload="none" loop src="../%E5%8F%B0%E7%81%A3BOSS.m4a"></audio>
+<audio id="bgm-taiwan-boss-2" preload="none" loop src="../%E5%8F%B0%E7%81%A3BOSS%E6%88%B0%E9%AC%A5BGM2.m4a"></audio>
+<audio id="bgm-taiwan-boss-yushan" preload="none" loop src="../%E7%8E%89%E5%B1%B1%E6%88%B0%E9%AC%A5BGM.m4a"></audio>
+<audio id="bgm-arena-battle-01" preload="none" loop src="../%E9%AC%A5%E6%8A%80%E5%A0%B4%E6%88%B0%E9%AC%A5BGM01.mp3"></audio>
+<audio id="bgm-arena-battle-02" preload="none" loop src="../%E9%AC%A5%E6%8A%80%E5%A0%B4%E6%88%B0%E9%AC%A5BGM02.m4a"></audio>
+<audio id="bgm-arena-battle-03" preload="none" loop src="../%E9%AC%A5%E6%8A%80%E5%A0%B4%E6%88%B0%E9%AC%A5BGM03.m4a"></audio>
+<audio id="bgm-king-challenge-2" preload="none" loop src="../%E7%9F%A5%E8%AD%98%E7%8E%8B%E5%95%8F%E7%AD%94%20(1).mp3"></audio>
+<audio id="bgm-boss-01" preload="none" loop src="../%E4%B9%9D%E5%B0%BE%E7%A9%BA%E8%B2%93%E6%80%AABOSS%E6%88%B0BGM.m4a"></audio>
 <!-- ★ v1.97.0 🏝 荒島專屬 BGM(minigame/audio/island_<key>.m4a;缺檔 onerror → data-fb 既有曲目) -->
-<audio id="bgm-isl-map" preload="none" loop data-fb="bgm-adv-march" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_map.m4a"></audio>
-<audio id="bgm-isl-camp" preload="none" loop data-fb="bgm-pet-house" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_camp.m4a"></audio>
-<audio id="bgm-isl-act" preload="none" loop data-fb="bgm-play" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_act.m4a"></audio>
-<audio id="bgm-isl-raid" preload="none" loop data-fb="bgm-boss-01" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_raid.m4a"></audio>
-<audio id="bgm-isl-raid2" preload="none" loop data-fb="bgm-boss-02" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_raid2.m4a"></audio><!-- ★ v1.105.0 防衛戰第二首,與 raid 輪流 -->
-<audio id="bgm-isl-ending" preload="none" loop data-fb="bgm-avatar-card" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_ending.m4a"></audio><!-- ★ v1.105.0 結局回憶幻燈片 -->
-<audio id="bgm-isl-beach" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_beach.m4a"></audio>
+<audio id="bgm-isl-map" preload="none" loop data-fb="bgm-adv-march" src="../minigame/audio/island_map.m4a"></audio>
+<audio id="bgm-isl-camp" preload="none" loop data-fb="bgm-pet-house" src="../minigame/audio/island_camp.m4a"></audio>
+<audio id="bgm-isl-act" preload="none" loop data-fb="bgm-play" src="../minigame/audio/island_act.m4a"></audio>
+<audio id="bgm-isl-raid" preload="none" loop data-fb="bgm-boss-01" src="../minigame/audio/island_raid.m4a"></audio>
+<audio id="bgm-isl-raid2" preload="none" loop data-fb="bgm-boss-02" src="../minigame/audio/island_raid2.m4a"></audio><!-- ★ v1.105.0 防衛戰第二首,與 raid 輪流 -->
+<audio id="bgm-isl-ending" preload="none" loop data-fb="bgm-avatar-card" src="../minigame/audio/island_ending.m4a"></audio><!-- ★ v1.105.0 結局回憶幻燈片 -->
+<audio id="bgm-isl-beach" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_beach.m4a"></audio>
 <!-- ★ v1.126.0(2026-09-13・老師已上傳海浪聲與森林鳥叫)— 場景環境音(疊在 BGM 之上循環播放,音量吃「音效」拉桿)。
      ⚠ 實查 repo:海浪聲.mp3 在 minigame/audio/、森林鳥叫.mp3 在「repo 根目錄」,兩個位置不一樣,所以 src 各自指對地方;
      日後老師若把森林鳥叫也搬進 minigame/audio/,只要改這一行的路徑即可。 -->
-<audio id="amb-isl-wave" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E6%B5%B7%E6%B5%AA%E8%81%B2.mp3"></audio>
-<audio id="amb-isl-bird" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E6%A3%AE%E6%9E%97%E9%B3%A5%E5%8F%AB.mp3"></audio>
+<audio id="amb-isl-wave" preload="none" loop src="../minigame/audio/%E6%B5%B7%E6%B5%AA%E8%81%B2.mp3"></audio>
+<audio id="amb-isl-bird" preload="none" loop src="../%E6%A3%AE%E6%9E%97%E9%B3%A5%E5%8F%AB.mp3"></audio>
 <!-- ★ v1.131.0(2026-09-13・老師:溪流/瀑布/洞穴滴水/草原 環境音已上傳)— 實查 repo 確認四支都在 minigame/audio/,注意 溪流是 .m4a、其餘三支是 .mp3。 -->
-<audio id="amb-isl-river" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E6%BA%AA%E6%B5%81.m4a"></audio>
-<audio id="amb-isl-fall"  preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E7%80%91%E5%B8%83.mp3"></audio>
-<audio id="amb-isl-drip"  preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E6%B4%9E%E7%A9%B4%E6%BB%B4%E6%B0%B4.mp3"></audio>
-<audio id="amb-isl-grass" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/%E8%8D%89%E5%8E%9F.mp3"></audio>
-<audio id="bgm-isl-forest" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_forest.m4a"></audio>
-<audio id="bgm-isl-grass" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_grass.m4a"></audio>
-<audio id="bgm-isl-river" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_river.m4a"></audio>
-<audio id="bgm-isl-rock" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_rock.m4a"></audio>
-<audio id="bgm-isl-lake" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_lake.m4a"></audio>
-<audio id="bgm-isl-cave" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_cave.m4a"></audio>
-<audio id="bgm-isl-cliff" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_cliff.m4a"></audio>
-<audio id="bgm-isl-valley" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_valley.m4a"></audio>
-<audio id="bgm-isl-ruins" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_ruins.m4a"></audio>
-<audio id="bgm-isl-volcano" preload="none" loop data-fb="bgm-adv-scene" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/minigame/audio/island_volcano.m4a"></audio>
-<audio id="bgm-boss-02" preload="none" loop src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/BOSS%E6%88%B002.mp3"></audio>
+<audio id="amb-isl-river" preload="none" loop src="../minigame/audio/%E6%BA%AA%E6%B5%81.m4a"></audio>
+<audio id="amb-isl-fall"  preload="none" loop src="../minigame/audio/%E7%80%91%E5%B8%83.mp3"></audio>
+<audio id="amb-isl-drip"  preload="none" loop src="../minigame/audio/%E6%B4%9E%E7%A9%B4%E6%BB%B4%E6%B0%B4.mp3"></audio>
+<audio id="amb-isl-grass" preload="none" loop src="../minigame/audio/%E8%8D%89%E5%8E%9F.mp3"></audio>
+<audio id="bgm-isl-forest" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_forest.m4a"></audio>
+<audio id="bgm-isl-grass" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_grass.m4a"></audio>
+<audio id="bgm-isl-river" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_river.m4a"></audio>
+<audio id="bgm-isl-rock" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_rock.m4a"></audio>
+<audio id="bgm-isl-lake" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_lake.m4a"></audio>
+<audio id="bgm-isl-cave" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_cave.m4a"></audio>
+<audio id="bgm-isl-cliff" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_cliff.m4a"></audio>
+<audio id="bgm-isl-valley" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_valley.m4a"></audio>
+<audio id="bgm-isl-ruins" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_ruins.m4a"></audio>
+<audio id="bgm-isl-volcano" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_volcano.m4a"></audio>
+<audio id="bgm-boss-02" preload="none" loop src="../BOSS%E6%88%B002.mp3"></audio>
 
 <!-- ★ v1.3.0(老師裁定 2丙)— 整頁場景背景層,固定在最底下;由 JS 依目前畫面換圖(mgSetScene)。 -->
 <div id="bgscene"></div>
@@ -4307,8 +4352,10 @@ window.islDirectVeilOff = function(){
 /* 火苗 */
 .isl-flame{font-size:120px;line-height:1;transition:transform .2s;transform-origin:50% 100%;}
 /* 釘子 */
-.isl-nails{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:min(80%,420px);}
-.isl-nail{aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);font-size:48px;display:flex;align-items:center;justify-content:center;}
+/* ★ v1.158.0(老師:「敲打遊戲現在都固定 3×2 內敲,改成 6×6,提高變化性和難度」)—— 釘板由 6 格(3 欄×2 列)擴成 36 格(6 欄×6 列);
+   格子變多,單格必須縮小、間距與字級一起縮,否則 36 格塞不進活動區(iPad 橫式只有約 380 版面 px 高)。 */
+.isl-nails{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:min(92%,560px);}
+.isl-nail{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);font-size:30px;display:flex;align-items:center;justify-content:center;padding:0;min-width:0;}
 .isl-nail.on{background:#ffd166;color:#333;box-shadow:0 0 18px #ffd166;}
 .isl-nail.done{background:rgba(123,237,159,.4);border-color:#7bed9f;}
 /* 結算 */
@@ -4664,6 +4711,32 @@ window.islDirectVeilOff = function(){
 #isl-act .isl-qte .big{white-space:nowrap;width:auto;min-width:min(70%,300px);max-width:96%;padding:0 32px;}
 #isl-act .isl-qte .cnt,#isl-act .isl-qte .fx{white-space:nowrap;}
 #isl-q-side .sh{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ══ ★ v1.158.0(老師③「採集的 QTE 長條和按鈕再放大延長,字不要超出」④「砍樹的 QTE 長條太小了整個都再放大延長」)══
+   採集(islQtePull)與砍樹/採石/烹飪(islQteSwing)共用同一組 `.isl-qte` 樣式,所以兩項一起放大就一起生效。
+   ① 延長:QTE 框上限 980px → 1280px(拉桿寬度 = 框寬,框一寬拉桿就跟著變長);
+      側欄要扣的寬度同時由 340/380 收到 330/360,把省下來的也讓給拉桿。
+   ② 放大:拉桿高 46 → 78px(指針、圓角、外框跟著等比),大按鈕高 96 → 124px、字 33 → 38px。
+   ③ 字不要超出:按鈕已經是 nowrap + 內容寬(v1.141.0),再把它改成 inline-flex 置中並給 line-height:1
+      ——`height` 配預設的 line-height 在中文字級一放大就會上下被切;左右內距改用 clamp,
+      窄螢幕自動收縮而不是把字擠出框外。下面 ≤1100px 的既有媒體查詢再收一段(後宣告者勝)。
+   ⚠ 拉桿內的黃區/暴擊區都是百分比定位,框變長 = 甜蜜點的實際 px 也跟著變長(判定標準不變,只是更好按),
+     這是放大必然的副作用,不是判定被改鬆。 */
+/* ⚠⚠ 根因(這才是「拉桿一直放不大」的真正原因,前幾輪都只改到公式沒改到分母):
+   `#isl-act-body` 是 `display:flex;flex-direction:column;align-items:center`,而 v1.136.0 為了修特效推版面
+   把內容包了一層 `.isl-act-inner` —— 這層是 align-items:center 底下的 flex 子項,寬度是**收縮到內容寬**的。
+   於是 `.isl-qte` 的 `calc(100% - 330px)` 其實是拿「內容自己的寬度」當 100%(不是活動區寬度),
+   等於用自己的寬度算自己的寬度:實測 1440px 桌機上採集 QTE 框只有 320 版面 px、砍樹只有 160 版面 px,
+   不管上限寫 680 還是 1280 都碰不到。把這一層在 QTE(.qside)情境下撐成滿寬,百分比才有正確的分母。
+   內部仍維持 flex + align-items:center,所有子元素的置中行為與改版前一致(只影響 QTE 畫面,不動知識題/拖曳題)。 */
+#isl-act-body.qside > .isl-act-inner{width:100%;display:flex;flex-direction:column;align-items:center;}
+#isl-act-body.qside .isl-qte{width:clamp(320px,calc(100% - 330px),1280px);}
+#island-root.ipad #isl-act-body.qside .isl-qte{width:clamp(320px,calc(100% - 360px),1280px);}
+#isl-act .isl-qte .bar{height:78px;border-radius:39px;border-width:4px;margin-bottom:22px;}
+#isl-act .isl-qte .bar .ptr{top:-6px;width:16px;height:90px;margin-left:-8px;border-radius:6px;}
+#isl-act .isl-qte .big{height:124px;border-radius:62px;font-size:38px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:min(72%,560px);max-width:96%;padding:0 clamp(24px,4%,56px);}
+#isl-act .isl-qte .tree{font-size:130px;}
 @media (max-width:1100px){
   #isl-act-body.qside .isl-qte-obj img{width:280px;height:280px;}
   #island-root.ipad #isl-act-body.qside .isl-qte-obj img{width:240px;height:240px;}
@@ -4673,7 +4746,10 @@ window.islDirectVeilOff = function(){
   #island-root.ipad #isl-q-side{width:285px;font-size:32px;}
   #isl-act .isl-qte .isl-act-title{font-size:26px;}
   #island-root.ipad #isl-act .isl-qte .isl-act-title{font-size:28px;}
-  #isl-act .isl-qte .big{font-size:27px;padding:0 24px;}
+  #isl-act .isl-qte .big{font-size:30px;padding:0 24px;height:104px;border-radius:52px;min-width:min(76%,420px);}   /* ★ v1.158.0 窄螢幕收一段(仍比改版前大),確保長字串不會被 max-width 夾到溢出 */
+  #isl-act .isl-qte .bar{height:64px;border-radius:32px;}
+  #isl-act .isl-qte .bar .ptr{height:76px;}
+  #isl-act .isl-qte .tree{font-size:110px;}
 }
 #island-root.ipad #isl-map-hint{font-size:34px;} #island-root.ipad #isl-zone-topinfo{font-size:34px;}
 #island-root.ipad .isl-namepick select{font-size:36px;} #island-root.ipad #isl-create .sec h4{font-size:40px;} #island-root.ipad #isl-create .sw button{font-size:40px;} #island-root.ipad #isl-create .styles button{font-size:32px;} #island-root.ipad #isl-create .prev .nm{font-size:48px;} #island-root.ipad #isl-create .prev input{font-size:44px;}
@@ -4704,7 +4780,7 @@ window.islDirectVeilOff = function(){
    (採集/伐木/采石暴擊、建造完工、拼圖/釘子陣過關、coinrush 填滩…不只是答題)。 */
 #isl-act-body > .isl-act-inner{margin-top:auto;margin-bottom:auto;}   /* 活動內容高度夠時置中,太高時(方格拼圖/釘子陣)改從頂端排起並可上下捲動,不再被切 */
 .isl-pipes{width:auto;height:min(100%,400px);max-width:90%;aspect-ratio:1;}   /* 水道 5×5 以可用高度為準(iPad 橫式活動區只剩約 380 版面 px) */
-.isl-nails{width:auto;height:min(100%,420px);max-width:80%;aspect-ratio:1;}
+.isl-nails{width:auto;height:min(100%,420px);max-width:92%;aspect-ratio:1;gap:6px;}   /* ★ v1.158.0 6×6 後單格更小,間距同步縮,max-width 放寬到 92% 免得 36 格被壓扁 */
 #isl-act-hint .who{width:64px;height:64px;flex:0 0 64px;overflow:hidden;}
 #isl-act-hint .who .isl-chibi,#isl-act-hint .who .isl-pixchar{transform:scale(.9);transform-origin:50% 50%;}   /* 提示條小人(像素圖或手繪)縮 .9 置中,不再垂到畫面外 */
 #isl-camp-side{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;align-content:start;column-gap:6px;row-gap:6px;width:264px;flex-basis:264px;padding:8px 6px;}
@@ -4998,6 +5074,13 @@ window.islDirectVeilOff = function(){
 .isl-poi.isl-npc img{ width:100%; height:100%; object-fit:contain; }
 /* 名稱改放「圖片正上方」、一行不換行(原本掛在腳下,大隻 NPC 的名牌會被下一排格子蓋住) */
 .isl-poi.isl-npc .nl{ top:auto; bottom:100%; margin:0 0 6px; white-space:nowrap; }
+/* ★ v1.158.0(老師:「荒島 NPC 頭上的名字欄位太高了,改成一行文字內的適當高度」)——
+   根因:NPC 的尺寸是 v1.152.0 起由 JS 逐隻 inline 指定的,那串 style 裡同時寫了
+   `line-height:<身高>px`(給缺圖時 emoji 置中用),而 `.nl` 名牌自己從來沒宣告 line-height,
+   於是**整個繼承了 NPC 的身高**當行高 ⇒ 台灣黑熊的名牌一格就有 192px 高(字只有 14px)。
+   這裡把行高釘死在「一行文字」的比例,名牌高度從此只跟字級走,跟 NPC 多大完全無關。
+   一併宣告 font-weight/text-align,避免未來再從容器繼承到別的意外值。 */
+.isl-poi.isl-npc .nl{ line-height:1.25; padding:2px 11px; font-weight:700; text-align:center; }
 .isl-deco.flip img{ transform:scaleX(-1); }
 /* 治療特效:塞在 #isl-camp-char 裡面 ⇒ 跟著人走,不會在他走路時飄在原地 */
 .isl-fx.onchar{ position:absolute; left:50%; top:50%; width:128px; height:128px; margin:-64px 0 0 -64px; pointer-events:none; z-index:6; }
@@ -5102,7 +5185,7 @@ window.islDirectVeilOff = function(){
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.157.0"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.159.0"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -5111,7 +5194,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.157.0';   /* ★ v1.157.0(2026-09-14・老師三項)—①營地走路主角改用野外那套走路動作模組(islCharSpriteInit 共用初始化,islCampTick 逐幀驅動 islCharPaint,吃到真正的跨步幀/轉身/鏡像,不再是 CSS transition 硬滑+margin-bottom 假裝晃動),尺寸改由 islCampCharScale() 依營地格子實際渲染尺寸算(格邊長×0.7=帳篷圖示高度,不寫死數字)。②品質小遊戲(輕輕摘/拉一下)材料圖片改成置中排版流、放大到 200%,拉桿/按鈕自然被推下去、再加一點間距;右側「紀錄」欄整組放大 50%;採集完成的 .isl-result 補上 margin:0 auto 確保置中。③修正走路腳步聲(D.SFX_MAP.walk 直接借用 sfx-tap 點擊音)在按方向鍵/拖曳搖桿長按移動時聽起來像連續點擊:islTick 新增 manual 旗標(方向鍵或拖曳搖桿在推動),manual 時腳步聲完全靜音,只留給「點地板自動走過去」(islTapToMove)那種一次性路徑移動。 */   /* ★ v1.156.0(2026-09-14・選擇題錯誤選項加長 第 3 批 60 題)—本檔僅版號同步(題目全在 island_db v1.156.0;唯一最長比例 45%→31%)。 */   /* ★ v1.155.0(2026-09-14・選擇題錯誤選項加長 第 2 批 50 題)—本檔僅版號同步(題目全在 island_db v1.155.0;唯一最長比例 58%→45%)。 */   /* ★ v1.154.0(2026-09-14・老師截圖回報:「點了角色能力會變成推擠排版的展開,我要的是額外小視窗說明不是這種推擠排版」)—根因:👤 角色能力視窗的 .tip 說明文字是用 `flex:1 1 100%` 塞進按鈕自己的 flex 排版,在 .isl-abil 這張 CSS Grid 裡,任何一顆卡片一展開,整列就會被撐高,連帶把下面所有列一起往下推(截圖裡「力氣」那列被推到很下面就是這樣來的)。改法:.tip 改成 position:absolute 浮在被點的那顆卡片正下方(脫離文件流,CSS Grid 排版時完全不計入這個元素的高度),只蓋住視覺上的那一小塊,其餘排版一格都不會動;配 pointer-events:none 讓浮窗不擋住被蓋住那格的點擊,.on 卡片給 z-index 蓋過鄰居格。純 CSS 修正,islCharOpen 的 JS 邏輯不變。 */   /* ★ v1.153.0(2026-09-14・老師:選擇題的錯誤選項要加長到至少和正確答案一樣長,避免學生用「選最長的」蒙混,失去思考的教學目的)—本檔僅版號同步(題目改寫全在 island_db v1.153.0;第 1 批 50 題,唯一最長比例 71%→58%)。 */   /* ★ v1.152.0(2026-09-14・老師四項)—①11 區可走遮罩全部依場景實圖逐格重建(以「比周圍暗多少」判定立體物、藍色判定水域、火山另判岩漿,去雜點後 BFS 連通驗證,不可達的可走格一律封起來);229 個資源點/小白/解謎點/訓練師座標一併吸附到最近的可走格,重建後 11 區固定點 100% 可達。②營地治療特效改掛在主角身上(islFxOnCampChar:GIF 塞進 #isl-camp-char 裡面,主角走動時特效跟著走)。③裝飾品也能左右鏡像(deco.f;點一下沒拖動就開小選單 → 翻轉,拖曳仍是換位置,以 8px 位移分辨點/拖)。④NPC 尺寸改成每隻依真實體型比例(玩家顯示高度 96px 為基準:陸蟹 72/梅花鹿 106/台灣黑熊 192=玩家 2 倍/領角鴞 72),名稱改成一行放在圖片正上方;⚠ margin 必須跟著尺寸一起算(腳底對齊定位法 margin-top=-(高度-10)),只改尺寸不改 margin 會讓 NPC 腳陷進地板。 */   /* ★ v1.151.0(2026-09-14・老師:營地設施可移動位置與左右鏡像翻轉;營地主角可在可行走區域自由移動並與設施互動,點設施會先走過去旁邊)—①設施新增 slot.flip(純外觀,不影響效果/耐久)與「🔀 搬移位置」搬移模式(進入模式後點任一格即互換,空地或別的設施皆可;施工中的不能搬)。②主角位置改成可變的 (x%,y%) 存在 _IS.campC(刻意不寫存檔:站在哪裡是臨時狀態);走路用 CSS transition 交給合成執行緒,不另開 rAF(舊 iPad 省電)。③點空地→走過去;點設施→先走到那一格正下方,抵達才開設施視窗(islCampGoToCell + callback)。④鏡像翻的是裡面那張圖不是容器:容器 transform 是 scale(2.2) 且 origin 在左下角,翻容器會讓人平移一個身寬、頭上泡泡的字也會左右相反;走路的腳步晃動改用 margin-bottom 而非 transform,否則動畫會蓋掉 scale(2.2) 讓人瞬間縮小。 */   /* ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—①阿獺雜貨鋪「買東西」分頁仍被縮成小視窗:v1.149.0 只在呼叫端傳 opts.wide,「寬度規則」與「要不要等比縮放」分散在兩處,任一路徑沒帶到 opts 就退回 islFitBox 縮放版(縮放幅度取決內容高度 ⇒ 清單最長的買東西縮最兇);改為把 .wide 直接寫進面板 markup 當單一真相,islPanel 看到框上已有 .wide 就同樣跳過縮放,三分頁尺寸永遠一致。②👤 角色能力視窗改接近全螢幕(.isl-bagbox.full)且不必捲動:4 維 + 14 生存技能改排成兩欄「能力方塊」(.isl-abil/.isl-ab),c-right 取消 max-height/overflow;每一項可點開說明標籤(再點同一項收起,_IS.abTip)。③營地左下的主角可以點:65% 說一句「當前最該做的事」進度提示(islCampHintText 由上而下第一個成立的才講),其餘說一句隨機心情(沿用 D.MONO,依天氣挑 wxSun/wxRain/wxTyphoon);新增 islBubble(指定文字的泡泡,與 islMono 共用同一顆 .isl-tired DOM,永遠只有一顆)。⚠ #isl-camp-char 原本 pointer-events:none,本輪改 auto 才點得到,泡泡本身維持 none 以免擋住第二次點擊。同輪 island_db v1.150.0 先行放入 🌟 天賦星域(46 節點)與 🤒 不良狀態(5 種)資料表,index 端邏輯下一輪接。 */   /* ★ v1.149.0（2026-09-14・老師截圖回報三項）—①左上視窗標題:`?mode=island` 直入與從大廳按鈕進場兩條路徑,document.title 都改成「小英雄小遊戲 — 荒島求生」(原本沿用整頁固定的 `<title>…英雄對戰小學堂</title>`,和畫面內容對不上)。②商店(阿獺雜貨鋪)「買東西」分頁看起來被縮得特別小:根因是三分頁共用同一支 islPanel(h,cb),沒傳 opts 時一律跑 islFitBox() 整框等比縮放,縮放幅度單純取決於當下內容量算出的高度——買東西清單通常比賣東西/委託長很多,所以縮得最兇;改傳 `{wide:true}` 讓商店面板跳過整框縮放,改用既有「wide 版」規格(框吃滿 92% 高+.bd 內捲),三分頁字級與按鈕尺寸從此一致;同步補上 `.isl-bagbox.wide` 這條原本沒有對應的 CSS(先前只有 `.box.wide`)。③老師在「🎨 造型工房(GM)」調好貼回聊天室的「📋 複製設定值」寫入 island_db.js 的 D.LAYER_ADJ(髮型改三向專屬微調)與 D.CREATE_DEFAULT(補 clothC:0),`minigame_island_db.js?v=` 快取破壞字串同步 bump。對應 island_db v1.149.0(僅本檔零改動,純資料表)。 */   /* ★ v1.148.0（2026-09-14・老師需求「十二星神(除了天蠍/射手以外)左邊清單縮圖高度Y減少25%,同步到小遊戲的英雄選單」）— MG_THUMB_POS 新增 10 位星神(牡羊/金牛/雙子/巨蟹/獅子/處女/天秤/摩羯/水瓶/雙魚)各 25(=主程式基準 50 + grid:-25)，比照 index.html v5.201.0 的 _teamFormAdjustObjPos 新增值同步；天蠍星神/射手星神依老師指示不調整仍維持預設 50。純顯示層，選角頁右側 .hm-banner 沿用既有固定 center 20% 裁切不受影響。 */   /* ★ v1.147.0（2026-09-14・老師截圖回報「荒島求生點進地圖區域後，畫面上半部大地圖和下半部場景疊在一起」緊急修復）— 根因＝#isl-map-wrap／#isl-zone／#isl-camp／#isl-act／#isl-create／#isl-def 這六個「畫面」原本只是共用外層 .isl-screen 的一般 block 子元素（各自 width:100%;height:100%;position:relative），設計書 2.1 講的「各畫面互斥顯示」完全只靠 islShowScreen() 幫沒有的那些加 .hidden(display:none) 撐著——只要有任何一條路徑忘了幫舊畫面補上 .hidden（或執行順序被打斷），兩個畫面就會同時不帶 .hidden，而它們在一般文件流裡不是互相覆蓋而是**上下疊放**，正是老師截圖看到「上面小地圖、下面場景各佔一半」的畫面。修法：六個畫面容器全部改成 position:absolute;left:0;top:0;right:0;bottom:0;（父層 .isl-screen 本就 position:relative），此後任兩個畫面同時可見也只會互相覆蓋（後面的蓋住前面的），不會再裂成上下兩半；另在 islEnterZone() 呼叫 islShowScreen('zone') 之後多補一行 hide('isl-map-wrap') 雙保險，防止任何未來路徑再漏一次。對應 sw v1.116.0(僅版號同步)。 */   /* ★ v1.146.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復):根因＝islEnterZone() 整個函式從缺一行 var 宣告——db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告,函式第一行 `_IS.scene = sc;` 一讀取未宣告的 sc 就丟 ReferenceError,函式當場中斷(console 有錯誤、畫面無任何提示),導致點地圖上任何一個區域、700ms 後一律靜默失敗、卡在地圖畫面進不去。補回缺的 var 宣告行即修復,對應 sw v1.115.0(僅版號同步)。 */   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.159.0';   /* ★ v1.159.0(2026-09-14・老師「完整下載了還是很慢、常常看不到圖片聽不到音效」)—【載入效能根治】①右上「更新」鈕舊寫法把 lxps-mini-* 全數清掉，連完整下載的 60~120MB(lxps-mini-island-v1)與隨手快取(assets)一起抹掉⇒每按一次更新就白裝，改成只清 lxps-mini-shell-*。②102 支音效音樂與英雄/寵物/場景三組圖庫全部從 raw.githubusercontent.com 改成同源相對路徑(raw 不是 CDN、依 IP 限流，一班 25 台 iPad 共用學校同一 IP 會被限流⇒圖出不來/沒聲音)，並新增 mgCdnFallback 自動退回舊網址的保險。③SW 快取策略改版：同源素材 cache-first、帶 ?v= 版號的檔案 cache-first、minigame_index.html 改 stale-while-revalidate。④minigame_sw.js 的 MINI_VERSION 漂移落後導致版本徽章永遠不會提示更新，本輪對齊。⑤音效預熱 mgWarmSfx + navigator.storage.persist() + 完整下載「已有的跳過/空間不足單獨計數」。 */   /* ★ v1.158.0(2026-09-14・老師四項)—①NPC 名牌高度:`.nl` 沒宣告 line-height,整個繼承到 v1.152.0 起由 JS inline 寫在 NPC 容器上的 `line-height:<身高>px`(台灣黑熊名牌因此高達 192px),釘死 1.25 行高後名牌高度只跟字級走。②敲釘子 3×2(6 格全輪一遍)改 6×6(36 格隨機取 8 格當順序),星等門檻同步改 7/5,不然 8 下中 6 下就滿星會比舊版更容易。③④採集/砲樹 QTE(共用 .isl-qte)拉桿與大按鈕放大延長:框寬上限 980→1280px、拉桿高 46→78px、按鈕 96→124px/字 33→38px,按鈕改 inline-flex+line-height:1+clamp 內距確保中文不被切也不溢出,≤1100px 媒體查詢再收一段。 */   /* ★ v1.157.0(2026-09-14・老師三項)—①營地走路主角改用野外那套走路動作模組(islCharSpriteInit 共用初始化,islCampTick 逐幀驅動 islCharPaint,吃到真正的跨步幀/轉身/鏡像,不再是 CSS transition 硬滑+margin-bottom 假裝晃動),尺寸改由 islCampCharScale() 依營地格子實際渲染尺寸算(格邊長×0.7=帳篷圖示高度,不寫死數字)。②品質小遊戲(輕輕摘/拉一下)材料圖片改成置中排版流、放大到 200%,拉桿/按鈕自然被推下去、再加一點間距;右側「紀錄」欄整組放大 50%;採集完成的 .isl-result 補上 margin:0 auto 確保置中。③修正走路腳步聲(D.SFX_MAP.walk 直接借用 sfx-tap 點擊音)在按方向鍵/拖曳搖桿長按移動時聽起來像連續點擊:islTick 新增 manual 旗標(方向鍵或拖曳搖桿在推動),manual 時腳步聲完全靜音,只留給「點地板自動走過去」(islTapToMove)那種一次性路徑移動。 */   /* ★ v1.156.0(2026-09-14・選擇題錯誤選項加長 第 3 批 60 題)—本檔僅版號同步(題目全在 island_db v1.156.0;唯一最長比例 45%→31%)。 */   /* ★ v1.155.0(2026-09-14・選擇題錯誤選項加長 第 2 批 50 題)—本檔僅版號同步(題目全在 island_db v1.155.0;唯一最長比例 58%→45%)。 */   /* ★ v1.154.0(2026-09-14・老師截圖回報:「點了角色能力會變成推擠排版的展開,我要的是額外小視窗說明不是這種推擠排版」)—根因:👤 角色能力視窗的 .tip 說明文字是用 `flex:1 1 100%` 塞進按鈕自己的 flex 排版,在 .isl-abil 這張 CSS Grid 裡,任何一顆卡片一展開,整列就會被撐高,連帶把下面所有列一起往下推(截圖裡「力氣」那列被推到很下面就是這樣來的)。改法:.tip 改成 position:absolute 浮在被點的那顆卡片正下方(脫離文件流,CSS Grid 排版時完全不計入這個元素的高度),只蓋住視覺上的那一小塊,其餘排版一格都不會動;配 pointer-events:none 讓浮窗不擋住被蓋住那格的點擊,.on 卡片給 z-index 蓋過鄰居格。純 CSS 修正,islCharOpen 的 JS 邏輯不變。 */   /* ★ v1.153.0(2026-09-14・老師:選擇題的錯誤選項要加長到至少和正確答案一樣長,避免學生用「選最長的」蒙混,失去思考的教學目的)—本檔僅版號同步(題目改寫全在 island_db v1.153.0;第 1 批 50 題,唯一最長比例 71%→58%)。 */   /* ★ v1.152.0(2026-09-14・老師四項)—①11 區可走遮罩全部依場景實圖逐格重建(以「比周圍暗多少」判定立體物、藍色判定水域、火山另判岩漿,去雜點後 BFS 連通驗證,不可達的可走格一律封起來);229 個資源點/小白/解謎點/訓練師座標一併吸附到最近的可走格,重建後 11 區固定點 100% 可達。②營地治療特效改掛在主角身上(islFxOnCampChar:GIF 塞進 #isl-camp-char 裡面,主角走動時特效跟著走)。③裝飾品也能左右鏡像(deco.f;點一下沒拖動就開小選單 → 翻轉,拖曳仍是換位置,以 8px 位移分辨點/拖)。④NPC 尺寸改成每隻依真實體型比例(玩家顯示高度 96px 為基準:陸蟹 72/梅花鹿 106/台灣黑熊 192=玩家 2 倍/領角鴞 72),名稱改成一行放在圖片正上方;⚠ margin 必須跟著尺寸一起算(腳底對齊定位法 margin-top=-(高度-10)),只改尺寸不改 margin 會讓 NPC 腳陷進地板。 */   /* ★ v1.151.0(2026-09-14・老師:營地設施可移動位置與左右鏡像翻轉;營地主角可在可行走區域自由移動並與設施互動,點設施會先走過去旁邊)—①設施新增 slot.flip(純外觀,不影響效果/耐久)與「🔀 搬移位置」搬移模式(進入模式後點任一格即互換,空地或別的設施皆可;施工中的不能搬)。②主角位置改成可變的 (x%,y%) 存在 _IS.campC(刻意不寫存檔:站在哪裡是臨時狀態);走路用 CSS transition 交給合成執行緒,不另開 rAF(舊 iPad 省電)。③點空地→走過去;點設施→先走到那一格正下方,抵達才開設施視窗(islCampGoToCell + callback)。④鏡像翻的是裡面那張圖不是容器:容器 transform 是 scale(2.2) 且 origin 在左下角,翻容器會讓人平移一個身寬、頭上泡泡的字也會左右相反;走路的腳步晃動改用 margin-bottom 而非 transform,否則動畫會蓋掉 scale(2.2) 讓人瞬間縮小。 */   /* ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—①阿獺雜貨鋪「買東西」分頁仍被縮成小視窗:v1.149.0 只在呼叫端傳 opts.wide,「寬度規則」與「要不要等比縮放」分散在兩處,任一路徑沒帶到 opts 就退回 islFitBox 縮放版(縮放幅度取決內容高度 ⇒ 清單最長的買東西縮最兇);改為把 .wide 直接寫進面板 markup 當單一真相,islPanel 看到框上已有 .wide 就同樣跳過縮放,三分頁尺寸永遠一致。②👤 角色能力視窗改接近全螢幕(.isl-bagbox.full)且不必捲動:4 維 + 14 生存技能改排成兩欄「能力方塊」(.isl-abil/.isl-ab),c-right 取消 max-height/overflow;每一項可點開說明標籤(再點同一項收起,_IS.abTip)。③營地左下的主角可以點:65% 說一句「當前最該做的事」進度提示(islCampHintText 由上而下第一個成立的才講),其餘說一句隨機心情(沿用 D.MONO,依天氣挑 wxSun/wxRain/wxTyphoon);新增 islBubble(指定文字的泡泡,與 islMono 共用同一顆 .isl-tired DOM,永遠只有一顆)。⚠ #isl-camp-char 原本 pointer-events:none,本輪改 auto 才點得到,泡泡本身維持 none 以免擋住第二次點擊。同輪 island_db v1.150.0 先行放入 🌟 天賦星域(46 節點)與 🤒 不良狀態(5 種)資料表,index 端邏輯下一輪接。 */   /* ★ v1.149.0（2026-09-14・老師截圖回報三項）—①左上視窗標題:`?mode=island` 直入與從大廳按鈕進場兩條路徑,document.title 都改成「小英雄小遊戲 — 荒島求生」(原本沿用整頁固定的 `<title>…英雄對戰小學堂</title>`,和畫面內容對不上)。②商店(阿獺雜貨鋪)「買東西」分頁看起來被縮得特別小:根因是三分頁共用同一支 islPanel(h,cb),沒傳 opts 時一律跑 islFitBox() 整框等比縮放,縮放幅度單純取決於當下內容量算出的高度——買東西清單通常比賣東西/委託長很多,所以縮得最兇;改傳 `{wide:true}` 讓商店面板跳過整框縮放,改用既有「wide 版」規格(框吃滿 92% 高+.bd 內捲),三分頁字級與按鈕尺寸從此一致;同步補上 `.isl-bagbox.wide` 這條原本沒有對應的 CSS(先前只有 `.box.wide`)。③老師在「🎨 造型工房(GM)」調好貼回聊天室的「📋 複製設定值」寫入 island_db.js 的 D.LAYER_ADJ(髮型改三向專屬微調)與 D.CREATE_DEFAULT(補 clothC:0),`minigame_island_db.js?v=` 快取破壞字串同步 bump。對應 island_db v1.149.0(僅本檔零改動,純資料表)。 */   /* ★ v1.148.0（2026-09-14・老師需求「十二星神(除了天蠍/射手以外)左邊清單縮圖高度Y減少25%,同步到小遊戲的英雄選單」）— MG_THUMB_POS 新增 10 位星神(牡羊/金牛/雙子/巨蟹/獅子/處女/天秤/摩羯/水瓶/雙魚)各 25(=主程式基準 50 + grid:-25)，比照 index.html v5.201.0 的 _teamFormAdjustObjPos 新增值同步；天蠍星神/射手星神依老師指示不調整仍維持預設 50。純顯示層，選角頁右側 .hm-banner 沿用既有固定 center 20% 裁切不受影響。 */   /* ★ v1.147.0（2026-09-14・老師截圖回報「荒島求生點進地圖區域後，畫面上半部大地圖和下半部場景疊在一起」緊急修復）— 根因＝#isl-map-wrap／#isl-zone／#isl-camp／#isl-act／#isl-create／#isl-def 這六個「畫面」原本只是共用外層 .isl-screen 的一般 block 子元素（各自 width:100%;height:100%;position:relative），設計書 2.1 講的「各畫面互斥顯示」完全只靠 islShowScreen() 幫沒有的那些加 .hidden(display:none) 撐著——只要有任何一條路徑忘了幫舊畫面補上 .hidden（或執行順序被打斷），兩個畫面就會同時不帶 .hidden，而它們在一般文件流裡不是互相覆蓋而是**上下疊放**，正是老師截圖看到「上面小地圖、下面場景各佔一半」的畫面。修法：六個畫面容器全部改成 position:absolute;left:0;top:0;right:0;bottom:0;（父層 .isl-screen 本就 position:relative），此後任兩個畫面同時可見也只會互相覆蓋（後面的蓋住前面的），不會再裂成上下兩半；另在 islEnterZone() 呼叫 islShowScreen('zone') 之後多補一行 hide('isl-map-wrap') 雙保險，防止任何未來路徑再漏一次。對應 sw v1.116.0(僅版號同步)。 */   /* ★ v1.146.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復):根因＝islEnterZone() 整個函式從缺一行 var 宣告——db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告,函式第一行 `_IS.scene = sc;` 一讀取未宣告的 sc 就丟 ReferenceError,函式當場中斷(console 有錯誤、畫面無任何提示),導致點地圖上任何一個區域、700ms 後一律靜默失敗、卡在地圖畫面進不去。補回缺的 var 宣告行即修復,對應 sw v1.115.0(僅版號同步)。 */   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -5666,6 +5749,7 @@ function _bgmArm(){
   var want = _bgmCur; _bgmCur = '';
   if(want) bgmPlay(want);
   try{ if(window.islAmbSfxRearm) window.islAmbSfxRearm(); }catch(e){}   /* ★ v1.126.0 拿到使用者手勢後,把被自動播放封鎖擋掉的環境音補播 */
+  try{ mgWarmSfx(); }catch(e){}   /* ★ v1.159.0 同一個手勢也是「可以開始下載音訊」的信號:把最常用的十幾支音效分批預熱,第一次按鈕才不會等半天沒聲音 */
 }
 /* ★ v1.4.0 — 🎵/🔊 由「開/關」改為開啟音量調整面板(同主程式 v5.37.0 ctrlOpenVolumePanel 的設計):
  *   拉桿 0~100、步進 5、0 = 靜音;同一顆鈕再點一次 = 關閉面板;點面板外側自動關閉;
@@ -5843,7 +5927,8 @@ window.mgToggleStyle = function(){
 /* ★ v1.1.0 — 代表縮圖一律沿用主程式 repo 既有的關卡場景圖(零新素材)。
    ⚠ 用 .png:這些場景圖主程式本來就在用,學生的 Service Worker 多半已經快取過,
      等於不必重新下載;改抓別的檔名反而會多一次網路來回。 */
-var MG_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+var MG_CDN = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';   /* ★ v1.159.0 舊的跨網域素材網址，只當「同源路徑抳不到」時的退路(見 mgCdnFallback) */
+var MG_IMG_BASE = '../';   /* ★ v1.159.0 改同源相對路徑：同一個 repo 的 GitHub Pages 本來就有這些檔，走 raw.githubusercontent.com 等於另開一個跨網域連線(另一次 DNS+TLS、不能與頁面共用 HTTP/2 連線)，而且 raw 是「原始檔案端點」不是 CDN，會依 IP 限流——一個班級 25 台 iPad 共用學校同一個對外 IP，一齊開機就是幾千個請求從同一 IP 打過去，被限流/斷線就會變成「圖出不來、音效沒聲音」。改同源後走 Pages 的 CDN，且本頁 SW 才會幫它 cache-first。萬一同源路徑抳不到，mgCdnFallback 會自動退回 MG_CDN 舊網址，不會整組死掉。 */
 function mgThumbUrl(x){
   /* ★ v1.3.0 — 改抓 .jpg 瘦身版(v5.13.0 起 repo 每張場景圖都有同名 jpg,110~240KB;png 是 900KB 級)。
      同一張 jpg 同時當「首頁縮圖」與「遊戲中整頁背景」⇒ 一款只下載一次。
@@ -5958,6 +6043,86 @@ function mgPicTag(pic, cls){
   if(_MG_MISS[pic]) return '';   /* ★ v1.9.0 優化②:已知缺圖直接略過 */
   return '<img class="' + cls + '" data-cls="' + cls + '" src="' + mgPicUrl(pic) + '" alt="" loading="lazy" data-pic="' + esc(String(pic)) + '" onerror="mgPicMiss(this,this.getAttribute(\'data-pic\'));">';   /* ★ v1.9.2 data-cls 供重試成功時還原 class */
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.159.0(2026-09-14・老師:「已經完整下載遊戲了,開遊戲讀取圖片還是很慢,
+ *   常常看不到圖片或聽不到音樂音效,要等他慢慢開出來」)— 載入效能三支共用工具
+ * ══════════════════════════════════════════════════════════════════════════
+ * ① mgCdnFallback:同源素材抓不到時自動退回舊的 raw.githubusercontent 網址。
+ *    用 document 上的「捕獲階段」error 監聽一次包辦全站 <img>/<audio>/<video>/<source>,
+ *    不必去改 100 多個產生 <img> 的呼叫點。捕獲階段在「事件抵達目標之前」就跑,
+ *    所以退路成功時呼叫 stopPropagation() 可以讓目標自己的 onerror(例如 mgPicMiss 的隱藏+記缺圖)
+ *    整個不要跑;等到退路網址「也」失敗時,元素上已經有 data-cdnfb 記號,本監聽直接放行,
+ *    原本那套缺圖處理照常接手 ⇒ 真的沒有的圖仍然會被正確隱藏、記入缺圖名單。
+ * ② mgWarmSfx:全部 <audio> 都是 preload="none"(必要:115 支一起預載會把校網塞爆),
+ *    代價是「第一次用到才開始下載」⇒ 按鈕按下去半天沒聲音。改成拿到使用者手勢後,
+ *    只把最常用的那十幾支分批(每批 4 支、間隔 400ms)悄悄預載,其餘維持隨用隨抓。
+ * ③ mgPersistStorage:向瀏覽器申請「持久化儲存」。iPad Safari 對一般網站的快取是
+ *    「空間不夠或七天沒用就整包清掉」⇒ 老師明明按過完整下載,過幾天回來又要重抓。
+ *    加到主畫面的 PWA 申請多半會直接通過,通過之後完整下載的 60~120MB 才真的留得住。 */
+function mgRepoBase(){
+  /* 頁面在 <站台根>/minigame/minigame_index.html ⇒ repo 根 = 去掉結尾的 minigame/xxx */
+  try{ return location.pathname.replace(/minigame\/[^\/]*$/, ''); }catch(e){ return '/'; }
+}
+function mgCdnUrlOf(src){
+  var u, base, rel;
+  try{ u = new URL(src, location.href); }catch(e){ return ''; }
+  if(u.origin !== location.origin) return '';
+  base = mgRepoBase();
+  if(u.pathname.indexOf(base) !== 0) return '';
+  rel = u.pathname.slice(base.length);
+  if(!rel) return '';
+  return MG_CDN + rel;   /* pathname 本來就是百分號編碼過的,直接接上即可 */
+}
+/* ⚠ _MG_CDN_BAD:同一支檔案「同源沒有、退路也沒有」時記下來,本次開機不再重試。
+   沒有這一層的話,那些本來就還沒上傳的選配素材(分層造型、武器外觀…)每畫一次就會多打一次
+   raw.githubusercontent —— 正好是本輪要消滅的東西。 */
+var _MG_CDN_BAD = {};
+document.addEventListener('error', function(ev){
+  var el = ev.target, tag, src, fb;
+  if(!el || !el.tagName) return;
+  tag = el.tagName.toLowerCase();
+  if(tag !== 'img' && tag !== 'audio' && tag !== 'video' && tag !== 'source') return;
+  if(el.getAttribute('data-cdnfb')) return;        /* 已經退過一次 ⇒ 放行給原本的缺圖/缺音處理 */
+  src = el.getAttribute('src') || '';
+  if(!src || /^https?:/i.test(src) || /^data:/i.test(src)) return;
+  if(_MG_CDN_BAD[src]) return;                     /* 這支檔案兩邊都沒有,不必再試第二次 */
+  fb = mgCdnUrlOf(src);
+  if(!fb) return;
+  el.setAttribute('data-cdnfb', '1');
+  el.setAttribute('data-cdnsrc', src);
+  try{ el.addEventListener('error', function(){ _MG_CDN_BAD[src] = 1; }); }catch(e){}
+  try{ ev.stopPropagation(); }catch(e){}
+  try{
+    el.src = fb;
+    if(tag === 'audio' || tag === 'video'){ el.load(); }
+  }catch(e){}
+}, true);
+/* ② 常用音效預熱(拿到手勢後才做,否則 iOS 根本不會下載) */
+var _MG_WARM = ['sfx-tap','sfx-ok','sfx-ng','sfx-sel','sfx-coin','sfx-cancel','sfx-punch','sfx-sword','sfx-crit','sfx-statup','sfx-applause','sfx-ko','sfx-explode','sfx-summon-reveal'];
+var _mgWarmed = false;
+function mgWarmSfx(){
+  if(_mgWarmed) return; _mgWarmed = true;
+  try{ if(navigator.connection && navigator.connection.saveData) return; }catch(e){}
+  var i = 0;
+  function batch(){
+    var n = 0, a;
+    while(i < _MG_WARM.length && n < 4){
+      a = $(_MG_WARM[i]); i++;
+      if(!a || a.readyState >= 2) continue;
+      try{ a.preload = 'auto'; a.load(); n++; }catch(e){}
+    }
+    if(i < _MG_WARM.length) setTimeout(batch, 400);
+  }
+  setTimeout(batch, 300);
+}
+/* ③ 持久化儲存(靜默,失敗不影響任何功能) */
+(function mgPersistStorage(){
+  try{
+    if(navigator.storage && navigator.storage.persisted && navigator.storage.persist){
+      navigator.storage.persisted().then(function(ok){ if(!ok) return navigator.storage.persist(); })['catch'](function(){});
+    }
+  }catch(e){}
+})();
 /* 依「文字」自動對照的圖(不必在資料表逐筆填):迷宮標記／童謠選項／格子與棋子 */
 var MG_PIC_MAP = {
   '南投':'maze_mz_lake.webp', '花蓮':'maze_mz_hualien.webp', '北海道':'maze_mz_hokkaido.webp', '首爾':'maze_mz_seoul.webp',   /* ★ v1.9.1 改 webp;南投沿用日月潭圖 */
@@ -8628,7 +8793,7 @@ var PAINTS = {
 var PAINT_COLS = 3, PAINT_ROWS = 4;
 /* 立繪一律走 repo 既有的瘦身版 .jpg(約 110~240KB),
    ⚠ 不要改成 .png:同一張 png 是 900KB 級,本小程式的存在目的就是給網路差的學生秒開。 */
-var HERO_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+var HERO_IMG_BASE = '../';   /* ★ v1.159.0 改同源相對路徑：同一個 repo 的 GitHub Pages 本來就有這些檔，走 raw.githubusercontent.com 等於另開一個跨網域連線(另一次 DNS+TLS、不能與頁面共用 HTTP/2 連線)，而且 raw 是「原始檔案端點」不是 CDN，會依 IP 限流——一個班級 25 台 iPad 共用學校同一個對外 IP，一齊開機就是幾千個請求從同一 IP 打過去，被限流/斷線就會變成「圖出不來、音效沒聲音」。改同源後走 Pages 的 CDN，且本頁 SW 才會幫它 cache-first。萬一同源路徑抳不到，mgCdnFallback 會自動退回 MG_CDN 舊網址，不會整組死掉。 */
 
 var _PT = null;   // { pic, url, cells, left, wrong, pick, dragging }
 
@@ -8830,7 +8995,7 @@ function _paintFinish(){
  *    (calc_regions.py 用同樣的 contain 放法算 bars;改成 cover 或裁切會對不上。)
  *  ★ 執行期零 canvas:比例是算好的數字,舊 iPad 也不卡,離線也能玩。
  * ══════════════════════════════════════════════════════════ */
-var PET_IMG_BASE = 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/';
+var PET_IMG_BASE = '../';   /* ★ v1.159.0 改同源相對路徑：同一個 repo 的 GitHub Pages 本來就有這些檔，走 raw.githubusercontent.com 等於另開一個跨網域連線(另一次 DNS+TLS、不能與頁面共用 HTTP/2 連線)，而且 raw 是「原始檔案端點」不是 CDN，會依 IP 限流——一個班級 25 台 iPad 共用學校同一個對外 IP，一齊開機就是幾千個請求從同一 IP 打過去，被限流/斷線就會變成「圖出不來、音效沒聲音」。改同源後走 Pages 的 CDN，且本頁 SW 才會幫它 cache-first。萬一同源路徑抳不到，mgCdnFallback 會自動退回 MG_CDN 舊網址，不會整組死掉。 */
 var CQ_REGION = {
   all:    { x:0,   y:0,   w:1,   h:1,   n:'全身'   },
   top:    { x:0,   y:0,   w:1,   h:0.5, n:'上半部' },
@@ -12802,8 +12967,15 @@ function boot(){
     setTimeout(go, 4000);  // 硬兜底:任何一步卡住 4 秒後照樣重整
     var p = Promise.resolve();
     if(window.caches && caches.keys){
+      /* ★ v1.159.0【根治·老師回報「已經完整下載遊戲了,開遊戲讀取圖片還是很慢」的最大單一元凶】——
+         舊寫法是「凡是 lxps-mini- 開頭的快取一律砍掉」,而完整下載安裝的 60~120MB 素材就放在
+         `lxps-mini-island-v1`、SW 平常抓到的圖片音效放在 `lxps-mini-assets-v1`,
+         兩個都中招 ⇒ 學生每按一次右上角「更新」,整包完整下載就被清光,下次開遊戲當然又要一張一張慢慢抓。
+         (minigame_sw.js 的 activate 其實特地寫了「保留 ISLAND」,結果被這一行從頁面端全部抹掉。)
+         改成只清 shell(程式碼本體)——本來就是為了讓新版程式生效才要清的東西;
+         素材與完整下載的快取一律留著,程式更新不該連素材一起重抓。 */
       p = p.then(function(){ return caches.keys(); }).then(function(keys){
-        return Promise.all(keys.map(function(k){ return (k.indexOf('lxps-mini-') === 0) ? caches['delete'](k) : null; }));
+        return Promise.all(keys.map(function(k){ return (k.indexOf('lxps-mini-shell-') === 0) ? caches['delete'](k) : null; }));
       })['catch'](function(){});
     }
     if('serviceWorker' in navigator && navigator.serviceWorker.getRegistration){
@@ -12813,6 +12985,16 @@ function boot(){
     }
     p.then(go, go);
   };
+  /* ★ v1.159.0 minigame_index.html 改成 stale-while-revalidate(先用快取秒開、網路在背景更新)後,
+     SW 在背景發現「伺服器上的檔案真的換了」會 postMessage 過來 ⇒ 立刻重驗一次版本,徽章馬上轉紅。
+     沒有這一條的話,學生要等下一次 5 分鐘輪詢才會知道有新版。 */
+  try{
+    if('serviceWorker' in navigator && navigator.serviceWorker.addEventListener){
+      navigator.serviceWorker.addEventListener('message', function(ev){
+        if(ev && ev.data && ev.data.type === 'MG_SHELL_UPDATED') mgVerCheck();
+      });
+    }
+  }catch(e){}
   mgVerPaint(null);
   setTimeout(mgVerCheck, 3000);
   setInterval(mgVerCheck, 5 * 60 * 1000);
@@ -15593,17 +15775,23 @@ function islActBuild(){
     islQuizOne('build', function(ok){ if(ok) A.know += 1; islQualityIntro(function(){ islTapNails(function(stars, crit){ A.stars = stars; A.crit = crit; islActResult(); }); }); });
   }
 }
-/* 品質 Tap「敲釘子」:6 支釘子依序閃,照順序點;節奏隨技能 Lv5 放慢 */
+/* 品質 Tap「敲釘子」:6×6 釘板隨機挑 8 支依序閃,照順序點;節奏隨技能 Lv5 放慢
+   ★ v1.158.0(老師:「敲打遊戲現在都固定 3×2 內敲,改成 6×6,提高變化性和難度」)——
+     舊版 6 格(3 欄×2 列)且「每一格都會輪到一次」,玩家等於只是把 6 格都點過一輪,位置毫無懸念;
+     改成 36 格中隨機取 8 格(ROUNDS)當順序 ⇒ 每次板面亮的位置都不一樣、也不保證平均分布,
+     眼睛要真的找亮起的那一格,難度與變化性都上來。
+   ⚠ 星等門檻必須跟著改:舊版是「6 下全中=3★、4~5 下=2★」,若沿用舊的 6/4 門檻,
+     8 下裡中 6 下(75%)就給滿星,反而比改版前更容易。改成 7/5(87.5%/62.5%)維持原本的手感比例。 */
 function islTapNails(cb){
-  var n = 6, order = shuffle([0,1,2,3,4,5]), step = 0, hits = 0, misses = 0, h = '', i, body, timer = null, gap = (ISL.skill.build.lv >= 5 || (_IS.act && _IS.act.id === 'craft' && ISL.skill.craft.lv >= 5)) ? 1400 : 1100,   /* ★ v1.96.0 製作 Lv5 也放慢 */ waiting = false, fx;
-  h = '<div class="isl-qte"><div class="isl-act-title">🔨 敲釘子:照閃的順序快點敲</div><div class="isl-nails" style="margin:0 auto">';
+  var n = 36, ROUNDS = 8, order = shuffle([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35]).slice(0, ROUNDS), step = 0, hits = 0, misses = 0, h = '', i, body, timer = null, gap = (ISL.skill.build.lv >= 5 || (_IS.act && _IS.act.id === 'craft' && ISL.skill.craft.lv >= 5)) ? 1400 : 1100,   /* ★ v1.96.0 製作 Lv5 也放慢 */ waiting = false, fx;
+  h = '<div class="isl-qte"><div class="isl-act-title">🔨 敲釘子:照閃的順序快點敲(' + ROUNDS + ' 下)</div><div class="isl-nails" style="margin:0 auto">';
   for(i = 0; i < n; i++){ h += '<button class="isl-nail" data-i="' + i + '">📍</button>'; }
   h += '</div><div class="fx" id="isl-q-fx"></div></div>';
   body = islActBody(h); fx = $('isl-q-fx');
-  islActHint('黃色亮起就敲!敲對越多,建築越牢固。');
+  islActHint('36 格釘板,黃色亮起的那一支就是要敲的!敲對越多,建築越牢固。');
   function flash(){
     var el, k;
-    if(step >= n){ finish(); return; }
+    if(step >= ROUNDS){ finish(); return; }   /* ★ v1.158.0 序列長度是 ROUNDS(8),不再等於格子數 n(36) */
     k = order[step]; el = body.querySelector('.isl-nail[data-i="' + k + '"]'); el.classList.add('on'); waiting = true;
     timer = setTimeout(function(){ if(waiting){ waiting = false; el.classList.remove('on'); misses++; fx.textContent = '太慢了…'; fx.style.color = '#ff7b7b'; step++; flash(); } }, gap);
   }
@@ -15614,7 +15802,7 @@ function islTapNails(cb){
     if(k === order[step]){ waiting = false; clearTimeout(timer); t.classList.remove('on'); t.classList.add('done'); t.textContent = '✅'; hits++; fx.textContent = '👍'; fx.style.color = '#7bed9f'; playSfx('sfx-punch', 0.4); islCharPaintAct('work'); step++; setTimeout(flash, 250); }
     else { misses++; playSfx('sfx-ng', 0.3); fx.textContent = '不是那一支!'; fx.style.color = '#ff7b7b'; islHurt(2, '槌子打歪,敲到手了'); }   /* ★ v1.92.0 */
   };
-  function finish(){ body.onclick = null; var st = hits >= 6 ? 3 : (hits >= 4 ? 2 : 1), crit = hits >= 6 && misses === 0; fx.textContent = st === 3 ? '🏗 超牢固!' : (st === 2 ? '還不錯' : '有點鬆…'); if(crit){ fx.textContent = '✨ 完美工法!'; playSfx('sfx-crit', 0.5); } setTimeout(function(){ cb(st, crit); }, 700); }
+  function finish(){ body.onclick = null; var st = hits >= 7 ? 3 : (hits >= 5 ? 2 : 1), crit = hits >= ROUNDS && misses === 0;   /* ★ v1.158.0 8 下制:7 下↑=3★、5 下↑=2★、全中且零失誤=完美工法 */ fx.textContent = st === 3 ? '🏗 超牢固!' : (st === 2 ? '還不錯' : '有點鬆…'); if(crit){ fx.textContent = '✨ 完美工法!'; playSfx('sfx-crit', 0.5); } setTimeout(function(){ cb(st, crit); }, 700); }
   setTimeout(flash, 600);
 }
 
@@ -16684,21 +16872,34 @@ window.islInstallOpen = function(){
   $('isl-install-go').onclick = function(){ islInstallRun(urls); };
 };
 function islInstallRun(urls){
-  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, optN = 0, running = 0, CONC = 3, cache = null, go = $('isl-install-go');
+  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, optN = 0, skipN = 0, quotaN = 0, running = 0, CONC = 6, cache = null, go = $('isl-install-go');   /* ★ v1.159.0 skipN=已在快取裡直接汿用、quotaN=裝置儲存空間不足；CONC 3→6(素材改同源後可以與頁面共用同一條 HTTP/2 連線多路復用，並行 6 個比 3 個快很多且不多開連線) */
   _islInst = { stop: false };
   if(go){ go.disabled = true; go.textContent = '下載中…'; }
+  /* ★ v1.159.0 兩項改良:
+     ①【只補缺的】先問快取有沒有,已經裝好的直接跳過 ⇒「再試一次/重新安裝」不必再把 60~120MB 整包重抓一遍。
+     ②【空間不足要講清楚】iPad 的快取空間是有上限的,滿了 cache.put() 會丟 QuotaExceededError。
+        舊版把它跟「檔案抓不到」混在一起報成「失敗 N 個」,老師只會覺得「明明裝好了怎麼還是慢」。
+        現在單獨計數並在結果頁明講,才知道要去清空間而不是重按一次。 */
   function next(){
     if(_islInst.stop) return;
     while(running < CONC && i < urls.length){ (function(it){ running++; i++;
-      var req = it.cross ? fetch(it.u, { mode: 'cors' }) : fetch(it.u);
-      req.then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(it.u, r); }).then(function(){ okN++; }, function(){ if(it.opt) optN++; else failN++; })
-        .then(function(){ running--; bar.style.width = Math.round((okN + failN + optN) / urls.length * 100) + '%'; txt.textContent = '下載中 ' + (okN + failN + optN) + ' / ' + urls.length + (failN ? '(失敗 ' + failN + ')' : ''); if(okN + failN + optN >= urls.length) fin(); else next(); });
+      cache.match(it.u).then(function(hit){
+        if(hit){ skipN++; return null; }
+        var req = it.cross ? fetch(it.u, { mode: 'cors' }) : fetch(it.u);
+        return req.then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(it.u, r); }).then(function(){ okN++; });
+      }, function(){ return null; })['catch'](function(err){
+        var nm = (err && (err.name || err.message)) || '';
+        if(/quota|exceed/i.test(String(nm))) quotaN++;
+        else if(it.opt) optN++;
+        else failN++;
+      })
+        .then(function(){ running--; var d = okN + failN + optN + skipN + quotaN; bar.style.width = Math.round(d / urls.length * 100) + '%'; txt.textContent = '下載中 ' + d + ' / ' + urls.length + (skipN ? '(已有 ' + skipN + ')' : '') + (failN ? '(失敗 ' + failN + ')' : ''); if(d >= urls.length) fin(); else next(); });
     })(urls[i]); }
   }
   function fin(){
-    var all = (failN === 0);
+    var all = (failN === 0 && quotaN === 0);
     if(all){ try{ localStorage.setItem('isl_installed', MG_IMG_VER + '|' + MG_VER); }catch(e){} }   /* ★ v1.116.0 記號含程式版號 */
-    txt.innerHTML = (all ? '✅ 全部安裝完成!離線也能開荒島了。' : '⚠ 完成,但有 ' + failN + ' 個檔案沒抓到(可能還沒上傳或網路不穩),可以再按一次只補缺的。') + '<br><span style="font-size:13px;opacity:.8">成功 ' + okN + ' / ' + urls.length + (optN ? '(選配造型圖 ' + optN + ' 張尚未上傳,不影響)' : '') + '</span>';
+    txt.innerHTML = (all ? '✅ 全部安裝完成!離線也能開荒島了。' : ((quotaN ? '⚠ 這台裝置的儲存空間不夠，有 ' + quotaN + ' 個檔案存不進去。請先清出空間(設定 › Safari › 進階 › 網站資料)再裝一次。' : '') + (failN ? '⚠ 完成,但有 ' + failN + ' 個檔案沒抓到(可能還沒上傳或網路不穩),可以再按一次只補缺的。' : ''))) + '<br><span style="font-size:13px;opacity:.8">成功 ' + okN + ' / ' + urls.length + (skipN ? '（已裝過直接汿用 ' + skipN + ' 個）' : '') + (optN ? '(選配造型圖 ' + optN + ' 張尚未上傳,不影響)' : '') + '</span>';
     if(go){ go.disabled = false; go.textContent = all ? '重新安裝' : '再試一次'; }
     try{ playSfx(all ? 'sfx-applause' : 'sfx-cancel', 0.4); }catch(e){}
     islInstallBtnPaint();
