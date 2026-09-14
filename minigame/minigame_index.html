@@ -15,6 +15,46 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.152.0(2026-09-14)
+     ★ v1.152.0(2026-09-14・老師四項)—
+       ①🗺 11 區可走遮罩全部依場景實圖逐格重建(island_db v1.152.0):
+         判定法 = 每格取中位色 →(a)藍色佔優 ⇒ 水域 '~';(b)火山另判岩漿(很亮但不能走,靠亮度判不出來);
+         (c)「比周圍 7×7 平均暗 10 階以上」⇒ 立體物(樹冠/岩壁/建物)'#';(d)絕對最暗的 12% 也算障礙。
+         接著去雜點(四鄰有 3 格可走的孤立障礙補回去、完全孤立的可走格封起來)→ 從出生點 BFS →
+         **不可達的可走格一律改成障礙**(不再出現「看得到走不到」的假空地)。
+         老師指定的森林:泥土路與草地可走、外圍密林擋住,已逐格目視核對過。
+       ②📍 229 個固定座標(資源點 pool/小白/解謎點/訓練師)一併吸附到最近的可走格,不再用「硬把那一格挖成可走」
+         的舊作法 ⇒ 不會在崖壁或水面中央挖出一個怪洞。重建後 11 區固定點 100% 可達(獨立重跑 BFS 驗證)。
+       ③🩹 營地治療特效改掛在主角身上(islFxOnCampChar):GIF 塞進 #isl-camp-char 裡面而不是算螢幕座標,
+         主角 v1.151.0 起會走動,用座標會在他走路途中飄在原地。
+       ④🪴 裝飾品也能左右鏡像(deco.f):點一下(沒拖動)開裝飾小選單 → 翻轉;拖曳仍然是換位置,
+         以「位移是否超過 8px」分辨點與拖。
+       ⑤🐻 NPC 尺寸改成每隻依真實體型比例,不再是「一般 72 / big 192」兩段式:
+         玩家顯示高度 96px(64×scale1.5)為基準 ⇒ 陸蟹 72(0.75×)、梅花鹿 106(1.1×)、
+         台灣黑熊 192(2×,老師指定「比玩家大 1 倍」)、領角鴞 72(0.75×),尺寸寫在 island_db 的 trainer.sz。
+         NPC 名稱改成一行放在圖片正上方(原本掛在腳下,大隻 NPC 的名牌會被下一排格子蓋住)。
+         ⚠ margin 必須跟著尺寸一起算:這些圖是「腳底對齊格子」的定位法(margin-top = -(高度-10)),
+           只改 width/height 不改 margin,NPC 會整個往下沉、腳陷進地板。
+       ⚠ 訓練師站位一併挪到寬敞處(以 5×5 鄰域可走格數挑最開闊的一格):
+         台灣黑熊 (26,18)→(26,13)、領角鴞 (8,4)→(6,15);陸蟹與梅花鹿原位就夠寬敞,不動。
+       對應 minigame_sw.js v1.120.0、minigame_island_db.js v1.152.0。
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.151.0(2026-09-14)
+     ★ v1.151.0(2026-09-14・老師:「營地完成的設施改成可以移動位置、圖片鏡像翻轉。營地中的主角可以在
+       可行走區域內自由移動,並和設施互動(點設施主角會走過去旁邊)」)—
+       ①🔀 搬移:設施視窗新增「搬移位置」進入搬移模式(該格閃綠框、其餘格顯示可放置虛線),
+         點任一格即與它互換(空地或別的設施都可以),再點同一格取消;施工中的設施不給搬。
+         ⚠ 建築的施工倒數 islBuildTimer 每秒都是重新掃 slots 陣列取 index,所以交換位置不會讓
+           施工中的建築完工失敗;但為了不讓玩家困惑,仍然禁止搬施工中的那一格。
+       ②🔁 鏡像:新增 slot.flip(0/1),純外觀,不影響任何效果與耐久;舊存檔沒有這個欄位 = 0,零影響。
+       ③🧍 主角自由走動:位置改成可變的 (x%,y%)(以 #isl-camp-grid 為基準)存在 _IS.campC,
+         刻意只放記憶體不寫存檔(站在哪裡是臨時狀態,寫雲端只會加重每次 islSave)。
+         點空地 → 走過去;點設施 → 先走到那一格正下方,抵達後才開設施視窗(islCampGoToCell + callback)。
+         走路用 CSS transition(left/bottom)交給瀏覽器合成執行緒,不另開 rAF ⇒ 舊 iPad 省電。
+       ⚠ 兩個 transform 的坑:(a)鏡像翻的是「裡面那張圖」(.isl-pixchar/.isl-chibi)而不是容器——
+         容器 transform 是 scale(2.2) 且 transform-origin 在左下角,翻容器會讓人往左平移一個身寬,
+         而且頭上對話泡泡會連字一起左右相反;(b)走路的腳步晃動改用 margin-bottom 而不是 transform,
+         動畫只要碰 transform 就會整個蓋掉 scale(2.2),人會瞬間縮回原尺寸。
+       對應 minigame_sw.js v1.119.0、minigame_island_db.js v1.151.0(零改動,僅版號同步)。
      小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.150.0(2026-09-14)
      ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—
        ①🛒 阿獺雜貨鋪「買東西」還是被縮成小視窗:根因不是它被特別改小,而是 v1.149.0 的修法把
@@ -4809,6 +4849,8 @@ window.islDirectVeilOff = function(){
 .isl-node img{width:128px;height:128px;}
 .isl-node.big{width:200px;height:200px;margin-left:-100px;margin-top:-188px;font-size:132px;}
 .isl-node.big img{width:200px;height:200px;}
+/* ★ v1.152.0 舊的兩段式 NPC 尺寸(一般 72 / big 192)已停用:尺寸改成每隻自己帶 sz、由 JS inline 指定。
+   規則保留但不再有任何元素套用 isl-npc-big;真的要回頭用兩段式時再把 class 加回 islEnterZone 即可。 */
 .isl-gull.isl-npc-big{width:192px;height:192px;margin-left:-96px;margin-top:-180px;font-size:150px;line-height:192px;}
 .isl-gull.isl-npc-big img{width:192px;height:192px;}
 
@@ -4883,6 +4925,31 @@ window.islDirectVeilOff = function(){
 /* 🧍 營地主角可點(說一句當前進度/心情);泡泡本身仍不吃點擊,才不會擋住第二次點擊 */
 #isl-camp-char{ pointer-events:auto; cursor:pointer; }
 #isl-camp-char .isl-tired{ pointer-events:none; }
+
+/* ══ ★ v1.151.0 — 🏕 營地:設施搬移/鏡像 + 主角自由走動 ══ */
+#isl-camp-grid{ cursor:pointer; }
+.isl-cell.flip img{ transform:scaleX(-1); }
+.isl-cell.moving{ border-color:#7bed9f !important; background:rgba(123,237,159,.22) !important; animation:islBounce .5s ease-in-out infinite alternate; }
+.isl-cell.movetarget{ border-style:dashed; border-color:#7bed9f; box-shadow:inset 0 0 0 3px rgba(123,237,159,.18); }
+.isl-bldtools{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:6px 0 2px; }
+.isl-bldtools .isl-btn{ margin:0; padding:6px 14px; font-size:17px; min-height:0; }
+/* 走路:位移交給 transition(見 islCampWalkTo),這裡只負責上下輕輕晃一下的腳步感。
+   ⚠ 刻意用 margin-bottom 而不是 transform:#isl-camp-char 的 transform 是 scale(2.2)(負責放大),
+     動畫只要碰 transform 就會整個蓋掉放大值,人會瞬間縮回原尺寸。 */
+#isl-camp-char.walking{ animation:islCampStep .28s steps(2) infinite; }
+@keyframes islCampStep{ 0%{ margin-bottom:0; } 50%{ margin-bottom:3px; } 100%{ margin-bottom:0; } }
+/* 鏡像:翻的是「裡面那張圖」不是整個容器 —— 容器一翻,頭上的對話泡泡會連字一起左右相反。
+   分層造型(.isl-pixchar.ly)底下有好幾層,翻父層就會整組一起翻,不必逐層處理。 */
+#isl-camp-char.flip .isl-pixchar, #isl-camp-char.flip .isl-chibi{ transform:scaleX(-1); }
+
+/* ══ ★ v1.152.0 — NPC 尺寸/名牌、裝飾鏡像、治療特效掛在主角身上 ══ */
+/* NPC 尺寸現在由 JS 逐隻 inline 指定(依真實體型比例),這裡只留不隨尺寸變的樣式 */
+.isl-poi.isl-npc img{ width:100%; height:100%; object-fit:contain; }
+/* 名稱改放「圖片正上方」、一行不換行(原本掛在腳下,大隻 NPC 的名牌會被下一排格子蓋住) */
+.isl-poi.isl-npc .nl{ top:auto; bottom:100%; margin:0 0 6px; white-space:nowrap; }
+.isl-deco.flip img{ transform:scaleX(-1); }
+/* 治療特效:塞在 #isl-camp-char 裡面 ⇒ 跟著人走,不會在他走路時飄在原地 */
+.isl-fx.onchar{ position:absolute; left:50%; top:50%; width:128px; height:128px; margin:-64px 0 0 -64px; pointer-events:none; z-index:6; }
 </style>
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
      層級(設計書 2.1):#isl-hud 固定頂欄 → 各畫面(#isl-create / #isl-map-wrap / #isl-zone / #isl-camp / #isl-act)
@@ -4984,7 +5051,7 @@ window.islDirectVeilOff = function(){
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.150.0"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.152.0"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -4993,7 +5060,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.150.0';   /* ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—①阿獺雜貨鋪「買東西」分頁仍被縮成小視窗:v1.149.0 只在呼叫端傳 opts.wide,「寬度規則」與「要不要等比縮放」分散在兩處,任一路徑沒帶到 opts 就退回 islFitBox 縮放版(縮放幅度取決內容高度 ⇒ 清單最長的買東西縮最兇);改為把 .wide 直接寫進面板 markup 當單一真相,islPanel 看到框上已有 .wide 就同樣跳過縮放,三分頁尺寸永遠一致。②👤 角色能力視窗改接近全螢幕(.isl-bagbox.full)且不必捲動:4 維 + 14 生存技能改排成兩欄「能力方塊」(.isl-abil/.isl-ab),c-right 取消 max-height/overflow;每一項可點開說明標籤(再點同一項收起,_IS.abTip)。③營地左下的主角可以點:65% 說一句「當前最該做的事」進度提示(islCampHintText 由上而下第一個成立的才講),其餘說一句隨機心情(沿用 D.MONO,依天氣挑 wxSun/wxRain/wxTyphoon);新增 islBubble(指定文字的泡泡,與 islMono 共用同一顆 .isl-tired DOM,永遠只有一顆)。⚠ #isl-camp-char 原本 pointer-events:none,本輪改 auto 才點得到,泡泡本身維持 none 以免擋住第二次點擊。同輪 island_db v1.150.0 先行放入 🌟 天賦星域(46 節點)與 🤒 不良狀態(5 種)資料表,index 端邏輯下一輪接。 */   /* ★ v1.149.0（2026-09-14・老師截圖回報三項）—①左上視窗標題:`?mode=island` 直入與從大廳按鈕進場兩條路徑,document.title 都改成「小英雄小遊戲 — 荒島求生」(原本沿用整頁固定的 `<title>…英雄對戰小學堂</title>`,和畫面內容對不上)。②商店(阿獺雜貨鋪)「買東西」分頁看起來被縮得特別小:根因是三分頁共用同一支 islPanel(h,cb),沒傳 opts 時一律跑 islFitBox() 整框等比縮放,縮放幅度單純取決於當下內容量算出的高度——買東西清單通常比賣東西/委託長很多,所以縮得最兇;改傳 `{wide:true}` 讓商店面板跳過整框縮放,改用既有「wide 版」規格(框吃滿 92% 高+.bd 內捲),三分頁字級與按鈕尺寸從此一致;同步補上 `.isl-bagbox.wide` 這條原本沒有對應的 CSS(先前只有 `.box.wide`)。③老師在「🎨 造型工房(GM)」調好貼回聊天室的「📋 複製設定值」寫入 island_db.js 的 D.LAYER_ADJ(髮型改三向專屬微調)與 D.CREATE_DEFAULT(補 clothC:0),`minigame_island_db.js?v=` 快取破壞字串同步 bump。對應 island_db v1.149.0(僅本檔零改動,純資料表)。 */   /* ★ v1.148.0（2026-09-14・老師需求「十二星神(除了天蠍/射手以外)左邊清單縮圖高度Y減少25%,同步到小遊戲的英雄選單」）— MG_THUMB_POS 新增 10 位星神(牡羊/金牛/雙子/巨蟹/獅子/處女/天秤/摩羯/水瓶/雙魚)各 25(=主程式基準 50 + grid:-25)，比照 index.html v5.201.0 的 _teamFormAdjustObjPos 新增值同步；天蠍星神/射手星神依老師指示不調整仍維持預設 50。純顯示層，選角頁右側 .hm-banner 沿用既有固定 center 20% 裁切不受影響。 */   /* ★ v1.147.0（2026-09-14・老師截圖回報「荒島求生點進地圖區域後，畫面上半部大地圖和下半部場景疊在一起」緊急修復）— 根因＝#isl-map-wrap／#isl-zone／#isl-camp／#isl-act／#isl-create／#isl-def 這六個「畫面」原本只是共用外層 .isl-screen 的一般 block 子元素（各自 width:100%;height:100%;position:relative），設計書 2.1 講的「各畫面互斥顯示」完全只靠 islShowScreen() 幫沒有的那些加 .hidden(display:none) 撐著——只要有任何一條路徑忘了幫舊畫面補上 .hidden（或執行順序被打斷），兩個畫面就會同時不帶 .hidden，而它們在一般文件流裡不是互相覆蓋而是**上下疊放**，正是老師截圖看到「上面小地圖、下面場景各佔一半」的畫面。修法：六個畫面容器全部改成 position:absolute;left:0;top:0;right:0;bottom:0;（父層 .isl-screen 本就 position:relative），此後任兩個畫面同時可見也只會互相覆蓋（後面的蓋住前面的），不會再裂成上下兩半；另在 islEnterZone() 呼叫 islShowScreen('zone') 之後多補一行 hide('isl-map-wrap') 雙保險，防止任何未來路徑再漏一次。對應 sw v1.116.0(僅版號同步)。 */   /* ★ v1.146.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復):根因＝islEnterZone() 整個函式從缺一行 var 宣告——db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告,函式第一行 `_IS.scene = sc;` 一讀取未宣告的 sc 就丟 ReferenceError,函式當場中斷(console 有錯誤、畫面無任何提示),導致點地圖上任何一個區域、700ms 後一律靜默失敗、卡在地圖畫面進不去。補回缺的 var 宣告行即修復,對應 sw v1.115.0(僅版號同步)。 */   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.152.0';   /* ★ v1.152.0(2026-09-14・老師四項)—①11 區可走遮罩全部依場景實圖逐格重建(以「比周圍暗多少」判定立體物、藍色判定水域、火山另判岩漿,去雜點後 BFS 連通驗證,不可達的可走格一律封起來);229 個資源點/小白/解謎點/訓練師座標一併吸附到最近的可走格,重建後 11 區固定點 100% 可達。②營地治療特效改掛在主角身上(islFxOnCampChar:GIF 塞進 #isl-camp-char 裡面,主角走動時特效跟著走)。③裝飾品也能左右鏡像(deco.f;點一下沒拖動就開小選單 → 翻轉,拖曳仍是換位置,以 8px 位移分辨點/拖)。④NPC 尺寸改成每隻依真實體型比例(玩家顯示高度 96px 為基準:陸蟹 72/梅花鹿 106/台灣黑熊 192=玩家 2 倍/領角鴞 72),名稱改成一行放在圖片正上方;⚠ margin 必須跟著尺寸一起算(腳底對齊定位法 margin-top=-(高度-10)),只改尺寸不改 margin 會讓 NPC 腳陷進地板。 */   /* ★ v1.151.0(2026-09-14・老師:營地設施可移動位置與左右鏡像翻轉;營地主角可在可行走區域自由移動並與設施互動,點設施會先走過去旁邊)—①設施新增 slot.flip(純外觀,不影響效果/耐久)與「🔀 搬移位置」搬移模式(進入模式後點任一格即互換,空地或別的設施皆可;施工中的不能搬)。②主角位置改成可變的 (x%,y%) 存在 _IS.campC(刻意不寫存檔:站在哪裡是臨時狀態);走路用 CSS transition 交給合成執行緒,不另開 rAF(舊 iPad 省電)。③點空地→走過去;點設施→先走到那一格正下方,抵達才開設施視窗(islCampGoToCell + callback)。④鏡像翻的是裡面那張圖不是容器:容器 transform 是 scale(2.2) 且 origin 在左下角,翻容器會讓人平移一個身寬、頭上泡泡的字也會左右相反;走路的腳步晃動改用 margin-bottom 而非 transform,否則動畫會蓋掉 scale(2.2) 讓人瞬間縮小。 */   /* ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—①阿獺雜貨鋪「買東西」分頁仍被縮成小視窗:v1.149.0 只在呼叫端傳 opts.wide,「寬度規則」與「要不要等比縮放」分散在兩處,任一路徑沒帶到 opts 就退回 islFitBox 縮放版(縮放幅度取決內容高度 ⇒ 清單最長的買東西縮最兇);改為把 .wide 直接寫進面板 markup 當單一真相,islPanel 看到框上已有 .wide 就同樣跳過縮放,三分頁尺寸永遠一致。②👤 角色能力視窗改接近全螢幕(.isl-bagbox.full)且不必捲動:4 維 + 14 生存技能改排成兩欄「能力方塊」(.isl-abil/.isl-ab),c-right 取消 max-height/overflow;每一項可點開說明標籤(再點同一項收起,_IS.abTip)。③營地左下的主角可以點:65% 說一句「當前最該做的事」進度提示(islCampHintText 由上而下第一個成立的才講),其餘說一句隨機心情(沿用 D.MONO,依天氣挑 wxSun/wxRain/wxTyphoon);新增 islBubble(指定文字的泡泡,與 islMono 共用同一顆 .isl-tired DOM,永遠只有一顆)。⚠ #isl-camp-char 原本 pointer-events:none,本輪改 auto 才點得到,泡泡本身維持 none 以免擋住第二次點擊。同輪 island_db v1.150.0 先行放入 🌟 天賦星域(46 節點)與 🤒 不良狀態(5 種)資料表,index 端邏輯下一輪接。 */   /* ★ v1.149.0（2026-09-14・老師截圖回報三項）—①左上視窗標題:`?mode=island` 直入與從大廳按鈕進場兩條路徑,document.title 都改成「小英雄小遊戲 — 荒島求生」(原本沿用整頁固定的 `<title>…英雄對戰小學堂</title>`,和畫面內容對不上)。②商店(阿獺雜貨鋪)「買東西」分頁看起來被縮得特別小:根因是三分頁共用同一支 islPanel(h,cb),沒傳 opts 時一律跑 islFitBox() 整框等比縮放,縮放幅度單純取決於當下內容量算出的高度——買東西清單通常比賣東西/委託長很多,所以縮得最兇;改傳 `{wide:true}` 讓商店面板跳過整框縮放,改用既有「wide 版」規格(框吃滿 92% 高+.bd 內捲),三分頁字級與按鈕尺寸從此一致;同步補上 `.isl-bagbox.wide` 這條原本沒有對應的 CSS(先前只有 `.box.wide`)。③老師在「🎨 造型工房(GM)」調好貼回聊天室的「📋 複製設定值」寫入 island_db.js 的 D.LAYER_ADJ(髮型改三向專屬微調)與 D.CREATE_DEFAULT(補 clothC:0),`minigame_island_db.js?v=` 快取破壞字串同步 bump。對應 island_db v1.149.0(僅本檔零改動,純資料表)。 */   /* ★ v1.148.0（2026-09-14・老師需求「十二星神(除了天蠍/射手以外)左邊清單縮圖高度Y減少25%,同步到小遊戲的英雄選單」）— MG_THUMB_POS 新增 10 位星神(牡羊/金牛/雙子/巨蟹/獅子/處女/天秤/摩羯/水瓶/雙魚)各 25(=主程式基準 50 + grid:-25)，比照 index.html v5.201.0 的 _teamFormAdjustObjPos 新增值同步；天蠍星神/射手星神依老師指示不調整仍維持預設 50。純顯示層，選角頁右側 .hm-banner 沿用既有固定 center 20% 裁切不受影響。 */   /* ★ v1.147.0（2026-09-14・老師截圖回報「荒島求生點進地圖區域後，畫面上半部大地圖和下半部場景疊在一起」緊急修復）— 根因＝#isl-map-wrap／#isl-zone／#isl-camp／#isl-act／#isl-create／#isl-def 這六個「畫面」原本只是共用外層 .isl-screen 的一般 block 子元素（各自 width:100%;height:100%;position:relative），設計書 2.1 講的「各畫面互斥顯示」完全只靠 islShowScreen() 幫沒有的那些加 .hidden(display:none) 撐著——只要有任何一條路徑忘了幫舊畫面補上 .hidden（或執行順序被打斷），兩個畫面就會同時不帶 .hidden，而它們在一般文件流裡不是互相覆蓋而是**上下疊放**，正是老師截圖看到「上面小地圖、下面場景各佔一半」的畫面。修法：六個畫面容器全部改成 position:absolute;left:0;top:0;right:0;bottom:0;（父層 .isl-screen 本就 position:relative），此後任兩個畫面同時可見也只會互相覆蓋（後面的蓋住前面的），不會再裂成上下兩半；另在 islEnterZone() 呼叫 islShowScreen('zone') 之後多補一行 hide('isl-map-wrap') 雙保險，防止任何未來路徑再漏一次。對應 sw v1.116.0(僅版號同步)。 */   /* ★ v1.146.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復):根因＝islEnterZone() 整個函式從缺一行 var 宣告——db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告,函式第一行 `_IS.scene = sc;` 一讀取未宣告的 sc 就丟 ReferenceError,函式當場中斷(console 有錯誤、畫面無任何提示),導致點地圖上任何一個區域、700ms 後一律靜默失敗、卡在地圖畫面進不去。補回缺的 var 宣告行即修復,對應 sw v1.115.0(僅版號同步)。 */   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -14135,6 +14202,18 @@ function islFxAt(parent, x, y, key){
   var im = document.createElement('img'); im.className = 'isl-fx'; im.src = u + '?v=' + MG_VER + '&t=' + islNow(); im.style.left = x + 'px'; im.style.top = y + 'px'; parent.appendChild(im);
   setTimeout(function(){ if(im.parentNode) im.parentNode.removeChild(im); }, 1200);
 }
+/* ★ v1.152.0(老師:「營地中的治療特效 GIF 要放在主角身上」)— 特效掛在營地主角身上,而不是營地畫面的固定座標。
+   ⚠ 掛法是把 GIF 塞進 #isl-camp-char 裡面(而不是算他的螢幕座標再放到 #isl-camp 上):
+     主角現在會走動(v1.151.0),用座標會在他走路途中飄在原地;掛進去就永遠跟著人,連被 scale(2.2) 放大也一起。 */
+function islFxOnCampChar(key){
+  var host = $('isl-camp-char'), u = MG_FX[key], im;
+  if(!host || !u) return;
+  im = document.createElement('img');
+  im.className = 'isl-fx onchar';
+  im.src = u + '?v=' + MG_VER + '&t=' + islNow();
+  host.appendChild(im);
+  setTimeout(function(){ if(im.parentNode) im.parentNode.removeChild(im); }, 1400);
+}
 
 /* ── 畫面切換 ── */
 function islShowScreen(name){
@@ -14747,7 +14826,7 @@ window.islLookSoon = function(){
   try{ toast('🎨 換造型還在調整中,尚未開放;創角時選的造型會一直保留著。'); }catch(_){}
 };
 function islEnterZone(zoneId, cb){
-  var db = islDB(), sc = db.SCENE[zoneId], zs = ISL.zones[zoneId], zm = $('isl-zone-map'), h = '', u, sp, i, n, first;   /* ★ v1.148.0 老師截圖回報「開始遊戲後第一張沙灘變成上下疊在一起」根因修復:zm 誤抓成外層容器 $('isl-zone')(#isl-zone 底下還有 #isl-zone-topinfo/#isl-joy/#isl-act-btn 三個常駐手足元素),下面 `zm.innerHTML = h` 把整個 #isl-zone 洗掉,連手足元素一起被拆掉;緊接著 islZoneTopInfo() 讀 $('isl-zone-topinfo') 已是 null → 丟例外(console 實證 Cannot set properties of null (setting 'innerHTML'))→ 函式提前中斷,連同後面重啟 rAF 迴圈的 `_IS.raf = requestAnimationFrame(islTick)` 都沒執行到,上一個畫面(大地圖)的動畫迴圈沒被换掉,新舊兩層畫面因此疊在一起,與 v1.146.0/v1.147.0 修的兩個成因(缺 var 宣告／CSS 排他)是同一種症狀的第三個根因。改回 `$('isl-zone-map')`──與全檔其餘 9 處消費點(islCamera/islNearCheck/islPickHtml/coop 對等玩家渲染/戰鬥面板等)完全同一口徑,#isl-zone-map 才是「場景內容容器」，#isl-zone 是外層固定殼；手足元素不再被清空。 */   /* ★ v1.143.0 老師回報「點地圖區域沒進去」根因修復:本函式從缺少這行 var 宣告,db/sc/zs/zm/h/u/sp/i/n/first 全部視為未宣告變數,第一次讀取 sc 就丟 ReferenceError,畫面卡在地圖(點擊後 700ms 靜默失敗,無任何提示) */
+  var db = islDB(), sc = db.SCENE[zoneId], zs = ISL.zones[zoneId], zm = $('isl-zone-map'), h = '', u, sp, i, n, first, npcSz;   /* ★ v1.152.0 npcSz 一定要在這裡宣告:v1.146.0 就是因為本函式漏了 var 宣告,第一行讀未宣告變數丟 ReferenceError,點任何區域都靜默失敗進不去 */   /* ★ v1.148.0 老師截圖回報「開始遊戲後第一張沙灘變成上下疊在一起」根因修復:zm 誤抓成外層容器 $('isl-zone')(#isl-zone 底下還有 #isl-zone-topinfo/#isl-joy/#isl-act-btn 三個常駐手足元素),下面 `zm.innerHTML = h` 把整個 #isl-zone 洗掉,連手足元素一起被拆掉;緊接著 islZoneTopInfo() 讀 $('isl-zone-topinfo') 已是 null → 丟例外(console 實證 Cannot set properties of null (setting 'innerHTML'))→ 函式提前中斷,連同後面重啟 rAF 迴圈的 `_IS.raf = requestAnimationFrame(islTick)` 都沒執行到,上一個畫面(大地圖)的動畫迴圈沒被换掉,新舊兩層畫面因此疊在一起,與 v1.146.0/v1.147.0 修的兩個成因(缺 var 宣告／CSS 排他)是同一種症狀的第三個根因。改回 `$('isl-zone-map')`──與全檔其餘 9 處消費點(islCamera/islNearCheck/islPickHtml/coop 對等玩家渲染/戰鬥面板等)完全同一口徑,#isl-zone-map 才是「場景內容容器」，#isl-zone 是外層固定殼；手足元素不再被清空。 */   /* ★ v1.143.0 老師回報「點地圖區域沒進去」根因修復:本函式從缺少這行 var 宣告,db/sc/zs/zm/h/u/sp/i/n/first 全部視為未宣告變數,第一次讀取 sc 就丟 ReferenceError,畫面卡在地圖(點擊後 700ms 靜默失敗,無任何提示) */
   setTimeout(islAmbSfxUpdate, 0);
   /* ★ v1.142.0(老師:「進森林之前要提醒玩家準備食物和製作基本的武器,否則戰鬥中可能會陷入苦戰」)—
      森林是第一個會遇敵開打的區域,學生常常空手進去被打到體力歸零。每個遊戲日只提醒一次。
@@ -14776,8 +14855,15 @@ function islEnterZone(zoneId, cb){
   if(sc.puzzle) _IS.pois.push({ kind: 'puzzle', x: sc.puzzle.x, y: sc.puzzle.y, e: sc.puzzle.e, label: sc.puzzle.n });
   if(zoneId === 'ruins' && db.DUNGEON) _IS.pois.push({ kind: 'dungeon', x: db.DUNGEON.entry.x, y: db.DUNGEON.entry.y, e: db.DUNGEON.entry.e, label: db.DUNGEON.entry.n });   /* ★ v1.104.0 乙 遺跡地下層入口 */
   if(sc.gullSpot) _IS.pois.push({ kind: 'gull', x: sc.gullSpot.x, y: sc.gullSpot.y, e: '🕊', label: '小白' });
-  if(sc.trainer && db.trainer(sc.trainer)){ var tr0 = db.trainer(sc.trainer); _IS.pois.push({ kind: 'trainer', id: tr0.id, x: tr0.spot.x, y: tr0.spot.y, e: tr0.e, img: tr0.img, label: tr0.n, big: tr0.big || 0 });   /* ★ v1.142.0 big:2 = 這隻 NPC 要畫成主角的兩倍高(島上動物訓練師體型差很多,黑熊不該跟海鷗小白一樣大) */ }   /* ★ v1.99.0 動物訓練師 */
-  for(i = 0; i < _IS.pois.length; i++){ n = _IS.pois[i]; h += '<div class="isl-poi' + (n.kind === 'gull' || n.kind === 'trainer' ? (' isl-gull' + (n.big >= 2 ? ' isl-npc-big' : '')) : '') + '" data-p="' + i + '" style="left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 56) + 'px">' + (n.kind === 'gull' && islImgUrl('gull_normal') ? '<img src="' + islImgUrl('gull_normal') + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'🕊\');">' : (n.kind === 'trainer' && islImgUrl(n.img) ? '<img src="' + islImgUrl(n.img) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + n.e + '\');">' : n.e)) + '<span class="nl">' + islEsc(n.label) + '</span></div>'; }
+  if(sc.trainer && db.trainer(sc.trainer)){ var tr0 = db.trainer(sc.trainer); _IS.pois.push({ kind: 'trainer', id: tr0.id, x: tr0.spot.x, y: tr0.spot.y, e: tr0.e, img: tr0.img, label: tr0.n, sz: tr0.sz || 0, big: tr0.big || 0 });   /* ★ v1.152.0 sz=依真實體型比例算好的顯示高度 px(玩家 96px 為基準) */   /* ★ v1.142.0 big:2 = 這隻 NPC 要畫成主角的兩倍高(島上動物訓練師體型差很多,黑熊不該跟海鷗小白一樣大) */ }   /* ★ v1.99.0 動物訓練師 */
+  for(i = 0; i < _IS.pois.length; i++){ n = _IS.pois[i];
+    /* ★ v1.152.0(老師:「NPC 的圖片尺寸依照正確比例縮放、名稱用 1 行放在圖片正上方」)—
+       尺寸不再是「一般 72px / big 192px」兩段式,而是每隻 NPC 自己帶 sz(依真實體型換算,玩家顯示高度 96px 為基準):
+       陸蟹 72(0.75×)、梅花鹿 106(1.1×)、台灣黑熊 192(2×,老師指定「比玩家大 1 倍」)、領角鴞 72(0.75×)。
+       ⚠ margin 必須跟著 sz 一起算:這些圖是「腳底對齊格子」的定位法(margin-top = -(高度-10)),
+         只改 width/height 不改 margin,NPC 會整個往下沉、腳陷進地板。 */
+    npcSz = (n.kind === 'gull' || n.kind === 'trainer') ? (n.sz || (n.big >= 2 ? 192 : 72)) : 0;
+    h += '<div class="isl-poi' + (n.kind === 'gull' || n.kind === 'trainer' ? ' isl-gull isl-npc' : '') + '" data-p="' + i + '"' + (npcSz ? ' style="width:' + npcSz + 'px;height:' + npcSz + 'px;margin-left:' + (-npcSz / 2) + 'px;margin-top:' + (-(npcSz - 10)) + 'px;font-size:' + Math.round(npcSz * 0.78) + 'px;line-height:' + npcSz + 'px;left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 56) + 'px">' : ' style="left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 56) + 'px">') + (n.kind === 'gull' && islImgUrl('gull_normal') ? '<img src="' + islImgUrl('gull_normal') + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'🕊\');">' : (n.kind === 'trainer' && islImgUrl(n.img) ? '<img src="' + islImgUrl(n.img) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + n.e + '\');">' : n.e)) + '<span class="nl">' + islEsc(n.label) + '</span></div>'; }
   for(i = 0; i < _IS.nodes.length; i++){ n = _IS.nodes[i]; h += islNodeHtml(n, i); }
   for(i = 0; i < _IS.picks.length; i++){ n = _IS.picks[i]; if(!n.taken) h += '<div class="isl-pick" data-k="' + i + '" style="left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 32) + 'px">' + islItemDef(n.item).e + '</div>'; }
   for(i = 0; i < (_IS.mines || []).length; i++){ n = _IS.mines[i]; if(!n.done) h += '<div class="isl-mine' + (ISL.skill.defense.lv >= 3 ? ' seen' : '') + '" data-m="' + i + '" style="left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 44) + 'px"></div>'; }   /* ★ v1.121.0 遇敵點:預設看不見;防衛 Lv3 起草叢微微晃動提示 */
@@ -15728,11 +15814,18 @@ function islCampPaint(){
   for(i = 0; i < nSlot; i++){
     s = ISL.camp.slots[i];
     if(s && !db.BUILDINGS[s.bld]) s = null;   /* ★ v1.111.0 守門:存檔裡的建築 id 已不存在(資料表改名/移除)時當空格,不讓整個營地畫面炸掉 */
-    if(s){ b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1')); h += '<button class="isl-cell built' + (s.bt ? ' building' : '') + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') + '" data-i="' + i + '">' + (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span><span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span></button>'; }
-    else h += '<button class="isl-cell empty" data-i="' + i + '">➕<span class="bn">空地</span></button>';
+    if(s){ b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1')); h += '<button class="isl-cell built' + (s.flip ? ' flip' : '') + (_IS.campMove === i ? ' moving' : '') + (_IS.campMove != null && _IS.campMove !== i ? ' movetarget' : '') + (s.bt ? ' building' : '') + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') + '" data-i="' + i + '">' + (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span><span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span></button>'; }
+    else h += '<button class="isl-cell empty' + (_IS.campMove != null ? ' movetarget' : '') + '" data-i="' + i + '">➕<span class="bn">空地</span></button>';
   }
   cells.innerHTML = h;
-  cells.onclick = function(ev){ var t = ev.target; while(t && t !== cells && !(t.getAttribute && t.getAttribute('data-i'))) t = t.parentNode; if(!t || t === cells) return; islCampCellTap(parseInt(t.getAttribute('data-i'), 10)); };
+  /* ★ v1.151.0 點設施 = 主角先走過去旁邊,到了才開視窗(搬移模式下則是立刻換位,不走路) */
+  cells.onclick = function(ev){ var t = ev.target, idx; while(t && t !== cells && !(t.getAttribute && t.getAttribute('data-i'))) t = t.parentNode; if(!t || t === cells) return; idx = parseInt(t.getAttribute('data-i'), 10);
+    if(_IS.campMove != null){ islCampMoveTo(idx); return; }
+    playSfx('sfx-tap', 0.25);
+    islCampGoToCell(idx, function(){ islCampCellTap(idx); });
+  };
+  islCampGroundBind();   /* ★ v1.151.0 點空地 → 主角走過去 */
+  islCampCharPlace();
   $('isl-camp-char').innerHTML = islChibiHtml(ISL.char, 'idle');
   islTiredCheck();   /* ★ v1.119.0 */
   if(islBuildBusyCount()) islBuildTimer();   /* ★ v1.125.0 有設施在施工 → 啟動每秒倒數 */
@@ -15746,6 +15839,100 @@ function islCampPaint(){
     '<button class="cat" onclick="islSubOpen(\'rest\')"><span class="ci">🌙</span>休息</button>';   /* ★ v1.125.0 老師:休息從「探索」裡搬出來獨立一個分頁 */
   islHud();
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.151.0(2026-09-14・老師三項)— 🏕 營地:設施可搬移/鏡像翻轉、主角可自由走動並走過去互動
+ *   ① 主角位置改成可變的 (x%, y%)(以 #isl-camp-grid 為基準,x=left、y=bottom),存在 _IS.campC。
+ *      ⚠ 刻意只存在記憶體不寫存檔:這是「站在哪裡」的臨時狀態,寫進雲端存檔只會增加每次 islSave 的負擔,
+ *        而且換裝置時「上次站在哪」一點也不重要。每次進營地一律從左下角的預設位置開始。
+ *   ② 走路用 CSS transition(left/bottom)而不是 rAF 逐幀:營地是靜態畫面,沒有碰撞與尋路需求,
+ *      transition 交給瀏覽器合成執行緒跑,比自己開一條 rAF 省電得多(舊 iPad 尤其有感)。
+ *   ③ 鏡像:翻的是「裡面那張圖」(.isl-pixchar/.isl-chibi)而不是 #isl-camp-char 容器本身 ——
+ *      容器的 transform 是 scale(2.2) 且 transform-origin 在左下角,直接在容器上加 scaleX(-1)
+ *      會讓整個人往左平移一個身寬,而且頭上的對話泡泡會連字一起左右相反。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function islCampCharPos(){ if(!_IS.campC) _IS.campC = { x: 6, y: 16 }; return _IS.campC; }
+function islCampCharPlace(){
+  var el = $('isl-camp-char'), p = islCampCharPos();
+  if(!el) return;
+  el.style.left = p.x + '%'; el.style.bottom = p.y + '%';
+}
+/* 走到營地內的 (x%, y%);cb 在抵達後才呼叫(給「點設施→走過去→開視窗」用) */
+function islCampWalkTo(x, y, cb){
+  var el = $('isl-camp-char'), p = islCampCharPos(), dx, dy, dist, ms;
+  if(!el || !ISL){ if(cb) cb(); return; }
+  x = islClamp(x, 3, 97); y = islClamp(y, 4, 72);   /* 可行走區域:營地範圍內,不讓他走出畫面或爬到頂端 */
+  dx = x - p.x; dy = y - p.y; dist = Math.sqrt(dx * dx + dy * dy);
+  if(dist < 1.5){ if(cb) setTimeout(cb, 60); return; }
+  if(dx < -0.8) el.classList.add('flip');
+  else if(dx > 0.8) el.classList.remove('flip');
+  ms = Math.max(260, Math.min(1500, Math.round(dist * 26)));
+  el.classList.add('walking');
+  el.style.transition = 'left ' + ms + 'ms linear, bottom ' + ms + 'ms linear';
+  p.x = x; p.y = y; islCampCharPlace();
+  try{ islSfx('walk'); }catch(_cw){}
+  if(_IS.campWalkT) clearTimeout(_IS.campWalkT);
+  _IS.campWalkT = setTimeout(function(){
+    var e2 = $('isl-camp-char');
+    _IS.campWalkT = 0;
+    if(e2){ e2.classList.remove('walking'); e2.style.transition = ''; }
+    if(cb) cb();
+  }, ms + 40);
+}
+/* 走到某一格設施的正下方(站在旁邊,不會站到設施上) */
+function islCampGoToCell(i, cb){
+  var g = $('isl-camp-grid'), cells = $('isl-camp-cells'), el, gr, r;
+  el = cells ? cells.querySelector('[data-i="' + i + '"]') : null;
+  if(!el || !g){ if(cb) cb(); return; }
+  gr = g.getBoundingClientRect(); r = el.getBoundingClientRect();
+  if(!gr.width || !gr.height){ if(cb) cb(); return; }
+  islCampWalkTo((r.left + r.width / 2 - gr.left) / gr.width * 100, (gr.bottom - r.bottom) / gr.height * 100 - 2, cb);
+}
+/* 點營地空地 → 走過去。⚠ 只處理「沒有打到格子」的點擊:格子有自己的 onclick(走過去 + 開視窗) */
+function islCampGroundBind(){
+  var g = $('isl-camp-grid'), cells;
+  if(!g || g._gbound) return;
+  g._gbound = true;
+  g.addEventListener('click', function(ev){
+    var t = ev.target, p, gr;
+    if(!ISL || _IS.coop || _IS.screen !== 'camp' || _IS.campMove != null) return;
+    cells = $('isl-camp-cells');
+    while(t && t !== g){ if(t === cells || (t.classList && (t.classList.contains('isl-deco') || t.id === 'isl-camp-board'))) return; t = t.parentNode; }
+    gr = g.getBoundingClientRect();
+    if(!gr.width || !gr.height) return;
+    p = ev.changedTouches ? ev.changedTouches[0] : ev;
+    islCampWalkTo((p.clientX - gr.left) / gr.width * 100, (gr.bottom - p.clientY) / gr.height * 100, null);
+  });
+}
+/* ── 🔀 搬移設施:點「搬移位置」進入搬移模式,再點任一格就互換(空地或別的設施都可以) ── */
+window.islCampMoveStart = function(i){
+  var s = ISL.camp.slots[i];
+  if(!s){ return; }
+  if(s.bt){ toast('施工中的設施不能搬'); return; }
+  islModalClose();
+  _IS.campMove = i;
+  playSfx('sfx-tap', 0.3);
+  toast('🔀 點另一格把它搬過去(再點同一格取消)');
+  islCampPaint();
+};
+function islCampMoveTo(j){
+  var i = _IS.campMove, tmp;
+  _IS.campMove = null;
+  if(i == null) return;
+  if(i === j){ playSfx('sfx-tap', 0.25); toast('取消搬移'); islCampPaint(); return; }
+  tmp = ISL.camp.slots[i]; ISL.camp.slots[i] = ISL.camp.slots[j]; ISL.camp.slots[j] = tmp;
+  playSfx('sfx-ok', 0.4); toast('🔀 搬好了');
+  islCampPaint(); islSave('campmove');
+}
+window.islCampMoveTo = islCampMoveTo;
+/* ── 🔁 左右翻轉:只是外觀(slot.flip),不影響任何效果與耐久 ── */
+window.islCampFlip = function(i){
+  var s = ISL.camp.slots[i];
+  if(!s) return;
+  s.flip = s.flip ? 0 : 1;
+  playSfx('sfx-tap', 0.3); toast('🔁 左右翻轉了');
+  islModalClose(); islCampPaint(); islSave('campflip');
+};
+
 /* ★ v1.115.0 營地大項目 → 細項按鈕(如主程式關卡選擇頁下方的選單):角色/營地/商店/探索 */
 function islSubItems(cat){
   var db = islDB(), hasFire = islCampHasBld('campfire'), L = [];
@@ -15804,6 +15991,7 @@ window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-amb
 window.islAmbToggle2 = function(){ islAmbSfxToggle(); };   /* ★ v1.126.0 ⚙ 設定選單裡的環境音開關(名稱與既有 islAmbToggle 動態背景區隔) */
 function islCampCellTap(i){
   var db = islDB(), s = ISL.camp.slots[i], b, maxHp, btns;
+  if(_IS.campMove != null){ islCampMoveTo(i); return; }   /* ★ v1.151.0 搬移模式:這一點是「搬到哪裡」,不開視窗 */
   playSfx('sfx-tap', 0.3);
   if(!s){ islCampBuildMenu(i); return; }
   if(s.bt){   /* ★ v1.125.0 施工中:只顯示進度,不能再操作那一格 */
@@ -15819,7 +16007,7 @@ function islCampCellTap(i){
     { t: '⬆ 升級', cls: 'gold', cb: function(){ islCampUpgrade(i); } }
   ];
   if(s.hp < maxHp) btns.push({ t: '🔧 修理', cls: 'warn', cb: function(){ islBldRepair(i); } });   /* ★ v1.92.0 結構受損 → 工程修復(耗半份材料,恢復滿耐久) */
-  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' + (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + ' ' + islLackBadge(islBldCost(s.bld, s.lv + 1), true) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
+  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' + '<p class="isl-bldtools"><button class="isl-btn ghost" onclick="islCampMoveStart(' + i + ')">🔀 搬移位置</button><button class="isl-btn ghost" onclick="islCampFlip(' + i + ')">🔁 左右翻轉</button></p>' + (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + ' ' + islLackBadge(islBldCost(s.bld, s.lv + 1), true) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
   islLackBind($('isl-modal'));   /* ★ v1.130.0 */
 }
 /* ★ v1.92.0 工程修復:耗一半原始建材,結構立即恢復滿耐久(不需重蓋) */
@@ -17359,7 +17547,7 @@ window.islTreatOpen = function(){
     { t: '治療', cls: 'gold', cb: function(){
       var use = can ? cost : alt, k; for(k in use){ if(use.hasOwnProperty(k)) islConsume(k, use[k]); }
       ISL.hp = ISL.hpMax; ISL.hurt = false;
-      playSfx('sfx-heal', 0.5); islFxAt(document.getElementById('isl-camp'), 200, 200, 'glow');
+      playSfx('sfx-heal', 0.5); islFxOnCampChar('glow');
       toast('🩹 治療完成,體力全滿!'); islHud(); islCampPaint(); islSave('treat');
     } }
   ]);
@@ -17442,16 +17630,27 @@ function islDecoPaint(){
   var layer = $('isl-camp-deco'), h = '', i, d, dl;
   if(!layer || !ISL) return;
   dl = ISL.camp.deco || [];
-  for(i = 0; i < dl.length; i++){ d = islDecoDef(dl[i].id); h += '<div class="isl-deco" data-d="' + i + '" style="left:' + dl[i].x + '%;top:' + dl[i].y + '%">' + islIcoHtml(d.img, d.e, 56) + '<span class="dn">' + islEsc(d.n) + '</span></div>'; }   /* ★ v1.120.0 裝飾有圖用圖 */
+  for(i = 0; i < dl.length; i++){ d = islDecoDef(dl[i].id); h += '<div class="isl-deco' + (dl[i].f ? ' flip' : '') + '" data-d="' + i + '" style="left:' + dl[i].x + '%;top:' + dl[i].y + '%">' + islIcoHtml(d.img, d.e, 56) + '<span class="dn">' + islEsc(d.n) + '</span></div>'; }   /* ★ v1.120.0 裝飾有圖用圖;★ v1.152.0 f=左右鏡像 */
   layer.innerHTML = h;
   if(!layer._bound){ layer._bound = true; islDecoDragBind(layer); }
 }
+/* ★ v1.152.0(老師:「裝飾品也和設施一樣改成可以鏡像翻轉」)— 點一下(沒有拖動)開裝飾小選單 */
+window.islDecoTap = function(i){
+  var d = ISL.camp.deco[i], def;
+  if(!d) return;
+  def = islDecoDef(d.id);
+  islModal('<h3>' + def.e + ' ' + islEsc(def.n) + '</h3><p style="font-size:15px;opacity:.85">' + islEsc(def.d || '') + '</p><p style="font-size:14px;opacity:.7">拖曳可以換位置。</p>', [
+    { t: '關閉', cls: 'ghost' },
+    { t: '🔁 左右翻轉', cls: 'gold', cb: function(){ d.f = d.f ? 0 : 1; playSfx('sfx-tap', 0.3); toast('🔁 翻轉了'); islDecoPaint(); islSave('decoflip'); } }
+  ]);
+};
 function islDecoDragBind(layer){
   var cur = null;
   function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }
-  function down(ev){ if(_IS.coop) return; var t = ev.target; while(t && t !== layer && !(t.classList && t.classList.contains('isl-deco'))) t = t.parentNode; if(!t || t === layer) return; cur = t;   /* ★ v1.114.0 參觀好友營地時裝飾唯讀,不可拖 */ t.classList.add('drag'); playSfx('sfx-sel', 0.25); ev.preventDefault(); }
-  function move(ev){ if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94); cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; ev.preventDefault(); }
-  function up(){ if(!cur) return; var i = parseInt(cur.getAttribute('data-d'), 10), d = ISL.camp.deco[i]; if(d && cur._x != null){ d.x = Math.round(cur._x); d.y = Math.round(cur._y); islSave('decomove'); } cur.classList.remove('drag'); cur = null; }
+  function down(ev){ if(_IS.coop) return; var t = ev.target, p; while(t && t !== layer && !(t.classList && t.classList.contains('isl-deco'))) t = t.parentNode; if(!t || t === layer) return; cur = t;   /* ★ v1.114.0 參觀好友營地時裝飾唯讀,不可拖 */ p = pos(ev); cur._sx = p.x; cur._sy = p.y; cur._moved = false; t.classList.add('drag'); playSfx('sfx-sel', 0.25); ev.preventDefault(); }
+  function move(ev){ if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94); if(Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8) cur._moved = true; cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; ev.preventDefault(); }
+  /* ★ v1.152.0 放手時分辨「拖」還是「點」:沒移動超過 8px 就當成點一下 → 開裝飾小選單(翻轉) */
+  function up(){ if(!cur) return; var i = parseInt(cur.getAttribute('data-d'), 10), d = ISL.camp.deco[i], tap = !cur._moved; if(d && !tap && cur._x != null){ d.x = Math.round(cur._x); d.y = Math.round(cur._y); islSave('decomove'); } cur.classList.remove('drag'); cur = null; if(tap) islDecoTap(i); }
   layer.addEventListener('touchstart', down, { passive: false }); layer.addEventListener('touchmove', move, { passive: false }); layer.addEventListener('touchend', up); layer.addEventListener('touchcancel', up);
   layer.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
 }
