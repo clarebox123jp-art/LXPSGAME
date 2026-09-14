@@ -4151,6 +4151,55 @@ const BURST_GIF_DB = {
     tint:'rgba(90,200,235,0.22)',
     dur:2500
   },
+  // ★ v5.200.0 — 十二星神 第二批爆發特效(補齊剩餘 8 位·全部重用既有 GIF·不同 key·零上傳,對齊第一批慣例;
+  //   tint 依所屬四象與第一批同色系統一:火=牡羊同色/土=金牛同色/風=雙子同色/水=巨蟹同色)
+  '太陽王座': {   // 獅子星神(火)— 太陽火球.gif(王座之上太陽威光主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('太陽火球.gif'),
+    sfx:[['sfx-explode',1.0],['sfx-crit',0.85],['sfx-burst',0.7]],
+    tint:'rgba(255,140,60,0.22)',
+    dur:2200
+  },
+  '處女豐穰頌': {   // 處女星神(土,治療系)— 花草搖曳.gif(豐收頌歌主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('花草搖曳.gif'),
+    sfx:[['sfx-heal',1.0],['sfx-revive',0.85],['sfx-windchime',0.6]],
+    tint:'rgba(136,221,102,0.22)',
+    dur:2400
+  },
+  '至公審判': {   // 天秤星神(風)— 禁錮.gif(秩序審判/技能封鎖主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('禁錮.gif'),
+    sfx:[['sfx-imprison-burst',0.9],['sfx-guard',0.8]],
+    tint:'rgba(170,140,255,0.20)'
+  },
+  '星蠍絕殺': {   // 天蠍星神(水)— 漩渦.gif(暗處蟄伏絕殺主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('漩渦.gif'),
+    sfx:[['sfx-fantasy',0.9],['sfx-crit',0.85],['sfx-burst',0.7]],
+    tint:'rgba(90,200,235,0.24)',
+    dur:1500
+  },
+  '天穹裂空・萬矢歸墟': {   // 射手星神(火)— 多火球射線.gif(萬矢歸墟主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('多火球射線.gif'),
+    sfx:[['sfx-explode',1.0],['sfx-crit',0.8],['sfx-rapidfire',0.7]],
+    tint:'rgba(255,140,60,0.22)',
+    dur:2470
+  },
+  '千仞崩岩': {   // 摩羯星神(土)— 地火爆炸.gif(山嶽崩塌主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('地火爆炸.gif'),
+    sfx:[['sfx-explode',1.0],['sfx-guard',0.85]],
+    tint:'rgba(200,160,80,0.22)',
+    dur:2000
+  },
+  '星海覆滅・時代革新': {   // 水瓶星神(風)— 龍捲風.gif(顛覆星圖時代革新主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('龍捲風.gif'),
+    sfx:[['sfx-explode',0.9],['sfx-powerup',0.75]],
+    tint:'rgba(170,140,255,0.22)',
+    dur:1440
+  },
+  '雙生幻滅・鏡海沉淪': {   // 雙魚星神(水)— 萬鏡映虛獄.gif(鏡海沉淪詛咒反域主題)
+    url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('萬鏡映虛獄.gif'),
+    sfx:[['sfx-fantasy',0.9],['sfx-reflect',0.75],['sfx-ice2',0.6]],
+    tint:'rgba(90,200,235,0.22)',
+    dur:2600
+  },
   // ★ v5.42.0 — 中國關 Phase 4 一梯招募英雄爆發特效(全部重用既有 GIF·不同 key·零上傳,對齊大刀勇士/寵物慣例)
   //   哪吒:多火球射線.gif(dur=2470 單圈,同神炎之翼實測值)六神兵烈焰亂舞主題
   '三頭六臂‧蓮華滅世': {
