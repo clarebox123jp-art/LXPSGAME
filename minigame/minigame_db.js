@@ -1,3 +1,8 @@
+/* ★ v1.45.0(2026-09-14・老師需求「十二星神在小遊戲中的天賦與爆發技能」＋「本關推薦」)—
+ *   ①MG_HEROES 追加十二星神 12 筆(64→76),立繪沿用主程式 repo 根目錄的「XX星神_場景.jpg」(實查 HTTP 200,零新素材);
+ *     爆發 GIF 暫時沿用既有素材(主程式 BURST_GIF_DB 這 12 隻本來就沒有專屬 GIF,詳交付說明)。
+ *   ②新增 window.MG_REC 關卡↔能力適配表,供選角頁「⭐ 本關推薦」計分,全部 76 隻一起吃這張表。
+ *   對應 minigame_index.html v1.145.0、minigame_sw.js v1.114.0。 */
 /* ============================================================================
  * minigame_db.js — 「小英雄小遊戲」小學堂資料表  v1.42.0(2026-09-12)
  * ★ v1.42.0(2026-09-12・老師自行設計,指定給神槍手)— reactclear→reactdodgeonmiss(危機反射,
@@ -4366,8 +4371,53 @@ window.MG_HEROES = [
   { n:'魔界花使‧朱玥', cls:'heal', img:'%E9%AD%94%E7%95%8C%E8%8A%B1%E4%BD%BF_%E6%9C%B1%E7%8E%A5.png', bn:'百花盛開', gif:'%E8%8A%B1%E8%8D%89%E6%90%96%E6%9B%B3.gif', sfx:[['sfx-heal',0.85]], tint:'rgba(136,221,102,0.22)', dur:2400 , pos:'15%' , eff2:{t:'regenpoison3x5',v:0}, tr:{t:'m3merge',v:1} },   /* ★v1.78.0老師需求「重新設計15關卡有幫助的第二效果」原 scoreboost(v20)改派 m3merge,湊滿4位 */
   { n:'小鬼貓與兔', cls:'atk', img:'%E5%B0%8F%E9%AC%BC%E8%B2%93%E5%85%94.png', bn:'貓兔齊抓咬', gif:'%E5%88%80%E5%85%89.gif', sfx:[['sfx-sword',1],['sfx-crit',0.7]], tint:'rgba(255,220,140,0.22)', dur:2400 , pos:'40%' , eff2:{t:'poison5x5',v:0}, tr:{t:'reactclear',v:1,p:50} },   /* ★v1.78.0老師需求「重新設計15關卡有幫助的第二效果」原 scoreboost(v30)改派 reactclear,湊滿4位 */
   { n:'法老王', cls:'atk', img:'%E6%B3%95%E8%80%81%E7%8E%8BBOSS.png', bn:'太陽神的審判', gif:'%E5%A4%AA%E9%99%BD%E7%81%AB%E7%90%83.gif', sfx:[['sfx-pharaoh-burst',1]], tint:'rgba(255,204,68,0.20)' , full:true , eff2:{t:'siphon15',v:0}, tr:{t:'chargeoncorrect',v:1,p:50} },
-  { n:'埃及豔后', cls:'ctrl', img:'%E5%9F%83%E5%8F%8A%E8%B1%94%E5%90%8E.png', bn:'尼羅河的詛咒', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-cleopatra-burst',1]], tint:'rgba(60,110,170,0.20)' , full:true , eff2:{t:'confuse',v:3}, tr:{t:'headstart',v:2} }
+  { n:'埃及豔后', cls:'ctrl', img:'%E5%9F%83%E5%8F%8A%E8%B1%94%E5%90%8E.png', bn:'尼羅河的詛咒', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-cleopatra-burst',1]], tint:'rgba(60,110,170,0.20)' , full:true , eff2:{t:'confuse',v:3}, tr:{t:'headstart',v:2} },
+  { n:'牡羊星神', cls:'atk', img:'%E7%89%A1%E7%BE%8A%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'牡羊終焉斬', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,110,40,0.22)', dur:2400 , pos:'20%' , eff2:{t:'breakdef3',v:0}, tr:{t:'reactclear',v:1,p:100} },
+  { n:'金牛星神', cls:'shd', img:'%E9%87%91%E7%89%9B%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'大地審判', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(210,170,90,0.22)', dur:2400 , pos:'20%' , eff2:{t:'immune',v:0}, tr:{t:'mistakeshield',v:50} },
+  { n:'雙子星神', cls:'ctrl', img:'%E9%9B%99%E5%AD%90%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'星命輪迴', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(153,102,255,0.22)', dur:2400 , pos:'20%' , eff2:{t:'pausepick5',v:0}, tr:{t:'twinbonus',v:1} },
+  { n:'巨蟹星神', cls:'heal', img:'%E5%B7%A8%E8%9F%B9%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'深海母巢', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(80,180,255,0.22)', dur:2400 , pos:'20%' , eff2:{t:'heal10dr3',v:10}, tr:{t:'earsolfa',v:1} },
+  { n:'獅子星神', cls:'atk', img:'%E7%8D%85%E5%AD%90%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'太陽王座', gif:'%E5%A4%AA%E9%99%BD%E7%81%AB%E7%90%83.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,216,102,0.20)', dur:2400 , pos:'20%' , eff2:{t:'multihit',v:0}, tr:{t:'m3merge',v:1} },
+  { n:'處女星神', cls:'heal', img:'%E8%99%95%E5%A5%B3%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'處女豐穰頌', gif:'%E8%8C%B6%E8%91%89%E9%A3%9B%E8%88%9E.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(180,255,200,0.20)', dur:2400 , pos:'20%' , eff2:{t:'cleanseheal15',v:15}, tr:{t:'orderends',v:1} },
+  { n:'天秤星神', cls:'ctrl', img:'%E5%A4%A9%E7%A7%A4%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'至公審判', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,220,140,0.22)', dur:2400 , pos:'20%' , eff2:{t:'averagehp',v:0}, tr:{t:'hintclear',v:1} },
+  { n:'天蠍星神', cls:'atk', img:'%E5%A4%A9%E8%A0%8D%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'星蠍絕殺', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(120,0,40,0.25)', dur:2400 , pos:'20%' , eff2:{t:'poison5x6',v:6}, tr:{t:'trapimmune',v:40} },
+  { n:'射手星神', cls:'atk', img:'%E5%B0%84%E6%89%8B%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'天穹裂空・萬矢歸墟', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,150,60,0.16)', dur:2400 , pos:'20%' , eff2:{t:'critboost3',v:0}, tr:{t:'mapclear5',v:5} },
+  { n:'摩羯星神', cls:'shd', img:'%E6%91%A9%E7%BE%AF%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'千仞崩岩', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(180,180,220,0.22)', dur:2400 , pos:'20%' , eff2:{t:'thorn',v:0}, tr:{t:'streakbonus',v:3,m:25} },
+  { n:'水瓶星神', cls:'ctrl', img:'%E6%B0%B4%E7%93%B6%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'星海覆滅・時代革新', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(125,249,255,0.18)', dur:2400 , pos:'20%' , eff2:{t:'noheal2',v:0}, tr:{t:'weakenoncorrect',v:3,p:50} },
+  { n:'雙魚星神', cls:'ctrl', img:'%E9%9B%99%E9%AD%9A%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'雙生幻滅・鏡海沉淪', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(170,220,255,0.18)', dur:2400 , pos:'20%' , eff2:{t:'halfreflect3',v:0}, tr:{t:'illusiononcorrect',v:1,p:35} }
 ];
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.45.0(2026-09-14・老師需求「英雄選擇頁追加『本關推薦』排序」)— 關卡 ↔ 能力適配表
+ *
+ * 【怎麼用】minigame_index.html 的 mgRecScore(hero, gameId) 讀這張表算分:
+ *     主場天賦 100 / 副場天賦 50 / 該關吃得到的第二效果 30 / 職能相符 10
+ *   ⚠ 刻意讓**全部 76 隻**一起吃這張表,不是只推十二星神 —— 否則選角頁會變成
+ *     「新英雄置頂」的廣告牆,舊英雄永遠被壓在下面。
+ *
+ * 【欄位】
+ *   tr    : 該關「主場」天賦(100 分),通常是只對這個引擎生效的關卡專屬天賦
+ *   tr2   : 該關「副場」天賦(50 分),對這關有幫助但不是專屬
+ *   eff2  : 該關吃得到的爆發第二效果(30 分)
+ *   why   : 推薦理由短語(顯示在卡片右上角徽章,務必短,iPad 上一行放得下)
+ * ⚠ 沒列到的關卡=不推薦任何人(選角頁的「本關推薦」分類會顯示「這一關沒有特別推薦的英雄」)。
+ * ══════════════════════════════════════════════════════════════════════════ */
+window.MG_REC = {
+  coinrush:      { tr:['reactclear'],        tr2:['speedstrike','reactdodgeonmiss','timebonus'], eff2:['multihit','critboost3','truedmg'],           why:'算數關開場清錯誤答案' },
+  maze:          { tr:['mazetrap','trapimmune','mazephase'], tr2:['hintclear'],                  eff2:['dmgimmune3','shield','heal10dr3'],            why:'迷宮陷阱剋星' },
+  scale:         { tr:['m3merge','m3healoncombo'], tr2:['streakbonus'],                          eff2:['multihit','heal','shield'],                   why:'消消樂連鎖加成' },
+  map:           { tr:['mapclear5'],         tr2:['hintclear','hintonce2'],                      eff2:['seal','noheal2'],                             why:'地圖開場點亮地名' },
+  music:         { tr:['earsolfa'],          tr2:['hintclear','timebonus'],                      eff2:['heal10dr3','dmgimmune3'],                     why:'聽音直接看唱名' },
+  teaorder:      { tr:['orderends'],         tr2:['hintonce2','timebonus'],                      eff2:['cleanseheal15','shield'],                     why:'排排站頭尾先定位' },
+  proverb_match: { tr:['twinbonus'],         tr2:['streakbonus','timebonus'],                    eff2:['pausepick5','charge'],                        why:'翻牌配對加成' },
+  species:       { tr:['hintclear','autoclear'], tr2:['hintonce2','illusiononcorrect'],          eff2:['averagehp','seal'],                           why:'三選一自動排除錯項' },
+  rock:          { tr:['streakbonus'],       tr2:['scoreboost','mistakeshield'],                 eff2:['thorn','dmgimmune3','immune'],                why:'連對加成最吃香' },
+  heat:          { tr:['mistakeshield'],     tr2:['healoncorrect','passiveheal'],                eff2:['immune','shield','dmgimmune3'],               why:'答錯傷害減半' },
+  recycle:       { tr:['weakenoncorrect'],   tr2:['dmgoncorrect','chargeoncorrect'],             eff2:['noheal2','weaken3','seal'],                   why:'答對就削弱對手' },
+  history:       { tr:['illusiononcorrect'], tr2:['hintclear','stealbuffoncorrect'],             eff2:['halfreflect3','confuse'],                     why:'答對機率閃避攻擊' },
+  weather:       { tr:['hintclear'],         tr2:['timeoncorrect','autoclear'],                  eff2:['averagehp','heal'],                           why:'選擇題自動排除錯項' },
+  proverb:       { tr:['hintonce2'],         tr2:['hintclear','streakbonus'],                    eff2:['charge','heal'],                              why:'首題直接排除兩個錯項' },
+  animal:        { tr:['mistakeshield'],     tr2:['hintclear','healoncorrect'],                  eff2:['shield','heal','immune'],                     why:'二分法答錯不怕' }
+};
 /* ★ v1.33.0(老師需求「讓64張SSR的額外技能效果都不一樣,根據他們原本大對抗中的爆發技能設計」)—
    4 型的「第二效果」不再是全 cls 共用同一組,改成逐英雄的 eff2 資料(見 MG_HEROES 每筆的 eff2:{t,v}),
    依照每隻英雄在大對抗裡真正的爆發技能特色設計(例如呂布 8 連擊出血→bleed、操偶師傀儡城牆→shield、

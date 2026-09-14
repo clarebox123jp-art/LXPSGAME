@@ -2741,6 +2741,33 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #hero-modal .hm-traitbox .hb-tag{font-size:clamp(11px,2.2vh,16px);color:#7ee8fa;letter-spacing:1px;margin-right:2px;}
 #hero-modal .hm-traitbox .hb-desc{font-size:clamp(11px,2.4vh,18px);color:#d6f7ff;line-height:1.25;}
 #hero-modal .hm-filter{flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap;}
+/* ══ ★ v1.145.0(老師需求「本關推薦排序＋呼吸光暈」)══
+   ⚠ 一律用 box-shadow 做呼吸,不用 filter:iPad 上 filter 動畫會掉幀(v1.118.0 既有教訓)。
+   ⚠ 不使用 display:...!important(小遊戲容器 CSS 鐵律,會蓋掉 .hidden)。 */
+#hero-modal .hm-filter .chip.rec{border-color:rgba(255,208,90,0.85);color:#ffe066;}
+#hero-modal .hm-filter .chip.rec.on{background:var(--gold);color:#08090d;}
+@keyframes mgRecBreathe{
+  0%,100%{box-shadow:0 0 0 2px rgba(255,208,90,0.85), 0 0 10px 2px rgba(255,190,60,0.35);}
+  50%    {box-shadow:0 0 0 3px rgba(255,226,140,1),  0 0 22px 7px rgba(255,190,60,0.75);}
+}
+#hero-modal .hm-list button.rec{animation:mgRecBreathe 2s ease-in-out infinite;}
+#hero-modal .hm-list button.rec .hm-name{color:#ffe9a8;}
+#hero-modal .hm-recbadge{position:absolute;top:4px;left:4px;z-index:3;max-width:calc(100% - 8px);
+  font-size:13px;font-weight:800;line-height:1.15;padding:3px 7px;border-radius:8px;
+  background:rgba(28,22,6,0.86);border:1.5px solid rgba(255,208,90,0.9);color:#ffe066;
+  white-space:normal;text-align:left;pointer-events:none;}
+@keyframes mgHlBreathe{
+  0%,100%{box-shadow:0 0 0 1.5px rgba(255,208,90,0.7), 0 0 8px 1px rgba(255,190,60,0.28);}
+  50%    {box-shadow:0 0 0 2.5px rgba(255,226,140,1),  0 0 18px 5px rgba(255,190,60,0.6);}
+}
+#hero-modal .hl-breathe{animation:mgHlBreathe 2s ease-in-out infinite;border-radius:10px;}
+#hero-modal .hb-recwhy{margin-top:6px;font-size:15px;font-weight:800;color:#ffe066;letter-spacing:0.5px;}
+#hero-modal .hm-empty{padding:26px 14px;text-align:center;color:#cfd6ff;font-size:18px;line-height:1.7;}
+/* iPad(觸控且短邊≥700):徽章與理由一併放大,比照 v1.118.0「荒島 iPad 文字要大」的同一個標準 */
+@media (pointer:coarse) and (min-height:700px){
+  #hero-modal .hm-recbadge{font-size:17px;padding:4px 9px;}
+  #hero-modal .hb-recwhy{font-size:19px;}
+}
 /* ★ v1.82.0(老師需求「四個篩選按鈕長度縮短些,集中在同1行」)— 桌機斷點(min-width:1024px)下
    hm-left 最窄只有 600px,舊尺寸(56px高/22px字/10px 18px內距)四顆常態擠成 2+2 兩行；
    縮小尺寸讓四顆在 600px 內穩定排成一行,不必再等內容換行。 */
@@ -4872,7 +4899,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.144.0';   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.145.0';   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -6672,7 +6699,15 @@ function _earPaintInput(){
       var ref = '正確答案:';
       for(i = 0; i < target.length; i++) ref += '<span class="kn ref">' + _earLabel(String(target[i])) + '</span> ';
       sc.innerHTML = ref;
-    }else sc.innerHTML = _EAR.input.length + ' / ' + target.length;
+    }
+    /* ★ v1.145.0 — 天賦「潮聲搖籃曲」(巨蟹星神):演奏題還沒作答時就把每個音的唱名列出來。
+       ⚠ 只列唱名當提示,不代按:玩家仍要自己照順序按對琴鍵,答錯一樣算錯。 */
+    else if(_BT && _BT.p && _BT.p.trEarSolfa){
+      var _cs = '<span class="kb-ph">🌊 ' + (MG.style === 's' ? '潮聲提示:' : '潮聲搖籃曲・唱名提示:') + '</span>';
+      for(i = 0; i < target.length; i++) _cs += '<span class="kn ref">' + _earLabel(String(target[i])) + '</span> ';
+      sc.innerHTML = _cs + '　<span class="kb-ph">' + _EAR.input.length + ' / ' + target.length + '</span>';
+    }
+    else sc.innerHTML = _EAR.input.length + ' / ' + target.length;
   }
   box.innerHTML = h;
   /* ★ v1.78.0(老師回報「聽音關卡的提示太多了」)— 下一個該按的鍵亮綠框提示,原本 score 題無條件顯示;
@@ -6941,6 +6976,15 @@ function renderOrder(x, r){
   $('qcard').textContent = tx(r.q);
   var _oq = $('order-q'); if(_oq) _oq.innerHTML = '<span>' + esc(txq(r)) + '</span>';   /* ★ v1.10.1 題目顯示在排排站自己的題卡 */
   _OD = { picked: [], items: r.seq, shuffled: shuffle(_idxList(r.seq.length)) };
+  /* ★ v1.145.0 — 天賦「豐收神光」(處女星神):排排站關開場自動把「頭」和「尾」定位好。
+     ⚠ picked 是「已放好的順序」,答對判定是 picked[i]===i(見 mgOrderSubmit),所以頭=索引0;
+       「尾」沒辦法在 picked 只放兩筆時就佔住最後一格(那是一條由前往後填的佇列),因此改用
+       _OD.lockTail 記住尾巴那一格,交卷時若玩家把它放對位置就沒事、放錯則自動歸位,
+       等於保證頭尾兩格一定正確 —— 效果與「頭尾先定位」一致,但不會破壞既有的填格邏輯。 */
+  if(_BT && _BT.p && _BT.p.trOrderEnds && r.seq && r.seq.length >= 3){
+    _OD.picked = [0];
+    _OD.lockTail = r.seq.length - 1;
+  }
   _orderPaint(r);
 }
 function _idxList(n){ var a = [], i; for(i = 0; i < n; i++) a.push(i); return a; }
@@ -6977,6 +7021,8 @@ window.mgOrderPick = function(oi){
 };
 window.mgOrderUndo = function(){
   if(MG.answered || !_OD || !_OD.picked.length) return;
+  /* ★ v1.145.0 — 處女星神天賦先幫你放好的「頭」不給收回(收回等於自己把天賦弄不見) */
+  if(typeof _OD.lockTail === 'number' && _OD.picked.length <= 1){ playSfx('sfx-cancel', 0.3); return; }
   _OD.picked.pop();
   playSfx('sfx-cancel', 0.3);
   _orderPaint(MG.order[MG.idx]);
@@ -6988,6 +7034,16 @@ window.mgOrderSubmit = function(){
     toast('還有格子沒有放喔');
     playSfx('sfx-cancel', 0.3);
     return;
+  }
+  /* ★ v1.145.0 — 天賦「豐收神光」(處女星神):交卷前把「尾」那一格強制歸位。
+     先把它從玩家排的序列裡抽掉、再接到最後面 ⇒ 不會出現重複索引,頭(開場已定位)與尾保證正確,
+     中間仍然完全由玩家自己排(排錯照樣算錯,天賦只免除頭尾兩格)。 */
+  if(typeof _OD.lockTail === 'number'){
+    var _lt = _OD.lockTail, _arr = [], _li;
+    for(_li = 0; _li < _OD.picked.length; _li++){ if(_OD.picked[_li] !== _lt) _arr.push(_OD.picked[_li]); }
+    _arr.push(_lt);
+    _OD.picked = _arr;
+    _orderPaint(r);
   }
   /* seq 在資料表裡就是「正確順序」,所以答對 = picked 剛好是 0,1,2,3… */
   var ok = true, i;
@@ -8749,6 +8805,18 @@ function lockBins(ansIdx){
 }
 
 function scoreIt(correct, noBattle){
+  /* ★ v1.145.0(雙子星神·星命輪迴)— 「可以再選一次正確答案」:答錯時若身上有 retryLeft,
+     整題不算數(不扣血、不記錯、不給對手充能、連擊不斷),0.6 秒後重出同一題讓玩家再選。
+     ⚠ 放在函式最前面:mgBattleHit 都還沒呼叫,所以不會有「先扣了血再退回去」的補償邏輯。
+     ⚠ renderQuestion(false) 會把 MG.answered 設回 false 並重抽選項順序 ⇒ 各引擎都能重新作答,
+       不必逐引擎改;計時也由它重新啟動。 */
+  if(!correct && _BT && _BT.p && _BT.p.retryLeft > 0){
+    _BT.p.retryLeft--;
+    try{ mgBattleFloatOn('p', (MG.lang === 'en' ? 'RETRY!' : '再選一次!'), 'heal'); }catch(_er1){}
+    try{ playSfx('sfx-powerup', 0.55); }catch(_er2){}
+    setTimeout(function(){ try{ renderQuestion(false); }catch(_er3){} }, 600);
+    return;
+  }
   /* ★ v1.29.0 戰鬥模式:一題一判的引擎由這裡統一接 HP;逐事件引擎(連連看/迷宮/算數大進擊)自己逐筆呼叫 mgBattleHit,
      結算時傳 noBattle=true 跳過,避免同一次作答扣兩次血。⚠ 放在最前面:KO 時 mgBattleEnd 會設 MG.answered/停計時,後面的分數照算。
      ★ v1.72.0(老師需求「原本玩家答對時攻擊1次、對手也反擊1次,改成答對時對手不會反擊」)— mgBattleHit
@@ -9207,6 +9275,13 @@ function mgEff2Text(h, isNpc){
     en: "; " + selfEn + "'s next 3 hits taken are halved, with the rest reflected back to " + foeEn };
   if(e.t === 'noatk2') return { s: '接下來 2 次' + foe + '都無法出手攻擊', f: '' + foe + '接下來 2 次普通攻擊判定完全沒收',
     en: "; " + foeEn + "'s next 2 attacks are silenced" };
+  /* ★ v1.145.0 十二星神三個新機制的說明文字(格式比照上下文:s=簡單風/f=精緻風/en=英文) */
+  if(e.t === 'heal10dr3') return { s: '' + self_ + '立刻回 10 滴血,接下來 3 次受傷都只痛一半', f: '深海潮汐湧上:' + self_ + '立即恢復 10 點 HP,並在接下來 3 回合內受到的傷害減少 50%',
+    en: "; " + selfEn + ' recover 10 HP and take 50% less damage for 3 rounds' };
+  if(e.t === 'noheal2') return { s: '接下來 2 題' + foe + '不管怎樣都回不了血', f: '逆天封流:' + foe + '接下來 2 回合內所有回復效果完全失效',
+    en: "; " + foeEn + ' cannot recover HP for 2 rounds' };
+  if(e.t === 'pausepick5') return { s: '時間暫停 5 秒,而且答錯還能再選一次', f: '星命輪迴:計時暫停 5 秒,並獲得 1 次「答錯不算數、重新再選一次」的機會',
+    en: '; freeze the timer for 5s and gain one retry on a wrong answer' };
   if(e.t === 'dmgbank3') return { s: '接下來' + self_ + '受傷 3 次都先記著,滿 3 次後一次全部還給' + foe, f: '' + self_ + '接下來 3 次受到的傷害累積起來,倒數歸零時一次性反擊給' + foe,
     en: "; " + selfEn + "'s next 3 hits taken are banked and unleashed on " + foeEn + ' all at once' };
   if(e.t === 'jam2seal') return { s: '接下來 2 次' + foe + '答對不計入充能,也不能用爆發技能', f: '' + foe + '接下來 2 次答對不計入充能,且爆發技能被封印',
@@ -9420,6 +9495,31 @@ window.mgHeroConfirm = function(){
 };
 window.mgHeroFilter = function(c){ _HM.filter = (_HM.filter === c) ? '' : c; mgHeroPaintPicker(); playSfx('sfx-tap', 0.25); };
 window.mgHeroPick = function(n){ _HM.sel = n; mgHeroPaintPicker(); playSfx('sfx-sel', 0.3); };
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.145.0(2026-09-14・老師需求「英雄選擇頁追加『本關推薦』排序」)
+ *   分數:主場天賦 100 / 副場天賦 50 / 該關吃得到的第二效果 30 / 職能相符 10。
+ *   ⚠ 全部 76 隻一起吃 MG_REC(minigame_db.js),不是只推十二星神。
+ *   ⚠ 老師裁定乙:**不自動選中**,「本關推薦」只是多一顆可以點的分類,預設仍是全部。
+ *   ⚠ 老師裁定丙:比照既有,清單來源仍是 mgHeroSelectableList()(已登入只看得到已解鎖的)。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function mgRecCfg(){
+  try{
+    var g = MG.cur, id = g && (g.id || g);
+    var R = window.MG_REC || {};
+    return (id && R[id]) ? R[id] : null;
+  }catch(e){ return null; }
+}
+function mgRecInList(arr, v){ var i; if(!arr || !v) return false; for(i = 0; i < arr.length; i++){ if(arr[i] === v) return true; } return false; }
+/* 回傳 { score, why, hl } —— hl 指出「該高亮哪一段文字」:'tr'(天賦) 或 'eff2'(爆發附加) */
+function mgRecScore(h){
+  var c = mgRecCfg(); if(!c || !h) return { score:0, why:'', hl:'' };
+  var sc = 0, hl = '', trT = (h.tr && h.tr.t) || '', e2T = (h.eff2 && h.eff2.t) || '';
+  if(mgRecInList(c.tr, trT)){ sc += 100; hl = 'tr'; }
+  else if(mgRecInList(c.tr2, trT)){ sc += 50; hl = 'tr'; }
+  if(mgRecInList(c.eff2, e2T)){ sc += 30; if(!hl) hl = 'eff2'; }
+  try{ if(c.cls && mgHeroCls(h) === c.cls) sc += 10; }catch(e){}
+  return { score: sc, why: (sc > 0 ? (c.why || '') : ''), hl: hl };
+}
 function mgHeroPaintPicker(){
   var L = mgHeroSelectableList(), h = mgHeroByName(_HM.sel) || L[0], i, html = '', keys = ['atk', 'heal', 'shd', 'ctrl'], k;
   if(!h) return;
@@ -9443,29 +9543,51 @@ function mgHeroPaintPicker(){
      原本 hb-tag/hb-name 各自獨立一個 <div>(區塊元素天生換行)，即使內文很短也要佔滿 3 行起跳；
      改成 <span> 塞進同一行(標籤+招式名+主效果說明放一起)，「附加」效果拆成獨立一行(.hb-eff2)，
      跟下面天賦欄位合計正好對齊老師要的「三行」版面，同時也讓爆發卡整體變矮，天賦欄位更不容易被擠出畫面。 */
+  /* ★ v1.145.0 — 右半部:只把「對這一關最有幫助的那一段」加呼吸光暈(hl-breathe),不整張卡閃。
+     hl==='tr' ⇒ 高亮天賦卡;hl==='eff2' ⇒ 高亮爆發的「附加」那一行。 */
+  var _recSel = mgRecScore(h), _recHl = (_recSel.score > 0) ? _recSel.hl : '';
   if(_bbEl) _bbEl.innerHTML = '<div class="hb-line1"><span class="hb-tag">⚡ ' + esc(MG.style === 's' ? '爆發' : '極限爆發') + '</span> '
     + '<span class="hb-name cls-' + hCls + '">' + esc(h.bn || tx(d.name)) + '</span>　'
     + '<span class="hb-desc">' + esc(tx(d.p)) + '</span></div>'
-    + mgEff2Html(_e2);
+    + (_recHl === 'eff2' ? mgEff2Html(_e2).replace('class="hb-eff2"', 'class="hb-eff2 hl-breathe"') : mgEff2Html(_e2))
+    + (_recHl ? '<div class="hb-recwhy">⭐ ' + esc((MG.lang === 'en' ? 'Recommended here: ' : '本關推薦理由:') + (_recSel.why || '')) + '</div>' : '');
   /* ★ v1.75.0(老師 v1.73.0 就預留的「天賦(被動)」欄位,本輪正式填入內容)—
      mgTraitText 只對已經串接引擎、真的會生效的類型回傳文字(見該函式註解);還沒串接的
      hintclear/resourcesave/autoclear(或根本沒有 tr 資料)一律回傳空字串,維持原本的
      dashed「之後設計」外觀,不誤導玩家以為有效果。 */
   var _trEl = $('hm-traitbox'), _trTxt = tx(mgTraitText(h));
   if(_trEl){
-    if(_trTxt){ _trEl.className = 'hm-traitbox filled'; _trEl.innerHTML = '<span class="hb-tag">✦ ' + esc(MG.style === 's' ? '天賦' : '天賦(被動)') + '</span>　<span class="hb-desc">' + esc(_trTxt) + '</span>'; }
+    if(_trTxt){ _trEl.className = 'hm-traitbox filled' + (_recHl === 'tr' ? ' hl-breathe' : ''); _trEl.innerHTML = '<span class="hb-tag">✦ ' + esc(MG.style === 's' ? '天賦' : '天賦(被動)') + '</span>　<span class="hb-desc">' + esc(_trTxt) + '</span>'; }
     else{ _trEl.className = 'hm-traitbox'; _trEl.textContent = '✦ 天賦(被動)——之後設計'; }
   }
+  /* ★ v1.145.0 — 「⭐ 本關推薦」排在四顆職能篩選之前;沒有該關適配表(或不是從關卡進來的)就不顯示這顆 */
+  if(mgRecCfg()) html += '<button class="chip rec' + (_HM.filter === '__rec' ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'__rec\')">⭐ ' + (MG.lang === 'en' ? 'Best here' : '本關推薦') + '</button>';
   for(k = 0; k < keys.length; k++){ var dd = mgBurstDef(keys[k]); html += '<button class="chip' + (_HM.filter === keys[k] ? ' on' : '') + '" type="button" onclick="mgHeroFilter(\'' + keys[k] + '\')">' + dd.icon + ' ' + esc(tx(dd.name)) + '</button>'; }
   $('hm-filter').innerHTML = html;
   html = '';
+  /* ★ v1.145.0 — 「本關推薦」分類:先算分、只留有分的、由高到低排序(同分維持原順序,穩定排序)。
+     ⚠ 用 concat() 複製一份再排,絕不動到 mgHeroList() 的原始順序(那是全域共用的抽表)。 */
+  var _recOn = (_HM.filter === '__rec'), _recMap = null;
+  if(_recOn){
+    _recMap = {};
+    var _tmp = [], _rs;
+    for(i = 0; i < L.length; i++){
+      _rs = mgRecScore(L[i]);
+      if(_rs.score > 0){ _recMap[L[i].n] = _rs; _tmp.push({ h: L[i], s: _rs.score, i: i }); }
+    }
+    _tmp.sort(function(a, b){ return (b.s - a.s) || (a.i - b.i); });
+    L = [];
+    for(i = 0; i < _tmp.length; i++) L.push(_tmp[i].h);
+    if(!L.length) html = '<div class="hm-empty">這一關沒有特別推薦的英雄,選你喜歡的就好!</div>';
+  }
   for(i = 0; i < L.length; i++){
-    if(_HM.filter && mgHeroCls(L[i]) !== _HM.filter) continue;
+    if(_HM.filter && !_recOn && mgHeroCls(L[i]) !== _HM.filter) continue;
     /* ★ v1.72.0(老師需求「左半部縮圖和名稱比照大對抗隊伍編成頁左側格式」)— 卡片由「橫式:小縮圖+名字
        同一行」改直式:縮圖滿版貼頂(.hm-thumb 撐滿卡片寬度)、名字置中貼在縮圖下方(比照
        _buildHeroPickNodes 的 .hpick-adv-node:圖在上、金色粗體名字置中在下)；cls-XX 底色與 on 選中外框
        邏輯不變。 */
-    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb"><img src="' + mgHeroUrl(L[i].img) + '" alt="" style="object-position:center ' + mgHeroThumbY(L[i].n) + '%" onerror="this.style.display=\'none\'"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span>' + mgTraitTagShort(L[i]) + '<span class="hm-name">' + esc(L[i].n) + '</span></button>';
+    var _rc = (_recOn && _recMap) ? _recMap[L[i].n] : null;
+    html += '<button type="button" class="cls-' + mgHeroCls(L[i]) + (L[i].n === h.n ? ' on' : '') + (_rc ? ' rec' : '') + '" onclick="mgHeroPick(\'' + esc(L[i].n).replace(/'/g, "\\'") + '\')"><span class="hm-thumb"><img src="' + mgHeroUrl(L[i].img) + '" alt="" style="object-position:center ' + mgHeroThumbY(L[i].n) + '%" onerror="this.style.display=\'none\'"></span><span class="hm-typebadge">' + mgBurstDef(mgHeroCls(L[i])).icon + '</span>' + mgTraitTagShort(L[i]) + (_rc && _rc.why ? '<span class="hm-recbadge">⭐ ' + esc(_rc.why) + '</span>' : '') + '<span class="hm-name">' + esc(L[i].n) + '</span></button>';
   }
   $('hm-list').innerHTML = html;
 }
@@ -9563,6 +9685,9 @@ var MG_STATUS_DEFS = [
   { f: 'sealLeft', kind: 'bad', icon: '🔒', zh: '封印', en: 'Sealed',
     active: function(S){ return S.sealLeft > 0; }, n: function(S){ return S.sealLeft; },
     desc: function(S){ return '接下來 ' + S.sealLeft + ' 題內無法使用極限爆發'; } },
+  { f: 'noHealLeft', kind: 'bad', icon: '🚫💚', zh: '禁療', en: 'No Heal',
+    active: function(S){ return S.noHealLeft > 0; }, n: function(S){ return S.noHealLeft; },
+    desc: function(S){ return '接下來 ' + S.noHealLeft + ' 題內所有回復都無效'; } },
   { f: 'confuseLeft', kind: 'bad', icon: '💫', zh: '魅惑', en: 'Charmed',
     active: function(S){ return S.confuseLeft > 0; }, n: function(S){ return S.confuseLeft; },
     desc: function(S){ return '接下來 ' + S.confuseLeft + ' 次出手攻擊,會打到自己'; } },
@@ -9836,6 +9961,8 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
   if(P.trPassiveHealV > 0 && P.hp > 0){ P.hp = Math.min(mgHpCap(P), P.hp + P.trPassiveHealV); mgBattleFloatOn('p', '+' + P.trPassiveHealV, 'heal'); }   /* ★ v1.87.0 — 天賦「生生不息」(水狐):不分答對答錯,每題固定回血 */
   if(P.sealLeft > 0) P.sealLeft--;   /* ★ v1.36.0 — 封印爆發技能:每題判定倒數一次,不分答對答錯 */
   if(N.sealLeft > 0) N.sealLeft--;
+  if(P.noHealLeft > 0) P.noHealLeft--;   /* ★ v1.145.0 禁療(水瓶星神):比照封印,每題倒數一次 */
+  if(N.noHealLeft > 0) N.noHealLeft--;
   if(ok){
     _BT.hits++;
     if(P.confuseLeft > 0){   /* ★ v1.36.0 — 魅惑:出手方(玩家)被魅惑,這次攻擊改打自己 */
@@ -9862,7 +9989,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
         dmgP = Math.round(dmgP * (1 + P.trLowHpBoostPct / 100));
       }
       mgDealDamage(P, N, dmgP, 'p');   /* ★ v1.57.0 — 傷害計算與各種新第二效果全部集中在 mgDealDamage,見該函式註解 */
-      if(P.healBuff > 0){   /* 逐英雄第二效果(回血):數值取該英雄自己的 eff2.v */
+      if(P.healBuff > 0 && mgHealOk(P)){   /* 逐英雄第二效果(回血):數值取該英雄自己的 eff2.v ★ v1.145.0 被禁療時整段跳過(倒數也不消耗) */
         P.healBuff--; var _ha = P.healAmt || MG_BT.HEALBUFF;
         if(P.healRedirectLeft > 0){ P.healRedirectLeft--; var _tgtHa = (P.healRedirectTo === 'n') ? N : P; _tgtHa.hp = Math.min(mgHpCap(_tgtHa), _tgtHa.hp + _ha); mgBattleFloatOn(P.healRedirectTo, '+' + _ha, 'heal'); }   /* ★ v1.57.0 — 鳳凰:對手回的血轉移到自己身上 */
         else{ P.hp = Math.min(mgHpCap(P), P.hp + _ha); mgBattleFloatOn('p', '+' + _ha, 'heal'); }
@@ -9870,7 +9997,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
     }
     /* ★ v1.78.0(老師需求「重新設計15關卡有幫助的第二效果」)— 3 種天賦「答對時 xxx」,對全部15款關卡通用生效(此函式是全部引擎共用的唯一答對入口)。
        刻意放在 eff2 回血段之後、爆發充能段之前:與既有 P.healBuff(逐英雄爆發第二效果)各自獨立疊加,不互相覆蓋。 */
-    if(P.trHealOnCorrectV > 0 && Math.random() * 100 < (P.trHealOnCorrectPct || 100)){
+    if(P.trHealOnCorrectV > 0 && mgHealOk(P) && Math.random() * 100 < (P.trHealOnCorrectPct || 100)){
       P.hp = Math.min(mgHpCap(P), P.hp + P.trHealOnCorrectV); mgBattleFloatOn('p', '+' + P.trHealOnCorrectV, 'heal');
     }
     if(P.trTimeOnCorrectV > 0 && Math.random() * 100 < (P.trTimeOnCorrectPct || 100)){
@@ -10117,6 +10244,9 @@ function mgApplyTrait(P){
   else if(t.t === 'randomvariant'){   /* 孫悟空「七十二變」:進場當下擲一次骰,50/50 套用 timebonus+6秒 或 scoreboost+12% */
     if(Math.random() < 0.5) P.trTimeBonus = 6; else P.trScorePct = 12;
   }
+  /* ★ v1.145.0(十二星神)兩個新天賦:各自只在一款關卡生效,比照 mazetrap/m3merge 的既有限制。 */
+  else if(t.t === 'earsolfa') P.trEarSolfa = true;     /* 巨蟹星神「潮聲搖籃曲」:消費點 _earPaintInput,聽音演奏題直接顯示每個音的唱名(只對 ear 引擎的演奏題) */
+  else if(t.t === 'orderends') P.trOrderEnds = true;   /* 處女星神「豐收神光」:消費點 renderOrder,排排站關開場自動把「頭」和「尾」兩格定位好(只對 order 引擎) */
   else if(t.t === 'hintclear') P.trHintClear = true;   /* ★ v1.76.0 — 消費點:renderQuestion 尾端,每題渲染完自動排除 1 個錯誤選項(僅 MG_HINTCLEAR_ENGINES 白名單引擎);★ v1.78.0 擴充:ear 引擎的「演奏/拍子」題(無選項)改為點亮下一個該按的音符,見 renderQuestion 尾端與 _earPaintInput */
   else if(t.t === 'autoclear') P.trAutoClearPct = t.v;   /* ★ v1.76.0 — 消費點:_timerRun 計時器每 0.1 秒的 tick,剩餘時間低於 v% 且引擎在 MG_AUTOCLEAR_ENGINES 白名單內時,直接視為本題答對(整關限 1 次) */
   /* resourcesave 已於 v1.76.0 全數改派給 mistakeshield(見設計提案調整紀錄),MG_HEROES.tr 不會再出現這個 type,此分支保留註解供日後若重新啟用參考。 */
@@ -10204,6 +10334,13 @@ function mgTraitText(h){
   if(t.t === 'chargeoncorrect'){ var _cocP = (typeof t.p === 'number') ? t.p : 50; return {
     s: '蓄勢待發:答對有 ' + _cocP + '% 機率多充 ' + t.v + ' 格爆發', f: '蓄勢待發:答對時有 ' + _cocP + '% 機率額外 +' + t.v + ' 格爆發充能',
     en: 'Trait: ' + _cocP + '% chance for +' + t.v + ' extra burst charge on a correct answer' }; }
+  /* ★ v1.145.0(十二星神)兩個新天賦說明,格式比照上下文(s 簡單風 / f 精緻風 / en 英文) */
+  if(t.t === 'earsolfa') return {
+    s: '潮聲搖籃曲:聽音演奏題會直接告訴你每個音的唱名', f: '潮聲搖籃曲:台灣童謠聽音坊的「演奏」題,作答前直接顯示整段旋律每個音的唱名(仍要自己照順序按對琴鍵;僅聽音坊生效)',
+    en: 'Trait: shows the solfa name of every note in play-back questions (Ear Training only)' };
+  if(t.t === 'orderends') return {
+    s: '豐收神光:排排站的第一格和最後一格自動幫你排好', f: '豐收神光:排排站小達人開場自動定位「頭」與「尾」兩格,中間順序仍由你自己排(僅排排站生效)',
+    en: 'Trait: the first and last slots are placed for you (Line-Up Master only)' };
   if(t.t === 'mazetrap') return {
     s: '識途老馬:一進迷宮就先幫你標出 1 個陷阱', f: '識途老馬:進入迷宮探險王時,直接標記出 1 個陷阱格(僅迷宮探險王生效)',
     en: 'Trait: reveals 1 trap tile at the start of the maze (Maze Adventure only)' };
@@ -10299,6 +10436,10 @@ function mgTraitTagShort(h){
   var t = h && h.tr, label = t && MG_TR_TAG_ZH[t.t]; if(!label) return '';
   return '<span class="hm-tag">' + esc(label) + '</span>';
 }
+/* ★ v1.145.0 — 禁療守門:被水瓶星神封住回復的一方,期間所有「回血」一律無效。
+   ⚠ 刻意做成一支小函式而不是散落各處的 if:回血點有五處(第二效果回血/天賦答對回血/爆發回復型/
+     立即回血/反彈回血),日後新增回血機制時只要記得問一次 mgHealOk 就不會漏掉。 */
+function mgHealOk(f){ return !(f && f.noHealLeft > 0); }
 function mgApplyEff2(caster, foe){
   var e = caster.h && caster.h.eff2; if(!e) return;
   if(e.t === 'heal'){ caster.healBuff = MG_BT.EFF2_N; caster.healAmt = e.v; }
@@ -10311,7 +10452,7 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'confuse') mgEff2ApplyBad(caster, foe, 'confuse', 0);                          /* ★ v1.36.0 — 對手接下來 EFF2_N 次「出手攻擊」改打自己 */
   /* ★ v1.55.0(老師需求「四隻護盾角色的第二效果改版」)— 麻吉喵改「立即恢復自己 HP」、神槍手改「直接扣對手 HP,
      無視護盾(不走 mgBattleHit 的護盾判定,直接改 foe.hp)」;操偶師維持原本的額外 +2 格護盾(仍走上面的 'shield' 分支)。 */
-  else if(e.t === 'healnow'){ caster.hp = Math.min(MG_BT.HP, caster.hp + e.v); try{ mgBattleFloatOn(mgSideOf(caster), '+' + e.v, 'heal'); }catch(_eh){} }
+  else if(e.t === 'healnow'){ if(!mgHealOk(caster)) return; caster.hp = Math.min(MG_BT.HP, caster.hp + e.v); try{ mgBattleFloatOn(mgSideOf(caster), '+' + e.v, 'heal'); }catch(_eh){} }
   else if(e.t === 'truedmg'){ foe.hp = Math.max(0, foe.hp - e.v); try{ mgBattleFxAttack(mgSideOf(caster), '−' + e.v); }catch(_ed){} }
   /* ★ v1.55.0(老師需求「控場型三隻改版」)— 網路駭客「受到不利狀態時反彈+回血」單純只是設定 thornLeft 倒數,
      實際反彈邏輯集中在上面的 mgEff2ApplyBad(每次有人要對 foe 施加壞狀態時才會觸發,不必另開監聽);
@@ -10340,6 +10481,22 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'fullimmune2'){ caster.dmgImmuneLeft = 2; caster.immuneLeft = 2; }   /* 暗魔將·血 */
   else if(e.t === 'halfreflect3'){ caster.dmgReduceLeft = 3; caster.reflectHalfLeft = 3; }   /* 紅色玩家 */
   else if(e.t === 'noatk2') foe.noAtkLeft = 2;   /* 地府酋長 */
+  /* ══ ★ v1.145.0(2026-09-14・十二星神進小遊戲·老師裁定甲)三個新機制 ══
+     ⚠ 三者都是規則表「尚未實作候選池」的詞,老師另外指定了各自的實際數值。 */
+  else if(e.t === 'heal10dr3'){   /* 巨蟹星神·深海母巢:恢復自己10HP + 3回合內受傷減少50% */
+    caster.hp = Math.min(MG_BT.HP, caster.hp + 10);
+    caster.dmgReduceLeft = 3;   /* 沿用既有減傷欄位(mgDealDamage 內 dmg/2 的消費點),不另立第二套減傷 */
+    try{ mgBattleFloatOn(mgSideOf(caster), '+10', 'heal'); }catch(_ehd){}
+  }
+  else if(e.t === 'noheal2'){   /* 水瓶星神·逆天封流(禁療):對手 2 回合內所有回復無效 */
+    foe.noHealLeft = 2;
+    try{ mgBattleFloatOn(mgSideOf(foe), (MG.lang === 'en' ? 'NO HEAL' : '禁療!'), 'block'); }catch(_enh){}
+  }
+  else if(e.t === 'pausepick5'){   /* 雙子星神·星命輪迴:時間暫停 5 秒 + 可以再選一次正確答案 */
+    try{ _BT.freezeUntil = (new Date()).getTime() + 5000; }catch(_efz){}   /* 沿用控場型爆發的同一支凍結(mgBattleFrozen 判定,倒數不扣、環不動) */
+    caster.retryLeft = (caster.retryLeft || 0) + 1;                        /* 消費點:scoreIt 最前面,答錯時改成「重出同一題再選一次」 */
+    try{ mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? '+5s / RETRY' : '暫停5秒·再選一次'), 'heal'); }catch(_epp){}
+  }
   else if(e.t === 'dmgbank3'){ caster.dmgBankLeft = 3; caster.dmgBankAmt = 0; }   /* 學霸(轉學生) */
   else if(e.t === 'jam2seal'){ foe.chargeLockLeft = 2; foe.sealLeft = 2; }   /* 天神宙斯 */
   else if(e.t === 'stealbuff'){   /* 維京海盜船長:依序偷護盾→回血中→減傷中,都沒有就順手給自己衝1格能量 */
@@ -10421,7 +10578,7 @@ window.mgBattleBurst = function(){
   mgBattlePaint();
   mgBurstCinematic('p', P.h, d, tx(d.p) + tx(mgEff2Text(P.h, false)), function(){
     if(eng === 'react') _reactBurstResume();
-    if(cls === 'heal'){
+    if(cls === 'heal' && mgHealOk(P)){   /* ★ v1.145.0 禁療中連爆發的回復也無效(淨化仍照走,見下) */
       P.hp = Math.min(MG_BT.HP, P.hp + MG_BT.HEAL); mgBattleFloatOn('p', '+' + MG_BT.HEAL, 'heal');
       /* ★ v1.54.0 — 回復型英雄比照大對抗巫女/米鈴,順手淨化自己身上的易傷/封印/魅惑 */
       if(mgBattleCleanseBad(P)) setTimeout(function(){ mgBattleFloatOn('p', (MG.lang === 'en' ? 'CLEANSED' : '淨化!'), 'heal'); }, 260);
@@ -10452,7 +10609,7 @@ function mgBattleNpcBurst(){
   mgBattlePaint();
   mgBurstCinematic('n', N.h, d, tx(d.npc) + tx(mgEff2Text(N.h, true)), function(){
     if(eng === 'react') _reactBurstResume();
-    if(cls === 'heal'){
+    if(cls === 'heal' && mgHealOk(N)){   /* ★ v1.145.0 同上,NPC 版對稱 */
       N.hp = Math.min(MG_BT.HP, N.hp + MG_BT.HEAL); mgBattleFloatOn('n', '+' + MG_BT.HEAL, 'heal');
       /* ★ v1.54.0 — NPC 版同步淨化,對稱玩家版 */
       if(mgBattleCleanseBad(N)) setTimeout(function(){ mgBattleFloatOn('n', (MG.lang === 'en' ? 'CLEANSED' : '淨化!'), 'heal'); }, 260);
