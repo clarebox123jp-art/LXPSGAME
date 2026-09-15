@@ -2913,10 +2913,19 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 /* 頂部橫幅圖(比照 showHeroPreview「頂部橫幅圖片」區塊:滿版寬度、固定高度、底部漸層讓文字更清楚)
    ★ v1.79.0 — 210px→150px:騰出高度給下面的爆發技能與天賦說明兩張卡,讓兩者「同時可見」不必捲動
    (原尺寸在字級放大後常把天賦卡整張擠出可視範圍)。 */
-#hero-modal .hm-banner{width:100%;height:clamp(56px,17vh,150px);position:relative;overflow:hidden;flex-shrink:0;background:rgba(20,22,36,.9);}
+/* ★ v1.169.0(老師需求:「右側英雄特寫圖片和爆發技能/天賦重新配置——先在底部貼齊爆發技能和天賦,
+   上面的空間全部用來填滿圖片」)—— 由「圖片固定高度、下面依序往下排」改成「下面三塊各自佔自己該有的高度、
+   圖片吃掉剩下的全部」。
+   ⚠ 只改 flex 分配不改 DOM 順序:.hm-right 是 flex-direction:column,把 .hm-banner 設成 flex:1 1 auto
+     就會自動吸收剩餘高度,姓名/爆發/天賦三塊維持 flex:0 0 auto 天生貼在下方,不必包新的容器、
+     也不必動任何一支產生 HTML 的 JS。
+   ⚠ min-height 仍要留:否則在很矮的視窗裡 flex 會把圖片壓到 0 高度變成一條線;
+     .hm-right 維持 overflow-y:auto(v1.79.0 的天賦被裁掉修正),真的塞不下時整欄仍可捲。 */
+#hero-modal .hm-banner{width:100%;flex:1 1 auto;min-height:clamp(56px,9vh,140px);height:auto;position:relative;overflow:hidden;background:rgba(20,22,36,.9);}   /* ★ v1.169.0 下限刻意訂低:真 Chromium 實測 iPad 橫式(1024×768)遇到「兩行爆發說明＋三行天賦」的長文案時,若圖片下限訂太高(14vh),文字就會被擠到整欄要捲動、反而看不到天賦;改成圖片先讓位,有空間才長高。 */
 #hero-modal .hm-banner img{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block;}
+#hero-modal .hm-name,#hero-modal .hm-burstbox,#hero-modal .hm-traitbox{flex:0 0 auto;}
 #hero-modal .hm-banner::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(to bottom,rgba(0,0,0,0) 55%,rgba(14,16,24,.95) 100%);}
+  background:linear-gradient(to bottom,rgba(0,0,0,0) 68%,rgba(14,16,24,.95) 100%);}   /* ★ v1.169.0 圖片變高後漸層起點由 55% 下移到 68%,露出更多畫面、下緣仍壓得住 */
 /* 姓名+類型徽章(比照 showHeroPreview「名稱+lore」區塊字級與金色)★ v1.79.0 — padding-top 12→8px 省空間 */
 #hero-modal .hm-name{padding:clamp(4px,1.2vh,8px) 20px 0;font-size:clamp(18px,4.6vh,34px);font-weight:900;color:var(--gold2,var(--gold));   /* ★ v1.93.0 800→900(字重自檢:800 不在字型鏈交集,缺字會合成粗體致字糊;900 是本專案最粗的實體字重,視覺效果不變) */
   letter-spacing:1px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
@@ -3542,6 +3551,44 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
+
+<!-- ══ ★ v1.169.0(2026-09-15・老師「本遊戲目前只支援橫式遊玩(同大對抗冒險模式),轉直的會有提醒玩家轉橫」)══
+     與主程式 index.html 的 #rotate-device-overlay 同一套做法與同一種文案。
+     ⚠ 只在「觸控裝置 + 直立」時出現;桌機(有滑鼠、或視窗寬 > 900)永遠不顯示——
+       老師在 PC 上把瀏覽器視窗拉窄也不該被這張蓋住。
+     ⚠ 這張是 position:fixed + z-index 極大值,刻意掛在 <body> 的第一個子節點、
+       不放進 #island-root:荒島根容器有 zoom:1.3 與 transform,position:fixed 掛進去會改對齊到它的座標系
+       (與主程式 v5.176.0 登入視窗被 #gc 的 transform 吃掉是同一種坑)。 ══ -->
+<div id="mg-rotate-overlay" aria-hidden="true">
+  <div class="mgro-inner">
+    <div class="mgro-icon">📱</div>
+    <div class="mgro-arrow">↻</div>
+    <div class="mgro-title">請將裝置橫向使用</div>
+    <div class="mgro-sub">本遊戲設計為橫式畫面遊玩<br>直立模式下按鈕與文字會被擠出畫面</div>
+    <div class="mgro-hint">💡 把裝置轉 90 度即可繼續遊戲</div>
+  </div>
+</div>
+<style>
+#mg-rotate-overlay{display:none;}
+/* 觸控裝置 + 直立 + 視窗不夠寬 → 蓋住整個畫面。
+   三個條件缺一不可:(hover:none)+(pointer:coarse) 排除桌機滑鼠、orientation:portrait 只認直立、
+   max-width:900px 讓大螢幕直式外接顯示器不被誤蓋(與主程式同一組門檻)。 */
+@media (hover:none) and (pointer:coarse) and (orientation:portrait) and (max-width:900px){
+  #mg-rotate-overlay{display:flex !important;position:fixed;inset:0;z-index:2147483000;
+    align-items:center;justify-content:center;text-align:center;
+    background:linear-gradient(160deg,#0d1b2a,#1b263b 60%,#0d1b2a);color:#fff;
+    padding:24px;box-sizing:border-box;
+    padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+  #mg-rotate-overlay .mgro-inner{max-width:520px;}
+  #mg-rotate-overlay .mgro-icon{font-size:76px;line-height:1;animation:mgRotateTilt 2.2s ease-in-out infinite;}
+  #mg-rotate-overlay .mgro-arrow{font-size:44px;color:#ffd166;margin-top:6px;animation:mgRotateSpin 2.2s linear infinite;}
+  #mg-rotate-overlay .mgro-title{font-size:30px;font-weight:900;color:#ffd166;margin:14px 0 10px;letter-spacing:2px;}
+  #mg-rotate-overlay .mgro-sub{font-size:19px;line-height:1.7;opacity:.92;}
+  #mg-rotate-overlay .mgro-hint{font-size:17px;margin-top:16px;opacity:.8;}
+}
+@keyframes mgRotateTilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-90deg)}}
+@keyframes mgRotateSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+</style>
 
 <!-- ══ ★ v1.129.0(2026-09-13・老師「荒島求生入口進去現在會先到小遊戲首頁然後才跳去荒島的首頁,
      修改成直接開啟荒島大地圖頁(不要顯示小遊戲首頁,已經不相關)」)══
@@ -4494,7 +4541,7 @@ window.islDirectVeilOff = function(){
 #isl-create .prev{width:38%;flex:0 0 38%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 40%,#2a6f97,#0f2a3c 70%);}
 #isl-create .prev .pv{width:64px;height:64px;transform:scale(3);transform-origin:50% 50%;margin:72px 0;}   /* ★ v1.112.0 由 .big 改名 .pv:原本選擇器 .prev .big 也命中確認鈕 .isl-btn.big,把「✅ 就是這樣!」放大 3 倍撐爆創角左欄(iPad 橫式實測鈕被切掉) */
 #isl-create .prev .nm{font-size:22px;font-weight:900;}
-#isl-create .prev input{font-size:20px;padding:8px 12px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;width:80%;text-align:center;font-family:inherit;}
+#isl-create .prev input{font-size:20px;padding:8px 12px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;width:80%;max-width:100%;box-sizing:border-box;min-width:0;text-align:center;font-family:inherit;}   /* ★ v1.168.0 量測:iPad 版字級被放大到 44px 後,島名字串比框還寬(實測橫向溢出 23px);補 box-sizing 與 max-width 讓框自己吃掉內距 */
 #isl-create .opts{flex:1;overflow-y:auto;padding:12px;}
 #isl-create .sec{margin-bottom:12px;}
 #isl-create .sec h4{margin:0 0 6px;font-size:18px;color:#ffd166;}
@@ -4803,7 +4850,7 @@ window.islDirectVeilOff = function(){
   #isl-act .isl-qte .tree{font-size:110px;}
 }
 #island-root.ipad #isl-map-hint{font-size:34px;} #island-root.ipad #isl-zone-topinfo{font-size:34px;}
-#island-root.ipad .isl-namepick select{font-size:36px;} #island-root.ipad #isl-create .sec h4{font-size:40px;} #island-root.ipad #isl-create .sw button{font-size:40px;} #island-root.ipad #isl-create .styles button{font-size:32px;} #island-root.ipad #isl-create .prev .nm{font-size:48px;} #island-root.ipad #isl-create .prev input{font-size:44px;}
+#island-root.ipad .isl-namepick select{font-size:36px;} #island-root.ipad #isl-create .sec h4{font-size:40px;} #island-root.ipad #isl-create .sw button{font-size:40px;} #island-root.ipad #isl-create .styles button{font-size:32px;} #island-root.ipad #isl-create .prev .nm{font-size:48px;} #island-root.ipad #isl-create .prev input{font-size:clamp(26px,3.4vw,44px);width:92%;}   /* ★ v1.168.0 量測:固定 44px 在直式 iPad 會讓島名超出輸入框;改成隨寬度收斂 */
 #island-root.ipad .isl-mon .hint{font-size:26px;} #island-root.ipad .isl-mon .cnt{font-size:30px;} #island-root.ipad #isl-def-top{font-size:38px;} #island-root.ipad #isl-def-tools button small{font-size:28px;}
 #island-root.ipad .isl-float{font-size:48px;} #island-root.ipad .isl-hurt{font-size:48px;}
 #island-root button{min-height:0;}   /* 主程式全域 button{min-height:52~64px} 會把荒島所有按鈕撐高(HUD 藥丸變成大圓、創角色票變橢圓),荒島按鈕各自有自己的高度 */
@@ -4817,8 +4864,16 @@ window.islDirectVeilOff = function(){
 #isl-create .prev input{max-width:300px;}
 /* ★ v1.116.0 島名選擇器(創角/改名共用):兩個原生 select 可捲動 */
 .isl-namepick{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+.isl-cr-hint{font-size:15px;line-height:1.5;}
+.isl-namerow{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px;}
+.isl-namerow .lb{font-size:15px;opacity:.85;flex:0 0 auto;}
+.isl-nameinput{flex:1 1 auto;min-width:0;max-width:min(100%,200px);box-sizing:border-box;}
+#island-root.ipad .isl-namerow .lb{font-size:24px;}
+#island-root.ipad .isl-nameinput{font-size:26px;max-width:min(100%,320px);}   /* ★ v1.168.0 量測:這行原本寫死 inline font-size:12px,是全荒島唯一低於 13px 的正文,四種視窗都偏小;拉到 15px 並讓 iPad 版可以再放大 */
+#island-root.ipad .isl-cr-hint{font-size:24px;}
 .isl-namepick select{font-size:18px;padding:7px 8px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;font-family:inherit;max-width:150px;min-height:0;}
-#isl-modal .isl-namepick + div input{font-size:18px;padding:7px 10px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;font-family:inherit;min-width:0;}
+.isl-namepick + div input,#isl-modal .isl-namepick + div input{font-size:18px;padding:7px 10px;border-radius:12px;border:2px solid #5fb3d9;background:#fff;color:#333;font-family:inherit;min-width:0;max-width:100%;box-sizing:border-box;}   /* ★ v1.168.0 量測:這條原本只寫給 #isl-modal(改島名視窗),創角頁的同一顆島名輸入框完全吃不到,iPadPro 實測島名比框寬 23px;選擇器放寬到兩處共用,並補 box-sizing 讓內距算在框內 */
+#island-root.ipad .isl-namepick + div input{font-size:30px;}
 #isl-create .prev > *{flex-shrink:0;}   /* 左欄可捲動後,flex 子項不可再被壓扁(預覽框 64px 被壓成 43px 讓小人蓋到名字輸入框) */
 #isl-act-body{min-height:0;overflow-y:auto;justify-content:flex-start;}
 /* ★ v1.136.0(老師:「採集時小題目答對出現的亮點特效會把整個題目視窗往下推」)—— 根因:
@@ -4839,6 +4894,21 @@ window.islDirectVeilOff = function(){
 #isl-camp-side button{padding:9px 2px;font-size:16px;}
 #isl-camp-board .who{font-size:14px;} .isl-codex-card .wh{font-size:14.5px;}
 @media (max-width:620px){ #isl-camp-side{grid-template-columns:1fr;width:108px;flex-basis:108px;} }
+/* ══ ★ v1.168.0(真 Chromium 量測)— 直式 iPad(768×1024)營地主選單整組被推出畫面外 ══
+   根因:`#isl-camp-side` 是 `flex:0 0 <width>`(flex-shrink = 0),iPad 版更被 `#island-root.ipad #isl-camp-side`
+   加寬到 300px。直式 iPad 的版面寬只有 768/1.3 ≈ 591px,而營地格子本身最少要 480px,
+   480 + 300 = 780 > 591 ⇒ 側欄整條被擠到 right:1014(視窗只有 768),
+   **學生在直式 iPad 上完全按不到 👤 角色 / 🏕 營地 / 🦦 商店 / 🗺 探索 / 🌙 休息**。
+   ⚠ 單純把側欄改窄沒用(480+200 仍 > 591);改成「上下排」才有完整寬度可用。
+   ⚠ 選擇器要同時蓋過 `#island-root.ipad #isl-camp-side`(2 id + class,特異度比單一 id 高),
+     所以這裡也用 `#island-root #isl-camp-side` 並放在最後宣告。 */
+@media (max-width:780px){
+  #isl-camp{ flex-direction:column; }
+  #island-root #isl-camp-side{ width:100%; flex:0 0 auto; flex-basis:auto; grid-template-columns:repeat(5,minmax(0,1fr)); max-height:30vh; overflow-y:auto; }
+  #island-root #isl-camp-side > div:first-child{ grid-column:1 / -1; }
+  #island-root.ipad #isl-camp-side button.cat{ font-size:26px; }
+  #isl-camp-grid{ min-height:0; }
+}
 /* ══ ★ v1.121.0(2026-09-13・老師:回合制踩地雷遇敵戰鬥+武器)— #isl-battle 半透明疊在場景上(同 #isl-act.over 手法);雙方立繪呼吸(islBtBreath)、攻擊/受擊/暈眩/倒下動作 class;攻擊 QTE;智取/吃 面板;場景內魔物跳出 .isl-mon-pop;隱藏遇敵點 .isl-mine;武器面板 .isl-wp ══ */
 #isl-battle{position:absolute;left:0;top:0;right:0;bottom:0;z-index:21;background:linear-gradient(180deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.6) 45%,rgba(0,0,0,.8) 100%);display:flex;flex-direction:column;color:#fff;overflow:hidden;}
 #island-root.inbattle #isl-zone-topinfo,#island-root.inbattle #isl-act-btn,#island-root.inbattle #isl-joy,#island-root.inbattle .isl-tired{visibility:hidden;}
@@ -4882,6 +4952,28 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-acts button{width:92px;height:74px;border-radius:16px;border:3px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font-size:28px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;} #isl-battle .bt-acts button small{font-size:14px;} #isl-battle .bt-acts button:disabled{opacity:.35;} #isl-battle .bt-acts.off{pointer-events:none;}
 #isl-battle .bt-qte{position:absolute;left:50%;top:auto;bottom:6px;transform:translateX(-50%);width:min(92%,620px);background:rgba(10,20,30,.94);border:3px solid #ffd166;border-radius:16px;padding:12px 14px;z-index:5;text-align:center;}
 #isl-battle .bt-qte .tt{font-size:16px;margin-bottom:8px;}
+/* ══ ★ v1.164.0(P2 組隊戰鬥)— 隊伍 HP 欄列表 + 站位陣型 + 目標指示 ══
+   ⚠ 刻意沿用既有 .bt-hpbox 這個 class 當每一列的容器,而不是另開一套:
+     iPad 放大覆寫段(#island-root.ipad #isl-battle .bt-hpbox .nm 等)本來就只認 .bt-hpbox,
+     另開 class 會讓組隊之後的名字/數字在 iPad 上全部縮回小字。 */
+#isl-battle .bt-top{align-items:flex-start;}
+#isl-battle .bt-team{flex:1 1 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
+#isl-battle .bt-team .bt-hpbox{padding:4px 9px;}
+#isl-battle .bt-team .bt-hpbox .nm{font-size:15px;}
+#isl-battle .bt-team .bt-hpbox .hpb{height:10px;margin:3px 0;}
+#isl-battle .bt-team .bt-hpbox .hpt{font-size:12px;}
+#isl-battle .bt-team.m .bt-hpbox{cursor:pointer;}
+#isl-battle .bt-hpbox.tgt{border-color:#ffd166;box-shadow:0 0 10px rgba(255,209,102,.75);}
+#isl-battle .bt-hpbox.dead{opacity:.42;filter:grayscale(1);}
+#isl-battle .bt-hpbox .tag{font-size:12px;opacity:.85;font-weight:400;}
+/* 陣型:每個單位的 left/right/width/height/z-index 由 JS 依站位 row 直接寫 inline style,
+   這裡只留「非目標魔物壓暗」「已倒下淡出」「目標頭上的黃色箭頭」三件純視覺的事。 */
+#isl-battle .bt-fig.ally .fig{animation-duration:2.6s;}
+#isl-battle .bt-fig.dim{filter:brightness(.72) saturate(.8);}
+#isl-battle .bt-fig.gone{opacity:.28;filter:grayscale(1);pointer-events:none;}
+#isl-battle .bt-fig.tgt::after{content:'';position:absolute;left:50%;top:-4px;margin-left:-11px;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:15px solid #ffd166;filter:drop-shadow(0 2px 3px #000);animation:islBtBreath 1.2s ease-in-out infinite;}
+#isl-battle .bt-fig.m{cursor:pointer;}
+#isl-battle .bt-badge{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);background:rgba(0,0,0,.72);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:1px 8px;font-size:13px;white-space:nowrap;}
 #isl-battle .bt-qte .bar{position:relative;height:26px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;margin:6px 0 10px;}
 #isl-battle .bt-qte .zone{position:absolute;top:0;bottom:0;background:rgba(123,237,159,.6);} #isl-battle .bt-qte .zone.crit{background:#fff;}
 #isl-battle .bt-qte .ptr{position:absolute;top:-2px;bottom:-2px;width:6px;margin-left:-3px;background:#ffd166;box-shadow:0 0 8px #ffd166;}
@@ -4890,6 +4982,9 @@ window.islDirectVeilOff = function(){
 .isl-mon-pop{position:absolute;width:96px;height:96px;margin-left:-48px;margin-top:-88px;z-index:6;text-align:center;font-size:70px;line-height:96px;animation:islBtPop .6s cubic-bezier(.2,1.6,.5,1);pointer-events:none;} .isl-mon-pop img{width:96px;height:96px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 6px #000);} .isl-mon-pop b{position:absolute;right:-6px;top:-10px;font-size:34px;color:#ff5d5d;text-shadow:0 2px 3px #000;}
 @keyframes islBtPop{0%{transform:translateY(40px) scale(.2);opacity:0}60%{transform:translateY(-16px) scale(1.15);opacity:1}100%{transform:translateY(0) scale(1)}}
 .isl-mine{position:absolute;width:40px;height:24px;margin-left:-20px;margin-top:-12px;display:none;pointer-events:none;z-index:3;} .isl-mine.seen{display:block;background:radial-gradient(ellipse,rgba(120,200,90,.6),transparent 70%);animation:islBtBreath 1.4s ease-in-out infinite;}
+/* ★ v1.165.0 🔍 環境觀察(特殊指令):整張圖進入掃描模式——遇敵點一律現形,資源點加一圈金色呼吸光暈 */
+#isl-zone-map.scan .isl-mine{display:block;background:radial-gradient(ellipse,rgba(255,120,120,.75),transparent 70%);animation:islBtBreath 1s ease-in-out infinite;}
+#isl-zone-map.scan .isl-poi:not(.isl-npc){filter:drop-shadow(0 0 10px #ffd166) drop-shadow(0 0 4px #ffd166);}
 .isl-wp{display:flex;gap:10px;align-items:center;text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;border:2px solid transparent;} .isl-wp.on{border-color:#7bed9f;} .isl-wp .ic{flex:0 0 60px;font-size:44px;text-align:center;} .isl-wp .bd{flex:1;min-width:0;} .isl-wp .ac{display:flex;flex-direction:column;gap:6px;} .isl-wp .ac .isl-btn{font-size:14px;padding:6px 10px;white-space:nowrap;}
 @media (max-width:620px){ #isl-battle .bt-fig{width:140px;height:140px;bottom:6%;} #isl-battle .bt-fig.p{left:4%;} #isl-battle .bt-fig.m{right:4%;} #isl-battle .bt-fig .fig .emo{font-size:96px;} #isl-battle .bt-fig .fig .chibi{transform:scale(2);} #isl-battle .bt-acts button{width:60px;height:60px;font-size:22px;} #isl-battle .bt-acts button small{font-size:11px;} #isl-battle .bt-log{font-size:14px;} }
 /* ★ v1.123.0 換造型視窗(選項規則同創角)+ 瞭望台 HUD 藥丸 */
@@ -4900,6 +4995,8 @@ window.islDirectVeilOff = function(){
 @media (max-width:620px){ .isl-look{flex-direction:column;} .isl-look .lprev{flex-basis:auto;} }
 #island-root.ipad .isl-look .sec h4{font-size:30px;} #island-root.ipad .isl-look .sw button{font-size:28px;min-width:64px;height:60px;} #island-root.ipad .isl-look .lprev input{font-size:30px;}
 #island-root.ipad #isl-battle .bt-hpbox .nm{font-size:30px;} #island-root.ipad #isl-battle .bt-hpbox small{font-size:22px;} #island-root.ipad #isl-battle .bt-hpbox .hpt{font-size:24px;} #island-root.ipad #isl-battle .bt-log{font-size:28px;} #island-root.ipad #isl-battle .bt-acts button{width:120px;height:96px;font-size:36px;} #island-root.ipad #isl-battle .bt-acts button small{font-size:22px;} #island-root.ipad #isl-battle .bt-qte .tt{font-size:26px;} #island-root.ipad #isl-battle .bt-qte .tools button{font-size:24px;} #island-root.ipad .isl-wp .bd{font-size:26px;} #island-root.ipad .isl-wp .bd span{font-size:22px !important;}
+/* ★ v1.164.0 組隊後同一欄最多疊 4 列,字級不能吃上面那條單列版的 30px,否則 iPad 上四列會把整個戰鬥畫面吃掉一半 */
+#island-root.ipad #isl-battle .bt-team .bt-hpbox .nm{font-size:21px;} #island-root.ipad #isl-battle .bt-team .bt-hpbox .hpt{font-size:17px;} #island-root.ipad #isl-battle .bt-team .bt-hpbox .tag{font-size:16px;} #island-root.ipad #isl-battle .bt-team .bt-hpbox .hpb{height:13px;}
 /* ══ ★ v1.124.0(2026-09-13・老師四項)— ①HUD 縮成一行(只留圖示+數字,點藥丸開說明小視窗,再點一次收起) ②視窗自動縮放不必捲動(「繼續」等按鈕永遠看得到) ④創角/換造型的 臉·髮型·服裝 改成同尺寸的預覽圖鈕 ══ */
 /* ① HUD 單行:v1.112.0 為了塞得下改成兩列(.grow 當整列斷行器),本輪改成「圖示化」後一列就夠,斷行器還原成一般彈性間隔;萬一某些裝置真的還是塞不下,整列橫向捲動,絕不換行 */
 #isl-hud{flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;overflow-y:hidden;row-gap:0;column-gap:6px;padding:5px 8px;}
@@ -4986,7 +5083,7 @@ window.islDirectVeilOff = function(){
 
 /* 三欄卡片視窗 */
 #isl-modal .box.wide{ width:min(98%,1180px); max-height:92%; }
-#isl-modal .isl-bagbox.wide{ width:min(98%,1180px); max-height:92%; }   /* ★ v1.149.0 商店(阿獺雜貨鋪)三分頁改走 wide 版——.isl-bagbox 原本沒有對應的 .wide 規則,只有 .box.wide 有,所以就算 JS 傳了 opts.wide:true 讓 islPanel 跳過等比縮放(islFitBox),框仍卡在窄版 width:min(96%,720px) 且沒有 max-height,補上這條後框才會真的吃到 98%/1180px 寬與 92% 高,配合既有 .isl-bagbox > .bd{overflow-y:auto} 內捲。 */
+#isl-modal .isl-bagbox.wide{ width:min(96%,1180px); max-height:92%; }   /* ★ v1.168.0 量測:.isl-x 是「掛在框外右上角 −19px(iPad −24px)」的設計,框吃到 98% 寬時那顆 ✕ 會壓在視窗邊緣;收到 96% 讓它一定在畫面內(1920 實測框右緣 1869 → ✕ 右緣 1891,仍在視窗內但只剩 29px 餘裕) */   /* ★ v1.149.0 商店(阿獺雜貨鋪)三分頁改走 wide 版——.isl-bagbox 原本沒有對應的 .wide 規則,只有 .box.wide 有,所以就算 JS 傳了 opts.wide:true 讓 islPanel 跳過等比縮放(islFitBox),框仍卡在窄版 width:min(96%,720px) 且沒有 max-height,補上這條後框才會真的吃到 98%/1180px 寬與 92% 高,配合既有 .isl-bagbox > .bd{overflow-y:auto} 內捲。 */
 .isl-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:8px 0 2px; }
 .isl-card{ position:relative; display:flex; flex-direction:column; align-items:center; text-align:center;
   background:rgba(0,0,0,.30); border:2px solid rgba(255,255,255,.18); border-radius:16px; padding:12px 10px 46px; }
@@ -5038,12 +5135,17 @@ window.islDirectVeilOff = function(){
    星圖 = 一張 1240×1020 的固定尺寸畫布,外層 .isl-sk-wrap 用瀏覽器原生捲動來平移
    (⚠ 刻意不自己寫拖曳:iPad 上原生慣性捲動比 JS 模擬順,而且不會和既有 islMapBindDrag 打架)。
    連線用一張同尺寸的 <svg> 墊在節點底下,節點是絕對定位的 <button>。 */
+.isl-sk-jump{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:15px; margin:0 0 6px; opacity:.95; }
+.isl-sk-jump span{ opacity:.8; }
+.isl-sk-jump .isl-btn{ margin:0; font-size:15px; padding:5px 9px; }
+#island-root.ipad .isl-sk-jump{ font-size:22px; } #island-root.ipad .isl-sk-jump .isl-btn{ font-size:22px; padding:8px 12px; }
 .isl-sk-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:19px; margin:0 0 8px; }
 .isl-sk-bar b{ color:#ffd166; font-size:23px; }
 .isl-sk-bar .isl-btn{ margin:0; font-size:17px; padding:7px 12px; }
 .isl-sk-wrap{ position:relative; overflow:auto; -webkit-overflow-scrolling:touch; border-radius:16px;
   border:2px solid rgba(124,196,232,.45); background:radial-gradient(circle at 48% 48%,#12304a 0%,#0b1d2e 62%,#071522 100%);
   height:min(58vh,560px); touch-action:pan-x pan-y; }
+.isl-sk-fit{ transform-origin:0 0; }   /* ★ v1.168.0 星圖自動縮到看得完(尺寸與 scale 由 islSkFit 寫成 inline) */
 .isl-sk-cv{ position:relative; width:1240px; height:1020px; }
 .isl-sk-cv > svg{ position:absolute; left:0; top:0; width:1240px; height:1020px; pointer-events:none; }
 .isl-sk-cv .star{ position:absolute; width:3px; height:3px; border-radius:50%; background:rgba(255,255,255,.55); }
@@ -5085,12 +5187,45 @@ window.islDirectVeilOff = function(){
 .isl-char2.full .c-right{ max-height:none; overflow:visible; padding-right:0; }
 .isl-char2 h4 .h4hint{ font-size:14px; font-weight:400; color:#9fd8f5; opacity:.85; margin-left:8px; }
 .isl-abil{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 14px; align-items:start; }
+/* ══ ★ v1.165.0(P3)— 📖 夥伴圖鑑 / 🧭 探險編組 / 🎯 特殊指令 的版面 ══
+   ⚠ 全部走既有的 .isl-bagbox.wide.full 外框與 .bd 內捲,不另開彈窗系統,
+     iPad 的整框縮放與字級覆寫才會自動吃到(v1.150.0 的教訓:另開一套就得再補一套 iPad 規則)。 */
+.isl-petgrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+@media (max-width:900px){ .isl-petgrid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.isl-petcard{ position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 8px; border-radius:14px; border:2px solid rgba(255,255,255,.28); background:rgba(255,255,255,.08); color:#fff; text-align:center; }
+.isl-petcard .pe{ font-size:40px; line-height:1.1; }
+.isl-petcard .pn{ font-size:17px; font-weight:700; }
+.isl-petcard .pt{ font-size:13px; opacity:.85; }
+.isl-petcard .pl{ font-size:13px; opacity:.9; }
+.isl-petcard .px{ font-size:12px; opacity:.8; }
+.isl-petcard.lock{ opacity:.55; filter:grayscale(.7); }
+.isl-petcard.inparty{ border-color:#ffd166; box-shadow:0 0 10px rgba(255,209,102,.55); }
+.isl-petcard .pin{ position:absolute; top:4px; right:6px; font-size:12px; background:rgba(0,0,0,.6); border-radius:999px; padding:1px 7px; }
+.isl-formation{ margin:4px 0 12px; padding:10px; border-radius:14px; background:rgba(0,0,0,.28); }
+.isl-formation .ftt{ font-size:15px; opacity:.9; margin-bottom:6px; }
+.isl-formation .frow{ display:flex; gap:8px; align-items:flex-end; justify-content:flex-end; flex-wrap:wrap; }
+.isl-formation .fu{ display:flex; flex-direction:column; align-items:center; font-size:13px; min-width:74px; padding:6px 4px; border-radius:12px; background:rgba(255,255,255,.1); }
+.isl-formation .fu b{ font-size:30px; line-height:1.1; }
+.isl-formation .fhint{ font-size:13px; opacity:.8; margin-top:6px; }
+.isl-slots{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+@media (max-width:760px){ .isl-slots{ grid-template-columns:1fr; } }
+.isl-slot{ display:flex; flex-direction:column; gap:6px; }
+.isl-slot .sh{ font-size:14px; opacity:.85; }
+.isl-slot .sb{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 8px; border-radius:14px; border:2px dashed rgba(255,255,255,.35); background:rgba(255,255,255,.08); color:#fff; }
+.isl-slot:not(.empty) .sb{ border-style:solid; border-color:#ffd166; }
+.isl-slot .se{ font-size:38px; line-height:1.1; }
+.isl-slot .sn{ font-size:17px; font-weight:700; }
+.isl-slot .sx{ font-size:13px; opacity:.85; text-align:center; }
+.isl-pickwrap{ display:flex; flex-direction:column; gap:8px; max-height:52vh; overflow:auto; }
+#isl-battle .bt-acts button.cmd{ border-color:#5fe0c0; }
+#island-root.ipad .isl-petcard .pn{ font-size:24px; } #island-root.ipad .isl-petcard .pe{ font-size:56px; } #island-root.ipad .isl-petcard .pt,#island-root.ipad .isl-petcard .pl{ font-size:19px; } #island-root.ipad .isl-petcard .px{ font-size:17px; }
+#island-root.ipad .isl-slot .sn{ font-size:24px; } #island-root.ipad .isl-slot .sx{ font-size:18px; } #island-root.ipad .isl-formation .fu{ font-size:18px; min-width:104px; }
 .isl-ab{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%; text-align:left; font-family:inherit;
   background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.16); border-radius:12px;
   padding:7px 10px; color:#fff; font-size:17px; position:relative; }   /* ★ v1.154.0 position:relative 讓 .tip 有錨點可以浮出來 */
 .isl-ab:active{ transform:scale(.985); }
 .isl-ab.on{ border-color:#ffd166; background:rgba(255,209,102,.14); z-index:21; }   /* ★ v1.154.0 開著說明的那顆墊高,浮窗才不會被隔壁儲存格蓋住 */
-.isl-ab .an{ flex:0 0 108px; font-weight:900; }
+.isl-ab .an{ flex:0 1 108px; min-width:0; font-weight:900; }   /* ★ v1.168.0 flex-shrink 由 0 改 1:視窗窄時名稱欄先讓一點,不要把後面的數字擠出去 */
 .isl-ab b{ flex:0 0 54px; color:#ffd166; font-size:19px; }
 .isl-ab .bar{ flex:1 1 60px; min-width:50px; height:12px; background:rgba(255,255,255,.15); border-radius:6px; overflow:hidden; }
 .isl-ab .bar i{ display:block; height:100%; background:#7bed9f; }
@@ -5102,7 +5237,7 @@ window.islDirectVeilOff = function(){
   background:#0e2436; border:2px solid #ffd166; border-left-width:4px; box-shadow:0 12px 28px rgba(0,0,0,.55);
   border-radius:10px; padding:8px 11px; font-size:15px; line-height:1.55; font-weight:400; pointer-events:none; }
 @media (max-width:900px){ .isl-abil{ grid-template-columns:1fr; } }
-#island-root.ipad .isl-ab{ font-size:26px; } #island-root.ipad .isl-ab .an{ flex-basis:160px; }
+#island-root.ipad .isl-ab{ font-size:26px; } #island-root.ipad .isl-ab .an{ flex:0 1 auto; flex-basis:auto; min-width:0; max-width:62%; }   /* ★ v1.168.0 量測:iPad 橫式(1024)這格只有約 200px 寬,名稱欄硬吃 160px 會把數字與進度條擠出卡片(實測橫向溢出 19px);改成可收縮、上限 62% */
 #island-root.ipad .isl-ab b{ flex-basis:86px; font-size:28px; }
 #island-root.ipad .isl-ab .ax{ font-size:20px; } #island-root.ipad .isl-ab .tip{ font-size:22px; }
 #island-root.ipad .isl-char2 h4 .h4hint{ font-size:20px; }
@@ -5236,7 +5371,7 @@ window.islDirectVeilOff = function(){
 </div>
 
 <script src="minigame_db.js?v=v1.76.0"></script>
-<script src="minigame_island_db.js?v=v1.162.0"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.169.0"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -5245,7 +5380,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.162.0';   /* ★ v1.162.0(2026-09-14・老師「確認每個功能都有用」)— 稽核器比對效果鍵與消費點，7 個真死鍵全補齊(緊急包紮/為隊友包紮/營地聚餐/保存食物/戰場醫官/毒素抗性)，重跑稽核死鍵=0；每個節點再加一個島上用的第二效果(QTE 指針變慢/甜蜜點擴大/走路速度/每日 AP/各活動產量/建造品質/失誤受傷減輕)；新增寵物三鍵(馴養成功率/每日產出/餵食不消耗)。 */   /* ★ v1.161.0(2026-09-14・老師裁定丙)— 🌟 天賦星域 index 端邏輯全部接上：點數現算(每贏 3 隻 +1、每 5 天 +1，存檔只存 taken)、islSkEff 單一效果出口(wp 欄依裝備武器開關)、星圖 UI(SVG 連線+節點+頭銜+🧙 洗點)、✨ 絕招戰鬥鈕(每場 1 次、數值讀 D.SK_ACTS)、🩸 流血層數、醫療節點讓不良狀態免材料處理 + 進階解毒劑。 */   /* ★ v1.160.0(2026-09-14・「繼續」)— 🤒 不良狀態 5 種 index 端邏輯全部接上：ISL.ails 存檔 + islAilEff 單一效果出口 + 四處消費端（戰鬥四維/每回合 dot/採集砍樹甜蜜點/治療量）+ 每日自然衰退 + 每區每日最多擲一次的意外觸發 + 🤒 身體狀況視窗(各自帶科學小知識與處置處方)。 */   /* ★ v1.159.0(2026-09-14・老師「完整下載了還是很慢、常常看不到圖片聽不到音效」)—【載入效能根治】①右上「更新」鈕舊寫法把 lxps-mini-* 全數清掉，連完整下載的 60~120MB(lxps-mini-island-v1)與隨手快取(assets)一起抹掉⇒每按一次更新就白裝，改成只清 lxps-mini-shell-*。②102 支音效音樂與英雄/寵物/場景三組圖庫全部從 raw.githubusercontent.com 改成同源相對路徑(raw 不是 CDN、依 IP 限流，一班 25 台 iPad 共用學校同一 IP 會被限流⇒圖出不來/沒聲音)，並新增 mgCdnFallback 自動退回舊網址的保險。③SW 快取策略改版：同源素材 cache-first、帶 ?v= 版號的檔案 cache-first、minigame_index.html 改 stale-while-revalidate。④minigame_sw.js 的 MINI_VERSION 漂移落後導致版本徽章永遠不會提示更新，本輪對齊。⑤音效預熱 mgWarmSfx + navigator.storage.persist() + 完整下載「已有的跳過/空間不足單獨計數」。 */   /* ★ v1.158.0(2026-09-14・老師四項)—①NPC 名牌高度:`.nl` 沒宣告 line-height,整個繼承到 v1.152.0 起由 JS inline 寫在 NPC 容器上的 `line-height:<身高>px`(台灣黑熊名牌因此高達 192px),釘死 1.25 行高後名牌高度只跟字級走。②敲釘子 3×2(6 格全輪一遍)改 6×6(36 格隨機取 8 格當順序),星等門檻同步改 7/5,不然 8 下中 6 下就滿星會比舊版更容易。③④採集/砲樹 QTE(共用 .isl-qte)拉桿與大按鈕放大延長:框寬上限 980→1280px、拉桿高 46→78px、按鈕 96→124px/字 33→38px,按鈕改 inline-flex+line-height:1+clamp 內距確保中文不被切也不溢出,≤1100px 媒體查詢再收一段。 */   /* ★ v1.157.0(2026-09-14・老師三項)—①營地走路主角改用野外那套走路動作模組(islCharSpriteInit 共用初始化,islCampTick 逐幀驅動 islCharPaint,吃到真正的跨步幀/轉身/鏡像,不再是 CSS transition 硬滑+margin-bottom 假裝晃動),尺寸改由 islCampCharScale() 依營地格子實際渲染尺寸算(格邊長×0.7=帳篷圖示高度,不寫死數字)。②品質小遊戲(輕輕摘/拉一下)材料圖片改成置中排版流、放大到 200%,拉桿/按鈕自然被推下去、再加一點間距;右側「紀錄」欄整組放大 50%;採集完成的 .isl-result 補上 margin:0 auto 確保置中。③修正走路腳步聲(D.SFX_MAP.walk 直接借用 sfx-tap 點擊音)在按方向鍵/拖曳搖桿長按移動時聽起來像連續點擊:islTick 新增 manual 旗標(方向鍵或拖曳搖桿在推動),manual 時腳步聲完全靜音,只留給「點地板自動走過去」(islTapToMove)那種一次性路徑移動。 */   /* ★ v1.156.0(2026-09-14・選擇題錯誤選項加長 第 3 批 60 題)—本檔僅版號同步(題目全在 island_db v1.156.0;唯一最長比例 45%→31%)。 */   /* ★ v1.155.0(2026-09-14・選擇題錯誤選項加長 第 2 批 50 題)—本檔僅版號同步(題目全在 island_db v1.155.0;唯一最長比例 58%→45%)。 */   /* ★ v1.154.0(2026-09-14・老師截圖回報:「點了角色能力會變成推擠排版的展開,我要的是額外小視窗說明不是這種推擠排版」)—根因:👤 角色能力視窗的 .tip 說明文字是用 `flex:1 1 100%` 塞進按鈕自己的 flex 排版,在 .isl-abil 這張 CSS Grid 裡,任何一顆卡片一展開,整列就會被撐高,連帶把下面所有列一起往下推(截圖裡「力氣」那列被推到很下面就是這樣來的)。改法:.tip 改成 position:absolute 浮在被點的那顆卡片正下方(脫離文件流,CSS Grid 排版時完全不計入這個元素的高度),只蓋住視覺上的那一小塊,其餘排版一格都不會動;配 pointer-events:none 讓浮窗不擋住被蓋住那格的點擊,.on 卡片給 z-index 蓋過鄰居格。純 CSS 修正,islCharOpen 的 JS 邏輯不變。 */   /* ★ v1.153.0(2026-09-14・老師:選擇題的錯誤選項要加長到至少和正確答案一樣長,避免學生用「選最長的」蒙混,失去思考的教學目的)—本檔僅版號同步(題目改寫全在 island_db v1.153.0;第 1 批 50 題,唯一最長比例 71%→58%)。 */   /* ★ v1.152.0(2026-09-14・老師四項)—①11 區可走遮罩全部依場景實圖逐格重建(以「比周圍暗多少」判定立體物、藍色判定水域、火山另判岩漿,去雜點後 BFS 連通驗證,不可達的可走格一律封起來);229 個資源點/小白/解謎點/訓練師座標一併吸附到最近的可走格,重建後 11 區固定點 100% 可達。②營地治療特效改掛在主角身上(islFxOnCampChar:GIF 塞進 #isl-camp-char 裡面,主角走動時特效跟著走)。③裝飾品也能左右鏡像(deco.f;點一下沒拖動就開小選單 → 翻轉,拖曳仍是換位置,以 8px 位移分辨點/拖)。④NPC 尺寸改成每隻依真實體型比例(玩家顯示高度 96px 為基準:陸蟹 72/梅花鹿 106/台灣黑熊 192=玩家 2 倍/領角鴞 72),名稱改成一行放在圖片正上方;⚠ margin 必須跟著尺寸一起算(腳底對齊定位法 margin-top=-(高度-10)),只改尺寸不改 margin 會讓 NPC 腳陷進地板。 */   /* ★ v1.151.0(2026-09-14・老師:營地設施可移動位置與左右鏡像翻轉;營地主角可在可行走區域自由移動並與設施互動,點設施會先走過去旁邊)—①設施新增 slot.flip(純外觀,不影響效果/耐久)與「🔀 搬移位置」搬移模式(進入模式後點任一格即互換,空地或別的設施皆可;施工中的不能搬)。②主角位置改成可變的 (x%,y%) 存在 _IS.campC(刻意不寫存檔:站在哪裡是臨時狀態);走路用 CSS transition 交給合成執行緒,不另開 rAF(舊 iPad 省電)。③點空地→走過去;點設施→先走到那一格正下方,抵達才開設施視窗(islCampGoToCell + callback)。④鏡像翻的是裡面那張圖不是容器:容器 transform 是 scale(2.2) 且 origin 在左下角,翻容器會讓人平移一個身寬、頭上泡泡的字也會左右相反;走路的腳步晃動改用 margin-bottom 而非 transform,否則動畫會蓋掉 scale(2.2) 讓人瞬間縮小。 */   /* ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—①阿獺雜貨鋪「買東西」分頁仍被縮成小視窗:v1.149.0 只在呼叫端傳 opts.wide,「寬度規則」與「要不要等比縮放」分散在兩處,任一路徑沒帶到 opts 就退回 islFitBox 縮放版(縮放幅度取決內容高度 ⇒ 清單最長的買東西縮最兇);改為把 .wide 直接寫進面板 markup 當單一真相,islPanel 看到框上已有 .wide 就同樣跳過縮放,三分頁尺寸永遠一致。②👤 角色能力視窗改接近全螢幕(.isl-bagbox.full)且不必捲動:4 維 + 14 生存技能改排成兩欄「能力方塊」(.isl-abil/.isl-ab),c-right 取消 max-height/overflow;每一項可點開說明標籤(再點同一項收起,_IS.abTip)。③營地左下的主角可以點:65% 說一句「當前最該做的事」進度提示(islCampHintText 由上而下第一個成立的才講),其餘說一句隨機心情(沿用 D.MONO,依天氣挑 wxSun/wxRain/wxTyphoon);新增 islBubble(指定文字的泡泡,與 islMono 共用同一顆 .isl-tired DOM,永遠只有一顆)。⚠ #isl-camp-char 原本 pointer-events:none,本輪改 auto 才點得到,泡泡本身維持 none 以免擋住第二次點擊。同輪 island_db v1.150.0 先行放入 🌟 天賦星域(46 節點)與 🤒 不良狀態(5 種)資料表,index 端邏輯下一輪接。 */   /* ★ v1.149.0（2026-09-14・老師截圖回報三項）—①左上視窗標題:`?mode=island` 直入與從大廳按鈕進場兩條路徑,document.title 都改成「小英雄小遊戲 — 荒島求生」(原本沿用整頁固定的 `<title>…英雄對戰小學堂</title>`,和畫面內容對不上)。②商店(阿獺雜貨鋪)「買東西」分頁看起來被縮得特別小:根因是三分頁共用同一支 islPanel(h,cb),沒傳 opts 時一律跑 islFitBox() 整框等比縮放,縮放幅度單純取決於當下內容量算出的高度——買東西清單通常比賣東西/委託長很多,所以縮得最兇;改傳 `{wide:true}` 讓商店面板跳過整框縮放,改用既有「wide 版」規格(框吃滿 92% 高+.bd 內捲),三分頁字級與按鈕尺寸從此一致;同步補上 `.isl-bagbox.wide` 這條原本沒有對應的 CSS(先前只有 `.box.wide`)。③老師在「🎨 造型工房(GM)」調好貼回聊天室的「📋 複製設定值」寫入 island_db.js 的 D.LAYER_ADJ(髮型改三向專屬微調)與 D.CREATE_DEFAULT(補 clothC:0),`minigame_island_db.js?v=` 快取破壞字串同步 bump。對應 island_db v1.149.0(僅本檔零改動,純資料表)。 */   /* ★ v1.148.0（2026-09-14・老師需求「十二星神(除了天蠍/射手以外)左邊清單縮圖高度Y減少25%,同步到小遊戲的英雄選單」）— MG_THUMB_POS 新增 10 位星神(牡羊/金牛/雙子/巨蟹/獅子/處女/天秤/摩羯/水瓶/雙魚)各 25(=主程式基準 50 + grid:-25)，比照 index.html v5.201.0 的 _teamFormAdjustObjPos 新增值同步；天蠍星神/射手星神依老師指示不調整仍維持預設 50。純顯示層，選角頁右側 .hm-banner 沿用既有固定 center 20% 裁切不受影響。 */   /* ★ v1.147.0（2026-09-14・老師截圖回報「荒島求生點進地圖區域後，畫面上半部大地圖和下半部場景疊在一起」緊急修復）— 根因＝#isl-map-wrap／#isl-zone／#isl-camp／#isl-act／#isl-create／#isl-def 這六個「畫面」原本只是共用外層 .isl-screen 的一般 block 子元素（各自 width:100%;height:100%;position:relative），設計書 2.1 講的「各畫面互斥顯示」完全只靠 islShowScreen() 幫沒有的那些加 .hidden(display:none) 撐著——只要有任何一條路徑忘了幫舊畫面補上 .hidden（或執行順序被打斷），兩個畫面就會同時不帶 .hidden，而它們在一般文件流裡不是互相覆蓋而是**上下疊放**，正是老師截圖看到「上面小地圖、下面場景各佔一半」的畫面。修法：六個畫面容器全部改成 position:absolute;left:0;top:0;right:0;bottom:0;（父層 .isl-screen 本就 position:relative），此後任兩個畫面同時可見也只會互相覆蓋（後面的蓋住前面的），不會再裂成上下兩半；另在 islEnterZone() 呼叫 islShowScreen('zone') 之後多補一行 hide('isl-map-wrap') 雙保險，防止任何未來路徑再漏一次。對應 sw v1.116.0(僅版號同步)。 */   /* ★ v1.146.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復):根因＝islEnterZone() 整個函式從缺一行 var 宣告——db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告,函式第一行 `_IS.scene = sc;` 一讀取未宣告的 sc 就丟 ReferenceError,函式當場中斷(console 有錯誤、畫面無任何提示),導致點地圖上任何一個區域、700ms 後一律靜默失敗、卡在地圖畫面進不去。補回缺的 var 宣告行即修復,對應 sw v1.115.0(僅版號同步)。 */   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
+var MG_VER = 'v1.169.0';   /* ★ v1.169.0(2026-09-15・老師兩項)— ①【只支援橫式】比照大對抗冒險模式的 #rotate-device-overlay,新增 #mg-rotate-overlay 強制橫式提醒層:觸控裝置且直立時蓋住整個畫面、提示轉 90 度。判定條件三者缺一不可——(hover:none)+(pointer:coarse) 排除桌機滑鼠、orientation:portrait 只認直立、max-width:900px 讓大螢幕直式外接顯示器不被誤蓋(與主程式同一組門檻);⚠ 這張刻意掛在 <body> 第一個子節點而不是放進 #island-root——荒島根容器有 zoom:1.3 與 transform,position:fixed 掛進去會改對齊到它的座標系(與主程式 v5.176.0 登入視窗被 #gc 的 transform 吃掉是同一種坑)。真 Chromium 實測:PC 1920(滑鼠)不顯示、iPad 橫 1024 不顯示、iPad Pro 橫 1366 不顯示、iPad 直 768 顯示、手機直 390 顯示、手機橫 844 不顯示 —— 六種情境全部正確。②【英雄選單右側重新配置】原本是「圖片固定高度(clamp 56~150px)、下面依序往下排」;改成「姓名/⚡爆發/★天賦 三塊各佔自己該有的高度並貼齊底部,圖片吃掉剩下的全部空間」。⚠ 只改 flex 分配不動 DOM 順序:.hm-right 本來就是 flex-direction:column,把 .hm-banner 設成 flex:1 1 auto 即自動吸收剩餘高度,三塊維持 flex:0 0 auto 天生貼在下方,不必包新容器、不必動任何一支產生 HTML 的 JS。底部漸層起點由 55% 下移到 68%(圖片變高後露出更多畫面、下緣仍壓得住文字)。⚠ 圖片的 min-height 下限刻意訂低(clamp(56px,9vh,140px)):實測 iPad 橫式遇到「兩行爆發說明＋三行天賦」的長文案時,下限訂太高會把文字擠到整欄要捲、反而看不到天賦 ⇒ 改成圖片先讓位,有空間才長高;.hm-right 維持 overflow-y:auto(v1.79.0 的天賦被裁掉修正)當最後一道保險。實測圖片佔右欄高度:PC 1920 = 60%、iPad Pro 1366 = 58%、1280×720 = 35%,三塊皆正確貼底(距底 12px = 天賦卡自身下邊距)。 */   /* ★ v1.168.0(2026-09-15・老師「檢查荒島各種操作是否有字體/視窗太小或太大導致溢出,針對 PC(1920×1080 全螢幕)與 iPad 檢查」)— 用真 Chromium 走完 12 個畫面 × 4 種視窗(PC 1920×1080／iPad 橫 1024×768／iPad 直 768×1024／iPad Pro 橫 1366×1024)逐元素量測(比對 scrollWidth/clientWidth 與視窗邊界,並回溯祖先是否本來就開了捲動,避免把 HUD 那種 overflow-x:auto 的捲動列誤判)。修 5 項:①【最嚴重】直式 iPad 營地主選單整條被擠出畫面外——`#isl-camp-side` 是 flex-shrink:0 且 iPad 版加寬到 300px,而直式版面寬只有 768/1.3≈591px、營地格子本身要 480px ⇒ 側欄被推到 right:1014,學生完全按不到 角色/營地/商店/探索/休息。新增 @media(max-width:780px) 讓營地改上下排、側欄變成底部五欄橫列(選擇器用 #island-root #isl-camp-side 才蓋得過 ipad 那條)。②角色能力方塊在 iPad 橫式橫向溢出 19px:`.isl-ab .an` 名稱欄 flex-shrink 為 0 且 iPad 硬吃 160px,改成可收縮、上限 62%。③創角島名輸入框溢出 21~23px:那顆 input 的 `max-width:180px` 寫在 inline style 上(贏過所有 CSS),iPad 字級放大後裝不下;改成 class 由 CSS 控制(.isl-namerow/.isl-nameinput),iPad 可同時放大字級與放寬上限。④創角說明文字寫死 inline font-size:12px,是全荒島唯一低於 13px 的正文 ⇒ 改 class 15px、iPad 24px。⑤🌟 天賦星域星圖是固定 1240×1020 畫布靠捲動平移,實測可視寬 PC 只有 1140、iPad 橫式只有 655 ⇒ 🎯 特殊指令星域的 8 顆節點全在 x 985~1200 的右下角,學生在 iPad 上等於找不到新功能。新增 islSkFit():開窗後依可視寬自動縮放(transform:scale,連點擊命中區一起縮,座標與 SVG 連線零改動),⚠ 縮放設 0.72 下限——實測若完全依寬度縮(直式 k=0.37)節點只剩 31px、名稱只剩 6.8px,變成看得到卻按不到也看不懂,比要捲動更糟;縮到下限仍放不下的視窗,靠同時新增的「星域快速跳轉列」一鍵捲過去。實測結果:PC 1920 與 iPad Pro 完全不必橫捲、節點 61~76px、名稱 13.2~16.6px;iPad 橫/直式節點 60px、名稱 13.1px,按「🎯 特殊指令」後 8 顆節點 8 顆完整落在可視範圍。另把 .isl-bagbox.wide 由 98% 收到 96%,讓「掛在框外 −19/−24px」的 ✕ 一定留在畫面內。 */   /* ★ v1.167.0(2026-09-15・死鍵稽核:「確認每個功能都有用」)— 🐾【最大一項】16 隻夥伴的天賦被動原本**只有文字沒有效果**(只有 4 隻是用 u.k==='bear' 這種硬寫,其餘 12 隻全是死鍵)。改成資料驅動:island_db 每隻帶 tal:{效果鍵:值},index 端只有 islPetTal(單位,鍵)／islPetTalAll／islPartyTal 三個出口,16 個效果鍵全部接上消費點——coverAddP 坦克代受機率(黑熊)、cutP 減傷(穿山甲)、thornP 反震(椰子蟹)、shieldP 護盾加成(綠蠵龜)、stunAddP 暈眩機率(獼猴)、sealAdd 封招延長(五色鳥)、healOutP 治療輸出(梅花鹿)、rainHealP 雨天治療(樹蛙)、lowHealP 半血治療(鮭魚)、perAllyAtkP 每多一位夥伴加攻(藍鵲)、lowHpAtkP 目標半血加攻(石虎)、firstDmgP 先手加傷(領角鴞)、critP 普攻暴擊(大冠鷲)、darkAtkP 暗處全隊攻擊(螢火蟲)、ctrlSpdP 控場成群加速(黑面琵鷺)、encAdd 野外多走幾步才遇敵(海鷗小白)。四隻原本寫不出效果的天賦文案一併改寫成寫得出來的(石虎夜襲→目標半血、螢火蟲命中→暗處攻擊、小白資源點→遇敵步數、領角鴞先手→隊友中第一個出手)。隊友普攻與專屬指令共用同一支 islPetAtk,天賦才不會只對其中一種生效。🔧 其餘死鍵:PET_XP.lose 補上消費點(打輸也給一點經驗,不讓學生白忙)、PET_BOND_GAIN.feed 補上「🍖 餵食」(圖鑑卡片,花一道料理換親密度;只吃料理不吃生食材)、PET_BOND_GAIN.dayTogether 補上(新的一天編組裡的夥伴親密度 +1)、PARTY.FRIEND_READONLY 接上真正的消費點(islPetsGainAfterWin 的跳過條件);PARTY_FRIEND.SNAP_ON/FIELDS 與 PET_XP.raid 三個無法有消費點的鍵直接移除。🧪 稽核器改成資料驅動(讀資料表現有欄位反查 index 消費點),重跑死鍵＝0。平衡沙盤重跑,曲線幾乎不變(遺跡 73→79%、火山 89→93%)。 */   /* ★ v1.166.0(2026-09-15・P4:步數遇敵 + 平衡稽核)— ①【老師需求⑤】野外遇敵改步數制 islEncStep():每走 D.ENC_STEP.min~max 步(15~30)隨機遭遇,戰後欠 safeSteps(8) 步才重新計數。「一步」＝踏進新格子(不是一幀也不是按一次鍵),慢走快走遇敵率才一樣;計數器只放 _IS 不寫存檔。舊的踩地雷式(islSpawnDaily 生成 _IS.mines + islMineCheck)整段保留但停用——只要 D.ENC_STEP 存在就不生成任何遇敵點,兩套並存會雙重觸發密到走不動;拿掉 D.ENC_STEP 即自動回到舊制。步數制的 mine 是合成物件(idx −1),islBattleEnd 只在 idx≥0 時才寫 daily.mines、islBattleClose 只在 idx≥0 時才刪 .isl-mine 元素。②【平衡稽核】沙盤跑 11 區 ×(0/1/2/3 位隊友)×150 場。第一輪發現滿編 100% 勝率且主角剩血 93~100%——根因不是等級太低而是**治療量壓過傷害**(草藥療傷 25%/cd2、露水治癒 20%/cd1 等於無限續航),改成 18%/cd3 與 15%/cd2;D.ENC 等級再上調一段(森林 4-7 … 遺跡 20-27、火山 24-31,沙灘維持不動因為那區還沒有隊友)。③【平衡】戰鬥中倒下的隊友當天不能再上場(rec.rest,明天自動歸隊;三條結束路徑勝/敗/逃都標記),編組頁顯示「💤 休息中」。刻意不做跨場扣血——「今天不能上場」對中低年級好懂,也不會逼他們一直跑回營地。調校後(寵物等級壓成主角的一半):早期 1 位隊友就穩、湖泊~山谷要 2~3 位、遺跡/火山滿編 73~89%,單人在中後段 0~11%——招募隊友從此是必要而不是裝飾。 */   /* ★ v1.165.0(2026-09-15・P3:UI 與招募)— 🐾 三個入口掛進 👤 角色子選單:**🧭 探險編組**(3 格,站位預覽由右到左＝前鋒到後排;選好友時整頁先跑 islFriendsRefresh 重抓名片＝老師裁定 2,借用版同場限一位、標明不可更改不會升級)、**📖 夥伴圖鑑**(16 隻卡片,已擁有顯示 Lv/親密度/四維/專屬指令/天賦/自然知識,未擁有顯示取得方式;商店款可直接用貝幣換)、**🎯 特殊指令**(裝設 3 格 + 已解鎖清單)。招募三條路:①訓練師課題通過後跳邀請(只有台灣黑熊/梅花鹿/領角鴞,陸蟹維持純訓練師)②海鷗小白在營火蓋好且森林解鎖後可邀請③野外馴養成功時擲 islPetWildRoll(機率讀 D.PETS[].get.p,並吃既有 tameP 天賦;刻意不另開資源點與圖片)。第一次取得會自動補進空的編組格(不然學生招募完還要再進一次編組頁,低年級最常見的回報就是「抓到了為什麼戰鬥沒出現」)。🎯 特殊指令:野外類掛在 🗺 探索子選單(沒裝就不出現,不放空按鈕)、戰鬥類每個各一顆按鈕插在動作列(每場各 1 次,用過變灰),AP 在 islCmdUse 統一扣;CMD_SCAN 進掃描模式(遇敵點現形+資源點金色光暈,只對當天那一區有效,islEnterZone 逐次 toggle 收掉)、CMD_QUICKPICK 下一次採集直接 ★★★(旗標一次性;刻意不寫進 note,note 在各活動分支會被覆蓋)、CMD_REST 野外回 30% 體力。island_db:CMD_CALL 由 both 改 battle(野外沒有隊友單位可治療,掛野外會變成按了沒反應的死按鈕)。 */   /* ★ v1.164.0(2026-09-15・P2:戰鬥引擎 1v1 → 組隊)— 🐾 主角+最多 3 位隊友 對 1~4 隻魔物。①引擎改「擴充」不「重寫」:_islBt.m 改成指向 _islBt.ms[mi] 的「目前鎖定目標」指標,既有 QTE/智取/絕招/包紮/流血/破防/反擊/不良狀態/地下層全部零改動照常運作;側別字串擴成 p/a0~a2/m0~m3('m'=目前目標的別名),$('isl-bt-'+side) 一律改走 islBtEl()。②回合順序 主角 → 隊友(依站位由前到後) → 魔物(逐隻);islBtMonTurn 改成驅動器,同一輪第一次呼叫先跑隊友,十幾處既有呼叫點一行都不用改。③站位:坦克 0 → 主角 1 → 攻擊 2 → 控場 3 → 治療 4,由 JS 依人數算 inline 座標;魔物依編號往右排。④魔物選目標依站位權重,坦克型可代替後排承受(TANK_COVER_P/TANK_CUT_P,台灣黑熊天賦再 +15%)。⑤隊友自動行動:冷卻好了放專屬指令,否則普通攻擊;16 招全部讀 D.PET_CMDS[].fx(本輪補上數值),支援 傷害/多段/全體/必中/暴擊加成/暈眩/單體與全體治療/解除不良狀態/護盾/攻防速全隊增益/代受/嘲諷/命中與速度減益/封暴擊/先手。⑥速度增減益換成迴避率(上限 25%),封招對沒有技能的魔物解釋成「打不出暴擊」,避免出現看不出差別的空效果。⑦勝利結算改整組逐隻結算(貝幣與掉落各一份,🔬 仍吃每日上限);上場寵物給經驗與親密度並自動升級(上限 50),借用版好友一律不寫回存檔(老師裁定 3)。⑧上方血條改成左右兩欄清單(沿用 .bt-hpbox 讓 iPad 放大覆寫繼續生效),點魔物那一列或舞台上的魔物即可換鎖定,換目標會清掉破防/防禦下降累積。⑨野外遇敵戰曲改播 D.BT.BGM_WILD(貓空小怪戰曲五選一),地下層與夜襲維持 raid/raid2。⑩進區域時隊伍未滿會提醒(D.ENC_TEAM_HINT,只提醒不擋人)。⑪island_db:16 招補 fx 數值;D.ENC 等級範圍沙盤實跑後全面下修(原 P1 訂到 Lv30~44,乘上每級 +18%HP/+12%攻再乘 4 隻會直接秒殺學生)。 */   /* ★ v1.163.0(2026-09-15・老師《寵物加入戰鬥／探險編組》需求 P1:資料層)— 🐾 新增 D.PET_TYPES(四型與站位 row)/D.PARTY(主角+3 隊友、坦克代受、借用版好友唯讀)/D.PARTY_FRIEND(每次開編組頁重抓快照)/D.PET_CMDS(16 個夥伴專屬指令)/D.PETS(4 位 NPC 夥伴 + 12 隻台灣寵物,各自 b 基礎值與 g 每級成長、天賦、取得方式、自然知識)/D.PET_ORDER/D.PET_LV(上限 50)/D.PET_XP/D.PET_BOND(親密度 5 階);🎯 天賦星域新增「特殊指令星域」(D.SK_CMDS 8 個指令 + SK_CMD_1~8 八個節點,座標全落在星圖右下方空白區,既有 41 個節點零更動;裝設上限 D.SK_CMD_SLOTS=3,使用消耗 ⚡AP);⚔ D.ENC 全表重排(num 每場 1~4 隻、lv 各區等級範圍)+ D.ENC_STEP(15~30 步遇敵,戰後 8 步安全)+ D.ENC_TEAM_HINT(隊伍未滿提醒門檻)+ D.BT.BGM_WILD(野外遇敵改播貓空小怪戰曲五選一);🖼 D.IMG 自動登記 96 張夥伴戰鬥立繪鍵 bt_pet_<key>_<6 態>(全部選配,缺圖退 idle→emoji)。⚠ 本輪純資料與存檔欄位,戰鬥引擎仍是 1v1,P2 才改寫。 */   /* ★ v1.162.0(2026-09-14・老師「確認每個功能都有用」)— 稽核器比對效果鍵與消費點，7 個真死鍵全補齊(緊急包紮/為隊友包紮/營地聚餐/保存食物/戰場醫官/毒素抗性)，重跑稽核死鍵=0；每個節點再加一個島上用的第二效果(QTE 指針變慢/甜蜜點擴大/走路速度/每日 AP/各活動產量/建造品質/失誤受傷減輕)；新增寵物三鍵(馴養成功率/每日產出/餵食不消耗)。 */   /* ★ v1.161.0(2026-09-14・老師裁定丙)— 🌟 天賦星域 index 端邏輯全部接上：點數現算(每贏 3 隻 +1、每 5 天 +1，存檔只存 taken)、islSkEff 單一效果出口(wp 欄依裝備武器開關)、星圖 UI(SVG 連線+節點+頭銜+🧙 洗點)、✨ 絕招戰鬥鈕(每場 1 次、數值讀 D.SK_ACTS)、🩸 流血層數、醫療節點讓不良狀態免材料處理 + 進階解毒劑。 */   /* ★ v1.160.0(2026-09-14・「繼續」)— 🤒 不良狀態 5 種 index 端邏輯全部接上：ISL.ails 存檔 + islAilEff 單一效果出口 + 四處消費端（戰鬥四維/每回合 dot/採集砍樹甜蜜點/治療量）+ 每日自然衰退 + 每區每日最多擲一次的意外觸發 + 🤒 身體狀況視窗(各自帶科學小知識與處置處方)。 */   /* ★ v1.159.0(2026-09-14・老師「完整下載了還是很慢、常常看不到圖片聽不到音效」)—【載入效能根治】①右上「更新」鈕舊寫法把 lxps-mini-* 全數清掉，連完整下載的 60~120MB(lxps-mini-island-v1)與隨手快取(assets)一起抹掉⇒每按一次更新就白裝，改成只清 lxps-mini-shell-*。②102 支音效音樂與英雄/寵物/場景三組圖庫全部從 raw.githubusercontent.com 改成同源相對路徑(raw 不是 CDN、依 IP 限流，一班 25 台 iPad 共用學校同一 IP 會被限流⇒圖出不來/沒聲音)，並新增 mgCdnFallback 自動退回舊網址的保險。③SW 快取策略改版：同源素材 cache-first、帶 ?v= 版號的檔案 cache-first、minigame_index.html 改 stale-while-revalidate。④minigame_sw.js 的 MINI_VERSION 漂移落後導致版本徽章永遠不會提示更新，本輪對齊。⑤音效預熱 mgWarmSfx + navigator.storage.persist() + 完整下載「已有的跳過/空間不足單獨計數」。 */   /* ★ v1.158.0(2026-09-14・老師四項)—①NPC 名牌高度:`.nl` 沒宣告 line-height,整個繼承到 v1.152.0 起由 JS inline 寫在 NPC 容器上的 `line-height:<身高>px`(台灣黑熊名牌因此高達 192px),釘死 1.25 行高後名牌高度只跟字級走。②敲釘子 3×2(6 格全輪一遍)改 6×6(36 格隨機取 8 格當順序),星等門檻同步改 7/5,不然 8 下中 6 下就滿星會比舊版更容易。③④採集/砲樹 QTE(共用 .isl-qte)拉桿與大按鈕放大延長:框寬上限 980→1280px、拉桿高 46→78px、按鈕 96→124px/字 33→38px,按鈕改 inline-flex+line-height:1+clamp 內距確保中文不被切也不溢出,≤1100px 媒體查詢再收一段。 */   /* ★ v1.157.0(2026-09-14・老師三項)—①營地走路主角改用野外那套走路動作模組(islCharSpriteInit 共用初始化,islCampTick 逐幀驅動 islCharPaint,吃到真正的跨步幀/轉身/鏡像,不再是 CSS transition 硬滑+margin-bottom 假裝晃動),尺寸改由 islCampCharScale() 依營地格子實際渲染尺寸算(格邊長×0.7=帳篷圖示高度,不寫死數字)。②品質小遊戲(輕輕摘/拉一下)材料圖片改成置中排版流、放大到 200%,拉桿/按鈕自然被推下去、再加一點間距;右側「紀錄」欄整組放大 50%;採集完成的 .isl-result 補上 margin:0 auto 確保置中。③修正走路腳步聲(D.SFX_MAP.walk 直接借用 sfx-tap 點擊音)在按方向鍵/拖曳搖桿長按移動時聽起來像連續點擊:islTick 新增 manual 旗標(方向鍵或拖曳搖桿在推動),manual 時腳步聲完全靜音,只留給「點地板自動走過去」(islTapToMove)那種一次性路徑移動。 */   /* ★ v1.156.0(2026-09-14・選擇題錯誤選項加長 第 3 批 60 題)—本檔僅版號同步(題目全在 island_db v1.156.0;唯一最長比例 45%→31%)。 */   /* ★ v1.155.0(2026-09-14・選擇題錯誤選項加長 第 2 批 50 題)—本檔僅版號同步(題目全在 island_db v1.155.0;唯一最長比例 58%→45%)。 */   /* ★ v1.154.0(2026-09-14・老師截圖回報:「點了角色能力會變成推擠排版的展開,我要的是額外小視窗說明不是這種推擠排版」)—根因:👤 角色能力視窗的 .tip 說明文字是用 `flex:1 1 100%` 塞進按鈕自己的 flex 排版,在 .isl-abil 這張 CSS Grid 裡,任何一顆卡片一展開,整列就會被撐高,連帶把下面所有列一起往下推(截圖裡「力氣」那列被推到很下面就是這樣來的)。改法:.tip 改成 position:absolute 浮在被點的那顆卡片正下方(脫離文件流,CSS Grid 排版時完全不計入這個元素的高度),只蓋住視覺上的那一小塊,其餘排版一格都不會動;配 pointer-events:none 讓浮窗不擋住被蓋住那格的點擊,.on 卡片給 z-index 蓋過鄰居格。純 CSS 修正,islCharOpen 的 JS 邏輯不變。 */   /* ★ v1.153.0(2026-09-14・老師:選擇題的錯誤選項要加長到至少和正確答案一樣長,避免學生用「選最長的」蒙混,失去思考的教學目的)—本檔僅版號同步(題目改寫全在 island_db v1.153.0;第 1 批 50 題,唯一最長比例 71%→58%)。 */   /* ★ v1.152.0(2026-09-14・老師四項)—①11 區可走遮罩全部依場景實圖逐格重建(以「比周圍暗多少」判定立體物、藍色判定水域、火山另判岩漿,去雜點後 BFS 連通驗證,不可達的可走格一律封起來);229 個資源點/小白/解謎點/訓練師座標一併吸附到最近的可走格,重建後 11 區固定點 100% 可達。②營地治療特效改掛在主角身上(islFxOnCampChar:GIF 塞進 #isl-camp-char 裡面,主角走動時特效跟著走)。③裝飾品也能左右鏡像(deco.f;點一下沒拖動就開小選單 → 翻轉,拖曳仍是換位置,以 8px 位移分辨點/拖)。④NPC 尺寸改成每隻依真實體型比例(玩家顯示高度 96px 為基準:陸蟹 72/梅花鹿 106/台灣黑熊 192=玩家 2 倍/領角鴞 72),名稱改成一行放在圖片正上方;⚠ margin 必須跟著尺寸一起算(腳底對齊定位法 margin-top=-(高度-10)),只改尺寸不改 margin 會讓 NPC 腳陷進地板。 */   /* ★ v1.151.0(2026-09-14・老師:營地設施可移動位置與左右鏡像翻轉;營地主角可在可行走區域自由移動並與設施互動,點設施會先走過去旁邊)—①設施新增 slot.flip(純外觀,不影響效果/耐久)與「🔀 搬移位置」搬移模式(進入模式後點任一格即互換,空地或別的設施皆可;施工中的不能搬)。②主角位置改成可變的 (x%,y%) 存在 _IS.campC(刻意不寫存檔:站在哪裡是臨時狀態);走路用 CSS transition 交給合成執行緒,不另開 rAF(舊 iPad 省電)。③點空地→走過去;點設施→先走到那一格正下方,抵達才開設施視窗(islCampGoToCell + callback)。④鏡像翻的是裡面那張圖不是容器:容器 transform 是 scale(2.2) 且 origin 在左下角,翻容器會讓人平移一個身寬、頭上泡泡的字也會左右相反;走路的腳步晃動改用 margin-bottom 而非 transform,否則動畫會蓋掉 scale(2.2) 讓人瞬間縮小。 */   /* ★ v1.150.0(2026-09-14・老師截圖回報三項 UI 修正)—①阿獺雜貨鋪「買東西」分頁仍被縮成小視窗:v1.149.0 只在呼叫端傳 opts.wide,「寬度規則」與「要不要等比縮放」分散在兩處,任一路徑沒帶到 opts 就退回 islFitBox 縮放版(縮放幅度取決內容高度 ⇒ 清單最長的買東西縮最兇);改為把 .wide 直接寫進面板 markup 當單一真相,islPanel 看到框上已有 .wide 就同樣跳過縮放,三分頁尺寸永遠一致。②👤 角色能力視窗改接近全螢幕(.isl-bagbox.full)且不必捲動:4 維 + 14 生存技能改排成兩欄「能力方塊」(.isl-abil/.isl-ab),c-right 取消 max-height/overflow;每一項可點開說明標籤(再點同一項收起,_IS.abTip)。③營地左下的主角可以點:65% 說一句「當前最該做的事」進度提示(islCampHintText 由上而下第一個成立的才講),其餘說一句隨機心情(沿用 D.MONO,依天氣挑 wxSun/wxRain/wxTyphoon);新增 islBubble(指定文字的泡泡,與 islMono 共用同一顆 .isl-tired DOM,永遠只有一顆)。⚠ #isl-camp-char 原本 pointer-events:none,本輪改 auto 才點得到,泡泡本身維持 none 以免擋住第二次點擊。同輪 island_db v1.150.0 先行放入 🌟 天賦星域(46 節點)與 🤒 不良狀態(5 種)資料表,index 端邏輯下一輪接。 */   /* ★ v1.149.0（2026-09-14・老師截圖回報三項）—①左上視窗標題:`?mode=island` 直入與從大廳按鈕進場兩條路徑,document.title 都改成「小英雄小遊戲 — 荒島求生」(原本沿用整頁固定的 `<title>…英雄對戰小學堂</title>`,和畫面內容對不上)。②商店(阿獺雜貨鋪)「買東西」分頁看起來被縮得特別小:根因是三分頁共用同一支 islPanel(h,cb),沒傳 opts 時一律跑 islFitBox() 整框等比縮放,縮放幅度單純取決於當下內容量算出的高度——買東西清單通常比賣東西/委託長很多,所以縮得最兇;改傳 `{wide:true}` 讓商店面板跳過整框縮放,改用既有「wide 版」規格(框吃滿 92% 高+.bd 內捲),三分頁字級與按鈕尺寸從此一致;同步補上 `.isl-bagbox.wide` 這條原本沒有對應的 CSS(先前只有 `.box.wide`)。③老師在「🎨 造型工房(GM)」調好貼回聊天室的「📋 複製設定值」寫入 island_db.js 的 D.LAYER_ADJ(髮型改三向專屬微調)與 D.CREATE_DEFAULT(補 clothC:0),`minigame_island_db.js?v=` 快取破壞字串同步 bump。對應 island_db v1.149.0(僅本檔零改動,純資料表)。 */   /* ★ v1.148.0（2026-09-14・老師需求「十二星神(除了天蠍/射手以外)左邊清單縮圖高度Y減少25%,同步到小遊戲的英雄選單」）— MG_THUMB_POS 新增 10 位星神(牡羊/金牛/雙子/巨蟹/獅子/處女/天秤/摩羯/水瓶/雙魚)各 25(=主程式基準 50 + grid:-25)，比照 index.html v5.201.0 的 _teamFormAdjustObjPos 新增值同步；天蠍星神/射手星神依老師指示不調整仍維持預設 50。純顯示層，選角頁右側 .hm-banner 沿用既有固定 center 20% 裁切不受影響。 */   /* ★ v1.147.0（2026-09-14・老師截圖回報「荒島求生點進地圖區域後，畫面上半部大地圖和下半部場景疊在一起」緊急修復）— 根因＝#isl-map-wrap／#isl-zone／#isl-camp／#isl-act／#isl-create／#isl-def 這六個「畫面」原本只是共用外層 .isl-screen 的一般 block 子元素（各自 width:100%;height:100%;position:relative），設計書 2.1 講的「各畫面互斥顯示」完全只靠 islShowScreen() 幫沒有的那些加 .hidden(display:none) 撐著——只要有任何一條路徑忘了幫舊畫面補上 .hidden（或執行順序被打斷），兩個畫面就會同時不帶 .hidden，而它們在一般文件流裡不是互相覆蓋而是**上下疊放**，正是老師截圖看到「上面小地圖、下面場景各佔一半」的畫面。修法：六個畫面容器全部改成 position:absolute;left:0;top:0;right:0;bottom:0;（父層 .isl-screen 本就 position:relative），此後任兩個畫面同時可見也只會互相覆蓋（後面的蓋住前面的），不會再裂成上下兩半；另在 islEnterZone() 呼叫 islShowScreen('zone') 之後多補一行 hide('isl-map-wrap') 雙保險，防止任何未來路徑再漏一次。對應 sw v1.116.0(僅版號同步)。 */   /* ★ v1.146.0(2026-09-14・老師回報「荒島求生點了地圖上的區域,沒有進去該地圖」緊急修復):根因＝islEnterZone() 整個函式從缺一行 var 宣告——db/sc/zs/zm/h/u/sp/i/n/first 十個變數全部未宣告,函式第一行 `_IS.scene = sc;` 一讀取未宣告的 sc 就丟 ReferenceError,函式當場中斷(console 有錯誤、畫面無任何提示),導致點地圖上任何一個區域、700ms 後一律靜默失敗、卡在地圖畫面進不去。補回缺的 var 宣告行即修復,對應 sw v1.115.0(僅版號同步)。 */   /* ★ v1.145.0(2026-09-14・老師兩項需求):①十二星神進小遊戲——12 隻補進 MG_HEROES(64→76),爆發第二效果與天賦依 2026-09-08 轉換規則表從主程式 HERO_SKILL_EFFECTS 標籤總和轉換,天賦刻意一位一個主場關、12 個主場關互不重複(15 關全覆蓋);新機制 4 種(heal10dr3/noheal2/pausepick5/earsolfa/orderends,老師裁定甲並指定數值)②英雄選角頁新增「⭐ 本關推薦」分類(MG_REC 適配表計分、卡片呼吸光暈、右側只高亮最相關那一段能力文字;老師裁定乙不自動選中、丙清單比照既有只顯示已解鎖)。對應 minigame_db.js v1.45.0、minigame_sw.js v1.114.0。 */   /* ★ v1.144.0(2026-09-14・老師「故事冒險模式、小遊戲模式、荒島求生 三個入口都要被休息排程阻擋。避免學生半夜不睡覺肝遊戲。」):小遊戲端補上與主程式同一套休息排程閘門——小遊戲是獨立的一頁(加到主畫面/書籤/記住 ?mode=island 直連網址都不經過主程式首頁),只改主程式等於留一扇後門;讀同一份 gameConfig/restSchedule 與同一把本機快取鑰匙 lxps_rest_sch_cache,休息時段蓋全螢幕夜空畫面+開機倒數(歸零自動重整),管理員信箱豁免,讀不到排程一律放行。對應 sw v1.113.0、island_db 仍 v1.31.0、主程式 v5.195.0。 */   /* ★ v1.143.0(2026-09-13・老師):戰鬥倒下動畫移除 rotate(±85deg)——倒下態立繪本來就畫成趴地,再旋轉會變頭下腳上;只留下沉+淡出+灰階。對應 sw v1.112.0、island_db 仍 v1.31.0。 */      /* ★ v1.142.0(2026-09-13・老師兩項＋補做前輪未完成):①地圖上採集物品圖放大(96→128px),樹木 kind='tree' 另外放大到 200px(主角實顯 96px,剛好比人高兩倍以上);②荒島所有小遊戲 QTE/活動畫面背景由 50% 暗遮罩改**不透明**;③訓練師 NPC 支援 big:2(台灣黑熊師傅畫成 192px=主角兩倍高),POI 物件補帶big 欄位並加 .isl-npc-big;④換造型入口上鎖改 islLookSoon(islLookOpen 整套一行未刪,做好改回去即開放);⑤進森林每遊戲日提醒一次準備食物與武器(只提醒不擋人)。對應 sw v1.111.0、island_db 仍 v1.31.0。 */      /* ★ v1.141.0(2026-09-13・老師看圖三項):①採集 QTE 視窗寬度根治(左側大圖的 260px 空位改成『真的有圖才預留』——`.qobj` 由 islQteSideReset 掛,舊公式不論有沒有左圖都固定扣 560px)＋標題與大按鈕一律 nowrap,不再折行;②森林可走區域依 island_zone_forest.jpg 逐格重建(暗像素密度法,樹冠/灌木/岩石/倒木全封、草地與黃土小徑全開,連通性過濾後 310 格),14 個落在樹上的資源點移到最近可走格;③台灣黑熊師傅由 (26,18) 的樹叢移到 (26,12) 右側空地。對應 island_db v1.31.0、sw v1.110.0。 */      /* ★ v1.140.0(2026-09-13・老師「繼續未完成的內容」— 接續⑫清單):拜訪好友營地(islCoopCampPaint)側欄按鈕併入與自己營地相同的 .cat 大圖示分類視覺(button.cat + icon span,原本是舊版純文字小按鈕清單,和自己營地那套「大圖示分類磚」視覺不一致);另加 #isl-camp-side button.cat.gold/.cat.warn 兩條疊加樣式(單靠 .cat 加 .gold/.warn 兩個 class 會因 CSS 選擇器 specificity 打平、後宣告的 .cat 蓋掉 .gold/.warn 底色,加雙 class 選擇器讓顏色疊加正確生效)。island_db/sw 本輪零改動,仍 v1.30.0/v1.109.0(僅版號同步)。 */      /* ★ v1.139.0(2026-09-13・老師「繼續」+ 老師回報品質小遊戲排版錯誤):①【緊急排版修正】老師截圖回報採石「用力拔起」QTE 畫面標題被拆成一字一行直直排下去、拉桿與按鈕都不見——根因是 #isl-act-body.qside .isl-qte 的寬度公式 min(96% - 560px,680px)(及 iPad 版 480px、手機版 calc(96% - 150px) 兩個變體)完全沒有下限,螢幕不夠寬時算出 0 或負值,QTE 框和裡面所有按百分比撐開的子元素(拉桿/按鈕)一起塌陷成 0 寬,中文標題無處可放只好一字一行往下排;三處全部加 max(下限,原公式) 保底(基本版 260px、手機版 220px、iPad 版 260px),任何螢幕寬度都不會再塌陷。②20 個水域資源錯點的執行期可走格濾網(islSpawnDaily 現場對照 sc.mask,'~' 一律跳過,不論資料面座標之後有沒有跟著改,水域資源點永遠不會生成) ③章節 food1(第一次煮出料理,cook 結算後掛點)/friend1(第一次真的被好友拜訪,islCoopNoticesCheck 偵測到「來拜訪你的島了」通知才播)呼叫點補齊——8 段章節劇情至此全數掛上呼叫點。island_db/sw 本輪零改動,仍 v1.30.0/v1.108.0(僅版號同步)。 */      /* ★ v1.138.0(2026-09-13・老師三項:①戰鬥立繪隨服裝/髮型/染色渲染 ②服裝新增成套染色 ③初始服裝改名):①新增三層戰鬥立繪 btl_base_<body>_s<膚色階>_<態>/btl_cloth_<body>_c<服裝>_<態>/btl_hair_<body>_h<髮型>_<態>(base/cloth/hair 疊合、共用既有 ISL_HAIR_FILTER 髮色濾鏡),islBtFigHtml 三張齊全才用疊圖、缺一律退回舊版單張 bt_p_<body>_<態>,不半套;islBtProbe 一併預探測新 15 張(3層×5態)。②服裝染色 clothC(0=原色,1~16 沿用髮色同一組16色濾鏡 ISL_CLOTH_DYE,新增 islClothDyeCss helper),接線 islLayerKeys/islLayersHtml/islLayerThumb(場景走動與換造型預覽同步染色)、islLookSecsHtml 新增「服裝染色」色票列、創角/換造型/GM匯出/islNormalize 舊存檔補值(0)五處全部串好。對應 sw v1.108.0、island_db v1.30.0(服裝改名)。 */   /* ★ v1.137.0(2026-09-13・老師「撿取音效+閃亮特效/社交改日後開放」小項補齊):撿取成功時加閃亮特效(islFxAt 沿用既有 MG_FX.hit 素材,不需新圖;撿取音效原本就有 sfx-coin,不重複加);好友面板新增「社交動作 敬請期待」占位提示(不做整套動作系統,只讓學生知道是規劃中);對應 sw v1.107.0、island_db 零改動仍 v1.29.0。 */   /* ★ v1.136.0(2026-09-13・老師:採集答對特效把題目視窗推下去):#isl-act-body 的 :first-child/:last-child 改成直接認 .isl-act-inner class,特效圖 append 進來不再影響置中;對應 sw v1.106.0。 */   /* ★ v1.135.0(2026-09-13・老師:GM 造型調整要可以三向各別設定):LAYER_ADJ 改兩層(共用 + @row 方向專屬),工房加方向選單與偵測標記,匯出一併輸出;對應 sw v1.105.0。 */   /* ★ v1.134.0(2026-09-13・老師「繼續開工」):角色狀態視窗改左右兩欄+全文字放大 / 雜貨鋪賣東西品質分列+數量步進器;對應 sw v1.104.0、island_db v1.29.0(零改動)。 */   /* ★ v1.133.0(2026-09-13・老師「繼續未完成的工作」+ 看圖三項):劇情/音效/內心話開啟並補齊掛點 / 分層造型跨格裁切根治(transform 取代 background-size 縮放) / LAYER_ADJ 依輪廓線重量全表歸位 / 20 個水域錯點上岸 / NPC 名牌不再蓋圖 / HUD 說明視窗 ✕ 按不關(inline onclick 漏挂 window) / 換造型面板新增 GM 調整入口;對應 sw v1.103.0、island_db v1.29.0。 */   /* ★ v1.132.0(2026-09-13・老師三項)：🏝 ①社交/好友連線探索改「日後開放」,先做劇情(8 段里程碑章節+阿川紙條)、主角內心話泡泡 islMono(37 情境)、操作互動音效 islSfx(30 事件) ②造型工房確認涵蓋身體/服裝/髮型/整張 sheet/戰鬥立繪共 36 張並修正少年新髮型預設值 ③訪客模式 ?guest=1(主程式確認視窗新增「不登入的訪客模式」);另修 island_db 的 ?v= 自 v1.128.0 起漏 bump 的快取破壞缺口;對應 sw v1.102.0、island_db v1.28.0。 */   /* ★ v1.131.0(2026-09-13・老師四項)：🏝 溪流/瀑布/洞穴滴水/草原 環境音接上＋水聲依距離三階段大小聲 / 戰鬥系統啟用(沙灘 ENC 第 1 天起＋GM 測試戰鬥鈕) / 武器 Lv5-10-15-20 換外觀 / 缺圖保留欄位改破圖佔位;對應 sw v1.101.0、island_db v1.27.0。 */   /* ★ v1.130.0(2026-09-13・老師五項)：🏝 建造/研究/裝飾/製作/武器 改三欄大卡片可捲動 / 角色狀態與武器視窗開不了的根因修正(islWeaponAtk 徒手時 null.lv) / ✕ 移到框外右上角 / 材料不足徽章＋來源查詢 / 造型工房涵蓋主角 36 張圖(含整張 sheet 與戰鬥立繪);對應 sw v1.100.0、island_db v1.26.0(零改動)。 */   /* ★ v1.129.0(2026-09-13・老師兩項)：🏝 ?mode=island 直入不再閃過小遊戲大廳(.isl-direct 簾幕 + 三個拆簾時機) / 左上角「回大對抗」改「回到首頁」;對應 sw v1.99.0、island_db v1.26.0(零改動)、主程式 v5.190.0。 */   /* ★ v1.128.0(2026-09-13・老師:GM 要能調整頭髮和衣服的尺寸與座標;三款長髮改少女限定,少年新增 3 款髮型)：🏝 分層造型微調表 D.LAYER_ADJ + 🎨 造型工房(GM) + 髮型依性別分列 + MG_IMG_VER→5;對應 sw v1.98.0、island_db v1.26.0。 */   /* ★ v1.127.0(2026-09-13・老師「只有 GM 可以進荒島」)：🏝 小遊戲端 GM 閘門(?mode=island 直連網址也擋)+ islInstallMark 供主程式下載鈕;對應 sw v1.97.0、island_db v1.25.0(零改動)、主程式 v5.189.0。 */   /* ★ v1.126.0(2026-09-13・老師:海浪聲/森林鳥叫掛接)：🏝 場景環境音循環播放(沙灘岩岸懸崖營地地圖=海浪,森林草原山谷溪流湖泊=鳥叫)+⚙ 獨立開關;對應 sw v1.96.0、island_db v1.25.0(零改動)。 */   /* ★ v1.125.0(2026-09-13・老師七項)：🏝 休息獨立分頁 / AP0 泡泡每畫面一次 / 營地泡泡不出界 / 存檔明確回饋 / 島上日誌日曆 / 建造真實等待時間+完工通知 / 武器 Lv20+熟練值;對應 sw v1.95.0、island_db v1.25.0。 */   /* ★ v1.124.0(2026-09-13・老師四項)：🏝 HUD 縮成一行+說明小視窗 / 視窗自動縮放免捲動 / 採集題庫 200 題不重複輪替 / 創角造型選項改同尺寸預覽圖並修好分層對位;對應 sw v1.94.0、island_db v1.24.0。 */   /* ★ v1.123.0(2026-09-13・老師「繼續未完成的工作」)：🏝 🎨 換造型 + 🗼 瞭望台常駐 HUD;對應 sw v1.93.0、island_db v1.23.0(零改動)。 */   /* ★ v1.122.0(2026-09-13・老師「繼續」)：🏝 地下層改回合制(接 islBattleStart dg 模式、守墓石像共振題)+ 戰鬥面板貼底;對應 island_db v1.23.0、sw v1.92.0。 */   /* ★ v1.121.0(2026-09-13・老師四項)：🏝 通關稽核(大葉來源/戰鬥科技點)+ 回合制踩地雷遇敵戰鬥(#isl-battle,雙方 5 態立繪+呼吸,武器影響 QTE)+ 6 種武器製作/升級/裝備;對應 island_db v1.22.0、sw v1.91.0。 */   /* ★ v1.120.0(2026-09-13・老師五項)：🏝 QTE 沒畫面(islActGather 未宣告 db)修正+活動畫面半透明疊場景+採集版面;離開回主程式首頁;採集鈕改名;漂流木等圖鍵;改名視窗確定變隨機名修正;對應 island_db v1.21.0、sw v1.90.0。 */   /* ★ v1.119.0(2026-09-13・老師七項)：🏝 賣價 ×1/×2/×3、對話框壓過面板、沙灘木石、AP 10 與各活動 AP+清單、採集輕中重、疲勞泡泡、地圖海面底圖;對應 island_db v1.20.0、sw v1.89.0。 */   /* ★ v1.118.0(2026-09-13・老師三項)：🏝 QTE 次數/暴擊訊息移右側紀錄欄+點擊星星特效+暴擊疊音效;走路幀插站立幀;iPad 文字 ×2;對應 sw v1.88.0。 */   /* ★ v1.117.0(2026-09-13・老師看圖)：大廳三顆模式鈕移除;islInstallUrls 掛 window 供主程式首頁「完整下載荒島求生主程式」鈕使用;對應 sw v1.87.0。 */   /* ★ v1.116.0(2026-09-13・老師六項)：🏝 完整下載主程式鈕(設定選單)/島名 70×62 下拉/造型 髮型髮色膚色服裝(分層 sprite)/四維與技能上限 50/水面閃爍波光;對應 island_db v1.19.0、sw v1.86.0。 */   /* ★ v1.115.0(2026-09-13・老師兩批需求)：🏝 迷霧/視窗 ✕+ESC/選單圖片化/倉庫三列/NPC 大頭像/角色重疊與走路修正/11 區碰撞遮罩重建/地標重標/營地 UI 重整;小遊戲字體改中黑體;對應 island_db v1.18.0、sw v1.85.0。 */   /* ★ v1.114.0(2026-09-12・老師「一先做」)：🏝 好友營地唯讀畫面(拜訪模式「🏕 參觀營地」:建築/裝飾/留言板/島主小人唯讀 + 💌 留言給島主);對應 island_db v1.17.0、sw v1.84.0。 */   /* ★ v1.113.0(2026-09-12)：?mode=island 開機直入荒島(主程式首頁入口);對應 sw v1.83.0。 */   /* ★ v1.112.0(2026-09-12・老師「檢測 iPad 版介面」)：🏝 真 Chromium iPad 量測修正——補上自 v1.90.0 未關閉的 @media(max-height:520px) 大括號(v1.91.0 之後所有荒島 CSS 在 iPad 上從沒生效)+ HUD 兩列 + 全域 button min-height 排除 + 創角/活動區/營地側欄/方陣版面修正;對應 island_db v1.16.0、sw v1.82.0。 */   /* ★ v1.111.0(2026-09-12・老師「繼續優化,除錯,視窗字體全放大」)：🏝 islZk() zoom 座標換算修 8 處觸控偏移 + zoom 1.3 與全域放大覆寫段 + vw→% + 四項除錯守門;對應 island_db v1.16.0(零改動)、sw v1.81.0。 */   /* ★ v1.110.0(2026-09-12・接續好友連線合作)：完成拜訪好友的島(islCoopJoin/islCoopLeave/心跳回報/onSnapshot 畫出對方小人/離線自動變 NPC 並通知島主),地圖顯示島主已解鎖區域、回營鈕在拜訪模式換成離開拜訪;需老師更新 firestore.rules(新增 minigameIsland/{uid}/mail 補回 + minigameIslandVisit 兩段)。 */   /* ★ v1.109.0(2026-09-12・老師四項修正)：🏝 主角改用像素風 sprite(移除手繪 CSS 小人,依性別自動套用;創角安靜自動套用大對抗主角造型) + 移動左右鏡像修正(側面素材實際朝右,重新對照圖片確認) + 水域('~')全面禁止進入(重畫 valley 遮罩+river/rock/lake/cave 共 8 點位移,BFS 驗證 11 區皆可達) + 採集簡化為 1 題知識題(移除部位連環點與種子傳播拖曳) + QTE 畫面加採集物資放大圖 + 全域改用 Noto Sans TC(中黑體,不缺字)+ zoom:1.2 整體放大;對應 island_db v1.16.0。 */   /* ★ v1.107.0(2026-09-12・老師「繼續完成荒島求生」)：🏝 📋 營地留言板(常駐,存檔 board)+ 📜 阿獺委託板(每日 3 張/困難加碼/里程碑,存檔 quest);對應 island_db v1.14.0、sw v1.78.0。 */   /* ★ v1.106.0(2026-09-12・老師「請繼續」,裁定 R/S 已確認)：🏝 好友信箱(送物資/留言,minigameIsland/{uid}/mail 子集合)+ 強調訪客島獨立不可匯入(裁定 S 文案);對應 island_db v1.13.0、sw v1.77.0。 */   /* ★ v1.105.0(2026-09-12・老師四項)：🏝 場景懶載入+首頁完整安裝鈕+raid/raid2 輪流+帆船結局(回憶幻燈片/捲動字幕);對應 island_db v1.12.0、sw v1.76.0。 */   /* ★ v1.104.0(2026-09-12・老師「甲乙丙全做」)：🏝 戰鬥擴充(8 魔物+瞭望台+四維加成+角色受傷/遺跡地下層/好友守夜);對應 island_db v1.11.0、sw v1.75.0。 */   /* ★ v1.103.0(2026-09-12)：🏝 荒島存檔三道守門(訪客共用島/所有權/雲端血統+先讀後寫+衝突裁定);對應 island_db v1.10.0(零改動)、sw v1.74.0。 */   /* ★ v1.102.0(2026-09-12)：場景改 .jpg;對應 island_db v1.10.0、sw v1.73.0。 */   /* ★ v1.101.0(2026-09-12)：MG_IMG_VER→4、五區遮罩重校;對應 island_db v1.9.0、sw v1.72.0。 */   /* ★ v1.100.0(2026-09-12)：🏝 動態背景+天氣系統+台灣化;對應 minigame_island_db.js v1.8.0、minigame_sw.js v1.71.0。 */   /* ★ v1.99.0(2026-09-12)：🏝 荒島 P4-b 動物訓練師 NPC;對應 minigame_island_db.js v1.7.0、minigame_sw.js v1.70.0。 */   /* ★ v1.98.0(2026-09-12)：🏝 荒島 P4-a 阿獺雜貨鋪(貝幣商店)+ 自然圖鑑;對應 minigame_island_db.js v1.6.0、minigame_sw.js v1.69.0。 */   /* ★ v1.97.0(2026-09-12)：MG_IMG_VER→3、🏝 荒島 BGM 掛點 islBgm + 各區首次內心話;對應 minigame_island_db.js v1.5.0、minigame_sw.js v1.68.0。 */   /* ★ v1.96.0(2026-09-12)：🏝 荒島 P3-b 懸崖/山谷/遺跡/火山四區+製作台與工具;對應 minigame_island_db.js v1.4.0、minigame_sw.js v1.67.0。 */   /* ★ v1.95.0(2026-09-12)：🏝 荒島 P3-a 科技研究/各區解謎點/湖泊+洞窟/木筏火把高階效果;對應 minigame_island_db.js v1.3.0、minigame_sw.js v1.66.0。 */   /* ★ v1.94.0(2026-09-12・老師「繼續」)：🏝 荒島 P2-b 烹飪/播種/馴養/鋪水道(Grid)+農田/畜欄/水道+全建築 Lv5+營地擴建+裝飾舒適度+料理可食;對應 minigame_island_db.js v1.2.0、minigame_sw.js v1.65.0。 */   /* ★ v1.93.0(2026-09-12・老師回報三項:①字重自檢主控台警告(500/800 缺字會合成粗體字糊) ②讀取不到小遊戲排行榜 ③繼續荒島開發)—
    ①字重修正:#ver-chip .vl 500→400、#hero-modal .hm-name 800→900(字型鏈交集只有 400/700/900,不在清單內的字重缺字時瀏覽器會合成粗體,筆畫多的繁體字因此糊成一團)。
    ②週排行榜讀取失敗(主控台實證 firestore 429 resource-exhausted):mgWeekFetch 改為對 429 專屬重試(1.2s/3s/7s 指數後退+隨機抖動,最多 3 次),
      重試用盡仍失敗則退回 localStorage 本機備份(mg_week_cache,每次成功讀取都會存一份)渲染,不再整片空白;開機與登入後的兩個初次呼叫點各自加隨機延遲
@@ -13133,6 +13268,10 @@ function islDefaultSave(){
     hp: 100, hpMax: 100, hurt: false,   /* ★ v1.92.0 角色體力:錯誤行動會受傷,需在營地治療;hurt=true 時受傷未癒 */
     sk: { taken: {}, respec: 0 },   /* ★ v1.161.0 🌟 天賦星域：只存「點了哪些節點」與洗點次數；點數一律現算(islSkPts) */
     ails: {},   /* ★ v1.160.0 🤒 不良狀態 {beesting:{d:剩餘天數,day:得到那天}};資料表見 island_db D.STATUS */
+    pets: [],   /* ★ v1.163.0 🐾 已收服的夥伴 [{k:寵物鍵, lv, xp, bond, hp}];資料表見 island_db D.PETS */
+    party: [null, null, null],   /* ★ v1.163.0 🧭 探險編組:主角 + 最多 3 位隊友;每格 null 或 {t:'pet',k:'bear'} / {t:'friend',uid:'…'} */
+    petDex: {},   /* ★ v1.163.0 📖 夥伴圖鑑 {寵物鍵:第一次入隊那天};收服過就永久留著,放生也不會消失 */
+    cmds: { slots: [null, null, null] },   /* ★ v1.163.0 🎯 已裝設的特殊指令(上限 D.SK_CMD_SLOTS);解鎖與否看 sk.taken 的 SK_CMD_* 節點 */
     char: null,                                                     /* {name,body,skin,hair,hairC,eyeC,style} 創角完成才有 */
     stats: { dex: 2, mov: 2, pow: 2, wit: 4 }, statXp: { dex: 0, mov: 0, pow: 0, wit: 0 },
     skill: { gather: { lv: 1, xp: 0 }, chop: { lv: 1, xp: 0 }, fire: { lv: 1, xp: 0 }, build: { lv: 1, xp: 0 }, fish: { lv: 1, xp: 0 }, trash: { lv: 1, xp: 0 }, quarry: { lv: 1, xp: 0 }, defense: { lv: 1, xp: 0 }, cook: { lv: 1, xp: 0 }, farm: { lv: 1, xp: 0 }, ranch: { lv: 1, xp: 0 }, water: { lv: 1, xp: 0 }, research: { lv: 1, xp: 0 }, craft: { lv: 1, xp: 0 } },   /* ★ v1.91.0 P2-a 新增 fish/trash/quarry/defense;★ v1.94.0 P2-b 新增 cook/farm/ranch/water */
@@ -13172,6 +13311,34 @@ function islNormalize(d){
   if(!d.sk.taken || typeof d.sk.taken !== 'object') d.sk.taken = {};
   if(typeof d.sk.respec !== 'number') d.sk.respec = 0;   /* ★ v1.161.0 舊存檔補 🌟 天賦星域(空的=一點都沒點，舊玩家零影響；累積點數依戰績與天數自動補發) */
   if(!d.ails || typeof d.ails !== 'object') d.ails = {};   /* ★ v1.160.0 舊存檔補 🤒 不良狀態(空的=沒生病,舊玩家零影響) */
+  /* ★ v1.163.0 舊存檔補 🐾 夥伴/編組/圖鑑/特殊指令。全部空值起步 ⇒ 舊玩家載入後與 v1.162.0 行為完全相同,
+     ⚠ party 一律夾成長度 3(老師裁定:一場戰鬥固定主角 + 3 隊友),多的截掉、少的補 null,
+       不合法的格子(指向不存在的寵物鍵)直接清成 null,避免日後編組頁讀到 undefined 就整頁掛掉。 */
+  if(!d.pets || !(d.pets instanceof Array)) d.pets = [];
+  for(i = d.pets.length - 1; i >= 0; i--){
+    if(!d.pets[i] || !db.PETS[d.pets[i].k]){ d.pets.splice(i, 1); continue; }
+    if(typeof d.pets[i].lv !== 'number' || d.pets[i].lv < 1) d.pets[i].lv = 1;
+    if(d.pets[i].lv > db.PET_LV.MAX) d.pets[i].lv = db.PET_LV.MAX;
+    if(typeof d.pets[i].xp !== 'number') d.pets[i].xp = 0;
+    if(typeof d.pets[i].bond !== 'number') d.pets[i].bond = 0;
+    if(typeof d.pets[i].bondPt !== 'number') d.pets[i].bondPt = 0;
+    if(typeof d.pets[i].rest !== 'number') d.pets[i].rest = 0;   /* ★ v1.166.0 倒下那天的日序;rest === ISL.day 就當天不上場 */   /* ★ v1.164.0 親密度點數(bond 是由點數換算出來的階級,存兩欄是為了讓階級門檻日後可調而不用重算舊存檔) */
+  }
+  if(!d.party || !(d.party instanceof Array)) d.party = [null, null, null];
+  while(d.party.length < db.PARTY.MAX_ALLY) d.party.push(null);
+  if(d.party.length > db.PARTY.MAX_ALLY) d.party.length = db.PARTY.MAX_ALLY;
+  for(i = 0; i < d.party.length; i++){
+    z = d.party[i];
+    if(!z || typeof z !== 'object'){ d.party[i] = null; continue; }
+    if(z.t === 'pet' && !db.PETS[z.k]) d.party[i] = null;
+    else if(z.t !== 'pet' && z.t !== 'friend') d.party[i] = null;
+  }
+  if(!d.petDex || typeof d.petDex !== 'object') d.petDex = {};
+  if(!d.cmds || typeof d.cmds !== 'object') d.cmds = { slots: [] };
+  if(!d.cmds.slots || !(d.cmds.slots instanceof Array)) d.cmds.slots = [];
+  while(d.cmds.slots.length < db.SK_CMD_SLOTS) d.cmds.slots.push(null);
+  if(d.cmds.slots.length > db.SK_CMD_SLOTS) d.cmds.slots.length = db.SK_CMD_SLOTS;
+  for(i = 0; i < d.cmds.slots.length; i++){ if(d.cmds.slots[i] && !db.SK_CMDS[d.cmds.slots[i]]) d.cmds.slots[i] = null; }
   if(typeof d.camp.lv !== 'number' || !db.CAMP_LV[d.camp.lv]) d.camp.lv = 1;   /* ★ v1.94.0 營地 Lv1~3:格數 9/12/16,缺的補 null(不再因長度 ≠9 整個重置) */
   if(!d.camp.slots) d.camp.slots = [];
   while(d.camp.slots.length < db.CAMP_LV[d.camp.lv].n) d.camp.slots.push(null);
@@ -14780,7 +14947,7 @@ function islCreatePaint(){
   h += '<div class="prev"><div class="nm">捏出你在島上的樣子</div><div class="pv" id="isl-cr-prev">' + islChibiHtml(c, 'idle') + '</div>';
   h += '<input id="isl-cr-name" maxlength="8" placeholder="幫角色取個名字" value="' + islEsc(c.name) + '">';
   if(MG.user) h += '<button class="isl-btn ghost" onclick="islCreateApplyMain()">👤 一鍵套用我的主角造型</button>';
-  h += islIslandNamePickHtml('isl-cr', c.islandName) + '<div style="font-size:12px;opacity:.75;margin:2px 0 6px">用「形容詞＋名詞」兩個選單組合島名(可捲動,' + (db.ISLAND_ADJ.length * db.ISLAND_NOUN.length) + ' 種),也可以自己打;登島後角色面板還能改</div>'   /* ★ v1.116.0 老師:島名詞庫 70×62 下拉選單 */
+  h += islIslandNamePickHtml('isl-cr', c.islandName) + '<div class="isl-cr-hint" style="opacity:.75;margin:2px 0 6px">用「形容詞＋名詞」兩個選單組合島名(可捲動,' + (db.ISLAND_ADJ.length * db.ISLAND_NOUN.length) + ' 種),也可以自己打;登島後角色面板還能改</div>'   /* ★ v1.116.0 老師:島名詞庫 70×62 下拉選單 */
   h += '<button class="isl-btn gold big" onclick="islCreateConfirm()">✅ 就是這樣!</button></div>';
   h += '<div class="opts">';
   h += islLookSecsHtml(c, 'isl-create');   /* ★ v1.124.0 體型/膚色(臉)/髮型/服裝 四組改成同尺寸的預覽圖鈕,創角與「🎨 換造型」共用同一支 */
@@ -14852,7 +15019,10 @@ function islIslandNamePickHtml(pf, cur){
   h += '</select><select id="' + pf + '-noun" title="名詞">';
   for(i = 0; i < db.ISLAND_NOUN.length; i++) h += '<option value="' + i + '"' + (i === ni ? ' selected' : '') + '>' + islEsc(db.ISLAND_NOUN[i]) + '</option>';
   h += '</select><button type="button" class="isl-btn ghost" id="' + pf + '-roll" style="padding:6px 10px;font-size:14px">🎲</button></div>';
-  h += '<div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px"><span style="font-size:14px;opacity:.85">島名</span><input id="' + pf + '-island" maxlength="' + db.ISLAND_NAME_MAX + '" placeholder="島的名字" value="' + islEsc(cur) + '" style="flex:1;max-width:180px"></div>';
+  /* ★ v1.168.0 量測:這顆輸入框原本 inline 寫死 `max-width:180px`,inline 樣式贏過所有 CSS,
+     iPad 版字級放大之後島名字串比 180px 還寬(實測溢出 21~23px)。改成 class 由 CSS 控制,
+     iPad 才能同時放大字級與放寬上限。⚠ 「島名」兩個字也從 inline 14px 改成 class,否則 iPad 上會小到看不清。 */
+  h += '<div class="isl-namerow"><span class="lb">島名</span><input id="' + pf + '-island" class="isl-nameinput" maxlength="' + db.ISLAND_NAME_MAX + '" placeholder="島的名字" value="' + islEsc(cur) + '"></div>';
   return h;
 }
 function islIslandNamePickBind(pf){
@@ -15093,9 +15263,13 @@ function islSpawnDaily(zoneId){
     if(Math.abs(cand.x - sc.spawn0.x) < 2 && Math.abs(cand.y - sc.spawn0.y) < 2) continue;
     picks.push({ idx: picks.length, x: cand.x, y: cand.y, item: sc.pick.items[Math.floor(rnd() * sc.pick.items.length)], taken: daily.picked.indexOf(picks.length) >= 0 });
   }
-  /* ★ v1.121.0 踩地雷式遇敵點:可走格、離出生/出口/回營/解謎/地下入口 ≥3 格、離資源點/撿取物 ≥2 格、彼此 ≥4 格;拜訪好友島不生成 */
+  /* ★ v1.121.0 踩地雷式遇敵點:可走格、離出生/出口/回營/解謎/地下入口 ≥3 格、離資源點/撿取物 ≥2 格、彼此 ≥4 格;拜訪好友島不生成
+     ★ v1.166.0(老師需求⑤:野外遇敵率提高至每移動 15~30 步之間隨機遭遇)——
+       踩地雷式已由「步數制」(islEncStep)取代,這一整段刻意保留但**不再生成任何遇敵點**。
+       ⚠ 兩套並存會變成雙重觸發(走 20 步遇一次,又剛好踩到藏起來的點再遇一次),密到學生走不動;
+         老師若要改回舊制,把 D.ENC_STEP 整個拿掉即可——下面這行會自動回到舊行為。 */
   var mines = [], E = db.ENC && db.ENC[zoneId], zdef = db.zone(zoneId), fixed = [sc.spawn0, sc.exit, sc.campGate, sc.puzzle].concat(zoneId === 'ruins' && db.DUNGEON ? [db.DUNGEON.entry] : []), mrnd = islRng(islHash(seedUid + '|' + seedDay + '|' + zoneId + '|enc')), mcells;
-  if(E && !_IS.coop && ISL.day >= (E.from || 1) && zdef){
+  if(!db.ENC_STEP && E && !_IS.coop && ISL.day >= (E.from || 1) && zdef){
     mcells = islShuffleSeeded(cells, mrnd);
     for(i = 0; i < mcells.length && mines.length < E.n; i++){
       cand = mcells[i];
@@ -15119,6 +15293,22 @@ window.islLookSoon = function(){
 function islEnterZone(zoneId, cb){
   var db = islDB(), sc = db.SCENE[zoneId], zs = ISL.zones[zoneId], zm = $('isl-zone-map'), h = '', u, sp, i, n, first, npcSz;   /* ★ v1.152.0 npcSz 一定要在這裡宣告:v1.146.0 就是因為本函式漏了 var 宣告,第一行讀未宣告變數丟 ReferenceError,點任何區域都靜默失敗進不去 */   /* ★ v1.148.0 老師截圖回報「開始遊戲後第一張沙灘變成上下疊在一起」根因修復:zm 誤抓成外層容器 $('isl-zone')(#isl-zone 底下還有 #isl-zone-topinfo/#isl-joy/#isl-act-btn 三個常駐手足元素),下面 `zm.innerHTML = h` 把整個 #isl-zone 洗掉,連手足元素一起被拆掉;緊接著 islZoneTopInfo() 讀 $('isl-zone-topinfo') 已是 null → 丟例外(console 實證 Cannot set properties of null (setting 'innerHTML'))→ 函式提前中斷,連同後面重啟 rAF 迴圈的 `_IS.raf = requestAnimationFrame(islTick)` 都沒執行到,上一個畫面(大地圖)的動畫迴圈沒被换掉,新舊兩層畫面因此疊在一起,與 v1.146.0/v1.147.0 修的兩個成因(缺 var 宣告／CSS 排他)是同一種症狀的第三個根因。改回 `$('isl-zone-map')`──與全檔其餘 9 處消費點(islCamera/islNearCheck/islPickHtml/coop 對等玩家渲染/戰鬥面板等)完全同一口徑,#isl-zone-map 才是「場景內容容器」，#isl-zone 是外層固定殼；手足元素不再被清空。 */   /* ★ v1.143.0 老師回報「點地圖區域沒進去」根因修復:本函式從缺少這行 var 宣告,db/sc/zs/zm/h/u/sp/i/n/first 全部視為未宣告變數,第一次讀取 sc 就丟 ReferenceError,畫面卡在地圖(點擊後 700ms 靜默失敗,無任何提示) */
   setTimeout(islAmbSfxUpdate, 0);
+  /* ★ v1.165.0 🔍 環境觀察的掃描模式只對「當天、那一區」有效。
+     ⚠ 這個 class 掛在 #isl-zone-map 上,而 islEnterZone 只重寫它的 innerHTML、不會動 class,
+       不在這裡收掉的話,用過一次之後整座島每一區都會永遠開著透視。 */
+  try{ if(zm) zm.classList.toggle('scan', _IS.scanDay === ISL.day && _IS.scanZone === zoneId); }catch(_sc){}
+  /* ★ v1.164.0(老師需求 4)— 前往各區域探險時如果主角隊伍未滿,提醒玩家去招募隊友。
+     ⚠ 只提醒、不擋人(與下面森林那段同一個原則);每個遊戲日每一區各提醒一次,
+       門檻讀 D.ENC_TEAM_HINT(沙灘 0 位、中段 1~2 位、遺跡火山 3 位)。 */
+  try{
+    var _need = (db.ENC_TEAM_HINT && db.ENC_TEAM_HINT[zoneId]) || 0, _have = 0, _pi;
+    for(_pi = 0; _pi < ISL.party.length; _pi++){ if(ISL.party[_pi]) _have++; }
+    _IS._teamWarn = _IS._teamWarn || {};
+    if(_need > _have && _IS._teamWarn[zoneId] !== ISL.day){
+      _IS._teamWarn[zoneId] = ISL.day;
+      setTimeout(function(){ toast('🧭 這一區的魔物會成群出現,建議先招募隊友(目前 ' + _have + '/' + _need + ' 位)'); }, 1200);
+    }
+  }catch(_tw){}
   /* ★ v1.142.0(老師:「進森林之前要提醒玩家準備食物和製作基本的武器,否則戰鬥中可能會陷入苦戰」)—
      森林是第一個會遇敵開打的區域,學生常常空手進去被打到體力歸零。每個遊戲日只提醒一次。
      ⚠ 只提醒、不擋人:想硬闖是玩家的選擇,不該把他鎖在門外。
@@ -15169,6 +15359,7 @@ function islEnterZone(zoneId, cb){
   _IS.cx = (first ? first.x : sc.spawn0.x) * 64 + 32; _IS.cy = (first ? first.y : sc.spawn0.y) * 64 + 40;
   if(!islWalkable(_IS.cx, _IS.cy)){ _IS.cx = sc.spawn0.x * 64 + 32; _IS.cy = sc.spawn0.y * 64 + 40; }
   _IS.dir = 'd'; _IS.path = null; _IS.joy = null; _IS.near = null;
+  islEncReset(zoneId);   /* ★ v1.166.0 進到新區域:重抽「還要走幾步才遇敵」 */
   _IS.onMine = -1; _IS.safeCell = null; (function(){ var c0 = islCell(_IS.cx, _IS.cy), q; for(q = 0; q < _IS.mines.length; q++){ if(!_IS.mines[q].done && _IS.mines[q].x === c0.x && _IS.mines[q].y === c0.y) _IS.onMine = _IS.mines[q].idx; } })();   /* ★ v1.121.0 進場就站在遇敵點上(昨天逃跑/倒下的位置)不立刻再打,走開再回來才觸發 */
   islCharSpriteInit('isl-char');
   islZoneBind();
@@ -15345,7 +15536,8 @@ function islTick(t){
   islCamera(false);
   islNearCheck();
   islAmbWaterTick();   /* ★ v1.131.0 走近/走遠水邊 → 水聲跟著大小聲 */
-  if(moving && islMineCheck()) return;   /* ★ v1.121.0 踩到遇敵點 → 魔物跳出 → 回合制戰鬥(islMineCheck 內已停 rAF) */
+  if(moving && islEncStep()) return;   /* ★ v1.166.0 步數制遇敵(取代 v1.121.0 的踩地雷式;islEncStep 內已停 rAF) */
+  if(moving && islMineCheck()) return;   /* ★ v1.121.0 踩到遇敵點 → 魔物跳出 → 回合制戰鬥(舊制;D.ENC_STEP 存在時不會有遇敵點,這行等於不作用) */
   _IS.raf = requestAnimationFrame(islTick);
 }
 function islCharPaint(anim, rootId, skipPos){
@@ -15471,6 +15663,10 @@ function islTrainerTalk(id){
     ISL.train[id] = wk;
     if(passed){ ISL.stats[tr.stat] = Math.min(db.STAT_MAX, ISL.stats[tr.stat] + 1); lvup = islSkillGain(tr.skill, 5); islLog('🎓 跟 ' + tr.e + tr.n + ' 上課,' + st.e + st.n + ' +1', tr.img); playSfx('sfx-statup', 0.5); islFxAt($('isl-zone'), 200, 200, 'glow'); }
     else playSfx('sfx-cancel', 0.4);
+    /* ★ v1.165.0(老師需求①)— 完成課題後就可以邀請到營地居住成為隊友。
+       ⚠ 只有老師點名的三位(台灣黑熊/梅花鹿/領角鴞)＋海鷗小白會入隊,陸蟹師傅維持純訓練師。
+       ⚠ 邀請視窗排在結算視窗「之後」才跳,不然學生會先看到招募卡、反而錯過上課結果。 */
+    if(passed && islDB().PETS[id] && !islPetHas(id)) setTimeout(function(){ islPetInvite(id); }, 300);
     islModal('<h3>' + (passed ? '🎓 學會了!' : '📚 再多練練') + '</h3><p>答對 ' + right + '/3 題' + (passed ? '　' + st.e + islEsc(st.n) + ' +1(現在 ' + ISL.stats[tr.stat] + ')　' + db.SKILLS[tr.skill].e + islEsc(db.SKILLS[tr.skill].n) + ' EXP +5' + (lvup ? ' ⬆ Lv' + ISL.skill[tr.skill].lv : '') : '，這週的課先上到這裡,下週再來挑戰。') + '</p><p style="font-size:14px;opacity:.85">💡 ' + islEsc(tr.lesson) + '</p>', [{ t: passed ? '太好了' : '好', cls: 'gold', cb: function(){ islResume(); } }]);
     islHud(); islSave('train');
   }
@@ -15481,6 +15677,11 @@ function islGullTalk(){
   if(!islCampHasBld('campfire')) lines = ['「嘎!先去採椰葉、野果,然後回營地蓋營火。有火,晚上才安全。」'];
   else if(!ISL.zones.forest.unlocked) lines = ['「嘎!營火有了,森林可以去了。那裡有很多木材。」'];
   else lines = ['「嘎!今天想做什麼?記得 AP 用完就回營休息,明天東西會長回來。」', '「這座島很大,以後我再帶你去更遠的地方。」'];
+  /* ★ v1.165.0 小白的「課題」＝帶你撐過最前面那段(蓋好營火、開通森林)。做到了就可以邀請牠住進營地。 */
+  if(islCampHasBld('campfire') && ISL.zones.forest.unlocked && !islPetHas('gull')){
+    islDialog(lines, { who: 'gull', mood: 'happy' }, function(){ islPetInvite('gull'); });
+    islCodexAdd('gull'); return;
+  }
   islDialog(lines, { who: 'gull', mood: 'happy' });
   islCodexAdd('gull');   /* ★ v1.98.0 */
 }
@@ -15910,6 +16111,9 @@ function islActResult(){
   var db = islDB(), A = _IS.act, a = db.ACTS[A.id], sk = ISL.skill[a.skill], stars = islClamp(A.stars + (A.crit ? 1 : 0), 1, 3), gain = [], h = '', i, n, put, xp, lvup = false, statUp = false, ratio = A.knowMax ? A.know / A.knowMax : 0, zm, node, note, built = false, slotIdx, bld;
   islActTimerStop(); islDragTeardown();
   if(islSkEff('craftStar') > 0 && (A.id === 'build' || A.id === 'craft')) stars = islClamp(stars + islSkEff('craftStar'), 1, 3);   /* ★ v1.162.0 🔋 蓄力：建造/製作品質 ★ +1 */
+  /* ★ v1.165.0 🎯 特殊指令「熟練採集」:一次性,用掉就清掉。
+     ⚠ 刻意不寫進 note —— note 在下面各個活動分支會被覆蓋,寫進去等於白寫;改用 toast。 */
+  if(_IS.qpick){ stars = 3; _IS.qpick = false; try{ toast('🧺 熟練採集發動:直接判定 ★★★'); }catch(_qp){} }
   ISL.ap = Math.max(0, ISL.ap - a.ap);
   /* ★ v1.133.0 AP 快用完的提醒。⚠ apZero(用完)已經由 v1.119.0 的 islTiredCheck 泡泡負責,
      這裡只管「還剩一點點」,兩邊條件互斥(>0 才講 apLow),不會兩題泡泡搶同一個位置。 */
@@ -15955,7 +16159,12 @@ function islActResult(){
   /* ★ v1.94.0 P2-b:馴養(動物進畜欄)、烹飪(扣食材出料理)、播種(寫入田地)、水道(Grid 拼圖蓋建築) */
   if(A.id === 'tame'){
     node = A.ctx.node;
-    if(A.tamed){ ISL.camp.pen.animals.push({ k: node.gives, q: stars, fed: false }); gain.push({ id: node.gives, n: 1, q: stars, animal: true }); note = '🐾 ' + db.ANIMALS[node.gives].n + '跟你回營地了!記得每天餵牠。'; }
+    if(A.tamed){ ISL.camp.pen.animals.push({ k: node.gives, q: stars, fed: false }); gain.push({ id: node.gives, n: 1, q: stars, animal: true }); note = '🐾 ' + db.ANIMALS[node.gives].n + '跟你回營地了!記得每天餵牠。';
+      /* ★ v1.165.0(老師裁定:12 隻寵物走野外馴養)— 馴養成功時,再擲一次「這一區的稀有夥伴有沒有現身」。
+         刻意不另開資源點與圖片:蹲在那裡慢慢接近動物,本來就是最有機會碰到別種動物的時候,
+         而且馴養成功率的天賦(tameP)可以順便加成到這裡,既有節點不會變成只對畜欄動物有用。 */
+      try{ islPetWildRoll(); }catch(_pw){}
+    }
     else note = '牠被嚇跑了……下次慢一點靠近。(AP 照扣)';
     node.taken = true; islDailyFor(_IS.zone).taken.push(node.idx);
     if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔 */
@@ -16302,6 +16511,9 @@ function islSubItems(cat){
     if(islAilList().length) L.push({ e:'🤒', t:'身體狀況', f:'islAilOpen()', cls:'warn' });
     if(islSkEff('feast') > 0) L.push({ e:'🍽', t:'營地聚餐', f:'islSkFeast()', cls: (ISL.skFeastDay === ISL.day ? '' : 'gold') });   /* ★ v1.162.0 */
     L.push({ e:'🌟', t:'天賦星域' + (islSkPts() ? '（' + islSkPts() + '）' : ''), f:'islSkOpen()', cls: islSkPts() ? 'gold' : '' });   /* ★ v1.161.0 有未使用點數時標金色 */   /* ★ v1.160.0 有不良狀態才出現 */
+    L.push({ e:'🧭', t:'探險編組' + '（' + islPartyCount() + '/' + db.PARTY.MAX_ALLY + '）', f:'islPartyOpen()', cls: (islPartyCount() < db.PARTY.MAX_ALLY && islPetCount() > islPartyCount()) ? 'gold' : '' });   /* ★ v1.165.0 有夥伴閒置又沒排滿時標金色 */
+    L.push({ e:'📖', t:'夥伴圖鑑', f:'islPetDexOpen()', n: islPetCount() });   /* ★ v1.165.0 */
+    L.push({ e:'🎯', t:'特殊指令' + (islCmdUnlocked().length ? '（' + islCmdEquipped().length + '/' + db.SK_CMD_SLOTS + '）' : ''), f:'islCmdOpen()', cls: (islCmdUnlocked().length > islCmdEquipped().length) ? 'gold' : '' });   /* ★ v1.165.0 有解鎖但沒裝設時標金色 */
     L.push({ e:'🎒', t:'物品包', f:'islBagOpen()' });
     L.push({ e:'🗡', t:'武器', f:'islWeaponOpen()' });   /* ★ v1.121.0 */
     L.push(islIsGm() ? { e:'🎨', t:'換造型(GM)', f:'islLookOpen()' } : { e:'🎨', t:'換造型(尚未開放)', f:'islLookSoon()' });   /* ★ v1.148.0 老師「換造型功能先開啟讓 GM 可以使用」——依 islIsGm() 分流:GM 直接開 islLookOpen() 正式面板,一般玩家維持 v1.142.0 的「尚未開放」提示不變,正式對全體開放時把整行改回單純 `L.push({e:'🎨',t:'換造型',f:'islLookOpen()'});` 即可。 */
@@ -16331,6 +16543,7 @@ function islSubItems(cat){
     L.push({ e:'🗑', t:'重新開始', f:'islResetAsk()', cls:'ghost' });
   } else {
     L.push({ e:'🗺', t:'出發', f:'islGoMap()', cls:'gold' });
+    if(islCmdEquipped('field').length) L.push({ e:'🎯', t:'特殊指令', f:'islCmdField()', cls:'gold' });   /* ★ v1.165.0 只在真的裝了野外類指令時才出現,不放空按鈕 */
     L.push({ e:'📖', t:'圖鑑', f:'islCodexOpen()', n: islCodexCount() });
     L.push({ e:'📅', t:'島上日誌', f:'islCalOpen()' });   /* ★ v1.125.0 日曆(重要履歷) */
   }
@@ -16469,6 +16682,7 @@ function islNewDay(){
   setTimeout(function(){
     var wxOld = islWeatherOf(ISL.day);   /* ★ v1.100.0 昨天的天氣決定農田/建築結果;今天的天氣顯示在醒來畫面 */
     ISL.day += 1; ISL.counters.days = ISL.day;
+    try{ islPetsDayTogether(); }catch(_pd){}   /* ★ v1.167.0 新的一天:編組裡的夥伴親密度 +1(D.PET_BOND_GAIN.dayTogether) */
     var tentB = islCampHasBld('tent'), bucketB = islCampHasBld('bucket'), canalB = islCampHasBld('canal'), comfort = islComfort(), dayNote = islNewDayFarmPen(wxOld);   /* ★ v1.94.0 P2-b */
     if(wxOld === 'typhoon'){ var sl = ISL.camp.slots, di, dmg = 0; for(di = 0; di < sl.length; di++){ if(sl[di]){ sl[di].hp = Math.max(0, sl[di].hp - (sl[di].bld === 'wall' ? 5 : 10)); dmg++; } } if(dmg) dayNote = (dayNote ? dayNote + '　' : '') + '🌀 颱風過後 ' + dmg + ' 棟建築耐久 −10'; }
     if(wxOld === 'rain' && bucketB){ islStoreAdd('water', 1, 3); dayNote = (dayNote ? dayNote + '　' : '') + '🌧 雨水多接 3 淡水'; }
@@ -16586,6 +16800,338 @@ window.islStoreOpen = function(){
      左欄 = 「看的」:立繪、島名/改名/換造型、裝備與戰鬥數值、統計。
      右欄 = 「讀的」:四維能力 + 生存技能,只有這一欄自己捲(max-height:56vh)。
    ⚠ 右欄必須 min-width:0,否則技能說明長字串會把 flex 欄擐爆把左欄擠出畫面(iPad 實測)。 */
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.165.0(P3)— 🐾 夥伴圖鑑 / 🧭 探險編組 / 🎯 特殊指令
+ *   ⚠ 三個入口都掛在 👤 角色子選單,與既有的天賦星域/武器/物品包同一層,學生不必重新學位置。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function islPetHas(k){ return !!islPetSave(k); }
+function islPetCount(){ return (ISL.pets || []).length; }
+function islPartyCount(){ var i, n = 0; for(i = 0; i < ISL.party.length; i++){ if(ISL.party[i]) n++; } return n; }
+function islPartyHasPet(k){ var i; for(i = 0; i < ISL.party.length; i++){ if(ISL.party[i] && ISL.party[i].t === 'pet' && ISL.party[i].k === k) return true; } return false; }
+/* 取得一位新夥伴。第一次取得會自動補進空的編組格——不然學生招募完還要再進一次編組頁才用得到,
+   而低年級最常見的回報就是「我明明抓到了為什麼戰鬥沒出現」。 */
+function islPetGet(k, quiet){
+  var db = islDB(), p = db.PETS[k], i;
+  if(!p || islPetHas(k)) return false;
+  ISL.pets.push({ k: k, lv: 1, xp: 0, bond: 0, bondPt: 0 });
+  ISL.petDex[k] = ISL.day;
+  for(i = 0; i < ISL.party.length; i++){ if(!ISL.party[i]){ ISL.party[i] = { t: 'pet', k: k }; break; } }
+  try{ islCodexAdd(k); }catch(_c){}
+  try{ islLog('🐾 ' + p.e + p.n + ' 成為夥伴了', 'bt_pet_' + k + '_idle'); }catch(_l){}
+  islSave('pet');
+  if(!quiet){
+    playSfx('sfx-applause', 0.5);
+    islModal('<h3>🐾 ' + p.e + ' ' + islEsc(p.n) + ' 加入了!</h3>' +
+      '<p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n + '——' + islEsc(db.PET_TYPES[p.type].d) : '') + '</p>' +
+      '<p>專屬指令:' + db.PET_CMDS[p.cmd].e + '<b>' + islEsc(db.PET_CMDS[p.cmd].n) + '</b>　' + islEsc(db.PET_CMDS[p.cmd].d) + '</p>' +
+      '<p>天賦:' + islEsc(p.talent) + '</p>' +
+      '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(p.sci) + '</p>' +
+      '<p style="font-size:14px;opacity:.75">已經自動排進 🧭 探險編組;要換人請到 👤 角色 → 🧭 探險編組。</p>',
+      [{ t: '太好了', cls: 'gold' }]);
+  }
+  return true;
+}
+/* 邀請一位 NPC 動物到營地住下(完成牠的課題之後) */
+function islPetInvite(k){
+  var db = islDB(), p = db.PETS[k];
+  if(!p || islPetHas(k)) return;
+  islModal('<h3>' + p.e + ' ' + islEsc(p.n) + '</h3>' +
+    '<p>「你學得很認真。要不要……我搬到你的營地去住?這樣我就能跟你一起去探險了。」</p>' +
+    '<p style="font-size:15px;opacity:.85">加入後牠會成為 ' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + ',' + islEsc(db.PET_TYPES[p.type].d) + '。</p>',
+    [{ t: '以後再說', cls: 'ghost' },
+     { t: '🏕 邀請牠住進營地', cls: 'gold', cb: function(){ islPetGet(k); } }]);
+}
+/* 野外馴養成功時,擲一次「這一區的稀有夥伴有沒有現身」。
+   ⚠ 機率讀 D.PETS[].get.p,並吃既有的 tameP 天賦(馴養成功率);一次只會遇到一隻。 */
+function islPetWildRoll(){
+  var db = islDB(), pool = [], i, k, p, pick, bonus = islSkEff('tameP') || 0;
+  for(i = 0; i < db.PET_ORDER.length; i++){
+    k = db.PET_ORDER[i]; p = db.PETS[k];
+    if(p.get.how !== 'tame' || p.get.zone !== _IS.zone || islPetHas(k)) continue;
+    pool.push(k);
+  }
+  if(!pool.length) return;
+  pick = pool[Math.floor(Math.random() * pool.length)]; p = db.PETS[pick];
+  if(Math.random() * 100 >= p.get.p + bonus / 2) return;
+  setTimeout(function(){
+    playSfx('sfx-summon-smoke', 0.4);
+    islModal('<h3>👀 草叢裡還有別的動物!</h3>' +
+      '<p>' + p.e + ' <b>' + islEsc(p.n) + '</b> 一直在旁邊看著你。你放輕動作,慢慢伸出手——</p>' +
+      '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(p.sci) + '</p>',
+      [{ t: '先不管牠', cls: 'ghost' },
+       { t: '🐾 試著跟牠做朋友', cls: 'gold', cb: function(){ islPetGet(pick); } }]);
+  }, 1400);
+}
+/* ── 📖 夥伴圖鑑 ── */
+window.islPetDexOpen = function(){
+  var db = islDB(), h = '', i, k, p, rec, got, ps;
+  playSfx('sfx-tap', 0.3);
+  h += '<div class="isl-bagbox wide full"><h3>📖 夥伴圖鑑 <span style="font-size:16px;opacity:.85">' + islPetCount() + '/' + db.PET_ORDER.length + '</span><span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';
+  h += '<div class="isl-petgrid">';
+  for(i = 0; i < db.PET_ORDER.length; i++){
+    k = db.PET_ORDER[i]; p = db.PETS[k]; rec = islPetSave(k); got = !!rec;
+    ps = got ? islPetStats(k, rec.lv, rec.bond) : null;
+    h += '<button class="isl-petcard' + (got ? '' : ' lock') + (islPartyHasPet(k) ? ' inparty' : '') + '" data-act="pet" data-k="' + k + '">' +
+      '<span class="pe">' + (got ? p.e : '❔') + '</span>' +
+      '<span class="pn">' + (got ? islEsc(p.n) : '???') + '</span>' +
+      '<span class="pt">' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + '</span>' +
+      (got ? '<span class="pl">Lv' + rec.lv + '　' + db.PET_BOND[rec.bond].e + '</span><span class="px">❤️' + ps.hp + '　⚔' + ps.atk + '　🛡' + ps.def + '　💨' + ps.spd + '</span>'
+           : '<span class="pl">' + islEsc(islPetGetHint(p)) + '</span>') +
+      (islPartyHasPet(k) ? '<span class="pin">🧭 編組中</span>' : '') + '</button>';
+  }
+  h += '</div></div></div>';
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act');
+    if(a === 'close') islModalClose();
+    else if(a === 'pet') islPetCardOpen(t.getAttribute('data-k'));
+  }, { wide: true });
+};
+function islPetGetHint(p){
+  var db = islDB();
+  if(p.get.how === 'npc') return '完成牠的課題後邀請入營';
+  if(p.get.how === 'shop') return '🦦 阿獺換購 🐚' + p.get.price;
+  return '在' + (db.zone(p.get.zone) ? db.zone(p.get.zone).n : p.get.zone) + '馴養時有機會遇到';
+}
+function islPetCardOpen(k){
+  var db = islDB(), p = db.PETS[k], rec = islPetSave(k), ps, h = '', btns = [], cmd = db.PET_CMDS[p.cmd], nxt;
+  h = '<h3>' + (rec ? p.e : '❔') + ' ' + (rec ? islEsc(p.n) : '???') + '</h3>';
+  if(!rec){
+    h += '<p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n : '') + '</p>';
+    h += '<p>取得方式:' + islEsc(islPetGetHint(p)) + '</p>';
+    if(p.get.how === 'shop'){
+      h += '<p style="font-size:15px;opacity:.85">阿獺說這一隻很難找,要用貝幣跟他換。你現在有 🐚' + ISL.shell + '。</p>';
+      btns.push({ t: '🦦 用 🐚' + p.get.price + ' 換', cls: ISL.shell >= p.get.price ? 'gold' : 'ghost', cb: function(){
+        if(ISL.shell < p.get.price){ islModal('<h3>🐚 貝幣不夠</h3><p>還差 ' + (p.get.price - ISL.shell) + ' 個貝幣。</p>', [{ t: '好', cb: function(){ islPetDexOpen(); } }]); return; }
+        ISL.shell -= p.get.price; islPetGet(k); islHud();
+      } });
+    }
+    btns.push({ t: '關閉', cls: 'ghost', cb: function(){ islPetDexOpen(); } });
+    islModal(h, btns); return;
+  }
+  ps = islPetStats(k, rec.lv, rec.bond);
+  nxt = (rec.lv >= db.PET_LV.MAX) ? 0 : (db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1));
+  h += '<p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n + '——' + islEsc(db.PET_TYPES[p.type].d) : '') + '</p>';
+  h += '<p><b>Lv' + rec.lv + '</b>' + (nxt ? '　EXP ' + rec.xp + '/' + nxt : '　(已滿級)') + '　親密度 ' + db.PET_BOND[rec.bond].e + islEsc(db.PET_BOND[rec.bond].n) + '(' + islEsc(db.PET_BOND[rec.bond].d) + ')</p>';
+  h += '<p>❤️ ' + ps.hp + '　⚔ ' + ps.atk + '　🛡 ' + ps.def + '　💨 ' + ps.spd + '</p>';
+  h += '<p>專屬指令:' + cmd.e + '<b>' + islEsc(cmd.n) + '</b>(冷卻 ' + cmd.cd + ' 回合)<br>' + islEsc(cmd.d) + '</p>';
+  h += '<p>天賦:' + islEsc(p.talent) + '</p>';
+  h += '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(p.sci) + '</p>';
+  btns.push({ t: '🍖 餵食(親密度 +' + db.PET_BOND_GAIN.feed + ')', cls: 'ghost', cb: function(){ islPetFeed(k); } });
+  if(islPartyHasPet(k)) btns.push({ t: '🧭 已在編組中', cls: 'ghost' });
+  else if(islPartyCount() < db.PARTY.MAX_ALLY) btns.push({ t: '🧭 加入編組', cls: 'gold', cb: function(){ var i; for(i = 0; i < ISL.party.length; i++){ if(!ISL.party[i]){ ISL.party[i] = { t: 'pet', k: k }; break; } } playSfx('sfx-ok', 0.4); islSave('party'); islPartyOpen(); } });
+  else btns.push({ t: '🧭 編組已滿(去換人)', cls: 'ghost', cb: function(){ islPartyOpen(); } });
+  btns.push({ t: '關閉', cls: 'ghost', cb: function(){ islPetDexOpen(); } });
+  islModal(h, btns);
+}
+/* ★ v1.167.0 餵食:花一道料理換親密度(D.PET_BOND_GAIN.feed)。
+   ⚠ 只吃「料理」不吃生食材——餵生肉給動物在自然課上是錯誤示範,而且料理本來就是學生自己煮的成果。 */
+function islPetFeed(k){
+  var db = islDB(), rec = islPetSave(k), p = db.PETS[k], s = ISL.bag.slots, i, d, list = [], h, bs, j;
+  if(!rec) return;
+  for(i = 0; i < s.length; i++){ d = islItemDef(s[i].id); if(d && d.cat === 'dish') list.push({ i: i, d: d, q: s[i].q, n: s[i].n }); }
+  if(!list.length){ islModal('<h3>🍖 餵食 ' + p.e + islEsc(p.n) + '</h3><p>物品包裡沒有料理。先回營地的營火煮一道吧!</p>', [{ t: '知道了', cls: 'gold', cb: function(){ islPetCardOpen(k); } }]); return; }
+  h = '<h3>🍖 餵 ' + p.e + ' ' + islEsc(p.n) + ' 吃什麼?</h3><div class="isl-pickwrap">';
+  for(i = 0; i < list.length; i++){ h += '<button class="isl-recipe can" data-i="' + list[i].i + '"><span class="rn">' + list[i].d.e + ' ' + islEsc(list[i].d.n) + ' ×' + list[i].n + '</span></button>'; }
+  h += '</div>';
+  islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islPetCardOpen(k); } }]);
+  bs = $('isl-modal').querySelectorAll('button[data-i]');
+  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){
+    ev.stopPropagation();
+    var ix = parseInt(this.getAttribute('data-i'), 10), it = ISL.bag.slots[ix], q;
+    if(!it) return;
+    islModalClose();
+    it.n -= 1; if(it.n <= 0) ISL.bag.slots.splice(ix, 1);
+    rec.bondPt = Math.min(db.PET_BOND_GAIN.cap, (rec.bondPt | 0) + db.PET_BOND_GAIN.feed);
+    for(q = db.PET_BOND.length - 1; q >= 0; q--){ if(rec.bondPt >= db.PET_BOND[q].need){ rec.bond = q; break; } }
+    playSfx('sfx-heal', 0.45); toast(p.e + ' ' + p.n + ' 很開心!親密度 ' + db.PET_BOND[rec.bond].e + db.PET_BOND[rec.bond].n);
+    islSave('feed'); islPetCardOpen(k);
+  }; }
+}
+/* ── 🧭 探險編組 ── */
+window.islPartyOpen = function(){
+  /* ★ 老師裁定 2:每次開編組頁選定好友時重抓快照 ⇒ 一進頁面就先重抓一次好友名片,
+     學生按下「選這位好友」拿到的一定是最新的等級,不會用到幾天前的舊快照。 */
+  playSfx('sfx-tap', 0.3);
+  if(MG.user && MG.fb && ISL.friends && ISL.friends.length) islFriendsRefresh(function(){ islPartyPaint(); });
+  else islPartyPaint();
+};
+function islPartyPaint(){
+  var db = islDB(), h = '', i, slot, u, line = [], p, rec, f;
+  /* 站位預覽:由前鋒到後排(老師指定:友軍右側第一位是最前鋒) */
+  line.push({ e: '🧍', n: '主角', row: db.PARTY.ROW.hero });
+  for(i = 0; i < ISL.party.length; i++){
+    slot = ISL.party[i]; if(!slot) continue;
+    if(slot.t === 'pet' && db.PETS[slot.k]) line.push({ e: db.PETS[slot.k].e, n: db.PETS[slot.k].n, row: db.PET_TYPES[db.PETS[slot.k].type].row });
+    else if(slot.t === 'friend'){ f = ISL.friendCache[slot.uid]; line.push({ e: '🧑', n: ((f && f.name) || '好友') + '(借用)', row: db.PET_TYPES.atk.row }); }
+  }
+  line.sort(function(a, b){ return a.row - b.row; });
+  h += '<div class="isl-bagbox wide full"><h3>🧭 探險編組 <span style="font-size:16px;opacity:.85">主角 + ' + islPartyCount() + '/' + db.PARTY.MAX_ALLY + ' 位隊友</span><span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';
+  h += '<div class="isl-formation"><div class="ftt">戰鬥站位(最右邊是最前鋒,最先被攻擊)</div><div class="frow">';
+  for(i = line.length - 1; i >= 0; i--){ h += '<span class="fu"><b>' + line[i].e + '</b>' + islEsc(line[i].n) + '</span>'; }
+  h += '</div><div class="fhint">🛡 坦克型站最前面並會代替後排承受攻擊　💚 治療型站最後面最安全</div></div>';
+  h += '<div class="isl-slots">';
+  for(i = 0; i < ISL.party.length; i++){
+    slot = ISL.party[i];
+    if(slot && slot.t === 'pet' && db.PETS[slot.k]){
+      p = db.PETS[slot.k]; rec = islPetSave(slot.k);
+      h += '<div class="isl-slot"><div class="sh">隊友 ' + (i + 1) + (rec && rec.rest === ISL.day ? '（💤 休息中）' : '') + '</div><button class="sb" data-act="pick" data-i="' + i + '"><span class="se">' + p.e + '</span><span class="sn">' + islEsc(p.n) + '</span><span class="sx">' + (rec && rec.rest === ISL.day ? '💤 今天受傷休息,明天回來' : 'Lv' + (rec ? rec.lv : 1) + '　' + db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n) + '</span></button><button class="isl-btn ghost" data-act="clear" data-i="' + i + '">移出</button></div>';
+    } else if(slot && slot.t === 'friend'){
+      f = ISL.friendCache[slot.uid];
+      h += '<div class="isl-slot"><div class="sh">隊友 ' + (i + 1) + '</div><button class="sb" data-act="pick" data-i="' + i + '"><span class="se">🧑</span><span class="sn">' + islEsc((f && f.name) || '好友') + '</span><span class="sx">借用版 Lv' + ((f && f.defLv) || 1) + '　不可更改・不會升級</span></button><button class="isl-btn ghost" data-act="clear" data-i="' + i + '">移出</button></div>';
+    } else {
+      h += '<div class="isl-slot empty"><div class="sh">隊友 ' + (i + 1) + '</div><button class="sb" data-act="pick" data-i="' + i + '"><span class="se">➕</span><span class="sn">空位</span><span class="sx">點一下選夥伴或好友</span></button></div>';
+    }
+  }
+  h += '</div>';
+  if(!islPetCount()) h += '<p style="opacity:.85">還沒有任何夥伴。先去找 🐻 台灣黑熊、🦉 領角鴞、🦌 梅花鹿 上課,或在野外 🐾 馴養時碰碰運氣。</p>';
+  h += '</div></div>';
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act'), i2 = parseInt(t.getAttribute('data-i'), 10);
+    if(a === 'close') islModalClose();
+    else if(a === 'clear'){ ISL.party[i2] = null; playSfx('sfx-cancel', 0.35); islSave('party'); islPartyPaint(); }
+    else if(a === 'pick') islPartyPick(i2);
+  }, { wide: true });
+}
+function islPartyPick(idx){
+  var db = islDB(), h = '', i, k, p, rec, f, any = false;
+  h = '<h3>🧭 隊友 ' + (idx + 1) + ' 要選誰?</h3><div class="isl-pickwrap">';
+  for(i = 0; i < db.PET_ORDER.length; i++){
+    k = db.PET_ORDER[i]; rec = islPetSave(k); if(!rec) continue;
+    p = db.PETS[k]; any = true;
+    h += '<button class="isl-recipe can" data-p="' + k + '"' + (islPartyHasPet(k) ? ' disabled' : '') + '><span class="rn">' + p.e + ' ' + islEsc(p.n) + ' Lv' + rec.lv + '　' + db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n + (islPartyHasPet(k) ? '(已在隊上)' : '') + '</span></button>';
+  }
+  for(i = 0; i < (ISL.friends || []).length; i++){
+    f = ISL.friendCache[ISL.friends[i].uid]; if(!f) continue; any = true;
+    h += '<button class="isl-recipe can" data-f="' + ISL.friends[i].uid + '"><span class="rn">🧑 ' + islEsc(f.name || '好友') + '(借用 Lv' + (f.defLv || 1) + ')　⚠ 不可更改屬性裝備・不會升級</span></button>';
+  }
+  h += '</div>';
+  if(!any) h += '<p>還沒有可以上場的夥伴或好友。</p>';
+  islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islPartyPaint(); } }]);
+  var bs = $('isl-modal').querySelectorAll('button[data-p],button[data-f]'), j;
+  for(j = 0; j < bs.length; j++){
+    bs[j].onclick = function(ev){
+      ev.stopPropagation();
+      if(this.disabled) return;
+      var pk = this.getAttribute('data-p'), fu = this.getAttribute('data-f'), q;
+      islModalClose(); playSfx('sfx-ok', 0.4);
+      if(pk) ISL.party[idx] = { t: 'pet', k: pk };
+      else {
+        /* 借用版好友:同一場只允許一位(D.PARTY_FRIEND.MAX),避免整隊都是別人的角色 */
+        for(q = 0; q < ISL.party.length; q++){ if(q !== idx && ISL.party[q] && ISL.party[q].t === 'friend') ISL.party[q] = null; }
+        ISL.party[idx] = { t: 'friend', uid: fu };
+      }
+      islSave('party'); islPartyPaint();
+    };
+  }
+}
+/* ── 🎯 特殊指令:解鎖(天賦星域點亮) → 裝設(能力頁,上限 D.SK_CMD_SLOTS) → 野外/戰鬥按鈕 ── */
+function islCmdUnlocked(){
+  var db = islDB(), out = [], i, n;
+  for(i = 0; i < db.SK_NODES.length; i++){ n = db.SK_NODES[i]; if(n.cmd && ISL.sk.taken[n.id] && out.indexOf(n.cmd) < 0) out.push(n.cmd); }
+  return out;
+}
+function islCmdEquipped(where){
+  var db = islDB(), out = [], i, id, d;
+  for(i = 0; i < ISL.cmds.slots.length; i++){
+    id = ISL.cmds.slots[i]; if(!id) continue;
+    d = db.SK_CMDS[id]; if(!d) continue;
+    if(where && d.where !== where && d.where !== 'both') continue;
+    out.push(id);
+  }
+  return out;
+}
+window.islCmdOpen = function(){
+  var db = islDB(), h = '', i, id, d, un = islCmdUnlocked();
+  playSfx('sfx-tap', 0.3);
+  h += '<div class="isl-bagbox wide full"><h3>🎯 特殊指令 <span style="font-size:16px;opacity:.85">裝設 ' + islCmdEquipped().length + '/' + db.SK_CMD_SLOTS + '</span><span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';
+  h += '<p style="opacity:.85">在 🌟 天賦星域點亮「特殊指令星域」的節點就會解鎖;裝設好的指令會出現在野外探索與戰鬥畫面,使用時消耗 ⚡AP。</p>';
+  h += '<div class="isl-slots">';
+  for(i = 0; i < ISL.cmds.slots.length; i++){
+    id = ISL.cmds.slots[i]; d = id ? db.SK_CMDS[id] : null;
+    h += '<div class="isl-slot' + (d ? '' : ' empty') + '"><div class="sh">指令格 ' + (i + 1) + '</div>' +
+      '<button class="sb" data-act="set" data-i="' + i + '"><span class="se">' + (d ? d.e : '➕') + '</span><span class="sn">' + (d ? islEsc(d.n) : '空格') + '</span><span class="sx">' + (d ? (d.where === 'field' ? '野外' : (d.where === 'battle' ? '戰鬥' : '野外+戰鬥')) + '・⚡' + d.ap : '點一下裝設') + '</span></button>' +
+      (d ? '<button class="isl-btn ghost" data-act="unset" data-i="' + i + '">卸下</button>' : '') + '</div>';
+  }
+  h += '</div>';
+  h += '<h4>已解鎖(' + un.length + '/' + 8 + ')</h4><div class="isl-pickwrap">';
+  if(!un.length) h += '<p style="opacity:.85">還沒解鎖任何特殊指令。到 🌟 天賦星域 右下角的「🎯 特殊指令星域」點亮節點吧。</p>';
+  for(i = 0; i < un.length; i++){ d = db.SK_CMDS[un[i]]; h += '<div class="isl-recipe"><span class="rn">' + d.e + ' <b>' + islEsc(d.n) + '</b>　' + (d.where === 'field' ? '野外' : (d.where === 'battle' ? '戰鬥' : '野外+戰鬥')) + '・⚡' + d.ap + '<br>' + islEsc(d.d) + '<br><span style="opacity:.8">🔬 ' + islEsc(d.sci) + '</span></span></div>'; }
+  h += '</div></div></div>';
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act'), i2 = parseInt(t.getAttribute('data-i'), 10);
+    if(a === 'close') islModalClose();
+    else if(a === 'unset'){ ISL.cmds.slots[i2] = null; playSfx('sfx-cancel', 0.35); islSave('cmd'); islCmdOpen(); }
+    else if(a === 'set') islCmdSetPick(i2);
+  }, { wide: true });
+};
+function islCmdSetPick(idx){
+  var db = islDB(), un = islCmdUnlocked(), h = '', i, d, bs, j;
+  if(!un.length){ islModal('<h3>🎯 還沒有可裝設的指令</h3><p>先到 🌟 天賦星域 右下角的「🎯 特殊指令星域」點亮節點。</p>', [{ t: '好', cls: 'gold', cb: function(){ islCmdOpen(); } }]); return; }
+  h = '<h3>🎯 指令格 ' + (idx + 1) + ' 裝哪一個?</h3><div class="isl-pickwrap">';
+  for(i = 0; i < un.length; i++){ d = db.SK_CMDS[un[i]]; h += '<button class="isl-recipe can" data-c="' + un[i] + '"><span class="rn">' + d.e + ' <b>' + islEsc(d.n) + '</b>　⚡' + d.ap + '<br>' + islEsc(d.d) + '</span></button>'; }
+  h += '</div>';
+  islModal(h, [{ t: '取消', cls: 'ghost', cb: function(){ islCmdOpen(); } }]);
+  bs = $('isl-modal').querySelectorAll('button[data-c]');
+  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); var id = this.getAttribute('data-c'), q; islModalClose(); playSfx('sfx-ok', 0.4);
+    for(q = 0; q < ISL.cmds.slots.length; q++){ if(ISL.cmds.slots[q] === id) ISL.cmds.slots[q] = null; }   /* 同一個指令不重複佔兩格 */
+    ISL.cmds.slots[idx] = id; islSave('cmd'); islCmdOpen(); }; }
+}
+/* 野外用的指令選單(掛在 🗺 探索 子選單) */
+window.islCmdField = function(){
+  var db = islDB(), L = islCmdEquipped('field'), h = '', i, d, bs, j;
+  playSfx('sfx-tap', 0.3);
+  if(!L.length){ islModal('<h3>🎯 特殊指令</h3><p>目前沒有裝設「野外」類的指令。到 👤 角色 → 🎯 特殊指令 裝設看看。</p>', [{ t: '知道了', cls: 'gold' }]); return; }
+  h = '<h3>🎯 使用特殊指令</h3><p style="opacity:.85">目前 ⚡AP ' + ISL.ap + '</p><div class="isl-pickwrap">';
+  for(i = 0; i < L.length; i++){ d = db.SK_CMDS[L[i]]; h += '<button class="isl-recipe' + (ISL.ap >= d.ap ? ' can' : '') + '" data-c="' + L[i] + '"' + (ISL.ap >= d.ap ? '' : ' disabled') + '><span class="rn">' + d.e + ' <b>' + islEsc(d.n) + '</b>　⚡' + d.ap + '<br>' + islEsc(d.d) + '</span></button>'; }
+  h += '</div>';
+  islModal(h, [{ t: '取消', cls: 'ghost' }]);
+  bs = $('isl-modal').querySelectorAll('button[data-c]');
+  for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); if(this.disabled) return; var id = this.getAttribute('data-c'); islModalClose(); islCmdUse(id, false); }; }
+};
+/* 執行特殊指令。⚠ AP 在這裡統一扣,各分支只負責效果,不要各自再扣一次。 */
+function islCmdUse(id, inBattle){
+  var db = islDB(), d = db.SK_CMDS[id], B = _islBt, i, u, was, tot = 0, zm;
+  if(!d) return false;
+  if(ISL.ap < d.ap){ islModal('<h3>⚡ AP 不夠</h3><p>' + d.e + islEsc(d.n) + ' 要 ⚡' + d.ap + ',你只剩 ⚡' + ISL.ap + '。</p>', [{ t: '知道了' }]); return false; }
+  ISL.ap -= d.ap; islHud(); playSfx('sfx-burst-use', 0.45);
+  if(inBattle && B && !B.over){
+    B.cmdUsed = B.cmdUsed || {}; B.cmdUsed[id] = true;
+    islBtSetState('p', 'atk', 700); islBtFx('p', 'glow', 200);
+    if(id === 'CMD_FIRSTAID'){
+      was = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(1, Math.round(ISL.hpMax * 0.15))); tot = ISL.hp - was; islBtFloat('p', '+' + tot, 'heal');
+      for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down) continue; was = B.allies[i].hp; B.allies[i].hp = Math.min(B.allies[i].hpMax, B.allies[i].hp + Math.max(1, Math.round(B.allies[i].hpMax * 0.15))); tot += B.allies[i].hp - was; islBtFloat(B.allies[i].side, '+' + (B.allies[i].hp - was), 'heal'); }
+      playSfx('sfx-heal', 0.5); islBtLog('🩹 戰場急救:全隊 ❤️+' + tot + '。');
+    } else if(id === 'CMD_SMOKE'){
+      islBtLog('💨 煙霧彈!趁著白煙拉著大家撤退——'); islBtHp(); setTimeout(function(){ islBattleEnd('flee'); }, 800); return true;
+    } else if(id === 'CMD_TRAP'){
+      u = islBtAliveMons();
+      for(i = 0; i < u.length; i++){ u[i].stun = Math.max(u[i].stun, 1); islBtFx(u[i].side, 'dizzy', 140); }
+      islBtLog('🪤 佈設陷阱:敵方全體被絆住,這一回合動不了!');
+    } else if(id === 'CMD_RALLY'){
+      islBtAddBuff('atkUpP', 25, 3); islBtLog('⚡ 鼓舞號令:全隊攻擊 +25%,持續 3 回合!');
+    } else if(id === 'CMD_CALL'){
+      islBtLog('📣 呼喚夥伴:' + islBtHealOne(B.hero, 20) + '。');
+    }
+    islBtHp(); islSave('cmd');
+    setTimeout(islBtMonTurn, 1000);
+    return true;
+  }
+  /* ── 野外 ── */
+  if(id === 'CMD_SCAN'){
+    _IS.scanDay = ISL.day; _IS.scanZone = _IS.zone;
+    zm = $('isl-zone-map'); if(zm) zm.classList.add('scan');
+    islModal('<h3>🔍 環境觀察</h3><p>你蹲下來仔細看了看——本區今天的資源點與草叢裡的動靜(遇敵點)都標出來了。</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(d.sci) + '</p>', [{ t: '好', cls: 'gold' }]);
+  } else if(id === 'CMD_QUICKPICK'){
+    _IS.qpick = true;
+    islModal('<h3>🧺 熟練採集</h3><p>下一次採集不必玩品質小遊戲,直接判定 ★★★。</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(d.sci) + '</p>', [{ t: '好', cls: 'gold' }]);
+  } else if(id === 'CMD_REST'){
+    was = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(1, Math.round(ISL.hpMax * 0.30)));
+    if(ISL.hp > ISL.hpMax * 0.5) ISL.hurt = false;
+    islModal('<h3>🔥 野外小憩</h3><p>就地生了一小堆火,休息了一下。❤️+' + (ISL.hp - was) + '</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(d.sci) + '</p>', [{ t: '好', cls: 'gold' }]);
+  }
+  islHud(); islSave('cmd');
+  return true;
+}
 window.islCharOpen = function(){
   var db = islDB(), h = '', i, s, sk, k, st = null, bp, sel;
   playSfx('sfx-tap', 0.3);
@@ -19087,6 +19633,36 @@ function islSkActDef(){
   return null;
 }
 /* ══ 星圖 UI ══ */
+/* ★ v1.168.0 把星圖縮到「寬度一眼看得完」。只縮寬度不縮高度:
+   兩軸都縮的話,wrap 高度只有 52~56vh,整張星圖會被壓成一小塊、字全部看不清楚;
+   縮寬度之後右側再也不會有看不到的節點,上下仍可捲動,這是兩者之間最好的平衡。 */
+/* 把星圖捲到指定星域的中心(縮放比要一起算進去) */
+window.islSkGo = function(gk){
+  var wrap = document.querySelector('#isl-modal .isl-sk-wrap'), p = islSkGalaxyPos(gk), k = _IS.skK || 1, db = islDB(), a, i, sx = 0, sy = 0, n = 0;
+  if(!wrap || !p) return;
+  a = db.SK_NODES || [];
+  for(i = 0; i < a.length; i++){ if(a[i].g !== gk || typeof a[i].x !== 'number') continue; sx += a[i].x; sy += a[i].y; n++; }
+  if(!n) return;
+  playSfx('sfx-tap', 0.3);
+  wrap.scrollLeft = Math.max(0, (sx / n) * k - wrap.clientWidth / 2);
+  wrap.scrollTop = Math.max(0, (sy / n) * k - wrap.clientHeight / 2);
+};
+function islSkFit(){
+  var wrap = document.querySelector('#isl-modal .isl-sk-wrap'),
+      fit = document.querySelector('#isl-modal .isl-sk-fit'),
+      db = islDB(), C = db.SK_CANVAS, k, avail;
+  if(!wrap || !fit || !C) return;
+  avail = wrap.clientWidth - 6;   /* 留一點邊,免得節點的圓框貼著邊緣 */
+  if(avail <= 0) return;
+  /* ⚠ 不能無限縮小:實測直式 iPad 若完全依寬度縮(k=0.37),節點只剩 31px 直徑、名稱只剩 6.8px,
+     變成「看得到但看不懂也按不到」——比要捲動更糟。下限訂 0.72(節點 ≥61px、名稱 ≥13px);
+     縮到下限還是放不下的視窗,靠下面那排「星域快速跳轉」直接捲過去,不必用手找。 */
+  k = Math.max(0.72, Math.min(1, avail / C.w));
+  _IS.skK = k;
+  fit.style.transform = k < 1 ? ('scale(' + k.toFixed(4) + ')') : '';
+  fit.style.width = Math.round(C.w * k) + 'px';
+  fit.style.height = Math.round(C.h * k) + 'px';
+}
 window.islSkOpen = function(){
   var db = islDB(), C = db.SK_CANVAS || { w: 1240, h: 1020 }, A = db.SK_NODES || [], G = db.SK_GALAXY || [],
       h = '', i, j, n, r, st, T, pts = islSkPts(), price;
@@ -19097,7 +19673,18 @@ window.islSkOpen = function(){
   h += '<div class="isl-sk-bar">可用天賦點 <b>' + pts + '</b>　<span style="opacity:.8;font-size:16px">(累計 ' + islSkEarned() + ' 點:每打贏 ' + ISL_SK_KILL_PER + ' 隻 +1、每過 ' + ISL_SK_DAY_PER + ' 天 +1)</span>' +
        '<button class="isl-btn ghost" data-sk="respec">🧙 拜訪巫醫洗點(🐚' + price + ')</button></div>';
   /* 連線:先畫線再畫節點(SVG 墊在底下) */
-  h += '<div class="isl-sk-wrap"><div class="isl-sk-cv" style="width:' + C.w + 'px;height:' + C.h + 'px">';
+  /* ★ v1.168.0 量測:星圖是一張固定 1240×1020 的畫布,靠 .isl-sk-wrap 捲動平移。
+     真 Chromium 實測可視寬度 PC 只有 1175px、iPad 橫式只有 705px ⇒ 右側 372~907px 要橫向捲動才看得到,
+     而 🎯 特殊指令星域的節點正好全在 x 985~1200 的右下角 —— 學生在 iPad 上等於找不到新功能。
+     改法:外包一層 .isl-sk-fit,開窗後由 islSkFit() 量實際可視寬度算縮放比,把整張星圖縮到「一眼看得完寬度」。
+     ⚠ 用 transform:scale 而不是改每個節點的座標:節點是 absolute 定位的 DOM,transform 會連點擊命中區一起縮放,
+       既有的 islSkGalaxyPos 座標與 SVG 連線完全不必改。 */
+  /* ★ v1.168.0 星域快速跳轉:縮放有下限,窄視窗仍需捲動才看得到右下角的 🎯 特殊指令星域。
+     一排按鈕直接把畫布捲到該星域,學生不必自己拖找。 */
+  h += '<div class="isl-sk-jump"><span>快速跳到:</span>';
+  for(i = 0; i < G.length; i++) h += '<button type="button" class="isl-btn ghost" onclick="islSkGo(\'' + G[i].k + '\')" style="color:' + G[i].c + '">' + G[i].e + islEsc(G[i].n.replace('星域', '')) + '</button>';
+  h += '</div>';
+  h += '<div class="isl-sk-wrap"><div class="isl-sk-fit"><div class="isl-sk-cv" style="width:' + C.w + 'px;height:' + C.h + 'px">';
   h += '<svg viewBox="0 0 ' + C.w + ' ' + C.h + '" xmlns="http://www.w3.org/2000/svg">';
   for(i = 0; i < A.length; i++){
     n = A[i];
@@ -19114,7 +19701,7 @@ window.islSkOpen = function(){
     h += '<button class="isl-sk-n ' + st + (n.key ? ' key' : '') + '" data-sk="' + n.id + '" style="left:' + n.x + 'px;top:' + n.y + 'px">' + n.e +
          '<span class="lb">' + islEsc(n.n) + '</span></button>';
   }
-  h += '</div></div>';
+  h += '</div></div></div>';
   T = islSkTitles();
   h += '<div class="isl-sk-ttl">';
   for(i = 0; i < (db.SK_TITLES || []).length; i++){
@@ -19125,6 +19712,7 @@ window.islSkOpen = function(){
   h += '</div><p style="font-size:14px;opacity:.8;margin:6px 0 0">點亮的節點會直接生效;帶武器圖示的星域只有「裝備那把武器」時才算數。關鍵節點 🌟 會解鎖戰鬥中的「✨ 絕招」。</p>';
   h += '</div></div>';
   islPanel(h, function(act){ if(act === 'close') islModalClose(); }, { wide: true });
+  setTimeout(islSkFit, 30);   /* 面板要先進 DOM 才量得到可視寬度 */
   (function(){
     var m = $('isl-modal'), bs = m.querySelectorAll('[data-sk]'), k;
     for(k = 0; k < bs.length; k++){
@@ -19342,6 +19930,132 @@ window.islAilOpen = function(){
     }
   })();
 };
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.164.0(P2)— 🐾 組隊戰鬥:1v1 → 最多「主角+3 隊友」對「1~4 隻魔物」
+ *   ⚠ 刻意「擴充」而不是「重寫」:_islBt.m 仍然存在,它現在是**目前鎖定的那隻魔物**的指標,
+ *     指向 _islBt.ms[_islBt.mi]。既有的 QTE／智取／絕招／包紮／流血／破防／反擊／地下層／
+ *     不良狀態全部照原樣讀 B.m,一行都不用改就繼續正確運作;要改的只有
+ *     「魔物倒下時換下一隻還是結束」「魔物回合改成全體輪流」「多插一段隊友回合」三件事。
+ *   ⚠ side 字串現在有三種:'p'=主角、'a0'~'a2'=隊友、'm0'~'m3'=魔物;'m' 是「目前目標」的別名。
+ *     所有 $('isl-bt-' + side) 一律改走 islBtEl(side),別名才解析得到。
+ *   ⚠ 隊友每場戰鬥都是滿血開打(倒下只影響這一場)。刻意不做跨場次的寵物血量:
+ *     國小學生在課堂上一節課只玩得到幾場,跨場扣血會變成「打一場就得回營地」,挫折感大於學習。
+ * ══════════════════════════════════════════════════════════════════════════ */
+/* ══ ★ v1.167.0 稽核:🐾 天賦被動單一出口 ══
+   原本 16 隻的 talent 只有文字,只有 4 隻是用「u.k === 'bear'」這種硬寫的方式生效,其餘 12 隻是死鍵。
+   改成資料驅動:每隻在 island_db 帶 tal:{效果鍵:值},index 端只有 islPetTal(單位, 鍵) 一個出口,
+   日後加寵物只要加資料、不必再改戰鬥程式(與 islSkEff / islAilEff 同一套思路)。 */
+function islPetTal(u, key){
+  var db = islDB(), p;
+  if(!u || u.t !== 'pet' || u.down) return 0;
+  p = db.PETS[u.k];
+  return (p && p.tal && p.tal[key]) || 0;
+}
+/* 全隊(場上)某個天賦鍵的總和;沒有戰鬥時回 0 */
+function islPetTalAll(key){
+  var B = _islBt, i, n = 0;
+  if(!B) return 0;
+  for(i = 0; i < B.allies.length; i++) n += islPetTal(B.allies[i], key);
+  return n;
+}
+/* 編組裡(不必在戰鬥中)某個天賦鍵的總和——給野外用的天賦(例如小白的遇敵步數) */
+function islPartyTal(key){
+  var db = islDB(), i, slot, p, n = 0;
+  if(!ISL || !ISL.party) return 0;
+  for(i = 0; i < ISL.party.length; i++){
+    slot = ISL.party[i];
+    if(!slot || slot.t !== 'pet') continue;
+    p = db.PETS[slot.k]; if(!p || !p.tal) continue;
+    if(islPetSave(slot.k) && islPetSave(slot.k).rest === ISL.day) continue;   /* 今天休息中的不算 */
+    n += p.tal[key] || 0;
+  }
+  return n;
+}
+/* 某隻寵物在 lv 級、bond 階時的四維(親密度倍率一起折進來) */
+function islPetStats(k, lv, bond){
+  var db = islDB(), p = db.PETS[k], g, mul, B;
+  if(!p) return null;
+  lv = Math.max(1, Math.min(db.PET_LV.MAX, lv | 0)); g = lv - 1;
+  B = db.PET_BOND[Math.max(0, Math.min(db.PET_BOND.length - 1, bond | 0))] || db.PET_BOND[0];
+  mul = B.mul || 1;
+  return { hp: Math.max(1, Math.round((p.b.hp + p.g.hp * g) * mul)),
+           atk: Math.max(1, Math.round((p.b.atk + p.g.atk * g) * mul)),
+           def: Math.max(0, Math.round((p.b.def + p.g.def * g) * mul)),
+           spd: Math.max(1, Math.round((p.b.spd + p.g.spd * g) * mul)),
+           cdCut: B.cdCut || 0 };
+}
+/* 存檔裡某隻寵物的紀錄 */
+function islPetSave(k){ var i; for(i = 0; i < ISL.pets.length; i++){ if(ISL.pets[i].k === k) return ISL.pets[i]; } return null; }
+/* 依 ISL.party 組出這場戰鬥的隊友單位(最多 3 位;無效/找不到的格子直接跳過) */
+function islBtMakeAllies(){
+  var db = islDB(), out = [], i, slot, k, ps, rec, pd, f;
+  for(i = 0; i < ISL.party.length && out.length < db.PARTY.MAX_ALLY; i++){
+    slot = ISL.party[i];
+    if(!slot) continue;
+    if(slot.t === 'pet'){
+      k = slot.k; pd = db.PETS[k]; rec = islPetSave(k);
+      if(!pd || !rec) continue;
+      if(rec.rest === ISL.day) continue;   /* ★ v1.166.0 上一場戰鬥倒下的隊友,當天要休息,明天才回來 */
+      ps = islPetStats(k, rec.lv, rec.bond);
+      out.push({ side: 'a' + out.length, t: 'pet', k: k, n: pd.n, e: pd.e, type: pd.type,
+        row: db.PET_TYPES[pd.type] ? db.PET_TYPES[pd.type].row : 2,
+        lv: rec.lv, hpMax: ps.hp, hp: ps.hp, atk: ps.atk, def: ps.def, spd: ps.spd,
+        cmd: pd.cmd, cd: 0, cdCut: ps.cdCut, shield: 0, stun: 0, down: false, rec: rec });
+    } else if(slot.t === 'friend'){
+      /* ★ 老師裁定 3:借用版好友角色不可更改任何屬性或裝備,也不會升級。
+         這裡只讀 friendCache 的唯讀快照(P3 的編組頁會在選定當下重抓一次),
+         打完不給經驗、不寫回任何欄位。 */
+      f = (ISL.friendCache && ISL.friendCache[slot.uid]) || null;
+      if(!f) continue;
+      var flv = Math.max(1, Math.min(50, (f.defLv | 0) || 1));
+      out.push({ side: 'a' + out.length, t: 'friend', uid: slot.uid, n: (f.name || '好友') + '(借用)', e: '🧑', type: 'atk',
+        row: db.PET_TYPES.atk.row, lv: flv, ro: true,
+        hpMax: 40 + flv * 3, hp: 40 + flv * 3, atk: 6 + Math.round(flv * 0.9), def: 2 + Math.round(flv * 0.22), spd: 5 + Math.round(flv * 0.2),
+        cmd: null, cd: 0, cdCut: 0, shield: 0, stun: 0, down: false });
+    }
+  }
+  return out;
+}
+/* 把「主角」也包成同一種單位介面,站位與隊友一起排 */
+function islBtHeroUnit(){ var db = islDB(); return { side: 'p', t: 'hero', n: (ISL.char && ISL.char.name) || '主角', e: '🧍', row: db.PARTY.ROW.hero, down: false }; }
+/* 全部友方單位(主角 + 隊友),由前鋒到後排排好 */
+function islBtFriendlies(){ var B = _islBt, a = [B.hero].concat(B.allies || []); a.sort(function(x, y){ return x.row - y.row; }); return a; }
+function islBtAliveAllies(){ var B = _islBt, out = [], i; for(i = 0; i < B.allies.length; i++){ if(!B.allies[i].down) out.push(B.allies[i]); } return out; }
+function islBtAliveMons(){ var B = _islBt, out = [], i; for(i = 0; i < B.ms.length; i++){ if(B.ms[i].hp > 0) out.push(B.ms[i]); } return out; }
+/* side 別名解析:'m' → 目前鎖定的魔物 */
+function islBtSideOf(side){ var B = _islBt; return (side === 'm' && B) ? ('m' + B.mi) : side; }
+function islBtEl(side){ return $('isl-bt-' + islBtSideOf(side)); }
+function islBtUnit(side){
+  var B = _islBt, i;
+  if(!B) return null;
+  if(side === 'p') return B.hero;
+  if(side === 'm') return B.m;
+  i = parseInt(side.substring(1), 10);
+  if(side.charAt(0) === 'a') return B.allies[i] || null;
+  if(side.charAt(0) === 'm') return B.ms[i] || null;
+  return null;
+}
+/* 全隊增益/敵方減益:一律存在 _islBt.buff / _islBt.deb,每個「我方回合開始」各扣 1 回合。
+   ⚠ 只有一個出口 islBtBuff(key),日後加指令只要往 fx 加欄位,不必再改戰鬥各處。 */
+function islBtBuff(key){ var B = _islBt, b = B && B.buff && B.buff[key]; return (b && b.t > 0) ? b.v : 0; }
+function islBtDeb(key){ var B = _islBt, b = B && B.deb && B.deb[key]; return (b && b.t > 0) ? b.v : 0; }
+function islBtAddBuff(key, v, turns){ var B = _islBt; if(!B) return; B.buff = B.buff || {}; B.buff[key] = { v: Math.max(v, (B.buff[key] && B.buff[key].t > 0) ? B.buff[key].v : 0), t: Math.max(turns || 1, (B.buff[key] && B.buff[key].t) || 0) }; }
+function islBtAddDeb(key, v, turns){ var B = _islBt; if(!B) return; B.deb = B.deb || {}; B.deb[key] = { v: Math.max(v, (B.deb[key] && B.deb[key].t > 0) ? B.deb[key].v : 0), t: Math.max(turns || 1, (B.deb[key] && B.deb[key].t) || 0) }; }
+function islBtTickBuffs(){ var B = _islBt, k; if(!B) return; for(k in B.buff){ if(B.buff.hasOwnProperty(k) && B.buff[k].t > 0) B.buff[k].t--; } for(k in B.deb){ if(B.deb.hasOwnProperty(k) && B.deb[k].t > 0) B.deb[k].t--; } if(B.taunt && B.taunt.t > 0) B.taunt.t--; if(B.heroGuard && B.heroGuard.t > 0) B.heroGuard.t--; }
+/* 受傷共用出口:護盾先擋、坦克代受在呼叫端處理 */
+function islBtHurtUnit(u, dmg){
+  var a;
+  if(u.side === 'p'){
+    var B0 = _islBt;
+    if(B0 && B0.heroShield > 0){ a = Math.min(B0.heroShield, dmg); B0.heroShield -= a; dmg -= a; if(a > 0) islBtFloat('p', '🛡 擋下 ' + a, 'block'); }
+    ISL.hp = Math.max(0, ISL.hp - dmg); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true; return dmg;
+  }
+  if(islPetTal(u, 'cutP')) dmg = Math.max(1, Math.round(dmg * (1 - islPetTal(u, 'cutP') / 100)));   /* ★ v1.167.0 天賦 cutP(穿山甲 鱗片護體) */
+  if(u.shield > 0){ a = Math.min(u.shield, dmg); u.shield -= a; dmg -= a; if(a > 0) islBtFloat(u.side, '🛡 擋下 ' + a, 'block'); }
+  u.hp = Math.max(0, u.hp - dmg);
+  if(u.hp <= 0 && !u.down){ u.down = true; islBtSetState(u.side, 'down', 0); playSfx('sfx-ko', 0.35); islBtLog('💤 ' + islEsc(u.n) + ' 撐不住,退下了……'); }
+  return dmg;
+}
 function islBtPlayerStats(){
   var db = islDB(), inst = islWeaponCur(), w = islWeaponDef(inst), st = ISL.stats, dlv = ISL.skill.defense ? ISL.skill.defense.lv : 1;
   /* ★ v1.160.0 🤒 不良狀態減益：allMul(失溫：攻/防/速 全部 −15%)、spdMul(燒燙傷：速度 −20%)、hitMul(蜂螫：甜蜜點寬度 −25%)。
@@ -19349,9 +20063,12 @@ function islBtPlayerStats(){
   var _aA = islAilEff('allMul'), _aS = islAilEff('spdMul'), _aH = islAilEff('hitMul');
   /* ★ v1.161.0 🌟 天賦星域：全部走 islSkEff 單一出口，帶 wp 欄的節點會自動依「現在裝備哪把武器」開關。 */
   var _kA = 1 + (islSkEff('atkP') + (ISL.skFeastDay === ISL.day ? 10 : 0)) / 100, _kD = 1 + islSkEff('defP') / 100, _kS = 1 + islSkEff('spdP') / 100, _kZ = 1 + (islSkEff('zoneP') + islSkEff('sweetP')) / 100;   /* ★ v1.162.0 營地聚餐(feast)當天攻擊 +10%；sweetP 也吃到戰鬥 QTE */
-  return { atk: Math.max(1, Math.round((islWeaponAtk(inst) + Math.floor(Math.min(50, st.pow) * db.BT.POW_ATK)) * _aA * _kA)),
-    def: Math.max(0, Math.round((db.BT.BASE_DEF + (w ? w.def : 0) + Math.floor(dlv / 5)) * _aA * _kD)),
-    spd: (Math.min(50, st.mov) * db.BT.MOV_SPD + (w ? w.spd : 0)) * _aA * _aS * _kS,
+  /* ★ v1.164.0 🐾 夥伴給的全隊增益(鼓舞號令 atkUpP / 鱗甲捲護 defUpP / 清流一躍 spdUpP)
+     也要吃到主角身上。沒有戰鬥時 islBtBuff 一律回 0,所以這三行在戰鬥外完全不影響任何數值。 */
+  var _pA = 1 + islBtBuff('atkUpP') / 100, _pD = 1 + islBtBuff('defUpP') / 100, _pS = 1 + islBtBuff('spdUpP') / 100;
+  return { atk: Math.max(1, Math.round((islWeaponAtk(inst) + Math.floor(Math.min(50, st.pow) * db.BT.POW_ATK)) * _aA * _kA * _pA)),
+    def: Math.max(0, Math.round((db.BT.BASE_DEF + (w ? w.def : 0) + Math.floor(dlv / 5)) * _aA * _kD * _pD)),
+    spd: (Math.min(50, st.mov) * db.BT.MOV_SPD + (w ? w.spd : 0)) * _aA * _aS * _kS * _pS,
     zone: (w ? w.zone : 1) * _aH * _kZ, crit: (w ? w.crit : 1.5) * (1 + islSkEff('critMulP') / 100),
     critC: islSkEff('critC'), hits: (w ? w.hits : 1) + islSkEff('hitsAdd'),
     first: !!(w && w.first) || islSkEff('firstHit') > 0, stunP: ((w && w.stunP) || 0) + islSkEff('stunAddP'),
@@ -19362,7 +20079,41 @@ function islMonMake(k, lv){
   return { k: k, n: m ? m.n : k, e: m ? m.e : '👾', tool: m ? m.tool : 'fist', hint: m ? m.hint : '', why: m ? m.why : '', lv: lv || 1,
     hpMax: Math.round(b.hp * (1 + db.BT.MON_LV_HP * g)), hp: Math.round(b.hp * (1 + db.BT.MON_LV_HP * g)), atk: Math.round(b.atk * (1 + db.BT.MON_LV_ATK * g)), def: b.def, spd: b.spd, crit: b.crit, drop: b.drop, d: b.d, stun: 0 };
 }
-/* 踩到遇敵點?(islTick 每幀呼叫;回傳 true=已進入戰鬥) */
+/* ══ ★ v1.166.0(P4・老師需求⑤)— 野外遇敵改「步數制」 ══
+   每走 D.ENC_STEP.min ~ max 步(預設 15~30)隨機遭遇一次;打完/逃掉之後還要再走 safeSteps 步才會重新計數,
+   避免剛脫身就原地又被纏上。
+   ⚠ 「一步」＝主角踏進一個新的格子(不是一幀,也不是按一次方向鍵)——用格子算,
+     慢慢走跟快快走遇敵率才會一樣,不然按住不放的學生會被懲罰。
+   ⚠ 計數器刻意只放在 _IS(不寫存檔):走了幾步是離開畫面就沒意義的臨時狀態,
+     寫進存檔反而會讓「昨天走到第 29 步」在今天第一步就觸發。 */
+function islEncReset(zoneId){
+  var db = islDB(), E = db.ENC && db.ENC[zoneId || _IS.zone], S = db.ENC_STEP;
+  _IS.steps = 0; _IS.encCell = null;
+  if(!S || !E){ _IS.encNext = 0; return; }
+  /* ★ v1.167.0 天賦 encAdd(海鷗小白 領路人):隊上有牠時要多走幾步才會遇敵——
+     牠是控場型,把「少打幾場」做成被動,比再加一個戰鬥數值更符合角色。 */
+  _IS.encNext = S.min + Math.floor(Math.random() * (S.max - S.min + 1)) + islPartyTal('encAdd');
+}
+function islEncStep(){
+  var db = islDB(), S = db.ENC_STEP, E, c, k, zdef;
+  if(!S) return false;
+  if(_islBt || _IS.coop || _IS.act || ISL.hp <= 0) return false;
+  E = db.ENC && db.ENC[_IS.zone];
+  if(!E || ISL.day < (E.from || 1)) return false;
+  c = islCell(_IS.cx, _IS.cy);
+  if(_IS.encCell && _IS.encCell.x === c.x && _IS.encCell.y === c.y) return false;   /* 還在同一格,不算一步 */
+  _IS.encCell = c; _IS.safeCell = c;
+  _IS.steps = (_IS.steps || 0) + 1;
+  if(!_IS.encNext) islEncReset(_IS.zone);
+  if(_IS.steps < _IS.encNext) return false;
+  _IS.steps = 0;
+  _IS.encNext = S.min + Math.floor(Math.random() * (S.max - S.min + 1)) + islPartyTal('encAdd');
+  zdef = db.zone(_IS.zone);
+  k = (E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : 'boar';
+  islBattleStart({ idx: -1, x: c.x, y: c.y, k: k, lv: (zdef && zdef.order) || 1, done: false });
+  return true;
+}
+/* 踩到遇敵點?(舊的踩地雷式;D.ENC_STEP 存在時不會有遇敵點,這支等於不作用。islTick 每幀呼叫;回傳 true=已進入戰鬥) */
 function islMineCheck(){
   var c, i, n, mines = _IS.mines || [];
   if(_islBt || _IS.coop || !mines.length || _IS.act || (ISL.hp <= 0)) return false;
@@ -19387,20 +20138,42 @@ window.islBtTest = function(){
   islBattleStart({ idx: -1, x: -1, y: -1, k: k, lv: (zdef && zdef.order) || 1, done: false });
 };
 window.islBattleStart = function(mine){
-  var db = islDB(), zm = $('isl-zone-map'), pop, u, m;
+  var db = islDB(), zm = $('isl-zone-map'), pop, u, m, E, num, i, lv, ks, probe;
   islZoneStop(); if(!mine.dg) islZoneRemember();
-  m = islMonMake(mine.k, mine.lv);
-  _islBt = { m: m, mine: mine, p: { stun: 0, guard: false }, over: false, busy: true, outwit: false, turn: 0, log: [], dg: mine.dg || null };
-  if(mine.dg){ if(mine.dg.preStun) m.stun = 1; islBgm((ISL.dungeon.runs % 2) ? 'raid2' : 'raid'); islBtProbe(m.k, function(){ setTimeout(function(){ if(_islBt) islBtOpen(); }, 250); }); return; }   /* ★ v1.122.0 地下層:沒有草叢可跳,直接開打 */
+  /* ★ v1.164.0 一場戰鬥的魔物群:
+     只有地下層(dg)與明確帶 solo 旗標的呼叫維持「指定 1 隻」;野外遇敵與 GM 測試鈕都依
+     D.ENC[zone].num/lv 抽一整組,老師按測試鈕就能直接驗收多隻的版面與流程。 */
+  ks = []; 
+  if(mine.dg || mine.solo){ ks.push({ k: mine.k, lv: mine.lv || 1 }); }
+  else {
+    E = (db.ENC && db.ENC[_IS.zone]) || null;
+    num = 1;
+    if(E && E.num){ num = E.num[0] + Math.floor(Math.random() * (E.num[1] - E.num[0] + 1)); }
+    num = Math.max(1, Math.min(4, num));   /* ⚠ 老師指定上限 4 隻,不論資料表怎麼填都夾住 */
+    for(i = 0; i < num; i++){
+      lv = mine.lv || 1;
+      if(E && E.lv) lv = E.lv[0] + Math.floor(Math.random() * (E.lv[1] - E.lv[0] + 1));
+      ks.push({ k: (E && E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : mine.k, lv: lv });
+    }
+  }
+  _islBt = { ms: [], mi: 0, m: null, mine: mine, p: { stun: 0, guard: false }, over: false, busy: true,
+             outwit: false, turn: 0, log: [], dg: mine.dg || null,
+             hero: islBtHeroUnit(), allies: mine.dg ? islBtMakeAllies() : islBtMakeAllies(),
+             buff: {}, deb: {}, allyDone: false };
+  for(i = 0; i < ks.length; i++){ m = islMonMake(ks[i].k, ks[i].lv); m.side = 'm' + i; m.idx = i; _islBt.ms.push(m); }
+  for(i = 0; i < _islBt.allies.length; i++){ _islBt.allies[i].side = 'a' + i; }
+  _islBt.m = _islBt.ms[0]; m = _islBt.m;
+  probe = function(cb){ islBtProbeAll(cb); };
+  if(mine.dg){ if(mine.dg.preStun) m.stun = 1; islBgm((ISL.dungeon.runs % 2) ? 'raid2' : 'raid'); probe(function(){ setTimeout(function(){ if(_islBt) islBtOpen(); }, 250); }); return; }   /* ★ v1.122.0 地下層:沒有草叢可跳,直接開打 */
   /* 魔物從草叢跳出(場景內,先給玩家看一眼再進戰鬥) */
   u = islImgUrl('mon_' + m.k);
   pop = document.createElement('div'); pop.className = 'isl-mon-pop'; pop.style.left = (mine.x * 64 + 32) + 'px'; pop.style.top = (mine.y * 64 + 40) + 'px';
-  pop.innerHTML = (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + '<b>!</b>';
+  pop.innerHTML = (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + '<b>' + (_islBt.ms.length > 1 ? '×' + _islBt.ms.length : '!') + '</b>';
   zm.appendChild(pop); _islBt.pop = pop;
   playSfx('sfx-summon-smoke', 0.45); setTimeout(function(){ playSfx('sfx-cantmove', 0.35); }, 250);
   try{ islMono('battleStart'); }catch(_b0){}   /* ★ v1.133.0 遇敵的內心話;此時還在場景畫面,泡泡掛得上 */
-  islBgm((ISL.battle.won + ISL.battle.lost) % 2 ? 'raid2' : 'raid');
-  islBtProbe(m.k, function(){
+  islBtBgmWild();
+  probe(function(){
     setTimeout(function(){
       if(!_islBt) return;
       if(!ISL.flags.battleTold){ ISL.flags.battleTold = true; islDialog(db.STORY.firstBattle, { who: 'me' }, function(){ islBtOpen(); }); }
@@ -19408,7 +20181,36 @@ window.islBattleStart = function(mine){
     }, 650);
   });
 };
+/* ★ v1.164.0(老師需求 6)野外遇敵戰曲:從 D.BT.BGM_WILD 隨機挑一首(＝大對抗貓空關小怪戰曲五選一)。
+   ⚠ 只給野外遇敵;地下層與夜襲仍走 raid/raid2。讀不到資料表就退回舊的 raid/raid2,不會變成沒有音樂。 */
+function islBtBgmWild(){
+  var db = islDB(), L = db.BT && db.BT.BGM_WILD, id, a;
+  if(!L || !L.length){ islBgm((ISL.battle.won + ISL.battle.lost) % 2 ? 'raid2' : 'raid'); return; }
+  id = L[Math.floor(Math.random() * L.length)];
+  a = $(id);
+  if(!a){ islBgm((ISL.battle.won + ISL.battle.lost) % 2 ? 'raid2' : 'raid'); return; }   /* 音檔元素不在(理論上不會)就退回既有荒島戰曲,不會變成沒有音樂 */
+  bgmPlay(id);
+}
 /* 先探測這場會用到的立繪(主角 5 態 + 該魔物 5 態),最多等 1.2 秒;結果快取在 _islPicOk */
+/* ★ v1.164.0 一場戰鬥會用到的立繪全部先探測:主角 5 態(含三層)+ 每隻魔物 5 態 + 每位隊友 6 態。
+   ⚠ 沿用既有 islPicProbe 的快取(_islPicOk),同一隻探測過就不會重抓;最多等 1.2 秒就開打。 */
+function islBtProbeAll(cb){
+  var B = _islBt, st = ['idle','atk','hit','stun','down'], pst = ['idle','atk','hit','stun','down','skill'],
+      body = (ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', keys = [], i, j, L, left, done = false,
+      fin = function(){ if(done) return; done = true; cb(); }, seen = {};
+  function add(k){ if(k && !seen[k]){ seen[k] = 1; keys.push(k); } }
+  for(i = 0; i < st.length; i++){
+    add('bt_p_' + body + '_' + st[i]);
+    L = islBtLayerKeysFor(st[i]); add(L.base); add(L.cloth); add(L.hair);   /* ★ v1.138.0 三層戰鬥立繪一起探測 */
+    for(j = 0; j < B.ms.length; j++) add('bt_m_' + B.ms[j].k + '_' + st[i]);
+  }
+  for(j = 0; j < B.ms.length; j++) add('mon_' + B.ms[j].k);
+  for(j = 0; j < B.allies.length; j++){ if(B.allies[j].t !== 'pet') continue; for(i = 0; i < pst.length; i++) add('bt_pet_' + B.allies[j].k + '_' + pst[i]); }
+  left = keys.length;
+  if(!left){ fin(); return; }
+  for(i = 0; i < keys.length; i++){ islPicProbe(keys[i], function(){ left--; if(left <= 0) fin(); }); }
+  setTimeout(fin, 1200);
+}
 function islBtProbe(k, cb){
   var st = ['idle','atk','hit','stun','down'], body = (ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', keys = [], i, L, left, done = false, fin = function(){ if(done) return; done = true; cb(); };
   for(i = 0; i < st.length; i++){
@@ -19447,7 +20249,7 @@ function islBtLayeredHtml(state){
   return h;
 }
 function islBtFigHtml(side, state){
-  var B = _islBt, body = (ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', key, idle, u, w, lyr;
+  var B = _islBt, body = (ISL.char && ISL.char.body === 'girl') ? 'girl' : 'boy', key, idle, u, lyr, un;
   if(side === 'p'){
     lyr = islBtLayeredHtml(state);   /* ★ v1.138.0 三層立繪隨造型/染色即時渲染;缺任一張才退回舊版整張圖 */
     if(lyr) return lyr;
@@ -19456,55 +20258,193 @@ function islBtFigHtml(side, state){
     if(islPicOkSync(idle)) return '<img class="pic" src="' + islImgUrl(idle) + '" alt="" style="' + islBtAdjStyle(idle) + '">';
     return '<div class="chibi">' + islChibiHtml(ISL.char, 'idle') + '</div>';   /* 缺圖:既有 sprite 正面幀放大 + CSS 動作 */
   }
-  key = 'bt_m_' + B.m.k + '_' + state; idle = 'bt_m_' + B.m.k + '_idle';
+  un = islBtUnit(side);
+  if(!un) return '';
+  if(side.charAt(0) === 'a'){
+    /* ★ v1.164.0 隊友立繪:寵物走 bt_pet_<k>_<6 態>;借用版好友沒有專屬圖,直接用 emoji。
+       ⚠ 96 張圖還沒上傳時,這裡一路退到 emoji,畫面仍然完整可玩(老師可以先驗收流程再補圖)。 */
+    if(un.t === 'pet'){
+      key = 'bt_pet_' + un.k + '_' + state; idle = 'bt_pet_' + un.k + '_idle';
+      if(islPicOkSync(key)) return '<img class="pic" src="' + islImgUrl(key) + '" alt="">';
+      if(islPicOkSync(idle)) return '<img class="pic" src="' + islImgUrl(idle) + '" alt="">';
+    }
+    return '<span class="emo">' + un.e + '</span>';
+  }
+  key = 'bt_m_' + un.k + '_' + state; idle = 'bt_m_' + un.k + '_idle';
   if(islPicOkSync(key)) return '<img class="pic" src="' + islImgUrl(key) + '" alt="">';
   if(islPicOkSync(idle)) return '<img class="pic" src="' + islImgUrl(idle) + '" alt="">';
-  u = islImgUrl('mon_' + B.m.k);
-  if(u && islPicOkSync('mon_' + B.m.k) !== false) return '<img class="pic mon" src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span class=\\\'emo\\\'>' + B.m.e + '</span>\');">';
-  return '<span class="emo">' + B.m.e + '</span>';
+  u = islImgUrl('mon_' + un.k);
+  if(u && islPicOkSync('mon_' + un.k) !== false) return '<img class="pic mon" src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span class=\\\'emo\\\'>' + un.e + '</span>\');">';
+  return '<span class="emo">' + un.e + '</span>';
 }
 function islBtSetState(side, state, ms){   /* 換立繪 + 動作 class;ms 後自動回 idle(down 不回) */
-  var el = $('isl-bt-' + side), fig, B = _islBt;
+  var el = islBtEl(side), fig, B = _islBt, sd = islBtSideOf(side), un;
   if(!el || !B) return;
-  fig = el.querySelector('.fig'); fig.innerHTML = islBtFigHtml(side, state);
-  el.className = 'bt-fig ' + side + ' ' + state;
-  if(side === 'p') islBtWeaponPaint();
-  if(B['_st_' + side]) clearTimeout(B['_st_' + side]);
-  if(state !== 'idle' && state !== 'down' && ms !== 0){ B['_st_' + side] = setTimeout(function(){ if(_islBt && !_islBt.over){ var s = (side === 'p' ? _islBt.p.stun : _islBt.m.stun) > 0 ? 'stun' : 'idle'; islBtSetState(side, s, 0); } }, ms || 500); }
+  fig = el.querySelector('.fig'); fig.innerHTML = islBtFigHtml(sd, state);
+  el.className = 'bt-fig ' + (sd.charAt(0) === 'a' ? 'ally ' : (sd.charAt(0) === 'm' ? 'm ' : 'p ')) + state;
+  if(sd.charAt(0) === 'm'){ if(sd === 'm' + B.mi) el.classList.add('tgt'); else el.classList.add('dim'); un = islBtUnit(sd); if(un && un.hp <= 0) el.classList.add('gone'); }
+  if(sd.charAt(0) === 'a'){ un = islBtUnit(sd); if(un && un.down) el.classList.add('gone'); }
+  islBtFigPos(sd, el);
+  if(sd === 'p') islBtWeaponPaint();
+  if(B['_st_' + sd]) clearTimeout(B['_st_' + sd]);
+  if(state !== 'idle' && state !== 'down' && ms !== 0){ B['_st_' + sd] = setTimeout(function(){ if(_islBt && !_islBt.over){ var uu = islBtUnit(sd), s = (uu && uu.stun > 0) ? 'stun' : 'idle'; if(sd === 'p') s = _islBt.p.stun > 0 ? 'stun' : 'idle'; if(uu && (uu.down || uu.hp <= 0)) return; islBtSetState(sd, s, 0); } }, ms || 500); }
 }
-function islBtWeaponPaint(){ var el = $('isl-bt-p'), w = islBtPlayerStats().w, wp; if(!el) return; wp = el.querySelector('.wp'); if(!wp) return; if(!w){ wp.innerHTML = ''; return; } var _wk = islWeaponImgKey(w, (islBtPlayerStats().inst || {}).lv || 1);   /* ★ v1.131.0 戰鬥中也用該等級的外觀 */
+/* ★ v1.164.0 陣型:友方由前鋒(最靠中間)到後排往左排,敵方由前到後往右排。
+   老師指定「友軍的右側第一位是最前鋒」⇒ row 越小越靠右(越靠近戰場中央)。
+   座標寫 inline style 而不是各站位一條 CSS,是因為隊友數量會變(0~3 位),
+   用 CSS 就得為每一種組合各寫一套;算好直接寫上去只有一條公式。 */
+function islBtFigPos(sd, el){
+  var B = _islBt, un, rows, pos, sz;
+  if(!B || !el) return;
+  if(sd.charAt(0) === 'm'){
+    un = islBtUnit(sd); if(!un) return;
+    rows = B.ms.length;
+    sz = rows >= 4 ? 130 : (rows === 3 ? 155 : (rows === 2 ? 185 : 220));
+    el.style.right = (4 + un.idx * (rows >= 4 ? 22 : (rows === 3 ? 25 : (rows === 2 ? 26 : 8)))) + '%';
+    el.style.left = ''; el.style.width = sz + 'px'; el.style.height = sz + 'px';
+    el.style.bottom = (10 + (un.idx % 2) * 6) + '%';
+    el.style.zIndex = String(10 - un.idx);
+    return;
+  }
+  un = (sd === 'p') ? B.hero : islBtUnit(sd); if(!un) return;
+  pos = islBtFriendlies(); rows = pos.length;
+  var order = 0, i; for(i = 0; i < pos.length; i++){ if(pos[i].side === sd) order = i; }
+  sz = (sd === 'p') ? (rows >= 3 ? 170 : 200) : (rows >= 3 ? 120 : 140);
+  el.style.left = (rows >= 4 ? (30 - order * 9) : (rows === 3 ? (28 - order * 10) : (rows === 2 ? (22 - order * 12) : 12))) + '%';
+  el.style.right = ''; el.style.width = sz + 'px'; el.style.height = sz + 'px';
+  el.style.bottom = (10 + order * 5) + '%';
+  el.style.zIndex = String(10 - order);
+}
+function islBtWeaponPaint(){ var el = islBtEl('p'), w = islBtPlayerStats().w, wp; if(!el) return; wp = el.querySelector('.wp'); if(!wp) return; if(!w){ wp.innerHTML = ''; return; } var _wk = islWeaponImgKey(w, (islBtPlayerStats().inst || {}).lv || 1);   /* ★ v1.131.0 戰鬥中也用該等級的外觀 */
   wp.innerHTML = islPicOkSync(_wk) ? '<img src="' + islImgUrl(_wk) + '" alt="">' : '<span>' + w.e + '</span>'; }
 function islBtOpen(){
-  var B = _islBt, db = islDB(), h = '', ps = islBtPlayerStats(), m = B.m, w = ps.w;
+  var B = _islBt, db = islDB(), h = '', ps = islBtPlayerStats(), m, w = ps.w, i, fastest;
   if(!B) return;
+  m = B.m;
   if(w && islPicOkSync(w.img) === undefined) islPicProbe(w.img, function(){ islBtWeaponPaint(); });
   if(B.pop && B.pop.parentNode) B.pop.parentNode.removeChild(B.pop); B.pop = null;
   islShowScreen('battle'); $('island-root').classList.add('inbattle');
-  h += '<div class="bt-top"><div class="bt-hpbox p"><div class="nm">👤 ' + islEsc(ISL.char.name) + ' <small>' + islEsc(islWeaponLabel(ps.inst)) + '</small></div><div class="hpb"><i id="isl-bt-php"></i></div><div class="hpt" id="isl-bt-phpt"></div></div>' +
-       '<div class="bt-vs">VS</div>' +
-       '<div class="bt-hpbox m"><div class="nm">' + m.e + ' ' + islEsc(m.n) + ' <small>Lv' + m.lv + '</small></div><div class="hpb"><i id="isl-bt-mhp"></i></div><div class="hpt" id="isl-bt-mhpt"></div></div></div>';
-  h += '<div class="bt-stage"><div class="bt-fig p idle" id="isl-bt-p"><div class="fig"></div><div class="wp"></div><div class="sh"></div></div><div class="bt-fig m idle" id="isl-bt-m"><div class="fig"></div><div class="sh"></div></div></div>';
+  /* ── 上方:左邊我方一列一位、右邊敵方一列一隻(點敵方任一列就換鎖定目標) ── */
+  h += '<div class="bt-top"><div class="bt-team p" id="isl-bt-team-p">';
+  h += '<div class="bt-hpbox p" data-s="p"><div class="nm">👤 ' + islEsc(ISL.char.name) + ' <small>' + islEsc(islWeaponLabel(ps.inst)) + '</small></div><div class="hpb"><i id="isl-bt-php"></i></div><div class="hpt" id="isl-bt-phpt"></div></div>';
+  for(i = 0; i < B.allies.length; i++){ h += islBtHpBoxHtml(B.allies[i]); }
+  h += '</div><div class="bt-vs">VS</div><div class="bt-team m" id="isl-bt-team-m">';
+  for(i = 0; i < B.ms.length; i++){ h += islBtHpBoxHtml(B.ms[i]); }
+  h += '</div></div>';
+  h += '<div class="bt-stage" id="isl-bt-stage"><div class="bt-fig p idle" id="isl-bt-p"><div class="fig"></div><div class="wp"></div><div class="sh"></div></div>';
+  for(i = 0; i < B.allies.length; i++){ h += '<div class="bt-fig ally idle" id="isl-bt-a' + i + '" data-s="a' + i + '"><div class="fig"></div><div class="sh"></div></div>'; }
+  for(i = 0; i < B.ms.length; i++){ h += '<div class="bt-fig m idle" id="isl-bt-m' + i + '" data-s="m' + i + '"><div class="fig"></div><div class="sh"></div></div>'; }
+  h += '</div>';
   h += '<div class="bt-log" id="isl-bt-log"></div>';
-  h += '<div class="bt-acts" id="isl-bt-acts">' + (islSkEff('bandageN') > 0 ? '<button data-a="bnd" class="med">🩹<small>緊急包紮</small></button>' : '') + (islSkActDef() ? '<button data-a="sk" class="sk">✨<small>' + islEsc(islSkActDef().d.n) + '</small></button>' : '') + '<button data-a="atk">⚔<small>攻擊</small></button><button data-a="wit">🧠<small>智取</small></button><button data-a="def">🛡<small>防禦</small></button><button data-a="eat">🍖<small>吃</small></button><button data-a="run">🏃<small>逃跑</small></button></div>';
+  /* ★ v1.165.0 🎯 已裝設的「戰鬥」類特殊指令,每一個各自一顆按鈕(一場各用一次,AP 另計) */
+  var _cmdH = '', _cl = islCmdEquipped('battle'), _ci, _cd;
+  for(_ci = 0; _ci < _cl.length; _ci++){ _cd = db.SK_CMDS[_cl[_ci]]; _cmdH += '<button data-a="cmd:' + _cl[_ci] + '" class="cmd">' + _cd.e + '<small>' + islEsc(_cd.n) + '<br>⚡' + _cd.ap + '</small></button>'; }
+  h += '<div class="bt-acts" id="isl-bt-acts">' + (islSkEff('bandageN') > 0 ? '<button data-a="bnd" class="med">🩹<small>緊急包紮</small></button>' : '') + (islSkActDef() ? '<button data-a="sk" class="sk">✨<small>' + islEsc(islSkActDef().d.n) + '</small></button>' : '') + _cmdH + '<button data-a="atk">⚔<small>攻擊</small></button><button data-a="wit">🧠<small>智取</small></button><button data-a="def">🛡<small>防禦</small></button><button data-a="eat">🍖<small>吃</small></button><button data-a="run">🏃<small>逃跑</small></button></div>';
   h += '<div class="bt-qte hidden" id="isl-bt-qte"></div>';
   $('isl-battle').innerHTML = h;
-  islBtSetState('p', 'idle', 0); islBtSetState('m', m.stun > 0 ? 'stun' : 'idle', 0);
+  islBtSetState('p', 'idle', 0);
+  for(i = 0; i < B.allies.length; i++) islBtSetState('a' + i, 'idle', 0);
+  for(i = 0; i < B.ms.length; i++) islBtSetState('m' + i, B.ms[i].stun > 0 ? 'stun' : 'idle', 0);
+  islBtTeamTalents();   /* ★ v1.167.0 開場就生效的隊伍天賦(冷光/群棲) */
   islBtHp();
   $('isl-bt-acts').onclick = function(ev){ var t = ev.target; while(t && t !== this && !(t.getAttribute && t.getAttribute('data-a'))) t = t.parentNode; if(!t || t === this || B.busy || B.over) return; islBtAction(t.getAttribute('data-a')); };
-  islBtLog(db.BT.lines.open[Math.floor(Math.random() * db.BT.lines.open.length)] + ' ' + islEsc(m.d) + (ISL.stats.wit >= 8 && m.hint ? ' 💡' + islEsc(m.hint) : ''));
+  /* 換目標:上方敵方列或舞台上的魔物,點哪隻就鎖哪隻(倒下的不能選) */
+  $('isl-bt-team-m').onclick = islBtPickTargetEv;
+  $('isl-bt-stage').onclick = islBtPickTargetEv;
+  islBtLog(db.BT.lines.open[Math.floor(Math.random() * db.BT.lines.open.length)] + (B.ms.length > 1 ? ' 一共 <b>' + B.ms.length + '</b> 隻!(點牠們可以換鎖定目標)' : ' ' + islEsc(m.d)) + (ISL.stats.wit >= 8 && m.hint ? ' 💡' + islEsc(m.hint) : ''));
   B.busy = false;
-  if(m.spd > ps.spd && !ps.first && m.stun <= 0){ islBtLog('⚡ ' + islEsc(m.n) + ' 比較快,先出手!'); B.busy = true; setTimeout(islBtMonTurn, 900); }
+  fastest = 0; for(i = 0; i < B.ms.length; i++){ if(B.ms[i].spd > fastest) fastest = B.ms[i].spd; }
+  if(fastest > ps.spd && !ps.first && m.stun <= 0){ islBtLog('⚡ 對方比較快,先出手!'); B.busy = true; B.allyDone = true;   /* 對方先手的那一輪,隊友跟主角一起排在後面行動 */ setTimeout(islBtMonTurn, 900); }
   else islBtPlayerTurn();
 }
-function islBtHp(){ var B = _islBt, p = $('isl-bt-php'), m = $('isl-bt-mhp'); if(!B || !p) return; p.style.width = Math.max(0, ISL.hp / ISL.hpMax * 100) + '%'; $('isl-bt-phpt').textContent = '❤️ ' + Math.max(0, ISL.hp) + '/' + ISL.hpMax; m.style.width = Math.max(0, B.m.hp / B.m.hpMax * 100) + '%'; $('isl-bt-mhpt').textContent = '❤️ ' + Math.max(0, B.m.hp) + '/' + B.m.hpMax; islHud(); }
+/* ★ v1.167.0 開戰當下就生效的隊伍天賦:
+   冷光(螢火蟲)——在洞窟/火山這種昏暗的地方全隊攻擊 +8%;
+   群棲(黑面琵鷺)——隊伍中有其他控場型時全隊速度 +8%。
+   兩者都做成「整場有效」的 buff(turns 給很大),不必每回合重算。 */
+function islBtTeamTalents(){
+  var B = _islBt, i, dark = 0, ctrl = 0, spd = 0;
+  if(!B) return;
+  for(i = 0; i < B.allies.length; i++){
+    if(B.allies[i].type === 'ctrl') ctrl++;
+    dark += islPetTal(B.allies[i], 'darkAtkP');
+    spd += islPetTal(B.allies[i], 'ctrlSpdP');
+  }
+  if(dark && (_IS.zone === 'cave' || _IS.zone === 'volcano' || (B.dg))){ islBtAddBuff('atkUpP', dark, 99); islBtLog('✨ 螢火蟲的冷光照亮了昏暗的地方——全隊攻擊 +' + dark + '%。'); }
+  if(spd && ctrl >= 2){ islBtAddBuff('spdUpP', spd, 99); islBtLog('🥄 控場型夥伴互相照應——全隊速度 +' + spd + '%。'); }
+}
+/* 一列 HP 條(隊友與魔物共用;主角那一列在 islBtOpen 直接寫,沿用既有 id 不動) */
+function islBtHpBoxHtml(u){
+  var db = islDB(), tag = '', isM = (u.side || '').charAt(0) === 'm';
+  if(!isM){ tag = (u.t === 'friend') ? '<span class="tag">借用・不升級</span>' : '<span class="tag">' + (db.PET_TYPES[u.type] ? db.PET_TYPES[u.type].e + db.PET_TYPES[u.type].n : '') + '</span>'; }
+  return '<div class="bt-hpbox ' + (isM ? 'm' : '') + '" id="isl-bt-box-' + u.side + '" data-s="' + u.side + '">' +
+    '<div class="nm">' + u.e + ' ' + islEsc(u.n) + ' <small>Lv' + u.lv + '</small> ' + tag + '</div>' +
+    '<div class="hpb"><i id="isl-bt-hp-' + u.side + '"></i></div><div class="hpt" id="isl-bt-hpt-' + u.side + '"></div></div>';
+}
+function islBtPickTargetEv(ev){
+  var B = _islBt, t = ev.target, s, i;
+  if(!B || B.over) return;
+  while(t && !(t.getAttribute && t.getAttribute('data-s'))) t = t.parentNode;
+  if(!t) return;
+  s = t.getAttribute('data-s');
+  if(s.charAt(0) !== 'm') return;
+  i = parseInt(s.substring(1), 10);
+  if(!B.ms[i] || B.ms[i].hp <= 0 || B.mi === i) return;
+  B.mi = i; B.m = B.ms[i];
+  B.brk = 0; B.defDown = 0;   /* ⚠ 破防/防禦下降是「對那一隻」累積的,換目標一定要清掉,否則會把 A 身上的破防帶去打 B */
+  playSfx('sfx-tap', 0.3);
+  islBtRepaintSides();
+  islBtLog('🎯 改鎖定 ' + B.m.e + ' ' + islEsc(B.m.n) + '(Lv' + B.m.lv + ')。' + islEsc(B.m.d));
+}
+/* 重畫所有魔物與隊友的 class(目標箭頭/壓暗/倒下) */
+function islBtRepaintSides(){
+  var B = _islBt, i;
+  if(!B) return;
+  for(i = 0; i < B.ms.length; i++) islBtSetState('m' + i, B.ms[i].hp <= 0 ? 'down' : (B.ms[i].stun > 0 ? 'stun' : 'idle'), 0);
+  for(i = 0; i < B.allies.length; i++) islBtSetState('a' + i, B.allies[i].down ? 'down' : 'idle', 0);
+  islBtHp();
+}
+/* ★ v1.164.0 一次重畫全部血條(主角 + 隊友 + 每隻魔物);目標箭頭與倒下灰化也在這裡收斂。 */
+function islBtHp(){
+  var B = _islBt, p = $('isl-bt-php'), i, u, bar, txt, box;
+  if(!B || !p) return;
+  p.style.width = Math.max(0, ISL.hp / ISL.hpMax * 100) + '%';
+  $('isl-bt-phpt').textContent = '❤️ ' + Math.max(0, ISL.hp) + '/' + ISL.hpMax;
+  for(i = 0; i < B.allies.length; i++){
+    u = B.allies[i]; bar = $('isl-bt-hp-' + u.side); txt = $('isl-bt-hpt-' + u.side); box = $('isl-bt-box-' + u.side);
+    if(bar) bar.style.width = Math.max(0, u.hp / u.hpMax * 100) + '%';
+    if(txt) txt.textContent = '❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax + (u.shield > 0 ? '　🛡' + u.shield : '') + (u.down ? '　💤 倒下' : (u.cd > 0 ? '　⏳ 指令 ' + u.cd : ''));
+    if(box) box.className = 'bt-hpbox' + (u.down ? ' dead' : '');
+  }
+  for(i = 0; i < B.ms.length; i++){
+    u = B.ms[i]; bar = $('isl-bt-hp-' + u.side); txt = $('isl-bt-hpt-' + u.side); box = $('isl-bt-box-' + u.side);
+    if(bar) bar.style.width = Math.max(0, u.hp / u.hpMax * 100) + '%';
+    if(txt) txt.textContent = '❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax + (u.bleed > 0 ? '　🩸' + u.bleed : '') + (u.stun > 0 ? '　😵' : '');
+    if(box) box.className = 'bt-hpbox m' + (u.hp <= 0 ? ' dead' : (i === B.mi ? ' tgt' : ''));
+  }
+  islHud();
+}
 function islBtLog(txt){ var l = $('isl-bt-log'); if(!l) return; l.innerHTML = txt; l.classList.remove('pop'); void l.offsetWidth; l.classList.add('pop'); }
-function islBtFloat(side, text, cls){ try{ var el = $('isl-bt-' + side), r; if(!el) return; r = el.getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + r.height * 0.35, text, cls); }catch(e){} }
-function islBtFx(side, kind, size){ try{ var el = $('isl-bt-' + side), r; if(!el) return; r = el.getBoundingClientRect(); mgFx(kind, r.left + r.width / 2, r.top + r.height / 2, size || Math.max(r.width, r.height) * 0.9, 700); }catch(e){} }
-function islBtActs(on){ var a = $('isl-bt-acts'), bs, i; if(!a) return; bs = a.querySelectorAll('button'); for(i = 0; i < bs.length; i++){ bs[i].disabled = !on || (bs[i].getAttribute('data-a') === 'wit' && _islBt.outwit); } a.classList.toggle('off', !on); }
+function islBtFloat(side, text, cls){ try{ var el = islBtEl(side), r; if(!el) return; r = el.getBoundingClientRect(); mgBattleFloat(r.left + r.width / 2, r.top + r.height * 0.35, text, cls); }catch(e){} }
+function islBtFx(side, kind, size){ try{ var el = islBtEl(side), r; if(!el) return; r = el.getBoundingClientRect(); mgFx(kind, r.left + r.width / 2, r.top + r.height / 2, size || Math.max(r.width, r.height) * 0.9, 700); }catch(e){} }
+function islBtActs(on){
+  var a = $('isl-bt-acts'), bs, i, k;
+  if(!a) return;
+  bs = a.querySelectorAll('button');
+  for(i = 0; i < bs.length; i++){
+    k = bs[i].getAttribute('data-a');
+    /* ★ v1.165.0 🎯 指令按鈕:這場用過就變灰(與「智取一場一次」同一種處理) */
+    bs[i].disabled = !on || (k === 'wit' && _islBt.outwit) || (k.indexOf('cmd:') === 0 && _islBt.cmdUsed && _islBt.cmdUsed[k.substring(4)]);
+  }
+  a.classList.toggle('off', !on);
+}
 function islBtPlayerTurn(){
-  var B = _islBt;
+  var B = _islBt, i;
   if(!B || B.over) return;
   B.turn++;
+  /* ★ v1.164.0 新的一輪:隊友回合重新開放、全隊增益/敵方減益各扣 1 回合、夥伴指令冷卻各扣 1 */
+  B.allyDone = false; islBtTickBuffs();
+  for(i = 0; i < B.allies.length; i++){ if(B.allies[i].cd > 0) B.allies[i].cd--; }
+  islBtHp();
   if(B.p.stun > 0){ B.p.stun--; B.busy = true; islBtActs(false); islBtSetState('p', 'stun', 0); islBtFx('p', 'dizzy', 160); playSfx('sfx-powerdown', 0.35); islBtLog('😵 頭暈目眩……這回合動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ islBtSetState('p', 'idle', 0); islBtMonTurn(); } }, 1200); return; }
   if(islAilTick()) return;   /* ★ v1.160.0 🤒 中毒/燒燙傷/感染的每回合持續傷害（回傳 true = 這一下就倒下了，不再給行動） */
   B.busy = false; islBtActs(true);
@@ -19514,6 +20454,12 @@ function islBtAction(a){
   var B = _islBt, db = islDB(), ps;
   if(!B || B.busy || B.over) return;
   B.busy = true; islBtActs(false); playSfx('sfx-tap', 0.3);
+  if(a.indexOf('cmd:') === 0){   /* ★ v1.165.0 🎯 特殊指令(每場每個各 1 次;AP 不足或已用過就把行動權還給玩家,不算浪費一個回合) */
+    var _cid = a.substring(4);
+    if(B.cmdUsed && B.cmdUsed[_cid]){ islBtLog('🎯 這個指令這場已經用過了。'); B.busy = false; islBtActs(true); return; }
+    if(!islCmdUse(_cid, true)){ B.busy = false; islBtActs(true); }
+    return;
+  }
   if(a === 'atk') islBtQte();
   else if(a === 'wit') islBtOutwit();
   else if(a === 'sk') islSkAct();
@@ -19574,7 +20520,7 @@ function islBtResolveAttack(results){
     islBtHp();
     islBtLog('⚔ ' + txt.join(' + ') + (anyCrit ? '!正中要害!' : '') + (stunned ? ' 🔨 打得牠眼冒金星,暈了!' : ''));
     if(islSkEff('bleedOn') > 0){ m.bleed = (m.bleed || 0) + 1; islBtLog('🩸 傷口流血了（流血 ' + m.bleed + ' 層，每回合 −2）。'); }   /* ★ v1.161.0 放血 */
-    if(m.hp <= 0){ setTimeout(function(){ islBattleEnd('win'); }, 700); return; }
+    if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; }   /* ★ v1.164.0 還有別隻就自動換目標繼續打,全部倒下才結算 */
     /* ★ v1.161.0 快手 freeP：命中後有機率不消耗這個回合（直接再輪到玩家） */
     if(islSkEff('freeP') && Math.random() * 100 < islSkEff('freeP')){ islBtLog('⚡ 快手！這一箭快到不算一個回合——你可以再行動一次！'); setTimeout(islBtPlayerTurn, 900); return; }
     setTimeout(islBtMonTurn, 1000);
@@ -19650,7 +20596,7 @@ function islSkAct(){
     islBtHp();
     islBtLog('✨ ' + islEsc(d.n) + ':' + txt.join(' + ') + ' = −' + total +
       (d.stun ? '　😵 暈眩 ' + d.stun + ' 回合' : '') + (d.bleed ? '　🩸 流血 +' + d.bleed + ' 層' : '') + (d.defDown ? '　🪨 防禦 −' + Math.round(d.defDown * 100) + '%(整場)' : ''));
-    if(m.hp <= 0){ setTimeout(function(){ islBattleEnd('win'); }, 700); return; }
+    if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; }
     setTimeout(islBtMonTurn, 1000);
   }, 700);
 }
@@ -19664,7 +20610,7 @@ function islBtOutwit(){
   h += '</div>';
   q.innerHTML = h; q.classList.remove('hidden');
   q.onclick = function(ev){ var t = ev.target; while(t && t !== q && !(t.getAttribute && t.getAttribute('data-t'))) t = t.parentNode; if(!t || t === q) return; q.onclick = null; q.classList.add('hidden'); B.outwit = true;
-    if(t.getAttribute('data-t') === m.tool){ playSfx('sfx-quiz-correct', 0.5); islBtSetState('p', 'atk', 600); setTimeout(function(){ if(!_islBt) return; m.hp = Math.max(0, m.hp - db.BT.OUTWIT_DMG); m.stun = Math.max(m.stun, db.BT.OUTWIT_STUN); playSfx('sfx-normalatk', 0.45); islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 150); islBtFloat('m', '−' + db.BT.OUTWIT_DMG, 'combo'); islBtHp(); islBtLog('✓ 答對!' + islEsc(m.why) + ' ' + islEsc(m.n) + ' 暈了 ' + db.BT.OUTWIT_STUN + ' 回合。'); islStatGain('wit', 1); if(m.hp <= 0){ setTimeout(function(){ islBattleEnd('win'); }, 700); return; } setTimeout(islBtMonTurn, 1100); }, 380); }
+    if(t.getAttribute('data-t') === m.tool){ playSfx('sfx-quiz-correct', 0.5); islBtSetState('p', 'atk', 600); setTimeout(function(){ if(!_islBt) return; m.hp = Math.max(0, m.hp - db.BT.OUTWIT_DMG); m.stun = Math.max(m.stun, db.BT.OUTWIT_STUN); playSfx('sfx-normalatk', 0.45); islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 150); islBtFloat('m', '−' + db.BT.OUTWIT_DMG, 'combo'); islBtHp(); islBtLog('✓ 答對!' + islEsc(m.why) + ' ' + islEsc(m.n) + ' 暈了 ' + db.BT.OUTWIT_STUN + ' 回合。'); islStatGain('wit', 1); if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; } setTimeout(islBtMonTurn, 1100); }, 380); }
     else { playSfx('sfx-ng', 0.4); islBtLog('✗ 牠不怕這個!' + islEsc(m.why) + ' 反而被撲過來——'); setTimeout(islBtMonTurn, 900); }
   };
 }
@@ -19679,43 +20625,294 @@ function islBtEat(){
     if(k < 0 || !ISL.bag.slots[k]){ B.busy = false; islBtActs(true); return; }
     var it = ISL.bag.slots[k], dd = islItemDef(it.id), was = ISL.hp; islEatApply(dd, it.q); it.n -= 1; if(it.n <= 0) ISL.bag.slots.splice(k, 1); islBtHp(); islBtFloat('p', '+' + (ISL.hp - was), 'heal'); islBtFx('p', 'glow', 160); islBtLog('🍖 吃了 ' + islEsc(dd.n) + ',❤️+' + (ISL.hp - was) + '。'); setTimeout(islBtMonTurn, 1000); };
 }
+/* ══ ★ v1.164.0(P2)— 回合流程 ══
+   一輪的順序:主角 → 隊友(依站位由前到後) → 魔物(依編號)。
+   ⚠ 既有程式碼有十幾處「做完事就 setTimeout(islBtMonTurn, N)」,為了不動那些呼叫點,
+     islBtMonTurn 本身改成「驅動器」:同一輪第一次被呼叫先跑隊友,跑完再呼叫自己一次才輪到魔物。
+     旗標 B.allyDone 在 islBtPlayerTurn 開頭歸零(＝新的一輪)。 */
 function islBtMonTurn(){
-  var B = _islBt, db = islDB(), m, dmg, crit, ps;
-  if(!B || B.over) return; m = B.m; B.busy = true; islBtActs(false);
-  /* ★ v1.161.0 🩸 流血：魔物回合開頭結算，每層 −2 */
-  if(m.bleed > 0){ var _bd = m.bleed * 2; m.hp = Math.max(0, m.hp - _bd); islBtHp(); islBtFloat('m', '−' + _bd, ''); islBtLog('🩸 流血 ' + m.bleed + ' 層：' + islEsc(m.n) + ' −2×' + m.bleed + '。'); if(m.hp <= 0){ setTimeout(function(){ islBattleEnd('win'); }, 700); return; } }
-  if(m.stun > 0){ m.stun--; islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 140); islBtLog('😵 ' + islEsc(m.n) + ' 暈眩中,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(m.stun <= 0) islBtSetState('m', 'idle', 0); islBtPlayerTurn(); } }, 1100); return; }
+  var B = _islBt, alive;
+  if(!B || B.over) return;
+  B.busy = true; islBtActs(false);
+  if(!B.allyDone){ B.allyDone = true; islBtAllyTurn(function(){ if(_islBt && !_islBt.over) islBtMonTurn(); }); return; }
+  alive = islBtAliveMons();
+  if(!alive.length){ return; }   /* 理論上不會走到:最後一隻倒下時 islBtOnMonDown 已經結算 */
+  islBtMonSeq(alive, 0);
+}
+/* 魔物一隻一隻輪流行動 */
+function islBtMonSeq(list, i){
+  var B = _islBt;
+  if(!B || B.over) return;
+  if(i >= list.length){ setTimeout(islBtPlayerTurn, 700); return; }
+  if(list[i].hp <= 0){ islBtMonSeq(list, i + 1); return; }
+  islBtMonAct(list[i], function(){ islBtMonSeq(list, i + 1); });
+}
+/* 魔物挑打誰:有人嘲諷就一定打他;否則依站位權重(越前鋒越容易被打到),
+   最後再讓坦克型隊友有機會代替後排承受(D.PARTY.TANK_COVER_P / TANK_CUT_P)。 */
+function islBtMonPickTarget(){
+  var B = _islBt, db = islDB(), cands = [], w = [], i, u, tot = 0, r, pick, tank = null;
+  if(B.taunt && B.taunt.t > 0){ u = islBtUnit(B.taunt.side); if(u && !u.down) return { u: u, byTaunt: true }; }
+  if(ISL.hp > 0){ cands.push(B.hero); w.push(2); }
+  for(i = 0; i < B.allies.length; i++){
+    u = B.allies[i]; if(u.down) continue;
+    cands.push(u); w.push(u.row <= db.PARTY.ROW.hero ? 3 : (u.row >= db.PARTY.ROW.heal ? 1 : 2));
+    if(u.type === 'tank') tank = u;
+  }
+  if(!cands.length) return null;
+  for(i = 0; i < w.length; i++) tot += w[i];
+  r = Math.random() * tot; pick = cands[0];
+  for(i = 0; i < cands.length; i++){ r -= w[i]; if(r <= 0){ pick = cands[i]; break; } }
+  if(tank && pick !== tank && Math.random() * 100 < (db.PARTY.TANK_COVER_P + islPetTal(tank, 'coverAddP'))){
+    return { u: tank, cover: pick, cut: db.PARTY.TANK_CUT_P };   /* ★ v1.167.0 天賦 coverAddP(台灣黑熊 厚實胸膛 +15%) */
+  }
+  return { u: pick };
+}
+function islBtMonAct(m, next){
+  var B = _islBt, db = islDB(), ps, pick, dmg, crit, u, cut, extraCut;
+  if(!B || B.over) return;
+  /* ★ v1.161.0 🩸 流血:魔物回合開頭結算,每層 −2 */
+  if(m.bleed > 0){
+    var _bd = m.bleed * 2; m.hp = Math.max(0, m.hp - _bd); islBtHp(); islBtFloat(m.side, '−' + _bd, '');
+    islBtLog('🩸 流血 ' + m.bleed + ' 層:' + islEsc(m.n) + ' −2×' + m.bleed + '。');
+    if(m.hp <= 0){ islBtOnMonDown(m, next); return; }
+  }
+  if(m.stun > 0){ m.stun--; islBtSetState(m.side, 'stun', 0); islBtFx(m.side, 'dizzy', 140); islBtLog('😵 ' + islEsc(m.n) + ' 暈眩中,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(m.stun <= 0) islBtSetState(m.side, 'idle', 0); next(); } }, 1000); return; }
+  pick = islBtMonPickTarget();
+  if(!pick){ next(); return; }
+  u = pick.u;
   ps = islBtPlayerStats();
-  islBtSetState('m', 'atk', 700); playSfx('sfx-punch', 0.4);
+  islBtSetState(m.side, 'atk', 700); playSfx('sfx-punch', 0.4);
   setTimeout(function(){
-    if(!_islBt) return;
-    crit = Math.random() * 100 < m.crit;
-    dmg = Math.max(1, m.atk - ps.def); dmg = Math.round(dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.5 : 1));
-    if(B.p.guard){ dmg = Math.max(1, Math.round(dmg * db.BT.DEFEND_CUT)); B.p.guard = false; islBtFloat('p', '🛡 減半', 'block'); }
-    if(ps.cut) dmg = Math.max(1, dmg - ps.cut);   /* ★ v1.161.0 🛡 硬払：每次受傷固定減 N */
-    ISL.hp = Math.max(0, ISL.hp - dmg); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true;
-    /* ★ v1.161.0 🌟 不倒的意志(deathSave)：每場戰鬥 1 次，體力歸零時保留 1 點不算戰敗。 */
-    if(ISL.hp <= 0 && islSkEff('deathSave') > 0 && !B.saved){ B.saved = true; ISL.hp = 1; islBtFloat('p', '🌟 擐住了！', 'heal'); islBtFx('p', 'glow', 200); playSfx('sfx-revive', 0.5); }
-    playSfx(crit ? 'sfx-crit' : 'sfx-normalatk', 0.5); islBtSetState('p', 'hit', 500); islBtFx('p', 'hit'); islBtFloat('p', '−' + dmg, crit ? 'combo' : '');
-    islBtHp();
-    if(ISL.hp <= 0){ islBtLog('💥 ' + islEsc(m.n) + ' 的攻擊 −' + dmg + '……' + db.BT.lines.lose[Math.floor(Math.random() * db.BT.lines.lose.length)]); setTimeout(function(){ islBattleEnd('lose'); }, 500); return; }
-    if(crit && db.BT.PLAYER_STUN_ON_CRIT){ B.p.stun = Math.max(B.p.stun, 1); islBtLog('💥 ' + islEsc(m.n) + ' 暴擊 −' + dmg + '!你被撞得頭昏眼花……'); }
-    else islBtLog('💢 ' + islEsc(m.n) + ' 攻擊 −' + dmg + '。');
-    /* ★ v1.161.0 🛡 反擊(counterP)：受擊時有機率立刻還手一下（固定為一般攻擊的一半，不走 QTE）。 */
-    if(!B.over && ISL.hp > 0 && islSkEff('counterP') && Math.random() * 100 < islSkEff('counterP')){
-      var _cd = Math.max(1, Math.round((ps.atk - m.def) * 0.5));
-      m.hp = Math.max(0, m.hp - _cd); islBtHp(); islBtSetState('p', 'atk', 500); islBtFloat('m', '−' + _cd, ''); playSfx('sfx-sword', 0.4);
-      islBtLog('🛡 反擊！趴它收手的瞬間還了一下 −' + _cd + '。');
-      if(m.hp <= 0){ setTimeout(function(){ islBattleEnd('win'); }, 700); return; }
+    if(!_islBt || _islBt.over) return;
+    /* ★ v1.164.0 敵方減益:hitDownP = 命中率下降(風沙亂舞等);seal = 這回合不能暴擊
+       ⚠ 魔物本來就沒有技能可封,所以「封招」對魔物的意義寫成「打不出暴擊」,
+         而不是做一個看不出差別的空效果——老師要的是每個功能都真的有用。 */
+    if(islBtDeb('hitDownP') && Math.random() * 100 < islBtDeb('hitDownP')){
+      playSfx('sfx-evade', 0.45); islBtFloat(u.side, 'MISS', 'block');
+      islBtLog('💨 ' + islEsc(m.n) + ' 被擾亂,揮空了!');
+      setTimeout(next, 700); return;
     }
-    setTimeout(islBtPlayerTurn, 1000);
+    /* ★ v1.164.0 速度增益/減益的出口:速度差換成迴避率(上限 25%),
+       不然 clearstream 的「全隊速度 +20%」與 sweepbill 的「敵方速度 −25%」在回合制裡看不出差別。 */
+    var _tspd = (u.side === 'p') ? ps.spd : u.spd;
+    _tspd = _tspd * (1 + islBtBuff('spdUpP') / 100);
+    var _mspd = m.spd * (1 - islBtDeb('spdDownP') / 100);
+    var _dodge = Math.max(0, Math.min(25, (_tspd - _mspd) * 1.5));
+    if(_dodge > 0 && Math.random() * 100 < _dodge){
+      playSfx('sfx-evade', 0.45); islBtFloat(u.side, '閃過!', 'block');
+      islBtLog('💨 ' + islEsc(u.n) + ' 反應夠快,閃開了 ' + islEsc(m.n) + ' 的攻擊!');
+      setTimeout(next, 700); return;
+    }
+    crit = (islBtDeb('seal') ? false : (Math.random() * 100 < m.crit));
+    cut = (u.side === 'p') ? ps.def : Math.round(u.def * (1 + islBtBuff('defUpP') / 100));
+    dmg = Math.max(1, m.atk - cut); dmg = Math.round(dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.5 : 1));
+    if(pick.cover){ dmg = Math.max(1, Math.round(dmg * (1 - pick.cut / 100))); islBtLog('🛡 ' + islEsc(u.n) + ' 擋在 ' + islEsc(pick.cover.n) + ' 前面,替他承受了這一下!'); }
+    if(pick.byTaunt && B.tauntCut) dmg = Math.max(1, Math.round(dmg * (1 - B.tauntCut / 100)));
+    if(u.side === 'p'){
+      if(B.p.guard){ dmg = Math.max(1, Math.round(dmg * db.BT.DEFEND_CUT)); B.p.guard = false; islBtFloat('p', '🛡 減半', 'block'); }
+      if(B.heroGuard && B.heroGuard.t > 0){ dmg = Math.max(1, Math.round(dmg * (1 - B.heroGuard.cut / 100))); islBtFloat('p', '🛡 夥伴護住', 'block'); B.heroGuard.t = 0; }
+      if(ps.cut) dmg = Math.max(1, dmg - ps.cut);   /* ★ v1.161.0 🛡 硬扛:每次受傷固定減 N */
+      islBtHurtUnit(B.hero, dmg);
+      /* ★ v1.161.0 🌟 不倒的意志(deathSave):每場戰鬥 1 次,體力歸零時保留 1 點不算戰敗。 */
+      if(ISL.hp <= 0 && islSkEff('deathSave') > 0 && !B.saved){ B.saved = true; ISL.hp = 1; islBtFloat('p', '🌟 撐住了!', 'heal'); islBtFx('p', 'glow', 200); playSfx('sfx-revive', 0.5); }
+    } else {
+      islBtHurtUnit(u, dmg);
+      /* ★ v1.167.0 天賦 thornP(椰子蟹 硬殼反震):被打中就反彈一部分傷害給對方 */
+      if(islPetTal(u, 'thornP') && m.hp > 0){
+        var _th = Math.max(1, Math.round(dmg * islPetTal(u, 'thornP') / 100));
+        m.hp = Math.max(0, m.hp - _th); islBtFloat(m.side, '−' + _th, ''); islBtLog('🦀 硬殼反震!' + islEsc(m.n) + ' 自己撞得 −' + _th + '。');
+        if(m.hp <= 0){ islBtHp(); islBtOnMonDown(m, next); return; }
+      }
+    }
+    playSfx(crit ? 'sfx-crit' : 'sfx-normalatk', 0.5);
+    if(!(u.side !== 'p' && u.down)) islBtSetState(u.side, 'hit', 500);
+    islBtFx(u.side, 'hit'); islBtFloat(u.side, '−' + dmg, crit ? 'combo' : '');
+    islBtHp();
+    if(u.side === 'p' && ISL.hp <= 0){ islBtLog('💥 ' + islEsc(m.n) + ' 的攻擊 −' + dmg + '……' + db.BT.lines.lose[Math.floor(Math.random() * db.BT.lines.lose.length)]); setTimeout(function(){ islBattleEnd('lose'); }, 500); return; }
+    if(u.side === 'p' && crit && db.BT.PLAYER_STUN_ON_CRIT){ B.p.stun = Math.max(B.p.stun, 1); islBtLog('💥 ' + islEsc(m.n) + ' 暴擊 −' + dmg + '!你被撞得頭昏眼花……'); }
+    else islBtLog('💢 ' + islEsc(m.n) + ' 攻擊 ' + islEsc(u.n) + ' −' + dmg + '。');
+    /* ★ v1.161.0 🛡 反擊(counterP):只有主角被打到時才觸發(天賦是主角的)。 */
+    if(!B.over && u.side === 'p' && ISL.hp > 0 && islSkEff('counterP') && Math.random() * 100 < islSkEff('counterP')){
+      var _cd = Math.max(1, Math.round((ps.atk - m.def) * 0.5));
+      m.hp = Math.max(0, m.hp - _cd); islBtHp(); islBtSetState('p', 'atk', 500); islBtFloat(m.side, '−' + _cd, ''); playSfx('sfx-sword', 0.4);
+      islBtLog('🛡 反擊!趁牠收手的瞬間還了一下 −' + _cd + '。');
+      if(m.hp <= 0){ islBtOnMonDown(m, next); return; }
+    }
+    setTimeout(next, 850);
   }, 380);
+}
+/* ══ 🐾 隊友回合:每位活著的隊友自動行動(冷卻好了就放專屬指令,否則普通攻擊)══
+   ⚠ 刻意做成自動而非讓學生逐一下指令:一場戰鬥要點 4 次選單,對中低年級太冗長,
+     而且「我挑的隊友會自己做對的事」正是組隊的樂趣。 */
+function islBtAllyTurn(done){
+  var B = _islBt, list, i;
+  if(!B || B.over){ done(); return; }
+  list = islBtAliveAllies();
+  /* ★ 指令帶 fx.first(領角鴞 靜音俯衝)且冷卻好了的,這一輪排在所有隊友最前面出手 */
+  list.sort(function(a, b){
+    var db = islDB(), fa = (a.cmd && db.PET_CMDS[a.cmd] && db.PET_CMDS[a.cmd].fx.first && a.cd <= 0) ? 1 : 0,
+        fb = (b.cmd && db.PET_CMDS[b.cmd] && db.PET_CMDS[b.cmd].fx.first && b.cd <= 0) ? 1 : 0;
+    if(fa !== fb) return fb - fa;
+    return a.row - b.row;
+  });
+  B.allyFirst = list.length ? list[0].side : null;   /* ★ v1.167.0 這一輪誰第一個出手(天賦 firstDmgP 要用) */
+  islBtAllySeq(list, 0, done);
+}
+function islBtAllySeq(list, i, done){
+  var B = _islBt;
+  if(!B || B.over) return;
+  if(i >= list.length){ done(); return; }
+  if(list[i].down){ islBtAllySeq(list, i + 1, done); return; }
+  islBtAllyAct(list[i], function(){ islBtAllySeq(list, i + 1, done); });
+}
+function islBtAllyAct(u, next){
+  var B = _islBt, db = islDB(), cmd = u.cmd ? db.PET_CMDS[u.cmd] : null, useCmd;
+  if(!B || B.over) return;
+  if(!islBtAliveMons().length){ next(); return; }
+  useCmd = !!(cmd && cmd.fx && u.cd <= 0);
+  if(useCmd){ u.cd = Math.max(1, (cmd.cd || 1) - (u.cdCut || 0)); islBtPetCmd(u, cmd, next); return; }
+  islBtAllyBasic(u, next);
+}
+/* ★ v1.167.0 隊友攻擊力的單一出口:全隊增益 atkUpP + 三個天賦
+   ——長尾陣列(台灣藍鵲:每多一位在場夥伴 +5%)、夜行獵手(石虎:目標半血以下 +20%)、
+     無聲之翼(領角鴞:在隊友中第一個出手時 +12%)。 */
+function islPetAtk(u, target){
+  var B = _islBt, atk = u.atk * (1 + islBtBuff('atkUpP') / 100), per = islPetTal(u, 'perAllyAtkP'), n;
+  if(per){ n = islBtAliveAllies().length - 1; if(n > 0) atk = atk * (1 + per * n / 100); }
+  if(target && islPetTal(u, 'lowHpAtkP') && target.hp <= target.hpMax * 0.5) atk = atk * (1 + islPetTal(u, 'lowHpAtkP') / 100);
+  if(B && B.allyFirst === u.side && islPetTal(u, 'firstDmgP')) atk = atk * (1 + islPetTal(u, 'firstDmgP') / 100);
+  return atk;
+}
+/* 普通攻擊:打目前鎖定的那隻(鎖定的已倒下就改打第一隻還活著的) */
+function islBtAllyBasic(u, next){
+  var B = _islBt, m = (B.m && B.m.hp > 0) ? B.m : islBtAliveMons()[0], dmg, crit;
+  if(!m){ next(); return; }
+  islBtSetState(u.side, 'atk', 600);
+  setTimeout(function(){
+    if(!_islBt || _islBt.over) return;
+    dmg = Math.max(1, Math.round(islPetAtk(u, m) - m.def));
+    dmg = Math.round(dmg * (0.9 + Math.random() * 0.2));
+    crit = islPetTal(u, 'critP') && Math.random() * 100 < islPetTal(u, 'critP');   /* ★ v1.167.0 天賦 critP(大冠鷲 高空視野) */
+    if(crit) dmg = Math.round(dmg * 1.5);
+    m.hp = Math.max(0, m.hp - dmg);
+    playSfx(crit ? 'sfx-crit' : 'sfx-normalatk', 0.45); islBtSetState(m.side, 'hit', 450); islBtFloat(m.side, '−' + dmg, crit ? 'combo' : ''); islBtHp();
+    islBtLog(u.e + ' ' + islEsc(u.n) + ' 攻擊 ' + islEsc(m.n) + (crit ? ' ✨暴擊' : '') + ' −' + dmg + '。');
+    if(m.hp <= 0){ islBtOnMonDown(m, next); return; }
+    setTimeout(next, 650);
+  }, 380);
+}
+/* 專屬指令:所有數值一律讀 D.PET_CMDS[...].fx,index 端不寫死任何一招的數字 */
+function islBtPetCmd(u, cmd, next){
+  var B = _islBt, db = islDB(), f = cmd.fx, targets, i, j, dmg, total, tgt, heals, lines = [];
+  islBtSetState(u.side, 'skill', 900); playSfx('sfx-burst-use', 0.45); islBtFx(u.side, 'glow', 180);
+  islBtLog(cmd.e + ' ' + islEsc(u.n) + ' 使出「' + islEsc(cmd.n) + '」——' + islEsc(cmd.d));
+  setTimeout(function(){
+    if(!_islBt || _islBt.over) return;
+    /* ①傷害類 */
+    if(f.mul){
+      targets = f.all ? islBtAliveMons() : [(B.m && B.m.hp > 0) ? B.m : islBtAliveMons()[0]];
+      for(i = 0; i < targets.length; i++){
+        tgt = targets[i]; if(!tgt) continue; total = 0;
+        for(j = 0; j < (f.hits || 1); j++){
+          dmg = Math.max(1, Math.round((islPetAtk(u, tgt) - tgt.def) * f.mul));   /* ★ v1.167.0 與普通攻擊共用 islPetAtk,天賦才不會只對其中一種生效 */
+          if(!f.sure) dmg = Math.round(dmg * (0.9 + Math.random() * 0.2));
+          if(f.critAdd && Math.random() * 100 < f.critAdd) dmg = Math.round(dmg * 1.5);
+          total += dmg;
+        }
+        tgt.hp = Math.max(0, tgt.hp - total);
+        islBtSetState(tgt.side, 'hit', 450); islBtFloat(tgt.side, '−' + total, 'combo');
+        lines.push(islEsc(tgt.n) + ' −' + total);
+        if(f.stunP && tgt.hp > 0 && Math.random() * 100 < (f.stunP + islPetTal(u, 'stunAddP'))){   /* ★ v1.167.0 天賦 stunAddP(台灣獼猴 手巧) */ tgt.stun = Math.max(tgt.stun, f.stun || 1); islBtFx(tgt.side, 'dizzy', 140); lines.push(islEsc(tgt.n) + ' 暈了'); }
+      }
+      playSfx('sfx-crit', 0.5);
+    }
+    /* ②治療類(單體=體力最低的隊友或主角;全體=大家) */
+    if(f.heal || f.healAll){
+      heals = f.healAll ? islBtHealAll(u, f.healAll) : islBtHealOne(u, f.heal);
+      lines.push(heals);
+    }
+    if(f.cure){
+      try{ var _ord = db.STATUS_ORDER || [], _c2;
+        for(_c2 = 0; _c2 < _ord.length; _c2++){ if(islAilHas(_ord[_c2])){ islAilCure(_ord[_c2], true); lines.push('清掉「' + islEsc(db.STATUS[_ord[_c2]].n) + '」'); break; } }
+      }catch(_ce){}
+    }
+    /* ③護盾與增益 */
+    if(f.shield){ lines.push(islBtShieldAll(u, f.shield)); }
+    if(f.defUpP){ islBtAddBuff('defUpP', f.defUpP, f.dur || 2); lines.push('全隊防禦 +' + f.defUpP + '%'); }
+    if(f.spdUpP){ islBtAddBuff('spdUpP', f.spdUpP, f.dur || 2); lines.push('全隊速度 +' + f.spdUpP + '%'); }
+    if(f.atkUpP){ islBtAddBuff('atkUpP', f.atkUpP, f.dur || 2); lines.push('全隊攻擊 +' + f.atkUpP + '%'); }
+    /* ④代受與嘲諷 */
+    if(f.guard){ B.heroGuard = { cut: f.cut || 40, t: f.dur || 1 }; lines.push('下一次攻擊由 ' + islEsc(u.n) + ' 擋下(傷害 −' + (f.cut || 40) + '%)'); }
+    if(f.taunt){ B.taunt = { side: u.side, t: f.dur || 1 }; B.tauntCut = f.cut || 0; lines.push('敵方這一回合只打得到 ' + islEsc(u.n)); }
+    /* ⑤敵方減益 */
+    if(f.hitDownP){ islBtAddDeb('hitDownP', f.hitDownP, f.dur || 2); lines.push('敵方命中 −' + f.hitDownP + '%'); }
+    if(f.spdDownP){ islBtAddDeb('spdDownP', f.spdDownP, f.dur || 2); lines.push('敵方速度 −' + f.spdDownP + '%'); }
+    if(f.seal){ islBtAddDeb('seal', 1, (f.dur || 1) + islPetTal(u, 'sealAdd')); lines.push('敵方打不出暴擊'); }   /* ★ v1.167.0 天賦 sealAdd(五色鳥 鑿洞高手) */
+    islBtHp();
+    islBtLog(cmd.e + ' ' + islEsc(cmd.n) + ':' + (lines.length ? lines.join('　') : '生效了!'));
+    /* 全部魔物倒下? */
+    for(i = 0; i < B.ms.length; i++){ if(B.ms[i].hp <= 0 && !B.ms[i]._downDone){ islBtOnMonDown(B.ms[i], next); return; } }
+    setTimeout(next, 800);
+  }, 700);
+}
+/* ★ v1.167.0 治療輸出加成的單一出口:識草本能(梅花鹿)、濕潤皮膚(莫氏樹蛙・雨天/颱風)、逆流而上(櫻花鉤吻鮭・自己半血以下) */
+function islPetHealMul(u){
+  var m = 1 + islPetTal(u, 'healOutP') / 100, wx;
+  if(islPetTal(u, 'rainHealP')){ try{ wx = islWeatherOf(ISL.day); }catch(_w){ wx = 'sun'; } if(wx === 'rain' || wx === 'typhoon') m += islPetTal(u, 'rainHealP') / 100; }
+  if(islPetTal(u, 'lowHealP') && u.hp <= u.hpMax * 0.5) m += islPetTal(u, 'lowHealP') / 100;
+  return m;
+}
+function islBtHealOne(u, pct){
+  var B = _islBt, best = null, bestR = 2, i, ratio, heal, was;
+  ratio = ISL.hp / ISL.hpMax; if(ISL.hp > 0){ best = B.hero; bestR = ratio; }
+  for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down) continue; ratio = B.allies[i].hp / B.allies[i].hpMax; if(ratio < bestR){ bestR = ratio; best = B.allies[i]; } }
+  if(!best) return '沒有人需要治療';
+  pct = pct * islPetHealMul(u);   /* ★ v1.167.0 治療天賦加成 */
+  if(best.side === 'p'){ was = ISL.hp; heal = Math.max(1, Math.round(ISL.hpMax * pct / 100)); ISL.hp = Math.min(ISL.hpMax, ISL.hp + heal); heal = ISL.hp - was; }
+  else { was = best.hp; heal = Math.max(1, Math.round(best.hpMax * pct / 100)); best.hp = Math.min(best.hpMax, best.hp + heal); heal = best.hp - was; }
+  playSfx('sfx-heal', 0.45); islBtFx(best.side, 'glow', 180); islBtFloat(best.side, '+' + heal, 'heal');
+  return islEsc(best.n) + ' ❤️+' + heal;
+}
+function islBtHealAll(u, pct){
+  var B = _islBt, i, heal, was, tot = 0;
+  pct = pct * islPetHealMul(u);   /* ★ v1.167.0 治療天賦加成 */
+  if(ISL.hp > 0){ was = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(1, Math.round(ISL.hpMax * pct / 100))); tot += ISL.hp - was; islBtFloat('p', '+' + (ISL.hp - was), 'heal'); }
+  for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down) continue; was = B.allies[i].hp; B.allies[i].hp = Math.min(B.allies[i].hpMax, B.allies[i].hp + Math.max(1, Math.round(B.allies[i].hpMax * pct / 100))); tot += B.allies[i].hp - was; islBtFloat(B.allies[i].side, '+' + (B.allies[i].hp - was), 'heal'); }
+  playSfx('sfx-heal', 0.5);
+  return '全隊 ❤️+' + tot;
+}
+function islBtShieldAll(u, pct){
+  var B = _islBt, i, n, tot = 0, bonus = 1 + islPetTal(u, 'shieldP') / 100;   /* ★ v1.167.0 天賦 shieldP(綠蠵龜 護盾傳承) */
+  for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down) continue; n = Math.max(1, Math.round(B.allies[i].hpMax * pct / 100 * bonus)); B.allies[i].shield += n; tot += n; islBtFloat(B.allies[i].side, '🛡+' + n, 'block'); }
+  B.heroShield = (B.heroShield || 0) + Math.max(1, Math.round(ISL.hpMax * pct / 100 * bonus));
+  playSfx('sfx-ok', 0.45);
+  return '全隊 🛡 護盾 +' + tot;
+}
+/* 有魔物倒下:一次把「已經 HP 歸零但還沒演倒下」的全部收乾淨(全體技能可能一次放倒兩隻),
+   還有活著的就自動換鎖定並繼續(cb),全部倒下才進勝利結算。 */
+function islBtOnMonDown(m, cb){
+  var B = _islBt, alive, i, fell = [];
+  if(!B || B.over) return;
+  for(i = 0; i < B.ms.length; i++){
+    if(B.ms[i].hp <= 0 && !B.ms[i]._downDone){ B.ms[i]._downDone = true; islBtSetState(B.ms[i].side, 'down', 0); islBtFx(B.ms[i].side, 'glow', 180); fell.push(B.ms[i].n); }
+  }
+  if(fell.length){ playSfx('sfx-ko', 0.45); islBtLog('💥 ' + islEsc(fell.join('、')) + ' 被打倒了!'); }
+  alive = islBtAliveMons();
+  islBtHp();
+  if(!alive.length){ setTimeout(function(){ islBattleEnd('win'); }, 700); return; }
+  if(B.m.hp <= 0){
+    for(i = 0; i < B.ms.length; i++){ if(B.ms[i].hp > 0){ B.mi = i; B.m = B.ms[i]; break; } }
+    B.brk = 0; B.defDown = 0;   /* 換目標必清:破防是對單一目標累積的 */
+    islBtRepaintSides();
+    islBtLog('🎯 還有 ' + alive.length + ' 隻!自動改鎖定 ' + B.m.e + ' ' + islEsc(B.m.n) + '。');
+  }
+  setTimeout(function(){ if(_islBt && !_islBt.over) cb(); }, 900);
 }
 window.islBattleEnd = function(how){
   var B = _islBt, db = islDB(), m, loot = [], k, n, put, tech = 0, xp, mine;
   if(!B || B.over) return; B.over = true; m = B.m; mine = B.mine; islBtActs(false);
   if(B.dg){   /* ★ v1.122.0 地下層:只演倒下/勝利動畫,戰利品與流程交回 islDgAfterBattle(樓層寶箱本來就有) */
-    if(how === 'win'){ islBtSetState('m', 'down', 0); playSfx('sfx-ko', 0.5); setTimeout(function(){ islBtFx('m', 'glow', 220); }, 200); ISL.battle.won++; islWeaponXpGain(m.lv); }   /* ★ v1.125.0 地下層打贏也算練功 */
+    if(how === 'win'){ islBtSetState('m', 'down', 0); playSfx('sfx-ko', 0.5); setTimeout(function(){ islBtFx('m', 'glow', 220); }, 200); ISL.battle.won++; islWeaponXpGain(m.lv); islPetsGainAfterWin(B.ms); }   /* ★ v1.125.0 地下層打贏也算練功;★ v1.164.0 地下層帶去的隊友一樣有經驗 */
     else if(how === 'lose'){ islBtSetState('p', 'down', 0); playSfx('sfx-ko', 0.5); ISL.battle.lost++; ISL.hurt = true; }
     else ISL.battle.fled++;
     islSave('battle');
@@ -19723,40 +20920,113 @@ window.islBattleEnd = function(how){
     return;
   }
   if(how === 'win'){
-    islBtSetState('m', 'down', 0); playSfx('sfx-ko', 0.5); setTimeout(function(){ islBtFx('m', 'glow', 220); }, 200);
-    mine.done = true; var dly = islDailyFor(_IS.zone); if(!dly.mines) dly.mines = []; dly.mines.push(mine.idx);
+    /* ★ v1.164.0 戰利品改成「整組魔物逐隻結算」:打贏 3 隻就拿 3 份貝幣與掉落,
+       但 🔬 科技點仍然吃每日上限(TECH_DAY_CAP),不會因為一場打多隻就變成刷科技點的捷徑。 */
+    var _all = B.ms, _q, _hi = 0, _names = [];
+    playSfx('sfx-ko', 0.5);
+    mine.done = true;
+    /* ★ v1.166.0 步數制的遇敵是臨時合成的(idx = −1),沒有對應的固定遇敵點可以記「今天打過了」;
+       只有舊的踩地雷式(idx ≥ 0)才寫進 daily.mines,否則會往存檔塞一堆 −1。 */
+    if(mine.idx >= 0){ var dly = islDailyFor(_IS.zone); if(!dly.mines) dly.mines = []; dly.mines.push(mine.idx); }
     if(ISL.battle.day !== ISL.day){ ISL.battle.day = ISL.day; ISL.battle.techToday = 0; }
-    n = m.drop.shell[0] + Math.floor(Math.random() * (m.drop.shell[1] - m.drop.shell[0] + 1)); ISL.shell += n; loot.push('🐚+' + n);
-    if(m.drop.item && Math.random() < m.drop.p){ put = islBagAdd(m.drop.item, 2, 1); if(put) loot.push(islItemDef(m.drop.item).e + islItemDef(m.drop.item).n + ' ★★'); else loot.push('🎒 滿了,掉落沒帶走'); }
+    n = 0;
+    for(_q = 0; _q < _all.length; _q++){
+      var _mm = _all[_q];
+      n += _mm.drop.shell[0] + Math.floor(Math.random() * (_mm.drop.shell[1] - _mm.drop.shell[0] + 1));
+      if(_mm.drop.item && Math.random() < _mm.drop.p){ put = islBagAdd(_mm.drop.item, 2, 1); if(put) loot.push(islItemDef(_mm.drop.item).e + islItemDef(_mm.drop.item).n + ' ★★'); else loot.push('🎒 滿了,掉落沒帶走'); }
+      if(_mm.lv > _hi) _hi = _mm.lv;
+      _names.push(_mm.e + _mm.n + '(Lv' + _mm.lv + ')');
+      islCodexAdd(_mm.k);
+    }
+    ISL.shell += n; loot.unshift('🐚+' + n);
     if(ISL.battle.techToday < db.BT.TECH_DAY_CAP){ tech = db.BT.TECH_PER_WIN; ISL.tech += tech; ISL.battle.techToday += tech; loot.push('🔬+' + tech); }
-    ISL.battle.won++; ISL.counters.acts += 0;
-    xp = db.BT.XP_WIN + (m.lv >= 6 ? 1 : 0); islSkillGain('defense', xp); islStatGain('pow', 1);
-    var wxp = islWeaponXpGain(m.lv); if(wxp) loot.push('🗡 熟練+' + wxp);   /* ★ v1.125.0 裝備武器打贏 → 累積武器熟練值 */
+    ISL.battle.won++;
+    xp = db.BT.XP_WIN + (_hi >= 6 ? 1 : 0) + (_all.length > 1 ? 1 : 0); islSkillGain('defense', xp); islStatGain('pow', 1);
+    var wxp = islWeaponXpGain(_hi); if(wxp) loot.push('🗡 熟練+' + wxp);   /* ★ v1.125.0 裝備武器打贏 → 累積武器熟練值 */
     if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 5);
-    islCodexAdd(m.k);
-    islLog('⚔ 在' + db.zone(_IS.zone).n + '趕跑了 ' + m.e + m.n, 'mon_' + m.k);
+    var _petTxt = islPetsGainAfterWin(_all), _rest = islPetsRestMark();
+    if(_rest) _petTxt += (_petTxt ? '<br>' : '') + '💤 有 ' + _rest + ' 位隊友受傷,今天先回營地休息,明天才能再出門。';
+    islLog('⚔ 在' + db.zone(_IS.zone).n + '趕跑了 ' + _names.join('、'), 'mon_' + m.k);
     try{ islMono('battleWin'); }catch(_bw){}   /* ★ v1.133.0 戰鬥畫面沒有角色可以掛泡泡 ⇒ islMono 會自動排隊,按「繼續探索」回到場景時補講 */
     islSave('battle');
-    setTimeout(function(){ islModal('<h3>🎉 ' + db.BT.lines.win[Math.floor(Math.random() * db.BT.lines.win.length)] + '</h3><p>' + islEsc(m.n) + '(Lv' + m.lv + ')被趕跑了。<br>戰利品:' + loot.join('　') + '<br>⚔ 防衛 EXP +' + xp + '　💪 力氣練習 +1　🔍 探索 +5%</p>' + (tech === 0 ? '<p style="font-size:14px;opacity:.75">今天打贏拿到的科技點已達上限(每天 ' + db.BT.TECH_DAY_CAP + ')。</p>' : ''), [{ t: '繼續探索', cls: 'gold', cb: function(){ islBattleClose(); } }]); }, 1400);
+    setTimeout(function(){ islModal('<h3>🎉 ' + db.BT.lines.win[Math.floor(Math.random() * db.BT.lines.win.length)] + '</h3><p>' + islEsc(_names.join('、')) + ' 被趕跑了。<br>戰利品:' + loot.join('　') + '<br>⚔ 防衛 EXP +' + xp + '　💪 力氣練習 +1　🔍 探索 +5%</p>' + (_petTxt ? '<p>' + _petTxt + '</p>' : '') + (tech === 0 ? '<p style="font-size:14px;opacity:.75">今天打贏拿到的科技點已達上限(每天 ' + db.BT.TECH_DAY_CAP + ')。</p>' : ''), [{ t: '繼續探索', cls: 'gold', cb: function(){ islBattleClose(); } }]); }, 1400);
   } else if(how === 'lose'){
-    islBtSetState('p', 'down', 0); playSfx('sfx-ko', 0.5); ISL.battle.lost++; ISL.hurt = true; islSkillGain('defense', db.BT.XP_LOSE); islSave('battle');
+    islBtSetState('p', 'down', 0); playSfx('sfx-ko', 0.5); ISL.battle.lost++; ISL.hurt = true; islSkillGain('defense', db.BT.XP_LOSE); islPetsGainAfterWin(B.ms, true); islPetsRestMark(); islSave('battle');
     try{ islMono('battleLose'); }catch(_bl){}   /* ★ v1.133.0(同樣走佇列,回營地才講) */
     setTimeout(function(){ islModal('<h3>🤕 倒下了……</h3><p>被 ' + islEsc(m.n) + ' 打倒,體力歸零。' + (m.hint ? '(牠的弱點:' + islEsc(m.hint) + ')' : '') + '<br>先回營地治療(🩹 大葉+淡水 / 纖維 2 / 草藥 1),明天再來報仇——牠還在原地。</p><p style="font-size:14px;opacity:.75">小提醒:做一把更好的武器(👤 角色 → 🗡 武器)、用 🧠 智取讓牠暈眩、多帶幾道料理。</p>', [{ t: '回營地', cls: 'gold', cb: function(){ islBattleClose(true); } }]); }, 1700);
   } else {   /* flee */
-    ISL.battle.fled++; islSave('battle');
+    ISL.battle.fled++; islPetsRestMark(); islSave('battle');
     setTimeout(function(){ islBattleClose(); }, 200);
   }
 };
+/* ★ v1.164.0 打贏後的夥伴結算:上場過的寵物拿經驗與親密度,借用版好友一律跳過。
+   ⚠ 這是唯一會寫回 ISL.pets 的地方;借用版好友(t==='friend')連碰都不碰,
+     老師裁定 3「不能更改他的任何屬性或裝備,也不會升級」在這裡收口。 */
+/* ★ v1.166.0 平衡:戰鬥中倒下的隊友當天不能再上場(明天自動歸隊)。
+   ⚠ 沙盤實跑發現滿編之後幾乎零成本(勝率 100%、主角剩血 93~100%、隊友倒下也沒有後果),
+     組隊就變成「按了就贏」;讓倒下真的少一位隊友,學生才會去在意站位與治療的時機。
+   ⚠ 寫的是 rec.rest(存檔),不是 ISL.pets[].hp —— 隊友仍然每場滿血開打,
+     「今天不能上場」比「跨場扣血」對中低年級好懂得多,也不會逼他們一直跑回營地。 */
+/* ★ v1.167.0 天天一起出門也會變熟(D.PET_BOND_GAIN.dayTogether)。
+   ⚠ 掛在「新的一天開始」那一刻,只算當下排在編組裡的寵物;每天最多一次(用 rec.bondDay 防重複)。 */
+window.islPetsDayTogether = function(){
+  var db = islDB(), i, slot, rec, j;
+  if(!ISL || !ISL.party) return;
+  for(i = 0; i < ISL.party.length; i++){
+    slot = ISL.party[i]; if(!slot || slot.t !== 'pet') continue;
+    rec = islPetSave(slot.k); if(!rec || rec.bondDay === ISL.day) continue;
+    rec.bondDay = ISL.day;
+    rec.bondPt = Math.min(db.PET_BOND_GAIN.cap, (rec.bondPt | 0) + db.PET_BOND_GAIN.dayTogether);
+    for(j = db.PET_BOND.length - 1; j >= 0; j--){ if(rec.bondPt >= db.PET_BOND[j].need){ rec.bond = j; break; } }
+  }
+};
+function islPetsRestMark(){
+  var B = _islBt, i, u, n = 0;
+  if(!B) return 0;
+  for(i = 0; i < B.allies.length; i++){
+    u = B.allies[i];
+    if(u.t !== 'pet' || !u.down || !u.rec) continue;
+    u.rec.rest = ISL.day; n++;
+  }
+  return n;
+}
+function islPetsGainAfterWin(mons, lost){
+  var db = islDB(), i, j, u, rec, gain, up, boss = false, txt = [], B = _islBt;
+  if(!B) return '';
+  for(i = 0; i < mons.length; i++){ if(mons[i].k === 'guardian') boss = true; }
+  for(i = 0; i < B.allies.length; i++){
+    u = B.allies[i];
+    /* ★ 老師裁定 3(D.PARTY.FRIEND_READONLY):借用版好友不可更改任何屬性,也不會升級 ⇒ 連碰都不碰 */
+    if(db.PARTY.FRIEND_READONLY && u.t === 'friend') continue;
+    if(u.t !== 'pet') continue;
+    rec = u.rec; if(!rec) continue;
+    gain = lost ? db.PET_XP.lose * mons.length : (boss ? db.PET_XP.boss : db.PET_XP.win) * mons.length;   /* ★ v1.167.0 打輸也給一點經驗,不讓學生白忙一場 */
+    rec.xp = (rec.xp | 0) + gain;
+    up = 0;
+    while(rec.lv < db.PET_LV.MAX && rec.xp >= db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1)){
+      rec.xp -= db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1); rec.lv++; up++;
+    }
+    if(rec.lv >= db.PET_LV.MAX) rec.xp = 0;
+    rec.bond = Math.min(db.PET_BOND_GAIN.cap, (rec.bond | 0) + 0);   /* 親密度用「點數」存,階級另外換算 */
+    rec.bondPt = Math.min(db.PET_BOND_GAIN.cap, (rec.bondPt | 0) + db.PET_BOND_GAIN.battle);
+    for(j = db.PET_BOND.length - 1; j >= 0; j--){ if(rec.bondPt >= db.PET_BOND[j].need){ if(rec.bond !== j){ rec.bond = j; txt.push(u.e + islEsc(u.n) + ' 親密度 → ' + db.PET_BOND[j].e + db.PET_BOND[j].n); } break; } }
+    txt.push(u.e + islEsc(u.n) + ' EXP+' + gain + (up ? '　🎉 升到 Lv' + rec.lv + '!' : ''));
+  }
+  return txt.length ? '🐾 ' + txt.join('<br>🐾 ') : '';
+}
 function islBattleClose(toCamp, keepStopped){   /* ★ v1.122.0 keepStopped=地下層:收掉戰鬥畫面但不重啟場景 rAF、不換 BGM(由地下層流程接手) */
   var B = _islBt, zm = $('isl-zone-map'), el;
-  if(B){ if(B._st_p) clearTimeout(B._st_p); if(B._st_m) clearTimeout(B._st_m); if(B.pop && B.pop.parentNode) B.pop.parentNode.removeChild(B.pop); }
+  if(B){ var _tk; for(_tk in B){ if(B.hasOwnProperty(_tk) && _tk.indexOf('_st_') === 0 && B[_tk]) clearTimeout(B[_tk]); }   /* ★ v1.164.0 立繪回 idle 的 timer 現在每個單位各一支(_st_p/_st_a0/_st_m0…),漏清會在戰鬥收掉之後才觸發、對著已經被清空的 DOM 動作 */
+    if(B.pop && B.pop.parentNode) B.pop.parentNode.removeChild(B.pop); }
   _islBt = null;
   $('isl-battle').innerHTML = ''; hide('isl-battle'); $('island-root').classList.remove('inbattle');
   if(keepStopped){ islShowScreen('zone'); islHud(); return; }
   if(toCamp){ islGoCamp(true); if(ISL.hp <= 0) setTimeout(function(){ toast('🩹 體力歸零,先在 👤 角色 → 🩹 治療'); }, 600); return; }
+  /* ★ v1.166.0 步數制:打完之後先欠 safeSteps 步(負數起算),再走滿才重新開始計數 */
+  (function(){ var S = islDB().ENC_STEP; if(S){ _IS.steps = -(S.safeSteps || 0); _IS.encCell = null; } })();
   /* 沒打贏(逃跑)或打贏:退回踩到遇敵點前的安全格,避免站在點上立刻再觸發 */
   if(B && !B.mine.done && _IS.safeCell){ _IS.cx = _IS.safeCell.x * 64 + 32; _IS.cy = _IS.safeCell.y * 64 + 40; }
-  if(B && B.mine.done && zm){ el = zm.querySelector('.isl-mine[data-m="' + B.mine.idx + '"]'); if(el && el.parentNode) el.parentNode.removeChild(el); }
+  if(B && B.mine.done && B.mine.idx >= 0 && zm){ el = zm.querySelector('.isl-mine[data-m="' + B.mine.idx + '"]'); if(el && el.parentNode) el.parentNode.removeChild(el); }   /* ★ v1.166.0 步數制沒有實體遇敵點元素可刪 */
   islShowScreen('zone'); islBgm(_IS.zone); islHud();
   _IS.lastT = 0; if(!_IS.raf) _IS.raf = requestAnimationFrame(islTick);
 }
