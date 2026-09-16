@@ -2259,7 +2259,7 @@ window.ISL_DB = (function(){
     shadow:   { hp:28, atk:8,  def:1, spd:7,  crit:15, drop:{ shell:[3,6], item:'crystal', p:0.2 }, d:'影子怪,怕光。' },
     ember:    { hp:32, atk:9,  def:2, spd:5,  crit:10, drop:{ shell:[3,6], item:'ore',     p:0.4 }, d:'火精,碰到會燙傷。' },
     basilisk: { hp:36, atk:8,  def:3, spd:5,  crit:20, drop:{ shell:[4,7], item:'relic',   p:0.3 }, d:'石化蛇,被牠瞪到會暈眩。' },
-    spark:    { hp:30, atk:10, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛。' },
+    spark:    { hp:30, atk:10, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛,偶爾會讓你觸電麻痺。', stunOnHitP:20 },   /* ★ v1.213.0 老師「技能清單稽核:補齊麻痺/免疫不利狀態」— 稽核發現戰鬥系統裡魔物從來不會對玩家隊伍施加任何不利狀態(hitDownP/spdDownP/seal/stun 全部只有「玩家隊友打魔物」這個方向),導致就算補一個「免疫不利狀態」天賦也無事可防、變成死鍵。補這 20% 麻痺機率讓雷精真的會麻痺人,免疫天賦才有意義(見下方 D.PET_CMDS sandwind 的 immuneAll)。 */
     guardian: { hp:80, atk:12, def:4, spd:3,  crit:10, drop:{ shell:[10,15], item:'relic', p:1 },  d:'守墓石像。' }
   };
   /* 各區「踩地雷式」遇敵:每遊戲日依 seed 在可走格藏 n 個遇敵點(離出生/出口/資源點 ≥3 格),踩到就跳出魔物;from=第幾天起才有;lv=魔物等級(= 區域 order) */
@@ -2611,28 +2611,35 @@ window.ISL_DB = (function(){
        hits/mul 段數與倍率・sure 必中・all 打全體・critAdd 這一擊暴擊率加成・stunP/stun 暈眩機率與回合・
        heal 單體治療(% 最大體力)・healAll 全隊治療・cure 解除一種不良狀態・shield 全隊護盾(% 最大體力)・
        defUpP/spdUpP 全隊增益・guard/cut 代受與減傷・taunt 強制敵方本回合只打自己・
-       hitDownP/spdDownP/seal 敵方減益・first 這回合先手・dur 效果持續回合數。 */
+       hitDownP/spdDownP/seal 敵方減益・first 這回合先手・dur 效果持續回合數。
+     ★ v1.213.0 老師「技能清單稽核」新增六個欄位(逐一補進稽核發現真的缺失的機制,見當輪 changelog):
+       revive 復活一位倒下的隊友(% 最大體力,吃 healOutP 天賦加成)・cureAll 解除全部不良狀態(cure 的全體版)・
+       randHits 配合 hits>1 使用,每一段改成隨機挑一隻還活著的魔物(而不是固定打同一隻鎖定目標)・
+       regenAll 全隊持續恢復(% 最大體力,施放當下就依 healOutP 天賦折算好存進 buff,之後每回合開頭自動觸發,
+       dur 控制觸發幾回合)・sleepP/sleepDur 睡眠機率與回合數(跟 stunP 的差別是可以撐好幾回合,但只要挨打
+       就會立刻醒來,不必等回合數用完)・immuneAll 全隊接下來 dur 回合內免疫敵方施加的不良狀態(麻痺/睡眠等;
+       目前唯一會對玩家隊伍施加不利狀態的是雷精 spark 的 stunOnHitP,見 D.MON_BT)。 */
   D.PET_CMDS = {
     /* A 組:四位 NPC 夥伴 */
     guard:      { n:'守護',       e:'🛡', cd:2, fx:{ guard:1, cut:40, dur:1 }, d:'1 回合內代替任一隊友承受攻擊,並把傷害再減 40%' },
-    herbheal:   { n:'草藥療傷',   e:'🌿', cd:3, fx:{ heal:18 }, d:'指定一位隊友回復 18% 最大體力' },   /* ★ v1.166.0 平衡:25%/cd2 → 18%/cd3。沙盤實跑 11 區都是 100% 勝率且幾乎不掉血,根因就是治療量壓過傷害 */
+    reviveherb: { n:'還魂草藥',   e:'🌿', cd:5, fx:{ revive:35 }, d:'用秘藥搶救一位倒下的隊友,讓他回到戰場並回復 35% 最大體力' },   /* ★ v1.213.0 老師「技能清單稽核:補齊復活」— 原本是 herbheal(單體治療 18%),跟隊上其他三位治療型夥伴(dewheal/glowlight/clearstream)的單體/全體治療重複度最高,改成全隊唯一的復活技能;⚠ 平衡風險:梅花鹿是最早期就能收服的 NPC 夥伴,復活技能偏後期向,换成她可能讓早期缺乏單體治療手段,需要老師實機驗收早期戰鬥難度是否變太高,不行的話可以考慮换成別隻夥伴帶這招。 */
     dive:       { n:'靜音俯衝',   e:'🦉', cd:2, fx:{ mul:1.8, first:1 }, d:'1.8 倍傷害,且這一回合必定先手' },
-    sandwind:   { n:'風沙亂舞',   e:'🕊', cd:3, fx:{ all:1, hitDownP:25, dur:2 }, d:'敵方全體命中率 −25%,持續 2 回合' },
+    sandwind:   { n:'風沙亂舞',   e:'🕊', cd:3, fx:{ all:1, hitDownP:25, dur:2, immuneAll:1 }, d:'敵方全體命中率 −25%,持續 2 回合;同時讓全隊接下來 2 回合免疫敵方施加的不良狀態' },   /* ★ v1.213.0 老師「技能清單稽核:補齊免疫不利狀態」— 原效果不動,額外疊加 immuneAll,跟海鷗小白「領路人」的天賦定位(躲避危險)一致 */
     /* B 組:攻擊型 */
     doubleclaw: { n:'二段攻擊',   e:'🐾', cd:1, fx:{ hits:2, mul:0.75 }, d:'連續兩爪,每爪 75% 傷害' },
-    flockrush:  { n:'群飛突擊',   e:'🪶', cd:2, fx:{ hits:3, mul:0.5, sure:1 }, d:'三段掠擊,每段 50% 傷害,必中' },
+    flockrush:  { n:'群飛突擊',   e:'🪶', cd:2, fx:{ hits:3, mul:0.5, sure:1, randHits:1 }, d:'三段掠擊,每段 50% 傷害,必中,且每段隨機攻擊一隻還活著的敵人' },   /* ★ v1.213.0 老師「技能清單稽核:補齊隨機目標多段攻擊」— 原本三段全部打同一隻鎖定目標,改成每段隨機挑敵人,「群飛」的畫面意象本來就該是分散攻擊而不是全部啄同一隻 */
     talondive:  { n:'蒼鷹撲擊',   e:'🦅', cd:3, fx:{ mul:2.2, critAdd:30 }, d:'2.2 倍傷害,這一擊暴擊率 +30%' },
     /* B 組:坦克型 */
     curlguard:  { n:'鱗甲捲護',   e:'🦔', cd:3, fx:{ defUpP:40, dur:2 }, d:'全隊防禦 +40%,持續 2 回合' },
     shellwall:  { n:'龜甲壁',     e:'🐢', cd:3, fx:{ shield:15 }, d:'給全隊一層護盾,各吸收 15% 最大體力的傷害' },
     clawtaunt:  { n:'巨螯嘲諷',   e:'🦀', cd:2, fx:{ taunt:1, cut:50, dur:1 }, d:'這一回合敵方全體只能攻擊自己,自身減傷 50%' },
     /* B 組:治療型 */
-    dewheal:    { n:'露水治癒',   e:'💧', cd:2, fx:{ heal:15 }, d:'指定一位隊友回復 15% 最大體力' },   /* ★ v1.166.0 平衡:cd1 的治療＝每隔一回合就補滿,等於無限續航 */
-    glowlight:  { n:'螢光普照',   e:'🌟', cd:3, fx:{ healAll:12, cure:1 }, d:'全隊回復 12% 最大體力,並解除一種不良狀態' },
+    dewmist:    { n:'露水迷霧',   e:'💧', cd:3, fx:{ regenAll:8, dur:3 }, d:'化作一團水霧,全隊接下來 3 回合每回合恢復 8% 最大體力' },   /* ★ v1.213.0 老師「技能清單稽核:補齊持續恢復HP」— 原本是 dewheal(單體治療15%),跟梅花鹿的單體治療重複度最高,改成持續恢復(HoT),施放當下就把「濕潤皮膚」天賦(雨天/颱風+25%)折算進去存成固定值,之後每回合自動生效,天賦不會變成死鍵 */
+    glowlight:  { n:'螢光普照',   e:'🌟', cd:3, fx:{ healAll:12, cureAll:1 }, d:'全隊回復 12% 最大體力,並解除全部不良狀態' },   /* ★ v1.213.0 老師「技能清單稽核:補齊解除全體不利狀態」— cure:1(只解一種)升級成 cureAll:1(全部解除),全隊治療的定位本來就該連帶把病都一起治好,不必留著只解一種的舊限制 */
     clearstream:{ n:'清流一躍',   e:'🐟', cd:3, fx:{ healAll:10, spdUpP:20, dur:2 }, d:'全隊回復 10% 最大體力,速度 +20% 持續 2 回合' },
     /* B 組:控場型 */
     throwstone: { n:'投石',       e:'🪨', cd:1, fx:{ mul:1.0, stunP:35, stun:1 }, d:'造成傷害,並有 35% 機率讓目標暈眩 1 回合' },
-    sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:2, fx:{ all:1, mul:0.6, spdDownP:25, dur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合' },
+    sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:2, fx:{ all:1, mul:0.6, spdDownP:25, dur:2, sleepP:20, sleepDur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合,且每隻各有 20% 機率陷入睡眠(最多 2 回合,挨打就會醒)' },   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 原效果不動,額外疊加對命中目標的入睡機率(不像暈眩只撐 1 回合、也不需要額外挨打就能一路睡好幾輪,但只要受到任何攻擊就會立刻醒來,兩者定位不同) */
     drumecho:   { n:'啄木聲波',   e:'🥁', cd:3, fx:{ all:1, seal:1, dur:1 }, d:'敵方全體 1 回合內無法使用技能(只能普通攻擊)' }
   };
 
@@ -2654,7 +2661,7 @@ window.ISL_DB = (function(){
                    sci:'台灣黑熊是台灣唯一的熊,胸前有 V 字白毛;野外只剩幾百隻,是瀕臨絕種的保育類。' },
     deer:        { n:'梅花鹿',     e:'🦌', type:'heal', npc:true, sz:106,
                    b:{ hp:60, atk:4,  def:2, spd:7 }, g:{ hp:5.3, atk:0.4,  def:0.3,  spd:0.3 },
-                   cmd:'herbheal',  talent:'識草本能:自己施放的治療效果 +15%', tal:{ healOutP:15 },
+                   cmd:'reviveherb',talent:'識草本能:自己施放的治療效果 +15%', tal:{ healOutP:15 },
                    get:{ how:'npc', quest:'trainer_deer' },
                    sci:'梅花鹿曾在台灣野外絕跡,靠人工復育才重新回到墾丁的草原上。' },
     owl:         { n:'領角鴞',     e:'🦉', type:'atk',  npc:true, sz:72,
@@ -2772,7 +2779,7 @@ window.ISL_DB = (function(){
     /* ── B 組:治療型 3 隻 ── */
     treefrog:    { n:'莫氏樹蛙',   e:'🐸', type:'heal',
                    b:{ hp:50, atk:4,  def:2, spd:7 }, g:{ hp:4.6, atk:0.38, def:0.28, spd:0.30 },
-                   cmd:'dewheal',    talent:'濕潤皮膚:雨天或颱風天,自己的治療效果 +25%', tal:{ rainHealP:25 },
+                   cmd:'dewmist',    talent:'濕潤皮膚:雨天或颱風天,自己的治療效果 +25%', tal:{ rainHealP:25 },
                    get:{ how:'tame', zone:'river', p:24 },
                    sci:'莫氏樹蛙腳趾末端有吸盤,能牢牢黏在葉片上;牠是台灣特有種,叫聲像「啾啾啾」。' ,
                    food:'herb', quiz:[
