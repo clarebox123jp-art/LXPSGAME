@@ -1056,7 +1056,7 @@ body{
         開機自檢允許清單同步改回 400/700/900。老師同輪並要求「小遊戲字體都適當放大」—
         本輪同步把全檔 font-size(含 clamp 上下限)一律 ×1.15 放大(四捨五入,至少 +1px),
         body 基準 17px→20px 隨全檔比例調整;版面用 flex/百分比等彈性寫法,吃得下文字變大。 */
-  font-family:'Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','M PLUS Rounded 1c','Nunito',sans-serif;
+  font-family:'M PLUS Rounded 1c','Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','Nunito',sans-serif;
   font-size:20px;line-height:1.65;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
@@ -2640,7 +2640,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    macOS/iOS 的「黑體」字族、Microsoft JhengHei 是 Windows 對應黑體、最後 Noto Sans TC 兜底),
    刻意跳過全站預設的毛筆字。掛在 .bt-card 上經由 CSS 繼承涵蓋卡片內所有文字(名稱/HP數字/爆發鈕/
    效果說明/剩餘次數等),不需要逐個子元素分別覆寫。 */
-.bt-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;font-family:'Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','M PLUS Rounded 1c','Nunito',sans-serif;}
+.bt-card{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;background:rgba(255,255,255,.05);border:2px solid rgba(232,228,216,.18);position:relative;font-family:'M PLUS Rounded 1c','Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','Nunito',sans-serif;}
 .bt-card.p{border-color:rgba(62,200,122,.55);}
 .bt-card.n{border-color:rgba(232,64,64,.55);}
 /* ★ v1.32.1(老師需求「完美保留大對抗的戰鬥打擊快感」)— 受擊回饋升級為三件套(震動+閃色+立繪頓挫縮放)，
@@ -2736,7 +2736,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
    走「白字/彩字+黑色陰影描邊+較大字級」的手感,原本這裡只有 26px 純色字+單純黑色模糊光暈,明顯太素;
    改成白底/彩色字 + 黑色偏移陰影(比照 .popup 的 2px 2px 0 #000)+ 彩色光暈,字級同步放大,字型也換成
    跟卡片一致的圓體/黑體家族(見上方 .bt-card 說明),animation 沿用既有 sfl 飄浮動畫不變(只換視覺,不換位移邏輯)。 */
-.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:30px;font-size:clamp(30px,3.6vw,46px);font-weight:900;font-family:'Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','M PLUS Rounded 1c','Nunito',sans-serif;color:#fff;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,80,80,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
+.bt-dmg{position:fixed;z-index:118;pointer-events:none;font-size:30px;font-size:clamp(30px,3.6vw,46px);font-weight:900;font-family:'M PLUS Rounded 1c','Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','Nunito',sans-serif;color:#fff;text-shadow:2px 2px 0 #000,0 0 14px rgba(255,80,80,.9);animation:sfl 1s ease-out forwards;transform:translate(-50%,-50%);}
 /* ★ v1.58.0(老師回報「PC 版戰鬥卡的圓體字太粗,iPad 版正常不用改」)—
    根因猜測:M PLUS Rounded 1c 是可變字重字型,同一個 font-weight 數值在不同作業系統的字型渲染引擎
    (PC 常見的 ClearType/DirectWrite 等)下,實際描邊粗細觀感可能比 iPadOS 的渲染更重,尤其戰鬥卡片
@@ -2894,7 +2894,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      其餘標題/描述/篩選鈕/英雄清單按鈕都是全站預設的 LXGW WenKai TC；改在容器上宣告一次，
      子孫元素靠 CSS 字型天生會繼承（.hm-list button 本來就寫 font-family:inherit）全部自動吃到，
      不必逐一補寫。*/
-  font-family:'Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','M PLUS Rounded 1c','Nunito',sans-serif;}
+  font-family:'M PLUS Rounded 1c','Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','Nunito',sans-serif;}
 /* ★ v1.68.0(老師回報「手機版選英雄的視窗還是無法捲動、選不到別的英雄」)— 根因:.box 本身完全沒有
    overflow 設定(預設 visible),當立繪(170px)+說明文字+篩選鈕列+英雄清單+底部按鈕列 加總高度超過
    max-height:90vh 時,瀏覽器不會讓 .box 變高,超出的內容就直接畫到 .box 邊框外面、視覺上被裁在螢幕
@@ -3558,7 +3558,7 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
      v1.3.0 改載的 LXGW WenKai TC(霞鶩文楷)本輪作廢,改回與主程式 index.html **一字不差**的字型
      <link>(見上方 v1.1.2 註解的共用快取考量,本輪重新成立):M PLUS Rounded 1c + Nunito +
      Noto Serif TC + Share Tech Mono。開過主程式的學生連這份 CSS 都直接命中快取,零下載。 -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&family=Share+Tech+Mono&family=Nunito:wght@400;700;800;900&family=M+PLUS+Rounded+1c:wght@400;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -3617,7 +3617,7 @@ html.isl-direct #page-home, html.isl-direct #topbar{ display:none !important; }
   position:fixed; inset:0; z-index:99990; display:none;
   align-items:center; justify-content:center; flex-direction:column; gap:16px;
   background:linear-gradient(160deg,#0d2233,#164a63);
-  color:#eafff4; font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color:#eafff4; font-family:'M PLUS Rounded 1c','Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   font-size:22px; font-weight:700; letter-spacing:1px; text-align:center; padding:20px;
 }
 html.isl-direct #isl-direct-veil{ display:flex; }
@@ -4181,7 +4181,7 @@ window.islDirectVeilOff = function(){
 <style id="island-style">
 #island-root{position:fixed;left:0;top:0;right:0;bottom:0;z-index:60;background:#0b1e2c;color:#fff;display:flex;flex-direction:column;overflow:hidden;
   zoom:1.3;   /* ★ v1.111.0 老師「視窗和字體全部放大」:1.2→1.3(座標換算見 islZk) */   /* ★ v1.109.0 老師需求「字體、按鈕介面都再放大」:整個荒島畫面統一放大 20%(fonts/padding/圖示等比放大),觸控座標與畫面渲染一致,不逐一改每條 px 數值 */
-  font-family:'Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','M PLUS Rounded 1c','Nunito',sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}   /* ★ v1.109.0 中文字一律先吃『Noto Sans TC』(中黑體、經 Google Fonts 載入、字集完整不缺字),圓體字型退到最後只給拉丁字母/數字用 */
+  font-family:'M PLUS Rounded 1c','Noto Sans TC','PingFang TC','Heiti TC','Microsoft JhengHei','Nunito',sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}   /* ★ v1.109.0 中文字一律先吃『Noto Sans TC』(中黑體、經 Google Fonts 載入、字集完整不缺字),圓體字型退到最後只給拉丁字母/數字用 */
 #island-root *{box-sizing:border-box;}
 #island-root button{font-family:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 /* ── HUD ── */
@@ -4372,12 +4372,12 @@ window.islDirectVeilOff = function(){
 #isl-camp-viewport{position:relative;flex:1;overflow:hidden;touch-action:none;min-height:0;cursor:pointer;}
 #isl-camp-grid{position:absolute;left:0;top:0;width:860px;height:860px;transform-origin:0 0;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;}
 #isl-camp-cells{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1;}   /* ★ v1.199.0 老師「建造設施改成和裝飾一樣直接放在營地正中央,可以自由拖曳移動位置擺放、鏡像翻轉,同時新增縮放尺寸」— 舊版是 CSS grid(3×3 固定格),改成跟 #isl-camp-deco 同一種「鋪滿整個畫布的自由層」,設施元素自己 position:absolute 用 %定位,不再受格子限制 */
-.isl-cell{border:3px dashed rgba(255,255,255,.4);border-radius:14px;background:rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:46px;color:#fff;position:relative;padding:0;overflow:hidden;}
+.isl-cell{border:none;border-radius:14px;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:46px;color:#fff;position:relative;padding:0;overflow:hidden;}   /* ★ v1.216.0 老師「營火/製作台這些設施的外框、名稱、等級都移除,當成一個有功能的裝飾就好」— 原本 3px 虛線框+黑底改透明,視覺上與 .isl-deco 裝飾層一致;點擊互動(islCampCellTap)完全不變,只是不再用「卡片」樣式圈住 */
 #isl-camp-cells .isl-cell{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;pointer-events:auto;cursor:grab;transition:transform .15s;touch-action:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45));}   /* ★ v1.199.0 自由定位版設施圖示(取代舊版格子);transform 由 JS 直接寫 scale(k) 或再疊 scaleX(-1),縮放與鏡像都在同一段字串裡,避免跟拖曳中的 .drag 放大互相蓋掉 */
 #isl-camp-cells .isl-cell.drag{transform:scale(1.12) !important;z-index:6;cursor:grabbing;}
 #island-root.ipad #isl-camp-cells .isl-cell{width:132px;height:132px;margin:-66px 0 0 -66px;}
-.isl-cell.empty{font-size:30px;opacity:.7;}
-.isl-cell.built{border-style:solid;border-color:rgba(255,255,255,.4);}   /* ★ v1.205.0 老師「移除黃色邊框」— 原 #ffd166 黃框+黃底移除,改沿用一般白色實線框 */
+.isl-cell.empty{font-size:30px;opacity:.7;border:3px dashed rgba(255,255,255,.4);background:rgba(0,0,0,.25);}   /* ★ v1.216.0 空地格仍要有虛線框提示「這裡可以蓋東西」,只有已完工的設施(.built)才拿掉框線變成純裝飾 */
+.isl-cell.built{border:none;background:none;}   /* ★ v1.216.0 原本的白色實線框規則移除,已完工設施不再有任何外框/底色(舊 v1.205.0 白框規則已刪) */
 .isl-cell img{width:70%;height:70%;object-fit:contain;}
 .isl-cell .bn{font-size:14px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:999px;padding:1px 8px;position:absolute;bottom:6px;white-space:nowrap;}   /* ★ v1.205.0 老師「等級改顯示在名稱後面,一樣白色字體」— 等級已併入本標籤文字(見 islCampPaint 組字串處),補 color:#fff 與 white-space:nowrap 防止「名稱 LvN」被截斷 */
 /* ★ v1.205.0 .isl-cell .lv 規則已移除——舊版等級標籤獨立一顆(黃字、絕對定位右上角),老師要求併入 .bn 名稱同一行白字後拿掉;本行僅留註解供日後回查,原規則: .isl-cell .lv{position:absolute;top:4px;right:6px;font-size:13px;color:#ffd166;font-weight:900;} */
@@ -4408,7 +4408,8 @@ window.islDirectVeilOff = function(){
 .isl-pipe .c{left:38%;top:38%;width:24%;height:24%;border-radius:4px;}
 .isl-pipe .pe{position:absolute;font-size:16px;line-height:1;pointer-events:none;}
 .isl-pipe .pe.src{left:2px;top:1px;} .isl-pipe .pe.dst{right:2px;bottom:1px;}
-.isl-recipe{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;margin:6px 0;width:min(96%,560px);color:#fff;border:2px solid rgba(255,255,255,.2);}
+.isl-recipe{display:flex;align-items:center;gap:10px;text-align:left;background:linear-gradient(160deg,rgba(30,50,44,.85),rgba(8,16,12,.9));border-radius:12px;padding:8px 10px;margin:6px 0;width:min(96%,560px);color:#fff;border:2px solid rgba(150,200,160,.35);box-shadow:0 4px 12px rgba(0,0,0,.35);}
+.isl-recipe.can{ border-color:rgba(123,237,159,.6); box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 14px rgba(123,237,159,.16); }
 .isl-recipe.can{border-color:#ffd166;}
 .isl-recipe .re{font-size:38px;}
 .isl-recipe .rn{flex:1;font-size:16px;line-height:1.35;}
@@ -4446,7 +4447,7 @@ window.islDirectVeilOff = function(){
 .isl-board-row .bd{flex:1;background:rgba(255,255,255,.08);border-radius:10px;padding:6px 10px;word-break:break-all;}
 .isl-board-row .bd small{display:block;opacity:.7;font-size:12px;margin-top:2px;}
 .isl-board-row .bd.own{background:rgba(255,209,102,.16);}
-.isl-quest-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.15);font-size:16px;}
+.isl-quest-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid rgba(150,200,160,.2);font-size:16px;}
 .isl-quest-row .ic{font-size:30px;width:40px;text-align:center;}
 .isl-quest-row .nm{flex:1;text-align:left;line-height:1.3;}
 .isl-quest-row .nm .st{font-size:13px;opacity:.8;display:block;}
@@ -4598,8 +4599,19 @@ window.islDirectVeilOff = function(){
 #isl-submenu .sm-grid button.warn{background:linear-gradient(180deg,#a04a24,#6b2f16);border-color:#ff9f43;}
 #isl-submenu .sm-grid button.ghost{opacity:.8;}
 #isl-submenu .sm-grid button:disabled{opacity:.4;}
-@media (max-width:620px){ #isl-submenu{padding:8px;} #isl-submenu .sm-box{width:98%;height:94%;padding:10px;} #isl-submenu .sm-grid{grid-template-columns:repeat(2,1fr);} #isl-camp-side button.cat{min-height:70px;font-size:16px;} #isl-camp-side button.cat .ci{font-size:28px;} }
-.isl-store-item{background:rgba(0,0,0,.25);border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left;display:flex;align-items:center;gap:14px;}   /* ★ v1.213.0 老師「名稱移到最左邊獨立一欄」— 由「直向:名稱在上、三格品質在下」改成「橫向:名稱在最左邊一欄、右邊接三格品質」 */
+/* ★ v1.216.0 老師「探索子選單改左中右三顆圓形大按鈕+ICON」— 只有 .sm-grid.circles(目前只有 explore 分類會掛這個 class)套用,
+   其餘分類的 .sm-grid 維持原本 3 欄格線不受影響。左中右置中排列,不論 2 或 3 顆項目都置中,不會偏一邊。 */
+#isl-submenu .sm-grid.circles{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:28px;padding:20px 0;}
+.isl-sub-c{display:flex;flex-direction:column;align-items:center;gap:8px;width:130px;}
+.isl-sub-c.dis{opacity:.4;}
+.isl-sub-c button{position:relative;width:110px;height:110px;border-radius:50%;background:linear-gradient(180deg,#2f7ba6,#1d5677);border:3px solid #7cc4e8;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.35),0 0 20px rgba(95,179,217,.25);}
+.isl-sub-c button.gold{background:linear-gradient(180deg,#b8902c,#7d5e12);border-color:#ffd166;}
+.isl-sub-c button .ci,.isl-sub-c button .isl-ico{font-size:44px;width:44px !important;height:44px !important;}
+.isl-sub-c button .bd{position:absolute;right:-4px;top:-4px;}
+.isl-sub-c .lb{font-size:17px;font-weight:700;color:#fff;text-align:center;}
+#island-root.ipad .isl-sub-c{width:190px;} #island-root.ipad .isl-sub-c button{width:170px;height:170px;} #island-root.ipad .isl-sub-c button .ci,#island-root.ipad .isl-sub-c button .isl-ico{font-size:66px;width:66px !important;height:66px !important;} #island-root.ipad .isl-sub-c .lb{font-size:28px;}
+@media (max-width:620px){ #isl-submenu{padding:8px;} #isl-submenu .sm-box{width:98%;height:94%;padding:10px;} #isl-submenu .sm-grid{grid-template-columns:repeat(2,1fr);} #isl-camp-side button.cat{min-height:70px;font-size:16px;} #isl-camp-side button.cat .ci{font-size:28px;} .isl-sub-c{width:96px;} .isl-sub-c button{width:86px;height:86px;} .isl-sub-c button .ci,.isl-sub-c button .isl-ico{font-size:32px;width:32px !important;height:32px !important;} .isl-sub-c .lb{font-size:14px;} }
+.isl-store-item{background:linear-gradient(160deg,rgba(30,50,44,.75),rgba(8,16,12,.82));border:1px solid rgba(150,200,160,.3);border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left;display:flex;align-items:center;gap:14px;}   /* ★ v1.213.0 老師「名稱移到最左邊獨立一欄」— 由「直向:名稱在上、三格品質在下」改成「橫向:名稱在最左邊一欄、右邊接三格品質」;★ v1.218.0 平塗黑底改漸層 */
 .isl-store-item .nm{flex:0 0 auto;min-width:110px;max-width:220px;font-size:38px;font-weight:700;color:#ffd166;line-height:1.15;}   /* ★ v1.213.0 老師「材料名稱字體放大100%」:19→38px,獨立成左欄(原本跟 .hd 共用一行,現在拆出來) */
 .isl-store-item .bd2{flex:1;min-width:0;}
 .isl-store-item .hd{display:flex;align-items:center;font-size:19px;font-weight:700;color:#ffd166;margin-bottom:4px;}
@@ -4659,7 +4671,8 @@ window.islDirectVeilOff = function(){
 .isl-bag-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
 /* ★ v1.185.0(老師④「物品包內的材料圖示和字體放大 100%」)— 圖示、名稱、數量、品質星星四項全部 ×2;
    ⚠ 格子高度(min-height)必須跟著一起加倍,只放大字不放大格子會讓名稱被 -webkit-line-clamp 裁掉一半。 */
-.isl-bag-slot{aspect-ratio:1;border-radius:14px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:72px;line-height:1;position:relative;color:#fff;padding:0;}
+.isl-bag-slot{aspect-ratio:1;border-radius:14px;background:linear-gradient(160deg,rgba(35,55,48,.7),rgba(10,18,14,.78));border:2px solid rgba(150,200,160,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:72px;line-height:1;position:relative;color:#fff;padding:0;box-shadow:0 3px 10px rgba(0,0,0,.3);}   /* ★ v1.218.0 平塗白底改深綠漸層,呼應荒島天然素材主題 */
+.isl-bag-slot.has{ border-color:rgba(123,237,159,.5); box-shadow:0 3px 10px rgba(0,0,0,.3),0 0 12px rgba(123,237,159,.14); }
 .isl-bag-slot .n{position:absolute;right:6px;bottom:4px;font-size:30px;font-weight:900;background:rgba(0,0,0,.6);border-radius:999px;padding:0 8px;}
 .isl-bag-slot .q{position:absolute;left:6px;top:4px;font-size:24px;color:#ffd166;}
 .isl-bag-slot img{width:60%;height:60%;object-fit:contain;}
@@ -4678,7 +4691,7 @@ window.islDirectVeilOff = function(){
 #island-root.ipad .isl-bag-slot .n{font-size:44px;padding:0 10px;}
 #island-root.ipad .isl-bag-slot .q{font-size:40px;}
 @media (max-width:620px){ .isl-bag-slot.has{min-height:208px;} .isl-bag-slot .nm{font-size:26px;} }
-.isl-store-row{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.15);font-size:17px;}
+.isl-store-row{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(150,200,160,.2);font-size:17px;}
 .isl-store-row .ic{font-size:28px;width:40px;text-align:center;}
 .isl-store-row .nm{flex:1;}
 .isl-store-row .st{font-size:13px;opacity:.85;}
@@ -4700,7 +4713,8 @@ window.islDirectVeilOff = function(){
 .isl-tabs button small{display:block;font-size:12px;opacity:.75;font-weight:400;}
 .isl-tabs button.on{background:#8a6d1e;border-color:#ffd166;}
 .isl-codex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;}
-.isl-codex-card{position:relative;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:8px 4px 6px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.isl-codex-card{position:relative;background:linear-gradient(160deg,rgba(30,50,44,.85),rgba(8,16,12,.9));border:2px solid rgba(150,200,160,.4);border-radius:14px;padding:8px 4px 6px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 4px 12px rgba(0,0,0,.35);}
+.isl-codex-card.lock{ opacity:.55; background:rgba(20,26,22,.7); border-color:rgba(255,255,255,.18); box-shadow:none; }
 .isl-codex-card .ic{font-size:34px;line-height:1;height:48px;display:flex;align-items:center;justify-content:center;}
 .isl-codex-card .ic img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated;}
 .isl-codex-card .nm{font-size:14px;font-weight:700;}
@@ -4733,7 +4747,7 @@ window.islDirectVeilOff = function(){
 #island-root.ipad .isl-char2 h4{font-size:36px;}
 #island-root.ipad .isl-char2 .c-pv{height:230px;}
 /* ★ v1.134.0(老師:「商店數量」)— 賣東西改「一個品質一列 + 數量步進器」 */
-.isl-sellrow{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(255,255,255,.10);font-size:18px;}
+.isl-sellrow{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid rgba(150,200,160,.18);font-size:18px;}
 .isl-sellrow .ic{width:34px;height:34px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;}
 .isl-sellrow .ic img{width:34px;height:34px;object-fit:contain;image-rendering:pixelated;}
 .isl-sellrow .nm{flex:1 1 auto;min-width:0;line-height:1.45;}
@@ -5141,7 +5155,7 @@ window.islDirectVeilOff = function(){
 #island-root.ipad .isl-bt-banner{font-size:68px;}
 #island-root.inbattle #isl-zone-topinfo,#island-root.inbattle #isl-act-btn,#island-root.inbattle #isl-joy,#island-root.inbattle .isl-tired{visibility:hidden;}
 #isl-battle .bt-top{display:flex;align-items:center;gap:10px;padding:8px 12px;flex:0 0 auto;}
-#isl-battle .bt-hpbox{flex:1;background:rgba(0,0,0,.82);border:2px solid rgba(255,255,255,.35);border-radius:12px;padding:6px 10px;min-width:0;}
+#isl-battle .bt-hpbox{flex:1;background:linear-gradient(160deg,rgba(40,20,20,.88),rgba(10,6,6,.92));border:2px solid rgba(255,255,255,.35);border-radius:12px;padding:6px 10px;min-width:0;box-shadow:0 3px 10px rgba(0,0,0,.4);}   /* ★ v1.220.0 老師「戰鬥介面也要優化」— 純黑平塗改深紅棕漸層(戰鬥主題),呼應本輪其餘元件的漸層+陰影手法 */
 #isl-battle .bt-hpbox .nm{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} #isl-battle .bt-hpbox small{opacity:.8;font-size:13px;font-weight:400;}
 #isl-battle .bt-hpbox .hprow{display:flex;align-items:center;gap:6px;}
 #isl-battle .bt-hpbox .hpb{width:35%;height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:4px 0;flex:0 0 auto;} #isl-battle .bt-hpbox .hpb i{display:block;height:100%;background:linear-gradient(90deg,#ff5d5d,#ffb347);transition:width .35s;} #isl-battle .bt-hpbox.m .hpb i{background:linear-gradient(90deg,#b46bff,#ff6bd6);}   /* ★ v1.195.0 老師需求①「HP 條縮短 50%,扣血比例保持正確」— 只改容器(.hpb)的寬度,裡面的血量填充(.hpb i)沿用原本就是「相對容器的百分比寬」,容器縮小、填充跟著等比縮小,扣血比例不受影響,不需要動任何 JS 計算;★ v1.207.0 老師「深色底往內縮 30%」— 50%→35%(50×0.7),騰出的寬度給新的 .sti 狀態圖示列(同一個 .hprow 裡用 flex 並排,不必再動任何 JS 換算) */
@@ -5186,10 +5200,10 @@ window.islDirectVeilOff = function(){
      合併會逼得那條選擇器也要改,日後要分別調整兩邊時反而更難。舊值備查:rotate(±85deg)。 */
 @keyframes islBtDown{0%{transform:translateY(0);opacity:1}100%{transform:translateY(18px);opacity:.55;filter:grayscale(1)}}
 @keyframes islBtDownM{0%{transform:translateY(0);opacity:1}100%{transform:translateY(18px);opacity:.55;filter:grayscale(1)}}
-#isl-battle .bt-log{flex:0 0 auto;min-height:44px;margin:0 12px;padding:8px 12px;background:rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.3);border-radius:12px;font-size:17px;line-height:1.35;} #isl-battle .bt-log.pop{animation:islPop .35s ease;}
+#isl-battle .bt-log{flex:0 0 auto;min-height:44px;margin:0 12px;padding:8px 12px;background:linear-gradient(160deg,rgba(20,20,26,.85),rgba(6,6,9,.9));border:2px solid rgba(255,255,255,.3);border-radius:12px;font-size:17px;line-height:1.35;box-shadow:0 3px 10px rgba(0,0,0,.4);} #isl-battle .bt-log.pop{animation:islPop .35s ease;}
 #isl-battle .bt-acts{flex:0 0 auto;display:flex;flex-wrap:wrap;row-gap:8px;gap:8px;justify-content:center;padding:10px 12px 14px;}   /* ★ v1.192.0 老師需求「指令按鈕再放大 50%,不影響原本版面」— 補上 flex-wrap:當放大後的按鈕一行擺不下時自動換行,不會被切出畫面外(原本的 nowrap 單行在按鈕變大後有溢出風險) */
-#isl-battle .bt-acts button{width:124px;height:96px;border-radius:16px;border:3px solid rgba(255,255,255,.4);background:rgba(255,255,255,.14);color:#fff;font-size:42px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;} #isl-battle .bt-acts button small{font-size:21px;} #isl-battle .bt-acts button:disabled{opacity:.35;} #isl-battle .bt-acts.off{pointer-events:none;}   /* ★ v1.192.0 圖示 28→42px(icon)、文字 14→21px(small)= 再放大 50%(老師需求);按鈕框 92×74→124×96,足夠裝下放大後的內容又不會浪費太多版面 */
-#isl-battle .bt-qte{position:absolute;left:50%;top:auto;bottom:6px;transform:translateX(-50%);width:min(92%,620px);background:rgba(10,20,30,.94);border:3px solid #ffd166;border-radius:16px;padding:12px 14px;z-index:5;text-align:center;}
+#isl-battle .bt-acts button{width:124px;height:96px;border-radius:16px;border:3px solid rgba(255,255,255,.4);background:linear-gradient(180deg,#2f7ba6,#1d5677);color:#fff;font-size:42px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:0 3px 0 rgba(0,0,0,.35);} #isl-battle .bt-acts button small{font-size:21px;} #isl-battle .bt-acts button:disabled{opacity:.35;} #isl-battle .bt-acts.off{pointer-events:none;}   /* ★ v1.192.0 圖示 28→42px(icon)、文字 14→21px(small)= 再放大 50%(老師需求);按鈕框 92×74→124×96,足夠裝下放大後的內容又不會浪費太多版面;★ v1.220.0 純白半透明平塗改跟全站 .isl-btn 一致的海洋藍漸層+厚度陰影 */
+#isl-battle .bt-qte{position:absolute;left:50%;top:auto;bottom:6px;transform:translateX(-50%);width:min(92%,620px);background:linear-gradient(160deg,rgba(20,30,42,.96),rgba(6,10,16,.96));border:3px solid #ffd166;border-radius:16px;padding:12px 14px;z-index:5;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 20px rgba(255,209,102,.2);}
 #isl-battle .bt-qte .tt{font-size:16px;margin-bottom:8px;}
 /* ══ ★ v1.164.0(P2 組隊戰鬥)— 隊伍 HP 欄列表 + 站位陣型 + 目標指示 ══
    ⚠ 刻意沿用既有 .bt-hpbox 這個 class 當每一列的容器,而不是另開一套:
@@ -5338,15 +5352,20 @@ window.islDirectVeilOff = function(){
 #isl-modal .isl-bagbox.wide{ width:min(96%,1180px); max-height:92%; }   /* ★ v1.168.0 量測:.isl-x 是「掛在框外右上角 −19px(iPad −24px)」的設計,框吃到 98% 寬時那顆 ✕ 會壓在視窗邊緣;收到 96% 讓它一定在畫面內(1920 實測框右緣 1869 → ✕ 右緣 1891,仍在視窗內但只剩 29px 餘裕) */   /* ★ v1.149.0 商店(阿獺雜貨鋪)三分頁改走 wide 版——.isl-bagbox 原本沒有對應的 .wide 規則,只有 .box.wide 有,所以就算 JS 傳了 opts.wide:true 讓 islPanel 跳過等比縮放(islFitBox),框仍卡在窄版 width:min(96%,720px) 且沒有 max-height,補上這條後框才會真的吃到 98%/1180px 寬與 92% 高,配合既有 .isl-bagbox > .bd{overflow-y:auto} 內捲。 */
 #island-root.ipad #isl-modal .isl-bagbox.wide{ max-height:98%; }   /* ★ v1.213.0 老師「iPad 物品包外框長度提高 30%,讓一行四個物品完整顯示」— 92%→98% 已經是實務上限(視窗還要留邊給狀態列,更高會直接頂到裝置邊緣沒有意義);真正解決「沒完整顯示」的是上面物品包這輪改掛 wide 跳過 islFitBox 等比縮放(見 islBagOpen 說明),不再讓整框連同圖示文字一起被壓到 0.45 倍,這條 max-height 只是把 iPad 能給的可視空間也一併拉滿。 */
 .isl-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:8px 0 2px; }
+/* ★ v1.218.0 老師「字體、美感都沿用冒險模式,色調保持海島自然風格」— .isl-card 是建造/研究/武器/防具/製作台
+   五個面板共用的卡片元件,原本純黑半透明平塗+單色細框,是最大宗的「自己畫的簡陋版」。改成跟 v1.210.0 彈窗
+   同一手法(深色漸層+發光邊框+外散光),但色相從彈窗的海洋藍換成更貼近「自然素材」的深綠棕漸層,呼應荒島
+   主題;已擁有(.done)/已裝備(.on)兩種狀態的邊框發光色分開,一眼就能分辨卡片狀態。 */
 .isl-card{ position:relative; display:flex; flex-direction:column; align-items:center; text-align:center;
-  background:rgba(0,0,0,.30); border:2px solid rgba(255,255,255,.18); border-radius:16px; padding:12px 10px 46px; }
-.isl-card.done{ opacity:.5; }
-.isl-card.on{ border-color:#7bed9f; background:rgba(46,158,91,.22); }
+  background:linear-gradient(160deg,rgba(40,58,34,.9),rgba(10,18,10,.92)); border:2px solid rgba(150,200,120,.45); border-radius:16px; padding:12px 10px 46px;
+  box-shadow:0 6px 18px rgba(0,0,0,.45); }
+.isl-card.done{ opacity:.6; border-color:rgba(123,237,159,.55); box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 20px rgba(123,237,159,.18); }
+.isl-card.on{ border-color:#ffd166; background:linear-gradient(160deg,rgba(90,72,20,.9),rgba(20,14,4,.92)); box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 22px rgba(255,209,102,.25); }
 .isl-card .ci{ width:128px; height:128px; display:flex; align-items:center; justify-content:center; font-size:78px; line-height:1; }
 .isl-card .ci img{ width:128px; height:128px; object-fit:contain; }
-.isl-card .cn{ font-size:25px; font-weight:900; margin:6px 0 2px; line-height:1.2; }
+.isl-card .cn{ font-size:25px; font-weight:900; margin:6px 0 2px; line-height:1.2; color:#e6f7d9; }
 .isl-card .cd{ font-size:18px; line-height:1.45; opacity:.93; }
-.isl-card .cc{ font-size:19px; font-weight:700; margin-top:6px; line-height:1.5; }
+.isl-card .cc{ font-size:19px; font-weight:700; margin-top:6px; line-height:1.5; color:#ffd166; }
 .isl-card .cb{ position:absolute; left:8px; right:8px; bottom:8px; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
 .isl-card .cb .isl-btn{ font-size:19px; padding:9px 16px; margin:0; }
 .isl-card .lk{ font-size:16px; color:#ff9f43; }
@@ -5409,18 +5428,19 @@ window.islDirectVeilOff = function(){
   text-shadow:0 2px 6px #000; letter-spacing:2px; white-space:nowrap; pointer-events:none; opacity:.9; }
 .isl-sk-n{ position:absolute; width:64px; height:64px; margin-left:-32px; margin-top:-32px; border-radius:50%;
   display:flex; align-items:center; justify-content:center; font-size:30px; line-height:1; font-family:inherit;
-  border:3px solid rgba(255,255,255,.30); background:rgba(10,26,40,.92); color:#fff; padding:0; }
+  border:3px solid rgba(255,255,255,.30); background:linear-gradient(160deg,rgba(40,58,34,.92),rgba(10,18,10,.95)); color:#fff; padding:0;
+  box-shadow:0 3px 10px rgba(0,0,0,.4); }   /* ★ v1.220.0 老師「天賦星盤也要優化」— 節點底色由純平塗黑改深綠棕漸層,呼應本輪其餘卡片元件同一套手法 */
 .isl-sk-n:active{ transform:scale(.92); }
 .isl-sk-n .lb{ position:absolute; top:66px; left:50%; transform:translateX(-50%); font-size:14px; font-weight:900;
   white-space:nowrap; text-shadow:0 2px 5px #000; opacity:.92; }
 @keyframes islSkPulse{ 0%,100%{ box-shadow:0 0 0 3px rgba(255,255,255,.28),0 0 10px rgba(255,255,255,.55); } 50%{ box-shadow:0 0 0 9px rgba(255,255,255,.5),0 0 30px rgba(255,255,255,.95); } }
 .isl-sk-n.can{ border-color:#ffd166; animation:islSkPulse 1.7s ease-in-out infinite; }   /* ★ v1.213.0 老師「中央基礎點還未點開時先顯示白色呼吸發光暈,點了之後鄰近可以點的技能一起亮起白色呼吸發光暈」— .can 這個 class 本來就同時涵蓋這兩種情境(還沒解鎖任何節點時,可點的正是星域起點;解鎖起點後,新變成可點的鄰近節點也會被改判成 .can),不必分開寫兩套邏輯,原本的金色靜態光暈改成白色呼吸動畫即可一次滿足兩種情境。 */
-.isl-sk-n.on{ border-color:#7bed9f; background:rgba(46,158,91,.42); box-shadow:0 0 16px rgba(123,237,159,.55); }
+.isl-sk-n.on{ border-color:#7bed9f; background:linear-gradient(160deg,rgba(35,110,64,.85),rgba(10,40,22,.92)); box-shadow:0 3px 10px rgba(0,0,0,.4),0 0 18px rgba(123,237,159,.6); }   /* ★ v1.220.0 已點亮節點改綠色漸層+更明顯外散光,與 .isl-petinfo 的綠色「已收錄」方塊同一套配色語彙 */
 .isl-sk-n.off{ opacity:.42; }
 .isl-sk-n.key{ width:78px; height:78px; margin-left:-39px; margin-top:-39px; font-size:36px; border-width:4px; }
-.isl-sk-n.key.on{ box-shadow:0 0 22px rgba(255,209,102,.85); border-color:#ffd166; }
+.isl-sk-n.key.on{ box-shadow:0 3px 10px rgba(0,0,0,.4),0 0 24px rgba(255,209,102,.85); border-color:#ffd166; background:linear-gradient(160deg,rgba(90,72,20,.88),rgba(20,14,4,.94)); }
 .isl-sk-ttl{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 0; }
-.isl-sk-ttl span{ background:rgba(255,209,102,.16); border:2px solid rgba(255,209,102,.55); color:#ffd166;
+.isl-sk-ttl span{ background:linear-gradient(160deg,rgba(90,72,20,.55),rgba(20,14,4,.55)); border:2px solid rgba(255,209,102,.55); color:#ffd166;
   border-radius:999px; padding:4px 12px; font-size:16px; font-weight:900; }
 .isl-sk-ttl span.off{ background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.18); color:rgba(255,255,255,.45); }
 /* ★ v1.189.0 老師「上下說明文字太多,簡化,星盤放大到接近全螢幕,其他說明收合起來要看再點開」—
@@ -5517,19 +5537,40 @@ window.islDirectVeilOff = function(){
 .isl-petcard.t-heal{ border-color:#7bed9f; box-shadow:0 0 10px rgba(123,237,159,.35); }
 .isl-petcard.t-tank.inparty,.isl-petcard.t-atk.inparty,.isl-petcard.t-ctrl.inparty,.isl-petcard.t-heal.inparty{ border-color:#ffd166; }
 /* ★ v1.197.0 夥伴詳情卡分區排版(比照大對抗英雄圖鑑的分欄視覺) */
+/* ★ v1.216.0 老師「寵物能力視窗的項目/數字/說明文字都用不同色彩字體提升質感,呈現大自然海洋風格」—
+   每一區塊左緣加一道各自的珊瑚/海草/沙灘/珊瑚色系細邊條當視覺分色(不動版面結構,只加 border-left+微調底色調),
+   四維數字改各自代表色(❤️珊瑚紅/⚔日照橘/🛡珊瑚礁藍/💨海草綠),技能/天賦標題字改用不同的海洋色系區分兩塊。
+   ★ v1.217.0 老師看圖指名要比照大對抗(冒險模式)寵物詳情卡的色票——原本只有細邊條的克制配色改成
+   實色塊底色+彩色進度條,直接複製大對抗 _showPetDetail 用的三組顏色(綠/金/粉),見 islPetCardOpen 說明。 */
 .isl-petinfo{ display:flex; flex-direction:column; gap:8px; text-align:left; margin-top:8px; }
-.isl-petinfo .sec{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:8px 12px; }
-.isl-petinfo .sec.typ{ display:flex; align-items:baseline; gap:8px; font-weight:800; }
+.isl-petinfo .sec{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-left:4px solid rgba(124,196,232,.6); border-radius:12px; padding:8px 12px; }
+.isl-petinfo .sec.typ{ display:flex; align-items:center; gap:10px; font-weight:800; border-left-color:#7cc4e8; flex-wrap:wrap; }
+.isl-petinfo .sec.typ .badge{ display:inline-block; font-size:15px; font-weight:900; border-radius:999px; padding:3px 14px; }
 .isl-petinfo .sec.typ .d{ font-weight:400; opacity:.8; font-size:13px; }
-.isl-petinfo .sec.lvbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:14px; }
-.isl-petinfo .sec.lvbar .lv{ font-weight:900; color:#ffd166; font-size:17px; }
-.isl-petinfo .sec.stat{ display:flex; justify-content:space-around; text-align:center; font-size:16px; }
-.isl-petinfo .sec.stat b{ display:block; font-size:18px; margin-top:2px; }
+.isl-petinfo .sec.lv-box{ background:rgba(20,60,40,.55); border-left-color:#7bed9f; }
+.isl-petinfo .sec.lv-box .hd{ font-size:18px; font-weight:900; color:#aaffcc; }
+.isl-petinfo .sec.lv-box .xpbar{ height:12px; background:rgba(0,0,0,.5); border-radius:6px; overflow:hidden; margin:6px 0 4px; }
+.isl-petinfo .sec.lv-box .xpbar i{ display:block; height:100%; background:linear-gradient(90deg,#55cc88,#aaffcc); }
+.isl-petinfo .sec.lv-box .sub{ font-size:14px; color:#cceedd; }
+.isl-petinfo .sec.bond-box{ background:rgba(90,40,70,.35); border-left-color:#ff9ec4; }
+.isl-petinfo .sec.bond-box .hd{ font-size:18px; font-weight:900; color:#ffbbdd; }
+.isl-petinfo .sec.bond-box .bondbar{ height:10px; background:rgba(0,0,0,.5); border-radius:5px; overflow:hidden; margin:6px 0 4px; }
+.isl-petinfo .sec.bond-box .bondbar i{ display:block; height:100%; background:linear-gradient(90deg,#ff88bb,#ffccdd); }
+.isl-petinfo .sec.bond-box .sub{ font-size:14px; color:#eec4d6; }
+.isl-petinfo .sec.stat{ display:flex; justify-content:space-around; text-align:center; font-size:16px; border-left-color:#5fb3d9; }
+.isl-petinfo .sec.stat b{ display:block; font-size:18px; margin-top:2px; font-family:inherit; }
+.isl-petinfo .sec.stat span:nth-child(1) b{ color:#ff8f8f; }   /* ❤️ HP → 珊瑚紅 */
+.isl-petinfo .sec.stat span:nth-child(2) b{ color:#ffb066; }   /* ⚔ 攻擊 → 日照橘 */
+.isl-petinfo .sec.stat span:nth-child(3) b{ color:#7cc4e8; }   /* 🛡 防禦 → 珊瑚礁藍 */
+.isl-petinfo .sec.stat span:nth-child(4) b{ color:#7bed9f; }   /* 💨 速度 → 海草綠 */
 .isl-petinfo .sec.stat i{ display:block; font-size:11px; font-style:normal; opacity:.75; margin-top:1px; }   /* ★ v1.213.0 老師「四維有圖示也要有中文」新增的 HP/攻擊/防禦/速度 小標籤 */
-.isl-petinfo .sec.skill .hd,.isl-petinfo .sec.talent .hd{ font-weight:800; color:#ffd166; display:flex; justify-content:space-between; align-items:baseline; }
+.isl-petinfo .sec.skill{ background:rgba(20,60,40,.30); border-left-color:#7bed9f; }
+.isl-petinfo .sec.talent{ background:rgba(50,40,16,.5); border-left-color:#ffd166; }
+.isl-petinfo .sec.skill .hd{ font-weight:800; color:#a8f0c2; display:flex; justify-content:space-between; align-items:baseline; font-family:'M PLUS Rounded 1c',inherit; }
+.isl-petinfo .sec.talent .hd{ font-weight:800; color:#ffdca0; display:flex; justify-content:space-between; align-items:baseline; font-family:'M PLUS Rounded 1c',inherit; }
 .isl-petinfo .sec.skill .cd{ font-weight:400; font-size:12px; opacity:.75; color:#fff; }
 .isl-petinfo .sec.skill .bd2,.isl-petinfo .sec.talent .bd2{ margin-top:3px; font-size:20px; line-height:1.4; opacity:.92; }   /* ★ v1.213.0 老師「技能和天賦效果說明文字放大50%」:13.5→20px */
-.isl-petinfo .sec.sci{ font-size:13px; opacity:.85; background:rgba(0,0,0,.2); }
+.isl-petinfo .sec.sci{ font-size:13px; opacity:.85; background:rgba(95,179,217,.10); border-left-color:#5fb3d9; color:#cfe9f7; font-style:italic; }
 #island-root.ipad .isl-petinfo .sec{ padding:12px 16px; } #island-root.ipad .isl-petinfo .sec.typ{ font-size:20px; } #island-root.ipad .isl-petinfo .sec.typ .d{ font-size:16px; } #island-root.ipad .isl-petinfo .sec.lvbar{ font-size:18px; } #island-root.ipad .isl-petinfo .sec.lvbar .lv{ font-size:22px; } #island-root.ipad .isl-petinfo .sec.stat{ font-size:20px; } #island-root.ipad .isl-petinfo .sec.stat b{ font-size:23px; } #island-root.ipad .isl-petinfo .sec.stat i{ font-size:14px; } #island-root.ipad .isl-petinfo .sec.skill .bd2,#island-root.ipad .isl-petinfo .sec.talent .bd2{ font-size:26px; } #island-root.ipad .isl-petinfo .sec.sci{ font-size:16px; }   /* ★ v1.213.0 iPad 版技能/天賦說明同步 ×1.5(17→26px),四維標籤 iPad 補 14px */
 .isl-formation{ margin:4px 0 12px; padding:10px; border-radius:14px; background:rgba(0,0,0,.28); }
 .isl-formation .ftt{ font-size:15px; opacity:.9; margin-bottom:6px; }
@@ -5561,6 +5602,20 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-acts button.cmd{ border-color:#5fe0c0; }
 #island-root.ipad .isl-petcard{ width:min(230px,60vw); } #island-root.ipad .isl-petcard .pic{ height:190px; font-size:100px; } #island-root.ipad .isl-petcard .pk{ font-size:72px; } #island-root.ipad .isl-petcard .nm{ font-size:24px; } #island-root.ipad .isl-petcard .tp,#island-root.ipad .isl-petcard .lv{ font-size:19px; } #island-root.ipad .isl-petcard .st{ font-size:17px; } #island-root.ipad .isl-petcard .pin{ font-size:17px; padding:3px 10px; }
 #island-root.ipad .isl-slot .sn{ font-size:24px; } #island-root.ipad .isl-slot .sx{ font-size:18px; } #island-root.ipad .isl-formation .fu{ font-size:18px; min-width:104px; }
+/* ★ v1.216.0 老師「主角能力頁項目/數字/說明文字都用不同色彩字體做設計」— 名稱維持白字,數字統一改珊瑚礁藍(與寵物防禦同色系,呼應海洋主題),進度條軌道加一點藍綠底色而非純白半透明,與 .isl-ab 原本已有的懸浮說明 .tip 不衝突。
+   ★ v1.217.0 老師看圖指名要比照大對抗寵物詳情卡的豐富色彩——四維各自換代表色(巧手珊瑚紫/腳程海草綠/力氣日照橘/巧思珊瑚礁藍),
+   生存技能維持金色進度條(呼應大對抗天賦金色方塊的既有用色)但數字改暖黃,兩組互相區分開。 */
+.isl-ab b{ color:#7cc4e8 !important; }
+.isl-ab .bar{ background:rgba(95,179,217,.18) !important; }
+.isl-ab[data-k^="stat:dex"] b{ color:#c58fff !important; }
+.isl-ab[data-k^="stat:dex"] .bar i{ background:#c58fff !important; }
+.isl-ab[data-k^="stat:mov"] b{ color:#7bed9f !important; }
+.isl-ab[data-k^="stat:mov"] .bar i{ background:#7bed9f !important; }
+.isl-ab[data-k^="stat:pow"] b{ color:#ffb066 !important; }
+.isl-ab[data-k^="stat:pow"] .bar i{ background:#ffb066 !important; }
+.isl-ab[data-k^="stat:wit"] b{ color:#7cc4e8 !important; }
+.isl-ab[data-k^="stat:wit"] .bar i{ background:#7cc4e8 !important; }
+.isl-abil.sk .isl-ab b{ color:#ffdca0 !important; }
 .isl-ab{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%; text-align:left; font-family:inherit;
   background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.16); border-radius:12px;
   padding:7px 10px; color:#fff; font-size:17px; position:relative; }   /* ★ v1.154.0 position:relative 讓 .tip 有錨點可以浮出來 */
@@ -5744,7 +5799,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.214.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.220.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -5753,7 +5808,12 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.214.0';   /* ★ v1.214.0(2026-09-16・接續 v1.213.0 的⑦,實作稽核出的 6 種缺失技能機制)— 全部走既有 D.PET_CMDS 的 fx 欄位系統擴充,單一出口 islBtPetCmd 新增分支,不另開第二套判斷:
+var MG_VER = 'v1.220.0';   /* ★ v1.220.0(2026-09-16・老師「字體/美感沿用冒險模式,天賦星盤/戰鬥介面也全部優化,字體要用冒險模式的圓體字不缺字的字形」)— ①字體:荒島 v1.109.0 當初刻意把『Noto Sans TC』排在『M PLUS Rounded 1c』前面(理由寫在原註解:圓體字集不完整,怕缺字);但大對抗主程式的全域字體堆疊其實是『M PLUS Rounded 1c』在前、『Noto Sans TC』在後(見 main_index.html body 規則),缺字時瀏覽器本來就會自動退到堆疊下一個字體去找那個字——不會整段消失或變問號,兩者順序互換不影響『不缺字』這件事,只差在圓體字涵蓋到的字會不會顯示成圓體。本輪把 6 處字體堆疊字串改成與大對抗同順序(圓體優先,Noto Sans TC/PingFang TC/Heiti TC/Microsoft JhengHei 依序墊底不缺字);Google Fonts 載入的 weight 同步比照大對抗只留 400/700/900(拿掉 500——這正是 v1.93.0 稽核揪出的『不在字型鏈交集,缺字時會合成粗體字糊』那個成因,既然要換字體優先序就先把同一顆地雷排除)。②天賦星盤:.isl-sk-n 節點與 .isl-sk-ttl 標籤由純黑/純色平塗改深綠棕漸層+陰影,已點亮節點改綠色漸層呼應 .isl-petinfo 的『已收錄』配色語彙。③戰鬥介面:.bt-hpbox/.bt-log/.bt-qte 三個純黑半透明容器改深紅棕/深藍漸層+外散光,.bt-acts 指令按鈕由純白半透明平塗改跟全站 .isl-btn 一致的海洋藍漸層+厚度陰影,不再是唯一一批『自己畫的簡陋版』。 */   /* ★ v1.219.0(2026-09-16・老師「字體美感都沿用冒險模式,檢查還有多少自己畫的簡陋版都升級,色調保持海島自然風格」+ 截圖回報 ui_bld 圖片名稱)— ①稽核並升級共用元件的平塗風格為漸層+發光邊框(色相從彈窗既有的海洋藍改成貼近荒島天然素材的深綠棕):.isl-card(建造/研究/武器/防具/製作台五面板共用)、.isl-recipe(烹飪/餵食選單)、.isl-store-item/.isl-store-row(倉庫/商店)、.isl-codex-card(圖鑑)、.isl-sellrow(賣東西)、.isl-quest-row(委託)、.isl-bag-slot(物品包)。②老師截圖指出上一輪判定「ui_bld 沒上傳」是誤判——repo 裡實際檔名是 island_ui_bld2.png(多一個 2),不是同一張圖片的兩份拷貝:ui_build 是側欄「建造」按鈕圖示、ui_bld 是 HUD「🏗 設施 X/Y」藥丸圖示,語意本來就不同,上一輪只搜了不帶 2 的檔名就漏掉,本輪補上正確檔名。⚠ 範圍說明:寵物圖鑑卡(.isl-petcard)已經有依類型的彩色發光框(v1.165.0 就有),天賦星域節點/戰鬥血條等更深的元件尚未逐一稽核,下一輪如果老師還想繼續往下做可以接著處理。 */   /* ★ v1.217.0(2026-09-16・老師看圖「冒險模式(大對抗)寵物詳情卡色彩豐富,荒島面板也要這樣」)— 直接複製大對抗 _showPetDetail 實際用的色票(綠=已收錄/等級、金=天賦、粉=好感度)套進 islPetCardOpen:類型改彩色徽章(坦克藍/攻擊珊瑚/治療綠/控場紫)、等級與親密度各自獨立成綠色/粉色方塊+漸層進度條(原本只是一行小字)；角色能力頁四維也各自換代表色(巧手珊瑚紫/腳程海草綠/力氣日照橘/巧思珊瑚礁藍)，生存技能數字改暖黃跟四維數字區分開。上一輪(v1.216.0)先出的版本比對訊息其實還沒真的 bump 常數，這輪一併補上正確版號。 */   /* ★ v1.215.0(2026-09-16・老師「補完所有功能視窗開啟音效、關閉音效、製作成功、招募成功、餵食、親密度上升、主角技能升級、寵物升級…各種音效,比照冒險模式的邏輯來配置」)— 先做稽核(對照 D.SFX_MAP 30 個事件鍵逐一反查 index 端消費點,再逐一核對老師點名的 8 種情境):
+       ・視窗開啟/關閉音效(menuOpen/menuClose):稽核發現這兩個鍵 v1.28.0 定義了以來從未被任何地方呼叫過,是貨真價實的死鍵——islModalClose() 完全靜音、開窗音效散落各呼叫端自己直接 playSfx('sfx-tap',…)。改成單一出口補上:islModal()/islPanel()(全荒島 164 處視窗/面板共用的唯二入口)補呼叫 islSfx('menuOpen'),islModalClose()(56 處關閉呼叫的唯一出口)補呼叫 islSfx('menuClose')——各補一處就全涵蓋,不必逐處改動。menuOpen 音量由 0.30 降到 0.15,因為多數呼叫端本來就已經先播了一聲 sfx-tap(按鈕點擊回饋),疊上去要「輕輕一層」不是變成兩聲。
+       ・製作成功(craft)/招募成功(islPetGet)/餵食+親密度上升(islHeartFx)/主角技能升級(islSkillGain 活動經驗、islSkTap 天賦星盤、武器升級):稽核後確認這 4 種老師點名的情境本來就都已經有專屬音效掛點(分別是 islActResult 結算的 sfx-powerup/sfx-applause/sfx-heal/sfx-statup),不是死鍵,本輪不動。
+       ・寵物升級(islPetsGainAfterWin 內 rec.lv++):稽核發現這才是真的死鍵——戰鬥結束共用的 sfx-ko 跟「這次打贏有沒有讓寵物升級」完全無關,升級本身從 v1.163.0 資料層上線以來一直靜音,只有結算文字看得到「🎉 升到 LvX」。比照玩家技能升級補上 islSfx('levelUp')(重用既有鍵,不新增)。
+       ・親密度「階級」提升(戰鬥打贏/每日一起出門累積到下一階,非送禮/餵食那條路):送禮與每日餵食本來就有 islHeartFx(飄愛心+sfx-heal),但戰鬥結算與 dayTogether 這兩處親密度提升到下一階完全靜音,新增 D.SFX_MAP.bond 鍵(沿用 sfx-heal,音量比 islHeartFx 稍低以區分「背景結算」與「主動送禮」兩種情境)並在 islPetsGainAfterWin 掛上呼叫點。
+    */   /* ★ v1.214.0(2026-09-16・接續 v1.213.0 的⑦,實作稽核出的 6 種缺失技能機制)— 全部走既有 D.PET_CMDS 的 fx 欄位系統擴充,單一出口 islBtPetCmd 新增分支,不另開第二套判斷:
        ・復活(revive):復活一位「已倒下(.down)」的隊友(吃 healOutP 天賦加成),沒有倒下的人就提示沒人需要復活。梅花鹿(deer)的 cmd 由 herbheal(單體治療,跟隊上其他 3 位治療型重複度最高)換成新招「還魂草藥」(reviveherb)。⚠ 平衡風險:梅花鹿是最早就能收服的 NPC,換成復活技能可能讓早期缺乏單體治療手段,需要老師實機驗收早期戰鬥難度,不行的話可以再換別隻夥伴帶這招。
        ・解除全體不利狀態(cureAll):既有 cure(只解一種)的全體版,不 break、把 STATUS_ORDER 全部清完。螢火蟲(firefly)glowlight 的 cure:1 升級成 cureAll:1,其餘不動。
        ・隨機目標多段攻擊(randHits):配合 hits>1 使用,每一段重新隨機挑一隻還活著的魔物,不再固定打同一隻鎖定目標。台灣藍鵲(bluemagpie)flockrush(三段 0.5 倍必中)加這個旗標,「群飛突擊」的畫面意象本來就該是分散攻擊。
@@ -15504,6 +15564,7 @@ function islModal(html, btns, opts){
   /* ★ v1.130.0 wide(三欄卡片)刻意不跑 islFitBox:那支是「等比縮小到不用捲」,會把老師要求放大的字再縮回去;
      wide 版改為「框吃滿 92% 高 + .bd 內捲」,字維持大、內容多就捲。 */
   if(!wide) islFitBox(m, m.firstElementChild);   /* ★ v1.124.0 太高就整框等比縮小,不必捲動 */
+  try{ islSfx('menuOpen'); }catch(_mo){}   /* ★ v1.215.0 老師「補完視窗開啟音效」— D.SFX_MAP.menuOpen 音量刻意壓到 0.15,跟呼叫端既有的 sfx-tap 疊在一起是「輕輕一層」不是「兩聲」;單一出口(islModal 是全荒島 144 處彈窗共用的唯一入口),不必逐處加呼叫 */
   m.onclick = function(ev){
     var t = ev.target, i;
     while(t && t !== m && !(t.getAttribute && t.getAttribute('data-i'))) t = t.parentNode;
@@ -15514,7 +15575,7 @@ function islModal(html, btns, opts){
     if(i >= 0 && btns[i] && btns[i].cb) btns[i].cb();
   };
 }
-function islModalClose(){ var m = $('isl-modal'); m.classList.add('hidden'); m.innerHTML = ''; m.onclick = null; }
+function islModalClose(){ var m = $('isl-modal'); m.classList.add('hidden'); m.innerHTML = ''; m.onclick = null; try{ islSfx('menuClose'); }catch(_mc){} }   /* ★ v1.215.0 老師「補完視窗關閉音效」— 這支是全荒島 56 處關閉呼叫的唯一出口,舊版完全靜音,補一處即全涵蓋 */
 /* 對白框(主角內心話／小白):逐句點下一句,可跳過 */
 function islDialog(lines, opts, cb){
   var d = $('isl-dialog'), i = 0, who = (opts && opts.who) || 'me';
@@ -17560,7 +17621,7 @@ function islCampPaint(){
       '" data-i="' + i + '" style="left:' + s.x + '%;top:' + s.y + '%">' +
       (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') +
       (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) +
-      '<span class="bn">' + islEsc(b.n) + ' Lv' + s.lv + '</span><span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span></button>';
+      (Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) < 100 ? '<span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span>' : '') + '</button>';
   }
   cells.innerHTML = h;
   islCampBldApplyTransforms();   /* 逐一把 scale(k)+可能的 scaleX(-1) 寫進 style.transform(見函式說明,不能只靠 CSS class) */
@@ -17741,10 +17802,15 @@ function islCampPetsPaint(){
     el = document.createElement('div');
     el.className = 'isl-camp-pet'; el.id = id;
     el.title = p.n;
+    /* ★ v1.216.0 老師「寵物和人類的尺寸比例不正確」— 舊版容器寫死 64×64,16 隻寵物(螢火蟲到綠蠵龜)全部同一個尺寸,
+       跟訓練師 NPC 早就有的依真實體型比例顯示高度(D.PETS[].sz,v1.152.0 就有,只是野外收服的 12 隻一直沒補這個欄位)
+       各玩各的。改用 p.sz(玩家 96px 為基準,沒有的退回 64 保底)算容器實際邊長,margin 一起改用 -半徑 對齊腳底。 */
+    var _psz = p.sz || 64;
+    el.style.width = _psz + 'px'; el.style.height = _psz + 'px'; el.style.marginLeft = (-_psz / 2) + 'px';
     el.style.left = x + '%'; el.style.bottom = y + '%';
     el.onclick = (function(kk){ return function(ev){ ev.stopPropagation(); islPetCardOpen(kk); }; })(rec.k);
     host.appendChild(el);
-    _IS.campPets.push({ id: id, x: x, y: y, k: rec.k, walking: false, el: el });
+    _IS.campPets.push({ id: id, x: x, y: y, k: rec.k, sz: _psz, walking: false, el: el });
     islCampPetRender(_IS.campPets.length - 1);   /* 初始一律畫待機(idle)姿態 */
   }
   islCampPetsScale();
@@ -17762,7 +17828,7 @@ function islCampPetsScale(){   /* 跟主角吃同一個縮放倍率(islCampCharS
 function islCampPetRender(i){
   var u = _IS.campPets || [], rec = u[i]; if(!rec || !rec.el) return;
   var pose = _IS.campPetsSleep ? 'sleep' : (rec.walking ? 'walk' : 'idle');
-  rec.el.innerHTML = islPetPicHtml(rec.k, 64, '', pose) + (_IS.campPetsSleep ? '<span class="zzz">💤</span>' : '');
+  rec.el.innerHTML = islPetPicHtml(rec.k, rec.sz || 64, '', pose) + (_IS.campPetsSleep ? '<span class="zzz">💤</span>' : '');   /* ★ v1.216.0 改吃各自的 sz(見 islCampPetsPaint),不再統一 64 */
   rec.el.classList.toggle('sleeping', !!_IS.campPetsSleep);
 }
 /* 睡覺開關:休息流程(islRest 的「睡覺 💤」按鈕)呼叫 on=true——漫步計時器暫停(原地不動)、
@@ -18068,10 +18134,20 @@ function islSubItems(cat){
   return L;
 }
 window.islSubOpen = function(cat){
-  var sm = $('isl-submenu'), L = islSubItems(cat), h = '', i, it, ttl = { char:'👤 角色', camp:'🏕 營地', shop:'🦦 阿獺雜貨鋪', explore:'🗺 探索', rest:'🌙 休息' }[cat] || '';
+  var sm = $('isl-submenu'), L = islSubItems(cat), h = '', i, it, ttl = { char:'👤 角色', camp:'🏕 營地', shop:'🦦 阿獺雜貨鋪', explore:'🗺 探索', rest:'🌙 休息' }[cat] || '', grid = $('isl-sub-grid');
   if(!sm) return;
   playSfx('sfx-tap', 0.3);
-  for(i = 0; i < L.length; i++){ it = L[i]; h += '<button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '"><span class="ci">' + (it.img ? islIcoHtml(it.img, it.e, 34) : it.e) + '</span>' + islEsc(it.t) + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button>'; }   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— it.img 有值就走 islIcoHtml(有圖用圖,沒圖照樣顯示 it.e 這個 emoji,只是外面多一圈淡淡的虛線框) */
+  /* ★ v1.216.0 老師看圖「探索裡面的出發/圖鑑/島上日誌,改成左中右三個圓形大按鈕+ICON,不要是現在那樣大大的空白區域」—
+     根因:.sm-grid 是 3 欄等寬格線(repeat(3,1fr)),其餘分類(角色 13 項/營地 9 項)項目一多格線自然填滿看不出問題,
+     探索永遠只有 2~3 項,3 欄格線硬把每一顆按鈕撐成畫面 1/3 寬的長方形,才會有「一大塊空白裡塞一顆小按鈕」的觀感。
+     只有 explore 這個分類改走新的 .isl-sub-circles(flex 置中、圓形圖示鈕+底下小字),其餘分類完全不動。 */
+  if(cat === 'explore'){
+    if(grid) grid.classList.add('circles');
+    for(i = 0; i < L.length; i++){ it = L[i]; h += '<div class="isl-sub-c' + (it.dis ? ' dis' : '') + '"><button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '">' + (it.img ? islIcoHtml(it.img, it.e, 40) : '<span class="ci">' + it.e + '</span>') + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button><span class="lb">' + islEsc(it.t) + '</span></div>'; }
+  } else {
+    if(grid) grid.classList.remove('circles');
+    for(i = 0; i < L.length; i++){ it = L[i]; h += '<button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '"><span class="ci">' + (it.img ? islIcoHtml(it.img, it.e, 34) : it.e) + '</span>' + islEsc(it.t) + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button>'; }   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— it.img 有值就走 islIcoHtml(有圖用圖,沒圖照樣顯示 it.e 這個 emoji,只是外面多一圈淡淡的虛線框) */
+  }
   $('isl-sub-title').innerHTML = ttl + '<span class="grow"></span><button class="isl-x" onclick="islSubClose()">✕</button>';
   $('isl-sub-grid').innerHTML = h;
   sm.classList.remove('hidden');
@@ -18409,6 +18485,7 @@ function islPanel(html, onTap, opts){
     if(!bx.querySelector('.isl-x')) bx.insertAdjacentHTML('afterbegin', '<button class="isl-x" data-act="close" aria-label="關閉">✕</button>');
   }
   if(!wide) islFitBox(m, bx);   /* ★ v1.124.0 營地各面板(物品包/倉庫/建造/裝飾/商店/委託…)太高時整框等比縮小,按鈕不再被切掉 */   /* ★ v1.115.0 面板一律補右上角 ✕(data-act=close 走各面板既有的關閉分支;h3 內原本的 ✕ 由 CSS 隱藏);★ v1.130.0 wide 版不縮放改內捲 */
+  try{ islSfx('menuOpen'); }catch(_po){}   /* ★ v1.215.0 islPanel 是全荒島 20 處清單型面板(物品包/倉庫/建造/商店…)共用的唯一入口,同 islModal 補一處即全涵蓋 */
   m.onclick = function(ev){ var t = ev.target; while(t && t !== m && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-i') != null))) t = t.parentNode; if(!t || t === m){ if(ev.target === m) islModalClose(); return; } playSfx('sfx-tap', 0.25); onTap(t); };
 }
 /* ── 倉庫(27.3):種類制,每種上限隨 Lv;顯示 ★ 分佈 ── */
@@ -18703,15 +18780,23 @@ function islPetCardOpen(k){
   }
   ps = islPetStats(k, rec.lv, rec.bond);
   nxt = (rec.lv >= db.PET_LV.MAX) ? 0 : (db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1));
-  /* ★ v1.197.0 老師「夥伴能力介紹要重新排版美化,比照大對抗的英雄圖鑑有不同欄位區分」—
-     原本 4~5 行 <p> 平鋪,改成分成獨立的卡片式區塊(.isl-petinfo .sec),每區有自己的底色/邊框/標題,
-     視覺上明確切開「類型」「等級與親密度」「四維」「專屬指令」「天賦」「自然小知識」六塊,不再是一整串文字。 */
+  /* ★ v1.217.0 老師看圖「冒險模式(大對抗)的寵物詳情卡色彩豐富(SR/坦克型色塊徽章、綠色已收錄馴養方塊+經驗條、
+     金色隨機素質方塊、粉色好感度方塊+進度條),荒島的面板也要這樣」— 直接沿用大對抗 index.html 寵物詳情卡
+     (_showPetDetail)實際使用的色票,而不是自己配一套新的:
+     綠(已收錄/等級):底 rgba(20,60,40,.55) 邊 rgba(120,255,180,.5) 字 #aaffcc;
+     金(天賦/特殊機制):底 rgba(50,40,16,.5) 邊 rgba(240,200,120,.45) 字 #ffdca0;
+     粉(親密度):底 rgba(90,40,70,.35) 邊 rgba(255,150,200,.5) 字 #ffbbdd,進度條漸層 #ff88bb→#ffccdd;
+     類型徽章色依 db.PET_TYPES 四型分開(坦克藍/攻擊珊瑚/治療綠/控場紫),仿大對抗「SR」藍底黑字圓角小標籤。 */
+  var _typeColors = { tank: { bg:'#5fb3d9', tx:'#062230' }, atk: { bg:'#ff8f8f', tx:'#3a0808' }, heal: { bg:'#7bed9f', tx:'#0d1810' }, ctrl: { bg:'#c58fff', tx:'#25073a' } };
+  var _tc = _typeColors[p.type] || _typeColors.tank;
+  var _bondPct = nxt ? Math.round(Math.min(100, (rec.xp / nxt) * 100)) : 100;
   h += '<div class="isl-petinfo">';
-  h += '<div class="sec typ">' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + ' ' + islEsc(db.PET_TYPES[p.type].n) + '<span class="d">' + islEsc(db.PET_TYPES[p.type].d) + '</span>' : '') + '</div>';
-  h += '<div class="sec lvbar"><span class="lv">Lv' + rec.lv + '</span>' + (nxt ? '<span class="xp">EXP ' + rec.xp + '/' + nxt + '</span>' : '<span class="xp">已滿級</span>') + '<span class="bond">' + db.PET_BOND[rec.bond].e + islEsc(db.PET_BOND[rec.bond].n) + '(' + islEsc(db.PET_BOND[rec.bond].d) + ')</span></div>';
+  h += '<div class="sec typ"><span class="badge" style="background:' + _tc.bg + ';color:' + _tc.tx + '">' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + ' ' + islEsc(db.PET_TYPES[p.type].n) : '') + '</span><span class="d">' + (db.PET_TYPES[p.type] ? islEsc(db.PET_TYPES[p.type].d) : '') + '</span></div>';
+  h += '<div class="sec lv-box"><div class="hd">🎓 已收錄馴養　Lv.' + rec.lv + '</div><div class="xpbar"><i style="width:' + _bondPct + '%"></i></div><div class="sub">' + (nxt ? 'EXP ' + rec.xp + ' / ' + nxt : '已滿級') + '</div></div>';
   h += '<div class="sec stat"><span>❤️<b>' + ps.hp + '</b><i>HP</i></span><span>⚔<b>' + ps.atk + '</b><i>攻擊</i></span><span>🛡<b>' + ps.def + '</b><i>防禦</i></span><span>💨<b>' + ps.spd + '</b><i>速度</i></span></div>';   /* ★ v1.213.0 老師「寵物狀態的四維有圖示也要有中文」— 原本只有 emoji+數字,補上 <i>HP/攻擊/防禦/速度</i> 小字標籤(CSS 見 .isl-petinfo .sec.stat i) */
   h += '<div class="sec skill"><div class="hd">' + cmd.e + ' ' + islEsc(cmd.n) + '<span class="cd">冷卻 ' + cmd.cd + ' 回合</span></div><div class="bd2">' + islEsc(cmd.d) + '</div></div>';
   h += '<div class="sec talent"><div class="hd">✨ 天賦</div><div class="bd2">' + islEsc(p.talent) + '</div></div>';
+  h += '<div class="sec bond-box"><div class="hd">💖 親密度　' + db.PET_BOND[rec.bond].e + ' ' + islEsc(db.PET_BOND[rec.bond].n) + '</div><div class="bondbar"><i style="width:' + Math.min(100, Math.round(rec.bondPt / (db.PET_BOND[db.PET_BOND.length - 1].need || 220) * 100)) + '%"></i></div><div class="sub">' + islEsc(db.PET_BOND[rec.bond].d) + '</div></div>';
   h += '<div class="sec sci">🔬 ' + islEsc(p.sci) + '</div>';
   h += '</div>';
   btns.push({ t: '🍖 餵食(親密度 +' + db.PET_BOND_GAIN.feed + ')', cls: 'ghost', cb: function(){ islPetFeed(k); } });
@@ -19484,7 +19569,7 @@ function islCalDay(day){
   }
   if(!any) h += '<p style="opacity:.75">這一天沒有特別的紀錄……平平安安也是一種幸福。</p>';
   h += '</div>';
-  islModal(h, [{ t: '← 回日曆', cls: 'ghost', cb: function(){ islCalOpen(_IS.calMon); } }, { t: '關閉' }]);
+  islModal(h, [{ t: '← 回日曆', cls: 'ghost', cb: function(){ islCalOpen(_IS.calMon); } }, { t: '關閉' }], { wide: true });   /* ★ v1.216.0 老師「日誌多筆紀錄要像委託清單一樣可以捲動,不要縮得看不清楚字」— 原本沒傳 wide,內容一多(某天十幾筆事件)islFitBox 整框等比縮放把字全部壓扁;改 wide 跳過縮放,改用下方 .isl-cal-day 自己的 max-height+overflow-y:auto 內捲,字級維持設計尺寸不再被壓縮 */
 }
 /* 右下角通知小卡(建造完工等);ms 逾時自動收,也可以自己按 ✕ */
 function islNotify(title, body, sfx){
@@ -23327,7 +23412,10 @@ function islPetsGainAfterWin(mons, lost){
     if(rec.lv >= db.PET_LV.MAX) rec.xp = 0;
     rec.bond = Math.min(db.PET_BOND_GAIN.cap, (rec.bond | 0) + 0);   /* 親密度用「點數」存,階級另外換算 */
     rec.bondPt = Math.min(db.PET_BOND_GAIN.cap, (rec.bondPt | 0) + islBondGain(db.PET_BOND_GAIN.battle + (up ? up * db.PET_BOND_GAIN.levelUp : 0)));   /* ★ v1.181.0 老師需求:升級要加更多親密度(每升 1 級額外 +levelUp,比單純打贏一場多很多);★ v1.196.0 天賦 bondGainP 接上 */
-    for(j = db.PET_BOND.length - 1; j >= 0; j--){ if(rec.bondPt >= db.PET_BOND[j].need){ if(rec.bond !== j){ rec.bond = j; txt.push(u.e + islEsc(u.n) + ' 親密度 → ' + db.PET_BOND[j].e + db.PET_BOND[j].n); } break; } }
+    for(j = db.PET_BOND.length - 1; j >= 0; j--){ if(rec.bondPt >= db.PET_BOND[j].need){ if(rec.bond !== j){ rec.bond = j; txt.push(u.e + islEsc(u.n) + ' 親密度 → ' + db.PET_BOND[j].e + db.PET_BOND[j].n); try{ islSfx('bond'); }catch(_pb){} } break; } }
+    /* ★ v1.215.0 老師「補完寵物升級音效」— 舊版寵物升級只有結算文字,戰鬥結束畫面共用的 sfx-ko 跟「有沒有升級」無關,
+       升級這件事本身完全靜音;比照玩家技能升級(islSkillGain 的 sfx-statup)補一聲 islSfx('levelUp')。 */
+    if(up) try{ islSfx('levelUp'); }catch(_pl){}
     txt.push(u.e + islEsc(u.n) + ' EXP+' + gain + (up ? '　🎉 升到 Lv' + rec.lv + '!' : ''));
   }
   return txt.length ? '🐾 ' + txt.join('<br>🐾 ') : '';

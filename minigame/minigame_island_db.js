@@ -50,7 +50,20 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.196.0';   /* ★★ v1.196.0(2026-09-16・接續交接檔 PENDING 清單,六項全部做完+追加採集題庫擴充)★★ —
+  D.VER = 'v1.220.0';   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
+  void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
+   新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
+   本輪視覺升級(.isl-card/.isl-recipe/.isl-store-item 等共用元件平塗改漸層)全在 index 端,本檔僅這一個圖鍵異動。
+   對應 index v1.219.0、sw v1.219.0(SHELL v1.185.0)。 */
+  void 'v1.217.0';   /* ★ v1.219.0 舊版號備查(原本是 D.VER 指派) */
+  void 'v1.217.0';   /* ★ v1.217.0(2026-09-16・老師看圖「冒險模式寵物詳情卡色彩豐富,荒島面板也要這樣」)— 本檔零改動,配色與版面全在 index 端(見 islPetCardOpen/.isl-petinfo/.isl-ab 說明)，這裡僅同步版號。對應 index v1.217.0、sw v1.217.0(SHELL v1.183.0)。 */
+  void 'v1.215.0';   /* ★ v1.217.0 舊版號備查(原本是 D.VER 指派) */
+  void 'v1.215.0';   /* ★ v1.215.0(2026-09-16・老師「補完視窗開啟/關閉、製作、招募、餵食、親密度、技能升級、寵物升級…各種音效,比照冒險模式的邏輯來配置」)—
+   本檔實質改動:D.SFX_MAP 三處——①menuOpen 音量 0.30→0.15(index 端補上呼叫點後,多數開窗前已經先播過 sfx-tap,降音量避免疊成兩聲刺耳);②menuClose 音量 0.25→0.20(index 端 islModalClose() 補上呼叫點,原本定義了 8 輪卻從未真正發聲);③新增 bond 鍵(['sfx-heal',0.25],親密度「階級」真的提升那一刻的音效,掛在戰鬥結算與每日一起出門,與送禮/餵食既有的 islHeartFx 音量做出區分)。稽核詳見 index v1.215.0 開頭註解;寵物升級音效(重用既有 levelUp 鍵)純 index 端改動,本檔零欄位異動。
+   對應 index v1.215.0、sw v1.215.0(SHELL v1.181.0)。 */
+  void 'v1.196.0';   /* ★ v1.215.0 舊版號備查(原本是 D.VER 指派) */
+  void 'v1.196.0';   /* ★★ 舊 v1.196.0(2026-09-16・接續交接檔 PENDING 清單,六項全部做完+追加採集題庫擴充)★★ —
    本檔實質改動:①D.QUIZ.gather 由 200 題擴充為 300 題(新增 100 題,主題涵蓋植物構造/種子生理/樹木木材/纖維編織/野外找水/岩石礦物/菇類真菌/潮間帶/台灣特有種動物/野外安全/動物性資源/簡單機械/永續採集知識,逐題核對舊 200 題避免重複出題;既有的 islQuizPick 不重複輪替機制原本就是通用邏輯,300 題自動沿用,出完一輪才洗牌重來,選項每題即時打亂)。
    ②天賦「馴養率(tameP)」稽核:發現 tameP 其實還被 islActTame(畜欄馴養雞/羊/兔)讀取,並非死鍵,故保留不動;另在 SK_CORE_LUCK/SK_MED_PHM_1/SK_MED_CK_KEY 三節點新增 bondGainP(寵物親密度提升效率)效果鍵,寵物每次獲得親密度時乘上 (1+bondGainP/100),index 端接在 islPetFeed/islPetsGainAfterWin/islPetsDayTogether 三處;順手修正 SK_CORE_LUCK 原本 eff 裡 tameP:10 被誤寫兩次的筆誤。
    ③魔物平衡:MON_LV_HP 0.18→0.22、MON_LV_ATK 0.12→0.15(主角/寵物 HP 這幾輪陸續下修,魔物成長率跟著上修,重新對齊);D.ENC 全表 num 下限上限各調高一格(森林~山谷從 1~3 隻上修到 2~4 隻,遺跡/火山下限頂到既有上限 4 隻),解決「4 打 1 太沒難度」。⚠ 這兩項是依比例反推的估計值,未實際跑沙盤驗證,下一輪建議找時間驗證。
@@ -248,6 +261,26 @@ window.ISL_DB = (function(){
     node_mushroom: 'island_node_mushroom.png',
     gull_normal: 'island_npc_gull_normal.png', gull_happy: 'island_npc_gull_happy.png', gull_worry: 'island_npc_gull_worry.png',
     ui_dialog: 'island_ui_dialog.png', ui_bag: 'island_ui_bag.png',
+    /* ★ v1.216.0 老師回報「圖示明明有上傳卻一直說沒上傳」— 稽核 index 端 v1.202.0「按鈕/選單ICON全部先掛好」
+       那輪新增的 48 個 ui_* 圖鍵,只有 ui_dialog/ui_bag 兩個真的登記進 D.IMG,其餘 46 個從頭到尾沒進這張表,
+       所以 islIcoHtml 一律查無 → 顯示破圖佔位「圖片還沒上傳」,即使老師真的已經把檔案傳到 repo 也沒用
+       (islImgUrl 連檔名字串都組不出來,根本不會發出那個 HTTP 請求)。逐一對 raw.githubusercontent 實測
+       HTTP 200,47 個裡 46 個真的都在(檔名規則沿用既有 island_ui_<key>.png),只有 ui_bld 缺檔(自然退回 emoji)。 */
+    ui_ail: 'island_ui_ail.png', ui_amb: 'island_ui_amb.png', ui_ambsfx: 'island_ui_ambsfx.png', ui_ap: 'island_ui_ap.png',
+    ui_armor: 'island_ui_armor.png', ui_bgm: 'island_ui_bgm.png', ui_board: 'island_ui_board.png', ui_build: 'island_ui_build.png',
+    ui_bld: 'island_ui_bld2.png',   /* ★ v1.219.0 老師截圖回報 repo 裡其實是 island_ui_bld2.png(多一個 2,不是 ui_build 的重複檔)——
+       這不是命名錯誤,是兩張不同的圖:ui_build 是側欄「🔨 建造」按鈕圖示,ui_bld 是頂部 HUD「🏗 設施 X/Y」藥丸圖示,
+       語意不同、本來就該各自一張。上一輪只搜了不帶 2 的 island_ui_bld.png(404)就判定沒上傳,漏找了真正存在的檔名。 */
+    ui_camp: 'island_ui_camp.png', ui_camplv: 'island_ui_camplv.png', ui_char: 'island_ui_char.png', ui_charstat: 'island_ui_charstat.png',
+    ui_cmd: 'island_ui_cmd.png', ui_codex: 'island_ui_codex.png', ui_craft: 'island_ui_craft.png', ui_day: 'island_ui_day.png',
+    ui_deco: 'island_ui_deco.png', ui_ending: 'island_ui_ending.png', ui_expand: 'island_ui_expand.png', ui_explore: 'island_ui_explore.png',
+    ui_farm: 'island_ui_farm.png', ui_feast: 'island_ui_feast.png', ui_friends: 'island_ui_friends.png', ui_fullscreen: 'island_ui_fullscreen.png',
+    ui_gear: 'island_ui_gear.png', ui_go: 'island_ui_go.png', ui_heal: 'island_ui_heal.png', ui_hp: 'island_ui_hp.png',
+    ui_look: 'island_ui_look.png', ui_mail: 'island_ui_mail.png', ui_party: 'island_ui_party.png', ui_pen: 'island_ui_pen.png',
+    ui_petdex: 'island_ui_petdex.png', ui_res: 'island_ui_res.png', ui_research: 'island_ui_research.png', ui_reset: 'island_ui_reset.png',
+    ui_rest: 'island_ui_rest.png', ui_save: 'island_ui_save.png', ui_sfx: 'island_ui_sfx.png', ui_shell: 'island_ui_shell.png',
+    ui_shop: 'island_ui_shop.png', ui_sleep: 'island_ui_sleep.png', ui_sos: 'island_ui_sos.png', ui_talent: 'island_ui_talent.png',
+    ui_tower: 'island_ui_tower.png', ui_weapon: 'island_ui_weapon.png',
     sheet_boy: 'island_body_sheet_boy.png', sheet_girl: 'island_body_sheet_girl.png',
     ending_sail: 'island_ending_sail.jpg',   /* ★ v1.20.0 大地圖外圍海面底圖(已在 repo) */
     /* ★ v1.21.0 選配(尚未上傳,缺圖退 emoji):沙灘漂流木/礁岩碎石資源點(192)、7 道料理(128)、12 種裝飾(128) */
@@ -512,8 +545,9 @@ window.ISL_DB = (function(){
      ⚠ 新增事件請一併到 index 端呼叫 islSfx(事件名),只加這裡不會有聲音。 */
   D.SFX_MAP = {
     walk:      ['sfx-tap', 0.12],          /* 每走一格(已節流,連走時每 2 格才響一次) */
-    menuOpen:  ['sfx-enter', 0.30],        /* 開面板/視窗 */
-    menuClose: ['sfx-cancel', 0.25],       /* 關視窗/取消 */
+    menuOpen:  ['sfx-enter', 0.15],        /* ★ v1.215.0 開面板/視窗——音量由 0.30 降到 0.15:index 端 islModal/islPanel 打開前呼叫端幾乎都已經先播過一聲 sfx-tap(按鈕本身的點擊回饋),這聲只是疊上去的「輕輕一層」,不是取代 */
+    menuClose: ['sfx-cancel', 0.20],       /* ★ v1.215.0 關視窗/取消——原本定義了卻從未被呼叫,islModalClose() 本輪起單一出口統一補上,音量調到 0.20 避免連續關窗太吵 */
+    bond:      ['sfx-heal', 0.25],         /* ★ v1.215.0 親密度「階級」真的提升那一刻(戰鬥打贏/每日一起出門累積到下一階);送禮/餵食走的是 islHeartFx(飄愛心+同一支 sfx-heal),這裡音量刻意壓低一點,避免跟主要的愛心特效音量不一致 */
     select:    ['sfx-sel', 0.28],          /* 選單選項、分頁切換 */
     confirm:   ['sfx-confirm', 0.35],      /* 確定鈕 */
     deny:      ['sfx-ng', 0.30],           /* 材料不足/AP 不足/走不過去 */
@@ -2671,7 +2705,7 @@ window.ISL_DB = (function(){
                    sci:'領角鴞的飛羽邊緣有細細的鋸齒,能把氣流打散,飛起來幾乎沒有聲音。' },
 
     /* ── B 組:攻擊型 3 隻 ── */
-    leopardcat:  { n:'石虎',       e:'🐆', type:'atk',
+    leopardcat:  { n:'石虎',       e:'🐆', type:'atk', sz:60,
                    b:{ hp:50, atk:10, def:2, spd:8 }, g:{ hp:4.4, atk:1.10, def:0.24, spd:0.34 },
                    cmd:'doubleclaw', talent:'夜行獵手:目標體力低於一半時,自己的攻擊 +20%', tal:{ lowHpAtkP:20 },
                    get:{ how:'tame', zone:'forest', p:22 },
@@ -2688,7 +2722,7 @@ window.ISL_DB = (function(){
         { q:'苗栗、南投一帶保護石虎最重要的行動是什麼？', o:['多蓋道路','設置友善通道、減少路殺','多噴農藥','把石虎抓來當寵物'], a:1, why:'設置生態友善通道能減少石虎被車撞的機會。' },
         { q:'石虎的英文名字裡有哪個字，形容牠身上的花紋？', o:['Leopard（豹）','Tiger（虎）','Lion（獅）','Panda（熊貓）'], a:0, why:'石虎的英文 Leopard cat，取名自牠身上像豹一樣的斑點花紋。' }
       ] },
-    bluemagpie:  { n:'台灣藍鵲',   e:'🐦', type:'atk',
+    bluemagpie:  { n:'台灣藍鵲',   e:'🐦', type:'atk', sz:55,
                    b:{ hp:45, atk:9,  def:2, spd:10 }, g:{ hp:3.9, atk:0.98, def:0.22, spd:0.40 },
                    cmd:'flockrush',  talent:'長尾陣列:隊伍中每多一位夥伴,自己攻擊 +5%', tal:{ perAllyAtkP:5 },
                    get:{ how:'tame', zone:'grass', p:26 },
@@ -2705,7 +2739,7 @@ window.ISL_DB = (function(){
         { q:'台灣藍鵲在保護幼鳥時會有什麼行為？', o:['完全不理會入侵者','會成群鳴叫、俯衝驅趕入侵者','立刻棄巢逃跑','把幼鳥藏到地底下'], a:1, why:'台灣藍鵲會群體合作，鳴叫俯衝驅趕靠近巢的入侵者。' },
         { q:'台灣藍鵲主要棲息在台灣的什麼地區？', o:['低、中海拔山區森林','海邊沙灘','高山寒原','都市水泥地'], a:0, why:'台灣藍鵲主要棲息在低、中海拔的山區森林。' }
       ] },
-    eagle:       { n:'大冠鷲',     e:'🦅', type:'atk',
+    eagle:       { n:'大冠鷲',     e:'🦅', type:'atk', sz:65,
                    b:{ hp:60, atk:11, def:3, spd:7 }, g:{ hp:5.4, atk:1.15, def:0.28, spd:0.28 },
                    cmd:'talondive',  talent:'高空視野:自己的普通攻擊有 8% 機率暴擊(1.5 倍)', tal:{ critP:8 },
                    get:{ how:'tame', zone:'cliff', p:14 },
@@ -2724,7 +2758,7 @@ window.ISL_DB = (function(){
       ] },
 
     /* ── B 組:坦克型 3 隻 ── */
-    pangolin:    { n:'穿山甲',     e:'🦔', type:'tank',
+    pangolin:    { n:'穿山甲',     e:'🦔', type:'tank', sz:55,
                    b:{ hp:90, atk:5,  def:5, spd:3 }, g:{ hp:8.6, atk:0.48, def:0.66, spd:0.15 },
                    cmd:'curlguard',  talent:'鱗片護體:自己受到的傷害固定再減 8%', tal:{ cutP:8 },
                    get:{ how:'tame', zone:'forest', p:16 },
@@ -2741,7 +2775,7 @@ window.ISL_DB = (function(){
         { q:'台灣穿山甲屬於什麼保育等級？', o:['普通動物，數量很多','珍貴稀有的保育類動物','外來入侵種','已經滅絕'], a:1, why:'台灣穿山甲是珍貴稀有的保育類動物。' },
         { q:'穿山甲的英文名字 pangolin 源自馬來語，意思和牠的什麼行為有關？', o:['「會捲起來的東西」','「跑得很快的動物」','「愛吃甜食的動物」','「會飛的動物」'], a:0, why:'pangolin 一詞源自馬來語，意思是「會捲起來的東西」，正好描述牠遇險捲成球的習性。' }
       ] },
-    turtle:      { n:'綠蠵龜',     e:'🐢', type:'tank',
+    turtle:      { n:'綠蠵龜',     e:'🐢', type:'tank', sz:85,
                    b:{ hp:90, atk:4,  def:6, spd:2 }, g:{ hp:8.6, atk:0.42, def:0.70, spd:0.12 },
                    cmd:'shellwall',  talent:'護盾傳承:自己給的護盾再 +20%', tal:{ shieldP:20 },
                    get:{ how:'tame', zone:'beach', p:12 },
@@ -2758,7 +2792,7 @@ window.ISL_DB = (function(){
         { q:'成年綠蠵龜的體型有多大？', o:['比手掌還小','殼長可達 1 公尺左右，體重上百公斤','和螞蟻差不多大','和大象一樣大'], a:1, why:'成年綠蠵龜體型相當大，殼長可達 1 公尺左右。' },
         { q:'台灣哪些地方是知名的海龜產卵地？', o:['澎湖望安、小琉球','合歡山','阿里山','日月潭'], a:0, why:'澎湖望安與小琉球是台灣知名的海龜上岸產卵地點。' }
       ] },
-    coconutcrab: { n:'椰子蟹',     e:'🦀', type:'tank',
+    coconutcrab: { n:'椰子蟹',     e:'🦀', type:'tank', sz:55,
                    b:{ hp:90, atk:7,  def:4, spd:4 }, g:{ hp:8.8, atk:0.60, def:0.58, spd:0.18 },
                    cmd:'clawtaunt',  talent:'硬殼反震:自己被攻擊時反彈 10% 傷害給對方', tal:{ thornP:10 },
                    get:{ how:'tame', zone:'rock', p:15 },
@@ -2777,7 +2811,7 @@ window.ISL_DB = (function(){
       ] },
 
     /* ── B 組:治療型 3 隻 ── */
-    treefrog:    { n:'莫氏樹蛙',   e:'🐸', type:'heal',
+    treefrog:    { n:'莫氏樹蛙',   e:'🐸', type:'heal', sz:28,
                    b:{ hp:50, atk:4,  def:2, spd:7 }, g:{ hp:4.6, atk:0.38, def:0.28, spd:0.30 },
                    cmd:'dewmist',    talent:'濕潤皮膚:雨天或颱風天,自己的治療效果 +25%', tal:{ rainHealP:25 },
                    get:{ how:'tame', zone:'river', p:24 },
@@ -2794,7 +2828,7 @@ window.ISL_DB = (function(){
         { q:'青蛙主要吃什麼維生？', o:['樹葉','昆蟲等小動物','石頭','塑膠垃圾'], a:1, why:'青蛙主要以昆蟲等小動物為食。' },
         { q:'保護台灣特有種青蛙棲地，最重要的是什麼？', o:['多蓋水泥堤防','維護乾淨的溪流與森林環境','多噴農藥除蟲','把牠們全部抓進實驗室'], a:1, why:'乾淨的溪流與森林環境，是青蛙生存不可或缺的條件。' }
       ] },
-    firefly:     { n:'螢火蟲',     e:'✨', type:'heal',
+    firefly:     { n:'螢火蟲',     e:'✨', type:'heal', sz:18,
                    b:{ hp:45, atk:3,  def:1, spd:9 }, g:{ hp:4.3, atk:0.32, def:0.20, spd:0.38 },
                    cmd:'glowlight',  talent:'冷光:在洞窟與火山這種昏暗的地方,全隊攻擊 +8%', tal:{ darkAtkP:8 },
                    get:{ how:'tame', zone:'cave', p:20 },
@@ -2811,14 +2845,14 @@ window.ISL_DB = (function(){
         { q:'螢火蟲的一生要經過哪些階段？', o:['卵→幼蟲→蛹→成蟲','一出生就是成蟲','只有幼蟲和成蟲兩階段','永遠停留在幼蟲階段'], a:0, why:'螢火蟲一生經歷卵、幼蟲、蛹、成蟲四個階段。' },
         { q:'保護螢火蟲棲地最重要的做法是什麼？', o:['減少農藥使用、減少光害','多裝路燈','多噴殺蟲劑','把牠們抓去做標本'], a:0, why:'減少農藥與光害，才能保留螢火蟲生存所需的乾淨環境。' }
       ] },
-    salmon:      { n:'櫻花鉤吻鮭', e:'🐟', type:'heal',
+    salmon:      { n:'櫻花鉤吻鮭', e:'🐟', type:'heal', sz:35,
                    b:{ hp:55, atk:5,  def:3, spd:6 }, g:{ hp:5.1, atk:0.44, def:0.32, spd:0.26 },
                    cmd:'clearstream',talent:'逆流而上:自己體力低於一半時,治療效果 +30%', tal:{ lowHealP:30 },
                    get:{ how:'shop', price:180 },
                    sci:'櫻花鉤吻鮭是冰河時期留下來的「陸封型」鮭魚,只住在台灣高山的冷水溪流裡。' },
 
     /* ── B 組:控場型 3 隻 ── */
-    macaque:     { n:'台灣獼猴',   e:'🐒', type:'ctrl',
+    macaque:     { n:'台灣獼猴',   e:'🐒', type:'ctrl', sz:70,
                    b:{ hp:50, atk:7,  def:3, spd:8 }, g:{ hp:4.6, atk:0.65, def:0.36, spd:0.34 },
                    cmd:'throwstone', talent:'手巧:自己造成暈眩的機率 +10%', tal:{ stunAddP:10 },
                    get:{ how:'tame', zone:'valley', p:18 },
@@ -2835,7 +2869,7 @@ window.ISL_DB = (function(){
         { q:'台灣獼猴目前在保育上被列為什麼等級？', o:['已經滅絕','族群穩定，但仍受法律保護的野生動物','外來入侵種要撲殺','世界上數量最多的哺乳類'], a:1, why:'台灣獼猴族群目前算穩定，但仍是受法律保護的野生動物。' },
         { q:'遇到野生台灣獼猴時，正確的做法是什麼？', o:['主動餵食牠們','不要餵食、保持距離、不直視挑釁','追著牠們拍照','搶走牠們手上的食物'], a:1, why:'遇到野生獼猴應不餵食、保持距離，避免直視挑釁。' }
       ] },
-    spoonbill:   { n:'黑面琵鷺',   e:'🥄', type:'ctrl',
+    spoonbill:   { n:'黑面琵鷺',   e:'🥄', type:'ctrl', sz:80,
                    b:{ hp:55, atk:6,  def:3, spd:9 }, g:{ hp:5.1, atk:0.58, def:0.34, spd:0.36 },
                    cmd:'sweepbill',  talent:'群棲:隊伍中有其他控場型時,全隊速度 +8%', tal:{ ctrlSpdP:8 },
                    get:{ how:'tame', zone:'lake', p:15 },
@@ -2852,7 +2886,7 @@ window.ISL_DB = (function(){
         { q:'黑面琵鷺遷徙時通常會做什麼？', o:['單獨一隻默默飛行','成群結隊一起飛行遷徙','用走的移動，不會飛','躲在地底冬眠'], a:1, why:'黑面琵鷺遷徙時通常成群結隊一起飛行。' },
         { q:'全世界黑面琵鷺的數量曾經瀕危，國際上如何一起合作保護牠？', o:['各國各自為政互不往來','跨國進行同步普查與棲地保護合作','完全不需要國際合作','只靠台灣一個國家保護就夠'], a:1, why:'黑面琵鷺的保育需要跨國同步普查與棲地保護合作。' }
       ] },
-    barbet:      { n:'五色鳥',     e:'🎨', type:'ctrl',
+    barbet:      { n:'五色鳥',     e:'🎨', type:'ctrl', sz:35,
                    b:{ hp:45, atk:6,  def:4, spd:7 }, g:{ hp:4.2, atk:0.56, def:0.40, spd:0.30 },
                    cmd:'drumecho',   talent:'鑿洞高手:自己的封招效果延長 1 回合', tal:{ sealAdd:1 },
                    get:{ how:'shop', price:160 },
