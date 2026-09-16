@@ -4328,7 +4328,15 @@ window.islDirectVeilOff = function(){
 #isl-movebtns button:active,#isl-movebtns button.on{background:#ffd166;color:#333;border-color:#fff;transform:scale(.92);}
 #island-root.inbattle #isl-movebtns{visibility:hidden;}
 @keyframes islJumpHop{0%{transform:translateY(0)}35%{transform:translateY(-22px)}100%{transform:translateY(0)}}
+@keyframes islJumpHopFlip{0%{transform:scaleX(-1) translateY(0)}35%{transform:scaleX(-1) translateY(-22px)}100%{transform:scaleX(-1) translateY(0)}}
+@keyframes islJumpHopPower{0%{transform:translateY(0)}35%{transform:translateY(-44px)}100%{transform:translateY(0)}}
+@keyframes islJumpHopPowerFlip{0%{transform:scaleX(-1) translateY(0)}35%{transform:scaleX(-1) translateY(-44px)}100%{transform:scaleX(-1) translateY(0)}}
 #isl-char.jump .sp,#isl-char.jump .isl-pixchar{animation:islJumpHop .45s ease-out;}   /* ★ 純 CSS 位移跳躍,不需要新美術也能立刻上線;P2 若補跳躍專屬 sprite,把這條動畫換成幀動畫即可,呼叫端 islJump() 不必改 */
+/* ★ v1.198.0 老師「向左跳時面向要正確翻轉向左」— 根因:.sp.flip 的靜態 transform:scaleX(-1) 與 .jump 動畫的 transform:translateY(...) 是同一個 CSS 屬性,animation 在播放期間會整個蓋掉靜態的 transform(不會合併兩者),導致跳躍當下暫時「消失」了鏡像,朝右跳沒事(本來就沒翻轉),朝左跳那 0.45 秒會瞬間變成面朝右。修法:改用兩套各自把 scaleX(-1) 寫進每一格關鍵影格的動畫(islJumpHopFlip/islJumpHopPowerFlip),.flip 狀態下走這兩套,翻轉在整段動畫期間都保留。
+   同輪老師需求②「持續跑步中奮力跳躍,高度距離+100%」— 新增 .power 修飾:掛在 #isl-char 上(與 .jump 同時掛),疊出的兩套鍵影格(islJumpHopPower/islJumpHopPowerFlip)高度是原本的兩倍(-44px)。 */
+#isl-char.jump.power .sp,#isl-char.jump.power .isl-pixchar{animation:islJumpHopPower .45s ease-out;}
+#isl-char.jump .sp.flip,#isl-char.jump .isl-pixchar.flip{animation:islJumpHopFlip .45s ease-out;}
+#isl-char.jump.power .sp.flip,#isl-char.jump.power .isl-pixchar.flip{animation:islJumpHopPowerFlip .45s ease-out;}
 #isl-zone-banner{position:absolute;left:0;right:0;top:36%;text-align:center;font-size:44px;font-weight:900;color:#fff;text-shadow:0 3px 8px #000;pointer-events:none;z-index:9;animation:islBanner 1.6s ease forwards;}
 @keyframes islBanner{0%{opacity:0;transform:scale(.6)}20%{opacity:1;transform:scale(1.1)}80%{opacity:1;transform:scale(1)}100%{opacity:0}}
 #isl-zone-topinfo{position:absolute;left:10px;top:8px;background:rgba(0,0,0,.55);border-radius:12px;padding:6px 12px;font-size:15px;z-index:9;pointer-events:none;}
@@ -4346,8 +4354,11 @@ window.islDirectVeilOff = function(){
    固定畫布裡多半吃到 420px 那個上限,四周多出來的空間天生變大,不必另外改裝飾座標的百分比公式。 */
 #isl-camp-viewport{position:relative;flex:1;overflow:hidden;touch-action:none;min-height:0;cursor:pointer;}
 #isl-camp-grid{position:absolute;left:0;top:0;width:860px;height:860px;transform-origin:0 0;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;}
-#isl-camp-cells{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(92%,420px,80vh);aspect-ratio:1;}
+#isl-camp-cells{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:1;}   /* ★ v1.199.0 老師「建造設施改成和裝飾一樣直接放在營地正中央,可以自由拖曳移動位置擺放、鏡像翻轉,同時新增縮放尺寸」— 舊版是 CSS grid(3×3 固定格),改成跟 #isl-camp-deco 同一種「鋪滿整個畫布的自由層」,設施元素自己 position:absolute 用 %定位,不再受格子限制 */
 .isl-cell{border:3px dashed rgba(255,255,255,.4);border-radius:14px;background:rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:46px;color:#fff;position:relative;padding:0;overflow:hidden;}
+#isl-camp-cells .isl-cell{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;pointer-events:auto;cursor:grab;transition:transform .15s;touch-action:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45));}   /* ★ v1.199.0 自由定位版設施圖示(取代舊版格子);transform 由 JS 直接寫 scale(k) 或再疊 scaleX(-1),縮放與鏡像都在同一段字串裡,避免跟拖曳中的 .drag 放大互相蓋掉 */
+#isl-camp-cells .isl-cell.drag{transform:scale(1.12) !important;z-index:6;cursor:grabbing;}
+#island-root.ipad #isl-camp-cells .isl-cell{width:132px;height:132px;margin:-66px 0 0 -66px;}
 .isl-cell.empty{font-size:30px;opacity:.7;}
 .isl-cell.built{border-style:solid;border-color:#ffd166;background:rgba(255,209,102,.12);}
 .isl-cell img{width:70%;height:70%;object-fit:contain;}
@@ -4358,7 +4369,7 @@ window.islDirectVeilOff = function(){
 /* ★ v1.94.0 P2-b:裝飾層(自由拖曳)、農田/畜欄面板、水道拼圖、烹飪火力 */
 #isl-camp-deco{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:2;}
 .isl-deco{position:absolute;font-size:40px;line-height:1;margin:-20px 0 0 -20px;pointer-events:auto;cursor:grab;filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));user-select:none;-webkit-user-select:none;touch-action:none;transition:transform .15s;}
-.isl-deco.drag{transform:scale(1.25);z-index:5;cursor:grabbing;}
+.isl-deco.drag{transform:scale(1.25) !important;z-index:5;cursor:grabbing;}   /* ★ v1.199.0 加 !important:裝飾現在也有自訂縮放(inline transform),拖曳中想放大提示一定要贏過那個 inline 值 */
 .isl-deco .dn{position:absolute;left:50%;transform:translateX(-50%);bottom:-14px;font-size:11px;background:rgba(0,0,0,.6);border-radius:999px;padding:0 6px;white-space:nowrap;opacity:0;}
 .isl-deco.drag .dn{opacity:1;}
 .isl-plots{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0;}
@@ -4386,13 +4397,19 @@ window.islDirectVeilOff = function(){
 .isl-recipe .rn{flex:1;font-size:16px;line-height:1.35;}
 .isl-recipe:disabled{opacity:.45;}
 .isl-cell.lit::after{content:'🔥';position:absolute;top:2px;left:6px;font-size:18px;animation:islBounce .5s ease-in-out infinite alternate;}
-#isl-camp-side{position:relative;width:118px;flex:0 0 118px;display:flex;flex-direction:column;gap:6px;padding:8px 6px;overflow-y:auto;background:rgba(0,0,0,.35);}
+#isl-camp-side{position:relative;width:59px;flex:0 0 59px;display:flex;flex-direction:column;gap:6px;padding:8px 6px;overflow-y:auto;background:rgba(0,0,0,.35);}   /* ★ v1.197.0 老師「營地中右側選單的長度X縮減50%」:118→59px(其餘各斷點同步砍半) */
 #isl-camp-side button{background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:12px;padding:8px 4px;font-size:15px;font-weight:700;line-height:1.15;}
 #isl-camp-side button.warn{background:#7a3b1e;border-color:#ff9f43;}
 #isl-camp-side button.gold{background:#8a6d1e;border-color:#ffd166;}
 #isl-camp-side button:disabled{opacity:.45;}
 #isl-camp-side button:active{transform:scale(.96);}
 #isl-camp-char{position:absolute;width:64px;height:64px;margin-left:-32px;transform-origin:50% 100%;pointer-events:auto;cursor:pointer;z-index:2;}   /* ★ v1.157.0 改成和 #isl-char 同一套盒模型(腳底中心對齊 left/bottom);scale 改由 islCampCharScale() 依帳篷高度動態算,不再寫死 2.2 */
+/* ★ v1.197.0 老師「已加入的寵物也會在營地中自由的行動(尺寸也依照主角尺寸同步縮放)」—
+   每隻寵物是一顆絕對定位的小圖示,left/bottom 用 % 表示(與 #isl-camp-char 同一套座標系),
+   transform-origin 50% 100% 讓縮放時腳底不跑位;transition 交給瀏覽器合成執行緒做隨機漫步(不開 rAF)。 */
+#isl-camp-pets{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.isl-camp-pet{position:absolute;width:56px;height:56px;margin-left:-28px;transform-origin:50% 100%;transition:left 2.4s ease-in-out,bottom 2.4s ease-in-out;pointer-events:auto;cursor:pointer;text-align:center;font-size:40px;line-height:56px;}
+.isl-camp-pet img{width:100%;height:100%;object-fit:contain;display:block;}   /* 縮放與左右鏡像都由 JS 直接寫進 .style.transform 字串(scale(k) 或 scale(k) scaleX(-1)),不靠額外 class,避免兩條 transform 規則互相蓋掉 */
 #isl-camp-board{position:absolute;right:12px;top:10px;max-width:46%;background:rgba(92,58,24,.92);border:2px solid #d9a066;border-radius:10px;padding:5px 9px;font-size:13px;line-height:1.3;color:#fff3d6;box-shadow:0 2px 6px rgba(0,0,0,.4);z-index:3;cursor:pointer;}   /* ★ v1.107.0 營地留言板告示牌 */
 #isl-camp-board b{color:#ffd166;font-weight:700;}
 #isl-camp-board .who{display:block;font-size:11px;opacity:.8;margin-top:2px;}
@@ -4498,10 +4515,16 @@ window.islDirectVeilOff = function(){
 .isl-nail.done{background:rgba(123,237,159,.4);border-color:#7bed9f;}
 /* 結算 */
 .isl-result{width:min(96%,560px);margin:0 auto;background:rgba(255,255,255,.08);border:2px solid #ffd166;border-radius:20px;padding:16px;text-align:center;}   /* ★ v1.157.0 老師:「採集完成的視窗要置中」—明確補上 margin:0 auto 保證水平置中 */
-.isl-result .stars{font-size:44px;letter-spacing:6px;margin:6px 0;}
-.isl-result .gain{font-size:24px;font-weight:900;color:#ffd166;margin:6px 0;}
-.isl-result .kc{background:rgba(0,0,0,.35);border-radius:12px;padding:10px;font-size:17px;text-align:left;margin:8px 0;line-height:1.4;}
-.isl-result .exp{font-size:16px;opacity:.9;}
+.isl-result .stars{font-size:50px;letter-spacing:6px;margin:6px 0;}
+.isl-result .gain{font-size:27px;font-weight:900;color:#ffd166;margin:6px 0;}
+.isl-result .kc{background:rgba(0,0,0,.35);border-radius:12px;padding:10px;font-size:19px;text-align:left;margin:8px 0;line-height:1.4;}
+.isl-result .exp{font-size:18px;opacity:.9;}
+/* ★ v1.200.0 老師「採集完成的視窗位置上移、長度增加、字體放大,讓玩家不用往下捲動視窗就能看到繼續按鈕」—
+   真正根治的做法不是「祈禱字級調完剛好塞得下」(內容長度會隨知識小卡則數/獲得物品種類變動,永遠有機會又塞不下),
+   而是讓「繼續」鈕跟著捲動容器(#isl-act-body,overflow-y:auto)用 position:sticky 貼在可視範圍底部——
+   不管上面內容有多長、字級多大,這顆鈕永遠釘在畫面最下緣看得到,不必再捲。 */
+.isl-result .isl-btn.big{position:sticky;bottom:2px;z-index:2;box-shadow:0 -6px 14px -4px rgba(0,0,0,.6);}
+#isl-act-body{padding:6px 10px;}   /* ★ v1.200.0 「位置上移」:上下留白收窄,結算視窗一開始就從更靠上的地方畫,同時多出來的高度也讓字放大後更不容易被逼到要捲動 */
 .isl-btn{background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:14px;padding:12px 22px;font-size:20px;font-weight:700;margin:6px 4px;}
 .isl-btn.gold{background:#8a6d1e;border-color:#ffd166;}
 .isl-btn.ghost{background:transparent;border-color:rgba(255,255,255,.4);}
@@ -4709,7 +4732,7 @@ window.islDirectVeilOff = function(){
 @media (max-width:620px){
   #isl-hud{font-size:14px;gap:4px;padding:4px 6px;}
   #isl-hud .ih{padding:3px 7px;}
-  #isl-camp-side{width:96px;flex-basis:96px;} #isl-camp-side button{font-size:13px;padding:6px 3px;}
+  #isl-camp-side{width:48px;flex-basis:48px;} #isl-camp-side button{font-size:13px;padding:6px 3px;}   /* ★ v1.197.0 96→48px */
   #isl-create{flex-direction:column;} #isl-create .prev{width:100%;flex:0 0 40%;} #isl-create .prev .pv{margin:40px 0;transform:scale(2.2);}
   .isl-quiz .q{font-size:19px;} .isl-quiz .opts button{font-size:17px;}
   #isl-dialog .dbox{font-size:14.5px;padding-left:96px;}   /* ★ v1.185.0 −20% */
@@ -4780,7 +4803,7 @@ window.islDirectVeilOff = function(){
 .isl-qte{width:min(96%,680px);} .isl-qte .cnt{font-size:22px;} .isl-qte .fx{font-size:36px;min-height:44px;} .isl-qte .big{height:96px;border-radius:48px;font-size:33px;}
 .isl-slot{width:164px;min-height:120px;} .isl-slot small{font-size:17px;} .isl-slot .d{font-size:14.5px;}
 .isl-item{width:104px;height:104px;} .isl-item small{font-size:14.5px;}
-.isl-result{width:min(96%,640px);padding:18px;} .isl-result .gain{font-size:27px;} .isl-result .kc{font-size:19px;} .isl-result .exp{font-size:18px;} .isl-result .stars{font-size:48px;}
+.isl-result{width:min(96%,640px);padding:18px;} .isl-result .gain{font-size:30px;} .isl-result .kc{font-size:21px;} .isl-result .exp{font-size:20px;} .isl-result .stars{font-size:54px;}
 .isl-btn{font-size:22px;padding:13px 24px;} .isl-btn.big{font-size:26px;padding:15px 32px;}
 #isl-modal .box{width:min(96%,700px);padding:20px;} #isl-modal .box h3{font-size:28px;} #isl-modal .box p{font-size:21px;} #isl-modal .box .row{gap:8px;margin-top:12px;}
 #isl-dialog .dbox{width:min(98%,860px);font-size:19px;min-height:118px;padding:16px 20px 18px 124px;}   /* ★ v1.185.0 −20%(24→19) */ #isl-dialog .dbox .por{width:96px;height:96px;font-size:68px;line-height:96px;} #isl-dialog .dbox .por img{width:96px;height:96px;} #isl-dialog .dbox .nxt{font-size:17px;} #isl-dialog .dbox .skip{font-size:17px;padding:5px 14px;top:-44px;}
@@ -4797,7 +4820,7 @@ window.islDirectVeilOff = function(){
 .isl-plot .pl{font-size:14.5px;}
 .isl-quest-row{font-size:18px;} .isl-quest-row .nm .st{font-size:14.5px;} .isl-quest-row .ic{font-size:33px;width:44px;}
 .isl-board-row{font-size:17px;} .isl-board-row .bd small{font-size:13px;} #isl-camp-board{font-size:15px;padding:7px 11px;line-height:1.35;} #isl-camp-board .who{font-size:12.5px;}
-#isl-camp-side{width:134px;flex-basis:134px;gap:7px;} #isl-camp-side button{font-size:17px;padding:9px 4px;}
+#isl-camp-side{width:67px;flex-basis:67px;gap:7px;} #isl-camp-side button{font-size:17px;padding:9px 4px;}   /* ★ v1.197.0 134→67px */
 #isl-camp-cells{width:auto;height:min(100%,460px);max-width:92%;}   /* ★ v1.112.0 不再用 vh(zoom 容器內 vh 不縮放,80vh 在 iPad 會算成 614 版面 px 超出畫面);改以父容器高度為準 */
 .isl-cell .bn{font-size:15px;} .isl-cell .lv{font-size:14.5px;} .isl-cell.empty{font-size:33px;}
 #isl-create .prev .nm{font-size:24px;} #isl-create .prev input{font-size:22px;padding:9px 12px;} #isl-create .sec h4{font-size:20px;} #isl-create .sw button{font-size:20px;min-width:56px;height:56px;} #isl-create .sw button.col{width:48px;min-width:48px;height:48px;} #isl-create .styles button{font-size:16.5px;padding:9px 11px;} #isl-create .styles b{font-size:20px;}
@@ -4812,7 +4835,7 @@ window.islDirectVeilOff = function(){
 /* 手機直式 / 矮螢幕:仍比桌機小一級,但比 v1.110.0 的縮小值再放大 */
 @media (max-width:620px){
   #isl-hud{font-size:15.5px;gap:4px;padding:4px 6px;} #isl-hud .ih{padding:3px 8px;} #isl-hud .ih.btn{font-size:15px;}
-  #isl-camp-side{width:108px;flex-basis:108px;} #isl-camp-side button{font-size:14.5px;padding:7px 3px;}
+  #isl-camp-side{width:54px;flex-basis:54px;} #isl-camp-side button{font-size:14.5px;padding:7px 3px;}   /* ★ v1.197.0 108→54px */
   .isl-quiz .q{font-size:21px;} .isl-quiz .opts button{font-size:19px;}
   #isl-dialog .dbox{font-size:16px;padding-left:108px;}   /* ★ v1.185.0 −20% */ #isl-dialog .dbox .por{width:84px;height:84px;font-size:60px;line-height:84px;} #isl-dialog .dbox .por img{width:84px;height:84px;}
   .isl-slot{width:140px;min-height:104px;} .isl-item{width:88px;height:88px;}
@@ -4848,7 +4871,7 @@ window.islDirectVeilOff = function(){
 /* ══ ★ v1.118.0(2026-09-13・老師「iPad 版荒島所有選單名稱、物品名稱、說明文字再放大 100%」)— #island-root.ipad(觸控裝置且螢幕短邊 ≥700,islEnter 判定)下,
    選單名稱/物品名稱/說明文字類全部 ×2;HUD、地圖、場景資源點標籤、活動主標題與大按鈕不在老師指定範圍,維持原尺寸。容器(彈窗 .box/面板 .isl-bagbox/細項選單/活動區)本來就可捲動。 ══ */
 #island-root.ipad #isl-submenu .sm-title{font-size:40px;} #island-root.ipad #isl-submenu .sm-grid{grid-template-columns:repeat(3,1fr);} #island-root.ipad #isl-submenu .sm-grid button{font-size:32px;min-height:112px;white-space:nowrap;} #island-root.ipad #isl-submenu .sm-grid button .ci{font-size:44px;} #island-root.ipad #isl-submenu .sm-box{width:96%;max-width:1200px;height:92%;max-height:900px;}
-#island-root.ipad #isl-camp-side button.cat{font-size:24px;min-height:76px;} #island-root.ipad #isl-camp-side button.cat .ci{font-size:32px;} #island-root.ipad #isl-camp-side{width:150px;flex-basis:150px;}   /* ★ v1.186.0 老師⑦「IPAD版營地右邊選單長度減少50%」:300→150px;.cat 是 grid-column:1/-1 整列獨佔一顆按鈕,寬度砍半後文字/圖示/高度一起收(34→24px、40→32px、92→76px),5 顆按鈕堆起來反而更省高度,「角色/營地/商店/探索/休息」都是 2 字詞,150px 寬綽綽有餘 */
+#island-root.ipad #isl-camp-side button.cat{font-size:24px;min-height:76px;} #island-root.ipad #isl-camp-side button.cat .ci{font-size:32px;} #island-root.ipad #isl-camp-side{width:75px;flex-basis:75px;}   /* ★ v1.197.0 老師再要求一次「長度X再縮減50%」:150→75px(v1.186.0 已經 300→150 過一次,這是第二次減半) */   /* ★ v1.186.0 老師⑦「IPAD版營地右邊選單長度減少50%」:300→150px;.cat 是 grid-column:1/-1 整列獨佔一顆按鈕,寬度砍半後文字/圖示/高度一起收(34→24px、40→32px、92→76px),5 顆按鈕堆起來反而更省高度,「角色/營地/商店/探索/休息」都是 2 字詞,150px 寬綽綽有餘 */
 #island-root.ipad #isl-gear button{font-size:34px;}
 #island-root.ipad #isl-modal .box h3{font-size:56px;} #island-root.ipad #isl-modal .box p{font-size:42px;} #island-root.ipad #isl-modal .box li{font-size:42px;} #island-root.ipad #isl-modal .box{width:min(96%,900px);max-height:94%;overflow-y:auto;}
 #island-root.ipad .isl-btn{font-size:36px;} #island-root.ipad .isl-btn.big{font-size:40px;}
@@ -4881,7 +4904,7 @@ window.islDirectVeilOff = function(){
 #island-root.ipad #isl-tut{font-size:26px;} #island-root.ipad #isl-tut button{font-size:22px;}   /* 教學氣泡浮在畫面上,×2 會蓋住整個營地,只放大 1.4 倍 */
 #island-root.ipad #isl-act-hint{font-size:27px;min-height:64px;} #island-root.ipad .isl-act-sub{font-size:27px;} #island-root.ipad #isl-act-top{font-size:24px;}   /* 活動畫面高度有限(iPad 橫式活動區約 380 版面 px),提示條只放大 1.4 倍,否則會把拉力條/大按鈕擠出畫面 */
 #island-root.ipad .isl-quiz .q{font-size:50px;} #island-root.ipad .isl-quiz .opts button{font-size:44px;min-height:100px;} #island-root.ipad .isl-quiz .why{font-size:38px;} #island-root.ipad .isl-quiz .hintbtn{font-size:34px;} #island-root.ipad .isl-quiz{width:min(96%,900px);}
-#island-root.ipad .isl-result .kc{font-size:38px;} #island-root.ipad .isl-result .exp{font-size:36px;} #island-root.ipad .isl-result .gain{font-size:54px;}
+#island-root.ipad .isl-result .kc{font-size:42px;} #island-root.ipad .isl-result .exp{font-size:40px;} #island-root.ipad .isl-result .gain{font-size:60px;}
 #island-root.ipad #isl-q-side{width:345px;font-size:36px;} #island-root.ipad #isl-q-side .sh{font-size:36px;} #island-root.ipad #isl-q-side li b{font-size:29px;} #island-root.ipad #isl-q-side .nx{font-size:36px;}   /* ★ v1.157.0 iPad 版同樣放大 50% */
 /* ══ ★ v1.141.0(2026-09-13・老師看圖:「採集小遊戲的視窗寬度被縮短縮小了,請重新調整長度,並讓 QTE 出現的文字都維持在一行內」)══
    ① 寬度：改成「只在真的有左側大圖時才預留位子」(`.qobj` 由 islQteSideReset 掛)。
@@ -5394,6 +5417,19 @@ window.islDirectVeilOff = function(){
 #isl-modal .isl-bagbox.isl-skbox{ height:96%; }
 #isl-modal .isl-bagbox.isl-skbox > .bd{ display:flex; flex-direction:column; min-height:0; }
 #isl-modal .isl-bagbox.isl-skbox .isl-sk-wrap{ flex:1 1 auto; height:auto; min-height:220px; }
+/* ★ v1.200.0 老師「天賦星域視窗版面重新配置,改成星盤固定放右半部50%滿版,左半部是其他訊息和按鈕」—
+   .bd 底下新增 .isl-sk-cols(左右兩欄 flex row);左欄(.isl-sk-left)裝點數列/快速跳轉/縮放列/收合說明,
+   本身可以直式捲動;右欄(.isl-sk-right)固定吃版面的一半寬,裡面塞星圖(.isl-sk-wrap 改成吃滿右欄剩餘高度)。
+   窄螢幕(手機直式)兩欄放不下,改回上下堆疊,星盤仍在下面。 */
+#isl-modal .isl-bagbox.isl-skbox .isl-sk-cols{ display:flex; flex-direction:row; gap:14px; flex:1 1 auto; min-height:0; }
+#isl-modal .isl-bagbox.isl-skbox .isl-sk-left{ flex:0 0 50%; max-width:50%; overflow-y:auto; padding-right:4px; min-height:0; }
+#isl-modal .isl-bagbox.isl-skbox .isl-sk-right{ flex:0 0 50%; max-width:50%; display:flex; flex-direction:column; min-height:0; }
+#isl-modal .isl-bagbox.isl-skbox .isl-sk-right .isl-sk-wrap{ width:100%; }
+@media (max-width:780px){
+  #isl-modal .isl-bagbox.isl-skbox .isl-sk-cols{ flex-direction:column; }
+  #isl-modal .isl-bagbox.isl-skbox .isl-sk-left,#isl-modal .isl-bagbox.isl-skbox .isl-sk-right{ flex:0 0 auto; max-width:100%; }
+  #isl-modal .isl-bagbox.isl-skbox .isl-sk-right{ flex:1 1 auto; }
+}
 #island-root .isl-bagbox.isl-skbox .isl-x{ right:10px; top:10px; background:rgba(8,20,32,.95); border-color:#9fd8f5; box-shadow:0 4px 16px rgba(0,0,0,.85); }
 #island-root.ipad .isl-bagbox.isl-skbox .isl-x{ right:14px; top:14px; }
 .isl-sk-zoom{ display:flex; align-items:center; gap:8px; font-size:15px; margin:0 0 6px; opacity:.95; flex-wrap:wrap; }
@@ -5421,7 +5457,7 @@ window.islDirectVeilOff = function(){
    老師之後上傳戰鬥立繪,圖鑑會自動換成真的圖,不必再改一次程式)。 */
 .isl-petcard{ position:relative; width:min(168px,44vw); display:flex; flex-direction:column; border-radius:18px; overflow:hidden; border:2.5px solid rgba(255,255,255,.28); background:rgba(255,255,255,.08); color:#fff; text-align:center; padding:0 0 8px; }
 .isl-petcard .pic{ width:100%; height:140px; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; font-size:72px; position:relative; overflow:hidden; }
-.isl-petcard .pic img{ width:100%; height:100%; object-fit:cover; display:block; }
+.isl-petcard .pic img{ width:100%; height:100%; object-fit:contain; display:block; }   /* ★ v1.197.0 老師「夥伴圖鑑的寵物圖片尺寸要縮小完整放在欄位中」— object-fit 由 cover 改 contain,cover 會把長寬比不同的圖裁切放大到填滿(圖1截圖看到的熊毛特寫/海鷗翅膀特寫就是被裁切局部放大的結果),contain 讓完整圖片等比縮小塞進 .pic 這個框,不再裁切 */
 .isl-petcard .pk{ position:absolute; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; font-size:52px; }
 .isl-petcard .nm{ font-size:18px; font-weight:800; margin-top:8px; }
 .isl-petcard .tp{ font-size:13px; opacity:.85; margin-top:1px; }
@@ -5437,6 +5473,20 @@ window.islDirectVeilOff = function(){
 .isl-petcard.t-ctrl{ border-color:#b98aff; box-shadow:0 0 10px rgba(185,138,255,.35); }
 .isl-petcard.t-heal{ border-color:#7bed9f; box-shadow:0 0 10px rgba(123,237,159,.35); }
 .isl-petcard.t-tank.inparty,.isl-petcard.t-atk.inparty,.isl-petcard.t-ctrl.inparty,.isl-petcard.t-heal.inparty{ border-color:#ffd166; }
+/* ★ v1.197.0 夥伴詳情卡分區排版(比照大對抗英雄圖鑑的分欄視覺) */
+.isl-petinfo{ display:flex; flex-direction:column; gap:8px; text-align:left; margin-top:8px; }
+.isl-petinfo .sec{ background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:8px 12px; }
+.isl-petinfo .sec.typ{ display:flex; align-items:baseline; gap:8px; font-weight:800; }
+.isl-petinfo .sec.typ .d{ font-weight:400; opacity:.8; font-size:13px; }
+.isl-petinfo .sec.lvbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:14px; }
+.isl-petinfo .sec.lvbar .lv{ font-weight:900; color:#ffd166; font-size:17px; }
+.isl-petinfo .sec.stat{ display:flex; justify-content:space-around; text-align:center; font-size:16px; }
+.isl-petinfo .sec.stat b{ display:block; font-size:18px; margin-top:2px; }
+.isl-petinfo .sec.skill .hd,.isl-petinfo .sec.talent .hd{ font-weight:800; color:#ffd166; display:flex; justify-content:space-between; align-items:baseline; }
+.isl-petinfo .sec.skill .cd{ font-weight:400; font-size:12px; opacity:.75; color:#fff; }
+.isl-petinfo .sec.skill .bd2,.isl-petinfo .sec.talent .bd2{ margin-top:3px; font-size:13.5px; line-height:1.4; opacity:.92; }
+.isl-petinfo .sec.sci{ font-size:13px; opacity:.85; background:rgba(0,0,0,.2); }
+#island-root.ipad .isl-petinfo .sec{ padding:12px 16px; } #island-root.ipad .isl-petinfo .sec.typ{ font-size:20px; } #island-root.ipad .isl-petinfo .sec.typ .d{ font-size:16px; } #island-root.ipad .isl-petinfo .sec.lvbar{ font-size:18px; } #island-root.ipad .isl-petinfo .sec.lvbar .lv{ font-size:22px; } #island-root.ipad .isl-petinfo .sec.stat{ font-size:20px; } #island-root.ipad .isl-petinfo .sec.stat b{ font-size:23px; } #island-root.ipad .isl-petinfo .sec.skill .bd2,#island-root.ipad .isl-petinfo .sec.talent .bd2{ font-size:17px; } #island-root.ipad .isl-petinfo .sec.sci{ font-size:16px; }
 .isl-formation{ margin:4px 0 12px; padding:10px; border-radius:14px; background:rgba(0,0,0,.28); }
 .isl-formation .ftt{ font-size:15px; opacity:.9; margin-bottom:6px; }
 .isl-formation .frow{ display:flex; gap:8px; align-items:flex-end; justify-content:flex-end; flex-wrap:wrap; }
@@ -5506,11 +5556,17 @@ window.islDirectVeilOff = function(){
 .isl-deco.flip img{ transform:scaleX(-1); }
 /* 治療特效:塞在 #isl-camp-char 裡面 ⇒ 跟著人走,不會在他走路時飄在原地 */
 .isl-fx.onchar{ position:absolute; left:50%; top:50%; width:128px; height:128px; margin:-64px 0 0 -64px; pointer-events:none; z-index:6; }
+/* ★ v1.197.0 頂部醒目更新通知(比照大對抗頂部通知條的做法:滿版一條、金色底、點了就更新) */
+#isl-updatebar{ position:absolute; left:0; right:0; top:0; z-index:9600; background:#ffd166; color:#3a2a00; font-weight:900; font-size:16px; text-align:center; padding:8px 10px; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.4); animation:islUpdBarPulse 1.6s ease-in-out infinite; }
+#isl-updatebar.hidden{ display:none; }
+@keyframes islUpdBarPulse{ 0%,100%{ opacity:1 } 50%{ opacity:.78 } }
+#island-root.ipad #isl-updatebar{ font-size:24px; padding:12px 14px; }
 </style>
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
      層級(設計書 2.1):#isl-hud 固定頂欄 → 各畫面(#isl-create / #isl-map-wrap / #isl-zone / #isl-camp / #isl-act)
      → #isl-dialog 對白框 / #isl-tut 教學條 / #isl-modal 通用彈窗(永遠最上層,掛 root 頂層不在縮放容器內)。 -->
 <div id="island-root" class="hidden">
+  <div id="isl-updatebar" class="hidden" onclick="mgVerReload()">🔄 有新版本可以更新,點這裡立即更新(會先幫你存檔)</div><!-- ★ v1.197.0 老師「遊戲進行中有更新版本時,出現醒目通知在畫面頂部(和大對抗一樣)提醒玩家手動更新」— mgVerPaint() 偵測到新版時連這條一起亮,跟大廳右上角那顆藥丸共用同一份判斷,不寫第二套版本比對邏輯 -->
   <div id="isl-hud">
     <!-- ★ v1.124.0 老師:常駐欄位全部縮成一行,只留圖示(+數字),點一下開文字說明小視窗、再點一次收起 → 全部改走 islHudTip(key, event, this) -->
     <span class="ih tipable" id="isl-hud-day" onclick="islCalOpen()" title="島上日誌(日曆)">📅 1</span><!-- ★ v1.125.0 老師:點日曆開放大版日曆視窗 -->
@@ -5520,6 +5576,7 @@ window.islDirectVeilOff = function(){
     <span class="ih tipable" id="isl-hud-shell" onclick="islHudTip('shell',event,this)" title="貝幣">🐚 0</span>
     <span class="ih res tipable" id="isl-hud-res" onclick="islHudTip('res',event,this)" title="資源(點一下看完整數量)">📦</span><!-- ★ v1.185.0 老師「資源總覽的圖示改成箱子」:🏚(廢墟房子,容易誤認成建築/營地)→ 📦。★ v1.170.0 老師:iPad 版頂部資訊列過長 → 這一項濃縮成單一圖示,點擊才展開完整資源數量 -->
     <span class="ih tipable" id="isl-hud-camplv" onclick="islHudTip('camplv',event,this)" title="營地等級與舒適度(點一下看說明)">🏠 1</span><!-- ★ v1.172.0 老師裁定【甲】:😊 舒適度與 🏠 營地等級併成這一顆(iPad 頂部資訊列再省一段),舒適度數字改在點開的說明小視窗裡看 --><!-- ★ v1.115.0 舒適度/營地等級移到頂端 -->
+    <span class="ih tipable" id="isl-hud-bld" onclick="islHudTip('bld',event,this)" title="設施(點一下看清單與剩餘空間)">🏗 0/9</span><!-- ★ v1.199.0 老師「空地欄位移除,改成設施在頂部營地等級右邊顯示清單和剩餘空間」 -->
     <span class="ih btn tipable hidden" id="isl-hud-tower" onclick="islHudTip('tower',event,this)" title="瞭望台:今晚預報">🗼</span><!-- ★ v1.123.0 瞭望台常駐 HUD -->
     <span class="grow"></span>
     <button class="ih btn" id="isl-hud-bag" onclick="islBagOpen()">🎒</button>
@@ -5558,7 +5615,7 @@ window.islDirectVeilOff = function(){
     </div>
     <div id="isl-camp" class="hidden">
       <img id="isl-camp-bg" src="" alt="" onerror="this.style.display='none';">
-      <div id="isl-camp-viewport"><div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char" onclick="islCampCharTap()" title="點一下和他說說話"></div><div id="isl-camp-board" class="hidden" onclick="islBoardTap()"></div></div></div><!-- ★ v1.186.0 老師⑦「建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」:新增 #isl-camp-viewport(overflow:hidden 視窗,仿 #isl-map-wrap),#isl-camp-grid 改成固定 860×860 設計畫布(可縮放/平移),舊有 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) -->
+      <div id="isl-camp-viewport"><div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char" onclick="islCampCharTap()" title="點一下和他說說話"></div><div id="isl-camp-pets"></div><div id="isl-camp-board" class="hidden" onclick="islBoardTap()"></div></div></div><!-- ★ v1.186.0 老師⑦「建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」:新增 #isl-camp-viewport(overflow:hidden 視窗,仿 #isl-map-wrap),#isl-camp-grid 改成固定 860×860 設計畫布(可縮放/平移),舊有 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) -->
       <div id="isl-camp-side"></div>
     </div>
     <div id="isl-act" class="hidden">
@@ -5631,7 +5688,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.195.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.132.0 修正:本行的 ?v= 自 v1.128.0 起就沒跟著 bump(v1.129/130/131 三輪都漏),而瀏覽器與 SW 都是**用完整 URL 當快取鍵**,URL 沒變就會繼續吃到舊的 minigame_island_db.js ⇒ 老師那台上的 island_db 很可能還停在 v1.26.0(武器 5 階段外觀、LAYER_ADJ 全都不會生效)。往後每輪 bump MG_VER 時**這一行必須一起改**。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.197.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -5640,7 +5697,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.196.0';   /* ★★ v1.196.0(2026-09-16・接續 MEMORY_HANDOFF 交接檔,6 項 PENDING 全部做完+追加採集題庫 100 題)★★ —
+var MG_VER = 'v1.201.0';   /* ★★ v1.201.0(2026-09-16・老師「檢查荒島求生中明顯的BUG」)★★ — 找到一組系統性死鍵:mgAutoBusy()/mgVerReload()/mgAutoUpdateBoot() 這一區塊(v1.187.0 引入)多處誤寫成 `window._IS`/`window.ISL`/`window.MG`/`window.toast`——這四個識別字全部是宣告在同一個 頂層 IIFE 內的區域變數/函式(var _IS={}、var ISL=null、var MG={}、function toast(){}),從來不是 window 的屬性,`window.X` 一律是 undefined,`if(window.X && ...)` 因此**永遠短路成 false**,後面那半句(才是真正想檢查的東西)從來沒有機會執行。實際影響:①mgAutoBusy() 的「人在荒島裡就算忙」「15款小遊戲進行中就算忙」兩條判斷永遠不成立⇒ 玩到一半自動更新照樣可能打斷玩家(v1.187.0 想修的那個bug其實沒修好);②mgVerReload()/MG_FORCE_RELOAD 重整前「先存檔」與「標記 ?mode=island」兩步永遠不會執行⇒ 手動或自動更新都有進度遺失與掉回小遊戲大廳的風險(上一輪 v1.197.0 修的 isl_resume_camp 也踩到同一個坑,新增的旗標同樣寫成 window._IS,一樣沒有生效);③更新中的 toast 提示不會顯示。修法:全部改回不加 window. 的純變數參照(_IS/ISL/MG/toast,JS 閉包本來就讀得到,不需要也不能透過 window 取),5 處一次修正。 —   /* ★ v1.199.0~v1.200.0(2026-09-16・老師營地建造/天賦星域/採集結算多項需求)— ①【最大一項】營地建造改成自由座標:ISL.camp.slots 由「格子索引+null佔位」改成「緊湊陣列,每筆帶 x/y/flip/scale」,islCampSlotsMigrate() 自動轉換舊存檔;建造/裝飾都能自由拖曳+左右翻轉+縮放(0.5~2.0,對應 -50%~+100%);移除舊版「進搬移模式→點另一格互換」,改直接拖曳;HUD 新增「🏗 設施 X/Y」取代原本的「空地」欄位,點開看清單與剩餘空間。 ②天賦星域視窗改左右兩欄:星盤固定右半部 50% 滿版,左半部放點數/快速跳轉/縮放/收合說明。 ③採集完成視窗「繼續」鈕改 position:sticky 貼在可視範圍底部,不管內容多長字多大都不必再捲動才看得到;順便字級全面調大、視窗位置上移(#isl-act-body 上下留白收窄)。 ⚠ 本輪風險:營地格子系統是大範圍資料結構改動,沒有實機帶著舊存檔走一遍完整流程(建造/升級/修理/夜襲/擴建/好友參觀)測試,只做了語法檢查與程式碼審查,麻煩老師這次務必實機驗收,尤其是帶著現有測試存檔進場那一刻的自動轉檔。 —   /* ★ v1.198.0(2026-09-16・老師野外跳躍/跑步三項)— ①修正向左跳躍時鏡像消失(瞬間變回面朝右)的 bug:.jump 動畫與 .flip 靜態 scaleX(-1) 是同一個 transform 屬性,動畫播放期間會整個蓋掉靜態值,改成把 scaleX(-1) 直接寫進每一格關鍵影格(islJumpHopFlip),翻轉全程保留。 ②持續跑步中跳躍(奮力跳躍)高度距離 +100%:面朝方向下 1 格被擋(# 或 ~)且下 2 格是普通可走地就整段跳過去,下 2 格是水一律不准跳(不會跳進水裡)。⚠ 遮罩目前只有 #(不可走,矮石頭/草叢/厚牆混在一起)與 ~(水)兩種符號,尚無法分辨「矮到跳得過去」與「真的牆」,本輪先做規則對的簡化版,細分地圖遮罩資料是下一輪工程。 ③連續點擊地面兩下切換成跑步移動到該點(單擊維持原本走路速度):islTapToMove 新增 run 參數,islTick 的 running 判定納入 _IS.pathRun。 —   /* ★ v1.197.0(2026-09-16・老師荒島求生 UI/UX 一輪多項需求)— ①採集/野外遇到夥伴視窗新增寵物圖片(islPetEncounterOpen 接上 islPetPicHtml) ②營地主角尺寸縮小50%(ISL_CAMP_CHAR_MULT),已收服的寵物同步縮放並在營地空地隨機漫步(islCampPetsPaint/islCampPetsWanderStart,現有素材仍是靜態立繪,走路/奔跑姿態圖片待老師之後上傳) ③營地右側選單寬度再縮減50%(各斷點/iPad 同步砍半),移除選單裡的武器/防具(仍在👤角色子選單) ④商店改成點了直接開「買東西」畫面,移除中間的購買/賣出/委託選擇層(islShopOpen('buy') 直呼) ⑤主角能力視窗捲動後開說明不再跳回頂端(捲動位置存/還原) ⑥夥伴圖鑑卡片圖片 object-fit 改 contain(不再裁切放大局部) ⑦夥伴詳情視窗改分區塊排版(.isl-petinfo,比照英雄圖鑑分欄視覺) ⑧頂部新增醒目更新通知條(#isl-updatebar,偵測到新版就亮,點了觸發 mgVerReload) ⑨修正手動更新後可能落到小遊戲大廳的問題:更新前記一次性旗標 isl_resume_camp,islEnter() 消費後直接開營地不回大地圖。 ⚠ 本輪未完成(下一輪接續):營地「空地」欄位移到頂部與「設施」清單合併顯示、建造設施改成像裝飾一樣自由拖曳/鏡像/縮放(這項牽動整個營地建造格系統,範圍較大,留給下一輪專門處理);寵物走路/奔跑/睡覺/坐下姿態圖與缺少的材料/選單/商品/道具圖片(HD-2D 像素風)需要老師之後提供或生成,已整理成清單(見交付的《像素荒島求生記_v1.197需求圖片清單.md》)。 —
    ①魔物 HP/能力隨等級成長同步玩家:D.BT.MON_LV_HP 0.18→0.22、MON_LV_ATK 0.12→0.15(island_db 端);②魔物數量再增加:D.ENC 全表 num 下限上限各調高一格,遺跡/火山頂到既有上限 4 隻,解決「小怪 4 打 1 太沒難度」(island_db 端,⚠ 這兩項是比例反推的估計值,未經沙盤實測,下一輪建議驗證)。
    ③迴力鏢命中後飛回主角手上的動畫:新增 `islBtWeaponFlyStart('boom')`,純 CSS keyframes 讓武器圖示(缺圖退 emoji)在 #isl-bt-stage 裡跑一趟「主角→魔物→主角」,視覺與傷害結算刻意分開跑,互不依賴。
    ④弓箭射出音效+特效:新增 `islBtWeaponFlyStart('arrow')`,一支箭形符號一次性飛越戰場,命中瞬間疊一聲 `sfx-tengu-strike`(借用既有音效當箭矢命中的專屬音,和一般近戰共用的 sfx-normalatk/sfx-crit 區分開,沒有新增任何音檔)。
@@ -13446,7 +13503,8 @@ function boot(){
   }
   function mgVerPaint(latest){
     var chip = document.getElementById('ver-chip'), cur = document.getElementById('ver-cur'),
-        nw = document.getElementById('ver-new'), btn = document.getElementById('ver-btn');
+        nw = document.getElementById('ver-new'), btn = document.getElementById('ver-btn'),
+        ub = document.getElementById('isl-updatebar');   /* ★ v1.197.0 */
     if(!chip || !cur) return;
     cur.textContent = MG_VER;
     var old = latest && mgVerNum(latest) > mgVerNum(MG_VER);
@@ -13454,10 +13512,14 @@ function boot(){
       chip.classList.add('old'); chip.title = '你玩的是舊版,最新是 ' + latest + ',按「更新」就好';
       if(nw){ nw.textContent = ' → ' + latest; nw.classList.remove('hidden'); }
       if(btn) btn.classList.remove('hidden');
+      /* ★ v1.197.0 老師「遊戲進行中有更新版本時,出現醒目通知在畫面頂部(和大對抗一樣)提醒玩家手動更新」—
+         只在真的人在荒島畫面裡(_IS.on)才亮,不在小遊戲大廳/主程式重複提醒(那邊本來就有自己的版本徽章)。 */
+      if(ub && _IS && _IS.on) ub.classList.remove('hidden');
     }else{
       chip.classList.remove('old'); chip.title = '已是最新版';
       if(nw){ nw.textContent = ''; nw.classList.add('hidden'); }
       if(btn) btn.classList.add('hidden');
+      if(ub) ub.classList.add('hidden');
     }
   }
   /* ★ v1.174.0 抽成單一真相供荒島 ⚙ 設定選單的「版本/更新」共用(原本只有大廳右上角徽章在用,
@@ -13490,7 +13552,8 @@ function boot(){
        改成保留原本的 search,只追加 r= 破快取參數;而且在重整前再確認一次 ?mode=island 有標上去。 */
     function go(){
       if(done) return; done = true;
-      try{ if(window._IS && _IS.on && window.islMarkUrlMode) islMarkUrlMode(true); }catch(_){}
+      try{ if(_IS && _IS.on && window.islMarkUrlMode) islMarkUrlMode(true); }catch(_){}
+      try{ if(_IS && _IS.on) localStorage.setItem('isl_resume_camp', '1'); }catch(_rc0){}   /* ★ v1.197.0 老師「手動更新後沒有順利回到遊戲,應該直接回到營地」— 不論更新當下在哪個畫面,記一個一次性旗標,islEnter() 重新載入完成後看到就直接開營地(最穩定、一定能開的畫面),不回預設的大地圖(見下方 islEnter 內的消費點) */
       try{ location.reload(); }
       catch(e){
         var _q = location.search || '';
@@ -13563,7 +13626,7 @@ function boot(){
         el = document.getElementById(ids[i]);
         if(el && !el.classList.contains('hidden') && el.offsetParent !== null) return true;
       }
-      if(window.MG && MG.inGame) return true;   /* 15 款小遊戲進行中 */
+      if(MG && MG.inGame) return true;   /* 15 款小遊戲進行中 */
       /* ★★ v1.187.0(老師:「荒島求生玩到一半會突然跳到回到荒島求生…跳出遊戲跑到小遊戲首頁」)★★
          【根因之一就在這支函式】舊版只認 `#isl-battle` 與 `#isl-act` 兩個畫面「忙碌」,
          可是荒島大部分時間都不在那兩個畫面:在大地圖走路、在營地蓋東西、在看物品包/商店/天賦星域……
@@ -13575,7 +13638,7 @@ function boot(){
                      ②任何彈窗/面板/對話框開著(學生正在讀字或選東西)
                      ③活動小遊戲的 QTE。
          ⚠ 這不是把自動更新關掉:回到大廳、或下一次開機時照樣會自動更新(見 mgAutoUpdateBoot 的改法)。 */
-      if(window._IS && _IS.on) return true;                                  /* ① 人在荒島裡 */
+      if(_IS && _IS.on) return true;                                  /* ① 人在荒島裡 */
       var m = document.getElementById('isl-modal');
       if(m && !m.classList.contains('hidden')) return true;                  /* ② 荒島彈窗/面板開著 */
       var sm = document.getElementById('isl-submenu');
@@ -13609,8 +13672,8 @@ function boot(){
       try{ localStorage.setItem('lxps_mg_autoheal_n', String((rec && rec.v === v) ? (_tries + 1) : 1)); }catch(e){}
       try{ localStorage.setItem('lxps_mg_autoheal', JSON.stringify({ v: v, t: now })); }catch(e){}
       try{ console.warn('[小遊戲自動更新] 線上 ' + v + ' 比本機 ' + MG_VER + ' 新 → 先存檔再更新'); }catch(e){}
-      try{ if(window.toast) toast('🔄 有新版 ' + v + ',正在幫你更新…'); }catch(e){}
-      try{ if(window.ISL && window.islSave) islSave(true); }catch(e){}   /* 本機+雲端立刻落地,比照 islExitNow */
+      try{ toast('🔄 有新版 ' + v + ',正在幫你更新…'); }catch(e){}
+      try{ if(ISL) islSave(true); }catch(e){}   /* 本機+雲端立刻落地,比照 islExitNow */
       setTimeout(function(){ try{ window.mgVerReload(); }catch(e){ try{ location.reload(); }catch(_){} } }, 900);
     });
   }
@@ -13622,7 +13685,8 @@ function boot(){
         if(!(ev && ev.data && ev.data.type === 'MG_FORCE_RELOAD')) return;
         if(window._mgForceReloaded) return; window._mgForceReloaded = true;
         if(mgAutoBusy()){ window._mgForceReloaded = false; return; }   /* 戰鬥中不打擾,下次開機自然是新版 */
-        try{ if(window.ISL && window.islSave) islSave(true); }catch(e){}
+        try{ if(ISL) islSave(true); }catch(e){}
+        try{ if(_IS && _IS.on) localStorage.setItem('isl_resume_camp', '1'); }catch(_rc1){}   /* ★ v1.197.0 見 mgVerReload 同一個旗標的說明 */
         setTimeout(function(){ try{ location.reload(); }catch(e){} }, 900);
       });
     }
@@ -13811,9 +13875,8 @@ function islNormalize(d){
   while(d.cmds.slots.length < db.SK_CMD_SLOTS) d.cmds.slots.push(null);
   if(d.cmds.slots.length > db.SK_CMD_SLOTS) d.cmds.slots.length = db.SK_CMD_SLOTS;
   for(i = 0; i < d.cmds.slots.length; i++){ if(d.cmds.slots[i] && !db.SK_CMDS[d.cmds.slots[i]]) d.cmds.slots[i] = null; }
-  if(typeof d.camp.lv !== 'number' || !db.CAMP_LV[d.camp.lv]) d.camp.lv = 1;   /* ★ v1.94.0 營地 Lv1~3:格數 9/12/16,缺的補 null(不再因長度 ≠9 整個重置) */
-  if(!d.camp.slots) d.camp.slots = [];
-  while(d.camp.slots.length < db.CAMP_LV[d.camp.lv].n) d.camp.slots.push(null);
+  if(typeof d.camp.lv !== 'number' || !db.CAMP_LV[d.camp.lv]) d.camp.lv = 1;   /* ★ v1.94.0 營地 Lv1~3:格數 9/12/16 */
+  if(!d.camp.slots) d.camp.slots = [];   /* ★ v1.199.0 老師「建造改成自由座標」— 不再用 null 佔位補到滿格,slots 現在是「只裝真正蓋好的東西」的緊湊陣列;既有的空位判斷改用 slots.length < CAMP_LV[lv].n(見 islCampBuildMenu)。舊存檔(可能還帶著 null 佔位、沒有 x/y 欄位)由 islCampSlotsMigrate() 在進營地畫面時轉檔一次,這裡不用先處理。 */
   if(!d.camp.deco) d.camp.deco = [];
   if(!d.camp.farm || !d.camp.farm.plots) d.camp.farm = { plots: [] };
   if(!d.camp.pen || !d.camp.pen.animals) d.camp.pen = { animals: [] };
@@ -14933,6 +14996,7 @@ function islHud(){
   var hpb = $('isl-hud-hp'); if(hpb){ hpb.textContent = '❤️ ' + ISL.hp; hpb.classList.toggle('low', ISL.hp < ISL.hpMax * 0.4); }   /* ★ v1.92.0 */
   $('isl-hud-shell').textContent = '🐚 ' + ISL.shell;
   var clc = $('isl-hud-camplv'); if(clc) clc.textContent = '🏠 ' + ISL.camp.lv;   /* ★ v1.172.0 老師裁定【甲】:舒適度那一顆併進來了,HUD 只顯示營地等級,😊 數字在說明小視窗 */   /* ★ v1.124.0 營地等級改 🏠(🏕 留給「回營」鈕) */
+  var bldc = $('isl-hud-bld'); if(bldc){ var _bcl = (islDB().CAMP_LV[ISL.camp.lv] || islDB().CAMP_LV[1]); bldc.textContent = '🏗 ' + ISL.camp.slots.length + '/' + _bcl.n; }   /* ★ v1.199.0 老師「空地欄位移除,改成設施在頂部營地等級右邊顯示清單和剩餘空間」 */
   var twc = $('isl-hud-tower'), twB = islCampHasBld('tower'); if(twc){ if(twB && ISL.char){ var tr = islRaidRoll(); twc.classList.remove('hidden'); twc.textContent = '🗼' + (tr.raid ? (twB.lv >= 2 ? tr.waves : '!') : ''); twc.classList.toggle('warn', !!tr.raid); } else twc.classList.add('hidden'); }   /* ★ v1.123.0 瞭望台常駐 HUD(islRaidRoll 是 seed 決定,今天不會變) */
   rs = $('isl-hud-res'); if(rs) rs.textContent = '📦';   /* ★ v1.185.0 老師:資源總覽圖示改箱子(與上面 HTML 初值同步,islHud() 每次重繪都會蓋回這裡)。★ v1.170.0(老師:iPad 版頂部資訊列過長)— 原本這一顆會把 🪵🪨🌿🍓💧🔬 六項數量全部攤在 HUD 上(實測 355px,是整條最寬的一項),改成只留一個圖示,完整數量點下去在說明小視窗看(islHudTipText('res')) */
   try{ islAilPaint(); }catch(_ap){}   /* ★ v1.160.0 🤒 不良狀態藥丸 */
@@ -15207,6 +15271,13 @@ function islHudTipText(k){
   else if(k === 'camplv' || k === 'comfort'){ o.t = '🏠 營地 Lv' + ISL.camp.lv + '　😊 舒適度 ' + islComfort();
     o.b = '營地等級決定可以蓋幾棟建築,材料夠的時候可以在營地擴建,格子會變多。<br>舒適度由營地的裝飾與建築累積,越高睡一覺回復越多、行動力上限也可能增加。';
     o.more = '<button onclick="islHudTipGo(\'comfort\')">🪴 舒適度怎麼算</button>'; }
+  else if(k === 'bld'){   /* ★ v1.199.0 老師「空地欄位移除,改成設施在頂部營地等級右邊顯示清單和剩餘空間」 */
+    var _bdb = islDB(), _bcl2 = _bdb.CAMP_LV[ISL.camp.lv] || _bdb.CAMP_LV[1], _bi, _bs, _bb;
+    o.t = '🏗 設施 ' + ISL.camp.slots.length + '/' + _bcl2.n; o.b = '<div class="isl-restip">'; any = false;
+    for(_bi = 0; _bi < ISL.camp.slots.length; _bi++){ _bs = ISL.camp.slots[_bi]; _bb = _bdb.BUILDINGS[_bs.bld]; if(!_bb) continue; any = true; o.b += '<span class="r"><i>' + _bb.e + '</i>' + islEsc(_bb.n) + '<b>Lv' + _bs.lv + '</b></span>'; }
+    o.b += '</div>';
+    if(!any) o.b = '<div style="opacity:.85">還沒蓋任何設施,去「🔨 建造」蓋第一棟吧!</div>';
+    o.b += '<div class="isl-restip-ft">還可以再蓋 ' + Math.max(0, _bcl2.n - ISL.camp.slots.length) + ' 棟(擴建營地可以再增加上限)。</div>'; }
   else if(k === 'tower'){ twB = islCampHasBld('tower'); tr = islRaidRoll();
     o.t = '🗼 今晚:' + (tr.raid ? ((twB && twB.lv >= 2) ? '夜襲 ' + tr.waves + ' 波!' : '有動靜!') : '安靜');
     o.b = tr.raid ? '今晚魔物會來襲擊營地,先把營火點好、圍牆修好再睡。' : '今晚沒有偵測到魔物的動靜,可以安心休息。';
@@ -15346,6 +15417,7 @@ function islShowScreen(name){
   var actEl = $('isl-act'); if(actEl) actEl.classList.toggle('over', !!under);
   _IS.screen = name;
   if(name !== 'zone') islZoneStop();
+  if(name !== 'camp') islCampPetsStop();   /* ★ v1.197.0 離開營地就停掉寵物漫步計時器,不留孤兒 setInterval */
   if(name !== 'zone' && name !== 'map' && name !== 'camp') islAmbDetach();   /* ★ v1.100.0 */
   var hudOn = (name !== 'create');
   $('isl-hud-bag').style.visibility = hudOn ? '' : 'hidden';
@@ -15589,7 +15661,11 @@ window.islEnter = function(){
     islDailyCheck();
     islHud();
     if(!ISL.char){ islCreateOpen(); }
-    else { islGoMap(); }
+    else {
+      var _islResumeCamp = false;   /* ★ v1.197.0 老師「手動更新後應該直接回到營地」— 消費 mgVerReload/MG_FORCE_RELOAD 存的一次性旗標 */
+      try{ if(localStorage.getItem('isl_resume_camp') === '1'){ _islResumeCamp = true; localStorage.removeItem('isl_resume_camp'); } }catch(_rc2){}
+      if(_islResumeCamp) islGoCamp(); else islGoMap();
+    }
     if(!islLocalOnly() && MG.user) islMailRefresh(function(){});   /* ★ v1.106.0 開機先抓一次信箱數量(供側欄徽章);★ v1.175.0 測試期不碰雲端 */
     if(!islLocalOnly() && MG.user) islCoopNoticesCheck();   /* ★ v1.108.0 開機順便看看有沒有人拜訪過/走了/離線的留言;★ v1.175.0 測試期不碰雲端 */
     /* ★ v1.175.0 測試期的說明要對「所有人」講一次(含老師自己登入時),
@@ -16293,7 +16369,21 @@ function islZoneBind(){
   function up(ev){
     if(!_IS.joy) return; var p = pos(ev);
     if(p.id !== _IS.joy.id) return;
-    if(!_IS.joy.moved && islNow() - _IS.joy.t < 400){ islTapToMove(p.x, p.y); }
+    if(!_IS.joy.moved && islNow() - _IS.joy.t < 400){
+      /* ★ v1.198.0 老師「連續點擊地面兩下可以切換成往該位置跑步移動」—
+         單次快速點放(<400ms 內沒推動搖桿)沿用既有 islTapToMove(走路);
+         如果上一次也是這樣的快速點放、而且離現在不到 320ms,判定為雙擊,
+         改呼叫 islTapToMove(...,true) 用跑步速度過去,同時清掉雙擊記錄(避免連三下又觸發)。
+         ⚠ 刻意不檢查兩次點的位置是否相近——地圖上想跑就是想跑,雙擊當下第二下點在哪就跑去哪,
+         判斷點與點距離反而會讓「先點近處確認再點遠處要跑去」的直覺操作被誤判成不算雙擊。 */
+      if(_IS.lastTapAt && (islNow() - _IS.lastTapAt) < 320){
+        _IS.lastTapAt = 0;
+        islTapToMove(p.x, p.y, true);
+      } else {
+        _IS.lastTapAt = islNow();
+        islTapToMove(p.x, p.y, false);
+      }
+    }
     _IS.joy = null; hide('isl-joy');
   }
   z.addEventListener('touchstart', down, { passive: false }); z.addEventListener('touchmove', move, { passive: false }); z.addEventListener('touchend', up); z.addEventListener('touchcancel', function(){ _IS.joy = null; hide('isl-joy'); });
@@ -16312,20 +16402,52 @@ function islZoneBind(){
 var _islJumpAt = 0;
 /* ★ v1.188.0 老師需求①「野外新增跳躍動作」— 純視覺+音效回饋(不影響碰撞/採集判定,不會讓學生誤以為能跳過水域或牆),
    500ms 冷卻防連按連放炸裂音效;.jump class 掛在 #isl-char 本身(不是內層 .sp),這樣分層造型(.ly 三層)與整張 sheet 兩種渲染模式都吃得到同一個 CSS 位移動畫,不必分別處理。 */
+/* ★ v1.198.0 老師「持續跑步中跳躍(奮力跳躍)可以提升跳躍高度和距離100%,可以跨越溪流、
+   部分比主角矮50%高度的石頭、草叢等障礙物,或是較低的山壁,但不能跳進水中」—
+   ⚠ 老實話說明本輪的簡化:場景遮罩(islMaskAt)目前只有兩種格子——'#'(不可走,涵蓋樹冠/岩壁/建物/
+   矮石頭/草叢/山壁,全部混在同一個符號裡)與'~'(水域)。資料表沒有另外標記「這個 # 是矮到跳得過去
+   的石頭/草叢,還是跳不過去的厚牆/區域邊界」,要做到老師說的那種精細判定,得先把 11 區地圖逐格
+   重新標記出「低矮可跳障礙」這第三種格子(比照 v1.152.0 逐格重建遮罩的做法),是下一輪的資料工程。
+   本輪先做「規則對」的簡化版:奮力跳躍時,面朝方向的下 1 格若擋住(不論是 # 還是 ~),
+   且下 2 格是普通可走地(不是 # 也不是 ~),就整段跳過去(對應「+100% 距離」);
+   若下 2 格仍是 ~(水),一律不准跳過去(「不能跳進水中」),原地只有視覺上的奮力跳躍動畫,
+   人不會被傳送。這樣「能跨過一格寬的溪流/矮障礙,但絕不會跳進水裡」的核心規則已經成立,
+   只是還沒辦法分辨「矮石頭」跟「真的牆」——真的牆這輪也會被跳過去,老師實機測試如果覺得
+   有牆被跳過去不合理,下一輪就是去補那第三種遮罩符號。 */
+function islJumpAheadCell(){
+  var cx = Math.floor(_IS.cx / 64), cy = Math.floor(_IS.cy / 64), dx = 0, dy = 0;
+  if(_IS.dir === 'l') dx = -1; else if(_IS.dir === 'r') dx = 1; else if(_IS.dir === 'u') dy = -1; else dy = 1;
+  return { c1: { x: cx + dx, y: cy + dy }, c2: { x: cx + dx * 2, y: cy + dy * 2 }, dx: dx, dy: dy };
+}
 function islJump(){
   if(!_IS.on || _IS.screen !== 'zone') return;
   var now = islNow(); if(now - _islJumpAt < 500) return; _islJumpAt = now;
   var el = $('isl-char'); if(!el) return;
-  el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump');
+  var running = !!(_IS.keys.shift || _IS.runBtn || (_IS.path && _IS.path.length && _IS.pathRun)), power = false, ahead, c1, c2;
+  el.classList.remove('jump'); el.classList.remove('power'); void el.offsetWidth;
+  if(running){
+    ahead = islJumpAheadCell(); c1 = islMaskAt(ahead.c1.x, ahead.c1.y); c2 = islMaskAt(ahead.c2.x, ahead.c2.y);
+    if((c1 === '#' || c1 === '~') && c2 !== '#' && c2 !== '~'){
+      power = true;
+      _IS.cx = ahead.c2.x * 64 + 32; _IS.cy = ahead.c2.y * 64 + 32;
+      islCharPaint('idle');
+      try{ islMono('jumpAcross'); }catch(_jm){}
+    } else if(c1 === '~'){
+      try{ toast('前面是水,不能跳進水裡!'); }catch(_jw){}
+    }
+  }
+  el.classList.add('jump'); if(power) el.classList.add('power');
   try{ islSfx('jump'); }catch(_j){}
-  setTimeout(function(){ if(el) el.classList.remove('jump'); }, 460);
+  setTimeout(function(){ if(el){ el.classList.remove('jump'); el.classList.remove('power'); } }, 460);
 }
-/* 點地板走過去:BFS 找路(格級,8 方向禁斜穿牆) */
-function islTapToMove(vx, vy){
+/* 點地板走過去:BFS 找路(格級,8 方向禁斜穿牆)。
+   ★ v1.198.0 新增 run 參數(老師需求「連續點擊地面兩下可以切換成往該位置跑步移動」):
+   true 時整段路徑用跑步速度走(islTick 讀 _IS.pathRun),抵達或路徑被打斷時清掉旗標。 */
+function islTapToMove(vx, vy, run){
   var s = _IS.camScale || 1, mx = (vx - _IS.camX) / s, my = (vy - _IS.camY) / s, tc = islCell(mx, my), sc = islCell(_IS.cx, _IS.cy), path;
   if(islMaskAt(tc.x, tc.y) === '#') return;
   path = islBfs(sc, tc);
-  if(path && path.length){ _IS.path = path; playSfx('sfx-tap', 0.2); }
+  if(path && path.length){ _IS.path = path; _IS.pathRun = !!run; playSfx('sfx-tap', 0.2); if(run){ try{ islSfx('run'); }catch(_rs){} } }
 }
 function islBfs(from, to){
   var W = 32, H = 24, prev = {}, q = [from], seen = {}, head = 0, cur, k, nb, i, dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]], nx, ny, path = [], key = function(p){ return p.x + ',' + p.y; };
@@ -16360,7 +16482,7 @@ function islTick(t){
   }
   d = Math.sqrt(vx * vx + vy * vy); if(d > 1){ vx /= d; vy /= d; }
   moving = (vx || vy) ? true : false;
-  running = !!(k.shift || _IS.runBtn);   /* ★ v1.188.0 老師需求①:Shift(鍵盤)或按住 👟 鈕(觸控)= 奔跑;BFS 自動走路(點地板)刻意不算跑步,那是「走過去」不是「跑過去」 */
+  running = !!(k.shift || _IS.runBtn || (_IS.path && _IS.path.length && _IS.pathRun));   /* ★ v1.188.0 老師需求①:Shift(鍵盤)或按住 👟 鈕(觸控)= 奔跑;★ v1.198.0 老師「連續點擊地面兩下切換成跑步移動」— 雙擊點地產生的路徑(_IS.pathRun)這輪起也算跑步(單擊點地維持原本的「走過去」,只有雙擊才是跑) */
   if(moving){
     spd = 192 * (1 + (Math.min(30, ISL.stats.mov) - 2) * 0.03) * (1 + islSkEff('moveP') / 100);   /* ★ v1.162.0 🌟 敏捷/雙迴旋：島上走路速度 +% */   /* ★ v1.116.0 腳程 30 以上不再加速(上限 50 會飆到 2.4 倍) */
     if(running) spd *= 1.6;   /* ★ v1.188.0 跑步速度倍率;刻意不吃 moveP 星域加成的疊乘(1.6 已經是明顯感受得到的幅度,再疊乘星域高階玩家會跑得太快,容易衝出鏡頭跟不上) */
@@ -17244,23 +17366,24 @@ function islCampPaint(){
   if(_IS.coop && _IS.screen === 'camp'){ islCoopCampPaint(); return; }   /* ★ v1.114.0 拜訪模式下營地畫面一律畫島主的唯讀營地,不畫自己的 */
   var db = islDB(), cells = $('isl-camp-cells'), side = $('isl-camp-side'), h = '', i, s, b, u, hasFire = islCampHasBld('campfire'), cl = db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1], nSlot = cl.n, comfort = islComfort();
   if($('isl-camp-host')) $('isl-camp-host').classList.add('hidden');   /* ★ v1.114.0 回到自己的營地時收起島主小人 */
-  cells.style.gridTemplateColumns = 'repeat(' + cl.cols + ',1fr)';   /* ★ v1.94.0 營地 Lv1~3:3×3 / 4×3 / 4×4 */
-  cells.style.aspectRatio = cl.cols + '/' + cl.rows;
-  while(ISL.camp.slots.length < nSlot) ISL.camp.slots.push(null);
-  for(i = 0; i < nSlot; i++){
+  islCampSlotsMigrate();   /* ★ v1.199.0 舊存檔(格子制,可能還有 null 佔位)一律先轉成自由座標的緊湊清單,見函式說明 */
+  /* ★ v1.199.0 老師「建造設施改成和裝飾一樣直接放在營地正中央,可以自由拖曳/鏡像翻轉,新增縮放尺寸」—
+     不再畫固定 3×3/4×3/4×4 格子(舊版 .isl-cell 是 CSS grid 的一格),改成跟裝飾同一套「自由座標層」:
+     ISL.camp.slots 現在是緊湊陣列(沒有 null 佔位),每筆多帶 x/y(%)、flip、scale。 */
+  for(i = 0; i < ISL.camp.slots.length; i++){
     s = ISL.camp.slots[i];
-    if(s && !db.BUILDINGS[s.bld]) s = null;   /* ★ v1.111.0 守門:存檔裡的建築 id 已不存在(資料表改名/移除)時當空格,不讓整個營地畫面炸掉 */
-    if(s){ b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1')); h += '<button class="isl-cell built' + (s.flip ? ' flip' : '') + (_IS.campMove === i ? ' moving' : '') + (_IS.campMove != null && _IS.campMove !== i ? ' movetarget' : '') + (s.bt ? ' building' : '') + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') + '" data-i="' + i + '">' + (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span><span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span></button>'; }
-    else h += '<button class="isl-cell empty' + (_IS.campMove != null ? ' movetarget' : '') + '" data-i="' + i + '">➕<span class="bn">空地</span></button>';
+    if(!db.BUILDINGS[s.bld]) continue;   /* ★ v1.111.0 守門:存檔裡的建築 id 已不存在(資料表改名/移除)時跳過,不讓整個營地畫面炸掉 */
+    b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1'));
+    h += '<button class="isl-cell built' + (s.bt ? ' building' : '') + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') +
+      '" data-i="' + i + '" style="left:' + s.x + '%;top:' + s.y + '%">' +
+      (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') +
+      (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) +
+      '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span><span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span></button>';
   }
   cells.innerHTML = h;
+  islCampBldApplyTransforms();   /* 逐一把 scale(k)+可能的 scaleX(-1) 寫進 style.transform(見函式說明,不能只靠 CSS class) */
+  if(!cells._bound){ cells._bound = true; islCampBldDragBind(cells); }
   islCampViewFit(); islCampViewBindDrag();   /* ★ v1.186.0 老師⑦:每次進營地重新 fit(讓學生先看到全貌,同大地圖每次重進都重新 fit 的做法),雙指手勢只綁一次(vp._islBound 擋重複) */
-  /* ★ v1.151.0 點設施 = 主角先走過去旁邊,到了才開視窗(搬移模式下則是立刻換位,不走路) */
-  cells.onclick = function(ev){ var t = ev.target, idx; while(t && t !== cells && !(t.getAttribute && t.getAttribute('data-i'))) t = t.parentNode; if(!t || t === cells) return; idx = parseInt(t.getAttribute('data-i'), 10);
-    if(_IS.campMove != null){ islCampMoveTo(idx); return; }
-    playSfx('sfx-tap', 0.25);
-    islCampGoToCell(idx, function(){ islCampCellTap(idx); });
-  };
   islCampGroundBind();   /* ★ v1.151.0 點空地 → 主角走過去 */
   /* ★ v1.157.0(老師:「營地走路的主角要用野外的走路動作模組,且尺寸縮小至跟帳篷一樣高」)—
      結構改成和 #isl-char 一樣:.shadow + 靜態 idle 立繪(缺圖保險用) + .sp(走路用,islCharSpriteInit 填內容)。 */
@@ -17269,6 +17392,7 @@ function islCampPaint(){
   islCampCharScale();
   islCampCharPlace();
   islCharPaint(_IS.campWalk ? 'walk' : 'idle', 'isl-camp-char', true);
+  islCampPetsPaint();   /* ★ v1.197.0 已加入的寵物在營地自由行動 */
   if(!_IS.campRaf) _IS.campRaf = requestAnimationFrame(islCampTick);
   islTiredCheck();   /* ★ v1.119.0 */
   if(islBuildBusyCount()) islBuildTimer();   /* ★ v1.125.0 有設施在施工 → 啟動每秒倒數 */
@@ -17277,7 +17401,7 @@ function islCampPaint(){
   side.innerHTML =   /* ★ v1.115.0 老師:側欄濃縮成 4 顆大項目,點了開細項(islSubOpen),細項再開內容視窗;舒適度/營地 Lv 移到頂端 HUD */
     '<button class="cat" onclick="islSubOpen(\'char\')"><span class="ci">👤</span>角色' + (islMailCount() ? '<span class="bd">' + islMailCount() + '</span>' : '') + '</button>' +
     '<button class="cat" onclick="islSubOpen(\'camp\')"><span class="ci">🏕</span>營地</button>' +
-    '<button class="cat" onclick="islSubOpen(\'shop\')"><span class="ci">🦦</span>商店' + (islQuestOpenCount() ? '<span class="bd">' + islQuestOpenCount() + '</span>' : '') + '</button>' +
+    '<button class="cat" onclick="islShopOpen(\'buy\')"><span class="ci">🦦</span>商店' + (islQuestOpenCount() ? '<span class="bd">' + islQuestOpenCount() + '</span>' : '') + '</button>' +   /* ★ v1.197.0 老師「商店直接打開買東西畫面,中間那層購買/賣出/委託選單移除」— 阿獺雜貨鋪本身的視窗(islShopOpen)頭部就已經有買/賣/委託三分頁可切換(圖1),中間這層 islSubOpen('shop') 選單是多餘的一層,直接呼叫 islShopOpen('buy') 跳過它 */
     '<button class="cat" onclick="islSubOpen(\'explore\')"><span class="ci">🗺</span>探索</button>' +
     '<button class="cat" onclick="islSubOpen(\'rest\')"><span class="ci">🌙</span>休息</button>';   /* ★ v1.125.0 老師:休息從「探索」裡搬出來獨立一個分頁 */
   islHud();
@@ -17311,6 +17435,7 @@ function islCampCharPlace(){
      跳過(同大地圖 _IS.mapMoved 的做法),避免拖完又觸發走路。
    - islCampViewIsInteractive():mousedown/touchstart 時若手指/滑鼠按在建造格、裝飾品、告示牌、
      主角本身之上,一律不啟動視角平移/縮放,讓給它們各自既有的點擊/拖曳處理。 */
+var ISL_CAMP_CHAR_MULT = 0.5;   /* ★ v1.197.0 老師「營地中的主角尺寸縮小50%,已加入的寵物也要在營地中自由行動,尺寸依照主角尺寸同步縮放」 */
 var ISL_CAMP_CANVAS = 860;   /* 畫布邊長(設計 px),所有裝置統一,靠 CSS transform 縮放適配;比舊版建造格上限 420px 大超過一倍,四周多出來的就是新增的裝飾空間 */
 function islCampViewFit(){
   var vp = $('isl-camp-viewport'), w, h, s;
@@ -17384,19 +17509,73 @@ function islCampViewBindDrag(){
    (縮小視角時角色跟著變超小、放大視角時角色跟著爆大),因為角色本身也是同一個可縮放畫布(#isl-camp-grid)
    的子元素,會自動跟著畫布縮放——這裡的 k 只需要算「角色相對格子的比例」一次,除掉當下的 campCam.s
    還原成畫布自己的設計尺寸,之後角色會跟著畫布 transform 自動同步縮放,不必每次雙指縮放都重算。 */
+/* ★ v1.157.0(老師:「尺寸縮小至跟帳篷一樣高」)— 量「營地格子的實際渲染尺寸」算縮放倍率,不寫死數字。
+   ★ v1.199.0 老師「建造改成自由座標」後 #isl-camp-cells 不再是 CSS grid,改成鋪滿整個 860px 畫布的
+   自由層,原本「畫布寬 ÷ 欄數」的算法不再適用(畫布現在跟欄數無關,除出來的格子會暴增數倍)。
+   改成直接量一顆真正的設施圖示(.isl-cell,CSS 寫死 96px/iPad 132px)的實際渲染寬度當作參考值;
+   營地裡還沒蓋任何設施時(剛創角/剛重置)量不到,退回 CSS 裡寫的那個設計尺寸常數。 */
 function islCampCharScale(){
-  var el = $('isl-camp-char'), cells = $('isl-camp-cells'), db = islDB(), cl, r, cellPx, k, cz;
-  if(!el || !cells || !ISL) return;
-  cl = db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1];
-  r = cells.getBoundingClientRect();
+  var el = $('isl-camp-char'), cellEl = document.querySelector('#isl-camp-cells .isl-cell'), r, cellPx, k, cz;
+  if(!el || !ISL) return;
   cz = (_IS.campCam && _IS.campCam.s) || 1;
-  cellPx = (r.width / cz) / (cl.cols || 3);
+  if(cellEl){ r = cellEl.getBoundingClientRect(); cellPx = r.width / cz; }
+  else cellPx = ($('island-root') && $('island-root').classList.contains('ipad')) ? 132 : 96;   /* 量不到時退回 CSS 寫死的設計寬度(iPad/一般各自的預設 96/132px) */
   k = cellPx > 0 ? (cellPx * 0.70) / 64 : 1.3;   /* 量不到(畫面還沒排版好)就退回一個接近帳篷大小的預設值 */
-  el.style.transform = 'scale(' + Math.max(0.5, k) + ')';
+  k = Math.max(0.5, k) * ISL_CAMP_CHAR_MULT;   /* ★ v1.197.0 老師「營地中的主角尺寸縮小50%」— 在既有公式算出的縮放值上再乘一個全域倍率,已加入營地的寵物(islCampPetsPaint)吃同一個常數,兩者永遠同步縮放 */
+  el.style.transform = 'scale(' + k + ')';
+  _IS.campCharK = k;   /* 讓 islCampPetsPaint 直接沿用,不必重算一次 */
 }
 /* 走到營地內的 (x%, y%);cb 在抵達後才呼叫(給「點設施→走過去→開視窗」用)。
    ★ v1.157.0 改成 rAF 逐幀推進(islCampTick),不再用 CSS transition 硬滑——
      這樣才能邊走邊決定方向、呼叫 islCharPaint 换真正的跨步幀,吃到跟野外完全一樣的走路動畫。 */
+/* ★ v1.197.0 老師「已加入的寵物也會在營地中自由的行動,尺寸也依照主角尺寸同步縮放」—
+   每次進營地畫面重建一輪:已收服的寵物(不分是否在探險編組裡)全部在營地空地上隨機漫步。
+   ⚠ 素材現況(v1.163.0 D.IMG 登記的 96 張 bt_pet_<key>_<態> 走路/奔跑姿態圖片尚未上傳,
+     islPetPicHtml 缺圖一律退回 idle→emoji),本輪只做「會自己走動的定位系統」,姿態動畫留給
+     素材到位後再接(那時只要把 islPetPicHtml 換成依方向/移動中挑對應 <态> 圖鍵即可,定位邏輯不必改)。
+   ⚠ 刻意不寫存檔:和主角一樣,站在哪裡是臨時狀態(_IS.campPets),換裝置/重進營地就重新隨機分布。 */
+function islCampPetsPaint(){
+  var host = $('isl-camp-pets'), i, rec, db = islDB(), p, id, el, x, y;
+  if(!host) return;
+  islCampPetsStop();   /* 先清掉舊的漫步計時器,避免累加 */
+  host.innerHTML = '';
+  _IS.campPets = [];
+  for(i = 0; i < (ISL.pets || []).length; i++){
+    rec = ISL.pets[i]; p = db.PETS[rec.k]; if(!p) continue;
+    id = 'isl-camp-pet-' + i;
+    x = 10 + Math.random() * 80; y = 8 + Math.random() * 55;
+    el = document.createElement('div');
+    el.className = 'isl-camp-pet'; el.id = id;
+    el.innerHTML = islPetPicHtml(rec.k, 999);
+    el.title = p.n;
+    el.style.left = x + '%'; el.style.bottom = y + '%';
+    el.onclick = (function(kk){ return function(ev){ ev.stopPropagation(); islPetCardOpen(kk); }; })(rec.k);
+    host.appendChild(el);
+    _IS.campPets.push({ id: id, x: x, y: y, el: el });
+  }
+  islCampPetsScale();
+  islCampPetsWanderStart();
+}
+function islCampPetsScale(){   /* 跟主角吃同一個縮放倍率(islCampCharScale 算完存在 _IS.campCharK) */
+  var i, u = _IS.campPets || [], k = _IS.campCharK || 1;
+  for(i = 0; i < u.length; i++){ if(u[i].el) u[i].el.style.transform = 'scale(' + k + ')' + (u[i].flip ? ' scaleX(-1)' : ''); }
+}
+function islCampPetsWanderStart(){
+  if(_IS.campPetsT) return;
+  _IS.campPetsT = setInterval(function(){
+    var i, u = _IS.campPets || [], nx, ny;
+    if(!_IS.on || _IS.screen !== 'camp'){ islCampPetsStop(); return; }
+    for(i = 0; i < u.length; i++){
+      if(Math.random() > 0.55) continue;   /* 不是每隻每次都動,才不會全部一起同步移動看起來很假 */
+      nx = islClamp(u[i].x + (Math.random() * 30 - 15), 6, 94);
+      ny = islClamp(u[i].y + (Math.random() * 20 - 10), 4, 66);
+      u[i].flip = nx < u[i].x;   /* 往左走鏡像翻面 */
+      u[i].x = nx; u[i].y = ny;
+      if(u[i].el){ u[i].el.style.left = nx + '%'; u[i].el.style.bottom = ny + '%'; u[i].el.style.transform = 'scale(' + (_IS.campCharK || 1) + ')' + (u[i].flip ? ' scaleX(-1)' : ''); }
+    }
+  }, 2600);
+}
+function islCampPetsStop(){ if(_IS.campPetsT){ clearInterval(_IS.campPetsT); _IS.campPetsT = 0; } }
 function islCampWalkTo(x, y, cb){
   var p = islCampCharPos(), dist;
   if(!ISL){ if(cb) cb(); return; }
@@ -17453,7 +17632,7 @@ function islCampGroundBind(){
   g._gbound = true;
   g.addEventListener('click', function(ev){
     var t = ev.target, p, gr;
-    if(!ISL || _IS.coop || _IS.screen !== 'camp' || _IS.campMove != null || _IS.campMoved) return;   /* ★ v1.186.0 老師⑦:加入 _IS.campMoved——建造區域雙指縮放/滑鼠拖曳平移(islCampViewBindDrag)剛結束時,不要把那次手勢誤判成「點地板走過去」 */
+    if(!ISL || _IS.coop || _IS.screen !== 'camp' || _IS.campMoved) return;   /* ★ v1.199.0 老師「建造改自由拖曳」— 舊版搬移模式(_IS.campMove)已移除,拖曳直接在設施本身完成,這裡不必再判斷;仍保留 campMoved(雙指縮放/滑鼠拖曳平移剛結束時不要誤判成走路點擊) */
     cells = $('isl-camp-cells');
     while(t && t !== g){ if(t === cells || (t.classList && (t.classList.contains('isl-deco') || t.id === 'isl-camp-board'))) return; t = t.parentNode; }
     gr = g.getBoundingClientRect();
@@ -17462,34 +17641,98 @@ function islCampGroundBind(){
     islCampWalkTo((p.clientX - gr.left) / gr.width * 100, (gr.bottom - p.clientY) / gr.height * 100, null);
   });
 }
-/* ── 🔀 搬移設施:點「搬移位置」進入搬移模式,再點任一格就互換(空地或別的設施都可以) ── */
-window.islCampMoveStart = function(i){
-  var s = ISL.camp.slots[i];
-  if(!s){ return; }
-  if(s.bt){ toast('施工中的設施不能搬'); return; }
-  islModalClose();
-  _IS.campMove = i;
-  playSfx('sfx-tap', 0.3);
-  toast('🔀 點另一格把它搬過去(再點同一格取消)');
-  islCampPaint();
-};
-function islCampMoveTo(j){
-  var i = _IS.campMove, tmp;
-  _IS.campMove = null;
-  if(i == null) return;
-  if(i === j){ playSfx('sfx-tap', 0.25); toast('取消搬移'); islCampPaint(); return; }
-  tmp = ISL.camp.slots[i]; ISL.camp.slots[i] = ISL.camp.slots[j]; ISL.camp.slots[j] = tmp;
-  playSfx('sfx-ok', 0.4); toast('🔀 搬好了');
-  islCampPaint(); islSave('campmove');
+/* ── ★ v1.199.0 舊存檔遷移:格子制(null 佔位陣列)→ 自由座標緊湊清單 ──
+   舊版 ISL.camp.slots 是「陣列索引=固定格子位置」,長度補到 nSlot、空格是 null;
+   新版每一筆都是真的建築,額外帶 x/y(%,以 #isl-camp-grid 為基準,跟裝飾同一套座標系)、
+   flip(0/1)、scale(0.5~2.0)。只在真的偵測到「還是舊格式」時才轉換一次(用「有沒有 x 欄位」判斷,
+   轉換過的存檔所有項目都會有 x,不會重複轉);轉換時依原本的格線位置反推一個接近的 x/y,
+   讓老師既有的測試營地畫面不會整個大洗牌。 */
+function islCampSlotsMigrate(){
+  var db = islDB(), sl = ISL.camp.slots, cl = db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1], out = [], i, s, cols, col, row, needs = false;
+  if(!sl || !sl.length) return;
+  for(i = 0; i < sl.length; i++){ if(sl[i] === null || (sl[i] && sl[i].x == null)){ needs = true; break; } }   /* ★ v1.199.0 舊格式的兩個特徵:①還有 null 佔位 ②真正的建築物件沒有 x 欄位,任一個成立就整批重算 */
+  if(!needs) return;
+  cols = cl.cols || 3;
+  for(i = 0; i < sl.length; i++){
+    s = sl[i]; if(!s) continue;
+    col = i % cols; row = Math.floor(i / cols);
+    s.x = Math.round(18 + col * (64 / Math.max(1, cols - 1 || 1)));
+    s.y = Math.round(18 + row * (54 / Math.max(1, (cl.rows || 3) - 1 || 1)));
+    s.flip = s.flip || 0; s.scale = s.scale || 1;
+    out.push(s);
+  }
+  ISL.camp.slots = out;
+  try{ islSave('campmigrate'); }catch(_cm){}
 }
-window.islCampMoveTo = islCampMoveTo;
-/* ── 🔁 左右翻轉:只是外觀(slot.flip),不影響任何效果與耐久 ── */
+/* 新蓋設施的預設位置:依目前已有幾棟,用黃金角螺旋錯開起點,避免每次都疊在正中央同一點。
+   老師/學生蓋完可以自己拖開,這裡只求「不要一開局全部疊圖」,不做真正的避碰演算法。 */
+function islCampNewBldPos(){
+  var n = ISL.camp.slots.length, ang = n * 137.5 * Math.PI / 180, r = 12 + (n % 5) * 6;
+  return { x: islClamp(Math.round(50 + Math.cos(ang) * r), 10, 90), y: islClamp(Math.round(45 + Math.sin(ang) * r), 10, 80) };
+}
+/* 逐一把 scale(k)+可能的 scaleX(-1) 寫進 style.transform——跟裝飾/寵物同一個道理:
+   縮放與鏡像必須合在同一段 transform 字串裡,分開寫(例如一個 class 管 scale、另一個 class 管 flip)
+   在拖曳中疊加 .drag 的 scale 覆寫時會互相蓋掉(v1.198.0 跳躍動畫就是踩過這個坑)。 */
+function islCampBldApplyTransforms(){
+  var i, s, el, k;
+  for(i = 0; i < ISL.camp.slots.length; i++){
+    s = ISL.camp.slots[i]; el = document.querySelector('#isl-camp-cells [data-i="' + i + '"]'); if(!el) continue;
+    k = s.scale || 1;
+    el.style.transform = 'scale(' + k + ')' + (s.flip ? ' scaleX(-1)' : '');
+  }
+}
+/* 拖曳:比照 islDecoDragBind,沒移動超過 8px 就當「點一下」→ 先走過去再開設施視窗;
+   真的拖動就存新的 x/y。★ v1.199.0 取代舊版「進搬移模式→點另一格互換」那一套。 */
+function islCampBldDragBind(layer){
+  var cur = null;
+  function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }
+  function down(ev){ if(_IS.coop) return; var t = ev.target, p; while(t && t !== layer && !(t.classList && t.classList.contains('isl-cell'))) t = t.parentNode; if(!t || t === layer) return; cur = t; p = pos(ev); cur._sx = p.x; cur._sy = p.y; cur._moved = false; t.classList.add('drag'); playSfx('sfx-sel', 0.25); ev.preventDefault(); ev.stopPropagation(); }
+  function move(ev){ if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94); if(Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8) cur._moved = true; cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; ev.preventDefault(); }
+  function up(){
+    if(!cur) return;
+    var i = parseInt(cur.getAttribute('data-i'), 10), s = ISL.camp.slots[i], tap = !cur._moved;
+    cur.classList.remove('drag');
+    if(s && s.bt){   /* 施工中不能拖:視覺上已經被 move() 改到新位置,這裡要改回存檔裡的原始座標,不然要等下次重畫才會歸位 */
+      cur.style.left = s.x + '%'; cur.style.top = s.y + '%';
+      cur = null;
+      if(tap) islCampGoToCell(i, function(){ islCampCellTap(i); });
+      return;
+    }
+    if(s && !tap && cur._x != null){ s.x = Math.round(cur._x); s.y = Math.round(cur._y); islSave('campbldmove'); }
+    cur = null;
+    if(tap) islCampGoToCell(i, function(){ islCampCellTap(i); });
+    else islCampBldApplyTransforms();   /* 拖完把 transform 字串重寫一次(left/top 是 style 直接改的,transform 沒被動過,這行其實只是保險) */
+  }
+  layer.addEventListener('touchstart', down, { passive: false }); layer.addEventListener('touchmove', move, { passive: false }); layer.addEventListener('touchend', up); layer.addEventListener('touchcancel', up);
+  layer.addEventListener('mousedown', down); window.addEventListener('mousemove', function(ev){ if(cur) move(ev); }); window.addEventListener('mouseup', function(){ if(cur) up(); });
+}
+/* ── 🔁 左右翻轉 + 🔍 縮放(±,範圍 0.5~2.0):只是外觀,不影響效果與耐久 ──
+   ★ v1.199.0 老師「新增設施/裝飾的縮放尺寸(最大+100%、-50%)」— 縮放基準 1.0 是老師眼中的「原始尺寸」,
+   +100% = scale 2.0、-50% = scale 0.5,兩邊都是原尺寸的倍率不是疊加,好懂也不會越調越誇張。 */
 window.islCampFlip = function(i){
   var s = ISL.camp.slots[i];
   if(!s) return;
   s.flip = s.flip ? 0 : 1;
   playSfx('sfx-tap', 0.3); toast('🔁 左右翻轉了');
   islModalClose(); islCampPaint(); islSave('campflip');
+};
+window.islCampScale = function(i, delta){
+  var s = ISL.camp.slots[i];
+  if(!s) return;
+  s.scale = islClamp(Math.round(((s.scale || 1) + delta) * 100) / 100, 0.5, 2.0);
+  playSfx('sfx-tap', 0.2);
+  islCampBldApplyTransforms();
+  islSave('campscale');
+  islCampCellTap(i);   /* 重畫同一張詳情卡,讓玩家看得到目前縮放百分比即時更新 */
+};
+window.islDecoScale = function(i, delta){
+  var d = ISL.camp.deco[i];
+  if(!d) return;
+  d.scale = islClamp(Math.round(((d.scale || 1) + delta) * 100) / 100, 0.5, 2.0);
+  playSfx('sfx-tap', 0.2);
+  islDecoPaint();
+  islSave('decoscale');
+  islDecoTap(i);
 };
 
 /* ★ v1.115.0 營地大項目 → 細項按鈕(如主程式關卡選擇頁下方的選單):角色/營地/商店/探索 */
@@ -17527,12 +17770,7 @@ function islSubItems(cat){
     if(islCampHasBld('farm')) L.push({ e:'🌱', t:'農田', f:'islFarmOpen()' });
     if(islCampHasBld('pen')) L.push({ e:'🐔', t:'畜欄', f:'islPenOpen()' });
     if(islCampHasBld('bench')) L.push({ e:'🛠', t:'製作', f:'islCraftOpen()' });
-    L.push({ e:'🗡', t:'武器', f:'islWeaponOpen()' });   /* ★ v1.121.0 製作/升級/裝備武器(棍棒與石斧不用製作台) */
-    L.push({ e:'🛡', t:'防具', f:'islArmorOpen()' });   /* ★ v1.187.0 製作/穿脫防具(葉編披肩與草編背心不用製作台) */
-  } else if(cat === 'shop'){
-    L.push({ e:'🛒', t:'購買', f:'islShopOpen(\'buy\')' });
-    L.push({ e:'💰', t:'賣出', f:'islShopOpen(\'sell\')' });
-    L.push({ e:'📜', t:'委託', f:'islShopOpen(\'quest\')', n: islQuestOpenCount() });
+    /* ★ v1.197.0 老師「營地選單中的武器和防具移除」— 武器/防具管理仍在 👤 角色 子選單裡(islWeaponOpen/islArmorOpen 沒有刪除,只是不在營地這個分類重複出現一次) */
   } else if(cat === 'rest'){   /* ★ v1.125.0 老師:休息獨立成一個分頁(睡覺/存檔/重新開始) */
     L.push({ e:'🌙', t:'休息睡覺', f:'islRest()', cls:'warn' });
     L.push({ e:'💾', t:'存檔', f:'islSaveTap()' });
@@ -17674,9 +17912,8 @@ window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-amb
 window.islAmbToggle2 = function(){ islAmbSfxToggle(); };   /* ★ v1.126.0 ⚙ 設定選單裡的環境音開關(名稱與既有 islAmbToggle 動態背景區隔) */
 function islCampCellTap(i){
   var db = islDB(), s = ISL.camp.slots[i], b, maxHp, btns;
-  if(_IS.campMove != null){ islCampMoveTo(i); return; }   /* ★ v1.151.0 搬移模式:這一點是「搬到哪裡」,不開視窗 */
   playSfx('sfx-tap', 0.3);
-  if(!s){ islCampBuildMenu(i); return; }
+  if(!s){ islCampBuildMenu(-1); return; }   /* ★ v1.199.0 自由座標版不再有「空地」這種東西可以點,理論上不會走到這裡;保留當保險,直接開建造選單 */
   if(s.bt){   /* ★ v1.125.0 施工中:只顯示進度,不能再操作那一格 */
     try{ islMono('building'); }catch(_bg){}   /* ★ v1.133.0 */
     b = db.BUILDINGS[s.bld];
@@ -17690,7 +17927,10 @@ function islCampCellTap(i){
     { t: '⬆ 升級', cls: 'gold', cb: function(){ islCampUpgrade(i); } }
   ];
   if(s.hp < maxHp) btns.push({ t: '🔧 修理', cls: 'warn', cb: function(){ islBldRepair(i); } });   /* ★ v1.92.0 結構受損 → 工程修復(耗半份材料,恢復滿耐久) */
-  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' + '<p class="isl-bldtools"><button class="isl-btn ghost" onclick="islCampMoveStart(' + i + ')">🔀 搬移位置</button><button class="isl-btn ghost" onclick="islCampFlip(' + i + ')">🔁 左右翻轉</button></p>' + (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + ' ' + islLackBadge(islBldCost(s.bld, s.lv + 1), true) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
+  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' +
+    '<p class="isl-bldtools"><button class="isl-btn ghost" onclick="islCampFlip(' + i + ')">🔁 左右翻轉</button><button class="isl-btn ghost" onclick="islCampScale(' + i + ',-0.25)">🔍− 縮小</button><span style="font-size:15px;opacity:.85">' + Math.round((s.scale || 1) * 100) + '%</span><button class="isl-btn ghost" onclick="islCampScale(' + i + ',0.25)">🔍+ 放大</button></p>' +
+    '<p style="font-size:13px;opacity:.7">拖曳它就能換位置(不用再進「搬移模式」)。</p>' +
+    (s.lv < db.BLD_MAX_LV ? '<p>⬆ 升到 Lv' + (s.lv + 1) + ' 需要:' + islCostHtml(islBldCost(s.bld, s.lv + 1)) + ' ' + islLackBadge(islBldCost(s.bld, s.lv + 1), true) + '<br><small style="opacity:.75">(升級 = 交材料 + 再做一次建造品質小遊戲)<br>Lv' + (s.lv + 1) + ':' + islEsc(b.lvText[s.lv] || '') + '</small></p>' : '<p style="opacity:.7">已達最高 Lv' + db.BLD_MAX_LV + '</p>'), btns);   /* ★ v1.94.0 Lv5 */
   islLackBind($('isl-modal'));   /* ★ v1.130.0 */
 }
 /* ★ v1.92.0 工程修復:耗一半原始建材,結構立即恢復滿耐久(不需重蓋) */
@@ -17705,9 +17945,12 @@ function islBldRepair(i){
 }
 function islBldCost(id, lv){ var c = islDB().BUILDINGS[id].cost, k, o = {}, m = ISL.skill.build.lv >= 7 ? 0.8 : 1; for(k in c){ if(c.hasOwnProperty(k)) o[k] = Math.max(1, Math.round(c[k] * lv * m)); } return o; }
 window.islCampBuildMenu = function(slot){
-  var db = islDB(), h = '<h3>🔨 建造</h3>', i, id, b, can, s, free = -1;
-  var nSlot = (db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1]).n, lockTxt;   /* ★ v1.94.0 */
-  if(slot < 0){ for(i = 0; i < nSlot; i++){ if(!ISL.camp.slots[i]){ free = i; break; } } if(free < 0){ islModal('<h3>沒有空地了</h3><p>按「🏕 擴建」升級營地,格子會變多。</p>'); return; } slot = free; }
+  var db = islDB(), h = '<h3>🔨 建造</h3>', i, id, b, can, s, lockTxt;
+  var cl = db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1], nSlot = cl.n;   /* ★ v1.94.0 */
+  /* ★ v1.199.0 老師「建造改成自由座標」— 不再需要找「第一個空格子」,只要看目前設施總數是否還沒到上限;
+     slot 永遠傳 -1(代表「新蓋一棟」),真正的位置在 islBuildStart 完工那一刻才決定(見該函式說明)。 */
+  if(slot < 0 && ISL.camp.slots.length >= nSlot){ islModal('<h3>設施空間不夠了</h3><p>按「🏕 擴建」升級營地,可以蓋的設施數量會變多。</p>'); return; }
+  slot = -1;
   /* ★ v1.130.0 老師:改成三欄大卡片(圖 128px、名稱 25px、說明 18px),框放大到 1180px 可捲動;材料不足時左下角掛 ⚠ 資源不足 */
   h += '<div class="isl-cards">';
   for(i = 0; i < db.BUILD_ORDER.length; i++){
@@ -18008,7 +18251,7 @@ function islPetEncounterOpen(k){
   playSfx('sfx-summon-smoke', 0.4);
   if(!ISL.petFriend[k]){
     fd = islItemDef(p.food); have = islHave(p.food) >= 1;
-    islModal('<h3>👀 你遇到了 ' + p.e + ' ' + islEsc(p.n) + '!</h3>' +
+    islModal('<div style="text-align:center">' + islPetPicHtml(k, 96) + '</div><h3>👀 你遇到了 ' + p.e + ' ' + islEsc(p.n) + '!</h3>' +
       '<p>牠停在不遠的地方看著你,好像肚子餓了……</p>' +
       (have
         ? '<p>牠喜歡吃 ' + fd.e + islEsc(fd.n) + ',你身上剛好有!要不要送給牠?</p>'
@@ -18018,7 +18261,7 @@ function islPetEncounterOpen(k){
         ? [{ t: '先不管牠', cls: 'ghost' }, { t: '🎁 送牠 ' + fd.e + islEsc(fd.n), cls: 'gold', cb: function(){ islPetGift(k); } }]
         : [{ t: '知道了', cls: 'gold' }]);
   } else {
-    islModal('<h3>' + p.e + ' ' + islEsc(p.n) + ' 又出現了!</h3><p>上次你已經送過牠喜歡的食物,牠對你很友善。要不要回答幾個問題,正式成為朋友?</p>',
+    islModal('<div style="text-align:center">' + islPetPicHtml(k, 96) + '</div><h3>' + p.e + ' ' + islEsc(p.n) + ' 又出現了!</h3><p>上次你已經送過牠喜歡的食物,牠對你很友善。要不要回答幾個問題,正式成為朋友?</p>',
       [{ t: '下次再說', cls: 'ghost' },
        { t: '📝 開始問答', cls: 'gold', cb: function(){ islPetQuizStart(k); } }]);
   }
@@ -18162,12 +18405,17 @@ function islPetCardOpen(k){
   }
   ps = islPetStats(k, rec.lv, rec.bond);
   nxt = (rec.lv >= db.PET_LV.MAX) ? 0 : (db.PET_LV.XP_BASE + db.PET_LV.XP_STEP * (rec.lv - 1));
-  h += '<p>' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + db.PET_TYPES[p.type].n + '——' + islEsc(db.PET_TYPES[p.type].d) : '') + '</p>';
-  h += '<p><b>Lv' + rec.lv + '</b>' + (nxt ? '　EXP ' + rec.xp + '/' + nxt : '　(已滿級)') + '　親密度 ' + db.PET_BOND[rec.bond].e + islEsc(db.PET_BOND[rec.bond].n) + '(' + islEsc(db.PET_BOND[rec.bond].d) + ')</p>';
-  h += '<p>❤️ ' + ps.hp + '　⚔ ' + ps.atk + '　🛡 ' + ps.def + '　💨 ' + ps.spd + '</p>';
-  h += '<p>專屬指令:' + cmd.e + '<b>' + islEsc(cmd.n) + '</b>(冷卻 ' + cmd.cd + ' 回合)<br>' + islEsc(cmd.d) + '</p>';
-  h += '<p>天賦:' + islEsc(p.talent) + '</p>';
-  h += '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(p.sci) + '</p>';
+  /* ★ v1.197.0 老師「夥伴能力介紹要重新排版美化,比照大對抗的英雄圖鑑有不同欄位區分」—
+     原本 4~5 行 <p> 平鋪,改成分成獨立的卡片式區塊(.isl-petinfo .sec),每區有自己的底色/邊框/標題,
+     視覺上明確切開「類型」「等級與親密度」「四維」「專屬指令」「天賦」「自然小知識」六塊,不再是一整串文字。 */
+  h += '<div class="isl-petinfo">';
+  h += '<div class="sec typ">' + (db.PET_TYPES[p.type] ? db.PET_TYPES[p.type].e + ' ' + islEsc(db.PET_TYPES[p.type].n) + '<span class="d">' + islEsc(db.PET_TYPES[p.type].d) + '</span>' : '') + '</div>';
+  h += '<div class="sec lvbar"><span class="lv">Lv' + rec.lv + '</span>' + (nxt ? '<span class="xp">EXP ' + rec.xp + '/' + nxt + '</span>' : '<span class="xp">已滿級</span>') + '<span class="bond">' + db.PET_BOND[rec.bond].e + islEsc(db.PET_BOND[rec.bond].n) + '(' + islEsc(db.PET_BOND[rec.bond].d) + ')</span></div>';
+  h += '<div class="sec stat"><span>❤️<b>' + ps.hp + '</b></span><span>⚔<b>' + ps.atk + '</b></span><span>🛡<b>' + ps.def + '</b></span><span>💨<b>' + ps.spd + '</b></span></div>';
+  h += '<div class="sec skill"><div class="hd">' + cmd.e + ' ' + islEsc(cmd.n) + '<span class="cd">冷卻 ' + cmd.cd + ' 回合</span></div><div class="bd2">' + islEsc(cmd.d) + '</div></div>';
+  h += '<div class="sec talent"><div class="hd">✨ 天賦</div><div class="bd2">' + islEsc(p.talent) + '</div></div>';
+  h += '<div class="sec sci">🔬 ' + islEsc(p.sci) + '</div>';
+  h += '</div>';
   btns.push({ t: '🍖 餵食(親密度 +' + db.PET_BOND_GAIN.feed + ')', cls: 'ghost', cb: function(){ islPetFeed(k); } });
   if(islPartyHasPet(k)) btns.push({ t: '🧭 已在編組中', cls: 'ghost' });
   else if(islPartyCount() < db.PARTY.MAX_ALLY) btns.push({ t: '🧭 加入編組', cls: 'gold', cb: function(){ var i; for(i = 0; i < ISL.party.length; i++){ if(!ISL.party[i]){ ISL.party[i] = { t: 'pet', k: k }; break; } } playSfx('sfx-ok', 0.4); islSave('party'); islPartyOpen(); } });
@@ -18422,7 +18670,13 @@ window.islCharOpen = function(){
   for(k in db.SKILLS){ if(!db.SKILLS.hasOwnProperty(k)) continue; sk = ISL.skill[k]; sel = (_IS.abTip === 'skill:' + k); h += '<button class="isl-ab' + (sel ? ' on' : '') + '" data-act="ab" data-k="skill:' + k + '"><span class="an">' + db.SKILLS[k].e + db.SKILLS[k].n + '</span><b>Lv' + sk.lv + '</b><span class="bar"><i style="width:' + (sk.lv >= db.SKILL_MAX ? 100 : sk.xp / db.SKILL_XP_NEED(sk.lv) * 100) + '%;background:#ffd166"></i></span><span class="ax">' + (sk.lv >= db.SKILL_MAX ? '頂級' : sk.xp + '/' + db.SKILL_XP_NEED(sk.lv)) + '</span>' + (sel ? '<span class="tip">' + islEsc('對應四維:' + (db.STATS[0].k === db.SKILLS[k].stat ? db.STATS[0].n : (db.SKILLS[k].stat === 'mov' ? '腳程' : (db.SKILLS[k].stat === 'pow' ? '力氣' : (db.SKILLS[k].stat === 'wit' ? '巧思' : '巧手'))))) + '<br>' + islEsc('Lv3:' + db.SKILLS[k].lv3) + '<br>' + islEsc('Lv5:' + db.SKILLS[k].lv5) + '<br>' + islEsc('Lv7:' + db.SKILLS[k].lv7) + '<br>Lv8 起每級產量再 +10%(上限 Lv' + db.SKILL_MAX + ')。</span>' : '') + '</button>'; }
   h += '</div>';   /* ★ v1.116.0 上限 50;★ v1.150.0 改成可點開說明的能力方塊 */
   h += '</div></div></div>';   /* c-right / isl-char2 / isl-bagbox ★ v1.134.0 */
-  islPanel(h, function(t){ var a = t.getAttribute('data-act'), kk = t.getAttribute('data-k'); if(a === 'close') islModalClose(); else if(a === 'ab'){ _IS.abTip = (_IS.abTip === kk) ? null : kk; islCharOpen(); } else if(a === 'rename') islIslandRenameOpen(); else if(a === 'weapon'){ islModalClose(); islWeaponOpen(); } else if(a === 'look'){ islModalClose(); islLookOpen(); } });   /* ★ v1.150.0 data-act="ab":同一項再點一次就關掉說明 */
+  islPanel(h, function(t){ var a = t.getAttribute('data-act'), kk = t.getAttribute('data-k'), cr0; if(a === 'close') islModalClose(); else if(a === 'ab'){ cr0 = $('isl-modal') ? $('isl-modal').querySelector('.c-right') : null; _IS.abScrollY = cr0 ? cr0.scrollTop : 0; _IS.abTip = (_IS.abTip === kk) ? null : kk; islCharOpen(); } else if(a === 'rename') islIslandRenameOpen(); else if(a === 'weapon'){ islModalClose(); islWeaponOpen(); } else if(a === 'look'){ islModalClose(); islLookOpen(); } });   /* ★ v1.150.0 data-act="ab":同一項再點一次就關掉說明 */
+  /* ★ v1.197.0 老師「主角能力視窗往下捲動後開啟任何能力看說明都會自動捲回頂端」—
+     根因:islPanel 整段 innerHTML 重寫,舊 .c-right 節點連同它的 scrollTop 一起被丟掉,
+     新節點永遠從 0 開始,和 v1.150.0 選角頁 _sOpts/_sPrev 的坑是同一種。
+     修法:上面的 data-act==='ab' 分支在重繪前先把舊節點的 scrollTop 存進 _IS.abScrollY,
+     這裡寫完新 DOM 後如果有存到的座標就寫回同一顆 .c-right,寫完立刻清掉避免影響下次正常開窗。 */
+  (function(){ var cr = $('isl-modal') ? $('isl-modal').querySelector('.c-right') : null; if(cr && _IS.abScrollY) cr.scrollTop = _IS.abScrollY; _IS.abScrollY = 0; })();
 };
 function islIslandRenameOpen(){   /* ★ v1.108.0 隨時改島名(手打或重抽) */
   var h = '<h3>🏝 幫島取個名字</h3>' + islIslandNamePickHtml('isl-rn', ISL.islandName || '') + '<p style="font-size:13px;opacity:.75;margin:6px 0 0">用兩個選單組合,或直接在島名欄自己打(最多 ' + islDB().ISLAND_NAME_MAX + ' 字)</p>';   /* ★ v1.116.0 改名也用選單 */
@@ -18680,7 +18934,7 @@ function islDefEnd(win){
     ISL.raids.lost++; islLog(D.fell ? '🤕 夜襲中倒下了…' : '💥 營地被夜襲翻了…', 'camp_night');
     /* D=甲:未加工資源 −30% + 隨機 1 棟建築耐久 −50 */
     for(i = 0; i < raw.length; i++){ k = raw[i]; it = ISL.store.items[k]; if(it){ cut = Math.floor((it.s1 + it.s2 + it.s3) * 0.3); if(cut > 0){ lost.push(islItemDef(k).e + '−' + cut); islConsume(k, cut); } } }
-    for(i = 0; i < 9; i++){ s = ISL.camp.slots[i]; if(s) built.push(s); }
+    for(i = 0; i < ISL.camp.slots.length; i++){ s = ISL.camp.slots[i]; if(s) built.push(s); }   /* ★ v1.199.0 順手修正:原本寫死 9(只對到營地 Lv1 的格數),Lv2/Lv3 多出來的建築永遠不會被夜襲選到;緊湊陣列改成直接用實際長度 */
     if(built.length){ victim = built[Math.floor(Math.random() * built.length)]; victim.hp = Math.max(0, victim.hp - 50); lost.push(db.BUILDINGS[victim.bld].e + db.BUILDINGS[victim.bld].n + ' 耐久−50'); }
     playSfx('sfx-explode', 0.45);
   }
@@ -18952,9 +19206,19 @@ function islBuildSecs(bldId, upgradeLv){
 function islBuildLeft(s){ return (s && s.bt) ? Math.max(0, Math.ceil((s.bt - islNow()) / 1000)) : 0; }
 function islSecsText(n){ var m = Math.floor(n / 60), s = n % 60; return m ? (m + ' 分 ' + s + ' 秒') : (s + ' 秒'); }
 function islBuildStart(slotIdx, bldId, stars, upgradeLv){
-  var s = ISL.camp.slots[slotIdx], secs = islBuildSecs(bldId, upgradeLv);
-  if(upgradeLv){ if(!s) return 0; s.bt = islNow() + secs * 1000; s.btTo = upgradeLv; }
-  else { ISL.camp.slots[slotIdx] = { bld: bldId, lv: 1, hp: 100, q: stars, bt: islNow() + secs * 1000 }; ISL.counters.builds += 1; }
+  var s, secs = islBuildSecs(bldId, upgradeLv), pos;
+  if(upgradeLv){
+    s = ISL.camp.slots[slotIdx]; if(!s) return 0;
+    s.bt = islNow() + secs * 1000; s.btTo = upgradeLv;
+  } else {
+    /* ★ v1.199.0 新蓋設施不再寫進固定索引,直接 push 一筆新的自由座標記錄;
+       位置用「錯開的隨機起點」而不是純隨機,盡量不要一開局就疊在同一個地方(仍可能重疊,
+       老師/學生蓋完可以自己拖開,不強求自動避碰演算法)。 */
+    pos = islCampNewBldPos();
+    slotIdx = ISL.camp.slots.length;
+    ISL.camp.slots.push({ bld: bldId, lv: 1, hp: 100, q: stars, bt: islNow() + secs * 1000, x: pos.x, y: pos.y, flip: 0, scale: 1 });
+    ISL.counters.builds += 1;
+  }
   islBuildTimer();
   /* ★ v1.133.0 動工的聲音(這裡原本完全沒有聲音:材料扣了、倒數開始了,卻一點回饋都沒有)。
      ⚠ 完工不在這裡發聲——islBuildFinish 的 islNotify 已經帶 sfx-medal,再加一次會變兩聲。 */
@@ -19174,7 +19438,7 @@ function islPublishCard(){   /* 雲端存檔成功後呼叫;5 分鐘最多一次
   if(_IS.pubAt && now - _IS.pubAt < 300000 && _IS.pubDay === ISL.day) return;
   _IS.pubAt = now; _IS.pubDay = ISL.day;
   var zu = [], zk; for(zk in ISL.zones){ if(ISL.zones.hasOwnProperty(zk) && ISL.zones[zk].unlocked) zu.push(zk); }   /* ★ v1.108.0 拜訪合作:訪客讀不到私人存檔 minigameIsland/{uid},只能靠這張公開名片取得島主的解鎖區域與簡化建築清單 */
-  var cs = [], ci; for(ci = 0; ci < ISL.camp.slots.length; ci++){ cs.push(ISL.camp.slots[ci] ? { bld: ISL.camp.slots[ci].bld, lv: ISL.camp.slots[ci].lv } : null); }
+  var cs = [], ci; for(ci = 0; ci < ISL.camp.slots.length; ci++){ cs.push(ISL.camp.slots[ci] ? { bld: ISL.camp.slots[ci].bld, lv: ISL.camp.slots[ci].lv, x: ISL.camp.slots[ci].x, y: ISL.camp.slots[ci].y, flip: ISL.camp.slots[ci].flip, scale: ISL.camp.slots[ci].scale } : null); }   /* ★ v1.199.0 自由座標版也要把 x/y/flip/scale 一起匯出,不然好友參觀時看到的位置全部跑掉(見 islCoopCampPaint) */
   var dp = [], di, dl = ISL.camp.deco || [], bp = [], bi, bl = ISL.board || [], pubDb = islDB();   /* ★ v1.114.0 好友營地唯讀畫面:多發布裝飾位置與留言板最新幾則(不含物品/貝幣,仍不需新規則) */
   for(di = 0; di < dl.length && di < pubDb.COOP_DECO_PUB; di++){ dp.push({ id: dl[di].id, x: dl[di].x, y: dl[di].y }); }
   for(bi = Math.max(0, bl.length - pubDb.COOP_BOARD_PUB); bi < bl.length; bi++){ bp.push({ n: String(bl[bi].n || '').slice(0, 16), t: String(bl[bi].t || '').slice(0, pubDb.BOARD_TEXT_MAX), day: bl[bi].day || 0 }); }
@@ -19395,15 +19659,16 @@ window.islCoopCampOpen = function(){
   if(!_IS.coop.campSeen){ _IS.coop.campSeen = true; toast('🏕 這是 ' + _IS.coop.ownerName + ' 的營地,只能參觀不能動手'); }
 };
 function islCoopCampPaint(){
-  var db = islDB(), C = _IS.coop, cells = $('isl-camp-cells'), side = $('isl-camp-side'), layer = $('isl-camp-deco'), host = $('isl-camp-host'), h = '', i, s, b, u, cl, nSlot, slots, dl, d, bl;
+  var db = islDB(), C = _IS.coop, cells = $('isl-camp-cells'), side = $('isl-camp-side'), layer = $('isl-camp-deco'), host = $('isl-camp-host'), h = '', i, s, b, u, cl, nSlot, slots, dl, d, bl, cols, x, y;
   if(!C || !cells || !side) return;
-  cl = db.CAMP_LV[C.ownerCampLv] || db.CAMP_LV[1]; slots = C.ownerCampSlots || []; nSlot = Math.max(cl.n, slots.length);
-  cells.style.gridTemplateColumns = 'repeat(' + cl.cols + ',1fr)';
-  cells.style.aspectRatio = cl.cols + '/' + cl.rows;
+  cl = db.CAMP_LV[C.ownerCampLv] || db.CAMP_LV[1]; slots = C.ownerCampSlots || []; nSlot = Math.max(cl.n, slots.length); cols = cl.cols || 3;
   for(i = 0; i < nSlot; i++){
     s = slots[i]; if(s && !db.BUILDINGS[s.bld]) s = null;
-    if(s){ b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1')); h += '<button class="isl-cell built" data-i="' + i + '">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span></button>'; }
-    else h += '<button class="isl-cell empty" data-i="' + i + '" style="opacity:.55">·<span class="bn">空地</span></button>';
+    if(!s) continue;   /* ★ v1.199.0 自由座標版不畫「空地」佔位格了,參觀模式只顯示對方真的蓋出來的東西 */
+    b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1'));
+    x = s.x != null ? s.x : Math.round(18 + (i % cols) * (64 / Math.max(1, cols - 1 || 1)));   /* 舊版(改版前)匯出的存檔沒有 x/y,退回跟 islCampSlotsMigrate 同一套格線位置估算,不會整個看不到 */
+    y = s.y != null ? s.y : Math.round(18 + Math.floor(i / cols) * (54 / Math.max(1, (cl.rows || 3) - 1 || 1)));
+    h += '<button class="isl-cell built" data-i="' + i + '" style="left:' + x + '%;top:' + y + '%;transform:scale(' + (s.scale || 1) + ')' + (s.flip ? ' scaleX(-1)' : '') + '">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="lv">Lv' + s.lv + '</span><span class="bn">' + islEsc(b.n) + '</span></button>';
   }
   cells.innerHTML = h;
   islCampViewFit(); islCampViewBindDrag();   /* ★ v1.186.0 老師⑦:參觀好友營地(唯讀)也能雙指縮放看整座島,裝飾唯讀不可拖(islDecoDragBind 的 down() 本來就有 if(_IS.coop) return),不會跟視角手勢衝突 */
@@ -19924,7 +20189,7 @@ function islDecoPaint(){
   var layer = $('isl-camp-deco'), h = '', i, d, dl;
   if(!layer || !ISL) return;
   dl = ISL.camp.deco || [];
-  for(i = 0; i < dl.length; i++){ d = islDecoDef(dl[i].id); h += '<div class="isl-deco' + (dl[i].f ? ' flip' : '') + '" data-d="' + i + '" style="left:' + dl[i].x + '%;top:' + dl[i].y + '%">' + islIcoHtml(d.img, d.e, 56) + '<span class="dn">' + islEsc(d.n) + '</span></div>'; }   /* ★ v1.120.0 裝飾有圖用圖;★ v1.152.0 f=左右鏡像 */
+  for(i = 0; i < dl.length; i++){ d = islDecoDef(dl[i].id); h += '<div class="isl-deco' + (dl[i].f ? ' flip' : '') + '" data-d="' + i + '" style="left:' + dl[i].x + '%;top:' + dl[i].y + '%;transform:scale(' + (dl[i].scale || 1) + ')">' + islIcoHtml(d.img, d.e, 56) + '<span class="dn">' + islEsc(d.n) + '</span></div>'; }   /* ★ v1.120.0 裝飾有圖用圖;★ v1.152.0 f=左右鏡像;★ v1.199.0 scale=自訂縮放(0.5~2.0),寫進 style.transform,拖曳中的 .drag !important 規則會暫時蓋過去,放開後恢復 */
   layer.innerHTML = h;
   if(!layer._bound){ layer._bound = true; islDecoDragBind(layer); }
 }
@@ -19935,6 +20200,8 @@ window.islDecoTap = function(i){
   def = islDecoDef(d.id);
   islModal('<h3>' + def.e + ' ' + islEsc(def.n) + '</h3><p style="font-size:15px;opacity:.85">' + islEsc(def.d || '') + '</p><p style="font-size:14px;opacity:.7">拖曳可以換位置。</p>', [
     { t: '關閉', cls: 'ghost' },
+    { t: '🔍− 縮小', cb: function(){ islDecoScale(i, -0.25); } },
+    { t: '🔍+ 放大', cb: function(){ islDecoScale(i, 0.25); } },
     { t: '🔁 左右翻轉', cls: 'gold', cb: function(){ d.f = d.f ? 0 : 1; playSfx('sfx-tap', 0.3); toast('🔁 翻轉了'); islDecoPaint(); islSave('decoflip'); } }
   ]);
 };
@@ -19956,7 +20223,7 @@ window.islCampExpand = function(){
   can = islCanAfford(cl.cost) && (!cl.tech || ISL.tech >= cl.tech);
   islModal('<h3>🏕 營地擴建 Lv' + nx + '</h3><p>格子 ' + db.CAMP_LV[ISL.camp.lv].n + ' → ' + cl.n + ' 格,營火血 ' + cl.fireHp + '。</p><p style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(cl.cost) + (cl.tech ? '　🔬科技點 ' + ISL.tech + '/' + cl.tech : '') + '</p>' + (cl.tech && ISL.tech < cl.tech ? '<p style="font-size:14px;opacity:.8">科技點:夜襲守住營地 +5。</p>' : ''), [
     { t: '取消', cls: 'ghost' },
-    { t: '擴建!', cls: 'gold', cb: function(){ if(!can){ toast('材料或科技點不夠'); return; } for(k in cl.cost){ if(cl.cost.hasOwnProperty(k)) islConsume(k, cl.cost[k]); } if(cl.tech) ISL.tech -= cl.tech; ISL.camp.lv = nx; while(ISL.camp.slots.length < cl.n) ISL.camp.slots.push(null); playSfx('sfx-summon-reveal', 0.5); toast('🏕 營地擴建到 Lv' + nx + '!'); islHud(); islCampPaint(); islSave('campexpand'); } }
+    { t: '擴建!', cls: 'gold', cb: function(){ if(!can){ toast('材料或科技點不夠'); return; } for(k in cl.cost){ if(cl.cost.hasOwnProperty(k)) islConsume(k, cl.cost[k]); } if(cl.tech) ISL.tech -= cl.tech; ISL.camp.lv = nx; playSfx('sfx-summon-reveal', 0.5); toast('🏕 營地擴建到 Lv' + nx + '!'); islHud(); islCampPaint(); islSave('campexpand'); } }   /* ★ v1.199.0 老師「建造改成自由座標」— 擴建只是把上限 cl.n 提高,不再需要補 null 佔位撐長陣列(slots 現在是緊湊清單,長度就是實際蓋了幾棟) */
   ]);
 };
 
@@ -21154,7 +21421,8 @@ window.islSkOpen = function(){
   playSfx('sfx-tap', 0.3);
   islSkApplyHp();
   price = (db.SK_RESPEC ? db.SK_RESPEC.base + db.SK_RESPEC.step * islSk().respec : 30);
-  h += '<div class="isl-bagbox wide full isl-skbox"><h3>🌟 天賦星域<span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';   /* ★ v1.187.0 老師:接近全螢幕 + 右上角 ✕ 要看得見(.isl-skbox 把 ✕ 移進框內,見 CSS) */
+  h += '<div class="isl-bagbox wide full isl-skbox"><h3>🌟 天賦星域<span class="grow"></span><button data-act="close">✕</button></h3><div class="bd"><div class="isl-sk-cols">';   /* ★ v1.200.0 老師「星盤固定放右半部50%滿版,左半部是其他訊息和按鈕」— .bd 底下新增左右兩欄容器 */
+  h += '<div class="isl-sk-left">';
   h += '<div class="isl-sk-bar">可用天賦點 <b>' + pts + '</b>' +
        '<button class="isl-btn ghost" data-sk="respec">🧙 洗點(🐚' + price + ')</button>' +
        '<button type="button" class="isl-btn ghost isl-sk-more-btn" onclick="islSkMoreToggle()">📖 更多說明 ▾</button></div>';   /* ★ v1.189.0 老師「上下說明文字太多,星盤放大到接近全螢幕,其他說明收合起來」—
@@ -21179,6 +21447,18 @@ window.islSkOpen = function(){
        '<button type="button" class="isl-btn ghost" onclick="islSkZoom(1.25)">➕</button>' +
        '<button type="button" class="isl-btn" onclick="islSkZoomFit()">⤢ 剛好一頁</button>' +
        '<span style="opacity:.75;font-size:13px">(也可以用兩根手指捏合放大縮小)</span></div>';
+  T = islSkTitles();
+  h += '<div class="isl-sk-more-body" id="isl-sk-more">';   /* ★ v1.189.0 老師「其他說明收合起來,要看再點開」— 累計點數規則/已解鎖頭銜/星域規則說明,三段全部收進來,預設隱藏(見 CSS .isl-sk-more-body{display:none}),點上面的「📖 更多說明」才展開。 */
+  h += '<p style="font-size:14px;opacity:.8;margin:0 0 6px">累計 ' + islSkEarned() + ' 點:每打贏 ' + ISL_SK_KILL_PER + ' 隻 +1、每過 ' + ISL_SK_DAY_PER + ' 天 +1。點亮的節點會直接生效;帶武器圖示的星域只有「裝備那把武器」時才算數。關鍵節點 🌟 會解鎖戰鬥中的「✨ 絕招」。</p>';
+  h += '<div class="isl-sk-ttl">';
+  for(i = 0; i < (db.SK_TITLES || []).length; i++){
+    n = db.SK_TITLES[i];
+    st = false; for(j = 0; j < T.length; j++){ if(T[j].id === n.id) st = true; }
+    h += '<span class="' + (st ? '' : 'off') + '">' + n.e + ' ' + islEsc(n.n) + '：' + islEsc(n.d) + '</span>';
+  }
+  h += '</div></div>';
+  h += '</div>';   /* /.isl-sk-left */
+  h += '<div class="isl-sk-right">';
   h += '<div class="isl-sk-wrap"><div class="isl-sk-fit"><div class="isl-sk-cv" style="width:' + C.w + 'px;height:' + C.h + 'px">';
   h += '<svg viewBox="0 0 ' + C.w + ' ' + C.h + '" xmlns="http://www.w3.org/2000/svg">';
   for(i = 0; i < A.length; i++){
@@ -21197,17 +21477,9 @@ window.islSkOpen = function(){
          '<span class="lb">' + islEsc(n.n) + '</span></button>';
   }
   h += '</div></div></div>';
-  T = islSkTitles();
-  h += '<div class="isl-sk-more-body" id="isl-sk-more">';   /* ★ v1.189.0 老師「其他說明收合起來,要看再點開」— 累計點數規則/已解鎖頭銜/星域規則說明,三段全部收進來,預設隱藏(見 CSS .isl-sk-more-body{display:none}),點上面的「📖 更多說明」才展開,星圖區(.isl-sk-wrap 是 flex:1)因此自動吃到這裡讓出來的高度,不必另外調整星圖尺寸。 */
-  h += '<p style="font-size:14px;opacity:.8;margin:0 0 6px">累計 ' + islSkEarned() + ' 點:每打贏 ' + ISL_SK_KILL_PER + ' 隻 +1、每過 ' + ISL_SK_DAY_PER + ' 天 +1。點亮的節點會直接生效;帶武器圖示的星域只有「裝備那把武器」時才算數。關鍵節點 🌟 會解鎖戰鬥中的「✨ 絕招」。</p>';
-  h += '<div class="isl-sk-ttl">';
-  for(i = 0; i < (db.SK_TITLES || []).length; i++){
-    n = db.SK_TITLES[i];
-    st = false; for(j = 0; j < T.length; j++){ if(T[j].id === n.id) st = true; }
-    h += '<span class="' + (st ? '' : 'off') + '">' + n.e + ' ' + islEsc(n.n) + '：' + islEsc(n.d) + '</span>';
-  }
-  h += '</div></div>';
-  h += '</div></div>';
+  h += '</div>';   /* /.isl-sk-right */
+  h += '</div></div>';   /* /.isl-sk-cols /.bd */
+  h += '</div>';   /* /.isl-bagbox */
   islPanel(h, function(t){ var act = t.getAttribute('data-act'); if(act === 'close') islModalClose(); }, { wide: true });   /* ★ v1.196.0 老師回報「天賦星域✕按了無效,按外面可以關閉」根治:islPanel 的 onTap 回呼傳進來的是「被點到的 DOM 元素」,不是 data-act 字串本身(對照 islStoreOpen 等其餘面板都是 function(t){ var a=t.getAttribute('data-act'); ... }這種寫法);這裡舊版直接把參數當成字串比較(act==='close'),元素物件永遠不會全等於字串 'close',判斷式恆假,✕ 因此按了沒反應——點背景關得掉是因為那條路走的是 islPanel 自己的 m.onclick 邊界判斷,不經過這支回呼。 */
   setTimeout(function(){ islSkFit(true); islSkBindPinch(); }, 30);   /* 面板要先進 DOM 才量得到可視寬度;開窗一律先回到「剛好一頁」 */
   (function(){
