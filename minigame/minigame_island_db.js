@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.220.0';   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.222.0';   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -368,7 +368,7 @@ window.ISL_DB = (function(){
     stone:    { n:'石頭',   e:'🪨', img:'res_stone',    cat:'res' },
     fiber:    { n:'纖維',   e:'🌿', img:'res_fiber',    cat:'res' },
     leaf:     { n:'大葉',   e:'🍃', img:'res_leaf',     cat:'res' },
-    berry:    { n:'野果',   e:'🍓', img:'res_berry',    cat:'food' },
+    berry:    { n:'野果',   e:'🍓', img:'res_berry',    cat:'dish', eat:{hp:15, ap:0} },   /* ★ v1.222.0 老師「烤魚改成某種容易取得可以生吃的果實」— 野果是全島最容易採到的食材(海灘/森林/草原等多區果叢皆有),比照下方蜂蜜(honey)的既有先例改標 cat:'dish' 使其「可直接生吃」不必先煮;cat:'dish' 只影響「能不能吃」(bag 詳情頁🍽吃鈕/倉庫列🍽吃鈕/戰鬥中🍖吃/營地聚餐/寵物餵食 五處消費點皆只讀 cat==='dish'),不影響採集/建造/烹飪材料需求(那些只認 id 不看 cat),D.RECIPES.d_jam 仍照舊吃 berry×3 做成野果醬。回復量與蜂蜜同(HP+15)——兩者都是「不煮直接吃」的生食材,沒理由野果比蜂蜜弱。 */
     mushroom: { n:'野菇',   e:'🍄', img:'res_mushroom', cat:'food' },
     shell:    { n:'貝殼',   e:'🐚', img:'res_shell',    cat:'misc' },
     pebble:   { n:'卵石',   e:'⚪', img:'res_pebble',   cat:'misc' },
