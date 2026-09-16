@@ -4554,6 +4554,7 @@ window.islDirectVeilOff = function(){
 #isl-camp-side button.cat.warn{background:linear-gradient(180deg,#a04a24,#6b2f16);border-color:#ff9f43;}
 #isl-camp-side button.cat:active{transform:translateY(3px);box-shadow:0 1px 0 #0e3348;}
 #isl-camp-side button.cat .ci{font-size:40px;line-height:1;}
+.ci .isl-ico,.ci .isl-noimg{width:1em !important;height:1em !important;}   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— islIcoHtml 回傳的 img/佔位 span 是寫死 px,套進 .ci 這種靠 font-size 決定圖示大小的容器裡,改用 1em 讓它跟著 .ci 目前的 font-size(含各斷點/iPad 覆寫)走,不必每個斷點各自再寫一次圖示尺寸 */
 #isl-camp-side .bd,#isl-submenu .bd{position:absolute;right:8px;top:8px;min-width:24px;height:24px;border-radius:12px;background:#e63946;color:#fff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 6px;}
 /* ★ v1.186.0 老師⑧「營地大選單開啟的小選單被裁切在小框架中拖曳很難使用,改成開啟接近全螢幕的視窗,
    一目瞭然」——舊版是靠右對齊的小框(width:min(520px,60%),還要 padding-right:290px 讓開側欄),
@@ -5319,11 +5320,13 @@ window.islDirectVeilOff = function(){
 .isl-lack:active{ transform:scale(.94); }
 .isl-lack.inline{ position:static; display:inline-block; margin-left:6px; vertical-align:middle; }
 /* ★ v1.131.0 缺圖佔位(網頁常見的破圖樣式):保留原本欄位大小,不讓版面塌掉 */
+/* ★ v1.203.0 老師「先隱藏那個虛線框」— 虛線框+斜紋底+🖼角標先關掉,只留乾淨的 emoji(視覺上跟改版前一樣);
+   underlying 機制沒有拆(islNoImgHtml 還是同一支,同一個 class),之後老師想恢復提示外框,只要把下面兩行
+   (border/background)與 .tag 的 display 改回來就好,不必動任何 JS。 */
 .isl-noimg{ position:relative; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle;
-  border:2px dashed rgba(255,255,255,.38); border-radius:10px; background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 6px,rgba(255,255,255,.10) 6px 12px);
   box-sizing:border-box; overflow:hidden; }
 .isl-noimg .em{ line-height:1; opacity:.9; }
-.isl-noimg .tag{ position:absolute; right:1px; bottom:0; font-size:11px; opacity:.75; line-height:1; }
+.isl-noimg .tag{ display:none; }
 .isl-src-row{ display:flex; gap:10px; align-items:flex-start; text-align:left; background:rgba(0,0,0,.25);
   border-radius:12px; padding:8px 10px; margin:6px 0; font-size:18px; line-height:1.45; }
 .isl-src-row .se{ font-size:30px; flex:0 0 auto; }
@@ -5588,7 +5591,7 @@ window.islDirectVeilOff = function(){
     <button class="ih btn" onclick="islExit()" title="離開荒島,回主程式首頁">✕</button>
     <!-- ★ v1.132.0 #isl-gear 已移到 #island-root 底下(見下方 isl-hud-tip 旁),原因見該處註解 -->
   </div>
-  <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()">🔊 音效音量</button><button onclick="islAmbToggle2()" id="isl-gear-ambsfx">🌊 環境音</button><button onclick="islGearToggle();mgFullscreen()">⛶ 全螢幕</button><button onclick="islGearToggle();islVerOpen()" id="isl-gear-ver" style="border-color:#8ab4ff">🔄 版本</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button><button onclick="islGearToggle();islLabOpen()" id="isl-gear-lab" style="border-color:#ffd166;display:none">🎨 造型工房(GM)</button><button onclick="islGearToggle();islBtTest()" id="isl-gear-bt" style="border-color:#ff9f43;display:none">⚔ 測試戰鬥(GM)</button><button onclick="islGearToggle();islResetAsk()" id="isl-gear-reset" style="border-color:#ff7b7b;display:none">🗑 重新開始・清除所有紀錄(GM)</button></div><!-- ★★ v1.132.0(老師回報「大地圖右上方按齒輪功能沒有出現選單」)★★
+  <div id="isl-gear" class="hidden"><button onclick="islAmbToggle();islGearPaint()" id="isl-gear-amb">🍃 動態背景</button><button onclick="islGearToggle();mgToggleBgm()" id="isl-gear-bgm">🎵 音樂音量</button><button onclick="islGearToggle();mgToggleSfx()" id="isl-gear-sfx">🔊 音效音量</button><button onclick="islAmbToggle2()" id="isl-gear-ambsfx">🌊 環境音</button><button onclick="islGearToggle();mgFullscreen()" id="isl-gear-full">⛶ 全螢幕</button><button onclick="islGearToggle();islVerOpen()" id="isl-gear-ver" style="border-color:#8ab4ff">🔄 版本</button><button onclick="islGearToggle();islInstallOpen()" id="isl-gear-inst" style="border-color:#7bed9f">⬇ 完整下載主程式</button><button onclick="islGearToggle();islLabOpen()" id="isl-gear-lab" style="border-color:#ffd166;display:none">🎨 造型工房(GM)</button><button onclick="islGearToggle();islBtTest()" id="isl-gear-bt" style="border-color:#ff9f43;display:none">⚔ 測試戰鬥(GM)</button><button onclick="islGearToggle();islResetAsk()" id="isl-gear-reset" style="border-color:#ff7b7b;display:none">🗑 重新開始・清除所有紀錄(GM)</button></div><!-- ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— 音樂/音效/全螢幕三顆補上 id(isl-gear-bgm/isl-gear-sfx/isl-gear-full),供 islGearPaint 換上圖示用(原本沒有 id,一直只能用 emoji) --><!-- ★★ v1.132.0(老師回報「大地圖右上方按齒輪功能沒有出現選單」)★★
        根因不是圖層,是**被裁掉**:這段原本放在 #isl-hud 裡面,而 #isl-hud 同時有 position:relative 與
        overflow-x:auto / overflow-y:hidden ⇒ #isl-gear 的 top:100%(貼在 HUD 下緣外)整塊落在 HUD 的溢出範圍,
        被 overflow 直接裁掉,完全畫不出來。只有在 iPad 兩欄 HUD 那個斷點(該處 overflow:visible)才看得到,
@@ -5697,7 +5700,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.201.0';   /* ★★ v1.201.0(2026-09-16・老師「檢查荒島求生中明顯的BUG」)★★ — 找到一組系統性死鍵:mgAutoBusy()/mgVerReload()/mgAutoUpdateBoot() 這一區塊(v1.187.0 引入)多處誤寫成 `window._IS`/`window.ISL`/`window.MG`/`window.toast`——這四個識別字全部是宣告在同一個 頂層 IIFE 內的區域變數/函式(var _IS={}、var ISL=null、var MG={}、function toast(){}),從來不是 window 的屬性,`window.X` 一律是 undefined,`if(window.X && ...)` 因此**永遠短路成 false**,後面那半句(才是真正想檢查的東西)從來沒有機會執行。實際影響:①mgAutoBusy() 的「人在荒島裡就算忙」「15款小遊戲進行中就算忙」兩條判斷永遠不成立⇒ 玩到一半自動更新照樣可能打斷玩家(v1.187.0 想修的那個bug其實沒修好);②mgVerReload()/MG_FORCE_RELOAD 重整前「先存檔」與「標記 ?mode=island」兩步永遠不會執行⇒ 手動或自動更新都有進度遺失與掉回小遊戲大廳的風險(上一輪 v1.197.0 修的 isl_resume_camp 也踩到同一個坑,新增的旗標同樣寫成 window._IS,一樣沒有生效);③更新中的 toast 提示不會顯示。修法:全部改回不加 window. 的純變數參照(_IS/ISL/MG/toast,JS 閉包本來就讀得到,不需要也不能透過 window 取),5 處一次修正。 —   /* ★ v1.199.0~v1.200.0(2026-09-16・老師營地建造/天賦星域/採集結算多項需求)— ①【最大一項】營地建造改成自由座標:ISL.camp.slots 由「格子索引+null佔位」改成「緊湊陣列,每筆帶 x/y/flip/scale」,islCampSlotsMigrate() 自動轉換舊存檔;建造/裝飾都能自由拖曳+左右翻轉+縮放(0.5~2.0,對應 -50%~+100%);移除舊版「進搬移模式→點另一格互換」,改直接拖曳;HUD 新增「🏗 設施 X/Y」取代原本的「空地」欄位,點開看清單與剩餘空間。 ②天賦星域視窗改左右兩欄:星盤固定右半部 50% 滿版,左半部放點數/快速跳轉/縮放/收合說明。 ③採集完成視窗「繼續」鈕改 position:sticky 貼在可視範圍底部,不管內容多長字多大都不必再捲動才看得到;順便字級全面調大、視窗位置上移(#isl-act-body 上下留白收窄)。 ⚠ 本輪風險:營地格子系統是大範圍資料結構改動,沒有實機帶著舊存檔走一遍完整流程(建造/升級/修理/夜襲/擴建/好友參觀)測試,只做了語法檢查與程式碼審查,麻煩老師這次務必實機驗收,尤其是帶著現有測試存檔進場那一刻的自動轉檔。 —   /* ★ v1.198.0(2026-09-16・老師野外跳躍/跑步三項)— ①修正向左跳躍時鏡像消失(瞬間變回面朝右)的 bug:.jump 動畫與 .flip 靜態 scaleX(-1) 是同一個 transform 屬性,動畫播放期間會整個蓋掉靜態值,改成把 scaleX(-1) 直接寫進每一格關鍵影格(islJumpHopFlip),翻轉全程保留。 ②持續跑步中跳躍(奮力跳躍)高度距離 +100%:面朝方向下 1 格被擋(# 或 ~)且下 2 格是普通可走地就整段跳過去,下 2 格是水一律不准跳(不會跳進水裡)。⚠ 遮罩目前只有 #(不可走,矮石頭/草叢/厚牆混在一起)與 ~(水)兩種符號,尚無法分辨「矮到跳得過去」與「真的牆」,本輪先做規則對的簡化版,細分地圖遮罩資料是下一輪工程。 ③連續點擊地面兩下切換成跑步移動到該點(單擊維持原本走路速度):islTapToMove 新增 run 參數,islTick 的 running 判定納入 _IS.pathRun。 —   /* ★ v1.197.0(2026-09-16・老師荒島求生 UI/UX 一輪多項需求)— ①採集/野外遇到夥伴視窗新增寵物圖片(islPetEncounterOpen 接上 islPetPicHtml) ②營地主角尺寸縮小50%(ISL_CAMP_CHAR_MULT),已收服的寵物同步縮放並在營地空地隨機漫步(islCampPetsPaint/islCampPetsWanderStart,現有素材仍是靜態立繪,走路/奔跑姿態圖片待老師之後上傳) ③營地右側選單寬度再縮減50%(各斷點/iPad 同步砍半),移除選單裡的武器/防具(仍在👤角色子選單) ④商店改成點了直接開「買東西」畫面,移除中間的購買/賣出/委託選擇層(islShopOpen('buy') 直呼) ⑤主角能力視窗捲動後開說明不再跳回頂端(捲動位置存/還原) ⑥夥伴圖鑑卡片圖片 object-fit 改 contain(不再裁切放大局部) ⑦夥伴詳情視窗改分區塊排版(.isl-petinfo,比照英雄圖鑑分欄視覺) ⑧頂部新增醒目更新通知條(#isl-updatebar,偵測到新版就亮,點了觸發 mgVerReload) ⑨修正手動更新後可能落到小遊戲大廳的問題:更新前記一次性旗標 isl_resume_camp,islEnter() 消費後直接開營地不回大地圖。 ⚠ 本輪未完成(下一輪接續):營地「空地」欄位移到頂部與「設施」清單合併顯示、建造設施改成像裝飾一樣自由拖曳/鏡像/縮放(這項牽動整個營地建造格系統,範圍較大,留給下一輪專門處理);寵物走路/奔跑/睡覺/坐下姿態圖與缺少的材料/選單/商品/道具圖片(HD-2D 像素風)需要老師之後提供或生成,已整理成清單(見交付的《像素荒島求生記_v1.197需求圖片清單.md》)。 —
+var MG_VER = 'v1.203.0';   /* ★ v1.203.0(2026-09-16・老師「先隱藏那個虛線框」)— 全域 .isl-noimg(缺圖佔位樣式,不只本輪新按鈕在用,材料/建築/裝飾/寵物等所有圖片缺圖時都走這支)拿掉虛線框/斜紋底/🖼角標,只留乾淨的 emoji,視覺上跟改版前一樣;機制本身沒拆,之後想恢復提示外框只要改回兩行 CSS,不必動 JS。 —   /* ★ v1.202.0(2026-09-16・老師「按鈕/選單ICON全部先掛好,缺圖就用預設」)— 側欄五大分類、角色/營地/探索/休息子選單項目、頂部 HUD 十顆藥丸、設定選單五顆一般按鈕,全部從純 emoji 改接 islIcoHtml(key, emoji, px):有對應圖片就顯示圖片,沒圖片(檔案還沒生成)自動退回原本的 emoji(外面多一圈淡淡的虛線框提示「這裡還可以放圖」,不影響操作)。island_db.js 同步新增對應的 47 個 D.IMG[ui_*] 圖鍵(D.VER→v1.197.0)。⚠ 天氣圖示(☀🌧🌀依天氣切換)、✕(離開)維持純 emoji 不做圖。 —   /* ★★ v1.201.0(2026-09-16・老師「檢查荒島求生中明顯的BUG」)★★ — 找到一組系統性死鍵:mgAutoBusy()/mgVerReload()/mgAutoUpdateBoot() 這一區塊(v1.187.0 引入)多處誤寫成 `window._IS`/`window.ISL`/`window.MG`/`window.toast`——這四個識別字全部是宣告在同一個 頂層 IIFE 內的區域變數/函式(var _IS={}、var ISL=null、var MG={}、function toast(){}),從來不是 window 的屬性,`window.X` 一律是 undefined,`if(window.X && ...)` 因此**永遠短路成 false**,後面那半句(才是真正想檢查的東西)從來沒有機會執行。實際影響:①mgAutoBusy() 的「人在荒島裡就算忙」「15款小遊戲進行中就算忙」兩條判斷永遠不成立⇒ 玩到一半自動更新照樣可能打斷玩家(v1.187.0 想修的那個bug其實沒修好);②mgVerReload()/MG_FORCE_RELOAD 重整前「先存檔」與「標記 ?mode=island」兩步永遠不會執行⇒ 手動或自動更新都有進度遺失與掉回小遊戲大廳的風險(上一輪 v1.197.0 修的 isl_resume_camp 也踩到同一個坑,新增的旗標同樣寫成 window._IS,一樣沒有生效);③更新中的 toast 提示不會顯示。修法:全部改回不加 window. 的純變數參照(_IS/ISL/MG/toast,JS 閉包本來就讀得到,不需要也不能透過 window 取),5 處一次修正。 —   /* ★ v1.199.0~v1.200.0(2026-09-16・老師營地建造/天賦星域/採集結算多項需求)— ①【最大一項】營地建造改成自由座標:ISL.camp.slots 由「格子索引+null佔位」改成「緊湊陣列,每筆帶 x/y/flip/scale」,islCampSlotsMigrate() 自動轉換舊存檔;建造/裝飾都能自由拖曳+左右翻轉+縮放(0.5~2.0,對應 -50%~+100%);移除舊版「進搬移模式→點另一格互換」,改直接拖曳;HUD 新增「🏗 設施 X/Y」取代原本的「空地」欄位,點開看清單與剩餘空間。 ②天賦星域視窗改左右兩欄:星盤固定右半部 50% 滿版,左半部放點數/快速跳轉/縮放/收合說明。 ③採集完成視窗「繼續」鈕改 position:sticky 貼在可視範圍底部,不管內容多長字多大都不必再捲動才看得到;順便字級全面調大、視窗位置上移(#isl-act-body 上下留白收窄)。 ⚠ 本輪風險:營地格子系統是大範圍資料結構改動,沒有實機帶著舊存檔走一遍完整流程(建造/升級/修理/夜襲/擴建/好友參觀)測試,只做了語法檢查與程式碼審查,麻煩老師這次務必實機驗收,尤其是帶著現有測試存檔進場那一刻的自動轉檔。 —   /* ★ v1.198.0(2026-09-16・老師野外跳躍/跑步三項)— ①修正向左跳躍時鏡像消失(瞬間變回面朝右)的 bug:.jump 動畫與 .flip 靜態 scaleX(-1) 是同一個 transform 屬性,動畫播放期間會整個蓋掉靜態值,改成把 scaleX(-1) 直接寫進每一格關鍵影格(islJumpHopFlip),翻轉全程保留。 ②持續跑步中跳躍(奮力跳躍)高度距離 +100%:面朝方向下 1 格被擋(# 或 ~)且下 2 格是普通可走地就整段跳過去,下 2 格是水一律不准跳(不會跳進水裡)。⚠ 遮罩目前只有 #(不可走,矮石頭/草叢/厚牆混在一起)與 ~(水)兩種符號,尚無法分辨「矮到跳得過去」與「真的牆」,本輪先做規則對的簡化版,細分地圖遮罩資料是下一輪工程。 ③連續點擊地面兩下切換成跑步移動到該點(單擊維持原本走路速度):islTapToMove 新增 run 參數,islTick 的 running 判定納入 _IS.pathRun。 —   /* ★ v1.197.0(2026-09-16・老師荒島求生 UI/UX 一輪多項需求)— ①採集/野外遇到夥伴視窗新增寵物圖片(islPetEncounterOpen 接上 islPetPicHtml) ②營地主角尺寸縮小50%(ISL_CAMP_CHAR_MULT),已收服的寵物同步縮放並在營地空地隨機漫步(islCampPetsPaint/islCampPetsWanderStart,現有素材仍是靜態立繪,走路/奔跑姿態圖片待老師之後上傳) ③營地右側選單寬度再縮減50%(各斷點/iPad 同步砍半),移除選單裡的武器/防具(仍在👤角色子選單) ④商店改成點了直接開「買東西」畫面,移除中間的購買/賣出/委託選擇層(islShopOpen('buy') 直呼) ⑤主角能力視窗捲動後開說明不再跳回頂端(捲動位置存/還原) ⑥夥伴圖鑑卡片圖片 object-fit 改 contain(不再裁切放大局部) ⑦夥伴詳情視窗改分區塊排版(.isl-petinfo,比照英雄圖鑑分欄視覺) ⑧頂部新增醒目更新通知條(#isl-updatebar,偵測到新版就亮,點了觸發 mgVerReload) ⑨修正手動更新後可能落到小遊戲大廳的問題:更新前記一次性旗標 isl_resume_camp,islEnter() 消費後直接開營地不回大地圖。 ⚠ 本輪未完成(下一輪接續):營地「空地」欄位移到頂部與「設施」清單合併顯示、建造設施改成像裝飾一樣自由拖曳/鏡像/縮放(這項牽動整個營地建造格系統,範圍較大,留給下一輪專門處理);寵物走路/奔跑/睡覺/坐下姿態圖與缺少的材料/選單/商品/道具圖片(HD-2D 像素風)需要老師之後提供或生成,已整理成清單(見交付的《像素荒島求生記_v1.197需求圖片清單.md》)。 —
    ①魔物 HP/能力隨等級成長同步玩家:D.BT.MON_LV_HP 0.18→0.22、MON_LV_ATK 0.12→0.15(island_db 端);②魔物數量再增加:D.ENC 全表 num 下限上限各調高一格,遺跡/火山頂到既有上限 4 隻,解決「小怪 4 打 1 太沒難度」(island_db 端,⚠ 這兩項是比例反推的估計值,未經沙盤實測,下一輪建議驗證)。
    ③迴力鏢命中後飛回主角手上的動畫:新增 `islBtWeaponFlyStart('boom')`,純 CSS keyframes 讓武器圖示(缺圖退 emoji)在 #isl-bt-stage 裡跑一趟「主角→魔物→主角」,視覺與傷害結算刻意分開跑,互不依賴。
    ④弓箭射出音效+特效:新增 `islBtWeaponFlyStart('arrow')`,一支箭形符號一次性飛越戰場,命中瞬間疊一聲 `sfx-tengu-strike`(借用既有音效當箭矢命中的專屬音,和一般近戰共用的 sfx-normalatk/sfx-crit 區分開,沒有新增任何音檔)。
@@ -14989,19 +14992,19 @@ function islChibiHtml(c, cls){   /* ★ v1.109.0 有像素 sprite 可用時一�
 function islHud(){
   if(!ISL) return;
   var rs;   /* ★ v1.170.0 資源那一項改成單一倉庫圖示,原本組字串用的 db/keys/i/h/n 全部用不到了 */
-  $('isl-hud-day').textContent = '📅 ' + ISL.day;   /* ★ v1.124.0 常駐欄位只留圖示+數字,文字說明改到點擊後的小視窗 */
-  var wxc = $('isl-hud-wx'); if(wxc){ var wxd = islWxDef(); wxc.textContent = wxd.e; wxc.className = 'ih btn tipable wx-' + islWeather(); }   /* ★ v1.124.0 只留天氣圖示 */   /* ★ v1.100.0 */
-  $('isl-hud-ap').textContent = '⚡ ' + ISL.ap;
+  $('isl-hud-day').innerHTML = islIcoHtml('ui_day', '📅', 22) + ' ' + ISL.day;   /* ★ v1.124.0 常駐欄位只留圖示+數字,文字說明改到點擊後的小視窗;★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— 改用 islIcoHtml,沒圖照樣顯示 📅 emoji */
+  var wxc = $('isl-hud-wx'); if(wxc){ var wxd = islWxDef(); wxc.textContent = wxd.e; wxc.className = 'ih btn tipable wx-' + islWeather(); }   /* ★ v1.124.0 只留天氣圖示 */   /* ★ v1.100.0 天氣依種類換圖示的變化太多(晴/雨/颱風…),先不做成固定圖,維持 emoji */
+  $('isl-hud-ap').innerHTML = islIcoHtml('ui_ap', '⚡', 22) + ' ' + ISL.ap;
   setTimeout(islTiredCheck, 0);   /* ★ v1.119.0 AP 用完 → 角色頭上泡泡(等畫面元素就位) */
-  var hpb = $('isl-hud-hp'); if(hpb){ hpb.textContent = '❤️ ' + ISL.hp; hpb.classList.toggle('low', ISL.hp < ISL.hpMax * 0.4); }   /* ★ v1.92.0 */
-  $('isl-hud-shell').textContent = '🐚 ' + ISL.shell;
-  var clc = $('isl-hud-camplv'); if(clc) clc.textContent = '🏠 ' + ISL.camp.lv;   /* ★ v1.172.0 老師裁定【甲】:舒適度那一顆併進來了,HUD 只顯示營地等級,😊 數字在說明小視窗 */   /* ★ v1.124.0 營地等級改 🏠(🏕 留給「回營」鈕) */
-  var bldc = $('isl-hud-bld'); if(bldc){ var _bcl = (islDB().CAMP_LV[ISL.camp.lv] || islDB().CAMP_LV[1]); bldc.textContent = '🏗 ' + ISL.camp.slots.length + '/' + _bcl.n; }   /* ★ v1.199.0 老師「空地欄位移除,改成設施在頂部營地等級右邊顯示清單和剩餘空間」 */
-  var twc = $('isl-hud-tower'), twB = islCampHasBld('tower'); if(twc){ if(twB && ISL.char){ var tr = islRaidRoll(); twc.classList.remove('hidden'); twc.textContent = '🗼' + (tr.raid ? (twB.lv >= 2 ? tr.waves : '!') : ''); twc.classList.toggle('warn', !!tr.raid); } else twc.classList.add('hidden'); }   /* ★ v1.123.0 瞭望台常駐 HUD(islRaidRoll 是 seed 決定,今天不會變) */
-  rs = $('isl-hud-res'); if(rs) rs.textContent = '📦';   /* ★ v1.185.0 老師:資源總覽圖示改箱子(與上面 HTML 初值同步,islHud() 每次重繪都會蓋回這裡)。★ v1.170.0(老師:iPad 版頂部資訊列過長)— 原本這一顆會把 🪵🪨🌿🍓💧🔬 六項數量全部攤在 HUD 上(實測 355px,是整條最寬的一項),改成只留一個圖示,完整數量點下去在說明小視窗看(islHudTipText('res')) */
+  var hpb = $('isl-hud-hp'); if(hpb){ hpb.innerHTML = islIcoHtml('ui_hp', '❤️', 22) + ' ' + ISL.hp; hpb.classList.toggle('low', ISL.hp < ISL.hpMax * 0.4); }   /* ★ v1.92.0 */
+  $('isl-hud-shell').innerHTML = islIcoHtml('ui_shell', '🐚', 22) + ' ' + ISL.shell;
+  var clc = $('isl-hud-camplv'); if(clc) clc.innerHTML = islIcoHtml('ui_camplv', '🏠', 22) + ' ' + ISL.camp.lv;   /* ★ v1.172.0 老師裁定【甲】:舒適度那一顆併進來了,HUD 只顯示營地等級,😊 數字在說明小視窗 */   /* ★ v1.124.0 營地等級改 🏠(🏕 留給「回營」鈕) */
+  var bldc = $('isl-hud-bld'); if(bldc){ var _bcl = (islDB().CAMP_LV[ISL.camp.lv] || islDB().CAMP_LV[1]); bldc.innerHTML = islIcoHtml('ui_bld', '🏗', 22) + ' ' + ISL.camp.slots.length + '/' + _bcl.n; }   /* ★ v1.199.0 老師「空地欄位移除,改成設施在頂部營地等級右邊顯示清單和剩餘空間」 */
+  var twc = $('isl-hud-tower'), twB = islCampHasBld('tower'); if(twc){ if(twB && ISL.char){ var tr = islRaidRoll(); twc.classList.remove('hidden'); twc.innerHTML = islIcoHtml('ui_tower', '🗼', 22) + (tr.raid ? (twB.lv >= 2 ? tr.waves : '!') : ''); twc.classList.toggle('warn', !!tr.raid); } else twc.classList.add('hidden'); }   /* ★ v1.123.0 瞭望台常駐 HUD(islRaidRoll 是 seed 決定,今天不會變) */
+  rs = $('isl-hud-res'); if(rs) rs.innerHTML = islIcoHtml('ui_res', '📦', 22);   /* ★ v1.185.0 老師:資源總覽圖示改箱子(與上面 HTML 初值同步,islHud() 每次重繪都會蓋回這裡)。★ v1.170.0(老師:iPad 版頂部資訊列過長)— 原本這一顆會把 🪵🪨🌿🍓💧🔬 六項數量全部攤在 HUD 上(實測 355px,是整條最寬的一項),改成只留一個圖示,完整數量點下去在說明小視窗看(islHudTipText('res')) */
   try{ islAilPaint(); }catch(_ap){}   /* ★ v1.160.0 🤒 不良狀態藥丸 */
   var sv = $('isl-hud-save'); if(sv){ if(MG.user) sv.classList.remove('off'); else sv.classList.add('off'); }
-  $('isl-hud-bag').textContent = '🎒 ' + islBagCount() + '/' + ISL.bag.cap;
+  $('isl-hud-bag').innerHTML = islIcoHtml('ui_bag', '🎒', 22) + ' ' + islBagCount() + '/' + ISL.bag.cap;
   if(_IS.hudTip) islHudTipPaint(_IS.hudTip);   /* ★ v1.124.0 說明視窗開著時,數值改變即時跟著更新 */
 }
 /* ★ v1.119.0 老師:AP 消耗清單視窗(點 HUD 的 AP 藥丸) */
@@ -15660,6 +15663,7 @@ window.islEnter = function(){
     _IS.noticeShown = false;   /* ★ v1.177.0 每次進場重置(見下方測試版告知) */
     islDailyCheck();
     islHud();
+    try{ islGearPaint(); }catch(_gp0){}   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— ⚙/🆘 這兩顆是常駐 HUD 按鈕,不必等玩家第一次點開設定選單才換圖,進場就先跑一次 */
     if(!ISL.char){ islCreateOpen(); }
     else {
       var _islResumeCamp = false;   /* ★ v1.197.0 老師「手動更新後應該直接回到營地」— 消費 mgVerReload/MG_FORCE_RELOAD 存的一次性旗標 */
@@ -17399,11 +17403,11 @@ function islCampPaint(){
   islDecoPaint();   /* ★ v1.94.0 裝飾層 */
   islBoardSignPaint();   /* ★ v1.107.0 告示牌顯示最新一則留言 */
   side.innerHTML =   /* ★ v1.115.0 老師:側欄濃縮成 4 顆大項目,點了開細項(islSubOpen),細項再開內容視窗;舒適度/營地 Lv 移到頂端 HUD */
-    '<button class="cat" onclick="islSubOpen(\'char\')"><span class="ci">👤</span>角色' + (islMailCount() ? '<span class="bd">' + islMailCount() + '</span>' : '') + '</button>' +
-    '<button class="cat" onclick="islSubOpen(\'camp\')"><span class="ci">🏕</span>營地</button>' +
-    '<button class="cat" onclick="islShopOpen(\'buy\')"><span class="ci">🦦</span>商店' + (islQuestOpenCount() ? '<span class="bd">' + islQuestOpenCount() + '</span>' : '') + '</button>' +   /* ★ v1.197.0 老師「商店直接打開買東西畫面,中間那層購買/賣出/委託選單移除」— 阿獺雜貨鋪本身的視窗(islShopOpen)頭部就已經有買/賣/委託三分頁可切換(圖1),中間這層 islSubOpen('shop') 選單是多餘的一層,直接呼叫 islShopOpen('buy') 跳過它 */
-    '<button class="cat" onclick="islSubOpen(\'explore\')"><span class="ci">🗺</span>探索</button>' +
-    '<button class="cat" onclick="islSubOpen(\'rest\')"><span class="ci">🌙</span>休息</button>';   /* ★ v1.125.0 老師:休息從「探索」裡搬出來獨立一個分頁 */
+    '<button class="cat" onclick="islSubOpen(\'char\')"><span class="ci">' + islIcoHtml('ui_char', '👤', 40) + '</span>角色' + (islMailCount() ? '<span class="bd">' + islMailCount() + '</span>' : '') + '</button>' +
+    '<button class="cat" onclick="islSubOpen(\'camp\')"><span class="ci">' + islIcoHtml('ui_camp', '🏕', 40) + '</span>營地</button>' +
+    '<button class="cat" onclick="islShopOpen(\'buy\')"><span class="ci">' + islIcoHtml('ui_shop', '🦦', 40) + '</span>商店' + (islQuestOpenCount() ? '<span class="bd">' + islQuestOpenCount() + '</span>' : '') + '</button>' +   /* ★ v1.197.0 老師「商店直接打開買東西畫面,中間那層購買/賣出/委託選單移除」— 阿獺雜貨鋪本身的視窗(islShopOpen)頭部就已經有買/賣/委託三分頁可切換(圖1),中間這層 islSubOpen('shop') 選單是多餘的一層,直接呼叫 islShopOpen('buy') 跳過它 */
+    '<button class="cat" onclick="islSubOpen(\'explore\')"><span class="ci">' + islIcoHtml('ui_explore', '🗺', 40) + '</span>探索</button>' +
+    '<button class="cat" onclick="islSubOpen(\'rest\')"><span class="ci">' + islIcoHtml('ui_rest', '🌙', 40) + '</span>休息</button>';   /* ★ v1.125.0 老師:休息從「探索」裡搬出來獨立一個分頁 */   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— 五顆大分類改走 islIcoHtml(有圖用圖,沒圖照樣顯示原本的 emoji,只是外面多一圈淡淡的虛線框,見 islNoImgHtml) */
   islHud();
 }
 /* ══════════════════════════════════════════════════════════════════════════
@@ -17739,51 +17743,51 @@ window.islDecoScale = function(i, delta){
 function islSubItems(cat){
   var db = islDB(), hasFire = islCampHasBld('campfire'), L = [];
   if(cat === 'char'){
-    L.push({ e:'👤', t:'角色狀態', f:'islCharOpen()' });
-    if(ISL.hp < ISL.hpMax) L.push({ e:'🩹', t:'治療', f:'islTreatOpen()', cls:'warn' });
-    if(islAilList().length) L.push({ e:'🤒', t:'身體狀況', f:'islAilOpen()', cls:'warn' });
-    if(islSkEff('feast') > 0) L.push({ e:'🍽', t:'營地聚餐', f:'islSkFeast()', cls: (ISL.skFeastDay === ISL.day ? '' : 'gold') });   /* ★ v1.162.0 */
-    L.push({ e:'🌟', t:'天賦星域' + (islSkPts() ? '（' + islSkPts() + '）' : ''), f:'islSkOpen()', cls: islSkPts() ? 'gold' : '' });   /* ★ v1.161.0 有未使用點數時標金色 */   /* ★ v1.160.0 有不良狀態才出現 */
-    L.push({ e:'🧭', t:'探險編組' + '（' + islPartyCount() + '/' + db.PARTY.MAX_ALLY + '）', f:'islPartyOpen()', cls: (islPartyCount() < db.PARTY.MAX_ALLY && islPetCount() > islPartyCount()) ? 'gold' : '' });   /* ★ v1.165.0 有夥伴閒置又沒排滿時標金色 */
-    L.push({ e:'📖', t:'夥伴圖鑑', f:'islPetDexOpen()', n: islPetCount() });   /* ★ v1.165.0 */
-    L.push({ e:'🎯', t:'特殊指令' + (islCmdUnlocked().length ? '（' + islCmdEquipped().length + '/' + db.SK_CMD_SLOTS + '）' : ''), f:'islCmdOpen()', cls: (islCmdUnlocked().length > islCmdEquipped().length) ? 'gold' : '' });   /* ★ v1.165.0 有解鎖但沒裝設時標金色 */
-    L.push({ e:'🎒', t:'物品包', f:'islBagOpen()' });
-    L.push({ e:'🗡', t:'武器', f:'islWeaponOpen()' });   /* ★ v1.121.0 */
-    L.push({ e:'🛡', t:'防具' + (islArmorCur() ? '' : '（未穿）'), f:'islArmorOpen()', cls: islArmorCur() ? '' : 'gold' });   /* ★ v1.187.0 沒穿防具時標金色提醒(戰鬥是「魔物攻擊 − 防禦」直接相減,不穿等於全額挨打) */
-    L.push(islIsGm() ? { e:'🎨', t:'換造型(GM)', f:'islLookOpen()' } : { e:'🎨', t:'換造型(尚未開放)', f:'islLookSoon()' });   /* ★ v1.148.0 老師「換造型功能先開啟讓 GM 可以使用」——依 islIsGm() 分流:GM 直接開 islLookOpen() 正式面板,一般玩家維持 v1.142.0 的「尚未開放」提示不變,正式對全體開放時把整行改回單純 `L.push({e:'🎨',t:'換造型',f:'islLookOpen()'});` 即可。 */
+    L.push({ e:'👤', t:'角色狀態', f:'islCharOpen()', img:'ui_charstat' });
+    if(ISL.hp < ISL.hpMax) L.push({ e:'🩹', t:'治療', f:'islTreatOpen()', cls:'warn', img:'ui_heal' });
+    if(islAilList().length) L.push({ e:'🤒', t:'身體狀況', f:'islAilOpen()', cls:'warn', img:'ui_ail' });
+    if(islSkEff('feast') > 0) L.push({ e:'🍽', t:'營地聚餐', f:'islSkFeast()', cls: (ISL.skFeastDay === ISL.day ? '' : 'gold'), img:'ui_feast' });   /* ★ v1.162.0 */
+    L.push({ e:'🌟', t:'天賦星域' + (islSkPts() ? '（' + islSkPts() + '）' : ''), f:'islSkOpen()', cls: islSkPts() ? 'gold' : '', img:'ui_talent' });   /* ★ v1.161.0 有未使用點數時標金色 */   /* ★ v1.160.0 有不良狀態才出現 */
+    L.push({ e:'🧭', t:'探險編組' + '（' + islPartyCount() + '/' + db.PARTY.MAX_ALLY + '）', f:'islPartyOpen()', cls: (islPartyCount() < db.PARTY.MAX_ALLY && islPetCount() > islPartyCount()) ? 'gold' : '', img:'ui_party' });   /* ★ v1.165.0 有夥伴閒置又沒排滿時標金色 */
+    L.push({ e:'📖', t:'夥伴圖鑑', f:'islPetDexOpen()', n: islPetCount(), img:'ui_petdex' });   /* ★ v1.165.0 */
+    L.push({ e:'🎯', t:'特殊指令' + (islCmdUnlocked().length ? '（' + islCmdEquipped().length + '/' + db.SK_CMD_SLOTS + '）' : ''), f:'islCmdOpen()', cls: (islCmdUnlocked().length > islCmdEquipped().length) ? 'gold' : '', img:'ui_cmd' });   /* ★ v1.165.0 有解鎖但沒裝設時標金色 */
+    L.push({ e:'🎒', t:'物品包', f:'islBagOpen()', img:'ui_bag' });   /* ★ v1.202.0 沿用舊版就登記好、一直沒接上任何消費點的 ui_bag(見 island_db D.IMG) */
+    L.push({ e:'🗡', t:'武器', f:'islWeaponOpen()', img:'ui_weapon' });   /* ★ v1.121.0 */
+    L.push({ e:'🛡', t:'防具' + (islArmorCur() ? '' : '（未穿）'), f:'islArmorOpen()', cls: islArmorCur() ? '' : 'gold', img:'ui_armor' });   /* ★ v1.187.0 沒穿防具時標金色提醒(戰鬥是「魔物攻擊 − 防禦」直接相減,不穿等於全額挨打) */
+    L.push(islIsGm() ? { e:'🎨', t:'換造型(GM)', f:'islLookOpen()', img:'ui_look' } : { e:'🎨', t:'換造型(尚未開放)', f:'islLookSoon()', img:'ui_look' });   /* ★ v1.148.0 老師「換造型功能先開啟讓 GM 可以使用」——依 islIsGm() 分流:GM 直接開 islLookOpen() 正式面板,一般玩家維持 v1.142.0 的「尚未開放」提示不變,正式對全體開放時把整行改回單純 `L.push({e:'🎨',t:'換造型',f:'islLookOpen()'});` 即可。 */
     /* ★ v1.175.0 測試期(只存裝置、不綁帳號):好友／信箱／留言板天生要有帳號與雲端,
        留著只會是一按就出錯的死鍵 ⇒ 整組收起來。ISL_TEST_LOCAL_ONLY 改回 false 就自動恢復。 */
     if(!islLocalOnly()){
-      L.push({ e:'👥', t:'好友', f:'islFriendsOpen()', n: ISL.friends && ISL.friends.length });
-      if(MG.user) L.push({ e:'📬', t:'信箱', f:'islMailOpen()', n: islMailCount() });
-      L.push({ e:'📋', t:'留言板', f:'islBoardOpen()', n: ISL.board && ISL.board.length });
+      L.push({ e:'👥', t:'好友', f:'islFriendsOpen()', n: ISL.friends && ISL.friends.length, img:'ui_friends' });
+      if(MG.user) L.push({ e:'📬', t:'信箱', f:'islMailOpen()', n: islMailCount(), img:'ui_mail' });
+      L.push({ e:'📋', t:'留言板', f:'islBoardOpen()', n: ISL.board && ISL.board.length, img:'ui_board' });
     }
-    if(ISL.flags.shipBuilt) L.push({ e:'🎬', t:'回憶', f:'islEndingPlay()' });
+    if(ISL.flags.shipBuilt) L.push({ e:'🎬', t:'回憶', f:'islEndingPlay()', img:'ui_ending' });
   } else if(cat === 'camp'){
-    L.push({ e:'🔨', t:'建造', f:'islCampBuildMenu(-1)' });
-    L.push({ e:'🔬', t:'研究', f:'islResearchOpen()' });
-    if(ISL.camp.lv < db.CAMP_MAX_LV) L.push({ e:'🏕', t:'擴建', f:'islCampExpand()' });
-    L.push({ e:'🔥', t:'生火' + (ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? '(已點)' : ''), f:'islCampFire()', dis: !hasFire });
-    L.push({ e:'🍳', t:'烹飪', f:'islCookOpen()', dis: !hasFire });
-    L.push({ e:'🪴', t:'裝飾', f:'islDecoOpen()' });
-    L.push({ e:'🏚', t:'倉庫', f:'islStoreOpen()' });
-    if(islCampHasBld('farm')) L.push({ e:'🌱', t:'農田', f:'islFarmOpen()' });
-    if(islCampHasBld('pen')) L.push({ e:'🐔', t:'畜欄', f:'islPenOpen()' });
-    if(islCampHasBld('bench')) L.push({ e:'🛠', t:'製作', f:'islCraftOpen()' });
+    L.push({ e:'🔨', t:'建造', f:'islCampBuildMenu(-1)', img:'ui_build' });
+    L.push({ e:'🔬', t:'研究', f:'islResearchOpen()', img:'ui_research' });
+    if(ISL.camp.lv < db.CAMP_MAX_LV) L.push({ e:'🏕', t:'擴建', f:'islCampExpand()', img:'ui_expand' });
+    L.push({ e:'🔥', t:'生火' + (ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? '(已點)' : ''), f:'islCampFire()', dis: !hasFire, img:'bld_campfire_1' });   /* ★ v1.202.0 生火/倉庫兩顆直接沿用對應建築圖(bld_campfire_1/bld_storage_1),不必另外做按鈕圖 */
+    L.push({ e:'🍳', t:'烹飪', f:'islCookOpen()', dis: !hasFire, img:'res_d_soup' });
+    L.push({ e:'🪴', t:'裝飾', f:'islDecoOpen()', img:'ui_deco' });
+    L.push({ e:'🏚', t:'倉庫', f:'islStoreOpen()', img:'bld_storage_1' });
+    if(islCampHasBld('farm')) L.push({ e:'🌱', t:'農田', f:'islFarmOpen()', img:'ui_farm' });
+    if(islCampHasBld('pen')) L.push({ e:'🐔', t:'畜欄', f:'islPenOpen()', img:'ui_pen' });
+    if(islCampHasBld('bench')) L.push({ e:'🛠', t:'製作', f:'islCraftOpen()', img:'ui_craft' });
     /* ★ v1.197.0 老師「營地選單中的武器和防具移除」— 武器/防具管理仍在 👤 角色 子選單裡(islWeaponOpen/islArmorOpen 沒有刪除,只是不在營地這個分類重複出現一次) */
   } else if(cat === 'rest'){   /* ★ v1.125.0 老師:休息獨立成一個分頁(睡覺/存檔/重新開始) */
-    L.push({ e:'🌙', t:'休息睡覺', f:'islRest()', cls:'warn' });
-    L.push({ e:'💾', t:'存檔', f:'islSaveTap()' });
+    L.push({ e:'🌙', t:'休息睡覺', f:'islRest()', cls:'warn', img:'ui_sleep' });
+    L.push({ e:'💾', t:'存檔', f:'islSaveTap()', img:'ui_save' });
     /* ★ v1.177.0 稽核修正(資料遺失最大暴露面):測試期是「同一台平板共用一座島」,而這顆鈕兩下確認就會
        islDefaultSave() 並立刻覆蓋 localStorage ⇒ 一個學生手癢,同一台 iPad 上前面所有人蓋的營地全沒了,
        而且測試期不上雲、連雲端副本都沒有,無法還原。⇒ 測試期只留給 GM(老師自己要重測還是按得到);
        ISL_TEST_LOCAL_ONLY 改回 false(各自有自己的雲端島)時自動恢復成全體都看得到,不必再改這行。 */
-    if(!islLocalOnly() || islIsGm()) L.push({ e:'🗑', t:'重新開始' + (islLocalOnly() ? '(GM)' : ''), f:'islResetAsk()', cls:'ghost' });
+    if(!islLocalOnly() || islIsGm()) L.push({ e:'🗑', t:'重新開始' + (islLocalOnly() ? '(GM)' : ''), f:'islResetAsk()', cls:'ghost', img:'ui_reset' });
   } else {
-    L.push({ e:'🗺', t:'出發', f:'islGoMap()', cls:'gold' });
-    if(islCmdEquipped('field').length) L.push({ e:'🎯', t:'特殊指令', f:'islCmdField()', cls:'gold' });   /* ★ v1.165.0 只在真的裝了野外類指令時才出現,不放空按鈕 */
-    L.push({ e:'📖', t:'圖鑑', f:'islCodexOpen()', n: islCodexCount() });
-    L.push({ e:'📅', t:'島上日誌', f:'islCalOpen()' });   /* ★ v1.125.0 日曆(重要履歷) */
+    L.push({ e:'🗺', t:'出發', f:'islGoMap()', cls:'gold', img:'ui_go' });
+    if(islCmdEquipped('field').length) L.push({ e:'🎯', t:'特殊指令', f:'islCmdField()', cls:'gold', img:'ui_cmd' });   /* ★ v1.165.0 只在真的裝了野外類指令時才出現,不放空按鈕 */
+    L.push({ e:'📖', t:'圖鑑', f:'islCodexOpen()', n: islCodexCount(), img:'ui_codex' });
+    L.push({ e:'📅', t:'島上日誌', f:'islCalOpen()', img:'ui_day' });   /* ★ v1.125.0 日曆(重要履歷) */
   }
   return L;
 }
@@ -17791,7 +17795,7 @@ window.islSubOpen = function(cat){
   var sm = $('isl-submenu'), L = islSubItems(cat), h = '', i, it, ttl = { char:'👤 角色', camp:'🏕 營地', shop:'🦦 阿獺雜貨鋪', explore:'🗺 探索', rest:'🌙 休息' }[cat] || '';
   if(!sm) return;
   playSfx('sfx-tap', 0.3);
-  for(i = 0; i < L.length; i++){ it = L[i]; h += '<button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '"><span class="ci">' + it.e + '</span>' + islEsc(it.t) + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button>'; }
+  for(i = 0; i < L.length; i++){ it = L[i]; h += '<button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '"><span class="ci">' + (it.img ? islIcoHtml(it.img, it.e, 34) : it.e) + '</span>' + islEsc(it.t) + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button>'; }   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— it.img 有值就走 islIcoHtml(有圖用圖,沒圖照樣顯示 it.e 這個 emoji,只是外面多一圈淡淡的虛線框) */
   $('isl-sub-title').innerHTML = ttl + '<span class="grow"></span><button class="isl-x" onclick="islSubClose()">✕</button>';
   $('isl-sub-grid').innerHTML = h;
   sm.classList.remove('hidden');
@@ -17883,7 +17887,12 @@ window.islGearToggle = function(){ var g = $('isl-gear'), hud = $('isl-hud'); if
   /* ★ v1.132.0 開啟時量 HUD 當下的真實高度再定位:HUD 會因 iPad/桌機斷點、字級、一列或兩列而變高,寫死 52px 在某些版面會壓到 HUD 或離太遠 */
   if(!g.classList.contains('hidden') && hud){ g.style.top = (hud.offsetTop + hud.offsetHeight + 4) + 'px'; }
   islGearPaint(); };
-window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.textContent = '🍃 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.textContent = '🌊 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = islIsGm() ? '' : 'none'; var bt = $('isl-gear-bt'); if(bt) bt.style.display = islIsGm() ? '' : 'none';
+window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.innerHTML = islIcoHtml('ui_amb', '🍃', 20) + ' 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.innerHTML = islIcoHtml('ui_ambsfx', '🌊', 20) + ' 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = islIsGm() ? '' : 'none'; var bt = $('isl-gear-bt'); if(bt) bt.style.display = islIsGm() ? '' : 'none';   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— 這兩顆原本用 textContent 整段覆寫(含開/關文字),改 innerHTML 才能同時保留圖示 */
+  var gb = $('isl-gear-bgm'); if(gb && !gb._ico){ gb._ico = true; gb.innerHTML = islIcoHtml('ui_bgm', '🎵', 20) + ' 音樂音量'; }
+  var gs = $('isl-gear-sfx'); if(gs && !gs._ico){ gs._ico = true; gs.innerHTML = islIcoHtml('ui_sfx', '🔊', 20) + ' 音效音量'; }
+  var gf = $('isl-gear-full'); if(gf && !gf._ico){ gf._ico = true; gf.innerHTML = islIcoHtml('ui_fullscreen', '⛶', 20) + ' 全螢幕'; }
+  var hg = $('isl-hud-gear'); if(hg && !hg._ico){ hg._ico = true; hg.innerHTML = islIcoHtml('ui_gear', '⚙', 22); }
+  var hs = $('isl-hud-sos'); if(hs && !hs._ico){ hs._ico = true; hs.innerHTML = islIcoHtml('ui_sos', '🆘', 22); }   /* ★ v1.202.0 這幾顆內容固定不隨狀態變,用 ._ico 記一次性旗標,不必每次開選單都重寫 innerHTML(省一點事,也避免蓋掉使用者這次互動中可能有的其他狀態) */
   /* ★ v1.183.0(老師:「大地圖的齒輪功能新增 重新開始,可清除所有記錄(GM測試專用)」)—
      沿用既有的 islResetAsk()(兩段確認 → islDefaultSave → 強制寫雲端 → 回創角頁),刻意不另寫第二套重置流程。
      ⚠ 這顆刻意和 🌙 休息裡那顆一樣只認 islIsGm():齒輪在每個畫面都按得到(大地圖/場景/營地),
