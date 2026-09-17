@@ -4576,13 +4576,19 @@ window.islDirectVeilOff = function(){
    z-index 46 = 壓過場景(<40)但低於 #isl-hud-tip(47) 與 #isl-modal(40+),不會蓋掉彈窗。 */
 #isl-gear.hidden{display:none;}
 #isl-gear button{background:#2a6f97;color:#fff;border:2px solid #5fb3d9;border-radius:12px;padding:10px 12px;font-size:17px;font-weight:700;text-align:left;}
-#isl-camp-side button.cat{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;grid-column:1 / -1;min-height:92px;font-size:20px;font-weight:900;letter-spacing:1px;background:linear-gradient(180deg,#3d8fbf,#1f5a7d);border:3px solid #8fd3f4;border-radius:18px;box-shadow:0 4px 0 #0e3348,0 6px 14px rgba(0,0,0,.4);}
+/* ★ v1.224.0 老師「荒島求生所有面板中的選單按鈕ICON改成圖為主、字為輔,圖片全部放大填滿按鈕,字重疊在圖片的右下方(不遮住圖片)」—
+   三組共用的「選單按鈕」(五顆大分類 .cat、#isl-submenu 底下服務全部面板(角色/營地/商店/探索/休息)的 .sm-grid button、探索子選單的 .isl-sub-c
+   圓形按鈕)原本都是「圖示疊文字上下兩截」的排法,改成圖示撐滿整顆按鈕(position:absolute;inset:0 置中)、文字改成小徽章疊在右下角
+   (半透明底色墊底避免看不清楚,但只佔按鈕角落一小塊,不會蓋住圖示本體)。.isl-card(建造/研究/武器/防具/製作台五個詳細清單,每張卡除了
+   圖示還有敘述/花費/按鈕等大量資訊)不在這次調整範圍內——那些是「選項卡」不是「選單按鈕」,圖片填滿會擠掉必要的文字資訊。 */
+#isl-camp-side button.cat{position:relative;display:flex;align-items:center;justify-content:center;grid-column:1 / -1;min-height:92px;font-weight:900;letter-spacing:1px;background:linear-gradient(180deg,#3d8fbf,#1f5a7d);border:3px solid #8fd3f4;border-radius:18px;box-shadow:0 4px 0 #0e3348,0 6px 14px rgba(0,0,0,.4);overflow:hidden;}
 #isl-camp-side button.cat.gold{background:linear-gradient(180deg,#b8902c,#7d5e12);border-color:#ffd166;}   /* ★ 本輪:拜訪模式側欄併入 .cat 樣式後,gold/warn 疊加類要蓋過 .cat 自己的底色,選擇器加上兩個 class 才會贏(單一 class 的 specificity 打平,後定義的 .cat 反而會蓋掉先定義的 .gold/.warn) */
 #isl-camp-side button.cat.warn{background:linear-gradient(180deg,#a04a24,#6b2f16);border-color:#ff9f43;}
 #isl-camp-side button.cat:active{transform:translateY(3px);box-shadow:0 1px 0 #0e3348;}
-#isl-camp-side button.cat .ci{font-size:40px;line-height:1;}
+#isl-camp-side button.cat .ci{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:58px;line-height:1;}
 .ci .isl-ico,.ci .isl-noimg{width:1em !important;height:1em !important;}   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— islIcoHtml 回傳的 img/佔位 span 是寫死 px,套進 .ci 這種靠 font-size 決定圖示大小的容器裡,改用 1em 讓它跟著 .ci 目前的 font-size(含各斷點/iPad 覆寫)走,不必每個斷點各自再寫一次圖示尺寸 */
-#isl-camp-side .bd,#isl-submenu .bd{position:absolute;right:8px;top:8px;min-width:24px;height:24px;border-radius:12px;background:#e63946;color:#fff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+#isl-camp-side .bd,#isl-submenu .bd{position:absolute;right:8px;top:8px;min-width:24px;height:24px;border-radius:12px;background:#e63946;color:#fff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 6px;z-index:2;}
+#isl-camp-side button.cat .lb,#isl-submenu .sm-grid button .lb{position:absolute;right:5px;bottom:3px;left:5px;font-size:13px;font-weight:800;background:rgba(0,0,0,.62);padding:2px 6px;border-radius:8px;line-height:1.35;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:1;}   /* ★ v1.224.0 圖為主字為輔的文字徽章:right/bottom 定位貼右下角,left 一起給一個保守值只是避免長詞在窄按鈕裡爆版,text-align:right 讓短詞仍然靠右;半透明黑底墊字才看得清楚,不加外框、不佔滿整顆按鈕 */
 /* ★ v1.186.0 老師⑧「營地大選單開啟的小選單被裁切在小框架中拖曳很難使用,改成開啟接近全螢幕的視窗,
    一目瞭然」——舊版是靠右對齊的小框(width:min(520px,60%),還要 padding-right:290px 讓開側欄),
    細項一多(例如「🗺 探索」底下的各種活動)就要在小框裡捲來捲去。改成置中、吃滿螢幕大部分空間的
@@ -4593,8 +4599,8 @@ window.islDirectVeilOff = function(){
 #isl-submenu .sm-title{display:flex;align-items:center;flex:0 0 auto;font-size:24px;font-weight:900;color:#ffd166;margin:0 0 10px 4px;}
 #isl-submenu .sm-title .isl-x{position:static;margin-left:auto;}
 #isl-submenu .sm-grid{flex:1 1 auto;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start;}
-#isl-submenu .sm-grid button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:86px;background:linear-gradient(180deg,#2f7ba6,#1d5677);color:#fff;border:2px solid #7cc4e8;border-radius:16px;font-size:17px;font-weight:700;}
-#isl-submenu .sm-grid button .ci{font-size:34px;line-height:1;}
+#isl-submenu .sm-grid button{position:relative;display:flex;align-items:center;justify-content:center;min-height:86px;background:linear-gradient(180deg,#2f7ba6,#1d5677);color:#fff;border:2px solid #7cc4e8;border-radius:16px;font-weight:700;overflow:hidden;}
+#isl-submenu .sm-grid button .ci{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:50px;line-height:1;}
 #isl-submenu .sm-grid button.gold{background:linear-gradient(180deg,#b8902c,#7d5e12);border-color:#ffd166;}
 #isl-submenu .sm-grid button.warn{background:linear-gradient(180deg,#a04a24,#6b2f16);border-color:#ff9f43;}
 #isl-submenu .sm-grid button.ghost{opacity:.8;}
@@ -4602,15 +4608,15 @@ window.islDirectVeilOff = function(){
 /* ★ v1.216.0 老師「探索子選單改左中右三顆圓形大按鈕+ICON」— 只有 .sm-grid.circles(目前只有 explore 分類會掛這個 class)套用,
    其餘分類的 .sm-grid 維持原本 3 欄格線不受影響。左中右置中排列,不論 2 或 3 顆項目都置中,不會偏一邊。 */
 #isl-submenu .sm-grid.circles{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:28px;padding:20px 0;}
-.isl-sub-c{display:flex;flex-direction:column;align-items:center;gap:8px;width:130px;}
+.isl-sub-c{display:flex;flex-direction:column;align-items:center;width:110px;}   /* ★ v1.224.0 這個外框 div 原本要留位置給按鈕下方的獨立 .lb 文字,文字搬進按鈕內部疊字後,外框只剩按鈕本身,寬度貼齊按鈕即可,拿掉舊的 gap */
 .isl-sub-c.dis{opacity:.4;}
-.isl-sub-c button{position:relative;width:110px;height:110px;border-radius:50%;background:linear-gradient(180deg,#2f7ba6,#1d5677);border:3px solid #7cc4e8;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.35),0 0 20px rgba(95,179,217,.25);}
+.isl-sub-c button{position:relative;width:110px;height:110px;border-radius:50%;background:linear-gradient(180deg,#2f7ba6,#1d5677);border:3px solid #7cc4e8;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 rgba(0,0,0,.35),0 0 20px rgba(95,179,217,.25);overflow:hidden;}
 .isl-sub-c button.gold{background:linear-gradient(180deg,#b8902c,#7d5e12);border-color:#ffd166;}
-.isl-sub-c button .ci,.isl-sub-c button .isl-ico{font-size:44px;width:44px !important;height:44px !important;}
-.isl-sub-c button .bd{position:absolute;right:-4px;top:-4px;}
-.isl-sub-c .lb{font-size:17px;font-weight:700;color:#fff;text-align:center;}
-#island-root.ipad .isl-sub-c{width:190px;} #island-root.ipad .isl-sub-c button{width:170px;height:170px;} #island-root.ipad .isl-sub-c button .ci,#island-root.ipad .isl-sub-c button .isl-ico{font-size:66px;width:66px !important;height:66px !important;} #island-root.ipad .isl-sub-c .lb{font-size:28px;}
-@media (max-width:620px){ #isl-submenu{padding:8px;} #isl-submenu .sm-box{width:98%;height:94%;padding:10px;} #isl-submenu .sm-grid{grid-template-columns:repeat(2,1fr);} #isl-camp-side button.cat{min-height:70px;font-size:16px;} #isl-camp-side button.cat .ci{font-size:28px;} .isl-sub-c{width:96px;} .isl-sub-c button{width:86px;height:86px;} .isl-sub-c button .ci,.isl-sub-c button .isl-ico{font-size:32px;width:32px !important;height:32px !important;} .isl-sub-c .lb{font-size:14px;} }
+.isl-sub-c button .ci,.isl-sub-c button .isl-ico{font-size:78px;width:78px !important;height:78px !important;}   /* ★ v1.224.0 圓形按鈕原本圖示只佔中間一小塊(44px/110px 直徑),放大到接近撐滿整個圓(78px),圖為主字為輔 */
+.isl-sub-c button .bd{position:absolute;right:-4px;top:-4px;z-index:2;}
+.isl-sub-c button .lb{position:absolute;left:6px;right:6px;bottom:5px;font-size:14px;font-weight:800;color:#fff;text-align:right;background:rgba(0,0,0,.62);padding:2px 6px;border-radius:8px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:1;}   /* ★ v1.224.0 原本是按鈕外側、圓形下方另起一行的獨立文字(.isl-sub-c .lb),改成疊在按鈕內部右下角,跟另外兩組選單按鈕文字徽章同一套視覺語言 */
+#island-root.ipad .isl-sub-c{width:170px;} #island-root.ipad .isl-sub-c button{width:170px;height:170px;} #island-root.ipad .isl-sub-c button .ci,#island-root.ipad .isl-sub-c button .isl-ico{font-size:120px;width:120px !important;height:120px !important;} #island-root.ipad .isl-sub-c button .lb{font-size:22px;}
+@media (max-width:620px){ #isl-submenu{padding:8px;} #isl-submenu .sm-box{width:98%;height:94%;padding:10px;} #isl-submenu .sm-grid{grid-template-columns:repeat(2,1fr);} #isl-camp-side button.cat{min-height:70px;} #isl-camp-side button.cat .ci{font-size:44px;} #isl-camp-side button.cat .lb{font-size:11px;} .isl-sub-c{width:86px;} .isl-sub-c button{width:86px;height:86px;} .isl-sub-c button .ci,.isl-sub-c button .isl-ico{font-size:60px;width:60px !important;height:60px !important;} .isl-sub-c button .lb{font-size:11px;} }
 .isl-store-item{background:linear-gradient(160deg,rgba(30,50,44,.75),rgba(8,16,12,.82));border:1px solid rgba(150,200,160,.3);border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left;display:flex;align-items:center;gap:14px;}   /* ★ v1.213.0 老師「名稱移到最左邊獨立一欄」— 由「直向:名稱在上、三格品質在下」改成「橫向:名稱在最左邊一欄、右邊接三格品質」;★ v1.218.0 平塗黑底改漸層 */
 .isl-store-item .nm{flex:0 0 auto;min-width:110px;max-width:220px;font-size:38px;font-weight:700;color:#ffd166;line-height:1.15;}   /* ★ v1.213.0 老師「材料名稱字體放大100%」:19→38px,獨立成左欄(原本跟 .hd 共用一行,現在拆出來) */
 .isl-store-item .bd2{flex:1;min-width:0;}
@@ -4915,8 +4921,8 @@ window.islDirectVeilOff = function(){
 @media (max-width:620px){ #isl-q-side{width:210px;font-size:21px;padding:9px 12px;} #isl-act-body.qside .isl-qte{width:max(200px,calc(96% - 220px));margin:0 220px 0 0;} }
 /* ══ ★ v1.118.0(2026-09-13・老師「iPad 版荒島所有選單名稱、物品名稱、說明文字再放大 100%」)— #island-root.ipad(觸控裝置且螢幕短邊 ≥700,islEnter 判定)下,
    選單名稱/物品名稱/說明文字類全部 ×2;HUD、地圖、場景資源點標籤、活動主標題與大按鈕不在老師指定範圍,維持原尺寸。容器(彈窗 .box/面板 .isl-bagbox/細項選單/活動區)本來就可捲動。 ══ */
-#island-root.ipad #isl-submenu .sm-title{font-size:40px;} #island-root.ipad #isl-submenu .sm-grid{grid-template-columns:repeat(3,1fr);} #island-root.ipad #isl-submenu .sm-grid button{font-size:32px;min-height:112px;white-space:nowrap;} #island-root.ipad #isl-submenu .sm-grid button .ci{font-size:44px;} #island-root.ipad #isl-submenu .sm-box{width:96%;max-width:1200px;height:92%;max-height:900px;}
-#island-root.ipad #isl-camp-side button.cat{font-size:24px;min-height:76px;} #island-root.ipad #isl-camp-side button.cat .ci{font-size:32px;} #island-root.ipad #isl-camp-side{width:75px;flex-basis:75px;}   /* ★ v1.197.0 老師再要求一次「長度X再縮減50%」:150→75px(v1.186.0 已經 300→150 過一次,這是第二次減半) */   /* ★ v1.186.0 老師⑦「IPAD版營地右邊選單長度減少50%」:300→150px;.cat 是 grid-column:1/-1 整列獨佔一顆按鈕,寬度砍半後文字/圖示/高度一起收(34→24px、40→32px、92→76px),5 顆按鈕堆起來反而更省高度,「角色/營地/商店/探索/休息」都是 2 字詞,150px 寬綽綽有餘 */
+#island-root.ipad #isl-submenu .sm-title{font-size:40px;} #island-root.ipad #isl-submenu .sm-grid{grid-template-columns:repeat(3,1fr);} #island-root.ipad #isl-submenu .sm-grid button{min-height:150px;} #island-root.ipad #isl-submenu .sm-grid button .ci{font-size:90px;} #island-root.ipad #isl-submenu .sm-grid button .lb{font-size:24px;} #island-root.ipad #isl-submenu .sm-box{width:96%;max-width:1200px;height:92%;max-height:900px;}   /* ★ v1.224.0 圖為主字為輔改版後,文字改讀 .lb(原本這裡直接放大按鈕本身 font-size:32px 已經沒有目標元素,一併改成放大 .lb 徽章字級 24px);.ci 圖示同步放大到 90px 撐滿 150px 高的 iPad 按鈕 */
+#island-root.ipad #isl-camp-side button.cat{min-height:76px;} #island-root.ipad #isl-camp-side button.cat .ci{font-size:52px;} #island-root.ipad #isl-camp-side button.cat .lb{font-size:18px;} #island-root.ipad #isl-camp-side{width:75px;flex-basis:75px;}   /* ★ v1.197.0 老師再要求一次「長度X再縮減50%」:150→75px(v1.186.0 已經 300→150 過一次,這是第二次減半) */   /* ★ v1.186.0 老師⑦「IPAD版營地右邊選單長度減少50%」:300→150px;.cat 是 grid-column:1/-1 整列獨佔一顆按鈕,寬度砍半後文字/圖示/高度一起收(34→24px、40→32px、92→76px),5 顆按鈕堆起來反而更省高度,「角色/營地/商店/探索/休息」都是 2 字詞,150px 寬綽綽有餘 */   /* ★ v1.224.0 圖為主字為輔改版:文字改讀 .lb,.ci 圖示放大到 52px 撐滿 76px 高的窄按鈕 */
 #island-root.ipad #isl-gear button{font-size:34px;}
 #island-root.ipad #isl-modal .box h3{font-size:56px;} #island-root.ipad #isl-modal .box p{font-size:42px;} #island-root.ipad #isl-modal .box li{font-size:42px;} #island-root.ipad #isl-modal .box{width:min(96%,900px);max-height:94%;overflow-y:auto;}
 #island-root.ipad .isl-btn{font-size:36px;} #island-root.ipad .isl-btn.big{font-size:40px;}
@@ -5799,7 +5805,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.222.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.224.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -5808,7 +5814,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.222.0';   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實,和小白第一次對話時被贈與」,推翻 v1.221.0)— 撤回上一輪「開局直接塞 3 個烤魚進物品包」的做法,改成兩件事:①贈送時機移到 islPrologue() 的 gullIntro 對話回呼(小白自我介紹說完話那一刻,玩家與小白的第一次真正「對話」结束)— islDefaultSave() 的 bag.slots 改回空陣列;②贈送物由「烤魚(需要先烹飪的料理)」改成「野果(berry,🍓,全島最容易採到的原始食材)」,並讓野果比照既有的蜂蜜(honey)先例改標 cat:'dish'+補 eat:{hp:15} 使其「可直接生吃」,不必先煮就能在 bag 詳情頁/倉庫列/戰鬥中🍖吃/營地聚餐/寵物餵食 直接吃(這五處消費點原本都只認 cat==='dish',回歸使用既有機制而非另開一套);D.RECIPES.d_jam(野果醬)仍照舊吃 berry×3,cat 改變不影響任何採集/建造/烹飪材料判定(那些只認 id 不看 cat)。 */   /* ★ v1.221.0(2026-09-17・老師「主角開局身上先自帶3個最初階的恢復料理」)— islDefaultSave() 的 bag.slots 預設值由空陣列改為 [{id:'d_fish',q:1,n:3}](烤魚×3,★1 品質,HP+30/份)。7 道料理(D.RECIPES)全數是即時回HP效果、彼此沒有明確分階系統,故取材料需求最單純(僅需魚×1,不必先湊齊多種食材)、且魚是海灘資源點一開局就採得到的烤魚,作為「最初階」代表;3 個數量對齊老師原話。★ 只動存檔初始化,不影響任何已存在的舊存檔(islNormalize 不會回填這個欄位,只有全新創角/GM 重新開始會拿到);islCreateConfirm() 只覆寫 char/stats/islandName 三個欄位,bag 沿用 islDefaultSave() 給的初始值,故不必額外呼叫 islBagAdd。 */   /* ★ v1.220.0(2026-09-16・老師「字體/美感沿用冒險模式,天賦星盤/戰鬥介面也全部優化,字體要用冒險模式的圓體字不缺字的字形」)— ①字體:荒島 v1.109.0 當初刻意把『Noto Sans TC』排在『M PLUS Rounded 1c』前面(理由寫在原註解:圓體字集不完整,怕缺字);但大對抗主程式的全域字體堆疊其實是『M PLUS Rounded 1c』在前、『Noto Sans TC』在後(見 main_index.html body 規則),缺字時瀏覽器本來就會自動退到堆疊下一個字體去找那個字——不會整段消失或變問號,兩者順序互換不影響『不缺字』這件事,只差在圓體字涵蓋到的字會不會顯示成圓體。本輪把 6 處字體堆疊字串改成與大對抗同順序(圓體優先,Noto Sans TC/PingFang TC/Heiti TC/Microsoft JhengHei 依序墊底不缺字);Google Fonts 載入的 weight 同步比照大對抗只留 400/700/900(拿掉 500——這正是 v1.93.0 稽核揪出的『不在字型鏈交集,缺字時會合成粗體字糊』那個成因,既然要換字體優先序就先把同一顆地雷排除)。②天賦星盤:.isl-sk-n 節點與 .isl-sk-ttl 標籤由純黑/純色平塗改深綠棕漸層+陰影,已點亮節點改綠色漸層呼應 .isl-petinfo 的『已收錄』配色語彙。③戰鬥介面:.bt-hpbox/.bt-log/.bt-qte 三個純黑半透明容器改深紅棕/深藍漸層+外散光,.bt-acts 指令按鈕由純白半透明平塗改跟全站 .isl-btn 一致的海洋藍漸層+厚度陰影,不再是唯一一批『自己畫的簡陋版』。 */   /* ★ v1.219.0(2026-09-16・老師「字體美感都沿用冒險模式,檢查還有多少自己畫的簡陋版都升級,色調保持海島自然風格」+ 截圖回報 ui_bld 圖片名稱)— ①稽核並升級共用元件的平塗風格為漸層+發光邊框(色相從彈窗既有的海洋藍改成貼近荒島天然素材的深綠棕):.isl-card(建造/研究/武器/防具/製作台五面板共用)、.isl-recipe(烹飪/餵食選單)、.isl-store-item/.isl-store-row(倉庫/商店)、.isl-codex-card(圖鑑)、.isl-sellrow(賣東西)、.isl-quest-row(委託)、.isl-bag-slot(物品包)。②老師截圖指出上一輪判定「ui_bld 沒上傳」是誤判——repo 裡實際檔名是 island_ui_bld2.png(多一個 2),不是同一張圖片的兩份拷貝:ui_build 是側欄「建造」按鈕圖示、ui_bld 是 HUD「🏗 設施 X/Y」藥丸圖示,語意本來就不同,上一輪只搜了不帶 2 的檔名就漏掉,本輪補上正確檔名。⚠ 範圍說明:寵物圖鑑卡(.isl-petcard)已經有依類型的彩色發光框(v1.165.0 就有),天賦星域節點/戰鬥血條等更深的元件尚未逐一稽核,下一輪如果老師還想繼續往下做可以接著處理。 */   /* ★ v1.217.0(2026-09-16・老師看圖「冒險模式(大對抗)寵物詳情卡色彩豐富,荒島面板也要這樣」)— 直接複製大對抗 _showPetDetail 實際用的色票(綠=已收錄/等級、金=天賦、粉=好感度)套進 islPetCardOpen:類型改彩色徽章(坦克藍/攻擊珊瑚/治療綠/控場紫)、等級與親密度各自獨立成綠色/粉色方塊+漸層進度條(原本只是一行小字)；角色能力頁四維也各自換代表色(巧手珊瑚紫/腳程海草綠/力氣日照橘/巧思珊瑚礁藍)，生存技能數字改暖黃跟四維數字區分開。上一輪(v1.216.0)先出的版本比對訊息其實還沒真的 bump 常數，這輪一併補上正確版號。 */   /* ★ v1.215.0(2026-09-16・老師「補完所有功能視窗開啟音效、關閉音效、製作成功、招募成功、餵食、親密度上升、主角技能升級、寵物升級…各種音效,比照冒險模式的邏輯來配置」)— 先做稽核(對照 D.SFX_MAP 30 個事件鍵逐一反查 index 端消費點,再逐一核對老師點名的 8 種情境):
+var MG_VER = 'v1.224.0';   /* ★ v1.224.0(2026-09-17・老師「荒島求生所有面板中的選單按鈕ICON改成圖為主、字為輔,圖片全部放大填滿按鈕,字重疊在圖片的右下方(不遮住圖片)」)— 三組服務全部面板的共用「選單按鈕」全部改版:①五顆大分類(角色/營地/商店/探索/休息,`#isl-camp-side button.cat`)②`#isl-submenu` 底下實際承載角色/營地/商店/休息四個面板全部細項清單的 `.sm-grid button`(角色 13 項、營地 9 項等)③探索子選單的圓形按鈕 `.isl-sub-c`。三組原本都是「圖示疊文字,上下兩截」的排法(圖示用 flex-column 擠在文字上方,只佔按鈕一小塊),改成圖示撐滿整顆按鈕(`position:absolute;inset:0` 置中,字級大幅放大:.cat 40→58px、.sm-grid 34→50px、圓形 44→78px),文字改成半透明黑底小徽章疊在按鈕右下角(`position:absolute;right/bottom`,不佔滿整顆按鈕、也不蓋住圖示中央主體)。HTML 產生端(`islCampPaint`/`islSubOpen`)原本文字是緊跟在 `<span class="ci">` 後面的裸文字節點,沒有自己的容器就沒辦法定位疊放,三處都補上 `<span class="lb">` 包住文字;探索圓形按鈕的文字原本是按鈕外側、圓形下方另起一行的獨立 `.lb`(`</button><span class="lb">文字</span>`),改成搬進按鈕內部(`<span class="lb">文字</span></button>`)才疊得上去。iPad 與窄螢幕(≤620px)的專屬覆寫規則一併同步放大圖示字級、把文字改指向 `.lb`。⚠ 刻意不動 `.isl-card`(建造/研究/武器/防具/製作台五個「選項卡」,每張卡除了圖示還有敘述/花費/操作鈕等大量必要資訊)——那些是詳細選項卡不是單純的選單按鈕,圖片填滿會擠掉玩家需要看到的文字內容。⚠ 沒有實機測試(沙箱看不到真實圖片素材,無法目視驗證疊字是否清楚、長詞會不會被裁切),麻煩老師實機驗收各面板按鈕,尤其字數較長的項目(如「探險編組(3/3)」這種帶括號數字的)在右下角徽章裡會不會太擠。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算主角/寵物/魔物初始與升級的HP/攻防速,避免戰鬥太沒難度或太困難,尤其四人滿編組隊帶坦克補師時幾乎沒難度」)— 用 Python 重現本遊戲的回合制戰鬥公式(主角/寵物/魔物三方 atk-def 傷害式、坦克代受、治療型全隊回血、目標選取權重),11 區 ×0~3 位隊友 ×多種投資階段各 150 場沙盤模擬,量化找出兩個真正的難度根因(不是隨便調數字):①`islHpLevelBonus`(主角四維升級)與 `islPetLevelHpBonus`(寵物每升一級)的 HP 加成原本是「+3% 複利」,四維上限各 50、合計最多可升級 190 次,複利算下來滿投資時 HP 會膨脹到近 20,000(魔物滿等也才 200~300),這是 v1.192.0 當時新增、changelog 自己就寫著「沒有跑沙盤模擬,建議下一輪驗證」卻一直沒有人接手驗證的地雷;改成固定值 +2(不複利,不看目前上限),190 次封頂只有 +380,量體回到與武器/防具/寵物既有成長曲線同一個級距。②沙盤顯示就算拿掉複利,坦克代受(60%+黑熊天賦 15%=75%)疊上治療型全隊持續回血(8~12%/回合),滿編 4 人隊伍幾乎不會輸——因為魔物的數量與等級原本完全只看區域、不看玩家帶了幾個隊友,「以多打少」的優勢沒有任何東西抵銷。三處同輪處理:(a) 兩處複利改固定值(見 island_db D.BT.HP_LVUP_FLAT/PET_HP_LVUP_FLAT);(b) 坦克代受 60%→40%、代受減傷 30%→15%、黑熊天賦 +15%→+8%,治療型三招(露水迷霧/螢光普照/清流一躍)回復量下修約 30~35% 並把冷卻 3→4 回合;(c) 新增**隊伍人數難度縮放**——`islBattleStart`(野外遇敵與地下層)現在會依 `islPartyCount()` 幫魔物加等級(`D.BT.ENC_LV_PER_ALLY`=每位隊友 +4 級,單人完全不受影響)、隊友 ≥2 人時魔物數量還有機會 +1 隻(`D.BT.ENC_EXTRA_MON_ALLY2`,上限仍是 4 隻)。魔物本身的每級成長率也小幅上調(HP +22%→+24%/級、攻擊 +15%→+17%/級)配合打底,不必再像 v1.196.0 那輪一樣單靠這裡的數字硬扛整個難度落差。沙盤結果:「典型進度」下滿編隊伍勝率由原本幾乎所有區域 90~100%,收斂成隨區域難度合理遞減的曲線(森林~岩岸仍相對輕鬆、湖泊起明顯吃緊、遺跡/火山即使滿編也只有一至兩成上下),單人與 1~2 位隊友的既有難度手感則盡量維持接近原樣。⚠ 這是簡化過的沙盤模型(假設固定命中率/暴擊率,沒有模擬全部天賦、異常狀態與武器特殊詞條交互),不是每一場實戰的精確重播,麻煩老師這次務必實機驗收(尤其滿編組隊在森林/草原這種早期區域是否仍偏鬆、遺跡/火山是否又偏死)再視情況微調。詳細數據與調整脈絡見 MEMORY_HANDOFF。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實,和小白第一次對話時被贈與」,推翻 v1.221.0)— 撤回上一輪「開局直接塞 3 個烤魚進物品包」的做法,改成兩件事:①贈送時機移到 islPrologue() 的 gullIntro 對話回呼(小白自我介紹說完話那一刻,玩家與小白的第一次真正「對話」结束)— islDefaultSave() 的 bag.slots 改回空陣列;②贈送物由「烤魚(需要先烹飪的料理)」改成「野果(berry,🍓,全島最容易採到的原始食材)」,並讓野果比照既有的蜂蜜(honey)先例改標 cat:'dish'+補 eat:{hp:15} 使其「可直接生吃」,不必先煮就能在 bag 詳情頁/倉庫列/戰鬥中🍖吃/營地聚餐/寵物餵食 直接吃(這五處消費點原本都只認 cat==='dish',回歸使用既有機制而非另開一套);D.RECIPES.d_jam(野果醬)仍照舊吃 berry×3,cat 改變不影響任何採集/建造/烹飪材料判定(那些只認 id 不看 cat)。 */   /* ★ v1.221.0(2026-09-17・老師「主角開局身上先自帶3個最初階的恢復料理」)— islDefaultSave() 的 bag.slots 預設值由空陣列改為 [{id:'d_fish',q:1,n:3}](烤魚×3,★1 品質,HP+30/份)。7 道料理(D.RECIPES)全數是即時回HP效果、彼此沒有明確分階系統,故取材料需求最單純(僅需魚×1,不必先湊齊多種食材)、且魚是海灘資源點一開局就採得到的烤魚,作為「最初階」代表;3 個數量對齊老師原話。★ 只動存檔初始化,不影響任何已存在的舊存檔(islNormalize 不會回填這個欄位,只有全新創角/GM 重新開始會拿到);islCreateConfirm() 只覆寫 char/stats/islandName 三個欄位,bag 沿用 islDefaultSave() 給的初始值,故不必額外呼叫 islBagAdd。 */   /* ★ v1.220.0(2026-09-16・老師「字體/美感沿用冒險模式,天賦星盤/戰鬥介面也全部優化,字體要用冒險模式的圓體字不缺字的字形」)— ①字體:荒島 v1.109.0 當初刻意把『Noto Sans TC』排在『M PLUS Rounded 1c』前面(理由寫在原註解:圓體字集不完整,怕缺字);但大對抗主程式的全域字體堆疊其實是『M PLUS Rounded 1c』在前、『Noto Sans TC』在後(見 main_index.html body 規則),缺字時瀏覽器本來就會自動退到堆疊下一個字體去找那個字——不會整段消失或變問號,兩者順序互換不影響『不缺字』這件事,只差在圓體字涵蓋到的字會不會顯示成圓體。本輪把 6 處字體堆疊字串改成與大對抗同順序(圓體優先,Noto Sans TC/PingFang TC/Heiti TC/Microsoft JhengHei 依序墊底不缺字);Google Fonts 載入的 weight 同步比照大對抗只留 400/700/900(拿掉 500——這正是 v1.93.0 稽核揪出的『不在字型鏈交集,缺字時會合成粗體字糊』那個成因,既然要換字體優先序就先把同一顆地雷排除)。②天賦星盤:.isl-sk-n 節點與 .isl-sk-ttl 標籤由純黑/純色平塗改深綠棕漸層+陰影,已點亮節點改綠色漸層呼應 .isl-petinfo 的『已收錄』配色語彙。③戰鬥介面:.bt-hpbox/.bt-log/.bt-qte 三個純黑半透明容器改深紅棕/深藍漸層+外散光,.bt-acts 指令按鈕由純白半透明平塗改跟全站 .isl-btn 一致的海洋藍漸層+厚度陰影,不再是唯一一批『自己畫的簡陋版』。 */   /* ★ v1.219.0(2026-09-16・老師「字體美感都沿用冒險模式,檢查還有多少自己畫的簡陋版都升級,色調保持海島自然風格」+ 截圖回報 ui_bld 圖片名稱)— ①稽核並升級共用元件的平塗風格為漸層+發光邊框(色相從彈窗既有的海洋藍改成貼近荒島天然素材的深綠棕):.isl-card(建造/研究/武器/防具/製作台五面板共用)、.isl-recipe(烹飪/餵食選單)、.isl-store-item/.isl-store-row(倉庫/商店)、.isl-codex-card(圖鑑)、.isl-sellrow(賣東西)、.isl-quest-row(委託)、.isl-bag-slot(物品包)。②老師截圖指出上一輪判定「ui_bld 沒上傳」是誤判——repo 裡實際檔名是 island_ui_bld2.png(多一個 2),不是同一張圖片的兩份拷貝:ui_build 是側欄「建造」按鈕圖示、ui_bld 是 HUD「🏗 設施 X/Y」藥丸圖示,語意本來就不同,上一輪只搜了不帶 2 的檔名就漏掉,本輪補上正確檔名。⚠ 範圍說明:寵物圖鑑卡(.isl-petcard)已經有依類型的彩色發光框(v1.165.0 就有),天賦星域節點/戰鬥血條等更深的元件尚未逐一稽核,下一輪如果老師還想繼續往下做可以接著處理。 */   /* ★ v1.217.0(2026-09-16・老師看圖「冒險模式(大對抗)寵物詳情卡色彩豐富,荒島面板也要這樣」)— 直接複製大對抗 _showPetDetail 實際用的色票(綠=已收錄/等級、金=天賦、粉=好感度)套進 islPetCardOpen:類型改彩色徽章(坦克藍/攻擊珊瑚/治療綠/控場紫)、等級與親密度各自獨立成綠色/粉色方塊+漸層進度條(原本只是一行小字)；角色能力頁四維也各自換代表色(巧手珊瑚紫/腳程海草綠/力氣日照橘/巧思珊瑚礁藍)，生存技能數字改暖黃跟四維數字區分開。上一輪(v1.216.0)先出的版本比對訊息其實還沒真的 bump 常數，這輪一併補上正確版號。 */   /* ★ v1.215.0(2026-09-16・老師「補完所有功能視窗開啟音效、關閉音效、製作成功、招募成功、餵食、親密度上升、主角技能升級、寵物升級…各種音效,比照冒險模式的邏輯來配置」)— 先做稽核(對照 D.SFX_MAP 30 個事件鍵逐一反查 index 端消費點,再逐一核對老師點名的 8 種情境):
        ・視窗開啟/關閉音效(menuOpen/menuClose):稽核發現這兩個鍵 v1.28.0 定義了以來從未被任何地方呼叫過,是貨真價實的死鍵——islModalClose() 完全靜音、開窗音效散落各呼叫端自己直接 playSfx('sfx-tap',…)。改成單一出口補上:islModal()/islPanel()(全荒島 164 處視窗/面板共用的唯二入口)補呼叫 islSfx('menuOpen'),islModalClose()(56 處關閉呼叫的唯一出口)補呼叫 islSfx('menuClose')——各補一處就全涵蓋,不必逐處改動。menuOpen 音量由 0.30 降到 0.15,因為多數呼叫端本來就已經先播了一聲 sfx-tap(按鈕點擊回饋),疊上去要「輕輕一層」不是變成兩聲。
        ・製作成功(craft)/招募成功(islPetGet)/餵食+親密度上升(islHeartFx)/主角技能升級(islSkillGain 活動經驗、islSkTap 天賦星盤、武器升級):稽核後確認這 4 種老師點名的情境本來就都已經有專屬音效掛點(分別是 islActResult 結算的 sfx-powerup/sfx-applause/sfx-heal/sfx-statup),不是死鍵,本輪不動。
        ・寵物升級(islPetsGainAfterWin 內 rec.lv++):稽核發現這才是真的死鍵——戰鬥結束共用的 sfx-ko 跟「這次打贏有沒有讓寵物升級」完全無關,升級本身從 v1.163.0 資料層上線以來一直靜音,只有結算文字看得到「🎉 升到 LvX」。比照玩家技能升級補上 islSfx('levelUp')(重用既有鍵,不新增)。
@@ -13944,7 +13950,7 @@ function islDefaultSave(){
     uid: islUid(), name: '', ver: db.SAVE_VER, created: islNow(),
     islandName: '',   /* ★ v1.108.0 無人島命名(創角時決定,可隨時改) */
     day: 1, ap: 10, apMax: 10, shell: 0, lastDate: '',   /* ★ v1.119.0 AP 基礎 10 */
-    hp: 70, hpMax: 70, hurt: false,   /* ★ v1.92.0 角色體力:錯誤行動會受傷,需在營地治療;hurt=true 時受傷未癒;★ v1.195.0 老師需求②「有了組隊系統後戰鬥難度大幅降低,重新設定主角Lv1基礎HP為70」— 原本 100,組隊系統上線後(v1.163.0~)主角不再是單打獨鬥,連同寵物一起算的總血量池變大很多,原本以「單人」為基準訂的 100 已經偏鬆,降到 70 讓組隊前期仍有壓力 */
+    hp: 70, hpMax: 70, hpBase: 70, hurt: false,   /* ★ v1.92.0 角色體力:錯誤行動會受傷,需在營地治療;hurt=true 時受傷未癒;★ v1.195.0 老師需求②「有了組隊系統後戰鬥難度大幅降低,重新設定主角Lv1基礎HP為70」— 原本 100,組隊系統上線後(v1.163.0~)主角不再是單打獨鬥,連同寵物一起算的總血量池變大很多,原本以「單人」為基準訂的 100 已經偏鬆,降到 70 讓組隊前期仍有壓力;★ v1.224.0 老師「計算主角裝備最高武器防具/天賦點滿時,滿編隊伍的勝率」— 稽核時揪出獨立於上一輪 HP 複利之外的第二個 bug:`islSkApplyHp()`(天賦「強健」的 +N% 最大體力)原本拿寫死的 `base=100` 去乘,完全不看 `islHpLevelBonus()` 實際累積起來的體力,導致**每次打開天賦星域畫面或點新節點,主角 HP 上限就會被硬蓋回 100 上下**,之前靠四維升級累積的體力平白消失。新增 `hpBase` 這個獨立欄位專門存「不含天賦%加成的累積體力本體」(islHpLevelBonus 只加這裡),`islSkApplyHp()` 改成拿 `hpBase` 去乘天賦%,兩個成長來源從此不再互相蓋掉。 */
     sk: { taken: {}, respec: 0 },   /* ★ v1.161.0 🌟 天賦星域：只存「點了哪些節點」與洗點次數；點數一律現算(islSkPts) */
     ails: {},   /* ★ v1.160.0 🤒 不良狀態 {beesting:{d:剩餘天數,day:得到那天}};資料表見 island_db D.STATUS */
     pets: [],   /* ★ v1.163.0 🐾 已收服的夥伴 [{k:寵物鍵, lv, xp, bond, hp}];資料表見 island_db D.PETS */
@@ -13975,9 +13981,11 @@ function islDefaultSave(){
   };
 }
 function islNormalize(d){
-  var def = islDefaultSave(), k, z, i, db = islDB();
+  var def = islDefaultSave(), k, z, i, db = islDB(), _hadHpBase;
   if(!d || typeof d !== 'object') return def;
+  _hadHpBase = (typeof d.hpBase === 'number');   /* ★ v1.224.0 記下「補值迴圈跑之前,舊存檔本來有沒有這個欄位」,下面才能正確判斷是不是真的舊存檔要特殊處理,而不是被同一圈通用補值搶先寫成預設值 70 蓋掉判斷依據 */
   for(k in def){ if(def.hasOwnProperty(k) && d[k] == null) d[k] = def[k]; }
+  if(!_hadHpBase){ d.hpBase = (typeof d.hpMax === 'number' && d.hpMax > 0) ? d.hpMax : def.hpBase; }   /* ★ v1.224.0 舊存檔沒有 hpBase 欄位:用「舊存檔當下的 hpMax」當作起始累積值,不讓老玩家已經練起來的體力憑空歸零(即使那個 hpMax 可能已經被複利或本輪修的另一個 bug 弄得不準,也是目前唯一拿得到的參考值,好過直接歸零) */
   for(k in def.flags){ if(def.flags.hasOwnProperty(k) && d.flags[k] == null) d.flags[k] = def.flags[k]; }
   for(k in def.skill){ if(def.skill.hasOwnProperty(k) && !d.skill[k]) d.skill[k] = { lv: 1, xp: 0 }; }
   for(k in def.stats){ if(def.stats.hasOwnProperty(k) && typeof d.stats[k] !== 'number') d.stats[k] = def.stats[k]; if(typeof d.statXp[k] !== 'number') d.statXp[k] = 0; }
@@ -14592,9 +14600,11 @@ function islStatGain(k, n){
    HP 上限與目前 HP 都 +3%(以目前 HP 上限為基準算 3%,兩者一起加,不會出現「加到當前 HP 卻因為卡在上限被浪費」的情況)。 */
 function islHpLevelBonus(){
   if(!ISL || !ISL.hpMax) return;
-  var add = Math.max(1, Math.round(ISL.hpMax * 0.03));
-  ISL.hpMax += add; ISL.hp = Math.min(ISL.hpMax, ISL.hp + add);
+  var add = db_islHpLevelBonusFlat();   /* ★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 原本每次四維升級都讓 HP 上限「複利」+3%(1.03 的次方疊乘),四維上限各 50、可升級次數合計高達 190 次,滿投資時複利算出來的 HP 會膨脹到近 20,000(對照魔物最高等級的 HP 也才 200~300),這正是「打怪毫無難度」最大的根因——沙盤模擬結果詳見 MEMORY_HANDOFF。改成固定值 +2(不隨目前上限縮放、不複利),190 次封頂也只是 +380,量體與武器/防具/寵物的既有成長曲線同一個級距,不會蓋過其他成長來源。 */
+  ISL.hpBase = (typeof ISL.hpBase === 'number' ? ISL.hpBase : ISL.hpMax) + add;   /* ★ v1.224.0 改累加在 hpBase(不含天賦「強健」% 加成的體力本體),不直接動 hpMax——hpMax 一律交給 islSkApplyHp() 用 hpBase×(1+天賦%) 統一算出來,兩個成長來源才不會像 v1.224.0 之前那樣互相蓋掉(詳見存檔欄位註解與 islSkApplyHp) */
+  islSkApplyHp();
 }
+function db_islHpLevelBonusFlat(){ var db = islDB(); return (db.BT && typeof db.BT.HP_LVUP_FLAT === 'number') ? db.BT.HP_LVUP_FLAT : 2; }
 function islSkillGain(k, n){
   var db = islDB(), sk = ISL.skill[k];
   sk.xp += n;
@@ -17646,11 +17656,11 @@ function islCampPaint(){
   side.classList.toggle('collapsed', islCampSideCollapsed());
   side.innerHTML =   /* ★ v1.115.0 老師:側欄濃縮成 4 顆大項目,點了開細項(islSubOpen),細項再開內容視窗;舒適度/營地 Lv 移到頂端 HUD */
     islCampSideTglHtml() +
-    '<button class="cat" onclick="islSubOpen(\'char\')"><span class="ci">' + islIcoHtml('ui_char', '👤', 40) + '</span>角色' + (islMailCount() ? '<span class="bd">' + islMailCount() + '</span>' : '') + '</button>' +
-    '<button class="cat" onclick="islSubOpen(\'camp\')"><span class="ci">' + islIcoHtml('ui_camp', '🏕', 40) + '</span>營地</button>' +
-    '<button class="cat" onclick="islShopOpen(\'buy\')"><span class="ci">' + islIcoHtml('ui_shop', '🦦', 40) + '</span>商店' + (islQuestOpenCount() ? '<span class="bd">' + islQuestOpenCount() + '</span>' : '') + '</button>' +   /* ★ v1.197.0 老師「商店直接打開買東西畫面,中間那層購買/賣出/委託選單移除」— 阿獺雜貨鋪本身的視窗(islShopOpen)頭部就已經有買/賣/委託三分頁可切換(圖1),中間這層 islSubOpen('shop') 選單是多餘的一層,直接呼叫 islShopOpen('buy') 跳過它 */
-    '<button class="cat" onclick="islSubOpen(\'explore\')"><span class="ci">' + islIcoHtml('ui_explore', '🗺', 40) + '</span>探索</button>' +
-    '<button class="cat" onclick="islSubOpen(\'rest\')"><span class="ci">' + islIcoHtml('ui_rest', '🌙', 40) + '</span>休息</button>';   /* ★ v1.125.0 老師:休息從「探索」裡搬出來獨立一個分頁 */   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— 五顆大分類改走 islIcoHtml(有圖用圖,沒圖照樣顯示原本的 emoji,只是外面多一圈淡淡的虛線框,見 islNoImgHtml) */
+    '<button class="cat" onclick="islSubOpen(\'char\')"><span class="ci">' + islIcoHtml('ui_char', '👤', 40) + '</span><span class="lb">角色</span>' + (islMailCount() ? '<span class="bd">' + islMailCount() + '</span>' : '') + '</button>' +
+    '<button class="cat" onclick="islSubOpen(\'camp\')"><span class="ci">' + islIcoHtml('ui_camp', '🏕', 40) + '</span><span class="lb">營地</span></button>' +
+    '<button class="cat" onclick="islShopOpen(\'buy\')"><span class="ci">' + islIcoHtml('ui_shop', '🦦', 40) + '</span><span class="lb">商店</span>' + (islQuestOpenCount() ? '<span class="bd">' + islQuestOpenCount() + '</span>' : '') + '</button>' +   /* ★ v1.197.0 老師「商店直接打開買東西畫面,中間那層購買/賣出/委託選單移除」— 阿獺雜貨鋪本身的視窗(islShopOpen)頭部就已經有買/賣/委託三分頁可切換(圖1),中間這層 islSubOpen('shop') 選單是多餘的一層,直接呼叫 islShopOpen('buy') 跳過它 */
+    '<button class="cat" onclick="islSubOpen(\'explore\')"><span class="ci">' + islIcoHtml('ui_explore', '🗺', 40) + '</span><span class="lb">探索</span></button>' +
+    '<button class="cat" onclick="islSubOpen(\'rest\')"><span class="ci">' + islIcoHtml('ui_rest', '🌙', 40) + '</span><span class="lb">休息</span></button>';   /* ★ v1.125.0 老師:休息從「探索」裡搬出來獨立一個分頁 */   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— 五顆大分類改走 islIcoHtml(有圖用圖,沒圖照樣顯示原本的 emoji,只是外面多一圈淡淡的虛線框,見 islNoImgHtml) */   /* ★ v1.224.0 老師「選單按鈕ICON改成圖為主字為輔,圖片放大填滿按鈕,字重疊在圖片右下角」— 文字原本是按鈕裡的裸文字節點(緊跟在 .ci 後面),沒有自己的容器就沒辦法疊放定位,補上 <span class="lb"> 包住文字,CSS 才能把它疊在圖示右下角(見 #isl-camp-side button.cat 樣式) */
   islHud();
 }
 /* ══════════════════════════════════════════════════════════════════════════
@@ -18144,10 +18154,10 @@ window.islSubOpen = function(cat){
      只有 explore 這個分類改走新的 .isl-sub-circles(flex 置中、圓形圖示鈕+底下小字),其餘分類完全不動。 */
   if(cat === 'explore'){
     if(grid) grid.classList.add('circles');
-    for(i = 0; i < L.length; i++){ it = L[i]; h += '<div class="isl-sub-c' + (it.dis ? ' dis' : '') + '"><button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '">' + (it.img ? islIcoHtml(it.img, it.e, 40) : '<span class="ci">' + it.e + '</span>') + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button><span class="lb">' + islEsc(it.t) + '</span></div>'; }
+    for(i = 0; i < L.length; i++){ it = L[i]; h += '<div class="isl-sub-c' + (it.dis ? ' dis' : '') + '"><button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '">' + (it.img ? islIcoHtml(it.img, it.e, 40) : '<span class="ci">' + it.e + '</span>') + '<span class="lb">' + islEsc(it.t) + '</span>' + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button></div>'; }   /* ★ v1.224.0 老師「選單按鈕ICON改成圖為主字為輔,圖片放大填滿按鈕,字疊在圖片右下角」— .lb 原本是按鈕外的手足元素(圓形圖示鈕下方另起一行小字),搬進按鈕內部才能疊在圖示右下角;.bd(數量徽章)維持原本疊右上角不動,跟 .lb 不會互相遮到 */
   } else {
     if(grid) grid.classList.remove('circles');
-    for(i = 0; i < L.length; i++){ it = L[i]; h += '<button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '"><span class="ci">' + (it.img ? islIcoHtml(it.img, it.e, 34) : it.e) + '</span>' + islEsc(it.t) + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button>'; }   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— it.img 有值就走 islIcoHtml(有圖用圖,沒圖照樣顯示 it.e 這個 emoji,只是外面多一圈淡淡的虛線框) */
+    for(i = 0; i < L.length; i++){ it = L[i]; h += '<button class="' + (it.cls || '') + '"' + (it.dis ? ' disabled' : '') + ' onclick="islSubClose();' + it.f + '"><span class="ci">' + (it.img ? islIcoHtml(it.img, it.e, 34) : it.e) + '</span><span class="lb">' + islEsc(it.t) + '</span>' + (it.n ? '<span class="bd">' + it.n + '</span>' : '') + '</button>'; }   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好,缺圖就用預設」— it.img 有值就走 islIcoHtml(有圖用圖,沒圖照樣顯示 it.e 這個 emoji,只是外面多一圈淡淡的虛線框) */   /* ★ v1.224.0 老師「選單按鈕ICON改成圖為主字為輔,圖片放大填滿按鈕,字疊在圖片右下角」— 文字原本是按鈕裡緊跟在 .ci 後面的裸文字節點,補 <span class="lb"> 包住才能疊放定位 */
   }
   $('isl-sub-title').innerHTML = ttl + '<span class="grow"></span><button class="isl-x" onclick="islSubClose()">✕</button>';
   $('isl-sub-grid').innerHTML = h;
@@ -21704,9 +21714,13 @@ function islSkEff(key){
    ⚠ tameP(馴養率)稽核發現仍被 islActTame(畜欄馴養雞/羊/兔)讀取,並非死鍵,故沿用不動;
      bondGainP 是新增的獨立效果鍵,兩者互不影響、互不取代。 */
 function islBondGain(n){ var p = islSkEff('bondGainP'); return p ? Math.round(n * (1 + p / 100)) : n; }
-/* 最大體力:hpMaxP 是唯一一個「存在存檔裡的衍生值」,所以點/洗點/載入後都要重算一次 */
+/* 最大體力:hpMaxP 是唯一一個「存在存檔裡的衍生值」,所以點/洗點/載入後都要重算一次
+   ★ v1.224.0 老師「計算滿裝滿天賦時滿編隊伍的勝率」稽核時揪出的獨立 bug——這裡原本寫死 `base=100` 去乘天賦%,
+   完全不看主角實際靠四維升級累積起來的體力(islHpLevelBonus 存在 ISL.hpBase),等於**每次打開天賦星域畫面
+   或點新節點,主角 HP 上限就會被硬蓋回 100 上下**,先前升級存起來的體力平白消失。改讀 ISL.hpBase(那份累積值
+   本身不受天賦%影響,只被 islHpLevelBonus 累加),兩個成長來源從此分開算、不再互相蓋掉。 */
 function islSkApplyHp(){
-  var base = 100, want = Math.round(base * (1 + islSkEff('hpMaxP') / 100)), was = ISL.hpMax;
+  var base = (ISL && typeof ISL.hpBase === 'number') ? ISL.hpBase : 70, want = Math.round(base * (1 + islSkEff('hpMaxP') / 100)), was = ISL.hpMax;
   if(want === was) return;
   ISL.hpMax = want;
   if(ISL.hp > ISL.hpMax) ISL.hp = ISL.hpMax;
@@ -22157,8 +22171,12 @@ function islPetStats(k, lv, bond){
 function islPetLevelHpBonus(k, rec){
   var db = islDB(), p = db.PETS[k];
   if(!p || !rec) return;
-  var cur = p.b.hp + p.g.hp * (rec.lv - 1) + (rec.hpBonus || 0);
-  rec.hpBonus = (rec.hpBonus || 0) + Math.max(1, Math.round(cur * 0.03));
+  /* ★ v1.223.0 老師「重新計算戰鬥難度」— 原本每級 HP 複利 +3%(取當下累積值,一路疊乘),
+     16 隻寵物 Lv1~50 全部疊加下來,坦克型在滿級時 HP 會膨脹到遠超魔物成長曲線,
+     跟主角那邊的複利是同一種問題(見 islHpLevelBonus 同輪修正)。寵物本身的 b.hp+g.hp 已經是
+     設計好的每級成長,這裡改成不看目前累積值、固定 +2(與主角同一個量級),不再疊乘。 */
+  var add = (db.BT && typeof db.BT.PET_HP_LVUP_FLAT === 'number') ? db.BT.PET_HP_LVUP_FLAT : 2;
+  rec.hpBonus = (rec.hpBonus || 0) + add;
 }
 /* 存檔裡某隻寵物的紀錄 */
 function islPetSave(k){ var i; for(i = 0; i < ISL.pets.length; i++){ if(ISL.pets[i].k === k) return ISL.pets[i]; } return null; }
@@ -22320,15 +22338,25 @@ window.islBattleStart = function(mine){
      只有地下層(dg)與明確帶 solo 旗標的呼叫維持「指定 1 隻」;野外遇敵與 GM 測試鈕都依
      D.ENC[zone].num/lv 抽一整組,老師按測試鈕就能直接驗收多隻的版面與流程。 */
   ks = []; 
-  if(mine.dg || mine.solo){ ks.push({ k: mine.k, lv: mine.lv || 1 }); }
+  if(mine.dg || mine.solo){
+    var _dgLv = mine.lv || 1;
+    if(mine.dg) _dgLv += islPartyCount() * (db.BT.ENC_LV_PER_ALLY || 0);   /* ★ v1.223.0 地下層(dg)戰鬥固定 1 隻,同樣要吃隊伍人數難度縮放,否則滿編組隊下地下層也會過鬆;GM 測試鈕(mine.solo)刻意不縮放,維持老師指定的精確等級方便驗收 */
+    ks.push({ k: mine.k, lv: _dgLv });
+  }
   else {
     E = (db.ENC && db.ENC[_IS.zone]) || null;
     num = 1;
     if(E && E.num){ num = E.num[0] + Math.floor(Math.random() * (E.num[1] - E.num[0] + 1)); }
+    /* ★ v1.223.0 老師「重新計算戰鬥難度,避免組隊太沒難度」— 沙盤模擬顯示遇敵魔物的數量/等級原本完全只看區域、不看玩家帶了幾個隊友,
+       導致「以多打少」的優勢沒有任何東西抵銷,滿編 4 人隊伍幾乎不會輸(詳見 MEMORY_HANDOFF 數據)。
+       這裡補上跟目前隊伍人數連動的難度縮放:①等級隨隊友數增加(0 人=完全不受影響,維持單人既有手感);
+       ②隊友 ≥2 人時魔物數量有機會 +1(上限仍是 4 隻)。兩者都讀 D.BT 的單一調整點,之後想改幅度只改資料表。 */
+    var _encTeamN = islPartyCount(), _encLvAdd = _encTeamN * (db.BT.ENC_LV_PER_ALLY || 0);
+    if(db.BT.ENC_EXTRA_MON_ALLY2 && _encTeamN >= 2 && Math.random() < 0.5) num += 1;
     num = Math.max(1, Math.min(4, num));   /* ⚠ 老師指定上限 4 隻,不論資料表怎麼填都夾住 */
     for(i = 0; i < num; i++){
       lv = mine.lv || 1;
-      if(E && E.lv) lv = E.lv[0] + Math.floor(Math.random() * (E.lv[1] - E.lv[0] + 1));
+      if(E && E.lv) lv = E.lv[0] + Math.floor(Math.random() * (E.lv[1] - E.lv[0] + 1)) + _encLvAdd;
       ks.push({ k: (E && E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : mine.k, lv: lv });
     }
   }
