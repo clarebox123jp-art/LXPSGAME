@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.224.0';   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.227.0';   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -130,6 +130,24 @@ window.ISL_DB = (function(){
      ⚠ v 必須與 index 的 MG_VER 同格式(vX.Y.Z):進場比對「比看過的還新就彈」用的是數值比較。
      ⚠ 只要有寫進這張表就會彈給學生看 ⇒ 純內部修正(不影響學生體感的)可以不必寫進來。 */
   D.LOG = [
+    { v: 'v1.227.0', d: '2026-09-17', items: [
+      '👑 十個區域各有一隻「地圖頭目」!探索度到 80% 就會出現頭目巢穴,花 ⚡2 挑戰。',
+      '🟨 頭目有黃色「韌性條」:用剋制牠的武器、智取選對工具、完美閃避都能削韌性,削光就「破韌」讓牠暈 2 回合、受傷 +50%。',
+      '☠ 頭目會倒數放「必殺技」,答對自然題就能找到掩護;血量掉到一半還會變強、叫幫手。',
+      '🎁 第一次打倒頭目:天賦點 +2、頭目核心素材 ×2、大量貝幣!打倒火山頭目後還能挑戰 ★2/★3 強化頭目。'
+    ] },
+    { v: 'v1.226.0', d: '2026-09-17', items: [
+      '⚠ 魔物會先「預告」再放招式!看到頭上的 ⚠,可以用智取選對工具取消它,或把牠打暈打斷。',
+      '✨ 新增「完美閃避」:魔物攻擊你時畫面會跳出「!」,越快點越好,點得夠快可以完全躲開!',
+      '🧠 智取不再是一場一次,改成用完等 3 回合就能再用。',
+      '📋 戰鬥右側可以切換夥伴戰術(全力進攻/保護主角/保守治療);寵物跟你打同一隻時還可能「連攜攻擊」。'
+    ] },
+    { v: 'v1.225.0', d: '2026-09-17', items: [
+      '⚔ 戰鬥數值全面翻新:防禦改成「按比例減傷」,再高的攻擊也打不穿厚甲、再厚的甲也不會變無敵。',
+      '⭐ 新增「冒險等級」:打贏戰鬥就能升級,體力、攻擊、防禦跟著成長。',
+      '👑 野外偶爾會遇到金色名字的「精英怪」,比較強,但一定會掉核心素材。',
+      '🗺 各區魔物等級重新排過,越後面的區域越有挑戰;營地裡的寵物也改成跟主角差不多大。'
+    ] },
     { v: 'v1.195.0', d: '2026-09-16', items: [
       '⚔ 戰鬥畫面的 HP 條縮短了,點擊主角或隊友可以看到能力與狀態的小視窗。',
       '❤️ 主角和寵物的血量基礎值重新調整過,組隊戰鬥會比之前有挑戰性一點。',
@@ -393,9 +411,14 @@ window.ISL_DB = (function(){
     crystal:  { n:'水晶',   e:'💎', img:'res_crystal',  cat:'misc' },
     herb:     { n:'草藥',   e:'🍀', img:'res_herb',     cat:'res' },    /* ★ P3-b 懸崖;治療替代材料 */
     honey:    { n:'蜂蜜',   e:'🍯', img:'res_honey',    cat:'dish', eat:{hp:15, ap:1} },   /* 山谷蜂巢;可直接吃 */
-    relic:    { n:'遺物',   e:'🏺', img:'res_relic',    cat:'misc' }
+    relic:    { n:'遺物',   e:'🏺', img:'res_relic',    cat:'misc' },
+    /* ★ v1.225.0 戰鬥優化 B1:精英怪必掉的核心素材(B4 武器詞條鑲嵌會用到;圖片選配,缺圖退 emoji) */
+    core_ember:   { n:'火精核心', e:'🔴', img:'res_core_ember',   cat:'misc' },
+    core_spark:   { n:'雷精核心', e:'🔵', img:'res_core_spark',   cat:'misc' },
+    core_beetle:  { n:'鐵甲蟲殼', e:'⚫', img:'res_core_beetle',  cat:'misc' },
+    herb_essence: { n:'草藥精華', e:'🧪', img:'res_herb_essence', cat:'misc' }
   };
-  D.ITEM_ORDER = ['wood','stone','fiber','leaf','reed','trash','water','berry','mushroom','fish','egg','milk','grain','seed','shell','pebble','feather','d_fish','d_jam','d_soup','d_stew','d_egg','d_bread','d_pudding','ore','crystal','herb','honey','relic'];
+  D.ITEM_ORDER = ['wood','stone','fiber','leaf','reed','trash','water','berry','mushroom','fish','egg','milk','grain','seed','shell','pebble','feather','d_fish','d_jam','d_soup','d_stew','d_egg','d_bread','d_pudding','ore','crystal','herb','honey','relic','core_ember','core_spark','core_beetle','herb_essence'];
   D.STACK = 20;                 /* 物品包每格堆疊上限 */
   D.BAG_CAP = 12;               /* 物品包 Lv1 格數 */
   D.STORE_CAP = { 1:99, 2:199, 3:399, 4:699, 5:999 };   /* 倉庫每種上限(隨倉庫 Lv) */
@@ -2285,16 +2308,16 @@ window.ISL_DB = (function(){
 
   /* ══════════════ ★ v1.22.0(2026-09-13・老師四項):回合制遇敵戰鬥 + 多樣武器 ══════════════ */
   /* 魔物戰鬥數值(基準=第 1 級,依區域 order 逐級成長:hp +18%/級、atk +12%/級;def/spd 固定)。fear=怕的工具(沿用 MONSTERS.tool,🧠 智取用) */
-  D.MON_BT = {
-    boar:     { hp:26, atk:6,  def:1, spd:6,  crit:10, drop:{ shell:[2,4], item:'fiber',   p:0.5 }, d:'橫衝直撞的野豬,皮厚但笨。' },
-    beetle:   { hp:30, atk:5,  def:3, spd:3,  crit:5,  drop:{ shell:[2,4], item:'ore',     p:0.25 }, d:'鐵甲很硬,普通攻擊會被彈掉一些。' },
-    slime:    { hp:22, atk:5,  def:0, spd:4,  crit:5,  drop:{ shell:[1,3], item:'water',   p:0.5 }, d:'軟軟的,打起來不痛不癢,但會黏住你。' },
-    bat:      { hp:20, atk:7,  def:1, spd:9,  crit:15, drop:{ shell:[2,5], item:'feather', p:0.6 }, d:'飛得快,常常先手。' },
-    shadow:   { hp:28, atk:8,  def:1, spd:7,  crit:15, drop:{ shell:[3,6], item:'crystal', p:0.2 }, d:'影子怪,怕光。' },
-    ember:    { hp:32, atk:9,  def:2, spd:5,  crit:10, drop:{ shell:[3,6], item:'ore',     p:0.4 }, d:'火精,碰到會燙傷。' },
-    basilisk: { hp:36, atk:8,  def:3, spd:5,  crit:20, drop:{ shell:[4,7], item:'relic',   p:0.3 }, d:'石化蛇,被牠瞪到會暈眩。' },
-    spark:    { hp:30, atk:10, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛,偶爾會讓你觸電麻痺。', stunOnHitP:20 },   /* ★ v1.213.0 老師「技能清單稽核:補齊麻痺/免疫不利狀態」— 稽核發現戰鬥系統裡魔物從來不會對玩家隊伍施加任何不利狀態(hitDownP/spdDownP/seal/stun 全部只有「玩家隊友打魔物」這個方向),導致就算補一個「免疫不利狀態」天賦也無事可防、變成死鍵。補這 20% 麻痺機率讓雷精真的會麻痺人,免疫天賦才有意義(見下方 D.PET_CMDS sandwind 的 immuneAll)。 */
-    guardian: { hp:80, atk:12, def:4, spd:3,  crit:10, drop:{ shell:[10,15], item:'relic', p:1 },  d:'守墓石像。' }
+  D.MON_BT = {   /* ★ v1.225.0 B1 基礎攻擊全部 ×1.35(比例減傷後原數值在前期幾乎打不痛) */
+    boar:     { hp:26, atk:8,  def:1, spd:6,  crit:10, drop:{ shell:[2,4], item:'fiber',   p:0.5 }, d:'橫衝直撞的野豬,皮厚但笨。' },
+    beetle:   { hp:30, atk:7,  def:3, spd:3,  crit:5,  drop:{ shell:[2,4], item:'ore',     p:0.25 }, d:'鐵甲很硬,普通攻擊會被彈掉一些。' },
+    slime:    { hp:22, atk:7,  def:0, spd:4,  crit:5,  drop:{ shell:[1,3], item:'water',   p:0.5 }, d:'軟軟的,打起來不痛不癢,但會黏住你。' },
+    bat:      { hp:20, atk:9,  def:1, spd:9,  crit:15, drop:{ shell:[2,5], item:'feather', p:0.6 }, d:'飛得快,常常先手。' },
+    shadow:   { hp:28, atk:11,  def:1, spd:7,  crit:15, drop:{ shell:[3,6], item:'crystal', p:0.2 }, d:'影子怪,怕光。' },
+    ember:    { hp:32, atk:12,  def:2, spd:5,  crit:10, drop:{ shell:[3,6], item:'ore',     p:0.4 }, d:'火精,碰到會燙傷。' },
+    basilisk: { hp:36, atk:11,  def:3, spd:5,  crit:20, drop:{ shell:[4,7], item:'relic',   p:0.3 }, d:'石化蛇,被牠瞪到會暈眩。' },
+    spark:    { hp:30, atk:14, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛,偶爾會讓你觸電麻痺。', stunOnHitP:20 },   /* ★ v1.213.0 老師「技能清單稽核:補齊麻痺/免疫不利狀態」— 稽核發現戰鬥系統裡魔物從來不會對玩家隊伍施加任何不利狀態(hitDownP/spdDownP/seal/stun 全部只有「玩家隊友打魔物」這個方向),導致就算補一個「免疫不利狀態」天賦也無事可防、變成死鍵。補這 20% 麻痺機率讓雷精真的會麻痺人,免疫天賦才有意義(見下方 D.PET_CMDS sandwind 的 immuneAll)。 */
+    guardian: { hp:80, atk:16, def:4, spd:3,  crit:10, drop:{ shell:[10,15], item:'relic', p:1 },  d:'守墓石像。' }
   };
   /* 各區「踩地雷式」遇敵:每遊戲日依 seed 在可走格藏 n 個遇敵點(離出生/出口/資源點 ≥3 格),踩到就跳出魔物;from=第幾天起才有;lv=魔物等級(= 區域 order) */
   /* ★ v1.163.0 有了組隊系統(主角+3 隊友)之後,各區魔物的「數量」與「等級」全表重排。
@@ -2313,16 +2336,16 @@ window.ISL_DB = (function(){
        ⚠ GM 專用的「⚔ 測試戰鬥」鈕(islBtTest,非管理員看不到)仍可在沙灘手動觸發(E 讀不到時退回野豬/Lv1),
          這是刻意保留的 QA 工具,不影響學生看到的沙灘體驗。
        ⚠ D.ENC_TEAM_HINT 的 beach:0 維持不動(沙灘本來就不需要隊友提醒),不影響本次修改。 */
-    forest:  { n:2, from:1,  mons:['boar','beetle'],              num:[2,3], lv:[4,7] },
-    grass:   { n:2, from:1,  mons:['boar','slime'],               num:[2,3], lv:[6,9] },
-    river:   { n:2, from:1,  mons:['slime','bat'],                num:[2,3], lv:[8,12] },
-    rock:    { n:2, from:1,  mons:['beetle','slime'],             num:[2,3], lv:[10,14] },
-    lake:    { n:3, from:1,  mons:['slime','bat'],                num:[3,4], lv:[12,17] },
-    cave:    { n:3, from:1,  mons:['bat','shadow','beetle'],      num:[3,4], lv:[14,20] },
-    cliff:   { n:3, from:1,  mons:['spark','boar'],               num:[3,4], lv:[16,23] },
-    valley:  { n:3, from:1,  mons:['ember','beetle'],             num:[3,4], lv:[18,25] },
-    ruins:   { n:4, from:1,  mons:['shadow','basilisk','spark'],  num:[4,4], lv:[20,27] },
-    volcano: { n:4, from:1,  mons:['ember','basilisk'],           num:[4,4], lv:[24,31] }
+    forest:  { n:2, from:1,  mons:['boar','beetle'],              num:[2,3], lv:[3,7] },
+    grass:   { n:2, from:1,  mons:['boar','slime'],               num:[2,3], lv:[6,10] },
+    river:   { n:2, from:1,  mons:['slime','bat'],                num:[2,3], lv:[9,14] },
+    rock:    { n:2, from:1,  mons:['beetle','slime'],             num:[2,3], lv:[12,17] },
+    lake:    { n:3, from:1,  mons:['slime','bat'],                num:[3,4], lv:[16,21] },
+    cave:    { n:3, from:1,  mons:['bat','shadow','beetle'],      num:[3,4], lv:[20,25] },
+    cliff:   { n:3, from:1,  mons:['spark','boar'],               num:[3,4], lv:[24,29] },
+    valley:  { n:3, from:1,  mons:['ember','beetle'],             num:[3,4], lv:[28,33] },
+    ruins:   { n:4, from:1,  mons:['shadow','basilisk','spark'],  num:[4,4], lv:[33,39] },
+    volcano: { n:4, from:1,  mons:['ember','basilisk'],           num:[4,4], lv:[38,45] }
   };   /* ★ v1.196.0 老師需求「魔物數量再增加,小怪讓主角群四打一太沒難度了」— 每區 num 下限與上限都往上調一格(森林~山谷從「1~2/2~2/2~3/3~3」上修到「2~3/3~4」區間,遺跡/火山原本上限就是設計决定的 4,直接把下限也頂到 4,固定滿編)。維持不變的只有「最多 4 隻」這個既有的設計上限(v1.163.0 老師裁定④)。 */
   /* ★ v1.163.0 野外遇敵改「步數制」(老師需求 5):每走 min~max 步隨機遭遇一次;
      戰鬥結束後 safeSteps 步內不再觸發,避免剛打完原地又被纏上。P4 於 index 端 islTick 接上。 */
@@ -2330,24 +2353,174 @@ window.ISL_DB = (function(){
   /* ★ v1.163.0 隊伍未滿提醒:進入區域時若隊友數 < needFrom[zone] 就提醒去招募(只提醒,不擋人) */
   D.ENC_TEAM_HINT = { beach:0, forest:1, grass:1, river:1, rock:2, lake:2, cave:2, cliff:2, valley:3, ruins:3, volcano:3 };
   D.BT = {
-    FIST_ATK: 4, BASE_DEF: 0, POW_ATK: 0.5, DEX_HIT: 0.6, MOV_SPD: 1, WIT_STUN: 14,   /* 徒手攻擊 4;力氣每點 +0.5 攻;巧手每點甜蜜點 +0.6%;巧思 ≥14 智取免答 */
+    FIST_ATK: 4, BASE_DEF: 0, POW_ATK: 0.3, DEX_HIT: 0.6, MOV_SPD: 1, WIT_STUN: 14,   /* 徒手攻擊 4;力氣每點 +0.5 攻;巧手每點甜蜜點 +0.6%;巧思 ≥14 智取免答 */
     DEFEND_CUT: 0.5, DEFEND_HEAL: 3,          /* 🛡 防禦:下一次受傷減半 + 回 3 */
     ESCAPE_BASE: 40, ESCAPE_MOV: 2,           /* 🏃 逃跑成功率 = 40% + 腳程×2%(上限 90%) */
     OUTWIT_DMG: 12, OUTWIT_STUN: 1,           /* 🧠 智取:選對它怕的工具 → 固定傷害 + 暈 1 回合;選錯 → 被反擊 */
-    MON_LV_HP: 0.24, MON_LV_ATK: 0.17,        /* 魔物每級成長;★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 這輪終於真的跑了沙盤模擬(Python 重現主角/寵物/魔物三方數值與回合制傷害公式,11 區 ×0~3 位隊友 ×多種投資階段各 150 場):找到兩個真正的難度根因,不只是這裡的成長率——①主角/寵物「升級 HP +3%複利」(見 islHpLevelBonus/islPetLevelHpBonus)在高度投資時會讓 HP 膨脹到魔物完全追不上的量級;②坦克代受率與治療型全隊回血疊加,滿編組隊幾乎不會輸(即使拿掉複利也一樣)。三處(複利改固定值、坦克代受/減傷下修、新增隊伍人數難度縮放 ENC_LV_PER_ALLY)同輪一起處理後,魔物成長率本身只需要小幅上調(0.22→0.24、0.15→0.17,約 +10%)配合打底,不必再像上一輪那樣單靠這裡的數字硬扛整個難度落差。⚠ 沙盤模型仍有簡化(假設固定命中率/暴擊率,未模擬全部天賦與異常狀態交互),請老師實機驗收各區手感,尤其是隊伍滿編時是否仍偏鬆。 */
-    ENC_LV_PER_ALLY: 4,                       /* ★ v1.223.0 新增:野外遇敵時,魔物等級額外 += 目前隊伍人數(0~3)×本值——隊伍越大,對手也跟著變強,不再是「只看區域、不看帶了幾個人」。0 位隊友(單人)完全不受影響,維持既有單人難度手感。 */
+    MON_LV_HP: 0.08, MON_LV_ATK: 0.13, MON_LV_DEF: 0.35, MON_LV_SPD: 0.06,   /* ★ v1.225.0 B1(沙盤校準後定案:HP 每級 +8%、攻擊 +13%,MON_BT 基礎攻擊全部 ×1.35):改比例傷害公式後,魔物防禦與速度也要隨等級成長(舊版 0~4 永遠不變,玩家攻擊每多 1 點就多打 1 點);HP/攻擊成長率同步放緩,區域等級改拉高到 45 */        /* 魔物每級成長;★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 這輪終於真的跑了沙盤模擬(Python 重現主角/寵物/魔物三方數值與回合制傷害公式,11 區 ×0~3 位隊友 ×多種投資階段各 150 場):找到兩個真正的難度根因,不只是這裡的成長率——①主角/寵物「升級 HP +3%複利」(見 islHpLevelBonus/islPetLevelHpBonus)在高度投資時會讓 HP 膨脹到魔物完全追不上的量級;②坦克代受率與治療型全隊回血疊加,滿編組隊幾乎不會輸(即使拿掉複利也一樣)。三處(複利改固定值、坦克代受/減傷下修、新增隊伍人數難度縮放 ENC_LV_PER_ALLY)同輪一起處理後,魔物成長率本身只需要小幅上調(0.22→0.24、0.15→0.17,約 +10%)配合打底,不必再像上一輪那樣單靠這裡的數字硬扛整個難度落差。⚠ 沙盤模型仍有簡化(假設固定命中率/暴擊率,未模擬全部天賦與異常狀態交互),請老師實機驗收各區手感,尤其是隊伍滿編時是否仍偏鬆。 */
+    ENC_LV_PER_ALLY: 0, PARTY_HP_PER_ALLY: 0.10, PARTY_ATK_PER_ALLY: 0.25, DMG_K: 60, DG_LV_BASE: 34, POW_ATK_CAP: 15, DEX_CRIT: 0.3,   /* ★ v1.225.0 B1:隊伍縮放改成「每位隊友魔物 HP×(1+0.10)、攻擊×(1+0.25)」(沙盤:加 HP 只會拖長回合,加攻擊才抵銷得了坦克+治療),不再加等級(加等級會讓 HP/攻擊/防禦一起非線性膨脹,難調);傷害=攻擊×DMG_K÷(DMG_K+防禦);地下層魔物等級基準 34;力氣攻擊加成上限 15;巧手每點暴擊率 +0.3% */                       /* ★ v1.223.0 新增:野外遇敵時,魔物等級額外 += 目前隊伍人數(0~3)×本值——隊伍越大,對手也跟著變強,不再是「只看區域、不看帶了幾個人」。0 位隊友(單人)完全不受影響,維持既有單人難度手感。 */
     ENC_EXTRA_MON_ALLY2: true,                /* ★ v1.223.0 新增:隊伍 ≥2 人時,魔物數量有機會 +1 隻(上限仍是 4 隻不變)——沙盤顯示光調等級還不夠讓「以多打少」的優勢被抵銷,需要數量也一起補。 */
-    HP_LVUP_FLAT: 2, PET_HP_LVUP_FLAT: 2,     /* ★ v1.223.0 主角四維升級 / 寵物每升一級 的固定 HP 加成(見 index 端 islHpLevelBonus/islPetLevelHpBonus),取代原本的複利 3%。 */
+    HP_LVUP_FLAT: 0, PET_HP_LVUP_FLAT: 2,   /* ★ v1.225.0 主角 HP 改由冒險等級決定(D.ADV),四維升級不再加 HP */     /* ★ v1.223.0 主角四維升級 / 寵物每升一級 的固定 HP 加成(見 index 端 islHpLevelBonus/islPetLevelHpBonus),取代原本的複利 3%。 */
     PLAYER_STUN_ON_CRIT: true,                /* 魔物暴擊 → 主角暈眩 1 回合 */
     TECH_PER_WIN: 1, TECH_DAY_CAP: 3,         /* 打贏 🔬+1(每天最多 3;補足科技點不足的通關鏈) */
     XP_WIN: 2, XP_LOSE: 1,                    /* 防衛技能 EXP */
-    QTE_SPEED: 1.5,                           /* 攻擊甜蜜點指針速度 */
+    QTE_SPEED: 1.5,
+    /* ★ v1.226.0 B2 完美閃避:魔物打到主角前跳「!」鈕。perfect 判定時間 = perfectMs + 腳程×movMs(上限 perfectMax);之後再給 goodMs 的「閃過一半」;被黏住時判定時間 ×slowMul */
+    DODGE: { perfectMs:320, movMs:6, perfectMax:650, goodMs:350, goodMul:0.6, slowMul:0.7 },   /* 沙盤校準:閃避太強會讓會操作的單人也近乎不敗 */
+    WIT_CD: 3,                                /* ★ v1.226.0 智取改冷卻制:用完之後隔 3 回合可再用(原本一場一次) */
+    TACTICS: {                                /* ★ v1.226.0 夥伴戰術(戰鬥中右側按鈕切換,記在 flags.btTactic) */
+      atk:   { n:'全力進攻', e:'⚔', allyDmg:1.15, allyTaken:1.10, d:'夥伴傷害 +15%,但夥伴受傷 +10%。' },
+      guard: { n:'保護主角', e:'🛡', allyDmg:0.90, heroTaken:0.85, coverAdd:25, d:'坦克更常替你擋、你受傷 −15%,夥伴傷害 −10%。' },
+      heal:  { n:'保守治療', e:'💚', allyDmg:0.85, healMul:1.25, d:'治療量 +25%,夥伴傷害 −15%。' }
+    },
+    COMBO: { base:10, perBond:5, mul:0.5 },   /* ★ v1.226.0 連攜攻擊:寵物普攻打到「你這回合打過的同一隻」時,機率 base + 親密度階×perBond %,追加 mul 倍傷害 */
+    METAL_ARMORS: ['oremail', 'relicguard'],  /* ★ v1.226.0 會導電的鐵甲(雷精連鎖閃電傷害 +50%) */                           /* 攻擊甜蜜點指針速度 */
     /* ★ v1.163.0 老師需求 6:野外遇敵戰鬥音樂改用大對抗「貓空關小怪戰鬥曲」,每次隨機輪播一首。
        這五支 <audio> 早就在 minigame_index.html 裡(與大對抗 BATTLE_BGM_LIST 同一組),零素材上傳。
        ⚠ 只換「野外遇敵」;遺跡地下層與夜襲防衛戰維持既有 raid/raid2 氣氛曲不動。 */
     BGM_WILD: ['bgm-battle-01', 'bgm-battle-02', 'bgm-battle-03', 'bgm-battle-04', 'bgm-battle-05'],
     lines: { open: ['有東西跳出來了!', '小心——是魔物!', '牠擋在路上……'], win: ['趕跑了!', '太棒了!', '這一區安全多了。'], lose: ['眼前一黑……', '……好痛,撐不住了。'], flee: ['溜掉了!', '先躲一下再說。'], fleeFail: ['沒逃掉!', '被追上了!'] }
   };
+  /* ★ v1.225.0 戰鬥優化 B1 — 冒險等級(戰鬥經驗):主角 HP/基礎攻擊/基礎防禦改由這條成長,四維改負責手感(暴擊/速度/QTE)。
+     xpNeed(lv)=Lv→Lv+1 需要的經驗;打贏每隻魔物 xpWin + 魔物等級×xpPerLv(精英 ×ELITE.XP_MUL);打輸拿 lose 比例。
+     舊存檔遷移:依 battle.won × migrateWin 反推起始等級,上限 migrateCap。 */
+  D.ADV = { MAX:50, HP_BASE:80, HP_LV:9, ATK_LV:0.6, DEF_LV:0.3, xpWin:3, xpPerLv:0.8, lose:0.2, migrateWin:25, migrateCap:35,
+    xpNeed: function(lv){ return 10 + lv * 8; } };
+  /* ★ v1.225.0 精英怪:野外遇敵每隻獨立擲 P;HP×HP_MUL 並帶一個詞綴;必掉核心素材(依魔物種類,其餘給草藥精華) */
+  D.ELITE = { P:0.12, HP_MUL:1.8, XP_MUL:2,
+    AFFIX: [ { k:'rage',  n:'狂暴', e:'💢', atkMul:1.3, d:'攻擊 ×1.3' },
+             { k:'hard',  n:'堅硬', e:'🪨', defMul:2, defAdd:3, d:'防禦 ×2 再 +3' },
+             { k:'swift', n:'迅捷', e:'💨', spdAdd:4, critAdd:10, d:'速度 +4、暴擊率 +10%' },
+             { k:'leech', n:'吸血', e:'🩸', leechP:30, d:'打中目標時回復傷害的 30%' },
+             { k:'split', n:'分裂', e:'🧬', splitAt:0.5, d:'血量掉到一半時分裂出一隻分身(場上最多 4 隻)' } ],   /* ★ v1.226.0 B2 補上分裂 */
+    DROP: { ember:'core_ember', spark:'core_spark', beetle:'core_beetle' }, DROP_DEF:'herb_essence' };
+  /* ★ v1.226.0 戰鬥優化 B2 — 魔物專屬技能。流程(index islBtMonSkill):輪到魔物時有 p% 機率「預告」(頭上 ⚠、紅光呼吸,這回合不攻擊),
+     下一次輪到牠才真的放。預告期間:把牠打暈/弄睡 = 打斷;用對工具智取 = 取消;單體招式打主角時一樣會跳完美閃避。
+     t: charge 單體重擊 / harden 自身防禦×defMul / sticky 單體+減速 / drain 單體+吸血 / vanish 自身隱身(攻擊 missP% 撲空)/
+        burn 全體+燒燙傷 dot%/回合 / petrify 單體+暈 stun 回合 / chain 隨機 n2 人(穿鐵甲 +metalP%)/ quake 全體+stunP% 暈眩。cd = 放完之後隔幾次行動才可能再預告。 */
+  D.MON_SKILL = {
+    boar:     { t:'charge',  n:'衝撞',     e:'💢', p:45, cd:2, mul:2.2, tele:'壓低身體、前腳刨地——要衝過來了!', hint:'防禦減半、快點「!」閃避,或把牠打暈打斷。' },
+    beetle:   { t:'harden',  n:'硬殼',     e:'🛡', p:40, cd:3, dur:2, defMul:2, tele:'把腳縮起來,甲殼閃著金屬光……', hint:'硬殼期間很難打痛;用 🧲 磁鐵智取可以取消,或先打別隻。' },
+    slime:    { t:'sticky',  n:'黏住',     e:'🫧', p:45, cd:2, mul:1.0, slow:2, tele:'身體鼓起來,準備噴黏液!', hint:'被黏住 2 回合動作變慢、比較難閃避;🧂 鹽智取可以取消。' },
+    bat:      { t:'drain',   n:'吸血',     e:'🩸', p:45, cd:2, mul:1.3, drainP:50, tele:'張開翅膀、露出尖牙……', hint:'打中會吸回一半的血;🔔 銅鑼智取可以取消,完美閃避就吸不到。' },
+    shadow:   { t:'vanish',  n:'隱身',     e:'🌫', p:40, cd:3, dur:2, missP:40, tele:'身體越來越淡,快要看不見了……', hint:'隱身時攻擊有 40% 會撲空;🔦 火把智取可以取消。' },
+    ember:    { t:'burn',    n:'燃燒',     e:'🔥', p:40, cd:3, mul:0.6, dot:5, dur:2, tele:'火焰越燒越旺,熱氣撲面而來!', hint:'全體受傷,再燒燙傷 2 回合(每回合 −5% 體力);💧 水桶智取可以取消。' },
+    basilisk: { t:'petrify', n:'石化凝視', e:'👁', p:40, cd:3, mul:0.6, stun:2, tele:'眼睛開始發出灰白色的光……', hint:'被瞪到會石化 2 回合不能動;🪞 鏡子智取可以取消,完美閃避也躲得掉。' },
+    spark:    { t:'chain',   n:'連鎖閃電', e:'⚡', p:40, cd:3, mul:0.8, n2:3, metalP:50, tele:'全身劈啪作響,電光越來越亮!', hint:'最多電到 3 個人,穿鐵甲的受傷 +50%(鐵是導體);🧤 橡膠手套智取可以取消。' },
+    guardian: { t:'quake',   n:'震地',     e:'🌋', p:45, cd:2, mul:0.8, stunP:20, tele:'石像舉起雙臂,地面開始震動……', hint:'全體受傷,有機率被震暈;🔔 銅鑼智取可以取消。' }
+  };
+
+  /* ══ ★ v1.227.0 戰鬥優化 B3 — 地圖頭目 ══
+     數值(沙盤校準):hp 基礎 80、防禦 4、攻擊 24×(1+0.10×區序)、成長沿用 MON_LV_*;隊伍縮放只加 HP(每位隊友 +30%),不加攻擊。
+     skills 格式同 D.MON_SKILL(會預告);新 t:aoe 全體 / multi 隨機 n2 段可重複 / summon 叫 cnt 隻 k / heal 自身回 healP% / blind 全隊攻擊 40% 落空 dur 回合 / strip 清掉全隊增益。
+     p2(HP ≤50%)/p3(HP ≤25%):atkMul/defMul/spdAdd、summon 叫 1 隻幫手、text 演出文字。
+     ult 必殺:每 every 次行動開始倒數 cd 回合,倒數時跳出掩護題(答對傷害 ×cover);倒數期間破韌 = 打斷。
+     weakWp 剋制武器(傷害 ×1.3、削韌 ×1.5);weakPets 剋制夥伴(傷害 ×1.5);core = 核心素材物品 id。 */
+  D.BOSS_RULE = { exploreNeed:80, ap:2, respawnDays:7, toughMax:100, hpPerAlly:0.30, brokenMul:1.5, brokenStun:2,
+    tough:{ hero:10, crit:6, ally:4, cmd:6, wit:35, perfect:15, stunToTough:20 }, weakWpMul:1.3, weakWpTough:1.5, weakPetMul:1.5,
+    stars:[ { n:'★1', lvAdd:0, coreMul:1 }, { n:'★2', lvAdd:8, coreMul:2 }, { n:'★3', lvAdd:16, coreMul:3 } ], starUnlock:'volcano',
+    reward:{ firstPts:2, firstCore:2, core:1, shellFirst:[30,10], shell:[10,5], xpMul:6 } };
+  D.BOSSES = [
+    { zone:'forest', k:'boarking', n:'鐵牙山豬王', e:'🐗', lv:10, hp:80, atk:24, def:4, spd:6, crit:10, tool:'gong', weakWp:['hammer','club'], core:'boss_tusk',
+      hint:'🔔 巨大的聲響會讓野生動物嚇得停下動作;錘和棍棒的重擊最能打亂牠。',
+      skills:[ { t:'charge', n:'蓄力衝撞', e:'💢', p:45, cd:2, mul:2.4, tele:'前腳猛刨地面,鼻孔噴著白氣……', hint:'防禦、快點「!」閃避,或削光韌性打斷。' },
+               { t:'summon', n:'呼喚小豬', e:'🐽', p:45, cd:3, k:'boar', cnt:1, tele:'仰頭發出長長的嚎叫……', hint:'會叫出一隻野豬幫忙;🔔 智取可以取消。' } ],
+      p2:{ atkMul:1.2, summon:'boar', text:'鐵牙山豬王被激怒了!鬃毛全部豎起來!' },
+      ult:{ n:'狂暴衝鋒', e:'🌪', every:5, cd:2, mul:2.2, cover:0.2, tele:'退到遠處、壓低身體——要朝整個隊伍撞過來了!',
+        q:[ { q:'跑得很快的東西很難馬上停下來,是因為?', o:['慣性','磁力','浮力','摩擦力變大'], a:0, why:'物體會保持原本的運動狀態(慣性),越重越快越難停——所以衝過來時側身閃開最安全。' },
+            { q:'野豬衝過來時,躲在哪裡最安全?', o:['粗大的樹幹後面','空曠的草地中間','跟牠正面對峙','趴在地上不動'], a:0, why:'粗樹幹能擋住衝撞的力量;空曠處沒有任何遮蔽。' } ] } },
+    { zone:'grass', k:'locustking', n:'飛蝗之王', e:'🦗', lv:13, hp:80, atk:26, def:4, spd:9, crit:10, tool:'torch', weakWp:['bow','boomerang'], weakPets:['gull','owl','bluemagpie','eagle','spoonbill','barbet'], core:'boss_locustwing',
+      hint:'🔦 煙和火光能驅散蟲群;鳥類夥伴是蝗蟲的天敵(食物鏈),傷害 ×1.5。',
+      skills:[ { t:'multi', n:'蝗群遮天', e:'🦗', p:45, cd:2, mul:0.45, n2:6, tele:'翅膀嗡嗡作響,天空暗了下來……', hint:'會隨機咬 6 下;🔦 火把智取可以取消。' },
+               { t:'strip', n:'啃食', e:'🍂', p:40, cd:3, mul:0.5, tele:'大顎喀喀作響,盯著大家身上的東西……', hint:'清掉全隊增益並造成傷害;先別急著放增益。' } ],
+      p2:{ atkMul:1.2, spdAdd:2, summon:'boar', text:'飛蝗之王振翅狂舞,整片草原都在震動!' },
+      ult:{ n:'飛蝗過境', e:'🌾', every:5, cd:2, mul:2.2, cover:0.2, tele:'成千上萬的蝗蟲聚成一大片黑雲……',
+        q:[ { q:'蝗蟲大量增加時,吃蝗蟲的鳥類數量通常會?', o:['跟著增加','馬上消失','完全不變','變成吃草'], a:0, why:'食物變多,捕食者也跟著變多——這是食物鏈互相牽制的關係。' },
+            { q:'在食物鏈中,吃植物的蝗蟲屬於?', o:['初級消費者','生產者','分解者','頂級掠食者'], a:0, why:'植物是生產者,直接吃植物的動物是初級消費者。' } ] } },
+    { zone:'river', k:'mudking', n:'洪流泥王', e:'🌊', lv:17, hp:80, atk:29, def:4, spd:6, crit:10, tool:'salt', weakWp:['stoneaxe','spear'], core:'boss_mudheart',
+      hint:'🧂 鹽會把水分吸出來(滲透作用);斬擊和穿刺對軟軟的泥巴最有效。',
+      skills:[ { t:'sticky', n:'泥流吞噬', e:'🫧', p:45, cd:2, mul:1.4, slow:2, tele:'身體像漩渦一樣轉起來……', hint:'被吞到會變慢 2 回合;🧂 鹽智取可以取消。' },
+               { t:'aoe', n:'暴漲', e:'🌊', p:40, cd:3, mul:0.8, slow:1, tele:'溪水突然往牠身上湧過來……', hint:'全體受傷並變慢 1 回合。' } ],
+      p2:{ atkMul:1.2, summon:'slime', text:'洪流泥王分出一團泥怪,水位越漲越高!' },
+      ult:{ n:'山洪暴發', e:'🌧', every:5, cd:2, mul:2.2, cover:0.2, tele:'上游傳來轟隆轟隆的聲音——大水要沖下來了!',
+        q:[ { q:'山坡上種滿樹木,可以減少土石流,是因為?', o:['樹根抓住土壤','樹會吸走雨雲','樹葉會發熱','樹木會擋住太陽'], a:0, why:'樹根像網子一樣抓住土壤,雨水也會先被樹葉和落葉層緩衝——這就是水土保持。' },
+            { q:'遇到溪水突然變混濁、水位上漲,應該?', o:['馬上往高處離開','留下來看熱鬧','下水把東西撿回來','在溪邊搭帳篷'], a:0, why:'溪水變濁上漲是山洪前兆,要立刻往高處移動。' } ] } },
+    { zone:'rock', k:'crabking', n:'巨螯椰子蟹王', e:'🦀', lv:20, hp:80, atk:31, def:4, spd:5, crit:10, tool:'fist', weakWp:['hammer','club'], core:'boss_clawshell',
+      hint:'👊 把牠翻過來!背甲朝下的蟹很難翻身;錘和棍棒的重擊能打碎硬殼。',
+      skills:[ { t:'charge', n:'巨鉗夾擊', e:'🦀', p:45, cd:2, mul:2.0, dot:4, dur:2, tele:'兩隻大鉗子高高舉起……', hint:'單體重擊,還會流血 2 回合。' },
+               { t:'harden', n:'換殼', e:'🐚', p:40, cd:3, dur:2, defMul:2, healP:15, tele:'縮進殼裡,殼縫冒出泡泡……', hint:'防禦 ×2 並回血 15%;👊 智取可以取消。' } ],
+      p2:{ atkMul:1.5, defMul:0.5, text:'喀啦!巨螯椰子蟹王的殼碎了——攻擊變猛,但防禦大降!' },
+      ult:{ n:'巨浪鉗擊', e:'🌊', every:5, cd:2, mul:2.2, cover:0.2, tele:'退到浪花裡,舉起雙鉗蓄力……',
+        q:[ { q:'螃蟹、蝦子要長大,必須先?', o:['蛻殼','冬眠','換毛','開花'], a:0, why:'甲殼類的外殼不會長大,要脫掉舊殼長出新殼(蛻殼),剛蛻殼時最脆弱。' },
+            { q:'椰子蟹和寄居蟹一樣,屬於哪一類動物?', o:['甲殼類','昆蟲','魚類','爬蟲類'], a:0, why:'有堅硬外骨骼、分節的腳和觸角,屬於節肢動物中的甲殼類。' } ] } },
+    { zone:'lake', k:'batqueen', n:'霧湖蝠后', e:'🦇', lv:24, hp:80, atk:34, def:4, spd:9, crit:12, tool:'gong', weakWp:['bow','spear'], core:'boss_batfeather',
+      hint:'🔔 巨大的聲響會干擾回聲定位;弓箭和長槍能打到空中的牠。',
+      skills:[ { t:'aoe', n:'超音波', e:'〰', p:40, cd:3, mul:0.5, stunP:45, tele:'張大嘴巴,耳朵開始嗡嗡作響……', hint:'全體受傷,有機率被震暈;🔔 智取可以取消。' },
+               { t:'drain', n:'吸血', e:'🩸', p:45, cd:2, mul:1.5, drainP:50, tele:'在霧裡盤旋,盯上了一個目標……', hint:'打中會吸回一半的血;完美閃避就吸不到。' } ],
+      p2:{ atkMul:1.2, summon:'bat', text:'霧湖蝠后召來了蝙蝠群!' },
+      ult:{ n:'回聲風暴', e:'🌀', every:5, cd:2, mul:2.2, cover:0.2, tele:'湖面起了一圈圈波紋,聲波越來越強……',
+        q:[ { q:'蝙蝠在黑暗中飛行不會撞到東西,是靠?', o:['發出聲音聽回聲','眼睛會發光','聞氣味','記住地圖'], a:0, why:'蝙蝠發出超音波,聽回聲判斷前方障礙物的位置——這叫回聲定位。' },
+            { q:'聲音碰到山壁彈回來,這種現象叫?', o:['回聲','折射','蒸發','共鳴'], a:0, why:'聲音遇到障礙物反射回來,就是回聲。' } ] } },
+    { zone:'cave', k:'abyssshadow', n:'深淵影魔', e:'👤', lv:28, hp:80, atk:36, def:4, spd:8, crit:15, tool:'torch', weakWp:['boomerang','bow'], core:'boss_shadowgem',
+      hint:'🔦 光沿直線前進,照得到的地方影子就會消失;迴力鏢和弓箭能打到躲在暗處的牠。',
+      skills:[ { t:'blind', n:'熄燈', e:'🌑', p:40, cd:3, dur:2, mul:0.4, tele:'洞裡的光一點一點被吸走……', hint:'全隊 2 回合攻擊有 40% 落空;🔦 智取可以取消。' },
+               { t:'summon', n:'影分身', e:'👥', p:40, cd:3, k:'shadow', cnt:2, tele:'影子從牆上剝落,變成好幾個……', hint:'會叫出 2 隻影魔。' } ],
+      p2:{ atkMul:1.2, summon:'shadow', text:'深淵影魔的身影忽大忽小,四周越來越暗!' },
+      ult:{ n:'深淵吞噬', e:'🕳', every:5, cd:2, mul:2.2, cover:0.2, tele:'整個洞窟暗到伸手不見五指……',
+        q:[ { q:'影子會出現,是因為?', o:['光沿直線前進被擋住','物體會發出黑光','空氣變黑','地上有洞'], a:0, why:'光沿直線前進,被不透光的物體擋住,後面照不到光的地方就是影子。' },
+            { q:'手電筒離手越近,牆上的手影會?', o:['越大','越小','不變','消失'], a:0, why:'光源越靠近物體,擋住的光範圍越大,影子就越大。' } ] } },
+    { zone:'cliff', k:'thunderbird', n:'雷鳴怪鳥', e:'⚡', lv:32, hp:80, atk:38, def:4, spd:9, crit:12, tool:'glove', weakWp:['bow','spear'], core:'boss_thunderplume',
+      hint:'🧤 橡膠是絕緣體,電流過不去;穿鐵甲打牠會被電得更痛(鐵是導體)。',
+      skills:[ { t:'chain', n:'落雷', e:'⚡', p:45, cd:2, mul:1.2, n2:3, metalP:50, tele:'雲層裡閃出一道道白光……', hint:'隨機劈 3 人,穿鐵甲 +50%;🧤 智取可以取消。' },
+               { t:'aoe', n:'麻痺風暴', e:'🌩', p:40, cd:3, mul:0.6, stunP:30, tele:'羽毛一根根豎起來,劈啪作響……', hint:'全體受傷,有機率麻痺。' } ],
+      p2:{ atkMul:1.2, summon:'spark', text:'雷鳴怪鳥召來了雷精,天空暗了下來!' },
+      ult:{ n:'雷暴', e:'🌩', every:5, cd:2, mul:2.2, cover:0.2, tele:'整片雷雲往懸崖壓下來——要打大雷了!',
+        q:[ { q:'打雷時,下列哪裡比較安全?', o:['蹲低遠離高處和大樹','站在空曠的山頂','躲在孤立的大樹下','手拿金屬棒子'], a:0, why:'閃電容易打中高處與尖端,空曠山頂和孤樹下最危險;蹲低遠離才安全。' },
+            { q:'下列哪一種材料容易導電?', o:['鐵','橡膠','木頭','塑膠'], a:0, why:'金屬是導體,電流容易通過;橡膠、塑膠、乾木頭是絕緣體。' } ] } },
+    { zone:'valley', k:'magmabeetle', n:'熔甲蟲王', e:'🔥', lv:36, hp:80, atk:41, def:4, spd:5, crit:10, tool:'water', weakWp:['hammer','club'], core:'boss_magmashell',
+      hint:'💧 水能降溫,燒得通紅的外殼一冷就會變脆;錘和棍棒能敲碎外殼。',
+      skills:[ { t:'aoe', n:'噴火', e:'🔥', p:45, cd:2, mul:0.7, dot:5, dur:2, tele:'甲殼縫隙越來越紅,冒出滾燙的蒸氣……', hint:'全體受傷並燒燙傷 2 回合;💧 智取可以取消。' },
+               { t:'harden', n:'高溫外殼', e:'🛡', p:40, cd:3, dur:2, defMul:2, tele:'外殼燒得通紅發亮……', hint:'防禦 ×2;先打幫手或準備破韌。' } ],
+      p2:{ atkMul:1.3, defMul:0.7, spdAdd:3, summon:'ember', text:'熔甲蟲王的外殼熔化了——速度變快、攻擊變猛!' },
+      ult:{ n:'熔岩噴發', e:'🌋', every:5, cd:2, mul:2.2, cover:0.2, tele:'地面裂開,岩漿從牠腳下湧出來……',
+        q:[ { q:'燒熱的玻璃杯突然倒冰水容易裂開,是因為?', o:['熱脹冷縮不平均','玻璃會融化','冰水太重','玻璃會吸水'], a:0, why:'溫度急速變化,外面收縮裡面還膨脹,受力不平均就會裂開(熱脹冷縮)。' },
+            { q:'燃燒需要三個條件,下列哪一個不是?', o:['水','可燃物','氧氣','足夠的溫度'], a:0, why:'燃燒三要素是可燃物、助燃物(氧氣)、燃點溫度;水是用來降溫滅火的。' } ] } },
+    { zone:'ruins', k:'gorgonqueen', n:'石化蛇后', e:'🐍', lv:42, hp:80, atk:43, def:4, spd:7, crit:15, tool:'mirror', weakWp:['stoneaxe','spear'], core:'boss_gorgonscale',
+      hint:'🪞 光滑的鏡面會把光反射回去;斬擊和穿刺能打穿蛇鱗的縫隙。',
+      skills:[ { t:'petrify', n:'石化凝視', e:'👁', p:45, cd:2, mul:0.8, stun:2, tele:'眼睛發出灰白色的光……', hint:'被瞪到石化 2 回合;🪞 智取可以取消,完美閃避也躲得掉。' },
+               { t:'heal', n:'蛻皮', e:'🐍', p:35, cd:4, healP:20, tele:'身體扭動,舊皮開始裂開……', hint:'回復 20% 血量;趁現在集中火力,或用智取打斷。' } ],
+      p2:{ atkMul:1.2, summon:'basilisk', text:'石化蛇后喚醒了守在石柱上的石化蛇!' },
+      ult:{ n:'萬物石化', e:'🗿', every:5, cd:2, mul:1.8, stunP:40, cover:0.2, tele:'整座遺跡的石柱都亮起灰白色的光……',
+        q:[ { q:'鏡子能把光反射回去,是因為鏡面?', o:['非常光滑','非常重','非常冷','會發光'], a:0, why:'光滑表面讓光整齊地反射(鏡面反射);粗糙表面則會漫反射。' },
+            { q:'光線照到鏡子上,反射角會?', o:['等於入射角','是入射角的兩倍','永遠是 90 度','完全不固定'], a:0, why:'反射定律:入射角等於反射角。' } ] } },
+    { zone:'volcano', k:'lavacolossus', n:'熔岩巨像', e:'🌋', lv:48, hp:80, atk:46, def:4, spd:4, crit:10, tool:'water', weakWp:['hammer'], core:'boss_lavaheart',
+      hint:'💧 水讓熔岩快速冷卻變成脆硬的岩石,這時用錘一敲就碎。',
+      skills:[ { t:'harden', n:'熔岩護甲', e:'🛡', p:40, cd:3, dur:2, defMul:2, healP:8, tele:'岩漿流過全身,凝成一層厚殼……', hint:'防禦 ×2 並回血;💧 智取可以取消。' },
+               { t:'summon', n:'召喚火精', e:'🔥', p:40, cd:3, k:'ember', cnt:2, tele:'從火山口召來一團團火焰……', hint:'會叫出 2 隻火精。' } ],
+      p2:{ atkMul:1.25, summon:'ember', text:'熔岩巨像怒吼,火山口開始噴發!' },
+      p3:{ atkMul:1.2, defMul:0.5, text:'熔岩巨像胸口裂開——核心外露了!防禦大降!' },
+      ult:{ n:'火山噴發', e:'🌋', every:5, cd:2, mul:2.4, cover:0.2, tele:'整座火山在震動,岩漿衝上天空——!',
+        q:[ { q:'岩漿冷卻之後會變成?', o:['火成岩','沉積岩','珊瑚礁','沙子'], a:0, why:'岩漿冷卻凝固形成的岩石叫火成岩,例如玄武岩、安山岩。' },
+            { q:'台灣的哪一座島是火山島?', o:['龜山島','小琉球','澎湖本島','綠島以外都不是'], a:0, why:'龜山島是台灣現在仍有活動跡象的火山島;小琉球是珊瑚礁島。' } ] } }
+  ];
+  D.bossByZone = function(z){ var i; for(i = 0; i < D.BOSSES.length; i++){ if(D.BOSSES[i].zone === z) return D.BOSSES[i]; } return null; };
+  D.bossByKey = function(k){ var i; for(i = 0; i < D.BOSSES.length; i++){ if(D.BOSSES[i].k === k) return D.BOSSES[i]; } return null; };
+  (function(){ var st = ['idle','atk','hit','stun','down','skill'], i, j, b;
+    for(i = 0; i < D.BOSSES.length; i++){ b = D.BOSSES[i];
+      D.MON_BT[b.k] = { hp:b.hp, atk:b.atk, def:b.def, spd:b.spd, crit:b.crit, drop:{ shell:[0,0], item:null, p:0 }, d:b.hint };
+      for(j = 0; j < st.length; j++) D.IMG['bt_m_' + b.k + '_' + st[j]] = 'island_bt_m_' + b.k + '_' + st[j] + '.png';
+      D.IMG['poi_lair_' + b.zone] = 'island_poi_lair_' + b.zone + '.png';
+    }
+    D.IMG.ui_boss = 'island_ui_boss.png';
+    var cores = [['boss_tusk','鐵牙獠牙','🦷'],['boss_locustwing','蝗王翅翼','🪽'],['boss_mudheart','泥王之心','🟤'],['boss_clawshell','巨螯碎殼','🦀'],['boss_batfeather','蝠后之羽','🪶'],['boss_shadowgem','深淵影晶','🔮'],['boss_thunderplume','雷鳴羽','⚡'],['boss_magmashell','熔甲殼片','🟥'],['boss_gorgonscale','蛇后鱗','🐍'],['boss_lavaheart','巨像熔心','❤️‍🔥']];
+    for(i = 0; i < cores.length; i++){ D.ITEMS[cores[i][0]] = { n:cores[i][1], e:cores[i][2], img:'res_' + cores[i][0], cat:'misc' }; D.IMG['res_' + cores[i][0]] = 'island_res_' + cores[i][0] + '.png'; D.ITEM_ORDER.push(cores[i][0]); }
+  })();
+  D.IMG.res_core_ember = 'island_res_core_ember.png';
+  D.IMG.res_core_spark = 'island_res_core_spark.png';
+  D.IMG.res_core_beetle = 'island_res_core_beetle.png';
+  D.IMG.res_herb_essence = 'island_res_herb_essence.png';
+  /* ★ v1.225.0 武器成長曲線放緩:攻擊 = 基礎 × (1 + WEAPON_LV_ATK×(Lv−1)) × (1 + WEAPON_Q_ATK×(★−1));Lv20★3 ≈ ×2.9(舊版 ×4.95) */
+  D.WEAPON_LV_ATK = 0.07; D.WEAPON_Q_ATK = 0.125;
   /* 武器(第三批需求):6 種,各有 ★1~3 品質(製作 QTE 決定)與 Lv1~5(製作台升級)。
    * atk=基礎攻擊;zone=甜蜜點寬度倍率(長槍寬、錘窄);spd=先手加成;crit=暴擊倍率;hits=一回合命中次數(迴力鏢 2 段);first=必先手(弓);stunP=命中時暈眩機率%(錘);def=防禦
    * hand=true 不用製作台就能做(棍棒/石斧:初期沒蓋製作台也能自保);up=每升 1 級的材料(× 當前 Lv)
@@ -2388,19 +2561,19 @@ window.ISL_DB = (function(){
   D.IMG.wp_boomerang_t4 = 'island_wp_boomerang_t4.png';
   D.IMG.wp_boomerang_t5 = 'island_wp_boomerang_t5.png';
   D.WEAPONS = [
-    { id:'club',      n:'棍棒',   e:'🏏', img:'wp_club',      atk:7,  def:1, zone:1.0, spd:0, crit:1.5, hits:1, hand:true,  cost:{wood:4, fiber:2},              up:{wood:3, fiber:1},
+    { id:'club',      n:'棍棒',   e:'🏏', img:'wp_club',      atk:8,  def:1, zone:1.0, spd:0, crit:1.5, hits:1, hand:true,  cost:{wood:4, fiber:2},              up:{wood:3, fiber:1},
       d:'最簡單的武器,一根硬木頭。',   sci:'木頭有彈性又不會太重,揮起來不震手。',
       parts:[ {k:'body', n:'棒身', need:'wood', hint:'又直又硬的木頭', e:'🪵'}, {k:'grip', n:'握把', need:'fiber', hint:'纏一圈纖維才不會滑手', e:'🌿'} ] },
     { id:'stoneaxe',  n:'石斧',   e:'🪓', img:'wp_stoneaxe',  atk:9,  def:0, zone:0.9, spd:0, crit:2.0, hits:1, hand:true,  cost:{stone:3, wood:3, fiber:2},     up:{stone:2, wood:2, fiber:1},
       d:'磨尖的石頭綁在木柄上,暴擊特別痛。', sci:'石頭磨出刃口,受力面積小→壓力大,砍得進去。',
       parts:[ {k:'head', n:'石刃', need:'stone', hint:'磨出刃口的硬石頭', e:'🪨'}, {k:'shaft', n:'斧柄', need:'wood', hint:'木柄是槓桿,越長越省力', e:'🪵'}, {k:'bind', n:'綁繩', need:'fiber', hint:'綁緊石刃不飛出去', e:'🌿'} ] },
-    { id:'spear',     n:'長槍',   e:'🔱', img:'wp_spear',     atk:10, def:1, zone:1.4, spd:1, crit:1.5, hits:1, hand:false, cost:{wood:6, stone:2, fiber:3},     up:{wood:3, stone:1, fiber:1},
+    { id:'spear',     n:'長槍',   e:'🔱', img:'wp_spear',     atk:9,  def:1, zone:1.4, spd:1, crit:1.5, hits:1, hand:false, cost:{wood:6, stone:2, fiber:3},     up:{wood:3, stone:1, fiber:1},
       d:'又長又準,甜蜜點特別寬。',     sci:'長槍離魔物遠,也能先刺到——距離就是安全。',
       parts:[ {k:'shaft', n:'槍桿', need:'wood', hint:'長而直,才刺得遠', e:'🪵'}, {k:'tip', n:'槍尖', need:'stone', hint:'尖尖的,受力面積小', e:'🪨'}, {k:'bind', n:'綁繩', need:'fiber', hint:'把槍尖綁牢', e:'🌿'} ] },
     { id:'bow',       n:'弓箭',   e:'🏹', img:'wp_bow',       atk:8,  def:0, zone:1.0, spd:4, crit:1.8, hits:1, first:true, hand:false, cost:{wood:5, fiber:6, feather:2}, up:{wood:2, fiber:3, feather:1},
       d:'遠遠射過去,永遠先出手。',     sci:'拉弓把「彈性位能」存進弓身,放手變成箭的動能。',
       parts:[ {k:'limb', n:'弓身', need:'wood', hint:'要有彈性,彎了會彈回來', e:'🪵'}, {k:'string', n:'弓弦', need:'fiber', hint:'細又韌,拉緊不斷', e:'🌿'}, {k:'fletch', n:'箭羽', need:'feather', hint:'羽毛讓箭飛得直', e:'🪶'} ] },
-    { id:'hammer',    n:'錘',     e:'🔨', img:'wp_hammer',    atk:14, def:2, zone:0.7, spd:-2, crit:1.5, hits:1, stunP:35, hand:false, cost:{stone:6, wood:4, fiber:2}, up:{stone:3, wood:2, fiber:1},
+    { id:'hammer',    n:'錘',     e:'🔨', img:'wp_hammer',    atk:12, def:2, zone:0.7, spd:-2, crit:1.5, hits:1, stunP:35, hand:false, cost:{stone:6, wood:4, fiber:2}, up:{stone:3, wood:2, fiber:1},
       d:'又重又慢,打中有機會把魔物打暈。', sci:'質量大、速度快 → 動量大,一錘下去魔物站不穩。',
       parts:[ {k:'head', n:'錘頭', need:'stone', hint:'又重又硬的大石頭', e:'🪨'}, {k:'shaft', n:'錘柄', need:'wood', hint:'長柄=長施力臂,更省力', e:'🪵'}, {k:'bind', n:'綁繩', need:'fiber', hint:'綁緊錘頭', e:'🌿'} ] },
     { id:'boomerang', n:'迴力鏢', e:'🪃', img:'wp_boomerang', atk:5,  def:0, zone:1.1, spd:2, crit:1.5, hits:2, hand:false, cost:{wood:5, fiber:2, shell:1},   up:{wood:3, fiber:1, shell:1},
@@ -2449,48 +2622,48 @@ window.ISL_DB = (function(){
   D.IMG.am_oremail      = 'island_am_oremail.png';
   D.IMG.am_relicguard   = 'island_am_relicguard.png';
   D.ARMORS = [
-    { id:'leafcloak', n:'葉編披肩', e:'🍃', img:'am_leafcloak', tier:1, def:1, cut:0, spd:0, ail:0, hand:true,
+    { id:'leafcloak', n:'葉編披肩', e:'🍃', img:'am_leafcloak', tier:1, def:3, cut:0, spd:0, ail:0, hand:true,
       cost:{ leaf:6, fiber:4 },
       d:'把大葉一片一片疊起來綁成披肩,樹枝刮不傷你。', sci:'葉子一層層疊著,撞擊的力量會分散到很多片上,單獨一片就不容易破。',
       parts:[ {k:'body', n:'披身', need:'leaf', hint:'大片又韌的月桃葉,要疊好幾層', e:'🍃'}, {k:'tie', n:'綁繩', need:'fiber', hint:'纖維搓成繩才綁得住', e:'🌿'} ] },
-    { id:'reedvest', n:'草編背心', e:'🎋', img:'am_reedvest', tier:2, def:2, cut:0, spd:0, ail:0, hand:true,
+    { id:'reedvest', n:'草編背心', e:'🎋', img:'am_reedvest', tier:2, def:5, cut:0, spd:0, ail:0, hand:true,
       cost:{ reed:8, fiber:5 },
       d:'蘆葦一條一條編起來,又輕又透氣。', sci:'一根蘆葦很好折,編成交錯的網以後互相撐住,就很難折斷——這叫「編織結構」。',
       parts:[ {k:'weave', n:'編body', need:'reed', hint:'蘆葦要一橫一直交錯編', e:'🎋'}, {k:'tie', n:'肩帶', need:'fiber', hint:'搓成繩掛在肩膀上', e:'🌿'} ] },
-    { id:'barkmail', n:'樹皮護甲', e:'🪵', img:'am_barkmail', tier:3, def:3, cut:0, spd:0, ail:0, hand:false,
+    { id:'barkmail', n:'樹皮護甲', e:'🪵', img:'am_barkmail', tier:3, def:8, cut:0, spd:0, ail:0, hand:false,
       cost:{ wood:8, fiber:5, leaf:4 },
       d:'厚樹皮削成一片一片,綁在身上像龜殼。', sci:'硬的樹皮擋撞擊、裡面墊軟葉子吸震——硬外殼配軟內裡,是最省材料的護具做法。',
       parts:[ {k:'plate', n:'樹皮甲片', need:'wood', hint:'厚一點的樹皮才擋得住', e:'🪵'}, {k:'pad', n:'內襯', need:'leaf', hint:'墊在裡面吸收撞擊', e:'🍃'}, {k:'tie', n:'綁繩', need:'fiber', hint:'一片一片串起來', e:'🌿'} ] },
-    { id:'shellplate', n:'貝殼胸甲', e:'🐚', img:'am_shellplate', tier:4, def:4, cut:1, spd:0, ail:0, hand:false,
+    { id:'shellplate', n:'貝殼胸甲', e:'🐚', img:'am_shellplate', tier:4, def:11, cut:1, spd:0, ail:0, hand:false,
       cost:{ shell:10, fiber:6, wood:5 },
       d:'大貝殼像鱗片一樣疊在胸口,又硬又滑。', sci:'貝殼是碳酸鈣做的,很硬;而且表面是弧形,攻擊會被「滑開」,不會正面吃下全部力量。',
       parts:[ {k:'scale', n:'貝甲片', need:'shell', hint:'挑大片、弧度漂亮的', e:'🐚'}, {k:'frame', n:'木骨架', need:'wood', hint:'撐住形狀不變形', e:'🪵'}, {k:'tie', n:'縫線', need:'fiber', hint:'把貝殼一片片縫上去', e:'🌿'} ] },
-    { id:'featherparka', n:'羽絨保暖衣', e:'🪶', img:'am_featherparka', tier:5, def:5, cut:0, spd:0, ail:15, hand:false,
+    { id:'featherparka', n:'羽絨保暖衣', e:'🪶', img:'am_featherparka', tier:5, def:14, cut:0, spd:0, ail:15, hand:false,
       cost:{ feather:10, fiber:8, reed:5 },
       d:'塞滿羽毛,山上再冷也不怕。', sci:'真正保暖的不是羽毛,是羽毛「困住的空氣」——空氣不太會傳熱,所以熱跑不掉。',
       parts:[ {k:'fill', n:'羽絨', need:'feather', hint:'蓬鬆的絨羽才困得住空氣', e:'🪶'}, {k:'shell', n:'外層', need:'reed', hint:'蘆葦纖維織成外層擋風', e:'🎋'}, {k:'sew', n:'縫線', need:'fiber', hint:'縫成一格一格,羽毛才不會全跑到下面', e:'🌿'} ] },
-    { id:'trashguard', n:'海廢拼接甲', e:'♻', img:'am_trashguard', tier:6, def:6, cut:1, spd:0, ail:0, hand:false,
+    { id:'trashguard', n:'海廢拼接甲', e:'♻', img:'am_trashguard', tier:6, def:17, cut:1, spd:0, ail:0, hand:false,
       cost:{ trash:12, fiber:8, pebble:6 },
       d:'海邊撿回來的塑膠片與浮球,洗乾淨剪一剪就是好護甲。', sci:'塑膠又輕又不吸水、還很耐撞;把垃圾變成裝備,海灘乾淨了、你也更安全。',
       parts:[ {k:'panel', n:'塑膠甲板', need:'trash', hint:'浮球剪開就是弧形甲片', e:'♻'}, {k:'stud', n:'卵石鉚釘', need:'pebble', hint:'小卵石當扣件固定', e:'⚪'}, {k:'tie', n:'綁帶', need:'fiber', hint:'穿孔綁起來', e:'🌿'} ] },
-    { id:'pebblescale', n:'卵石鱗甲', e:'⚪', img:'am_pebblescale', tier:7, def:7, cut:2, spd:-1, ail:0, hand:false,
+    { id:'pebblescale', n:'卵石鱗甲', e:'⚪', img:'am_pebblescale', tier:7, def:21, cut:2, spd:-1, ail:0, hand:false,
       cost:{ pebble:14, fiber:9, wood:6 },
       d:'扁卵石像魚鱗一樣層層疊疊,很重但很硬。', sci:'鱗片會互相重疊又各自能動,所以又擋得住又能彎腰——不過石頭很重,動作會慢一點。',
       parts:[ {k:'scale', n:'石鱗', need:'pebble', hint:'挑扁扁的,才疊得平', e:'⚪'}, {k:'back', n:'底板', need:'wood', hint:'木板當底,石頭才有地方黏', e:'🪵'}, {k:'sew', n:'串繩', need:'fiber', hint:'一排一排串起來', e:'🌿'} ] },
-    { id:'herbrobe', n:'草藥護身衣', e:'🍀', img:'am_herbrobe', tier:8, def:8, cut:1, spd:0, ail:30, hand:false,
+    { id:'herbrobe', n:'草藥護身衣', e:'🍀', img:'am_herbrobe', tier:8, def:24, cut:1, spd:0, ail:30, hand:false,
       cost:{ herb:12, fiber:10, leaf:6 },
       d:'織進驅蟲草藥,蟲不咬、傷口也不容易發炎。', sci:'很多植物會分泌氣味物質保護自己,人類把它做成防蚊與消毒用品——這叫「植物的化學防禦」。',
       parts:[ {k:'weave', n:'草藥襯裡', need:'herb', hint:'搗碎揉進布料裡', e:'🍀'}, {k:'cloth', n:'外衣', need:'fiber', hint:'纖維織成一整件', e:'🌿'}, {k:'hood', n:'葉帽兜', need:'leaf', hint:'遮頭遮脖子', e:'🍃'} ] },
-    { id:'oremail', n:'鐵片鎖甲', e:'🟫', img:'am_oremail', tier:9, def:10, cut:3, spd:-2, ail:0, hand:false,
+    { id:'oremail', n:'鐵片鎖甲', e:'🟫', img:'am_oremail', tier:9, def:30, cut:3, spd:-2, ail:0, hand:false,
       cost:{ ore:10, fiber:10, wood:8 },
       d:'洞窟挖到的鐵礦敲成薄片,一片片串成整件,最硬也最重。', sci:'鐵比石頭硬,但整塊鐵不能彎;敲成小片串起來就能又硬又活動——這就是鎖子甲的道理。',
       parts:[ {k:'plate', n:'鐵甲片', need:'ore', hint:'敲扁、邊緣磨鈍不割手', e:'🟫'}, {k:'frame', n:'木背板', need:'wood', hint:'背後撐住重量', e:'🪵'}, {k:'link', n:'串繩', need:'fiber', hint:'每片都要串兩個孔才不會翻', e:'🌿'} ] },
-    { id:'relicguard', n:'遺跡守護鎧', e:'🏺', img:'am_relicguard', tier:10, def:12, cut:4, spd:-1, ail:15, hand:false,
+    { id:'relicguard', n:'遺跡守護鎧', e:'🏺', img:'am_relicguard', tier:10, def:38, cut:4, spd:-1, ail:15, hand:false,
       cost:{ relic:2, crystal:3, ore:12, fiber:10 },
       d:'照著遺跡石像身上的紋路重做的一整套甲,島上做得出來最好的東西。', sci:'古人早就知道「哪裡該厚、哪裡要留活動空間」;照著遺物的做法做,比自己亂試快得多。',
       parts:[ {k:'core', n:'遺物紋章', need:'relic', hint:'地下層帶回來的遺物', e:'🏺'}, {k:'gem', n:'水晶扣', need:'crystal', hint:'水晶磨成扣件,又硬又不生鏽', e:'💎'}, {k:'plate', n:'鐵甲片', need:'ore', hint:'比鎖甲更講究的甲片', e:'🟫'}, {k:'sew', n:'串繩', need:'fiber', hint:'整件串起來', e:'🌿'} ] }
   ];
-  D.ARMOR_QUAL = 0.25;   /* 品質加成:def × (1 + 0.25 × (★ − 1));與武器同一條公式,★3 = ×1.5 */
+  D.ARMOR_QUAL = 0.125;   /* ★ v1.225.0 配合比例傷害公式,防禦數值放大到 3~38,品質加成改 ★3 = ×1.25(與武器同) */   /* 品質加成:def × (1 + 0.25 × (★ − 1));與武器同一條公式,★3 = ×1.5 */
   D.armor = function(id){ var i; for(i = 0; i < D.ARMORS.length; i++){ if(D.ARMORS[i].id === id) return D.ARMORS[i]; } return null; };
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -2692,7 +2865,7 @@ window.ISL_DB = (function(){
                    get:{ how:'npc', quest:'gull_intro' },
                    sci:'黑尾鷗每年冬天從日本、韓國飛到台灣北海岸過冬,翅膀長又窄,能乘海風滑翔很久不用拍翅。' },
     bear:        { n:'台灣黑熊',   e:'🐻', type:'tank', npc:true, sz:192,
-                   b:{ hp:90, atk:6,  def:5, spd:3 }, g:{ hp:8.6, atk:0.55, def:0.65, spd:0.14 },
+                   b:{ hp:90, atk:6,  def:5, spd:3 }, g:{ hp:7.5, atk:0.55, def:0.90, spd:0.14 },
                    cmd:'guard',     talent:'厚實胸膛:代替隊友承受攻擊的機率再 +8%', tal:{ coverAddP:8 },   /* ★ v1.223.0 老師「重新計算戰鬥難度」— +15%→+8%,疊在 D.PARTY.TANK_COVER_P(60%→40%)之上一起下修,避免黑熊一隻就把代受率頂到接近全部攻擊都打不到後排 */
                    get:{ how:'npc', quest:'trainer_bear' },
                    sci:'台灣黑熊是台灣唯一的熊,胸前有 V 字白毛;野外只剩幾百隻,是瀕臨絕種的保育類。' },
@@ -2762,7 +2935,7 @@ window.ISL_DB = (function(){
 
     /* ── B 組:坦克型 3 隻 ── */
     pangolin:    { n:'穿山甲',     e:'🦔', type:'tank', sz:55,
-                   b:{ hp:90, atk:5,  def:5, spd:3 }, g:{ hp:8.6, atk:0.48, def:0.66, spd:0.15 },
+                   b:{ hp:90, atk:5,  def:5, spd:3 }, g:{ hp:7.5, atk:0.48, def:0.90, spd:0.15 },
                    cmd:'curlguard',  talent:'鱗片護體:自己受到的傷害固定再減 8%', tal:{ cutP:8 },
                    get:{ how:'tame', zone:'forest', p:16 },
                    sci:'穿山甲的鱗片和我們的指甲一樣是角蛋白,遇到危險會捲成一顆球保護柔軟的肚子。' ,
@@ -2779,7 +2952,7 @@ window.ISL_DB = (function(){
         { q:'穿山甲的英文名字 pangolin 源自馬來語，意思和牠的什麼行為有關？', o:['「會捲起來的東西」','「跑得很快的動物」','「愛吃甜食的動物」','「會飛的動物」'], a:0, why:'pangolin 一詞源自馬來語，意思是「會捲起來的東西」，正好描述牠遇險捲成球的習性。' }
       ] },
     turtle:      { n:'綠蠵龜',     e:'🐢', type:'tank', sz:85,
-                   b:{ hp:90, atk:4,  def:6, spd:2 }, g:{ hp:8.6, atk:0.42, def:0.70, spd:0.12 },
+                   b:{ hp:90, atk:4,  def:6, spd:2 }, g:{ hp:7.5, atk:0.42, def:0.95, spd:0.12 },
                    cmd:'shellwall',  talent:'護盾傳承:自己給的護盾再 +20%', tal:{ shieldP:20 },
                    get:{ how:'tame', zone:'beach', p:12 },
                    sci:'綠蠵龜會回到自己出生的沙灘產卵;小海龜的性別是由沙子的溫度決定的。' ,
@@ -2796,7 +2969,7 @@ window.ISL_DB = (function(){
         { q:'台灣哪些地方是知名的海龜產卵地？', o:['澎湖望安、小琉球','合歡山','阿里山','日月潭'], a:0, why:'澎湖望安與小琉球是台灣知名的海龜上岸產卵地點。' }
       ] },
     coconutcrab: { n:'椰子蟹',     e:'🦀', type:'tank', sz:55,
-                   b:{ hp:90, atk:7,  def:4, spd:4 }, g:{ hp:8.8, atk:0.60, def:0.58, spd:0.18 },
+                   b:{ hp:90, atk:7,  def:4, spd:4 }, g:{ hp:7.7, atk:0.60, def:0.80, spd:0.18 },
                    cmd:'clawtaunt',  talent:'硬殼反震:自己被攻擊時反彈 10% 傷害給對方', tal:{ thornP:10 },
                    get:{ how:'tame', zone:'rock', p:15 },
                    sci:'椰子蟹是世界上最大的陸生甲殼類,螯力大到能剝開椰子,但要三十年才長到成年。' ,
