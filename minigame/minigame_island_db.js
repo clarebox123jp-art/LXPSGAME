@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.227.0';   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.228.0';   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -130,6 +130,12 @@ window.ISL_DB = (function(){
      ⚠ v 必須與 index 的 MG_VER 同格式(vX.Y.Z):進場比對「比看過的還新就彈」用的是數值比較。
      ⚠ 只要有寫進這張表就會彈給學生看 ⇒ 純內部修正(不影響學生體感的)可以不必寫進來。 */
   D.LOG = [
+    { v: 'v1.228.0', d: '2026-09-17', items: [
+      '⚔ 武器分成打擊/斬擊/穿刺/射擊/投擲,魔物有硬殼/軟體/飛行/元素屬性。血條旁出現「⬆剋制」就是選對武器了,打起來 +30%!',
+      '🔁 戰鬥中可以換武器(換完這回合攻擊只剩一半);每種武器還有自己的特長,例如長槍會搶先刺打斷預告、迴力鏢第二下會彈到另一隻。',
+      '💎 ★2 以上的武器或練到 Lv10 會開「鑲嵌槽」,用精英怪和頭目的核心素材鑲上詞條;🛡 防具分輕甲/中甲/重甲,還有寒冷、毒、燒燙、雷抗性。',
+      '💍 第一次打倒各區頭目會得到專屬飾品(以前打過的會自動補發)。魔物血量變少、攻擊變痛,戰鬥節奏更快了!'
+    ] },
     { v: 'v1.227.0', d: '2026-09-17', items: [
       '👑 十個區域各有一隻「地圖頭目」!探索度到 80% 就會出現頭目巢穴,花 ⚡2 挑戰。',
       '🟨 頭目有黃色「韌性條」:用剋制牠的武器、智取選對工具、完美閃避都能削韌性,削光就「破韌」讓牠暈 2 回合、受傷 +50%。',
@@ -2357,7 +2363,7 @@ window.ISL_DB = (function(){
     DEFEND_CUT: 0.5, DEFEND_HEAL: 3,          /* 🛡 防禦:下一次受傷減半 + 回 3 */
     ESCAPE_BASE: 40, ESCAPE_MOV: 2,           /* 🏃 逃跑成功率 = 40% + 腳程×2%(上限 90%) */
     OUTWIT_DMG: 12, OUTWIT_STUN: 1,           /* 🧠 智取:選對它怕的工具 → 固定傷害 + 暈 1 回合;選錯 → 被反擊 */
-    MON_LV_HP: 0.08, MON_LV_ATK: 0.13, MON_LV_DEF: 0.35, MON_LV_SPD: 0.06,   /* ★ v1.225.0 B1(沙盤校準後定案:HP 每級 +8%、攻擊 +13%,MON_BT 基礎攻擊全部 ×1.35):改比例傷害公式後,魔物防禦與速度也要隨等級成長(舊版 0~4 永遠不變,玩家攻擊每多 1 點就多打 1 點);HP/攻擊成長率同步放緩,區域等級改拉高到 45 */        /* 魔物每級成長;★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 這輪終於真的跑了沙盤模擬(Python 重現主角/寵物/魔物三方數值與回合制傷害公式,11 區 ×0~3 位隊友 ×多種投資階段各 150 場):找到兩個真正的難度根因,不只是這裡的成長率——①主角/寵物「升級 HP +3%複利」(見 islHpLevelBonus/islPetLevelHpBonus)在高度投資時會讓 HP 膨脹到魔物完全追不上的量級;②坦克代受率與治療型全隊回血疊加,滿編組隊幾乎不會輸(即使拿掉複利也一樣)。三處(複利改固定值、坦克代受/減傷下修、新增隊伍人數難度縮放 ENC_LV_PER_ALLY)同輪一起處理後,魔物成長率本身只需要小幅上調(0.22→0.24、0.15→0.17,約 +10%)配合打底,不必再像上一輪那樣單靠這裡的數字硬扛整個難度落差。⚠ 沙盤模型仍有簡化(假設固定命中率/暴擊率,未模擬全部天賦與異常狀態交互),請老師實機驗收各區手感,尤其是隊伍滿編時是否仍偏鬆。 */
+    MON_LV_HP: 0.05, MON_LV_ATK: 0.23, MON_LV_DEF: 0.35, MON_LV_SPD: 0.06,   /* ★ v1.228.0 B4 沙盤校準:HP 0.08→0.05、攻擊 0.13→0.23(武器剋制/詞條/飾品上線後,後期滿編回合 7~9→5~6、會操作滿編遺跡/火山 ≈91%、不操作 ≈71%);頭目另用 BOSS_RULE.lvHp/lvAtk 維持 B3 校準值 */   /* ★ v1.225.0 B1(沙盤校準後定案:HP 每級 +8%、攻擊 +13%,MON_BT 基礎攻擊全部 ×1.35):改比例傷害公式後,魔物防禦與速度也要隨等級成長(舊版 0~4 永遠不變,玩家攻擊每多 1 點就多打 1 點);HP/攻擊成長率同步放緩,區域等級改拉高到 45 */        /* 魔物每級成長;★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 這輪終於真的跑了沙盤模擬(Python 重現主角/寵物/魔物三方數值與回合制傷害公式,11 區 ×0~3 位隊友 ×多種投資階段各 150 場):找到兩個真正的難度根因,不只是這裡的成長率——①主角/寵物「升級 HP +3%複利」(見 islHpLevelBonus/islPetLevelHpBonus)在高度投資時會讓 HP 膨脹到魔物完全追不上的量級;②坦克代受率與治療型全隊回血疊加,滿編組隊幾乎不會輸(即使拿掉複利也一樣)。三處(複利改固定值、坦克代受/減傷下修、新增隊伍人數難度縮放 ENC_LV_PER_ALLY)同輪一起處理後,魔物成長率本身只需要小幅上調(0.22→0.24、0.15→0.17,約 +10%)配合打底,不必再像上一輪那樣單靠這裡的數字硬扛整個難度落差。⚠ 沙盤模型仍有簡化(假設固定命中率/暴擊率,未模擬全部天賦與異常狀態交互),請老師實機驗收各區手感,尤其是隊伍滿編時是否仍偏鬆。 */
     ENC_LV_PER_ALLY: 0, PARTY_HP_PER_ALLY: 0.10, PARTY_ATK_PER_ALLY: 0.25, DMG_K: 60, DG_LV_BASE: 34, POW_ATK_CAP: 15, DEX_CRIT: 0.3,   /* ★ v1.225.0 B1:隊伍縮放改成「每位隊友魔物 HP×(1+0.10)、攻擊×(1+0.25)」(沙盤:加 HP 只會拖長回合,加攻擊才抵銷得了坦克+治療),不再加等級(加等級會讓 HP/攻擊/防禦一起非線性膨脹,難調);傷害=攻擊×DMG_K÷(DMG_K+防禦);地下層魔物等級基準 34;力氣攻擊加成上限 15;巧手每點暴擊率 +0.3% */                       /* ★ v1.223.0 新增:野外遇敵時,魔物等級額外 += 目前隊伍人數(0~3)×本值——隊伍越大,對手也跟著變強,不再是「只看區域、不看帶了幾個人」。0 位隊友(單人)完全不受影響,維持既有單人難度手感。 */
     ENC_EXTRA_MON_ALLY2: true,                /* ★ v1.223.0 新增:隊伍 ≥2 人時,魔物數量有機會 +1 隻(上限仍是 4 隻不變)——沙盤顯示光調等級還不夠讓「以多打少」的優勢被抵銷,需要數量也一起補。 */
     HP_LVUP_FLAT: 0, PET_HP_LVUP_FLAT: 2,   /* ★ v1.225.0 主角 HP 改由冒險等級決定(D.ADV),四維升級不再加 HP */     /* ★ v1.223.0 主角四維升級 / 寵物每升一級 的固定 HP 加成(見 index 端 islHpLevelBonus/islPetLevelHpBonus),取代原本的複利 3%。 */
@@ -2416,7 +2422,7 @@ window.ISL_DB = (function(){
      p2(HP ≤50%)/p3(HP ≤25%):atkMul/defMul/spdAdd、summon 叫 1 隻幫手、text 演出文字。
      ult 必殺:每 every 次行動開始倒數 cd 回合,倒數時跳出掩護題(答對傷害 ×cover);倒數期間破韌 = 打斷。
      weakWp 剋制武器(傷害 ×1.3、削韌 ×1.5);weakPets 剋制夥伴(傷害 ×1.5);core = 核心素材物品 id。 */
-  D.BOSS_RULE = { exploreNeed:80, ap:2, respawnDays:7, toughMax:100, hpPerAlly:0.30, brokenMul:1.5, brokenStun:2,
+  D.BOSS_RULE = { lvHp:0.08, lvAtk:0.13, exploreNeed:80, ap:2, respawnDays:7, toughMax:100, hpPerAlly:0.30, brokenMul:1.5, brokenStun:2,
     tough:{ hero:10, crit:6, ally:4, cmd:6, wit:35, perfect:15, stunToTough:20 }, weakWpMul:1.3, weakWpTough:1.5, weakPetMul:1.5,
     stars:[ { n:'★1', lvAdd:0, coreMul:1 }, { n:'★2', lvAdd:8, coreMul:2 }, { n:'★3', lvAdd:16, coreMul:3 } ], starUnlock:'volcano',
     reward:{ firstPts:2, firstCore:2, core:1, shellFirst:[30,10], shell:[10,5], xpMul:6 } };
@@ -2665,6 +2671,124 @@ window.ISL_DB = (function(){
   ];
   D.ARMOR_QUAL = 0.125;   /* ★ v1.225.0 配合比例傷害公式,防禦數值放大到 3~38,品質加成改 ★3 = ×1.25(與武器同) */   /* 品質加成:def × (1 + 0.25 × (★ − 1));與武器同一條公式,★3 = ×1.5 */
   D.armor = function(id){ var i; for(i = 0; i < D.ARMORS.length; i++){ if(D.ARMORS[i].id === id) return D.ARMORS[i]; } return null; };
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * ★ v1.228.0 戰鬥優化 B4 — 裝備:武器類型剋制/武器固有特性/詞條鑲嵌/防具三路線+抗性/飾品/戰鬥中換武器
+   * ══════════════════════════════════════════════════════════════════════════
+   * index 端出口(只准從這幾支讀,不要散讀本區資料):
+   *   islBtTypeRel(m, w)  → 'strong' | 'weak' | ''(武器類型對魔物屬性)
+   *   islWpTrait(w, key)  → 武器固有特性數值
+   *   islAffixEff(key)    → 目前武器鑲嵌詞條加總
+   *   islResist(k)        → 抗性 %(防具 res + 中甲路線 + 飾品),夾在 −80~80
+   *   islAccEff(key)      → 目前飾品效果
+   * ⚠ 本區註解嚴禁出現「星號+斜線」字樣(v1.227.0 教訓)。 */
+  D.WP_TYPES = {
+    blunt:  { n:'打擊', e:'🔨', d:'靠重量與衝擊力,震碎硬殼最有效。' },
+    slash:  { n:'斬擊', e:'🪓', d:'刃口受力面積小,切開軟軟的身體最有效。' },
+    pierce: { n:'穿刺', e:'🔱', d:'尖端集中力量,刺進柔軟的目標最深。' },
+    shoot:  { n:'射擊', e:'🏹', d:'遠距離打到會飛的目標。' },
+    throw:  { n:'投擲', e:'🪃', d:'旋轉飛行,打得到空中與沒有固定形體的目標。' }
+  };
+  /* 魔物屬性:strong = 被這些類型剋(傷害 ×TYPE_MUL.strong)、weak = 這些類型打牠吃虧(×TYPE_MUL.weak) */
+  D.MON_TAGS = {
+    hard: { n:'硬殼', e:'🐚', strong:['blunt'], weak:['slash','shoot'], sci:'硬殼能把刀刃和箭彈開,但重擊的震動會傳進殼裡。' },
+    soft: { n:'軟體', e:'🫧', strong:['slash','pierce'], weak:['blunt','throw'], sci:'軟軟的身體會吸收衝擊力(像枕頭),但擋不住切和刺。' },
+    fly:  { n:'飛行', e:'🪽', strong:['shoot','throw'], weak:['blunt'], sci:'會飛的目標要用遠距離武器;棍棒揮不到天上。' },
+    elem: { n:'元素', e:'✨', strong:['blunt','throw'], weak:['pierce'], sci:'火焰、電光、影子沒有固定形體,槍尖一刺就穿過去;揮動的風壓反而能把它們打散。' }
+  };
+  D.TYPE_MUL = { strong:1.3, weak:0.8 };
+  D.MON_TAG_OF = { boar:'', beetle:'hard', slime:'soft', bat:'fly', shadow:'elem', ember:'elem', basilisk:'soft', spark:'elem', guardian:'hard',
+    boarking:'hard', locustking:'fly', mudking:'soft', crabking:'hard', batqueen:'fly', abyssshadow:'elem', thunderbird:'fly', magmabeetle:'hard', gorgonqueen:'soft', lavacolossus:'hard' };
+  /* 武器類型與固有特性(徒手 = fist,算打擊) */
+  D.WP_INFO = {
+    fist:      { wt:'blunt' },
+    club:      { wt:'blunt',  toughMul:1.5, tr:'削韌 +50%', d:'棍棒打頭目時削韌性 +50%。' },
+    stoneaxe:  { wt:'slash',  critBleed:2,  tr:'暴擊附流血', d:'暴擊時讓目標流血 2 層。' },
+    spear:     { wt:'pierce', preempt:0.6,  tr:'預告必先手', d:'魔物放出預告招式前,你會先刺一槍(60% 傷害)。' },
+    bow:       { wt:'shoot',  aim:1.3,      tr:'精準瞄準',   d:'不會因為隱身或熄燈落空;打幫手/分身傷害 ×1.3。' },
+    hammer:    { wt:'blunt',  toughMul:2.0, tr:'大量削韌',   d:'打頭目時削韌性 ×2。' },
+    boomerang: { wt:'throw',  bounce:true,  tr:'彈射',       d:'第二段會彈到另一隻魔物身上(只有一隻時照打同一隻)。' }
+  };
+  /* ── 詞條/鑲嵌:★2 一格、★3 再一格、Lv10 一格、Lv20 一格(最多 4 格)。
+     cost:核心素材(固定)+ boss 任選其一 ×1 + 貝幣。重新鑲嵌同一格 = 覆蓋舊詞條(再付一次)。
+     eff 鍵:burnP 命中機率燒燙傷 / stunP 暈眩機率 / toughAdd 每次命中額外削韌 / defIgnP 無視防禦 % / hardDmgP 對硬殼加傷 %
+            bleedP 命中機率流血 / spdAdd 速度 / dodgeMs 完美閃避判定毫秒 / lifeP 命中回血(最大 HP %,每回合一次)
+            critC 暴擊率 / critMulAdd 暴擊倍率 / dmgP 傷害 % / weakBonusP 剋制時再加傷 % */
+  D.SOCKET = { q2:1, q3:1, lv10:1, lv20:1, shell:20, burnDot:4, burnT:2 };
+  D.AFFIX = [
+    { k:'burn',     n:'灼熱',     e:'🔥', eff:{ burnP:25 },               cost:{ core_ember:2 },   boss:['boss_magmashell','boss_lavaheart'],               d:'命中 25% 讓目標燒燙傷 2 回合(每回合 −4% 最大 HP)。', sci:'高溫會破壞生物的細胞——所以燙傷要馬上用冷水沖。' },
+    { k:'shock',    n:'帶電',     e:'⚡', eff:{ stunP:12, toughAdd:4 },   cost:{ core_spark:2 },   boss:['boss_thunderplume','boss_batfeather'],            d:'命中 12% 讓目標麻痺 1 回合;打頭目每次多削韌 4。', sci:'電流通過肌肉會讓肌肉不聽使喚地收縮,所以觸電會動不了。' },
+    { k:'magnet',   n:'磁化',     e:'🧲', eff:{ defIgnP:20, hardDmgP:15 }, cost:{ core_beetle:2 },  boss:['boss_clawshell','boss_magmashell'],               d:'無視目標 20% 防禦;打硬殼魔物傷害 +15%。', sci:'磁鐵會吸住含鐵的東西——鐵甲蟲的殼裡有鐵,被磁化的武器更容易卡進去。' },
+    { k:'serrate',  n:'鋸齒',     e:'🪚', eff:{ bleedP:30 },              cost:{ herb_essence:2 }, boss:['boss_tusk','boss_clawshell'],                     d:'命中 30% 讓目標流血 1 層。', sci:'鋸齒刃口一次切出好幾道小傷口,傷口越多越難止血。' },
+    { k:'feather',  n:'輕羽',     e:'🪶', eff:{ spdAdd:3, dodgeMs:50 },   cost:{ herb_essence:2 }, boss:['boss_locustwing','boss_batfeather','boss_thunderplume'], d:'速度 +3,完美閃避判定時間 +0.05 秒。', sci:'東西越輕,同樣的力氣就能揮得越快(質量小、加速度大)。' },
+    { k:'herbcoat', n:'藥草塗層', e:'🌿', eff:{ lifeP:3 },                cost:{ herb_essence:3 }, boss:['boss_mudheart','boss_locustwing'],                d:'命中時回復 3% 最大體力(每回合一次)。', sci:'有些植物有消炎止痛的成分,古人會搗碎敷在傷口上。' },
+    { k:'crystal',  n:'水晶聚焦', e:'💎', eff:{ critC:8, critMulAdd:0.2 }, cost:{ core_spark:2 },   boss:['boss_shadowgem','boss_gorgonscale'],              d:'暴擊率 +8%、暴擊傷害倍率 +0.2。', sci:'水晶能把光集中在一點(聚焦)——力量集中,威力就大。' },
+    { k:'ancient',  n:'古紋',     e:'🏺', eff:{ dmgP:10, weakBonusP:10 },  cost:{ herb_essence:2 }, boss:['boss_gorgonscale','boss_lavaheart','boss_shadowgem'], d:'傷害 +10%;武器剋制目標時再 +10%。', sci:'遺跡的紋路記錄了古人一代代試出來的做法,照著做少走很多冤枉路。' }
+  ];
+  D.affix = function(k){ var i; for(i = 0; i < D.AFFIX.length; i++){ if(D.AFFIX[i].k === k) return D.AFFIX[i]; } return null; };
+  /* ── 防具三路線+抗性。route:light 輕甲 / mid 中甲 / heavy 重甲;res:cold 寒冷 / poison 毒 / burn 燒燙 / thunder 雷(負數 = 弱點)。
+     抗性出口 islResist:
+       thunder → 連鎖閃電傷害 ×(1 − 抗性%),雷精觸電機率 ×(1 − 抗性%)(取代 v1.226.0 的 METAL_ARMORS +50%:鐵甲改成雷抗 −50)
+       burn    → 燒燙傷有抗性% 機率不上身、燒燙傷每回合傷害 ×(1 − 抗性%);野外燒燙傷機率同樣打折
+       poison  → 巨鉗流血等「傷口類」持續傷害同上;野外蜂螫/蛇咬/感染機率打折
+       cold    → 黏住/泥流「變慢」有抗性% 機率不生效;野外失溫機率打折 */
+  D.ARMOR_ROUTE = {
+    light: { n:'輕甲', e:'🪶', dodgeMs:80, d:'穿起來輕快:完美閃避判定時間 +0.08 秒。' },
+    mid:   { n:'中甲', e:'⚖', resAll:10, d:'攻守平衡:所有抗性 +10%。' },
+    heavy: { n:'重甲', e:'🪨', counterMul:0.6, dodgeMs:-40, d:'又硬又重:完美閃避後一定順勢反擊(60% 傷害),但判定時間 −0.04 秒。' }
+  };
+  D.RES_TYPES = { cold:{ n:'寒冷', e:'❄' }, poison:{ n:'毒', e:'☠' }, burn:{ n:'燒燙', e:'🔥' }, thunder:{ n:'雷', e:'⚡' } };
+  D.RES_CAP = 80;
+  D.ARMOR_EXT = {
+    leafcloak:    { route:'light', res:{} },
+    reedvest:     { route:'light', res:{ cold:10 } },
+    barkmail:     { route:'mid',   res:{ cold:10, burn:-10 } },
+    shellplate:   { route:'heavy', res:{ burn:10 } },
+    featherparka: { route:'light', res:{ cold:40 } },
+    trashguard:   { route:'mid',   res:{ poison:15, thunder:15 } },
+    pebblescale:  { route:'heavy', res:{ burn:20 } },
+    herbrobe:     { route:'mid',   res:{ poison:40 } },
+    oremail:      { route:'heavy', res:{ thunder:-50, cold:10 } },
+    relicguard:   { route:'mid',   res:{ thunder:-50, burn:20, poison:15 } },
+    glidevest:    { route:'light', res:{ cold:20 } },
+    stormcloak:   { route:'light', res:{ thunder:40, cold:20 } }
+  };
+  /* 兩件新輕甲(補後期輕甲路線),圖片選配 */
+  D.IMG.am_glidevest  = 'island_am_glidevest.png';
+  D.IMG.am_stormcloak = 'island_am_stormcloak.png';
+  D.ARMORS.push(
+    { id:'glidevest', n:'滑翔輕裝', e:'🪁', img:'am_glidevest', tier:7, def:17, cut:0, spd:2, ail:0, hand:false,
+      cost:{ feather:12, reed:8, fiber:8 },
+      d:'羽毛與蘆葦做的貼身輕裝,跑跳特別靈活。', sci:'鳥的羽毛又輕又堅韌,中空的羽軸用最少的材料撐起最大的面積。',
+      parts:[ {k:'wing', n:'羽片', need:'feather', hint:'一片片疊成輕盈的外層', e:'🪶'}, {k:'frame', n:'蘆葦骨', need:'reed', hint:'中空的蘆葦又輕又挺', e:'🎋'}, {k:'sew', n:'縫線', need:'fiber', hint:'縫得貼身才不會卡手卡腳', e:'🌿'} ] },
+    { id:'stormcloak', n:'雷羽風衣', e:'🌩', img:'am_stormcloak', tier:10, def:30, cut:1, spd:3, ail:10, hand:false,
+      cost:{ boss_thunderplume:1, feather:14, crystal:2, fiber:10 },
+      d:'用雷鳴怪鳥掉下的羽毛做成的風衣,又輕又不導電。', sci:'羽毛和乾燥的纖維都是「絕緣體」,電流很難通過——所以穿它不怕雷擊。',
+      parts:[ {k:'core', n:'雷鳴羽', need:'boss_thunderplume', hint:'頭目掉下的特別羽毛', e:'⚡'}, {k:'shell', n:'羽絨外層', need:'feather', hint:'層層疊起來擋風', e:'🪶'}, {k:'gem', n:'水晶扣', need:'crystal', hint:'不生鏽、不導電的扣件', e:'💎'}, {k:'sew', n:'縫線', need:'fiber', hint:'整件縫起來', e:'🌿'} ] }
+  );
+  D.ARMOR_TIER_ORDER = ['leafcloak','reedvest','barkmail','shellplate','featherparka','trashguard','pebblescale','glidevest','herbrobe','oremail','relicguard','stormcloak'];
+  /* ── 飾品(一格):擊敗各區頭目首次必得。舊存檔依 ISL.bosses[zone].kills 自動補發。
+     eff 鍵:atkP / defP / hpP / spdAdd / critC / cut / toughP 削韌 % / escAdd 逃跑率 / leechP 普攻吸血 % / noMiss 不會因隱身熄燈落空
+            dodgeMs / stunResP 暈眩抵抗 % / res:{} 抗性 */
+  D.ACCS = [
+    { id:'acc_tusk',    zone:'forest',  n:'鐵牙項鍊', e:'🦷', eff:{ atkP:8, toughP:20 },                      d:'攻擊 +8%、打頭目削韌 +20%。' },
+    { id:'acc_locust',  zone:'grass',   n:'蝗翅護符', e:'🪽', eff:{ spdAdd:3, escAdd:15 },                    d:'速度 +3、逃跑成功率 +15%。' },
+    { id:'acc_mud',     zone:'river',   n:'泥心墜飾', e:'🟤', eff:{ hpP:8, res:{ poison:25, cold:25 } },      d:'體力上限 +8%、毒與寒冷抗性 +25%。' },
+    { id:'acc_claw',    zone:'rock',    n:'巨螯手環', e:'🦀', eff:{ defP:10, cut:2 },                         d:'防禦 +10%、每次受傷再減 2。' },
+    { id:'acc_bat',     zone:'lake',    n:'蝠后耳墜', e:'🦇', eff:{ leechP:6, dodgeMs:40 },                   d:'普攻吸血 6%、完美閃避判定 +0.04 秒。' },
+    { id:'acc_shadow',  zone:'cave',    n:'影晶戒',   e:'🔮', eff:{ critC:8, noMiss:1 },                      d:'暴擊率 +8%、不會因隱身或熄燈落空。' },
+    { id:'acc_thunder', zone:'cliff',   n:'雷羽髮飾', e:'⚡', eff:{ dodgeMs:80, res:{ thunder:40 } },        d:'完美閃避判定 +0.08 秒、雷抗性 +40%。' },
+    { id:'acc_magma',   zone:'valley',  n:'熔殼胸針', e:'🟥', eff:{ cut:3, res:{ burn:40 } },                 d:'每次受傷再減 3、燒燙抗性 +40%。' },
+    { id:'acc_gorgon',  zone:'ruins',   n:'蛇鱗手鏡', e:'🪞', eff:{ stunResP:50, res:{ poison:25 } },        d:'50% 機率抵抗暈眩/石化、毒抗性 +25%。' },
+    { id:'acc_colossus',zone:'volcano', n:'巨像之心', e:'❤‍🔥', eff:{ hpP:15, atkP:8, res:{ cold:10, poison:10, burn:10, thunder:10 } }, d:'體力上限 +15%、攻擊 +8%、全抗性 +10%。' }
+  ];
+  (function(){ var i; for(i = 0; i < D.ACCS.length; i++){ D.IMG[D.ACCS[i].id] = 'island_' + D.ACCS[i].id.replace('acc_', 'acc_') + '.png'; } })();
+  D.acc = function(id){ var i; for(i = 0; i < D.ACCS.length; i++){ if(D.ACCS[i].id === id) return D.ACCS[i]; } return null; };
+  D.accByZone = function(z){ var i; for(i = 0; i < D.ACCS.length; i++){ if(D.ACCS[i].zone === z) return D.ACCS[i]; } return null; };
+  D.IMG.ui_acc = D.IMG.ui_acc || 'island_ui_acc.png';
+  D.IMG.ui_socket = D.IMG.ui_socket || 'island_ui_socket.png';
+  /* 戰鬥中換武器:本回合只剩半個回合(換完之後的攻擊/絕招傷害 ×mul;同一回合再換一次 = 回合結束) */
+  D.BT_SWAP = { mul:0.5 };
 
   /* ══════════════════════════════════════════════════════════════════════════
    * ★ v1.150.0 — 🌟 天賦星域(技能樹)+ 🤒 不良狀態
