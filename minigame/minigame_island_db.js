@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.228.0';   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.233.0';   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -130,6 +130,27 @@ window.ISL_DB = (function(){
      ⚠ v 必須與 index 的 MG_VER 同格式(vX.Y.Z):進場比對「比看過的還新就彈」用的是數值比較。
      ⚠ 只要有寫進這張表就會彈給學生看 ⇒ 純內部修正(不影響學生體感的)可以不必寫進來。 */
   D.LOG = [
+    { v: 'v1.233.0', d: '2026-09-17', items: [
+      '🏃 準備好迎接新的跑步、跳躍與戰鬥動作圖:每一種髮型都有自己的一套,髮色、膚色、衣服顏色會跟你捏的造型一樣。',
+      '💇 女生髮型更新:「短髮」換成「妹妹頭單馬尾」,「自然長髮」換成「長直髮」。'
+    ] },
+    { v: 'v1.232.0', d: '2026-09-17', items: [
+      '🏃 跑步和跳躍的身體換成完整的運動服人物,只把頭換成你自己捏的造型,脖子剛好接上,不會再看到身體缺一塊。'
+    ] },
+    { v: 'v1.231.0', d: '2026-09-17', items: [
+      '🏃 主角奔跑有真正的跑步動作了!按住 👟 或雙擊地面跑起來試試看。',
+      '🦘 跳躍也換成蹲下→騰空→落地的動作;頭髮、髮色、膚色、衣服顏色都跟你自己捏的造型一樣。'
+    ] },
+    { v: 'v1.230.0', d: '2026-09-17', items: [
+      '🐾 營地裡的夥伴會一步一步走路了,晚上睡覺時會趴下來打呼。',
+      '🎒 物品包滿了撿不下的東西,現在會掉在腳邊(今天之內都在),整理完物品包再走過去就能撿回來。',
+      '📖 自然圖鑑新增「👑 地圖頭目」分類,打倒頭目就會收錄牠的自然小知識。'
+    ] },
+    { v: 'v1.229.0', d: '2026-09-17', items: [
+      '🌟 天賦星盤重整!每種武器都有自己的招牌機制:弓「🎯專注」越射越準、棍斧「🪓破甲」越敲越脆、錘「🔋蓄力」防禦後一記重擊、長槍「🔱架槍」被打就反刺、迴力鏢「↪彈射」打到兩隻。',
+      '🔀 每條武器星域中段要「二選一」走不同路線,最後的 👑 精通節點要用頭目素材才能點亮。砍樹、採石、QTE 這些生活加成集中到新的 🧺 生活技藝星域。',
+      '🧙 因為星盤改版,武器星域的點數已經全部還給你,另外送一次免費洗點,重新規劃看看吧!'
+    ] },
     { v: 'v1.228.0', d: '2026-09-17', items: [
       '⚔ 武器分成打擊/斬擊/穿刺/射擊/投擲,魔物有硬殼/軟體/飛行/元素屬性。血條旁出現「⬆剋制」就是選對武器了,打起來 +30%!',
       '🔁 戰鬥中可以換武器(換完這回合攻擊只剩一半);每種武器還有自己的特長,例如長槍會搶先刺打斷預告、迴力鏢第二下會彈到另一隻。',
@@ -2115,7 +2136,8 @@ window.ISL_DB = (function(){
     { k:'dish',    n:'料理',       e:'🍳' },
     { k:'tech',    n:'科技',       e:'🔬' },
     { k:'puzzle',  n:'島嶼謎題',   e:'🧩' },
-    { k:'monster', n:'夜襲魔物',   e:'👾' }
+    { k:'monster', n:'夜襲魔物',   e:'👾' },
+    { k:'boss',    n:'地圖頭目',   e:'👑' }   /* ★ v1.230.0 */
   ];
   D.CODEX_ALIAS = { berry:'bush', wood:'tree', fiber:'fibergrass', lava:'lavarock', feather:'nest' };   /* spawn kind → codex id */
   D.CODEX_PICK  = { shell:'shell', pebble:'pebble', feather:'nest', berry:'bush' };                       /* 撿取物品 → codex id */
@@ -2511,6 +2533,19 @@ window.ISL_DB = (function(){
   ];
   D.bossByZone = function(z){ var i; for(i = 0; i < D.BOSSES.length; i++){ if(D.BOSSES[i].zone === z) return D.BOSSES[i]; } return null; };
   D.bossByKey = function(k){ var i; for(i = 0; i < D.BOSSES.length; i++){ if(D.BOSSES[i].k === k) return D.BOSSES[i]; } return null; };
+  /* ★ v1.230.0 頭目圖鑑(B3 已知缺口):id = 頭目 key,打倒時戰鬥結算既有的 islCodexAdd(m.k) 自動收錄;舊存檔在開圖鑑時依 ISL.bosses[zone].kills 補登 */
+  D.CODEX.push(
+    { id:'boarking',     cat:'boss', n:'鐵牙山豬王',   e:'🐗', img:'bt_m_boarking_idle',     where:'森林巢穴', d:'台灣野豬的獠牙會一直長,靠互相摩擦磨尖。公豬的獠牙比母豬長,是打架和挖土的工具。' },
+    { id:'locustking',   cat:'boss', n:'飛蝗之王',     e:'🦗', img:'bt_m_locustking_idle',   where:'草原巢穴', d:'蝗蟲平常獨居,數量太多、互相碰觸後會變成「群居型」,顏色變深、成群遷飛,一天能吃掉跟自己體重一樣多的植物。' },
+    { id:'mudking',      cat:'boss', n:'洪流泥王',     e:'🌊', img:'bt_m_mudking_idle',      where:'溪流巢穴', d:'大雨時水流變快,能沖走的泥沙石頭就變多;水流慢下來,泥沙就沉積下來,這就是沖積平原形成的原因。' },
+    { id:'crabking',     cat:'boss', n:'巨螯椰子蟹王', e:'🦀', img:'bt_m_crabking_idle',     where:'岩岸巢穴', d:'椰子蟹是陸地上最大的節肢動物,螯的夾力非常大;牠小時候住在海裡,長大後才上岸生活,在台灣是保育類。' },
+    { id:'batqueen',     cat:'boss', n:'霧湖蝠后',     e:'🦇', img:'bt_m_batqueen_idle',     where:'湖泊巢穴', d:'蝙蝠是唯一真正會飛的哺乳類,翅膀其實是長長的手指撐開的皮膜;很多蝙蝠吃蚊子等害蟲,是人類的好幫手。' },
+    { id:'abyssshadow',  cat:'boss', n:'深淵影魔',     e:'👤', img:'bt_m_abyssshadow_idle',  where:'洞窟巢穴', d:'光沿直線前進,被不透光的東西擋住就形成影子;光源越靠近物體,影子就越大。' },
+    { id:'thunderbird',  cat:'boss', n:'雷鳴怪鳥',     e:'⚡', img:'bt_m_thunderbird_idle',  where:'懸崖巢穴', d:'閃電是雲裡累積的電一次放出來;光比聲音快很多,所以先看到閃電才聽到雷聲。數秒數再乘以 340 公尺,就知道閃電離你多遠。' },
+    { id:'magmabeetle',  cat:'boss', n:'熔甲蟲王',     e:'🔥', img:'bt_m_magmabeetle_idle',  where:'山谷巢穴', d:'甲蟲的前翅變成硬硬的「翅鞘」保護身體,真正拿來飛的是藏在底下的薄薄後翅。' },
+    { id:'gorgonqueen',  cat:'boss', n:'石化蛇后',     e:'🐍', img:'bt_m_gorgonqueen_idle',  where:'遺跡巢穴', d:'蛇沒有眼瞼,眼睛上蓋著一片透明鱗片,所以看起來「一直瞪著你」;蛇用舌頭收集空氣中的氣味分子來辨認方向。' },
+    { id:'lavacolossus', cat:'boss', n:'熔岩巨像',     e:'🌋', img:'bt_m_lavacolossus_idle', where:'火山巢穴', d:'岩漿冷卻變成火成岩:在地表冷得快的是玄武岩(顆粒細),在地底慢慢冷的是花岡岩(顆粒粗)。台灣的澎湖就有很多玄武岩。' }
+  );
   (function(){ var st = ['idle','atk','hit','stun','down','skill'], i, j, b;
     for(i = 0; i < D.BOSSES.length; i++){ b = D.BOSSES[i];
       D.MON_BT[b.k] = { hp:b.hp, atk:b.atk, def:b.def, spd:b.spd, crit:b.crit, drop:{ shell:[0,0], item:null, p:0 }, d:b.hint };
@@ -2801,90 +2836,120 @@ window.ISL_DB = (function(){
    *     棍棒石斧星域吃 club 與 stoneaxe 兩把(老師裁定:它們共用一個星域)。
    *   ⚠ x/y = 星圖畫布座標(畫布 1240×1020,中央基礎星域在 (600,500) 附近),節點直徑 64。
    * ══════════════════════════════════════════════════════════════════════════ */
-  D.SK_CANVAS = { w:1240, h:1020, cx:600, cy:500 };
+  D.SK_CANVAS = { w:1640, h:1640, cx:820, cy:820 };   /* ★ v1.229.0 B5:星圖改放射狀 8 條星域(每條沿 ang 角度往外長),畫布放大 */
   D.SK_GALAXY = [
     { k:'core',      n:'中央基礎星域',   e:'✨', c:'#ffd166' },
-    { k:'bow',       n:'弓箭星域',       e:'🏹', c:'#7bed9f' },
-    { k:'club',      n:'棍棒石斧星域',   e:'🪵', c:'#ff9f43' },
-    { k:'hammer',    n:'錘星域',         e:'🔨', c:'#c9a0ff' },
-    { k:'spear',     n:'長槍星域',       e:'🔱', c:'#5fb3d9' },
-    { k:'boomerang', n:'迴力鏢星域',     e:'🪃', c:'#f7b6cf' },
-    { k:'med',       n:'醫療急救星域',   e:'🩹', c:'#ff7b7b' },
-    { k:'cmd',       n:'特殊指令星域',   e:'🎯', c:'#5fe0c0' }   /* ★ v1.163.0 點亮後可到 👤 能力頁裝設,野外/戰鬥會多出按鈕(消耗 ⚡AP) */
+    { k:'bow',       n:'弓箭星域',       e:'🏹', c:'#7bed9f', ang:-67.5 },
+    { k:'boomerang', n:'迴力鏢星域',     e:'🪃', c:'#f7b6cf', ang:-22.5 },
+    { k:'med',       n:'醫療急救星域',   e:'🩹', c:'#ff7b7b', ang:22.5 },
+    { k:'cmd',       n:'特殊指令星域',   e:'🎯', c:'#5fe0c0', ang:67.5 },   /* ★ v1.163.0 點亮後可到 👤 能力頁裝設,野外/戰鬥會多出按鈕(消耗 ⚡AP) */
+    { k:'spear',     n:'長槍星域',       e:'🔱', c:'#5fb3d9', ang:112.5 },
+    { k:'hammer',    n:'錘星域',         e:'🔨', c:'#c9a0ff', ang:157.5 },
+    { k:'club',      n:'棍棒石斧星域',   e:'🪵', c:'#ff9f43', ang:-157.5 },
+    { k:'life',      n:'生活技藝星域',   e:'🧺', c:'#ffe28a', ang:-112.5 }   /* ★ v1.229.0 B5 新增:生活效果集中 */
   ];
-  /* 關鍵節點解鎖的主動技能(戰鬥中「✨ 絕招」鈕,每場戰鬥 1 次;裝備對應武器才會出現) */
+  /* ★ v1.229.0 B5 每條武器星域固定 8 節點:
+       ①專屬機制(_1)→ ②基本功(_2)→ ③分歧二選一(_F1A / _F1B,同 grp 互斥)→ ④分歧延伸(_F2A / _F2B)
+       → ⑤關鍵主動技(_KEY,reqAny:兩條分歧任一條走完即可)→ ⑥精通(_M,mst:true,點亮要付 mat 頭目素材;付過一次就記在 ISL.sk.paid,洗點後再點不必重付)。
+     u/v = 沿星域方向的距離 / 垂直偏移,islDB 載入時一次換算成 x/y(中央星域用 pr/pa 極座標)。
+     ⚠ 本區註解同樣嚴禁「星號+斜線」。 */
   D.SK_ACTS = {
-    bow_volley:   { n:'連射',     e:'🏹', d:'連續射出 3 箭(每箭 60% 傷害,必中)',               hits:3, mul:0.60 },
-    club_smash:   { n:'猛擊',     e:'🪵', d:'一記重擊 2.2 倍傷害,並讓目標防禦 −30%(整場)',     hits:1, mul:2.20, defDown:0.30 },
-    spear_combo:  { n:'突刺連環', e:'🔱', d:'貫穿 2 段(各 1.2 倍),並讓目標流血 2 層',           hits:2, mul:1.20, bleed:2 },
-    hammer_quake: { n:'地裂重擊', e:'🔨', d:'1.8 倍傷害,必定擊暈 2 回合',                        hits:1, mul:1.80, stun:2 },
-    boom_dance:   { n:'迴旋亂舞', e:'🪃', d:'迴力鏢橫掃 4 段(各 55% 傷害,必中)',                hits:4, mul:0.55 }
+    bow_volley:   { n:'連射',     e:'🏹', d:'連續射出 3 箭(每箭 60% 傷害,必中);專注每層再 +10%',              hits:3, mul:0.60, focusUse:10 },
+    club_smash:   { n:'猛擊',     e:'🪵', d:'一記重擊 2.2 倍傷害,讓目標防禦 −30%,並疊 2 層破甲',             hits:1, mul:2.20, defDown:0.30, brk:2 },
+    spear_combo:  { n:'突刺連環', e:'🔱', d:'貫穿 2 段(各 1.2 倍),讓目標流血 2 層,放完自動架槍',            hits:2, mul:1.20, bleed:2, brace:1 },
+    hammer_quake: { n:'地裂重擊', e:'🔨', d:'1.8 倍傷害,必定擊暈 2 回合;蓄力層數也會加上去',                  hits:1, mul:1.80, stun:2 },
+    boom_dance:   { n:'迴旋亂舞', e:'🪃', d:'迴力鏢橫掃 4 段(各 55% 傷害,必中),每段隨機打一隻魔物',          hits:4, mul:0.55, spread:1 }
   };
-  /* 節點:id/g 星域/n 名稱/req 前置(全部要有)/x,y 星圖座標/d 效果說明/eff 效果鍵/wp 限定武器/key 關鍵節點/act 主動技能/sci 小知識 */
+  /* 節點:id/g 星域/n 名稱/req 前置(全部要有)/reqAny 前置(任一)/grp 互斥分歧/u,v 或 pr,pa 座標/d 效果說明/eff 效果鍵/wp 限定武器/key 關鍵節點/act 主動技能/mst 精通/mat 精通素材/sci 小知識 */
   D.SK_NODES = [
-    /* ── 中央基礎星域(無前置,一開始就能點) ── */
-    { id:'SK_CORE_HP',   g:'core', n:'強健', e:'💪', req:[], x:543, y:443, d:'最大體力 +10%；每日 ⚡AP +1', eff:{ hpMaxP:10, apAdd:1, apAdd:1 } },
-    { id:'SK_CORE_ATK',  g:'core', n:'蠻力', e:'⚔',  req:[], x:657, y:443, d:'物理攻擊 +5%；砍樹/採石 產量 +1', eff:{ atkP:5, chopAdd:1, quarryAdd:1, chopAdd:1, quarryAdd:1 } },
-    { id:'SK_CORE_SPD',  g:'core', n:'敏捷', e:'💨', req:[], x:543, y:557, d:'行動速度 +5%；島上走路速度 +12%', eff:{ spdP:5, moveP:12, moveP:12 } },
-    { id:'SK_CORE_LUCK', g:'core', n:'幸運', e:'🍀', req:[], x:657, y:557, d:'稀有掉落率 +5%；野生動物馴養成功率 +10%、寵物親密度提升效率 +10%', eff:{ luckP:5, tameP:10, bondGainP:10 } },   /* ★ v1.196.0 老師需求:tameP 稽核發現仍被 islActTame(畜欄馴養,雞/羊/兔)使用,並非死鍵,故保留;另補上新效果鍵 bondGainP(寵物親密度提升效率),原本重複寫兩次的 tameP:10 順手修正為單一 bondGainP:10,行為不變、多了一個真正生效的新效果 */
-    /* ── 弓箭星域 ── */
-    { id:'SK_BOW_1',   g:'bow', wp:['bow'], n:'穩定持弓', e:'🎯', req:['SK_CORE_ATK'], x:600, y:340, d:'暴擊率 +5%；所有 QTE 甜蜜點 +8%', eff:{ critC:5, sweetP:8 } },
-    { id:'SK_BOW_2',   g:'bow', wp:['bow'], n:'遠射',     e:'🏹', req:['SK_BOW_1'], x:666, y:228, d:'傷害 +10%', eff:{ dmgP:10 }, sci:'箭離弦後靠慣性前進,拉得越滿、飛得越遠。' },
-    { id:'SK_BOW_3',   g:'bow', wp:['bow'], n:'快手',     e:'⚡', req:['SK_BOW_1'], x:534, y:228, d:'命中後 10% 機率不消耗這個回合；所有 QTE 指針變慢 12%', eff:{ freeP:10, qteSlowP:12 } },
-    { id:'SK_BOW_4',   g:'bow', wp:['bow'], n:'連續命中', e:'📈', req:['SK_BOW_2','SK_BOW_3'], x:600, y:124, d:'同一場連續命中疊加傷害(最高 +20%)；所有 QTE 甜蜜點 +5%', eff:{ comboP:20, sweetP:5 } },
-    { id:'SK_BOW_KEY', g:'bow', wp:['bow'], key:true, act:'bow_volley', n:'連射', e:'🌟', req:['SK_BOW_4'], x:600, y:30, d:'★關鍵節點:解鎖主動技能「連射」' },
-    /* ── 棍棒石斧星域 ── */
-    { id:'SK_CLUB_1',   g:'club', wp:['club','stoneaxe'], n:'握把纏繩', e:'🎯', req:['SK_CORE_ATK'], x:443, y:467, d:'暴擊率 +5%；所有 QTE 甜蜜點 +8%', eff:{ critC:5, sweetP:8 } },
-    { id:'SK_CLUB_2',   g:'club', wp:['club','stoneaxe'], n:'趁亂追擊', e:'💫', req:['SK_CLUB_1'], x:348, y:379, d:'對「暈眩中」的目標傷害 +25%；砍樹產量 +1', eff:{ vsStunP:25, chopAdd:1 } },
-    { id:'SK_CLUB_3',   g:'club', wp:['club','stoneaxe'], n:'反擊',     e:'🛡', req:['SK_CLUB_1'], x:320, y:508, d:'受擊時 15% 機率立刻反擊；島上活動失誤受傷 −30%', eff:{ counterP:15, hurtCutP:30 } },
-    { id:'SK_CLUB_4',   g:'club', wp:['club','stoneaxe'], n:'破防',     e:'🪨', req:['SK_CLUB_2','SK_CLUB_3'], x:232, y:422, d:'連續攻擊同一目標疊加破防(每次 −8% 防禦,最多 −40%)；採石產量 +1', eff:{ breakP:8, quarryAdd:1 } },
-    { id:'SK_CLUB_KEY', g:'club', wp:['club','stoneaxe'], key:true, act:'club_smash', n:'猛擊', e:'🌟', req:['SK_CLUB_4'], x:140, y:402, d:'★關鍵節點:解鎖主動技能「猛擊」' },
-    /* ── 錘星域 ── */
-    { id:'SK_HAMMER_1',   g:'hammer', wp:['hammer'], n:'穩握錘柄', e:'🎯', req:['SK_CORE_ATK'], x:474, y:599, d:'暴擊率 +5%；所有 QTE 甜蜜點 +8%', eff:{ critC:5, sweetP:8 } },
-    { id:'SK_HAMMER_2',   g:'hammer', wp:['hammer'], n:'震盪',     e:'😵', req:['SK_HAMMER_1'], x:345, y:615, d:'擊暈機率 +12%；採石產量 +1', eff:{ stunAddP:12, quarryAdd:1 }, sci:'重物撞擊會把能量變成震動傳出去。' },
-    { id:'SK_HAMMER_3',   g:'hammer', wp:['hammer'], n:'硬扛',     e:'🛡', req:['SK_HAMMER_1'], x:426, y:719, d:'每次受傷固定減 3；島上活動失誤受傷 −30%', eff:{ dmgCut:3, hurtCutP:30 } },
-    { id:'SK_HAMMER_4',   g:'hammer', wp:['hammer'], n:'蓄力',     e:'🔋', req:['SK_HAMMER_2','SK_HAMMER_3'], x:304, y:731, d:'防禦後的下一擊傷害 +35%；建造/製作品質 ★ +1', eff:{ chargeP:35, craftStar:1 } },
-    { id:'SK_HAMMER_KEY', g:'hammer', wp:['hammer'], key:true, act:'hammer_quake', n:'地裂重擊', e:'🌟', req:['SK_HAMMER_4'], x:230, y:789, d:'★關鍵節點:解鎖主動技能「地裂重擊」' },
-    /* ── 長槍星域 ── */
-    { id:'SK_SPEAR_1',   g:'spear', wp:['spear'], n:'槍身平衡', e:'🎯', req:['SK_CORE_ATK'], x:594, y:660, d:'暴擊率 +5%；所有 QTE 甜蜜點 +8%', eff:{ critC:5, sweetP:8 } },
-    { id:'SK_SPEAR_2',   g:'spear', wp:['spear'], n:'掃擊',     e:'🌀', req:['SK_SPEAR_1'], x:525, y:770, d:'攻擊帶小範圍(甜蜜點寬度 +18%)', eff:{ zoneP:18 } },
-    { id:'SK_SPEAR_3',   g:'spear', wp:['spear'], n:'先發制人', e:'🥇', req:['SK_SPEAR_1'], x:656, y:774, d:'每場戰鬥第一擊必定命中；所有 QTE 指針變慢 12%', eff:{ firstHit:1, qteSlowP:12 } },
-    { id:'SK_SPEAR_4',   g:'spear', wp:['spear'], n:'放血',     e:'🩸', req:['SK_SPEAR_2','SK_SPEAR_3'], x:587, y:876, d:'命中時疊加流血(每層每回合 −2)；捕魚產量 +1', eff:{ bleedOn:1, fishAdd:1 } },
-    { id:'SK_SPEAR_KEY', g:'spear', wp:['spear'], key:true, act:'spear_combo', n:'突刺連環', e:'🌟', req:['SK_SPEAR_4'], x:584, y:970, d:'★關鍵節點:解鎖主動技能「突刺連環」' },
-    /* ── 迴力鏢星域 ── */
-    { id:'SK_BOOMERANG_1',   g:'boomerang', wp:['boomerang'], n:'手感', e:'🎯', req:['SK_CORE_ATK'], x:719, y:607, d:'暴擊率 +5%；所有 QTE 甜蜜點 +8%', eff:{ critC:5, sweetP:8 } },
-    { id:'SK_BOOMERANG_2',   g:'boomerang', wp:['boomerang'], n:'雙迴旋', e:'🪃', req:['SK_BOOMERANG_1'], x:758, y:731, d:'一回合多命中 1 次；島上走路速度 +10%', eff:{ hitsAdd:1, moveP:10 }, sci:'迴力鏢彎曲的翼形讓它一邊旋轉一邊繞回來。' },
-    { id:'SK_BOOMERANG_3',   g:'boomerang', wp:['boomerang'], n:'回收',   e:'♻', req:['SK_BOOMERANG_1'], x:846, y:633, d:'命中後 25% 機率多賺 1 點武器熟練(省資源)；採集作答時間 +8%', eff:{ xpBackP:25, actSecP:8 } },
-    { id:'SK_BOOMERANG_4',   g:'boomerang', wp:['boomerang'], n:'追打',   e:'💫', req:['SK_BOOMERANG_2','SK_BOOMERANG_3'], x:879, y:752, d:'對「暈眩中/被擊退」的目標傷害 +20%；所有 QTE 指針變慢 10%', eff:{ vsStunP:20, qteSlowP:10 } },
-    { id:'SK_BOOMERANG_KEY', g:'boomerang', wp:['boomerang'], key:true, act:'boom_dance', n:'迴旋亂舞', e:'🌟', req:['SK_BOOMERANG_4'], x:949, y:814, d:'★關鍵節點:解鎖主動技能「迴旋亂舞」' },
-    /* ── 醫療急救星域:包紮 / 藥學 / 烹飪 三條子路徑(星域內互通,見 D.SK_MED_LINK) ── */
-    { id:'SK_MED_BND_1',   g:'med', sub:'bnd', dep:1, n:'止血',     e:'🩹', req:['SK_CORE_HP'],     x:860,  y:300, d:'戰鬥中可止血:去除自己身上的流血/蜂螫；島上活動失誤受傷 −25%', eff:{ bleedCure:1, hurtCutP:25 } },
-    { id:'SK_MED_BND_2',   g:'med', sub:'bnd', dep:2, n:'緊急包紮', e:'🧻', req:['SK_MED_BND_1'],   x:952,  y:300, d:'每場戰鬥 1 次:立刻回復 30% 體力(不用藥草)', eff:{ bandageP:30, bandageN:1 } },
-    { id:'SK_MED_BND_3',   g:'med', sub:'bnd', dep:3, n:'為隊友包紮', e:'🤝', req:['SK_MED_BND_2'], x:1044, y:300, d:'★多人連線用;單人時:緊急包紮可用次數 +1、回復量 +10%', eff:{ bandageN:1, bandageP:10, allyBnd:1 } },
-    { id:'SK_MED_BND_KEY', g:'med', sub:'bnd', dep:4, key:true, n:'不倒的意志', e:'🌟', req:['SK_MED_BND_3'], x:1136, y:300, d:'★關鍵節點:每場戰鬥 1 次,體力歸零時保留 1 點不算戰敗', eff:{ deathSave:1 } },
-    { id:'SK_MED_PHM_1',   g:'med', sub:'phm', dep:1, n:'辨識野生藥草', e:'🍀', req:['SK_CORE_LUCK'], x:860,  y:420, d:'採集時 🍀草藥 掉落機率 +25%；野生動物馴養成功率 +15%、寵物親密度提升效率 +15%', eff:{ herbP:25, tameP:15, bondGainP:15 }, sci:'認得出植物才敢用——不認得的野草絕對不能亂吃。' },   /* ★ v1.196.0 新增 bondGainP,tameP 保留不動(見 SK_CORE_LUCK 註解) */
-    { id:'SK_MED_PHM_2',   g:'med', sub:'phm', dep:2, n:'基礎解毒劑', e:'🧪', req:['SK_MED_PHM_1'],   x:952,  y:420, d:'可調配解毒劑,解除蛇咬中毒(需 🍀草藥 1)', eff:{ poisonCure:1 } },
-    { id:'SK_MED_PHM_3',   g:'med', sub:'phm', dep:3, n:'毒素抗性',   e:'🛡', req:['SK_MED_PHM_2'],   x:1044, y:420, d:'中毒每回合傷害減半,惡化速度也減半；島上活動失誤受傷 −25%', eff:{ poisonResP:50, hurtCutP:25 } },
-    { id:'SK_MED_PHM_KEY', g:'med', sub:'phm', dep:4, key:true, n:'進階解毒劑', e:'🌟', req:['SK_MED_PHM_3'], x:1136, y:420, d:'★關鍵節點:一次解除身上所有不良狀態(每天 1 次,需 🍀草藥 1)', eff:{ cureAll:1 } },
-    { id:'SK_MED_CK_1',   g:'med', sub:'ck', dep:1, n:'恢復料理',   e:'🍲', req:['SK_CORE_HP'],    x:860,  y:540, d:'吃料理回復量 +20%,熱食可解除失溫；養的動物每日產出 +20%', eff:{ dishP:20, coldCure:1, petYieldP:20 } },
-    { id:'SK_MED_CK_2',   g:'med', sub:'ck', dep:2, n:'保存食物',   e:'🫙', req:['SK_MED_CK_1'],   x:952,  y:540, d:'25% 機率吃了料理卻不消耗那一份；餵動物也有 25% 不消耗飼料', eff:{ dishSaveP:25, petFeedSaveP:25 }, sci:'曬乾、煙燻、加鹽都能讓食物不容易壞——因為細菌沒有水就長不起來。' },
-    { id:'SK_MED_CK_3',   g:'med', sub:'ck', dep:3, n:'消除疲勞',   e:'⚡', req:['SK_MED_CK_2'],   x:1044, y:540, d:'每天第一次吃料理額外回復 ⚡AP 1；養的動物每日產出 +25%', eff:{ dishAp:1, petYieldP:25 } },
-    { id:'SK_MED_CK_KEY', g:'med', sub:'ck', dep:4, key:true, n:'營地聚餐', e:'🌟', req:['SK_MED_CK_3'], x:1136, y:540, d:'★多人連線用;在營地辦聚餐:今天攻擊 +10%(每天 1 次,需任一道料理)；養的動物每日產出 +25%、野生動物馴養成功率 +15%、寵物親密度提升效率 +15%', eff:{ feast:1, petYieldP:25, tameP:15, bondGainP:15 } }   /* ★ v1.196.0 新增 bondGainP,tameP 保留不動(見 SK_CORE_LUCK 註解) */
+    /* ── 中央基礎星域(無前置,一開始就能點)。B5:ATK 放正中央、其他三顆各自朝它們接出去的星域(HP→醫療、LUCK→特殊指令、SPD→生活技藝) ── */
+    { id:'SK_CORE_ATK',  g:'core', n:'蠻力', e:'⚔',  req:[], pr:0,   pa:0,      d:'物理攻擊 +6%(五個武器星域都從這裡出發)', eff:{ atkP:6 } },
+    { id:'SK_CORE_HP',   g:'core', n:'強健', e:'💪', req:[], pr:115, pa:22.5,   d:'最大體力 +10%;每日 ⚡AP +1', eff:{ hpMaxP:10, apAdd:1 } },
+    { id:'SK_CORE_LUCK', g:'core', n:'幸運', e:'🍀', req:[], pr:115, pa:67.5,   d:'稀有掉落率 +5%;野生動物馴養成功率 +10%、寵物親密度提升效率 +10%', eff:{ luckP:5, tameP:10, bondGainP:10 } },
+    { id:'SK_CORE_SPD',  g:'core', n:'敏捷', e:'💨', req:[], pr:115, pa:-112.5, d:'行動速度 +5%;島上走路速度 +12%', eff:{ spdP:5, moveP:12 } },
+    /* ── 🏹 弓箭星域:🎯 專注層 ── */
+    { id:'SK_BOW_1', g:'bow', wp:['bow'], n:'專注呼吸', e:'🎯', req:['SK_CORE_ATK'], u:170, v:0, d:'命中時累積「🎯專注」1 層(上限 3):每層暴擊率 +4%、傷害 +3%;整回合落空專注就散掉', eff:{ focusOn:1 }, sci:'拉弓前先穩住呼吸,手才不會晃——專注靠的是身體放鬆,不是用力。' },
+    { id:'SK_BOW_2', g:'bow', wp:['bow'], n:'基本功', e:'🎯', req:['SK_BOW_1'], u:265, v:0, d:'暴擊率 +5%、傷害 +5%', eff:{ critC:5, dmgP:5 } },
+    { id:'SK_BOW_F1A', g:'bow', wp:['bow'], grp:'bow_f', n:'屏息凝神', e:'🌬', req:['SK_BOW_2'], u:360, v:-62, d:'【分歧・二選一】專注上限 +2(最多 5 層),每層暴擊率再 +2%', eff:{ focusMax:2, focusCrit:2 } },
+    { id:'SK_BOW_F1B', g:'bow', wp:['bow'], grp:'bow_f', n:'快手連發', e:'⚡', req:['SK_BOW_2'], u:360, v:62, d:'【分歧・二選一】命中後 12% 機率不消耗這個回合;落空時專注只掉 1 層', eff:{ freeP:12, focusKeep:1 } },
+    { id:'SK_BOW_F2A', g:'bow', wp:['bow'], n:'一擊必殺', e:'💥', req:['SK_BOW_F1A'], u:455, v:-62, d:'專注滿層時,下一箭命中必定暴擊、暴擊傷害再 +30%,射完專注歸零', eff:{ focusBurst:1 } },
+    { id:'SK_BOW_F2B', g:'bow', wp:['bow'], n:'箭雨', e:'🌧', req:['SK_BOW_F1B'], u:455, v:62, d:'普通攻擊後 30% 機率多射一箭,打另一隻魔物(50% 傷害、必中)', eff:{ arrowP:30 } },
+    { id:'SK_BOW_KEY', g:'bow', wp:['bow'], key:true, act:'bow_volley', n:'連射', e:'🌟', reqAny:['SK_BOW_F2A','SK_BOW_F2B'], u:550, v:0, d:'★關鍵節點:解鎖絕招「連射」;專注每 1 層讓連射傷害 +10%(用掉全部專注)' },
+    { id:'SK_BOW_M', g:'bow', wp:['bow'], mst:true, n:'鷹眼', e:'👑', req:['SK_BOW_KEY'], mat:{ boss_batfeather:2 }, u:645, v:0, d:'【精通】絕招每場可以用 2 次;開戰就有 1 層專注。需要頭目素材 🪶蝠后之羽 ×2(洗點後再點不必重付)', eff:{ actAdd:1, focusStart:1 }, sci:'老鷹的眼睛能看清幾百公尺外的小動物,因為牠視網膜上的感光細胞特別密。' },
+    /* ── 🪵 棍棒石斧星域:🪓 破甲層 ── */
+    { id:'SK_CLUB_1', g:'club', wp:['club','stoneaxe'], n:'破甲打擊', e:'🪓', req:['SK_CORE_ATK'], u:170, v:0, d:'攻擊命中時,讓目標疊 1 層「🪓破甲」(上限 3):每層防禦 −6%;破甲留在那隻魔物身上,換目標也不會消失', eff:{ brkOn:1 }, sci:'一直敲同一個地方,硬殼上的小裂縫會越來越大——這就是「疲勞破壞」。' },
+    { id:'SK_CLUB_2', g:'club', wp:['club','stoneaxe'], n:'基本功', e:'🎯', req:['SK_CLUB_1'], u:265, v:0, d:'暴擊率 +5%、傷害 +5%', eff:{ critC:5, dmgP:5 } },
+    { id:'SK_CLUB_F1A', g:'club', wp:['club','stoneaxe'], grp:'club_f', n:'重劈', e:'🪨', req:['SK_CLUB_2'], u:360, v:-62, d:'【分歧・二選一】破甲上限 +2(最多 5 層),每層再 −2%(滿層防禦 −40%)', eff:{ brkMax:2, brkDef:2 } },
+    { id:'SK_CLUB_F1B', g:'club', wp:['club','stoneaxe'], grp:'club_f', n:'趁亂追擊', e:'💫', req:['SK_CLUB_2'], u:360, v:62, d:'【分歧・二選一】對暈眩中的目標傷害 +25%,而且每次多疊 1 層破甲', eff:{ vsStunP:25, brkStun:1 } },
+    { id:'SK_CLUB_F2A', g:'club', wp:['club','stoneaxe'], n:'碎甲', e:'💢', req:['SK_CLUB_F1A'], u:455, v:-62, d:'目標破甲疊滿時,你的傷害 +30%', eff:{ brkFullP:30 } },
+    { id:'SK_CLUB_F2B', g:'club', wp:['club','stoneaxe'], n:'反擊', e:'🛡', req:['SK_CLUB_F1B'], u:455, v:62, d:'被魔物打中時 15% 機率立刻反擊(50% 傷害),反擊也會疊破甲', eff:{ counterP:15, brkCounter:1 } },
+    { id:'SK_CLUB_KEY', g:'club', wp:['club','stoneaxe'], key:true, act:'club_smash', n:'猛擊', e:'🌟', reqAny:['SK_CLUB_F2A','SK_CLUB_F2B'], u:550, v:0, d:'★關鍵節點:解鎖絕招「猛擊」;猛擊命中再疊 2 層破甲' },
+    { id:'SK_CLUB_M', g:'club', wp:['club','stoneaxe'], mst:true, n:'裂岩者', e:'👑', req:['SK_CLUB_KEY'], mat:{ boss_magmashell:2 }, u:645, v:0, d:'【精通】每隻魔物第一次被你打中就直接疊 2 層破甲;傷害 +8%。需要頭目素材 🟥熔甲殼片 ×2(洗點後再點不必重付)', eff:{ brkOpen:2, dmgP:8 }, sci:'岩石遇熱膨脹、遇冷收縮,反覆幾次就會裂開——這叫「熱脹冷縮造成的風化」。' },
+    /* ── 🔨 錘星域:🔋 蓄力層 ── */
+    { id:'SK_HAMMER_1', g:'hammer', wp:['hammer'], n:'蓄力架勢', e:'🔋', req:['SK_CORE_ATK'], u:170, v:0, d:'按「🛡 防禦」時蓄 1 層「🔋蓄力」(上限 2):下一次攻擊或絕招每層傷害 +30%、擊暈機率 +8%,打出去就用掉', eff:{ chargeOn:1 }, sci:'把錘子舉高再落下,位能變成動能——舉得越高,打下去越重。' },
+    { id:'SK_HAMMER_2', g:'hammer', wp:['hammer'], n:'基本功', e:'🎯', req:['SK_HAMMER_1'], u:265, v:0, d:'暴擊率 +5%、傷害 +5%', eff:{ critC:5, dmgP:5 } },
+    { id:'SK_HAMMER_F1A', g:'hammer', wp:['hammer'], grp:'hammer_f', n:'厚積薄發', e:'🏋', req:['SK_HAMMER_2'], u:360, v:-62, d:'【分歧・二選一】蓄力上限 +1(最多 3 層),每層傷害再 +10%', eff:{ chargeMax:1, chargeMul:10 } },
+    { id:'SK_HAMMER_F1B', g:'hammer', wp:['hammer'], grp:'hammer_f', n:'震盪', e:'😵', req:['SK_HAMMER_2'], u:360, v:62, d:'【分歧・二選一】擊暈機率 +12%;蓄力每層擊暈機率再 +6%', eff:{ stunAddP:12, chargeStun:6 }, sci:'重物撞擊會把能量變成震動傳出去。' },
+    { id:'SK_HAMMER_F2A', g:'hammer', wp:['hammer'], n:'地鳴', e:'🌋', req:['SK_HAMMER_F1A'], u:455, v:-62, d:'蓄力滿層出手時,其他魔物也會受到 40% 傷害', eff:{ chargeSplash:40 } },
+    { id:'SK_HAMMER_F2B', g:'hammer', wp:['hammer'], n:'硬扛', e:'🧱', req:['SK_HAMMER_F1B'], u:455, v:62, d:'每次受傷固定 −3;身上有蓄力時受傷再 −20%', eff:{ dmgCut:3, chargeGuard:20 } },
+    { id:'SK_HAMMER_KEY', g:'hammer', wp:['hammer'], key:true, act:'hammer_quake', n:'地裂重擊', e:'🌟', reqAny:['SK_HAMMER_F2A','SK_HAMMER_F2B'], u:550, v:0, d:'★關鍵節點:解鎖絕招「地裂重擊」;蓄力也會加在這一擊上' },
+    { id:'SK_HAMMER_M', g:'hammer', wp:['hammer'], mst:true, n:'山崩', e:'👑', req:['SK_HAMMER_KEY'], mat:{ boss_lavaheart:1 }, u:645, v:0, d:'【精通】普通攻擊命中 25% 機率自動蓄 1 層;開戰就有 1 層蓄力。需要頭目素材 ❤️‍🔥巨像熔心 ×1(洗點後再點不必重付)', eff:{ chargeAutoP:25, chargeStart:1 }, sci:'山崩是因為坡上的土石重量大過摩擦力,一點點震動就讓整片滑下來。' },
+    /* ── 🔱 長槍星域:🔱 架槍反擊 ── */
+    { id:'SK_SPEAR_1', g:'spear', wp:['spear'], n:'架槍', e:'🔱', req:['SK_CORE_ATK'], u:170, v:0, d:'按「🛡 防禦」時架起長槍:到你下一回合前,魔物普通攻擊打你,你一定反刺一下(50% 傷害)', eff:{ braceOn:1 }, sci:'長槍比對手的手臂長,先把槍尖對準對方,對方衝過來就等於自己撞上來。' },
+    { id:'SK_SPEAR_2', g:'spear', wp:['spear'], n:'基本功', e:'🎯', req:['SK_SPEAR_1'], u:265, v:0, d:'暴擊率 +5%、傷害 +5%', eff:{ critC:5, dmgP:5 } },
+    { id:'SK_SPEAR_F1A', g:'spear', wp:['spear'], grp:'spear_f', n:'以守代攻', e:'🛡', req:['SK_SPEAR_2'], u:360, v:-62, d:'【分歧・二選一】反刺傷害 +30%(變成 80%),而且反刺可以暴擊', eff:{ braceMul:30, braceCrit:1 } },
+    { id:'SK_SPEAR_F1B', g:'spear', wp:['spear'], grp:'spear_f', n:'放血', e:'🩸', req:['SK_SPEAR_2'], u:360, v:62, d:'【分歧・二選一】普通攻擊與反刺命中時,讓目標流血 1 層(每回合 −2)', eff:{ bleedOn:1 } },
+    { id:'SK_SPEAR_F2A', g:'spear', wp:['spear'], n:'見招拆招', e:'👁', req:['SK_SPEAR_F1A'], u:455, v:-62, d:'完美閃避時也會順勢反刺(不必先架槍)', eff:{ braceDodge:1 } },
+    { id:'SK_SPEAR_F2B', g:'spear', wp:['spear'], n:'先發制人', e:'🥇', req:['SK_SPEAR_F1B'], u:455, v:62, d:'每場戰鬥第一擊必定命中;對流血中的目標傷害 +15%', eff:{ firstHit:1, vsBleedP:15 } },
+    { id:'SK_SPEAR_KEY', g:'spear', wp:['spear'], key:true, act:'spear_combo', n:'突刺連環', e:'🌟', reqAny:['SK_SPEAR_F2A','SK_SPEAR_F2B'], u:550, v:0, d:'★關鍵節點:解鎖絕招「突刺連環」;放完之後自動架起長槍' },
+    { id:'SK_SPEAR_M', g:'spear', wp:['spear'], mst:true, n:'不動如山', e:'👑', req:['SK_SPEAR_KEY'], mat:{ boss_thunderplume:2 }, u:645, v:0, d:'【精通】架槍時受到的傷害 −30%;架槍多撐 1 回合。需要頭目素材 ⚡雷鳴羽 ×2(洗點後再點不必重付)', eff:{ braceCut:30, braceKeep:1 }, sci:'重心越低、腳站越開,身體越不容易被推倒——所以架槍要蹲低。' },
+    /* ── 🪃 迴力鏢星域:↪ 彈射 ── */
+    { id:'SK_BOOMERANG_1', g:'boomerang', wp:['boomerang'], n:'迴旋彈射', e:'↪', req:['SK_CORE_ATK'], u:170, v:0, d:'迴力鏢第二段彈到另一隻魔物的那一下,傷害 +20%', eff:{ bounceMul:20 }, sci:'迴力鏢彎曲的翼形讓它一邊旋轉一邊繞回來。' },
+    { id:'SK_BOOMERANG_2', g:'boomerang', wp:['boomerang'], n:'基本功', e:'🎯', req:['SK_BOOMERANG_1'], u:265, v:0, d:'暴擊率 +5%、傷害 +5%', eff:{ critC:5, dmgP:5 } },
+    { id:'SK_BOOMERANG_F1A', g:'boomerang', wp:['boomerang'], grp:'boomerang_f', n:'雙迴旋', e:'🌀', req:['SK_BOOMERANG_2'], u:360, v:-62, d:'【分歧・二選一】一回合多丟 1 段', eff:{ hitsAdd:1 } },
+    { id:'SK_BOOMERANG_F1B', g:'boomerang', wp:['boomerang'], grp:'boomerang_f', n:'精準迴旋', e:'🎯', req:['SK_BOOMERANG_2'], u:360, v:62, d:'【分歧・二選一】彈射傷害再 +30%,並且優先彈向血量最少的魔物', eff:{ bounceMul:30, bounceSmart:1 } },
+    { id:'SK_BOOMERANG_F2A', g:'boomerang', wp:['boomerang'], n:'追打', e:'💫', req:['SK_BOOMERANG_F1A'], u:455, v:-62, d:'對暈眩中的目標傷害 +20%;彈射命中 15% 機率把目標打暈', eff:{ vsStunP:20, bounceStunP:15 } },
+    { id:'SK_BOOMERANG_F2B', g:'boomerang', wp:['boomerang'], n:'回收', e:'♻', req:['SK_BOOMERANG_F1B'], u:455, v:62, d:'命中後 25% 機率多賺 1 點武器熟練;彈射打倒魔物時回復 6% 體力', eff:{ xpBackP:25, bounceKillHeal:6 } },
+    { id:'SK_BOOMERANG_KEY', g:'boomerang', wp:['boomerang'], key:true, act:'boom_dance', n:'迴旋亂舞', e:'🌟', reqAny:['SK_BOOMERANG_F2A','SK_BOOMERANG_F2B'], u:550, v:0, d:'★關鍵節點:解鎖絕招「迴旋亂舞」' },
+    { id:'SK_BOOMERANG_M', g:'boomerang', wp:['boomerang'], mst:true, n:'旋風', e:'👑', req:['SK_BOOMERANG_KEY'], mat:{ boss_shadowgem:2 }, u:645, v:0, d:'【精通】第三段也會彈射(打第三隻魔物,沒有就打第二隻)。需要頭目素材 🔮深淵影晶 ×2(洗點後再點不必重付)', eff:{ bounceAdd:1 }, sci:'旋轉的東西會比較穩——陀螺、腳踏車輪子都是靠這個原理不倒。' },
+    /* ── 🧺 中央・生活技藝星域(B5:原本散在各武器星域的生活效果全部搬到這裡,不必再為了砍樹去點某把武器) ── */
+    { id:'SK_LIFE_1', g:'life', n:'巧手', e:'🖐', req:['SK_CORE_SPD'], u:230, v:0, d:'所有 QTE 甜蜜點 +8%(島上活動與戰鬥攻擊都算)', eff:{ sweetP:8 } },
+    { id:'SK_LIFE_2', g:'life', n:'慢活節奏', e:'🐢', req:['SK_LIFE_1'], u:320, v:-62, d:'所有 QTE 指針變慢 12%', eff:{ qteSlowP:12 } },
+    { id:'SK_LIFE_3', g:'life', n:'伐木採石', e:'🪓', req:['SK_LIFE_1'], u:320, v:62, d:'砍樹/採石 產量各 +1', eff:{ chopAdd:1, quarryAdd:1 }, sci:'順著木頭纖維的方向劈,比橫著砍省力很多。' },
+    { id:'SK_LIFE_4', g:'life', n:'小心作業', e:'🧤', req:['SK_LIFE_2'], u:410, v:-62, d:'島上活動失誤受傷 −30%', eff:{ hurtCutP:30 } },
+    { id:'SK_LIFE_5', g:'life', n:'漁獵好手', e:'🎣', req:['SK_LIFE_3'], u:410, v:62, d:'捕魚產量 +1;採集作答時間 +8%', eff:{ fishAdd:1, actSecP:8 } },
+    { id:'SK_LIFE_6', g:'life', key:true, n:'匠心', e:'🌟', req:['SK_LIFE_4','SK_LIFE_5'], u:500, v:0, d:'★建造/製作品質 ★ +1;QTE 甜蜜點再 +5%、指針再慢 10%', eff:{ craftStar:1, sweetP:5, qteSlowP:10 }, sci:'熟能生巧:重複練習會讓大腦把動作變成「自動化」,不用想也做得準。' },
+    { id:'SK_MED_BND_1',   g:'med', sub:'bnd', dep:1, n:'止血',     e:'🩹', req:['SK_CORE_HP'],     u:230, v:-90, d:'戰鬥中可止血:去除自己身上的流血/蜂螫；島上活動失誤受傷 −25%', eff:{ bleedCure:1, hurtCutP:25 } },
+    { id:'SK_MED_BND_2',   g:'med', sub:'bnd', dep:2, n:'緊急包紮', e:'🧻', req:['SK_MED_BND_1'],   u:320, v:-90, d:'每場戰鬥 1 次:立刻回復 30% 體力(不用藥草)', eff:{ bandageP:30, bandageN:1 } },
+    { id:'SK_MED_BND_3',   g:'med', sub:'bnd', dep:3, n:'為隊友包紮', e:'🤝', req:['SK_MED_BND_2'], u:410, v:-90, d:'★多人連線用;單人時:緊急包紮可用次數 +1、回復量 +10%', eff:{ bandageN:1, bandageP:10, allyBnd:1 } },
+    { id:'SK_MED_BND_KEY', g:'med', sub:'bnd', dep:4, key:true, n:'不倒的意志', e:'🌟', req:['SK_MED_BND_3'], u:500, v:-90, d:'★關鍵節點:每場戰鬥 1 次,體力歸零時保留 1 點不算戰敗', eff:{ deathSave:1 } },
+    { id:'SK_MED_PHM_1',   g:'med', sub:'phm', dep:1, n:'辨識野生藥草', e:'🍀', req:['SK_CORE_LUCK'], u:230, v:0, d:'採集時 🍀草藥 掉落機率 +25%；野生動物馴養成功率 +15%、寵物親密度提升效率 +15%', eff:{ herbP:25, tameP:15, bondGainP:15 }, sci:'認得出植物才敢用——不認得的野草絕對不能亂吃。' },   /* ★ v1.196.0 新增 bondGainP,tameP 保留不動(見 SK_CORE_LUCK 註解) */
+    { id:'SK_MED_PHM_2',   g:'med', sub:'phm', dep:2, n:'基礎解毒劑', e:'🧪', req:['SK_MED_PHM_1'],   u:320, v:0, d:'可調配解毒劑,解除蛇咬中毒(需 🍀草藥 1)', eff:{ poisonCure:1 } },
+    { id:'SK_MED_PHM_3',   g:'med', sub:'phm', dep:3, n:'毒素抗性',   e:'🛡', req:['SK_MED_PHM_2'],   u:410, v:0, d:'中毒每回合傷害減半,惡化速度也減半；島上活動失誤受傷 −25%', eff:{ poisonResP:50, hurtCutP:25 } },
+    { id:'SK_MED_PHM_KEY', g:'med', sub:'phm', dep:4, key:true, n:'進階解毒劑', e:'🌟', req:['SK_MED_PHM_3'], u:500, v:0, d:'★關鍵節點:一次解除身上所有不良狀態(每天 1 次,需 🍀草藥 1)', eff:{ cureAll:1 } },
+    { id:'SK_MED_CK_1',   g:'med', sub:'ck', dep:1, n:'恢復料理',   e:'🍲', req:['SK_CORE_HP'],    u:230, v:90, d:'吃料理回復量 +20%,熱食可解除失溫；養的動物每日產出 +20%', eff:{ dishP:20, coldCure:1, petYieldP:20 } },
+    { id:'SK_MED_CK_2',   g:'med', sub:'ck', dep:2, n:'保存食物',   e:'🫙', req:['SK_MED_CK_1'],   u:320, v:90, d:'25% 機率吃了料理卻不消耗那一份；餵動物也有 25% 不消耗飼料', eff:{ dishSaveP:25, petFeedSaveP:25 }, sci:'曬乾、煙燻、加鹽都能讓食物不容易壞——因為細菌沒有水就長不起來。' },
+    { id:'SK_MED_CK_3',   g:'med', sub:'ck', dep:3, n:'消除疲勞',   e:'⚡', req:['SK_MED_CK_2'],   u:410, v:90, d:'每天第一次吃料理額外回復 ⚡AP 1；養的動物每日產出 +25%', eff:{ dishAp:1, petYieldP:25 } },
+    { id:'SK_MED_CK_KEY', g:'med', sub:'ck', dep:4, key:true, n:'營地聚餐', e:'🌟', req:['SK_MED_CK_3'], u:500, v:90, d:'★多人連線用;在營地辦聚餐:今天攻擊 +10%(每天 1 次,需任一道料理)；養的動物每日產出 +25%、野生動物馴養成功率 +15%、寵物親密度提升效率 +15%', eff:{ feast:1, petYieldP:25, tameP:15, bondGainP:15 } },   /* ★ v1.196.0 新增 bondGainP,tameP 保留不動(見 SK_CORE_LUCK 註解) */
+    /* ★ v1.163.0 ── 🎯 特殊指令星域(每個節點帶一個 cmd 鍵 → 對應 D.SK_CMDS;點亮 = 解鎖該指令,還要到能力頁裝設才會出現按鈕) ── */
+    { id:'SK_CMD_1', g:'cmd', cmd:'CMD_SCAN',      n:'環境觀察', e:'🔍', req:['SK_CORE_LUCK'],           u:260, v:0, d:'解鎖特殊指令「🔍 環境觀察」(野外・⚡1)', eff:{}, sci:'先觀察再行動,是所有野外工作的第一步。' },
+    { id:'SK_CMD_2', g:'cmd', cmd:'CMD_FIRSTAID',  n:'戰場急救', e:'🩹', req:['SK_CMD_1'],                u:350, v:-90, d:'解鎖特殊指令「🩹 戰場急救」(戰鬥・⚡2)', eff:{}, sci:'急救的順序是先止血、再保暖,最後才送醫。' },
+    { id:'SK_CMD_3', g:'cmd', cmd:'CMD_SMOKE',     n:'煙霧彈',   e:'💨', req:['SK_CMD_1'],                u:350, v:0, d:'解鎖特殊指令「💨 煙霧彈」(戰鬥・⚡1)',   eff:{}, sci:'濃煙會遮住動物的視線與氣味,是很老的脫身方法。' },
+    { id:'SK_CMD_4', g:'cmd', cmd:'CMD_QUICKPICK', n:'熟練採集', e:'🧺', req:['SK_CMD_1'],                u:350, v:90, d:'解鎖特殊指令「🧺 熟練採集」(野外・⚡2)', eff:{}, sci:'熟練來自重複練習,動作會慢慢變成身體記得的事。' },
+    { id:'SK_CMD_5', g:'cmd', cmd:'CMD_TRAP',      n:'佈設陷阱', e:'🪤', req:['SK_CMD_2'],                u:440, v:-90, d:'解鎖特殊指令「🪤 佈設陷阱」(戰鬥・⚡2)', eff:{}, sci:'陷阱靠的是「位能一次放掉」,所以小小的繩子也能絆倒大東西。' },
+    { id:'SK_CMD_6', g:'cmd', cmd:'CMD_CALL',      n:'呼喚夥伴', e:'📣', req:['SK_CMD_3'],                u:440, v:0, d:'解鎖特殊指令「📣 呼喚夥伴」(野外+戰鬥・⚡1)', eff:{}, sci:'動物能分辨熟悉的聲音,叫名字比大吼有用。' },
+    { id:'SK_CMD_7', g:'cmd', cmd:'CMD_RALLY',     n:'鼓舞號令', e:'⚡', req:['SK_CMD_4'],                u:440, v:90, d:'解鎖特殊指令「⚡ 鼓舞號令」(戰鬥・⚡2)', eff:{}, sci:'一起喊口號會讓人動作更同步,這叫「節律同調」。' },
+    { id:'SK_CMD_8', g:'cmd', cmd:'CMD_REST', key:true, n:'野外小憩', e:'🔥', req:['SK_CMD_6','SK_CMD_7'], u:530, v:45, d:'★解鎖特殊指令「🔥 野外小憩」(野外・⚡3)', eff:{}, sci:'休息時身體會把血糖轉回肌肉裡的肝醣,這就是「恢復」。' }
   ];
-  /* 醫療星域內部互通:某節點的前置若沒點,但同星域已有「深度 ≥ 本節點深度−1」的節點,也算前置達成
-     ⇒ 點完「包紮 2 號」可以直接接「藥學 1 號」,不必繞回中央基礎星域。 */
-  /* ★ v1.163.0 ── 🎯 特殊指令星域(8 節點,全部落在星圖右下方原本的空白區,既有 41 個節點座標零更動) ──
-     每個節點帶一個 cmd 鍵 → 對應 D.SK_CMDS;點亮 = 解鎖該指令,還要到能力頁裝設(上限 D.SK_CMD_SLOTS)才會出現按鈕。 */
-  D.SK_NODES.push(
-    { id:'SK_CMD_1', g:'cmd', cmd:'CMD_SCAN',      n:'環境觀察', e:'🔍', req:['SK_CORE_LUCK'],           x:1030, y:655, d:'解鎖特殊指令「🔍 環境觀察」(野外・⚡1)', eff:{}, sci:'先觀察再行動,是所有野外工作的第一步。' },
-    { id:'SK_CMD_2', g:'cmd', cmd:'CMD_FIRSTAID',  n:'戰場急救', e:'🩹', req:['SK_CMD_1'],                x:1140, y:655, d:'解鎖特殊指令「🩹 戰場急救」(戰鬥・⚡2)', eff:{}, sci:'急救的順序是先止血、再保暖,最後才送醫。' },
-    { id:'SK_CMD_3', g:'cmd', cmd:'CMD_SMOKE',     n:'煙霧彈',   e:'💨', req:['SK_CMD_1'],                x:985,  y:745, d:'解鎖特殊指令「💨 煙霧彈」(戰鬥・⚡1)',   eff:{}, sci:'濃煙會遮住動物的視線與氣味,是很老的脫身方法。' },
-    { id:'SK_CMD_4', g:'cmd', cmd:'CMD_QUICKPICK', n:'熟練採集', e:'🧺', req:['SK_CMD_1'],                x:1095, y:745, d:'解鎖特殊指令「🧺 熟練採集」(野外・⚡2)', eff:{}, sci:'熟練來自重複練習,動作會慢慢變成身體記得的事。' },
-    { id:'SK_CMD_5', g:'cmd', cmd:'CMD_TRAP',      n:'佈設陷阱', e:'🪤', req:['SK_CMD_2'],                x:1200, y:745, d:'解鎖特殊指令「🪤 佈設陷阱」(戰鬥・⚡2)', eff:{}, sci:'陷阱靠的是「位能一次放掉」,所以小小的繩子也能絆倒大東西。' },
-    { id:'SK_CMD_6', g:'cmd', cmd:'CMD_CALL',      n:'呼喚夥伴', e:'📣', req:['SK_CMD_3'],                x:1030, y:845, d:'解鎖特殊指令「📣 呼喚夥伴」(野外+戰鬥・⚡1)', eff:{}, sci:'動物能分辨熟悉的聲音,叫名字比大吼有用。' },
-    { id:'SK_CMD_7', g:'cmd', cmd:'CMD_RALLY',     n:'鼓舞號令', e:'⚡', req:['SK_CMD_4'],                x:1140, y:845, d:'解鎖特殊指令「⚡ 鼓舞號令」(戰鬥・⚡2)', eff:{}, sci:'一起喊口號會讓人動作更同步,這叫「節律同調」。' },
-    { id:'SK_CMD_8', g:'cmd', cmd:'CMD_REST', key:true, n:'野外小憩', e:'🔥', req:['SK_CMD_6','SK_CMD_7'], x:1085, y:945, d:'★解鎖特殊指令「🔥 野外小憩」(野外・⚡3)', eff:{}, sci:'休息時身體會把血糖轉回肌肉裡的肝醣,這就是「恢復」。' }
-  );
+  /* ★ v1.229.0 B5 座標換算(u/v 沿星域角度、pr/pa 極座標)——index 端只讀 x/y,零改動 */
+  (function(){ var C = D.SK_CANVAS, G = {}, i, g, n, a, cs, sn;
+    for(i = 0; i < D.SK_GALAXY.length; i++) G[D.SK_GALAXY[i].k] = D.SK_GALAXY[i];
+    for(i = 0; i < D.SK_NODES.length; i++){ n = D.SK_NODES[i];
+      if(typeof n.pr === 'number'){ a = n.pa * Math.PI / 180; n.x = Math.round(C.cx + n.pr * Math.cos(a)); n.y = Math.round(C.cy + n.pr * Math.sin(a)); continue; }
+      if(typeof n.u !== 'number') continue;
+      g = G[n.g]; a = ((g && g.ang) || 0) * Math.PI / 180; cs = Math.cos(a); sn = Math.sin(a);
+      n.x = Math.round(C.cx + n.u * cs - n.v * sn); n.y = Math.round(C.cy + n.u * sn + n.v * cs); }
+  })();
   D.SK_MED_LINK = true;
   /* 關鍵節點頭銜(自動取得,可同時擁有多個,不鎖點法) */
   D.SK_TITLES = [
@@ -3235,6 +3300,12 @@ window.ISL_DB = (function(){
   (function(){ var st = ['idle','atk','hit','stun','down','skill'], i, j, k;
     for(i = 0; i < D.PET_ORDER.length; i++){ k = D.PET_ORDER[i];
       for(j = 0; j < st.length; j++){ D.IMG['bt_pet_' + k + '_' + st[j]] = 'island_bt_pet_' + k + '_' + st[j] + '.png'; } } })();
+  /* ★ v1.230.0 營地走路/睡覺姿態圖(32 張選配):island_bt_pet_<key>_walk.png / _sleep.png,規格同戰鬥立繪(512×512 透明底、側面朝右、腳底貼底)。
+     index 端先探測檔案存不存在,有才用;沒有就沿用 idle 圖加程式動畫(走路上下晃、睡覺趴低呼吸),所以沒上傳也不會破圖。 */
+  /* ★ v1.231.0 主角跑步/跳躍下半身 sheet(頭與上半身由 index 端疊回玩家自己的分層造型) */
+  (function(){ var bs = ['boy','girl'], i, h, b; for(i = 0; i < 2; i++){ b = bs[i]; for(h = 0; h < 4; h++){ D.IMG['run_' + b + '_h' + h] = 'island_run_' + b + '_h' + h + '.png'; D.IMG['jump_' + b + '_h' + h] = 'island_jump_' + b + '_h' + h + '.png'; D.IMG['bt_' + b + '_h' + h] = 'island_bt_' + b + '_h' + h + '.png'; } } })();   /* ★ v1.233.0 全髮型整張動作圖(選配,沒上傳自動退回舊做法) */
+  D.IMG.run_sheet_boy = 'island_run_sheet_boy.png'; D.IMG.run_sheet_girl = 'island_run_sheet_girl.png'; D.IMG.jump_sheet_boy = 'island_jump_sheet_boy.png'; D.IMG.jump_sheet_girl = 'island_jump_sheet_girl.png';
+  (function(){ var i, k; for(i = 0; i < D.PET_ORDER.length; i++){ k = D.PET_ORDER[i]; D.IMG['bt_pet_' + k + '_walk'] = 'island_bt_pet_' + k + '_walk.png'; D.IMG['bt_pet_' + k + '_sleep'] = 'island_bt_pet_' + k + '_sleep.png'; } })();
 
   D.QUIZ = D.QUIZ || {};
   D.QUIZ.weapon = [
