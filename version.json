@@ -1,8 +1,8 @@
 {
   "_comment": "LXPSGAME 版本表（index.html 內 _LXPS_FILE_VERSIONS 的輕量副本）。★ 鐵則：改任何 .js/.css/.html 模組時，index.html 的 _LXPS_FILE_VERSIONS 與本檔必須同時更新、內容完全一致，否則全班會被判定成舊版而不斷強制更新。★ 本檔存在的唯一理由：v5.210.0 之前是每 90 秒抓 11.4MB 的 index.html 只為讀這張表，一節課 25 台 iPad 約 8GB，會壓垮 GitHub Pages 與學校網路。",
-  "generatedFor": "v5.213.0",
+  "generatedFor": "v5.215.0",
   "files": {
-    "index.html": "v5.213.0",
+    "index.html": "v5.215.0",
     "mainstory.js": "v5.57.0",
     "main.css": "v5.186.0",
     "adv_quiz_db.js": "20260906",
@@ -13,6 +13,6 @@
     "world-boss.js": "v5.116.0",
     "world-boss-ui.html": "v5.145.0",
     "arena.js": "v5.91.0",
-    "game_changelog.js": "v5.213.0"
+    "game_changelog.js": "v5.215.0"
   }
 }
