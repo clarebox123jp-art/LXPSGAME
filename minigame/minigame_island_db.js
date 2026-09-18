@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.244.0';   /* ★ v1.244.0 — 本檔僅 D.LOG 新增一筆與版號同步(營地方向盤/好友連結系統/造型工房開放/結算鈕位置全在 index 端) */   /* ★ v1.243.0 — 老師「寵物技能修正」:穿山甲/綠蠵龜/椰子蟹三隻坦克型天賦重寫(固定減傷 40~60%,綠蠵龜新增每回合自癒 15%)、梅花鹿天賦改「每回合解 1 不利狀態+全隊回 8%」、螢火蟲/鮭魚兩招治療技能倍率大幅提升並拉長冷卻補償、攻擊型與控場型技能冷卻微調做出差異化定位 */   /* ★ v1.242.0 — 海鷗小白技能改「海風祝禱」(敵方命中−25%+全隊回復20%)、魔物攻擊成長 0.23→0.16、16 隻寵物 HP/防禦成長 +12%、懸崖移除野豬並下修雷精攻擊 */   /* ★ v1.241.0 — 髮型逐格定位表全面重算(對齊第 1 格)、森林~懸崖新手難度重排、海鷗小白改治療型、台灣黑熊改仇恨坦 */ void 'v1.240.0';   /* ★ v1.240.0 — 戰鬥圖檔名對齊 island_battle_*、新增 D.BT_FX 特效表 */ void 'v1.239.0';   /* ★ v1.239.0 — 本檔本輪無資料異動(頭目一覽改版/營地奔跑卡速修正/寵物數值放大三項都在 index 端),僅隨 index/sw 版號同步;D.LOG 新增一筆。 */   /* ★ v1.234.0(2026-09-17・老師「重排主線劇情/教學/NPC 對白/劇情分支、20 種新魔物、材料重新規劃」)— 檔尾新增一大段覆寫:D.MAINLINE 6 章主線、D.ROUTES 4 組分支、D.SPEAKERS、D.MON_RACES/MON_RACE_OF、20 種 wild 魔物(MONSTERS/MON_BT/MON_SKILL/MON_TAG_OF/CODEX)、DEF_TOOLS +4、新素材 chitin/silk/gel/ash、各配方 cost 重排、分支專屬裝飾 8 件、D.LOG 一筆。 */   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.245.0';   /* ★ v1.245.0 — 主線新增第六~八章(時間倒轉之貝/r5 r6 兩次重大抉擇/場景變體圖鍵/四件抉擇裝飾/timeshell 物品)、第四章拿掉地下層目標、D.DUNGEON.open=false、D.BOSSES_HIDDEN.guardian 最強頭目資料(未接線) */   /* ★ v1.244.0 — 本檔僅 D.LOG 新增一筆與版號同步(營地方向盤/好友連結系統/造型工房開放/結算鈕位置全在 index 端) */   /* ★ v1.243.0 — 老師「寵物技能修正」:穿山甲/綠蠵龜/椰子蟹三隻坦克型天賦重寫(固定減傷 40~60%,綠蠵龜新增每回合自癒 15%)、梅花鹿天賦改「每回合解 1 不利狀態+全隊回 8%」、螢火蟲/鮭魚兩招治療技能倍率大幅提升並拉長冷卻補償、攻擊型與控場型技能冷卻微調做出差異化定位 */   /* ★ v1.242.0 — 海鷗小白技能改「海風祝禱」(敵方命中−25%+全隊回復20%)、魔物攻擊成長 0.23→0.16、16 隻寵物 HP/防禦成長 +12%、懸崖移除野豬並下修雷精攻擊 */   /* ★ v1.241.0 — 髮型逐格定位表全面重算(對齊第 1 格)、森林~懸崖新手難度重排、海鷗小白改治療型、台灣黑熊改仇恨坦 */ void 'v1.240.0';   /* ★ v1.240.0 — 戰鬥圖檔名對齊 island_battle_*、新增 D.BT_FX 特效表 */ void 'v1.239.0';   /* ★ v1.239.0 — 本檔本輪無資料異動(頭目一覽改版/營地奔跑卡速修正/寵物數值放大三項都在 index 端),僅隨 index/sw 版號同步;D.LOG 新增一筆。 */   /* ★ v1.234.0(2026-09-17・老師「重排主線劇情/教學/NPC 對白/劇情分支、20 種新魔物、材料重新規劃」)— 檔尾新增一大段覆寫:D.MAINLINE 6 章主線、D.ROUTES 4 組分支、D.SPEAKERS、D.MON_RACES/MON_RACE_OF、20 種 wild 魔物(MONSTERS/MON_BT/MON_SKILL/MON_TAG_OF/CODEX)、DEF_TOOLS +4、新素材 chitin/silk/gel/ash、各配方 cost 重排、分支專屬裝飾 8 件、D.LOG 一筆。 */   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -1534,6 +1534,7 @@ window.ISL_DB = (function(){
   D.DEF_BITE_HP = 5;   /* ★ v1.11.0 甲:魔物咬到營火時,守在旁邊的你也受傷 5;體力歸零 = 倒下,夜襲判輸 */
   /* ★ v1.11.0 乙:遺跡地下層(探索戰鬥=工具配對 + 一題,不是動作戰鬥;每天可下一次,遺跡機關解開後開放) */
   D.DUNGEON = {
+    open: false,   /* ★ v1.245.0 老師:遺跡地下層暫不開放(index islDungeonOpen 讀這個旗標);守墓石像重新設計成最強頭目 → 見 D.BOSSES_HIDDEN.guardian */
     floors: 3, ap: 1, entry:{x:16, y:17, n:'地下入口', e:'🕳'},
     intro: ['石板下面有階梯,黑漆漆的……解開機關後,門真的開了。', '(地下層每天可以探一次。裡面的魔物比地面的強,是回合制戰鬥;帶好武器和料理,打不過就撤退。守墓石像會共振——答對牠的問題,開戰時牠會先暈一回合。)'],   /* ★ v1.22.0→v1.23.0 地下層改回合制 */
     floorNames: ['B1 石廊', 'B2 水晶室', 'B3 守墓者之間'],
@@ -3560,9 +3561,9 @@ window.ISL_DB = (function(){
         { t:'explore', id:'cave', n:30, txt:'洞窟探索度 30%', g:'洞窟裡有鐵礦和水晶,也有怕光的魔物。', go:'cave' },
         { t:'tech', id:'circuit', txt:'研究「電路」', g:'要先研究滑輪、水車,再研究電路,才進得了遺跡。' },
         { t:'puzzle', id:'ruins', txt:'解開遺跡機關', g:'遺跡裡的「!」機關:把電路接通,門就會打開。', go:'ruins' },
-        { t:'dungeon', n:1, txt:'通關遺跡地下層', g:'遺跡的地下入口每天能下去一次,最深處有守墓石像。', go:'ruins' }
+        { t:'explore', id:'ruins', n:60, txt:'遺跡探索度 60%', g:'在遺跡完成活動、打倒魔物,慢慢把石柱之間的路走通。', go:'ruins' }   /* ★ v1.245.0 老師:遺跡地下層暫不開放 ⇒ 第四章不再要求通關地下層(舊存檔已通關的不受影響) */
       ],
-      end: [ { s:'me', l:['守墓石像碎掉之後,牆上的壁畫亮了起來。', '古人把雷晶放在石台上,整座島的燈都亮了——直到有一天,雷晶越來越亮、越來越燙……', '石台上還留著一顆拳頭大的碎片,嗡嗡地發著光。這就是「電之心」。'] },
+      end: [ { s:'me', l:['機關接通的那一刻,遺跡中央的石台亮了起來,牆上的壁畫也跟著發光。', '古人把雷晶放在石台上,整座島的燈都亮了——直到有一天,雷晶越來越亮、越來越燙……', '石台上還留著一顆拳頭大的碎片,嗡嗡地發著光。這就是「電之心」。'] },
              { s:'gull', l:['「嘎……阿川那時候,是把碎片埋回火山口的。」', '「你要怎麼做?」'] } ],
       reward: { shell:40, tech:6, items:{ crystal:1 } },
       choice: 'r4' },
@@ -3588,8 +3589,59 @@ window.ISL_DB = (function(){
              { s:'bear', r:'r3b', l:['「吼——營地是整座島最安全的地方,大家都會好好守著。」'] },
              { s:'gull', r:'r4a', l:['「電之心在火山口睡得好熟,島上的黑霧散了。」'] },
              { s:'crab', r:'r4b', l:['「喀嚓!營地的燈會一直亮著,等你哪天回來玩。」'] },
-             { s:'me', l:['這座島教會我的,是「先觀察,再想辦法」,還有——替你生活的地方做點什麼。', '(主線完結!島一直都在,想留下來的話,隨時都能繼續生活。)'] } ],
-      reward: { shell:50 } }
+             { s:'me', l:['這座島教會我的,是「先觀察,再想辦法」,還有——替你生活的地方做點什麼。'] },
+             { s:'gull', l:['「嘎……等一下!火山口那邊,有個東西在發光——好像在叫你。」'] } ],
+      reward: { shell:50 } },
+
+    /* ★ v1.245.0 老師「劇情腳本改成新版:做到火山之後、完成帆船、時間倒轉之貝、重大抉擇影響島的生態和變化」— 第六~八章 */
+    { id:'c6', n:'第六章・時間倒轉之貝', e:'🐚', sum:'看完回憶,登上火山口,接下阿川留下的「時間倒轉之貝」。',
+      start: [ { s:'me', l:['帆船已經造好了,可是我還沒真的離開。', '火山口那道光……去看看吧。'] },
+               { s:'note', l:['【阿川的最後一張紙條】', '「這顆貝殼會把時間帶回去——回到島還來得及改變的那一刻。」', '「我沒有勇氣用它。你替我決定這座島的未來吧。」'] },
+               { s:'gull', l:['「嘎——這是『時間倒轉之貝』!靠近耳朵聽,聽得到島在呼吸。」', '「阿川說,只要吹響它,島就會回到選擇的路口……但每一次選擇,島都會真的改變。」'] } ],
+      give: { flags:{ timeShell:1 }, items:{ timeshell:1 } },
+      objs: [
+        { t:'flag', k:'endingSeen', txt:'看完帆船的回憶', g:'營地側欄「👤 角色 → 🎬 回憶」,看完整段回憶再回來。' },
+        { t:'flag', k:'timeShell', txt:'接下時間倒轉之貝', g:'火山口的光——小白會帶你去。' },
+        { t:'explore', id:'volcano', n:60, txt:'火山探索度 60%', g:'火山口邊緣走一圈,看清楚電之心留下的痕跡。', go:'volcano' },
+        { t:'adv', n:25, txt:'冒險等級達到 Lv25', g:'島的變化會讓魔物更強,先把自己練起來。' }
+      ],
+      end: [ { s:'me', l:['我把貝殼貼在耳邊——真的聽得到:火山在低鳴,森林在沙沙作響,海在拍打岩岸。', '貝殼發燙了。時間,正在倒轉……'] },
+             { s:'gull', l:['「嘎!第一個路口到了——火山口裡,電之心留下的餘熱正在往上冒!」', '「要引導它,還是封住它?這會決定火山和森林的樣子。」'] } ],
+      reward: { shell:30, tech:4 },
+      choice: 'r5' },
+
+    { id:'c7', n:'第七章・島的抉擇', e:'🌍', sum:'時間再次倒轉——這次是海與地心的路口。',
+      start: [ { s:'me', r:'r5a', l:['熔岩順著我挖的溝流進海裡,火山冷卻下來——山坡上鋪滿了肥沃的火山灰。', '……可是風把火星帶進了森林。'] },
+               { s:'me', r:'r5b', l:['冰晶和水晶把火山口封住了,火山安靜得像睡著一樣。', '森林因為沒有火,長得比以前更茂密。'] },
+               { s:'otter', l:['「嘿,貝殼又發亮了!這次是海那邊——潮水好像在等你的答案。」'] } ],
+      objs: [
+        { t:'route', id:'r5', txt:'做出火山的抉擇', g:'貝殼會在你準備好時再次響起(點上方 📜 就能回答)。' },
+        { t:'zoneVarSeen', id:'volcano', txt:'親眼看看改變後的火山', g:'打開 🗺 大地圖,再去一次火山。', go:'volcano' },
+        { t:'zoneVarSeen', id:'forest', txt:'親眼看看改變後的森林', g:'森林也跟著變了,去看看。', go:'forest' },
+        { t:'pets', n:4, txt:'擁有 4 位夥伴', g:'島變了,動物們也在找新的家。' }
+      ],
+      end: [ { s:'gull', l:['「嘎……第二個路口:海潮之貝在叫,地心之貝也在叫。」', '「引海水進來,草原會變成濕地;往地心挖,洞窟會崩塌、露出更深的地方。」', '「這一次,也由你決定。」'] } ],
+      reward: { shell:40, tech:6 },
+      choice: 'r6' },
+
+    { id:'c8', n:'終章・島的新樣貌', e:'🌈', sum:'走過每一個被你改變的地方,和島說再見——或者留下來。',
+      start: [ { s:'me', r:'r6a', l:['海水漫過草原,退去之後留下一片濕地——黑面琵鷺成群飛來了。'] },
+               { s:'me', r:'r6b', l:['洞窟深處轟隆一聲崩塌,塵土散去後,一條往更深處的通道露了出來。'] },
+               { s:'owl', l:['「咕——時間倒轉之貝的力量用完了。從現在起,島會照著你的選擇,自己長下去。」'] } ],
+      objs: [
+        { t:'route', id:'r6', txt:'做出海與地心的抉擇', g:'貝殼會在你準備好時再次響起。' },
+        { t:'zoneVarSeen', id:'grass', r:'r6a', txt:'走進變成濕地的草原', g:'打開 🗺 大地圖,再去一次草原。', go:'grass' },
+        { t:'zoneVarSeen', id:'beach', r:'r6a', txt:'看看被潮水改變的沙灘', g:'沙灘也不一樣了。', go:'beach' },
+        { t:'zoneVarSeen', id:'cave', r:'r6b', txt:'走進崩塌後的洞窟', g:'洞窟深處露出了新的通道(深層洞窟日後開放)。', go:'cave' },
+        { t:'bossAny', n:4, txt:'打倒任意 4 隻地圖頭目', g:'島變強了,頭目也變強了——證明你能守護這座島。' },
+        { t:'camplv', n:4, txt:'營地擴建到 Lv4', g:'營地側欄「🏕 營地 → 🏕 擴建」。' }
+      ],
+      end: [ { s:'gull', r:'r5a', l:['「嘎!火山灰讓田裡的作物長得又快又大!」'] },
+             { s:'gull', r:'r5b', l:['「嘎!火山睡著了,晚上再也沒有紅光,星星好清楚。」'] },
+             { s:'otter', r:'r6a', l:['「濕地裡魚蝦多到吃不完,水鳥都回來了!」'] },
+             { s:'bear', r:'r6b', l:['「吼——洞窟底下那條通道,有股很老很老的氣息。守墓石像……牠還在下面。總有一天,你得下去看看。」'] },
+             { s:'me', l:['島變成了我選擇的樣子。', '不管是留下來,還是揚帆回家——這座島都會記得,是我讓它變成這樣的。', '(主線完結!島一直都在,想留下來的話,隨時都能繼續生活。)'] } ],
+      reward: { shell:80, tech:10, items:{ crystal:3 } } }
   ];
   /* ── 五、劇情分支(影響島嶼發展)──
      eff 效果鍵(index islRouteEff 讀取;名稱結尾 Mul 的是乘法,其餘加總):
@@ -3635,8 +3687,39 @@ window.ISL_DB = (function(){
           b:{
             k:'r4b', n:'💡 點亮營地', d:'把碎片接上電路,讓營地整晚亮著電燈。', pro:'營地多一盞電燈(舒適度 +12);科技研究材料 −20%', con:'燈光會吸引魔物,夜襲機率 +10%',
             eff:{ researchMul:0.8, raidP:10 }, deco:'r_elamp',
-            reply:[ { s:'owl', l:['「咕——科技是工具,用對了是光,用錯了會燙手。小心使用。」'] } ] } }
+            reply:[ { s:'owl', l:['「咕——科技是工具,用對了是光,用錯了會燙手。小心使用。」'] } ] } },
+    /* ★ v1.245.0 時間倒轉之貝的兩次重大抉擇(第六、七章):now.zoneVar 會把該區的場景圖換成 zone_<區>_<變體>(圖沒上傳就自動退回原圖) */
+    r5: { q:'火山口裡電之心的餘熱正在往上冒,要怎麼辦?', a:{
+            k:'r5a', n:'🌋 引導熔岩', d:'挖一條溝把熔岩引進海裡,讓火山「安全地」噴一次。', pro:'火山灰肥沃:採集產量 +1、採石產量 +2;火山、山谷每天多長採石點', con:'火星飄進森林引發森林大火:森林環境受損 +30、森林採集點 −1',
+            eff:{ act_gather:1, act_quarry:2, spawn_volcano:1, spawn_valley:1, spawn_forest:-1 }, deco:'r_ash', now:{ dmg:{ forest:30 }, zoneVar:{ volcano:'erupt', forest:'fire' } },
+            reply:[ { s:'gull', l:['「嘎——!火山噴了!熔岩流進海裡,冒出好大的白煙!」', '「……森林那邊,有火光。」'] } ] },
+          b:{
+            k:'r5b', n:'❄ 封印火山', d:'把水晶和溪水灌進火山口,讓火山冷卻沉睡。', pro:'森林復育:森林、草原每天多長採集點,夥伴親密度 +15%;全島環境受損 −20', con:'火山變得寒冷,採石、礦物產量 −1',
+            eff:{ spawn_forest:1, spawn_grass:1, bondP:15, act_quarry:-1 }, deco:'r_ice', now:{ dmgAll:-20, zoneVar:{ volcano:'calm', forest:'lush' } },
+            reply:[ { s:'gull', l:['「嘎……火山打了個呵欠,睡著了。」', '「森林好像鬆了一口氣,長得比以前更綠。」'] } ] } },
+    r6: { q:'海潮之貝與地心之貝同時響起——要往哪裡去?', a:{
+            k:'r6a', n:'🌊 引海入陸', d:'打開岩岸的礁石缺口,讓海水漫進草原,形成濕地。', pro:'草原變成濕地:捕魚產量 +2;黑面琵鷺、莫氏樹蛙親密度 +30%;夜襲機率 −5%', con:'草原採集產量 −1;沙灘被潮水改變',
+            eff:{ act_fish:2, bondP:30, raidP:-5, act_gather:-1 }, deco:'r_wetland', now:{ zoneVar:{ grass:'wetland', beach:'flood' } },
+            reply:[ { s:'otter', l:['「哇——海水進來了!草原變成一片濕地,水鳥都飛來了!」'] } ] },
+          b:{
+            k:'r6b', n:'⛰ 深入地心', d:'用地心之貝震開洞窟底部,尋找島嶼最深的祕密。', pro:'洞窟崩塌後露出新的「深層洞窟」通道(日後開放);礦物、水晶產量 +2;冒險經驗 +15%', con:'洞窟環境受損 +30;野外遇敵步數 −2',
+            eff:{ act_quarry:2, advXpP:15, encAdd:-2 }, deco:'r_crystal', now:{ dmg:{ cave:30 }, zoneVar:{ cave:'collapse' }, flags:{ deepCave:1 } },
+            reply:[ { s:'bear', l:['「吼——地在震!洞窟底下……露出一條通道。」', '「那底下有東西在等。時候到了,再下去。」'] } ] } }
   };
+  /* ★ v1.245.0 抉擇專屬裝飾(四件)與時間倒轉之貝物品 */
+  D.DECOS.push({ id:'r_ash',     n:'火山灰田', e:'🌋', img:'deco_r_ash',     comfort:4, cost:{}, shop:true, route:true, d:'火山灰鋪出來的一小塊田,黑黑的土最肥。' });
+  D.DECOS.push({ id:'r_ice',     n:'冰封水晶', e:'❄',  img:'deco_r_ice',     comfort:5, cost:{}, shop:true, route:true, d:'封住火山口時多出來的一塊冰晶,永遠不會融化。' });
+  D.DECOS.push({ id:'r_wetland', n:'濕地蘆葦', e:'🌾', img:'deco_r_wetland', comfort:4, cost:{}, shop:true, route:true, d:'從新濕地移來的蘆葦叢,水鳥喜歡停在上面。' });
+  D.DECOS.push({ id:'r_crystal', n:'地心水晶', e:'💎', img:'deco_r_crystal', comfort:6, cost:{}, shop:true, route:true, d:'洞窟崩塌後撿到的大水晶,在夜裡微微發光。' });
+  D.ITEMS.timeshell = { n:'時間倒轉之貝', e:'🐚', img:'res_timeshell', cat:'misc', d:'阿川留下的貝殼,靠近耳朵能聽到島在呼吸。' };
+  D.ITEM_ORDER.push('timeshell');
+  D.IMG.res_timeshell = 'island_res_timeshell.png';
+  /* ★ v1.245.0 抉擇後的場景變體圖(全部選配,沒上傳自動退回原圖):zone_<區>_<變體> */
+  D.IMG.zone_volcano_erupt = 'island_zone_volcano_erupt.jpg'; D.IMG.zone_volcano_calm = 'island_zone_volcano_calm.jpg';
+  D.IMG.zone_forest_fire = 'island_zone_forest_fire.jpg';     D.IMG.zone_forest_lush = 'island_zone_forest_lush.jpg';
+  D.IMG.zone_grass_wetland = 'island_zone_grass_wetland.jpg'; D.IMG.zone_beach_flood = 'island_zone_beach_flood.jpg';
+  D.IMG.zone_cave_collapse = 'island_zone_cave_collapse.jpg'; D.IMG.zone_cave_deep = 'island_zone_cave_deep.jpg';
+  D.IMG.deco_r_ash = 'island_deco_r_ash.png'; D.IMG.deco_r_ice = 'island_deco_r_ice.png'; D.IMG.deco_r_wetland = 'island_deco_r_wetland.png'; D.IMG.deco_r_crystal = 'island_deco_r_crystal.png';
   D.DECOS.push({ id:'r_buoy',      n:'浮球風鈴', e:'🎐', img:'deco_r_buoy',      comfort:3,  cost:{}, shop:true, route:true, d:'撿回來的浮球串成風鈴——海廢也能變成美麗的東西。' });
   D.DECOS.push({ id:'r_woodpile',  n:'柴堆',     e:'🪵', img:'deco_r_woodpile',  comfort:3,  cost:{}, shop:true, route:true, d:'木頭要先曬乾才好燒:水分蒸發了,燃點才容易到。' });
   D.DECOS.push({ id:'r_sapling',   n:'樟樹苗',   e:'🌱', img:'deco_r_sapling',   comfort:4,  cost:{}, shop:true, route:true, d:'砍一棵、種一棵,森林才砍不完——這叫「永續」。' });
@@ -4016,6 +4099,29 @@ window.ISL_DB = (function(){
     '🐾 16 隻夥伴升級時體力與防禦的成長也一起調整,讓牠們跟怪物的成長腳步更貼近。',
     '🏔 懸崖的野豬移到別的地方去了,雷精的攻擊力也調降了一些。'
   ] });
+  /* ★ v1.245.0 老師「守墓石像位於遺跡地下層深處,重新設計成最強大的 BOSS,但暫不開放」—
+     格式與 D.BOSSES 完全相同(hp/def/atk/tool/weakWp/skills/p2/p3/ult/core),等地下層開放時把它掛進 islDgEncounter 的 boss 分支
+     (mine.boss 格式)即可,現在不會被任何程式讀到。定位:全島最強(Lv55,高於火山巨像 48),三階段,必殺「萬鈞共振」。 */
+  D.BOSSES_HIDDEN = {
+    guardian: { k:'guardian', n:'守墓石像・不朽之王', e:'🗿', zone:'ruins', lv:55, order:11, hp:140, def:7, atk:24 * 2.4, tool:'gong', weakWp:'hammer', weakPets:['barbet'],
+      tags:['rock'], skills:[
+        { t:'quake', n:'碎地重踏', mul:1.4, all:1, tele:'石像抬起巨足,地面裂開——全隊都會受傷!', hint:'用「防禦」或讓坦克型夥伴嘲諷' },
+        { t:'petrify', n:'石化凝視', stunP:60, dur:1, tele:'石像的雙眼亮起灰光……被看到會石化一回合!', hint:'讓五色鳥封招,或搶在牠放出前削韌' } ],
+      p2:{ at:0.5, atkMul:1.25, defMul:0.8, summon:{ k:'clockwork', n:2 }, text:'石像的裂縫裡爬出發條守衛!' },
+      p3:{ at:0.25, atkMul:1.5, spdMul:1.3, text:'石像全身發出共振的嗡鳴,每一步都震得洞窟落石!' },
+      ult:{ n:'萬鈞共振', every:4, cd:2, mul:2.6, cover:0.15, hint:'共振!敲鑼——用相同頻率的振動抵銷它', qs:[
+        { q:'兩個相同頻率的振動疊在一起,可能發生什麼?', o:['互相抵銷或互相加強(干涉)','振動會直接消失','會變成光','完全沒有關係'], a:0, why:'同頻率的振動可以互相加強,也可以互相抵銷,這叫干涉。' },
+        { q:'為什麼軍隊過橋時不能齊步走?', o:['怕引起橋的共振','怕太吵','怕走太快','橋會滑'], a:0, why:'齊步的頻率若和橋一樣,共振會讓橋劇烈搖晃。' } ] },
+      core:'boss_guardcore', reward:{ firstPts:4, shell:[60, 20] },
+      lore:'古人建造遺跡時,把守護的意志灌進了這座石像。它不是敵人——它只是還在等待,等一個能證明自己懂得「平衡」的人。' }
+  };
+
+  D.LOG.unshift({ v: 'v1.243.0', d: '2026-09-18', items: [
+    '🛡 穿山甲、綠蠵龜、椰子蟹三隻坦克型夥伴的天賦大幅增強,減傷幅度都提升到 40~60%,綠蠵龜還多了每回合自癒。',
+    '🦌 梅花鹿天賦改成每回合自動幫隊伍解除一個不良狀態,並恢復全隊 8% 體力。',
+    '✨ 螢火蟲、櫻花鉤吻鮭兩招治療型技能大幅提升(螢火蟲全隊回 30%;鮭魚改成連續 3 回合每回合回 15%+加速),冷卻時間也一起拉長。',
+    '🎯 攻擊型、控場型夥伴的技能冷卻做了微調,讓每一隻在探險和頭目戰裡都有自己專屬、別隻取代不了的用法。'
+  ] });
   D.LOG.unshift({ v: 'v1.244.0', d: '2026-09-18', items: [
     '🕹 營地左下角多了一顆小方向盤,拖著它就能帶主角在營地走動(鍵盤、點地板走路都還在)。',
     '🔗 好友面板新增「連結大對抗好友」:一鍵把大對抗和荒島兩邊的好友合併,好友名字旁邊也會顯示 🟢 在線 / 🟡 剛離開 / ⚫ 離線。',
@@ -4023,12 +4129,10 @@ window.ISL_DB = (function(){
     '🎨 換造型正式開放給所有人!每 1 小時可以換 1 次,換完好友馬上看得到你的新造型。',
     '👍 品質小遊戲結算的「繼續」按鈕移到右邊,而且點畫面任何地方都可以直接關閉。'
   ] });
-  D.LOG.unshift({ v: 'v1.243.0', d: '2026-09-18', items: [
-    '🛡 穿山甲、綠蠵龜、椰子蟹三隻坦克型夥伴的天賦大幅增強,減傷幅度都提升到 40~60%,綠蠵龜還多了每回合自癒。',
-    '🦌 梅花鹿天賦改成每回合自動幫隊伍解除一個不良狀態,並恢復全隊 8% 體力。',
-    '✨ 螢火蟲、櫻花鉤吻鮭兩招治療型技能大幅提升(螢火蟲全隊回 30%;鮭魚改成連續 3 回合每回合回 15%+加速),冷卻時間也一起拉長。',
-    '🎯 攻擊型、控場型夥伴的技能冷卻做了微調,讓每一隻在探險和頭目戰裡都有自己專屬、別隻取代不了的用法。'
+  D.LOG.unshift({ v: 'v1.245.0', d: '2026-09-18', items: [
+    '🐾 夜襲時營地的夥伴會出來幫忙守營火(最多 3 隻)!長按夥伴可以拖到想守的地方,擋住經過的魔物 3 秒,之後夥伴會暈 5 秒——主要還是要靠你自己趕走魔物喔。',
+    '📜 主線新增第六~八章:造好帆船之後,火山口出現「時間倒轉之貝」,兩次重大抉擇會真的改變島的樣子(火山爆發或沉睡、森林大火或復育、海水倒灌成濕地、洞窟崩塌露出深層通道)。',
+    '🕳 遺跡地下層暫時封閉整修,第四章不再需要通關地下層;守墓石像正在變成全島最強的頭目,之後再開放。'
   ] });
-
   return D;
 })();
