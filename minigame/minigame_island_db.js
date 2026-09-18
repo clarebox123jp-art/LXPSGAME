@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.242.0';   /* ★ v1.242.0 — 海鷗小白技能改「海風祝禱」(敵方命中−25%+全隊回復20%)、魔物攻擊成長 0.23→0.16、16 隻寵物 HP/防禦成長 +12%、懸崖移除野豬並下修雷精攻擊 */   /* ★ v1.241.0 — 髮型逐格定位表全面重算(對齊第 1 格)、森林~懸崖新手難度重排、海鷗小白改治療型、台灣黑熊改仇恨坦 */ void 'v1.240.0';   /* ★ v1.240.0 — 戰鬥圖檔名對齊 island_battle_*、新增 D.BT_FX 特效表 */ void 'v1.239.0';   /* ★ v1.239.0 — 本檔本輪無資料異動(頭目一覽改版/營地奔跑卡速修正/寵物數值放大三項都在 index 端),僅隨 index/sw 版號同步;D.LOG 新增一筆。 */   /* ★ v1.234.0(2026-09-17・老師「重排主線劇情/教學/NPC 對白/劇情分支、20 種新魔物、材料重新規劃」)— 檔尾新增一大段覆寫:D.MAINLINE 6 章主線、D.ROUTES 4 組分支、D.SPEAKERS、D.MON_RACES/MON_RACE_OF、20 種 wild 魔物(MONSTERS/MON_BT/MON_SKILL/MON_TAG_OF/CODEX)、DEF_TOOLS +4、新素材 chitin/silk/gel/ash、各配方 cost 重排、分支專屬裝飾 8 件、D.LOG 一筆。 */   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.244.0';   /* ★ v1.244.0 — 本檔僅 D.LOG 新增一筆與版號同步(營地方向盤/好友連結系統/造型工房開放/結算鈕位置全在 index 端) */   /* ★ v1.243.0 — 老師「寵物技能修正」:穿山甲/綠蠵龜/椰子蟹三隻坦克型天賦重寫(固定減傷 40~60%,綠蠵龜新增每回合自癒 15%)、梅花鹿天賦改「每回合解 1 不利狀態+全隊回 8%」、螢火蟲/鮭魚兩招治療技能倍率大幅提升並拉長冷卻補償、攻擊型與控場型技能冷卻微調做出差異化定位 */   /* ★ v1.242.0 — 海鷗小白技能改「海風祝禱」(敵方命中−25%+全隊回復20%)、魔物攻擊成長 0.23→0.16、16 隻寵物 HP/防禦成長 +12%、懸崖移除野豬並下修雷精攻擊 */   /* ★ v1.241.0 — 髮型逐格定位表全面重算(對齊第 1 格)、森林~懸崖新手難度重排、海鷗小白改治療型、台灣黑熊改仇恨坦 */ void 'v1.240.0';   /* ★ v1.240.0 — 戰鬥圖檔名對齊 island_battle_*、新增 D.BT_FX 特效表 */ void 'v1.239.0';   /* ★ v1.239.0 — 本檔本輪無資料異動(頭目一覽改版/營地奔跑卡速修正/寵物數值放大三項都在 index 端),僅隨 index/sw 版號同步;D.LOG 新增一筆。 */   /* ★ v1.234.0(2026-09-17・老師「重排主線劇情/教學/NPC 對白/劇情分支、20 種新魔物、材料重新規劃」)— 檔尾新增一大段覆寫:D.MAINLINE 6 章主線、D.ROUTES 4 組分支、D.SPEAKERS、D.MON_RACES/MON_RACE_OF、20 種 wild 魔物(MONSTERS/MON_BT/MON_SKILL/MON_TAG_OF/CODEX)、DEF_TOOLS +4、新素材 chitin/silk/gel/ash、各配方 cost 重排、分支專屬裝飾 8 件、D.LOG 一筆。 */   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -3069,7 +3069,7 @@ window.ISL_DB = (function(){
   D.PET_CMDS = {
     /* A 組:四位 NPC 夥伴 */
     guard:      { n:'守護',       e:'🛡', cd:2, fx:{ guard:1, cut:40, dur:1 }, d:'1 回合內代替任一隊友承受攻擊,並把傷害再減 40%' },
-    reviveherb: { n:'還魂草藥',   e:'🌿', cd:5, fx:{ revive:35 }, d:'用秘藥搶救一位倒下的隊友,讓他回到戰場並回復 35% 最大體力' },   /* ★ v1.213.0 老師「技能清單稽核:補齊復活」— 原本是 herbheal(單體治療 18%),跟隊上其他三位治療型夥伴(dewheal/glowlight/clearstream)的單體/全體治療重複度最高,改成全隊唯一的復活技能;⚠ 平衡風險:梅花鹿是最早期就能收服的 NPC 夥伴,復活技能偏後期向,换成她可能讓早期缺乏單體治療手段,需要老師實機驗收早期戰鬥難度是否變太高,不行的話可以考慮换成別隻夥伴帶這招。 */
+    reviveherb: { n:'還魂草藥',   e:'🌿', cd:6, fx:{ revive:35 }, d:'用秘藥搶救一位倒下的隊友,讓他回到戰場並回復 35% 最大體力' },   /* ★ v1.243.0 cd 5→6,補償梅花鹿天賦改成「每回合自動解一種不良狀態+全隊回8%HP」後的額外每回合價值 */   /* ★ v1.213.0 老師「技能清單稽核:補齊復活」— 原本是 herbheal(單體治療 18%),跟隊上其他三位治療型夥伴(dewheal/glowlight/clearstream)的單體/全體治療重複度最高,改成全隊唯一的復活技能;⚠ 平衡風險:梅花鹿是最早期就能收服的 NPC 夥伴,復活技能偏後期向,换成她可能讓早期缺乏單體治療手段,需要老師實機驗收早期戰鬥難度是否變太高,不行的話可以考慮换成別隻夥伴帶這招。 */
     dive:       { n:'靜音俯衝',   e:'🦉', cd:2, fx:{ mul:1.8, first:1 }, d:'1.8 倍傷害,且這一回合必定先手' },
     sandwind:   { n:'海風祝禱',   e:'🕊', cd:3, fx:{ hitDownP:25, dur:2, healAll:20 }, d:'敵方全體命中率 −25%,持續 2 回合;同時為全隊回復 20% 最大體力' },   /* ★ v1.242.0 老師「小白的天賦已有每回合補最少血的隊友10%HP,技能改成降低敵方全體25%命中,同時恢復友方全體20%HP」— 沿用同一個鍵(sandwind)重新定義,原本疊加的 immuneAll 拿掉;⚠ 副作用:雷精(spark)stunOnHitP 麻痺隊友/主角原本唯一的解法就是這顆 immuneAll,拿掉後目前沒有任何機制能防雷精麻痺(見 D.LOG) */
     /* B 組:攻擊型 */
@@ -3077,15 +3077,15 @@ window.ISL_DB = (function(){
     flockrush:  { n:'群飛突擊',   e:'🪶', cd:2, fx:{ hits:3, mul:0.5, sure:1, randHits:1 }, d:'三段掠擊,每段 50% 傷害,必中,且每段隨機攻擊一隻還活著的敵人' },   /* ★ v1.213.0 老師「技能清單稽核:補齊隨機目標多段攻擊」— 原本三段全部打同一隻鎖定目標,改成每段隨機挑敵人,「群飛」的畫面意象本來就該是分散攻擊而不是全部啄同一隻 */
     talondive:  { n:'蒼鷹撲擊',   e:'🦅', cd:3, fx:{ mul:2.2, critAdd:30 }, d:'2.2 倍傷害,這一擊暴擊率 +30%' },
     /* B 組:坦克型 */
-    curlguard:  { n:'鱗甲捲護',   e:'🦔', cd:3, fx:{ defUpP:40, dur:2 }, d:'全隊防禦 +40%,持續 2 回合' },
-    shellwall:  { n:'龜甲壁',     e:'🐢', cd:3, fx:{ shield:15 }, d:'給全隊一層護盾,各吸收 15% 最大體力的傷害' },
-    clawtaunt:  { n:'巨螯嘲諷',   e:'🦀', cd:2, fx:{ taunt:1, cut:50, dur:1 }, d:'這一回合敵方全體只能攻擊自己,自身減傷 50%' },
+    curlguard:  { n:'鱗甲捲護',   e:'🦔', cd:4, fx:{ defUpP:40, dur:2 }, d:'全隊防禦 +40%,持續 2 回合' },   /* ★ v1.243.0 cd 3→4,補償穿山甲天賦鱗片護體 8%→40% 的大幅增強 */
+    shellwall:  { n:'龜甲壁',     e:'🐢', cd:4, fx:{ shield:15 }, d:'給全隊一層護盾,各吸收 15% 最大體力的傷害' },   /* ★ v1.243.0 cd 3→4,補償綠蠵龜天賦改成「減傷60%+每回合自癒15%」後自身極難被打倒 */
+    clawtaunt:  { n:'巨螯嘲諷',   e:'🦀', cd:3, fx:{ taunt:1, cut:50, dur:1 }, d:'這一回合敵方全體只能攻擊自己,自身減傷 50%' },   /* ★ v1.243.0 cd 2→3,補償椰子蟹天賦改成「減傷40%+反彈50%」後嘲諷抗性大幅提升 */
     /* B 組:治療型 */
     dewmist:    { n:'露水迷霧',   e:'💧', cd:4, fx:{ regenAll:6, dur:3 }, d:'化作一團水霧,全隊接下來 3 回合每回合恢復 6% 最大體力' },   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 8%/cd3→6%/cd4:沙盤顯示治療型的全隊持續回血量,疊上坦克代受後幾乎能完全抵銷魔物輸出,全隊幾乎不會輸;降低單次回復量並拉長冷卻,削弱但不砍斷這個機制。 */   /* ★ v1.213.0 老師「技能清單稽核:補齊持續恢復HP」— 原本是 dewheal(單體治療15%),跟梅花鹿的單體治療重複度最高,改成持續恢復(HoT),施放當下就把「濕潤皮膚」天賦(雨天/颱風+25%)折算進去存成固定值,之後每回合自動生效,天賦不會變成死鍵 */
-    glowlight:  { n:'螢光普照',   e:'🌟', cd:4, fx:{ healAll:8, cureAll:1 }, d:'全隊回復 8% 最大體力,並解除全部不良狀態' },   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 12%/cd3→8%/cd4,理由同 dewmist,解除異常狀態的附加效果不變。 */   /* ★ v1.213.0 老師「技能清單稽核:補齊解除全體不利狀態」— cure:1(只解一種)升級成 cureAll:1(全部解除),全隊治療的定位本來就該連帶把病都一起治好,不必留著只解一種的舊限制 */
-    clearstream:{ n:'清流一躍',   e:'🐟', cd:4, fx:{ healAll:7, spdUpP:20, dur:2 }, d:'全隊回復 7% 最大體力,速度 +20% 持續 2 回合' },   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 10%/cd3→7%/cd4,理由同上,速度加成不變。 */
+    glowlight:  { n:'螢光普照',   e:'🌟', cd:6, fx:{ healAll:30, cureAll:1 }, d:'全隊回復 30% 最大體力,並解除全部不良狀態' },   /* ★ v1.243.0 老師「螢火蟲技能改:全隊恢復30%+解除不良狀態」— 8%→30%(明顯拉開與其他治療招的回復量級距,定位成「大招級單次爆發治療」),cd 4→6 補償倍增的回復量,避免變成每 4 回合就能全隊滿血的無腦解法。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 12%/cd3→8%/cd4,理由同 dewmist,解除異常狀態的附加效果不變。 */   /* ★ v1.213.0 老師「技能清單稽核:補齊解除全體不利狀態」— cure:1(只解一種)升級成 cureAll:1(全部解除),全隊治療的定位本來就該連帶把病都一起治好,不必留著只解一種的舊限制 */
+    clearstream:{ n:'清流一躍',   e:'🐟', cd:6, fx:{ regenAll:15, spdUpP:20, dur:3 }, d:'化作一道清流,全隊接下來 3 回合每回合恢復 15% 最大體力,且速度 +20%' },   /* ★ v1.243.0 老師「櫻花鉤吻鮭技能改:全隊每回合回15%+速度+20%,持續3回合」— healAll(單次)改 regenAll(持續回合制,沿用既有 regenAll 引擎,施放當下折算 healOutP 天賦後每回合自動觸發),速度加成持續回合數同步拉到 3;cd 4→6 補償「持續 3 回合、每回合 15%」等於單場最多 45% 的高額總回復量。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 10%/cd3→7%/cd4,理由同上,速度加成不變。 */
     /* B 組:控場型 */
-    throwstone: { n:'投石',       e:'🪨', cd:1, fx:{ mul:1.0, stunP:35, stun:1 }, d:'造成傷害,並有 35% 機率讓目標暈眩 1 回合' },
+    throwstone: { n:'投石',       e:'🪨', cd:2, fx:{ mul:1.0, stunP:35, stun:1 }, d:'造成傷害,並有 35% 機率讓目標暈眩 1 回合' },   /* ★ v1.243 老師「攻擊型/控場型做平衡」— cd 1→2:疊上台灣獼猴天賦 stunAddP+10%(合計 45% 單體暈眩),cd1 等於每回合都能賭暈眩,拉到 cd2 讓三隻控場型的節奏落在同一個級距(macaque=高頻單體 CC、spoonbill=中頻範圍減速+睡眠、barbet=低頻範圍封招),不再是macaque一隻獨大。 */
     sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:2, fx:{ all:1, mul:0.6, spdDownP:25, dur:2, sleepP:20, sleepDur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合,且每隻各有 20% 機率陷入睡眠(最多 2 回合,挨打就會醒)' },   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 原效果不動,額外疊加對命中目標的入睡機率(不像暈眩只撐 1 回合、也不需要額外挨打就能一路睡好幾輪,但只要受到任何攻擊就會立刻醒來,兩者定位不同) */
     drumecho:   { n:'啄木聲波',   e:'🥁', cd:3, fx:{ all:1, seal:1, dur:1 }, d:'敵方全體 1 回合內無法使用技能(只能普通攻擊)' }
   };
@@ -3108,7 +3108,7 @@ window.ISL_DB = (function(){
                    sci:'台灣黑熊是台灣唯一的熊,胸前有 V 字白毛;野外只剩幾百隻,是瀕臨絕種的保育類。' },
     deer:        { n:'梅花鹿',     e:'🦌', type:'heal', npc:true, sz:106,
                    b:{ hp:60, atk:4,  def:2, spd:7 }, g:{ hp:5.94, atk:0.4,  def:0.34,  spd:0.3 },
-                   cmd:'reviveherb',talent:'識草本能:自己施放的治療效果 +15%', tal:{ healOutP:15 },
+                   cmd:'reviveherb',talent:'百草知識:每回合自動幫隊伍解除 1 個不利狀態,並恢復全隊 8% 最大體力', tal:{ tickCure1:1, tickHealAllP:8 },   /* ★ v1.243.0 老師「梅花鹿天賦改成:每回合自動解除隊友1個不利狀態+恢復全隊8%HP」— 取代原本的 healOutP(治療輸出+15%);解除不利狀態沿用既有 islAilCure 單一出口(跟 D.PET_CMDS 的 cure/cureAll 走同一套),恢復全隊走新的 islBtPartyTalTick(與 tal.selfRegenP 同一輪新增) */
                    get:{ how:'npc', quest:'trainer_deer' },
                    sci:'梅花鹿曾在台灣野外絕跡,靠人工復育才重新回到墾丁的草原上。' },
     owl:         { n:'領角鴞',     e:'🦉', type:'atk',  npc:true, sz:72,
@@ -3173,7 +3173,7 @@ window.ISL_DB = (function(){
     /* ── B 組:坦克型 3 隻 ── */
     pangolin:    { n:'穿山甲',     e:'🦔', type:'tank', sz:55,
                    b:{ hp:90, atk:5,  def:5, spd:3 }, g:{ hp:8.4, atk:0.48, def:1.01, spd:0.15 },
-                   cmd:'curlguard',  talent:'鱗片護體:自己受到的傷害固定再減 8%', tal:{ cutP:8 },
+                   cmd:'curlguard',  talent:'鱗片護體:自己受到的傷害固定再減 40%', tal:{ cutP:40 },   /* ★ v1.243.0 老師「穿山甲天賦:受傷固定-40%」— 8%→40% */
                    get:{ how:'tame', zone:'forest', p:16 },
                    sci:'穿山甲的鱗片和我們的指甲一樣是角蛋白,遇到危險會捲成一顆球保護柔軟的肚子。' ,
                    food:'honey', quiz:[
@@ -3190,7 +3190,7 @@ window.ISL_DB = (function(){
       ] },
     turtle:      { n:'綠蠵龜',     e:'🐢', type:'tank', sz:85,
                    b:{ hp:90, atk:4,  def:6, spd:2 }, g:{ hp:8.4, atk:0.42, def:1.06, spd:0.12 },
-                   cmd:'shellwall',  talent:'護盾傳承:自己給的護盾再 +20%', tal:{ shieldP:20 },
+                   cmd:'shellwall',  talent:'龜甲護體:自己受到的傷害固定再減 60%,且每回合自動恢復自己 15% 最大體力', tal:{ cutP:60, selfRegenP:15 },   /* ★ v1.243.0 老師「綠蠵龜天賦:受傷固定-60%,每回合恢復自己15%HP」— 取代原本的 shieldP(護盾傳承+20%);selfRegenP 是本輪新增的天賦鍵,吃新的 islBtSelfRegenTick(單位自己每回合開頭回自己 HP,不影響隊友,與治療型的 healOutP/tickHealAllP 分開計算避免混淆) */
                    get:{ how:'tame', zone:'beach', p:12 },
                    sci:'綠蠵龜會回到自己出生的沙灘產卵;小海龜的性別是由沙子的溫度決定的。' ,
                    food:'mushroom', quiz:[
@@ -3207,7 +3207,7 @@ window.ISL_DB = (function(){
       ] },
     coconutcrab: { n:'椰子蟹',     e:'🦀', type:'tank', sz:55,
                    b:{ hp:90, atk:7,  def:4, spd:4 }, g:{ hp:8.62, atk:0.60, def:0.9, spd:0.18 },
-                   cmd:'clawtaunt',  talent:'硬殼反震:自己被攻擊時反彈 10% 傷害給對方', tal:{ thornP:10 },
+                   cmd:'clawtaunt',  talent:'硬殼反震:自己受到的傷害固定再減 40%,並反彈 50% 傷害給攻擊者', tal:{ cutP:40, thornP:50 },   /* ★ v1.243.0 老師「椰子蟹天賦:受傷固定-40%,被打反彈50%傷害」— thornP 10%→50%,並新增 cutP:40(與其他兩隻坦克型統一都有固定減傷,椰子蟹的特色改成「減傷幅度三隻裡最低,但反震最兇」,配合牠自身攻擊力(atk 7)全坦克最高,適合逆推打消耗戰) */
                    get:{ how:'tame', zone:'rock', p:15 },
                    sci:'椰子蟹是世界上最大的陸生甲殼類,螯力大到能剝開椰子,但要三十年才長到成年。' ,
                    food:'d_jam', quiz:[
@@ -4015,6 +4015,19 @@ window.ISL_DB = (function(){
     '⚔ 森林之外的怪物,等級越高攻擊力成長得比之前緩和一些,後期打起來不會突然變得非常難。',
     '🐾 16 隻夥伴升級時體力與防禦的成長也一起調整,讓牠們跟怪物的成長腳步更貼近。',
     '🏔 懸崖的野豬移到別的地方去了,雷精的攻擊力也調降了一些。'
+  ] });
+  D.LOG.unshift({ v: 'v1.244.0', d: '2026-09-18', items: [
+    '🕹 營地左下角多了一顆小方向盤,拖著它就能帶主角在營地走動(鍵盤、點地板走路都還在)。',
+    '🔗 好友面板新增「連結大對抗好友」:一鍵把大對抗和荒島兩邊的好友合併,好友名字旁邊也會顯示 🟢 在線 / 🟡 剛離開 / ⚫ 離線。',
+    '👋 探險編組選好友改成「邀請協助」:好友會用他島上的實力來當你的隊友 12 小時,同一位好友之後要休息 12 小時才能再邀。',
+    '🎨 換造型正式開放給所有人!每 1 小時可以換 1 次,換完好友馬上看得到你的新造型。',
+    '👍 品質小遊戲結算的「繼續」按鈕移到右邊,而且點畫面任何地方都可以直接關閉。'
+  ] });
+  D.LOG.unshift({ v: 'v1.243.0', d: '2026-09-18', items: [
+    '🛡 穿山甲、綠蠵龜、椰子蟹三隻坦克型夥伴的天賦大幅增強,減傷幅度都提升到 40~60%,綠蠵龜還多了每回合自癒。',
+    '🦌 梅花鹿天賦改成每回合自動幫隊伍解除一個不良狀態,並恢復全隊 8% 體力。',
+    '✨ 螢火蟲、櫻花鉤吻鮭兩招治療型技能大幅提升(螢火蟲全隊回 30%;鮭魚改成連續 3 回合每回合回 15%+加速),冷卻時間也一起拉長。',
+    '🎯 攻擊型、控場型夥伴的技能冷卻做了微調,讓每一隻在探險和頭目戰裡都有自己專屬、別隻取代不了的用法。'
   ] });
 
   return D;
