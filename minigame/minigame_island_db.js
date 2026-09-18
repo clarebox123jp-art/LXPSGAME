@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.241.0';   /* ★ v1.241.0 — 髮型逐格定位表全面重算(對齊第 1 格)、森林~懸崖新手難度重排、海鷗小白改治療型、台灣黑熊改仇恨坦 */ void 'v1.240.0';   /* ★ v1.240.0 — 戰鬥圖檔名對齊 island_battle_*、新增 D.BT_FX 特效表 */ void 'v1.239.0';   /* ★ v1.239.0 — 本檔本輪無資料異動(頭目一覽改版/營地奔跑卡速修正/寵物數值放大三項都在 index 端),僅隨 index/sw 版號同步;D.LOG 新增一筆。 */   /* ★ v1.234.0(2026-09-17・老師「重排主線劇情/教學/NPC 對白/劇情分支、20 種新魔物、材料重新規劃」)— 檔尾新增一大段覆寫:D.MAINLINE 6 章主線、D.ROUTES 4 組分支、D.SPEAKERS、D.MON_RACES/MON_RACE_OF、20 種 wild 魔物(MONSTERS/MON_BT/MON_SKILL/MON_TAG_OF/CODEX)、DEF_TOOLS +4、新素材 chitin/silk/gel/ash、各配方 cost 重排、分支專屬裝飾 8 件、D.LOG 一筆。 */   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
+  D.VER = 'v1.242.0';   /* ★ v1.242.0 — 海鷗小白技能改「海風祝禱」(敵方命中−25%+全隊回復20%)、魔物攻擊成長 0.23→0.16、16 隻寵物 HP/防禦成長 +12%、懸崖移除野豬並下修雷精攻擊 */   /* ★ v1.241.0 — 髮型逐格定位表全面重算(對齊第 1 格)、森林~懸崖新手難度重排、海鷗小白改治療型、台灣黑熊改仇恨坦 */ void 'v1.240.0';   /* ★ v1.240.0 — 戰鬥圖檔名對齊 island_battle_*、新增 D.BT_FX 特效表 */ void 'v1.239.0';   /* ★ v1.239.0 — 本檔本輪無資料異動(頭目一覽改版/營地奔跑卡速修正/寵物數值放大三項都在 index 端),僅隨 index/sw 版號同步;D.LOG 新增一筆。 */   /* ★ v1.234.0(2026-09-17・老師「重排主線劇情/教學/NPC 對白/劇情分支、20 種新魔物、材料重新規劃」)— 檔尾新增一大段覆寫:D.MAINLINE 6 章主線、D.ROUTES 4 組分支、D.SPEAKERS、D.MON_RACES/MON_RACE_OF、20 種 wild 魔物(MONSTERS/MON_BT/MON_SKILL/MON_TAG_OF/CODEX)、DEF_TOOLS +4、新素材 chitin/silk/gel/ash、各配方 cost 重排、分支專屬裝飾 8 件、D.LOG 一筆。 */   /* ★ v1.233.0(2026-09-17・老師「全髮型動作圖快生完(含選做戰鬥),你先繼續」)— 本檔實質異動:D.IMG 預先登記 8 髮型 × 3 種整張完整人物動作圖圖鍵 run_<body>_h<n>(768×384,6 欄×3 方向)、jump_<body>_h<n>(512×384,4 欄×3 方向)、bt_<body>_h<n>(512×1024,4 欄×8 動作,側面朝右);D.LOG 新增一筆。對應 index v1.233.0、sw v1.233.0(SHELL v1.199.0)。 */   /* ★ v1.232.0(2026-09-17・跑跳改完整人物圖只換頭、脖子對齊)— 本檔僅 D.LOG 更新與版號同步。對應 index v1.232.0、sw v1.232.0(SHELL v1.198.0)。 */   /* ★ v1.231.0(2026-09-17・老師「主角跑和跳的圖片套用」)— 本檔實質異動:D.IMG 登記 run_sheet_boy/girl、jump_sheet_boy/girl 四個圖鍵(island_run_sheet_<body>.png 4 欄×3 列、island_jump_sheet_<body>.png 3 欄×3 列,頭與上半身已去背);D.LOG 新增一筆。對應 index v1.231.0、sw v1.231.0(SHELL v1.197.0)。 */   /* ★ v1.230.0(2026-09-17・老師「繼續我說要做但還沒做的內容,例如營地寵物走路和睡覺圖片」)— 本檔實質異動:①D.IMG 登記 16 位夥伴 × walk/sleep 共 32 個選配圖鍵 bt_pet_<key>_walk/_sleep(上傳同名檔即自動換圖,不必改程式;沒上傳時 index 端用程式動畫做走路/睡覺姿態)②D.CODEX_CATS 新增「👑 地圖頭目」、D.CODEX 新增 10 隻頭目條目(id 與 D.BOSSES[].k 相同,打倒頭目時既有的 islCodexAdd(m.k) 自動收錄)③D.LOG 新增一筆。對應 index v1.230.0、sw v1.230.0(SHELL v1.196.0)。 */   /* ★ v1.229.0(2026-09-17・戰鬥系統優化 B5:天賦星盤重整)— 本檔實質異動:D.SK_CANVAS 1640×1640 放射狀 8 條星域(D.SK_GALAXY 帶 ang);D.SK_NODES 49→70 節點:五條武器星域各 8 節點(專屬機制→基本功→分歧二選一 grp→分歧延伸→關鍵主動技 reqAny→精通 mst+mat 頭目素材),新增生活技藝星域 6 節點(sweetP/qteSlowP/chopAdd/quarryAdd/fishAdd/actSecP/hurtCutP/craftStar 從武器星域搬過來),清掉 SK_CORE_HP/ATK/SPD 重複寫兩次的效果鍵;節點改 u/v 或 pr/pa 座標,載入時換算 x/y;D.SK_ACTS 補 focusUse/brk/brace/spread。對應 index v1.229.0、sw v1.229.0(SHELL v1.195.0)。 */   /* ★ v1.228.0(2026-09-17・戰鬥系統優化 B4:裝備)— 本檔實質異動:新增 D.WP_TYPES/D.MON_TAGS/D.TYPE_MUL/D.MON_TAG_OF/D.WP_INFO(武器類型與固有特性)、D.SOCKET/D.AFFIX(8 種詞條)、D.ARMOR_ROUTE/D.RES_TYPES/D.ARMOR_EXT(防具三路線與抗性)、兩件新輕甲 glidevest/stormcloak、D.ACCS(10 件頭目飾品)、D.BT_SWAP;D.BT.MON_LV_HP 0.08→0.05、MON_LV_ATK 0.13→0.23;D.BOSS_RULE 新增 lvHp/lvAtk。對應 index v1.228.0、sw v1.228.0(SHELL v1.194.0)。 */   /* ★ v1.227.0(2026-09-17・老師「繼續」— 戰鬥系統優化 B3:十隻地圖頭目)— 本檔實質異動:新增 D.BOSSES(10 區頭目:數值/弱點工具/剋制武器/兩招技能/第二(三)階段/必殺技+掩護題)、D.BOSS_RULE(巢穴解鎖探索度、挑戰 AP、重生天數、韌性、隊伍 HP 縮放、獎勵、★2/★3)、D.bossByZone/D.bossByKey、10 種頭目核心素材物品、頭目 MON_BT 條目、bt_m_<頭目>_<6 態>/poi_lair_<區>/res_boss_ 系列、ui_boss 圖鍵。戰鬥流程在 index 端。對應 index v1.227.0、sw v1.227.0(SHELL v1.193.0)。 */   /* ★ v1.226.0(2026-09-17・老師「繼續。完美隔擋改成完美閃避」— 戰鬥系統優化 B2)— 本檔實質異動:新增 D.MON_SKILL(9 種魔物專屬技能+預告文字+應對提示)、D.BT.DODGE(完美閃避 QTE 判定時間)/WIT_CD(智取冷卻)/TACTICS(夥伴戰術三種)/COMBO(連攜攻擊)/METAL_ARMORS(導電鐵甲)、D.ELITE 詞綴新增「分裂」。戰鬥流程在 index 端。對應 index v1.226.0、sw v1.226.0(SHELL v1.192.0)。 */   /* ★ v1.225.0(2026-09-17・老師「照設計全部實作」— 戰鬥系統優化 B1:數值引擎)— 本檔實質異動:D.BT 魔物成長改 HP+12%/攻+10%/防+0.35/速+0.06 每級、隊伍縮放改 HP/攻倍率(ENC_LV_PER_ALLY 歸 0)、比例傷害常數 DMG_K、力氣攻擊/巧手暴擊係數;新增 D.ADV(冒險等級)、D.ELITE(精英怪)、4 種核心素材物品;D.ENC 區域等級重排(森林 3~7 … 火山 38~45);武器基礎攻擊與成長曲線、防具防禦重排(配合比例公式)、坦克型寵物 HP/防禦成長調整。對應 index v1.225.0、sw v1.225.0(SHELL v1.191.0)。 */   /* ★ v1.224.0(2026-09-17・老師「選單按鈕ICON改成圖為主字為輔」)— 本檔零改動,三組選單按鈕的 HTML 結構與 CSS 全在 index 端(islCampPaint/islSubOpen 與對應樣式),這裡僅同步版號。對應 index v1.224.0、sw v1.224.0(SHELL v1.190.0)。 */   /* ★ v1.223.0(2026-09-17・老師「重新計算戰鬥難度」)— 本檔實質異動:D.PARTY.TANK_COVER_P/TANK_CUT_P 下修、黑熊天賦 coverAddP 下修、D.BT.MON_LV_HP/MON_LV_ATK 微調、新增 D.BT.ENC_LV_PER_ALLY/ENC_EXTRA_MON_ALLY2/HP_LVUP_FLAT/PET_HP_LVUP_FLAT 四個常數、治療型三招(dewmist/glowlight/clearstream)回復量與冷卻調整;戰鬥引擎與 HP 複利改固定值的邏輯在 index 端(islHpLevelBonus/islPetLevelHpBonus/islBattleStart)。對應 index v1.223.0、sw v1.223.0(SHELL v1.189.0)。 */   /* ★ v1.222.0(2026-09-17・老師「烤魚改成某種容易取得可以生吃的果實」)— 本檔實質異動:berry(野果)由 cat:'food' 改 cat:'dish' 並補 eat:{hp:15,ap:0},比照既有 honey(蜂蜜)先例使其可直接生吃;贈送時機邏輯在 index 端 islPrologue()。對應 index v1.222.0、sw v1.222.0(SHELL v1.188.0)。 */   /* ★ v1.221.0(2026-09-17)— 本檔零改動(新增的「開局帶3個烤魚」是存檔預設值,寫在 index 端 islDefaultSave 裡,烤魚 d_fish 本來就已在 D.ITEMS/D.RECIPES 登記過,不必新增資料),僅版號同步。對應 index v1.221.0、sw v1.221.0(SHELL v1.187.0)。 */   /* ★ v1.220.0(2026-09-16・老師「字體改用冒險模式的圓體字+天賦星盤/戰鬥介面優化」)— 本檔零改動,字體堆疊順序/星盤與戰鬥介面漸層全在 index 端,這裡僅同步版號。對應 index v1.220.0、sw v1.220.0(SHELL v1.186.0)。 */
   void 'v1.219.0';   /* ★ v1.220.0 舊版號備查(原本是 D.VER 指派) */
   void 'v1.217.0';   /* ★ v1.219.0(2026-09-16・老師截圖「ui_bld 是不是檔名打錯」)— 確認不是打錯,是漏找到帶「2」的真實檔名:
    新增 ui_bld: 'island_ui_bld2.png'(HUD「🏗 設施 X/Y」藥丸圖示,與側欄「建造」按鈕用的 ui_build/island_ui_build.png 是兩張不同圖)。
@@ -2385,7 +2385,7 @@ window.ISL_DB = (function(){
     shadow:   { hp:28, atk:11,  def:1, spd:7,  crit:15, drop:{ shell:[3,6], item:'crystal', p:0.2 }, d:'影子怪,怕光。' },
     ember:    { hp:32, atk:12,  def:2, spd:5,  crit:10, drop:{ shell:[3,6], item:'ore',     p:0.4 }, d:'火精,碰到會燙傷。' },
     basilisk: { hp:36, atk:11,  def:3, spd:5,  crit:20, drop:{ shell:[4,7], item:'relic',   p:0.3 }, d:'石化蛇,被牠瞪到會暈眩。' },
-    spark:    { hp:30, atk:14, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛,偶爾會讓你觸電麻痺。', stunOnHitP:20 },   /* ★ v1.213.0 老師「技能清單稽核:補齊麻痺/免疫不利狀態」— 稽核發現戰鬥系統裡魔物從來不會對玩家隊伍施加任何不利狀態(hitDownP/spdDownP/seal/stun 全部只有「玩家隊友打魔物」這個方向),導致就算補一個「免疫不利狀態」天賦也無事可防、變成死鍵。補這 20% 麻痺機率讓雷精真的會麻痺人,免疫天賦才有意義(見下方 D.PET_CMDS sandwind 的 immuneAll)。 */
+    spark:    { hp:30, atk:11, def:1, spd:10, crit:20, drop:{ shell:[4,7], item:'crystal', p:0.35 }, d:'雷精,又快又痛,偶爾會讓你觸電麻痺。', stunOnHitP:20 },   /* ★ v1.242.0 老師「其他照建議修改」— 攻擊 14→11:雷精是全野生魔物基礎攻擊最高的一隻(懸崖/遺跡同級距其餘魔物都在 10~13),下修到同級距上緣,仍保留高速/高爆擊/觸電麻痺的定位特色 */   /* ★ v1.213.0 老師「技能清單稽核:補齊麻痺/免疫不利狀態」— 稽核發現戰鬥系統裡魔物從來不會對玩家隊伍施加任何不利狀態(hitDownP/spdDownP/seal/stun 全部只有「玩家隊友打魔物」這個方向),導致就算補一個「免疫不利狀態」天賦也無事可防、變成死鍵。補這 20% 麻痺機率讓雷精真的會麻痺人,免疫天賦才有意義(見下方 D.PET_CMDS sandwind 的 immuneAll)。 */
     guardian: { hp:80, atk:16, def:4, spd:3,  crit:10, drop:{ shell:[10,15], item:'relic', p:1 },  d:'守墓石像。' }
   };
   /* 各區「踩地雷式」遇敵:每遊戲日依 seed 在可走格藏 n 個遇敵點(離出生/出口/資源點 ≥3 格),踩到就跳出魔物;from=第幾天起才有;lv=魔物等級(= 區域 order) */
@@ -2418,7 +2418,7 @@ window.ISL_DB = (function(){
     rock:    { n:2, from:1,  mons:['beetle','slime'],             num:[2,3], lv:[10,14] },
     lake:    { n:3, from:1,  mons:['slime','bat'],                num:[3,4], lv:[14,19] },
     cave:    { n:3, from:1,  mons:['bat','shadow','beetle'],      num:[3,4], lv:[18,24] },
-    cliff:   { n:3, from:1,  mons:['spark','boar'],               num:[3,4], lv:[23,29] },
+    cliff:   { n:3, from:1,  mons:['spark','harpy','rockslide'],  num:[3,4], lv:[23,29] },   /* ★ v1.242.0 野豬(boar,森林/草原就有)移出懸崖名單——懸崖三種原生魔物(雷精/風鳶妖/落石魔)已經足夠,不必混進其他區域的魔物 */
     valley:  { n:3, from:1,  mons:['ember','beetle'],             num:[3,4], lv:[28,33] },
     ruins:   { n:4, from:1,  mons:['shadow','basilisk','spark'],  num:[4,4], lv:[33,39] },
     volcano: { n:4, from:1,  mons:['ember','basilisk'],           num:[4,4], lv:[38,45] }
@@ -2433,7 +2433,7 @@ window.ISL_DB = (function(){
     DEFEND_CUT: 0.5, DEFEND_HEAL: 3,          /* 🛡 防禦:下一次受傷減半 + 回 3 */
     ESCAPE_BASE: 40, ESCAPE_MOV: 2,           /* 🏃 逃跑成功率 = 40% + 腳程×2%(上限 90%) */
     OUTWIT_DMG: 12, OUTWIT_STUN: 1,           /* 🧠 智取:選對它怕的工具 → 固定傷害 + 暈 1 回合;選錯 → 被反擊 */
-    MON_LV_HP: 0.05, MON_LV_ATK: 0.23, MON_LV_DEF: 0.35, MON_LV_SPD: 0.06,   /* ★ v1.228.0 B4 沙盤校準:HP 0.08→0.05、攻擊 0.13→0.23(武器剋制/詞條/飾品上線後,後期滿編回合 7~9→5~6、會操作滿編遺跡/火山 ≈91%、不操作 ≈71%);頭目另用 BOSS_RULE.lvHp/lvAtk 維持 B3 校準值 */   /* ★ v1.225.0 B1(沙盤校準後定案:HP 每級 +8%、攻擊 +13%,MON_BT 基礎攻擊全部 ×1.35):改比例傷害公式後,魔物防禦與速度也要隨等級成長(舊版 0~4 永遠不變,玩家攻擊每多 1 點就多打 1 點);HP/攻擊成長率同步放緩,區域等級改拉高到 45 */        /* 魔物每級成長;★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 這輪終於真的跑了沙盤模擬(Python 重現主角/寵物/魔物三方數值與回合制傷害公式,11 區 ×0~3 位隊友 ×多種投資階段各 150 場):找到兩個真正的難度根因,不只是這裡的成長率——①主角/寵物「升級 HP +3%複利」(見 islHpLevelBonus/islPetLevelHpBonus)在高度投資時會讓 HP 膨脹到魔物完全追不上的量級;②坦克代受率與治療型全隊回血疊加,滿編組隊幾乎不會輸(即使拿掉複利也一樣)。三處(複利改固定值、坦克代受/減傷下修、新增隊伍人數難度縮放 ENC_LV_PER_ALLY)同輪一起處理後,魔物成長率本身只需要小幅上調(0.22→0.24、0.15→0.17,約 +10%)配合打底,不必再像上一輪那樣單靠這裡的數字硬扛整個難度落差。⚠ 沙盤模型仍有簡化(假設固定命中率/暴擊率,未模擬全部天賦與異常狀態交互),請老師實機驗收各區手感,尤其是隊伍滿編時是否仍偏鬆。 */
+    MON_LV_HP: 0.05, MON_LV_ATK: 0.16, MON_LV_DEF: 0.35, MON_LV_SPD: 0.06,   /* ★ v1.242.0 老師「怪物升級時攻擊力提升幅度調降些」— 0.23→0.16(沙盤重跑:遺跡/火山滿編練好的隊伍勝率由 71~76%→86~91%,森林~山谷維持趨近全勝,不再有遺跡/火山斷崖式落差);頭目仍走 BOSS_RULE.lvAtk(0.13)不受影響 */   /* ★ v1.228.0 B4 沙盤校準:HP 0.08→0.05、攻擊 0.13→0.23(武器剋制/詞條/飾品上線後,後期滿編回合 7~9→5~6、會操作滿編遺跡/火山 ≈91%、不操作 ≈71%);頭目另用 BOSS_RULE.lvHp/lvAtk 維持 B3 校準值 */   /* ★ v1.225.0 B1(沙盤校準後定案:HP 每級 +8%、攻擊 +13%,MON_BT 基礎攻擊全部 ×1.35):改比例傷害公式後,魔物防禦與速度也要隨等級成長(舊版 0~4 永遠不變,玩家攻擊每多 1 點就多打 1 點);HP/攻擊成長率同步放緩,區域等級改拉高到 45 */        /* 魔物每級成長;★ v1.223.0 老師「重新計算戰鬥難度,避免太沒難度或太困難」— 這輪終於真的跑了沙盤模擬(Python 重現主角/寵物/魔物三方數值與回合制傷害公式,11 區 ×0~3 位隊友 ×多種投資階段各 150 場):找到兩個真正的難度根因,不只是這裡的成長率——①主角/寵物「升級 HP +3%複利」(見 islHpLevelBonus/islPetLevelHpBonus)在高度投資時會讓 HP 膨脹到魔物完全追不上的量級;②坦克代受率與治療型全隊回血疊加,滿編組隊幾乎不會輸(即使拿掉複利也一樣)。三處(複利改固定值、坦克代受/減傷下修、新增隊伍人數難度縮放 ENC_LV_PER_ALLY)同輪一起處理後,魔物成長率本身只需要小幅上調(0.22→0.24、0.15→0.17,約 +10%)配合打底,不必再像上一輪那樣單靠這裡的數字硬扛整個難度落差。⚠ 沙盤模型仍有簡化(假設固定命中率/暴擊率,未模擬全部天賦與異常狀態交互),請老師實機驗收各區手感,尤其是隊伍滿編時是否仍偏鬆。 */
     ENC_LV_PER_ALLY: 0, PARTY_HP_PER_ALLY: 0.10, PARTY_ATK_PER_ALLY: 0.25, DMG_K: 60, DG_LV_BASE: 34, POW_ATK_CAP: 15, DEX_CRIT: 0.3,   /* ★ v1.225.0 B1:隊伍縮放改成「每位隊友魔物 HP×(1+0.10)、攻擊×(1+0.25)」(沙盤:加 HP 只會拖長回合,加攻擊才抵銷得了坦克+治療),不再加等級(加等級會讓 HP/攻擊/防禦一起非線性膨脹,難調);傷害=攻擊×DMG_K÷(DMG_K+防禦);地下層魔物等級基準 34;力氣攻擊加成上限 15;巧手每點暴擊率 +0.3% */                       /* ★ v1.223.0 新增:野外遇敵時,魔物等級額外 += 目前隊伍人數(0~3)×本值——隊伍越大,對手也跟著變強,不再是「只看區域、不看帶了幾個人」。0 位隊友(單人)完全不受影響,維持既有單人難度手感。 */
     ENC_EXTRA_MON_ALLY2: true,                /* ★ v1.223.0 新增:隊伍 ≥2 人時,魔物數量有機會 +1 隻(上限仍是 4 隻不變)——沙盤顯示光調等級還不夠讓「以多打少」的優勢被抵銷,需要數量也一起補。 */
     HP_LVUP_FLAT: 0, PET_HP_LVUP_FLAT: 2,   /* ★ v1.225.0 主角 HP 改由冒險等級決定(D.ADV),四維升級不再加 HP */     /* ★ v1.223.0 主角四維升級 / 寵物每升一級 的固定 HP 加成(見 index 端 islHpLevelBonus/islPetLevelHpBonus),取代原本的複利 3%。 */
@@ -3071,7 +3071,7 @@ window.ISL_DB = (function(){
     guard:      { n:'守護',       e:'🛡', cd:2, fx:{ guard:1, cut:40, dur:1 }, d:'1 回合內代替任一隊友承受攻擊,並把傷害再減 40%' },
     reviveherb: { n:'還魂草藥',   e:'🌿', cd:5, fx:{ revive:35 }, d:'用秘藥搶救一位倒下的隊友,讓他回到戰場並回復 35% 最大體力' },   /* ★ v1.213.0 老師「技能清單稽核:補齊復活」— 原本是 herbheal(單體治療 18%),跟隊上其他三位治療型夥伴(dewheal/glowlight/clearstream)的單體/全體治療重複度最高,改成全隊唯一的復活技能;⚠ 平衡風險:梅花鹿是最早期就能收服的 NPC 夥伴,復活技能偏後期向,换成她可能讓早期缺乏單體治療手段,需要老師實機驗收早期戰鬥難度是否變太高,不行的話可以考慮换成別隻夥伴帶這招。 */
     dive:       { n:'靜音俯衝',   e:'🦉', cd:2, fx:{ mul:1.8, first:1 }, d:'1.8 倍傷害,且這一回合必定先手' },
-    sandwind:   { n:'風沙亂舞',   e:'🕊', cd:3, fx:{ all:1, hitDownP:25, dur:2, immuneAll:1 }, d:'敵方全體命中率 −25%,持續 2 回合;同時讓全隊接下來 2 回合免疫敵方施加的不良狀態' },   /* ★ v1.213.0 老師「技能清單稽核:補齊免疫不利狀態」— 原效果不動,額外疊加 immuneAll,跟海鷗小白「領路人」的天賦定位(躲避危險)一致 */
+    sandwind:   { n:'海風祝禱',   e:'🕊', cd:3, fx:{ hitDownP:25, dur:2, healAll:20 }, d:'敵方全體命中率 −25%,持續 2 回合;同時為全隊回復 20% 最大體力' },   /* ★ v1.242.0 老師「小白的天賦已有每回合補最少血的隊友10%HP,技能改成降低敵方全體25%命中,同時恢復友方全體20%HP」— 沿用同一個鍵(sandwind)重新定義,原本疊加的 immuneAll 拿掉;⚠ 副作用:雷精(spark)stunOnHitP 麻痺隊友/主角原本唯一的解法就是這顆 immuneAll,拿掉後目前沒有任何機制能防雷精麻痺(見 D.LOG) */
     /* B 組:攻擊型 */
     doubleclaw: { n:'二段攻擊',   e:'🐾', cd:1, fx:{ hits:2, mul:0.75 }, d:'連續兩爪,每爪 75% 傷害' },
     flockrush:  { n:'群飛突擊',   e:'🪶', cd:2, fx:{ hits:3, mul:0.5, sure:1, randHits:1 }, d:'三段掠擊,每段 50% 傷害,必中,且每段隨機攻擊一隻還活著的敵人' },   /* ★ v1.213.0 老師「技能清單稽核:補齊隨機目標多段攻擊」— 原本三段全部打同一隻鎖定目標,改成每段隨機挑敵人,「群飛」的畫面意象本來就該是分散攻擊而不是全部啄同一隻 */
@@ -3097,29 +3097,29 @@ window.ISL_DB = (function(){
   D.PETS = {
     /* ── A 組:四位 NPC 夥伴(完成各自課題後可邀請到營地居住) ── */
     gull:        { n:'海鷗小白',   e:'🕊', type:'heal', npc:true, sz:72,   /* ★ v1.241.0 老師:「海鷗小白天賦修正:每回合恢復 HP 最少的友方 10% HP。職能改成治療型。」— type 由 ctrl 改 heal(站位改到最後排、卡片配色改綠色、魔物選目標的權重也跟著變低,與其他治療型一致) */
-                   b:{ hp:45, atk:6,  def:3, spd:9 }, g:{ hp:3.9, atk:0.6, def:0.35, spd:0.38 },
+                   b:{ hp:45, atk:6,  def:3, spd:9 }, g:{ hp:4.37, atk:0.6, def:0.39, spd:0.38 },
                    cmd:'sandwind',  talent:'銜草療傷:每回合自動恢復全隊 HP 最少的那一位 10% 體力(野外也還是會多走 5 步才遇敵)', tal:{ encAdd:5, healLowP:10 },   /* ★ v1.241.0 healLowP = 每回合開頭治療全隊血量比例最低的一位(含主角),數值是「那一位的最大 HP」的百分比;既有的 encAdd(領路人)保留,那是野外用的、與戰鬥天賦不衝突 */
                    get:{ how:'npc', quest:'gull_intro' },
                    sci:'黑尾鷗每年冬天從日本、韓國飛到台灣北海岸過冬,翅膀長又窄,能乘海風滑翔很久不用拍翅。' },
     bear:        { n:'台灣黑熊',   e:'🐻', type:'tank', npc:true, sz:192,
-                   b:{ hp:90, atk:6,  def:5, spd:3 }, g:{ hp:7.5, atk:0.55, def:0.90, spd:0.14 },
+                   b:{ hp:90, atk:6,  def:5, spd:3 }, g:{ hp:8.4, atk:0.55, def:1.01, spd:0.14 },
                    cmd:'guard',     talent:'挺身而出:自己血量越滿越會被盯上(滿血 100%、快沒血 20%),而且受到的所有傷害都減少 30%', tal:{ aggroHpP:1, cutP:30 },   /* ★ v1.241.0 老師:「台灣黑熊的天賦修改:自身血量越高,成為攻擊目標的機率越高(100%~20%)。受到所有傷害減少 30%。」— 舊的 coverAddP(代受機率 +8%)整個由 aggroHpP 取代:aggroHpP 的單位不是機率點數,而是「開啟這個機制」的旗標,實際機率由自己目前的血量比例線性換算(100%→20%,見 index 端 islBtMonPickTarget);同時牠不再走 D.PARTY.TANK_COVER_P 那套「事後代受」,避免同一件事被算兩次。cutP 沿用穿山甲既有的減傷鍵(islBtHurtUnit 單一出口),不必新增程式分支 */
                    get:{ how:'npc', quest:'trainer_bear' },
                    sci:'台灣黑熊是台灣唯一的熊,胸前有 V 字白毛;野外只剩幾百隻,是瀕臨絕種的保育類。' },
     deer:        { n:'梅花鹿',     e:'🦌', type:'heal', npc:true, sz:106,
-                   b:{ hp:60, atk:4,  def:2, spd:7 }, g:{ hp:5.3, atk:0.4,  def:0.3,  spd:0.3 },
+                   b:{ hp:60, atk:4,  def:2, spd:7 }, g:{ hp:5.94, atk:0.4,  def:0.34,  spd:0.3 },
                    cmd:'reviveherb',talent:'識草本能:自己施放的治療效果 +15%', tal:{ healOutP:15 },
                    get:{ how:'npc', quest:'trainer_deer' },
                    sci:'梅花鹿曾在台灣野外絕跡,靠人工復育才重新回到墾丁的草原上。' },
     owl:         { n:'領角鴞',     e:'🦉', type:'atk',  npc:true, sz:72,
-                   b:{ hp:55, atk:10, def:2, spd:8 }, g:{ hp:4.9, atk:1.05, def:0.25, spd:0.32 },
+                   b:{ hp:55, atk:10, def:2, spd:8 }, g:{ hp:5.49, atk:1.05, def:0.28, spd:0.32 },
                    cmd:'dive',      talent:'無聲之翼:在隊友中第一個出手時傷害 +12%', tal:{ firstDmgP:12 },
                    get:{ how:'npc', quest:'trainer_owl' },
                    sci:'領角鴞的飛羽邊緣有細細的鋸齒,能把氣流打散,飛起來幾乎沒有聲音。' },
 
     /* ── B 組:攻擊型 3 隻 ── */
     leopardcat:  { n:'石虎',       e:'🐆', type:'atk', sz:60,
-                   b:{ hp:50, atk:10, def:2, spd:8 }, g:{ hp:4.4, atk:1.10, def:0.24, spd:0.34 },
+                   b:{ hp:50, atk:10, def:2, spd:8 }, g:{ hp:4.93, atk:1.10, def:0.27, spd:0.34 },
                    cmd:'doubleclaw', talent:'夜行獵手:目標體力低於一半時,自己的攻擊 +20%', tal:{ lowHpAtkP:20 },
                    get:{ how:'tame', zone:'forest', p:22 },
                    sci:'石虎是台灣僅存的野生貓科動物,耳朵背面有白斑,住在淺山的草叢與果園附近。' ,
@@ -3136,7 +3136,7 @@ window.ISL_DB = (function(){
         { q:'石虎的英文名字裡有哪個字，形容牠身上的花紋？', o:['Leopard（豹）','Tiger（虎）','Lion（獅）','Panda（熊貓）'], a:0, why:'石虎的英文 Leopard cat，取名自牠身上像豹一樣的斑點花紋。' }
       ] },
     bluemagpie:  { n:'台灣藍鵲',   e:'🐦', type:'atk', sz:55,
-                   b:{ hp:45, atk:9,  def:2, spd:10 }, g:{ hp:3.9, atk:0.98, def:0.22, spd:0.40 },
+                   b:{ hp:45, atk:9,  def:2, spd:10 }, g:{ hp:4.37, atk:0.98, def:0.25, spd:0.40 },
                    cmd:'flockrush',  talent:'長尾陣列:隊伍中每多一位夥伴,自己攻擊 +5%', tal:{ perAllyAtkP:5 },
                    get:{ how:'tame', zone:'grass', p:26 },
                    sci:'台灣藍鵲會「家族幫手」育雛,哥哥姊姊會一起幫忙餵弟弟妹妹,是台灣特有種。' ,
@@ -3153,7 +3153,7 @@ window.ISL_DB = (function(){
         { q:'台灣藍鵲主要棲息在台灣的什麼地區？', o:['低、中海拔山區森林','海邊沙灘','高山寒原','都市水泥地'], a:0, why:'台灣藍鵲主要棲息在低、中海拔的山區森林。' }
       ] },
     eagle:       { n:'大冠鷲',     e:'🦅', type:'atk', sz:65,
-                   b:{ hp:60, atk:11, def:3, spd:7 }, g:{ hp:5.4, atk:1.15, def:0.28, spd:0.28 },
+                   b:{ hp:60, atk:11, def:3, spd:7 }, g:{ hp:6.05, atk:1.15, def:0.31, spd:0.28 },
                    cmd:'talondive',  talent:'高空視野:自己的普通攻擊有 8% 機率暴擊(1.5 倍)', tal:{ critP:8 },
                    get:{ how:'tame', zone:'cliff', p:14 },
                    sci:'大冠鷲盤旋時會發出「呼——悠」的長鳴,靠上升氣流幾乎不用拍翅就能升高。' ,
@@ -3172,7 +3172,7 @@ window.ISL_DB = (function(){
 
     /* ── B 組:坦克型 3 隻 ── */
     pangolin:    { n:'穿山甲',     e:'🦔', type:'tank', sz:55,
-                   b:{ hp:90, atk:5,  def:5, spd:3 }, g:{ hp:7.5, atk:0.48, def:0.90, spd:0.15 },
+                   b:{ hp:90, atk:5,  def:5, spd:3 }, g:{ hp:8.4, atk:0.48, def:1.01, spd:0.15 },
                    cmd:'curlguard',  talent:'鱗片護體:自己受到的傷害固定再減 8%', tal:{ cutP:8 },
                    get:{ how:'tame', zone:'forest', p:16 },
                    sci:'穿山甲的鱗片和我們的指甲一樣是角蛋白,遇到危險會捲成一顆球保護柔軟的肚子。' ,
@@ -3189,7 +3189,7 @@ window.ISL_DB = (function(){
         { q:'穿山甲的英文名字 pangolin 源自馬來語，意思和牠的什麼行為有關？', o:['「會捲起來的東西」','「跑得很快的動物」','「愛吃甜食的動物」','「會飛的動物」'], a:0, why:'pangolin 一詞源自馬來語，意思是「會捲起來的東西」，正好描述牠遇險捲成球的習性。' }
       ] },
     turtle:      { n:'綠蠵龜',     e:'🐢', type:'tank', sz:85,
-                   b:{ hp:90, atk:4,  def:6, spd:2 }, g:{ hp:7.5, atk:0.42, def:0.95, spd:0.12 },
+                   b:{ hp:90, atk:4,  def:6, spd:2 }, g:{ hp:8.4, atk:0.42, def:1.06, spd:0.12 },
                    cmd:'shellwall',  talent:'護盾傳承:自己給的護盾再 +20%', tal:{ shieldP:20 },
                    get:{ how:'tame', zone:'beach', p:12 },
                    sci:'綠蠵龜會回到自己出生的沙灘產卵;小海龜的性別是由沙子的溫度決定的。' ,
@@ -3206,7 +3206,7 @@ window.ISL_DB = (function(){
         { q:'台灣哪些地方是知名的海龜產卵地？', o:['澎湖望安、小琉球','合歡山','阿里山','日月潭'], a:0, why:'澎湖望安與小琉球是台灣知名的海龜上岸產卵地點。' }
       ] },
     coconutcrab: { n:'椰子蟹',     e:'🦀', type:'tank', sz:55,
-                   b:{ hp:90, atk:7,  def:4, spd:4 }, g:{ hp:7.7, atk:0.60, def:0.80, spd:0.18 },
+                   b:{ hp:90, atk:7,  def:4, spd:4 }, g:{ hp:8.62, atk:0.60, def:0.9, spd:0.18 },
                    cmd:'clawtaunt',  talent:'硬殼反震:自己被攻擊時反彈 10% 傷害給對方', tal:{ thornP:10 },
                    get:{ how:'tame', zone:'rock', p:15 },
                    sci:'椰子蟹是世界上最大的陸生甲殼類,螯力大到能剝開椰子,但要三十年才長到成年。' ,
@@ -3225,7 +3225,7 @@ window.ISL_DB = (function(){
 
     /* ── B 組:治療型 3 隻 ── */
     treefrog:    { n:'莫氏樹蛙',   e:'🐸', type:'heal', sz:28,
-                   b:{ hp:50, atk:4,  def:2, spd:7 }, g:{ hp:4.6, atk:0.38, def:0.28, spd:0.30 },
+                   b:{ hp:50, atk:4,  def:2, spd:7 }, g:{ hp:5.15, atk:0.38, def:0.31, spd:0.30 },
                    cmd:'dewmist',    talent:'濕潤皮膚:雨天或颱風天,自己的治療效果 +25%', tal:{ rainHealP:25 },
                    get:{ how:'tame', zone:'river', p:24 },
                    sci:'莫氏樹蛙腳趾末端有吸盤,能牢牢黏在葉片上;牠是台灣特有種,叫聲像「啾啾啾」。' ,
@@ -3242,7 +3242,7 @@ window.ISL_DB = (function(){
         { q:'保護台灣特有種青蛙棲地，最重要的是什麼？', o:['多蓋水泥堤防','維護乾淨的溪流與森林環境','多噴農藥除蟲','把牠們全部抓進實驗室'], a:1, why:'乾淨的溪流與森林環境，是青蛙生存不可或缺的條件。' }
       ] },
     firefly:     { n:'螢火蟲',     e:'✨', type:'heal', sz:18,
-                   b:{ hp:45, atk:3,  def:1, spd:9 }, g:{ hp:4.3, atk:0.32, def:0.20, spd:0.38 },
+                   b:{ hp:45, atk:3,  def:1, spd:9 }, g:{ hp:4.82, atk:0.32, def:0.22, spd:0.38 },
                    cmd:'glowlight',  talent:'冷光:在洞窟與火山這種昏暗的地方,全隊攻擊 +8%', tal:{ darkAtkP:8 },
                    get:{ how:'tame', zone:'cave', p:20 },
                    sci:'螢火蟲的光幾乎不發熱,叫做「冷光」;牠對光害和農藥很敏感,是環境好不好的指標。' ,
@@ -3259,14 +3259,14 @@ window.ISL_DB = (function(){
         { q:'保護螢火蟲棲地最重要的做法是什麼？', o:['減少農藥使用、減少光害','多裝路燈','多噴殺蟲劑','把牠們抓去做標本'], a:0, why:'減少農藥與光害，才能保留螢火蟲生存所需的乾淨環境。' }
       ] },
     salmon:      { n:'櫻花鉤吻鮭', e:'🐟', type:'heal', sz:35,
-                   b:{ hp:55, atk:5,  def:3, spd:6 }, g:{ hp:5.1, atk:0.44, def:0.32, spd:0.26 },
+                   b:{ hp:55, atk:5,  def:3, spd:6 }, g:{ hp:5.71, atk:0.44, def:0.36, spd:0.26 },
                    cmd:'clearstream',talent:'逆流而上:自己體力低於一半時,治療效果 +30%', tal:{ lowHealP:30 },
                    get:{ how:'shop', price:180 },
                    sci:'櫻花鉤吻鮭是冰河時期留下來的「陸封型」鮭魚,只住在台灣高山的冷水溪流裡。' },
 
     /* ── B 組:控場型 3 隻 ── */
     macaque:     { n:'台灣獼猴',   e:'🐒', type:'ctrl', sz:70,
-                   b:{ hp:50, atk:7,  def:3, spd:8 }, g:{ hp:4.6, atk:0.65, def:0.36, spd:0.34 },
+                   b:{ hp:50, atk:7,  def:3, spd:8 }, g:{ hp:5.15, atk:0.65, def:0.4, spd:0.34 },
                    cmd:'throwstone', talent:'手巧:自己造成暈眩的機率 +10%', tal:{ stunAddP:10 },
                    get:{ how:'tame', zone:'valley', p:18 },
                    sci:'台灣獼猴是台灣唯一的野生猴類,會用手挑食物、互相理毛,群體裡有清楚的階級。' ,
@@ -3283,7 +3283,7 @@ window.ISL_DB = (function(){
         { q:'遇到野生台灣獼猴時，正確的做法是什麼？', o:['主動餵食牠們','不要餵食、保持距離、不直視挑釁','追著牠們拍照','搶走牠們手上的食物'], a:1, why:'遇到野生獼猴應不餵食、保持距離，避免直視挑釁。' }
       ] },
     spoonbill:   { n:'黑面琵鷺',   e:'🥄', type:'ctrl', sz:80,
-                   b:{ hp:55, atk:6,  def:3, spd:9 }, g:{ hp:5.1, atk:0.58, def:0.34, spd:0.36 },
+                   b:{ hp:55, atk:6,  def:3, spd:9 }, g:{ hp:5.71, atk:0.58, def:0.38, spd:0.36 },
                    cmd:'sweepbill',  talent:'群棲:隊伍中有其他控場型時,全隊速度 +8%', tal:{ ctrlSpdP:8 },
                    get:{ how:'tame', zone:'lake', p:15 },
                    sci:'黑面琵鷺會把扁扁的嘴伸進水裡左右掃,碰到魚蝦就合起來;全世界大部分都在台南過冬。' ,
@@ -3300,7 +3300,7 @@ window.ISL_DB = (function(){
         { q:'全世界黑面琵鷺的數量曾經瀕危，國際上如何一起合作保護牠？', o:['各國各自為政互不往來','跨國進行同步普查與棲地保護合作','完全不需要國際合作','只靠台灣一個國家保護就夠'], a:1, why:'黑面琵鷺的保育需要跨國同步普查與棲地保護合作。' }
       ] },
     barbet:      { n:'五色鳥',     e:'🎨', type:'ctrl', sz:35,
-                   b:{ hp:45, atk:6,  def:4, spd:7 }, g:{ hp:4.2, atk:0.56, def:0.40, spd:0.30 },
+                   b:{ hp:45, atk:6,  def:4, spd:7 }, g:{ hp:4.7, atk:0.56, def:0.45, spd:0.30 },
                    cmd:'drumecho',   talent:'鑿洞高手:自己的封招效果延長 1 回合', tal:{ sealAdd:1 },
                    get:{ how:'shop', price:160 },
                    sci:'五色鳥會用嘴在枯木上鑿洞當巢,叫聲像敲木魚,所以被叫做「森林裡的花和尚」。' }
@@ -3849,7 +3849,7 @@ window.ISL_DB = (function(){
       rock:    ['beetle','slime','urchin','jelly'],
       lake:    ['slime','bat','snakehead','mistfrog'],
       cave:    ['bat','shadow','beetle','cavespider','golem'],
-      cliff:   ['spark','boar','harpy','rockslide'],
+      cliff:   ['spark','harpy','rockslide'],   /* ★ v1.242.0 移除野豬(森林/草原已有),同步稍早 D.ENC.cliff.mons 的初始值 */
       valley:  ['ember','beetle','pollen','stag'],
       ruins:   ['shadow','basilisk','spark','clockwork','wraith'],
       volcano: ['ember','basilisk','salamander','ashcrow']
@@ -4009,6 +4009,12 @@ window.ISL_DB = (function(){
     '🔇 打輸的音樂會在回到營地時停下來,不會一直放到你在營地走來走去。',
     '📋 營地右邊的五顆大選單不用再往下捲,一眼就看得到「休息」了。',
     '👆 營地和探索裡的按鈕按一下就會打開了,不用再連點好幾次。'
+  ] });
+  D.LOG.unshift({ v: 'v1.242.0', d: '2026-09-18', items: [
+    '🕊 海鷗小白技能改成「海風祝禱」:讓敵人變得比較打不中(全體命中率下降),同時幫全隊回一些體力。',
+    '⚔ 森林之外的怪物,等級越高攻擊力成長得比之前緩和一些,後期打起來不會突然變得非常難。',
+    '🐾 16 隻夥伴升級時體力與防禦的成長也一起調整,讓牠們跟怪物的成長腳步更貼近。',
+    '🏔 懸崖的野豬移到別的地方去了,雷精的攻擊力也調降了一些。'
   ] });
 
   return D;
