@@ -1,16 +1,18 @@
 {
-  "_comment": "LXPSGAME 版本表（index.html 內 _LXPS_FILE_VERSIONS 的輕量副本）。★ 鐵則一：本檔的鍵必須與 index.html 的 _LXPS_FILE_VERSIONS 完全相同（一個不多、一個不少、版號逐一相等），否則全班會被判定成舊版而不斷強制更新。★ 鐵則二：本檔沒有的檔案不要加進來——adv_quiz_db.js / sw.js / student_roster.js 在 index.html 的表裡本來就沒有對應鍵，寫進來會讓比對永遠不相等（2026-09-19 實際災情：多寫這兩個鍵導致每次開機都判定有新版 → 舊版裝置無限硬刷 → 讀取超久、按鈕沒反應、登入被中斷）。★ 鐵則三：本檔一律排在 index.html 之後上傳（先程式、後版本表）。★ 本檔存在的唯一理由：v5.210.0 之前是每 90 秒抓 11.4MB 的 index.html 只為讀這張表，一節課 25 台 iPad 約 8GB，會壓垮 GitHub Pages 與學校網路。",
-  "generatedFor": "v5.219.0",
+  "_comment": "LXPSGAME 版本表（index.html 內 _LXPS_FILE_VERSIONS 的輕量副本）。★ 本檔自 v5.220.0 起一律由交付腳本從 index.html 的 _LXPS_FILE_VERSIONS「丟 node 求值」後自動產生，不可手寫、不可用 regex 掃原始文字（原始文字看得到被註解吃掉的鍵）。★ 鐵則一：鍵集合必須與 _LXPS_FILE_VERSIONS 完全相同，一個不多一個不少、版號逐一相等，否則比對永遠不相等，全校會被判定成舊版而不斷要求更新。★ 鐵則二：adv_quiz_db.js 與 student_roster.js 的值是日期格式（YYYYMMDD）不是 vX.Y.Z，撈鍵時兩種格式都要收。★ 鐵則三：本檔一律排在 index.html 之後上傳（先程式、後版本表）。",
+  "generatedFor": "v5.220.0",
   "files": {
-    "index.html": "v5.219.0",
+    "index.html": "v5.220.0",
     "mainstory.js": "v5.57.0",
     "main.css": "v5.186.0",
+    "adv_quiz_db.js": "20260906",
     "hero_db.js": "v5.201.0",
+    "student_roster.js": "20260628",
     "avatar_db.js": "v5.25.0",
-    "admin_panel.js": "v5.219.0",
+    "admin_panel.js": "v5.220.0",
     "world-boss.js": "v5.116.0",
     "world-boss-ui.html": "v5.145.0",
     "arena.js": "v5.91.0",
-    "game_changelog.js": "v5.219.0"
+    "game_changelog.js": "v5.220.0"
   }
 }
