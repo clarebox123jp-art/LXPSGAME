@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.265.0(2026-09-19)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.266.0(2026-09-19)
      ⚠ 檔頭這行自 v1.163.0 起漏跟(停在 v1.162.0),v1.170.0 補上;逐輪更動摘要一律看下方 MG_VER 常數的註解。
      ★ v1.162.0(2026-09-14・老師：「檢查星域的效果…確認每個功能都有用。還有提升寵物能力的。最後包括缺的六個都全部完成」)—
        【稽核結果】寫了一支稽核器把 D.SK_NODES/D.SK_TITLES 的效果鍵全部對比 index 的消費點，
@@ -6275,7 +6275,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.265.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.266.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -6284,7 +6284,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.265.0';   /* ★ v1.265.0(2026-09-19・老師看圖兩項:①「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」②「右側選單的圖片不管在哪個裝置(PC、IPAD)都要保持五個靠右邊緣對齊,ICON 放大到接近填滿黃色方框」)—
+var MG_VER = 'v1.266.0';   /* ★★ v1.266.0(2026-09-19・老師回報兩項:①「荒島求生完整下載主程式後,版號沒有同步更新到最新」②「登入帳號後也永遠只能訪客,無法正常登入自己的帳號紀錄遊玩。IPAD 問題最嚴重」)★★ — 【① 版號不同步・三道根因一次補齊】(a) 版本檢查 mgVerFetchLatest() 抓的是 minigame_sw.js?ck=時間戳,而這支請求原本掉進 minigame_sw.js 最後那條 network-first(**逾時只有 2.5 秒**);逾時退回 caches.match(req),但 URL 帶唯一時間戳 ⇒ 快取必定 miss ⇒ 回 504 ⇒ r.ok 是 false ⇒ cb(null) ⇒ 畫面**靜默當成「已是最新」**。一班 25 台同時跟校網要這支 70 多 KB 的檔,2.5 秒很容易超過;而且完整下載之後圖片/音樂/資料表全部走快取、**只剩這一支還要走網路** ⇒ 「下載完反而更新不到」是機制性成因不是錯覺。修法:minigame_sw.js v1.266.0 在 fetch 監聽器最前面對 minigame_sw.js 直接 return 不攔截(交回瀏覽器原生,頁面端本來就帶 cache:'no-store'),本檔這支再自己加 8 秒逾時 + 失敗重試一次。(b) 荒島裡唯一的更新入口是頂部黃條 #isl-updatebar,而它只在 mgVerPaint 執行的**當下**人已經在荒島裡(_IS.on)才會亮——開機 3 秒那次檢查幾乎一定早於學生真的進荒島(?mode=island 直入還要等登入還原),查到了也白查、之後再也沒人重畫 ⇒ 新增 MG._verLatest 記住最近一次的線上版號 + window.mgVerRepaint() 出口,islEnter() 進場立刻重畫一次(不發請求),9 秒後再真正重查一次當保險。(c) mgAutoBusy() 只要 `_IS.on` 就回 true(v1.187.0 刻意的,不改),但忙碌時的重排間隔 60 秒 ⇒ 學生一整節課都在荒島 ⇒ 等於每台 iPad 每分鐘重抓一次 72KB 的 sw 檔、25 台就是每分鐘 25 次白白佔校網,放寬到 5 分鐘(與 mgVerCheck 同節奏)。 — 【② 登入後永遠訪客・根治】新增**第五個放行條件:同一個瀏覽器工作階段、同一個 uid**(sessionStorage 的 lxps_mg_sess_uid)。根因:v1.255.0 只替 mgVerReload / MG_FORCE_RELOAD 兩條「我們自己發動的重整」補了 keep-login 旗標,但 iPad 上**沒有旗標的頁面重載**遠比那兩條多,而每一次都 = 共用裝置守門靜默登出 = 掉回訪客島:WKWebView 記憶體吃緊把分頁整個丟掉再自動重載(本程式 v1.173.0 自己就記錄過;完整下載後多扛 60~120MB 快取,記憶體壓力更大、更常發生——這正是老師說『完整下載之後最嚴重』的機制性原因)、休息排程倒數重整、「📄 資料檔沒載到 → 🔄 重新整理」、islVerUpdate 的退路 reload、學生自己下拉重整。⚠ 刻意用 sessionStorage 不是 localStorage:它綁在「這一個分頁的瀏覽工作階段」,重新整理(含系統丟分頁後的自動還原)會保留,但**關掉 App 再打開一定是空的** ⇒ 同一位學生自己重整放行、下一位同學打開 App 照樣把上一位的帳號踢掉,共用裝置防污染(鐵律 1.41)一個位元組都沒放寬;並且比對 uid,還原到別的帳號一律不放行。另外:靜默登出改成會講一句話(toast 指路到左上角登入入口),「資料檔沒載到」與 islVerUpdate 退路兩處 reload 也補上 keep-login 旗標。 ⚠⚠ 若老師實測後「登入了還是訪客島」依舊:請先確認主程式 GM 選單的荒島開關 gameConfig/islandAccess.localOnly 是不是 true——那個欄位為 true 時 islUid() 依設計一律回 'guest',登入了也照樣是這台裝置的共用訪客島,那是設定不是 bug。 */   /* ★ v1.265.0(2026-09-19・老師看圖兩項:①「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」②「右側選單的圖片不管在哪個裝置(PC、IPAD)都要保持五個靠右邊緣對齊,ICON 放大到接近填滿黃色方框」)—
    ①【設施名稱改點了才顯示・且不隨設施縮放】v1.264.0 把 .bn 名稱標籤畫在 .isl-cell 裡面,兩個問題:常駐顯示、
      且標籤跟著 islCampBldApplyTransforms 寫在設施上的個人縮放(0.5~2.0)一起變大變小(老師截圖裡放大過的營火標籤跟著巨大)。
      改成:自己的營地不再畫常駐標籤;點設施的當下由新函式 islBldNameFlash() 在 #isl-camp-grid 層浮出「🔥 營火 Lv2」
@@ -13395,18 +13395,45 @@ function onUser(u){
     try{ _mgKeepLoginReload = (localStorage.getItem('lxps_mg_reload_keep_login') === '1') || (sessionStorage.getItem('lxps_mg_reload_keep_login') === '1'); }catch(_){}
     try{ localStorage.removeItem('lxps_mg_reload_keep_login'); }catch(_){}   /* 一次性 */
     try{ sessionStorage.removeItem('lxps_mg_reload_keep_login'); }catch(_){}   /* 一次性 */
-    if(!_mgActiveSignInThisPageload && !_mgPendingRedirect && !_mgHandoff && !_mgKeepLoginReload){
+    /* ★★ v1.266.0(老師「荒島求生登入帳號後也永遠只能訪客,無法正常登入自己的帳號紀錄遊玩。
+       IPAD 問題最嚴重」)★★ — 第五個放行條件:**同一個瀏覽器工作階段、同一個 uid**。
+       【根因】v1.255.0 只替「mgVerReload / MG_FORCE_RELOAD 這兩條我們自己發動的重整」補了旗標,
+       但 iPad 上**沒有旗標的頁面重載**遠比那兩條多,而且每一次都 = 靜默登出 = 掉回訪客島:
+         ・iPad 的 WKWebView 記憶體吃緊時會把分頁整個丟掉再自動重載(這支程式自己在 v1.173.0
+           就記錄過這個現象;完整下載之後裝置多扛 60~120MB 快取,記憶體壓力更大、更常發生
+           —— 這正是老師說「完整下載之後最嚴重」的機制性原因)
+         ・休息排程倒數歸零的自動重整、「📄 資料檔沒載到 → 🔄 重新整理」、islVerUpdate 的退路 reload
+         ・學生自己下拉重新整理、切換語言重載
+       這些全都不是「別人的帳號被自動還原」,而是**同一位學生、同一個分頁、同一份登入**,
+       卻一律被當成陌生人踢掉,學生只看到左上角又變回「👤 未登入帳號」,重登一次、再被踢一次。
+       【為什麼用 sessionStorage 而不是 localStorage】這是整個修法的關鍵,不能改:
+         sessionStorage 綁在「這一個分頁的瀏覽工作階段」——重新整理(含系統丟分頁後的自動重載、
+         分頁還原)會保留,但**關掉 App / 關掉分頁再打開就一定是空的**。
+         ⇒ 同一位學生自己重整 ⇒ 放行;下一位同學打開 App ⇒ 讀不到 ⇒ 守門照常把上一位的帳號踢掉。
+         共用裝置防污染(鐵律 1.41)一個位元組都沒有放寬,放寬的只有「同一個分頁內的重整」。
+       ⚠ 刻意比對 uid:萬一 Firebase 還原的是別的帳號,uid 對不上就不放行。 */
+    var _mgSameSession = false;
+    try{ _mgSameSession = !!(u.uid && sessionStorage.getItem('lxps_mg_sess_uid') === String(u.uid)); }catch(_){}
+    if(!_mgActiveSignInThisPageload && !_mgPendingRedirect && !_mgHandoff && !_mgKeepLoginReload && !_mgSameSession){
       try{ console.warn('[小遊戲・禁止自動登入 v1.71.0] 偵測到自動還原的帳號且無交接鑰匙 → 靜默登出'); }catch(_){}
       try{
         localStorage.removeItem('lxps_shared_login_ts');
         localStorage.removeItem('lxps_shared_login_uid');
         localStorage.removeItem('lxps_shared_login_email');
       }catch(_){}
+      try{ sessionStorage.removeItem('lxps_mg_sess_uid'); }catch(_){}
       try{ if(MG.fb) MG.fb.auth.signOut(); }catch(_){}
+      /* ★ v1.266.0 舊版這裡是完全靜默的 ⇒ 老師與學生都只看到「怎麼又變訪客了」,
+         查不出發生什麼事(這也是這個問題拖了好幾輪才找到的原因之一)。
+         改成講一句話,並明確指路到左上角那顆登入入口(v1.258.0 起就可以點)。 */
+      try{ setTimeout(function(){ try{ toast('已自動登出(共用裝置保護)。要玩自己的進度,請點左上角「👤 未登入帳號 🔑」重新登入'); }catch(_){} }, 1200); }catch(_){}
       return;   /* 交給隨後那次 onUser(null) 走未登入分支，不在這裡重複做清理 */
     }
     /* 通過放行 ⇒ 標記為本頁主動登入，讓之後若再觸發一次 onUser 不會被自己攔下 */
     _mgActiveSignInThisPageload = true;
+    /* ★ v1.266.0 蓋上「這個分頁的工作階段已經驗證過這個 uid」的章:
+       同一個分頁之後不論因為什麼原因重整,都認得出「還是同一位學生」。 */
+    try{ if(u.uid) sessionStorage.setItem('lxps_mg_sess_uid', String(u.uid)); }catch(_){}
   }
   MG.user = u || null;
   MG.unlockedHeroes = null;   /* ★ v1.31.0 — 每次登入/登出狀態改變都重置,避免殘留上一個帳號的解鎖清單 */
@@ -13433,6 +13460,7 @@ function onUser(u){
   }else{
     btn.textContent = '登入';
     who.textContent = '';
+    try{ sessionStorage.removeItem('lxps_mg_sess_uid'); }catch(_){}   /* ★ v1.266.0 登出(含被守門踢掉)一定要拔掉信任章,否則下一次重整會把剛登出的帳號又放行回來 */
     MG.wk.mine = {};   /* ★ v1.10.0 登出清掉本機週成績(共用平板不可殘留上一位) */
     MG.best = {};      /* ★ v1.10.0 稽核(鐵律 1.41 共用裝置防污染):登出同時清掉記憶體最佳成績,下一位同學登入不會看到/合併到上一位的分數;雲端 minigameScores 已存,自己再登入即回來 */
     MG.favs = [];      /* ★ v1.53.0 — 同上稽核口徑:登出清掉最愛清單,不讓下一位共用裝置的同學看到/誤改上一位的收藏 */
@@ -14277,10 +14305,19 @@ function boot(){
     var m = String(v || '').match(/(\d+)\.(\d+)\.(\d+)/);
     return m ? (+m[1]) * 1000000 + (+m[2]) * 1000 + (+m[3]) : 0;
   }
+  /* ★★ v1.266.0(老師:「完整下載主程式後,版號沒有同步更新到最新」)★★
+     根因之一:版本檢查的結果只存在「那一次 mgVerPaint 的區域變數」裡。荒島頂部的黃色更新條
+     (#isl-updatebar)只有在「畫的當下人已經在荒島裡(_IS.on)」才會亮——可是開機 3 秒那次
+     mgVerCheck 幾乎一定早於學生真的進荒島(尤其 ?mode=island 直入要等登入還原),
+     那一次算出「有新版」卻因為 _IS.on 還是 false 而沒有亮黃條,結果就再也沒有人會重畫它,
+     學生要等到下一次 5 分鐘輪詢才有機會看到 ⇒ 常常一整節課都看不到任何更新提示。
+     ⇒ 把最近一次查到的線上版號記在 MG._verLatest,並開一個 window.mgVerRepaint() 出口,
+       islEnter()(真的進荒島那一刻)立刻用記住的值重畫一次,不必等網路也不必等輪詢。 */
   function mgVerPaint(latest){
     var chip = document.getElementById('ver-chip'), cur = document.getElementById('ver-cur'),
         nw = document.getElementById('ver-new'), btn = document.getElementById('ver-btn'),
         ub = document.getElementById('isl-updatebar');   /* ★ v1.197.0 */
+    try{ if(latest) MG._verLatest = latest; }catch(_vl){}   /* ★ v1.266.0 記住,供 mgVerRepaint 用 */
     if(!chip || !cur) return;
     cur.textContent = MG_VER;
     var old = latest && mgVerNum(latest) > mgVerNum(MG_VER);
@@ -14300,21 +14337,51 @@ function boot(){
   }
   /* ★ v1.174.0 抽成單一真相供荒島 ⚙ 設定選單的「版本/更新」共用(原本只有大廳右上角徽章在用,
      荒島整個畫面蓋住大廳 ⇒ 學生在荒島裡完全沒有地方可以看版本或更新)。 */
+  /* ★★ v1.266.0【根治·老師「完整下載主程式後版號沒有同步更新到最新」的最大單一元凶】★★
+     舊寫法只發一次 fetch,而這支請求在 minigame_sw.js 裡原本會掉進**最後那條 network-first
+     (逾時 2.5 秒)**:逾時就退回 caches.match(req),但這支的 URL 每次都帶唯一的 ?ck=時間戳
+     ⇒ 快取必定 miss ⇒ 回一個 504 ⇒ r.ok 是 false ⇒ cb(null) ⇒ 畫面**靜默當成「已是最新」**。
+     一班 25 台同時開機跟學校 wifi 要這支 72KB 的檔,2.5 秒非常容易超過;
+     而且完整下載之後圖片/音樂/資料表全部走快取,**只剩這一支還要走網路** ——
+     這就是「下載完反而更新不到」的機制性成因,不是錯覺。
+     兩道修法(各自獨立):
+       (a) minigame_sw.js v1.266.0:fetch 監聽器最前面對 minigame_sw.js 直接 return 不攔截,
+           交回瀏覽器原生(cache:'no-store' 本來就會去網路),不再被那 2.5 秒的鍘刀砍掉。
+       (b) 本函式:自己加一道 8 秒逾時(比 SW 舊的 2.5 秒寬鬆很多,但仍有上限不會無限掛著),
+           失敗或逾時再重試一次(間隔 1.2 秒),兩次都不行才 cb(null)。
+     ⚠ 仍然維持「查不到就靜默維持現狀」的行為(離線時不要嚇小朋友),只是不再「幾乎必定查不到」。 */
   window.mgVerFetchLatest = function(cb){
     if(!window.fetch){ cb(null); return; }
-    try{
-      fetch('minigame_sw.js?ck=' + Date.now(), { cache: 'no-store' }).then(function(r){
-        return (r && r.ok) ? r.text() : null;
-      }).then(function(t){
-        var m = t ? t.match(/MINI_VERSION\s*=\s*['"]([^'"]+)['"]/) : null;
-        cb(m ? m[1] : null);
-      })['catch'](function(){ cb(null); });
-    }catch(e){ cb(null); }
+    var tries = 0;
+    function one(){
+      tries++;
+      var done = false;
+      function fin(v){ if(done) return; done = true; if(v || tries >= 2){ cb(v || null); } else { setTimeout(one, 1200); } }
+      setTimeout(function(){ fin(null); }, 8000);   /* 逾時保險:不讓 respondWith 永遠懸著 */
+      try{
+        fetch('minigame_sw.js?ck=' + Date.now(), { cache: 'no-store' }).then(function(r){
+          return (r && r.ok) ? r.text() : null;
+        }).then(function(t){
+          var m = t ? t.match(/MINI_VERSION\s*=\s*['"]([^'"]+)['"]/) : null;
+          fin(m ? m[1] : null);
+        })['catch'](function(){ fin(null); });
+      }catch(e){ fin(null); }
+    }
+    one();
   };
   window.mgVerNumOf = mgVerNum;
   function mgVerCheck(){
     window.mgVerFetchLatest(function(v){ if(v) mgVerPaint(v); });
   }
+  /* ★ v1.266.0 用「最近一次查到的線上版號」重畫一次(不發網路請求)。
+     islEnter() 進荒島那一刻呼叫 ⇒ 開機時就查到有新版、但當時還沒進荒島所以沒亮的黃條,
+     一進荒島立刻補亮;沒查到過就順手再查一次。 */
+  window.mgVerRepaint = function(){
+    var v = null;
+    try{ v = MG._verLatest || null; }catch(_){}
+    if(v){ mgVerPaint(v); }
+    else { try{ mgVerCheck(); }catch(_){} }
+  };
   window.mgVerReload = function(){
     try{ playSfx('sfx-tap', 0.35); }catch(_){}
     var btn = document.getElementById('ver-btn');
@@ -14453,7 +14520,11 @@ function boot(){
         try{ console.warn('[小遊戲自動更新] 已對 ' + v + ' 更新過仍是舊版,改由徽章提示,不再自動刷'); }catch(e){}
         return;
       }
-      if(mgAutoBusy()){ setTimeout(function(){ window._mgAutoUpdRan = false; mgAutoUpdateBoot(); }, 60000); return; }
+      /* ★ v1.266.0 忙碌重排由 60 秒放寬到 5 分鐘:mgAutoBusy() 只要 `_IS.on`(人在荒島)就回 true,
+         而學生一整節課都在荒島裡 ⇒ 舊的 60 秒等於「每台 iPad 每分鐘重抓一次 72KB 的 minigame_sw.js」,
+         25 台就是每分鐘 25 次,白白跟場景圖/音樂搶同一條校網頻寬(而且永遠不會真的更新)。
+         改 5 分鐘與既有的 mgVerCheck 輪詢同一個節奏,學生回到大廳或下次開機照樣會自動更新。 */
+      if(mgAutoBusy()){ setTimeout(function(){ window._mgAutoUpdRan = false; mgAutoUpdateBoot(); }, 300000); return; }
       /* ★ v1.187.0 —「同一版本 10 分鐘只自動更新一次」的防迴圈仍在,但再加一道「這台裝置最多自動刷 2 次」:
          真正卡住的裝置(快取中毒、部署不一致)舊版會每 10 分鐘自己跳一次、永遠跳下去;
          兩次都救不回來就代表不是重整能解決的,改讓 ⚙ 版本鈕轉紅由人工處理,不再打擾學生。 */
@@ -16782,7 +16853,8 @@ window.islEnter = function(){
        只會看到「按了沒反應」;而且 ?mode=island 的簾幕是在下面第 3 行才拆,這裡提早 return
        等於把簾幕留在畫面上。⇒ 先拆簾、再用明確的小視窗告訴他怎麼救自己。 */
     try{ if(window.islDirectVeilOff) window.islDirectVeilOff(); }catch(_ev){}
-    islModal('<h3>📄 資料檔沒載到</h3><p>荒島的資料檔這次沒有下載成功(通常是網路太慢或剛好在更新)。</p><p>按「重新整理」再試一次就好,你的進度不會不見。</p>', [{ t: '等一下再說', cls: 'ghost' }, { t: '🔄 重新整理', cls: 'gold', cb: function(){ try{ location.reload(); }catch(_er){} } }]);
+    islModal('<h3>📄 資料檔沒載到</h3><p>荒島的資料檔這次沒有下載成功(通常是網路太慢或剛好在更新)。</p><p>按「重新整理」再試一次就好,你的進度不會不見。</p>', [{ t: '等一下再說', cls: 'ghost' }, { t: '🔄 重新整理', cls: 'gold', cb: function(){ try{ if(MG.user){ localStorage.setItem('lxps_mg_reload_keep_login', '1'); sessionStorage.setItem('lxps_mg_reload_keep_login', '1'); } }catch(_kl3){}   /* ★ v1.266.0 這顆也是 location.reload() 換頁,不補旗標就會被共用裝置守門當成陌生人登出(見 onUser v1.266.0 說明) */
+      try{ location.reload(); }catch(_er){} } }]);
     return;
   }
   if(!islGateOk()){ islGateBlock(); return; }   /* ★ v1.127.0 只有 GM 進得來(含直接打 ?mode=island 網址) */
@@ -16807,6 +16879,12 @@ window.islEnter = function(){
     islDailyCheck();
     islHud();
     try{ islAudioWarm(); mgWarmSfxWA(); }catch(_aw0){}   /* ★ v1.259.0 音樂/環境音預熱 + 常用音效先解碼成 WebAudio 緩衝 */
+    /* ★★ v1.266.0(老師「完整下載主程式後版號沒有同步更新到最新」)★★
+       荒島裡唯一看得到的更新入口就是頂部黃條 #isl-updatebar,而它只在 mgVerPaint 執行的「當下」
+       人已經在荒島裡(_IS.on)才會亮。開機 3 秒那次檢查幾乎一定早於學生真的進荒島 ⇒ 查到了也沒亮。
+       ⇒ 進場立刻用記住的版號重畫一次(mgVerRepaint 不發請求),再排一次真正的重新查詢當保險。 */
+    try{ if(window.mgVerRepaint) window.mgVerRepaint(); }catch(_vr0){}
+    try{ setTimeout(function(){ try{ if(window.mgVerFetchLatest) window.mgVerFetchLatest(function(v){ if(v && window.mgVerRepaint){ try{ MG._verLatest = v; }catch(_){} window.mgVerRepaint(); } }); }catch(_){} }, 9000); }catch(_vr1){}
     try{ islGearPaint(); }catch(_gp0){}   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— ⚙/🆘 這兩顆是常駐 HUD 按鈕,不必等玩家第一次點開設定選單才換圖,進場就先跑一次 */
     if(!ISL.char){ islCreateOpen(); }
     else {
@@ -19836,7 +19914,8 @@ window.islVerUpdate = function(btn){
   setTimeout(function(){
     if(btn) btn.textContent = '⏳ 更新中…';
     try{ window.mgVerReload(); }
-    catch(_eu){ try{ location.reload(); }catch(_e2){} }
+    catch(_eu){ try{ if(MG.user){ localStorage.setItem('lxps_mg_reload_keep_login', '1'); sessionStorage.setItem('lxps_mg_reload_keep_login', '1'); } }catch(_kl4){}   /* ★ v1.266.0 mgVerReload 丟例外時走的這條退路,舊碼沒補旗標 ⇒ 更新完就被登出變訪客 */
+      try{ location.reload(); }catch(_e2){} }
   }, 700);   /* 留 700ms 讓雲端存檔送出去(比照 islExitNow) */
   /* ★ v1.234.0 這顆按鈕是彈窗裡的本地元素,不是 mgVerReload() 內部認得的 #ver-btn(那顆藏在大廳
      頂欄,老師回報的正是荒島這裡卡住)——mgVerReload 出問題時的看門狗只會救回 #ver-btn,救不到
