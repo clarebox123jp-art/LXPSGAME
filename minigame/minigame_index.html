@@ -4463,7 +4463,7 @@ window.islDirectVeilOff = function(){
 .isl-cell .hp i{display:block;height:100%;background:#7bed9f;border-radius:2px;}
 /* ★ v1.94.0 P2-b:裝飾層(自由拖曳)、農田/畜欄面板、水道拼圖、烹飪火力 */
 #isl-camp-deco{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:2;}
-.isl-deco{position:absolute;font-size:40px;line-height:1;margin:-20px 0 0 -20px;pointer-events:auto;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform .15s;}   /* ★ v1.248.0 老師回報「營地設施類底下的殘留外框陰影」— 稽核發現這個問題其實在 v1.238.0 就已經對 .isl-cell(設施)修過(拿掉 filter:drop-shadow),但當時的 changelog 標題寫的是「營地設施」,沒注意到 .isl-cell 本來就是照著 .isl-deco(裝飾)的視覺刻意做成一致的(見 v1.216.0 註解「原本 3px 虛線框+黑底改透明,視覺上與 .isl-deco 裝飾層一致」)——結果 .isl-cell 修了,當初拿來當範本的 .isl-deco 自己反而漏改,原本的 filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) 一直留到現在。花盆/石頭/貝殼等裝飾品拖進營地放置後,腳下都會有這輪拿掉的那種黑色陰影塊,跟老師這次看到的成因完全同款。⚠ 若老師這次看到殘留陰影的畫面確實是「設施」(製作台/營火這類有功能的建築)而不是純裝飾,那些的陰影其實在 v1.238.0 就該已經沒有了——比較可能是那台裝置還在跑 v1.238.0 之前的舊快取版本(這個專案已知有好幾輪「按了更新沒真的套用新版」的案例),麻煩老師先看一下荒島畫面右下角⚙設定→🔄版本,確認版號有沒有卡在 v1.237.0 或更早、需不需要手動按「⬇立即更新」。
+.isl-deco{position:absolute;font-size:40px;line-height:1;margin:-20px 0 0 -20px;pointer-events:auto;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform .15s;}   /* ★ v1.248.0 老師回報「營地設施類底下的殘留外框陰影」— 稽核發現這個問題其實在 v1.238.0 就已經對 .isl-cell(設施)修過(拿掉 filter:drop-shadow),但當時的 changelog 標題寫的是「營地設施」,沒注意到 .isl-cell 本來就是照著 .isl-deco(裝飾)的視覺刻意做成一致的(見 v1.216.0 註解「原本 3px 虛線框+黑底改透明,視覺上與 .isl-deco 裝飾層一致」)——結果 .isl-cell 修了,當初拿來當範本的 .isl-deco 自己反而漏改,原本的 filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) 一直留到現在。花盆/石頭/貝殼等裝飾品拖進營地放置後,腳下都會有這輪拿掉的那種黑色陰影塊,跟老師這次看到的成因完全同款。⚠ 若老師這次看到殘留陰影的畫面確實是「設施」(製作台/營火這類有功能的建築)而不是純裝飾,那些的陰影其實在 v1.238.0 就該已經沒有了——比較可能是那台裝置還在跑 v1.238.0 之前的舊快取版本(這個專案已知有好幾輪「按了更新沒真的套用新版」的案例),麻煩老師先看一下荒島畫面右下角⚙設定→🔄版本,確認版號有沒有卡在 v1.237.0 或更早、需不需要手動按「⬇立即更新」。   ★ v1.264.0 稽核:這段註解從 v1.248.0 起就忘了寫結尾,整段一路吃到下一行的註解結尾,把下一行 .isl-deco.drag 的「拖曳中放大 1.25 倍」提示整條註解掉(所以裝飾拖曳從來沒有放大回饋)。本輪補上結尾。 */
 .isl-deco.drag{transform:scale(1.25) !important;z-index:5;cursor:grabbing;}   /* ★ v1.199.0 加 !important:裝飾現在也有自訂縮放(inline transform),拖曳中想放大提示一定要贏過那個 inline 值 */
 .isl-deco .dn{position:absolute;left:50%;transform:translateX(-50%);bottom:-14px;font-size:11px;background:rgba(0,0,0,.6);border-radius:999px;padding:0 6px;white-space:nowrap;opacity:0;}
 .isl-deco.drag .dn{opacity:1;}
@@ -4717,7 +4717,7 @@ window.islDirectVeilOff = function(){
    近全螢幕視窗:標題釘在頂端不隨內容捲動,按鈕格 .sm-grid 自己捲(內容再多也不影響標題與外框)。 */
 #isl-submenu{position:absolute;left:0;top:0;right:0;bottom:0;z-index:36;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px;}
 #isl-submenu.hidden{display:none;}
-#isl-submenu .sm-box{position:relative;width:96%;max-width:1080px;height:auto;max-height:92%;display:flex;flex-direction:column;background:linear-gradient(160deg,rgba(30,66,90,.72),rgba(6,16,24,.72));border:3px solid rgba(124,196,232,.85);border-radius:22px;padding:16px;box-shadow:0 12px 34px rgba(0,0,0,.55),0 0 40px rgba(95,179,217,.25);}   /* ★ v1.210.0 質感升級,見 #isl-modal .box 同輪說明;★ v1.238.0 老師「按鈕改方形後,背後一大片沒用到的空間全部半透明,剛好填滿所有方形按鈕就好」— height:92%(固定貼近全螢幕高)→ height:auto(隨 .sm-grid 實際內容高度,項目少的分類如休息只有 3 顆鈕就只會是一個矮窗,不再硬撐出一大片空白);max-height:92% 當上限(項目多的分類如角色 13 項仍會撐到接近全螢幕,.sm-grid 本身 overflow-y:auto 內捲);背景透明度 .98→.72,半透明能看到後面的場景/營地畫面
+#isl-submenu .sm-box{position:relative;width:96%;max-width:1080px;height:auto;max-height:92%;display:flex;flex-direction:column;background:linear-gradient(160deg,rgba(30,66,90,.72),rgba(6,16,24,.72));border:3px solid rgba(124,196,232,.85);border-radius:22px;padding:16px;box-shadow:0 12px 34px rgba(0,0,0,.55),0 0 40px rgba(95,179,217,.25);}   /* ★ v1.210.0 質感升級,見 #isl-modal .box 同輪說明;★ v1.238.0 老師「按鈕改方形後,背後一大片沒用到的空間全部半透明,剛好填滿所有方形按鈕就好」— height:92%(固定貼近全螢幕高)→ height:auto(隨 .sm-grid 實際內容高度,項目少的分類如休息只有 3 顆鈕就只會是一個矮窗,不再硬撐出一大片空白);max-height:92% 當上限(項目多的分類如角色 13 項仍會撐到接近全螢幕,.sm-grid 本身 overflow-y:auto 內捲);背景透明度 .98→.72,半透明能看到後面的場景/營地畫面   ★ v1.264.0 稽核:這段註解從 v1.238.0 起就忘了寫結尾,一路吃掉下面 11 行(.sm-title/.sm-title .isl-x/.sm-grid/.sm-grid button/.ci/.gold/.warn/.ghost/:disabled)直到 v1.216.0 那段註解的結尾才結束。多數規則在後面的 v1.238/v1.240 區塊有 !important 版本補回,但 .sm-grid button.gold/.warn 的金色/橘色底一直是失效的(天賦點數未用、防具未穿的金色提醒都看不到)。本輪補上結尾。 */
 #isl-submenu .sm-title{display:flex;align-items:center;flex:0 0 auto;font-size:24px;font-weight:900;color:#ffd166;margin:0 0 10px 4px;}
 #isl-submenu .sm-title .isl-x{position:static;margin-left:auto;}
 #isl-submenu .sm-grid{flex:1 1 auto;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start;}
@@ -5965,6 +5965,18 @@ window.islDirectVeilOff = function(){
 #isl-submenu .sm-grid, #isl-submenu .sm-grid.circles{ overflow-y:auto !important; overflow-x:hidden !important; min-height:0 !important; flex:1 1 auto !important; }   /* ★ v1.256.0 老師截圖「角色子選單黃色框架下方出現拖曳bar,左右邊按鈕被裁切」— 根因是只寫了 overflow-y:auto、沒有明講 overflow-x,瀏覽器在「一軸設 auto、另一軸沒設」時,依 CSS 規範會把另一軸也強制算成 auto(不是維持預設的 visible),於是只要格線內容比容器寬度多出哪怕 1px(五欄 1fr 格線加上按鈕自身的 padding/border 用 box-sizing 換算時很容易有這種次像素誤差),就會冒出一條不必要的水平捲軸,而且捲軸出現的那一刻預設是停在最左邊,最右邊那一欄(如「特殊指令」)恰好被裁掉一點點,正是老師説的「左右邊按鈕被裁切」。明講 overflow-x:hidden,水平方向永遠不會捲動也不會裁切,格線本來就已經用 repeat(5,1fr) 固定滿版,不需要也不應該有水平捲軸。 */
 .cat .lb{ color:#fff !important; text-shadow:0 2px 0 #000,0 0 6px rgba(0,0,0,.9),2px 0 0 #000,-2px 0 0 #000 !important; }
 #isl-camp-side button.cat .ci{ }   /* ★ v1.249.0 老師回報「電腦版營地右側選單圖片太小」— 根因:這條規則(v1.240.0「奇幻生活風」那輪加的)把側欄五大分類的圖示容器強制縮到 width:72%+max-width:160px,蓋掉了上面 .cat .ci 那條「width:100%+padding:9%」的填滿設計(#isl-camp-side button.cat .ci 的選擇器特異度比 .cat .ci 高,不管寫在前面還是後面都會贏),導致金色方磚背景是滿的、裡面的圖示卻只佔一小塊,兩者尺寸對不上就是「看起來太小」。清空這條覆寫,side 欄五大分類的圖示改回跟其他選單(探索圓形/子選單方磚)同一套滿版比例,金色底跟圖示尺寸從此一致。
+   ★★ v1.264.0 根治(老師「子選單又疊在一起,這問題一直沒有克服,每次換裝置都會遇到」)★★ —— 真因就是這段註解從 v1.249.0 起就忘了寫結尾:
+   它一路吃到下一行 v1.254.0 註解的開頭,把「子選單排版修正」真正的兩行整段註解掉了 ——
+     (a) .sm-grid{ grid-auto-rows:max-content; align-items:start }
+     (b) .sm-grid button{ height:auto; max-height:none; flex:none; width:100%; min-width:0 }
+   ⇒ 格線雖然照 v1.259.0 改成 repeat(5,minmax(0,1fr)),按鈕卻還鎖在 v1.240.0 寫死的 width:150px !important,
+     欄寬會隨視窗變、按鈕不會:欄寬 > 150 就稀疏、欄寬 < 150 就溢出被 overflow-x:hidden 裁掉,
+     而 .ci 的 aspect-ratio 正方形高度算不準、往下壓進下一列 = 老師看到的疊圖。
+   真 Chromium 實測(非 iPad,補上註解結尾前→後,圖示往下溢出量):1920×963 +16→−68、1598×804 +54→−68、
+     1536×770 +62→−68、1280×642 +92→−102 ⇒ 四種視窗零重疊且結果一致。
+   ⚠ 這也是「改了 v1.254.0/v1.256.0/v1.259.0 三輪都沒好、換一台機器就換一個樣」的原因:
+     那兩行從寫下去的第一天起就沒有生效過,嚴重程度只跟視窗高度有關。
+   ⚠ 日後在這一區加註解:結尾的星號斜線一定要補上,本檔 CSS 註解一旦漏關就會安靜吃掉後面的規則(v1.238/v1.248/v1.249 三次同款)。 */
 #isl-submenu .sm-grid, #isl-submenu .sm-grid.circles{ grid-auto-rows:max-content !important; align-items:start !important; }
 #isl-submenu .sm-grid button{ height:auto !important; max-height:none !important; flex:none !important; width:100% !important; min-width:0 !important; }   /* ★ v1.254.0 欄寬改由格線的 1fr 決定,按鈕不再自己鎖 140px 寫死寬度(否則格線縮窄時按鈕還是硬撐 140px,一樣會擠出格線外),改用 width:100% 填滿所在那一欄的實際寬度,欄多寬按鈕就多寬,兩者永遠對得起來。★ v1.256.0 補上 min-width:0——CSS Grid 的格子項目預設不會縮小到比自己內容(圖示/文字)的最小寬度還窄,按鈕內容一旦有任何一點比 1fr 算出來的欄寬要求更寬,就會把整條格線撐寬造成水平溢出,min-width:0 讓按鈕真的能縮到跟欄寬一樣,不被內容的天生最小寬度卡住。 */
 .isl-sub-c, .isl-sub-c button{ height:auto !important; max-height:none !important; flex:none !important; width:140px !important; }   /* 探索圓形按鈕走 flex-wrap(不是這裡改的格線),維持原本固定寬度,不受本輪影響 */
@@ -6058,9 +6070,10 @@ window.islDirectVeilOff = function(){
  * ⚠ 收合狀態(.collapsed)與拜訪好友營地共用同一組選擇器,一併生效。
  * ══════════════════════════════════════════════════════════════════════════ */
 @media (min-width:781px){
-  #island-root #isl-camp-side{ display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; align-content:stretch !important; justify-content:flex-start !important; gap:6px !important; overflow:hidden !important; }
+  #island-root #isl-camp-side{ display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; align-content:stretch !important; justify-content:flex-start !important; gap:6px !important; overflow-x:hidden !important; overflow-y:auto !important; }   /* ★ v1.264.0 overflow:hidden → overflow-y:auto:配合下面新增的 min-height 下限,視窗真的矮到五顆塞不下時改成可捲動,而不是把第五顆直接裁掉看不到(舊寫法沒有下限所以永遠塞得下,代價就是無限縮小) */
   #island-root #isl-camp-side > div:first-child, #island-root #isl-camp-side .tgl{ flex:0 0 auto !important; }
-  #island-root #isl-camp-side button.cat{ flex:1 1 0 !important; min-height:0 !important; height:auto !important; width:100% !important; justify-content:center !important; gap:4px !important; }
+  #island-root #isl-camp-side button.cat{ flex:1 1 0 !important; min-height:100px !important; height:auto !important; width:100% !important; justify-content:center !important; gap:4px !important; }   /* ★ v1.264.0 老師「營地選單圖片又變超小」— v1.241.0 把五顆改成「平分側欄高度」(flex:1 1 0 + min-height:0),好處是永遠不必捲動,代價是**完全沒有下限**:視窗一矮,五顆連同裡面的圖示就一路縮下去,換一台螢幕矮一點的筆電就明顯變小。補上 100px 下限(≈ .isl-cell 設計尺寸 96px,圖示約 76px);視窗夠高時 flex:1 1 0 照樣把五顆撐大,行為不變。 */
+  #island-root.ipad #isl-camp-side button.cat{ min-height:132px !important; }   /* ★ v1.264.0 iPad 斷點用 .isl-cell 的 iPad 設計尺寸 132px 當下限 */
   #island-root #isl-camp-side button.cat .ci{ flex:1 1 auto !important; min-height:0 !important; width:auto !important; height:auto !important; max-width:100% !important; aspect-ratio:1 !important; align-self:center !important; font-size:clamp(22px,5vh,72px) !important; }
   #island-root #isl-camp-side button.cat .lb{ flex:0 0 auto !important; font-size:clamp(12px,1.9vh,24px) !important; line-height:1.15 !important; }
   #island-root.ipad #isl-camp-side button.cat .lb{ font-size:clamp(14px,2.2vh,32px) !important; }
@@ -6236,7 +6249,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.263.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.264.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -6245,7 +6258,10 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.263.0';   /* ★ v1.263.0(2026-09-19・老師兩項:①「荒島戰鬥畫面的主角攻擊 BAR 的左右移動速度突然變得超級快,是你的新設計?突然變得太難了」②「戰鬥的保守治療按鈕移到自動技能的右邊,兩顆鈕同一排不要擋住戰鬥 LOG 條」)—
+var MG_VER = 'v1.264.0';   /* ★★ v1.264.0(2026-09-19・老師「換一台筆記電腦後,營地選單圖片和角色圖片又變超小、子選單又疊在一起。這個問題一直沒有克服,每次換裝置都會遇到,試圖找到原因並解決」+「點營地中的營火、火把等設施類也要出現名稱(現在裝飾類有做到)」)★★ —
+   ①【子選單疊圖根治・真因是沒關起來的 CSS 註解】第 5967 行 v1.249.0 那段「斜線星號」從來沒有寫結尾,一路吃掉 v1.254.0/v1.256.0 真正的兩行修正(.sm-grid 的 grid-auto-rows:max-content/align-items:start、.sm-grid button 的 height:auto/width:100%/min-width:0)⇒ 格線改成 5 欄了,按鈕卻還鎖在 v1.240.0 寫死的 width:150px !important,欄寬隨視窗變、按鈕不變,.ci 的正方形高度算不準就往下壓進下一列。真 Chromium 四種視窗實測:補上註解結尾前,圖示往下溢出 +16/+54/+62/+92px,補後全部負值(零重疊)且四種視窗結果一致。同輪順手補好另外兩個同款漏關的註解(4466 行吃掉 .isl-deco.drag 拖曳放大提示、4720 行吃掉 .sm-title/.sm-grid 等 11 行基底規則,連帶讓 .sm-grid button.gold/.warn 的金色提醒失效)。
+   ②【營地「換裝置就變超小」根治・老師裁定甲】營地裡每一樣東西的大小只看視窗高度且沒有下限(畫布短邊固定 860 → s = 視窗短邊 ÷ 860,主角/設施/寵物全部乘同一個 s)⇒ 桌機換筆電、視窗矮一截,全部跟著縮。新增 ISL_CAMP_MIN_SCALE = 1.0:s 低於下限時改縮小「設計畫布」把 s 頂回 1.0(畫布本來就永遠剛好蓋滿視窗,設計尺寸只是顯示倍率旋鈕),所有裝置一律用設計原尺寸,不裁掉任何東西、不動任何座標與存檔。側欄五顆分類磚(v1.241.0 的 flex:1 1 0 平分高度,同樣沒有下限)補 min-height 100px/iPad 132px,並把 overflow:hidden 改成 overflow-y:auto,真的塞不下時改成可捲動而不是裁掉第五顆。
+   ③【設施名稱】營地設施補回「名稱 LvN」白字標籤(.bn 的 CSS 與參觀好友營地那條路徑一直都有,只有自己的營地在 v1.216.0 被拿掉),兩條路徑從此一致。 */   /* ★ v1.263.0(2026-09-19・老師兩項:①「荒島戰鬥畫面的主角攻擊 BAR 的左右移動速度突然變得超級快,是你的新設計?突然變得太難了」②「戰鬥的保守治療按鈕移到自動技能的右邊,兩顆鈕同一排不要擋住戰鬥 LOG 條」)—
    ①【攻擊 BAR 變超快・不是新設計,是速度一直綁在螢幕更新率上】islBtQte 的指針舊寫法是 `pos += dirv * spd`,
      **每一幀**固定加 spd 而不是每秒走多少 ⇒ 速度直接等比於裝置更新率:60Hz 的平板 150%/秒(來回約 1.3 秒,原本設計的手感)、
      120Hz(ProMotion)的機器整整快一倍(來回只剩 0.67 秒)。同一份程式在不同平板難度不同,換機或系統解鎖高更新率就會「突然」變快。
@@ -18939,7 +18955,8 @@ function islCampPaint(){
       '" data-i="' + i + '" style="left:' + s.x + '%;top:' + s.y + '%">' +
       (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') +
       (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) +
-      (Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) < 100 ? '<span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span>' : '') + '</button>';
+      (Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) < 100 ? '<span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span>' : '') +
+      '<span class="bn">' + islEsc(b.n) + ' Lv' + s.lv + '</span></button>';   /* ★ v1.264.0 老師「點營地中的營火、火把等設施類也要出現名稱(現在裝飾類有做到)」— .bn 這顆標籤的 CSS(白字黑底藥丸,見 .isl-cell .bn)一直都在、參觀好友營地那條路徑(islCoopCampPaint)也一直有畫,只有「自己的營地」在 v1.216.0 那輪依老師當時指示把名稱與等級一起拿掉了。本輪照老師新的指示補回來,兩條路徑從此一致,格式沿用好友營地那邊既有的「名稱 LvN」。 */
   }
   cells.innerHTML = h;
   islCampBldApplyTransforms();   /* 逐一把 scale(k)+可能的 scaleX(-1) 寫進 style.transform(見函式說明,不能只靠 CSS class) */
@@ -19002,6 +19019,18 @@ function islCampCharPlace(){
 var ISL_CAMP_PET_RATIO = 0.7;   /* ★ v1.225.0 營地寵物 = 主角 64px 基準 × 0.7(比照戰鬥畫面夥伴框 140 : 主角框 200) */
 var ISL_CAMP_CHAR_MULT = 1.0;   /* ★ v1.204.0 老師「營地的主角尺寸放大100%(其他寵物也正確比例調整)」— 上一輪(v1.197.0)老師先要求縮小50%(乘0.5),這輪要求在那個基礎上再放大100%(乘2)= 0.5×2 = 1.0,等於退回縮小50%之前的原始尺寸;寵物與主角吃同一個常數,兩者永遠同步縮放。 */
 var ISL_CAMP_CANVAS = 860;   /* 畫布邊長(設計 px),所有裝置統一,靠 CSS transform 縮放適配;比舊版建造格上限 420px 大超過一倍,四周多出來的就是新增的裝飾空間 */
+/* ★★ v1.264.0(老師「換一台筆記電腦後營地選單圖片和角色圖片又變超小,每次換裝置都會遇到」,裁定甲)★★
+   【根因】營地畫面上每一樣東西的大小都只看「視窗高度」,而且沒有下限:
+     islCampViewFit() 的畫布短邊固定 860 設計 px、cover-fit 算出 s = 視窗短邊 ÷ 860,
+     主角 = 64 × islCampCharScale() × s、設施 = 96 × s、寵物 = 45 × s 全部乘同一個 s
+     ⇒ 視窗矮 30%,營地裡每一樣東西就跟著小 30%。桌機大螢幕換成筆電(扣掉標題列/工作列後視窗矮一截)
+       就是老師說的「又變超小」,而且每台機器縮不同倍數,所以「每次換裝置都會遇到」。
+   【修法】不改任何座標與存檔:設施/裝飾/主角/寵物全部是 % 定位,而畫布永遠剛好蓋滿視窗(cw*s==w、ch*s==h),
+     所以「畫布設計尺寸」其實只是一個顯示倍率的旋鈕。當算出來的 s 低於下限時,改成把設計畫布縮小
+     (短邊 = 視窗短邊 ÷ 下限),s 就回到下限 ⇒ 畫面上的東西維持設計原尺寸,而且不會裁掉任何東西。
+   【下限 1.0 = 老師裁定甲】所有裝置一律用設計原尺寸(設施 96px、主角約 67px),換機完全一致;
+     視窗夠高的機器 s 本來就 > 1,行為一格未變。要整體再放大改這一個數字即可(例如 1.2 = 全部大 20%)。 */
+var ISL_CAMP_MIN_SCALE = 1.0;
 function islCampViewFit(){
   var vp = $('isl-camp-viewport'), w, h, s;
   if(!vp) return;
@@ -19019,8 +19048,14 @@ function islCampViewFit(){
      實際能走、能擺的區域跟看得到的背景對不起來。改成畫布長寬比＝視窗長寬比(短邊固定 860 設計 px,長邊依比例拉長):
      s 剛好等於「短邊貼齊」,畫布不多不少正好蓋滿整個營地視窗(=背景圖顯示範圍,頂部 HUD 與右側欄不算),
      設施/裝飾/主角/寵物全部用 % 定位,畫布變形後自動等比重排,存檔零改動。畫布尺寸存 _IS.campCanvas 供 islCampViewApply 夾邊界。 */
-  var cw, ch, g = $('isl-camp-grid');
-  if(w >= h){ ch = ISL_CAMP_CANVAS; cw = Math.round(ISL_CAMP_CANVAS * w / h); } else { cw = ISL_CAMP_CANVAS; ch = Math.round(ISL_CAMP_CANVAS * h / w); }
+  var cw, ch, g = $('isl-camp-grid'), shortSide = ISL_CAMP_CANVAS, shortPx = Math.min(w, h);
+  /* ★ v1.264.0 顯示倍率下限(見 ISL_CAMP_MIN_SCALE 上方說明):cover-fit 的 s 就等於「視窗短邊 ÷ 畫布短邊」,
+     算出來低於下限時改縮小設計畫布把 s 頂回下限,畫面上的設施/主角/寵物才不會隨視窗變矮一起縮水。
+     ⚠ 下限只會「縮小畫布」不會放大,視窗夠高的機器完全不受影響;⚠ 保底 120px 防止極端小視窗除出病態值。 */
+  if(shortPx > 0 && ISL_CAMP_MIN_SCALE > 0 && shortPx / ISL_CAMP_CANVAS < ISL_CAMP_MIN_SCALE){
+    shortSide = Math.max(120, Math.round(shortPx / ISL_CAMP_MIN_SCALE));
+  }
+  if(w >= h){ ch = shortSide; cw = Math.round(shortSide * w / h); } else { cw = shortSide; ch = Math.round(shortSide * h / w); }
   _IS.campCanvas = { w: cw, h: ch };
   if(g){ g.style.width = cw + 'px'; g.style.height = ch + 'px'; }
   s = Math.max(w / cw, h / ch);
