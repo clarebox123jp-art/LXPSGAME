@@ -1397,6 +1397,14 @@ body.wb-in-worldboss-battle .popup {
 
 /* === 橫式低高度 (≤500px 高,例如手機橫放) === */
 @media (orientation: landscape) and (max-height: 500px) {
+  /* ★ v5.222.0（老師回報手機橫放·Galaxy S24+·首頁標題字幾乎完全看不見)—
+     首頁標題 .title-wrap/.title-zh 原本疊了兩層固定負 margin(-180px+-320px design px)，
+     用來把標題圖從 flex 置中位置往上拉、貼齊畫布上緣，這個位移量是照桌機/iPad 的畫布配置
+     手調出來的固定值；橫放手機這種極短視窗，同樣的固定位移量會把標題圖整個拉出 #gc 可視
+     範圍外(#gc 有 overflow:hidden，超出去的部分直接看不見)。這裡縮小位移量，讓標題留在
+     可視範圍內；只在「橫式且真實視窗高度 ≤500px」生效，不影響 desktop/iPad 原本的位置。 */
+  #overlay .title-wrap { margin-top: -20px; }
+  .title-zh { margin-top: -40px; }
   /* 確保所有彈窗高度受限,可捲動 */
   #_deadlock-rescue-menu,
   #adv-boss-detail-pop > div,
@@ -3020,6 +3028,18 @@ body.wb-in-worldboss-battle .popup {
   font-size:24px;font-weight:700;letter-spacing:1px;
   border:2.5px solid;transition:all 0.18s;position:relative;
   min-height:0;height:56px;
+}
+/* ════════════════════════════════════════════════════════════════
+   ★ v5.221.0(2026-09-19・老師裁定「甲」)— 觸控裝置底部選單按鈕放大:
+     v5.219.0 讓畫布拉高後底部改留手勢帶(見 index.html scaleToViewport)，
+     這裡把按鈕本身也放大，實體點擊區更好按；圖示/文字放大幅度在
+     index.html 同款媒體查詢裡疊加(那邊字級走 clamp()，這裡只管高度)。
+   ════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) and (max-width: 1366px) and (min-width: 601px) {
+  #adv-bottom-nav .adv-nav-btn {
+    height: 100px !important;
+    min-height: 100px !important;
+  }
 }
 .adv-nav-btn.locked-nav{
   background:rgba(30,30,40,0.7);border-color:rgba(80,80,100,0.4);
