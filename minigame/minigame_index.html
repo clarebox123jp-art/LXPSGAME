@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.263.0(2026-09-19)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.265.0(2026-09-19)
      ⚠ 檔頭這行自 v1.163.0 起漏跟(停在 v1.162.0),v1.170.0 補上;逐輪更動摘要一律看下方 MG_VER 常數的註解。
      ★ v1.162.0(2026-09-14・老師：「檢查星域的效果…確認每個功能都有用。還有提升寵物能力的。最後包括缺的六個都全部完成」)—
        【稽核結果】寫了一支稽核器把 D.SK_NODES/D.SK_TITLES 的效果鍵全部對比 index 的消費點，
@@ -6121,6 +6121,32 @@ window.islDirectVeilOff = function(){
 #isl-hudmore button.sos{background:rgba(200,40,40,.92);border-color:#ffd166;font-weight:900;}
 #island-root.ipad #isl-hudmore{min-width:330px;}
 #island-root.ipad #isl-hudmore button{font-size:30px;padding:12px 16px;}
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.265.0(2026-09-19・老師兩項)— 放在 <style> 最尾端,同權重靠「後者勝」生效,舊規則一行未刪。
+ * ①「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」
+ *   → islBldNameFlash() 的小牌子:掛在 #isl-camp-grid 層,吃不到設施個人縮放(見函式說明),1.7 秒淡出。
+ * ══════════════════════════════════════════════════════════════════════════ */
+#isl-camp-grid .isl-bldname{position:absolute;transform:translate(-50%,-135%);z-index:9;pointer-events:none;background:rgba(10,22,32,.88);border:2px solid #7cc4e8;border-radius:999px;padding:4px 14px;font-size:20px;font-weight:900;color:#fff;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.45);animation:islBldNameIn 1.7s ease forwards;}
+#island-root.ipad #isl-camp-grid .isl-bldname{font-size:26px;padding:5px 18px;}
+@keyframes islBldNameIn{0%{opacity:0;transform:translate(-50%,-110%);}12%{opacity:1;transform:translate(-50%,-135%);}78%{opacity:1;}100%{opacity:0;transform:translate(-50%,-160%);}}
+/* ══════════════════════════════════════════════════════════════════════════
+ * ②「右側選單的圖片不管在哪個裝置(PC、IPAD)都要保持五個靠右邊緣對齊,ICON 放大到接近填滿黃色方框」
+ *   改動三件事(PC 與 iPad 從此吃**同一組數值**,不再各走各的):
+ *   (a) 側欄寬度統一 176px(原 PC 75px/iPad 300px 兩套),右內距縮到 3px + 捲軸隱藏(scrollbar-width:none)
+ *       ⇒ 五顆方磚貼齊視窗右緣,不再被捲軸溝槽/大內距推開一條縫。
+ *   (b) 五顆一律全部看得到:方磚 flex:1 1 0 平分高度、拿掉 v1.264.0 的 min-height 100/132px 下限
+ *       (那個下限在矮視窗會把第五顆擠出去變成要捲動)⇒ 高度不夠時五顆一起等比變矮,永遠五顆都在。
+ *   (c) ICON 填滿:黃色方框是 .ci(aspect-ratio:1 的金色底),但圖片被通用規則 `.ci .isl-ico{width:1em}`
+ *       綁在 font-size(上限 72px)上,方框 150px、圖只有 72px ⇒ 看起來永遠小一圈。改成寬高 86% 直接跟著
+ *       方框走,方框多大圖就多大;emoji 備援字級同步放大。手機直式(≤780px 底部橫列)那套維持不動。
+ * ══════════════════════════════════════════════════════════════════════════ */
+#island-root #isl-camp-side, #island-root.ipad #isl-camp-side{width:176px !important;flex-basis:176px !important;padding:6px 3px 6px 5px !important;gap:7px !important;scrollbar-width:none !important;}
+#island-root #isl-camp-side::-webkit-scrollbar{display:none;}
+#island-root #isl-camp-side button.cat, #island-root.ipad #isl-camp-side button.cat{flex:1 1 0 !important;min-height:0 !important;}
+#island-root #isl-camp-side button.cat .ci, #island-root.ipad #isl-camp-side button.cat .ci{font-size:clamp(30px,6vh,84px) !important;padding:5px !important;}   /* ⚠ 舊規則的 padding:9% 是以「側欄容器寬度」解析的(CSS 百分比內距一律看 containing block 的寬),176px 側欄 ⇒ 每邊 15px 內距+4px 邊框,73px 的金色方框內容區只剩 35px——這才是「圖示永遠小一圈」的真兇;改成固定 5px */
+#island-root #isl-camp-side button.cat .ci .isl-ico, #island-root #isl-camp-side button.cat .ci .isl-noimg, #island-root.ipad #isl-camp-side button.cat .ci .isl-ico, #island-root.ipad #isl-camp-side button.cat .ci .isl-noimg{width:100% !important;height:100% !important;object-fit:contain !important;}
+#island-root #isl-camp-side button.cat .lb, #island-root.ipad #isl-camp-side button.cat .lb{font-size:clamp(13px,2vh,26px) !important;}
+@media (max-width:780px){ #island-root #isl-camp-side, #island-root.ipad #isl-camp-side{width:100% !important;flex-basis:auto !important;} #island-root #isl-camp-side button.cat{flex:0 0 auto !important;min-height:64px !important;} }   /* 直式/手機:維持 v1.226.0 底部五欄橫列的既有版型,只把本段的直欄覆寫還原 */
 </style>
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
      層級(設計書 2.1):#isl-hud 固定頂欄 → 各畫面(#isl-create / #isl-map-wrap / #isl-zone / #isl-camp / #isl-act)
@@ -6249,7 +6275,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.264.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.265.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -6258,7 +6284,21 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.264.0';   /* ★★ v1.264.0(2026-09-19・老師「換一台筆記電腦後,營地選單圖片和角色圖片又變超小、子選單又疊在一起。這個問題一直沒有克服,每次換裝置都會遇到,試圖找到原因並解決」+「點營地中的營火、火把等設施類也要出現名稱(現在裝飾類有做到)」)★★ —
+var MG_VER = 'v1.265.0';   /* ★ v1.265.0(2026-09-19・老師看圖兩項:①「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」②「右側選單的圖片不管在哪個裝置(PC、IPAD)都要保持五個靠右邊緣對齊,ICON 放大到接近填滿黃色方框」)—
+   ①【設施名稱改點了才顯示・且不隨設施縮放】v1.264.0 把 .bn 名稱標籤畫在 .isl-cell 裡面,兩個問題:常駐顯示、
+     且標籤跟著 islCampBldApplyTransforms 寫在設施上的個人縮放(0.5~2.0)一起變大變小(老師截圖裡放大過的營火標籤跟著巨大)。
+     改成:自己的營地不再畫常駐標籤;點設施的當下由新函式 islBldNameFlash() 在 #isl-camp-grid 層浮出「🔥 營火 Lv2」
+     小牌子 1.7 秒淡出(施工/升級中顯示狀態)——牌子掛在格子**外面**那一層,設施個人縮放影響不到,
+     實測設施 scale(2) 時牌子字級仍為標準 20px/iPad 26px;走過去開視窗的既有互動一行未動。
+     參觀好友營地(islCoopCampPaint,唯讀、點不了設施)維持原本常駐標籤不動。
+   ②【側欄五顆 PC/iPad 統一・貼右緣・ICON 填滿】三件事,PC 與 iPad 從此吃同一組數值:
+     (a) 側欄寬度統一 176px(原 PC 75px/iPad 300px 兩套)、右內距 3px、捲軸隱藏 ⇒ 方磚貼齊視窗右緣(實測右縫 4px)。
+     (b) 方磚 flex:1 1 0 平分高度並拿掉 v1.264.0 的 min-height 100/132 下限 ⇒ 五顆永遠全部看得到(實測兩種裝置皆 5/5 無捲動)。
+     (c) ★ICON 小一圈的真兇:金色方框 .ci 的舊規則 padding:9% —— CSS 百分比內距一律以 containing block 的**寬度**解析,
+        這裡的 containing block 是側欄容器(176px)⇒ 每邊內距 15px + 邊框 4px,73px 的方框內容區只剩 35px,
+        圖再怎麼設都只有 30px。改成固定 padding:5px + 圖 100%(object-fit:contain),實測圖佔整顆方磚 76%(原 41%)。
+     手機直式(≤780px 底部五欄橫列)那套版型維持不動。
+   ⚠ 另:檔頭版本行 v1.264.0 那輪漏跟(停在 v1.263.0),本輪一併補上。 */   /* ★★ v1.264.0(2026-09-19・老師「換一台筆記電腦後,營地選單圖片和角色圖片又變超小、子選單又疊在一起。這個問題一直沒有克服,每次換裝置都會遇到,試圖找到原因並解決」+「點營地中的營火、火把等設施類也要出現名稱(現在裝飾類有做到)」)★★ —
    ①【子選單疊圖根治・真因是沒關起來的 CSS 註解】第 5967 行 v1.249.0 那段「斜線星號」從來沒有寫結尾,一路吃掉 v1.254.0/v1.256.0 真正的兩行修正(.sm-grid 的 grid-auto-rows:max-content/align-items:start、.sm-grid button 的 height:auto/width:100%/min-width:0)⇒ 格線改成 5 欄了,按鈕卻還鎖在 v1.240.0 寫死的 width:150px !important,欄寬隨視窗變、按鈕不變,.ci 的正方形高度算不準就往下壓進下一列。真 Chromium 四種視窗實測:補上註解結尾前,圖示往下溢出 +16/+54/+62/+92px,補後全部負值(零重疊)且四種視窗結果一致。同輪順手補好另外兩個同款漏關的註解(4466 行吃掉 .isl-deco.drag 拖曳放大提示、4720 行吃掉 .sm-title/.sm-grid 等 11 行基底規則,連帶讓 .sm-grid button.gold/.warn 的金色提醒失效)。
    ②【營地「換裝置就變超小」根治・老師裁定甲】營地裡每一樣東西的大小只看視窗高度且沒有下限(畫布短邊固定 860 → s = 視窗短邊 ÷ 860,主角/設施/寵物全部乘同一個 s)⇒ 桌機換筆電、視窗矮一截,全部跟著縮。新增 ISL_CAMP_MIN_SCALE = 1.0:s 低於下限時改縮小「設計畫布」把 s 頂回 1.0(畫布本來就永遠剛好蓋滿視窗,設計尺寸只是顯示倍率旋鈕),所有裝置一律用設計原尺寸,不裁掉任何東西、不動任何座標與存檔。側欄五顆分類磚(v1.241.0 的 flex:1 1 0 平分高度,同樣沒有下限)補 min-height 100px/iPad 132px,並把 overflow:hidden 改成 overflow-y:auto,真的塞不下時改成可捲動而不是裁掉第五顆。
    ③【設施名稱】營地設施補回「名稱 LvN」白字標籤(.bn 的 CSS 與參觀好友營地那條路徑一直都有,只有自己的營地在 v1.216.0 被拿掉),兩條路徑從此一致。 */   /* ★ v1.263.0(2026-09-19・老師兩項:①「荒島戰鬥畫面的主角攻擊 BAR 的左右移動速度突然變得超級快,是你的新設計?突然變得太難了」②「戰鬥的保守治療按鈕移到自動技能的右邊,兩顆鈕同一排不要擋住戰鬥 LOG 條」)—
@@ -18956,7 +18996,12 @@ function islCampPaint(){
       (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') +
       (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) +
       (Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) < 100 ? '<span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span>' : '') +
-      '<span class="bn">' + islEsc(b.n) + ' Lv' + s.lv + '</span></button>';   /* ★ v1.264.0 老師「點營地中的營火、火把等設施類也要出現名稱(現在裝飾類有做到)」— .bn 這顆標籤的 CSS(白字黑底藥丸,見 .isl-cell .bn)一直都在、參觀好友營地那條路徑(islCoopCampPaint)也一直有畫,只有「自己的營地」在 v1.216.0 那輪依老師當時指示把名稱與等級一起拿掉了。本輪照老師新的指示補回來,兩條路徑從此一致,格式沿用好友營地那邊既有的「名稱 LvN」。 */
+      '</button>';   /* ★ v1.265.0 老師「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」—
+      v1.264.0 把 .bn 名稱標籤畫在 .isl-cell **裡面**,兩個問題:①常駐顯示(老師只要點了才出現)②標籤跟著
+      islCampBldApplyTransforms 寫在設施上的個人縮放(0.5~2.0)一起變大變小——老師截圖裡放大過的營火,標籤跟著巨大。
+      改成:自己的營地不再畫常駐標籤,點設施的當下由 islBldNameFlash() 在 #isl-camp-grid 層(設施縮放影響不到的那一層)
+      用同一組 % 座標浮出「🔥 營火 Lv2」小牌子 1.7 秒淡出 ⇒ 名稱字級恆定,設施縮到 0.5 倍或放到 2 倍都一樣大。
+      參觀好友營地(islCoopCampPaint,唯讀、點不了設施)維持原本的常駐標籤不動。 */
   }
   cells.innerHTML = h;
   islCampBldApplyTransforms();   /* 逐一把 scale(k)+可能的 scaleX(-1) 寫進 style.transform(見函式說明,不能只靠 CSS class) */
@@ -19505,6 +19550,27 @@ function islCampBldApplyTransforms(){
 }
 /* 拖曳:比照 islDecoDragBind,沒移動超過 8px 就當「點一下」→ 先走過去再開設施視窗;
    真的拖動就存新的 x/y。★ v1.199.0 取代舊版「進搬移模式→點另一格互換」那一套。 */
+/* ★ v1.265.0 老師「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」—
+   點設施的當下在它頭上浮出「🔥 營火 Lv2」小牌子,1.7 秒自動淡出;走過去開視窗的既有互動完全不動。
+   ★ 牌子刻意掛在 #isl-camp-grid(跟設施同一個可縮放畫布)而**不是掛在 .isl-cell 裡面**:
+     設施的個人縮放(islCampScale 0.5~2.0)是 islCampBldApplyTransforms 寫在 .isl-cell 自己的 transform 上,
+     掛在格子外面的牌子完全吃不到那個縮放 ⇒ 名稱字級恆定,設施縮到 0.5 或放到 2 倍都一樣大(老師的第二句需求);
+     而畫布本身的視角縮放/平移(campCam)兩者都吃得到,牌子永遠貼著設施跑,零額外計算。 */
+function islBldNameFlash(i){
+  try{
+    var s = ISL.camp.slots[i], db = islDB(), b, g, el, lvTx;
+    if(!s) return;
+    b = db.BUILDINGS[s.bld]; g = $('isl-camp-grid');
+    if(!b || !g) return;
+    el = document.createElement('div');
+    el.className = 'isl-bldname';
+    lvTx = s.bt ? (s.btTo ? ' 升級中' : ' 施工中') : (' Lv' + (s.lv || 1));
+    el.textContent = b.e + ' ' + b.n + lvTx;
+    el.style.left = s.x + '%'; el.style.top = s.y + '%';
+    g.appendChild(el);
+    setTimeout(function(){ try{ if(el.parentNode) el.parentNode.removeChild(el); }catch(_bn2){} }, 1700);
+  }catch(_bn){}
+}
 function islCampBldDragBind(layer){
   var cur = null;
   function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }
@@ -19517,12 +19583,12 @@ function islCampBldDragBind(layer){
     if(s && s.bt){   /* 施工中不能拖:視覺上已經被 move() 改到新位置,這裡要改回存檔裡的原始座標,不然要等下次重畫才會歸位 */
       cur.style.left = s.x + '%'; cur.style.top = s.y + '%';
       cur = null;
-      if(tap) islCampGoToCell(i, function(){ islCampCellTap(i); });
+      if(tap){ islBldNameFlash(i); islCampGoToCell(i, function(){ islCampCellTap(i); }); }   /* ★ v1.265.0 點下去先浮名稱 */
       return;
     }
     if(s && !tap && cur._x != null){ s.x = Math.round(cur._x); s.y = Math.round(cur._y); islSave('campbldmove'); }
     cur = null;
-    if(tap) islCampGoToCell(i, function(){ islCampCellTap(i); });
+    if(tap){ islBldNameFlash(i); islCampGoToCell(i, function(){ islCampCellTap(i); }); }   /* ★ v1.265.0 點下去先浮名稱 */
     else islCampBldApplyTransforms();   /* 拖完把 transform 字串重寫一次(left/top 是 style 直接改的,transform 沒被動過,這行其實只是保險) */
   }
   layer.addEventListener('touchstart', down, { passive: false }); layer.addEventListener('touchmove', move, { passive: false }); layer.addEventListener('touchend', up); layer.addEventListener('touchcancel', up);
