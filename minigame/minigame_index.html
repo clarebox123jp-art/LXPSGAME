@@ -5401,7 +5401,7 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-fig.p{left:12%;transform:scale(.8);transform-origin:50% 100%;} #isl-battle .bt-fig.m{right:12%;}   /* ★ v1.283.0 老師「主角人物圖片尺寸縮小 20%」— 縮放套在外層 .bt-fig.p(定位框),不是內層會播呼吸動畫的 .fig,兩個 transform 各自在不同元素上疊加、不會互相蓋掉;原點釘在腳底(50% 100%)才不會縮小後整個人往上飄 */
 #isl-battle .bt-fig .fig{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;transform-origin:50% 100%;animation:islBtBreath 2.4s ease-in-out infinite;}
 #isl-battle .bt-fig.m .fig{animation-duration:2s;animation-delay:.6s;}
-#isl-battle .bt-fig.m .pic:not(.mon){transform:scaleX(-1);}   /* ★ v1.284.0 老師看圖回報「黏泥怪/僧帽水母靈面向還是錯的」— 推翻 v1.283.0 的假設:那輪以為「素材一律畫成面朝右」對所有魔物圖都成立,但多數魔物走的是 islMonPicKey() 共用圖示(.pic.mon,與圖鑑/野外共用同一張),這批圖本來就是照玩家會從左側靠近設計、已經面朝左,硬套鏡像反而轉成面朝右。改成排除 .mon:只有真的有專屬戰鬥四態圖(bt_m_<k>_<state>,.pic 不帶 .mon)的少數魔物才鏡像,共用圖示的多數魔物維持原圖不鏡像。 */
+#isl-battle .bt-fig.m .pic{transform:scaleX(-1);}   /* ★ v1.286.0 老師看圖回報「毛蟹武士/夜蝠面向還是錯的,全部怪物都要鏡像翻向左側(面朝玩家方)」— 推翻 v1.284.0 的假設:那輪以為共用圖示(.pic.mon)是照玩家從左側靠近設計、已經面朝左,這次老師截圖裡毛蟹武士與夜蝠(都是共用圖示)明明白白面朝右(背對玩家),證明那個假設是錯的,共用圖示其實跟專屬戰鬥圖一樣預設面朝右。拿掉 :not(.mon) 排除,全部魔物圖(不分共用或專屬)一律鏡像,統一面向左側玩家。 */
 #isl-battle .bt-fig .fig img.pic{max-width:100%;max-height:100%;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
 #isl-battle .bt-fig .fig .pic-layers{position:relative;width:100%;height:100%;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}   /* ★ v1.138.0 三層戰鬥立繪(base/cloth/hair)疊合容器 */
 #isl-battle .bt-fig .fig .pic-layers img.ly{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
@@ -5441,8 +5441,8 @@ window.islDirectVeilOff = function(){
    ⚠ 刻意沿用既有 .bt-hpbox 這個 class 當每一列的容器,而不是另開一套:
      iPad 放大覆寫段(#island-root.ipad #isl-battle .bt-hpbox .nm 等)本來就只認 .bt-hpbox,
      另開 class 會讓組隊之後的名字/數字在 iPad 上全部縮回小字。 */
-#isl-battle .bt-top{align-items:flex-start;}
-#isl-battle .bt-team{flex:1 1 0;display:flex;flex-direction:column;gap:4px;min-width:0;}
+#isl-battle .bt-top{align-items:flex-start;justify-content:space-between;}   /* ★ v1.286.0 老師看圖「上面四個透明深色底的框架縮短50%,玩家方向左縮、魔物方向右縮,讓中間VS區域變大可以看到背景」— 兩側改固定寬度(不再各佔滿一半)後用 space-between 把它們推到最外側,中間空出來的部份.bt-team本身沒有背景色(只有裡面的.bt-hpbox各自有),自然會透出戰鬥場景背景圖 */
+#isl-battle .bt-team{flex:0 0 24%;max-width:24%;display:flex;flex-direction:column;gap:4px;min-width:0;}   /* ★ v1.286.0 由 flex:1 1 0(各佔滿半版面)改固定 24%寬(約為原本~48%的一半,「縮短50%」);.p排本來就在前面貼左緣、.m排在後面貼右緣,交給上面.bt-top的space-between定位,不必再另外寫left/right */
 #isl-battle .bt-team .bt-hpbox{padding:4px 9px;}
 #isl-battle .bt-team .bt-hpbox .nm{font-size:15px;}
 #isl-battle .bt-team .bt-hpbox .hpb{height:10px;margin:3px 0;}
@@ -6485,16 +6485,13 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.285.0';   /* ★★ v1.285.0(2026-09-20・老師「仔細檢查目前荒島男女主角跑步圖片順序,修得更正確」)—
-   Python 逐像素複測 8 張整張人物跑步圖(男女各 h0~h3)全部 24 列(3 方向×8 圖),確認 v1.282.0「第 6 格是收腿
-   站直過渡幀」的判斷維持正確;但 v1.241.0 留下的「其餘 5 格依跨幅寬度排序、大小交錯播放」演算法覆核後
-   站不住腳——5 格跨幅彼此只差幾像素,排序結果對量測誤差極敏感,實測(男 h0 側面)排出來的播放順序跨幅
-   64→55→63→60→61 呈鋸齒狀,不是平順的「跨步拉開→收回」律動,且完全脫離美術原始畫格順序,日後老師想
-   微調某一格動作也難對應。比照本檔同一套手法、已驗證沒問題的走路 ISL_WALK_SEQ(該序列是照素材原始欄序
-   排,不是靠寬度量測),把 islFullRunSeq 改成同樣做法:拿掉跨幅量測與排序,5 個跨步格直接照原始欄序(第
-   1~5 格)播放,每格後面插一次第 6 格站直錨點,播放序列長度與節奏(10 格×54ms)完全不變,islRjPaint 端
-   不必修改。⚠ 沒有實機環境能看動畫實際跑動效果,這是依靜態逐格圖片比對做的判斷,麻煩老師這次務必實機
-   驗收男女跑步動作(尤其正面/背面方向,先前沒有另外覆核過)。 */
+var MG_VER = 'v1.287.0';   /* ★★ v1.287.0(2026-09-20・老師「跑步動畫速度用150ms」)—
+   islRjPaint 跑步序列播放間隔由 54ms/格改成 150ms/格(10 格序列,整圈由 540ms 拉長到 1500ms);
+   老師先前反映 54ms 時站直格與跨步格切換太快,看起來像角色在原地快速抖動而不是跑步,改慢後每格
+   停留時間變長,應該比較看得出是連續的跑步動作。⚠ 沒有實機環境能實際感受新速度跑不跑得順,麻煩
+   老師這次實機確認 150ms 是不是剛好、還是要再調快或調慢。 */
+var MG_VER_PREV_286 = 'v1.286.0';   /* ★★ v1.286.0(2026-09-20・老師看圖三項:①戰鬥HP框架縮短50%露出背景 ②技能列次數用完要變暗 ③魔物面向再次回報還是錯的)— 詳見上一輪交付。 */
+var MG_VER_PREV_285 = 'v1.285.0';   /* ★★ v1.285.0(2026-09-20・老師「仔細檢查目前荒島男女主角跑步圖片順序,修得更正確」)— islFullRunSeq 改回素材原始欄序播放,詳見上一輪交付。 */
 var MG_VER_PREV_284 = 'v1.284.0';   /* ★★ v1.284.0(2026-09-20・老師連續多項回報與新需求)—
    ①戰鬥畫面補修:魔物面向推翻上輪判斷(多數魔物走共用圖鑑圖示 .pic.mon,本來就已朝左,改成排除 .mon 只鏡像真的有專屬戰鬥圖的少數魔物);
    魔物 HP 條那排文字(名稱/等級/標籤)改右對齊;雙方 HP 條左側都新增 HP 小標籤(依 row-reverse 方向決定放在 DOM 前或後);
@@ -18536,7 +18533,7 @@ function islRjPaint(sp, body, row, kind, t){
     var _rjScale = (kind === 'run') ? 'scale(1.16)' : 'scale(1.23)';   /* ★ v1.240.0 老師「跑步和跳躍時的圖片要再稍微放大 5~10%」:1.08→1.16、1.15→1.23 */
     if(w.style.transform !== _rjScale){ w.style.transform = _rjScale; w.style.transformOrigin = '32px 60px'; }   /* ★ v1.237.0 錨點沿用 islLyApply 同一套「水平中心線×腳底線」基準(32px,60px),不是用格子邊緣(64px),放大時腳底才不會離地飄起來 */
     if(kind === 'run'){
-      if(full.seq && full.seq[row] && full.seq[row].length === 10){ col = full.seq[row][Math.floor(t / 54) % 10]; }   /* ★ v1.282.0 10 格序列(5 跨步交錯插 5 次站直錨點),見 islFullRunSeq;54ms/格讓整圈週期維持與舊版 6×90ms=540ms 一致,腳程節奏不因格數變多而變慢 */
+      if(full.seq && full.seq[row] && full.seq[row].length === 10){ col = full.seq[row][Math.floor(t / 150) % 10]; }   /* ★ v1.287.0 老師「跑步動畫速度用150ms」— 老師實機看過覺得原本 54ms/格(整圈540ms)在站直格與跨步格之間切換太快、看起來像原地抖動,改成 150ms/格(整圈 10×150=1500ms),見 MG_VER 版本說明。 */
       else { col = Math.floor(t / 90) % 6; }   /* 序列算失敗的備援,退回舊版直接照格序播放 */
     }
     else { el = Math.max(0, t - _islJumpAt); col = el < 130 ? 0 : (el < 290 ? 1 : (el < 520 ? 2 : 3)); }   /* ★ v1.237.0 老師「跳躍的高度和距離再提升+100%」— 落地時間點依新的 .65s(660ms)總時長等比拉長(原 90/200/360,對應舊 .45s/450ms 生命週期),不是照高度直接翻倍到 720ms(那樣會超過下面 setTimeout 660ms 就把 .jump class 拔掉的時間點,落地姿勢永遠播不到) */
@@ -26101,8 +26098,8 @@ function islBtActs(on){
   bs = a.querySelectorAll('button');
   for(i = 0; i < bs.length; i++){
     k = bs[i].getAttribute('data-a');
-    /* ★ v1.165.0 🎯 指令按鈕:這場用過就變灰(與「智取一場一次」同一種處理) */
-    bs[i].disabled = !on || (k === 'wit' && (_islBt.witCd || 0) > 0) || (k.indexOf('cmd:') === 0 && _islBt.cmdUsed && _islBt.cmdUsed[k.substring(4)]);
+    /* ★ v1.165.0 🎯 指令按鈕:這場用過就變灰(與「智取一場一次」同一種處理);★ v1.286.0 老師看圖「下方技能列使用次數歸零時變成暗色」——緊急包紮(bnd)/絕招(sk)原本用完後點下去只會跳戰報文字婉拒,按鈕本身仍是亮著的可點樣子,容易讓學生以為還能用;比照 wit/cmd 同一套,次數用完直接連同 disabled 一起變暗(CSS 既有 button:disabled{opacity:.35} 沿用,不必新增樣式) */
+    bs[i].disabled = !on || (k === 'wit' && (_islBt.witCd || 0) > 0) || (k.indexOf('cmd:') === 0 && _islBt.cmdUsed && _islBt.cmdUsed[k.substring(4)]) || (k === 'bnd' && _islBt.bnd >= islSkEff('bandageN')) || (k === 'sk' && _islBt.skUsed);
   }
   a.classList.toggle('off', !on);
   var _wb = a.querySelector('button[data-a="wit"] small'); if(_wb) _wb.textContent = ((_islBt.witCd || 0) > 0) ? '智取(' + _islBt.witCd + ')' : '智取';   /* ★ v1.226.0 顯示冷卻 */
