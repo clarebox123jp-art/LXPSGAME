@@ -3709,6 +3709,8 @@ window.islDirectVeilOff = function(){
 <!-- ★ v1.29.0 戰鬥模式:各英雄極限爆發音效(全部沿用主程式 index.html 同 id 同 src,preload=none 不影響首載;已逐檔 curl -I 驗證 200;主程式的 sfx-waterfox-burst 因 raw 404 未收錄) -->
 <audio id="sfx-burst" preload="none" src="../%E7%88%86%E7%99%BC%E6%8A%80%E8%83%BD.mp3"></audio>
 <audio id="sfx-crit" preload="none" src="../%E7%88%86%E6%93%8A.mp3"></audio>
+<audio id="sfx-sweet-hit" preload="none" src="../minigame/audio/%E7%94%9C%E8%9C%9C%E9%BB%9E%E5%91%BD%E4%B8%AD.mp3"></audio><!-- ★ v1.280.0 老師需求「採集和戰鬥的甜蜜點命中時播放音效」— 命中甜蜜點(圓心暴擊區)專屬音效,取代原本共用的 sfx-crit(爆擊.mp3),見 islQtePull/islQteSwing/islQteBlow/islQteTension/islBtQte 五處消費點 -->
+<audio id="sfx-mon-appear" preload="none" src="../minigame/audio/%E5%B0%8F%E6%80%AA%E5%87%BA%E7%8F%BE.mp3"></audio><!-- ★ v1.280.0 老師需求「野外小怪跳出來時播放音效」— islEncStep()/islMineCheck() 觸發野外遇敵戰鬥的那一刻播放 -->
 <audio id="sfx-punch" preload="none" src="../short_punch1.mp3"></audio>
 <audio id="sfx-sword" preload="none" src="../sword2.mp3"></audio>
 <audio id="sfx-athena-burst" preload="none" src="../%E5%A4%A9%E4%BD%BF%E7%9A%84%E5%91%BC%E8%81%B2.mp3"></audio>
@@ -4817,12 +4819,19 @@ window.islDirectVeilOff = function(){
 .isl-bag-slot .chk{position:absolute;right:6px;top:4px;bottom:auto;font-size:26px;z-index:2;}   /* ★ v1.273.0 老師「勾選方塊位置改成右上角」— 原本壓在右下角,跟 ×N 數量(v1.240.0 起 .n 釘右下)疊在同一個角落 */
 .isl-bag-slot .fx{display:block;font-size:15px;line-height:1.15;color:#9fe8ff;font-weight:700;max-width:96%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}   /* ★ v1.273.0 物品包格底下一行戰鬥效果(讀 D.BT_ITEMS + islBtItemFxText,沒登記的不顯示) */
 #island-root.ipad .isl-bag-slot .fx{font-size:24px;}
-.isl-bag-slot .seltag{position:absolute;left:6px;bottom:4px;font-size:16px;font-weight:900;background:#ffd166;color:#3a2a00;border-radius:999px;padding:0 8px;}
+.isl-bag-slot .seltag{position:absolute;left:6px;right:6px;bottom:4px;font-size:32px;font-weight:900;background:#ffd166;color:#3a2a00;border-radius:999px;padding:4px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px;white-space:nowrap;overflow:hidden;}   /* ★ v1.278.0 老師「存入/取出標籤放大100%並增加+-可設定數量」— 16→32px,並從純文字改成 flex 容器裝下面的 qb/qn 數量步進器 */
+.isl-bag-slot .seltag .qb{cursor:pointer;background:rgba(58,42,0,.2);border-radius:50%;width:1.15em;height:1.15em;min-width:1.15em;display:inline-flex;align-items:center;justify-content:center;line-height:1;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+.isl-bag-slot .seltag .qb:active{background:rgba(58,42,0,.4);transform:scale(.92);}
+.isl-bag-slot .seltag .qn{min-width:1.4em;text-align:center;}
 .isl-selbar{position:sticky;bottom:0;display:flex;justify-content:center;padding:10px 0 2px;background:linear-gradient(0deg,rgba(8,16,12,.92),rgba(8,16,12,0));}   /* ★ v1.271.0 選取存入/取出底部固定操作列 */
 .isl-selbar .isl-btn{font-size:20px;padding:10px 22px;}
-.isl-store-q.sel-row{cursor:pointer;border:2px solid transparent;position:relative;padding-right:40px;}   /* ★ v1.273.0 勾選方塊改釘在列的右上角 */
+.isl-store-q.sel-row{cursor:pointer;border:2px solid transparent;position:relative;padding-right:40px;flex-wrap:wrap;row-gap:6px;}   /* ★ v1.273.0 勾選方塊改釘在列的右上角;★ v1.278.0 補 flex-wrap 讓新增的「取出」標籤+數量步進器擠不下時換行,不會被切掉或蓋住 */
 .isl-store-q.sel-row.sel{border-color:#ffd166;background:rgba(255,209,102,.16);}
 .isl-store-q.sel-row .chk{font-size:24px;position:absolute;right:4px;top:2px;}
+.isl-store-q.sel-row .seltag{display:inline-flex;align-items:center;gap:6px;font-size:32px;font-weight:900;background:#ffd166;color:#3a2a00;border-radius:999px;padding:4px 12px;margin-left:8px;white-space:nowrap;}   /* ★ v1.278.0 老師「存入/取出標籤放大100%並增加+-可設定數量」— 倉庫這邊以前沒有「取出」標籤,本輪比照物品包的存入標籤補上同尺寸同風格 */
+.isl-store-q.sel-row .seltag .qb{cursor:pointer;background:rgba(58,42,0,.2);border-radius:50%;width:1.15em;height:1.15em;min-width:1.15em;display:inline-flex;align-items:center;justify-content:center;line-height:1;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+.isl-store-q.sel-row .seltag .qb:active{background:rgba(58,42,0,.4);transform:scale(.92);}
+.isl-store-q.sel-row .seltag .qn{min-width:1.4em;text-align:center;}
 .isl-store-item .fx{display:block;font-size:18px;line-height:1.2;color:#9fe8ff;font-weight:700;max-width:220px;}   /* ★ v1.273.0 倉庫每種物品名稱下方顯示戰鬥效果(同一物品各品質共用同一份文字) */
 #island-root.ipad .isl-store-item .fx{font-size:26px;}
 .isl-bag-slot img{width:60%;height:60%;object-fit:contain;}
@@ -5418,6 +5427,7 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-qte .bar{position:relative;height:26px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;margin:6px 0 10px;}
 #isl-battle .bt-qte .zone{position:absolute;top:0;bottom:0;background:rgba(123,237,159,.6);} #isl-battle .bt-qte .zone.crit{background:#fff;}
 #isl-battle .bt-qte .ptr{position:absolute;top:-2px;bottom:-2px;width:6px;margin-left:-3px;background:#ffd166;box-shadow:0 0 8px #ffd166;}
+#isl-battle .bt-qte .bar.crit-hit{animation:islBarShake .35s ease;}   /* ★ v1.280.0 老師「戰鬥的甜蜜點命中時 bar 震動」— 戰鬥攻擊 QTE 的 .bar 是 .bt-qte 底下的,不是 .isl-qte 底下的,套用不到既有 `.isl-qte .bar.crit-hit` 那條規則(class 名字一樣、父層不一樣、CSS 選擇器完全比對不到);islBarShake 這個 @keyframes 本身是全域共用的,這裡只需要補一條選對範圍的規則。 */
 #isl-battle .bt-qte button.big{font-size:26px;padding:12px 30px;border-radius:999px;border:3px solid #ffd166;background:#ffd166;color:#222;font-weight:900;}
 #isl-battle .bt-qte .tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0;} #isl-battle .bt-qte .tools button{min-width:110px;padding:8px 10px;border-radius:12px;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:16px;display:flex;flex-direction:column;align-items:center;gap:3px;} #isl-battle .bt-qte .tools button span{font-size:30px;} #isl-battle .bt-qte .tools button small{font-size:12px;opacity:.8;}
 .isl-mon-pop{position:absolute;width:96px;height:96px;margin-left:-48px;margin-top:-88px;z-index:6;text-align:center;font-size:70px;line-height:96px;animation:islBtPop .6s cubic-bezier(.2,1.6,.5,1);pointer-events:none;} .isl-mon-pop img{width:96px;height:96px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 6px #000);} .isl-mon-pop b{position:absolute;right:-6px;top:-10px;font-size:34px;color:#ff5d5d;text-shadow:0 2px 3px #000;}
@@ -6228,8 +6238,8 @@ window.islDirectVeilOff = function(){
      白天也在 DOM 上但沒有樣式,切換日夜不必重畫任何一層)。
    ⚠ 為什麼用 filter 而不是疊一層半透明黑幕:黑幕會把「發光」一起壓暗,而且要處理層級與點擊穿透;
      filter 只作用在元素自己身上,既不影響背景圖、也不擋點擊,發光可以另外用 drop-shadow 疊回去。
-   ⚠ 夜色濾鏡鏈的順序是有意義的:先 brightness 壓暗 → saturate 降彩度 → sepia+hue-rotate 染成冷藍調
-     → 最後補一點 saturate 讓藍色不要死灰。整條只影響顏色,不動尺寸/位置,不會讓任何東西跑位。
+   ⚠ 夜色濾鏡鏈的順序是有意義的:先 brightness 壓暗 → saturate 降彩度,兩層而已。
+     整條只影響顏色,不動尺寸/位置,不會讓任何東西跑位。
    ══════════════════════════════════════════════════════════════════════════ */
 #island-root.isl-night #isl-char,
 #island-root.isl-night #isl-camp-char,
@@ -6241,7 +6251,12 @@ window.islDirectVeilOff = function(){
 #island-root.isl-night .isl-mine,
 #island-root.isl-night #isl-camp-cells .isl-cell,
 #island-root.isl-night .isl-deco{
-  filter:brightness(.62) saturate(.7) sepia(.22) hue-rotate(185deg) saturate(1.3);
+  /* ★ v1.277.0 老師回報「角色和動物的原膚色都變暗一點點就好，現在這樣直接變藍色不好看」—
+     舊版 sepia(.22) hue-rotate(185deg) 那兩段是刻意把顏色染成冷藍調營造夜色，但 sepia 會先把畫面
+     去彩轉黃再用 hue-rotate 旋色，旋到 185deg（藍區）就整個人物被染成一片藍，老師截圖裡的角色與
+     植物正是這個效果。改成只留 brightness/saturate 兩層純壓暗+降彩度、不改變原本色相，膚色/衣服/
+     植物顏色維持原色只是暗一點，符合「暗一點點就好」的要求。 */
+  filter:brightness(.8) saturate(.85);
 }
 /* 發光物件(營火/火把/路燈/螢火蟲/水晶/夜光植物…):夜色壓暗的幅度減半,再疊兩層暖光暈。
    ⚠ 這一條必須排在上面那組**後面**才蓋得過(同特異性、後宣告者勝——v1.267.0 學到的那一課)。
@@ -6433,7 +6448,35 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.276.0';   /* ★★ v1.276.0(2026-09-20・老師三項:①「荒島移動方式優化，移除跑步鍵、保留跳躍鍵(圖示放大並移到移動方向盤的右側比較好按)。螢幕左下方的滑動方向盤改成拖到外圈邊緣時自動切換成跑步(內圈小移動就是原本的行走)，原本點地面兩下切換跑步也保留。」②「IPAD荒島儲存到雲端一直跳出沒有存成功的視窗。」③「荒島大地圖的各區域的ICON、名稱和等級都放大100%。」)★★ —
+var MG_VER = 'v1.281.0';   /* ★★ v1.281.0(2026-09-20・老師四項:①「採集和戰鬥的甜蜜點命中時,bar震動,同時播放音效」②「荒島中野外小怪跳出來時播放音效」③「戰鬥中有多段傷害時,後面段數的傷害也要播放打擊音效(冒險模式、小遊戲模式全部一起改)」④「目前野外boss的位置都太角落了(在無法移動到達的地方),位置往內一點距離」)★★ —
+   ①新增音效 sfx-sweet-hit(甜蜜點命中.mp3):islQteSideAdd(採集/砍樹/採石共用的暴擊收口)、islQteBlow、islQteTension 三處把原本共用的 sfx-crit 換成專屬音效;戰鬥攻擊 QTE(islBtQte)原本完全沒有 bar 震動,補上 islQteImpact() 呼叫+CSS 補 .bt-qte .bar.crit-hit 規則(舊 .isl-qte .bar.crit-hit 選擇器對不到 .bt-qte 底下的 bar)。
+   ②新增音效 sfx-mon-appear(小怪出現.mp3):islBattleStart() 開頭在「非頭目、非地下層」的一般野外遇敵(islEncStep 步數觸發/islMineCheck 舊踩地雷式/islBtTest GM 測試鈕共用同一路徑)播放。
+   ③islBtResolveAttack(主角攻擊結算,含迴力鏢/連擊等多段武器)舊版打擊音效只在整組結算完統一播一次,迴圈裡逐段跳出的傷害數字反而是無聲的;改成每一段命中各自照傷害跳字同一組 260ms 錯開時間點各自播放,並移除結尾重複的那一次;islBtBounceHit(迴力鏢彈射打第二隻)原本完全靜音,一併補上。冒險模式對應修正在 index.html v5.231.0(機械師/警長「亂槍射擊」逐發補音效)。
+   ④islBossLairPos()(頭目巢穴 BFS 選點)邊界緩衝由 1~2 格加大到 3~4 格、新增「至少 2 個可走方向」門檻排除死巷格子,把候選範圍整個往地圖中心收;小地圖篩不出候選時退回舊規則當備援,不會讓頭目整個沒有巢穴位置。
+   對應 island_db v1.277.0(零改動,不必重傳)、sw v1.281.0(SHELL v1.247.0)。 */   /* ★★ v1.279.0(2026-09-20・老師三項:①「存入倉庫和取出的『存入/取出標籤』放大100%並增加+-可設定數量」②「PC版跑步新增快捷鍵:方向鍵/WASD連點兩下，再按任意1方向鍵就停下腳步」③「檢查跑步的過程圖片是否都完整對接repo了」)★★ —
+   ①【存入/取出標籤放大+可調數量】.isl-bag-slot .seltag 與新增的 .isl-store-q.sel-row .seltag 字級 16→32px(100%),
+   從純文字改成 flex 容器裝下「－ N ＋」步進器；_IS.bagSel[i]／_IS.storeSel[key] 由布林值改存「要存入/取出幾個」的
+   數量(打勾當下預設整疊全選,語意與舊版全存/全取一致,只是多了可調整的空間),seldep/selwd 改讀這個數量做部分存取,
+   不足額度時剩餘量留在原本的包裡；只有那疊數量 >1 才顯示步進器(只有 1 個沒有可調整的空間)。倉庫這排 sel-row
+   外層元素由 <button> 改 <div>(HTML 不允許 <button> 巢狀 <button>,+/− 步進器也是可獨立點擊元素)。
+   ②【勾選/步進器不再自動捲回頂端・老師追加回報】islPanel 每次都整段 innerHTML 覆寫,舊節點連同 scrollTop 一起
+   丟掉,新節點永遠從 0 開始(與 v1.197.0 主角能力視窗同一種坑)。新增單一真相 islModalScrollY() 讀目前 .bd
+   捲動位置,islBagOpen/islStoreOpen 在 selchk/bagqdec/bagqinc/storeqdec/storeqinc 五個會重繪的分支重繪前先記
+   進 _IS.bagScrollY/_IS.storeScrollY,兩支函式尾端各自還原一次(與 islCharOpen()/_IS.abScrollY 同一套範式)。
+   ③【PC 鍵盤雙擊跑步】新增共用出口 islKeyMoveTapRun(k,ev):方向鍵/WASD 連點兩下(350ms 內非 repeat 的第二次
+   按下)開始跑步(_IS.keyRun=true,不需按住不放);跑步中再按任一方向鍵(不論間隔多久)立刻停止跑步。
+   islRunningNow() 兩個分支新增讀 _IS.keyRun,islShowScreen()/視窗失焦/切背景比照既有 _IS.keys 一併清空,不會
+   把野外的跑步狀態帶進營地或殘留到下次進場。PC 鍵盤 Shift(按住才跑)、雙擊地板跑步(islTapToMove run 參數)、
+   方向盤拖到外圈(ISL_JOY_RUN_MAG)三條既有路徑完全不受影響,四種觸發來源並存,全部收斂到同一個 islRunningNow()。
+   ④【跑步過程圖片對接複查】逐一 HTTP 查證 D.IMG 登記的全部跑/跳/戰鬥整張人物圖(run_<body>_h<n>、
+   jump_<body>_h<n>、bt_<body>_h<n> 共 24 張,body∈{boy,girl}×h∈{0,1,2,3};外加 4 張退回用的
+   run_sheet_<body>/jump_sheet_<body>)——全數 28 張 repo 現況皆為 200,無缺漏,不必改動 island_db.js。
+   對應 island_db v1.277.0(零改動,不必重傳)、sw v1.279.0(SHELL v1.245.0)。 */   /* ★ v1.277.0(2026-09-20・老師回報「荒島夜晚的角色CSS遮罩，所有角色和動物的原膚色都變暗一點點就好，現在這樣直接變藍色不好看」)—
+   夜間濾鏡鏈 `#island-root.isl-night` 那組選擇器(角色/寵物/採集點/裝飾等前景物件)由
+   `brightness(.62) saturate(.7) sepia(.22) hue-rotate(185deg) saturate(1.3)` 改成
+   `brightness(.8) saturate(.85)`：拿掉 sepia+hue-rotate 那段染色(是它把畫面轉黃再旋到藍色區間、
+   把角色與植物整個染成一片藍)，只留純壓暗+輕微降彩度，原本色相不變，效果是「暗一點點」而非變色。
+   對應 island_db v1.276.0(零改動)、sw v1.277.0(SHELL v1.243.0)。 */   /* ★★ v1.276.0(2026-09-20・老師三項:①「荒島移動方式優化，移除跑步鍵、保留跳躍鍵(圖示放大並移到移動方向盤的右側比較好按)。螢幕左下方的滑動方向盤改成拖到外圈邊緣時自動切換成跑步(內圈小移動就是原本的行走)，原本點地面兩下切換跑步也保留。」②「IPAD荒島儲存到雲端一直跳出沒有存成功的視窗。」③「荒島大地圖的各區域的ICON、名稱和等級都放大100%。」)★★ —
    ①【移動方式改版】野外 #isl-run-btn 與營地 #isl-camp-run-btn 兩顆 👟 奔跑鈕整組移除(HTML/CSS/JS 綁定全刪，舊行以行內註解備查)；奔跑改由拖曳方向盤觸發，新增全域門檻 ISL_JOY_RUN_MAG=0.8：野外 #isl-joy 的 move() 與營地 #isl-camp-joy 的 setv() 原本就會把拖曳量正規化成 0~1(1=貼齊外圈)，跨過門檻即標記本次搖桿 run:true，islRunningNow() 新增讀這個旗標(取代移除的 _IS.runBtn/_IS.campRunBtn)；PC 鍵盤 Shift 與雙擊地板跑步(islTapToMove 的 run 參數)兩條既有路徑完全不受影響，三者並存。兩顆方向盤在進入跑步門檻時整圈染成跑步金色(.run class)當視覺回饋。跳躍鈕(🪽)保留、放大(64→88px、字級 30→46px)並從方向盤正下方移到方向盤右側(zone 側容器改 left:150px，camp 側緊貼 #isl-camp-joy 右緣並垂直置中)。
    ②【存檔誤報修正】islSaveTap()「💾 存檔」的手動存檔看門狗根因有二：(a) 舊碼判斷成功與否只看 `reason==='manual'`，但失敗後的背景重試呼叫 islSave('retry') 帶的是 reason='retry'，若那次重試才真正成功，舊碼完全不會收尾等待狀態，白白等到看門狗逾時被判定「沒有存成功」；改成只認 `_IS.manualSave` 這個「還在等手動存檔結果」的旗標本身，不管哪個 reason 觸發的成功都算數。(b) 9 秒門檻對校網較慢、iPad 較容易卡頓的連線太短，尤其第一次存檔(!_IS.cloudSeen 分支要先讀一次雲端才寫，是兩趟來回)；初始看門狗延到 14 秒，且失敗時不再只排一次背景重試就結束——第 1~2 次失敗改延後看門狗(重排 12 秒)並 toast 告知還在重試，讓玩家看到的等待跟背景重試同步，連續失敗超過上限(2 次)才真的顯示失敗視窗且立即收尾，不必空等看門狗跑完。本機一律先落地不受影響，這輪純粹修「误报」不動任何存檔資料結構。
    ③【大地圖放大】`.isl-zone-spot`(區域圖示容器+emoji)、`.zn`(區域名稱)、`.lv`(怪物等級徽章 ⚔Lv)、`.lk`(鎖頭圖示)全數放大 100%：容器 160→320px、圖示 44→88px、名稱 26→52px、等級 15→30px、鎖頭 28→52px，邊框與內距等比微調；⚠ 純 CSS 尺寸調整，未動任何區域座標/資料，個別區域若因此感覺擠在一起，屬於美術排版微調範圍，之後可視需要另外調整各 POI 座標。
@@ -16868,6 +16911,7 @@ function islShowScreen(name){
   if(name !== 'camp') islCampPetsStop();   /* ★ v1.197.0 離開營地就停掉寵物漫步計時器,不留孤兒 setInterval */
   if(name !== 'camp') islCampJoyStop();   /* ★ v1.247.0 離開營地就清空方向盤殘留向量,比照上面 islZoneStop() 對野外搖桿的做法(見 islCampJoyStop 說明) */
   _IS.keys = {};   /* ★ v1.268.0 換畫面一律清空鍵盤按住狀態(與上面兩行清搖桿/方向盤同一個用意):鍵盤的 keyup 有可能在切畫面/開視窗的瞬間被吃掉,殘留的 true 會讓主角一直往同一個方向走。清空是冪等的,玩家真的按著的鍵會在下一個 keydown 立刻補回來。 */
+  _IS.keyRun = false; _IS.keyLastMoveAt = 0;   /* ★ v1.279.0 老師「PC版跑步新增快捷鍵:方向鍵/WASD連點兩下,再按任意1方向鍵就停下腳步」— 換畫面(野外⇄營地⇄其他)一併清空雙擊跑步旗標,不會把野外按出來的跑步狀態帶進營地(或反過來) */
   if(name !== 'zone' && name !== 'map' && name !== 'camp') islAmbDetach();   /* ★ v1.100.0 */
   var hudOn = (name !== 'create');
   $('isl-hud-bag').style.visibility = hudOn ? '' : 'hidden';
@@ -17906,8 +17950,27 @@ function islZoneResume(){ if(_IS.screen === 'zone' && !_IS.raf){ _IS.lastT = 0; 
 function islKeysReleaseBind(){
   if(window._islKeysRelBound) return; window._islKeysRelBound = true;
   window.addEventListener('keyup', function(ev){ try{ _IS.keys[ev.key.toLowerCase()] = false; }catch(_kr){} });
-  window.addEventListener('blur', function(){ _IS.keys = {}; });
-  document.addEventListener('visibilitychange', function(){ if(document.hidden) _IS.keys = {}; });
+  window.addEventListener('blur', function(){ _IS.keys = {}; _IS.keyRun = false; });   /* ★ v1.279.0 視窗失焦時鍵盤跑步旗標一併清掉,理由與清 _IS.keys 相同:焦點跑掉之後不會再收到 keyup,殘留 true 會讓角色卡在跑步速度 */
+  document.addEventListener('visibilitychange', function(){ if(document.hidden){ _IS.keys = {}; _IS.keyRun = false; } });
+}
+/* ★ v1.279.0 老師「PC版跑步新增快捷鍵:方向鍵/WASD 連點兩下,再按任意1方向鍵就停下腳步」— 單一真相,野外
+   (islZoneBind)與營地(islCampMoveBind)的鍵盤 keydown 各呼叫一次,不各自維護一份幾乎一樣的判斷(同類坑
+   v1.212.0 的 islRunningNow() 就是為了避免这种「三處各自維護一份幾乎一樣但不完全同步的條件式」而抽出來的)。
+   規則:
+     ①目前沒有在跑(_IS.keyRun 為 false)+這次按下距離上一次按下方向鍵在 350ms 內(雙擊)⇒ 開始跑步,
+       _IS.keyRun 保持 true 到下一次符合②的按鍵為止,不需要按住不放。
+     ②目前正在跑(_IS.keyRun 為 true)+又按下任一方向鍵(不論間隔多久,單擊即算)⇒ 立刻停止跑步。
+   ⇒ islRunningNow() 讀 `_IS.keyRun` 這個旗標(見下方兩處新增分支),PC 鍵盤 Shift(按住才跑)與雙擊地板
+   跑步(islTapToMove 的 run 參數)兩條既有路徑完全不受影響,三者並存,互不覆蓋。
+   ⚠ ev.repeat 一律忽略:瀏覽器對按住不放的鍵會自動觸發連續 keydown(repeat:true),那不是玩家新按了一次,
+   不能拿來當雙擊判定的第二下,也不該被當成②的「又按了一下」而誤停跑步。 */
+function islKeyMoveTapRun(k, ev){
+  if(ev && ev.repeat) return;
+  if(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].indexOf(k) < 0) return;
+  var now = islNow();
+  if(_IS.keyRun){ _IS.keyRun = false; }
+  else{ var dt = now - (_IS.keyLastMoveAt || 0); if(_IS.keyLastMoveAt && dt > 0 && dt < 350) _IS.keyRun = true; }
+  _IS.keyLastMoveAt = now;
 }
 function islZoneBind(){
   var z = $('isl-zone'), joy = $('isl-joy');
@@ -17973,7 +18036,7 @@ function islZoneBind(){
   window.addEventListener('touchend', function(ev){ if(_IS.joy){ var i; for(i = 0; i < ev.changedTouches.length; i++){ if(ev.changedTouches[i].identifier === _IS.joy.id) up(ev); } } });
   window.addEventListener('touchcancel', function(){ _IS.joy = null; joy.classList.remove('run'); hide('isl-joy'); });
   document.addEventListener('visibilitychange', function(){ if(document.hidden){ _IS.joy = null; joy.classList.remove('run'); hide('isl-joy'); } });
-  window.addEventListener('keydown', function(ev){ if(!_IS.on || _IS.screen !== 'zone') return; var k = ev.key.toLowerCase(); _IS.keys[k] = true; if(k === ' ' || k === 'enter'){ if(!$('isl-act-btn').classList.contains('hidden')) window.islActBtnTap(); else if(k === ' ') islJump();   /* ★ v1.188.0 老師需求①:空白鍵原本只在「旁邊有東西可互動」時當確認鍵,現在附近沒東西時改成跳躍;Enter 鍵不受影響(維持只當確認鍵,不然智取答題等對話框裡按 Enter 會被誤判成跳躍) */ ev.preventDefault(); } if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].indexOf(k) >= 0){ _IS.path = null; ev.preventDefault(); } });
+  window.addEventListener('keydown', function(ev){ if(!_IS.on || _IS.screen !== 'zone') return; var k = ev.key.toLowerCase(); _IS.keys[k] = true; if(k === ' ' || k === 'enter'){ if(!$('isl-act-btn').classList.contains('hidden')) window.islActBtnTap(); else if(k === ' ') islJump();   /* ★ v1.188.0 老師需求①:空白鍵原本只在「旁邊有東西可互動」時當確認鍵,現在附近沒東西時改成跳躍;Enter 鍵不受影響(維持只當確認鍵,不然智取答題等對話框裡按 Enter 會被誤判成跳躍) */ ev.preventDefault(); } if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].indexOf(k) >= 0){ _IS.path = null; islKeyMoveTapRun(k, ev);   /* ★ v1.279.0 方向鍵/WASD 連點兩下=跑步、跑步中再按任一方向鍵=停下,見 islKeyMoveTapRun 說明 */ ev.preventDefault(); } });
   islKeysReleaseBind();   /* ★ v1.268.0 舊碼在這裡直接綁 keyup;改走共用出口(見 islKeysReleaseBind 說明),因為營地那條路徑也需要它。舊行備查:window.addEventListener('keyup', function(ev){ _IS.keys[ev.key.toLowerCase()] = false; }); */
   /* ★ v1.276.0 老師「移除跑步鍵、保留跳躍鍵」— 👟 奔跑鈕與其 runOn/runOff 綁定整段移除(舊行備查:
      var runBtn=$('isl-run-btn'); function runOn(ev){_IS.runBtn=true;runBtn.classList.add('on');if(ev)ev.preventDefault();}
@@ -18007,9 +18070,9 @@ var _islJumpAt = 0;
    rootId 傳 'isl-camp-char' 走營地那一路,其餘(含不傳)一律走野外判斷。 */
 function islRunningNow(rootId){
   if(rootId === 'isl-camp-char'){
-    return !!((_IS.keys && _IS.keys.shift) || (_IS.campWalk && _IS.campWalk.run) || (_IS.campJoy && _IS.campJoy.run));   /* ★ v1.276.0 👟 奔跑鈕移除,_IS.campRunBtn 判斷改為 _IS.campJoy.run(方向盤拖到外圈邊緣) */
+    return !!((_IS.keys && _IS.keys.shift) || _IS.keyRun || (_IS.campWalk && _IS.campWalk.run) || (_IS.campJoy && _IS.campJoy.run));   /* ★ v1.276.0 👟 奔跑鈕移除,_IS.campRunBtn 判斷改為 _IS.campJoy.run(方向盤拖到外圈邊緣);★ v1.279.0 新增 _IS.keyRun(方向鍵/WASD 連點兩下) */
   }
-  return !!((_IS.keys && _IS.keys.shift) || (_IS.path && _IS.path.length && _IS.pathRun) || (_IS.joy && _IS.joy.run));   /* ★ v1.276.0 👟 奔跑鈕移除,_IS.runBtn 判斷改為 _IS.joy.run(方向盤拖到外圈邊緣) */
+  return !!((_IS.keys && _IS.keys.shift) || _IS.keyRun || (_IS.path && _IS.path.length && _IS.pathRun) || (_IS.joy && _IS.joy.run));   /* ★ v1.276.0 👟 奔跑鈕移除,_IS.runBtn 判斷改為 _IS.joy.run(方向盤拖到外圈邊緣);★ v1.279.0 新增 _IS.keyRun(方向鍵/WASD 連點兩下) */
 }
 /* ★ v1.274.0(2026-09-20・老師需求「跑步的音效只在持續奔跑期間播放,停止跑步要停止音效」)—
    舊版 sfx-run 是每兩格路過就 islSfx('run') 一次性重播(見 islTick/islCampTick 內 _cellK 那段),
@@ -18683,7 +18746,7 @@ function islQteSideAdd(n, text, color, crit, total){
   li.innerHTML = '<b>第 ' + n + ' 次</b><span>' + islEsc(text) + '</span>';
   ul.appendChild(li);
   if(nx) nx.textContent = (total && n >= total) ? '完成' : '第 ' + (n + 1) + ' 次';
-  if(crit){ playSfx('sfx-crit', 0.55); setTimeout(function(){ playSfx('sfx-summon-reveal', 0.45); }, 60); islActFxCenter('hit'); sd = $('isl-q-side'); if(sd) islFxAt(sd, sd.clientWidth / 2, sd.clientHeight / 2, 'hit'); }   /* ★ v1.185.0 紀錄欄由直立清單改成底部一行橫條後,舊的「34 + 第幾筆×40」縱向落點會掉到欄位外面(整條只剩一行高);改成直接取該欄正中央 */
+  if(crit){ playSfx('sfx-sweet-hit', 0.55); setTimeout(function(){ playSfx('sfx-summon-reveal', 0.45); }, 60); islActFxCenter('hit'); sd = $('isl-q-side'); if(sd) islFxAt(sd, sd.clientWidth / 2, sd.clientHeight / 2, 'hit'); }   /* ★ v1.185.0 紀錄欄由直立清單改成底部一行橫條後,舊的「34 + 第幾筆×40」縱向落點會掉到欄位外面(整條只剩一行高);改成直接取該欄正中央 *//* ★ v1.280.0 老師「採集和戰鬥的甜蜜點命中時播放音效」— 這支是採集(islQtePull)與砍樹/採石(islQteSwing)共用的唯一暴擊收口,改這裡兩款活動一次到位;sfx-crit(爆擊.mp3)換成專屬的 sfx-sweet-hit(甜蜜點命中.mp3) */
 }
 /* ★ v1.258.0(2026-09-18・老師「品質小遊戲/砍樹/釣魚 QTE 太陽春,要精緻」)— QTE 精緻化共用出口:
    ①繽紛彈字(islFxPopText):bounce-in 彈出 + 依 tier 上色/漸層(crit=彩虹漸層文字、good=綠、bad=紅晃動),掛在各 QTE markup 裡新增的 .isl-qte-pop(position:relative;height:0)容器內,用相對定位天生對齊、不必算 zoom/bar 座標,也不會被 .bar 的 overflow:hidden 裁掉。
@@ -18958,7 +19021,7 @@ function islQteBlow(cb){
     fill.style.width = lvl + '%'; flame.style.transform = 'scale(' + (0.4 + lvl / 100 * 1.1) + ')';
     $('isl-q-cnt').textContent = '綠區累計 ' + inZone.toFixed(1) + ' / 5.0 秒';
     $('isl-act-tbar').style.width = Math.max(0, (endAt - now) / 12000 * 100) + '%'; $('isl-act-tnum').textContent = Math.ceil(Math.max(0, endAt - now) / 1000) + 's';
-    if(inZone >= 5 || now >= endAt){ cancelAnimationFrame(raf); $('isl-q-btn').disabled = true; var st = inZone >= 5 ? 3 : (inZone >= 3 ? 2 : 1), crit = inZone >= 5 && total <= 7.5; fx.textContent = st === 3 ? '🔥 火燒得剛剛好!' : (st === 2 ? '還算穩' : '火太小了…'); if(crit){ fx.textContent = '✨ 完美控火!'; playSfx('sfx-crit', 0.5); islFxPopText($('isl-q-pop'), '✨ 完美控火!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
+    if(inZone >= 5 || now >= endAt){ cancelAnimationFrame(raf); $('isl-q-btn').disabled = true; var st = inZone >= 5 ? 3 : (inZone >= 3 ? 2 : 1), crit = inZone >= 5 && total <= 7.5; fx.textContent = st === 3 ? '🔥 火燒得剛剛好!' : (st === 2 ? '還算穩' : '火太小了…'); if(crit){ fx.textContent = '✨ 完美控火!'; playSfx('sfx-sweet-hit', 0.55); islFxPopText($('isl-q-pop'), '✨ 完美控火!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
     raf = requestAnimationFrame(loop);
   }
   $('isl-q-btn').onclick = function(){ lvl += 14; if(lvl > 100){ lvl = 0; fx.textContent = '噗——吹熄了!'; fx.style.color = '#ff7b7b'; playSfx('sfx-ng', 0.4); islFxPopText($('isl-q-pop'), '噗——吹熄了!', 'bad'); islQteImpact($('isl-q-bar')); } else { fx.textContent = ''; playSfx('sfx-tap', 0.3); } };
@@ -19844,7 +19907,7 @@ function islCampMoveBind(){
     if(!_IS.on || _IS.screen !== 'camp') return;
     var k = ev.key.toLowerCase(); _IS.keys[k] = true;
     if(k === ' '){ islJump('isl-camp-char'); ev.preventDefault(); }
-    if(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].indexOf(k) >= 0){ _IS.campWalk = null; ev.preventDefault(); }
+    if(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].indexOf(k) >= 0){ _IS.campWalk = null; islKeyMoveTapRun(k, ev);   /* ★ v1.279.0 同野外(islZoneBind)同一套雙擊跑步/單擊停下規則,見 islKeyMoveTapRun 說明 */ ev.preventDefault(); }
   });
   var jumpBtn = $('isl-camp-jump-btn');
   (function(){   /* ★ v1.244.0 營地方向盤 */
@@ -20492,6 +20555,10 @@ window.islResetAsk = function(){
   ]);
 };
 
+/* ★ v1.279.0 老師「取出和存入的勾選，不要每按一下就自動捲回頂端」— 單一真相:讀目前面板 .bd 內捲容器的 scrollTop。
+   islPanel 每次重繪都是整段 innerHTML 覆寫(見 islPanel 說明),舊節點連同它的 scrollTop 一起被丟掉、新節點永遠從 0 開始;
+   與 v1.197.0 主角能力視窗同一種坑,這裡抽成共用 helper 供物品包/倉庫兩處呼叫,不必各自重寫一次同樣的三行。 */
+function islModalScrollY(){ var bd = $('isl-modal') ? $('isl-modal').querySelector('.bd') : null; return bd ? bd.scrollTop : 0; }
 /* ── 物品包(27.2):4 欄 × 3 列;點格看詳情/丟棄 ── */
 window.islBagOpen = function(){
   if(!ISL) return;
@@ -20503,7 +20570,8 @@ window.islBagOpen = function(){
   for(i = 0; i < ISL.bag.cap; i++){
     if(s[i]){
       d = islItemDef(s[i].id);
-      var bchk = selMode && _IS.bagSel && _IS.bagSel[i];
+      var bchk = selMode && _IS.bagSel && _IS.bagSel.hasOwnProperty(i);   /* ★ v1.278.0 _IS.bagSel[i] 由布林 true 改存「這格要存入幾個」的數量,hasOwnProperty 才是正確的「有沒有勾選」判斷(數量若剛好是 0 用布林值判斷會誤判成沒勾) */
+      var bqty = bchk ? Math.min(_IS.bagSel[i], s[i].n) : 0;   /* 夾住:防止勾選當下數量還在,但畫面重繪之間該格被其他流程動過(例如同時被吃掉/丟棄)導致 qty 超過現有庫存 */
       h += '<button class="isl-bag-slot has' + (bchk ? ' sel' : '') + '" data-i="' + i + '"' + (selMode ? ' data-act="selchk"' : '') + '>'
         + (selMode ? '<span class="chk">' + (bchk ? '✅' : '⬜') + '</span>' : '')
         /* ★ v1.275.0 老師「數量 ×N 的文字移到圖片正右方」— 把圖片包進 .ic,×N 改成 .ic 的絕對定位子元素,
@@ -20514,7 +20582,9 @@ window.islBagOpen = function(){
         + '<span class="ic">' + islItemIco(s[i].id, 144) + '<span class="n">×' + s[i].n + '</span></span>'   /* ★ v1.185.0 老師④:材料圖示 72 → 144px(×2);格子 max-width:86% 仍是上限保險,四欄版面塞得下 */
         + '<span class="q">' + (s[i].q === 3 ? '★★★' : (s[i].q === 2 ? '★★' : '')) + '</span><span class="nm">' + islEsc(d.n) + '</span>'
         + (function(){ var _sp = (typeof islBtItemSpec === 'function') ? islBtItemSpec(s[i].id) : null, _fx = _sp ? islBtItemFxText(_sp) : ''; return _fx ? '<span class="fx" title="' + islEsc(_fx) + '">⚔ ' + islEsc(_fx) + '</span>' : ''; })()   /* ★ v1.273.0 老師「物品袋顯示物品的戰鬥效果」— 與商店/戰鬥道具欄同一份 D.BT_ITEMS 來源 */
-        + (bchk ? '<span class="seltag">存入</span>' : '')
+        /* ★ v1.278.0 老師「存入/取出標籤放大100%並增加+-可設定數量」— 這疊數量 >1 才顯示 +/- 步進器(只有 1 個時沒有可調整的空間,單純顯示「存入」二字省版面);
+           qb 是 span 不是 button,巢狀在外層 <button> 裡才合法;islPanel 的事件委派從 ev.target 本身開始比對 data-act,點在 qb 上不會被外層 selchk 攔截。 */
+        + (bchk ? ('<span class="seltag">存入' + (s[i].n > 1 ? ('<span class="qb" data-act="bagqdec" data-i="' + i + '">－</span><b class="qn">' + bqty + '</b><span class="qb" data-act="bagqinc" data-i="' + i + '">＋</span>') : '') + '</span>') : '')
         + '</button>';   /* ★ v1.174.0 老師:圖示再放大(44→72)並補上名稱 */
     }
     else h += '<div class="isl-bag-slot" style="opacity:.35"></div>';
@@ -20527,15 +20597,24 @@ window.islBagOpen = function(){
     if(act === 'close'){ _IS.bagSel = null; _IS.bagSelOn = false; islModalClose(); return; }   /* ★ v1.271.0 關閉面板順手清掉選取狀態,不會殘留到下次一般開啟物品包 */
     if(act === 'dep'){ islDepositAll(); playSfx('sfx-coin', 0.4); islModalClose(); islBagOpen(); islSave('deposit'); return; }
     if(act === 'selcancel'){ _IS.bagSel = null; _IS.bagSelOn = false; islBagOpen(); return; }   /* ★ v1.271.0 */
-    if(act === 'selchk'){ if(!_IS.bagSel) _IS.bagSel = {}; if(_IS.bagSel[i]) delete _IS.bagSel[i]; else _IS.bagSel[i] = true; playSfx('sfx-tap', 0.2); islBagOpen(); return; }   /* ★ v1.271.0 打勾/取消打勾只重畫面板,選取狀態放在執行期 _IS,不進存檔 */
+    if(act === 'selchk'){ _IS.bagScrollY = islModalScrollY(); if(!_IS.bagSel) _IS.bagSel = {}; if(_IS.bagSel.hasOwnProperty(i)) delete _IS.bagSel[i]; else _IS.bagSel[i] = s[parseInt(i, 10)] ? s[parseInt(i, 10)].n : 1;   /* ★ v1.278.0 打勾當下預設「這疊全部存入」(數量=現有 n),之後可用 +/- 調整成部分存入,行為與舊版全存語意一致,只是多了可以改的空間 */ playSfx('sfx-tap', 0.2); islBagOpen(); return; }   /* ★ v1.271.0 打勾/取消打勾只重畫面板,選取狀態放在執行期 _IS,不進存檔;★ v1.279.0 老師「勾選不要每按一下就自動捲回頂端」— 重繪前先記住捲動位置,islBagOpen 尾端會照 _IS.bagScrollY 還原 */
+    if(act === 'bagqdec' || act === 'bagqinc'){   /* ★ v1.278.0 老師「增加+-可設定數量」— i 是格子索引,調整範圍夾在 [1, 該格現有 n] 之間,不可能調出超過持有量或調到 0(0 應該用取消勾選表達,不是數量 0) */
+      var qi = parseInt(i, 10), qslot = s[qi];
+      if(!qslot || !_IS.bagSel || !_IS.bagSel.hasOwnProperty(i)) return;
+      var qcur = _IS.bagSel[i] + (act === 'bagqinc' ? 1 : -1);
+      if(qcur < 1) qcur = 1; if(qcur > qslot.n) qcur = qslot.n;
+      _IS.bagScrollY = islModalScrollY();   /* ★ v1.279.0 同上,+/- 步進器按一下也不該把畫面彈回頂端 */
+      _IS.bagSel[i] = qcur; playSfx('sfx-tap', 0.15); islBagOpen(); return;
+    }
     if(act === 'seldep'){   /* ★ v1.271.0 把勾選的每一格個別搬進倉庫,沿用既有 islStoreAdd(單格容量守門/放不下留在物品包);全空選取先擋掉避免白跑一趟 */
-      var keys = [], kk, j, slot, put, leftOver = false, movedAny = false;
+      var keys = [], kk, j, slot, wantQ, put, leftOver = false, movedAny = false;
       for(kk in (_IS.bagSel || {})){ if(_IS.bagSel.hasOwnProperty(kk)) keys.push(parseInt(kk, 10)); }
       if(!keys.length){ toast('還沒勾選要存入的東西'); return; }
       for(j = 0; j < keys.length; j++){
         slot = s[keys[j]]; if(!slot) continue;
-        put = islStoreAdd(slot.id, slot.q, slot.n);
-        if(put >= slot.n){ s[keys[j]] = null; movedAny = true; }
+        wantQ = Math.min(_IS.bagSel[keys[j]] || slot.n, slot.n);   /* ★ v1.278.0 改用步進器選定的數量,不再一律整疊搬走 */
+        put = islStoreAdd(slot.id, slot.q, wantQ);
+        if(put >= wantQ){ slot.n -= wantQ; if(slot.n <= 0) s[keys[j]] = null; movedAny = true; }
         else{ if(put > 0){ slot.n -= put; movedAny = true; } leftOver = true; }
       }
       ISL.bag.slots = []; for(j = 0; j < s.length; j++){ if(s[j]) ISL.bag.slots.push(s[j]); }
@@ -20547,6 +20626,7 @@ window.islBagOpen = function(){
     }
     if(i != null){ it = s[parseInt(i, 10)]; d = islItemDef(it.id); var bts = [{ t: '關閉', cls: 'ghost', cb: function(){ islBagOpen(); } }]; if(d.cat === 'dish') bts.push({ t: '🍽 吃 1 個', cls: 'gold', cb: function(){ islEatDish(it, s); } }); bts.push({ t: '🗑 丟掉 1 個', cls: 'warn', cb: function(){ it.n -= 1; if(it.n <= 0) s.splice(s.indexOf(it), 1); playSfx('sfx-cancel', 0.3); islHud(); islBagOpen(); islSave('bag'); } }); islModal('<h3>' + d.e + ' ' + islEsc(d.n) + (it.q > 1 ? ' ' + (it.q === 3 ? '★★★' : '★★') : '') + ' ×' + it.n + '</h3><p>' + (d.cat === 'dish' ? islDishText(d, it.q) : (it.q === 3 ? '品質極佳,建造時 1 個當 2 個!' : (it.q === 2 ? '品質不錯。' : '普通品質。'))) + '</p>', bts); }   /* ★ v1.94.0 料理可吃 */
   });
+  (function(){ var bd = $('isl-modal') ? $('isl-modal').querySelector('.bd') : null; if(bd && _IS.bagScrollY) bd.scrollTop = _IS.bagScrollY; _IS.bagScrollY = 0; })();   /* ★ v1.279.0 還原勾選/+−觸發的重繪前記住的捲動位置,與 islCharOpen()/_IS.abScrollY 同一套範式;一般開啟(無記錄)時 _IS.bagScrollY 是 0/undefined,不會誤跳 */
 };
 /* ★ v1.130.0 把面板內容收進可捲動的 .bd(只包一次):框本身改 overflow:visible 讓 ✕ 浮在框外,
    捲動責任交給 .bd。⚠ 只認「直系子元素」的 .bd —— 內容裡面本來就有 .bd 的(例如武器卡 .isl-wp > .bd)不能誤判。 */
@@ -20583,8 +20663,14 @@ function islStoreQRow(k, d, q, n, sel){
      改成 圖 → ×N → ★星級,×N 緊貼在圖片右邊;.isl-store-q .n 的 margin-left:auto 同步在 CSS 取消。 */
   var body = islItemIco(k, 48) + '<span class="n">×' + n + '</span><span class="q q' + q + '">' + (q === 3 ? '★★★' : (q === 2 ? '★★' : '★')) + '</span>';   /* ★ v1.271.0 老師需求「倉庫新增取出放入物品袋」— sel 為真且該品質數量 >0 時渲染成可勾選按鈕,否則維持原本的純顯示 div,數量 0 的品質列在選取模式下也不給勾 */
   if(sel && n > 0){
-    var checked = _IS.storeSel && _IS.storeSel[k + '|' + q];
-    return '<button type="button" class="isl-store-q sel-row' + (checked ? ' sel' : '') + '" data-act="selchk" data-k="' + k + '" data-q="' + q + '"><span class="chk">' + (checked ? '✅' : '⬜') + '</span>' + body + '</button>';
+    var selKey = k + '|' + q, checked = _IS.storeSel && _IS.storeSel.hasOwnProperty(selKey), qty = checked ? Math.min(_IS.storeSel[selKey], n) : 0;
+    /* ★ v1.278.0 老師「存入/取出標籤放大100%並增加+-可設定數量」— 外層改成 <div> 不再是 <button>:
+       要放進去的 +/- 步進器也是可獨立點擊的元素,HTML 不允許 <button> 裡再包 <button>(巢狀互動元素無效),
+       改用 <div data-act="selchk"> 當作整列的勾選熱區,+/- 用 <span data-act="storeqdec/inc"> 也是同一套
+       islPanel 事件委派(從 ev.target 本身開始比對 data-act,點在 qb 上不會被外層 selchk 攔截),不必額外攔截冒泡。 */
+    return '<div class="isl-store-q sel-row' + (checked ? ' sel' : '') + '" data-act="selchk" data-k="' + k + '" data-q="' + q + '"><span class="chk">' + (checked ? '✅' : '⬜') + '</span>' + body
+      + (checked ? ('<span class="seltag">取出' + (n > 1 ? ('<span class="qb" data-act="storeqdec" data-k="' + k + '" data-q="' + q + '">－</span><b class="qn">' + qty + '</b><span class="qb" data-act="storeqinc" data-k="' + k + '" data-q="' + q + '">＋</span>') : '') + '</span>') : '')
+      + '</div>';
   }
   return '<div class="isl-store-q' + (n > 0 ? '' : ' zero') + '">' + body + '</div>';   /* ★ v1.115.0 倉庫每種物品三列(同圖,各標星級/數量;0 的變淡) */
 }
@@ -20609,18 +20695,27 @@ window.islStoreOpen = function(){
     else if(a === 'eat') islEatFromStore(t.getAttribute('data-k'));
     else if(a === 'selmode'){ _IS.storeSelOn = true; _IS.storeSel = {}; islStoreOpen(); }   /* ★ v1.271.0 */
     else if(a === 'selcancel'){ _IS.storeSelOn = false; _IS.storeSel = null; islStoreOpen(); }   /* ★ v1.271.0 */
-    else if(a === 'selchk'){ var kk = t.getAttribute('data-k'), qq = t.getAttribute('data-q'), key = kk + '|' + qq; if(!_IS.storeSel) _IS.storeSel = {}; if(_IS.storeSel[key]) delete _IS.storeSel[key]; else _IS.storeSel[key] = true; playSfx('sfx-tap', 0.2); islStoreOpen(); }   /* ★ v1.271.0 */
+    else if(a === 'selchk'){ _IS.storeScrollY = islModalScrollY(); var kk = t.getAttribute('data-k'), qq = t.getAttribute('data-q'), key = kk + '|' + qq; if(!_IS.storeSel) _IS.storeSel = {}; if(_IS.storeSel.hasOwnProperty(key)) delete _IS.storeSel[key]; else { var o3 = ISL.store.items[kk]; _IS.storeSel[key] = o3 ? (o3['s' + qq] || 0) : 0; }   /* ★ v1.278.0 打勾當下預設「這疊全部取出」(數量=現有庫存),之後可用 +/- 調整成部分取出,行為與舊版全取語意一致,只是多了可以改的空間;★ v1.279.0 重繪前先記住捲動位置,islStoreOpen 尾端照 _IS.storeScrollY 還原 */ playSfx('sfx-tap', 0.2); islStoreOpen(); }   /* ★ v1.271.0 */
+    else if(a === 'storeqdec' || a === 'storeqinc'){   /* ★ v1.278.0 老師「增加+-可設定數量」— 每次點擊都重新讀一次 ISL.store.items 當下的庫存當上限,不用畫面上舊的 n(防止勾選期間物品因其他流程被動用) */
+      var qk = t.getAttribute('data-k'), qqv = t.getAttribute('data-q'), qkey = qk + '|' + qqv, qo = ISL.store.items[qk], qmax = qo ? (qo['s' + qqv] || 0) : 0;
+      if(!_IS.storeSel || !_IS.storeSel.hasOwnProperty(qkey)) return;
+      var qv = _IS.storeSel[qkey] + (a === 'storeqinc' ? 1 : -1);
+      if(qv < 1) qv = 1; if(qv > qmax) qv = qmax;
+      _IS.storeScrollY = islModalScrollY();   /* ★ v1.279.0 同上,+/- 步進器按一下也不該把畫面彈回頂端 */
+      _IS.storeSel[qkey] = qv; playSfx('sfx-tap', 0.15); islStoreOpen(); return;
+    }
     else if(a === 'selwd'){   /* ★ v1.271.0 把勾選的每一種品質整疊搬進物品包,沿用既有 islBagAdd(格數/疊放上限守門);物品包放不下的留在倉庫並提示 */
-      var keys = [], kx, jx, parts, kid, qn, o2, have2, put2, moved = 0, leftOver = false;
+      var keys = [], kx, jx, parts, kid, qn, o2, have2, wantQ2, put2, moved = 0, leftOver = false;
       for(kx in (_IS.storeSel || {})){ if(_IS.storeSel.hasOwnProperty(kx)) keys.push(kx); }
       if(!keys.length){ toast('還沒勾選要取出的東西'); return; }
       for(jx = 0; jx < keys.length; jx++){
         parts = keys[jx].split('|'); kid = parts[0]; qn = parseInt(parts[1], 10);
         o2 = ISL.store.items[kid]; if(!o2) continue;
         have2 = o2['s' + qn] || 0; if(have2 <= 0) continue;
-        put2 = islBagAdd(kid, qn, have2);
+        wantQ2 = Math.min(_IS.storeSel[keys[jx]] || have2, have2);   /* ★ v1.278.0 改用步進器選定的數量,不再一律整疊取出 */
+        put2 = islBagAdd(kid, qn, wantQ2);
         if(put2 > 0){ o2['s' + qn] -= put2; moved += put2; }
-        if(put2 < have2) leftOver = true;
+        if(put2 < wantQ2) leftOver = true;
       }
       _IS.storeSel = null; _IS.storeSelOn = false;
       if(moved > 0) playSfx('sfx-coin', 0.4);
@@ -20628,6 +20723,7 @@ window.islStoreOpen = function(){
       islHud(); islStoreOpen(); islSave('withdraw');
     }
   });   /* ★ v1.94.0 */
+  (function(){ var bd = $('isl-modal') ? $('isl-modal').querySelector('.bd') : null; if(bd && _IS.storeScrollY) bd.scrollTop = _IS.storeScrollY; _IS.storeScrollY = 0; })();   /* ★ v1.279.0 老師「取出的勾選不要每按一下就自動捲回頂端」— 還原重繪前記住的捲動位置,與 islBagOpen()/_IS.bagScrollY 同一套範式 */
 };
 /* ── 角色頁:四維能力 + 技能 Lv/EXP ── */
 /* ══ ★ v1.134.0(老師:「角色狀態視窗改成左右兩部分配置,視窗內全部文字放大顯示」)══
@@ -21260,7 +21356,7 @@ function islQteTension(cb){
     if(p >= lo && p <= hi) inZone += dt; total += dt;
     $('isl-q-cnt').textContent = '綠區累計 ' + inZone.toFixed(1) + ' / 3.0 秒';
     $('isl-act-tbar').style.width = Math.max(0, (endAt - now) / 10000 * 100) + '%'; $('isl-act-tnum').textContent = Math.ceil(Math.max(0, endAt - now) / 1000) + 's';
-    if(inZone >= 3 || now >= endAt){ cancelAnimationFrame(raf); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); var st = inZone >= 3 ? 3 : (inZone >= 1.8 ? 2 : 1), crit = inZone >= 3 && total <= 4.5; fx.textContent = st === 3 ? '🐟 拉上來了!' : (st === 2 ? '差一點' : '線快斷了…'); if(crit){ fx.textContent = '✨ 完美收竿!'; playSfx('sfx-crit', 0.5); islFxPopText($('isl-q-pop'), '✨ 完美收竿!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact(bar); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
+    if(inZone >= 3 || now >= endAt){ cancelAnimationFrame(raf); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); var st = inZone >= 3 ? 3 : (inZone >= 1.8 ? 2 : 1), crit = inZone >= 3 && total <= 4.5; fx.textContent = st === 3 ? '🐟 拉上來了!' : (st === 2 ? '差一點' : '線快斷了…'); if(crit){ fx.textContent = '✨ 完美收竿!'; playSfx('sfx-sweet-hit', 0.55); islFxPopText($('isl-q-pop'), '✨ 完美收竿!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact(bar); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
     raf = requestAnimationFrame(loop);
   }
   raf = requestAnimationFrame(loop);
@@ -24926,6 +25022,7 @@ window.islBtTest = function(){
 };
 window.islBattleStart = function(mine){
   try{ islFriendNpcTick(); }catch(_fnb){}   /* ★ v1.244.0 好友 NPC 到期就不上場 */
+  try{ if(!mine.boss && !mine.dg) playSfx('sfx-mon-appear', 0.55); }catch(_ma){}   /* ★ v1.280.0 老師「荒島中野外小怪跳出來時播放音效」— 只在一般野外遇敵(islEncStep 步數觸發/islMineCheck 舊踩地雷式/islBtTest GM 測試鈕,idx 判定不夠精準故直接排除頭目與地下層)時播放,頭目/地下層戰鬥有各自的開場鋪陳不重複播 */
   var db = islDB(), zm = $('isl-zone-map'), pop, u, m, E, num, i, lv, ks, probe;
   islZoneStop(); if(!mine.dg) islZoneRemember();
   /* ★ v1.164.0 一場戰鬥的魔物群:
@@ -25881,7 +25978,7 @@ function islBtAction(a){
 function islBtQte(){
   var B = _islBt, ps = islBtPlayerStats(), q = $('isl-bt-qte'), db = islDB(), wide = Math.round(Math.min(46, (18 + Math.min(20, ISL.stats.dex) * db.BT.DEX_HIT) * ps.zone)), lo = 22 + Math.random() * (56 - wide), pos = 0, dirv = 1, raf = 0, hit = 0, done = 0, results = [], w = ps.w, _fcC = islBtFocusCrit(), _burst = islSkEff('focusBurst') > 0 && islBtFocusFull();   /* ★ v1.229.0 B5 專注 */
   B.focusBurstNow = _burst;
-  q.innerHTML = '<div class="tt">' + (w ? w.e + ' ' + islEsc(w.n) : '👊 徒手') + ':指針進綠區時按下!正中央白線=暴擊' + (ps.hits > 1 ? '(連按 ' + ps.hits + ' 下)' : '') + islBtMechTag() + '</div><div class="bar"><div class="zone" style="left:' + lo + '%;width:' + wide + '%"></div><div class="zone crit" style="left:' + (lo + wide / 2 - 1.5) + '%;width:3%"></div><div class="ptr" id="isl-bt-ptr"></div></div><button class="big" id="isl-bt-hit">' + (w ? w.e : '👊') + ' 打!</button>';
+  q.innerHTML = '<div class="tt">' + (w ? w.e + ' ' + islEsc(w.n) : '👊 徒手') + ':指針進綠區時按下!正中央白線=暴擊' + (ps.hits > 1 ? '(連按 ' + ps.hits + ' 下)' : '') + islBtMechTag() + '</div><div class="bar" id="isl-bt-bar"><div class="zone" style="left:' + lo + '%;width:' + wide + '%"></div><div class="zone crit" style="left:' + (lo + wide / 2 - 1.5) + '%;width:3%"></div><div class="ptr" id="isl-bt-ptr"></div></div><button class="big" id="isl-bt-hit">' + (w ? w.e : '👊') + ' 打!</button>';   /* ★ v1.280.0 老師「戰鬥的甜蜜點命中時 bar 震動+播放音效」— .bar 補上 id="isl-bt-bar" 才能傳給 islQteImpact() 做震動(其餘採集/砍樹/釣魚 QTE 早就是這樣掛 id) */
   q.classList.remove('hidden');
   var ptr = $('isl-bt-ptr'), spd = (db.BT.QTE_SPEED + Math.min(1, B.m.lv * 0.08)) * (1 - Math.min(60, islSkEff('qteSlowP')) / 100);   /* ★ v1.162.0 🌟 戰鬥 QTE 指針也變慢 */
   /* ══ ★ v1.263.0(老師回報「主角攻擊 BAR 的左右移動速度突然變得超級快,是你的新設計?突然變得太難了」)══
@@ -25913,7 +26010,8 @@ function islBtQte(){
     /* ★ v1.161.0 🎯 critC(暴擊率 +N%)：本遊戲的暴擊原本純粹看指針位置，沒有「機率」這回事。
        不動位置判定(那是技術，該留給玩家)，改成「已經命中但不在正中央」時額外擲一次升格成暴擊。 */
     if(ok && !crit && (ps.critC + _fcC) && Math.random() * 100 < ps.critC + _fcC) crit = true; if(ok && _burst) crit = true;   /* ★ v1.229.0 B5 專注暴擊/滿層必暴擊 */
-    try{ playSfx(crit ? 'sfx-crit' : (ok ? 'sfx-quiz-correct' : 'sfx-ng'), crit ? 0.5 : 0.38); }catch(_qs){}   /* ★ v1.191.0 老師需求②「命中甜蜜點、miss都要有清楚的音效」— 按下的當下立刻回饋(不必等後面 islBtResolveAttack 的傷害音效才有反應),暴擊/命中/落空三種用既有音效區分開,不新增檔案 */
+    try{ playSfx(crit ? 'sfx-sweet-hit' : (ok ? 'sfx-quiz-correct' : 'sfx-ng'), crit ? 0.55 : 0.38); }catch(_qs){}   /* ★ v1.191.0 老師需求②「命中甜蜜點、miss都要有清楚的音效」— 按下的當下立刻回饋(不必等後面 islBtResolveAttack 的傷害音效才有反應),暴擊/命中/落空三種用既有音效區分開,不新增檔案;★ v1.280.0 老師「戰鬥的甜蜜點命中時播放音效」— 暴擊(=命中正中央甜蜜點)改用專屬的 sfx-sweet-hit(甜蜜點命中.mp3),取代原本共用的 sfx-crit */
+    if(crit) islQteImpact($('isl-bt-bar'));   /* ★ v1.280.0 老師「甜蜜點命中時 bar 震動,目前砍樹有做到」— 戰鬥攻擊 QTE 原本完全沒有這個反饋,補上與採集/砍樹/釣魚同一支 islQteImpact();CSS 端另補 .bt-qte .bar.crit-hit 規則(見 islBarShake 定義處),否則 class 加了也不會動 */
     results.push(crit ? 2 : (ok ? 1 : 0)); done++;
     if(done >= ps.hits){ cancelAnimationFrame(raf); B.qteRaf = 0;   /* ★ v1.263.0 收乾淨,避免殘留 id 讓下一次開場誤判 */
       q.classList.add('hidden'); islBtResolveAttack(results); }
@@ -25965,7 +26063,7 @@ function islBtBounceHit(o, r, ps){
   islBtAffixOnHit(o, []);
   if(o.hp > 0 && !o.boss && islSkEff('bounceStunP') > 0 && Math.random() * 100 < islSkEff('bounceStunP')) o.stun = Math.max(o.stun || 0, 1);   /* ★ v1.229.0 B5 追打 */
   if(o.hp <= 0 && ISL.hp > 0 && islSkEff('bounceKillHeal') > 0){ var _kh = Math.max(1, Math.round(ISL.hpMax * islSkEff('bounceKillHeal') / 100)), _kw = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + _kh); if(ISL.hp > _kw) setTimeout(function(){ if(_islBt){ islBtFloat('p', '+' + (ISL.hp - _kw), 'heal'); islBtHp(); } }, 560); }   /* ★ v1.229.0 B5 回收 */
-  (function(u, v){ setTimeout(function(){ if(_islBt){ islBtFloat(u.side, '↪−' + v, ''); islBtSetState(u.side, u.hp <= 0 ? 'down' : 'hit', 450); } }, 520); })(o, d);
+  (function(u, v){ setTimeout(function(){ if(_islBt){ islBtFloat(u.side, '↪−' + v, ''); islBtSetState(u.side, u.hp <= 0 ? 'down' : 'hit', 450); playSfx(r === 2 ? 'sfx-crit' : 'sfx-normalatk', 0.45); } }, 520); })(o, d);   /* ★ v1.280.0 老師「多段傷害的後面段數也要播放打擊音效」— 彈射的第二段命中原本完全靜音(只跳字沒有聲音),補上跟主線同一套音效 */
   return { u: o, d: d };
 }
 /* ══ ★ v1.229.0 戰鬥優化 B5:武器星域專屬機制(🎯專注/🪓破甲/🔋蓄力/🔱架槍/↪彈射)共用小出口 ══
@@ -26139,6 +26237,7 @@ function islBtResolveAttack(results){
       var _stP = ps.stunP + _chg * (8 + islSkEff('chargeStun')); if(_stP && Math.random() * 100 < _stP) stunned = true;   /* ★ v1.229.0 B5 蓄力擊暈 */
       islBtAffixOnHit(m, _on);   /* ★ v1.228.0 灼熱/鋸齒 */
       (function(_hd, _hc, _hi){ setTimeout(function(){ if(_islBt) islBtFloat('m', '−' + _hd, _hc ? 'combo' : ''); }, _hi * 260); })(dmg, r === 2, i);   /* ★ v1.195.0 老師需求「迴力鏢的傷害跳出分成兩次」— 多段武器(目前只有迴力鏢 hits:2)原本是加總後只跳一次合計數字,改成每一段命中各自跳一次(錯開 260ms 避免疊在同一個位置看不清楚);單段武器(hits=1)迴圈只跑一次,行為跟以前一樣看不出差異 */
+      (function(_hc, _hi){ setTimeout(function(){ if(_islBt) playSfx(_hc ? 'sfx-crit' : 'sfx-normalatk', 0.45); }, _hi * 260); })(r === 2, i);   /* ★ v1.280.0 老師「戰鬥中有多段傷害時，後面段數的傷害也要播放打擊音效」— 舊版打擊音效只在迴圈結束後統一播一次(見下方 playSfx(anyCrit?...)),迴力鏢/連擊等多段武器只有整組結算完那一刻聽得到聲音、中間每一下都是無聲的;改成每一段命中各自照跟傷害跳字同一組 260ms 錯開時間點都播一次,聽感才跟畫面上一段一段跳出來的傷害數字對得上 */
     }
     if(_chg){ B.chg = 0; _on.push('🔋 ' + _chg + ' 層蓄力全打出去!'); }   /* ★ v1.229.0 B5 蓄力用掉 */
     if(islBtFocusOn()){ if(anyHit || _bo){ B.focus = _burst ? 0 : Math.min(islBtFocusMax(), (B.focus || 0) + 1); if(_burst) _on.push('💥 屏息一擊!'); } else B.focus = islSkEff('focusKeep') > 0 ? Math.max(0, (B.focus || 0) - 1) : 0; }   /* ★ v1.229.0 B5 專注 */
@@ -26155,7 +26254,7 @@ function islBtResolveAttack(results){
     if(islSkEff('chargeAutoP') > 0 && islSkEff('chargeOn') > 0 && Math.random() * 100 < islSkEff('chargeAutoP')){ B.chg = Math.min(islBtChargeMax(), (B.chg || 0) + 1); _on.push('🔋 順勢蓄力 ' + B.chg); }
     if(islSkEff('arrowP') > 0 && Math.random() * 100 < islSkEff('arrowP')){ var _ao = islBtBounceTarget(m, []) || (m.hp > 0 ? m : null); if(_ao){ if(islBtExtraHit(_ao, 0.5, '➳', ps)) _bDown = true; _on.push('🌧 多射一箭 → ' + islEsc(_ao.n)); } }
     if(_rel){ setTimeout(function(){ if(_islBt) islBtFloat(m.side, _rel === 'strong' ? '剋制!' : '吃虧…', _rel === 'strong' ? 'combo' : 'block'); }, 120); _on.unshift(_rel === 'strong' ? '⬆ 武器剋制!' : '⬇ 這種武器打牠吃虧'); }
-    playSfx(anyCrit ? 'sfx-crit' : 'sfx-normalatk', 0.5); islBtSetState('m', 'hit', 500); islBtFx('m', 'hit'); try{ var _wf = islBtFxDB().weapon || {}; islBtFxPlay(_wf[(ps.w && ps.w.id) || 'fist'], null, m.side); if(anyCrit && islBtFxDB().crit) islBtFxPlay(islBtFxDB().crit, null, m.side, true); }catch(_wfx){}   /* ★ v1.240.0 各武器打擊特效 */   /* ★ v1.195.0 原本這裡還有一個「合計傷害」的 islBtFloat(顯示 total),現在拆成迴圈裡逐段跳,這裡不再重複跳一次合計數字 */
+    islBtSetState('m', 'hit', 500); islBtFx('m', 'hit'); try{ var _wf = islBtFxDB().weapon || {}; islBtFxPlay(_wf[(ps.w && ps.w.id) || 'fist'], null, m.side); if(anyCrit && islBtFxDB().crit) islBtFxPlay(islBtFxDB().crit, null, m.side, true); }catch(_wfx){}   /* ★ v1.240.0 各武器打擊特效;★ v1.280.0 打擊音效改移到上方迴圈逐段播放(見該處說明),這裡不再重複播一次總結音,避免最後一段的聲音疊兩次 */   /* ★ v1.195.0 原本這裡還有一個「合計傷害」的 islBtFloat(顯示 total),現在拆成迴圈裡逐段跳,這裡不再重複跳一次合計數字 */
     if(stunned && m.hp > 0){ m.stun = Math.max(m.stun, 1); setTimeout(function(){ islBtFx('m', 'dizzy', 140); }, 300); }
     islBtHp();
     islBtLog('⚔ ' + txt.join(' + ') + (anyCrit ? '!正中要害!' : '') + (stunned ? ' 🔨 打得牠眼冒金星,暈了!' : '') + (_on.length ? ' ' + _on.join(' ') : ''));
@@ -26583,14 +26682,26 @@ function islBossState(z){
 function islBossStarsOk(){ var R = islDB().BOSS_RULE; return !!(R && ISL.bosses && ISL.bosses[R.starUnlock] && ISL.bosses[R.starUnlock].kills > 0); }
 function islBossReadyCount(){ var db = islDB(), i, n = 0; if(!db.BOSSES) return 0; for(i = 0; i < db.BOSSES.length; i++){ if(islBossState(db.BOSSES[i].zone).s === 'ready') n++; } return n; }
 function islBossLairPos(sc, pois){
-  var W = 32, H = 24, q, dist = {}, head = 0, cur, best = null, bd = -1, i, d, nx, ny, k, ok, dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  var W = 32, H = 24, q, dist = {}, head = 0, cur, best = null, bd = -1, best2 = null, bd2 = -1, i, d, nx, ny, k, ok, ok2, dirs = [[1,0],[-1,0],[0,1],[0,-1]], _nb;
   if(!sc || !sc.spawn0) return null;
   q = [{ x: sc.spawn0.x, y: sc.spawn0.y }]; dist[sc.spawn0.x + ',' + sc.spawn0.y] = 0;
   while(head < q.length && head < 1200){
     cur = q[head++]; d = dist[cur.x + ',' + cur.y];
-    ok = cur.y >= 2 && cur.y <= H - 2 && cur.x >= 1 && cur.x <= W - 2 && islMaskAt(cur.x, cur.y) === '.';
+    /* ★ v5.231.0(minigame v1.281.0) 老師「野外boss的位置都太角落了(在無法移動到達的地方)，位置往內一點距離」—
+       舊邊界緩衝只有 1~2 格,BFS 選的又是「離出生點最遠的可走格」,天生偏好挑地圖最角落那一格;
+       角落地形常常是狹窄的一格死巷(旁邊多半是水/牆),學生要沿著邊緣繞很久才走得到,體感就是「到不了」。
+       ①緩衝加大到 4 格,先把候選範圍整個往地圖中心收；②新增「至少 2 個可走方向」的門檻,排除那種
+       只有一條路能進出的死巷格子,確保頭目落點附近有一小片空間、不是卡在牆角的死胡同。
+       ⚠ 兩個條件加總在小張地圖上可能篩不出任何候選 → best2 是沿用舊規則(緩衝 1~2 格,無鄰格門檻)的
+       備援候選,兩者都跑同一輪 BFS 不必重跑第二次,best 找不到時退回 best2,絕不會因為篩選太嚴而讓
+       頭目整個沒有巢穴位置。 */
+    ok = cur.y >= 4 && cur.y <= H - 4 && cur.x >= 3 && cur.x <= W - 4 && islMaskAt(cur.x, cur.y) === '.';
+    if(ok){ _nb = 0; for(i = 0; i < dirs.length; i++){ if(islMaskAt(cur.x + dirs[i][0], cur.y + dirs[i][1]) === '.') _nb++; } if(_nb < 2) ok = false; }
     for(i = 0; ok && i < pois.length; i++){ if(Math.abs(pois[i].x - cur.x) <= 2 && Math.abs(pois[i].y - cur.y) <= 2) ok = false; }
     if(ok && d > bd){ bd = d; best = cur; }
+    ok2 = cur.y >= 2 && cur.y <= H - 2 && cur.x >= 1 && cur.x <= W - 2 && islMaskAt(cur.x, cur.y) === '.';
+    for(i = 0; ok2 && i < pois.length; i++){ if(Math.abs(pois[i].x - cur.x) <= 2 && Math.abs(pois[i].y - cur.y) <= 2) ok2 = false; }
+    if(ok2 && d > bd2){ bd2 = d; best2 = cur; }
     for(i = 0; i < dirs.length; i++){
       nx = cur.x + dirs[i][0]; ny = cur.y + dirs[i][1];
       if(nx < 0 || ny < 0 || nx >= W || ny >= H || islMaskAt(nx, ny) !== '.') continue;
@@ -26598,7 +26709,7 @@ function islBossLairPos(sc, pois){
       dist[k] = d + 1; q.push({ x: nx, y: ny });
     }
   }
-  return best;
+  return best || best2;
 }
 window.islBossLairOpen = function(z){
   var db = islDB(), R = db.BOSS_RULE, b = db.bossByZone(z), st = islBossState(z), sv = islBossSave(z), tool = db.defTool(b.tool), wps = [], sk = [], i, j, h, btns = [], stars, core = islItemDef(b.core);
