@@ -4258,10 +4258,11 @@ window.islDirectVeilOff = function(){
 #isl-map canvas.fallback{position:absolute;left:0;top:0;width:100%;height:100%;}
 .isl-zone-spot{position:absolute;width:160px;height:160px;margin-left:-80px;margin-top:-80px;border-radius:50%;border:4px solid rgba(255,255,255,.7);background:rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:44px;color:#fff;text-shadow:0 2px 4px #000;padding:0;}
 .isl-zone-spot .zn{font-size:26px;font-weight:900;background:rgba(0,0,0,.55);border-radius:999px;padding:2px 14px;margin-top:2px;}
+.isl-zone-spot .lv{font-size:15px;font-weight:700;background:rgba(0,0,0,.45);border-radius:999px;padding:1px 10px;margin-top:2px;color:#ffd166;}   /* ★ v1.270.0 怪物等級範圍徽章 */
 .isl-zone-spot.open{border-color:#ffd166;background:rgba(255,209,102,.18);animation:islFloat 2.4s ease-in-out infinite;}
 .isl-zone-spot.lock{opacity:.6;filter:grayscale(.6);}
 .isl-zone-spot.unknown{opacity:.45;filter:grayscale(1) blur(.5px);}
-.isl-zone-spot.unknown .zn{visibility:hidden;}
+.isl-zone-spot.unknown .zn,.isl-zone-spot.unknown .lv{visibility:hidden;}
 .isl-zone-spot .lk{position:absolute;right:6px;top:6px;font-size:28px;}
 @keyframes islFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 #isl-map-camp,#isl-map-leave{position:absolute;width:150px;height:150px;margin-left:-75px;margin-top:-75px;border-radius:24px;border:4px solid #ff9f43;background:rgba(255,159,67,.2);font-size:46px;color:#fff;text-shadow:0 2px 4px #000;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -4518,6 +4519,8 @@ window.islDirectVeilOff = function(){
 .isl-camp-pet.walk .pp{animation:islPetWalkBob .36s ease-in-out infinite alternate;}
 .isl-camp-pet.walk:not(.proc) .pp{animation:islPetWalkBobS .36s ease-in-out infinite alternate;}
 .isl-camp-pet.proc.sleeping .pp{animation:islPetSleep 2.6s ease-in-out infinite;filter:brightness(.78) saturate(.85);}
+.isl-camp-pet.hop:not(.sleeping) .pp{animation:islPetHopJump .6s ease-in-out infinite;}   /* ★ v1.272.0 老師需求「營地建設等待時,寵物圍在工地旁原地跳躍」— 不看 .proc,不分有沒有真圖都一樣跳(跳躍是這批寵物當下唯一的狀態,不是「沒圖時代跳」那種退回) */
+@keyframes islPetHopJump{0%,100%{transform:translateY(0) scale(1,1)}22%{transform:translateY(0) scale(1.1,.86)}55%{transform:translateY(-38%) scale(.9,1.1)}82%{transform:translateY(0) scale(1.06,.92)}}
 @keyframes islPetIdle{0%,100%{transform:scale(1,1)}50%{transform:scale(1.02,.97)}}
 @keyframes islPetWalkBob{0%{transform:translateY(0) rotate(-6deg)}100%{transform:translateY(-10%) rotate(6deg)}}
 @keyframes islPetWalkBobS{0%{transform:translateY(0)}100%{transform:translateY(-5%)}}
@@ -4803,6 +4806,14 @@ window.islDirectVeilOff = function(){
 .isl-bag-slot.has{ border-color:rgba(123,237,159,.5); box-shadow:0 3px 10px rgba(0,0,0,.3),0 0 12px rgba(123,237,159,.14); }
 .isl-bag-slot .n{position:absolute;right:6px;bottom:4px;font-size:30px;font-weight:900;background:rgba(0,0,0,.6);border-radius:999px;padding:0 8px;}
 .isl-bag-slot .q{position:absolute;left:6px;top:4px;font-size:24px;color:#ffd166;}
+.isl-bag-slot.sel{border-color:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.55),0 3px 10px rgba(0,0,0,.3);}   /* ★ v1.271.0 選取存入模式已勾選格 */
+.isl-bag-slot .chk{position:absolute;right:6px;bottom:4px;font-size:26px;z-index:1;}
+.isl-bag-slot .seltag{position:absolute;left:6px;bottom:4px;font-size:16px;font-weight:900;background:#ffd166;color:#3a2a00;border-radius:999px;padding:0 8px;}
+.isl-selbar{position:sticky;bottom:0;display:flex;justify-content:center;padding:10px 0 2px;background:linear-gradient(0deg,rgba(8,16,12,.92),rgba(8,16,12,0));}   /* ★ v1.271.0 選取存入/取出底部固定操作列 */
+.isl-selbar .isl-btn{font-size:20px;padding:10px 22px;}
+.isl-store-q.sel-row{cursor:pointer;border:2px solid transparent;}
+.isl-store-q.sel-row.sel{border-color:#ffd166;background:rgba(255,209,102,.16);}
+.isl-store-q.sel-row .chk{font-size:24px;}
 .isl-bag-slot img{width:60%;height:60%;object-fit:contain;}
 /* ★ v1.174.0(老師:「物品包的圖示再放大,並加上名稱」)——
    ⚠ 這裡是真正的關鍵:上面那條 `img{width:60%;height:60%}` 會蓋掉 islIcoHtml 寫在 inline style 的 px,
@@ -6332,7 +6343,7 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.269.0';   /* ★ v1.269.0(2026-09-19・老師需求「射手星神比照其餘十位星神縮圖 Y -25%，同步到小遊戲」)— MG_THUMB_POS 補列射手星神:25(天蠍星神依本輪明確指示仍排除，不列入本表)。純顯示層，戰鬥數值零改動。 */   /* ★★ v1.268.0(2026-09-19・老師「PC 版荒島的營地,主角要能用上下左右/WASD 移動」)★★ — 根因:鍵盤「放開」(keyup)自 v1.109.0 起只綁在 islZoneBind()(野外場景)裡,營地那條路徑(v1.212.0 的 islCampMoveBind)只綁了 keydown ⇒ 沒先去過任何一張野外地圖的玩家,在營地按下方向鍵之後按鍵狀態永遠停在「按住」,主角一路走到座標夾邊卡住、再按別的方向只是互相抵銷 ⇒ 表現就是「營地方向鍵沒有用」。修法:抽出共用單一出口 islKeysReleaseBind()(keyup + 視窗失焦 + 切到背景 三道一起清),野外與營地各呼叫一次;並在 islShowScreen() 換畫面時一律清空 _IS.keys(與既有的清搖桿/清方向盤同一個用意)。 */   /* ★★ v1.267.0(2026-09-19・老師手機實測回報「許多位置堆疊、無法捲動點不到確定(繼續)鍵、視窗太窄、可見區域太小」)★★ — 純 CSS 一段:手機橫式(橫式且高度≤520px)把 #island-root 的 zoom 由 1.3 還原成 1,並補上一組矮螢幕瘦身規則(標題/內文/按鈕/子選單磚/卡片圖),放在整個 <style> 最後才蓋得過 v1.111.0 那段無條件的全域放大覆寫。根因與改前改後的實測數字全部寫在該段 CSS 的註解裡(可用內容高 66→253px 等)。⚠ JS 一行未動,islZk() 會自己量出新的縮放值。對應 island_db v1.267.0(僅 D.VER 與 D.LOG 一筆)、minigame_sw.js v1.267.0(SHELL v1.233.0)。 */   /* ★★ v1.266.0(2026-09-19・老師回報兩項:①「荒島求生完整下載主程式後,版號沒有同步更新到最新」②「登入帳號後也永遠只能訪客,無法正常登入自己的帳號紀錄遊玩。IPAD 問題最嚴重」)★★ — 【① 版號不同步・三道根因一次補齊】(a) 版本檢查 mgVerFetchLatest() 抓的是 minigame_sw.js?ck=時間戳,而這支請求原本掉進 minigame_sw.js 最後那條 network-first(**逾時只有 2.5 秒**);逾時退回 caches.match(req),但 URL 帶唯一時間戳 ⇒ 快取必定 miss ⇒ 回 504 ⇒ r.ok 是 false ⇒ cb(null) ⇒ 畫面**靜默當成「已是最新」**。一班 25 台同時跟校網要這支 70 多 KB 的檔,2.5 秒很容易超過;而且完整下載之後圖片/音樂/資料表全部走快取、**只剩這一支還要走網路** ⇒ 「下載完反而更新不到」是機制性成因不是錯覺。修法:minigame_sw.js v1.266.0 在 fetch 監聽器最前面對 minigame_sw.js 直接 return 不攔截(交回瀏覽器原生,頁面端本來就帶 cache:'no-store'),本檔這支再自己加 8 秒逾時 + 失敗重試一次。(b) 荒島裡唯一的更新入口是頂部黃條 #isl-updatebar,而它只在 mgVerPaint 執行的**當下**人已經在荒島裡(_IS.on)才會亮——開機 3 秒那次檢查幾乎一定早於學生真的進荒島(?mode=island 直入還要等登入還原),查到了也白查、之後再也沒人重畫 ⇒ 新增 MG._verLatest 記住最近一次的線上版號 + window.mgVerRepaint() 出口,islEnter() 進場立刻重畫一次(不發請求),9 秒後再真正重查一次當保險。(c) mgAutoBusy() 只要 `_IS.on` 就回 true(v1.187.0 刻意的,不改),但忙碌時的重排間隔 60 秒 ⇒ 學生一整節課都在荒島 ⇒ 等於每台 iPad 每分鐘重抓一次 72KB 的 sw 檔、25 台就是每分鐘 25 次白白佔校網,放寬到 5 分鐘(與 mgVerCheck 同節奏)。 — 【② 登入後永遠訪客・根治】新增**第五個放行條件:同一個瀏覽器工作階段、同一個 uid**(sessionStorage 的 lxps_mg_sess_uid)。根因:v1.255.0 只替 mgVerReload / MG_FORCE_RELOAD 兩條「我們自己發動的重整」補了 keep-login 旗標,但 iPad 上**沒有旗標的頁面重載**遠比那兩條多,而每一次都 = 共用裝置守門靜默登出 = 掉回訪客島:WKWebView 記憶體吃緊把分頁整個丟掉再自動重載(本程式 v1.173.0 自己就記錄過;完整下載後多扛 60~120MB 快取,記憶體壓力更大、更常發生——這正是老師說『完整下載之後最嚴重』的機制性原因)、休息排程倒數重整、「📄 資料檔沒載到 → 🔄 重新整理」、islVerUpdate 的退路 reload、學生自己下拉重整。⚠ 刻意用 sessionStorage 不是 localStorage:它綁在「這一個分頁的瀏覽工作階段」,重新整理(含系統丟分頁後的自動還原)會保留,但**關掉 App 再打開一定是空的** ⇒ 同一位學生自己重整放行、下一位同學打開 App 照樣把上一位的帳號踢掉,共用裝置防污染(鐵律 1.41)一個位元組都沒放寬;並且比對 uid,還原到別的帳號一律不放行。另外:靜默登出改成會講一句話(toast 指路到左上角登入入口),「資料檔沒載到」與 islVerUpdate 退路兩處 reload 也補上 keep-login 旗標。 ⚠⚠ 若老師實測後「登入了還是訪客島」依舊:請先確認主程式 GM 選單的荒島開關 gameConfig/islandAccess.localOnly 是不是 true——那個欄位為 true 時 islUid() 依設計一律回 'guest',登入了也照樣是這台裝置的共用訪客島,那是設定不是 bug。 */   /* ★ v1.265.0(2026-09-19・老師看圖兩項:①「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」②「右側選單的圖片不管在哪個裝置(PC、IPAD)都要保持五個靠右邊緣對齊,ICON 放大到接近填滿黃色方框」)—
+var MG_VER = 'v1.272.0';   /* ★ v1.272.0(2026-09-19・老師需求「營地建設等待時間的同時,隨機1~3隻寵物會圍在建設中的設施旁邊,原地跳躍」)— islCampPetsPaint 隨機分布完所有已收服寵物後,新增 islCampPetsGather():逐一檢查 ISL.camp.slots 裡「施工中」(s.bt)的設施,每格各自從寵物池(洗牌後,各工地不會固定抽到同幾隻)隨機抽 1~3 隻(池子不夠就有幾隻算幾隻),改站到該設施座標附近(依分到隻數等角度散開)並標記 rec.hop=true;islCampPetRender 依這個旗標疊 .hop class 播放純 CSS 原地跳躍動畫(islPetHopJump:蹲低擠壓→躍起拉長→落地擠壓,不需要新圖片素材),islCampPetsWanderStart 的隨機漫步迴圈跳過 hop 中的寵物,不會被漫步計時器拉走。⚠ 座標換算:設施格是「離頂端 top%」、寵物/主角是「離底部 bottom%」,兩套座標系相反(v1.152.0 就記過這個坑),用 100−s.y 換算。⚠ 刻意不寫存檔,跟主角/寵物平常站哪一樣是臨時視覺狀態,每次重畫營地(含施工進度變化、完工)都會重新抽一輪;完工後那一格不再是施工中,下次重畫自然回到隨機漫步,不必額外收尾。純顯示層,零資料表異動(island_db 仍 v1.267.0 不必重傳)。 */   /* ★ v1.271.0(2026-09-19・老師兩項:①「回營地跳出的放倉庫詢問視窗新增『選取存入』,開啟物品包勾選模式,勾完底部有『把勾選物品存入』」②「營地倉庫新增『取出放入物品袋』按鈕,同樣可勾選,勾完底部有『把勾選物品取出』」)— ①islCampDepositAsk 詢問視窗新增第三顆「選取存入」,呼叫既有 islBagOpen() 進入勾選模式(_IS.bagSelOn/_IS.bagSel,執行期旗標,不進存檔):每格已放物品的按鈕右下角出現勾選框,再點一次取消勾選,已勾格左下角標「存入」並亮邊框;底部固定操作列「把勾選物品存入」逐格呼叫既有 islStoreAdd(單格容量守門,倉庫放不下的留在物品包並提示,跟「一鍵全放」同一套安全邏輯)。②倉庫 islStoreOpen 新增「🎒 取出放入物品袋」按鈕進勾選模式(_IS.storeSelOn/_IS.storeSel):三個品質列(★/★★/★★★)各自可勾(0 個的列不能勾),底部「把勾選物品取出」逐項呼叫既有 islBagAdd(格數/疊放上限守門,物品包放不下的留在倉庫並提示);選取模式下「🍽 吃」按鈕先收起,避免跟同一列的勾選搶點擊。③islModalClose(全荒島關閉面板的唯一出口,含背景點擊關閉)統一清空兩組選取旗標,背景點擊關掉面板也不會讓下次一般開啟物品包/倉庫殘留卡在勾選模式。純顯示/操作層,零資料表異動(island_db 仍 v1.267.0 不必重傳)、零交易與存檔結構改動(選取狀態本來就不寫進存檔)。 */   /* ★ v1.270.0(2026-09-19・老師兩項:①「荒島商店買賣物品的資訊,顯示玩家『目前持有數量』和『戰鬥效果』」②「大地圖上各區域顯示怪物的等級範圍」)— ①阿獺雜貨鋪「買東西」每一列新增持有數量(🎒 持有 N,islHave 物品包+倉庫合計)與戰鬥效果(讀既有 D.BT_ITEMS + islBtItemFxText(),與戰鬥中「🎒 道具」欄同一份資料來源,不會顯示與實際效果不一致);沒登記在 D.BT_ITEMS 的商品(蘆葦、科技點材料、物品包擴格、裝飾品)不顯示這一行,不硬湊。「賣東西」分頁原本就有持有數量,本輪同步補上戰鬥效果(同一物品各品質共用同一份文字)。②大地圖每個區域圖示新增等級徽章(⚔Lv 下限~上限,讀既有 D.ENC[區域].lv),沙灘沒有 D.ENC 資料(安全區,不會戰鬥)故不顯示;❓ 未知區域沿用既有 .zn 名稱同一套隱藏規則,不會提前洩漏還沒解鎖區域的怪物強度。純顯示層,零資料表異動(island_db 仍 v1.267.0 不必重傳)、零戰鬥/交易數值改動。 */   /* ★ v1.269.0(2026-09-19・老師需求「射手星神比照其餘十位星神縮圖 Y -25%，同步到小遊戲」)— MG_THUMB_POS 補列射手星神:25(天蠍星神依本輪明確指示仍排除，不列入本表)。純顯示層，戰鬥數值零改動。 */   /* ★★ v1.268.0(2026-09-19・老師「PC 版荒島的營地,主角要能用上下左右/WASD 移動」)★★ — 根因:鍵盤「放開」(keyup)自 v1.109.0 起只綁在 islZoneBind()(野外場景)裡,營地那條路徑(v1.212.0 的 islCampMoveBind)只綁了 keydown ⇒ 沒先去過任何一張野外地圖的玩家,在營地按下方向鍵之後按鍵狀態永遠停在「按住」,主角一路走到座標夾邊卡住、再按別的方向只是互相抵銷 ⇒ 表現就是「營地方向鍵沒有用」。修法:抽出共用單一出口 islKeysReleaseBind()(keyup + 視窗失焦 + 切到背景 三道一起清),野外與營地各呼叫一次;並在 islShowScreen() 換畫面時一律清空 _IS.keys(與既有的清搖桿/清方向盤同一個用意)。 */   /* ★★ v1.267.0(2026-09-19・老師手機實測回報「許多位置堆疊、無法捲動點不到確定(繼續)鍵、視窗太窄、可見區域太小」)★★ — 純 CSS 一段:手機橫式(橫式且高度≤520px)把 #island-root 的 zoom 由 1.3 還原成 1,並補上一組矮螢幕瘦身規則(標題/內文/按鈕/子選單磚/卡片圖),放在整個 <style> 最後才蓋得過 v1.111.0 那段無條件的全域放大覆寫。根因與改前改後的實測數字全部寫在該段 CSS 的註解裡(可用內容高 66→253px 等)。⚠ JS 一行未動,islZk() 會自己量出新的縮放值。對應 island_db v1.267.0(僅 D.VER 與 D.LOG 一筆)、minigame_sw.js v1.267.0(SHELL v1.233.0)。 */   /* ★★ v1.266.0(2026-09-19・老師回報兩項:①「荒島求生完整下載主程式後,版號沒有同步更新到最新」②「登入帳號後也永遠只能訪客,無法正常登入自己的帳號紀錄遊玩。IPAD 問題最嚴重」)★★ — 【① 版號不同步・三道根因一次補齊】(a) 版本檢查 mgVerFetchLatest() 抓的是 minigame_sw.js?ck=時間戳,而這支請求原本掉進 minigame_sw.js 最後那條 network-first(**逾時只有 2.5 秒**);逾時退回 caches.match(req),但 URL 帶唯一時間戳 ⇒ 快取必定 miss ⇒ 回 504 ⇒ r.ok 是 false ⇒ cb(null) ⇒ 畫面**靜默當成「已是最新」**。一班 25 台同時跟校網要這支 70 多 KB 的檔,2.5 秒很容易超過;而且完整下載之後圖片/音樂/資料表全部走快取、**只剩這一支還要走網路** ⇒ 「下載完反而更新不到」是機制性成因不是錯覺。修法:minigame_sw.js v1.266.0 在 fetch 監聽器最前面對 minigame_sw.js 直接 return 不攔截(交回瀏覽器原生,頁面端本來就帶 cache:'no-store'),本檔這支再自己加 8 秒逾時 + 失敗重試一次。(b) 荒島裡唯一的更新入口是頂部黃條 #isl-updatebar,而它只在 mgVerPaint 執行的**當下**人已經在荒島裡(_IS.on)才會亮——開機 3 秒那次檢查幾乎一定早於學生真的進荒島(?mode=island 直入還要等登入還原),查到了也白查、之後再也沒人重畫 ⇒ 新增 MG._verLatest 記住最近一次的線上版號 + window.mgVerRepaint() 出口,islEnter() 進場立刻重畫一次(不發請求),9 秒後再真正重查一次當保險。(c) mgAutoBusy() 只要 `_IS.on` 就回 true(v1.187.0 刻意的,不改),但忙碌時的重排間隔 60 秒 ⇒ 學生一整節課都在荒島 ⇒ 等於每台 iPad 每分鐘重抓一次 72KB 的 sw 檔、25 台就是每分鐘 25 次白白佔校網,放寬到 5 分鐘(與 mgVerCheck 同節奏)。 — 【② 登入後永遠訪客・根治】新增**第五個放行條件:同一個瀏覽器工作階段、同一個 uid**(sessionStorage 的 lxps_mg_sess_uid)。根因:v1.255.0 只替 mgVerReload / MG_FORCE_RELOAD 兩條「我們自己發動的重整」補了 keep-login 旗標,但 iPad 上**沒有旗標的頁面重載**遠比那兩條多,而每一次都 = 共用裝置守門靜默登出 = 掉回訪客島:WKWebView 記憶體吃緊把分頁整個丟掉再自動重載(本程式 v1.173.0 自己就記錄過;完整下載後多扛 60~120MB 快取,記憶體壓力更大、更常發生——這正是老師說『完整下載之後最嚴重』的機制性原因)、休息排程倒數重整、「📄 資料檔沒載到 → 🔄 重新整理」、islVerUpdate 的退路 reload、學生自己下拉重整。⚠ 刻意用 sessionStorage 不是 localStorage:它綁在「這一個分頁的瀏覽工作階段」,重新整理(含系統丟分頁後的自動還原)會保留,但**關掉 App 再打開一定是空的** ⇒ 同一位學生自己重整放行、下一位同學打開 App 照樣把上一位的帳號踢掉,共用裝置防污染(鐵律 1.41)一個位元組都沒放寬;並且比對 uid,還原到別的帳號一律不放行。另外:靜默登出改成會講一句話(toast 指路到左上角登入入口),「資料檔沒載到」與 islVerUpdate 退路兩處 reload 也補上 keep-login 旗標。 ⚠⚠ 若老師實測後「登入了還是訪客島」依舊:請先確認主程式 GM 選單的荒島開關 gameConfig/islandAccess.localOnly 是不是 true——那個欄位為 true 時 islUid() 依設計一律回 'guest',登入了也照樣是這台裝置的共用訪客島,那是設定不是 bug。 */   /* ★ v1.265.0(2026-09-19・老師看圖兩項:①「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」②「右側選單的圖片不管在哪個裝置(PC、IPAD)都要保持五個靠右邊緣對齊,ICON 放大到接近填滿黃色方框」)—
    ①【設施名稱改點了才顯示・且不隨設施縮放】v1.264.0 把 .bn 名稱標籤畫在 .isl-cell 裡面,兩個問題:常駐顯示、
      且標籤跟著 islCampBldApplyTransforms 寫在設施上的個人縮放(0.5~2.0)一起變大變小(老師截圖裡放大過的營火標籤跟著巨大)。
      改成:自己的營地不再畫常駐標籤;點設施的當下由新函式 islBldNameFlash() 在 #isl-camp-grid 層浮出「🔥 營火 Lv2」
@@ -16626,7 +16637,7 @@ function islModal(html, btns, opts){
     if(i >= 0 && btns[i] && btns[i].cb) btns[i].cb();
   };
 }
-function islModalClose(){ var m = $('isl-modal'); m.classList.add('hidden'); m.innerHTML = ''; m.onclick = null; try{ islSfx('menuClose'); }catch(_mc){} }   /* ★ v1.215.0 老師「補完視窗關閉音效」— 這支是全荒島 56 處關閉呼叫的唯一出口,舊版完全靜音,補一處即全涵蓋 */
+function islModalClose(){ var m = $('isl-modal'); m.classList.add('hidden'); m.innerHTML = ''; m.onclick = null; _IS.bagSel = null; _IS.bagSelOn = false; _IS.storeSel = null; _IS.storeSelOn = false; try{ islSfx('menuClose'); }catch(_mc){} }   /* ★ v1.215.0 老師「補完視窗關閉音效」— 這支是全荒島 56 處關閉呼叫的唯一出口,舊版完全靜音,補一處即全涵蓋 */   /* ★ v1.271.0 老師需求「物品包/倉庫新增選取存入/取出」— 選取狀態放在執行期 _IS,不是存檔欄位;背景點擊(非走 data-act=close 分支)也會直接呼叫這支,若不在這裡順手清空,關掉面板後下次從別的入口一般開啟物品包/倉庫會意外卡在勾選模式 */
 /* 對白框(主角內心話／小白):逐句點下一句,可跳過 */
 function islDialog(lines, opts, cb){
   var d = $('isl-dialog'), i = 0, who = (opts && opts.who) || 'me';
@@ -17358,14 +17369,14 @@ function islZoneState(z){
   return (z.order <= maxOpen + 1) ? 'lock' : 'unknown';
 }
 function islMapPaint(){
-  var db = islDB(), m = $('isl-map'), h = '', i, z, st, u = islImgUrl('map'), cur = db.zone(ISL.curZone) || db.ZONES[0], lg = $('isl-map-logo'), lu = islImgUrl('logo');
+  var db = islDB(), m = $('isl-map'), h = '', i, z, st, u = islImgUrl('map'), cur = db.zone(ISL.curZone) || db.ZONES[0], lg = $('isl-map-logo'), lu = islImgUrl('logo'), enc, lvTxt;
   if(lg){ if(lu){ if(lg.getAttribute('src') !== lu){ lg.style.display = ''; lg.src = lu; } }else lg.style.display = 'none'; }   /* ★ v1.172.0 左下角 LOGO(只在 src 真的變了才重設,免得每次重畫地圖都重新載入一次圖) */
   h += '<canvas class="fallback" id="isl-map-cv" width="512" height="384"></canvas>';
   if(u) h += '<img class="mapimg" src="' + u + '" alt="" onerror="this.style.display=\'none\';">';
   h += '<canvas class="fog" id="isl-map-fog" width="1024" height="768"></canvas>';   /* ★ v1.115.0 迷霧層(1/2 解析度即可,拉伸顯示) */
   for(i = 0; i < db.ZONES.length; i++){
-    z = db.ZONES[i]; st = islZoneState(z);
-    h += '<button class="isl-zone-spot ' + st + '" data-z="' + z.id + '" style="left:' + z.map.x + '%;top:' + z.map.y + '%">' + (st === 'unknown' ? '❓' : z.e) + '<span class="zn">' + islEsc(z.n) + '</span>' + (st === 'lock' ? '<span class="lk">🔒</span>' : '') + '</button>';
+    z = db.ZONES[i]; st = islZoneState(z); enc = db.ENC[z.id]; lvTxt = enc ? ('⚔Lv' + enc.lv[0] + '~' + enc.lv[1]) : '';   /* ★ v1.270.0 老師需求「大地圖各區域顯示怪物的等級範圍」— 讀既有 D.ENC[zone].lv,沙灘沒有 ENC 資料(安全區)故不顯示;沿用 .zn 同一套 unknown 狀態隱藏規則,不會洩漏還沒解鎖的區域資訊 */
+    h += '<button class="isl-zone-spot ' + st + '" data-z="' + z.id + '" style="left:' + z.map.x + '%;top:' + z.map.y + '%">' + (st === 'unknown' ? '❓' : z.e) + '<span class="zn">' + islEsc(z.n) + '</span>' + (lvTxt ? '<span class="lv">' + lvTxt + '</span>' : '') + (st === 'lock' ? '<span class="lk">🔒</span>' : '') + '</button>';
   }
   h += _IS.coop ? '<button id="isl-map-camp" data-z="__visitcamp" style="left:49%;top:67%">🏕<span class="zn">參觀營地</span></button><button id="isl-map-leave" data-z="__leave" style="left:28%;top:84%">🚪<span class="zn">離開拜訪</span></button>' : '<button id="isl-map-camp" data-z="__camp" style="left:49%;top:67%">🏕<span class="zn">營地</span></button>';   /* ★ v1.108.0 拜訪模式:回營鈕換成離開拜訪;★ v1.114.0 拜訪模式再加「🏕 參觀營地」(唯讀) */
   h += '<div id="isl-map-char" style="left:' + cur.map.x + '%;top:' + cur.map.y + '%">' + islChibiHtml(ISL.char, 'idle') + '</div>';
@@ -19127,6 +19138,7 @@ function islCampDepositAsk(){
   if(!ISL.bag.slots.length) return;
   islModal('<h3>🎒 → 🏚</h3><p>把物品包的東西放進倉庫?(建造、生火會直接讀兩邊合計,不用手動搬)</p>', [
     { t: '先留著', cls: 'ghost' },
+    { t: '選取存入', cls: '', cb: function(){ _IS.bagSelOn = true; _IS.bagSel = {}; islBagOpen(); } },   /* ★ v1.271.0 老師需求「新增選取存入」— 進物品包勾選模式,見 islBagOpen */
     { t: '一鍵全放', cls: 'gold', cb: function(){ islDepositAll(); playSfx('sfx-coin', 0.4); toast('已放進倉庫'); islCampPaint(); islSave('deposit'); } }
   ]);
 }
@@ -19395,8 +19407,39 @@ function islCampPetsPaint(){
     _IS.campPets.push({ id: id, x: x, y: y, k: rec.k, sz: _psz, walking: false, el: el });
     islCampPetRender(_IS.campPets.length - 1);   /* 初始一律畫待機(idle)姿態 */
   }
+  islCampPetsGather();   /* ★ v1.272.0 老師需求「營地建設等待時間的同時,隨機1~3隻寵物會圍在建設中的設施旁邊,原地跳躍」— 見函式說明 */
   islCampPetsScale();
   islCampPetsWanderStart();
+}
+/* ★ v1.272.0(2026-09-19・老師「營地建設等待時間的同時,隨機1~3隻寵物會圍在建設中的設施旁邊,原地跳躍」)—
+   從已隨機分布好的寵物池裡,每個「施工中」的設施(ISL.camp.slots[].bt)各自抽 1~3 隻(池子不夠就有幾隻抽幾隻),
+   改成圍在那格旁邊(以設施座標為圓心,依分到的隻數等角度散開,半徑固定 9%/7%,islClamp 夾在寵物本來就會用的
+   活動範圍內)並標記 rec.hop=true,islCampPetRender 依這個旗標疊 .hop class 播原地跳躍動畫(見 CSS islPetHopJump)、
+   islCampPetsWanderStart 的隨機漫步迴圈跳過 hop 中的寵物(不會被漫步計時器拉走)。
+   ⚠ 座標換算:設施格用「離頂端 top%」,寵物與主角用「離底部 bottom%」,兩套座標系相反(v1.152.0 就記過這個坑),
+   這裡統一用 100−s.y 換算成寵物看得懂的 bottom%。
+   ⚠ 刻意不寫存檔:跟主角/寵物平常站哪一樣是臨時視覺狀態,每次重畫營地(含施工進度變化、完工)都會重新抽一輪,
+   完工後那一格不再是「施工中」,下次重畫自然回到隨機漫步,不必額外收尾。 */
+function islCampPetsGather(){
+  var sites = [], i, s, pool = [], u = _IS.campPets || [], j, tmp, r, bi, site, cnt, ci, ang, ox, oy, rec2, idx;
+  if(!u.length) return;
+  for(i = 0; i < ISL.camp.slots.length; i++){ s = ISL.camp.slots[i]; if(s && s.bt) sites.push({ x: s.x, y: 100 - s.y }); }
+  if(!sites.length) return;
+  for(i = 0; i < u.length; i++) pool.push(i);
+  for(i = pool.length - 1; i > 0; i--){ j = Math.floor(Math.random() * (i + 1)); tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }   /* 洗牌,各工地隨機抽到不同寵物,不會每次都同幾隻圍過去 */
+  for(bi = 0; bi < sites.length && pool.length; bi++){
+    site = sites[bi];
+    cnt = Math.min(pool.length, 1 + Math.floor(Math.random() * 3));   /* 1~3 隻,池子不夠就有幾隻算幾隻 */
+    for(ci = 0; ci < cnt; ci++){
+      idx = pool.pop(); rec2 = u[idx]; if(!rec2) continue;
+      ang = (ci / cnt) * Math.PI * 2 + Math.random() * 0.6;
+      ox = islClamp(site.x + Math.cos(ang) * 9, 6, 94);
+      oy = islClamp(site.y + Math.sin(ang) * 7, 4, 66);
+      rec2.x = ox; rec2.y = oy; rec2.hop = true;
+      if(rec2.el){ rec2.el.style.left = ox + '%'; rec2.el.style.bottom = oy + '%'; }
+      islCampPetRender(idx);
+    }
+  }
 }
 function islCampPetsScale(){   /* 跟主角吃同一個縮放倍率(islCampCharScale 算完存在 _IS.campCharK) */
   var i, u = _IS.campPets || [], k = _IS.campCharK || 1;
@@ -19420,6 +19463,7 @@ function islCampPetRender(i){
   rec.el.classList.toggle('walk', pose === 'walk');
   rec.el.classList.toggle('proc', !real);   /* ★ v1.216.0 改吃各自的 sz(見 islCampPetsPaint),不再統一 64 */
   rec.el.classList.toggle('sleeping', !!_IS.campPetsSleep);
+  rec.el.classList.toggle('hop', !!rec.hop && !_IS.campPetsSleep);   /* ★ v1.272.0 圍在工地旁的寵物原地跳躍;睡著了就不跳(.sleeping 那組動畫優先) */
 }
 /* 睡覺開關:休息流程(islRest 的「睡覺 💤」按鈕)呼叫 on=true——漫步計時器暫停(原地不動)、
    全部寵物立刻換成睡覺姿態+💤;on=false 由 islCampPetsPaint 在每次重畫營地時自然歸零(見上方),
@@ -19436,6 +19480,7 @@ function islCampPetsWanderStart(){
     if(!_IS.on || _IS.screen !== 'camp'){ islCampPetsStop(); return; }
     if(_IS.campPetsSleep) return;   /* ★ v1.212.0 睡覺中整組暫停漫步,維持原地不動 */
     for(i = 0; i < u.length; i++){
+      if(u[i].hop) continue;   /* ★ v1.272.0 圍在施工中設施旁原地跳躍的寵物不參與隨機漫步,留在原地 */
       if(Math.random() > 0.55) continue;   /* 不是每隻每次都動,才不會全部一起同步移動看起來很假 */
       nx = islClamp(u[i].x + (Math.random() * 30 - 15), 6, 94);
       ny = islClamp(u[i].y + (Math.random() * 20 - 10), 4, 66);
@@ -20223,19 +20268,49 @@ window.islResetAsk = function(){
 /* ── 物品包(27.2):4 欄 × 3 列;點格看詳情/丟棄 ── */
 window.islBagOpen = function(){
   if(!ISL) return;
-  var db = islDB(), s = ISL.bag.slots, h = '', i, d;
+  var db = islDB(), s = ISL.bag.slots, h = '', i, d, selMode = !!_IS.bagSelOn, selN = 0, kSel;   /* ★ v1.271.0 老師需求「回營自動詢問視窗新增選取存入」— selMode 由 islCampDepositAsk 的「選取存入」按鈕或 islStoreOpen 的「把勾選物品取出」流程結束後統一設定/清除,不影響其餘既有呼叫點(它們都是 _IS.bagSelOn 預設 falsy 的一般開啟) */
+  if(selMode){ for(kSel in (_IS.bagSel || {})){ if(_IS.bagSel.hasOwnProperty(kSel)) selN++; } }
   playSfx('sfx-tap', 0.3);
-  h += '<div class="isl-bagbox wide"><h3>🎒 物品包 <span class="grow"></span><span style="font-size:32px">' + s.length + '/' + ISL.bag.cap + ' 格</span>'   /* ★ v1.213.0 老師「iPad 物品包外框太短,一行四個物品沒辦法完整顯示」— 根因:這支呼叫 islPanel() 沒傳 opts.wide,舊版會跑 islFitBox() 把整個框等比縮放(transform:scale)塞進可視高度,物品格常常好幾列(填滿格 .isl-bag-slot.has 在 iPad 高達 320px),縮放係數常常被壓到 0.45 下限,圖示/文字全部一起被壓扁變小,看起來就是「擠成一團」。改成跟商店(v1.150.0)、倉庫同一招:框上直接掛 wide,islPanel 就會跳過縮放,改用 CSS max-height + .bd 內捲,格子永遠是設計尺寸,多的列用捲的,不會再整體被壓縮。 */ + (_IS.screen === 'camp' ? '<button data-act="dep">🏚 全放倉庫</button>' : '') + '<button data-act="close">✕</button></h3>';
+  h += '<div class="isl-bagbox wide"><h3>🎒 ' + (selMode ? '選取存入' : '物品包') + ' <span class="grow"></span>' + (selMode ? '' : ('<span style="font-size:32px">' + s.length + '/' + ISL.bag.cap + ' 格</span>'))   /* ★ v1.213.0 老師「iPad 物品包外框太短,一行四個物品沒辦法完整顯示」— 根因:這支呼叫 islPanel() 沒傳 opts.wide,舊版會跑 islFitBox() 把整個框等比縮放(transform:scale)塞進可視高度,物品格常常好幾列(填滿格 .isl-bag-slot.has 在 iPad 高達 320px),縮放係數常常被壓到 0.45 下限,圖示/文字全部一起被壓扁變小,看起來就是「擠成一團」。改成跟商店(v1.150.0)、倉庫同一招:框上直接掛 wide,islPanel 就會跳過縮放,改用 CSS max-height + .bd 內捲,格子永遠是設計尺寸,多的列用捲的,不會再整體被壓縮。 */ + (!selMode && _IS.screen === 'camp' ? '<button data-act="dep">🏚 全放倉庫</button>' : '') + (selMode ? '<button data-act="selcancel">取消</button>' : '') + '<button data-act="close">✕</button></h3>';
   h += '<div class="isl-bag-tools">🧰 工具:' + (ISL.tools.length ? islToolNames() : '(還沒有;蓋「🛠 製作台」就能做)') + '</div><div class="isl-bag-grid">';   /* ★ v1.96.0 */
   for(i = 0; i < ISL.bag.cap; i++){
-    if(s[i]){ d = islItemDef(s[i].id); h += '<button class="isl-bag-slot has" data-i="' + i + '">' + islItemIco(s[i].id, 144) + '<span class="q">'   /* ★ v1.185.0 老師④:材料圖示 72 → 144px(×2);格子 max-width:86% 仍是上限保險,四欄版面塞得下 */ + (s[i].q === 3 ? '★★★' : (s[i].q === 2 ? '★★' : '')) + '</span><span class="n">×' + s[i].n + '</span><span class="nm">' + islEsc(d.n) + '</span></button>'; }   /* ★ v1.174.0 老師:圖示再放大(44→72)並補上名稱 */
+    if(s[i]){
+      d = islItemDef(s[i].id);
+      var bchk = selMode && _IS.bagSel && _IS.bagSel[i];
+      h += '<button class="isl-bag-slot has' + (bchk ? ' sel' : '') + '" data-i="' + i + '"' + (selMode ? ' data-act="selchk"' : '') + '>'
+        + (selMode ? '<span class="chk">' + (bchk ? '✅' : '⬜') + '</span>' : '')
+        + islItemIco(s[i].id, 144) + '<span class="q">'   /* ★ v1.185.0 老師④:材料圖示 72 → 144px(×2);格子 max-width:86% 仍是上限保險,四欄版面塞得下 */ + (s[i].q === 3 ? '★★★' : (s[i].q === 2 ? '★★' : '')) + '</span><span class="n">×' + s[i].n + '</span><span class="nm">' + islEsc(d.n) + '</span>'
+        + (bchk ? '<span class="seltag">存入</span>' : '')
+        + '</button>';   /* ★ v1.174.0 老師:圖示再放大(44→72)並補上名稱 */
+    }
     else h += '<div class="isl-bag-slot" style="opacity:.35"></div>';
   }
-  h += '</div></div>';
+  h += '</div>';
+  if(selMode) h += '<div class="isl-selbar"><button class="isl-btn gold" data-act="seldep"' + (selN ? '' : ' disabled') + '>把勾選物品存入' + (selN ? '(' + selN + ')' : '') + '</button></div>';   /* ★ v1.271.0 */
+  h += '</div>';
   islPanel(h, function(t){
     var act = t.getAttribute('data-act'), i = t.getAttribute('data-i'), it, d;
-    if(act === 'close'){ islModalClose(); return; }
+    if(act === 'close'){ _IS.bagSel = null; _IS.bagSelOn = false; islModalClose(); return; }   /* ★ v1.271.0 關閉面板順手清掉選取狀態,不會殘留到下次一般開啟物品包 */
     if(act === 'dep'){ islDepositAll(); playSfx('sfx-coin', 0.4); islModalClose(); islBagOpen(); islSave('deposit'); return; }
+    if(act === 'selcancel'){ _IS.bagSel = null; _IS.bagSelOn = false; islBagOpen(); return; }   /* ★ v1.271.0 */
+    if(act === 'selchk'){ if(!_IS.bagSel) _IS.bagSel = {}; if(_IS.bagSel[i]) delete _IS.bagSel[i]; else _IS.bagSel[i] = true; playSfx('sfx-tap', 0.2); islBagOpen(); return; }   /* ★ v1.271.0 打勾/取消打勾只重畫面板,選取狀態放在執行期 _IS,不進存檔 */
+    if(act === 'seldep'){   /* ★ v1.271.0 把勾選的每一格個別搬進倉庫,沿用既有 islStoreAdd(單格容量守門/放不下留在物品包);全空選取先擋掉避免白跑一趟 */
+      var keys = [], kk, j, slot, put, leftOver = false, movedAny = false;
+      for(kk in (_IS.bagSel || {})){ if(_IS.bagSel.hasOwnProperty(kk)) keys.push(parseInt(kk, 10)); }
+      if(!keys.length){ toast('還沒勾選要存入的東西'); return; }
+      for(j = 0; j < keys.length; j++){
+        slot = s[keys[j]]; if(!slot) continue;
+        put = islStoreAdd(slot.id, slot.q, slot.n);
+        if(put >= slot.n){ s[keys[j]] = null; movedAny = true; }
+        else{ if(put > 0){ slot.n -= put; movedAny = true; } leftOver = true; }
+      }
+      ISL.bag.slots = []; for(j = 0; j < s.length; j++){ if(s[j]) ISL.bag.slots.push(s[j]); }
+      _IS.bagSel = null; _IS.bagSelOn = false;
+      if(movedAny) playSfx('sfx-coin', 0.4);
+      toast(!movedAny ? '倉庫空間不足,一個都放不下' : (leftOver ? '已存入(倉庫空間不足,部分留在物品包)' : '已把勾選物品存入倉庫'));
+      islHud(); islCampPaint(); islBagOpen(); islSave('deposit');
+      return;
+    }
     if(i != null){ it = s[parseInt(i, 10)]; d = islItemDef(it.id); var bts = [{ t: '關閉', cls: 'ghost', cb: function(){ islBagOpen(); } }]; if(d.cat === 'dish') bts.push({ t: '🍽 吃 1 個', cls: 'gold', cb: function(){ islEatDish(it, s); } }); bts.push({ t: '🗑 丟掉 1 個', cls: 'warn', cb: function(){ it.n -= 1; if(it.n <= 0) s.splice(s.indexOf(it), 1); playSfx('sfx-cancel', 0.3); islHud(); islBagOpen(); islSave('bag'); } }); islModal('<h3>' + d.e + ' ' + islEsc(d.n) + (it.q > 1 ? ' ' + (it.q === 3 ? '★★★' : '★★') : '') + ' ×' + it.n + '</h3><p>' + (d.cat === 'dish' ? islDishText(d, it.q) : (it.q === 3 ? '品質極佳,建造時 1 個當 2 個!' : (it.q === 2 ? '品質不錯。' : '普通品質。'))) + '</p>', bts); }   /* ★ v1.94.0 料理可吃 */
   });
 };
@@ -20269,20 +20344,53 @@ function islPanel(html, onTap, opts){
   m.onclick = function(ev){ var t = ev.target; while(t && t !== m && !(t.getAttribute && (t.getAttribute('data-act') || t.getAttribute('data-i') != null))) t = t.parentNode; if(!t || t === m){ if(ev.target === m) islModalClose(); return; } playSfx('sfx-tap', 0.25); onTap(t); };
 }
 /* ── 倉庫(27.3):種類制,每種上限隨 Lv;顯示 ★ 分佈 ── */
-function islStoreQRow(k, d, q, n){ return '<div class="isl-store-q' + (n > 0 ? '' : ' zero') + '">' + islItemIco(k, 48) + '<span class="q q' + q + '">' + (q === 3 ? '★★★' : (q === 2 ? '★★' : '★')) + '</span><span class="n">×' + n + '</span></div>'; }   /* ★ v1.115.0 倉庫每種物品三列(同圖,各標星級/數量;0 的變淡) */
+function islStoreQRow(k, d, q, n, sel){
+  var body = islItemIco(k, 48) + '<span class="q q' + q + '">' + (q === 3 ? '★★★' : (q === 2 ? '★★' : '★')) + '</span><span class="n">×' + n + '</span>';   /* ★ v1.271.0 老師需求「倉庫新增取出放入物品袋」— sel 為真且該品質數量 >0 時渲染成可勾選按鈕,否則維持原本的純顯示 div,數量 0 的品質列在選取模式下也不給勾 */
+  if(sel && n > 0){
+    var checked = _IS.storeSel && _IS.storeSel[k + '|' + q];
+    return '<button type="button" class="isl-store-q sel-row' + (checked ? ' sel' : '') + '" data-act="selchk" data-k="' + k + '" data-q="' + q + '"><span class="chk">' + (checked ? '✅' : '⬜') + '</span>' + body + '</button>';
+  }
+  return '<div class="isl-store-q' + (n > 0 ? '' : ' zero') + '">' + body + '</div>';   /* ★ v1.115.0 倉庫每種物品三列(同圖,各標星級/數量;0 的變淡) */
+}
 window.islStoreOpen = function(){
-  var db = islDB(), it = ISL.store.items, h = '', i, k, d, o, cap = islStoreCap(), any = false, lv = islCampHasBld('storage') ? islCampHasBld('storage').lv : 0;
+  var db = islDB(), it = ISL.store.items, h = '', i, k, d, o, cap = islStoreCap(), any = false, lv = islCampHasBld('storage') ? islCampHasBld('storage').lv : 0, selMode = !!_IS.storeSelOn, selN = 0, kSel;
   playSfx('sfx-tap', 0.3);
   ISL.store.lv = Math.max(1, lv || 1);
-  h += '<div class="isl-bagbox wide"><h3>🏚 倉庫 Lv' + ISL.store.lv + ' <span class="grow"></span><span style="font-size:15px">每種上限 ' + cap + '</span><button data-act="close">✕</button></h3>';   /* ★ v1.213.0 老師「延長倉庫的長度,不要讓任何欄位被裁切」— 根因跟物品包同一種(islPanel 沒傳 wide 會跑 islFitBox 整框縮放),改掛 wide 跳過縮放,見下方 CSS 改用 .bd 內捲。 */
+  if(selMode){ for(kSel in (_IS.storeSel || {})){ if(_IS.storeSel.hasOwnProperty(kSel)) selN++; } }
+  h += '<div class="isl-bagbox wide"><h3>🏚 ' + (selMode ? '選取取出' : ('倉庫 Lv' + ISL.store.lv)) + ' <span class="grow"></span>' + (!selMode ? ('<span style="font-size:15px">每種上限 ' + cap + '</span><button data-act="selmode">🎒 取出放入物品袋</button>') : '<button data-act="selcancel">取消</button>') + '<button data-act="close">✕</button></h3>';   /* ★ v1.213.0 老師「延長倉庫的長度,不要讓任何欄位被裁切」— 根因跟物品包同一種(islPanel 沒傳 wide 會跑 islFitBox 整框縮放),改掛 wide 跳過縮放,見下方 CSS 改用 .bd 內捲。★ v1.271.0 老師需求「倉庫新增取出放入物品袋」— 選取模式下隱藏「吃」以外的一般操作按鈕,只留取消,避免和勾選混淆 */
   if(!lv) h += '<p style="font-size:15px;color:#ffd166">還沒蓋倉庫,先暫時堆在營地空地(容量同 Lv1)。</p>';
   for(i = 0; i < db.ITEM_ORDER.length; i++){
     k = db.ITEM_ORDER[i]; o = it[k]; if(!o || (o.s1 + o.s2 + o.s3) <= 0) continue; any = true; d = islItemDef(k);
-    h += '<div class="isl-store-item"><span class="nm">' + islEsc(d.n) + '</span><div class="bd2"><div class="hd"><b>' + (o.s1 + o.s2 + o.s3) + '/' + cap + '</b>' + (d.cat === 'dish' ? '<button class="isl-btn gold" style="padding:6px 10px;font-size:15px;margin:0 0 0 8px" data-act="eat" data-k="' + k + '">🍽 吃</button>' : '') + '</div><div class="qs">' + islStoreQRow(k, d, 1, o.s1) + islStoreQRow(k, d, 2, o.s2) + islStoreQRow(k, d, 3, o.s3) + '</div></div></div>';   /* ★ v1.94.0;★ v1.115.0 老師:同一張圖三列,分別標星級與數量;★ v1.213.0 老師「名稱移到各材料最左邊獨立一欄」— 原本 islEsc(d.n) 是壓在 .hd 整排最上面的標題列,改抽成獨立的 .nm 放進 .isl-store-item 最前面(flex 左欄),.hd/.qs 一起包進 .bd2 靠右,見下方 CSS。 */
+    h += '<div class="isl-store-item"><span class="nm">' + islEsc(d.n) + '</span><div class="bd2"><div class="hd"><b>' + (o.s1 + o.s2 + o.s3) + '/' + cap + '</b>' + (!selMode && d.cat === 'dish' ? '<button class="isl-btn gold" style="padding:6px 10px;font-size:15px;margin:0 0 0 8px" data-act="eat" data-k="' + k + '">🍽 吃</button>' : '') + '</div><div class="qs">' + islStoreQRow(k, d, 1, o.s1, selMode) + islStoreQRow(k, d, 2, o.s2, selMode) + islStoreQRow(k, d, 3, o.s3, selMode) + '</div></div></div>';   /* ★ v1.94.0;★ v1.115.0 老師:同一張圖三列,分別標星級與數量;★ v1.213.0 老師「名稱移到各材料最左邊獨立一欄」— 原本 islEsc(d.n) 是壓在 .hd 整排最上面的標題列,改抽成獨立的 .nm 放進 .isl-store-item 最前面(flex 左欄),.hd/.qs 一起包進 .bd2 靠右,見下方 CSS。★ v1.271.0 選取模式下「吃」按鈕先收起,避免跟同一列的勾選按鈕搶點擊 */
   }
   if(!any) h += '<p style="opacity:.7">倉庫是空的,去採集吧!</p>';
+  if(selMode) h += '<div class="isl-selbar"><button class="isl-btn gold" data-act="selwd"' + (selN ? '' : ' disabled') + '>把勾選物品取出' + (selN ? '(' + selN + ')' : '') + '</button></div>';   /* ★ v1.271.0 */
   h += '</div>';
-  islPanel(h, function(t){ var a = t.getAttribute('data-act'); if(a === 'close') islModalClose(); else if(a === 'eat') islEatFromStore(t.getAttribute('data-k')); });   /* ★ v1.94.0 */
+  islPanel(h, function(t){
+    var a = t.getAttribute('data-act');
+    if(a === 'close'){ _IS.storeSel = null; _IS.storeSelOn = false; islModalClose(); return; }   /* ★ v1.271.0 關閉面板順手清掉選取狀態 */
+    else if(a === 'eat') islEatFromStore(t.getAttribute('data-k'));
+    else if(a === 'selmode'){ _IS.storeSelOn = true; _IS.storeSel = {}; islStoreOpen(); }   /* ★ v1.271.0 */
+    else if(a === 'selcancel'){ _IS.storeSelOn = false; _IS.storeSel = null; islStoreOpen(); }   /* ★ v1.271.0 */
+    else if(a === 'selchk'){ var kk = t.getAttribute('data-k'), qq = t.getAttribute('data-q'), key = kk + '|' + qq; if(!_IS.storeSel) _IS.storeSel = {}; if(_IS.storeSel[key]) delete _IS.storeSel[key]; else _IS.storeSel[key] = true; playSfx('sfx-tap', 0.2); islStoreOpen(); }   /* ★ v1.271.0 */
+    else if(a === 'selwd'){   /* ★ v1.271.0 把勾選的每一種品質整疊搬進物品包,沿用既有 islBagAdd(格數/疊放上限守門);物品包放不下的留在倉庫並提示 */
+      var keys = [], kx, jx, parts, kid, qn, o2, have2, put2, moved = 0, leftOver = false;
+      for(kx in (_IS.storeSel || {})){ if(_IS.storeSel.hasOwnProperty(kx)) keys.push(kx); }
+      if(!keys.length){ toast('還沒勾選要取出的東西'); return; }
+      for(jx = 0; jx < keys.length; jx++){
+        parts = keys[jx].split('|'); kid = parts[0]; qn = parseInt(parts[1], 10);
+        o2 = ISL.store.items[kid]; if(!o2) continue;
+        have2 = o2['s' + qn] || 0; if(have2 <= 0) continue;
+        put2 = islBagAdd(kid, qn, have2);
+        if(put2 > 0){ o2['s' + qn] -= put2; moved += put2; }
+        if(put2 < have2) leftOver = true;
+      }
+      _IS.storeSel = null; _IS.storeSelOn = false;
+      if(moved > 0) playSfx('sfx-coin', 0.4);
+      toast(moved <= 0 ? '物品包空間不足,一個都放不下' : (leftOver ? '已取出部分(物品包空間不足)' : '已把勾選物品取出到物品包'));
+      islHud(); islStoreOpen(); islSave('withdraw');
+    }
+  });   /* ★ v1.94.0 */
 };
 /* ── 角色頁:四維能力 + 技能 Lv/EXP ── */
 /* ══ ★ v1.134.0(老師:「角色狀態視窗改成左右兩部分配置,視窗內全部文字放大顯示」)══
@@ -23195,21 +23303,32 @@ window.islShopOpen = function(tab){
       if(it.give.kind === 'deco'){ var owned = false; for(k = 0; k < ISL.camp.deco.length; k++){ if(ISL.camp.deco[k].id === it.give.deco) owned = true; } if(owned) continue; }
       var stepper = (it.give.kind !== 'bagup' && it.give.kind !== 'deco'), qn = stepper ? islBuyQty(it.id) : 1;   /* ★ v1.186.0 老師⑨:「物品包擴格」有階梯漲價上限、「裝飾品」買一次就從清單移除,這兩種天生只能買 1,不套步進器 */
       p = islShopPrice(it); var pTot = stepper ? islShopPriceQ(it, qn) : p; can = islShopCanPay(pTot);
-      h += '<div class="isl-store-row"><span class="ic">' + it.e + '</span><span class="nm">' + islEsc(it.n) + (sp === it.id ? ' <span class="isl-sale">今日特價 −30%</span>' : '') + (it.give.kind === 'bagup' ? ' <span style="opacity:.8;font-size:13px">(' + ISL.shop.bagUp + '/' + S.bagUp.max + ')</span>' : '') + '<br><span class="st">' + islEsc(it.d) + '<br><span style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islShopPriceText(p) + (stepper ? '　/份' : '') + '</span></span></span>'
+      /* ★ v1.270.0 老師需求「商店買賣物品顯示『目前持有數量』和『戰鬥效果』」—
+         持有數量只對「給實體物品」(give.item)的商品有意義(物品包擴格/裝飾品沒有「持有幾個」這回事);
+         戰鬥效果沿用既有戰鬥「🎒 道具」欄同一張 D.BT_ITEMS 表 + islBtItemFxText() 自動產生文字,
+         沒登記在該表(如蘆葦、科技點材料)就不顯示這一行,顯示跟戰鬥中實際效果永遠同一份資料來源。 */
+      var holdTxt = it.give.item ? ('🎒 持有 ' + islHave(it.give.item)) : '', btSpec = it.give.item ? islBtItemSpec(it.give.item) : null, fxTxt = btSpec ? islBtItemFxText(btSpec) : '';
+      h += '<div class="isl-store-row"><span class="ic">' + it.e + '</span><span class="nm">' + islEsc(it.n) + (sp === it.id ? ' <span class="isl-sale">今日特價 −30%</span>' : '') + (it.give.kind === 'bagup' ? ' <span style="opacity:.8;font-size:13px">(' + ISL.shop.bagUp + '/' + S.bagUp.max + ')</span>' : '') + '<br><span class="st">' + islEsc(it.d) + '<br><span style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islShopPriceText(p) + (stepper ? '　/份' : '') + '</span>'
+        + (holdTxt ? '<br><span style="opacity:.8">' + holdTxt + '</span>' : '')
+        + (fxTxt ? '<br><span style="color:#ffd166">⚔ 戰鬥效果:' + islEsc(fxTxt) + '</span>' : '')
+        + '</span></span>'
         + (stepper ? '<span class="qty"><button data-act="bq" data-k="' + it.id + '" data-d="-1">－</button><b id="isl-bq-' + it.id + '">' + qn + '</b><button data-act="bq" data-k="' + it.id + '" data-d="1">＋</button></span>' : '')
         + '<button class="isl-btn buyx ' + (can ? 'gold' : '') + '" id="isl-bbtn-' + it.id + '" data-act="buy" data-k="' + it.id + '" data-q="' + qn + '"' + (can ? '' : ' disabled') + '>買' + (stepper ? ' <span id="isl-bv-' + it.id + '">' + islShopPriceText(pTot) + '</span>' : '') + '</button></div>';
     }
   } else {
-    var any = false, qq, hv, qn;
+    var any = false, qq, hv, qn, sellFxTxt;
     h += '<p style="font-size:15px;opacity:.8;margin:0 0 4px">品質越好賣越貴:★ 原價、★★ ×2、★★★ ×3。用 －＋ 選數量,每一種品質分開賣。</p>';
     for(i = 0; i < db.ITEM_ORDER.length; i++){
       k = db.ITEM_ORDER[i]; price = S.sell[k]; if(!price || islHave(k) <= 0) continue; d = islItemDef(k);
+      var sellFxSpec = islBtItemSpec(k); sellFxTxt = sellFxSpec ? islBtItemFxText(sellFxSpec) : '';   /* ★ v1.270.0 賣東西分頁同步補「戰鬥效果」(持有數量原本就有,見下面 hv);同一物品各品質共用同一份效果文字,不必逐星重算 */
       for(qq = 3; qq >= 1; qq--){   /* ★★★ 排最上面:值錢的放在眼睛先看到的地方,才不會不小心賣掉 */
         hv = islHaveQ(k, qq); if(hv <= 0) continue; any = true; qn = islSellQty(k, qq);
         h += '<div class="isl-sellrow">'
            + '<span class="ic">' + islItemIco(k, 42) + '</span>'
            + '<span class="nm">' + islEsc(d.n) + ' <span class="qq">' + (qq === 3 ? '★★★' : (qq === 2 ? '★★' : '★')) + '</span>'
-           + '<br><span class="st">🐚 ' + (price * qq) + ' /個　持有 ' + hv + '</span></span>'
+           + '<br><span class="st">🐚 ' + (price * qq) + ' /個　持有 ' + hv + '</span>'
+           + (sellFxTxt ? '<br><span class="st" style="color:#ffd166">⚔ 戰鬥效果:' + islEsc(sellFxTxt) + '</span>' : '')
+           + '</span>'
            + '<span class="qty">'
            + '<button data-act="sq" data-k="' + k + '" data-q="' + qq + '" data-d="-1">－</button>'
            + '<b id="isl-sq-' + k + '-' + qq + '">' + qn + '</b>'
