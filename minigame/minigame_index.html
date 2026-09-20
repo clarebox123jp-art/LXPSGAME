@@ -5389,6 +5389,11 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-hpbox .sti-i{display:inline-flex;align-items:center;gap:1px;min-width:22px;height:20px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);font-size:12px;line-height:1;cursor:pointer;touch-action:manipulation;}
 #isl-battle .bt-hpbox .sti-i:active{transform:scale(.9);}
 #isl-battle .bt-hpbox .hpt{font-size:14px;}
+/* ★ v1.284.0 老師「魔物HP條的名稱等文字訊息要靠右對齊，雙方的HP條左側都標示HP；玩家HP條下方的技能量表改成白色，長度改成和HP一樣，並在技能量表左側標示SP」 */
+#isl-battle .bt-hpbox.m .nm{text-align:right;}
+#isl-battle .bt-hpbox .hpl{flex:0 0 auto;font-size:12px;font-weight:700;opacity:.8;}
+#isl-battle .bt-hpbox .hprow.sp{margin-top:2px;}
+#isl-battle .bt-hpbox .hprow.sp .hpb i{background:#fff;}   /* SP 條強制白色,不吃 HP 條的紅橘漸層 */
 #isl-battle .bt-vs{position:absolute;left:50%;top:4px;transform:translateX(-50%);font-size:56px;font-weight:900;color:#ffd166;text-shadow:0 2px 4px #000;z-index:6;pointer-events:none;}   /* ★ v1.283.0 老師「VS 移到畫面上方置中並放大 100%」— 拉出 .bt-top 的 flex 排版,直接貼齊 #isl-battle 容器頂端置中(28px→56px) */
 #isl-battle .bt-stage{flex:1 1 auto;position:relative;min-height:0;}
 #isl-battle .bt-fig{position:absolute;bottom:10%;width:220px;height:220px;}
@@ -5396,7 +5401,7 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-fig.p{left:12%;transform:scale(.8);transform-origin:50% 100%;} #isl-battle .bt-fig.m{right:12%;}   /* ★ v1.283.0 老師「主角人物圖片尺寸縮小 20%」— 縮放套在外層 .bt-fig.p(定位框),不是內層會播呼吸動畫的 .fig,兩個 transform 各自在不同元素上疊加、不會互相蓋掉;原點釘在腳底(50% 100%)才不會縮小後整個人往上飄 */
 #isl-battle .bt-fig .fig{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;transform-origin:50% 100%;animation:islBtBreath 2.4s ease-in-out infinite;}
 #isl-battle .bt-fig.m .fig{animation-duration:2s;animation-delay:.6s;}
-#isl-battle .bt-fig.m .pic{transform:scaleX(-1);}   /* ★ v1.283.0 老師「敵方野豬應該面對左方,檢查所有魔物面向」— 素材本身一律畫成面朝右(跟主角同一套慣例,見戰鬥圖需求清單),敵方站在畫面右側卻要面向玩家(左側),單一 CSS 鏡像整排魔物圖片,不分魔物種類、不用逐隻改素材或逐隻寫程式判斷 */
+#isl-battle .bt-fig.m .pic:not(.mon){transform:scaleX(-1);}   /* ★ v1.284.0 老師看圖回報「黏泥怪/僧帽水母靈面向還是錯的」— 推翻 v1.283.0 的假設:那輪以為「素材一律畫成面朝右」對所有魔物圖都成立,但多數魔物走的是 islMonPicKey() 共用圖示(.pic.mon,與圖鑑/野外共用同一張),這批圖本來就是照玩家會從左側靠近設計、已經面朝左,硬套鏡像反而轉成面朝右。改成排除 .mon:只有真的有專屬戰鬥四態圖(bt_m_<k>_<state>,.pic 不帶 .mon)的少數魔物才鏡像,共用圖示的多數魔物維持原圖不鏡像。 */
 #isl-battle .bt-fig .fig img.pic{max-width:100%;max-height:100%;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
 #isl-battle .bt-fig .fig .pic-layers{position:relative;width:100%;height:100%;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}   /* ★ v1.138.0 三層戰鬥立繪(base/cloth/hair)疊合容器 */
 #isl-battle .bt-fig .fig .pic-layers img.ly{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
@@ -6480,7 +6485,17 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.283.0';   /* ★★ v1.283.0(2026-09-20・老師看圖兩批:①戰鬥畫面UI修正五項 ②營地長按1秒才開視窗)—
+var MG_VER = 'v1.284.0';   /* ★★ v1.284.0(2026-09-20・老師連續多項回報與新需求)—
+   ①戰鬥畫面補修:魔物面向推翻上輪判斷(多數魔物走共用圖鑑圖示 .pic.mon,本來就已朝左,改成排除 .mon 只鏡像真的有專屬戰鬥圖的少數魔物);
+   魔物 HP 條那排文字(名稱/等級/標籤)改右對齊;雙方 HP 條左側都新增 HP 小標籤(依 row-reverse 方向決定放在 DOM 前或後);
+   智取傷害公式改成「玩家攻擊力×2 + 目標最大HP×20%」,取代原本 max(固定值,12%最大HP)。
+   ②玩家 HP 條下方新增 SP 條(沿用 .hpb 同一顆容器,寬度自動跟 HP 一致,強制白色):資料來源是絕招本場剩餘次數(islBtSpUpdate,
+   滿→用一次少一截),隨 islBtHp() 一起更新不必另開呼叫點。
+   ③島上日誌:拿掉原本每場野外遇敵必記的「⚔ 在○○趕跑了○○」,改成只記「🆕 第一次遇到的小怪」(借用 islCodexAdd 的回傳值判斷首次)
+   與「🎒 戰鬥掉落的材料」;新增 ISL.battle.dayLog(total/win/lose)逐場累計,islNewDay 換日時結算成一筆「⚔ 第 N 天共戰鬥 X 場(勝
+   Y・敗 Z)」日誌再歸零。
+   ④新增 ISL_OBJ_TALK:13 種設施 + 9 種裝飾各 2~3 句專屬台詞,長按開啟該物件詳情視窗時(islCampCellTap/islDecoTap)主角隨口說一句
+   (islBubble,不擋視窗開啟)。 ★★ */   /* ★★ v1.283.0(2026-09-20・老師看圖兩批:①戰鬥畫面UI修正五項 ②營地長按1秒才開視窗)—
    【戰鬥畫面】①左右 HP 條各自往自己那側縮短 40%(.hprow 敵方整排反過來排,貼齊畫面右緣)②VS 移到畫面最上方置中放大 100%
    ③主角戰鬥立繪縮小 20%(.bt-fig.p 外層定位框縮放,不動內層呼吸動畫)④寵物技能計量表滿時的紅色方形呼吸外框改成貼著寵物剪影
    的呼吸外光(box-shadow 只會照矩形邊界發光,改用 drop-shadow 吃圖片透明通道畫出來的光暈才會貼合輪廓)⑤道具/戰術選單容器
@@ -16450,6 +16465,39 @@ function islBubble(text, dur){
   }catch(_){}
 }
 window.islBubble = islBubble;
+/* ★ v1.284.0 老師「營地中製造每一個物件都有專屬對白」— 13 種設施 + 9 種裝飾各 2~3 句隨機台詞,
+   長按開啟該物件的詳情視窗時(islCampCellTap/islDecoTap)由主角隨口說一句(沿用 islBubble,跟營地泡泡/心情
+   共用同一顆 DOM,不擋視窗開啟、不強迫閱讀);沒有登記的 id(理論上不會發生,新建築/裝飾上線時若忘記補台詞)
+   直接安靜跳過,不會噴錯誤。 */
+var ISL_OBJ_TALK = {
+  campfire: ['火一點起來,整個營地都暖了。', '晚上有火,魔物才不敢靠太近。', '柴要選乾的,濕木頭只會冒煙不會旺。'],
+  tent: ['今晚就睡這裡,好好休息。', '帳篷搭好,終於有個能躺平的地方。', '屋頂夠防水,下雨也不怕。'],
+  storage: ['東西堆滿地不是辦法,通通放進倉庫。', '有了倉庫,採集回來的東西總算有地方放。'],
+  bucket: ['接雨水存起來,總比每次都跑去溪邊好。', '這桶架看起來簡單,省下不少力氣。'],
+  raft: ['划這艘筏子應該到得了岩岸。', '木筏做得還算牢固,划出去看看。'],
+  wall: ['圍牆蓋好,魔物晚上爬得慢多了。', '石頭一塊塊疊上去,累是累,值得。'],
+  torch: ['火把一點,怕光的魔物應該不敢靠近了。', '這光圈,晚上走動安心不少。'],
+  farm: ['翻好土、種下去,等它長大就有收成。', '每天記得澆水,作物才長得好。'],
+  pen: ['畜欄蓋好了,可以馴養動物了。', '動物住這裡,記得每天餵飼料。'],
+  bench: ['製作台架好,終於能好好做點武器防具。', '工具都在這裡,想做什麼都方便。'],
+  tower: ['站上瞭望台,能提前看到今晚有沒有動靜。', '瞭望台蓋高一點,看得更遠。'],
+  ship: ['帆船一天天成形,離開這座島的那天不遠了。', '造這艘船,是為了有一天能航向遠方。'],
+  canal: ['水道通了,田地就不用每天手動澆水。', '這條水道,省了不少來回搬水的力氣。'],
+  pot: ['盆栽擺著,看著它發芽心情就好。', '種點東西在門口,感覺沒那麼荒涼了。'],
+  fence: ['圍出一小塊地,總算有點家的樣子。', '小柵欄擋不住什麼,但看了安心。'],
+  lamp: ['路燈亮著,晚上走回營地不會黑漆漆的。', '有盞燈,像真的有個家一樣。'],
+  rug: ['地毯鋪上去,踩起來舒服多了。', '腳踩在這上面,終於不硌腳了。'],
+  chime: ['風吹過,貝殼風鈴叮叮作響,挺好聽的。', '這聲音讓營地感覺更熱鬧了。'],
+  flower: ['花開了,蜜蜂蝴蝶都被引來了。', '種點花,荒島也能有點色彩。'],
+  table: ['有張桌子,終於能好好坐下來吃飯了。', '坐在這裡吃飯,感覺踏實多了。'],
+  bed: ['這張床看起來比地上舒服太多了。', '有張床,睡覺總算不用將就了。'],
+  statue: ['這尊雕像,算是紀念這段開墾的日子吧。', '立起這座雕像,好像在跟自己說:走到這裡了。']
+};
+function islObjTalk(id){
+  var arr = ISL_OBJ_TALK[id];
+  if(!arr || !arr.length) return;
+  try{ islBubble(arr[Math.floor(Math.random() * arr.length)]); }catch(_ot){}
+}
 /* 當前最該做的一件事(由上而下第一個成立的就講);全部都做完了就回傳 null ⇒ 改講心情。
    ⚠ 這裡只「講」不「強迫」:真正要玩家照做的仍然是 toast / 視窗,泡泡只負責提醒方向。 */
 function islCampHintText(){
@@ -20479,6 +20527,7 @@ function islCampCellTap(i){
     return;
   }
   b = db.BUILDINGS[s.bld]; maxHp = 100 + 25 * (s.lv - 1);
+  islObjTalk(s.bld);   /* ★ v1.284.0 老師「營地中製造每一個物件都有專屬對白」 */
   btns = [
     { t: '關閉', cls: 'ghost' },
     { t: (s.bld === 'campfire' ? '🔥 生火' : (s.bld === 'storage' ? '🏚 打開倉庫' : (s.bld === 'farm' ? '🌱 打開農田' : (s.bld === 'pen' ? '🐔 打開畜欄' : (s.bld === 'bench' ? '🛠 製作' : (s.bld === 'tent' ? '😴 休息' : '關閉')))))), cb: function(){ if(s.bld === 'campfire') islCampFire(); else if(s.bld === 'storage') islStoreOpen(); else if(s.bld === 'farm') islFarmOpen(); else if(s.bld === 'pen') islPenOpen(); else if(s.bld === 'bench') islCraftOpen(); else if(s.bld === 'tent') islRest(); } },   /* ★ v1.94.0 農田/畜欄入口 */
@@ -20612,6 +20661,9 @@ function islNewDay(){
   setTimeout(function(){ ov.style.opacity = '1'; }, 20);
   setTimeout(function(){
     var wxOld = islWeatherOf(ISL.day);   /* ★ v1.100.0 昨天的天氣決定農田/建築結果;今天的天氣顯示在醒來畫面 */
+    if(ISL.battle && ISL.battle.dayLog && ISL.battle.dayLog.total > 0){ islLog('⚔ 第 ' + ISL.day + ' 天共戰鬥 ' + ISL.battle.dayLog.total + ' 場(勝 ' + ISL.battle.dayLog.win + '・敗 ' + ISL.battle.dayLog.lose + ')', null); }   /* ★ v1.284.0 老師「可以記錄每一天總戰鬥場次和勝敗次數」 */
+    if(!ISL.battle) ISL.battle = {};
+    ISL.battle.dayLog = { total: 0, win: 0, lose: 0 };
     ISL.day += 1; ISL.counters.days = ISL.day;
     try{ islPetsDayTogether(); }catch(_pd){}   /* ★ v1.167.0 新的一天:編組裡的夥伴親密度 +1(D.PET_BOND_GAIN.dayTogether) */
     var tentB = islCampHasBld('tent'), bucketB = islCampHasBld('bucket'), canalB = islCampHasBld('canal'), comfort = islComfort(), dayNote = islNewDayFarmPen(wxOld);   /* ★ v1.94.0 P2-b */
@@ -23226,6 +23278,7 @@ window.islDecoTap = function(i){
   var d = ISL.camp.deco[i], def;
   if(!d) return;
   def = islDecoDef(d.id);
+  islObjTalk(d.id);   /* ★ v1.284.0 老師「營地中製造每一個物件都有專屬對白」 */
   islModal('<h3>' + def.e + ' ' + islEsc(def.n) + '</h3><p style="font-size:15px;opacity:.85">' + islEsc(def.d || '') + '</p><p style="font-size:14px;opacity:.7">拖曳可以換位置。</p>', [
     { t: '關閉', cls: 'ghost' },
     { t: '🔍− 縮小', cb: function(){ islDecoScale(i, -0.25); } },
@@ -25475,7 +25528,7 @@ function islBtOpen(){
   try{ islSfx('battleEnter'); }catch(_be){}   /* ★ v1.188.0 老師需求③「加強進場時的音效」:畫面真正切到戰鬥 UI 的這一刻,與草叢跳出(sfx-roar)是不同時間點,故意分開用兩支音效疊加,進場更有份量 */
   /* ── 上方:左邊我方一列一位、右邊敵方一列一隻(點敵方任一列就換鎖定目標) ── */
   h += '<div class="bt-top"><div class="bt-team p" id="isl-bt-team-p">';
-  h += '<div class="bt-hpbox p" data-s="p"><div class="nm">👤 ' + islEsc(ISL.char.name) + ' <small>' + islEsc(islWeaponLabel(ps.inst)) + '</small></div><div class="hprow"><div class="hpb"><i id="isl-bt-php"></i></div><div class="sti" id="isl-bt-sti-p"></div></div><div class="hpt" id="isl-bt-phpt"></div></div>';
+  h += '<div class="bt-hpbox p" data-s="p"><div class="nm">👤 ' + islEsc(ISL.char.name) + ' <small>' + islEsc(islWeaponLabel(ps.inst)) + '</small></div><div class="hprow"><span class="hpl">HP</span><div class="hpb"><i id="isl-bt-php"></i></div><div class="sti" id="isl-bt-sti-p"></div></div><div class="hprow sp"><span class="hpl">SP</span><div class="hpb" id="isl-bt-spbar"><i id="isl-bt-sp" style="width:100%"></i></div></div><div class="hpt" id="isl-bt-phpt"></div></div>';   /* ★ v1.284.0 老師①「雙方HP條左側都標示HP」②「玩家HP條下方技能量表改白色、長度和HP一樣、左側標示SP」— SP 沿用絕招剩餘次數(每場 1~2 次,見 islBtUseSkill 的 _skMax/B.skN),滿→用一次少一截,islBtSpUpdate() 統一更新 */
   for(i = 0; i < B.allies.length; i++){ h += islBtHpBoxHtml(B.allies[i]); }
   h += '</div><div class="bt-vs">VS</div><div class="bt-team m" id="isl-bt-team-m">';
   for(i = 0; i < B.ms.length; i++){ h += islBtHpBoxHtml(B.ms[i]); }
@@ -25805,7 +25858,7 @@ function islBtHpBoxHtml(u){
   else { var _mt = db.MON_TAGS ? db.MON_TAGS[islMonTag(u)] : null; tag = (_mt ? '<span class="tag mt" onclick="event.stopPropagation();islBtTagTap(\'' + islMonTag(u) + '\')">' + _mt.e + _mt.n + '</span>' : '') + '<span class="rel"></span>'; }   /* ★ v1.228.0 魔物屬性+剋制箭頭 */
   return '<div class="bt-hpbox ' + (isM ? 'm' : '') + '" id="isl-bt-box-' + u.side + '" data-s="' + u.side + '">' +
     '<div class="nm">' + u.e + ' <span class="mn" id="isl-bt-mn-' + u.side + '">' + islEsc(u.n) + '</span> <small>Lv' + u.lv + '</small> ' + tag + '</div>' +   /* ★ v1.261.0 名字包 span,之後補代號只改這一格 */
-    '<div class="hprow">' + (isM ? '<span class="bcd" id="isl-bt-cd-' + u.side + '">' + islEsc(u.code || '') + '</span>' : '') + '<div class="hpb"><i id="isl-bt-hp-' + u.side + '"></i></div><div class="sti" id="isl-bt-sti-' + u.side + '"></div></div>' +   /* ★ v1.261.0 老師「怪物 HP 條上也顯示代號」 */
+    '<div class="hprow">' + (isM ? '<span class="bcd" id="isl-bt-cd-' + u.side + '">' + islEsc(u.code || '') + '</span>' : '<span class="hpl">HP</span>') + '<div class="hpb"><i id="isl-bt-hp-' + u.side + '"></i></div>' + (isM ? '<span class="hpl">HP</span>' : '') + '<div class="sti" id="isl-bt-sti-' + u.side + '"></div></div>' +   /* ★ v1.261.0 老師「怪物 HP 條上也顯示代號」;★ v1.284.0 老師「雙方 HP 條左側都標示 HP」— 敵方(.m)這排整排 row-reverse,DOM 順序要放在 .hpb 之後才會顯示在視覺上的左側(緊貼血條),我方(含隊友)沒有 reverse,直接放在 .hpb 之前即可 */
     (u.cmd ? '<div class="gau g1" id="isl-bt-gau-' + u.side + '" title="技能計量"><i style="width:0%"></i></div>' : '') +   /* ★ v1.258.0 HP 條下方的技能計量表(只有帶專屬指令的寵物有) */
     '<div class="hpt" id="isl-bt-hpt-' + u.side + '"></div></div>';
 }
@@ -25909,11 +25962,22 @@ function islBtStIconsHtml(list){
   }
   return o;
 }
+/* ★ v1.284.0 老師「玩家HP條下方的技能量表改成白色，長度改成和HP一樣，並在技能量表左側標示SP」—
+   拿絕招剩餘次數當 SP 的資料來源(每場 1~2 次,islBtUseSkill 的 _skMax/B.skN 同一份),滿→用一次少一截;
+   顏色強制白色、寬度沿用 .hpb 同一顆容器(不另外量尺寸)。 */
+function islBtSpUpdate(){
+  var B = _islBt, el = $('isl-bt-sp'), max, used, pct;
+  if(!B || !el) return;
+  max = 1 + islSkEff('actAdd'); used = B.skN || 0;
+  pct = Math.max(0, Math.min(100, Math.round((max - used) / max * 100)));
+  el.style.width = pct + '%';
+}
 function islBtHp(){
   var B = _islBt, p = $('isl-bt-php'), i, u, bar, txt, box, sti, icons;
   if(!B || !p) return;
   p.style.width = Math.max(0, ISL.hp / ISL.hpMax * 100) + '%';
   $('isl-bt-phpt').textContent = '❤️ ' + Math.max(0, ISL.hp) + '/' + ISL.hpMax;
+  islBtSpUpdate();   /* ★ v1.284.0 SP 條(絕招剩餘次數)跟著 HP 一起同步,不必另開呼叫點 */
   sti = $('isl-bt-sti-p');
   if(sti){ icons = []; if(B.p.stun > 0) icons.push({ k: 'stun' }); if(B.p.guard) icons.push({ k: 'guard' }); if(islBtFocusOn() && (B.focus || 0) > 0) icons.push({ k: 'focus', v: Math.min(islBtFocusMax(), B.focus) }); if(islBtChargeNow() > 0) icons.push({ k: 'chg', v: islBtChargeNow() }); if(B.p.brace > 0 && islSkEff('braceOn') > 0) icons.push({ k: 'brace' });   /* ★ v1.229.0 B5 */ if(B.p.slowT > 0) icons.push({ k: 'slow', v: B.p.slowT }); if(B.p.burnT > 0) icons.push({ k: 'burn', v: B.p.burnT }); sti.innerHTML = islBtStIconsHtml(icons); }
   for(i = 0; i < B.allies.length; i++){
@@ -26518,7 +26582,7 @@ function islBtOutwit(){
   h += '</div>';
   q.innerHTML = h; q.classList.remove('hidden');
   q.onclick = function(ev){ var t = ev.target; while(t && t !== q && !(t.getAttribute && t.getAttribute('data-t'))) t = t.parentNode; if(!t || t === q) return; q.onclick = null; q.classList.add('hidden'); B.outwit = true; B.witCd = (db.BT.WIT_CD || 3);   /* ★ v1.226.0 冷卻制 */
-    if(t.getAttribute('data-t') === m.tool){ playSfx('sfx-quiz-correct', 0.5); islBtSetState('p', 'atk', 600); islBtFxEv('outwit', 'p', m.side); setTimeout(function(){ if(!_islBt) return; var _owd = Math.max(db.BT.OUTWIT_DMG, Math.round(m.hpMax * 0.12)); m.hp = Math.max(0, m.hp - _owd);   /* ★ v1.225.0 智取至少打掉最大 HP 12%(固定 12 在後期等於沒打) */ if(m.tele){ var _tS = islBtMonSkillDef(m); m.tele = false; m.teleS = null; m.skCd = _tS ? _tS.cd : 2; islBtLog('🔍 看穿了!' + islEsc(m.n) + ' 的「' + (_tS ? islEsc(_tS.n) : '') + '」被你取消了。'); } if(m.hardT > 0 && typeof m._def0 === 'number'){ m.def = m._def0; m.hardT = 0; } m.hideT = 0; if(m.boss) islBtToughHit(m, db.BOSS_RULE.tough.wit);   /* ★ v1.226.0 預告中用對工具 = 取消招式;★ v1.227.0 頭目削韌 */ m.stun = Math.max(m.stun, db.BT.OUTWIT_STUN); playSfx('sfx-normalatk', 0.45); islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 150); islBtFloat('m', '−' + _owd, 'combo'); islBtHp(); islBtLog('✓ 答對!' + islEsc(m.why) + ' ' + islEsc(m.n) + ' 暈了 ' + db.BT.OUTWIT_STUN + ' 回合。'); islStatGain('wit', 1); if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; } setTimeout(islBtMonTurn, 1100); }, 380); }
+    if(t.getAttribute('data-t') === m.tool){ playSfx('sfx-quiz-correct', 0.5); islBtSetState('p', 'atk', 600); islBtFxEv('outwit', 'p', m.side); setTimeout(function(){ if(!_islBt) return; var _owd = Math.round(islBtPlayerStats().atk * 2 + m.hpMax * 0.2); m.hp = Math.max(0, m.hp - _owd);   /* ★ v1.284.0 老師「智取傷害改成玩家攻擊力的2倍+目標最大HP的20%」,取代原本 max(固定值,12%最大HP)(v1.225.0) */ if(m.tele){ var _tS = islBtMonSkillDef(m); m.tele = false; m.teleS = null; m.skCd = _tS ? _tS.cd : 2; islBtLog('🔍 看穿了!' + islEsc(m.n) + ' 的「' + (_tS ? islEsc(_tS.n) : '') + '」被你取消了。'); } if(m.hardT > 0 && typeof m._def0 === 'number'){ m.def = m._def0; m.hardT = 0; } m.hideT = 0; if(m.boss) islBtToughHit(m, db.BOSS_RULE.tough.wit);   /* ★ v1.226.0 預告中用對工具 = 取消招式;★ v1.227.0 頭目削韌 */ m.stun = Math.max(m.stun, db.BT.OUTWIT_STUN); playSfx('sfx-normalatk', 0.45); islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 150); islBtFloat('m', '−' + _owd, 'combo'); islBtHp(); islBtLog('✓ 答對!' + islEsc(m.why) + ' ' + islEsc(m.n) + ' 暈了 ' + db.BT.OUTWIT_STUN + ' 回合。'); islStatGain('wit', 1); if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; } setTimeout(islBtMonTurn, 1100); }, 380); }
     else { playSfx('sfx-ng', 0.4); islBtLog('✗ 牠不怕這個!' + islEsc(m.why) + ' 反而被撲過來——'); setTimeout(islBtMonTurn, 900); }
   };
 }
@@ -27387,15 +27451,16 @@ window.islBattleEnd = function(how){
     if(mine.idx >= 0){ var dly = islDailyFor(_IS.zone); if(!dly.mines) dly.mines = []; dly.mines.push(mine.idx); }
     if(ISL.battle.day !== ISL.day){ ISL.battle.day = ISL.day; ISL.battle.techToday = 0; }
     n = 0;
+    var _newMon = [], _dropLog = [];
     for(_q = 0; _q < _all.length; _q++){
       var _mm = _all[_q];
       n += _mm.drop.shell[0] + Math.floor(Math.random() * (_mm.drop.shell[1] - _mm.drop.shell[0] + 1));
-      if(_mm.drop.item && Math.random() < _mm.drop.p){ put = islBagAdd(_mm.drop.item, 2, 1); if(put) loot.push(islItemDef(_mm.drop.item).e + islItemDef(_mm.drop.item).n + ' ★★'); else { islDropNear(_mm.drop.item, 2, 1); loot.push('🎒 滿了,' + islItemDef(_mm.drop.item).e + '掉在腳邊'); } }   /* ★ v1.230.0 */
+      if(_mm.drop.item && Math.random() < _mm.drop.p){ put = islBagAdd(_mm.drop.item, 2, 1); if(put){ loot.push(islItemDef(_mm.drop.item).e + islItemDef(_mm.drop.item).n + ' ★★'); _dropLog.push(islItemDef(_mm.drop.item).e + islItemDef(_mm.drop.item).n); } else { islDropNear(_mm.drop.item, 2, 1); loot.push('🎒 滿了,' + islItemDef(_mm.drop.item).e + '掉在腳邊'); _dropLog.push(islItemDef(_mm.drop.item).e + islItemDef(_mm.drop.item).n); } }   /* ★ v1.230.0 */
       if(_mm.lv > _hi) _hi = _mm.lv;
       _names.push(_mm.e + _mm.n + '(Lv' + _mm.lv + ')');
-      islCodexAdd(_mm.k);
+      if(islCodexAdd(_mm.k)) _newMon.push(_mm.e + _mm.n);   /* ★ v1.284.0 老師「島上日誌的野外小怪戰鬥記錄不用記,初次遇到的小怪和掉落材料才需要記錄」— islCodexAdd 本身就是「第一次登記才回 true」,借用這個回傳值判斷是否為初次遇到,不必另外維護一份已遇清單 */
     }
-    for(_q = 0; _q < _all.length; _q++){ if(!_all[_q].elite) continue; var _ci = (db.ELITE.DROP[_all[_q].k] || db.ELITE.DROP_DEF), _cp = islBagAdd(_ci, 2, 1); if(!_cp) islStoreAdd(_ci, 2, 1); loot.push(islItemDef(_ci).e + islItemDef(_ci).n + ' ★★(精英)'); }   /* ★ v1.225.0 精英怪必掉核心素材,包滿進倉庫 */
+    for(_q = 0; _q < _all.length; _q++){ if(!_all[_q].elite) continue; var _ci = (db.ELITE.DROP[_all[_q].k] || db.ELITE.DROP_DEF), _cp = islBagAdd(_ci, 2, 1); if(!_cp) islStoreAdd(_ci, 2, 1); loot.push(islItemDef(_ci).e + islItemDef(_ci).n + ' ★★(精英)'); _dropLog.push(islItemDef(_ci).e + islItemDef(_ci).n); }   /* ★ v1.225.0 精英怪必掉核心素材,包滿進倉庫 */
     ISL.shell += n; loot.unshift('🐚+' + n);
     var _advTxt = islAdvGain(islAdvXpOf(_all));
     if(mine.boss){ try{ loot.push(islBossReward(mine.boss)); try{ islBtBanner('👑 頭目擊破!'); }catch(_bb2){} }catch(_br){ try{ islErrPush('頭目獎勵結算失敗:' + _br); }catch(_e2){} } }   /* ★ v1.227.0 */
@@ -27406,15 +27471,19 @@ window.islBattleEnd = function(how){
     if(!_IS.coop && ISL.zones[_IS.zone]) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 5);   /* ★ v1.228.0 守門:不在區域內開戰(GM 測試鈕)不再丟例外 */
     var _petTxt = islPetsGainAfterWin(_all), _rest = islPetsRestMark();
     if(_rest) _petTxt += (_petTxt ? '<br>' : '') + '💤 有 ' + _rest + ' 位隊友受傷,今天先回營地休息,明天才能再出門。';
-    islLog('⚔ 在' + db.zone(_IS.zone).n + '趕跑了 ' + _names.join('、'), islMonPicKey(m.k));   /* ★ v1.275.0 */
+    ISL.battle.dayLog = ISL.battle.dayLog || { total: 0, win: 0, lose: 0 }; ISL.battle.dayLog.total++; ISL.battle.dayLog.win++;   /* ★ v1.284.0 每日戰鬥場次+勝敗次數,islNewDay 換日時結算成一筆日誌 */
+    if(_newMon.length) islLog('🆕 第一次遇到 ' + _newMon.join('、'), islMonPicKey(m.k));
+    if(_dropLog.length) islLog('🎒 戰鬥掉落:' + _dropLog.join('、'), islMonPicKey(m.k));   /* ★ v1.284.0 老師「島上日誌的野外小怪戰鬥記錄不用記,初次遇到的小怪和掉落材料才需要記錄」— 拿掉原本每場必記的「⚔ 在○○趕跑了○○」,改成只記這兩種真的值得回顧的事件 */
     try{ islMono('battleWin'); }catch(_bw){}   /* ★ v1.133.0 戰鬥畫面沒有角色可以掛泡泡 ⇒ islMono 會自動排隊,按「繼續探索」回到場景時補講 */
     islSave('battle');
     setTimeout(function(){ islModal('<h3>🎉 ' + db.BT.lines.win[Math.floor(Math.random() * db.BT.lines.win.length)] + '</h3><p>' + islEsc(_names.join('、')) + ' 被趕跑了。<br>戰利品:' + loot.join('　') + '<br>' + _advTxt + '<br>⚔ 防衛 EXP +' + xp + '　💪 力氣練習 +1　🔍 探索 +5%</p>' + (_petTxt ? '<p>' + _petTxt + '</p>' : '') + (tech === 0 ? '<p style="font-size:14px;opacity:.75">今天打贏拿到的科技點已達上限(每天 ' + db.BT.TECH_DAY_CAP + ')。</p>' : ''), [{ t: '繼續探索', cls: 'gold', cb: function(){ bgmFadeOut(600, function(){ islBattleClose(); }); } }]); }, 1400);   /* ★ v1.191.0 老師需求②「關閉後勝利音樂淡出」— 按下「繼續探索」先把勝利音樂淡出 600ms,淡完才收battle/換回場景 BGM,不再是硬切一聲就停 */
   } else if(how === 'lose'){
+    ISL.battle.dayLog = ISL.battle.dayLog || { total: 0, win: 0, lose: 0 }; ISL.battle.dayLog.total++; ISL.battle.dayLog.lose++;   /* ★ v1.284.0 */
     islBtSetState('p', 'down', 0); playSfx('sfx-ko', 0.5); islBtFxEv('lose', 'p', null); ISL.battle.lost++; ISL.hurt = true; islSkillGain('defense', db.BT.XP_LOSE); islPetsGainAfterWin(B.ms, true); islPetsRestMark(); try{ islAdvGain(islAdvXpOf(B.ms, (islDB().ADV || {}).lose || 0.2)); }catch(_al){} islSave('battle');
     try{ islMono('battleLose'); }catch(_bl){}   /* ★ v1.133.0(同樣走佇列,回營地才講) */
     setTimeout(function(){ islModal('<h3>🤕 倒下了……</h3><p>被 ' + islEsc(m.n) + ' 打倒,體力歸零。' + (m.hint ? '(牠的弱點:' + islEsc(m.hint) + ')' : '') + '<br>先回營地治療(🩹 大葉+淡水 / 纖維 2 / 草藥 1),明天再來報仇——牠還在原地。</p><p style="font-size:14px;opacity:.75">小提醒:做一把更好的武器(👤 角色 → 🗡 武器)、用 🧠 智取讓牠暈眩、多帶幾道料理。</p>', [{ t: '回營地', cls: 'gold', cb: function(){ islBattleClose(true); } }]); }, 1700);
   } else {   /* flee */
+    ISL.battle.dayLog = ISL.battle.dayLog || { total: 0, win: 0, lose: 0 }; ISL.battle.dayLog.total++;   /* ★ v1.284.0 逃跑不算勝負,只計入總場次 */
     ISL.battle.fled++; islPetsRestMark(); islSave('battle');
     setTimeout(function(){ islBattleClose(); }, 200);
   }
