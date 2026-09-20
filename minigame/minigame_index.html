@@ -4256,14 +4256,14 @@ window.islDirectVeilOff = function(){
 #isl-map .fog{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;}   /* ★ v1.115.0 未探索區域深色迷霧 */
 #isl-map .isl-zone-spot,#isl-map-camp,#isl-map-leave,#isl-map-char{z-index:2;}
 #isl-map canvas.fallback{position:absolute;left:0;top:0;width:100%;height:100%;}
-.isl-zone-spot{position:absolute;width:160px;height:160px;margin-left:-80px;margin-top:-80px;border-radius:50%;border:4px solid rgba(255,255,255,.7);background:rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:44px;color:#fff;text-shadow:0 2px 4px #000;padding:0;}
-.isl-zone-spot .zn{font-size:26px;font-weight:900;background:rgba(0,0,0,.55);border-radius:999px;padding:2px 14px;margin-top:2px;}
-.isl-zone-spot .lv{font-size:15px;font-weight:700;background:rgba(0,0,0,.45);border-radius:999px;padding:1px 10px;margin-top:2px;color:#ffd166;}   /* ★ v1.270.0 怪物等級範圍徽章 */
+.isl-zone-spot{position:absolute;width:320px;height:320px;margin-left:-160px;margin-top:-160px;border-radius:50%;border:6px solid rgba(255,255,255,.7);background:rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:88px;color:#fff;text-shadow:0 2px 4px #000;padding:0;}   /* ★ v1.276.0 老師需求「大地圖各區域的ICON、名稱和等級都放大100%」— 整顆圖示容器與 emoji 字級(44→88px)一併加倍,名稱/等級字級見下方 .zn/.lv */
+.isl-zone-spot .zn{font-size:52px;font-weight:900;background:rgba(0,0,0,.55);border-radius:999px;padding:4px 24px;margin-top:4px;}
+.isl-zone-spot .lv{font-size:30px;font-weight:700;background:rgba(0,0,0,.45);border-radius:999px;padding:2px 18px;margin-top:4px;color:#ffd166;}   /* ★ v1.270.0 怪物等級範圍徽章;★ v1.276.0 隨圖示放大 100% */
 .isl-zone-spot.open{border-color:#ffd166;background:rgba(255,209,102,.18);animation:islFloat 2.4s ease-in-out infinite;}
 .isl-zone-spot.lock{opacity:.6;filter:grayscale(.6);}
 .isl-zone-spot.unknown{opacity:.45;filter:grayscale(1) blur(.5px);}
 .isl-zone-spot.unknown .zn,.isl-zone-spot.unknown .lv{visibility:hidden;}
-.isl-zone-spot .lk{position:absolute;right:6px;top:6px;font-size:28px;}
+.isl-zone-spot .lk{position:absolute;right:10px;top:10px;font-size:52px;}   /* ★ v1.276.0 鎖頭圖示隨整顆放大 100% 同步放大,位置微調避免貼死邊緣 */
 @keyframes islFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 #isl-map-camp,#isl-map-leave{position:absolute;width:150px;height:150px;margin-left:-75px;margin-top:-75px;border-radius:24px;border:4px solid #ff9f43;background:rgba(255,159,67,.2);font-size:46px;color:#fff;text-shadow:0 2px 4px #000;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 #isl-map-camp .zn,#isl-map-leave .zn{font-size:24px;font-weight:900;background:rgba(0,0,0,.55);border-radius:999px;padding:2px 12px;}
@@ -4386,22 +4386,29 @@ window.islDirectVeilOff = function(){
 @keyframes islSpWalkS{from{background-position:-128px -128px}to{background-position:-384px -128px}}
 /* 搖桿 / 互動鈕 / 場景浮層 */
 #isl-joy{position:absolute;width:140px;height:140px;margin-left:-70px;margin-top:-70px;border-radius:50%;background:rgba(255,255,255,.12);border:3px solid rgba(255,255,255,.35);pointer-events:none;z-index:8;}
+#isl-joy.run{background:rgba(255,209,102,.28);border-color:rgba(255,209,102,.75);}   /* ★ v1.276.0 拖到外圈邊緣觸發奔跑時整圈染金色,與營地方向盤同一套視覺回饋 */
 #isl-joy .knob{position:absolute;left:45px;top:45px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.55);}
 #isl-act-btn{position:absolute;right:18px;bottom:18px;width:96px;height:96px;border-radius:50%;background:#ffd166;color:#333;font-size:44px;font-weight:900;border:5px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,.45);z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;}
 #isl-act-btn small{font-size:14px;font-weight:700;margin-top:2px;}
 #isl-act-btn:active{transform:scale(.94);}
 /* ★ v1.188.0 老師需求①「野外新增奔跑/跳躍動作,iPad 畫面左下角鞋子(跑)+翅膀(跳)按鈕」—
-   刻意放左下角(action 鈕在右下角,兩邊不搶同一隻拇指);.run 按住期間亮起(islTick 每幀依 _IS.runBtn 判斷,不靠 CSS :active,因為手指按住不放時瀏覽器不會持續觸發 :active 之外的邏輯)。 */
-#isl-movebtns{position:absolute;left:18px;bottom:18px;display:flex;gap:10px;z-index:9;}
-#isl-movebtns button{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:30px;border:3px solid rgba(255,255,255,.5);box-shadow:0 4px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
+   刻意放左下角(action 鈕在右下角,兩邊不搶同一隻拇指)。
+   ★ v1.276.0 老師「移除跑步鍵、保留跳躍鍵(圖示放大並移到方向盤右側)」— 👟 奔跑鈕整顆移除(奔跑改由
+   方向盤拖到外圈邊緣自動觸發,見 islZoneBind/islCampMoveBind 的 ISL_JOY_RUN_MAG 說明);只剩 🪽 跳躍鈕,
+   放大並且從方向盤正下方移到方向盤右側(不擋在拖曳路徑正上方,右手拇指滑完方向盤直接點得到)。 */
+#isl-movebtns{position:absolute;left:150px;bottom:26px;display:flex;gap:10px;z-index:9;}
+#isl-movebtns button{width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:46px;border:3px solid rgba(255,255,255,.5);box-shadow:0 4px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
 #isl-movebtns button:active,#isl-movebtns button.on{background:#ffd166;color:#333;border-color:#fff;transform:scale(.92);}
 #island-root.inbattle #isl-movebtns{visibility:hidden;}
-/* ★ v1.212.0 營地版奔跑/跳躍鈕,樣式照抄野外 #isl-movebtns(同尺寸/位置/按下反饋,操作手感一致) */
-#isl-camp-movebtns{position:absolute;left:18px;bottom:18px;display:flex;gap:10px;z-index:9;}
-#isl-camp-joy{position:absolute;left:18px;bottom:88px;width:112px;height:112px;border-radius:50%;background:rgba(255,255,255,.14);border:3px solid rgba(255,255,255,.4);z-index:9;touch-action:none;}   /* ★ v1.244.0 營地固定式方向盤(在 👟🪽 正上方) */
+/* ★ v1.212.0 營地版跳躍鈕,樣式照抄野外 #isl-movebtns(同尺寸/按下反饋,操作手感一致);★ v1.276.0 位置改貼在
+   #isl-camp-joy(左18px/寬112px,右緣在 130px)右側,垂直置中對齊方向盤高度(方向盤 bottom:88~200px,中心 144px;
+   本鈕 88px 高,bottom = 144-44 = 100px) */
+#isl-camp-movebtns{position:absolute;left:150px;bottom:100px;display:flex;gap:10px;z-index:9;}
+#isl-camp-joy{position:absolute;left:18px;bottom:88px;width:112px;height:112px;border-radius:50%;background:rgba(255,255,255,.14);border:3px solid rgba(255,255,255,.4);z-index:9;touch-action:none;}   /* ★ v1.244.0 營地固定式方向盤(現緊鄰 🪽 跳躍鈕左側) */
 #isl-camp-joy .knob{position:absolute;left:34px;top:34px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.6);pointer-events:none;}
 #isl-camp-joy.on{background:rgba(255,255,255,.22);}
-#isl-camp-movebtns button{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:30px;border:3px solid rgba(255,255,255,.5);box-shadow:0 4px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
+#isl-camp-joy.run{background:rgba(255,209,102,.28);border-color:rgba(255,209,102,.75);}   /* ★ v1.276.0 拖到外圈邊緣、即將/已經觸發奔跑時方向盤整圈染成跑步的金色,給玩家一個「已經進入跑步區」的視覺回饋 */
+#isl-camp-movebtns button{width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:46px;border:3px solid rgba(255,255,255,.5);box-shadow:0 4px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;line-height:1;-webkit-user-select:none;user-select:none;touch-action:none;}
 #isl-camp-movebtns button:active,#isl-camp-movebtns button.on{background:#ffd166;color:#333;border-color:#fff;transform:scale(.92);}
 /* ★ v1.237.0 老師「跳躍的高度和距離再提升+100%」— 一般跳躍 -22px→-44px、奮力跳躍 -44px→-88px,兩組都翻倍。 */
 @keyframes islJumpHop{0%{transform:translateY(0)}35%{transform:translateY(-44px)}100%{transform:translateY(0)}}
@@ -6339,13 +6346,13 @@ window.islDirectVeilOff = function(){
       <div id="isl-zone-topinfo"></div>
       <div id="isl-joy" class="hidden"><div class="knob"></div></div>
       <button id="isl-act-btn" class="hidden" onclick="islActBtnTap()">!</button>
-      <div id="isl-movebtns"><button id="isl-run-btn" title="按住奔跑(鍵盤:Shift)">👟</button><button id="isl-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.188.0 老師需求①「野外新增奔跑/跳躍動作」:iPad 版畫面左下角兩顆鈕,鞋子=按住奔跑、翅膀=點一下跳躍;PC 對應鍵盤 Shift(奔跑,按住)/空白鍵(跳躍,單按) -->
+      <div id="isl-movebtns"><button id="isl-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.276.0 老師需求「移除跑步鍵、保留跳躍鍵(放大並移到方向盤右側)」— 👟 奔跑鈕已移除,奔跑改由方向盤拖到外圈邊緣自動觸發(見 CSS/JS 說明),PC 鍵盤 Shift 與雙擊地板跑步兩條既有路徑不受影響 -->
     </div>
     <div id="isl-camp" class="hidden">
       <img id="isl-camp-bg" src="" alt="" onerror="this.style.display='none';">
       <div id="isl-camp-viewport"><div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char" onclick="islCampCharTap()" title="點一下和他說說話"></div><div id="isl-camp-pets"></div><div id="isl-camp-board" class="hidden" onclick="islBoardTap()"></div></div></div><!-- ★ v1.186.0 老師⑦「建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」:新增 #isl-camp-viewport(overflow:hidden 視窗,仿 #isl-map-wrap),#isl-camp-grid 改成固定 860×860 設計畫布(可縮放/平移),舊有 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) -->
       <div id="isl-camp-side"></div>
-      <div id="isl-camp-joy" title="拖曳方向盤移動"><div class="knob"></div></div><div id="isl-camp-movebtns"><button id="isl-camp-run-btn" title="按住奔跑(鍵盤:Shift)">👟</button><button id="isl-camp-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.244.0 老師「營地中的主角移動也增加小方向盤移動方式」— #isl-camp-joy 固定在左下角(不像野外那顆是「按哪裡冒哪裡」:營地的單指手勢已被 點地走路/裝飾拖曳/雙指縮放 瓜分,固定式方向盤才不會跟它們打架),拖曳知道方向後寫進 _IS.campJoy,islCampTick 跟鍵盤同一條 manual 路徑吃 --><!-- ★ v1.212.0 老師「讓營地的主角也具備完整的野外移動指令功能」— 比照野外 #isl-movebtns,掛在 #isl-camp 底下(不是 #isl-camp-grid 裡面),才不會被雙指縮放/平移的 transform 一起吃到;鍵盤 WASD/方向鍵即時移動、Shift/雙擊點地=跑步、空白鍵=跳躍(純視覺,見 islCampMoveBind/islCampTick) -->
+      <div id="isl-camp-joy" title="拖曳方向盤移動(拖到外圈邊緣自動奔跑)"><div class="knob"></div></div><div id="isl-camp-movebtns"><button id="isl-camp-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.276.0 老師需求「移除跑步鍵、保留跳躍鍵(放大並移到方向盤右側)」— 👟 奔跑鈕已移除,奔跑改由方向盤拖到外圈邊緣自動觸發 --><!-- ★ v1.244.0 老師「營地中的主角移動也增加小方向盤移動方式」— #isl-camp-joy 固定在左下角(不像野外那顆是「按哪裡冒哪裡」:營地的單指手勢已被 點地走路/裝飾拖曳/雙指縮放 瓜分,固定式方向盤才不會跟它們打架),拖曳知道方向後寫進 _IS.campJoy,islCampTick 跟鍵盤同一條 manual 路徑吃 --><!-- ★ v1.212.0 老師「讓營地的主角也具備完整的野外移動指令功能」— 比照野外 #isl-movebtns,掛在 #isl-camp 底下(不是 #isl-camp-grid 裡面),才不會被雙指縮放/平移的 transform 一起吃到;鍵盤 WASD/方向鍵即時移動、Shift/雙擊點地=跑步、空白鍵=跳躍(純視覺,見 islCampMoveBind/islCampTick) -->
     </div>
     <div id="isl-act" class="hidden">
       <div id="isl-act-top"><span id="isl-act-name">活動</span><div class="tbar"><i id="isl-act-tbar" style="width:100%"></i></div><span class="tnum" id="isl-act-tnum">30</span><span class="prog" id="isl-act-prog"></span></div>
@@ -6426,7 +6433,11 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.275.0';   /* ★★ v1.275.0(2026-09-20・老師四項:①「荒島每天的 AP 使用超過 50% 時,背景會切換成夜間模式,同時將部分夜行性魔物改成只在夜間出現」②「夜間時所有地圖上的角色物件才需要加一層純 CSS 夜色,夜景圖片不需要再額外加這個」③「夜間時所有可發光的物件或寵物都要添加發光效果」④「存入倉庫和取出的勾選視窗之物品戰鬥功能字體改成黑色,數量 ×N 的文字移到圖片正右方」⑤「野外遇敵跳出的怪物插圖,蜜蜂沒有用到 REPO 圖片,修正後檢查還有哪些跳出怪物圖片沒有正確對接」)★★
+var MG_VER = 'v1.276.0';   /* ★★ v1.276.0(2026-09-20・老師三項:①「荒島移動方式優化，移除跑步鍵、保留跳躍鍵(圖示放大並移到移動方向盤的右側比較好按)。螢幕左下方的滑動方向盤改成拖到外圈邊緣時自動切換成跑步(內圈小移動就是原本的行走)，原本點地面兩下切換跑步也保留。」②「IPAD荒島儲存到雲端一直跳出沒有存成功的視窗。」③「荒島大地圖的各區域的ICON、名稱和等級都放大100%。」)★★ —
+   ①【移動方式改版】野外 #isl-run-btn 與營地 #isl-camp-run-btn 兩顆 👟 奔跑鈕整組移除(HTML/CSS/JS 綁定全刪，舊行以行內註解備查)；奔跑改由拖曳方向盤觸發，新增全域門檻 ISL_JOY_RUN_MAG=0.8：野外 #isl-joy 的 move() 與營地 #isl-camp-joy 的 setv() 原本就會把拖曳量正規化成 0~1(1=貼齊外圈)，跨過門檻即標記本次搖桿 run:true，islRunningNow() 新增讀這個旗標(取代移除的 _IS.runBtn/_IS.campRunBtn)；PC 鍵盤 Shift 與雙擊地板跑步(islTapToMove 的 run 參數)兩條既有路徑完全不受影響，三者並存。兩顆方向盤在進入跑步門檻時整圈染成跑步金色(.run class)當視覺回饋。跳躍鈕(🪽)保留、放大(64→88px、字級 30→46px)並從方向盤正下方移到方向盤右側(zone 側容器改 left:150px，camp 側緊貼 #isl-camp-joy 右緣並垂直置中)。
+   ②【存檔誤報修正】islSaveTap()「💾 存檔」的手動存檔看門狗根因有二：(a) 舊碼判斷成功與否只看 `reason==='manual'`，但失敗後的背景重試呼叫 islSave('retry') 帶的是 reason='retry'，若那次重試才真正成功，舊碼完全不會收尾等待狀態，白白等到看門狗逾時被判定「沒有存成功」；改成只認 `_IS.manualSave` 這個「還在等手動存檔結果」的旗標本身，不管哪個 reason 觸發的成功都算數。(b) 9 秒門檻對校網較慢、iPad 較容易卡頓的連線太短，尤其第一次存檔(!_IS.cloudSeen 分支要先讀一次雲端才寫，是兩趟來回)；初始看門狗延到 14 秒，且失敗時不再只排一次背景重試就結束——第 1~2 次失敗改延後看門狗(重排 12 秒)並 toast 告知還在重試，讓玩家看到的等待跟背景重試同步，連續失敗超過上限(2 次)才真的顯示失敗視窗且立即收尾，不必空等看門狗跑完。本機一律先落地不受影響，這輪純粹修「误报」不動任何存檔資料結構。
+   ③【大地圖放大】`.isl-zone-spot`(區域圖示容器+emoji)、`.zn`(區域名稱)、`.lv`(怪物等級徽章 ⚔Lv)、`.lk`(鎖頭圖示)全數放大 100%：容器 160→320px、圖示 44→88px、名稱 26→52px、等級 15→30px、鎖頭 28→52px，邊框與內距等比微調；⚠ 純 CSS 尺寸調整，未動任何區域座標/資料，個別區域若因此感覺擠在一起，屬於美術排版微調範圍，之後可視需要另外調整各 POI 座標。
+   對應 island_db v1.276.0(僅 D.LOG 新增一筆)、sw v1.276.0(SHELL v1.242.0，因本檔程式碼改版需要破快取)。 */   /* ★★ v1.275.0(2026-09-20・老師四項:①「荒島每天的 AP 使用超過 50% 時,背景會切換成夜間模式,同時將部分夜行性魔物改成只在夜間出現」②「夜間時所有地圖上的角色物件才需要加一層純 CSS 夜色,夜景圖片不需要再額外加這個」③「夜間時所有可發光的物件或寵物都要添加發光效果」④「存入倉庫和取出的勾選視窗之物品戰鬥功能字體改成黑色,數量 ×N 的文字移到圖片正右方」⑤「野外遇敵跳出的怪物插圖,蜜蜂沒有用到 REPO 圖片,修正後檢查還有哪些跳出怪物圖片沒有正確對接」)★★
    ──【① 夜間模式】單一真相三支:islIsNight()(純謂詞,只看『今天已用掉多少比例的 AP』,門檻讀 island_db 的 D.NIGHT.apUsedPct=0.5)、
      islNightSync()(唯一寫入點:設 window._islNightBg、切 #island-root 的 .isl-night、**只有日夜真的翻面那一刻**才換背景圖)、
      islZoneBgRepaint()(就地換 img.zbg 的 src,不重畫整個場景 ⇒ 主角位置/資源點/走路狀態全不受影響)。
@@ -15057,10 +15068,38 @@ function islSave(reason, force, now){   /* ★ v1.119.0 now=true:雲端立刻寫
     if(!ISL || _IS.loading || !MG.user || !MG.fb || MG.user.uid !== uid || ISL.uid !== uid) return;   /* 觸發時重驗:期間換了帳號就丟棄 */
     var payload = JSON.parse(JSON.stringify(ISL)), ref = MG.fb.db.collection('minigameIsland').doc(uid);
     payload.uid = uid;
-    function ok(){ _IS.cloudSeen = true; _IS.cloudAt = payload.updatedAt; _IS.dirty = false; if(reason === 'manual') islSavedFlash(); try{ islPublishCard(); }catch(_e){} }   /* ★ v1.104.0 丙 名片 */
+    function ok(){
+      _IS.cloudSeen = true; _IS.cloudAt = payload.updatedAt; _IS.dirty = false;
+      /* ★ v1.276.0 老師回報「iPad 存檔一直跳出『沒有存成功』」根因①:這裡原本只認 `reason==='manual'`
+         才收尾手動存檔的等待狀態;但下面 fail() 失敗後排的背景重試呼叫 islSave('retry') 帶的是
+         reason='retry',若那次重試才是真正成功的那一次,舊碼完全不會清掉 `_IS.manualSave`,等於
+         白白等到 9 秒逾時被判定「沒有存成功」——存檔其實已經成功了,純粹是判斷條件漏看重試這條路。
+         改成只看 `_IS.manualSave` 這個「還在等手動存檔結果」的旗標本身,不管是哪個 reason 觸發的
+         成功都算數。 */
+      if(_IS.manualSave){ if(_IS.saveWaitT){ clearTimeout(_IS.saveWaitT); _IS.saveWaitT = 0; } islSavedFlash(); }
+      try{ islPublishCard(); }catch(_e){}
+    }   /* ★ v1.104.0 丙 名片 */
     function fail(e){
       if(e && e.code === 'isl-conflict'){ islConflictMark(e.cloud, reason); return; }
-      if(reason === 'manual') toast('☁ 雲端存檔失敗(已存在這台裝置)');
+      /* ★ v1.276.0 老師回報「iPad 存檔一直跳出『沒有存成功』」根因②:9 秒門檻對校網較慢、iPad 較容易
+         卡頓的連線太短,尤其第一次存檔(下面的 `!_IS.cloudSeen` 分支要先讀一次雲端才寫,是兩趟來回);
+         而且原本失敗只排一次 8 秒後的背景重試,`islSaveTap` 的 9 秒看門狗完全不知道背景還在重試,
+         經常在重試「真正成功之前」就先跳出誤報的失敗視窗——進度其實只是存得比較慢,不是真的失敗。
+         修法:比照上面 ok() 改認 `_IS.manualSave` 旗標(不看 reason,涵蓋 retry 這條路)。第 1~2 次
+         失敗只延後看門狗(取消原本的、重新排 12 秒)並用 toast 告知還在重試,讓玩家看到的等待跟背景
+         重試同步;連續失敗超過上限才真的顯示「沒有存成功」,而且此時直接收尾不必等看門狗跑完剩餘時間。 */
+      if(_IS.manualSave){
+        _IS.manualRetries = (_IS.manualRetries || 0) + 1;
+        if(_IS.manualRetries <= 2){
+          toast('☁ 網路有點慢,正在重試存檔…');
+          if(_IS.saveWaitT) clearTimeout(_IS.saveWaitT);
+          _IS.saveWaitT = setTimeout(function(){ if(_IS.manualSave){ _IS.manualSave = false; islSaveResult(false); } }, 12000);
+        } else {
+          _IS.manualSave = false;
+          if(_IS.saveWaitT){ clearTimeout(_IS.saveWaitT); _IS.saveWaitT = 0; }
+          islSaveResult(false);
+        }
+      }
       try{ console.warn('[island save]', e && e.message); }catch(_){}
       if(!_IS.retryT) _IS.retryT = setTimeout(function(){ _IS.retryT = null; if(ISL && _IS.on && !_IS.conflict) islSave('retry'); }, 8000);   /* ★ v1.119.0 網路失敗 8 秒後自動重試(本機已存,不會丟) */
     }
@@ -15135,9 +15174,10 @@ window.islSaveTap = function(){
   }
   islLocalWrite();                       /* 先落地本機,雲端失敗也不會掉進度 */
   _IS.manualSave = true;
+  _IS.manualRetries = 0;   /* ★ v1.276.0 每次按存檔重新歸零,不沿用上一次的失敗次數 */
   toast('💾 儲存中…');
   if(_IS.saveWaitT) clearTimeout(_IS.saveWaitT);
-  _IS.saveWaitT = setTimeout(function(){ if(_IS.manualSave){ _IS.manualSave = false; islSaveResult(false); } }, 9000);   /* 9 秒還沒回報成功 = 當作失敗,明確告訴玩家 */
+  _IS.saveWaitT = setTimeout(function(){ if(_IS.manualSave){ _IS.manualSave = false; islSaveResult(false); } }, 14000);   /* ★ v1.276.0 老師回報 iPad 常誤報「沒有存成功」— 9→14 秒,給校網較慢的裝置與「先讀雲端再寫」的首次存檔(兩趟來回)足夠時間;失敗後的重試視窗另有 fail() 內的 12 秒延後機制,不受這裡影響 */
   islSave('manual', true, true);
 };
 /* ══════════════════════════════════════════════════════════════════════════
@@ -17874,20 +17914,28 @@ function islZoneBind(){
   if(z._islBound) return; z._islBound = true;
   function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; var r = z.getBoundingClientRect(), k = islZk(); return { x: (t.clientX - r.left) / k, y: (t.clientY - r.top) / k, id: ev.changedTouches ? t.identifier : 'm' }; }   /* ★ v1.111.0 ÷zoom:搖桿圓圈貼手指、點地走到正確格 */
   function down(ev){
-    if(ev.target && (ev.target.id === 'isl-act-btn' || ev.target.id === 'isl-run-btn' || ev.target.id === 'isl-jump-btn')) return;   /* ★ v1.188.0 新的奔跑/跳躍鈕也要排除,不然點下去會被搖桿 down() 攔截,自己的按鈕反而按不到 */
+    if(ev.target && (ev.target.id === 'isl-act-btn' || ev.target.id === 'isl-jump-btn')) return;   /* ★ v1.276.0 跑步鈕已移除,只剩跳躍鈕要排除,不然點下去會被搖桿 down() 攔截,自己的按鈕反而按不到 */
     var p = pos(ev), r = z.getBoundingClientRect();
     if(_IS.joy) return;
-    _IS.joy = { id: p.id, ox: p.x, oy: p.y, dx: 0, dy: 0, moved: false, t: islNow() };
-    joy.style.left = p.x + 'px'; joy.style.top = p.y + 'px'; joy.querySelector('.knob').style.transform = ''; show('isl-joy');
+    _IS.joy = { id: p.id, ox: p.x, oy: p.y, dx: 0, dy: 0, moved: false, run: false, t: islNow() };
+    joy.style.left = p.x + 'px'; joy.style.top = p.y + 'px'; joy.querySelector('.knob').style.transform = ''; joy.classList.remove('run'); show('isl-joy');
     ev.preventDefault();
   }
   function move(ev){
-    if(!_IS.joy) return; var p = pos(ev), dx, dy, d;
+    if(!_IS.joy) return; var p = pos(ev), dx, dy, d, mag;
     if(p.id !== _IS.joy.id) return;
     dx = p.x - _IS.joy.ox; dy = p.y - _IS.joy.oy; d = Math.sqrt(dx * dx + dy * dy);
     if(d > 8) _IS.joy.moved = true;
     if(d > 60){ dx = dx / d * 60; dy = dy / d * 60; }
     _IS.joy.dx = dx / 60; _IS.joy.dy = dy / 60;
+    /* ★ v1.276.0 老師需求「滑動方向盤拖到外圈邊緣時自動切換成跑步,內圈小移動就是原本的行走」—
+       dx/dy 除以 60(最大拖曳半徑)後,其向量長度天生就是 0~1 的正規化拖曳幅度(貼著外圈時剛好是 1),
+       不必另外重算一次距離;跨過 ISL_JOY_RUN_MAG 門檻(見常數定義處)就標記本次搖桿為「跑步模式」,
+       islRunningNow() 讀這個旗標。門檻故意不設在剛好 1(那要求手指精準頂到圓周最外緣,對小學生太苛刻),
+       留一小段「靠近外圈也算」的容許帶。 */
+    mag = Math.sqrt(_IS.joy.dx * _IS.joy.dx + _IS.joy.dy * _IS.joy.dy);
+    _IS.joy.run = mag >= ISL_JOY_RUN_MAG;
+    joy.classList.toggle('run', _IS.joy.run);
     joy.querySelector('.knob').style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
     if(_IS.joy.moved) _IS.path = null;
     ev.preventDefault();
@@ -17901,7 +17949,8 @@ function islZoneBind(){
          如果上一次也是這樣的快速點放、而且離現在不到 320ms,判定為雙擊,
          改呼叫 islTapToMove(...,true) 用跑步速度過去,同時清掉雙擊記錄(避免連三下又觸發)。
          ⚠ 刻意不檢查兩次點的位置是否相近——地圖上想跑就是想跑,雙擊當下第二下點在哪就跑去哪,
-         判斷點與點距離反而會讓「先點近處確認再點遠處要跑去」的直覺操作被誤判成不算雙擊。 */
+         判斷點與點距離反而會讓「先點近處確認再點遠處要跑去」的直覺操作被誤判成不算雙擊。
+         ★ v1.276.0 老師裁定此雙擊跑步捷徑與方向盤拖邊緣跑步兩者並存,不互相取代。 */
       if(_IS.lastTapAt && (islNow() - _IS.lastTapAt) < 320){
         _IS.lastTapAt = 0;
         islTapToMove(p.x, p.y, true);
@@ -17910,9 +17959,9 @@ function islZoneBind(){
         islTapToMove(p.x, p.y, false);
       }
     }
-    _IS.joy = null; hide('isl-joy');
+    _IS.joy = null; joy.classList.remove('run'); hide('isl-joy');
   }
-  z.addEventListener('touchstart', down, { passive: false }); z.addEventListener('touchmove', move, { passive: false }); z.addEventListener('touchend', up); z.addEventListener('touchcancel', function(){ _IS.joy = null; hide('isl-joy'); });
+  z.addEventListener('touchstart', down, { passive: false }); z.addEventListener('touchmove', move, { passive: false }); z.addEventListener('touchend', up); z.addEventListener('touchcancel', function(){ _IS.joy = null; joy.classList.remove('run'); hide('isl-joy'); });
   z.addEventListener('mousedown', function(ev){ if(ev.button === 0) down(ev); }); window.addEventListener('mousemove', function(ev){ if(_IS.joy && _IS.joy.id === 'm') move(ev); }); window.addEventListener('mouseup', function(ev){ if(_IS.joy && _IS.joy.id === 'm') up(ev); });
   /* ★ v1.247.0 老師回報「進任何地圖都會自動往右上移動,無法正常控制移動」,與營地方向盤同一輪一併稽核——
      這顆野外「按哪裡冒哪裡」搖桿的 touchend 綁在 z(#isl-zone,已是全螢幕範圍)上,理論上手指不管拖到哪都還在
@@ -17922,18 +17971,18 @@ function islZoneBind(){
      screen 才會被 islZoneStop() 清掉,同一個 zone 裡卡住不會自己好)。比照營地方向盤同輪補上 window 層級
      touchend/touchcancel(雙重保險,即使 z 本身漏接也還有這一道)與 visibilitychange 清空。 */
   window.addEventListener('touchend', function(ev){ if(_IS.joy){ var i; for(i = 0; i < ev.changedTouches.length; i++){ if(ev.changedTouches[i].identifier === _IS.joy.id) up(ev); } } });
-  window.addEventListener('touchcancel', function(){ _IS.joy = null; hide('isl-joy'); });
-  document.addEventListener('visibilitychange', function(){ if(document.hidden){ _IS.joy = null; hide('isl-joy'); } });
+  window.addEventListener('touchcancel', function(){ _IS.joy = null; joy.classList.remove('run'); hide('isl-joy'); });
+  document.addEventListener('visibilitychange', function(){ if(document.hidden){ _IS.joy = null; joy.classList.remove('run'); hide('isl-joy'); } });
   window.addEventListener('keydown', function(ev){ if(!_IS.on || _IS.screen !== 'zone') return; var k = ev.key.toLowerCase(); _IS.keys[k] = true; if(k === ' ' || k === 'enter'){ if(!$('isl-act-btn').classList.contains('hidden')) window.islActBtnTap(); else if(k === ' ') islJump();   /* ★ v1.188.0 老師需求①:空白鍵原本只在「旁邊有東西可互動」時當確認鍵,現在附近沒東西時改成跳躍;Enter 鍵不受影響(維持只當確認鍵,不然智取答題等對話框裡按 Enter 會被誤判成跳躍) */ ev.preventDefault(); } if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].indexOf(k) >= 0){ _IS.path = null; ev.preventDefault(); } });
   islKeysReleaseBind();   /* ★ v1.268.0 舊碼在這裡直接綁 keyup;改走共用出口(見 islKeysReleaseBind 說明),因為營地那條路徑也需要它。舊行備查:window.addEventListener('keyup', function(ev){ _IS.keys[ev.key.toLowerCase()] = false; }); */
-  /* ★ v1.188.0 老師需求①:👟 按住奔跑 / 🪽 點一下跳躍。刻意各自綁自己的 down/up,不共用搖桿那一套(搖桿是「移動方向」,這兩顆是「移動狀態切換」,語意不同,混在一起會很難懂)。 */
-  var runBtn = $('isl-run-btn'), jumpBtn = $('isl-jump-btn');
-  function runOn(ev){ _IS.runBtn = true; runBtn.classList.add('on'); if(ev) ev.preventDefault(); }
-  function runOff(ev){ _IS.runBtn = false; runBtn.classList.remove('on'); }
-  runBtn.addEventListener('touchstart', runOn, { passive: false }); runBtn.addEventListener('touchend', runOff); runBtn.addEventListener('touchcancel', runOff);
-  runBtn.addEventListener('mousedown', runOn); window.addEventListener('mouseup', runOff);
-  window.addEventListener('touchend', runOff); window.addEventListener('touchcancel', runOff);   /* ★ v1.239.0 與營地 👟 鈕同一種坑(見 islCampMoveBind 說明)同輪一併補,避免野外奔跑也卡在跑步速度 */
-  document.addEventListener('visibilitychange', function(){ if(document.hidden) runOff(); });
+  /* ★ v1.276.0 老師「移除跑步鍵、保留跳躍鍵」— 👟 奔跑鈕與其 runOn/runOff 綁定整段移除(舊行備查:
+     var runBtn=$('isl-run-btn'); function runOn(ev){_IS.runBtn=true;runBtn.classList.add('on');if(ev)ev.preventDefault();}
+     function runOff(ev){_IS.runBtn=false;runBtn.classList.remove('on');} runBtn.addEventListener('touchstart',runOn,{passive:false});
+     runBtn.addEventListener('touchend',runOff); runBtn.addEventListener('touchcancel',runOff); runBtn.addEventListener('mousedown',runOn);
+     window.addEventListener('mouseup',runOff); window.addEventListener('touchend',runOff); window.addEventListener('touchcancel',runOff);
+     document.addEventListener('visibilitychange',function(){if(document.hidden)runOff();});)。
+     奔跑改由方向盤拖到外圈邊緣自動觸發(見 move() 內 ISL_JOY_RUN_MAG 判斷),PC 鍵盤 Shift 仍可用(islRunningNow 保留該分支)。 */
+  var jumpBtn = $('isl-jump-btn');
   jumpBtn.addEventListener('touchstart', function(ev){ islJump(); ev.preventDefault(); }, { passive: false });
   jumpBtn.addEventListener('mousedown', function(ev){ islJump(); ev.preventDefault(); });
 }
@@ -17958,9 +18007,9 @@ var _islJumpAt = 0;
    rootId 傳 'isl-camp-char' 走營地那一路,其餘(含不傳)一律走野外判斷。 */
 function islRunningNow(rootId){
   if(rootId === 'isl-camp-char'){
-    return !!(_IS.campRunBtn || (_IS.keys && _IS.keys.shift) || (_IS.campWalk && _IS.campWalk.run));
+    return !!((_IS.keys && _IS.keys.shift) || (_IS.campWalk && _IS.campWalk.run) || (_IS.campJoy && _IS.campJoy.run));   /* ★ v1.276.0 👟 奔跑鈕移除,_IS.campRunBtn 判斷改為 _IS.campJoy.run(方向盤拖到外圈邊緣) */
   }
-  return !!(_IS.runBtn || (_IS.keys && _IS.keys.shift) || (_IS.path && _IS.path.length && _IS.pathRun));
+  return !!((_IS.keys && _IS.keys.shift) || (_IS.path && _IS.path.length && _IS.pathRun) || (_IS.joy && _IS.joy.run));   /* ★ v1.276.0 👟 奔跑鈕移除,_IS.runBtn 判斷改為 _IS.joy.run(方向盤拖到外圈邊緣) */
 }
 /* ★ v1.274.0(2026-09-20・老師需求「跑步的音效只在持續奔跑期間播放,停止跑步要停止音效」)—
    舊版 sfx-run 是每兩格路過就 islSfx('run') 一次性重播(見 islTick/islCampTick 內 _cellK 那段),
@@ -19385,6 +19434,9 @@ function islCampCharPlace(){
    - islCampViewIsInteractive():mousedown/touchstart 時若手指/滑鼠按在建造格、裝飾品、告示牌、
      主角本身之上,一律不啟動視角平移/縮放,讓給它們各自既有的點擊/拖曳處理。 */
 var ISL_CAMP_PET_RATIO = 0.7;   /* ★ v1.225.0 營地寵物 = 主角 64px 基準 × 0.7(比照戰鬥畫面夥伴框 140 : 主角框 200) */
+var ISL_JOY_RUN_MAG = 0.8;   /* ★ v1.276.0 老師需求「滑動方向盤拖到外圈邊緣時自動切換成跑步,內圈小移動就是原本的行走」—
+   野外 #isl-joy 與營地 #isl-camp-joy 兩顆方向盤的拖曳幅度都已正規化成 0~1(1=貼到最外圈),超過此門檻
+   即視為「已經拖到邊緣」自動觸發跑步;故意不設剛好 1.0,留一點容許帶,不要求小學生的手指精準頂到圓周最外緣。 */
 var ISL_CAMP_CHAR_MULT = 1.0;   /* ★ v1.204.0 老師「營地的主角尺寸放大100%(其他寵物也正確比例調整)」— 上一輪(v1.197.0)老師先要求縮小50%(乘0.5),這輪要求在那個基礎上再放大100%(乘2)= 0.5×2 = 1.0,等於退回縮小50%之前的原始尺寸;寵物與主角吃同一個常數,兩者永遠同步縮放。 */
 var ISL_CAMP_CANVAS = 860;   /* 畫布邊長(設計 px),所有裝置統一,靠 CSS transform 縮放適配;比舊版建造格上限 420px 大超過一倍,四周多出來的就是新增的裝飾空間 */
 /* ★★ v1.264.0(老師「換一台筆記電腦後營地選單圖片和角色圖片又變超小,每次換裝置都會遇到」,裁定甲)★★
@@ -19794,15 +19846,19 @@ function islCampMoveBind(){
     if(k === ' '){ islJump('isl-camp-char'); ev.preventDefault(); }
     if(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].indexOf(k) >= 0){ _IS.campWalk = null; ev.preventDefault(); }
   });
-  var runBtn = $('isl-camp-run-btn'), jumpBtn = $('isl-camp-jump-btn');
+  var jumpBtn = $('isl-camp-jump-btn');
   (function(){   /* ★ v1.244.0 營地方向盤 */
     var joy = $('isl-camp-joy'), knob, R = 34, pid = null; if(!joy) return; knob = joy.querySelector('.knob');
     function ctr(){ var r = joy.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, k: r.width / 112 }; }
     function setv(cx, cy){ var c = ctr(), dx = (cx - c.x) / c.k, dy = (cy - c.y) / c.k, d = Math.sqrt(dx * dx + dy * dy), m = Math.min(d, R) / R, nx, ny;
-      if(d < 4){ _IS.campJoy = { on:false, dx:0, dy:0 }; if(knob) knob.style.transform = ''; return; }
-      nx = dx / d; ny = dy / d; _IS.campJoy = { on:true, dx: nx * m, dy: ny * m }; _IS.campWalk = null;
+      if(d < 4){ _IS.campJoy = { on:false, dx:0, dy:0, run:false }; if(knob) knob.style.transform = ''; joy.classList.remove('run'); return; }
+      nx = dx / d; ny = dy / d;
+      /* ★ v1.276.0 老師需求「拖到外圈邊緣自動切換成跑步」— m 本來就是 0~1 的正規化拖曳幅度(貼齊圓周時
+         剛好是 1),跨過 ISL_JOY_RUN_MAG 門檻即標記本次方向盤為跑步模式,islRunningNow('isl-camp-char') 讀取。 */
+      _IS.campJoy = { on:true, dx: nx * m, dy: ny * m, run: m >= ISL_JOY_RUN_MAG }; _IS.campWalk = null;
+      joy.classList.toggle('run', _IS.campJoy.run);
       if(knob) knob.style.transform = 'translate(' + (nx * Math.min(d, R)) + 'px,' + (ny * Math.min(d, R)) + 'px)'; }
-    function end(){ pid = null; _IS.campJoy = { on:false, dx:0, dy:0 }; joy.classList.remove('on'); if(knob) knob.style.transform = ''; }
+    function end(){ pid = null; _IS.campJoy = { on:false, dx:0, dy:0, run:false }; joy.classList.remove('on'); joy.classList.remove('run'); if(knob) knob.style.transform = ''; }
     joy.addEventListener('touchstart', function(ev){ var t = ev.changedTouches[0]; pid = t.identifier; joy.classList.add('on'); setv(t.clientX, t.clientY); ev.preventDefault(); ev.stopPropagation(); }, { passive:false });
     joy.addEventListener('touchmove', function(ev){ var i, t; for(i = 0; i < ev.changedTouches.length; i++){ t = ev.changedTouches[i]; if(t.identifier === pid){ setv(t.clientX, t.clientY); ev.preventDefault(); ev.stopPropagation(); } } }, { passive:false });
     joy.addEventListener('touchend', function(ev){ var i; for(i = 0; i < ev.changedTouches.length; i++){ if(ev.changedTouches[i].identifier === pid) end(); } ev.stopPropagation(); });
@@ -19811,27 +19867,16 @@ function islCampMoveBind(){
     window.addEventListener('mousemove', function(ev){ if(pid === 'm') setv(ev.clientX, ev.clientY); });
     window.addEventListener('mouseup', function(){ if(pid === 'm') end(); });
     document.addEventListener('visibilitychange', function(){ if(document.hidden) end(); });
-    /* ★ v1.247.0 與 👟 奔跑鈕(v1.239.0)同一種坑:拖方向盤本來就常常把手指拖出這顆 112px 圓圈的範圍
+    /* ★ v1.247.0 與 👟 奔跑鈕(v1.239.0,★ v1.276.0 已移除)同一種坑:拖方向盤本來就常常把手指拖出這顆 112px 圓圈的範圍
        再放開,只綁在 joy 元素自己身上的 touchend/touchcancel 在部分瀏覽器/手勢情境下收不到,補兩道
        window 層級全域保險,只認自己的 pid,不會誤放開別的手指(例如同時在雙指縮放地圖)。 */
     window.addEventListener('touchend', function(ev){ var i; for(i = 0; i < ev.changedTouches.length; i++){ if(ev.changedTouches[i].identifier === pid) end(); } });
     window.addEventListener('touchcancel', function(ev){ var i; for(i = 0; i < ev.changedTouches.length; i++){ if(ev.changedTouches[i].identifier === pid) end(); } });
   })();
-  if(runBtn){
-    function runOn(ev){ _IS.campRunBtn = true; runBtn.classList.add('on'); if(ev) ev.preventDefault(); }
-    function runOff(){ _IS.campRunBtn = false; runBtn.classList.remove('on'); }
-    runBtn.addEventListener('touchstart', runOn, { passive: false }); runBtn.addEventListener('touchend', runOff); runBtn.addEventListener('touchcancel', runOff);
-    runBtn.addEventListener('mousedown', runOn); window.addEventListener('mouseup', runOff);
-    /* ★ v1.239.0 老師回報「營地的主角移動速度會不正常的加快」— 根因:手指按住 👟 按住奔跑時,如果手指
-       滑出按鈕範圍再放開,原本只綁在按鈕本身的 touchend 在部分瀏覽器/手勢情境下可能收不到(iOS Safari
-       + 手勢辨識衝突,同類坑本專案已踩過多次),_IS.campRunBtn 就會卡在 true、角色從此永遠用跑步速度
-       (72×1.6)走路,而且沒有任何畫面提示玩家正在「卡奔跑」,看起來就像「速度不正常變快了」。
-       補兩道全域保險,其中一道收不到還有另一道兜底:
-       ①window 層級的 touchend/touchcancel(不只按鈕自己那顆,任何地方放開手指都算數)
-       ②視窗切到背景(切 App/鎖螢幕)時直接視同放開,不留著一個看不見的按鍵狀態。 */
-    window.addEventListener('touchend', runOff); window.addEventListener('touchcancel', runOff);
-    document.addEventListener('visibilitychange', function(){ if(document.hidden) runOff(); });
-  }
+  /* ★ v1.276.0 老師「移除跑步鍵、保留跳躍鍵」— 👟 奔跑鈕與其 runOn/runOff 綁定整段移除(舊行備查:
+     var runBtn=$('isl-camp-run-btn'); function runOn(ev){_IS.campRunBtn=true;runBtn.classList.add('on');if(ev)ev.preventDefault();}
+     function runOff(){_IS.campRunBtn=false;runBtn.classList.remove('on');} 其餘 touchstart/touchend/touchcancel/mousedown/
+     window mouseup/touchend/touchcancel/visibilitychange 綁定全部一併移除)。奔跑改由方向盤拖到外圈邊緣自動觸發。 */
   if(jumpBtn){
     jumpBtn.addEventListener('touchstart', function(ev){ islJump('isl-camp-char'); ev.preventDefault(); }, { passive: false });
     jumpBtn.addEventListener('mousedown', function(ev){ islJump('isl-camp-char'); ev.preventDefault(); });
