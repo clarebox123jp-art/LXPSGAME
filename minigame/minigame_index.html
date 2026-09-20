@@ -3569,11 +3569,12 @@ img.pic-bin + .be,img.pic-bin + .oe{display:none;}   /* 有圖就不重複顯示
 #island-root.ipad #isl-battle .bt-hpbox .gau{height:12px;}
 /* ★ v1.258.0 可施展時:寵物立繪與 HP 條外框的燃燒發光粒子呼吸光暈(純 CSS/emoji,零新素材) */
 @keyframes islGaugeGlow{0%,100%{box-shadow:0 0 6px 2px rgba(255,150,60,.55);}50%{box-shadow:0 0 20px 7px rgba(255,95,30,.95);}}
-@keyframes islGaugeSpark{0%{transform:translateY(0) scale(.8);opacity:0;}20%{opacity:1;}100%{transform:translateY(-30px) scale(1.15);opacity:0;}}
-#isl-battle .bt-hpbox.gready{border-color:#ffb066;animation:islGaugeGlow 1.1s ease-in-out infinite;}
-#isl-battle .bt-fig.gready .fig{animation:islGaugeGlow 1.1s ease-in-out infinite;border-radius:14px;}
+@keyframes islGaugeGlowFig{0%,100%{filter:drop-shadow(0 0 4px rgba(255,150,60,.85)) drop-shadow(0 0 9px rgba(255,150,60,.55));}50%{filter:drop-shadow(0 0 11px rgba(255,95,30,1)) drop-shadow(0 0 20px rgba(255,95,30,.7));}}   /* ★ v1.283.0 老師「寵物圖片外的紅色呼吸方形外框改成沿著寵物輪廓線的呼吸外光」— box-shadow 只會照著元素的矩形邊界發光(就是老師說的「方形外框」),drop-shadow 是吃圖片本身透明通道畫出來的光暈,會貼著寵物剪影的輪廓,而不是外面那個看不見的矩形容器 */
+#isl-battle .bt-hpbox.gready{border-color:#ffb066;animation:islGaugeGlow 1.1s ease-in-out infinite;}   /* HP 條那排本來就是矩形面板,維持方形發光合理,不受影響 */
+#isl-battle .bt-fig.gready .fig{animation:islGaugeGlowFig 1.1s ease-in-out infinite;}   /* ★ v1.283.0 改用貼輪廓的 drop-shadow,拿掉沒意義的 border-radius(那是配 box-shadow 方框用的圓角,drop-shadow 不需要) */
 #isl-battle .bt-fig.gready::before{content:'🔥';position:absolute;left:16%;bottom:6%;font-size:15px;animation:islGaugeSpark 1.3s linear infinite;pointer-events:none;z-index:3;}
 #isl-battle .bt-fig.gready::after{content:'✨';position:absolute;right:12%;bottom:14%;font-size:12px;animation:islGaugeSpark 1.6s .45s linear infinite;pointer-events:none;z-index:3;}
+@keyframes islGaugeSpark{0%{transform:translateY(0) scale(.8);opacity:0;}20%{opacity:1;}100%{transform:translateY(-30px) scale(1.15);opacity:0;}}
 
 /* ★ v1.227.0 B3:頭目韌性條、頭目一覽 */
 #isl-battle .bt-hpbox .tgh{height:8px;width:35%;margin-top:3px;background:rgba(0,0,0,.5);border-radius:4px;overflow:hidden;border:1px solid rgba(255,209,102,.6);}
@@ -3797,6 +3798,8 @@ window.islDirectVeilOff = function(){
 <audio id="bgm-isl-act" preload="none" loop data-fb="bgm-play" src="../minigame/audio/island_act.m4a"></audio>
 <audio id="bgm-isl-raid" preload="none" loop data-fb="bgm-boss-01" src="../minigame/audio/island_raid.m4a"></audio>
 <audio id="bgm-isl-raid2" preload="none" loop data-fb="bgm-boss-02" src="../minigame/audio/island_raid2.m4a"></audio><!-- ★ v1.105.0 防衛戰第二首,與 raid 輪流 -->
+<audio id="sfx-cook-cursor" preload="none" src="../minigame/audio/%E5%BF%AB%E9%80%9F%E5%88%87%E8%8F%9C.mp3"></audio><!-- ★ v1.282.0 老師「烹飪的品質小遊戲時,游標開始在 BAR 上來回移動時播放音效」 -->
+<audio id="sfx-cook-hit" preload="none" src="../minigame/audio/%E7%83%B9%E9%A3%AA.m4a"></audio><!-- ★ v1.282.0 老師「在甜蜜點和兩側按成功時播放音效」 -->
 <audio id="bgm-isl-ending" preload="none" loop data-fb="bgm-avatar-card" src="../minigame/audio/island_ending.m4a"></audio><!-- ★ v1.105.0 結局回憶幻燈片 -->
 <audio id="bgm-isl-beach" preload="none" loop data-fb="bgm-adv-scene" src="../minigame/audio/island_beach.m4a"></audio>
 <!-- ★ v1.126.0(2026-09-13・老師已上傳海浪聲與森林鳥叫)— 場景環境音(疊在 BGM 之上循環播放,音量吃「音效」拉桿)。
@@ -4314,6 +4317,12 @@ window.islDirectVeilOff = function(){
 #isl-char{position:absolute;width:64px;height:64px;margin-left:-32px;margin-top:-56px;transform:scale(1.5);transform-origin:50% 100%;pointer-events:none;z-index:5;}
 #isl-char .shadow,#isl-camp-char .shadow{position:absolute;left:14px;bottom:0;width:36px;height:12px;border-radius:50%;background:rgba(0,0,0,.35);}
 .isl-camp-pet .shadow{position:absolute;left:21.875%;bottom:0;width:56.25%;height:18.75%;border-radius:50%;background:rgba(0,0,0,.35);}   /* ★ v1.251.0 老師看圖「營地的寵物加上地面陰影(同主角)」— 寵物容器不是固定 64px(是 64px×ISL_CAMP_PET_RATIO=45px,見 islCampPetsPaint 的 _psz),不能直接套用主角那顆寫死 px 的 .shadow,改用同樣比例(14/64、36/64、12/64)換算成 %,不管 _psz 算出多少都自動等比例對齊腳底。 */
+/* ★ v1.283.0 老師「營地中的所有設施和裝飾、寵物、主角等都要長按1秒才開啟視窗(出現1秒讀條在該物件上),避免主角移動時一直不小心點到/移到」—
+   .isl-lp-bar 是按下瞬間貼在該物件上的 1 秒進度條(純 CSS width 動畫,見 islLongTapBind);.isl-cell/.isl-camp-pet 本身有 overflow:hidden(見各自定義),
+   故意貼在「框內」貼底(bottom:3px)而不是往外溢出(外溢會被 overflow:hidden 裁掉看不見)。 */
+.isl-lp-bar{position:absolute;left:10%;right:10%;bottom:3px;height:5px;background:rgba(0,0,0,.55);border-radius:999px;overflow:hidden;pointer-events:none;z-index:50;}
+.isl-lp-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ffd166,#ff9f43);animation:islLpBar 1s linear forwards;}
+@keyframes islLpBar{from{width:0%}to{width:100%}}
 /* ★ v1.119.0 AP 用完的疲勞泡泡(掛在 #isl-char / #isl-camp-char 內,跟著角色縮放) */
 .isl-tired{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);white-space:nowrap;background:#fff;color:#333;border:2px solid #333;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:700;line-height:1.3;z-index:9;box-shadow:0 2px 6px rgba(0,0,0,.35);animation:islTiredIn .35s ease-out;pointer-events:none;}
 .isl-tired:after{content:'';position:absolute;left:50%;top:100%;margin-left:-6px;border:6px solid transparent;border-top-color:#333;}
@@ -4625,6 +4634,8 @@ window.islDirectVeilOff = function(){
 .isl-poptext.good{font-size:32px;color:#7bed9f;}
 .isl-poptext.bad{font-size:28px;color:#ff7b7b;animation-name:islPopTextBad;}
 .isl-spark{position:absolute;left:50%;bottom:6px;font-size:18px;pointer-events:none;z-index:29;animation:islSparkFly .6s ease-out forwards;}
+.isl-qte-star{position:absolute;top:50%;transform:translate(-50%,-50%) scale(.2) rotate(-20deg);font-size:24px;pointer-events:none;z-index:8;animation:islQteZoneStar .65s ease-out forwards;text-shadow:0 0 6px #fff8d6;}   /* ★ v1.283.0 老師「所有點到甜蜜點的位置新增閃亮星星特效」— 釘在甜蜜點的實際 %位置,原地縮放+旋轉不位移,配合 .bar 的 overflow:hidden 不會被裁掉 */
+@keyframes islQteZoneStar{0%{transform:translate(-50%,-50%) scale(.2) rotate(-20deg);opacity:0;}35%{opacity:1;transform:translate(-50%,-50%) scale(1.3) rotate(10deg);}100%{opacity:0;transform:translate(-50%,-50%) scale(.9) rotate(25deg);}}
 @keyframes islZoneGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.4)}}
 @keyframes islBarShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes islPopText{0%{opacity:0;transform:translate(-50%,0) scale(.3) rotate(-6deg);}55%{opacity:1;transform:translate(-50%,-46px) scale(1.15) rotate(2deg);}100%{opacity:0;transform:translate(-50%,-92px) scale(1) rotate(0);}}
@@ -4951,8 +4962,27 @@ window.islDirectVeilOff = function(){
        用真的 Chromium 量測 document.styleSheets 才發現(最後一條規則是整個 @media,裡面包了 330 條中的 200 多條)。補上這個 } 之後一切歸位。 */
 /* ── ★ v1.91.0 P2-a:防衛戰 / 捕魚 / 打撈 ── */
 #isl-def{position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;background:radial-gradient(circle at 50% 55%,#3b2a12 0,#0a0f1a 55%);}
-#isl-def-fire{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px;font-size:90px;line-height:120px;text-align:center;filter:drop-shadow(0 0 30px #ffb347);}
-#isl-def-fire.hurt{animation:islShake .4s ease;filter:drop-shadow(0 0 30px #ff4d4d);}
+/* ★ v1.282.0 老師四項(守衛營地中間火焰改營火 ICON+HP 條+木材補血/擊退提示移到最上方/主角站到火堆旁/營火受傷全螢幕震動閃紅光)—
+   #isl-def-campfire 把火焰圖示/HP 條/木材鈕包成一直欄,取代原本單獨貼在正中央的裸 emoji;
+   #isl-def-char 新增主角站位(這個畫面原本完全沒有渲染主角,只有好友小人/寵物,老師要的「主角」在此新增);
+   #isl-def-flash 是新的全螢幕受傷紅光遮罩,islDefScreenShake 是新的全螢幕震動(取代原本只有火焰自己小幅搖晃)。 */
+#isl-def-campfire{position:absolute;left:50%;top:50%;transform:translate(-50%,-62%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3;}
+#isl-def-fire{position:relative;width:120px;height:120px;font-size:90px;line-height:120px;text-align:center;}
+#isl-def-fire img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 30px #ffb347);}
+#isl-def-fire.hurt{animation:islShake .4s ease;}
+#isl-def-fire.hurt img,#isl-def-fire.hurt{filter:drop-shadow(0 0 30px #ff4d4d);}
+#isl-def-firehp{width:150px;height:16px;border-radius:999px;background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.35);overflow:hidden;box-shadow:inset 0 2px 5px rgba(0,0,0,.5);}
+#isl-def-firehp-bar{height:100%;width:100%;background:linear-gradient(90deg,#ff5f2e,#ffb347 55%,#ffe66d);transition:width .3s ease;}
+#isl-def-wood{background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 16px;font-size:15px;font-weight:700;color:#fff;cursor:pointer;text-shadow:0 1px 2px #000;transition:transform .15s ease,opacity .15s ease;}
+#isl-def-wood:active{transform:scale(.93);}
+#isl-def-wood.off{opacity:.4;cursor:not-allowed;}
+#isl-def-char{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-56px 0 0 -156px;transform:scale(1.5);transform-origin:50% 100%;pointer-events:none;z-index:2;}
+#isl-def-flash{position:absolute;inset:0;background:#ff2b2b;opacity:0;pointer-events:none;z-index:8;}
+#isl-def-flash.on{animation:islDefFlash .4s ease;}
+@keyframes islDefFlash{0%{opacity:0}20%{opacity:.55}100%{opacity:0}}
+#isl-def.shake{animation:islDefScreenShake .4s ease;}
+@keyframes islDefScreenShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-10px,4px)}40%{transform:translate(8px,-6px)}60%{transform:translate(-6px,6px)}80%{transform:translate(6px,-3px)}}
+#island-root.isl-def-on #toast{bottom:auto;top:70px;}   /* ★ v1.282.0 老師「下方的擊退提示訊息位置移到畫面最上方區域」— 全域 #toast 只在防衛戰畫面顯示時改貼頂,離開這個畫面自動恢復貼底,其他所有畫面不受影響 */
 #isl-def-light{position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,100,.35),transparent 70%);pointer-events:none;}
 #isl-def-top{position:absolute;left:10px;top:8px;right:10px;display:flex;gap:10px;font-size:17px;font-weight:700;text-shadow:0 1px 3px #000;z-index:3;}
 #isl-def-top .grow{flex:1;}
@@ -5353,18 +5383,20 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-hpbox{flex:1;background:linear-gradient(160deg,rgba(40,20,20,.88),rgba(10,6,6,.92));border:2px solid rgba(255,255,255,.35);border-radius:12px;padding:6px 10px;min-width:0;box-shadow:0 3px 10px rgba(0,0,0,.4);}   /* ★ v1.220.0 老師「戰鬥介面也要優化」— 純黑平塗改深紅棕漸層(戰鬥主題),呼應本輪其餘元件的漸層+陰影手法 */
 #isl-battle .bt-hpbox .nm{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} #isl-battle .bt-hpbox small{opacity:.8;font-size:13px;font-weight:400;}
 #isl-battle .bt-hpbox .hprow{display:flex;align-items:center;gap:6px;}
-#isl-battle .bt-hpbox .hpb{width:35%;height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:4px 0;flex:0 0 auto;} #isl-battle .bt-hpbox .hpb i{display:block;height:100%;background:linear-gradient(90deg,#ff5d5d,#ffb347);transition:width .35s;} #isl-battle .bt-hpbox.m .hpb i{background:linear-gradient(90deg,#b46bff,#ff6bd6);}   /* ★ v1.195.0 老師需求①「HP 條縮短 50%,扣血比例保持正確」— 只改容器(.hpb)的寬度,裡面的血量填充(.hpb i)沿用原本就是「相對容器的百分比寬」,容器縮小、填充跟著等比縮小,扣血比例不受影響,不需要動任何 JS 計算;★ v1.207.0 老師「深色底往內縮 30%」— 50%→35%(50×0.7),騰出的寬度給新的 .sti 狀態圖示列(同一個 .hprow 裡用 flex 並排,不必再動任何 JS 換算) */
+#isl-battle .bt-team.m .bt-hpbox .hprow{flex-direction:row-reverse;}   /* ★ v1.283.0 老師「左右 HP 條向各自方向縮短」— 敵方(m)這排整排反過來排,HP 條(與代號 bcd)貼齊自己那側外緣(畫面右緣),縮短後才會往右邊靠攏而不是往畫面中央塌 */
+#isl-battle .bt-hpbox .hpb{width:21%;height:14px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;margin:4px 0;flex:0 0 auto;} #isl-battle .bt-hpbox .hpb i{display:block;height:100%;background:linear-gradient(90deg,#ff5d5d,#ffb347);transition:width .35s;} #isl-battle .bt-hpbox.m .hpb i{background:linear-gradient(90deg,#b46bff,#ff6bd6);}   /* ★ v1.195.0 老師需求①「HP 條縮短 50%,扣血比例保持正確」— 只改容器(.hpb)的寬度,裡面的血量填充(.hpb i)沿用原本就是「相對容器的百分比寬」,容器縮小、填充跟著等比縮小,扣血比例不受影響,不需要動任何 JS 計算;★ v1.207.0 老師「深色底往內縮 30%」— 50%→35%(50×0.7),騰出的寬度給新的 .sti 狀態圖示列(同一個 .hprow 裡用 flex 並排,不必再動任何 JS 換算);★ v1.283.0 老師「左右 HP 條向各自方向縮短 40%」— 35%→21%(35×0.6) */
 #isl-battle .bt-hpbox .sti{display:flex;flex-wrap:wrap;gap:4px;align-items:center;flex:1 1 auto;min-width:0;}
 #isl-battle .bt-hpbox .sti-i{display:inline-flex;align-items:center;gap:1px;min-width:22px;height:20px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.3);font-size:12px;line-height:1;cursor:pointer;touch-action:manipulation;}
 #isl-battle .bt-hpbox .sti-i:active{transform:scale(.9);}
 #isl-battle .bt-hpbox .hpt{font-size:14px;}
-#isl-battle .bt-vs{font-size:28px;font-weight:900;color:#ffd166;text-shadow:0 2px 4px #000;flex:0 0 auto;}
+#isl-battle .bt-vs{position:absolute;left:50%;top:4px;transform:translateX(-50%);font-size:56px;font-weight:900;color:#ffd166;text-shadow:0 2px 4px #000;z-index:6;pointer-events:none;}   /* ★ v1.283.0 老師「VS 移到畫面上方置中並放大 100%」— 拉出 .bt-top 的 flex 排版,直接貼齊 #isl-battle 容器頂端置中(28px→56px) */
 #isl-battle .bt-stage{flex:1 1 auto;position:relative;min-height:0;}
 #isl-battle .bt-fig{position:absolute;bottom:10%;width:220px;height:220px;}
 #isl-battle .bt-fig.biggon{ transform:scale(1.5); z-index:15; transition:transform .25s ease-out; }   /* ★ v1.193.0 老師需求「暫時放大使用技能的寵物圖片2秒」— 沿用既有 .bt-fig 定位,只加一個 transform 縮放的疊加 class,2 秒後由 JS 自動拿掉,不影響原本站位座標(transform 不佔版面空間)。 */
-#isl-battle .bt-fig.p{left:12%;} #isl-battle .bt-fig.m{right:12%;}
+#isl-battle .bt-fig.p{left:12%;transform:scale(.8);transform-origin:50% 100%;} #isl-battle .bt-fig.m{right:12%;}   /* ★ v1.283.0 老師「主角人物圖片尺寸縮小 20%」— 縮放套在外層 .bt-fig.p(定位框),不是內層會播呼吸動畫的 .fig,兩個 transform 各自在不同元素上疊加、不會互相蓋掉;原點釘在腳底(50% 100%)才不會縮小後整個人往上飄 */
 #isl-battle .bt-fig .fig{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;transform-origin:50% 100%;animation:islBtBreath 2.4s ease-in-out infinite;}
 #isl-battle .bt-fig.m .fig{animation-duration:2s;animation-delay:.6s;}
+#isl-battle .bt-fig.m .pic{transform:scaleX(-1);}   /* ★ v1.283.0 老師「敵方野豬應該面對左方,檢查所有魔物面向」— 素材本身一律畫成面朝右(跟主角同一套慣例,見戰鬥圖需求清單),敵方站在畫面右側卻要面向玩家(左側),單一 CSS 鏡像整排魔物圖片,不分魔物種類、不用逐隻改素材或逐隻寫程式判斷 */
 #isl-battle .bt-fig .fig img.pic{max-width:100%;max-height:100%;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
 #isl-battle .bt-fig .fig .pic-layers{position:relative;width:100%;height:100%;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}   /* ★ v1.138.0 三層戰鬥立繪(base/cloth/hair)疊合容器 */
 #isl-battle .bt-fig .fig .pic-layers img.ly{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
@@ -5398,7 +5430,7 @@ window.islDirectVeilOff = function(){
 #isl-battle .bt-log{flex:0 0 auto;min-height:44px;margin:0 12px;padding:8px 12px;background:linear-gradient(160deg,rgba(20,20,26,.85),rgba(6,6,9,.9));border:2px solid rgba(255,255,255,.3);border-radius:12px;font-size:17px;line-height:1.35;box-shadow:0 3px 10px rgba(0,0,0,.4);} #isl-battle .bt-log.pop{animation:islPop .35s ease;}
 #isl-battle .bt-acts{flex:0 0 auto;display:flex;flex-wrap:wrap;row-gap:8px;gap:8px;justify-content:center;padding:10px 12px 14px;}   /* ★ v1.192.0 老師需求「指令按鈕再放大 50%,不影響原本版面」— 補上 flex-wrap:當放大後的按鈕一行擺不下時自動換行,不會被切出畫面外(原本的 nowrap 單行在按鈕變大後有溢出風險) */
 #isl-battle .bt-acts button{width:124px;height:96px;border-radius:16px;border:3px solid rgba(255,255,255,.4);background:linear-gradient(180deg,#2f7ba6,#1d5677);color:#fff;font-size:42px;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;box-shadow:0 3px 0 rgba(0,0,0,.35);} #isl-battle .bt-acts button small{font-size:21px;} #isl-battle .bt-acts button:disabled{opacity:.35;} #isl-battle .bt-acts.off{pointer-events:none;}   /* ★ v1.192.0 圖示 28→42px(icon)、文字 14→21px(small)= 再放大 50%(老師需求);按鈕框 92×74→124×96,足夠裝下放大後的內容又不會浪費太多版面;★ v1.220.0 純白半透明平塗改跟全站 .isl-btn 一致的海洋藍漸層+厚度陰影 */
-#isl-battle .bt-qte{position:absolute;left:50%;top:auto;bottom:6px;transform:translateX(-50%);width:min(92%,620px);background:linear-gradient(160deg,rgba(20,30,42,.96),rgba(6,10,16,.96));border:3px solid #ffd166;border-radius:16px;padding:12px 14px;z-index:5;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 20px rgba(255,209,102,.2);}
+#isl-battle .bt-qte{position:absolute;left:50%;top:auto;bottom:6px;transform:translateX(-50%);width:min(92%,620px);background:linear-gradient(160deg,rgba(20,30,42,.96),rgba(6,10,16,.96));border:3px solid #ffd166;border-radius:16px;padding:12px 14px;z-index:20;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 20px rgba(255,209,102,.2);}   /* ★ v1.283.0 老師「道具視窗要在最高階層不被角色擋住」— 這個容器同時是攻擊 QTE 與道具/戰術選單共用的殼(islBtItemOpen 等寫進同一個 #isl-bt-qte),根因是 .bt-fig.biggon(寵物放技能時暫時放大 2 秒)z-index:15 比這裡的舊值 5 還高,寵物剛好在放大的那 2 秒點開道具就會被蓋住;改成 20,穩穩蓋過場上所有立繪(含 biggon) */
 #isl-battle .bt-qte .tt{font-size:16px;margin-bottom:8px;}
 /* ══ ★ v1.164.0(P2 組隊戰鬥)— 隊伍 HP 欄列表 + 站位陣型 + 目標指示 ══
    ⚠ 刻意沿用既有 .bt-hpbox 這個 class 當每一列的容器,而不是另開一套:
@@ -6365,7 +6397,7 @@ window.islDirectVeilOff = function(){
     </div>
     <div id="isl-camp" class="hidden">
       <img id="isl-camp-bg" src="" alt="" onerror="this.style.display='none';">
-      <div id="isl-camp-viewport"><div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char" onclick="islCampCharTap()" title="點一下和他說說話"></div><div id="isl-camp-pets"></div><div id="isl-camp-board" class="hidden" onclick="islBoardTap()"></div></div></div><!-- ★ v1.186.0 老師⑦「建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」:新增 #isl-camp-viewport(overflow:hidden 視窗,仿 #isl-map-wrap),#isl-camp-grid 改成固定 860×860 設計畫布(可縮放/平移),舊有 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) -->
+      <div id="isl-camp-viewport"><div id="isl-camp-grid"><div id="isl-camp-cells"></div><div id="isl-camp-deco"></div><div id="isl-camp-char" title="長按和他說說話"></div><div id="isl-camp-pets"></div><div id="isl-camp-board" class="hidden" onclick="islBoardTap()"></div></div></div><!-- ★ v1.186.0 老師⑦「建造區域改成可以用雙指同時滑動縮放,呈現更遼闊的建造區域和裝飾空間」:新增 #isl-camp-viewport(overflow:hidden 視窗,仿 #isl-map-wrap),#isl-camp-grid 改成固定 860×860 設計畫布(可縮放/平移),舊有 isl-camp-deco=可拖曳裝飾層;★ v1.107.0 isl-camp-board=營地留言板告示牌(顯示最新一則) --><!-- ★ v1.283.0 老師「主角長按1秒才開啟視窗」— onclick 拿掉,改由 islCampPaint 呼叫 islLongTapBind 一次性綁定(見該處說明) -->
       <div id="isl-camp-side"></div>
       <div id="isl-camp-joy" title="拖曳方向盤移動(拖到外圈邊緣自動奔跑)"><div class="knob"></div></div><div id="isl-camp-movebtns"><button id="isl-camp-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.276.0 老師需求「移除跑步鍵、保留跳躍鍵(放大並移到方向盤右側)」— 👟 奔跑鈕已移除,奔跑改由方向盤拖到外圈邊緣自動觸發 --><!-- ★ v1.244.0 老師「營地中的主角移動也增加小方向盤移動方式」— #isl-camp-joy 固定在左下角(不像野外那顆是「按哪裡冒哪裡」:營地的單指手勢已被 點地走路/裝飾拖曳/雙指縮放 瓜分,固定式方向盤才不會跟它們打架),拖曳知道方向後寫進 _IS.campJoy,islCampTick 跟鍵盤同一條 manual 路徑吃 --><!-- ★ v1.212.0 老師「讓營地的主角也具備完整的野外移動指令功能」— 比照野外 #isl-movebtns,掛在 #isl-camp 底下(不是 #isl-camp-grid 裡面),才不會被雙指縮放/平移的 transform 一起吃到;鍵盤 WASD/方向鍵即時移動、Shift/雙擊點地=跑步、空白鍵=跳躍(純視覺,見 islCampMoveBind/islCampTick) -->
     </div>
@@ -6448,7 +6480,21 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.281.0';   /* ★★ v1.281.0(2026-09-20・老師四項:①「採集和戰鬥的甜蜜點命中時,bar震動,同時播放音效」②「荒島中野外小怪跳出來時播放音效」③「戰鬥中有多段傷害時,後面段數的傷害也要播放打擊音效(冒險模式、小遊戲模式全部一起改)」④「目前野外boss的位置都太角落了(在無法移動到達的地方),位置往內一點距離」)★★ —
+var MG_VER = 'v1.283.0';   /* ★★ v1.283.0(2026-09-20・老師看圖兩批:①戰鬥畫面UI修正五項 ②營地長按1秒才開視窗)—
+   【戰鬥畫面】①左右 HP 條各自往自己那側縮短 40%(.hprow 敵方整排反過來排,貼齊畫面右緣)②VS 移到畫面最上方置中放大 100%
+   ③主角戰鬥立繪縮小 20%(.bt-fig.p 外層定位框縮放,不動內層呼吸動畫)④寵物技能計量表滿時的紅色方形呼吸外框改成貼著寵物剪影
+   的呼吸外光(box-shadow 只會照矩形邊界發光,改用 drop-shadow 吃圖片透明通道畫出來的光暈才會貼合輪廓)⑤道具/戰術選單容器
+   z-index 5→20,蓋過寵物放技能時暫時放大(biggon,z-index 15)的立繪⑥敵方魔物整排 CSS 鏡像面向玩家(素材本身一律畫成面朝右,
+   不分魔物種類、不用逐隻改素材)⑦新增 islQteZoneStar:所有點到甜蜜點的位置(採集暴擊/品質QTE命中/戰鬥攻擊QTE命中)新增閃亮
+   星星特效,釘在甜蜜點實際位置原地縮放旋轉。【營地】新增共用出口 islLongTapBind + .isl-lp-bar(1秒進度條純CSS width動畫):
+   設施/裝飾/主角/寵物四類物件全部改成長按 1000ms 不位移才開視窗,放開太早或移動超過門檻(拖曳搬家/翻轉)一律取消不開視窗;
+   設施與裝飾本身就有拖曳搬家邏輯,直接整合進各自的長按判定,不呼叫共用出口。 ★★ */   /* ★★ v1.282.0(2026-09-20・老師回報「最右邊那張圖就是雙腳併攏站直的過渡幀」,推翻 v1.241.0 誤判)—
+   逐格複測老師上傳的 8 張跑步整張人物圖(男女各 h0~h3)確認:最右邊(第 6 格)幾乎每列跨幅都全列最窄(尤其側面差距懸殊),
+   確實是雙腳併攏站直的過渡幀。islFullRunSeq 改成**固定第 6 格當收腿錨點**(不再靠寬度量測去猜),其餘 5 張跨步格依實測
+   跨幅大小交錯排序,比照走路 ISL_WALK_SEQ 節奏在每個跨步格之間插一次錨點格,播放序列由 6 格變 10 格(錨點出現 5 次);
+   islRjPaint 對應改 54ms/格(10×54=540ms,與舊版 6×90=540ms 整圈週期一致,腳程不會變慢),備援(序列算失敗時)退回舊版
+   6 格 90ms 直接照格序播放。範圍只有 islFullRunSeq/islRjPaint 兩處,jump/戰鬥圖與其他 7 張非最新上傳的跑步圖用同一套
+   邏輯自動套用,不必逐張改。對應 island_db v1.276.0(零改動,不必重傳)、sw v1.282.0(SHELL v1.248.0)。★★ */   /* ★★ v1.281.0(2026-09-20・老師四項:①「採集和戰鬥的甜蜜點命中時,bar震動,同時播放音效」②「荒島中野外小怪跳出來時播放音效」③「戰鬥中有多段傷害時,後面段數的傷害也要播放打擊音效(冒險模式、小遊戲模式全部一起改)」④「目前野外boss的位置都太角落了(在無法移動到達的地方),位置往內一點距離」)★★ —
    ①新增音效 sfx-sweet-hit(甜蜜點命中.mp3):islQteSideAdd(採集/砍樹/採石共用的暴擊收口)、islQteBlow、islQteTension 三處把原本共用的 sfx-crit 換成專屬音效;戰鬥攻擊 QTE(islBtQte)原本完全沒有 bar 震動,補上 islQteImpact() 呼叫+CSS 補 .bt-qte .bar.crit-hit 規則(舊 .isl-qte .bar.crit-hit 選擇器對不到 .bt-qte 底下的 bar)。
    ②新增音效 sfx-mon-appear(小怪出現.mp3):islBattleStart() 開頭在「非頭目、非地下層」的一般野外遇敵(islEncStep 步數觸發/islMineCheck 舊踩地雷式/islBtTest GM 測試鈕共用同一路徑)播放。
    ③islBtResolveAttack(主角攻擊結算,含迴力鏢/連擊等多段武器)舊版打擊音效只在整組結算完統一播一次,迴圈裡逐段跳出的傷害數字反而是無聲的;改成每一段命中各自照傷害跳字同一組 260ms 錯開時間點各自播放,並移除結尾重複的那一次;islBtBounceHit(迴力鏢彈射打第二隻)原本完全靜音,一併補上。冒險模式對應修正在 index.html v5.231.0(機械師/警長「亂槍射擊」逐發補音效)。
@@ -16907,6 +16953,7 @@ function islShowScreen(name){
   for(i = 0; i < all.length; i++){ if(all[i] === 'isl-' + name || all[i] === 'isl-' + name + '-wrap' || all[i] === under){ show(all[i]); } else { hide(all[i]); } }
   var actEl = $('isl-act'); if(actEl) actEl.classList.toggle('over', !!under);
   _IS.screen = name;
+  try{ $('island-root').classList.toggle('isl-def-on', name === 'def'); }catch(_dr){}   /* ★ v1.282.0 老師「擊退提示訊息移到最上方」— 只在防衛戰畫面時讓全域 #toast 改貼頂,見該條 CSS 說明 */
   if(name !== 'zone') islZoneStop();
   if(name !== 'camp') islCampPetsStop();   /* ★ v1.197.0 離開營地就停掉寵物漫步計時器,不留孤兒 setInterval */
   if(name !== 'camp') islCampJoyStop();   /* ★ v1.247.0 離開營地就清空方向盤殘留向量,比照上面 islZoneStop() 對野外搖桿的做法(見 islCampJoyStop 說明) */
@@ -18326,20 +18373,22 @@ function islFullCleanCells(d, W, H){
     }
   }
 }
-/* ══ ★ v1.241.0(老師「跑步時少了手腳直立的過渡圖,導致跑步像手腳沒有出現動態」)══
-   走路很早以前就處理過同一件事:ISL_WALK_SEQ 在每個跨步幀之間插一格站立幀(v1.118.0),腳才有「開→合→開」的節奏。
-   跑步一直是單純 0→1→2→3→4→5 照順序播。實際量測老師上傳的 8 張跑步圖(每張 6 格 × 3 方向,量每一格
-   下半身 38px 內人物的左右跨幅)發現:①這批圖裡**沒有任何一格是雙腳併攏站直的**(跨幅最小的那幾格也還在跨步);
-   ②而且每張圖的格子順序都不一樣(各自生圖,不是同一套動作),所以不能寫死一組順序。
-   ⇒ 改成在分層當下順便量一次,把六格依跨幅排序後「大跨步 → 小跨步 → 大跨步 → …」交錯排出播放順序,
-     用跨幅最小的那幾格充當「收腿」的過渡幀,跑起來就有明顯的開合節奏,而不是六張都張著腿一直平移。
-   ⚠ 這是在現有素材下能做到的最好結果;要有真正「雙腳併攏站直」的過渡幀,得在跑步圖裡多畫一格,
-     老師之後如果補圖,把那一格放進來效果會更好(程式這邊不用再改,排序會自動把它排在跨步幀之間)。 */
+/* ══ ★ v1.282.0(老師「最右邊那張圖就是雙腳併攏站直的過渡幀」,推翻 v1.241.0 的量測誤判)══
+   v1.241.0 當初逐格量測老師上傳的跑步圖跨幅,結論寫成「這批圖裡沒有任何一格是雙腳併攏站直的」——
+   複測後發現是誤判:8 張圖(男 h0~h3、女 h0~h3)最右邊那一格(第 6 欄),量測跨幅幾乎每一列都是全列最窄
+   (尤其側面/第 3 列,男約 26~27px vs 其他格 55~65px,女約 25~26px vs 38~59px,差距懸殊);
+   女生正/背面因裙裝輪廓差異本來就小,少數列量出來跟另一兩格並列最小,但美術設計上第 6 格本來就是固定的
+   收腿站直格,不該每次靠寬度量測去猜。
+   ⇒ 改成**固定第 6 格(索引 5)當收腿錨點**,不再用寬度去找哪格最窄;其餘 5 格(跨步格)才依量測跨幅
+     由大到小排序、大小交錯排出順序,再比照走路 ISL_WALK_SEQ 的節奏,在每一個跨步格之間插一次錨點格,
+     播放序列長度由原本 6 變成 10(5 跨步格 × 2,錨點格出現 5 次)——跑起來才有像走路模組那種
+     「跨步→收腿→跨步→收腿」的開合律動,不再只在整輪 6 格裡收腿一次。 */
 function islFullRunSeq(d, W, H){
-  var CS = 128, cols = Math.floor(W / CS), rows = Math.floor(H / CS), r, c, x, y, mn, mx, wide = [], seq = [], out = [], i, a, b;
+  var CS = 128, cols = Math.floor(W / CS), rows = Math.floor(H / CS), r, c, x, y, mn, mx, wide = [], seq = [], out = [], i, a, b, standIdx = cols - 1, row10;
   for(r = 0; r < rows; r++){
     wide = [];
     for(c = 0; c < cols; c++){
+      if(c === standIdx) continue;   /* ★ v1.282.0 最右格固定當站直錨點,不參與跨幅排序 */
       mn = -1; mx = -1;
       for(y = 90; y < CS; y++){
         for(x = 0; x < CS; x++){
@@ -18352,8 +18401,9 @@ function islFullRunSeq(d, W, H){
     }
     wide.sort(function(p, q){ return q.w - p.w; });   /* 跨幅由大到小 */
     seq = []; a = 0; b = wide.length - 1;
-    while(a <= b){ seq.push(wide[a].c); if(a !== b) seq.push(wide[b].c); a++; b--; }   /* 大、小、次大、次小…交錯 */
-    out.push(seq);
+    while(a <= b){ seq.push(wide[a].c); if(a !== b) seq.push(wide[b].c); a++; b--; }   /* 5 張跨步格大、小、次大、次小…交錯 */
+    row10 = []; for(i = 0; i < seq.length; i++){ row10.push(seq[i]); row10.push(standIdx); }   /* ★ v1.282.0 每個跨步格後面插一次錨點格,長度變 10 */
+    out.push(row10);
   }
   return out;
 }
@@ -18437,7 +18487,10 @@ function islRjPaint(sp, body, row, kind, t){
        CSS 等比放大,把視覺大小拉回跟走路/待機時接近,不動任何座標換算邏輯。 */
     var _rjScale = (kind === 'run') ? 'scale(1.16)' : 'scale(1.23)';   /* ★ v1.240.0 老師「跑步和跳躍時的圖片要再稍微放大 5~10%」:1.08→1.16、1.15→1.23 */
     if(w.style.transform !== _rjScale){ w.style.transform = _rjScale; w.style.transformOrigin = '32px 60px'; }   /* ★ v1.237.0 錨點沿用 islLyApply 同一套「水平中心線×腳底線」基準(32px,60px),不是用格子邊緣(64px),放大時腳底才不會離地飄起來 */
-    if(kind === 'run'){ col = Math.floor(t / 90) % 6; if(full.seq && full.seq[row] && full.seq[row].length === 6) col = full.seq[row][col];   /* ★ v1.241.0 依實測跨幅交錯播放,見 islFullRunSeq */ }
+    if(kind === 'run'){
+      if(full.seq && full.seq[row] && full.seq[row].length === 10){ col = full.seq[row][Math.floor(t / 54) % 10]; }   /* ★ v1.282.0 10 格序列(5 跨步交錯插 5 次站直錨點),見 islFullRunSeq;54ms/格讓整圈週期維持與舊版 6×90ms=540ms 一致,腳程節奏不因格數變多而變慢 */
+      else { col = Math.floor(t / 90) % 6; }   /* 序列算失敗的備援,退回舊版直接照格序播放 */
+    }
     else { el = Math.max(0, t - _islJumpAt); col = el < 130 ? 0 : (el < 290 ? 1 : (el < 520 ? 2 : 3)); }   /* ★ v1.237.0 老師「跳躍的高度和距離再提升+100%」— 落地時間點依新的 .65s(660ms)總時長等比拉長(原 90/200/360,對應舊 .45s/450ms 生命週期),不是照高度直接翻倍到 720ms(那樣會超過下面 setTimeout 660ms 就把 .jump class 拔掉的時間點,落地姿勢永遠播不到) */
     fk = kind + full.body.length + '|' + JSON.stringify(ISL.char);
     if(w._fk !== fk){
@@ -18773,6 +18826,15 @@ function islQteSpark(host){
     (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 650); })(s);
   }
 }
+/* ★ v1.283.0 老師「所有點到甜蜜點的位置新增閃亮星星特效在甜蜜點上(包含戰鬥中)」— 與 islQteSpark(繞著彈字容器中心放射)不同,
+   這支釘死在「甜蜜點在拉桿上的實際 % 位置」,才是真的疊在甜蜜點正上方;bar 本身有 overflow:hidden,動畫刻意只做原地縮放+旋轉,
+   不做位移,才不會被裁掉。五處呼叫端(採集/砍樹+採石+烹飪/生火/拉竿/戰鬥攻擊)共用同一支,任何一處日後想關掉這個特效只要拿掉那一行呼叫。 */
+function islQteZoneStar(barEl, pct){
+  if(!barEl) return;
+  var s = document.createElement('div'); s.className = 'isl-qte-star'; s.textContent = '⭐'; s.style.left = pct + '%';
+  barEl.appendChild(s);
+  setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); }, 650);
+}
 function islQteImpact(barEl){
   if(!barEl) return;
   barEl.classList.remove('crit-hit');
@@ -18883,7 +18945,7 @@ function islQtePull(cb, opts){   /* ★ v1.94.0 opts:{title,btn,hint,over,ok,low
     if(!hold) return; hold = false; tries++;
     var tx, tc, isCrit = false;   /* ★ v1.118.0 結果改寫到右側紀錄欄;暴擊音效/特效由 islQteSideAdd 統一處理 */
     if(v >= 100){ tx = opts.over || '壓爛了…'; tc = '#ff7b7b'; playSfx('sfx-ng', 0.4); islFxPopText($('isl-q-pop'), '💥 ' + tx, 'bad'); islQteImpact($('isl-q-bar')); }
-    else if(v >= cen - 2 && v <= cen + 2){ hits++; crit = true; isCrit = true; tx = '✨ ' + (opts.crit || '暴擊採集!'); tc = '#ffd166'; islFxPopText($('isl-q-pop'), tx, 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); }
+    else if(v >= cen - 2 && v <= cen + 2){ hits++; crit = true; isCrit = true; tx = '✨ ' + (opts.crit || '暴擊採集!'); tc = '#ffd166'; islFxPopText($('isl-q-pop'), tx, 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); islQteZoneStar($('isl-q-bar'), v); }   /* ★ v1.283.0 老師「甜蜜點位置新增閃亮星星特效」 */
     else if(v >= lo && v <= hi){ hits++; tx = '👍 ' + (opts.ok || '剛剛好'); tc = '#7bed9f'; playSfx('sfx-coin', 0.4); islFxPopText($('isl-q-pop'), tx, 'good'); }
     else if(v > hi){ tx = opts.over || '太用力了'; tc = '#ff7b7b'; playSfx('sfx-ng', 0.4); islFxPopText($('isl-q-pop'), tx, 'bad'); islQteImpact($('isl-q-bar')); }
     else { tx = opts.low || '還沒摘下來'; tc = '#ffd166'; playSfx('sfx-cancel', 0.3); islFxPopText($('isl-q-pop'), tx, 'bad'); }
@@ -18921,8 +18983,8 @@ function islQteSwing(rounds, cb, opts){   /* ★ v1.91.0 opts:{icon,btn,done} �
     if(busy || r >= rounds) return; busy = true;
     var ok = pos >= zone._lo && pos <= zone._hi, isCrit = Math.abs(pos - zone._c) <= 1.5;
     tree.classList.add('hit'); playSfx('sfx-sword', 0.45); islCharPaintAct('work');
-    if(isCrit){ hits++; crit = true; fx.textContent = '✨ 暴擊!正中甜蜜點'; fx.style.color = '#ffd166'; islFxPopText($('isl-q-pop'), '✨ 暴擊!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); }   /* ★ v1.118.0 音效/特效改在 islQteSideAdd;★ v1.258.0 加彈字+火花+震動 */
-    else if(ok){ hits++; fx.textContent = '👍 砍得深!'; fx.style.color = '#7bed9f'; playSfx('sfx-coin', 0.35); islFxPopText($('isl-q-pop'), '👍 命中!', 'good'); }
+    if(isCrit){ hits++; crit = true; fx.textContent = '✨ 暴擊!正中甜蜜點'; fx.style.color = '#ffd166'; islFxPopText($('isl-q-pop'), '✨ 暴擊!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); islQteZoneStar($('isl-q-bar'), pos); if(opts.cookSfx) playSfx('sfx-cook-hit', 0.5); }   /* ★ v1.118.0 音效/特效改在 islQteSideAdd;★ v1.258.0 加彈字+火花+震動;★ v1.282.0 老師「烹飪甜蜜點和兩側按成功時播放音效」— 只在 opts.cookSfx(烹飪呼叫端)生效,砍樹/採石共用同一支函式不受影響;★ v1.283.0 老師「甜蜜點位置新增閃亮星星特效」 */
+    else if(ok){ hits++; fx.textContent = '👍 砍得深!'; fx.style.color = '#7bed9f'; playSfx('sfx-coin', 0.35); islFxPopText($('isl-q-pop'), '👍 命中!', 'good'); if(opts.cookSfx) playSfx('sfx-cook-hit', 0.5); }
     else if(pos > zone._hi){ fx.textContent = '太用力,' + (opts.hurtMsg || '手滑了一下,擦傷了!'); fx.style.color = '#ff6b6b'; playSfx('sfx-ng', 0.35); islHurt(3, opts.hurtMsg || (opts.icon === '🪨' ? '碎石飛濺,擦傷了' : '斧頭滑掉,傷到手'), body, 50, 40); islFxPopText($('isl-q-pop'), '💥 太用力了', 'bad'); islQteImpact($('isl-q-bar')); }   /* ★ v1.92.0 過度用力=受傷 */
     else { fx.textContent = '滑掉了…'; fx.style.color = '#ff7b7b'; playSfx('sfx-ng', 0.35); islFxPopText($('isl-q-pop'), '滑掉了…', 'bad'); }
     r++; cnt.textContent = r < rounds ? '第 ' + (r + 1) + ' ' + (opts.unit || '斧') : (opts.doneText || '砍倒了!');
@@ -18930,6 +18992,7 @@ function islQteSwing(rounds, cb, opts){   /* ★ v1.91.0 opts:{icon,btn,done} �
     setTimeout(function(){ tree.classList.remove('hit'); busy = false; if(r >= rounds){ cancelAnimationFrame(raf); tree.textContent = (opts.done || '🪵'); setTimeout(function(){ cb(hits, crit); }, 600); } else setZone(); }, 350);
   };
   raf = requestAnimationFrame(loop);
+  if(opts.cookSfx) playSfx('sfx-cook-cursor', 0.45);   /* ★ v1.282.0 老師「游標開始在 BAR 上來回移動時播放音效」— 指針這裡才第一次開始跑,只在烹飪呼叫端生效 */
 }
 function islCharPaintAct(cls){ var w = $('isl-act-who'); if(w){ w.innerHTML = islChibiHtml(ISL.char, cls); } }
 /* 年輪:樹樁出現 N 圈,問「這棵樹幾歲?」點數字(±1 算對);伐木 Lv3 自動顯示答案提示 */
@@ -19021,7 +19084,7 @@ function islQteBlow(cb){
     fill.style.width = lvl + '%'; flame.style.transform = 'scale(' + (0.4 + lvl / 100 * 1.1) + ')';
     $('isl-q-cnt').textContent = '綠區累計 ' + inZone.toFixed(1) + ' / 5.0 秒';
     $('isl-act-tbar').style.width = Math.max(0, (endAt - now) / 12000 * 100) + '%'; $('isl-act-tnum').textContent = Math.ceil(Math.max(0, endAt - now) / 1000) + 's';
-    if(inZone >= 5 || now >= endAt){ cancelAnimationFrame(raf); $('isl-q-btn').disabled = true; var st = inZone >= 5 ? 3 : (inZone >= 3 ? 2 : 1), crit = inZone >= 5 && total <= 7.5; fx.textContent = st === 3 ? '🔥 火燒得剛剛好!' : (st === 2 ? '還算穩' : '火太小了…'); if(crit){ fx.textContent = '✨ 完美控火!'; playSfx('sfx-sweet-hit', 0.55); islFxPopText($('isl-q-pop'), '✨ 完美控火!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
+    if(inZone >= 5 || now >= endAt){ cancelAnimationFrame(raf); $('isl-q-btn').disabled = true; var st = inZone >= 5 ? 3 : (inZone >= 3 ? 2 : 1), crit = inZone >= 5 && total <= 7.5; fx.textContent = st === 3 ? '🔥 火燒得剛剛好!' : (st === 2 ? '還算穩' : '火太小了…'); if(crit){ fx.textContent = '✨ 完美控火!'; playSfx('sfx-sweet-hit', 0.55); islFxPopText($('isl-q-pop'), '✨ 完美控火!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact($('isl-q-bar')); islQteZoneStar($('isl-q-bar'), (lo + hi) / 2); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
     raf = requestAnimationFrame(loop);
   }
   $('isl-q-btn').onclick = function(){ lvl += 14; if(lvl > 100){ lvl = 0; fx.textContent = '噗——吹熄了!'; fx.style.color = '#ff7b7b'; playSfx('sfx-ng', 0.4); islFxPopText($('isl-q-pop'), '噗——吹熄了!', 'bad'); islQteImpact($('isl-q-bar')); } else { fx.textContent = ''; playSfx('sfx-tap', 0.3); } };
@@ -19448,6 +19511,7 @@ function islCampPaint(){
      結構改成和 #isl-char 一樣:.shadow + 靜態 idle 立繪(缺圖保險用) + .sp(走路用,islCharSpriteInit 填內容)。 */
   $('isl-camp-char').innerHTML = '<div class="shadow"></div>' + islChibiHtml(ISL.char, 'idle') + '<div class="sp d"></div>';
   islCharSpriteInit('isl-camp-char');
+  if(!$('isl-camp-char')._lpBound){ $('isl-camp-char')._lpBound = true; islLongTapBind($('isl-camp-char'), function(){ islCampCharTap(); }); }   /* ★ v1.283.0 主角長按1秒才開啟視窗(只綁一次,元素本身不會被重建) */
   islCampCharScale();
   islCampCharPlace();
   islCharPaint(_IS.campWalk ? 'walk' : 'idle', 'isl-camp-char', true);
@@ -19479,6 +19543,32 @@ function islCampPaint(){
  *      會讓整個人往左平移一個身寬,而且頭上的對話泡泡會連字一起左右相反。
  * ══════════════════════════════════════════════════════════════════════════ */
 function islCampCharPos(){ if(!_IS.campC) _IS.campC = { x: 6, y: 16 }; return _IS.campC; }
+/* ★ v1.283.0 老師「主角/寵物長按1秒才開啟視窗(出現1秒讀條),避免移動時不小心點到」—
+   給不能拖曳的物件(主角/寵物)用的共用長按出口:按下起算 1000ms,同時貼一條 .isl-lp-bar 進度條;
+   放開太早或移動超過門檻(10px)一律取消,不開視窗;成立時只呼叫一次 cb。
+   設施(islCampBldDragBind)與裝飾(islDecoDragBind)本身就有拖曳邏輯,各自整合同一套「持續 1000ms 不位移才觸發」規則,不呼叫這支。 */
+var ISL_LONGTAP_MS = 1000;
+function islLongTapBind(el, cb){
+  var timer = null, sx = 0, sy = 0, moved = false;
+  function pos(ev){ var t = ev.touches && ev.touches.length ? ev.touches[0] : (ev.changedTouches && ev.changedTouches.length ? ev.changedTouches[0] : ev); return { x: t.clientX, y: t.clientY }; }
+  function clearBar(){ var b = el.querySelector('.isl-lp-bar'); if(b && b.parentNode) b.parentNode.removeChild(b); }
+  function down(ev){
+    if(timer) return;   /* 已經在計時就不重複起算(避免多指觸控疊加) */
+    var p = pos(ev); sx = p.x; sy = p.y; moved = false;
+    var b = document.createElement('div'); b.className = 'isl-lp-bar'; b.innerHTML = '<i></i>'; el.appendChild(b);
+    timer = setTimeout(function(){ timer = null; clearBar(); if(!moved) cb(ev); }, ISL_LONGTAP_MS);
+    ev.stopPropagation();
+  }
+  function move(ev){ if(!timer) return; var p = pos(ev); if(Math.abs(p.x - sx) > 10 || Math.abs(p.y - sy) > 10){ moved = true; clearTimeout(timer); timer = null; clearBar(); } }
+  function up(){ if(timer){ clearTimeout(timer); timer = null; } clearBar(); }
+  el.addEventListener('touchstart', down, { passive: true });
+  el.addEventListener('touchmove', move, { passive: true });
+  el.addEventListener('touchend', up);
+  el.addEventListener('touchcancel', up);
+  el.addEventListener('mousedown', function(ev){ if(ev.button === 0) down(ev); });
+  window.addEventListener('mousemove', function(ev){ if(timer) move(ev); });
+  window.addEventListener('mouseup', up);
+}
 function islCampCharPlace(){
   var el = $('isl-camp-char'), p = islCampCharPos();
   if(!el) return;
@@ -19678,7 +19768,7 @@ function islCampPetsPaint(){
     el.style.width = _psz + 'px'; el.style.height = _psz + 'px'; el.style.marginLeft = (-_psz / 2) + 'px';
     el.style.lineHeight = _psz + 'px'; el.style.fontSize = Math.round(_psz * 0.62) + 'px';
     el.style.left = x + '%'; el.style.bottom = y + '%';
-    el.onclick = (function(kk){ return function(ev){ ev.stopPropagation(); islPetCardOpen(kk); }; })(rec.k);
+    islLongTapBind(el, (function(kk){ return function(){ islPetCardOpen(kk); }; })(rec.k));   /* ★ v1.283.0 老師「寵物長按1秒才開啟視窗」 */
     host.appendChild(el);
     _IS.campPets.push({ id: id, x: x, y: y, k: rec.k, sz: _psz, walking: false, el: el });
     islCampPetRender(_IS.campPets.length - 1);   /* 初始一律畫待機(idle)姿態 */
@@ -20038,25 +20128,40 @@ function islBldNameFlash(i){
     setTimeout(function(){ try{ if(el.parentNode) el.parentNode.removeChild(el); }catch(_bn2){} }, 1700);
   }catch(_bn){}
 }
+/* ★ v1.283.0 老師「設施長按1秒才開啟視窗(出現1秒讀條),避免主角移動時不小心點到」—
+   按下先貼 .isl-lp-bar 進度條並起算 1000ms;放開手指前一旦位移超過 8px(視為要拖曳搬家)立刻取消計時、
+   讀條收掉,退回原本的拖曳搬家邏輯(不開視窗);沒有位移撐滿 1000ms 才觸發開視窗,不必等放開手指。
+   施工中的設施(s.bt)本來就不能拖,邏輯不變——只是「點開」也一併改成長按觸發。 */
 function islCampBldDragBind(layer){
-  var cur = null;
+  var cur = null, timer = null;
   function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }
-  function down(ev){ if(_IS.coop) return; var t = ev.target, p; while(t && t !== layer && !(t.classList && t.classList.contains('isl-cell'))) t = t.parentNode; if(!t || t === layer) return; cur = t; p = pos(ev); cur._sx = p.x; cur._sy = p.y; cur._moved = false; t.classList.add('drag'); playSfx('sfx-sel', 0.25); ev.preventDefault(); ev.stopPropagation(); }
-  function move(ev){ if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94); if(Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8) cur._moved = true; cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; ev.preventDefault(); }
+  function clearBar(el){ var b = el.querySelector('.isl-lp-bar'); if(b && b.parentNode) b.parentNode.removeChild(b); }
+  function down(ev){
+    if(_IS.coop) return; var t = ev.target, p; while(t && t !== layer && !(t.classList && t.classList.contains('isl-cell'))) t = t.parentNode; if(!t || t === layer) return;
+    cur = t; p = pos(ev); cur._sx = p.x; cur._sy = p.y; cur._moved = false; cur._x = null; cur._y = null;
+    var b = document.createElement('div'); b.className = 'isl-lp-bar'; b.innerHTML = '<i></i>'; t.appendChild(b);
+    playSfx('sfx-sel', 0.25);
+    timer = setTimeout(function(){
+      timer = null; if(!cur || cur !== t || cur._moved) return;
+      clearBar(t); var i = parseInt(t.getAttribute('data-i'), 10);
+      islBldNameFlash(i); islCampGoToCell(i, function(){ islCampCellTap(i); });
+    }, ISL_LONGTAP_MS);
+    ev.preventDefault(); ev.stopPropagation();
+  }
+  function move(ev){
+    if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94);
+    if(!cur._moved && (Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8)){ cur._moved = true; if(timer){ clearTimeout(timer); timer = null; } clearBar(cur); cur.classList.add('drag'); }
+    if(cur._moved){ cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; }
+    ev.preventDefault();
+  }
   function up(){
     if(!cur) return;
-    var i = parseInt(cur.getAttribute('data-i'), 10), s = ISL.camp.slots[i], tap = !cur._moved;
-    cur.classList.remove('drag');
-    if(s && s.bt){   /* 施工中不能拖:視覺上已經被 move() 改到新位置,這裡要改回存檔裡的原始座標,不然要等下次重畫才會歸位 */
-      cur.style.left = s.x + '%'; cur.style.top = s.y + '%';
-      cur = null;
-      if(tap){ islBldNameFlash(i); islCampGoToCell(i, function(){ islCampCellTap(i); }); }   /* ★ v1.265.0 點下去先浮名稱 */
-      return;
-    }
-    if(s && !tap && cur._x != null){ s.x = Math.round(cur._x); s.y = Math.round(cur._y); islSave('campbldmove'); }
+    if(timer){ clearTimeout(timer); timer = null; }
+    var el = cur, i = parseInt(el.getAttribute('data-i'), 10), s = ISL.camp.slots[i], moved = el._moved;
+    clearBar(el); el.classList.remove('drag');
+    if(s && s.bt){ el.style.left = s.x + '%'; el.style.top = s.y + '%'; cur = null; return; }
+    if(s && moved && el._x != null){ s.x = Math.round(el._x); s.y = Math.round(el._y); islSave('campbldmove'); islCampBldApplyTransforms(); }
     cur = null;
-    if(tap){ islBldNameFlash(i); islCampGoToCell(i, function(){ islCampCellTap(i); }); }   /* ★ v1.265.0 點下去先浮名稱 */
-    else islCampBldApplyTransforms();   /* 拖完把 transform 字串重寫一次(left/top 是 style 直接改的,transform 沒被動過,這行其實只是保險) */
   }
   layer.addEventListener('touchstart', down, { passive: false }); layer.addEventListener('touchmove', move, { passive: false }); layer.addEventListener('touchend', up); layer.addEventListener('touchcancel', up);
   layer.addEventListener('mousedown', down); window.addEventListener('mousemove', function(ev){ if(cur) move(ev); }); window.addEventListener('mouseup', function(){ if(cur) up(); });
@@ -21356,7 +21461,7 @@ function islQteTension(cb){
     if(p >= lo && p <= hi) inZone += dt; total += dt;
     $('isl-q-cnt').textContent = '綠區累計 ' + inZone.toFixed(1) + ' / 3.0 秒';
     $('isl-act-tbar').style.width = Math.max(0, (endAt - now) / 10000 * 100) + '%'; $('isl-act-tnum').textContent = Math.ceil(Math.max(0, endAt - now) / 1000) + 's';
-    if(inZone >= 3 || now >= endAt){ cancelAnimationFrame(raf); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); var st = inZone >= 3 ? 3 : (inZone >= 1.8 ? 2 : 1), crit = inZone >= 3 && total <= 4.5; fx.textContent = st === 3 ? '🐟 拉上來了!' : (st === 2 ? '差一點' : '線快斷了…'); if(crit){ fx.textContent = '✨ 完美收竿!'; playSfx('sfx-sweet-hit', 0.55); islFxPopText($('isl-q-pop'), '✨ 完美收竿!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact(bar); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
+    if(inZone >= 3 || now >= endAt){ cancelAnimationFrame(raf); window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); var st = inZone >= 3 ? 3 : (inZone >= 1.8 ? 2 : 1), crit = inZone >= 3 && total <= 4.5; fx.textContent = st === 3 ? '🐟 拉上來了!' : (st === 2 ? '差一點' : '線快斷了…'); if(crit){ fx.textContent = '✨ 完美收竿!'; playSfx('sfx-sweet-hit', 0.55); islFxPopText($('isl-q-pop'), '✨ 完美收竿!', 'crit'); islQteSpark($('isl-q-pop')); islQteImpact(bar); islQteZoneStar(bar, (lo + hi) / 2); } else { islFxPopText($('isl-q-pop'), fx.textContent, st === 3 ? 'good' : 'bad'); } setTimeout(function(){ cb(st, crit); }, 700); return; }
     raf = requestAnimationFrame(loop);
   }
   raf = requestAnimationFrame(loop);
@@ -21423,6 +21528,7 @@ function islDefStart(roll){
   roll = roll || islRaidRoll();
   _islDef = { hp: (fireB ? camp.fireHp + (fireB.lv >= 5 ? 2 : (fireB.lv >= 3 ? 1 : 0)) : 2) + (ISL.skill.defense.lv >= 7 ? 1 : 0), hpMax: 0, wave: 0, waves: roll.waves, mons: [], tool: 'fist', alive: 0, timer: null, ended: false, kills: 0, slow: wallB ? (1 + 0.1 * wallB.lv + 0.1) : 1, torch: !!torchB, torchLv: torchB ? torchB.lv : 0, waveN: 0, spawnedW: 0,
     kinds: roll.kinds, towerLv: towerB ? towerB.lv : 0, fell: false, helpers: [], helperT: [], helpKills: 0,   /* ★ v1.104.0 甲/丙 */
+    fireLv: fireB ? fireB.lv : 0, woodUsed: 0, woodMax: 2,   /* ★ v1.282.0 老師「HP 條下新增木材 2/2,點擊消耗 1 次木材補充營火 HP 20%,最多 2 次」 */
     boarTaps: st.pow >= 14 ? 1 : (st.pow >= 8 ? 2 : 3), waveBonus: st.mov >= 14 ? 4000 : (st.mov >= 8 ? 2000 : 0), hintOn: st.wit >= 8, stun: st.wit >= 14 };
   _islDef.slow *= (st.dex >= 14 ? 1.2 : (st.dex >= 8 ? 1.1 : 1));   /* 巧手:魔物慢 10%/20% */
   _islDef.hpMax = _islDef.hp;
@@ -21437,8 +21543,11 @@ function islDefStart(roll){
   islModal('<h3>🌙 夜襲!</h3><p>魔物朝營火爬過來了!先在下方選工具,再點魔物:<br>' + legend + '</p><p>營火血 ' + _islDef.hp + '　共 ' + _islDef.waves + ' 波,每波 15 秒。魔物咬到營火時,守在旁邊的你也會受傷 ❤️−' + db.DEF_BITE_HP + '(體力 ' + ISL.hp + '/' + ISL.hpMax + ')。' + (ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? '' : '<br>⚠ 營火沒點,今晚特別危險!') + '</p>' + (bonus.length ? '<p style="font-size:14px;color:#7bed9f">能力加成:' + bonus.join('、') + '</p>' : '') + (_islDef.helpers.length ? '<p style="font-size:14px;color:#ffd166">👥 ' + _islDef.helpers.length + ' 位好友的小人在營火旁一起守夜!</p>' : ''), [{ t: '守住營地!', cls: 'gold', cb: function(){ islDefWave(); islDefHelpersStart(); } }]);
 }
 function islDefPaint(){
-  var db = islDB(), d = $('isl-def'), h = '', i;
-  h += '<div id="isl-def-light" style="transform:scale(' + (_islDef.torch ? 1.5 : 1) + ')"></div><div id="isl-def-fire">🔥</div>';
+  var db = islDB(), d = $('isl-def'), h = '', i, fireImg = islImgUrl('bld_campfire_' + (_islDef.fireLv >= 3 ? '3' : '1'));
+  h += '<div id="isl-def-light" style="transform:scale(' + (_islDef.torch ? 1.5 : 1) + ')"></div>';
+  h += '<div id="isl-def-campfire"><div id="isl-def-fire">' + (fireImg ? '<img src="' + fireImg + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'🔥\');">' : '🔥') + '</div><div id="isl-def-firehp"><div id="isl-def-firehp-bar"></div></div><div id="isl-def-wood" data-wood="1">🪵 木材 <span id="isl-def-wood-n"></span></div></div>';   /* ★ v1.282.0 老師①營火改圖示+HP條(漸層)+木材補血鈕 */
+  h += '<div id="isl-def-char">' + islChibiHtml(ISL.char, 'idle') + '</div>';   /* ★ v1.282.0 老師③主角站到火堆旁(這個畫面原本沒有渲染主角) */
+  h += '<div id="isl-def-flash"></div>';   /* ★ v1.282.0 老師④營火受傷全螢幕閃紅光 */
   h += '<div id="isl-def-top"><span id="isl-def-hp"></span><span id="isl-def-wv"></span><span class="grow"></span><span id="isl-def-kill"></span></div>';
   var tl = islDefToolsTonight();   /* ★ v1.104.0 只列今晚會用到的工具(最多 6 顆) */
   h += '<div id="isl-def-tools" class="' + (tl.length > 4 ? 'many' : '') + '">'; for(i = 0; i < tl.length; i++){ h += '<button data-t="' + tl[i].k + '" class="' + (tl[i].k === _islDef.tool ? 'on' : '') + '">' + tl[i].e + '<small>' + tl[i].n + '</small></button>'; } h += '</div>';
@@ -21446,13 +21555,31 @@ function islDefPaint(){
   islDefHud();
   d.onclick = function(ev){
     var t = ev.target;
-    while(t && t !== d && !(t.getAttribute && (t.getAttribute('data-t') || t.getAttribute('data-m')))) t = t.parentNode;
+    while(t && t !== d && !(t.getAttribute && (t.getAttribute('data-t') || t.getAttribute('data-m') || t.getAttribute('data-wood')))) t = t.parentNode;
     if(!t || t === d) return;
+    if(t.getAttribute('data-wood')){ islDefWoodHeal(); return; }   /* ★ v1.282.0 */
     if(t.getAttribute('data-t')){ _islDef.tool = t.getAttribute('data-t'); var bs = d.querySelectorAll('#isl-def-tools button'), i; for(i = 0; i < bs.length; i++){ bs[i].className = bs[i].getAttribute('data-t') === _islDef.tool ? 'on' : ''; } playSfx('sfx-sel', 0.3); return; }
     islDefTap(parseInt(t.getAttribute('data-m'), 10), t);
   };
 }
-function islDefHud(){ $('isl-def-hp').textContent = '🔥 營火 ' + _islDef.hp + '/' + _islDef.hpMax + '　❤️ ' + ISL.hp; $('isl-def-wv').textContent = '🌊 第 ' + _islDef.wave + '/' + _islDef.waves + ' 波'; $('isl-def-kill').textContent = '⚔ 擊退 ' + _islDef.kills; }
+/* ★ v1.282.0 老師「HP 條下新增木材 2/2,可以點擊消耗 1 次木材補充營火 HP 20%,最多 2 次」 */
+function islDefWoodHeal(){
+  var D = _islDef;
+  if(!D || D.ended) return;
+  if(D.woodUsed >= D.woodMax){ toast('今晚的木材已經用完了'); return; }
+  if(!islHave('wood')){ toast('沒有木材了'); return; }
+  if(D.hp >= D.hpMax){ toast('營火血量已滿'); return; }
+  islConsume('wood', 1); D.woodUsed++;
+  D.hp = Math.min(D.hpMax, D.hp + Math.round(D.hpMax * 0.2));
+  playSfx('sfx-confirm', 0.4); islDefHud();
+}
+function islDefHud(){
+  var D = _islDef, pct = D.hpMax ? Math.max(0, Math.min(100, Math.round(D.hp / D.hpMax * 100))) : 0, wb = $('isl-def-firehp-bar'), wn = $('isl-def-wood-n'), wd = $('isl-def-wood');
+  $('isl-def-hp').textContent = '🔥 營火 ' + D.hp + '/' + D.hpMax + '　❤️ ' + ISL.hp; $('isl-def-wv').textContent = '🌊 第 ' + D.wave + '/' + D.waves + ' 波'; $('isl-def-kill').textContent = '⚔ 擊退 ' + D.kills;
+  if(wb) wb.style.width = pct + '%';   /* ★ v1.282.0 營火 HP 條(漸層),跟血量文字同一份資料 */
+  if(wn) wn.textContent = (D.woodMax - D.woodUsed) + '/' + D.woodMax;
+  if(wd) wd.classList.toggle('off', D.woodUsed >= D.woodMax || D.hp >= D.hpMax);
+}
 function islDefWave(){
   var db = islDB(), D = _islDef, n, i, banner, d = $('isl-def');
   if(!D || D.ended) return;
@@ -21500,12 +21627,14 @@ function islDefFreeze(mo, ms){
   }, ms);
 }
 function islDefBite(id){
-  var D = _islDef, mo, fire = $('isl-def-fire');
+  var D = _islDef, mo, fire = $('isl-def-fire'), screen = $('isl-def'), flash = $('isl-def-flash');
   if(!D) return;   /* ★ 戰鬥已結束(計時器殘留) */
   mo = D.mons[id];
   if(!mo || mo.done || D.ended) return;
   mo.done = true; D.alive--; if(mo.el.parentNode) mo.el.parentNode.removeChild(mo.el);
   D.hp--; playSfx('sfx-punch', 0.5); if(fire){ fire.classList.remove('hurt'); void fire.offsetWidth; fire.classList.add('hurt'); }
+  if(screen){ screen.classList.remove('shake'); void screen.offsetWidth; screen.classList.add('shake'); }   /* ★ v1.282.0 老師④「營火受傷時全畫面震動」 */
+  if(flash){ flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on'); }   /* ★ v1.282.0 老師④「並閃一下紅光」 */
   /* ★ v1.104.0 甲:守在營火旁的你也被撞到 */
   ISL.hp = Math.max(0, ISL.hp - islDB().DEF_BITE_HP); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true;
   islHurtFloat($('isl-def'), (mo.w || 800) / 2 + 70, (mo.h || 500) / 2 - 40, '你 −' + islDB().DEF_BITE_HP + ' ❤️'); islDefHud();
@@ -23104,15 +23233,39 @@ window.islDecoTap = function(i){
     { t: '🔁 左右翻轉', cls: 'gold', cb: function(){ d.f = d.f ? 0 : 1; playSfx('sfx-tap', 0.3); toast('🔁 翻轉了'); islDecoPaint(); islSave('decoflip'); } }
   ]);
 };
+/* ★ v1.283.0 老師「裝飾長按1秒才開啟(翻轉)選單,避免主角移動時不小心點到」— 同設施(islCampBldDragBind)同一套規則:
+   位移超過 8px 視為拖曳搬家、取消長按;沒有位移撐滿 1000ms 才開選單,不必等放開手指。 */
 function islDecoDragBind(layer){
-  var cur = null;
+  var cur = null, timer = null;
   function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; return { x: t.clientX, y: t.clientY }; }
-  function down(ev){ if(_IS.coop) return; var t = ev.target, p; while(t && t !== layer && !(t.classList && t.classList.contains('isl-deco'))) t = t.parentNode; if(!t || t === layer) return; cur = t;   /* ★ v1.114.0 參觀好友營地時裝飾唯讀,不可拖 */ p = pos(ev); cur._sx = p.x; cur._sy = p.y; cur._moved = false; t.classList.add('drag'); playSfx('sfx-sel', 0.25); ev.preventDefault(); }
-  function move(ev){ if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94); if(Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8) cur._moved = true; cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; ev.preventDefault(); }
-  /* ★ v1.152.0 放手時分辨「拖」還是「點」:沒移動超過 8px 就當成點一下 → 開裝飾小選單(翻轉) */
-  function up(){ if(!cur) return; var i = parseInt(cur.getAttribute('data-d'), 10), d = ISL.camp.deco[i], tap = !cur._moved; if(d && !tap && cur._x != null){ d.x = Math.round(cur._x); d.y = Math.round(cur._y); islSave('decomove'); } cur.classList.remove('drag'); cur = null; if(tap) islDecoTap(i); }
+  function clearBar(el){ var b = el.querySelector('.isl-lp-bar'); if(b && b.parentNode) b.parentNode.removeChild(b); }
+  function down(ev){
+    if(_IS.coop) return; var t = ev.target, p; while(t && t !== layer && !(t.classList && t.classList.contains('isl-deco'))) t = t.parentNode; if(!t || t === layer) return;   /* ★ v1.114.0 參觀好友營地時裝飾唯讀,不可拖 */
+    cur = t; p = pos(ev); cur._sx = p.x; cur._sy = p.y; cur._moved = false; cur._x = null; cur._y = null;
+    var b = document.createElement('div'); b.className = 'isl-lp-bar'; b.innerHTML = '<i></i>'; t.appendChild(b);
+    playSfx('sfx-sel', 0.25);
+    timer = setTimeout(function(){
+      timer = null; if(!cur || cur !== t || cur._moved) return;
+      clearBar(t); islDecoTap(parseInt(t.getAttribute('data-d'), 10));
+    }, ISL_LONGTAP_MS);
+    ev.preventDefault();
+  }
+  function move(ev){
+    if(!cur) return; var p = pos(ev), r = layer.getBoundingClientRect(), x = islClamp((p.x - r.left) / r.width * 100, 4, 96), y = islClamp((p.y - r.top) / r.height * 100, 6, 94);
+    if(!cur._moved && (Math.abs(p.x - cur._sx) > 8 || Math.abs(p.y - cur._sy) > 8)){ cur._moved = true; if(timer){ clearTimeout(timer); timer = null; } clearBar(cur); cur.classList.add('drag'); }
+    if(cur._moved){ cur.style.left = x + '%'; cur.style.top = y + '%'; cur._x = x; cur._y = y; }
+    ev.preventDefault();
+  }
+  function up(){
+    if(!cur) return;
+    if(timer){ clearTimeout(timer); timer = null; }
+    var el = cur, i = parseInt(el.getAttribute('data-d'), 10), d = ISL.camp.deco[i], moved = el._moved;
+    clearBar(el); el.classList.remove('drag');
+    if(d && moved && el._x != null){ d.x = Math.round(el._x); d.y = Math.round(el._y); islSave('decomove'); }
+    cur = null;
+  }
   layer.addEventListener('touchstart', down, { passive: false }); layer.addEventListener('touchmove', move, { passive: false }); layer.addEventListener('touchend', up); layer.addEventListener('touchcancel', up);
-  layer.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+  layer.addEventListener('mousedown', down); window.addEventListener('mousemove', function(ev){ if(cur) move(ev); }); window.addEventListener('mouseup', function(){ if(cur) up(); });
 }
 /* ── 營地擴建 Lv1→2→3(格數 9→12→16) ── */
 window.islCampExpand = function(){
@@ -23189,7 +23342,7 @@ function islActCook(){
   function done(){
     islActTimerStop(); islDragTeardown();
     A.notes.push((right >= cards.length ? '✓ ' : '△ ') + '火力控制 ' + right + '/' + cards.length + '。' + rc.why);
-    islQuizOne('cook', function(ok){ if(ok) A.know += 1; islQualityIntro(function(){ islQteSwing(3, function(hits, crit){ A.stars = Math.max(1, hits); A.crit = crit; islActResult(); }, { icon: '🍳', btn: '🥄 翻面!', unit: '次', doneText: '起鍋!', done: rc.e, hurtMsg: '油噴出來,燙到手了' }); }); });
+    islQuizOne('cook', function(ok){ if(ok) A.know += 1; islQualityIntro(function(){ islQteSwing(3, function(hits, crit){ A.stars = Math.max(1, hits); A.crit = crit; islActResult(); }, { icon: '🍳', btn: '🥄 翻面!', unit: '次', doneText: '起鍋!', done: rc.e, hurtMsg: '油噴出來,燙到手了', cookSfx: true }); }); });   /* ★ v1.282.0 老師「烹飪的品質小遊戲」專屬音效(游標移動+命中成功),只加 cookSfx:true 這個旗標,不影響砍樹/採石共用同一支 islQteSwing */
   }
 }
 
@@ -26011,7 +26164,7 @@ function islBtQte(){
        不動位置判定(那是技術，該留給玩家)，改成「已經命中但不在正中央」時額外擲一次升格成暴擊。 */
     if(ok && !crit && (ps.critC + _fcC) && Math.random() * 100 < ps.critC + _fcC) crit = true; if(ok && _burst) crit = true;   /* ★ v1.229.0 B5 專注暴擊/滿層必暴擊 */
     try{ playSfx(crit ? 'sfx-sweet-hit' : (ok ? 'sfx-quiz-correct' : 'sfx-ng'), crit ? 0.55 : 0.38); }catch(_qs){}   /* ★ v1.191.0 老師需求②「命中甜蜜點、miss都要有清楚的音效」— 按下的當下立刻回饋(不必等後面 islBtResolveAttack 的傷害音效才有反應),暴擊/命中/落空三種用既有音效區分開,不新增檔案;★ v1.280.0 老師「戰鬥的甜蜜點命中時播放音效」— 暴擊(=命中正中央甜蜜點)改用專屬的 sfx-sweet-hit(甜蜜點命中.mp3),取代原本共用的 sfx-crit */
-    if(crit) islQteImpact($('isl-bt-bar'));   /* ★ v1.280.0 老師「甜蜜點命中時 bar 震動,目前砍樹有做到」— 戰鬥攻擊 QTE 原本完全沒有這個反饋,補上與採集/砍樹/釣魚同一支 islQteImpact();CSS 端另補 .bt-qte .bar.crit-hit 規則(見 islBarShake 定義處),否則 class 加了也不會動 */
+    if(crit) { islQteImpact($('isl-bt-bar')); islQteZoneStar($('isl-bt-bar'), pos); }   /* ★ v1.280.0 老師「甜蜜點命中時 bar 震動,目前砍樹有做到」— 戰鬥攻擊 QTE 原本完全沒有這個反饋,補上與採集/砍樹/釣魚同一支 islQteImpact();CSS 端另補 .bt-qte .bar.crit-hit 規則(見 islBarShake 定義處),否則 class 加了也不會動;★ v1.283.0 老師「甜蜜點位置新增閃亮星星特效(包含戰鬥中)」 */
     results.push(crit ? 2 : (ok ? 1 : 0)); done++;
     if(done >= ps.hits){ cancelAnimationFrame(raf); B.qteRaf = 0;   /* ★ v1.263.0 收乾淨,避免殘留 id 讓下一次開場誤判 */
       q.classList.add('hidden'); islBtResolveAttack(results); }
