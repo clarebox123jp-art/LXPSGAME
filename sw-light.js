@@ -1,5 +1,22 @@
 // ════════════════════════════════════════════════════════════════════════
-//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.4)
+//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.12.0)
+//
+//  ★★ v3.12.0（2026-09-20・對應遊戲 v5.230.0・老師回報「iPad 已完整下載的資源重開遊戲後又被刪除、要等很久慢慢重抓」
+//     「即使新型 iPad 也常延遲、按了反應慢」「必須永遠不可再刪除音畫素材」）★★
+//    【根因：素材有兩個互相殘殺的家】完整下載存在 sw.js 的 lxps-assets-v2；本檔（沒按過完整下載的多數學生裝置）
+//    卻存在自己的 lxpsgame-light-v1，而後者會被三個地方砍掉：
+//      ① index.html 版本自癒硬刷 _hardRefreshForPWAUpdate 的「保留清單」只認 asset|island，light 不在內
+//         ⇒ 老師每上傳一版、每台走本檔的 iPad 素材整包歸零重抓（老師一天上傳好幾版＝天天歸零）；
+//      ② sw.js 一接管（GM／完整下載／換手）activate 就刪掉所有非 shell/asset/mini 的快取，本檔的也在內；
+//      ③ 本檔自己的 LRU 上限 400 筆，而遊戲素材遠超過 400 ⇒ 邊存邊丟、永遠存不滿。
+//    另外兩個拖慢速度的病灶：④ 每一次快取命中都再背景 fetch 一次（cache:'no-cache' 重新驗證）
+//    ⇒ 25 台 iPad 每張圖每次顯示都多打一次校網＝「圖有了還是卡」；⑤ opaque（跨域看不到狀態）的
+//    回應也照存 ⇒ 429/404 壞回應會被永久存成「壞圖」（sw.js v3.5.89 修過同一個坑）。
+//    【修法】(a) CACHE_NAME 改與 sw.js 共用同一個 lxps-assets-v2：素材從此只有一個家，sw.js activate 保留它、
+//    版本硬刷保留它（名稱含 asset）、兩支 SW 換手互相看得到；(b) LRU 淘汰整段廢止（永遠不刪素材）；
+//    (c) 命中就回、不再背景重驗（素材網址改版靠 ?v= 版號，與 sw.js 同口徑）；(d) 只存 ok 的回應；
+//    (e) activate 一次性把舊 lxpsgame-light-v1 搬進 lxps-assets-v2 再刪舊家（搬失敗就保留舊家不刪）。
+//    ⚠ sw.js v3.8.4 同輪把 lxpsgame-light- 前綴加入保留名單（雙保險，搬家前 sw.js 先接管也不會砍）。
 //
 //  ★ v3.11.4（2026-09-20・對應遊戲 v5.226.0・老師回報「iPad 首頁出現帳號後又自動登出變回 v3.1.2 等很久，然後又自動成功登入，但是非常卡」）
 //    ① 回覆 GET_VERSION：主程式 v5.150.1 起每次開機都會對 controller 送 GET_VERSION，25 秒沒回就當成「誤傳的小遊戲 SW」
@@ -35,8 +52,9 @@
 
 'use strict';
 
-const CACHE_NAME = 'lxpsgame-light-v1';
-const MAX_CACHE_ENTRIES = 400;  // 圖片/音效約 250 個,留 150 個緩衝
+const CACHE_NAME = 'lxps-assets-v2';   /* ★ v3.12.0 與 sw.js 的 ASSET_CACHE 同名共用（單一素材家）。舊值 'lxpsgame-light-v1' 由 activate 一次性搬家 */
+const LEGACY_LIGHT_CACHE = 'lxpsgame-light-v1';
+const MAX_CACHE_ENTRIES = Infinity;  /* ★ v3.12.0 老師鐵律「永遠不可再刪除素材」：LRU 淘汰廢止（trimCache 保留為空操作） */
 const ASSET_EXT_RE = /\.(png|jpg|jpeg|gif|webp|svg|mp3|m4a|wav|ogg|woff|woff2)(\?|$)/i;
 const CACHEABLE_HOSTS = [
   'raw.githubusercontent.com',
@@ -46,7 +64,7 @@ const CACHEABLE_HOSTS = [
 ];
 // ★ v3.11.4 同源（GitHub Pages 本站）也要快取——v5.210.0 起主程式素材幾乎全走同源相對路徑
 try{ if(self.location && self.location.hostname && CACHEABLE_HOSTS.indexOf(self.location.hostname) === -1) CACHEABLE_HOSTS.push(self.location.hostname); }catch(_){}
-const SW_LIGHT_VERSION = 'v3.11.4';
+const SW_LIGHT_VERSION = 'v3.12.0';
 
 // ════════════════════════════════════════════════════════════════════════
 // ★ v3.11.2 — jsDelivr CDN 改寫(與 sw.js 同邏輯,繞 GitHub raw 429)
@@ -86,7 +104,18 @@ function rewriteToJsDelivr(originalUrl){
 // 抓資源:優先 jsDelivr,失敗回退原 req。opts 例:{cache:'no-cache'}
 async function cdnFetch(req, opts){
   const cdnUrl = rewriteToJsDelivr(req.url);
-  if(!cdnUrl) return fetch(req, opts);
+  /* ★ v3.12.0 跨域（raw 兜底）改先用 cors 抓（raw/jsDelivr 都有送 ACAO:*），讀得到狀態才能只存 200；
+     cors 失敗再退回原 req（no-cors opaque，回給頁面照樣能顯示，只是不會被存快取）。同源請求原樣不動。 */
+  if(!cdnUrl){
+    try{
+      const su = new URL(req.url);
+      if(self.location && su.hostname !== self.location.hostname){
+        const rc = await fetch(req.url, Object.assign({ mode:'cors', credentials:'omit' }, opts || {}));
+        if(rc && rc.ok) return rc;
+      }
+    }catch(_){}
+    return fetch(req, opts);
+  }
   try{
     const res = await fetch(cdnUrl, opts); // jsDelivr 有送 CORS,可讀
     if(res && (res.ok || res.type === 'opaque')) return res;
@@ -138,6 +167,7 @@ function shouldCache(url){
 
 // ─── LRU 淘汰:cache 超過上限時刪最舊的 ───
 async function trimCache(){
+  if(!isFinite(MAX_CACHE_ENTRIES)) return;   /* ★ v3.12.0 永不淘汰 */
   try{
     const cache = await caches.open(CACHE_NAME);
     const keys = await cache.keys();
@@ -153,25 +183,40 @@ async function trimCache(){
 
 // ─── install:立即進入 active,不等其他 SW ───
 self.addEventListener('install', (event) => {
-  console.log('[SW-Light v3.11.4] 安裝中(輕量圖片快取模式)');
+  console.log('[SW-Light v3.12.0] 安裝中(輕量圖片快取模式)');
   self.skipWaiting();
 });
 
 // ─── activate:接管控制權,清掉舊版 cache ───
 self.addEventListener('activate', (event) => {
-  console.log('[SW-Light v3.11.4] 啟動,接管所有頁面');
+  console.log('[SW-Light v3.12.0] 啟動,接管所有頁面');
   event.waitUntil((async () => {
+    /* ★ v3.12.0 一次性搬家：把舊 lxpsgame-light-v1 的每一筆搬進共用的 lxps-assets-v2（已存在的不覆蓋），
+       全部搬成功才刪舊家；任何一筆搬失敗就保留舊家不刪（少刪無害、多刪害玩家重抓）。
+       ⚠ 刻意不再「清掉其他 light 版本 cache」：素材只能被搬、不能被砍。 */
     try{
       const names = await caches.keys();
-      await Promise.all(names.map(n => {
-        // 留下自己的 cache,其他 light 版本 cache 都清掉
-        if(n.startsWith('lxpsgame-light-') && n !== CACHE_NAME){
-          console.log('[SW-Light] 清理舊版 cache:' + n);
-          return caches.delete(n);
-        }
-      }));
+      for(const n of names){
+        if(!n.startsWith('lxpsgame-light-')) continue;
+        let allOk = true;
+        try{
+          const oldC = await caches.open(n);
+          const newC = await caches.open(CACHE_NAME);
+          const reqs = await oldC.keys();
+          for(const r of reqs){
+            try{
+              const has = await newC.match(r);
+              if(has) continue;
+              const res = await oldC.match(r);
+              if(res && res.ok) await newC.put(r, res);
+            }catch(_){ allOk = false; }
+          }
+          console.log('[SW-Light v3.12.0] 搬家 ' + n + ' → ' + CACHE_NAME + '：' + reqs.length + ' 筆' + (allOk ? '' : '（部分失敗，保留舊家）'));
+        }catch(e){ allOk = false; console.warn('[SW-Light] 搬家失敗，保留舊家', n, e); }
+        if(allOk){ try{ await caches.delete(n); }catch(_){} }
+      }
     }catch(e){
-      console.warn('[SW-Light] activate cleanup 失敗', e);
+      console.warn('[SW-Light] activate migrate 失敗', e);
     }
     await self.clients.claim();
   })());
@@ -194,25 +239,15 @@ self.addEventListener('fetch', (event) => {
       const cached = await cache.match(wantUrl);   // ★ key 用實際抓取 URL(webp/png 各存各的)
 
       if(cached){
-        // ─── 有 cache → 立刻回,背景更新 ───
-        event.waitUntil((async () => {
-          try{
-            const fresh = await assetFetch(req, wantUrl, { cache: 'no-cache' }); // ★ v3.11.3 webp→png fallback
-            if(fresh && (fresh.ok || fresh.type === 'opaque')){
-              await cache.put(wantUrl, fresh.clone());
-              // 定期 trim(每 20 次更新跑一次,避免每次都跑)
-              if(Math.random() < 0.05) trimCache();
-            }
-          }catch(_){
-            // 網路失敗無所謂,反正用 cache 版本
-          }
-        })());
+        /* ★ v3.12.0 命中即回，不再每次命中都背景重驗（舊碼每張圖每次顯示都多打一次校網，是「圖有了還是卡」的病灶之一）。
+           素材改版一律靠網址 ?v= 版號換新，與 sw.js cacheFirstAsset 同口徑。舊行備查：
+           event.waitUntil(assetFetch(req, wantUrl, {cache:'no-cache'}) → cache.put(...)) */
         return cached;
       }
 
       // ─── 沒 cache → 抓網路(優先 webp,再 CDN),成功則存 cache ───
       const network = await assetFetch(req, wantUrl);   // ★ v3.11.3 webp→png fallback
-      if(network && (network.ok || network.type === 'opaque')){
+      if(network && network.ok){   /* ★ v3.12.0 只存確認 200 的回應；opaque 看不到狀態，429/404 存進去就是永久壞圖（sw.js v3.5.89 同坑） */
         // clone 因為 Response body 只能讀一次
         cache.put(wantUrl, network.clone()).then(() => {
           if(Math.random() < 0.05) trimCache();
