@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
 <!-- ============================================================================
-     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.266.0(2026-09-19)
+     小英雄小遊戲 — 獨立 PWA(minigame/minigame_index.html)v1.275.0(2026-09-20)
      ⚠ 檔頭這行自 v1.163.0 起漏跟(停在 v1.162.0),v1.170.0 補上;逐輪更動摘要一律看下方 MG_VER 常數的註解。
      ★ v1.162.0(2026-09-14・老師：「檢查星域的效果…確認每個功能都有用。還有提升寵物能力的。最後包括缺的六個都全部完成」)—
        【稽核結果】寫了一支稽核器把 D.SK_NODES/D.SK_TITLES 的效果鍵全部對比 index 的消費點，
@@ -6210,6 +6210,84 @@ window.islDirectVeilOff = function(){
   .isl-codex-card .ic{ height:40px !important; font-size:28px !important; }
   #isl-act-body{ padding:4px 8px !important; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v1.275.0(2026-09-20・老師「荒島每天的 AP 使用超過 50% 時背景切換成夜間模式」+ 追加裁定二/三)★
+   【老師裁定②】夜色只加在「地圖上的角色物件」身上,**夜景背景圖不要再套一層**——
+     11 區的 island_zone_<區>_night.jpg 與 island_camp_night.jpg 本身已經是畫好的夜景,
+     再蓋一層濾鏡會變成「夜景再加夜色」整片糊黑。所以下面每一條選擇器都**刻意不含**
+     `.zbg` / `#isl-camp-bg` / `#isl-zone-cv`(後備 canvas 也算背景),只點名前景物件。
+   【老師裁定③】會發光的物件與寵物在夜間要加發光效果 ⇒ `.nglow`(由 JS 依 D.NIGHT_GLOW 掛上,
+     白天也在 DOM 上但沒有樣式,切換日夜不必重畫任何一層)。
+   ⚠ 為什麼用 filter 而不是疊一層半透明黑幕:黑幕會把「發光」一起壓暗,而且要處理層級與點擊穿透;
+     filter 只作用在元素自己身上,既不影響背景圖、也不擋點擊,發光可以另外用 drop-shadow 疊回去。
+   ⚠ 夜色濾鏡鏈的順序是有意義的:先 brightness 壓暗 → saturate 降彩度 → sepia+hue-rotate 染成冷藍調
+     → 最後補一點 saturate 讓藍色不要死灰。整條只影響顏色,不動尺寸/位置,不會讓任何東西跑位。
+   ══════════════════════════════════════════════════════════════════════════ */
+#island-root.isl-night #isl-char,
+#island-root.isl-night #isl-camp-char,
+#island-root.isl-night .isl-camp-pet,
+#island-root.isl-night .isl-node,
+#island-root.isl-night .isl-pick,
+#island-root.isl-night .isl-poi,
+#island-root.isl-night .isl-mon-pop,
+#island-root.isl-night .isl-mine,
+#island-root.isl-night #isl-camp-cells .isl-cell,
+#island-root.isl-night .isl-deco{
+  filter:brightness(.62) saturate(.7) sepia(.22) hue-rotate(185deg) saturate(1.3);
+}
+/* 發光物件(營火/火把/路燈/螢火蟲/水晶/夜光植物…):夜色壓暗的幅度減半,再疊兩層暖光暈。
+   ⚠ 這一條必須排在上面那組**後面**才蓋得過(同特異性、後宣告者勝——v1.267.0 學到的那一課)。
+   ⚠ 這裡刻意**不寫 !important**:`!important` 的宣告優先權高於 CSS 動畫,寫了會把下面那段
+     呼吸光暈的 keyframes 整個凍結成靜態值(看起來就是「加了動畫卻不會呼吸」)。
+     改用特異性取勝——本條 `#island-root.isl-night .nglow` 與上面那組同為「1 個 id + 2 個 class」,
+     同分時後宣告者贏,而本條就排在後面。 */
+#island-root.isl-night .nglow{
+  filter:brightness(.92) saturate(1.05)
+         drop-shadow(0 0 10px rgba(255,208,110,.95))
+         drop-shadow(0 0 26px rgba(255,170,60,.6));
+  animation:islNightGlow 2.6s ease-in-out infinite;
+}
+@keyframes islNightGlow{
+  0%,100%{ filter:brightness(.92) saturate(1.05) drop-shadow(0 0 8px rgba(255,208,110,.85)) drop-shadow(0 0 20px rgba(255,170,60,.45)); }
+  50%    { filter:brightness(1.04) saturate(1.15) drop-shadow(0 0 16px rgba(255,225,140,1))  drop-shadow(0 0 36px rgba(255,180,70,.75)); }
+}
+/* 已點著的營火(.lit)夜間再加強一段:光暈更大、偏橘紅,與一般發光物件做出差別 */
+#island-root.isl-night #isl-camp-cells .isl-cell.lit{ animation:islNightGlowFire 2.2s ease-in-out infinite; }
+@keyframes islNightGlowFire{
+  0%,100%{ filter:brightness(1) saturate(1.15) drop-shadow(0 0 12px rgba(255,160,60,.95)) drop-shadow(0 0 32px rgba(255,110,30,.55)); }
+  50%    { filter:brightness(1.12) saturate(1.25) drop-shadow(0 0 22px rgba(255,190,90,1)) drop-shadow(0 0 52px rgba(255,120,35,.85)); }
+}
+/* ⚠ 刻意不寫「名牌/泡泡 filter:none」那種規則:CSS 的 filter 是作用在**整棵子樹**上的,
+   子元素再寫 filter:none 也解不掉父層已經套上的濾鏡(這是規範行為,不是 bug)。
+   實測夜色只壓到 62% 亮度,名牌本身是深底白字、數量徽章是黑底白字,壓暗後仍然看得清楚;
+   真的要讓某一層完全不染色,唯一做法是把它移出被套濾鏡的容器,那會動到定位,本輪刻意不做。 */
+/* HUD 上的小月亮:純顯示,告訴學生現在是晚上(白天不顯示) */
+#isl-hud-night{ display:none; }
+#island-root.isl-night #isl-hud-night{ display:inline-flex; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ★ v1.275.0 物品包/倉庫兩項 UI 修正(老師:「存入倉庫和取出的勾選視窗之物品戰鬥功能字體改成黑色,
+     數量 ×N 的文字移到圖片正右方」)★
+   ⚠ 整段刻意放在 <style> 的**最後面**:要蓋過上面既有的 `.isl-bag-slot.has .n{right:6px;top:4px}`
+     與 `.isl-store-q .n{margin-left:auto}`,兩者特異性與本段相同,靠「後宣告者勝」取勝
+     (與 v1.267.0 手機橫式那段同一個理由;不用 !important 是為了留給 iPad/手機斷點還能覆寫)。
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ① ×N 貼在「圖片」正右方:.ic 是本輪新包的圖片容器,寬度吃滿格子、內容置中 ⇒ top:50% 就是圖片的中線 */
+.isl-bag-slot .ic{ position:relative; display:flex; align-items:center; justify-content:center; width:100%; }
+.isl-bag-slot .ic .n,
+.isl-bag-slot.has .ic .n{ position:absolute; right:2px; top:50%; bottom:auto; transform:translateY(-50%); }
+/* 倉庫列:取消把 ×N 推到整列最右邊的 margin-left:auto,讓它緊跟在圖片後面 */
+.isl-store-q .n{ margin-left:4px; margin-right:6px; }
+/* ② 戰鬥效果文字改黑色。⚠ 物品格與倉庫列的底色都是深綠/深色漸層,純黑字會完全看不見
+   ⇒ 依老師「照你建議」的裁定,黑字加一條近白色的底條當標籤,既是黑字也看得清楚。 */
+.isl-bag-slot .fx,
+.isl-store-item .fx{
+  color:#111 !important; background:rgba(255,255,255,.9);
+  border-radius:8px; padding:1px 7px; box-shadow:0 1px 3px rgba(0,0,0,.35);
+}
+.isl-bag-slot .fx{ margin:2px auto 0; width:fit-content; max-width:96%; }
+.isl-store-item .fx{ margin-top:3px; width:fit-content; }
 </style>
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
      層級(設計書 2.1):#isl-hud 固定頂欄 → 各畫面(#isl-create / #isl-map-wrap / #isl-zone / #isl-camp / #isl-act)
@@ -6220,6 +6298,7 @@ window.islDirectVeilOff = function(){
     <!-- ★ v1.124.0 老師:常駐欄位全部縮成一行,只留圖示(+數字),點一下開文字說明小視窗、再點一次收起 → 全部改走 islHudTip(key, event, this) -->
     <span class="ih guest hidden" id="isl-hud-guest" onclick="mgLoginTap()" title="訪客模式:沒有登入帳號,進度只留在這台裝置。點這裡登入帳號,切換到你自己的島嶼進度。">👤 <span class="t">未登入帳號</span> 🔑</span><!-- ★ v1.262.0 文字包一層 .t:平板上方欄位真的塞不下時(islHudFit 加 .tight),只收掉「未登入帳號」四個字剩下 👤🔑,標籤本身、橘色底與點了就登入的行為都不變 --><!-- ★ v1.255.0 老師「進入訪客模式就在畫面頂端顯示未登入帳號標籤」— 常駐 HUD 最前面,登入才會被 islHud() 隱藏;★ v1.258.0 老師「點左上角登入帳號 → 出現登入選帳號的視窗」— 標籤改可點,直接呼叫既有 window.mgLoginTap()(內建 prompt:'select_account' 的 Google 選帳號視窗+popup 被擋自動退 redirect+共用裝置守門放行旗標,登入後 islOnUser 會自動清記憶體、重新讀那個帳號的雲端島),不另寫第二套登入;登入狀態下這顆標籤本來就被 islHud() 隱藏,不會誤觸 mgLoginTap 的登出詢問分支 -->
     <span class="ih tipable" id="isl-hud-day" onclick="islCalOpen()" title="島上日誌(日曆)">📅 1</span><!-- ★ v1.125.0 老師:點日曆開放大版日曆視窗 -->
+    <span class="ih" id="isl-hud-night" title="天黑了(今天的體力用掉超過一半)">🌙</span><!-- ★ v1.275.0 夜間指示:顯示/隱藏完全由 CSS 的 #island-root.isl-night 決定,JS 一行都不必管 -->
     <span class="ih btn tipable" id="isl-hud-wx" onclick="islHudTip('wx',event,this)" title="天氣">☀</span><!-- ★ v1.100.0 天氣 -->
     <span class="ih ap btn tipable" id="isl-hud-ap" onclick="islHudTip('ap',event,this)" title="行動力">⚡ 10</span><!-- ★ v1.119.0 點了看 AP 說明,視窗內可再開消耗清單 -->
     <span class="ih hp tipable" id="isl-hud-hp" onclick="islHudTip('hp',event,this)" title="體力">❤️ 100</span><!-- ★ v1.92.0 角色體力 --><span class="ih hidden" id="isl-hud-ail" onclick="islAilOpen()" title="身體狀況"></span><!-- ★ v1.160.0 🤒 不良狀態藥丸：沒生病時整顆藏起來不佔位，點一下開處置視窗 -->
@@ -6338,7 +6417,7 @@ window.islDirectVeilOff = function(){
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.273.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.275.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -6347,7 +6426,41 @@ window.islDirectVeilOff = function(){
 (function(){
 'use strict';
 
-var MG_VER = 'v1.274.0';   /* ★ v1.274.0(2026-09-20・老師三項:①「睡覺的圖片改成每隔1分鐘會有33%機率切換成睡覺,持續1分鐘切換回走路姿態;按『休息』時先提醒玩家還有多少體力沒有使用,真的要直接睡覺了嗎」②「確認後全部動物都切換成睡覺圖片不動,然後營地畫面會停留3秒漸暗到全黑;邊緣小瑕疵清除」③「跑步的音效只在持續奔跑期間播放,停止跑步要停止音效」)—
+var MG_VER = 'v1.275.0';   /* ★★ v1.275.0(2026-09-20・老師四項:①「荒島每天的 AP 使用超過 50% 時,背景會切換成夜間模式,同時將部分夜行性魔物改成只在夜間出現」②「夜間時所有地圖上的角色物件才需要加一層純 CSS 夜色,夜景圖片不需要再額外加這個」③「夜間時所有可發光的物件或寵物都要添加發光效果」④「存入倉庫和取出的勾選視窗之物品戰鬥功能字體改成黑色,數量 ×N 的文字移到圖片正右方」⑤「野外遇敵跳出的怪物插圖,蜜蜂沒有用到 REPO 圖片,修正後檢查還有哪些跳出怪物圖片沒有正確對接」)★★
+   ──【① 夜間模式】單一真相三支:islIsNight()(純謂詞,只看『今天已用掉多少比例的 AP』,門檻讀 island_db 的 D.NIGHT.apUsedPct=0.5)、
+     islNightSync()(唯一寫入點:設 window._islNightBg、切 #island-root 的 .isl-night、**只有日夜真的翻面那一刻**才換背景圖)、
+     islZoneBgRepaint()(就地換 img.zbg 的 src,不重畫整個場景 ⇒ 主角位置/資源點/走路狀態全不受影響)。
+     ⚠ 掛點選在 islHud():AP 會被扣的地方超過十處(採集/建造/研究/製作/上課/地下層/特殊指令/工程修復…),逐處補呼叫一定會漏;
+       但那十幾處**扣完 AP 一律會呼叫 islHud() 重畫 ⚡ 數字**,所以 islHud 是全荒島『AP 變動』唯一的共同收口點,掛一處即全涵蓋
+       (與 v1.268.0 抽 islKeysReleaseBind 同一個思路)。islEnterZone/islGoCampInner 各再補一次,確保換畫面當下就是對的。
+     ⚠ 刻意不寫進存檔:白天/夜晚完全由『當下 AP 剩多少』推導,存了反而會跟 AP 打架(睡一覺 AP 補滿就該天亮,不需要有人去改旗標)。
+     ⚠ 背景圖:11 區 zone_<區>_night(v1.273.0 已登記圖鍵,老師本輪已把 11 張 island_zone_<區>_night.jpg 上傳,逐檔 HTTP 查證全 200)
+       與營地 camp_night(v1.90.0 就有,原本只有夜襲畫面在用,本輪起正常回營地也會依 AP 用量選圖)。
+   ──【② 夜色只上在角色物件,不碰夜景圖】老師裁定:夜景圖本身已經畫成晚上,再蓋一層濾鏡會變成『夜景再加夜色』整片糊黑。
+     CSS 那段(在 <style> 最後)每一條選擇器都**刻意不含** .zbg / #isl-camp-bg / #isl-zone-cv,只點名主角/寵物/NPC/資源點/掉落物/設施/裝飾/魔物跳出圖。
+     ⚠ 用 filter 不用『疊一層半透明黑幕』:黑幕會把發光效果一起壓暗,而且要處理層級與點擊穿透;filter 只作用在元素自己身上。
+   ──【③ 發光物件】D.NIGHT_GLOW(island_db)分 bld/deco/pet/node 四類,index 端只有 islNightGlowIs(類別,鍵) 一個出口,
+     四個產生 HTML 的地方(營地設施/營地裝飾/營地寵物/野外資源點)各問一次掛上 .nglow。
+     ⚠ .nglow 白天也在 DOM 上但**沒有任何樣式**(CSS 有 .isl-night 前綴)⇒ 日夜切換不必重畫任何一層。
+     ⚠ .nglow 的 filter **刻意不寫 !important**:!important 的優先權高於 CSS 動畫,寫了會把呼吸光暈的 keyframes 整個凍結成靜態值;
+       改用『同特異性、後宣告者勝』取勝(與 v1.267.0 手機橫式那段同一個道理)。營火點著時(.lit)另有一組更大更橘的專屬呼吸動畫。
+   ──【④ 夜行性魔物】D.MON_NIGHT(island_db)8 隻:夜蝠/影魔/鼴鼠土匪/水蛭精/霧沼蛙/盲眼穴蛛/鍬形蟲騎士/古代遊魂。
+     規則:白天只抽『不在名單內』的,夜間全部都可能抽到(夜行性是**加碼**不是取代)。單一出口 islEncMonPool()/islEncPick(),
+     三個抽魔物的地方(步數遇敵 islEncStep / GM 測試戰鬥 islBtTest / 一場多隻時的補位)全部改讀它,舊的踩地雷式 islSpawnDaily 也一併改。
+     ⚠ 安全網:白天過濾後若一隻都不剩,一律退回完整清單——『白天走進某區完全不遇敵』比『多遇到一隻夜行性魔物』嚴重得多。
+     ⚠ 已逐區驗算:白天每一區仍有 2~4 種魔物可抽(森林4/草原3/溪流2/岩岸4/湖泊2/洞窟2/懸崖3/山谷3/遺跡3/火山4)。
+   ──【⑤ 魔物插圖沒對接・稽核結論:不只蜜蜂,是 30 隻全中】畫面上『魔物的圖』一直只讀 mon_<key> 這一個圖鍵,
+     而 D.IMG 只登記了最早那 9 隻。v1.234.0 新增的 20 種野外魔物與 v1.227.0 的 10 隻地圖頭目**從來沒有 mon_ 這個鍵**⇒ 一律退回 emoji。
+     逐檔 HTTP 查證(2026-09-20):9 隻基本魔物 island_mon_<k>.png 全 200;20 隻野外魔物 + 10 隻頭目的 island_mon_<k>.png **全部 404**,
+     但同樣這 30 隻的 island_bt_m_<k>_idle.png **全部 200**(戰鬥立繪早就上傳了)⇒ 不是圖沒上傳,是兩套鍵、新魔物只有後者。
+     老師說的『蜜蜂』= 虎頭蜂兵(hornet),正是這 20 隻其中之一。修法:抽單一出口 islMonPicKey()/islMonPicUrl()——先找 mon_<k>,
+     沒有就退 bt_m_<k>_idle,再沒有才回空字串(呼叫端顯示 emoji);五個消費點(野外遇敵跳出/夜襲魔物/地下層魔物/戰鬥立繪最後退路/島上日誌圖示)
+     與兩處預探測全部改讀它。⚠ 刻意不去 D.IMG 補 30 個 mon_ 鍵——那些檔案根本不存在,補了只會讓『完整下載』多 30 個必定失敗的網址。
+   ──【⑥ 物品包/倉庫兩項 UI】(a) ×N 移到圖片正右方:物品包把圖片包進新的 .ic 容器、×N 改成它的絕對定位子元素(top:50% 才真的是**圖片**的中線;
+     整格的 50% 不是,因為格子裡還有名稱與戰鬥效果兩行);倉庫列把 ×N 從『margin-left:auto 推到整列最右邊』改成緊跟在圖片後面。
+     ⚠ 同時解掉 v1.273.0 留下的衝突:勾選框 .chk 那一輪被移到右上角,而 ×N 自 v1.174.0 起也在右上角,兩個疊在同一個角落——這正是老師看到『×N 位置跑掉』的成因。
+     (b) 戰鬥效果文字改黑色:物品格與倉庫列底色都是深綠/深色漸層,純黑字會完全看不見 ⇒ 依老師『照你建議』的裁定,黑字加一條近白色底條當標籤,既是黑字也看得清楚。
+   ⚠ 對應 island_db v1.275.0(新增 D.NIGHT/D.MON_NIGHT/D.NIGHT_GLOW + D.LOG 一筆)、sw v1.275.0(SHELL v1.241.0)。 */   /* ★ v1.274.0(2026-09-20・老師三項:①「睡覺的圖片改成每隔1分鐘會有33%機率切換成睡覺,持續1分鐘切換回走路姿態;按『休息』時先提醒玩家還有多少體力沒有使用,真的要直接睡覺了嗎」②「確認後全部動物都切換成睡覺圖片不動,然後營地畫面會停留3秒漸暗到全黑;邊緣小瑕疵清除」③「跑步的音效只在持續奔跑期間播放,停止跑步要停止音效」)—
 ①新增 islCampPetsNapStart()(每 60 秒對每隻寵物各擲一次 33%,中了 rec.nap=true 顯示睡覺姿態+💤,60 秒後自動歸位),與既有
  islCampPetsWanderStart() 各自獨立計時器,島 db 零改動、圖片沿用 v1.257.0 已上傳的 16 張 _sleep 圖(其中 barbet/deer/owl/
  treefrog 4 張這輪順手清掉生成殘留的孤立雜點,構圖與位置一個像素都沒變)。islRest() 改成 AP>0 時獨立一句醒目提問
@@ -16024,6 +16137,10 @@ function islChibiHtml(c, cls){   /* ★ v1.109.0 有像素 sprite 可用時一�
 /* ── HUD ── */
 function islHud(){
   if(!ISL) return;
+  /* ★ v1.275.0 夜間模式:AP 會被扣的地方超過十處,但**每一處扣完都會呼叫 islHud() 重畫 ⚡ 數字**,
+     所以這裡是全荒島「AP 變動」唯一的共同收口點,掛一行即全涵蓋(見 islNightSync 上方說明)。
+     islNightSync 內部有「沒翻面就直接 return」的守門,高頻呼叫幾乎零成本。 */
+  try{ islNightSync(); }catch(_nt){}
   var rs;   /* ★ v1.170.0 資源那一項改成單一倉庫圖示,原本組字串用的 db/keys/i/h/n 全部用不到了 */
   /* ★ v1.262.0 老師「iPad 頂部欄位太長,要左右捲動才看得到右邊五顆」— HUD 圖示在 iPad 上原本是 22×1.4=31px,
      整條 HUD 光圖示就吃掉十顆×31px。這裡改傳 17(iPad 實際畫出來 17×1.4≈24px,PC 維持 22 不變),
@@ -17553,7 +17670,7 @@ function islSpawnDaily(zoneId){
       if(!farEnough(out, cand, 2) || !farEnough(picks, cand, 2) || !farEnough(mines, cand, 4)) continue;
       for(j = 0, ok = true; j < fixed.length; j++){ if(fixed[j] && Math.abs(fixed[j].x - cand.x) < 3 && Math.abs(fixed[j].y - cand.y) < 3) ok = false; }
       if(!ok) continue;
-      mines.push({ idx: mines.length, x: cand.x, y: cand.y, k: E.mons[Math.floor(mrnd() * E.mons.length)], lv: zdef.order || 1, done: !!(daily.mines && daily.mines.indexOf(mines.length) >= 0) });
+      mines.push({ idx: mines.length, x: cand.x, y: cand.y, k: islEncPick(E, 'boar', mrnd), lv: zdef.order || 1, done: !!(daily.mines && daily.mines.indexOf(mines.length) >= 0) });
     }
   }
   return { nodes: out, picks: picks, mines: mines };
@@ -17600,6 +17717,9 @@ function islEnterZone(zoneId, cb){
     }
   }catch(_eFw){}
   _IS.zone = zoneId; _IS.scene = sc; ISL.curZone = zoneId;
+  /* ★ v1.275.0 夜間模式:islZoneBgKey 讀的是 window._islNightBg,這裡必須在算背景圖之前先同步一次,
+     否則「入夜後才第一次進這一區」會拿到白天的圖,要等下一次 islHud 翻面才換(那時已經看到白天圖了)。 */
+  try{ islNightSync(); }catch(_nt){}
   _IS.water = islWaterCells(sc); _IS.ambWT = 0;   /* ★ v1.131.0 水聲距離調節:進場先把水域格掃出來(一次),之後每 220ms 只算最近距離 */
   islShowScreen('zone'); hide('isl-map-wrap');   /* ★ v1.147.0 雙保險:老師截圖回報「進區域後大地圖與場景疊在一起」,islShowScreen 理論上已排他隱藏地圖,但保留這行防止任何遺漏路徑讓地圖殘留可見(同 islPrologue() 既有寫法)。真正修法在 CSS(見下)。 */
   islBgm(zoneId);
@@ -17680,7 +17800,7 @@ function islEnterZone(zoneId, cb){
 function islNodeHtml(n, i){
   var u = islImgUrl(n.taken && n.kind === 'tree' ? 'node_stump' : (n.taken && n.kind === 'bush' ? 'node_bush_empty' : n.node));
   var swayK = ' palm bush mush tree reed seedgrass fiber fibergrass lotus glow herb grain berry wood hive ';   /* ★ v1.100.0 植物類資源點隨風搖曳 */
-  return '<div class="isl-node' + (n.kind === 'tree' ? ' big' : '') + (n.taken ? ' taken' : '') + (swayK.indexOf(' ' + n.kind + ' ') >= 0 && !n.taken ? ' sway' : '') + '" data-n="' + i + '" style="left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 60) + 'px;animation-delay:0s,' + ((n.x * 7 + n.y * 3) % 10) / 4 + 's">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + (n.taken ? '🪵' : n.e) + '\');">' : (n.taken ? (n.kind === 'tree' ? '🪵' : '🌱') : n.e)) + '<span class="nl">' + islEsc(n.label) + (n.taken ? '(已採)' : '') + '</span></div>';
+  return '<div class="isl-node' + (n.kind === 'tree' ? ' big' : '') + (n.taken ? ' taken' : '') + (swayK.indexOf(' ' + n.kind + ' ') >= 0 && !n.taken ? ' sway' : '') + ((!n.taken && islNightGlowIs('node', n.kind)) ? ' nglow' : '') + '" data-n="' + i + '" style="left:' + (n.x * 64 + 32) + 'px;top:' + (n.y * 64 + 60) + 'px;animation-delay:0s,' + ((n.x * 7 + n.y * 3) % 10) / 4 + 's">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + (n.taken ? '🪵' : n.e) + '\');">' : (n.taken ? (n.kind === 'tree' ? '🪵' : '🌱') : n.e)) + '<span class="nl">' + islEsc(n.label) + (n.taken ? '(已採)' : '') + '</span></div>';
 }
 function islZoneDrawFallback(cv, sc){
   if(!cv) return;
@@ -19145,7 +19265,12 @@ function islGoCampInner(silent){
   islZoneRemember();
   islShowScreen('camp');
   islBgm('camp');   /* ★ v1.97.0 */
-  $('isl-camp-bg').src = islImgUrl('camp') || ''; $('isl-camp-bg').style.display = '';
+  /* ★ v1.275.0 夜間模式:營地背景同樣分日/夜。camp_night 這張圖 v1.90.0 就登記了(夜襲畫面在用),
+     本輪起正常回營地也會依 AP 用量選圖;islNightSync 先跑一次確保 _islNightBg 是最新的。
+     ⚠ 兩張圖都在 islPreloadWarm('camp', ['camp','camp_night']) 的背景預載清單裡(上方既有),不必另外預抓。 */
+  try{ islNightSync(); }catch(_nt){}
+  var _cbk = (islIsNight() && islDB().IMG['camp_night']) ? 'camp_night' : 'camp';
+  $('isl-camp-bg').src = islImgUrl(_cbk) || ''; $('isl-camp-bg').style.display = '';
   islCampPaint();
   islAmbAttach('camp');   /* ★ v1.100.0 */
   islTutDone('camped');
@@ -19189,6 +19314,7 @@ function islCampPaint(){
     if(!db.BUILDINGS[s.bld]) continue;   /* ★ v1.111.0 守門:存檔裡的建築 id 已不存在(資料表改名/移除)時跳過,不讓整個營地畫面炸掉 */
     b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1'));
     h += '<button class="isl-cell built' + (s.bt ? ' building' : '') + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') +
+      (islNightGlowIs('bld', s.bld) ? ' nglow' : '') +   /* ★ v1.275.0 夜間發光設施(營火/火把/瞭望台);白天這個 class 沒有任何樣式 */
       '" data-i="' + i + '" style="left:' + s.x + '%;top:' + s.y + '%">' +
       (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') +
       (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) +
@@ -19423,7 +19549,8 @@ function islCampPetsPaint(){
     id = 'isl-camp-pet-' + i;
     x = 10 + Math.random() * 80; y = 8 + Math.random() * 55;
     el = document.createElement('div');
-    el.className = 'isl-camp-pet'; el.id = id;
+    el.className = 'isl-camp-pet' + (islNightGlowIs('pet', rec.k) ? ' nglow' : '');   /* ★ v1.275.0 夜間會發光的夥伴(螢火蟲) */
+    el.id = id;
     el.title = p.n;
     /* ★ v1.216.0 老師「寵物和人類的尺寸比例不正確」— 舊版容器寫死 64×64,16 隻寵物(螢火蟲到綠蠵龜)全部同一個尺寸,
        跟訓練師 NPC 早就有的依真實體型比例顯示高度(D.PETS[].sz,v1.152.0 就有,只是野外收服的 12 隻一直沒補這個欄位)
@@ -20334,7 +20461,13 @@ window.islBagOpen = function(){
       var bchk = selMode && _IS.bagSel && _IS.bagSel[i];
       h += '<button class="isl-bag-slot has' + (bchk ? ' sel' : '') + '" data-i="' + i + '"' + (selMode ? ' data-act="selchk"' : '') + '>'
         + (selMode ? '<span class="chk">' + (bchk ? '✅' : '⬜') + '</span>' : '')
-        + islItemIco(s[i].id, 144) + '<span class="q">'   /* ★ v1.185.0 老師④:材料圖示 72 → 144px(×2);格子 max-width:86% 仍是上限保險,四欄版面塞得下 */ + (s[i].q === 3 ? '★★★' : (s[i].q === 2 ? '★★' : '')) + '</span><span class="n">×' + s[i].n + '</span><span class="nm">' + islEsc(d.n) + '</span>'
+        /* ★ v1.275.0 老師「數量 ×N 的文字移到圖片正右方」— 把圖片包進 .ic,×N 改成 .ic 的絕對定位子元素,
+           才能「以圖片本身為基準」貼在它右側並垂直置中。⚠ 不能只改 .n 的 top/right:格子裡除了圖片還有
+           名稱與戰鬥效果兩行,整格的 50% 高度並不是圖片的中線;包一層容器才是真正的「圖片正右方」。
+           ⚠ 同時解掉 v1.273.0 留下的衝突:勾選框 .chk 那一輪被移到右上角,而 ×N 自 v1.174.0 起也在右上角,
+             兩個疊在同一個角落互相蓋住——這正是老師看到「×N 位置跑掉」的成因。 */
+        + '<span class="ic">' + islItemIco(s[i].id, 144) + '<span class="n">×' + s[i].n + '</span></span>'   /* ★ v1.185.0 老師④:材料圖示 72 → 144px(×2);格子 max-width:86% 仍是上限保險,四欄版面塞得下 */
+        + '<span class="q">' + (s[i].q === 3 ? '★★★' : (s[i].q === 2 ? '★★' : '')) + '</span><span class="nm">' + islEsc(d.n) + '</span>'
         + (function(){ var _sp = (typeof islBtItemSpec === 'function') ? islBtItemSpec(s[i].id) : null, _fx = _sp ? islBtItemFxText(_sp) : ''; return _fx ? '<span class="fx" title="' + islEsc(_fx) + '">⚔ ' + islEsc(_fx) + '</span>' : ''; })()   /* ★ v1.273.0 老師「物品袋顯示物品的戰鬥效果」— 與商店/戰鬥道具欄同一份 D.BT_ITEMS 來源 */
         + (bchk ? '<span class="seltag">存入</span>' : '')
         + '</button>';   /* ★ v1.174.0 老師:圖示再放大(44→72)並補上名稱 */
@@ -20401,7 +20534,9 @@ function islPanel(html, onTap, opts){
 }
 /* ── 倉庫(27.3):種類制,每種上限隨 Lv;顯示 ★ 分佈 ── */
 function islStoreQRow(k, d, q, n, sel){
-  var body = islItemIco(k, 48) + '<span class="q q' + q + '">' + (q === 3 ? '★★★' : (q === 2 ? '★★' : '★')) + '</span><span class="n">×' + n + '</span>';   /* ★ v1.271.0 老師需求「倉庫新增取出放入物品袋」— sel 為真且該品質數量 >0 時渲染成可勾選按鈕,否則維持原本的純顯示 div,數量 0 的品質列在選取模式下也不給勾 */
+  /* ★ v1.275.0 老師「數量 ×N 的文字移到圖片正右方」— 原本順序是 圖 → ★星級 → ×N(靠 margin-left:auto 推到整列最右邊),
+     改成 圖 → ×N → ★星級,×N 緊貼在圖片右邊;.isl-store-q .n 的 margin-left:auto 同步在 CSS 取消。 */
+  var body = islItemIco(k, 48) + '<span class="n">×' + n + '</span><span class="q q' + q + '">' + (q === 3 ? '★★★' : (q === 2 ? '★★' : '★')) + '</span>';   /* ★ v1.271.0 老師需求「倉庫新增取出放入物品袋」— sel 為真且該品質數量 >0 時渲染成可勾選按鈕,否則維持原本的純顯示 div,數量 0 的品質列在選取模式下也不給勾 */
   if(sel && n > 0){
     var checked = _IS.storeSel && _IS.storeSel[k + '|' + q];
     return '<button type="button" class="isl-store-q sel-row' + (checked ? ' sel' : '') + '" data-act="selchk" data-k="' + k + '" data-q="' + q + '"><span class="chk">' + (checked ? '✅' : '⬜') + '</span>' + body + '</button>';
@@ -21198,7 +21333,7 @@ function islDefSpawn(){
   if(m.k === 'bat' && D.torchLv >= 4 && Math.random() < 0.5) m = db.MONSTERS[Math.random() < 0.5 ? 1 : 3];   /* ★ v1.95.0 火把 Lv4 夜蝠也減半 */
   if(side === 0){ x = Math.random() * w; y = -40; } else if(side === 1){ x = w + 40; y = Math.random() * h; } else if(side === 2){ x = Math.random() * w; y = h + 40; } else { x = -40; y = Math.random() * h; }
   id = D.mons.length; el = document.createElement('div'); el.className = 'isl-mon'; el.setAttribute('data-m', id);
-  el.innerHTML = (islImgUrl('mon_' + m.k) ? '<img src="' + islImgUrl('mon_' + m.k) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + (ISL.skill.defense.lv >= 3 || D.hintOn ? '<span class="hint">' + islEsc(m.hint) + '</span>' : '') + (m.k === 'boar' ? '<span class="cnt">' + D.boarTaps + '</span>' : '');   /* ★ v1.104.0 巧思提示、力氣連點數 */
+  el.innerHTML = (islMonPicUrl(m.k) ? '<img src="' + islMonPicUrl(m.k) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + (ISL.skill.defense.lv >= 3 || D.hintOn ? '<span class="hint">' + islEsc(m.hint) + '</span>' : '') + (m.k === 'boar' ? '<span class="cnt">' + D.boarTaps + '</span>' : '');   /* ★ v1.104.0 巧思提示、力氣連點數 */
   el.style.left = x + 'px'; el.style.top = y + 'px';
   d.appendChild(el);
   dur = (5 + Math.random() * 3) * D.slow;
@@ -21352,6 +21487,99 @@ function islPreloadWarm(key, imgKeys, bgmKey){
   }catch(_pw){ try{ window._islLastErr = '[背景預熱 ' + key + '] ' + (_pw && _pw.message ? _pw.message : _pw); }catch(_){} }
 }
 window.islPreloadSkip = function(){ try{ playSfx('sfx-tap', 0.3); }catch(e){} if(window._islPreloadFin) window._islPreloadFin(); };
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★★ v1.275.0(2026-09-20・老師「荒島每天的 AP 使用超過 50% 時,背景會切換成夜間模式」)★★
+ * ── 夜間模式:單一真相 ──
+ *   islIsNight()     = 純謂詞,只讀「今天已經用掉多少比例的 AP」。門檻在 island_db 的 D.NIGHT.apUsedPct
+ *                      (目前 0.5 = 用超過一半就入夜),老師要改成三分之一或七成只改資料表一個數字。
+ *   window._islNightBg = 給 islZoneBgKey 用的開關(v1.273.0 就預留好的那一個,本輪才真的有人設它)。
+ *   islNightSync()   = 唯一的寫入點:算出現在是不是夜晚 → 寫開關 → 切 #island-root 的 .isl-night
+ *                      → 只有「日夜真的翻面」那一刻才去換背景圖(平常每次 islHud() 呼叫成本 ≈ 0)。
+ *
+ * ⚠ 為什麼掛在 islHud():AP 會被扣的地方超過十處(採集/建造/研究/製作/上課/地下層/特殊指令/工程修復…),
+ *   逐處補呼叫一定會漏;而這些地方**扣完 AP 一律會呼叫 islHud() 重畫頂欄**(⚡ 數字要更新),
+ *   所以 islHud 是全荒島「AP 變動」唯一的共同收口點,掛一處即全涵蓋,與 v1.268.0 抽 islKeysReleaseBind
+ *   的作法同一個思路。另外 islEnterZone / islGoCampInner 各補一次,確保換畫面當下一定是對的。
+ *
+ * ⚠ 刻意不寫進存檔:白天/夜晚完全由「當下的 AP 剩多少」推導出來,存了反而會跟 AP 打架
+ *   (例:睡一覺 AP 補滿 → 本來就該天亮,不需要另外有人去把旗標改回來)。
+ * ══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★★ v1.275.0(老師「野外遇敵跳出的怪物插圖,蜜蜂沒有用到 REPO 圖片,修正後檢查還有哪些跳出怪物圖片沒有正確對接」)★★
+ * 【稽核結論:不只蜜蜂,是 30 隻全中】
+ *   畫面上「魔物的圖」一直只讀一個圖鍵 `mon_<key>`,而 island_db 的 D.IMG 裡只登記了最早那 9 隻
+ *   (影魔/鐵甲蟲/夜蝠/野豬/黏泥怪/火精/石化蛇/雷精/守墓石像)。v1.234.0 新增的 20 種野外魔物
+ *   與 v1.227.0 的 10 隻地圖頭目**從來沒有 mon_ 這個鍵**,一律 islImgUrl 取不到 ⇒ 退回 emoji。
+ *   逐檔 HTTP 查證(2026-09-20):
+ *     ・9 隻基本魔物 island_mon_<k>.png  → 全部 200
+ *     ・20 隻野外魔物 + 10 隻頭目 island_mon_<k>.png → **全部 404**
+ *     ・但同樣這 30 隻的 island_bt_m_<k>_idle.png → **全部 200**(戰鬥立繪早就上傳了)
+ *   ⇒ 不是圖沒上傳,是「遇敵跳出圖」與「戰鬥立繪」用的是兩套鍵,新魔物只有後者。
+ *   老師說的「蜜蜂」= 虎頭蜂兵(hornet),正是這 20 隻其中之一。
+ * 【修法】抽一支單一出口:先找 `mon_<k>`,沒有就退 `bt_m_<k>_idle`,再沒有才回空字串(呼叫端顯示 emoji)。
+ *   ⚠ 刻意不去 D.IMG 補 30 個 mon_ 鍵——那些檔案根本不存在,補了只會讓「完整下載」多 30 個必定失敗的網址。
+ *   ⚠ 四個消費點(野外遇敵跳出/地下層魔物/戰鬥立繪最後一段退路/島上日誌圖示)全部改讀這一支。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function islMonPicKey(k){
+  try{
+    if(!k) return '';
+    var IMG = islDB().IMG || {};
+    if(IMG['mon_' + k]) return 'mon_' + k;
+    if(IMG['bt_m_' + k + '_idle']) return 'bt_m_' + k + '_idle';
+  }catch(e){}
+  return '';
+}
+function islMonPicUrl(k){ var kk = islMonPicKey(k); return kk ? (islImgUrl(kk) || '') : ''; }
+function islIsNight(){
+  try{
+    if(!ISL) return false;
+    var d = islDB(), p = (d && d.NIGHT && typeof d.NIGHT.apUsedPct === 'number') ? d.NIGHT.apUsedPct : 0.5;
+    var mx = ISL.apMax | 0, left = ISL.ap | 0;
+    if(mx <= 0) return false;                       /* 上限算不出來時一律當白天(保守) */
+    if(left < 0) left = 0; if(left > mx) left = mx;
+    return ((mx - left) / mx) > p;                  /* 「超過」門檻才算夜晚:剛好一半仍是白天 */
+  }catch(e){ return false; }
+}
+/* 發光物件判定:資料在 island_db 的 D.NIGHT_GLOW(分 bld/deco/pet/node 四類),
+   表裡沒有這一類或查不到就回 false(白天/夜晚都不發光),資料表壞掉也不會讓畫面爆掉。 */
+function islNightGlowIs(cat, key){
+  try{
+    var g = islDB().NIGHT_GLOW;
+    if(!g || !key) return false;
+    var a = g[cat];
+    if(!a) return false;
+    if(Array.isArray(a)) return a.indexOf(key) >= 0;
+    return !!a[key];
+  }catch(e){ return false; }
+}
+/* 場景背景圖就地換圖(不重畫整個場景 ⇒ 主角位置、資源點、走路狀態全部不受影響)。
+   找不到那張 <img class="zbg">(例如場景圖根本沒載到、或現在不在野外畫面)就安靜跳過。 */
+function islZoneBgRepaint(){
+  try{
+    if(_IS.screen !== 'zone' || !_IS.zone || !_IS.scene) return;
+    var zm = $('isl-zone-map'); if(!zm) return;
+    var img = zm.querySelector('img.zbg'); if(!img) return;
+    var k = islZoneBgKey(_IS.zone, _IS.scene), u = islImgUrl(k), u0 = islImgUrl(_IS.scene.bg);
+    if(!u) return;
+    img.setAttribute('data-fb', (k !== _IS.scene.bg && u0) ? u0 : '');   /* 夜景圖萬一載不到 → 退回白天原圖,不會變一片空白 */
+    img.style.display = '';
+    if(img.src !== u) img.src = u;
+  }catch(e){}
+}
+function islNightSync(){
+  try{
+    var n = islIsNight(), was = !!window._islNightBg, root = $('island-root');
+    window._islNightBg = n;
+    if(root) root.classList.toggle('isl-night', n);
+    if(n === was) return;                            /* 沒翻面就什麼都不做(這是本函式被高頻呼叫仍然很便宜的原因) */
+    if(_IS.screen === 'zone'){ islZoneBgRepaint(); }
+    else if(_IS.screen === 'camp'){
+      var cb = $('isl-camp-bg');
+      if(cb){ var ck = (n && islDB().IMG['camp_night']) ? 'camp_night' : 'camp'; var cu = islImgUrl(ck); if(cu){ cb.src = cu; cb.style.display = ''; } }
+    }
+    try{ if(n) islMono('night1'); }catch(_m){}       /* 入夜時主角講一句(沒這個情境的話 islMono 自己會安靜略過) */
+  }catch(e){}
+}
 function islZoneBgKey(zoneId, sc){ var v = ISL && ISL.zoneVar && ISL.zoneVar[zoneId], k, base = sc.bg; if(v){ k = sc.bg + '_' + v; if(islDB().IMG[k]) base = k; } if(window._islNightBg && islDB().IMG[sc.bg + '_night']) return sc.bg + '_night'; return base; }   /* ★ v1.245.0 路線變體;★ v1.273.0 夜晚版:window._islNightBg(日後時間系統的單一開關,目前不設)為真且島 db 有 zone_<區>_night 鍵才取用,沒圖退回白天/變體圖 */
 function islPreloadZone(zoneId, cb){
   var db = islDB(), sc = db.SCENE[zoneId], keys = [islZoneBgKey(zoneId, sc), sc.bg, 'gull_normal', (ISL.char && ISL.char.body === 'girl') ? 'sheet_girl' : 'sheet_boy', 'node_stump', 'node_bush_empty'], k, tr, L;
@@ -22533,7 +22761,7 @@ function islDgAfterBattle(how){   /* ★ v1.122.0 地下層戰鬥結束 */
     if(C.boss){ islDgLoot(); } else islModal('<h3>🎉 ' + islEsc(m.n) + ' 被趕跑了!</h3><p>' + islEsc(m.why || '') + '</p>', [{ t: '繼續前進', cls: 'gold', cb: function(){ islDgEncounter(); } }]); }
   else islDgEnd(false);   /* 倒下或逃跑 = 撤退 */
 }
-function islDgMonHtml(m){ var u = islImgUrl('mon_' + m.k); return '<div style="font-size:64px;line-height:1.1;margin:4px 0">' + (u ? '<img src="' + u + '" alt="" style="width:120px;height:120px;object-fit:contain" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + '</div>'; }
+function islDgMonHtml(m){ var u = islMonPicUrl(m.k);   /* ★ v1.275.0 同一支單一出口 */ return '<div style="font-size:64px;line-height:1.1;margin:4px 0">' + (u ? '<img src="' + u + '" alt="" style="width:120px;height:120px;object-fit:contain" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + '</div>'; }
 function islDgToolPick(){
   var db = islDB(), S = _islDg, C = S.cur, m = C.m, opts = [m.tool], i, k, h, order, correctT = db.defTool(m.tool), pool = [];
   if(!C.opts){ for(i = 0; i < db.DEF_TOOLS.length; i++){ k = db.DEF_TOOLS[i].k; if(k !== m.tool) pool.push(k); } pool = shuffle(pool); while(opts.length < 4) opts.push(pool.pop()); C.opts = shuffle(opts); }   /* ★ v1.105.0 同一隻魔物的四個選項固定,選錯重選時位置與停用狀態不變 */
@@ -22719,7 +22947,7 @@ function islDecoPaint(){
   var layer = $('isl-camp-deco'), h = '', i, d, dl;
   if(!layer || !ISL) return;
   dl = ISL.camp.deco || [];
-  for(i = 0; i < dl.length; i++){ d = islDecoDef(dl[i].id); h += '<div class="isl-deco' + (dl[i].f ? ' flip' : '') + '" data-d="' + i + '" style="left:' + dl[i].x + '%;top:' + dl[i].y + '%;transform:scale(' + (dl[i].scale || 1) + ')">' + islIcoHtml(d.img, d.e, 56) + '<span class="dn">' + islEsc(d.n) + '</span></div>'; }   /* ★ v1.120.0 裝飾有圖用圖;★ v1.152.0 f=左右鏡像;★ v1.199.0 scale=自訂縮放(0.5~2.0),寫進 style.transform,拖曳中的 .drag !important 規則會暫時蓋過去,放開後恢復 */
+  for(i = 0; i < dl.length; i++){ d = islDecoDef(dl[i].id); h += '<div class="isl-deco' + (dl[i].f ? ' flip' : '') + (islNightGlowIs('deco', dl[i].id) ? ' nglow' : '') + '" data-d="' + i + '" style="left:' + dl[i].x + '%;top:' + dl[i].y + '%;transform:scale(' + (dl[i].scale || 1) + ')">' + islIcoHtml(d.img, d.e, 56) + '<span class="dn">' + islEsc(d.n) + '</span></div>'; }   /* ★ v1.120.0 裝飾有圖用圖;★ v1.152.0 f=左右鏡像;★ v1.199.0 scale=自訂縮放(0.5~2.0),寫進 style.transform,拖曳中的 .drag !important 規則會暫時蓋過去,放開後恢復 */
   layer.innerHTML = h;
   if(!layer._bound){ layer._bound = true; islDecoDragBind(layer); }
 }
@@ -24583,6 +24811,31 @@ function islEncReset(zoneId){
      牠是控場型,把「少打幾場」做成被動,比再加一個戰鬥數值更符合角色。 */
   _IS.encNext = S.min + Math.floor(Math.random() * (S.max - S.min + 1)) + islPartyTal('encAdd') + islRouteEff('encAdd');
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.275.0(老師「將部分夜行性魔物改成只在夜間出現」)— 遇敵魔物池的單一出口。
+ *   【規則】白天 = 只抽「不在 D.MON_NIGHT 名單裡」的;夜間 = 整張名單都可能抽到。
+ *     也就是夜行性魔物是**加碼**不是取代,晚上出門會遇到更多種類,白天則完全不會撞見牠們。
+ *   【安全網】過濾後如果一隻都不剩(例如老師日後把某一區全部標成夜行性),一律退回原本的完整清單
+ *     ——「白天走進某一區完全不會遇敵」比「多遇到一隻夜行性魔物」嚴重得多,寧可漏擋不可開天窗。
+ *     (本輪的 8 隻已逐區驗算過,每區白天都還剩 2~4 種,這道安全網是給未來改表的人用的。)
+ *   ⚠ 三個抽魔物的地方(步數遇敵 islEncStep / GM 測試戰鬥 islBtTest / 一場多隻時的補位)
+ *     全部改讀這一支,不再各自寫 E.mons[...],日後規則再改只動這裡。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function islEncMonPool(E){
+  var all = (E && E.mons) ? E.mons : [], night, N, out = [], i;
+  if(!all.length) return all;
+  try{
+    night = islIsNight();
+    N = islDB().MON_NIGHT || {};
+  }catch(e){ return all; }
+  if(night) return all;                                  /* 夜間:全部都可能出現 */
+  for(i = 0; i < all.length; i++){ if(!N[all[i]]) out.push(all[i]); }
+  return out.length ? out : all;                         /* 白天過濾完全空 ⇒ 退回完整清單(見上方安全網說明) */
+}
+function islEncPick(E, fb, rnd){
+  var pool = islEncMonPool(E), r = (typeof rnd === 'function') ? rnd : Math.random;
+  return pool.length ? pool[Math.floor(r() * pool.length)] : (fb || 'boar');
+}
 function islEncStep(){
   var db = islDB(), S = db.ENC_STEP, E, c, k, zdef;
   if(!S) return false;
@@ -24598,7 +24851,7 @@ function islEncStep(){
   _IS.steps = 0;
   _IS.encNext = S.min + Math.floor(Math.random() * (S.max - S.min + 1)) + islPartyTal('encAdd') + islRouteEff('encAdd');
   zdef = db.zone(_IS.zone);
-  k = (E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : 'boar';
+  k = islEncPick(E, 'boar');   /* ★ v1.275.0 夜行性魔物過濾(白天不會抽到) */
   islBattleStart({ idx: -1, x: c.x, y: c.y, k: k, lv: (zdef && zdef.order) || 1, done: false });
   return true;
 }
@@ -24623,7 +24876,7 @@ window.islBtTest = function(){
   if(_IS.screen !== 'zone' || !z){ toast('⚔ 請先進入任何一個場景(不是營地或大地圖)再按一次'); return; }
   if(_islBt){ toast('已經在戰鬥中了'); return; }
   E = db.ENC && db.ENC[z]; zdef = db.zone(z);
-  k = (E && E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : 'boar';
+  k = islEncPick(E, 'boar');   /* ★ v1.275.0 GM 測試戰鬥也走同一支池(晚上測才抽得到夜行性魔物) */
   islBattleStart({ idx: -1, x: -1, y: -1, k: k, lv: (zdef && zdef.order) || 1, done: false });
 };
 window.islBattleStart = function(mine){
@@ -24654,7 +24907,7 @@ window.islBattleStart = function(mine){
     for(i = 0; i < num; i++){
       lv = mine.lv || 1;
       if(E && E.lv) lv = E.lv[0] + Math.floor(Math.random() * (E.lv[1] - E.lv[0] + 1)) + _encLvAdd;
-      ks.push({ k: (E && E.mons && E.mons.length) ? E.mons[Math.floor(Math.random() * E.mons.length)] : mine.k, lv: lv });
+      ks.push({ k: islEncPick(E, mine.k), lv: lv });   /* ★ v1.275.0 一場多隻時的補位同樣走日/夜池 */
     }
   }
   _islBt = { ms: [], mi: 0, m: null, mine: mine, p: { stun: 0, guard: false }, over: false, busy: true,
@@ -24687,7 +24940,7 @@ window.islBattleStart = function(mine){
   probe = function(cb){ islBtProbeAll(cb); };
   if(mine.dg){ if(mine.dg.preStun) m.stun = 1; islBgm((ISL.dungeon.runs % 2) ? 'raid2' : 'raid'); probe(function(){ setTimeout(function(){ if(_islBt) islBtOpen(); }, 250); }); return; }   /* ★ v1.122.0 地下層:沒有草叢可跳,直接開打 */
   /* 魔物從草叢跳出(場景內,先給玩家看一眼再進戰鬥) */
-  u = islImgUrl('mon_' + m.k);
+  u = islMonPicUrl(m.k);   /* ★ v1.275.0 老師回報「蜜蜂沒有用到 REPO 圖片」就是這一行：舊碼只找 mon_ 鍵，20 種野外魔物與 10 隻頭目都沒有那個鍵 */
   pop = document.createElement('div'); pop.className = 'isl-mon-pop'; pop.style.left = (mine.x * 64 + 32) + 'px'; pop.style.top = (mine.y * 64 + 40) + 'px';
   pop.innerHTML = (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + m.e + '\');">' : m.e) + '<b>' + (_islBt.ms.length > 1 ? '×' + _islBt.ms.length : '!') + '</b>';
   zm.appendChild(pop); _islBt.pop = pop;
@@ -24763,7 +25016,7 @@ function islBtProbeAll(cb){
     L = islBtLayerKeysFor(st[i]); add(L.base); add(L.cloth); add(L.hair);   /* ★ v1.138.0 三層戰鬥立繪一起探測 */
     for(j = 0; j < B.ms.length; j++) add('bt_m_' + B.ms[j].k + '_' + st[i]);
   }
-  for(j = 0; j < B.ms.length; j++) add('mon_' + B.ms[j].k);
+  for(j = 0; j < B.ms.length; j++){ var _mpk = islMonPicKey(B.ms[j].k); if(_mpk) add(_mpk); }   /* ★ v1.275.0 預探測也走單一出口，不再探一個必定 404 的 mon_ 鍵 */
   for(j = 0; j < B.ms.length; j++){ if(B.ms[j].boss) add('bt_m_' + B.ms[j].k + '_skill'); }   /* ★ v1.240.0 頭目施法圖 */
   for(j = 0; j < B.allies.length; j++){ if(B.allies[j].t !== 'pet') continue; for(i = 0; i < pst.length; i++) add('bt_pet_' + B.allies[j].k + '_' + pst[i]); }
   left = keys.length;
@@ -24777,7 +25030,7 @@ function islBtProbe(k, cb){
     keys.push('bt_p_' + body + '_' + st[i]); keys.push('bt_m_' + k + '_' + st[i]);
     L = islBtLayerKeysFor(st[i]); keys.push(L.base); keys.push(L.cloth); keys.push(L.hair);   /* ★ v1.138.0 三層戰鬥立繪一起探測,開戰時第一幀就能直接畫對 */
   }
-  keys.push('mon_' + k);
+  var _mpk1 = islMonPicKey(k); if(_mpk1) keys.push(_mpk1);   /* ★ v1.275.0 */
   left = keys.length;
   for(i = 0; i < keys.length; i++){ islPicProbe(keys[i], function(){ left--; if(left <= 0) fin(); }); }
   setTimeout(fin, 1200);
@@ -24836,8 +25089,9 @@ function islBtFigHtml(side, state){
   key = 'bt_m_' + un.k + '_' + state; idle = 'bt_m_' + un.k + '_idle';
   if(islPicOkSync(key)) return '<img class="pic" src="' + islImgUrl(key) + '" alt="">';
   if(islPicOkSync(idle)) return '<img class="pic" src="' + islImgUrl(idle) + '" alt="">';
-  u = islImgUrl('mon_' + un.k);
-  if(u && islPicOkSync('mon_' + un.k) !== false) return '<img class="pic mon" src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span class=\\\'emo\\\'>' + un.e + '</span>\');">';
+  var _mpk2 = islMonPicKey(un.k);
+  u = _mpk2 ? islImgUrl(_mpk2) : '';
+  if(u && islPicOkSync(_mpk2) !== false) return '<img class="pic mon" src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span class=\\\'emo\\\'>' + un.e + '</span>\');">';
   return '<span class="emo">' + un.e + '</span>';
 }
 function islBtSetState(side, state, ms){   /* 換立繪 + 動作 class;ms 後自動回 idle(down 不回) */
@@ -26375,7 +26629,7 @@ function islBossReward(ctx){
   if(first){ ISL.bossPts = (ISL.bossPts | 0) + R.reward.firstPts; txt.push('🌟 天賦點 +' + R.reward.firstPts); }
   var _ac = islAccGrant(ctx.zone, false); if(_ac) txt.push('💍 ' + _ac.e + _ac.n);   /* ★ v1.228.0 B4 頭目專屬飾品 */
   ax = Math.round((db.ADV.xpWin + (b.lv + star.lvAdd) * db.ADV.xpPerLv) * (R.reward.xpMul - 1)); at = islAdvGain(ax); if(at) txt.push(at);
-  islLog('👑 打倒了地圖頭目 ' + b.e + b.n + (ctx.star ? ' ' + star.n : ''), 'mon_' + b.k);
+  islLog('👑 打倒了地圖頭目 ' + b.e + b.n + (ctx.star ? ' ' + star.n : ''), islMonPicKey(b.k));   /* ★ v1.275.0 */
   return '<b>👑 頭目獎勵' + (first ? '(首次擊敗!)' : '') + ':' + txt.join('　') + '</b>';
 }
 function islBtAddMon(k, lv, opt){
@@ -26843,7 +27097,7 @@ window.islBattleEnd = function(how){
     if(!_IS.coop && ISL.zones[_IS.zone]) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 5);   /* ★ v1.228.0 守門:不在區域內開戰(GM 測試鈕)不再丟例外 */
     var _petTxt = islPetsGainAfterWin(_all), _rest = islPetsRestMark();
     if(_rest) _petTxt += (_petTxt ? '<br>' : '') + '💤 有 ' + _rest + ' 位隊友受傷,今天先回營地休息,明天才能再出門。';
-    islLog('⚔ 在' + db.zone(_IS.zone).n + '趕跑了 ' + _names.join('、'), 'mon_' + m.k);
+    islLog('⚔ 在' + db.zone(_IS.zone).n + '趕跑了 ' + _names.join('、'), islMonPicKey(m.k));   /* ★ v1.275.0 */
     try{ islMono('battleWin'); }catch(_bw){}   /* ★ v1.133.0 戰鬥畫面沒有角色可以掛泡泡 ⇒ islMono 會自動排隊,按「繼續探索」回到場景時補講 */
     islSave('battle');
     setTimeout(function(){ islModal('<h3>🎉 ' + db.BT.lines.win[Math.floor(Math.random() * db.BT.lines.win.length)] + '</h3><p>' + islEsc(_names.join('、')) + ' 被趕跑了。<br>戰利品:' + loot.join('　') + '<br>' + _advTxt + '<br>⚔ 防衛 EXP +' + xp + '　💪 力氣練習 +1　🔍 探索 +5%</p>' + (_petTxt ? '<p>' + _petTxt + '</p>' : '') + (tech === 0 ? '<p style="font-size:14px;opacity:.75">今天打贏拿到的科技點已達上限(每天 ' + db.BT.TECH_DAY_CAP + ')。</p>' : ''), [{ t: '繼續探索', cls: 'gold', cb: function(){ bgmFadeOut(600, function(){ islBattleClose(); }); } }]); }, 1400);   /* ★ v1.191.0 老師需求②「關閉後勝利音樂淡出」— 按下「繼續探索」先把勝利音樂淡出 600ms,淡完才收battle/換回場景 BGM,不再是硬切一聲就停 */
