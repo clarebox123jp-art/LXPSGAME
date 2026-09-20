@@ -1,5 +1,14 @@
 // ════════════════════════════════════════════════════════════════════════
-//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.3)
+//  sw-light.js — LXPSGAME 輕量級圖片快取 Service Worker(v3.11.4)
+//
+//  ★ v3.11.4（2026-09-20・對應遊戲 v5.226.0・老師回報「iPad 首頁出現帳號後又自動登出變回 v3.1.2 等很久，然後又自動成功登入，但是非常卡」）
+//    ① 回覆 GET_VERSION：主程式 v5.150.1 起每次開機都會對 controller 送 GET_VERSION，25 秒沒回就當成「誤傳的小遊戲 SW」
+//       並自動重整頁面一次；本檔以前只認 SW_LIGHT_STATS／SW_LIGHT_CLEAR，被控制的裝置每次開 App 都被誤判重整一次。
+//       現在回 {type:'VERSION', version:'sw-light/v3.11.4', light:true}（index.html v5.226.0 同時對 sw-light 直接跳過檢查，雙保險）。
+//    ② CACHEABLE_HOSTS 補上同源：主程式 v5.210.0 把 331 處素材網址改成同源相對路徑（GitHub Pages）後，
+//       本檔只快取 raw/github/jsdelivr/cdnjs 四個主機 ⇒ 同源圖片／音效一張都沒存，每次開遊戲全部重抓 ⇒「非常卡、圖片載入慢」。
+//       同源請求不走 CDN 改寫（rewriteToJsDelivr 對非 GitHub 主機本來就回 null，直接原樣 fetch），策略仍是 cache-first + 背景更新。
+//    ③ 快取名稱不變（lxpsgame-light-v1），已存的圖不重抓。
 // ════════════════════════════════════════════════════════════════════════
 //
 //  目的:給「沒申請下載授權」的學生使用,讓圖片/音效/字型「看過一次就存起來」,
@@ -35,6 +44,9 @@ const CACHEABLE_HOSTS = [
   'cdn.jsdelivr.net',
   'cdnjs.cloudflare.com'
 ];
+// ★ v3.11.4 同源（GitHub Pages 本站）也要快取——v5.210.0 起主程式素材幾乎全走同源相對路徑
+try{ if(self.location && self.location.hostname && CACHEABLE_HOSTS.indexOf(self.location.hostname) === -1) CACHEABLE_HOSTS.push(self.location.hostname); }catch(_){}
+const SW_LIGHT_VERSION = 'v3.11.4';
 
 // ════════════════════════════════════════════════════════════════════════
 // ★ v3.11.2 — jsDelivr CDN 改寫(與 sw.js 同邏輯,繞 GitHub raw 429)
@@ -141,13 +153,13 @@ async function trimCache(){
 
 // ─── install:立即進入 active,不等其他 SW ───
 self.addEventListener('install', (event) => {
-  console.log('[SW-Light v3.11.3] 安裝中(輕量圖片快取模式)');
+  console.log('[SW-Light v3.11.4] 安裝中(輕量圖片快取模式)');
   self.skipWaiting();
 });
 
 // ─── activate:接管控制權,清掉舊版 cache ───
 self.addEventListener('activate', (event) => {
-  console.log('[SW-Light v3.11.3] 啟動,接管所有頁面');
+  console.log('[SW-Light v3.11.4] 啟動,接管所有頁面');
   event.waitUntil((async () => {
     try{
       const names = await caches.keys();
@@ -219,6 +231,14 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   const data = event.data || {};
 
+  // ★ v3.11.4 — 回覆主程式開機的引擎身分確認（不回會被當成誤傳的小遊戲 SW 而重整頁面）
+  if(data.type === 'GET_VERSION'){
+    const msg = { type: 'VERSION', version: 'sw-light/' + SW_LIGHT_VERSION, light: true };
+    try{ if(event.ports && event.ports[0]) event.ports[0].postMessage(msg); }catch(_){}
+    try{ if(event.source && event.source.postMessage) event.source.postMessage(msg); }catch(_){}
+    return;
+  }
+
   if(data.type === 'SW_LIGHT_STATS'){
     (async () => {
       try{
@@ -266,4 +286,4 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('[SW-Light v3.11.3] script loaded — 等待 install/activate');
+console.log('[SW-Light v3.11.4] script loaded — 等待 install/activate');
