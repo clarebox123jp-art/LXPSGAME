@@ -6181,6 +6181,13 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #isl-battle .bt-tac,#isl-battle .bt-auto{position:static !important;left:auto !important;bottom:auto !important;flex:0 0 auto;}
 #island-root.ipad #isl-battle .bt-side{left:26%;top:14px;bottom:auto;gap:12px;}
 @media (max-width:620px){ #isl-battle .bt-side{left:26%;top:6px;bottom:auto;gap:6px;} }   /* ★ v1.288.0 兩個斷點的覆寫一起改成貼上緣;bottom:auto 一定要補,否則舊值留著會變成上下都釘住、按鈕被拉長 */
+/* ★ v1.289.0 老師「勝利結算分區塊排版」— 舊版是整段文字全部擠在一個 <p> 裡(戰果/獲得/成長/夥伴混在一起),改成四個各自獨立的藥丸區塊,islBtResultHtml() 只在資料存在時才輸出對應區塊(例如沒有隊友就沒有 🐾夥伴 那一塊)。 */
+.isl-res{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.isl-res-sec{background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.16);border-radius:14px;padding:8px 12px;}
+.isl-res-h{font-weight:900;font-size:15px;color:#ffd166;margin-bottom:3px;}
+.isl-res-b{font-size:14px;line-height:1.5;}
+#island-root.ipad .isl-res-h{font-size:22px;}
+#island-root.ipad .isl-res-b{font-size:21px;}
 /* ☰ 更多選單:外觀與 #isl-gear 同一套(掛在 #island-root 直下,不能放進 #isl-hud,那層有 overflow 會整塊裁掉) */
 #isl-hudmore{position:absolute;right:10px;top:52px;z-index:46;display:flex;flex-direction:column;gap:6px;background:#17364b;border:3px solid #5fb3d9;border-radius:16px;padding:10px;box-shadow:0 10px 24px rgba(0,0,0,.55);min-width:210px;max-height:calc(100% - 64px);overflow-y:auto;}
 #isl-hudmore.hidden{display:none;}
@@ -6476,7 +6483,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.288.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.291.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -6485,7 +6492,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.288.0';   /* ★★ v1.288.0(2026-09-21・老師多批需求:①重新檢驗所有地圖可移動區域 ②戰鬥魔物面向/HP 數字 ③營地長按與移動優先 ④防衛戰訊息擋住指令鍵 ⑤受傷夥伴復活道具 ⑥四項天賦調整 ⑦BOSS 放大與兩顆鈕移位)—
+var MG_VER = 'v1.291.0';   /* ★★ v1.291.0(2026-09-21・老師「確認跑步8張循環的圖有沒有實機問題」)— 拿 GitHub repo 上老師實際上傳的 8 張跑步圖(1024×384)逐格真的量測+目視檢查後,抓到一個 design 階段沒發現的問題:islFullRunCenter() 原本連垂直方向(dy)也比照水平方向做「對齊格子幾何中心」,但 8 張圖 24 列量下來,每格 bbox 下緣(腳底)幾乎都釘在同一條地面線,bbox 上緣(頭頂)才會隨跨步/收腿姿態自然高低變化——把 dy 也拉去對齊幾何中心,會讓雙腳跟著姿態上下浮動,變成人物一邊跑一邊上下彈跳而不是穩穩踩在地上。已拿掉 dy 計算,只保留水平置中(dx);垂直對齊本來就有另一套機制在管(ISL_RJ_NECK 脖子基準線+transformOrigin 腳底錨點),不需要也不能疊加。另外用實圖跑過一次「碎屑清除」規則(strict 版),119 處真實碎屑全部抓到、零漏網,也逐一目視確認 ISL_RUN_SKIP 剔除表(boy_h0/girl_h2 各兩格)是全部 8 張圖裡唯一需要跳過的「雙腿張開站地」違和格,其餘 6 張圖 24 列動作皆正常。 */   /* ★★ v1.290.0(2026-09-21・老師「繼續」— 天賦新效果鍵正式接上節點資料)— 本檔零改動,9 個效果鍵(buildFastP/costCutP/defHpAdd/defSlowP/defWoodAdd/defBiteCutP/exploreP)的消費端上一包(v1.289.0)已接好,本輪只在 island_db.js 的 D.SK_NODES 補上對應節點的 eff 欄位,詳見 D.VER 說明。 */   /* ★★ v1.289.0(2026-09-21・老師「勝利結算分區塊排版/跑步8張循環/天賦新效果鍵」)— ①勝利結算改 islBtResultHtml() 拆成🏆戰果/🎁獲得/📈成長/🐾夥伴四區塊 ②跑步 8 欄新圖(islFullRunSeq 改吃圖鍵+圖寬,ISL_RUN_SKIP 剔除表,islRjPaint 欄數改吃 full.cols、序列長度改吃 _sq.length)③碎屑清除加 strict 規則+islFullRunCenter() 逐格置中 ④天賦新效果鍵掛點:buildFastP(islBuildSecs)、costCutP(islConsume+islCostCutOn 包住建造/製作工具)、defHpAdd/defSlowP/defWoodAdd(islDefStart)、defBiteCutP(islDefBite)、exploreP(islExploreGain,6 處探索度增量)。 */   /* ★★ v1.288.0(2026-09-21・老師多批需求:①重新檢驗所有地圖可移動區域 ②戰鬥魔物面向/HP 數字 ③營地長按與移動優先 ④防衛戰訊息擋住指令鍵 ⑤受傷夥伴復活道具 ⑥四項天賦調整 ⑦BOSS 放大與兩顆鈕移位)—
    【① 11 區可走遮罩全面重建】老師回報「洞穴這個位置過不去左邊」。舊遮罩(v1.152.0)是用「比周圍暗多少就算障礙物」建的,
      在亮的場景可用,但洞窟整張都是暗的 ⇒ 石板路被判成障礙、左下角整片黑色岩壁反而可走。同一個根因也讓懸崖最上層
      台地(明明畫了石階)整片被封死。改成「正面認地面」:每區依自己的地面顏色特徵逐像素判定,再按格統計地面佔比;
@@ -15496,13 +15503,28 @@ function islStoreAdd(id, q, n){
 }
 /* 兩層合計(建造/生火直接讀合計,不必先搬) */
 function islHave(id){ var s = ISL.bag.slots, i, n = 0, it = ISL.store.items[id]; for(i = 0; i < s.length; i++){ if(s[i].id === id) n += s[i].n; } if(it) n += it.s1 + it.s2 + it.s3; return n; }
+/* ★ v1.289.0 天賦「節省材料」(costCutP,上限 50%):只在建造與製作工具兩條扣料路徑生效(islCostCutOn 包住呼叫),
+   逐份(每個實際要被拿走的物品單位)各自擲一次,擲中就那一份不用真的從物品包/倉庫扣掉——用深度計數
+   而不是單純布林,巢狀呼叫(理論上不會發生,但保守起見)也不會被內層的 finally 提早關掉。 */
+var _islCostCutDepth = 0;
+function islCostCutOn(fn){ _islCostCutDepth++; try{ return fn(); }finally{ _islCostCutDepth--; } }
 /* 扣資源:先扣物品包再扣倉庫;★★★ 一個當兩個(16.1) */
 function islConsume(id, need){
-  var s = ISL.bag.slots, i, take, q, it;
+  var s = ISL.bag.slots, i, take, q, it, cutP = (_islCostCutDepth > 0) ? Math.min(50, islSkEff('costCutP')) : 0, free, u;
   for(q = 1; q <= 3 && need > 0; q++){
-    for(i = s.length - 1; i >= 0 && need > 0; i--){ if(s[i].id === id && s[i].q === q){ take = Math.min(s[i].n, q === 3 ? Math.ceil(need / 2) : need); s[i].n -= take; need -= (q === 3 ? take * 2 : take); if(s[i].n <= 0) s.splice(i, 1); } }
+    for(i = s.length - 1; i >= 0 && need > 0; i--){
+      if(s[i].id === id && s[i].q === q){
+        take = Math.min(s[i].n, q === 3 ? Math.ceil(need / 2) : need);
+        free = 0; if(cutP){ for(u = 0; u < take; u++){ if(Math.random() * 100 < cutP) free++; } }   /* ★ v1.289.0 逐份擲,需求量(need)照樣扣,只有實際離開背包的數量打折 */
+        s[i].n -= (take - free); need -= (q === 3 ? take * 2 : take); if(s[i].n <= 0) s.splice(i, 1);
+      }
+    }
     it = ISL.store.items[id];
-    if(it && need > 0){ take = Math.min(it['s' + q], q === 3 ? Math.ceil(need / 2) : need); it['s' + q] -= take; need -= (q === 3 ? take * 2 : take); }
+    if(it && need > 0){
+      take = Math.min(it['s' + q], q === 3 ? Math.ceil(need / 2) : need);
+      free = 0; if(cutP){ for(u = 0; u < take; u++){ if(Math.random() * 100 < cutP) free++; } }
+      it['s' + q] -= (take - free); need -= (q === 3 ? take * 2 : take);
+    }
   }
   return need <= 0;
 }
@@ -18030,7 +18052,7 @@ function islEnterZone(zoneId, cb){
     if(zs.visited && !_IS.monoQ && Math.random() < 0.3) setTimeout(function(){ if(_IS.screen === 'zone' && _IS.zone === zoneId) islMono('zoneAgain'); }, 1200);
   }catch(_mz){}
   zs.explore = zs.explore || 0;
-  if(!zs.visited){ zs.visited = true; islLog('🔍 第一次踏進 ' + db.zone(zoneId).e + db.zone(zoneId).n, sc.bg); islBanner('探索!' + db.zone(zoneId).e + ' ' + db.zone(zoneId).n); playSfx('sfx-fantasy', 0.45); zs.explore = Math.min(100, zs.explore + 10); islSave('zone');
+  if(!zs.visited){ zs.visited = true; islLog('🔍 第一次踏進 ' + db.zone(zoneId).e + db.zone(zoneId).n, sc.bg); islBanner('探索!' + db.zone(zoneId).e + ' ' + db.zone(zoneId).n); playSfx('sfx-fantasy', 0.45); zs.explore = Math.min(100, zs.explore + islExploreGain(10)); islSave('zone');   /* ★ v1.289.0 天賦 exploreP:首次踏進場景 */
     if(db.STORY.zoneIntro && db.STORY.zoneIntro[zoneId] && zoneId !== 'beach'){ setTimeout(function(){ if(_IS.screen === 'zone' && _IS.zone === zoneId){ islZoneStop();
       /* ★ v1.132.0 老師「先做劇情」:三個關鍵區域第一次抵達時,把章節劇情**接在同一段對白後面**一起播。
          ⚠ 刻意不另開第二個 islDialog:連開兩個對白框,第一個關掉那一瞬間畫面會閃一下,
@@ -18458,8 +18480,8 @@ function islFullSkinMul(body, si, cb){
    畫進了下一格的最上緣(y≈6~15),蹲下/落地這種頭比較低的格子就看得到兩條碎塊浮在頭上。
    每格(128px)做 8 連通找區塊:最大塊=人物;其餘「很小(≤300px)、很扁(高≤12)、整塊在人物頂端 3px 以上」
    或 ≤4px 的雜點直接清成透明。刻意保守:貼著頭的髮束、馬尾都跟人物相連或很近,不會被清掉。 */
-function islFullCleanCells(d, W, H){
-  var CS = 128, cols = Math.floor(W / CS), rows = Math.floor(H / CS), r, c, x, y, i, lab, n, stack, sz, minY, maxY, best, bestSz, comps, k, p, px, py, nx, ny, dx2, dy2, top;
+function islFullCleanCells(d, W, H, strict){   /* ★ v1.289.0 老師「跑步 8 張圖有殘留碎屑(最大 336px)」— 新增 strict 參數(只對 run 生效),舊的「貼頭頂端的小雜點」規則不變,額外加一條「不管在上面還是旁邊,只要整塊完全落在主體左右範圍之外、面積不大」也清掉,順手記 minX/maxX 才判得出「在旁邊」 */
+  var CS = 128, cols = Math.floor(W / CS), rows = Math.floor(H / CS), r, c, x, y, i, lab, n, stack, sz, minY, maxY, minX, maxX, best, bestSz, comps, k, p, px, py, nx, ny, dx2, dy2, top, mainMinX, mainMaxX;
   lab = new Int32Array(CS * CS);
   for(r = 0; r < rows; r++){
     for(c = 0; c < cols; c++){
@@ -18469,10 +18491,11 @@ function islFullCleanCells(d, W, H){
         for(x = 0; x < CS; x++){
           i = y * CS + x;
           if(lab[i] || d[((r * CS + y) * W + (c * CS + x)) * 4 + 3] < 10) continue;
-          n++; lab[i] = n; stack = [i]; sz = 0; minY = y; maxY = y;
+          n++; lab[i] = n; stack = [i]; sz = 0; minY = y; maxY = y; minX = x; maxX = x;
           while(stack.length){
             p = stack.pop(); px = p % CS; py = (p - px) / CS; sz++;
             if(py < minY) minY = py; if(py > maxY) maxY = py;
+            if(px < minX) minX = px; if(px > maxX) maxX = px;
             for(dy2 = -1; dy2 <= 1; dy2++){ for(dx2 = -1; dx2 <= 1; dx2++){
               nx = px + dx2; ny = py + dy2;
               if(nx < 0 || ny < 0 || nx >= CS || ny >= CS) continue;
@@ -18481,16 +18504,18 @@ function islFullCleanCells(d, W, H){
               lab[k] = n; stack.push(k);
             } }
           }
-          comps.push({ id: n, sz: sz, minY: minY, maxY: maxY });
+          comps.push({ id: n, sz: sz, minY: minY, maxY: maxY, minX: minX, maxX: maxX });
           if(sz > bestSz){ bestSz = sz; best = n; }
         }
       }
       if(comps.length < 2) continue;
-      top = 0; for(k = 0; k < comps.length; k++){ if(comps[k].id === best) top = comps[k].minY; }
+      top = 0; mainMinX = 0; mainMaxX = CS - 1;
+      for(k = 0; k < comps.length; k++){ if(comps[k].id === best){ top = comps[k].minY; mainMinX = comps[k].minX; mainMaxX = comps[k].maxX; } }
       var kill = {}, any = false;
       for(k = 0; k < comps.length; k++){
         p = comps[k]; if(p.id === best) continue;
-        if(p.sz <= 4 || (p.sz <= 300 && (p.maxY - p.minY) <= 12 && p.maxY < top - 3)){ kill[p.id] = 1; any = true; }
+        if(p.sz <= 4 || (p.sz <= 300 && (p.maxY - p.minY) <= 12 && p.maxY < top - 3)){ kill[p.id] = 1; any = true; continue; }
+        if(strict && p.sz <= 600 && (p.maxX < mainMinX || p.minX > mainMaxX)){ kill[p.id] = 1; any = true; }   /* ★ v1.289.0 非主體、面積不大、x 範圍完全落在主體之外(不論上下左右) */
       }
       if(!any) continue;
       for(y = 0; y < CS; y++){ for(x = 0; x < CS; x++){ if(kill[lab[y * CS + x]]) d[((r * CS + y) * W + (c * CS + x)) * 4 + 3] = 0; } }
@@ -18512,12 +18537,59 @@ function islFullCleanCells(d, W, H){
      (收腿錨點),播放序列長度維持 10 不變,54ms/格與 islRjPaint 端完全不用改。
    ⚠ 沒有實機環境能看動畫實際跑起來的樣子,這是依 8 張圖 24 列靜態逐格比對做的判斷,
      麻煩老師這次務必實機驗收男女跑步動作是否比之前順,尤其原本沒發現異狀的正面/背面方向。 */
-function islFullRunSeq(d, W, H){
-  var CS = 128, cols = Math.floor(W / CS), rows = Math.floor(H / CS), r, c, out = [], row10, standIdx = cols - 1;
+/* ★ v1.289.0 老師上傳「跑步 8 張循環」新圖(1024×384=8 欄×3 列),取代原本 6 欄(768×384)的舊圖。
+   8 欄新圖本身就是一輪完整的跑步循環,不必再像 6 欄舊圖那樣「跨步格＋插站直錨點交錯」——
+   直接照原始欄序播放即可;逐格看過後只有下面兩張圖各兩格是「雙腿張開站地」的違和格,要跳過不播。
+   row 對應 islRjPaint 的 row 參數:0=正面、1=背面、2=側面(與 ISL_RJ_NECK 同一套順序)。 */
+var ISL_RUN_SKIP = { run_boy_h0: [[3], [3], []], run_girl_h2: [[2, 3], [2, 3], []] };
+function islFullRunSeq(d, W, H, key){
+  var CS = 128, cols = Math.round(W / CS), rows = Math.floor(H / CS), r, c, out = [], rowSeq, standIdx = cols - 1, skip = ISL_RUN_SKIP[key], sk;
+  if(cols === 6){   /* ★ v1.289.0 6 欄舊圖(尚未換成新圖的髮型)走 legacy 路徑,維持 v1.285.0 原行為一字不改 */
+    for(r = 0; r < rows; r++){
+      rowSeq = [];
+      for(c = 0; c < standIdx; c++){ rowSeq.push(c); rowSeq.push(standIdx); }
+      out.push(rowSeq);
+    }
+    return out;
+  }
+  for(r = 0; r < rows; r++){   /* ★ v1.289.0 8 欄新圖:全部欄位依原始順序播放,剔除表挑掉的格子直接跳過不進序列 */
+    rowSeq = []; sk = (skip && skip[r]) || [];
+    for(c = 0; c < cols; c++){ if(sk.indexOf(c) === -1) rowSeq.push(c); }
+    out.push(rowSeq);
+  }
+  return out;
+}
+/* ★ v1.289.0 老師「素材每格人物右偏 13~16px 未置中」— 量每格 alpha 外接框的水平中心,與格子水平中心(63.5)
+   差超過 5px 才修正(避免把本來就該有姿態位移的格子強行拉正),回傳的 dx 是 128 原圖單位,
+   islRjPaint 端要 ÷2 才是實際顯示的 64px 位移;只用在 kind==='run' 的新 8 欄圖。
+   ★ v1.291.0 老師「確認跑步 8 張循環的圖有沒有實機問題」— 拿 GitHub repo 上老師實際上傳的 8 張圖(1024×384)逐格量測後發現:
+   垂直方向(dy)**不能**比照水平方向做「對齊格子幾何中心」的置中——8 張圖全部 24 列量下來,每一格的 bbox 下緣(腳底)
+   幾乎都釘在同一條線(y≈116~123,就是站立的地面高度),bbox 上緣(頭頂)才會隨跨步/收腿姿態自然高低變化。
+   舊版把 dy 也拉去對齊格子幾何中心(63.5),等於每一幀都用「這一幀身形有多高」反過來決定腳要墊高多少,
+   會把原本該貼著地面的雙腳跟著姿態上下浮動,變成人物一邊跑一邊上下彈跳而不是穩穩踩在地上——
+   這是本輪拿真圖實測才抓到、design 階段沒發現的問題。⇒ 拿掉 dy 計算與回傳,只做水平置中;
+   垂直對齊本來就已經有另一套機制在管(ISL_RJ_NECK 的脖子基準線 + transformOrigin 腳底錨點),不需要也不能疊加這裡的置中。 */
+function islFullRunCenter(d, W, H){
+  var CS = 128, cols = Math.round(W / CS), rows = Math.floor(H / CS), r, c, x, y, a, minX, maxX, cx0, dx, out = [], rowOff;
   for(r = 0; r < rows; r++){
-    row10 = [];
-    for(c = 0; c < standIdx; c++){ row10.push(c); row10.push(standIdx); }   /* ★ v1.285.0 依素材原始欄序,每格後插一次站直錨點 */
-    out.push(row10);
+    rowOff = [];
+    for(c = 0; c < cols; c++){
+      minX = CS; maxX = -1;
+      for(y = 0; y < CS; y++){
+        for(x = 0; x < CS; x++){
+          a = d[((r * CS + y) * W + (c * CS + x)) * 4 + 3];
+          if(a < 10) continue;
+          if(x < minX) minX = x; if(x > maxX) maxX = x;
+        }
+      }
+      dx = 0;
+      if(maxX >= minX){
+        cx0 = (minX + maxX) / 2;
+        if(Math.abs(cx0 - 63.5) > 5) dx = Math.round(63.5 - cx0);
+      }
+      rowOff.push([dx, 0]);
+    }
+    out.push(rowOff);
   }
   return out;
 }
@@ -18537,8 +18609,12 @@ function islFullGet(kind, c, cb){
         try{
           W = im.width; H = im.height; cv = document.createElement('canvas'); cv.width = W; cv.height = H; cx = cv.getContext('2d'); cx.drawImage(im, 0, 0);
           src = cx.getImageData(0, 0, W, H).data;
-          islFullCleanCells(src, W, H);   /* ★ v1.240.0 清掉每格上緣殘留的鄰格鞋底碎塊(跳躍時頭上那兩條) */
-          if(kind === 'run'){ try{ outs.seq = islFullRunSeq(src, W, H); }catch(_sq){ outs.seq = null; } }   /* ★ v1.241.0 跑步播放順序(大跨步↔收腿交錯),只在分層這一次算,之後每幀直接查表 */
+          islFullCleanCells(src, W, H, kind === 'run');   /* ★ v1.240.0 清掉每格上緣殘留的鄰格鞋底碎塊(跳躍時頭上那兩條);★ v1.289.0 run 圖多開 strict,順手清掉不貼頭頂但仍落在主體範圍外的碎屑(最大量到 336px) */
+          if(kind === 'run'){
+            outs.cols = Math.round(W / 128);   /* ★ v1.289.0 欄數改吃圖寬計算(6 欄舊圖/8 欄新圖都撐得住),取代原本寫死的 6 */
+            try{ outs.seq = islFullRunSeq(src, W, H, key); }catch(_sq){ outs.seq = null; }   /* ★ v1.241.0 跑步播放順序,只在分層這一次算,之後每幀直接查表;★ v1.289.0 改吃圖鍵(剔除表)與圖寬(欄數) */
+            try{ outs.off = islFullRunCenter(src, W, H); }catch(_ct){ outs.off = null; }   /* ★ v1.289.0 逐格置中位移,只算一次存起來,畫的時候直接查表 */
+          }
           for(t = 0; t < 3; t++) L.push(cx.createImageData(W, H));
           for(i = 0; i < src.length; i += 4){
             a = src[i + 3]; if(a < 10) continue;
@@ -18592,7 +18668,7 @@ function islRjPaint(sp, body, row, kind, t){
   if(!w){ w = document.createElement('div'); w.className = 'rjw'; w.innerHTML = '<div class="rjb"></div><div class="rju"></div><div class="ff fb"></div><div class="ff fc"></div><div class="ff fh"></div>'; sp.appendChild(w); }
   /* ★ v1.233.0 整張完整人物圖(該髮型):跑 6 格、跳 4 格,三層同步換格 */
   if(full){
-    fc = kind === 'run' ? 6 : 4;
+    fc = kind === 'run' ? (full.cols || 6) : 4;   /* ★ v1.289.0 老師「跑步 8 張循環」新圖是 8 欄,改吃分層時量到的實際欄數(舊 6 欄圖 full.cols 一樣算得出 6,行為不變) */
     /* ★ v1.237.0(老師回報「主角跑步跳躍時的圖片會縮小」)— 逐格量測全髮型跑跳圖(768×384/512×384)
        與走路基底圖(base_<body>_s0,同樣 768×384)的角色像素高度才發現:雖然 background-size/position
        的換算本身沒有算錯(兩邊都是 6/4 格×128px 原圖縮到 64px 顯示格,比例一致),但「跑步」圖裡畫的
@@ -18602,8 +18678,9 @@ function islRjPaint(sp, body, row, kind, t){
     var _rjScale = (kind === 'run') ? 'scale(1.16)' : 'scale(1.23)';   /* ★ v1.240.0 老師「跑步和跳躍時的圖片要再稍微放大 5~10%」:1.08→1.16、1.15→1.23 */
     if(w.style.transform !== _rjScale){ w.style.transform = _rjScale; w.style.transformOrigin = '32px 60px'; }   /* ★ v1.237.0 錨點沿用 islLyApply 同一套「水平中心線×腳底線」基準(32px,60px),不是用格子邊緣(64px),放大時腳底才不會離地飄起來 */
     if(kind === 'run'){
-      if(full.seq && full.seq[row] && full.seq[row].length === 10){ col = full.seq[row][Math.floor(t / 150) % 10]; }   /* ★ v1.287.0 老師「跑步動畫速度用150ms」— 老師實機看過覺得原本 54ms/格(整圈540ms)在站直格與跨步格之間切換太快、看起來像原地抖動,改成 150ms/格(整圈 10×150=1500ms),見 MG_VER 版本說明。 */
-      else { col = Math.floor(t / 90) % 6; }   /* 序列算失敗的備援,退回舊版直接照格序播放 */
+      var _sq = full.seq && full.seq[row];
+      if(_sq && _sq.length){ col = _sq[Math.floor(t / 150) % _sq.length]; }   /* ★ v1.287.0 老師「跑步動畫速度用150ms」;★ v1.289.0 序列長度不再寫死 10(8 欄新圖依剔除表算出的長度不固定),改吃 _sq.length,150ms/格節奏不變 */
+      else { col = Math.floor(t / 90) % fc; }   /* 序列算失敗的備援,退回直接照格序播放(欄數也改吃 fc,不寫死 6) */
     }
     else { el = Math.max(0, t - _islJumpAt); col = el < 130 ? 0 : (el < 290 ? 1 : (el < 520 ? 2 : 3)); }   /* ★ v1.237.0 老師「跳躍的高度和距離再提升+100%」— 落地時間點依新的 .65s(660ms)總時長等比拉長(原 90/200/360,對應舊 .45s/450ms 生命週期),不是照高度直接翻倍到 720ms(那樣會超過下面 setTimeout 660ms 就把 .jump class 拔掉的時間點,落地姿勢永遠播不到) */
     fk = kind + full.body.length + '|' + JSON.stringify(ISL.char);
@@ -18614,7 +18691,8 @@ function islRjPaint(sp, body, row, kind, t){
       w.querySelector('.fh').style.cssText = css.hair + 'background-size:' + (fc * 64) + 'px 192px;';
       w._img = '';
     }
-    bp = (-col * 64) + 'px ' + (-row * 64) + 'px';
+    var _cOfs = (kind === 'run' && full.off && full.off[row] && full.off[row][col]) ? full.off[row][col] : [0, 0];   /* ★ v1.289.0 逐格置中位移(128 原圖單位),下面 ÷2 換算成 64px 顯示格 */
+    bp = (-col * 64 + _cOfs[0] / 2) + 'px ' + (-row * 64 + _cOfs[1] / 2) + 'px';
     var ffs = w.querySelectorAll('.ff'); for(i = 0; i < ffs.length; i++){ if(ffs[i].style.backgroundPosition !== bp) ffs[i].style.backgroundPosition = bp; }
     if(!sp.classList.contains('rjon')) sp.classList.add('rjon');
     if(!sp.classList.contains('rjfull')) sp.classList.add('rjfull');
@@ -19361,7 +19439,7 @@ function islActResult(){
     if(A.id === 'gather' && node.bonus){ put = islBagAdd(node.bonus, stars, 1); if(put) gain.push({ id: node.bonus, n: 1, q: stars }); }   /* ★ v1.121.0 資源點附帶產物(林投 → +1 大葉;大葉原本全島無來源) */
     if(ISL.scanSaveDay === ISL.day && Math.random() < 0.5){ try{ toast('🔍 環境觀察:這個採集點還留著,可以再採一次!'); }catch(_sv){} }   /* ★ v1.288.0 🔍 環境觀察:當天採集 50% 機率不消耗採集點(不標 taken、不寫進 daily.taken,點就留在原地) */
     else { node.taken = true; islDailyFor(_IS.zone).taken.push(node.idx); }
-    if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔 */
+    if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + islExploreGain(10));   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔;★ v1.289.0 天賦 exploreP:採集 */
     islCodexAdd(node.kind);   /* ★ v1.98.0 圖鑑自動收錄(kind 別名見 CODEX_ALIAS) */
   }
   /* ★ v1.94.0 P2-b:馴養(動物進畜欄)、烹飪(扣食材出料理)、播種(寫入田地)、水道(Grid 拼圖蓋建築) */
@@ -19373,7 +19451,7 @@ function islActResult(){
     }
     else note = '牠被嚇跑了……下次慢一點靠近。(AP 照扣)';
     node.taken = true; islDailyFor(_IS.zone).taken.push(node.idx);
-    if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 10);   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔 */
+    if(!_IS.coop) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + islExploreGain(10));   /* ★ v1.108.0 拜訪好友島時不計自己的探索度/不寫進自己存檔;★ v1.289.0 天賦 exploreP:馴養 */
     islCodexAdd(node.kind);   /* ★ v1.98.0 觀察過就收錄(跑掉也算) */
   }
   if(A.id === 'cook'){
@@ -19397,7 +19475,7 @@ function islActResult(){
     var tl = A.ctx.tool, bench = islCampHasBld('bench');
     if(A.built){
       built = true; bld = { n: tl.n };
-      for(i in A.ctx.cost){ if(A.ctx.cost.hasOwnProperty(i)) islConsume(i, A.ctx.cost[i]); }
+      islCostCutOn(function(){ for(i in A.ctx.cost){ if(A.ctx.cost.hasOwnProperty(i)) islConsume(i, A.ctx.cost[i]); } });   /* ★ v1.289.0 天賦 costCutP:製作工具扣料路徑 */
       if(tl.weapon){ ISL.weapons.push({ id: tl.id, q: stars, lv: 1, sk: stars >= 3 ? [null, null] : (stars >= 2 ? [null] : []) }); if(ISL.equip.weapon < 0 || !ISL.weapons[ISL.equip.weapon]) ISL.equip.weapon = ISL.weapons.length - 1; islCodexAdd('wp_' + tl.id); }   /* ★ v1.121.0 武器:每把獨立(品質=結算星數),沒裝備就自動裝上 */
       else if(tl.armor){ ISL.armors.push({ id: tl.id, q: stars }); if(ISL.equip.armor < 0 || !ISL.armors[ISL.equip.armor]) ISL.equip.armor = ISL.armors.length - 1; islCodexAdd('am_' + tl.id); }   /* ★ v1.187.0 防具:與武器同一條製作路徑(拖材料→知識題→敲打組裝),結算星數就是品質;還沒穿任何防具就自動穿上(不然學生做完會問「為什麼沒變強」) */
       else if(ISL.tools.indexOf(tl.id) < 0) ISL.tools.push(tl.id);
@@ -19431,7 +19509,7 @@ function islActResult(){
     bld = db.BUILDINGS[A.ctx.bld]; slotIdx = A.ctx.slot;
     if(A.built){
       built = true;
-      for(i in A.ctx.cost){ if(A.ctx.cost.hasOwnProperty(i)) islConsume(i, A.ctx.cost[i]); }
+      islCostCutOn(function(){ for(i in A.ctx.cost){ if(A.ctx.cost.hasOwnProperty(i)) islConsume(i, A.ctx.cost[i]); } });   /* ★ v1.289.0 天賦 costCutP:建造扣料路徑 */
       if(bld.tech && !A.ctx.upgrade) ISL.tech = Math.max(0, ISL.tech - islBldTech(bld));   /* ★ v1.105.0 帆船扣科技點(動工當下就扣);★ v1.234.0 分支「讓電之心沉睡」科技點需求 −10 */
       var bSec = islBuildStart(slotIdx, A.ctx.bld, stars, A.ctx.upgrade);   /* ★ v1.125.0 老師:所有建造都要等真實時間;完工紀錄/解鎖/結局一律移到 islBuildFinish */
       note = '🏗 ' + bld.e + bld.n + (A.ctx.upgrade ? ' 開始升級' : ' 開始施工') + '了,還要 ' + islSecsText(bSec) + '。可以先去做別的事,完工會在右下角通知你!';
@@ -21738,9 +21816,11 @@ function islDefStart(roll){
   roll = roll || islRaidRoll();
   _islDef = { hp: (fireB ? camp.fireHp + (fireB.lv >= 5 ? 2 : (fireB.lv >= 3 ? 1 : 0)) : 2) + (ISL.skill.defense.lv >= 7 ? 1 : 0), hpMax: 0, wave: 0, waves: roll.waves, mons: [], tool: 'fist', alive: 0, timer: null, ended: false, kills: 0, slow: wallB ? (1 + 0.1 * wallB.lv + 0.1) : 1, torch: !!torchB, torchLv: torchB ? torchB.lv : 0, waveN: 0, spawnedW: 0,
     kinds: roll.kinds, towerLv: towerB ? towerB.lv : 0, fell: false, helpers: [], helperT: [], helpKills: 0,   /* ★ v1.104.0 甲/丙 */
-    fireLv: fireB ? fireB.lv : 0, woodUsed: 0, woodMax: 2,   /* ★ v1.282.0 老師「HP 條下新增木材 2/2,點擊消耗 1 次木材補充營火 HP 20%,最多 2 次」 */
+    fireLv: fireB ? fireB.lv : 0, woodUsed: 0, woodMax: 2 + Math.round(islSkEff('defWoodAdd')),   /* ★ v1.282.0 老師「HP 條下新增木材 2/2,點擊消耗 1 次木材補充營火 HP 20%,最多 2 次」;★ v1.289.0 天賦 defWoodAdd:補血次數上限 +N */
     boarTaps: st.pow >= 14 ? 1 : (st.pow >= 8 ? 2 : 3), waveBonus: st.mov >= 14 ? 4000 : (st.mov >= 8 ? 2000 : 0), hintOn: st.wit >= 8, stun: st.wit >= 14 };
   _islDef.slow *= (st.dex >= 14 ? 1.2 : (st.dex >= 8 ? 1.1 : 1));   /* 巧手:魔物慢 10%/20% */
+  _islDef.slow *= (1 + Math.min(40, islSkEff('defSlowP')) / 100);   /* ★ v1.289.0 天賦 defSlowP:魔物爬向營火再變慢,上限 40% */
+  _islDef.hp += Math.round(islSkEff('defHpAdd'));   /* ★ v1.289.0 天賦 defHpAdd:營火血量直接 +N(節點配置建議 SK_CORE_HP+defHpAdd1) */
   _islDef.hpMax = _islDef.hp;
   for(k in B){ if(B.hasOwnProperty(k)){ if(st[k] >= 14) bonus.push(B[k].e + B[k].t14); else if(st[k] >= 8) bonus.push(B[k].e + B[k].t8); } }
   for(i = 0; i < roll.kinds.length; i++){ m = db.monster(roll.kinds[i]); if(m){ legend += (i ? '　' : '') + m.e + islEsc(m.n) + '→' + db.defTool(m.tool).e + (m.k === 'boar' ? '連點 ' + _islDef.boarTaps + ' 下' : islEsc(db.defTool(m.tool).n)); } }
@@ -21845,9 +21925,10 @@ function islDefBite(id){
   D.hp--; playSfx('sfx-punch', 0.5); if(fire){ fire.classList.remove('hurt'); void fire.offsetWidth; fire.classList.add('hurt'); }
   if(screen){ screen.classList.remove('shake'); void screen.offsetWidth; screen.classList.add('shake'); }   /* ★ v1.282.0 老師④「營火受傷時全畫面震動」 */
   if(flash){ flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on'); }   /* ★ v1.282.0 老師④「並閃一下紅光」 */
-  /* ★ v1.104.0 甲:守在營火旁的你也被撞到 */
-  ISL.hp = Math.max(0, ISL.hp - islDB().DEF_BITE_HP); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true;
-  islHurtFloat($('isl-def'), (mo.w || 800) / 2 + 70, (mo.h || 500) / 2 - 40, '你 −' + islDB().DEF_BITE_HP + ' ❤️'); islDefHud();
+  /* ★ v1.104.0 甲:守在營火旁的你也被撞到;★ v1.289.0 天賦 defBiteCutP(上限 50%):被咬扣血減輕 */
+  var _biteHp = Math.max(1, Math.round(islDB().DEF_BITE_HP * (1 - Math.min(50, islSkEff('defBiteCutP')) / 100)));
+  ISL.hp = Math.max(0, ISL.hp - _biteHp); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true;
+  islHurtFloat($('isl-def'), (mo.w || 800) / 2 + 70, (mo.h || 500) / 2 - 40, '你 −' + _biteHp + ' ❤️'); islDefHud();
   if(ISL.hp <= 0){ D.fell = true; islDefEnd(false); return; }
   if(D.hp <= 0){ islDefEnd(false); return; }
   islDefCheckWave();
@@ -22298,8 +22379,9 @@ function islNotify(title, body, sfx){
    ⚠ 新建的設施在完工前不算「有」(islCampHasBld 會跳過)⇒ 不會蓋到一半就先解鎖森林、先能生火;
      升級中的設施則維持舊等級照常可用(只是那一格多一條倒數),否則升級反而變成懲罰。 */
 function islBuildSecs(bldId, upgradeLv){
-  var db = islDB(), base = (db.BUILD_SECS && db.BUILD_SECS[bldId]) || db.BUILD_SECS_DEFAULT || 90;
-  return upgradeLv ? Math.round(base * 0.6 * upgradeLv) : base;
+  var db = islDB(), base = (db.BUILD_SECS && db.BUILD_SECS[bldId]) || db.BUILD_SECS_DEFAULT || 90, secs = upgradeLv ? Math.round(base * 0.6 * upgradeLv) : base;
+  var p = Math.min(60, islSkEff('buildFastP'));   /* ★ v1.289.0 天賦「建造加速」,上限 60%(節點配置建議 SK_LIFE_3+buildFastP10、SK_LIFE_6+buildFastP15) */
+  return p ? Math.max(1, Math.round(secs * (1 - p / 100))) : secs;
 }
 function islBuildLeft(s){ return (s && s.bt) ? Math.max(0, Math.ceil((s.bt - islNow()) / 1000)) : 0; }
 function islSecsText(n){ var m = Math.floor(n / 60), s = n % 60; return m ? (m + ' 分 ' + s + ' 秒') : (s + ' 秒'); }
@@ -23287,7 +23369,7 @@ function islDgEnd(cleared){
   if(!S) return;
   if(cleared){ ISL.dungeon.clears++; if(S.floor > ISL.dungeon.best) ISL.dungeon.best = S.floor; islLog((ISL.dungeon.clears === 1 ? '🏆 第一次通關遺跡地下層,打敗守墓石像' : '🕳 再次通關遺跡地下層'), 'mon_guardian'); }
   else if(S.floor > ISL.dungeon.best) ISL.dungeon.best = S.floor;
-  ISL.zones.ruins.explore = Math.min(100, (ISL.zones.ruins.explore || 0) + (cleared ? 15 : 5));
+  ISL.zones.ruins.explore = Math.min(100, (ISL.zones.ruins.explore || 0) + islExploreGain(cleared ? 15 : 5));   /* ★ v1.289.0 天賦 exploreP:遺跡地下層通關/撤退 */
   _islDg = null; islSave('dungeon'); islHud();
   done = function(){ islModal('<h3>' + (cleared ? '🏆 地下層通關!' : (ISL.hp <= 0 ? '🤕 體力用完,撤退' : '🏃 撤退')) + '</h3><p>趕跑 ' + S.kills + ' 隻魔物' + (S.loot.length ? '<br>戰利品:' + islEsc(S.loot.join(' / ')) : '') + (cleared ? '<br>探索 +15%' : '<br>探索 +5%') + (ISL.hp <= 0 ? '<br>先回營地治療吧。' : '') + '</p>', [{ t: '回到地面', cls: 'gold', cb: function(){ if(ISL.hp <= 0) islGoCamp(); else islDgResume(); } }]); };
   if(first){ islCodexAdd('guardian'); islFxAt($('isl-zone'), 200, 200, 'glow'); islDialog(G.clearStory, { who: 'me' }, done); }
@@ -23867,7 +23949,7 @@ function islPuzzleOpen(zoneId){
     var k, txt = [];
     ISL.puzzles[zoneId] = true; islCodexAdd('pz_' + zoneId); islLog('🧩 解開了 ' + pz.e + pz.n, islDB().SCENE[zoneId] ? islDB().SCENE[zoneId].bg : null);   /* ★ v1.98.0;★ v1.105.0 */
     for(k in pz.reward){ if(pz.reward.hasOwnProperty(k)){ if(k === 'shell') ISL.shell += pz.reward[k]; else if(k === 'tech') ISL.tech += pz.reward[k]; txt.push((k === 'shell' ? '🐚 貝幣 +' : '🔬 科技點 +') + pz.reward[k]); } }
-    ISL.zones[zoneId].explore = Math.min(100, (ISL.zones[zoneId].explore || 0) + 20);
+    ISL.zones[zoneId].explore = Math.min(100, (ISL.zones[zoneId].explore || 0) + islExploreGain(20));   /* ★ v1.289.0 天賦 exploreP:解謎(老師原始需求只列 5 處,這一處是稽核時順手一起補上的第 6 處,保持全部探索度增量口徑一致) */
     islStatGain('wit', 2);
     playSfx('sfx-summon-reveal', 0.5); islFxAt($('isl-zone'), 200, 200, 'glow');
     islModal('<h3>🧩 解開了!</h3><p>' + txt.join('　') + '　探索 +20%</p>', [{ t: '太好了', cls: 'gold', cb: function(){ islResume(); } }]);
@@ -24667,6 +24749,9 @@ function islSkEff(key){
    ⚠ tameP(馴養率)稽核發現仍被 islActTame(畜欄馴養雞/羊/兔)讀取,並非死鍵,故沿用不動;
      bondGainP 是新增的獨立效果鍵,兩者互不影響、互不取代。 */
 function islBondGain(n){ var p = islSkEff('bondGainP') + islRouteEff('bondP'); return p ? Math.round(n * (1 + p / 100)) : n; }   /* ★ v1.234.0 劇情分支「共存」讓夥伴親密度 +30% */
+/* ★ v1.289.0 天賦「探索效率」(exploreP)單一出口:每一次探索度增量(首次踏進場景/採集/馴養/解謎/夜襲防衛/戰鬥勝利)
+   都乘上 (1+exploreP/100),與 islBondGain 同一種寫法(節點配置建議 SK_CORE_SPD+exploreP10、SK_LIFE_5+exploreP10)。 */
+function islExploreGain(n){ var p = islSkEff('exploreP'); return p ? Math.round(n * (1 + p / 100)) : n; }
 /* 最大體力:hpMaxP 是唯一一個「存在存檔裡的衍生值」,所以點/洗點/載入後都要重算一次
    ★ v1.224.0 老師「計算滿裝滿天賦時滿編隊伍的勝率」稽核時揪出的獨立 bug——這裡原本寫死 `base=100` 去乘天賦%,
    完全不看主角實際靠四維升級累積起來的體力(islHpLevelBonus 存在 ISL.hpBase),等於**每次打開天賦星域畫面
@@ -27613,6 +27698,18 @@ function islBtOnMonDown(m, cb){
   }
   setTimeout(function(){ if(_islBt && !_islBt.over) cb(); }, 900);
 }
+/* ★ v1.289.0 老師「勝利結算分區塊排版」— 把原本擠在同一段 <p> 裡的戰果/獲得/成長/夥伴四類訊息拆成各自的藥丸區塊。
+   o = { names, xp, loot, advTxt, techCapTxt, petTxt } 任一欄空字串/空陣列就整塊不輸出(islModal 裡不會出現空標題)。 */
+function islBtResultHtml(o){
+  var sec = [], body;
+  function pill(e, t, b){ if(!b) return; sec.push('<div class="isl-res-sec"><div class="isl-res-h">' + e + ' ' + t + '</div><div class="isl-res-b">' + b + '</div></div>'); }
+  body = islEsc(o.names.join('、')) + ' 被趕跑了。' + (o.xp ? ('<br>⚔ 防衛 EXP +' + o.xp + '　💪 力氣練習 +1　🔍 探索 +5%') : '');
+  pill('🏆', '戰果', body);
+  pill('🎁', '獲得', (o.loot || []).join('　'));
+  pill('📈', '成長', (o.advTxt || '') + (o.techCapTxt ? '<br>' + o.techCapTxt : ''));
+  pill('🐾', '夥伴', o.petTxt || '');
+  return '<div class="isl-res">' + sec.join('') + '</div>';
+}
 window.islBattleEnd = function(how){
   var B = _islBt, db = islDB(), m, loot = [], k, n, put, tech = 0, xp, mine;
   if(!B || B.over) return; B.over = true; m = B.m; mine = B.mine; islBtActs(false);
@@ -27654,7 +27751,7 @@ window.islBattleEnd = function(how){
     ISL.battle.won++;
     xp = db.BT.XP_WIN + (_hi >= 6 ? 1 : 0) + (_all.length > 1 ? 1 : 0); islSkillGain('defense', xp); islStatGain('pow', 1);
     var wxp = islWeaponXpGain(_hi); if(wxp) loot.push('🗡 熟練+' + wxp);   /* ★ v1.125.0 裝備武器打贏 → 累積武器熟練值 */
-    if(!_IS.coop && ISL.zones[_IS.zone]) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + 5);   /* ★ v1.228.0 守門:不在區域內開戰(GM 測試鈕)不再丟例外 */
+    if(!_IS.coop && ISL.zones[_IS.zone]) ISL.zones[_IS.zone].explore = Math.min(100, (ISL.zones[_IS.zone].explore || 0) + islExploreGain(5));   /* ★ v1.228.0 守門:不在區域內開戰(GM 測試鈕)不再丟例外;★ v1.289.0 天賦 exploreP:戰鬥勝利 */
     var _petTxt = islPetsGainAfterWin(_all), _rest = islPetsRestMark();
     if(_rest) _petTxt += (_petTxt ? '<br>' : '') + '💤 有 ' + _rest + ' 位隊友受傷,今天先回營地休息,明天才能再出門。';
     ISL.battle.dayLog = ISL.battle.dayLog || { total: 0, win: 0, lose: 0 }; ISL.battle.dayLog.total++; ISL.battle.dayLog.win++;   /* ★ v1.284.0 每日戰鬥場次+勝敗次數,islNewDay 換日時結算成一筆日誌 */
@@ -27662,7 +27759,7 @@ window.islBattleEnd = function(how){
     if(_dropLog.length) islLog('🎒 戰鬥掉落:' + _dropLog.join('、'), islMonPicKey(m.k));   /* ★ v1.284.0 老師「島上日誌的野外小怪戰鬥記錄不用記,初次遇到的小怪和掉落材料才需要記錄」— 拿掉原本每場必記的「⚔ 在○○趕跑了○○」,改成只記這兩種真的值得回顧的事件 */
     try{ islMono('battleWin'); }catch(_bw){}   /* ★ v1.133.0 戰鬥畫面沒有角色可以掛泡泡 ⇒ islMono 會自動排隊,按「繼續探索」回到場景時補講 */
     islSave('battle');
-    setTimeout(function(){ islModal('<h3>🎉 ' + db.BT.lines.win[Math.floor(Math.random() * db.BT.lines.win.length)] + '</h3><p>' + islEsc(_names.join('、')) + ' 被趕跑了。<br>戰利品:' + loot.join('　') + '<br>' + _advTxt + '<br>⚔ 防衛 EXP +' + xp + '　💪 力氣練習 +1　🔍 探索 +5%</p>' + (_petTxt ? '<p>' + _petTxt + '</p>' : '') + (tech === 0 ? '<p style="font-size:14px;opacity:.75">今天打贏拿到的科技點已達上限(每天 ' + db.BT.TECH_DAY_CAP + ')。</p>' : ''), [{ t: '繼續探索', cls: 'gold', cb: function(){ bgmFadeOut(600, function(){ islBattleClose(); }); } }]); }, 1400);   /* ★ v1.191.0 老師需求②「關閉後勝利音樂淡出」— 按下「繼續探索」先把勝利音樂淡出 600ms,淡完才收battle/換回場景 BGM,不再是硬切一聲就停 */
+    setTimeout(function(){ islModal('<h3>🎉 ' + db.BT.lines.win[Math.floor(Math.random() * db.BT.lines.win.length)] + '</h3>' + islBtResultHtml({ names: _names, xp: xp, loot: loot, advTxt: _advTxt, techCapTxt: (tech === 0 ? '今天打贏拿到的科技點已達上限(每天 ' + db.BT.TECH_DAY_CAP + ')。' : ''), petTxt: _petTxt }), [{ t: '繼續探索', cls: 'gold', cb: function(){ bgmFadeOut(600, function(){ islBattleClose(); }); } }]); }, 1400);   /* ★ v1.191.0 老師需求②「關閉後勝利音樂淡出」— 按下「繼續探索」先把勝利音樂淡出 600ms,淡完才收battle/換回場景 BGM,不再是硬切一聲就停;★ v1.289.0 老師需求「勝利結算分區塊排版」— 改呼叫 islBtResultHtml() 拆成 🏆戰果/🎁獲得/📈成長/🐾夥伴 四區 */
   } else if(how === 'lose'){
     ISL.battle.dayLog = ISL.battle.dayLog || { total: 0, win: 0, lose: 0 }; ISL.battle.dayLog.total++; ISL.battle.dayLog.lose++;   /* ★ v1.284.0 */
     islBtSetState('p', 'down', 0); playSfx('sfx-ko', 0.5); islBtFxEv('lose', 'p', null); ISL.battle.lost++; ISL.hurt = true; islSkillGain('defense', db.BT.XP_LOSE); islPetsGainAfterWin(B.ms, true); islPetsRestMark(); try{ islAdvGain(islAdvXpOf(B.ms, (islDB().ADV || {}).lose || 0.2)); }catch(_al){} islSave('battle');
