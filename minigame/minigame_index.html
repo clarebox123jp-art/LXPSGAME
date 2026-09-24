@@ -4268,6 +4268,9 @@ window.islDirectVeilOff = function(){
 .isl-zone-spot.lock{opacity:.6;filter:grayscale(.6);}
 .isl-zone-spot.unknown{opacity:.45;filter:grayscale(1) blur(.5px);}
 .isl-zone-spot.unknown .zn,.isl-zone-spot.unknown .lv{visibility:hidden;}
+.isl-zone-spot .zn{white-space:nowrap;}
+.isl-zone-spot .zn .ex{font-size:.66em;font-weight:900;color:#7bed9f;margin-left:12px;vertical-align:middle;}   /* ★ v1.323.0 老師「大地圖各區域名稱旁加上探索度百分比」— 只在已開放區域顯示,拜訪好友島不顯示(那是島主的進度) */
+.isl-zone-spot .zn .ex.full{color:#ffd166;}
 .isl-zone-spot .lk{position:absolute;right:10px;top:10px;font-size:52px;}   /* ★ v1.276.0 鎖頭圖示隨整顆放大 100% 同步放大,位置微調避免貼死邊緣 */
 @keyframes islFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 #isl-map-camp,#isl-map-leave{position:absolute;width:150px;height:150px;margin-left:-75px;margin-top:-75px;border-radius:24px;border:4px solid #ff9f43;background:rgba(255,159,67,.2);font-size:46px;color:#fff;text-shadow:0 2px 4px #000;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -4706,6 +4709,8 @@ window.islDirectVeilOff = function(){
 .isl-btn:disabled{opacity:.45;box-shadow:none;}
 /* ── 通用彈窗 / 對白 ── */
 #isl-modal{position:absolute;left:0;top:0;right:0;bottom:0;z-index:40;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:14px;}
+#isl-skpop{position:absolute;left:0;top:0;right:0;bottom:0;z-index:60;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;padding:14px;}   /* ★ v1.323.0 天賦節點說明/確認小視窗疊在星盤上(星盤留在背景),見 islSkPop */
+#isl-skpop .box{max-height:88%;} #isl-skpop .box .bd{overflow-y:auto;}
 #isl-modal .box,.isl-bagbox{position:relative;}
 /* ★ v1.115.0 UI 重整:頂端大藥丸、右上設定選單、側欄 4 大項目、細項選單 */
 #isl-hud .ih.big{font-size:19px;padding:6px 14px;background:linear-gradient(180deg,rgba(255,209,102,.28),rgba(255,209,102,.1));border-color:rgba(255,209,102,.55);color:#ffe9a8;}
@@ -5801,6 +5806,22 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 .isl-petcard.t-heal{ border-color:#7bed9f; box-shadow:0 0 10px rgba(123,237,159,.35); }
 .isl-petcard.t-boss{ border-color:#ffd166; box-shadow:0 0 10px rgba(255,209,102,.35); }   /* ★ v1.239.0 頭目一覽卡片改用金色呼應 👑,沿用同一套 .isl-petcard.t-<type> 配色寫法 */
 .isl-petcard.t-tank.inparty,.isl-petcard.t-atk.inparty,.isl-petcard.t-ctrl.inparty,.isl-petcard.t-heal.inparty{ border-color:#ffd166; }
+/* ★ v1.323.0 夥伴圖鑑篩選/排序列 + 選隊友模式(休息卡/短版復活膠囊/好友卡) */
+.isl-dexbar{ display:flex; flex-direction:column; gap:8px; margin:0 0 14px; padding:10px 12px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.14); border-radius:14px; }
+.isl-dexbar .row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.isl-dexbar .lb{ font-size:15px; font-weight:800; color:#9fd8f5; margin-right:4px; }
+.isl-dexbar .chip{ cursor:pointer; font-size:16px; font-weight:800; padding:5px 14px; border-radius:999px; border:2px solid rgba(255,255,255,.3); background:rgba(255,255,255,.08); color:#e8f4ff; white-space:nowrap; user-select:none; -webkit-user-select:none; }
+.isl-dexbar .chip.on{ background:#ffd166; border-color:#ffd166; color:#2a1a00; }
+.isl-dexbar .chip.ty-tank{ border-color:#5599ff; } .isl-dexbar .chip.ty-atk{ border-color:#ff7b7b; } .isl-dexbar .chip.ty-ctrl{ border-color:#b98aff; } .isl-dexbar .chip.ty-heal{ border-color:#7bed9f; }
+.isl-dexbar .chip.ty-friend{ border-color:#7fd1ff; }
+.isl-dexbar .chip.dir{ margin-left:auto; border-color:#7fd1ff; color:#aee3ff; }
+.isl-petcard .rst{ font-size:13px; font-weight:800; color:#ff8f8f; margin-top:2px; }
+.isl-petcard .isl-dexrev{ align-self:center; display:inline-block; margin:4px 0 2px; padding:3px 12px; font-size:14px; font-weight:900; border-radius:999px; background:linear-gradient(180deg,#ffe08a,#f2b33d); color:#3a2300; border:2px solid #ffd166; cursor:pointer; white-space:nowrap; }
+.isl-petcard.rest .pic{ filter:grayscale(.6) brightness(.7); }
+.isl-petcard.blk{ opacity:.7; }
+.isl-petcard.blk.rest{ opacity:1; }
+.isl-petcard.t-friend{ border-color:#7fd1ff; box-shadow:0 0 10px rgba(127,209,255,.35); }
+.isl-dexfoot{ display:flex; justify-content:center; margin-top:16px; }
 /* ★ v1.197.0 夥伴詳情卡分區排版(比照大對抗英雄圖鑑的分欄視覺) */
 /* ★ v1.216.0 老師「寵物能力視窗的項目/數字/說明文字都用不同色彩字體提升質感,呈現大自然海洋風格」—
    每一區塊左緣加一道各自的珊瑚/海草/沙灘/珊瑚色系細邊條當視覺分色(不動版面結構,只加 border-left+微調底色調),
@@ -5898,10 +5919,14 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 .isl-ab .tip{ position:absolute; left:0; right:0; bottom:calc(100% + 6px); top:auto; z-index:30; margin-top:0;
   background:#0e2436; border:2px solid #ffd166; border-left-width:4px; box-shadow:0 12px 28px rgba(0,0,0,.55);
   border-radius:10px; padding:8px 11px; font-size:15px; line-height:1.55; font-weight:400; pointer-events:none; }   /* ★ v1.213.0 老師「改成懸浮在該能力的上方」— top→bottom,浮窗改往上長;原本浮在下方時,越靠近清單底部的項目說明越容易被視窗邊界或下一列蓋住/裁到看不全,改往上長之後清單裡大多數項目上方都已經有內容區域,顯示空間比往下長穩定得多。 */
+.isl-abil:not(.sk) .isl-ab .tip{ top:calc(100% + 6px); bottom:auto; }   /* ★ v1.323.0 四維說明多了「怎麼練」清單變高,四維方塊在右欄最上面,往上長會被視窗頂端裁掉 ⇒ 四維這組改往下長(下方是生存技能清單,蓋住無妨);生存技能維持往上 */
+.isl-ab .tip .how{ display:block; margin-top:6px; padding-top:6px; border-top:1px dashed rgba(255,209,102,.5); color:#cfeaff; }
+.isl-ab .tip .how b{ flex:none; font-size:inherit; color:#ffd166; }
 @media (max-width:900px){ .isl-abil{ grid-template-columns:1fr; } }
 #island-root.ipad .isl-ab{ font-size:26px; } #island-root.ipad .isl-ab .an{ flex:0 1 auto; flex-basis:auto; min-width:0; max-width:62%; }   /* ★ v1.168.0 量測:iPad 橫式(1024)這格只有約 200px 寬,名稱欄硬吃 160px 會把數字與進度條擠出卡片(實測橫向溢出 19px);改成可收縮、上限 62% */
 #island-root.ipad .isl-ab b{ flex-basis:86px; font-size:28px; }
 #island-root.ipad .isl-ab .ax{ font-size:20px; } #island-root.ipad .isl-ab .tip{ font-size:22px; }
+#island-root.ipad .isl-ab .tip .how b{ flex:none; font-size:inherit; }   /* ★ v1.323.0 擋住上一行 .isl-ab b 的 28px 大字 */
 #island-root.ipad .isl-char2 h4 .h4hint{ font-size:20px; }
 /* 🧍 營地主角可點(說一句當前進度/心情);泡泡本身仍不吃點擊,才不會擋住第二次點擊 */
 #isl-camp-char .isl-tired{ pointer-events:none; }
@@ -6532,7 +6557,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.322.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.325.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -6541,7 +6566,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.322.0';   /* ★ v1.322.0(2026-09-24・老師「許多 iPad 學生在荒島大地圖,遊戲初期點了沙灘沒辦法進入沙灘,但可以進營地」)— 根因:v1.305.0 傳送點走近自動回大地圖 + islGoMap 內 islZoneRemember 把「站在傳送點上」記成當日最後位置 ⇒ 同日再進該區就出生在傳送點上、第一幀立刻被彈回大地圖(沙灘傳送點左側與下方是岩壁只能從上方進入,100% 必中;其他區從上往下走進傳送點也會中)。修法:islEnterZone 出生點離傳送點 <96px 改用 spawn0 + 新旗標 _IS.exitArm(離開傳送點 ≥80px 才啟動自動傳送)。本包以 v1.321.0(寵物平衡)三檔為基底疊加;island_db 資料零改動只加 D.LOG,?v= 同步 v1.322.0。 */   /* ★ v1.321.0(2026-09-24・老師六項寵物天賦/技能平衡修正:領角鴞攻擊附加失明(命中-50%)、櫻花鉤吻鮭普攻補血+倒下時全隊回血+技能改立即40%+持續3回合10%、五色鳥普攻2次+受傷縮短冷卻+技能改封技能、敵方傷害-30%、莫氏樹蛙雨天治療+100%且超額轉護盾、梅花鹿技能改治療兼復活80%、櫻花鉤吻鮭與五色鳥解鎖價格調到500貝)— 6 隻寵物的天賦/技能全部重寫,9 個新/改效果鍵(blindOnHitP/atkHealLowP/downHealAllP/basicHits/cdCutOnHit/skillSeal/dmgDownP/healRevive/regenOverflowShield)的消費點:islBtAllyBasic(blindOnHitP/atkHealLowP/basicHits)、islBtHurtUnit(downHealAllP/cdCutOnHit,新增 islBtPetDownHealAll())、islBtMonTick/islBtMonAct(m.blindT 失明倒數與命中判定、dmgDownP 傷害折減)、islBtMonSkill(skillSeal 直接跳過)、islBtMonHitSeq(dmgDownP 同步折減)、islBtPetCmd(healRevive/skillSeal/dmgDownP/regenAll 的 regenOverflowShield 旗標)、islBtRegenTick(overflow 轉護盾)。 */   /* ★ v1.320.0(2026-09-23・老師「我沒看到馴獸的星盤節點」)— 實查 GitHub:minigame_island_db.js 仍是 v1.316.0(SK_BEAST 0 筆)——v1.319.0 那包只放 index/sw/圖(island_db 零改動沒附),v1.317.0/v1.318.0 的 island_db 從未上傳;而 index v1.319.0 已經用 ?v=v1.318.0 這個網址去抓,SW 對帶 ?v= 的程式檔是 cache-first ⇒ 已開過 v1.319.0 的平板把「舊的 v1.316.0 內容」存在 v1.318.0 的網址底下,光補傳檔案它們也不會重抓。修法:island_db 內容與 v1.318.0 相同(馴獸專精/寵物圖片倍率/露水迷霧 15%),只把 D.VER 與這行 ?v= 一起換成 v1.320.0 讓網址改變強制重抓。🔴 教訓:三檔版號有任何一檔沒附在包裡,就要在回覆第一行講清楚「這包不含 X,X 要用哪一包的」——或乾脆每包三檔都附,最保險。 */   /* ★ v1.319.0(2026-09-23・老師交來重生的 8 張螢火蟲圖)— 本檔唯一改動:MG_IMG_FVER 新增 island_bt_pet_firefly_idle/atk/hit/stun/down/skill、island_pet_firefly_walk/sleep 共 8 鍵 = '2'(同檔名覆蓋必做,v1.303.0 教訓)。圖檔本身在交付前處理過:老師原圖 1254×1254 主體佔畫面寬 88~95%、腳底在 72~87% 高,直接用會比舊圖大約 1.4 倍且走路/睡覺浮在影子上方 ⇒ 八張統一同一個縮放(1254→512 再 ×0.75,狀態之間切換不會忽大忽小),並逐張把身體中心 x 與腳底 y 對齊舊圖同狀態的位置;另清掉去背殘留的紅色雜邊(只換成最近的不透明像素顏色,前胸背板本身的橘紅邊緣不動)。刻意畫的 Zz/暈眩星星/晃動線/速度線全部保留。island_db 零改動,?v= 維持 v1.318.0。 */   /* ★ v1.318.0(2026-09-23・老師三項:①螢火蟲圖片畫成屁股發光的蜜蜂、不符合自然科學常識 → 只交付重生圖片提示詞,本檔零改動;②梅花鹿圖片放大20%、石虎/海鷗小白縮小10%、莫氏樹蛙/螢火蟲縮小20%;③莫氏樹蛙技能增強為3回合每回合回15%)— ②新增單一出口 islPetPicMul(k) 讀 island_db 的 D.PET_PIC_MUL,只接兩個消費點:營地寵物容器邊長(islCampPetsPaint 的 _psz)與戰鬥隊友立繪框(islBtFigPos 的 sz),都是改框的寬高(不疊 transform),腳底定位不動;夥伴圖鑑/編組格等「塞滿固定框」的小圖示不吃倍率。③純資料(island_db PET_CMDS.dewmist regenAll 6→15),本檔零改動。⚠ 老師之後若用同檔名覆蓋上傳 8 張新螢火蟲圖,下一輪務必在 MG_IMG_FVER 補這 8 鍵(v1.303.0 教訓);本輪刻意不先 bump,免得裝置在新圖上傳前用新網址把舊圖又快取一次。 */   /* ★ v1.317.0(2026-09-23・老師「荒島的天賦星盤新增馴獸專精路線,主要提升所有寵物各項能力和技能強化」)— island_db 新增第 9 條星域 🐾 馴獸專精(-90 度正上方,核心「馴獸之心」+15 顆節點,含🔀二選一分歧、🌟羈絆守護關鍵節點、👑萬獸之王精通,另加頭銜「馴獸大師」)。本檔接上 12 個新效果鍵的消費點,全部只作用在寵物隊友(u.t==='pet'),好友借用角色不受影響:islPetStats(petHpP/petAtkP/petDefP/petSpdP 四維%、petCdCut 冷卻減免,圖鑑/詳情卡/戰鬥共用同一出口)、islBtMakeAllies(petGaugeStart 開戰計量)、islBtGaugeTick(petGaugeP 計量累積速度)、islBtAllyBasic(petCritC 普攻暴擊率)、islBtHurtUnit(petCutP 寵物減傷上限 50%、petGuts 每場第一次倒下保留 1 HP)、islBtPetCmd(petSkDmgP 技能傷害)、islPetHealMul/islBtShieldAll(petSkSupP 技能治療/復活/持續恢復/護盾)。星盤畫面本身零改動(快速跳轉鈕/星域名牌/連線全部讀資料表自動生成)。 */   /* ★ v1.316.0(2026-09-23・老師「荒島的主角跑步側面角色圖片要往影子貼近,尺寸也要再縮小25%」)— 只動側面(row2)跑步這一條路徑,不影響正面/背面跑步或任何方向的跳躍:①尺寸再縮小25% — 新增 `_rjSide2=0.75` 疊乘進既有的 `_rjBase×_rjWsc×_rjRowMul×_rjHFix` 連乘式(x/y 同倍率一起縮小,不擠壓變形)。②往影子貼近 — 用 Node+sharp 重新逐像素量測老師目前實際上傳的全部 8 種髮型跑步圖(boy_h0~h3、girl_h0~h3),量出側面(row2)真實腳底錨點 footY 分別落在 50/56/54.5/55.5/56/53.5/58.5/57.5px,對照正面/背面沿用的固定錨點 60px(離陰影所在的 64px 畫面底部只差 4px,視覺上已經很貼近),側面 8 種髮型的錨點普遍比 60px 高了 1.5~10px,縮放時腳底又固定在 footY 原地不會跟著移動,所以看起來比正面/背面更懸空。新增 `_rjShiftY=Math.max(0,60-footY)`,在 `w.style.transform` 疊加一段 `translateY(_rjShiftYpx)`,寫在 `scale(...)` 前面(CSS 複合 transform 以最後列出的函式先套用、最先列出的函式最後套用外層位移,translateY 因此以「最終顯示像素」為單位平移、不會被任何一路縮放倍率放大或縮小),精準把側面腳底錨點統一拉到跟正面/背面同一個 60px 基準,不需要重新調校腳底貼地(transformOrigin 錨點本身沒有變)。⚠ 兩項數值都是拿實際圖片量測+CSS transform 複合順序的數學驗證算出來的,不是用猜的,但沒有實機截圖比對修正後畫面,麻煩老師實機看一次跑步側面人物是否已經夠貼近陰影、尺寸縮小的幅度是否合適,需要再調再回報。 */   /* ★ v1.315.1(2026-09-23・老師看新的側面身高校正預覽截圖回報「跑步的腳底貼齊水平地平線」)— v1.315.0 的 islFullRunHScale 逐格身高校正本身量測正確,但套用時沿用舊有寫死的 `transformOrigin:'32px 60px'` 當縮放錨點,實測用 Node 逐像素量測老師 4 張跑步圖的側面腳底基準線(islFullRunCenter 算出的 med,÷2 換算成 64px 顯示座標)發現真實值落在 50~56px,不是猜測中的 60px(4 種髮型都不一樣、且沒有一種剛好等於 60);CSS scale 錨點沒對準真正的腳底像素,側面每一格疊乘的身高校正倍率(0.6~2 倍)又逐格不同,於是每一格「被拉伸/壓縮的幅度」不一樣,腳底就跟著每一格往上下飄動(錨點偏低 10px 時,套用最極端的兩倍率算出腳底浮動範圍可達 14px)——這是 v1.315.0 校正值本身沒錯、但縮放基準點選錯導致的新副作用,不是重新量錯身高。修法:islFullRunCenter() 算 dy 時,side 列(row2)額外把算出來的中位數基準線(med,已經是全部 8 格腳底對齊後的共同基準)存成 `out.footMed`;islFullGet 的 finish() 一併存成 `outs.footY = footMed/2`;islRjPaint() 側面(row2)且量得出 footY 時,transformOrigin 改用 `32px <footY>px` 這個逐圖實測的真實腳底錨點取代寫死的 60px(量不出來的舊圖/正面/背面不受影響,退回原本 60px,行為不變)——縮放錨點本來就在腳底像素上,不管疊乘幾倍腳底位置本身完全不動(CSS transform-origin 的定義保證這一點,不是估計值,是數學上必然成立),徹底解決「腳底離地飄動」的根因,不需要再另外加位移補償去追每一格。 */   /* ★ v1.315.0(2026-09-23・老師看圖回報「奔跑的側面人物還是會忽大忽小,重新將八張側面跑步循環圖的角色尺寸高度調整成和正面一樣的高度,不可以漏掉任何一張」)— 過去兩輪(v1.312.0/v1.314.0)修的都是「側面整排套同一個倍率」(dy 腳底基準線置中、_rjRowMul 整排再放大 25%),從未處理過「側面 8 格各自的人物高度本來就不一致」這件事;跨步/收腿姿態時,同一列跑步循環裡每一格人物 alpha 外接框的高度本來就有落差(畫師沒有嚴格對齊每一格的身高),固定套用同一個倍率沒辦法把每一格拉回同一個高度,播放起來才會看到「跑起來的人時大時小」——這是逐格差異,不是效能或播放序列問題。新增 `islFullRunHScale()`:量出正面(row0)8 格人物高度的平均值當基準身高,側面(row2)8 格逐格各自量出自己的高度,算出「基準身高 ÷ 這一格高度」的等比校正值(x/y 同倍率一起縮放,不會把人物擠扁拉長變形),`islRjPaint()` 組 CSS scale 時依目前播到的那一格(col)動態疊乘這個逐格校正值,取代過去「整排套同一個固定倍率」的做法;實測老師目前實際上傳的三張跑步圖(run_boy_h0/h1、run_girl_h0),8 格側面原始高度落差最大到正面的 6~7 成(如 boy_h0 的 68~85px vs 正面平均 108.5px),逐格校正後 8 格全部精確對齊到同一個高度(誤差 0px),v1.314.0 那條整排 25% 放大的固定倍率繼續保留疊乘在外層(維持老師先前要求的整體放大幅度),兩者互不衝突。 */   /* ★ v1.314.1(2026-09-22・老師修正 v1.314.0 的 AP 上限加成倍率:「AP上限新增兩種加成 — 冒險等級每10級 +1(封頂Lv50,最多+5)、舒適度每20點 +1(封頂100,最多+5)」— 上一版誤把「+5」看成每一級距的加成量,實際老師要的是每級距 +1(封頂 +5),兩條算式的 `×5` 尾數改成 `×1`(`Math.floor(Math.min(islAdvLv(),50)/10)×1`、`Math.floor(Math.min(comfort,100)/20)×1`,邏輯結構不變只改倍率),AP 消耗一覽視窗說明文字同步改回「⭐冒險等級每 10 級 +1(封頂 Lv50)、😊舒適度每 20 點 +1(封頂 100)」。 */   /* ★ v1.314.0(2026-09-22・老師五項:①看圖「存入倉庫選單圖片文字再縮小一些,不要讓右邊被裁切或是物品說明被遮擋」②「主角的冒險等級也顯示在戰鬥中(目前只顯示武器等級)」③「戰鬥指令再縮小些,不要跑去第二行」④依老師貼回的 D.LAYER_ADJ 代碼更新立繪參數(island_db 端)⑤「主角側面跑步圖片全部再放大25%,正面和背面的跑步圖片全部放大10%」— ①islBagOpen()/islStoreOpen() 選取模式的 .isl-bagbox 新增 selmode class,圖示由 144px 縮到 100px,並新增一段不分裝置(先前 v1.305.0 只在 #island-root.ipad 縮小,老師這輪截圖證實 PC 也會裁切)的 CSS 統一縮小 .nm/.n/.q/.fx/.seltag 五樣文字,四樣加起來不再比方格寬。②islBtOpen() 主角血條列的 <small> 標籤在武器標籤前面插入「⭐Lv+islAdvLv()」(沿用角色能力視窗同一支既有函式),同一行不增加版面高度。③#isl-battle .bt-acts button 自 v1.192.0 放大到 124×96 後從未跟著縮過,疊上 v1.313.0 的收合鈕後滿編仍有 9 顆,一般桌機視窗在 zoom:1.3 下常態裝不下整排;改成 96×74(icon 32px/文字 13px)、容器 gap 8→6px,iPad/手機兩個既有小尺寸斷點不動。④⑤見 minigame_island_db.js 與 index.html 內對應函式 islRjPaint() 的 changelog 註解。⑥老師追加「主角AP上限提升的方式增加:冒險等級每達到10的倍數(最大50級)AP+5、舒適度每達到20的倍數(最大100)AP+5」— 新的一天結算 ISL.apMax 那一行疊加兩條 `Math.floor(Math.min(現值,封頂)/門檻)×5`,與既有帳篷 Lv3/5、舒適≥20 舊制 +1、天賦 apAdd 三個來源各自獨立疊加不互相取代;AP 消耗一覽視窗與 HUD 提示文字同步補上這兩條新來源的說明。 */   /* ★ v1.313.0(2026-09-22・老師看圖「把特殊指令收合成一顆按鈕,按下去展開」)— 裝設的 1~3 個 🎯 特殊指令(戰場急救/呼喚夥伴/煙霧彈…)原本跟緊急包紮/絕招/攻擊/智取/防禦/道具/換武器/逃跑擠在同一排動作鈕裡,裝滿 3 個時整排會很擠。`islBtActsHtml()` 改成:裝了至少 1 個特殊指令才渲染一顆「🎯 特殊指令」收合鈕(class=more),實際的 1~3 個指令鈕改標 class="sub" 並用新 CSS 規則 `#isl-battle .bt-acts button.sub{display:none}` 預設藏起來;新增 `islBtCmdToggle()` 切換 `#isl-bt-acts` 的 `cmdopen` class(展開時連動把收合鈕文字換成「✕ 收合」),`islBtActsBindTip()` 的放開事件裡攔截 `data-a==="cmdmore"` 優先處理(純 UI 面板開合,不算一次戰鬥行動,不吃 `B.busy` 守門,戰報/回合權完全不受影響);點了展開面板裡任一個指令,`islBtAction()` 的 `cmd:` 分支會先呼叫新增的 `islBtCmdClose()` 自動收合回去(不管指令成不成功都收,不用玩家自己再點一次)。一個指令都沒裝設時完全不渲染收合鈕,維持原本「沒裝就不出現任何指令相關按鈕」的行為;長按收合鈕沿用既有 `islBtActTip()` 說明泡泡機制,補一句「展開/收合已裝設的特殊指令」。 */   /* ★ v1.312.0(2026-09-22・老師看圖「奔跑時三個面向的尺寸和圖片比例錯誤:①正面/背面角色被拉寬了,要修成跟走路一樣的寬度比例 ②側面跑步人物尺寸縮小忽大忽小,腳也沒踩在同一地平線」)— 老師 v1.301.0 那輪重新上傳過一批跑步圖(檔名不變、直接覆蓋),把「現在實際在線上」的圖抓下來逐像素量測(沿用 islFullRunCenter 同一套 alpha 外接框演算法)才找到兩個各自獨立的根因:①正面/背面人物 alpha 外接框寬度比走路基底圖寬了約 4~5 成(側面沒有這個問題,是正常跨步變寬變窄的動畫),v1.237.0 當年加的 scale(1.16) 是「等比」放大,沒辦法只修寬度不動高度;新增 islFullRowBBox()/islFullWalkRowW()/islFullRunWScale() 三支函式,跟既有 islFullSkinMul() 同一種做法——拿走路基底圖(base_<body>_s0)當寬度參考基準,現場量測跑步圖正面/背面的實際寬度,算出校正比例(縮到 0.55~1.05 之間防暴衝),islRjPaint 的 CSS scale 拆成 x/y 兩軸,x 軸疊乘這個寬度校正、y 軸維持原本 1.16 倍不動,側面(row2)固定不修;以後不管哪個髮型重傳圖,這裡都會自動重新量、不必回程式改寫死的倍率。②v1.291.0 當時「腳底幾乎都釘在同一條線,拿掉 dy 只留水平置中」的結論是拿舊圖量的,這批新圖重新量測後發現正面/背面依然穩(≤2px 不用修),但側面這批新圖腳底 y 實際跨了 6px 不是穩定一條線;islFullRunCenter() 加回 dy 計算,但只在側面(row2)生效,用這一列 8 格腳底 y 的中位數當基準,超過 2px 才修正,正面/背面繼續維持 dy=0。★ 已用 Node+sharp 解碼老師實際上傳的 island_run_boy_h0/h1、island_run_girl_h0 三張圖跑過這三支新函式驗證數值(正面/背面校正值落在 0.62~0.71 之間,側面 dy 修正量在 -6~3px),並用 Playwright 真的把 CSS 疊出來的畫面截圖比對修正前後,正面/背面視覺上明顯變窄回到走路的身形比例,側面畫面未受影響;其餘髮型(h2/h3)未能實機驗收,麻煩老師確認全部髮型跑起來都正常。 */   /* ★ v1.311.0(2026-09-22・老師看圖「天賦節點可以點亮的區域不正確,必須按照路線依序走過去,不可以跳過去點後面的節點」)— 根因不是畫面判斷邏輯寫錯,是 v1.300.0 那輪把 59 段既有連結逐段插入中點節點時,把「原子節點的 req 改指向新節點」(例如「藥效Ⅱ」的前置從「藥效Ⅰ」改成新插入的「止血」),但沒有替舊存檔補這一步:舊存檔裡藥效Ⅱ/藥效Ⅲ/藥效Ⅳ這些早就點亮的下游節點 taken 仍是 true,新插入的「止血/緊急包紮/為隊友包紮」taken 卻是 false 且 req(藥效Ⅰ/藥效Ⅱ…)剛好已經 taken,於是新節點顯示成「可以點亮(黃圈)」——畫面上就是「後面已經亮、前面反而還沒點亮可以點」的違反路線順序畫面,看起來像能跳著點,其實是舊存檔的殘影。新增 islSkMigrateB6(ISL.sk.ver 5→6,每份存檔只跑一次):凡是已經點亮的節點,把它 req 鏈上所有前置節點一併回填點亮(不額外收費,玩家本來就已經走過這條路,只是中間新插入的那一顆幫忙補發,多輪疊代到鏈路補完整為止),只動必經的 req、不動分歧二選一的 reqAny。island_db.js 本輪零改動,只有 index.html 的 islSk()/islSkMigrateB6() 邏輯異動。 */   /* ★ v1.310.0(2026-09-22・老師兩項)—①「把『訪客未登入』也共用玩家名稱這個位置,也是不要推擠前面的按鈕」— #isl-hud-guest(👤 未登入帳號 🔑)原本釘死在 HUD 最前面,常駐佔位會把 📅🌙☀⚡❤️🐚📦🏠🏗📜 這一整排操作用藥丸往右推;搬到 HUD 尾端跟 v1.309.0 新增的 `#isl-hud-me` 緊鄰,兩者共用同一個「畫面右上角」槽位——本來就是互斥關係(islHud() 用 `.hidden` 切換,登入顯示玩家名稱、沒登入顯示訪客標籤,同一時間只會有一顆),單純搬動 DOM 位置(從 HUD 最前面移到 `.grow` 之後、最尾端),不動任何 JS 判斷邏輯與 CSS 規則(`.ih.guest`/`.ih.me`/`.tight` 收合規則全部原樣沿用),風險等同一次剪貼。②「更新了這八張新的跑步圖上傳到Github了,確實的把染色、跑步循環做正確」— 比照 v1.241.0/v1.303.0 同一個坑:同檔名覆蓋重傳圖片,若不個別 bump `MG_IMG_FVER`,已經抓過舊圖的裝置(cache-first)會永遠卡在舊圖;`island_run_boy_h0~h3`/`island_run_girl_h0~h3` 共 8 個鍵 2→3,只讓這 8 張圖的網址改變重新抓取,不動全域 MG_IMG_VER。island_db.js 本輪零改動。 */   /* ★ v1.309.0(2026-09-22・老師「荒島求生的右上角新增玩家名稱方便辨識」)— #isl-hud(頂部常駐欄)最尾端新增一顆純顯示用藥丸 `#isl-hud-me`(👤 玩家名稱),視覺上落在畫面右上角;只在已登入帳號時顯示,內容讀 `MG.user.displayName`(沒有就退 `MG.user.email`,再截到 10 字),訪客模式已有專屬的 `#isl-hud-guest`(👤 未登入帳號 🔑)標籤在 HUD 最前面,兩者互斥不重複顯示。共用既有的 `islHud()` 單一重繪出口(登入/登出會觸發 `islOnUser` 重畫 HUD,不必另找呼叫點)與 `islHudFit()` 自動收窄機制——放不下時 `.tight` 層級會先把這顆收成只剩 👤 圖示(比照既有 guest 標籤的做法),用純中性配色(不用其他藥丸的彩色底)標示它不可點擊,不會撐爆 iPad 頂部欄位。island_db.js 本輪零改動。 */   /* ★ v1.308.0(2026-09-22・老師回報「PC版敲釘子格子版面太大超過螢幕,要拖曳畫面才能點,但有些玩家的PC沒這問題」)— `.isl-nails`(敲釘子 6×6 格)舊寫法 `height:min(100%,420px)` 的 100% 是相對 `.isl-act-inner` 這個沒有指定寬高、純看內容疊多高的 auto 容器,而內容裡就包含 `.isl-nails` 自己 ⇒ 「父層高度看我多高、我的高度又要看父層多高」的循環依賴,CSS 規格對算不出來的父層高度要退回 auto 處理,但 auto 混進 `min()` 函式時不同瀏覽器/排版引擎實測收斂結果不一致(疊上 #island-root 既有的 zoom:1.3 更放大這種不一致),才會「同一份程式碼,有的 PC 抓到安全上限、有的抓到異常大的值把 36 格撐超出螢幕」。改法:徹底不再依賴父層百分比高度,`.isl-nails`/`.isl-pipes`(水道 5×5,同一種舊寫法,順手一併修)改用 `min(80vw,62vh,480px)`(`.isl-pipes` 用 78vw,58vh,420px)同時吃視窗寬與視窗高兩個方向比例,vw/vh 相對「視窗」不相對父層、不會有循環依賴,且本檔其餘 clamp()/vw/vh 寫法在 zoom:1.3 底下已有既有先例驗證過正常運作;不論 PC 螢幕解析度大小,格子永遠照視窗比例縮放並保持置中,不會再超出可視範圍。詳見 island-style 區塊 `.isl-nails`/`.isl-pipes` 規則上的完整註解。island_db.js 本輪零改動。 */   /* ★ v1.307.0(2026-09-22・老師「星盤的節點距離太近都疊在一起了,修正」)— 本檔零改動,天賦星盤節點重疊的根治全在 minigame_island_db.js 端(D.SK_CANVAS 放大 2 倍+D.SK_NODES 座標等比放大+三個座標巧合節點另外挪開,詳見 island_db.js D.VER 說明),這裡僅隨資料表版號同步(`minigame_island_db.js?v=` 這行本輪一併對齊 v1.307.0,避免踩到 v1.276.0/v1.288.0/v1.303.0 三次都漏跟同一行的舊坑)。 */   /* ★ v1.306.0(2026-09-22・老師「iPad 戰鬥下方的指令文字要縮小50%,使一行可以完整包含所有特殊+基礎指令」)— #island-root.ipad 的 `.bt-acts button` 覆寫整組等比縮小約 50%:框 162×125→81×63px、圖示 54→27px、`.bt-acts button small` 名稱字級 33→17px(與 <620px 手機斷點的 81×78/33/17 相近但更矮);同時把容器 `.bt-acts` 的 gap 從共用的 8px 收到 5px 多留一點空間。這排動作鈕最多可能同時出現到 11 顆(3 個已裝設的特殊指令+緊急包紮+絕招+攻擊/智取/防禦/道具+換武器+逃跑),舊 iPad 尺寸每顆連間距近 170px,11 顆遠超 iPad 可視寬度必定被 `.bt-acts` 的 `flex-wrap:wrap` 擠成兩行;縮小後每顆約 89px,11 顆約 980px,iPad 橫向可視寬度內裝得下一整排。只動 iPad(`#island-root.ipad`),PC 版本輪未動、手機另有自己的 `<620px` 斷點。 */   /* ★ v1.305.0(2026-09-22・老師兩項)—①各地圖新增傳送到大地圖的傳送點,走靠近自動切換:各區早就有一顆 kind:'exit' 的傳送點(sc.exit,渲染成 🗺 大島地圖 圖示),舊版要走近後再按互動鈕才會 islGoMap();islNearCheck() 新增一段跟撿小物同一種「走近自動觸發」寫法(判定半徑 40px,比一般 POI 顯示鄰近鈕的 96px 更緊,只是路過不會被送走),觸發時直接呼叫 islGoMap() 並回傳 true;islTick 呼叫端比照遇敵/踩地雷兩個既有分支,收到 true 立刻 return,不會在畫面已切到大地圖之後還跑完那一幀剩下的野外邏輯。11 區的傳送點座標本來就都已存在(island_db.js sc.exit),零資料表異動。②iPad 版「回營地存入/取出」視窗圖片文字縮小:v1.185.0(材料圖示 72→144px)與 v1.278.0(.seltag 標籤字級 16→32px,還要塞下 +/- 步進器)兩輪各自放大疊加後,在 iPad 4 欄/3 欄窄版面撐爆——.seltag 是 white-space:nowrap+overflow:hidden,塞不下不會換行變矮而是直接被裁掉一截。新增 #island-root.ipad 專屬覆寫(放在 <style> 最尾端蓋過舊規則):.seltag 字級 32→18px 並縮小 +/- 步進器,.isl-bag-slot.has img 的 max-width 86%→68%+補上 max-height:92px;只動 iPad,PC/手機兩個既有斷點不受影響。 */   /* ★ v1.304.0(2026-09-22・老師兩項)—①跑步時頭髮一塊塊變色:跑/跳圖頭髮是帶色偏的灰,舊規則只收純灰,其餘像素掉進身體層或被女生粉紅上衣規則收進服裝層;新增 islFullIsHair 放寬跑/跳圖頭髮判定(限格內 y<100 避開鞋襪)並把頭髮像素轉純灰階,髮色濾鏡才與走路頭髮同色。②側面跑步每格 150→75ms,正/背面不變。 */   /* ★★ v1.303.0(2026-09-22・老師連續兩輪回報「跑步還是卡住,兩腳持續張開懸空」,經像素比對/慢動作播放頁面反覆確認側面 8 格圖片本身與 10 步播放順序都正確無誤後,老師仍然實機看到舊的破圖畫面,逼出真因)— 真因是老師 v1.301.0 那輪重新上傳的 8 張 island_run_<body>_h<n>.png(同檔名覆蓋)從未被加進 `MG_IMG_FVER` 個別快取版號表,而 `/minigame/img/` 走 cache-first 策略,已經抓過舊圖的裝置會永遠卡在舊快取——跟 v1.241.0 八張戰鬥圖同名覆蓋踩過的同一種坑,只是這次踩在跑步圖上。見下面 `MG_IMG_FVER` 表新增這 8 個鍵處的完整說明。程式邏輯(ISL_RUN_SIDE_SEQ 10 步順序)與圖片內容本身這兩輪確認皆無問題,不必再改。 */   /* ★★ v1.302.0(2026-09-21・老師「側面跑步圖正確順序 4512354678 循環」)— 側面(side)跑步序列改成老師指定的固定循環順序:4→5→1→2→3→5→4→6→7→8→(回到4)共 10 步(1-indexed 格號),不再是單純把 8 格從頭播到尾;新增 `ISL_RUN_SIDE_SEQ` 常數([3,4,0,1,2,4,3,5,6,7],0-indexed),`islFullRunSeq` 只在 row===2(側面)且 8 欄新圖時套用,正/背面(row 0/1)不受影響、仍照原始欄序播放。`islRjPaint` 消費端早在 v1.289.0 就已經把序列長度改吃 `_sq.length`(不寫死 10),這次 10 步的序列不必再改任何播放邏輯,直接吃得到。 */   /* ★★ v1.301.0(2026-09-21・老師重新上傳 8 張跑步圖 run_boy_h0~h3/run_girl_h0~h3,要求重新確認跑步循環順序是否正確)— 逐格核對新圖後發現:原本靠 `ISL_RUN_SKIP` 跳過的兩個角色(`run_boy_h0` 正/背面第 4 格、`run_girl_h2` 正/背面第 3~4 格「雙腿併攏站立」違和格)這次老師已經在新圖裡修掉了,正/背面 8 格現在都是連續自然的跑步動作,舊剔除表已經沒有存在必要,`ISL_RUN_SKIP` 清空,兩個角色與其餘 6 個角色一樣完整播 8 格,循環節奏才會一致(舊版少 1~2 格會讓這兩個角色的跑步比別人快、卡頓)。★ 側面(side)第 4~5 格那個「雙腳併攏、跨步交會」的瞬間逐格核對後確認是全部 8 張圖共通的正常設計(v1.291.0 曾誤判成問題但當時沒有深入核對,這輪用像素級比對+目視雙重確認排除),維持不剔除。八張新圖同輪已對接上傳(檔名不變,直接覆蓋)。 */   /* ★★ v1.300.0(2026-09-21・老師「天賦星盤節點間新增對應能力小節點＋『格擋率』改『閃避減傷』＋『更多說明』視窗中心新增狀態收益與已解鎖特殊指令清單」)— ①資料層(island_db.js D.SK_NODES 70→129 節點)：既有 59 段前置連結(五武器星域各 7 段×5、生活技藝 5 段、醫療三支線各 4 段、特殊指令 7 段)逐段插入一顆固定 +1% 的小節點,依路線專精分配 9 種能力(暴擊率/攻擊/最大體力/防禦/速度/跑速/治療量/異常狀態抵抗/閃避減傷),每種能力累計節點數皆 ≤20(=+20% 上限),詳細分配見 island_db.js D.VER 說明。②新效果鍵接線:`ailResP`(異常狀態抵抗)併進 `islAilRollZone`(區域型)與 `islAilDaily`(失溫/感染)共 3 處機率折扣公式;`dodgeCutP`(閃避減傷,取代老師原提議的「格擋率」——戰鬥系統本來沒有被動格擋,只有 QTE 完美閃避)併進 `islBtDodgeApply` 的「閃過一半」傷害再折算,上限額外 50%,完美閃避(0 傷害)不受影響。③新增 `islSkBonusHtml()`:天賦星盤「更多說明」收合區中間(介紹段落之後、已解鎖頭銜清單之前)新增兩份清單——📈 目前點亮節點的狀態收益(逐一讀 D.SK_NODES 現況的 d 文字組成,武器限定節點附註「裝備○○才生效」)與 🎯 已解鎖的特殊指令(讀 D.SK_CMDS 對應的效果文字),兩份都沒有另外維護第二份資料,新增節點/指令會自動反映。 */   /* ★★ v1.299.0(2026-09-21・老師三項:①戰鬥截圖回報「邀請好友協助戰鬥,沒有正確讀取到好友的角色造型」②「下方指令文字縮小一些不要有兩行字」③「長按指令可以在該指令上方暫時開啟指令效果說明,放開後關閉說明」)— ①根因:借用版好友的戰鬥單位(islBtMakeAllies)從 v1.164.0 起就寫死回傳通用 emoji(🧑),從沒讀過好友實際的造型(其實 ISL.friendCache[uid].char 早就有,名片系統 v1.244.0 就在發布);單位物件補上 char 欄位、islBtFigHtml 的隊友立繪分支改成有 char 就用 islChibiHtml 畫出本人像素造型(與主角缺整張戰鬥圖時的既有 .chibi 備援共用同一套 CSS scale(3) 規則),沒有 char 才退回 emoji;順手一併修正探險編組站位預覽/隊友卡/戰鬥中點頭像預覽三處同一種「固定顯示🧑」的舊碼,新增共用小圖示出口 islBtSmallChibi()。②`.bt-acts button small` 21px→16px+nowrap:4 字指令名稱在 124px 按鈕裡原本會被擠成兩行,疊上指令鈕本來就有的「名稱/⚡花費」兩行結構,合計三行擠成一團。③新增 islBtActsBindTip():動作列的 onclick 代理改成長按/短按分流(比照全站設施/裝飾長按看說明、短按才動作的既有慣例)——按下起算 420ms,撐滿就在該顆按鈕正上方浮出效果說明泡泡(.bt-tip,🎯特殊指令/✨絕招複用 D.SK_CMDS/D.SK_ACTS 現成的 .d 說明文字,其餘七顆通用動作用新的簡短對照表 islBtActTip),放開泡泡就收掉;沒有撐到 420ms 的一般短按維持原樣立刻執行動作。 */   /* ★★ v1.298.0(2026-09-21・老師回報「營地點擊設施、裝飾、右方選單,主角會自己往左上角移動到底」)— 真因見 islLongTapBind() 上方的完整說明:主角與已收服寵物共用的「長按開視窗」共用出口,其 `window.addEventListener('mouseup', up)` 是**無條件全域監聽**(唯一漏加守門的一處,設施/裝飾兩支姊妹函式都有正確守門),且寵物元素每次 islCampPetsPaint() 重繪營地都會整批重新綁一次、舊監聽從未清除;於是任何一次滑鼠/觸控放開(不管點的是設施、裝飾、右側選單按鈕、甚至任何按鈕)都會讓這些從未在自己身上按下過的 up() 一起執行,讀到閉包裡從未更新過的初始座標 (0,0),夾出營地座標的極限值(x=3、y=72)──正是畫面左上角,且每次任意點擊都會重觸發,才會看起來像「自動往左上角衝到底」。修法:新增 `active` 旗標(比照 islCampBldDragBind/islDecoDragBind 既有的 `cur` 守門寫法),只有真的在這顆元素身上按下過才會處理放開事件,不是衝著它來的一律忽略。 */   /* ★★ v1.297.0(2026-09-21・老師「天賦星盤『呼喚夥伴』的效果改成完全恢復1名隊友的HP,名稱和說明也修正」)— islBtHealOne(B.hero, 20) → islBtHealOne(B.hero, 100),20% 治療量改成 100%(封頂邏輯本來就有,不會超過滿血);D.SK_CMDS.CMD_CALL 與天賦節點 SK_CMD_6 的 d 文字同步改成「完全恢復體力」;順手修正 SK_CMD_6 節點文字裡「(野外+戰鬥・⚡1)」的錯誤標示(CMD_CALL 自 v1.165.0 起就已經改成戰鬥限定,野外沒有隊友單位可治療,節點文字一直沒跟著改);sci 自然知識小提示原本講「動物能分辨熟悉的聲音」跟治療效果搭不上,改寫成「呼喚→夥伴放下戒心全力照顧→加速恢復」的因果說法。⚠ 名稱「呼喚夥伴」本輪維持不動(老師沒有指定新名稱,效果變強但「呼喚」的敘事本身仍說得通——夥伴聞聲趕來救援)。 */   /* ★★ v1.296.0(2026-09-21・老師兩項:①戰鬥圖片複查——老師回報「戰鬥圖片都是完整的」,重新逐格放大檢查後確認上一輪判定 boy_h1/h2/h3 與 girl_h0 勝利狀態有裁切/白線是誤判(整張總覽縮圖顯示時的視覺假象,逐格放大看完全乾淨),已撤回,本輪零改動任何圖檔 ②營地點設施走位——老師回報「點設施1秒開啟視窗後主角應該走向該設施,現在會自主走向左上角落很奇怪」,改回 v1.288.0 之前的流程:長按成立不再就地開窗,`islCampBldDragBind` 的 timer 觸發改呼叫 `islCampGoToCell(i, function(){ islBldNameFlash(i); islCampCellTap(i); })`,主角先走到設施旁邊、抵達才開視窗。 */   /* ★★ v1.295.0(2026-09-21・老師看圖「探險編組選擇的寵物休息中,圖片要換成睡覺的」)— islPetPicHtml() 本來就支援 pose 參數(walk/sleep,沒有對應圖會自動退回 idle,見 v1.212.0 說明),只是探險編組的兩處寵物卡片(隊友卡 islPartyOpen、選誰清單 islPartyPick)呼叫時一直沒有把休息中(_rst/_rs)的判斷傳進去,永遠只顯示 idle 圖。兩處都改成休息中傳 'sleep'、正常傳 'idle';16 隻夥伴的睡覺圖(island_pet_<key>_sleep.png)v1.257.0 就已經上傳並登記好,零新素材依賴。 */   /* ★★ v1.294.0(2026-09-21・老師兩項:①生火QTE的「吹」改成「搧風」,說明也修正 ②生完火主角說「這個品質超好…」很奇怪,針對各種行動寫出2-3種不同的反應台詞)— ①islQteBlow 按鈕/提示/失敗訊息全面把「吹」改「搧風」(💨吹! → 🪭搧風!;吹氣補充氧氣 → 搧風補充氧氣;噗——吹熄了 → 呼——搧熄了)。②根因是 D.MONO 的 star3/crit 兩句內心話原本不分活動類型,通用文字帶著「採集/手拿東西」語感,套到生火/建造/研究這類活動就顯得答非所問;新增 islMonoActKey(base,id) 單一出口,依活動 id 找專屬鍵(如 star3Fire/critFire),找不到才退回原本通用版;island_db.js 補齊 13 種活動(採集/伐木/採石/捕魚/打撈/馴養/烹飪/播種/製作/研究/水道/生火/建造)各自 2~3 句專屬反應共 26 把新鍵,islActResult 的呼叫點改用這個出口。 */   /* ★★ v1.293.0(2026-09-21・老師看圖「戰場急救」天賦彈窗只有空話沒有效果說明)— islSkTap() 組裝天賦節點彈窗時,原本只顯示 n.d(「解鎖特殊指令「🩹 戰場急救」(戰鬥・⚡2)」這種開場白),沒有把 D.SK_CMDS 表裡早就寫好的實際效果文字(如「治療1名隊友50%最大體力;倒下的隊友也能直接救回來」)撈出來顯示,比照同一支函式裡絕招(n.act)那行的寫法補上對應的指令效果行,SK_CMD_1~8 共 8 個特殊指令節點一次全部修好,不必逐一寫死每一顆。 */   /* ★★ v1.292.0(2026-09-21・老師在「🎨 造型工房(GM)」再調一次後貼回「📋 複製設定值」)— 本檔零改動,D.LAYER_ADJ/D.CREATE_DEFAULT 全在 island_db.js 端,這裡僅版號同步。 */   /* ★★ v1.291.0(2026-09-21・老師「確認跑步8張循環的圖有沒有實機問題」)— 拿 GitHub repo 上老師實際上傳的 8 張跑步圖(1024×384)逐格真的量測+目視檢查後,抓到一個 design 階段沒發現的問題:islFullRunCenter() 原本連垂直方向(dy)也比照水平方向做「對齊格子幾何中心」,但 8 張圖 24 列量下來,每格 bbox 下緣(腳底)幾乎都釘在同一條地面線,bbox 上緣(頭頂)才會隨跨步/收腿姿態自然高低變化——把 dy 也拉去對齊幾何中心,會讓雙腳跟著姿態上下浮動,變成人物一邊跑一邊上下彈跳而不是穩穩踩在地上。已拿掉 dy 計算,只保留水平置中(dx);垂直對齊本來就有另一套機制在管(ISL_RJ_NECK 脖子基準線+transformOrigin 腳底錨點),不需要也不能疊加。另外用實圖跑過一次「碎屑清除」規則(strict 版),119 處真實碎屑全部抓到、零漏網,也逐一目視確認 ISL_RUN_SKIP 剔除表(boy_h0/girl_h2 各兩格)是全部 8 張圖裡唯一需要跳過的「雙腿張開站地」違和格,其餘 6 張圖 24 列動作皆正常。 */   /* ★★ v1.290.0(2026-09-21・老師「繼續」— 天賦新效果鍵正式接上節點資料)— 本檔零改動,9 個效果鍵(buildFastP/costCutP/defHpAdd/defSlowP/defWoodAdd/defBiteCutP/exploreP)的消費端上一包(v1.289.0)已接好,本輪只在 island_db.js 的 D.SK_NODES 補上對應節點的 eff 欄位,詳見 D.VER 說明。 */   /* ★★ v1.289.0(2026-09-21・老師「勝利結算分區塊排版/跑步8張循環/天賦新效果鍵」)— ①勝利結算改 islBtResultHtml() 拆成🏆戰果/🎁獲得/📈成長/🐾夥伴四區塊 ②跑步 8 欄新圖(islFullRunSeq 改吃圖鍵+圖寬,ISL_RUN_SKIP 剔除表,islRjPaint 欄數改吃 full.cols、序列長度改吃 _sq.length)③碎屑清除加 strict 規則+islFullRunCenter() 逐格置中 ④天賦新效果鍵掛點:buildFastP(islBuildSecs)、costCutP(islConsume+islCostCutOn 包住建造/製作工具)、defHpAdd/defSlowP/defWoodAdd(islDefStart)、defBiteCutP(islDefBite)、exploreP(islExploreGain,6 處探索度增量)。 */   /* ★★ v1.288.0(2026-09-21・老師多批需求:①重新檢驗所有地圖可移動區域 ②戰鬥魔物面向/HP 數字 ③營地長按與移動優先 ④防衛戰訊息擋住指令鍵 ⑤受傷夥伴復活道具 ⑥四項天賦調整 ⑦BOSS 放大與兩顆鈕移位)—
+var MG_VER = 'v1.325.0';   /* ★ v1.325.0(2026-09-24・老師兩項)— ①治療型寵物自動施展技能改成智能行動:海鷗小白/梅花鹿/莫氏樹蛙/螢火蟲/櫻花鉤吻鮭 這幾隻治療型寵物,原本只要「冷卻好+計量滿」就會自動放技能,不管當下需不需要;本輪新增 islBtIsHealCmd(判斷這招是不是治療型:fx 有 heal/healAll/healRevive/revive/cure/cureAll 任一個)+islBtHealNeeded(照優先順序判斷值不值得現在放:①有人倒下且這招能復活→優先復活 ②身上有不良狀態且這招能解除→優先解除 ③有人[含主角]體力低於70%且這招能治療→治療),islBtAllyAct 判斷 useCmd 時多這層檢查,條件都不成立就先普攻,計量/冷卻繼續保留到真正需要的時候(regenAll 持續恢復類 buff 不受影響,照常自動施放)。②戰鬥受傷數字補上護盾/減傷% 的呈現:老師「受到120傷害但有50護盾就顯示 -120(-50),受到100傷害但有50%減傷就顯示 -100(-50%)」— 新增模組級 _islHurtInfo,islBtHurtUnit 每次呼叫都記下 raw(原始傷害)/pct(cutP+petCutP 疊乘後的合併減傷%)/shield(護盾實際擋下量),新增 islBtHurtFloatText()/islBtHurtFloat() 讀出來組成單一浮動數字,取代原本護盾另外彈一個「🛡 擋下 N」的做法;涵蓋範圍:魔物普通攻擊(islBtMonAct)、魔物技能命中(islBtMonHitSeq)、隊友中燒燙傷持續傷害、陷阱固定比例傷害,主角/隊友、一般攻擊/技能傷害皆適用。 */   /* ★ v1.324.0(2026-09-24・老師四項)— ①天賦節點確認視窗開啟時,天賦星盤要維持在畫面背景:islSkTap 六種說明/確認全部改走新的 islSkPop(疊在 #isl-modal 星盤畫面上方的小視窗 #isl-skpop,不再用 islModal 整片蓋掉星盤),關閉/再想想只收小視窗、星盤原地保留。②荒島戰鬥多段攻擊(石虎二段爪擊、五色鳥連續 2 次普攻等)的每段傷害數字改成間隔 0.3 秒依序跳出(傷害本身仍同步立即結算,只延後受擊動畫與浮動文字,islBtAllyBasic/islBtPetCmd 內用 setTimeout(...,  段序×300) 分開播放)。③天賦節點「野外小憩」效果全面加強:原本只回自己 30% 體力,改成全隊(自己+隊友)體力回滿 100%、解除所有不利狀態、順便讓休息中的夥伴恢復精神可再上場,並限制每天只能用 1 次(新通用旗標 D.SK_CMDS.*.once:'day',island_index 新增 islCmdDayUsed/islCmdDayMark + ISL.cmdDay 記錄表,islCmdUse 用過會擋、islCmdField 按鈕列表也會同步變灰標示「今天用過了」)。island_db 有改(CMD_REST 資料)⇒ D.VER 與 ?v= 一起跟到 v1.324.0。 */   /* ★ v1.323.0(2026-09-24・老師四項)— ①探險編組「隊友 N 要選誰?」改成直接開夥伴圖鑑卡片格線(選隊友模式:只列已收服+好友卡,點卡片即選入) ②休息中寵物的草藥復活鈕縮成短版膠囊貼在名字正下方 ③夥伴圖鑑上方新增類型篩選(攻擊/坦克/治療/控場)+排序(等級/HP/攻擊/防禦/速度/親密度)+遞增/遞減,比照大對抗英雄頁 hpsort-btn 再點一次切方向 ④大地圖各區名稱旁顯示探索度 %(拜訪好友島不顯示) ⑤選隊友篩選新增「🧑 好友」類別 ⑥老師「把所有提升屬性可以做的事情都寫完整」:能力頁四維說明新增「怎麼練」清單(讀 island_db D.STATS[].how),四維浮窗改往下長 ⑦老師「提升腳程用捕魚和馴養非常不合理,改跟跑步、逃亡有關」:捕魚→巧手、馴養→巧思(island_db ACTS/SKILLS),腳程改由 islMovRunAdd(野外雙擊奔跑每 4000px +1 練習、每天上限 8)、戰鬥逃跑(成功 +2/失敗 +1)、完美閃避(+1,每場上限 2)練,共用出口 islMovTrain ⑧老師看圖「幸運沒點亮後面不該開放、飽足沒點後面不該開放」:關掉醫療星域互通 D.SK_MED_LINK(island_db),新增 islSkMigrateB7 把舊存檔靠互通跳點的節點退回點數(sk.ver 6→7,開星盤提示一次) ⑨老師看圖「天賦節點確認視窗開啟時,天賦星盤要維持在畫面背景」:islSkTap 六種說明/確認改走新 islSkPop(疊在 #isl-modal 星盤上的 #isl-skpop 小視窗,不再用 islModal 整個換掉),再想想/關閉只關小視窗不重畫星盤。island_db 有改 ⇒ D.VER 與 ?v= 一起跟到 v1.323.0。 */   /* ★ v1.322.0(2026-09-24・老師「許多 iPad 學生在荒島大地圖,遊戲初期點了沙灘沒辦法進入沙灘,但可以進營地」)— 根因:v1.305.0 傳送點走近自動回大地圖 + islGoMap 內 islZoneRemember 把「站在傳送點上」記成當日最後位置 ⇒ 同日再進該區就出生在傳送點上、第一幀立刻被彈回大地圖(沙灘傳送點左側與下方是岩壁只能從上方進入,100% 必中;其他區從上往下走進傳送點也會中)。修法:islEnterZone 出生點離傳送點 <96px 改用 spawn0 + 新旗標 _IS.exitArm(離開傳送點 ≥80px 才啟動自動傳送)。本包以 v1.321.0(寵物平衡)三檔為基底疊加;island_db 資料零改動只加 D.LOG,?v= 同步 v1.322.0。 */   /* ★ v1.321.0(2026-09-24・老師六項寵物天賦/技能平衡修正:領角鴞攻擊附加失明(命中-50%)、櫻花鉤吻鮭普攻補血+倒下時全隊回血+技能改立即40%+持續3回合10%、五色鳥普攻2次+受傷縮短冷卻+技能改封技能、敵方傷害-30%、莫氏樹蛙雨天治療+100%且超額轉護盾、梅花鹿技能改治療兼復活80%、櫻花鉤吻鮭與五色鳥解鎖價格調到500貝)— 6 隻寵物的天賦/技能全部重寫,9 個新/改效果鍵(blindOnHitP/atkHealLowP/downHealAllP/basicHits/cdCutOnHit/skillSeal/dmgDownP/healRevive/regenOverflowShield)的消費點:islBtAllyBasic(blindOnHitP/atkHealLowP/basicHits)、islBtHurtUnit(downHealAllP/cdCutOnHit,新增 islBtPetDownHealAll())、islBtMonTick/islBtMonAct(m.blindT 失明倒數與命中判定、dmgDownP 傷害折減)、islBtMonSkill(skillSeal 直接跳過)、islBtMonHitSeq(dmgDownP 同步折減)、islBtPetCmd(healRevive/skillSeal/dmgDownP/regenAll 的 regenOverflowShield 旗標)、islBtRegenTick(overflow 轉護盾)。 */   /* ★ v1.320.0(2026-09-23・老師「我沒看到馴獸的星盤節點」)— 實查 GitHub:minigame_island_db.js 仍是 v1.316.0(SK_BEAST 0 筆)——v1.319.0 那包只放 index/sw/圖(island_db 零改動沒附),v1.317.0/v1.318.0 的 island_db 從未上傳;而 index v1.319.0 已經用 ?v=v1.318.0 這個網址去抓,SW 對帶 ?v= 的程式檔是 cache-first ⇒ 已開過 v1.319.0 的平板把「舊的 v1.316.0 內容」存在 v1.318.0 的網址底下,光補傳檔案它們也不會重抓。修法:island_db 內容與 v1.318.0 相同(馴獸專精/寵物圖片倍率/露水迷霧 15%),只把 D.VER 與這行 ?v= 一起換成 v1.320.0 讓網址改變強制重抓。🔴 教訓:三檔版號有任何一檔沒附在包裡,就要在回覆第一行講清楚「這包不含 X,X 要用哪一包的」——或乾脆每包三檔都附,最保險。 */   /* ★ v1.319.0(2026-09-23・老師交來重生的 8 張螢火蟲圖)— 本檔唯一改動:MG_IMG_FVER 新增 island_bt_pet_firefly_idle/atk/hit/stun/down/skill、island_pet_firefly_walk/sleep 共 8 鍵 = '2'(同檔名覆蓋必做,v1.303.0 教訓)。圖檔本身在交付前處理過:老師原圖 1254×1254 主體佔畫面寬 88~95%、腳底在 72~87% 高,直接用會比舊圖大約 1.4 倍且走路/睡覺浮在影子上方 ⇒ 八張統一同一個縮放(1254→512 再 ×0.75,狀態之間切換不會忽大忽小),並逐張把身體中心 x 與腳底 y 對齊舊圖同狀態的位置;另清掉去背殘留的紅色雜邊(只換成最近的不透明像素顏色,前胸背板本身的橘紅邊緣不動)。刻意畫的 Zz/暈眩星星/晃動線/速度線全部保留。island_db 零改動,?v= 維持 v1.318.0。 */   /* ★ v1.318.0(2026-09-23・老師三項:①螢火蟲圖片畫成屁股發光的蜜蜂、不符合自然科學常識 → 只交付重生圖片提示詞,本檔零改動;②梅花鹿圖片放大20%、石虎/海鷗小白縮小10%、莫氏樹蛙/螢火蟲縮小20%;③莫氏樹蛙技能增強為3回合每回合回15%)— ②新增單一出口 islPetPicMul(k) 讀 island_db 的 D.PET_PIC_MUL,只接兩個消費點:營地寵物容器邊長(islCampPetsPaint 的 _psz)與戰鬥隊友立繪框(islBtFigPos 的 sz),都是改框的寬高(不疊 transform),腳底定位不動;夥伴圖鑑/編組格等「塞滿固定框」的小圖示不吃倍率。③純資料(island_db PET_CMDS.dewmist regenAll 6→15),本檔零改動。⚠ 老師之後若用同檔名覆蓋上傳 8 張新螢火蟲圖,下一輪務必在 MG_IMG_FVER 補這 8 鍵(v1.303.0 教訓);本輪刻意不先 bump,免得裝置在新圖上傳前用新網址把舊圖又快取一次。 */   /* ★ v1.317.0(2026-09-23・老師「荒島的天賦星盤新增馴獸專精路線,主要提升所有寵物各項能力和技能強化」)— island_db 新增第 9 條星域 🐾 馴獸專精(-90 度正上方,核心「馴獸之心」+15 顆節點,含🔀二選一分歧、🌟羈絆守護關鍵節點、👑萬獸之王精通,另加頭銜「馴獸大師」)。本檔接上 12 個新效果鍵的消費點,全部只作用在寵物隊友(u.t==='pet'),好友借用角色不受影響:islPetStats(petHpP/petAtkP/petDefP/petSpdP 四維%、petCdCut 冷卻減免,圖鑑/詳情卡/戰鬥共用同一出口)、islBtMakeAllies(petGaugeStart 開戰計量)、islBtGaugeTick(petGaugeP 計量累積速度)、islBtAllyBasic(petCritC 普攻暴擊率)、islBtHurtUnit(petCutP 寵物減傷上限 50%、petGuts 每場第一次倒下保留 1 HP)、islBtPetCmd(petSkDmgP 技能傷害)、islPetHealMul/islBtShieldAll(petSkSupP 技能治療/復活/持續恢復/護盾)。星盤畫面本身零改動(快速跳轉鈕/星域名牌/連線全部讀資料表自動生成)。 */   /* ★ v1.316.0(2026-09-23・老師「荒島的主角跑步側面角色圖片要往影子貼近,尺寸也要再縮小25%」)— 只動側面(row2)跑步這一條路徑,不影響正面/背面跑步或任何方向的跳躍:①尺寸再縮小25% — 新增 `_rjSide2=0.75` 疊乘進既有的 `_rjBase×_rjWsc×_rjRowMul×_rjHFix` 連乘式(x/y 同倍率一起縮小,不擠壓變形)。②往影子貼近 — 用 Node+sharp 重新逐像素量測老師目前實際上傳的全部 8 種髮型跑步圖(boy_h0~h3、girl_h0~h3),量出側面(row2)真實腳底錨點 footY 分別落在 50/56/54.5/55.5/56/53.5/58.5/57.5px,對照正面/背面沿用的固定錨點 60px(離陰影所在的 64px 畫面底部只差 4px,視覺上已經很貼近),側面 8 種髮型的錨點普遍比 60px 高了 1.5~10px,縮放時腳底又固定在 footY 原地不會跟著移動,所以看起來比正面/背面更懸空。新增 `_rjShiftY=Math.max(0,60-footY)`,在 `w.style.transform` 疊加一段 `translateY(_rjShiftYpx)`,寫在 `scale(...)` 前面(CSS 複合 transform 以最後列出的函式先套用、最先列出的函式最後套用外層位移,translateY 因此以「最終顯示像素」為單位平移、不會被任何一路縮放倍率放大或縮小),精準把側面腳底錨點統一拉到跟正面/背面同一個 60px 基準,不需要重新調校腳底貼地(transformOrigin 錨點本身沒有變)。⚠ 兩項數值都是拿實際圖片量測+CSS transform 複合順序的數學驗證算出來的,不是用猜的,但沒有實機截圖比對修正後畫面,麻煩老師實機看一次跑步側面人物是否已經夠貼近陰影、尺寸縮小的幅度是否合適,需要再調再回報。 */   /* ★ v1.315.1(2026-09-23・老師看新的側面身高校正預覽截圖回報「跑步的腳底貼齊水平地平線」)— v1.315.0 的 islFullRunHScale 逐格身高校正本身量測正確,但套用時沿用舊有寫死的 `transformOrigin:'32px 60px'` 當縮放錨點,實測用 Node 逐像素量測老師 4 張跑步圖的側面腳底基準線(islFullRunCenter 算出的 med,÷2 換算成 64px 顯示座標)發現真實值落在 50~56px,不是猜測中的 60px(4 種髮型都不一樣、且沒有一種剛好等於 60);CSS scale 錨點沒對準真正的腳底像素,側面每一格疊乘的身高校正倍率(0.6~2 倍)又逐格不同,於是每一格「被拉伸/壓縮的幅度」不一樣,腳底就跟著每一格往上下飄動(錨點偏低 10px 時,套用最極端的兩倍率算出腳底浮動範圍可達 14px)——這是 v1.315.0 校正值本身沒錯、但縮放基準點選錯導致的新副作用,不是重新量錯身高。修法:islFullRunCenter() 算 dy 時,side 列(row2)額外把算出來的中位數基準線(med,已經是全部 8 格腳底對齊後的共同基準)存成 `out.footMed`;islFullGet 的 finish() 一併存成 `outs.footY = footMed/2`;islRjPaint() 側面(row2)且量得出 footY 時,transformOrigin 改用 `32px <footY>px` 這個逐圖實測的真實腳底錨點取代寫死的 60px(量不出來的舊圖/正面/背面不受影響,退回原本 60px,行為不變)——縮放錨點本來就在腳底像素上,不管疊乘幾倍腳底位置本身完全不動(CSS transform-origin 的定義保證這一點,不是估計值,是數學上必然成立),徹底解決「腳底離地飄動」的根因,不需要再另外加位移補償去追每一格。 */   /* ★ v1.315.0(2026-09-23・老師看圖回報「奔跑的側面人物還是會忽大忽小,重新將八張側面跑步循環圖的角色尺寸高度調整成和正面一樣的高度,不可以漏掉任何一張」)— 過去兩輪(v1.312.0/v1.314.0)修的都是「側面整排套同一個倍率」(dy 腳底基準線置中、_rjRowMul 整排再放大 25%),從未處理過「側面 8 格各自的人物高度本來就不一致」這件事;跨步/收腿姿態時,同一列跑步循環裡每一格人物 alpha 外接框的高度本來就有落差(畫師沒有嚴格對齊每一格的身高),固定套用同一個倍率沒辦法把每一格拉回同一個高度,播放起來才會看到「跑起來的人時大時小」——這是逐格差異,不是效能或播放序列問題。新增 `islFullRunHScale()`:量出正面(row0)8 格人物高度的平均值當基準身高,側面(row2)8 格逐格各自量出自己的高度,算出「基準身高 ÷ 這一格高度」的等比校正值(x/y 同倍率一起縮放,不會把人物擠扁拉長變形),`islRjPaint()` 組 CSS scale 時依目前播到的那一格(col)動態疊乘這個逐格校正值,取代過去「整排套同一個固定倍率」的做法;實測老師目前實際上傳的三張跑步圖(run_boy_h0/h1、run_girl_h0),8 格側面原始高度落差最大到正面的 6~7 成(如 boy_h0 的 68~85px vs 正面平均 108.5px),逐格校正後 8 格全部精確對齊到同一個高度(誤差 0px),v1.314.0 那條整排 25% 放大的固定倍率繼續保留疊乘在外層(維持老師先前要求的整體放大幅度),兩者互不衝突。 */   /* ★ v1.314.1(2026-09-22・老師修正 v1.314.0 的 AP 上限加成倍率:「AP上限新增兩種加成 — 冒險等級每10級 +1(封頂Lv50,最多+5)、舒適度每20點 +1(封頂100,最多+5)」— 上一版誤把「+5」看成每一級距的加成量,實際老師要的是每級距 +1(封頂 +5),兩條算式的 `×5` 尾數改成 `×1`(`Math.floor(Math.min(islAdvLv(),50)/10)×1`、`Math.floor(Math.min(comfort,100)/20)×1`,邏輯結構不變只改倍率),AP 消耗一覽視窗說明文字同步改回「⭐冒險等級每 10 級 +1(封頂 Lv50)、😊舒適度每 20 點 +1(封頂 100)」。 */   /* ★ v1.314.0(2026-09-22・老師五項:①看圖「存入倉庫選單圖片文字再縮小一些,不要讓右邊被裁切或是物品說明被遮擋」②「主角的冒險等級也顯示在戰鬥中(目前只顯示武器等級)」③「戰鬥指令再縮小些,不要跑去第二行」④依老師貼回的 D.LAYER_ADJ 代碼更新立繪參數(island_db 端)⑤「主角側面跑步圖片全部再放大25%,正面和背面的跑步圖片全部放大10%」— ①islBagOpen()/islStoreOpen() 選取模式的 .isl-bagbox 新增 selmode class,圖示由 144px 縮到 100px,並新增一段不分裝置(先前 v1.305.0 只在 #island-root.ipad 縮小,老師這輪截圖證實 PC 也會裁切)的 CSS 統一縮小 .nm/.n/.q/.fx/.seltag 五樣文字,四樣加起來不再比方格寬。②islBtOpen() 主角血條列的 <small> 標籤在武器標籤前面插入「⭐Lv+islAdvLv()」(沿用角色能力視窗同一支既有函式),同一行不增加版面高度。③#isl-battle .bt-acts button 自 v1.192.0 放大到 124×96 後從未跟著縮過,疊上 v1.313.0 的收合鈕後滿編仍有 9 顆,一般桌機視窗在 zoom:1.3 下常態裝不下整排;改成 96×74(icon 32px/文字 13px)、容器 gap 8→6px,iPad/手機兩個既有小尺寸斷點不動。④⑤見 minigame_island_db.js 與 index.html 內對應函式 islRjPaint() 的 changelog 註解。⑥老師追加「主角AP上限提升的方式增加:冒險等級每達到10的倍數(最大50級)AP+5、舒適度每達到20的倍數(最大100)AP+5」— 新的一天結算 ISL.apMax 那一行疊加兩條 `Math.floor(Math.min(現值,封頂)/門檻)×5`,與既有帳篷 Lv3/5、舒適≥20 舊制 +1、天賦 apAdd 三個來源各自獨立疊加不互相取代;AP 消耗一覽視窗與 HUD 提示文字同步補上這兩條新來源的說明。 */   /* ★ v1.313.0(2026-09-22・老師看圖「把特殊指令收合成一顆按鈕,按下去展開」)— 裝設的 1~3 個 🎯 特殊指令(戰場急救/呼喚夥伴/煙霧彈…)原本跟緊急包紮/絕招/攻擊/智取/防禦/道具/換武器/逃跑擠在同一排動作鈕裡,裝滿 3 個時整排會很擠。`islBtActsHtml()` 改成:裝了至少 1 個特殊指令才渲染一顆「🎯 特殊指令」收合鈕(class=more),實際的 1~3 個指令鈕改標 class="sub" 並用新 CSS 規則 `#isl-battle .bt-acts button.sub{display:none}` 預設藏起來;新增 `islBtCmdToggle()` 切換 `#isl-bt-acts` 的 `cmdopen` class(展開時連動把收合鈕文字換成「✕ 收合」),`islBtActsBindTip()` 的放開事件裡攔截 `data-a==="cmdmore"` 優先處理(純 UI 面板開合,不算一次戰鬥行動,不吃 `B.busy` 守門,戰報/回合權完全不受影響);點了展開面板裡任一個指令,`islBtAction()` 的 `cmd:` 分支會先呼叫新增的 `islBtCmdClose()` 自動收合回去(不管指令成不成功都收,不用玩家自己再點一次)。一個指令都沒裝設時完全不渲染收合鈕,維持原本「沒裝就不出現任何指令相關按鈕」的行為;長按收合鈕沿用既有 `islBtActTip()` 說明泡泡機制,補一句「展開/收合已裝設的特殊指令」。 */   /* ★ v1.312.0(2026-09-22・老師看圖「奔跑時三個面向的尺寸和圖片比例錯誤:①正面/背面角色被拉寬了,要修成跟走路一樣的寬度比例 ②側面跑步人物尺寸縮小忽大忽小,腳也沒踩在同一地平線」)— 老師 v1.301.0 那輪重新上傳過一批跑步圖(檔名不變、直接覆蓋),把「現在實際在線上」的圖抓下來逐像素量測(沿用 islFullRunCenter 同一套 alpha 外接框演算法)才找到兩個各自獨立的根因:①正面/背面人物 alpha 外接框寬度比走路基底圖寬了約 4~5 成(側面沒有這個問題,是正常跨步變寬變窄的動畫),v1.237.0 當年加的 scale(1.16) 是「等比」放大,沒辦法只修寬度不動高度;新增 islFullRowBBox()/islFullWalkRowW()/islFullRunWScale() 三支函式,跟既有 islFullSkinMul() 同一種做法——拿走路基底圖(base_<body>_s0)當寬度參考基準,現場量測跑步圖正面/背面的實際寬度,算出校正比例(縮到 0.55~1.05 之間防暴衝),islRjPaint 的 CSS scale 拆成 x/y 兩軸,x 軸疊乘這個寬度校正、y 軸維持原本 1.16 倍不動,側面(row2)固定不修;以後不管哪個髮型重傳圖,這裡都會自動重新量、不必回程式改寫死的倍率。②v1.291.0 當時「腳底幾乎都釘在同一條線,拿掉 dy 只留水平置中」的結論是拿舊圖量的,這批新圖重新量測後發現正面/背面依然穩(≤2px 不用修),但側面這批新圖腳底 y 實際跨了 6px 不是穩定一條線;islFullRunCenter() 加回 dy 計算,但只在側面(row2)生效,用這一列 8 格腳底 y 的中位數當基準,超過 2px 才修正,正面/背面繼續維持 dy=0。★ 已用 Node+sharp 解碼老師實際上傳的 island_run_boy_h0/h1、island_run_girl_h0 三張圖跑過這三支新函式驗證數值(正面/背面校正值落在 0.62~0.71 之間,側面 dy 修正量在 -6~3px),並用 Playwright 真的把 CSS 疊出來的畫面截圖比對修正前後,正面/背面視覺上明顯變窄回到走路的身形比例,側面畫面未受影響;其餘髮型(h2/h3)未能實機驗收,麻煩老師確認全部髮型跑起來都正常。 */   /* ★ v1.311.0(2026-09-22・老師看圖「天賦節點可以點亮的區域不正確,必須按照路線依序走過去,不可以跳過去點後面的節點」)— 根因不是畫面判斷邏輯寫錯,是 v1.300.0 那輪把 59 段既有連結逐段插入中點節點時,把「原子節點的 req 改指向新節點」(例如「藥效Ⅱ」的前置從「藥效Ⅰ」改成新插入的「止血」),但沒有替舊存檔補這一步:舊存檔裡藥效Ⅱ/藥效Ⅲ/藥效Ⅳ這些早就點亮的下游節點 taken 仍是 true,新插入的「止血/緊急包紮/為隊友包紮」taken 卻是 false 且 req(藥效Ⅰ/藥效Ⅱ…)剛好已經 taken,於是新節點顯示成「可以點亮(黃圈)」——畫面上就是「後面已經亮、前面反而還沒點亮可以點」的違反路線順序畫面,看起來像能跳著點,其實是舊存檔的殘影。新增 islSkMigrateB6(ISL.sk.ver 5→6,每份存檔只跑一次):凡是已經點亮的節點,把它 req 鏈上所有前置節點一併回填點亮(不額外收費,玩家本來就已經走過這條路,只是中間新插入的那一顆幫忙補發,多輪疊代到鏈路補完整為止),只動必經的 req、不動分歧二選一的 reqAny。island_db.js 本輪零改動,只有 index.html 的 islSk()/islSkMigrateB6() 邏輯異動。 */   /* ★ v1.310.0(2026-09-22・老師兩項)—①「把『訪客未登入』也共用玩家名稱這個位置,也是不要推擠前面的按鈕」— #isl-hud-guest(👤 未登入帳號 🔑)原本釘死在 HUD 最前面,常駐佔位會把 📅🌙☀⚡❤️🐚📦🏠🏗📜 這一整排操作用藥丸往右推;搬到 HUD 尾端跟 v1.309.0 新增的 `#isl-hud-me` 緊鄰,兩者共用同一個「畫面右上角」槽位——本來就是互斥關係(islHud() 用 `.hidden` 切換,登入顯示玩家名稱、沒登入顯示訪客標籤,同一時間只會有一顆),單純搬動 DOM 位置(從 HUD 最前面移到 `.grow` 之後、最尾端),不動任何 JS 判斷邏輯與 CSS 規則(`.ih.guest`/`.ih.me`/`.tight` 收合規則全部原樣沿用),風險等同一次剪貼。②「更新了這八張新的跑步圖上傳到Github了,確實的把染色、跑步循環做正確」— 比照 v1.241.0/v1.303.0 同一個坑:同檔名覆蓋重傳圖片,若不個別 bump `MG_IMG_FVER`,已經抓過舊圖的裝置(cache-first)會永遠卡在舊圖;`island_run_boy_h0~h3`/`island_run_girl_h0~h3` 共 8 個鍵 2→3,只讓這 8 張圖的網址改變重新抓取,不動全域 MG_IMG_VER。island_db.js 本輪零改動。 */   /* ★ v1.309.0(2026-09-22・老師「荒島求生的右上角新增玩家名稱方便辨識」)— #isl-hud(頂部常駐欄)最尾端新增一顆純顯示用藥丸 `#isl-hud-me`(👤 玩家名稱),視覺上落在畫面右上角;只在已登入帳號時顯示,內容讀 `MG.user.displayName`(沒有就退 `MG.user.email`,再截到 10 字),訪客模式已有專屬的 `#isl-hud-guest`(👤 未登入帳號 🔑)標籤在 HUD 最前面,兩者互斥不重複顯示。共用既有的 `islHud()` 單一重繪出口(登入/登出會觸發 `islOnUser` 重畫 HUD,不必另找呼叫點)與 `islHudFit()` 自動收窄機制——放不下時 `.tight` 層級會先把這顆收成只剩 👤 圖示(比照既有 guest 標籤的做法),用純中性配色(不用其他藥丸的彩色底)標示它不可點擊,不會撐爆 iPad 頂部欄位。island_db.js 本輪零改動。 */   /* ★ v1.308.0(2026-09-22・老師回報「PC版敲釘子格子版面太大超過螢幕,要拖曳畫面才能點,但有些玩家的PC沒這問題」)— `.isl-nails`(敲釘子 6×6 格)舊寫法 `height:min(100%,420px)` 的 100% 是相對 `.isl-act-inner` 這個沒有指定寬高、純看內容疊多高的 auto 容器,而內容裡就包含 `.isl-nails` 自己 ⇒ 「父層高度看我多高、我的高度又要看父層多高」的循環依賴,CSS 規格對算不出來的父層高度要退回 auto 處理,但 auto 混進 `min()` 函式時不同瀏覽器/排版引擎實測收斂結果不一致(疊上 #island-root 既有的 zoom:1.3 更放大這種不一致),才會「同一份程式碼,有的 PC 抓到安全上限、有的抓到異常大的值把 36 格撐超出螢幕」。改法:徹底不再依賴父層百分比高度,`.isl-nails`/`.isl-pipes`(水道 5×5,同一種舊寫法,順手一併修)改用 `min(80vw,62vh,480px)`(`.isl-pipes` 用 78vw,58vh,420px)同時吃視窗寬與視窗高兩個方向比例,vw/vh 相對「視窗」不相對父層、不會有循環依賴,且本檔其餘 clamp()/vw/vh 寫法在 zoom:1.3 底下已有既有先例驗證過正常運作;不論 PC 螢幕解析度大小,格子永遠照視窗比例縮放並保持置中,不會再超出可視範圍。詳見 island-style 區塊 `.isl-nails`/`.isl-pipes` 規則上的完整註解。island_db.js 本輪零改動。 */   /* ★ v1.307.0(2026-09-22・老師「星盤的節點距離太近都疊在一起了,修正」)— 本檔零改動,天賦星盤節點重疊的根治全在 minigame_island_db.js 端(D.SK_CANVAS 放大 2 倍+D.SK_NODES 座標等比放大+三個座標巧合節點另外挪開,詳見 island_db.js D.VER 說明),這裡僅隨資料表版號同步(`minigame_island_db.js?v=` 這行本輪一併對齊 v1.307.0,避免踩到 v1.276.0/v1.288.0/v1.303.0 三次都漏跟同一行的舊坑)。 */   /* ★ v1.306.0(2026-09-22・老師「iPad 戰鬥下方的指令文字要縮小50%,使一行可以完整包含所有特殊+基礎指令」)— #island-root.ipad 的 `.bt-acts button` 覆寫整組等比縮小約 50%:框 162×125→81×63px、圖示 54→27px、`.bt-acts button small` 名稱字級 33→17px(與 <620px 手機斷點的 81×78/33/17 相近但更矮);同時把容器 `.bt-acts` 的 gap 從共用的 8px 收到 5px 多留一點空間。這排動作鈕最多可能同時出現到 11 顆(3 個已裝設的特殊指令+緊急包紮+絕招+攻擊/智取/防禦/道具+換武器+逃跑),舊 iPad 尺寸每顆連間距近 170px,11 顆遠超 iPad 可視寬度必定被 `.bt-acts` 的 `flex-wrap:wrap` 擠成兩行;縮小後每顆約 89px,11 顆約 980px,iPad 橫向可視寬度內裝得下一整排。只動 iPad(`#island-root.ipad`),PC 版本輪未動、手機另有自己的 `<620px` 斷點。 */   /* ★ v1.305.0(2026-09-22・老師兩項)—①各地圖新增傳送到大地圖的傳送點,走靠近自動切換:各區早就有一顆 kind:'exit' 的傳送點(sc.exit,渲染成 🗺 大島地圖 圖示),舊版要走近後再按互動鈕才會 islGoMap();islNearCheck() 新增一段跟撿小物同一種「走近自動觸發」寫法(判定半徑 40px,比一般 POI 顯示鄰近鈕的 96px 更緊,只是路過不會被送走),觸發時直接呼叫 islGoMap() 並回傳 true;islTick 呼叫端比照遇敵/踩地雷兩個既有分支,收到 true 立刻 return,不會在畫面已切到大地圖之後還跑完那一幀剩下的野外邏輯。11 區的傳送點座標本來就都已存在(island_db.js sc.exit),零資料表異動。②iPad 版「回營地存入/取出」視窗圖片文字縮小:v1.185.0(材料圖示 72→144px)與 v1.278.0(.seltag 標籤字級 16→32px,還要塞下 +/- 步進器)兩輪各自放大疊加後,在 iPad 4 欄/3 欄窄版面撐爆——.seltag 是 white-space:nowrap+overflow:hidden,塞不下不會換行變矮而是直接被裁掉一截。新增 #island-root.ipad 專屬覆寫(放在 <style> 最尾端蓋過舊規則):.seltag 字級 32→18px 並縮小 +/- 步進器,.isl-bag-slot.has img 的 max-width 86%→68%+補上 max-height:92px;只動 iPad,PC/手機兩個既有斷點不受影響。 */   /* ★ v1.304.0(2026-09-22・老師兩項)—①跑步時頭髮一塊塊變色:跑/跳圖頭髮是帶色偏的灰,舊規則只收純灰,其餘像素掉進身體層或被女生粉紅上衣規則收進服裝層;新增 islFullIsHair 放寬跑/跳圖頭髮判定(限格內 y<100 避開鞋襪)並把頭髮像素轉純灰階,髮色濾鏡才與走路頭髮同色。②側面跑步每格 150→75ms,正/背面不變。 */   /* ★★ v1.303.0(2026-09-22・老師連續兩輪回報「跑步還是卡住,兩腳持續張開懸空」,經像素比對/慢動作播放頁面反覆確認側面 8 格圖片本身與 10 步播放順序都正確無誤後,老師仍然實機看到舊的破圖畫面,逼出真因)— 真因是老師 v1.301.0 那輪重新上傳的 8 張 island_run_<body>_h<n>.png(同檔名覆蓋)從未被加進 `MG_IMG_FVER` 個別快取版號表,而 `/minigame/img/` 走 cache-first 策略,已經抓過舊圖的裝置會永遠卡在舊快取——跟 v1.241.0 八張戰鬥圖同名覆蓋踩過的同一種坑,只是這次踩在跑步圖上。見下面 `MG_IMG_FVER` 表新增這 8 個鍵處的完整說明。程式邏輯(ISL_RUN_SIDE_SEQ 10 步順序)與圖片內容本身這兩輪確認皆無問題,不必再改。 */   /* ★★ v1.302.0(2026-09-21・老師「側面跑步圖正確順序 4512354678 循環」)— 側面(side)跑步序列改成老師指定的固定循環順序:4→5→1→2→3→5→4→6→7→8→(回到4)共 10 步(1-indexed 格號),不再是單純把 8 格從頭播到尾;新增 `ISL_RUN_SIDE_SEQ` 常數([3,4,0,1,2,4,3,5,6,7],0-indexed),`islFullRunSeq` 只在 row===2(側面)且 8 欄新圖時套用,正/背面(row 0/1)不受影響、仍照原始欄序播放。`islRjPaint` 消費端早在 v1.289.0 就已經把序列長度改吃 `_sq.length`(不寫死 10),這次 10 步的序列不必再改任何播放邏輯,直接吃得到。 */   /* ★★ v1.301.0(2026-09-21・老師重新上傳 8 張跑步圖 run_boy_h0~h3/run_girl_h0~h3,要求重新確認跑步循環順序是否正確)— 逐格核對新圖後發現:原本靠 `ISL_RUN_SKIP` 跳過的兩個角色(`run_boy_h0` 正/背面第 4 格、`run_girl_h2` 正/背面第 3~4 格「雙腿併攏站立」違和格)這次老師已經在新圖裡修掉了,正/背面 8 格現在都是連續自然的跑步動作,舊剔除表已經沒有存在必要,`ISL_RUN_SKIP` 清空,兩個角色與其餘 6 個角色一樣完整播 8 格,循環節奏才會一致(舊版少 1~2 格會讓這兩個角色的跑步比別人快、卡頓)。★ 側面(side)第 4~5 格那個「雙腳併攏、跨步交會」的瞬間逐格核對後確認是全部 8 張圖共通的正常設計(v1.291.0 曾誤判成問題但當時沒有深入核對,這輪用像素級比對+目視雙重確認排除),維持不剔除。八張新圖同輪已對接上傳(檔名不變,直接覆蓋)。 */   /* ★★ v1.300.0(2026-09-21・老師「天賦星盤節點間新增對應能力小節點＋『格擋率』改『閃避減傷』＋『更多說明』視窗中心新增狀態收益與已解鎖特殊指令清單」)— ①資料層(island_db.js D.SK_NODES 70→129 節點)：既有 59 段前置連結(五武器星域各 7 段×5、生活技藝 5 段、醫療三支線各 4 段、特殊指令 7 段)逐段插入一顆固定 +1% 的小節點,依路線專精分配 9 種能力(暴擊率/攻擊/最大體力/防禦/速度/跑速/治療量/異常狀態抵抗/閃避減傷),每種能力累計節點數皆 ≤20(=+20% 上限),詳細分配見 island_db.js D.VER 說明。②新效果鍵接線:`ailResP`(異常狀態抵抗)併進 `islAilRollZone`(區域型)與 `islAilDaily`(失溫/感染)共 3 處機率折扣公式;`dodgeCutP`(閃避減傷,取代老師原提議的「格擋率」——戰鬥系統本來沒有被動格擋,只有 QTE 完美閃避)併進 `islBtDodgeApply` 的「閃過一半」傷害再折算,上限額外 50%,完美閃避(0 傷害)不受影響。③新增 `islSkBonusHtml()`:天賦星盤「更多說明」收合區中間(介紹段落之後、已解鎖頭銜清單之前)新增兩份清單——📈 目前點亮節點的狀態收益(逐一讀 D.SK_NODES 現況的 d 文字組成,武器限定節點附註「裝備○○才生效」)與 🎯 已解鎖的特殊指令(讀 D.SK_CMDS 對應的效果文字),兩份都沒有另外維護第二份資料,新增節點/指令會自動反映。 */   /* ★★ v1.299.0(2026-09-21・老師三項:①戰鬥截圖回報「邀請好友協助戰鬥,沒有正確讀取到好友的角色造型」②「下方指令文字縮小一些不要有兩行字」③「長按指令可以在該指令上方暫時開啟指令效果說明,放開後關閉說明」)— ①根因:借用版好友的戰鬥單位(islBtMakeAllies)從 v1.164.0 起就寫死回傳通用 emoji(🧑),從沒讀過好友實際的造型(其實 ISL.friendCache[uid].char 早就有,名片系統 v1.244.0 就在發布);單位物件補上 char 欄位、islBtFigHtml 的隊友立繪分支改成有 char 就用 islChibiHtml 畫出本人像素造型(與主角缺整張戰鬥圖時的既有 .chibi 備援共用同一套 CSS scale(3) 規則),沒有 char 才退回 emoji;順手一併修正探險編組站位預覽/隊友卡/戰鬥中點頭像預覽三處同一種「固定顯示🧑」的舊碼,新增共用小圖示出口 islBtSmallChibi()。②`.bt-acts button small` 21px→16px+nowrap:4 字指令名稱在 124px 按鈕裡原本會被擠成兩行,疊上指令鈕本來就有的「名稱/⚡花費」兩行結構,合計三行擠成一團。③新增 islBtActsBindTip():動作列的 onclick 代理改成長按/短按分流(比照全站設施/裝飾長按看說明、短按才動作的既有慣例)——按下起算 420ms,撐滿就在該顆按鈕正上方浮出效果說明泡泡(.bt-tip,🎯特殊指令/✨絕招複用 D.SK_CMDS/D.SK_ACTS 現成的 .d 說明文字,其餘七顆通用動作用新的簡短對照表 islBtActTip),放開泡泡就收掉;沒有撐到 420ms 的一般短按維持原樣立刻執行動作。 */   /* ★★ v1.298.0(2026-09-21・老師回報「營地點擊設施、裝飾、右方選單,主角會自己往左上角移動到底」)— 真因見 islLongTapBind() 上方的完整說明:主角與已收服寵物共用的「長按開視窗」共用出口,其 `window.addEventListener('mouseup', up)` 是**無條件全域監聽**(唯一漏加守門的一處,設施/裝飾兩支姊妹函式都有正確守門),且寵物元素每次 islCampPetsPaint() 重繪營地都會整批重新綁一次、舊監聽從未清除;於是任何一次滑鼠/觸控放開(不管點的是設施、裝飾、右側選單按鈕、甚至任何按鈕)都會讓這些從未在自己身上按下過的 up() 一起執行,讀到閉包裡從未更新過的初始座標 (0,0),夾出營地座標的極限值(x=3、y=72)──正是畫面左上角,且每次任意點擊都會重觸發,才會看起來像「自動往左上角衝到底」。修法:新增 `active` 旗標(比照 islCampBldDragBind/islDecoDragBind 既有的 `cur` 守門寫法),只有真的在這顆元素身上按下過才會處理放開事件,不是衝著它來的一律忽略。 */   /* ★★ v1.297.0(2026-09-21・老師「天賦星盤『呼喚夥伴』的效果改成完全恢復1名隊友的HP,名稱和說明也修正」)— islBtHealOne(B.hero, 20) → islBtHealOne(B.hero, 100),20% 治療量改成 100%(封頂邏輯本來就有,不會超過滿血);D.SK_CMDS.CMD_CALL 與天賦節點 SK_CMD_6 的 d 文字同步改成「完全恢復體力」;順手修正 SK_CMD_6 節點文字裡「(野外+戰鬥・⚡1)」的錯誤標示(CMD_CALL 自 v1.165.0 起就已經改成戰鬥限定,野外沒有隊友單位可治療,節點文字一直沒跟著改);sci 自然知識小提示原本講「動物能分辨熟悉的聲音」跟治療效果搭不上,改寫成「呼喚→夥伴放下戒心全力照顧→加速恢復」的因果說法。⚠ 名稱「呼喚夥伴」本輪維持不動(老師沒有指定新名稱,效果變強但「呼喚」的敘事本身仍說得通——夥伴聞聲趕來救援)。 */   /* ★★ v1.296.0(2026-09-21・老師兩項:①戰鬥圖片複查——老師回報「戰鬥圖片都是完整的」,重新逐格放大檢查後確認上一輪判定 boy_h1/h2/h3 與 girl_h0 勝利狀態有裁切/白線是誤判(整張總覽縮圖顯示時的視覺假象,逐格放大看完全乾淨),已撤回,本輪零改動任何圖檔 ②營地點設施走位——老師回報「點設施1秒開啟視窗後主角應該走向該設施,現在會自主走向左上角落很奇怪」,改回 v1.288.0 之前的流程:長按成立不再就地開窗,`islCampBldDragBind` 的 timer 觸發改呼叫 `islCampGoToCell(i, function(){ islBldNameFlash(i); islCampCellTap(i); })`,主角先走到設施旁邊、抵達才開視窗。 */   /* ★★ v1.295.0(2026-09-21・老師看圖「探險編組選擇的寵物休息中,圖片要換成睡覺的」)— islPetPicHtml() 本來就支援 pose 參數(walk/sleep,沒有對應圖會自動退回 idle,見 v1.212.0 說明),只是探險編組的兩處寵物卡片(隊友卡 islPartyOpen、選誰清單 islPartyPick)呼叫時一直沒有把休息中(_rst/_rs)的判斷傳進去,永遠只顯示 idle 圖。兩處都改成休息中傳 'sleep'、正常傳 'idle';16 隻夥伴的睡覺圖(island_pet_<key>_sleep.png)v1.257.0 就已經上傳並登記好,零新素材依賴。 */   /* ★★ v1.294.0(2026-09-21・老師兩項:①生火QTE的「吹」改成「搧風」,說明也修正 ②生完火主角說「這個品質超好…」很奇怪,針對各種行動寫出2-3種不同的反應台詞)— ①islQteBlow 按鈕/提示/失敗訊息全面把「吹」改「搧風」(💨吹! → 🪭搧風!;吹氣補充氧氣 → 搧風補充氧氣;噗——吹熄了 → 呼——搧熄了)。②根因是 D.MONO 的 star3/crit 兩句內心話原本不分活動類型,通用文字帶著「採集/手拿東西」語感,套到生火/建造/研究這類活動就顯得答非所問;新增 islMonoActKey(base,id) 單一出口,依活動 id 找專屬鍵(如 star3Fire/critFire),找不到才退回原本通用版;island_db.js 補齊 13 種活動(採集/伐木/採石/捕魚/打撈/馴養/烹飪/播種/製作/研究/水道/生火/建造)各自 2~3 句專屬反應共 26 把新鍵,islActResult 的呼叫點改用這個出口。 */   /* ★★ v1.293.0(2026-09-21・老師看圖「戰場急救」天賦彈窗只有空話沒有效果說明)— islSkTap() 組裝天賦節點彈窗時,原本只顯示 n.d(「解鎖特殊指令「🩹 戰場急救」(戰鬥・⚡2)」這種開場白),沒有把 D.SK_CMDS 表裡早就寫好的實際效果文字(如「治療1名隊友50%最大體力;倒下的隊友也能直接救回來」)撈出來顯示,比照同一支函式裡絕招(n.act)那行的寫法補上對應的指令效果行,SK_CMD_1~8 共 8 個特殊指令節點一次全部修好,不必逐一寫死每一顆。 */   /* ★★ v1.292.0(2026-09-21・老師在「🎨 造型工房(GM)」再調一次後貼回「📋 複製設定值」)— 本檔零改動,D.LAYER_ADJ/D.CREATE_DEFAULT 全在 island_db.js 端,這裡僅版號同步。 */   /* ★★ v1.291.0(2026-09-21・老師「確認跑步8張循環的圖有沒有實機問題」)— 拿 GitHub repo 上老師實際上傳的 8 張跑步圖(1024×384)逐格真的量測+目視檢查後,抓到一個 design 階段沒發現的問題:islFullRunCenter() 原本連垂直方向(dy)也比照水平方向做「對齊格子幾何中心」,但 8 張圖 24 列量下來,每格 bbox 下緣(腳底)幾乎都釘在同一條地面線,bbox 上緣(頭頂)才會隨跨步/收腿姿態自然高低變化——把 dy 也拉去對齊幾何中心,會讓雙腳跟著姿態上下浮動,變成人物一邊跑一邊上下彈跳而不是穩穩踩在地上。已拿掉 dy 計算,只保留水平置中(dx);垂直對齊本來就有另一套機制在管(ISL_RJ_NECK 脖子基準線+transformOrigin 腳底錨點),不需要也不能疊加。另外用實圖跑過一次「碎屑清除」規則(strict 版),119 處真實碎屑全部抓到、零漏網,也逐一目視確認 ISL_RUN_SKIP 剔除表(boy_h0/girl_h2 各兩格)是全部 8 張圖裡唯一需要跳過的「雙腿張開站地」違和格,其餘 6 張圖 24 列動作皆正常。 */   /* ★★ v1.290.0(2026-09-21・老師「繼續」— 天賦新效果鍵正式接上節點資料)— 本檔零改動,9 個效果鍵(buildFastP/costCutP/defHpAdd/defSlowP/defWoodAdd/defBiteCutP/exploreP)的消費端上一包(v1.289.0)已接好,本輪只在 island_db.js 的 D.SK_NODES 補上對應節點的 eff 欄位,詳見 D.VER 說明。 */   /* ★★ v1.289.0(2026-09-21・老師「勝利結算分區塊排版/跑步8張循環/天賦新效果鍵」)— ①勝利結算改 islBtResultHtml() 拆成🏆戰果/🎁獲得/📈成長/🐾夥伴四區塊 ②跑步 8 欄新圖(islFullRunSeq 改吃圖鍵+圖寬,ISL_RUN_SKIP 剔除表,islRjPaint 欄數改吃 full.cols、序列長度改吃 _sq.length)③碎屑清除加 strict 規則+islFullRunCenter() 逐格置中 ④天賦新效果鍵掛點:buildFastP(islBuildSecs)、costCutP(islConsume+islCostCutOn 包住建造/製作工具)、defHpAdd/defSlowP/defWoodAdd(islDefStart)、defBiteCutP(islDefBite)、exploreP(islExploreGain,6 處探索度增量)。 */   /* ★★ v1.288.0(2026-09-21・老師多批需求:①重新檢驗所有地圖可移動區域 ②戰鬥魔物面向/HP 數字 ③營地長按與移動優先 ④防衛戰訊息擋住指令鍵 ⑤受傷夥伴復活道具 ⑥四項天賦調整 ⑦BOSS 放大與兩顆鈕移位)—
    【① 11 區可走遮罩全面重建】老師回報「洞穴這個位置過不去左邊」。舊遮罩(v1.152.0)是用「比周圍暗多少就算障礙物」建的,
      在亮的場景可用,但洞窟整張都是暗的 ⇒ 石板路被判成障礙、左下角整片黑色岩壁反而可走。同一個根因也讓懸崖最上層
      台地(明明畫了石階)整片被封死。改成「正面認地面」:每區依自己的地面顏色特徵逐像素判定,再按格統計地面佔比;
@@ -15752,6 +15777,26 @@ function islDepositAll(){
 }
 
 /* ── 四維能力／技能 EXP ── */
+/* ★ v1.323.0 腳程練法(D.MOV_TRAIN):野外奔跑距離。ISL.movRun={day,px,n} 只記當天,換日自動歸零;每天最多 RUN_DAY_MAX 次練習。 */
+function islMovRunAdd(px){
+  var M = islDB().MOV_TRAIN, R;
+  if(!M || !ISL || !(px > 0)) return;
+  R = ISL.movRun;
+  if(!R || R.day !== ISL.day) R = ISL.movRun = { day: ISL.day, px: 0, n: 0 };
+  if(R.n >= M.RUN_DAY_MAX) return;
+  R.px += px;
+  if(R.px < M.RUN_PX) return;
+  R.px -= M.RUN_PX; R.n += 1;
+  islMovTrain(1, R.n >= M.RUN_DAY_MAX ? '👣 今天跑步練腳程已經練滿了,明天再來!' : '');
+}
+/* 腳程練習共用出口:升級時跳 toast+音效,並存檔 */
+function islMovTrain(n, tip){
+  var up = islStatGain('mov', n);
+  if(up){ try{ playSfx('sfx-statup', 0.5); }catch(_su){} toast('👣 腳程 +1!現在 ' + ISL.stats.mov); }
+  else if(tip) toast(tip);
+  islSave('movTrain');
+  return up;
+}
 function islStatGain(k, n){
   var db = islDB();
   ISL.statXp[k] = (ISL.statXp[k] || 0) + (n || 1);
@@ -17818,7 +17863,7 @@ function islMapPaint(){
   h += '<canvas class="fog" id="isl-map-fog" width="1024" height="768"></canvas>';   /* ★ v1.115.0 迷霧層(1/2 解析度即可,拉伸顯示) */
   for(i = 0; i < db.ZONES.length; i++){
     z = db.ZONES[i]; st = islZoneState(z); enc = db.ENC[z.id]; lvTxt = enc ? ('⚔Lv' + enc.lv[0] + '~' + enc.lv[1]) : '';   /* ★ v1.270.0 老師需求「大地圖各區域顯示怪物的等級範圍」— 讀既有 D.ENC[zone].lv,沙灘沒有 ENC 資料(安全區)故不顯示;沿用 .zn 同一套 unknown 狀態隱藏規則,不會洩漏還沒解鎖的區域資訊 */
-    h += '<button class="isl-zone-spot ' + st + '" data-z="' + z.id + '" style="left:' + z.map.x + '%;top:' + z.map.y + '%">' + (st === 'unknown' ? '❓' : z.e) + '<span class="zn">' + islEsc(z.n) + '</span>' + (lvTxt ? '<span class="lv">' + lvTxt + '</span>' : '') + (st === 'lock' ? '<span class="lk">🔒</span>' : '') + '</button>';
+    h += '<button class="isl-zone-spot ' + st + '" data-z="' + z.id + '" style="left:' + z.map.x + '%;top:' + z.map.y + '%">' + (st === 'unknown' ? '❓' : z.e) + '<span class="zn">' + islEsc(z.n) + ((st === 'open' && !_IS.coop) ? '<b class="ex' + ((((ISL.zones[z.id] || {}).explore) || 0) >= 100 ? ' full' : '') + '">' + ((((ISL.zones[z.id] || {}).explore) || 0) >= 100 ? '✅' : '🧭') + Math.min(100, (((ISL.zones[z.id] || {}).explore) || 0)) + '%</b>' : '') + '</span>' + (lvTxt ? '<span class="lv">' + lvTxt + '</span>' : '') + (st === 'lock' ? '<span class="lk">🔒</span>' : '') + '</button>';
   }
   h += _IS.coop ? '<button id="isl-map-camp" data-z="__visitcamp" style="left:49%;top:67%">🏕<span class="zn">參觀營地</span></button><button id="isl-map-leave" data-z="__leave" style="left:28%;top:84%">🚪<span class="zn">離開拜訪</span></button>' : '<button id="isl-map-camp" data-z="__camp" style="left:49%;top:67%">🏕<span class="zn">營地</span></button>';   /* ★ v1.108.0 拜訪模式:回營鈕換成離開拜訪;★ v1.114.0 拜訪模式再加「🏕 參觀營地」(唯讀) */
   h += '<div id="isl-map-char" style="left:' + cur.map.x + '%;top:' + cur.map.y + '%">' + islChibiHtml(ISL.char, 'idle') + '</div>';
@@ -18460,6 +18505,7 @@ function islTick(t){
       }
     }
     if(_okx) _IS.cx = nx; if(_oky) _IS.cy = ny;
+    if(running && (_okx || _oky) && !_IS.coop) islMovRunAdd(spd * dt);   /* ★ v1.323.0 老師「腳程改成跟跑步有關」— 雙擊奔跑且真的有前進才算(撞牆原地跑不算);拜訪好友島不練自己的能力 */
     _IS.cx = islClamp(_IS.cx, 24, 2048 - 24); _IS.cy = islClamp(_IS.cy, 40, 1536 - 8);
     if(Math.abs(vx) > Math.abs(vy)) _IS.dir = vx > 0 ? 'r' : 'l'; else _IS.dir = vy > 0 ? 'd' : 'u';
     if(!ISL.flags.movedOnce){ ISL.flags.movedOnce = true; islTutDone('moved'); }
@@ -21501,28 +21547,103 @@ function islHeartFx(){
   try{ playSfx('sfx-heal', 0.4); }catch(_h2){}
 }
 /* ── 📖 夥伴圖鑑 ── */
-window.islPetDexOpen = function(){
-  var db = islDB(), h = '', i, k, p, rec, got, ps, typeDef;
+/* ★ v1.323.0(2026-09-24・老師三項)—
+   ①「荒島選隊友重新排版,改成直接開啟夥伴圖鑑」:islPartyPick(idx) 不再開一條一條的文字清單,改呼叫 islPetDexOpen(idx) 進「選隊友模式」
+     ——同一套卡片格線,只列已收服的夥伴 + 好友卡;點卡片=選入第 idx 格;已在隊上/今天休息的卡片變暗點了只跳提示。
+   ②「用草藥復活的按鈕縮短貼齊在該休息寵物名字下方」:休息中的卡片在名字正下方放一顆短版小膠囊「🧪 復活(持有 N)」,
+     用 <span data-act="rev"> 而不是 <button>(卡片本身是 <button>,HTML 不允許巢狀按鈕;islPanel 事件委派從 ev.target 往上找,
+     點在膠囊上會先命中 rev,不會被外層卡片攔走)。⚠ 休息卡片刻意不加 disabled——disabled 按鈕連子元素的點擊都會被瀏覽器吞掉,膠囊會點不到。
+   ③「夥伴圖鑑上方新增分類篩選(攻擊/坦克/治療/控場)+ 依等級/HP/攻擊/防禦/速度/親密度排序 + 遞增/遞減」:比照大對抗英雄頁
+     .hpsort-btn 的做法(再點一次同一顆排序鈕=切換方向),另外多一顆獨立的方向鈕;篩選/排序狀態存在 _islDexF,
+     圖鑑與選隊友模式共用、關掉再開仍記得。未收服的夥伴沒有數值,排序時一律排在最後。 */
+var _islDexF = { t: 'all', s: 'def', d: -1 };
+var ISL_DEX_SORTS = [ { k: 'def', n: '預設' }, { k: 'lv', n: '等級' }, { k: 'hp', n: 'HP' }, { k: 'atk', n: '攻擊' }, { k: 'def2', n: '防禦' }, { k: 'spd', n: '速度' }, { k: 'bond', n: '親密度' } ];
+function islDexSortVal(it, s){
+  if(s === 'lv') return it.rec.lv;
+  if(s === 'hp') return it.ps.hp;
+  if(s === 'atk') return it.ps.atk;
+  if(s === 'def2') return it.ps.def;
+  if(s === 'spd') return it.ps.spd;
+  if(s === 'bond') return it.rec.bondPt || 0;
+  return 0;
+}
+function islPetReviveShortText(){
+  var d = islItemDef(ISL_REVIVE_ITEM());
+  return (d ? d.e : '💊') + ' 復活(持有 ' + islHave(ISL_REVIVE_ITEM()) + ')';
+}
+window.islPetDexOpen = function(pickIdx){
+  var db = islDB(), h = '', i, k, p, rec, got, ps, typeDef, F = _islDexF, pick = (typeof pickIdx === 'number'), list = [], it, rs, inP, blk, tk, f, cdl, blv, nFr = 0, ft;
+  ft = (!pick && F.t === 'friend') ? 'all' : F.t;   /* ★ v1.323.0 老師「隊友的篩選新增類別 好友」— 「好友」只在選隊友模式出現;一般圖鑑沒有好友卡,殘留的 friend 篩選一律視為全部 */
   playSfx('sfx-tap', 0.3);
-  h += '<div class="isl-bagbox wide full"><h3>📖 夥伴圖鑑 <span style="font-size:16px;opacity:.85">' + islPetCount() + '/' + db.PET_ORDER.length + '</span><span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';
-  h += '<div class="isl-petgrid">';
+  if(pick) h += '<div class="isl-bagbox wide full"><h3>🧭 隊友 ' + (pickIdx + 1) + ' 要選誰? <span style="font-size:16px;opacity:.85">點一張卡片就選牠</span><span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';
+  else h += '<div class="isl-bagbox wide full"><h3>📖 夥伴圖鑑 <span style="font-size:16px;opacity:.85">' + islPetCount() + '/' + db.PET_ORDER.length + '</span><span class="grow"></span><button data-act="close">✕</button></h3><div class="bd">';
+  /* 篩選/排序列 */
+  h += '<div class="isl-dexbar"><div class="row"><span class="lb">類型</span>';
+  h += '<span class="chip' + (ft === 'all' ? ' on' : '') + '" data-act="dexT" data-v="all">全部</span>';
+  for(tk in db.PET_TYPES){ if(!db.PET_TYPES.hasOwnProperty(tk)) continue; h += '<span class="chip ty-' + tk + (ft === tk ? ' on' : '') + '" data-act="dexT" data-v="' + tk + '">' + db.PET_TYPES[tk].e + ' ' + islEsc(db.PET_TYPES[tk].n) + '</span>'; }
+  if(pick) h += '<span class="chip ty-friend' + (ft === 'friend' ? ' on' : '') + '" data-act="dexT" data-v="friend">🧑 好友</span>';
+  h += '</div><div class="row"><span class="lb">排序</span>';
+  for(i = 0; i < ISL_DEX_SORTS.length; i++){ h += '<span class="chip' + (F.s === ISL_DEX_SORTS[i].k ? ' on' : '') + '" data-act="dexS" data-v="' + ISL_DEX_SORTS[i].k + '">' + ISL_DEX_SORTS[i].n + (F.s === ISL_DEX_SORTS[i].k && F.s !== 'def' ? (F.d < 0 ? ' ↓' : ' ↑') : '') + '</span>'; }
+  h += '<span class="chip dir" data-act="dexD">' + (F.d < 0 ? '⬇ 遞減(大→小)' : '⬆ 遞增(小→大)') + '</span></div></div>';
   for(i = 0; i < db.PET_ORDER.length; i++){
     k = db.PET_ORDER[i]; p = db.PETS[k]; rec = islPetSave(k); got = !!rec;
-    ps = got ? islPetStats(k, rec.lv, rec.bond) : null;
+    if(pick && !got) continue;
+    if(ft !== 'all' && p.type !== ft) continue;   /* ft==='friend' 時所有夥伴都不符合 ⇒ 只剩好友卡 */
+    list.push({ k: k, p: p, rec: rec, got: got, ps: got ? islPetStats(k, rec.lv, rec.bond) : null, o: i });
+  }
+  if(F.s === 'def'){ if(F.d > 0) list.reverse(); }
+  else list.sort(function(a, b){
+    if(a.got !== b.got) return a.got ? -1 : 1;
+    if(!a.got) return a.o - b.o;
+    var va = islDexSortVal(a, F.s), vb = islDexSortVal(b, F.s);
+    return va === vb ? a.o - b.o : (va - vb) * F.d;
+  });
+  h += '<div class="isl-petgrid">';
+  for(i = 0; i < list.length; i++){
+    it = list[i]; k = it.k; p = it.p; rec = it.rec; got = it.got; ps = it.ps;
     typeDef = db.PET_TYPES[p.type];
-    h += '<button class="isl-petcard t-' + p.type + (got ? '' : ' lock') + (islPartyHasPet(k) ? ' inparty' : '') + '" data-act="pet" data-k="' + k + '">';
-    h += '<div class="pic">' + (got ? islPetPicHtml(k, 'fill') : '❔') + (got ? '' : '<span class="pk">🔒</span>') + '</div>';   /* ★ v1.208.0 老師「夥伴圖鑑的圖片尺寸要正確縮小到框框內可以看到完整寵物」— 999 是誤用(inline style 蓋掉 CSS 導致局部放大裁切,見 islPetPicHtml 說明),改傳 'fill' 讓 CSS 的 width:100%/object-fit:contain 真正生效 */
+    rs = !!(got && rec.rest === ISL.day); inP = islPartyHasPet(k); blk = pick && (rs || inP);
+    h += '<button class="isl-petcard t-' + p.type + (got ? '' : ' lock') + (inP ? ' inparty' : '') + (rs ? ' rest' : '') + (blk ? ' blk' : '') + '" data-act="pet" data-k="' + k + '">';
+    h += '<div class="pic">' + (got ? islPetPicHtml(k, 'fill', null, rs ? 'sleep' : 'idle') : '❔') + (got ? '' : '<span class="pk">🔒</span>') + '</div>';   /* ★ v1.208.0 'fill' 讓 CSS 的 width:100%/object-fit:contain 真正生效(見 islPetPicHtml 說明);★ v1.323.0 休息中換睡覺姿態 */
     h += '<div class="nm">' + (got ? islEsc(p.n) : '???') + '</div>';
+    if(rs) h += '<div class="rst">💤 今天受傷休息</div><span class="isl-dexrev" data-act="rev" data-k="' + k + '">' + islPetReviveShortText() + '</span>';   /* ★ v1.323.0 ② 短版復活鈕貼在名字正下方 */
     h += '<div class="tp">' + (typeDef ? typeDef.e + ' ' + typeDef.n : '') + '</div>';
     if(got) h += '<div class="lv">Lv' + rec.lv + '　' + db.PET_BOND[rec.bond].e + '</div><div class="st">❤️' + ps.hp + '　⚔' + ps.atk + '　🛡' + ps.def + '　💨' + ps.spd + '</div>';
     else h += '<div class="lv hint">' + islEsc(islPetGetHint(p)) + '</div>';
-    h += (islPartyHasPet(k) ? '<span class="pin">🧭 編組中</span>' : '') + '</button>';
+    h += (inP ? '<span class="pin">🧭 ' + (pick ? '已在隊上' : '編組中') + '</span>' : '') + '</button>';
   }
-  h += '</div></div></div>';
+  if(pick && (ft === 'all' || ft === 'friend')){
+    for(i = 0; i < (ISL.friends || []).length; i++){
+      f = ISL.friendCache[ISL.friends[i].uid]; if(!f) continue; nFr++;
+      cdl = islFriendNpcCdLeft(ISL.friends[i].uid); blv = (f.bt && f.bt.lv) || f.defLv || 1;
+      h += '<button class="isl-petcard t-friend' + (cdl > 0 ? ' blk' : '') + '" data-act="friend" data-f="' + ISL.friends[i].uid + '">';
+      h += '<div class="pic">' + (f.char ? islBtSmallChibi(f.char, 110) : '🧑') + '</div>';
+      h += '<div class="nm">' + islEsc(f.name || '好友') + '</div><div class="tp">🧑 好友協助</div>';
+      h += '<div class="lv">Lv' + blv + (f.bt && f.bt.wn ? '・' + islEsc(f.bt.wn) : '') + '</div>';
+      h += '<div class="st">' + (cdl > 0 ? '⏳ 冷卻中,還要 ' + islFriendNpcLeftText(Date.now() + cdl) : '12 小時協助・不會升級') + '</div></button>';
+    }
+  }
+  h += '</div>';
+  if(!list.length && !nFr) h += '<p style="opacity:.85">' + (pick ? (ft === 'all' ? '還沒有可以上場的夥伴或好友。' : (ft === 'friend' ? '還沒有好友。到 👥 好友 輸入好友碼加朋友吧!' : '這個類型還沒有夥伴,換個類型看看。')) : '這個類型沒有夥伴。') + '</p>';
+  if(pick) h += '<div class="isl-dexfoot"><button class="isl-btn ghost" data-act="close">取消</button></div>';
+  h += '</div></div>';
   islPanel(h, function(t){
-    var a = t.getAttribute('data-act');
-    if(a === 'close') islModalClose();
-    else if(a === 'pet') islPetCardOpen(t.getAttribute('data-k'));
+    var a = t.getAttribute('data-act'), v = t.getAttribute('data-v'), kk = t.getAttribute('data-k'), r2;
+    if(a === 'close'){ if(pick) islPartyPaint(); else islModalClose(); }
+    else if(a === 'dexT'){ F.t = v; islPetDexOpen(pickIdx); }
+    else if(a === 'dexS'){ if(F.s === v && v !== 'def') F.d = -F.d; else F.s = v; islPetDexOpen(pickIdx); }
+    else if(a === 'dexD'){ F.d = -F.d; islPetDexOpen(pickIdx); }
+    else if(a === 'rev') islPetReviveTap(kk, function(){ islPetDexOpen(pickIdx); });
+    else if(a === 'pet'){
+      if(!pick){ islPetCardOpen(kk); return; }
+      r2 = islPetSave(kk); if(!r2) return;
+      if(islPartyHasPet(kk)){ toast('牠已經在隊上了'); return; }
+      if(r2.rest === ISL.day){ toast('💤 牠今天在休息——按名字下面的復活,或等明天'); return; }
+      islModalClose(); playSfx('sfx-ok', 0.4);
+      ISL.party[pickIdx] = { t: 'pet', k: kk };
+      islSave('party'); islPartyPaint();
+    }
+    else if(a === 'friend' && pick) islPartyPickFriend(pickIdx, t.getAttribute('data-f'));
   }, { wide: true });
 };
 /* ★ v1.194.0 老師「探險編組要顯示寵物圖片,所有關於寵物的地方都要顯示寵物圖片」—
@@ -21712,7 +21833,22 @@ window.islPetReviveTap = function(k, after){
     } }
   ]);
 };
-function islPartyPick(idx){
+/* ★ v1.323.0 老師「荒島選隊友重新排版,改成直接開啟夥伴圖鑑」— 選隊友一律走 islPetDexOpen(idx) 的選隊友模式(見該函式說明)。
+   好友選入的規則原封不動抽成 islPartyPickFriend;舊的文字清單版改名 islPartyPickList_old 留作備查,已無任何呼叫端。 */
+function islPartyPick(idx){ islPetDexOpen(idx); }
+function islPartyPickFriend(idx, fu){
+  var q, _inv;
+  if(islFriendNpcCdLeft(fu) > 0){ toast('⏳ 這位好友還在冷卻中'); return; }
+  islModalClose(); playSfx('sfx-ok', 0.4);
+  /* 借用版好友:同一場只允許一位(D.PARTY_FRIEND.MAX),避免整隊都是別人的角色 */
+  _inv = islFriendNpcInvite(fu);   /* ★ v1.244.0 12 小時 NPC 隊友 + 12 小時冷卻 */
+  if(!_inv.ok){ toast(_inv.msg); islPartyPaint(); return; }
+  for(q = 0; q < ISL.party.length; q++){ if(q !== idx && ISL.party[q] && ISL.party[q].t === 'friend') ISL.party[q] = null; }
+  ISL.party[idx] = { t: 'friend', uid: fu };
+  toast('👋 ' + _inv.name + ' 來幫忙 12 小時!');
+  islSave('party'); islPartyPaint();
+}
+function islPartyPickList_old(idx){
   var db = islDB(), h = '', i, k, p, rec, f, any = false;
   h = '<h3>🧭 隊友 ' + (idx + 1) + ' 要選誰?</h3><div class="isl-pickwrap">';
   for(i = 0; i < db.PET_ORDER.length; i++){
@@ -21817,18 +21953,28 @@ window.islCmdField = function(){
   playSfx('sfx-tap', 0.3);
   if(!L.length){ islModal('<h3>🎯 特殊指令</h3><p>目前沒有裝設「野外」類的指令。到 👤 角色 → 🎯 特殊指令 裝設看看。</p>', [{ t: '知道了', cls: 'gold' }]); return; }
   h = '<h3>🎯 使用特殊指令</h3><p style="opacity:.85">目前 ⚡AP ' + ISL.ap + '</p><div class="isl-pickwrap">';
-  for(i = 0; i < L.length; i++){ d = db.SK_CMDS[L[i]]; h += '<button class="isl-recipe' + (ISL.ap >= d.ap ? ' can' : '') + '" data-c="' + L[i] + '"' + (ISL.ap >= d.ap ? '' : ' disabled') + '><span class="rn">' + d.e + ' <b>' + islEsc(d.n) + '</b>　⚡' + d.ap + '<br>' + islEsc(d.d) + '</span></button>'; }
+  for(i = 0; i < L.length; i++){
+    d = db.SK_CMDS[L[i]];
+    var _used = (d.once === 'day' && islCmdDayUsed(L[i])), _can = ISL.ap >= d.ap && !_used;   /* ★ v1.324.0 每天限用一次的指令(如 野外小憩)用過後這裡也一起變灰,不必點下去才知道 */
+    h += '<button class="isl-recipe' + (_can ? ' can' : '') + '" data-c="' + L[i] + '"' + (_can ? '' : ' disabled') + '><span class="rn">' + d.e + ' <b>' + islEsc(d.n) + '</b>　⚡' + d.ap + (_used ? '　<b>今天用過了</b>' : '') + '<br>' + islEsc(d.d) + '</span></button>';
+  }
   h += '</div>';
   islModal(h, [{ t: '取消', cls: 'ghost' }]);
   bs = $('isl-modal').querySelectorAll('button[data-c]');
   for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); if(this.disabled) return; var id = this.getAttribute('data-c'); islModalClose(); islCmdUse(id, false); }; }
 };
+/* ★ v1.324.0 通用「每天限用 N 次」旗標(目前只有 once:'day'=1 次):以後其他指令要做每天限用,
+   直接在 D.SK_CMDS 掛上 once:'day' 就會自動吃到這裡的擋用/顯示邏輯,不必各自再寫一顆專用旗標。 */
+function islCmdDayUsed(id){ return !!(ISL.cmdDay && ISL.cmdDay[id] === ISL.day); }
+function islCmdDayMark(id){ if(!ISL.cmdDay || typeof ISL.cmdDay !== 'object') ISL.cmdDay = {}; ISL.cmdDay[id] = ISL.day; }
 /* 執行特殊指令。⚠ AP 在這裡統一扣,各分支只負責效果,不要各自再扣一次。 */
 function islCmdUse(id, inBattle){
   var db = islDB(), d = db.SK_CMDS[id], B = _islBt, i, u, was, tot = 0, zm;
   if(!d) return false;
+  if(d.once === 'day' && islCmdDayUsed(id)){ islModal('<h3>' + d.e + ' ' + islEsc(d.n) + '</h3><p>今天已經用過了,明天再來吧!</p>', [{ t: '知道了' }]); return false; }
   if(ISL.ap < d.ap){ islModal('<h3>⚡ AP 不夠</h3><p>' + d.e + islEsc(d.n) + ' 要 ⚡' + d.ap + ',你只剩 ⚡' + ISL.ap + '。</p>', [{ t: '知道了' }]); return false; }
   ISL.ap -= d.ap; islHud(); playSfx('sfx-burst-use', 0.45);
+  if(d.once === 'day') islCmdDayMark(id);
   if(inBattle && B && !B.over){
     B.cmdUsed = B.cmdUsed || {}; B.cmdUsed[id] = true;
     islBtSetState('p', 'atk', 700); islBtFx('p', 'glow', 200);
@@ -21879,9 +22025,18 @@ function islCmdUse(id, inBattle){
     _IS.qpick = true;
     islModal('<h3>🧺 熟練採集</h3><p>下一次採集不必玩品質小遊戲,直接判定 ★★★。</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(d.sci) + '</p>', [{ t: '好', cls: 'gold' }]);
   } else if(id === 'CMD_REST'){
-    was = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(1, Math.round(ISL.hpMax * 0.30)));
-    if(ISL.hp > ISL.hpMax * 0.5) ISL.hurt = false;
-    islModal('<h3>🔥 野外小憩</h3><p>就地生了一小堆火,休息了一下。❤️+' + (ISL.hp - was) + '</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(d.sci) + '</p>', [{ t: '好', cls: 'gold' }]);
+    /* ★ v1.324.0 老師「天賦節點－野外小憩 效果改成 恢復全隊100%的HP並解除所有不利狀態(每天限用一次)」—
+       每天限用一次已由上面通用的 d.once==='day' 擋掉;這裡只管效果本身:
+       自己補滿體力+隊友(ISL.party 裡當天休息中的寵物)一併復原,不吃道具、不看今天有沒有受傷休息,
+       跟 🧪 草藥精華復活是兩條獨立的路——這顆按鈕本來就是「每天一次的全隊大休息」,划算但一天只有一次。 */
+    was = ISL.hp; ISL.hp = ISL.hpMax; ISL.hurt = false;
+    var _ails = islAilList(), _ai, _curedN = 0;
+    for(_ai = 0; _ai < _ails.length; _ai++){ islAilCure(_ails[_ai], true); _curedN++; }
+    var _revN = 0, _pi, _prec;
+    for(_pi = 0; _pi < ISL.party.length; _pi++){
+      if(ISL.party[_pi] && ISL.party[_pi].t === 'pet'){ _prec = islPetSave(ISL.party[_pi].k); if(_prec && _prec.rest === ISL.day){ _prec.rest = 0; _revN++; } }
+    }
+    islModal('<h3>🔥 野外小憩</h3><p>就地生了一小堆火,全隊圍著火堆好好休息了一下。</p><p>❤️ ' + (ISL.hp - was > 0 ? '+' + (ISL.hp - was) + '(體力全滿)' : '體力已經是滿的') + (_curedN ? '<br>✅ 解除了 ' + _curedN + ' 種不良狀態' : '') + (_revN ? '<br>💊 ' + _revN + ' 位隊友恢復精神,可以重新上場了' : '') + '</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(d.sci) + '</p>', [{ t: '好', cls: 'gold' }]);
   }
   islHud(); islSave('cmd');
   return true;
@@ -21918,9 +22073,9 @@ window.islCharOpen = function(){
   h += '<div class="c-right">';
   h += '<h4>💪 四維能力 <span class="h4hint">點一下看說明,再點一下收起</span></h4>';
   h += '<div class="isl-abil">';
-  for(i = 0; i < db.STATS.length; i++){ s = db.STATS[i]; sel = (_IS.abTip === 'stat:' + s.k); h += '<button class="isl-ab' + (sel ? ' on' : '') + '" data-act="ab" data-k="stat:' + s.k + '"><span class="an">' + s.e + s.n + '</span><b>' + ISL.stats[s.k] + '</b><span class="bar"><i style="width:' + (ISL.stats[s.k] / db.STAT_MAX * 100) + '%"></i></span><span class="ax">練 ' + (ISL.statXp[s.k] || 0) + '/' + db.STAT_XP_NEED + '</span>' + (sel ? '<span class="tip">' + islEsc(s.d) + '<br>再做 ' + (db.STAT_XP_NEED - (ISL.statXp[s.k] || 0)) + ' 次對應活動就 +1(上限 ' + db.STAT_MAX + ')。</span>' : '') + '</button>'; }
+  for(i = 0; i < db.STATS.length; i++){ s = db.STATS[i]; sel = (_IS.abTip === 'stat:' + s.k); h += '<button class="isl-ab' + (sel ? ' on' : '') + '" data-act="ab" data-k="stat:' + s.k + '"><span class="an">' + s.e + s.n + '</span><b>' + ISL.stats[s.k] + '</b><span class="bar"><i style="width:' + (ISL.stats[s.k] / db.STAT_MAX * 100) + '%"></i></span><span class="ax">練 ' + (ISL.statXp[s.k] || 0) + '/' + db.STAT_XP_NEED + '</span>' + (sel ? '<span class="tip">' + islEsc(s.d) + '<br>再練 ' + (db.STAT_XP_NEED - (ISL.statXp[s.k] || 0)) + ' 次就 +1(上限 ' + db.STAT_MAX + ')。' + (s.how && s.how.length ? '<span class="how"><b>怎麼練:</b>' + s.how.map(function(x){ return '<br>・' + islEsc(x); }).join('') + '</span>' : '') + '</span>' : '') + '</button>'; }
   h += '</div>';
-  h += '<p style="font-size:15px;opacity:.75;margin:4px 0 0">做對應活動每 ' + db.STAT_XP_NEED + ' 次 +1(上限 ' + db.STAT_MAX + ');向動物訓練師學習也能 +1。</p>';
+  h += '<p style="font-size:15px;opacity:.75;margin:4px 0 0">每練習 ' + db.STAT_XP_NEED + ' 次 +1(上限 ' + db.STAT_MAX + ');點一下四維能力就能看到「怎麼練」。</p>';
   h += '<h4>🛠 生存技能(用了才長)</h4>';
   h += '<div class="isl-abil sk">';
   for(k in db.SKILLS){ if(!db.SKILLS.hasOwnProperty(k)) continue; sk = ISL.skill[k]; sel = (_IS.abTip === 'skill:' + k); h += '<button class="isl-ab' + (sel ? ' on' : '') + '" data-act="ab" data-k="skill:' + k + '"><span class="an">' + db.SKILLS[k].e + db.SKILLS[k].n + '</span><b>Lv' + sk.lv + '</b><span class="bar"><i style="width:' + (sk.lv >= db.SKILL_MAX ? 100 : sk.xp / db.SKILL_XP_NEED(sk.lv) * 100) + '%;background:#ffd166"></i></span><span class="ax">' + (sk.lv >= db.SKILL_MAX ? '頂級' : sk.xp + '/' + db.SKILL_XP_NEED(sk.lv)) + '</span>' + (sel ? '<span class="tip">' + islEsc('對應四維:' + (db.STATS[0].k === db.SKILLS[k].stat ? db.STATS[0].n : (db.SKILLS[k].stat === 'mov' ? '腳程' : (db.SKILLS[k].stat === 'pow' ? '力氣' : (db.SKILLS[k].stat === 'wit' ? '巧思' : '巧手'))))) + '<br>' + islEsc('Lv3:' + db.SKILLS[k].lv3) + '<br>' + islEsc('Lv5:' + db.SKILLS[k].lv5) + '<br>' + islEsc('Lv7:' + db.SKILLS[k].lv7) + '<br>Lv8 起每級產量再 +10%(上限 Lv' + db.SKILL_MAX + ')。</span>' : '') + '</button>'; }
@@ -24916,7 +25071,7 @@ function islResLineHtml(resObj){ var db = islDB(), R = db.RES_TYPES || {}, k, a 
  *   ⚠ 帶 wp 欄的節點只有「裝備該武器時」才算進去(棍棒石斧星域吃 club 與 stoneaxe 兩把)。
  */
 var ISL_SK_KILL_PER = 3, ISL_SK_DAY_PER = 5;   /* ★ 老師裁定丙 */
-function islSk(){ if(!ISL.sk || typeof ISL.sk !== 'object') ISL.sk = { taken: {}, respec: 0 }; if(!ISL.sk.taken) ISL.sk.taken = {}; if(typeof ISL.sk.respec !== 'number') ISL.sk.respec = 0; if(!ISL.sk.paid || typeof ISL.sk.paid !== 'object') ISL.sk.paid = {}; if((ISL.sk.ver | 0) < 5 && islDB() && islDB().SK_NODES) islSkMigrateB5(ISL.sk); if((ISL.sk.ver | 0) < 6 && islDB() && islDB().SK_NODES) islSkMigrateB6(ISL.sk); return ISL.sk; }
+function islSk(){ if(!ISL.sk || typeof ISL.sk !== 'object') ISL.sk = { taken: {}, respec: 0 }; if(!ISL.sk.taken) ISL.sk.taken = {}; if(typeof ISL.sk.respec !== 'number') ISL.sk.respec = 0; if(!ISL.sk.paid || typeof ISL.sk.paid !== 'object') ISL.sk.paid = {}; if((ISL.sk.ver | 0) < 5 && islDB() && islDB().SK_NODES) islSkMigrateB5(ISL.sk); if((ISL.sk.ver | 0) < 6 && islDB() && islDB().SK_NODES) islSkMigrateB6(ISL.sk); if((ISL.sk.ver | 0) < 7 && islDB() && islDB().SK_NODES) islSkMigrateB7(ISL.sk); return ISL.sk; }
 /* ★ v1.229.0 B5 舊點數遷移(每份存檔只跑一次,sk.ver=5):五條武器星域整個重做,舊的武器節點與已不存在的節點一律退回點數;
    中央/醫療/特殊指令節點 id 與前置都沒變,原樣保留(不然學生裝好的特殊指令會突然消失)。全員另送一次免費洗點(sk.free)。
    ⚠ 點數本來就是「已賺 − 已點」現算的,刪掉 taken 就等於退點,不必另外補發。 */
@@ -24954,6 +25109,26 @@ function islSkMigrateB6(sk){
     }
   }
   sk.ver = 6;
+}
+/* ★ v1.323.0 B7 老師看圖「幸運沒有點亮,後面節點(辨識野生藥草…)不該開放;飽足還沒點,後面(恢復料理/保存食物…)不該開放」——
+   根因:醫療星域的 D.SK_MED_LINK「互通」讓前置沒點的醫療節點也能點(見 islSkReqOk);資料表已關掉互通。
+   舊存檔裡靠互通「跳點」的節點:與 B6 相反,這裡不幫忙補發前置(補發等於白送好幾點),而是把「前置沒達成」的節點退掉,
+   點數自動回到可用點數(可用 = 賺到 − 已點亮數,不必另記);精通素材已付過的記在 sk.paid,重新點亮不必再付。
+   多輪疊代到穩定(退掉一顆可能讓它下游也不成立)。每份存檔只跑一次(sk.ver 6→7),b7Drop>0 時開星盤會提示一次。 */
+function islSkMigrateB7(sk){
+  var a = islDB().SK_NODES || [], changed = true, i, j, n, ok, any, drop = 0, guard = 0;
+  while(changed && guard < 40){
+    changed = false; guard++;
+    for(i = 0; i < a.length; i++){
+      n = a[i];
+      if(!sk.taken[n.id]) continue;
+      ok = true;
+      for(j = 0; j < (n.req || []).length; j++){ if(!sk.taken[n.req[j]]){ ok = false; break; } }
+      if(ok && n.reqAny && n.reqAny.length){ any = false; for(j = 0; j < n.reqAny.length; j++){ if(sk.taken[n.reqAny[j]]) any = true; } ok = any; }
+      if(!ok){ delete sk.taken[n.id]; drop++; changed = true; }
+    }
+  }
+  sk.ver = 7; sk.b7Drop = drop; sk.b7Told = drop ? 0 : 1;
 }
 function islSkEarned(){ var w = (ISL.battle && ISL.battle.won) | 0; return Math.floor(w / ISL_SK_KILL_PER) + Math.floor(Math.max(0, ISL.day - 1) / ISL_SK_DAY_PER) + (ISL.bossPts | 0); }   /* ★ v1.227.0 頭目首殺天賦點 */
 function islSkSpent(){ var t = islSk().taken, k, n = 0; for(k in t){ if(t.hasOwnProperty(k) && t[k]) n++; } return n; }
@@ -25187,6 +25362,11 @@ window.islSkOpen = function(){
     islModal('<h3>🌟 天賦星盤改版了!</h3><p>每種武器都有自己的招牌機制:🏹弓「🎯專注」、🪵棍斧「🪓破甲」、🔨錘「🔋蓄力」、🔱長槍「架槍反刺」、🪃迴力鏢「↪彈射」。</p><p>武器星域中段要 🔀<b>二選一</b>,最後的 👑<b>精通</b>要用頭目素材才能點亮;砍樹、採石、QTE 這些生活加成搬到新的 🧺<b>生活技藝星域</b>。</p><p style="color:#7bed9f">你原本點在武器星域的 <b>' + (islSk().b5Drop | 0) + '</b> 點已經全部退回,另外送你 <b>1 次免費洗點</b>。中央、醫療、特殊指令的節點都保留著。</p>', [{ t: '去看新星盤', cls: 'gold', cb: function(){ islSkOpen(); } }]);
     return;
   }
+  if(islSk().b7Told === 0){   /* ★ v1.323.0 B7 跳點退還說明(每份存檔只跳一次) */
+    islSk().b7Told = 1; islSkApplyHp(); islSave('sk');
+    islModal('<h3>🌟 天賦星盤修正</h3><p>天賦要<b>照著連線一顆一顆往外點</b>。之前有些節點沒點前面的就能點,這次修正了。</p><p>你有 <b>' + (islSk().b7Drop | 0) + '</b> 顆跳著點的節點已經退回,點數全部還給你,可以照路線重新點。</p>', [{ t: '知道了', cls: 'gold', cb: function(){ islSkOpen(); } }]);
+    return;
+  }
   islSkApplyHp();
   price = (db.SK_RESPEC ? db.SK_RESPEC.base + db.SK_RESPEC.step * islSk().respec : 30);
   h += '<div class="isl-bagbox wide full isl-skbox"><h3>🌟 天賦星域<span class="grow"></span><button data-act="close">✕</button></h3><div class="bd"><div class="isl-sk-cols">';   /* ★ v1.200.0 老師「星盤固定放右半部50%滿版,左半部是其他訊息和按鈕」— .bd 底下新增左右兩欄容器 */
@@ -25275,8 +25455,33 @@ function islSkGalaxyPos(k){
   if(g && typeof g.ang === 'number' && mu){ an = g.ang * Math.PI / 180; return { x: Math.round(C.cx + (mu + 105) * Math.cos(an)), y: Math.round(C.cy + (mu + 105) * Math.sin(an)) }; }   /* ★ v1.229.0 B5 放射狀:星域名放在最外圈節點再往外一點 */
   return { x: Math.round(sx / n), y: Math.max(16, miny - 56) };
 }
+/* ★ v1.323.0 老師看圖「天賦節點確認視窗開啟時,天賦星盤要維持在畫面背景」——
+   舊版節點說明/確認走 islModal,它會把 #isl-modal 整個 innerHTML 換掉 ⇒ 星盤消失、只剩營地畫面當背景,關掉再 islSkOpen() 重畫。
+   改成 islSkPop:在 #isl-modal(星盤面板所在)裡「疊加」一層 #isl-skpop 小視窗,沿用 islModal 的 .box/.bd/.row 外觀(CSS 會自動套到),
+   星盤本體完全不動、仍在背景看得到;關閉只移除這一層。點外圍半透明處也可關閉。
+   ⚠ 事件:小視窗自己 stopPropagation,不會觸發星盤面板 islPanel 的 m.onclick(那支點到面板外會整個關掉星盤)。
+   ⚠ 星盤沒開著(#isl-modal hidden)時退回 islModal,行為與舊版一致。 */
+function islSkPopClose(){ var o = $('isl-skpop'); if(o && o.parentNode) o.parentNode.removeChild(o); }
+function islSkPop(html, btns){
+  var m = $('isl-modal'), d, row, i, b;
+  islSkPopClose();
+  if(!m || m.classList.contains('hidden') || !m.querySelector('[data-sk]')){ islModal(html, btns); return; }
+  btns = btns || [{ t: '好', cls: '' }];
+  d = document.createElement('div'); d.id = 'isl-skpop';
+  d.innerHTML = '<div class="box"><button class="isl-x" aria-label="關閉">✕</button><div class="bd">' + html + '</div><div class="row"></div></div>';
+  row = d.querySelector('.row');
+  for(i = 0; i < btns.length; i++){
+    b = document.createElement('button'); b.className = 'isl-btn ' + (btns[i].cls || ''); b.textContent = btns[i].t;
+    b.onclick = (function(bt){ return function(ev){ ev.stopPropagation(); playSfx('sfx-tap', 0.3); islSkPopClose(); if(bt.cb) bt.cb(); }; })(btns[i]);
+    row.appendChild(b);
+  }
+  d.querySelector('.isl-x').onclick = function(ev){ ev.stopPropagation(); playSfx('sfx-tap', 0.3); islSkPopClose(); };
+  d.onclick = function(ev){ ev.stopPropagation(); if(ev.target === d) islSkPopClose(); };
+  m.appendChild(d);
+  try{ islSfx('menuOpen'); }catch(_mo){}
+}
 function islSkTap(id){
-  var n = islSkNode(id), db = islDB(), h, g = null, i, sk = islSk(), back = [{ t: '關閉', cls: 'ghost', cb: function(){ islSkOpen(); } }];
+  var n = islSkNode(id), db = islDB(), h, g = null, i, sk = islSk(), back = [{ t: '關閉', cls: 'ghost' }];   /* ★ v1.323.0 關閉=只關小視窗 */
   if(!n) return;
   playSfx('sfx-sel', 0.28);
   h = '<h3>' + n.e + ' ' + islEsc(n.n) + (n.mst ? ' <small style="color:#ffd166">👑 精通</small>' : '') + '</h3><p>' + islEsc(n.d) + '</p>';
@@ -25287,13 +25492,13 @@ function islSkTap(id){
   if(n.cmd && db.SK_CMDS && db.SK_CMDS[n.cmd]) h += '<p style="font-size:15px">' + db.SK_CMDS[n.cmd].e + ' 效果:' + islEsc(db.SK_CMDS[n.cmd].d) + '</p>';   /* ★ v1.293.0 老師看圖「戰場急救」節點彈窗只有『解鎖特殊指令』這句空話,沒有實際效果說明——D.SK_CMDS 表裡其實早就有完整效果文字(d 欄位,如「治療1名隊友50%最大體力;倒下的隊友也能直接救回來」),只是 islSkTap 組裝彈窗內容時沒有把它撈出來顯示,比照上面 n.act(絕招)那行同樣的寫法補上,SK_CMD_1~8 共 8 個特殊指令節點全部套用到,不必逐一寫死。 */
   if(n.mat) h += '<p style="font-size:15px;color:' + (islSkMatOk(n) ? '#7bed9f' : '#ff9f9f') + '">👑 精通素材:' + (sk.paid[n.id] ? '已經付過了,再點不用付' : islEsc(islSkMatText(n))) + '</p>';
   if(n.sci) h += '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(n.sci) + '</p>';
-  if(islSkHas(id)) islModal(h + '<p style="color:#7bed9f">✅ 已點亮。</p>', back);
-  else if(!islSkReqOk(n)) islModal(h + '<p style="color:#ff7b7b">還不能點:要先點亮前面的節點。</p>', back);
-  else if(islSkGrpTaken(n)) islModal(h + '<p style="color:#ff7b7b">你已經走了「' + islEsc(islSkGrpTaken(n).n) + '」這條路線。想改走這一條,要先洗點。</p>', back);
-  else if(islSkPts() <= 0) islModal(h + '<p style="color:#ff7b7b">天賦點不夠了(每打贏 ' + ISL_SK_KILL_PER + ' 隻魔物 +1、每過 ' + ISL_SK_DAY_PER + ' 個島上日 +1、首次打倒頭目 +2)。</p>', back);
-  else if(!islSkMatOk(n)) islModal(h + '<p style="color:#ff7b7b">頭目素材還不夠——去打倒對應的頭目吧!(物品包和倉庫裡的都算)</p>', back);
-  else islModal(h + '<p>要花 <b>1</b> 點天賦點點亮它嗎?(目前 ' + islSkPts() + ' 點)' + (islSkMatNeed(n) ? '<br>會同時用掉上面的頭目素材。' : '') + '</p>', [
-    { t: '再想想', cls: 'ghost', cb: function(){ islSkOpen(); } },
+  if(islSkHas(id)) islSkPop(h + '<p style="color:#7bed9f">✅ 已點亮。</p>', back);
+  else if(!islSkReqOk(n)) islSkPop(h + '<p style="color:#ff7b7b">還不能點:要先點亮前面的節點。</p>', back);
+  else if(islSkGrpTaken(n)) islSkPop(h + '<p style="color:#ff7b7b">你已經走了「' + islEsc(islSkGrpTaken(n).n) + '」這條路線。想改走這一條,要先洗點。</p>', back);
+  else if(islSkPts() <= 0) islSkPop(h + '<p style="color:#ff7b7b">天賦點不夠了(每打贏 ' + ISL_SK_KILL_PER + ' 隻魔物 +1、每過 ' + ISL_SK_DAY_PER + ' 個島上日 +1、首次打倒頭目 +2)。</p>', back);
+  else if(!islSkMatOk(n)) islSkPop(h + '<p style="color:#ff7b7b">頭目素材還不夠——去打倒對應的頭目吧!(物品包和倉庫裡的都算)</p>', back);
+  else islSkPop(h + '<p>要花 <b>1</b> 點天賦點點亮它嗎?(目前 ' + islSkPts() + ' 點)' + (islSkMatNeed(n) ? '<br>會同時用掉上面的頭目素材。' : '') + '</p>', [
+    { t: '再想想', cls: 'ghost' },   /* ★ v1.323.0 只關掉小視窗,星盤留在原位(不重畫,捲動位置/縮放不跳掉) */
     { t: '✨ 點亮', cls: 'gold', cb: function(){
         var k;
         if(!islSkCan(id)){ toast('現在還不能點亮'); islSkOpen(); return; }
@@ -25628,17 +25833,26 @@ function islBtDeb(key){ var B = _islBt, b = B && B.deb && B.deb[key]; return (b 
 function islBtAddBuff(key, v, turns){ var B = _islBt; if(!B) return; B.buff = B.buff || {}; B.buff[key] = { v: Math.max(v, (B.buff[key] && B.buff[key].t > 0) ? B.buff[key].v : 0), t: Math.max(turns || 1, (B.buff[key] && B.buff[key].t) || 0) }; }
 function islBtAddDeb(key, v, turns){ var B = _islBt; if(!B) return; B.deb = B.deb || {}; B.deb[key] = { v: Math.max(v, (B.deb[key] && B.deb[key].t > 0) ? B.deb[key].v : 0), t: Math.max(turns || 1, (B.deb[key] && B.deb[key].t) || 0) }; }
 function islBtTickBuffs(){ var B = _islBt, k; if(!B) return; for(k in B.buff){ if(B.buff.hasOwnProperty(k) && B.buff[k].t > 0) B.buff[k].t--; } for(k in B.deb){ if(B.deb.hasOwnProperty(k) && B.deb[k].t > 0) B.deb[k].t--; } if(B.taunt && B.taunt.t > 0) B.taunt.t--; if(B.heroGuard && B.heroGuard.t > 0) B.heroGuard.t--; }
-/* 受傷共用出口:護盾先擋、坦克代受在呼叫端處理 */
+/* 受傷共用出口:護盾先擋、坦克代受在呼叫端處理
+   ★ v1.325.0 老師「受傷如果被護盾抵消或減傷,數字要呈現,例如受到120傷害但有50護盾就顯示 -120(-50);受到100傷害但有50%減傷就顯示 -100(-50%)」—
+   新增模組級 _islHurtInfo,每次呼叫都記下這次的 raw(呼叫端傳進來、尚未經過護盾/目標自身減傷% 的原始傷害)、pct(cutP+petCutP 疊乘算出的合併減傷%,四捨五入)、shield(護盾實際擋下的量)、final(最後真正扣血的量);
+   呼叫端改用 islBtHurtFloat()/islBtHurtFloatText() 讀這個資訊組出 "−120(−50%, −50)" 這種格式的單一浮動數字,不再各自另外彈一個「🛡 擋下 N」。 */
+var _islHurtInfo = null;
 function islBtHurtUnit(u, dmg){
-  var a;
+  var a, raw = dmg, pct = 0, shieldAmt = 0, before;
   if(u.side === 'p'){
     var B0 = _islBt;
-    if(B0 && B0.heroShield > 0){ a = Math.min(B0.heroShield, dmg); B0.heroShield -= a; dmg -= a; if(a > 0) islBtFloat('p', '🛡 擋下 ' + a, 'block'); }
-    ISL.hp = Math.max(0, ISL.hp - dmg); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true; return dmg;
+    if(B0 && B0.heroShield > 0){ a = Math.min(B0.heroShield, dmg); B0.heroShield -= a; dmg -= a; shieldAmt += a; }
+    ISL.hp = Math.max(0, ISL.hp - dmg); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true;
+    _islHurtInfo = { raw: raw, pct: 0, shield: shieldAmt, final: dmg };
+    return dmg;
   }
+  before = dmg;
   if(islPetTal(u, 'cutP')) dmg = Math.max(1, Math.round(dmg * (1 - islPetTal(u, 'cutP') / 100)));   /* ★ v1.167.0 天賦 cutP(穿山甲 鱗片護體) */
   if(u.t === 'pet' && islSkEff('petCutP')) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(50, islSkEff('petCutP')) / 100)));   /* ★ v1.317.0 馴獸專精 petCutP:寵物受到的傷害 −N%(上限 50%) */
-  if(u.shield > 0){ a = Math.min(u.shield, dmg); u.shield -= a; dmg -= a; if(a > 0) islBtFloat(u.side, '🛡 擋下 ' + a, 'block'); }
+  if(before > 0) pct = Math.round((1 - dmg / before) * 100);
+  if(u.shield > 0){ a = Math.min(u.shield, dmg); u.shield -= a; dmg -= a; shieldAmt += a; }
+  _islHurtInfo = { raw: raw, pct: pct, shield: shieldAmt, final: dmg };
   u.hp = Math.max(0, u.hp - dmg);
   if(dmg > 0 && u.t === 'pet' && !u.down && islPetTal(u, 'cdCutOnHit')){ u.cd = Math.max(0, (u.cd || 0) - islPetTal(u, 'cdCutOnHit')); }   /* ★ v1.321.0 天賦 cdCutOnHit(五色鳥 鑿洞連擊):自己受到傷害時,技能冷卻縮短 N 回合 */
   if(u.hp <= 0 && !u.down && u.t === 'pet' && !u._guts && islSkEff('petGuts')){ u._guts = true; u.hp = 1; islBtFloat(u.side, '🐾 撐住了!', 'heal'); islBtLog('🌟 羈絆守護!' + islEsc(u.n) + ' 咬牙撐住,保留 1 點體力。'); }   /* ★ v1.317.0 馴獸專精關鍵節點 petGuts:每隻寵物每場第一次被打倒時保留 1 點(u 是每場重建的戰鬥單位,_guts 旗標天然每場重置) */
@@ -25649,6 +25863,18 @@ function islBtHurtUnit(u, dmg){
   }
   return dmg;
 }
+/* ★ v1.325.0 組出「−120(−50%, −50)」這種格式的字串:prefix 是 🔥/🩸 這種前綴符號(不影響括號內容)。
+   讀 islBtHurtUnit 剛存好的 _islHurtInfo,呼叫端必須緊接在該次 islBtHurtUnit(...) 之後呼叫,中間不能再呼叫別的 islBtHurtUnit。 */
+function islBtHurtFloatText(prefix){
+  var info = _islHurtInfo, parts = [], t;
+  if(!info) return (prefix || '') + '−0';
+  t = (prefix || '') + '−' + info.raw;
+  if(info.pct) parts.push('−' + info.pct + '%');
+  if(info.shield) parts.push('−' + info.shield);
+  if(parts.length) t += '(' + parts.join(', ') + ')';
+  return t;
+}
+function islBtHurtFloat(side, cls, prefix){ islBtFloat(side, islBtHurtFloatText(prefix), cls); }
 /* ★ v1.321.0 天賦 downHealAllP(櫻花鉤吻鮭):某隻寵物剛剛倒下(u.down 剛設 true)時觸發,自己不算在內;
    活著的隊友與主角一律回 pct%,已經倒下的隊友直接復活並以 pct% 最大體力回到戰場。
    ⚠ pct 由呼叫端在 u.down 設 true「之前」就讀好傳進來,這裡不能再用 islPetTal(u,...) 重讀(u 已經 down,islPetTal 對倒下單位一律回 0)。 */
@@ -26397,7 +26623,7 @@ function islBtItemUse(k, side){
   islBtSetState('p', 'idle', 0);
   if(sp.risk && Math.random() * 100 < sp.risk.p){
     u = tg[0];
-    if(u){ n = Math.max(1, Math.round(((u.side === 'p') ? ISL.hpMax : u.hpMax) * Math.abs(sp.risk.hpP) / 100)); islBtHurtUnit(u, n); islBtFloat(u.side, '−' + n, ''); islBtFx(u.side, 'dizzy', 140); }
+    if(u){ n = Math.max(1, Math.round(((u.side === 'p') ? ISL.hpMax : u.hpMax) * Math.abs(sp.risk.hpP) / 100)); islBtHurtUnit(u, n); islBtHurtFloat(u.side, ''); islBtFx(u.side, 'dizzy', 140); }   /* ★ v1.325.0 傷害數字改用 islBtHurtFloat,護盾/減傷% 併入同一個浮動文字 */
     playSfx('sfx-ng', 0.4); islBtHp();
     islBtLog('🎒 ' + islEsc(d.n) + ':' + islEsc(sp.risk.txt) + (u ? ' −' + n : ''));
     if(ISL.hp <= 0){ B.busy = true; islBtActs(false); setTimeout(function(){ islBattleEnd('lose'); }, 700); return; }
@@ -26771,8 +26997,8 @@ function islBtAction(a){
   else if(a === 'run'){
     ps = islBtPlayerStats();
     var ch = Math.min(90, db.BT.ESCAPE_BASE + Math.min(50, ISL.stats.mov) * db.BT.ESCAPE_MOV + islAccEff('escAdd'));   /* ★ v1.228.0 蝗翅護符 */
-    if(Math.random() * 100 < ch){ playSfx('sfx-evade', 0.45); islBtLog('🏃 ' + db.BT.lines.flee[Math.floor(Math.random() * db.BT.lines.flee.length)]); setTimeout(function(){ islBattleEnd('flee'); }, 800); }
-    else { playSfx('sfx-ng', 0.35); islBtLog('🏃 ' + db.BT.lines.fleeFail[Math.floor(Math.random() * db.BT.lines.fleeFail.length)] + '(成功率 ' + ch + '%)'); setTimeout(islBtMonTurn, 900); }
+    if(Math.random() * 100 < ch){ playSfx('sfx-evade', 0.45); islBtLog('🏃 ' + db.BT.lines.flee[Math.floor(Math.random() * db.BT.lines.flee.length)]); try{ if(db.MOV_TRAIN) islMovTrain(db.MOV_TRAIN.ESC_OK); }catch(_mt1){} setTimeout(function(){ islBattleEnd('flee'); }, 800); }   /* ★ v1.323.0 逃跑成功練腳程 */
+    else { playSfx('sfx-ng', 0.35); islBtLog('🏃 ' + db.BT.lines.fleeFail[Math.floor(Math.random() * db.BT.lines.fleeFail.length)] + '(成功率 ' + ch + '%)'); try{ if(db.MOV_TRAIN) islMovTrain(db.MOV_TRAIN.ESC_FAIL); }catch(_mt2){} setTimeout(islBtMonTurn, 900); }   /* ★ v1.323.0 沒逃掉也算練習 */
   }
 }
 /* ⚔ 攻擊 QTE:指針左右擺,綠區=命中、中央白線=暴擊、綠區外=落空;迴力鏢連按 2 次(兩段) */
@@ -27489,8 +27715,8 @@ function islBtMonHitSeq(m, S, list, i, next){
     islBtLeech(m, dmg);
     if(S.drainP && m.hp > 0){ h = Math.max(1, Math.round(dmg * S.drainP / 100)); m.hp = Math.min(m.hpMax, m.hp + h); islBtFloat(m.side, '+' + h, 'heal'); extra += '(吸回 ' + h + ')'; }
     if(!(u.side !== 'p' && u.down)) islBtSetState(u.side, 'hit', 500);
-    islBtFx(u.side, 'hit'); islBtFxPlay(islBtFxSkill(m, S), null, u.side, true); islBtFloat(u.side, '−' + dmg, 'combo'); islBtHp();   /* ★ v1.240.0 招式打中目標的特效(音效在施放時播過) */
-    islBtLog('💥「' + islEsc(S.n) + '」打中 ' + islEsc(u.side === 'p' ? ((ISL.char && ISL.char.name) || '你') : u.n) + ' −' + dmg + extra + '。');
+    islBtFx(u.side, 'hit'); islBtFxPlay(islBtFxSkill(m, S), null, u.side, true); islBtHurtFloat(u.side, 'combo'); islBtHp();   /* ★ v1.240.0 招式打中目標的特效(音效在施放時播過) */ /* ★ v1.325.0 傷害數字改用 islBtHurtFloat,護盾/減傷% 併入同一個浮動文字 */
+    islBtLog('💥「' + islEsc(S.n) + '」打中 ' + islEsc(u.side === 'p' ? ((ISL.char && ISL.char.name) || '你') : u.n) + ' ' + islBtHurtFloatText('') + extra + '。');
     if(S.slow){ if(u.side === 'p'){ if(islResRoll('cold')) islBtLog('❄ 身體保暖不僵硬,沒有被拖慢!'); else B.p.slowT = Math.max(B.p.slowT || 0, S.slow); } else u.slowT = Math.max(u.slowT || 0, S.slow); }   /* ★ v1.228.0 寒冷抗性 */
     if(S.dot){ if(u.side === 'p'){ var _dk = (S.t === 'burn') ? 'burn' : 'poison'; if(islResRoll(_dk)) islBtLog((_dk === 'burn' ? '🔥 燒燙' : '☠ 毒') + '抗性擋下了持續傷害!'); else { B.p.burnT = Math.max(B.p.burnT || 0, S.dur || 2); B.p.dotKey = _dk; } } else u.burnT = Math.max(u.burnT || 0, S.dur || 2); }   /* ★ v1.228.0 燒燙/毒抗性 */
     stunN = S.stun || ((S.stunP && Math.random() * 100 < S.stunP) ? 1 : 0);
@@ -27527,7 +27753,9 @@ function islBtDodgeQte(cb){
 function islBtDodgeApply(u, r, dmg){
   var db = islDB();
   if(u.side !== 'p' || !r || r === 'none') return dmg;
-  if(r === 'perfect'){ playSfx('sfx-evade', 0.5); islBtFloat('p', '完美閃避!', 'block'); islBtFx('p', 'hit', 160); islBtFxEv('dodge', 'p', null); return 0; }
+  if(r === 'perfect'){ playSfx('sfx-evade', 0.5); islBtFloat('p', '完美閃避!', 'block'); islBtFx('p', 'hit', 160); islBtFxEv('dodge', 'p', null);
+    try{ if(db.MOV_TRAIN && _islBt && (_islBt.movDodge || 0) < db.MOV_TRAIN.DODGE_PER_BT){ _islBt.movDodge = (_islBt.movDodge || 0) + 1; islMovTrain(db.MOV_TRAIN.DODGE); } }catch(_mt3){}   /* ★ v1.323.0 完美閃避練腳程(每場上限) */
+    return 0; }
   playSfx('sfx-evade', 0.35); islBtFloat('p', '閃過一半', 'block');
   return Math.max(1, Math.round(dmg * db.BT.DODGE.goodMul * (1 - Math.min(50, islSkEff('dodgeCutP')) / 100)));   /* ★ v1.300.0 天賦「警覺」(特殊指令路線新節點,取代原本規劃的「格擋率」)：一般閃避(非完美)在既有折半基礎上再減傷,上限額外 50%,完美閃避(r==='perfect')不受影響、本來就是 0 傷害 */
 }
@@ -27551,7 +27779,7 @@ function islBtStatusTick(){
   }
   for(i = 0; i < B.allies.length; i++){
     u = B.allies[i]; if(u.slowT > 0) u.slowT--;
-    if(u.burnT > 0 && !u.down){ u.burnT--; d = Math.max(1, Math.round(u.hpMax * dotP / 100)); islBtHurtUnit(u, d); islBtFloat(u.side, '🔥−' + d, ''); }
+    if(u.burnT > 0 && !u.down){ u.burnT--; d = Math.max(1, Math.round(u.hpMax * dotP / 100)); islBtHurtUnit(u, d); islBtHurtFloat(u.side, '', '🔥'); }   /* ★ v1.325.0 傷害數字改用 islBtHurtFloat */
   }
   return false;
 }
@@ -27895,12 +28123,12 @@ function islBtMonAct(m, next){
     }
     playSfx(crit ? 'sfx-crit' : 'sfx-normalatk', 0.5);
     if(!(u.side !== 'p' && u.down)) islBtSetState(u.side, 'hit', 500);
-    islBtFx(u.side, 'hit'); islBtFxMonHit(m, u.side, crit); islBtFloat(u.side, '−' + dmg, crit ? 'combo' : '');   /* ★ v1.240.0 依種族/魔物的普攻特效 */
+    islBtFx(u.side, 'hit'); islBtFxMonHit(m, u.side, crit); islBtHurtFloat(u.side, crit ? 'combo' : '');   /* ★ v1.240.0 依種族/魔物的普攻特效 */ /* ★ v1.325.0 傷害數字改用 islBtHurtFloat,護盾/減傷% 併入同一個浮動文字 */
     islBtHp();
-    if(u.side === 'p' && ISL.hp <= 0){ islBtLog('💥 ' + islEsc(m.n) + ' 的攻擊 −' + dmg + '……' + db.BT.lines.lose[Math.floor(Math.random() * db.BT.lines.lose.length)]); setTimeout(function(){ islBattleEnd('lose'); }, 500); return; }
-    if(u.side === 'p' && crit && db.BT.PLAYER_STUN_ON_CRIT && !islBtBuff('immune')){ B.p.stun = Math.max(B.p.stun, 1); islBtLog('💥 ' + islEsc(m.n) + ' 暴擊 −' + dmg + '!你被撞得頭昏眼花……'); }   /* ★ v1.213.0 老師「技能清單稽核:補齊免疫不利狀態」— 這是原本就存在、唯一會讓魔物弄暈玩家的機制,補上 immune 保護,不然新加的 immuneAll 只防得住新機制、防不住這個舊的,老師實測時會覺得「免疫」名不符實 */
-    else if(u.side === 'p' && crit && db.BT.PLAYER_STUN_ON_CRIT) islBtLog('💥 ' + islEsc(m.n) + ' 暴擊 −' + dmg + '!幸好有護身,沒被撞暈。');
-    else islBtLog('💢 ' + islEsc(m.n) + ' 攻擊 ' + islEsc(u.n) + ' −' + dmg + '。');
+    if(u.side === 'p' && ISL.hp <= 0){ islBtLog('💥 ' + islEsc(m.n) + ' 的攻擊 ' + islBtHurtFloatText('') + '……' + db.BT.lines.lose[Math.floor(Math.random() * db.BT.lines.lose.length)]); setTimeout(function(){ islBattleEnd('lose'); }, 500); return; }
+    if(u.side === 'p' && crit && db.BT.PLAYER_STUN_ON_CRIT && !islBtBuff('immune')){ B.p.stun = Math.max(B.p.stun, 1); islBtLog('💥 ' + islEsc(m.n) + ' 暴擊 ' + islBtHurtFloatText('') + '!你被撞得頭昏眼花……'); }   /* ★ v1.213.0 老師「技能清單稽核:補齊免疫不利狀態」— 這是原本就存在、唯一會讓魔物弄暈玩家的機制,補上 immune 保護,不然新加的 immuneAll 只防得住新機制、防不住這個舊的,老師實測時會覺得「免疫」名不符實 */
+    else if(u.side === 'p' && crit && db.BT.PLAYER_STUN_ON_CRIT) islBtLog('💥 ' + islEsc(m.n) + ' 暴擊 ' + islBtHurtFloatText('') + '!幸好有護身,沒被撞暈。');
+    else islBtLog('💢 ' + islEsc(m.n) + ' 攻擊 ' + islEsc(u.n) + ' ' + islBtHurtFloatText('') + '。');
     /* ★ v1.213.0 老師「技能清單稽核:補齊麻痺(對玩家隊伍)」— 雷精(spark)專屬的觸電機率,玩家與隊友都可能中;
        跟上面的暴擊撞暈是兩條獨立路徑(這個不看暴擊,純機率),兩者都吃同一顆 immune buff。 */
     if(m.stunOnHitP && !islBtBuff('immune') && Math.random() * 100 < m.stunOnHitP * (u.side === 'p' ? Math.max(0, 1 - islResist('thunder') / 100) : 1)){   /* ★ v1.228.0 雷抗性 */
@@ -27952,8 +28180,32 @@ function islBtAllyAct(u, next){
      順便讓這個欄位本身不再是死的。寫法比照魔物那邊(islBtMonAct)。 */
   if(u.stun > 0){ u.stun--; islBtSetState(u.side, 'stun', 0); islBtFx(u.side, 'dizzy', 140); islBtLog('😵 ' + islEsc(u.n) + ' 暈眩中,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(u.stun <= 0) islBtSetState(u.side, 'idle', 0); next(); } }, 1000); return; }
   useCmd = !!(cmd && cmd.fx && u.cd <= 0 && (u.gauge || 0) >= 100 && !islBtPetManual());   /* ★ v1.258.0 老師需求①:自動施放要「冷卻好+計量滿 100」;✋ 手動模式輪到自己一律只普攻,施放交給玩家點寵物插隊 */
+  if(useCmd && islBtIsHealCmd(cmd)) useCmd = islBtHealNeeded(cmd);   /* ★ v1.325.0 治療型寵物自動施展技能智能行動:見 islBtHealNeeded 說明,沒人需要治療/復活/解除狀態時這回合先不放,改普攻,計量/冷卻都保留到真正需要的時候 */
   if(useCmd){ u.cd = Math.max(1, (cmd.cd || 1) - (u.cdCut || 0)); u.gauge = 0; islBtGaugePaint(); islBtPetCmd(u, cmd, next); return; }
   islBtAllyBasic(u, next);
+}
+/* ★ v1.325.0 老師「治療型寵物自動施展技能智能行動:友方任一人HP低於70%(未倒下)使用治療技能;友方任一人倒下且持有復活技能則優先復活;友方任一人陷入不利狀態且持有解除狀態技能則優先解除」—
+   只針對「治療型指令」(fx 裡有 heal/healAll/healRevive/revive/cure/cureAll 任一鍵)做這層判斷,其餘攻擊/增益/控場類指令維持原本「冷卻好+計量滿就放」的行為不變;
+   同一招同時具備多種效果時(例如梅花鹿 healRevive 同時能治療與復活),只要滿足其中一個條件就會出招,實際要治療還是復活由 islBtPetCmd 本體效果邏輯自己決定優先順序(已經是「先挑倒下的人復活,沒有倒下的人才補血量最低者」),這裡只負責「值不值得現在放」。
+   regenAll(持續恢復,例如莫氏樹蛙 露水迷霧)是預防性的全隊 buff,不算在治療型指令內,一律照常自動施放。 */
+function islBtIsHealCmd(cmd){
+  var f = cmd && cmd.fx; if(!f) return false;
+  return !!(f.heal || f.healAll || f.healRevive || f.revive || f.cure || f.cureAll);
+}
+function islBtHealNeeded(cmd){
+  var f = cmd.fx, B = _islBt, i, a;
+  if(!B) return true;
+  if(f.revive || f.healRevive){   /* ①有人倒下,且這招能復活 → 優先出招 */
+    for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down) return true; }
+  }
+  if(f.cure || f.cureAll){   /* ②身上還有不良狀態(場外飢餓/口渴/生病…),且這招能解除 → 優先出招 */
+    try{ if(islAilList().length) return true; }catch(_ah){}
+  }
+  if(f.heal || f.healAll || f.healRevive){   /* ③有人(含主角)體力低於 70%(未倒下) → 出招治療 */
+    if(ISL.hp > 0 && ISL.hp / ISL.hpMax < 0.7) return true;
+    for(i = 0; i < B.allies.length; i++){ a = B.allies[i]; if(!a.down && a.hp / a.hpMax < 0.7) return true; }
+  }
+  return false;
 }
 /* ★ v1.167.0 隊友攻擊力的單一出口:全隊增益 atkUpP + 天賦
    ——長尾陣列(台灣藍鵲:每多一位在場夥伴 +5%)、夜行獵手(石虎:目標半血以下 +20%)、
@@ -27983,7 +28235,10 @@ function islBtAllyBasic(u, next){
       crit = _pcC > 0 && Math.random() * 100 < _pcC;   /* ★ v1.167.0 天賦 critP(大冠鷲 高空視野) */
       if(crit) dmg = Math.round(dmg * 1.5);
       dmg = islBtBossDmg(m, dmg, u); m.hp = Math.max(0, m.hp - dmg); if(m.boss) islBtToughHit(m, islDB().BOSS_RULE.tough.ally);
-      playSfx(crit ? 'sfx-crit' : 'sfx-normalatk', 0.45); islBtSetState(m.side, 'hit', 450); try{ var _pf = islBtFxDB().petAtk || {}; islBtFxPlay(_pf[u.k] || _pf[u.type] || _pf.def, null, m.side); }catch(_pfx){}   /* ★ v1.240.0 夥伴普攻特效 */ islBtFloat(m.side, '−' + dmg, crit ? 'combo' : ''); islBtHp();
+      (function(_m, _dmg, _crit, _hi){ setTimeout(function(){   /* ★ v1.324.0 老師「荒島戰鬥中多段攻擊(例如石虎)每段傷害要間隔0.3秒跳出數字」— 傷害/擊殺判定仍在上面同步立即算完,只把這一段的受擊動畫/特效/浮動數字/血條延後 hi×300ms 播出,連續好幾段才不會疊在同一個位置看不清楚(比照 v1.195.0 迴力鏢的做法,300ms 是老師這次指定的間隔) */
+        if(!_islBt) return;
+        playSfx(_crit ? 'sfx-crit' : 'sfx-normalatk', 0.45); islBtSetState(_m.side, 'hit', 450); try{ var _pf = islBtFxDB().petAtk || {}; islBtFxPlay(_pf[u.k] || _pf[u.type] || _pf.def, null, _m.side); }catch(_pfx){}   /* ★ v1.240.0 夥伴普攻特效 */ islBtFloat(_m.side, '−' + _dmg, _crit ? 'combo' : ''); islBtHp();
+      }, _hi * 300); })(m, dmg, crit, hi);
       islBtLog(u.e + ' ' + islEsc(u.n) + ' 攻擊 ' + islEsc(m.n) + (crit ? ' ✨暴擊' : '') + ' −' + dmg + (hits > 1 ? '(第 ' + (hi + 1) + '/' + hits + ' 段)' : '') + '。');
       var _CB = islDB().BT.COMBO;
       if(_CB && B.heroTgt === m.side && m.hp > 0 && u.t === 'pet' && Math.random() * 100 < _CB.base + _CB.perBond * ((u.rec && u.rec.bond) | 0)){ var _cbd = Math.max(1, Math.round(dmg * _CB.mul)); m.hp = Math.max(0, m.hp - _cbd); islBtFloat(m.side, '🤝−' + _cbd, 'combo'); islBtLog('🤝 連攜攻擊!' + islEsc(u.n) + ' 跟著你追打 −' + _cbd + '。'); islBtHp(); }   /* ★ v1.226.0 連攜 */
@@ -27991,7 +28246,7 @@ function islBtAllyBasic(u, next){
       if(!healed && islPetTal(u, 'atkHealLowP')){ healed = true; islBtLog('🐟 ' + islEsc(u.n) + ' 順手一治:' + islBtHealOne(u, islPetTal(u, 'atkHealLowP'))); }   /* ★ v1.321.0 天賦 atkHealLowP(櫻花鉤吻鮭 力竭迴游):普通攻擊時順便治療隊伍裡血量比例最低的一位,多段攻擊只觸發一次 */
       if(m.hp <= 0){ islBtOnMonDown(m, next); return; }
     }
-    setTimeout(next, 650);
+    setTimeout(next, 650 + Math.max(0, hits - 1) * 300);   /* ★ v1.324.0 多段時延後進下一步,讓最後一段的浮動數字有時間播完 */
   }, 380);
 }
 /* 專屬指令:所有數值一律讀 D.PET_CMDS[...].fx,index 端不寫死任何一招的數字 */
@@ -28014,7 +28269,8 @@ function islBtPetCmd(u, cmd, next){
           if(!f.sure) dmg = Math.round(dmg * (0.9 + Math.random() * 0.2));
           if(f.critAdd && Math.random() * 100 < f.critAdd) dmg = Math.round(dmg * 1.5);
           dmg = islBtBossDmg(hitTgt, dmg, u); hitTgt.hp = Math.max(0, hitTgt.hp - dmg); if(hitTgt.boss) islBtToughHit(hitTgt, islDB().BOSS_RULE.tough.cmd);
-          islBtSetState(hitTgt.side, 'hit', 450); if(j === 0 && B._cmdFx && B._cmdFx.t) islBtFxPlay({ t: B._cmdFx.t, tz: B._cmdFx.tz }, null, hitTgt.side); islBtFloat(hitTgt.side, '−' + dmg, 'combo');
+          if(j === 0 && B._cmdFx && B._cmdFx.t) islBtFxPlay({ t: B._cmdFx.t, tz: B._cmdFx.tz }, null, hitTgt.side);
+          (function(_t, _dmg, _j){ setTimeout(function(){ if(!_islBt) return; islBtSetState(_t.side, 'hit', 450); islBtFloat(_t.side, '−' + _dmg, 'combo'); }, _j * 300); })(hitTgt, dmg, j);   /* ★ v1.324.0 老師「荒島戰鬥中多段攻擊(例如石虎二段攻擊)每段傷害要間隔0.3秒跳出數字」— 傷害同步立即算完(暈眩/睡眠/失明等判定不受影響),只把受擊動畫與浮動數字延後 j×300ms,連續好幾段才看得清楚是哪一段的數字 */
           lines.push(islEsc(hitTgt.n) + ' −' + dmg);
           total += dmg;
           if(f.stunP && hitTgt.hp > 0 && Math.random() * 100 < (f.stunP + islPetTal(u, 'stunAddP'))){   /* ★ v1.167.0 天賦 stunAddP(台灣獼猴 手巧) */ hitTgt.stun = Math.max(hitTgt.stun, f.stun || 1); islBtFx(hitTgt.side, 'dizzy', 140); lines.push(islEsc(hitTgt.n) + ' 暈了'); }
@@ -28087,7 +28343,7 @@ function islBtPetCmd(u, cmd, next){
     islBtLog(cmd.e + ' ' + islEsc(cmd.n) + ':' + (lines.length ? lines.join('　') : '生效了!'));
     /* 全部魔物倒下? */
     for(i = 0; i < B.ms.length; i++){ if(B.ms[i].hp <= 0 && !B.ms[i]._downDone){ islBtOnMonDown(B.ms[i], next); return; } }
-    setTimeout(next, 800);
+    setTimeout(next, 800 + Math.max(0, (f.hits || 1) - 1) * 300);   /* ★ v1.324.0 多段技能(如石虎二段攻擊)延後進下一步,讓最後一段的浮動數字有時間播完 */
   }, 700);
 }
 function islBtRegenTick(){   /* ★ v1.213.0 老師「技能清單稽核:補齊持續恢復HP」— 每回合開頭(islBtPlayerTurn 呼叫)結算一次,pct 施放當下就已經折算過天賦,這裡單純套用 */
