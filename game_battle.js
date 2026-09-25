@@ -5390,6 +5390,7 @@ const STATUS_DESCS = {
 const BUFF_DESCS = {
   immune:        '無敵：持續期間免疫傷害和不利狀態',
   _amaReflect:   '日暮反照：受到對手直接傷害時，把傷害加倍反彈給攻擊者',   // ★ v5.232.0 天照大神 S1
+  _amaSunAtk:    '烈日之光：攻擊力上升（依天照大神的特技）',   // ★ v5.237.0 天照大神 S2 追加
   statusImmune: '免疫不利狀態：持續期間所有不利狀態無效',
   shield:        '護盾：下一次傷害無效',
   evasion:       '迴避：速度低於自己的攻擊無法命中',
@@ -7679,6 +7680,157 @@ function addBuff(h,t,dur=1){
 //   涵蓋:traitSlow(冰法師 -50% 速)、_tenguSpdDown(大天狗風捲殘雲 -25% 速)、_zeusSpDown(天神宙斯 -50% 特技)
 //   注意:僅還原帶有 _origSpd/_origSp 快照的狀態;天賦/增強等其他狀態不受影響。
 function _restoreStatDebuffOnRemove(h, removedStatuses){
+  // ★ v5.239.0 — 改為委派給全面版 _lxpsStatFxRestore(涵蓋所有改素質的有利/不利狀態,見下方)
+  try{ _lxpsStatFxRestore(h, removedStatuses); }catch(_){}
+}
+// ════════════════════════════════════════════════════════════════════════
+// ★★ v5.239.0(2026-09-25・老師「全面清查」)— 改素質暫態效果「統一還原」
+//   背景:遊戲裡有兩種改素質的方式 ——
+//     (甲)物件快照/增量:效果物件本身記原值或增量(strengthened/_soulSwap 記 _origXxx;_rogueSwift/_slamSpd/_sprint 記 _spdBoost…)
+//     (乙)英雄欄位記帳:原值記在英雄身上(weakened→_weakenOrig*、_aquariusWeak→_aquWeakOrig*、doubleatk→_mirrorOrigAtk、
+//          _amaSunAtk→_amaSunAtk、_bugStack→_bugStackAtk/Sp、_scholarBreak→_scholarSpdBonus、_ponyMaxHpBuff→_ponyHpBonus)
+//   原本只有「自然到期」會還原,各種消除/淨化/清空/奪取/死亡/連場重置的路徑多半直接把物件丟掉 ⇒ 數值永久殘留(可跨小怪戰)。
+//   規則:任何地方要把效果物件拿掉,拿掉「之前」呼叫 _lxpsStatFxRestore(h, 被拿掉的物件陣列);整批清空用 _lxpsStatFxRestoreAll。
+//   冪等:每個物件還原後標 _fxDone;(乙)類還原後刪英雄欄位,重複呼叫不會重複還原。
+function _lxpsStatFxRestoreOne(h, e){
+  if(!h || !e || e._fxDone) return false;
+  let did = false;
+  try{
+    switch(e.type){
+      // ── 有利(buffs)──
+      case 'strengthened':
+        if(e._origAtk !== undefined){ h.atk = e._origAtk; h.sp = e._origSp; h.spd = e._origSpd; did = true; } break;
+      case '_soulSwap':
+        if(e._origAtk !== undefined){
+          h.atk = e._origAtk; h.sp = e._origSp; did = true;
+          if(e._swapRole === 'fox'){ try{ if(typeof _foxSoulSwapRestore === 'function') _foxSoulSwapRestore(h); }catch(_){} }
+        } break;
+      case 'doubleatk':
+        if(h._mirrorOrigAtk !== undefined){ h.atk = h._mirrorOrigAtk; delete h._mirrorOrigAtk; h._burstMirror = false; did = true; } break;
+      case '_amaSunAtk':
+        if(h._amaSunAtk > 0){ _amaSunAtkRemove(h, 'strip'); did = true; } break;
+      case '_bugStack':
+        if(h._bugStackAtk !== undefined || h._bugStackSp !== undefined || typeof e._atk === 'number' || typeof e._sp === 'number'){
+          const _ba = (typeof h._bugStackAtk === 'number') ? h._bugStackAtk : (e._atk || 0);
+          const _bs = (typeof h._bugStackSp  === 'number') ? h._bugStackSp  : (e._sp  || 0);
+          if(_ba) h.atk = Math.max(1, (h.atk || 0) - _ba);
+          if(_bs) h.sp  = Math.max(1, (h.sp  || 0) - _bs);
+          delete h._bugStackAtk; delete h._bugStackSp; did = true;
+        } break;
+      case '_scholarBreak': {
+        const _sb = (typeof h._scholarSpdBonus === 'number') ? h._scholarSpdBonus : e._spdBonus;
+        if(typeof _sb === 'number'){ h.spd = Math.max(0, (h.spd || 0) - _sb); delete h._scholarSpdBonus; did = true; }
+      } break;
+      case '_rogueSwift':
+        if(typeof e._spdBoost === 'number'){ h.spd = Math.max(1, (h.spd || 0) - e._spdBoost); did = true; } break;
+      case '_ponyMaxHpBuff':
+        if(typeof e._hpBonus === 'number'){
+          h.hp = Math.max(1, (h.hp || 1) - e._hpBonus); h.curHp = Math.min(h.curHp, h.hp);
+          delete h._ponyHpBonus; delete h._ponyMaxHpBaseline; did = true;
+        } break;
+      // ── 不利/特質(status)──
+      case 'traitSlow': case '_tenguSpdDown':
+        if(e._origSpd !== undefined){ h.spd = e._origSpd; did = true; } break;
+      case '_zeusSpDown':
+        if(e._origSp !== undefined){ h.sp = e._origSp; did = true; } break;
+      case 'traitWeak': case '_cryDebuff': case '_dreamDebuff':
+        if(e._origAtk !== undefined){ h.atk = e._origAtk; h.sp = e._origSp; did = true; } break;
+      case '_cuteWeaken':
+        if(e._atkCut){ h.atk += e._atkCut; e._atkCut = 0; did = true; }
+        if(e._spCut){  h.sp  += e._spCut;  e._spCut  = 0; did = true; }
+        break;
+      case 'weakened':
+        if(h._weakenOrigAtk !== undefined){ h.atk = h._weakenOrigAtk; delete h._weakenOrigAtk; did = true; }
+        if(h._weakenOrigSp  !== undefined){ h.sp  = h._weakenOrigSp;  delete h._weakenOrigSp;  did = true; }
+        if(h._weakenOrigSpd !== undefined){ h.spd = h._weakenOrigSpd; delete h._weakenOrigSpd; did = true; }
+        break;
+      case '_aquariusWeak':
+        if(h._aquWeakOrigAtk !== undefined){ h.atk = h._aquWeakOrigAtk; delete h._aquWeakOrigAtk; did = true; }
+        if(h._aquWeakOrigSp  !== undefined){ h.sp  = h._aquWeakOrigSp;  delete h._aquWeakOrigSp;  did = true; }
+        break;
+      case 'traitRage':
+        if(e._rageAtkBonus !== undefined){ h.atk = Math.max(1, (h.atk || 0) - e._rageAtkBonus); did = true; } break;
+      case '_sprint':
+        if(e._spdBoost !== undefined){ h.spd = Math.max(1, (h.spd || 0) - e._spdBoost); h._sprintOrigSpd = undefined; did = true; } break;
+      case '_slamSpd':
+        if(e._spdBoost !== undefined){ h.spd = Math.max(1, (h.spd || 0) - e._spdBoost); did = true; } break;
+    }
+  }catch(_){}
+  e._fxDone = true;
+  return did;
+}
+function _lxpsStatFxRestore(h, list){
+  if(!h || !Array.isArray(list)) return 0;
+  let n = 0;
+  list.forEach(function(e){ if(_lxpsStatFxRestoreOne(h, e)) n++; });
+  return n;
+}
+//   整批清空前用:which = 'buffs' | 'status' | 省略(兩者)
+function _lxpsStatFxRestoreAll(h, which){
+  if(!h) return 0;
+  let n = 0;
+  try{
+    if(which !== 'status' && Array.isArray(h.buffs))  n += _lxpsStatFxRestore(h, h.buffs.slice());
+    if(which !== 'buffs'  && Array.isArray(h.status)) n += _lxpsStatFxRestore(h, h.status.slice());
+  }catch(_){}
+  return n;
+}
+//   數值被整批重設(回到 _initState 等)時用:只丟掉英雄身上的記帳欄位,不做還原(避免之後又被扣一次)
+function _lxpsStatFxForget(h){
+  if(!h) return;
+  ['_weakenOrigAtk','_weakenOrigSp','_weakenOrigSpd','_aquWeakOrigAtk','_aquWeakOrigSp','_mirrorOrigAtk',
+   '_amaSunAtk','_bugStackAtk','_bugStackSp','_scholarSpdBonus','_ponyHpBonus','_ponyMaxHpBaseline'].forEach(function(k){
+    try{ delete h[k]; }catch(_){}
+  });
+  try{ h._burstMirror = false; }catch(_){}
+}
+//   奪取/轉移效果物件給別人時用:回傳「去掉素質欄位」的複本,避免接收方到期時被套上原主人的數值
+function _lxpsStatFxSanitizeCopies(list){
+  const _STRIP = ['_origAtk','_origSp','_origSpd','_atk','_sp','_spdBonus','_spdBoost','_hpBonus','_rageAtkBonus','_atkCut','_spCut','_baseAtk','_baseSp','_swapRole'];
+  return (list || []).map(function(e){
+    if(!e || typeof e !== 'object') return e;
+    const c = Object.assign({}, e);
+    _STRIP.forEach(function(k){ delete c[k]; });
+    c._fxDone = true;
+    return c;
+  });
+}
+//   連場/戰鬥結束時用:把所有改素質的效果「還原並拿掉」(其他 buff/status 不動)
+var _LXPS_STATFX_TYPES = ['strengthened','_soulSwap','doubleatk','_amaSunAtk','_bugStack','_scholarBreak','_rogueSwift','_ponyMaxHpBuff',
+  'traitSlow','_tenguSpdDown','_zeusSpDown','traitWeak','_cryDebuff','_dreamDebuff','_cuteWeaken','weakened','_aquariusWeak','traitRage','_sprint','_slamSpd'];
+function _lxpsStatFxStripAll(h){
+  if(!h) return 0;
+  let n = 0;
+  try{
+    const _is = function(e){ return e && _LXPS_STATFX_TYPES.indexOf(e.type) >= 0; };
+    if(Array.isArray(h.buffs)){  n += _lxpsStatFxRestore(h, h.buffs.filter(_is));  h.buffs  = h.buffs.filter(function(e){ return !_is(e); }); }
+    if(Array.isArray(h.status)){ n += _lxpsStatFxRestore(h, h.status.filter(_is)); h.status = h.status.filter(function(e){ return !_is(e); }); }
+    _lxpsStatFxReconcile(h);   // 物件早已不在、只剩英雄欄位記帳的也一併還原
+  }catch(_){}
+  return n;
+}
+//   英雄欄位記帳(乙類)自我校正:效果物件已不在身上、但記帳還在 ⇒ 還原(每回合 tickStatus 開頭跑)
+function _lxpsStatFxReconcile(h){
+  if(!h) return;
+  try{
+    const _hasB = function(t){ return (h.buffs  || []).some(function(b){ return b && b.type === t; }); };
+    const _hasS = function(t){ return (h.status || []).some(function(s){ return s && s.type === t; }); };
+    if((h._weakenOrigAtk !== undefined || h._weakenOrigSp !== undefined || h._weakenOrigSpd !== undefined) && !_hasS('weakened'))
+      _lxpsStatFxRestoreOne(h, { type:'weakened' });
+    if((h._aquWeakOrigAtk !== undefined || h._aquWeakOrigSp !== undefined) && !_hasS('_aquariusWeak'))
+      _lxpsStatFxRestoreOne(h, { type:'_aquariusWeak' });
+    if(h._mirrorOrigAtk !== undefined && !_hasB('doubleatk') && !h._iliyaBurstActive)
+      _lxpsStatFxRestoreOne(h, { type:'doubleatk' });
+    if((h._bugStackAtk !== undefined || h._bugStackSp !== undefined) && !_hasB('_bugStack'))
+      _lxpsStatFxRestoreOne(h, { type:'_bugStack' });
+    if(typeof h._scholarSpdBonus === 'number' && !_hasB('_scholarBreak'))
+      _lxpsStatFxRestoreOne(h, { type:'_scholarBreak' });
+    if(typeof h._ponyHpBonus === 'number' && !_hasB('_ponyMaxHpBuff'))
+      _lxpsStatFxRestoreOne(h, { type:'_ponyMaxHpBuff', _hpBonus:h._ponyHpBonus });
+    _amaSunAtkReconcile(h);
+  }catch(_){}
+}
+function _restoreStatDebuffOnRemove_legacy_v3_13_28(h, removedStatuses){
   try{
     if(!h || !Array.isArray(removedStatuses)) return;
     removedStatuses.forEach(function(s){
@@ -7921,28 +8073,40 @@ function _tauntImmuneCheck(t){
 function clearGoodBuffs(h){
     // 堅定祈禱（protectBuff）：有此 buff 時有利狀態不可被消除
   if(hasBuff(h,'protectBuff')) return;
+  // ★ v5.238.0(2026-09-25・老師「修改bug」)— 改過素質的有利 buff 被消除時,一律「先還原、後移除」
+  //   舊 BUG:先 filter 掉 buffs 才 find('strengthened'/'doubleatk') ⇒
+  //     ①被真的消掉的增強術/明鏡止水永遠找不到 ⇒ 攻特速(明鏡為攻擊)提升留到整場戰鬥結束;
+  //     ②反而是「沒被消掉」(強力/爆發來源)的那個被找到 ⇒ buff 還在卻先把數值還原,效果提早失效。
+  //   小力強力隱身分支原本也直接 filter、完全沒還原,一併走同一個還原流程。
+  const _restoreRemoved = (keep) => {
+    // ★ v5.239.0 — 改用全面版 _lxpsStatFxRestore(原本只認增強術/明鏡止水)
+    try{ _lxpsStatFxRestore(h, (h.buffs || []).filter(b => b && !keep(b))); }catch(_){}
+  };
   // 小力：強力隱身不可被消除
-  if(hasBuff(h,'inuInvisible')) { h.buffs=h.buffs.filter(b=>b.type==='inuInvisible'||b.type==='immune'||['deathimmune','immovable','rebirth','misfortune','alchemist','counter'].includes(b.type)); return; }
-  const PROTECTED_BUFFS=['deathimmune','immovable','rebirth','misfortune','alchemist','counter','divineBlessing','reviveImmune'];
-  h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type) || b._fromBurst || b._strong);
-  // 還原 strengthened 的能力值
-  const str=h.buffs.find(b=>b.type==='strengthened');
-  if(str && str._origAtk!==undefined){ h.atk=str._origAtk; h.sp=str._origSp; h.spd=str._origSpd; }
-  // 還原 doubleatk（明鏡止水）
-  const dbAtk=h.buffs.find(b=>b.type==='doubleatk');
-  if(dbAtk && h._mirrorOrigAtk!==undefined){
-    h.atk=h._mirrorOrigAtk;
-    delete h._mirrorOrigAtk;
-    h._burstMirror=false;
+  if(hasBuff(h,'inuInvisible')) {
+    const _keepInu = b=>b.type==='inuInvisible'||b.type==='immune'||['deathimmune','immovable','rebirth','misfortune','alchemist','counter'].includes(b.type);
+    _restoreRemoved(_keepInu);
+    h.buffs=h.buffs.filter(_keepInu);
+    try{ _amaSunAtkReconcile(h); }catch(_){}   // ★ v5.237.0 烈日攻擊上升被消除 ⇒ 還原
+    return;
   }
-  h.buffs=h.buffs.filter(b=>PROTECTED_BUFFS.includes(b.type) || b._fromBurst || b._strong);
+  const PROTECTED_BUFFS=['deathimmune','immovable','rebirth','misfortune','alchemist','counter','divineBlessing','reviveImmune'];
+  const _keep = b=>PROTECTED_BUFFS.includes(b.type) || b._fromBurst || b._strong;
+  // 還原 strengthened(增強術)/ doubleatk(明鏡止水)的能力值 —— 只還原「這次真的被消掉」的那幾個
+  _restoreRemoved(_keep);
+  h.buffs=h.buffs.filter(_keep);
   // 以下 buff 永遠不被 dispel 消除（角色核心被動狀態）
   // 忠犬守護：_inuGuard buff消失時同步清除 _inuGuardActive
       if(!h.buffs.some(b=>b.type==='_inuGuard')){
         h._inuGuardActive=false;
       }
+  // ★ v5.237.0 — 烈日「攻擊力上升」被消除 ⇒ 立刻還原攻擊力
+  try{ _amaSunAtkReconcile(h); }catch(_){}
 }
 function tickStatus(h){
+  // ★ v5.237.0 — 烈日「攻擊力上升」自我校正:buff 已被任何路徑拿掉但增量還掛在 atk 上 ⇒ 還原
+  // ★ v5.239.0 — 擴大為全部「英雄欄位記帳」類(虛弱咒/顛倒乾坤/明鏡止水/BUG疊加/下課時光/救醫馬HP/烈日)
+  try{ _lxpsStatFxReconcile(h); }catch(_){}
   // ★ v3.13.76 — 魔劍姬‧伊莉雅 S2「魔皇鬥氣」每回合觸發計數重置(回合開始)
   if(h.name === '魔劍姬‧伊莉雅') h._iliyaTriggersThisTurn = 0;
   const _CE=['stun','freeze','sleep','para','trap','berserk'];
@@ -7956,6 +8120,9 @@ function tickStatus(h){
       try{ log(`🌪️ [${h.name}] 風捲殘雲減速結束,速度恢復為 ${h.spd}。`); }catch(_){}
     }
     if(s.type==='traitWeak' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
+    // ★ v5.239.0 — 補上從來沒有的自然到期還原:水瓶星神「顛倒乾坤」(_aquariusWeak)、灌籃「灌籃加速」(_slamSpd)
+    //   (_slamSpd 原本只在回合開始找 dur<=0 的物件還原,但 dur 歸零當下就被這裡的 filter 丟掉 ⇒ 永遠找不到)
+    if(s.type==='_aquariusWeak' || s.type==='_slamSpd'){ try{ _lxpsStatFxRestoreOne(h, s); }catch(_){} }
     if(s.type==='traitRage' && s._rageAtkBonus!==undefined){ h.atk=Math.max(1,h.atk-s._rageAtkBonus); }
     // ★ v1.0.20260421.3000o — 強力易傷到期清除 _vulnStrong 旗標
     if(s.type==='dmgVuln' && h._vulnStrong){ delete h._vulnStrong; }
@@ -8021,6 +8188,10 @@ function tickStatus(h){
       }
       try{ renderCard(h); }catch(_){}
     }
+    // ★ v5.237.0 — 天照大神 S2 烈日「攻擊力上升」到期還原
+    if(b.type==='_amaSunAtk'){ _amaSunAtkRemove(h, 'expire'); try{ renderCard(h); }catch(_){} }
+    // ★ v5.239.0 — 神偷爆發「神偷敏捷」速度 +10 原本註解寫「自動還原」但從來沒有還原碼 ⇒ 每放一次永久 +10
+    if(b.type==='_rogueSwift'){ try{ if(_lxpsStatFxRestoreOne(h, b)) log(`🗡 [${h.name}] 神偷敏捷結束,速度恢復。`); renderCard(h); }catch(_){} }
     // ★ v3.11.20 — 網路駭客天賦「BUG疊加」到期還原:收回竊取的攻擊/特技
     if(b.type==='_bugStack'){
       if(typeof b._atk === 'number'){ h.atk = Math.max(1, (h.atk || 0) - b._atk); }
@@ -15239,6 +15410,7 @@ function buffClass(t){
   _gearLifesteal:'dmgup',       // 開場:吸血 → 紅色
   _catIceGuard:'shield',        // ★ v4.48.0 — 貓人族長 S2 冰精靈守護(全隊減傷+攻擊者緩速)→ 藍色 shield
   _amaReflect:'dmgup',          // ★ v5.232.0 — 天照大神 S1 日暮反照(受傷反彈)→ 紅色 dmgup 類
+  _amaSunAtk:'dmgup',           // ★ v5.237.0 — 天照大神 S2 烈日之光(攻擊力上升)→ 紅色 dmgup 類
   _soulSwap:'dmgup',            // ★ v4.52.0 — 幽魂暗狐 爆發「靈魂交換」換魂(互換攻特+奪招)→ dmgup 類
   firegodbody:'dmgup',          // ★ v4.46.0 — 炎火超少女 爆發「火神附體」自身增益 → 紅色 dmgup
   haste:'dmgup'                 // 加速 → 紅色 dmgup
@@ -15308,7 +15480,7 @@ function buffName(t){
   _gearLifesteal:'🩸 汲取之印',            // 裝備開場:造成傷害 20% 吸血
   _catIceGuard:'❄️ 冰精靈守護',           // ★ v4.48.0 — 貓人族長 S2:全隊減傷 + 攻擊者緩速
   _soulSwap:'🌀 換魂',                   // ★ v4.52.0 — 幽魂暗狐 爆發:互換攻擊/特技 + 暗狐可施展對手技能與爆發
-_odinGaze:'👁 注視',_odinGuard:'🛡 英靈殿守望',_amaReflect:'🌇 日暮反照',_iliyaBurst:'👑 魔尊覺醒',badimmune:'✨ 不利免疫',berserkViking:'🪓 狂暴',
+_odinGaze:'👁 注視',_odinGuard:'🛡 英靈殿守望',_amaReflect:'🌇 日暮反照',_amaSunAtk:'☀️ 烈日之光',_iliyaBurst:'👑 魔尊覺醒',badimmune:'✨ 不利免疫',berserkViking:'🪓 狂暴',
   firegodbody:'🔥 火神附體',               // ★ v4.46.0 — 炎火超少女 爆發:受傷減半/不倒/受火轉治療/造成傷害必中無視有利+禁益
   haste:'💨 加速'                          // 增強術/天賦觸發加速
 };
@@ -16451,15 +16623,58 @@ function _ur4HasGood(t){
 }
 //   究極神兵 S2/爆發:「有護盾或有利狀態」→ 傷害 ×2(龍王盾也算);只判定、不改任何狀態
 function _ur4ShieldGoodMult(t){ return (_ur4HasShield(t) || _ur4HasGood(t)) ? 2 : 1; }
+// ★★ v5.237.0(2026-09-25・老師需求)— 天照大神 S2「烈日」追加:依天照特技 50%(+5%/級,加法)使全體友方攻擊力上升 2 回合
+//   實作:加法改 h.atk(比照 _bugStack / traitRage 既有寫法),增加量同時記在 buff._atk 與 h._amaSunAtk(唯一還原依據)。
+//   還原點:①buff 到期(tickStatus dur===1 區塊)②clearGoodBuffs ③_ur4RestoreBuffStats(究極神兵/月讀消有利)
+//          ④tickStatus 開頭 _amaSunAtkReconcile:任何其他路徑把 buff 拿掉(或跨場清 buffs)而 h._amaSunAtk 還在 ⇒ 補還原。
+//   重複施放:先扣掉舊增量再加新增量(不疊加,刷新為 2 回合)。
+//   特技取值與 execSkill 內 spv 同算式:floor(sp × (1 + sp × 1%))。
+function _amaSunAtkRemove(h, why){
+  try{
+    if(!h) return;
+    const _amt = h._amaSunAtk || 0;
+    if(_amt > 0){
+      h.atk = Math.max(1, (h.atk || 0) - _amt);
+      try{ if(why) log(`☀️ [${h.name}] 烈日之光消散,攻擊力恢復(-${_amt})。`); }catch(_){}
+    }
+    delete h._amaSunAtk;
+  }catch(_){}
+}
+function _amaSunAtkReconcile(h){
+  try{
+    if(!h || !(h._amaSunAtk > 0)) return;
+    if((h.buffs || []).some(function(b){ return b && b.type === '_amaSunAtk'; })) return;
+    _amaSunAtkRemove(h, 'reconcile');
+    try{ renderCard(h); }catch(_){}
+  }catch(_){}
+}
+function _amaSunAtkApply(caster, allies, skLv){
+  try{
+    const _sp = (caster && caster.sp) || 0;
+    const _spv = Math.floor(_sp * (1 + _sp * 0.01));
+    const _pct = 50 + (skLv || 0) * 5;
+    const _amt = Math.max(1, Math.floor(_spv * _pct / 100));
+    const _al = (allies || []).filter(function(x){ return x && x.curHp > 0; });
+    _al.forEach(function(x){
+      if(!Array.isArray(x.buffs)) x.buffs = [];
+      if(x._amaSunAtk > 0) _amaSunAtkRemove(x);
+      x.buffs = x.buffs.filter(function(b){ return !(b && b.type === '_amaSunAtk'); });
+      addBuff(x, '_amaSunAtk', 2);
+      const _b = x.buffs.find(function(b){ return b && b.type === '_amaSunAtk'; });
+      if(!_b) return;   // 被沉默(_buffSeal 不擋底線 buff,保險)或已倒下
+      _b._atk = _amt;
+      x._amaSunAtk = _amt;
+      x.atk = (x.atk || 0) + _amt;
+      try{ bannerFX(x, '☀️ 攻擊 +' + _amt, '#ffcc55', 700); }catch(_){}
+      try{ renderCard(x); }catch(_){}
+    });
+    try{ log(`☀️ [${caster.name}] 烈日照耀全隊!全體友方攻擊力 +${_amt}(特技 ${_pct}%,2 回合)`); }catch(_){}
+  }catch(e){ console.warn('[v5.237.0 烈日攻擊上升] 例外', e); }
+}
 //   移除有利 buff 時,把「改過素質」的兩種 buff 還原(對齊 clearGoodBuffs 既有寫法)
 function _ur4RestoreBuffStats(h, removed){
-  try{
-    (removed || []).forEach(function(b){
-      if(!b) return;
-      if(b.type === 'strengthened' && b._origAtk !== undefined){ h.atk = b._origAtk; h.sp = b._origSp; h.spd = b._origSpd; }
-      if(b.type === 'doubleatk' && h._mirrorOrigAtk !== undefined){ h.atk = h._mirrorOrigAtk; delete h._mirrorOrigAtk; h._burstMirror = false; }
-    });
-  }catch(_){}
+  // ★ v5.239.0 — 改用全面版(原本只認烈日/增強術/明鏡止水;_soulSwap 等「含強力」被月讀清掉時不還原)
+  try{ _lxpsStatFxRestore(h, removed || []); }catch(_){}
 }
 //   究極神兵 S1:消除 1 個有利狀態(護盾優先)。回傳被消除項目的名稱(空字串=沒東西可消)。
 //   ⚠ 刻意「不拆」世界 BOSS 龍王元素護盾(老師預設裁定,比照魔劍姬神魔滅殺,保護世界 BOSS 平衡);
@@ -17842,6 +18057,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='神偷'){
     // ★ 自己獲得速度+10持續2回合（自動還原）
+    try{ _lxpsStatFxRestore(h, (h.buffs||[]).filter(b => b && b.type === '_rogueSwift')); }catch(_){}   // ★ v5.239.0 重放先還原舊的,不疊加
     h.buffs = h.buffs.filter(b => b.type !== '_rogueSwift');
     h.spd = (h.spd|0) + 10;
     h.buffs.push({type:'_rogueSwift',dur:2+_lv5Extra,_spdBoost:10,_fromBurst:true});
@@ -17873,8 +18089,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       try{ if(side === 'p1' && typeof window._alchThiefSteal === 'function') window._alchThiefSteal(h, t); }catch(_eAlchStB){}
       const stolenBuffs = (t.buffs || []).slice();
       if(stolenBuffs.length){
+        // ★ v5.239.0 — 被奪的一方先還原素質;奪到的一方拿「去掉素質欄位」的複本(否則到期時會被套成原主人的攻特速)
+        try{ _lxpsStatFxRestore(t, stolenBuffs); }catch(_){}
         t.buffs = [];
-        h.buffs.push(...stolenBuffs);
+        h.buffs.push(..._lxpsStatFxSanitizeCopies(stolenBuffs));
         log(`[${h.name}] 奪取 [${t.name}] 的全部有利狀態(${stolenBuffs.length} 個)!`);
         bannerFX(h,'奪取狀態!','#ffcc00',800);
       }
@@ -18276,6 +18494,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
 }
   if(name==='武鬥家'){
     // ★ v1.0.20260424.0500 — 明鏡止水追加:解除自己所有不利狀態
+    try{ _lxpsStatFxRestore(h, h.status.filter(s => typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0
     h.status = h.status.filter(s => !(typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type)));
     addBuff(h,'immune',2+_lv5Extra); addBuff(h,'immovable',2+_lv5Extra); addBuff(h,'dmgup',2+_lv5Extra); addBuff(h,'protectBuff',2+_lv5Extra);
     // 倍攻：記錄原始攻擊值，提升為2倍
@@ -18296,6 +18515,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _iliyaBurstDur = 2 + _lv5Extra;          // 2 回合,MAX(burstLv4)→3
     const _iliyaAtkMul2  = 2.0 + _burstLv * 0.10;  // 攻擊倍率 2.0→2.4
     // 解除自己所有不利狀態
+    try{ _lxpsStatFxRestore(h, h.status.filter(s => typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0 先還原被降的素質,再做全屬性×2 快照
     h.status = h.status.filter(s => !(typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type)));
     // 全屬性×2(攻擊用倍率);記錄原始值,到期由 tickStatus 還原
     // ★ v3.13.85 — 疊加防護:魔尊覺醒生效期間再次發動「不再翻倍」(否則 _iliyaBurstOrig 會記到已翻倍值→×4,到期還原回不去真值),僅刷新時限/旗標(老師需求 1)
@@ -18350,6 +18570,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _bkVulnP = 0.30 + _burstLv*0.05;
     const _doBkBurst = (t)=>{
       if(!t || t.curHp<=0) return;
+      try{ _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){}   // ★ v5.239.0 清空前先還原素質
       t.buffs = [];   // 消除對手全部有利狀態(含強力版)
       doDmg(t, _bkBurstDmg, {actor:h, isSkill:true, mustHit:true, ignoreBuffs:true, ignoreEvasion:true, noHidden:true});
       if(t.curHp>0){
@@ -18388,6 +18609,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _detBurstOpts = {actor:h, fixedDmg:true, mustHit:true, ignoreBuffs:true, ignoreEvasion:true, noGuard:true, noHidden:true, noCrit:true, noCounter:true};
     const _doDetBurst = (t)=>{
       if(!t || t.curHp<=0) return;
+      try{ _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){}   // ★ v5.239.0 清空前先還原素質
       t.buffs = [];   // 消除目標全部有利狀態(含強力版)
       doDmg(t, _detBurstDmg, _detBurstOpts);
       if(t.curHp>0){
@@ -18428,6 +18650,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _mgReboundOpts = {actor:h, mustHit:true, ignoreEvasion:true};
     const _doImprison = (t)=>{
       if(!t || t.curHp<=0) return;
+      try{ _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){}   // ★ v5.239.0 清空前先還原素質
       t.buffs = [];   // 消除目標全部有利狀態(含強力版)
       if(_mgIsStrong(t) && Math.random() < 0.5){
         // 強敵掙脫:不被禁錮,改受特技 500%(×_burstMult)反噬
@@ -18458,12 +18681,13 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(name==='軍師'){
     // 奪對手有利狀態、將己方不利狀態轉移、讓行動結束隊友再行動
     const eBufs=[];
-    enemies.forEach(t=>{ eBufs.push(...t.buffs); t.buffs=[]; });
-    allies.forEach(t=>{ t.buffs.push(...eBufs.filter(b=>!['protectBuff','guard'].includes(b.type))); });
+    // ★ v5.239.0 — 轉移前先還原原主人的素質;接收方拿去掉素質欄位的複本(否則到期時被套成原主人的數值)
+    enemies.forEach(t=>{ try{ _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){} eBufs.push(...t.buffs); t.buffs=[]; });
+    allies.forEach(t=>{ t.buffs.push(..._lxpsStatFxSanitizeCopies(eBufs.filter(b=>!['protectBuff','guard'].includes(b.type)))); });
     // 不利狀態轉移
     const myBad=[];
-    allies.forEach(t=>{ myBad.push(...t.status.filter(s=>BAD_STATUS.includes(s.type))); t.status=t.status.filter(s=>!BAD_STATUS.includes(s.type)); });
-    enemies.forEach((t,i)=>{ t.status.push(...myBad); });
+    allies.forEach(t=>{ const _mb=t.status.filter(s=>BAD_STATUS.includes(s.type)); try{ _lxpsStatFxRestore(t, _mb); }catch(_){} myBad.push(..._mb); t.status=t.status.filter(s=>!BAD_STATUS.includes(s.type)); });
+    enemies.forEach((t,i)=>{ t.status.push(..._lxpsStatFxSanitizeCopies(myBad)); });
     // 行動結束隊友再行動
     allies.filter(t=>t.acted&&t.curHp>0).forEach(t=>{ t.acted=false; });
     const _strEnergy=4+_burstLv;
@@ -18807,6 +19031,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       playSfx('sfx-basketball',0.9);
       doDmg(t,Math.floor(spv*7.5*_burstMult),{actor:h,isSkill:true,ignoreBuffs:true,mustHit:true});
       G[side].filter(x=>x.curHp>0).forEach(x=>{
+        try{ _lxpsStatFxRestore(x, (x.status||[]).filter(s => s && s.type === '_slamSpd')); }catch(_){}   // ★ v5.239.0 重放先還原舊的,不疊加
         const _xBoost = Math.max(1, Math.ceil((x.spd||0) * 0.5));
         x.spd += _xBoost;
         x.status=x.status.filter(s=>s.type!=='_slamSpd');
@@ -19144,6 +19369,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     // ════════════════════════════════════════
     _allTeam.forEach(t => {
       if(!t || t.curHp <= 0) return; // 第 1 段沒救活的就不處理
+      try{ _lxpsStatFxRestoreAll(t, 'status'); }catch(_){}   // ★ v5.239.0 清空不利前先還原被降的素質
       t.status = [];
     });
 
@@ -19883,6 +20109,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
             bannerFX(_reaped, '💀 被收割!', '#cc0033', 1000);
             // Step 3:強制秒殺(類靈魂收割)— 非 BOSS 才能秒
             _reaped.curHp = 0;
+            try{ _lxpsStatFxRestoreAll(_reaped); }catch(_){}   // ★ v5.239.0 倒下清空前先還原素質(之後被復活才不會帶著暫態數值)
             _reaped.status = [];
             _reaped.buffs = [];
           }
@@ -19968,6 +20195,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
               log(`👹 [${h.name}] 大嘴吸入!直接吞噬 [${_pickedTarget.name}]!`);
               bannerFX(_pickedTarget, '👹 被吞噬!', '#cc0044', 1000);
               _pickedTarget.curHp = 0;
+              try{ _lxpsStatFxRestoreAll(_pickedTarget); }catch(_){}   // ★ v5.239.0
               _pickedTarget.status = [];
               _pickedTarget.buffs = [];
               try{ playSfx('sfx-ko', 0.85); }catch(_){}
@@ -21393,6 +21621,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
               if(typeof clearGoodBuffs === 'function') clearGoodBuffs(_ft);
               const _CY_KEEP = ['deathimmune','immovable','rebirth','misfortune','alchemist','counter','divineBlessing','reviveImmune','inuInvisible'];
               if(Array.isArray(_ft.buffs)){
+                try{ _lxpsStatFxRestore(_ft, _ft.buffs.filter(function(b){ return b && _CY_KEEP.indexOf(b.type) < 0; })); }catch(_){}   // ★ v5.239.0
                 _ft.buffs = _ft.buffs.filter(function(b){ return b && _CY_KEEP.indexOf(b.type) >= 0; });
               }
               try{ log(`🌪 [${_ft.name}] 被涿鹿風沙捲走了所有有利狀態!(強力消除)`); }catch(_){}
@@ -21758,8 +21987,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     bannerFX(h,'💻 系統還原!','#55aaff',1500);
     try{ flashScreen('rgba(80,170,255,0.22)', 600); }catch(_){}
     // ① 清敵全體有利(含強力版) + 清友全體不利(含強力版)
-    enemies.forEach(t=>{ if(t.curHp>0){ t.buffs=[]; try{ renderCard(t); }catch(_){} } });
-    allies.forEach(t=>{ t.status=[]; try{ renderCard(t); }catch(_){} });
+    enemies.forEach(t=>{ if(t.curHp>0){ try{ _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){} t.buffs=[]; try{ renderCard(t); }catch(_){} } });
+    allies.forEach(t=>{ try{ _lxpsStatFxRestoreAll(t, 'status'); }catch(_){} t.status=[]; try{ renderCard(t); }catch(_){} });   // ★ v5.239.0 清空前先還原素質
     log(`💻 [${h.name}] 清除敵方有利狀態與我方不利狀態(含強力版)!`);
     // ② 友全體 100%HP 復活(可救起倒下者)
     (G[side]||[]).forEach(t=>{
@@ -22111,6 +22340,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
                 try{ bannerFX(t, '💀 倒下!', '#cc0033', 1000); }catch(_){}
                 try{ playSfx('sfx-ko', 0.85); }catch(_){}
                 t.curHp = 0;
+                try{ _lxpsStatFxRestoreAll(t); }catch(_){}   // ★ v5.239.0
                 t.status = []; t.buffs = [];
                 try{ renderCard(t); }catch(_){}
               }, idx * 120);
@@ -30009,6 +30239,7 @@ function doDmg(target, rawDmg, opts={}){
       }catch(_hce){ console.warn('[地府酋長] 亡魂積怨疊層失敗', _hce); }
     }
     // 清除所有狀態與增益
+    try{ _lxpsStatFxRestoreAll(target); }catch(_){}   // ★ v5.239.0 倒下清空前先還原素質
     target.status=[];
     if(target.buffs.some(b => b.type === 'divineBlessing')){
       if(target._baseHp){ target.hp=target._baseHp; delete target._baseHp; }
@@ -31831,6 +32062,7 @@ function doRevive(target, pct=0.5, full=false, opts={}){
   }
   target.curHp=reviveHp;
   target.acted=false;
+  try{ _lxpsStatFxRestore(target, (target.status||[]).concat((target.buffs||[]).filter(b=>b.type!=='deathimmune'))); }catch(_){}   // ★ v5.239.0 復活清空前還原
   target.status=[]; // 清除所有不利狀態
   target.buffs=target.buffs.filter(b=>b.type==='deathimmune'); // 只保留「死亡免疫」buff，其餘清除
   // ★ v3.15.33 任務4 復活保護:剛復活的「友方」(p1)英雄獲得復活無敵(reviveImmune),免疫一切傷害與不利狀態,直到自己回合開始於 startTurn 解除。敵方復活不受影響。
@@ -35044,6 +35276,7 @@ function execSkill(a, sk, cost, stype){
           try{
             const _removable = (t.buffs || []).filter(b => !b._protected && !b._noStripe);
             if(_removable.length){
+              try{ _lxpsStatFxRestore(t, _removable); }catch(_){}   // ★ v5.239.0
               t.buffs = (t.buffs || []).filter(b => b._protected || b._noStripe);
               log(`💨 [${t.name}] 全部有利狀態(含強力)被神魔滅殺消除!`);
               try{ bannerFX(t,'💨 有利全清','#cc99ff',700); }catch(_){}
@@ -35252,6 +35485,8 @@ function execSkill(a, sk, cost, stype){
       if(_o1 || _o2){ try{ bannerFX(t,'☀️ 強力失明+燃燒','#ffb347',800); }catch(_){} }
       try{ renderCard(t); }catch(_){}
     });
+    // ★ v5.237.0 — 追加:依天照特技 50%(+5%/級)使全體友方攻擊力上升 2 回合
+    _amaSunAtkApply(a, G[a.side] || [], _activeSkLv || 0);
     endAction(a, cost);
   }
   else if(n==='弦月'){
@@ -36454,6 +36689,7 @@ function execSkill(a, sk, cost, stype){
         try{ doHeal(t, _vgH1, {actor:a, isHeal:true, noDice:true, noWarhorn:true}); }catch(_){}
       }
       if(t.curHp > 0){
+        try{ _lxpsStatFxRestore(t, (t.status || []).filter(s => typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0
         try{ t.status = (t.status || []).filter(s => !(typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}
         try{ addBuff(t, 'fieldImmune', 1); }catch(_){}
         try{ bannerFX(t, '🛡️ 場地免疫', '#ffe8aa', 800); }catch(_){}
@@ -36469,6 +36705,7 @@ function execSkill(a, sk, cost, stype){
     const _vgH2 = Math.max(1, Math.floor(spv(a) * 1.00));
     G[a.side].filter(x => x.curHp > 0).forEach(t => {
       try{ doHeal(t, _vgH2, {actor:a, isHeal:true, noDice:true, noWarhorn:true}); }catch(_){}
+      try{ _lxpsStatFxRestore(t, (t.status || []).filter(s => typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0
       try{ t.status = (t.status || []).filter(s => !(typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}
       try{ renderCard(t); }catch(_){}
     });
@@ -38178,6 +38415,7 @@ function execSkill(a, sk, cost, stype){
       // Lv5 解除該友方所有不利狀態
       if(_isLv5){
         const _origCount = (t.status||[]).length;
+        try{ _lxpsStatFxRestore(t, (t.status||[]).filter(s => typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0
         t.status = (t.status||[]).filter(s => !(typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(s.type)));
         if(_origCount > t.status.length){
           bannerFX(t, '✨解除全部不利狀態', '#88ffcc', 800);
@@ -39238,6 +39476,7 @@ function execSkill(a, sk, cost, stype){
       const _removed = _badBefore.length;
       if(_removed > 0){
         // 解除所有不利狀態
+        try{ _lxpsStatFxRestore(t, t.status.filter(s => BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0
         t.status = t.status.filter(s => !BAD_STATUS.includes(s.type));
       }
       log(`🔔 [${a.name}] 鈴音淨化!治療 [${t.name}] ${_healAmt} HP,解除 ${_removed} 個不利狀態!`);
@@ -39283,6 +39522,7 @@ function execSkill(a, sk, cost, stype){
       const _bad = (ally.status || []).filter(s => BAD_STATUS.includes(s.type));
       if(_bad.length > 0){
         _totalRemoved += _bad.length;
+        try{ _lxpsStatFxRestore(ally, _bad); }catch(_){}   // ★ v5.239.0
         ally.status = ally.status.filter(s => !BAD_STATUS.includes(s.type));
         try{ renderCard(ally); }catch(_){}
       }
@@ -40812,6 +41052,7 @@ function execSkill(a, sk, cost, stype){
         playSkillFX('死亡宣告',a,[t]);
         const stolen=t.curHp;
         t.curHp=0;
+        try{ _lxpsStatFxRestoreAll(t); }catch(_){}   // ★ v5.239.0
         t.status=[]; t.buffs=[];
         renderCard(t); playSfx('sfx-ko',0.85);
         log(`💀 [${t.name}] 被靈魂收割！`);
@@ -41617,6 +41858,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
             const _removable = (t.buffs || []).filter(b => !b._protected && !b._noStripe);
             for(let i = 0; i < _stripCount && i < _removable.length; i++){
               const _toStrip = _removable[i];
+              try{ _lxpsStatFxRestore(t, [_toStrip]); }catch(_){}   // ★ v5.239.0
               t.buffs = t.buffs.filter(b => b !== _toStrip);
               _stripped++;
             }
@@ -42499,6 +42741,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
           try{ bannerFX(t, '💀 倒下!', '#cc0033', 1000); }catch(_){}
           try{ playSfx('sfx-ko', 0.85); }catch(_){}
           t.curHp = 0;
+          try{ _lxpsStatFxRestoreAll(t); }catch(_){}   // ★ v5.239.0
           t.status = []; t.buffs = [];
         }
         try{ renderCard(t); }catch(_){}
@@ -42541,6 +42784,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
           try{ bannerFX(t, '💀 倒下!', '#cc0033', 1000); }catch(_){}
           try{ playSfx('sfx-ko', 0.85); }catch(_){}
           t.curHp = 0;
+          try{ _lxpsStatFxRestoreAll(t); }catch(_){}   // ★ v5.239.0
           t.status = []; t.buffs = [];
         }
         try{ renderCard(t); }catch(_){}
@@ -45143,6 +45387,7 @@ function startTurn(){
             const _removable = (foe.buffs || []).filter(b => b && !b._protected && !b._noStripe);
             if(!_removable.length) return;
             const _toRemove = _removable.slice(0, _gmCount);
+            try{ _lxpsStatFxRestore(foe, _toRemove); }catch(_){}   // ★ v5.239.0
             foe.buffs = (foe.buffs || []).filter(b => !_toRemove.includes(b));
             _gmRemovedTotal += _toRemove.length;
             try{ bannerFX(foe, '💨 有利-' + _toRemove.length, '#ffcc66', 700); }catch(_){}
@@ -45678,6 +45923,7 @@ function startTurn(){
       const _badSts = next.status.filter(s=>BAD_STATUS.includes(s.type));
       if(_badSts.length){
         const _removed = _badSts[Math.floor(Math.random()*_badSts.length)];
+        try{ _lxpsStatFxRestore(next, [_removed]); }catch(_){}   // ★ v5.239.0
         next.status = next.status.filter(s=>s!==_removed);
         log(`🔔 [米鈴] 天賦：守護鈴音！清除 [${next.name}] 的 [${statusName(_removed.type)}]！`);
         bannerFX(next,'守護鈴音！','#ffaadd',800);
@@ -49338,6 +49584,7 @@ function aiUseSkill(a,sk,cost,pref){
       else{ try{ doHeal(_vgTgt,_vgH1A,{actor:a,isHeal:true,noDice:true,noWarhorn:true}); }catch(_){} }
       if(_vgTgt.curHp>0){
         try{
+          try{ _lxpsStatFxRestore(_vgTgt, (_vgTgt.status||[]).filter(s=>typeof BAD_STATUS!=='undefined' && BAD_STATUS.includes(s.type))); }catch(_){}   // ★ v5.239.0
           _vgTgt.status=(_vgTgt.status||[]).filter(s=>!(typeof BAD_STATUS!=='undefined' && BAD_STATUS.includes(s.type)));
           addBuff(_vgTgt,'fieldImmune',1);
           renderCard(_vgTgt);
@@ -49351,7 +49598,7 @@ function aiUseSkill(a,sk,cost,pref){
     try{ bannerFX(a,'🌾 淨土之風!','#ffe8aa',900); }catch(_){}
     allies.filter(x=>x.curHp>0).forEach(x=>{
       try{ doHeal(x,_vgH2A,{actor:a,isHeal:true,noDice:true,noWarhorn:true}); }catch(_){}
-      try{ x.status=(x.status||[]).filter(s=>!(typeof BAD_STATUS!=='undefined' && BAD_STATUS.includes(s.type))); renderCard(x); }catch(_){}
+      try{ _lxpsStatFxRestore(x, (x.status||[]).filter(s=>typeof BAD_STATUS!=='undefined' && BAD_STATUS.includes(s.type))); x.status=(x.status||[]).filter(s=>!(typeof BAD_STATUS!=='undefined' && BAD_STATUS.includes(s.type))); renderCard(x); }catch(_){}   // ★ v5.239.0 先還原
     });
   }
   else if(n==='天秤查封令'){ // 天秤 S1:全體對手各 80%(+3%/lv,上限95%)機率 1 回合物品封鎖
@@ -49931,7 +50178,7 @@ function aiUseSkill(a,sk,cost,pref){
       if(_t.curHp > 0){
         try{
           const _rm = (_t.buffs || []).filter(b => !b._protected && !b._noStripe);
-          if(_rm.length) _t.buffs = (_t.buffs || []).filter(b => b._protected || b._noStripe);
+          if(_rm.length){ try{ _lxpsStatFxRestore(_t, _rm); }catch(_){} _t.buffs = (_t.buffs || []).filter(b => b._protected || b._noStripe); }   // ★ v5.239.0
         }catch(_){}
         try{ addBuff(_t, '_buffSeal', 2); }catch(_){}
         try{ addStatus(_t, 'dmgVuln', 2); }catch(_){}
@@ -50021,6 +50268,8 @@ function aiUseSkill(a,sk,cost,pref){
       const _d = (_u4Lv >= 4) ? 3 : 2;
       log(`☀️ [${a.name}] 烈日!正午烈日灼燒全場!`);
       _u4Foes.forEach(t => { _ur4PushStrong(t, 'forecast', _d, a); _ur4PushStrong(t, 'hellfire', _d, a); try{ renderCard(t); }catch(_){} });
+      // ★ v5.237.0 — 追加(雙路徑對齊 execSkill):依天照特技 50%(+5%/級)使全體友方攻擊力上升 2 回合
+      _amaSunAtkApply(a, allies, _u4Lv);
     }
     else if(n==='弦月'){
       if(_u4Top){
@@ -50530,6 +50779,7 @@ function aiUseSkill(a,sk,cost,pref){
           h.sp=h._initState.sp; h.spd=h._initState.spd;
           h.curHp=h._initState.hp;
           h.status=[]; h.buffs=[]; h.acted=false; h.equip=null;
+          try{ _lxpsStatFxForget(h); }catch(_){}   // ★ v5.239.0 數值已回到初始值 ⇒ 丟掉記帳欄位,避免之後被再扣一次
           renderCard(h);
         }
       });
@@ -51035,7 +51285,7 @@ function aiUseSkill(a,sk,cost,pref){
     try{ doHeal(_target, _healAmt, {actor:a, isHeal:true, noDice:true, allowRevive:true}); }catch(_){}
     const _badBefore = (_target.status || []).filter(s => BAD_STATUS.includes(s.type));
     const _removed = _badBefore.length;
-    if(_removed > 0){ _target.status = _target.status.filter(s => !BAD_STATUS.includes(s.type)); }
+    if(_removed > 0){ try{ _lxpsStatFxRestore(_target, _badBefore); }catch(_){} _target.status = _target.status.filter(s => !BAD_STATUS.includes(s.type)); }   // ★ v5.239.0
     log(`🔔 [${a.name}] 鈴音淨化!治療 [${_target.name}] ${_healAmt} HP,解除 ${_removed} 個不利狀態!`);
     try{ bannerFX(_target, '🔔 鈴音淨化', '#ffaadd', 1100); }catch(_){}
     try{ playSfx('sfx-heal', 0.9); playSfx('sfx-gentle', 0.7); }catch(_){}
@@ -51078,6 +51328,7 @@ function aiUseSkill(a,sk,cost,pref){
       const _bad = (ally.status || []).filter(s => BAD_STATUS.includes(s.type));
       if(_bad.length > 0){
         _totalRemoved += _bad.length;
+        try{ _lxpsStatFxRestore(ally, _bad); }catch(_){}   // ★ v5.239.0
         ally.status = ally.status.filter(s => !BAD_STATUS.includes(s.type));
         try{ renderCard(ally); }catch(_){}
       }
@@ -52156,6 +52407,7 @@ function aiUseSkill(a,sk,cost,pref){
             try{ bannerFX(t, '💀 倒下!', '#cc0033', 1000); }catch(_){}
             try{ playSfx('sfx-ko', 0.85); }catch(_){}
             t.curHp = 0;
+            try{ _lxpsStatFxRestoreAll(t); }catch(_){}   // ★ v5.239.0
             t.status = []; t.buffs = [];
           }
           try{ renderCard(t); }catch(_){}
@@ -52196,6 +52448,7 @@ function aiUseSkill(a,sk,cost,pref){
           try{ bannerFX(_grS2T, '💀 倒下!', '#cc0033', 1000); }catch(_){}
           try{ playSfx('sfx-ko', 0.85); }catch(_){}
           _grS2T.curHp = 0;
+          try{ _lxpsStatFxRestoreAll(_grS2T); }catch(_){}   // ★ v5.239.0
           _grS2T.status = []; _grS2T.buffs = [];
         }
         try{ renderCard(_grS2T); }catch(_){}
@@ -52923,6 +53176,7 @@ function aiUseSkill(a,sk,cost,pref){
           const _removable = (t.buffs || []).filter(b => !b._protected && !b._noStripe);
           for(let _ki=0; _ki<_stripCount && _ki<_removable.length; _ki++){
             const _toStrip = _removable[_ki];
+            try{ _lxpsStatFxRestore(t, [_toStrip]); }catch(_){}   // ★ v5.239.0
             t.buffs = t.buffs.filter(b => b !== _toStrip);
             _stripped++;
           }
@@ -53703,6 +53957,7 @@ function checkWin(){
       G.p1.forEach(h => {
         if(!h) return;
         h.curHp = 1;
+        try{ _lxpsStatFxRestoreAll(h); }catch(_){}   // ★ v5.239.0
         h.status = [];
         h.buffs = [];
         h.buffs.push({ type:'immune', dur:2, _odinRevive:true });
@@ -56283,7 +56538,7 @@ document.addEventListener('keydown', function(e){
             // 如果 doDmg 本身出錯,回退到直接設 curHp=0
             console.warn('[F9 doDmg fallback]', dE);
             h.curHp = 0;
-            try{ h.status=[]; h.buffs=[]; }catch(_){}
+            try{ _lxpsStatFxRestoreAll(h); h.status=[]; h.buffs=[]; }catch(_){}
             try{ renderCard(h); }catch(_){}
           }
         });
@@ -63831,6 +64086,7 @@ function _gearTurnCleanse(){
       if(!_bad.length) return;
       if(Math.random() < Math.min(0.95, _pct / 100)){
         const _pick = _bad[Math.floor(Math.random() * _bad.length)];
+        try{ _lxpsStatFxRestore(h, [_pick]); }catch(_){}   // ★ v5.239.0
         h.status = h.status.filter(function(s){ return s !== _pick; });
         try{ log('✨ [' + h.name + '] 裝備淨化!消除了「' + ((typeof statusName === 'function') ? statusName(_pick.type) : _pick.type) + '」!'); }catch(_){}
         try{ bannerFX(h, '✨ 裝備淨化', '#bbffcc', 700); }catch(_){}

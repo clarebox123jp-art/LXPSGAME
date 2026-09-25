@@ -3489,6 +3489,8 @@
            'confused','dmgVuln','healReduced','weakened','charm','breakDef','detain',
            'imprison','_burstSeal','_traitSeal'];
       if(boss && Array.isArray(boss.status) && boss.status.length){
+        // ★ v5.239.0 — 清除前先還原被降的素質(虛弱咒等),否則龍王整場維持被削弱的數值
+        try{ if(typeof _lxpsStatFxRestore === 'function') _lxpsStatFxRestore(boss, boss.status.filter(function(s){ return s && _BADS.indexOf(s.type) !== -1; })); }catch(_){}
         boss.status = boss.status.filter(function(s){ return s && _BADS.indexOf(s.type) === -1; });
       }
       try{ if(typeof renderCard === 'function') renderCard(boss); }catch(_){}

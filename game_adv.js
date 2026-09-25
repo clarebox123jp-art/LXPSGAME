@@ -13260,6 +13260,8 @@ function _tgHidePetSpotlight(){
 function _tgAskPetQuestion(pet, petName){
   // ★ v1.0.20260421.3000c — 標記為寵物事件答題模式，跳過答對獎勵視窗
   window._tgPetQuizMode = true;
+  // ★ v5.236.0 — 出寵物題前清掉上一場戰鬥殘留的 33 秒 BOSS 答題 watchdog(它會把寵物題誤關成「答錯」)
+  try{ if(window._quizDeadlockWatchdog){ clearTimeout(window._quizDeadlockWatchdog); window._quizDeadlockWatchdog = null; } }catch(_){}
   // ★ 初始化答題狀態（此處在過場中觸發，戰鬥尚未啟動）
   if(!window._miniQuizUsedIds) window._miniQuizUsedIds = new Set();
   if(typeof window._miniQuizTotalCoins !== 'number') window._miniQuizTotalCoins = 0;
@@ -14526,6 +14528,7 @@ function advStartBattle(){
   if(typeof G !== 'undefined' && G && G.p1){
     G.p1.forEach(h=>{
       h.curHp = h.hp;
+      try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){}   // ★ v5.239.0 清空前先還原上一場殘留的暫態素質
       h.status = [];
       h.buffs = [];
       h.acted = false;
@@ -15350,6 +15353,18 @@ function advShowQuiz() {
       return;
     }
   }catch(_){}
+  // ★ v5.236.0(2026-09-25・玩家回報「動不了」貓空第三場寵物事件)—「小怪戰中直接 return」移到 33 秒 watchdog 之前
+  //   舊:先 arm 33 秒 _quizDeadlockWatchdog,再判斷小怪戰直接 return ⇒ 這顆計時器沒人清,小怪戰結束後仍在跑;
+  //       之後第三場「野生動物」寵物題共用 adv-quiz-overlay,計時器到期看到 overlay 開著 → advOnQuizSkip(BOSS 路徑)
+  //       把學生正在答的寵物題關掉 → 題目可見性 watchdog 再判 {correct:false} ⇒ 沒作答就答錯、寵物跑掉。
+  //   新:小怪戰路徑不 arm,並順手清掉殘留的那顆。
+  if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
+    try{
+      if(window._quizDeadlockWatchdog){ clearTimeout(window._quizDeadlockWatchdog); window._quizDeadlockWatchdog = null; }
+    }catch(_){}
+    if(_advQuizResolveCb){ const _cbM = _advQuizResolveCb; _advQuizResolveCb = null; _cbM(); }
+    return;
+  }
   try{
     if(window._quizDeadlockWatchdog){
       clearTimeout(window._quizDeadlockWatchdog);
@@ -15358,6 +15373,14 @@ function advShowQuiz() {
     window._quizDeadlockWatchdog = setTimeout(() => {
       try{
         const _qOv2 = document.getElementById('adv-quiz-overlay');
+        // ★ v5.236.0 — 自我驗證:目前 overlay 上若是寵物題 / 小怪題(共用同一個 overlay),一律不介入;
+        //   它們各自有 3 秒可見性 watchdog 與第三場 120 秒事件 watchdog。BOSS 題的救援行為完全不變。
+        const _wdPetOrMini = !!window._tgPetQuizMode
+          || (typeof window._miniQuizPhase !== 'undefined' && (window._miniQuizPhase === 'asking' || window._miniQuizPhase === 'done'))
+          || (typeof window._miniQuizOnDone === 'function');
+        if(_wdPetOrMini){
+          console.warn('[Quiz watchdog v5.236.0] 33 秒到期但目前是寵物/小怪題,不介入(避免誤關學生正在答的題目)');
+        } else
         if(_qOv2 && _qOv2.classList.contains('show')){
           console.warn('🚨 [Quiz watchdog] 答題視窗超過 33 秒沒進展,強制 advOnQuizSkip');
           if(typeof log === 'function') log('⏰ [系統] 答題超時,自動跳過');
@@ -15367,11 +15390,7 @@ function advShowQuiz() {
       window._quizDeadlockWatchdog = null;
     }, 33000);
   }catch(_){}
-  // ★ 小怪戰中不可觸發 BOSS 戰題目流程，直接執行 resolve callback
-  if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive){
-    if(_advQuizResolveCb){ const _cb = _advQuizResolveCb; _advQuizResolveCb = null; _cb(); }
-    return;
-  }
+  // ★ 小怪戰中不可觸發 BOSS 戰題目流程 —— v5.236.0 起此判斷已移到 33 秒 watchdog 之前(見上方)
   let q = advPickQuestion();
   if (!q) {
     // 沒有題目，直接讓Boss行動
@@ -17138,6 +17157,7 @@ function _arenaAIApplyReward(id){
       _foes.forEach(t => {
         try{
           const _bcount = (t.buffs || []).length;
+          try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){}   // ★ v5.239.0
           t.buffs = [];
           _removedTotal += _bcount;
           if(_bcount > 0){
@@ -18699,11 +18719,13 @@ function advApplyReward(id) {
         try{
           const _bcount = (t.buffs || []).length;
           // 強制清除所有 buffs(包括 protectBuff 等強力有利狀態)
+          try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(t, 'buffs'); }catch(_){}   // ★ v5.239.0
           t.buffs = [];
           // ★ v3.15.9 — 再清 status 裡的有利免疫類(否則無敵/免死/控免在 status 時消不掉)
           let _sRemoved = 0;
           if(Array.isArray(t.status)){
             const _before = t.status.length;
+            try{ if(typeof _lxpsStatFxRestore === 'function') _lxpsStatFxRestore(t, t.status.filter(s => s && _GOOD_IMMUNE_STATUS.indexOf(s.type) >= 0)); }catch(_){}   // ★ v5.239.0
             t.status = t.status.filter(s => !s || _GOOD_IMMUNE_STATUS.indexOf(s.type) < 0);
             _sRemoved = _before - t.status.length;
           }
@@ -19343,6 +19365,7 @@ function advDoContinue() {
   // 隊伍全部復活
   G.p1.forEach(h => {
     h.curHp = h.hp;
+    try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){}   // ★ v5.239.0
     h.status = [];
     h.buffs = [];
     h.acted = false;
@@ -19397,6 +19420,7 @@ function advRestartBattle() {
   //   都是「整場一次性」旗標,不清的話第二場 BOSS 直接失去鎖血+爆發反擊(老師回報)。
   //   爆發反擊由 _scheduleBossLifelineCounter 依附兩段鎖血,清掉旗標即全恢復。對玩家清這些無害。
   const _resetH = (h)=>{
+    try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){}   // ★ v5.239.0
     h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false;
     // ★ v3.16.46 — 重新開戰也要完全復原到戰鬥開始:歸零極限爆發次數(_burstUsed)+崛起鬥志(_risingSpiritCount)+S2使用旗標(s2used),
     //   與「換隊友重戰」及正常開戰 advStartBattle 一致(否則重戰後爆發次數/S2 不恢復)。
@@ -34553,8 +34577,8 @@ function _rrfSelectIn(newName) {
         // ★ v3.16.46 — 補上 _burstUsed=0(極限爆發使用次數)+_risingSpiritCount=0(武士崛起鬥志),
         //   與正常開戰 advStartBattle(BOSS 戰前重置)完全一致 → 換隊友重戰真正「完全復原到戰鬥開始」,
         //   不再殘留已用完的爆發次數。
-        G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; h.s2used=false; h._burstUsed=0; h._risingSpiritCount=0; });
-        G.p2.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; h._burstUsed=0; h._risingSpiritCount=0; });
+        G.p1.forEach(h=>{ try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){} h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; h.s2used=false; h._burstUsed=0; h._risingSpiritCount=0; });
+        G.p2.forEach(h=>{ try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){} h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; h._burstUsed=0; h._risingSpiritCount=0; });   // ★ v5.239.0 先還原暫態素質
         // ★ v3.16.46 — 連招疲勞同步歸零(與正常開戰一致;否則重戰後技能仍帶上一場累積的疲勞)
         G.comboFatigue = 0; G.comboFatigueByHero = {}; G.lastSkillName = null; G.lastSkillByHero = {};
         G.energy = {p1:2, p2:2};
@@ -44628,11 +44652,11 @@ const SKILL_UPGRADE_DEF = {
   '英靈殿的守望者': { cat:'special_odin_s2', label:'自身減傷%(挑釁1回合/對BOSS50%失效固定)' },
   // ★ v5.232.0 — 第四～六隻 UR(陳祈宏老師設計)技能升級登錄(鐵律 1.139)
   //   五招 fd 都「只有一個 %」= 主倍率 ⇒ 通用 cat:'dmg' ×(1+lv*0.05) 與 execSkill/aiUseSkill 實作逐字同算式。
-  //   烈日 fd 無任何 % ⇒ 必須開專屬 cat(否則圖鑑永遠 Lv1):成長=Lv5 起強力失明/燃燒 2→3 回合。
+  //   烈日 必須開專屬 cat:成長=全隊攻擊上升 特技50%+5%/級(v5.237.0)+ Lv5 起強力失明/燃燒 2→3 回合。
   '破盾神槍':       { cat:'dmg', label:'單體傷害(消除1個有利/無敵1回合固定)' },
   '神兵四連砲':     { cat:'dmg', label:'每段傷害(4段/護盾剋制2倍固定)' },
   '日暮':           { cat:'dmg', label:'反彈傷害%(2回合/單次上限5000)' },
-  '烈日':           { cat:'special_amaterasu_s2', label:'強力失明+強力燃燒回合數' },
+  '烈日':           { cat:'special_amaterasu_s2', label:'全隊攻擊上升(特技%)/強力失明+燃燒回合數' },
   '弦月':           { cat:'dmg', label:'單體傷害(強力魅惑2回合固定)' },
   '滿月':           { cat:'dmg', label:'全體傷害(清除全部有利固定)' },
 };
@@ -45009,9 +45033,12 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     fd = fd.replace(/受到的傷害\s*-?\s*30\s*%/g, '受到的傷害 -' + HL(_od2R + '%'));
   }
   else if(cat === 'special_amaterasu_s2'){
-    // ★ v5.232.0 天照大神 烈日:唯一成長=技能 Lv5(skLv>=4)起強力失明+強力燃燒 2 → 3 回合(execSkill/aiUseSkill _amDur2 對齊)
+    // ★ v5.232.0 天照大神 烈日:技能 Lv5(skLv>=4)起強力失明+強力燃燒 2 → 3 回合(execSkill/aiUseSkill _amDur2 對齊)
+    // ★ v5.237.0 追加:全隊攻擊上升「天照特技 50%」+5%/級(加法,_amaSunAtkApply 對齊);攻擊上升固定 2 回合
+    //   ⚠ 回合數 regex 只抓「燃燒」後面那個 2 回合,不可再用 /2\s*回合/g(會把攻擊上升的 2 回合也改成 3)
+    fd = fd.replace(/特技\s*50\s*%/g, '特技 ' + HL((50 + skLv * 5) + '%'));
     if(skLv >= 4){
-      fd = fd.replace(/2\s*回合/g, HL('3 回合'));
+      fd = fd.replace(/(燃燒」?\s*)2\s*回合/g, '$1' + HL('3 回合'));
     }
   }
   else if(cat === 'special_random_shot'){
@@ -47884,8 +47911,9 @@ function buildSkillLvTable(skillName, currentLv) {
     }
     else if(cat==='special_amaterasu_s2'){
       // ★ v5.232.0 天照大神 烈日:Lv5(lv>=4)起 2 → 3 回合;無法免疫固定
+      // ★ v5.237.0 追加:全隊攻擊上升 特技 50% +5%/級(加法)2 回合
       const _amD = (lv >= 4) ? 3 : 2;
-      effectText = '全體對手 強力失明 + 強力燃燒 ' + _amD + ' 回合(無法免疫)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
+      effectText = '全隊攻擊上升(特技' + (50 + lv*5) + '%)2 回合 + 全體對手 強力失明 + 強力燃燒 ' + _amD + ' 回合(無法免疫)' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     else if(cat==='special_sanctuary'){
       // 聖殿領域:Lv5+1 回合, Lv10 -1 能量
@@ -62534,6 +62562,8 @@ function _advMiniQuizSubmit(letter, isCorrect) {
 //   涵蓋:魔尊覺醒(全屬性×2)、明鏡止水(攻×2)、田徑閃燃(下次傷害×2)、超頻(傷害倍率)。
 function _clearTransientStatMods(h){
   if(!h) return;
+  // ★ v5.239.0 — 先把所有改素質的暫態效果(增強術/虛弱/顛倒乾坤/烈日/神偷敏捷/灌籃加速…)還原並拿掉,防跨戰鬥殘留
+  try{ if(typeof _lxpsStatFxStripAll === 'function') _lxpsStatFxStripAll(h); }catch(_){}
   try{
     if(h._iliyaBurstOrig){
       var _o=h._iliyaBurstOrig;
@@ -62832,7 +62862,7 @@ function advStartMiniBattle(nextSceneIdx) {
       }
     }
     // ★ 玩家隊伍HP全滿
-    if(G.p1) G.p1.forEach(h=>{ h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });
+    if(G.p1) G.p1.forEach(h=>{ try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){} h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });   // ★ v5.239.0
     // ════════════════════════════════════════════════════════════════════
     // ★ v3.13.10(2026-06-01)— 鳳凰天賦旗標重置(每場小怪戰開始)
     //   鐵律 1.146:天賦優先度最高 — 「整場限 1 次」應指「每場戰鬥」
@@ -64119,6 +64149,10 @@ function advMiniResultConfirm(){
   // ★ v1.0.20260423.3400 — 統一用 _clearBattleBg 立即清除,避免 700ms setTimeout 在玩家
   //   快速進入新關卡時把新背景清掉造成黑畫面
   _clearBattleBg('mini battle end');
+  // ★ v5.236.0 — 小怪戰結束,清掉可能殘留的 33 秒 BOSS 答題 watchdog,不讓它帶進過場/第三場事件
+  try{ if(window._quizDeadlockWatchdog){ clearTimeout(window._quizDeadlockWatchdog); window._quizDeadlockWatchdog = null; } }catch(_){}
+  // ★ v5.239.0 — 小怪戰結束:玩家隊伍所有改素質暫態效果還原並拿掉(小怪戰→BOSS 戰沿用同一批英雄物件)
+  try{ if(typeof G !== 'undefined' && G && Array.isArray(G.p1) && typeof _lxpsStatFxStripAll === 'function') G.p1.forEach(function(_h){ try{ _lxpsStatFxStripAll(_h); }catch(_){} }); }catch(_){}
   const _pf2 = document.getElementById('p2-field');
   if(_pf2) _pf2.style.visibility = '';
 
