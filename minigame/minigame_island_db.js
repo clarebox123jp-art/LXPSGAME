@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.342.0';   /* ★ v1.342.0(2026-09-25)— 本檔實質異動:D.DECO_FRONT(50 件裝飾正面圖)+ 對應 D.IMG deco_<id>_front 與 DECOS[].front、D.SHOP.daily.decoLimit=1(今日裝飾每天限購 1 件)、D.LOG。對應 minigame_index.html v1.342.0。 */
+  D.VER = 'v1.343.0';   /* ★ v1.343.0(2026-09-25)— 本檔實質異動:圖鑑 CODEX 空 img 補齊(料理→ITEMS 物品圖、野外魔物→bt_m_<k>_idle、研究 tech_<id>/解謎 pz_<區> 先登記圖鍵待上傳)+ D.LOG。對應 minigame_index.html v1.343.0。 */
+  void 'v1.342.0';   /* ★ v1.343.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.342.0(2026-09-25)— 本檔實質異動:D.DECO_FRONT(50 件裝飾正面圖)+ 對應 D.IMG deco_<id>_front 與 DECOS[].front、D.SHOP.daily.decoLimit=1(今日裝飾每天限購 1 件)、D.LOG。對應 minigame_index.html v1.342.0。 */
   void 'v1.341.0';   /* ★ v1.342.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.341.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(物品包格子版面在 index)。對應 minigame_index.html v1.341.0。 */
   void 'v1.340.0';   /* ★ v1.341.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.340.0(2026-09-25)— 本檔實質異動:D.PET_CMDS.sweepbill sleepP 20→50;D.PETS.spoonbill 天賦改群棲警戒(tal hitRallyP/hitRallySpdP/hitRallyCd);D.PETS.firefly 天賦冷光改 darkAtkP 15+darkDodgeP 15;D.LOG。對應 minigame_index.html v1.340.0。 */
   void 'v1.339.0';   /* ★ v1.340.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.339.0(2026-09-25)— 本檔實質異動:D.LEGEND.minPets 8→15(傳說夥伴調查解鎖門檻)+ D.LOG。對應 minigame_index.html v1.339.0。 */
@@ -5373,5 +5374,22 @@ window.ISL_DB = (function(){
     '🔄 50 種家具多了「正面」:點家具 →「🔄 轉向」,側面 → 反過來的側面 → 正面,輪流切換。',
     '🦦 阿獺的「今日裝飾」一天只賣 1 件,買了就等明天換新的。',
     '📖 自然圖鑑改成大卡片,圖和字都變大了;每一筆都寫出「可以拿到什麼材料」,還多了「🎒 資源材料」分頁,查每種材料在哪裡拿得到。'
+  ] });
+  /* ── ★ v1.343.0 老師「先修料理(圖鑑圖片)」+ 同類問題一併補齊 ──
+     圖鑑 CODEX 有 41 筆 img:'' ⇒ 卡片只剩 emoji:
+       ① 料理 7 道:圖其實早就有(物品圖 res_d_*,背包/烹飪都在用)⇒ 改指向 ITEMS[id].img。
+       ② 野外魔物 20 隻(v1.2xx 新增那批):沒有 mon_<k> 小圖示,但戰鬥立繪 bt_m_<k>_idle 都在 ⇒ 改用立繪。
+       ③ 研究 4 項 / 解謎 10 處:完全沒有圖 ⇒ 先登記圖鍵 tech_<id> / pz_<區>(檔名 island_tech_<id>.png / island_pz_<區>.png,
+          老師照清單生圖上傳後自動顯示,程式不必再改);沒上傳前卡片照舊退回 emoji(onerror),完整下載列為選配(index 正則已加 tech|pz)。
+     只補「目前是空字串」的,已經有圖鍵的一律不動。 */
+  (function(){ var i, x, it;
+    for(i = 0; i < D.CODEX.length; i++){ x = D.CODEX[i]; if(x.img) continue;
+      if(x.cat === 'dish'){ it = D.ITEMS[x.id]; if(it && it.img) x.img = it.img; }
+      else if(x.cat === 'monster'){ if(D.IMG['bt_m_' + x.id + '_idle']) x.img = 'bt_m_' + x.id + '_idle'; }
+      else if(x.cat === 'tech'){ x.img = 'tech_' + x.id; D.IMG[x.img] = 'island_tech_' + x.id + '.png'; }
+      else if(x.cat === 'puzzle'){ x.img = x.id; D.IMG[x.img] = 'island_' + x.id + '.png'; }
+    } })();
+  D.LOG.unshift({ v: 'v1.343.0', d: '2026-09-25', items: [
+    '📖 自然圖鑑的料理和 20 種野外魔物現在都有圖片了(原本只有表情符號)。'
   ] });
 })();
