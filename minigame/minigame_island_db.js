@@ -50,7 +50,9 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.339.0';   /* ★ v1.339.0(2026-09-25)— 本檔實質異動:D.LEGEND.minPets 8→15(傳說夥伴調查解鎖門檻)+ D.LOG。對應 minigame_index.html v1.339.0。 */
+  D.VER = 'v1.341.0';   /* ★ v1.341.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(物品包格子版面在 index)。對應 minigame_index.html v1.341.0。 */
+  void 'v1.340.0';   /* ★ v1.341.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.340.0(2026-09-25)— 本檔實質異動:D.PET_CMDS.sweepbill sleepP 20→50;D.PETS.spoonbill 天賦改群棲警戒(tal hitRallyP/hitRallySpdP/hitRallyCd);D.PETS.firefly 天賦冷光改 darkAtkP 15+darkDodgeP 15;D.LOG。對應 minigame_index.html v1.340.0。 */
+  void 'v1.339.0';   /* ★ v1.340.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.339.0(2026-09-25)— 本檔實質異動:D.LEGEND.minPets 8→15(傳說夥伴調查解鎖門檻)+ D.LOG。對應 minigame_index.html v1.339.0。 */
   void 'v1.338.0';   /* ★ v1.339.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.338.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(解謎點字級在 index)。對應 minigame_index.html v1.338.0。 */
   void 'v1.337.0';   /* ★ v1.338.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.337.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(iPad 版面/選單音效/生火標籤全在 index)。對應 minigame_index.html v1.337.0。 */
   void 'v1.336.0';   /* ★ v1.337.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.336.0(2026-09-25)— 本檔實質異動:檔尾 D.MAKE_FEE / D.makeFee / D.makeTotal(製作貝幣單一真相)、阿獺商店全表依三原則重算(買材料=賣價×3、買成品≥自製成本×1.5)、D.decoPrice 下限、夥伴裝備價/賣價重算、D.LOG。對應 minigame_index.html v1.336.0。 */
@@ -3323,7 +3325,7 @@ window.ISL_DB = (function(){
     clearstream:{ n:'清流一躍',   e:'🐟', cd:6, fx:{ healAll:40, regenAll:10, spdUpP:20, dur:3 }, d:'化作一道清流,全隊立即恢復 40% 最大體力,接下來 3 回合每回合再恢復 10%,且速度 +20%' },   /* ★ v1.321.0 老師「櫻花鉤吻鮭技能修正:全隊立即恢復40%HP,接下來3回合內每回合恢復10%HP」— regenAll:15→10 並新增 healAll:40(立即單次全隊治療,與 regenAll 持續恢復同時生效,f.heal/f.healAll 與 f.regenAll 是各自獨立的 if 區塊,本來就能疊加);spdUpP/dur 沿用不動。 */   /* ★ v1.243.0 老師「櫻花鉤吻鮭技能改:全隊每回合回15%+速度+20%,持續3回合」— healAll(單次)改 regenAll(持續回合制,沿用既有 regenAll 引擎,施放當下折算 healOutP 天賦後每回合自動觸發),速度加成持續回合數同步拉到 3;cd 4→6 補償「持續 3 回合、每回合 15%」等於單場最多 45% 的高額總回復量。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 10%/cd3→7%/cd4,理由同上,速度加成不變。 */
     /* B 組:控場型 */
     throwstone: { n:'投石',       e:'🪨', cd:2, fx:{ mul:1.0, stunP:35, stun:1 }, d:'造成傷害,並有 35% 機率讓目標暈眩 1 回合' },   /* ★ v1.243 老師「攻擊型/控場型做平衡」— cd 1→2:疊上台灣獼猴天賦 stunAddP+10%(合計 45% 單體暈眩),cd1 等於每回合都能賭暈眩,拉到 cd2 讓三隻控場型的節奏落在同一個級距(macaque=高頻單體 CC、spoonbill=中頻範圍減速+睡眠、barbet=低頻範圍封招),不再是macaque一隻獨大。 */
-    sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:2, fx:{ all:1, mul:0.6, spdDownP:25, dur:2, sleepP:20, sleepDur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合,且每隻各有 20% 機率陷入睡眠(最多 2 回合,挨打就會醒)' },   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 原效果不動,額外疊加對命中目標的入睡機率(不像暈眩只撐 1 回合、也不需要額外挨打就能一路睡好幾輪,但只要受到任何攻擊就會立刻醒來,兩者定位不同) */
+    sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:2, fx:{ all:1, mul:0.6, spdDownP:25, dur:2, sleepP:50, sleepDur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合,且每隻各有 50% 機率陷入睡眠(最多 2 回合,挨打就會醒)' },   /* ★ v1.340.0 老師「黑面琵鷺技能造成的睡眠機率提高至50%」— sleepP 20→50;傷害/減速/睡眠回合不變(戴水晶風鈴 skillPowP 時照舊等比放大,封頂 100%) */   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 原效果不動,額外疊加對命中目標的入睡機率(不像暈眩只撐 1 回合、也不需要額外挨打就能一路睡好幾輪,但只要受到任何攻擊就會立刻醒來,兩者定位不同) */
     drumecho:   { n:'啄木聲波',   e:'🥁', cd:3, fx:{ all:1, skillSeal:1, dmgDownP:30, dur:1 }, d:'敵方全體 1 回合內無法使用技能(只能普通攻擊),且造成的傷害降低 30%' },   /* ★ v1.321.0 老師「五色鳥的技能修正:敵方全體1回合內無法使用技能(只能普通攻擊)且造成的傷害降低30%」— seal(舊版對魔物只做到「打不出暴擊」的變通)改成真正的 skillSeal(讓 islBtMonSkill 這回合直接跳過,魔物只能普攻)+ dmgDownP:30(魔物這回合的傷害輸出 −30%),兩者都是新的 B.deb 鍵,消費點在 islBtMonSkill/islBtMonAct/islBtMonHitSeq。 */
     /* ★ v1.331.0 🌈 傳說夥伴專屬指令(企畫書《傳說夥伴與寵物裝備》老師定案 2026-09-24)。
        新 fx 鍵:poisonP/poisonDmgP/poisonDur(魔物中毒,每隻魔物自己回合開頭扣血;地圖頭目扣血減半)、
@@ -3487,7 +3489,7 @@ window.ISL_DB = (function(){
       ] },
     firefly:     { n:'螢火蟲',     e:'✨', type:'heal', sz:18,
                    b:{ hp:45, atk:3,  def:1, spd:9 }, g:{ hp:4.82, atk:0.32, def:0.22, spd:0.38 },
-                   cmd:'glowlight',  talent:'冷光:在洞窟與火山這種昏暗的地方,全隊攻擊 +8%', tal:{ darkAtkP:8 },
+                   cmd:'glowlight',  talent:'冷光:在洞窟、地下層與夜晚這種昏暗的環境,全隊攻擊 +15%、迴避率 +15%', tal:{ darkAtkP:15, darkDodgeP:15 },   /* ★ v1.340.0 老師「在洞窟與夜晚等昏暗環境,全隊攻擊力/迴避率+15%」— 攻擊 8→15、新增迴避 darkDodgeP;昏暗條件改為 洞窟/地下層/夜晚(islIsNight),火山移出 */
                    get:{ how:'tame', zone:'cave', p:20 },
                    sci:'螢火蟲的光幾乎不發熱,叫做「冷光」;牠對光害和農藥很敏感,是環境好不好的指標。' ,
                    food:'water', quiz:[
@@ -3528,7 +3530,7 @@ window.ISL_DB = (function(){
       ] },
     spoonbill:   { n:'黑面琵鷺',   e:'🥄', type:'ctrl', sz:80,
                    b:{ hp:55, atk:6,  def:3, spd:9 }, g:{ hp:5.71, atk:0.58, def:0.38, spd:0.36 },
-                   cmd:'sweepbill',  talent:'群棲:隊伍中有其他控場型時,全隊速度 +8%', tal:{ ctrlSpdP:8 },
+                   cmd:'sweepbill',  talent:'群棲警戒:自己受到傷害時,有 40% 機率讓全隊速度 +50% 持續 1 回合,同時全隊技能冷卻縮短 1 回合(效果還在時不會再次觸發,不可疊加)', tal:{ hitRallyP:40, hitRallySpdP:50, hitRallyCd:1 },   /* ★ v1.340.0 老師改天賦:舊「群棲:隊伍中有其他控場型時全隊速度 +8%」(ctrlSpdP:8)整條換掉;index 端 islBtHurtUnit 觸發,buff 鍵 spdTalP 與技能的 spdUpP 分開計時 */
                    get:{ how:'tame', zone:'lake', p:15 },
                    sci:'黑面琵鷺會把扁扁的嘴伸進水裡左右掃,碰到魚蝦就合起來;全世界大部分都在台南過冬。' ,
                    food:'d_fish', quiz:[
@@ -5346,5 +5348,12 @@ window.ISL_DB = (function(){
   ] });
   D.LOG.unshift({ v: 'v1.339.0', d: '2026-09-25', items: [
     '🌈 傳說夥伴調查的開放條件改成「已招募 15 位夥伴」:先把島上的夥伴幾乎都交成朋友,阿獺才會把調查筆記交給你。'
+  ] });
+  D.LOG.unshift({ v: 'v1.340.0', d: '2026-09-25', items: [
+    '🥄 黑面琵鷺:「橫掃扁嘴」讓魔物睡著的機率提高到 50%;新天賦「群棲警戒」——被打時有 40% 機率讓全隊速度 +50%(1 回合),還能讓大家的技能冷卻少 1 回合。',
+    '✨ 螢火蟲:天賦「冷光」變強了!在洞窟、地下層和夜晚,全隊攻擊 +15%、迴避 +15%。'
+  ] });
+  D.LOG.unshift({ v: 'v1.341.0', d: '2026-09-25', items: [
+    '🎒 iPad 的物品包和「選取存入」視窗:格子變小一點,一排四格都完整看得到,右邊不會再被切掉。'
   ] });
 })();
