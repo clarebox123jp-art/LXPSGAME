@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.341.0';   /* ★ v1.341.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(物品包格子版面在 index)。對應 minigame_index.html v1.341.0。 */
+  D.VER = 'v1.342.0';   /* ★ v1.342.0(2026-09-25)— 本檔實質異動:D.DECO_FRONT(50 件裝飾正面圖)+ 對應 D.IMG deco_<id>_front 與 DECOS[].front、D.SHOP.daily.decoLimit=1(今日裝飾每天限購 1 件)、D.LOG。對應 minigame_index.html v1.342.0。 */
+  void 'v1.341.0';   /* ★ v1.342.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.341.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(物品包格子版面在 index)。對應 minigame_index.html v1.341.0。 */
   void 'v1.340.0';   /* ★ v1.341.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.340.0(2026-09-25)— 本檔實質異動:D.PET_CMDS.sweepbill sleepP 20→50;D.PETS.spoonbill 天賦改群棲警戒(tal hitRallyP/hitRallySpdP/hitRallyCd);D.PETS.firefly 天賦冷光改 darkAtkP 15+darkDodgeP 15;D.LOG。對應 minigame_index.html v1.340.0。 */
   void 'v1.339.0';   /* ★ v1.340.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.339.0(2026-09-25)— 本檔實質異動:D.LEGEND.minPets 8→15(傳說夥伴調查解鎖門檻)+ D.LOG。對應 minigame_index.html v1.339.0。 */
   void 'v1.338.0';   /* ★ v1.339.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.338.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(解謎點字級在 index)。對應 minigame_index.html v1.338.0。 */
@@ -5166,6 +5167,18 @@ window.ISL_DB = (function(){
   D.DECOS.push({ id:'screen',    n:'木框屏風',   e:'🎋', img:'deco_screen',    comfort:3,  p:34,  z:5, sz:1.6, cost:{wood:6, fiber:6},             d:'不用蓋牆,擺一座屏風就能把大房間分成兩區。' });
   (function(){ var i, d; for(i = 0; i < D.DECOS.length; i++){ d = D.DECOS[i]; if(d.img && !D.IMG[d.img]) D.IMG[d.img] = 'island_' + d.img + '.png'; } })();   /* 新裝飾圖選配(512×512 透明底),缺圖退 emoji */
   D.NIGHT_GLOW.deco.push('lights', 'floorlamp', 'fireplace', 'fountain');
+  /* ── ★ v1.342.0 老師「家具旋轉角度多一個正面」──
+     有列在這裡的裝飾,點開小選單的「🔄 轉向」會依序切換:側面(原圖)→ 側面翻轉 → 正面 → 回到側面;
+     存檔欄位沿用 deco.f(0=側面、1=側面翻轉、2=正面),舊存檔 0/1 意義不變。
+     正面圖檔名一律 island_deco_<id>_front.png(512×512 透明底);以後舊裝飾補了正面圖,把 id 加進這張表即可,程式不必改。
+     ⚠ 沒列在表裡的裝飾維持原本「🔁 左右翻轉」兩段切換,不會切到一張不存在的正面圖。 */
+  D.DECO_FRONT = ['aquarium', 'bamboo', 'basket', 'birdhouse', 'bookshelf', 'bunkbed', 'cabin', 'chair', 'clock', 'cupboard',
+    'curtain', 'cushion', 'desk', 'dining', 'dresser', 'fireplace', 'floorlamp', 'flowerarch', 'fountain', 'globe',
+    'guitar', 'hammock', 'hangplant', 'lights', 'logseat', 'lotuspond', 'mailbox', 'organ', 'painting', 'palm',
+    'picnic', 'plushbear', 'pool', 'rocker', 'roundrug', 'sandcastle', 'scarecrow', 'screen', 'sofa', 'specimen',
+    'stonepath', 'stove', 'sundial', 'swing', 'teaset', 'telescope', 'wardrobe', 'well', 'windmill', 'woodbridge'];
+  (function(){ var i, j, id; for(i = 0; i < D.DECO_FRONT.length; i++){ id = D.DECO_FRONT[i];
+      for(j = 0; j < D.DECOS.length; j++){ if(D.DECOS[j].id === id){ D.DECOS[j].front = 'deco_' + id + '_front'; D.IMG['deco_' + id + '_front'] = 'island_deco_' + id + '_front.png'; break; } } } })();
 
   /* ── 🏡 小木屋室內:左/中/右/後 四個房間,每間最多 20 件 ── */
   D.CABIN = {
@@ -5181,7 +5194,7 @@ window.ISL_DB = (function(){
   D.IMG.cabin_room_r = 'island_cabin_room_r.png'; D.IMG.cabin_room_u = 'island_cabin_room_u.png';
 
   /* ── 🦦 阿獺每日輪替 ── */
-  D.SHOP.daily = { itemN: 6, gearChance: 0.10 };   /* 每天從材料/料理商品抽 6 樣上架;10% 機率其中 1 樣換成隨機夥伴裝備(只抽已達成頭目條件的) */
+  D.SHOP.daily = { itemN: 6, gearChance: 0.10, decoLimit: 1 };   /* ★ v1.342.0 老師「雜貨店的每日家具限購 1 件」— decoLimit=今日裝飾每個遊戲日最多買幾件(存檔 ISL.shop.ddDay/ddN) */   /* 每天從材料/料理商品抽 6 樣上架;10% 機率其中 1 樣換成隨機夥伴裝備(只抽已達成頭目條件的) */
   /* 夥伴裝備商店價,賣出一律半價(覆寫 v1.331.0 的舊 sell 值) */
   D.PET_GEAR_PRICE = { pg_collar:60, pg_leafmail:60, pg_featherring:60, pg_shellguard:70, pg_honeyjar:160, pg_herbsachet:160, pg_chime:200, pg_ember:220, pg_fang:600, pg_magma:900 };
   (function(){ var i, g; for(i = 0; i < D.PET_GEAR.length; i++){ g = D.PET_GEAR[i]; if(D.PET_GEAR_PRICE[g.id]){ g.price = D.PET_GEAR_PRICE[g.id]; g.sell = Math.max(1, Math.min(Math.floor(g.price / 2), D.matValue(g.cost || {}))); } } })();   /* ★ v1.333.0 老師「夥伴裝備也改成甲」:min(半價, 材料回收價);商店賣的一律 ★1 */
@@ -5355,5 +5368,10 @@ window.ISL_DB = (function(){
   ] });
   D.LOG.unshift({ v: 'v1.341.0', d: '2026-09-25', items: [
     '🎒 iPad 的物品包和「選取存入」視窗:格子變小一點,一排四格都完整看得到,右邊不會再被切掉。'
+  ] });
+  D.LOG.unshift({ v: 'v1.342.0', d: '2026-09-25', items: [
+    '🔄 50 種家具多了「正面」:點家具 →「🔄 轉向」,側面 → 反過來的側面 → 正面,輪流切換。',
+    '🦦 阿獺的「今日裝飾」一天只賣 1 件,買了就等明天換新的。',
+    '📖 自然圖鑑改成大卡片,圖和字都變大了;每一筆都寫出「可以拿到什麼材料」,還多了「🎒 資源材料」分頁,查每種材料在哪裡拿得到。'
   ] });
 })();
