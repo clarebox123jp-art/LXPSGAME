@@ -15608,11 +15608,16 @@ function updateUI(){
     const _lastSk_ui = (G.lastSkillByHero&&G.lastSkillByHero[_hk_ui])||'';
     const _s1fatigued = _fat_ui>0 && _lastSk_ui===a.s1.n;
     const _s2fatigued = _fat_ui>0 && _lastSk_ui===a.s2.n;
+    // ★ v5.240.0 — 連招疲勞顯示修正:左邊劃掉=原本消耗(skillCost 不含疲勞,其他折扣照算)、右邊紅字=疲勞累積後消耗。
+    //   舊版左邊用 _s1base(只算 c±戰場卡,漏掉克雷爾/女神權能等折扣),且下方舊「G.comboFatigue」區塊會把疲勞後數字
+    //   塞進第一個 🔷(= 劃掉那格)⇒ 玩家看到被劃掉的是疲勞後數字。_s1base/_s2base 保留不刪(未再使用)。
+    const _s1orig = _s1fatigued ? skillCost(a.s1, a, true, true) : c1;
+    const _s2orig = _s2fatigued ? skillCost(a.s2, a, true, true) : c2;
     const _s1costHtml = _s1fatigued
-      ? `<span style="color:#888;text-decoration:line-through">🔷${_s1base}</span> <span style="color:#ff4444;font-weight:700">🔴${c1}↑</span>`
+      ? `<span style="color:#888;text-decoration:line-through">🔷${_s1orig}</span> <span style="color:#ff4444;font-weight:700">🔴${c1}↑</span> <span style="font-size:18px;color:#ff8855">（+${_fat_ui}疲勞）</span>`
       : `🔷${c1}`;
     const _s2costHtml = _s2fatigued
-      ? `<span style="color:#888;text-decoration:line-through">🔷${_s2base}</span> <span style="color:#ff4444;font-weight:700">🔴${c2}↑</span>`
+      ? `<span style="color:#888;text-decoration:line-through">🔷${_s2orig}</span> <span style="color:#ff4444;font-weight:700">🔴${c2}↑</span> <span style="font-size:18px;color:#ff8855">（+${_fat_ui}疲勞）</span>`
       : `🔷${c2}`;
     const _s1meta=`🔷${c1}${a.s1.p?' [被動]':''}`, _s2meta=`🔷${c2}${a.s2.p?' [被動]':''}`;
     // ★ v1.0.20260421.3020 — 顯示當前技能等級與該級效果
@@ -15659,7 +15664,9 @@ function updateUI(){
     s1b.disabled = a.acted || s1IsPassive || G.energy.p1<c1 || isSealed;
     s2b.disabled = a.acted || s2IsPassive || G.energy.p1<c2 || (a.s2.once&&a.s2used) || isSealed;
     // 連招疲勞提示：在技能名稱後顯示額外費用
-    const _fatigue = G.comboFatigue||0;
+    // ★ v5.240.0 — 停用:這段讀的是「全場共用」的舊 G.comboFatigue(不影響實際消耗),且 regex 抓第一個 🔷 會打進劃掉的原價格,
+    //   造成「劃掉的是疲勞後數字」。疲勞提示改由上方 _s1costHtml/_s2costHtml(按英雄個別 G.comboFatigueByHero)一次畫好。
+    const _fatigue = 0; // 舊:G.comboFatigue||0
     if(_fatigue>0 && G.lastSkillName){
       if(G.lastSkillName===a.s1.n && !s1IsPassive){
         s1b.innerHTML=s1b.innerHTML.replace(
@@ -15757,7 +15764,8 @@ const _JP_HEAL_SKILL_SET = new Set(['救贖神光','治癒之風','神聖鎚擊'
   '冥佑','死者轉生','布奶的保護','水精靈合奏','鈴音淨化','下課時光',
   '舔舔治療','水盤守護','七彩天使神光','聖潔彩繪',
   '乾杯','保持正能量','滿血菇','風恆之星','炸彈四重奏','隱身療傷']);
-function skillCost(s, actor, displayOnly=false){
+function skillCost(s, actor, displayOnly=false, noFatigue=false){
+  // ★ v5.240.0 — noFatigue=true:算「不含連招疲勞」的消耗(只給技能鈕顯示劃掉的原價用;其他折扣/加成照算)
   let c=s.c;
   // ★ PHASE 2 A2 — 主角覺醒閘門(乙):未覺醒時 s1/s2 視為不可施放(回 99·能量永遠不足)
   //   覺醒後往下正常算(HERO_DB 已寫 c:3/c:4)。以 _isProtagHero 把關,不影響同名的籃球隊員/變臉戲法原主人。
@@ -15851,7 +15859,7 @@ function skillCost(s, actor, displayOnly=false){
     const _hk = actor.side+'-'+actor.pos;
     const _fat = (G.comboFatigueByHero && G.comboFatigueByHero[_hk]) || 0;
     const _last = G.lastSkillByHero[_hk] || '';
-    if(_fat > 0 && _last === s.n){
+    if(_fat > 0 && _last === s.n && !noFatigue){
       c = c + _fat;
     }
   }
@@ -19753,7 +19761,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(burstName==='永晝'){
     const _oppA = side==='p1'?'p2':'p1';
     const _foesA = G[_oppA].filter(x => x && x.curHp > 0);
-    const _totA = Math.max(1, Math.floor(spv * 8.0 * _burstMult));
+    const _totA = Math.max(1, Math.floor(spv * 6.5 * _burstMult));   // ★ v5.240.0 老師下修 800% → 650%(舊:spv * 8.0)
     const _regA = Math.max(12, Math.floor(spv * 0.5 * _burstMult));
     log(`☀️ [${h.name}] 永晝!太陽永不西沉!`);
     bannerFX(h, '☀️ 永晝!', '#ffd27a', 1400);
@@ -19766,7 +19774,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         renderCard(al);
       });
     }catch(_eA1){ console.warn('[天照 爆發 復活/再生]', _eA1); }
-    // Step 2:特技 800% 敵全體分攤光屬性 + 強力失明 + 強力燃燒 2 回合
+    // Step 2:特技 650%(v5.240.0 由 800% 下修)敵全體分攤光屬性 + 強力失明 + 強力燃燒 2 回合
     if(_foesA.length){
       const _perA = Math.max(1, Math.floor(_totA / _foesA.length));
       _foesA.forEach((f, i) => {
