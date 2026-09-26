@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.344.0';   /* ★ v1.344.0(2026-09-26)— 本檔實質異動:D.CABIN 加 charDoorK/spd 與每間房 walk/doors/doorH(小木屋室內可走動、門檻換房間),後面房間改「後院」,新圖鍵 cabin_room_l2/r2/yard(新檔名,舊圖當退路);檔尾 D.LOG。 */
+  D.VER = 'v1.345.0';   /* ★ v1.345.0(2026-09-26)— 本檔實質異動:左右房間改回現有圖 cabin_room_l/r(取消 l2/r2),門座標/門高依現有圖實量;檔尾 D.LOG。 */
+  void 'v1.344.0';   /* ★ v1.344.0(2026-09-26)— 本檔實質異動:D.CABIN 加 charDoorK/spd 與每間房 walk/doors/doorH(小木屋室內可走動、門檻換房間),後面房間改「後院」,新圖鍵 cabin_room_l2/r2/yard(新檔名,舊圖當退路);檔尾 D.LOG。 */
   void 'v1.343.0';   /* ★ v1.343.0(2026-09-25)— 本檔實質異動:圖鑑 CODEX 空 img 補齊(料理→ITEMS 物品圖、野外魔物→bt_m_<k>_idle、研究 tech_<id>/解謎 pz_<區> 先登記圖鍵待上傳)+ D.LOG。對應 minigame_index.html v1.343.0。 */
   void 'v1.342.0';   /* ★ v1.343.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.342.0(2026-09-25)— 本檔實質異動:D.DECO_FRONT(50 件裝飾正面圖)+ 對應 D.IMG deco_<id>_front 與 DECOS[].front、D.SHOP.daily.decoLimit=1(今日裝飾每天限購 1 件)、D.LOG。對應 minigame_index.html v1.342.0。 */
   void 'v1.341.0';   /* ★ v1.342.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.341.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(物品包格子版面在 index)。對應 minigame_index.html v1.341.0。 */
@@ -5198,12 +5199,14 @@ window.ISL_DB = (function(){
         walk: { y0:36, y1:95, t0:15, t1:85, b0:3, b1:97 },
         doors: [ { to:'l', x:9, y:44, bx:1.5, by:26, al:'l' }, { to:'r', x:91, y:44, bx:98.5, by:26, al:'r' },
                  { to:'u', x:50, y:35, bx:50, by:17, al:'c' }, { to:'out', x:50, y:95, bx:50, by:95, al:'c' } ] },
-      { k:'l', n:'左邊房間', e:'⬅', img:'cabin_room_l2', img0:'cabin_room_l', doorH: 0.38, doorH0: 0.34,
+      /* ★ v1.345.0 老師「左右房間已經有圖片不需要重新生成」— 改回直接用現有 island_cabin_room_l/r.png(不再走 l2/r2 新檔名);
+         門位置與門高依現有圖實量:左房門在右牆 x 90~97.5%、y 14~46%(門高 0.32);右房門在左牆 x 2~9%、y 9~49%(門高 0.39),後牆底 42% */
+      { k:'l', n:'左邊房間', e:'⬅', img:'cabin_room_l', doorH: 0.32,
         walk: { y0:40, y1:95, t0:15, t1:86, b0:3, b1:97 },
-        doors: [ { to:'c', x:91, y:46, bx:98.5, by:28, al:'r' } ] },
-      { k:'r', n:'右邊房間', e:'➡', img:'cabin_room_r2', img0:'cabin_room_r', doorH: 0.38, doorH0: 0.36,
-        walk: { y0:40, y1:95, t0:14, t1:85, b0:3, b1:97 },
-        doors: [ { to:'c', x:9, y:46, bx:1.5, by:28, al:'l' } ] },
+        doors: [ { to:'c', x:90, y:47, bx:98.5, by:30, al:'r' } ] },
+      { k:'r', n:'右邊房間', e:'➡', img:'cabin_room_r', doorH: 0.39,
+        walk: { y0:44, y1:95, t0:14, t1:86, b0:3, b1:97 },
+        doors: [ { to:'c', x:9, y:49, bx:1.5, by:30, al:'l' } ] },
       { k:'u', n:'後院',     e:'🌳', img:'cabin_room_yard', doorH: 0.38, yard: true,   /* ★ yard:老師裁定「後院只能放戶外的裝飾」(out 或 DECO_TAB_OUT) */
         walk: { y0:40, y1:94, t0:4, t1:96, b0:3, b1:97 },
         doors: [ { to:'c', x:50, y:95, bx:50, by:95, al:'c' } ] }
@@ -5212,7 +5215,7 @@ window.ISL_DB = (function(){
   D.IMG.cabin_room_c = 'island_cabin_room_c.png'; D.IMG.cabin_room_l = 'island_cabin_room_l.png';
   D.IMG.cabin_room_r = 'island_cabin_room_r.png'; D.IMG.cabin_room_u = 'island_cabin_room_u.png';
   /* ★ v1.344.0 三張新房間圖用新檔名(不同名覆蓋,免 bump MG_IMG_FVER);沒上傳前左右房間退回舊圖、後院退回 CSS 草地底色 */
-  D.IMG.cabin_room_l2 = 'island_cabin_room_l2.png'; D.IMG.cabin_room_r2 = 'island_cabin_room_r2.png'; D.IMG.cabin_room_yard = 'island_cabin_room_yard.png';
+  D.IMG.cabin_room_yard = 'island_cabin_room_yard.png';   /* ★ v1.345.0 l2/r2 取消(沿用現有左右房間圖),只剩後院待生圖 */
 
   /* ── 🦦 阿獺每日輪替 ── */
   D.SHOP.daily = { itemN: 6, gearChance: 0.10, decoLimit: 1 };   /* ★ v1.342.0 老師「雜貨店的每日家具限購 1 件」— decoLimit=今日裝飾每個遊戲日最多買幾件(存檔 ISL.shop.ddDay/ddN) */   /* 每天從材料/料理商品抽 6 樣上架;10% 機率其中 1 樣換成隨機夥伴裝備(只抽已達成頭目條件的) */
@@ -5416,5 +5419,8 @@ window.ISL_DB = (function(){
     '🏡 小木屋裡可以操作主角走來走去了(方向盤/鍵盤/點地板,點兩下用跑的),走進門就換房間,還有屋內腳步聲。',
     '🌳 小木屋的「後面房間」改成「後院」,後院只能放戶外的裝飾(水池、樹、柵欄這類),室內房間照舊放家具。',
     '🔬🧩 研究、解謎點和四件抉擇裝飾、時間倒轉之貝、洞窟深處場景都換上正式圖片了。'
+  ] });
+  D.LOG.unshift({ v: 'v1.345.0', d: '2026-09-26', items: [
+    '🏡 修正小木屋左右房間都顯示成客廳的問題,現在每個房間都是自己的樣子。'
   ] });
 })();
