@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.345.0';   /* ★ v1.345.0(2026-09-26)— 本檔實質異動:左右房間改回現有圖 cabin_room_l/r(取消 l2/r2),門座標/門高依現有圖實量;檔尾 D.LOG。 */
+  D.VER = 'v1.346.0';   /* ★ v1.346.0(2026-09-26)— 本檔實質異動:後院圖到位,D.CABIN 後院 walk/門座標依實圖調整;檔尾 D.LOG。 */
+  void 'v1.345.0';   /* ★ v1.345.0(2026-09-26)— 本檔實質異動:左右房間改回現有圖 cabin_room_l/r(取消 l2/r2),門座標/門高依現有圖實量;檔尾 D.LOG。 */
   void 'v1.344.0';   /* ★ v1.344.0(2026-09-26)— 本檔實質異動:D.CABIN 加 charDoorK/spd 與每間房 walk/doors/doorH(小木屋室內可走動、門檻換房間),後面房間改「後院」,新圖鍵 cabin_room_l2/r2/yard(新檔名,舊圖當退路);檔尾 D.LOG。 */
   void 'v1.343.0';   /* ★ v1.343.0(2026-09-25)— 本檔實質異動:圖鑑 CODEX 空 img 補齊(料理→ITEMS 物品圖、野外魔物→bt_m_<k>_idle、研究 tech_<id>/解謎 pz_<區> 先登記圖鍵待上傳)+ D.LOG。對應 minigame_index.html v1.343.0。 */
   void 'v1.342.0';   /* ★ v1.343.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.342.0(2026-09-25)— 本檔實質異動:D.DECO_FRONT(50 件裝飾正面圖)+ 對應 D.IMG deco_<id>_front 與 DECOS[].front、D.SHOP.daily.decoLimit=1(今日裝飾每天限購 1 件)、D.LOG。對應 minigame_index.html v1.342.0。 */
@@ -5208,8 +5209,10 @@ window.ISL_DB = (function(){
         walk: { y0:44, y1:95, t0:14, t1:86, b0:3, b1:97 },
         doors: [ { to:'c', x:9, y:49, bx:1.5, by:30, al:'l' } ] },
       { k:'u', n:'後院',     e:'🌳', img:'cabin_room_yard', doorH: 0.38, yard: true,   /* ★ yard:老師裁定「後院只能放戶外的裝飾」(out 或 DECO_TAB_OUT) */
-        walk: { y0:40, y1:94, t0:4, t1:96, b0:3, b1:97 },
-        doors: [ { to:'c', x:50, y:95, bx:50, by:95, al:'c' } ] }
+        /* ★ v1.346.0 老師提供後院圖(island_cabin_room_yard.png,1600×1000):柵欄底/草地頂約 28% ⇒ walk.y0 34(再高主角頭會頂到房間上緣被裁);
+           回屋台階在下方正中(寬 20~79%、頂 83%)⇒ 門檻 (50,92)、標籤放台階上 */
+        walk: { y0:34, y1:95, t0:3, t1:97, b0:3, b1:97 },
+        doors: [ { to:'c', x:50, y:92, bx:50, by:90, al:'c' } ] }
     ]
   };
   D.IMG.cabin_room_c = 'island_cabin_room_c.png'; D.IMG.cabin_room_l = 'island_cabin_room_l.png';
@@ -5422,5 +5425,8 @@ window.ISL_DB = (function(){
   ] });
   D.LOG.unshift({ v: 'v1.345.0', d: '2026-09-26', items: [
     '🏡 修正小木屋左右房間都顯示成客廳的問題,現在每個房間都是自己的樣子。'
+  ] });
+  D.LOG.unshift({ v: 'v1.346.0', d: '2026-09-26', items: [
+    '🌳 小木屋後院換上正式的草地圖,可以一路走到柵欄邊;從下方木台階走回屋內。'
   ] });
 })();
