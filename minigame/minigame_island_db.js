@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.343.0';   /* ★ v1.343.0(2026-09-25)— 本檔實質異動:圖鑑 CODEX 空 img 補齊(料理→ITEMS 物品圖、野外魔物→bt_m_<k>_idle、研究 tech_<id>/解謎 pz_<區> 先登記圖鍵待上傳)+ D.LOG。對應 minigame_index.html v1.343.0。 */
+  D.VER = 'v1.344.0';   /* ★ v1.344.0(2026-09-26)— 本檔實質異動:D.CABIN 加 charDoorK/spd 與每間房 walk/doors/doorH(小木屋室內可走動、門檻換房間),後面房間改「後院」,新圖鍵 cabin_room_l2/r2/yard(新檔名,舊圖當退路);檔尾 D.LOG。 */
+  void 'v1.343.0';   /* ★ v1.343.0(2026-09-25)— 本檔實質異動:圖鑑 CODEX 空 img 補齊(料理→ITEMS 物品圖、野外魔物→bt_m_<k>_idle、研究 tech_<id>/解謎 pz_<區> 先登記圖鍵待上傳)+ D.LOG。對應 minigame_index.html v1.343.0。 */
   void 'v1.342.0';   /* ★ v1.343.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.342.0(2026-09-25)— 本檔實質異動:D.DECO_FRONT(50 件裝飾正面圖)+ 對應 D.IMG deco_<id>_front 與 DECOS[].front、D.SHOP.daily.decoLimit=1(今日裝飾每天限購 1 件)、D.LOG。對應 minigame_index.html v1.342.0。 */
   void 'v1.341.0';   /* ★ v1.342.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.341.0(2026-09-25)— 本檔僅版號同步 + D.LOG 一筆(物品包格子版面在 index)。對應 minigame_index.html v1.341.0。 */
   void 'v1.340.0';   /* ★ v1.341.0 舊版號備查(原本是 D.VER 指派) */   /* ★ v1.340.0(2026-09-25)— 本檔實質異動:D.PET_CMDS.sweepbill sleepP 20→50;D.PETS.spoonbill 天賦改群棲警戒(tal hitRallyP/hitRallySpdP/hitRallyCd);D.PETS.firefly 天賦冷光改 darkAtkP 15+darkDodgeP 15;D.LOG。對應 minigame_index.html v1.340.0。 */
@@ -5184,15 +5185,34 @@ window.ISL_DB = (function(){
   /* ── 🏡 小木屋室內:左/中/右/後 四個房間,每間最多 20 件 ── */
   D.CABIN = {
     id: 'cabin', cap: 20, furSzMax: 1.8, furBaseH: 0.15,   /* 家具基礎高度 = 房間高 × furBaseH × min(sz, furSzMax) */
+    /* ★ v1.344.0 老師「小木屋內也能操作主角移動」「角色身高 = 屋內房門高度的 75%」「後面房間改成後院」—
+       座標一律是房間圖的百分比(x=左→右,y=上→下,y 指「腳底/門檻」所在高度):
+       walk  = 可走地板梯形:y0~y1 上下界;y0 那條線的左右界 t0/t1,y1 那條線的左右界 b0/b1(中間線性內插)。
+       doors = to(目標房間 k,'out'=出門)、x/y 門檻地板點(走進去就換房間)、bx/by/al 門標籤位置(al: l 靠左/r 靠右/c 置中)。
+       doorH = 這張圖裡「房門」高度占房間高的比例;主角身高 = doorH × 0.75(CHAR_DOOR_K)。
+       img0/doorH0 = 新圖還沒上傳時退回的舊圖與舊圖的門高(新舊圖門的位置刻意設計成相同,座標共用)。
+       以後換房間圖只要改這裡的數字,程式不必動。 */
+    charDoorK: 0.75, spd: 1.25,   /* spd = 每秒走幾個「主角身高」(營地 ≈1.1) */
     rooms: [
-      { k:'c', n:'客廳',     e:'🏠', img:'cabin_room_c' },
-      { k:'l', n:'左邊房間', e:'⬅', img:'cabin_room_l' },
-      { k:'r', n:'右邊房間', e:'➡', img:'cabin_room_r' },
-      { k:'u', n:'後面房間', e:'⬆', img:'cabin_room_u' }
+      { k:'c', n:'客廳',     e:'🏠', img:'cabin_room_c', doorH: 0.38,
+        walk: { y0:36, y1:95, t0:15, t1:85, b0:3, b1:97 },
+        doors: [ { to:'l', x:9, y:44, bx:1.5, by:26, al:'l' }, { to:'r', x:91, y:44, bx:98.5, by:26, al:'r' },
+                 { to:'u', x:50, y:35, bx:50, by:17, al:'c' }, { to:'out', x:50, y:95, bx:50, by:95, al:'c' } ] },
+      { k:'l', n:'左邊房間', e:'⬅', img:'cabin_room_l2', img0:'cabin_room_l', doorH: 0.38, doorH0: 0.34,
+        walk: { y0:40, y1:95, t0:15, t1:86, b0:3, b1:97 },
+        doors: [ { to:'c', x:91, y:46, bx:98.5, by:28, al:'r' } ] },
+      { k:'r', n:'右邊房間', e:'➡', img:'cabin_room_r2', img0:'cabin_room_r', doorH: 0.38, doorH0: 0.36,
+        walk: { y0:40, y1:95, t0:14, t1:85, b0:3, b1:97 },
+        doors: [ { to:'c', x:9, y:46, bx:1.5, by:28, al:'l' } ] },
+      { k:'u', n:'後院',     e:'🌳', img:'cabin_room_yard', doorH: 0.38, yard: true,   /* ★ yard:老師裁定「後院只能放戶外的裝飾」(out 或 DECO_TAB_OUT) */
+        walk: { y0:40, y1:94, t0:4, t1:96, b0:3, b1:97 },
+        doors: [ { to:'c', x:50, y:95, bx:50, by:95, al:'c' } ] }
     ]
   };
   D.IMG.cabin_room_c = 'island_cabin_room_c.png'; D.IMG.cabin_room_l = 'island_cabin_room_l.png';
   D.IMG.cabin_room_r = 'island_cabin_room_r.png'; D.IMG.cabin_room_u = 'island_cabin_room_u.png';
+  /* ★ v1.344.0 三張新房間圖用新檔名(不同名覆蓋,免 bump MG_IMG_FVER);沒上傳前左右房間退回舊圖、後院退回 CSS 草地底色 */
+  D.IMG.cabin_room_l2 = 'island_cabin_room_l2.png'; D.IMG.cabin_room_r2 = 'island_cabin_room_r2.png'; D.IMG.cabin_room_yard = 'island_cabin_room_yard.png';
 
   /* ── 🦦 阿獺每日輪替 ── */
   D.SHOP.daily = { itemN: 6, gearChance: 0.10, decoLimit: 1 };   /* ★ v1.342.0 老師「雜貨店的每日家具限購 1 件」— decoLimit=今日裝飾每個遊戲日最多買幾件(存檔 ISL.shop.ddDay/ddN) */   /* 每天從材料/料理商品抽 6 樣上架;10% 機率其中 1 樣換成隨機夥伴裝備(只抽已達成頭目條件的) */
@@ -5391,5 +5411,10 @@ window.ISL_DB = (function(){
     } })();
   D.LOG.unshift({ v: 'v1.343.0', d: '2026-09-25', items: [
     '📖 自然圖鑑的料理和 20 種野外魔物現在都有圖片了(原本只有表情符號)。'
+  ] });
+  D.LOG.unshift({ v: 'v1.344.0', d: '2026-09-26', items: [
+    '🏡 小木屋裡可以操作主角走來走去了(方向盤/鍵盤/點地板,點兩下用跑的),走進門就換房間,還有屋內腳步聲。',
+    '🌳 小木屋的「後面房間」改成「後院」,後院只能放戶外的裝飾(水池、樹、柵欄這類),室內房間照舊放家具。',
+    '🔬🧩 研究、解謎點和四件抉擇裝飾、時間倒轉之貝、洞窟深處場景都換上正式圖片了。'
   ] });
 })();
