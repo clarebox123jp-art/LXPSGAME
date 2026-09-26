@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.347.0';   /* ★ v1.347.0(2026-09-26)— 本檔實質異動:D.CABIN.charDoorK 0.75→0.5625(屋內主角縮小 25%)、spd 1.25→1.67(走路快慢不變);檔尾 D.LOG。 */
+  D.VER = 'v1.348.0';   /* ★ v1.348.0(2026-09-26)— 本檔實質異動:D.PET_PIC_MUL.firefly 0.8→0.4(螢火蟲圖片縮小 50%);檔尾 D.LOG。 */
+  void 'v1.347.0';   /* ★ v1.347.0(2026-09-26)— 本檔實質異動:D.CABIN.charDoorK 0.75→0.5625(屋內主角縮小 25%)、spd 1.25→1.67(走路快慢不變);檔尾 D.LOG。 */
   void 'v1.346.0';   /* ★ v1.346.0(2026-09-26)— 本檔實質異動:後院圖到位,D.CABIN 後院 walk/門座標依實圖調整;檔尾 D.LOG。 */
   void 'v1.345.0';   /* ★ v1.345.0(2026-09-26)— 本檔實質異動:左右房間改回現有圖 cabin_room_l/r(取消 l2/r2),門座標/門高依現有圖實量;檔尾 D.LOG。 */
   void 'v1.344.0';   /* ★ v1.344.0(2026-09-26)— 本檔實質異動:D.CABIN 加 charDoorK/spd 與每間房 walk/doors/doorH(小木屋室內可走動、門檻換房間),後面房間改「後院」,新圖鍵 cabin_room_l2/r2/yard(新檔名,舊圖當退路);檔尾 D.LOG。 */
@@ -3622,7 +3623,7 @@ window.ISL_DB = (function(){
      index 端只有兩個消費點:營地寵物容器邊長(islCampPetsPaint 的 _psz)與戰鬥隊友立繪框(islBtFigPos 的 sz),
      兩處都是改「框的寬高」不是疊 transform,腳底定位不動、影子(% 定位)自動跟著等比。
      夥伴圖鑑卡片/編組格這種「塞滿固定框」的小圖示刻意不吃,避免放大的梅花鹿被框裁掉。 */
-  D.PET_PIC_MUL = { deer:1.2, leopardcat:0.9, gull:0.9, treefrog:0.8, firefly:0.8 };
+  D.PET_PIC_MUL = { deer:1.2, leopardcat:0.9, gull:0.9, treefrog:0.8, firefly:0.4 };   /* ★ v1.348.0 老師「螢火蟲整體圖片縮小 50%」:0.8→0.4(index islPetPicMul 下限同步放寬到 0.3) */
 
   /* 夥伴等級:與主角同樣最高 50 級;升到 Lv n 所需經驗 = XP_BASE + XP_STEP×(n−1)。
      經驗只給「有上場」的夥伴(借用版好友角色永遠不給,見 D.PARTY.FRIEND_READONLY)。 */
@@ -5434,5 +5435,9 @@ window.ISL_DB = (function(){
   D.LOG.unshift({ v: 'v1.347.0', d: '2026-09-26', items: [
     '🏡 修正小木屋客廳和左右房間的圖片有時不見、只剩一片咖啡色的問題。',
     '🧍 小木屋裡的主角縮小一點,房間看起來更寬敞(走路速度不變)。'
+  ] });
+  D.LOG.unshift({ v: 'v1.348.0', d: '2026-09-26', items: [
+    '🏕 回到營地時,主角改站在營地正上方;正上方新增「🗺 前往大地圖」出口,點一下或走過去就能到大地圖。',
+    '✨ 螢火蟲的圖片縮小一半,更像一隻小小的螢火蟲。'
   ] });
 })();
