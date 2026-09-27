@@ -2351,6 +2351,83 @@ const HERO_PORTRAIT_LIBRARY = {
     { id:'default', name:'原始肖像',
       url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('小鬼貓兔.png') },
   ],
+  // ★ v5.241.0(2026-09-27)— 十二星神「異性版」皮膚(免費解鎖):圖鑑肖像切換列直接可選,不掛 requiresUnlock。
+  //   default = 原本的「XX星神_場景.jpg」(與 HERO_IMGS 同檔);新皮膚檔名 = 老師上傳原名改 .jpg(去背無、立繪 1049×1499 左右)。
+  //   ⚠ 雙子星神的新圖檔名為「雙子星神_男生新版.jpg」(其餘 11 張為「_異性版.jpg」)。
+  //   原版男神→新版女神:牡羊/金牛/獅子/天秤/射手/水瓶/摩羯(摩羯原版是白鬍老者→新版是年輕女性);
+  //   原版女神→新版男神:雙子/巨蟹/處女/天蠍/雙魚。
+  '牡羊星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('牡羊星神_場景.jpg') },
+    { id:'zodiac_alt', name:'牡羊女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('牡羊星神_異性版.jpg') },
+  ],
+  '金牛星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('金牛星神_場景.jpg') },
+    { id:'zodiac_alt', name:'金牛女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('金牛星神_異性版.jpg') },
+  ],
+  '雙子星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙子星神_場景.jpg') },
+    { id:'zodiac_alt', name:'雙子男神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙子星神_男生新版.jpg') },
+  ],
+  '巨蟹星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('巨蟹星神_場景.jpg') },
+    { id:'zodiac_alt', name:'巨蟹男神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('巨蟹星神_異性版.jpg') },
+  ],
+  '獅子星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('獅子星神_場景.jpg') },
+    { id:'zodiac_alt', name:'獅子女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('獅子星神_異性版.jpg') },
+  ],
+  '處女星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('處女星神_場景.jpg') },
+    { id:'zodiac_alt', name:'處女男神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('處女星神_異性版.jpg') },
+  ],
+  '天秤星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('天秤星神_場景.jpg') },
+    { id:'zodiac_alt', name:'天秤女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('天秤星神_異性版.jpg') },
+  ],
+  '天蠍星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('天蠍星神_場景.jpg') },
+    { id:'zodiac_alt', name:'天蠍男神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('天蠍星神_異性版.jpg') },
+  ],
+  '射手星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('射手星神_場景.jpg') },
+    { id:'zodiac_alt', name:'射手女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('射手星神_異性版.jpg') },
+  ],
+  '摩羯星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('摩羯星神_場景.jpg') },
+    { id:'zodiac_alt', name:'摩羯女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('摩羯星神_異性版.jpg') },
+  ],
+  '水瓶星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水瓶星神_場景.jpg') },
+    { id:'zodiac_alt', name:'水瓶女神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('水瓶星神_異性版.jpg') },
+  ],
+  '雙魚星神': [
+    { id:'default', name:'原始肖像',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙魚星神_場景.jpg') },
+    { id:'zodiac_alt', name:'雙魚男神版',
+      url:'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent('雙魚星神_異性版.jpg') },
+  ],
 };
 
 // ════════════════════════════════════════════════════════════════
