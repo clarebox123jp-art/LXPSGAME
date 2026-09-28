@@ -31549,6 +31549,14 @@ function _tutInterInjectCSS() {
       padding:4px 16px; border:1px solid #444; border-radius:8px;
       background:transparent; font-family:inherit; }
     ._ti-msg-bar .ti-skip:hover { color:#aaa; border-color:#666; }
+    /* ★ v5.243.0 手機橫式(高 ≤520px):提示框收成一列小字,少佔畫面;提示框本體不吃點擊(只有跳過鈕吃),
+       就算還壓到卡片,點下去也會穿透到下面的目標 */
+    @media (orientation:landscape) and (max-height:520px){
+      ._ti-msg-bar { top:4px; padding:5px 12px; gap:3px; max-width:min(700px,70vw); border-radius:10px; pointer-events:none; }
+      ._ti-msg-bar .ti-title { font-size:16px; }
+      ._ti-msg-bar .ti-text  { font-size:12px; line-height:1.3; }
+      ._ti-msg-bar .ti-skip  { font-size:12px; padding:2px 10px; pointer-events:auto; }
+    }
     @keyframes _tiPraiseIn {
       from { opacity:0; transform:translate(-50%,-50%) scale(0.7); }
       to   { opacity:1; transform:translate(-50%,-50%) scale(1); }
@@ -31942,6 +31950,22 @@ function _tutInterShowAtkTarget() {
   // ★ 敵方卡牌在畫面上方 → 手指 ↑ 貼底緣
   _tutInterShowArrow(cardEl || null, 'up');
   _tutInterShowMsg('🎯 選擇攻擊目標！', '點擊箭頭所指的敵方角色，對他發動攻擊！');
+  // ★ v5.243.0(2026-09-27・老師安卓截圖「普通攻擊指導的提示視窗蓋住怪物,按不到目標卡死」)
+  //   手機橫式視窗只有 ~411px 高,固定在 top:10px 的提示框會整個壓在敵方卡片上;
+  //   通用做法:量出提示框與目標卡片的矩形是否重疊,重疊就把提示框改貼視窗底部
+  //   (那一步玩家只需要點上方敵人,底部我方卡片暫時被蓋沒關係)。iPad/桌機不重疊 → 零改動。
+  try{
+    const _mb = document.getElementById('_ti-msg-bar');
+    if(_mb && cardEl){
+      const a = _mb.getBoundingClientRect(), b = cardEl.getBoundingClientRect();
+      const _ov = !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+      if(_ov){
+        _mb.style.top = 'auto';
+        _mb.style.bottom = '6px';
+        _mb.classList.add('_ti-msg-bottom');
+      }
+    }
+  }catch(_){}
 
   _tutInterPhase = 'atk_target';
 
@@ -35243,13 +35267,37 @@ function _showTreasureLevelUpModal(item, onClose){
   // 建立中央彈窗(跟英雄升級不同位置 — 中央而非右側)
   const ov = document.createElement('div');
   ov.id = '_treasure-lu-ov';
+  // ★ v5.243.0(2026-09-27・老師安卓截圖「中國關卡至寶升級視窗無法捲動,按鈕超出螢幕按不到,整場戰鬥卡死」)
+  //   根因:這張卡片寫死 180px 圖＋36/44px 大字＋30px 內距,總高約 520px > 手機橫式視窗 411px;
+  //   外層 align-items:center 讓超出的部分對稱溢出到上下兩邊,底部的「✔ 確認」在螢幕外,
+  //   卡片本身又沒有 max-height/overflow,連捲都捲不到 ⇒ 死結。三道保險(比照 v5.163.0/v5.224.0 彈窗範式):
+  //   ① 外層 align-items:safe center(內容過高時貼頂而不是對稱溢出)
+  //   ② 卡片 max-height:min(92dvh,92vh)+overflow-y:auto(任何螢幕都捲得到按鈕)
+  //   ③ 手機橫式(高 ≤520px)專屬縮小樣式(_treasure-lu-phone-style),整張卡不用捲就看得到按鈕
   ov.style.cssText = [
     'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9810;',
-    'display:flex;align-items:center;justify-content:center;',
+    'display:flex;align-items:safe center;justify-content:center;',
+    'overflow-y:auto;-webkit-overflow-scrolling:touch;',
     'background:rgba(0,0,15,0.55);backdrop-filter:blur(3px);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
     'animation:_luFadeIn 0.4s cubic-bezier(0.22,1,0.36,1);',
   ].join('');
+  if(!document.getElementById('_treasure-lu-phone-style')){
+    const _pst = document.createElement('style');
+    _pst.id = '_treasure-lu-phone-style';
+    _pst.textContent = `
+      #_treasure-lu-ov > div > *{ flex-shrink:0; }
+      @media (orientation:landscape) and (max-height:520px){
+        #_treasure-lu-ov > div{ padding:10px 22px !important; border-radius:14px !important; min-width:0 !important; }
+        #_treasure-lu-ov ._lu-img{ width:76px !important; height:76px !important; border-width:3px !important; font-size:38px !important; }
+        #_treasure-lu-ov ._lu-title{ font-size:19px !important; margin:6px 0 2px !important; }
+        #_treasure-lu-ov ._lu-name{ font-size:15px !important; margin-bottom:0 !important; }
+        #_treasure-lu-ov ._lu-lv{ font-size:24px !important; }
+        #_treasure-lu-ov ._lu-pt{ font-size:12px !important; margin-top:2px !important; }
+        #_treasure-lu-ov button{ margin-top:8px !important; padding:6px 24px !important; font-size:16px !important; border-width:2px !important; }
+      }`;
+    document.head.appendChild(_pst);
+  }
 
   const card = document.createElement('div');
   card.style.cssText = [
@@ -35259,6 +35307,7 @@ function _showTreasureLevelUpModal(item, onClose){
     'box-shadow:0 0 60px rgba(255,180,0,0.35),0 8px 30px rgba(0,0,0,0.7)',
     'padding:30px 40px',
     'min-width:320px;max-width:min(92vw,480px)',
+    'max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch',
     'display:flex;flex-direction:column;align-items:center',
   ].join(';');
 
@@ -60756,6 +60805,9 @@ async function showLoginGate() {
     if(_lgModalDetach && (_lgModalDetach.parentNode !== document.body || _lgModalDetach !== document.body.lastElementChild)){
       document.body.appendChild(_lgModalDetach);
     }
+    // ★ v5.243.0 手機橫式:搬到 body 之後撤掉 v5.242.0 _lxpsFixGcClamp 在畫布內套上的 max 字級(33px !important),
+    //   否則真實 px 呈現時變成巨字,字級交回 #lxps-phone-css 的登入閘門規則
+    try{ if(typeof window._lxpsUndoClampFix === 'function') window._lxpsUndoClampFix(_lgModalDetach); }catch(_){}
   }catch(_eLgDetach){ console.warn('[v5.176.0 login-gate-modal 提升圖層]', _eLgDetach); }
   const modal = document.getElementById('login-gate-modal');
   if(modal) modal.style.display = 'flex';

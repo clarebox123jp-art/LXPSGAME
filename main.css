@@ -386,7 +386,11 @@ body{color:var(--text);font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}
 #burst-panel{
   position:absolute;left:50%;transform:translateX(-50%);
   bottom:60px;width:96%;max-width:640px;
-  max-height:80vh;overflow-y:auto;
+  /* ★ v5.243.0(2026-09-27・老師安卓截圖「爆發技的視窗太小,還要捲動才能按到使用爆發」)
+     舊值 80vh:面板掛在 #gc(1920 設計 px 再 transform:scale)裡,80vh 量到的是「真實視窗高 80%」
+     卻被當設計 px 用 ⇒ 手機橫式(視窗 411px)只剩 ~330 設計 px ≈ 螢幕 1/4 高,說明文字＋按鈕塞不下只能捲。
+     改用畫布設計高度(--gc-h 由 scaleToViewport 維護;PC 1080p 時 0.86×1080=929 ≈ 舊值 864,肉眼無差)。 */
+  max-height:calc(var(--gc-h, 1080px) * 0.86);overflow-y:auto;
   background:linear-gradient(135deg,rgba(20,10,0,0.97),rgba(40,15,0,0.97));
   border:2px solid #ff6600;border-radius:16px;
   padding:20px 24px 22px;z-index:400;
@@ -4907,14 +4911,26 @@ body {
   ._event-popup-footer { padding: 6px 12px !important; }
   ._event-popup-btn { font-size: 13px !important; padding: 6px 16px !important; border-radius: 7px !important; }
 
-  /* ═══ 對話框 ═══ */
+  /* ═══ 對話框 ═══
+     ★ v5.243.0(2026-09-27・老師安卓截圖「冒險關卡劇情下方的對白文字,第三行以後就看不到了」)
+     根因:#adv-dialog-box 在 #gc(1920 設計 px 再 transform:scale ≈0.34)裡面,舊值 max-height:90vh
+     量到的是「真實視窗高 90% ≈ 370」卻被當成設計 px 用 ⇒ 對話框只有 370 設計 px 高(螢幕 1/3),
+     72px 字 ×1.55 行高一行就 112 設計 px,第三行起超出對話框、被 #adv-cutscene-overlay 的
+     overflow:hidden 裁掉。修法:上限改用畫布設計高度(--gc-h 由 scaleToViewport 維護)的 46%,
+     字級 72→56(手機實際約 19px,仍比一般 UI 字大)、行高 1.5,三行=252 設計 px 穩穩放得下;
+     文字區本身另設 max-height=三行+overflow-y:auto 當保險(超長對白在文字區內可捲,不再被裁)。
+     ⚠ 不可把 overflow 設在 #adv-dialog-box 上:「⏭ 跳過劇情」鈕是掛在框外上緣(top:-46px)的絕對定位子元素,會被裁掉。 */
   #adv-dialog-box {
-    max-height: 90vh !important;
-    padding: 24px 100px 48px 28px !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    padding: 14px 190px 40px 28px !important;   /* 右側留給法寶欄(v5.243.0 實測 100px 會被法寶欄壓到第一行尾) */
   }
-  #adv-dialog-speaker { font-size: 64px !important; margin-bottom: 12px !important; }
-  #adv-dialog-text { font-size: 72px !important; line-height: 1.55 !important; }
-  #adv-dialog-next { font-size: 72px !important; }
+  #adv-dialog-speaker { font-size: 40px !important; margin-bottom: 6px !important; }
+  #adv-dialog-text {
+    font-size: 56px !important; line-height: 1.5 !important;
+    max-height: 258px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  #adv-dialog-next { font-size: 48px !important; bottom: 6px !important; }
 }
 
 
