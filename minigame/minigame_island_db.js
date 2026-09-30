@@ -50,7 +50,9 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.360.0';   /* ★ v1.360.0(2026-09-29)— 本檔僅版號與 D.LOG(營地造景重設位置鈕在 index);與 v1.359.0 co-op 心跳異動同一包交付 */
+  D.VER = 'v1.362.0';   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
+  void 'v1.361.0';   /* ★ v1.361.0(2026-09-30)— 本檔僅版號與 D.LOG(跑跳真圖總開關在 index) */
+  void 'v1.360.0';   /* ★ v1.360.0(2026-09-29)— 本檔僅版號與 D.LOG(營地造景重設位置鈕在 index);與 v1.359.0 co-op 心跳異動同一包交付 */
   void 'v1.359.0';   /* ★ v1.359.0(2026-09-29・老師「乙」)— 本檔實質異動:拜訪好友島 co-op 心跳 COOP_HEARTBEAT_SEC 6→15(每人每分鐘 10→4 次寫入,25 人整節課互訪從約 1 萬次降到約 4 千次)、COOP_STALE_SEC 18→45(維持 3 次心跳沒到才判離線變 NPC),COOP_GONE_SEC 600 不動;檔尾 D.LOG。 */
   void 'v1.355.0';   /* ★ v1.355.0(2026-09-27・老師「戰鬥圖片:我生成手持六種武器的姿勢圖,你把武器對齊在手上」,甲乙)— 本檔實質異動:新增 D.BT_WP { grip(6 把道具圖握把點/朝向/大小,PCA 量測初值), anchor.default(8 列×4 格起始錨點,待老師用 🗡 武器工房拖好後貼回覆蓋) };檔尾 D.LOG。對應 index v1.355.0、sw v1.355.0。 */   void 'v1.354.0';   /* ★ v1.354.0(2026-09-27・老師「在我上傳新圖之前,把你可以做的修正先處理好」)— 本檔實質異動:D.LAYER_ADJ 八款 hair_* 共 32 組值改等比(sx=sy,dy 重算,見該表註解);檔尾 D.LOG 一筆。對應 index v1.354.0(跑步正/背面壓扁修正)、sw v1.354.0。 */   void 'v1.352.0';   /* ★ v1.352.0(2026-09-26)— 本檔實質異動:老師「蜂蜜太難取得」⇒ 虎頭蜂兵掉蜂蜜 30%→50%、新增 D.HONEY_CHOP_P=0.25(伐木機率附帶蜂蜜);檔尾 D.LOG。 */
   void 'v1.351.0';   /* ★ v1.351.0(2026-09-26)— 本檔僅版號與 D.LOG(戰鬥暫停環境音在 index) */
@@ -3713,7 +3715,7 @@ window.ISL_DB = (function(){
   /* ★ v1.230.0 營地走路/睡覺姿態圖(32 張選配):island_bt_pet_<key>_walk.png / _sleep.png,規格同戰鬥立繪(512×512 透明底、側面朝右、腳底貼底)。
      index 端先探測檔案存不存在,有才用;沒有就沿用 idle 圖加程式動畫(走路上下晃、睡覺趴低呼吸),所以沒上傳也不會破圖。 */
   /* ★ v1.231.0 主角跑步/跳躍下半身 sheet(頭與上半身由 index 端疊回玩家自己的分層造型) */
-  (function(){ var bs = ['boy','girl'], i, h, b; for(i = 0; i < 2; i++){ b = bs[i]; for(h = 0; h < 4; h++){ D.IMG['run_' + b + '_h' + h] = 'island_run_' + b + '_h' + h + '.png'; D.IMG['jump_' + b + '_h' + h] = 'island_jump_' + b + '_h' + h + '.png'; D.IMG['bt_' + b + '_h' + h] = 'island_battle_' + b + '_h' + h + '.png';   /* ★ v1.240.0 老師實際上傳的檔名是 island_battle_*(原本寫 island_bt_* 對不上,整張戰鬥圖一直沒套用) */ } } })();   /* ★ v1.233.0 全髮型整張動作圖(選配,沒上傳自動退回舊做法) */
+  (function(){ var bs = ['boy','girl'], i, h, b; for(i = 0; i < 2; i++){ b = bs[i]; for(h = 0; h < 6; h++){ D.IMG['walk_' + b + '_h' + h] = 'island_walk_' + b + '_h' + h + '.png'; D.IMG['run_' + b + '_h' + h] = 'island_run_' + b + '_h' + h + '.png'; D.IMG['jump_' + b + '_h' + h] = 'island_jump_' + b + '_h' + h + '.png'; D.IMG['bt_' + b + '_h' + h] = 'island_battle_' + b + '_h' + h + '.png';   /* ★ v1.362.0 老師 2026-09-30 重生成 sprites.rar:髮型 4→6 種(h4/h5 新增)、新增走路整張圖 island_walk_*(512×384 4 欄);走/跑/跳全部 4 欄 3 列同基準 */   /* ★ v1.240.0 老師實際上傳的檔名是 island_battle_*(原本寫 island_bt_* 對不上,整張戰鬥圖一直沒套用) */ } } })();   /* ★ v1.233.0 全髮型整張動作圖(選配,沒上傳自動退回舊做法) */
   D.IMG.run_sheet_boy = 'island_run_sheet_boy.png'; D.IMG.run_sheet_girl = 'island_run_sheet_girl.png'; D.IMG.jump_sheet_boy = 'island_jump_sheet_boy.png'; D.IMG.jump_sheet_girl = 'island_jump_sheet_girl.png';
   (function(){ var i, k; for(i = 0; i < D.PET_ORDER.length; i++){ k = D.PET_ORDER[i]; D.IMG['bt_pet_' + k + '_walk'] = 'island_pet_' + k + '_walk.png'; D.IMG['bt_pet_' + k + '_sleep'] = 'island_pet_' + k + '_sleep.png'; } })();   /* ★ v1.257.0 老師回報「圖片連結有誤」實查:老師上傳的 32 張實際檔名是 island_pet_<key>_walk/sleep.png(少了 bt_ 這一段),跟原本資料表登記的 island_bt_pet_<key>_walk/sleep.png 對不上,逐一 HTTP 查證 32 張全部 404;改成登記真正上傳的檔名,實測 32 張全部 200。⚠ 只改檔名字串,D.IMG 的鍵名(bt_pet_<key>_walk/_sleep)完全不動,index 端 islCampPetRender/islPetPicHtml 等消費點不必跟著改,一行修好全部 16 隻。與 v1.240.0 主角戰鬥圖同一種坑(當時上傳檔名是 island_battle_* 不是資料表原寫的 island_bt_*),都是「登記檔名跟著老師實際上傳的來,不要反過來要老師改檔名配合資料表」。 */
 
@@ -5511,5 +5513,12 @@ window.ISL_DB = (function(){
   ] });
   D.LOG.unshift({ v: 'v1.360.0', d: '2026-09-29', items: [
     '🏕 營地左上角新增「營地造景」按鈕:設施或裝飾不小心拖到畫面外點不到時,打開清單按「📍 重設位置」,它就會回到營地正中央,再拖到想放的地方就好。'
+  ] });
+  D.LOG.unshift({ v: 'v1.361.0', d: '2026-09-30', items: [
+    '🏃 主角跑步和跳躍的圖片不再壓扁、不再忽大忽小,身高和腳底跟走路對齊;剛開始跑的那一瞬間也不會再閃出奇怪的身體。'
+  ] });
+  D.LOG.unshift({ v: 'v1.362.0', d: '2026-09-30', items: [
+    '🧑‍🎨 主角全新畫風!走路、跑步、跳躍的圖全部重畫成同一套,不會再壓扁或忽大忽小。',
+    '💇 髮型各多 2 種:少年「側分微長髮」「凌亂短髮」、少女「齊瀏海短髮」「雙麻花辮」,到「🎨 換造型」試試。'
   ] });
 })();
