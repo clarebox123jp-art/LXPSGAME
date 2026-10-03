@@ -4434,7 +4434,7 @@ window.islDirectVeilOff = function(){
 .sp .rjw .rju > .ly{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;background-size:384px 192px;image-rendering:pixelated;}
 .isl-pixchar.ly>.ly,#isl-char .sp.ly>.ly,#isl-camp-char .sp.ly>.ly{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;background-size:384px 192px;image-rendering:pixelated;pointer-events:none;}
 .isl-pixchar.full{background-image:none;overflow:visible;}   /* ★ v1.362.0 整張走路圖靜態格(islFullWalkHtml):三層 .ff dataURL 疊圖 */
-.isl-pixchar.full>.ff{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;image-rendering:pixelated;pointer-events:none;display:block;}
+.isl-pixchar.full>.ff{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;image-rendering:auto;pointer-events:none;display:block;}
 @keyframes islSpWalk{from{background-position:-128px 0}to{background-position:-384px 0}}
 @keyframes islSpWalkU{from{background-position:-128px -64px}to{background-position:-384px -64px}}
 @keyframes islSpWalkS{from{background-position:-128px -128px}to{background-position:-384px -128px}}
@@ -4484,10 +4484,10 @@ window.islDirectVeilOff = function(){
 #isl-char.jump.power .sp,#isl-char.jump.power .isl-pixchar,#isl-camp-char.jump.power .sp,#isl-camp-char.jump.power .isl-pixchar{animation:islJumpHopPower .65s ease-out;}
 #isl-char.jump .sp.flip,#isl-char.jump .isl-pixchar.flip,#isl-camp-char.jump .sp.flip,#isl-camp-char.jump .isl-pixchar.flip{animation:islJumpHopFlip .65s ease-out;}
 #isl-char.jump:not(.power) .sp.rjfull,#isl-camp-char.jump:not(.power) .sp.rjfull{animation:islJumpLift .65s ease-out !important;} #isl-char.jump:not(.power) .sp.rjfull.flip,#isl-camp-char.jump:not(.power) .sp.rjfull.flip{animation:islJumpLiftFlip .65s ease-out !important;}   /* ★ v1.240.0 老師「跳躍時人物位置提升 50%(約半個身高)再落下,影子留在地平線」— 只動 .sp,影子 .shadow 是手足元素不跟著動 */   /* ★ v1.233.0 整張跳躍圖自己畫了騰空高度,不再疊 CSS 位移(奮力跳保留) */
-.sp .rjw .ff{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;image-rendering:pixelated;display:none;}
+.sp .rjw .ff{position:absolute;left:0;top:0;width:64px;height:64px;background-repeat:no-repeat;image-rendering:auto;display:none;}
 .sp.rjfull .rjw .ff{display:block;} .sp.rjfull .rjw .rjb,.sp.rjfull .rjw .rju{display:none;}
 #isl-battle .bt-fig .fig .pic-full{position:relative;width:100%;height:100%;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}   /* ★ v1.233.0 整張戰鬥動作圖(4 欄×8 列) */
-#isl-battle .bt-fig .fig .pic-full .fl{position:absolute;inset:0;background-repeat:no-repeat;background-size:400% 800%;image-rendering:pixelated;}
+#isl-battle .bt-fig .fig .pic-full .fl{position:absolute;inset:0;background-repeat:no-repeat;background-size:400% 800%;image-rendering:auto;}   /* ★ v1.367.0 整張主角圖(走/跑/跳/戰鬥 .ff/.fl)是高解析手繪圖不是點陣圖:pixelated 會在「512 原圖縮半 → 再放大」時最近鄰取樣掉一半像素,輪廓變鋸齒、斷線;改 auto 平滑縮放 */
 #isl-battle .bt-fig .fig .pic-full .wpl{position:absolute;inset:0;pointer-events:none;} #isl-battle .bt-fig .fig .pic-full .wpl img,#isl-wplab-pv img{position:absolute;pointer-events:none;image-rendering:auto;}   /* ★ v1.355.0 武器貼手層:img 由 islBtWpPlace 逐幀定位,z-index -1 = 藏在手後(.pic-full 有 filter 自成堆疊,不會掉到背景後面) */
 .pic-full.st-idle .fl{background-position-y:0%;animation:islBtF4L .8s steps(4) infinite;}
 .pic-full.st-atk .fl{background-position-y:14.2857%;animation:islBtF4O .45s steps(3) forwards;}
@@ -4939,12 +4939,12 @@ window.islDirectVeilOff = function(){
 .isl-codex-card{position:relative;background:linear-gradient(160deg,rgba(30,50,44,.85),rgba(8,16,12,.9));border:2px solid rgba(150,200,160,.4);border-radius:14px;padding:8px 4px 6px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 4px 12px rgba(0,0,0,.35);}
 .isl-codex-card.lock{ opacity:.55; background:rgba(20,26,22,.7); border-color:rgba(255,255,255,.18); box-shadow:none; }
 .isl-codex-card .ic{font-size:34px;line-height:1;height:48px;display:flex;align-items:center;justify-content:center;}
-.isl-codex-card .ic img{width:48px;height:48px;object-fit:contain;image-rendering:pixelated;}
+.isl-codex-card .ic img{width:48px;height:48px;object-fit:contain;image-rendering:auto;}
 .isl-codex-card .nm{font-size:14px;font-weight:700;}
 .isl-codex-card .wh{font-size:11px;opacity:.7;text-align:center;line-height:1.2;}
 .isl-codex-card.lock{opacity:.55;border-style:dashed;}
 .isl-shop-npc{display:flex;align-items:center;gap:10px;margin:0 0 8px;}
-.isl-shop-npc img{width:64px;height:64px;object-fit:contain;image-rendering:pixelated;}
+.isl-shop-npc img{width:64px;height:64px;object-fit:contain;image-rendering:auto;}   /* ★ v1.367.0 魔物/夥伴/NPC 立繪是 512px 大圖,縮成 48~200px 顯示時 pixelated 會跳格掉像素(輪廓鋸齒),戰鬥立繪、遇敵跳出、圖鑑、商店 NPC 一律改 auto 平滑縮放 */
 .isl-shop-npc .say{flex:1;background:rgba(255,255,255,.12);border-radius:14px;padding:8px 10px;font-size:14px;}
 .isl-sale{background:#c0392b;color:#fff;font-size:12px;border-radius:999px;padding:1px 8px;font-weight:700;}
 /* 角色頁 */
@@ -5455,7 +5455,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #isl-battle .bt-fig .fig{position:absolute;left:0;right:0;bottom:0;top:0;display:flex;align-items:flex-end;justify-content:center;transform-origin:50% 100%;animation:islBtBreath 2.4s ease-in-out infinite;}
 #isl-battle .bt-fig.m .fig{animation-duration:2s;animation-delay:.6s;}
 #isl-battle .bt-fig.m .pic{transform:none;}   /* ★ v1.288.0(老師第三次回報「魔物還是沒有面向玩家」)— 這一輪不再用推測的,直接把 28 張 island_bt_m_<k>_idle.png 與共用圖示 island_mon_<k>.png 全部抓下來逐張看過:凡是有明確朝向的(basilisk/boar/bat/beetle/harpy/hornet/mantis/mistfrog/mole/salamander/snakehead/ashcrow…)**原圖一律畫成面朝左**,其餘(golem/slime/shadow/urchin/jelly/spark/stag/thornvine/wraith/clockwork/rockslide/pollen/mittencrab/cavespider)是正面對稱、沒有朝向。玩家站左邊 ⇒ 原圖直接放就是面對玩家,v1.284.0 與 v1.286.0 兩輪都把「原圖朝右」當成前提去加鏡像,反而是那個鏡像把魔物轉成背對玩家。⇒ 鏡像整個拿掉(保留這條規則寫 none 而不是刪掉,是為了蓋掉學生裝置上還在快取的舊 CSS,並留下這段說明以免第四次又被改回去)。 */
-#isl-battle .bt-fig .fig img.pic{max-width:100%;max-height:100%;image-rendering:pixelated;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
+#isl-battle .bt-fig .fig img.pic{max-width:100%;max-height:100%;image-rendering:auto;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
 #isl-battle .bt-fig .fig .pic-layers{position:relative;width:100%;height:100%;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}   /* ★ v1.138.0 三層戰鬥立繪(base/cloth/hair)疊合容器 */
 #isl-battle .bt-fig .fig .pic-layers img.ly{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
 #isl-battle .bt-fig .fig .emo{font-size:150px;line-height:1;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5));}
@@ -5522,7 +5522,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 #isl-battle .bt-qte .bar.crit-hit{animation:islBarShake .35s ease;}   /* ★ v1.280.0 老師「戰鬥的甜蜜點命中時 bar 震動」— 戰鬥攻擊 QTE 的 .bar 是 .bt-qte 底下的,不是 .isl-qte 底下的,套用不到既有 `.isl-qte .bar.crit-hit` 那條規則(class 名字一樣、父層不一樣、CSS 選擇器完全比對不到);islBarShake 這個 @keyframes 本身是全域共用的,這裡只需要補一條選對範圍的規則。 */
 #isl-battle .bt-qte button.big{font-size:26px;padding:12px 30px;border-radius:999px;border:3px solid #ffd166;background:#ffd166;color:#222;font-weight:900;}
 #isl-battle .bt-qte .tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:6px 0;} #isl-battle .bt-qte .tools button{min-width:110px;padding:8px 10px;border-radius:12px;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:16px;display:flex;flex-direction:column;align-items:center;gap:3px;} #isl-battle .bt-qte .tools button span{font-size:30px;} #isl-battle .bt-qte .tools button small{font-size:12px;opacity:.8;}
-.isl-mon-pop{position:absolute;width:96px;height:96px;margin-left:-48px;margin-top:-88px;z-index:6;text-align:center;font-size:70px;line-height:96px;animation:islBtPop .6s cubic-bezier(.2,1.6,.5,1);pointer-events:none;} .isl-mon-pop img{width:96px;height:96px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 6px #000);} .isl-mon-pop b{position:absolute;right:-6px;top:-10px;font-size:34px;color:#ff5d5d;text-shadow:0 2px 3px #000;}
+.isl-mon-pop{position:absolute;width:96px;height:96px;margin-left:-48px;margin-top:-88px;z-index:6;text-align:center;font-size:70px;line-height:96px;animation:islBtPop .6s cubic-bezier(.2,1.6,.5,1);pointer-events:none;} .isl-mon-pop img{width:96px;height:96px;object-fit:contain;image-rendering:auto;filter:drop-shadow(0 4px 6px #000);} .isl-mon-pop b{position:absolute;right:-6px;top:-10px;font-size:34px;color:#ff5d5d;text-shadow:0 2px 3px #000;}
 @keyframes islBtPop{0%{transform:translateY(40px) scale(.2);opacity:0}60%{transform:translateY(-16px) scale(1.15);opacity:1}100%{transform:translateY(0) scale(1)}}
 .isl-mine{position:absolute;width:40px;height:24px;margin-left:-20px;margin-top:-12px;display:none;pointer-events:none;z-index:3;} .isl-mine.seen{display:block;background:radial-gradient(ellipse,rgba(120,200,90,.6),transparent 70%);animation:islBtBreath 1.4s ease-in-out infinite;}
 /* ★ v1.165.0 🔍 環境觀察(特殊指令):整張圖進入掃描模式——遇敵點一律現形,資源點加一圈金色呼吸光暈 */
@@ -7056,7 +7056,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.366.0';   /* ★ v1.366.0(2026-10-01・老師兩項)— ①「吃滿寬度的視窗,右上角的 ✕ 移到更上層不要被切掉」:#isl-modal .box.wide / .isl-bagbox.wide 的 .isl-x 收進框內右上角(z-index 30、深底亮框),第一個標題列右側留出 ✕ 寬度;非 wide 小視窗維持框外設計。②「營地造景重設位置清單用原圖片縮小版,不用 emoji」:islCampFixOpen 每列 .fe 改 islIcoHtml(設施 b.img_1/_3、裝飾 islDecoImgKey),正方形框 contain(PC 56/iPad 60/手機 34)。CSS 皆在 island-style 最後 v1.366.0 段。 */   void 'v1.365.0';   /* ★ v1.365.0(2026-10-01・老師附 PC 截圖「營地重設位置的視窗文字太小,優化它」)— islCampFixOpen 三平台都改走 islModal wide(PC/手機原本走 islFitBox 整框等比縮小,22 列被縮到字約 10px),清單改兩欄、字級三平台各一組(CSS 在 island-style 最後 v1.365.0 段;iPad 隱藏座標數字讓位給名稱)。 */   void 'v1.364.0';   /* ★ v1.364.0(2026-10-01・老師「所有可以往下捲的視窗邊框下方新增跳動的往下箭頭，提示玩家可以往下捲。包括大作戰、小遊戲、荒島」)— 檔尾新增 #lxps-scrhint-js(與大對抗 v5.244.0 同一份 ES5 程式):每 1.5 秒掃可見元素找 overflow-y auto/scroll 且內容超出 24px 以上的容器,在下緣中央掛跳動 ▼(body 直下 fixed、gBCR 定位,不受 #island-root zoom 影響;捲到底/被蓋住自動藏;點箭頭往下捲 70%)。island_db 零改動維持 v1.363.0(`?v=` 不跟)。 */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30・老師「荒島營地中點擊(持續)設施和裝飾時,自動顯示該物的名稱並且用白色輪廓光暈圈起,讓玩家較容易看出自己正在點選哪一個物件。放開時自動隱藏物件名稱和輪廓光暈」)—
+var MG_VER = 'v1.367.0';   /* ★ v1.367.0(2026-10-03・老師截圖「主角邊線和色彩有點奇怪」;外海探險包延後為 v1.368.0)— 主角整張圖顯示優化:①走/跑/跳/戰鬥的 .ff/.fl 改 image-rendering:auto(原 pixelated 在「512 原圖縮半再放大」時最近鄰掉像素 ⇒ 輪廓鋸齒、斷線);②islFullGet 分層加柔性去綠幕+去綠溢色(邊緣暗綠/紫藍雜邊);③頭髮層只留連通的真頭髮(灰鞋、短褲白條紋、衣領不再被染成髮色),頭髮外圍過渡像素併入頭髮層(深色頭髮外圈淺灰雜點)。老師追加「目前所有的角色圖都處理好再輸出」:④魔物/夥伴/NPC 立繪顯示(戰鬥 img.pic、遇敵跳出、圖鑑、商店 NPC)與 GM 造型工房預覽同改 auto;⑤ 130 張夥伴圖(island_bt_pet_ 與 island_pet_ 開頭)重處理去掉輪廓外圍亮綠去背邊,同名覆蓋+MG_IMG_FVER 個別 5→6。魔物圖本身多為綠色系(螳螂/史萊姆/花妖/山豬王綠光),去綠會傷到原設計,不處理。只動顯示,不動存檔/數值。 */   /* ★ v1.366.0(2026-10-01・老師兩項)— ①「吃滿寬度的視窗,右上角的 ✕ 移到更上層不要被切掉」:#isl-modal .box.wide / .isl-bagbox.wide 的 .isl-x 收進框內右上角(z-index 30、深底亮框),第一個標題列右側留出 ✕ 寬度;非 wide 小視窗維持框外設計。②「營地造景重設位置清單用原圖片縮小版,不用 emoji」:islCampFixOpen 每列 .fe 改 islIcoHtml(設施 b.img_1/_3、裝飾 islDecoImgKey),正方形框 contain(PC 56/iPad 60/手機 34)。CSS 皆在 island-style 最後 v1.366.0 段。 */   void 'v1.365.0';   /* ★ v1.365.0(2026-10-01・老師附 PC 截圖「營地重設位置的視窗文字太小,優化它」)— islCampFixOpen 三平台都改走 islModal wide(PC/手機原本走 islFitBox 整框等比縮小,22 列被縮到字約 10px),清單改兩欄、字級三平台各一組(CSS 在 island-style 最後 v1.365.0 段;iPad 隱藏座標數字讓位給名稱)。 */   void 'v1.364.0';   /* ★ v1.364.0(2026-10-01・老師「所有可以往下捲的視窗邊框下方新增跳動的往下箭頭，提示玩家可以往下捲。包括大作戰、小遊戲、荒島」)— 檔尾新增 #lxps-scrhint-js(與大對抗 v5.244.0 同一份 ES5 程式):每 1.5 秒掃可見元素找 overflow-y auto/scroll 且內容超出 24px 以上的容器,在下緣中央掛跳動 ▼(body 直下 fixed、gBCR 定位,不受 #island-root zoom 影響;捲到底/被蓋住自動藏;點箭頭往下捲 70%)。island_db 零改動維持 v1.363.0(`?v=` 不跟)。 */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30・老師「荒島營地中點擊(持續)設施和裝飾時,自動顯示該物的名稱並且用白色輪廓光暈圈起,讓玩家較容易看出自己正在點選哪一個物件。放開時自動隱藏物件名稱和輪廓光暈」)—
    新增 islHoldOn/islHoldPlace/islHoldOff 共用出口(見 islBldNameFlash 下方說明),掛進 islCampBldDragBind(設施)/islDecoDragBind(裝飾)/islCabinFurDragBind(小木屋家具)三支拖曳綁定:
    按下 ⇒ 圖片沿 PNG 外形描白色輪廓光暈(.isl-hold,drop-shadow 寫在子層圖片,不跟夜色/夜光的外層 filter 打架)+ 頭上名稱牌(.isl-holdname,設施帶等級/施工中);
    拖曳中牌子跟著物件走;放開/取消觸控一律收掉。設施長按成立時原本會另外閃一塊 islBldNameFlash 牌子,改由按住期間的名稱牌取代,拿掉避免兩塊重疊;
@@ -8204,6 +8204,10 @@ var MG_IMG_FVER = { island_hair_girl_h0: '2', island_hair_girl_h2: '2', island_r
    那段時間開過荒島的平板已把「正面圖」快取在 ?v=5 的網址下 ⇒ 這 50 張個別 bump 到 6,強迫重抓側面原圖。 */
 (function(){ var a = ['aquarium','bamboo','basket','birdhouse','bookshelf','bunkbed','cabin','chair','clock','cupboard','curtain','cushion','desk','dining','dresser','fireplace','floorlamp','flowerarch','fountain','globe','guitar','hammock','hangplant','lights','logseat','lotuspond','mailbox','organ','painting','palm','picnic','plushbear','pool','rocker','roundrug','sandcastle','scarecrow','screen','sofa','specimen','stonepath','stove','sundial','swing','teaset','telescope','wardrobe','well','windmill','woodbridge'], i;
   for(i = 0; i < a.length; i++) MG_IMG_FVER['island_deco_' + a[i]] = '6'; })();
+/* ★ v1.367.0 夥伴圖去綠邊:130 張夥伴戰鬥立繪/營地走路睡覺圖(island_bt_pet_*、island_pet_*)輪廓外圍殘留一圈亮綠去背邊,
+   以「邊緣像素比內側明顯更綠才壓掉綠色」的方式重新處理後同名覆蓋(樹蛙、海龜光環等本來就是綠色的部分不動) ⇒ 這 130 張個別 bump 5→6 強迫重抓。 */
+(function(){ var a, i;
+  a = ['island_bt_pet_barbet_atk','island_bt_pet_barbet_down','island_bt_pet_barbet_hit','island_bt_pet_barbet_idle','island_bt_pet_barbet_skill','island_bt_pet_barbet_stun','island_bt_pet_bear_atk','island_bt_pet_bear_down','island_bt_pet_bear_hit','island_bt_pet_bear_idle','island_bt_pet_bear_skill','island_bt_pet_bear_stun','island_bt_pet_bluemagpie_atk','island_bt_pet_bluemagpie_down','island_bt_pet_bluemagpie_hit','island_bt_pet_bluemagpie_idle','island_bt_pet_bluemagpie_skill','island_bt_pet_bluemagpie_stun','island_bt_pet_bluering_atk','island_bt_pet_bluering_down','island_bt_pet_bluering_hit','island_bt_pet_bluering_skill','island_bt_pet_cloudleopard_atk','island_bt_pet_coconutcrab_atk','island_bt_pet_coconutcrab_down','island_bt_pet_coconutcrab_hit','island_bt_pet_coconutcrab_idle','island_bt_pet_coconutcrab_skill','island_bt_pet_coconutcrab_stun','island_bt_pet_deer_atk','island_bt_pet_deer_down','island_bt_pet_deer_hit','island_bt_pet_deer_idle','island_bt_pet_deer_skill','island_bt_pet_deer_stun','island_bt_pet_eagle_atk','island_bt_pet_eagle_down','island_bt_pet_eagle_hit','island_bt_pet_eagle_idle','island_bt_pet_eagle_skill','island_bt_pet_eagle_stun','island_bt_pet_gull_atk','island_bt_pet_gull_down','island_bt_pet_gull_hit','island_bt_pet_gull_idle','island_bt_pet_gull_skill','island_bt_pet_gull_stun','island_bt_pet_leopardcat_atk','island_bt_pet_leopardcat_down','island_bt_pet_leopardcat_hit','island_bt_pet_leopardcat_idle','island_bt_pet_leopardcat_skill','island_bt_pet_leopardcat_stun','island_bt_pet_macaque_atk','island_bt_pet_macaque_down','island_bt_pet_macaque_hit','island_bt_pet_macaque_idle','island_bt_pet_macaque_skill','island_bt_pet_macaque_stun','island_bt_pet_owl_atk','island_bt_pet_owl_down','island_bt_pet_owl_hit','island_bt_pet_owl_idle','island_bt_pet_owl_skill','island_bt_pet_owl_stun','island_bt_pet_pangolin_atk','island_bt_pet_pangolin_down','island_bt_pet_pangolin_hit','island_bt_pet_pangolin_idle','island_bt_pet_pangolin_skill','island_bt_pet_pangolin_stun','island_bt_pet_salmon_atk','island_bt_pet_salmon_down','island_bt_pet_salmon_hit','island_bt_pet_salmon_idle','island_bt_pet_salmon_skill','island_bt_pet_salmon_stun','island_bt_pet_spoonbill_atk','island_bt_pet_spoonbill_down','island_bt_pet_spoonbill_hit','island_bt_pet_spoonbill_idle','island_bt_pet_spoonbill_skill','island_bt_pet_spoonbill_stun','island_bt_pet_swallowtail_atk','island_bt_pet_swallowtail_down','island_bt_pet_swallowtail_stun','island_bt_pet_treefrog_atk','island_bt_pet_treefrog_down','island_bt_pet_treefrog_hit','island_bt_pet_treefrog_idle','island_bt_pet_treefrog_skill','island_bt_pet_treefrog_stun','island_bt_pet_turtle_atk','island_bt_pet_turtle_down','island_bt_pet_turtle_hit','island_bt_pet_turtle_idle','island_bt_pet_turtle_skill','island_bt_pet_turtle_stun','island_pet_barbet_sleep','island_pet_barbet_walk','island_pet_bear_sleep','island_pet_bear_walk','island_pet_bluemagpie_sleep','island_pet_bluemagpie_walk','island_pet_bluering_sleep','island_pet_bluering_walk','island_pet_coconutcrab_sleep','island_pet_coconutcrab_walk','island_pet_deer_sleep','island_pet_deer_walk','island_pet_eagle_sleep','island_pet_eagle_walk','island_pet_gull_sleep','island_pet_gull_walk','island_pet_leopardcat_sleep','island_pet_leopardcat_walk','island_pet_macaque_sleep','island_pet_macaque_walk','island_pet_owl_sleep','island_pet_owl_walk','island_pet_pangolin_sleep','island_pet_pangolin_walk','island_pet_salmon_sleep','island_pet_salmon_walk','island_pet_spoonbill_sleep','island_pet_spoonbill_walk','island_pet_treefrog_sleep','island_pet_treefrog_walk','island_pet_turtle_sleep','island_pet_turtle_walk']; for(i = 0; i < a.length; i++) MG_IMG_FVER[a[i]] = '6'; })();
 function mgPicUrl(pic){
   /* ★ v1.9.0 '@檔名.png' = 主程式 repo 根目錄既有素材(如寵物去背 png),動物分類關沿用 40 隻寵物圖不必再生圖 */
   pic = String(pic);
@@ -16841,7 +16845,7 @@ function islLabPaint(){
            '<div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(255,209,102,.35)"></div>' +
            '<div style="position:absolute;left:0;bottom:0;width:100%;height:1px;background:rgba(255,209,102,.35)"></div>' +
            (_bok === false ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:.7">(還沒上傳這張圖)</div>' :
-            '<div style="position:absolute;inset:0;background-image:url(' + _bu + ');background-repeat:no-repeat;background-size:400% 800%;background-position:0% ' + (ISL_LAB_BTST[i].r * 100 / 7) + '%;image-rendering:pixelated;' + islBtAdjStyle(_bk) + '"></div>') +
+            '<div style="position:absolute;inset:0;background-image:url(' + _bu + ');background-repeat:no-repeat;background-size:400% 800%;background-position:0% ' + (ISL_LAB_BTST[i].r * 100 / 7) + '%;image-rendering:auto;' + islBtAdjStyle(_bk) + '"></div>') +
            '</div><div style="font-size:13px;opacity:.85;margin-top:2px">' + ISL_LAB_BTST[i].n + '</div></div>';
     }
     h += '<div style="font-size:13px;opacity:.8;margin-top:2px">⚔ 戰鬥立繪用「腳底中心」當基準點縮放,調大調小腳都不會離地。這一頁調的是整張動作圖(' + islEsc(_bk) + '),8 種狀態共用同一組值。</div></div>';
@@ -17183,7 +17187,7 @@ function islWpLabPaint(){
   h += '<div id="isl-wplab-pv" style="width:' + prev + 'px;height:' + prev + 'px;background:#0d1a26;border:2px solid #ffd166;border-radius:12px;position:relative;z-index:0;overflow:hidden;touch-action:none;cursor:crosshair">';
   if(full){
     css = islFullLayersCss(full, ch); col = L.col; sn = ISL_BT_WP_STATES.indexOf(L.state);
-    for(i = 0; i < 3; i++) h += '<div style="position:absolute;inset:0;' + css[['body', 'cloth', 'hair'][i]] + 'background-repeat:no-repeat;background-size:400% 800%;background-position:' + (col * 100 / 3) + '% ' + (sn * 100 / 7) + '%;image-rendering:pixelated"></div>';
+    for(i = 0; i < 3; i++) h += '<div style="position:absolute;inset:0;' + css[['body', 'cloth', 'hair'][i]] + 'background-repeat:no-repeat;background-size:400% 800%;background-position:' + (col * 100 / 3) + '% ' + (sn * 100 / 7) + '%;image-rendering:auto"></div>';
     if(w) h += '<img id="isl-wplab-wp" src="' + islImgUrl(islWeaponImgKey(w, 1)) + '" alt="" draggable="false" style="position:absolute;pointer-events:none">';
     h += '<div id="isl-wplab-dot" style="position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#ff00ff;border:2px solid #fff;pointer-events:none;z-index:3"></div>';
   } else if(full === false){ h += '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.7">(還沒上傳 island_battle_' + L.body + '_h' + L.hair + '.png)</div>'; }
@@ -17193,7 +17197,7 @@ function islWpLabPaint(){
   h += '<div style="display:flex;gap:6px;margin-top:6px">';
   for(i = 0; i < 4; i++){
     h += '<div onclick="islWpLabSet(\'col\',' + i + ')" style="cursor:pointer;width:68px;height:68px;background:#0d1a26;border:3px solid ' + (i === L.col ? '#ffd166' : '#2a6f97') + ';border-radius:10px;position:relative;overflow:hidden">';
-    if(full){ css = islFullLayersCss(full, ch); sn = ISL_BT_WP_STATES.indexOf(L.state); h += '<div style="position:absolute;inset:0;' + css.body + 'background-repeat:no-repeat;background-size:400% 800%;background-position:' + (i * 100 / 3) + '% ' + (sn * 100 / 7) + '%;image-rendering:pixelated"></div>'; }
+    if(full){ css = islFullLayersCss(full, ch); sn = ISL_BT_WP_STATES.indexOf(L.state); h += '<div style="position:absolute;inset:0;' + css.body + 'background-repeat:no-repeat;background-size:400% 800%;background-position:' + (i * 100 / 3) + '% ' + (sn * 100 / 7) + '%;image-rendering:auto"></div>'; }
     h += '<div style="position:absolute;right:3px;bottom:1px;font-size:12px;opacity:.8">' + (i + 1) + '</div></div>';
   }
   h += '</div></div>';
@@ -20043,15 +20047,90 @@ function islFullGet(kind, c, cb){
               }catch(_un){ outs.uni = null; }
             }
             for(t = 0; t < 3; t++) L.push(cx.createImageData(W, H));
+            /* ★ v1.367.0 老師截圖「主角邊線和色彩有點奇怪」— ①綠幕邊緣的半綠像素原本整顆保留(只砍純綠),綠色混進輪廓 → 被歸到身體層變成暗綠邊、
+               或被頭髮濾鏡染成紫藍色邊;改成「柔性去背+去綠溢色」:越綠越透明、綠色通道壓回 max(r,b)。實測 48 張整張圖角色內部幾乎沒有綠色(最多 138 顆,全是邊緣反鋸齒),不會誤傷。
+               ②頭髮邊緣的過渡像素(偏灰、不是皮膚色)原本落到身體層、沒被染色 ⇒ 深色頭髮外圍一圈淺灰雜點;分層後再補一輪「貼著頭髮的低彩度像素併入頭髮層」。 */
+            var _lt = new Int8Array(W * H), _og = new Uint8ClampedArray(W * H * 3), _gx, _kf, _pi, _px, _py, _nb, _it, _ch;
+            for(_pi = 0; _pi < _lt.length; _pi++) _lt[_pi] = -1;
             for(i = 0; i < src.length; i += 4){
               a = src[i + 3]; if(a < 10) continue;
               r = src[i]; g = src[i + 1]; b = src[i + 2];
               if(g > 200 && r < 90 && b < 90) continue;   /* 純綠背景 */
+              _gx = g - Math.max(r, b);
+              if(_gx > 40){
+                if(g > 150 && _gx > 150) continue;
+                _kf = Math.max(0, Math.min(1, 1 - (_gx - 40) / 140)); a = Math.round(a * _kf); if(a < 10) continue;
+                g = Math.max(r, b);
+              }
+              _og[(i >> 2) * 3] = r; _og[(i >> 2) * 3 + 1] = g; _og[(i >> 2) * 3 + 2] = b;
               v = islFullHsv(r, g, b);
               if(islFullIsHair(v, kind, Math.floor(i / 4 / W) % 128)){ t = 0; r = g = b = Math.round(0.299 * r + 0.587 * g + 0.114 * b); }   /* ★ v1.304.0 頭髮判定改走 islFullIsHair,並把頭髮像素轉成純灰階,髮色濾鏡才會跟走路頭髮圖層同色 */
               else if((v[0] >= 185 && v[0] <= 255 && v[1] > 0.2) || (body === 'girl' && (v[0] >= 315 || v[0] <= 5) && v[1] > 0.2 && v[2] > 0.55)) t = 1;
               else { t = 2; if(islFullIsSkin(v)){ r = Math.min(255, Math.round(r * mul[0])); g = Math.min(255, Math.round(g * mul[1])); b = Math.min(255, Math.round(b * mul[2])); } }
-              o = L[t].data; o[i] = r; o[i + 1] = g; o[i + 2] = b; o[i + 3] = a;
+              o = L[t].data; o[i] = r; o[i + 1] = g; o[i + 2] = b; o[i + 3] = a; _lt[i >> 2] = t;
+            }
+            /* ★ v1.367.0 頭髮層只留「真的頭髮」:灰色的鞋子、短褲白條紋、衣領原本也符合低彩度判定被分進頭髮層 ⇒ 染金髮時鞋子/褲子冒出黃色條紋。
+               每個 128 格各自找頭髮連通塊:最大塊一定是頭髮;其他塊要 ≥60 顆(雙馬尾、麻花辮),或落在最大塊範圍內(外擴 6px)且離主髮塊 ≤3px(髮絲碎塊)才算頭髮,其餘退回身體層原色。 */
+            (function(){
+              var CS = 128, gc = Math.floor(W / CS), gr = Math.floor(H / CS), cr, cc, lab = new Int32Array(CS * CS), st = new Int32Array(CS * CS), comps, n, x, y, k, p, q, qx, qy, dx, dy, sz, sx, sy, mnx, mny, mxx, mxy, big, ok, j, cm, ii;
+              for(cr = 0; cr < gr; cr++){ for(cc = 0; cc < gc; cc++){
+                for(k = 0; k < lab.length; k++) lab[k] = 0;
+                comps = []; n = 0;
+                for(y = 0; y < CS; y++){ for(x = 0; x < CS; x++){
+                  p = (cr * CS + y) * W + cc * CS + x;
+                  if(_lt[p] !== 0 || lab[y * CS + x]) continue;
+                  n++; sz = 0; sx = 0; sy = 0; mnx = x; mxx = x; mny = y; mxy = y; k = 0; st[k++] = y * CS + x; lab[y * CS + x] = n;
+                  var px = [];
+                  while(k > 0){
+                    q = st[--k]; qx = q % CS; qy = (q - qx) / CS; sz++; sx += qx; sy += qy; px.push(q);
+                    if(qx < mnx) mnx = qx; if(qx > mxx) mxx = qx; if(qy < mny) mny = qy; if(qy > mxy) mxy = qy;
+                    for(dy = -1; dy <= 1; dy++){ for(dx = -1; dx <= 1; dx++){
+                      var nx2 = qx + dx, ny2 = qy + dy;
+                      if(nx2 < 0 || ny2 < 0 || nx2 >= CS || ny2 >= CS || lab[ny2 * CS + nx2]) continue;
+                      if(_lt[(cr * CS + ny2) * W + cc * CS + nx2] !== 0) continue;
+                      lab[ny2 * CS + nx2] = n; st[k++] = ny2 * CS + nx2;
+                    } }
+                  }
+                  comps.push({ id: n, sz: sz, cx: sx / sz, cy: sy / sz, x0: mnx, x1: mxx, y0: mny, y1: mxy, px: px });
+                } }
+                if(comps.length < 2) continue;
+                big = comps[0]; for(j = 1; j < comps.length; j++){ if(comps[j].sz > big.sz) big = comps[j]; }
+                for(j = 0; j < comps.length; j++){
+                  cm = comps[j]; if(cm === big) continue;
+                  ok = cm.sz >= 60;
+                  if(!ok && cm.cx >= big.x0 - 6 && cm.cx <= big.x1 + 6 && cm.cy >= big.y0 - 6 && cm.cy <= big.y1 + 6){   /* 在頭髮範圍內還要「離主髮塊 ≤3px」才算髮絲碎塊(長髮中間夾的衣領/褲條紋不算) */
+                    for(k = 0; k < cm.px.length && !ok; k++){
+                      q = cm.px[k]; qx = q % CS; qy = (q - qx) / CS;
+                      for(dy = -3; dy <= 3 && !ok; dy++){ for(dx = -3; dx <= 3; dx++){ var _nx3 = qx + dx, _ny3 = qy + dy; if(_nx3 >= 0 && _ny3 >= 0 && _nx3 < CS && _ny3 < CS && lab[_ny3 * CS + _nx3] === big.id){ ok = true; break; } } }
+                    }
+                  }
+                  if(ok) continue;
+                  for(k = 0; k < cm.px.length; k++){
+                    q = cm.px[k]; qx = q % CS; qy = (q - qx) / CS; p = (cr * CS + qy) * W + cc * CS + qx; ii = p * 4;
+                    L[2].data[ii] = _og[p * 3]; L[2].data[ii + 1] = _og[p * 3 + 1]; L[2].data[ii + 2] = _og[p * 3 + 2]; L[2].data[ii + 3] = L[0].data[ii + 3];
+                    L[0].data[ii] = L[0].data[ii + 1] = L[0].data[ii + 2] = L[0].data[ii + 3] = 0; _lt[p] = 2;
+                  }
+                }
+              } }
+            })();
+            for(_it = 0; _it < 2; _it++){   /* 頭髮外圍過渡像素併入頭髮層(兩圈);輪廓深線(亮度 <0.18)與皮膚色不動,避免淺色頭髮把黑邊吃掉 */
+              _ch = [];
+              for(_py = 1; _py < H - 1; _py++){
+                if((kind === 'run' || kind === 'jump') && (_py % 128) >= 100) continue;
+                for(_px = 1; _px < W - 1; _px++){
+                  _pi = _py * W + _px; if(_lt[_pi] !== 2) continue;
+                  _nb = (_lt[_pi - 1] === 0) + (_lt[_pi + 1] === 0) + (_lt[_pi - W] === 0) + (_lt[_pi + W] === 0);
+                  if(_nb < 2) continue;
+                  o = L[2].data; i = _pi * 4; v = islFullHsv(o[i], o[i + 1], o[i + 2]);
+                  if(v[1] >= 0.30 || v[2] < 0.18 || v[2] > 0.88 || islFullIsSkin(v)) continue;
+                  _ch.push(_pi);
+                }
+              }
+              for(_pi = 0; _pi < _ch.length; _pi++){
+                i = _ch[_pi] * 4; o = L[2].data; r = Math.round(0.299 * o[i] + 0.587 * o[i + 1] + 0.114 * o[i + 2]);
+                L[0].data[i] = L[0].data[i + 1] = L[0].data[i + 2] = r; L[0].data[i + 3] = o[i + 3];
+                o[i] = o[i + 1] = o[i + 2] = o[i + 3] = 0; _lt[_ch[_pi]] = 0;
+              }
             }
             for(t = 0; t < 3; t++){ cx.clearRect(0, 0, W, H); cx.putImageData(L[t], 0, 0); outs[['hair', 'cloth', 'body'][t]] = cv.toDataURL('image/png'); }
             outs.w = W; outs.h = H;
