@@ -7014,6 +7014,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 }
 /* ★ v1.378.0 品質小遊戲新玩法(⭕縮圈 / 👊連打 / 🧠記憶順序)— PC 預設、iPad 放大、手機橫式縮小;尺寸一律用 px 搭 vh/vw 雙軸夾限,不用「相對父層百分比高度」(v1.308.0 鐵律) */
 .isl-qte2{ display:flex; flex-direction:column; align-items:center; }
+.isl-bt-wx{ position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:0; }   /* ★ v1.379.0 野外戰鬥的雨與閃電畫布(三平台同一條,吃滿戰鬥畫面) */
 #isl-sea-go.locked{ background:linear-gradient(180deg,#d6dde3,#93a1ad); color:#34424d; border-color:#eef2f5; }   /* ★ v1.378.0 外島上鎖時的「⛵ 出海探險 🔒」(大小沿用 #isl-sea-go 三平台規則) */
 .isl-ringbox{ position:relative; width:min(240px,34vh,60vw); height:min(240px,34vh,60vw); margin:6px auto 14px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
 .isl-ringbox::before{ content:''; position:absolute; left:0; top:0; right:0; bottom:0; border-radius:50%; background:radial-gradient(circle,rgba(0,0,0,.18),rgba(0,0,0,.45)); }
@@ -7200,7 +7201,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.378.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
+<script src="minigame_island_db.js?v=v1.379.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
 <script src="minigame_sea_db.js?v=v1.378.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
@@ -7210,7 +7211,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)— ①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -18380,6 +18381,9 @@ function islShowScreen(name){
   _IS.keys = {};   /* ★ v1.268.0 換畫面一律清空鍵盤按住狀態(與上面兩行清搖桿/方向盤同一個用意):鍵盤的 keyup 有可能在切畫面/開視窗的瞬間被吃掉,殘留的 true 會讓主角一直往同一個方向走。清空是冪等的,玩家真的按著的鍵會在下一個 keydown 立刻補回來。 */
   _IS.keyRun = false; _IS.keyLastMoveAt = 0;   /* ★ v1.279.0 老師「PC版跑步新增快捷鍵:方向鍵/WASD連點兩下,再按任意1方向鍵就停下腳步」— 換畫面(野外⇄營地⇄其他)一併清空雙擊跑步旗標,不會把野外按出來的跑步狀態帶進營地(或反過來) */
   if(name !== 'zone' && name !== 'map' && name !== 'camp') islAmbDetach();   /* ★ v1.100.0 */
+  if(name === 'zone') setTimeout(function(){   /* ★ v1.379.0 老師「戰鬥結束回到野外地圖也要保持環境特效(目前戰鬥完下雨和打雷會消失)」:戰鬥/活動畫面會收掉動態背景,回到野外時若畫布不在就重新掛上(islEnterZone 自己會掛,這裡延後一拍檢查,不會重複) */
+    try{ var A = _islAmb, zm = $('isl-zone-map'); if(_IS.screen === 'zone' && ISL && !ISL.flags.ambOff && zm && !(A.mode === 'zone' && A.host === zm && A.cv.pt && A.cv.pt.parentNode === zm)) islAmbAttach('zone'); }catch(_ra){}
+  }, 0);
   var hudOn = (name !== 'create');
   $('isl-hud-bag').style.visibility = hudOn ? '' : 'hidden';
   $('isl-hud-camp').style.visibility = (hudOn && name !== 'camp' && name !== 'act' && name !== 'battle') ? '' : 'hidden';
@@ -28412,10 +28416,10 @@ function islAmbAttach(mode){
   }
   /* 雲影:3~4 團,隨風漂 */
   A.wx = islAmbWx(mode);   /* ★ v1.378.0 外島區用外島天氣(狂風暴雨島=颱風級、雨林午後=雷陣雨、冰雪/海底不下雨) */
-  wind = islAmbWxDef(A.wx).wind; A.clouds = []; n = mode === 'camp' ? 2 : 4;
+  wind = islAmbWxDef(A.wx).wind; A.clouds = []; n = A.wx === 'cave' ? 0 : (mode === 'camp' ? 2 : 4);
   for(i = 0; i < n; i++) A.clouds.push({ x: Math.random() * W, y: Math.random() * H, rx: 260 + Math.random() * 260, ry: 150 + Math.random() * 140, a: 0.55 + Math.random() * 0.25 });
   A.parts = []; A.rain = [];
-  cnt = A.wx === 'typhoon' ? 14 : ((A.wx === 'rain' || A.wx === 'thunder') ? 3 : 7); if(mode === 'camp') cnt = Math.ceil(cnt / 2);
+  cnt = A.wx === 'cave' ? 0 : (A.wx === 'typhoon' ? 14 : ((A.wx === 'rain' || A.wx === 'thunder') ? 3 : 7)); if(mode === 'camp') cnt = Math.ceil(cnt / 2);
   for(i = 0; i < cnt; i++) A.parts.push(islAmbNewPart(true));
   cnt = A.wx === 'typhoon' ? 260 : (A.wx === 'thunder' ? 200 : (A.wx === 'rain' ? 90 : 0)); if(mode === 'camp') cnt = Math.ceil(cnt / 2);   /* ★ v1.378.0 颱風大雨:雨滴更多、更長、更快、明顯斜打 */
   for(i = 0; i < cnt; i++) A.rain.push(islAmbRainDrop(A.wx, W, H, true));
@@ -28507,6 +28511,7 @@ var _islWxS = { nextThunder: 0, lastBolt: 0, fadeT: {} };
 /* 動態背景與天氣音效共用:這一刻「看起來/聽起來」是什麼天氣(外島區用外島天氣) */
 function islAmbWx(mode){
   var w = islWeather(), z, k;
+  if(mode === 'zone' && _IS.zone === 'cave') return 'cave';   /* ★ v1.379.0 老師「洞穴中不用出現下雨和颳風特效」:洞窟裡不下雨、沒有飄葉風紋與雲影(聲音另由 islWxSndProfile 調小) */
   try{
     if((mode === 'zone' || mode === 'snd') && typeof islSeaHere === 'function' && islSeaHere()){
       z = islSeaZoneDef(_IS.zone); k = z ? islSeaWx(z) : '';
@@ -28529,13 +28534,23 @@ function islAmbRainDrop(wx, W, H, anywhere){
 function islWxSndProfile(){
   var s = _IS.screen, wx;
   if(!_IS.on || !ISL || (ISL.flags && ISL.flags.ambSfxOff) || _mgVolSfx <= 0 || document.hidden) return null;
-  if(_islBt || ['zone', 'act', 'camp', 'map'].indexOf(s) < 0) return null;
-  wx = (s === 'zone' || s === 'act') ? islAmbWx('snd') : islWeather();
-  if(wx === 'typhoon') return { k: 'typhoon', storm: 0.5, leaf: 0.45, th: [10, 22], thV: 0.55, bolt: 0.75 };
-  if(wx === 'thunder') return { k: 'thunder', storm: 0.38, leaf: 0, th: [14, 28], thV: 0.45, bolt: 0.6 };
-  if(wx === 'rain') return { k: 'rain', storm: 0.2, leaf: 0, th: [30, 60], thV: 0.25, bolt: 0 };
-  if(wx === 'eye') return { k: 'eye', storm: 0, leaf: 0.15, th: [16, 32], thV: 0.3, bolt: 0 };
-  return null;
+  if(s === 'battle'){   /* ★ v1.379.0 老師「野外的戰鬥畫面中維持下雨和打雷的情境(洞穴中不用)」:野外戰鬥照樣有雨聲/雷聲(音量 ×0.7 讓戰鬥音樂聽得到);洞窟、地下層、夜襲防衛戰不播 */
+    if(!_islBt || _islBt.dg || (_islBt.mine && _islBt.mine.dg) || _IS.zone === 'cave') return null;
+  } else if(['zone', 'act', 'camp', 'map'].indexOf(s) < 0 || (_islBt && (_islBt.dg || (_islBt.mine && _islBt.mine.dg)))) return null;   /* 魔物剛跳出來、戰鬥畫面還沒打開(第一次戰鬥教學對白)時雨聲也不中斷 */
+  wx = (s === 'zone' || s === 'act' || s === 'battle') ? islAmbWx('snd') : islWeather();
+  return islWxSndProfileOf(wx, _IS.zone === 'cave' && s !== 'camp' && s !== 'map', s === 'battle');
+}
+/* cave = 在洞窟裡:隔著岩壁聽外面的風雨,只剩小聲的雨聲和悶雷(×0.35),沒有狂風吹樹、看不到白光所以也沒有閃電聲;battle = 野外戰鬥中整體 ×0.7 */
+function islWxSndProfileOf(wx, cave, battle){
+  var P = null, m;
+  if(wx === 'typhoon') P = { k: 'typhoon', storm: 0.5, leaf: 0.45, th: [10, 22], thV: 0.55, bolt: 0.75 };
+  else if(wx === 'thunder') P = { k: 'thunder', storm: 0.38, leaf: 0, th: [14, 28], thV: 0.45, bolt: 0.6 };
+  else if(wx === 'rain') P = { k: 'rain', storm: 0.2, leaf: 0, th: [30, 60], thV: 0.25, bolt: 0 };
+  else if(wx === 'eye') P = { k: 'eye', storm: 0, leaf: 0.15, th: [16, 32], thV: 0.3, bolt: 0 };
+  if(!P) return null;
+  if(cave){ P.storm *= 0.35; P.leaf = 0; P.thV *= 0.35; P.bolt = 0; P.k += '-cave'; }
+  if(battle){ m = 0.7; P.storm *= m; P.leaf *= m; P.thV *= m; P.bolt *= m; }
+  return P;
 }
 function islWxLoopSet(id, vol){
   var a = $(id), v, p;
@@ -28571,6 +28586,7 @@ function islWxCutStop(id){ var a = $(id); clearTimeout(_islWxS.fadeT[id]); clear
 function islWxBolt(force){
   var P = islWxSndProfile(), now = Date.now(), k = _IS.cabin ? 0.45 : 1;
   if(!P && !force) return;
+  if(P && !P.bolt && !force) return;   /* ★ v1.379.0 洞窟裡沒有閃電聲 */
   if(now - _islWxS.lastBolt < 900) return;
   _islWxS.lastBolt = now;
   islWxCut('wx-isl-bolt', ISL_WX_BOLT_CUTS, 2.6, ((P && P.bolt) || 0.75) * k);
@@ -28591,6 +28607,45 @@ function islWxSndTick(){
   }
 }
 setInterval(function(){ try{ islWxSndTick(); }catch(e){} }, 1000);
+/* ★ v1.379.0 野外戰鬥畫面的雨與閃電(洞窟/地下層/防衛戰不加):戰鬥畫面是另一個全畫面層,場景的動態背景畫布在戰鬥時會被收掉,
+   所以在 #isl-battle 裡另開一張半解析度畫布,雨滴規則同 islAmbRainDrop(斜率、長度、速度一樣),白光閃完一樣呼叫 islWxBolt 播閃電聲。
+   畫布 pointer-events:none,不擋任何按鈕;#isl-battle 被清空(islBattleClose)時迴圈自己停。 */
+var _islBtWx = { raf: 0, cv: null, last: 0, rain: [], flash: 0, flash2: -1, next: 4, wx: '' };
+function islBtWxAttach(){
+  var el = $('isl-battle'), B = _islBt, wx, c, i, W, H, n;
+  islBtWxStop();
+  if(!el || !B || !ISL || (ISL.flags && ISL.flags.ambOff)) return;
+  if(B.dg || (B.mine && B.mine.dg) || _IS.zone === 'cave' || _IS.screen !== 'battle') return;
+  wx = islAmbWx('snd');
+  if(wx !== 'typhoon' && wx !== 'thunder' && wx !== 'rain') return;
+  c = document.createElement('canvas'); c.className = 'isl-bt-wx';
+  W = Math.max(320, el.clientWidth || 1280); H = Math.max(200, el.clientHeight || 720);
+  c.width = Math.round(W / 2); c.height = Math.round(H / 2);
+  el.insertBefore(c, el.firstChild);   /* 放在最底層:雨下在場景與角色前面,但在血條、戰報、指令鈕後面,不擋字 */
+  _islBtWx.cv = c; _islBtWx.wx = wx; _islBtWx.W = W; _islBtWx.H = H; _islBtWx.rain = []; _islBtWx.flash = 0; _islBtWx.flash2 = -1; _islBtWx.last = 0;
+  _islBtWx.next = 2 + Math.random() * 5;
+  n = wx === 'typhoon' ? 200 : (wx === 'thunder' ? 150 : 70);
+  for(i = 0; i < n; i++) _islBtWx.rain.push(islAmbRainDrop(wx, W, H, true));
+  _islBtWx.raf = requestAnimationFrame(islBtWxTick);
+}
+function islBtWxStop(){ if(_islBtWx.raf) cancelAnimationFrame(_islBtWx.raf); _islBtWx.raf = 0; if(_islBtWx.cv && _islBtWx.cv.parentNode) _islBtWx.cv.parentNode.removeChild(_islBtWx.cv); _islBtWx.cv = null; }
+function islBtWxTick(ts){
+  var A = _islBtWx, c = A.cv, x, dt, i, p, W = A.W, H = A.H, wx = A.wx;
+  if(!c || !c.parentNode || !_islBt || !_IS.on){ A.raf = 0; A.cv = null; return; }
+  if(A.last && ts - A.last < 33){ A.raf = requestAnimationFrame(islBtWxTick); return; }
+  dt = A.last ? Math.min(0.1, (ts - A.last) / 1000) : 0.033; A.last = ts;
+  x = c.getContext('2d'); x.setTransform(0.5, 0, 0, 0.5, 0, 0); x.clearRect(0, 0, W, H); x.lineCap = 'round';
+  x.strokeStyle = '#dbe9ff'; x.globalAlpha = wx === 'typhoon' ? 0.5 : (wx === 'thunder' ? 0.42 : 0.32); x.lineWidth = wx === 'typhoon' ? 3 : (wx === 'thunder' ? 2.4 : 1.6); x.beginPath();
+  for(i = 0; i < A.rain.length; i++){ p = A.rain[i]; p.y += p.s * 0.6 * dt; p.x += p.s * 0.6 * p.k * dt; if(p.y - p.l > H || p.x - p.l * p.k > W + 40) A.rain[i] = p = islAmbRainDrop(wx, W, H, false); x.moveTo(p.x, p.y); x.lineTo(p.x - p.l * 0.7 * p.k, p.y - p.l * 0.7); }
+  x.stroke(); x.globalAlpha = 1;
+  if(wx === 'typhoon' || wx === 'thunder'){
+    A.next -= dt;
+    if(A.next <= 0){ A.flash = 0.38; A.flash2 = Math.random() < 0.45 ? 0.2 : -1; A.next = wx === 'typhoon' ? 6 + Math.random() * 9 : 10 + Math.random() * 12; try{ islWxBolt(); }catch(_b){} }
+    if(A.flash2 > 0){ A.flash2 -= dt; if(A.flash2 <= 0 && A.flash < 0.15){ A.flash = 0.26; A.flash2 = -1; } }
+    if(A.flash > 0){ x.globalAlpha = A.flash; x.fillStyle = '#ffffff'; x.fillRect(0, 0, W, H); x.globalAlpha = 1; A.flash -= dt * 1.6; }
+  }
+  A.raf = requestAnimationFrame(islBtWxTick);
+}
 document.addEventListener('visibilitychange', function(){ try{ islWxSndTick(); }catch(e){} });
 window.islAmbToggle = function(){ ISL.flags.ambOff = !ISL.flags.ambOff; toast(ISL.flags.ambOff ? '🍃 動態背景:關' : '🍃 動態背景:開'); if(ISL.flags.ambOff) islAmbDetach(); else if(_IS.screen === 'zone' || _IS.screen === 'map' || _IS.screen === 'camp') islAmbAttach(_IS.screen); islSave('amb'); };
 
@@ -29807,9 +29862,18 @@ function islEncMonPool(E){
     night = islIsNight();
     N = islDB().MON_NIGHT || {};
   }catch(e){ return all; }
-  if(night) return all;                                  /* 夜間:全部都可能出現 */
-  for(i = 0; i < all.length; i++){ if(!N[all[i]]) out.push(all[i]); }
-  return out.length ? out : all;                         /* 白天過濾完全空 ⇒ 退回完整清單(見上方安全網說明) */
+  out = all;
+  if(!night){ out = []; for(i = 0; i < all.length; i++){ if(!N[all[i]]) out.push(all[i]); } if(!out.length) out = all; }   /* 白天:去掉夜行性;過濾完全空 ⇒ 退回完整清單(見上方安全網說明) */
+  /* ★ v1.379.0 老師「設定部分魔物不會在颱風天出現(洞穴中不受影響)」:本島颱風天去掉 D.MON_TYPHOON 名單裡的魔物(虎頭蜂躲回蜂巢、鳥類不飛…);
+     洞窟不受影響、外島有自己的天氣也不受影響;同樣有安全網:過濾完一隻都不剩就不過濾 */
+  try{
+    var T = islDB().MON_TYPHOON, tw = [];
+    if(T && islWeather() === 'typhoon' && _IS.zone !== 'cave' && !(typeof islSeaZoneDef === 'function' && islSeaZoneDef(_IS.zone))){
+      for(i = 0; i < out.length; i++){ if(!T[out[i]]) tw.push(out[i]); }
+      if(tw.length) out = tw;
+    }
+  }catch(_ty){}
+  return out;
 }
 function islEncPick(E, fb, rnd){
   var pool = islEncMonPool(E), r = (typeof rnd === 'function') ? rnd : Math.random;
@@ -30204,6 +30268,7 @@ function islBtOpen(){
      + '</div>';
   h += '<div class="bt-qte hidden" id="isl-bt-qte"></div>';
   $('isl-battle').innerHTML = h;
+  try{ islBtWxAttach(); }catch(_bwx){}   /* ★ v1.379.0 野外戰鬥維持下雨/打雷 */
   try{ islBtBanner(B.mine && B.mine.boss ? '👑 頭目戰!' : '⚔ 開戰!'); }catch(_bb){} if(B.mine && B.mine.boss) setTimeout(function(){ islBtFxEv('bossIntro', 'm0', null); }, 500);   /* ★ v1.240.0 頭目登場 */   /* ★ v1.191.0 老師需求①「進戰鬥要有開戰的大字報出現在畫面中央」 */
   try{ islTutFit(); }catch(_tf1){}   /* ★ v1.177.0 戰鬥一開,教學條讓到血條下面 */
   islBtSetState('p', 'idle', 0);
