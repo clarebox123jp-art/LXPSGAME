@@ -7067,6 +7067,30 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
   .isl-seqpad button{ height:min(64px,17vh) !important; border-radius:12px !important; border-width:2px !important; }
   .isl-seqpad button .e{ font-size:28px !important; } .isl-seqpad button small{ font-size:10px !important; }
 }
+/* ★ v1.381.0 島嶼回顧:標題 + 1~2 句感性話語 + 日期(三平台:PC 預設 → iPad #island-root.ipad → 手機橫式 @media 放最後)。
+   字幕下方加一層由下往上的暗色漸層,讓兩行話語在亮色場景圖上也讀得清楚;圖片高度讓出字幕的位置。 */
+#isl-ending-cap{ bottom:5%; padding:18px 24px 10px; background:linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,.45) 70%, rgba(0,0,0,0)); }
+#isl-ending-cap .tt{ display:block; font-size:24px; font-weight:900; }
+#isl-ending-cap .feel{ max-width:980px; margin:8px auto 2px; font-size:19px; font-weight:400; line-height:1.55; color:#fdf1d6; }
+#isl-ending-cap .feel span{ display:block; }
+#isl-ending .sl img{ max-height:62%; margin-bottom:12%; }
+#isl-ending .sl .em{ margin-bottom:12%; }
+.isl-recap-tip{ opacity:.85; margin:4px 0 10px; font-size:16px; }
+.isl-recap-row{ display:block; width:100%; margin:6px 0; text-align:left; font-size:18px; }
+.isl-recap-row small{ display:block; font-size:14px; font-weight:400; opacity:.85; margin-top:2px; }
+#island-root.ipad #isl-ending-cap .tt{ font-size:26px; }
+#island-root.ipad #isl-ending-cap .feel{ font-size:20px; max-width:860px; }
+#island-root.ipad .isl-recap-row{ font-size:19px; }
+#island-root.ipad #isl-ending .sl img{ max-height:54%; margin-bottom:20%; }   /* iPad 畫面較方,圖片讓出字幕高度(沙盒 1180×820 截圖驗過不再壓到標題) */
+@media (orientation:landscape) and (max-height:520px){
+  #isl-ending-cap{ bottom:2%; padding:10px 14px 6px; }
+  #isl-ending-cap .tt{ font-size:15px; }
+  #isl-ending-cap .feel{ font-size:12px; line-height:1.45; margin:4px auto 1px; }
+  #isl-ending-cap small{ font-size:11px; margin-top:2px; }
+  #isl-ending .sl img{ max-height:52%; margin-bottom:16%; }
+  #isl-ending .sl .em{ font-size:72px; margin-bottom:16%; }
+  .isl-recap-tip{ font-size:12px; margin:2px 0 6px; } .isl-recap-row{ font-size:13px; margin:4px 0; padding:6px 10px; } .isl-recap-row small{ font-size:11px; }
+}
 </style>
 
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
@@ -7201,7 +7225,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.380.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
+<script src="minigame_island_db.js?v=v1.381.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
 <script src="minigame_sea_db.js?v=v1.378.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
@@ -7211,7 +7235,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)— ①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -15779,6 +15803,7 @@ function islDefaultSave(){
     quiz: {},                                                       /* ★ v1.124.0 各活動題庫出題進度 {gather:{r:輪次,i:本輪已出,n:題庫題數}};islNormalize 會自動替舊存檔補上 */
     dungeon: { day: 0, runs: 0, clears: 0, best: 0 }, friends: [], friendCache: {}, friendNpc: { uid: null, until: 0, bt: null, cds: {} }, friendLinked: false, lookAt: 0, zoneVar: {},   /* ★ v1.245.0 抉擇後的場景變體 */   /* ★ v1.244.0 好友 NPC 隊友(12h 有效 + 每位好友 12h 冷卻)/與大對抗好友連結旗標/造型冷卻起算 */
     board: [], quest: { day: 0, done: {}, total: 0, ms: 0 },   /* ★ v1.107.0 營地留言板 [{n,t,at,day,own}](上限 BOARD_MAX);阿獺委託板 {day:今日已抽的日序,done:{questId:1},total:累計完成,ms:已領里程碑階數} */
+    recaps: [],   /* ★ v1.381.0 收藏的島嶼回顧 [{id,d,day,slides:[{d,day,t,img,f}]}](帆船完成時自動收藏;🎬 回憶 隨時重看) */
     mem: [],   /* ★ v1.380.0 回憶精選(與 log 同格式,只收 D.ENDING.pri 分數 ≥ memMin 的生活里程碑,不受 LOG_MAX 輪替刪除;結局幻燈片主要素材) */
     log: [],   /* ★ v1.105.0 回憶紀錄 [{d:'YYYY-MM-DD',day,t,img}](結局幻燈片素材,上限 LOG_MAX) */   /* ★ v1.104.0 乙 地下層紀錄;丙 好友 [{uid,name,day}] 與名片快取 {uid:{name,defLv,char,day,at}} */   /* ★ v1.99.0 train={trainerId:上次受訓週序} */   /* ★ v1.98.0 商店擴格次數/累計賣出;圖鑑 {id:收錄日};已領里程碑階數 */
     flags: { prologue: false, tut: false, tutStep: 0, firstCamp: false, forestTold: false, shopTold: false },
@@ -15916,6 +15941,7 @@ function islNormalize(d){
   if(!d.friends || !(d.friends instanceof Array)) d.friends = [];
   if(!d.friendCache || typeof d.friendCache !== 'object') d.friendCache = {};
   if(!d.log || !(d.log instanceof Array)) d.log = [];   /* ★ v1.105.0 */
+  if(!d.recaps || !(d.recaps instanceof Array)) d.recaps = [];   /* ★ v1.381.0 舊存檔已造好帆船的:第一次按 🎬 回憶 時當場收藏一份 */
   if(!d.mem || !(d.mem instanceof Array)) d.mem = [];   /* ★ v1.380.0 舊存檔:空的起步,結局時會再從 log + 存檔現況補齊(islMemAll) */
   if(!d.board || !(d.board instanceof Array)) d.board = [];
   if(typeof d.msgDay !== 'string') d.msgDay = '';   /* ★ v1.334.0 最後一次留言的真實日期(islToday),每天限 1 次 */   /* ★ v1.107.0 */
@@ -19596,7 +19622,7 @@ function islSeaStep(){
   c = islCell(_IS.cx, _IS.cy); k = c.x + ',' + c.y;
   if(k === _islSea.cellK) return;
   _islSea.cellK = k;
-  if(M.k === 'temp'){ _islSea.stepN = (_islSea.stepN || 0) + 1; if(_islSea.stepN % 2 === 0) islSeaSfx('snowstep'); }   /* 冰雪島踩雪聲(每 2 格一聲,太密會吵) */
+  /* ★ v1.381.0 老師「冰天雪地島的腳步聲也先改成跟本島一樣就好」:拿掉踩雪聲(snowstep),改回本島規則——走路無聲、跑步每兩格一聲 sfx-run(islTick 移動分支本來就對外島生效)。sfx-sea-snowstep 音檔標籤保留,以後要再開只要恢復這一行 */
   if(_islSea.m.v > 0){
     _islSea.cells++;
     if(_islSea.cells >= M.perCells){
@@ -23145,7 +23171,7 @@ function islCampBldApplyTransforms(){
   var i, s, el, k;
   for(i = 0; i < ISL.camp.slots.length; i++){
     s = ISL.camp.slots[i]; el = document.querySelector('#isl-camp-cells [data-i="' + i + '"]'); if(!el) continue;
-    k = s.scale || 1;
+    k = (s.scale || 1) * ((islDB().BUILDINGS[s.bld] && islDB().BUILDINGS[s.bld].baseK) || 1);   /* ★ v1.381.0 老師「營地蓋好的帆船圖片基本尺寸放大 100%」:BUILDINGS[].baseK 基本倍率(帆船 2),玩家自己的縮放 s.scale 疊在上面 */
     el.style.transform = 'scale(' + k + ')' + (s.flip ? ' scaleX(-1)' : '');
   }
 }
@@ -23327,7 +23353,7 @@ function islSubItems(cat){
       if(MG.user) L.push({ e:'📬', t:'信箱', f:'islMailOpen()', n: islMailCount(), img:'ui_mail' });
       L.push({ e:'📋', t:'留言板', f:'islBoardOpen()', n: ISL.board && ISL.board.length, img:'ui_board' });
     }
-    if(ISL.flags.shipBuilt) L.push({ e:'🎬', t:'回憶', f:'islEndingPlay()', img:'ui_ending' });
+    if(ISL.flags.shipBuilt) L.push({ e:'🎬', t:'回憶', f:'islRecapOpen()', img:'ui_ending' });   /* ★ v1.381.0 改開「島嶼回顧」收藏清單 */
   } else if(cat === 'camp'){
     L.push({ e:'🔨', t:'建造', f:'islCampBuildMenu(-1)', img:'ui_build' });
     L.push({ e:'🔬', t:'研究', f:'islResearchOpen()', img:'ui_research' });
@@ -25574,6 +25600,77 @@ function islFirstGlyph(t){
   if(t.charCodeAt(n) === 0xFE0F) n++;
   return t.slice(0, n);
 }
+/* ── ★ v1.381.0 島嶼回顧:感性話語 / 相關圖片 / 收藏(老師「每一段都多寫 1~2 句感性的話語,對島嶼生態的見解、動植物們的情感…增添依依不捨的感覺。
+   島嶼回顧可以儲存起來隨時觀看,回顧時也要有音樂和相關圖片」)──
+   文字表在 island_db D.ENDING.feel;音樂沿用 bgm-isl-ending(island_ending.m4a,repo 已有)。 */
+/* 在文字裡找出提到的是哪一個(區域/建築/夥伴/料理/動物):取最長的名稱,避免短名字誤中 */
+function islMemMatch(t, map, nameOf){
+  var k, n, best = null, bl = 0;
+  for(k in map){ if(!map.hasOwnProperty(k)) continue; n = nameOf(map[k], k); if(n && n.length > bl && t.indexOf(n) >= 0){ best = k; bl = n.length; } }
+  return best;
+}
+function islMemZoneOf(t){ var db = islDB(), m = {}, i; for(i = 0; i < db.ZONES.length; i++) m[db.ZONES[i].id] = db.ZONES[i]; return islMemMatch(t, m, function(z){ return z.n; }); }
+function islMemRecipeOf(t){ var db = islDB(), m = {}, i; for(i = 0; i < (db.RECIPES || []).length; i++) m[db.RECIPES[i].id] = db.RECIPES[i]; return islMemMatch(t, m, function(r){ return r.n; }); }
+function islMemFeel(e){
+  var db = islDB(), E = db.ENDING, F = (E && E.feel) || {}, t = (e && e.t) || '', sc = islMemScore(t), g = sc ? sc.g : '', h = islHash(t), k, r, out = [];
+  function pick(a){ return (a && a.length) ? a[h % a.length] : ''; }
+  function nm(s, n){ return String(s || '').replace(/\{n\}/g, n || ''); }
+  if(g === 'start') return (F.start || []).slice(0, 2);
+  if(g === 'end') return (F.end || []).slice(0, 2);
+  if(g === 'camp') return ((F.camp || {})[t.indexOf('營地') >= 0 ? 'firstCamp' : 'fire'] || []).slice(0, 2);
+  if(g === 'zone'){ k = islMemZoneOf(t); return k && F.zone && F.zone[k] ? F.zone[k].slice(0, 2) : [pick(F.nature)]; }
+  if(g === 'build'){ k = islMemMatch(t, db.BUILDINGS, function(b, id){ return id === 'ship' ? '' : b.n; }); if(k && F.bld && F.bld[k]) out.push(F.bld[k]); out.push(pick(F.bldTail)); return out; }
+  if(g === 'pet' || g === 'petmeet'){
+    k = islMemMatch(t, db.PETS, function(p){ return p.n; }); r = k ? db.PETS[k] : null;
+    if(g === 'petmeet') return [nm(pick(F.petmeet), r ? r.n : '牠')];
+    if(r && r.sci) out.push(r.sci);
+    out.push(nm(pick(F.petTail), r ? r.n : '夥伴'));
+    return out;
+  }
+  if(g === 'cook'){ k = islMemRecipeOf(t); r = null; for(var i2 = 0; k && i2 < db.RECIPES.length; i2++){ if(db.RECIPES[i2].id === k) r = db.RECIPES[i2]; } if(r && r.why) out.push(r.why); out.push(pick(F.cookTail)); return out; }
+  if(g === 'tame'){ k = islMemMatch(t, db.ANIMALS, function(a){ return a.n; }); if(k && db.ANIMALS[k].d) out.push(db.ANIMALS[k].d); out.push(pick(F.tameTail)); return out; }
+  if(F[g] && F[g].length) return [pick(F[g])];
+  return [];
+}
+function islMemImg(e){
+  var db = islDB(), I = db.IMG, t = (e && e.t) || '', sc = islMemScore(t), g = sc ? sc.g : '', c = [], k, i;
+  if(e && e.img){ c.push(e.img); c.push(e.img + '_1'); }
+  if(g === 'start') c.push('zone_beach');
+  if(g === 'end'){ c.push('ending_sail'); c.push('bld_ship_1'); }
+  if(g === 'camp') c.push(t.indexOf('營火') >= 0 ? 'bld_campfire_1' : 'camp');
+  if(g === 'build'){ k = islMemMatch(t, db.BUILDINGS, function(b){ return b.n; }); if(k){ c.push(db.BUILDINGS[k].img + '_1'); c.push(db.BUILDINGS[k].img); } }
+  if(g === 'pet' || g === 'petmeet'){ k = islMemMatch(t, db.PETS, function(p){ return p.n; }); if(k) c.push('bt_pet_' + k + '_idle'); }
+  if(g === 'cook'){ k = islMemRecipeOf(t); if(k) c.push('res_' + k); }
+  if(g === 'tame'){ k = islMemMatch(t, db.ANIMALS, function(a){ return a.n; }); if(k){ c.push('node_' + k); c.push('bld_pen_1'); } }
+  k = islMemZoneOf(t); if(k && db.SCENE[k]) c.push(db.SCENE[k].bg);
+  if(g === 'raid') c.push('camp_night');
+  c.push('camp');
+  for(i = 0; i < c.length; i++){ if(c[i] && I[c[i]]) return c[i]; }
+  return '';
+}
+/* 收藏:ISL.recaps=[{id,d,day,slides:[{d,day,t,img,f:[感性話語]}]}],最多 D.ENDING.recapMax 份(第一份帆船完成那天永遠保留) */
+function islRecapList(){ if(!ISL) return []; if(!ISL.recaps || !(ISL.recaps instanceof Array)) ISL.recaps = []; return ISL.recaps; }
+function islRecapSave(){
+  var E = islDB().ENDING, L = islRecapList(), sl = islMemPick(E.maxSlides || 30), out = [], i, it, rec, mx = E.recapMax || 5;
+  for(i = 0; i < sl.length; i++){ it = sl[i]; out.push({ d: it.d, day: it.day || 0, t: it.t, img: islMemImg(it) || null, f: islMemFeel(it) }); }
+  rec = { id: islNow(), d: islToday(), day: ISL.day, slides: out };
+  L.push(rec);
+  while(L.length > mx) L.splice(1, 1);   /* 超過上限:刪第二舊的(第一份保留) */
+  try{ islSave('recap'); }catch(_rs){}
+  return rec;
+}
+window.islRecapOpen = function(){
+  var L = islRecapList(), h = '', i, r;
+  if(!ISL || !ISL.flags.shipBuilt) return;
+  if(!L.length) islRecapSave();
+  h += '<h3>🎬 島嶼回顧</h3><p class="isl-recap-tip">帆船完成那天的回顧已經收藏起來,隨時都可以重看(會播放回憶音樂)。</p>';
+  for(i = L.length - 1; i >= 0; i--){
+    r = L[i];
+    h += '<button class="isl-btn isl-recap-row ' + (i === 0 ? 'gold' : 'ghost') + '" onclick="islRecapPlay(' + i + ')">▶ ' + (i === 0 ? '⛵ 帆船完成那天的回顧' : '📸 收藏 #' + (i + 1)) + '<small>' + islDateText(r.d) + '・第 ' + (r.day || '?') + ' 天・' + r.slides.length + ' 個片段</small></button>';
+  }
+  islModal(h, [{ t: '關閉', cls: '' }]);   /* 收藏清單保留多份的結構(recapMax),目前只自動收藏帆船完成那一份:帆船之後的事件(出海)本來就不放進荒島回顧,另存一份內容會一模一樣 */
+};
+window.islRecapPlay = function(i){ var L = islRecapList(); if(!L[i]) return; islModalClose(); islEndingPlay(L[i]); };
 function islDateText(d){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? (parseInt(m[1], 10) + '年' + parseInt(m[2], 10) + '月' + parseInt(m[3], 10) + '日') : '某一天'; }
 /* 舊存檔沒有 log:依現狀補一份(日期用開島日,第幾天不詳) */
 function islLogBackfill(){
@@ -25599,14 +25696,17 @@ function islLogBackfill(){
 }
 /* ── ④ 結局:回憶幻燈片(淡入淡出 + Ken Burns)→ 電影捲動字幕 → 留在島上 ── */
 var _islEnd = null;
-window.islEndingPlay = function(){
+window.islEndingPlay = function(rec){
   var db = islDB(), E = db.ENDING, root = $('isl-ending'), stage = $('isl-ending-stage'), cap = $('isl-ending-cap'), cr = $('isl-ending-credits'), log, slides = [], i, step, n;
   if(!ISL || !ISL.char) return;
+  /* ★ v1.381.0 收藏的島嶼回顧:有指定就播那一份;沒指定(帆船剛完成)就取第一份,沒有就當場做一份收藏起來 */
+  if(!rec || !rec.slides){ try{ rec = islRecapList()[0] || islRecapSave(); }catch(_rs){ rec = null; } }
+  if(rec && rec.slides && rec.slides.length) slides = rec.slides;
   /* ★ v1.380.0 改用回憶精選(第一天漂流開頭、帆船完成結尾、中間挑生活里程碑,照時間排);舊版「log 平均抽樣」整段退役 */
-  try{ slides = islMemPick(E.maxSlides || 30); }catch(_mp){ slides = []; }
+  if(!slides.length){ try{ slides = islMemPick(E.maxSlides || 30); }catch(_mp){ slides = []; } }
   if(!slides.length){ log = (ISL.log && ISL.log.length) ? ISL.log.slice() : islLogBackfill(); step = Math.max(1, log.length / (E.maxSlides || 30)); for(i = 0; i < log.length && slides.length < (E.maxSlides || 30); i += step) slides.push(log[Math.floor(i)]); }   /* 保險:精選出錯才退回舊抽樣 */
   islZoneStop(); islAmbDetach(); islModalClose();
-  _islEnd = { i: -1, timers: [], done: false, slides: slides };
+  _islEnd = { i: -1, timers: [], done: false, slides: slides, rec: rec };
   stage.innerHTML = ''; cap.innerHTML = ''; cap.className = ''; cr.innerHTML = ''; cr.className = ''; cr.style.animationDuration = '';
   show('isl-ending');
   islBgm('ending');
@@ -25624,12 +25724,14 @@ function islEndingSlide(){
   it = S.slides[S.i];
   prev = stage.querySelector('.sl.on'); if(prev){ prev.classList.remove('on'); (function(p){ setTimeout(function(){ if(p.parentNode) p.parentNode.removeChild(p); }, E.fadeSec * 1000 + 100); })(prev); }
   el = document.createElement('div'); el.className = 'sl';
-  u = it.img ? islImgUrl(it.img) : '';
+  u = islImgUrl(it.img && db.IMG[it.img] ? it.img : islMemImg(it));   /* ★ v1.381.0 每張都配相關圖片(舊紀錄的 bld_xxx 等鍵其實不存在 ⇒ 依分類找場景/建築/夥伴/料理/動物圖,都找不到才用營地) */
   el.innerHTML = u ? '<img src="' + u + '" alt="" onerror="this.parentNode.innerHTML=\'<div class=em>' + islEsc(islFirstGlyph(it.t)) + '</div>\'">' : '<div class="em">' + islEsc(islFirstGlyph(it.t)) + '</div>';   /* ★ v1.380.0 完整 emoji(舊 charAt(0) 切半個字) */
   stage.appendChild(el);
   cap.classList.remove('on');
-  S.timers.push(setTimeout(function(){ el.classList.add('on'); cap.innerHTML = islEsc(it.t) + '<small>' + islDateText(it.d) + (it.day ? '　第 ' + it.day + ' 天' : '') + '</small>'; cap.classList.add('on'); }, 60));
-  S.timers.push(setTimeout(islEndingSlide, (E.slideSec + E.fadeSec) * 1000));
+  var _fl = it.f || islMemFeel(it), _fh = '', _fi;   /* ★ v1.381.0 感性話語:收藏的回顧存著當時的句子(it.f),舊資料現算 */
+  for(_fi = 0; _fl && _fi < _fl.length; _fi++){ if(_fl[_fi]) _fh += '<span>' + islEsc(_fl[_fi]) + '</span>'; }
+  S.timers.push(setTimeout(function(){ el.classList.add('on'); cap.innerHTML = '<b class="tt">' + islEsc(it.t) + '</b>' + (_fh ? '<div class="feel">' + _fh + '</div>' : '') + '<small>' + islDateText(it.d) + (it.day ? '　第 ' + it.day + ' 天' : '') + '</small>'; cap.classList.add('on'); }, 60));
+  S.timers.push(setTimeout(islEndingSlide, ((_fh ? (E.feelSec || 7.2) : E.slideSec) + E.fadeSec) * 1000));
 }
 function islEndingCredits(){
   var db = islDB(), E = db.ENDING, S = _islEnd, stage = $('isl-ending-stage'), cap = $('isl-ending-cap'), cr = $('isl-ending-credits'), h = '', i, lines = [], prev, secs, bl = 0, s;
@@ -25662,7 +25764,8 @@ function islEndingFinal(){
   fin = document.createElement('div'); fin.className = 'fin';
   fin.innerHTML = '<div style="font-size:60px">⛵</div><div style="font-size:22px;font-weight:900;text-align:center;padding:0 24px">' + islEsc(db.STORY.endingHome) + '</div>';
   var b1 = document.createElement('button'); b1.className = 'isl-btn gold big'; b1.textContent = '留在島上繼續生活'; b1.onclick = function(){ islEndingClose(); };
-  var b2 = document.createElement('button'); b2.className = 'isl-btn ghost'; b2.textContent = '再看一次回憶'; b2.onclick = function(){ hide('isl-ending'); islEndingPlay(); };
+  var _rr = S.rec;   /* ★ v1.381.0 再看一次 = 同一份收藏 */
+  var b2 = document.createElement('button'); b2.className = 'isl-btn ghost'; b2.textContent = '再看一次回憶'; b2.onclick = function(){ hide('isl-ending'); islEndingPlay(_rr); };
   fin.appendChild(b1); fin.appendChild(b2); stage.appendChild(fin);
   setTimeout(function(){ fin.classList.add('on'); }, 60);
 }
@@ -26117,7 +26220,7 @@ function islCoopCampPaint(){
     b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1'));
     x = s.x != null ? s.x : Math.round(18 + (i % cols) * (64 / Math.max(1, cols - 1 || 1)));   /* 舊版(改版前)匯出的存檔沒有 x/y,退回跟 islCampSlotsMigrate 同一套格線位置估算,不會整個看不到 */
     y = s.y != null ? s.y : Math.round(18 + Math.floor(i / cols) * (54 / Math.max(1, (cl.rows || 3) - 1 || 1)));
-    h += '<button class="isl-cell built" data-i="' + i + '" style="left:' + x + '%;top:' + y + '%;z-index:' + islBldZ(s) + ';transform:scale(' + (s.scale || 1) + ')' + (s.flip ? ' scaleX(-1)' : '') + '">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="bn">' + islEsc(b.n) + ' Lv' + s.lv + '</span></button>';
+    h += '<button class="isl-cell built" data-i="' + i + '" style="left:' + x + '%;top:' + y + '%;z-index:' + islBldZ(s) + ';transform:scale(' + ((s.scale || 1) * (b.baseK || 1)) + ')' + (s.flip ? ' scaleX(-1)' : '') + '">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) + '<span class="bn">' + islEsc(b.n) + ' Lv' + s.lv + '</span></button>';
   }
   cells.innerHTML = h;
   islCampViewFit(); islCampViewBindDrag();   /* ★ v1.186.0 老師⑦:參觀好友營地(唯讀)也能雙指縮放看整座島,裝飾唯讀不可拖(islDecoDragBind 的 down() 本來就有 if(_IS.coop) return),不會跟視角手勢衝突 */
