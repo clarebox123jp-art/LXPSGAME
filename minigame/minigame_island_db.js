@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
+  D.VER = 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
   void 'v1.361.0';   /* ★ v1.361.0(2026-09-30)— 本檔僅版號與 D.LOG(跑跳真圖總開關在 index) */
   void 'v1.360.0';   /* ★ v1.360.0(2026-09-29)— 本檔僅版號與 D.LOG(營地造景重設位置鈕在 index);與 v1.359.0 co-op 心跳異動同一包交付 */
   void 'v1.359.0';   /* ★ v1.359.0(2026-09-29・老師「乙」)— 本檔實質異動:拜訪好友島 co-op 心跳 COOP_HEARTBEAT_SEC 6→15(每人每分鐘 10→4 次寫入,25 人整節課互訪從約 1 萬次降到約 4 千次)、COOP_STALE_SEC 18→45(維持 3 次心跳沒到才判離線變 NPC),COOP_GONE_SEC 600 不動;檔尾 D.LOG。 */
@@ -219,7 +219,7 @@ window.ISL_DB = (function(){
       '💍 第一次打倒各區頭目會得到專屬飾品(以前打過的會自動補發)。魔物血量變少、攻擊變痛,戰鬥節奏更快了!'
     ] },
     { v: 'v1.227.0', d: '2026-09-17', items: [
-      '👑 十個區域各有一隻「地圖頭目」!探索度到 80% 就會出現頭目巢穴,花 ⚡2 挑戰。',
+      '👑 十個區域各有一隻「地圖頭目」!探索度到 80% 就會出現頭目巢穴,花 ⚡1 挑戰。',
       '🟨 頭目有黃色「韌性條」:用剋制牠的武器、智取選對工具、完美閃避都能削韌性,削光就「破韌」讓牠暈 2 回合、受傷 +50%。',
       '☠ 頭目會倒數放「必殺技」,答對自然題就能找到掩護;血量掉到一半還會變強、叫幫手。',
       '🎁 第一次打倒頭目:天賦點 +2、頭目核心素材 ×2、大量貝幣!打倒火山頭目後還能挑戰 ★2/★3 強化頭目。'
@@ -624,9 +624,10 @@ window.ISL_DB = (function(){
     core_ember:   { n:'火精核心', e:'🔴', img:'res_core_ember',   cat:'misc' },
     core_spark:   { n:'雷精核心', e:'🔵', img:'res_core_spark',   cat:'misc' },
     core_beetle:  { n:'鐵甲蟲殼', e:'⚫', img:'res_core_beetle',  cat:'misc' },
-    herb_essence: { n:'草藥精華', e:'🧪', img:'res_herb_essence', cat:'misc' }
+    herb_essence: { n:'草藥精華', e:'🧪', img:'res_herb_essence', cat:'misc' },
+    boss_wake:    { n:'頭目喚醒鈴', e:'🔔', img:'res_boss_wake', cat:'misc' }   /* ★ v1.375.0 阿獺雜貨鋪每日限購 1 個(100 貝幣);在沉睡中的頭目巢穴使用,立刻喚醒、可再次挑戰。缺圖退 emoji */
   };
-  D.ITEM_ORDER = ['wood','stone','fiber','leaf','reed','trash','water','berry','mushroom','fish','egg','milk','grain','seed','shell','pebble','feather','d_fish','d_jam','d_soup','d_stew','d_egg','d_bread','d_pudding','ore','crystal','herb','honey','relic','core_ember','core_spark','core_beetle','herb_essence'];
+  D.ITEM_ORDER = ['wood','stone','fiber','leaf','reed','trash','water','berry','mushroom','fish','egg','milk','grain','seed','shell','pebble','feather','d_fish','d_jam','d_soup','d_stew','d_egg','d_bread','d_pudding','ore','crystal','herb','honey','relic','core_ember','core_spark','core_beetle','herb_essence','boss_wake'];
   D.STACK = 20;                 /* 物品包每格堆疊上限 */
   D.BAG_CAP = 12;               /* 物品包 Lv1 格數 */
   D.STORE_CAP = { 1:99, 2:199, 3:399, 4:699, 5:999 };   /* 倉庫每種上限(隨倉庫 Lv) */
@@ -1173,7 +1174,7 @@ window.ISL_DB = (function(){
       glow:   { n:2, minGap:2, act:'gather', node:'node_glowshroom', e:'🍄', gives:'mushroom', label:'螢光蕈',
                pool:[{x:13,y:10},{x:16,y:11},{x:25,y:14},{x:5,y:8},{x:21,y:5}] }   /* ★ v1.29.0 第 4 個原本在洞窟水潭 '~' */
     },
-    pick:{ n:[3,5], minGap:3, items:['pebble','stone','crystal','ore'] },
+    pick:{ n:[3,5], minGap:3, items:['pebble','stone','crystal','ore','silk','silk'] },   /* ★ v1.377.0 老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」— 地上撿取物加入蛛絲(silk 出現兩次 ⇒ 每個撿取點約 1/3 是蛛絲,每天 3~5 個點約 1~2 條);原本只有打盲眼穴蛛(60%)才掉,洞窟地圖上看不到蜘蛛絲 */
     puzzle:{x:8,y:17, n:'迴聲池', e:'🔊'}
   };
   /* ★ P3-b(v1.4.0):懸崖(三層台地、鳥巢/草藥/岩石)、山谷(蜿蜒溪+穀物/蜂巢/野果)、遺跡(石柱廣場+中央石室機關)、火山(中央熔岩湖不可走) */
@@ -2365,6 +2366,7 @@ window.ISL_DB = (function(){
     ],
     bagUp: { step:2, max:5, price:[15, 25, 40, 60, 85] },   /* 第 n 次擴格價(貝幣) */
     dailyOff: 0.3,                                          /* 每日特價 −30%(只算貝幣那一項) */
+    bossWake: { shell:100, limit:1 },                       /* ★ v1.375.0 頭目喚醒鈴:定價 100 貝幣(固定,不打特價)、每人每天限購 limit 個;打倒過任一頭目後才上架 */
     sell: { wood:1, stone:1, fiber:1, leaf:1, reed:1, berry:1, mushroom:2, fish:2, shell:2, pebble:1, feather:2, seed:1, water:1,
             egg:2, milk:3, grain:2, trash:3, ore:4, crystal:8, relic:10, honey:3, herb:3,
             d_fish:4, d_jam:3, d_soup:5, d_stew:6, d_egg:4, d_bread:4, d_pudding:6 }
@@ -2697,7 +2699,7 @@ window.ISL_DB = (function(){
      p2(HP ≤50%)/p3(HP ≤25%):atkMul/defMul/spdAdd、summon 叫 1 隻幫手、text 演出文字。
      ult 必殺:每 every 次行動開始倒數 cd 回合,倒數時跳出掩護題(答對傷害 ×cover);倒數期間破韌 = 打斷。
      weakWp 剋制武器(傷害 ×1.3、削韌 ×1.5);weakPets 剋制夥伴(傷害 ×1.5);core = 核心素材物品 id。 */
-  D.BOSS_RULE = { lvHp:0.08, lvAtk:0.13, exploreNeed:80, ap:2, respawnDays:7, toughMax:100, hpPerAlly:0.30, brokenMul:1.5, brokenStun:2,
+  D.BOSS_RULE = { lvHp:0.08, lvAtk:0.13, exploreNeed:80, ap:1,   /* ★ v1.375.0 老師「挑戰頭目改成需要 1 AP」(原 2;index 的挑戰/提示文字都讀 R.ap,免改) */ respawnDays:7, toughMax:100, hpPerAlly:0.30, brokenMul:1.5, brokenStun:2,
     tough:{ hero:10, crit:6, ally:4, cmd:6, wit:35, perfect:15, stunToTough:20 }, weakWpMul:1.3, weakWpTough:1.5, weakPetMul:1.5,
     stars:[ { n:'★1', lvAdd:0, coreMul:1 }, { n:'★2', lvAdd:8, coreMul:2 }, { n:'★3', lvAdd:16, coreMul:3 } ], starUnlock:'volcano',
     reward:{ firstPts:2, firstCore:2, core:1, shellFirst:[30,10], shell:[10,5], xpMul:6 } };
@@ -3277,7 +3279,7 @@ window.ISL_DB = (function(){
     { id:'SK_BEAST_F2B', g:'beast', n:'療癒羈絆', e:'💚', req:['SK_BEAST_L4B'], u:1065, v:70, d:'寵物專屬技能的治療/復活/護盾/持續恢復量 +25%', eff:{ petSkSupP:25 } },
     { id:'SK_BEAST_KEY', g:'beast', key:true, n:'羈絆守護', e:'🌟', reqAny:['SK_BEAST_F2A','SK_BEAST_F2B'], u:1160, v:0, d:'★關鍵節點:每隻寵物每場戰鬥第一次被打倒時,會撐住保留 1 點體力;開戰時技能計量再多 25%', eff:{ petGuts:1, petGaugeStart:25 }, sci:'一起經歷過危險的夥伴會建立很深的信任,動物在保護重要的同伴時,常常能撐得比平常更久。' },
     { id:'SK_BEAST_L5', g:'beast', req:['SK_BEAST_KEY'], u:1255, v:0, n:'萬獸共鳴', e:'🎶', d:'寵物最大體力/攻擊/防禦/速度 各 +1%', eff:{ petHpP:1, petAtkP:1, petDefP:1, petSpdP:1 } },
-    { id:'SK_BEAST_M', g:'beast', mst:true, n:'萬獸之王', e:'👑', req:['SK_BEAST_L5'], mat:{ boss_tusk:2 }, u:1350, v:0, d:'【精通】寵物專屬技能冷卻 −1 回合(最少仍要 1 回合);所有寵物最大體力/攻擊/防禦/速度再 +5%。需要頭目素材 🦷鐵牙獠牙 ×2(洗點後再點不必重付)', eff:{ petCdCut:1, petHpP:5, petAtkP:5, petDefP:5, petSpdP:5 }, sci:'狼群、象群都有經驗豐富的領頭者,牠帶頭行動時,整群的合作會變得更有效率。' }
+    { id:'SK_BEAST_M', g:'beast', mst:true, n:'萬獸之王', e:'👑', req:['SK_BEAST_L5'], mat:{ boss_tusk:2 }, u:1350, v:0, d:'【精通】寵物專屬技能冷卻 −1 回合(最多縮短一半);所有寵物最大體力/攻擊/防禦/速度再 +5%。需要頭目素材 🦷鐵牙獠牙 ×2(洗點後再點不必重付)', eff:{ petCdCut:1, petHpP:5, petAtkP:5, petDefP:5, petSpdP:5 }, sci:'狼群、象群都有經驗豐富的領頭者,牠帶頭行動時,整群的合作會變得更有效率。' }
   ];
   /* ★ v1.229.0 B5 座標換算(u/v 沿星域角度、pr/pa 極座標)——index 端只讀 x/y,零改動 */
   (function(){ var C = D.SK_CANVAS, G = {}, i, g, n, a, cs, sn;
@@ -3362,28 +3364,28 @@ window.ISL_DB = (function(){
     guard:      { n:'守護',       e:'🛡', cd:2, fx:{ guard:1, cut:40, dur:1 }, d:'1 回合內代替任一隊友承受攻擊,並把傷害再減 40%' },
     reviveherb: { n:'還魂草藥',   e:'🌿', cd:6, fx:{ healRevive:80 }, d:'用秘藥搶救 1 名隊友,以 80% 最大體力治療(對象已倒下就直接復活)' },   /* ★ v1.321.0 老師「梅花鹿的技能修正:以80%HP治療1名隊友(可以復活)」— revive:35(只能復活)改成 healRevive:80(優先復活倒下的隊友,沒有倒下的人就補血量比例最低的那位,兩種情況共用同一顆技能鍵,見 index 端 islBtPetCmd 新的 f.healRevive 分支) */   /* ★ v1.243.0 cd 5→6,補償梅花鹿天賦改成「每回合自動解一種不良狀態+全隊回8%HP」後的額外每回合價值 */   /* ★ v1.213.0 老師「技能清單稽核:補齊復活」— 原本是 herbheal(單體治療 18%),跟隊上其他三位治療型夥伴(dewheal/glowlight/clearstream)的單體/全體治療重複度最高,改成全隊唯一的復活技能;⚠ 平衡風險:梅花鹿是最早期就能收服的 NPC 夥伴,復活技能偏後期向,换成她可能讓早期缺乏單體治療手段,需要老師實機驗收早期戰鬥難度是否變太高,不行的話可以考慮换成別隻夥伴帶這招。 */
     dive:       { n:'靜音俯衝',   e:'🦉', cd:2, fx:{ mul:1.8, first:1 }, d:'1.8 倍傷害,且這一回合必定先手' },
-    sandwind:   { n:'海風祝禱',   e:'🕊', cd:3, fx:{ hitDownP:25, dur:2, healAll:20 }, d:'敵方全體命中率 −25%,持續 2 回合;同時為全隊回復 20% 最大體力' },   /* ★ v1.242.0 老師「小白的天賦已有每回合補最少血的隊友10%HP,技能改成降低敵方全體25%命中,同時恢復友方全體20%HP」— 沿用同一個鍵(sandwind)重新定義,原本疊加的 immuneAll 拿掉;⚠ 副作用:雷精(spark)stunOnHitP 麻痺隊友/主角原本唯一的解法就是這顆 immuneAll,拿掉後目前沒有任何機制能防雷精麻痺(見 D.LOG) */
+    sandwind:   { n:'海風祝禱',   e:'🕊', cd:4, fx:{ hitDownP:25, dur:2, healAll:20 }, d:'敵方全體命中率 −25%,持續 2 回合;同時為全隊回復 20% 最大體力' },   /* ★ v1.242.0 老師「小白的天賦已有每回合補最少血的隊友10%HP,技能改成降低敵方全體25%命中,同時恢復友方全體20%HP」— 沿用同一個鍵(sandwind)重新定義,原本疊加的 immuneAll 拿掉;⚠ 副作用:雷精(spark)stunOnHitP 麻痺隊友/主角原本唯一的解法就是這顆 immuneAll,拿掉後目前沒有任何機制能防雷精麻痺(見 D.LOG) */
     /* B 組:攻擊型 */
-    doubleclaw: { n:'二段攻擊',   e:'🐾', cd:1, fx:{ hits:2, mul:1 }, d:'連續兩爪,每爪 100% 傷害' },   /* ★ v1.327.0 老師「石虎技能二段攻擊修改:每爪100%傷害」— mul 0.75→1 */
+    doubleclaw: { n:'二段攻擊',   e:'🐾', cd:2, fx:{ hits:2, mul:1 }, d:'連續兩爪,每爪 100% 傷害' },   /* ★ v1.376.0 cd 1→2:冷卻 1 不吃任何縮減,等於每回合 2 倍傷害(每回合產出 2.0,是第二名領角鴞 0.9 的兩倍以上) */   /* ★ v1.327.0 老師「石虎技能二段攻擊修改:每爪100%傷害」— mul 0.75→1 */
     flockrush:  { n:'群飛突擊',   e:'🪶', cd:4, fx:{ hits:4, mul:0.7, sure:1, randHits:1 }, d:'四段掠擊,每段 70% 傷害,必中,且每段隨機攻擊一隻還活著的敵人' },   /* ★ v1.327.0 老師「台灣藍鵲技能四段掠擊修改:隨機攻擊四段,每段70%傷害,冷卻改成4回合」— hits 3→4、mul 0.5→0.7、cd 2→4 */
     talondive:  { n:'蒼鷹撲擊',   e:'🦅', cd:3, fx:{ mul:2.2, critAdd:30 }, d:'2.2 倍傷害,這一擊暴擊率 +30%' },
     /* B 組:坦克型 */
     curlguard:  { n:'鱗甲捲護',   e:'🦔', cd:4, fx:{ defUpP:40, dur:2 }, d:'全隊防禦 +40%,持續 2 回合' },   /* ★ v1.243.0 cd 3→4,補償穿山甲天賦鱗片護體 8%→40% 的大幅增強 */
-    shellwall:  { n:'龜甲壁',     e:'🐢', cd:4, fx:{ shield:15 }, d:'給全隊一層護盾,各吸收 15% 最大體力的傷害' },   /* ★ v1.243.0 cd 3→4,補償綠蠵龜天賦改成「減傷60%+每回合自癒15%」後自身極難被打倒 */
+    shellwall:  { n:'龜甲壁',     e:'🐢', cd:3, fx:{ shield:15 }, d:'給全隊一層護盾,各吸收 15% 最大體力的傷害' },   /* ★ v1.243.0 cd 3→4,補償綠蠵龜天賦改成「減傷60%+每回合自癒15%」後自身極難被打倒 */
     clawtaunt:  { n:'巨螯嘲諷',   e:'🦀', cd:3, fx:{ taunt:1, cut:50, dur:1 }, d:'這一回合敵方全體只能攻擊自己,自身減傷 50%' },   /* ★ v1.243.0 cd 2→3,補償椰子蟹天賦改成「減傷40%+反彈50%」後嘲諷抗性大幅提升 */
     /* B 組:治療型 */
     dewmist:    { n:'露水迷霧',   e:'💧', cd:4, fx:{ regenAll:15, dur:3 }, d:'化作一團水霧,全隊接下來 3 回合每回合恢復 15% 最大體力' },   /* ★ v1.318.0 老師「莫氏樹蛙的技能效果增強:3回合內每回恢復15%HP(冷卻4回合)」— regenAll 6→15、dur 3 與 cd 4 維持(本來就是老師指定值)。與其他治療招同口徑,實際量仍吃 islPetHealMul(施放者等級 ×0.91~1.3、夥伴戰術、雨天天賦 +25%、馴獸專精 petSkSupP)。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 8%/cd3→6%/cd4:沙盤顯示治療型的全隊持續回血量,疊上坦克代受後幾乎能完全抵銷魔物輸出,全隊幾乎不會輸;降低單次回復量並拉長冷卻,削弱但不砍斷這個機制。 */   /* ★ v1.213.0 老師「技能清單稽核:補齊持續恢復HP」— 原本是 dewheal(單體治療15%),跟梅花鹿的單體治療重複度最高,改成持續恢復(HoT),施放當下就把「濕潤皮膚」天賦(雨天/颱風+25%)折算進去存成固定值,之後每回合自動生效,天賦不會變成死鍵 */
-    glowlight:  { n:'螢光普照',   e:'🌟', cd:6, fx:{ healAll:30, cureAll:1 }, d:'全隊回復 30% 最大體力,並解除全部不良狀態' },   /* ★ v1.243.0 老師「螢火蟲技能改:全隊恢復30%+解除不良狀態」— 8%→30%(明顯拉開與其他治療招的回復量級距,定位成「大招級單次爆發治療」),cd 4→6 補償倍增的回復量,避免變成每 4 回合就能全隊滿血的無腦解法。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 12%/cd3→8%/cd4,理由同 dewmist,解除異常狀態的附加效果不變。 */   /* ★ v1.213.0 老師「技能清單稽核:補齊解除全體不利狀態」— cure:1(只解一種)升級成 cureAll:1(全部解除),全隊治療的定位本來就該連帶把病都一起治好,不必留著只解一種的舊限制 */
+    glowlight:  { n:'螢光普照',   e:'🌟', cd:5, fx:{ healAll:30, cureAll:1 }, d:'全隊回復 30% 最大體力,並解除全部不良狀態' },   /* ★ v1.243.0 老師「螢火蟲技能改:全隊恢復30%+解除不良狀態」— 8%→30%(明顯拉開與其他治療招的回復量級距,定位成「大招級單次爆發治療」),cd 4→6 補償倍增的回復量,避免變成每 4 回合就能全隊滿血的無腦解法。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 12%/cd3→8%/cd4,理由同 dewmist,解除異常狀態的附加效果不變。 */   /* ★ v1.213.0 老師「技能清單稽核:補齊解除全體不利狀態」— cure:1(只解一種)升級成 cureAll:1(全部解除),全隊治療的定位本來就該連帶把病都一起治好,不必留著只解一種的舊限制 */
     clearstream:{ n:'清流一躍',   e:'🐟', cd:6, fx:{ healAll:40, regenAll:10, spdUpP:20, dur:3 }, d:'化作一道清流,全隊立即恢復 40% 最大體力,接下來 3 回合每回合再恢復 10%,且速度 +20%' },   /* ★ v1.321.0 老師「櫻花鉤吻鮭技能修正:全隊立即恢復40%HP,接下來3回合內每回合恢復10%HP」— regenAll:15→10 並新增 healAll:40(立即單次全隊治療,與 regenAll 持續恢復同時生效,f.heal/f.healAll 與 f.regenAll 是各自獨立的 if 區塊,本來就能疊加);spdUpP/dur 沿用不動。 */   /* ★ v1.243.0 老師「櫻花鉤吻鮭技能改:全隊每回合回15%+速度+20%,持續3回合」— healAll(單次)改 regenAll(持續回合制,沿用既有 regenAll 引擎,施放當下折算 healOutP 天賦後每回合自動觸發),速度加成持續回合數同步拉到 3;cd 4→6 補償「持續 3 回合、每回合 15%」等於單場最多 45% 的高額總回復量。 */   /* ★ v1.223.0 老師「重新計算戰鬥難度」— 10%/cd3→7%/cd4,理由同上,速度加成不變。 */
     /* B 組:控場型 */
     throwstone: { n:'投石',       e:'🪨', cd:2, fx:{ mul:1.0, stunP:35, stun:1 }, d:'造成傷害,並有 35% 機率讓目標暈眩 1 回合' },   /* ★ v1.243 老師「攻擊型/控場型做平衡」— cd 1→2:疊上台灣獼猴天賦 stunAddP+10%(合計 45% 單體暈眩),cd1 等於每回合都能賭暈眩,拉到 cd2 讓三隻控場型的節奏落在同一個級距(macaque=高頻單體 CC、spoonbill=中頻範圍減速+睡眠、barbet=低頻範圍封招),不再是macaque一隻獨大。 */
-    sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:2, fx:{ all:1, mul:0.6, spdDownP:25, dur:2, sleepP:50, sleepDur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合,且每隻各有 50% 機率陷入睡眠(最多 2 回合,挨打就會醒)' },   /* ★ v1.340.0 老師「黑面琵鷺技能造成的睡眠機率提高至50%」— sleepP 20→50;傷害/減速/睡眠回合不變(戴水晶風鈴 skillPowP 時照舊等比放大,封頂 100%) */   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 原效果不動,額外疊加對命中目標的入睡機率(不像暈眩只撐 1 回合、也不需要額外挨打就能一路睡好幾輪,但只要受到任何攻擊就會立刻醒來,兩者定位不同) */
+    sweepbill:  { n:'橫掃扁嘴',   e:'🥄', cd:3, fx:{ all:1, mul:0.6, spdDownP:25, dur:2, sleepP:50, sleepDur:2 }, d:'敵方全體受到 60% 傷害,速度 −25% 持續 2 回合,且每隻各有 50% 機率陷入睡眠(最多 2 回合,挨打就會醒)' },   /* ★ v1.340.0 老師「黑面琵鷺技能造成的睡眠機率提高至50%」— sleepP 20→50;傷害/減速/睡眠回合不變(戴水晶風鈴 skillPowP 時照舊等比放大,封頂 100%) */   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 原效果不動,額外疊加對命中目標的入睡機率(不像暈眩只撐 1 回合、也不需要額外挨打就能一路睡好幾輪,但只要受到任何攻擊就會立刻醒來,兩者定位不同) */
     drumecho:   { n:'啄木聲波',   e:'🥁', cd:3, fx:{ all:1, skillSeal:1, dmgDownP:30, dur:1 }, d:'敵方全體 1 回合內無法使用技能(只能普通攻擊),且造成的傷害降低 30%' },   /* ★ v1.321.0 老師「五色鳥的技能修正:敵方全體1回合內無法使用技能(只能普通攻擊)且造成的傷害降低30%」— seal(舊版對魔物只做到「打不出暴擊」的變通)改成真正的 skillSeal(讓 islBtMonSkill 這回合直接跳過,魔物只能普攻)+ dmgDownP:30(魔物這回合的傷害輸出 −30%),兩者都是新的 B.deb 鍵,消費點在 islBtMonSkill/islBtMonAct/islBtMonHitSeq。 */
     /* ★ v1.331.0 🌈 傳說夥伴專屬指令(企畫書《傳說夥伴與寵物裝備》老師定案 2026-09-24)。
        新 fx 鍵:poisonP/poisonDmgP/poisonDur(魔物中毒,每隻魔物自己回合開頭扣血;地圖頭目扣血減半)、
        confuseP/confuseDur(魔物混亂:出手改打自己的同伴,場上只剩自己就打自己;地圖頭目免疫,改成命中 −30%)。
        消費點全在 index 端 islBtPetCmd(施加)/islBtMonAct(結算)。 */
-    cloudpounce: { n:'雲影撲擊',   e:'🐾', cd:4, fx:{ all:1, mul:1.1 }, d:'撲向敵方全體,每隻各受 110% 傷害' },
+    cloudpounce: { n:'雲影撲擊',   e:'🐾', cd:3, fx:{ all:1, mul:1.1 }, d:'撲向敵方全體,每隻各受 110% 傷害' },   /* ★ v1.376.0 cd 4→3:全體傷害每敵每回合只有 0.28 倍,是攻擊型最低;同輪另有 螢光普照 6→5、龜甲壁 4→3(老師明確要 3)、橫掃扁嘴 2→3(睡眠+緩速近乎常駐) */
     bluebite:    { n:'藍環毒咬',   e:'💙', cd:3, fx:{ mul:1.0, poisonP:100, poisonDmgP:8, poisonDur:3 }, d:'造成 100% 傷害,並讓目標中毒 3 回合(每回合 −8% 最大體力;地圖頭目減半)' },
     scalepowder: { n:'迷幻鱗粉',   e:'✨', cd:4, fx:{ all:1, confuseP:65, confuseDur:2 }, d:'灑出鱗粉,敵方全體各有 65% 機率「混亂」2 回合(混亂的魔物會攻擊自己的同伴);地圖頭目不會混亂,改成命中 −30% 2 回合' }
   };
@@ -3673,14 +3675,14 @@ window.ISL_DB = (function(){
   /* 夥伴等級:與主角同樣最高 50 級;升到 Lv n 所需經驗 = XP_BASE + XP_STEP×(n−1)。
      經驗只給「有上場」的夥伴(借用版好友角色永遠不給,見 D.PARTY.FRIEND_READONLY)。 */
   D.PET_LV = { MAX:50, XP_BASE:12, XP_STEP:8 };
-  D.PET_XP = { win:6, lose:2, boss:20 };   /* ★ v1.167.0 稽核:raid(夜襲)是死鍵——夜襲防衛戰沒有隊友單位,移除;lose 本輪補上消費點(打輸也給一點經驗,不讓學生白忙) */
+  D.PET_XP = { win:6, lose:2, boss:20, bossPerLv:4 };   /* ★ v1.375.0 老師「荒島 boss 戰給寵物的經驗值太少」— 頭目戰寵物經驗 = boss + bossPerLv × 頭目等級(只算一份):山豬王 Lv10=60、泥王 Lv17=88、蟹王 Lv20=100、★3 再加 16 級 ≈ +64;對照寵物升級所需 12+8×(Lv-1)(Lv20=164)。 */   /* ★ v1.167.0 稽核:raid(夜襲)是死鍵——夜襲防衛戰沒有隊友單位,移除;lose 本輪補上消費點(打輸也給一點經驗,不讓學生白忙) */
   /* 親密度 5 階:靠餵食與同行累積,純加成不擋玩法 */
   D.PET_BOND = [
     { n:'陌生',   e:'🤍', need:0,   d:'剛加入,還在觀察你' },
     { n:'熟悉',   e:'💛', need:20,  d:'全能力 +3%' ,  mul:1.03 },
     { n:'信任',   e:'🧡', need:60,  d:'全能力 +6%' ,  mul:1.06 },
     { n:'親密',   e:'❤️', need:120, d:'全能力 +10%',  mul:1.10 },
-    { n:'生死之交',e:'💖', need:220, d:'全能力 +15%,專屬指令冷卻 −1 回合', mul:1.15, cdCut:1 }
+    { n:'生死之交',e:'💖', need:220, d:'全能力 +15%,專屬指令冷卻 −1 回合(最多縮短一半)', mul:1.15, cdCut:1 }
   ];
   D.PET_BOND_GAIN = { feed:4, battle:2, levelUp:8, dayTogether:1, cap:999 };   /* ★ v1.167.0 稽核:feed 與 dayTogether 原本是死鍵,本輪補上消費點(圖鑑的「🍖 餵食」與每天同行 +1);★ v1.181.0 老師需求「寵物升級要加更多親密度」新增 levelUp(每升 1 級額外 +8,比單純打贏一場的 +2 多很多,鼓勵練等) */
   /* ★ v1.181.0(老師需求「寵物加入條件改為送禮＋答題」)— 野外招募新規則參數:
@@ -5088,7 +5090,7 @@ window.ISL_DB = (function(){
       sci:'有些植物有特殊氣味,能讓蟲子不想靠近,古人會做成香包帶在身上防蚊蟲、防疫病。',
       parts:[ {k:'bag', n:'布袋', need:'fiber', hint:'纖維織成小布袋', e:'🌿'}, {k:'herb', n:'藥草', need:'herb', hint:'曬乾的草藥氣味最濃', e:'🍀'}, {k:'ess', n:'精華', need:'herb_essence', hint:'濃縮的草藥精華滴幾滴', e:'🧪'} ] },
     { id:'pg_chime',   n:'水晶風鈴',     e:'💎', tier:2, hand:false, sell:30,
-      cost:{ crystal:3, ore:3, core_spark:2 }, eff:{ cdCut:1, skillPowP:20 }, d:'專屬指令冷卻 −1 回合(最少 1),技能效果 +20%',
+      cost:{ crystal:3, ore:3, core_spark:2 }, eff:{ cdCut:1, skillPowP:20 }, d:'專屬指令冷卻 −1 回合(最多縮短一半),技能效果 +20%',
       sci:'聲音是物體振動產生的,敲得越硬的東西,聲音越清脆;兩枚雷精核心互相共鳴,放大了那股力量。',
       parts:[ {k:'bell', n:'鈴身', need:'ore', hint:'鐵敲成薄薄的鈴身', e:'🟫'}, {k:'tongue', n:'鈴舌', need:'crystal', hint:'越硬的東西敲起來越清脆', e:'💎'}, {k:'core', n:'共鳴核', need:'core_spark', hint:'兩枚雷精核心互相共鳴', e:'🔵'} ] },
     { id:'pg_ember',   n:'火精護符',     e:'🔥', tier:2, hand:false, sell:35,
@@ -5523,5 +5525,19 @@ window.ISL_DB = (function(){
   ] });
   D.LOG.unshift({ v: 'v1.363.0', d: '2026-09-30', items: [
     '✨ 在營地按住設施或裝飾時,它會亮起一圈白色光暈,頭上也會出現名字,一眼就知道自己點到哪一個;放開手就自動消失。小木屋裡的家具也一樣。'
+  ] });
+  D.LOG.unshift({ v: 'v1.375.0', d: '2026-10-04', items: [
+    '🐾 打倒地圖頭目(山豬王、飛蝗之王等)和島主之後,出戰的夥伴會拿到大量經驗值,頭目等級越高拿得越多,不用再打很多場小怪才能幫夥伴升級。',
+    '⚡ 挑戰地圖頭目從 2 點行動力降成 1 點。',
+    '🔔 阿獺雜貨鋪新增「頭目喚醒鈴」(🐚100,每天限買 1 個,打倒過任一頭目後上架):頭目還在沉睡的時候,到牠的巢穴按「使用喚醒鈴」,就能馬上再挑戰一次,不用等 7 天。'
+  ] });
+  D.LOG.unshift({ v: 'v1.376.0', d: '2026-10-04', items: [
+    '⏳ 夥伴技能冷卻調整:親密度「生死之交」、天賦「精通」、水晶風鈴三種縮短冷卻的效果還是可以疊加,但最多只能把冷卻縮短一半(例如 4 回合最短 2 回合),不會再變成每回合都能施放。',
+    '📖 夥伴詳情卡現在會顯示你實際的技能冷卻,例如「冷卻 4 回合(你的縮減 −1 → 3)」。',
+    '🐾 基礎冷卻調整:石虎二段攻擊 1→2、黑面琵鷺橫掃扁嘴 2→3、綠蠵龜龜甲壁 4→3、螢火蟲螢光普照 6→5、雲豹雲影撲擊 4→3。'
+  ] });
+  D.LOG.unshift({ v: 'v1.377.0', d: '2026-10-04', items: [
+    '🕸 洞窟的地上現在也撿得到蛛絲了:每天洞窟裡的撿取點有機會出現 🕸,走過去就能直接撿,不用再專門打盲眼穴蛛。',
+    '🕊 海鷗小白的技能「海風祝禱」冷卻從 3 回合改成 4 回合(全隊回血 + 敵方命中 −25% 的效果太划算了)。'
   ] });
 })();
