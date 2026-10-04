@@ -7150,7 +7150,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -24812,7 +24812,7 @@ function islInstallRepair(urls, cb){
   function fin(){ if(done) return; done = true; try{ cb(fail); }catch(_c){} }
   function next(){
     while(running < CONC && i < urls.length){ (function(u){ running++; i++;
-      fetch(u).then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(u, r); })['catch'](function(){ fail++; })
+      islInstGet({ u: u, cross: u.indexOf(location.origin) !== 0 }, cache, 1)['catch'](function(){ fail++; })
         .then(function(){ running--; if(i >= urls.length && running <= 0) fin(); else next(); });
     })(urls[i]); }
     if(i >= urls.length && running <= 0) fin();
@@ -24855,8 +24855,10 @@ var ISL_CACHE = 'lxps-mini-island-v1', _islInst = null;
 window.islInstallUrls = islInstallUrls;   /* ★ v1.117.0 主程式首頁「完整下載荒島求生主程式」鈕用隱藏 iframe 載入本頁後讀這份清單 */
 window.islInstallMark = function(){ return MG_IMG_VER + '|' + MG_VER; };   /* ★ v1.127.0 主程式下載完成後要寫同一個 isl_installed 記號(同 origin,兩邊共用),記號含圖版號與程式版號 */
 function islInstallUrls(){   /* ★ v1.116.0 老師:「完整下載荒島求生主程式」— 主程式檔 + 全部音效音樂 + 荒島全部圖片(分層造型 24 張列為 opt:沒上傳不算失敗) */
-  var db = islDB(), urls = [], seen = {}, k, u, as, i, sc, src;
+  var db = islDB(), urls = [], seen = {}, k, u, as, i, sc, src, _seaOff = false;
   if(!db) return urls;
+  /* ★ v1.372.0 出海探險還沒對學生開放(ISL_SEA_ADMIN_ONLY=true)時,359 張圖+9 首 BGM+16 個環境音/音效(約 65MB)不列入完整下載——學生進不去、下載也只是白白拖慢。GM 帳號照舊列為選配;日後旗標改 false,下次版號變動重按完整下載就會只補這批缺的。 */
+  try{ _seaOff = !!(ISL_SEA_ADMIN_ONLY && !islIsGm()); }catch(_so){}
   function add(u, cross, opt){ if(u && !seen[u]){ seen[u] = true; urls.push({ u: u, cross: !!cross, opt: !!opt }); } }
   /* ★★ v1.180.0 根治(老師回報「還是卡在載入營地」的真因)★★ ——
      這一行以前是 `add('./minigame_index.html'); add('./manifest.json'); …`。
@@ -24871,9 +24873,9 @@ function islInstallUrls(){   /* ★ v1.116.0 老師:「完整下載荒島求生�
   add('./title.webp'); add('./icon-192.png'); add('./icon-180.png');
   sc = document.querySelectorAll('script[src]');
   for(i = 0; i < sc.length; i++){ src = sc[i].getAttribute('src') || ''; if(src.indexOf('minigame_') === 0) add('./' + src); }   /* minigame_db.js?v= / minigame_island_db.js?v=(與頁面實際請求同 URL,SW caches.match 才會命中) */
-  for(k in db.IMG){ if(db.IMG.hasOwnProperty(k)){ add(mgPicUrl(db.IMG[k]), false, /^(base|hair|cloth|deco|bt|wp|am|run|jump|tech|pz)_|^cabin_room_(l2|r2|yard)$|^zone_[a-z]+_(erupt|calm|fire|lush|wetland|flood|collapse|deep|night)$|^res_d_|^res_core_|^res_herb_essence$|^res_boss_|^poi_lair_|^ui_boss$|^acc_|^ui_acc$|^ui_socket$|^logo$|^node_(drift|beachrock|bigleaf)$|^res_(chitin|silk|gel|ash)$/.test(k) || !!(db.SEA_IMG && db.SEA_IMG[k])); } }   /* ★ v1.368.0 出海探險的 358 張新圖全部列為選配(老師上傳前完整下載不算失敗) */   /* ★ v1.172.0 logo 列為選配(檔案由老師上傳,沒上傳不算安裝失敗) */   /* ★ v1.120.0 選配圖再加裝飾/料理/漂流木/礁岩;★ v1.121.0 戰鬥立繪 bt_ 武器 wp_ 月桃葉叢 */
+  for(k in db.IMG){ if(db.IMG.hasOwnProperty(k)){ if(_seaOff && db.SEA_IMG && db.SEA_IMG[k]) continue; add(mgPicUrl(db.IMG[k]), false, /^(base|hair|cloth|deco|bt|wp|am|run|jump|tech|pz)_|^cabin_room_(l2|r2|yard)$|^zone_[a-z]+_(erupt|calm|fire|lush|wetland|flood|collapse|deep|night)$|^res_d_|^res_core_|^res_herb_essence$|^res_boss_|^poi_lair_|^ui_boss$|^acc_|^ui_acc$|^ui_socket$|^logo$|^node_(drift|beachrock|bigleaf)$|^res_(chitin|silk|gel|ash)$/.test(k) || !!(db.SEA_IMG && db.SEA_IMG[k])); } }   /* ★ v1.368.0 出海探險的 358 張新圖全部列為選配(老師上傳前完整下載不算失敗) */   /* ★ v1.172.0 logo 列為選配(檔案由老師上傳,沒上傳不算安裝失敗) */   /* ★ v1.120.0 選配圖再加裝飾/料理/漂流木/礁岩;★ v1.121.0 戰鬥立繪 bt_ 武器 wp_ 月桃葉叢 */
   as = document.querySelectorAll('audio[src]');
-  for(i = 0; i < as.length; i++){ u = as[i].getAttribute('src'); add(u, /^https?:/i.test(u) && u.indexOf(location.origin) !== 0, /island_(sea|amb|sfx)_/.test(u)); }   /* ★ v1.368.0 出海探險的新音樂音效列為選配(老師上傳前不算安裝失敗) */
+  for(i = 0; i < as.length; i++){ u = as[i].getAttribute('src'); if(_seaOff && /island_(sea|amb|sfx)_/.test(u)) continue; add(u, /^https?:/i.test(u) && u.indexOf(location.origin) !== 0, /island_(sea|amb|sfx)_/.test(u)); }   /* ★ v1.368.0 出海探險的新音樂音效列為選配(老師上傳前不算安裝失敗) */
   /* ★ v1.171.0 荒島用到但不在 D.IMG 表裡的共用特效圖(採集閃光、暴擊光圈…都在 repo 根目錄)——
      以前完全沒被列入完整下載,第一次採集/戰鬥當下才臨時去抓,校網慢的時候特效會晚好幾秒才出現。列為選配,缺檔不算失敗。 */
   try{ for(k in MG_FX){ if(MG_FX.hasOwnProperty(k)) add(MG_FX[k], false, true); } }catch(_fx){}
@@ -24886,13 +24888,37 @@ window.islInstallOpen = function(){
   try{ playSfx('sfx-tap', 0.3); }catch(e){}
   if(!window.caches || !window.fetch){ toast('這個瀏覽器不支援離線安裝(需要 https 與 Cache API)'); return; }
   show('isl-install'); bar.style.width = '0%';
-  txt.innerHTML = '把荒島求生<b>主程式</b>(網頁+資料表+設定檔)、全部 ' + document.querySelectorAll('audio[src]').length + ' 支音效音樂、荒島全部圖片(11 區場景、地圖、營地、建築、資源、NPC、魔物、造型)共 <b>' + urls.length + ' 個檔案</b>一次存進這台裝置。<br><span style="font-size:13px;opacity:.8">約 60~120 MB,建議接 Wi-Fi。裝好後離線也能開荒島、進場景不用等下載;版本 ' + MG_VER + ' / 圖片 v' + MG_IMG_VER + (islInstallState() === MG_IMG_VER + '|' + MG_VER ? ' ✓ 已安裝(可重新安裝)' : '') + '</span>';
+  txt.innerHTML = '把荒島求生<b>主程式</b>(網頁+資料表+設定檔)、全部 ' + document.querySelectorAll('audio[src]').length + ' 支音效音樂、荒島全部圖片(11 區場景、地圖、營地、建築、資源、NPC、魔物、造型)共 <b>' + urls.length + ' 個檔案</b>一次存進這台裝置。<br><span style="font-size:13px;opacity:.8">約 ' + islInstallEstMb() + ' MB,建議接 Wi-Fi。裝好後離線也能開荒島、進場景不用等下載;版本 ' + MG_VER + ' / 圖片 v' + MG_IMG_VER + (islInstallState() === MG_IMG_VER + '|' + MG_VER ? ' ✓ 已安裝(可重新安裝)' : '') + '</span>';
   btns.innerHTML = '<button class="chip" id="isl-install-go" style="border-color:#7bed9f">開始下載</button><button class="chip" id="isl-install-x">關閉</button>';
   $('isl-install-x').onclick = function(){ if(_islInst) _islInst.stop = true; hide('isl-install'); islInstallBtnPaint(); };
   $('isl-install-go').onclick = function(){ islInstallRun(urls); };
 };
+/* ★ v1.372.0(老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)—— 單檔下載+存入快取的共用函式。
+   【查到的原因】①下載量早就不是 60~120MB:圖片 1225 張約 223MB+音樂約 70MB,其中出海探險(359 張圖+9 首 BGM,約 65MB)在 ISL_SEA_ADMIN_ONLY=true 時學生根本進不去,卻照樣被下載;
+   ②每個檔案實際被寫了兩份:頁面的 fetch 會先經過 minigame_sw.js 的 cacheFirst(未命中就抓網路、複製一份存進 ASSET 快取),頁面拿到回應後又 cache.put 進 ISLAND ⇒ 同一個檔案存兩次(約 600MB 寫入、iPad 配額也被吃掉一倍);
+   ③同一條 cacheFirst 還有 15 秒逾時,一個 2~4MB 的大檔在校網塞住時超過 15 秒就被回 504,算成「失敗/選配沒上傳」,學生得重按;④並行只有 6 條。
+   【修法】安裝用的同源請求一律帶 X-Lxps-Install 標頭,minigame_sw.js 看到就不攔截(直接走瀏覽器網路層,不再多存一份、不吃 15 秒逾時);每個檔案自己 90 秒逾時(下載到存完整個算數)、暫時性失敗(逾時/斷線/5xx/429)自動重試 1 次,404 不重試;並行 6→10。
+   ⚠ 跨網域音檔(it.cross)不帶自訂標頭——會觸發 CORS 預檢而失敗。舊版 SW 還沒換上時看不懂標頭,行為等同修正前(照舊多存一份),不會壞。 */
+function islInstGet(it, cache, tries){
+  var ctl = null, tm = null, opt = {};
+  try{ if(typeof AbortController === 'function') ctl = new AbortController(); }catch(_a){}
+  if(it.cross) opt.mode = 'cors'; else opt.headers = { 'X-Lxps-Install': '1' };
+  if(ctl){ opt.signal = ctl.signal; tm = setTimeout(function(){ try{ ctl.abort(); }catch(_b){} }, 90000); }
+  return fetch(it.u, opt).then(function(r){
+    if(!r || !r.ok){ var e = new Error('bad'); e.status = r ? r.status : 0; throw e; }
+    return cache.put(it.u, r);
+  }).then(function(){ if(tm) clearTimeout(tm); }, function(err){
+    if(tm) clearTimeout(tm);
+    var nm = (err && (err.name || err.message)) || '';
+    if(/quota|exceed/i.test(String(nm))) throw err;   /* 空間不足重試也沒用,直接回報 */
+    if(err && err.status && err.status < 500 && err.status !== 408 && err.status !== 429) throw err;   /* 404/403 這種不是暫時性的,不重試 */
+    if(tries > 1) return new Promise(function(res){ setTimeout(res, 800); }).then(function(){ return islInstGet(it, cache, tries - 1); });
+    throw err;
+  });
+}
+function islInstallEstMb(){ try{ return (ISL_SEA_ADMIN_ONLY && !islIsGm()) ? '230' : '300'; }catch(e){ return '230'; } }   /* ★ v1.372.0 大小估計:含出海探險素材約 300MB、不含約 230MB(實測 2026-10-04:圖 1225 張 223MB 含出海 44MB;音樂約 70MB 含出海 20MB) */
 function islInstallRun(urls){
-  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, optN = 0, skipN = 0, quotaN = 0, running = 0, CONC = 6, cache = null, go = $('isl-install-go');   /* ★ v1.159.0 skipN=已在快取裡直接汿用、quotaN=裝置儲存空間不足；CONC 3→6(素材改同源後可以與頁面共用同一條 HTTP/2 連線多路復用，並行 6 個比 3 個快很多且不多開連線) */
+  var txt = $('isl-install-txt'), bar = $('isl-install-bar'), i = 0, okN = 0, failN = 0, optN = 0, skipN = 0, quotaN = 0, running = 0, CONC = 10, cache = null, go = $('isl-install-go');   /* ★ v1.159.0 skipN=已在快取裡直接汿用、quotaN=裝置儲存空間不足；CONC 3→6(素材改同源後可以與頁面共用同一條 HTTP/2 連線多路復用，並行 6 個比 3 個快很多且不多開連線) */
   _islInst = { stop: false };
   if(go){ go.disabled = true; go.textContent = '下載中…'; }
   /* ★ v1.180.0(老師需求③「慢慢下載的檔案就固定永久存到裝置就好了」)——
@@ -24916,8 +24942,7 @@ function islInstallRun(urls){
     while(running < CONC && i < urls.length){ (function(it){ running++; i++;
       cache.match(it.u).then(function(hit){
         if(hit){ skipN++; return null; }
-        var req = it.cross ? fetch(it.u, { mode: 'cors' }) : fetch(it.u);
-        return req.then(function(r){ if(!r || !r.ok) throw new Error('bad'); return cache.put(it.u, r); }).then(function(){ okN++; });
+        return islInstGet(it, cache, 2).then(function(){ okN++; });   /* ★ v1.372.0 帶標頭繞過 SW 重複快取+逾時+重試(見 islInstGet) */
       }, function(){ return null; })['catch'](function(err){
         var nm = (err && (err.name || err.message)) || '';
         if(/quota|exceed/i.test(String(nm))) quotaN++;
