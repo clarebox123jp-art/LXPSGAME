@@ -7150,7 +7150,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -22137,7 +22137,7 @@ function islCampExitCheck(p){
      旗標,不是「衝著我來的」放開事件一律直接略過,不會再誤觸 islCampTapWalk。 */
 var ISL_LONGTAP_MS = 1000;
 function islLongTapBind(el, cb){
-  var timer = null, sx = 0, sy = 0, lx = 0, ly = 0, moved = false, fired = false, active = false;
+  var timer = null, sx = 0, sy = 0, lx = 0, ly = 0, moved = false, fired = false, active = false, lastTouch = 0;   /* ★ v1.374.0 lastTouch:最近一次真的觸控時間,用來濾掉 Android/iOS 觸控後補發的幽靈滑鼠事件 */
   function pos(ev){ var t = ev.touches && ev.touches.length ? ev.touches[0] : (ev.changedTouches && ev.changedTouches.length ? ev.changedTouches[0] : ev); return { x: t.clientX, y: t.clientY }; }
   function clearBar(){ var b = el.querySelector('.isl-lp-bar'); if(b && b.parentNode) b.parentNode.removeChild(b); }
   function down(ev){
@@ -22157,11 +22157,17 @@ function islLongTapBind(el, cb){
     clearBar(); fired = false;
     if(!wasFired && !wasMoved) islCampTapWalk(tx, ty);   /* ★ v1.288.0 老師「營地點擊任何位置都以移動為優先」— 主角/寵物的短按也讓給移動(islCampTapWalk 自己會守門,不在營地畫面就直接 return) */
   }
-  el.addEventListener('touchstart', down, { passive: true });
+  /* ★ v1.374.0(老師「檢查還有沒有其他地方也有相同的 bug」稽核出的同類問題,與 v1.373.0 戰鬥動作鈕同一種成因:觸控後瀏覽器補發相容滑鼠事件)
+     這裡 touchstart 是 passive:true(不能 preventDefault),所以 Android/iOS 在 touchend 之後還會補發 mousedown→mouseup,
+     而下面的 mousedown 也綁了 down()、全域 mouseup 又綁了 up() ⇒ 主角/寵物「點一下」會被當成兩次 up() ⇒ islCampTapWalk 連呼叫兩次,
+     第二次距離第一次 <320ms 被營地的「連點兩下 = 跑步」規則(_IS.campLastTapAt)判成雙擊 ⇒ 單點也跑步,而且 1 秒長按計時被重複起算一次。
+     修法:比照 islCampViewBindDrag(v1.189.0)既有做法,記下最近一次真的觸控時間,800ms 內的滑鼠事件一律略過(實測幽靈事件間隔 <50ms,
+     不會誤擋真的滑鼠操作;桌機純滑鼠 lastTouch 永遠是 0,行為不變)。 */
+  el.addEventListener('touchstart', function(ev){ lastTouch = Date.now(); down(ev); }, { passive: true });
   el.addEventListener('touchmove', move, { passive: true });
-  el.addEventListener('touchend', up);
+  el.addEventListener('touchend', function(ev){ lastTouch = Date.now(); up(); });
   el.addEventListener('touchcancel', up);
-  el.addEventListener('mousedown', function(ev){ if(ev.button === 0) down(ev); });
+  el.addEventListener('mousedown', function(ev){ if(ev.button === 0 && Date.now() - lastTouch > 800) down(ev); });
   window.addEventListener('mousemove', function(ev){ if(timer) move(ev); });
   window.addEventListener('mouseup', function(){ if(active) up(); });   /* ★ v1.298.0 加守門,不再是無條件全域監聽(根因見上方說明) */
 }
@@ -30614,7 +30620,7 @@ function islBtActTip(a){
   if(a === 'sk'){ var sd = islSkActDef(); return (sd && sd.d) ? sd.d.d : ''; }
   return M[a] || '';
 }
-var _islBtTipT = null, _islBtTipBtn = null, _islBtTipShown = false;
+var _islBtTipT = null, _islBtTipBtn = null, _islBtTipShown = false, _islBtTouchT = 0;   /* ★ v1.373.0 _islBtTouchT = 最後一次在動作鈕列「手指放開」的時間(Android 幽靈 click 防護用,見 islBtActsBindTip) */
 function islBtActsBindTip(){
   var box = $('isl-bt-acts');
   if(!box) return;
@@ -30652,8 +30658,24 @@ function islBtActsBindTip(){
   box.onmouseup = up;
   box.onmouseleave = cancel;
   box.ontouchstart = down;
-  box.ontouchend = up;
+  /* ══ ★ v1.373.0(老師回報,只發生在 Android 手機:①迴力鏢第一次按完 Bar 就消失、只打一段 ②按「智取」沒跳選項、直接套用某個結果)══
+     ★★ 同一個根因:動作鈕是在 touchend 就觸發(長按說明泡泡機制,v1.299.0),但沒有 preventDefault ⇒
+        Android Chrome 在 touchend 之後還會補發一輪「相容滑鼠事件」(mousedown/mouseup/click),且落點是「手指放開的那個位置」。
+        而 touchend 當下我們已經把 #isl-bt-qte 面板(貼底部 bottom:6px,正好蓋在動作鈕列上方/同一帶)開出來了 ⇒
+        補發的 click 打到的是面板上的東西:
+          ・攻擊:打到「打!」鈕 ⇒ 瞬間被算成第 1 下(指針隨機位置,多半落空)⇒ 迴力鏢 hits=2 的第 2 下就是玩家真的按的第一下 ⇒ 按完 Bar 就消失、只剩一段傷害;
+          ・智取:打到四個工具選項之一 ⇒ q.onclick 立刻判定,玩家根本沒看到選單 ⇒「不知道哪一個項目的結果」。
+        iPad/桌機沒事:iOS 的補發 click 時機不同、桌機只有 mouseup 一條路(有 B.busy 守門)。
+     修法兩道:①touchend 一律 preventDefault ⇒ 瀏覽器不再補發 mouse/click(根治);
+              ②面板(#isl-bt-qte)加捕獲階段保險:動作鈕剛放開 450ms 內進來的 click/mousedown/mouseup 一律吞掉(即使有別的路徑補發也打不到面板)。
+     ⚠ 之後任何「touchend 就開面板」的新做法都要比照這兩道,否則 Android 會再踩一次。 */
+  box.ontouchend = function(ev){ _islBtTouchT = Date.now(); try{ if(ev && ev.cancelable) ev.preventDefault(); }catch(_pd){} up(ev); };
   box.ontouchcancel = cancel;
+  var _qg = $('isl-bt-qte');
+  if(_qg){
+    var _qGuard = function(ev){ if(Date.now() - _islBtTouchT < 450){ ev.stopPropagation(); ev.preventDefault(); } };
+    _qg.addEventListener('click', _qGuard, true); _qg.addEventListener('mousedown', _qGuard, true); _qg.addEventListener('mouseup', _qGuard, true);
+  }
 }
 
 function islBtSwapOpen(){
