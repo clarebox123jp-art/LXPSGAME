@@ -7150,7 +7150,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -18470,6 +18470,9 @@ setTimeout(islAccFetch, 2000);
 setInterval(islAccFetch, 5 * 60 * 1000);
 var ISL_GM_EMAILS = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
 function islIsGm(){ try{ return !!(MG.user && MG.user.email && ISL_GM_EMAILS.indexOf(String(MG.user.email).toLowerCase()) >= 0); }catch(e){ return false; } }
+/* v1.371.0 GM 髮型/服裝座標調整(造型工房 islLabOpen)的入口總開關。主角圖已全面換成完整的走/跑/跳整張圖(不再是光頭加髮型分層),不需要再調層次座標,
+   所以設定選單的造型工房鈕與換造型面板的調髮型/調服裝兩鈕一律收起來;程式整套保留,日後要恢復只要把下面這行改回 true。武器工房不受這個旗標影響。 */
+var ISL_LAYER_LAB_ON = false;
 function islGateOk(){ return !islAdminOnly() || islIsGm(); }   /* ★ v1.180.0 由直接讀常數改走單一出口 islAdminOnly()(雲端 gameConfig/islandAccess 優先,讀不到才退回常數) */
 window.islGateOk = islGateOk;
 function islGateBlock(){
@@ -23138,7 +23141,7 @@ window.islGearToggle = function(){ var g = $('isl-gear'), hud = $('isl-hud'); if
   /* ★ v1.132.0 開啟時量 HUD 當下的真實高度再定位:HUD 會因 iPad/桌機斷點、字級、一列或兩列而變高,寫死 52px 在某些版面會壓到 HUD 或離太遠 */
   if(!g.classList.contains('hidden') && hud){ g.style.top = (hud.offsetTop + hud.offsetHeight + 4) + 'px'; }
   islGearPaint(); };
-window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.innerHTML = islIcoHtml('ui_amb', '🍃', 20) + ' 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.innerHTML = islIcoHtml('ui_ambsfx', '🌊', 20) + ' 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = islIsGm() ? '' : 'none'; var bt = $('isl-gear-bt'); if(bt) bt.style.display = islIsGm() ? '' : 'none';   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— 這兩顆原本用 textContent 整段覆寫(含開/關文字),改 innerHTML 才能同時保留圖示 */
+window.islGearPaint = function(){ var a = $('isl-gear-amb'), b = $('isl-gear-ambsfx'), l = $('isl-gear-lab'); if(a && ISL) a.innerHTML = islIcoHtml('ui_amb', '🍃', 20) + ' 動態背景:' + (ISL.flags.ambOff ? '關' : '開'); if(b && ISL) b.innerHTML = islIcoHtml('ui_ambsfx', '🌊', 20) + ' 環境音:' + (ISL.flags.ambSfxOff ? '關' : '開'); if(l) l.style.display = (ISL_LAYER_LAB_ON && islIsGm()) ? '' : 'none'; var bt = $('isl-gear-bt'); if(bt) bt.style.display = islIsGm() ? '' : 'none';   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— 這兩顆原本用 textContent 整段覆寫(含開/關文字),改 innerHTML 才能同時保留圖示 */
   var gb = $('isl-gear-bgm'); if(gb && !gb._ico){ gb._ico = true; gb.innerHTML = islIcoHtml('ui_bgm', '🎵', 20) + ' 音樂音量'; }
   var gs = $('isl-gear-sfx'); if(gs && !gs._ico){ gs._ico = true; gs.innerHTML = islIcoHtml('ui_sfx', '🔊', 20) + ' 音效音量'; }
   var gf = $('isl-gear-full'); if(gf && !gf._ico){ gf._ico = true; gf.innerHTML = islIcoHtml('ui_fullscreen', '⛶', 20) + ' 全螢幕'; }
@@ -28075,9 +28078,8 @@ function islLookPaint(){
      ⚠ 老師 2026-09-13 裁定甲:維持「貼回來」的流程,不做「直接寫雲端套用到全校」——
        後者省一步,但一台 iPad 上的誤操作會無聲無息變成 900 個學生的預設長相。 */
   if(islIsGm()){
-    h += '<div class="isl-look-gm"><span>🛠 老師專用:覺得哪一層沒對齊就直接進去調</span>'
-       + '<button class="isl-btn" data-gm="hair">🎨 調髮型</button>'
-       + '<button class="isl-btn" data-gm="cloth">👕 調服裝</button>'
+    h += '<div class="isl-look-gm"><span>' + (ISL_LAYER_LAB_ON ? '🛠 老師專用:覺得哪一層沒對齊就直接進去調' : '🛠 老師專用') + '</span>'
+       + (ISL_LAYER_LAB_ON ? '<button class="isl-btn" data-gm="hair">🎨 調髮型</button><button class="isl-btn" data-gm="cloth">👕 調服裝</button>' : '')   /* v1.371.0 主角圖已是完整整張圖,調髮型/調服裝入口收起 */
        + '<button class="isl-btn" data-gm="wp">🗡 武器工房</button></div>';   /* ★ v1.355.0 戰鬥武器貼手位置 */
   }
   h += '</div>';
