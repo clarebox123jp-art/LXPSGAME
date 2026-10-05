@@ -7225,7 +7225,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.381.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
+<script src="minigame_island_db.js?v=v1.382.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
 <script src="minigame_sea_db.js?v=v1.378.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
@@ -7235,7 +7235,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)— ①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -15979,6 +15979,7 @@ function islCloudFailModal(cb, token){
 function islLoadDone(data, cb, token){
   if(token !== _IS.loadSeq) return;   /* 期間又換了帳號 → 這份結果作廢 */
   ISL = islNormalize(data);
+  try{ var _lr = islLogRestore(); if(_lr) setTimeout(function(){ try{ toast('📅 島上日誌:幫你找回了 ' + _lr + ' 件以前的重要紀錄'); }catch(_lt){} }, 2500); }catch(_lr0){ try{ islErrPush('日誌補回失敗:' + _lr0); }catch(_e3){} }   /* ★ v1.382.0 只跑一次(flags.logRestore) */
   try{ islAdvApply(); }catch(_aa){}   /* ★ v1.225.0 HP 上限依冒險等級重算(舊版複利/四維累積的 hpBase 一律改由等級決定) */
   ISL.uid = islUid();
   if(MG.user) ISL.name = MG.user.displayName || ISL.name || '';
@@ -25415,7 +25416,7 @@ window.islCalOpen = function(mon){
   for(i = a; i <= b; i++){
     cnt = by[i] ? by[i].length : 0;
     h += '<button data-cd="' + i + '" class="' + (cnt ? 'has ' : '') + (i === ISL.day ? 'today ' : '') + (i > ISL.day ? 'future' : '') + '"><span class="dn">' + i + '</span>' +
-         (cnt ? '<span class="ev">' + islEsc(String(by[i][0].t || '').slice(0, 1)) + '</span><span class="cnt">' + cnt + '</span>' : '') + '</button>';
+         (cnt ? '<span class="ev">' + islEsc(islFirstGlyph(by[i][0].t)) + '</span><span class="cnt">' + cnt + '</span>' : '') + '</button>';
   }
   h += '</div><p style="font-size:14px;opacity:.8;margin:8px 0 0">金框 = 那天有大事,點下去看詳細;綠框 = 今天。這些紀錄最後會變成離島時的回憶幻燈片。</p>';
   islModal(h, [{ t: '關閉', cls: 'ghost' }]);
@@ -25523,9 +25524,128 @@ function islLog(t, img){
   var db = islDB();
   if(!ISL) return;
   if(!ISL.log) ISL.log = [];
+  if(islLogSkip(t)) return;   /* ★ v1.382.0 採集/戰鬥掉落/點天賦不記 */
   ISL.log.push({ d: islToday(), day: ISL.day, t: t, img: img || null });
-  if(ISL.log.length > db.LOG_MAX) ISL.log.splice(0, ISL.log.length - db.LOG_MAX);
+  if(ISL.log.length > db.LOG_MAX) islLogTrim();   /* ★ v1.382.0 不再從最前面整筆刪:每天保留最重要的 3 件,先刪分數最低的 */
   try{ islMemAdd(ISL.log[ISL.log.length - 1]); }catch(_ma){}   /* ★ v1.380.0 生活里程碑另存 ISL.mem(不被 150 筆輪替刪掉) */
+}
+/* ── ★ v1.382.0 島上日誌(老師「上限改成 300 筆。改成每天都保留至少 3 件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。
+   已經被刪除的重要記錄要幫玩家補回來(如果可以)」)──
+   【舊版】LOG_MAX 150,滿了 splice(0,…) 從最前面整筆刪 ⇒ 每場戰鬥都寫一筆「戰鬥掉落」,玩不到一個月第一天的紀錄就沒了。
+   【新版】①LOG_SKIP 開頭的紀錄不寫;②超過 LOG_MAX(300) 時 islLogTrim:每一天依 D.ENDING.pri 分數留前 LOG_DAY_KEEP(3) 件(同分留早的),
+          其餘依「分數低 → 日子早」順序刪到 300;萬一全部都是受保護的(超過 100 天),才從分數最低的受保護紀錄刪(漂流/帆船 100 分永不刪);
+          ③islLogRestore(讀檔時跑一次,flags.logRestore):清掉舊存檔的雜項、把 ISL.mem 與存檔現況(各區/建築/科技/解謎/夥伴/料理/好友…)
+          裡「日誌已經沒有」的大事補回去,第幾天能從存檔推算的就用真實天數,推不出來的放在「最早一筆還在的紀錄」前一天並標(補回)。 */
+function islLogSkip(t){ var S = islDB().LOG_SKIP || [], i; t = t || ''; for(i = 0; i < S.length; i++){ if(t.indexOf(S[i]) === 0) return true; } return false; }
+function islLogW(e){ var s = islMemScore(e && e.t); return s ? s.w : 0; }
+function islLogTrim(){
+  var db = islDB(), L = ISL.log, max = db.LOG_MAX || 300, keepN = db.LOG_DAY_KEEP || 3, byDay = {}, rank = [], i, e, dk, cand, kill = {}, need, a;
+  if(!L || L.length <= max) return;
+  for(i = 0; i < L.length; i++){ dk = L[i].day | 0; if(!byDay[dk]) byDay[dk] = []; byDay[dk].push(i); }
+  for(dk in byDay){   /* rank[i] = 這筆在「那一天」裡的重要度名次(0 = 那天最重要) */
+    if(!byDay.hasOwnProperty(dk)) continue;
+    a = byDay[dk].slice().sort(function(x, y){ return (islLogW(L[y]) - islLogW(L[x])) || (x - y); });
+    for(i = 0; i < a.length; i++) rank[a[i]] = i;
+  }
+  need = L.length - max;
+  /* 先刪「每天第 4 件以後」;玩超過 100 天、3×天數 > 300 時才退到每天留 2 件、再退到 1 件(每一天最重要的那件一定留著,直到 300 天) */
+  for(; keepN >= 1 && need > 0; keepN--){
+    cand = []; for(i = 0; i < L.length; i++){ if(!kill[i] && rank[i] >= keepN) cand.push(i); }
+    cand.sort(function(x, y){ return (islLogW(L[x]) - islLogW(L[y])) || ((L[x].day | 0) - (L[y].day | 0)) || (x - y); });
+    for(i = 0; i < cand.length && need > 0; i++){ kill[cand[i]] = 1; need--; }
+  }
+  if(need > 0){   /* 超過 300 天才會走到這裡:從分數最低、日子最早的開始刪,100 分(漂流/帆船)不刪 */
+    cand = []; for(i = 0; i < L.length; i++){ if(!kill[i] && islLogW(L[i]) < 100) cand.push(i); }
+    cand.sort(function(x, y){ return (islLogW(L[x]) - islLogW(L[y])) || ((L[x].day | 0) - (L[y].day | 0)) || (x - y); });
+    for(i = 0; i < cand.length && need > 0; i++){ kill[cand[i]] = 1; need--; }
+  }
+  e = []; for(i = 0; i < L.length; i++){ if(!kill[i]) e.push(L[i]); }
+  ISL.log = e;
+}
+/* 遊戲第 N 天 → 大概的真實日期:用還留著的紀錄內插(同一天有紀錄就用那天的日期;最前面用開島日) */
+function islLogDateFor(day){
+  var L = ISL.log || [], i, lo = null, hi = null, d0, t0, t1, f, dt;
+  function ms(s){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : NaN; }
+  function fmt(t){ var x = new Date(t); return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+  for(i = 0; i < L.length; i++){
+    if(!L[i] || !(L[i].day > 0) || isNaN(ms(L[i].d))) continue;
+    if(L[i].day === day) return L[i].d;
+    if(L[i].day < day && (!lo || L[i].day > lo.day)) lo = L[i];
+    if(L[i].day > day && (!hi || L[i].day < hi.day)) hi = L[i];
+  }
+  d0 = new Date(ISL.created || islNow()); d0 = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()).getTime();
+  if(!lo) lo = { day: 1, d: fmt(d0) };
+  if(!hi) return lo.d;
+  t0 = ms(lo.d); t1 = ms(hi.d); if(isNaN(t0) || isNaN(t1)) return hi.d;
+  f = (day - lo.day) / Math.max(1, hi.day - lo.day); dt = t0 + (t1 - t0) * f;
+  return fmt(t0 + Math.round((t1 - t0) * f / 86400000) * 86400000);
+}
+function islLogRestore(){
+  var db = islDB(), L, i, k, z, s, b, add = [], has = {}, byG = {}, first = 0, fallback, cdx, zDay, p, gl, n0;
+  if(!ISL || !ISL.flags || ISL.flags.logRestore) return 0;
+  if(!ISL.char) return 0;   /* 還沒創角的新島:不跑(創角時自己會寫第一天漂流),也先不標記 */
+  ISL.flags.logRestore = 1;
+  if(!ISL.log || !(ISL.log instanceof Array)) ISL.log = [];
+  /* ① 清雜項 */
+  L = []; for(i = 0; i < ISL.log.length; i++){ if(ISL.log[i] && ISL.log[i].t && !islLogSkip(ISL.log[i].t)) L.push(ISL.log[i]); }
+  ISL.log = L;
+  for(i = 0; i < L.length; i++){ has[L[i].t] = 1; gl = islFirstGlyph(L[i].t); byG[gl] = (byG[gl] || '') + '\n' + L[i].t; if(L[i].day > 0 && (!first || L[i].day < first)) first = L[i].day; }
+  fallback = Math.max(1, (first || ISL.day || 1) - 1);
+  cdx = ISL.codex || {};
+  function put(t, img, day, key, est){
+    var g2 = islFirstGlyph(t);
+    if(has[t]) return;
+    if(key && (byG[g2] || '').indexOf(key) >= 0) return;   /* 同一類已經有提到這個名稱的紀錄 */
+    has[t] = 1; byG[g2] = (byG[g2] || '') + '\n' + t;
+    add.push({ d: null, day: Math.max(1, day | 0 || fallback), t: est ? t + '(補回)' : t, img: img || null, rb: 1 });
+  }
+  /* ② ISL.mem(v1.380.0 起的回憶精選,日期是真的) */
+  for(i = 0; i < (ISL.mem || []).length; i++){ s = ISL.mem[i]; if(s && s.t && !has[s.t]) { has[s.t] = 1; gl = islFirstGlyph(s.t); byG[gl] = (byG[gl] || '') + '\n' + s.t; add.push({ d: s.d || null, day: s.day || fallback, t: s.t, img: s.img || null, rb: 1 }); } }
+  /* ③ 存檔現況 */
+  put('🏝 漂流到荒島,展開求生生活', 'zone_beach', 1, '漂流');
+  if(ISL.flags.firstCamp) put('🏕 在空地上設立營地', 'camp', 1, '營地');
+  if(ISL.flags.fireTold) put('🔥 第一次生起營火', 'bld_campfire_1', 1, '營火');
+  /* 各區:第一次在那一區收錄圖鑑的那天 ≈ 第一次踏進那天 */
+  for(i = 0; i < db.ZONES.length; i++){
+    z = db.ZONES[i]; if(z.sea || !ISL.zones[z.id] || !ISL.zones[z.id].visited || z.id === 'beach') continue;
+    zDay = 0;
+    for(k = 0; k < db.CODEX.length; k++){ p = db.CODEX[k]; if(cdx[p.id] && p.where && String(p.where).split(/[\/(、]/)[0] === z.n && (!zDay || cdx[p.id] < zDay)) zDay = cdx[p.id]; }
+    put('🔍 第一次踏進 ' + z.e + z.n, db.SCENE[z.id] ? db.SCENE[z.id].bg : null, zDay, z.n, !zDay);
+  }
+  /* 建築沒有存蓋好的日子:若它是某一區的解鎖條件(營火→森林、水桶架→溪流、木筏→岩岸),就放在那一區第一次踏進的前一天;其餘放在最早紀錄前一天。都標(補回) */
+  (function(){
+    var bd = {}, j, zz, zd, q;
+    for(j = 0; j < db.ZONES.length; j++){
+      zz = db.ZONES[j]; if(!zz.unlock || zz.unlock.t !== 'bld') continue;
+      zd = 0; for(q = 0; q < add.length; q++){ if(add[q].t.indexOf('🔍 第一次踏進 ' + zz.e + zz.n) === 0) zd = add[q].day; }
+      for(q = 0; !zd && q < ISL.log.length; q++){ if(ISL.log[q].t.indexOf(zz.n) >= 0 && ISL.log[q].t.indexOf('🔍') === 0) zd = ISL.log[q].day; }
+      if(zd) bd[zz.unlock.bld] = Math.max(1, zd - 1);
+    }
+    for(j = 0; j < (ISL.camp.slots || []).length; j++){
+      s = ISL.camp.slots[j]; b = s && db.BUILDINGS[s.bld]; if(!b || s.bld === 'ship') continue;
+      put('🏗 蓋好了 ' + b.e + b.n, b.img + '_1', bd[s.bld] || 0, b.n, true);
+    }
+  })();
+  if(ISL.flags.shipBuilt){   /* 帆船:有記完成日期(真實日期)⇒ 找同一天的紀錄推第幾天 */
+    (function(){ var q, sd = ISL.flags.shipDate, dy = 0; for(q = 0; q < ISL.log.length; q++){ if(ISL.log[q].d === sd && ISL.log[q].day > dy) dy = ISL.log[q].day; } put('⛵ 帆船完成!具備離開荒島的條件', 'bld_ship', dy || ISL.day, '帆船', !dy); })();
+  }
+  for(k in (ISL.techs || {})){ if(ISL.techs.hasOwnProperty(k) && db.tech(k)) put('🔬 研究成功:' + db.tech(k).e + db.tech(k).n, null, cdx[k] || 0, db.tech(k).n, !cdx[k]); }
+  for(k in (ISL.puzzles || {})){ if(ISL.puzzles.hasOwnProperty(k) && db.PUZZLES[k]) put('🧩 解開了 ' + db.PUZZLES[k].e + db.PUZZLES[k].n, db.SCENE[k] ? db.SCENE[k].bg : null, cdx['pz_' + k] || 0, db.PUZZLES[k].n, !cdx['pz_' + k]); }
+  for(k in (ISL.petDex || {})){ if(ISL.petDex.hasOwnProperty(k) && db.PETS[k]) put('🐾 ' + db.PETS[k].e + db.PETS[k].n + ' 成為夥伴了', 'bt_pet_' + k + '_idle', ISL.petDex[k] || 0, db.PETS[k].n, !ISL.petDex[k]); }
+  for(i = 0; i < (db.RECIPES || []).length; i++){ k = db.RECIPES[i].id; if(cdx[k]) put('🍳 第一次做出 ' + db.RECIPES[i].e + db.RECIPES[i].n, 'res_' + k, cdx[k], db.RECIPES[i].n); }
+  for(i = 0; i < (ISL.friends || []).length; i++){ s = ISL.friends[i]; if(s) put('👥 和 ' + (s.name || '好友') + ' 成為好友', null, s.day || 0, s.name || '好友', !s.day); }
+  if(ISL.dungeon && ISL.dungeon.clears) put('🏆 第一次通關遺跡地下層,打敗守墓石像', 'mon_guardian', cdx.guardian || 0, '遺跡地下層', !cdx.guardian);
+  if(!add.length) return 0;
+  /* ④ 補日期、合併、照天數排序(同一天:補回的放在原本紀錄前面) */
+  for(i = 0; i < add.length; i++){ if(!add[i].d) add[i].d = islLogDateFor(add[i].day); }
+  L = add.concat(ISL.log);
+  for(i = 0; i < L.length; i++) L[i]._o = i;
+  L.sort(function(x, y){ return ((x.day | 0) - (y.day | 0)) || (x._o - y._o); });
+  for(i = 0; i < L.length; i++) delete L[i]._o;
+  ISL.log = L;
+  if(ISL.log.length > (db.LOG_MAX || 300)) islLogTrim();
+  for(i = 0; i < add.length; i++){ try{ islMemAdd(add[i]); }catch(_rm){} }
+  return add.length;
 }
 /* ── ★ v1.380.0 回憶精選(老師「帆船後的回顧沒有從第一天開始;要多注重完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)──
    【根因】①ISL.log 上限 150 筆、滿了從最前面刪 ⇒ 玩到造帆船時第一天的漂流/營地/營火早被刪光,回憶從中段開始;
@@ -25573,7 +25693,7 @@ function islMemPick(maxN){
   var all = islMemAll(), c = [], i, e, sc, pick = [], cnt = {}, first = null, last = null, rest = [], out;
   for(i = 0; i < all.length; i++){
     e = all[i]; sc = islMemScore(e.t);
-    if(!sc || sc.w <= 0) continue;
+    if(!sc || sc.w < (islDB().ENDING.memMin || 30)) continue;   /* ★ v1.382.0 pri 新增的低分項(只給日誌排序用)不進回憶 */
     c.push({ e: e, w: sc.w, g: sc.g, cap: sc.cap, o: i, dy: e.day || 0 });
   }
   /* 補齊項 day=0(不知道第幾天)⇒ 排序時當作第 1 天、放在原本順序裡 */
