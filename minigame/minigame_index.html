@@ -7091,6 +7091,65 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
   #isl-ending .sl .em{ font-size:72px; margin-bottom:16%; }
   .isl-recap-tip{ font-size:12px; margin:2px 0 6px; } .isl-recap-row{ font-size:13px; margin:4px 0; padding:6px 10px; } .isl-recap-row small{ font-size:11px; }
 }
+/* ★ v1.384.0 島主 QTE(冰面裂縫/割斷氣根/十七級強風/深淵之眼)+深海黑暗;PC 預設、iPad(#island-root.ipad)、手機橫式(本段最後的 media query,排在整份樣式最後) */
+#isl-battle .isl-sq{ position:absolute; left:0; top:0; right:0; bottom:0; z-index:90; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(4,10,24,.62); touch-action:none; user-select:none; -webkit-user-select:none; animation:islSqIn .18s ease-out; }
+#isl-battle .isl-sq .tt{ font-size:26px; font-weight:900; color:#fff; text-shadow:0 2px 6px #000; text-align:center; padding:0 18px; max-width:92%; }
+#isl-battle .isl-sq .tt b{ color:#ffd166; }
+#isl-battle .isl-sq .bar{ width:min(560px,70%); height:14px; border-radius:8px; background:rgba(255,255,255,.18); overflow:hidden; border:2px solid rgba(255,255,255,.5); }
+#isl-battle .isl-sq .bar i{ display:block; height:100%; width:100%; background:linear-gradient(90deg,#ff6a4d,#ffd166); transform-origin:left center; animation-name:islSqBar; animation-timing-function:linear; animation-fill-mode:forwards; }
+#isl-battle .isl-sq.good{ box-shadow:inset 0 0 0 8px #6ee7a8; }
+#isl-battle .isl-sq.bad{ box-shadow:inset 0 0 0 8px #ff6a6a; }
+#isl-battle .isl-sq .pad{ position:relative; width:min(420px,62vh); height:min(420px,62vh); }
+#isl-battle .isl-sq .pad .side{ position:absolute; width:33%; height:33%; min-height:0; padding:0; border-radius:18px; font-size:52px; line-height:1.1; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; }
+#isl-battle .isl-sq .pad .side small{ font-size:18px; font-weight:900; }
+#isl-battle .isl-sq .pad .s-u{ left:33.5%; top:0; } #isl-battle .isl-sq .pad .s-d{ left:33.5%; bottom:0; } #isl-battle .isl-sq .pad .s-l{ left:0; top:33.5%; } #isl-battle .isl-sq .pad .s-r{ right:0; top:33.5%; }
+#isl-battle .isl-sq .pad .crack{ background:repeating-linear-gradient(55deg,#5b6a7d 0 14px,#2b3442 14px 18px); border:3px solid #ff8a6a; box-shadow:0 0 14px rgba(255,120,90,.6); }
+#isl-battle .isl-sq .pad .safe{ background:linear-gradient(160deg,#e6f6ff,#9fd3f2); color:#163a5c; border:3px solid #fff; box-shadow:0 0 18px rgba(160,220,255,.9); }
+#isl-battle .isl-sq .pad .me{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:64px; transition:transform .35s ease-out; pointer-events:none; }
+#isl-battle .isl-sq .pad .me.go-u{ transform:translate(-50%,-160%); } #isl-battle .isl-sq .pad .me.go-d{ transform:translate(-50%,60%); } #isl-battle .isl-sq .pad .me.go-l{ transform:translate(-160%,-50%); } #isl-battle .isl-sq .pad .me.go-r{ transform:translate(60%,-50%); }
+#isl-battle .isl-sq .field{ position:relative; width:min(760px,82%); height:58%; border-radius:20px; background:radial-gradient(ellipse at center,rgba(60,110,50,.55),rgba(20,40,18,.75)); border:3px solid rgba(160,230,140,.6); touch-action:none; cursor:crosshair; }
+#isl-battle .isl-sq .vine{ position:absolute; width:26px; height:160px; border-radius:14px; background:repeating-linear-gradient(0deg,#3f7a2a 0 12px,#2c5a1d 12px 16px); border:3px solid #1b3a12; box-shadow:0 0 10px rgba(140,255,120,.5); pointer-events:none; transition:opacity .35s, filter .35s; }
+#isl-battle .isl-sq .vine.cut{ opacity:.18; filter:grayscale(1); }
+#isl-battle .isl-sq .ring{ position:relative; width:min(380px,56vh); height:min(380px,56vh); border-radius:50%; background:radial-gradient(circle,rgba(150,190,220,.35),rgba(20,40,70,.65)); touch-action:none; cursor:grab; }
+#isl-battle .isl-sq .ring svg{ position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; }
+#isl-battle .isl-sq .ring .bg{ fill:none; stroke:rgba(255,255,255,.25); stroke-width:8; }
+#isl-battle .isl-sq .ring .fg{ fill:none; stroke:#6ee7a8; stroke-width:8; stroke-linecap:round; transform:rotate(-90deg) scaleX(-1); transform-origin:50% 50%; }
+#isl-battle .isl-sq .ring .sw{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:120px; animation:islSqSpin 1.1s linear infinite; pointer-events:none; }
+#isl-battle .isl-sq .ring .arr{ position:absolute; right:6%; top:4%; font-size:54px; color:#ffd166; text-shadow:0 2px 6px #000; pointer-events:none; }
+#isl-battle .isl-sq .eye{ --o:0; position:relative; width:min(420px,62%); height:min(220px,36vh); display:flex; align-items:center; justify-content:center; }
+#isl-battle .isl-sq .eye i{ display:block; width:100%; height:calc(var(--o) * 100% + 4px); border-radius:50%; background:radial-gradient(ellipse at center,#fff6c8 0%,#ffcf4d 30%,#b33a1a 62%,#3b0b0b 100%); border:4px solid #2a0606; box-shadow:0 0 30px rgba(255,90,40,.6); }
+#isl-battle .isl-sq .eye b{ position:absolute; width:calc(var(--o) * 18%); height:calc(var(--o) * 70%); border-radius:50%; background:#111; }
+#isl-battle .isl-sq .eye.max i{ box-shadow:0 0 50px #ffe08a, 0 0 100px rgba(255,220,120,.7); }
+#isl-battle .isl-sq .mir{ min-width:200px; min-height:0; padding:14px 28px; border-radius:24px; font-size:56px; line-height:1.1; background:linear-gradient(160deg,#dbeefe,#8fb8de); color:#123; border:4px solid #fff; display:flex; flex-direction:column; align-items:center; cursor:pointer; touch-action:none; }
+#isl-battle .isl-sq .mir small{ font-size:18px; font-weight:900; }
+#isl-battle .isl-sq .mir.on{ transform:scale(.94); box-shadow:0 0 26px #fff; }
+#isl-battle.seadark .bt-team.m .hpb, #isl-battle.seadark .bt-team.m .hpt{ visibility:hidden; }
+#isl-battle.seadark .bt-stage::after{ content:''; position:absolute; left:0; top:0; right:0; bottom:0; background:radial-gradient(ellipse at 30% 60%,rgba(0,0,0,0) 0%,rgba(0,0,10,.55) 55%,rgba(0,0,10,.82) 100%); pointer-events:none; z-index:20; }
+@keyframes islSqIn{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes islSqBar{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
+@keyframes islSqSpin{ from{ transform:translate(-50%,-50%) rotate(0deg); } to{ transform:translate(-50%,-50%) rotate(360deg); } }
+#island-root.ipad #isl-battle .isl-sq{ gap:10px; }
+#island-root.ipad #isl-battle .isl-sq .tt{ font-size:28px; }   /* iPad 有 #island-root zoom 1.3:這裡的 vh 會再被放大,尺寸要比 PC 收得更緊(沙盒 1180×820 截圖驗過不出界、不壓到動作列) */
+#island-root.ipad #isl-battle .isl-sq .pad{ width:min(330px,44vh); height:min(330px,44vh); }
+#island-root.ipad #isl-battle .isl-sq .pad .side{ font-size:46px; } #island-root.ipad #isl-battle .isl-sq .pad .side small{ font-size:18px; }
+#island-root.ipad #isl-battle .isl-sq .field{ height:50%; }
+#island-root.ipad #isl-battle .isl-sq .ring{ width:min(300px,42vh); height:min(300px,42vh); } #island-root.ipad #isl-battle .isl-sq .ring .sw{ font-size:90px; } #island-root.ipad #isl-battle .isl-sq .ring .arr{ font-size:44px; }
+#island-root.ipad #isl-battle .isl-sq .eye{ height:min(170px,24vh); }
+#island-root.ipad #isl-battle .isl-sq .mir{ font-size:46px; min-width:180px; padding:10px 22px; } #island-root.ipad #isl-battle .isl-sq .mir small{ font-size:18px; }
+#island-root.ipad #isl-battle .isl-sq .vine{ width:30px; }
+@media (orientation:landscape) and (max-height:520px){
+  #isl-battle .isl-sq{ gap:6px; }
+  #isl-battle .isl-sq .tt{ font-size:15px; }
+  #isl-battle .isl-sq .bar{ height:9px; }
+  #isl-battle .isl-sq .pad{ width:min(240px,66vh); height:min(240px,66vh); }
+  #isl-battle .isl-sq .pad .side{ font-size:30px; border-radius:12px; } #isl-battle .isl-sq .pad .side small{ font-size:11px; }
+  #isl-battle .isl-sq .pad .me{ font-size:36px; }
+  #isl-battle .isl-sq .field{ height:62%; }
+  #isl-battle .isl-sq .vine{ width:18px; }
+  #isl-battle .isl-sq .ring{ width:min(230px,62vh); height:min(230px,62vh); } #isl-battle .isl-sq .ring .sw{ font-size:70px; } #isl-battle .isl-sq .ring .arr{ font-size:32px; }
+  #isl-battle .isl-sq .eye{ height:min(120px,34vh); }
+  #isl-battle .isl-sq .mir{ font-size:32px; min-width:130px; padding:6px 16px; } #isl-battle .isl-sq .mir small{ font-size:11px; }
+}
 </style>
 
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
@@ -7226,7 +7285,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
 <script src="minigame_island_db.js?v=v1.383.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_sea_db.js?v=v1.378.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_sea_db.js?v=v1.384.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -7235,7 +7294,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -19630,7 +19689,7 @@ function islSeaStep(){
       _islSea.cells = 0;
       isle = islSeaIsleOfZone(_IS.zone);
       if(M.rainStop && isle.id === 'jungle' && islSeaJungleRain()) return;   /* 雷陣雨時涼快又有雨水,水分不掉 */
-      rate = M.drain * (M.wxMul && islWeather() !== 'sunny' ? M.wxMul : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1);
+      rate = M.drain * (M.wxMul && islWeather() !== 'sunny' ? M.wxMul : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1) * (1 - Math.min(80, islPartyTal(M.k === 'temp' ? 'fieldTempP' : (M.k === 'water' ? 'fieldWaterP' : 'fieldNoneP'))) / 100);   /* ★ v1.384.0 野外特長:皇帝企鵝(體溫)/水豚(水分)帶在隊上消耗 −30% */
       islSeaMeterAdd(-rate);
       if(_islSea.m.v < M.max * 0.25 && islNow() - _islSea.lowAt > 20000){ _islSea.lowAt = islNow(); toast(M.e + ' ' + M.lowTxt); islSeaSfx(M.k === 'temp' ? 'shiver' : 'drink'); }
     }
@@ -19652,7 +19711,7 @@ function islSeaFrame(dt){
   M = islSeaMeterDef();
   if(M && M.perSec){
     if(_islSea.m.v > 0){
-      islSeaMeterAddQuiet(-M.perSec * dt * (islSeaDark() ? (M.darkMul || 1) : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1));
+      islSeaMeterAddQuiet(-M.perSec * dt * (islSeaDark() ? (M.darkMul || 1) : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1) * (1 - Math.min(80, islPartyTal('fieldOxyP')) / 100));   /* ★ v1.384.0 野外特長:大王具足蟲帶在隊上氧氣消耗 −30% */
       _islSea.oxyT += dt; if(_islSea.oxyT > 0.5){ _islSea.oxyT = 0; islSeaHudPaint(); }
       if(_islSea.m.v < M.max * 0.25 && islNow() - _islSea.lowAt > 15000){ _islSea.lowAt = islNow(); toast(M.e + ' ' + M.lowTxt); islSeaSfx('lowoxy'); }
     } else {
@@ -19681,6 +19740,7 @@ function islSeaGustTick(G){
     if(islMaskAt(c.x - d.dx, c.y - d.dy) === '#'){ toast('🪨 躲在岩石背風處,風吹不動你!'); return; }
     cells = G.cells[0] + Math.floor(Math.random() * (G.cells[1] - G.cells[0] + 1));
     if(islSeaArmorIs(G.gear)) cells = Math.max(1, Math.round(cells / 2));
+    if(islPartyTal('fieldGustP')) cells = Math.max(1, Math.round(cells * (1 - Math.min(80, islPartyTal('fieldGustP')) / 100)));   /* ★ v1.384.0 野外特長:信天翁帶在隊上被吹走的距離 −50% */
     step = 16;
     for(i = 0; i < cells * 64 / step; i++){
       nx = _IS.cx + d.dx * step; ny = _IS.cy + d.dy * step;
@@ -30036,8 +30096,12 @@ function islBtHeroReflect(m, dmg){
   m.hp = Math.max(0, m.hp - r);
   try{ islBtFloat(m.side, '🦀−' + r, 'combo'); islBtLog('🦀 巨螯手環把 ' + r + ' 點傷害反彈給 ' + islEsc(m.n) + '!'); if(m.hp <= 0) islBtSetState(m.side, 'down', 0); }catch(_rf){}
 }
+/* ★ v1.384.0 外島戰鬥擴充(islSea* 區塊,在 islBtOnMonDown 前面)總開關:所有 islSea* 掛點先問這支。
+   出問題時把這支改成 return false,外島夥伴/島主就退回「沒有新機制」的普通戰鬥,本島戰鬥本來就不受影響。 */
+function islSeaOn(){ return typeof islSeaHurtPre === 'function'; }
 function islBtHurtUnit(u, dmg){
   var a, raw = dmg, pct = 0, shieldAmt = 0, before;
+  var _seaK = 1; if(islSeaOn()){ var _sx = islSeaHurtPre(u, dmg); if(_sx.done) return _sx.ret; _seaK = raw > 0 ? _sx.dmg / raw : 1; dmg = _sx.dmg; }   /* _seaK:外島減傷/分攤後剩下的比例,併進受傷數字的 −N% 顯示 */   /* ★ v1.384.0 象龜無敵/企鵝圈分攤/抱團取暖/具足蟲殘血減傷/象龜傷害封頂/具足蟲吸收累積 */
   if(u.side === 'p'){
     var B0 = _islBt;
     if(B0 && B0.heroShield > 0){ a = Math.min(B0.heroShield, dmg); B0.heroShield -= a; dmg -= a; shieldAmt += a; }
@@ -30045,14 +30109,17 @@ function islBtHurtUnit(u, dmg){
     if(dmg > 1 && islAccEff('cutP')){ dmg = Math.max(1, Math.round(dmg * (1 - Math.min(60, islAccEff('cutP')) / 100))); }   /* ★ v1.333.0 🟥 熔殼胸針 cutP:每次受傷 −25%(舊版固定 −3,後期魔物攻擊 40+ 時幾乎沒感覺) */
     ISL.hp = Math.max(0, ISL.hp - dmg); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true;
     if(ISL.hp <= 0 && dmg > 0 && islAccEff('gutsP') && Math.random() * 100 < islAccEff('gutsP')){ ISL.hp = 1; try{ islBtFloat('p', '🟤 撐住了!', 'heal'); islBtLog('🟤 泥心墜飾發光!你咬牙撐住,保留 1 點體力。'); }catch(_gp){} }   /* ★ v1.333.0 泥心墜飾 gutsP:受到致命傷害時 20% 機率保留 1 HP(每一下致命傷各擲一次) */
-    _islHurtInfo = { raw: raw, pct: _bc > 0 ? Math.round((1 - dmg / _bc) * 100) : 0, shield: shieldAmt, final: dmg };
+    if(ISL.hp <= 0 && dmg > 0 && islSeaOn()) islSeaOnDown(u);   /* ★ v1.384.0 🦦 海獺手牽手:主角留 1 點,下一回合回到 30% */
+    var _hp0 = _bc > 0 ? Math.round((1 - dmg / _bc * _seaK) * 100) : 0;   /* ★ v1.384.0 減傷 % 併進外島抱團/分攤 */
+    _islHurtInfo = { raw: raw, pct: _hp0, shield: shieldAmt, final: dmg };
+    if(islSeaOn()){ islSeaAfterHurt(u); _islHurtInfo = { raw: raw, pct: _hp0, shield: shieldAmt, final: dmg }; }   /* ★ v1.384.0 🐟 海鸚存魚急救(_islHurtInfo 重寫一次:急救不該改到這一下的受傷數字) */
     return dmg;
   }
   before = dmg;
   if(islPetTal(u, 'cutP')) dmg = Math.max(1, Math.round(dmg * (1 - islPetTal(u, 'cutP') / 100)));   /* ★ v1.167.0 天賦 cutP(穿山甲 鱗片護體) */
   if(u.t === 'pet' && islSkEff('petCutP')) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(50, islSkEff('petCutP')) / 100)));   /* ★ v1.317.0 馴獸專精 petCutP:寵物受到的傷害 −N%(上限 50%) */
   if(dmg > 1 && islPetGearEff(u, 'dmgHalfP') && Math.random() * 100 < islPetGearEff(u, 'dmgHalfP')){ dmg = Math.max(1, Math.round(dmg / 2)); }   /* ★ v1.331.0 🌋 熔心勇氣徽章 dmgHalfP:受到傷害時 N% 機率直接打對折(併進 pct 一起顯示在受傷數字的減傷 %) */
-  if(before > 0) pct = Math.round((1 - dmg / before) * 100);
+  if(before > 0) pct = Math.round((1 - dmg / before * _seaK) * 100);   /* ★ v1.384.0 _seaK:外島分攤/抱團/殘血減傷/封頂一起算進 −N% */
   if(u.shield > 0){ a = Math.min(u.shield, dmg); u.shield -= a; dmg -= a; shieldAmt += a; }
   _islHurtInfo = { raw: raw, pct: pct, shield: shieldAmt, final: dmg };
   u.hp = Math.max(0, u.hp - dmg);
@@ -30064,7 +30131,9 @@ function islBtHurtUnit(u, dmg){
     var _dhp = (u.t === 'pet') ? islPetTal(u, 'downHealAllP') : 0;   /* ★ v1.321.0 必須在 u.down 設 true 之前先讀天賦值——islPetTal 對 u.down 的單位一律回 0,倒下當下才觸發的天賦要先把值存起來 */
     u.down = true; islBtSetState(u.side, 'down', 0); playSfx('sfx-ko', 0.35); islBtLog('💤 ' + islEsc(u.n) + ' 撐不住,退下了……');
     if(_dhp) islBtPetDownHealAll(u, _dhp);   /* ★ v1.321.0 天賦 downHealAllP(櫻花鉤吻鮭 力竭迴游):自己倒下時全隊恢復 N% HP,可復活倒下的夥伴 */
+    if(islSeaOn() && u.down) islSeaOnDown(u);   /* ★ v1.384.0 🦦 海獺手牽手:下一回合以 30% 站起來 */
   }
+  if(islSeaOn() && !u.down){ var _hi0 = _islHurtInfo; islSeaAfterHurt(u); _islHurtInfo = _hi0; }   /* ★ v1.384.0 🐟 海鸚存魚急救 */
   return dmg;
 }
 /* ★ v1.325.0 組出「−120(−50%, −50)」這種格式的字串:prefix 是 🔥/🩸 這種前綴符號(不影響括號內容)。
@@ -30119,7 +30188,7 @@ function islAdvGain(n){
   if(up){ var _was = ISL.hpMax; islAdvApply(); ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(0, ISL.hpMax - _was)); try{ islSfx('levelUp'); }catch(_lu){} toast('⭐ 冒險等級提升到 Lv' + ISL.adv.lv + '!體力、攻擊、防禦都變強了'); }
   return '⭐ 冒險經驗 +' + n + (up ? '(升到 Lv' + ISL.adv.lv + '!)' : '');
 }
-function islAdvXpOf(ms, mul){ var A = islDB().ADV, E = islDB().ELITE, t = 0, i; if(!A) return 0; for(i = 0; i < ms.length; i++){ t += (A.xpWin + ms[i].lv * A.xpPerLv) * (ms[i].elite && E ? E.XP_MUL : 1); } return Math.round(t * (mul || 1)); }
+function islAdvXpOf(ms, mul){ var A = islDB().ADV, E = islDB().ELITE, t = 0, i; if(!A) return 0; for(i = 0; i < ms.length; i++){ if(ms[i].part) continue;   /* ★ v1.384.0 島主部位(氣根/腕足)不另算經驗 */ t += (A.xpWin + ms[i].lv * A.xpPerLv) * (ms[i].elite && E ? E.XP_MUL : 1); } return Math.round(t * (mul || 1)); }
 /* ★ v1.225.0 精英怪吸血詞綴:打中目標時回復傷害的 N% */
 function islBtLeech(m, dmg){ if(!m || !m.elite || !m.elite.leechP || m.hp <= 0) return; var h = Math.max(1, Math.round(dmg * m.elite.leechP / 100)); m.hp = Math.min(m.hpMax, m.hp + h); try{ islBtFloat(m.side, '+' + h, 'heal'); }catch(_lf){} islBtLog('🩸 ' + islEsc(m.n) + ' 吸血回復 +' + h + '。'); }
 function islBtPlayerStats(){
@@ -30549,6 +30618,7 @@ function islBtWatchStart(){
 function islBtOpen(){
   var B = _islBt, db = islDB(), h = '', ps = islBtPlayerStats(), m, w = ps.w, i, fastest;
   if(!B) return;
+  if(islSeaOn()) islSeaBtOpen();   /* ★ v1.384.0 外島島主的氣根/腕足部位單位,要在下面組畫面之前加入 B.ms */
   m = B.m;
   islBtWatchStart();   /* ★ v1.177.0 戰鬥卡住看門狗:開戰就掛,islBattleClose 收掉 */
   if(w && islPicOkSync(w.img) === undefined) islPicProbe(w.img, function(){ islBtWeaponPaint(); });
@@ -31042,12 +31112,12 @@ function islBtHp(){
   $('isl-bt-phpt').textContent = '❤️ ' + Math.max(0, ISL.hp) + '/' + ISL.hpMax;
   islBtSpUpdate();   /* ★ v1.284.0 SP 條(絕招剩餘次數)跟著 HP 一起同步,不必另開呼叫點 */
   sti = $('isl-bt-sti-p');
-  if(sti){ icons = []; if(B.p.stun > 0) icons.push({ k: 'stun' }); if(B.p.guard) icons.push({ k: 'guard' }); if(islBtFocusOn() && (B.focus || 0) > 0) icons.push({ k: 'focus', v: Math.min(islBtFocusMax(), B.focus) }); if(islBtChargeNow() > 0) icons.push({ k: 'chg', v: islBtChargeNow() }); if(B.p.brace > 0 && islSkEff('braceOn') > 0) icons.push({ k: 'brace' });   /* ★ v1.229.0 B5 */ if(B.p.slowT > 0) icons.push({ k: 'slow', v: B.p.slowT }); if(B.p.burnT > 0) icons.push({ k: 'burn', v: B.p.burnT }); sti.innerHTML = islBtStIconsHtml(icons); }
+  if(sti){ icons = []; if(B.p.stun > 0) icons.push({ k: 'stun' }); if(B.p.guard) icons.push({ k: 'guard' }); if(islBtFocusOn() && (B.focus || 0) > 0) icons.push({ k: 'focus', v: Math.min(islBtFocusMax(), B.focus) }); if(islBtChargeNow() > 0) icons.push({ k: 'chg', v: islBtChargeNow() }); if(B.p.brace > 0 && islSkEff('braceOn') > 0) icons.push({ k: 'brace' });   /* ★ v1.229.0 B5 */ if(B.p.slowT > 0) icons.push({ k: 'slow', v: B.p.slowT }); if(B.p.burnT > 0) icons.push({ k: 'burn', v: B.p.burnT }); if(islSeaOn()) icons = icons.concat(islSeaStIcons('p'));   /* ★ v1.384.0 */ sti.innerHTML = islBtStIconsHtml(icons); }
   for(i = 0; i < B.allies.length; i++){
     u = B.allies[i]; bar = $('isl-bt-hp-' + u.side); txt = $('isl-bt-hpt-' + u.side); box = $('isl-bt-box-' + u.side); sti = $('isl-bt-sti-' + u.side);
     if(bar) bar.style.width = Math.max(0, u.hp / u.hpMax * 100) + '%';
     if(txt) txt.textContent = '❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax;
-    if(sti){ icons = []; if(u.shield > 0) icons.push({ k: 'shield', v: u.shield }); if(u.down) icons.push({ k: 'down' }); else if(u.slowT > 0) icons.push({ k: 'slow', v: u.slowT }); if(u.burnT > 0) icons.push({ k: 'burn', v: u.burnT }); if(u.cd > 0) icons.push({ k: 'cd', v: u.cd }); sti.innerHTML = islBtStIconsHtml(icons); }
+    if(sti){ icons = []; if(u.shield > 0) icons.push({ k: 'shield', v: u.shield }); if(u.down) icons.push({ k: 'down' }); else if(u.slowT > 0) icons.push({ k: 'slow', v: u.slowT }); if(u.burnT > 0) icons.push({ k: 'burn', v: u.burnT }); if(u.cd > 0) icons.push({ k: 'cd', v: u.cd }); if(islSeaOn()) icons = icons.concat(islSeaStIcons(u));   /* ★ v1.384.0 */ sti.innerHTML = islBtStIconsHtml(icons); }
     if(box) box.className = 'bt-hpbox' + (u.down ? ' dead' : '');
   }
   islBtSplitCheck(); islBtBossPhaseCheck();   /* ★ v1.226.0 精英分裂;★ v1.227.0 頭目階段 */
@@ -31057,7 +31127,7 @@ function islBtHp(){
     if(txt) txt.textContent = '❤️ ' + Math.max(0, u.hp) + '/' + u.hpMax;
     if(u.boss && box){ var _tg = box.querySelector('.tgh'); if(!_tg){ box.insertAdjacentHTML('beforeend', '<div class="tgh" title="韌性"><i></i></div>'); _tg = box.querySelector('.tgh'); } _tg.firstChild.style.width = (u.brkT > 0 ? 100 : Math.max(0, u.tough / u.toughMax * 100)) + '%'; _tg.classList.toggle('brk', u.brkT > 0); }   /* ★ v1.227.0 韌性條 */
     if(box){ var _rl = box.querySelector('.rel'); if(_rl){ var _rr = islBtTypeRel(u, islWeaponDef(islWeaponCur())); _rl.textContent = _rr === 'strong' ? '⬆剋制' : (_rr === 'weak' ? '⬇吃虧' : ''); _rl.className = 'rel ' + _rr; } }   /* ★ v1.228.0 */
-    if(sti){ icons = []; if(u.bleed > 0) icons.push({ k: 'bleed', v: u.bleed }); if(islBtBrkLv(u) > 0) icons.push({ k: 'brkL', v: islBtBrkLv(u) });   /* ★ v1.229.0 B5 */ if(u.burnT > 0) icons.push({ k: 'burn', v: u.burnT }); if(u.poisonT > 0) icons.push({ k: 'mpois', v: u.poisonT }); if(u.confT > 0) icons.push({ k: 'conf', v: u.confT }); if(u.blindT > 0) icons.push({ k: 'blind', v: u.blindT });   /* ★ v1.331.0 */ if(u.stun > 0) icons.push({ k: 'stun' }); if(u.grdTele && u.hp > 0) icons.push({ k: 'grd' }); if(u.tele && u.hp > 0 && islBtStfxEnsure('sk_' + u.k)) icons.push({ k: 'sk_' + u.k }); if(u.hardT > 0) icons.push({ k: 'hard', v: u.hardT }); if(u.hideT > 0) icons.push({ k: 'hide', v: u.hideT }); if(u.elite && islBtStfxEnsure('el_' + u.elite.k)) icons.push({ k: 'el_' + u.elite.k }); if(u.boss && u.ult > 0) icons.push({ k: 'ult', v: u.ult }); if(u.brkT > 0) icons.push({ k: 'brk' }); sti.innerHTML = islBtStIconsHtml(icons); }
+    if(sti){ icons = []; if(u.bleed > 0) icons.push({ k: 'bleed', v: u.bleed }); if(islBtBrkLv(u) > 0) icons.push({ k: 'brkL', v: islBtBrkLv(u) });   /* ★ v1.229.0 B5 */ if(u.burnT > 0) icons.push({ k: 'burn', v: u.burnT }); if(u.poisonT > 0) icons.push({ k: 'mpois', v: u.poisonT }); if(u.confT > 0) icons.push({ k: 'conf', v: u.confT }); if(u.blindT > 0) icons.push({ k: 'blind', v: u.blindT });   /* ★ v1.331.0 */ if(u.stun > 0) icons.push({ k: 'stun' }); if(u.grdTele && u.hp > 0) icons.push({ k: 'grd' }); if(u.tele && u.hp > 0 && islBtStfxEnsure('sk_' + u.k)) icons.push({ k: 'sk_' + u.k }); if(u.hardT > 0) icons.push({ k: 'hard', v: u.hardT }); if(u.hideT > 0) icons.push({ k: 'hide', v: u.hideT }); if(u.elite && islBtStfxEnsure('el_' + u.elite.k)) icons.push({ k: 'el_' + u.elite.k }); if(u.boss && u.ult > 0) icons.push({ k: 'ult', v: u.ult }); if(u.brkT > 0) icons.push({ k: 'brk' }); if(islSeaOn()) icons = icons.concat(islSeaStIcons(u));   /* ★ v1.384.0 */ sti.innerHTML = islBtStIconsHtml(icons); }
     if(box) box.className = 'bt-hpbox m' + (u.hp <= 0 ? ' dead' : (i === B.mi ? ' tgt' : ''));
   }
   try{ islBtGrdUi(islBtGrdPending()); }catch(_gu){}   /* ★ v1.335.0 頭目在蓄勢中被打倒 ⇒ 橘光/防禦鈕閃爍一起收掉 */
@@ -31143,7 +31213,7 @@ function islBtFxSkill(m, S){
   var F = islBtFxDB();
   if(!S) return null;
   if(S.t === 'ult' && m && F.bossUlt && F.bossUlt[m.k]) return F.bossUlt[m.k];
-  return (F.monSkill && F.monSkill[S.t]) || null;
+  return (F.monSkill && F.monSkill[S.fxT || S.t]) || null;   /* ★ v1.384.0 外島島主新招式借用既有特效(S.fxT) */
 }
 function islBtFxEv(key, cs, ts){ var F = islBtFxDB(); islBtFxPlay(F.ev && F.ev[key], cs, ts); }
 function islBtFxCmdKey(cmd){ var a = islDB().PET_CMDS || {}, k; for(k in a){ if(a.hasOwnProperty(k) && a[k] === cmd) return k; } return ''; }
@@ -31626,6 +31696,7 @@ function islBtResolveAttack(results){
       var _def2 = m.def;
       if(_bl0) _def2 = Math.max(0, Math.round(m.def * (1 - islBtBrkDefP(m) / 100)));   /* ★ v1.229.0 B5 破甲層(疊在魔物身上,取代舊 breakP/B.brk) */
       if(B.defDown) _def2 = Math.max(0, Math.round(_def2 * (1 - B.defDown)));
+      if(islSeaOn()) _def2 = Math.max(0, Math.round(_def2 * islSeaDefMul(m, null)));   /* ★ v1.384.0 🐆 美洲豹破甲(全隊受惠) */
       if(islAffixEff('defIgnP')) _def2 = Math.max(0, Math.round(_def2 * (1 - islAffixEff('defIgnP') / 100)));   /* ★ v1.228.0 磁化 */
       dmg = islBtDmg(ps.atk, _def2);
       var _bonus = (ps.dmgP || 0) + (m.stun > 0 ? islSkEff('vsStunP') : 0) + (m.bleed > 0 ? islSkEff('vsBleedP') : 0) + islBtFocusDmg() + _chg * (30 + islSkEff('chargeMul')) + ((_bl0 && _bl0 >= islBtBrkMax()) ? islSkEff('brkFullP') : 0);   /* ★ v1.229.0 B5 專注/蓄力/碎甲(取代舊 comboP/chargeP) */
@@ -31757,7 +31828,7 @@ function islSkAct(){
     for(i = 0; i < (d.hits || 1); i++){
       var _tg = m, _al;
       if(d.spread){ _al = islBtAliveMons(); if(_al.length) _tg = _al[Math.floor(Math.random() * _al.length)]; }   /* ★ v1.229.0 B5 迴旋亂舞每段隨機 */
-      dmg = Math.max(1, Math.round(islBtDmgRaw(ps.atk, Math.round(_tg.def * (1 - islBtBrkDefP(_tg) / 100))) * (d.mul || 1) * islHeroSkMul() * _aMul * (0.95 + Math.random() * 0.1) * islBtTypeMul(_tg, ps.w) * islBtB4Mul(_tg, ps)));   /* ★ v1.228.0 類型剋制也吃絕招;★ v1.229.0 破甲/蓄力/專注 */
+      dmg = Math.max(1, Math.round(islBtDmgRaw(ps.atk, Math.round(_tg.def * (1 - islBtBrkDefP(_tg) / 100) * (islSeaOn() ? islSeaDefMul(_tg, null) : 1))) * (d.mul || 1) * islHeroSkMul() * _aMul * (0.95 + Math.random() * 0.1) * islBtTypeMul(_tg, ps.w) * islBtB4Mul(_tg, ps)));   /* ★ v1.228.0 類型剋制也吃絕招;★ v1.229.0 破甲/蓄力/專注 */
       if(_tg !== m){ dmg = islBtBossDmg(_tg, dmg, 'p'); _tg.hp = Math.max(0, _tg.hp - dmg); (function(u, v){ setTimeout(function(){ if(_islBt){ islBtFloat(u.side, '−' + v, 'combo'); islBtSetState(u.side, u.hp <= 0 ? 'down' : 'hit', 450); } }, 200); })(_tg, dmg); txt.push('↪' + dmg); continue; }
       total += dmg; txt.push(String(dmg));
     }
@@ -31786,7 +31857,7 @@ function islBtOutwit(){
   q.innerHTML = h; q.classList.remove('hidden');
   islBtWitHint(m); B._witOpen = true;   /* ★ v1.335.0 上方提示小視窗;開著時點別隻魔物會重畫(islBtPickTargetEv) */
   q.onclick = function(ev){ var t = ev.target; while(t && t !== q && !(t.getAttribute && t.getAttribute('data-t'))) t = t.parentNode; if(!t || t === q) return; q.onclick = null; q.classList.add('hidden'); islBtWitHint(null); B._witOpen = false; B.outwit = true; B.witCd = (db.BT.WIT_CD || 3);   /* ★ v1.226.0 冷卻制 */
-    if(t.getAttribute('data-t') === m.tool){ playSfx('sfx-quiz-correct', 0.5); islBtSetState('p', 'atk', 600); islBtFxEv('outwit', 'p', m.side); setTimeout(function(){ if(!_islBt) return; var _owd = Math.round(islBtPlayerStats().atk * 2 + m.hpMax * 0.2); m.hp = Math.max(0, m.hp - _owd);   /* ★ v1.284.0 老師「智取傷害改成玩家攻擊力的2倍+目標最大HP的20%」,取代原本 max(固定值,12%最大HP)(v1.225.0) */ if(m.tele){ var _tS = islBtMonSkillDef(m); m.tele = false; m.teleS = null; m.skCd = _tS ? _tS.cd : 2; islBtLog('🔍 看穿了!' + islEsc(m.n) + ' 的「' + (_tS ? islEsc(_tS.n) : '') + '」被你取消了。'); } if(m.hardT > 0 && typeof m._def0 === 'number'){ m.def = m._def0; m.hardT = 0; } m.hideT = 0; if(m.boss) islBtToughHit(m, db.BOSS_RULE.tough.wit);   /* ★ v1.226.0 預告中用對工具 = 取消招式;★ v1.227.0 頭目削韌 */ m.stun = Math.max(m.stun, db.BT.OUTWIT_STUN); playSfx('sfx-normalatk', 0.45); islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 150); islBtFloat('m', '−' + _owd, 'combo'); islBtHp(); islBtLog('✓ 答對!' + islEsc(m.why) + ' ' + islEsc(m.n) + ' 暈了 ' + db.BT.OUTWIT_STUN + ' 回合。'); islStatGain('wit', 1); if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; } setTimeout(islBtMonTurn, 1100); }, 380); }
+    if(t.getAttribute('data-t') === m.tool){ playSfx('sfx-quiz-correct', 0.5); islBtSetState('p', 'atk', 600); islBtFxEv('outwit', 'p', m.side); setTimeout(function(){ if(!_islBt) return; var _owd = Math.round(islBtPlayerStats().atk * 2 + m.hpMax * 0.2); m.hp = Math.max(0, m.hp - _owd);   /* ★ v1.284.0 老師「智取傷害改成玩家攻擊力的2倍+目標最大HP的20%」,取代原本 max(固定值,12%最大HP)(v1.225.0) */ if(m.tele){ var _tS = islBtMonSkillDef(m); m.tele = false; m.teleS = null; m.skCd = _tS ? _tS.cd : 2; islBtLog('🔍 看穿了!' + islEsc(m.n) + ' 的「' + (_tS ? islEsc(_tS.n) : '') + '」被你取消了。'); } if(m.hardT > 0 && typeof m._def0 === 'number'){ m.def = m._def0; m.hardT = 0; } m.hideT = 0; if(m.boss) islBtToughHit(m, db.BOSS_RULE.tough.wit); if(islSeaOn()) islSeaOutwit(m);   /* ★ v1.384.0 火把融霜凍/鏡子照亮黑暗/鐮刀割斷纏繞 */   /* ★ v1.226.0 預告中用對工具 = 取消招式;★ v1.227.0 頭目削韌 */ m.stun = Math.max(m.stun, db.BT.OUTWIT_STUN); playSfx('sfx-normalatk', 0.45); islBtSetState('m', 'stun', 0); islBtFx('m', 'dizzy', 150); islBtFloat('m', '−' + _owd, 'combo'); islBtHp(); islBtLog('✓ 答對!' + islEsc(m.why) + ' ' + islEsc(m.n) + ' 暈了 ' + db.BT.OUTWIT_STUN + ' 回合。'); islStatGain('wit', 1); if(m.hp <= 0){ islBtOnMonDown(m, function(){ islBtMonTurn(); }); return; } setTimeout(islBtMonTurn, 1100); }, 380); }
     else { playSfx('sfx-ng', 0.4); islBtLog('✗ 牠不怕這個!' + islEsc(m.why) + ' 反而被撲過來——'); setTimeout(islBtMonTurn, 900); }
   };
 }
@@ -31969,8 +32040,9 @@ function islBtMonSkill(m, next){
   if(m.boss){ S = m.boss.skills[Math.floor(Math.random() * m.boss.skills.length)]; if((S.t === 'harden' && m.hardT > 0) || (S.t === 'summon' && _islBt.ms.length >= 4)) return false; }
   if(Math.random() * 100 >= S.p + (m.phase >= 2 ? 15 : 0)) return false;
   m.tele = true; if(m.boss) m.teleS = S;
+  if(m.boss && islSeaOn() && islSeaTele(m, S, next)) return true;   /* ★ v1.384.0 外島島主:預告時就鎖定目標({T});擬態變色直接變色 */
   islBtSetState(m.side, 'idle', 0); islBtFloat(m.side, '⚠ ' + S.n, 'combo'); playSfx('sfx-cantmove', 0.4);
-  islBtLog('⚠ ' + S.e + ' ' + islEsc(m.n) + ':' + islEsc(S.tele) + '<b>(下回合放「' + islEsc(S.n) + '」)</b> 💡' + islEsc(S.hint));
+  islBtLog('⚠ ' + S.e + ' ' + islEsc(m.n) + ':' + islEsc(islSeaOn() ? islSeaTeleTxt(m, S) : S.tele) + '<b>(下回合放「' + islEsc(S.n) + '」)</b> 💡' + islEsc(S.hint));
   islBtHp();
   setTimeout(function(){ if(_islBt && !_islBt.over) next(); }, 1000);
   return true;
@@ -31984,7 +32056,8 @@ function islBtMonSkillRun(m, S, next){
   if(S.t === 'vanish'){ m.hideT = S.dur || 2; islBtFloat(m.side, '隱身', 'block'); islBtHp(); setTimeout(next, 900); return; }
   if(S.t === 'summon'){ var _sn = 0, _si; for(_si = 0; _si < (S.cnt || 1); _si++){ if(islBtAddMon(S.k, Math.max(1, m.lv - 4))) _sn++; } islBtLog(_sn ? '📣 叫來了 ' + _sn + ' 隻幫手!' : '📣 ……但戰場已經擠滿了。'); islBtHp(); setTimeout(next, 1000); return; }
   if(S.t === 'heal'){ var _hh = Math.round(m.hpMax * (S.healP || 20) / 100); m.hp = Math.min(m.hpMax, m.hp + _hh); islBtFloat(m.side, '+' + _hh, 'heal'); islBtHealParticles(m.side); islBtHp(); setTimeout(next, 900); return; }
-  if(S.t === 'blind'){ _islBt.blindT = Math.max(_islBt.blindT || 0, S.dur || 2); islBtLog('🌑 四周一片漆黑!' + (S.dur || 2) + ' 回合內攻擊有 40% 會落空。'); }
+  if(m.boss && islSeaOn() && islSeaSkillRun(m, S, next)) return;   /* ★ v1.384.0 外島島主新招式(霜凍/鎖定衝撞/雷擊標記/捲走/暴風捲/絞殺纏繞/種子炸彈/光合/八腕齊出/深海黑暗) */
+  if(S.t === 'blind'){ var _bdu = islSeaOn() ? islSeaAilShort(S.dur || 2) : (S.dur || 2); _islBt.blindT = Math.max(_islBt.blindT || 0, _bdu); islBtLog('🌑 四周一片漆黑!' + _bdu + ' 回合內攻擊有 40% 會落空。'); }   /* ★ v1.384.0 金剛鸚鵡縮短 */
   if(S.t === 'strip'){ _islBt.buff = {}; islBtLog('🍂 全隊的增益被啃光了!'); }
   if(S.t === 'burn' || S.t === 'quake' || S.t === 'aoe' || S.t === 'strip' || S.t === 'blind' || S.t === 'ult') targets = islBtFriendliesAlive();
   else if(S.t === 'multi'){ pool = islBtFriendliesAlive(); for(var _mi = 0; _mi < (S.n2 || 4) && pool.length; _mi++) targets.push(pool[Math.floor(Math.random() * pool.length)]); }
@@ -32006,6 +32079,7 @@ function islBtMonHitSeq(m, S, list, i, next){
     dmg = islBtDmg(m.atk * mul, def);
     dmg = Math.round(dmg * (0.9 + Math.random() * 0.2));
     if(islBtDeb('dmgDownP')) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(90, islBtDeb('dmgDownP')) / 100)));   /* ★ v1.321.0 天賦/技能 dmgDownP(五色鳥 啄木聲波):敵方招式傷害同樣吃這個減益 */
+    if(islSeaOn()) dmg = islSeaMonOut(m, dmg);   /* ★ v1.384.0 */
     if(u.side === 'p' && r === 'good') dmg = islBtDodgeApply(u, 'good', dmg);
     dmg = islBtTacTaken(u, dmg);
     if(u.side === 'p'){
@@ -32019,8 +32093,10 @@ function islBtMonHitSeq(m, S, list, i, next){
     if(!(u.side !== 'p' && u.down)) islBtSetState(u.side, 'hit', 500);
     islBtFx(u.side, 'hit'); islBtFxPlay(islBtFxSkill(m, S), null, u.side, true); islBtHurtFloat(u.side, 'combo'); islBtHp();   /* ★ v1.240.0 招式打中目標的特效(音效在施放時播過) */ /* ★ v1.325.0 傷害數字改用 islBtHurtFloat,護盾/減傷% 併入同一個浮動文字 */
     islBtLog('💥「' + islEsc(S.n) + '」打中 ' + islEsc(u.side === 'p' ? ((ISL.char && ISL.char.name) || '你') : u.n) + ' ' + islBtHurtFloatText('') + extra + '。');
-    if(S.slow && !_gOk){ if(u.side === 'p'){ if(islResRoll('cold')) islBtLog('❄ 身體保暖不僵硬,沒有被拖慢!'); else B.p.slowT = Math.max(B.p.slowT || 0, S.slow); } else if(!islBtPetAilBlock(u, '被拖慢')) u.slowT = Math.max(u.slowT || 0, S.slow); }   /* ★ v1.228.0 寒冷抗性 */
-    if(S.dot && !_gOk){ if(u.side === 'p'){ var _dk = (S.t === 'burn') ? 'burn' : 'poison'; if(islResRoll(_dk)) islBtLog((_dk === 'burn' ? '🔥 燒燙' : '☠ 毒') + '抗性擋下了持續傷害!'); else { B.p.burnT = Math.max(B.p.burnT || 0, S.dur || 2); B.p.dotKey = _dk; } } else if(!islBtPetAilBlock(u, '受到持續傷害')) u.burnT = Math.max(u.burnT || 0, S.dur || 2); }   /* ★ v1.228.0 燒燙/毒抗性 */
+    var _sSl = S.slow, _sDu = S.dur || 2; if(islSeaOn()){ _sSl = islSeaAilShort(_sSl); _sDu = islSeaAilShort(_sDu); }   /* ★ v1.384.0 🦜 吃黏土解毒:2 回合以上的不利狀態縮短 1 回合 */
+    if(S.slow && !_gOk){ if(u.side === 'p'){ if(islResRoll('cold')) islBtLog('❄ 身體保暖不僵硬,沒有被拖慢!'); else B.p.slowT = Math.max(B.p.slowT || 0, _sSl); } else if(!islBtPetAilBlock(u, '被拖慢')) u.slowT = Math.max(u.slowT || 0, _sSl); }   /* ★ v1.228.0 寒冷抗性 */
+    if(S.dot && !_gOk && S.t !== 'burn' && islPetTalAll('poisonImm')){ islBtLog('🦜 金剛鸚鵡吃的黏土把毒吸走了,' + islEsc(u.side === 'p' ? '你' : u.n) + ' 沒有中毒!'); }   /* ★ v1.384.0 🦜 全隊不會中毒 */
+    else if(S.dot && !_gOk){ if(u.side === 'p'){ var _dk = (S.t === 'burn') ? 'burn' : 'poison'; if(islResRoll(_dk)) islBtLog((_dk === 'burn' ? '🔥 燒燙' : '☠ 毒') + '抗性擋下了持續傷害!'); else { B.p.burnT = Math.max(B.p.burnT || 0, _sDu); B.p.dotKey = _dk; } } else if(!islBtPetAilBlock(u, '受到持續傷害')) u.burnT = Math.max(u.burnT || 0, _sDu); }   /* ★ v1.228.0 燒燙/毒抗性 */
     stunN = _gOk ? 0 : (S.stun || ((S.stunP && Math.random() * 100 < S.stunP) ? 1 : 0));
     if(stunN && u.side === 'p' && (islAccEff('stunResP') + islAccEff('ailResP')) && Math.random() * 100 < (islAccEff('stunResP') + islAccEff('ailResP'))){ stunN = 0; islBtLog('🪞 蛇鱗手鏡擋住了!沒有被' + (S.t === 'petrify' ? '石化' : '震暈') + '。'); }   /* ★ v1.228.0 */
     if(stunN && !islBtBuff('immune')){
@@ -32030,11 +32106,12 @@ function islBtMonHitSeq(m, S, list, i, next){
     if(u.side === 'p' && ISL.hp <= 0){ setTimeout(function(){ islBattleEnd('lose'); }, 600); return; }
     setTimeout(function(){ islBtMonHitSeq(m, S, list, i + 1, next); }, 450);
   };
-  if(S.grd){ go('none'); return; }   /* ★ v1.335.0 重壓技:閃不掉(不跳「!」、羽毛腳環也躲不開),只能靠防禦扛 */
+  if(S.grd){ go((islSeaOn() && islSeaGrdDodge(u)) ? 'perfect' : 'none'); return; }   /* ★ v1.335.0 重壓技:閃不掉(不跳「!」、羽毛腳環也躲不開),只能靠防禦扛;★ v1.384.0 外島島主的重壓技 QTE 成功(冰面裂縫跳到厚冰上)⇒ 主角當成完美閃避 */
   if(u.side !== 'p' && islPetGearEff(u, 'dodgeAddP') && Math.random() * 100 < islPetGearEff(u, 'dodgeAddP')){   /* ★ v1.331.0 🪶 羽毛腳環:招式也能額外迴避 */
     playSfx('sfx-evade', 0.4); islBtFloat(u.side, '閃過!', 'block'); islBtLog('🪶 ' + islEsc(u.n) + ' 輕巧地躲開了「' + islEsc(S.n) + '」!');
     setTimeout(function(){ islBtMonHitSeq(m, S, list, i + 1, next); }, 450); return;
   }
+  if(u.side !== 'p' && islSeaOn() && islSeaFoxDodge(u, S.n)){ setTimeout(function(){ islBtMonHitSeq(m, S, list, i + 1, next); }, 450); return; }   /* ★ v1.384.0 🦊 雪地保護色(招式也能閃) */
   if(islBtTalDodge(u)){   /* ★ v1.340.0 冷光迴避:招式同樣可以多擲一次(重壓技 S.grd 在上面已先 return,照舊閃不掉) */
     playSfx('sfx-evade', 0.4); islBtFloat(u.side, '閃過!', 'block'); islBtLog('✨ 冷光中 ' + islEsc(u.n) + ' 看清了動作,躲開了「' + islEsc(S.n) + '」!');
     setTimeout(function(){ islBtMonHitSeq(m, S, list, i + 1, next); }, 450); return;
@@ -32083,6 +32160,7 @@ function islBtPerfectCounter(m, next){
 /* 燒燙傷/減速:每回合開頭結算;回傳 true = 主角倒下 */
 function islBtStatusTick(){
   var B = _islBt, i, u, d, MS = islDB().MON_SKILL, dotP = (MS && MS.ember && MS.ember.dot) || 5;
+  if(islSeaOn() && islSeaTurnTick()) return true;   /* ★ v1.384.0 外島夥伴/島主的每回合機制(存魚/復活/吸收爆發/冰甲/暴風雪/氣根/纏繞/種子/颱風眼/水壓/黑暗/再生腕足);回 true = 主角倒下或魔物全滅 */
   if(B.blindT > 0) B.blindT--; if(B.p.slowT > 0) B.p.slowT--;
   if(B.p.burnT > 0 && ISL.hp > 0){
     B.p.burnT--; d = Math.max(1, Math.round(ISL.hpMax * dotP / 100 * islResMul(B.p.dotKey || 'burn')));   /* ★ v1.228.0 抗性減傷 */ ISL.hp = Math.max(0, ISL.hp - d); islBtFloat('p', '🔥−' + d, ''); islBtLog('🔥 燒燙傷 −' + d + '。');
@@ -32283,6 +32361,7 @@ function islBtToughHit(m, n){
 }
 function islBtBossDmg(m, dmg, src){
   var R = islDB().BOSS_RULE, mul = 1, w;
+  if(islSeaOn()) dmg = islSeaMonTaken(m, dmg, src);   /* ★ v1.384.0 雪鴞鎖定/北極狐冰凍(所有魔物)+島主機制(冰甲/氣根/眼牆與颱風眼/大王魷變白) */
   if(!m || !m.boss || !R) return dmg;
   if(m.brkT > 0) mul = mul * R.brokenMul;
   if(src === 'p'){ w = islBtPlayerStats().w; if(w && m.boss.weakWp.indexOf(w.id) >= 0 && islBtTypeRel(m, w) !== 'strong') mul = mul * R.weakWpMul; }   /* ★ v1.228.0 類型剋制(×1.3)已經算過就不再疊剋制武器 */
@@ -32314,6 +32393,7 @@ function islBtBossPhaseCheck(){
     try{ islBtBanner(ph === 2 ? '🔥 第二階段!' : '💢 最終階段!'); }catch(_e){} islBtFxEv('bossPhase', m.side, null);
     playSfx('sfx-summon-reveal', 0.5); islBtLog('🔥 ' + islEsc(P.text));
     if(P.summon) islBtAddMon(P.summon, Math.max(1, m.lv - 4));
+    if(islSeaOn()) islSeaPhase(m, P);   /* ★ v1.384.0 冰甲補滿+暴風雪/逆風/再生腕足(根系相連直接看 m.phase) */
   }
 }
 /* ══ ★ v1.335.0 頭目大絕招(重壓技)══
@@ -32369,6 +32449,11 @@ function islBtGrdBoom(G){
 function islBtGrdRelease(m, G, next){
   var B = _islBt, F = islBtFxDB(), S, targets;
   islBtGrdUi(false);
+  if(G.qte && islSeaOn() && !B._seaQDone){   /* ★ v1.384.0 外島島主重壓技先跑 QTE(冰面裂縫=往安全方向滑動);主角暈著就直接算失敗 */
+    if(B.p.stun > 0 || ISL.hp <= 0) B._seaQ = 'fail';
+    else { islSeaQteRun(G.qte, m, function(r){ if(!_islBt || _islBt.over) return; _islBt._seaQ = r; _islBt._seaQDone = true; islBtGrdRelease(m, G, next); }); return; }
+  }
+  B._seaQDone = false;
   B._grdG = !!(B.p.guard && ISL.hp > 0 && !(B.p.stun > 0));
   B._grdStun = !B._grdG && B.p.stun > 0;
   S = { t: G.t || (G.aoe ? 'aoe' : 'charge'), n: G.n, e: G.e, mul: G.mul, grd: 1, stun: G.stun || 0, slow: G.slow || 0, dot: G.dot || 0, dur: G.dur || 2 };
@@ -32393,6 +32478,7 @@ function islBtGrdTaken(side, dmg){
     if(B._grdStun) return Math.max(1, Math.round(dmg * R.stunMul));
     return dmg;
   }
+  if(B._seaQ === 'ok'){ islBtFloat(side, '跟著躲開!', 'block'); return Math.max(1, Math.round(dmg * 0.3)); }   /* ★ v1.384.0 QTE 成功:夥伴跟著你躲到安全的地方 */
   if(B._grdG){ islBtFloat(side, '趴下!', 'block'); return Math.max(1, Math.round(dmg * R.allyMul)); }
   return dmg;
 }
@@ -32407,6 +32493,9 @@ function islBtGrdAfter(m, G, next){
     islBtLog('🛡 穩穩扛住了「' + islEsc(G.n) + '」!' + (m.hp > 0 && R.tough ? '反震讓 ' + islEsc(m.n) + ' 的韌性 −' + R.tough + '。' : ''));
   }
   if(G.sci) islBtLog('🔬 ' + islEsc(G.sci));
+  if(G.qte && B._seaQ === 'ok') islBtLog('🧊 你跳到厚冰上,躲開了「' + islEsc(G.n) + '」!');
+  else if(G.qte === 'swipe' && B._seaQ === 'fail' && ISL.hp > 0){ B.p.stun = Math.max(B.p.stun, 1); islBtLog('🧊 一腳踩進冰縫,凍得動不了!下回合不能行動。'); }   /* ★ v1.384.0 */
+  B._seaQ = null;
   B._grdG = false; B._grdStun = false;
   islBtHp();
   next();
@@ -32460,7 +32549,8 @@ function islBtBossQuiz(m, next){
   };
 }
 function islBtBossUlt(m, next){
-  var U = m.boss.ult, B = _islBt, S = { t: 'ult', n: U.n, e: U.e, mul: (U.mul || 2.2) * (B.ultCover ? (U.cover || 0.2) : 1), stunP: U.stunP || 0 };
+  if(islSeaOn() && m.boss.ult && m.boss.ult.qte && _islBt && !_islBt._seaUltQ && islSeaUltQte(m, m.boss.ult, next)) return;   /* ★ v1.384.0 外島島主必殺技先跑 QTE(十七級強風=逆時針畫圈/深淵之眼=按住放開);QTE 結束回呼會再進來一次 */
+  var U = m.boss.ult, B = _islBt, S = { t: 'ult', n: U.n, e: U.e, mul: (U.mul || 2.2) * (B.ultCover ? (U.cover || 0.2) : 1) * (islSeaOn() ? islSeaUltMul(U) : 1), stunP: U.stunP || 0 };
   try{ islBtBanner('☠ ' + U.n + '!'); }catch(_b){}
   if(B.ultCover) islBtLog('🛡 大家躲在掩護後面!');
   B.ultCover = false;
@@ -32498,7 +32588,9 @@ function islBtMonAct(m, next){
   if(m.stun > 0){ islBtMonInterrupt(m); m.stun--; if(m.stun <= 0 && m.brkT > 0){ m.brkT = 0; islBtLog('🟨 ' + islEsc(m.n) + ' 從破韌中站起來了。'); } islBtSetState(m.side, 'stun', 0); islBtFx(m.side, 'dizzy', 140); islBtLog('😵 ' + islEsc(m.n) + ' 暈眩中,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(m.stun <= 0) islBtSetState(m.side, 'idle', 0); next(); } }, 1000); return; }
   if(m.sleep > 0 && m.hp !== m._sleepHp){ m.sleep = 0; islBtLog('⏰ ' + islEsc(m.n) + ' 被打醒了!'); }   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠(受到攻擊就醒來)」— 跟入睡當下記錄的血量快照(_sleepHp)不一樣,代表這段期間挨了打,提前清醒、這回合照常行動,不必等睡滿回合數 */
   if(m.sleep > 0){ islBtMonInterrupt(m); m.sleep--; islBtSetState(m.side, 'stun', 0); islBtFx(m.side, 'dizzy', 140); islBtLog('💤 ' + islEsc(m.n) + ' 睡得正香,叫不醒!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(m.sleep <= 0) islBtSetState(m.side, 'idle', 0); next(); } }, 1000); return; }   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 跟暈眩一樣撐滿回合數會自動醒,但額外多一條「被打就立刻清零醒來」的路徑(見上一行),兩個途徑只要滿足一個就醒 */
+  if(m.frzT > 0){ islBtMonInterrupt(m); m.frzT--; islBtSetState(m.side, 'stun', 0); islBtFx(m.side, 'dizzy', 140); islBtLog('🧊 ' + islEsc(m.n) + ' 被凍住了,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(m.frzT <= 0) islBtSetState(m.side, 'idle', 0); next(); } }, 1000); return; }   /* ★ v1.384.0 🦊 北極狐冰凍:跟暈眩不同,挨打不會醒(頭目不會進這個狀態,改成削韌) */
   if(islBtMonConfuseAct(m, next)) return;   /* ★ v1.331.0 💫 混亂中:這一動改打同伴(頭目不會進這個狀態) */
+  if(m.boss && islSeaOn() && islSeaBossPre(m, next)) return;   /* ★ v1.384.0 🎨 大王魷變色結算(變紅=重擊全隊/變白=這一動休息) */
   if(islBtMonSkill(m, next)) return;   /* ★ v1.226.0 B2 預告/放招式,這回合就不普攻 */
   pick = islBtMonPickTarget();
   if(!pick){ next(); return; }
@@ -32540,6 +32632,7 @@ function islBtMonAct(m, next){
       islBtLog('🪶 ' + islEsc(u.n) + ' 腳步輕盈,躲開了 ' + islEsc(m.n) + ' 的攻擊!');
       setTimeout(next, 700); return;
     }
+    if(u.side !== 'p' && islSeaOn() && islSeaFoxDodge(u, m.n)){ setTimeout(next, 700); return; }   /* ★ v1.384.0 🦊 雪地保護色 */
     if(!(u.side === 'p' && B._dq === 'perfect') && islBtTalDodge(u)){   /* ★ v1.340.0 冷光迴避(螢火蟲):昏暗環境全隊多一次 15% 迴避,主角也吃;主角已經完美閃避時讓給完美閃避(保留反擊) */
       playSfx('sfx-evade', 0.45); islBtFloat(u.side, '閃過!', 'block');
       islBtLog('✨ 冷光中 ' + islEsc(u.n) + ' 看清了動作,躲開了 ' + islEsc(m.n) + ' 的攻擊!');
@@ -32550,6 +32643,7 @@ function islBtMonAct(m, next){
     cut = (u.side === 'p') ? ps.def : Math.round(u.def * (1 + islBtBuff('defUpP') / 100));
     dmg = islBtDmg(m.atk, cut); dmg = Math.round(dmg * (0.9 + Math.random() * 0.2) * (crit ? 1.5 : 1));
     if(islBtDeb('dmgDownP')) dmg = Math.max(1, Math.round(dmg * (1 - Math.min(90, islBtDeb('dmgDownP')) / 100)));   /* ★ v1.321.0 天賦/技能 dmgDownP(五色鳥 啄木聲波):敵方這回合造成的傷害 −N% */
+    if(islSeaOn()) dmg = islSeaMonOut(m, dmg);   /* ★ v1.384.0 🦫 和平使者光環/🦑 少腕足加攻 */
     if(u.side === 'p' && B._dq === 'good') dmg = islBtDodgeApply(u, 'good', dmg);
     if(pick.cover){ dmg = Math.max(1, Math.round(dmg * (1 - pick.cut / 100))); islBtLog('🛡 ' + islEsc(u.n) + ' 擋在 ' + islEsc(pick.cover.n) + ' 前面,替他承受了這一下!'); }
     if(pick.byTaunt && B.tauntCut) dmg = Math.max(1, Math.round(dmg * (1 - B.tauntCut / 100)));
@@ -32607,8 +32701,10 @@ function islBtAllyTurn(done){
     var db = islDB(), fa = (a.cmd && db.PET_CMDS[a.cmd] && db.PET_CMDS[a.cmd].fx.first && a.cd <= 0) ? 1 : 0,
         fb = (b.cmd && db.PET_CMDS[b.cmd] && db.PET_CMDS[b.cmd].fx.first && b.cd <= 0) ? 1 : 0;
     if(fa !== fb) return fb - fa;
+    if(B.headwind) return (a.spd || 0) - (b.spd || 0);   /* ★ v1.384.0 颶風元靈第二階段「逆風」:最慢的先動 */
     return a.row - b.row;
   });
+  if(B.shuffleT > 0){ B.shuffleT = 0; list = shuffle(list); islBtLog('🌀 被暴風捲吹得東倒西歪,夥伴的出手順序亂掉了!'); }   /* ★ v1.384.0 暴風捲 */
   B.allyFirst = list.length ? list[0].side : null;   /* ★ v1.167.0 這一輪誰第一個出手(天賦 firstDmgP 要用) */
   islBtAllySeq(list, 0, done);
 }
@@ -32617,7 +32713,7 @@ function islBtAllySeq(list, i, done){
   if(!B || B.over) return;
   if(i >= list.length){ done(); return; }
   if(list[i].down){ islBtAllySeq(list, i + 1, done); return; }
-  islBtAllyAct(list[i], function(){ islBtAllySeq(list, i + 1, done); });
+  islBtAllyAct(list[i], function(){ if(islSeaOn()) islSeaExtraAct(list[i], function(){ islBtAllySeq(list, i + 1, done); }); else islBtAllySeq(list, i + 1, done); });   /* ★ v1.384.0 🪶 信天翁動態翱翔:輪到的那一回合再行動一次 */
 }
 function islBtAllyAct(u, next){
   var B = _islBt, db = islDB(), cmd = u.cmd ? db.PET_CMDS[u.cmd] : null, useCmd;
@@ -32628,8 +32724,10 @@ function islBtAllyAct(u, next){
      等於是個死鍵(隊友就算被標記暈眩也照常行動);雷精 stunOnHitP 這輪開始會真的打中隊友,補上檢查讓它生效,
      順便讓這個欄位本身不再是死的。寫法比照魔物那邊(islBtMonAct)。 */
   if(u.stun > 0){ u.stun--; islBtSetState(u.side, 'stun', 0); islBtFx(u.side, 'dizzy', 140); islBtLog('😵 ' + islEsc(u.n) + ' 暈眩中,動不了!'); setTimeout(function(){ if(_islBt && !_islBt.over){ if(u.stun <= 0) islBtSetState(u.side, 'idle', 0); next(); } }, 1000); return; }
+  if(u.restT > 0){ u.restT--; islBtSetState(u.side, 'def', 900); islBtLog('🐢 ' + islEsc(u.n) + ' 還縮在殼裡休息,這回合不能行動。'); setTimeout(function(){ if(_islBt && !_islBt.over){ islBtSetState(u.side, 'idle', 0); next(); } }, 900); return; }   /* ★ v1.384.0 象龜縮進殼裡的代價 */
   useCmd = !!(cmd && cmd.fx && u.cd <= 0 && (u.gauge || 0) >= 100 && !islBtPetManual());   /* ★ v1.258.0 老師需求①:自動施放要「冷卻好+計量滿 100」;✋ 手動模式輪到自己一律只普攻,施放交給玩家點寵物插隊 */
-  if(useCmd && islBtIsHealCmd(cmd)) useCmd = islBtHealNeeded(cmd);   /* ★ v1.325.0 治療型寵物自動施展技能智能行動:見 islBtHealNeeded 說明,沒人需要治療/復活/解除狀態時這回合先不放,改普攻,計量/冷卻都保留到真正需要的時候 */
+  if(useCmd && islBtIsHealCmd(cmd)) useCmd = islBtHealNeeded(cmd);
+  if(useCmd && cmd.fx.invuln && islSeaOn()) useCmd = islSeaInvulnWorth();   /* ★ v1.384.0 象龜無敵:有頭目預告/蓄大絕招或有人半血以下才放(不然計量/冷卻保留) */   /* ★ v1.325.0 治療型寵物自動施展技能智能行動:見 islBtHealNeeded 說明,沒人需要治療/復活/解除狀態時這回合先不放,改普攻,計量/冷卻都保留到真正需要的時候 */
   if(useCmd){ u.cd = islPetCmdCd(cmd.cd, u.cdCut); u.gauge = 0; islBtGaugePaint(); islBtPetCmd(u, cmd, next); return; }
   islBtAllyBasic(u, next);
 }
@@ -32647,6 +32745,7 @@ function islBtHealNeeded(cmd){
   if(f.revive || f.healRevive){   /* ①有人倒下,且這招能復活 → 優先出招 */
     for(i = 0; i < B.allies.length; i++){ if(B.allies[i].down) return true; }
   }
+  if(f.cleanseAll && islSeaOn() && islSeaHasBattleAil()) return true;   /* ★ v1.384.0 🦦 敲開貝殼:有人身上有戰鬥中的不利狀態就放 */
   if(f.cure || f.cureAll){   /* ②身上還有不良狀態(場外飢餓/口渴/生病…),且這招能解除 → 優先出招 */
     try{ if(islAilList().length) return true; }catch(_ah){}
   }
@@ -32673,6 +32772,7 @@ function islPetAtk(u, target){
 function islPetDmgMul(u, target){
   var m = 1;
   if(target && islPetTal(u, 'lowHpAtkP') && target.hp <= target.hpMax * 0.5) m *= (1 + islPetTal(u, 'lowHpAtkP') / 100);
+  if(target && islPetTal(u, 'spdDmgP') && u.spd > (target.spd || 0)) m *= (1 + Math.min(islPetTal(u, 'spdDmgCap') || 60, (u.spd - (target.spd || 0)) * islPetTal(u, 'spdDmgP')) / 100);   /* ★ v1.384.0 🗡 雨傘旗魚 最快的魚:速度差換成傷害 */
   return m;
 }
 /* ══ ★ v1.331.0 魔物新狀態(傳說夥伴帶進來):☠ 中毒 / 💫 混亂 ══
@@ -32716,8 +32816,9 @@ function islBtMonConfuseAct(m, next){
 }
 /* ★ v1.331.0 💎 水晶風鈴 skillPowP:專屬指令 fx 內所有「效果量」等比放大(段數/回合/旗標不放大,機率封頂 100)。
    沒戴就原封不動回傳同一個物件,既有 16 位夥伴零影響。 */
-var ISL_FX_POW_KEYS = ['mul', 'heal', 'healAll', 'healRevive', 'revive', 'shield', 'regenAll', 'defUpP', 'spdUpP', 'atkUpP', 'hitDownP', 'spdDownP', 'dmgDownP', 'cut', 'stunP', 'sleepP', 'critAdd', 'poisonP', 'poisonDmgP', 'confuseP'];
-var ISL_FX_PROB_KEYS = { stunP: 1, sleepP: 1, critAdd: 1, poisonP: 1, confuseP: 1, hitDownP: 1, dmgDownP: 1, cut: 1 };
+var ISL_FX_POW_KEYS = ['mul', 'heal', 'healAll', 'healRevive', 'revive', 'shield', 'regenAll', 'defUpP', 'spdUpP', 'atkUpP', 'hitDownP', 'spdDownP', 'dmgDownP', 'cut', 'stunP', 'sleepP', 'critAdd', 'poisonP', 'poisonDmgP', 'confuseP', 'pierceMul', 'chainMul', 'freezeP', 'fishHealP', 'cleanseHealP', 'healAmpP'];   /* ★ v1.384.0 外島夥伴新效果量也吃水晶風鈴 */
+var ISL_FX_MUL_KEYS = { mul: 1, pierceMul: 1, chainMul: 1 };   /* ★ v1.384.0 倍率類保留兩位小數(其餘取整) */
+var ISL_FX_PROB_KEYS = { stunP: 1, sleepP: 1, critAdd: 1, poisonP: 1, confuseP: 1, hitDownP: 1, dmgDownP: 1, cut: 1, freezeP: 1 };
 var ISL_FX_HEAL_KEYS = { heal: 1, healAll: 1, healRevive: 1, revive: 1, regenAll: 1 };   /* ★ v1.333.0 🍯 蜂蜜小陶罐 healP:只放大「治療量」這幾個鍵 */
 function islBtPetCmdFx(u, fx){
   var p = islPetGearEff(u, 'skillPowP'), hp = islPetGearEff(u, 'healP'), o = {}, k, i, v;
@@ -32726,7 +32827,7 @@ function islBtPetCmdFx(u, fx){
   for(i = 0; i < ISL_FX_POW_KEYS.length; i++){
     k = ISL_FX_POW_KEYS[i]; if(typeof o[k] !== 'number') continue;
     v = o[k] * (1 + (p || 0) / 100) * (ISL_FX_HEAL_KEYS[k] ? 1 + (hp || 0) / 100 : 1);
-    o[k] = (k === 'mul') ? Math.round(v * 100) / 100 : Math.round(v);
+    o[k] = ISL_FX_MUL_KEYS[k] ? Math.round(v * 100) / 100 : Math.round(v);
     if(ISL_FX_PROB_KEYS[k]) o[k] = Math.min(k === 'cut' || k === 'dmgDownP' || k === 'hitDownP' ? 90 : 100, o[k]);
   }
   return o;
@@ -32742,11 +32843,11 @@ function islBtAllyBasic(u, next){
   if(m.hideT > 0 && Math.random() * 100 < ((islBtMonSkillDef(m) || {}).missP || 40)){ islBtFloat(m.side, 'MISS', 'block'); islBtLog(u.e + ' ' + islEsc(u.n) + ' 撲空了——' + islEsc(m.n) + ' 隱身中!'); setTimeout(next, 600); return; }
     hits = Math.max(1, (u.t === 'pet' ? (islPetTal(u, 'basicHits') || 1) : 1));   /* ★ v1.321.0 天賦 basicHits(五色鳥 鑿洞連擊):普通攻擊變成連續 N 次,每段各自計算傷害/暴擊 */
     for(hi = 0; hi < hits; hi++){
-      m = (B.m && B.m.hp > 0) ? B.m : islBtAliveMons()[0]; if(!m) break;
-      dmg = Math.round(islBtDmg(islPetAtk(u, m), m.def) * islPetDmgMul(u, m));   /* ★ v1.327.0 石虎天賦 lowHpAtkP 改乘在傷害本身(islPetDmgMul),不再疊進 islPetAtk 的攻擊力 */
+      m = (B.m && B.m.hp > 0) ? B.m : islBtAliveMons()[0]; if(islSeaOn() && B.darkT > 0){ var _dkl = islBtAliveMons(); if(_dkl.length) m = _dkl[Math.floor(Math.random() * _dkl.length)]; } if(!m) break;   /* ★ v1.384.0 🖤 深海黑暗:看不清楚,攻擊目標隨機 */
+      dmg = Math.round(islBtDmg(islPetAtk(u, m), m.def * (islSeaOn() ? islSeaDefMul(m, u) : 1)) * islPetDmgMul(u, m));   /* ★ v1.384.0 美洲豹穿甲/破甲 */   /* ★ v1.327.0 石虎天賦 lowHpAtkP 改乘在傷害本身(islPetDmgMul),不再疊進 islPetAtk 的攻擊力 */
       dmg = Math.round(dmg * (0.9 + Math.random() * 0.2));
       var _pcC = (islPetTal(u, 'critP') || 0) + (u.t === 'pet' ? islSkEff('petCritC') : 0) + islPetGearEff(u, 'critC');   /* ★ v1.317.0 馴獸專精 petCritC:寵物普攻暴擊率,與寵物天賦 critP 相加 */   /* ★ v1.331.0 夥伴裝備 critC(纖維項圈/獸王之牙)同一條相加 */
-      crit = _pcC > 0 && Math.random() * 100 < _pcC;   /* ★ v1.167.0 天賦 critP(大冠鷲 高空視野) */
+      crit = (_pcC > 0 && Math.random() * 100 < _pcC) || (islSeaOn() && islSeaFoxCritUse(u));   /* ★ v1.167.0 天賦 critP(大冠鷲 高空視野);★ v1.384.0 北極狐閃開後必暴擊 */
       if(crit) dmg = Math.round(dmg * 1.5);
       /* ★ v1.331.0 🐆 台灣雲豹「樹梢伏擊」:先看這一擊出手當下場上還剩幾隻魔物——只剩 1 隻才擲單體爆發(soloCrit),
          還有別隻才擲波及(splash),兩者互斥,同一次普攻只會吃其中一種(企畫書工程註) */
@@ -32773,6 +32874,7 @@ function islBtAllyBasic(u, next){
       var _CB = islDB().BT.COMBO;
       if(_CB && B.heroTgt === m.side && m.hp > 0 && u.t === 'pet' && Math.random() * 100 < _CB.base + _CB.perBond * ((u.rec && u.rec.bond) | 0)){ var _cbd = Math.max(1, Math.round(dmg * _CB.mul)); m.hp = Math.max(0, m.hp - _cbd); islBtFloat(m.side, '🤝−' + _cbd, 'combo'); islBtLog('🤝 連攜攻擊!' + islEsc(u.n) + ' 跟著你追打 −' + _cbd + '。'); islBtHp(); }   /* ★ v1.226.0 連攜 */
       if(islPetTal(u, 'blindOnHitP') && m.hp > 0 && Math.random() * 100 < islPetTal(u, 'blindOnHitP')){ m.blindT = Math.max(m.blindT || 0, 1); m.blindHitDownP = 50; islBtFx(m.side, 'dizzy', 140); islBtFloat(m.side, '😵‍💫失明', 'block'); islBtLog('🌑 ' + islEsc(u.n) + ' 攻擊讓 ' + islEsc(m.n) + ' 睜不開眼,接下來 1 回合命中 −50%!'); }   /* ★ v1.321.0 天賦 blindOnHitP(領角鴞 夜盲突襲) */
+      if(islSeaOn()) islSeaOnPetHit(u, m);   /* ★ v1.384.0 🦉 雪鴞鎖定 */
       if(!healed && islPetTal(u, 'atkHealLowP')){ healed = true; islBtLog('🐟 ' + islEsc(u.n) + ' 順手一治:' + islBtHealOne(u, islPetTal(u, 'atkHealLowP'))); }   /* ★ v1.321.0 天賦 atkHealLowP(櫻花鉤吻鮭 力竭迴游):普通攻擊時順便治療隊伍裡血量比例最低的一位,多段攻擊只觸發一次 */
       /* ★ v1.331.0 🐙 藍環章魚「警戒藍環」:同一顆骰同時中毒 + 失明(失明走領角鴞既有的 m.blindT/blindHitDownP) */
       if(islPetTal(u, 'poisonOnHitP') && m.hp > 0 && Math.random() * 100 < islPetTal(u, 'poisonOnHitP')){
@@ -32792,8 +32894,10 @@ function islBtPetCmd(u, cmd, next){
   var B = _islBt, db = islDB(), f = islBtPetCmdFx(u, cmd.fx), targets, i, j, dmg, total, tgt, heals, lines = [], hitTgt, alive;   /* ★ v1.331.0 💎 水晶風鈴 skillPowP:fx 效果量等比放大(沒戴=原物件) */
   islBtSetState(u.side, 'skill', 900); playSfx('sfx-burst-use', 0.45); islBtFx(u.side, 'focus', 180); try{ B._cmdFx = (islBtFxDB().petCmd || {})[islBtFxCmdKey(cmd)] || null; islBtFxPlay(B._cmdFx ? { c: B._cmdFx.c, s: B._cmdFx.s, v: B._cmdFx.v } : null, u.side, null); }catch(_cfx){}   /* ★ v1.240.0 寵物專屬指令特效 */ islBtPetBig(u.side); islBtSkillPopup(u.side, cmd.e + ' ' + cmd.n);   /* ★ v1.193.0 老師需求①「寵物使用技能的小發光柱特效改成集中效果線,並暫時放大寵物圖片2秒」— 'glow'(金色光圈)→'focus'(集中效果線),另外掛 .biggon 放大 2 秒;★ v1.194.0 老師追加「頭上顯示技能名稱演示」— 補上 islBtSkillPopup */
   islBtLog(cmd.e + ' ' + islEsc(u.n) + ' 使出「' + islEsc(cmd.n) + '」——' + islEsc(cmd.d));
+  if(B && !(cmd.fx && cmd.fx.mimic)) B.lastCmd = cmd;   /* ★ v1.384.0 🦜 金剛鸚鵡學舌:記住本場最後一招寵物技能 */
   setTimeout(function(){
     if(!_islBt || _islBt.over) return;
+    if(islSeaOn() && islSeaPetCmdPre(u, cmd, f, lines, next)) return;   /* ★ v1.384.0 學舌(交給被模仿的那招)/旗魚貫穿/信天翁連鎖 */
     /* ①傷害類 */
     if(f.mul){
       targets = f.all ? islBtAliveMons() : [(B.m && B.m.hp > 0) ? B.m : islBtAliveMons()[0]];
@@ -32803,9 +32907,9 @@ function islBtPetCmd(u, cmd, next){
           hitTgt = tgt;
           if(f.randHits){ alive = islBtAliveMons(); if(!alive.length) continue; hitTgt = alive[Math.floor(Math.random() * alive.length)]; }   /* ★ v1.213.0 老師「技能清單稽核:補齊隨機目標多段攻擊」— 每段重新隨機挑一隻還活著的敵人,不再固定打同一隻鎖定目標 */
           if(!hitTgt || hitTgt.hp <= 0) continue;
-          dmg = Math.max(1, Math.round(islBtDmgRaw(islPetAtk(u, hitTgt), hitTgt.def) * f.mul * (1 + (u.t === 'pet' ? islSkEff('petSkDmgP') : 0) / 100) * islPetDmgMul(u, hitTgt)));   /* ★ v1.317.0 馴獸專精 petSkDmgP:寵物專屬技能傷害 +N% */   /* ★ v1.167.0 與普通攻擊共用 islPetAtk,天賦才不會只對其中一種生效 */   /* ★ v1.327.0 疊上 islPetDmgMul(石虎 lowHpAtkP 目標半血以下傷害+50%,技能傷害同樣吃得到) */
+          dmg = Math.max(1, Math.round(islBtDmgRaw(islPetAtk(u, hitTgt), hitTgt.def * (islSeaOn() ? islSeaDefMul(hitTgt, u) : 1)) * f.mul * (1 + (u.t === 'pet' ? islSkEff('petSkDmgP') : 0) / 100) * islPetDmgMul(u, hitTgt)));   /* ★ v1.317.0 馴獸專精 petSkDmgP:寵物專屬技能傷害 +N% */   /* ★ v1.167.0 與普通攻擊共用 islPetAtk,天賦才不會只對其中一種生效 */   /* ★ v1.327.0 疊上 islPetDmgMul(石虎 lowHpAtkP 目標半血以下傷害+50%,技能傷害同樣吃得到) */
           if(!f.sure) dmg = Math.round(dmg * (0.9 + Math.random() * 0.2));
-          if(f.critAdd && Math.random() * 100 < f.critAdd) dmg = Math.round(dmg * 1.5);
+          if((f.critAdd && Math.random() * 100 < f.critAdd) || (islSeaOn() && islSeaFoxCritUse(u))) dmg = Math.round(dmg * 1.5);   /* ★ v1.384.0 北極狐閃開後必暴擊 */
           dmg = islBtBossDmg(hitTgt, dmg, u); hitTgt.hp = Math.max(0, hitTgt.hp - dmg); if(hitTgt.boss) islBtToughHit(hitTgt, islDB().BOSS_RULE.tough.cmd);
           if(j === 0 && B._cmdFx && B._cmdFx.t) islBtFxPlay({ t: B._cmdFx.t, tz: B._cmdFx.tz }, null, hitTgt.side);
           (function(_t, _dmg, _j){ setTimeout(function(){ if(!_islBt) return; islBtSetState(_t.side, 'hit', 450); islBtFloat(_t.side, '−' + _dmg, 'combo'); }, _j * 300); })(hitTgt, dmg, j);   /* ★ v1.324.0 老師「荒島戰鬥中多段攻擊(例如石虎二段攻擊)每段傷害要間隔0.3秒跳出數字」— 傷害同步立即算完(暈眩/睡眠/失明等判定不受影響),只把受擊動畫與浮動數字延後 j×300ms,連續好幾段才看得清楚是哪一段的數字 */
@@ -32814,7 +32918,8 @@ function islBtPetCmd(u, cmd, next){
           if(f.stunP && hitTgt.hp > 0 && Math.random() * 100 < (f.stunP + islPetTal(u, 'stunAddP'))){   /* ★ v1.167.0 天賦 stunAddP(台灣獼猴 手巧) */ hitTgt.stun = Math.max(hitTgt.stun, f.stun || 1); islBtFx(hitTgt.side, 'dizzy', 140); lines.push(islEsc(hitTgt.n) + ' 暈了'); }
           if(f.sleepP && hitTgt.hp > 0 && Math.random() * 100 < f.sleepP){ hitTgt.sleep = Math.max(hitTgt.sleep || 0, f.sleepDur || 2); hitTgt._sleepHp = hitTgt.hp; islBtFx(hitTgt.side, 'dizzy', 140); lines.push(islEsc(hitTgt.n) + ' 睡著了'); }   /* ★ v1.213.0 老師「技能清單稽核:補齊睡眠」— 跟 stunP 共用同一顆骰,但寫進 .sleep 不是 .stun;_sleepHp 記下入睡當下的血量,魔物輪到自己回合時(islBtMonAct)比對 hp 是否變了,變了就代表挨了打,睡眠提前解除 */
           if(islPetTal(u, 'blindOnHitP') && hitTgt.hp > 0 && Math.random() * 100 < islPetTal(u, 'blindOnHitP')){ hitTgt.blindT = Math.max(hitTgt.blindT || 0, 1); hitTgt.blindHitDownP = 50; islBtFx(hitTgt.side, 'dizzy', 140); lines.push(islEsc(hitTgt.n) + ' 失明了'); }
-          if(j === 0 && f.poisonP && hitTgt.hp > 0 && Math.random() * 100 < f.poisonP){ islBtMonPoison(hitTgt, f.poisonDmgP || 8, f.poisonDur || 3, u); lines.push(islEsc(hitTgt.n) + ' 中毒了' + (hitTgt.boss ? '(頭目減半)' : '')); }   /* ★ v1.331.0 🐙 藍環毒咬:每個目標只擲一次 */   /* ★ v1.321.0 天賦 blindOnHitP(領角鴞 夜盲突襲):技能造成傷害時也比照普通攻擊觸發 */
+          if(j === 0 && f.poisonP && hitTgt.hp > 0 && Math.random() * 100 < f.poisonP){ islBtMonPoison(hitTgt, f.poisonDmgP || 8, f.poisonDur || 3, u); lines.push(islEsc(hitTgt.n) + ' 中毒了' + (hitTgt.boss ? '(頭目減半)' : '')); }   /* ★ v1.331.0 🐙 藍環毒咬:每個目標只擲一次 */
+          if(islSeaOn()) islSeaCmdOnHit(u, f, hitTgt, dmg, lines);   /* ★ v1.384.0 雪鴞處決/北極狐冰凍/美洲豹破甲 */   /* ★ v1.321.0 天賦 blindOnHitP(領角鴞 夜盲突襲):技能造成傷害時也比照普通攻擊觸發 */
         }
       }
       playSfx('sfx-crit', 0.5);
@@ -32890,6 +32995,7 @@ function islBtPetCmd(u, cmd, next){
     if(f.seal){ islBtAddDeb('seal', 1, (f.dur || 1) + islPetTal(u, 'sealAdd')); lines.push('敵方打不出暴擊'); }   /* ★ v1.167.0 天賦 sealAdd(五色鳥 鑿洞高手,v1.321.0 起天賦已改版,此鍵保留給未來重用) */
     if(f.skillSeal){ islBtAddDeb('skillSeal', 1, f.dur || 1); lines.push('敵方 1 回合內無法使用技能(只能普通攻擊)'); }   /* ★ v1.321.0 技能 drumecho(五色鳥 啄木聲波)改版:消費點在 islBtMonSkill */
     if(f.dmgDownP){ islBtAddDeb('dmgDownP', f.dmgDownP, f.dur || 1); lines.push('敵方造成的傷害 −' + f.dmgDownP + '%'); }   /* ★ v1.321.0 技能 drumecho(五色鳥 啄木聲波)改版:消費點在 islBtMonAct/islBtMonHitSeq */
+    if(islSeaOn()) islSeaPetCmdPost(u, f, lines);   /* ★ v1.384.0 企鵝圈分攤/泡溫泉增幅/縮進殼裡/一口十條魚/敲開貝殼/甲殼蜷縮 */
     islBtHp();
     islBtLog(cmd.e + ' ' + islEsc(cmd.n) + ':' + (lines.length ? lines.join('　') : '生效了!'));
     /* 全部魔物倒下? */
@@ -32921,6 +33027,7 @@ function islPetHealMul(u){
   if(islPetTal(u, 'rainHealP')){ try{ wx = islWeatherOf(ISL.day); }catch(_w){ wx = 'sun'; } if(wx === 'rain' || wx === 'typhoon') m += islPetTal(u, 'rainHealP') / 100; }
   if(islPetTal(u, 'lowHealP') && u.hp <= u.hpMax * 0.5) m += islPetTal(u, 'lowHealP') / 100;
   if(u && u.t === 'pet') m += islSkEff('petSkSupP') / 100;   /* ★ v1.317.0 馴獸專精 petSkSupP:寵物技能治療/復活/持續恢復量 +N%(護盾在 islBtShieldAll) */
+  if(u && u.t === 'pet' && islBtBuff('healAmpP')) m += islBtBuff('healAmpP') / 100;   /* ★ v1.384.0 ♨ 水豚泡溫泉:夥伴治療效果 +50% */
   return m * (0.9 + 0.008 * Math.min((islDB().PET_LV && islDB().PET_LV.MAX) || 50, u.lv || 1)) * islBtTacMul('healMul');   /* ★ v1.368.0 上限跟著等級上限(外島可到 70 → ×1.46) */   /* ★ v1.226.0 治療量吃施放者等級(Lv1 ×0.91、Lv13 ×1.0、Lv50 ×1.3)+夥伴戰術 */
 }
 /* ★ v1.333.0 🍀 草藥香包 healRecvP:夥伴「受到治療」時恢復量 +N%(治療技能/全隊治療/天賦回血/自癒/持續恢復/戰鬥道具,凡是補到這隻夥伴的都吃;主角不是夥伴,恆為 1) */
@@ -32953,11 +33060,684 @@ function islBtShieldAll(u, pct){
   playSfx('sfx-ok', 0.45);
   return '全隊 🛡 護盾 +' + tot;
 }
+/* ══ ★ v1.384.0 外島夥伴與島主新機制(老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」)══
+   資料全在 minigame_sea_db.js(PET_CMDS fx 新鍵/PETS tal 新鍵/BOSSES[].seaMech 與新招式 t/BOSS_GRD.qte/ult.qte/SEA_PARTS);這一區是唯一的引擎出口,
+   既有戰鬥函式只在固定位置呼叫這裡(搜尋 islSea 就能找到全部掛點,每個掛點都先問 islSeaOn()):
+     受傷前 islBtHurtUnit → islSeaHurtPre(無敵/分攤/抱團/殘血減傷/傷害封頂/吸收累積)、受傷後 islSeaAfterHurt(海鸚存魚急救)、倒下 islSeaOnDown(海獺手牽手)
+     打魔物 islBtBossDmg → islSeaMonTaken(鎖定/冰凍/冰甲/氣根/眼牆/變白)、魔物出手 islSeaMonOut(水豚光環/腕足加成)、防禦 islSeaDefMul(穿甲/破甲)
+     回合開頭 islBtStatusTick → islSeaTurnTick(存魚/復活/離場/吸收/冰甲/暴風雪/氣根/纏繞/種子/颱風眼/水壓/黑暗/再生腕足)
+     寵物技能 islBtPetCmd → islSeaPetCmdPre(模仿/貫穿/連鎖)、islSeaCmdOnHit(處決/冰凍/破甲)、islSeaPetCmdPost(分攤/增幅/無敵/存魚/淨化/吸收)
+     頭目 islBtMonSkill 預告 → islSeaTele(鎖定目標/變色)、islBtMonSkillRun → islSeaSkillRun(新招式)、islBtMonAct → islSeaBossPre(變色結算)
+     QTE:islSeaQteRun(kind, m, cb)——swipe/slash/circle/hold 四種,三平台共用一套(樣式在最後一個 style 區塊尾端,iPad/手機另有覆寫)。
+   ⚠ 必須放在主程式閉包('use strict')裡、ISL_BT_STFX 定義之後(本區載入時會把新狀態圖示併進 ISL_BT_STFX);區塊內不可有「區塊層級的 function 宣告」(strict ES5 會語法錯誤),一律寫成 var x = function。
+   ⚠ ES5 only;任何新狀態都掛在戰鬥單位或 _islBt 上(每場重建,天然歸零),不寫存檔。 */
+function islSeaSea(m){ return (m && m.boss && m.boss.seaMech) ? m.boss.seaMech : null; }
+function islSeaBossAlive(k){ var B = _islBt, i; if(!B) return null; for(i = 0; i < B.ms.length; i++){ if(B.ms[i].boss && B.ms[i].k === k && B.ms[i].hp > 0) return B.ms[i]; } return null; }
+function islSeaParts(boss, alive){ var B = _islBt, out = [], i, c; if(!B || !boss) return out; for(i = 0; i < B.ms.length; i++){ c = B.ms[i]; if(c.part && c.owner === boss.side && (!alive || c.hp > 0)) out.push(c); } return out; }
+function islSeaPetWith(key){ var B = _islBt, i; if(!B) return null; for(i = 0; i < B.allies.length; i++){ if(islPetTal(B.allies[i], key)) return B.allies[i]; } return null; }
+function islSeaUnitName(u){ return u && u.side === 'p' ? ((ISL.char && ISL.char.name) || '你') : (u ? u.n : ''); }
+function islSeaHpOf(u){ return u.side === 'p' ? ISL.hp : u.hp; }
+function islSeaHpMaxOf(u){ return u.side === 'p' ? ISL.hpMax : u.hpMax; }
+function islSeaAliveFriend(u){ return !!u && (u.side === 'p' ? ISL.hp > 0 : !u.down); }
+function islSeaStormy(){ var s = false; try{ var isle = _IS.zone ? islSeaIsleOfZone(_IS.zone) : null; s = !!(isle && isle.id === 'storm'); }catch(_e){} try{ if(islWeather() === 'typhoon') s = true; }catch(_w){} return s; }
+function islSeaHealUnit(u, pct, tag){   /* 直接治療一個友方單位 N% 最大體力(不吃施放者倍率),回實際回復量 */
+  var was, h;
+  if(!islSeaAliveFriend(u)) return 0;
+  if(u.side === 'p'){ was = ISL.hp; ISL.hp = Math.min(ISL.hpMax, ISL.hp + Math.max(1, Math.round(ISL.hpMax * pct / 100))); h = ISL.hp - was; }
+  else { was = u.hp; u.hp = Math.min(u.hpMax, u.hp + Math.max(1, Math.round(u.hpMax * pct * islBtHealRecv(u) / 100))); h = u.hp - was; }
+  if(h > 0){ try{ islBtFloat(u.side, (tag || '') + '+' + h, 'heal'); islBtHealParticles(u.side); }catch(_f){} }
+  return h;
+}
+/* ── 受傷:前置(回傳 { done:true, ret:N } = 已處理完,呼叫端直接 return) ── */
+function islSeaHurtPre(u, dmg){
+  var B = _islBt, raw = dmg, sp, list, i, v, each, n, hp, cut, lost, cap, _hd;
+  if(!B || B.over || !(dmg > 0)) return { dmg: dmg };
+  if(u.t === 'pet' && u.absorbT > 0) u.absorbAcc = (u.absorbAcc || 0) + raw;   /* 🛡 具足蟲甲殼蜷縮:先記原始傷害(還沒扣減傷) */
+  if(islBtBuff('invuln')){ _islHurtInfo = { raw: raw, pct: 100, shield: 0, final: 0 }; try{ islBtFloat(u.side, '🐢 擋下', 'block'); }catch(_f0){} return { done: true, ret: 0 }; }   /* 🐢 象龜縮進殼裡:本回合全隊無敵 */
+  sp = islBtBuff('shareP');
+  if(sp && !B._seaShare){   /* 🐧 企鵝圈:總量 −N% 後平均分給全隊(分到主角的那份不會讓主角倒下) */
+    list = islBtFriendliesAlive(); n = list.length;
+    if(n > 1){
+      each = Math.max(1, Math.round(dmg * (1 - Math.min(90, sp) / 100) / n));
+      B._seaShare = true;
+      for(i = 0; i < list.length; i++){
+        v = list[i]; if(v === u) continue;
+        if(v.side === 'p'){ _hd = Math.min(each, Math.max(0, ISL.hp - 1)); if(_hd > 0){ islBtHurtUnit(v, _hd); try{ islBtFloat('p', '🐧−' + _hd, ''); }catch(_f1){} } }
+        else { islBtHurtUnit(v, each); try{ islBtFloat(v.side, '🐧−' + each, ''); }catch(_f2){} }
+      }
+      B._seaShare = false;
+      dmg = each;
+      if(u.side === 'p' && ISL.hp - dmg <= 0 && ISL.hp > 1) dmg = ISL.hp - 1;
+    }
+  }
+  hp = islPetTalAll('huddleP');
+  if(hp){ n = islBtFriendliesAlive().length; cut = Math.min(40, hp * n); dmg = dmg * (1 - cut / 100); }   /* 🐧 抱團取暖:全隊每人 −5% */
+  if(u.t === 'pet'){
+    if(islPetTal(u, 'lostHpCutP')){ lost = Math.floor(Math.max(0, 1 - u.hp / u.hpMax) * 10); cut = Math.min(islPetTal(u, 'lostHpCutCap') || 54, lost * islPetTal(u, 'lostHpCutP')); if(cut > 0) dmg = dmg * (1 - cut / 100); }   /* 🦐 深海節能 */
+    if(islPetTal(u, 'hitCapP')){ cap = Math.max(1, Math.ceil(u.hpMax * islPetTal(u, 'hitCapP') / 100)); if(dmg > cap){ dmg = cap; try{ islBtFloat(u.side, '🐢 硬殼', 'block'); }catch(_f3){} } }   /* 🐢 百年硬殼:單次傷害封頂 */
+  }
+  return { dmg: Math.max(1, Math.round(dmg)) };
+}
+/* 受傷後:海鸚存魚自動急救(隊友體力掉到 fishAt% 以下) */
+function islSeaAfterHurt(u){
+  var B = _islBt, pf, at, h;
+  if(!B || B.over || !islSeaAliveFriend(u)) return;
+  pf = islSeaPetWith('fishMax'); if(!pf || !(pf.fish > 0)) return;
+  at = islPetTal(pf, 'fishAt') || 30;
+  if(islSeaHpOf(u) > islSeaHpMaxOf(u) * at / 100) return;
+  pf.fish--;
+  h = islSeaHealUnit(u, islPetTal(pf, 'fishSaveP') || 20, '🐟');
+  if(h > 0) islBtLog('🐟 ' + islEsc(pf.n) + ' 趕緊吐出一條小魚給 ' + islEsc(islSeaUnitName(u)) + ' 吃,❤️+' + h + '(嘴裡還有 ' + pf.fish + ' 條)。');
+}
+/* 主角/夥伴即將倒下:海獺手牽手(主角留 1 點、下回合回到 30%;夥伴下回合以 30% 站起來);回 true = 主角被牽住了 */
+function islSeaOnDown(u){
+  var B = _islBt, ot, maxN;
+  if(!B || B.over) return false;
+  ot = islSeaPetWith('handRevive'); if(!ot || ot === u) return false;
+  maxN = islPetTal(ot, 'handN') || 2;
+  if((B.otterUsed || 0) >= maxN) return false;
+  B.otterUsed = (B.otterUsed || 0) + 1;
+  if(u.side === 'p'){ ISL.hp = 1; B.otterHero = true; try{ islBtFloat('p', '🦦 牽住了!', 'heal'); }catch(_f){} islBtLog('🦦 ' + islEsc(ot.n) + ' 一把牽住快倒下的你!下一回合會站起來(這場還剩 ' + (maxN - B.otterUsed) + ' 次)。'); return true; }
+  B.otterQ = B.otterQ || []; B.otterQ.push(u);
+  islBtLog('🦦 ' + islEsc(ot.n) + ' 緊緊牽住 ' + islEsc(u.n) + ' 的手,下一回合會把牠拉起來(這場還剩 ' + (maxN - B.otterUsed) + ' 次)。');
+  return false;
+}
+/* ── 魔物受到的傷害(islBtBossDmg 開頭):鎖定/冰凍 + 島主機制 ── */
+function islSeaMonTaken(m, dmg, src){
+  var B = _islBt, S, mul = 1, w, roots, i, part, tot, cap0;
+  if(!B || !m || !(dmg > 0)) return dmg;
+  if(m.markT > 0) mul *= 1 + (m.markP || 20) / 100;
+  if(m.frzT > 0) mul *= 1.3;
+  S = islSeaSea(m);
+  if(S){
+    if(m.k === 'mammothking' && m.iceL > 0){
+      mul *= 1 - (S.iceCutP || 60) / 100;
+      if(src === 'p' || dmg >= m.hpMax * (S.iceHitP || 2) / 100){   /* 主角的攻擊、或夠重的一擊(≥ 最大體力 2%)才敲得破;夥伴普攻/連攜這種輕打只會被冰甲擋掉(沙盒實跑:不設門檻 6 層一回合就被輕打敲光) */
+        w = (src === 'p') ? islBtPlayerStats().w : null;
+        m.iceL = Math.max(0, m.iceL - ((w && w.id === 'hammer') ? 2 : 1));
+        try{ islBtFloat(m.side, m.iceL > 0 ? '🧊 冰甲 ' + m.iceL : '🧊 冰甲碎光!', 'block'); }catch(_f0){}
+        if(m.iceL <= 0) islBtLog('🧊 ' + islEsc(m.n) + ' 的冰甲全部碎光了——現在打得動牠了!');
+      }
+    }
+    if(m.k === 'treespirit'){
+      roots = islSeaParts(m, true);
+      if(roots.length){
+        if(m.phase >= 2){
+          tot = dmg * mul * (S.linkP || 70) / 100;
+          for(i = 0; i < roots.length; i++){ part = roots[i]; cap0 = Math.max(1, Math.round(tot / roots.length)); part.hp = Math.max(0, part.hp - cap0); (function(_p, _d){ setTimeout(function(){ if(_islBt) islBtFloat(_p.side, '🌿−' + _d, ''); }, 200); })(part, cap0); }
+          mul *= 1 - (S.linkP || 70) / 100;
+        } else mul *= 1 - (S.bodyCutP || 50) / 100;
+      }
+      if(B.seed && !B.seed.broken){ B.seed.dealt += Math.round(dmg * mul); if(B.seed.dealt >= B.seed.need){ B.seed.broken = true; islBtLog('🌰 種子被震碎了!'); try{ islBtFloat(m.side, '🌰 震碎!', 'combo'); }catch(_f1){} } }
+    }
+    if(m.k === 'hurricane') mul *= B.eye ? (S.eyeMul || 2) : (1 - (S.wallCutP || 80) / 100);
+    if(m.k === 'giantsquid' && m.chroma === 'white') mul *= 1.5;
+  }
+  return Math.max(1, Math.round(dmg * mul));
+}
+/* 魔物出手的傷害修正(普攻與招式兩條路徑) */
+function islSeaMonOut(m, dmg){
+  var a = Math.min(60, islPetTalAll('auraDmgDownP')), S = islSeaSea(m), lost = 0, i, ps;
+  if(a > 0) dmg = dmg * (1 - a / 100);   /* 🦫 和平使者 */
+  if(S && S.perLostAtkP && S.parts){ ps = islSeaParts(m, false); for(i = 0; i < ps.length; i++){ if(ps[i].hp <= 0) lost++; } lost += Math.max(0, (S.parts.n || 0) - ps.length); if(lost) dmg = dmg * (1 + lost * S.perLostAtkP / 100); }   /* 🦑 少一條腕足攻擊 +10% */
+  return Math.max(1, Math.round(dmg));
+}
+/* 魔物防禦倍率:美洲豹穿甲(只對牠自己的攻擊)×破甲(全隊) */
+function islSeaDefMul(m, u){
+  var k = 1;
+  if(m && m.armBrkT > 0) k *= 1 - (m.armBrkP || 50) / 100;
+  if(u && u.t === 'pet' && islPetTal(u, 'pierceP')) k *= 1 - islPetTal(u, 'pierceP') / 100;
+  return Math.max(0, k);
+}
+/* 北極狐雪地保護色:被攻擊時 N% 閃開,下一擊必暴擊;回 true = 閃開了 */
+function islSeaFoxDodge(u, by){
+  var p = (u && u.side !== 'p') ? islPetTal(u, 'selfDodgeP') : 0;
+  if(!p || Math.random() * 100 >= p) return false;
+  if(islPetTal(u, 'dodgeCrit')) u.foxCrit = true;
+  try{ playSfx('sfx-evade', 0.45); islBtFloat(u.side, '❄ 閃開!', 'block'); }catch(_f){}
+  islBtLog('🦊 ' + islEsc(u.n) + ' 白色的毛跟雪地融成一片,' + islEsc(by || '') + ' 撲了個空!' + (u.foxCrit ? '下一擊必定暴擊!' : ''));
+  return true;
+}
+function islSeaFoxCritUse(u){ if(u && u.foxCrit){ u.foxCrit = false; return true; } return false; }
+/* 寵物普攻命中後(雪鴞鎖定) */
+function islSeaOnPetHit(u, m){
+  var _new;
+  if(!u || !m || m.hp <= 0) return;
+  if(islPetTal(u, 'markOnHit')){ _new = !(m.markT > 0); m.markT = Math.max(m.markT || 0, (islPetTal(u, 'markDur') || 2) + 1); m.markP = islPetTal(u, 'markP') || 20; if(_new){ try{ islBtFloat(m.side, '🎯 鎖定', 'combo'); }catch(_f){} islBtLog('🦉 ' + islEsc(u.n) + ' 盯住了 ' + islEsc(m.n) + '——全隊打牠傷害 +' + m.markP + '%!'); } }
+}
+/* 魔物冰凍(北極狐);頭目改成削韌 */
+function islSeaFreeze(m, dur, lines){
+  var R = islDB().BOSS_RULE;
+  if(!m || m.hp <= 0) return;
+  if(m.boss){ islBtToughHit(m, (R && R.tough && R.tough.stunToTough ? R.tough.stunToTough : 20) * 2); if(lines) lines.push(islEsc(m.n) + ' 被凍得發抖,韌性大減'); return; }
+  m.frzT = Math.max(m.frzT || 0, dur || 2); islBtMonInterrupt(m);
+  try{ islBtFx(m.side, 'dizzy', 140); islBtFloat(m.side, '🧊 冰凍', 'block'); }catch(_f){}
+  if(lines) lines.push(islEsc(m.n) + ' 被凍住了');
+}
+/* ── 寵物技能:前置(模仿/貫穿/連鎖);回 true = 已交給別的流程(呼叫端直接 return) ── */
+function islSeaPetCmdPre(u, cmd, f, lines, next){
+  var B = _islBt, db = islDB(), al, i, tgt, mul, dmg, n, k;
+  var hit = function(t, mu){
+    var d = Math.max(1, Math.round(islBtDmgRaw(islPetAtk(u, t), t.def * islSeaDefMul(t, u)) * mu * (1 + (u.t === 'pet' ? islSkEff('petSkDmgP') : 0) / 100) * islPetDmgMul(u, t) * (0.9 + Math.random() * 0.2)));
+    if(islSeaFoxCritUse(u)) d = Math.round(d * 1.5);
+    d = islBtBossDmg(t, d, u); t.hp = Math.max(0, t.hp - d); if(t.boss) islBtToughHit(t, db.BOSS_RULE.tough.cmd);
+    return d;
+  };
+  if(f.mimic){
+    if(B.lastCmd && B.lastCmd !== cmd && !(B.lastCmd.fx && B.lastCmd.fx.mimic)){
+      islBtLog('🦜 ' + islEsc(u.n) + ' 歪著頭聽了一下——「' + islEsc(B.lastCmd.n) + '」!學得一模一樣!');
+      islBtPetCmd(u, B.lastCmd, next);
+      return true;
+    }
+    lines.push('還沒有夥伴放過技能,改成大聲尖叫');
+  }
+  if(f.pierceMul){   /* 🗡 旗魚突刺:鎖定目標排第一,其餘依序,倍率逐隻遞減 */
+    al = islBtAliveMons(); tgt = (B.m && B.m.hp > 0) ? B.m : al[0];
+    if(tgt){ al.splice(al.indexOf(tgt), 1); al.unshift(tgt); }
+    for(i = 0; i < al.length; i++){
+      mul = Math.max(0.4, f.pierceMul - i * (f.pierceDec || 0.4)); dmg = hit(al[i], mul);
+      (function(_t, _d, _j){ setTimeout(function(){ if(!_islBt) return; islBtSetState(_t.side, 'hit', 450); islBtFloat(_t.side, '🗡−' + _d, 'combo'); }, _j * 220); })(al[i], dmg, i);
+      lines.push(islEsc(al[i].n) + ' −' + dmg + '(×' + mul.toFixed(1) + ')');
+    }
+    playSfx('sfx-crit', 0.5);
+  }
+  if(f.chainMul){   /* 🪶 乘風掠擊:打倒就換下一隻,最多 chainN 次,每次 +chainUpP% */
+    tgt = (B.m && B.m.hp > 0) ? B.m : islBtAliveMons()[0]; n = 0; k = f.chainMul;
+    while(tgt && n < (f.chainN || 4)){
+      dmg = hit(tgt, k); n++;
+      (function(_t, _d, _j){ setTimeout(function(){ if(!_islBt) return; islBtSetState(_t.side, 'hit', 450); islBtFloat(_t.side, '🪶−' + _d, 'combo'); }, _j * 260); })(tgt, dmg, n - 1);
+      lines.push(islEsc(tgt.n) + ' −' + dmg);
+      if(tgt.hp > 0) break;
+      lines.push('打倒了!乘風撲向下一隻');
+      k = k * (1 + (f.chainUpP || 20) / 100);
+      al = islBtAliveMons(); tgt = al.length ? al[0] : null;
+    }
+    playSfx('sfx-crit', 0.5);
+  }
+  return false;
+}
+/* 一般傷害招式每一段命中後(處決/冰凍/破甲) */
+function islSeaCmdOnHit(u, f, t, dmg, lines){
+  var _ex;
+  if(!t) return;
+  if(f.execP && dmg > 0){
+    if(t.hp > 0 && t.hp <= t.hpMax * f.execP / 100){
+      if(t.boss){ _ex = islBtBossDmg(t, dmg, u); t.hp = Math.max(0, t.hp - _ex); lines.push('🦉 追擊要害 −' + _ex); }
+      else { t.hp = 0; lines.push('🦉 ' + islEsc(t.n) + ' 被一擊擊倒!'); try{ islBtFloat(t.side, '💀 處決', 'combo'); }catch(_f){} }
+    }
+  }
+  if(f.freezeP && t.hp > 0 && Math.random() * 100 < f.freezeP) islSeaFreeze(t, f.freezeDur || 2, lines);
+  if(f.armBrkP && t.hp > 0){ t.armBrkT = Math.max(t.armBrkT || 0, (f.armBrkDur || 3) + 1); t.armBrkP = f.armBrkP; lines.push(islEsc(t.n) + ' 防禦 −' + f.armBrkP + '%'); try{ islBtFloat(t.side, '🦴 破甲', 'block'); }catch(_f2){} }
+}
+/* 全隊戰鬥中的不利狀態一次清光,回清掉的數量(海獺敲開貝殼) */
+function islSeaCleanseAll(){
+  var B = _islBt, n = 0, i, u, a, k;
+  if(!B) return 0;
+  if(B.p.stun > 0){ B.p.stun = 0; n++; } if(B.p.slowT > 0){ B.p.slowT = 0; n++; } if(B.p.burnT > 0){ B.p.burnT = 0; n++; }
+  if(B.blindT > 0){ B.blindT = 0; n++; }
+  if(B.frost){ for(k in B.frost){ if(B.frost.hasOwnProperty(k) && B.frost[k] > 0){ B.frost[k] = 0; n++; } } }
+  if(B.bind){ B.bind = null; n++; }
+  for(i = 0; i < B.allies.length; i++){ u = B.allies[i]; if(u.down) continue; if(u.stun > 0){ u.stun = 0; n++; islBtSetState(u.side, 'idle', 0); } if(u.slowT > 0){ u.slowT = 0; n++; } if(u.burnT > 0){ u.burnT = 0; n++; } }
+  try{ a = islAilList(); for(i = 0; i < a.length; i++){ islAilCure(a[i], true); n++; } }catch(_a){}
+  return n;
+}
+function islSeaHasBattleAil(){ var B = _islBt, i, u, k; if(!B) return false; if(B.p.stun > 0 || B.p.slowT > 0 || B.p.burnT > 0 || B.blindT > 0 || B.bind) return true; if(B.frost){ for(k in B.frost){ if(B.frost.hasOwnProperty(k) && B.frost[k] > 0) return true; } } for(i = 0; i < B.allies.length; i++){ u = B.allies[i]; if(!u.down && (u.stun > 0 || u.slowT > 0 || u.burnT > 0)) return true; } try{ if(islAilList().length) return true; }catch(_a){} return false; }
+/* 寵物技能:後置效果 */
+function islSeaPetCmdPost(u, f, lines){
+  var n, h;
+  if(f.shareP){ islBtAddBuff('shareP', f.shareP, f.dur || 2); lines.push((f.dur || 2) + ' 回合內全隊平分傷害(總量 −' + f.shareP + '%)'); }
+  if(f.healAmpP){ islBtAddBuff('healAmpP', f.healAmpP, f.dur || 3); lines.push('夥伴的治療效果 +' + f.healAmpP + '%'); }
+  if(f.invuln){ islBtAddBuff('invuln', 1, 1); if(f.selfRest) u.restT = 1; lines.push('本回合全隊不會受傷'); }
+  if(f.fishHealP){ n = u.fish || 0; if(n > 0){ u.fish = 0; lines.push('再加 ' + n + ' 條魚:' + islBtHealAll(u, f.fishHealP * n)); } else lines.push('嘴裡還沒有魚'); }
+  if(f.cleanseAll){ n = islSeaCleanseAll(); if(n > 0){ h = islBtHealAll(u, (f.cleanseHealP || 10) * n); islBtAddBuff('atkUpP', (f.cleanseAtkP || 10) * n, f.dur || 2); lines.push('解除了 ' + n + ' 個不利狀態!' + h + '、全隊攻擊 +' + ((f.cleanseAtkP || 10) * n) + '%'); } else lines.push('大家身上沒有不利狀態'); }
+  if(f.absorb){ u.absorbT = (f.dur || 2) + 1; u.absorbAcc = 0; lines.push(islEsc(u.n) + ' 開始記下受到的每一下傷害'); }
+}
+/* 象龜無敵值不值得現在放:有魔物在預告/蓄大絕招,或有人半血以下 */
+function islSeaInvulnWorth(){
+  var B = _islBt, i, m;
+  if(!B) return true;
+  for(i = 0; i < B.ms.length; i++){ m = B.ms[i]; if(m.hp > 0 && (m.tele || m.grdTele || m.grdQ || m.ult === 1 || m.chroma === 'red' || m.seaTgt)) return true; }
+  if(ISL.hp > 0 && ISL.hp < ISL.hpMax * 0.5) return true;
+  for(i = 0; i < B.allies.length; i++){ if(!B.allies[i].down && B.allies[i].hp < B.allies[i].hpMax * 0.5) return true; }
+  return false;
+}
+/* 信天翁多行動一次(包住原本的 next) */
+function islSeaExtraAct(u, cont){
+  var B = _islBt, ev;
+  if(!B || B.over || !u || u.down || !islBtAliveMons().length){ cont(); return; }
+  ev = islPetTal(u, 'extraEvery'); if(!ev){ cont(); return; }
+  if(islSeaStormy() && islPetTal(u, 'extraEveryStorm')) ev = islPetTal(u, 'extraEveryStorm');
+  if(B.turn % ev !== 0 || u._exT === B.turn){ cont(); return; }
+  u._exT = B.turn;
+  islBtLog('🪶 ' + islEsc(u.n) + ' 乘著風又繞了一圈,再行動一次!');
+  setTimeout(function(){ if(_islBt && !_islBt.over) islBtAllyAct(u, cont); }, 500);
+}
+/* 霜凍疊層(猛瑪王) */
+function islSeaFrost(u, n){
+  var B = _islBt, mx = 3, k, mk;
+  if(!B || !islSeaAliveFriend(u) || islBtBuff('immune')) return;
+  mk = islSeaBossAlive('mammothking'); if(mk && islSeaSea(mk)) mx = islSeaSea(mk).frostMax || 3;
+  B.frost = B.frost || {}; k = u.side; B.frost[k] = (B.frost[k] || 0) + (n || 1);
+  if(B.frost[k] >= mx){
+    B.frost[k] = 0;
+    if(u.side === 'p'){ B.p.stun = Math.max(B.p.stun, 1); islBtLog('🧊 你全身凍僵了,下回合動不了!'); }
+    else if(!islBtPetAilBlock(u, '被凍住')){ u.stun = Math.max(u.stun, 1); islBtLog('🧊 ' + islEsc(u.n) + ' 凍僵了,下回合動不了!'); }
+    try{ islBtFx(u.side, 'dizzy', 140); islBtFloat(u.side, '🧊 凍僵', 'block'); }catch(_f){}
+  }
+}
+/* 金剛鸚鵡:2 回合以上的不利狀態縮短 1 回合 */
+function islSeaAilShort(v){ return (v >= 2 && islPetTalAll('ailShort')) ? v - 1 : v; }
+/* ── 開戰:島主部位單位(氣根/腕足)在 islBtOpen 畫面組出來之前加入 ── */
+function islSeaBtOpen(){
+  var B = _islBt, db = islDB(), i, m, S, j, c, n0;
+  if(!B || B._seaInit) return; B._seaInit = true;
+  n0 = B.ms.length;
+  for(i = 0; i < n0; i++){
+    m = B.ms[i]; S = islSeaSea(m); if(!S) continue;
+    if(S.iceL) m.iceL = S.iceL;
+    if(S.parts && db.SEA_PARTS && db.SEA_PARTS[S.parts.k]){
+      for(j = 0; j < (S.parts.n || 1) && B.ms.length < 4; j++){
+        c = islBtAddMon(S.parts.k, m.lv, { hpMax: Math.max(10, Math.round(m.hpMax * (S.parts.hpP || 10) / 100)), atk: Math.max(1, Math.round(m.atk * (S.parts.atkP || 30) / 100)), def: m.def });
+        if(c){ c.part = true; c.owner = m.side; c.skCd = 99; }
+      }
+    }
+  }
+  if(islSeaBossAlive('hurricane')) B.eye = false;
+}
+/* 魔物倒下收屍前:島主倒下 ⇒ 部位一起倒;腕足斷 ⇒ 放開抓住的人;氣根斷 ⇒ 記重生時間 */
+function islSeaOnMonDown(){
+  var B = _islBt, i, j, c, ps, S, u;
+  if(!B) return;
+  for(i = 0; i < B.ms.length; i++){
+    c = B.ms[i];
+    if(c.boss && c.boss.seaMech && c.hp <= 0){ ps = islSeaParts(c, true); for(j = 0; j < ps.length; j++) ps[j].hp = 0; if(B.bind && B.bind.m === c.side) B.bind = null; B.seed = null; }
+    if(c.part && c.hp <= 0 && !c._downDone){
+      if(c.grab){ u = islBtUnit(c.grab); if(u && islSeaAliveFriend(u)){ if(u.side === 'p') B.p.stun = 0; else { u.stun = 0; islBtSetState(u.side, 'idle', 0); } islBtLog('🦑 腕足斷了!' + islEsc(islSeaUnitName(u)) + ' 被放開了!'); } c.grab = null; }
+      S = islSeaSea(islBtUnit(c.owner)); if(S && S.parts && S.parts.regrow) c.regrowAt = B.turn + S.parts.regrow;
+    }
+  }
+}
+/* 頭目第二階段 */
+function islSeaPhase(m, P){
+  var B = _islBt, S = islSeaSea(m);
+  if(!S || !P) return;
+  if(P.iceFull) m.iceL = S.iceL || 6;
+  if(P.blizzard) m.blizzard = true;
+  if(P.headwind) B.headwind = true;
+  if(P.regrow) m.regrow = true;
+}
+/* ── 每回合開頭;回 true = 主角倒下或魔物全滅(呼叫端結束這回合) ── */
+function islSeaTurnTick(){
+  var B = _islBt, i, j, u, m, S, list, d, al, cap, k, _pw, _sk;
+  if(!B || B.over) return false;
+  for(i = 0; i < B.ms.length; i++){ m = B.ms[i]; if(m.markT > 0) m.markT--; if(m.armBrkT > 0) m.armBrkT--; }
+  for(i = 0; i < B.allies.length; i++){
+    u = B.allies[i];
+    if(!u.down && islPetTal(u, 'fishMax') && (u.fish || 0) < islPetTal(u, 'fishMax')){ u.fish = (u.fish || 0) + 1; }
+    if(u._gone > 0){ u._gone--; if(u._gone <= 0){ u.down = false; u.hp = Math.max(1, u._goneHp || 1); islBtSetState(u.side, 'idle', 0); islBtLog('🌪 ' + islEsc(u.n) + ' 被風吹回來了!'); } }
+    if(u.absorbT > 0){ u.absorbT--; if(u.absorbT <= 0) islSeaAbsorbRelease(u); }
+  }
+  if(B.otterQ && B.otterQ.length){ for(i = 0; i < B.otterQ.length; i++){ u = B.otterQ[i]; if(u.down && !(u._gone > 0)){ u.down = false; u.hp = Math.max(1, Math.round(u.hpMax * 0.3)); islBtSetState(u.side, 'idle', 0); islBtFx(u.side, 'glow', 220); islBtFloat(u.side, '🦦 +' + u.hp, 'heal'); islBtLog('🦦 ' + islEsc(u.n) + ' 被拉起來了,回到戰場!'); playSfx('sfx-revive', 0.45); } } B.otterQ = []; }
+  if(B.otterHero && ISL.hp > 0){ B.otterHero = false; if(ISL.hp < ISL.hpMax * 0.3){ ISL.hp = Math.round(ISL.hpMax * 0.3); islBtFloat('p', '🦦 站起來!', 'heal'); islBtHealParticles('p'); islBtLog('🦦 你被拉了起來,體力回到 30%!'); } }
+  for(i = 0; i < B.ms.length; i++){
+    m = B.ms[i]; S = islSeaSea(m); if(!S || m.hp <= 0) continue;
+    if(m.k === 'mammothking'){
+      if(S.iceRegenEvery && B.turn > 1 && B.turn % S.iceRegenEvery === 0 && (m.iceL || 0) < S.iceL){ m.iceL = Math.min(S.iceL, (m.iceL || 0) + (S.iceRegenN || 2)); islBtFloat(m.side, '🧊 冰甲 ' + m.iceL, 'shieldup'); islBtLog('🧊 ' + islEsc(m.n) + ' 身上又結了一層冰甲(' + m.iceL + ' 層)。'); }
+      if(m.blizzard){ list = islBtFriendliesAlive(); for(j = 0; j < list.length; j++) islSeaFrost(list[j], 1); islBtLog('🌨 暴風雪!全隊霜凍 +1。'); }
+    }
+    if(S.parts && S.parts.regrow){ list = islSeaParts(m, false); for(j = 0; j < list.length; j++){ if(list[j].hp <= 0 && list[j].regrowAt && B.turn >= list[j].regrowAt) islSeaPartRevive(list[j], '🌿 氣根又從土裡長出來了!'); } }
+    if(m.regrow && S.regrowEvery && B.turn % S.regrowEvery === 0){ list = islSeaParts(m, false); for(j = 0; j < list.length; j++){ if(list[j].hp <= 0){ islSeaPartRevive(list[j], '🦑 一條腕足又長回來了!'); break; } } }
+    if(m.k === 'hurricane'){ k = S.eyeEvery || 3; B.eye = (B.turn % k === 0); if(B.eye){ try{ islBtBanner('🌀 颱風眼!'); }catch(_b){} islBtLog('🌀 風突然停了——颱風眼經過!這回合打牠傷害 ×' + (S.eyeMul || 2) + ',快把絕招放出去!'); } }
+    if(S.pressP && B.turn > 1){ _pw = B.press || 0; B.press = Math.min(S.pressCap || 40, _pw + S.pressP); cap = 1 - B.press / 100; if(ISL.hp > Math.round(ISL.hpMax * cap)) ISL.hp = Math.max(1, Math.round(ISL.hpMax * cap)); for(j = 0; j < B.allies.length; j++){ u = B.allies[j]; if(!u.down && u.hp > Math.round(u.hpMax * cap)) u.hp = Math.max(1, Math.round(u.hpMax * cap)); } if(B.press > _pw) islBtLog('🌊 越來越深的水壓壓下來,全隊最大體力 −' + B.press + '%!'); }
+  }
+  if(B.darkT > 0){ B.darkT--; if(B.darkT <= 0){ islSeaDarkUi(false); islBtLog('🖤 墨汁慢慢散開,看得見了。'); } else { al = islBtAliveMons(); if(al.length){ B.m = al[Math.floor(Math.random() * al.length)]; B.mi = B.ms.indexOf(B.m); islBtRepaintSides(); } } }
+  if(B.bind){
+    m = islBtUnit(B.bind.m); u = islBtUnit(B.bind.side);
+    if(!m || m.hp <= 0 || !islSeaAliveFriend(u)) B.bind = null;
+    else {
+      B.bind.t--;
+      if(B.bind.t > 0){ d = Math.max(1, Math.round(islSeaHpMaxOf(u) * B.bind.dot / 100)); islBtHurtUnit(u, d); islBtHurtFloat(u.side, '', '🌿'); m.hp = Math.min(m.hpMax, m.hp + d); islBtFloat(m.side, '+' + d, 'heal'); islBtLog('🌿 絞殺纏繞:' + islEsc(islSeaUnitName(u)) + ' 被吸走 ' + d + ' 體力(還剩 ' + B.bind.t + ' 回合)。'); }
+      else { d = Math.max(1, Math.round(islBtDmg(m.atk * (B.bind.end || 4), u.side === 'p' ? islBtPlayerStats().def : u.def))); islBtHurtUnit(u, d); islBtHurtFloat(u.side, 'combo', '🌿'); islBtLog('💥 絞殺!氣根猛力一收,' + islEsc(islSeaUnitName(u)) + ' ' + islBtHurtFloatText('') + '!'); B.bind = null; try{ islBtFx(u.side, 'hit'); }catch(_x){} }
+    }
+  }
+  if(B.seed){
+    m = islSeaBossAlive('treespirit');
+    if(!m || B.seed.broken) B.seed = null;
+    else { B.seed.t--; if(B.seed.t <= 0){ _sk = B.seed.k || 'stranglevine'; B.seed = null; if(islBtAddMon(_sk, Math.max(1, m.lv - 4))) islBtLog('🌱 種子長成了一隻絞殺藤魔!'); else islBtLog('🌱 種子發芽了,可是戰場已經擠滿了。'); } }
+  }
+  islBtHp();
+  if(ISL.hp <= 0){ B.busy = true; islBtActs(false); setTimeout(function(){ islBattleEnd('lose'); }, 600); return true; }
+  if(islBtAnyNewDown()){   /* 回合開頭的傷害(具足蟲甲殼爆發)打倒了魔物:交給既有收屍;全滅就停在這裡等勝利結算 */
+    for(i = 0; i < B.ms.length; i++){ if(B.ms[i].hp <= 0 && !B.ms[i]._downDone){ m = B.ms[i]; break; } }
+    if(!islBtAliveMons().length){ B.busy = true; islBtActs(false); islBtOnMonDown(m, function(){}); return true; }
+    islBtOnMonDown(m, function(){});
+  }
+  return false;
+}
+function islSeaPartRevive(c, txt){
+  c.hp = c.hpMax; c._downDone = false; c.regrowAt = 0; c.grab = null;
+  try{ islBtSetState(c.side, 'idle', 0); playSfx('sfx-summon-smoke', 0.35); }catch(_e){}
+  islBtLog(txt);
+}
+function islSeaAbsorbRelease(u){
+  var al, i, d, tot = u.absorbAcc || 0, list = [];
+  u.absorbAcc = 0;
+  if(u.down){ islBtLog('🛡 ' + islEsc(u.n) + ' 倒下了,記下的傷害沒能打回去……'); return; }
+  if(tot <= 0){ islBtLog('🛡 ' + islEsc(u.n) + ' 鬆開了甲殼(這兩回合沒有挨打)。'); return; }
+  al = islBtAliveMons();
+  for(i = 0; i < al.length; i++){ d = islBtBossDmg(al[i], tot, u); al[i].hp = Math.max(0, al[i].hp - d); list.push(islEsc(al[i].n) + ' −' + d); (function(_t, _d){ setTimeout(function(){ if(!_islBt) return; islBtSetState(_t.side, 'hit', 450); islBtFloat(_t.side, '🛡−' + _d, 'combo'); }, 150); })(al[i], d); }
+  try{ islBtSetState(u.side, 'skill', 700); islBtSkillPopup(u.side, '🛡 甲殼爆發'); playSfx('sfx-crit', 0.55); }catch(_e){}
+  islBtLog('🛡 ' + islEsc(u.n) + ' 猛然張開甲殼,把記下的 ' + tot + ' 點傷害全部打回去!' + list.join('、'));
+}
+function islSeaDarkUi(on){ var h = $('isl-battle'); if(h) h.classList.toggle('seadark', !!on); }
+/* 預告時(islBtMonSkill):鎖定目標/擬態變色;回 true = 已處理完這一動 */
+function islSeaTele(m, S, next){
+  var p;
+  if(!islSeaSea(m)) return false;
+  m.seaTgt = null;
+  if(S.t === 'lockon' || S.t === 'boltmark'){ p = islBtMonPickTarget(); if(p && p.u) m.seaTgt = p.u.side; }
+  if(S.t === 'chroma'){
+    m.tele = false; m.teleS = null; m.skCd = S.cd || 3;
+    m.chroma = Math.random() < 0.5 ? 'red' : 'white';
+    islBtSetState(m.side, 'skill', 900); playSfx('sfx-cantmove', 0.45);
+    islBtFloat(m.side, m.chroma === 'red' ? '🔴 變紅了!' : '⚪ 變白了!', 'combo');
+    islBtLog(S.e + ' ' + islEsc(m.n) + ' ' + (m.chroma === 'red' ? '全身變成<b>紅色</b>!——下一動要重擊全隊,快按 🛡 防禦!' : '全身變成<b>白色</b>,身體軟了下來——現在打牠傷害 +50%,快猛攻!'));
+    islBtHp();
+    setTimeout(function(){ if(_islBt && !_islBt.over) next(); }, 1000);
+    return true;
+  }
+  return false;
+}
+function islSeaTeleTxt(m, S){ var t = S.tele || '', u = m && m.seaTgt ? islBtUnit(m.seaTgt) : null; return t.replace('{T}', u ? islSeaUnitName(u) : '你們'); }
+/* 頭目一動開頭:變色結算;回 true = 這一動處理完 */
+function islSeaBossPre(m, next){
+  var B = _islBt, S, T;
+  if(!m.chroma || !islSeaSea(m)) return false;
+  if(m.chroma === 'white'){ m.chroma = null; islBtSetState(m.side, 'idle', 0); islBtLog('⚪ ' + islEsc(m.n) + ' 的顏色變回來了,這一動忙著恢復身體。'); islBtHp(); setTimeout(function(){ if(_islBt && !_islBt.over) next(); }, 900); return true; }
+  m.chroma = null;
+  B._grdG = !!(B.p.guard && ISL.hp > 0 && !(B.p.stun > 0)); B._grdStun = false;
+  S = { t: 'aoe', fxT: 'aoe', n: '擬態重擊', e: '🔴', mul: 1.6, grd: 1 };   /* 倍率比照其他島主重壓技(1.5~1.6);沙盒實跑 2.2 倍沒防禦時 Lv62 主角一下就倒 */
+  islBtSetState(m.side, 'atk', 800); playSfx('sfx-explode', 0.6); islBtSkillPopup(m.side, '🔴 擬態重擊');
+  islBtLog('🔴 ' + islEsc(m.n) + ' 的腕足一起砸下來!' + (B._grdG ? ' 🛡 你擺好防禦了!' : ' ⚠ 沒有防禦!'));
+  T = islBtFriendliesAlive();
+  setTimeout(function(){ if(!_islBt || _islBt.over) return; islBtMonHitSeq(m, S, T, 0, function(){ if(_islBt){ if(_islBt._grdG) _islBt.p.guard = false; _islBt._grdG = false; } next(); }); }, 450);
+  return true;
+}
+/* ── 島主新招式(islBtMonSkillRun);回 true = 已處理 ── */
+function islSeaSkillRun(m, S, next){
+  var B = _islBt, t = S.t, T, u, p, wx, h, al, i, ts, list, n, S2;
+  var hitSeq = function(S3, targets, after){ setTimeout(function(){ if(!_islBt || _islBt.over) return; islBtMonHitSeq(m, S3, targets, 0, after || next); }, 380); };
+  var tgtOf = function(){ var tu; u = m.seaTgt ? islBtUnit(m.seaTgt) : null; m.seaTgt = null; if(B.taunt && B.taunt.t > 0){ tu = islBtUnit(B.taunt.side); if(tu && !tu.down){ islBtLog('🦀 ' + islEsc(tu.n) + ' 跳出來嘲諷,把攻擊引到自己身上!'); return tu; } } if(!islSeaAliveFriend(u)){ p = islBtMonPickTarget(); u = p ? p.u : null; } return u; };
+  if(!islSeaSea(m)) return false;
+  if(t === 'frost'){
+    T = islBtFriendliesAlive();
+    hitSeq({ t: 'aoe', fxT: 'aoe', n: S.n, e: S.e, mul: S.mul || 0.7 }, T, function(){ var L = islBtFriendliesAlive(), j; for(j = 0; j < L.length; j++) islSeaFrost(L[j], 1); islBtLog('❄ 寒氣鑽進身體,全隊霜凍 +1(疊滿 ' + ((islSeaSea(m) || {}).frostMax || 3) + ' 層會凍僵)。'); islBtHp(); next(); });
+    return true;
+  }
+  if(t === 'lockon'){
+    u = tgtOf(); if(!u){ next(); return true; }
+    S2 = { t: 'charge', fxT: 'charge', n: S.n, e: S.e, mul: S.mul || 3 };
+    if(u.side === 'p' && B.heroGuard && B.heroGuard.t > 0){ S2.mul = S2.mul * (1 - B.heroGuard.cut / 100); B.heroGuard.t = 0; islBtLog('🛡 夥伴擋在你前面,分掉了衝撞的力道!'); }
+    hitSeq(S2, [u]); return true;
+  }
+  if(t === 'boltmark'){
+    u = tgtOf(); if(!u){ next(); return true; }
+    if(B.p.guard && ISL.hp > 0 && !(B.p.stun > 0)){ T = islBtFriendliesAlive(); islBtLog('⚡ 你舉起防禦當避雷針,雷被引開、分散到全隊!'); hitSeq({ t: 'chain', fxT: 'chain', n: S.n, e: S.e, mul: (S.mul || 2.5) / Math.max(1, T.length) }, T); return true; }
+    hitSeq({ t: 'chain', fxT: 'chain', n: S.n, e: S.e, mul: S.mul || 2.5 }, [u]); return true;
+  }
+  if(t === 'blow'){
+    al = []; for(i = 0; i < B.allies.length; i++){ if(!B.allies[i].down && !(B.allies[i]._gone > 0)) al.push(B.allies[i]); }
+    if(!al.length){ hitSeq({ t: 'aoe', fxT: 'aoe', n: S.n, e: S.e, mul: 0.6 }, islBtFriendliesAlive()); return true; }
+    u = al[Math.floor(Math.random() * al.length)];
+    if(islBtBuff('immune') || islBtPetAilBlock(u, '被吹走')){ islBtLog('🌪 ' + islEsc(u.n) + ' 穩穩站住,沒被吹走!'); setTimeout(next, 900); return true; }
+    u._gone = (S.dur || 2) + 1; u._goneHp = u.hp; u.down = true; islBtSetState(u.side, 'down', 0);
+    islBtFloat(u.side, '🌪 被吹走!', 'block'); islBtLog('🌪 ' + islEsc(u.n) + ' 被旋風捲上天,' + (S.dur || 2) + ' 回合內回不來!');
+    islBtHp(); setTimeout(next, 1000); return true;
+  }
+  if(t === 'swirl'){ B.shuffleT = 1; hitSeq({ t: 'aoe', fxT: 'aoe', n: S.n, e: S.e, mul: S.mul || 0.8, slow: S.slow || 1 }, islBtFriendliesAlive(), function(){ islBtLog('🌀 大家被吹得東倒西歪,下回合夥伴的出手順序會亂掉!'); next(); }); return true; }
+  if(t === 'bind'){
+    p = islBtMonPickTarget(); u = p ? p.u : null; if(!u){ next(); return true; }
+    hitSeq({ t: 'sticky', fxT: 'sticky', n: S.n, e: S.e, mul: S.mul || 0.6 }, [u], function(){
+      if(!_islBt || _islBt.over) return;
+      if(!islSeaAliveFriend(u) || islBtBuff('immune')){ next(); return; }
+      B.bind = { side: u.side, m: m.side, t: (S.bindT || 3) + 1, dot: S.bindDotP || 8, end: S.bindEndMul || 4 };
+      islBtLog('🌿 氣根纏住了 ' + islEsc(islSeaUnitName(u)) + '!3 回合後會被絞緊——快劃斷藤蔓!');
+      islBtHp();
+      if(B.p.stun > 0 || ISL.hp <= 0){ islBtLog('😵 你動不了,沒辦法割藤蔓……'); next(); return; }
+      islSeaQteRun('slash', m, function(r){
+        var cut = r | 0;
+        if(!_islBt || _islBt.over) return;
+        if(B.bind){ if(cut >= 3){ B.bind = null; islBtLog('✂ 三條藤蔓全部劃斷!' + islEsc(islSeaUnitName(u)) + ' 掙脫了!'); playSfx('sfx-quiz-correct', 0.45); } else if(cut > 0){ B.bind.t = Math.max(1, B.bind.t - cut); islBtLog('✂ 劃斷了 ' + cut + ' 條藤蔓,纏繞鬆了一點(還剩 ' + Math.max(0, B.bind.t - 1) + ' 回合)。'); } else islBtLog('✗ 一條都沒劃斷……'); }
+        islBtHp(); next();
+      });
+    });
+    return true;
+  }
+  if(t === 'seed'){ B.seed = { t: (S.seedT || 3) + 1, need: Math.max(1, Math.round(m.hpMax * (S.seedNeedP || 15) / 100)), dealt: 0, k: S.k }; islBtLog('🌰 一顆大種子落地了!3 回合內對 ' + islEsc(m.n) + ' 造成 ' + B.seed.need + ' 點傷害就能震碎它。'); islBtHp(); setTimeout(next, 900); return true; }
+  if(t === 'photo'){
+    try{ wx = islWeather(); }catch(_w){ wx = 'sunny'; }
+    n = wx === 'sunny' ? (S.healSun || 25) : ((wx === 'rain' || wx === 'typhoon') ? (S.healRain || 5) : (S.healP || 15));
+    h = Math.round(m.hpMax * n / 100); m.hp = Math.min(m.hpMax, m.hp + h); islBtFloat(m.side, '+' + h, 'heal'); islBtHealParticles(m.side);
+    islBtLog('☀ ' + (wx === 'sunny' ? '大太陽下,葉子拚命行光合作用' : ((wx === 'rain' || wx === 'typhoon') ? '下著雨,陽光不夠,只回了一點點' : '雲層擋住一半的陽光')) + ':' + islEsc(m.n) + ' 回復 ' + n + '%(+' + h + ')。');
+    islBtHp(); setTimeout(next, 900); return true;
+  }
+  if(t === 'grab'){
+    ts = islSeaParts(m, true); list = shuffle(islBtFriendliesAlive()); T = [];
+    if(!ts.length){ ts = [m]; }
+    for(i = 0; i < ts.length && i < list.length; i++){ T.push(list[i]); ts[i]._grabFor = list[i].side; }
+    hitSeq({ t: 'petrify', fxT: 'petrify', n: S.n, e: S.e, mul: S.mul || 0.6, stun: 1 }, T, function(){
+      var j, c;
+      for(j = 0; j < ts.length; j++){ c = ts[j]; if(c._grabFor){ if(c !== m && c.hp > 0) c.grab = c._grabFor; c._grabFor = null; } }
+      islBtLog('🦑 腕足把 ' + T.length + ' 個人抓住了!打斷抓人的那條腕足就能救出來。'); islBtHp(); next();
+    });
+    return true;
+  }
+  if(t === 'dark'){ B.darkT = (S.dur || 3) + 1; islSeaDarkUi(true); islBtLog('🖤 墨汁把四周染得一片漆黑!' + (S.dur || 3) + ' 回合內看不到敵人的血量,攻擊目標會亂掉。'); islBtHp(); setTimeout(next, 900); return true; }
+  if(t === 'chroma'){ m.chroma = Math.random() < 0.5 ? 'red' : 'white'; islBtHp(); setTimeout(next, 700); return true; }
+  return false;
+}
+/* 智取成功的島主追加效果 */
+function islSeaOutwit(m){
+  var B = _islBt, k;
+  if(!B || !m) return;
+  if(m.k === 'mammothking' && B.frost){ for(k in B.frost){ if(B.frost.hasOwnProperty(k)) B.frost[k] = 0; } islBtLog('🔦 火光暖暖的,全隊的霜凍都融化了!'); }
+  if((m.k === 'giantsquid' || m.k === 'tentacle') && B.darkT > 0){ B.darkT = 0; islSeaDarkUi(false); islBtLog('🪞 鏡子反射的光照亮了四周!'); }
+  if((m.k === 'treespirit' || m.k === 'rootpart') && B.bind){ B.bind = null; islBtLog('🌾 鐮刀一揮,纏人的氣根斷了!'); }
+}
+/* 大絕招的 QTE 結果:重壓技成功 = 主角當成完美閃避 */
+function islSeaGrdDodge(u){ var B = _islBt; return !!(B && u && u.side === 'p' && B._seaQ === 'ok'); }
+/* 必殺技(ult)套 QTE:回 true = 已接手流程 */
+function islSeaUltQte(m, U, next){
+  var B = _islBt;
+  if(!U.qte || B._seaUltQ) return false;
+  if(B.p.stun > 0 || ISL.hp <= 0){ islBtLog('😵 你動彈不得,來不及反應……'); return false; }
+  islSeaQteRun(U.qte, m, function(r){
+    if(!_islBt || _islBt.over) return;
+    B._seaUltQ = r || 'fail';
+    if(U.qte === 'hold' && r === 'ok'){
+      B._seaUltQ = null; B.ultCover = false;
+      try{ islBtBanner('🪞 閃光反擊!'); }catch(_b){}
+      islBtLog('🪞 鏡子在牠張大眼睛的那一瞬間閃出強光!' + islEsc(m.n) + ' 嚇得縮成一團——「' + islEsc(U.n) + '」被打斷了!');
+      islBtToughHit(m, m.tough || 999); islBtHp();
+      setTimeout(function(){ if(_islBt && !_islBt.over) next(); }, 900);
+      return;
+    }
+    islBtBossUlt(m, next);
+  });
+  return true;
+}
+function islSeaUltMul(U){
+  var B = _islBt, r = B && B._seaUltQ, k = 1;
+  if(B) B._seaUltQ = null;
+  if(!r || !U.qte) return 1;
+  if(U.qte === 'circle'){ if(r === 'ok'){ k = 0.2; islBtLog('🌀 你逆著風畫圈,抵消了大半的旋轉力!'); } else if(r === 'wrong'){ k = 1.3; islBtLog('🌀 畫成順時針了!反而順著風被吹得更慘……'); } else islBtLog('🌀 圈沒畫完,風太強了!'); }
+  if(U.qte === 'hold' && r !== 'ok') islBtLog('🪞 時機沒抓好,被那隻大眼睛盯住了!');
+  return k;
+}
+/* 狀態圖示(islBtHp 三處併進來) */
+function islSeaStIcons(u){
+  var B = _islBt, o = [], k = u === 'p' ? 'p' : (u && u.side);
+  if(!B || !u) return o;
+  if(u === 'p' || (u.side && u.side.charAt(0) === 'a')){
+    if(B.frost && B.frost[k] > 0) o.push({ k: 'sfrost', v: B.frost[k] });
+    if(B.bind && B.bind.side === k) o.push({ k: 'sbind', v: Math.max(1, B.bind.t - 1) });
+    if(u === 'p'){ if(islBtBuff('shareP')) o.push({ k: 'sshare' }); if(islBtBuff('invuln')) o.push({ k: 'sinv' }); if(islBtBuff('healAmpP')) o.push({ k: 'samp' }); if(B.press > 0) o.push({ k: 'spress', v: B.press }); }
+    else { if(u._gone > 0) o.push({ k: 'sgone', v: u._gone }); if(u.fish > 0) o.push({ k: 'sfish', v: u.fish }); if(u.absorbT > 0) o.push({ k: 'sabs', v: u.absorbAcc || 0 }); if(u.restT > 0) o.push({ k: 'srest' }); if(u.foxCrit) o.push({ k: 'sfox' }); }
+    return o;
+  }
+  if(u.markT > 0) o.push({ k: 'smark', v: u.markT });
+  if(u.frzT > 0) o.push({ k: 'sfrz', v: u.frzT });
+  if(u.armBrkT > 0) o.push({ k: 'sbrk', v: u.armBrkT });
+  if(u.iceL > 0) o.push({ k: 'sice', v: u.iceL });
+  if(u.grab) o.push({ k: 'sgrab' });
+  if(u.k === 'hurricane' && u.hp > 0) o.push({ k: B.eye ? 'seye' : 'swall' });
+  if(u.chroma) o.push({ k: u.chroma === 'red' ? 'sred' : 'swhite' });
+  if(u.k === 'treespirit' && B.seed && !B.seed.broken) o.push({ k: 'sseed', v: Math.max(1, B.seed.t - 1) });
+  if(u.boss && u.boss.seaMech && u.k === 'treespirit' && islSeaParts(u, true).length) o.push({ k: 'sroot', v: islSeaParts(u, true).length });
+  if(u.boss && u.seaTgt && u.tele) o.push({ k: 'slock' });
+  return o;
+}
+var ISL_SEA_STFX = {
+  sfrost: { e: '❄', n: '霜凍', d: '寒氣累積在身上,疊滿 3 層就會凍僵 1 回合。火把智取猛瑪王可以融掉全隊的霜凍,海獺的「敲開貝殼」也能清掉。' },
+  sbind: { e: '🌿', n: '被纏住', d: '每回合被氣根吸走 8% 最大體力(巨木靈回血),數字到了就會被絞緊受到 4 倍傷害!鐮刀智取或海獺的淨化可以救出來。' },
+  sshare: { e: '🐧', n: '企鵝圈', d: '任何隊友受到的傷害都平均分給全隊一起扛,而且總量再減 30%;分到你的那份不會讓你倒下。' },
+  sinv: { e: '🐢', n: '縮進殼裡', d: '這一回合全隊完全不會受傷。' },
+  samp: { e: '♨', n: '泡溫泉', d: '夥伴的治療效果 +50%。' },
+  spress: { e: '🌊', n: '水壓', d: '潛得越深壓力越大,全隊最大體力一直下降(最多 −40%),要速戰速決!' },
+  sgone: { e: '🌪', n: '被吹走', d: '被旋風捲到戰場外面,回來之前不能行動、也不能被治療。' },
+  sfish: { e: '🐟', n: '存魚', d: '海鸚嘴裡叼著的小魚。隊友體力掉到 30% 以下會自動吃一條;放「一口十條魚」時會全部分出去。' },
+  sabs: { e: '🛡', n: '甲殼蜷縮', d: '正在記下受到的傷害(數字是目前累積量),時間到會全部打回敵方全體。' },
+  srest: { e: '🐢', n: '縮在殼裡', d: '剛剛用過「縮進殼裡」,下一回合要休息,不能行動。' },
+  sfox: { e: '🦊', n: '蓄勢', d: '剛閃開攻擊,下一次攻擊必定暴擊。' },
+  smark: { e: '🎯', n: '被鎖定', d: '被雪鴞盯上了,全隊打牠的傷害 +20%。' },
+  sfrz: { e: '🧊', n: '冰凍', d: '被凍住不能動,挨打也不會醒,而且受到的傷害 +30%。' },
+  sbrk: { e: '🦴', n: '破甲', d: '防禦 −50%,全隊打牠都更痛。' },
+  sice: { e: '🧊', n: '冰甲', d: '有冰甲時牠受到的傷害 −60%。你的攻擊或夠重的一擊每次敲碎 1 層(錘一下碎 2 層),夥伴的輕打敲不破;每 3 回合會再長 2 層。' },
+  sgrab: { e: '🦑', n: '抓著人', d: '這條腕足正抓住一位隊友;把它打斷就能救出來。' },
+  swall: { e: '🌀', n: '眼牆', d: '颱風的眼牆風雨最強,攻擊被吹散,傷害 −80%。每 3 回合颱風眼會經過一次。' },
+  seye: { e: '☀', n: '颱風眼', d: '颱風眼經過,風平浪靜!這回合打牠傷害 ×2,快放絕招!' },
+  sred: { e: '🔴', n: '變紅', d: '下一動要重擊全隊!現在按 🛡 防禦,全隊都會少受很多傷害。' },
+  swhite: { e: '⚪', n: '變白', d: '身體放軟了,受到的傷害 +50%,快猛攻!' },
+  sseed: { e: '🌰', n: '種子', d: '時間到會長成一隻絞殺藤魔;在那之前對巨木靈造成足夠的傷害就能震碎它。' },
+  sroot: { e: '🌿', n: '氣根', d: '還有氣根連著時,本體受到的傷害會被分掉(第二階段幾乎打不動)。先砍斷氣根!氣根 4 回合後會重新長出來。' },
+  slock: { e: '🎯', n: '鎖定目標', d: '頭目已經瞄準了某個人,下一動就會攻擊他,看戰鬥紀錄就知道是誰。' }
+};
+(function(){ var k; for(k in ISL_SEA_STFX){ if(ISL_SEA_STFX.hasOwnProperty(k)) ISL_BT_STFX[k] = ISL_SEA_STFX[k]; } })();
+/* 戰鬥結束收尾:被吹走的夥伴放回來(不然會被當成倒下而休息一天) */
+function islSeaBtEnd(){
+  var B = _islBt, i, u;
+  if(!B) return;
+  for(i = 0; i < B.allies.length; i++){ u = B.allies[i]; if(u._gone > 0){ u._gone = 0; u.down = false; u.hp = Math.max(1, u._goneHp || 1); } }
+  islSeaDarkUi(false);
+  islSeaQteClose();
+}
+/* ══ 🎮 四種島主 QTE ══
+   islSeaQteRun(kind, m, cb):swipe → cb('ok'|'fail');slash → cb(劃斷的條數 0~3);circle → cb('ok'|'wrong'|'fail');hold → cb('ok'|'fail')。
+   判定時間吃腳程/巧手與天賦「慢活節奏」(dodgeGoodMs)、品質小遊戲變慢(qteSlowP),寬鬆上限 +0.6 秒。
+   觸控/滑鼠/鍵盤三種輸入:手機與 iPad 用手指,PC 用滑鼠拖曳(方向滑動也能按方向鍵或點安全的那一側;按住放開也能用空白鍵)。 */
+var _islSeaQ = null;
+function islSeaQteMs(base){ var b = Math.min(600, (Math.min(70, ISL.stats.mov || 0) * 5) + (Math.min(70, ISL.stats.dex || 0) * 3) + Math.min(400, islSkEff('dodgeGoodMs')) / 2); return Math.round((base + b) / Math.max(0.4, islQteSlow())); }
+function islSeaQteClose(){ var Q = _islSeaQ; _islSeaQ = null; if(!Q) return; try{ if(Q.raf) cancelAnimationFrame(Q.raf); }catch(_r){} try{ clearTimeout(Q.to); }catch(_t){} try{ if(Q.key) document.removeEventListener('keydown', Q.key); if(Q.keyUp) document.removeEventListener('keyup', Q.keyUp); if(Q.mu) window.removeEventListener('mouseup', Q.mu); }catch(_k){} try{ if(Q.el && Q.el.parentNode) Q.el.parentNode.removeChild(Q.el); }catch(_e){} }
+function islSeaQtePt(ev, el){ var t = (ev.touches && ev.touches[0]) || (ev.changedTouches && ev.changedTouches[0]) || ev, r = el.getBoundingClientRect(); return { x: t.clientX - r.left, y: t.clientY - r.top, w: r.width, h: r.height }; }
+function islSeaQteRun(kind, m, cb){
+  var host = $('isl-battle'), el, Q, done = false, ms;
+  var fin = function(r){ if(done) return; done = true; setTimeout(function(){ islSeaQteClose(); cb(r); }, 650); };
+  islSeaQteClose();
+  if(!host){ cb(kind === 'slash' ? 0 : 'fail'); return; }
+  el = document.createElement('div'); el.className = 'isl-sq k-' + kind; host.appendChild(el);
+  Q = _islSeaQ = { el: el };
+  try{ playSfx('sfx-burst-ready', 0.5); }catch(_s){}
+  if(kind === 'swipe'){
+    var dirs = ['u', 'd', 'l', 'r'], safe = dirs[Math.floor(Math.random() * 4)], h = '', i, p0 = null;
+    ms = islSeaQteMs(1200);
+    h += '<div class="tt">🧊 冰面裂開了!往<b>沒有裂縫</b>的厚冰滑過去!</div><div class="pad">';
+    for(i = 0; i < 4; i++) h += '<button type="button" class="side s-' + dirs[i] + (dirs[i] === safe ? ' safe' : ' crack') + '" data-d="' + dirs[i] + '">' + (dirs[i] === safe ? '🧊<small>厚冰</small>' : '⚡<small>裂縫</small>') + '</button>';
+    h += '<div class="me">🧍</div></div><div class="bar"><i style="animation-duration:' + ms + 'ms"></i></div>';
+    el.innerHTML = h;
+    var pick = function(d){ var ok; if(done) return; ok = d === safe; el.classList.add(ok ? 'good' : 'bad'); el.querySelector('.me').className = 'me go-' + d; try{ playSfx(ok ? 'sfx-evade' : 'sfx-ng', 0.5); }catch(_p){} fin(ok ? 'ok' : 'fail'); };
+    el.addEventListener('click', function(ev){ var t = ev.target; while(t && t !== el && !(t.getAttribute && t.getAttribute('data-d'))) t = t.parentNode; if(t && t !== el) pick(t.getAttribute('data-d')); });
+    var dn = function(ev){ p0 = islSeaQtePt(ev, el); };
+    var up = function(ev){ var p, dx, dy; if(!p0) return; p = islSeaQtePt(ev, el); dx = p.x - p0.x; dy = p.y - p0.y; p0 = null; if(Math.max(Math.abs(dx), Math.abs(dy)) < 40) return; try{ ev.preventDefault(); }catch(_e){} pick(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u')); };
+    el.addEventListener('touchstart', dn, { passive: true }); el.addEventListener('touchend', up); el.addEventListener('mousedown', dn); el.addEventListener('mouseup', up);
+    Q.key = function(ev){ var K = { ArrowUp: 'u', ArrowDown: 'd', ArrowLeft: 'l', ArrowRight: 'r' }[ev.key]; if(K){ try{ ev.preventDefault(); }catch(_e){} pick(K); } }; document.addEventListener('keydown', Q.key);
+    Q.to = setTimeout(function(){ if(!done){ el.classList.add('bad'); fin('fail'); } }, ms);
+    return;
+  }
+  if(kind === 'slash'){
+    var V = [], cut = 0, last = null, drag = false, j, vh = '';
+    ms = islSeaQteMs(3000);
+    for(j = 0; j < 3; j++) V.push({ x: 18 + j * 30 + Math.random() * 8, y: 30 + Math.random() * 40, a: -35 + Math.random() * 70, cut: false });
+    for(j = 0; j < 3; j++) vh += '<div class="vine" data-i="' + j + '" style="left:' + V[j].x + '%;top:' + V[j].y + '%;transform:translate(-50%,-50%) rotate(' + V[j].a + 'deg)"></div>';
+    el.innerHTML = '<div class="tt">🌿 被纏住了!用手指<b>劃過</b>藤蔓把它割斷!(3 條)</div><div class="field">' + vh + '</div><div class="bar"><i style="animation-duration:' + ms + 'ms"></i></div>';
+    var fld = el.querySelector('.field');
+    (function(){ var L0 = Math.round(Math.min(fld.clientWidth, fld.clientHeight) * 0.72), vs = fld.querySelectorAll('.vine'), q; for(q = 0; q < vs.length; q++) vs[q].style.height = Math.max(60, L0) + 'px'; })();   /* 藤蔓長度 = 判定長度(場地短邊 × 0.72);用 clientWidth(不含 zoom),判定那邊用 getBoundingClientRect,兩邊比例一致 */
+    var seg = function(ax, ay, bx, by, cx, cy, dx, dy){ var cr = function(px, py, qx, qy, rx, ry){ return (qx - px) * (ry - py) - (qy - py) * (rx - px); }; var d1 = cr(cx, cy, dx, dy, ax, ay), d2 = cr(cx, cy, dx, dy, bx, by), d3 = cr(ax, ay, bx, by, cx, cy), d4 = cr(ax, ay, bx, by, dx, dy); return (d1 * d2 < 0) && (d3 * d4 < 0); };
+    var test = function(p){
+      var k, v, L, r, ex, ey, vx, vy, ve;
+      if(last){
+        for(k = 0; k < V.length; k++){
+          v = V[k]; if(v.cut) continue;
+          L = Math.min(p.w, p.h) * 0.36; r = v.a * Math.PI / 180; ex = Math.sin(r) * L; ey = -Math.cos(r) * L;
+          vx = v.x / 100 * p.w; vy = v.y / 100 * p.h;
+          if(seg(last.x, last.y, p.x, p.y, vx - ex, vy - ey, vx + ex, vy + ey)){ v.cut = true; cut++; ve = fld.querySelector('.vine[data-i="' + k + '"]'); if(ve) ve.classList.add('cut'); try{ playSfx('sfx-sword', 0.45); }catch(_s2){} if(cut >= 3){ el.classList.add('good'); fin(3); return; } }
+        }
+      }
+      last = p;
+    };
+    var sd = function(ev){ drag = true; last = islSeaQtePt(ev, fld); try{ ev.preventDefault(); }catch(_e){} };
+    var sm = function(ev){ if(!drag || done) return; try{ ev.preventDefault(); }catch(_e){} test(islSeaQtePt(ev, fld)); };
+    var su = function(){ drag = false; last = null; };
+    fld.addEventListener('touchstart', sd); fld.addEventListener('touchmove', sm); fld.addEventListener('touchend', su);
+    fld.addEventListener('mousedown', sd); fld.addEventListener('mousemove', sm); Q.mu = su; window.addEventListener('mouseup', su);
+    Q.to = setTimeout(function(){ if(!done){ el.classList.add(cut ? 'good' : 'bad'); fin(cut); } }, ms);
+    return;
+  }
+  if(kind === 'circle'){
+    var acc = 0, la = null, held = false, need = Math.PI * 4;
+    ms = islSeaQteMs(4000);
+    el.innerHTML = '<div class="tt">🌀 十七級強風!在圓圈上<b>逆時針</b>畫 2 圈,抵消颱風的旋轉!</div><div class="ring"><div class="sw">🌀</div><div class="arr">↺</div><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"></circle><circle class="fg" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5"></circle></svg></div><div class="bar"><i style="animation-duration:' + ms + 'ms"></i></div>';
+    var rg = el.querySelector('.ring'), fg = el.querySelector('.fg');
+    var ang = function(p){ return Math.atan2(p.y - p.h / 2, p.x - p.w / 2); };
+    var cd = function(ev){ held = true; la = ang(islSeaQtePt(ev, rg)); try{ ev.preventDefault(); }catch(_e){} };
+    var cm = function(ev){
+      var a, d;
+      if(!held || done) return; try{ ev.preventDefault(); }catch(_e){}
+      a = ang(islSeaQtePt(ev, rg)); if(la === null){ la = a; return; }
+      d = a - la; if(d > Math.PI) d -= Math.PI * 2; if(d < -Math.PI) d += Math.PI * 2; la = a;
+      acc += d;   /* 螢幕座標 y 向下 ⇒ 角度變小 = 畫面上逆時針 */
+      fg.setAttribute('stroke-dashoffset', String(276.5 * (1 - Math.max(0, Math.min(1, -acc / need)))));
+      if(-acc >= need){ el.classList.add('good'); try{ playSfx('sfx-quiz-correct', 0.5); }catch(_s3){} fin('ok'); }
+      else if(acc >= Math.PI * 2){ el.classList.add('bad'); try{ playSfx('sfx-ng', 0.5); }catch(_s4){} fin('wrong'); }
+    };
+    var cu = function(){ held = false; la = null; };
+    rg.addEventListener('touchstart', cd); rg.addEventListener('touchmove', cm); rg.addEventListener('touchend', cu);
+    rg.addEventListener('mousedown', cd); rg.addEventListener('mousemove', cm); Q.mu = cu; window.addEventListener('mouseup', cu);
+    Q.to = setTimeout(function(){ if(!done){ el.classList.add('bad'); fin('fail'); } }, ms);
+    return;
+  }
+  if(kind === 'hold'){
+    var openMs = 1800, win = Math.min(700, islSeaQteMs(260)), t0 = islNow(), pressed = false, eye, btn;
+    el.innerHTML = '<div class="tt">👁 深淵之眼要張開了!<b>按住</b> 🪞,在眼睛<b>張到最大</b>的那一刻放開!</div><div class="eye"><i></i><b></b></div><button type="button" class="mir">🪞<small>按住</small></button>';
+    eye = el.querySelector('.eye'); btn = el.querySelector('.mir');
+    var openK = function(){ var t = islNow() - t0; if(t < openMs) return t / openMs; if(t < openMs + win) return 1; return Math.max(0, 1 - (t - openMs - win) / 500); };
+    var tick = function(){ var t; if(done) return; t = islNow() - t0; eye.style.setProperty('--o', String(openK())); eye.classList.toggle('max', t >= openMs && t < openMs + win); if(t > openMs + win + 500){ el.classList.add('bad'); fin('fail'); return; } Q.raf = requestAnimationFrame(tick); };
+    var hd = function(ev){ try{ ev.preventDefault(); }catch(_e){} if(done) return; pressed = true; btn.classList.add('on'); };
+    var hu = function(ev){ var t; if(!pressed || done) return; try{ ev.preventDefault(); }catch(_e){} pressed = false; btn.classList.remove('on'); t = islNow() - t0; if(t >= openMs && t < openMs + win){ el.classList.add('good'); try{ playSfx('sfx-crit', 0.6); }catch(_s5){} fin('ok'); } else { el.classList.add('bad'); try{ playSfx('sfx-ng', 0.5); }catch(_s6){} fin('fail'); } };
+    btn.addEventListener('touchstart', hd); btn.addEventListener('touchend', hu); btn.addEventListener('mousedown', hd); btn.addEventListener('mouseup', hu); btn.addEventListener('mouseleave', function(ev){ if(pressed) hu(ev); });
+    Q.key = function(ev){ if(ev.key === ' ' || ev.key === 'Enter'){ try{ ev.preventDefault(); }catch(_e){} if(!pressed && !ev.repeat) hd(ev); } }; document.addEventListener('keydown', Q.key);
+    Q.keyUp = function(ev){ if(ev.key === ' ' || ev.key === 'Enter') hu(ev); }; document.addEventListener('keyup', Q.keyUp);
+    Q.raf = requestAnimationFrame(tick);
+    return;
+  }
+  cb(kind === 'slash' ? 0 : 'fail');
+}
+/* ══ ★ v1.384.0 外島擴充區塊結束 ══ */
 /* 有魔物倒下:一次把「已經 HP 歸零但還沒演倒下」的全部收乾淨(全體技能可能一次放倒兩隻),
    還有活著的就自動換鎖定並繼續(cb),全部倒下才進勝利結算。 */
 function islBtOnMonDown(m, cb){
   var B = _islBt, alive, i, fell = [];
   if(!B || B.over) return;
+  if(islSeaOn()) islSeaOnMonDown();   /* ★ v1.384.0 島主倒下 ⇒ 氣根/腕足一起倒;腕足斷 ⇒ 放開被抓的人;氣根斷 ⇒ 記重生時間 */
   for(i = 0; i < B.ms.length; i++){
     if(B.ms[i].hp <= 0 && !B.ms[i]._downDone){ B.ms[i]._downDone = true; islBtSetState(B.ms[i].side, 'down', 0); islBtFx(B.ms[i].side, 'hit', 180); islBtFxEv(B.ms[i].boss ? 'bossDown' : 'monDown', B.ms[i].side, null); fell.push(B.ms[i].n); }   /* ★ v1.193.0 老師需求②「被打倒的魔物身上發光特效改成點擊星星特效」— 'glow'(金色光圈)→'hit'(點擊星星) */
   }
@@ -32988,6 +33768,7 @@ function islBtResultHtml(o){
 window.islBattleEnd = function(how){
   var B = _islBt, db = islDB(), m, loot = [], k, n, put, tech = 0, xp, mine;
   if(!B || B.over) return; B.over = true; m = B.m; mine = B.mine; islBtActs(false);
+  if(islSeaOn()) islSeaBtEnd();   /* ★ v1.384.0 被旋風吹走的夥伴放回來(不然會被當成倒下而休息一天)、收掉黑暗遮罩與 QTE */
   if(B.dg){   /* ★ v1.122.0 地下層:只演倒下/勝利動畫,戰利品與流程交回 islDgAfterBattle(樓層寶箱本來就有) */
     if(how === 'win'){ islBtSetState('m', 'down', 0); playSfx('sfx-ko', 0.5); setTimeout(function(){ islBtFx('m', 'hit', 220); }, 200); ISL.battle.won++; islWeaponXpGain(m.lv); islPetsGainAfterWin(B.ms); try{ islAdvGain(islAdvXpOf(B.ms)); }catch(_ad){} }   /* ★ v1.125.0 地下層打贏也算練功;★ v1.164.0 地下層帶去的隊友一樣有經驗;★ v1.193.0 老師需求②:'glow'→'hit'(點擊星星) */   /* ★ v1.125.0 地下層打贏也算練功;★ v1.164.0 地下層帶去的隊友一樣有經驗 */
     else if(how === 'lose'){ islBtSetState('p', 'down', 0); playSfx('sfx-ko', 0.5); islBtFxEv('lose', 'p', null); ISL.battle.lost++; ISL.hurt = true; }
@@ -33746,6 +34527,5 @@ window.islPetGearOpen = function(selK){
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(start, 1200); }, false);
   else setTimeout(start, 1200);
 })();
-</script>
-</body>
+</script></body>
 </html>
