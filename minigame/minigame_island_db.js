@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.382.0';   /* ★ v1.382.0(2026-10-05)— 本檔實質異動:D.LOG_MAX 150→300、新增 D.LOG_DAY_KEEP/D.LOG_SKIP、D.ENDING.pri 新增日誌排序用低分項;檔尾 D.LOG */   void 'v1.381.0';   /* ★ v1.381.0(2026-10-05)—本檔實質異動:BUILDINGS.ship.baseK=2(營地帆船基本尺寸 ×2);D.ENDING 新增 feel(島嶼回顧感性話語)/feelSec/recapMax;檔尾 D.LOG */   void 'v1.380.0';   /* ★ v1.380.0(2026-10-04)— 本檔實質異動:D.ENDING 新增 pri(回憶精選打分表)/keyBld/memMin/memMax,maxSlides 28→30;檔尾 D.LOG */   void 'v1.379.0';   /* ★ v1.379.0(2026-10-04)— 本檔實質異動:新增 D.MON_TYPHOON(颱風天野外不出現的 6 種魔物);檔尾 D.LOG */   void 'v1.378.0';   /* ★ v1.378.0(2026-10-04)— 本檔實質異動:D.QUIZ gather/chop/quarry/fish/trash 各 +50 題(檔尾 IIFE 接在原題庫後面);檔尾 D.LOG */   void 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
+  D.VER = 'v1.383.0';   /* ★ v1.383.0(2026-10-06)— 本檔只有檔尾 D.LOG(好友互動正式開放稽核;修法在 index) */   void 'v1.382.0';   /* ★ v1.382.0(2026-10-05)—本檔實質異動:D.LOG_MAX 150→300、新增 D.LOG_DAY_KEEP/D.LOG_SKIP、D.ENDING.pri 新增日誌排序用低分項;檔尾 D.LOG */   void 'v1.381.0';   /* ★ v1.381.0(2026-10-05)—本檔實質異動:BUILDINGS.ship.baseK=2(營地帆船基本尺寸 ×2);D.ENDING 新增 feel(島嶼回顧感性話語)/feelSec/recapMax;檔尾 D.LOG */   void 'v1.380.0';   /* ★ v1.380.0(2026-10-04)— 本檔實質異動:D.ENDING 新增 pri(回憶精選打分表)/keyBld/memMin/memMax,maxSlides 28→30;檔尾 D.LOG */   void 'v1.379.0';   /* ★ v1.379.0(2026-10-04)— 本檔實質異動:新增 D.MON_TYPHOON(颱風天野外不出現的 6 種魔物);檔尾 D.LOG */   void 'v1.378.0';   /* ★ v1.378.0(2026-10-04)— 本檔實質異動:D.QUIZ gather/chop/quarry/fish/trash 各 +50 題(檔尾 IIFE 接在原題庫後面);檔尾 D.LOG */   void 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
   void 'v1.361.0';   /* ★ v1.361.0(2026-09-30)— 本檔僅版號與 D.LOG(跑跳真圖總開關在 index) */
   void 'v1.360.0';   /* ★ v1.360.0(2026-09-29)— 本檔僅版號與 D.LOG(營地造景重設位置鈕在 index);與 v1.359.0 co-op 心跳異動同一包交付 */
   void 'v1.359.0';   /* ★ v1.359.0(2026-09-29・老師「乙」)— 本檔實質異動:拜訪好友島 co-op 心跳 COOP_HEARTBEAT_SEC 6→15(每人每分鐘 10→4 次寫入,25 人整節課互訪從約 1 萬次降到約 4 千次)、COOP_STALE_SEC 18→45(維持 3 次心跳沒到才判離線變 NPC),COOP_GONE_SEC 600 不動;檔尾 D.LOG。 */
@@ -5926,5 +5926,9 @@ window.ISL_DB = (function(){
     '📅 島上日誌可以記 300 筆了,而且每一天都會留下最重要的 3 件事,前面的日子不會再被清空。',
     '🧹 戰鬥掉落、點天賦這些小事不再寫進日誌。',
     '🔎 以前被清掉的重要紀錄(踏進新區域、蓋好設施、研究科技、夥伴加入、做出料理…)會自動找回來;找不到確切日子的會標「(補回)」。'
+  ] });
+  D.LOG.unshift({ v: 'v1.383.0', d: '2026-10-06', items: [
+    '👥 好友功能正式開放:加好友、留言送禮、邀請好友當隊友、夜襲好友小人幫忙、拜訪好友的島。',
+    '🚪 修正拜訪好友的島:有人沒按「離開」就直接關掉平板,名額會一直被佔住,最後變成「人滿了」進不去;現在會自動把離線的人清出去。'
   ] });
 })();
