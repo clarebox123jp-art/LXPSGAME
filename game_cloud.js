@@ -4520,8 +4520,8 @@
   window._memberRewardMarkKey = function(uid){ return 'lxps_member_reward_w_' + String(uid || ''); };
   window._memberRewardGrantLocal = function(uid, source){
     try{
-      if(typeof backpackAdd === 'function'){ backpackAdd('summon_crystal', 10); backpackAdd('summon_ticket_ssr', 1); }
-      if(typeof addKnowledgeCoins === 'function'){ addKnowledgeCoins(20000); }
+      if(typeof backpackAdd === 'function'){ backpackAdd('summon_crystal', 10, '建立會員資料'); backpackAdd('summon_ticket_ssr', 1); }
+      if(typeof addKnowledgeCoins === 'function'){ addKnowledgeCoins(20000, '收入:建立會員資料'); }
       else if(typeof _knowledgeCoins !== 'undefined'){ window._knowledgeCoins = (_knowledgeCoins || 0) + 20000; if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay(); }
       if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
       if(typeof _setNavDot === 'function') _setNavDot('背包', true);
@@ -6827,7 +6827,8 @@
     'summon_ticket_ssr':1,'summon_ticket_sr':1,'summon_ticket_ssr_pick':1,
     'summon_ticket_ur_pick':1,'summon_ticket_sr_pick':1,
     'summon_ticket_treasure':1,'summon_ticket_treasure_pick':1,
-    'pet_summon_ticket':1   /* ★ v4.0.0 隨機寵物召喚卷(使用紀錄供 GM 稽核) */
+    'pet_summon_ticket':1,  /* ★ v4.0.0 隨機寵物召喚卷(使用紀錄供 GM 稽核) */
+    'summon_ticket_ur_swap':1   /* ★ v5.246.0 UR 英雄替換卷(取得/使用寫帳本,GM「🔁 UR轉換紀錄」讀) */
   };
   window._fbSaveTicketLedger = async function(list){
     try{
@@ -12792,14 +12793,17 @@
         ? _d._battleHistory.slice(-50).sort((a,b) => (b.at||0) - (a.at||0))
         : [];
       // 知識幣帳目(若存在)
-      const _coinTx = Array.isArray(_d._coinTransactions)
-        ? _d._coinTransactions.slice(-100).sort((a,b) => (b.at||0) - (a.at||0))
+      // ★ v5.247.0 — 帳本雲端存 400 筆,GM 過去只顯示最近 100 筆 → 全部顯示;並補上字串版 fallback(同水晶帳)
+      let _coinRaw = Array.isArray(_d._coinTransactions) ? _d._coinTransactions : null;
+      if(!_coinRaw && typeof _d._coinTransactions_s === 'string'){ try{ const _pcn = JSON.parse(_d._coinTransactions_s); if(Array.isArray(_pcn)) _coinRaw = _pcn; }catch(_){} }
+      const _coinTx = Array.isArray(_coinRaw)
+        ? _coinRaw.slice(-400).sort((a,b) => (b.at||0) - (a.at||0))
         : [];
       // ★ v3.13.58 — 召喚水晶帳目(若存在;含字串 fallback,模式同 _coinTransactions_s)
       let _crystalRaw = Array.isArray(_d._crystalTransactions) ? _d._crystalTransactions : null;
       if(!_crystalRaw && typeof _d._crystalTransactions_s === 'string'){ try{ const _pc = JSON.parse(_d._crystalTransactions_s); if(Array.isArray(_pc)) _crystalRaw = _pc; }catch(_){} }
       const _crystalTx = Array.isArray(_crystalRaw)
-        ? _crystalRaw.slice(-100).sort((a,b) => (b.at||0) - (a.at||0))
+        ? _crystalRaw.slice(-400).sort((a,b) => (b.at||0) - (a.at||0))
         : [];
       // ★ v3.11.35e — 果實獲得紀錄
       const _fruitH = Array.isArray(_d._fruitHistory)
@@ -12926,6 +12930,7 @@
 
       const _full = {
         // 基本
+        uid: uid,   // ★ v5.247.0 供 GM 完整資料頁比對「寫入者是不是本人」
         name: _d.name || '', email: _d.email || '', knowledgeCoins: _d.knowledgeCoins || 0,
         savedAt: _d.savedAt || 0, saveVersion: _d.v || 0,
         friendshipHeart: (typeof _d.friendshipHeart === 'number') ? _d.friendshipHeart : 0,
@@ -12944,6 +12949,7 @@
         heroPortraitUnlocked: _safeObj(_d.heroPortraitUnlocked),
         heroPortraitChoice: _safeObj(_d.heroPortraitChoice),
         skinUnlockHistory: _safeArr(_d._skinUnlockHistory).slice(-200).sort((a,b)=>(b.at||0)-(a.at||0)),
+        redeemClaimLog: _safeArr(_d._redeemClaimLog).slice(-200).sort((a,b)=>(b.at||0)-(a.at||0)),   // ★ v5.247.0 兌換碼領取紀錄(GM 完整資料分頁顯示)
         // 勳章
         playerMedals: _safeObj(_d.playerMedals),
         medalStats: _safeObj(_d.medalStats),

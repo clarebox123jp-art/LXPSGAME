@@ -4929,6 +4929,51 @@ function _logActivity(type, payload){
   }catch(_){}
 }
 window._logActivity = _logActivity;
+// ★ v5.247.0(2026-10-07)— 鬥技場逐場勝敗寫進活動紀錄(GM「📒 活動」→「⚔ 鬥技場」篩選)
+//   過去 GM 有這顆篩選鈕,但全專案沒有任何地方寫 type:'arena' ⇒ 永遠 0 筆,學生說「我明明贏了」無從查證。
+//   _arenaSettleReward 定義在 arena.js(載入比本檔晚,PvP 開房時還會再包一層),所以用輕量輪詢把它包一層:
+//   原函式照常執行 → 回傳後記一筆 { result, zheng, total, rounds, mode, team }。包過的函式帶 _lxpsActLogged 旗標,
+//   若被別處整個換掉會自動重包;PvP 重複結算的空回傳(state:null 且 0 證)不記。只加紀錄,不改任何結算結果。
+(function(){
+  var _depth = 0;
+  function _arenaActLog(result, pay){
+    try{
+      var _p = (pay && typeof pay === 'object') ? pay : {};
+      var _z = parseInt(_p.zheng, 10) || 0;
+      if(_p.state === null && _z === 0 && !(parseInt(_p.total, 10) > 0)) return;   // PvP 防重複發證的空回傳
+      var _team = [];
+      try{ if(typeof G !== 'undefined' && G && Array.isArray(G.p1)) _team = G.p1.map(function(h){ return h && h.name; }).filter(Boolean).slice(0, 6); }catch(_){}
+      var _isPvp = false; try{ _isPvp = !!(window._pvpCtx && window._pvpCtx.battleLive); }catch(_){}
+      _logActivity('arena', { result: String(result || ''), zheng: _z, total: (parseInt(_p.total, 10) || 0),
+        rounds: (function(){ try{ return (typeof G !== 'undefined' && G && G.round) || 0; }catch(_){ return 0; } })(),
+        mode: _isPvp ? 'pvp' : 'ai', team: _team.join('、') });
+    }catch(_){}
+  }
+  function _wrap(){
+    try{
+      var f = window._arenaSettleReward;
+      if(typeof f !== 'function' || f._lxpsActLogged) return;
+      var w = function(result){
+        // 多層包裝(本包裝 → PvP 包裝 → 本包裝 …)時只由最外層記一筆,避免同一場記兩次
+        _depth++;
+        var pay;
+        try{ pay = f.apply(this, arguments); }
+        finally{ _depth--; }
+        if(_depth === 0){
+          try{
+            if(pay && typeof pay.then === 'function'){ pay.then(function(v){ _arenaActLog(result, v); }, function(){}); }
+            else _arenaActLog(result, pay);
+          }catch(_){}
+        }
+        return pay;
+      };
+      w._lxpsActLogged = true;
+      window._arenaSettleReward = w;
+    }catch(_){}
+  }
+  _wrap();
+  try{ setInterval(_wrap, 4000); }catch(_){}
+})();
 
 // 英雄圖鑑中點擊肖像縮圖的統一入口：切換 + 更新左側立繪 + 重新渲染縮圖列
 function _onPortraitSwitcherClick(heroName, portraitId){
@@ -65181,6 +65226,7 @@ window._gearReceiveGift = function(gift){
     if(!g || !g.itemId || !GEAR_DB[g.itemId]) return { ok:false, text:'' };
     if(_gearOwnedCount() >= window._GEAR_MAX_OWNED){
       _knowledgeCoins = (_knowledgeCoins || 0) + 3000;   // 滿 100 件 → 比照背包滿轉幣前例
+      try{ if(typeof _logCoinTx === 'function') _logCoinTx(3000, '收禮:裝備背包滿轉幣'); }catch(_){}   // ★ v5.247.0
       return { ok:true, text:'💰 3,000 知識幣(裝備背包已滿 100 件,好友的裝備自動兌換)', replaced:true };
     }
     const _afs = [];
@@ -72134,7 +72180,7 @@ window._showPreviewPage = function(stage, focusSectionId){
                 if(coinsAwarded > 0){
                   _medalStats[_todayKey] = _todayCoins + coinsAwarded;
                   _medalStats.previewCoinsEarned = (_medalStats.previewCoinsEarned||0) + coinsAwarded;
-                  try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(coinsAwarded); }catch(_){}
+                  try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(coinsAwarded, '收入:預習全對'); }catch(_){}
                 }
               } else {
                 _medalStats.previewPerfectStreak = 0;

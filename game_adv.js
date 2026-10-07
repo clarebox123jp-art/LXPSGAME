@@ -4775,7 +4775,7 @@ function _kingClaimRewards(){
   const _finalDeluxe  = _rewards.deluxe  + (_bonus.deluxe  || 0);
   // 發獎到背包
   try{
-    if(_finalCrystal > 0) backpackAdd('summon_crystal', _finalCrystal);
+    if(_finalCrystal > 0) backpackAdd('summon_crystal', _finalCrystal, '知識王獎勵');
     if(_finalPremium > 0) backpackAdd('hero_exp_book_premium', _finalPremium);
     if(_finalDeluxe  > 0) backpackAdd('hero_exp_book_deluxe', _finalDeluxe);
     // ★ 同步左下角召喚水晶顯示
@@ -5024,7 +5024,7 @@ function _scGrantReward(){
   try{
     var _kc=window._kingChallenge; if(!_kc) return false;
     if(_kc._specialChallengeRewardClaimed) return false;   // 雙重保險:已領過絕不重複發
-    if(typeof backpackAdd==='function'){ backpackAdd('summon_crystal',10); backpackAdd('summon_ticket_ssr',1); }
+    if(typeof backpackAdd==='function'){ backpackAdd('summon_crystal',10,'特別挑戰全對'); backpackAdd('summon_ticket_ssr',1); }
     _kc._specialChallengeRewardClaimed=true;
     try{ if(typeof _syncSummonCrystalDisplay==='function') _syncSummonCrystalDisplay(); }catch(_){}
     try{ if(typeof _setNavDot==='function') _setNavDot('背包',true); }catch(_){}
@@ -7442,7 +7442,7 @@ window._alchSellMat = function(id, qty){
   if(n <= 0) return 0;
   d.m[id] = cur - n; if(d.m[id] <= 0) delete d.m[id];
   var gain = m.price * n;
-  try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(gain); }catch(_){}
+  try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(gain, '收入:賣煉丹材料'); }catch(_){}
   try{ _showInGameToast('💰 賣出 ' + m.icon + m.n + ' ×' + n + ',獲得知識幣 ' + gain.toLocaleString() + '!', '#ffdd66', 2600); }catch(_){}
   try{ playSfx('sfx-confirm', 0.6); }catch(_){}
   window._alchSave();
@@ -7454,7 +7454,7 @@ window._alchSellPill = function(id, qty){
   if(n <= 0) return 0;
   d.p[id] = cur - n; if(d.p[id] <= 0) delete d.p[id];
   var gain = p.price * n;
-  try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(gain); }catch(_){}
+  try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(gain, '收入:賣丹藥'); }catch(_){}
   try{ _showInGameToast('💰 賣出 ' + p.icon + p.n + ' ×' + n + ',獲得知識幣 ' + gain.toLocaleString() + '!', '#ffdd66', 2600); }catch(_){}
   try{ playSfx('sfx-confirm', 0.6); }catch(_){}
   window._alchSave();
@@ -7501,7 +7501,7 @@ window._alchMiniBattleDrops = function(mobSnapshot){
           try{ if(typeof log === 'function') log('📜 [' + mob.name + '] 掉落丹方!習得配方【' + pn.n + '】!'); }catch(_){}
           try{ _showInGameToast('📜 習得新配方【' + pn.icon + pn.n + '】!到神農鼎煉丹吧!', '#cc88ff', 3800); }catch(_){}
         } else {
-          try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(2000); }catch(_){}
+          try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(2000, '收入:重複丹方轉幣'); }catch(_){}
           changed = true;
           try{ if(typeof log === 'function') log('📜 [' + mob.name + '] 掉落丹方——配方已全部習得,折抵知識幣 2,000!'); }catch(_){}
         }
@@ -10513,8 +10513,8 @@ window._onChinaBossDefeated = function(){
     try{
       const _ccFirst = !(typeof _medals !== 'undefined' && _medals && _medals['china_caocao_clear']);
       if(_ccFirst){
-        if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(5000);
-        backpackAdd('summon_crystal', 30);
+        if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(5000, '收入:官渡曹操首通');
+        backpackAdd('summon_crystal', 30, '官渡曹操首通');
         backpackAdd('hero_exp_book_premium', 3);
         if(typeof log==='function') log('🏰 首次擊敗曹操!獲得【知識幣 ×5000】【召喚水晶 ×30】【豪華典藏版經驗之書 ×3】!');
         _showInGameToast('🏰 官渡首捷!知識幣5000+水晶30+豪華經驗書×3', '#ffdd66', 4500);
@@ -10530,8 +10530,8 @@ window._onChinaBossDefeated = function(){
     try{
       const _cyFirst = !(typeof _medals !== 'undefined' && _medals && _medals['china_chiyou_clear']);
       if(_cyFirst){
-        if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(8000);
-        backpackAdd('summon_crystal', 50);
+        if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(8000, '收入:涿鹿蚩尤首通');
+        backpackAdd('summon_crystal', 50, '涿鹿蚩尤首通');
         backpackAdd('burst_upgrade_fruit', 2);
         try{ if(typeof window._advSaveFruitHistory === 'function') window._advSaveFruitHistory('china_chiyou_clear', 2); }catch(_){}
         backpackAdd('hero_exp_book_premium', 5);
@@ -20704,7 +20704,7 @@ async function advShowBattleResult(win) {
       if(_losePartialExp > 0 && G && G.p1)
         G.p1.forEach(h => { if(h && h.name && !h._isFriendHero) addHeroExp(h.name, _losePartialExp); });
       if(_losePartialCoins > 0)
-        addKnowledgeCoins(_losePartialCoins);
+        addKnowledgeCoins(_losePartialCoins, '收入:戰敗部分獎勵');
       // ★ v3.11.6(2026-05-27)鐵律 1.98 — 戰敗也有縮水版獎勵發放,且乘了加成倍率,因此也視為「今日已領」
       if(_losePartialExp > 0 || _losePartialCoins > 0){
         try{ if(typeof window._advCommitReviewBonusFlags === 'function') window._advCommitReviewBonusFlags(_loseRewardInfo); }catch(_){}
@@ -23762,7 +23762,7 @@ async function advStartWinSequence() {
     }catch(_eToadG){}
     _bossCoins = Math.round(_battleExpC * 0.3 * _blessMultCoin * _gearGoldMult * _petGoldMult);
   }catch(_coinE){ console.warn('[BOSS 結算金幣] 計算失敗:', _coinE); }
-  if(_bossCoins > 0) addKnowledgeCoins(_bossCoins);
+  if(_bossCoins > 0) addKnowledgeCoins(_bossCoins, '收入:BOSS 結算');
   // ★ v5.31.0 — 裝備 Phase 3:冒險 BOSS 裝備掉落 75%(傳說80/神話20;世界BOSS 不走此結算路徑;測試期僅 GM)
   try{ if(typeof window._gearTryDrop === 'function') window._gearTryDrop('boss', '[BOSS] '); }catch(_gearBDropE){ console.warn('[裝備BOSS掉落]', _gearBDropE); }
   // ★ 成就：BOSS打倒
@@ -23965,7 +23965,7 @@ async function advStartWinSequence() {
       }
       // (4) 50% 召喚水晶
       if(Math.random() < Math.min(0.95, 0.50 * _blsDk)){
-        backpackAdd('summon_crystal', 1);
+        backpackAdd('summon_crystal', 1, '黑暗球掉落');
         log('🔮 [黑暗球‧希望型態] 掉落了【召喚水晶】!已放入背包。');
         _showInGameToast('🔮 獲得召喚水晶 ×1', '#cc88ff', 3000);
       }
@@ -24367,7 +24367,7 @@ async function advStartWinSequence() {
       const _roll = Math.random();
       const _finalPct = Math.round(_finalRate * 100);
       if(_roll < _finalRate){
-        backpackAdd('summon_crystal', 1);
+        backpackAdd('summon_crystal', 1, '戰鬥掉落');
         log(`🔮 全英雄收錄成就！獲得【召喚水晶】×1！(掉落機率 ${_finalPct}%)`);
         setTimeout(()=>{
           _showInGameToast(`🔮 全英雄收錄！獲得召喚水晶×1(${_finalPct}% 機率)`, '#cc88ff', 4000);
@@ -30465,6 +30465,12 @@ window._guniuS2MaxOf = function(h){
 // ★ 知識幣 & 背包 系統
 // ────────────────────────────────────
 let _knowledgeCoins = 0;   // 知識幣
+// ★ v5.247.0(2026-10-07・老師「檢查還有什麼重要記錄 GM 查不到」→ 開工)— window._knowledgeCoins 橋接
+//   根因:本檔是一般 <script>,頂層 let _knowledgeCoins 不會變成 window 屬性;game_cloud.js(module)的
+//   週小博士/鬥技場排名/小遊戲週排行/世界王結算領獎寫的是 window._knowledgeCoins = 舊值 + 獎勵 ⇒ 真正的變數沒變,
+//   雲端 transaction 雖已加幣,下一次自動存檔又用舊值寫回 = 剛領的知識幣被沖掉(帳本也記錯餘額)。
+//   修法:把 window._knowledgeCoins 定義成存取子,讀寫都直通這個變數(舊讀取點 typeof === 'number' 照常成立)。
+try{ Object.defineProperty(window, '_knowledgeCoins', { configurable:true, enumerable:false, get:function(){ return _knowledgeCoins; }, set:function(v){ var _n = Number(v); if(isFinite(_n)) _knowledgeCoins = Math.round(_n); } }); }catch(_eKcBridge){}
 let _shopDailyData = {};   // 每日商店購買紀錄 {date:'YYYYMMDD', burst_upgrade_fruit:0}
 let _shopWeeklyData = {};  // ★ v3.13.83 — 每週商店購買紀錄 {week:'YYYYMMDD(本週一)', summon_ticket_xxx:0}(極限膠囊每週限購用)
 /* ★ v5.227.0（老師「新增 UR 英雄替換卷(商店－召喚類)每個月 1 號更新，免費限購 1 張」）—
@@ -31176,7 +31182,7 @@ window._lxpsScheduleBackpackSync = function(){
     }, 2500);
   }catch(_e){}
 };
-function backpackAdd(id, n=1){
+function backpackAdd(id, n=1, src){   // ★ v5.247.0 第三參數 src = 來源標籤(選用):寫進水晶帳本/召喚卷帳本,供 GM 查證
   const cur = _playerBackpack[id]||0;
   _playerBackpack[id] = Math.min(99, cur+n);
   const _added = _playerBackpack[id] - cur; // 實際新增數
@@ -31184,15 +31190,17 @@ function backpackAdd(id, n=1){
   //   來源標籤由呼叫端以 window._ticketGrantSrc 提供（選用），未提供則記 'grant'。
   var _grantTids = [];   // ★ v5.143.0 — 本次產生的券 tid，帶進 ticketLedger grant 紀錄（追溯到單張）
   if(_added > 0 && !window._ticketBusy && window._isTicketInstId(id)){
-    try{ _grantTids = window._ticketGrantInst(id, _added, window._ticketGrantSrc || 'grant', 0) || []; }catch(_eTkA){}
+    try{ _grantTids = window._ticketGrantInst(id, _added, window._ticketGrantSrc || src || 'grant', 0) || []; }catch(_eTkA){}
   }
   // ★ v3.15.40 — 寫穿透:實際有新增才排程上雲(去抖動合併,避免寫入風暴)
   if(_added > 0){ try{ if(typeof window._lxpsScheduleBackpackSync === 'function') window._lxpsScheduleBackpackSync(); }catch(_){} }
   // ★ v3.17.6 — 召喚卷 UID 帳本:獲得即記錄證據到雲端(內部已過濾非召喚卷·永不刪)
-  if(_added > 0){ try{ if(typeof window._recordTicketLedger === 'function') window._recordTicketLedger('grant', id, _added, undefined, _grantTids); }catch(_){} }   // ★ v5.143.0 帶 tid
+  if(_added > 0){ try{ if(typeof window._recordTicketLedger === 'function') window._recordTicketLedger('grant', id, _added, (src || window._ticketGrantSrc || undefined), _grantTids); }catch(_){} }   // ★ v5.143.0 帶 tid ・ ★ v5.247.0 帶來源
+  // ★ v5.247.0 — 召喚水晶:所有經過 backpackAdd 的獲得都寫水晶帳本(過去只有 5 個點有記,其餘要等存檔對帳才併成一筆「未分類變動」)
+  if(_added > 0 && id === 'summon_crystal'){ try{ if(typeof _logCrystalTx === 'function') _logCrystalTx(_added, src ? ('獲得:' + src) : '獲得(獎勵/系統)'); }catch(_){} }
   return _added;
 }
-function backpackRemove(id, n=1){
+function backpackRemove(id, n=1, src){   // ★ v5.247.0 第三參數 src = 用途標籤(選用)
   // ★★ v5.135.0 — 券類：以「實例數」為可扣上限（inst 是權威，背包數字只是投影）★★
   //   舊碼以 _playerBackpack[id] 為上限；若背包數字因殘槽 union 而虛高，
   //   會扣出一張根本不存在的券 ⇒ 一律改讀實例數。
@@ -31220,15 +31228,16 @@ function backpackRemove(id, n=1){
   //   ⚠ 券類另有更強的「即時原子寫」在各消費點（v5.91.0），本排程是全域保底那一層。
   if(actual > 0){ try{ if(typeof window._lxpsScheduleBackpackSync === 'function') window._lxpsScheduleBackpackSync(); }catch(_){} }
   // ★ v3.17.6 — 召喚卷 UID 帳本:使用(消耗)即記錄證據到雲端(內部已過濾非召喚卷·永不刪)
-  if(actual > 0){ try{ if(typeof window._recordTicketLedger === 'function') window._recordTicketLedger('use', id, actual, undefined, _usedTids); }catch(_){} }   // ★ v5.143.0 帶 tid
+  if(actual > 0){ try{ if(typeof window._recordTicketLedger === 'function') window._recordTicketLedger('use', id, actual, (src || undefined), _usedTids); }catch(_){} }   // ★ v5.143.0 帶 tid ・ ★ v5.247.0 帶用途
+  if(actual > 0 && id === 'summon_crystal'){ try{ if(typeof _logCrystalTx === 'function') _logCrystalTx(-actual, src ? ('消費:' + src) : '消費(其他)'); }catch(_){} }   // ★ v5.247.0
   return actual;
 }
-function addKnowledgeCoins(n){
+function addKnowledgeCoins(n, reason){   // ★ v5.247.0 第二參數 reason = 來源標籤(帳本寫明是哪裡給的幣)
   _knowledgeCoins = (_knowledgeCoins||0) + Math.round(n);
   try{ _medalStats.totalCoinsEarned = (_medalStats.totalCoinsEarned||0) + Math.round(n);
     if(_medalStats.totalCoinsEarned >= 50000) _unlockMedal('coins_50000');
     if((_knowledgeCoins||0) >= 10000) _unlockMedal('coins_10000'); }catch(_){}
-  try{ _logCoinTx(Math.round(n), '收入(獎勵/系統)'); }catch(_){}
+  try{ _logCoinTx(Math.round(n), reason ? String(reason) : '收入(獎勵/系統)'); }catch(_){}
   gameCloudSave();
   _syncCoinsDisplay();
 }
@@ -36754,7 +36763,7 @@ async function _doRedeem(){
       if(r.reward && r.reward.backpack && typeof r.reward.backpack === 'object' && typeof backpackAdd === 'function'){
         Object.keys(r.reward.backpack).forEach(function(_bk){
           var _bq = Math.max(0, parseInt(r.reward.backpack[_bk], 10) || 0);
-          if(_bq > 0) backpackAdd(_bk, _bq);
+          if(_bq > 0) backpackAdd(_bk, _bq, '兌換碼 ' + String(code || '').slice(0, 16));
         });
       }
     }catch(_eApplyMem){ console.warn('[序號兌換] 套記憶體背包失敗(不影響·重新整理會補)', _eApplyMem); }
@@ -36957,7 +36966,7 @@ async function _claimGmClassRewardFromInbox(rid, btn){
       if(r.reward && r.reward.backpack && typeof r.reward.backpack === 'object' && typeof backpackAdd === 'function'){
         Object.keys(r.reward.backpack).forEach(function(_bk){
           var _bq = Math.max(0, parseInt(r.reward.backpack[_bk], 10) || 0);
-          if(_bq > 0) backpackAdd(_bk, _bq);
+          if(_bq > 0) backpackAdd(_bk, _bq, 'GM 課堂獎勵');
         });
       }
     }catch(_eApplyMem){ console.warn('[GM獎勵領取·甲] 套記憶體背包失敗(不影響·reload 會補)', _eApplyMem); }
@@ -37199,8 +37208,8 @@ function _arenaGrantExchangeItem(it){
         return '✅ 兌換成功!獲得 知識幣 ×10,000 💰';
       }
       case 'arena_x_summon_crystal': {
-        if(typeof backpackAdd === 'function') backpackAdd('summon_crystal', 1);
-        try{ if(typeof _logCrystalTx === 'function') _logCrystalTx(1, '兌換:鬥技場商店'); }catch(_){}
+        if(typeof backpackAdd === 'function') backpackAdd('summon_crystal', 1, '兌換:鬥技場商店');
+        /* ★ v5.247.0 水晶帳改由 backpackAdd 統一記(避免重複兩筆) */
         return '✅ 兌換成功!獲得 召喚水晶 ×1 🔮';
       }
       case 'arena_x_burst_fruit':
@@ -40553,12 +40562,12 @@ function doSummon(times){
   try{
     if(_crystalsToSpend > 0){
       if(typeof backpackRemove === 'function'){
-        backpackRemove('summon_crystal', _crystalsToSpend);
+        backpackRemove('summon_crystal', _crystalsToSpend, '召喚 ×' + (times||1));
       } else if(window._playerBackpack){
         window._playerBackpack.summon_crystal = Math.max(0, (window._playerBackpack.summon_crystal||0) - _crystalsToSpend);
       }
       // ★ v3.13.58 — 水晶帳本:記錄召喚消費(扣完後呼叫,balance 才正確)
-      try{ if(typeof _logCrystalTx === 'function') _logCrystalTx(-_crystalsToSpend, '消費:召喚 ×' + (times||1)); }catch(_){}
+      if(typeof backpackRemove !== 'function'){ try{ if(typeof _logCrystalTx === 'function') _logCrystalTx(-_crystalsToSpend, '消費:召喚 ×' + (times||1)); }catch(_){} }   // ★ v5.247.0 一般情況改由 backpackRemove 統一記帳
     }
     if(typeof gameCloudSave === 'function') gameCloudSave();
   }catch(e){ console.error('[扣水晶]', e); }
@@ -42504,7 +42513,7 @@ function useBackpackItem(id){
           if(typeof _saveTaiwanTreasureData === 'function') _saveTaiwanTreasureData();
           // 退回卷軸 + 知識幣
           if(_refundScrolls > 0 && typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', _refundScrolls);
-          if(_refundCoin > 0 && typeof addKnowledgeCoins === 'function') addKnowledgeCoins(_refundCoin);
+          if(_refundCoin > 0 && typeof addKnowledgeCoins === 'function') addKnowledgeCoins(_refundCoin, '退款:重置至寶');
           // 扣除靈水
           backpackRemove('treasure_reset_potion');
           // 關掉視窗
@@ -55575,8 +55584,8 @@ window._maybeShowAuditApologyCompensation = async function(){
     catch(_eFlag){ console.warn('[審查道歉補償] 寫旗標失敗,本次不發', _eFlag); return; }
     // 本地發獎(鏡像會員獎勵:addKnowledgeCoins + backpackAdd)
     var _coins = 100000, _crys = 10;
-    try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(_coins); }catch(_eC){ console.warn('[審查道歉補償] 發幣例外', _eC); }
-    try{ if(typeof backpackAdd === 'function') backpackAdd('summon_crystal', _crys); }catch(_eK){ console.warn('[審查道歉補償] 發水晶例外', _eK); }
+    try{ if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(_coins, '收入:審查道歉補償'); }catch(_eC){ console.warn('[審查道歉補償] 發幣例外', _eC); }
+    try{ if(typeof backpackAdd === 'function') backpackAdd('summon_crystal', _crys, '審查道歉補償'); }catch(_eK){ console.warn('[審查道歉補償] 發水晶例外', _eK); }
     try{ if(typeof window._logActivity === 'function') window._logActivity('reward', { source:'audit_apology_compensation', items:['coins x' + _coins, 'summon_crystal x' + _crys] }); }catch(_){}
     // 立即存檔持久(autosave 亦覆蓋)
     try{ if(typeof gameCloudSave === 'function'){ var _p = gameCloudSave(); if(_p && typeof _p.catch === 'function') _p.catch(function(){}); } }catch(_){}
@@ -58298,9 +58307,9 @@ window._checkDailyRepHeroBonus = async function(){
           _giftKind = 'book';
         }else{
           _giftKind = 'coins'; _giftCoins = 5000;
-          if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(5000);
+          if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(5000, '收入:代表英雄滿等替代');
         }
-        try{ if(typeof _logActivity === 'function') _logActivity('代表英雄滿等替代獎勵', { hero:_heroName, kind:_giftKind, coins:_giftCoins }); }catch(_){}
+        try{ if(typeof _logActivity === 'function') _logActivity('reward', { source:'hero_maxlv_alt', hero:_heroName, kind:_giftKind, coins:_giftCoins }); }catch(_){}
       }catch(_eGift){ console.warn('[每日代表英雄經驗] 滿等替代獎勵發放失敗', _eGift); }
       // 彈窗告知(延後一拍,等登入流程跑完才彈,與一般簽到動畫一致)
       try{
@@ -60230,6 +60239,7 @@ window._giftAddHeart = async function(amount){
         window._friendshipHeart = 99;
         if(typeof _knowledgeCoins !== 'undefined'){
           _knowledgeCoins = (_knowledgeCoins||0) + 10000;
+          try{ if(typeof _logCoinTx === 'function') _logCoinTx(10000, '收入:友情之心滿額補償(SSR卷已滿)'); }catch(_){}   // ★ v5.247.0
           if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay();
         }
         if(typeof backpackAdd === 'function'){
@@ -60545,9 +60555,10 @@ window._giftConfirmSend = async function(friendIdx, giftId){
     const c = g.cost;
     if(c.type === 'coins'){
       _knowledgeCoins = Math.max(0, (_knowledgeCoins||0) - c.amount);
+      try{ if(typeof _logCoinTx === 'function') _logCoinTx(-c.amount, '送禮:給 ' + String((f && (f.name || f.email)) || '好友').slice(0, 16)); }catch(_){}   // ★ v5.247.0
       if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay();
     } else if(c.type === 'crystal'){
-      if(typeof backpackRemove === 'function') backpackRemove('summon_crystal', c.amount);
+      if(typeof backpackRemove === 'function') backpackRemove('summon_crystal', c.amount, '送禮給 ' + String((f && (f.name || f.email)) || '好友').slice(0, 16));
       if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
     } else if(c.type === 'backpack' && c.key){
       if(typeof backpackRemove === 'function') backpackRemove(c.key, c.amount);
@@ -60581,9 +60592,10 @@ window._giftConfirmSend = async function(friendIdx, giftId){
       const c = g.cost;
       if(c.type === 'coins'){
         _knowledgeCoins = (_knowledgeCoins||0) + c.amount;
+        try{ if(typeof _logCoinTx === 'function') _logCoinTx(c.amount, '退款:送禮失敗'); }catch(_){}   // ★ v5.247.0
         if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay();
       } else if(c.type === 'crystal'){
-        if(typeof backpackAdd === 'function') backpackAdd('summon_crystal', c.amount);
+        if(typeof backpackAdd === 'function') backpackAdd('summon_crystal', c.amount, '送禮失敗退回');
         if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
       } else if(c.type === 'backpack' && c.key){
         if(typeof backpackAdd === 'function') backpackAdd(c.key, c.amount);
@@ -60762,18 +60774,20 @@ window._giftClaimPendingGifts = async function(){
       const d = _gift.deliver || _giftDef.deliver;
       if(d.type === 'coins'){
         _knowledgeCoins = (_knowledgeCoins||0) + d.amount;
+        try{ if(typeof _logCoinTx === 'function') _logCoinTx(d.amount, '收禮:好友送的知識幣'); }catch(_){}   // ★ v5.247.0
         _actualGiven = '💰 ' + d.amount.toLocaleString() + ' 知識幣';
       } else if(d.type === 'crystal'){
         // ★ v3.12.2 — 走 backpack('summon_crystal')+ 99 上限保護(對齊背包物品)
         const _curHave = (typeof backpackGet === 'function') ? backpackGet('summon_crystal') : 0;
         const _canAdd = Math.min(d.amount, Math.max(0, 99 - _curHave));
         if(_canAdd > 0 && typeof backpackAdd === 'function'){
-          backpackAdd('summon_crystal', _canAdd);
+          backpackAdd('summon_crystal', _canAdd, '收到好友送禮');
         }
         try{ if(typeof window._giftRecvLedgerAdd === 'function') window._giftRecvLedgerAdd('summon_crystal', _canAdd); }catch(_){}   // ★ v5.31.0 抵銷帳
         const _overflow = d.amount - _canAdd;
         if(_overflow > 0){
           _knowledgeCoins = (_knowledgeCoins||0) + 3000;
+          try{ if(typeof _logCoinTx === 'function') _logCoinTx(3000, '收禮:水晶已滿轉幣'); }catch(_){}   // ★ v5.247.0
           _replacedByCoins = true;
         }
         _actualGiven = (_canAdd > 0 ? '💎 召喚水晶 ×' + _canAdd : '')
@@ -60797,6 +60811,7 @@ window._giftClaimPendingGifts = async function(){
         const _overflow = d.amount - _canAdd;
         if(_overflow > 0){
           _knowledgeCoins = (_knowledgeCoins||0) + 3000;
+          try{ if(typeof _logCoinTx === 'function') _logCoinTx(3000, '收禮:背包已滿轉幣'); }catch(_){}   // ★ v5.247.0
           _replacedByCoins = true;
         }
         const _bpDef = (typeof BACKPACK_ITEM_DEF !== 'undefined') ? BACKPACK_ITEM_DEF[d.key] : null;
@@ -64201,7 +64216,7 @@ function advFinishMiniBattle(win) {
           if(mob._chestEscaped) return; // 逃跑的不給獎勵
           // 寶箱怪：必定大量知識幣（2500~5000）+ 其他掉落(★ v3.14.13 丙:幣吃龍王祝福 +25%)
           const _chestCoins = Math.round((2500 + Math.floor(Math.random() * 2501)) * _blessMultDrop);
-          addKnowledgeCoins(_chestCoins);
+          addKnowledgeCoins(_chestCoins, '收入:寶箱怪');
           _miniDrops.push({ icon:'💰', name:`知識幣×${_chestCoins}`, sellPrice:0 });
           log(`💰 [寶箱怪] 掉落知識幣 ${_chestCoins} 枚！`);
           // 2% 超越極限果實(× 難度倍率)
@@ -64259,7 +64274,7 @@ function advFinishMiniBattle(win) {
           _showRareMobDefeat('行走的二宮尊德像'); try{ _checkMedalDefeat('行走的二宮尊德像'); }catch(_){}
           // 必定大量知識幣（2500~5000）+ 其他掉落
           const _chestCoins = 2500 + Math.floor(Math.random() * 2501);
-          addKnowledgeCoins(_chestCoins);
+          addKnowledgeCoins(_chestCoins, '收入:二宮尊德像');
           _miniDrops.push({ icon:'💰', name:`知識幣×${_chestCoins}`, sellPrice:0 });
           log(`💰 [行走的二宮尊德像] 掉落知識幣 ${_chestCoins} 枚！`);
           // 2% 超越極限果實
@@ -64350,7 +64365,7 @@ function advFinishMiniBattle(win) {
           //   (裝備 50% 掉落走上方 _gearMiniBattleDrops 的 _GEAR_RARE_MOB_NAMES rareMob 路徑,此處不重複擲)
           _showRareMobDefeat('貔貅'); try{ _checkMedalDefeat('貔貅'); }catch(_){}
           const _pixiuCoins = Math.round((3500 + Math.floor(Math.random() * 3501)) * _blessMultDrop);
-          addKnowledgeCoins(_pixiuCoins);
+          addKnowledgeCoins(_pixiuCoins, '收入:貔貅');
           _miniDrops.push({ icon:'💰', name:`知識幣×${_pixiuCoins}`, sellPrice:0 });
           log(`💰 [貔貅] 肚子裡的財寶嘩啦啦掉出來!獲得知識幣 ${_pixiuCoins} 枚!`);
           // 2% 超越極限果實
@@ -64491,7 +64506,7 @@ function advFinishMiniBattle(win) {
         if(_toadMiniMult > 1) _miniCoins = Math.round(_miniCoins * _toadMiniMult);
         const _quizCoins = window._miniQuizTotalCoins || 0;
         const _totalCoins = _miniCoins + _quizCoins;
-        if(_totalCoins > 0) addKnowledgeCoins(_totalCoins);
+        if(_totalCoins > 0) addKnowledgeCoins(_totalCoins, '收入:冒險戰鬥結算');
         // ★ 小怪戰結束時發放法寶（移出過場演出）
         let _treasureGot = null;
         const _nextSceneIdx = _advMiniBattleNextScene;
@@ -72094,10 +72109,10 @@ function _unlockMedal(id){
   const _coinReward = _isTopTier ? 10000 : 2000;
   try{
     if(typeof backpackAdd === 'function'){
-      backpackAdd('summon_crystal', _crystalReward);
+      backpackAdd('summon_crystal', _crystalReward, '獎章獎勵');
     }
     if(typeof addKnowledgeCoins === 'function'){
-      addKnowledgeCoins(_coinReward);
+      addKnowledgeCoins(_coinReward, '收入:獎章獎勵');
     } else {
       _knowledgeCoins = (_knowledgeCoins||0) + _coinReward;
     }
@@ -75860,11 +75875,12 @@ window._grantRetroactiveMedalRewards = async function(){
       if(typeof _playerBackpack !== 'object' || !_playerBackpack) _playerBackpack = {};
       const _curCrystal = Number(_playerBackpack.summon_crystal || 0);
       _playerBackpack.summon_crystal = _curCrystal + _totalCrystals;
+      try{ if(_totalCrystals > 0 && typeof _logCrystalTx === 'function') _logCrystalTx(_totalCrystals, '獲得:補發獎章獎勵'); }catch(_){}   // ★ v5.247.0
     }catch(e){ console.warn('[補發水晶寫入失敗]', e); }
     // 知識幣:用標準介面(內部會更新顯示與雲端)
     try{
       if(typeof addKnowledgeCoins === 'function'){
-        addKnowledgeCoins(_totalCoins);
+        addKnowledgeCoins(_totalCoins, '收入:補發獎章獎勵');
       } else {
         _knowledgeCoins = (_knowledgeCoins||0) + _totalCoins;
       }
