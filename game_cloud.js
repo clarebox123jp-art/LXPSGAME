@@ -18407,10 +18407,38 @@
     }catch(_e){ console.warn('[帳號列 v5.141.0] 繪製失敗', _e); return false; }
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★★ v5.245.0（2026-10-07・老師「有些學生用 iPad 登入成功後 1 秒又立刻變成未登入狀態，很嚴重」）★★
+  //   根因：共用 iPad 上前一位同學(A)沒登出 ⇒ 開機時 Firebase 從 IndexedDB 還原 A 的 token ⇒ onAuth(A) 開始跑。
+  //         A 這一輪會先 await 雲端查「這台是不是信任裝置」(_fbLoad 讀整份存檔、沒有逾時,校網 25 台同時開時常等 10 秒以上)。
+  //         等待期間首頁照常可按 ⇒ 同學 B 按「開始遊戲」用自己帳號登入成功 ⇒ 畫面變成 B 已登入。
+  //         接著 A 那一輪的查詢回來「不信任」⇒ 執行 `_fbAuth.signOut()` —— 但 signOut 是登出「目前這個人」,
+  //         此時目前的人已經是 B ⇒ **B 剛登入就被登出**，畫面跳回未登入(就是老師看到的「1 秒後變未登入」)。
+  //         維修/休息時段/停權三道閘門在 await 之後也各有一個 signOut,同樣會誤殺後來登入的人。
+  //   修法：每一輪 onAuth 處理開始前、每次 await 回來、以及任何 signOut 之前，都先確認
+  //         「Firebase 目前登入的人仍是這一輪要處理的 user」;不是 ⇒ 這一輪已過期,直接結束,
+  //         不登出、不清 _fbUser/_gUserId、不顯示任何卡片(新的人有他自己那一輪 onAuth 處理)。
+  //         另把信任裝置查詢加 6 秒逾時(逾時＝不信任,與原本查詢失敗的語意相同),縮短 A 那一輪卡住的時間。
+  //   ⚠ 共用平板防線不變：A 的殘留 token 仍然一定被攔、不會自動登入；只是不會再把「後來真正登入的 B」一起登出。
+  // ════════════════════════════════════════════════════════════════════
+  const _lxpsAuthFlowStale = function(u, where){
+    try{
+      if(!u || !u.uid) return false;
+      const _c = _fbAuth && _fbAuth.currentUser;
+      if(_c && _c.uid === u.uid) return false;
+      _fbDiag('onAuth:這一輪(' + (u.email || String(u.uid).slice(0, 8)) + ')已過期,目前登入者='
+        + (_c ? (_c.email || String(_c.uid).slice(0, 8)) : 'null') + ' → 結束這一輪,不登出(' + (where || '') + ')', 'warn');
+      return true;
+    }catch(_){ return false; }
+  };
+  window._lxpsAuthFlowStale = _lxpsAuthFlowStale;
+
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
     // ★ FIX 20260517(ee) — 等 redirect 處理完才推 UI,避免 user=null 先把 UI 推到未登入
     try{ await window._fbRedirectReady; }catch(_){}
+    // ★ v5.245.0 — 等待期間若已換人登入(或已登出),這一輪的 user 是過期的 ⇒ 交給新的那一輪處理
+    if(user && _lxpsAuthFlowStale(user, 'redirectReady 後')) return;
     // 若 user 仍為 null 但 _fbAuth.currentUser 不為 null(race condition),改用 currentUser
     if(!user){
       try{
@@ -18608,7 +18636,12 @@
                || (window._lxpsDeviceTrust.isStandalone && window._lxpsDeviceTrust.isStandalone()))){   // 舊條件保留為備援
           try{
             const _deviceId = window._lxpsDeviceTrust.getDeviceId();
-            _isDeviceTrusted = await window._lxpsDeviceTrust.isDeviceTrustedOnCloud(user.uid, _deviceId);
+            // ★ v5.245.0 — 加 6 秒逾時(逾時＝不信任,與查詢失敗同語意),避免這一輪卡在雲端讀取太久
+            try{
+              _isDeviceTrusted = await window._fbRaceTimeout(window._lxpsDeviceTrust.isDeviceTrustedOnCloud(user.uid, _deviceId), 6000, 'device-trust');
+            }catch(_eTrTo){ _isDeviceTrusted = false; _fbDiag('onAuth:信任裝置查詢逾時/失敗 → 視為不信任', 'warn'); }
+            // ★ v5.245.0 — 查詢期間有別人登入了 ⇒ 這一輪過期,不可往下(下面會 signOut 到別人)
+            if(_lxpsAuthFlowStale(user, '信任裝置查詢後')) return;
             if(_isDeviceTrusted){
               console.log('[裝置信任 v3.10.3] ✅ 此裝置已被信任,放行自動登入(會顯示 3 秒倒數確認卡)');
               // 顯示倒數確認卡 — 不阻塞 onAuth 後續流程,但給玩家機會在 3 秒內取消
@@ -18619,6 +18652,7 @@
                   async function(){
                     // 玩家點「不是我」→ 強制登出 + 顯示重登卡
                     console.warn('[裝置信任 v3.10.3] 玩家在倒數內取消自動登入');
+                    if(_lxpsAuthFlowStale(user, '信任倒數「不是我」')) return;   // ★ v5.245.0 已換人就不登出
                     try { await _fbAuth.signOut(); } catch(_){}
                     window._fbUser = null;
                     window._gUserId = null;
@@ -18656,6 +18690,8 @@
         if(_isAutoRestore && !_bypassAutoLoginBlock && !_isDeviceTrusted){
           console.warn('[禁止自動登入 v3.10.1] 偵測到 Firebase 自動還原 token,' +
             'email=' + (user.email || '?') + ' → 強制登出,要求重新登入');
+          // ★ v5.245.0 — 只登出「這一輪的殘留帳號」;若在這之前已有人(B)主動登入,目前登入者就不是殘留帳號,絕不能登出
+          if(_lxpsAuthFlowStale(user, '禁止自動登入 signOut 前')) return;
           _fbDiag('autoLoginBlock:偵測到自動還原 (email=' + (user.email || '?') + '),強制 signOut',  'warn');
 
           // 立刻登出(不清本機資料,讓玩家重新登入後 onAuth 自然走 _clearAccountLocalData 流程)
@@ -18786,6 +18822,8 @@
           } else console.warn('[登入閘門 v5.152.0] 玩家主檔讀取逾時/失敗,停權檢查放行', _gr[2].reason);
         }catch(_eGate){ console.warn('[登入閘門 v5.152.0] 併發讀取例外,全部放行', _eGate); }
       }
+      // ★ v5.245.0 — 三道閘門讀取最久 10 秒;期間換人登入/已登出 ⇒ 這一輪過期,不再往下(避免下面 signOut 或寫 _gUserId 蓋掉新的人)
+      if(_lxpsAuthFlowStale(user, '登入閘門讀取後')) return;
       if(!_isDev) {
         try {
           const m = _gateM;   // ★ v5.152.0（舊:await window._fbGetMaintenance()）
@@ -18817,6 +18855,7 @@
               return;  // 停止後續登入流程(不讀雲端,不建 session)— 但保留 _fbUser 讓下載 path 能用
             }
             console.warn('[維修模式] 已啟動,非管理員(且無下載授權)被拒絕登入');
+            if(_lxpsAuthFlowStale(user, '維修模式 signOut 前')) return;   // ★ v5.245.0
             // 立刻登出
             try { await _fbAuth.signOut(); } catch(_){}
             window._fbUser = null;
@@ -18838,6 +18877,7 @@
             ? window._restEvalState(_restSch, new Date()) : { state:'open' };
           if(_restEv && _restEv.state === 'rest'){
             console.warn('[休息排程] 休息時段,非管理員登入封鎖');
+            if(_lxpsAuthFlowStale(user, '休息排程 signOut 前')) return;   // ★ v5.245.0
             try { if(window._progressLoaded) gameCloudSave(); } catch(_){}
             try { if(window._fbSignOut) window._fbSignOut(); } catch(_){}
             try {
@@ -18859,6 +18899,7 @@
             const _reason = _data._suspendReason || '帳號資料異常,已暫停存取';
             const _at = _data._suspendedAt ? new Date(_data._suspendedAt).toLocaleString() : '';
             console.warn('[停權] 帳號已被管理員停權,uid=' + user.uid);
+            if(_lxpsAuthFlowStale(user, '停權 signOut 前')) return;   // ★ v5.245.0
             try { await _fbAuth.signOut(); } catch(_e2) {}
             window._fbUser = null;
             window._gUserId = null;
@@ -19022,6 +19063,7 @@
         localStorage.setItem('lxps_last_active_uid', user.uid);
       } catch(_e) { console.warn('[換帳號清理] 失敗', _e); }
 
+      if(_lxpsAuthFlowStale(user, '寫入 _gUserId 前')) return;   // ★ v5.245.0 過期的一輪不可把 _gUserId 改回前一位
       window._fbUser = user;
       window._gUserId = user.uid; // ★ 確保 _gUserId 同步
       // ★ v3.11.14(2026-05-28) — 標記「本 session 已真正登入過」,
@@ -19103,7 +19145,18 @@
           }
         } catch(_){}
         // 優先序：本地暱稱 > 雲端暱稱 > Google Auth 名稱 > email
-        const _finalName = _nick || _remoteName || user.displayName || user.email || '';
+        let _finalName = _nick || _remoteName || user.displayName || user.email || '';
+        // ★ v5.245.0 — 暱稱開頭若是舊學年的 4 碼班級座號(如「5428吳沛儀」「5428吳同學」),換成目前名冊的 4 碼並寫回本機+雲端
+        try{
+          if(typeof window._lxpsRefreshRosterCode === 'function'){
+            const _fresh = window._lxpsRefreshRosterCode(_finalName, user.email || '');
+            if(_fresh && _fresh !== _finalName){
+              console.info('[登入暱稱同步] 名冊班級座號已更新:' + _finalName.slice(0, 4) + ' → ' + _fresh.slice(0, 4));
+              _finalName = _fresh;
+              if(_nick){ try{ localStorage.setItem('lxps_nickname_' + user.uid, _fresh); }catch(_){} }
+            }
+          }
+        }catch(_eRc){}
         const _finalEmail = (user.email || '').toLowerCase();
         // ★ v5.152.0 — 雲端已是同值 ⇒ 完全跳過這筆寫入（含最壞 3 次×2 秒的重試等待）。
         //   絕大多數登入都是「同一個人同一個暱稱」，這一筆每次都白寫，25 台同時開機時還佔頻寬。

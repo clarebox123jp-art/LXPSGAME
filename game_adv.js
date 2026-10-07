@@ -4506,6 +4506,8 @@ function _kingShowQuestionPopup(){
       </div>
     </div>`;
   document.body.appendChild(_wrap);
+  // ★ v5.245.0 — 音樂互動題(聽音演奏/看簡譜彈/模仿拍子/音樂QTE)知識王也適用;非互動題時這行會順手結束上一題的互動狀態
+  try{ if(typeof window._lxpsEarMountKing === 'function') window._lxpsEarMountKing(_q); }catch(_eEarK){}
   // ★ v1.0.20260510.5810 — 雙重保險:每次切換題目後,主動清除 active focus,
   // 避免瀏覽器把 focus 還原到新題目同位置的選項上,出現黃色殘影
   try{
@@ -15155,7 +15157,7 @@ window._lxpsEarDuck = function(ms){
       const st = { els: [] };
       if(_bv > _pct){
         const _ratio = _pct / _bv;
-        document.querySelectorAll('audio[id^="bgm-"]').forEach(function(el){
+        document.querySelectorAll('audio[id^="bgm-"],audio#adventure-bgm').forEach(function(el){   // ★ v5.245.0 關卡選擇頁 BGM id 是 adventure-bgm(沒有 bgm- 前綴)
           try{ if(!el.paused && el.volume > 0){ const _o = el.volume; el.volume = _o * _ratio; st.els.push({ el: el, orig: _o, ducked: el.volume }); } }catch(e){}
         });
       }
@@ -15213,6 +15215,27 @@ window._lxpsQuizPlay = function(id, btn){
       totalMs = acc * 1000 + 400;
     }
     window._lxpsEarDuck(totalMs);   // ★ BGM／音效縮至 20%(播完自動還原)
+    // ★ v5.245.0(老師:音樂題播放題目聲音與作答時 BGM 都降到 20%,題目結束再恢復)— 故事冒險答題視窗內:
+    //   按過播放後一路維持降音,直到選項被作答鎖定/視窗關閉才還原(知識王/龍王等其他畫面維持「播完就還原」)
+    try{
+      if(btn && typeof window._lxpsEarHoldBegin === 'function'){
+        const _earOv = document.getElementById('adv-quiz-overlay');
+        const _kingPop = document.getElementById('king-question-popup');
+        if(_kingPop && _kingPop.contains(btn)){
+          // ★ 知識王:按過播放後維持降音,直到這題作答(選項被鎖)或換題/離開
+          window._lxpsEarHoldBegin(function(){
+            if(!document.body.contains(btn) || document.getElementById('king-question-popup') !== _kingPop) return false;
+            return !!_kingPop.querySelector('.king-option:not(:disabled)');
+          });
+        }else if(_earOv && _earOv.contains(btn) && typeof window._lxpsEarCtxOk === 'function' && window._lxpsEarCtxOk()){
+          window._lxpsEarHoldBegin(function(){
+            if(!document.body.contains(btn) || !window._lxpsEarOverlayShown()) return false;
+            const _od = document.getElementById('adv-quiz-options');
+            return !!(_od && _od.querySelector('.aqo-btn:not(:disabled)'));
+          });
+        }
+      }
+    }catch(_eHold){}
     if(btn){
       btn.disabled = true; btn.classList.add('playing');
       setTimeout(function(){ try{ btn.disabled = false; btn.classList.remove('playing'); }catch(e){} }, Math.max(300, totalMs));
@@ -15231,6 +15254,702 @@ window._lxpsQuizPlay = function(id, btn){
       'cursor:pointer;font-family:inherit;touch-action:manipulation;}',
       '.lxps-qplay.playing{background:rgba(255,224,80,.45);color:#fff;}',
       '.lxps-qplay:disabled{opacity:.7;cursor:default;}'
+    ].join('');
+    document.head.appendChild(st);
+  }catch(e){}
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+// ★ v5.245.0(2026-10-07・老師「故事冒險模式音樂題庫,非樂理/音樂史的選擇題改成音樂 QTE 與聽音、彈奏題(比照小遊戲音樂類)」
+//   +「音樂題播放題目聲音和玩家答題演奏時,BGM 自動減少到原本 20%,題目結束後再恢復」)
+//   【互動音樂題】題目物件帶 ear:{ t:'play'|'score'|'rhythm'|'qte', ... }(adv_quiz_db.js 由產生器追加,原題文字/選項/答案一字未動)
+//     play   = 聽音演奏:聽完用 8 個小動物琴鍵依序彈回來(notes 為正解)
+//     score  = 看簡譜彈:照簡譜順序彈出經典兒歌(只判順序、不判拍子)
+//     rhythm = 模仿拍子:聽鼓聲後用同樣節奏敲鼓(拍數一樣、各拍長短比例誤差 ≤45% 算對;與小遊戲聽音坊同一套判定)
+//     qte    = 音樂 QTE:旋律音符隨拍子飛向判定線,對準時按下 ⇒ 把旋律奏出來;按中 need 個(扣掉亂按次數)算過
+//   ★ 只在「故事冒險模式」(_adventureMode=true 且非世界 BOSS)的兩個出題點掛載:advShowQuiz(BOSS 題)、_advMiniQuizAsk(小怪/寵物題)。
+//     鬥技場/知識王/龍王/世界 BOSS 抽到同一題 ⇒ 照舊顯示原選擇題(那些出題點不呼叫 _lxpsEarMount)。
+//   ★ 作答完成後「代按」原本隱藏起來的正確/錯誤選項按鈕 ⇒ 計分、知識幣、連擊、至寶 EXP、小博士、流星沙第二次機會…
+//     全部沿用 advSubmitAnswer/_advMiniQuizSubmit 既有流程,零改動。
+//   ★ BGM 降音:互動題一掛載就把 BGM/音效降到 20%,直到這題結束(送出答案/超時/視窗關閉)才還原;
+//     聽音選擇題(seq/pattern)在故事冒險視窗內按播放後同樣維持降音到作答為止(其他畫面維持原本「播完就還原」)。
+// ═══════════════════════════════════════════════════════════════════
+window._LXPS_EAR_NOTES = [
+  { k:'do',  sf:'Do',  pn:'C',  jp:'1',  hz:261.63, ani:'🐱', c:'#ff6b6b' },
+  { k:'re',  sf:'Re',  pn:'D',  jp:'2',  hz:293.66, ani:'🐶', c:'#ffa94d' },
+  { k:'mi',  sf:'Mi',  pn:'E',  jp:'3',  hz:329.63, ani:'🐸', c:'#ffd43b' },
+  { k:'fa',  sf:'Fa',  pn:'F',  jp:'4',  hz:349.23, ani:'🐰', c:'#69db7c' },
+  { k:'sol', sf:'Sol', pn:'G',  jp:'5',  hz:392.00, ani:'🐷', c:'#4dabf7' },
+  { k:'la',  sf:'La',  pn:'A',  jp:'6',  hz:440.00, ani:'🐔', c:'#748ffc' },
+  { k:'si',  sf:'Si',  pn:'B',  jp:'7',  hz:493.88, ani:'🐵', c:'#da77f2' },
+  { k:'do2', sf:'Do',  pn:"C'", jp:'1̇', hz:523.25, ani:'🐮', c:'#f783ac' }
+];
+window._lxpsEarNote = function(k){
+  var a = window._LXPS_EAR_NOTES, i;
+  for(i = 0; i < a.length; i++){ if(a[i].k === k) return a[i]; }
+  return null;
+};
+window._lxpsEarLbl = function(k){ var n = window._lxpsEarNote(k); return n ? (n.sf + (k === 'do2' ? '⁺' : '')) : String(k); };
+window._lxpsEarIsQ = function(q){ return !!(q && q.ear && typeof q.ear.t === 'string'); };
+// 只有故事冒險模式用互動題;世界 BOSS 有多人同步題目的需求,不適用
+window._lxpsEarCtxOk = function(){
+  try{
+    if(typeof _adventureMode === 'undefined' || !_adventureMode) return false;
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') return false;
+    if(window._wbConnectedHostMode) return false;
+    return true;
+  }catch(e){ return false; }
+};
+window._lxpsEarSecFor = function(q){
+  try{
+    if(window._lxpsEarIsQ(q) && window._lxpsEarCtxOk()){
+      var s = Number(q.ear.sec) || 45;
+      return Math.max(30, Math.min(75, Math.round(s)));
+    }
+  }catch(e){}
+  return 30;
+};
+// ── BGM 降音「保持」:check() 回 true 期間持續維持 20%,回 false(題目結束)就立刻還原 ──
+window._lxpsEarHoldBegin = function(check){
+  try{
+    window._lxpsEarDuck(800);
+    window._lxpsEarHoldCheck = check;
+    if(window._lxpsEarHoldIv) return;
+    window._lxpsEarHoldIv = setInterval(function(){
+      var alive = false;
+      try{ alive = !!(window._lxpsEarHoldCheck && window._lxpsEarHoldCheck()); }catch(e){ alive = false; }
+      if(alive){ window._lxpsEarDuck(800); window._lxpsEarDuckEnforce(); return; }   // 只延長還原時間,不會疊乘
+      window._lxpsEarHoldEnd();
+    }, 250);
+  }catch(e){}
+};
+// ★ 保持降音期間:BGM 正在淡入(例如知識王開場切歌 bgmFadeTo)或中途換歌,把被拉回去的音量再壓回 20%
+window._lxpsEarDuckEnforce = function(){
+  try{
+    const st = window._lxpsEarDuckState; if(!st) return;
+    const _pct = window._LXPS_EAR_DUCK_PCT;
+    const _bv = (typeof window._bgmUserVol === 'number') ? window._bgmUserVol : 1;
+    if(_bv <= _pct) return;
+    const _ratio = _pct / _bv;
+    document.querySelectorAll('audio[id^="bgm-"],audio#adventure-bgm').forEach(function(el){
+      try{
+        if(el.paused || !(el.volume > 0)) return;
+        let r = null, i;
+        for(i = 0; i < st.els.length; i++){ if(st.els[i].el === el){ r = st.els[i]; break; } }
+        if(!r){ const _o = el.volume; el.volume = _o * _ratio; st.els.push({ el: el, orig: _o, ducked: el.volume }); return; }
+        if(el.volume > r.ducked + 0.01){ r.orig = el.volume; el.volume = r.orig * _ratio; r.ducked = el.volume; }
+      }catch(e){}
+    });
+  }catch(e){}
+};
+window._lxpsEarHoldEnd = function(){
+  try{
+    if(window._lxpsEarHoldIv){ clearInterval(window._lxpsEarHoldIv); window._lxpsEarHoldIv = null; }
+    window._lxpsEarHoldCheck = null;
+    if(window._lxpsEarDuckTimer){ clearTimeout(window._lxpsEarDuckTimer); window._lxpsEarDuckTimer = null; }
+    window._lxpsEarUnduck();
+  }catch(e){}
+};
+window._lxpsEarOverlayShown = function(){
+  try{ var ov = document.getElementById('adv-quiz-overlay'); return !!(ov && ov.classList.contains('show') && ov.style.display !== 'none'); }catch(e){ return false; }
+};
+// ── 合成:琴鍵音/示範 ──
+window._lxpsEarKeyTone = function(k, dur){
+  try{
+    var ctx = window._lxpsEarCtx(); if(!ctx) return false;
+    var n = window._lxpsEarNote(k); if(!n) return false;
+    window._lxpsEarTone(ctx, n.hz, ctx.currentTime + 0.01, dur || 0.5);
+    return true;
+  }catch(e){ return false; }
+};
+window._lxpsEarText = function(o){
+  if(!o) return '';
+  if(typeof o === 'string') return o;
+  var cute = (window._artStyle === 'cute');
+  return String((cute ? (o.s || o.f) : (o.f || o.s)) || '');
+};
+window._lxpsEarEsc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); };
+window._LXPS_EAR_S = null;
+window._LXPS_EAR_SEQ = 0;
+window._LXPS_EAR_KEY_IMG = false;
+
+// ── 掛載:advShowQuiz / _advMiniQuizAsk 建好(隱藏用)選項按鈕後呼叫;回傳 true = 本題改玩互動題 ──
+window._lxpsEarMount = function(q, kind){
+  try{
+    var old = window._LXPS_EAR_S;
+    if(old){ old.dead = true; if(old.raf) try{ cancelAnimationFrame(old.raf); }catch(_){} }
+    window._LXPS_EAR_S = null;
+    try{ var _qe0 = document.getElementById('adv-quiz-question'); if(_qe0 && _qe0.getAttribute('data-ear-fs')){ _qe0.style.fontSize = ''; _qe0.removeAttribute('data-ear-fs'); } }catch(_){}
+    if(!window._lxpsEarIsQ(q) || !window._lxpsEarCtxOk()) return false;
+    var optDiv = document.getElementById('adv-quiz-options');
+    var qEl = document.getElementById('adv-quiz-question');
+    if(!optDiv || !qEl) return false;
+    var btns = optDiv.querySelectorAll('.aqo-btn');
+    var hasOk = false, hasNg = false, i;
+    for(i = 0; i < btns.length; i++){ if(btns[i].dataset.isCorrect === '1') hasOk = true; else hasNg = true; }
+    if(!hasOk || !hasNg) return false;          // 沒有可代按的對/錯按鈕 ⇒ 安全退回選擇題
+    for(i = 0; i < btns.length; i++) btns[i].style.display = 'none';
+    return window._lxpsEarMountCore(q, kind || 'boss', optDiv, qEl, { qScale: 0.82, wScale: 0.66 });
+  }catch(err){
+    console.warn('[ear] 掛載失敗,退回選擇題', err);
+    try{
+      var od = document.getElementById('adv-quiz-options');
+      if(od){ var bs = od.querySelectorAll('.aqo-btn'), j; for(j = 0; j < bs.length; j++) bs[j].style.display = ''; var ww = od.querySelector('.lxps-ear'); if(ww) ww.remove(); }
+      var qe = document.getElementById('adv-quiz-question'); if(qe && q) qe.textContent = q.question;
+    }catch(_){}
+    window._LXPS_EAR_S = null;
+    return false;
+  }
+};
+// ── 共用核心:在指定的題幹 qEl / 選項區 optDiv 裡建互動題。opt:{ qScale, wScale, alive(), submit(ok) } ──
+window._lxpsEarMountCore = function(q, kind, optDiv, qEl, opt){
+  opt = opt || {};
+  try{
+    var e = q.ear;
+    var S = { id: ++window._LXPS_EAR_SEQ, q: q, e: e, kind: kind || 'boss', done: false, submitted: false, dead: false,
+              input: [], taps: [], judge: null, raf: 0,
+              alive: (typeof opt.alive === 'function') ? opt.alive : null,
+              submit: (typeof opt.submit === 'function') ? opt.submit : null };
+    window._LXPS_EAR_S = S;
+    // 題幹:主題標籤 + 題目
+    // 手機橫式(視窗高 ≤520px)一律用短版題幹,琴鍵/判定線才留得在同一屏
+    var _short = false; try{ _short = (window.innerHeight || 999) <= 520; }catch(_){}
+    var txt = (_short && e.q && e.q.s) ? String(e.q.s) : window._lxpsEarText(e.q), tag = '', bar = txt.indexOf('|');
+    if(bar >= 0){ tag = txt.slice(0, bar); txt = txt.slice(bar + 1); }
+    qEl.textContent = '';
+    qEl.insertAdjacentHTML('beforeend',
+      (tag ? '<span class="lxps-ear-tag">' + window._lxpsEarEsc(tag) + '</span>' : '')
+      + '<span class="lxps-ear-qt">' + window._lxpsEarEsc(txt) + '</span>');
+    // 字級跟著題目走(PC/iPad/手機三套 CSS 都會自動對上)
+    var w = document.createElement('div');
+    w.className = 'lxps-ear lxps-ear-' + e.t;
+    w.setAttribute('data-noscrhint', '1');
+    // 互動題的題幹縮成 82%(琴鍵/判定線要留在同一屏,手機橫式尤其重要);下一題掛載時自動還原
+    try{
+      var fs = parseFloat(getComputedStyle(qEl).fontSize) || 40;
+      var _qs = (typeof opt.qScale === 'number') ? opt.qScale : 0.82, _ws = (typeof opt.wScale === 'number') ? opt.wScale : 0.66;
+      if(_qs !== 1){ qEl.style.fontSize = Math.round(fs * _qs) + 'px'; qEl.setAttribute('data-ear-fs', '1'); }
+      w.style.fontSize = Math.round(fs * _ws) + 'px';
+    }catch(_){}
+    optDiv.appendChild(w);
+    S.w = w;
+    if(e.t === 'rhythm') window._lxpsEarBuildDrum(S);
+    else if(e.t === 'qte') window._lxpsEarBuildQte(S);
+    else window._lxpsEarBuildKeys(S);
+    // ★ BGM 降到 20%,這題結束(送出/超時/視窗關閉/換題)自動還原
+    window._lxpsEarHoldBegin(function(){ return !S.submitted && window._lxpsEarAlive(S); });
+    return true;
+  }catch(err){
+    window._LXPS_EAR_S = null;
+    throw err;
+  }
+};
+window._lxpsEarAlive = function(S){
+  if(!(S && !S.dead && window._LXPS_EAR_S === S && S.w && document.body.contains(S.w))) return false;
+  try{ return S.alive ? !!S.alive() : window._lxpsEarOverlayShown(); }catch(e){ return false; }
+};
+// ★ v5.245.0(老師:改題範圍包含知識王)— 知識王答題彈窗掛載:題目帶 ear ⇒ 隱藏 ABCD 選項改玩互動題,
+//   作答完成後呼叫 _kingPickAnswer(正解 idx / 任一錯誤 idx),分數 +5、小博士、至寶經驗、下一題流程全沿用原本。
+window._lxpsEarMountKing = function(q){
+  try{
+    var old = window._LXPS_EAR_S;
+    if(old){ old.dead = true; if(old.raf) try{ cancelAnimationFrame(old.raf); }catch(_){} }
+    window._LXPS_EAR_S = null;
+    if(!window._lxpsEarIsQ(q)) return false;
+    var pop = document.getElementById('king-question-popup');
+    var optDiv = document.getElementById('king-options-area');
+    var qEl = pop ? pop.querySelector('.king-question-text') : null;
+    if(!pop || !optDiv || !qEl) return false;
+    var ci = ['A','B','C','D'].indexOf(String(q.answer || '').trim().toUpperCase());
+    var btns = optDiv.querySelectorAll('.king-option'), wi = -1, i;
+    for(i = 0; i < btns.length; i++){ var _ix = parseInt(btns[i].getAttribute('data-idx'), 10); if(_ix !== ci && wi < 0) wi = _ix; }
+    if(ci < 0 || wi < 0) return false;
+    for(i = 0; i < btns.length; i++) btns[i].style.display = 'none';
+    // 知識王的「刪除錯誤」「提示之光」對互動題沒有作用 ⇒ 先鎖起來(不耗用);「換題重抽」照常
+    try{
+      var tb = pop.querySelectorAll('.king-tool-btn');
+      for(i = 0; i < tb.length; i++){
+        var _oc = tb[i].getAttribute('onclick') || '';
+        if(_oc.indexOf("'hint'") >= 0 || _oc.indexOf("'remove'") >= 0){ tb[i].disabled = true; tb[i].style.opacity = '.45'; tb[i].title = '音樂互動題不能用這個法寶'; }
+      }
+    }catch(_){}
+    return window._lxpsEarMountCore(q, 'king', optDiv, qEl, {
+      qScale: 1, wScale: 0.85,
+      alive: function(){ return document.getElementById('king-question-popup') === pop && document.body.contains(pop); },
+      submit: function(ok){ if(typeof _kingPickAnswer === 'function') _kingPickAnswer(ok ? ci : wi); }
+    });
+  }catch(err){
+    console.warn('[ear] 知識王掛載失敗,退回選擇題', err);
+    try{
+      var od = document.getElementById('king-options-area');
+      if(od){ var bs = od.querySelectorAll('.king-option'), j; for(j = 0; j < bs.length; j++) bs[j].style.display = ''; var ww = od.querySelector('.lxps-ear'); if(ww) ww.remove(); }
+    }catch(_){}
+    window._LXPS_EAR_S = null;
+    return false;
+  }
+};
+window._lxpsEarMsg = function(S, html, cls){
+  try{ var m = S.w.querySelector('.lxps-ear-msg'); if(m){ m.className = 'lxps-ear-msg' + (cls ? ' ' + cls : ''); m.innerHTML = html; } }catch(e){}
+};
+// ── 作答完成:顯示結果 → 1.2 秒後代按隱藏的對/錯按鈕(沿用既有計分流程)──
+window._lxpsEarFinish = function(S, ok, msg){
+  if(!S || S.done || !window._lxpsEarAlive(S)) return;
+  S.done = true;
+  try{ S.w.classList.add(ok ? 'is-ok' : 'is-ng'); }catch(e){}
+  var why = window._lxpsEarText(S.e.why);
+  window._lxpsEarMsg(S, (ok ? '✅ ' : '❌ ') + window._lxpsEarEsc(msg || (ok ? '答對了!' : '再接再厲!'))
+    + (why ? '<div class="lxps-ear-why">' + window._lxpsEarEsc(why) + '</div>' : ''), ok ? 'ok' : 'ng');
+  setTimeout(function(){
+    if(!window._lxpsEarAlive(S)) return;
+    // 找一顆對錯相符的隱藏選項取它的字母(法寶「水晶」可能把唯一的錯誤選項 disabled ⇒ 仍照樣取字母,直接呼叫送出函式)
+    var optDiv = document.getElementById('adv-quiz-options');
+    var bs = optDiv ? optDiv.querySelectorAll('.aqo-btn') : [], letter = ok ? 'A' : 'Z', i;
+    for(i = 0; i < bs.length; i++){ if((bs[i].dataset.isCorrect === '1') === !!ok){ letter = bs[i].dataset.letter || letter; if(!bs[i].disabled) break; } }
+    S.submitted = true;
+    try{
+      if(S.submit){ S.submit(!!ok); }
+      else if(S.kind === 'mini'){ if(typeof _advMiniQuizSubmit === 'function') _advMiniQuizSubmit(letter, !!ok); }
+      else if(typeof advSubmitAnswer === 'function') advSubmitAnswer(letter, !!ok);
+    }catch(err){ console.warn('[ear] 送出失敗', err); }
+    // 流星沙(第二次機會):BOSS 題答錯後若仍在作答狀態 ⇒ 重來一次
+    if(!ok && S.kind === 'boss'){
+      setTimeout(function(){
+        try{
+          if(S.dead || window._LXPS_EAR_S !== S) return;
+          if(typeof _advQuizPhase !== 'undefined' && _advQuizPhase === 'asking'
+             && typeof _advCurrentQuestion !== 'undefined' && _advCurrentQuestion === S.q && window._lxpsEarOverlayShown()){
+            window._lxpsEarRetry(S);
+          }
+        }catch(_){}
+      }, 450);
+    }
+  }, 1200);
+};
+window._lxpsEarRetry = function(S){
+  try{
+    S.done = false; S.submitted = false; S.input = []; S.taps = []; S.judge = null;
+    if(S.raf){ try{ cancelAnimationFrame(S.raf); }catch(_){} S.raf = 0; }
+    S.w.className = 'lxps-ear lxps-ear-' + S.e.t;
+    S.w.innerHTML = '';
+    if(S.e.t === 'rhythm') window._lxpsEarBuildDrum(S);
+    else if(S.e.t === 'qte') window._lxpsEarBuildQte(S);
+    else window._lxpsEarBuildKeys(S);
+    window._lxpsEarMsg(S, '🌠 流星沙給你第二次機會,再試一次!', 'hint');
+    window._lxpsEarHoldBegin(function(){ return !S.submitted && window._lxpsEarAlive(S); });
+  }catch(e){}
+};
+// ── 示範播放(play/score/qte 旋律、rhythm 鼓聲)──
+window._lxpsEarDemo = function(S, btn){
+  try{
+    if(!window._lxpsEarAlive(S)) return;
+    var ctx = window._lxpsEarCtx();
+    if(!ctx){ try{ if(typeof _showInGameToast === 'function') _showInGameToast('這台裝置不支援音效', 'warn'); }catch(_){} return; }
+    var e = S.e, t0 = ctx.currentTime + 0.06, ms = 0, i;
+    if(e.t === 'rhythm'){
+      var beat = 60 / (e.bpm || 90), acc = 0, p = e.pattern || [];
+      for(i = 0; i < p.length; i++){
+        (function(k, st){
+          window._lxpsEarDrum(ctx, st);
+          setTimeout(function(){ try{ var d = S.w.querySelector('[data-bt="' + k + '"]'); if(d && !S.done){ d.classList.add('on'); setTimeout(function(){ d.classList.remove('on'); }, 180); } }catch(_){} }, Math.max(0, (st - ctx.currentTime) * 1000));
+        })(i, t0 + acc);
+        acc += p[i] * beat;
+      }
+      ms = acc * 1000 + 300;
+    }else{
+      var notes = e.notes || [], gap = e.gap || 0.6, acc2 = 0;
+      var beatQ = (e.t === 'qte') ? 60 / (e.bpm || 84) : 0;
+      for(i = 0; i < notes.length; i++){
+        var d = beatQ ? (e.beats && e.beats[i] ? e.beats[i] : 1) * beatQ : gap;
+        (function(k, st, du){
+          var n = window._lxpsEarNote(k); if(!n) return;
+          window._lxpsEarTone(ctx, n.hz, st, du);
+          if(e.t === 'score'){
+            setTimeout(function(){ try{ var el = S.w.querySelector('[data-k="' + k + '"]'); if(el && !S.done){ el.classList.add('lit'); setTimeout(function(){ el.classList.remove('lit'); }, 200); } }catch(_){} }, Math.max(0, (st - ctx.currentTime) * 1000));
+          }
+        })(notes[i], t0 + acc2, Math.min(0.55, d * 0.9));
+        acc2 += d;
+      }
+      ms = acc2 * 1000 + 400;
+    }
+    window._lxpsEarDuck(ms);
+    if(btn){ btn.disabled = true; btn.classList.add('playing'); setTimeout(function(){ try{ btn.disabled = false; btn.classList.remove('playing'); }catch(_){} }, Math.max(300, ms)); }
+  }catch(err){ console.warn('[ear] 示範播放失敗', err); }
+};
+window._lxpsEarBtn = function(label, cls, fn){
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'lxps-ear-btn' + (cls ? ' ' + cls : ''); b.innerHTML = label;
+  b.onclick = function(ev){ try{ if(ev){ ev.stopPropagation(); ev.preventDefault(); } }catch(_){} fn(b); };
+  return b;
+};
+// 觸控/滑鼠統一「按下」事件(不等 click 的 300ms,節奏題需要即時)
+window._lxpsEarOnPress = function(el, fn){
+  var last = 0;
+  function h(ev){
+    try{ if(ev && ev.cancelable) ev.preventDefault(); if(ev) ev.stopPropagation(); }catch(_){}
+    var now = Date.now(); if(now - last < 40) return; last = now;
+    fn(ev);
+  }
+  if(window.PointerEvent) el.addEventListener('pointerdown', h);
+  else { el.addEventListener('touchstart', h, { passive:false }); el.addEventListener('mousedown', h); }
+};
+
+// ═══ 琴鍵(play/score)═══
+window._lxpsEarBuildKeys = function(S){
+  var e = S.e, w = S.w, i, target = e.notes || [];
+  var top = document.createElement('div'); top.className = 'lxps-ear-top';
+  top.appendChild(window._lxpsEarBtn(e.t === 'score' ? '🔊 聽示範' : '🔊 播放', 'play', function(b){ window._lxpsEarDemo(S, b); }));
+  var tip = document.createElement('span'); tip.className = 'lxps-ear-tip';
+  tip.textContent = (e.t === 'score')
+    ? ((window._artStyle === 'cute') ? '看簡譜,照順序彈!' : '照簡譜順序按琴鍵(只看順序,不看拍子)')
+    : ((window._artStyle === 'cute') ? '聽完再彈回來!' : '可以重聽,不扣分;彈滿 ' + target.length + ' 個音自動判定');
+  top.appendChild(tip);
+  w.appendChild(top);
+  var inp = document.createElement('div'); inp.className = 'lxps-ear-input'; w.appendChild(inp);
+  var row = document.createElement('div'); row.className = 'lxps-ear-keys';
+  window._LXPS_EAR_NOTES.forEach(function(n){
+    var k = document.createElement('div');
+    k.className = 'lxps-ear-key'; k.setAttribute('data-k', n.k); k.style.setProperty('--kc', n.c);
+    // ★ 琴鍵/鼓目前一律用 emoji(repo 沒有 music_key_*.png;不去抓不存在的圖,免得每題多 9 次 404 再退回 raw)。
+    //   之後若上傳去背小動物圖,把 window._LXPS_EAR_KEY_IMG 改成 true 即可。
+    k.innerHTML = '<div class="ani">' + (window._LXPS_EAR_KEY_IMG ? '<img src="' + window._LXPS_QUIZ_IMG_BASE + 'music_key_' + n.k + '.png" alt="" draggable="false" onload="this.nextSibling.style.display=\'none\'" onerror="this.remove()">' : '') + '<span>' + n.ani + '</span></div>'
+      + '<div class="lab">' + n.sf + (n.k === 'do2' ? '<sup>+</sup>' : '') + '<small>' + (e.t === 'score' ? n.jp : n.pn) + '</small></div>';
+    window._lxpsEarOnPress(k, function(){ window._lxpsEarKey(S, n.k, k); });
+    row.appendChild(k);
+  });
+  w.appendChild(row);
+  var ctl = document.createElement('div'); ctl.className = 'lxps-ear-ctl';
+  ctl.appendChild(window._lxpsEarBtn('⌫ 退一個', '', function(){ if(S.done) return; S.input.pop(); window._lxpsEarPaintKeys(S); }));
+  ctl.appendChild(window._lxpsEarBtn('↺ 重彈', '', function(){ if(S.done) return; S.input = []; window._lxpsEarPaintKeys(S); }));
+  w.appendChild(ctl);
+  var msg = document.createElement('div'); msg.className = 'lxps-ear-msg'; w.appendChild(msg);
+  window._lxpsEarPaintKeys(S);
+};
+window._lxpsEarPaintKeys = function(S){
+  try{
+    var e = S.e, target = e.notes || [], box = S.w.querySelector('.lxps-ear-input'), h = '', i, k;
+    if(e.t === 'score'){
+      h = '<span class="ph">🎼 〈' + window._lxpsEarEsc(e.title || '') + '〉</span>';
+      for(i = 0; i < target.length; i++){
+        k = target[i];
+        var c = 'kn ref';
+        if(i < S.input.length) c = (S.input[i] === k) ? 'kn ok' : 'kn ng';
+        else if(i === S.input.length && !S.done) c = 'kn ref cur';
+        var n = window._lxpsEarNote(k);
+        h += '<span class="' + c + '"><b>' + (n ? n.jp : '?') + '</b><i>' + window._lxpsEarLbl(k) + '</i></span>';
+      }
+    }else{
+      if(!S.input.length) h = '<span class="ph">' + ((window._artStyle === 'cute') ? '按琴鍵開始彈…' : '你彈的音會出現在這裡(共 ' + target.length + ' 個音)') + '</span>';
+      for(i = 0; i < S.input.length; i++){
+        k = S.input[i];
+        var st = S.done ? ((target[i] === k) ? ' ok' : ' ng') : '';
+        h += '<span class="kn' + st + '"><i>' + window._lxpsEarLbl(k) + '</i></span>';
+      }
+      if(S.done){
+        h += '<span class="ph">正確:</span>';
+        for(i = 0; i < target.length; i++) h += '<span class="kn ref"><i>' + window._lxpsEarLbl(target[i]) + '</i></span>';
+      }else h += '<span class="cnt">' + S.input.length + ' / ' + target.length + '</span>';
+    }
+    box.innerHTML = h;
+  }catch(err){}
+};
+window._lxpsEarKey = function(S, k, el){
+  if(!window._lxpsEarAlive(S) || S.done) return;
+  if(!window._lxpsEarKeyTone(k, 0.5)){ try{ if(typeof _showInGameToast === 'function') _showInGameToast('這台裝置不支援音效', 'warn'); }catch(_){} }
+  window._lxpsEarDuck(700);
+  if(el){ el.classList.add('lit'); setTimeout(function(){ try{ el.classList.remove('lit'); }catch(_){} }, 200); }
+  var target = S.e.notes || [];
+  if(S.input.length >= target.length) return;
+  S.input.push(k);
+  window._lxpsEarPaintKeys(S);
+  if(S.input.length >= target.length){
+    setTimeout(function(){
+      if(S.done || !window._lxpsEarAlive(S)) return;
+      var ok = true, hit = 0, i;
+      for(i = 0; i < target.length; i++){ if(S.input[i] === target[i]) hit++; else ok = false; }
+      S.done = true; window._lxpsEarPaintKeys(S); S.done = false;
+      window._lxpsEarFinish(S, ok, ok ? ('彈對了!' + (S.e.t === 'score' ? '一首〈' + (S.e.title || '') + '〉' : '')) : ('彈對 ' + hit + ' / ' + target.length + ' 個音'));
+    }, 350);
+  }
+};
+
+// ═══ 鼓(rhythm)═══
+window._lxpsEarBuildDrum = function(S){
+  var e = S.e, w = S.w, p = e.pattern || [], i;
+  var top = document.createElement('div'); top.className = 'lxps-ear-top';
+  top.appendChild(window._lxpsEarBtn('🔊 聽鼓聲', 'play', function(b){ window._lxpsEarDemo(S, b); }));
+  var tip = document.createElement('span'); tip.className = 'lxps-ear-tip';
+  tip.textContent = (window._artStyle === 'cute') ? '聽完,敲出一樣的拍子!' : '快慢沒關係,長短要一樣;敲滿 ' + p.length + ' 下自動判定';
+  top.appendChild(tip); w.appendChild(top);
+  var beats = document.createElement('div'); beats.className = 'lxps-ear-beats'; w.appendChild(beats);
+  var pad = document.createElement('div'); pad.className = 'lxps-ear-pad';
+  pad.innerHTML = (window._LXPS_EAR_KEY_IMG ? '<img src="' + window._LXPS_QUIZ_IMG_BASE + 'music_drum.png" alt="" draggable="false" onload="this.nextSibling.style.display=\'none\'" onerror="this.remove()">' : '') + '<span>🥁</span><em>敲!</em>';
+  window._lxpsEarOnPress(pad, function(){ window._lxpsEarTap(S, pad); });
+  w.appendChild(pad);
+  var ctl = document.createElement('div'); ctl.className = 'lxps-ear-ctl';
+  ctl.appendChild(window._lxpsEarBtn('↺ 重敲', '', function(){ if(S.done) return; S.taps = []; window._lxpsEarPaintBeats(S); }));
+  w.appendChild(ctl);
+  var msg = document.createElement('div'); msg.className = 'lxps-ear-msg'; w.appendChild(msg);
+  window._lxpsEarPaintBeats(S);
+};
+window._lxpsEarPaintBeats = function(S){
+  try{
+    var p = S.e.pattern || [], b = S.w.querySelector('.lxps-ear-beats'), h = '', i, c;
+    for(i = 0; i < p.length; i++){
+      c = 'bt' + (p[i] >= 2 ? ' long' : (p[i] < 1 ? ' short' : ''));
+      if(S.judge) c += S.judge[i] ? ' me' : ' miss';
+      else if(i < S.taps.length) c += ' me';
+      h += '<span class="' + c + '" data-bt="' + i + '"><i>' + (p[i] >= 2 ? '♩—' : (p[i] >= 1 ? '♩' : '♪')) + '</i></span>';
+    }
+    h += '<span class="cnt">' + (S.judge ? '' : (S.taps.length + ' / ' + p.length)) + '</span>';
+    b.innerHTML = h;
+  }catch(err){}
+};
+window._lxpsEarTap = function(S, pad){
+  if(!window._lxpsEarAlive(S) || S.done) return;
+  var p = S.e.pattern || [];
+  if(S.taps.length >= p.length) return;
+  try{ var ctx = window._lxpsEarCtx(); if(ctx) window._lxpsEarDrum(ctx, ctx.currentTime + 0.005); }catch(_){}
+  window._lxpsEarDuck(700);
+  if(pad){ pad.classList.add('hit'); setTimeout(function(){ try{ pad.classList.remove('hit'); }catch(_){} }, 90); }
+  S.taps.push((window.performance && performance.now) ? performance.now() : Date.now());
+  window._lxpsEarPaintBeats(S);
+  if(S.taps.length >= p.length){
+    setTimeout(function(){
+      if(S.done || !window._lxpsEarAlive(S)) return;
+      var taps = S.taps, judge = [], ok = true, i;
+      if(p.length < 2){ judge = [true]; }
+      else{
+        var tSum = 0, mSum = 0;
+        for(i = 0; i < p.length - 1; i++){ tSum += p[i]; mSum += (taps[i + 1] - taps[i]); }
+        judge.push(true);   // 第一下是起拍
+        for(i = 0; i < p.length - 1; i++){
+          var tr = p[i] / tSum, mr = (taps[i + 1] - taps[i]) / (mSum || 1);
+          var good = Math.abs(mr - tr) <= tr * 0.45;
+          // ★ 再比「相鄰兩拍的長短關係」:長短不同的兩拍,敲出來的比例要在 1.5 倍誤差內
+          //   (只用總比例判定時,平均速度亂敲也會過 ♪♪♩♩ 這類節奏)
+          if(good && i > 0){
+            var want = p[i] / p[i - 1], got = (taps[i + 1] - taps[i]) / Math.max(1, (taps[i] - taps[i - 1]));
+            if(got > want * 1.5 || got < want / 1.5) good = false;
+          }
+          judge.push(good); if(!good) ok = false;
+        }
+      }
+      S.judge = judge; window._lxpsEarPaintBeats(S);
+      var nOk = 0; for(i = 0; i < judge.length; i++) if(judge[i]) nOk++;
+      window._lxpsEarFinish(S, ok, ok ? '拍子一模一樣!' : ('有 ' + (judge.length - nOk) + ' 拍的長短不對(紅色那幾拍)'));
+    }, 250);
+  }
+};
+
+// ═══ 音樂 QTE ═══
+window._lxpsEarBuildQte = function(S){
+  var e = S.e, w = S.w, notes = e.notes || [], i;
+  var top = document.createElement('div'); top.className = 'lxps-ear-top';
+  top.appendChild(window._lxpsEarBtn('🔊 聽旋律', 'play', function(b){ if(S.qRun) return; window._lxpsEarDemo(S, b); }));
+  var go = window._lxpsEarBtn('▶ 開始演奏', 'go', function(b){ window._lxpsEarQteStart(S, b); });
+  top.appendChild(go);
+  var tip = document.createElement('span'); tip.className = 'lxps-ear-tip';
+  tip.textContent = '〈' + (e.title || '') + '〉需按中 ' + (e.need || notes.length) + ' / ' + notes.length + ' 個';
+  top.appendChild(tip); w.appendChild(top);
+  var lane = document.createElement('div'); lane.className = 'lxps-ear-lane';
+  lane.innerHTML = '<div class="hitline"></div><div class="cd"></div>';
+  w.appendChild(lane);
+  var hit = document.createElement('div'); hit.className = 'lxps-ear-hit';
+  hit.innerHTML = '🎵 按!';
+  window._lxpsEarOnPress(hit, function(){ window._lxpsEarQteTap(S); });
+  window._lxpsEarOnPress(lane, function(){ window._lxpsEarQteTap(S); });
+  w.appendChild(hit);
+  var sc = document.createElement('div'); sc.className = 'lxps-ear-qsc'; w.appendChild(sc);
+  var msg = document.createElement('div'); msg.className = 'lxps-ear-msg'; w.appendChild(msg);
+  S.qLane = lane; S.qHit = hit; S.qSc = sc; S.qRun = false; S.qNotes = [];
+  // 音符 DOM(先排在判定線右側等待)
+  for(i = 0; i < notes.length; i++){
+    var n = window._lxpsEarNote(notes[i]);
+    var d = document.createElement('div');
+    d.className = 'qn'; d.style.setProperty('--kc', n ? n.c : '#ffe050');
+    d.innerHTML = '<span>' + (n ? n.ani : '🎵') + '</span><i>' + window._lxpsEarLbl(notes[i]) + '</i>';
+    d.style.left = '110%';
+    lane.appendChild(d);
+    S.qNotes.push({ k: notes[i], el: d, t: 0, st: 0 });   // st:0 待判 1 命中 -1 錯過
+  }
+  S.qHits = 0; S.qExtra = 0;
+  window._lxpsEarQtePaint(S);
+};
+window._lxpsEarQtePaint = function(S){
+  try{
+    var need = S.e.need || S.qNotes.length;
+    S.qSc.innerHTML = '🎯 按中 <b>' + S.qHits + '</b> / ' + need + (S.qExtra ? '　<span class="ex">亂按 −' + S.qExtra + '</span>' : '');
+  }catch(e){}
+};
+window._lxpsEarNow = function(){ return (window.performance && performance.now) ? performance.now() : Date.now(); };
+window._lxpsEarQteStart = function(S, btn){
+  if(!window._lxpsEarAlive(S) || S.done || S.qRun) return;
+  var ctx = window._lxpsEarCtx();
+  if(!ctx){ try{ if(typeof _showInGameToast === 'function') _showInGameToast('這台裝置不支援音效', 'warn'); }catch(_){} }
+  S.qRun = true;
+  if(btn){ btn.disabled = true; btn.style.visibility = 'hidden'; }
+  var e = S.e, beat = 60000 / (e.bpm || 84), lead = 4 * beat, now = window._lxpsEarNow(), acc = 0, i;
+  S.qBeat = beat; S.qTravel = Math.max(1500, beat * 3); S.qWin = e.win || 220;
+  S.qT0 = now + lead;
+  for(i = 0; i < S.qNotes.length; i++){ S.qNotes[i].t = S.qT0 + acc; acc += ((e.beats && e.beats[i]) ? e.beats[i] : 1) * beat; }
+  S.qEnd = S.qT0 + acc;
+  // 預備拍:4 下鼓聲 + 倒數
+  try{ if(ctx){ for(i = 0; i < 4; i++) window._lxpsEarDrum(ctx, ctx.currentTime + 0.02 + (i * beat) / 1000); } }catch(_){}
+  var cd = S.qLane.querySelector('.cd');
+  function frame(){
+    if(!window._lxpsEarAlive(S)){ S.raf = 0; return; }
+    var t = window._lxpsEarNow(), i2, n, left;
+    if(cd){
+      if(t < S.qT0){ var left4 = Math.ceil((S.qT0 - t) / beat); cd.textContent = left4 > 0 && left4 <= 4 ? String(left4) : ''; cd.style.display = 'block'; }
+      else cd.style.display = 'none';
+    }
+    var hitX = 14, span = 100 - hitX;
+    for(i2 = 0; i2 < S.qNotes.length; i2++){
+      n = S.qNotes[i2];
+      if(n.st === 0 && t - n.t > S.qWin){ n.st = -1; n.el.classList.add('miss'); }
+      left = hitX + ((n.t - t) / S.qTravel) * span;
+      if(n.st === 1){ continue; }
+      if(left > 112){ n.el.style.left = '112%'; continue; }
+      if(left < -12){ n.el.style.display = 'none'; continue; }
+      n.el.style.left = left + '%';
+    }
+    if(t > S.qEnd + S.qWin + 500){
+      S.raf = 0; S.qRun = false;
+      var need = S.e.need || S.qNotes.length, score = S.qHits - S.qExtra;
+      window._lxpsEarFinish(S, score >= need, score >= need
+        ? ('奏出〈' + (S.e.title || '') + '〉!按中 ' + S.qHits + ' / ' + S.qNotes.length)
+        : ('按中 ' + S.qHits + ' / ' + S.qNotes.length + (S.qExtra ? '(亂按 ' + S.qExtra + ' 次)' : '') + ',差一點點'));
+      return;
+    }
+    S.raf = requestAnimationFrame(frame);
+  }
+  S.raf = requestAnimationFrame(frame);
+};
+window._lxpsEarQteTap = function(S){
+  if(!window._lxpsEarAlive(S) || S.done) return;
+  if(!S.qRun){ window._lxpsEarMsg(S, '先按「▶ 開始演奏」喔!', 'hint'); return; }
+  var t = window._lxpsEarNow();
+  if(t < S.qT0 - S.qWin) return;                       // 預備拍期間不算
+  var best = null, bd = 1e9, i, n, d;
+  for(i = 0; i < S.qNotes.length; i++){
+    n = S.qNotes[i]; if(n.st !== 0) continue;
+    d = Math.abs(t - n.t); if(d < bd){ bd = d; best = n; }
+  }
+  try{ S.qHit.classList.add('on'); setTimeout(function(){ try{ S.qHit.classList.remove('on'); }catch(_){} }, 90); }catch(_){}
+  if(best && bd <= S.qWin){
+    best.st = 1; S.qHits++;
+    window._lxpsEarKeyTone(best.k, Math.min(0.55, S.qBeat / 1000 * 0.9));
+    best.el.classList.add('hit'); best.el.style.left = '14%';
+    setTimeout(function(){ try{ best.el.style.display = 'none'; }catch(_){} }, 260);
+  }else{
+    S.qExtra++;
+    try{ S.qLane.classList.add('shake'); setTimeout(function(){ try{ S.qLane.classList.remove('shake'); }catch(_){} }, 160); }catch(_){}
+  }
+  window._lxpsEarDuck(700);
+  window._lxpsEarQtePaint(S);
+};
+
+// ── BOSS 題的 33 秒卡死救援與新回合 30 秒超時,互動題作答時間較長 ⇒ 依本題秒數重新上膛(邏輯與原本一字相同,只改秒數)──
+window._lxpsEarRearmWatchdogs = function(sec){
+  try{
+    var ms = (Math.max(30, sec || 30) + 3) * 1000;
+    if(window._quizDeadlockWatchdog){
+      clearTimeout(window._quizDeadlockWatchdog);
+      window._quizDeadlockWatchdog = setTimeout(function(){
+        try{
+          var _qOv2 = document.getElementById('adv-quiz-overlay');
+          var _wdPetOrMini = !!window._tgPetQuizMode
+            || (typeof window._miniQuizPhase !== 'undefined' && (window._miniQuizPhase === 'asking' || window._miniQuizPhase === 'done'))
+            || (typeof window._miniQuizOnDone === 'function');
+          if(!_wdPetOrMini && _qOv2 && _qOv2.classList.contains('show')){
+            console.warn('🚨 [Quiz watchdog/ear] 互動音樂題超過時限沒進展,強制 advOnQuizSkip');
+            if(typeof advOnQuizSkip === 'function') advOnQuizSkip();
+          }
+        }catch(_){}
+        window._quizDeadlockWatchdog = null;
+      }, ms + 3000);
+    }
+    if(window._advRoundQuizTimeout){
+      clearTimeout(window._advRoundQuizTimeout);
+      window._advRoundQuizTimeout = setTimeout(function(){
+        console.warn('🎓 [ear] 互動音樂題超時,視為答錯');
+        try{ if(typeof _advStats !== 'undefined' && _advStats) _advStats.lastAnswerCorrect = false; }catch(_){}
+        try{ var _qOv = document.getElementById('adv-quiz-overlay'); if(_qOv){ _qOv.classList.remove('show'); _qOv.style.display = 'none'; } }catch(_){}
+        try{ if(typeof _advRoundQuizPenalty === 'function') _advRoundQuizPenalty(); }catch(_){}
+        try{ if(typeof _advFinishRoundQuiz === 'function') _advFinishRoundQuiz(); }catch(_){}
+      }, ms);
+    }
+  }catch(e){}
+};
+
+(function(){
+  try{
+    if(document.getElementById('_lxps_ear_css')) return;
+    var st = document.createElement('style'); st.id = '_lxps_ear_css';
+    st.textContent = [
+      '.lxps-ear{grid-column:1/-1;display:flex;flex-direction:column;gap:.45em;padding:.2em 0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-family:inherit;}',
+      '.lxps-ear-tag{display:inline-block;font-size:.62em;font-weight:800;color:#ffe9a8;background:rgba(255,200,50,.16);border:1px solid rgba(255,224,80,.5);border-radius:.6em;padding:.05em .5em;margin-right:.45em;vertical-align:middle;letter-spacing:1px;}',
+      '.lxps-ear-top{display:flex;align-items:center;gap:.6em;flex-wrap:wrap;}',
+      '.lxps-ear-tip{color:#9fb4d8;font-size:.78em;font-weight:600;}',
+      '.lxps-ear-btn{font-family:inherit;font-size:.9em;font-weight:800;padding:.3em .9em;border-radius:.6em;border:2px solid rgba(74,158,255,.55);background:rgba(20,40,80,.85);color:#cfe3ff;cursor:pointer;touch-action:manipulation;}',
+      '.lxps-ear-btn.play{border-color:rgba(255,224,80,.8);background:rgba(255,200,50,.18);color:#ffe050;}',
+      '.lxps-ear-btn.go{border-color:rgba(110,230,150,.85);background:rgba(60,190,110,.22);color:#9dffbf;}',
+      '.lxps-ear-btn.playing{background:rgba(255,224,80,.45);color:#fff;}',
+      '.lxps-ear-btn:disabled{opacity:.6;cursor:default;}',
+      '.lxps-ear-input{min-height:1.9em;display:flex;flex-wrap:wrap;align-items:center;gap:.25em;padding:.25em .4em;border-radius:.5em;background:rgba(255,255,255,.05);border:1px dashed rgba(160,190,255,.3);}',
+      '.lxps-ear-input .ph{color:#8899bb;font-size:.8em;margin-right:.3em;}',
+      '.lxps-ear-input .cnt{margin-left:auto;color:#ffe050;font-weight:800;font-size:.85em;}',
+      '.lxps-ear-input .kn{display:inline-flex;flex-direction:column;align-items:center;min-width:1.6em;padding:.05em .25em;border-radius:.35em;background:rgba(74,158,255,.18);border:1px solid rgba(74,158,255,.45);color:#dbe8ff;line-height:1.1;}',
+      '.lxps-ear-input .kn b{font-size:1em;}',
+      '.lxps-ear-input .kn i{font-style:normal;font-size:.62em;opacity:.9;}',
+      '.lxps-ear-input .kn.ref{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:#cbd5e8;}',
+      '.lxps-ear-input .kn.cur{border-color:#ffe050;box-shadow:0 0 .4em rgba(255,224,80,.6);}',
+      '.lxps-ear-input .kn.ok{background:rgba(62,200,122,.25);border-color:#3ec87a;color:#9dffbf;}',
+      '.lxps-ear-input .kn.ng{background:rgba(232,64,64,.22);border-color:#e84040;color:#ffaaaa;}',
+      '.lxps-ear-keys{display:flex;gap:.3em;}',
+      '.lxps-ear-key{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1em;padding:.35em .1em;border-radius:.6em;cursor:pointer;touch-action:manipulation;',
+      'background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(225,232,245,.95));border:3px solid var(--kc,#ffe050);box-shadow:0 .2em 0 var(--kc,#ffe050);transition:transform .06s;}',
+      '.lxps-ear-key .ani{font-size:1.5em;line-height:1;height:1.25em;display:flex;align-items:center;justify-content:center;}',
+      '.lxps-ear-key .ani img{height:1.25em;width:auto;pointer-events:none;}',
+      '.lxps-ear-key .lab{font-size:.78em;font-weight:900;color:#333;line-height:1.05;text-align:center;}',
+      '.lxps-ear-key .lab small{display:block;font-size:.72em;color:#667;font-weight:700;}',
+      '.lxps-ear-key.lit{transform:translateY(.15em);box-shadow:0 0 .7em var(--kc,#ffe050);background:var(--kc,#ffe050);}',
+      '.lxps-ear-ctl{display:flex;gap:.5em;justify-content:flex-end;}',
+      '.lxps-ear-ctl .lxps-ear-btn{font-size:.72em;}',
+      '.lxps-ear-msg{min-height:1.2em;font-size:.82em;font-weight:800;color:#cfe3ff;text-align:center;}',
+      '.lxps-ear-msg.ok{color:#7df0a8;}.lxps-ear-msg.ng{color:#ff9a9a;}.lxps-ear-msg.hint{color:#ffe050;}',
+      '.lxps-ear-why{font-size:.82em;font-weight:600;color:#c8d3ea;margin-top:.2em;line-height:1.4;}',
+      '.lxps-ear-beats{display:flex;align-items:center;justify-content:center;gap:.35em;flex-wrap:wrap;min-height:1.8em;}',
+      '.lxps-ear-beats .bt{display:inline-flex;align-items:center;justify-content:center;width:1.6em;height:1.6em;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.3);color:#cbd5e8;font-size:.9em;}',
+      '.lxps-ear-beats .bt i{font-style:normal;}',
+      '.lxps-ear-beats .bt.long{width:2.6em;border-radius:.8em;}',
+      '.lxps-ear-beats .bt.short{width:1.2em;height:1.2em;}',
+      '.lxps-ear-beats .bt.on{background:rgba(255,224,80,.6);border-color:#ffe050;color:#222;}',
+      '.lxps-ear-beats .bt.me{background:rgba(62,200,122,.35);border-color:#3ec87a;color:#fff;}',
+      '.lxps-ear-beats .bt.miss{background:rgba(232,64,64,.35);border-color:#e84040;color:#fff;}',
+      '.lxps-ear-beats .cnt{margin-left:.5em;color:#ffe050;font-weight:800;font-size:.85em;}',
+      '.lxps-ear-pad{align-self:center;width:5.2em;height:5.2em;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;',
+      'background:radial-gradient(circle at 50% 40%,#fff3d6,#e8b46a 70%,#a8702a);border:.22em solid #ffe050;box-shadow:0 .25em 0 #8a5a1e,0 0 1em rgba(255,200,80,.35);transition:transform .05s;}',
+      '.lxps-ear-pad span{font-size:2.2em;line-height:1;}.lxps-ear-pad img{height:2.6em;pointer-events:none;}',
+      '.lxps-ear-pad em{font-style:normal;font-weight:900;color:#5a3510;font-size:.8em;}',
+      '.lxps-ear-pad.hit{transform:scale(.93);box-shadow:0 .1em 0 #8a5a1e,0 0 1.4em rgba(255,224,80,.8);}',
+      '.lxps-ear-lane{position:relative;height:3.6em;border-radius:.7em;overflow:hidden;cursor:pointer;touch-action:manipulation;',
+      'background:linear-gradient(90deg,rgba(255,224,80,.10),rgba(20,30,60,.85) 22%,rgba(20,30,60,.85));border:2px solid rgba(74,158,255,.4);}',
+      '.lxps-ear-lane.shake{animation:lxpsEarShake .16s;}',
+      '@keyframes lxpsEarShake{0%,100%{transform:translateX(0)}35%{transform:translateX(-.15em)}70%{transform:translateX(.15em)}}',
+      '.lxps-ear-lane .hitline{position:absolute;left:14%;top:0;bottom:0;width:.24em;margin-left:-.12em;background:#ffe050;box-shadow:0 0 .6em #ffe050;}',
+      '.lxps-ear-lane .cd{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.9em;font-weight:900;color:#ffe050;text-shadow:0 0 .4em rgba(255,224,80,.7);display:none;}',
+      '.lxps-ear-lane .qn{position:absolute;top:50%;width:2.6em;height:2.6em;margin:-1.3em 0 0 -1.3em;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;',
+      'background:#fff;border:.18em solid var(--kc,#ffe050);box-shadow:0 0 .5em var(--kc,#ffe050);line-height:1;}',
+      '.lxps-ear-lane .qn span{font-size:1.1em;}.lxps-ear-lane .qn i{font-style:normal;font-size:.55em;font-weight:900;color:#333;}',
+      '.lxps-ear-lane .qn.hit{transform:scale(1.35);opacity:.2;transition:transform .25s,opacity .25s;}',
+      '.lxps-ear-lane .qn.miss{opacity:.35;filter:grayscale(1);}',
+      '.lxps-ear-hit{align-self:center;min-width:8em;text-align:center;padding:.35em 1.2em;border-radius:.8em;font-size:1.15em;font-weight:900;cursor:pointer;touch-action:manipulation;',
+      'color:#2a1a00;background:linear-gradient(180deg,#fff2a8,#ffd24a);border:3px solid #ffb300;box-shadow:0 .22em 0 #b77d00;transition:transform .05s;}',
+      '.lxps-ear-hit.on{transform:translateY(.15em);box-shadow:0 .06em 0 #b77d00,0 0 1em rgba(255,210,74,.8);}',
+      '.lxps-ear-qsc{text-align:center;color:#cfe3ff;font-size:.8em;font-weight:700;}.lxps-ear-qsc b{color:#ffe050;font-size:1.15em;}.lxps-ear-qsc .ex{color:#ff9a9a;}',
+      '.lxps-ear.is-ok{animation:lxpsEarOk .5s;}',
+      '@keyframes lxpsEarOk{0%{filter:brightness(1)}40%{filter:brightness(1.35)}100%{filter:brightness(1)}}'
     ].join('');
     document.head.appendChild(st);
   }catch(e){}
@@ -15446,6 +16165,9 @@ function advShowQuiz() {
     btn.onclick = () => advSubmitAnswer(letters[i], btn.dataset.isCorrect === '1');
     optDiv.appendChild(btn);
   });
+  // ★ v5.245.0 — 互動音樂題(聽音演奏/看簡譜彈/模仿拍子/音樂QTE):故事冒險模式才掛載,選項按鈕隱藏保留給作答完成後送出用
+  let _lxpsEarOn = false;
+  try{ _lxpsEarOn = !!(typeof window._lxpsEarMount === 'function' && window._lxpsEarMount(q, 'boss')); }catch(_eEar){ _lxpsEarOn = false; }
 
   // 法寶列
   advUpdateBattleTreasureBar();
@@ -15550,8 +16272,9 @@ function advShowQuiz() {
 
   // 開始計時
   // ★ v3.3.7+ — 老師需求:答題思考時間從 60 → 30 秒(讓卡死救援更快觸發)
-  _advQuizSeconds = 30;
-  document.getElementById('adv-quiz-timer').textContent = '30';
+  _advQuizSeconds = _lxpsEarOn ? window._lxpsEarSecFor(q) : 30;   // ★ v5.245.0 互動音樂題依題型給 40~66 秒
+  document.getElementById('adv-quiz-timer').textContent = String(_advQuizSeconds);
+  if(_lxpsEarOn){ try{ window._lxpsEarRearmWatchdogs(_advQuizSeconds); }catch(_eEarWd){} }
   document.getElementById('adv-quiz-timer').classList.remove('urgent');
   if (_advQuizTimer) clearInterval(_advQuizTimer);
   _advQuizTimer = setInterval(() => {
@@ -62244,6 +62967,8 @@ function _advMiniQuizAsk(onDone) {
     btn.onclick = () => _advMiniQuizSubmit(letters[i], btn.dataset.isCorrect === '1');
     optDiv.appendChild(btn);
   });
+  // ★ v5.245.0 — 互動音樂題(小怪/寵物題同樣適用;小怪題本來就不計時)
+  try{ if(typeof window._lxpsEarMount === 'function') window._lxpsEarMount(q, 'mini'); }catch(_eEarM){}
 
   qOv.classList.add('show');
   // ★ v3.4.19 — 修 BUG:13:45:53/13:46:30 玩家連續回報「題目沒正常出現」,
