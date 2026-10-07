@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.383.0';   /* ★ v1.383.0(2026-10-06)— 本檔只有檔尾 D.LOG(好友互動正式開放稽核;修法在 index) */   void 'v1.382.0';   /* ★ v1.382.0(2026-10-05)—本檔實質異動:D.LOG_MAX 150→300、新增 D.LOG_DAY_KEEP/D.LOG_SKIP、D.ENDING.pri 新增日誌排序用低分項;檔尾 D.LOG */   void 'v1.381.0';   /* ★ v1.381.0(2026-10-05)—本檔實質異動:BUILDINGS.ship.baseK=2(營地帆船基本尺寸 ×2);D.ENDING 新增 feel(島嶼回顧感性話語)/feelSec/recapMax;檔尾 D.LOG */   void 'v1.380.0';   /* ★ v1.380.0(2026-10-04)— 本檔實質異動:D.ENDING 新增 pri(回憶精選打分表)/keyBld/memMin/memMax,maxSlides 28→30;檔尾 D.LOG */   void 'v1.379.0';   /* ★ v1.379.0(2026-10-04)— 本檔實質異動:新增 D.MON_TYPHOON(颱風天野外不出現的 6 種魔物);檔尾 D.LOG */   void 'v1.378.0';   /* ★ v1.378.0(2026-10-04)— 本檔實質異動:D.QUIZ gather/chop/quarry/fish/trash 各 +50 題(檔尾 IIFE 接在原題庫後面);檔尾 D.LOG */   void 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
+  D.VER = 'v1.386.0';   /* ★ v1.386.0(2026-10-07)— 本檔實質異動:D.BOSS_RULE.reward 新增 hpRef:80(頭目貝幣/經驗按 HP 比例放大的基準);D.ACCS 新增 4 件外島島主飾品(sea:1)+圖鍵;新增 D.ACC_UP(飾品強化)、D.BOSS_RULE.grow(頭目重生成長);蛇鱗手鏡 ailResP 75→50;D.SHOP.bossWake 100→200 貝幣;檔尾 D.LOG */   void 'v1.385.0';   /* ★ v1.385.0(2026-10-07)— 本檔實質異動:新增 D.FRIEND_BT(好友隊友戰鬥技能:可帶的特殊指令白名單/計量/觸發門檻);檔尾 D.LOG */   void 'v1.384.0';   /* ★ v1.384.0 本檔未改(外島夥伴新機制在 index/sea_db) */   void 'v1.383.0';   /* ★ v1.383.0(2026-10-06)— 本檔只有檔尾 D.LOG(好友互動正式開放稽核;修法在 index) */   void 'v1.382.0';   /* ★ v1.382.0(2026-10-05)—本檔實質異動:D.LOG_MAX 150→300、新增 D.LOG_DAY_KEEP/D.LOG_SKIP、D.ENDING.pri 新增日誌排序用低分項;檔尾 D.LOG */   void 'v1.381.0';   /* ★ v1.381.0(2026-10-05)—本檔實質異動:BUILDINGS.ship.baseK=2(營地帆船基本尺寸 ×2);D.ENDING 新增 feel(島嶼回顧感性話語)/feelSec/recapMax;檔尾 D.LOG */   void 'v1.380.0';   /* ★ v1.380.0(2026-10-04)— 本檔實質異動:D.ENDING 新增 pri(回憶精選打分表)/keyBld/memMin/memMax,maxSlides 28→30;檔尾 D.LOG */   void 'v1.379.0';   /* ★ v1.379.0(2026-10-04)— 本檔實質異動:新增 D.MON_TYPHOON(颱風天野外不出現的 6 種魔物);檔尾 D.LOG */   void 'v1.378.0';   /* ★ v1.378.0(2026-10-04)— 本檔實質異動:D.QUIZ gather/chop/quarry/fish/trash 各 +50 題(檔尾 IIFE 接在原題庫後面);檔尾 D.LOG */   void 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
   void 'v1.361.0';   /* ★ v1.361.0(2026-09-30)— 本檔僅版號與 D.LOG(跑跳真圖總開關在 index) */
   void 'v1.360.0';   /* ★ v1.360.0(2026-09-29)— 本檔僅版號與 D.LOG(營地造景重設位置鈕在 index);與 v1.359.0 co-op 心跳異動同一包交付 */
   void 'v1.359.0';   /* ★ v1.359.0(2026-09-29・老師「乙」)— 本檔實質異動:拜訪好友島 co-op 心跳 COOP_HEARTBEAT_SEC 6→15(每人每分鐘 10→4 次寫入,25 人整節課互訪從約 1 萬次降到約 4 千次)、COOP_STALE_SEC 18→45(維持 3 次心跳沒到才判離線變 NPC),COOP_GONE_SEC 600 不動;檔尾 D.LOG。 */
@@ -625,7 +625,7 @@ window.ISL_DB = (function(){
     core_spark:   { n:'雷精核心', e:'🔵', img:'res_core_spark',   cat:'misc' },
     core_beetle:  { n:'鐵甲蟲殼', e:'⚫', img:'res_core_beetle',  cat:'misc' },
     herb_essence: { n:'草藥精華', e:'🧪', img:'res_herb_essence', cat:'misc' },
-    boss_wake:    { n:'頭目喚醒鈴', e:'🔔', img:'res_boss_wake', cat:'misc' }   /* ★ v1.375.0 阿獺雜貨鋪每日限購 1 個(100 貝幣);在沉睡中的頭目巢穴使用,立刻喚醒、可再次挑戰。缺圖退 emoji */
+    boss_wake:    { n:'頭目喚醒鈴', e:'🔔', img:'res_boss_wake', cat:'misc' }   /* ★ v1.375.0 阿獺雜貨鋪每日限購 1 個(v1.386.0 起 200 貝幣,價格讀 D.SHOP.bossWake.shell);在沉睡中的頭目巢穴使用,立刻喚醒、可再次挑戰。缺圖退 emoji */
   };
   D.ITEM_ORDER = ['wood','stone','fiber','leaf','reed','trash','water','berry','mushroom','fish','egg','milk','grain','seed','shell','pebble','feather','d_fish','d_jam','d_soup','d_stew','d_egg','d_bread','d_pudding','ore','crystal','herb','honey','relic','core_ember','core_spark','core_beetle','herb_essence','boss_wake'];
   D.STACK = 20;                 /* 物品包每格堆疊上限 */
@@ -1845,6 +1845,13 @@ window.ISL_DB = (function(){
   D.FRIEND_MAX = 5;
   D.FRIEND_HELPERS = 3;       /* 夜襲時最多 3 位好友小人在營火旁 */
   D.FRIEND_HIT_SEC = function(defLv){ return Math.max(3, 7 - 0.4 * (defLv || 1)); };   /* 好友每隔幾秒趕走一隻(防衛技能越高越快) */
+  /* ★ v1.385.0 老師「好友在戰鬥中也要會施展天賦技能」(甲案:帶好友本人的技能)—
+     好友發名片時,把「目前武器解鎖的 ✨ 絕招」與「裝設的 🎯 戰鬥類特殊指令」一起存進名片 bt 快照(bt.sk / bt.cmds);
+     借用/協助好友上場後跟寵物一樣累積技能計量,滿了自動挑一招放,每招每場限 1 次(比照主角絕招每場 1 次)。
+     CMDS:好友能帶進戰鬥的特殊指令白名單 — 煙霧彈 CMD_SMOKE 是「整隊立刻逃跑」,不能讓好友替玩家決定,刻意排除。
+     GAUGE:每個角色行動累積多少計量(與寵物同 25);LOW_HP:隊伍有人體力低於這個比例才算「需要治療」。
+     ACT_MUL:好友絕招傷害倍率(快照數值已經是本尊 80%,這裡維持 1 不再打折;要調強弱改這個數字即可)。 */
+  D.FRIEND_BT = { CMDS: ['CMD_FIRSTAID', 'CMD_CALL', 'CMD_TRAP', 'CMD_RALLY'], GAUGE: 25, LOW_HP: 0.5, ACT_MUL: 1, RALLY_P: 25, RALLY_T: 3, FIRSTAID_P: 50, CALL_P: 100 };
 
   D.QUIZ = D.QUIZ || {};   /* ★ v1.1.0 提前宣告(P2 題庫先於 P1 題庫定義) */
   D.QUIZ.fish = [
@@ -2444,7 +2451,7 @@ window.ISL_DB = (function(){
     ],
     bagUp: { step:2, max:5, price:[15, 25, 40, 60, 85] },   /* 第 n 次擴格價(貝幣) */
     dailyOff: 0.3,                                          /* 每日特價 −30%(只算貝幣那一項) */
-    bossWake: { shell:100, limit:1 },                       /* ★ v1.375.0 頭目喚醒鈴:定價 100 貝幣(固定,不打特價)、每人每天限購 limit 個;打倒過任一頭目後才上架 */
+    bossWake: { shell:200, limit:1 },                       /* ★ v1.386.0 老師「喚醒鈴的價錢改成 200」(原 100;頭目獎勵 ×5 後 100 會變成穩賺);★ v1.375.0 頭目喚醒鈴:定價(固定,不打特價)、每人每天限購 limit 個;打倒過任一頭目後才上架 */
     sell: { wood:1, stone:1, fiber:1, leaf:1, reed:1, berry:1, mushroom:2, fish:2, shell:2, pebble:1, feather:2, seed:1, water:1,
             egg:2, milk:3, grain:2, trash:3, ore:4, crystal:8, relic:10, honey:3, herb:3,
             d_fish:4, d_jam:3, d_soup:5, d_stew:6, d_egg:4, d_bread:4, d_pudding:6 }
@@ -2780,7 +2787,9 @@ window.ISL_DB = (function(){
   D.BOSS_RULE = { lvHp:0.08, lvAtk:0.13, exploreNeed:80, ap:1,   /* ★ v1.375.0 老師「挑戰頭目改成需要 1 AP」(原 2;index 的挑戰/提示文字都讀 R.ap,免改) */ respawnDays:7, toughMax:100, hpPerAlly:0.30, brokenMul:1.5, brokenStun:2,
     tough:{ hero:10, crit:6, ally:4, cmd:6, wit:35, perfect:15, stunToTough:20 }, weakWpMul:1.3, weakWpTough:1.5, weakPetMul:1.5,
     stars:[ { n:'★1', lvAdd:0, coreMul:1 }, { n:'★2', lvAdd:8, coreMul:2 }, { n:'★3', lvAdd:16, coreMul:3 } ], starUnlock:'volcano',
-    reward:{ firstPts:2, firstCore:2, core:1, shellFirst:[30,10], shell:[10,5], xpMul:6 } };
+    reward:{ firstPts:2, firstCore:2, core:1, shellFirst:[30,10], shell:[10,5], xpMul:6, hpRef:80 } };   /* ★ v1.386.0 老師「BOSS 的經驗值和貝幣要按照比例提升」— hpRef=這組獎勵數字當初校準時的頭目 HP(80);
+       v1.299.0 頭目 HP 80→400(×5)後獎勵一直沒跟上。index 的 islBossRewardMul(b)=頭目 hp ÷ hpRef(現在 ×5),乘在 🐚 貝幣、主角冒險經驗、寵物頭目經驗三處;
+       核心素材、首殺天賦點、飾品不變。之後頭目 HP 再調,獎勵自動按同一比例跟著走;要單獨調獎勵就改 hpRef(數字越小獎勵越多)。 */
   D.BOSSES = [
     { zone:'forest', k:'boarking', n:'鐵牙山豬王', e:'🐗', lv:10, hp:400, atk:24, def:4, spd:6, crit:10, tool:'gong', weakWp:['hammer','club'], core:'boss_tusk',
       hint:'🔔 巨大的聲響會讓野生動物嚇得停下動作;錘和棍棒的重擊最能打亂牠。',
@@ -3153,6 +3162,38 @@ window.ISL_DB = (function(){
   (function(){ var i; for(i = 0; i < D.ACCS.length; i++){ D.IMG[D.ACCS[i].id] = 'island_' + D.ACCS[i].id.replace('acc_', 'acc_') + '.png'; } })();
   D.acc = function(id){ var i; for(i = 0; i < D.ACCS.length; i++){ if(D.ACCS[i].id === id) return D.ACCS[i]; } return null; };
   D.accByZone = function(z){ var i; for(i = 0; i < D.ACCS.length; i++){ if(D.ACCS[i].zone === z) return D.ACCS[i]; } return null; };
+  /* ★ v1.386.0 老師「所有的頭目第二次以後打倒可以強化該頭目的飾品效果,每次強化+1級可以提升10%效果,最大+5級。但頭目每次重生都會提高3級(能力也會變強)」
+     ACC_UP:飾品強化。已經擁有該頭目的飾品、再次打倒那隻頭目 → 飾品 +1(上限 MAX);每級所有數值效果 ×(1+P%)。
+       FLAG = 開關型(有/沒有,不放大);COUNT = 次數型(放大後無條件捨去,例如自動閃避 2 次 → +5 時 3 次)。
+       抗性、減傷、異常抵抗原本就有上限(RES_CAP 80、cutP 60),放大後照樣被夾住。
+     TXT:飾品面板顯示「強化後實際數值」用的文字(顯示=實作;沒列的鍵只顯示描述原文)。
+     BOSS_RULE.grow(在 D.BOSS_RULE 後面補上):頭目每被打倒一次,下次重生 +lv 級(能力隨等級變強),最多累積 max 次(=飾品強化滿級那一次)。 */
+  D.ACC_UP = { MAX: 5, P: 10, FLAG: ['noMiss'], COUNT: ['autoDodgeN'],
+    CAP: { ailResP: 80, cutP: 60, res: 80 },   /* 強化後的上限,與遊戲原本的上限一致(異常抵抗 RES_CAP 80、熔殼胸針減傷 60、抗性 80),面板數字=實際效果 */
+    TXT: { atkP: ['攻擊 +', '%'], defP: ['防禦 +', '%'], hpP: ['體力上限 +', '%'], toughP: ['打頭目削韌 +', '%'], spdAdd: ['速度 +', ''], escAdd: ['逃跑成功率 +', '%'], moveP: ['走路速度 +', '%'],
+      gutsP: ['致命傷害時保留 1 體力 ', '%'], reflectP: ['傷害反彈 ', '%'], leechP: ['普攻吸血 ', '%'], dodgeMs: ['完美閃避判定 +', ' 毫秒'], critC: ['暴擊率 +', '%'], noMiss: ['不會因隱身或熄燈落空', ''],
+      cutP: ['受到傷害 −', '%'], ailResP: ['抵抗不利狀態 ', '%'], skillP: ['絕招與戰鬥指令效果 +', '%'], apSaveP: ['使用 AP 時不消耗 ', '%'],
+      shieldStartP: ['開戰護盾 最大體力 ', '%'], regenP: ['每回合恢復 最大體力 ', '%'], autoDodgeN: ['每場自動完美閃避 ', ' 次'], inkBlindP: ['普攻讓目標失明 ', '%'] },
+    RES: { thunder: '雷抗性', burn: '燒燙抗性', cold: '寒冷抗性', poison: '毒抗性' } };
+  D.BOSS_RULE.grow = { lv: 3, max: 5 };
+  /* ★ v1.386.0 老師「外島的頭目也要掉落特殊功能飾品」— 4 位島主各一件,首殺必得(走同一支 islAccGrant(zone));
+     舊存檔打倒過島主的,islNormalize 依 ISL.bosses[zone].kills 自動補發(既有邏輯掃 D.ACCS,不必另寫)。
+     每件都是本島飾品沒有的新機制(index 消費點):
+       shieldStartP 開戰時得到最大體力 N% 的護盾(islAccBtStart)・regenP 每回合開始恢復 N% 最大體力(islAccTurnRegen)
+       autoDodgeN 每場戰鬥前 N 次被魔物攻擊自動完美閃避(islBtDodgeQte 開頭)・inkBlindP 普攻命中 N% 讓目標失明 1 回合、命中 −50%(islBtAffixOnHit)
+     sea:1 = 外島飾品:飾品面板在「還沒拿到、而且這位玩家還不能出海」時不顯示(避免學生看到打不到的問號卡)。
+     圖片選配:island_acc_mammoth / island_acc_treering / island_acc_windeye / island_acc_ink(.png,缺圖顯示 emoji)。 */
+  D.ACCS.push(
+    { id:'acc_mammoth',  zone:'ice_peak',     sea:1, n:'猛瑪冰牙', e:'🦣', eff:{ shieldStartP:25, res:{ cold:50 } }, d:'開戰時得到最大體力 25% 的護盾、寒冷抗性 +50%。',
+      sci:'猛瑪象的長牙和厚厚的皮下脂肪,是牠們在冰河時期抵擋寒風與撞擊的「天然護甲」。' },
+    { id:'acc_treering', zone:'jungle_giant', sea:1, n:'古樹年輪', e:'🌳', eff:{ regenP:6, hpP:10 },              d:'每回合開始恢復 6% 最大體力、體力上限 +10%。',
+      sci:'樹幹每年長出一圈新的木頭,受傷的地方會慢慢被新長出來的組織包起來癒合。' },
+    { id:'acc_windeye',  zone:'storm_eye',    sea:1, n:'風眼羅盤', e:'🌀', eff:{ autoDodgeN:2, spdAdd:5 },          d:'每場戰鬥前 2 次被魔物攻擊時自動完美閃避、速度 +5。',
+      sci:'颱風中心的「颱風眼」風很小、天空甚至是晴的,周圍卻是最猛烈的眼牆——找到風眼,就找到了安全的地方。' },
+    { id:'acc_ink',      zone:'deep_vent',    sea:1, n:'深淵墨囊', e:'🦑', eff:{ inkBlindP:30, critC:5 },           d:'普攻命中時 30% 機率讓目標失明 1 回合(命中 −50%)、暴擊率 +5%。',
+      sci:'烏賊遇到危險會噴出墨汁,墨汁在水中散開形成一團黑霧,讓敵人看不清楚、趁機逃走。' }
+  );
+  D.IMG.acc_mammoth = 'island_acc_mammoth.png'; D.IMG.acc_treering = 'island_acc_treering.png'; D.IMG.acc_windeye = 'island_acc_windeye.png'; D.IMG.acc_ink = 'island_acc_ink.png';
   D.IMG.ui_acc = D.IMG.ui_acc || 'island_ui_acc.png';
   D.IMG.ui_socket = D.IMG.ui_socket || 'island_ui_socket.png';
   /* 戰鬥中換武器:本回合只剩半個回合(換完之後的攻擊/絕招傷害 ×mul;同一回合再換一次 = 回合結束) */
@@ -5366,7 +5407,7 @@ window.ISL_DB = (function(){
       acc_shadow:   { eff:{ critC:10, noMiss:1 },                d:'暴擊率 +10%、不會因隱身或熄燈落空。' },
       acc_thunder:  { eff:{ dodgeMs:500, res:{ thunder:50 } },   d:'完美閃避判定 +0.5 秒、雷抗性 +50%。' },
       acc_magma:    { eff:{ cutP:25, res:{ burn:50 } },          d:'每次受到的傷害 −25%、燒燙抗性 +50%。' },
-      acc_gorgon:   { eff:{ ailResP:75 },                        d:'75% 機率抵抗所有不利狀態(暈眩、石化、中毒、燒燙、寒冷、麻痺…)。' },
+      acc_gorgon:   { eff:{ ailResP:50 },                        d:'50% 機率抵抗所有不利狀態(暈眩、石化、中毒、燒燙、寒冷、麻痺…)。' },   /* ★ v1.386.0 老師「蛇髮女王飾品的異常抵抗基礎改成 50%」(原 75:強化 +1 就碰到上限 80,後面幾級沒作用;50 → +5 時 75,強化每級都有感) */
       acc_colossus: { eff:{ skillP:20, apSaveP:30 },             d:'絕招與戰鬥指令效果 +20%、使用 AP 時 30% 機率不消耗。' }
     }, i, a;
     for(i = 0; i < D.ACCS.length; i++){ a = D.ACCS[i]; if(E[a.id]){ a.eff = E[a.id].eff; a.d = E[a.id].d; } }
@@ -5930,5 +5971,18 @@ window.ISL_DB = (function(){
   D.LOG.unshift({ v: 'v1.383.0', d: '2026-10-06', items: [
     '👥 好友功能正式開放:加好友、留言送禮、邀請好友當隊友、夜襲好友小人幫忙、拜訪好友的島。',
     '🚪 修正拜訪好友的島:有人沒按「離開」就直接關掉平板,名額會一直被佔住,最後變成「人滿了」進不去;現在會自動把離線的人清出去。'
+  ] });
+  D.LOG.unshift({ v: 'v1.385.0', d: '2026-10-07', items: [
+    '🧑 好友隊友會放招了!好友上場後會帶著他自己的 ✨ 絕招和 🎯 戰鬥特殊指令(戰場急救、呼喚夥伴、佈設陷阱、鼓舞號令),技能計量滿了就自動施展,每招每場 1 次。',
+    '💡 好友很聰明:有人倒下先救人、有人半血以下先治療,沒人受傷就不浪費治療招。',
+    '🔄 好友要先用新版玩一下(名片會自動更新)才會帶上技能;已經在協助中的好友,用的是邀請當下的技能。'
+  ] });
+  D.LOG.unshift({ v: 'v1.386.0', d: '2026-10-07', items: [
+    '🖼 修正玩到一半場景圖、資源點圖片突然不見:網路一時塞住讀不到的圖,現在會在背景自動重試,讀到就放回去;切回遊戲或網路恢復時會立刻再試一次。',
+    '👑 頭目的經驗值和貝幣按照頭目血量的比例提高(頭目血量是以前的 5 倍,獎勵現在也是 5 倍),寵物從頭目拿到的經驗也一起提高。',
+    '🦣 外島的 4 位島主也會掉落專屬飾品:猛瑪冰牙(開戰護盾)、古樹年輪(每回合回血)、風眼羅盤(自動完美閃避)、深淵墨囊(讓魔物失明)。',
+    '💍 第二次以後再打倒頭目,牠的飾品會強化 +1,每級效果 +10%,最高 +5。',
+    '🪞 蛇鱗手鏡的異常抵抗改成 50%(強化後最高 75%);🔔 頭目喚醒鈴改成 200 貝幣。',
+    '📈 頭目每被打倒一次,重生時會 +3 級、變得更強(最多 +15 級),經驗也跟著變多。'
   ] });
 })();
