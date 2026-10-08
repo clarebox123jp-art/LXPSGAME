@@ -7308,7 +7308,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.389.0';   /* v1.389.0(2026-10-08・老師兩項裁定)— ①「當天行動力用掉一半以上(切換至夜晚)才能睡」:islRest 開頭以 islIsNight() 擋門(與夜間模式同一個門檻 D.NIGHT.apUsedPct),白天按休息只跳說明「再用 N 點就天黑」;體力 0 一律准睡(安全閥,避免卡死)。②「每日登島禮和留言板的一天一次改成看島上日誌的時間」:登島禮改記 ISL.giftDay=島上天數(進島+睡醒換日各檢查一次),留言改 ISL.msgDay=ISL.day(舊的日期字串歸 0)。island_db 零改動(?v= 不跟)。 */   void 'v1.388.0';   /* v1.388.0(2026-10-08・老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 九項:①拜訪好友島已採/已撿改記在自己存檔 ISL.coopDaily(按島主分開),進出拜訪不再全部重生 ②夜襲結算記 ISL.raidDone,重新整理不能重打同一場刷科技點 ③收信改「先刪雲端信、成功才給」+ISL.mailGot 記已收 id,離線收信關 App 不能重複收 ④資源點各組數量當天凍結 daily.want,工程修復/打撈失誤改變受損度不再讓已採點重生 ⑤傳說夥伴考試/訓練師上課開始就記次數,按 ✕ 不能重考 ⑥islActResult 只結算一次 ⑦商店買價保底高於賣回價(空氣瓶特價套利)⑧料理賣價不超過材料價(islSellUnit 單一出口)⑨附禮留言立刻雲端存檔、存檔衝突中不能附禮、換帳號清信箱快取。island_db 零改動(?v= 不跟)。 */   void 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -16018,7 +16018,7 @@ function islNormalize(d){
   if(!d.recaps || !(d.recaps instanceof Array)) d.recaps = [];   /* ★ v1.381.0 舊存檔已造好帆船的:第一次按 🎬 回憶 時當場收藏一份 */
   if(!d.mem || !(d.mem instanceof Array)) d.mem = [];   /* ★ v1.380.0 舊存檔:空的起步,結局時會再從 log + 存檔現況補齊(islMemAll) */
   if(!d.board || !(d.board instanceof Array)) d.board = [];
-  if(typeof d.msgDay !== 'string') d.msgDay = '';   /* ★ v1.334.0 最後一次留言的真實日期(islToday),每天限 1 次 */   /* ★ v1.107.0 */
+  if(typeof d.msgDay !== 'number') d.msgDay = 0;   /* ★ v1.389.0 改存島上天數(ISL.day);舊版存的真實日期字串一律歸 0 = 今天還沒留言 */   /* ★ v1.334.0 最後一次留言的真實日期(islToday),每天限 1 次 */   /* ★ v1.107.0 */
   if(!d.quest || typeof d.quest !== 'object') d.quest = { day: 0, done: {}, total: 0, ms: 0 };
   if(!d.quest.done || typeof d.quest.done !== 'object') d.quest.done = {};
   if(typeof d.quest.total !== 'number') d.quest.total = 0;
@@ -16392,6 +16392,7 @@ function islOnUser(u){
   if(_IS.lastUid === undefined){ _IS.lastUid = uid; return; }   /* 開機第一次 onUser(null) 不是登出 */
   if(uid === _IS.lastUid) return;
   _IS.lastUid = uid;
+  _IS.mail = []; _IS.msg = null;   /* ★ v1.388.0 換帳號:上一個人的信箱快取/寫到一半的留言不能留給下一個人 */
   if(_IS.coop) islCoopTeardown();   /* ★ v1.108.0 換帳號時若還在拜訪別人的島,先退出(那份 session 屬於舊帳號) */
   if(_IS.saveT){ clearTimeout(_IS.saveT); _IS.saveT = null; }
   _IS.conflict = null; _IS.cloudSeen = false;
@@ -16401,16 +16402,18 @@ function islOnUser(u){
   mgLoading(true);
   islLoad(function(){ mgLoading(false); islDailyCheck(); islHud(); if(ISL.char) islGoMap(); else islCreateOpen(); });
 }
-/* 每日(真實日)檢查:每日首次登入貝幣 +5(29.6);離線幾天都只算一次
+/* 每日檢查:每日登島禮貝幣 +5(29.6)
    ★ v1.387.0(2026-10-08・老師「荒島行動力和體力還沒睡覺休息就莫名被重置全滿」)— 根因:這裡原本在「真實日期換日」時
      把 ISL.ap 直接設回 apMax。荒島的一天是靠 🌙 睡覺(islNewDay)推進的,真實日期跟遊戲日完全無關 ⇒ 只要隔天(或過了午夜)
      重新進荒島/換帳號重讀,AP 就會在遊戲日沒變、沒睡覺的情況下憑空補滿,等於每個真實日送一整天 AP,也讓「睡覺才回滿」
      的設計失效。修法:AP 只在 islNewDay(睡覺)回滿,這裡只留每日登島禮貝幣。HP 本來就只在睡覺/治療/野外小憩回復,
      不受這裡影響。 */
+/* ★ v1.389.0(老師「每日登島禮的一天一次改成看島上日誌的時間」)— 改看島上天數 ISL.giftDay(不再看平板真實日期,改平板時鐘就能多領);
+   進島時、以及睡醒換日(islNewDay)時各檢查一次 ⇒ 島上每一天固定 +5 一次。睡覺要先用掉一半 AP,不能靠狂睡刷。舊欄位 lastDate 保留不再使用。 */
 function islDailyCheck(){
-  var t = islToday();
-  if(ISL.lastDate !== t){
-    ISL.lastDate = t;
+  if(!ISL) return;
+  if(ISL.giftDay !== ISL.day){
+    ISL.giftDay = ISL.day;
     if(ISL.char){ ISL.shell += 5; toast('🐚 每日登島禮:貝幣 +5'); }
     islSave('daily');
   }
@@ -20137,8 +20140,21 @@ function islCell(px, py){ return { x: Math.floor(px / 64), y: Math.floor(py / 64
 /* 當日資源重生(25.2):seed = hash(uid+day+zone),候選池洗牌 → 依序取、跳過距離 < minGap 者 → 取滿 n */
 function islDailyFor(zoneId){   /* ★ v1.108.0 拜訪好友的島時,每日資源生成用「島主 uid + 島主天數」當種子,taken/picked 記在執行期快取(不落自己的存檔) */
   if(_IS.coop){
-    var cd = _IS.coopDaily[zoneId];
-    if(!cd || cd.day !== _IS.coop.ownerDay) cd = _IS.coopDaily[zoneId] = { day: _IS.coop.ownerDay, taken: [], picked: [], acts: {}, mines: [] };
+    /* ★ v1.388.0(老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 根因:拜訪好友時「已採/已撿」只記在執行期
+       _IS.coopDaily,每次進出拜訪(islCoopJoin/islCoopTeardown)都清空;資源點又是用「島主 uid+島主天數」固定種子生成
+       ⇒ 離開再拜訪,地上撿取物(不花 AP)與資源點全部原地重生,可無限刷。修法:改記在自己的存檔 ISL.coopDaily,
+       以「島主 uid」分開記,島主天數沒變就沿用;只保留目前好友清單內的島主、最多 30 份,不會讓存檔無限長大。 */
+    var CD = ISL.coopDaily, ou = _IS.coop.ownerUid, od = _IS.coop.ownerDay, rec, fk, fi, keep;
+    if(!CD || typeof CD !== 'object' || CD instanceof Array) CD = ISL.coopDaily = {};
+    rec = CD[ou];
+    if(!rec || rec.day !== od){
+      rec = CD[ou] = { day: od, z: {} };
+      fk = Object.keys(CD);
+      if(fk.length > 30){ keep = {}; for(fi = 0; fi < (ISL.friends || []).length; fi++){ if(ISL.friends[fi] && ISL.friends[fi].uid) keep[ISL.friends[fi].uid] = 1; } keep[ou] = 1; for(fi = 0; fi < fk.length; fi++){ if(!keep[fk[fi]]) delete CD[fk[fi]]; } }
+    }
+    if(!rec.z || typeof rec.z !== 'object') rec.z = {};
+    var cd = rec.z[zoneId];
+    if(!cd) cd = rec.z[zoneId] = { day: od, taken: [], picked: [], acts: {}, mines: [] };
     return cd;
   }
   var zs = ISL.zones[zoneId];
@@ -20161,6 +20177,11 @@ function islSpawnDaily(zoneId){
     if(wxS === 'rain' && (sp.act === 'fish' || k === 'mush' || k === 'glow')) want += 1;
     want += islRouteEff('spawn_' + zoneId);   /* ★ v1.234.0 劇情分支:保育森林 → 森林/草原多長採集點;開發營地 → 森林少長 */
     if(want < 1) want = 1;
+    /* ★ v1.388.0 根因:已採/已撿是用「流水號 idx」記的,而 want 會隨環境受損度(工程修復歸零、打撈分類失誤增加)與劇情分支
+       在同一天中途改變 ⇒ 各組數量一變,後面所有 idx 位移,已採過的資源點/撿取物又變回「沒採過」可以再採。
+       修法:每天第一次生成時把各組數量凍結在 daily.want,當天後續一律沿用,隔天(daily 重建)才重算。 */
+    if(!daily.want || typeof daily.want !== 'object') daily.want = {};
+    if(typeof daily.want[k] === 'number') want = daily.want[k]; else daily.want[k] = want;
     for(i = 0; i < pool.length && n < want; i++){
       if(!farEnough(out, pool[i], sp.minGap || 1)) continue;
       var _snp = islSnapCell(pool[i].x, pool[i].y, 6);   /* ★ v1.288.0 取代舊的「只擋水域」濾網:遮罩重建後任何落在障礙格上的資源點都自動吸附到最近可走格,吸不到(6 格內全是障礙)就跳過這一個候選點,換池子裡的下一個 */
@@ -21593,7 +21614,7 @@ function islTrainerTalk(id){
     if(done){ islModal('<h3>' + tr.e + ' ' + islEsc(tr.n) + '</h3><p>「這週你已經上過課了,先去把學到的用出來!下週再來。」</p><p style="font-size:14px;opacity:.8">💡 ' + islEsc(tr.lesson) + '</p>', [{ t: '好', cb: function(){ islResume(); } }]); islSave('train'); return; }
     if(ISL.stats[tr.stat] >= islCapFor(db.STAT_MAX)){ islModal('<h3>' + tr.e + ' ' + islEsc(tr.n) + '</h3><p>「你的' + islEsc(st.n) + '已經是島上最厲害的了,沒什麼好教了!」</p>', [{ t: '好', cb: function(){ islResume(); } }]); return; }
     if(ISL.ap <= 0){ islModal('<h3>⚡ AP 用完了</h3><p>上課要花 1 AP,明天再來吧。</p>', [{ t: '知道了', cb: function(){ islResume(); } }]); return; }
-    islModal('<h3>' + tr.e + ' ' + islEsc(tr.n) + '的課</h3><p>三個問題答對 ' + db.TRAIN_NEED + ' 題以上 → ' + st.e + islEsc(st.n) + ' +1、' + db.SKILLS[tr.skill].e + islEsc(db.SKILLS[tr.skill].n) + ' EXP +5。<br>每週只能上一次,耗 ⚡1 AP。</p>', [{ t: '下次再說', cls: 'ghost', cb: function(){ islResume(); } }, { t: '⚡1 開始上課', cls: 'gold', cb: function(){ islApPay(1); islHud(); bank = shuffle(db.QUIZ['train_' + tr.stat].slice()); qs = bank.slice(0, 3); ask(); } }]);
+    islModal('<h3>' + tr.e + ' ' + islEsc(tr.n) + '的課</h3><p>三個問題答對 ' + db.TRAIN_NEED + ' 題以上 → ' + st.e + islEsc(st.n) + ' +1、' + db.SKILLS[tr.skill].e + islEsc(db.SKILLS[tr.skill].n) + ' EXP +5。<br>每週只能上一次,耗 ⚡1 AP。</p>', [{ t: '下次再說', cls: 'ghost', cb: function(){ islResume(); } }, { t: '⚡1 開始上課', cls: 'gold', cb: function(){ islApPay(1); ISL.train[id] = wk; islSave('train'); islHud(); bank = shuffle(db.QUIZ['train_' + tr.stat].slice()); qs = bank.slice(0, 3); ask(); } }]);   /* ★ v1.388.0 「每週一次」改在開課就記:舊版只在上完課才記,快不及格時按 ✕ 關掉就能同一週一直重上 */
   });
   function ask(){
     var q = qs[qi], order = shuffle([0,1,2,3]), h = '<h3>' + tr.e + ' 第 ' + (qi + 1) + '/3 題</h3><p style="font-size:18px">' + islEsc(q.q) + '</p>', j;
@@ -22331,6 +22352,8 @@ function islDragTeardown(){
 
 /* ── 結算卡:知識 ✓/✗ + 品質 ★ + 資源 + EXP;寫入物品包/倉庫/建築;扣 AP;存檔 ── */
 function islActResult(){
+  if(!_IS.act || _IS.act.resulted) return;   /* ★ v1.388.0 同一個活動只結算一次:拖曳 500ms 延遲 + 計時器兩邊都可能呼叫 done(),連拖兩下會結算兩次(雙倍產出) */
+  _IS.act.resulted = true;
   var db = islDB(), A = _IS.act, a = db.ACTS[A.id], sk = ISL.skill[a.skill], stars = islClamp(A.stars + (A.crit ? 1 : 0), 1, 3), gain = [], h = '', i, n, put, xp, lvup = false, statUp = false, ratio = A.knowMax ? A.know / A.knowMax : 0, zm, node, note, built = false, slotIdx, bld;
   islActTimerStop(); islDragTeardown();
   if(islSkEff('craftStar') > 0 && (A.id === 'build' || A.id === 'craft')) stars = islClamp(stars + islSkEff('craftStar'), 1, 3);   /* ★ v1.162.0 🔋 蓄力：建造/製作品質 ★ +1 */
@@ -23896,6 +23919,17 @@ window.islCampFire = function(){
 };
 /* 🌙 休息 = 結束今天:天數 +1、AP 重置、資源重生(依 seed)、營火狀態重置;P1 無防衛戰(P2) */
 window.islRest = function(){
+  /* ★ v1.389.0(老師裁定「當天行動力用掉一半以上(切換至夜晚)才能睡」)— 根因:睡覺不花任何代價,狂按休息就能一直換日,
+     每日資源/商店/委託/出海/喚醒鈴/登島禮與「每 5 天 +1 天賦點」全部可以無限刷。門檻直接沿用夜間模式的單一真相 islIsNight()
+     (D.NIGHT.apUsedPct,超過一半才天黑),畫面變夜晚的那一刻就是可以睡的那一刻。
+     ⚠ 安全閥:體力 0(做不了任何活動、可能也沒材料治療)時一律准睡,睡覺本來就會回體力,避免學生卡死在白天。 */
+  if(!islIsNight() && !((ISL.hp | 0) <= 0)){
+    var _nd = islDB(), _np = (_nd && _nd.NIGHT && typeof _nd.NIGHT.apUsedPct === 'number') ? _nd.NIGHT.apUsedPct : 0.5,
+        _mx = ISL.apMax | 0, _used = Math.max(0, _mx - Math.max(0, ISL.ap | 0)), _need = Math.max(1, Math.floor(_mx * _np) + 1 - _used);
+    playSfx('sfx-ng', 0.35);
+    islModal('<h3>☀ 天還亮著,還不能睡</h3><p>今天的行動力(⚡AP)要用掉<b>超過一半</b>、天色變暗以後才能休息睡覺。</p><p style="color:#ffd166;font-weight:800">⚡ 目前 ' + (ISL.ap | 0) + '/' + _mx + ',再用 ' + _need + ' 點就天黑了。</p><p style="font-size:15px;opacity:.85">去採集、伐木、捕魚、建造或製作東西吧!</p>', [{ t: '好', cls: 'gold' }]);
+    return;
+  }
   var db = islDB(), apLeft = ISL.ap | 0,
       apMsg = apLeft > 0
         ? ('<p style="color:#ffd166;font-weight:800">⚡ 你還有 ' + apLeft + ' 點體力(AP)還沒用完,真的要直接睡覺、結束今天嗎?</p>')   /* ★ v1.274.0 老師需求「按休息時先提醒玩家還有多少體力沒有使用,真的要直接睡覺了嗎」— 舊版只在第二行小字帶過「(還有 N AP 沒用)」,容易被忽略;改成獨立醒目的一句提問,AP=0 時不需要這句提問 */
@@ -23940,6 +23974,7 @@ function islNewDay(){
     if(!ISL.battle) ISL.battle = {};
     ISL.battle.dayLog = { total: 0, win: 0, lose: 0 };
     ISL.day += 1; ISL.counters.days = ISL.day;
+    try{ islDailyCheck(); }catch(_dck){}   /* ★ v1.389.0 島上新的一天:每日登島禮 */
     try{ islPetsDayTogether(); }catch(_pd){}   /* ★ v1.167.0 新的一天:編組裡的夥伴親密度 +1(D.PET_BOND_GAIN.dayTogether) */
     var tentB = islCampHasBld('tent'), bucketB = islCampHasBld('bucket'), canalB = islCampHasBld('canal'), comfort = islComfort(), dayNote = islNewDayFarmPen(wxOld);   /* ★ v1.94.0 P2-b */
     if(wxOld === 'typhoon'){ var sl = ISL.camp.slots, di, dmg = 0; for(di = 0; di < sl.length; di++){ if(sl[di]){ sl[di].hp = Math.max(0, sl[di].hp - (sl[di].bld === 'wall' ? 5 : 10)); dmg++; } } if(dmg) dayNote = (dayNote ? dayNote + '　' : '') + '🌀 颱風過後 ' + dmg + ' 棟建築耐久 −10'; }
@@ -24305,6 +24340,7 @@ function islPetQuizStart(k){
   var db = islDB(), p = db.PETS[k], RR = (p && p.legend && db.PET_RECRUIT_LEGEND) ? db.PET_RECRUIT_LEGEND : db.PET_RECRUIT, bank = shuffle((p.quiz || []).slice()).slice(0, RR.quizPick), idx = 0, correct = 0;   /* ★ v1.331.0 🌈 傳說夥伴讀 PET_RECRUIT_LEGEND(10 題全考、答對 9 題) */
   if(p.legend && ISL.legend && ISL.legend.quizDay[k] === ISL.day){ islModal('<h3>' + p.e + ' ' + islEsc(p.n) + '</h3><p>今天已經考過了,牠還在觀察你。明天再來試一次吧!</p><p style="font-size:15px;opacity:.85">🔬 ' + islEsc(p.sci) + '</p>', [{ t: '好', cls: 'gold' }]); return; }
   if(!bank.length){ toast('這隻夥伴還沒有題庫(請回報老師)'); return; }
+  if(p.legend && ISL.legend){ ISL.legend.quizDay[k] = ISL.day; islSave('legend'); }   /* ★ v1.388.0 傳說夥伴「一天考一次」改在開考就記:舊版只在考不過時才記,答錯快要不及格就按 ✕ 關掉可無限重考 */
   playSfx('sfx-tap', 0.3);
   step();
   function step(){
@@ -25043,6 +25079,10 @@ function islRaidRoll(){
   return { raid: rnd() < chance, chance: chance, waves: 2 + (ISL.day >= 6 ? 1 : 0), kinds: kinds };
 }
 function islNightCheck(){
+  /* ★ v1.388.0 根因:夜襲結果(科技點 +5、勝場、防衛經驗、巧思)在 islDefEnd 就存檔,但「換日」要等玩家按「天亮了」;
+     夜襲又是用「uid+天數」固定擲骰 ⇒ 打贏後不按天亮了、直接重新整理,回到同一天再睡一次,同一場夜襲必定再來,可無限刷。
+     修法:islDefEnd 記下 ISL.raidDone=今天,這一晚已經打完夜襲就直接換日,不再重打。 */
+  if(ISL.raidDone === ISL.day){ islNewDay(); return; }
   var r = islRaidRoll();
   /* ★ v1.133.0 第一次遇到夜襲 → raid1 章節。⚠ 接在防衛戰**開始之前**播:
      打完再播的話,玩家剛經歷完一場緊張的防衛戰,情緒已經收尾了,劇情插在那裡很突兀。 */
@@ -25218,6 +25258,7 @@ function islDefEnd(win){
   }
   islSkillGain('defense', xp); islStatGain('wit', 1);
   try{ islMono(win ? 'raidWin' : 'raidLose'); }catch(_rw){}   /* ★ v1.133.0 防衛戰畫面沒有角色可掛泡泡 ⇒ 排隊,按「天亮了」回營地才講 */
+  ISL.raidDone = ISL.day;   /* ★ v1.388.0 這一晚的夜襲已結算(見 islNightCheck),重新整理也不會重打 */
   islSave('raid');
   if(D.helpers.length && !ISL.flags.friendWatchTold){ ISL.flags.friendWatchTold = true; setTimeout(function(){ toast('💭 ' + db.STORY.friendWatch); }, 1200); }
   islModal('<h3>' + (win ? '🎉 守住了!' : (D.fell ? '🤕 你倒下了…' : '💥 營地被翻了…')) + '</h3><p>擊退 ' + D.kills + ' 隻魔物' + (D.helpKills ? '(好友幫忙 ' + D.helpKills + ' 隻)' : '') + (win ? '　🔬 科技點 +5' : '') + (D.fell ? '<br>被魔物撞得體力用完,天亮後記得治療。' : '') + '</p>' + (lost.length ? '<p style="color:#ff7b7b">損失:' + islEsc(lost.join('、')) + '</p>' : '') + '<p style="font-size:15px;opacity:.85">影魔怕光、鐵甲蟲被磁鐵吸、夜蝠怕巨響——用對方法比用力重要。' + (win ? '' : ' 記得每天點營火、蓋圍牆和火把!') + '</p>', [{ t: '天亮了', cls: 'gold', cb: function(){ _islDef = null; islShowScreen('camp'); bgmPlay('bgm-pet-house'); islNewDay(); } }]);
@@ -26621,9 +26662,11 @@ function islCoopNoteSend(txt){
 function islMailRef(uid){ return MG.fb.db.collection('minigameIsland').doc(uid).collection('mail'); }
 function islMailRefresh(cb){
   if(!MG.user || !MG.fb){ _IS.mail = []; if(cb) cb(); return; }
-  islMailRef(MG.user.uid).get().then(function(qs){
+  var _mu = MG.user.uid;
+  islMailRef(_mu).get().then(function(qs){
     var arr = [], i;
-    qs.forEach(function(doc){ var d = doc.data(); d._id = doc.id; arr.push(d); });
+    if(!MG.user || MG.user.uid !== _mu){ if(cb) cb(); return; }   /* ★ v1.388.0 期間換了帳號:這份是上一個人的信,丟掉 */
+    qs.forEach(function(doc){ var d = doc.data(); d._id = doc.id; if(islMailGotHas(doc.id)){ try{ islMailRef(_mu).doc(doc.id)['delete']()['catch'](function(){}); }catch(_d1){} return; } arr.push(d); });   /* ★ v1.388.0 已收過的信不再列出,順手補刪 */
     arr.sort(function(a, b){ return (a.at || 0) - (b.at || 0); });
     _IS.mail = arr; _IS.mailAt = islNow();
     if(cb) cb();
@@ -26764,7 +26807,7 @@ window._islBoardWriteV107 = function(){
  *   有附禮 → type:'gift', items:{ '<鍵>': 數量 }(規則要求恰 1 種 ✓), text:'P:…'(gift 型規則不檢查 text,欄位在白名單內 ✓)
  *   禮物鍵:'i~<物品id>~<品質>'(材料/料理)、'pg~<夥伴裝備id>~<品質>';舊版無 ~ 的鍵視為 ★1 材料(相容 v1.106.0 舊信)。
  * 收件端 islMsgPhraseText 只照 D.BOARD_PHRASES 顯示,硬塞的文字顯示不出來;禮物照白名單+上限再驗一次才入帳(防竄改)。
- * 每日一次:ISL.msgDay = islToday()(真實日期,不是島上天數;島上天數可以靠睡覺一直跳)。
+ * 每日一次:ISL.msgDay = ISL.day(★ v1.389.0 老師改成看島上天數;舊版用真實日期,改平板時鐘就能多留言)。
  *   寄出前先扣禮物、記今天;雲端寫入失敗就把禮物退回、把今天的次數還給玩家。
  * ⚠ 所有按鈕用 data-act(islPanel),絕不用 data-i(v1.333.0 餵食 BUG 同款地雷)。
  */
@@ -26777,7 +26820,7 @@ function islMsgPhraseText(t){
   for(i = 0; i < a.length && out.length < 3; i++){ if(P[parseInt(a[i], 10)]) out.push(P[parseInt(a[i], 10)]); }
   return out.join('　');
 }
-function islMsgUsedToday(){ return !!(ISL && ISL.msgDay === islToday()); }
+function islMsgUsedToday(){ return !!(ISL && ISL.msgDay === ISL.day); }   /* ★ v1.389.0(老師「留言板的一天一次改成看島上日誌的時間」)— 改看島上天數,不看平板時鐘(改平板日期就能多留言);睡覺要先用掉一半 AP,不能靠狂睡刷 */
 function islMsgDishIds(){ var R = islDB().RECIPES || [], out = [], i; for(i = 0; i < R.length; i++) out.push(R[i].id); return out; }
 function islMsgGiftKind(id){
   var db = islDB();
@@ -26925,13 +26968,14 @@ function islMsgSend(){
   txt = islMsgPhraseText(code); to = M.to;
   if(to.kind === 'self'){
     _IS.msg = null; islModalClose();
-    ISL.msgDay = islToday();
+    ISL.msgDay = ISL.day;
     if(islBoardAdd(name, txt, true)){ playSfx('sfx-powerup', 0.35); toast('📌 釘上留言板了'); }
     islCampPaint(); islBoardOpen();
     return;
   }
   if(!MG.user || !MG.fb){ toast('登入後才能留言給別人'); return; }
   g = M.gift;
+  if(g && _IS.conflict){ toast('☁ 這台和雲端的存檔不一樣,先按 💾 決定用哪一份,才能附禮物'); return; }   /* ★ v1.388.0 衝突中只存本機:這時送禮再選「用雲端的」會把禮物變回來 */
   if(g){   /* 寄出前先扣(防連點/同時開兩個視窗重複送),失敗再退回 */
     if(g.k === 'pg'){
       bag = (ISL.petGear && ISL.petGear.bag) || [];
@@ -26946,9 +26990,9 @@ function islMsgSend(){
       key = 'i~' + g.id + '~' + g.q; items = {}; items[key] = got;
     }
   }
-  prevDay = ISL.msgDay; ISL.msgDay = islToday();
+  prevDay = ISL.msgDay; ISL.msgDay = ISL.day;
   _IS.msg = null; islModalClose();
-  islHud(); islSave('msg');
+  islHud(); islSave('msg', false, !!items);   /* ★ v1.388.0 附禮時本機+雲端立刻存:避免 45 秒節流期間關 App/換平板,讀回「禮物還沒扣」的舊存檔 ⇒ 禮物送出去了自己也還有 */
   doc = { from: MG.user.uid, fromName: name, type: items ? 'gift' : 'note', text: code, at: islNow() };
   if(items) doc.items = items;
   mgLoading(true);
@@ -26987,10 +27031,43 @@ function islMailPaint(){
   var bs = $('isl-modal').querySelectorAll('button[data-mcl]'), j;   /* 用 data-mcl,不用 data-i(islModal 會把 data-i 當成按鈕列) */
   for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){ ev.stopPropagation(); islMailClaim(parseInt(this.getAttribute('data-mcl'), 10), !!this.getAttribute('data-pin')); }; }
 }
+/* ★ v1.388.0 根因:舊版「先給禮物、再刪信」,而且刪信失敗被 catch 吞掉 ⇒ 離線/網路不穩時收下禮物後關掉 App,
+   本機存檔已有禮物、雲端那封信卻還在,下次開信箱可以再收一次,無限重複;兩次信箱更新(進島+開信箱)回來的順序顛倒也會讓已收的信再冒出來。
+   修法:①先刪雲端的信,刪成功才給禮物(寧可網路不通時先收不到,也不重複給);②收過的信 id 記在 ISL.mailGot,
+   之後不論信箱怎麼更新,看到這個 id 一律不再給、只補刪;③收下後雲端立刻存檔。 */
+function islMailGotHas(id){ return !!(ISL && ISL.mailGot && typeof ISL.mailGot === 'object' && ISL.mailGot[id]); }
+function islMailGotMark(id){
+  var k, a = [], i;
+  if(!ISL.mailGot || typeof ISL.mailGot !== 'object' || ISL.mailGot instanceof Array) ISL.mailGot = {};
+  ISL.mailGot[id] = islNow();
+  for(k in ISL.mailGot){ if(ISL.mailGot.hasOwnProperty(k)) a.push([k, ISL.mailGot[k]]); }
+  if(a.length > 200){ a.sort(function(x, y){ return x[1] - y[1]; }); for(i = 0; i < a.length - 200; i++) delete ISL.mailGot[a[i][0]]; }   /* 只留最近 200 封,存檔不會無限長大 */
+}
 function islMailClaim(i, pin){
+  var m = _IS.mail[i], ref, settled = false, wt;
+  if(!m || !MG.user || !MG.fb) return;
+  if(islMailGotHas(m._id)){   /* 已經收過(上次刪信沒成功)→ 只補刪,不再給 */
+    try{ islMailRef(MG.user.uid).doc(m._id)['delete']()['catch'](function(){}); }catch(_d0){}
+    _IS.mail.splice(i, 1); islMailPaint(); toast('這封信已經收過了'); return;
+  }
+  if(m._claiming) return;
+  m._claiming = true;
+  mgLoading(true);
+  ref = islMailRef(MG.user.uid).doc(m._id);
+  wt = setTimeout(function(){ if(settled) return; mgLoading(false); toast('📶 網路不太穩,這封信先留著,連上網路後會自動收下'); }, 8000);
+  ref['delete']().then(function(){
+    settled = true; clearTimeout(wt); mgLoading(false);
+    if(!ISL || ISL.uid !== islUid() || islMailGotHas(m._id)) return;   /* 期間換了帳號,或另一個請求已經給過 */
+    islMailGive(m, pin);
+  })['catch'](function(){
+    settled = true; clearTimeout(wt); mgLoading(false); m._claiming = false;
+    toast('收信失敗(網路或權限問題),這封信還在,等一下再收一次');
+  });
+}
+function islMailGive(m, pin){
   try{ islMono('mail'); }catch(_mm){}
-  var db = islDB(), m = _IS.mail[i], k, dk, n, kind, gd, txt, got = '', bad = false;
-  if(!m) return;
+  var db = islDB(), k, dk, n, kind, gd, txt, got = '', bad = false, j;
+  islMailGotMark(m._id);
   txt = m.text ? islMsgPhraseText(m.text) : '';
   if(m.type === 'gift'){
     for(k in m.items){ if(!m.items.hasOwnProperty(k)) continue;
@@ -27012,10 +27089,9 @@ function islMailClaim(i, pin){
   }
   else if(pin){ if(txt){ islBoardAdd(m.fromName || '好友', txt, false); playSfx('sfx-powerup', 0.35); toast('📌 釘上留言板了'); } }
   else { playSfx('sfx-tap', 0.3); }
-  islMailRef(MG.user.uid).doc(m._id)['delete']()['catch'](function(){});
-  _IS.mail.splice(i, 1);
-  islSave('mail');
-  islMailPaint();
+  j = (_IS.mail || []).indexOf(m); if(j >= 0) _IS.mail.splice(j, 1);   /* ★ v1.388.0 刪信是非同步的,這時清單可能已重整過,用物件找位置不用舊索引 */
+  islSave('mail', false, true);   /* ★ v1.388.0 收下的東西立刻寫雲端 */
+  try{ var _mo = $('isl-modal'); if(_mo && _mo.querySelector('button[data-mcl]')) islMailPaint(); else islHud(); }catch(_mp){}   /* 信箱已經關掉(等網路時玩家先離開)就不要再彈出來蓋住別的畫面 */
 }
 /* ── 委託板 ── */
 function islQuestNeedOk(need){
@@ -27041,7 +27117,7 @@ function islQuestList(){
     n2 = c.min + Math.floor(rnd() * (c.max - c.min + 1));
     if(isHard) n2 = Math.max(c.min, Math.round(n2 * Q.hardMul));
     id = 'q' + ISL.day + '_' + c.item;
-    return { id: id, item: c.item, n: n2, why: c.why, hard: !!isHard, shell: Math.round(((db.SHOP.sell[c.item] || 1) * n2 * Q.rewardMul) + Q.rewardFlat), give: null, done: !!ISL.quest.done[id] };
+    return { id: id, item: c.item, n: n2, why: c.why, hard: !!isHard, shell: Math.round(((islSellUnit(c.item, 1) || 1) * n2 * Q.rewardMul) + Q.rewardFlat), give: null, done: !!ISL.quest.done[id] };
   }
   for(i = 0; i < Q.perDay - 1; i++){ pick = take(basic.length ? basic : all, false); if(pick) out.push(pick); }
   hard = take(all, true);
@@ -28552,7 +28628,7 @@ window.islCodexMatOpen = function(k){
   var db = islDB(), d = islItemDef(k), src = islItemSources(k), h = '', i, u = d.img ? islImgUrl(d.img) : '', sell = db.SHOP && db.SHOP.sell ? db.SHOP.sell[k] : 0;
   playSfx('sfx-tap', 0.3);
   h += '<h3>' + d.e + ' ' + islEsc(d.n) + '</h3>' + (u ? '<div style="text-align:center"><img class="isl-cx-big" src="' + u + '" alt="" onerror="this.style.display=\'none\'"></div>' : '');
-  h += '<p class="isl-cx-p">🎒 目前持有 <b>' + islHave(k) + '</b>' + (sell ? '　🦦 阿獺收購 ★ 🐚' + sell + '(★★ ×2、★★★ ×3)' : '') + '</p>';
+  h += '<p class="isl-cx-p">🎒 目前持有 <b>' + islHave(k) + '</b>' + (sell ? '　🦦 阿獺收購 ' + (islSellUnit(k, 3) < sell * 3 ? '🐚' + islSellUnit(k, 1) + '~' + islSellUnit(k, 3) + '(料理最多收到材料價)' : '★ 🐚' + sell + '(★★ ×2、★★★ ×3)') : '') + '</p>';
   h += '<div class="isl-cx-gain"><h4>📍 哪裡拿得到</h4>';
   if(!src.length) h += '<div class="isl-src-row"><span class="se">❓</span><span>目前只能從特殊事件取得(遺跡地下層、委託獎勵或劇情),多探索看看!</span></div>';
   for(i = 0; i < src.length; i++) h += '<div class="isl-src-row"><span class="se">' + src[i].e + '</span><span>' + islEsc(src[i].t) + (src[i].lock ? '<br><span style="color:#ff9a9a;font-size:14px">' + islEsc(src[i].lock) + '</span>' : '') + '</span></div>';
@@ -28604,7 +28680,21 @@ function islShopPrice(it){
   for(k in it.price){ if(it.price.hasOwnProperty(k)) p[k] = it.price[k]; }
   if(it.give.kind === 'bagup'){ p.shell = db.SHOP.bagUp.price[Math.min(ISL.shop.bagUp, db.SHOP.bagUp.price.length - 1)]; }
   if(sp === it.id && p.shell) p.shell = Math.max(1, Math.round(p.shell * (1 - db.SHOP.dailyOff)));
+  /* ★ v1.388.0 保底:買價永遠高於「買到的東西馬上賣回去」的錢。根因:外島 sea_db 的「空氣瓶 ×2」(🐚14)是在 island_db 統一訂價
+     (買材料=賣價×3)之後才加進來,沒被重算;遇到每日特價 −30% 變 🐚10,兩瓶賣回 🐚12 ⇒ 買 20 組賣掉每次淨賺 🐚40,可無限重複。 */
+  if(p.shell && it.give && it.give.item && db.SHOP.sell[it.give.item]){ var _rs = islSellUnit(it.give.item, it.give.q || 1) * (it.give.n || 1); if(p.shell <= _rs) p.shell = _rs + 1; }
   return p;
+}
+/* ★ v1.388.0 賣給阿獺的單價(單一出口:賣東西分頁的顯示、實際賣出、委託交付、買價保底都讀這支)。
+   一般材料 = 賣價 × 品質(★ ×1、★★ ×2、★★★ ×3,v1.119.0 老師裁定)。
+   料理(D.RECIPES 的成品)= 上面那個數字,但不超過「材料回收價」— 老師裁定甲「做了再賣不能賺」(island_db MAKE_FEE 註解:
+   賣成品 = min(商店價一半, 材料回收價))。根因:料理照 ★ 倍率賣,★★★ 一次又做出 2 份,烤魚(1 條魚 🐚2+製作費 🐚11)
+   做成 2 份 ★★★ 賣 🐚24,做了再賣穩賺。 */
+function islSellUnit(id, q){
+  var db = islDB(), base = (db.SHOP && db.SHOP.sell && db.SHOP.sell[id]) || 0, v = base * (q || 1), i, R;
+  if(!_IS.dishCap){ _IS.dishCap = {}; R = db.RECIPES || []; for(i = 0; i < R.length; i++){ if(R[i] && R[i].id && R[i].need && db.matValue) _IS.dishCap[R[i].id] = Math.max(1, Math.floor(db.matValue(R[i].need))); } }
+  if(typeof _IS.dishCap[id] === 'number') v = Math.min(v, _IS.dishCap[id]);
+  return v;
 }
 function islShopCanPay(p){ return ISL.shell >= (p.shell || 0) && islHave('relic') >= (p.relic || 0) && islHave('crystal') >= (p.crystal || 0) && islHave('shell') >= (p.shellItem || 0); }
 function islShopPriceText(p){ var a = []; if(p.shell) a.push('🐚 ' + p.shell); if(p.relic) a.push('🏺 遺物 ' + islHave('relic') + '/' + p.relic); if(p.crystal) a.push('💎 水晶 ' + islHave('crystal') + '/' + p.crystal); if(p.shellItem) a.push('🐚 貝殼 ' + islHave('shell') + '/' + p.shellItem); return a.join('　'); }
@@ -28641,10 +28731,10 @@ function islHaveQ(id, q){
 function islSellTakeQ(id, q, n){
   var db = islDB(), base = db.SHOP.sell[id] || 0, sl = ISL.bag.slots, i, it, take, val = 0, sold = 0;
   for(i = sl.length - 1; i >= 0 && n > 0; i--){
-    if(sl[i].id === id && sl[i].q === q){ take = Math.min(sl[i].n, n); sl[i].n -= take; n -= take; sold += take; val += take * base * q; if(sl[i].n <= 0) sl.splice(i, 1); }
+    if(sl[i].id === id && sl[i].q === q){ take = Math.min(sl[i].n, n); sl[i].n -= take; n -= take; sold += take; val += take * islSellUnit(id, q); if(sl[i].n <= 0) sl.splice(i, 1); }
   }
   it = ISL.store.items[id];
-  if(it && n > 0 && (it['s' + q] || 0) > 0){ take = Math.min(it['s' + q], n); it['s' + q] -= take; n -= take; sold += take; val += take * base * q; }
+  if(it && n > 0 && (it['s' + q] || 0) > 0){ take = Math.min(it['s' + q], n); it['s' + q] -= take; n -= take; sold += take; val += take * islSellUnit(id, q); }
   return { n: sold, val: Math.round(val) };
 }
 /* 步進器當下的數量(只存在執行期,不進存檔) */
@@ -28667,15 +28757,15 @@ function islSellRowPaint(id, q){
   var db = islDB(), n = islSellQty(id, q), base = db.SHOP.sell[id] || 0,
       a = $('isl-sq-' + id + '-' + q), b = $('isl-sv-' + id + '-' + q);
   if(a) a.textContent = n;
-  if(b) b.textContent = Math.round(n * base * q);
+  if(b) b.textContent = Math.round(n * islSellUnit(id, q));
 }
 function islSellTake(id, n){
   var db = islDB(), base = db.SHOP.sell[id] || 0, q, i, s = ISL.bag.slots, it, take, val = 0, sold = 0, mul;
   for(q = 1; q <= 3 && n > 0; q++){
     mul = q;   /* ★ v1.119.0 老師:★ 原價、★★ ×2、★★★ ×3 */
-    for(i = s.length - 1; i >= 0 && n > 0; i--){ if(s[i].id === id && s[i].q === q){ take = Math.min(s[i].n, n); s[i].n -= take; n -= take; sold += take; val += take * base * mul; if(s[i].n <= 0) s.splice(i, 1); } }
+    for(i = s.length - 1; i >= 0 && n > 0; i--){ if(s[i].id === id && s[i].q === q){ take = Math.min(s[i].n, n); s[i].n -= take; n -= take; sold += take; val += take * islSellUnit(id, mul); if(s[i].n <= 0) s.splice(i, 1); } }
     it = ISL.store.items[id];
-    if(it && n > 0 && it['s' + q] > 0){ take = Math.min(it['s' + q], n); it['s' + q] -= take; n -= take; sold += take; val += take * base * mul; }
+    if(it && n > 0 && it['s' + q] > 0){ take = Math.min(it['s' + q], n); it['s' + q] -= take; n -= take; sold += take; val += take * islSellUnit(id, mul); }
   }
   return { n: sold, val: Math.round(val) };
 }
@@ -28729,7 +28819,7 @@ window.islShopOpen = function(tab){
         h += '<div class="isl-sellrow">'
            + '<span class="ic">' + islItemIco(k, 42) + '</span>'
            + '<span class="nm">' + islEsc(d.n) + ' <span class="qq">' + (qq === 3 ? '★★★' : (qq === 2 ? '★★' : '★')) + '</span>'
-           + '<br><span class="st">🐚 ' + (price * qq) + ' /個　持有 ' + hv + '</span>'
+           + '<br><span class="st">🐚 ' + islSellUnit(k, qq) + ' /個　持有 ' + hv + '</span>'
            + (sellFxTxt ? '<br><span class="st" style="color:#ffd166">⚔ 戰鬥效果:' + islEsc(sellFxTxt) + '</span>' : '')
            + '</span>'
            + '<span class="qty">'
@@ -28738,7 +28828,7 @@ window.islShopOpen = function(tab){
            + '<button data-act="sq" data-k="' + k + '" data-q="' + qq + '" data-d="1">＋</button>'
            + '<button class="mx" data-act="sq" data-k="' + k + '" data-q="' + qq + '" data-d="max">最大</button>'
            + '</span>'
-           + '<button class="isl-btn gold go" data-act="sellq" data-k="' + k + '" data-q="' + qq + '">賣出 🐚<span id="isl-sv-' + k + '-' + qq + '">' + (qn * price * qq) + '</span></button>'
+           + '<button class="isl-btn gold go" data-act="sellq" data-k="' + k + '" data-q="' + qq + '">賣出 🐚<span id="isl-sv-' + k + '-' + qq + '">' + (qn * islSellUnit(k, qq)) + '</span></button>'
            + '</div>';
       }
     }
