@@ -50,7 +50,8 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.386.0';   /* ★ v1.386.0(2026-10-07)— 本檔實質異動:D.BOSS_RULE.reward 新增 hpRef:80(頭目貝幣/經驗按 HP 比例放大的基準);D.ACCS 新增 4 件外島島主飾品(sea:1)+圖鍵;新增 D.ACC_UP(飾品強化)、D.BOSS_RULE.grow(頭目重生成長);蛇鱗手鏡 ailResP 75→50;D.SHOP.bossWake 100→200 貝幣;檔尾 D.LOG */   void 'v1.385.0';   /* ★ v1.385.0(2026-10-07)— 本檔實質異動:新增 D.FRIEND_BT(好友隊友戰鬥技能:可帶的特殊指令白名單/計量/觸發門檻);檔尾 D.LOG */   void 'v1.384.0';   /* ★ v1.384.0 本檔未改(外島夥伴新機制在 index/sea_db) */   void 'v1.383.0';   /* ★ v1.383.0(2026-10-06)— 本檔只有檔尾 D.LOG(好友互動正式開放稽核;修法在 index) */   void 'v1.382.0';   /* ★ v1.382.0(2026-10-05)—本檔實質異動:D.LOG_MAX 150→300、新增 D.LOG_DAY_KEEP/D.LOG_SKIP、D.ENDING.pri 新增日誌排序用低分項;檔尾 D.LOG */   void 'v1.381.0';   /* ★ v1.381.0(2026-10-05)—本檔實質異動:BUILDINGS.ship.baseK=2(營地帆船基本尺寸 ×2);D.ENDING 新增 feel(島嶼回顧感性話語)/feelSec/recapMax;檔尾 D.LOG */   void 'v1.380.0';   /* ★ v1.380.0(2026-10-04)— 本檔實質異動:D.ENDING 新增 pri(回憶精選打分表)/keyBld/memMin/memMax,maxSlides 28→30;檔尾 D.LOG */   void 'v1.379.0';   /* ★ v1.379.0(2026-10-04)— 本檔實質異動:新增 D.MON_TYPHOON(颱風天野外不出現的 6 種魔物);檔尾 D.LOG */   void 'v1.378.0';   /* ★ v1.378.0(2026-10-04)— 本檔實質異動:D.QUIZ gather/chop/quarry/fish/trash 各 +50 題(檔尾 IIFE 接在原題庫後面);檔尾 D.LOG */   void 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
+  D.VER = 'v1.390.0';   /* ★ v1.390.0(2026-10-08・老師「第六章之後確認沒問題就先開到第八章」)— 本檔實質異動:終章 c8 目標「營地擴建到 Lv4」改成「圖鑑收錄 50 種」(營地最高只有 Lv3,D.CAMP_MAX_LV=3,原目標永遠完成不了,學生會卡在終章、也接不上外島篇);D.LOG 一筆。第六~八章開關在 index(ISL_CH6_OPEN)。 */
+  void 'v1.386.0';   /* ★ v1.386.0(2026-10-07)— 本檔實質異動:D.BOSS_RULE.reward 新增 hpRef:80(頭目貝幣/經驗按 HP 比例放大的基準);D.ACCS 新增 4 件外島島主飾品(sea:1)+圖鍵;新增 D.ACC_UP(飾品強化)、D.BOSS_RULE.grow(頭目重生成長);蛇鱗手鏡 ailResP 75→50;D.SHOP.bossWake 100→200 貝幣;檔尾 D.LOG */   void 'v1.385.0';   /* ★ v1.385.0(2026-10-07)— 本檔實質異動:新增 D.FRIEND_BT(好友隊友戰鬥技能:可帶的特殊指令白名單/計量/觸發門檻);檔尾 D.LOG */   void 'v1.384.0';   /* ★ v1.384.0 本檔未改(外島夥伴新機制在 index/sea_db) */   void 'v1.383.0';   /* ★ v1.383.0(2026-10-06)— 本檔只有檔尾 D.LOG(好友互動正式開放稽核;修法在 index) */   void 'v1.382.0';   /* ★ v1.382.0(2026-10-05)—本檔實質異動:D.LOG_MAX 150→300、新增 D.LOG_DAY_KEEP/D.LOG_SKIP、D.ENDING.pri 新增日誌排序用低分項;檔尾 D.LOG */   void 'v1.381.0';   /* ★ v1.381.0(2026-10-05)—本檔實質異動:BUILDINGS.ship.baseK=2(營地帆船基本尺寸 ×2);D.ENDING 新增 feel(島嶼回顧感性話語)/feelSec/recapMax;檔尾 D.LOG */   void 'v1.380.0';   /* ★ v1.380.0(2026-10-04)— 本檔實質異動:D.ENDING 新增 pri(回憶精選打分表)/keyBld/memMin/memMax,maxSlides 28→30;檔尾 D.LOG */   void 'v1.379.0';   /* ★ v1.379.0(2026-10-04)— 本檔實質異動:新增 D.MON_TYPHOON(颱風天野外不出現的 6 種魔物);檔尾 D.LOG */   void 'v1.378.0';   /* ★ v1.378.0(2026-10-04)— 本檔實質異動:D.QUIZ gather/chop/quarry/fish/trash 各 +50 題(檔尾 IIFE 接在原題庫後面);檔尾 D.LOG */   void 'v1.377.0';   /* ★ v1.377.0(2026-10-04)— 本檔實質異動:D.SCENE.cave.pick.items 加入 silk(蛛絲)×2;PET_CMDS.sandwind cd 3→4(老師「海鷗冷卻改成4」);檔尾 D.LOG */   void 'v1.376.0';   /* ★ v1.376.0(2026-10-04)— 本檔實質異動:PET_CMDS 基礎冷卻調整(doubleclaw 1→2、sweepbill 2→3、shellwall 4→3、glowlight 6→5、cloudpounce 4→3);冷卻縮減三處說明文字改「最多縮短一半」(公式在 index 的 islPetCmdCd);檔尾 D.LOG */   void 'v1.375.0';   /* ★ v1.375.0(2026-10-04)— 本檔實質異動:D.PET_XP 新增 bossPerLv:4(頭目戰寵物經驗隨頭目等級成長);D.BOSS_RULE.ap 2→1;D.ITEMS/ITEM_ORDER 新增 boss_wake;D.SHOP.bossWake;檔尾 D.LOG */   void 'v1.363.0';   /* ★ v1.363.0(2026-09-30)— 隨 index 同步(營地按住物件名稱牌+白色輪廓光暈;本檔只新增 D.LOG 一筆) */   /* ★ v1.362.0(2026-09-30)— 本檔實質異動:主角圖鍵髮型 h<4→h<6、新增 walk_{g}_h{n} 走路整張圖鍵(對應老師 sprites.rar 40 張);檔尾 D.LOG */
   void 'v1.361.0';   /* ★ v1.361.0(2026-09-30)— 本檔僅版號與 D.LOG(跑跳真圖總開關在 index) */
   void 'v1.360.0';   /* ★ v1.360.0(2026-09-29)— 本檔僅版號與 D.LOG(營地造景重設位置鈕在 index);與 v1.359.0 co-op 心跳異動同一包交付 */
   void 'v1.359.0';   /* ★ v1.359.0(2026-09-29・老師「乙」)— 本檔實質異動:拜訪好友島 co-op 心跳 COOP_HEARTBEAT_SEC 6→15(每人每分鐘 10→4 次寫入,25 人整節課互訪從約 1 萬次降到約 4 千次)、COOP_STALE_SEC 18→45(維持 3 次心跳沒到才判離線變 NPC),COOP_GONE_SEC 600 不動;檔尾 D.LOG。 */
@@ -4118,7 +4119,7 @@ window.ISL_DB = (function(){
         { t:'zoneVarSeen', id:'beach', r:'r6a', txt:'看看被潮水改變的沙灘', g:'沙灘也不一樣了。', go:'beach' },
         { t:'zoneVarSeen', id:'cave', r:'r6b', txt:'走進崩塌後的洞窟', g:'洞窟深處露出了新的通道(深層洞窟日後開放)。', go:'cave' },
         { t:'bossAny', n:4, txt:'打倒任意 4 隻地圖頭目', g:'島變強了,頭目也變強了——證明你能守護這座島。' },
-        { t:'camplv', n:4, txt:'營地擴建到 Lv4', g:'營地側欄「🏕 營地 → 🏕 擴建」。' }
+        { t:'codex', n:50, txt:'圖鑑收錄 50 種', g:'島變了,動植物、礦物、料理、魔物都可能有新發現——「👤 角色 → 📖 圖鑑」看還缺哪些。' }   /* ★ v1.390.0 原本是 camplv n:4(營地擴建到 Lv4),但 D.CAMP_MAX_LV=3、沒有 Lv4 ⇒ 永遠完成不了;改成圖鑑 50 種(= D.CODEX_MS 最後一個里程碑) */
       ],
       end: [ { s:'gull', r:'r5a', l:['「嘎!火山灰讓田裡的作物長得又快又大!」'] },
              { s:'gull', r:'r5b', l:['「嘎!火山睡著了,晚上再也沒有紅光,星星好清楚。」'] },
@@ -5984,5 +5985,9 @@ window.ISL_DB = (function(){
     '💍 第二次以後再打倒頭目,牠的飾品會強化 +1,每級效果 +10%,最高 +5。',
     '🪞 蛇鱗手鏡的異常抵抗改成 50%(強化後最高 75%);🔔 頭目喚醒鈴改成 200 貝幣。',
     '📈 頭目每被打倒一次,重生時會 +3 級、變得更強(最多 +15 級),經驗也跟著變多。'
+  ] });
+  D.LOG.unshift({ v: 'v1.390.0', d: '2026-10-08', items: [
+    '🐚 第六章「時間倒轉之貝」到終章「島的新樣貌」正式開放:造好帆船後,火山口的光會帶你走進新的故事,你的兩個選擇會真的改變火山、森林、草原和洞窟的樣子。',
+    '📖 終章的目標「營地擴建到 Lv4」改成「圖鑑收錄 50 種」(營地最高只到 Lv3,原本的目標做不到)。'
   ] });
 })();
