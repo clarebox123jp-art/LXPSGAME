@@ -4563,6 +4563,8 @@ window.islDirectVeilOff = function(){
 /* ★ v1.205.0 .isl-cell .lv 規則已移除——舊版等級標籤獨立一顆(黃字、絕對定位右上角),老師要求併入 .bn 名稱同一行白字後拿掉;本行僅留註解供日後回查,原規則: .isl-cell .lv{position:absolute;top:4px;right:6px;font-size:13px;color:#ffd166;font-weight:900;} */
 .isl-cell .hp{position:absolute;left:8px;right:8px;bottom:2px;height:3px;background:rgba(255,255,255,.25);border-radius:2px;}
 .isl-cell .hp i{display:block;height:100%;background:#7bed9f;border-radius:2px;}
+.isl-cell .hp{display:none;} .isl-cell .hp.lo,.isl-cell.isl-hold .hp{display:block;} .isl-cell .hp.lo i{background:#ff8f6b;}
+.isl-cell.broken > img{filter:grayscale(.85) brightness(.65);} .isl-cell.broken .hp.lo i{background:#ff4d4d;}   /* ★ v1.392.0 嚴重受損(≤20%):圖變灰暗、耐久條紅色 */   /* ★ v1.392.0 耐久條平常隱藏;按住設施或耐久 < 50%(.lo,橘紅)才顯示 */
 /* ★ v1.94.0 P2-b:裝飾層(自由拖曳)、農田/畜欄面板、水道拼圖、烹飪火力 */
 #isl-camp-deco{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:2;}
 .isl-deco{position:absolute;font-size:40px;line-height:1;margin:-20px 0 0 -20px;pointer-events:auto;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;transition:transform .15s;}   /* ★ v1.248.0 老師回報「營地設施類底下的殘留外框陰影」— 稽核發現這個問題其實在 v1.238.0 就已經對 .isl-cell(設施)修過(拿掉 filter:drop-shadow),但當時的 changelog 標題寫的是「營地設施」,沒注意到 .isl-cell 本來就是照著 .isl-deco(裝飾)的視覺刻意做成一致的(見 v1.216.0 註解「原本 3px 虛線框+黑底改透明,視覺上與 .isl-deco 裝飾層一致」)——結果 .isl-cell 修了,當初拿來當範本的 .isl-deco 自己反而漏改,原本的 filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)) 一直留到現在。花盆/石頭/貝殼等裝飾品拖進營地放置後,腳下都會有這輪拿掉的那種黑色陰影塊,跟老師這次看到的成因完全同款。⚠ 若老師這次看到殘留陰影的畫面確實是「設施」(製作台/營火這類有功能的建築)而不是純裝飾,那些的陰影其實在 v1.238.0 就該已經沒有了——比較可能是那台裝置還在跑 v1.238.0 之前的舊快取版本(這個專案已知有好幾輪「按了更新沒真的套用新版」的案例),麻煩老師先看一下荒島畫面右下角⚙設定→🔄版本,確認版號有沒有卡在 v1.237.0 或更早、需不需要手動按「⬇立即更新」。   ★ v1.264.0 稽核:這段註解從 v1.248.0 起就忘了寫結尾,整段一路吃到下一行的註解結尾,把下一行 .isl-deco.drag 的「拖曳中放大 1.25 倍」提示整條註解掉(所以裝飾拖曳從來沒有放大回饋)。本輪補上結尾。 */
@@ -7164,6 +7166,28 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
   #isl-modal .box .isl-fsk small{ font-size:11px; }
   #isl-modal .box p.isl-fskg{ font-size:13px; margin:4px 0; }
 }
+/* ★ v1.391.0 物品包「💰 賣普通材料」鈕 + 確認視窗清單。三平台:PC 預設、iPad(#island-root.ipad)、手機橫式(本段最後)。 */
+.isl-bagbox h3 button.isl-bulk-btn{ background:#8a5a12; border-color:#f3c35b; }
+.isl-bagbox.isl-bag-main h3{ white-space:nowrap; }
+.isl-bagbox.isl-bag-main h3 > button{ flex-shrink:0; }
+#island-root.ipad .isl-bagbox.isl-bag-main h3{ padding-right:72px; gap:10px; flex-wrap:wrap; row-gap:6px; }   /* 讓出右上角 ✕(.isl-x)的位置;iPad 1024 寬裝不下一行時,兩顆按鈕自動換到第二行(標題本身不斷行) */
+#island-root.ipad .isl-bagbox.isl-bag-main h3 button{ font-size:24px; padding:6px 10px; }
+#isl-modal .box .isl-bulk-list{ display:flex; flex-direction:column; gap:4px; margin:6px auto; max-width:420px; text-align:left; }
+#isl-modal .box .isl-bulk-row{ display:flex; align-items:center; gap:8px; padding:3px 10px; border-radius:10px; background:rgba(0,0,0,.22); font-size:18px; }
+#isl-modal .box .isl-bulk-row > :first-child{ width:40px !important; height:40px !important; font-size:30px; line-height:40px; object-fit:contain; flex:0 0 40px; }
+#isl-modal .box .isl-bulk-row .nm{ flex:1; }
+#isl-modal .box .isl-bulk-row b{ color:#ffd76a; white-space:nowrap; }
+#isl-modal .box p.isl-bulk-tot{ font-size:20px; font-weight:700; color:#ffd76a; margin:6px 0 0; }
+#island-root.ipad #isl-modal .box .isl-bulk-list{ max-width:640px; gap:6px; }
+#island-root.ipad #isl-modal .box .isl-bulk-row{ font-size:28px; padding:5px 14px; }
+#island-root.ipad #isl-modal .box .isl-bulk-row > :first-child{ width:60px !important; height:60px !important; font-size:46px; line-height:60px; flex-basis:60px; }
+#island-root.ipad #isl-modal .box p.isl-bulk-tot{ font-size:32px; }
+@media (orientation:landscape) and (max-height:520px){
+  #isl-modal .box .isl-bulk-list{ gap:2px; margin:3px auto; }
+  #isl-modal .box .isl-bulk-row{ font-size:13px; padding:1px 8px; gap:6px; }
+  #isl-modal .box .isl-bulk-row > :first-child{ width:24px !important; height:24px !important; font-size:18px; line-height:24px; flex-basis:24px; }
+  #isl-modal .box p.isl-bulk-tot{ font-size:14px; margin:3px 0 0; }
+}
 </style>
 
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
@@ -7298,8 +7322,8 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.390.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_sea_db.js?v=v1.384.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
+<script src="minigame_island_db.js?v=v1.392.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
+<script src="minigame_sea_db.js?v=v1.392.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
  * 小英雄小遊戲 — 主程式邏輯 v1.0.0
@@ -7308,7 +7332,9 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.390.0';   /* ★ v1.390.0(2026-10-08・老師「第六章之後確認沒問題就先開到第八章」)— ISL_CH6_OPEN false→true,第六~八章(時間倒轉之貝/島的抉擇/島的新樣貌)對學生開放;已停在第五章完成的玩家會自動接上 c6 開場(islMainTick 原本就在等這個旗標,存檔結構不用動)。外島篇 c9 之後仍由 ⚙ GM「外島開關」(gameConfig/islandSea)控制,本輪不動。檢查時找到 c8 卡關點(目標營地 Lv4,但營地最高 Lv3),在 island_db 改成圖鑑 50 種。 */     /* v1.389.0(2026-10-08・老師兩項裁定)— ①「當天行動力用掉一半以上(切換至夜晚)才能睡」:islRest 開頭以 islIsNight() 擋門(與夜間模式同一個門檻 D.NIGHT.apUsedPct),白天按休息只跳說明「再用 N 點就天黑」;體力 0 一律准睡(安全閥,避免卡死)。②「每日登島禮和留言板的一天一次改成看島上日誌的時間」:登島禮改記 ISL.giftDay=島上天數(進島+睡醒換日各檢查一次),留言改 ISL.msgDay=ISL.day(舊的日期字串歸 0)。island_db 零改動(?v= 不跟)。 */   void 'v1.388.0';   /* v1.388.0(2026-10-08・老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 九項:①拜訪好友島已採/已撿改記在自己存檔 ISL.coopDaily(按島主分開),進出拜訪不再全部重生 ②夜襲結算記 ISL.raidDone,重新整理不能重打同一場刷科技點 ③收信改「先刪雲端信、成功才給」+ISL.mailGot 記已收 id,離線收信關 App 不能重複收 ④資源點各組數量當天凍結 daily.want,工程修復/打撈失誤改變受損度不再讓已採點重生 ⑤傳說夥伴考試/訓練師上課開始就記次數,按 ✕ 不能重考 ⑥islActResult 只結算一次 ⑦商店買價保底高於賣回價(空氣瓶特價套利)⑧料理賣價不超過材料價(islSellUnit 單一出口)⑨附禮留言立刻雲端存檔、存檔衝突中不能附禮、換帳號清信箱快取。island_db 零改動(?v= 不跟)。 */   void 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
+var MG_VER = 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
+void 'v1.391.0';   /* ★ v1.391.0(2026-10-09・老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料(容易採集大量取得的)」)— 營地裡打開物品包,標題列多一顆「💰 賣普通材料」:只賣物品包裡 D.SHOP.bulkSell 清單(收購價 1 貝幣的基礎採集物)的 ★ 品質,先列清單+總價確認再賣;★★/★★★、倉庫、料理與稀有材料一律不動。新函式 islBulkSellList/islBulkSellAsk。對應 island_db v1.391.0(新增 D.SHOP.bulkSell + D.LOG 一筆)、sw v1.391.0(SHELL v1.391.0)。 */
+void 'v1.390.0';   /* ★ v1.390.0(2026-10-08・老師「第六章之後確認沒問題就先開到第八章」)— ISL_CH6_OPEN false→true,第六~八章(時間倒轉之貝/島的抉擇/島的新樣貌)對學生開放;已停在第五章完成的玩家會自動接上 c6 開場(islMainTick 原本就在等這個旗標,存檔結構不用動)。外島篇 c9 之後仍由 ⚙ GM「外島開關」(gameConfig/islandSea)控制,本輪不動。檢查時找到 c8 卡關點(目標營地 Lv4,但營地最高 Lv3),在 island_db 改成圖鑑 50 種。 */     /* v1.389.0(2026-10-08・老師兩項裁定)— ①「當天行動力用掉一半以上(切換至夜晚)才能睡」:islRest 開頭以 islIsNight() 擋門(與夜間模式同一個門檻 D.NIGHT.apUsedPct),白天按休息只跳說明「再用 N 點就天黑」;體力 0 一律准睡(安全閥,避免卡死)。②「每日登島禮和留言板的一天一次改成看島上日誌的時間」:登島禮改記 ISL.giftDay=島上天數(進島+睡醒換日各檢查一次),留言改 ISL.msgDay=ISL.day(舊的日期字串歸 0)。island_db 零改動(?v= 不跟)。 */   void 'v1.388.0';   /* v1.388.0(2026-10-08・老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 九項:①拜訪好友島已採/已撿改記在自己存檔 ISL.coopDaily(按島主分開),進出拜訪不再全部重生 ②夜襲結算記 ISL.raidDone,重新整理不能重打同一場刷科技點 ③收信改「先刪雲端信、成功才給」+ISL.mailGot 記已收 id,離線收信關 App 不能重複收 ④資源點各組數量當天凍結 daily.want,工程修復/打撈失誤改變受損度不再讓已採點重生 ⑤傳說夥伴考試/訓練師上課開始就記次數,按 ✕ 不能重考 ⑥islActResult 只結算一次 ⑦商店買價保底高於賣回價(空氣瓶特價套利)⑧料理賣價不超過材料價(islSellUnit 單一出口)⑨附禮留言立刻雲端存檔、存檔衝突中不能附禮、換帳號清信箱快取。island_db 零改動(?v= 不跟)。 */   void 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
    ②防卡死三處:islBfs 點地走路改用 islCellOpen(水域也繞開、禁斜穿也看水/藤蔓;點到站不上去的格子走到旁邊就停)、
      islTick 新增「腳下站不住→吸附最近可走格」保險+點地路徑看門狗(0.6 秒沒更接近就放棄路徑)、islJump 落點限 '.' 且走得到。
@@ -18146,7 +18172,7 @@ function islMainObjCur(o){
     case 'cnt':     return (ISL.counters && ISL.counters[o.k]) || 0;
     case 'days':    return ISL.day || 1;
     case 'flag':    return (ISL.flags && ISL.flags[o.k]) ? 1 : 0;
-    case 'bld':     return islCampHasBld(o.id) ? 1 : 0;
+    case 'bld':     return islCampOwnBld(o.id) ? 1 : 0;   /* ★ v1.392.0 主線「蓋好 X」:受損不讓進度倒退 */
     case 'zone':    return (ISL.zones[o.id] && ISL.zones[o.id].unlocked) ? 1 : 0;
     case 'explore': return (ISL.zones[o.id] && ISL.zones[o.id].explore) || 0;
     case 'tech':    return (ISL.techs && ISL.techs[o.id]) ? 1 : 0;
@@ -18859,9 +18885,11 @@ window.islEnter = function(){
     try{ islGearPaint(); }catch(_gp0){}   /* ★ v1.202.0 老師「按鈕/選單ICON全部先掛好」— ⚙/🆘 這兩顆是常駐 HUD 按鈕,不必等玩家第一次點開設定選單才換圖,進場就先跑一次 */
     if(!ISL.char){ islCreateOpen(); }
     else {
+      try{ islBldDmgMigrate(); }catch(_bdm0){}   /* ★ v1.392.0 */
       var _islResumeCamp = false;   /* ★ v1.197.0 老師「手動更新後應該直接回到營地」— 消費 mgVerReload/MG_FORCE_RELOAD 存的一次性旗標 */
       try{ if(localStorage.getItem('isl_resume_camp') === '1'){ _islResumeCamp = true; localStorage.removeItem('isl_resume_camp'); } }catch(_rc2){}
-      if(_islResumeCamp) islGoCamp(); else islGoMap();
+      if(_islResumeCamp && !(ISL.sea && ISL.sea.onSea)) islGoCamp(); else islGoMap();   /* ★ v1.392.0 存檔停在外島(含過夜後)⇒ 回世界地圖,不要被「回營地」偷偷結束航程 */
+      try{ if(islSeaReserve()) islSeaForceArm(); }catch(_sfa){}   /* ★ v1.392.0 第 2 天重開遊戲也要守住回航 */
     }
     if(!islLocalOnly() && MG.user) islMailRefresh(function(){});   /* ★ v1.106.0 開機先抓一次信箱數量(供側欄徽章);★ v1.175.0 測試期不碰雲端 */
     if(!islLocalOnly() && MG.user) islCoopNoticesCheck();   /* ★ v1.108.0 開機順便看看有沒有人拜訪過/走了/離線的留言;★ v1.175.0 測試期不碰雲端 */
@@ -19420,6 +19448,8 @@ function islSeaState(){
   if(typeof S.sailDay !== 'number') S.sailDay = 0;
   if(typeof S.onSea !== 'boolean') S.onSea = false;
   if(typeof S.isle !== 'string') S.isle = '';
+  if(typeof S.backDay !== 'number') S.backDay = 0;   /* ★ v1.392.0 回本島的那一天(當天不能再出海) */
+  if(typeof S.campDay !== 'number') S.campDay = 0;   /* ★ v1.392.0 最近一次在外島紮營的日子 */
   if(!S.vine || typeof S.vine !== 'object') S.vine = {};
   if(!S.guard || typeof S.guard !== 'object') S.guard = {};
   if(!S.obs || typeof S.obs !== 'object') S.obs = {};
@@ -19512,8 +19542,8 @@ function islSeaEnterGuard(zoneId){
   S = islSeaState(); z = islSeaZoneDef(zoneId);
   if(z){ if(islSeaCanEnter(zoneId)) return false; islSeaTryEnter(zoneId); return true; }
   if(S.onSea){
-    islModal('<h3>⛵ 你現在在 ' + islEsc((islSeaIsleDef(S.isle) || {}).n || '外島') + '</h3><p>要先搭帆船回本島,才能去' + islEsc((islDB().zone(zoneId) || {}).n || '那裡') + '。</p><p style="opacity:.8">⚠ 回到本島後,今天就不能再出海了。</p>',
-      [{ t: '先不要', cls: 'ghost', cb: function(){ islZoneResume(); } }, { t: '⛵ 回本島', cls: 'gold', cb: function(){ islSeaEndTrip(true); islEnterZone(zoneId); } }]);
+    islModal('<h3>⛵ 你現在在 ' + islEsc((islSeaIsleDef(S.isle) || {}).n || '外島') + '</h3><p>要先搭帆船回本島(⚡' + islSeaCampCfg().backAp + '),才能去' + islEsc((islDB().zone(zoneId) || {}).n || '那裡') + '。</p><p style="opacity:.8">⚠ 回到本島後,今天就不能再出海了。</p>',
+      [{ t: '先不要', cls: 'ghost', cb: function(){ islZoneResume(); } }, { t: '⛵ 回本島 ⚡' + islSeaCampCfg().backAp, cls: 'gold', cb: function(){ islSeaReturnGo(function(){ islEnterZone(zoneId); }, false); } }]);   /* ★ v1.392.0 回航 ⚡3 走單一出口 */
     return true;
   }
   return false;
@@ -19526,15 +19556,22 @@ function islSeaTryEnter(zoneId){
   if(st === 'lock'){ playSfx('sfx-cancel', 0.3); islModal('<h3>🔒 ' + z.e + ' ' + islEsc(z.n) + '</h3><p>解鎖條件:<b>' + islEsc(z.unlockText) + '</b></p>'); return; }
   if(S.onSea && S.isle === z.isle){ islEnterZone(zoneId); return; }
   if(S.onSea){ playSfx('sfx-cancel', 0.3); islModal('<h3>⛵ 今天在 ' + islEsc((islSeaIsleDef(S.isle) || {}).n) + '</h3><p>每天只能出海一次。想去' + isle.e + islEsc(isle.n) + ',要先回本島營地休息,明天再出發。</p>'); return; }
+  if(!_islSea.gmAll){   /* ★ v1.392.0 出航條件:回本島當天不能再出海、帆船嚴重受損/倒塌開不了、AP 至少 ⚡3 */
+    var _sc = islSeaCampCfg();
+    if(S.backDay === ISL.day){ playSfx('sfx-cancel', 0.3); islModal('<h3>⛵ 今天剛回到本島</h3><p>帆船要整理、補給也要準備——今天先在本島休息,明天再出海吧!</p>'); return; }
+    if(ISL.flags && ISL.flags.shipBuilt && !islCampHasBld('ship')){ playSfx('sfx-cancel', 0.3); islModal('<h3>⛵ 帆船開不了</h3><p>' + (islCampOwnBld('ship') ? '帆船嚴重受損,先回營地 🔧 修理,修好才能出海。' : '帆船倒塌不見了,要回營地重新建造才能出海。') + '</p>'); return; }
+    if(ISL.ap < _sc.sailAp){ playSfx('sfx-cancel', 0.3); islModal('<h3>⚡ AP 不夠出航</h3><p>出海要花 ⚡' + _sc.sailAp + ',你只剩 ⚡' + ISL.ap + '。回營地「🌙 休息」,明天再出發吧!</p>'); return; }
+  }
   if(S.sailDay === ISL.day && !_islSea.gmAll){ playSfx('sfx-cancel', 0.3); islModal('<h3>⛵ 今天已經出海過了</h3><p>帆船要整理一下、補給也要準備——每天只能出海一次。回營地「🌙 休息」,明天再出發吧!</p>'); return; }
   islModal('<h3>⛵ 出海前往 ' + isle.e + ' ' + islEsc(isle.n) + '?</h3>' +
     '<p>目的地:' + z.e + ' <b>' + islEsc(z.n) + '</b>(魔物 ⚔Lv' + z.lv[0] + '~' + z.lv[1] + ')</p>' +
-    '<p style="font-size:15px;opacity:.85">・每天只能出海 <b>1 次</b>(不花 AP)。<br>・出海後,今天可以在 ' + islEsc(isle.n) + ' 的各區之間自由來回。<br>・回到本島營地(⛵ 停泊點或 🏕),今天的航程就結束。' + (isle.meter ? '<br>・' + isle.meter.e + ' 注意' + islEsc(isle.meter.n) + '!' : '') + (isle.gust ? '<br>・🌬 小心陣風和 ⚡ 落雷!' : '') + '</p>',
+    '<p style="font-size:15px;opacity:.85">・出航 <b>⚡' + islSeaCampCfg().sailAp + '</b>、回航 <b>⚡' + islSeaCampCfg().backAp + '</b>;每天只能出海 1 次。<br>・出海後,可以在 ' + islEsc(isle.n) + ' 的各區之間自由來回。<br>・天黑後可以 ⛺ 紮營過夜(會傷身體),第二天一定要留 ⚡' + islSeaCampCfg().reserve + ' 回本島。<br>・回本島:⛵ 停泊點或 🏕。' + (isle.meter ? '<br>・' + isle.meter.e + ' 注意' + islEsc(isle.meter.n) + '!' : '') + (isle.gust ? '<br>・🌬 小心陣風和 ⚡ 落雷!' : '') + '</p>',
     [{ t: '先不要', cls: 'ghost' }, { t: '⛵ 出航!', cls: 'gold', cb: function(){ islSeaSail(zoneId); } }]);
 }
 function islSeaSail(zoneId){
   var z = islSeaZoneDef(zoneId), S = islSeaState(), db = islSeaDB(), ov, u, lines;
   if(!z) return;
+  if(!_islSea.gmAll){ if(ISL.ap < islSeaCampCfg().sailAp){ toast('⚡ AP 不夠出航'); return; } islApPay(islSeaCampCfg().sailAp); }   /* ★ v1.392.0 出航 ⚡3 */
   S.onSea = true; S.isle = z.isle; S.sailDay = ISL.day;
   S.trips = (typeof S.trips === 'number' ? S.trips : 0) + 1;   /* ★ v1.378.0 出海次數(外島篇主線目標「第一次出海」) */
   _islSea.m = null;
@@ -19552,9 +19589,121 @@ function islSeaEndTrip(quiet){
   var S = islSeaState();
   if(!S || !S.onSea) return;
   S.onSea = false; _islSea.m = null; _islSea.page = 0;
+  try{ islSeaForceStop(); }catch(_fs){}   /* ★ v1.392.0 */
   islSeaZoneLeave();
   try{ islSave('sea'); }catch(_s){}
   if(!quiet) try{ toast('⛵ 回到本島了,今天的航程結束(明天可以再出海)'); }catch(_t){}
+}
+/* ══ ★ v1.392.0(2026-10-09・老師「外島探索出海及回島各消耗 3AP,不足無法出航。在外島可以紮營過夜,但根據不同島會發生不同的
+   健康損害,系統要保證玩家必須保留至少 3AP 在遊戲時間的第二天強制回本島。」;裁定全部選甲)══
+   ・出航 ⚡3(islSeaSail)、回航 ⚡3(islSeaReturnGo);回本島當天(S.backDay)不能再出海,原本「每天一次」維持。
+   ・回航的三個入口(HUD 🏕、⛵ 停泊點/世界地圖的帆船、在外島點本島區域)全部走 islSeaBoatAsk / islSeaReturnGo 一條路。
+   ・第 1 天(ISL.day === S.sailDay)天黑後可以 ⛺ 紮營過夜(islSeaCampNight):不擲夜襲、直接 islNewDay(本島照常換日);
+     醒來 AP = max(保留量, 上限 × 一半),套用該島露宿損害(islSeaNightHarm)。
+   ・第 2 天:任何會讓 AP 掉到保留量以下的事先擋(islSeaApBlock,掛在活動/藤蔓/特殊指令/頭目四個入口);
+     AP ≤ 保留量時跳出唯一一顆「⛵ 回航」的視窗(islSeaForceTry 輪詢,等畫面上沒有活動/戰鬥/對白/視窗才跳,被 ✕ 掉會再跳)。
+     保險:就算有沒擋到的扣 AP 路徑讓 AP 低於 3,強制回航照樣成立(扣到 0 為止),一定回得了本島。
+   ・在外島體力歸零 = 小白和帆船免費把你救回本島(不扣 AP)。 */
+function islSeaCampCfg(){ var db = islSeaDB(), C = db && db.SEA && db.SEA.CAMP; return C || { sailAp: 3, backAp: 3, reserve: 3, apRefill: 0.5, hpP: 20, gearMul: 0.5, ail: {}, gear: {}, nightKey: {}, txt: {} }; }
+function islSkSeaOpen(){ var S = ISL && ISL.sea; return !!((S && (S.trips | 0) > 0) || (_islSea && _islSea.gmAll)); }
+function islSeaDay2(){ var S = ISL && ISL.sea; return !!(S && S.onSea && ISL.day > (S.sailDay | 0)); }
+function islSeaReserve(){ return islSeaDay2() ? (islSeaCampCfg().reserve || 3) : 0; }
+function islSeaVis(id){ var e = $(id); return !!(e && !e.classList.contains('hidden') && (e.offsetWidth || e.offsetHeight)); }
+/* 第 2 天的 AP 保留閘門:回傳 true = 已擋下(呼叫端直接 return) */
+function islSeaApBlock(cost){
+  var r = islSeaReserve();
+  cost = cost || 0;
+  if(!r || ISL.ap - cost >= r) return false;
+  playSfx('sfx-cancel', 0.3);
+  islModal('<h3>⛵ 要留體力回航</h3><p>今天是在外島的第二天,一定要留 <b>⚡' + r + '</b> 搭帆船回本島。</p><p>這件事要花 ⚡' + cost + ',你現在只有 ⚡' + ISL.ap + ',做了就回不去了。</p>',
+    [{ t: '知道了', cls: 'ghost', cb: function(){ try{ islZoneResume(); }catch(_zr){} } }, { t: '⛵ 現在回航', cls: 'gold', cb: function(){ islSeaReturnGo(null, false); } }]);
+  return true;
+}
+function islSeaForceArm(){ if(_islSea.forceT) return; _islSea.forceT = setInterval(islSeaForceTry, 1200); }
+function islSeaForceStop(){ if(_islSea.forceT){ clearInterval(_islSea.forceT); _islSea.forceT = 0; } }
+function islSeaForceTry(){
+  var r;
+  try{
+    r = islSeaReserve();
+    if(!ISL || !r || ISL.ap > r){ islSeaForceStop(); return; }
+    if(_IS.coop || (_IS.screen !== 'zone' && _IS.screen !== 'map')) return;
+    if(_IS.act || _islBt || islSeaVis('isl-modal') || islSeaVis('isl-act') || islSeaVis('isl-battle') || islSeaVis('isl-dialog') || $('isl-sea-sail')) return;
+    try{ islZoneStop(); }catch(_zs){}
+    playSfx('sfx-cancel', 0.35);
+    islModal('<h3>⛵ 該回航了!</h3><p>今天是在外島的第二天,體力只剩下回航要用的 ⚡' + ISL.ap + '。</p><p>帆船要出發了——回本島好好休息吧!</p>',
+      [{ t: '⛵ 回航', cls: 'gold', cb: function(){ islSeaForceStop(); islSeaReturnGo(null, true); } }]);
+  }catch(_ft){}
+}
+/* 回航:force = 第 2 天強制回航(AP 不夠也照走,扣到 0);rescue = 體力歸零被救回(不扣 AP)。next = 回到本島後要做的事(預設進營地) */
+function islSeaReturnGo(next, force, rescue){
+  var S = islSeaState(), C = islSeaCampCfg(), cost = C.backAp || 3, ov, u;
+  if(!S || !S.onSea){ if(next) next(); else islGoCamp(true); return; }
+  if(!rescue){
+    if(force){ ISL.ap = Math.max(0, ISL.ap - Math.min(ISL.ap, cost)); }
+    else if(ISL.ap < cost){
+      playSfx('sfx-cancel', 0.3);
+      islModal('<h3>⚡ AP 不夠回航</h3><p>搭帆船回本島要 ⚡' + cost + ',你只剩 ⚡' + ISL.ap + '。</p>' + (ISL.day === S.sailDay ? '<p>天黑以後可以在外島 <b>⛺ 紮營過夜</b>,明天再回去(露宿會傷身體,要有心理準備)。</p>' : ''),
+        [{ t: '知道了', cls: 'ghost', cb: function(){ try{ islZoneResume(); }catch(_zr){} } }].concat(ISL.day === S.sailDay ? [{ t: '⛺ 紮營過夜', cls: 'gold', cb: function(){ islSeaCampNight(); } }] : []));
+      return;
+    }
+    else islApPay(cost);
+  }
+  S.backDay = ISL.day;
+  try{ islZoneStop(); }catch(_zs){}
+  islSeaEndTrip(true);
+  try{ islLog(rescue ? '🆘 在外島倒下,被小白和帆船救回本島' : '⛵ 從外島回到本島', null); }catch(_l){}
+  islHud(); islSave('sea');
+  islSeaSfx('sail');
+  ov = document.createElement('div'); ov.id = 'isl-sea-sail';
+  u = islImgUrl('ending_sail');
+  ov.innerHTML = (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';">' : '') + '<div class="t">' + (rescue ? '小白一路飛著帶路,帆船把你載回了本島……' : '起錨回航!') + '<br><small>' + (force ? '回到本島營地,好好休息吧。' : '海風把帆船推回熟悉的島。') + '</small></div>';
+  ($('island-root') || document.body).appendChild(ov);
+  setTimeout(function(){ try{ if(ov.parentNode) ov.parentNode.removeChild(ov); }catch(_r){} if(next) next(); else islGoCamp(true); toast('⛵ 回到本島了' + (rescue ? '' : '(回航 ⚡' + (force ? '用掉剩下的體力' : cost) + ')') + ';明天才能再出海'); }, 1700);
+}
+/* 帆船視窗(停泊點 / 世界地圖帆船 / HUD 🏕 在外島時):回航、紮營、再待一下 */
+function islSeaBoatAsk(){
+  var S = islSeaState(), C = islSeaCampCfg(), isle = islSeaIsleDef(S.isle) || { n: '外島', e: '⛵' }, day1 = ISL.day === S.sailDay, btns = [{ t: '再待一下', cls: 'ghost', cb: function(){ try{ islZoneResume(); }catch(_zr){} } }];
+  if(day1) btns.push({ t: '⛺ 紮營過夜', cls: '', cb: function(){ islSeaCampNight(); } });
+  btns.push({ t: '⛵ 回本島 ⚡' + (C.backAp || 3), cls: 'gold', cb: function(){ islSeaReturnGo(null, false); } });
+  islModal('<h3>⛵ 帆船・' + isle.e + ' ' + islEsc(isle.n) + '</h3><p>回本島要花 <b>⚡' + (C.backAp || 3) + '</b>(你有 ⚡' + ISL.ap + ')。</p>' +
+    (day1 ? '<p style="font-size:15px;opacity:.9">天黑以後也可以在這裡 ⛺ 紮營過夜,明天再回去——但露宿會傷身體,醒來 AP 只回一半,而且明天一定要留 ⚡' + (C.reserve || 3) + ' 回航。</p>'
+          : '<p style="font-size:15px;color:#ffd166">今天是在外島的第二天,一定要留 ⚡' + (C.reserve || 3) + ' 回本島。</p>'), btns);
+}
+/* ⛺ 外島紮營過夜:只有第 1 天、而且要天黑(跟本島「休息」同一條規則) */
+function islSeaCampNight(){
+  var S = islSeaState(), C = islSeaCampCfg(), isle = islSeaIsleDef(S.isle) || { n: '外島', e: '⛵', id: '' }, ak = C.ail[isle.id], ad = ak ? islAilDef(ak) : null, g = C.gear[isle.id], gd = g ? islDB().armor(g) : null, wear = g ? islSeaArmorIs(g) : false;
+  if(!S.onSea) return;
+  if(ISL.day !== S.sailDay){ playSfx('sfx-cancel', 0.3); islModal('<h3>⛺ 不能再住一晚了</h3><p>在外島最多只能過一夜。今天一定要搭帆船回本島。</p>', [{ t: '⛵ 回本島', cls: 'gold', cb: function(){ islSeaReturnGo(null, false); } }]); return; }
+  if(!islIsNight() && (ISL.hp | 0) > 0){
+    playSfx('sfx-ng', 0.35);
+    islModal('<h3>☀ 天還亮著,還不能睡</h3><p>今天的行動力(⚡AP)要用掉<b>超過一半</b>、天色變暗以後才能紮營睡覺。</p>', [{ t: '好', cls: 'gold', cb: function(){ try{ islZoneResume(); }catch(_zr){} } }]);
+    return;
+  }
+  islModal('<h3>⛺ 在 ' + isle.e + ' ' + islEsc(isle.n) + ' 紮營過夜?</h3><p style="font-size:15px;opacity:.9">' + islEsc((C.txt && C.txt[isle.id]) || '') + '</p>' +
+    '<p style="text-align:left;font-size:15px">⚠ 露宿會傷身體:體力 −' + C.hpP + '%' + (ad ? '、很可能得到「' + ad.e + ' ' + islEsc(ad.n) + '」' : '') + (gd ? '<br>　' + (wear ? '✅ 你穿著「' + gd.e + islEsc(gd.n) + '」,損害減半。' : '💡 穿著「' + gd.e + islEsc(gd.n) + '」損害會減半。') : '') +
+    '<br>⚡ 明天 AP 只回一半,而且一定要留 ⚡' + (C.reserve || 3) + ' 搭帆船回本島。<br>🏕 本島營地照常過一天(作物、颱風照算),但你不在家,不會被夜襲。</p>',
+    [{ t: '再想想', cls: 'ghost', cb: function(){ try{ islZoneResume(); }catch(_zr){} } }, { t: '⛺ 紮營 💤', cls: 'gold', cb: function(){
+      var root = $('island-root'), ov = document.createElement('div');
+      try{ islZoneStop(); }catch(_zs){}
+      S.campDay = ISL.day; S.nights = (S.nights | 0) + 1;
+      try{ islLog('⛺ 在' + isle.e + isle.n + '紮營過夜', null); }catch(_l){}
+      ov.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;background:#000;z-index:55;opacity:0;transition:opacity 2s linear;pointer-events:none;';
+      root.appendChild(ov);
+      setTimeout(function(){ ov.style.opacity = '1'; }, 20);
+      setTimeout(function(){ try{ ov.remove(); }catch(_rm){} _islSea.camping = true; islNewDay(); }, 2050);
+    } }]);
+}
+/* 露宿損害(islNewDay 在外島過夜時呼叫):體力 −hpP%、該島專屬不良狀態;環境防具 ×gearMul、遠洋星域 seaNightCutP + 該島 night*P 再減(合計上限 90%) */
+function islSeaNightHarm(){
+  var S = islSeaState(), C = islSeaCampCfg(), isle = S.isle, ak = C.ail[isle], g = C.gear[isle], cut, mul, hp, note = [], ad;
+  cut = Math.min(90, islSkEff('seaNightCutP') + (C.nightKey[isle] ? islSkEff(C.nightKey[isle]) : 0));
+  mul = (g && islSeaArmorIs(g) ? (C.gearMul || 0.5) : 1) * (1 - cut / 100);
+  hp = Math.round(ISL.hpMax * (C.hpP || 20) / 100 * mul);
+  if(hp > 0){ ISL.hp = Math.max(1, ISL.hp - hp); note.push('❤️ 露宿 −' + hp); if(ISL.hp <= ISL.hpMax * 0.5) ISL.hurt = true; }
+  ad = ak ? islAilDef(ak) : null;
+  if(ad && !islAilHas(ak) && Math.random() < mul){ islAilAdd(ak, '在' + ((islSeaIsleDef(isle) || {}).n || '外島') + '露宿'); note.push(ad.e + ad.n); }
+  else if(ad && !islAilHas(ak)) note.push('✅ 沒有' + ad.n);
+  return note.length ? '⛺ ' + note.join('　') : '';
 }
 
 /* ── 🗺 世界地圖翻頁 ── */
@@ -19689,10 +19838,7 @@ function islSeaMapFallback(cv, isle){
   ctx.fillStyle = isle.color || '#7bb661'; ctx.beginPath(); ctx.ellipse ? ctx.ellipse(254, 196, 190, 140, -0.08, 0, Math.PI * 2) : ctx.arc(254, 196, 175, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse ? ctx.ellipse(250, 120, 110, 60, 0, 0, Math.PI * 2) : ctx.arc(250, 120, 90, 0, Math.PI * 2); ctx.fill();
 }
-function islSeaBoatAsk(){
-  islModal('<h3>⛵ 搭帆船回本島營地?</h3><p>回到本島後,今天的航程就結束了(明天可以再出海)。</p>',
-    [{ t: '再待一下', cls: 'ghost', cb: function(){ islZoneResume(); } }, { t: '⛵ 回營地', cls: 'gold', cb: function(){ islGoCamp(); } }]);
-}
+/* ★ v1.392.0 舊版 islSeaBoatAsk(只有「回營地」一顆)已由上方出海模組的新版取代(回航 ⚡3 / 紮營過夜) */
 
 /* ── 進到外島區域:場景大小、互動點、藤蔓、天氣/黑暗/計量條 ── */
 function islSeaSceneSize(sc){
@@ -19818,7 +19964,7 @@ function islSeaStep(){
       _islSea.cells = 0;
       isle = islSeaIsleOfZone(_IS.zone);
       if(M.rainStop && isle.id === 'jungle' && islSeaJungleRain()) return;   /* 雷陣雨時涼快又有雨水,水分不掉 */
-      rate = M.drain * (M.wxMul && islWeather() !== 'sunny' ? M.wxMul : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1) * (1 - Math.min(80, islPartyTal(M.k === 'temp' ? 'fieldTempP' : (M.k === 'water' ? 'fieldWaterP' : 'fieldNoneP'))) / 100);   /* ★ v1.384.0 野外特長:皇帝企鵝(體溫)/水豚(水分)帶在隊上消耗 −30% */
+      rate = M.drain * (M.wxMul && islWeather() !== 'sunny' ? M.wxMul : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1) * (1 - Math.min(80, islPartyTal(M.k === 'temp' ? 'fieldTempP' : (M.k === 'water' ? 'fieldWaterP' : 'fieldNoneP')) + islSkEff(M.k === 'temp' ? 'tempCutP' : (M.k === 'water' ? 'waterCutP' : 'noneCutP'))) / 100);   /* ★ v1.392.0 + 遠洋星域體溫/水分消耗減免(與夥伴野外特長合計,上限 80%) */   /* ★ v1.384.0 野外特長:皇帝企鵝(體溫)/水豚(水分)帶在隊上消耗 −30% */
       islSeaMeterAdd(-rate);
       if(_islSea.m.v < M.max * 0.25 && islNow() - _islSea.lowAt > 20000){ _islSea.lowAt = islNow(); toast(M.e + ' ' + M.lowTxt); islSeaSfx(M.k === 'temp' ? 'shiver' : 'drink'); }
     }
@@ -19840,7 +19986,7 @@ function islSeaFrame(dt){
   M = islSeaMeterDef();
   if(M && M.perSec){
     if(_islSea.m.v > 0){
-      islSeaMeterAddQuiet(-M.perSec * dt * (islSeaDark() ? (M.darkMul || 1) : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1) * (1 - Math.min(80, islPartyTal('fieldOxyP')) / 100));   /* ★ v1.384.0 野外特長:大王具足蟲帶在隊上氧氣消耗 −30% */
+      islSeaMeterAddQuiet(-M.perSec * dt * (islSeaDark() ? (M.darkMul || 1) : 1) * (islSeaArmorIs(M.gear) ? 0.5 : 1) * (1 - Math.min(80, islPartyTal('fieldOxyP') + islSkEff('oxyCutP')) / 100));   /* ★ v1.392.0 + 遠洋星域氧氣消耗減免 */   /* ★ v1.384.0 野外特長:大王具足蟲帶在隊上氧氣消耗 −30% */
       _islSea.oxyT += dt; if(_islSea.oxyT > 0.5){ _islSea.oxyT = 0; islSeaHudPaint(); }
       if(_islSea.m.v < M.max * 0.25 && islNow() - _islSea.lowAt > 15000){ _islSea.lowAt = islNow(); toast(M.e + ' ' + M.lowTxt); islSeaSfx('lowoxy'); }
     } else {
@@ -19869,7 +20015,7 @@ function islSeaGustTick(G){
     if(islMaskAt(c.x - d.dx, c.y - d.dy) === '#'){ toast('🪨 躲在岩石背風處,風吹不動你!'); return; }
     cells = G.cells[0] + Math.floor(Math.random() * (G.cells[1] - G.cells[0] + 1));
     if(islSeaArmorIs(G.gear)) cells = Math.max(1, Math.round(cells / 2));
-    if(islPartyTal('fieldGustP')) cells = Math.max(1, Math.round(cells * (1 - Math.min(80, islPartyTal('fieldGustP')) / 100)));   /* ★ v1.384.0 野外特長:信天翁帶在隊上被吹走的距離 −50% */
+    if(islPartyTal('fieldGustP') + islSkEff('gustCutP')) cells = Math.max(1, Math.round(cells * (1 - Math.min(80, islPartyTal('fieldGustP') + islSkEff('gustCutP')) / 100)));   /* ★ v1.392.0 + 遠洋星域陣風距離減免 */   /* ★ v1.384.0 野外特長:信天翁帶在隊上被吹走的距離 −50% */
     step = 16;
     for(i = 0; i < cells * 64 / step; i++){
       nx = _IS.cx + d.dx * step; ny = _IS.cy + d.dy * step;
@@ -19895,7 +20041,7 @@ function islSeaBoltTick(B){
     if(el){ el.className = 'isl-sea-bolt hit'; setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 450); }
     try{ _islAmb.flash = Math.max(_islAmb.flash || 0, 0.5); }catch(_fl){}   /* ★ v1.378.0 落雷打下來:全畫面白光+老師上傳的閃電聲(原本 island_sfx_thunder 尚未上傳,走退回音效) */
     if(typeof islWxBolt === 'function' && islWxSndProfile()) islWxBolt(true); else islSeaSfx('thunder');
-    if(d < B.r) islHurt(Math.max(1, Math.round(ISL.hpMax * B.hurtP / 100 * (islSeaArmorIs(B.gear) ? 0.5 : 1))), '被落雷打到', $('isl-zone-map'), _IS.cx, _IS.cy - 60);
+    if(d < B.r) islHurt(Math.max(1, Math.round(ISL.hpMax * B.hurtP / 100 * (islSeaArmorIs(B.gear) ? 0.5 : 1) * (1 - Math.min(80, islSkEff('boltCutP')) / 100))), '被落雷打到',   /* ★ v1.392.0 遠洋星域落雷減傷 */ $('isl-zone-map'), _IS.cx, _IS.cy - 60);
     _islSea.bolt = null; _islSea.boltAt = now + B.everySec * 1000;
   }
 }
@@ -19946,6 +20092,7 @@ function islSeaVineCut(o){
   var db = islSeaDB(), V = db.SEA.VINE, S = islSeaState(), i, vs;
   if((ISL.tools || []).indexOf(V.tool) < 0){ playSfx('sfx-cancel', 0.3); islModal('<h3>🌿 藤蔓好密</h3><p>徒手扯不開……要有工具「🔪 開山刀」才砍得開。<br><span style="opacity:.8">(營地「製作工具」:鐵礦 4、木材 3、纖維 4)</span></p>'); return; }
   if(ISL.ap < (V.ap || 1)){ islModal('<h3>⚡ AP 不夠</h3><p>砍藤蔓要花 ⚡' + (V.ap || 1) + '。</p>'); return; }
+  if(islSeaApBlock(V.ap || 1)) return;   /* ★ v1.392.0 */
   islApPay(V.ap || 1);
   S.vine[_IS.zone] = ISL.day;
   vs = $('isl-zone-map').querySelectorAll('.isl-sea-vine');
@@ -20099,6 +20246,7 @@ function islMapZoneTap(z){
   if(st === 'unknown'){ playSfx('sfx-cancel', 0.3); islModal('<h3>❓</h3><p>這裡還籠罩在雲霧裡……先探索前面的區域吧。</p>'); return; }
   if(st === 'lock'){ playSfx('sfx-cancel', 0.3); islModal('<h3>🔒 ' + islEsc(z.n) + '</h3><p>解鎖條件:<b>' + islEsc(z.unlockText) + '</b></p>' + (z.p1 ? '' : '<p style="opacity:.7">(這個區域下一階段才開放探索)</p>')); return; }
   if(!z.p1){ islModal('<h3>' + z.e + ' ' + islEsc(z.n) + '</h3><p>這個區域的場景還在製作中,下一階段開放。</p>'); return; }
+  if(!_IS.coop){ var _zb = islZoneBldBlock(z.id); if(_zb){ playSfx('sfx-cancel', 0.3); islZoneBldBlockMsg(_zb); return; } }   /* ★ v1.392.0 解鎖它的設施嚴重受損/倒塌 ⇒ 暫時進不去 */
   playSfx('sfx-sel', 0.35);
   var ch = $('isl-map-char'); if(ch){ ch.style.left = z.map.x + '%'; ch.style.top = z.map.y + '%'; }
   setTimeout(function(){ islEnterZone(z.id); }, 700);
@@ -20231,6 +20379,7 @@ window.islLookSoon = function(){
 function islEnterZone(zoneId, cb){
   var db = islDB(), sc = db.SCENE[zoneId], zs = ISL.zones[zoneId], zm = $('isl-zone-map'), h = '', u, sp, i, n, first, npcSz;   /* ★ v1.152.0 npcSz 一定要在這裡宣告:v1.146.0 就是因為本函式漏了 var 宣告,第一行讀未宣告變數丟 ReferenceError,點任何區域都靜默失敗進不去 */   /* ★ v1.148.0 老師截圖回報「開始遊戲後第一張沙灘變成上下疊在一起」根因修復:zm 誤抓成外層容器 $('isl-zone')(#isl-zone 底下還有 #isl-zone-topinfo/#isl-joy/#isl-act-btn 三個常駐手足元素),下面 `zm.innerHTML = h` 把整個 #isl-zone 洗掉,連手足元素一起被拆掉;緊接著 islZoneTopInfo() 讀 $('isl-zone-topinfo') 已是 null → 丟例外(console 實證 Cannot set properties of null (setting 'innerHTML'))→ 函式提前中斷,連同後面重啟 rAF 迴圈的 `_IS.raf = requestAnimationFrame(islTick)` 都沒執行到,上一個畫面(大地圖)的動畫迴圈沒被换掉,新舊兩層畫面因此疊在一起,與 v1.146.0/v1.147.0 修的兩個成因(缺 var 宣告／CSS 排他)是同一種症狀的第三個根因。改回 `$('isl-zone-map')`──與全檔其餘 9 處消費點(islCamera/islNearCheck/islPickHtml/coop 對等玩家渲染/戰鬥面板等)完全同一口徑,#isl-zone-map 才是「場景內容容器」，#isl-zone 是外層固定殼；手足元素不再被清空。 */   /* ★ v1.143.0 老師回報「點地圖區域沒進去」根因修復:本函式從缺少這行 var 宣告,db/sc/zs/zm/h/u/sp/i/n/first 全部視為未宣告變數,第一次讀取 sc 就丟 ReferenceError,畫面卡在地圖(點擊後 700ms 靜默失敗,無任何提示) */
   try{ if(typeof islSeaEnterGuard === 'function'){ if(islSeaEnterGuard(zoneId)) return; if(islSeaZoneDef(zoneId)){ islSeaZonesInit(ISL.zones); zs = ISL.zones[zoneId]; } } }catch(_sg){}   /* ★ v1.368.0 ⛵ 外島區要先出海(每天 1 次);在海上要進本島區要先回航 */
+  try{ if(!_IS.coop && _IS.zone !== zoneId){ var _zbk = islZoneBldBlock(zoneId); if(_zbk){ playSfx('sfx-cancel', 0.3); islZoneBldBlockMsg(_zbk); return; } } }catch(_zbe){}   /* ★ v1.392.0 所有進區入口(大地圖/主線「前往」/頭目清單)共用同一道設施損壞閘門;同一區重進(活動結束回場景)不擋 */
   setTimeout(islAmbSfxUpdate, 0);
   /* ★ v1.165.0 🔍 環境觀察的掃描模式只對「當天、那一區」有效。
      ⚠ 這個 class 掛在 #isl-zone-map 上,而 islEnterZone 只重寫它的 innerHTML、不會動 class,
@@ -21660,6 +21809,7 @@ function islZoneRemember(){ if(_IS.zone && ISL){ var c = islCell(_IS.cx, _IS.cy)
 function islActStart(actId, ctx){
   var db = islDB(), a = db.ACTS[actId];
   if(ISL.ap < (a.ap || 1)){ islModal('<h3>⚡ AP 不夠</h3><p>' + a.e + islEsc(a.n) + ' 要花 ⚡' + (a.ap || 1) + ',你只剩 ⚡' + ISL.ap + '。回營地「🌙 休息」明天再來。</p>', [{ t: '知道了' }, { t: '📋 看 AP 清單', cls: 'ghost', cb: function(){ islApListOpen(); } }]); islTiredCheck(); return; }   /* ★ v1.119.0 各活動 AP 不同,開始前先檢查 */
+  if(islSeaApBlock(a.ap || 1)) return;   /* ★ v1.392.0 外島第 2 天:要留 ⚡3 回航 */
   if(ISL.hp <= 0){ islModal('<h3>🤕 傷太重了</h3><p>先回營地治療,才有力氣做事。</p>', [{ t: '知道了', cls: 'gold', cb: function(){ islGoCamp(); } }]); return; }   /* ★ v1.92.0 */
   islZoneStop(); islZoneRemember();
   _IS.act = { id: actId, ctx: ctx || {}, know: 0, knowMax: 1, quiz: 0, stars: 1, crit: false, timer: null, tleft: 0, phase: 'know', done: false, notes: [] };
@@ -22575,8 +22725,58 @@ function islMonoState(){
     }
   }catch(_ms){}
 }
-function islCampHasBld(id){ var s = ISL.camp.slots, i; for(i = 0; i < s.length; i++){ if(s[i] && s[i].bld === id && (!s[i].bt || s[i].btTo)) return s[i]; } return null; }   /* ★ v1.125.0 新建施工中(有 bt 且不是升級)不算「已經有」,以免蓋到一半就先解鎖/先能用;升級中維持舊等級照常可用 */
+function islCampHasBld(id){ var s = ISL.camp.slots, i; for(i = 0; i < s.length; i++){ if(s[i] && s[i].bld === id && (!s[i].bt || s[i].btTo) && !islBldBroken(s[i])) return s[i]; } return null; }   /* ★ v1.125.0 新建施工中(有 bt 且不是升級)不算「已經有」,以免蓋到一半就先解鎖/先能用;升級中維持舊等級照常可用 */   /* ★ v1.392.0 嚴重受損(耐久 ≤ D.BLD_DMG.brokenP %)也不算「有」⇒ 全島 55 個功能檢查點(生火/倉庫/農田/製作/區域解鎖…)一起停擺,修好立刻恢復 */
+/* ★ v1.392.0 「蓋過、還站著」(含嚴重受損):建造選單判斷「✅ 已蓋」、主線目標「蓋好 X」用這支,受損不會讓進度倒退、也不會讓人重複蓋第二座 */
+function islCampOwnBld(id){ var s = ISL.camp.slots, i; for(i = 0; i < s.length; i++){ if(s[i] && s[i].bld === id && (!s[i].bt || s[i].btTo)) return s[i]; } return null; }
+function islBldDmgRule(){ var R = islDB().BLD_DMG || {}; return { warnP: R.warnP || 50, brokenP: (typeof R.brokenP === 'number') ? R.brokenP : 20, comfortWarn: R.comfortWarn || 0, comfortBroken: R.comfortBroken || 0, migP: R.migP || 25 }; }
+function islBldBroken(s){ var p; if(!s || typeof s.hp !== 'number') return false; p = islBldHpPct(s); return p <= islBldDmgRule().brokenP; }
+/* 這棟設施名稱+狀態(嚴重受損/倒塌提示用) */
+function islBldNameOf(id){ var b = islDB().BUILDINGS[id]; return b ? b.e + b.n : id; }
+/* 扣耐久的單一出口:歸零 ⇒ 倒塌消失(從 slots 移除,要重新建造)。回傳 'gone' / 'broken' / 'warn' / ''。
+   ⚠ 會改動 ISL.camp.slots 長度:在迴圈裡呼叫時要從後往前跑,或先收集再處理。 */
+function islBldDamage(s, n){
+  var R = islBldDmgRule(), was, idx;
+  if(!s || typeof s.hp !== 'number') return '';
+  was = islBldHpPct(s);
+  s.hp = Math.max(0, s.hp - n);
+  if(s.hp <= 0){
+    idx = ISL.camp.slots.indexOf(s); if(idx >= 0) ISL.camp.slots.splice(idx, 1);
+    try{ islLog('💥 ' + islBldNameOf(s.bld) + ' 倒塌了,要重新建造', 'camp_night'); }catch(_l){}
+    return 'gone';
+  }
+  if(islBldBroken(s)){ if(was > R.brokenP){ try{ islLog('⚠ ' + islBldNameOf(s.bld) + ' 嚴重受損,暫時不能使用(修好才會恢復)', 'camp_night'); }catch(_l2){} } return 'broken'; }
+  return islBldHpPct(s) < R.warnP ? 'warn' : '';
+}
+/* 舒適度扣分:耐久 < warnP 每棟 −comfortWarn,嚴重受損每棟 −comfortBroken */
+function islBldComfortCut(){
+  var R = islBldDmgRule(), s = (ISL && ISL.camp && ISL.camp.slots) || [], i, n = 0, p;
+  for(i = 0; i < s.length; i++){ if(!s[i] || s[i].bt && !s[i].btTo || typeof s[i].hp !== 'number') continue; p = islBldHpPct(s[i]); if(islBldBroken(s[i])) n += R.comfortBroken; else if(p < R.warnP) n += R.comfortWarn; }
+  return n;
+}
+/* 舊存檔一次性保護:更新當下已經 ≤ brokenP 的設施拉到 migP(颱風扣耐久從來不會自己回復,累積多年的損傷不該一更新就讓營地整批停擺) */
+function islBldDmgMigrate(){
+  var R = islBldDmgRule(), s, i, mx, n = 0;
+  if(!ISL || !ISL.camp || !ISL.flags || ISL.flags.bldDmgMig) return;
+  s = ISL.camp.slots || [];
+  for(i = 0; i < s.length; i++){ if(!s[i] || typeof s[i].hp !== 'number') continue; mx = 100 + 25 * ((s[i].lv || 1) - 1); if(islBldHpPct(s[i]) <= R.brokenP){ s[i].hp = Math.ceil(mx * R.migP / 100); n++; } }
+  ISL.flags.bldDmgMig = 1;
+  if(n){ try{ islLog('🔧 有 ' + n + ' 棟設施被颱風弄得快撐不住了:耐久剩 20% 以下會停擺、歸零會倒塌,記得修理!', 'camp_night'); }catch(_l){} }
+}
+/* 區域被哪棟設施「卡住」:unlock 是 bld 的區域,或 tech 解鎖且該科技需要某設施的區域;回傳設施 id 或 null */
+function islZoneBldBlock(zoneId){
+  var db = islDB(), z = db.zone ? db.zone(zoneId) : null, u, t;
+  if(!z || !z.unlock || !ISL) return null;
+  u = z.unlock;
+  if(u.t === 'bld' && u.bld && !islCampHasBld(u.bld)) return u.bld;
+  if(u.t === 'tech' && u.tech && db.tech){ t = db.tech(u.tech); if(t && t.needBld && !islCampHasBld(t.needBld)) return t.needBld; }
+  return null;
+}
+function islZoneBldBlockMsg(bid){
+  var own = islCampOwnBld(bid), nm = islBldNameOf(bid);
+  islModal('<h3>🚧 去不了</h3><p>' + (own ? '「' + nm + '」嚴重受損,暫時不能用——先回營地 🔧 修理,修好就能去了。' : '「' + nm + '」倒塌不見了——回營地重新建造,蓋好就能去了。') + '</p>', [{ t: '知道了', cls: 'gold' }]);
+}
 window.islGoCamp = function(silent){
+  if(!silent && ISL && ISL.sea && ISL.sea.onSea && !_IS.coop){ try{ islSeaBoatAsk(); return; }catch(_sba){} }   /* ★ v1.392.0 人在外島按 🏕/回營地 ⇒ 帆船視窗(回航 ⚡3 / 紮營);系統路徑(silent:🆘 救援、片尾)照舊直接回營地 */
   try{ if(typeof islSeaEndTrip === 'function') islSeaEndTrip(!!silent); }catch(_set){}   /* ★ v1.368.0 ⛵ 回到本島營地 = 當天航程結束(每天只能出海一次) */
   /* ★ v1.176.0(老師回報「仍然無法進入營地」)— 整段包起來:以前只要中間任何一行丟例外,
      畫面就停在原地、學生只覺得「按了沒反應」,而且沒有任何線索可查。現在一律把原因講出來,
@@ -22649,6 +22849,7 @@ function islCampPaint(){
   var db = islDB(), cells = $('isl-camp-cells'), side = $('isl-camp-side'), h = '', i, s, b, u, hasFire = islCampHasBld('campfire'), cl = db.CAMP_LV[ISL.camp.lv] || db.CAMP_LV[1], nSlot = cl.n, comfort = islComfort();
   try{ islCampExitPaint(); }catch(_xp){}   /* ★ v1.348.0 正上方「🗺 前往大地圖」出口 */
   if($('isl-camp-host')) $('isl-camp-host').classList.add('hidden');   /* ★ v1.114.0 回到自己的營地時收起島主小人 */
+  try{ islBldDmgMigrate(); }catch(_bdm){}   /* ★ v1.392.0 舊存檔一次性:≤20% 的設施拉到 25%,不讓一更新就停擺/倒塌 */
   islCampSlotsMigrate();   /* ★ v1.199.0 舊存檔(格子制,可能還有 null 佔位)一律先轉成自由座標的緊湊清單,見函式說明 */
   /* ★ v1.199.0 老師「建造設施改成和裝飾一樣直接放在營地正中央,可以自由拖曳/鏡像翻轉,新增縮放尺寸」—
      不再畫固定 3×3/4×3/4×4 格子(舊版 .isl-cell 是 CSS grid 的一格),改成跟裝飾同一套「自由座標層」:
@@ -22657,12 +22858,12 @@ function islCampPaint(){
     s = ISL.camp.slots[i];
     if(!db.BUILDINGS[s.bld]) continue;   /* ★ v1.111.0 守門:存檔裡的建築 id 已不存在(資料表改名/移除)時跳過,不讓整個營地畫面炸掉 */
     b = db.BUILDINGS[s.bld]; u = islImgUrl(b.img + (s.lv >= 3 ? '_3' : '_1'));
-    h += '<button class="isl-cell built' + (s.bt ? ' building' : '') + (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') +
+    h += '<button class="isl-cell built' + (s.bt ? ' building' : '') + (islBldBroken(s) ? ' broken' : '') +   /* ★ v1.392.0 嚴重受損變灰暗 */ (s.bld === 'campfire' && ISL.camp.fireLit && ISL.camp.fireDay === ISL.day ? ' lit' : '') +
       (islNightGlowIs('bld', s.bld) ? ' nglow' : '') +   /* ★ v1.275.0 夜間發光設施(營火/火把/瞭望台);白天這個 class 沒有任何樣式 */
       '" data-i="' + i + '" style="left:' + s.x + '%;top:' + s.y + '%;z-index:' + islBldZ(s) + '">' +   /* ★ v1.333.0 圖層 1~9 */
       (s.bt ? '<span class="bt">⏳ ' + islSecsText(islBuildLeft(s)) + '</span>' : '') +
       (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'' + b.e + '\');">' : b.e) +
-      (Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) < 100 ? '<span class="hp"><i style="width:' + Math.round(s.hp / (100 + 25 * (s.lv - 1)) * 100) + '%"></i></span>' : '') +
+      (islBldHpPct(s) < 100 ? '<span class="hp' + (islBldHpPct(s) < 50 ? ' lo' : '') + '"><i style="width:' + islBldHpPct(s) + '%"></i></span>' : '') +   /* ★ v1.392.0 ≥50% 的條預設隱藏(CSS),按住設施才浮出;<50% 加 .lo 常駐 */
       '</button>';   /* ★ v1.265.0 老師「設施的名稱不需要一直顯示,點了才顯示。且放大縮小設施的時候,名稱和等級保持不變,不要跟著縮放」—
       v1.264.0 把 .bn 名稱標籤畫在 .isl-cell **裡面**,兩個問題:①常駐顯示(老師只要點了才出現)②標籤跟著
       islCampBldApplyTransforms 寫在設施上的個人縮放(0.5~2.0)一起變大變小——老師截圖裡放大過的營火,標籤跟著巨大。
@@ -23452,8 +23653,11 @@ function islHoldCamK(){ var c = _IS.campCam; return (c && c.s) ? 1 / c.s : 1; }
 function islBldLabel(i){
   var s = ISL.camp.slots[i], b = s ? islDB().BUILDINGS[s.bld] : null;
   if(!b) return '';
-  return b.e + ' ' + b.n + (s.bt ? (s.btTo ? ' 升級中' : ' 施工中') : (' Lv' + (s.lv || 1)));
+  return b.e + ' ' + b.n + (s.bt ? (s.btTo ? ' 升級中' : ' 施工中') : (' Lv' + (s.lv || 1))) + (islBldHpPct(s) < 100 ? ' 🔧' + islBldHpPct(s) + '%' : '');   /* ★ v1.392.0 受損時名稱牌順便寫出耐久 */
 }
+/* ★ v1.392.0 老師「營地設施耐久度條不明原因常駐很妨礙觀看」— 根因:颱風天每棟設施耐久 −10 且不會自己回復,舊規則「不滿 100% 就畫條」
+   ⇒ 遇過一次颱風,全部設施底下的條就一直掛著。老師選甲:平常不畫,按住設施(.isl-hold)時才浮出;耐久 < 50% 才常駐提醒該修了。 */
+function islBldHpPct(s){ var mx = 100 + 25 * ((s && s.lv ? s.lv : 1) - 1); return s ? Math.round(Math.max(0, s.hp) / mx * 100) : 100; }
 function islDecoLabel(d){ var def = d ? islDecoDef(d.id) : null; return def ? (def.e + ' ' + def.n) : ''; }
 /* ★ v1.283.0 老師「設施長按1秒才開啟視窗(出現1秒讀條),避免主角移動時不小心點到」—
    按下先貼 .isl-lp-bar 進度條並起算 1000ms;放開手指前一旦位移超過 8px(視為要拖曳搬家)立刻取消計時、
@@ -23829,8 +24033,9 @@ function islCampCellTap(i){
     { t: (s.bld === 'campfire' ? '🔥 生火' : (s.bld === 'storage' ? '🏚 打開倉庫' : (s.bld === 'farm' ? '🌱 打開農田' : (s.bld === 'pen' ? '🐔 打開畜欄' : (s.bld === 'bench' ? '🛠 製作' : (s.bld === 'tent' ? '😴 休息' : '關閉')))))), cb: function(){ if(s.bld === 'campfire') islCampFire(); else if(s.bld === 'storage') islStoreOpen(); else if(s.bld === 'farm') islFarmOpen(); else if(s.bld === 'pen') islPenOpen(); else if(s.bld === 'bench') islCraftOpen(); else if(s.bld === 'tent') islRest(); } },   /* ★ v1.94.0 農田/畜欄入口 */
     { t: '⬆ 升級', cls: 'gold', cb: function(){ islCampUpgrade(i); } }
   ];
+  if(islBldBroken(s)) btns = [{ t: '關閉', cls: 'ghost' }];   /* ★ v1.392.0 嚴重受損:功能鈕與升級先收起來,只剩修理 */
   if(s.hp < maxHp) btns.push({ t: '🔧 修理', cls: 'warn', cb: function(){ islBldRepair(i); } });   /* ★ v1.92.0 結構受損 → 工程修復(耗半份材料,恢復滿耐久) */
-  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : '') + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' +
+  islModal('<h3>' + b.e + ' ' + islEsc(b.n) + ' Lv' + s.lv + '</h3><p>' + islEsc(b.desc) + '</p><p>耐久 ' + s.hp + '/' + maxHp + (islBldBroken(s) ? ' <b style="color:#ff6b6b">⚠ 嚴重受損:暫時不能使用(相關功能與地圖都停擺),修好立刻恢復;耐久歸零會倒塌,要重新建造。</b>' : (islBldHpPct(s) < islBldDmgRule().warnP ? ' <span style="color:#ff9f7b">(受損,舒適度 −' + islBldDmgRule().comfortWarn + ',建議修理)</span>' : (s.hp < maxHp ? ' <span style="color:#ff8f8f">(結構受損,建議修理)</span>' : ''))) + '　本級效果:' + islEsc(b.lvText[s.lv - 1] || '') + '</p>' +
     '<p class="isl-bldtools"><button class="isl-btn ghost" onclick="islCampFlip(' + i + ')">🔁 左右翻轉</button><button class="isl-btn ghost" onclick="islCampScale(' + i + ',-0.25)">🔍− 縮小</button><span style="font-size:15px;opacity:.85">' + Math.round((s.scale || 1) * 100) + '%</span><button class="isl-btn ghost" onclick="islCampScale(' + i + ',0.25)">🔍+ 放大</button></p>' +
     islLayerRowHtml(islBldZ(s), 'islCampLayer(' + i + ',') +   /* ★ v1.333.0 前後圖層 1~9 */
     '<p style="font-size:13px;opacity:.7">拖曳它就能換位置(不用再進「搬移模式」)。</p>' +
@@ -23859,12 +24064,12 @@ window.islCampBuildMenu = function(slot){
   /* ★ v1.130.0 老師:改成三欄大卡片(圖 128px、名稱 25px、說明 18px),框放大到 1180px 可捲動;材料不足時左下角掛 ⚠ 資源不足 */
   h += '<div class="isl-cards sm">';
   for(i = 0; i < db.BUILD_ORDER.length; i++){
-    id = db.BUILD_ORDER[i]; b = db.BUILDINGS[id]; var nc = islNewBldCost(b); can = islCanAfford(nc); s = islCampHasBld(id);   /* ★ v1.234.0 nc = 套用分支木材用量後的實際材料 */
+    id = db.BUILD_ORDER[i]; b = db.BUILDINGS[id]; var nc = islNewBldCost(b); can = islCanAfford(nc); s = islCampOwnBld(id);   /* ★ v1.392.0 嚴重受損也算「已蓋」(修理就好,不必蓋第二座) */   /* ★ v1.234.0 nc = 套用分支木材用量後的實際材料 */
     lockTxt = (b.needZone && !ISL.zones[b.needZone].unlocked) ? '(要先解鎖' + db.zone(b.needZone).e + db.zone(b.needZone).n + ')' : (b.tech && ISL.tech < islBldTech(b) ? '(需要 🔬 科技點 ' + islBldTech(b) + ',現在 ' + ISL.tech + ')' : '');   /* ★ v1.234.0 islBldTech 套用分支「讓電之心沉睡」科技點 −10 */   /* ★ v1.105.0 帆船需科技點 */
     if(lockTxt) can = false;
     h += '<div class="isl-card' + (s ? ' done' : '') + '">' +
          '<div class="ci">' + islIcoHtml(b.img + '_1', b.e, 128) + '</div>' +
-         '<div class="cn">' + islEsc(b.n) + (s ? ' <span style="font-size:18px;color:#7bed9f">✅ 已蓋</span>' : '') + '</div>' +
+         '<div class="cn">' + islEsc(b.n) + (s ? (islBldBroken(s) ? ' <span style="font-size:18px;color:#ff9f7b">⚠ 嚴重受損</span>' : ' <span style="font-size:18px;color:#7bed9f">✅ 已蓋</span>') : '') + '</div>' +
          '<div class="cd">' + islEsc(b.desc) + '</div>' +
          (s ? '' : '<div class="cc" style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islCostHtml(nc) + '</div>' +
               (lockTxt ? '<div class="lk">' + islEsc(lockTxt) + '</div>' : '') +
@@ -23957,7 +24162,9 @@ function islRestConfirm(){
   setTimeout(function(){ try{ ov.remove(); }catch(_rm){} islNightCheck(); }, 3050);
 }
 function islNewDay(){
-  try{ if(ISL && ISL.sea && ISL.sea.onSea && typeof islSeaEndTrip === 'function') islSeaEndTrip(true); }catch(_snd){}   /* ★ v1.368.0 ⛵ 換日時還在海上:航程結束,不能在外島過夜 */
+  var _seaCamp = !!(_islSea && _islSea.camping && ISL && ISL.sea && ISL.sea.onSea);   /* ★ v1.392.0 ⛺ 外島紮營過夜:航程延續到第 2 天 */
+  if(_islSea) _islSea.camping = false;
+  try{ if(!_seaCamp && ISL && ISL.sea && ISL.sea.onSea && typeof islSeaEndTrip === 'function') islSeaEndTrip(true); }catch(_snd){}   /* ★ v1.368.0 ⛵ 換日時還在海上:航程結束;★ v1.392.0 紮營過夜例外 */
   try{ if(MG.user && ISL.friends && ISL.friends.length) islFriendsRefresh(); }catch(_f){}   /* ★ v1.104.0 丙 每日更新好友名片(≤5 次讀取) */
   try{ if(MG.user) islMailRefresh(function(){ islCampPaint(); }); }catch(_ml){}   /* ★ v1.106.0 每日更新信箱數量 */
   try{ if(MG.user && !islLocalOnly()) islPresenceBeat('day'); }catch(_pb2){}   /* ★ v1.244.0 換日再寫一次心跳(刷新制,不做每分鐘輪詢) */
@@ -23977,28 +24184,32 @@ function islNewDay(){
     try{ islDailyCheck(); }catch(_dck){}   /* ★ v1.389.0 島上新的一天:每日登島禮 */
     try{ islPetsDayTogether(); }catch(_pd){}   /* ★ v1.167.0 新的一天:編組裡的夥伴親密度 +1(D.PET_BOND_GAIN.dayTogether) */
     var tentB = islCampHasBld('tent'), bucketB = islCampHasBld('bucket'), canalB = islCampHasBld('canal'), comfort = islComfort(), dayNote = islNewDayFarmPen(wxOld);   /* ★ v1.94.0 P2-b */
-    if(wxOld === 'typhoon'){ var sl = ISL.camp.slots, di, dmg = 0; for(di = 0; di < sl.length; di++){ if(sl[di]){ sl[di].hp = Math.max(0, sl[di].hp - (sl[di].bld === 'wall' ? 5 : 10)); dmg++; } } if(dmg) dayNote = (dayNote ? dayNote + '　' : '') + '🌀 颱風過後 ' + dmg + ' 棟建築耐久 −10'; }
+    if(wxOld === 'typhoon'){ var sl = ISL.camp.slots.slice(), di, dmg = 0, _tyR, _tyGone = [], _tyBrk = []; for(di = 0; di < sl.length; di++){ if(sl[di] && !(sl[di].bld === 'ship' && ISL.sea && ISL.sea.onSea)){ _tyR = islBldDamage(sl[di], sl[di].bld === 'wall' ? 5 : 10); dmg++; if(_tyR === 'gone') _tyGone.push(islBldNameOf(sl[di].bld)); else if(_tyR === 'broken') _tyBrk.push(islBldNameOf(sl[di].bld)); } } if(dmg) dayNote = (dayNote ? dayNote + '　' : '') + '🌀 颱風過後 ' + dmg + ' 棟建築耐久 −10' + (_tyBrk.length ? '　⚠ 嚴重受損:' + _tyBrk.join('、') : '') + (_tyGone.length ? '　💥 倒塌:' + _tyGone.join('、') : ''); }   /* ★ v1.392.0 改走 islBldDamage(歸零倒塌移除);先 slice 一份再跑,倒塌移除不會讓迴圈跳格 */
     if(wxOld === 'rain' && bucketB){ islStoreAdd('water', 1, 3); dayNote = (dayNote ? dayNote + '　' : '') + '🌧 雨水多接 3 淡水'; }
     var wxNew = islWxDef(islWeatherOf(ISL.day));
     ISL.apMax = (db.AP_BASE || 10) + (tentB ? (tentB.lv >= 5 ? 2 : (tentB.lv >= 3 ? 1 : 0)) : 0) + (comfort >= 20 ? 1 : 0) + islSkEff('apAdd') + Math.floor(Math.min(islAdvLv(), 50) / 10) * 1 + Math.floor(Math.min(comfort, 100) / 20) * 1;   /* ★ v1.162.0 🌟 強健：每日 ⚡AP +1 */   /* ★ v1.119.0 基礎 10 */   /* ★ v1.314.1 老師修正倍率:「主角AP上限提升的方式增加:①冒險等級每達到10的倍數(最大50級,AP+1)②舒適度每達到20的倍數(最大100,AP+1)」— 兩條都用 Math.floor(現值/門檻)×1 累計算(不是單一門檻觸發),冒險等級 10/20/30/40/50 各 +1(封頂 +5),舒適度 20/40/60/80/100 各 +1(封頂 +5);兩者都用 Math.min 夾住輸入值,超過封頂(冒險 Lv50+、舒適 100+)不會繼續往上疊加。與既有的帳篷 Lv3/5、舒適≥20 舊制 +1、天賦 apAdd 三個既有加成來源各自獨立疊加,不互相取代。 */
     ISL.ap = ISL.apMax;
+    if(_seaCamp){ var _scf = islSeaCampCfg(); ISL.ap = Math.max(_scf.reserve || 3, Math.ceil(ISL.apMax * (_scf.apRefill || 0.5))); }   /* ★ v1.392.0 露宿睡不好:AP 只回一半(至少留得出回航量) */
     var _fireWas = !!ISL.camp.fireLit;   /* ★ v1.160.0 先記下「昨晚營火有沒有點著」，這一行重設之後就問不到了（失溫判定要用） */
     ISL.camp.fireLit = false;
     if(bucketB){ islStoreAdd('water', 1, 5 + 3 * (bucketB.lv - 1)); }   /* ★ v1.91.0 水桶架每日淡水(12.3);★ v1.94.0 Lv1~5 = 5/8/11/14/17 */
     if(canalB){ islStoreAdd('water', 1, [0, 3, 5, 7, 9, 12][canalB.lv] + (ISL.skill.water.lv >= 7 ? 2 : 0)); }
     for(k in ISL.zones){ if(ISL.zones.hasOwnProperty(k)){ ISL.zones[k].damage = Math.max(0, (ISL.zones[k].damage || 0) - 10); ISL.zones[k].daily = { day: ISL.day, taken: [], picked: [], acts: {} }; ISL.zones[k].last = null; } }   /* ★ v1.92.0 環境自然修復:每晚 −10 */
-    if(ISL.hp < ISL.hpMax){ ISL.hp = Math.min(ISL.hpMax, comfort >= 50 ? ISL.hpMax : ISL.hp + 10 + (comfort >= 10 ? 10 : 0)); if(ISL.hp >= ISL.hpMax * 0.6) ISL.hurt = false; }   /* ★ v1.92.0 睡一覺回一點體力,但重傷仍需治療;★ v1.94.0 舒適 ≥10 多回 10、≥50 全滿 */
+    if(!_seaCamp && ISL.hp < ISL.hpMax){ ISL.hp = Math.min(ISL.hpMax, comfort >= 50 ? ISL.hpMax : ISL.hp + 10 + (comfort >= 10 ? 10 : 0)); if(ISL.hp >= ISL.hpMax * 0.6) ISL.hurt = false; }   /* ★ v1.92.0 睡一覺回一點體力,但重傷仍需治療;★ v1.94.0 舒適 ≥10 多回 10、≥50 全滿 */
     /* ★ v1.160.0 🤒 不良狀態：自然衰退倒數 + 失溫/感染的每日觸發判定。
        ⚠ 必須排在 ISL.hp 回血與 ISL.hurt 重算之後：感染的觸發條件是「外傷擐過一整晚還沒好」，
          若在回血之前判定，那些睡一覺就會好的輕傷也會被算成感染。 */
-    try{ var _ailNote = islAilDaily(wxOld, _fireWas); if(_ailNote) dayNote = (dayNote ? dayNote + '　' : '') + _ailNote; }catch(_ad){}
+    try{ var _ailNote = islAilDaily(wxOld, _seaCamp ? true : _fireWas); if(_ailNote) dayNote = (dayNote ? dayNote + '　' : '') + _ailNote; }catch(_ad){}   /* ★ v1.392.0 人在外島:本島營火有沒有點不關你的事(露宿損害另算) */
+    if(_seaCamp){ try{ var _snNote = islSeaNightHarm(); if(_snNote) dayNote = (dayNote ? dayNote + '　' : '') + _snNote; }catch(_snh){} }   /* ★ v1.392.0 ⛺ 露宿損害 */
     try{ var _lgNote = islLegendDaily(wxOld); if(_lgNote) dayNote = (dayNote ? dayNote + '　' : '') + _lgNote; }catch(_lgd){}   /* ★ v1.331.0 🌈 傳說夥伴調查:相機拍攝/檫樹生長/蝴蝶變態/幼蟲天敵判定 */
     islTutDone('rested');
     islHud(); islCampPaint();
     islSave('rest');
     ov.innerHTML = wxNew.e + ' 第 ' + ISL.day + ' 天・' + islEsc(wxNew.n) + '<br><br>島上的東西又長回來了!' + (dayNote ? '<br><span style="font-size:18px;color:#ffd166">' + dayNote + '</span>' : '');   /* ★ v1.94.0 農田/畜欄日報 */
     islSfx('newDay');
-    setTimeout(function(){ ov.style.opacity = '0'; setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); }, 600); }, 1400);
+    setTimeout(function(){ ov.style.opacity = '0'; setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov);
+      if(_seaCamp){ try{ if(_IS.zone && islSeaZoneDef(_IS.zone)) islEnterZone(_IS.zone); else islGoMap(); }catch(_sez){} try{ toast('⛺ 在外島醒來:今天一定要留 ⚡' + islSeaReserve() + ' 搭帆船回本島'); }catch(_st){} try{ if(ISL.ap <= islSeaReserve()) islSeaForceArm(); }catch(_sfa2){} }   /* ★ v1.392.0 醒來回到外島場景(刷新當天資源) */
+    }, 600); }, 1400);
     /* ★ v1.132.0 醒來後的內心話:天氣有話講就講天氣(比較應景),沒有就講「新的一天」;第 5 天起偶爾講一句帶天數的。
        ⚠ 排在畫面淡出之後(2300ms),不然泡泡會被黑幕蓋住白講一次。 */
     setTimeout(function(){
@@ -24033,7 +24244,7 @@ window.islBagOpen = function(){
   var db = islDB(), s = ISL.bag.slots, h = '', i, d, selMode = !!_IS.bagSelOn, selN = 0, kSel;   /* ★ v1.271.0 老師需求「回營自動詢問視窗新增選取存入」— selMode 由 islCampDepositAsk 的「選取存入」按鈕或 islStoreOpen 的「把勾選物品取出」流程結束後統一設定/清除,不影響其餘既有呼叫點(它們都是 _IS.bagSelOn 預設 falsy 的一般開啟) */
   if(selMode){ for(kSel in (_IS.bagSel || {})){ if(_IS.bagSel.hasOwnProperty(kSel)) selN++; } }
   playSfx('sfx-tap', 0.3);
-  h += '<div class="isl-bagbox wide' + (selMode ? ' selmode' : '') + '"><h3>🎒 ' + (selMode ? '選取存入' : '物品包') + ' <span class="grow"></span>'   /* ★ v1.314.0 老師「存入倉庫選單圖片文字再縮小一些,不要讓右邊被裁切或是物品說明被遮擋」— 掛 selmode class,讓下面新增的 CSS 只在勾選存入模式縮小圖示/文字,一般開物品包不受影響 */ + (selMode ? '' : ('<span style="font-size:32px">' + s.length + '/' + ISL.bag.cap + ' 格</span>'))   /* ★ v1.213.0 老師「iPad 物品包外框太短,一行四個物品沒辦法完整顯示」— 根因:這支呼叫 islPanel() 沒傳 opts.wide,舊版會跑 islFitBox() 把整個框等比縮放(transform:scale)塞進可視高度,物品格常常好幾列(填滿格 .isl-bag-slot.has 在 iPad 高達 320px),縮放係數常常被壓到 0.45 下限,圖示/文字全部一起被壓扁變小,看起來就是「擠成一團」。改成跟商店(v1.150.0)、倉庫同一招:框上直接掛 wide,islPanel 就會跳過縮放,改用 CSS max-height + .bd 內捲,格子永遠是設計尺寸,多的列用捲的,不會再整體被壓縮。 */ + (!selMode && _IS.screen === 'camp' ? '<button data-act="dep">🏚 全放倉庫</button>' : '') + (selMode ? '<button data-act="selcancel">取消</button>' : '') + '<button data-act="close">✕</button></h3>';
+  h += '<div class="isl-bagbox wide' + (selMode ? ' selmode' : '') + (!selMode && _IS.screen === 'camp' ? ' isl-bag-main' : '') + '"><h3>🎒 ' + (selMode ? '選取存入' : '物品包') + ' <span class="grow"></span>'   /* ★ v1.314.0 老師「存入倉庫選單圖片文字再縮小一些,不要讓右邊被裁切或是物品說明被遮擋」— 掛 selmode class,讓下面新增的 CSS 只在勾選存入模式縮小圖示/文字,一般開物品包不受影響 */ + (selMode ? '' : ('<span style="font-size:32px">' + s.length + '/' + ISL.bag.cap + ' 格</span>'))   /* ★ v1.213.0 老師「iPad 物品包外框太短,一行四個物品沒辦法完整顯示」— 根因:這支呼叫 islPanel() 沒傳 opts.wide,舊版會跑 islFitBox() 把整個框等比縮放(transform:scale)塞進可視高度,物品格常常好幾列(填滿格 .isl-bag-slot.has 在 iPad 高達 320px),縮放係數常常被壓到 0.45 下限,圖示/文字全部一起被壓扁變小,看起來就是「擠成一團」。改成跟商店(v1.150.0)、倉庫同一招:框上直接掛 wide,islPanel 就會跳過縮放,改用 CSS max-height + .bd 內捲,格子永遠是設計尺寸,多的列用捲的,不會再整體被壓縮。 */ + (!selMode && _IS.screen === 'camp' ? '<button data-act="dep">🏚 全放倉庫</button><button data-act="bulksell" class="isl-bulk-btn">💰 賣普通材料</button>' : '') + (selMode ? '<button data-act="selcancel">取消</button>' : '') + '<button data-act="close">✕</button></h3>';
   h += '<div class="isl-bag-tools">🧰 工具:' + (ISL.tools.length ? islToolNames() : '(還沒有;蓋「🛠 製作台」就能做)') + '</div><div class="isl-bag-grid">';   /* ★ v1.96.0 */
   for(i = 0; i < ISL.bag.cap; i++){
     if(s[i]){
@@ -24064,6 +24275,7 @@ window.islBagOpen = function(){
     var act = t.getAttribute('data-act'), i = t.getAttribute('data-i'), it, d;
     if(act === 'close'){ _IS.bagSel = null; _IS.bagSelOn = false; islModalClose(); return; }   /* ★ v1.271.0 關閉面板順手清掉選取狀態,不會殘留到下次一般開啟物品包 */
     if(act === 'dep'){ islDepositAll(); playSfx('sfx-coin', 0.4); islModalClose(); islBagOpen(); islSave('deposit'); return; }
+    if(act === 'bulksell'){ islBulkSellAsk(); return; }   /* ★ v1.391.0 一鍵賣 ★ 普通材料(先確認) */
     if(act === 'selcancel'){ _IS.bagSel = null; _IS.bagSelOn = false; islBagOpen(); return; }   /* ★ v1.271.0 */
     if(act === 'selchk'){ _IS.bagScrollY = islModalScrollY(); if(!_IS.bagSel) _IS.bagSel = {}; if(_IS.bagSel.hasOwnProperty(i)) delete _IS.bagSel[i]; else _IS.bagSel[i] = s[parseInt(i, 10)] ? s[parseInt(i, 10)].n : 1;   /* ★ v1.278.0 打勾當下預設「這疊全部存入」(數量=現有 n),之後可用 +/- 調整成部分存入,行為與舊版全存語意一致,只是多了可以改的空間 */ playSfx('sfx-tap', 0.2); islBagOpen(); return; }   /* ★ v1.271.0 打勾/取消打勾只重畫面板,選取狀態放在執行期 _IS,不進存檔;★ v1.279.0 老師「勾選不要每按一下就自動捲回頂端」— 重繪前先記住捲動位置,islBagOpen 尾端會照 _IS.bagScrollY 還原 */
     if(act === 'bagqdec' || act === 'bagqinc'){   /* ★ v1.278.0 老師「增加+-可設定數量」— i 是格子索引,調整範圍夾在 [1, 該格現有 n] 之間,不可能調出超過持有量或調到 0(0 應該用取消勾選表達,不是數量 0) */
@@ -24837,6 +25049,7 @@ function islCmdUse(id, inBattle){
   if(!d) return false;
   if(d.once === 'day' && islCmdDayUsed(id)){ islModal('<h3>' + d.e + ' ' + islEsc(d.n) + '</h3><p>今天已經用過了,明天再來吧!</p>', [{ t: '知道了' }]); return false; }
   if(ISL.ap < d.ap){ islModal('<h3>⚡ AP 不夠</h3><p>' + d.e + islEsc(d.n) + ' 要 ⚡' + d.ap + ',你只剩 ⚡' + ISL.ap + '。</p>', [{ t: '知道了' }]); return false; }
+  if(islSeaApBlock(d.ap)) return false;   /* ★ v1.392.0 */
   islApPay(d.ap); islHud(); playSfx('sfx-burst-use', 0.45);
   if(d.once === 'day') islCmdDayMark(id);
   if(inBattle && B && !B.over){
@@ -25253,7 +25466,7 @@ function islDefEnd(win){
     /* D=甲:未加工資源 −30% + 隨機 1 棟建築耐久 −50 */
     for(i = 0; i < raw.length; i++){ k = raw[i]; it = ISL.store.items[k]; if(it){ cut = Math.floor((it.s1 + it.s2 + it.s3) * 0.3); if(cut > 0){ lost.push(islItemDef(k).e + '−' + cut); islConsume(k, cut); } } }
     for(i = 0; i < ISL.camp.slots.length; i++){ s = ISL.camp.slots[i]; if(s) built.push(s); }   /* ★ v1.199.0 順手修正:原本寫死 9(只對到營地 Lv1 的格數),Lv2/Lv3 多出來的建築永遠不會被夜襲選到;緊湊陣列改成直接用實際長度 */
-    if(built.length){ victim = built[Math.floor(Math.random() * built.length)]; victim.hp = Math.max(0, victim.hp - 50); lost.push(db.BUILDINGS[victim.bld].e + db.BUILDINGS[victim.bld].n + ' 耐久−50'); }
+    if(built.length){ victim = built[Math.floor(Math.random() * built.length)]; var _vr = islBldDamage(victim, 50); lost.push(db.BUILDINGS[victim.bld].e + db.BUILDINGS[victim.bld].n + (_vr === 'gone' ? ' 被打垮了💥(要重新建造)' : (_vr === 'broken' ? ' 耐久−50(⚠ 嚴重受損)' : ' 耐久−50'))); }   /* ★ v1.392.0 改走 islBldDamage */
     playSfx('sfx-explode', 0.45);
   }
   islSkillGain('defense', xp); islStatGain('wit', 1);
@@ -27298,7 +27511,9 @@ function islHurt(n, label, parentEl, x, y){
     try{ if(ISL.hp > 0 && ISL.hp <= ISL.hpMax * 0.3) islMono('hpLow'); }catch(_hl){}
     if(ISL.hp <= 0 && !_IS._hurtWarned){
       _IS._hurtWarned = true;
-      setTimeout(function(){ islModal('<h3>🤕 傷得不輕</h3><p>' + islEsc(label) + ',體力用完了。趕快回營地治療吧!</p>', [{ t: '回營地', cls: 'gold', cb: function(){ _IS._hurtWarned = false; islGoCamp(); } }]); }, 900);
+      setTimeout(function(){
+        if(ISL.sea && ISL.sea.onSea){ islModal('<h3>🤕 傷得不輕</h3><p>' + islEsc(label) + ',體力用完了。</p><p>小白看到了,馬上帶著帆船來接你回本島治療(這次不扣 AP)。</p>', [{ t: '⛵ 回本島', cls: 'gold', cb: function(){ _IS._hurtWarned = false; islSeaReturnGo(null, false, true); } }]); return; }   /* ★ v1.392.0 外島倒下 = 免費救回本島 */
+        islModal('<h3>🤕 傷得不輕</h3><p>' + islEsc(label) + ',體力用完了。趕快回營地治療吧!</p>', [{ t: '回營地', cls: 'gold', cb: function(){ _IS._hurtWarned = false; islGoCamp(); } }]); }, 900);
     }
   }
 }
@@ -27372,14 +27587,15 @@ function islComfortParts(){
   for(i = 0; i < ids.length; i++){ id = ids[i]; d = islDecoDef(id); if(!d || !d.comfort) continue; kinds++; for(j = 0; j < cnt[id]; j++) n += islComfortCopy(d.comfort, j); }
   tentB = islCampHasBld('tent'); if(tentB) tentN = R.tent[tentB.lv] || 0;
   n += tentN;
-  return { raw: n, val: Math.min(R.max, n), max: R.max, kinds: kinds, tent: tentN };
+  var dmgCut = islBldComfortCut();   /* ★ v1.392.0 受損設施扣舒適度(耐久 < 50% 每棟 −3、嚴重受損每棟 −5,數值在 D.BLD_DMG) */
+  return { raw: n, val: Math.max(0, Math.min(R.max, n) - dmgCut), max: R.max, kinds: kinds, tent: tentN, dmg: dmgCut };
 }
 function islComfort(){ if(!ISL) return 0; return islComfortParts().val; }
 /* 再多擺一件這種裝飾會加幾分(裝飾面板卡片用) */
 function islComfortNext(id){ var d = islDecoDef(id); if(!d) return 0; return islComfortCopy(d.comfort, islDecoOwnedCount(id)); }
 window.islComfortTip = function(){
   var db = islDB(), P = islComfortParts(), c = P.val, R = islComfortRule(), h = '<h3>😊 舒適度 ' + c + ' / ' + P.max + (c >= P.max ? ' 🌟 最高!' : '') + '</h3><p>裝飾營地、小木屋家具、升級帳篷都會提高舒適度,住得舒服才有力氣。</p>' +
-    '<p style="text-align:left;font-size:15px;opacity:.9">🪴 已擺 ' + P.kinds + ' 種裝飾・⛺ 帳篷 +' + P.tent + (P.raw > P.max ? '・超過上限的 ' + (P.raw - P.max) + ' 分不再計算' : '') + '<br>💡 同一種裝飾:第 1 件全額、第 2 件算一半、第 ' + (R.dupN + 1) + ' 件起不加分——擺得越多樣越舒服!</p><p style="text-align:left;font-size:16px">', i;   /* ★ v1.335.0 */
+    '<p style="text-align:left;font-size:15px;opacity:.9">🪴 已擺 ' + P.kinds + ' 種裝飾・⛺ 帳篷 +' + P.tent + (P.dmg ? '・<span style="color:#ff9f7b">🔧 設施受損 −' + P.dmg + '</span>' : '') + (P.raw > P.max ? '・超過上限的 ' + (P.raw - P.max) + ' 分不再計算' : '') + '<br>💡 同一種裝飾:第 1 件全額、第 2 件算一半、第 ' + (R.dupN + 1) + ' 件起不加分——擺得越多樣越舒服!</p><p style="text-align:left;font-size:16px">', i;   /* ★ v1.335.0 */
   for(i = 0; i < db.COMFORT_TIERS.length; i++){ h += (c >= db.COMFORT_TIERS[i].at ? '✅ ' : '⬜ ') + db.COMFORT_TIERS[i].at + ':' + islEsc(db.COMFORT_TIERS[i].t) + '<br>'; }
   islModal(h + '</p>');
 };
@@ -28769,6 +28985,48 @@ function islSellTake(id, n){
   }
   return { n: sold, val: Math.round(val) };
 }
+/* ══ ★ v1.391.0 老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料(容易採集大量取得的)」══
+   範圍刻意收得很窄,避免學生一鍵把重要東西賣掉:
+   ①只看「物品包」(倉庫滿了才會堆在物品包,倉庫本身不動)
+   ②只賣 D.SHOP.bulkSell 清單(收購價 1 貝幣的基礎採集物)
+   ③只賣 ★ 品質——★★/★★★ 賣價是 2~3 倍、做東西還會影響成品品質,留給學生自己決定
+   一律先跳確認視窗列出要賣的東西與總價,按「賣掉」才真的扣。 */
+function islBulkSellList(){
+  var db = islDB(), L = (db.SHOP && db.SHOP.bulkSell) || [], s = ISL.bag.slots, i, j, out = [], m = {}, id;
+  for(i = 0; i < s.length; i++){
+    id = s[i].id;
+    if(s[i].q !== 1 || L.indexOf(id) < 0 || !(db.SHOP.sell[id] > 0)) continue;
+    if(!m.hasOwnProperty(id)){ m[id] = out.length; out.push({ id: id, n: 0, val: 0 }); }
+    out[m[id]].n += s[i].n;
+  }
+  for(j = 0; j < out.length; j++) out[j].val = Math.round(out[j].n * islSellUnit(out[j].id, 1));
+  out.sort(function(a, b){ return L.indexOf(a.id) - L.indexOf(b.id); });
+  return out;
+}
+function islBulkSellAsk(){
+  var L = islBulkSellList(), i, tn = 0, tv = 0, rows = '', d;
+  if(!L.length){ playSfx('sfx-cancel', 0.3); toast('物品包裡沒有可以一鍵賣的 ★ 普通材料'); return; }
+  for(i = 0; i < L.length; i++){
+    d = islItemDef(L[i].id); tn += L[i].n; tv += L[i].val;
+    rows += '<div class="isl-bulk-row">' + islItemIco(L[i].id, 40) + '<span class="nm">' + islEsc(d.n) + ' ×' + L[i].n + '</span><b>🐚 ' + L[i].val + '</b></div>';
+  }
+  islModal('<h3>💰 賣普通材料</h3><p class="isl-bulk-note">把物品包裡這些 ★ 普通材料賣給阿獺?(★★、★★★ 和倉庫裡的不會賣)</p><div class="isl-bulk-list">' + rows + '</div><p class="isl-bulk-tot">共 ' + tn + ' 個 → 🐚 +' + tv + '</p>', [
+    { t: '先不要', cls: 'ghost', cb: function(){ islBagOpen(); } },
+    { t: '賣掉', cls: 'gold', cb: function(){
+      var s = ISL.bag.slots, k, sold = 0, val = 0, ok = {}, x;
+      for(x = 0; x < L.length; x++) ok[L[x].id] = 1;
+      for(k = s.length - 1; k >= 0; k--){
+        if(s[k].q === 1 && ok.hasOwnProperty(s[k].id)){ sold += s[k].n; val += s[k].n * islSellUnit(s[k].id, 1); s.splice(k, 1); }
+      }
+      val = Math.round(val);
+      if(sold <= 0){ toast('沒有可以賣的'); islBagOpen(); return; }
+      ISL.shell += val; ISL.shop.sold += sold;
+      playSfx('sfx-coin', 0.45); try{ if(Math.random() < 0.4) islMono('trade'); }catch(_tb){}
+      toast('💰 賣出普通材料 ×' + sold + ' → 🐚+' + val);
+      islHud(); islBagOpen(); islSave('shop');
+    } }
+  ]);
+}
 window.islShopOpen = function(tab){
   var db = islDB(), S = db.SHOP, h = '', i, it, p, can, sp = islShopSpecial(), u = islImgUrl(S.npc.img), k, d, have, price, first = !ISL.flags.shopTold;
   if(!ISL) return;
@@ -29485,7 +29743,9 @@ function islHeroSkMul(){ return 1 + islAccEff('skillP') / 100; }
 function islApPay(n){
   n = n | 0; if(n <= 0) return 0;
   if(islAccEff('apSaveP') && Math.random() * 100 < islAccEff('apSaveP')){ try{ toast('❤‍🔥 巨像之心:這次沒有消耗 AP!'); }catch(_ap){} return 0; }
-  ISL.ap = Math.max(0, ISL.ap - n); return n;
+  ISL.ap = Math.max(0, ISL.ap - n);
+  try{ if(islSeaReserve() && ISL.ap <= islSeaReserve()) islSeaForceArm(); }catch(_sfa){}   /* ★ v1.392.0 外島第 2 天 AP 用到只剩回航量 ⇒ 等畫面空下來跳「該回航了」 */
+  return n;
 }
 function islAccGrant(z, quiet){
   var db = islDB(), a = db.accByZone ? db.accByZone(z) : null;
@@ -29650,6 +29910,7 @@ function islSkWpOk(n){
 function islSkReqOk(n){
   var db = islDB(), i, a, j, ok = true;
   if(!n) return false;
+  if(n.seaGate && !islSkSeaOpen()) return false;   /* ★ v1.392.0 遠洋星域:第一次出海後才開放 */
   for(i = 0; i < (n.req || []).length; i++){ if(!islSkHas(n.req[i])){ ok = false; break; } }
   if(ok && n.reqAny && n.reqAny.length){ ok = false; for(i = 0; i < n.reqAny.length; i++){ if(islSkHas(n.reqAny[i])) ok = true; } }   /* ★ v1.229.0 B5 關鍵節點:兩條分歧任一條走完即可 */
   if(ok) return true;
@@ -29695,6 +29956,7 @@ function islSkEff(key){
     n = a[i];
     if(!islSkHas(n.id) || !n.eff) continue;
     if(!islSkWpOk(n)) continue;
+    if(n.seaOnly && !(ISL && ISL.sea && ISL.sea.onSea)) continue;   /* ★ v1.392.0 遠洋星域【外島】節點:人在外島才生效 */
     if(typeof n.eff[key] === 'number') v += n.eff[key];
   }
   T = islSkTitles();
@@ -29997,6 +30259,7 @@ function islSkTap(id){
   if(n.mat) h += '<p style="font-size:15px;color:' + (islSkMatOk(n) ? '#7bed9f' : '#ff9f9f') + '">👑 精通素材:' + (sk.paid[n.id] ? '已經付過了,再點不用付' : islEsc(islSkMatText(n))) + '</p>';
   if(n.sci) h += '<p style="font-size:15px;opacity:.85">🔬 ' + islEsc(n.sci) + '</p>';
   if(islSkHas(id)) islSkPop(h + '<p style="color:#7bed9f">✅ 已點亮。</p>', back);
+  else if(n.seaGate && !islSkSeaOpen()) islSkPop(h + '<p style="color:#ff7b7b">🌊 遠洋星域要等你第一次搭帆船出海之後才會開放。</p>', back);   /* ★ v1.392.0 */
   else if(!islSkReqOk(n)) islSkPop(h + '<p style="color:#ff7b7b">還不能點:要先點亮前面的節點。</p>', back);
   else if(islSkGrpTaken(n)) islSkPop(h + '<p style="color:#ff7b7b">你已經走了「' + islEsc(islSkGrpTaken(n).n) + '」這條路線。想改走這一條,要先洗點。</p>', back);
   else if(islSkPts() <= 0) islSkPop(h + '<p style="color:#ff7b7b">天賦點不夠了(每打贏 ' + ISL_SK_KILL_PER + ' 隻魔物 +1、每過 ' + ISL_SK_DAY_PER + ' 個島上日 +1、首次打倒頭目 +2)。</p>', back);
@@ -30042,7 +30305,10 @@ var ISL_AIL_CURE = {
   snakebite: { cost: { herb: 1 },             t: '嚼碎草藥外敷並保持安靜不亂動' },
   burn:      { cost: { water: 1, leaf: 1 },   t: '先用淡水沖,再用乾淨的大葉蓋住' },
   cold:      { fire: true,                    t: '在點著的營火旁烤暖、換上乾衣服' },
-  infect:    { cost: { herb: 1, water: 1 },   t: '把傷口徹底洗乾淨,再敷上草藥' }
+  infect:    { cost: { herb: 1, water: 1 },   t: '把傷口徹底洗乾淨,再敷上草藥' },
+  fever:     { cost: { herb: 1, water: 1 },   t: '多喝乾淨的水,用草藥退燒,好好休息' },   /* ★ v1.392.0 外島露宿(雨林) */
+  chill:     { cost: { water: 1, fiber: 1 },  t: '喝點溫水,用乾的纖維毯把身體裹起來' },   /* ★ v1.392.0 外島露宿(風暴島) */
+  earache:   { cost: { water: 1 },            t: '慢慢吞口水、捏住鼻子輕輕鼓氣,平衡耳壓' }   /* ★ v1.392.0 外島露宿(海底洞穴) */
 };
 /* ★ v1.161.0 天賦星域與不良狀態的交叉點：
    D.STATUS 每一種本來就寫了 cure:[節點 id]（止血包紮/解毒劑/熱食/進階解毒劑）。
@@ -32560,6 +32826,7 @@ function islBossWake(z){
 function islBossChallenge(z, si){
   var db = islDB(), R = db.BOSS_RULE, b = db.bossByZone(z), poi = null, i;
   if(ISL.ap < R.ap){ toast('⚡ AP 不夠(挑戰頭目要 ⚡' + R.ap + ')'); return; }
+  if(islSeaApBlock(R.ap)) return;   /* ★ v1.392.0 */
   if(ISL.hp <= 0){ toast('❤️ 體力歸零了,先回營地治療'); return; }
   islApPay(R.ap); islHud();
   for(i = 0; i < (_IS.pois || []).length; i++){ if(_IS.pois[i].kind === 'lair') poi = _IS.pois[i]; }

@@ -23,7 +23,8 @@
   if(!D || D.SEA) return;
   var _imgKeys0 = {}, _k0;
   for(_k0 in D.IMG){ if(D.IMG.hasOwnProperty(_k0)) _imgKeys0[_k0] = 1; }
-  D.SEA_VER = 'v1.384.0';   /* ★ v1.384.0 外島夥伴與島主新機制(見檔頭);★ v1.378.0 外島篇主線 c9~c13 + 4 位說話者(檔尾 v1.378.0 區塊);終章最後一句改「本島篇完結」 */
+  D.SEA_VER = 'v1.392.0';   /* ★ v1.392.0 外島 AP/紮營過夜/露宿不良狀態(D.SEA.CAMP、D.STATUS fever/chill/earache)+ 🌊 遠洋星域 21 節點(檔尾 v1.392.0 區塊) */
+  void 'v1.384.0';   /* ★ v1.384.0 外島夥伴與島主新機制(見檔頭);★ v1.378.0 外島篇主線 c9~c13 + 4 位說話者(檔尾 v1.378.0 區塊);終章最後一句改「本島篇完結」 */
 
   /* ══════════════════════════════════════════════════════════════════════════
    * ★ v1.368.0(2026-10-01・老師《荒島出海探險設計書 v0.2》第一包:資料層)
@@ -1779,6 +1780,83 @@
     for(i = 0; i < L.length; i++) L[i]._ord = i;
     L.sort(function(a, b){ var d = vn(b.v) - vn(a.v); return d ? d : a._ord - b._ord; });
     for(i = 0; i < L.length; i++) delete L[i]._ord;
+  })();
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * ★ v1.392.0(2026-10-09・老師「外島探索出海及回島各消耗 3AP,不足無法出航。在外島可以紮營過夜,但根據不同島會發生不同的
+   *   健康損害,系統要保證玩家必須保留至少 3AP 在遊戲時間的第二天強制回本島。天賦星盤新增更豐富適應外島地圖的分支。」
+   *   老師裁定全部選甲:①第二天 AP 剩 3 時強制回航 ②每島專屬不良狀態 + 體力 −20%,穿該島環境防具減半
+   *   ③露宿隔天 AP 只回一半 ④人在外島時本島照常換日但不會夜襲 ⑤遠洋星域不做「航行 AP 減少」;每天只能出海一次維持。
+   *   index 端出口:islSeaBoatAsk / islSeaCampNight / islSeaNightHarm / islSeaReturnGo / islSeaApBlock / islSeaForceTry。
+   * ══════════════════════════════════════════════════════════════════════════ */
+  D.SEA.CAMP = {
+    sailAp: 3,          /* 出航扣 AP(不夠就不能出航) */
+    backAp: 3,          /* 回航扣 AP(第 1 天不夠就只能紮營過夜) */
+    reserve: 3,         /* 第 2 天一定要保留的 AP;剩這麼多時強制回航 */
+    apRefill: 0.5,      /* 露宿隔天 AP 回到上限的幾成(至少 reserve) */
+    hpP: 20,            /* 露宿體力扣上限的 % */
+    gearMul: 0.5,       /* 穿著該島環境防具:體力扣減、生病機率都 ×0.5 */
+    ail: { ice:'cold', jungle:'fever', storm:'chill', deep:'earache' },
+    gear: { ice:'qiviutcoat', jungle:'junglesuit', storm:'stormcoat', deep:'divesuit' },
+    nightKey: { ice:'nightIceP', jungle:'nightJungleP', storm:'nightStormP', deep:'nightDeepP' },
+    txt: { ice:'雪地的夜晚冷得刺骨,帳篷外的風呼呼地吹……', jungle:'雨林的夜裡又濕又悶,蚊子在耳邊嗡嗡叫了一整晚……',
+           storm:'半夜下起暴雨,帳篷被風吹得啪啪響,衣服全淋濕了……', deep:'在海蝕洞的氣室裡過夜,潮水一漲一退,耳朵一直悶悶的……' }
+  };
+  D.SEA.BOAT.label = '帆船(回航/紮營)';
+  /* 三種外島露宿的不良狀態(冰天雪地島沿用既有「🥶 失溫」) */
+  D.STATUS.fever   = { n:'蚊蟲叮咬發燒', e:'🦟', days:2, d:'攻擊/防禦/速度 −10%,戰鬥每回合 −1 體力', from:'在熱帶雨林島露宿', allMul:0.9, dot:1, cure:['SK_SEA_JG_3'], cureN:'雨林醫生',
+                       sci:'熱帶的斑蚊會傳染登革熱;穿長袖、掛蚊帳、把積水的容器倒乾淨,是最有效的防蚊方法。' };
+  D.STATUS.chill   = { n:'淋雨著涼', e:'🤧', days:2, d:'速度 −15%,瞄準甜蜜點縮小 10%', from:'在狂風暴雨島露宿', spdMul:0.85, hitMul:0.9, cure:['SK_SEA_ST_3'], cureN:'暴風行者',
+                       sci:'濕衣服貼在身上,水分蒸發時會一直帶走體溫;淋雨後要盡快擦乾、換上乾衣服。' };
+  D.STATUS.earache = { n:'耳壓痛', e:'👂', days:1, d:'頭暈耳鳴,瞄準甜蜜點縮小 20%', from:'在海底洞穴露宿', hitMul:0.8, cure:['SK_SEA_DP_3'], cureN:'耳壓平衡',
+                       sci:'越往深處水壓越大,會把耳膜往內壓;潛水員下潛時會捏住鼻子輕輕鼓氣,讓耳朵裡外的壓力一樣。' };
+  D.STATUS_ORDER.push('fever', 'chill', 'earache');
+  if(D.STATUS.cold && D.STATUS.cold.cure) D.STATUS.cold.cure.push('SK_SEA_ICE_3');
+
+  /* ── 🌊 遠洋星域(第 10 條星域,ang 90 = 正下方,夾在 特殊指令 67.5° 與 長槍 112.5° 中間) ──
+     seaGate:第一次出海後才能點(index islSkReqOk);seaOnly:只有人在外島(ISL.sea.onSea)時才生效(index islSkEff),
+     所以這條可以放心借用全島共用的 atkP/defP/gatherP/luckP 等效果鍵,不會在本島變強。
+     新效果鍵(index 消費點):tempCutP/waterCutP/oxyCutP(環境計量條消耗)、gustCutP(被陣風吹走距離)、boltCutP(落雷傷害)、
+     seaNightCutP(露宿損害,全島)、nightIceP/nightJungleP/nightStormP/nightDeepP(該島露宿損害)。
+     ⚠ 刻意沒有任何「航行 AP 減少」(老師裁定甲:保留 3 AP 回航規則的意義)。 */
+  D.SK_GALAXY.push({ k:'sea', n:'遠洋星域', e:'🌊', c:'#4fc3f7', ang:90 });
+  (function(){
+    var N = [
+      { id:'SK_CORE_SEA', g:'core', n:'航海之心', e:'⛵', req:[], pr:300, pa:90, seaGate:1, seaOnly:1, d:'【外島】採集額外產出機率 +5%、探索度增加 +10%(遠洋星域從這裡出發;第一次出海後開放)', eff:{ gatherP:5, exploreP:10 } },
+      { id:'SK_SEA_L1', g:'sea', req:['SK_CORE_SEA'], u:400, v:0, seaGate:1, seaOnly:1, n:'海風Ⅰ', e:'🌬', d:'【外島】攻擊 +2%', eff:{ atkP:2 } },
+      { id:'SK_SEA_1', g:'sea', req:['SK_SEA_L1'], u:495, v:0, seaGate:1, n:'露宿達人', e:'⛺', d:'在外島紮營過夜的健康損害(體力扣減、生病機率)−25%', eff:{ seaNightCutP:25 },
+        sci:'野外紮營要選地勢高、背風、離水邊有點距離的地方,半夜下雨才不會淹水,也比較不會被風吹垮。' },
+      { id:'SK_SEA_L2', g:'sea', req:['SK_SEA_1'], u:590, v:0, seaGate:1, seaOnly:1, n:'海風Ⅱ', e:'🛡', d:'【外島】防禦 +2%', eff:{ defP:2 } },
+      { id:'SK_SEA_2', g:'sea', req:['SK_SEA_L2'], u:685, v:0, seaGate:1, n:'遠洋基本功', e:'🧭', d:'四座外島的環境負擔 −10%(體溫/水分/氧氣消耗、被陣風吹走的距離、落雷傷害)', eff:{ tempCutP:10, waterCutP:10, oxyCutP:10, gustCutP:10, boltCutP:10 } },
+      { id:'SK_SEA_L3', g:'sea', req:['SK_SEA_2'], u:840, v:0, seaGate:1, seaOnly:1, n:'遠航Ⅰ', e:'🍀', d:'【外島】稀有掉落率 +2%', eff:{ luckP:2 } },
+      /* 四島支線(彼此不互斥,想點幾條都可以;從 u 1000 才分岔,避開兩側 特殊指令/長槍 星域的延伸節點) */
+      { id:'SK_SEA_ICE_1', g:'sea', req:['SK_SEA_L3'], u:1000, v:-165, seaGate:1, n:'抗寒Ⅰ', e:'🧣', d:'冰天雪地島:體溫消耗 −15%', eff:{ tempCutP:15 } },
+      { id:'SK_SEA_ICE_2', g:'sea', req:['SK_SEA_ICE_1'], u:1095, v:-165, seaGate:1, n:'雪洞過夜', e:'🏔', d:'在冰天雪地島露宿的損害再 −50%', eff:{ nightIceP:50 },
+        sci:'雪裡面藏著很多空氣,是很好的隔熱材料;北極的因紐特人用雪塊蓋的冰屋,裡面可以比外面暖和二三十度。' },
+      { id:'SK_SEA_ICE_3', g:'sea', req:['SK_SEA_ICE_2'], u:1190, v:-165, seaGate:1, n:'凍原求生', e:'🔥', d:'體溫消耗再 −15%;🥶 失溫不用材料也能直接處理', eff:{ tempCutP:15 } },
+      { id:'SK_SEA_JG_1', g:'sea', req:['SK_SEA_L3'], u:1000, v:-55, seaGate:1, n:'保水Ⅰ', e:'💧', d:'熱帶雨林島:水分消耗 −15%', eff:{ waterCutP:15 } },
+      { id:'SK_SEA_JG_2', g:'sea', req:['SK_SEA_JG_1'], u:1095, v:-55, seaGate:1, n:'吊床蚊帳', e:'🕸', d:'在熱帶雨林島露宿的損害再 −50%', eff:{ nightJungleP:50 },
+        sci:'雨林的地面潮濕又有很多蟲,把吊床綁在兩棵樹之間睡、再掛上蚊帳,可以同時避開濕氣和蚊子。' },
+      { id:'SK_SEA_JG_3', g:'sea', req:['SK_SEA_JG_2'], u:1190, v:-55, seaGate:1, n:'雨林醫生', e:'🌿', d:'水分消耗再 −15%;🦟 蚊蟲叮咬發燒不用材料也能直接處理', eff:{ waterCutP:15 } },
+      { id:'SK_SEA_ST_1', g:'sea', req:['SK_SEA_L3'], u:1000, v:55, seaGate:1, n:'站穩Ⅰ', e:'🪨', d:'狂風暴雨島:被陣風吹走的距離 −25%、落雷傷害 −25%', eff:{ gustCutP:25, boltCutP:25 } },
+      { id:'SK_SEA_ST_2', g:'sea', req:['SK_SEA_ST_1'], u:1095, v:55, seaGate:1, n:'避風營地', e:'⛺', d:'在狂風暴雨島露宿的損害再 −50%', eff:{ nightStormP:50 },
+        sci:'帳篷要搭在大岩石的「背風面」,讓岩石替你擋風;帳篷的營釘要斜斜地往外打,才不會被風拔起來。' },
+      { id:'SK_SEA_ST_3', g:'sea', req:['SK_SEA_ST_2'], u:1190, v:55, seaGate:1, n:'暴風行者', e:'⚡', d:'陣風距離與落雷傷害再 −25%;🤧 淋雨著涼不用材料也能直接處理', eff:{ gustCutP:25, boltCutP:25 } },
+      { id:'SK_SEA_DP_1', g:'sea', req:['SK_SEA_L3'], u:1000, v:165, seaGate:1, n:'閉氣Ⅰ', e:'🫧', d:'海底洞穴:氧氣消耗 −15%', eff:{ oxyCutP:15 } },
+      { id:'SK_SEA_DP_2', g:'sea', req:['SK_SEA_DP_1'], u:1095, v:165, seaGate:1, n:'岩洞氣室', e:'🫙', d:'在海底洞穴露宿的損害再 −50%', eff:{ nightDeepP:50 },
+        sci:'有些海蝕洞的頂部會困住一團空氣,形成「氣室」;潛水員受困時,可以在氣室裡呼吸、休息,等待救援。' },
+      { id:'SK_SEA_DP_3', g:'sea', req:['SK_SEA_DP_2'], u:1190, v:165, seaGate:1, n:'耳壓平衡', e:'👂', d:'氧氣消耗再 −15%;👂 耳壓痛不用材料也能直接處理', eff:{ oxyCutP:15 } },
+      { id:'SK_SEA_KEY', g:'sea', key:true, reqAny:['SK_SEA_ICE_3','SK_SEA_JG_3','SK_SEA_ST_3','SK_SEA_DP_3'], u:1285, v:0, seaGate:1, seaOnly:1, n:'大航海家', e:'🌟', d:'★關鍵節點(四條支線任一條走完就能點)【外島】攻擊/防禦 +8%、稀有掉落率 +10%', eff:{ atkP:8, defP:8, luckP:10 } },
+      { id:'SK_SEA_L5', g:'sea', req:['SK_SEA_KEY'], u:1380, v:0, seaGate:1, seaOnly:1, n:'海神庇佑', e:'🐋', d:'【外島】採集額外產出機率 +5%、暴擊率 +3%', eff:{ gatherP:5, critC:3 } },
+      { id:'SK_SEA_M', g:'sea', mst:true, req:['SK_SEA_L5'], mat:{ core_mammoth:1, core_treespirit:1, core_hurricane:1, core_giantsquid:1 }, u:1475, v:0, seaGate:1, n:'四海之主', e:'👑',
+        d:'【精通】露宿損害再 −25%;四座外島的環境負擔再 −10%。(點亮要四座外島島主的核心各 1 個)', eff:{ seaNightCutP:25, tempCutP:10, waterCutP:10, oxyCutP:10, gustCutP:10, boltCutP:10 } }
+    ], C = D.SK_CANVAS, i, n, a = 90 * Math.PI / 180, cs = Math.cos(a), sn = Math.sin(a), pa;
+    for(i = 0; i < N.length; i++){
+      n = N[i];
+      if(typeof n.pr === 'number'){ pa = n.pa * Math.PI / 180; n.x = Math.round(C.cx + n.pr * Math.cos(pa)); n.y = Math.round(C.cy + n.pr * Math.sin(pa)); }
+      else { n.x = Math.round(C.cx + n.u * cs - n.v * sn); n.y = Math.round(C.cy + n.u * sn + n.v * cs); }
+      D.SK_NODES.push(n);
+    }
   })();
 
   /* 本檔新增的圖鍵全部列為選配:圖還沒上傳前「完整下載」不會因此算失敗(index 端 islInstallUrls 讀 D.SEA_IMG) */
