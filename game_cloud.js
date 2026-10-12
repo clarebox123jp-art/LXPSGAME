@@ -18563,6 +18563,23 @@
           }
         }catch(_eHo){}
         const _isAutoRestore = !_activeThisPage && !_pendingRedirect && !_intentionalReload && !_appHandoff;   // ★ v5.175.0（舊:尾端沒有 && !_appHandoff）
+        // ★★ v5.248.0(2026-10-12・老師「週五沒登出的平板,週一直接登進上週那位的帳號」+「不可再被下一個使用者免輸入密碼登入」)★★
+        //   App 被 iOS 關掉、週一重開 ⇒ Firebase 從 IndexedDB 還原上一位的 token。
+        //   裝置層 lxps_idle_last({uid,t},game_adv.js 閒置模組 + 小遊戲共同寫入)記著這個帳號最後一次真的有人操作的時間;
+        //   **同一個帳號 + 已超過 30 分鐘** ⇒ 這次還原一律當成陌生人:不吃信任裝置倒數放行,
+        //   連自家 reload／跨程式交接鑰匙也不放行(那兩把鑰匙只有幾十秒效期,本來就不可能合法跨越 30 分鐘)。
+        //   ⚠ 只看「不是本頁主動登入、也不是 redirect 登入回程」的情境:學生剛剛自己按登入,舊紀錄當然是舊的,不能誤擋。
+        let _idleExpiredRestore = false;
+        try{
+          if(!_activeThisPage && !_pendingRedirect && user && user.uid){
+            const _il = JSON.parse(localStorage.getItem('lxps_idle_last') || 'null');
+            if(_il && _il.uid === user.uid && (Date.now() - (Number(_il.t) || 0)) >= 30 * 60 * 1000){
+              _idleExpiredRestore = true;
+              console.warn('[閒置逾時守門 v5.248.0] 此帳號上次操作已超過 30 分鐘 → 不放行自動還原(含信任裝置),要求重新登入');
+              try{ _fbDiag('idleExpiredRestore:上次操作逾 30 分鐘,拒絕自動還原', 'warn'); }catch(_){}
+            }
+          }
+        }catch(_eIdleX){}
         if(_appHandoff){
           console.log('[跨程式交接 v5.175.0] 偵測到小遊戲 ⇄ 大對抗 的自家導航鑰匙(uid 相符、120 秒內、已消費),放行本次登入(不視為共用裝置自動還原)');
           window._lxpsActiveSignInThisPageload = true;
@@ -18636,6 +18653,7 @@
           }
         }catch(_eBlk){}
         if(_LXPS_DEVICE_TRUST_AUTOLOGIN && !_deviceTrustBlocked && !_justLoggedOut
+           && !_idleExpiredRestore   // ★ v5.248.0 閒置逾時的帳號,信任裝置也不放行
            && _isAutoRestore && !_bypassAutoLoginBlock
            && window._lxpsDeviceTrust
            && ((typeof window._lxpsDeviceTrust.trustModeOk === 'function' && window._lxpsDeviceTrust.trustModeOk())   // ★ v5.148.0 不限安裝版
@@ -18693,7 +18711,9 @@
           }
         }
 
-        if(_isAutoRestore && !_bypassAutoLoginBlock && !_isDeviceTrusted){
+        if((_isAutoRestore || _idleExpiredRestore) && !_bypassAutoLoginBlock && !_isDeviceTrusted){   // ★ v5.248.0 加 || _idleExpiredRestore
+          // ★ v5.248.0 — 上面自家 reload／交接鑰匙分支可能已把本頁標成「主動登入」;逾時情境要撤回,不留後門
+          if(_idleExpiredRestore){ try{ window._lxpsActiveSignInThisPageload = false; }catch(_){} }
           console.warn('[禁止自動登入 v3.10.1] 偵測到 Firebase 自動還原 token,' +
             'email=' + (user.email || '?') + ' → 強制登出,要求重新登入');
           // ★ v5.245.0 — 只登出「這一輪的殘留帳號」;若在這之前已有人(B)主動登入,目前登入者就不是殘留帳號,絕不能登出

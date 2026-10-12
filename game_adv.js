@@ -25330,14 +25330,41 @@ window._clearAccountLocalData = function(reason){
   console.log('🧹 [換帳號清理] 已清除 ' + _removed + ' 筆全域 localStorage(原因:' + reason + ')');
 };
 
+// ════════════════════════════════════════════════════════════════════════════
+// ★★ v5.248.0(2026-10-12・老師回報「上週五沒登出的平板，週一下午直接登進上週那位學生的帳號」)★★
+//   老師需求原話:「只要遊玩30分鐘沒有繼續按確認遊玩就應該強制登出，且不可再被下一個使用者免輸入密碼登入」
+//   【實查根因,四個洞疊在一起】
+//   ① 30 分鐘到了只彈確認視窗、**永遠等**(先前某輪改成「沒經過確認絕不登出」)⇒ 沒人按就永遠登入著。
+//   ② 視窗本身擋不住觸碰:document 的 capture 監聽比視窗自己的 capture 先跑,
+//      所以點視窗任何地方都先被 _markActivity 當成「使用者活動」⇒ 視窗被關掉、計時歸零。
+//      ⇒ 週一第一位碰平板的學生,手指一按就直接接手上週五那位的帳號。
+//   ③ iPad 睡眠時 setInterval 整個凍結,醒來後第一下觸碰比計時器先到 ⇒ 睡了三天也被當成「剛剛有操作」。
+//   ④ 戰鬥中每秒把「最後操作時間」刷成現在 ⇒ 停在戰鬥畫面的平板永遠不會逾時。
+//   【本輪修法】
+//   ・30 分鐘無操作 → 彈確認視窗並倒數 60 秒;沒按「✅ 我還在 繼續遊戲」就強制存檔+登出+重整。
+//   ・已經超過「30 分鐘+60 秒」(含睡眠/關螢幕跨夜)→ 不給確認機會,醒來當下直接登出。
+//   ・視窗內的觸碰一律不算活動;超過門檻後的第一下觸碰也不能把時間救回來(而且會被吃掉,不會點到遊戲)。
+//   ・回到前景(visibilitychange/pageshow/focus)立刻判定一次,不等下一個 tick。
+//   ・戰鬥中不再豁免(戰鬥快照照舊在登出前先存,進度不會掉 —— 這正是當初加豁免要保護的東西)。
+//   ・登出流程:先蓋全螢幕遮罩擋住下一位 → 存檔(每段最多等 8 秒,離線也不會卡住不登出)→
+//     signOut(含刪 Auth IndexedDB)→ 寫 lxps_just_logged_out(重整後信任裝置不得放行)→ 重整。
+//   ・裝置層紀錄 `lxps_idle_last`({uid,t}):App 被系統關掉再開時,game_cloud.js onAuth 讀它,
+//     同一個帳號上次活動已超過 30 分鐘 ⇒ 不吃信任裝置/任何放行,強制重新登入(見 game_cloud.js 同版號註解)。
+//     小遊戲/荒島也讀寫同一個 key(同源)。
+//   ⚠ GM 信任裝置免閒置登出(v3.16.32)維持不變。
+// ════════════════════════════════════════════════════════════════════════════
 (function(){
   const IDLE_TIMEOUT_MS    = 30 * 60 * 1000; // 30 分鐘(v6542 從 5 分鐘調整為 30 分鐘)
-  const WARNING_BEFORE_MS  = 30 * 1000;       // 舊倒數秒數，本輪改為無時限等待確認後不再被消費，保留常數供未來參考
+  const CONFIRM_MS         = 60 * 1000;       // ★ v5.248.0 確認視窗倒數:60 秒沒按「繼續遊戲」就強制登出
+  const SLEEP_GAP_MS       = 15 * 1000;       // ★ v5.248.0 兩次 tick 間隔超過這個 = 裝置睡過(計時器被凍結)
   const TICK_MS            = 1000;            // 每秒檢查
   // ★ v3.14.7 — 持久化 localStorage key(per-uid),跨 reload/JS context 回收仍能算真實 elapsed
   const LS_KEY_PREFIX      = 'lxps_idle_ts_'; // 完整 key = LS_KEY_PREFIX + uid
+  const LS_GLOBAL_KEY      = 'lxps_idle_last';// ★ v5.248.0 裝置層 {uid,t}(index.html 白名單 + 小遊戲共用)
   const LS_FLUSH_INTERVAL  = 60 * 1000;       // 節流:最多每 60 秒寫一次 localStorage
   let   _lastActivityTs    = Date.now();
+  let   _lastTickTs        = 0;     // ★ v5.248.0 上一次 tick 的時間(偵測睡眠)
+  let   _loggingOut        = false; // ★ v5.248.0 登出流程進行中(防重入)
   let   _tickHandle        = null;
   let   _warningShown      = false;
   let   _isStopped         = true;
@@ -25353,17 +25380,28 @@ window._clearAccountLocalData = function(reason){
     if(!force && (now - _lsLastFlushTs) < LS_FLUSH_INTERVAL) return;
     try{
       localStorage.setItem(LS_KEY_PREFIX + _currentUid, String(_lastActivityTs));
+      localStorage.setItem(LS_GLOBAL_KEY, JSON.stringify({ uid: _currentUid, t: _lastActivityTs }));   // ★ v5.248.0
       _lsLastFlushTs = now;
     }catch(_){}
   }
 
   // 任何使用者操作都呼叫此函式
-  function _markActivity(){
-    _lastActivityTs = _now();
-    // 若倒數視窗開著,使用者卻是在「視窗外」操作 → 視為要繼續玩,關掉視窗
-    if(_warningShown){
-      _closeWarning('user_active');
+  function _markActivity(e){
+    // ★ v5.248.0 — 確認視窗裡的觸碰不算活動(舊版:點視窗任何地方都會先跑到這裡,把視窗關掉、計時歸零)
+    try{
+      const _w = document.getElementById('_idle-logout-warn');
+      if(_w && e && e.target && _w.contains(e.target)) return;
+    }catch(_){}
+    if(_isStopped || _loggingOut) return;
+    // ★ v5.248.0 — 已經超過門檻(典型:睡了一整個週末,醒來第一下觸碰比計時器先到)⇒
+    //   這一下不能把時間救回來,也不能點到後面的遊戲;交給 _tick 判定(彈確認或直接登出)。
+    if(_now() - _lastActivityTs >= IDLE_TIMEOUT_MS){
+      try{ if(e && e.cancelable) e.preventDefault(); }catch(_){}
+      try{ if(e) e.stopPropagation(); }catch(_){}
+      _tick();
+      return;
     }
+    _lastActivityTs = _now();
     _flushToStorage(false); // 節流寫 localStorage
   }
 
@@ -25391,11 +25429,13 @@ window._clearAccountLocalData = function(reason){
     const pop = document.createElement('div');
     pop.id = '_idle-logout-warn';
     // 用 capture-phase 攔在最上層,並阻擋事件向下傳遞,使「彈窗外不被當作活動」
+    // ★ v5.248.0 — 三平台(手機橫向 411 高／iPad／PC)尺寸一律用 clamp 隨視窗高度縮放,
+    //   卡片 max-height + overflow-y:auto、外層 align-items:safe center(對話框溢出慣例,按鈕永遠點得到)
     pop.style.cssText =
-      'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.85);' +
-      'display:flex;align-items:center;justify-content:center;' +
+      'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.88);' +
+      'display:flex;align-items:safe center;justify-content:center;padding:12px;box-sizing:border-box;' +
       'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-    // 彈窗自己的點擊不算「使用者活動」(否則永遠不會登出) — 但「繼續遊戲」按鈕仍要能按
+    // 彈窗自己的點擊不算「使用者活動」(★ v5.248.0 真正的判斷在 _markActivity 開頭的 contains 檢查)
     pop.addEventListener('mousedown',  function(e){ e.stopPropagation(); }, true);
     pop.addEventListener('touchstart', function(e){ e.stopPropagation(); }, true);
     pop.addEventListener('pointerdown',function(e){ e.stopPropagation(); }, true);
@@ -25404,27 +25444,32 @@ window._clearAccountLocalData = function(reason){
     card.style.cssText =
       'background:linear-gradient(135deg,#1a0820,#0d0515);' +
       'border:3px solid #ffaa44;border-radius:24px;' +
-      'padding:40px 48px;max-width:min(92vw,520px);text-align:center;' +
+      'padding:clamp(14px,4vh,40px) clamp(16px,4vw,48px);max-width:min(92vw,560px);' +
+      'max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;text-align:center;' +
       'box-shadow:0 0 50px rgba(255,170,68,0.45);';
     card.innerHTML =
-      '<div style="font-size:60px;margin-bottom:14px;">⏰</div>' +
-      '<div style="font-size:28px;font-weight:900;color:#ffaa44;margin-bottom:10px;">你已經閒置超過 30 分鐘</div>' +
-      '<div style="font-size:18px;color:#ccc;line-height:1.6;margin-bottom:24px;">' +
-        '為了保護你的帳號(尤其是和同學共用裝置時),<br>請告訴我們：要繼續遊戲，還是先存檔登出休息一下？</div>' +
-      '<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">' +
-        '<button id="_idle-stay-btn" style="padding:14px 36px;font-size:22px;font-weight:900;' +
+      '<div style="font-size:clamp(30px,8vh,60px);margin-bottom:clamp(4px,1.4vh,14px);">⏰</div>' +
+      '<div style="font-size:clamp(19px,4.6vh,28px);font-weight:900;color:#ffaa44;margin-bottom:clamp(4px,1.2vh,10px);">你已經 30 分鐘沒有操作了</div>' +
+      '<div style="font-size:clamp(14px,3.2vh,18px);color:#ccc;line-height:1.55;margin-bottom:clamp(8px,2.4vh,20px);">' +
+        '為了保護帳號(共用平板),<br>' +
+        '<b id="_idle-logout-countdown" style="color:#ffdd66;font-size:1.35em;">60</b> 秒內沒按「繼續遊戲」就會<b style="color:#ff9988;">自動存檔並登出</b>。</div>' +
+      '<div style="display:flex;gap:clamp(8px,1.6vh,14px);justify-content:center;flex-wrap:wrap;">' +
+        '<button id="_idle-stay-btn" style="padding:clamp(8px,2vh,14px) clamp(18px,3vw,36px);font-size:clamp(17px,3.8vh,22px);font-weight:900;' +
           'background:linear-gradient(135deg,rgba(80,200,120,0.3),rgba(40,160,80,0.3));' +
           'border:2px solid #66cc88;color:#aaffcc;border-radius:14px;cursor:pointer;">✅ 我還在 繼續遊戲</button>' +
-        '<button id="_idle-logout-now-btn" style="padding:14px 36px;font-size:18px;font-weight:800;' +
+        '<button id="_idle-logout-now-btn" style="padding:clamp(8px,2vh,14px) clamp(18px,3vw,36px);font-size:clamp(15px,3.2vh,18px);font-weight:800;' +
           'background:rgba(60,60,80,0.5);border:2px solid #7788aa;color:#cdd8ff;border-radius:14px;cursor:pointer;">💾 存檔並登出休息</button>' +
-      '</div>' +
-      '<div style="font-size:11px;color:#555;margin-top:14px;opacity:0.6;">v6531</div>';
+      '</div>';
     pop.appendChild(card);
     document.body.appendChild(pop);
 
     document.getElementById('_idle-stay-btn').onclick = function(){
+      // ★ v5.248.0 — 倒數已到(或裝置剛睡醒、計時器還沒跑到)就不准再按繼續,直接走登出
+      if(_loggingOut) return;
+      if(_now() - _lastActivityTs >= IDLE_TIMEOUT_MS + CONFIRM_MS){ _doAutoLogout('idle_confirm_too_late'); return; }
       _closeWarning('stay_button');
       _lastActivityTs = _now();
+      _flushToStorage(true);
     };
     document.getElementById('_idle-logout-now-btn').onclick = function(){
       _closeWarning('logout_now_button');
@@ -25438,105 +25483,128 @@ window._clearAccountLocalData = function(reason){
     if(el) el.remove();
   }
 
-  // ★ 本輪起不再呼叫（新版彈窗不設倒數，見 _tick／_showWarning 註解），保留函式供未來參考
+  // ★ v5.248.0 — 重新啟用:確認視窗 60 秒倒數(每個 tick 更新)
   function _updateCountdownDisplay(secLeft){
     const el = document.getElementById('_idle-logout-countdown');
     if(el) el.textContent = String(Math.max(0, secLeft));
   }
 
+  // ★ v5.248.0 — 任一段存檔/登出最多等 ms 毫秒(週一喚醒時 wifi 常常還沒連上,不能讓「存檔卡住」變成「永遠不登出」)
+  function _withTimeout(p, ms){
+    return Promise.race([ Promise.resolve(p), new Promise(function(r){ setTimeout(function(){ r('__timeout__'); }, ms); }) ]);
+  }
+
   async function _doAutoLogout(reason){
+    if(_loggingOut) return;      // ★ v5.248.0 防重入(tick 與觸碰可能同時觸發)
+    _loggingOut = true;
     console.log('🚪 [閒置自動登出] 觸發,原因:' + reason);
     _closeWarning('auto_logout');
+    // ★ v5.248.0 — 第 1 步就蓋上全螢幕遮罩:存檔要好幾秒,這段期間下一位同學不能碰到上一位的帳號
+    let _doneMsg = null;
+    try {
+      const old = document.getElementById('_idle-logout-done');
+      if(old) old.remove();
+      const pop = document.createElement('div');
+      pop.id = '_idle-logout-done';
+      pop.style.cssText =
+        'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,0.94);' +
+        'display:flex;align-items:safe center;justify-content:center;padding:12px;box-sizing:border-box;' +
+        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+      const _block = function(e){ try{ e.stopPropagation(); if(e.cancelable) e.preventDefault(); }catch(_){} };
+      ['touchstart','touchend','mousedown','mouseup','pointerdown','pointerup','click','keydown'].forEach(function(t){
+        pop.addEventListener(t, _block, true);
+      });
+      pop.innerHTML =
+        '<div style="background:linear-gradient(135deg,#0a0e20,#060810);' +
+          'border:3px solid #88aaff;border-radius:24px;' +
+          'padding:clamp(14px,4vh,40px) clamp(16px,4vw,48px);max-width:min(92vw,520px);' +
+          'max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;text-align:center;' +
+          'box-shadow:0 0 50px rgba(80,140,255,0.4);">' +
+          '<div style="font-size:clamp(30px,8vh,60px);margin-bottom:clamp(4px,1.4vh,14px);">⏰</div>' +
+          '<div style="font-size:clamp(19px,4.6vh,28px);font-weight:900;color:#aaccff;margin-bottom:clamp(6px,1.4vh,14px);">閒置太久，自動登出</div>' +
+          '<div id="_idle-logout-done-msg" style="font-size:clamp(14px,3.2vh,17px);color:#ccc;line-height:1.7;">' +
+            '正在存檔並登出，請稍候…<br>完成後會回到首頁，要玩請重新登入自己的帳號。' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(pop);
+      _doneMsg = document.getElementById('_idle-logout-done-msg');
+    } catch(_){}
     window._idleAutoLogoutStop();
     // ★ v3.15.0 — 老師回報修正:自動登出後清除本機「上次活躍時間戳」,
     //   否則玩家重新登入時 _idleAutoLogoutStart 又讀到 >30 分鐘的舊戳記 →
     //   立刻再被判定 stale_session 二次登出(同一視窗連跳兩次)。清掉即可讓重新登入乾淨計時。
+    //   ★ v5.248.0 — 裝置層 lxps_idle_last 刻意「不清」:它記著這個帳號已經逾時,
+    //     重整/App 重開時 onAuth 會據此拒絕自動還原(重新登入時 _idleAutoLogoutStart 會覆寫成新的)。
     try{
       const _luid = _currentUid || window._gUserId;
       if(_luid) localStorage.removeItem(LS_KEY_PREFIX + _luid);
+    }catch(_){}
+    // ★ v5.248.0 — 重整後的那次 onAuth 一律不吃「信任裝置」放行(同 _showLogoutPin 的登出慣例,v5.137.0)
+    try{ sessionStorage.setItem('lxps_just_logged_out', String(Date.now())); }catch(_){}
+    // ★ v5.248.0 — 清共用登入快速鈕戳記,不把這個帳號留給下一位(同 v5.166.0 攔截器收尾)
+    try{
+      localStorage.removeItem('lxps_shared_login_ts');
+      localStorage.removeItem('lxps_shared_login_uid');
+      localStorage.removeItem('lxps_shared_login_email');
     }catch(_){}
     try {
       // ★ v3.5.16 — 先強制存戰鬥快照(若有的話),確保下次登入能續戰
       if(typeof window._forceSaveBattleSnapshotAndSync === 'function'){
         try { window._forceSaveBattleSnapshotAndSync('idle_auto_logout'); } catch(_) {}
       }
-      // 1) 先把進度寫到雲端(safe 槽 + 完整雲端存檔)
+      // 1) 先把進度寫到雲端(safe 槽 + 完整雲端存檔)— ★ v5.248.0 每段最多 8 秒
       if(window._trySaveSafeIfHealthier && window._gUserId){
-        await window._trySaveSafeIfHealthier('idle_auto_logout');
+        try { await _withTimeout(window._trySaveSafeIfHealthier('idle_auto_logout'), 8000); } catch(_) {}
       }
       if(typeof gameCloudSave === 'function' && window._gUserId){
-        try { await gameCloudSave(); } catch(_) {}
+        try { await _withTimeout(gameCloudSave(), 8000); } catch(_) {}
       }
     } catch(e) { console.warn('[閒置自動登出] 存檔失敗', e); }
     // 2) 直接 signOut(不走 gSignOut 全套,因為等下會 reload,跑半套就好)
     try {
-      if(window._fbSignOut) await window._fbSignOut();
+      if(window._fbSignOut) await _withTimeout(window._fbSignOut(), 6000);
     } catch(e) { console.warn('[閒置自動登出] signOut 失敗', e); }
-    // 3) 顯示全螢幕提示(避免被各種 modal 蓋住)
+    try { window._gUserId = null; window._fbUser = null; window._lxpsLoggedInThisSession = false; } catch(_){}
+    // 3) 更新提示文字
     try {
-      const pop = document.createElement('div');
-      pop.id = '_idle-logout-done';
-      pop.style.cssText =
-        'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);' +
-        'display:flex;align-items:center;justify-content:center;' +
-        'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
-      pop.innerHTML =
-        '<div style="background:linear-gradient(135deg,#0a0e20,#060810);' +
-          'border:3px solid #88aaff;border-radius:24px;' +
-          'padding:40px 48px;max-width:min(92vw,520px);text-align:center;' +
-          'box-shadow:0 0 50px rgba(80,140,255,0.4);">' +
-          '<div style="font-size:60px;margin-bottom:14px;">⏰</div>' +
-          '<div style="font-size:28px;font-weight:900;color:#aaccff;margin-bottom:14px;">已存檔並登出</div>' +
-          '<div style="font-size:17px;color:#ccc;line-height:1.7;">' +
-            '你的選擇已經處理完成,進度已經存好囉。<br>' +
-            '畫面 3 秒後會自動回到首頁。' +
-          '</div>' +
-        '</div>';
-      document.body.appendChild(pop);
+      if(_doneMsg) _doneMsg.innerHTML = '已存檔並登出 ✅<br>畫面 3 秒後會回到首頁，要玩請重新登入自己的帳號。';
     } catch(_){}
-    // 4) 3 秒後強制重整(這樣才會回到「未登入的乾淨首頁」)
+    // 4) 3 秒後強制重整(這樣才會回到「未登入的乾淨首頁」)— ⚠ 刻意裸 reload,不設放行旗標(v5.141.0 裁定)
     setTimeout(function(){
       try { window.location.reload(); } catch(_) {}
     }, 3000);
   }
 
   function _tick(){
-    if(_isStopped) return;
+    if(_isStopped || _loggingOut) return;
     if(window._lxpsGmTrustedNoIdle) return;  // ★ v3.16.32 GM 信任裝置免閒置登出(雙保險;_idleAutoLogoutStop 已停計時器)
     if(!window._gUserId) return;  // 訪客模式不啟用(沒帳號可登出)
-    // ★ v3.5.16 — 戰鬥中暫停閒置倒數(老師 2026/5/22 回報:打到一半被切換帳號跳回首頁)
-    //   情境:玩家在 BOSS 戰中分心(看課本/想題目),30 分鐘剛好到 → 被強制登出 reload → 進度遺失
-    //   修法:_adventureMode=true 且 G.round>=1 時,持續更新 _lastActivityTs,等於把倒數停在
-    //         「剛剛有操作」狀態,直到玩家離開戰鬥才開始真正倒數
-    //   另外加分:被踢/閒置兩種情境下,先用 forceSaveBattleSnapshotAndSync 保住進度
-    try{
-      if(typeof _adventureMode !== 'undefined' && _adventureMode
-         && typeof G !== 'undefined' && G && (G.round || 0) >= 1
-         && !window._advBattleResultShown){
-        _lastActivityTs = _now();
-        if(_warningShown) _closeWarning('in_battle');
-        return;
-      }
-    }catch(_){}
+    const now = _now();
+    // ★ v5.248.0 — 偵測睡眠:兩次 tick 間隔太久 = 計時器被 iOS 凍結過(關螢幕/鎖屏/放一整個週末)
+    const slept = !!(_lastTickTs && (now - _lastTickTs) > SLEEP_GAP_MS);
+    _lastTickTs = now;
+    // ★ v5.248.0 — 戰鬥中豁免(v3.5.16)已移除:停在戰鬥畫面的平板會永遠不逾時,週末放著就等於一直開著帳號。
+    //   當初怕的「進度遺失」由 _doAutoLogout 第一步的 _forceSaveBattleSnapshotAndSync 保住(下次登入可續戰)。
     // ★ v5.141.0（老師回報「新電腦下載安裝等很久沒開始，然後自動登出」）— 下載中視同有操作。
     //   安裝讀條是全螢幕 z 999999，30 秒倒數提示卡根本看不到，30 分鐘一到就被登出重整、下載中斷。
+    //   ★ v5.248.0 — 只在「沒睡過」時豁免:睡眠期間下載本來就不會進行,睡醒照樣要判定逾時。
     try{
-      if(window._lxpsPwaDownloading === true || document.getElementById('_pwa-install-overlay')){
-        _lastActivityTs = _now();
+      if(!slept && (window._lxpsPwaDownloading === true || document.getElementById('_pwa-install-overlay'))){
+        _lastActivityTs = now;
         if(_warningShown) _closeWarning('pwa_downloading');
         return;
       }
     }catch(_){}
-    const elapsed = _now() - _lastActivityTs;
-    // ★ 本輪修正（老師需求「保證登入後30分鐘內不會自動登出；超過或待機30分鐘時跳確認視窗，
-    //   由玩家自己選繼續遊戲或存檔登出休息，不會沒經過確認就被登出」）—
-    //   舊版一到 IDLE_TIMEOUT_MS 就無條件呼叫 _doAutoLogout('idle_timeout')，玩家沒點任何鈕
-    //   也照樣被登出（先前的 30 秒倒數視窗只是「預告」，不是真的等玩家選）。
-    //   改為：到門檻只彈確認視窗、不自動登出，之後每次 _tick 只要視窗還開著就不重複彈，
-    //   直到玩家自己按下「繼續遊戲」（_lastActivityTs 歸零重算）或「存檔並登出休息」（走 _doAutoLogout）
-    //   為止——不管閒置多久，沒有玩家的選擇就絕不會被登出。
+    const elapsed = now - _lastActivityTs;
+    // ★ v5.248.0（老師 2026-10-12:「只要遊玩30分鐘沒有繼續按確認遊玩就應該強制登出」,取代先前「沒確認絕不登出」）
+    //   30 分鐘 → 彈確認視窗倒數 60 秒;超過 30 分 60 秒仍未按「繼續遊戲」(或裝置睡過頭)→ 強制存檔登出。
+    if(elapsed >= IDLE_TIMEOUT_MS + CONFIRM_MS){
+      _doAutoLogout(slept ? 'idle_slept_past_timeout' : 'idle_no_confirm');
+      return;
+    }
     if(elapsed >= IDLE_TIMEOUT_MS){
       if(!_warningShown) _showWarning();
+      _updateCountdownDisplay(Math.ceil((IDLE_TIMEOUT_MS + CONFIRM_MS - elapsed) / 1000));
       return;
     }
   }
@@ -25587,8 +25655,14 @@ window._clearAccountLocalData = function(reason){
       }
     }catch(_eGmIdle){}
 
+    // ★ v5.248.0 — 新登入 = 新的 30 分鐘:裝置層紀錄立刻改寫成這位、現在(覆蓋上一位逾時的紀錄)
+    _lsLastFlushTs = 0;
+    _flushToStorage(true);
+
     if(!_isStopped) return;  // 已啟動就不重複
     _isStopped = false;
+    _loggingOut = false;
+    _lastTickTs = _now();
     if(!_lastActivityTs || _lastActivityTs <= 0) _lastActivityTs = _now(); // 首次無 stored 值
     _warningShown = false;
     _attachListeners();
@@ -25596,13 +25670,22 @@ window._clearAccountLocalData = function(reason){
     _tickHandle = setInterval(_tick, TICK_MS);
     // 回到前景時也強制 flush 一次（iOS 凍結解除後補寫）
     document.addEventListener('visibilitychange', _onVisibilityForIdle, true);
-    console.log('⏰ [閒置自動登出] 已啟動(30 分鐘無操作 → 自動登出,登出前 30 秒倒數提示)');
+    window.addEventListener('pageshow', _onWakeForIdle, true);   // ★ v5.248.0
+    window.addEventListener('focus',    _onWakeForIdle, true);   // ★ v5.248.0
+    console.log('⏰ [閒置自動登出] 已啟動(30 分鐘無操作 → 確認視窗倒數 60 秒 → 未確認強制登出)');
   };
+
+  // ★ v5.248.0 — 回到前景/睡醒:不等下一個 tick,立刻判定(週一一開螢幕就登出,學生還來不及碰)
+  function _onWakeForIdle(){
+    try{ _tick(); }catch(_){}
+  }
 
   // visibilitychange hidden → 立刻 flush（記錄最後活躍時間，iOS kill 前已寫好）
   function _onVisibilityForIdle(){
     if(document.hidden){
       _flushToStorage(true); // 強制寫，確保 iOS kill 時已記錄
+    } else {
+      _onWakeForIdle();      // ★ v5.248.0
     }
   }
 
@@ -25611,6 +25694,8 @@ window._clearAccountLocalData = function(reason){
     if(_tickHandle){ clearInterval(_tickHandle); _tickHandle = null; }
     _detachListeners();
     document.removeEventListener('visibilitychange', _onVisibilityForIdle, true);
+    window.removeEventListener('pageshow', _onWakeForIdle, true);   // ★ v5.248.0
+    window.removeEventListener('focus',    _onWakeForIdle, true);   // ★ v5.248.0
     _closeWarning('stop');
     // 登出後清除 localStorage 時間戳(讓下次正常登入重新計時)
     if(_currentUid){
@@ -25620,6 +25705,8 @@ window._clearAccountLocalData = function(reason){
 
   // 重置計時器(供外部呼叫,例如其他互動完成後想刷新)
   window._idleAutoLogoutReset = function(){
+    // ★ v5.248.0 — 已逾時就不准用程式把時間刷回來(睡醒後別的程式先跑到這裡 = 又把上一位救活)
+    if(!_isStopped && (_now() - _lastActivityTs) >= IDLE_TIMEOUT_MS){ try{ _tick(); }catch(_){} return; }
     _lastActivityTs = _now();
     if(_warningShown) _closeWarning('reset');
     _flushToStorage(true); // 同步寫 localStorage
