@@ -15949,11 +15949,43 @@
                      heroes:(p.heroes || []).slice(), extra:String(extra || '') });
     };
     // (a) 課堂獎勵 gmGiftLog
+    // ★★ v5.251.0(老師「課堂獎勵名目要兩邊都同步」)— 名目補齊 ★★
+    //   v3.17.6 之前的 gmGiftLog 沒存 merit/rewardId,但同一次發放寫進學生收件箱
+    //   gmClassRewards/{uid}/items 的那份有 merit(=「🎁 GM 獎勵領取紀錄」顯示的名目)。
+    //   對法:① gmGiftLog 有 rewardId → 直接對收件箱同 id;② 沒有 → 找建立時間差 ≤ 2 分鐘、
+    //   獎勵文字相同、尚未被配對的收件箱項目(取時間最近者)。gmGiftLog 規則只准 create,
+    //   不能回寫,所以只在顯示時補,標「(名目取自學生收件箱)」。對不上維持「(未填名目)」。
+    var _inbox = [];
+    try{
+      var _ibs = await getDocs(collection(_fbDb, 'gmClassRewards', uid, 'items'));
+      _ibs.forEach(function(d){ var _x = d.data() || {}; _inbox.push({ id:d.id, at:(Number(_x.at) || 0), merit:String(_x.merit || ''), items:(Array.isArray(_x.itemsLabel) ? _x.itemsLabel.join('|') : ''), used:false }); });
+    }catch(_eIb){ /* 收件箱讀不到只影響名目顯示，不影響判定 */ }
+    var _meritOf = function(_g){
+      if(_g.merit) return String(_g.merit);
+      var _hit = null;
+      if(_g.rewardId){ _inbox.forEach(function(b){ if(!_hit && b.id === _g.rewardId) _hit = b; }); }
+      if(!_hit){
+        var _gat = Number(_g.at) || 0, _git = Array.isArray(_g.items) ? _g.items.join('|') : '', _best = 1e15;
+        if(_gat){
+          _inbox.forEach(function(b){
+            if(b.used || !b.merit || !b.at) return;
+            var _dt = Math.abs(b.at - _gat);
+            if(_dt > 120000) return;
+            var _score = _dt + ((_git && b.items && b.items !== _git) ? 600000 : 0);   // 文字相同者優先(舊版標籤可能改過字)
+            if(_score < _best){ _best = _score; _hit = b; }
+          });
+        }
+      }
+      if(_hit && _hit.merit){ _hit.used = true; return _hit.merit + '(名目取自學生收件箱)'; }
+      return '';
+    };
     try{
       var _gs = await getDocs(query(collection(_fbDb, 'gmGiftLog'), where('uid', '==', uid)));
-      _gs.forEach(function(g){
-        var _g = g.data() || {};
-        _push('課堂獎勵', (_g.merit || '(未填名目)'), _g.at,
+      var _gArr = [];
+      _gs.forEach(function(g){ _gArr.push(g.data() || {}); });
+      _gArr.sort(function(a, b){ return (Number(a.at) || 0) - (Number(b.at) || 0); });   // 舊→新配對,同秒兩筆才不會互搶
+      _gArr.forEach(function(_g){
+        _push('課堂獎勵', (_meritOf(_g) || '(未填名目)'), _g.at,
               window._lxpsParseGrantItems(Array.isArray(_g.items) ? _g.items : []),
               (_g.kind === 'compensation') ? '學生補償工具' : (_g.by || ''));
       });
@@ -16165,10 +16197,64 @@
     var _gmOwned      = _urDetail.filter(function(x){ return x.origin === 'gm'; });
     _ticketOwned.sort(function(a, b){ return (a.at || 0) - (b.at || 0); });
     var _overTicket = Math.max(0, _ticketOwned.length - _urQuota);
-    var _surplusUR  = _overTicket + _unknownOwned.length;
+    // ════════════════════════════════════════════════════════════════
+    // ★★ v5.251.0(老師 2026-10-13 實錘 6217:「他已經召喚出兩支我給他的 UR 召喚卷」)★★
+    //   舊口徑把「查無來源」一律算超額 ⇒ 老師發 2 張、學生用 2 張換了 2 隻,
+    //   只因為是解鎖帳本上線前換的(帳本來源 legacy_grandfather / 空白),就被標成「多 2 隻」⇒ 叫老師刪合法英雄。
+    //   新口徑:查無來源的 UR 先拿「券額度扣掉券換取後剩下的」去抵(推定是用老師發的券換的),
+    //     抵得完 = 合法(綠勾·標「舊帳推定券換」);抵不完的才是真正查無來源的超額。
+    //   ⇒ 只會比舊口徑少判、不會多判(學生保護方向)。全體稽核中心(_fbAdminScanURTicketAudit)本輪未改。
+    // ════════════════════════════════════════════════════════════════
+    //   順序:查無來源的舊帳一定早於有 ticket_ur_pick 紀錄的(解鎖帳本上線前換的)⇒ 依時間先佔額度,
+    //   超出的是「最後才換到」的那幾隻(較可能是用殘留券換的),標 overQuota 讓老師一眼看出該收哪隻。
+    _unknownOwned.sort(function(a, b){ return (a.at || 0) - (b.at || 0); });
+    var _legacyCovered = Math.min(_unknownOwned.length, _urQuota);
+    _unknownOwned.slice(0, _legacyCovered).forEach(function(x){
+      x.origin = 'legacy'; x.noSrc = false; x.legacyCovered = true;
+      x.src = '舊帳無紀錄・推定用老師發的券換的(在券額度內)';
+    });
+    var _unknownLeft = _unknownOwned.length - _legacyCovered;
+    _overTicket = Math.max(0, _ticketOwned.length - Math.max(0, _urQuota - _legacyCovered));
+    if(_overTicket > 0){
+      _ticketOwned.slice(_ticketOwned.length - _overTicket).forEach(function(x){ x.overQuota = true; });   // _ticketOwned 已依時間舊→新排序
+    }
+    var _surplusUR  = _overTicket + _unknownLeft;
     var _shouldUR   = Math.max(0, _ownedUR.length - _surplusUR);
+
+    // ★★ v5.251.0 — UR 券「手上應該剩幾張」改用持有 UR 推算(不再只靠學生端帳本的使用筆數)★★
+    //   學生端 ticketLedger 會被別台平板的本機清單整包蓋掉、帳本上線前的使用也沒記 ⇒「已使用」嚴重少算
+    //   (6217:老師發 2、帳本已使用 0、手上 2 ⇒ 舊畫面顯示 ✅ 對得起來,實際是 2 張重複召喚 bug 殘留券)。
+    //   已用張數 = max(帳本使用筆數, 非老師直接發放的 UR 隻數)  — 每一隻非直接發放的 UR 都一定用掉過一張券
+    //   應剩 = max(0, 券額度 − 已用);手上 = 主檔 ticketData 券實例(v5.135.0 起的唯一權威,沒有才退回背包數字)
+    var _urTkHeldGm = _leftDetail.ur.gm, _urTkHeldBase = _leftDetail.ur.base, _urTkSrc = 'bag';
+    try{
+      var _tdA = null;
+      if(typeof _d.ticketData_s === 'string' && _d.ticketData_s){ var _tpA = JSON.parse(_d.ticketData_s); if(_tpA && typeof _tpA === 'object' && !Array.isArray(_tpA)) _tdA = _tpA; }
+      if(!_tdA && _d.ticketData && typeof _d.ticketData === 'object' && !Array.isArray(_d.ticketData)) _tdA = _d.ticketData;
+      if(_tdA && _tdA.inst && typeof _tdA.inst === 'object'){
+        var _cg = 0, _cb = 0;
+        Object.keys(_tdA.inst).forEach(function(t){
+          var _ri = _tdA.inst[t]; if(!_ri) return;
+          if(_ri.it === 'gm_summon_ticket_ur_pick') _cg++;
+          else if(_ri.it === 'summon_ticket_ur_pick') _cb++;
+        });
+        _urTkHeldGm = _cg; _urTkHeldBase = _cb; _urTkSrc = 'inst';
+      }
+    }catch(_eTdA){ _warn.push('券實例讀取失敗(改用背包數字)：' + ((_eTdA && _eTdA.message) || _eTdA)); }
+    var _urTkConsumed = _ticketOwned.length + _unknownOwned.length;
+    var _urTkUsedEff  = Math.max(_usedN.ur, _urTkConsumed);
+    var _urTkLegit    = Math.max(0, _urQuota - _urTkUsedEff);
+    var _urTkHeld     = _urTkHeldGm + _urTkHeldBase;
+    var _urTk = {
+      quota: _urQuota, usedLedger: _usedN.ur, consumed: _urTkConsumed, usedEff: _urTkUsedEff,
+      legitLeft: _urTkLegit, held: _urTkHeld, heldGm: _urTkHeldGm, heldBase: _urTkHeldBase, src: _urTkSrc,
+      surplus: Math.max(0, _urTkHeld - _urTkLegit), short: Math.max(0, _urTkLegit - _urTkHeld)
+    };
     var _histEmpty  = (_hist.length === 0);
-    _urDetail.sort(function(a, b){ return (a.noSrc === b.noSrc) ? 0 : (a.noSrc ? -1 : 1); });
+    _urDetail.sort(function(a, b){
+      var _fa = (a.noSrc || a.overQuota) ? 1 : 0, _fb = (b.noSrc || b.overQuota) ? 1 : 0;   // ★ v5.251.0 超出額度的也排前面
+      return _fb - _fa;
+    });
 
     // ════════════════════════════════════════════════════════════════
     // ★ v5.132.0（老師需求「直接在這個視窗中補發缺失的獎勵或刪除多出來的
@@ -16264,8 +16350,10 @@
       arenaTk: _arenaTk,                    // 其中：鬥技場兌換
       gmCount: _gmOwned.length,             // 老師直接發放的隻數
       ticketCount: _ticketOwned.length,     // 券換取的隻數
-      unknownCount: _unknownOwned.length,   // 查無來源的隻數
+      unknownCount: _unknownLeft,           // 查無來源的隻數(★ v5.251.0 — 扣掉券額度推定抵掉的舊帳)
+      legacyCovered: _legacyCovered,        // ★ v5.251.0 — 舊帳無紀錄、在券額度內推定為券換的隻數
       overTicket: _overTicket,              // 券換取超出額度的隻數
+      urTk: _urTk,                          // ★ v5.251.0 — UR 券對帳(額度/已用推算/應剩/手上實例/多出/短少)
       histEmpty: _histEmpty,                // ★ 解鎖帳本空的 → 判定不可信，不可派發
       ledgerEmpty: (_led.length === 0),
       warn: _warn
@@ -17725,13 +17813,25 @@
       if(!_bag || typeof _bag !== 'object' || Array.isArray(_bag)) _bag = {};
       else _bag = Object.assign({}, _bag);
 
+      // ★ v5.251.0 — 可扣上限 = max(背包數字, 券實例數):v5.135.0 起實例才是權威,
+      //   背包數字比實例少時(殘槽/投影落後)舊碼只扣得到背包那幾張,實例殘留 ⇒ 券還能用。
+      var _instCnt = {};
+      try{
+        var _tdC = null;
+        if(typeof _d.ticketData_s === 'string' && _d.ticketData_s){ var _tpC = JSON.parse(_d.ticketData_s); if(_tpC && typeof _tpC === 'object' && !Array.isArray(_tpC)) _tdC = _tpC; }
+        if(!_tdC && _d.ticketData && typeof _d.ticketData === 'object' && !Array.isArray(_d.ticketData)) _tdC = _d.ticketData;
+        if(_tdC && _tdC.inst && typeof _tdC.inst === 'object'){
+          Object.keys(_tdC.inst).forEach(function(t){ var _ri = _tdC.inst[t]; if(_ri && _ri.it) _instCnt[_ri.it] = (_instCnt[_ri.it] || 0) + 1; });
+        }
+      }catch(_eIc){}
       var _remain = _total, _thisRemoved = {}, _any = 0;
       _keys.forEach(function(k){
         if(_remain <= 0) return;
-        var _cur = parseInt(_bag[k], 10) || 0;
+        var _bagCur = parseInt(_bag[k], 10) || 0;
+        var _cur = Math.max(_bagCur, _instCnt[k] || 0);
         if(_cur <= 0) return;
         var _take = Math.min(_remain, _cur);
-        var _left = _cur - _take;
+        var _left = _bagCur - _take;
         if(_left <= 0) delete _bag[k]; else _bag[k] = _left;
         _thisRemoved[k] = _take; _any += _take; _remain -= _take;
       });
