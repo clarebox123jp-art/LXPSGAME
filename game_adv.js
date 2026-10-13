@@ -62265,8 +62265,44 @@ async function _lgAfterSignIn(user){
   openAdventureOverlay();
 }
 
+/* ★★ v5.250.0(老師「部分 iPad 登入卡很久進不了遊戲」)— 25 台同時開機時,登入元件(game_cloud.js 1.6MB + Firebase SDK)
+   常常比登入視窗晚到。舊碼:先把登入視窗關掉,再發現 _fbSignIn 還沒好 ⇒ 只在 console 印一行,畫面什麼都沒有,
+   學生以為按了沒反應、一直重按。改成:元件還沒好時視窗不關,按鈕旁顯示「登入元件下載中…」並自動等它(最多 30 秒),
+   一好就直接接著登入;30 秒還沒好才請學生重新整理。 */
+function _lgWaitSignInReady(fnName){
+  return new Promise(function(res){
+    if(typeof window[fnName] === 'function'){ res(true); return; }
+    var t0 = Date.now(), tip = null;
+    try{
+      var sub = document.getElementById('lg-subtitle');   /* 放在登入視窗副標題正下方(視窗本體沒有 class 可抓) */
+      tip = document.createElement('div'); tip.id = 'lg-wait-sdk';
+      tip.style.cssText = 'margin:0 0 14px;font-size:clamp(16px,2.6vh,24px);color:#ffe08a;font-weight:800;text-align:center;';
+      tip.textContent = '⏳ 登入元件下載中,請稍等…(不用重按)';
+      if(sub && !document.getElementById('lg-wait-sdk')) sub.insertAdjacentElement('afterend', tip);
+      else if(!sub){ tip = null; try{ if(typeof window._showSimpleToast === 'function') window._showSimpleToast('⏳ 登入元件下載中,請稍等…(不用重按)', 'warn'); }catch(_t){} }
+    }catch(_){}
+    var iv = setInterval(function(){
+      var ok = (typeof window[fnName] === 'function');
+      if(ok || Date.now() - t0 > 30000){
+        clearInterval(iv);
+        try{ var e = document.getElementById('lg-wait-sdk'); if(e) e.remove(); }catch(_){}
+        res(ok);
+      } else if(tip){ tip.textContent = '⏳ 登入元件下載中,請稍等…(不用重按,' + Math.round((Date.now() - t0) / 1000) + ' 秒)'; }
+    }, 400);
+  });
+}
 async function loginGateGoogle() {
   const modal = document.getElementById('login-gate-modal');
+  if(!window._fbSignIn){
+    if(window._lgWaiting) return;   /* 已經在等了,重按不重複排隊 */
+    window._lgWaiting = true;
+    const _ready = await _lgWaitSignInReady('_fbSignIn');
+    window._lgWaiting = false;
+    if(!_ready){
+      try{ if(typeof window._showSimpleToast === 'function') window._showSimpleToast('⚠️ 登入元件一直下載不下來,請下拉重新整理頁面再試一次', 'warn'); }catch(_){}
+      return;
+    }
+  }
   if(modal) modal.style.display = 'none';
   if(window._fbSignIn) {
     try{ sessionStorage.setItem('lxps_login_then_adventure', '1'); }catch(_){}
@@ -62291,11 +62327,18 @@ async function loginGateGoogle() {
 window.loginGateGoogleAs = async function(email){
   if(!email){ return loginGateGoogle(); }
   const modal = document.getElementById('login-gate-modal');
-  if(modal) modal.style.display = 'none';
   if(!window._fbSignInWithHint){
-    console.warn('[登入閘門] _fbSignInWithHint 未就緒,退回一般登入');
-    return loginGateGoogle();
+    /* ★ v5.250.0 元件還沒下載好:先不關視窗,等它(同 loginGateGoogle) */
+    if(window._lgWaiting) return;
+    window._lgWaiting = true;
+    const _ready2 = await _lgWaitSignInReady('_fbSignInWithHint');
+    window._lgWaiting = false;
+    if(!_ready2){
+      console.warn('[登入閘門] _fbSignInWithHint 未就緒,退回一般登入');
+      return loginGateGoogle();
+    }
   }
+  if(modal) modal.style.display = 'none';
   try{ sessionStorage.setItem('lxps_login_then_adventure', '1'); }catch(_){}
   let user = null;
   try{ user = await window._fbSignInWithHint(email); }

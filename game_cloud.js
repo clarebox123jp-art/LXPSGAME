@@ -462,11 +462,19 @@
     // ★ v3.13.53 — 已有登入進行中 → 忽略此次重複觸發(共用 iPad 學生常連點登入鈕)
     // ★ v5.148.0 — 安全閥：iOS 安裝版的 popup 永不 resolve（見上方病因），舊碼會讓這把鎖永久卡死、
     //   之後每次按登入都被靜默吃掉。鎖超過 90 秒一律視為死鎖放行（SDK 本身會取消前一個 popup 作業）。
-    if(_signInBusy && (Date.now() - _signInBusyAt) < 90000){
+    /* ★★ v5.250.0(老師「部分 iPad 登入卡很久進不了遊戲」)— Safari 分頁的 signInWithPopup 沒有逾時,
+       學生切回遊戲分頁/Google 視窗沒回傳時 promise 永遠不結束,這把鎖又讓之後 90 秒內每一次按登入都被「靜默」吃掉
+       (登入視窗閃一下又出現,學生以為壞了)。改成:①鎖只擋 20 秒(足夠擋連點)②被擋時講一句話,不再靜默。
+       20 秒後再按 = 開新的登入,Firebase 會自動取消前一個卡住的視窗(auth/cancelled-popup-request,下方已安靜處理)。 */
+    if(_signInBusy && (Date.now() - _signInBusyAt) < 20000){
       _fbDiag('signIn:已有登入進行中 → 忽略重複觸發(避免 auth/cancelled-popup-request)', 'warn');
+      try{
+        var _wl = Math.ceil((20000 - (Date.now() - _signInBusyAt)) / 1000);
+        if(typeof window._showSimpleToast === 'function') window._showSimpleToast('Google 登入視窗已經開著,請在那個視窗選帳號;沒看到的話 ' + _wl + ' 秒後再按一次登入', 'warn');
+      }catch(_eT){}
       return null;
     }
-    if(_signInBusy){ _fbDiag('signIn:登入鎖已卡超過 90 秒 → 視為死鎖，放行本次登入', 'warn'); }
+    if(_signInBusy){ _fbDiag('signIn:登入鎖已超過 20 秒 → 視為卡住,放行本次登入(前一個 popup 會被 SDK 取消)', 'warn'); }
     _signInBusy = true;
     _signInBusyAt = Date.now();   // ★ v5.148.0
     try {
@@ -19190,6 +19198,10 @@
         const _needNameWrite = !(_remoteName === _finalName && _remoteEmail === _finalEmail);
         // ★ v1.1.0 — 加重試 3 次,避免配額爆掉時暱稱靜默無法上雲
         let _writeOk = !_needNameWrite;
+        // ★★ v5.250.0 — 暱稱寫入原本 await 最多 3 次(每次沒有逾時 + 失敗間隔 2 秒),而且排在建立 session、讀存檔之前。
+        //   最常觸發的時機正是「閘門讀取逾時」(=網路壅塞)或新學年名冊座號改了(=很多人同時),正好卡最多人。
+        //   改成整段丟到背景執行(邏輯一字不改,只是不再擋住登入);背景失敗照舊 5 分鐘後再試。
+        if(_needNameWrite){ (async () => {
         for(let _r = 0; _needNameWrite && _r < 3; _r++){
           try {
             await setDoc(doc(_fbDb, 'players', user.uid), {
@@ -19216,6 +19228,7 @@
             } catch(_) { /* 放棄,等下次登入再試 */ }
           }, 5 * 60 * 1000);
         }
+        })().catch(function(){}); }   /* ★ v5.250.0 背景寫入結束 */
         // 雲端有自訂暱稱但本地沒有 → 補寫到本地，讓下面 UI 更新直接讀到正確值
         if(!_nick && _remoteName) {
           localStorage.setItem('lxps_nickname_' + user.uid, _remoteName);
@@ -19260,8 +19273,13 @@
       const _sid = localStorage.getItem('lxps_session_' + user.uid) || (Math.random().toString(36).slice(2) + Date.now().toString(36));
       localStorage.setItem('lxps_session_' + user.uid, _sid);
       window._mySessionId = _sid;
+      // ★★ v5.250.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」)— 這一筆 updateDoc 原本**沒有逾時**:
+      //   Firestore 寫入要等 server 確認才 resolve,斷線/壅塞時不會 reject、只會一直等 ⇒ 25 台同時登入時,
+      //   後面的 gameCloudLoad 與自動進冒險全部被它擋住,學生看到「已登入」卻什麼都不動。
+      //   改成最多等 4 秒就繼續;寫入本身照常在背景送達(_sessionClaimConfirmed 在真的送達時才設 true,
+      //   踢人 watcher 本來就會等它 —— v3.14.4 的防誤踢設計不受影響)。
       if(window._fbCreateSession) {
-        try{ await window._fbCreateSession(user.uid, _sid); }catch(_){}
+        try{ await Promise.race([ window._fbCreateSession(user.uid, _sid), new Promise(function(r){ setTimeout(r, 4000); }) ]); }catch(_){}
       }
       // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
