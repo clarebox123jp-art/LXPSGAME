@@ -25842,6 +25842,16 @@ function _buildSafeData() {
       if(Array.isArray(_parsedAct)) _activityHistory = _parsedAct.slice(-800);
     }
   }catch(_eActRead){ console.warn('[_buildSafeData] _activityHistory 讀取失敗', _eActRead); }
+  // ★ v5.252.0 — 道具獲得帳本(只上傳本人的筆·字串版單寫·封頂 300)
+  let _itemGainLog = [];
+  try{
+    const _rawIl = localStorage.getItem('lxps_item_log');
+    if(_rawIl){
+      const _pIl = JSON.parse(_rawIl);
+      const _u12Il = String(window._gUserId || '').slice(0, 12);
+      if(Array.isArray(_pIl)) _itemGainLog = _pIl.filter(e => e && typeof e === 'object' && e.uid === _u12Il).slice(-300);
+    }
+  }catch(_eIlRead){ console.warn('[_buildSafeData] _itemGainLog 讀取失敗', _eIlRead); }
   return {
     v: SAVE_DATA_VERSION,           // 版本號
     savedAt: Date.now(),
@@ -25876,6 +25886,8 @@ function _buildSafeData() {
     // ★ v3.13.94 — 統一活動紀錄(雙寫:物件 + 字串,模式同 _coinTransactions)
     _activityHistory: _activityHistory,
     _activityHistory_s: JSON.stringify(_activityHistory),
+    // ★ v5.252.0 — 道具獲得帳本(只寫字串版,學生「📜 最近獲得」清單讀)
+    _itemGainLog_s: JSON.stringify(_itemGainLog),
     heroLevels:      _heroLevels,            // {name: 數字}
     // ★ v3.15.96(2026-06-23)— 字串版繞過 Firebase merge:true 不刪 map key 的限制(同 playerBackpack_s):
     //   雲端 heroLevels(map)深合併會殘留「已不擁有英雄」的幻影等級 → 墊高 maxLv 誤判倒退;
@@ -26745,6 +26757,30 @@ function _applySafeData(raw) {
         { cloud: _cloudAct.length, localMine: _localActMine.length, merged: _finalAct.length });
     }
   }catch(_eActMerge){ console.warn('[_applySafeData v3.13.94][_activityHistory] 合併失敗', _eActMerge); }
+
+  // ★ v5.252.0 — 道具獲得帳本合併(雲端 ∪ 本地本人的筆,以 id 去重,依時間排序,保留最近 300 筆)
+  //   不污染關鍵同 _activityHistory:本地只認當前 uid 的筆;合併結果寫回本地後,別人的殘留筆自然被清掉。
+  try{
+    let _cloudIl = null;
+    if(typeof data._itemGainLog_s === 'string'){ try{ _cloudIl = JSON.parse(data._itemGainLog_s); }catch(_){ _cloudIl = null; } }
+    if(!Array.isArray(_cloudIl) && Array.isArray(data._itemGainLog)) _cloudIl = data._itemGainLog;
+    if(!Array.isArray(_cloudIl)) _cloudIl = [];
+    let _localIl = [];
+    try{ const _rawIl2 = localStorage.getItem('lxps_item_log'); if(_rawIl2){ const _p2 = JSON.parse(_rawIl2); if(Array.isArray(_p2)) _localIl = _p2; } }catch(_){}
+    const _u12Il2 = (window._gUserId || '').slice(0, 12);
+    const _localIlMine = _localIl.filter(e => e && typeof e === 'object' && e.uid && _u12Il2 && e.uid === _u12Il2);
+    const _seenIl = new Set();
+    const _mergedIl = [];
+    [..._cloudIl, ..._localIlMine].forEach(e => {
+      if(!e || typeof e !== 'object' || typeof e.at !== 'number') return;
+      const _k = e.id ? ('id:' + e.id) : (e.at + '|' + (e.it || ''));
+      if(_seenIl.has(_k)) return;
+      _seenIl.add(_k);
+      _mergedIl.push(e);
+    });
+    _mergedIl.sort((a, b) => (a.at || 0) - (b.at || 0));
+    localStorage.setItem('lxps_item_log', JSON.stringify(_mergedIl.slice(-300)));
+  }catch(_eIlMerge){ console.warn('[_applySafeData v5.252.0][_itemGainLog] 合併失敗', _eIlMerge); }
 
   // ════════════════════════════════════════════════════════════
   // ★ v3.13.9(2026-06-01)鐵律 1.144:六大英雄表合併前加 uid 守門
@@ -31269,10 +31305,88 @@ window._lxpsScheduleBackpackSync = function(){
     }, 2500);
   }catch(_e){}
 };
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.252.0(2026-10-14・老師「新增『最近獲得物品清單』，讓學生可以查詢自己是否有獲得冒險中的獎勵
+//    (包含召喚卷的使用紀錄)」)— 道具獲得帳本 ★★
+//   【為什麼要新帳本】既有帳本只涵蓋 召喚卷(ticketLedger)/水晶(_crystalTransactions)/知識幣/英雄/至寶;
+//     經驗書、技能書、果實、捲軸、寵物道具、素材…等一般道具「拿到了沒」完全沒有紀錄,學生說「沒拿到」無從查。
+//   【單點掛勾】全專案所有道具獲得都經過 backpackAdd(100+ 個呼叫點)⇒ 只在這裡記一次就全數涵蓋。
+//   【記什麼】{ at, it(道具id), n(實際放進背包數), x(背包滿 99 沒放進去的數量·有才記), s(來源), uid(前12碼), id }
+//     ・召喚卷/自選卷由 ticketLedger 記(含使用),水晶由水晶帳本記 ⇒ 這兩類這裡不重複記;
+//       唯一例外:召喚卷因背包已滿 99 沒放進去 → 記一筆 n:0 x:N(ticketLedger 只記實際入袋的,會看不出來)。
+//     ・來源:呼叫端有給 src 就用 src;沒給就看「當下在哪個畫面」推斷(冒險・關卡名/商店/召喚星空/鬥技場…)。
+//   【共用 iPad 不污染(鐵律 1.41)】單一 localStorage 'lxps_item_log',每筆帶 uid;
+//     上傳(_buildSafeData)只帶本人的筆,載入合併(_applySafeData)本地只認本人的筆(同 _activityHistory 模式),
+//     學生清單也只顯示本人的筆 ⇒ 別人留在同一台平板的紀錄不會混進來、也不會被上傳到別人雲端。
+//   【雲端】只寫字串版 _itemGainLog_s(封頂 300 筆 ≈ 30KB,不雙寫省主檔空間);隨背包同步(_lxpsScheduleBackpackSync
+//     → gameCloudSave)一起上雲,不另外觸發寫入。三槽合併 union 去重(game_cloud.js)。
+//   ⚠ 載入完成前(_progressLoaded!==true)不記:開機對帳/還原存檔時的 backpackAdd 不是「獲得」。
+// ════════════════════════════════════════════════════════════════════
+window._LXPS_ITEM_LOG_KEY = 'lxps_item_log';
+window._LXPS_ITEM_LOG_CAP = 300;
+window._LXPS_STAGE_LABEL = { maokong:'貓空', taiwan:'台灣', japan:'日本', egypt:'埃及', china:'中國古代',
+  worldboss:'世界BOSS', mainstory:'主線劇情', arena:'鬥技場' };
+window._lxpsGainCtxLabel = function(){
+  try{
+    var _vis = function(elId){
+      var el = document.getElementById(elId); if(!el) return false;
+      var d = el.style.display;
+      if(d === 'none') return false;
+      if(d) return true;
+      try{ return window.getComputedStyle(el).display !== 'none'; }catch(_){ return false; }
+    };
+    var _stg = (typeof _adventureStage !== 'undefined') ? _adventureStage : null;
+    if(_stg){
+      var _nm = window._LXPS_STAGE_LABEL[_stg] || '';
+      if(_stg === 'worldboss' || _stg === 'arena' || _stg === 'mainstory') return _nm;
+      var _boss = '';
+      try{
+        if(_stg === 'taiwan' && window._advSelectedTaiwanBoss && typeof TAIWAN_BOSSES !== 'undefined'
+           && TAIWAN_BOSSES[window._advSelectedTaiwanBoss]) _boss = String(TAIWAN_BOSSES[window._advSelectedTaiwanBoss].name || '');
+        else if(_stg === 'japan' && window._currentBossVariantInfo && window._currentBossVariantInfo.main) _boss = String(window._currentBossVariantInfo.main);
+      }catch(_){}
+      return '冒險' + (_nm ? ('・' + _nm) : '') + (_boss ? ('(' + _boss + ')') : '');
+    }
+    if(_vis('summon-overlay'))   return '召喚星空';
+    if(_vis('shop-overlay'))     return '商店';
+    if(_vis('arenaLobbyOverlay'))return '鬥技場';
+    if(_vis('mainstory-overlay') || _vis('mainstory-select-overlay')) return '主線劇情';
+    if(_vis('redeem-overlay'))   return '序號兌換';
+    if(_vis('medal-page-overlay')) return '獎章';
+    if(_vis('pet-page-overlay')) return '寵物';
+  }catch(_){}
+  return '';
+};
+window._lxpsLogItemGain = function(id, req, added, src){
+  try{
+    if(!id) return;
+    if(window._progressLoaded !== true) return;
+    req = Math.max(0, parseInt(req, 10) || 0);
+    added = Math.max(0, parseInt(added, 10) || 0);
+    if(req <= 0) return;
+    if(id === 'summon_crystal' || id === 'wb_entry_ticket') return;              // 水晶有自己的帳本;入場券是系統每日發放
+    var _isTk = !!(window._TICKET_LEDGER_KEYS && window._TICKET_LEDGER_KEYS[id]);
+    var _lost = Math.max(0, req - added);
+    if(_isTk && !_lost) return;                                                   // 召喚卷正常入袋 → ticketLedger 已記
+    if(!added && !_lost) return;
+    var _e = { at: Date.now(), it: String(id), n: (_isTk ? 0 : added),
+               s: String(src || window._ticketGrantSrc || window._lxpsGainCtxLabel() || '').slice(0, 30),
+               uid: String(window._gUserId || '').slice(0, 12),
+               id: (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)) };
+    if(_lost) _e.x = _lost;
+    var _h = [];
+    try{ var _r = localStorage.getItem(window._LXPS_ITEM_LOG_KEY); _h = _r ? JSON.parse(_r) : []; if(!Array.isArray(_h)) _h = []; }catch(_){ _h = []; }
+    _h.push(_e);
+    if(_h.length > window._LXPS_ITEM_LOG_CAP) _h = _h.slice(-window._LXPS_ITEM_LOG_CAP);
+    try{ localStorage.setItem(window._LXPS_ITEM_LOG_KEY, JSON.stringify(_h)); }catch(_){}
+  }catch(_eLog){ try{ console.warn('[_lxpsLogItemGain] 記錄失敗(不影響獲得)', _eLog); }catch(_){} }
+};
 function backpackAdd(id, n=1, src){   // ★ v5.247.0 第三參數 src = 來源標籤(選用):寫進水晶帳本/召喚卷帳本,供 GM 查證
   const cur = _playerBackpack[id]||0;
   _playerBackpack[id] = Math.min(99, cur+n);
   const _added = _playerBackpack[id] - cur; // 實際新增數
+  // ★ v5.252.0 — 最近獲得物品帳本(只記不改·背包滿 99 沒放進去的數量也記下來)
+  try{ if(n > 0) window._lxpsLogItemGain(id, n, _added, src); }catch(_eIl){}
   // ★★ v5.135.0 — 券類：實際新增幾張就產生幾個唯一實例（單點涵蓋所有發放端）★★
   //   來源標籤由呼叫端以 window._ticketGrantSrc 提供（選用），未提供則記 'grant'。
   var _grantTids = [];   // ★ v5.143.0 — 本次產生的券 tid，帶進 ticketLedger grant 紀錄（追溯到單張）
@@ -41984,6 +42098,15 @@ function openBackpackOverlay(){
   const cv = document.getElementById('bag-coins-val');
   if(cv) cv.textContent = (_knowledgeCoins||0).toLocaleString();
   _renderBackpackMain();
+  // ★ v5.252.0 — 「📜 獲得紀錄」入口鈕:雙版文字(鐵律 1.232 模式②動態)＋三平台樣式
+  try{
+    if(typeof window._lxpsGainLogEnsureCss === 'function') window._lxpsGainLogEnsureCss();
+    const _gbCute = (window._artStyle === 'cute');
+    const _gb = document.getElementById('bag-gainlog-btn');
+    if(_gb) _gb.textContent = _gbCute ? '📜 拿到什麼' : '📜 獲得紀錄';
+    const _gh = document.getElementById('bag-gainlog-hint');
+    if(_gh) _gh.textContent = _gbCute ? '想知道最近拿到了什麼、召喚卷用到哪裡去了?' : '查詢近期獲得的道具、召喚卷使用紀錄、英雄與至寶';
+  }catch(_eGb){}
   const ov = document.getElementById('backpack-overlay');
   if(ov) ov.style.display='block';
 }
@@ -41992,6 +42115,266 @@ function closeBackpackOverlay(){
   const ov = document.getElementById('backpack-overlay');
   if(ov) ov.style.display='none';
 }
+
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.252.0(2026-10-14・老師「新增『最近獲得物品清單』，讓學生可以查詢自己是否有獲得冒險中的獎勵
+//    (包含召喚卷的使用紀錄)」)— 學生端「📜 最近獲得物品」清單 ★★
+//   入口:背包標題列「📜 獲得紀錄」(cute 版「📜 拿到什麼」);也可 window._lxpsOpenGainLog() 直接開。
+//   資料全讀本機(登入時雲端已合併寫回本機,零雲端讀取):
+//     🎒 道具   ← lxps_item_log(v5.252.0 新帳本·含背包滿 99 沒放進去的數量)
+//     🛡️ 裝備   ← window._equipUnlockHistory(取得類;賣出/送出/回收不列)
+//     🎫 召喚卷 ← lxps_ticket_ledger_{uid}(獲得＋使用;使用那筆用券編號 tid 對回英雄/至寶帳本 →「換到誰」)
+//     🦸 英雄   ← adv_hero_unlock_history(取得類;回收/確認/稽核類不列)
+//     💎 至寶   ← adv_treasure_unlock_history(同上)
+//     💰 知識幣 / 💠 水晶 ← lxps_coin_tx / lxps_crystal_tx(只列增加的筆)
+//   每筆只列「有 uid 且是本人」或「沒有 uid 的舊紀錄」⇒ 共用 iPad 別人的紀錄不會出現(鐵律 1.41)。
+//   畫面:body 直下 position:fixed 真實 px 視窗(不在 #gc 畫布內)⇒ 三平台各自用真實 px 媒體查詢調整(鐵律〇之二)。
+//   純讀取,不寫任何資料。
+// ════════════════════════════════════════════════════════════════════
+window._lxpsGainLogEnsureCss = function(){
+  try{
+    if(document.getElementById('lxps-gainlog-css')) return;
+    var st = document.createElement('style');
+    st.id = 'lxps-gainlog-css';
+    st.textContent = ''
+      // 背包內容區最上方的入口列(#gc 畫布內·設計 px)
+      + '#bag-gainlog-bar{display:flex;align-items:center;justify-content:flex-end;gap:20px;margin:0 0 14px;}'
+      + '#bag-gainlog-hint{font-size:30px;font-weight:700;color:#a9c8f0;text-align:right;}'
+      + '#bag-gainlog-btn{padding:10px 26px;font-size:40px;font-weight:800;background:linear-gradient(135deg,rgba(50,100,190,0.85),rgba(30,60,140,0.85));border:2px solid #8ec5ff;color:#eef6ff;border-radius:12px;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 0 14px rgba(120,180,255,0.35);}'
+      + '#lxps-gainlog-ov{position:fixed;inset:0;z-index:100500;display:flex;align-items:safe center;justify-content:center;background:rgba(0,0,14,0.8);padding:12px;box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+      + '#lxps-gainlog-card{width:min(920px,96vw);max-height:min(92dvh,92vh);display:flex;flex-direction:column;box-sizing:border-box;background:linear-gradient(160deg,rgba(12,22,48,0.98),rgba(8,14,32,0.98));border:2.5px solid rgba(130,190,255,0.75);border-radius:16px;box-shadow:0 0 40px rgba(60,120,255,0.35);overflow:hidden;color:#dfeaff;}'
+      + '#lxps-gainlog-card>*{flex:0 0 auto;}'   // 標題/說明/分類/頁尾不被壓縮(手機矮螢幕時只讓清單縮)
+      + '#lxps-gainlog-card .gl-head{display:flex;align-items:center;gap:10px;padding:14px 18px 6px;}'
+      + '#lxps-gainlog-card .gl-title{flex:1;font-size:24px;font-weight:900;color:#bfe0ff;letter-spacing:1px;}'
+      + '#lxps-gainlog-card .gl-close{min-width:88px;min-height:44px;padding:6px 16px;font-size:18px;font-weight:800;background:rgba(70,20,20,0.55);border:2px solid #e86a6a;color:#ffd0d0;border-radius:10px;cursor:pointer;font-family:inherit;}'
+      + '#lxps-gainlog-card .gl-sub{padding:0 18px 8px;font-size:15px;line-height:1.55;color:#a9c4e6;}'
+      + '#lxps-gainlog-card .gl-chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 18px 10px;}'
+      + '#lxps-gainlog-card .gl-chip{min-height:44px;padding:6px 14px;font-size:16px;font-weight:800;border-radius:22px;border:2px solid rgba(140,190,255,0.45);background:rgba(20,40,80,0.6);color:#cfe3ff;cursor:pointer;font-family:inherit;white-space:nowrap;}'
+      + '#lxps-gainlog-card .gl-chip.on{background:linear-gradient(135deg,#3a7bd5,#2a5aa8);border-color:#bfe0ff;color:#fff;}'
+      + '#lxps-gainlog-card .gl-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 18px 10px;}'
+      + '#lxps-gainlog-card .gl-day{position:sticky;top:0;z-index:1;margin:10px 0 4px;padding:5px 10px;font-size:15px;font-weight:900;color:#ffe08a;background:rgba(10,18,40,0.96);border-left:4px solid #ffcc55;border-radius:6px;}'
+      + '#lxps-gainlog-card .gl-row{display:flex;align-items:flex-start;gap:10px;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:16px;line-height:1.5;}'
+      + '#lxps-gainlog-card .gl-time{flex:0 0 auto;min-width:46px;color:#8aa3c8;font-size:14px;padding-top:1px;font-variant-numeric:tabular-nums;}'
+      + '#lxps-gainlog-card .gl-ic{flex:0 0 auto;width:26px;text-align:center;font-size:19px;}'
+      + '#lxps-gainlog-card .gl-main{flex:1 1 auto;min-width:0;word-break:break-word;}'
+      + '#lxps-gainlog-card .gl-src{display:inline-block;margin-left:6px;padding:0 8px;border-radius:9px;font-size:13px;background:rgba(120,170,255,0.16);border:1px solid rgba(120,170,255,0.4);color:#bcd6ff;white-space:nowrap;}'
+      + '#lxps-gainlog-card .gl-warn{display:block;margin-top:2px;font-size:14px;color:#ffb27a;}'
+      + '#lxps-gainlog-card .gl-got{color:#9effb0;font-weight:800;}'
+      + '#lxps-gainlog-card .gl-use{color:#ffc08a;font-weight:800;}'
+      + '#lxps-gainlog-card .gl-empty{padding:30px 10px;text-align:center;color:#8fa6c8;font-size:16px;}'
+      + '#lxps-gainlog-card .gl-foot{padding:8px 18px 12px;font-size:13px;line-height:1.55;color:#93a9c9;border-top:1px solid rgba(255,255,255,0.08);}'
+      // iPad / 平板(寬 ≥ 1000)略放大
+      + '@media (min-width:1000px) and (min-height:700px){#lxps-gainlog-card .gl-title{font-size:28px;}#lxps-gainlog-card .gl-row{font-size:18px;}#lxps-gainlog-card .gl-sub{font-size:16px;}}'
+      // 手機橫放(高度 ≤ 520):壓縮上下留白、分類列改單行橫向捲動、清單吃剩下的高度;字級守住內文 ≥12/標題 ≥16
+      + '@media (orientation:landscape) and (max-height:520px){'
+      +   '#lxps-gainlog-ov{padding:4px;}'
+      +   '#lxps-gainlog-card{width:min(860px,98vw);max-height:calc(100dvh - 8px);border-radius:12px;}'
+      +   '#lxps-gainlog-card .gl-head{padding:6px 12px 2px;}'
+      +   '#lxps-gainlog-card .gl-title{font-size:18px;}'
+      +   '#lxps-gainlog-card .gl-sub{padding:0 12px 4px;font-size:12px;line-height:1.4;}'
+      +   '#lxps-gainlog-card .gl-chips{flex-wrap:nowrap;overflow-x:auto;padding:2px 12px 6px;gap:6px;}'
+      +   '#lxps-gainlog-card .gl-chip{font-size:13px;padding:4px 12px;flex:0 0 auto;}'
+      +   '#lxps-gainlog-card .gl-list{padding:0 12px 6px;}'
+      +   '#lxps-gainlog-card .gl-row{font-size:14px;padding:6px 4px;}'
+      +   '#lxps-gainlog-card .gl-time{font-size:12px;}'
+      +   '#lxps-gainlog-card .gl-src{font-size:12px;}'
+      +   '#lxps-gainlog-card .gl-day{font-size:13px;margin:6px 0 2px;}'
+      +   '#lxps-gainlog-card .gl-foot{padding:4px 12px 6px;font-size:12px;}'
+      // 背包入口鈕(#gc 畫布內·設計 px·手機約縮 0.36 倍)→ 放大到真實高度 ≥ 44px;提示字放大到真實 ≥ 12px
+      +   '#bag-gainlog-btn{font-size:66px;padding:22px 30px;}'
+      +   '#bag-gainlog-hint{font-size:40px;}'
+      + '}';
+    document.head.appendChild(st);
+  }catch(_e){}
+};
+try{ window._lxpsGainLogEnsureCss(); }catch(_eGlCss){}   // 載入即注入,背包入口鈕一出現就有樣式
+
+window._lxpsGainLogRows = function(){
+  var _cute = (window._artStyle === 'cute');
+  var T = function(c, p){ return _cute ? c : p; };
+  var _esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+  var _me = String(window._gUserId || '').slice(0, 12);
+  var _mine = function(u){ u = String(u || ''); return !u || !_me || u.slice(0, 12) === _me; };
+  var _arr = function(key){ try{ var r = localStorage.getItem(key); var a = r ? JSON.parse(r) : []; return Array.isArray(a) ? a : []; }catch(_){ return []; } };
+  var _def = function(id){
+    try{ if(typeof BACKPACK_ITEM_DEF !== 'undefined' && BACKPACK_ITEM_DEF[id]) return BACKPACK_ITEM_DEF[id]; }catch(_){}
+    return null;
+  };
+  var _itemNm = function(id){ var d = _def(id); return d ? (String(d.icon || '') + ' ' + String(d.name || id)) : ('📦 ' + id); };
+  var _treNm = function(id){
+    try{ var db = window.TAIWAN_TREASURES; if(db && db[id] && db[id].name) return String(db[id].name); }catch(_){}
+    return String(id);
+  };
+  var _srcLbl = function(s){
+    try{ if(typeof _lxpsUnlockSourceLabel === 'function'){ var o = _lxpsUnlockSourceLabel(s); return o ? o.text : ''; } }catch(_){}
+    return '';
+  };
+  var rows = [];
+  var _SKIP_SRC = { admin_delete:1, player_confirmed:1, audit_error_recovered:1, sold:1, gift_sent:1 };
+
+  // ── 英雄 / 至寶(先建 tid → 名稱對照,召喚卷「換到誰」要用)──
+  var _tidHit = {};
+  var _heroH = _arr('adv_hero_unlock_history');
+  _heroH.forEach(function(e){
+    if(!e || !e.name || !_mine(e.uid)) return;
+    var src = String(e.source || '');
+    if(_SKIP_SRC[src] || src.indexOf('audit') === 0) return;
+    if(e.tid) String(e.tid).split(',').forEach(function(t){ t = t.trim(); if(t) (_tidHit[t] = _tidHit[t] || []).push('🦸 ' + e.name); });
+    rows.push({ at:(Number(e.at) || 0), cat:'hero', ic:'🦸',
+      html:'<span class="gl-got">' + T('拿到英雄', '獲得英雄') + '</span> <b>' + _esc(e.name) + '</b>', src:_srcLbl(src) });
+  });
+  var _treH = _arr('adv_treasure_unlock_history');
+  _treH.forEach(function(e){
+    if(!e || !e.id || !_mine(e.uid)) return;
+    var src = String(e.source || '');
+    if(_SKIP_SRC[src] || src.indexOf('audit') === 0) return;
+    if(e.tid) String(e.tid).split(',').forEach(function(t){ t = t.trim(); if(t) (_tidHit[t] = _tidHit[t] || []).push('💎 ' + _treNm(e.id)); });
+    rows.push({ at:(Number(e.at) || 0), cat:'hero', ic:'💎',
+      html:'<span class="gl-got">' + T('拿到至寶', '獲得至寶') + '</span> <b>' + _esc(_treNm(e.id)) + '</b>', src:_srcLbl(src) });
+  });
+
+  // ── 召喚卷(獲得＋使用)──
+  if(_me){
+    _arr('lxps_ticket_ledger_' + window._gUserId).forEach(function(e){
+      if(!e || !e.item || !_mine(e.uid)) return;
+      var n = Math.abs(parseInt(e.n, 10) || 0) || 1;
+      if(e.ev === 'use'){
+        var _got = [];
+        if(e.tid) String(e.tid).split(',').forEach(function(t){ t = t.trim(); if(t && _tidHit[t]) _got = _got.concat(_tidHit[t]); });
+        var _res = String(e.result || '');
+        if(!_got.length && _res.indexOf(':') > 0) _got.push(_res.slice(_res.indexOf(':') + 1));   // 寵物券 'SR:綠雉'
+        rows.push({ at:(Number(e.at) || 0), cat:'ticket', ic:'🎫',
+          html:'<span class="gl-use">' + T('用掉', '使用') + '</span> ' + _esc(_itemNm(e.item)) + ' ×' + n
+            + (_got.length ? (' → ' + T('換到 ', '換得 ') + '<b>' + _esc(_got.join('、')) + '</b>') : ''),
+          src:'' });
+      } else if(e.ev === 'grant'){
+        var _gs = String(e.result || '');
+        if(_gs === 'grant') _gs = '';
+        rows.push({ at:(Number(e.at) || 0), cat:'ticket', ic:'🎫',
+          html:'<span class="gl-got">' + T('拿到', '獲得') + '</span> ' + _esc(_itemNm(e.item)) + ' ×' + n, src:_gs });
+      }
+    });
+  }
+
+  // ── 一般道具(v5.252.0 新帳本)──
+  _arr('lxps_item_log').forEach(function(e){
+    if(!e || !e.it || !_mine(e.uid)) return;
+    var n = parseInt(e.n, 10) || 0, x = parseInt(e.x, 10) || 0;
+    var _isTk = !!(window._TICKET_LEDGER_KEYS && window._TICKET_LEDGER_KEYS[e.it]);
+    var html = n > 0 ? ('<span class="gl-got">' + T('拿到', '獲得') + '</span> ' + _esc(_itemNm(e.it)) + ' ×' + n)
+                     : ('<span class="gl-use">' + T('沒拿到', '未入袋') + '</span> ' + _esc(_itemNm(e.it)));
+    if(x > 0) html += '<span class="gl-warn">⚠ ' + T('背包已經 99 個滿了,有 ' + x + ' 個沒放進去', '背包已達上限 99,另有 ' + x + ' 個未能放入') + '</span>';
+    rows.push({ at:(Number(e.at) || 0), cat:(_isTk ? 'ticket' : 'item'), ic:(_isTk ? '🎫' : '🎒'), html:html, src:String(e.s || '') });
+  });
+
+  // ── 裝備(取得類)──
+  try{
+    var _GSRC = { drop_mob:'冒險・小怪掉落', drop_rare:'冒險・菁英掉落', drop_boss:'冒險・BOSS 掉落', summon:'召喚',
+                  shop:'商店', gm_grant:'老師發放', gift:'好友贈送' };
+    (Array.isArray(window._equipUnlockHistory) ? window._equipUnlockHistory : []).forEach(function(e){
+      if(!e || !e.itemId || !_mine(e.uid12)) return;
+      var src = String(e.src || '');
+      if(_SKIP_SRC[src] || _SKIP_SRC[String(e.source || '')]) return;
+      var g = (typeof GEAR_DB !== 'undefined' && GEAR_DB[e.itemId]) ? GEAR_DB[e.itemId] : null;
+      rows.push({ at:(Number(e.at) || 0), cat:'item', ic:'🛡️',
+        html:'<span class="gl-got">' + T('拿到裝備', '獲得裝備') + '</span> ' + _esc(g ? (String(g.icon || '') + ' ' + g.n) : e.itemId),
+        src:(_GSRC[src] || '') });
+    });
+  }catch(_eG){}
+
+  // ── 知識幣 / 召喚水晶(只列增加)──
+  var _money = function(key, ic, nmC, nmP){
+    _arr(key).forEach(function(e){
+      if(!e || !_mine(e.uid)) return;
+      var a = parseInt(e.amount, 10) || 0;
+      if(a <= 0) return;
+      var r = String(e.reason || '');
+      if(r.indexOf('基準') === 0) return;
+      if(r === '(未分類變動)') r = T('其他', '其他來源');
+      r = r.replace(/^獲得:/, '');
+      rows.push({ at:(Number(e.at) || 0), cat:'money', ic:ic,
+        html:'<span class="gl-got">+' + a.toLocaleString() + '</span> ' + T(nmC, nmP), src:r });
+    });
+  };
+  _money('lxps_coin_tx', '💰', '知識幣', '知識幣');
+  _money('lxps_crystal_tx', '💠', '召喚水晶', '召喚水晶');
+
+  rows.sort(function(a, b){ return (b.at || 0) - (a.at || 0); });
+  return rows;
+};
+
+window._lxpsOpenGainLog = function(initCat){
+  try{
+    window._lxpsGainLogEnsureCss();
+    var _cute = (window._artStyle === 'cute');
+    var T = function(c, p){ return _cute ? c : p; };
+    var _esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+    var _old = document.getElementById('lxps-gainlog-ov'); if(_old) _old.remove();
+    var CATS = [
+      { k:'all',    c:'📋 全部',        p:'📋 全部' },
+      { k:'item',   c:'🎒 道具和裝備',   p:'🎒 道具・裝備' },
+      { k:'ticket', c:'🎫 召喚卷',      p:'🎫 召喚卷(含使用)' },
+      { k:'hero',   c:'🦸 英雄和至寶',   p:'🦸 英雄・至寶' },
+      { k:'money',  c:'💰 知識幣和水晶', p:'💰 知識幣・水晶' }
+    ];
+    var _cat = initCat || 'all';
+    var _rows = window._lxpsGainLogRows();
+    var ov = document.createElement('div');
+    ov.id = 'lxps-gainlog-ov';
+    ov.innerHTML = '<div id="lxps-gainlog-card" role="dialog" aria-modal="true">'
+      + '<div class="gl-head"><div class="gl-title">' + T('📜 我最近拿到什麼', '📜 最近獲得物品紀錄') + '</div>'
+      + '<button class="gl-close" type="button">✕ ' + T('關掉', '關閉') + '</button></div>'
+      + '<div class="gl-sub">' + T('打完冒險、領了獎勵、用了召喚卷,都會記在這裡喔!最新的在最上面。',
+                                    '依時間由新到舊,列出你獲得的道具、裝備、召喚卷(含使用紀錄)、英雄、至寶、知識幣與召喚水晶。') + '</div>'
+      + '<div class="gl-chips">' + CATS.map(function(c){ return '<button type="button" class="gl-chip" data-k="' + c.k + '">' + T(c.c, c.p) + '</button>'; }).join('') + '</div>'
+      + '<div class="gl-list" data-scrollable="true"></div>'
+      + '<div class="gl-foot">' + T('📌 道具和裝備從這次更新開始才有完整紀錄。如果覺得少拿了,把這一頁截圖給老師看!',
+                                     '📌 一般道具自本次更新(v5.252.0)起開始記錄;召喚卷、英雄、至寶、知識幣、水晶可查到較早的紀錄。若認為獎勵短少,請截圖本頁並告知老師。') + '</div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    var _list = ov.querySelector('.gl-list');
+    var _pad = function(v){ return (v < 10 ? '0' : '') + v; };
+    var _render = function(){
+      Array.prototype.forEach.call(ov.querySelectorAll('.gl-chip'), function(b){ b.classList.toggle('on', b.getAttribute('data-k') === _cat); });
+      var rs = _rows.filter(function(r){ return _cat === 'all' || r.cat === _cat; });
+      if(!rs.length){
+        _list.innerHTML = '<div class="gl-empty">' + T('這裡還沒有紀錄喔,去冒險拿獎勵吧!', '目前沒有符合的紀錄。') + '</div>';
+        return;
+      }
+      var LIMIT = 300, h = '', lastDay = '';
+      var _now = new Date(), _today = _now.getFullYear() + '/' + (_now.getMonth() + 1) + '/' + _now.getDate();
+      var _y = new Date(_now.getTime() - 86400000), _yday = _y.getFullYear() + '/' + (_y.getMonth() + 1) + '/' + _y.getDate();
+      var WK = ['日','一','二','三','四','五','六'];
+      rs.slice(0, LIMIT).forEach(function(r){
+        var d = new Date(r.at || 0);
+        var dk = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+        if(dk !== lastDay){
+          lastDay = dk;
+          var tag = (dk === _today) ? T('(今天)', '(今日)') : (dk === _yday ? T('(昨天)', '(昨日)') : '');
+          h += '<div class="gl-day">' + (r.at ? ((d.getMonth() + 1) + '/' + d.getDate() + ' ' + T('星期', '週') + WK[d.getDay()] + ' ' + tag) : T('時間不明', '時間不詳')) + '</div>';
+        }
+        h += '<div class="gl-row"><span class="gl-time">' + (r.at ? (_pad(d.getHours()) + ':' + _pad(d.getMinutes())) : '--:--') + '</span>'
+          + '<span class="gl-ic">' + r.ic + '</span>'
+          + '<span class="gl-main">' + r.html + (r.src ? ('<span class="gl-src">' + _esc(r.src) + '</span>') : '') + '</span></div>';
+      });
+      if(rs.length > LIMIT) h += '<div class="gl-empty">' + T('更早的紀錄太多了,只顯示最近 ' + LIMIT + ' 筆', '僅顯示最近 ' + LIMIT + ' 筆') + '</div>';
+      _list.innerHTML = h;
+      _list.scrollTop = 0;
+    };
+    var _close = function(){
+      try{ document.removeEventListener('keydown', _onKey, true); }catch(_){}
+      try{ ov.remove(); }catch(_){}
+    };
+    var _onKey = function(ev){ if(ev.key === 'Escape'){ ev.stopPropagation(); _close(); } };
+    document.addEventListener('keydown', _onKey, true);
+    ov.addEventListener('click', function(ev){ if(ev.target === ov) _close(); });
+    ov.querySelector('.gl-close').onclick = function(){ try{ playSfx('sfx-cancel', 0.4); }catch(_){} _close(); };
+    Array.prototype.forEach.call(ov.querySelectorAll('.gl-chip'), function(b){
+      b.onclick = function(){ try{ playSfx('sfx-sel', 0.5); }catch(_){} _cat = b.getAttribute('data-k'); _render(); };
+    });
+    _render();
+  }catch(_eOpen){ try{ console.warn('[最近獲得物品] 開啟失敗', _eOpen); }catch(_){} }
+};
 
 function _renderBackpackMain(){
   const grid = document.getElementById('backpack-grid');

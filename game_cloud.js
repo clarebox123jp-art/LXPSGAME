@@ -1820,6 +1820,7 @@
       var _crysTx   = _lxpsMergeHist(slots, '_crystalTransactions', function(e){ return e.id ? ('id:'+e.id) : ((e.at||0)+'|'+(e.amount||0)); }, 400);
       var _fruitH   = _lxpsMergeHist(slots, '_fruitHistory', function(e){ return (e.at||0)+'|'+(e.source||''); }, 200);
       var _actH     = _lxpsMergeHist(slots, '_activityHistory', function(e){ return e.id ? ('id:'+e.id) : ((e.at||0)+'|'+(e.type||'')); }, 800);
+      var _itemLogH = _lxpsMergeHist(slots, '_itemGainLog', function(e){ return e.id ? ('id:'+e.id) : ((e.at||0)+'|'+(e.it||'')); }, 300);   // ★ v5.252.0 道具獲得帳本
       var _battleMap = {};
       slots.forEach(function(s){
         _lxpsArrFromSlot(s, '_battleHistory').forEach(function(e){
@@ -2167,6 +2168,7 @@
       merged._fruitHistory         = _fruitH;
       merged._battleHistory        = _battleH;
       merged._activityHistory      = _actH;         merged._activityHistory_s = JSON.stringify(_actH);
+      merged._itemGainLog_s        = JSON.stringify(_itemLogH);   // ★ v5.252.0 只有字串版
       merged._compensationHistory  = _compHist;     merged._compensationHistory_s = JSON.stringify(_compHist);
       merged._compensationCount    = _compCount;
       if(_rescue) merged._adminRescueSignal = _rescue;
