@@ -4661,7 +4661,9 @@
         status: 'pending',
         requestDateStr: (typeof _getTodayKeyTW === 'function') ? _getTodayKeyTW() : '',
         createdAt: Date.now()
-      }, { merge: true });
+      }, { mergeFields: ['uid','email','displayLabel','claims','selfCheck','status','requestDateStr','createdAt'] });
+      // ★ v5.253.0 — merge:true 會把 claims 這個 map「深層合併」⇒ 昨天勾的 items / appeal / lostHeroes 會殘留到今天的新申請。
+      //   改 mergeFields:列出的欄位整個覆蓋(claims 每次都是全新的),其餘 GM 欄位(gmNote/resolvedAt/_handledItems)照舊保留。
       console.log('[帳號救援] 已送出申請,uid=' + uid);
       return true;
     }catch(e){ console.error('[帳號救援] 申請寫入失敗', e); return false; }
@@ -14873,7 +14875,13 @@
       crossAccountCount: _crossAccount.length,
       crystal: { current: _curCrys, ledger: _crysLedger, willAdd: _missingCrys },
       coins: { current: _curCoins, ledger: _coinLedger, willAdd: _missingCoins },
-      hasChanges: _hasChanges
+      hasChanges: _hasChanges,
+      // ★ v5.253.0 逐項救援用(唯讀附加欄位·不影響既有呼叫端):現有/已被移除清單 + 背包現況
+      ownedHeroes: Object.keys(_curHeroes),
+      removedHeroes: Object.keys(_latest).filter(function(n){ return !!_REMOVE_SRC[_latest[n].source]; }),
+      ownedTreasures: Object.keys(_curTre),
+      removedTreasures: Object.keys(_treLatest).filter(function(id){ return _treLatest[id].source === 'admin_delete'; }),
+      backpackNow: _curBag
     };
     console.info('[GM 帳號重建 v3.15.40] uid=' + String(uid).slice(0,8) + ' diff:', _diff);
     return {
@@ -14903,6 +14911,137 @@
     }
     console.info('[GM 帳號重建 v3.16.5] 已套用 uid=' + String(uid).slice(0,8), { add:(_res && _res.slotsWritten), removed:(_rmRes && _rmRes.removed) });
     return { ok: !!((!_res || _res.ok) && (!_rmRes || _rmRes.ok)), result: _res, removeResult: _rmRes };
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★★ v5.253.0(2026-10-15・老師「全部角色和知識幣等物資救援，讓玩家每天都可以選取來申請；
+  //    GM 收到後系統自動掃描該玩家申請的東西是否真的有獲得紀錄，沒有就自動建議駁回；
+  //    玩家申請時不符合記錄就無法選取，但最後還是提供打字申訴」)— 逐項救援核對引擎 ★★
+  //   _fbRescueVerifyItems(uid, req, opt) —「學生端選單」與「GM 端審核」共用同一支 ⇒ 兩邊判定永遠一致:
+  //     學生端:req=null → 只回 avail(每隻英雄/每件至寶/每種資源「能不能申請、最多多少」)→ 不能申請的直接鎖住。
+  //     GM 端 :req=學生申請的 claims.items → 另回 verdict(逐項 ✅建議通過/❌建議駁回+理由)、
+  //             payload(只含通過項目,餵 _fbApplyAccountRebuild)、okLines/rejLines(給 GM 看·給學生的駁回說明)。
+  //   依據全部是「雲端」資料(三槽合併 + 帳本),學生改本機/改請求內容都騙不過 GM 端重算。
+  //   判定口徑:
+  //     🦸 英雄 / 💎 至寶:= _fbRebuildAccountFromLedgers 的「本帳號 uid 自己的獲得紀錄 − 現在擁有 − 已被老師移除」
+  //     💰 知識幣 / 🔮 水晶:= 帳本最後餘額 − 現在餘額(帳本較高才算被弄丟;水晶補到不超過 99)
+  //     🎫 召喚卷(各種):= 雲端 ticketLedger 本帳號「獲得 − 使用」− 背包現有(只有大於 0 才算短少)
+  //   ⚠ 只讀不寫。召喚卷帳本自 v3.17.6 起才有;更早拿到的券查不到 → 判「無短少」(寧可少補,學生可用申訴)。
+  // ════════════════════════════════════════════════════════════════════
+  window._RESCUE_TICKET_NAMES = {
+    'summon_ticket_ssr':'SSR 召喚卷', 'summon_ticket_sr':'SR 召喚卷',
+    'summon_ticket_ssr_pick':'SSR 自選卷', 'summon_ticket_ur_pick':'UR 自選卷', 'summon_ticket_sr_pick':'SR 自選卷',
+    'summon_ticket_treasure':'至寶召喚卷', 'summon_ticket_treasure_pick':'至寶自選卷',
+    'pet_summon_ticket':'寵物召喚卷', 'summon_ticket_ur_swap':'UR 英雄替換卷'
+  };
+  window._fbRescueVerifyItems = async function(uid, req, opt){
+    if(!uid) throw new Error('缺少 uid');
+    opt = opt || {};
+    var _uid12 = String(uid).slice(0, 12);
+    var rr = (opt.rr && opt.rr.diff && opt.rr.uid === uid) ? opt.rr : await window._fbRebuildAccountFromLedgers(uid);   // GM 卡片已跑過就沿用,省一次雲端讀取
+    var d = (rr && rr.diff) || {};
+    var _set = function(a){ var o = {}; (Array.isArray(a) ? a : []).forEach(function(k){ if(k) o[k] = 1; }); return o; };
+    var _own = _set(d.ownedHeroes), _rmv = _set(d.removedHeroes);
+    var _miss = {}; (d.missingHeroDetail || []).forEach(function(h){ if(h && h.name) _miss[h.name] = h; });
+    var _ownT = _set(d.ownedTreasures), _rmvT = _set(d.removedTreasures);
+    var _missT = {}; (d.missingTreasures || []).forEach(function(t){ if(t && t.id) _missT[t.id] = t; });
+    var _treNm = function(id){ try{ var t = window.TAIWAN_TREASURES && window.TAIWAN_TREASURES[id]; return (t && t.name) ? t.name : id; }catch(_){ return id; } };
+
+    // ── 英雄狀態:missing=可申請 / owned=已擁有 / removed=老師移除或審核收回 / none=查無獲得紀錄
+    var _heroSt = function(n){
+      if(_miss[n]) return 'missing';
+      if(_own[n]) return 'owned';
+      if(_rmv[n]) return 'removed';
+      return 'none';
+    };
+    var _treSt = function(id){
+      if(_missT[id]) return 'missing';
+      if(_ownT[id]) return 'owned';
+      if(_rmvT[id]) return 'removed';
+      return 'none';
+    };
+    var _allH = {}; (opt.allHeroes || []).concat(Object.keys(_miss), d.ownedHeroes || [], d.removedHeroes || []).forEach(function(n){ if(n) _allH[n] = 1; });
+    var _allT = {}; (opt.allTreasures || []).concat(Object.keys(_missT), d.ownedTreasures || [], d.removedTreasures || []).forEach(function(id){
+      if(!id) return;
+      try{ if(window._isJapanTreasureKey && window._isJapanTreasureKey(id)) return; }catch(_){}
+      _allT[id] = 1;
+    });
+    var avail = { heroes:{}, treasures:{}, tickets:{},
+      coins:   { max: (d.coins && d.coins.willAdd) || 0,   current: (d.coins && d.coins.current) || 0,   ledger: (d.coins ? d.coins.ledger : null) },
+      crystal: { max: (d.crystal && d.crystal.willAdd) || 0, current: (d.crystal && d.crystal.current) || 0, ledger: (d.crystal ? d.crystal.ledger : null) } };
+    Object.keys(_allH).forEach(function(n){ avail.heroes[n] = { st:_heroSt(n), lv:(_miss[n] && _miss[n].lv) || 1 }; });
+    Object.keys(_allT).forEach(function(id){ avail.treasures[id] = { st:_treSt(id), name:_treNm(id) }; });
+
+    // ── 召喚卷:雲端帳本(只認本帳號 uid 的紀錄)獲得 − 使用 − 背包現有
+    var _tl = [];
+    try{ if(typeof window._fbLoadTicketLedger === 'function') _tl = await window._fbLoadTicketLedger(uid); }catch(_eTl){ _tl = []; }
+    var _bag = (d.backpackNow && typeof d.backpackNow === 'object') ? d.backpackNow : {};
+    var _tg = {}, _tu = {};
+    (Array.isArray(_tl) ? _tl : []).forEach(function(e){
+      if(!e || !e.item) return;
+      if(e.uid && String(e.uid).slice(0, 12) !== _uid12) return;
+      var n = Math.abs(parseInt(e.n, 10) || 0);
+      if(e.ev === 'grant') _tg[e.item] = (_tg[e.item] || 0) + n;
+      else if(e.ev === 'use') _tu[e.item] = (_tu[e.item] || 0) + n;
+    });
+    Object.keys(window._RESCUE_TICKET_NAMES).forEach(function(it){
+      var g = _tg[it] || 0, u = _tu[it] || 0, cur = (typeof _bag[it] === 'number') ? _bag[it] : 0;
+      var exp = Math.max(0, g - u);
+      avail.tickets[it] = { name: window._RESCUE_TICKET_NAMES[it], grant:g, use:u, current:cur, max: Math.max(0, exp - cur) };
+    });
+
+    var out = { rr: rr, avail: avail };
+    if(!req || typeof req !== 'object') return out;
+
+    // ── 逐項判定(GM 端)
+    var _why = { owned:'現在已經擁有，不需要救援', removed:'已被老師移除／審核收回，不能自動補回', none:'查無這個帳號的獲得紀錄' };
+    var verdict = { heroes:[], treasures:[], coins:null, crystal:null, tickets:[] };
+    var okLines = [], rejLines = [];
+    var payload = { reason:'v5.253.0 逐項救援(依雲端帳本核對通過項目)', coinsMode:'add' };
+    var _okH = [], _okT = [], _bp = {};
+    (Array.isArray(req.heroes) ? req.heroes : []).forEach(function(n){
+      if(!n) return;
+      var st = _heroSt(n), ok = (st === 'missing');
+      verdict.heroes.push({ name:n, ok:ok, st:st, reason: ok ? ('有獲得紀錄・現在不見了(補回 Lv' + ((_miss[n] && _miss[n].lv) || 1) + ')') : _why[st] });
+      if(ok){ _okH.push(n); okLines.push('🦸 ' + n); } else rejLines.push('🦸 ' + n + ':' + _why[st]);
+    });
+    (Array.isArray(req.treasures) ? req.treasures : []).forEach(function(id){
+      if(!id) return;
+      var st = _treSt(id), ok = (st === 'missing'), nm = _treNm(id);
+      verdict.treasures.push({ id:id, name:nm, ok:ok, st:st, reason: ok ? '有獲得紀錄・現在不見了' : _why[st] });
+      if(ok){ _okT.push(id); okLines.push('💎 ' + nm); } else rejLines.push('💎 ' + nm + ':' + _why[st]);
+    });
+    var _qty = function(key, label, max){
+      var want = Math.max(0, parseInt(req[key], 10) || 0);
+      if(!want) return null;
+      var ok = Math.min(want, max), rej = want - ok;
+      var v = { req:want, ok:ok, rej:rej, max:max,
+        reason: ok >= want ? '帳本顯示確實短少' : (ok > 0 ? ('帳本只顯示短少 ' + max + ',多申請的 ' + rej + ' 不補') : '帳本顯示沒有短少(數量對得上)') };
+      if(ok > 0) okLines.push(label + ' +' + ok);
+      if(rej > 0) rejLines.push(label + ' ' + rej + ':' + (ok > 0 ? ('帳本只顯示短少 ' + max) : '帳本顯示沒有短少'));
+      return v;
+    };
+    verdict.coins = _qty('coins', '💰 知識幣', avail.coins.max);
+    verdict.crystal = _qty('crystal', '🔮 召喚水晶', avail.crystal.max);
+    var _rt = (req.tickets && typeof req.tickets === 'object') ? req.tickets : {};
+    Object.keys(_rt).forEach(function(it){
+      var a = avail.tickets[it]; if(!a) return;
+      var want = Math.max(0, parseInt(_rt[it], 10) || 0); if(!want) return;
+      var ok = Math.min(want, a.max), rej = want - ok;
+      verdict.tickets.push({ item:it, name:a.name, req:want, ok:ok, rej:rej, max:a.max,
+        reason: ok >= want ? ('帳本:拿到 ' + a.grant + '、用掉 ' + a.use + '、背包 ' + a.current) : ('帳本只顯示短少 ' + a.max + '(拿到 ' + a.grant + '、用掉 ' + a.use + '、背包 ' + a.current + ')') });
+      if(ok > 0){ _bp[it] = ok; okLines.push('🎫 ' + a.name + ' +' + ok); }
+      if(rej > 0) rejLines.push('🎫 ' + a.name + ' ' + rej + ':' + (ok > 0 ? ('帳本只顯示短少 ' + a.max) : '帳本顯示沒有短少'));
+    });
+    if(_okH.length) payload.unlockedHeroes = _okH;
+    if(_okT.length) payload.treasures = _okT;
+    if(verdict.coins && verdict.coins.ok > 0) payload.coins = verdict.coins.ok;
+    if(verdict.crystal && verdict.crystal.ok > 0) _bp.summon_crystal = verdict.crystal.ok;
+    if(Object.keys(_bp).length) payload.backpack = _bp;
+    var _hasOk = !!(payload.unlockedHeroes || payload.treasures || payload.coins || payload.backpack);
+    out.verdict = verdict; out.okLines = okLines; out.rejLines = rejLines;
+    out.payload = _hasOk ? payload : null;
+    return out;
   };
 
   // ════════════════════════════════════════════════════════════════════

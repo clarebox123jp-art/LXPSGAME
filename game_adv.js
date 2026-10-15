@@ -54705,6 +54705,246 @@ window._RESCUE_CLAIM_DEFS = [
   { key:'rankAward', emoji:'🏆', label:'排名獎勵',             hint:'小博士/世界BOSS排名獎勵沒拿到' }
 ];
 
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.253.0(2026-10-15・老師「全部角色和知識幣等物資救援，讓玩家每天都可以選取來申請…
+//    不符合記錄就自動讓玩家無法選取，但最後還是提供打字申訴」)— 學生端「逐項救援選單」★★
+//   取代原本 6 個大類勾選:開窗即用 _fbRescueVerifyItems(自己uid)讀「雲端」帳本(與 GM 審核同一支引擎),
+//   列出遊戲裡全部英雄 / 全部至寶 / 知識幣 / 召喚水晶 / 各種召喚卷:
+//     ・有獲得紀錄、現在卻不見的 → 可以勾(數量類最多只能填到帳本顯示的短少數)
+//     ・已擁有 / 查無獲得紀錄 / 老師移除 → 灰色鎖住不能選,並寫出原因
+//   最下面「✍️ 打字申訴」永遠可填(系統查不到但確定有拿過 → 交老師人工判斷)。
+//   送出寫 claims.items / claims.appeal(塞既有 claims 物件 ⇒ firestore.rules 不用改)。
+//   畫面:body 直下 position:fixed 真實 px ⇒ 三平台用真實 px 媒體查詢(鐵律〇之二),窄螢幕/矮螢幕規則放最後。
+// ════════════════════════════════════════════════════════════════════
+window._rrqPickEnsureCss = function(){
+  try{
+    if(document.getElementById('lxps-rrq2-css')) return;
+    var st = document.createElement('style');
+    st.id = 'lxps-rrq2-css';
+    st.textContent = ''
+      + '#_rrq-pick{margin-bottom:13px;}'
+      + '#_rrq-pick .rq-h{font-size:14px;color:#ffe2b0;font-weight:800;margin-bottom:4px;}'
+      + '#_rrq-pick .rq-sub{font-size:12.5px;color:#d6c4a0;line-height:1.55;margin-bottom:8px;}'
+      + '#_rrq-pick .rq-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}'
+      + '#_rrq-pick .rq-tab{min-height:40px;padding:6px 12px;font-size:14px;font-weight:800;border-radius:20px;border:1.5px solid rgba(255,200,120,0.4);background:rgba(0,0,0,0.35);color:#ffe0b0;cursor:pointer;font-family:inherit;white-space:nowrap;}'
+      + '#_rrq-pick .rq-tab.on{background:linear-gradient(135deg,rgba(230,170,60,0.75),rgba(180,120,30,0.9));border-color:#ffcf80;color:#fff;}'
+      + '#_rrq-pick .rq-tab b{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:9px;background:rgba(120,255,170,0.25);color:#c8ffd8;font-size:12px;}'
+      + '#_rrq-pick .rq-tools{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}'
+      + '#_rrq-pick .rq-search{flex:1 1 140px;min-width:0;min-height:36px;padding:5px 10px;font-size:14px;border-radius:8px;border:1px solid rgba(255,200,120,0.35);background:rgba(0,0,0,0.4);color:#fff;font-family:inherit;box-sizing:border-box;}'
+      + '#_rrq-pick .rq-only{display:flex;align-items:center;gap:5px;font-size:13px;color:#e8dcc4;cursor:pointer;white-space:nowrap;}'
+      + '#_rrq-pick .rq-list{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border:1px solid rgba(255,200,120,0.18);border-radius:8px;background:rgba(0,0,0,0.25);}'
+      + '#_rrq-pick .rq-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid rgba(255,200,120,0.1);cursor:pointer;}'
+      + '#_rrq-pick .rq-row.off{cursor:not-allowed;opacity:0.5;}'
+      + '#_rrq-pick .rq-row input[type=checkbox]{width:20px;height:20px;flex-shrink:0;accent-color:#e6a537;cursor:inherit;margin:0;}'
+      + '#_rrq-pick .rq-nm{flex:1;min-width:0;font-size:14.5px;font-weight:800;color:#ffe6b8;word-break:break-word;}'
+      + '#_rrq-pick .rq-tag{flex:0 0 auto;font-size:12px;padding:1px 8px;border-radius:9px;white-space:nowrap;}'
+      + '#_rrq-pick .rq-tag.ok{background:rgba(80,220,140,0.2);border:1px solid rgba(120,255,170,0.55);color:#bfffd2;}'
+      + '#_rrq-pick .rq-tag.no{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#c9c0b0;}'
+      + '#_rrq-pick .rq-tag.warn{background:rgba(255,160,70,0.18);border:1px solid rgba(255,180,100,0.6);color:#ffd2a0;}'
+      + '#_rrq-pick .rq-qty{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid rgba(255,200,120,0.1);flex-wrap:wrap;}'
+      + '#_rrq-pick .rq-qty.off{opacity:0.5;}'
+      + '#_rrq-pick .rq-qty .rq-info{flex:1 1 180px;min-width:0;font-size:12.5px;color:#d6c4a0;line-height:1.5;}'
+      + '#_rrq-pick .rq-qty .rq-info b{font-size:14.5px;color:#ffe6b8;}'
+      + '#_rrq-pick .rq-num{width:96px;min-height:38px;padding:4px 8px;font-size:16px;font-weight:800;text-align:center;border-radius:8px;border:1.5px solid rgba(255,200,120,0.5);background:rgba(0,0,0,0.45);color:#fff;font-family:inherit;box-sizing:border-box;}'
+      + '#_rrq-pick .rq-num:disabled{border-color:rgba(255,255,255,0.15);color:#888;}'
+      + '#_rrq-pick .rq-empty{padding:16px 10px;text-align:center;color:#bbb;font-size:13px;}'
+      + '#_rrq-pick .rq-load{padding:18px 10px;text-align:center;color:#ffd98a;font-size:14px;}'
+      + '#_rrq-pick .rq-sum{margin-top:7px;font-size:13px;color:#bfffd2;min-height:18px;}'
+      + '#_rrq-appeal-box{margin-bottom:13px;background:rgba(40,30,60,0.45);border:1.5px solid rgba(190,160,255,0.45);border-radius:10px;padding:11px 13px;}'
+      + '#_rrq-appeal-box .rq-h{font-size:14px;font-weight:800;color:#e2d4ff;margin-bottom:4px;}'
+      + '#_rrq-appeal-box .rq-sub{font-size:12.5px;color:#d4c8ec;line-height:1.55;margin-bottom:7px;}'
+      + '#_rrq-appeal{width:100%;min-height:72px;box-sizing:border-box;padding:8px 10px;font-size:14px;line-height:1.5;border-radius:8px;border:1px solid rgba(190,160,255,0.45);background:rgba(0,0,0,0.4);color:#fff;font-family:inherit;resize:vertical;}'
+      + '#_rrq-appeal-box .rq-cnt{text-align:right;font-size:12px;color:#a99cc8;margin-top:3px;}'
+      // iPad / 平板(寬 ≥ 1000)略放大清單高度
+      + '@media (min-width:1000px) and (min-height:700px){#_rrq-pick .rq-list{max-height:340px;}#_rrq-pick .rq-nm{font-size:15.5px;}}'
+      // 手機橫放(高度 ≤ 520):清單壓矮、分頁改單行橫捲、字級守住內文 ≥12
+      + '@media (orientation:landscape) and (max-height:520px){'
+      +   '#_rrq-pick .rq-tabs{flex-wrap:nowrap;overflow-x:auto;gap:5px;}'
+      +   '#_rrq-pick .rq-tab{min-height:36px;font-size:13px;padding:4px 10px;flex:0 0 auto;}'
+      +   '#_rrq-pick .rq-list{max-height:150px;}'
+      +   '#_rrq-pick .rq-row{padding:6px 8px;}'
+      +   '#_rrq-pick .rq-nm{font-size:13.5px;}'
+      +   '#_rrq-pick .rq-sub,#_rrq-appeal-box .rq-sub{font-size:12px;line-height:1.4;}'
+      +   '#_rrq-appeal{min-height:52px;font-size:13px;}'
+      + '}';
+    document.head.appendChild(st);
+  }catch(_e){}
+};
+
+// 開窗後非同步載入(雲端核對)→ 畫出逐項選單。applied=今天已申請(全部鎖住只供查看)
+window._rrqPickLoad = async function(modal, applied){
+  var box = modal ? modal.querySelector('#_rrq-pick') : null;
+  if(!box) return;
+  window._rrqPickEnsureCss();
+  var _cute = (window._artStyle === 'cute');
+  var T = function(c, p){ return _cute ? c : p; };
+  var _esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+  box.innerHTML = '<div class="rq-h">' + T('🎯 選出你不見的東西', '🎯 選擇要救援的項目') + '</div>'
+    + '<div class="rq-load">' + T('⏳ 正在查你的遊戲紀錄…', '⏳ 正在查詢雲端遊戲紀錄…') + '</div>';
+  window._rrqPick = null;
+  var _allH = [];
+  try{
+    var _src = (typeof ADMIN_ALL_HEROES !== 'undefined' && Array.isArray(ADMIN_ALL_HEROES)) ? ADMIN_ALL_HEROES : [];
+    var _seen = {};
+    _src.forEach(function(n){
+      if(!n || _seen[n]) return;
+      try{ if(typeof _PLAYER_HERO_NAMES !== 'undefined' && _PLAYER_HERO_NAMES && typeof _PLAYER_HERO_NAMES.has === 'function' && !_PLAYER_HERO_NAMES.has(n)) return; }catch(_){}
+      _seen[n] = 1; _allH.push(n);
+    });
+  }catch(_eH){}
+  var _allT = [];
+  try{ if(window.TAIWAN_TREASURES && typeof window.TAIWAN_TREASURES === 'object') _allT = Object.keys(window.TAIWAN_TREASURES); }catch(_eT){}
+  var res = null;
+  try{
+    if(typeof window._fbRescueVerifyItems !== 'function') throw new Error('核對元件尚未載入');
+    res = await window._fbRescueVerifyItems(window._gUserId, null, { allHeroes:_allH, allTreasures:_allT });
+  }catch(e){
+    box.innerHTML = '<div class="rq-h">' + T('🎯 選出你不見的東西', '🎯 選擇要救援的項目') + '</div>'
+      + '<div class="rq-empty" style="color:#ff9d7a;">' + T('❌ 查不到紀錄(網路可能不穩)。你還是可以在下面打字申訴,或等一下再試。', '❌ 雲端紀錄查詢失敗(可能是網路不穩)。仍可於下方填寫申訴,或稍後重新開啟本視窗。') + '</div>'
+      + '<button type="button" class="rq-tab" id="_rrq-pick-retry" style="width:100%;">' + T('🔄 再查一次', '🔄 重新查詢') + '</button>';
+    var _rb = box.querySelector('#_rrq-pick-retry'); if(_rb) _rb.onclick = function(){ window._rrqPickLoad(modal, applied); };
+    console.warn('[逐項救援] 核對失敗', e);
+    return;
+  }
+  if(!document.body.contains(box)) return;   // 視窗已關
+  var A = res.avail;
+  var TAG = {
+    missing: { c:'ok', t:T('✅ 可以申請', '✅ 可申請') },
+    owned:   { c:'no', t:T('你已經有了', '已擁有') },
+    // ★ v5.253.0(老師 10/15 追加裁定「查不到獲得紀錄、被老師移除的不要鎖住」)→ 可選,但標橘色「需老師審核」;GM 端仍逐項標 ❌建議駁回+理由
+    removed: { c:'warn', t:T('⚠ 老師收回過・要老師看', '⚠ 曾由老師移除・需老師審核') },
+    none:    { c:'warn', t:T('⚠ 查不到紀錄・要老師看', '⚠ 查無獲得紀錄・需老師審核') }
+  };
+  var ORD = { missing:0, owned:1, removed:2, none:3 };
+  var heroes = Object.keys(A.heroes).map(function(n){ return { k:n, nm:n, st:A.heroes[n].st }; });
+  var tres = Object.keys(A.treasures).map(function(id){ return { k:id, nm:A.treasures[id].name, st:A.treasures[id].st }; });
+  var _byOrd = function(a, b){ return (ORD[a.st] - ORD[b.st]) || String(a.nm).localeCompare(String(b.nm), 'zh-Hant'); };
+  heroes.sort(_byOrd); tres.sort(_byOrd);
+  var tks = Object.keys(A.tickets).map(function(it){ var t = A.tickets[it]; return { k:it, nm:t.name, max:t.max, cur:t.current }; });
+  var nH = heroes.filter(function(x){ return x.st === 'missing'; }).length;
+  var nT = tres.filter(function(x){ return x.st === 'missing'; }).length;
+  var nM = (A.coins.max > 0 ? 1 : 0) + (A.crystal.max > 0 ? 1 : 0);
+  var nK = tks.filter(function(x){ return x.max > 0; }).length;
+  var state = { tab:'hero', only:false, q:'', selH:{}, selT:{}, qty:{ coins:0, crystal:0 }, tk:{} };
+  window._rrqPick = { avail:A, state:state };
+  var _tabs = [
+    { k:'hero',  t:T('🦸 英雄', '🦸 英雄'), n:nH },
+    { k:'tre',   t:T('💎 至寶', '💎 至寶'), n:nT },
+    { k:'money', t:T('💰 幣和水晶', '💰 知識幣・水晶'), n:nM },
+    { k:'tk',    t:T('🎫 召喚卷', '🎫 召喚卷'), n:nK }
+  ];
+  var _dis = applied ? ' disabled' : '';
+  var _qtyRow = function(key, icon, label, cur, max){
+    var off = applied || max <= 0;
+    var v = (key.indexOf('tk:') === 0) ? (state.tk[key.slice(3)] || 0) : (state.qty[key] || 0);
+    return '<div class="rq-qty' + (max <= 0 ? ' off' : '') + '">'
+      + '<div class="rq-info"><b>' + icon + ' ' + _esc(label) + '</b><br>'
+      +   T('現在有 ', '目前 ') + Number(cur || 0).toLocaleString() + '・'
+      +   (max > 0 ? ('<span style="color:#bfffd2;">' + T('紀錄顯示少了 ', '帳本顯示短少 ') + max.toLocaleString() + T(',最多可以申請這麼多', ',最多可申請此數量') + '</span>')
+                   : ('<span style="color:#c9c0b0;">' + T('🔒 紀錄對得上,沒有少', '🔒 帳本與現況相符,無短少') + '</span>'))
+      + '</div>'
+      + '<input type="number" inputmode="numeric" class="rq-num" data-key="' + _esc(key) + '" min="0" max="' + max + '" step="1" value="' + (off ? 0 : v) + '"' + (off ? ' disabled' : '') + ' aria-label="' + _esc(label) + '">'
+      + '</div>';
+  };
+  var _sumTxt = function(){
+    var parts = [];
+    var h = Object.keys(state.selH).length, t = Object.keys(state.selT).length;
+    if(h) parts.push('🦸 ' + h); if(t) parts.push('💎 ' + t);
+    if(state.qty.coins) parts.push('💰 ' + state.qty.coins); if(state.qty.crystal) parts.push('🔮 ' + state.qty.crystal);
+    var k = 0; Object.keys(state.tk).forEach(function(x){ k += state.tk[x] || 0; }); if(k) parts.push('🎫 ' + k);
+    return parts.length ? (T('已選:', '已選擇:') + parts.join('、')) : '';
+  };
+  // 英雄/至寶清單內容(搜尋時只換這塊)
+  var _listHtml = function(){
+    var src = (state.tab === 'hero') ? heroes : tres;
+    var sel = (state.tab === 'hero') ? state.selH : state.selT;
+    var q = String(state.q || '').trim();
+    var rows = src.filter(function(x){ return (!state.only || x.st === 'missing') && (!q || String(x.nm).indexOf(q) >= 0); });
+    if(!rows.length){
+      return '<div class="rq-empty">' + ((state.only && !q) ? T('沒有查到有紀錄的,可以關掉「只看有紀錄的」看全部', '目前沒有具獲得紀錄的項目;取消「僅顯示有紀錄者」可檢視全部。') : T('找不到這個名字', '查無符合的名稱')) + '</div>';
+    }
+    return rows.map(function(x){
+      var can = (x.st !== 'owned') && !applied;
+      var tg = TAG[x.st] || TAG.none;
+      return '<label class="rq-row' + (x.st === 'owned' ? ' off' : '') + '">'
+        + '<input type="checkbox" class="rq-cb" data-k="' + _esc(x.k) + '"' + (sel[x.k] ? ' checked' : '') + (can ? '' : ' disabled') + '>'
+        + '<span class="rq-nm">' + (state.tab === 'tre' ? '💎 ' : '') + _esc(x.nm) + '</span>'
+        + '<span class="rq-tag ' + tg.c + '">' + tg.t + '</span></label>';
+    }).join('');
+  };
+  var _bindCb = function(){
+    Array.prototype.forEach.call(box.querySelectorAll('.rq-cb'), function(cb){
+      cb.onchange = function(){
+        var k = cb.getAttribute('data-k'), sel = (state.tab === 'hero') ? state.selH : state.selT;
+        if(cb.checked) sel[k] = 1; else delete sel[k];
+        var sm = box.querySelector('.rq-sum'); if(sm) sm.textContent = _sumTxt();
+      };
+    });
+  };
+  var render = function(){
+    var html = '<div class="rq-h">' + T('🎯 選出你不見的東西', '🎯 選擇要救援的項目') + '</div>'
+      + '<div class="rq-sub">' + T('系統已經幫你查好紀錄了!<b style="color:#bfffd2;">✅ 綠色</b>是有紀錄、可以申請;<b style="color:#ffd2a0;">⚠ 橘色</b>是查不到你拿過,也可以選,但要老師查過才會補;你已經有的不能選。',
+                                     '系統已依雲端遊戲紀錄完成比對:<b style="color:#bfffd2;">✅ 可申請</b>為有獲得紀錄者;<b style="color:#ffd2a0;">⚠ 需老師審核</b>為查無紀錄或曾由老師移除者,仍可勾選,但須經老師查核;已擁有者無法選取。') + '</div>'
+      + '<div class="rq-tabs">' + _tabs.map(function(tb){ return '<button type="button" class="rq-tab' + (state.tab === tb.k ? ' on' : '') + '" data-tab="' + tb.k + '">' + tb.t + '<b>' + tb.n + '</b></button>'; }).join('') + '</div>';
+    if(state.tab === 'hero' || state.tab === 'tre'){
+      html += '<div class="rq-tools"><input type="search" class="rq-search" placeholder="' + T('🔍 找名字', '🔍 搜尋名稱') + '" value="' + _esc(state.q) + '">'
+        + '<label class="rq-only"><input type="checkbox" class="rq-only-cb"' + (state.only ? ' checked' : '') + ' style="width:18px;height:18px;margin:0;accent-color:#e6a537;">' + T('只看有紀錄的', '僅顯示有紀錄者') + '</label></div>';
+      html += '<div class="rq-list" data-scrollable="true">' + _listHtml() + '</div>';
+    } else if(state.tab === 'money'){
+      html += '<div class="rq-list" data-scrollable="true">'
+        + _qtyRow('coins', '💰', T('知識幣', '知識幣'), A.coins.current, A.coins.max)
+        + _qtyRow('crystal', '🔮', T('召喚水晶', '召喚水晶'), A.crystal.current, A.crystal.max)
+        + '</div>';
+    } else {
+      html += '<div class="rq-list" data-scrollable="true">'
+        + tks.map(function(t){ return _qtyRow('tk:' + t.k, '🎫', t.nm, t.cur, t.max); }).join('')
+        + '</div>';
+    }
+    html += '<div class="rq-sum">' + _sumTxt() + '</div>';
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll('.rq-tab'), function(b){
+      b.onclick = function(){ state.tab = b.getAttribute('data-tab'); state.q = ''; render(); };
+    });
+    // ★ 搜尋只重畫清單、不換掉輸入框;注音/拼音「組字中」不更新 ⇒ iPad 中文輸入法選字不會被打斷
+    var _s = box.querySelector('.rq-search');
+    if(_s){
+      var _composing = false;
+      var _apply = function(){ state.q = _s.value; var L = box.querySelector('.rq-list'); if(L){ L.innerHTML = _listHtml(); _bindCb(); } };
+      _s.addEventListener('compositionstart', function(){ _composing = true; });
+      _s.addEventListener('compositionend', function(){ _composing = false; _apply(); });
+      _s.oninput = function(ev){ if(_composing || (ev && ev.isComposing)) return; _apply(); };
+    }
+    var _o = box.querySelector('.rq-only-cb');
+    if(_o) _o.onchange = function(){ state.only = !!_o.checked; render(); };
+    _bindCb();
+    Array.prototype.forEach.call(box.querySelectorAll('.rq-num'), function(inp){
+      inp.onchange = inp.oninput = function(){
+        var key = inp.getAttribute('data-key'), mx = parseInt(inp.getAttribute('max'), 10) || 0;
+        var v = Math.max(0, Math.min(mx, parseInt(inp.value, 10) || 0));
+        if(String(v) !== String(inp.value) && inp.value !== '') inp.value = v;
+        if(key.indexOf('tk:') === 0){ if(v) state.tk[key.slice(3)] = v; else delete state.tk[key.slice(3)]; }
+        else state.qty[key] = v;
+        var sm = box.querySelector('.rq-sum'); if(sm) sm.textContent = _sumTxt();
+      };
+    });
+  };
+  render();
+};
+
+// 送出前收集(再用 avail 夾一次,防 devtools 解鎖;GM 端仍會重新權威核對)
+window._rrqPickCollect = function(){
+  var P = window._rrqPick;
+  var out = { heroes:[], treasures:[], coins:0, crystal:0, tickets:{} };
+  if(!P || !P.avail) return out;
+  var A = P.avail, S = P.state;
+  Object.keys(S.selH).forEach(function(n){ if(A.heroes[n] && A.heroes[n].st !== 'owned') out.heroes.push(n); });          // 已擁有才擋(查無/移除可送,GM 端建議駁回)
+  Object.keys(S.selT).forEach(function(id){ if(A.treasures[id] && A.treasures[id].st !== 'owned') out.treasures.push(id); });
+  out.coins = Math.max(0, Math.min(A.coins.max, S.qty.coins || 0));
+  out.crystal = Math.max(0, Math.min(A.crystal.max, S.qty.crystal || 0));
+  Object.keys(S.tk).forEach(function(it){ var t = A.tickets[it]; var v = Math.max(0, Math.min(t ? t.max : 0, S.tk[it] || 0)); if(v) out.tickets[it] = v; });
+  return out;
+};
+
 window._openRescueReq = async function(){
   if(!window._gUserId){
     if(typeof _showSimpleToast === 'function') _showSimpleToast('⚠️ 請先登入 Google 帳號,才能申請帳號救援', 'warn');
@@ -54883,8 +55123,16 @@ window._openRescueReq = async function(){
         '<div>👤 你的帳號:<b style="color:#ffcf7a;">' + _esc(_nameDisplay) + '</b></div>' +
         '<div>📧 信箱:<b style="color:#ffcf7a;">' + _esc(_emailDisplay) + '</b></div>' +
       '</div>' +
-      '<div style="font-size:14px;color:#ffe2b0;font-weight:800;margin-bottom:9px;">請勾選你「遺失」的項目(可複選):</div>' +
-      _checkRows +
+      // ★ v5.253.0 — 6 大類勾選改為「逐項救援選單」(雲端紀錄核對過才能選)＋打字申訴
+      '<div id="_rrq-pick"></div>' +
+      '<div id="_rrq-appeal-box">' +
+        '<div class="rq-h">' + ((window._artStyle === 'cute') ? '✍️ 打字跟老師說' : '✍️ 打字申訴') + '</div>' +
+        '<div class="rq-sub">' + ((window._artStyle === 'cute')
+          ? '上面查不到、但你確定有拿過?寫下<b>哪一天、在哪裡</b>拿到的(例如排名獎勵、老師發的),老師會幫你查。'
+          : '若系統查無紀錄、但你確定曾經獲得(例如排名獎勵、老師發放),請寫下<b>日期與取得方式</b>,老師將人工查核。') + '</div>' +
+        '<textarea id="_rrq-appeal" maxlength="300" ' + (_appliedToday ? 'disabled ' : '') + 'placeholder="' + ((window._artStyle === 'cute') ? '例如:10/12 打世界BOSS第3名,沒拿到獎勵' : '例:10/12 世界 BOSS 排名第 3,未收到排名獎勵') + '"></textarea>' +
+        '<div class="rq-cnt"><span id="_rrq-appeal-n">0</span> / 300</div>' +
+      '</div>' +
       _lostSection +
       '<button id="_rrq-audit-btn" style="width:100%;margin:4px 0 13px;padding:12px;font-size:14.5px;font-weight:900;background:linear-gradient(135deg,rgba(90,150,200,0.5),rgba(60,110,170,0.6));border:2px solid #6fb0e0;color:#eaf6ff;border-radius:11px;cursor:pointer;font-family:inherit;">🔍 我的英雄來源自我審查(圖鑑卡片版)</button>' +
       '<div id="_rrq-msg" style="min-height:18px;font-size:13px;color:#ff9d7a;margin:8px 0 10px;text-align:center;"></div>' +
@@ -54901,7 +55149,14 @@ window._openRescueReq = async function(){
       '</div>' +
     '</div>';
 
+  try{ window._rrqPickEnsureCss(); }catch(_eCss){}
   document.body.appendChild(_modal);
+  // ★ v5.253.0 — 逐項救援選單(非同步查雲端)＋申訴字數
+  try{ window._rrqPickLoad(_modal, _appliedToday); }catch(_ePk){ console.warn('[逐項救援] 載入失敗', _ePk); }
+  try{
+    var _apTa = document.getElementById('_rrq-appeal'), _apN = document.getElementById('_rrq-appeal-n');
+    if(_apTa && _apN) _apTa.oninput = function(){ _apN.textContent = String(_apTa.value.length); };
+  }catch(_eAp){}
 
   var _grBtn = document.getElementById('_rrq-gmreply-btn');
   if(_grBtn) _grBtn.onclick = function(){ var _gb = document.getElementById('_rrq-gmreply-box'); if(_gb) _gb.style.display = (_gb.style.display === 'none' ? 'block' : 'none'); };
@@ -54951,7 +55206,31 @@ window._rescueReqSubmit = async function(_modal, _btn){
     }
     if(_lost.length){ _claims.lostHeroes = _lost; _anyChecked = true; }
   }catch(_eLost){}
-  if(!_anyChecked){ _setMsg('#ff9d7a', '❌ 請至少勾選一個遺失項目,或標記一個英雄'); return; }
+  // ★ v5.253.0 — 逐項救援選單 + 打字申訴 → claims.items / claims.appeal(並同步舊 6 大類布林,讓舊版 GM 畫面也看得到大類)
+  try{
+    const _it = (typeof window._rrqPickCollect === 'function') ? window._rrqPickCollect() : null;
+    if(_it){
+      const _nTk = Object.keys(_it.tickets).length;
+      if(_it.heroes.length || _it.treasures.length || _it.coins || _it.crystal || _nTk){
+        _claims.items = _it;
+        if(_it.heroes.length) _claims.heroes = true;
+        if(_it.treasures.length) _claims.treasures = true;
+        if(_it.coins) _claims.coins = true;
+        if(_it.crystal) _claims.crystal = true;
+        if(_nTk) _claims.ticket = true;
+        _anyChecked = true;
+      }
+    }
+    const _apEl = _modal ? _modal.querySelector('#_rrq-appeal') : null;
+    const _ap = _apEl ? String(_apEl.value || '').trim().slice(0, 300) : '';
+    if(_ap){ _claims.appeal = _ap; _anyChecked = true; }
+  }catch(_eItems){ console.warn('[逐項救援] 收集失敗', _eItems); }
+  if(!_anyChecked){
+    _setMsg('#ff9d7a', (window._artStyle === 'cute')
+      ? '❌ 還沒選東西喔!請勾選上面 ✅ 綠色的項目,或在「打字跟老師說」寫下來'
+      : '❌ 請至少選擇一個可申請的項目,或填寫申訴內容');
+    return;
+  }
 
   if(_btn){ _btn.disabled = true; _btn.textContent = '送出中…'; }
   _setMsg('#ffd98a', '⏳ 正在查詢你的遊戲記錄…');
