@@ -51390,6 +51390,8 @@ function _renderHeroDetail(name, box) {
   try{ _renderHeroCodexUnlockBar(name); }catch(_){}
   // ★ v4.40.0 — 「播放動畫」按鈕:依收錄狀態(彩色圖=已收錄→可點;未收錄→禁用灰階)刷新
   try{ _codexRefreshBurstAnimBtn(name, _heroIsUnlocked); }catch(_){}
+  // ★ v5.276.0 — 左側大圖左上(稀有度標籤下方)「✨ 命座」按鈕(一打開就看得到;有可點命星會閃金光)
+  try{ if(typeof window._cstCodexSideBtn === 'function') window._cstCodexSideBtn(name, _heroIsUnlocked); }catch(_){}
   // ★ 肖像切換面板：若此英雄有多張肖像則顯示，並標記已解鎖/未解鎖/當前選擇
   try{
     const _sw = document.getElementById('hero-detail-portrait-switcher');
@@ -71446,6 +71448,7 @@ function openMonsterDetail(name) {
   if(imgEl&&avEl){
     if(img){ imgEl.src=img; imgEl.style.display='block'; avEl.style.display='none'; }
     else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; avEl.style.fontSize='96px'; }
+    try{ var _cstSb = document.getElementById('hero-detail-cst-btn'); if(_cstSb) _cstSb.style.display = 'none'; }catch(_){}   // ★ v5.276.0 魔物詳情共用此視窗 ⇒ 收起英雄的「✨ 命座」按鈕
     // 清除英雄頁可能殘留的 grayscale filter
     imgEl.style.filter = '';
     avEl.style.filter = '';
@@ -79094,6 +79097,15 @@ function makeRadar(dims, size) {
       '.cst-codexglow{position:absolute;inset:0;pointer-events:none;z-index:3;border:4px solid #ffd97a;border-radius:6px;animation:cstCodexBreath 1s ease-in-out 2 forwards;}',
       '@keyframes cstCodexBreath{0%{opacity:0.15;box-shadow:inset 0 0 6px rgba(255,210,90,0.3);}50%{opacity:1;box-shadow:inset 0 0 38px rgba(255,210,90,0.95),0 0 26px rgba(255,210,90,0.9);}100%{opacity:0;box-shadow:inset 0 0 6px rgba(255,210,90,0);}}',
       '@media (prefers-reduced-motion:reduce){.cst-spark,.cst-wave{display:none;}}',
+      /* ★ v5.276.0 圖鑑大圖左上(稀有度標籤下方)「✨ 命座」按鈕＋格子卡可點命星閃爍 */
+      '#hero-detail-cst-btn{position:absolute;left:14px;top:100px;z-index:11;display:flex;align-items:center;gap:8px;min-height:70px;padding:10px 22px;border-radius:16px;cursor:pointer;font-family:inherit;font-size:28px;font-weight:900;color:#fff3cf;border:3px solid #ffd97a;background:linear-gradient(135deg,rgba(40,60,160,0.95),rgba(20,20,70,0.95));box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 12px rgba(255,210,90,0.45);}',
+      '#hero-detail-cst-btn .cst-sb-n{font-size:20px;color:#ffd97a;}',
+      '#hero-detail-cst-btn .cst-sb-free{font-size:19px;padding:3px 11px;border-radius:999px;background:#2fd47a;color:#04210f;}',
+      '#hero-detail-cst-btn.hot{animation:cstSbHot 1.4s ease-in-out infinite;}',
+      '@keyframes cstSbHot{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 10px rgba(255,210,90,0.45);}50%{box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 26px rgba(255,220,110,1);}}',
+      '.cst-gfree{animation:cstPulse 1.2s ease-in-out infinite;}',
+      /* 圖鑑詳情在遊戲畫布內、手機橫放整張畫布縮到約 0.4 倍 ⇒ 反向放大,讓實際按鈕高度 ≥ 44px(三平台鐵律) */
+      '@media (orientation:landscape) and (max-height:520px){#hero-detail-cst-btn{font-size:46px;min-height:124px;padding:12px 26px;gap:12px;border-width:4px;border-radius:22px;} #hero-detail-cst-btn .cst-sb-n{font-size:34px;} #hero-detail-cst-btn .cst-sb-free{font-size:32px;padding:4px 14px;}}',
       /* iPad(1024~1366 寬):星圖略小、說明字略大 */
       '@media (min-width:900px) and (max-width:1400px) and (min-height:700px){.cst-mapwrap{width:min(480px,48vw);} .cst-desc{font-size:19px;}}',
       /* ★ 手機橫放(約 891×411):緊湊版星圖、說明卡改底部抽屜(設計書第四節);本區塊放在最後(CSS 宣告順序鐵律) */
@@ -79123,10 +79135,14 @@ function makeRadar(dims, size) {
      由 _buildHeroGrid 的卡片模板呼叫;星圖點亮/重置/雲端載入後 _cstGridStarsRefresh() 就地更新(不重畫整個格子)。 */
   W._cstGridStarsInner = function(name){
     var k = W._cstKey(name), lit = Math.min(W._CST_MAX, W._cstLit(k).length), full = (lit >= W._CST_MAX), s = '';
+    /* ★ v5.276.0 有命星還沒點的(已擁有):那幾顆顯示白色閃爍 ✦,提示「這位英雄可以點命星」 */
+    var free = 0; try{ free = _owned(k) ? Math.max(0, Math.min(W._CST_MAX, W._cstHeld(k)) - lit) : 0; }catch(_){ free = 0; }
     for(var i = 0; i < W._CST_MAX; i++){
       s += (i < lit)
         ? '<span style="color:#ffd97a;text-shadow:0 0 6px rgba(255,210,90,0.95)' + (full ? ',0 0 14px rgba(255,170,40,0.9)' : '') + ';">✦</span>'
-        : '<span style="color:rgba(190,200,235,0.45);">✧</span>';
+        : (i < lit + free)
+          ? '<span class="cst-gfree" style="color:#ffffff;text-shadow:0 0 8px rgba(160,255,200,0.95);">✦</span>'
+          : '<span style="color:rgba(190,200,235,0.45);">✧</span>';
     }
     return s;
   };
@@ -79139,6 +79155,38 @@ function makeRadar(dims, size) {
         + ' style="display:flex;justify-content:center;gap:6px;padding:6px 0 2px;font-size:26px;line-height:1;letter-spacing:0;background:rgba(10,12,30,0.55);">'
         + W._cstGridStarsInner(name) + '</div>';
     }catch(_){ return ''; }
+  };
+  /* ════════════ ★ v5.276.0(老師 2026-10-17 15:09「我找不到命星去哪裡點」)英雄詳情左側大圖「✨ 命座」浮動按鈕 ════════════
+   *   原入口(_cstCodexEntryHtml)在右欄素質區下方、要往下捲才看得到 ⇒ 另在左側大圖放一顆一打開就看得到的按鈕
+   *   (老師 17:41 裁定位置:左上角 SSR 等稀有度標籤的正下方;右上是切換肖像、右下播放動畫)。
+   *   有可點命星(已擁有且 持有 > 已點亮)⇒ 綠色「可點 N」徽章＋金光脈衝。點擊走既有 data-cst-open 捕獲監聽 → 開星圖。
+   *   由 _renderHeroDetail 呼叫(每次換英雄/點亮後重畫都會刷新);不符資格(R/未開放)就隱藏。 */
+  W._cstCodexSideBtn = function(name, unlocked){
+    try{
+      var side = document.getElementById('hero-detail-img-side'); if(!side) return;
+      var b = document.getElementById('hero-detail-cst-btn');
+      if(!W._cstOpenForMe() || !name || !W._cstEligible(name)){ if(b) b.style.display = 'none'; return; }
+      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R' && !_isProtag(W._cstKey(name))) { if(b) b.style.display = 'none'; return; } }catch(_){}
+      if(!b){ b = document.createElement('button'); b.type = 'button'; b.id = 'hero-detail-cst-btn'; side.appendChild(b); }
+      var k = W._cstKey(name), lit = W._cstLit(k).length, held = W._cstHeld(k);
+      var free = (unlocked && _owned(k)) ? Math.max(0, held - lit) : 0;
+      b.setAttribute('data-cst-open', name);
+      b.className = 'cst-sidebtn' + (free > 0 ? ' hot' : '');
+      b.style.display = 'flex';
+      b.innerHTML = '<span style="font-size:1.15em;">✨</span><span>' + _T('命座', '命座') + '</span>'
+        + '<span class="cst-sb-n">' + lit + '/6</span>'
+        + (free > 0 ? '<span class="cst-sb-free">' + _T('可點 ', '可分配 ') + free + '</span>' : '');
+      b.title = free > 0 ? _T('有 ' + free + ' 顆命星可以點亮!', '可分配命星 ' + free + ' 顆') : _T('打開星圖', '開啟星圖');
+      /* ★ v5.276.0(老師 17:41)放在左上角「SSR 等稀有度標籤」正下方:量測標籤位置往下排(量不到退 top:100px) */
+      var pos = function(){
+        try{
+          var bd = document.getElementById('hero-detail-rarity-badge');
+          var t = (bd && bd.offsetHeight) ? (bd.offsetTop + bd.offsetHeight + 12) : 100;
+          b.style.top = t + 'px'; b.style.bottom = 'auto';
+        }catch(_){}
+      };
+      pos(); try{ requestAnimationFrame(pos); }catch(_){ setTimeout(pos, 60); }
+    }catch(e){ console.warn('[命座] 圖鑑大圖按鈕', e); }
   };
   W._cstGridStarsRefresh = function(){
     try{

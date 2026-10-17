@@ -82555,7 +82555,7 @@ function _showNewHeroAnnouncement(forceShow){
       + '<div style="font-size:clamp(20px,2.4vw,25px);font-weight:900;color:#ffe9a8;margin-bottom:8px;">🧭 ' + _T2('三步驟讓英雄變強', '三步驟點亮命星') + '</div>'
       + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">'
       +   _step(1, '🔮', '已經有的英雄又被召喚到 ⇒ 拿到 1 顆命星', '重複取得已擁有的英雄 ⇒ 獲得該英雄命星 ×1')
-      +   _step(2, '📖', '打開英雄圖鑑 → 點英雄 → 按「✨ 命座」', '英雄圖鑑 → 英雄詳情 → 「✨ 命座」開啟星圖')
+      +   _step(2, '📖', '打開英雄圖鑑 → 點英雄 → 按大圖左上角(稀有度標籤下面)的「✨ 命座」', '英雄圖鑑 → 英雄詳情 → 左側大圖左上角(稀有度標籤下方)「✨ 命座」開啟星圖')
       +   _step(3, '⭐', '選一條路,點亮星星,英雄馬上變強!', '自選軌道點亮命星,效果於冒險戰鬥即時生效')
       + '</div>'
       /* ── ③ 三條路(實際命星示範) ── */
@@ -82584,8 +82584,8 @@ function _showNewHeroAnnouncement(forceShow){
             _miniMap(_img('獅子星神'), ['t1', 't2', 's1'], 92) + _op('🔄') + _miniMap(_img('獅子星神'), [], 92) + '<div style="font-size:14px;color:#ffe9a8;font-weight:900;">💰 5000</div>')
       + '</div>'
       + '<div style="margin-top:14px;padding:12px 16px;background:rgba(30,34,80,0.5);border-left:4px solid #ffd97a;border-radius:8px;font-size:16px;color:#e8eeff;line-height:1.65;">'
-      + _T2('💡 命座只在冒險模式(故事、關卡、世界 BOSS)有用,鬥技場不會變強,這樣比賽才公平!戰鬥紀錄裡出現 ✨ 就是命星在幫忙喔。快去英雄圖鑑點亮第一顆星吧!',
-            '💡 命座僅於冒險模式(故事/關卡/世界 BOSS)生效,鬥技場不生效以維持公平;命星效果設有全隊上限,戰鬥紀錄以 ✨ 標示。入口:英雄圖鑑 → 英雄詳情 →「✨ 命座」。')
+      + _T2('💡 命座只在冒險模式(故事、關卡、世界 BOSS)有用,鬥技場不會變強,這樣比賽才公平!戰鬥紀錄裡出現 ✨ 就是命星在幫忙喔。英雄大圖左上角、SSR 標籤下面的「✨ 命座」在閃金光,就代表有星星可以點,快去點亮第一顆星吧!',
+            '💡 命座僅於冒險模式(故事/關卡/世界 BOSS)生效,鬥技場不生效以維持公平;命星效果設有全隊上限,戰鬥紀錄以 ✨ 標示。入口:英雄圖鑑 → 英雄詳情 → 左側大圖左上角稀有度標籤下方「✨ 命座」(有可分配命星時會閃金光)。')
       + '</div></div>';
   };
 
