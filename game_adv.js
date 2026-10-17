@@ -78670,7 +78670,7 @@ function makeRadar(dims, size) {
     try{ if(typeof W._refreshMyRepHeroCloud === 'function') W._refreshMyRepHeroCloud(); }catch(_){}   /* ★ v5.275.0 代表英雄的命星快照同步(1.5 秒防抖;沒設代表英雄就什麼都不做) */
   }
   function _ready(){ return W._progressLoaded === true && (W._cstHydrated === true || W._cstHydrated === 'empty'); }
-  function _toast(msg, color){
+  function _toast(msg, color, ms){   /* ★ v5.277.0 加可選 ms(停留毫秒);不帶 = 原本 3.2 秒 */
     try{
       var t = document.createElement('div');
       t.className = 'cst-toast';
@@ -78680,7 +78680,7 @@ function makeRadar(dims, size) {
         + "font-family:'M PLUS Rounded 1c','Nunito',sans-serif;pointer-events:none;";
       t.textContent = msg;
       document.body.appendChild(t);
-      setTimeout(function(){ try{ t.remove(); }catch(_){} }, 3200);
+      setTimeout(function(){ try{ t.remove(); }catch(_){} }, (ms > 0) ? ms : 3200);
     }catch(_){}
   }
   W._cstToast = _toast;
@@ -78816,6 +78816,32 @@ function makeRadar(dims, size) {
   }
 
   /* ── 雲端載入(由 _applySafeData 呼叫)── */
+  /* ★ v5.277.0(老師 2026-10-17 19:13「圖鑑沒看到命座按鈕、10 抽沒出現重複角色轉命座」)——
+   *   根因:constellation_db.js 從沒上傳到 GitHub(game_cloud.js、hero_db.js 也停在舊版),命座表是空的 ⇒
+   *   _cstEligible 全部回 false ⇒ 圖鑑按鈕/十字星全隱藏、召喚池排除已擁有英雄,而且「完全沒有任何提示」。
+   *   這裡在雲端資料載入後檢查一次:命座已開放卻缺檔 ⇒ console.error 給所有人,GM 另外跳紅框提醒(學生不打擾)。
+   *   每個分頁只提醒一次。檢查項目:①CONSTELLATION_DB 有沒有資料 ②game_cloud.js 是否為含命星雲端合併的新版。 */
+  var _cstHealthLogged = false, _cstHealthWarned = false;   /* console 一次、GM 紅框一次,分開記(GM 身分可能比第一次檢查晚確定) */
+  W._cstHealthCheck = function(){
+    try{
+      if(_cstHealthWarned || W._CST_ADMIN_ONLY === true) return;
+      var miss = [];
+      if(!Object.keys(_db()).length) miss.push('constellation_db.js(命座資料表沒有載入)');
+      if(typeof W._lxpsCstMerge !== 'function') miss.push('game_cloud.js(舊版,命星雲端存檔合併不存在)');
+      if(!miss.length) return;
+      if(!_cstHealthLogged){
+        _cstHealthLogged = true;
+        console.error('[命座] 檔案缺漏,命座功能無法正常運作:' + miss.join('、') + '。請確認這些檔案已上傳到 GitHub。');
+      }
+      var adm = false; try{ adm = (typeof W._isAdminUser === 'function' && !!W._isAdminUser()); }catch(_){}
+      if(!adm) return;
+      _cstHealthWarned = true;
+      setTimeout(function(){
+        _toast(_T('⚠ GM 提醒:命座檔案缺漏\n' + miss.join('\n') + '\n請把這些檔案上傳到 GitHub',
+                  '⚠ GM 警示:命座系統檔案缺漏\n' + miss.join('\n') + '\n請確認以上檔案已部署至 GitHub'), '#ff6a6a', 12000);
+      }, 4000);
+    }catch(_){}
+  };
   W._cstHydrate = function(data){
     try{
       var cloud = data ? data.constellationData_s : null;
@@ -78844,6 +78870,7 @@ function makeRadar(dims, size) {
       try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑已開著時,十字星跟著雲端資料更新
       if(got.length || swept){ setTimeout(_save, 1500); }
       if(got.length && W._cstOpenForMe()){ setTimeout(function(){ _toast(_T('✨ 老師送你命星!\n' + got.join('、'), '✨ 收到老師發放的命星\n' + got.join('、'))); }, 2500); }
+      try{ W._cstHealthCheck(); }catch(_){}   // ★ v5.277.0 命座檔案缺漏 GM 警示
     }catch(e){ console.warn('[命座] 雲端載入例外(保留記憶體資料)', e); if(W._cstHydrated !== true) W._cstHydrated = 'empty'; }
   };
   function _hasContent(d){
@@ -79162,6 +79189,7 @@ function makeRadar(dims, size) {
    *   有可點命星(已擁有且 持有 > 已點亮)⇒ 綠色「可點 N」徽章＋金光脈衝。點擊走既有 data-cst-open 捕獲監聽 → 開星圖。
    *   由 _renderHeroDetail 呼叫(每次換英雄/點亮後重畫都會刷新);不符資格(R/未開放)就隱藏。 */
   W._cstCodexSideBtn = function(name, unlocked){
+    try{ W._cstHealthCheck(); }catch(_){}   // ★ v5.277.0 GM 打開圖鑑時再檢查一次命座檔案(缺檔時按鈕會被隱藏,這裡讓 GM 知道原因)
     try{
       var side = document.getElementById('hero-detail-img-side'); if(!side) return;
       var b = document.getElementById('hero-detail-cst-btn');
