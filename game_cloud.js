@@ -7722,6 +7722,65 @@
     return { ok: true, id: _id, grant: _grant, msg: '寫入:' + _wrote.join('/') + (_skipped.length ? ('(略過不存在槽:' + _skipped.join('/') + ')') : '') + '。已寄登入通知。' };
   };
 
+  // ★ v5.278.0(老師 2026-10-18「GM獎勵和補償等功能新增各英雄命座」)——一次寫多筆命星發放單
+  //   給 _fbCompensatePlayer 用(補償工具、課堂獎勵領取、全體獎勵領取、虛寶序號兌換都走它)。
+  //   list = [{ k:'孫悟空' | '#pick_SR' | '#pick_SSR' | '#pick_UR', n:1~6 }];不合格的項目略過(回傳 skipped)。
+  //   opt.idBase:有值 ⇒ 單號固定為 idBase + '_' + 序號(同一筆領獎重跑也不會重複發,例如課堂獎勵失敗回滾後重領);
+  //               沒值 ⇒ 隨機單號(GM 手動補償,同樣內容發兩次就是兩次)。
+  //   寫法與 _fbAdminGrantConstellation 相同(三槽 cstGmGrants_s 追加,已存在的單號不覆寫);
+  //   寫的是自己的帳號(學生端領獎)且命星資料已載入 ⇒ 立刻折進記憶體(_cstFoldGmGrants),不必等下次登入。
+  window._fbCstGrantMany = async function(uid, list, opt){
+    if(!_fbDb) throw new Error('Firestore 尚未就緒');
+    if(!uid) throw new Error('缺少 uid');
+    opt = opt || {};
+    const _db = window.CONSTELLATION_DB || {};
+    const _protag = window._PROTAG_SSR_NAME || '主角‧覺醒';
+    const _now = Date.now();
+    const _rand = 'g' + _now.toString(36) + Math.random().toString(36).slice(2, 6);
+    const _base = opt.idBase ? String(opt.idBase).slice(0, 80) : _rand;
+    const _grants = {}, _skipped = [];
+    (Array.isArray(list) ? list : []).slice(0, 60).forEach(function(it, i){
+      const _k = String((it && it.k) || '');
+      const _n = Math.max(1, Math.min(6, parseInt(it && it.n, 10) || 1));
+      const _isPick = /^#pick_(SR|SSR|UR)$/.test(_k);
+      const _dbReady = Object.keys(_db).length > 0;   // 命座表沒載入(學生平板偶發)⇒ 先照寫,登入折入時 _cstGrantStar 會再檢查,不在這裡丟掉已領的獎勵
+      if(!_k || _k === _protag || (!_isPick && _dbReady && (!_db[_k] || _db[_k].r === 'R'))){ _skipped.push(_k); return; }
+      _grants[_base + '_' + i] = { k: _k, n: _n, at: _now, by: String(opt.by || 'admin').slice(0, 80), why: String(opt.why || '').slice(0, 80) };
+    });
+    const _ids = Object.keys(_grants);
+    if(!_ids.length) return { ok: false, written: 0, skipped: _skipped, msg: '沒有可發放的命星' };
+    const _gds = (typeof getDocFromServer === 'function') ? getDocFromServer : getDoc;
+    const _targets = [
+      { ref: doc(_fbDb, 'players', uid), label: '主檔', mustExist: true },
+      { ref: doc(_fbDb, 'players', uid, 'saves', 'live'), label: 'live', mustExist: false },
+      { ref: doc(_fbDb, 'players', uid, 'saves', 'safe'), label: 'safe', mustExist: false }
+    ];
+    const _wrote = [];
+    let _merged = {};
+    for(let i = 0; i < _targets.length; i++){
+      const _t = _targets[i];
+      let _snap = null;
+      try{ _snap = await _gds(_t.ref); }catch(_e1){ try{ _snap = await getDoc(_t.ref); }catch(_e2){ _snap = null; } }
+      const _ex = _snap && ((typeof _snap.exists === 'function') ? _snap.exists() : !!_snap.exists);
+      if(!_ex){ if(_t.mustExist) throw new Error('查無玩家主檔:' + uid); continue; }
+      const _g = window._lxpsCstMergeGm([(_snap.data() || {}).cstGmGrants_s]);
+      _ids.forEach(function(id){ if(!_g[id]) _g[id] = _grants[id]; });   // 已存在的單號不覆寫(冪等)
+      await setDoc(_t.ref, { cstGmGrants_s: JSON.stringify(_g) }, { merge: true });
+      _wrote.push(_t.label);
+      _merged = _g;
+    }
+    // 自己的帳號 ⇒ 立刻折進記憶體(命星資料還沒載入就留給登入時的 _cstHydrate,不會漏)
+    try{
+      const _me = (window._fbUser && window._fbUser.uid) || window._gUserId || '';
+      if(_me && _me === uid && typeof window._cstFoldGmGrants === 'function'){
+        const _sub = {}; _ids.forEach(function(id){ if(_merged[id]) _sub[id] = _merged[id]; });
+        window._cstFoldGmGrants(_sub, { quiet: !!opt.quiet });
+      }
+    }catch(_eF){ console.warn('[命星批次發放] 記憶體折入失敗(雲端已寫,下次登入會補上)', _eF); }
+    console.log('[_fbCstGrantMany] ✅', uid, _ids.length + ' 筆', _wrote, _skipped.length ? ('略過 ' + _skipped.join('、')) : '');
+    return { ok: true, written: _ids.length, ids: _ids, slots: _wrote, skipped: _skipped };
+  };
+
   // ★ v4.14.0 — GM 寵物重置補償(老師裁決:兩模式皆可)
   //   mode 'reroll' = 重擲隨機素質(換新 seed + retrainVer++;等級/經驗/好感/跟隨全保留)
   //   mode 'full'   = 完全重置(等級→1、經驗→0、換新 seed + retrainVer++;好感/跟隨保留)
@@ -14813,10 +14872,29 @@
       live: _liveWriteOk,
       safe: _safeWriteResult && _safeWriteResult.written
     });
+    // ★ v5.278.0 命星(compensation.cstStars = [{k,n}]):三槽寫完再寫命星發放單。
+    //   學生端領獎(課堂/全體/序號)用 by 當固定單號 ⇒ 重領/重跑不會重複;GM 手動補償用隨機單號。
+    //   失敗只記錄、不拋錯(上面的資源已經入帳,不能因為命星失敗讓呼叫端以為整筆沒發)。
+    let _cstRes = null;
+    if(Array.isArray(compensation.cstStars) && compensation.cstStars.length){
+      const _cBy = String(compensation.by || '');
+      const _cDet = /^(globalReward|redeem|gmClassReward):/.test(_cBy);
+      try{
+        if(typeof window._fbCstGrantMany !== 'function') throw new Error('_fbCstGrantMany 未載入');
+        _cstRes = await window._fbCstGrantMany(uid, compensation.cstStars, {
+          by: _cBy || 'admin', why: String(compensation.reason || '').slice(0, 80),
+          idBase: _cDet ? ('c_' + _cBy) : null, quiet: _cDet
+        });
+      }catch(_eCst){
+        console.error('🚨 [補償] 命星發放單寫入失敗(其他資源已入帳)', _eCst);
+        _cstRes = { ok: false, error: (_eCst && _eCst.message) || String(_eCst) };
+      }
+    }
     return {
       ok: true,
       uid,
       count: _existCount + 1,
+      cstStars: _cstRes,
       mergedUnlocked: _mergedUnlocked,
       mergedLevels: _mergedLevels,
       mergedCoins: _newCoins,

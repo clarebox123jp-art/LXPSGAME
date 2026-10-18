@@ -78821,6 +78821,39 @@ function makeRadar(dims, size) {
    *   _cstEligible 全部回 false ⇒ 圖鑑按鈕/十字星全隱藏、召喚池排除已擁有英雄,而且「完全沒有任何提示」。
    *   這裡在雲端資料載入後檢查一次:命座已開放卻缺檔 ⇒ console.error 給所有人,GM 另外跳紅框提醒(學生不打擾)。
    *   每個分頁只提醒一次。檢查項目:①CONSTELLATION_DB 有沒有資料 ②game_cloud.js 是否為含命星雲端合併的新版。 */
+  /* ★ v5.278.0 GM 發放單折入(登入 _cstHydrate 與領獎當下 _cstFoldGmGrants 共用)。依單號冪等:ga[單號] 有值就跳過。
+   *   角色命星而命座表還沒載入 ⇒ 這張單「先不折、不標記」,下次再試(舊版會標記已領卻發不出去 ⇒ 永久少一顆)。 */
+  function _foldGm(gm){
+    var got = [];
+    if(!gm || typeof gm !== 'object') return got;
+    var dbReady = Object.keys(_db()).length > 0;
+    Object.keys(gm).sort(function(a, b){ return (gm[a].at || 0) - (gm[b].at || 0); }).forEach(function(id){
+      var g = gm[id], dd = D();
+      if(!g || !g.k || dd.ga[id]) return;
+      var isPick = /^#pick_(SR|SSR|UR)$/.test(g.k);
+      if(!isPick && !dbReady) return;
+      dd.ga[id] = g.at || Date.now();
+      var n = Math.max(1, Math.min(6, g.n | 0));
+      if(isPick){ dd.got[g.k] = (dd.got[g.k] | 0) + n; _log('gm', g.k, n, 'gm:' + id); got.push(g.k.replace('#pick_', '') + ' 自選命星 ×' + n); }
+      else { var r = W._cstGrantStar(g.k, n, 'gm:' + id); if(r) got.push(g.k + ' 命星 ×' + n); }
+    });
+    return got;
+  }
+  /* ★ v5.278.0 領獎當下立刻入帳(由 game_cloud _fbCstGrantMany 在「寫的是自己帳號」時呼叫)。
+   *   命星資料還沒從雲端載入(_cstHydrated 不是 true/'empty')⇒ 不動記憶體,交給登入時的 _cstHydrate(雲端那份已含新單號,不會漏)。
+   *   opt.quiet:領獎視窗本身會列出命星 ⇒ 不再另跳提示。 */
+  W._cstFoldGmGrants = function(gm, opt){
+    try{
+      if(W._cstHydrated !== true && W._cstHydrated !== 'empty') return [];   /* 'empty' = 已載入、這位玩家還沒有命星資料 */
+      var got = _foldGm(gm);
+      if(got.length){
+        _save();
+        try{ W._cstGridStarsRefresh(); }catch(_){}
+        if(!(opt && opt.quiet) && W._cstOpenForMe()){ _toast(_T('✨ 老師送你命星!\n' + got.join('、'), '✨ 收到老師發放的命星\n' + got.join('、'))); }
+      }
+      return got;
+    }catch(e){ console.warn('[命座] 領獎折入例外(下次登入會補上)', e); return []; }
+  };
   var _cstHealthLogged = false, _cstHealthWarned = false;   /* console 一次、GM 紅框一次,分開記(GM 身分可能比第一次檢查晚確定) */
   W._cstHealthCheck = function(){
     try{
@@ -78853,15 +78886,7 @@ function makeRadar(dims, size) {
       W._cstData = merged; D();
       /* GM 發放單:依單號冪等折入 */
       var gm = (typeof W._lxpsCstMergeGm === 'function') ? W._lxpsCstMergeGm([data ? data.cstGmGrants_s : null]) : {};
-      var got = [];
-      Object.keys(gm).sort(function(a, b){ return (gm[a].at || 0) - (gm[b].at || 0); }).forEach(function(id){
-        var g = gm[id], dd = D();
-        if(dd.ga[id]) return;
-        dd.ga[id] = g.at || Date.now();
-        var n = Math.max(1, Math.min(6, g.n | 0));
-        if(/^#pick_(SR|SSR|UR)$/.test(g.k)){ dd.got[g.k] = (dd.got[g.k] | 0) + n; _log('gm', g.k, n, 'gm:' + id); got.push(g.k.replace('#pick_', '') + ' 自選命星 ×' + n); }
-        else { var r = W._cstGrantStar(g.k, n, 'gm:' + id); if(r) got.push(g.k + ' 命星 ×' + n); }
-      });
+      var got = _foldGm(gm);   // ★ v5.278.0 抽成共用(領獎當下 _cstFoldGmGrants 也走這支)
       var swept = _protagLedgerSweep();
       /* 三態:true=已載入雲端命星資料 / 'empty'=這份資料裡沒有命星欄位(新玩家,或來源是舊本機快照)
          ⇒ 'empty' 時只有記憶體真的有內容(拿到第一顆命星等)才寫雲端,避免舊快照的「沒有欄位」把雲端命星洗成空的(風險 A2)。 */
