@@ -50,7 +50,7 @@ window.ISL_DB = (function(){
   'use strict';
 
   var D = {};
-  D.VER = 'v1.396.0';   /* ★ v1.396.0(2026-10-13)— D.STATS 腳程說明補上「走路/奔跑速度最多 +50%、野外少遇到魔物最多 −50%」(公式在 index islMoveBonus/islEncDodge) */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成不再是相同的回答,把原本的提示改成隨機情境(依天氣、晝夜、現場環境),讓玩家選擇正確的措施才會成功造成傷害」)— 本檔實質異動:檔尾新增 D.WIT_ZT(區域→環境標籤)/D.WIT_ZT_N/D.WIT_CAT(弱點類別名)/D.WIT_SC(86 題情境);D.LOG 一筆。D.WIT_HINT 保留不再讀取。 */
+  D.VER = 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 本檔實質異動:檔尾新增 D.TREASURE(全部數字)/D.TREASURE_COL(11 件收藏品,同時登記為室內裝飾 D.DECOS)/D.TOOLS 自製羅盤(needZone:'cave')/D.IMG 24 張尋寶圖＋點擊星星.gif;D.STATS 四維、5 隻寵物天賦、4 件飾品、2 件防具、水晶風鈴的說明文字補上尋寶效果;D.LOG 一筆。 */   void 'v1.396.0';   /* ★ v1.396.0(2026-10-13)— D.STATS 腳程說明補上「走路/奔跑速度最多 +50%、野外少遇到魔物最多 −50%」(公式在 index islMoveBonus/islEncDodge) */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成不再是相同的回答,把原本的提示改成隨機情境(依天氣、晝夜、現場環境),讓玩家選擇正確的措施才會成功造成傷害」)— 本檔實質異動:檔尾新增 D.WIT_ZT(區域→環境標籤)/D.WIT_ZT_N/D.WIT_CAT(弱點類別名)/D.WIT_SC(86 題情境);D.LOG 一筆。D.WIT_HINT 保留不再讀取。 */
   void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師「魔物包含 boss 受到相同的智取傷害,每次減為上次的 50%」「智取威力取決於巧思,設計合理公式避免太強」)— 本檔實質異動:D.BT 新增 OUTWIT_ATK0/OUTWIT_ATK_WIT/OUTWIT_HP_WIT/OUTWIT_HP_CAP/OUTWIT_BOSS_HP/OUTWIT_DECAY;D.STATS 巧思說明加「智取威力」;D.LOG 一筆。公式在 index islBtWitDmg。 */
   void 'v1.392.0';   /* ★ v1.392.0(2026-10-09)— 本檔實質異動:D.BLD_DMG(設施損壞分級)+ D.LOG 一筆;外島/遠洋星域資料在 sea_db。 */
   void 'v1.391.0';   /* ★ v1.391.0(2026-10-09・老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料」)— 本檔實質異動:新增 D.SHOP.bulkSell 清單 + D.LOG 一筆。 */
@@ -6254,5 +6254,139 @@ window.ISL_DB = (function(){
   D.LOG.unshift({ v: 'v1.394.0', d: '2026-10-12', items: [
     '🧠 智取改成「情境題」:每次會依照現在的天氣、白天晚上、所在地方(洞窟、水邊、冰雪、海底……)出一個情境,要選出最適合的做法才會成功。同一隻魔物,情境不同,答案也可能不同——例如下大雨時直接點火把會被澆熄。',
     '💡 巧思 14 以上,智取時會先幫你刪掉一個錯的做法;遺跡地下層選工具也改成情境題。'
+  ] });
+
+  /* ══════════════════════════════════════════════════════════════════════════
+   * ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」;設計書 Project Knowledge claude/荒島尋寶系統_設計書.md v1.1,A~D 全選甲)
+   *   每張本島地圖藏 🟤 普通 + 🟣 稀有 寶藏;🧭 自製羅盤照《大對抗》寵物躲貓貓的方式探測(四段距離音效＋星星變色＋思考泡泡);
+   *   挖到才扣 ⚡1(挖錯免費);按島上天數重置:第一次每區都有,之後只有隨機幾區重生;阿獺賣 🗺 藏寶圖。
+   *   主角四維/寵物/裝備的尋寶效果一律掛在既有的上面(老師:不新增),全部數字集中在 D.TREASURE,調參只改這裡。
+   *   程式在 minigame_index.html(搜尋 islTr)。外島(sea)與拜訪好友的島不放寶藏(裁定 D 甲)。
+   * ══════════════════════════════════════════════════════════════════════════ */
+  D.TREASURE = {
+    unlockZone: 'cave',                  /* 裁定 C 甲:解鎖洞窟(有鐵礦)後才做得出羅盤 */
+    diag: 2560,                          /* 本島場景 2048×1536 的對角線(px);距離一律 ÷ 這個數正規化 */
+    tier4: [0.45, 0.25, 0.12],           /* 4 段:> 0.45 很遠 / ≤0.45 有點距離 / ≤0.25 有點近 / ≤0.12 非常近 */
+    tier6: [0.45, 0.25, 0.12, 0.07, 0.045],   /* 6 段(蝠后耳墜/影晶戒):再多「很近」「幾乎在腳下」 */
+    digR: 96,                            /* 挖掘半徑(px,約 1.5 格) */
+    digRMaxP: 100,                       /* 挖掘半徑加成總上限 +100% */
+    cdMs: 3000, cdMinMs: 1500,           /* 探測冷卻 3 秒,所有縮短加起來最低 1.5 秒 */
+    cdQ: [0, 0, 300, 600],               /* 羅盤品質 ★/★★/★★★ 縮短 0/0.3/0.6 秒 */
+    wit: { arrow: 14, both: 30 },        /* 巧思 ≥14 有方向箭頭;≥30 一次量兩個寶藏 */
+    dexP: 1, dexMaxP: 40,                /* 巧手每點挖掘半徑 +1%,最多 +40% */
+    powP: 1, powMaxP: 40,                /* 力氣每點稀有連打次數 −1%,最多 −40% */
+    movMs: 20, movMaxMs: 1000,           /* 腳程每點冷卻 −0.02 秒,最多 −1 秒 */
+    mashMaxCutP: 50,                     /* 稀有連打次數所有減免總上限 −50% */
+    mash: { base: 14, perOrder: 2, sec: 6 },   /* 稀有寶藏連打:14 + 區域順序×2 下,6 秒內打完 */
+    respawn: { nMin: 3, nMax: 5, rMin: 1, rMax: 2, pity: 3 },   /* 第二天起:普通 3~5 區、稀有 1~2 區;連續 3 天沒重生 ⇒ 第 4 天必定有普通 */
+    keepGap: 2,                          /* 寶藏離傳送點/資源點/解謎點等至少 2 格 */
+    pairGapP: 0.30,                      /* 同區普通與稀有至少相距 0.30 對角線(找不到位置時逐步放寬) */
+    wxJam: { typhoon: 25 },              /* 颱風天探測 25% 訊號亂跳(閃電的電流會產生磁場干擾指針) */
+    missTrashP: 15, missTrashArmorP: 40, /* 挖錯撿到海廢/卵石的機率;穿 ♻ 海廢拼接甲 40% */
+    fragP: 30, fragNeed: 4,              /* 普通寶藏 30% 掉藏寶圖碎片;4 片合成古老藏寶圖 */
+    oldR: 0.20,                          /* 古老藏寶圖:稀有寶藏所在的大圓圈半徑(對角線比例) */
+    reward: {
+      n: { shellBase: 10, shellPerOrder: 3, matKinds: [1, 2], matN: [1, 3], matQ: 2 },
+      r: { shellBase: 40, shellPerOrder: 8, rare: ['crystal', 'relic', 'ore'], rareN: [1, 2], rareQ: 3, gearP: 10 }
+    },
+    crabP: 30,                           /* 椰子蟹「強盜蟹」:普通寶藏 30% 多一件材料 */
+    relicArmorP: 40,                     /* 🏺 遺跡守護鎧:稀有寶藏 40% 多 1 個遺物 */
+    mapPrice: 30,                        /* 🗺 藏寶圖(阿獺,每天限購 1 張,不吃每日特價) */
+    otterPrize: { shell: 30, frag: 1 },  /* 阿獺的舊羅盤任務:挖到第一個寶藏的謝禮 */
+    pet: {                               /* 只有編進探險隊伍才生效(野外效果,戰鬥天賦不變) */
+      pangolin:    { digP: 50, mashCutP: 30, t: '🧭 野外・挖洞高手:挖掘範圍 +50%、稀有寶藏連打次數 −30%' },
+      bluemagpie:  { t: '🧭 野外・藏食記憶:每進入一區,第一次探測不用冷卻,而且一定有方向箭頭' },
+      eagle:       { t: '🧭 野外・高空視野:進到今天有寶藏的區域時會提醒你' },
+      coconutcrab: { t: '🧭 野外・強盜蟹:挖到普通寶藏時 30% 多一件材料' },
+      firefly:     { cdMs: 1000, t: '🧭 野外・冷光照路:夜晚和洞窟裡,探測冷卻 −1 秒' }
+    },
+    acc: {                               /* 飾品(固定值,不隨飾品強化等級成長) */
+      acc_bat:     { tiers6: 1, t: '🧭 尋寶:回聲定位——距離提示 4 段變 6 段' },
+      acc_claw:    { digP: 25, t: '🧭 尋寶:挖掘範圍 +25%' },
+      acc_shadow:  { tiers6r: 1, t: '🧭 尋寶:探測稀有寶藏也有 6 段提示' },
+      acc_windeye: { cdMs: 1000, noJam: 1, arrow: 1, t: '🧭 尋寶:探測冷卻 −1 秒、颱風天不受干擾、一定有方向箭頭' }
+    },
+    armor: {
+      trashguard:  { t: '🧭 尋寶:挖錯地方撿到海廢的機率 15% → 40%' },
+      relicguard:  { t: '🧭 尋寶:挖到稀有寶藏時 40% 多 1 個遺物' }
+    },
+    petGear: { pg_chime: { noJam: 1, t: '🧭 尋寶:戴著它的夥伴在隊上 ⇒ 颱風天羅盤不受干擾' } },
+    tierTxt: {
+      cute: ['💭 好像離很遠耶…', '💭 有一點點距離~', '💭 嗯…有點近了!', '💭 就在附近!超級近!', '💭 很近很近了!', '💭 幾乎就在腳下!挖挖看!'],
+      prem: ['💭 距離很遠', '💭 還有一段距離', '💭 有點近了', '💭 非常近,就在附近', '💭 很近了', '💭 幾乎就在腳下']
+    }
+  };
+  /* 自製羅盤:走既有「🛠 製作台」(拖零件 + 1 題 + 敲打組裝);浮針指南針是國小自然科的教材 */
+  D.TOOLS.push({ id:'compass', n:'自製羅盤', e:'🧭', img:'res_compass', needZone:'cave', cost:{ ore:1, leaf:2, shell:2, water:1 }, eff:{},
+    d:'把磁化的鐵針插在葉子上,放進裝水的貝殼裡,針就會自己轉向南北。拿著它到野外就能尋寶!',
+    parts:[ {k:'needle', n:'指針', need:'ore',   hint:'鐵被磁石摩擦後會帶磁性,變成小磁鐵', e:'🟫'},
+            {k:'float',  n:'浮片', need:'leaf',  hint:'葉子讓針浮在水面上,才轉得動',     e:'🍃'},
+            {k:'bowl',   n:'水碗', need:'shell', hint:'凹凹的貝殼剛好裝一碗水',           e:'🐚'},
+            {k:'water',  n:'水',   need:'water', hint:'針要浮在水上,摩擦力才夠小',       e:'💧'} ] });
+  /* 寶藏收藏品:每區 1 件,該區第一次挖到稀有寶藏必得;是室內裝飾(小木屋可擺),不在每日商店與製作清單出現(shop/route) */
+  D.TREASURE_COL = [
+    { id:'col_bottle',     zone:'beach',   n:'漂流瓶',     e:'🍾', d:'洋流像海裡的大河,能把一個瓶子帶到幾千公里外的海岸。' },
+    { id:'col_camphor',    zone:'forest',  n:'樟腦結晶',   e:'🧊', d:'樟樹提煉出的樟腦可以防蟲;一百多年前台灣是世界最大的樟腦產地。' },
+    { id:'col_arrowhead',  zone:'grass',   n:'石器箭頭',   e:'🏹', d:'史前的人一片一片敲打石頭,把邊緣磨得又薄又利來打獵。' },
+    { id:'col_goldsand',   zone:'river',   n:'砂金',       e:'✨', d:'金子密度很大,溪水沖刷時會沉在溪底的砂裡,所以用淘金盤搖一搖就能分出來。' },
+    { id:'col_fossil',     zone:'rock',    n:'貝類化石',   e:'🐚', d:'貝殼被泥沙埋起來,經過幾百萬年,礦物慢慢取代原本的成分,就變成了石頭。' },
+    { id:'col_paddle',     zone:'lake',    n:'獨木舟槳',   e:'🛶', d:'台灣原住民會把一整根大樹幹挖空做成獨木舟,再刻上族群的花紋。' },
+    { id:'col_stalactite', zone:'cave',    n:'鐘乳石碎片', e:'🦴', d:'含碳酸鈣的水一滴一滴落下,幾千年才長出一小截鐘乳石,和貝殼、蛋殼是親戚。' },
+    { id:'col_lamp',       zone:'cliff',   n:'老燈塔油燈', e:'🏮', d:'燈塔用一圈圈的透鏡把燈光聚在一起,讓很遠的船也看得到。' },
+    { id:'col_gear',       zone:'valley',  n:'木齒輪',     e:'⚙', d:'兩個齒輪咬在一起,一個轉,另一個就會反方向轉——水車和時鐘都靠它傳遞力量。' },
+    { id:'col_potsherd',   zone:'ruins',   n:'古陶片',     e:'🏺', d:'黏土經過高溫燒過變成陶,不怕水也不會爛,所以考古學家常挖到幾千年前的陶片。' },
+    { id:'col_obsidian',   zone:'volcano', n:'黑曜石',     e:'🖤', d:'岩漿突然冷卻、來不及長出結晶,就變成像玻璃一樣光滑的火山玻璃。' }
+  ];
+  (function(){
+    var i, c;
+    for(i = 0; i < D.TREASURE_COL.length; i++){
+      c = D.TREASURE_COL[i];
+      D.IMG['deco_' + c.id] = 'island_deco_' + c.id + '.png';
+      D.DECOS.push({ id: c.id, n: c.n, e: c.e, img: 'deco_' + c.id, comfort: 3, cost: {}, shop: true, route: true, tr: 1, uniq: true, d: '🧭 寶藏收藏品:' + c.d });
+    }
+    D.IMG.deco_trcase = 'island_deco_trcase.png';
+    D.DECOS.push({ id: 'trcase', n: '寶藏展示櫃', e: '🗄', img: 'deco_trcase', comfort: 8, cost: {}, shop: true, route: true, tr: 1, uniq: true, d: '🧭 集滿 11 件寶藏收藏品的獎勵——用漂流木做的玻璃櫃,把一路上的發現好好收起來。' });
+    var im = { ui_compass: 'island_ui_compass.png', ui_dig: 'island_ui_dig.png', res_compass: 'island_res_compass.png',
+               res_tmap: 'island_res_tmap.png', res_tmap_old: 'island_res_tmap_old.png', res_tmap_frag: 'island_res_tmap_frag.png',
+               tr_chest_n: 'island_tr_chest_n.png', tr_chest_r: 'island_tr_chest_r.png', tr_dust: 'island_tr_dust.png', tr_mound: 'island_tr_mound.png',
+               ui_trmark_n: 'island_ui_trmark_n.png', ui_trmark_r: 'island_ui_trmark_r.png', tr_star: '點擊星星.gif' }, k;
+    for(k in im){ if(im.hasOwnProperty(k)) D.IMG[k] = im[k]; }
+  })();
+  D.TREASURE.col = function(id){ var i; for(i = 0; i < D.TREASURE_COL.length; i++){ if(D.TREASURE_COL[i].id === id) return D.TREASURE_COL[i]; } return null; };
+  D.TREASURE.colOf = function(zone){ var i; for(i = 0; i < D.TREASURE_COL.length; i++){ if(D.TREASURE_COL[i].zone === zone) return D.TREASURE_COL[i]; } return null; };
+  /* 阿獺的舊羅盤(一次性小任務):①解鎖洞窟後第一次進雜貨鋪聽阿獺說 ②做出自製羅盤 ③挖到第一個寶藏 ⇒ 阿獺謝禮 */
+  D.TREASURE.otterIntro = [
+    '欸,你去過洞窟了?那你一定看到亮晶晶的鐵礦了吧!',
+    '我年輕的時候有一個寶貝羅盤——一根磁化的鐵針插在葉子上,浮在貝殼裡的水上面,針就會自己轉向。',
+    '我就是靠它,在這座島上挖到好多從海上漂來、被埋起來的寶藏。後來掉進溪裡,再也找不到了……',
+    '你幫自己做一個吧!到 🛠 製作台,用鐵礦、大葉、貝殼和淡水就做得出來。',
+    '拿著羅盤在野外按「🧭 探測」:聲音越急、星星越紅,就離寶藏越近。站到上面再按「🪏 挖掘」!',
+    '每張地圖都藏著一個普通寶藏和一個稀有寶藏。第一次每區都有,之後每天只有幾區會再冒出來——想知道是哪幾區,來跟我買 🗺 藏寶圖。',
+    '挖到第一個寶藏記得回來給我看看,我有謝禮給你!'
+  ];
+  D.TREASURE.otterThanks = [
+    '哇!你真的挖到寶藏了!看到你拿著羅盤的樣子,好像看到年輕時候的我。',
+    '這些給你當謝禮。對了,普通寶藏裡有時候會夾著「藏寶圖碎片」,集滿 4 片可以拼成古老藏寶圖,會畫出稀有寶藏大概在哪一帶喔!'
+  ];
+
+  /* 既有說明文字補上尋寶效果(四維、寵物天賦、飾品、防具、夥伴裝備都看同一張 D.TREASURE 表;顯示 = 實作) */
+  (function(){
+    var T = D.TREASURE, i, s, k, a;
+    var statAdd = { wit: '🧭 尋寶:巧思 14 以上探測有方向箭頭,30 以上一次量兩個寶藏',
+                    dex: '🧭 尋寶:挖掘範圍每點 +1%(最多 +40%)',
+                    pow: '🧭 尋寶:稀有寶藏連打次數每點 −1%(最多 −40%)',
+                    mov: '🧭 尋寶:探測冷卻每點 −0.02 秒(最多 −1 秒)' };
+    for(i = 0; i < D.STATS.length; i++){ s = D.STATS[i]; if(statAdd[s.k]) s.d = s.d + '、' + statAdd[s.k]; }
+    for(k in T.pet){ if(T.pet.hasOwnProperty(k) && D.PETS[k]){ D.PETS[k].talent = D.PETS[k].talent + '(' + T.pet[k].t + ')'; } }
+    for(k in T.acc){ if(T.acc.hasOwnProperty(k)){ a = D.acc(k); if(a) a.d = a.d + ' ' + T.acc[k].t; } }
+    for(k in T.armor){ if(T.armor.hasOwnProperty(k)){ a = D.armor(k); if(a) a.d = a.d + ' ' + T.armor[k].t; } }
+    for(k in T.petGear){ if(T.petGear.hasOwnProperty(k)){ a = D.petGear(k); if(a) a.d = a.d + ' ' + T.petGear[k].t; } }
+  })();
+
+  D.LOG.unshift({ v: 'v1.399.0', d: '2026-10-18', items: [
+    '🧭【新功能:尋寶】解鎖洞窟之後去找阿獺,他會教你做「自製羅盤」(🛠 製作台)。每張地圖都藏著 🟤 普通寶藏和 🟣 稀有寶藏!',
+    '🔊 拿著羅盤在野外按「🧭 探測」:聲音越急、星星越紅、泡泡說「非常近」,就離寶藏越近;走到上面按「🪏 挖掘」。挖到寶藏才扣 ⚡1,挖錯不扣。稀有寶藏埋得深,要連打挖出來。',
+    '🗺 第一次每區都有寶藏,之後每天只有幾區會再冒出來;阿獺每天賣 1 張藏寶圖,會在大地圖標出今天哪幾區有寶藏。沒挖到的寶藏會留到明天。',
+    '🏺 每區第一次挖到稀有寶藏會得到那一區的「收藏品」,可以擺進小木屋;集滿 11 件還有寶藏展示櫃!巧思、巧手、力氣、腳程,還有穿山甲、藍鵲、大冠鷲、椰子蟹、螢火蟲和幾件飾品,都能幫你尋寶。'
   ] });
 })();

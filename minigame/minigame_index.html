@@ -3851,6 +3851,11 @@ window.islDirectVeilOff = function(){
 <audio id="wx-isl-leaf" preload="none" loop src="../minigame/audio/%E9%A2%B1%E9%A2%A8%E5%90%B9%E8%A5%B2%E6%A8%B9%E8%91%89.mp3"></audio>
 <audio id="wx-isl-bolt" preload="none" src="../minigame/audio/%E9%96%83%E9%9B%BB.mp3"></audio>
 <audio id="wx-isl-thunder" preload="none" src="../minigame/audio/%E6%89%93%E9%9B%B7%E8%81%B2.mp3"></audio>
+<!-- ★ v1.399.0 🧭 尋寶探測四段距離音效(從大對抗寵物躲貓貓複製到 minigame/audio/;遠→近) -->
+<audio id="sfx-tr-d0" preload="none" src="../minigame/audio/%E8%BA%B2%E8%B2%93%E8%B2%93%E5%BE%88%E9%81%A0.mp3"></audio>
+<audio id="sfx-tr-d1" preload="none" src="../minigame/audio/%E8%BA%B2%E8%B2%93%E8%B2%93%E6%9C%89%E9%BB%9E%E8%B7%9D%E9%9B%A2.mp3"></audio>
+<audio id="sfx-tr-d2" preload="none" src="../minigame/audio/%E8%BA%B2%E8%B2%93%E8%B2%93%E6%9C%89%E9%BB%9E%E8%BF%91.mp3"></audio>
+<audio id="sfx-tr-d3" preload="none" src="../minigame/audio/%E8%BA%B2%E8%B2%93%E8%B2%93%E9%9D%9E%E5%B8%B8%E8%BF%91.mp3"></audio>
 <!-- ★ v1.368.0 ⛵ 出海探險環境音 6 個 + 音效 10 個(老師上傳前缺檔:onerror 標記 data-bad,程式自動退回現有的相近聲音) -->
 <audio id="amb-isl-sea_blizzard"   preload="none" loop src="../minigame/audio/island_amb_blizzard.mp3" onerror="this.setAttribute('data-bad','1')"></audio>
 <audio id="amb-isl-sea_jungle"     preload="none" loop src="../minigame/audio/island_amb_jungle.mp3" onerror="this.setAttribute('data-bad','1')"></audio>
@@ -7261,6 +7266,85 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
   #isl-modal .box .isl-iq button{ min-width:32px; height:28px; font-size:15px; padding:0 6px; }
   #isl-modal .box .isl-iq b.n{ font-size:16px; }
 }
+/* ══ ★ v1.399.0 🧭 尋寶系統(PC 預設 → iPad → 手機橫放,依 CSS 宣告順序鐵律放在本 style 最尾端) ══ */
+#isl-tr-btns{position:absolute;right:144px;bottom:22px;display:flex;align-items:flex-end;gap:10px;z-index:9;}
+#isl-tr-btns button{position:relative;width:84px;height:84px;border-radius:50%;background:rgba(20,30,50,.62);color:#fff;border:3px solid rgba(255,214,102,.85);box-shadow:0 4px 10px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;font-size:34px;line-height:1;cursor:pointer;font-family:inherit;touch-action:manipulation;}
+#isl-tr-btns button small{font-size:13px;font-weight:800;margin-top:2px;text-shadow:0 1px 2px #000;}
+#isl-tr-btns button .trb-ico{display:flex;align-items:center;justify-content:center;width:52px;height:52px;}
+#isl-tr-btns button .trb-ico img{width:52px;height:52px;object-fit:contain;}
+#isl-tr-btns button:active{transform:scale(.93);}
+#isl-tr-btns #isl-tr-tgt{width:54px;height:54px;font-size:28px;border-color:rgba(255,255,255,.6);}
+#isl-tr-btns #isl-tr-probe.cd{filter:grayscale(.6) brightness(.8);}
+#isl-tr-cd{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:22px;font-weight:900;color:#ffd166;text-shadow:0 0 4px #000,0 0 4px #000;pointer-events:none;}
+#island-root.inbattle #isl-tr-btns,#island-root.inbattle #isl-tr-bub{visibility:hidden;}
+#isl-tr-bub{position:absolute;left:50%;top:18%;transform:translateX(-50%);z-index:12;pointer-events:none;padding:10px 22px;border-radius:20px;background:rgba(0,0,0,.76);border:3px solid rgba(120,190,255,.95);color:#fff;font-size:24px;font-weight:900;line-height:1.45;text-align:center;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.85);box-shadow:0 6px 22px rgba(0,0,0,.5);transition:opacity .4s;animation:islTrPop .3s ease-out;}
+#isl-tr-bub .arw{display:inline-block;margin-left:6px;font-size:1.25em;color:#ffd166;}
+#isl-tr-bub .sub{font-size:16px;color:#9fe8ff;}
+@keyframes islTrPop{0%{transform:translateX(-50%) scale(.4);}70%{transform:translateX(-50%) scale(1.08);}100%{transform:translateX(-50%) scale(1);}}
+.isl-tr-star{position:absolute;width:72px;height:72px;margin-left:-36px;margin-top:-36px;pointer-events:none;z-index:7;font-size:44px;text-align:center;}
+.isl-tr-star img{width:72px;height:72px;}
+#isl-tr-dust{position:absolute;width:128px;height:128px;margin-left:-64px;margin-top:-104px;pointer-events:none;z-index:6;background-repeat:no-repeat;background-size:512px 128px;animation:islTrDust .5s steps(4) infinite;font-size:48px;text-align:center;}
+@keyframes islTrDust{from{background-position:0 0;}to{background-position:-512px 0;}}
+#isl-char.isl-tr-digging{animation:islTrBob .25s ease-in-out infinite;}
+@keyframes islTrBob{0%,100%{translate:0 0;}50%{translate:0 6px;}}
+.isl-tr-mound{position:absolute;width:96px;height:96px;margin-left:-48px;margin-top:-70px;pointer-events:none;z-index:4;font-size:40px;text-align:center;animation:islTrFade 2.6s ease-in forwards;}
+.isl-tr-mound img{width:96px;height:96px;}
+@keyframes islTrFade{0%,70%{opacity:1;}100%{opacity:0;}}
+.isl-tr-old{position:absolute;border-radius:50%;border:5px dashed rgba(200,140,255,.9);background:rgba(160,90,255,.12);pointer-events:none;z-index:3;display:flex;align-items:flex-start;justify-content:center;box-sizing:border-box;}
+.isl-tr-old span{margin-top:-18px;padding:3px 12px;border-radius:999px;background:rgba(60,20,90,.85);color:#f0dcff;font-size:18px;font-weight:800;white-space:nowrap;}
+.isl-tr-gm{position:absolute;margin-left:-26px;margin-top:-30px;padding:2px 6px;border-radius:8px;background:rgba(0,0,0,.7);color:#fff;font-size:16px;font-weight:900;pointer-events:none;z-index:9;border:2px dashed #ff6b6b;}
+#isl-tr-mash{position:absolute;left:0;top:0;right:0;bottom:0;z-index:30;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;}
+#isl-tr-mash .box{background:rgba(30,20,50,.95);border:3px solid #c39bff;border-radius:22px;padding:14px 22px 18px;text-align:center;color:#fff;width:min(86%,420px);box-shadow:0 10px 30px rgba(0,0,0,.6);}
+#isl-tr-mash .tt{font-size:21px;font-weight:900;margin-bottom:6px;}
+#isl-tr-mash .chest{font-size:80px;height:130px;display:flex;align-items:center;justify-content:center;}
+#isl-tr-mash .chest img{height:130px;width:auto;}
+#isl-tr-mash .chest.bump{animation:islTrBump .15s ease-out;}
+@keyframes islTrBump{0%{transform:scale(1);}50%{transform:scale(1.08) rotate(-3deg);}100%{transform:scale(1);}}
+#isl-tr-mash .bar{height:18px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden;margin:6px 0 4px;}
+#isl-tr-mash .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#9b5de5,#f15bb5);transition:width .1s;}
+#isl-tr-mash .cnt{font-size:18px;font-weight:800;}
+#isl-tr-mash .dig{margin-top:8px;width:150px;height:150px;border-radius:50%;font-size:40px;font-weight:900;background:#ffd166;color:#333;border:5px solid #fff;box-shadow:0 6px 14px rgba(0,0,0,.45);cursor:pointer;font-family:inherit;touch-action:manipulation;-webkit-user-select:none;user-select:none;}
+#isl-tr-mash .dig:active{transform:scale(.94);}
+#isl-tr-mash .tm{margin-top:8px;font-size:20px;font-weight:900;color:#ffd166;}
+#isl-tr-mash.win .box{border-color:#7bed9f;} #isl-tr-mash.lose .box{border-color:#ff7b7b;}
+.isl-trmark{position:absolute;transform:translate(78px,-168px);display:flex;gap:2px;padding:3px 8px;border-radius:999px;background:rgba(20,15,35,.6);border:3px solid rgba(255,214,102,.85);pointer-events:none;z-index:4;font-size:48px;line-height:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6));}
+.isl-trmark img{width:64px;height:64px;}
+.isl-trmark .ok{display:inline-block;width:84px;height:84px;line-height:84px;text-align:center;border-radius:50%;background:#2e7d32;color:#fff;font-size:56px;border:4px solid #fff;}
+#isl-modal .isl-tr-reveal{text-align:center;}
+#isl-modal .isl-tr-reveal .ch{display:flex;justify-content:center;animation:islTrPop2 .5s ease-out;}
+@keyframes islTrPop2{0%{transform:scale(.2) translateY(40px);opacity:0;}70%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);}}
+#isl-modal .isl-tr-reveal ul{list-style:none;padding:0;margin:8px 0;font-size:19px;line-height:1.7;}
+#isl-modal .isl-tr-reveal .ap{font-size:15px;opacity:.8;margin:0;}
+#isl-modal .isl-tr-book .sec{background:rgba(0,0,0,.08);border-radius:12px;padding:8px 12px;margin:8px 0;font-size:17px;line-height:1.6;}
+#isl-modal .isl-tr-book .sec > b{display:block;margin-bottom:2px;}
+#isl-modal .isl-tr-book .st.ok{color:#2e7d32;}
+#isl-modal .isl-tr-book .fx{font-size:15px;opacity:.9;}
+#isl-modal .isl-tr-book .frag{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#isl-modal .isl-tr-book .cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:4px;}
+#isl-modal .isl-tr-book .col{background:rgba(0,0,0,.1);border-radius:10px;padding:6px 4px;text-align:center;}
+#isl-modal .isl-tr-book .col.own{background:rgba(255,209,102,.25);}
+#isl-modal .isl-tr-book .col .q{display:block;font-size:40px;height:64px;line-height:64px;opacity:.5;}
+#isl-modal .isl-tr-book .col small{display:block;font-size:13px;line-height:1.3;}
+#isl-modal .isl-tr-book .gm{border:2px dashed #ff6b6b;}
+#island-root.ipad #isl-tr-btns{right:150px;bottom:24px;}
+#island-root.ipad #isl-tr-btns button{width:76px;height:76px;}
+#island-root.ipad #isl-tr-btns button .trb-ico,#island-root.ipad #isl-tr-btns button .trb-ico img{width:46px;height:46px;}
+#island-root.ipad #isl-tr-btns #isl-tr-tgt{width:50px;height:50px;font-size:25px;}
+@media (orientation:landscape) and (max-height:520px){
+  #isl-tr-btns{right:112px;bottom:14px;gap:6px;}
+  #isl-tr-btns button{width:62px;height:62px;border-width:2px;}
+  #isl-tr-btns button .trb-ico,#isl-tr-btns button .trb-ico img{width:36px;height:36px;}
+  #isl-tr-btns button small{font-size:11px;}
+  #isl-tr-btns #isl-tr-tgt{width:42px;height:42px;font-size:21px;}
+  #isl-tr-cd{font-size:17px;}
+  #isl-tr-bub{font-size:17px;padding:6px 14px;top:14%;}
+  #isl-tr-mash .box{padding:8px 14px 10px;}
+  #isl-tr-mash .chest{height:76px;} #isl-tr-mash .chest img{height:76px;}
+  #isl-tr-mash .dig{width:104px;height:104px;font-size:30px;margin-top:4px;}
+  #isl-tr-mash .tt{font-size:16px;} #isl-tr-mash .tm{font-size:16px;margin-top:4px;}
+  #isl-modal .isl-tr-reveal ul{font-size:15px;line-height:1.5;}
+  #isl-modal .isl-tr-book .sec{font-size:14px;padding:6px 10px;}
+}
 </style>
 
 <!-- ★ v1.90.0 — 🏝 像素荒島求生記 P1 骨架:畫面容器。所有內容由 isl* 函式動態填入;子畫面用 .hidden 切換。
@@ -7299,7 +7383,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
        修法:整段搬到 #island-root 直系子元素(比照本來就沒事的 #isl-hud-tip),改用固定 top 值定位,
        從此不受 HUD 的 overflow 與斷點影響。⚠ 這也是老師一直打不開「🎨 造型工房(GM)」的原因——
        工房唯一入口就在這個選單裡。 -->
-  <div id="isl-hudmore" class="hidden"><button id="isl-hud-save" onclick="islHudMoreClose();islSaveTap()">💾 存檔</button><button id="isl-more-gear" onclick="islHudMoreClose();islGearToggle()">⚙ 設定</button><button id="isl-more-sos" class="sos" onclick="islHudMoreClose();islSosOpen()">🆘 卡住了 / 回報錯誤</button><button id="isl-more-exit" onclick="islHudMoreClose();islExit()">✕ 離開荒島</button></div><!-- ★ v1.262.0 ☰ 更多:比照 #isl-gear 的做法掛在 #island-root 直下(不能放進 #isl-hud,那一層有 overflow 會把下拉整塊裁掉,見 #isl-gear 的 v1.132.0 註解);💾 仍沿用 id=isl-hud-save,islHud() 的「未登入變半透明」與 islSavedFlash() 的「已儲存 ✓」兩處消費點不必改寫成第二套 -->
+  <div id="isl-hudmore" class="hidden"><button id="isl-hud-save" onclick="islHudMoreClose();islSaveTap()">💾 存檔</button><button id="isl-more-gear" onclick="islHudMoreClose();islGearToggle()">⚙ 設定</button><button id="isl-more-tr" onclick="islHudMoreClose();islTrBookOpen()">🧭 尋寶手冊</button><button id="isl-more-sos" class="sos" onclick="islHudMoreClose();islSosOpen()">🆘 卡住了 / 回報錯誤</button><button id="isl-more-exit" onclick="islHudMoreClose();islExit()">✕ 離開荒島</button></div><!-- ★ v1.262.0 ☰ 更多:比照 #isl-gear 的做法掛在 #island-root 直下(不能放進 #isl-hud,那一層有 overflow 會把下拉整塊裁掉,見 #isl-gear 的 v1.132.0 註解);💾 仍沿用 id=isl-hud-save,islHud() 的「未登入變半透明」與 islSavedFlash() 的「已儲存 ✓」兩處消費點不必改寫成第二套 -->
   <div id="isl-hud-tip" class="hidden"></div>
   <div id="isl-notify"></div><!-- ★ v1.125.0 右下角完工通知(建造完成) --><!-- ★ v1.124.0 HUD 藥丸的文字說明小視窗(掛 root 直下,避免被 HUD 橫向捲動裁掉) -->
   <div id="isl-submenu" class="hidden" onclick="if(event.target===this&&window._islSubDownSelf)islSubClose()"><div class="sm-box"><div class="sm-title" id="isl-sub-title"></div><div class="sm-grid" id="isl-sub-grid"></div></div></div><!-- ★ v1.115.0 營地大項目 → 細項按鈕(如主程式關卡選擇頁下方選單) -->
@@ -7316,6 +7400,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
       <div id="isl-zone-topinfo"></div>
       <div id="isl-joy" class="hidden"><div class="knob"></div></div>
       <button id="isl-act-btn" class="hidden" onclick="islActBtnTap()">!</button>
+      <div id="isl-tr-btns" class="hidden"><button id="isl-tr-tgt" onclick="islTrTgtToggle()" title="切換要找的寶藏(普通/稀有)">🟤</button><button id="isl-tr-probe" onclick="islTrProbe()" title="🧭 探測寶藏"><span class="trb-ico" data-k="ui_compass">🧭</span><small>探測</small><i id="isl-tr-cd"></i></button><button id="isl-tr-dig" onclick="islTrDig()" title="🪏 挖掘"><span class="trb-ico" data-k="ui_dig">🪏</span><small>挖掘</small></button></div><!-- ★ v1.399.0 🧭 尋寶:探測/挖掘/切換目標(islTrZoneEnter 決定顯示) -->
       <div id="isl-movebtns"><button id="isl-jump-btn" title="跳躍(鍵盤:空白鍵)">🪽</button></div><!-- ★ v1.276.0 老師需求「移除跑步鍵、保留跳躍鍵(放大並移到方向盤右側)」— 👟 奔跑鈕已移除,奔跑改由方向盤拖到外圈邊緣自動觸發(見 CSS/JS 說明),PC 鍵盤 Shift 與雙擊地板跑步兩條既有路徑不受影響 -->
     </div>
     <div id="isl-camp" class="hidden">
@@ -7395,7 +7480,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
      ⚠ 重試一定要換一個 URL(加 &r=時間戳),否則瀏覽器與 SW 都用完整 URL 當快取鍵,重抓的還是同一個失敗結果。
      ⚠ 只重試一次(data-r 記號),失敗兩次就交給 islEnter 的「資料檔沒載到」視窗處理,不無限重抓打爆學校網路。 -->
 <script src="minigame_db.js?v=v1.76.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
-<script src="minigame_island_db.js?v=v1.396.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
+<script src="minigame_island_db.js?v=v1.399.0"onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script>
 <script src="minigame_sea_db.js?v=v1.392.0" onerror="(function(s){ if(s.getAttribute('data-r')) return; s.setAttribute('data-r','1'); var n = document.createElement('script'); n.src = s.src + '&r=' + (+new Date()); document.head.appendChild(n); })(this)"></script><!-- ★ v1.368.0 ⛵ 出海探險資料表(新檔,擴充 window.ISL_DB;?v= 跟著本檔有改動時 bump)。上傳順序:minigame_island_db.js → minigame_sea_db.js → minigame_sw.js → minigame_index.html --><!-- ★ v1.303.0 順手修正:這行 ?v= 停在 v1.299.0 已經三輪(v1.300.0 天賦星盤 129 節點、v1.301.0、v1.302.0)沒跟著 MG_VER 一起 bump,補回同步到 v1.303.0——island_db.js 走 network-first(逾時才退回快取),沒有跑步圖那種 cache-first 的嚴重性,但放著不管遲早會在網路較慢的裝置上讓學生吃到舊版天賦資料,順手一併修掉。 --><!-- ★ v1.297.0 — D.SK_CMDS.CMD_CALL 與 SK_CMD_6 節點文字更新(效果20%→100%+野外標示修正),有實質內容改動 --><!-- ★ v1.296.0 — 隨 index 同步(營地點設施走位改回長按走過去再開視窗,D.VER 同步升版,本檔零改動) --><!-- ★ v1.295.0 — 隨 index 同步(探險編組寵物休息中改睡覺姿態,D.VER 同步升版,本檔零改動) --><!-- ★ v1.294.0 — D.MONO 新增 13 種活動×2(star3/crit)共 26 把專屬反應台詞,有實質內容改動 --><!-- ★ v1.293.0 — 隨 index 同步(天賦特殊指令彈窗補上效果說明,D.VER 同步升版,本檔零改動) --><!-- ★ v1.292.0 — D.LAYER_ADJ 造型工房匯出值全表更新,有實質內容改動 --><!-- ★ v1.291.0 — 隨 index 同步(跑步 dy 置中誤判根治,D.VER 同步升版,本檔零改動) --><!-- ★ v1.290.0 — D.SK_NODES 9 個效果鍵正式接上節點資料,有實質內容改動 --><!-- ★ v1.289.0 — 隨 index 同步(跑步 8 張循環/天賦新效果鍵掛點,D.VER 同步升版) --><!-- ★ v1.257.0 — 寵物走路/睡覺圖檔名對齊老師實際上傳的 island_pet_*,快取版號同步 --><!-- ★ v1.253.0 — 沙灘新增專屬每日貝殼堆(spawn.shell),快取版號同步 --><!-- ★ v1.242.0 — 隨 index v1.242.0 bump,sandwind 重定義+MON_LV_ATK/寵物成長/懸崖魔物表異動 --><!-- ★ v1.220.0 — 隨 index v1.220.0 bump,本檔零改動(字體/星盤/戰鬥介面全在 index 端) --><!-- ★ v1.219.0 — 隨 index v1.219.0 bump,ui_bld 圖鍵改正確檔名 island_ui_bld2.png --><!-- ★ v1.217.0 — 隨 index v1.217.0 bump,寵物詳情卡改用大對抗同色票(型別徽章/等級綠框/好感粉框) --><!-- ★ v1.215.0 — 隨 index v1.215.0 bump,D.SFX_MAP 新增 bond 鍵+menuOpen/menuClose 音量微調,快取版號同步 --><!-- ★ v1.214.0 — 隨 index v1.214.0 bump,僅上一步 v1.213.0 異動的延續(sweepbill 說明文字微調),快取版號同步 -->   <!-- ★ v1.213.0 老師「技能清單稽核,缺失就補到天賦星盤或寵物技能/天賦中」— 補6種真的缺失的戰鬥機制(復活/解除全體不利狀態/隨機目標多段攻擊/持續恢復HP/睡眠/免疫不利狀態),雷精(spark)新增 stunOnHitP,梅花鹿/莫氏樹蛙換技能,有實質內容改動,bump 版號讓所有裝置重抓 --><!-- ★ v1.205.0 補齊 19 個 D.IMG[ui_*] 選單圖示鍵,有實質內容改動,bump 版號讓所有裝置重抓 -->   <!-- ★ v1.197.0 順手修正:這行 ?v= 停在 v1.195.0 已經兩輪沒跟著 MG_VER 一起 bump(v1.196.0 那輪漏了),補回同步;island_db.js 本輪內容零改動,只是同步快取版號字串,避免舊瀏覽器快取繼續吃到 v1.195.0 那份。 --><!-- ★ v1.90.0 — 🏝 像素荒島求生記資料表(區域/遮罩/題庫/建築/起步風格/劇情);只掛 window.ISL_DB,邏輯在下方 isl* 區塊 -->
 <script>
 /* ============================================================================
@@ -7405,7 +7490,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.398.0';   /* ★ v1.398.0(2026-10-14・老師「iPad 荒島加好友時無法輸入 wasd」)— 野外/營地鍵盤監聽在打字時(焦點在輸入框)不再攔 WASD/方向鍵/空白/Enter,新增 islIsTypingEv;island_db 零改動(?v= 維持 v1.396.0) */   void 'v1.397.0';   /* ★ v1.397.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」,與大對抗 v5.250.0 同包)— 素材帳本(_mgLedgerMake)只記本站檔、舊帳本外站網址略過並清出;補不回的(逾時/5xx)累計 2 次從帳本淘汰(L.strike);開機對帳 8→4 秒沒結果就不擋;先進入鈕 5→3 秒;最多擋 2→1 分鐘。island_db 零改動(?v= 不跟)。 */  void 'v1.396.0';   /*★ v1.396.0(2026-10-13・老師六項)— ①開機素材對帳 mgAssetRepairBoot/_mgLedgerMake(快取不見的素材先補回再進場,荒島直入等補完;5 秒後可先進入)②物品包「賣普通材料」可勾 ★/★★/★★★(islBulkQ);點單一物品改 islBagItemOpen:丟掉 N 個(+−/全部)、營地內賣出 N 個 ③速度顯示 islNum1 四捨五入到小數第一位(只改顯示)④跳躍 islJumpPlan:沿面向量障礙寬度、矮障礙(獨立 ≤8 格不碰邊)/窄水(走 1、跑 3 格)可跳,高障礙/藤蔓不可,講原因 ⑤移動加成封頂 +50%(islMoveBonus,腳程 30 = +50%)、腳程減遇敵最高 50%(islEncDodge)⑥天賦「目前點亮收益」改加總(ISL_SK_SUM)⑦商店賣東西/倉庫改物品包格子(islQTileHtml),物品包/倉庫/賣東西頂端排列列 islSortBar(分類+價格/品質/數量 升降序),賣出/存入/取出步進器 islQStep 0~全部循環(0 按 − 跳最大、最大按 + 跳 1;點格子 0↔全部),底部一次結帳。island_db v1.396.0(腳程說明,?v= 同步)。 */  void 'v1.395.0';   /*★ v1.395.0(2026-10-12・老師「上週五沒登出的平板,週一直接登進上週那位的帳號」+「30分鐘沒按確認遊玩就強制登出,且不可再被下一個使用者免輸入密碼登入」)— 新增 mgIdle 閒置模組(本程式之前完全沒有閒置登出):30 分鐘無觸碰/按鍵 → 確認視窗倒數 60 秒 → 未按「繼續遊戲」就荒島立即存檔+signOut+重整;超過 30 分 60 秒(睡眠跨夜)醒來直接登出;視窗內觸碰不算活動、逾時後第一下觸碰救不回時間。裝置層 lxps_idle_last 與大對抗 v5.248.0 共用;onUser 第六道判定:逾時帳號不吃任何放行鑰匙(含同分頁 sessionStorage 章)。island_db 零改動(?v= 不跟)。 */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成隨機情境(依天氣、晝夜、現場環境),選對措施才會造成傷害」+ 選項用圖示+做法短句、地下層也改、巧思 14 以上刪一個錯誤選項)— 新函式 islWitEnv/islWitOk/islWitEnvText/islWitPick;islBtOutwit 改讀情境題(m._witQ 保留到答題、m._witLast 避免連續同題);islBtWitHint 上方小視窗改顯示環境+情境;islDgToolPick 改情境題(C.wq);CSS 2×2 做法方格(三平台)。題庫 island_db D.WIT_SC。夜襲防衛戰維持固定工具。 */  void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師兩項)— ①同一隻魔物(含頭目)重複被智取,傷害每次減半(m.witN 計次)②智取威力改由巧思決定:新函式 islBtWitDmg = 攻擊力×(1.5+巧思×0.04) + 最大HP×min(7.5%,巧思×0.15%)(頭目 HP 部分 ×0.5),取代 v1.284.0「攻擊力×2+最大HP×20%」;智取選單顯示預估傷害與衰減。island_db D.BT.OUTWIT_* 參數。 */  void 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
+var MG_VER = 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 🧭 自製羅盤探測(躲貓貓四段距離音效＋星星變色＋思考泡泡)/🪏 挖掘(挖到才扣 ⚡1、稀有連打)/每日重生/🗺 藏寶圖/古老藏寶圖/11 件收藏品/尋寶手冊/阿獺舊羅盤小任務;程式搜尋 islTr,數字在 island_db D.TREASURE */   void 'v1.398.0';   /* ★ v1.398.0(2026-10-14・老師「iPad 荒島加好友時無法輸入 wasd」)— 野外/營地鍵盤監聽在打字時(焦點在輸入框)不再攔 WASD/方向鍵/空白/Enter,新增 islIsTypingEv;island_db 零改動(?v= 維持 v1.396.0) */   void 'v1.397.0';   /* ★ v1.397.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」,與大對抗 v5.250.0 同包)— 素材帳本(_mgLedgerMake)只記本站檔、舊帳本外站網址略過並清出;補不回的(逾時/5xx)累計 2 次從帳本淘汰(L.strike);開機對帳 8→4 秒沒結果就不擋;先進入鈕 5→3 秒;最多擋 2→1 分鐘。island_db 零改動(?v= 不跟)。 */  void 'v1.396.0';   /*★ v1.396.0(2026-10-13・老師六項)— ①開機素材對帳 mgAssetRepairBoot/_mgLedgerMake(快取不見的素材先補回再進場,荒島直入等補完;5 秒後可先進入)②物品包「賣普通材料」可勾 ★/★★/★★★(islBulkQ);點單一物品改 islBagItemOpen:丟掉 N 個(+−/全部)、營地內賣出 N 個 ③速度顯示 islNum1 四捨五入到小數第一位(只改顯示)④跳躍 islJumpPlan:沿面向量障礙寬度、矮障礙(獨立 ≤8 格不碰邊)/窄水(走 1、跑 3 格)可跳,高障礙/藤蔓不可,講原因 ⑤移動加成封頂 +50%(islMoveBonus,腳程 30 = +50%)、腳程減遇敵最高 50%(islEncDodge)⑥天賦「目前點亮收益」改加總(ISL_SK_SUM)⑦商店賣東西/倉庫改物品包格子(islQTileHtml),物品包/倉庫/賣東西頂端排列列 islSortBar(分類+價格/品質/數量 升降序),賣出/存入/取出步進器 islQStep 0~全部循環(0 按 − 跳最大、最大按 + 跳 1;點格子 0↔全部),底部一次結帳。island_db v1.396.0(腳程說明,?v= 同步)。 */  void 'v1.395.0';   /*★ v1.395.0(2026-10-12・老師「上週五沒登出的平板,週一直接登進上週那位的帳號」+「30分鐘沒按確認遊玩就強制登出,且不可再被下一個使用者免輸入密碼登入」)— 新增 mgIdle 閒置模組(本程式之前完全沒有閒置登出):30 分鐘無觸碰/按鍵 → 確認視窗倒數 60 秒 → 未按「繼續遊戲」就荒島立即存檔+signOut+重整;超過 30 分 60 秒(睡眠跨夜)醒來直接登出;視窗內觸碰不算活動、逾時後第一下觸碰救不回時間。裝置層 lxps_idle_last 與大對抗 v5.248.0 共用;onUser 第六道判定:逾時帳號不吃任何放行鑰匙(含同分頁 sessionStorage 章)。island_db 零改動(?v= 不跟)。 */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成隨機情境(依天氣、晝夜、現場環境),選對措施才會造成傷害」+ 選項用圖示+做法短句、地下層也改、巧思 14 以上刪一個錯誤選項)— 新函式 islWitEnv/islWitOk/islWitEnvText/islWitPick;islBtOutwit 改讀情境題(m._witQ 保留到答題、m._witLast 避免連續同題);islBtWitHint 上方小視窗改顯示環境+情境;islDgToolPick 改情境題(C.wq);CSS 2×2 做法方格(三平台)。題庫 island_db D.WIT_SC。夜襲防衛戰維持固定工具。 */  void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師兩項)— ①同一隻魔物(含頭目)重複被智取,傷害每次減半(m.witN 計次)②智取威力改由巧思決定:新函式 islBtWitDmg = 攻擊力×(1.5+巧思×0.04) + 最大HP×min(7.5%,巧思×0.15%)(頭目 HP 部分 ×0.5),取代 v1.284.0「攻擊力×2+最大HP×20%」;智取選單顯示預估傷害與衰減。island_db D.BT.OUTWIT_* 參數。 */  void 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
 void 'v1.391.0';   /* ★ v1.391.0(2026-10-09・老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料(容易採集大量取得的)」)— 營地裡打開物品包,標題列多一顆「💰 賣普通材料」:只賣物品包裡 D.SHOP.bulkSell 清單(收購價 1 貝幣的基礎採集物)的 ★ 品質,先列清單+總價確認再賣;★★/★★★、倉庫、料理與稀有材料一律不動。新函式 islBulkSellList/islBulkSellAsk。對應 island_db v1.391.0(新增 D.SHOP.bulkSell + D.LOG 一筆)、sw v1.391.0(SHELL v1.391.0)。 */
 void 'v1.390.0';   /* ★ v1.390.0(2026-10-08・老師「第六章之後確認沒問題就先開到第八章」)— ISL_CH6_OPEN false→true,第六~八章(時間倒轉之貝/島的抉擇/島的新樣貌)對學生開放;已停在第五章完成的玩家會自動接上 c6 開場(islMainTick 原本就在等這個旗標,存檔結構不用動)。外島篇 c9 之後仍由 ⚙ GM「外島開關」(gameConfig/islandSea)控制,本輪不動。檢查時找到 c8 卡關點(目標營地 Lv4,但營地最高 Lv3),在 island_db 改成圖鑑 50 種。 */     /* v1.389.0(2026-10-08・老師兩項裁定)— ①「當天行動力用掉一半以上(切換至夜晚)才能睡」:islRest 開頭以 islIsNight() 擋門(與夜間模式同一個門檻 D.NIGHT.apUsedPct),白天按休息只跳說明「再用 N 點就天黑」;體力 0 一律准睡(安全閥,避免卡死)。②「每日登島禮和留言板的一天一次改成看島上日誌的時間」:登島禮改記 ISL.giftDay=島上天數(進島+睡醒換日各檢查一次),留言改 ISL.msgDay=ISL.day(舊的日期字串歸 0)。island_db 零改動(?v= 不跟)。 */   void 'v1.388.0';   /* v1.388.0(2026-10-08・老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 九項:①拜訪好友島已採/已撿改記在自己存檔 ISL.coopDaily(按島主分開),進出拜訪不再全部重生 ②夜襲結算記 ISL.raidDone,重新整理不能重打同一場刷科技點 ③收信改「先刪雲端信、成功才給」+ISL.mailGot 記已收 id,離線收信關 App 不能重複收 ④資源點各組數量當天凍結 daily.want,工程修復/打撈失誤改變受損度不再讓已採點重生 ⑤傳說夥伴考試/訓練師上課開始就記次數,按 ✕ 不能重考 ⑥islActResult 只結算一次 ⑦商店買價保底高於賣回價(空氣瓶特價套利)⑧料理賣價不超過材料價(islSellUnit 單一出口)⑨附禮留言立刻雲端存檔、存檔衝突中不能附禮、換帳號清信箱快取。island_db 零改動(?v= 不跟)。 */   void 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
@@ -20535,6 +20620,7 @@ function islMapPaint(){
   }
   h += _IS.coop ? '<button id="isl-map-camp" data-z="__visitcamp" style="left:49%;top:67%">🏕<span class="zn">參觀營地</span></button><button id="isl-map-leave" data-z="__leave" style="left:28%;top:84%">🚪<span class="zn">離開拜訪</span></button>' : '<button id="isl-map-camp" data-z="__camp" style="left:49%;top:67%">🏕<span class="zn">營地</span></button>';   /* ★ v1.108.0 拜訪模式:回營鈕換成離開拜訪;★ v1.114.0 拜訪模式再加「🏕 參觀營地」(唯讀) */
   h += '<div id="isl-map-char" style="left:' + cur.map.x + '%;top:' + cur.map.y + '%">' + islChibiHtml(ISL.char, 'idle') + '</div>';
+  try{ h += islTrMapMarks(); }catch(_trm){}   /* ★ v1.399.0 🗺 藏寶圖標記(今天有寶藏的區)/今天挖過 ✔ */
   m.innerHTML = h;
   islMapDrawFallback($('isl-map-cv'));
   islMapFogDraw();
@@ -20891,6 +20977,7 @@ function islEnterZone(zoneId, cb){
   _IS.lastT = 0; if(_IS.raf) cancelAnimationFrame(_IS.raf); _IS.raf = requestAnimationFrame(islTick);
   islCamera(true);
   if(_IS.coop){ islCoopHeartbeatSend(); islCoopPeersRender(); }   /* ★ v1.108.0 拜訪模式:一進場景立刻回報位置+畫出場上其他人,不用等下個心跳 */
+  try{ islTrZoneEnter(zoneId); }catch(_tre){ try{ console.warn('[尋寶] 進場', _tre); }catch(_){} }   /* ★ v1.399.0 🧭 尋寶按鈕/古老藏寶圖圓圈/大冠鷲提醒 */
   if(cb) cb();
 }
 function islNodeHtml(n, i){
@@ -21012,6 +21099,7 @@ function islZoneBind(){
   function pos(ev){ var t = ev.changedTouches ? ev.changedTouches[0] : ev; var r = z.getBoundingClientRect(), k = islZk(); return { x: (t.clientX - r.left) / k, y: (t.clientY - r.top) / k, id: ev.changedTouches ? t.identifier : 'm' }; }   /* ★ v1.111.0 ÷zoom:搖桿圓圈貼手指、點地走到正確格 */
   function down(ev){
     if(ev.target && (ev.target.id === 'isl-act-btn' || ev.target.id === 'isl-jump-btn')) return;   /* ★ v1.276.0 跑步鈕已移除,只剩跳躍鈕要排除,不然點下去會被搖桿 down() 攔截,自己的按鈕反而按不到 */
+    if(ev.target && ev.target.closest && ev.target.closest('#isl-tr-btns,#isl-tr-mash,#isl-tr-bub')) return;   /* ★ v1.399.0 🧭 尋寶按鈕與連打面板同理(搖桿 down 會 preventDefault 把點擊吃掉) */
     var p = pos(ev), r = z.getBoundingClientRect();
     if(_IS.joy) return;
     _IS.joy = { id: p.id, ox: p.x, oy: p.y, dx: 0, dy: 0, moved: false, run: false, t: islNow() };
@@ -22120,6 +22208,467 @@ function islNearCheck(){
     } else hide('isl-act-btn');
   }
 }
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.399.0 🧭 尋寶系統(老師 2026-10-17/18;設計書 claude/荒島尋寶系統_設計書.md v1.1,A~D 全選甲;數字全在 island_db D.TREASURE)
+ *   存檔 ISL.tr = { v:1, day:最近一次重生的島上天數, z:{區:{n:{x,y}|null, r:{x,y}|null, dry:連續沒重生天數, first:第一次放寶藏那天, dug:最近挖到那天}},
+ *                   frag:藏寶圖碎片, mapDay:買藏寶圖那天, oldDay:用古老藏寶圖那天, col:{收藏品id:取得天}, cq:羅盤品質, q:阿獺任務(0 未聽/1 已聽/2 已謝),
+ *                   dugN, dugR, caseGot, rolls }(islTrState 懶建立,不動 islNormalize)。
+ *   重生:每個島上天數第一次讀 islTrState 時擲一次(種子 uid|tr|day,同一天重進位置不變);沒挖的寶藏會留著。
+ *   ⚠ 只在本島 11 區、不在外島(裁定 D 甲)、拜訪好友的島一律停用(_IS.coop)。挖到才扣 ⚡1(裁定 A 甲),挖寶不練四維(裁定 B 甲)。
+ *   探測回饋照抄大對抗 _petPlayHideSeek:四段距離 mp3 + 點擊星星.gif 依距離變色 + 思考泡泡。
+ * ══════════════════════════════════════════════════════════════════════════ */
+var _islTrReach = {};
+function islTrDB(){ var d = islDB(); return d && d.TREASURE; }
+function islTrIsHome(z){ var d = islDB(), zd = d.zone(z); return !!(zd && !zd.sea && d.SCENE[z]); }
+function islTrUnlocked(){ var T = islTrDB(); return !!(T && ISL && ISL.zones && ISL.zones[T.unlockZone] && ISL.zones[T.unlockZone].unlocked); }
+function islTrHasCompass(){ return !!(ISL && ISL.tools && ISL.tools.indexOf('compass') >= 0); }
+function islTrZones(){ var d = islDB(), out = [], i, z; for(i = 0; i < d.ZONES.length; i++){ z = d.ZONES[i]; if(!z.sea && d.SCENE[z.id] && ISL.zones[z.id] && ISL.zones[z.id].unlocked) out.push(z.id); } return out; }
+function islTrHereOk(){ var sh = false; try{ sh = (typeof islSeaHere === 'function') && islSeaHere(); }catch(_e){} return !!(ISL && !_IS.coop && !sh && _IS.screen === 'zone' && _IS.zone && islTrIsHome(_IS.zone)); }
+function islTrAvail(){ return !!(islTrDB() && islTrHasCompass() && islTrHereOk()); }
+/* 場景裡可放寶藏的格子:從出生點 BFS 走得到的 '.' 格,且離傳送點/資源點/解謎點/訓練師等所有標記至少 keepGap 格(每區算一次快取) */
+function islTrPts(o, acc, dep){
+  var k, v;
+  if(!o || typeof o !== 'object' || dep > 5) return;
+  if(typeof o.x === 'number' && typeof o.y === 'number') acc.push(o);
+  if(o instanceof Array){ for(k = 0; k < o.length; k++) islTrPts(o[k], acc, dep + 1); return; }
+  for(k in o){ if(o.hasOwnProperty(k) && k !== 'mask'){ v = o[k]; if(v && typeof v === 'object') islTrPts(v, acc, dep + 1); } }
+}
+function islTrReach(z){
+  if(_islTrReach[z]) return _islTrReach[z];
+  var sc = islDB().SCENE[z], m = sc && sc.mask, out = [], seen = {}, q = [], H, W, s, i, c, nx, ny, d, av = [], gap = (islTrDB().keepGap | 0) || 2, ok, j;
+  var DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
+  if(!m || !m.length) return (_islTrReach[z] = []);
+  H = m.length; W = m[0].length;
+  function walk(x, y){ return x >= 0 && y >= 0 && x < W && y < H && m[y].charAt(x) === '.'; }
+  s = sc.spawn0 || { x: 2, y: 2 };
+  if(!walk(s.x, s.y)){ for(d = 1; d < 10 && !walk(s.x, s.y); d++){ for(j = 0; j < 4; j++){ if(walk(s.x + DX[j] * d, s.y + DY[j] * d)){ s = { x: s.x + DX[j] * d, y: s.y + DY[j] * d }; break; } } } }
+  if(!walk(s.x, s.y)) return (_islTrReach[z] = []);
+  q.push(s); seen[s.x + ',' + s.y] = 1;
+  islTrPts(sc, av, 0);
+  while(q.length){
+    c = q.shift();
+    ok = (c.x > 0 && c.y > 0 && c.x < W - 1 && c.y < H - 1);
+    for(i = 0; ok && i < av.length; i++){ if(Math.abs(av[i].x - c.x) < gap && Math.abs(av[i].y - c.y) < gap) ok = false; }
+    if(ok) out.push({ x: c.x, y: c.y });
+    for(i = 0; i < 4; i++){ nx = c.x + DX[i]; ny = c.y + DY[i]; if(walk(nx, ny) && !seen[nx + ',' + ny]){ seen[nx + ',' + ny] = 1; q.push({ x: nx, y: ny }); } }
+  }
+  return (_islTrReach[z] = out);
+}
+function islTrPick(z, rnd, other){
+  var C = islTrReach(z), T = islTrDB(), gap = T.pairGapP * T.diag, i, c, d, best = null, bd = -1;
+  if(!C.length) return null;
+  for(i = 0; i < 40; i++){
+    c = C[Math.floor(rnd() * C.length)];
+    if(!other) return { x: c.x, y: c.y };
+    d = Math.sqrt(Math.pow((c.x - other.x) * 64, 2) + Math.pow((c.y - other.y) * 64, 2));
+    if(d >= gap) return { x: c.x, y: c.y };
+    if(d > bd){ bd = d; best = c; }
+  }
+  return best ? { x: best.x, y: best.y } : null;
+}
+function islTrZ(T, z){ var Z = T.z[z]; if(!Z || typeof Z !== 'object'){ Z = T.z[z] = { n: null, r: null, dry: 0, first: 0, dug: 0 }; } return Z; }
+/* 第二天起的重生:沒挖的留著;沒有普通寶藏的區抽 3~5 區(連續 3 天沒抽到的必中);稀有 1~2 區 */
+function islTrRoll(T){
+  var R = islTrDB().respawn, zs, rnd, i, z, Z, candN = [], candR = [], forced = [], kN, kR, pickN = {}, sh;
+  T.day = ISL.day;
+  if(!islTrUnlocked()) return;
+  if((T.rolls | 0) > 0){
+    zs = islTrZones(); rnd = islRng(islHash((ISL.uid || 'guest') + '|tr|' + ISL.day));
+    for(i = 0; i < zs.length; i++){ Z = islTrZ(T, zs[i]); if(!Z.first) continue; if(!Z.n){ candN.push(zs[i]); if((Z.dry | 0) >= R.pity) forced.push(zs[i]); } if(!Z.r) candR.push(zs[i]); }
+    kN = zs.length >= 5 ? (R.nMin + Math.floor(rnd() * (R.nMax - R.nMin + 1))) : Math.max(1, Math.ceil(zs.length * 0.6));
+    sh = islShuffleSeeded(candN, rnd);
+    for(i = 0; i < forced.length; i++) pickN[forced[i]] = 1;
+    for(i = 0; i < sh.length && Object.keys(pickN).length < Math.max(kN, forced.length); i++) pickN[sh[i]] = 1;
+    for(i = 0; i < candN.length; i++){ z = candN[i]; Z = islTrZ(T, z); if(pickN[z]){ Z.n = islTrPick(z, rnd, Z.r); Z.dry = 0; } else Z.dry = (Z.dry | 0) + 1; }
+    kR = Math.min(candR.length, R.rMin + Math.floor(rnd() * (R.rMax - R.rMin + 1)));
+    sh = islShuffleSeeded(candR, rnd);
+    for(i = 0; i < kR; i++){ Z = islTrZ(T, sh[i]); Z.r = islTrPick(sh[i], rnd, Z.n); }
+  }
+  T.rolls = (T.rolls | 0) + 1;
+  T._dirty = 1;
+}
+/* 第一次尋寶:每一區(包括之後才解鎖的區)第一次都有普通＋稀有 */
+function islTrFirst(T){
+  var zs, i, z, Z, rnd;
+  if(!islTrUnlocked()) return;
+  zs = islTrZones();
+  for(i = 0; i < zs.length; i++){
+    z = zs[i]; Z = islTrZ(T, z); if(Z.first) continue;
+    rnd = islRng(islHash((ISL.uid || 'guest') + '|trf|' + z));
+    Z.n = islTrPick(z, rnd, null); Z.r = islTrPick(z, rnd, Z.n); Z.first = ISL.day || 1; T._dirty = 1;
+  }
+}
+function islTrState(){
+  var T, k, nums = ['day', 'frag', 'mapDay', 'oldDay', 'cq', 'q', 'dugN', 'dugR', 'caseGot', 'rolls'];
+  if(!ISL || !islTrDB()) return null;
+  T = ISL.tr;
+  if(!T || typeof T !== 'object' || T.v !== 1) T = ISL.tr = { v: 1, z: {}, col: {} };
+  if(!T.z || typeof T.z !== 'object') T.z = {};
+  if(!T.col || typeof T.col !== 'object') T.col = {};
+  for(k = 0; k < nums.length; k++){ if(typeof T[nums[k]] !== 'number') T[nums[k]] = 0; }
+  if(T.day !== ISL.day) islTrRoll(T);
+  islTrFirst(T);
+  if(T._dirty){ delete T._dirty; try{ islSave('tr'); }catch(_s){} }
+  return T;
+}
+/* ── 能力/寵物/裝備效果(全部看 D.TREASURE;上限也在那裡) ── */
+function islTrPet(k){ try{ return islPartyHasPet(k); }catch(e){ return false; } }
+function islTrAcc(){ try{ var a = islAccCur(); return a ? a.id : ''; }catch(e){ return ''; } }
+function islTrArmor(){ try{ var a = islArmorCur(); return a ? a.id : ''; }catch(e){ return ''; } }
+function islTrStat(k){ return (ISL && ISL.stats && ISL.stats[k]) | 0; }
+function islTrDigP(){ var T = islTrDB(), p = Math.min(T.dexMaxP, islTrStat('dex') * T.dexP); if(islTrPet('pangolin')) p += T.pet.pangolin.digP; if(islTrAcc() === 'acc_claw') p += T.acc.acc_claw.digP; return Math.min(T.digRMaxP, p); }
+function islTrDigR(){ var T = islTrDB(); return T.digR * (1 + islTrDigP() / 100); }
+function islTrCdMs(zone){
+  var T = islTrDB(), st = islTrState(), ms = T.cdMs;
+  ms -= T.cdQ[Math.max(0, Math.min(3, (st && st.cq) | 0))] || 0;
+  ms -= Math.min(T.movMaxMs, islTrStat('mov') * T.movMs);
+  if(islTrPet('firefly') && (zone === 'cave' || islIsNight())) ms -= T.pet.firefly.cdMs;
+  if(islTrAcc() === 'acc_windeye') ms -= T.acc.acc_windeye.cdMs;
+  return Math.max(T.cdMinMs, ms);
+}
+function islTrMashCutP(){ var T = islTrDB(), c = Math.min(T.powMaxP, islTrStat('pow') * T.powP); if(islTrPet('pangolin')) c += T.pet.pangolin.mashCutP; return Math.min(T.mashMaxCutP, c); }
+function islTrMashN(zone){ var T = islTrDB(), zd = islDB().zone(zone), n = T.mash.base + T.mash.perOrder * ((zd && zd.order) | 0); return Math.max(5, Math.round(n * (1 - islTrMashCutP() / 100))); }
+function islTrNoJam(){
+  var i, p, g;
+  if(islTrAcc() === 'acc_windeye') return true;
+  for(i = 0; ISL.party && i < ISL.party.length; i++){ p = ISL.party[i]; if(p && p.t === 'pet'){ try{ g = islPetGearInst(p.k); }catch(_g){ g = null; } if(g && islTrDB().petGear[g.id] && islTrDB().petGear[g.id].noJam) return true; } }
+  return false;
+}
+function islTrJamP(){ var p = islTrDB().wxJam[islWeather()] | 0; return (p > 0 && !islTrNoJam()) ? p : 0; }
+function islTrTiers(kind){ var a = islTrAcc(), T = islTrDB(); return (a === 'acc_bat' || (kind === 'r' && a === 'acc_shadow')) ? T.tier6 : T.tier4; }
+function islTrCute(){ return true; }   /* 荒島只有一種文字風格(簡單風);精緻風文案先備著,日後荒島加風格切換只改這一行 */
+/* 量一個寶藏:回傳 {has, d(正規化距離), tier, dir(8 方位箭頭)};該區沒有這種寶藏 ⇒ 一律「很遠」(刻意分不出來,藏寶圖才有價值) */
+function islTrMeasure(kind){
+  var T = islTrState(), Z = T && T.z[_IS.zone], p = Z && Z[kind], th = islTrTiers(kind), tx, ty, dx, dy, d, t = 0, i, ARW = ['➡', '↘', '⬇', '↙', '⬅', '↖', '⬆', '↗'];
+  if(!p) return { has: false, d: 1, tier: 0, dir: '' };
+  tx = p.x * 64 + 32; ty = p.y * 64 + 40; dx = tx - _IS.cx; dy = ty - _IS.cy;
+  d = Math.sqrt(dx * dx + dy * dy) / islTrDB().diag;
+  for(i = 0; i < th.length; i++){ if(d <= th[i]) t = i + 1; }
+  return { has: true, d: d, tier: t, dir: ARW[((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8] };
+}
+/* ── 畫面:按鈕、星星、泡泡 ── */
+var _islTrStarFilter = ['hue-rotate(175deg) saturate(1.7) brightness(1.1)', 'hue-rotate(75deg) saturate(1.5)', 'none', 'hue-rotate(-55deg) saturate(1.9) brightness(1.05)', 'hue-rotate(-60deg) saturate(2.3) brightness(1.15)', 'hue-rotate(-70deg) saturate(2.8) brightness(1.3)'];
+var _islTrBubCol = ['rgba(120,190,255,0.95)', 'rgba(150,230,150,0.95)', 'rgba(255,220,120,0.95)', 'rgba(255,120,100,0.95)', 'rgba(255,90,80,0.98)', 'rgba(255,60,60,1)'];
+function islTrBtnsPaint(){
+  var w = $('isl-tr-btns'), tg = $('isl-tr-tgt'), ic, i, u;
+  if(!w) return;
+  if(!islTrAvail()){ w.classList.add('hidden'); return; }
+  w.classList.remove('hidden');
+  if(tg){ tg.textContent = (_IS.trTgt === 'r') ? '🟣' : '🟤'; tg.title = (_IS.trTgt === 'r') ? '現在找:🟣 稀有寶藏(點一下換成普通)' : '現在找:🟤 普通寶藏(點一下換成稀有)'; }
+  ic = w.querySelectorAll('.trb-ico[data-k]');
+  for(i = 0; i < ic.length; i++){ if(ic[i].getAttribute('data-done')) continue; u = islImgUrl(ic[i].getAttribute('data-k')); ic[i].setAttribute('data-done', '1'); if(u) ic[i].innerHTML = '<img src="' + u + '" alt="" onerror="this.parentNode.textContent=this.parentNode.getAttribute(\'data-e\')||\'🧭\'">'; ic[i].setAttribute('data-e', ic[i].getAttribute('data-k') === 'ui_dig' ? '🪏' : '🧭'); }
+}
+window.islTrTgtToggle = function(){ _IS.trTgt = (_IS.trTgt === 'r') ? 'n' : 'r'; playSfx('sfx-sel', 0.4); toast(_IS.trTgt === 'r' ? '🧭 現在找 🟣 稀有寶藏' : '🧭 現在找 🟤 普通寶藏'); islTrBtnsPaint(); };
+function islTrStar(tier){
+  var zm = $('isl-zone-map'), u = islImgUrl('tr_star'), e, f;
+  if(!zm) return;
+  e = document.createElement('div'); e.className = 'isl-tr-star';
+  e.style.left = Math.round(_IS.cx) + 'px'; e.style.top = Math.round(_IS.cy - 20) + 'px';
+  f = (tier < 0) ? 'grayscale(1) brightness(0.8)' : (_islTrStarFilter[tier] || 'none');
+  e.innerHTML = u ? '<img src="' + u + '&t=' + islNow() + '" alt="" style="' + (f !== 'none' ? 'filter:' + f + ';-webkit-filter:' + f + ';' : '') + '" onerror="this.parentNode.textContent=\'✨\'">' : '✨';
+  zm.appendChild(e);
+  setTimeout(function(){ if(e.parentNode) e.parentNode.removeChild(e); }, 950);
+}
+function islTrBubble(lines, tier){
+  var host = $('isl-zone'), old = $('isl-tr-bub'), b;
+  if(!host) return;
+  if(old && old.parentNode) old.parentNode.removeChild(old);
+  b = document.createElement('div'); b.id = 'isl-tr-bub';
+  b.style.borderColor = (tier < 0) ? 'rgba(200,200,200,.9)' : (_islTrBubCol[tier] || _islTrBubCol[0]);
+  b.innerHTML = lines.join('<br>');
+  host.appendChild(b);
+  clearTimeout(_IS.trBubT);
+  _IS.trBubT = setTimeout(function(){ b.style.opacity = '0'; setTimeout(function(){ if(b.parentNode) b.parentNode.removeChild(b); }, 420); }, 1900);
+}
+function islTrCdStart(ms){
+  var el = $('isl-tr-cd'), btn = $('isl-tr-probe');
+  _IS.trCdUntil = islNow() + ms;
+  clearInterval(_IS.trCdIv);
+  if(btn) btn.classList.add('cd');
+  _IS.trCdIv = setInterval(function(){
+    var left = _IS.trCdUntil - islNow();
+    if(left <= 0){ clearInterval(_IS.trCdIv); _IS.trCdIv = 0; if(el) el.textContent = ''; if(btn) btn.classList.remove('cd'); return; }
+    if(el) el.textContent = (left / 1000).toFixed(1);
+  }, 100);
+}
+function islTrTierLine(kind, m, arrow){
+  var T = islTrDB(), txt = (islTrCute() ? T.tierTxt.cute : T.tierTxt.prem)[m.tier] || T.tierTxt.cute[0];
+  return (kind === 'r' ? '🟣 ' : '🟤 ') + islEsc(txt) + (arrow && m.has && m.dir ? ' <b class="arw">' + m.dir + '</b>' : '');
+}
+/* 🧭 探測 */
+window.islTrProbe = function(){
+  var now = islNow(), T, kind, other, free = false, m, m2, wit, arrow, lines, snd, jp;
+  if(!islTrAvail() || _IS.trBusy) return;
+  if(now < (_IS.trCdUntil || 0)){ playSfx('sfx-cantmove', 0.25); return; }
+  T = islTrState(); kind = (_IS.trTgt === 'r') ? 'r' : 'n'; other = (kind === 'r') ? 'n' : 'r';
+  if(islTrPet('bluemagpie') && _IS.trMagpie !== _IS.trEnterId){ free = true; _IS.trMagpie = _IS.trEnterId; }
+  jp = islTrJamP();
+  if(jp && Math.random() * 100 < jp){
+    islTrStar(-1); playSfx('sfx-cancel', 0.35);
+    islTrBubble([islTrCute() ? '⚡ 指針亂轉!颱風的閃電在干擾羅盤…' : '⚡ 訊號干擾:閃電電流產生的磁場讓指針失準'], -1);
+    islTrCdStart(islTrCdMs(_IS.zone)); return;
+  }
+  wit = islTrStat('wit'); m = islTrMeasure(kind);
+  arrow = free || islTrAcc() === 'acc_windeye' || (wit >= islTrDB().wit.arrow && m.tier >= 2);
+  lines = [islTrTierLine(kind, m, arrow)];
+  if(wit >= islTrDB().wit.both){ m2 = islTrMeasure(other); lines.push(islTrTierLine(other, m2, m2.tier >= 2)); }
+  if(free) lines.push('<span class="sub">🐦 藍鵲記得藏東西的地方!</span>');
+  snd = Math.min(3, m.tier);
+  islTrStar(m.tier);
+  if(snd >= 0) playSfx('sfx-tr-d' + snd, 0.85);
+  islTrBubble(lines, m.tier);
+  if(!free) islTrCdStart(islTrCdMs(_IS.zone));
+};
+/* 🪏 挖掘 */
+window.islTrDig = function(){
+  var T, Z, R, best = '', bd = 1e9, k, p, d;
+  if(!islTrAvail() || _IS.trBusy) return;
+  T = islTrState(); Z = T.z[_IS.zone] || {}; R = islTrDigR();
+  for(k in { n: 1, r: 1 }){ p = Z[k]; if(!p) continue; d = Math.sqrt(Math.pow(p.x * 64 + 32 - _IS.cx, 2) + Math.pow(p.y * 64 + 40 - _IS.cy, 2)); if(d <= R && d < bd){ bd = d; best = k; } }
+  if(!best){ islTrMiss(); return; }
+  if((ISL.ap | 0) <= 0){ playSfx('sfx-cancel', 0.35); toast('⚡ 行動力用完了……寶藏會乖乖留在這裡,明天再來挖!'); return; }
+  _IS.trBusy = true;
+  islTrDigFx(true);
+  if(best === 'r'){
+    setTimeout(function(){ islTrMash(_IS.zone, function(ok){ islTrDigFx(false); _IS.trBusy = false; if(ok) islTrGot('r'); else { playSfx('sfx-powerdown', 0.4); toast(islTrCute() ? '😵 挖不動……稀有寶藏埋得好深,再試一次!(沒有扣 AP)' : '挖掘中斷:稀有寶藏埋得較深,請再試一次(未消耗 AP)'); } }); }, 500);
+  } else {
+    setTimeout(function(){ islTrDigFx(false); _IS.trBusy = false; islTrGot('n'); }, 1200);
+  }
+};
+function islTrDigFx(on){
+  var zm = $('isl-zone-map'), ch = $('isl-char'), e = $('isl-tr-dust'), u;
+  if(ch){ if(on) ch.classList.add('isl-tr-digging'); else ch.classList.remove('isl-tr-digging'); }
+  if(!on){ if(e && e.parentNode) e.parentNode.removeChild(e); return; }
+  playSfx('sfx-crack', 0.45);
+  if(!zm) return;
+  if(e && e.parentNode) e.parentNode.removeChild(e);
+  e = document.createElement('div'); e.id = 'isl-tr-dust'; u = islImgUrl('tr_dust');
+  e.style.left = Math.round(_IS.cx) + 'px'; e.style.top = Math.round(_IS.cy) + 'px';
+  if(u) e.style.backgroundImage = 'url("' + u + '")'; else e.textContent = '💨';
+  zm.appendChild(e);
+}
+function islTrMiss(){
+  var zm = $('isl-zone-map'), T = islTrDB(), e, u, p = (islTrArmor() === 'trashguard') ? T.missTrashArmorP : T.missTrashP, id, put;
+  if(_IS.trBusy) return;
+  _IS.trBusy = true; islTrDigFx(true);
+  setTimeout(function(){
+    islTrDigFx(false); _IS.trBusy = false;
+    if(zm){
+      e = document.createElement('div'); e.className = 'isl-tr-mound'; u = islImgUrl('tr_mound');
+      e.style.left = Math.round(_IS.cx) + 'px'; e.style.top = Math.round(_IS.cy) + 'px';
+      e.innerHTML = u ? '<img src="' + u + '" alt="" onerror="this.parentNode.textContent=\'🟫\'">' : '🟫';
+      zm.appendChild(e); setTimeout(function(){ if(e.parentNode) e.parentNode.removeChild(e); }, 2600);
+    }
+    if(Math.random() * 100 < p){
+      id = (Math.random() < 0.5) ? 'trash' : 'pebble';
+      put = islBagAdd(id, 1, 1); if(put < 1) islStoreAdd(id, 1, 1);
+      playSfx('sfx-coin', 0.3);
+      toast(id === 'trash' ? '♻ 這裡沒有寶藏,只挖到一個海廢……順手回收!' : '🪨 這裡沒有寶藏,只挖到一顆卵石');
+      islSave('tr');
+    } else {
+      playSfx('sfx-ng', 0.3);
+      toast(islTrCute() ? '🟫 這裡只有泥土……再用羅盤探測看看!(挖錯不扣 AP)' : '此處沒有寶藏(挖錯不消耗 AP)');
+    }
+  }, 900);
+}
+/* 稀有寶藏連打:N 下、限時 mash.sec 秒;失敗不扣 AP */
+function islTrMash(zone, cb){
+  var host = $('isl-zone'), N = islTrMashN(zone), sec = islTrDB().mash.sec, n = 0, t0 = islNow(), done = false, ov, bar, cnt, tm, iv, btn, u = islImgUrl('tr_chest_r');
+  if(!host){ cb(false); return; }
+  ov = document.createElement('div'); ov.id = 'isl-tr-mash';
+  ov.innerHTML = '<div class="box"><div class="tt">🟣 ' + (islTrCute() ? '稀有寶藏埋得好深!快連打挖出來!' : '稀有寶藏:限時連續挖掘') + '</div>'
+    + '<div class="chest">' + (u ? '<img src="' + u + '" alt="" onerror="this.parentNode.textContent=\'💎\'">' : '💎') + '</div>'
+    + '<div class="bar"><i></i></div><div class="cnt"></div>'
+    + '<button type="button" class="dig">🪏 挖!</button><div class="tm"></div></div>';
+  host.appendChild(ov);
+  bar = ov.querySelector('.bar i'); cnt = ov.querySelector('.cnt'); tm = ov.querySelector('.tm'); btn = ov.querySelector('.dig');
+  function paint(){ bar.style.width = Math.min(100, n / N * 100) + '%'; cnt.textContent = n + ' / ' + N; }
+  function end(ok){
+    if(done) return; done = true; clearInterval(iv);
+    btn.disabled = true; ov.classList.add(ok ? 'win' : 'lose');
+    setTimeout(function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); cb(ok); }, ok ? 450 : 700);
+  }
+  function hit(ev){ if(ev){ ev.preventDefault(); ev.stopPropagation(); } if(done) return; n++; playSfx('sfx-crack', 0.35); paint(); ov.querySelector('.chest').classList.remove('bump'); void ov.offsetWidth; ov.querySelector('.chest').classList.add('bump'); if(n >= N) end(true); }
+  btn.addEventListener('touchstart', hit, { passive: false });
+  btn.addEventListener('mousedown', hit);
+  btn.addEventListener('keydown', function(ev){ if(ev.key === ' ' || ev.key === 'Enter') hit(ev); });
+  iv = setInterval(function(){ var left = sec - (islNow() - t0) / 1000; tm.textContent = '⏱ ' + Math.max(0, left).toFixed(1); if(left <= 0) end(false); }, 100);
+  paint(); try{ btn.focus(); }catch(_f){}
+}
+function islTrGive(id, q, n){ var put = islBagAdd(id, q, n); if(put < n) islStoreAdd(id, q, n - put); }
+function islTrZoneMats(z){
+  var sc = islDB().SCENE[z], set = {}, out = [], k, i, it;
+  if(!sc) return ['wood', 'stone'];
+  for(k in (sc.spawn || {})){ if(sc.spawn.hasOwnProperty(k) && sc.spawn[k].gives) set[sc.spawn[k].gives] = 1; }
+  if(sc.pick && sc.pick.items){ for(i = 0; i < sc.pick.items.length; i++) set[sc.pick.items[i]] = 1; }
+  for(k in set){ if(set.hasOwnProperty(k)){ it = islDB().ITEMS[k]; if(it && it.cat !== 'dish' && islDB().SHOP.sell[k]) out.push(k); } }
+  return out.length ? out : ['wood', 'stone'];
+}
+function islTrRand(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+function islTrGot(kind){
+  var T = islTrState(), z = _IS.zone, Z = T.z[z], db = islDB(), TD = islTrDB(), zd = db.zone(z), ord = (zd && zd.order) | 0, rw = TD.reward[kind], lines = [], sh, mats, i, id, n, c, g, gl, firstEver, thanks = null;
+  if(!Z || !Z[kind]) return;
+  firstEver = !((T.dugN | 0) + (T.dugR | 0));
+  Z[kind] = null; Z.dug = ISL.day;
+  islApPay(1);
+  sh = Math.max(1, Math.round((rw.shellBase + rw.shellPerOrder * ord) * (0.8 + Math.random() * 0.4)));
+  ISL.shell += sh; lines.push('🐚 貝幣 +' + sh);
+  if(kind === 'n'){
+    mats = islShuffleSeeded(islTrZoneMats(z), Math.random);
+    for(i = 0; i < Math.min(mats.length, islTrRand(rw.matKinds[0], rw.matKinds[1])); i++){ id = mats[i]; n = islTrRand(rw.matN[0], rw.matN[1]); islTrGive(id, rw.matQ, n); lines.push(islItemDef(id).e + ' ' + islItemDef(id).n + ' ★★ ×' + n); }
+    if(islTrPet('coconutcrab') && Math.random() * 100 < TD.crabP){ id = mats[mats.length - 1]; islTrGive(id, rw.matQ, 1); lines.push('🦀 椰子蟹多拖回 ' + islItemDef(id).e + islItemDef(id).n + ' ×1'); }
+    if(Math.random() * 100 < TD.fragP){ T.frag = (T.frag | 0) + 1; lines.push('🧩 藏寶圖碎片 ×1(現在 ' + T.frag + ' / ' + TD.fragNeed + ')'); }
+    T.dugN = (T.dugN | 0) + 1;
+  } else {
+    id = rw.rare[Math.floor(Math.random() * rw.rare.length)]; n = islTrRand(rw.rareN[0], rw.rareN[1]);
+    islTrGive(id, rw.rareQ, n); lines.push(islItemDef(id).e + ' ' + islItemDef(id).n + ' ★★★ ×' + n);
+    if(islTrArmor() === 'relicguard' && Math.random() * 100 < TD.relicArmorP){ islTrGive('relic', 2, 1); lines.push('🏺 遺跡守護鎧認出一件古物:' + islItemDef('relic').e + islItemDef('relic').n + ' ×1'); }
+    if(Math.random() * 100 < rw.gearP && db.PET_GEAR){
+      gl = []; for(i = 0; i < db.PET_GEAR.length; i++){ if((db.PET_GEAR[i].tier | 0) <= 2) gl.push(db.PET_GEAR[i]); }
+      if(gl.length){ g = gl[Math.floor(Math.random() * gl.length)]; if(!ISL.petGear) ISL.petGear = { bag: [], eq: {}, seq: 0 }; ISL.petGear.seq = (ISL.petGear.seq || 0) + 1; ISL.petGear.bag.push({ u: ISL.petGear.seq, id: g.id, q: 2 }); lines.push('🐾 夥伴裝備「' + g.e + g.n + '」★★'); }
+    }
+    c = TD.colOf(z);
+    if(c && !T.col[c.id]){
+      T.col[c.id] = ISL.day;
+      ISL.camp.deco.push({ id: c.id, x: 30 + Math.round(Math.random() * 40), y: 20 + Math.round(Math.random() * 60) });
+      lines.push('🏺 收藏品「' + c.e + ' ' + c.n + '」!(已擺到營地,可以搬進小木屋)');
+      try{ islLog('🏺 在' + zd.n + '挖到收藏品「' + c.n + '」', 'deco_' + c.id); }catch(_l1){}
+    }
+    T.dugR = (T.dugR | 0) + 1;
+    try{ islLog('💎 在' + zd.n + '挖到稀有寶藏', 'tr_chest_r'); }catch(_l2){}
+  }
+  if(firstEver){ try{ islLog('🧭 第一次用羅盤挖到寶藏!', 'tr_chest_n'); }catch(_l3){} }
+  if(T.q === 1){ T.q = 2; ISL.shell += TD.otterPrize.shell; T.frag = (T.frag | 0) + TD.otterPrize.frag; thanks = TD.otterThanks; lines.push('🦦 阿獺的謝禮:🐚 +' + TD.otterPrize.shell + '、🧩 碎片 ×' + TD.otterPrize.frag); }
+  if(!T.caseGot && islTrColCount() >= db.TREASURE_COL.length){
+    T.caseGot = ISL.day; ISL.camp.deco.push({ id: 'trcase', x: 50, y: 50 });
+    lines.push('🗄 集滿 11 件收藏品!得到「寶藏展示櫃」');
+    try{ islLog('🗄 集滿 11 件寶藏收藏品,得到寶藏展示櫃', 'deco_trcase'); }catch(_l4){}
+  }
+  try{ islHud(); }catch(_h){}
+  islSave('tr');
+  islTrReveal(kind, lines, thanks);
+  try{ islTiredCheck(); }catch(_tc){}
+}
+function islTrColCount(){ var T = islTrState(), k, n = 0; for(k in T.col){ if(T.col.hasOwnProperty(k) && T.col[k]) n++; } return n; }
+function islTrReveal(kind, lines, thanks){
+  var S = islDB().SHOP;
+  playSfx(kind === 'r' ? 'sfx-fanfare' : 'sfx-summon-reveal', 0.5);
+  setTimeout(function(){ playSfx('sfx-coin', 0.4); }, 350);
+  islModal('<div class="isl-tr-reveal"><div class="ch">' + islIcoHtml(kind === 'r' ? 'tr_chest_r' : 'tr_chest_n', kind === 'r' ? '💎' : '📦', 200) + '</div>'
+    + '<h3>' + (kind === 'r' ? '🟣 挖到稀有寶藏!' : '🟤 挖到普通寶藏!') + '</h3>'
+    + '<ul>' + lines.map(function(t){ return '<li>' + islEsc(t) + '</li>'; }).join('') + '</ul>'
+    + '<p class="ap">⚡ 行動力 −1</p></div>',
+    [{ t: kind === 'r' ? '太棒了!' : '好耶!', cls: 'gold', cb: function(){ if(thanks){ islDialog(thanks, { who: 'npc', img: S.npc.img, e: S.npc.e }, null); } } }]);
+}
+/* 進場:按鈕、古老藏寶圖的圓圈、大冠鷲提醒、GM 顯示位置 */
+function islTrZoneEnter(zoneId){
+  var zm = $('isl-zone-map'), T, Z, TD = islTrDB(), sc, p, e, r, k, rnd, ox, oy;
+  _IS.trEnterId = (_IS.trEnterId | 0) + 1;
+  _IS.trBusy = false;
+  if(!TD || !islTrHereOk()){ islTrBtnsPaint(); return; }
+  T = islTrState(); Z = T ? T.z[zoneId] : null;
+  islTrBtnsPaint();
+  if(!Z || !zm) return;
+  if(T.oldDay === ISL.day && Z.r){
+    rnd = islRng(islHash((ISL.uid || 'guest') + '|trold|' + ISL.day + '|' + zoneId));
+    r = TD.oldR * TD.diag; ox = Z.r.x * 64 + 32 + (rnd() - 0.5) * r; oy = Z.r.y * 64 + 40 + (rnd() - 0.5) * r;
+    e = document.createElement('div'); e.className = 'isl-tr-old';
+    e.style.left = Math.round(ox - r) + 'px'; e.style.top = Math.round(oy - r) + 'px'; e.style.width = e.style.height = Math.round(r * 2) + 'px';
+    e.innerHTML = '<span>📜 稀有寶藏在這一帶</span>'; zm.appendChild(e);
+  }
+  if(_IS.trGmShow && islIsGm()){
+    for(k in { n: 1, r: 1 }){ p = Z[k]; if(!p) continue; e = document.createElement('div'); e.className = 'isl-tr-gm'; e.style.left = (p.x * 64 + 32) + 'px'; e.style.top = (p.y * 64 + 40) + 'px'; e.textContent = (k === 'r' ? '🟣' : '🟤') + 'GM'; zm.appendChild(e); }
+  }
+  if(islTrHasCompass() && islTrPet('eagle') && (Z.n || Z.r)){
+    if(!_IS.trEagle) _IS.trEagle = {};
+    if(_IS.trEagle[zoneId] !== ISL.day){ _IS.trEagle[zoneId] = ISL.day; setTimeout(function(){ if(_IS.screen === 'zone' && _IS.zone === zoneId) toast(islTrCute() ? '🦅 大冠鷲在天上繞圈圈:這一區有寶藏的氣息!' : '🦅 大冠鷲盤旋示警:此區今日有寶藏'); }, 1500); }
+  }
+}
+/* 大地圖標記:買了今天的藏寶圖 ⇒ 標出今天有寶藏的區(含前幾天沒挖的);沒買 ⇒ 只標今天挖過的 ✔ */
+function islTrMapMarks(){
+  var T, h = '', db = islDB(), i, z, Z, u1, u2, mk;
+  try{
+    if(_IS.coop || !islTrDB() || !islTrUnlocked()) return '';
+    T = islTrState(); if(!T) return '';
+    u1 = islImgUrl('ui_trmark_n'); u2 = islImgUrl('ui_trmark_r');
+    for(i = 0; i < db.ZONES.length; i++){
+      z = db.ZONES[i]; if(z.sea || !ISL.zones[z.id] || !ISL.zones[z.id].unlocked) continue;
+      Z = T.z[z.id]; if(!Z) continue; mk = '';
+      if(T.mapDay === ISL.day){
+        if(Z.n) mk += u1 ? '<img src="' + u1 + '" alt="🟤">' : '🟤';
+        if(Z.r) mk += u2 ? '<img src="' + u2 + '" alt="🟣">' : '🟣';
+      }
+      if(!mk && Z.dug === ISL.day) mk = '<b class="ok">✔</b>';
+      if(mk) h += '<div class="isl-trmark" style="left:' + z.map.x + '%;top:' + z.map.y + '%">' + mk + '</div>';
+    }
+  }catch(e){ return ''; }
+  return h;
+}
+/* 🧭 尋寶手冊(☰ 更多 → 🧭 尋寶手冊) */
+window.islTrBookOpen = function(){
+  var TD = islTrDB(), T, db = islDB(), h = '', i, c, own, steps, wit, k, cq;
+  playSfx('sfx-tap', 0.3);
+  if(!TD || !ISL) return;
+  T = islTrState();
+  h += '<div class="isl-tr-book"><h3>🧭 尋寶手冊</h3>';
+  if(!islTrUnlocked()){
+    h += '<p>🔒 先解鎖 ' + db.zone(TD.unlockZone).e + db.zone(TD.unlockZone).n + '(研究科技「火把」),再去阿獺雜貨鋪聽他說「舊羅盤」的故事。</p></div>';
+    islModal(h, [{ t: '關閉', cls: 'ghost' }]); return;
+  }
+  steps = [ ['🦦 去阿獺雜貨鋪聽「舊羅盤」的故事', T.q >= 1], ['🛠 在製作台做出自製羅盤', islTrHasCompass()], ['🪏 挖到第一個寶藏,回報阿獺', T.q >= 2] ];
+  h += '<div class="sec"><b>📜 阿獺的舊羅盤</b>' + steps.map(function(s){ return '<div class="st' + (s[1] ? ' ok' : '') + '">' + (s[1] ? '✅ ' : '⬜ ') + islEsc(s[0]) + '</div>'; }).join('') + '</div>';
+  cq = T.cq | 0;
+  h += '<div class="sec"><b>🧭 我的羅盤</b> ' + (islTrHasCompass() ? ('自製羅盤 ' + '★★★'.slice(0, Math.max(1, cq))) : '還沒有') + '</div>';
+  wit = islTrStat('wit');
+  h += '<div class="sec"><b>💪 現在的尋寶能力</b>'
+    + '<div>🧠 方向箭頭:' + (wit >= TD.wit.arrow ? '✅ 有' : '巧思 ' + wit + ' / ' + TD.wit.arrow) + '　一次量兩個:' + (wit >= TD.wit.both ? '✅' : wit + ' / ' + TD.wit.both) + '</div>'
+    + '<div>🖐 挖掘範圍 +' + islTrDigP() + '%(上限 +' + TD.digRMaxP + '%)</div>'
+    + '<div>👣 探測冷卻 ' + (islTrCdMs(_IS.zone) / 1000).toFixed(1) + ' 秒(最短 ' + (TD.cdMinMs / 1000).toFixed(1) + ' 秒)</div>'
+    + '<div>💪 稀有寶藏連打 −' + islTrMashCutP() + '%</div>';
+  for(k in TD.pet){ if(TD.pet.hasOwnProperty(k) && islTrPet(k)) h += '<div class="fx">🐾 ' + islEsc(db.PETS[k].n) + ':' + islEsc(TD.pet[k].t.replace('🧭 野外・', '')) + '</div>'; }
+  if(TD.acc[islTrAcc()]) h += '<div class="fx">💍 ' + islEsc(TD.acc[islTrAcc()].t) + '</div>';
+  if(TD.armor[islTrArmor()]) h += '<div class="fx">🛡 ' + islEsc(TD.armor[islTrArmor()].t) + '</div>';
+  if(islTrNoJam() && islTrAcc() !== 'acc_windeye') h += '<div class="fx">💎 ' + islEsc(TD.petGear.pg_chime.t) + '</div>';
+  h += '</div>';
+  h += '<div class="sec"><b>🗺 藏寶圖</b>'
+    + '<div>' + (T.mapDay === ISL.day ? '✅ 今天的藏寶圖已經標在大地圖上' : '今天還沒有藏寶圖(阿獺雜貨鋪 🐚' + TD.mapPrice + ',每天 1 張)') + '</div>'
+    + '<div class="frag">' + islIcoHtml('res_tmap_frag', '🧩', 40) + ' 藏寶圖碎片 ' + (T.frag | 0) + ' / ' + TD.fragNeed
+    + ((T.frag | 0) >= TD.fragNeed && T.oldDay !== ISL.day ? ' <button class="isl-btn gold" data-tr="old">📜 拼成古老藏寶圖並使用</button>' : (T.oldDay === ISL.day ? ' ✅ 今天已使用古老藏寶圖' : '')) + '</div></div>';
+  h += '<div class="sec"><b>🏺 寶藏收藏品 ' + islTrColCount() + ' / ' + db.TREASURE_COL.length + '</b><div class="cols">';
+  for(i = 0; i < db.TREASURE_COL.length; i++){
+    c = db.TREASURE_COL[i]; own = !!T.col[c.id];
+    h += '<div class="col' + (own ? ' own' : '') + '" title="' + islEsc(own ? c.d : '還沒挖到') + '">' + (own ? islIcoHtml('deco_' + c.id, c.e, 64) : '<span class="q">❓</span>') + '<small>' + islEsc(db.zone(c.zone).n) + '<br>' + islEsc(own ? c.n : '???') + '</small></div>';
+  }
+  h += '</div></div>';
+  if(islIsGm()){
+    h += '<div class="sec gm"><b>⚙ GM 測試</b> <button class="isl-btn" data-tr="gmroll">🎲 重抽今天的寶藏</button> <button class="isl-btn" data-tr="gmshow">' + (_IS.trGmShow ? '🙈 隱藏' : '👁 顯示') + '場景裡的寶藏位置</button> <button class="isl-btn" data-tr="gmfill">🧭 全區補滿</button></div>';
+  }
+  h += '</div>';
+  islModal(h, [{ t: '關閉', cls: 'ghost' }], { wide: true });
+  (function(){
+    var bs = $('isl-modal') ? $('isl-modal').querySelectorAll('button[data-tr]') : [], j;
+    for(j = 0; j < bs.length; j++){ bs[j].onclick = function(ev){
+      var a = this.getAttribute('data-tr'), S2 = islTrState(), zs, q;
+      ev.stopPropagation();
+      if(a === 'old'){ if((S2.frag | 0) < TD.fragNeed) return; S2.frag -= TD.fragNeed; S2.oldDay = ISL.day; playSfx('sfx-fanfare', 0.45); toast('📜 古老藏寶圖:進到今天有稀有寶藏的區,會看到它大概埋在哪一帶!'); islSave('tr'); islModalClose(); islTrBookOpen(); return; }
+      if(a === 'gmroll'){ S2.day = 0; zs = islTrZones(); for(q = 0; q < zs.length; q++){ islTrZ(S2, zs[q]).n = null; islTrZ(S2, zs[q]).r = null; } S2.rolls = Math.max(1, S2.rolls | 0); islTrState(); toast('🎲 GM:今天的寶藏重抽了'); }
+      if(a === 'gmfill'){ zs = islTrZones(); for(q = 0; q < zs.length; q++){ var Zq = islTrZ(S2, zs[q]), rq = islRng(islHash('gmfill|' + islNow() + '|' + zs[q])); if(!Zq.n) Zq.n = islTrPick(zs[q], rq, Zq.r); if(!Zq.r) Zq.r = islTrPick(zs[q], rq, Zq.n); } islSave('tr'); toast('🧭 GM:全部區域都補上普通＋稀有寶藏'); }
+      if(a === 'gmshow'){ _IS.trGmShow = !_IS.trGmShow; toast(_IS.trGmShow ? '👁 重新進場後會顯示寶藏位置' : '🙈 已隱藏'); }
+      islModalClose(); islTrBookOpen();
+      if(_IS.screen === 'zone' && _IS.zone) islTrZoneEnter(_IS.zone);
+    }; }
+  })();
+};
+/* 阿獺的舊羅盤:解鎖洞窟後第一次進雜貨鋪 ⇒ 先聽故事(回傳 true = 這次先播對白) */
+function islTrOtterIntro(reopen){
+  var TD = islTrDB(), T, S = islDB().SHOP;
+  if(!TD || !islTrUnlocked()) return false;
+  T = islTrState(); if(!T || T.q >= 1) return false;
+  T.q = 1; islSave('tr');
+  try{ islLog('🦦 阿獺說了他的舊羅盤的故事', S.npc.img); }catch(_l){}
+  islDialog(TD.otterIntro, { who: 'npc', img: S.npc.img, e: S.npc.e }, reopen || null);
+  return true;
+}
 /* ══ ★ v1.230.0 物品包滿時「掉在腳邊」,當天可以回來撿(老師待辦「物品包滿時掉落物可回撿」)══
    資料存在 islDailyFor(zone).drops = [{item,q,n,x,y}](跟 taken/picked 同一個每日容器 ⇒ 換日自然清空、拜訪好友時存在共用快取不落自己的存檔);
    畫面上沿用既有 .isl-pick 撿取物(走近自動撿),只是多帶數量與品質。 */
@@ -23064,6 +23613,7 @@ function islActResult(){
       else if(tl.armor){ ISL.armors.push({ id: tl.id, q: stars }); if(ISL.equip.armor < 0 || !ISL.armors[ISL.equip.armor]) ISL.equip.armor = ISL.armors.length - 1; islCodexAdd('am_' + tl.id); }   /* ★ v1.187.0 防具:與武器同一條製作路徑(拖材料→知識題→敲打組裝),結算星數就是品質;還沒穿任何防具就自動穿上(不然學生做完會問「為什麼沒變強」) */
       else if(tl.petgear){ ISL.petGear.seq = (ISL.petGear.seq || 0) + 1; ISL.petGear.bag.push({ u: ISL.petGear.seq, id: tl.id, q: stars }); }   /* ★ v1.331.0 🐾 夥伴裝備:與護甲同一條製作路徑,結算星數就是品質;做好放進 ISL.petGear.bag,到「🐾 夥伴裝備」給夥伴戴上 */
       else if(ISL.tools.indexOf(tl.id) < 0) ISL.tools.push(tl.id);
+      if(tl.id === 'compass'){ try{ var _trC = islTrState(); if(_trC) _trC.cq = Math.max(_trC.cq | 0, stars | 0); islLog('🧭 做出了自製羅盤', 'res_compass'); }catch(_trc){} }   /* ★ v1.399.0 羅盤品質 ★ 影響探測冷卻(阿獺任務進度不在這裡動:先做羅盤的人下次進店照樣聽故事) */
       note = tl.e + ' ' + tl.n + ((tl.weapon || tl.armor || tl.petgear) ? '(' + '★★★'.slice(0, stars) + ')' : '') + ' 做好了!' + tl.d + (tl.petgear ? '(到 👤 角色 → 🐾 夥伴裝備 給夥伴戴上)' : '');
     } else note = '零件放錯太多,做不出來……材料沒扣,再試一次。';
   }
@@ -29320,6 +29870,7 @@ window.islCraftOpen = function(){
   h += '<div class="isl-cards">';
   for(i = 0; i < db.TOOLS.length; i++){
     t = db.TOOLS[i]; own = ISL.tools.indexOf(t.id) >= 0; cost = islCraftCost(t); can = islCanAfford(cost);
+    if(t.needZone && !(ISL.zones[t.needZone] && ISL.zones[t.needZone].unlocked) && !own) continue;   /* ★ v1.399.0 🧭 自製羅盤:解鎖洞窟後才出現(裁定 C 甲) */
     h += '<div class="isl-card' + (own ? ' done' : '') + '">' +
          '<div class="ci">' + islIcoHtml(t.img, t.e, 128) + '</div>' +
          '<div class="cn">' + islEsc(t.n) + (own ? ' <span style="font-size:18px;color:#7bed9f">✅ 已擁有</span>' : '') + '</div>' +
@@ -29538,6 +30089,7 @@ function islShopDailyEntries(){
   var db = islDB(), T = islShopToday(), out = [], g, d;
   if(T.gear){ g = db.petGear(T.gear); if(g) out.push({ id: 'gear_' + g.id, n: g.n, e: g.e, daily: 1, price: { shell: g.price || (g.sell || 20) * 2 }, give: { kind: 'petgear', gear: g.id }, d: '🐾 夥伴裝備:' + g.d + '(買到的是 ★ 品質)' }); }
   if(T.deco){ d = islDecoDef(T.deco); out.push({ id: 'dd_' + d.id, n: d.n, e: d.e, daily: 1, price: { shell: db.decoPrice(d.id) }, give: { kind: 'deco', deco: d.id }, d: '🪴 今日裝飾(😊+' + (d.comfort || 0) + (d.out ? '・只能擺戶外' : '') + '):' + (d.d || '') }); }
+  try{ var _trD = db.TREASURE, _trS = (_trD && islTrUnlocked()) ? islTrState() : null; if(_trS && (_trS.q >= 1 || islTrHasCompass())) out.push({ id: 'trmap', n: '藏寶圖', e: '🗺', daily: 1, price: { shell: _trD.mapPrice }, give: { kind: 'tmap' }, d: '🧭 買了馬上生效:大地圖會標出「今天」哪幾區一定有寶藏(🟤 普通/🟣 稀有,含前幾天還沒挖的)。每天 1 張,不打折。' }); }catch(_trE){}   /* ★ v1.399.0 */
   if(db.SHOP.bossWake && islShopWakeShown()){ out.push({ id: 'bosswake', n: islItemDef('boss_wake').n, e: islItemDef('boss_wake').e, daily: 1, price: { shell: db.SHOP.bossWake.shell || 100 }, give: { kind: 'bosswake' }, d: '🔔 搖響它,沉睡中的地圖頭目會馬上醒來,可以再挑戰一次(到頭目巢穴使用)。每天限購 ' + (db.SHOP.bossWake.limit || 1) + ' 個。' }); }   /* ★ v1.375.0 */
   return out;
 }
@@ -29695,6 +30247,7 @@ window.islShopOpen = function(tab){
   playSfx('sfx-tap', 0.3);
   islCodexAdd('otter');
   if(first){ ISL.flags.shopTold = true; islLog('🦦 認識了阿獺雜貨鋪', S.npc.img); islDialog(S.npc.hello, { who: 'npc', img: S.npc.img, e: S.npc.e }, function(){ islShopOpen(tab); }); islSave('shop'); return; }
+  try{ if(islTrOtterIntro(function(){ islShopOpen(tab); })) return; }catch(_tri){}   /* ★ v1.399.0 🧭 解鎖洞窟後第一次進店:阿獺的舊羅盤故事 */
   h += '<div class="isl-bagbox wide' + (tab === 'sell' ? ' selmode isl-shop-sell' : '') + '"><h3>' + S.npc.e + ' 阿獺雜貨鋪 <span style="font-size:15px;opacity:.85">🐚 ' + ISL.shell + '</span><span class="grow"></span><button data-act="close">✕</button></h3>';   /* ★ v1.150.0 .wide 寫在 markup:三分頁(買/賣/委託)永遠同一個尺寸,不再因清單長短被縮放 */
   h += '<div class="isl-shop-npc">' + (u ? '<img src="' + u + '" alt="" onerror="this.style.display=\'none\';this.parentNode.insertAdjacentHTML(\'afterbegin\',\'<span style=&quot;font-size:40px&quot;>' + S.npc.e + '</span>\');">' : '<span style="font-size:40px">' + S.npc.e + '</span>') + '<div class="say">' + islEsc(S.npc.tips[(ISL.day + islCodexCount()) % S.npc.tips.length]) + '</div></div>';
   h += '<div class="isl-tabs"><button class="' + (tab === 'buy' ? 'on' : '') + '" data-act="tab" data-k="buy">🛒 買東西</button><button class="' + (tab === 'sell' ? 'on' : '') + '" data-act="tab" data-k="sell">💰 賣東西</button><button class="' + (tab === 'quest' ? 'on' : '') + '" data-act="tab" data-k="quest">📜 委託' + (islQuestOpenCount() ? ' <span style="font-size:12px;opacity:.85">' + islQuestOpenCount() + '</span>' : '') + '</button></div>';   /* ★ v1.107.0 委託板分頁 */
@@ -29710,17 +30263,18 @@ window.islShopOpen = function(tab){
       if(it.give.kind === 'bagup' && ISL.shop.bagUp >= S.bagUp.max) continue;
       if(it.give.kind === 'legendTree' && !islLegendTreeShopOk()) continue;   /* ★ v1.331.0 🌱 台灣檫樹苗:打倒山谷頭目後才上架,只賣一次 */
       if(it.give.kind === 'deco' && !it.daily){ var owned = false; for(k = 0; k < ISL.camp.deco.length; k++){ if(ISL.camp.deco[k].id === it.give.deco) owned = true; } if(owned) continue; }
-      var stepper = (it.give.kind !== 'bagup' && it.give.kind !== 'deco' && it.give.kind !== 'legendTree' && it.give.kind !== 'petgear' && it.give.kind !== 'bosswake'), qn = stepper ? islBuyQty(it.id) : 1;   /* ★ v1.186.0 老師⑨:「物品包擴格」有階梯漲價上限、「裝飾品」買一次就從清單移除,這兩種天生只能買 1,不套步進器 */
+      var stepper = (it.give.kind !== 'bagup' && it.give.kind !== 'deco' && it.give.kind !== 'legendTree' && it.give.kind !== 'petgear' && it.give.kind !== 'bosswake' && it.give.kind !== 'tmap'), qn = stepper ? islBuyQty(it.id) : 1;   /* ★ v1.186.0 老師⑨:「物品包擴格」有階梯漲價上限、「裝飾品」買一次就從清單移除,這兩種天生只能買 1,不套步進器 */
       p = islShopPrice(it); var pTot = stepper ? islShopPriceQ(it, qn) : p; can = islShopCanPay(pTot);
       var ddOut = (it.daily && it.give.kind === 'deco' && islShopDecoLeft() <= 0);   /* ★ v1.342.0 今日裝飾已買滿 */
-      if(it.give.kind === 'bosswake' && islShopWakeLeft() <= 0) ddOut = true;   /* ★ v1.375.0 頭目喚醒鈴今天已買滿(沿用 ddOut 的「已售完」呈現) */
+      if(it.give.kind === 'bosswake' && islShopWakeLeft() <= 0) ddOut = true;
+      if(it.give.kind === 'tmap'){ try{ if(islTrState().mapDay === ISL.day) ddOut = true; }catch(_tm){} }   /* ★ v1.399.0 藏寶圖一天 1 張 */   /* ★ v1.375.0 頭目喚醒鈴今天已買滿(沿用 ddOut 的「已售完」呈現) */
       if(ddOut) can = false;
       /* ★ v1.270.0 老師需求「商店買賣物品顯示『目前持有數量』和『戰鬥效果』」—
          持有數量只對「給實體物品」(give.item)的商品有意義(物品包擴格/裝飾品沒有「持有幾個」這回事);
          戰鬥效果沿用既有戰鬥「🎒 道具」欄同一張 D.BT_ITEMS 表 + islBtItemFxText() 自動產生文字,
          沒登記在該表(如蘆葦、科技點材料)就不顯示這一行,顯示跟戰鬥中實際效果永遠同一份資料來源。 */
       var holdTxt = it.give.item ? ('🎒 持有 ' + islHave(it.give.item)) : '', btSpec = it.give.item ? islBtItemSpec(it.give.item) : null, fxTxt = btSpec ? islBtItemFxText(btSpec) : '';
-      h += '<div class="isl-store-row"><span class="ic">' + it.e + '</span><span class="nm">' + islEsc(it.n) + (it.daily ? ' <span class="isl-sale">🗓 今日限定' + (it.give.kind === 'deco' ? (ddOut ? '・今天已售完' : '・限購 1 件') : (it.give.kind === 'bosswake' ? (ddOut ? '・今天已售完' : '・限購 ' + ((db.SHOP.bossWake && db.SHOP.bossWake.limit) || 1) + ' 個') : '')) + '</span>' : '') + (sp === it.id ? ' <span class="isl-sale">今日特價 −30%</span>' : '') + (it.give.kind === 'bagup' ? ' <span style="opacity:.8;font-size:13px">(' + ISL.shop.bagUp + '/' + S.bagUp.max + ')</span>' : '') + '<br><span class="st">' + islEsc(it.d) + '<br><span style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islShopPriceText(p) + (stepper ? '　/份' : '') + '</span>'
+      h += '<div class="isl-store-row"><span class="ic">' + it.e + '</span><span class="nm">' + islEsc(it.n) + (it.daily ? ' <span class="isl-sale">🗓 今日限定' + (it.give.kind === 'deco' ? (ddOut ? '・今天已售完' : '・限購 1 件') : (it.give.kind === 'bosswake' ? (ddOut ? '・今天已售完' : '・限購 ' + ((db.SHOP.bossWake && db.SHOP.bossWake.limit) || 1) + ' 個') : (it.give.kind === 'tmap' ? (ddOut ? '・今天已買過' : '・限購 1 張') : ''))) + '</span>' : '') + (sp === it.id ? ' <span class="isl-sale">今日特價 −30%</span>' : '') + (it.give.kind === 'bagup' ? ' <span style="opacity:.8;font-size:13px">(' + ISL.shop.bagUp + '/' + S.bagUp.max + ')</span>' : '') + '<br><span class="st">' + islEsc(it.d) + '<br><span style="color:' + (can ? '#7bed9f' : '#ff7b7b') + '">' + islShopPriceText(p) + (stepper ? '　/份' : '') + '</span>'
         + (holdTxt ? '<br><span style="opacity:.8">' + holdTxt + '</span>' : '')
         + (fxTxt ? '<br><span style="color:#000">⚔ 戰鬥效果:' + islEsc(fxTxt) + '</span>' : '')   /* ★ v1.337.0 老師「雜貨鋪買東西的材料戰鬥效果字體顏色改成黑色」— 原 #ffd166 淡黃字壓在米白商店卡底色上看不清 */
         + '</span></span>'
@@ -29879,13 +30433,18 @@ window.islShopOpen = function(tab){
       var _bl = islShopDailyEntries().concat(S.buy);   /* ★ v1.333.0 今日限定(夥伴裝備/今日裝飾)是虛擬商品,一起找 */
       for(j = 0; j < _bl.length; j++){ if(_bl[j].id === kk) def = _bl[j]; }
       if(!def) return;
-      var qN = (def.give.kind === 'bagup' || def.give.kind === 'deco' || def.give.kind === 'legendTree' || def.give.kind === 'petgear' || def.give.kind === 'bosswake') ? 1 : Math.max(1, parseInt(t.getAttribute('data-q'), 10) || 1);   /* ★ v1.186.0 老師⑨:物品包擴格/裝飾品這兩種天生只能買 1,強制忽略 data-q,不受畫面殘留舊數字影響 */
+      var qN = (def.give.kind === 'bagup' || def.give.kind === 'deco' || def.give.kind === 'legendTree' || def.give.kind === 'petgear' || def.give.kind === 'bosswake' || def.give.kind === 'tmap') ? 1 : Math.max(1, parseInt(t.getAttribute('data-q'), 10) || 1);   /* ★ v1.186.0 老師⑨:物品包擴格/裝飾品這兩種天生只能買 1,強制忽略 data-q,不受畫面殘留舊數字影響 */
       pp = islShopPriceQ(def, qN);
       if(!islShopCanPay(pp)){ toast('貝幣或材料不夠'); return; }
       if(def.give.kind === 'bagup' && ISL.shop.bagUp >= S.bagUp.max){ toast('已經縫到極限了'); return; }
       if(def.give.kind === 'deco' && islDecoDef(def.give.deco).uniq && islDecoOwnedCount(def.give.deco) > 0){ toast('全島只能有一棟' + islDecoDef(def.give.deco).n); return; }   /* ★ v1.333.0 */
       if(def.daily && def.give.kind === 'deco' && islShopDecoLeft() <= 0){ toast('🦦 今日裝飾一天只賣 1 件,明天會換新的喔'); islShopOpen('buy'); return; }   /* ★ v1.342.0 每日家具限購 1 件(畫面舊按鈕殘留也擋得住) */
       if(def.daily && def.give.kind === 'deco'){ if(ISL.shop.ddDay !== ISL.day){ ISL.shop.ddDay = ISL.day; ISL.shop.ddN = 0; } ISL.shop.ddN = (ISL.shop.ddN || 0) + 1; }
+      if(def.give.kind === 'tmap'){   /* ★ v1.399.0 🗺 藏寶圖:一天 1 張,買了當場生效(大地圖標出今天有寶藏的區);畫面舊按鈕殘留也擋得住 */
+        var _trB = islTrState();
+        if(!_trB || _trB.mapDay === ISL.day){ toast('🦦 今天的藏寶圖已經給你了,明天再來吧'); islShopOpen('buy'); return; }
+        _trB.mapDay = ISL.day;
+      }
       if(def.give.kind === 'bosswake'){   /* ★ v1.375.0 頭目喚醒鈴:每天限購(畫面舊按鈕殘留也擋得住),通過才計數,最後一關放在扣款前 */
         if(islShopWakeLeft() <= 0){ toast('🦦 頭目喚醒鈴一天只賣 ' + ((S.bossWake && S.bossWake.limit) || 1) + ' 個,明天再來吧'); islShopOpen('buy'); return; }
         if(ISL.shop.bwDay !== ISL.day){ ISL.shop.bwDay = ISL.day; ISL.shop.bwN = 0; } ISL.shop.bwN = (ISL.shop.bwN || 0) + 1;
@@ -29904,7 +30463,7 @@ window.islShopOpen = function(tab){
       if(pp.shellItem) islSellTake('shell', pp.shellItem);
       if(_IS.buyQ) delete _IS.buyQ[def.id];   /* ★ v1.186.0 買完歸零,下次重開這一列從 1 開始,不殘留上次買的數量嚇到學生 */
       playSfx('sfx-powerup', 0.4);
-      toast(def.e + ' ' + def.n + (qN > 1 ? ' ×' + qN : '') + (def.give.kind === 'bagup' ? '!物品包現在 ' + ISL.bag.cap + ' 格' : (def.give.kind === 'deco' ? ' 買好了,擺在營地,拖它可以換位置' : ' 買好了')));
+      toast(def.e + ' ' + def.n + (qN > 1 ? ' ×' + qN : '') + (def.give.kind === 'bagup' ? '!物品包現在 ' + ISL.bag.cap + ' 格' : (def.give.kind === 'deco' ? ' 買好了,擺在營地,拖它可以換位置' : (def.give.kind === 'tmap' ? ' 打開了!回大地圖看看今天哪幾區有寶藏' : ' 買好了'))));
       islHud(); islShopOpen('buy'); if(def.give.kind === 'deco') islCampPaint(); islSave('shop');
     }
   }, { wide: true });
