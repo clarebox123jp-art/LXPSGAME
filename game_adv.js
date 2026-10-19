@@ -7845,7 +7845,9 @@ window._alchYaotongTraitLv = function(){
 window._alchYaotongSaveRate = function(){
   var lv = window._alchYaotongTraitLv();
   if(lv < 0) return 0;
-  return Math.min(0.60, 0.40 + lv * 0.05);
+  var _cstYtR = Math.min(0.60, 0.40 + lv * 0.05);
+  try{ var _cstYtH = window._alchYaotongAlive(); if(_cstYtH && window._cstHas && window._cstHasN(_cstYtH,'t1','煉丹小藥童')) _cstYtR = Math.min(1, _cstYtR + 0.20); }catch(_){}
+  return _cstYtR;
 };
 // 讀取生效中的丹藥效果值(未生效/非中國關戰鬥一律回 0)
 window._alchFxGet = function(key){
@@ -8111,6 +8113,26 @@ window._alchConsume = function(pid, pill){
       try{ log('🧪 [煉丹小藥童] 藥童巧手發動!捨不得用掉 —【' + pill.n + '】沒有被消耗!'); }catch(_){}
       try{ var _ytH = window._alchYaotongAlive(); if(_ytH) bannerFX(_ytH, '🧪 丹藥沒用掉!', '#aaffaa', 1200); }catch(_){}
       try{ _showInGameToast((window._artStyle==='cute') ? '🧪 小藥童捨不得用掉這顆丹藥,它還在盒子裡!' : '🧪 藥童巧手發動:本次未消耗該顆丹藥。', '#aaffaa', 2600); }catch(_){}
+      // 🔧 v5.262.0 命星 煉丹小藥童 t2「分藥星」(老師平衡甲案):不消耗時,HP 比例最低的另一名友方回復該丹藥治療量的一半;
+      //   該丹藥沒有治療效果 ⇒ 回復 10% 最大 HP。治療量以受治療者最大 HP 計:玉露回春丹 40%→20%、百草回春露 8%×5 回合→20%、九轉還魂丹 60%→30%。
+      try{
+        var _ytT2 = window._alchYaotongAlive();
+        if(_ytT2 && typeof window._cstHasN === 'function' && window._cstHasN(_ytT2,'t2','煉丹小藥童')){
+          var _t2Al = ((G && G.p1) || []).filter(function(x){ return x && x !== _ytT2 && x.curHp > 0 && (x.hp||0) > 0; })
+                        .sort(function(x, y){ return (x.curHp / x.hp) - (y.curHp / y.hp); })[0];
+          if(_t2Al){
+            var _t2E = (pill && pill.eff) || {}, _t2P = 0.10;
+            if(_t2E.type === 'heal') _t2P = (_t2E.pct || 0.4) * 0.5;
+            else if(_t2E.type === 'regenHp') _t2P = (_t2E.pct || 0) * (_t2E.t || 5) * 0.5;
+            else if(_t2E.type === 'reviveAll') _t2P = (_t2E.pct || 0) * 0.5;
+            if(!(_t2P > 0)) _t2P = 0.10;
+            var _t2Hv = Math.max(1, Math.floor((_t2Al.hp || 0) * _t2P));
+            if(typeof doHeal === 'function') doHeal(_t2Al, _t2Hv, {actor:_ytT2, isHeal:true, noDice:true, noWarhorn:true});
+            else { _t2Al.curHp = Math.min(_t2Al.hp, _t2Al.curHp + _t2Hv); try{ renderCard(_t2Al); }catch(_){} }
+            try{ log('✨ [' + _ytT2.name + '] 命星:分藥!把【' + pill.n + '】的藥效分給【' + _t2Al.name + '】,回復 ' + _t2Hv + ' HP!'); }catch(_){}
+          }
+        }
+      }catch(_eCstYtT2){ console.warn('[命星 煉丹小藥童 t2]', _eCstYtT2); }
     }
     G._alchUsed = (G._alchUsed|0) + 1;
     // ★ v5.60.0(老師需求④)— 使用丹藥:特殊音效 + 全畫面閃光 + 丹藥名字幕特效
@@ -8130,6 +8152,8 @@ window._alchConsume = function(pid, pill){
     //   ⚠ S2 是「技能」不是天賦 ⇒ 走 _alchYaotongAlive() 不查天賦失效(天賦封印不該連技能一起關掉);
     //     但若被 seal(封印技能) 則不觸發 —— 語意正確,且與其他被動技能一致。
     try{ if(typeof window._alchYaotongS2Proc === 'function') window._alchYaotongS2Proc(); }catch(_eYtS2){ console.warn('[以毒攻毒] 失敗', _eYtS2); }
+    // 🔧 v5.262.0 命星 煉丹小藥童 b2「丹爐常燃星」:丹藥真的被服用後通知戰鬥引擎(窗口/次數上限由 game_battle.js helper 自行判斷;未點亮時 G._cstYtB2 不存在 ⇒ 無作用)
+    try{ if(typeof window._cstYtB2OnPill === 'function') window._cstYtB2OnPill('p1'); }catch(_eCstYtB2Z){ console.warn('[命星 煉丹小藥童 b2]', _eCstYtB2Z); }
   }catch(_e){ console.warn('[丹藥消耗] 失敗', _e); }
 };
 // ═══════════════════════════════════════════════════════════════════
@@ -8159,7 +8183,10 @@ window._alchYaotongS1Proc = function(){
     if(_showLv >= 10)     _w = [['c',60],['u',30],['e',9],['l',1]];
     else if(_showLv >= 6) _w = [['c',61],['u',30],['e',9]];
     else                  _w = [['c',70],['u',30]];
-    var _n = 1 + (Math.random() < 0.25 ? 1 : 0);   // 必得 1 個 + 25% 再 1 個
+    var _cstYtS1 = false;
+    try{ var _cstYtH1 = ((G && G.p1) || []).find(function(x){ return x && x.name === window._LXPS_YAOTONG; }); _cstYtS1 = !!(_cstYtH1 && window._cstHas && window._cstHasN(_cstYtH1,'s1','煉丹小藥童')); }catch(_){ _cstYtS1 = false; }
+    var _n = 1 + (Math.random() < (_cstYtS1 ? 0.50 : 0.25) ? 1 : 0);   // 必得 1 個 + 25% 再 1 個
+    try{ if(_cstYtS1 && (G.p1||[]).every(function(x){ return !x || x.curHp > 0; })){ _n += 1; log('✨ [煉丹小藥童] 命星:全員平安凱旋,竹簍再多 1 個材料!'); } }catch(_){}
     var _got = [];
     for(var i = 0; i < _n; i++){
       var _roll = Math.random() * 100, _acc = 0, _rar = 'c';
@@ -8190,7 +8217,10 @@ window._alchYaotongS2Proc = function(){
     var _alive2 = (G.p2||[]).filter(function(x){ return x && x.curHp > 0; });
     if(_alive2.length){
       var _top = _alive2.slice().sort(function(a,b){ return (b.curHp||0) - (a.curHp||0); })[0];
-      if(_top){
+      // 🔧 v5.262.0 命星 煉丹小藥童 s2「藥毒反噬星」:目標已中毒 ⇒ 由 game_battle.js helper 引爆(回 true = 已引爆,不再上毒);未點亮/每回合已用過 ⇒ 回 false 照原本上毒
+      var _cstYtS2Det = false;
+      try{ if(_top && typeof window._cstYtS2Detonate === 'function') _cstYtS2Det = !!window._cstYtS2Detonate(h, _top); }catch(_eCstYtS2Z){ _cstYtS2Det = false; }
+      if(_top && !_cstYtS2Det){
         try{ addStatus(_top, 'poison', 5); }catch(_){}
         try{ log('☠ [煉丹小藥童] 以毒攻毒!順手撒出一把藥渣 — [' + _top.name + '] 中毒了!'); }catch(_){}
         try{ bannerFX(_top, '☠ 中毒', '#88cc55', 900); renderCard(_top); }catch(_){}
@@ -25223,6 +25253,8 @@ window._clearAccountLocalData = function(reason){
     window._petHouseSlots  = [null, null, null];
     window._petHouseDaily  = { d:'', rec:{} };
     window._petTamePity    = {};   // ★ v5.3.0 — 馴養保底計數同步清除(localStorage 鏡像本就綁 uid·僅清記憶體·新帳號由雲端 petTamePity_s 還原)
+    // ★ v5.254.0 — 命座命星記憶體清除(鐵律 1.41 共用 iPad):清空＋_cstHydrated=false ⇒ 新帳號雲端載入前存檔不帶命星欄位
+    try{ if(typeof window._cstResetMemory === 'function') window._cstResetMemory(); }catch(_eCstClr){}
     // ★ v4.78.0 — 主線劇情進度 + 主角(自訂角色)設定記憶體清除(老師 2026-07-22 任務3 稽核補漏)
     //   同型病灶:雲端 players/{uid}.mainStoryProgress / .avatarCard 與本機 key 都已綁 uid ✅,
     //   但這兩份「記憶體物件」原本不在換帳號清單內 → 共用 iPad 換帳號無整頁 reload 時,
@@ -25888,6 +25920,8 @@ function _buildSafeData() {
     _activityHistory_s: JSON.stringify(_activityHistory),
     // ★ v5.252.0 — 道具獲得帳本(只寫字串版,學生「📜 最近獲得」清單讀)
     _itemGainLog_s: JSON.stringify(_itemGainLog),
+    // ★ v5.254.0 — 命座命星(只寫字串版 constellationData_s);本帳號雲端資料尚未載入前回 {} ⇒ 本欄位不寫,絕不以空資料覆蓋雲端
+    ...((typeof window._cstSafeField === 'function') ? window._cstSafeField() : {}),
     heroLevels:      _heroLevels,            // {name: 數字}
     // ★ v3.15.96(2026-06-23)— 字串版繞過 Firebase merge:true 不刪 map key 的限制(同 playerBackpack_s):
     //   雲端 heroLevels(map)深合併會殘留「已不擁有英雄」的幻影等級 → 墊高 maxLv 誤判倒退;
@@ -27422,6 +27456,8 @@ function _applySafeData(raw) {
   if(Array.isArray(data.petsEverCollected)){
     _petsEverCollected = new Set(data.petsEverCollected);
   }
+  // ★ v5.254.0 — 命座命星:雲端 constellationData_s 與記憶體合併(取得/消耗取 max、點法新者勝)＋折入 GM 發放單＋主角章節帳本
+  try{ if(typeof window._cstHydrate === 'function') window._cstHydrate(data); }catch(_eCstH){ console.warn('[命座] 載入例外', _eCstH); }
   // ★ v3.37.0 — 寵物馴養:優先採信 tamedPets_s,fallback map;與記憶體 union 逐鍵 max(誤刪是大忌·只增不減)
   try{
     var _cloudPets = null;
@@ -30676,9 +30712,9 @@ const BACKPACK_ITEM_DEF = {
   'summon_ticket_ssr': { name:'SSR 英雄召喚卷', icon:'🌈', desc:'知識王「持之以恆」累積 10 天(每天 ≥90 分)的稀世獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!(若 SSR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
   'summon_ticket_sr':  { name:'SR 英雄召喚卷',  icon:'⭐', desc:'知識王「持之以恆」累積 5 天(每天 ≥80 分)的努力獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!(若 SR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
   // ★ v3.13.74 — 自選召喚卷(老師指定):與「隨機券」並存,使用時可從尚未收錄的對應稀有度英雄中「自己挑一名」
-  'summon_ticket_ssr_pick': { name:'SSR 自選召喚卷', icon:'🌟', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SSR 英雄中,親自挑選一名加入隊伍!(若 SSR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
-  'summon_ticket_ur_pick': { name:'UR 自選召喚卷', icon:'👑', desc:'極為稀有的 UR 自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 UR 英雄中,親自挑選一名加入隊伍!(若 UR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
-  'summon_ticket_sr_pick':  { name:'SR 自選召喚卷',  icon:'✨', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SR 英雄中,親自挑選一名加入隊伍!(若 SR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_ssr_pick': { name:'SSR 自選召喚卷', icon:'🌟', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SSR 英雄中,親自挑選一名加入隊伍!已經收錄的 SSR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_ur_pick': { name:'UR 自選召喚卷', icon:'👑', desc:'極為稀有的 UR 自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 UR 英雄中,親自挑選一名加入隊伍!已經收錄的 UR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_sr_pick':  { name:'SR 自選召喚卷',  icon:'✨', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SR 英雄中,親自挑選一名加入隊伍!已經收錄的 SR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
   // ★ v3.13.82 — 至寶召喚卷(GM 課堂獎勵發放新增):隨機券 = 直接抽 1 件未擁有的台灣至寶;自選券 = 從未擁有的至寶中親自挑 1 件。已全收錄時自動轉至寶經驗卷軸 ×5。
   'summon_ticket_treasure':      { name:'隨機至寶召喚卷', icon:'💎', desc:'閃耀寶石般的召喚卷!使用後必定獲得一件隨機「尚未擁有」的台灣至寶!(若至寶已全收齊,改贈 至寶經驗卷軸 ×5)', type:'use', useLabel:'使用(召喚至寶)' },
   'summon_ticket_treasure_pick': { name:'自選至寶召喚卷', icon:'💠', desc:'珍貴的自選至寶召喚卷!使用時可從所有「尚未擁有」的至寶（台灣 10 + 龍王 8 件）中,親自挑選一件加入收藏!(若至寶已全收齊,改贈 至寶經驗卷軸 ×5)', type:'use', useLabel:'使用(自選至寶)' },
@@ -30687,9 +30723,9 @@ const BACKPACK_ITEM_DEF = {
   //   使用時走 _useGmTicket(暫時實體化對應 base 卷 → 沿用既有使用流程,不動核心召喚引擎)。
   'gm_summon_ticket_ssr':          { name:'🎁GM獎勵·SSR召喚卷',      icon:'🌈', desc:'老師親自發放的獎勵召喚卷!前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ssr' },
   'gm_summon_ticket_sr':           { name:'🎁GM獎勵·SR召喚卷',       icon:'⭐', desc:'老師親自發放的獎勵召喚卷!前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr' },
-  'gm_summon_ticket_ssr_pick':     { name:'🎁GM獎勵·SSR自選召喚卷',  icon:'🌟', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SSR 英雄中親自挑選一名!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ssr_pick' },
-  'gm_summon_ticket_sr_pick':      { name:'🎁GM獎勵·SR自選召喚卷',   icon:'✨', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SR 英雄中親自挑選一名!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr_pick' },
-  'gm_summon_ticket_ur_pick':      { name:'🎁GM獎勵·UR自選召喚卷',   icon:'👑', desc:'老師親自發放的極稀有 UR 自選卷!前往召喚星空使用,可從「尚未收錄」的 UR 英雄中親自挑選一名!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ur_pick' },
+  'gm_summon_ticket_ssr_pick':     { name:'🎁GM獎勵·SSR自選召喚卷',  icon:'🌟', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SSR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ssr_pick' },
+  'gm_summon_ticket_sr_pick':      { name:'🎁GM獎勵·SR自選召喚卷',   icon:'✨', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr_pick' },
+  'gm_summon_ticket_ur_pick':      { name:'🎁GM獎勵·UR自選召喚卷',   icon:'👑', desc:'老師親自發放的極稀有 UR 自選卷!前往召喚星空使用,可從「尚未收錄」的 UR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ur_pick' },
   'gm_summon_ticket_treasure':     { name:'🎁GM獎勵·隨機至寶召喚卷',  icon:'💎', desc:'老師親自發放的獎勵至寶卷!使用後必定獲得一件隨機「尚未擁有」的台灣至寶!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_treasure' },
   'gm_summon_ticket_treasure_pick':{ name:'🎁GM獎勵·自選至寶召喚卷',  icon:'💠', desc:'老師親自發放的獎勵自選至寶卷!使用時可從所有「尚未擁有」的至寶（台灣 10 + 龍王 8 件）中親自挑一件!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_treasure_pick' },
   // ★ v3.13.95(2026-06-09)— 靈魂碎片系統:打 BOSS 機率解鎖關「沒解鎖」時的安慰獎。
@@ -33113,6 +33149,11 @@ function _startDeadlockWatchdog(){
     'skill-detail-popup',        // 技能詳細說明
     'custom-confirm-overlay',    // 自訂確認框
     'item-ops',                  // 物品操作面板
+    // 🔧 v5.262.0 同步 game_battle.js _GP_LEGIT_MODALS/_legitIds:盜取/逆轉神計/命星選擇視窗為合法暫停,不判卡死
+    'cst-steal2-ov','cst-field-pair-ov','cst-pick7-ov',
+    'steal-picker-ov','steal-preview-ov','steal-discard-ov',
+    'surprise-field-ov','surprise-confirm-ov',
+    'invent-picker',             // 🔧 v5.262.0 科學發明家「即刻發明」6 選 3/4(玩家選擇中)
   ];
   const _isAnyLegitModalOpen = () => {
     for(const _id of _LEGIT_PAUSE_MODALS){
@@ -35072,6 +35113,15 @@ window._deadlockRescueSkipTurn = function(){
           const el = document.getElementById(id);
           if(el && el.style.display !== 'none') el.style.display = 'none';
         });
+        // 🔧 v5.262.0 卡死自救:與 game_battle.js _closeAllBattleModals 一致 —— 命星/盜取/逆轉神計/塔羅/即刻發明選擇視窗直接 remove、不回呼,
+        //   並清掉命星選擇視窗排隊與盜取暫存狀態(避免移除後又跳出下一個排隊視窗或殘留盜取流程)
+        try{ window._cstPick7Q = []; }catch(_eCstP7qZ){}
+        ['cst-pick7-ov','cst-steal2-ov','cst-field-pair-ov','tarot-choice-overlay',
+         'steal-picker-ov','steal-preview-ov','steal-discard-ov','surprise-field-ov','surprise-confirm-ov',
+         'invent-picker'].forEach(function(id){
+          try{ var _elZ = document.getElementById(id); if(_elZ) _elZ.remove(); }catch(_){}
+        });
+        try{ window._stealState = null; }catch(_){}
       }catch(_modE){ console.warn('[卡死自救] 關閉殘留 modal 失敗', _modE); }
       // ⑤ 重新顯示玩家行動面板的容器(action-panel / item-panel)— 讓玩家能按按鈕
       try{
@@ -38382,6 +38432,8 @@ function openSummonOverlay(){
   _syncSummonCrystalDisplay();
   // 顯示
   ov.style.display = 'block';
+  // ★ v5.254.0 命座:「✨ 命星工坊」按鈕(測試期只有 GM 看得到;非開放對象會被移除)
+  try{ if(typeof window._cstEnsureSummonBtn === 'function') window._cstEnsureSummonBtn(); }catch(_eCstBtn){}
   // ★ v5.84.0(P1 甲)— 動態背景影片改「進這一頁才載」(開機不再預抓)
   try{ if(window._lxpsActivateBgVideo) window._lxpsActivateBgVideo('summon-bg-video'); }catch(_){}
   // 啟動螢火蟲
@@ -38776,6 +38828,20 @@ function _rollOneSummon(_batchExcl){
         });
       }
     }catch(_){}
+    // ★ v5.254.0 命座(裁定 1甲):已擁有的 SSR 回到池裡(未擁有×3/已擁有×1/滿6命仍×1→虛無的命星),寵物維持原比例(B2)。
+    //   濾網與上方 _availUnlocked 逐字相同、只差「已擁有」;測試期 _cstOpenForMe() 為假 ⇒ 整段跳過、行為與 v5.253.0 相同。
+    try{
+      if(window._cstOpenForMe && window._cstOpenForMe() && typeof window._cstSummonPick === 'function'){
+        const _cstOwnedSSR = (typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES))
+          ? SUMMON_RARE_HEROES.filter(h => unlocked.includes(h) && !_egSummonExcl.has(h) && !_cnSummonExcl.has(h)
+              && !(typeof _summonStageLocked === 'function' && _summonStageLocked(h))
+              && _lxpsHeroDataReady(h) && !_excl.has(h)
+              && (typeof window._cstEligible !== 'function' || window._cstEligible(h)))
+          : [];
+        const _cstR = window._cstSummonPick('SSR', _availUnlocked.filter(h => !_excl.has(h)), _cstOwnedSSR, _petPoolSSR.filter(p => !_excl.has(p)), '🌈');
+        if(_cstR) return _cstR;
+      }
+    }catch(_eCstSSR){ console.warn('[命座 SSR 權重] 例外 → 走原邏輯', _eCstSSR); }
     // ★ v3.15.77 — 再排除「本次連抽稍早已抽中」的英雄/寵物 → 同一次連抽不會重複給同一隻
     const _avail = _availUnlocked.filter(h => !_excl.has(h));
     const _availPets = _petPoolSSR.filter(p => !_excl.has(p));
@@ -38834,6 +38900,19 @@ function _rollOneSummon(_batchExcl){
         });
       }
     }catch(_){}
+    // ★ v5.254.0 命座(裁定 1甲·SR 貓空通關池同樣套用):已擁有 SR 回池,權重同 SSR 槽(見上方說明)
+    try{
+      if(window._cstOpenForMe && window._cstOpenForMe() && typeof window._cstSummonPick === 'function'){
+        const _cstOwnedSR = _all.filter(n =>
+          (typeof _getHeroRarity === 'function' && _getHeroRarity(n) === 'SR')
+          && unlocked.includes(n)
+          && !(typeof _summonStageLocked === 'function' && _summonStageLocked(n))
+          && !_excl.has(n)
+          && (typeof window._cstEligible !== 'function' || window._cstEligible(n)));
+        const _cstR2 = window._cstSummonPick('SR', _availUnlocked.filter(n => !_excl.has(n)), _cstOwnedSR, _petPoolSR.filter(p => !_excl.has(p)), '⭐');
+        if(_cstR2) return _cstR2;
+      }
+    }catch(_eCstSR){ console.warn('[命座 SR 權重] 例外 → 走原邏輯', _eCstSR); }
     // ★ v3.15.77 — 再排除「本次連抽稍早已抽中」的英雄/寵物 → 同一次連抽不會重複給同一隻
     const _avail = _availUnlocked.filter(n => !_excl.has(n));
     const _availPets = _petPoolSR.filter(p => !_excl.has(p));
@@ -38913,6 +38992,9 @@ function _applySummonReward(rwd){
     if(rwd.kind === 'rare_hero'){
       // 解鎖角色
       if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(rwd.heroName, 'summon_rare');
+    } else if(rwd.kind === 'cst_star'){
+      // ★ v5.254.0 命座:抽到已擁有的角色 → 該角色命星 +1(已滿 6 命 → 同稀有度虛無的命星)
+      try{ if(typeof window._cstGrantStar === 'function') window._cstGrantStar(rwd.heroName, 1, 'summon'); }catch(e){ console.error('[summon cst_star apply]', e); }
     } else if(rwd.kind === 'rare_pet'){
       // ★ v4.1.0 — 召喚星空抽中寵物:收錄馴養 Lv1(好感 0·同步標記已相遇),語義同 pet_summon_ticket;
       //   src 標 'summon_star' 寫入 _petTameHistory 帳本供 GM 稽核來源。
@@ -39178,6 +39260,27 @@ function _playSummon10xFx(onDone){
 function _lxpsHeroDataReady(n){
   try{ return !!(typeof HERO_DB !== 'undefined' && HERO_DB && HERO_DB[n]); }catch(_){ return false; }
 }
+/* ★ v5.279.0 — 自選召喚卷「本來就選得到」的完整名單(不看擁有與否)。
+   給命座模組的「已收錄 → 換命星」用:只有這張卷本來就能挑的英雄,才能用這張卷換它的命星
+   (避免 GM 限定、活動限定等自選卷挑不到的英雄,被這條路繞進來拿命星)。口徑與 _summonTicketUnrecorded(tier, true) 相同,只差不濾擁有。 */
+function _summonTicketPickUniverse(rarity){
+  try{
+    if(rarity === 'UR'){
+      const _urPool = (typeof window._LXPS_RARITY_UR !== 'undefined' && Array.isArray(window._LXPS_RARITY_UR)) ? window._LXPS_RARITY_UR : [];
+      return _urPool.filter(n => _lxpsHeroDataReady(n));
+    }
+    if(rarity === 'SSR'){
+      const _pool = (typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES)) ? SUMMON_RARE_HEROES : [];
+      return _pool.filter(n => _lxpsHeroDataReady(n));
+    }
+    if(rarity === 'SR'){
+      const _all = (typeof ADMIN_ALL_HEROES !== 'undefined' && Array.isArray(ADMIN_ALL_HEROES)) ? ADMIN_ALL_HEROES : [];
+      return _all.filter(n => (typeof _getHeroRarity === 'function' && _getHeroRarity(n) === 'SR') && _lxpsHeroDataReady(n));
+    }
+  }catch(_){}
+  return [];
+}
+window._summonTicketPickUniverse = _summonTicketPickUniverse;
 function _summonTicketUnrecorded(rarity, forPick){
   try{
     const _tpLocked = function(n){
@@ -39249,6 +39352,11 @@ function _openSummonTicketModal(){
     const _ssrPickLeft = _summonTicketUnrecorded('SSR', true).length;
     const _srPickLeft  = _summonTicketUnrecorded('SR',  true).length;
     const _urPickLeft  = _summonTicketUnrecorded('UR',  true).length;
+    /* ★ v5.279.0(老師 2026-10-19「自選召喚卷無法選取已收錄英雄」)— 自選卷可把已收錄、未滿 6 命的同稀有度英雄轉 1 顆命星,
+       所以「全收錄」不再等於「不能用」:按鈕改看 未收錄數 + 可換命星數(舊碼只看未收錄 ⇒ 全收錄後連挑選面板都進不去,
+       v5.254.0 的 UR→命星 區也因此打不開)。 */
+    const _cstTkStar = function(t){ try{ return (typeof window._cstTicketStarCandidates === 'function') ? window._cstTicketStarCandidates(t).length : 0; }catch(_){ return 0; } };
+    const _ssrPickStar = _cstTkStar('SSR'), _srPickStar = _cstTkStar('SR'), _urPickStar = _cstTkStar('UR');
     // ★ v3.15.64 — 至寶券(隨機 + 自選)張數與剩餘可召喚數(老師需求:與英雄券同列對齊補上)
     //   後端使用邏輯沿用既有 _useTreasureTicket()/_openTreasureTicketPickModal()(v3.13.82/v3.15.56)
     const _treaRandCnt = (typeof backpackGet === 'function') ? (backpackGet('summon_ticket_treasure')||0) : 0;
@@ -39257,14 +39365,15 @@ function _openSummonTicketModal(){
     const _treaPickLeft = (typeof _treasureTicketPickNotOwned === 'function') ? _treasureTicketPickNotOwned().length : _treaRandLeft;
 
     // ★ v3.13.74 — isPick=true 時,按鈕改開「自選英雄」挑選面板(_openSummonTicketPickModal)
-    const _card = function(tier, label, icon, accent, have, leftCount, isPick){
-      const _canUse = have > 0 && leftCount > 0;
+    const _card = function(tier, label, icon, accent, have, leftCount, isPick, starCount){
+      starCount = isPick ? (starCount | 0) : 0;   /* ★ v5.279.0 自選卷:已收錄可換命星的人數 */
+      const _canUse = have > 0 && (leftCount + starCount) > 0;
       const _fnName = isPick ? '_openSummonTicketPickModal' : '_useSummonTicket';
       const _btnTxt = isPick ? ('🌟 使用自選 ' + tier + ' 卷') : ('✨ 使用 ' + tier + ' 召喚卷');
       let _btnHtml;
       if(have <= 0){
         _btnHtml = '<div style="margin-top:8px;font-size:14px;color:#888;text-align:center;">尚未持有此召喚卷</div>';
-      } else if(leftCount <= 0){
+      } else if((leftCount + starCount) <= 0){
         // ★★ v5.97.0（學生回報「無法使用 SSR 隨機召喚券」）— 文案要講實話 ★★
         //   舊碼一律寫「已全收錄」，但真正的原因常常是「還沒開放的新英雄不入池」
         //   （v5.66.0 測試期凍結）⇒ 學生明明沒收滿卻被告知全收錄 ⇒ 以為券壞了。
@@ -39296,6 +39405,7 @@ function _openSummonTicketModal(){
         +   have + '</b> 張</div>'
         + '<div style="font-size:13px;color:#aabbcc;text-align:center;margin-top:4px;">'
         +   '尚有 <b style="color:' + accent + ';">' + leftCount + '</b> 名 ' + tier + ' 英雄未收錄</div>'
+        + (starCount > 0 ? ('<div style="font-size:12px;color:#ffd97a;text-align:center;margin-top:2px;">⭐ 已收錄的 ' + starCount + ' 名可換成命星</div>') : '')
         + _btnHtml
         + '</div>';
     };
@@ -39431,9 +39541,9 @@ function _openSummonTicketModal(){
         + '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
           + _card('SSR', 'SSR 英雄召喚卷', '🌈', '#ff8ad9', _ssrCnt, _ssrLeft, false)
           + _card('SR',  'SR 英雄召喚卷',  '⭐', '#ffd33b', _srCnt,  _srLeft,  false)
-          + _card('SSR', 'SSR 自選召喚卷', '🌟', '#ffb347', _ssrPickCnt, _ssrPickLeft, true)
-          + _card('SR',  'SR 自選召喚卷',  '✨', '#7fe0ff', _srPickCnt,  _srPickLeft,  true)
-          + _card('UR',  'UR 自選召喚卷',  '👑', '#ff5e9c', _urPickCnt,  _urPickLeft,  true)
+          + _card('SSR', 'SSR 自選召喚卷', '🌟', '#ffb347', _ssrPickCnt, _ssrPickLeft, true, _ssrPickStar)
+          + _card('SR',  'SR 自選召喚卷',  '✨', '#7fe0ff', _srPickCnt,  _srPickLeft,  true, _srPickStar)
+          + _card('UR',  'UR 自選召喚卷',  '👑', '#ff5e9c', _urPickCnt,  _urPickLeft,  true, _urPickStar)
         + '</div>'
         // ★ v3.15.64 — 至寶召喚卷分組(與英雄券同面板對齊;後端沿用既有至寶券系統)
         + '<div style="font-size:clamp(15px,1.8vw,18px);font-weight:900;color:#aee0ff;text-align:center;letter-spacing:1px;margin:18px 0 4px;">💎 至寶召喚卷</div>'
@@ -39496,8 +39606,11 @@ function _useGmTicket(gmId){
                    : (_base === 'summon_ticket_ssr_pick') ? 'SSR' : 'SR';
         var _piP = (typeof window._lxpsTicketPoolInfo === 'function')
                  ? window._lxpsTicketPoolInfo(_tierP, true) : { usable: 1, lockedNew: 0 };
-        if(_piP.usable <= 0){
-          _gmBlock = '🔒 ' + _tierP + ' 已全收錄，券先幫你留著，日後有新英雄就能用';
+        /* ★ v5.279.0 — 已收錄、未滿 6 命的英雄可轉命星 ⇒ 這種情況券仍用得出去,不擋 */
+        var _stP = 0;
+        try{ _stP = (typeof window._cstTicketStarCandidates === 'function') ? window._cstTicketStarCandidates(_tierP).length : 0; }catch(_){ _stP = 0; }
+        if(_piP.usable <= 0 && _stP <= 0){
+          _gmBlock = '🔒 ' + _tierP + ' 已全收錄而且都滿 6 命了，券先幫你留著，日後有新英雄就能用';
         }
       }
       // ⚠ 至寶券（隨機／自選）全收齊時會改贈「至寶經驗卷軸 ×5」＝仍有價值，刻意不擋。
@@ -39635,9 +39748,14 @@ function _openSummonTicketPickModal(tier){
     const _have = (typeof backpackGet === 'function') ? backpackGet(_ticketId) : 0;
     if(_have <= 0){ _showInGameToast('沒有這張自選召喚卷了', '#ff8844', 2000); return; }
     const _pool = _summonTicketUnrecorded(tier, true);   /* ★ v5.67.0 forPick=true:自選卷不排除測試期角色(老師裁定) */
-    if(!_pool.length){
+    // ★ v5.254.0 命座(裁定 4甲／風險 A7):UR 自選卷多一區「已擁有的 UR → 轉 1 顆命星」(滿 6 命者不列;測試期只有 GM)
+    /* ★ v5.279.0(老師 2026-10-19「自選召喚卷無法選取已收錄英雄」)— SR/SSR 比照 UR:已收錄、未滿 6 命的同稀有度英雄
+       另列一區,選了轉 1 顆命星(_cstTicketStarCandidates)。全收錄＋全滿 6 命才會走到下面的「保留」提示。 */
+    const _cstURList = (typeof window._cstTicketStarCandidates === 'function') ? window._cstTicketStarCandidates(tier)
+      : ((tier === 'UR' && typeof window._cstURStarCandidates === 'function') ? window._cstURStarCandidates() : []);
+    if(!_pool.length && !_cstURList.length){
       // ★ v5.97.0 — 自選券不套測試期凍結，走到這裡就是真的全收錄了（文案照舊，但補一句券會保留）
-      _showInGameToast('🔒 ' + tier + ' 已全收錄,自選券保留著不會消失,日後有新 ' + tier + ' 英雄就能用', '#ffaa44', 3600);
+      _showInGameToast('🔒 ' + tier + ' 已全收錄,而且都滿 6 命了。自選券保留著不會消失,日後有新 ' + tier + ' 英雄就能用', '#ffaa44', 3600);
       return;
     }
     // 關掉召喚卷主面板,開挑選面板
@@ -39659,7 +39777,9 @@ function _openSummonTicketPickModal(tier){
         + '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:5px;padding:0 4px;line-height:1.25;">' + name + '</div>'
         + '</button>';
     };
-    const _grid = _pool.map(_heroCard).join('');
+    const _grid = _pool.map(_heroCard).join('')
+      + ((_cstURList.length && typeof window._cstTicketSectionHtml === 'function') ? window._cstTicketSectionHtml(tier, _cstURList)
+         : ((_cstURList.length && typeof window._cstURTicketSectionHtml === 'function') ? window._cstURTicketSectionHtml(_cstURList) : ''));   /* ★ v5.254.0 / v5.279.0 SR·SSR 也有 */
     const _modal = document.createElement('div');
     _modal.id = '_summon-ticket-pick-modal';
     _modal.style.cssText = 'position:fixed;inset:0;z-index:910;display:flex;align-items:center;justify-content:center;'
@@ -39672,7 +39792,9 @@ function _openSummonTicketPickModal(tier){
         + '<div style="font-size:clamp(20px,2.6vw,28px);font-weight:900;color:' + _accent + ';text-align:center;'
           + 'letter-spacing:2px;margin-bottom:4px;">' + (tier === 'SSR' ? '🌟 SSR' : tier === 'UR' ? '👑 UR' : '✨ SR') + ' 自選召喚卷</div>'
         + '<div style="font-size:13px;color:#cfc4ff;text-align:center;margin-bottom:14px;">'
-          + '點選你想要的英雄(共 <b style="color:' + _accent + ';">' + _pool.length + '</b> 名未收錄)・持有 <b style="color:#fff;">' + _have + '</b> 張</div>'
+          + '點選你想要的英雄(共 <b style="color:' + _accent + ';">' + _pool.length + '</b> 名未收錄'
+          + (_cstURList.length ? '、<b style="color:#ffd97a;">' + _cstURList.length + '</b> 名已收錄可換命星' : '')
+          + ')・持有 <b style="color:#fff;">' + _have + '</b> 張</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;overflow-y:auto;padding:4px;flex:1;">'
           + _grid
         + '</div>'
@@ -40103,6 +40225,8 @@ function _urSwapConfirm(fromName, toName){
     + '<div style="font-size:20px;font-weight:900;margin-bottom:8px;">' + fromName + ' <span style="color:#ffd166;">➜</span> ' + toName + '</div>'
     + '<div style="font-size:15px;color:#9ff0c0;">✅ 會一起搬過去:等級 Lv' + _lv + '、經驗、素質投資、技能 Lv' + _s1 + '/Lv' + _s2 + '、極限爆發 Lv' + (_bl + 1) + '、天賦等級</div>'
     + '<div style="font-size:15px;color:#ffc48a;margin-top:6px;">🧰 會先卸下來(東西都還在,可以再裝到別人身上):至寶、寵物、裝備</div>'
+    + (function(){ try{ var _cn = (typeof window._cstHeld === 'function' && window._cstOpenForMe && window._cstOpenForMe()) ? window._cstHeld(fromName) : 0;
+        return _cn > 0 ? '<div style="font-size:15px;color:#ffe08a;margin-top:6px;">✨ ' + fromName + ' 的 ' + _cn + ' 顆命星會退回成 ' + _cn + ' 顆「UR 自選命星」(召喚星空的命星工坊可以送給你其他的 UR)</div>' : ''; }catch(_){ return ''; } })()
     + '<div style="font-size:15px;color:#ff9a9a;margin-top:6px;">⚠ <b>' + fromName + ' 會從你的英雄圖鑑裡消失</b>,而且<b>換不回來</b>。</div>'
     + '<div style="font-size:13px;color:#a79ad0;margin-top:8px;">按下「確定替換」之後會消耗 1 張 UR 英雄替換卷。</div>'
     + '</div>';
@@ -40171,6 +40295,8 @@ async function _urSwapRun(fromName, toName){
 
     /* ── 雲端成功了,才同步本機記憶體(順序不可顛倒:先改本機、雲端又失敗 = 兩邊對不起來)── */
     try{ window._lxpsURSwapApplyLocal(fromName, toName); }catch(_eL){ console.warn('[UR 替換卷] 本機同步例外(雲端已完成,重整後即正確)', _eL); }
+    /* ★ v5.254.0 命座(裁定 13甲):被換掉的 UR 身上所有命星(含已點亮)退回成等量「UR 自選命星」,只能用在已擁有的 UR */
+    try{ if(typeof window._cstOnURSwap === 'function') window._cstOnURSwap(fromName); }catch(_eCstSw){ console.warn('[UR 替換卷] 命星退回例外', _eCstSw); }
     /* ── 最後才扣券,並即時落地(與召喚卷同一條車道)── */
     try{ backpackRemove(_tid, 1); }catch(_){}
     try{ if(typeof window._lxpsInstantBackpackPersist === 'function') window._lxpsInstantBackpackPersist('UR英雄替換卷'); }catch(_){}
@@ -40804,15 +40930,16 @@ function doSummon(times){
     let _one = _rollOneSummon(_batchClaimedHeroes);
     if(_one){
       // ★ v4.1.0 — 稀有槽混池後,寵物(rare_pet)與英雄共用同一槽上限(本批 SSR 產出合計 ≤1、SR 合計 ≤1)
-      if((_one.kind === 'rare_hero' || _one.kind === 'rare_pet') && _one._rarityTier === 'SSR'){
+      // ★ v5.254.0 命星(cst_star)與英雄/寵物共用同一槽上限 ⇒ 同批不可能出現兩隻同角色(設計書第一節)
+      if((_one.kind === 'rare_hero' || _one.kind === 'rare_pet' || _one.kind === 'cst_star') && _one._rarityTier === 'SSR'){
         if(_batchSSR >= 1){ _one = _capCommonReward(); } else { _batchSSR++; }
-      } else if((_one.kind === 'rare_hero' || _one.kind === 'rare_pet') && _one._rarityTier === 'SR'){
+      } else if((_one.kind === 'rare_hero' || _one.kind === 'rare_pet' || _one.kind === 'cst_star') && _one._rarityTier === 'SR'){
         if(_batchSR >= 1){ _one = _capCommonReward(); } else { _batchSR++; }
       } else if(_one.kind === 'random_treasure'){
         if(_batchTreasure >= 1){ _one = _capCommonReward(); } else { _batchTreasure++; }
       }
     }
-    if(_one && _one.kind === 'rare_hero' && _one.heroName) _batchClaimedHeroes.add(_one.heroName);
+    if(_one && (_one.kind === 'rare_hero' || _one.kind === 'cst_star') && _one.heroName) _batchClaimedHeroes.add(_one.heroName);
     if(_one && _one.kind === 'rare_pet' && _one.petName) _batchClaimedHeroes.add(_one.petName);   // ★ v4.1.0 寵物同批排除(名稱與英雄不重疊)
     results.push(_one);
   }
@@ -40951,6 +41078,7 @@ function _showSummonResults(results){
       + (r.qty > 1 ? '<div class="srqty">' + _qtyStr + '</div>' : '')
       + (r._dupConverted ? '<div style="font-size:10px;color:#7fe7c4;margin-top:2px;line-height:1.1;font-weight:700;">🔄 重複轉換</div>' : '')
       + (r.kind === 'rare_pet' ? '<div style="font-size:10px;color:#aaffcc;margin-top:2px;line-height:1.1;font-weight:700;">🐾 直接馴養成功</div>' : '')
+      + (r.kind === 'cst_star' ? '<div style="font-size:10px;color:#ffe08a;margin-top:2px;line-height:1.1;font-weight:700;">' + (r._cstVoid ? '🌑 已滿 6 命・可拿去合成' : '✨ 重複角色→命星 +1') + '</div>' : '')
       + '</div>';
   });
   content += '</div>';
@@ -44874,6 +45002,7 @@ function _applyPresetTeam(slotIdx, overridePt){
   G.p1.forEach((h, i)=>{
     const sk = pt.skills[i];
     if(sk && sk.slot && sk.skillName){
+      try{ if(sk.skillName === '兵貫神速之計') sk.skillName = '兵貴神速之計'; }catch(_eSkFix){}   // 🔧 v5.263.0 錯字更正:舊存的預設陣容仍是「兵貫」⇒ 讀入時轉成新名稱
       // 從 NEW_SKILLS_DB 找技能資料
       const skillData = (typeof NEW_SKILLS_DB!=='undefined') ? NEW_SKILLS_DB.find(s=>s.n===sk.skillName) : null;
       if(skillData){
@@ -45779,7 +45908,7 @@ const SKILL_UPGRADE_DEF = {
   '聖殿領域':     { cat:'special_sanctuary', label:'減傷持續' },                                        // 聖騎士 S2 Lv5+1, Lv10 -1 能量
   '熱情之舞':     { cat:'special_passion', label:'增益百分比+回合' },                                    // ★ v1.0.20260501.5120 — 每級+5% 增益、滿等(LV10)+1 回合、技能消耗能量減半
   '出奇制勝':     { cat:'special_strategy', label:'抽卡張數' },                                         // 軍師 S1 Lv5/Lv10 +1
-  '兵貫神速之計': { cat:'special_advisor', label:'附加效果' },                                          // 軍師 S2 Lv5/Lv10
+  '兵貴神速之計': { cat:'special_advisor', label:'附加效果' },                                          // 軍師 S2 Lv5/Lv10
   // ★ v3.7.11 — 鬼力橫掃:fd 有「攻擊 150%(升)+ 爆擊率 +50%(固定)」,改自訂只升 150%
   '鬼力橫掃': { cat:'special_shuten_smash', label:'技能傷害' },                                                     // 酒吞童子 S1 每級+5%
   // ★ v3.7.11 — 乾杯:fd 有「恢復 40%(升)+ 攻特提升 25%(固定)」,改自訂只升 40%
@@ -46585,7 +46714,7 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
     fd = fd.replace(/抽取?\s*3\s*張/g, '抽取 ' + HL(cnt) + ' 張');
   }
   else if(cat === 'special_advisor'){
-    // 兵貫神速: Lv5 解狀態, Lv10 復活
+    // 兵貴神速: Lv5 解狀態, Lv10 復活
     if(skLv >= 9) fd += '<br>★ 升級加成: ' + HL('解除目標所有不利狀態 + 可選 20%HP 復活倒下友方');
     else if(skLv >= 4) fd += '<br>★ 升級加成: ' + HL('解除目標所有不利狀態');
   }
@@ -48493,7 +48622,7 @@ function _getSkUpgradeBadge(skillName, skLv){
     return '抽 ' + cnt + ' 張選 1';
   }
   if(cat==='special_advisor'){
-    // 兵貫神速之計:Lv5 解狀態, Lv10 復活
+    // 兵貴神速之計:Lv5 解狀態, Lv10 復活
     if((skLv||0) >= 9) return '解狀態+復活倒下';
     if((skLv||0) >= 4) return '解除目標所有不利狀態';
     return '基礎效果';
@@ -49184,7 +49313,7 @@ function buildSkillLvTable(skillName, currentLv) {
       effectText = '抽 ' + cnt + ' 張選 1 張使用' + (lv===9?'（MAX）':(lv===0?'（基礎）':''));
     }
     else if(cat==='special_advisor'){
-      // 兵貫神速之計:Lv5 解狀態, Lv10 復活
+      // 兵貴神速之計:Lv5 解狀態, Lv10 復活
       if(lv >= 9) effectText = '+解除目標所有不利狀態+可選 20%HP 復活倒下友方（MAX）';
       else if(lv >= 4) effectText = '+解除目標所有不利狀態';
       else effectText = '基礎效果（讓友方代替自己行動 1 次）';
@@ -50481,6 +50610,7 @@ function _buildHeroGrid() {
         ? `<img src="${img}" style="width:100%;height:280px;object-fit:cover;object-position:top center;display:block;background:#111;"/>`
         : `<div style="width:100%;height:260px;background:${isUnlocked?'rgba(20,20,30,0.8)':'#111'};display:flex;align-items:center;justify-content:center;font-size:100px;">${av}</div>`
       }
+      ${(() => { try{ return (typeof window._cstGridStarsHtml === 'function') ? window._cstGridStarsHtml(name) : ''; }catch(_eCstGs){ return ''; } })()}
       <div style="padding:12px 14px 14px;">
         <div style="font-size:clamp(22px,2.3vw,34px);font-weight:700;color:${isUnlocked?'#ffe8a0':'#666'};margin-bottom:6px;line-height:1.15;word-break:break-word;">
           ${isUnlocked ? (typeof window._heroDisplayName==='function'?window._heroDisplayName(name):name) : '???'}
@@ -51297,6 +51427,8 @@ function _renderHeroDetail(name, box) {
   try{ _renderHeroCodexUnlockBar(name); }catch(_){}
   // ★ v4.40.0 — 「播放動畫」按鈕:依收錄狀態(彩色圖=已收錄→可點;未收錄→禁用灰階)刷新
   try{ _codexRefreshBurstAnimBtn(name, _heroIsUnlocked); }catch(_){}
+  // ★ v5.276.0 — 左側大圖左上(稀有度標籤下方)「✨ 命座」按鈕(一打開就看得到;有可點命星會閃金光)
+  try{ if(typeof window._cstCodexSideBtn === 'function') window._cstCodexSideBtn(name, _heroIsUnlocked); }catch(_){}
   // ★ 肖像切換面板：若此英雄有多張肖像則顯示，並標記已解鎖/未解鎖/當前選擇
   try{
     const _sw = document.getElementById('hero-detail-portrait-switcher');
@@ -52001,6 +52133,7 @@ function _renderHeroDetail(name, box) {
         })()}
       </div>
     </div>
+    ${(typeof window._cstCodexEntryHtml === 'function') ? window._cstCodexEntryHtml(name, _heroIsUnlocked) : ''}
     <!-- 技能區 -->
     <div id="_hut-anchor-skills" style="border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;margin-bottom:14px;">
       <div style="font-size:30px;font-weight:700;color:#ffe8a0;margin-bottom:10px;">🎯 技能</div>
@@ -59387,7 +59520,10 @@ async function _selectRepHero(name) {
     }
   } catch(e) { console.warn('[_selectRepHero] 至寶資料打包失敗', e); treasures = []; }
 
+  // ★ v5.275.0 命星快照(好友借用時套用;只帶已點亮槽位,無則不帶欄位)
+  let _cstSnap = null; try{ if(typeof window._cstRepSnap === 'function') _cstSnap = window._cstRepSnap(name, null); }catch(_){}
   _myRepHero = { name, level: lv, statInvested: inv, skillLevels: skl, burstLevel: bLv, img, treasures };
+  if(_cstSnap) _myRepHero.cst = _cstSnap;
 
   try {
     await window._fbSetRepHero(window._gUserId, _myRepHero);
@@ -59455,7 +59591,10 @@ window._refreshMyRepHeroCloud = function(){
             });
           }
         } catch(e) { console.warn('[refreshRepHero] 至寶打包失敗', e); }
+        // ★ v5.275.0 命星快照(命星資料未載入前沿用舊快照,絕不以空資料蓋掉)
+        let _cstSnap = null; try{ if(typeof window._cstRepSnap === 'function') _cstSnap = window._cstRepSnap(name, (_myRepHero && _myRepHero.name === name) ? _myRepHero.cst : null); }catch(_){}
         _myRepHero = { name, level: lv, statInvested: inv, skillLevels: skl, burstLevel: bLv, img, treasures };
+        if(_cstSnap) _myRepHero.cst = _cstSnap;
         window._myRepHero = _myRepHero;
         // 寫雲端
         window._fbSetRepHero(window._gUserId, _myRepHero).then(()=>{
@@ -59664,6 +59803,7 @@ function _renderFriendHeroDetailHtml(rep){
       <span>📖 ${s1n} <b style="color:#ffe066;">Lv.${s.skillLevels.s1||0}</b></span>
       <span>📖 ${s2n} <b style="color:#ffe066;">Lv.${s.skillLevels.s2||0}</b></span>
       <span>💥 ${bn} <b style="color:#ff8866;">Lv.${s.burstLevel||0}</b></span>
+      ${(rep.cst && Array.isArray(rep.cst.s) && rep.cst.s.length) ? `<span>✨ ${(typeof _artStyle!=='undefined'&&_artStyle==='cute')?'命星亮了':'已點亮命星'} <b style="color:#ffd97a;">${Math.min(6, rep.cst.s.length)} / 6</b></span>` : ''}
     </div>
     <!-- 至寶 -->
     <div style="font-size:13px;color:#ffcc66;font-weight:700;margin-bottom:4px;letter-spacing:1px;">💎 裝備的至寶（${s.treasures.length}件）</div>
@@ -62127,6 +62267,8 @@ function _injectFriendHeroIntoBattle() {
     // ★ v3.13.88 — 封鎖極限膠囊洩漏:好友英雄已套好友自己的數據,標記 _capsuleApplied 防止
     //   任何後續 _applyAdvLevelHpBonus 把『本機玩家的膠囊投資(_heroCapsuleInvested[同名])』加上去。
     existingHero._capsuleApplied = true;
+    // ★ v5.275.0 好友命星:依好友代表英雄快照 cst 套用(唯讀;不讀本機命星)
+    try{ if(typeof window._cstApplyFriend === 'function') window._cstApplyFriend(existingHero, fh); }catch(_eCstF){}
     log(`[好友英雄] ${name}（${fh._ownerName}）Lv.${friendLv} 屬性已套用！`);
     return;
   }
@@ -62158,6 +62300,8 @@ function _injectFriendHeroIntoBattle() {
   h._friendOwner  = fh._ownerName;
   // ★ v3.13.88 — 封鎖極限膠囊洩漏(同 existing 路徑):防 _applyAdvLevelHpBonus 加上本機膠囊投資
   h._capsuleApplied = true;
+  // ★ v5.275.0 好友命星(同上)
+  try{ if(typeof window._cstApplyFriend === 'function') window._cstApplyFriend(h, fh); }catch(_eCstF2){}
   G.p1.push(h);
   log(`🤝 [好友英雄] ${name}（${fh._ownerName}）加入戰鬥！Lv.${friendLv}`);
 }
@@ -71341,6 +71485,7 @@ function openMonsterDetail(name) {
   if(imgEl&&avEl){
     if(img){ imgEl.src=img; imgEl.style.display='block'; avEl.style.display='none'; }
     else{ imgEl.style.display='none'; avEl.style.display='flex'; avEl.textContent=av; avEl.style.fontSize='96px'; }
+    try{ var _cstSb = document.getElementById('hero-detail-cst-btn'); if(_cstSb) _cstSb.style.display = 'none'; }catch(_){}   // ★ v5.276.0 魔物詳情共用此視窗 ⇒ 收起英雄的「✨ 命座」按鈕
     // 清除英雄頁可能殘留的 grayscale filter
     imgEl.style.filter = '';
     avEl.style.filter = '';
@@ -78444,6 +78589,1199 @@ function makeRadar(dims, size) {
 
 
 
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+ * ★★★ v5.254.0(2026-10-15)冒險模式「命座突破系統」第一階段(骨架＋圖鑑星圖＋命星工坊)★★★
+ *   老師:「冒險模式新增角色突破系統,重複召喚到相同角色轉化為命座,每角色最多六個命座……
+ *         命座在《英雄圖鑑》用星座圖呈現,中央是核心,玩家可以選擇要往哪一個路線投資。除了 R 卡以外都有命座」
+ *   權威文件:專案知識庫 claude/命座突破系統_設計書.md(v1.1＋裁定 1甲~18);命星文字在 constellation_db.js。
+ *   本輪範圍(裁定 6甲 第 1~3 步):
+ *     ① 命星存檔(雲端權威＋共用 iPad 防汙染)② 召喚權重 未擁有×3/已擁有×1/滿6命仍×1→虛無的命星
+ *     ③ 命星合成＋自選命星(召喚星空「✨ 命星工坊」)④ 重置星圖收知識幣 ⑤ GM 發放(admin_panel)
+ *     ⑥ UR 自選卷選已擁有 UR → 命星 ⑦ UR 替換卷退回命星 ⑧ 主角章節命星 ⑨ 圖鑑「✨ 命座」星圖(三平台)
+ *     ⑩ 戰前套用框架 _cstApplyToHero(G1/G2/G3/G7 在 game_battle.js window._cstCap)
+ *     ★ 星星的「戰鬥效果」下一輪起分批接(登錄表 window._CST_EFFECTS);本輪點亮的星會在效果接上後自動生效。
+ *   ★ 測試期閘門 _CST_ADMIN_ONLY=true:非 GM 帳號 **所有行為與 v5.253.0 完全相同**(召喚不改權重、圖鑑不出現命座、
+ *     星空不出現工坊),老師測完改 false 即全體開放(比照荒島/中國關/寵物系統的開放方式)。
+ *
+ *   【資料】window._cstData = { v:1, got:{k:n}, used:{k:n}, lit:{英雄:{s:[槽…],at}}, ga:{GM單號:at}, pc:{章:at}, hist:[] }
+ *     k = 英雄名 / '#void_SR' '#void_SSR'(虛無的命星)/ '#pick_SR' '#pick_SSR' '#pick_UR'(自選命星)
+ *     英雄持有命星數 = got−used(上限 6);可點亮 = 持有 − 已點亮。主角例外:持有數 = 已通關的指定章節數(衍生值,登入冪等)。
+ *     雲端只寫字串欄位 constellationData_s(三槽合併 window._lxpsCstMerge 在 game_cloud.js:got/used 取 max、點法 at 新者勝)。
+ *     GM 發放寫 cstGmGrants_s(學生端只讀不寫,登入時依單號折進來 ⇒ 不會被學生端舊記憶體蓋掉)。
+ *   【鐵律對照】1.41 共用 iPad:_clearAccountLocalData 清記憶體＋_cstHydrated=false(未載入前存檔不帶本欄位 ⇒ 絕不以空資料蓋雲端);
+ *     hist 只保留本人 uid;1.232 雙版文字:所有說明 cute/premium 兩版;〇之二 三平台:星圖用 body 直下真實 px 視窗＋媒體查詢。
+ * ═══════════════════════════════════════════════════════════════════════════════════════════ */
+(function _lxpsConstellationSystem(){
+  var W = window;
+  W._CST_ADMIN_ONLY = false;           /* ★ v5.274.0(老師 2026-10-17 13:45「正式開放命星」)全體開放;要退回測試期改回 true(單一開關) */
+  W._CST_RESET_COST = 5000;            /* 重置星圖收的知識幣(老師 2026-10-15 裁定 5000;原預設 1000) */
+  W._CST_PROTAG_CHAPTERS = ['ch3', 'ch6'];   /* 主角命星:依序第 1、2 顆(設計書第八節建議;老師尚未最後確認,改這裡即可) */
+  W._CST_MAX = 6;
+  var SLOTS = ['t1', 't2', 's1', 's2', 'b1', 'b2'];
+  var PRE = { t2:'t1', s2:'s1', b2:'b1' };
+  var SLOT_LBL = { t1:'天·壹', t2:'天·貳', s1:'技·壹', s2:'技·貳', b1:'爆·壹', b2:'爆·貳' };
+  var TRACK = { t:{ cute:'🌟 天賦之路', prem:'🌟 天賦之軌' }, s:{ cute:'⚔ 技能之路', prem:'⚔ 技能之軌' }, b:{ cute:'💥 大絕之路', prem:'💥 爆發之軌' } };
+
+  W._cstOpenForMe = function(){
+    try{
+      if(W._CST_ADMIN_ONLY !== true) return true;
+      return (typeof W._isAdminUser === 'function' && !!W._isAdminUser());
+    }catch(_){ return false; }
+  };
+  function _cute(){ try{ return (typeof _artStyle === 'undefined') || _artStyle === 'cute'; }catch(_){ return true; } }
+  function _T(cuteTxt, premTxt){ return _cute() ? cuteTxt : premTxt; }
+  function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]; }); }
+  function _uid12(){ return String(W._gUserId || '').slice(0, 12); }
+  function _fresh(){ return { v:1, got:{}, used:{}, lit:{}, ga:{}, pc:{}, hist:[] }; }
+  function D(){
+    var d = W._cstData;
+    if(!d || typeof d !== 'object' || Array.isArray(d)){ d = W._cstData = _fresh(); }
+    ['got', 'used', 'lit', 'ga', 'pc'].forEach(function(f){ if(!d[f] || typeof d[f] !== 'object' || Array.isArray(d[f])) d[f] = {}; });
+    if(!Array.isArray(d.hist)) d.hist = [];
+    return d;
+  }
+  W._cstData = W._cstData || _fresh();
+  W._cstHydrated = false;
+  function _db(){ return (W.CONSTELLATION_DB && typeof W.CONSTELLATION_DB === 'object') ? W.CONSTELLATION_DB : {}; }
+  function _protagKey(){ return W._PROTAG_SSR_NAME || '主角‧覺醒'; }
+  function _protagOwnName(){ return W._PROTAG_HERO_NAME || '主角'; }
+  W._cstKey = function(name){
+    if(!name) return '';
+    if(name === _protagOwnName() || name === _protagKey()) return _protagKey();
+    return name;
+  };
+  function _isProtag(k){ return k === _protagKey(); }
+  W._cstRarity = function(name){
+    var k = W._cstKey(name);
+    if(_isProtag(k)) return 'P';
+    try{ if(typeof W._lxpsIsUR === 'function' && W._lxpsIsUR(k)) return 'UR'; }catch(_){}
+    try{ if(typeof _getHeroRarity === 'function'){ var r = _getHeroRarity(k); if(r) return r; } }catch(_){}
+    var e = _db()[k]; return e ? e.r : 'R';
+  };
+  W._cstEligible = function(name){
+    var k = W._cstKey(name);
+    if(!_db()[k]) return false;
+    return W._cstRarity(k) !== 'R';
+  };
+  function _owned(k){
+    try{
+      var u = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      if(_isProtag(k)) return u.indexOf(_protagOwnName()) >= 0;
+      return u.indexOf(k) >= 0;
+    }catch(_){ return false; }
+  }
+  function _awakened(){ try{ return !!(W._lxpsProtagAwakened && W._lxpsProtagAwakened()); }catch(_){ return false; } }
+  function _chapDone(){
+    var p = W._mainStoryProgress || {}, n = 0;
+    (W._CST_PROTAG_CHAPTERS || []).forEach(function(c){ if(p && p[c] === 'done') n++; });
+    return Math.min(W._CST_MAX, n);
+  }
+  W._cstHeld = function(name){
+    var k = W._cstKey(name); if(!k) return 0;
+    if(_isProtag(k)) return _chapDone();
+    var d = D();
+    return Math.max(0, Math.min(W._CST_MAX, (d.got[k] | 0) - (d.used[k] | 0)));
+  };
+  W._cstLit = function(name){
+    var k = W._cstKey(name), d = D(), r = d.lit[k];
+    var arr = (r && Array.isArray(r.s)) ? r.s : [], out = [];
+    arr.forEach(function(s){
+      if(SLOTS.indexOf(s) < 0 || out.indexOf(s) >= 0) return;
+      if(PRE[s] && out.indexOf(PRE[s]) < 0) return;
+      out.push(s);
+    });
+    var held = W._cstHeld(k);
+    if(out.length > held) out = out.slice(0, held);   /* 依點亮順序截斷 ⇒ 前置星一定在前面,不會留下孤兒「貳」 */
+    return out;
+  };
+  W._cstFree = function(name){ return Math.max(0, W._cstHeld(name) - W._cstLit(name).length); };
+  W._cstCount = function(key){ var d = D(); return Math.max(0, (d.got[key] | 0) - (d.used[key] | 0)); };
+  function _log(kind, h, n, src){
+    var d = D(), now = Date.now();
+    d.hist.push({ id:'c' + now.toString(36) + Math.random().toString(36).slice(2, 6), at:now, k:kind, h:h, n:n, s:src || '', uid:_uid12() });
+    if(d.hist.length > 300) d.hist = d.hist.slice(-300);
+  }
+  function _save(){
+    try{ if(typeof gameCloudSave === 'function') Promise.resolve(gameCloudSave()).catch(function(){}); }catch(_){}
+    try{ if(typeof W._refreshMyRepHeroCloud === 'function') W._refreshMyRepHeroCloud(); }catch(_){}   /* ★ v5.275.0 代表英雄的命星快照同步(1.5 秒防抖;沒設代表英雄就什麼都不做) */
+  }
+  function _ready(){ return W._progressLoaded === true && (W._cstHydrated === true || W._cstHydrated === 'empty'); }
+  function _toast(msg, color, ms){   /* ★ v5.277.0 加可選 ms(停留毫秒);不帶 = 原本 3.2 秒 */
+    try{
+      var t = document.createElement('div');
+      t.className = 'cst-toast';
+      t.style.cssText = 'position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:2147483000;max-width:min(92vw,620px);'
+        + 'padding:12px 20px;border-radius:14px;font-size:17px;font-weight:800;line-height:1.5;text-align:center;white-space:pre-line;'
+        + 'background:rgba(16,12,44,0.96);border:2px solid ' + (color || '#ffd97a') + ';color:#fff;box-shadow:0 6px 30px rgba(0,0,0,0.5);'
+        + "font-family:'M PLUS Rounded 1c','Nunito',sans-serif;pointer-events:none;";
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(function(){ try{ t.remove(); }catch(_){} }, (ms > 0) ? ms : 3200);
+    }catch(_){}
+  }
+  W._cstToast = _toast;
+
+  /* ── 取得命星(召喚重複 / GM / UR 自選卷)。英雄已滿 6 命 ⇒ 轉同稀有度「虛無的命星」(UR 滿 6 ⇒ UR 自選命星) ── */
+  W._cstGrantStar = function(name, n, src){
+    var k = W._cstKey(name); n = Math.max(1, n | 0);
+    if(!k || _isProtag(k) || !W._cstEligible(k)) return null;
+    var d = D(), rar = W._cstRarity(k), star = 0, overflow = 0;
+    for(var i = 0; i < n; i++){
+      if(W._cstHeld(k) < W._CST_MAX){ d.got[k] = (d.got[k] | 0) + 1; star++; }
+      else overflow++;
+    }
+    var ovKey = (rar === 'UR') ? '#pick_UR' : ('#void_' + rar);
+    if(overflow){ d.got[ovKey] = (d.got[ovKey] | 0) + overflow; }
+    if(star) _log('get', k, star, src);
+    if(overflow) _log(rar === 'UR' ? 'pick_get' : 'void', ovKey, overflow, (src || '') + ':' + k);
+    return { star:star, overflow:overflow, ovKey:ovKey, rar:rar };
+  };
+
+  /* ── 點亮 ── */
+  W._cstLight = function(name, slot){
+    var k = W._cstKey(name);
+    if(!W._cstOpenForMe()) return { ok:false, why:_T('命座還沒開放喔', '命座系統尚未開放') };
+    if(!_ready()) return { ok:false, why:_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試') };
+    if(!W._cstEligible(k)) return { ok:false, why:_T('這位英雄沒有命座', '此角色沒有命座') };
+    if(SLOTS.indexOf(slot) < 0) return { ok:false, why:'?' };
+    if(!_owned(k)) return { ok:false, why:_T('還沒有這位英雄', '尚未擁有此角色') };
+    if(_isProtag(k) && !_awakened()) return { ok:false, why:_T('主角覺醒後才能點亮', '主角需先覺醒才能點亮命星') };
+    var lit = W._cstLit(k);
+    if(lit.indexOf(slot) >= 0) return { ok:false, why:_T('這顆已經亮了', '此命星已點亮') };
+    if(PRE[slot] && lit.indexOf(PRE[slot]) < 0) return { ok:false, why:_T('要先點亮「' + SLOT_LBL[PRE[slot]] + '」', '需先點亮同軌道的「' + SLOT_LBL[PRE[slot]] + '」') };
+    if(W._cstFree(k) <= 0) return { ok:false, why:_T('沒有可以用的命星了', '沒有可分配的命星') };
+    var d = D();
+    d.lit[k] = { s: lit.concat([slot]), at: Date.now() };
+    _log('lit', k, 1, slot);
+    _save();
+    return { ok:true };
+  };
+
+  /* ── 重置星圖(收知識幣;命星全數退回可重新分配,也可以拿去合成)── */
+  W._cstReset = function(name){
+    var k = W._cstKey(name), lit = W._cstLit(k), cost = W._CST_RESET_COST | 0;
+    if(!_ready()) return { ok:false, why:_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試') };
+    if(!lit.length) return { ok:false, why:_T('還沒有點亮的星', '尚無已點亮的命星') };
+    var coins = 0; try{ coins = (typeof _knowledgeCoins !== 'undefined') ? (_knowledgeCoins | 0) : 0; }catch(_){}
+    if(coins < cost) return { ok:false, why:_T('知識幣不夠(要 ' + cost + ')', '知識幣不足(需要 ' + cost + ')') };
+    try{
+      _knowledgeCoins = Math.max(0, (_knowledgeCoins || 0) - cost);
+      try{ if(typeof _logCoinTx === 'function') _logCoinTx(-cost, '消費:命座星圖重置-' + k); }catch(_){}
+      try{ if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay(); }catch(_){}
+    }catch(_eC){ return { ok:false, why:'扣幣失敗' }; }
+    D().lit[k] = { s:[], at:Date.now() };
+    _log('reset', k, lit.length, String(cost));
+    _save();
+    return { ok:true, n:lit.length };
+  };
+
+  /* ── 合成:同稀有度 3 顆(虛無的命星 或 未點亮的角色命星,可混搭)→ 1 顆同稀有度自選命星(SR/SSR 分開)── */
+  W._cstSynth = function(rar, inputs){
+    if(rar !== 'SR' && rar !== 'SSR') return { ok:false, why:'?' };
+    if(!_ready()) return { ok:false, why:_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試') };
+    if(!Array.isArray(inputs) || inputs.length !== 3) return { ok:false, why:_T('要剛好放 3 顆', '需要剛好 3 顆材料') };
+    var need = {};
+    inputs.forEach(function(k){ need[k] = (need[k] | 0) + 1; });
+    var bad = Object.keys(need).filter(function(k){
+      if(k === '#void_' + rar) return W._cstCount(k) < need[k];
+      if(k.charAt(0) === '#') return true;
+      if(_isProtag(k) || W._cstRarity(k) !== rar) return true;
+      return W._cstFree(k) < need[k];
+    });
+    if(bad.length) return { ok:false, why:_T('材料不夠或不能用', '材料數量不足或稀有度不符') };
+    var d = D();
+    Object.keys(need).forEach(function(k){ d.used[k] = (d.used[k] | 0) + need[k]; });
+    d.got['#pick_' + rar] = (d.got['#pick_' + rar] | 0) + 1;
+    _log('syn', '#pick_' + rar, 1, Object.keys(need).map(function(k){ return k + '×' + need[k]; }).join(','));
+    _save();
+    return { ok:true };
+  };
+
+  /* ── 自選命星:選 1 名已擁有、未滿 6 命、同稀有度的角色(SR/SSR 不能指定 UR、主角;UR 自選命星只能用在已擁有的 UR)── */
+  W._cstPickCandidates = function(rar){
+    var out = [];
+    try{
+      Object.keys(_db()).forEach(function(k){
+        if(_isProtag(k)) return;
+        if(W._cstRarity(k) !== rar) return;
+        if(!_owned(k)) return;
+        if(W._cstHeld(k) >= W._CST_MAX) return;
+        out.push(k);
+      });
+    }catch(_){}
+    return out;
+  };
+  W._cstUsePick = function(rar, name){
+    var k = W._cstKey(name), pk = '#pick_' + rar;
+    if(!_ready()) return { ok:false, why:_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試') };
+    if(W._cstCount(pk) <= 0) return { ok:false, why:_T('沒有這種自選命星', '沒有此稀有度的自選命星') };
+    if(W._cstPickCandidates(rar).indexOf(k) < 0) return { ok:false, why:_T('這位英雄不能選', '此角色不符合條件') };
+    var d = D();
+    d.used[pk] = (d.used[pk] | 0) + 1;
+    d.got[k] = (d.got[k] | 0) + 1;
+    _log('pick', k, 1, pk);
+    _save();
+    return { ok:true };
+  };
+
+  /* ── UR 替換卷(13甲):被換掉的 UR 身上所有命星(含已點亮)退回成等量「UR 自選命星」── */
+  W._cstOnURSwap = function(fromName){
+    try{
+      var k = W._cstKey(fromName), d = D();
+      var n = Math.max(0, (d.got[k] | 0) - (d.used[k] | 0));
+      if(n <= 0) return 0;
+      d.used[k] = (d.used[k] | 0) + n;
+      d.got['#pick_UR'] = (d.got['#pick_UR'] | 0) + n;
+      d.lit[k] = { s:[], at:Date.now() };
+      _log('urswap', k, n, '#pick_UR');
+      _save();
+      return n;
+    }catch(e){ console.warn('[命座] UR 替換退回命星例外', e); return 0; }
+  };
+
+  /* ── 主角章節命星(衍生值;這裡只負責第一次看到時寫帳本,登入冪等)── */
+  function _protagLedgerSweep(){
+    try{
+      if(!W._cstOpenForMe()) return false;   /* 測試期:非 GM 帳號完全不寫命星資料 */
+      var d = D(), p = W._mainStoryProgress || {}, ch = false;
+      (W._CST_PROTAG_CHAPTERS || []).forEach(function(c){
+        if(p[c] === 'done' && !d.pc[c]){ d.pc[c] = Date.now(); _log('get', _protagKey(), 1, 'story:' + c); ch = true; }
+      });
+      return ch;
+    }catch(_){ return false; }
+  }
+
+  /* ── 雲端載入(由 _applySafeData 呼叫)── */
+  /* ★ v5.277.0(老師 2026-10-17 19:13「圖鑑沒看到命座按鈕、10 抽沒出現重複角色轉命座」)——
+   *   根因:constellation_db.js 從沒上傳到 GitHub(game_cloud.js、hero_db.js 也停在舊版),命座表是空的 ⇒
+   *   _cstEligible 全部回 false ⇒ 圖鑑按鈕/十字星全隱藏、召喚池排除已擁有英雄,而且「完全沒有任何提示」。
+   *   這裡在雲端資料載入後檢查一次:命座已開放卻缺檔 ⇒ console.error 給所有人,GM 另外跳紅框提醒(學生不打擾)。
+   *   每個分頁只提醒一次。檢查項目:①CONSTELLATION_DB 有沒有資料 ②game_cloud.js 是否為含命星雲端合併的新版。 */
+  /* ★ v5.278.0 GM 發放單折入(登入 _cstHydrate 與領獎當下 _cstFoldGmGrants 共用)。依單號冪等:ga[單號] 有值就跳過。
+   *   角色命星而命座表還沒載入 ⇒ 這張單「先不折、不標記」,下次再試(舊版會標記已領卻發不出去 ⇒ 永久少一顆)。 */
+  function _foldGm(gm){
+    var got = [];
+    if(!gm || typeof gm !== 'object') return got;
+    var dbReady = Object.keys(_db()).length > 0;
+    Object.keys(gm).sort(function(a, b){ return (gm[a].at || 0) - (gm[b].at || 0); }).forEach(function(id){
+      var g = gm[id], dd = D();
+      if(!g || !g.k || dd.ga[id]) return;
+      var isPick = /^#pick_(SR|SSR|UR)$/.test(g.k);
+      if(!isPick && !dbReady) return;
+      dd.ga[id] = g.at || Date.now();
+      var n = Math.max(1, Math.min(6, g.n | 0));
+      if(isPick){ dd.got[g.k] = (dd.got[g.k] | 0) + n; _log('gm', g.k, n, 'gm:' + id); got.push(g.k.replace('#pick_', '') + ' 自選命星 ×' + n); }
+      else { var r = W._cstGrantStar(g.k, n, 'gm:' + id); if(r) got.push(g.k + ' 命星 ×' + n); }
+    });
+    return got;
+  }
+  /* ★ v5.278.0 領獎當下立刻入帳(由 game_cloud _fbCstGrantMany 在「寫的是自己帳號」時呼叫)。
+   *   命星資料還沒從雲端載入(_cstHydrated 不是 true/'empty')⇒ 不動記憶體,交給登入時的 _cstHydrate(雲端那份已含新單號,不會漏)。
+   *   opt.quiet:領獎視窗本身會列出命星 ⇒ 不再另跳提示。 */
+  W._cstFoldGmGrants = function(gm, opt){
+    try{
+      if(W._cstHydrated !== true && W._cstHydrated !== 'empty') return [];   /* 'empty' = 已載入、這位玩家還沒有命星資料 */
+      var got = _foldGm(gm);
+      if(got.length){
+        _save();
+        try{ W._cstGridStarsRefresh(); }catch(_){}
+        if(!(opt && opt.quiet) && W._cstOpenForMe()){ _toast(_T('✨ 老師送你命星!\n' + got.join('、'), '✨ 收到老師發放的命星\n' + got.join('、'))); }
+      }
+      return got;
+    }catch(e){ console.warn('[命座] 領獎折入例外(下次登入會補上)', e); return []; }
+  };
+  var _cstHealthLogged = false, _cstHealthWarned = false;   /* console 一次、GM 紅框一次,分開記(GM 身分可能比第一次檢查晚確定) */
+  W._cstHealthCheck = function(){
+    try{
+      if(_cstHealthWarned || W._CST_ADMIN_ONLY === true) return;
+      var miss = [];
+      if(!Object.keys(_db()).length) miss.push('constellation_db.js(命座資料表沒有載入)');
+      if(typeof W._lxpsCstMerge !== 'function') miss.push('game_cloud.js(舊版,命星雲端存檔合併不存在)');
+      if(!miss.length) return;
+      if(!_cstHealthLogged){
+        _cstHealthLogged = true;
+        console.error('[命座] 檔案缺漏,命座功能無法正常運作:' + miss.join('、') + '。請確認這些檔案已上傳到 GitHub。');
+      }
+      var adm = false; try{ adm = (typeof W._isAdminUser === 'function' && !!W._isAdminUser()); }catch(_){}
+      if(!adm) return;
+      _cstHealthWarned = true;
+      setTimeout(function(){
+        _toast(_T('⚠ GM 提醒:命座檔案缺漏\n' + miss.join('\n') + '\n請把這些檔案上傳到 GitHub',
+                  '⚠ GM 警示:命座系統檔案缺漏\n' + miss.join('\n') + '\n請確認以上檔案已部署至 GitHub'), '#ff6a6a', 12000);
+      }, 4000);
+    }catch(_){}
+  };
+  W._cstHydrate = function(data){
+    try{
+      var cloud = data ? data.constellationData_s : null;
+      var hasCloud = (typeof cloud === 'string' && cloud.length > 0);
+      var mem = W._cstHydrated ? JSON.stringify(D()) : null;   /* 本帳號已載入過才合併記憶體;第一次載入只信雲端 */
+      var merged = (typeof W._lxpsCstMerge === 'function') ? W._lxpsCstMerge([cloud, mem]) : (W._lxpsCstParse ? (W._lxpsCstParse(cloud) || _fresh()) : _fresh());
+      var u = _uid12();
+      merged.hist = (merged.hist || []).filter(function(e){ return !e.uid || !u || e.uid === u; });   /* 鐵律 1.41:別人的帳本筆不留 */
+      W._cstData = merged; D();
+      /* GM 發放單:依單號冪等折入 */
+      var gm = (typeof W._lxpsCstMergeGm === 'function') ? W._lxpsCstMergeGm([data ? data.cstGmGrants_s : null]) : {};
+      var got = _foldGm(gm);   // ★ v5.278.0 抽成共用(領獎當下 _cstFoldGmGrants 也走這支)
+      var swept = _protagLedgerSweep();
+      /* 三態:true=已載入雲端命星資料 / 'empty'=這份資料裡沒有命星欄位(新玩家,或來源是舊本機快照)
+         ⇒ 'empty' 時只有記憶體真的有內容(拿到第一顆命星等)才寫雲端,避免舊快照的「沒有欄位」把雲端命星洗成空的(風險 A2)。 */
+      if(hasCloud || W._cstHydrated === true) W._cstHydrated = true;
+      else W._cstHydrated = 'empty';
+      try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑已開著時,十字星跟著雲端資料更新
+      if(got.length || swept){ setTimeout(_save, 1500); }
+      if(got.length && W._cstOpenForMe()){ setTimeout(function(){ _toast(_T('✨ 老師送你命星!\n' + got.join('、'), '✨ 收到老師發放的命星\n' + got.join('、'))); }, 2500); }
+      try{ W._cstHealthCheck(); }catch(_){}   // ★ v5.277.0 命座檔案缺漏 GM 警示
+    }catch(e){ console.warn('[命座] 雲端載入例外(保留記憶體資料)', e); if(W._cstHydrated !== true) W._cstHydrated = 'empty'; }
+  };
+  function _hasContent(d){
+    try{
+      return Object.keys(d.got).length > 0 || Object.keys(d.used).length > 0 || Object.keys(d.lit).length > 0
+        || Object.keys(d.ga).length > 0 || Object.keys(d.pc).length > 0 || d.hist.length > 0;
+    }catch(_){ return false; }
+  }
+  /* ── 存檔欄位(由 _buildSafeData 展開;未載入完成前回空物件 ⇒ 本欄位不寫,絕不以空資料覆蓋雲端)── */
+  W._cstSafeField = function(){
+    try{
+      if(W._cstHydrated !== true && W._cstHydrated !== 'empty') return {};
+      _protagLedgerSweep();
+      var d = D();
+      if(W._cstHydrated === 'empty' && !_hasContent(d)) return {};
+      return { constellationData_s: JSON.stringify(d) };
+    }catch(_){ return {}; }
+  };
+  /* ── 換帳號清空(由 _clearAccountLocalData 呼叫)── */
+  W._cstResetMemory = function(){
+    W._cstData = _fresh(); W._cstHydrated = false;
+    try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 換帳號:圖鑑格子若還在畫面上,十字星立刻歸零(只改畫面,不寫存檔)
+    try{ var ov = document.getElementById('cst-map-ov'); if(ov) ov.remove(); }catch(_){}
+    try{ var sy = document.getElementById('cst-synth-ov'); if(sy) sy.remove(); }catch(_){}
+  };
+
+  /* ── 召喚權重(由 _rollOneSummon 的 SSR/SR 槽呼叫)──
+     unowned/owned:呼叫端用與原本完全相同的濾網算好(關卡限定、測試期、資料未到齊…都已排除)
+     寵物比例維持原本(風險 B2):寵物機率 = 寵物數 /(未擁有英雄數 + 寵物數),和舊版一樣;剩下的機率才給英雄,英雄內部 未擁有×3/已擁有×1。
+     回傳 null ⇒ 交回原本的程式處理(例如全部都被本批排除)。 */
+  W._cstSummonPick = function(tier, unowned, owned, pets, icon){
+    try{
+      var U = unowned || [], O = owned || [], P = pets || [];
+      if(!U.length && !O.length && !P.length) return null;
+      var petShare = (U.length + P.length) > 0 ? (P.length / (U.length + P.length)) : 0;
+      if(P.length && Math.random() < petShare){
+        var pn = P[Math.floor(Math.random() * P.length)];
+        return { kind:'rare_pet', name:pn, petName:pn, icon:'🐾', qty:1, isRare:true, _rarityTier:tier };
+      }
+      var wU = U.length * 3, wO = O.length;
+      if(wU + wO <= 0) return null;
+      var r = Math.random() * (wU + wO);
+      if(r < wU){
+        var hn = U[Math.min(U.length - 1, Math.floor(r / 3))];
+        return { kind:'rare_hero', name:hn, heroName:hn, icon:icon, qty:1, isRare:true, _rarityTier:tier };
+      }
+      var on = O[Math.min(O.length - 1, Math.floor(r - wU))];
+      var full = W._cstHeld(on) >= W._CST_MAX;
+      return { kind:'cst_star', heroName:on, name:(full ? ('🌑 ' + tier + ' 虛無的命星') : ('命星・' + on)), icon:(full ? '🌑' : '⭐'),
+               qty:1, isRare:true, _rarityTier:tier, _cstVoid:full };
+    }catch(e){ console.warn('[命座] 召喚權重例外 → 交回原邏輯', e); return null; }
+  };
+
+  /* ── 自選召喚卷(SR/SSR/UR):已擁有、未滿 6 命的同稀有度角色可轉 1 顆命星 ──
+   *   v5.254.0 原本只做 UR(4甲 / 風險 A7)。
+   *   ★ v5.279.0(老師 2026-10-19「先修改自選召喚卷無法選取已收錄英雄的問題」)——
+   *     SR/SSR 自選卷比照 UR:已收錄的同稀有度英雄也列出來,選了就轉 1 顆命星(和召喚池「重複角色轉命星」同一個規則)。
+   *     主角、R 卡(沒有命座)、滿 6 命不列。 */
+  W._cstTicketStarCandidates = function(tier){
+    if(tier !== 'SR' && tier !== 'SSR' && tier !== 'UR') return [];
+    if(!W._cstOpenForMe()) return [];
+    /* ★ v5.279.0 只收「這張卷本來就挑得到」的英雄(_summonTicketPickUniverse;取不到名單時退回只看命座表,與 v5.254.0 UR 原行為相同) */
+    var uni = null;
+    try{ if(typeof W._summonTicketPickUniverse === 'function'){ var u = W._summonTicketPickUniverse(tier); if(u && u.length) uni = u; } }catch(_){ uni = null; }
+    return Object.keys(_db()).filter(function(k){
+      return !_isProtag(k) && W._cstRarity(k) === tier && _owned(k) && W._cstHeld(k) < W._CST_MAX && (!uni || uni.indexOf(k) >= 0);
+    });
+  };
+  W._cstURStarCandidates = function(){ return W._cstTicketStarCandidates('UR'); };   /* 舊名保留(相容) */
+  W._cstTicketSectionHtml = function(tier, list){
+    if(!list || !list.length) return '';
+    var h = '<div style="flex-basis:100%;width:100%;margin:10px 0 2px;padding-top:10px;border-top:1px dashed rgba(255,200,255,0.4);'
+      + 'font-size:14px;font-weight:800;color:#ffd6f0;text-align:center;">' + _T('✨ 已經有的 ' + tier + ' → 換成 1 顆命星', '✨ 已擁有的 ' + tier + '(轉為 1 顆命星)') + '</div>';
+    list.forEach(function(n){
+      var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[n]) ? HERO_IMGS[n] : '';
+      h += '<button type="button" data-cst-urtk="' + _esc(n) + '" data-cst-tktier="' + tier + '" style="width:108px;background:rgba(40,0,40,0.7);border:2px solid #ffb3e666;border-radius:11px;cursor:pointer;padding:0 0 6px;font-family:inherit;overflow:hidden;">'
+        + (img ? '<img src="' + _esc(img) + '" alt="" loading="lazy" style="width:100%;height:96px;object-fit:cover;border-radius:9px 9px 0 0;background:#0a0a18;">' : '<div style="height:96px;display:flex;align-items:center;justify-content:center;font-size:34px;">⭐</div>')
+        + '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:5px;padding:0 4px;line-height:1.25;">' + _esc(n) + '</div>'
+        + '<div style="font-size:11px;color:#ffd97a;font-weight:800;">⭐ ' + W._cstHeld(n) + '/6 → +1</div></button>';
+    });
+    return h;
+  };
+  W._cstURTicketSectionHtml = function(list){ return W._cstTicketSectionHtml('UR', list); };   /* 舊名保留(相容) */
+  W._cstUseTicketForStar = function(tier, name){
+    if(tier !== 'SR' && tier !== 'SSR' && tier !== 'UR') tier = 'UR';
+    var tid = 'summon_ticket_' + tier.toLowerCase() + '_pick';
+    var srcTag = 'ticket_' + tier.toLowerCase() + '_pick';
+    try{
+      if(!_ready()){ _toast(_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試'), '#ffaa44'); return; }
+      if(W._cstTicketStarCandidates(tier).indexOf(name) < 0){ _toast(_T('這位 ' + tier + ' 不能選', '此 ' + tier + ' 不符合條件(未擁有或已滿 6 命)'), '#ffaa44'); return; }
+      if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tier + ' 自選卷了', '沒有 ' + tier + ' 自選召喚卷'), '#ffaa44'); return; }
+      var msg = _T('要用 1 張 ' + tier + ' 自選卷,換「' + name + '」的 1 顆命星嗎?\n(現在 ' + W._cstHeld(name) + '/6)',
+                   '確定消耗 1 張 ' + tier + ' 自選召喚卷,轉為「' + name + '」的 1 顆命星?\n(目前命星 ' + W._cstHeld(name) + '/6)');
+      var uidAtAsk = _uid12();   /* 開確認框當下是哪個帳號 */
+      var go = function(){
+        try{
+          if(W._summonTicketStarBusy) return;   /* 防連點:同一張券只換一次 */
+          W._summonTicketStarBusy = true;
+          setTimeout(function(){ W._summonTicketStarBusy = false; }, 1500);
+          /* ★ v5.279.0 防汙染:確認框開著時換了帳號(共用 iPad、閒置登出)⇒ 整筆作廢,不動任何資料 */
+          if(!uidAtAsk || _uid12() !== uidAtAsk || !_ready()){ _toast(_T('帳號換過了,請重新打開召喚卷', '帳號已變更,請重新開啟召喚卷'), '#ffaa44'); return; }
+          try{ if(typeof W._lxpsUidDrift === 'function' && W._lxpsUidDrift()){ _toast(_T('帳號狀態不穩,等一下再試', '帳號狀態異常,請稍候再試'), '#ffaa44'); return; } }catch(_){}
+          /* ★ v5.279.0 防幽靈卷:券實例還沒從雲端載入時不准用(否則扣的是背包數字、實例沒消耗,下次登入券會復活) */
+          try{ if(typeof W._isTicketInstId === 'function' && W._isTicketInstId(tid) && !W._ticketHydrated){ _toast(_T('召喚卷資料還在載入,等一下再試', '召喚卷資料尚未載入完成,請稍候再試'), '#ffaa44'); return; } }catch(_){}
+          if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tier + ' 自選卷了', '沒有 ' + tier + ' 自選召喚卷'), '#ffaa44'); return; }
+          if(W._cstTicketStarCandidates(tier).indexOf(name) < 0){ _toast(_T('這位英雄已經滿 6 命了', '此角色已滿 6 命'), '#ffaa44'); return; }
+          var k = W._cstKey(name), d0 = D(), gotBefore = d0.got[k] | 0, histBefore = d0.hist.length;
+          /* 還原時只拿掉這一筆剛寫的帳本(由尾端往前找,帳本滿 300 筆被截過也找得到) */
+          var _popMine = function(){
+            try{
+              var hh = D().hist;
+              for(var i = hh.length - 1; i >= 0 && i >= hh.length - 3; i--){
+                var e = hh[i];
+                if(e && (e.s === srcTag || String(e.s || '').indexOf(srcTag + ':') === 0) && e.at && (Date.now() - e.at) < 5000){ hh.splice(i, 1); }
+              }
+            }catch(_){}
+          };
+          var r = W._cstGrantStar(name, 1, srcTag);
+          if(!r || r.star !== 1 || r.overflow){   /* 只接受「剛好 +1 顆角色命星」;其他情況還原記憶體(此時尚未存檔) */
+            d0 = D(); d0.got[k] = gotBefore; if(!gotBefore) delete d0.got[k];
+            if(r && r.overflow && r.ovKey){ d0.got[r.ovKey] = Math.max(0, (d0.got[r.ovKey] | 0) - r.overflow); if(!d0.got[r.ovKey]) delete d0.got[r.ovKey]; }
+            _popMine();
+            _toast(_T('沒有成功,券還在', '轉換失敗,券未扣除'), '#ff8844'); return;
+          }
+          /* ★ v5.279.0 防洗命星:一定要真的扣到 1 張券(backpackRemove 以券實例為準);扣不到 ⇒ 把剛加的命星收回(同步、尚未存檔) */
+          var took = 0;
+          try{ took = backpackRemove(tid, 1, tier + '自選卷→命星:' + name) | 0; }catch(_){ took = 0; }
+          if(took < 1){
+            d0 = D(); d0.got[k] = gotBefore; if(!gotBefore) delete d0.got[k];
+            _popMine();
+            _toast(_T('券沒有扣成功,命星沒有發,券還在', '扣券失敗,未發放命星'), '#ff8844'); return;
+          }
+          /* ★ v5.279.0 扣券＋命星「同一次」即時原子寫入雲端(背包、券實例、命星三者一起落地,含重試)。
+             舊 UR 流程是背包走快車道、命星走 gameCloudSave 慢車道 ⇒ App 被切走可能「券扣了、命星沒上雲」。
+             _cstSafeField 在命星資料未載入時回空物件 ⇒ 這裡 _ready() 已保證載入,不會拿空資料蓋雲端。 */
+          var atomicOk = false;
+          try{
+            if(W._progressLoaded === true && typeof W._lxpsCloudInstantUnlock === 'function' && typeof _playerBackpack === 'object' && _playerBackpack){
+              var cf = W._cstSafeField();
+              if(cf && cf.constellationData_s){
+                var bag = JSON.parse(JSON.stringify(_playerBackpack));
+                var patch = { playerBackpack: bag, playerBackpack_s: JSON.stringify(bag), constellationData_s: cf.constellationData_s };
+                try{ if(typeof W._ticketDataForCloud === 'function'){ var tk = W._ticketDataForCloud(); patch.ticketData = tk; patch.ticketData_s = JSON.stringify(tk); } }catch(_){}
+                W._lxpsCloudInstantUnlock(patch, tier + '自選卷→命星(扣券+命星):' + name);
+                atomicOk = true;
+              }
+            }
+          }catch(eA){ console.warn('[命座] 自選卷轉命星原子寫入失敗,改走背包即時落地＋gameCloudSave', eA); }
+          if(!atomicOk){ try{ if(typeof W._lxpsInstantBackpackPersist === 'function') W._lxpsInstantBackpackPersist(tier + '自選卷→命星'); }catch(_){} }
+          try{ if(typeof W._logActivity === 'function') W._logActivity('ticket_use', { ticket: tid, cst: name }); }catch(_){}
+          _save();   /* 三槽完整存檔(命星欄位由 _buildSafeData 帶) */
+          try{ var m = document.getElementById('_summon-ticket-pick-modal'); if(m) m.remove(); }catch(_){}
+          try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
+          _toast(_T('⭐ ' + name + ' 拿到 1 顆命星!\n到英雄圖鑑「✨ 命座」點亮它吧!', '⭐ ' + name + ' 獲得命星 ×1\n請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
+        }catch(e2){ console.warn('[命座] 自選卷轉命星例外', e2); _toast('發生錯誤:' + (e2 && e2.message ? e2.message : e2), '#ff8844'); }
+      };
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if(confirm(msg)) go();
+    }catch(e){ console.warn('[命座] 自選卷轉命星', e); }
+  };
+  W._cstUseURTicketForStar = function(name){ return W._cstUseTicketForStar('UR', name); };   /* 舊名保留(相容) */
+  document.addEventListener('click', function(ev){
+    var t = ev.target;
+    while(t && t !== document && !(t.getAttribute && t.getAttribute('data-cst-urtk'))) t = t.parentNode;
+    if(!t || t === document) return;
+    try{ playSfx('sfx-sel', 0.6); }catch(_){}
+    W._cstUseTicketForStar(t.getAttribute('data-cst-tktier') || 'UR', t.getAttribute('data-cst-urtk'));
+  }, true);
+
+  /* ── 戰前套用(由 game_battle.js _applyBattlePrepToHero ④ 呼叫)── */
+  W._cstApplyToHero = function(h, tag){
+    if(!h || !h.name) return;
+    if(!W._cstOpenForMe()) return;
+    if(h._isFriendHero) return;
+    try{ if(typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero && W._friendHeroInParty && _invitedFriendHero.name === h.name) return; }catch(_){}
+    var inAdv = false;
+    try{ inAdv = (typeof _adventureMode !== 'undefined' && _adventureMode === true) || /^WB-/.test(String(tag || '')); }catch(_){}
+    if(!inAdv) return;   /* 裁定 2甲:鬥技場不生效(鬥技場本來就不走這支,這裡再守一次) */
+    var k = W._cstKey(h.name);
+    if(!W._cstEligible(k)) return;
+    if(_isProtag(k) && !_awakened()) return;
+    var lit = W._cstLit(k);
+    if(!lit.length){ h._cst = null; return; }
+    var cst = { k:k, lit:{}, n:lit.length, src:'cst' };
+    lit.forEach(function(s){ cst.lit[s] = 1; });
+    h._cst = cst;
+    var reg = (W._CST_EFFECTS && W._CST_EFFECTS[k]) || null, on = [];
+    lit.forEach(function(s){
+      var e = reg && reg[s];
+      if(e && typeof e.prep === 'function'){ try{ e.prep(h, cst); on.push(s); }catch(err){ console.warn('[命座] ' + k + ' ' + s + ' 套用失敗', err); } }
+    });
+    try{ console.log('[命座] ' + k + ' 點亮 ' + lit.join(',') + '(已接效果:' + (on.join(',') || '無') + ')'); }catch(_){}
+  };
+  /* ════════════ ★ v5.275.0(老師 2026-10-17 13:52 需求 2)借來的好友英雄吃「好友自己」點亮的命星 ════════════
+   *   ①好友端:代表英雄快照 representativeHero 多帶 cst:{k, s:[已點亮槽…]}(_selectRepHero / _refreshMyRepHeroCloud 打包;
+   *     點亮/重置後也觸發一次 1.5 秒防抖刷新)。只是「好友自己的資料」的唯讀副本,借用者端沒有任何寫回路徑。
+   *   ②借用者端:_injectFriendHeroIntoBattle(只在冒險模式、世界 BOSS 已擋)套完好友等級/投資/至寶/技能後呼叫 _cstApplyFriend,
+   *     依快照建 h._cst;絕不讀本機 _cstData(本機同名英雄的命星不會漏到好友身上 ⇐ _cstApplyToHero 對好友英雄早退照舊)。
+   *   ③快照驗證:槽位白名單、同軌「貳」必須有「壹」、最多 6 顆、命座表有這位英雄且非 R、名稱對得上;任何不符整包不套。
+   *   ④好友的主角(唯一別名「好友·暱稱」):以 h._cstPF 旗標讓 _cstHasP 認得它是「主角命星的主人」(凡人臨摹時施放者是凡人 ⇒ 不成立)。
+   *   ⑤鬥技場:借來的好友只借角色不借養成(v5.106.0 裁定),本來就不呼叫本函式。 */
+  W._cstRepSnap = function(name, prev){
+    try{
+      if(!name || !W._cstEligible(name)) return null;
+      if(!_ready()) return (prev && typeof prev === 'object') ? prev : null;   /* 命星資料尚未從雲端載入 ⇒ 沿用舊快照,不以空資料蓋掉 */
+      var k = W._cstKey(name);
+      if(_isProtag(k) && !_awakened()) return null;
+      var lit = W._cstLit(k);
+      return lit.length ? { k:k, s:lit.slice(0, W._CST_MAX) } : null;
+    }catch(_){ return null; }
+  };
+  W._cstApplyFriend = function(h, fh){
+    try{
+      if(!h || !fh) return;
+      h._cst = null; h._cstPF = false;
+      if(!W._cstOpenForMe()) return;
+      if(!(typeof _adventureMode !== 'undefined' && _adventureMode === true)) return;
+      var snap = fh.cst;
+      if(!snap || typeof snap !== 'object' || !Array.isArray(snap.s) || !snap.s.length) return;
+      var k = String(snap.k || '');
+      if(!_db()[k] || W._cstRarity(k) === 'R') return;
+      if(h.name !== fh.name) return;                    /* 只套在「這隻借來的英雄」本人身上 */
+      var isP = _isProtag(k);                             /* 好友主角在本機叫唯一別名 ⇒ 不比對名字,以快照 k 認主角 */
+      if(!isP && W._cstKey(h.name) !== k) return;
+      var seen = {}, out = [];
+      for(var j = 0; j < snap.s.length; j++){
+        var sv = snap.s[j];
+        if(SLOTS.indexOf(sv) < 0 || seen[sv]) return;   /* 有任何怪槽或重複 ⇒ 整包不套 */
+        seen[sv] = 1; out.push(sv);
+      }
+      if(!out.length || out.length > W._CST_MAX) return;
+      for(var i = 0; i < out.length; i++){ if(PRE[out[i]] && !seen[PRE[out[i]]]) return; }
+      var cst = { k:k, lit:{}, n:out.length, src:'friend' };
+      out.forEach(function(s){ cst.lit[s] = 1; });
+      h._cst = cst;
+      if(isP) h._cstPF = true;
+      try{ console.log('[命座·好友] ' + h.name + '(' + (fh._ownerName || '') + ')套用好友命星 ' + out.join(',')); }catch(_){}
+    }catch(e){ console.warn('[命座·好友] 套用失敗', e); }
+  };
+  W._cstEffectReady =function(k, slot){ try{ return !!(W._CST_EFFECTS && W._CST_EFFECTS[k] && W._CST_EFFECTS[k][slot]); }catch(_){ return false; } };
+
+  /* ════════════ UI:CSS(載入即注入;三平台:PC 預設 / iPad / 手機橫放 max-height:520px)════════════ */
+  (function _css(){
+    if(document.getElementById('cst-css')) return;
+    var st = document.createElement('style'); st.id = 'cst-css';
+    st.textContent = [
+      '#cst-map-ov,#cst-synth-ov{position:fixed;inset:0;z-index:10700;display:flex;align-items:safe center;justify-content:center;background:rgba(3,4,18,0.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:12px;box-sizing:border-box;}',
+      '.cst-card{position:relative;width:min(1120px,96vw);max-height:min(94dvh,94vh);overflow-y:auto;box-sizing:border-box;background:radial-gradient(ellipse at 50% 30%,#1a2a66 0%,#0b1033 55%,#05071c 100%);border:3px solid rgba(150,180,255,0.6);border-radius:20px;padding:16px 20px 14px;color:#e8eeff;box-shadow:0 0 60px rgba(90,120,255,0.35);}',
+      '.cst-head{display:flex;align-items:flex-start;gap:12px;padding-right:56px;}',
+      '.cst-title{font-size:26px;font-weight:900;color:#ffe9a8;letter-spacing:1px;line-height:1.25;}',
+      '.cst-lore{font-size:15px;color:#b8c4f0;margin-top:3px;line-height:1.45;}',
+      '.cst-stat{margin-top:6px;font-size:16px;font-weight:800;color:#9fd8ff;}',
+      '.cst-stat b{color:#ffd97a;font-size:19px;}',
+      '.cst-x{position:absolute;top:10px;right:12px;width:48px;height:48px;border-radius:50%;border:2px solid rgba(200,210,255,0.6);background:rgba(10,14,40,0.85);color:#fff;font-size:24px;font-weight:900;cursor:pointer;line-height:1;}',
+      '.cst-body{display:flex;gap:18px;align-items:stretch;margin-top:10px;}',
+      '.cst-mapwrap{flex:0 0 auto;width:min(520px,52vw);max-width:100%;}',
+      '.cst-svg{width:100%;height:auto;display:block;max-height:min(66dvh,66vh);}',
+      '.cst-side{flex:1 1 auto;min-width:0;background:rgba(8,12,40,0.78);border:1.5px solid rgba(140,170,255,0.4);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;}',
+      '.cst-side .cst-sx{display:none;}',
+      '.cst-slot{font-size:15px;color:#9fb4ff;font-weight:800;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}',
+      '.cst-badge{font-size:13px;padding:2px 9px;border-radius:999px;border:1px solid;font-weight:800;}',
+      '.cst-sname{font-size:24px;font-weight:900;color:#ffe9a8;line-height:1.3;}',
+      '.cst-sk{font-size:15px;color:#cfe0ff;}',
+      '.cst-desc{font-size:18px;color:#fff;line-height:1.65;}',
+      '.cst-full{font-size:15px;color:#cdd6ff;line-height:1.6;background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 10px;}',
+      '.cst-full summary{cursor:pointer;color:#9fd8ff;font-weight:800;}',
+      '.cst-note{font-size:14px;color:#ffcf8a;line-height:1.5;}',
+      '.cst-btn{min-height:46px;padding:10px 22px;font-size:18px;font-weight:900;border-radius:14px;cursor:pointer;font-family:inherit;border:2px solid #ffd97a;background:linear-gradient(135deg,rgba(255,200,80,0.35),rgba(255,150,60,0.22));color:#fff3cf;}',
+      '.cst-btn[disabled]{opacity:0.45;cursor:not-allowed;filter:grayscale(0.6);}',
+      '.cst-btn.alt{border-color:#9fb4ff;background:rgba(120,140,255,0.16);color:#dfe6ff;}',
+      '.cst-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:10px;font-size:14px;color:#aab6e6;line-height:1.5;}',
+      '.cst-foot details{flex:1 1 320px;min-width:0;}',
+      '.cst-foot summary{cursor:pointer;color:#9fd8ff;font-weight:800;}',
+      '.cst-star{cursor:pointer;}',
+      '.cst-star .cst-glow{opacity:0;}',
+      '.cst-star.lit .cst-glow{opacity:0.9;}',
+      '.cst-star.can circle.cst-core{animation:cstPulse 1.6s ease-in-out infinite;}',
+      '.cst-star.sel circle.cst-ring{stroke:#7fe7ff;stroke-width:4;}',
+      '@keyframes cstPulse{0%,100%{opacity:1}50%{opacity:0.45}}',
+      '.cst-entry{display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%;box-sizing:border-box;padding:12px 16px;margin:0 0 14px;border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;border:2px solid rgba(160,180,255,0.75);background:linear-gradient(135deg,rgba(40,60,160,0.55),rgba(20,20,70,0.75));color:#fff;}',
+      /* 命星工坊 */
+      '.cst-tabs{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;}',
+      '.cst-tab{min-height:44px;padding:8px 18px;font-size:17px;font-weight:900;border-radius:12px;border:2px solid rgba(160,180,255,0.6);background:rgba(20,26,70,0.8);color:#dfe6ff;cursor:pointer;font-family:inherit;}',
+      '.cst-tab.on{background:linear-gradient(135deg,#ffd97a,#ffb347);color:#2a1600;border-color:#ffe9a8;}',
+      '.cst-sec{background:rgba(8,12,40,0.7);border:1.5px solid rgba(140,170,255,0.35);border-radius:14px;padding:12px 14px;margin-top:10px;}',
+      '.cst-sec h4{margin:0 0 8px;font-size:18px;color:#ffe9a8;}',
+      '.cst-chips{display:flex;flex-wrap:wrap;gap:8px;}',
+      '.cst-chip{min-height:44px;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;border:2px solid rgba(160,180,255,0.55);background:rgba(25,32,80,0.85);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}',
+      '.cst-chip[disabled]{opacity:0.4;cursor:not-allowed;}',
+      '.cst-chip img{width:34px;height:34px;border-radius:50%;object-fit:cover;}',
+      '.cst-tray{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;}',
+      '.cst-tslot{width:64px;height:64px;border-radius:50%;border:2px dashed rgba(200,210,255,0.6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#cfd8ff;text-align:center;overflow:hidden;background:rgba(10,14,40,0.8);}',
+      '.cst-tslot.on{border-style:solid;border-color:#ffd97a;color:#ffe9a8;}',
+      /* ★ v5.275.0(老師 2026-10-17 13:52)點亮命星回饋:按鈕按下閃光、星星爆開、英雄頭像邊框 2 秒呼吸光芒、飄字與粒子 */
+      '.cst-btn.cst-press{animation:cstPress .38s ease-out;}',
+      '@keyframes cstPress{0%{transform:scale(1);box-shadow:0 0 0 rgba(255,217,122,0);}40%{transform:scale(0.93);box-shadow:0 0 26px rgba(255,217,122,0.95);}100%{transform:scale(1);box-shadow:0 0 0 rgba(255,217,122,0);}}',
+      '.cst-btn.cst-done{animation:cstDoneBtn 1.1s ease-out;}',
+      '.cst-btn.cst-done[disabled]{opacity:1;filter:none;}',
+      '@keyframes cstDoneBtn{0%{transform:scale(1.18);background:#ffe9a8;color:#3a2200;box-shadow:0 0 34px #ffd97a;}100%{transform:scale(1);}}',
+      '.cst-star.cst-just{transform-box:fill-box;transform-origin:center;animation:cstStarPop .9s cubic-bezier(.2,1.6,.4,1);}',
+      '@keyframes cstStarPop{0%{transform:scale(0.3);}55%{transform:scale(1.45);}100%{transform:scale(1);}}',
+      '.cst-aura{opacity:0;pointer-events:none;}',
+      '.cst-aura.on{transform-box:fill-box;transform-origin:center;animation:cstBreath 1s ease-in-out 2;}',
+      '.cst-auraR.on{animation:cstBreathR 1s ease-in-out 2;}',
+      '@keyframes cstBreath{0%{opacity:0;transform:scale(0.92);}50%{opacity:1;transform:scale(1.12);}100%{opacity:0;transform:scale(0.92);}}',
+      '@keyframes cstBreathR{0%{opacity:0.25;stroke-width:4;}50%{opacity:1;stroke-width:14;}100%{opacity:0.25;stroke-width:4;}}',
+      '.cst-fxlayer{position:fixed;pointer-events:none;z-index:10790;left:0;top:0;width:0;height:0;}',
+      '.cst-spark{position:fixed;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:radial-gradient(circle,#fffbe0 0%,#ffd24a 55%,rgba(255,180,40,0) 75%);pointer-events:none;z-index:10790;animation:cstSpark .85s ease-out forwards;}',
+      '@keyframes cstSpark{0%{transform:translate(0,0) scale(1.2);opacity:1;}100%{transform:translate(var(--dx),var(--dy)) scale(0.2);opacity:0;}}',
+      '.cst-wave{position:fixed;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:4px solid #ffe9a8;box-shadow:0 0 18px #ffd97a;pointer-events:none;z-index:10790;animation:cstWave .7s ease-out forwards;}',
+      '@keyframes cstWave{0%{transform:scale(0.4);opacity:1;}100%{transform:scale(7);opacity:0;}}',
+      '.cst-pow{position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:10791;font-size:30px;font-weight:900;color:#fff3c0;white-space:nowrap;text-shadow:0 0 10px #ffb400,0 0 22px #ff8a00,0 2px 4px #000;animation:cstPow 1.6s ease-out forwards;}',
+      '@keyframes cstPow{0%{opacity:0;transform:translate(-50%,-30%) scale(0.6);}18%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}70%{opacity:1;transform:translate(-50%,-90%) scale(1);}100%{opacity:0;transform:translate(-50%,-130%) scale(1);}}',
+      '.cst-card.cst-flash{animation:cstCardFlash 2s ease-in-out;}',
+      '@keyframes cstCardFlash{0%,100%{box-shadow:0 0 60px rgba(90,120,255,0.35);}25%,75%{box-shadow:0 0 70px rgba(255,210,90,0.85),inset 0 0 40px rgba(255,210,90,0.25);}50%{box-shadow:0 0 40px rgba(255,210,90,0.4);}}',
+      '.cst-codexglow{position:absolute;inset:0;pointer-events:none;z-index:3;border:4px solid #ffd97a;border-radius:6px;animation:cstCodexBreath 1s ease-in-out 2 forwards;}',
+      '@keyframes cstCodexBreath{0%{opacity:0.15;box-shadow:inset 0 0 6px rgba(255,210,90,0.3);}50%{opacity:1;box-shadow:inset 0 0 38px rgba(255,210,90,0.95),0 0 26px rgba(255,210,90,0.9);}100%{opacity:0;box-shadow:inset 0 0 6px rgba(255,210,90,0);}}',
+      '@media (prefers-reduced-motion:reduce){.cst-spark,.cst-wave{display:none;}}',
+      /* ★ v5.276.0 圖鑑大圖左上(稀有度標籤下方)「✨ 命座」按鈕＋格子卡可點命星閃爍 */
+      '#hero-detail-cst-btn{position:absolute;left:14px;top:100px;z-index:11;display:flex;align-items:center;gap:8px;min-height:70px;padding:10px 22px;border-radius:16px;cursor:pointer;font-family:inherit;font-size:28px;font-weight:900;color:#fff3cf;border:3px solid #ffd97a;background:linear-gradient(135deg,rgba(40,60,160,0.95),rgba(20,20,70,0.95));box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 12px rgba(255,210,90,0.45);}',
+      '#hero-detail-cst-btn .cst-sb-n{font-size:20px;color:#ffd97a;}',
+      '#hero-detail-cst-btn .cst-sb-free{font-size:19px;padding:3px 11px;border-radius:999px;background:#2fd47a;color:#04210f;}',
+      '#hero-detail-cst-btn.hot{animation:cstSbHot 1.4s ease-in-out infinite;}',
+      '@keyframes cstSbHot{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 10px rgba(255,210,90,0.45);}50%{box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 26px rgba(255,220,110,1);}}',
+      '.cst-gfree{animation:cstPulse 1.2s ease-in-out infinite;}',
+      /* 圖鑑詳情在遊戲畫布內、手機橫放整張畫布縮到約 0.4 倍 ⇒ 反向放大,讓實際按鈕高度 ≥ 44px(三平台鐵律) */
+      '@media (orientation:landscape) and (max-height:520px){#hero-detail-cst-btn{font-size:46px;min-height:124px;padding:12px 26px;gap:12px;border-width:4px;border-radius:22px;} #hero-detail-cst-btn .cst-sb-n{font-size:34px;} #hero-detail-cst-btn .cst-sb-free{font-size:32px;padding:4px 14px;}}',
+      /* iPad(1024~1366 寬):星圖略小、說明字略大 */
+      '@media (min-width:900px) and (max-width:1400px) and (min-height:700px){.cst-mapwrap{width:min(480px,48vw);} .cst-desc{font-size:19px;}}',
+      /* ★ 手機橫放(約 891×411):緊湊版星圖、說明卡改底部抽屜(設計書第四節);本區塊放在最後(CSS 宣告順序鐵律) */
+      '@media (orientation:landscape) and (max-height:520px){',
+      '  #cst-map-ov,#cst-synth-ov{padding:4px;}',
+      '  .cst-card{width:100%;max-height:calc(100vh - 8px);max-height:calc(100dvh - 8px);border-radius:12px;padding:8px 12px 8px;}',
+      '  .cst-title{font-size:19px;} .cst-lore{display:none;} .cst-stat{font-size:14px;margin-top:2px;} .cst-stat b{font-size:16px;}',
+      '  .cst-x{width:44px;height:44px;top:6px;right:8px;font-size:20px;}',
+      '  .cst-body{margin-top:4px;gap:10px;}',
+      '  .cst-mapwrap{width:auto;flex:1 1 auto;display:flex;justify-content:center;}',
+      '  .cst-svg{width:auto;height:calc(100vh - 84px);height:calc(100dvh - 84px);max-height:none;}',
+      '  .cst-svg .cst-lb{font-size:19px;}',
+      '  #cst-map-ov .cst-foot{position:absolute;left:12px;bottom:10px;margin:0;z-index:2;}',
+      '  .cst-side{position:fixed;left:0;right:0;bottom:0;z-index:10710;max-height:64vh;max-height:64dvh;overflow-y:auto;border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .22s ease;padding:10px 14px 12px;}',
+      '  .cst-side.open{transform:translateY(0);box-shadow:0 -8px 30px rgba(0,0,0,0.6);}',
+      '  .cst-side .cst-sx{display:block;position:absolute;top:6px;right:10px;width:44px;height:44px;border-radius:50%;border:2px solid rgba(200,210,255,0.6);background:rgba(10,14,40,0.9);color:#fff;font-size:20px;font-weight:900;}',
+      '  .cst-sname{font-size:19px;padding-right:50px;} .cst-desc{font-size:15px;} .cst-btn{font-size:16px;min-height:44px;padding:8px 16px;}',
+      '  .cst-foot{margin-top:4px;font-size:12px;} .cst-foot details{display:none;}',
+      '  .cst-pow{font-size:22px;}',
+      '  .cst-sec{padding:8px 10px;} .cst-sec h4{font-size:15px;} .cst-chip{font-size:13px;} .cst-tab{font-size:15px;}',
+      '}'
+    ].join('\n');
+    (document.head || document.documentElement).appendChild(st);
+  })();
+
+  /* ════════════ v5.265.0 老師需求:英雄圖鑑格子卡圖片下方 6 顆十字星(SR/SSR/UR;點亮幾顆亮幾顆,6 顆全亮 = 滿命座)════════════
+     由 _buildHeroGrid 的卡片模板呼叫;星圖點亮/重置/雲端載入後 _cstGridStarsRefresh() 就地更新(不重畫整個格子)。 */
+  W._cstGridStarsInner = function(name){
+    var k = W._cstKey(name), lit = Math.min(W._CST_MAX, W._cstLit(k).length), full = (lit >= W._CST_MAX), s = '';
+    /* ★ v5.276.0 有命星還沒點的(已擁有):那幾顆顯示白色閃爍 ✦,提示「這位英雄可以點命星」 */
+    var free = 0; try{ free = _owned(k) ? Math.max(0, Math.min(W._CST_MAX, W._cstHeld(k)) - lit) : 0; }catch(_){ free = 0; }
+    for(var i = 0; i < W._CST_MAX; i++){
+      s += (i < lit)
+        ? '<span style="color:#ffd97a;text-shadow:0 0 6px rgba(255,210,90,0.95)' + (full ? ',0 0 14px rgba(255,170,40,0.9)' : '') + ';">✦</span>'
+        : (i < lit + free)
+          ? '<span class="cst-gfree" style="color:#ffffff;text-shadow:0 0 8px rgba(160,255,200,0.95);">✦</span>'
+          : '<span style="color:rgba(190,200,235,0.45);">✧</span>';
+    }
+    return s;
+  };
+  W._cstGridStarsHtml = function(name){
+    try{
+      if(!W._cstOpenForMe() || !W._cstEligible(name)) return '';
+      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R') return ''; }catch(_){}   /* 主角 R 卡等:R 不顯示 */
+      var lit = W._cstLit(W._cstKey(name)).length;
+      return '<div class="cst-gstars" data-cst-g="' + _esc(name) + '" title="' + _esc(_T('命星 ' + lit + '/6', '命座 ' + lit + '/6')) + '"'
+        + ' style="display:flex;justify-content:center;gap:6px;padding:6px 0 2px;font-size:26px;line-height:1;letter-spacing:0;background:rgba(10,12,30,0.55);">'
+        + W._cstGridStarsInner(name) + '</div>';
+    }catch(_){ return ''; }
+  };
+  /* ════════════ ★ v5.276.0(老師 2026-10-17 15:09「我找不到命星去哪裡點」)英雄詳情左側大圖「✨ 命座」浮動按鈕 ════════════
+   *   原入口(_cstCodexEntryHtml)在右欄素質區下方、要往下捲才看得到 ⇒ 另在左側大圖放一顆一打開就看得到的按鈕
+   *   (老師 17:41 裁定位置:左上角 SSR 等稀有度標籤的正下方;右上是切換肖像、右下播放動畫)。
+   *   有可點命星(已擁有且 持有 > 已點亮)⇒ 綠色「可點 N」徽章＋金光脈衝。點擊走既有 data-cst-open 捕獲監聽 → 開星圖。
+   *   由 _renderHeroDetail 呼叫(每次換英雄/點亮後重畫都會刷新);不符資格(R/未開放)就隱藏。 */
+  W._cstCodexSideBtn = function(name, unlocked){
+    try{ W._cstHealthCheck(); }catch(_){}   // ★ v5.277.0 GM 打開圖鑑時再檢查一次命座檔案(缺檔時按鈕會被隱藏,這裡讓 GM 知道原因)
+    try{
+      var side = document.getElementById('hero-detail-img-side'); if(!side) return;
+      var b = document.getElementById('hero-detail-cst-btn');
+      if(!W._cstOpenForMe() || !name || !W._cstEligible(name)){ if(b) b.style.display = 'none'; return; }
+      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R' && !_isProtag(W._cstKey(name))) { if(b) b.style.display = 'none'; return; } }catch(_){}
+      if(!b){ b = document.createElement('button'); b.type = 'button'; b.id = 'hero-detail-cst-btn'; side.appendChild(b); }
+      var k = W._cstKey(name), lit = W._cstLit(k).length, held = W._cstHeld(k);
+      var free = (unlocked && _owned(k)) ? Math.max(0, held - lit) : 0;
+      b.setAttribute('data-cst-open', name);
+      b.className = 'cst-sidebtn' + (free > 0 ? ' hot' : '');
+      b.style.display = 'flex';
+      b.innerHTML = '<span style="font-size:1.15em;">✨</span><span>' + _T('命座', '命座') + '</span>'
+        + '<span class="cst-sb-n">' + lit + '/6</span>'
+        + (free > 0 ? '<span class="cst-sb-free">' + _T('可點 ', '可分配 ') + free + '</span>' : '');
+      b.title = free > 0 ? _T('有 ' + free + ' 顆命星可以點亮!', '可分配命星 ' + free + ' 顆') : _T('打開星圖', '開啟星圖');
+      /* ★ v5.276.0(老師 17:41)放在左上角「SSR 等稀有度標籤」正下方:量測標籤位置往下排(量不到退 top:100px) */
+      var pos = function(){
+        try{
+          var bd = document.getElementById('hero-detail-rarity-badge');
+          var t = (bd && bd.offsetHeight) ? (bd.offsetTop + bd.offsetHeight + 12) : 100;
+          b.style.top = t + 'px'; b.style.bottom = 'auto';
+        }catch(_){}
+      };
+      pos(); try{ requestAnimationFrame(pos); }catch(_){ setTimeout(pos, 60); }
+    }catch(e){ console.warn('[命座] 圖鑑大圖按鈕', e); }
+  };
+  W._cstGridStarsRefresh = function(){
+    try{
+      Array.prototype.forEach.call(document.querySelectorAll('.cst-gstars[data-cst-g]'), function(el){
+        var n = el.getAttribute('data-cst-g'); if(!n) return;
+        el.innerHTML = W._cstGridStarsInner(n);
+        el.title = _T('命星 ' + W._cstLit(W._cstKey(n)).length + '/6', '命座 ' + W._cstLit(W._cstKey(n)).length + '/6');
+      });
+    }catch(_){}
+  };
+
+  /* ════════════ 圖鑑入口(由 _renderHeroDetail 呼叫,放在技能區上方)════════════ */
+  W._cstCodexEntryHtml = function(name, unlocked){
+    try{
+      if(!W._cstOpenForMe() || !W._cstEligible(name)) return '';
+      var k = W._cstKey(name), e = _db()[k];
+      var held = W._cstHeld(k), lit = W._cstLit(k).length, free = Math.max(0, held - lit);
+      var dots = '';
+      for(var i = 0; i < W._CST_MAX; i++) dots += '<span style="color:' + (i < lit ? '#ffd97a' : (i < held ? '#ffffff' : '#4a5488')) + ';">★</span>';
+      var tip = !unlocked ? _T('還沒有這位英雄,可以先看看星圖', '尚未擁有,可預覽星圖')
+              : (free > 0 ? _T('有 ' + free + ' 顆命星可以點亮!', '可分配命星 ' + free + ' 顆') : _T('重複召喚到這位英雄就會得到命星', '重複召喚此角色可獲得命星'));
+      return '<button type="button" class="cst-entry" data-cst-open="' + _esc(name) + '">'
+        + '<span style="font-size:26px;font-weight:900;color:#ffe9a8;">✨ ' + _T('命座', '命座') + '・' + _esc(e.c || '') + '</span>'
+        + '<span style="font-size:22px;letter-spacing:2px;">' + dots + '</span>'
+        + '<span style="font-size:18px;color:' + (free > 0 && unlocked ? '#7fffb0' : '#b8c4f0') + ';font-weight:800;">' + tip + '</span>'
+        + '<span style="margin-left:auto;font-size:18px;color:#9fd8ff;font-weight:800;">' + _T('打開星圖 ▶', '開啟星圖 ▶') + '</span>'
+        + '</button>';
+    }catch(_){ return ''; }
+  };
+  document.addEventListener('click', function(ev){
+    var t = ev.target;
+    while(t && t !== document && !(t.getAttribute && t.getAttribute('data-cst-open'))) t = t.parentNode;
+    if(!t || t === document) return;
+    ev.stopPropagation();
+    try{ playSfx('sfx-sel', 0.6); }catch(_){}
+    W._cstOpenMap(t.getAttribute('data-cst-open'));
+  }, true);
+
+  /* ════════════ 星圖視窗 ════════════ */
+  var _GEO = (function(){
+    var cx = 210, cy = 222, r1 = 98, r2 = 172;
+    function at(deg, r){ var a = deg * Math.PI / 180; return { x: Math.round(cx + r * Math.cos(a)), y: Math.round(cy + r * Math.sin(a)) }; }
+    return { cx:cx, cy:cy, pos:{ b1:at(-90, r1), b2:at(-90, r2), t1:at(150, r1), t2:at(150, r2), s1:at(30, r1), s2:at(30, r2) } };
+  })();
+  var _mapState = { name:'', sel:'' };
+  function _typeBadge(st){
+    var m = st.ty === '⚙' ? { c:'#ff9a6a', t:_T('⚙ 全新玩法', '⚙ 引擎新增') } : st.ty === '✦' ? { c:'#c9a2ff', t:_T('✦ 新招式', '✦ 新機制') } : { c:'#7fe7c4', t:_T('＋ 變更強', '＋ 強化') };
+    return '<span class="cst-badge" style="color:' + m.c + ';border-color:' + m.c + ';">' + m.t + '</span>' + (st.bal ? '<span class="cst-badge" style="color:#ffd97a;border-color:#ffd97a;" title="v1.1 平衡修正">⚖</span>' : '');
+  }
+  function _svg(k, e, lit, held, owned, canLight){
+    var g = _GEO, P = g.pos, s = '';
+    var img = (typeof HERO_IMGS !== 'undefined' && (HERO_IMGS[k] || HERO_IMGS[W._cstKey(k)])) ? (HERO_IMGS[k] || HERO_IMGS[W._cstKey(k)]) : '';
+    s += '<svg class="cst-svg" viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="命座星圖">';
+    s += '<defs><radialGradient id="cstGl" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff6c8" stop-opacity="1"/><stop offset="100%" stop-color="#ffcf4a" stop-opacity="0"/></radialGradient>'
+       + '<clipPath id="cstClip"><circle cx="' + g.cx + '" cy="' + g.cy + '" r="50"/></clipPath></defs>';
+    /* 背景小星點(固定種子,不每次重抽) */
+    for(var i = 0; i < 46; i++){ var x = (i * 97) % 420, y = (i * 61 + 23) % 420; s += '<circle cx="' + x + '" cy="' + y + '" r="' + (i % 3 === 0 ? 1.6 : 1) + '" fill="#ffffff" opacity="' + (0.25 + (i % 5) * 0.1) + '"/>'; }
+    var line = function(a, b, on){ return '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '" stroke="' + (on ? '#ffd97a' : '#3b4a8a') + '" stroke-width="' + (on ? 4 : 2.5) + '" stroke-linecap="round"' + (on ? '' : ' stroke-dasharray="6 6"') + '/>'; };
+    var C = { x:g.cx, y:g.cy };
+    ['b', 't', 's'].forEach(function(t){
+      s += line(C, P[t + '1'], lit.indexOf(t + '1') >= 0);
+      s += line(P[t + '1'], P[t + '2'], lit.indexOf(t + '2') >= 0);
+    });
+    /* ★ v5.275.0 呼吸光暈放在頭像「後面」(放前面會把臉蓋白);外圈金環放在頭像上方 */
+    s += '<circle class="cst-aura" cx="' + g.cx + '" cy="' + g.cy + '" r="78" fill="url(#cstGl)"/>';
+    /* 核心 */
+    s += '<circle cx="' + g.cx + '" cy="' + g.cy + '" r="58" fill="url(#cstGl)" opacity="' + (owned ? 0.55 : 0.12) + '"/>';
+    s += '<circle cx="' + g.cx + '" cy="' + g.cy + '" r="52" fill="#0c1240" stroke="' + (owned ? '#ffd97a' : '#4a5488') + '" stroke-width="3"/>';
+    if(img) s += '<image href="' + _esc(img) + '" x="' + (g.cx - 50) + '" y="' + (g.cy - 50) + '" width="100" height="100" preserveAspectRatio="xMidYMin slice" clip-path="url(#cstClip)" opacity="' + (owned ? 1 : 0.35) + '"/>';
+    else s += '<text x="' + g.cx + '" y="' + (g.cy + 12) + '" text-anchor="middle" font-size="36" fill="#fff">⦿</text>';
+    /* ★ v5.275.0 點亮回饋:頭像外圈呼吸光芒(平時透明,點亮成功後加 .on 跑 2 秒 = 兩次呼吸) */
+    s += '<circle class="cst-aura cst-auraR" cx="' + g.cx + '" cy="' + g.cy + '" r="56" fill="none" stroke="#ffd24a" stroke-width="4"/>';
+    /* 軌道名(爆發在 b2 左側、天賦/技能在貳星下方;星名一律另放,彼此不重疊) */
+    var tl = { b:{ x:P.b2.x - 34, y:P.b2.y + 6, a:'end' }, t:{ x:P.t2.x + 10, y:P.t2.y + 50, a:'middle' }, s:{ x:P.s2.x - 10, y:P.s2.y + 50, a:'middle' } };
+    ['b', 't', 's'].forEach(function(t){ s += '<text class="cst-lb" x="' + tl[t].x + '" y="' + tl[t].y + '" text-anchor="' + tl[t].a + '" font-size="15" font-weight="800" fill="#9fb4ff">' + _esc(_T(TRACK[t].cute, TRACK[t].prem)) + '</text>'; });
+    /* 星名位置:爆發軌放右側,天賦/技能軌放星的上方 */
+    var lblPos = function(sl, p){ return (sl.charAt(0) === 'b') ? { x:p.x + 32, y:p.y + 5, a:'start' } : { x:p.x, y:p.y - 31, a:'middle' }; };
+    /* 星 */
+    SLOTS.forEach(function(sl){
+      var p = P[sl], isLit = lit.indexOf(sl) >= 0;
+      var can = !isLit && owned && canLight && (!PRE[sl] || lit.indexOf(PRE[sl]) >= 0) && (held - lit.length) > 0;
+      var cls = 'cst-star' + (isLit ? ' lit' : '') + (can ? ' can' : '') + (_mapState.sel === sl ? ' sel' : '');
+      var fill = isLit ? '#ffd24a' : (can ? '#ffffff' : '#2a3366');
+      s += '<g class="' + cls + '" data-cst-star="' + sl + '" tabindex="0">'
+        + '<circle class="cst-glow" cx="' + p.x + '" cy="' + p.y + '" r="40" fill="url(#cstGl)"/>'
+        + '<circle cx="' + p.x + '" cy="' + p.y + '" r="34" fill="transparent"/>'   /* 加大點擊範圍(手機橫放縮圖後仍約 46px) */
+        + '<circle class="cst-ring" cx="' + p.x + '" cy="' + p.y + '" r="24" fill="none" stroke="' + (isLit ? '#fff3c0' : '#5a6aaa') + '" stroke-width="2"/>'
+        + '<circle class="cst-core" cx="' + p.x + '" cy="' + p.y + '" r="17" fill="' + fill + '"/>'
+        + '<text x="' + p.x + '" y="' + (p.y + 6) + '" text-anchor="middle" font-size="17" font-weight="900" fill="' + (isLit ? '#5a3a00' : (can ? '#1a2266' : '#8090c8')) + '">★</text>'
+        + (function(){ var lp = lblPos(sl, p); return '<text class="cst-lb" x="' + lp.x + '" y="' + lp.y + '" text-anchor="' + lp.a + '" font-size="14" font-weight="800" fill="' + (isLit ? '#ffe9a8' : '#aab6e6') + '">' + SLOT_LBL[sl] + '</text>'; })()
+        + '</g>';
+    });
+    s += '</svg>';
+    return s;
+  }
+  function _sideHtml(k, e, lit, held, owned){
+    var sl = _mapState.sel;
+    if(!sl){
+      return '<button type="button" class="cst-sx" data-cst-act="sideclose">✕</button>'
+        + '<div class="cst-sname">' + _T('點一顆星星看看它的效果', '點選星圖上的命星以查看效果') + '</div>'
+        + '<div class="cst-desc">' + _T('每拿到 1 顆命星,就可以選一條路點亮下一顆星。同一條路要先點「壹」才能點「貳」。',
+                                         '每獲得 1 顆命星,可自選任一軌道點亮下一顆;同軌道須先點「壹」才能點「貳」。壹=進化(數值與條件),貳=質變(新機制)。') + '</div>';
+    }
+    var st = e.s[sl], isLit = lit.indexOf(sl) >= 0, cute = _cute();
+    var h = '<button type="button" class="cst-sx" data-cst-act="sideclose">✕</button>';
+    h += '<div class="cst-slot">' + SLOT_LBL[sl] + ' ' + _typeBadge(st) + '</div>';
+    h += '<div class="cst-sname">' + _esc(st.n) + '</div>';
+    if(st.k) h += '<div class="cst-sk">' + _T('強化技能:', '對應技能:') + '「' + _esc(st.k) + '」</div>';
+    h += '<div class="cst-desc">' + _esc(cute ? st.sd : st.fd) + '</div>';
+    h += '<details class="cst-full"><summary>' + (cute ? '📖 看完整說明' : '📖 簡單說明') + '</summary>' + _esc(cute ? st.fd : st.sd) + '</details>';
+    var _pt = ''; try{ var _er = W._CST_EFFECTS[W._cstKey(k)][sl]; _pt = (_er && _er.partial) || ''; }catch(_){}
+    if(_pt) h += '<div class="cst-note">' + _T('🛠 這顆星大部分已經生效,還差一點:', '🛠 此命星部分效果尚在製作中:') + _esc(_pt) + '</div>';
+    if(!W._cstEffectReady(W._cstKey(k), sl)) h += '<div class="cst-note">' + _T('🛠 這顆星的戰鬥效果還在製作中,現在點亮,之後更新就會自動生效!', '🛠 此命星的戰鬥效果尚在製作中;現在點亮,效果上線後自動生效。') + '</div>';
+    var why = '';
+    if(isLit) why = _T('✅ 已經點亮了', '✅ 已點亮');
+    else if(!owned) why = _T('還沒有這位英雄', '尚未擁有此角色');
+    else if(_isProtag(W._cstKey(k)) && !_awakened()) why = _T('主角覺醒後才能點亮', '主角覺醒後才能點亮');
+    else if(PRE[sl] && lit.indexOf(PRE[sl]) < 0) why = _T('要先點亮「' + SLOT_LBL[PRE[sl]] + '」', '需先點亮「' + SLOT_LBL[PRE[sl]] + '」');
+    else if(held - lit.length <= 0) why = _T('沒有可以用的命星', '沒有可分配的命星');
+    h += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">'
+      + '<button type="button" class="cst-btn" data-cst-act="light"' + (why ? ' disabled' : '') + '>' + _T('⭐ 點亮這顆星', '⭐ 點亮命星') + '</button>'
+      + (why ? '<span style="font-size:15px;color:' + (isLit ? '#7fffb0' : '#ffcf8a') + ';font-weight:800;">' + why + '</span>' : '')
+      + '</div>';
+    return h;
+  }
+  function _renderMap(){
+    var ov = document.getElementById('cst-map-ov'); if(!ov) return;
+    var name = _mapState.name, k = W._cstKey(name), e = _db()[k];
+    if(!e){ ov.remove(); return; }
+    var owned = _owned(k), held = W._cstHeld(k), lit = W._cstLit(k), free = Math.max(0, held - lit.length);
+    var canLight = _ready() && (!_isProtag(k) || _awakened());
+    var protagNote = '';
+    if(_isProtag(k)){
+      protagNote = '<div class="cst-stat" style="color:#ffcf8a;">' + _T('主角的命星要靠主線劇情拿:第三章、第六章各 1 顆,第 3～6 顆在第七章以後開放。' + (_awakened() ? '' : '(覺醒後才能點亮)'),
+        '主角命星僅由主線大章節取得:第三章、第六章通關各 1 顆;第 3～6 顆於第七章以後開放。' + (_awakened() ? '' : '(覺醒後才能點亮)')) + '</div>';
+    }
+    var html = '<div class="cst-card" role="dialog" aria-modal="true">'
+      + '<button type="button" class="cst-x" data-cst-act="close" aria-label="關閉">✕</button>'
+      + '<div class="cst-head"><div style="min-width:0;">'
+      +   '<div class="cst-title">✨ ' + _esc(k) + '・' + _esc(e.c) + '</div>'
+      +   '<div class="cst-lore">' + _esc(e.l) + '</div>'
+      +   '<div class="cst-stat">' + _T('命星', '命星') + ' <b>' + lit.length + '</b> / ' + held + _T(' 亮了', ' 已點亮') + '・' + _T('還可以點', '可分配') + ' <b>' + free + '</b>・' + _T('最多 6 顆', '上限 6') + (owned ? '' : _T('・(還沒有這位英雄)', '・(尚未擁有)')) + '</div>'
+      +   protagNote
+      + '</div></div>'
+      + '<div class="cst-body">'
+      +   '<div class="cst-mapwrap">' + _svg(k, e, lit, held, owned, canLight) + '</div>'
+      +   '<div class="cst-side' + (_mapState.sel ? ' open' : '') + '">' + _sideHtml(k, e, lit, held, owned) + '</div>'
+      + '</div>'
+      + '<div class="cst-foot">'
+      +   '<details><summary>' + _T('ⓘ 命座在哪裡有用?', 'ⓘ 命座生效範圍與全隊上限') + '</summary>'
+      +     _T('命座只在冒險模式(故事、關卡、世界 BOSS)有用;鬥技場和小遊戲不會變強。為了公平,命星有全隊上限:每回合每人最多放 1 次大絕、全隊 2 次;多出來的回能、免死會被擋下來,戰鬥紀錄會寫「已達上限」。',
+               '命座僅於冒險模式(故事/關卡/世界 BOSS)生效,鬥技場與小遊戲不生效。命星效果受全隊上限約束:每人每回合爆發 ≤1、全隊 ≤2;額外行動每人 ≤1、全隊 ≤3;命星額外回能全隊每回合 ≤+4;免死每人每回合 1 次、每場 2 次;減傷相乘 ≤70%。被上限擋下時戰鬥紀錄會標示。')
+      +   '</details>'
+      +   '<button type="button" class="cst-btn alt" data-cst-act="reset"' + (lit.length && owned ? '' : ' disabled') + '>🔄 ' + _T('重新分配', '重置星圖') + '(💰' + (W._CST_RESET_COST | 0) + ')</button>'
+      + '</div>'
+      + '</div>';
+    ov.innerHTML = html;
+  }
+  W._cstOpenMap = function(name){
+    try{
+      if(!W._cstOpenForMe() || !W._cstEligible(name)) return;
+      try{ _protagLedgerSweep(); }catch(_){}
+      var ov = document.getElementById('cst-map-ov');
+      if(!ov){
+        ov = document.createElement('div'); ov.id = 'cst-map-ov';
+        ov.addEventListener('click', _onMapClick);
+        document.body.appendChild(ov);
+      }
+      _mapState.name = name; _mapState.sel = '';
+      _cstCodexGlowPending = false;   // ★ v5.275.0 每次開星圖重新計算
+      _renderMap();
+    }catch(e){ console.warn('[命座] 開啟星圖失敗', e); }
+  };
+  function _refreshCodex(){
+    try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑格子卡的十字星同步
+    try{
+      var box = document.getElementById('hero-detail-content'), hov = document.getElementById('hero-detail-overlay');
+      if(box && hov && hov.style.display !== 'none' && W._pgiLastCodexName && typeof _renderHeroDetail === 'function') _renderHeroDetail(W._pgiLastCodexName, box);
+    }catch(_){}
+    _cstCodexGlow();   // ★ v5.275.0 本次開星圖有點亮過 ⇒ 回到圖鑑時大圖邊框呼吸光芒 2 秒
+  }
+  /* ★ v5.275.0(老師 2026-10-17 13:52)點亮命星的「英雄變強」回饋:純視覺/音效,零資料寫入。
+   *   ①音效:能力上升(sfx-powerup)→ 0.35 秒後獲得獎章(sfx-medal-unlock)疊一層
+   *   ②星圖:新點亮的星彈跳放大、卡片外框閃金光、按鈕(已重畫為「已點亮」)金色脈衝
+   *   ③英雄頭像(星圖中心)外圈呼吸光芒 2 秒(1 秒一次 × 2);關閉星圖回到圖鑑時,圖鑑大圖邊框再呼吸 2 秒
+   *   ④粒子:從星星位置迸出金色火花＋衝擊波,頭像上方飄字「力量提升!」
+   *   全部 position:fixed 掛 body、pointer-events:none、2.2 秒後自動移除;任何一步失敗只略過不影響點亮結果。 */
+  var _cstCodexGlowPending = false;
+  function _cstLitFx(sl){
+    try{ playSfx('sfx-powerup', 0.9); }catch(_){}
+    setTimeout(function(){ try{ playSfx('sfx-medal-unlock', 0.75); }catch(_){} }, 350);
+    _cstCodexGlowPending = true;
+    try{
+      var ov = document.getElementById('cst-map-ov'); if(!ov) return;
+      var card = ov.querySelector('.cst-card');
+      if(card){ card.classList.add('cst-flash'); setTimeout(function(){ try{ card.classList.remove('cst-flash'); }catch(_){} }, 2100); }
+      ov.querySelectorAll('.cst-aura').forEach(function(a){ a.classList.add('on'); });
+      var g = ov.querySelector('[data-cst-star="' + sl + '"]'); if(g) g.classList.add('cst-just');
+      var btn = ov.querySelector('[data-cst-act="light"]'); if(btn) btn.classList.add('cst-done');
+      /* 手機橫放:說明抽屜會蓋住頭像 ⇒ 0.35 秒後把抽屜收下去,讓孩子看到頭像呼吸光芒(點星星可再打開) */
+      try{
+        if(W.matchMedia && W.matchMedia('(orientation:landscape) and (max-height:520px)').matches){
+          var side = ov.querySelector('.cst-side');
+          if(side) setTimeout(function(){ try{ side.classList.remove('open'); }catch(_){} }, 350);
+        }
+      }catch(_){}
+      var _ctr = function(el){ var r = el.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height / 2, ok:(r.width > 0 && r.height > 0) }; };
+      var _add = function(cls, x, y, extra){
+        var d = document.createElement('div'); d.className = cls;
+        d.style.left = x + 'px'; d.style.top = y + 'px';
+        if(extra) extra(d);
+        document.body.appendChild(d);
+        setTimeout(function(){ try{ d.remove(); }catch(_){} }, 2200);
+        return d;
+      };
+      var _burst = function(c, n, dist){
+        if(!c.ok) return;
+        _add('cst-wave', c.x, c.y);
+        for(var i = 0; i < n; i++){
+          var ang = (Math.PI * 2 * i / n) + Math.random() * 0.4, dd = dist * (0.6 + Math.random() * 0.6);
+          _add('cst-spark', c.x, c.y, function(d){ d.style.setProperty('--dx', Math.round(Math.cos(ang) * dd) + 'px'); d.style.setProperty('--dy', Math.round(Math.sin(ang) * dd) + 'px'); d.style.animationDelay = (Math.random() * 0.12).toFixed(2) + 's'; });
+        }
+      };
+      if(g){ var core = g.querySelector('.cst-core'); if(core) _burst(_ctr(core), 14, 70); }
+      if(btn) _burst(_ctr(btn), 10, 55);
+      var aura = ov.querySelector('.cst-auraR');
+      if(aura){
+        var pc = _ctr(aura);
+        if(pc.ok){
+          setTimeout(function(){ _burst(pc, 18, 95); }, 260);
+          var r = aura.getBoundingClientRect();
+          _add('cst-pow', pc.x, Math.max(30, r.top - 6), function(d){ d.textContent = _T('💪 力量提升!', '✨ 命星之力覺醒'); });
+        }
+      }
+    }catch(e){ console.warn('[命座] 點亮特效略過', e); }
+  }
+  function _cstCodexGlow(){
+    if(!_cstCodexGlowPending) return;
+    _cstCodexGlowPending = false;
+    setTimeout(function(){
+      try{
+        var side = document.getElementById('hero-detail-img-side'), hov = document.getElementById('hero-detail-overlay');
+        if(!side || !hov || hov.style.display === 'none') return;
+        var old = side.querySelector('.cst-codexglow'); if(old) old.remove();
+        var d = document.createElement('div'); d.className = 'cst-codexglow';
+        side.appendChild(d);
+        try{ playSfx('sfx-statup', 0.5); }catch(_){}
+        setTimeout(function(){ try{ d.remove(); }catch(_){} }, 2150);
+      }catch(_){}
+    }, 120);
+  }
+  function _onMapClick(ev){
+    var ov = document.getElementById('cst-map-ov'); if(!ov) return;
+    if(ev.target === ov){ ov.remove(); _refreshCodex(); return; }
+    var t = ev.target;
+    while(t && t !== ov && !(t.getAttribute && (t.getAttribute('data-cst-act') || t.getAttribute('data-cst-star')))) t = t.parentNode;
+    if(!t || t === ov) return;
+    var star = t.getAttribute('data-cst-star'), act = t.getAttribute('data-cst-act');
+    if(star){ try{ playSfx('sfx-sel', 0.45); }catch(_){} _mapState.sel = star; _renderMap(); return; }
+    if(act === 'close'){ try{ playSfx('sfx-cancel', 0.5); }catch(_){} ov.remove(); _refreshCodex(); return; }
+    if(act === 'sideclose'){ _mapState.sel = ''; _renderMap(); return; }
+    if(act === 'light'){
+      try{ t.classList.remove('cst-press'); void t.offsetWidth; t.classList.add('cst-press'); playSfx('sfx-burst-ready', 0.55); }catch(_){}   /* ★ v5.275.0 按下回饋 */
+      var nm = _mapState.name, sl = _mapState.sel, st = _db()[W._cstKey(nm)].s[sl];
+      var msg = _T('要點亮「' + st.n + '」嗎?\n之後想換別條路,要花 ' + W._CST_RESET_COST + ' 知識幣重新分配喔。',
+                   '確定點亮「' + st.n + '」?\n日後如需改變點法,重置星圖需 ' + W._CST_RESET_COST + ' 知識幣。');
+      var go = function(){
+        var r = W._cstLight(nm, sl);
+        if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
+        _toast(_T('⭐ 點亮了「' + st.n + '」!', '⭐ 已點亮「' + st.n + '」'), '#ffd97a');
+        _renderMap();
+        try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑格子卡十字星立即亮起
+        _cstLitFx(sl);   // ★ v5.275.0 變強回饋(音效＋按鈕/星星/頭像呼吸光芒 2 秒)
+      };
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if(confirm(msg)) go();
+      return;
+    }
+    if(act === 'reset'){
+      var nm2 = _mapState.name, n = W._cstLit(nm2).length;
+      var msg2 = _T('要把 ' + n + ' 顆亮著的星全部收回來重新分配嗎?\n要花 ' + W._CST_RESET_COST + ' 知識幣。',
+                    '確定重置星圖?已點亮的 ' + n + ' 顆命星將全數退回,可重新分配或拿去合成。\n費用:' + W._CST_RESET_COST + ' 知識幣。');
+      var go2 = function(){
+        var r = W._cstReset(nm2);
+        if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
+        try{ playSfx('sfx-confirm', 0.6); }catch(_){}
+        _toast(_T('🔄 星星都收回來了,可以重新點!', '🔄 星圖已重置,命星已退回'), '#9fd8ff');
+        _mapState.sel = ''; _renderMap();
+        try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑格子卡十字星同步熄滅
+      };
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if(confirm(msg2)) go2();
+    }
+  }
+  document.addEventListener('keydown', function(ev){
+    if(ev.key !== 'Escape') return;
+    var ov = document.getElementById('cst-map-ov'); if(ov){ ov.remove(); _refreshCodex(); }
+    var sy = document.getElementById('cst-synth-ov'); if(sy) sy.remove();
+  });
+
+  /* ════════════ 召喚星空「✨ 命星工坊」:合成＋使用自選命星 ════════════ */
+  W._cstEnsureSummonBtn = function(){
+    try{
+      var sov = document.getElementById('summon-overlay');
+      var old = document.getElementById('cst-summon-btn');
+      if(!W._cstOpenForMe()){ if(old) old.remove(); return; }
+      if(!sov) return;
+      /* 位置:緊貼在「📜 召喚紀錄」正上方(用 offset* 讀未縮放的版面座標 ⇒ 手機橫放字級 clamp(…vw) 變大時也不會疊在一起) */
+      var _place = function(btn){
+        try{
+          var hb = document.getElementById('summon-history-btn');
+          if(hb && hb.offsetHeight > 0){
+            btn.style.bottom = 'auto';
+            btn.style.left = hb.offsetLeft + 'px';
+            btn.style.top = Math.max(0, hb.offsetTop - btn.offsetHeight - 12) + 'px';
+          }
+        }catch(_){}
+      };
+      if(old){ old.textContent = _T('✨ 命星合成屋', '✨ 命星工坊'); setTimeout(function(){ _place(old); }, 60); return; }
+      var b = document.createElement('button');
+      b.id = 'cst-summon-btn'; b.type = 'button';
+      b.setAttribute('onclick', "playSfx('sfx-sel',0.5);window._cstOpenSynth&&window._cstOpenSynth()");
+      b.style.cssText = 'position:absolute;bottom:178px;left:32px;z-index:10;padding:10px 22px;font-size:clamp(18px,2.2vw,28px);font-weight:700;'
+        + "font-family:'M PLUS Rounded 1c','Nunito',sans-serif;background:rgba(0,0,10,0.7);border:2px solid rgba(255,230,140,0.75);"
+        + 'color:#fff1b8;border-radius:10px;cursor:pointer;letter-spacing:2px;backdrop-filter:blur(4px);box-shadow:0 0 14px rgba(255,210,90,0.4);';
+      b.textContent = _T('✨ 命星合成屋', '✨ 命星工坊');
+      sov.appendChild(b);
+      setTimeout(function(){ _place(b); }, 60);
+    }catch(e){ console.warn('[命座] 星空按鈕', e); }
+  };
+  var _syn = { tab:'SR', tray:[] };
+  function _synMaterials(rar){
+    var out = [], vk = '#void_' + rar, vc = W._cstCount(vk);
+    out.push({ k:vk, n:vc, label:_T('虛無的命星', '虛無的命星'), icon:'🌑' });
+    Object.keys(_db()).forEach(function(k){
+      if(_isProtag(k) || W._cstRarity(k) !== rar) return;
+      var f = W._cstFree(k); if(f > 0) out.push({ k:k, n:f, label:k, icon:'⭐' });
+    });
+    return out;
+  }
+  function _renderSynth(){
+    var ov = document.getElementById('cst-synth-ov'); if(!ov) return;
+    var rar = _syn.tab, pk = '#pick_' + rar, picks = W._cstCount(pk);
+    var head = '<div class="cst-card" role="dialog" aria-modal="true">'
+      + '<button type="button" class="cst-x" data-cst-sy="close" aria-label="關閉">✕</button>'
+      + '<div class="cst-title">' + _T('✨ 命星合成屋', '✨ 命星工坊') + '</div>'
+      + '<div class="cst-lore">' + _T('3 顆同樣稀有度的命星(虛無的命星或還沒點亮的角色命星)→ 合成 1 顆「自選命星」,可以送給自己想要的英雄!SR 和 SSR 不能混在一起。',
+                                      '同稀有度任意 3 顆「虛無的命星」或「未點亮的角色命星」可合成 1 顆同稀有度「自選命星」,指定給已擁有、未滿 6 命的角色。SR 與 SSR 分開計算、不可互換;UR 命星與主角命星不能合成。') + '</div>'
+      + '<div class="cst-tabs">' + ['SR', 'SSR', 'UR'].map(function(t){
+          return '<button type="button" class="cst-tab' + (t === rar ? ' on' : '') + '" data-cst-sy="tab" data-v="' + t + '">' + t + '(' + _T('自選 ', '自選 ') + W._cstCount('#pick_' + t) + (t !== 'UR' ? '・' + _T('虛無 ', '虛無 ') + W._cstCount('#void_' + t) : '') + ')</button>';
+        }).join('') + '</div>';
+    var body = '';
+    if(rar !== 'UR'){
+      var mats = _synMaterials(rar), used = {};
+      _syn.tray.forEach(function(k){ used[k] = (used[k] | 0) + 1; });
+      body += '<div class="cst-sec"><h4>① ' + _T('放 3 顆進來合成', '選 3 顆材料合成') + '</h4><div class="cst-tray">';
+      for(var i = 0; i < 3; i++){
+        var tk = _syn.tray[i];
+        body += '<div class="cst-tslot' + (tk ? ' on' : '') + '" data-cst-sy="untray" data-i="' + i + '">' + (tk ? (tk.charAt(0) === '#' ? '🌑<br>' + _T('虛無', '虛無') : '⭐<br>' + _esc(tk).slice(0, 5)) : '＋') + '</div>';
+      }
+      body += '<button type="button" class="cst-btn" data-cst-sy="synth"' + (_syn.tray.length === 3 ? '' : ' disabled') + '>' + _T('✨ 合成!', '✨ 合成') + '</button>'
+        + '<button type="button" class="cst-btn alt" data-cst-sy="clear"' + (_syn.tray.length ? '' : ' disabled') + '>' + _T('清空', '清空') + '</button></div>';
+      body += '<div class="cst-chips">';
+      var any = false;
+      mats.forEach(function(m){
+        var left = m.n - (used[m.k] | 0);
+        if(m.n <= 0) return; any = true;
+        var img = (m.k.charAt(0) !== '#' && typeof HERO_IMGS !== 'undefined' && HERO_IMGS[m.k]) ? '<img src="' + _esc(HERO_IMGS[m.k]) + '" alt="">' : m.icon;
+        body += '<button type="button" class="cst-chip" data-cst-sy="add" data-k="' + _esc(m.k) + '"' + (left > 0 && _syn.tray.length < 3 ? '' : ' disabled') + '>' + img + _esc(m.label) + ' ×' + left + '</button>';
+      });
+      if(!any) body += '<div class="cst-note">' + _T('現在沒有可以合成的命星。抽到已經有 6 命的英雄會得到虛無的命星;還沒點亮的角色命星也可以拿來合成。', '目前沒有可用材料。抽到已滿 6 命的角色會獲得虛無的命星;未點亮的角色命星亦可作為材料(重置退回的也可以)。') + '</div>';
+      body += '</div><div style="font-size:13px;color:#ffcf8a;margin-top:6px;">' + _T('⚠ 角色命星放進去合成就會變成自選命星,那位英雄的命星會少 1 顆。', '⚠ 角色命星投入合成後即消耗,該角色持有命星 −1。') + '</div></div>';
+    }
+    var cands = W._cstPickCandidates(rar);
+    body += '<div class="cst-sec"><h4>' + (rar !== 'UR' ? '② ' : '') + _T('使用自選命星', '使用自選命星') + '(' + _T('有 ', '持有 ') + picks + ')</h4>';
+    if(rar === 'UR') body += '<div style="font-size:14px;color:#cdd6ff;margin-bottom:6px;">' + _T('UR 自選命星是 UR 替換卷退回來的,或老師發的,只能給你已經有的 UR。', 'UR 自選命星來自 UR 替換卷退回或老師發放,只能指定已擁有的 UR。') + '</div>';
+    if(!cands.length) body += '<div class="cst-note">' + _T('沒有可以選的英雄(要已經擁有、命星還沒滿 6 顆)。', '沒有符合條件的角色(需已擁有且命星未滿 6)。') + '</div>';
+    else {
+      body += '<div class="cst-chips">';
+      cands.forEach(function(k){
+        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="">' : '⭐';
+        body += '<button type="button" class="cst-chip" data-cst-sy="pick" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + _esc(k) + ' ' + W._cstHeld(k) + '/6</button>';
+      });
+      body += '</div>';
+    }
+    body += '</div>';
+    ov.innerHTML = head + body + '</div>';
+  }
+  W._cstOpenSynth = function(){
+    try{
+      if(!W._cstOpenForMe()) return;
+      var ov = document.getElementById('cst-synth-ov');
+      if(!ov){
+        ov = document.createElement('div'); ov.id = 'cst-synth-ov';
+        ov.addEventListener('click', _onSynthClick);
+        document.body.appendChild(ov);
+      }
+      _syn.tray = [];
+      _renderSynth();
+    }catch(e){ console.warn('[命座] 命星工坊', e); }
+  };
+  function _onSynthClick(ev){
+    var ov = document.getElementById('cst-synth-ov'); if(!ov) return;
+    if(ev.target === ov){ ov.remove(); return; }
+    var t = ev.target;
+    while(t && t !== ov && !(t.getAttribute && t.getAttribute('data-cst-sy'))) t = t.parentNode;
+    if(!t || t === ov || t.disabled) return;
+    var a = t.getAttribute('data-cst-sy');
+    if(a === 'close'){ try{ playSfx('sfx-cancel', 0.5); }catch(_){} ov.remove(); return; }
+    if(a === 'tab'){ _syn.tab = t.getAttribute('data-v'); _syn.tray = []; try{ playSfx('sfx-sel', 0.4); }catch(_){} _renderSynth(); return; }
+    if(a === 'add'){ if(_syn.tray.length < 3){ _syn.tray.push(t.getAttribute('data-k')); try{ playSfx('sfx-sel', 0.4); }catch(_){} } _renderSynth(); return; }
+    if(a === 'untray'){ var i = parseInt(t.getAttribute('data-i'), 10); if(_syn.tray[i]) _syn.tray.splice(i, 1); _renderSynth(); return; }
+    if(a === 'clear'){ _syn.tray = []; _renderSynth(); return; }
+    if(a === 'synth'){
+      var rar = _syn.tab, tray = _syn.tray.slice();
+      var heroes = tray.filter(function(k){ return k.charAt(0) !== '#'; });
+      var msg = _T('要把這 3 顆合成 1 顆「' + rar + ' 自選命星」嗎?' + (heroes.length ? '\n(' + heroes.join('、') + ' 的命星會用掉)' : ''),
+                   '確定以 3 顆材料合成 1 顆「' + rar + ' 自選命星」?' + (heroes.length ? '\n將消耗:' + heroes.join('、') + ' 的未點亮命星' : ''));
+      var go = function(){
+        var r = W._cstSynth(rar, tray);
+        if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
+        _syn.tray = [];
+        try{ playSfx('sfx-medal-unlock', 0.85); }catch(_){}
+        _toast(_T('✨ 合成成功!得到 1 顆 ' + rar + ' 自選命星', '✨ 合成完成:' + rar + ' 自選命星 ×1'), '#ffd97a');
+        _renderSynth();
+      };
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if(confirm(msg)) go();
+      return;
+    }
+    if(a === 'pick'){
+      var rar2 = _syn.tab, k = t.getAttribute('data-k');
+      var msg2 = _T('要把 1 顆 ' + rar2 + ' 自選命星送給「' + k + '」嗎?', '確定將 1 顆 ' + rar2 + ' 自選命星指定給「' + k + '」?');
+      var go2 = function(){
+        var r = W._cstUsePick(rar2, k);
+        if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
+        try{ playSfx('sfx-medal-unlock', 0.85); }catch(_){}
+        _toast(_T('⭐ ' + k + ' 拿到 1 顆命星!到英雄圖鑑點亮它吧!', '⭐ ' + k + ' 命星 +1,請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
+        _renderSynth();
+      };
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if(confirm(msg2)) go2();
+    }
+  }
+})();
 
 window._advSystemReady = true;
 
