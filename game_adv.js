@@ -21248,6 +21248,270 @@ const ADMIN_ALL_HEROES = [
   '煉丹小藥童',
 ];
 
+/* ════════════════════════════════════════════════════════════════════════
+ * ★★ v5.280.0 永久英雄擁有證明 — 學生端記憶體(老師 2026-10-19「獲得角色這種重要存檔要永久保留不可刪除」)
+ *   純函式(_lxpsHeroLedgerMerge/Acq/Rem/Owned/Removed/FoldHistory)在 game_cloud.js,本段只管「這個帳號」的記憶體。
+ *   ・登入:_applySafeData → _lxpsHLHydrate(data)(雲端那份已在 gameCloudLoad 對帳過)
+ *   ・獲得:advSaveUnlockedHero → _lxpsHLRecordAcq(當下記一筆)
+ *   ・存檔:_buildSafeData → _lxpsHLSafeField(清單)(折入本機流水帳的移除/獲得,再輸出 heroOwnLedger_s)
+ *   ・讀清單:advGetUnlockedHeroes 自癒時,證明裡擁有的英雄一定補回(永不遺失)
+ *   ・換帳號:_clearAccountLocalData → _lxpsHLReset()
+ *   帳號隔離:記憶體綁 uid 前 12 碼,不是當前帳號一律視為「未載入」(不讀、不寫、不輸出)。
+ * ════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var W = window;
+  W._lxpsHLMem = null;   // { uid12, L, cut }
+  function _u12(){ return String(W._gUserId || '').slice(0, 12); }
+  W._lxpsHLReady = function(){ return !!(W._lxpsHLMem && W._lxpsHLMem.uid12 && W._lxpsHLMem.uid12 === _u12() && typeof W._lxpsHeroLedgerAcq === 'function'); };
+  W._lxpsHLHydrate = function(data){
+    try{
+      if(typeof W._lxpsHeroLedgerMerge !== 'function') return;
+      var u = _u12(); if(!u) return;
+      var cut = (data && +data._lastResetAt) || 0;
+      var prev = (W._lxpsHLMem && W._lxpsHLMem.uid12 === u) ? W._lxpsHLMem.L : null;
+      var L = W._lxpsHeroLedgerMerge([data && data.heroOwnLedger_s, prev], u, cut);
+      // 本機流水帳(此時已與雲端流水帳合併過)也折進來:本機剛做的移除(例如「不是我的」)尚未存檔時,證明也要知道
+      try{
+        var raw = localStorage.getItem('adv_hero_unlock_history');
+        var h = raw ? JSON.parse(raw) : [];
+        if(Array.isArray(h) && typeof W._lxpsHeroLedgerFoldHistory === 'function') W._lxpsHeroLedgerFoldHistory(L, h, u, cut, true);
+      }catch(_){}
+      W._lxpsHLMem = { uid12: u, L: L, cut: cut };
+      _lastFoldRaw = null;
+    }catch(e){ console.warn('[永久擁有證明] 載入例外', e); }
+  };
+  W._lxpsHLReset = function(){ W._lxpsHLMem = null; _lastFoldRaw = null; };
+  W._lxpsHLRecordAcq = function(name, src){
+    try{
+      if(!name || !W._lxpsHLReady()) return;
+      W._lxpsHeroLedgerAcq(W._lxpsHLMem.L, name, Date.now(), src || 'unlock', W._lxpsHLMem.uid12);
+    }catch(_){}
+  };
+  var _lastFoldRaw = null;
+  W._lxpsHLFoldLocal = function(){   // 本機流水帳有新的移除/獲得(UR 替換、「不是我的」、剛抽到)時立刻反映(內容沒變就跳過)
+    try{
+      if(!W._lxpsHLReady()) return;
+      var raw = localStorage.getItem('adv_hero_unlock_history');
+      if(!raw || raw === _lastFoldRaw) return;
+      _lastFoldRaw = raw;
+      var h = JSON.parse(raw);
+      if(Array.isArray(h)) W._lxpsHeroLedgerFoldHistory(W._lxpsHLMem.L, h, W._lxpsHLMem.uid12, W._lxpsHLMem.cut, true);
+    }catch(_){}
+  };
+  W._lxpsHLOwnedNames = function(){
+    if(!W._lxpsHLReady()) return [];
+    var L = W._lxpsHLMem.L;
+    return Object.keys(L.h).filter(function(n){ return W._lxpsHeroLedgerOwned(L, n); });
+  };
+  W._lxpsHLIsRemoved = function(name){
+    return !!(W._lxpsHLReady() && W._lxpsHeroLedgerRemoved(W._lxpsHLMem.L, name));
+  };
+  W._lxpsHLSafeField = function(list){
+    try{
+      if(!W._lxpsHLReady()) return {};
+      var M = W._lxpsHLMem, L = M.L, u = M.uid12;
+      try{
+        var raw = localStorage.getItem('adv_hero_unlock_history');
+        var h = raw ? JSON.parse(raw) : [];
+        if(Array.isArray(h)) W._lxpsHeroLedgerFoldHistory(L, h, u, M.cut, true);
+      }catch(_){}
+      var now = Date.now();
+      (Array.isArray(list) ? list : []).forEach(function(n){
+        if(!n || W._lxpsHeroLedgerOwned(L, n)) return;
+        if(W._lxpsHeroLedgerRemoved(L, n)) return;   // 最近一次是移除 ⇒ 清單裡的是舊殘留,絕不記成獲得(否則老師刪的會復活)
+        W._lxpsHeroLedgerAcq(L, n, now, 'seen', u);
+      });
+      return { heroOwnLedger_s: JSON.stringify(L) };
+    }catch(e){ console.warn('[永久擁有證明] 存檔欄位例外(本次不寫證明)', e); return {}; }
+  };
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+ * ★★ v5.280.0 永久資產帳本 — 學生端(老師 2026-10-19「每一次玩家新增或減少資源,都寫入雲端永久證明」)
+ *   做法:不靠每個金流點各自記帳(幾十個地方,總會漏),改「快照比對」——
+ *     每次存檔/每 15 秒/離開時,把目前持有(英雄、至寶與等級、命星、背包道具含水晶與召喚卷、知識幣)
+ *     跟上一次快照比對,有變就記成一筆筆增減;來源從同一段時間的既有帳本(召喚卷帳本、知識幣帳本、
+ *     解鎖紀錄、命星帳本、背包加減時的用途標籤)抓來附註。⇒ 任何一條路徑改到資源都逃不掉。
+ *   兩次存檔之間被別人改過(老師發獎、別台平板、登入自動補回)⇒ 登入時跟雲端上次存的快照比,記成 reconcile。
+ *   第一次跑新版 ⇒ 寫一頁 baseline(當下全部持有＝歸屬基準)。
+ *   上傳:累積的增減每 20 秒(或離開時)寫成一頁到 players/{uid}/assetLedger(只能新增,不能改、不能刪)。
+ *   上傳失敗的會存在這台裝置(本帳號專屬鍵),下次再補傳;換帳號一律清空記憶體、不會寫到別人帳本。
+ *   GM 帳號不記(GM 擁有全部英雄,記了只是雜訊)。
+ * ════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var W = window;
+  var A = { uid12: null, snap: null, lastAt: 0, hints: [], q: [], flushT: null, startedFor: null, loaded: null };
+  W._lxpsAsset = A;
+  var QKEY = 'lxps_asset_queue';
+  function _u12(){ return String(W._gUserId || '').slice(0, 12); }
+  function _isAdm(){ try{ return typeof W._isAdminUser === 'function' && !!W._isAdminUser(); }catch(_){ return false; } }
+  function _ready(){ return W._progressLoaded === true && !!_u12() && typeof W._lxpsHLReady === 'function' && W._lxpsHLReady() && !_isAdm(); }
+  function _snap(){
+    var s = { h:{}, t:{}, s:{}, b:{}, c:0 };
+    try{ (advGetUnlockedHeroes() || []).forEach(function(n){ if(n) s.h[n] = (typeof _heroLevels === 'object' && _heroLevels && (+_heroLevels[n] || 0)) || 1; }); }catch(_){}
+    try{ if(typeof _taiwanTreasureData === 'object' && _taiwanTreasureData) Object.keys(_taiwanTreasureData).forEach(function(id){ var r = _taiwanTreasureData[id]; if(r) s.t[id] = (+r.lv || 0) || 1; }); }catch(_){}
+    try{ var d = W._cstData; if(d && d.got){ Object.keys(d.got).forEach(function(k){ var n = (+d.got[k] || 0) - (+((d.used || {})[k]) || 0); if(n > 0) s.s[k] = n; }); } }catch(_){}
+    try{ if(typeof _playerBackpack === 'object' && _playerBackpack) Object.keys(_playerBackpack).forEach(function(k){ var v = +_playerBackpack[k] || 0; if(v) s.b[k] = v; }); }catch(_){}
+    try{ s.c = Math.round(+_knowledgeCoins || 0); }catch(_){}
+    return s;
+  }
+  function _ls(key){ try{ var r = localStorage.getItem(key); var p = r ? JSON.parse(r) : null; return p; }catch(_){ return null; } }
+  function _why(k, id, since){
+    var out = [];
+    try{
+      if(k === 'b'){ A.hints.forEach(function(x){ if(x.id === id && x.src) out.push(x.src); }); }
+      else if(k === 'c'){ (_ls('lxps_coin_tx') || []).forEach(function(x){ if(x && (+x.at || 0) > since && x.reason) out.push(x.reason); }); }
+      else if(k === 'h'){ (_ls('adv_hero_unlock_history') || []).forEach(function(x){ if(x && x.name === id && (+x.at || 0) > since) out.push(x.source || ''); }); }
+      else if(k === 's'){ var d = W._cstData; ((d && d.hist) || []).forEach(function(x){ if(x && x.h === id && (+x.at || 0) > since) out.push((x.k || '') + (x.s ? (':' + x.s) : '')); }); }
+    }catch(_){}
+    var u = []; out.forEach(function(x){ if(x && u.indexOf(x) < 0) u.push(x); });
+    return u.slice(-3).join('|').slice(0, 80);
+  }
+  function _diff(a, b, since){
+    var out = [];
+    function add(k, id, d, v){ var e = { k:k, id:String(id), d:d, v:v }; var w = _why(k, id, since); if(w) e.why = w; out.push(e); }
+    Object.keys(b.h).forEach(function(n){ if(!(n in a.h)) add('h', n, 1, b.h[n]); });
+    Object.keys(a.h).forEach(function(n){ if(!(n in b.h)) add('h', n, -1, 0); });
+    Object.keys(b.t).forEach(function(id){ if(!(id in a.t)) add('t', id, 1, b.t[id]); else if(b.t[id] !== a.t[id]) add('tl', id, b.t[id] - a.t[id], b.t[id]); });
+    Object.keys(a.t).forEach(function(id){ if(!(id in b.t)) add('t', id, -1, 0); });
+    ['s', 'b'].forEach(function(k){
+      var keys = {}; Object.keys(a[k]).forEach(function(x){ keys[x] = 1; }); Object.keys(b[k]).forEach(function(x){ keys[x] = 1; });
+      Object.keys(keys).forEach(function(x){ var d = (+b[k][x] || 0) - (+a[k][x] || 0); if(d) add(k, x, d, +b[k][x] || 0); });
+    });
+    if((b.c | 0) !== (a.c | 0)) add('c', 'coins', (b.c | 0) - (a.c | 0), b.c | 0);
+    return out;
+  }
+  function _qLoad(){ var q = _ls(QKEY), u = _u12(); return Array.isArray(q) ? q.filter(function(p){ return p && p.u === u; }) : []; }   /* 只接回本帳號的(共用 iPad 防汙染) */
+  // ★ 二審 M2:佇列用「位元組」封頂,避免塞滿 iPad Safari 約 5MB 的 localStorage 而讓其他存檔(例如剛抽到的英雄)寫不進去。
+  //   本帳號最多 ~350KB、其他帳號合計最多 ~120KB;超過時先丟最舊的「非歸屬基準」頁,歸屬基準頁保留。
+  var Q_MINE = 350000, Q_OTHERS = 120000, PAGE_MAX = 300;
+  function _sz(p){ try{ return JSON.stringify(p).length; }catch(_){ return 0; } }
+  function _trim(arr, cap){
+    var tot = 0, i; for(i = 0; i < arr.length; i++) tot += _sz(arr[i]);
+    while(tot > cap && arr.length){
+      var k = -1; for(i = 0; i < arr.length; i++){ if(arr[i].kind !== 'baseline'){ k = i; break; } }
+      if(k < 0) k = 0;
+      tot -= _sz(arr[k]); arr.splice(k, 1);
+    }
+    return arr;
+  }
+  function _qSave(){
+    try{
+      var u = A.uid12 || _u12();
+      var others = (_ls(QKEY) || []).filter(function(p){ return p && p.u && p.u !== u; });   /* 同台平板其他帳號還沒傳完的保留,等他們自己登入再傳 */
+      A.q = _trim(A.q, Q_MINE);
+      localStorage.setItem(QKEY, JSON.stringify(_trim(others, Q_OTHERS).concat(A.q)));
+    }catch(_){}
+  }
+  var _inflight = {};   // 只在記憶體:正在寫的頁 id(頁面重載後一律重傳,同一個 id 重傳安全)
+  function _newId(){ return Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
+  // ★ 二審 M1/M4/截斷:每頁建立時就給固定 id;遊戲中的增減併進同一頁(每頁最多 300 筆,滿了開新頁,不再截斷丟棄)
+  function _push(kind, entries, extra){
+    if(!entries || !entries.length){ if(!(extra && extra.snap_s)) return; }
+    var now = Date.now(), u = _u12();
+    var es = (entries || []).map(function(e){ var x = Object.assign({}, e); if(!x.at) x.at = now; return x; });
+    if(extra && extra.snap_s){
+      var pb = { id: _newId(), at: now, kind: kind, e: es.slice(0, PAGE_MAX), u: u, snap_s: extra.snap_s };
+      if(extra.note) pb.note = extra.note;
+      A.q.push(pb); es = es.slice(PAGE_MAX);
+    }
+    while(es.length){
+      var last = A.q.length ? A.q[A.q.length - 1] : null;
+      if(!(last && last.kind === kind && last.u === u && !last.snap_s && !last.sent && !_inflight[last.id] && last.e.length < PAGE_MAX)){
+        last = { id: _newId(), at: now, kind: kind, e: [], u: u }; A.q.push(last);
+      }
+      var room = PAGE_MAX - last.e.length;
+      Array.prototype.push.apply(last.e, es.slice(0, room)); es = es.slice(room);
+    }
+    _qSave(); _schedule(60000);
+  }
+  function _schedule(ms){
+    var due = Date.now() + ms;
+    if(A.flushT){ if(A.flushDue && A.flushDue <= due) return; clearTimeout(A.flushT); }   // 已排的比較早就沿用;這次比較急就改排(三審 L5)
+    A.flushDue = due;
+    A.flushT = setTimeout(function(){ A.flushT = null; A.flushDue = 0; W._lxpsAssetFlush(); }, ms);
+  }
+  W._lxpsAssetFlush = function(){
+    try{
+      if(!_ready() || A.uid12 !== _u12() || !A.q.length) return;
+      if(typeof W._lxpsAssetLedgerWrite !== 'function') return;
+      var uid = W._gUserId, u12 = A.uid12;   // ★ 二審 M3:寫入開始時就鎖定帳號,寫完才回來也不會記到下一位同學
+      A.q.forEach(function(p){
+        if(!p || p.u !== u12 || _inflight[p.id]) return;
+        if(!p.id) p.id = _newId();
+        _inflight[p.id] = 1;
+        if(!p.sent){ p.sent = 1; _qSave(); }   // 三審 M2:送出過的頁不再併入新增減(否則已寫成功的頁重傳被擋,新併入的會無聲遺失)
+        var meta = { kind: p.kind, id: p.id };
+        if(p.snap_s) meta.snap_s = p.snap_s;
+        if(p.note) meta.note = p.note;
+        W._lxpsAssetLedgerWrite(uid, p.e, meta).then(function(ok){
+          delete _inflight[p.id];
+          if(!ok) return;   // 留在佇列(這台裝置),下次用同一個 id 重傳
+          if(A.uid12 === u12){
+            A.q = A.q.filter(function(x){ return x !== p; }); _qSave();
+          } else {
+            try{ var all = (_ls(QKEY) || []).filter(function(x){ return !(x && x.id === p.id); }); localStorage.setItem(QKEY, JSON.stringify(all)); }catch(_){}
+          }
+          if(p.kind === 'baseline') _markBaseline(u12);
+        });
+      });
+    }catch(e){ console.warn('[永久資產帳本] 上傳例外(下次再傳)', e); }
+  };
+  function _markBaseline(u12){
+    try{
+      if(!u12 || _u12() !== u12) return;   // 已換帳號:不寫到別人主檔(下次本人登入時,佇列裡已沒有 baseline 頁,但雲端已有那頁;會再寫一次基準,可接受)
+      if(typeof W._lxpsCloudInstantUnlock === 'function') W._lxpsCloudInstantUnlock({ _assetBaselineAt: Date.now() }, '永久資產帳本:歸屬基準');
+      if(A.loaded && A.loaded.uid12 === u12) A.loaded.baselineAt = Date.now();
+    }catch(_){}
+  }
+  // 登入資料載入時(_applySafeData)記下雲端上次存的快照與是否已有歸屬基準;真正開始比對等到 _ready
+  W._lxpsAssetOnLoad = function(data){
+    try{
+      if(A.uid12 && A.uid12 !== _u12()) W._lxpsAssetReset();
+      A.loaded = { snap_s: (data && typeof data.assetSnap_s === 'string') ? data.assetSnap_s : null, baselineAt: (data && +data._assetBaselineAt) || 0, uid12: _u12() };
+      A.startedFor = null;
+    }catch(_){}
+  };
+  W._lxpsAssetReset = function(){ A.uid12 = null; A.snap = null; A.hints = []; A.q = []; A.startedFor = null; A.loaded = null; if(A.flushT){ clearTimeout(A.flushT); A.flushT = null; } };
+  W._lxpsAssetHint = function(k, id, d, src){ try{ if(A.uid12 && A.uid12 === _u12() && src) A.hints.push({ k:k, id:String(id), d:d, src:String(src).slice(0, 40) }); if(A.hints.length > 400) A.hints = A.hints.slice(-400); }catch(_){} };
+  W._lxpsAssetTick = function(){
+    try{
+      if(!_ready()) return null;
+      var u = _u12(), now = Date.now(), cur = _snap();
+      if(A.startedFor !== u){
+        // 本帳號本次登入的第一次:接上這台裝置沒傳完的、比對雲端上次快照、需要時寫歸屬基準
+        A.uid12 = u; A.startedFor = u; A.hints = [];
+        A.q = _qLoad();
+        var L = A.loaded && A.loaded.uid12 === u ? A.loaded : { snap_s:null, baselineAt:0 };
+        if(!L.baselineAt){ _push('baseline', [], { snap_s: JSON.stringify(cur), note:'歸屬基準:新版第一次登入時本帳號的全部持有' }); }
+        else if(L.snap_s){
+          var prev = null; try{ prev = JSON.parse(L.snap_s); }catch(_){ prev = null; }
+          if(prev && prev.h){ _push('reconcile', _diff(prev, cur, 0).map(function(e){ e.why = e.why || '兩次存檔之間的雲端變動(老師發放/別台平板/自動補回)'; return e; })); }
+        }
+        A.snap = cur; A.lastAt = now;
+        _schedule(3000);
+        return cur;
+      }
+      var es = _diff(A.snap, cur, A.lastAt);
+      if(es.length){ _push('play', es); }
+      A.snap = cur; A.lastAt = now; A.hints = [];
+      return cur;
+    }catch(e){ console.warn('[永久資產帳本] 比對例外', e); return null; }
+  };
+  // _buildSafeData 用:先比對一次,再把快照存進雲端(下次登入比對「兩次存檔之間」的變動)
+  W._lxpsAssetSafeField = function(){
+    try{
+      var cur = W._lxpsAssetTick();
+      if(!cur) return {};
+      return { assetSnap_s: JSON.stringify(cur) };
+    }catch(_){ return {}; }
+  };
+  setInterval(function(){ try{ W._lxpsAssetTick(); }catch(_){} }, 15000);
+  var _bye = function(){ try{ W._lxpsAssetTick(); W._lxpsAssetFlush(); }catch(_){} };
+  try{ W.addEventListener('pagehide', _bye); }catch(_){}
+  try{ document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') _bye(); }); }catch(_){}
+})();
+
 function advGetUnlockedHeroes() {
   // ★ v1.0.20260507.5610 — 管理員直接擁有所有 47 隻英雄
   //   寫到 localStorage 中,讓每個依賴此 list 的其他系統都能讀到
@@ -21321,10 +21585,27 @@ function advGetUnlockedHeroes() {
         try{ if(typeof window._advHasEventUnlockEvidence === 'function' && !window._advHasEventUnlockEvidence(name)) return; }catch(_){}
         _set.add(name); _recovered++;
       });
+      // ★ v5.280.0 永久擁有證明自癒:證明裡「擁有」的英雄一定在清單裡(永不遺失)。
+      //   (審查修正)最近一次是移除的只「不加回來」,不主動從清單拿掉;活動限定英雄仍要過解鎖證據守門。
+      //   證明只在已載入當前帳號時才有內容(_lxpsHLReady 綁 uid),不會把別帳號的英雄帶進來。
+      try{
+        if(typeof window._lxpsHLOwnedNames === 'function'){
+          try{ window._lxpsHLFoldLocal(); }catch(_){}
+          window._lxpsHLOwnedNames().forEach(function(name){
+            if(!name || _set.has(name)) return;
+            let _isPH = true;
+            try{ if(typeof _PLAYER_HERO_NAMES !== 'undefined' && _PLAYER_HERO_NAMES) _isPH = _PLAYER_HERO_NAMES.has(name); }catch(_){ _isPH = true; }
+            if(!_isPH) return;
+            try{ if(typeof window._advHasEventUnlockEvidence === 'function' && !window._advHasEventUnlockEvidence(name)) return; }catch(_){}
+            _set.add(name); _recovered++;
+          });
+        }
+      }catch(_eHL){}
       Object.keys(_hLv).forEach(function(name){
         if(!name || _set.has(name)) return;
         if((_hLv[name] || 0) <= 0) return;
         if(_delGuardSet.has(name)) return;  // ★ v3.16.6(乙②)— 帳本顯示已被 GM 刪除 → 不自癒回來
+        try{ if(window._lxpsHLIsRemoved && window._lxpsHLIsRemoved(name)) return; }catch(_){}   // ★ v5.280.0 永久證明顯示最近一次是移除 → 不自癒回來
         // 玩家英雄白名單過濾(排除已從 HERO_DB 移除的英雄 / BOSS / 菁英)
         let _isPlayerHero = true;
         try{
@@ -21873,6 +22154,8 @@ function advSaveUnlockedHero(name, source) {
     const list = advGetUnlockedHeroes();
     const _isNew = !list.includes(name);
     if(_isNew) list.push(name);
+    // ★ v5.280.0 永久擁有證明:真的新獲得才記一筆(二審 M5:已在清單的重複呼叫不蓋「現在」章,免得把老師剛刪的英雄壓回來)
+    try{ if(_isNew && typeof window._lxpsHLRecordAcq === 'function') window._lxpsHLRecordAcq(name, source); }catch(_eHLA){}
     localStorage.setItem('adv_unlocked_heroes', JSON.stringify(list));
     // ★ v3.11.9(2026-05-28) — CRITICAL FIX:同步寫 adv_unlocked_heroes_uid 標記
     //   bug 根因:_applySafeData(line ~64984)會用 _storedUid !== _curUid 判定本地是否為「別人的殘留」,
@@ -25255,6 +25538,9 @@ window._clearAccountLocalData = function(reason){
     window._petTamePity    = {};   // ★ v5.3.0 — 馴養保底計數同步清除(localStorage 鏡像本就綁 uid·僅清記憶體·新帳號由雲端 petTamePity_s 還原)
     // ★ v5.254.0 — 命座命星記憶體清除(鐵律 1.41 共用 iPad):清空＋_cstHydrated=false ⇒ 新帳號雲端載入前存檔不帶命星欄位
     try{ if(typeof window._cstResetMemory === 'function') window._cstResetMemory(); }catch(_eCstClr){}
+    try{ if(typeof window._lxpsAssetFlush === 'function') window._lxpsAssetFlush(); }catch(_eALF){}   // ★ v5.280.0 換帳號前先把這位的資產帳本送出(uid 已換則留在本機,等本人登入再傳)
+    try{ if(typeof window._lxpsHLReset === 'function') window._lxpsHLReset(); }catch(_eHLClr){}   // ★ v5.280.0 永久擁有證明記憶體跟著帳號清掉
+    try{ if(typeof window._lxpsAssetReset === 'function') window._lxpsAssetReset(); }catch(_eALR){}
     // ★ v4.78.0 — 主線劇情進度 + 主角(自訂角色)設定記憶體清除(老師 2026-07-22 任務3 稽核補漏)
     //   同型病灶:雲端 players/{uid}.mainStoryProgress / .avatarCard 與本機 key 都已綁 uid ✅,
     //   但這兩份「記憶體物件」原本不在換帳號清單內 → 共用 iPad 換帳號無整頁 reload 時,
@@ -25922,6 +26208,10 @@ function _buildSafeData() {
     _itemGainLog_s: JSON.stringify(_itemGainLog),
     // ★ v5.254.0 — 命座命星(只寫字串版 constellationData_s);本帳號雲端資料尚未載入前回 {} ⇒ 本欄位不寫,絕不以空資料覆蓋雲端
     ...((typeof window._cstSafeField === 'function') ? window._cstSafeField() : {}),
+    // ★ v5.280.0 — 永久英雄擁有證明(只寫字串版 heroOwnLedger_s);本帳號尚未載入前回 {} ⇒ 不寫(主檔寫入時 _fbSave 還會與雲端那份合併)
+    ...((typeof window._lxpsHLSafeField === 'function') ? window._lxpsHLSafeField(advGetUnlockedHeroes()) : {}),
+    // ★ v5.280.0 — 永久資產帳本:存檔當下比對一次並附上持有快照(下次登入比對兩次存檔之間的雲端變動)
+    ...((typeof window._lxpsAssetSafeField === 'function') ? window._lxpsAssetSafeField() : {}),
     heroLevels:      _heroLevels,            // {name: 數字}
     // ★ v3.15.96(2026-06-23)— 字串版繞過 Firebase merge:true 不刪 map key 的限制(同 playerBackpack_s):
     //   雲端 heroLevels(map)深合併會殘留「已不擁有英雄」的幻影等級 → 墊高 maxLv 誤判倒退;
@@ -27458,6 +27748,8 @@ function _applySafeData(raw) {
   }
   // ★ v5.254.0 — 命座命星:雲端 constellationData_s 與記憶體合併(取得/消耗取 max、點法新者勝)＋折入 GM 發放單＋主角章節帳本
   try{ if(typeof window._cstHydrate === 'function') window._cstHydrate(data); }catch(_eCstH){ console.warn('[命座] 載入例外', _eCstH); }
+  try{ if(typeof window._lxpsHLHydrate === 'function') window._lxpsHLHydrate(data); }catch(_eHLH){ console.warn('[永久擁有證明] 載入例外', _eHLH); }   // ★ v5.280.0
+  try{ if(typeof window._lxpsAssetOnLoad === 'function') window._lxpsAssetOnLoad(data); }catch(_eALO){}   // ★ v5.280.0 永久資產帳本
   // ★ v3.37.0 — 寵物馴養:優先採信 tamedPets_s,fallback map;與記憶體 union 逐鍵 max(誤刪是大忌·只增不減)
   try{
     var _cloudPets = null;
@@ -30101,6 +30393,7 @@ window.gameCloudLoad = async function(uid) {
       const _live = _r[0].status === 'fulfilled' ? _r[0].value : null;
       const _safe = _r[1].status === 'fulfilled' ? _r[1].value : null;
       const _main = _r[2].status === 'fulfilled' ? _r[2].value : null;
+      try{ window._lxpsLastRawSlots = { uid: uid, slots: [_main, _live, _safe] }; }catch(_){}   /* ★ v5.280.0 給永久擁有證明登入對帳用 */
       if(!_r.some(x => x.status === 'fulfilled')){
         const _e = new Error('三槽全部讀取失敗');
         _e._allSlotsFailed = true;
@@ -30221,6 +30514,16 @@ window.gameCloudLoad = async function(uid) {
       cloudOk = false;
     }
   }
+  /* ★ v5.280.0 永久擁有證明登入對帳(老師 2026-10-19「獲得角色要永久保留不可刪除」):
+     英雄清單 = 選定資料 ∪ 證明裡擁有的 ∪ 任一槽有投資證據的,扣掉最近一次是移除的;補回的英雄帶回各槽最高養成。
+     原地修改 data(權威下載的 _lxpsAuthoritativeData 是同一個物件,一起更新)。任何錯誤都回傳原資料。 */
+  try{
+    if(cloudOk && data && typeof window._lxpsHeroLedgerReconcile === 'function'){
+      var _rawLS = window._lxpsLastRawSlots;
+      var _rawArr = (_rawLS && _rawLS.uid === uid && Array.isArray(_rawLS.slots)) ? _rawLS.slots : [];
+      data = window._lxpsHeroLedgerReconcile(data, _rawArr, uid) || data;
+    }
+  }catch(_eHLR){ console.warn('[v5.280.0 永久擁有證明] 對帳例外(沿用原資料)', _eHLR); }
 
   // ② 若雲端成功但 data 是 null → 可能是「真新玩家(文件不存在)」或「離線/快取讀空(無法確認)」
   // ★ v3.13.90(2026-06-09)— 收緊新玩家判定(老師裁示丙,甲-1):
@@ -31421,6 +31724,7 @@ function backpackAdd(id, n=1, src){   // ★ v5.247.0 第三參數 src = 來源�
   const cur = _playerBackpack[id]||0;
   _playerBackpack[id] = Math.min(99, cur+n);
   const _added = _playerBackpack[id] - cur; // 實際新增數
+  try{ if(_added > 0 && window._lxpsAssetHint) window._lxpsAssetHint('b', id, _added, src || window._ticketGrantSrc || '獲得'); }catch(_eAH){}   // ★ v5.280.0 永久資產帳本:來源附註
   // ★ v5.252.0 — 最近獲得物品帳本(只記不改·背包滿 99 沒放進去的數量也記下來)
   try{ if(n > 0) window._lxpsLogItemGain(id, n, _added, src); }catch(_eIl){}
   // ★★ v5.135.0 — 券類：實際新增幾張就產生幾個唯一實例（單點涵蓋所有發放端）★★
@@ -31453,6 +31757,7 @@ function backpackRemove(id, n=1, src){   // ★ v5.247.0 第三參數 src = 用�
   }
   _playerBackpack[id] = Math.max(0, (_playerBackpack[id]||0) - actual);
   if(_playerBackpack[id]===0) delete _playerBackpack[id];
+  try{ if(actual > 0 && window._lxpsAssetHint) window._lxpsAssetHint('b', id, -actual, src || '使用'); }catch(_eAH){}   // ★ v5.280.0 永久資產帳本:用途附註
   // ★★ v5.91.0（老師 2026-08-20 回報「一張 UR 券被用三次」根治的一環）— 消耗也要寫穿透 ★★
   //   【不對稱漏口】backpackAdd 自 v3.15.40 起「獲得即排程上雲」，
   //     但 backpackRemove **從來沒有對應的排程** —— 消耗只改本機，要等別處剛好呼叫
