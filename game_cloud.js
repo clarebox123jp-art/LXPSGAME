@@ -1327,7 +1327,17 @@
                 if(!_adminForce && Array.isArray(_writeData.unlockedHeroes)){
                   var _isPHNL = function(n){ try{ if(typeof _PLAYER_HERO_NAMES === 'undefined' || !_PLAYER_HERO_NAMES) return true; return _PLAYER_HERO_NAMES.has(n); }catch(_){ return true; } };
                   var _evtL = function(n){ try{ if(typeof window._advHasEventUnlockEvidence === 'function') return window._advHasEventUnlockEvidence(n) !== false; }catch(_){} return true; };
-                  var _wl = _writeData.unlockedHeroes.filter(function(n){ return !!n; });
+                  // ★ v5.281.0 例外:老師刪過(本帳號 uid、6/30 後、之後沒救援/重新獲得)的英雄,舊畫面要寫回就拿掉(其餘一律不拿)
+                  var _adGate = false; try{ _adGate = !(typeof window._isAdminUser === 'function' && window._isAdminUser()) && typeof window._lxpsHeroShouldAutoRedelete === 'function'; }catch(_){}
+                  var _wl = _writeData.unlockedHeroes.filter(function(n){
+                    if(!n) return false;
+                    if(_adGate && window._lxpsHeroShouldAutoRedelete(_mgL, n, _u12L)){
+                      try{ if(window._isProtagHero && window._isProtagHero(n)) return true; }catch(_){}
+                      try{ console.warn('[_fbSave v5.281.0] 擋下寫回已刪英雄:' + n); }catch(_){}
+                      return false;
+                    }
+                    return true;
+                  });
                   var _wls = {}; _wl.forEach(function(n){ _wls[n] = 1; });
                   Object.keys(_mgL.h).forEach(function(n){ if(!_wls[n] && !_gateRemovedSet[n] && window._lxpsHeroLedgerOwned(_mgL, n) && _isPHNL(n) && _evtL(n)){ _wl.push(n); _wls[n] = 1; } });
                   if(_wl.length !== _writeData.unlockedHeroes.length || _wl.some(function(n, i){ return n !== _writeData.unlockedHeroes[i]; })){
@@ -1937,11 +1947,12 @@
     if(!(e.w > 0) || at > e.w){ e.w = at; e.ws = String(src || '').slice(0, 40); }
     if(u12) e.u = u12;
   };
-  window._lxpsHeroLedgerRem = function(L, name, at, src){
+  // ru(v5.281.0)= 寫這筆移除的帳號 uid 前 12 碼;帳號搬家後舊帳號的移除帶舊 ru ⇒ 新帳號合併時整筆作廢、也不會被自動刪除採用
+  window._lxpsHeroLedgerRem = function(L, name, at, src, ru){
     if(!L || !name) return;
     at = +at || 0; if(at <= 0) return;
     var e = _hlEnt(L, name);
-    if(!(e.r > 0) || at > e.r){ e.r = at; e.rs = String(src || '').slice(0, 40); }
+    if(!(e.r > 0) || at > e.r){ e.r = at; e.rs = String(src || '').slice(0, 40); if(ru) e.ru = String(ru).slice(0, 12); else delete e.ru; }
   };
   // 實際獲得晚於最後一次移除(老師帳本反推、幽靈英雄稽核只認這個)
   window._lxpsHeroLedgerStrong = function(L, name){
@@ -1960,6 +1971,28 @@
     var e = L && L.h && L.h[name];
     return !!(e && (e.r || 0) > 0 && (e.r || 0) >= (e.l || 0));
   };
+  // ════════════════════════════════════════════════════════════════════════
+  // ★★ v5.281.0 自動刪除「已刪又被寫回」的英雄(老師 2026-10-19 19:07 交代)
+  //   情境:老師刪英雄(或 UR 退回/替換、學生「不是我的」)的同時,有一台還沒重新整理的舊平板剛好存檔 ⇒ 英雄被寫回清單。
+  //   判定(全部成立才刪):
+  //     ① 證明裡最近一次動作是移除(r ≥ l;看見持有 w 不算,救援/發放/重新抽到才算 l)
+  //     ② 那筆移除是「本帳號 uid」寫的(FoldHistory 只收本帳號 uid 的移除,別人殘留的紀錄進不來)
+  //     ③ 移除時間在 2026/06/30 之後(更早的舊紀錄不動)
+  //     ④ 移除來源是 admin_delete / audit_error_recovered
+  //   救援:老師在後台救援/補發會寫 admin_grant(帶 uid)⇒ l > r ⇒ 永久持有,這裡永遠不會再刪它,
+  //        除非老師之後又刪一次(那是新的移除)。
+  // ════════════════════════════════════════════════════════════════════════
+  window._LXPS_AUTO_REDEL_SINCE = 1782748800000;   // 2026-06-30 00:00 台北時間
+  //   ⑤(二審 H1)那筆移除必須確定是本帳號寫的(ru === 本帳號);沒有 ru 的舊證明不採用(帳號搬家帶來的舊移除分不出來)
+  window._lxpsHeroShouldAutoRedelete = function(L, name, u12){
+    var e = L && L.h && L.h[name];
+    if(!e) return false;
+    var r = +e.r || 0, l = +e.l || 0;
+    if(!(r > window._LXPS_AUTO_REDEL_SINCE)) return false;
+    if(!(r >= l)) return false;
+    if(!u12 || String(e.ru || '') !== String(u12).slice(0, 12)) return false;
+    return !!window._LXPS_HERO_REMOVE_SRC[String(e.rs || '')];
+  };
   window._lxpsHeroLedgerMerge = function(list, u12, cutoff){
     var out = { v:1, h:{} };
     var _cut = (typeof cutoff === 'number' && cutoff > 0) ? cutoff : 0;
@@ -1969,7 +2002,8 @@
         var e = d.h[n]; if(!n || !e || typeof e !== 'object') return;
         var r = +e.r || 0;
         if(_cut && r <= _cut) r = 0;   // ★ 二審 H2:還原/重置分界之前的移除也作廢(分界當下的清單才是依據,否則被還原的英雄永遠被判「已移除」)
-        if(r > 0) window._lxpsHeroLedgerRem(out, n, r, e.rs);         // 移除不看 uid
+        if(r > 0 && u12 && e.ru && String(e.ru).slice(0, 12) !== u12) r = 0;   // ★ v5.281.0 別帳號(帳號搬家前)的移除不帶過來
+        if(r > 0) window._lxpsHeroLedgerRem(out, n, r, e.rs, e.ru);   // 沒有 ru 的舊移除照舊算(只擋加回)
         if(u12 && e.u && String(e.u).slice(0, 12) !== u12) return;   // 獲得/持有只收本帳號的(汙染守門)
         var f = +e.f || 0, l = +e.l || 0, w = +e.w || 0;
         if(_cut){ if(f <= _cut) f = 0; if(l <= _cut) l = 0; if(w <= _cut) w = 0; }   // 重置前的不算
@@ -1997,7 +2031,7 @@
         // ★ 二審 H1:共用平板上一位同學按「不是我的」的移除(帶他自己的 uid)不能算到這位同學身上
         // ★ 三審:雲端流水帳本身也可能早已混進別人的紀錄(舊版 _applySafeData 會把本機殘留併進來再上傳)⇒ 一律只認本帳號 uid 的移除。
         //   老師刪除的寫入點都帶目標 uid(v5.280.0 補齊最後兩處);沒有 uid 的舊移除不再算(只影響「擋加回」,不會刪任何英雄)。
-        if(u12 && eu === u12) window._lxpsHeroLedgerRem(L, e.name, at, src);
+        if(u12 && eu === u12) window._lxpsHeroLedgerRem(L, e.name, at, src, u12);
         void strictRem;
         return;
       }
@@ -2152,6 +2186,38 @@
       });
       // ③(審查修正)不主動拿掉主檔清單裡已有的英雄:移除紀錄只負責「擋加回來」(①②已擋),
       //   避免「沒寫獲得紀錄的復原路徑」或兩台裝置時鐘不準時,把學生確實擁有的英雄拿掉。
+      // ③-b ★ v5.281.0 例外:老師刪過(本帳號 uid、2026/06/30 後、之後沒有救援/發放/重新獲得)又被舊平板寫回的 ⇒ 自動刪除。
+      //   不通知學生;等級暫存在 _auditRecoveredLevels,老師救援時無損還原。GM 帳號不做。
+      var _autoDel = [];
+      try{
+        var _isAdm = false; try{ _isAdm = typeof window._isAdminUser === 'function' && !!window._isAdminUser(); }catch(_){}
+        if(!_isAdm){
+          Object.keys(_final).forEach(function(n){
+            try{ if(window._isProtagHero && window._isProtagHero(n)) return; }catch(_){}
+            if(window._lxpsHeroShouldAutoRedelete(L, n, u12)) _autoDel.push(n);
+          });
+        }
+        if(_autoDel.length && typeof window._lxpsSlotRemoveHeroesPatch === 'function'){
+          // 等級:老師刪除當下雲端已暫存原等級(_auditRecoveredLevels),救援用那份;這裡只把刪除前各槽最高等級記進流水帳備查
+          var _adLv = {};
+          _autoDel.forEach(function(n){ var mx = 0; _all.forEach(function(s){ var v = +_lxpsObjFromSlot(s, 'heroLevels')[n] || 0; if(v > mx) mx = v; }); _adLv[n] = mx; });
+          // 時間戳 = 原移除時間 + 1 毫秒(不用這台平板的「現在」):平板時鐘若走快,用現在蓋章會讓之後老師的救援反而比較早而失效
+          // 二審 M3:先在草稿上套完全部,成功才一次寫回 data(中途出錯 ⇒ data 完全不動,不會出現「英雄還在、養成被清空」)
+          var _sc = Object.assign({}, data), _scKeys = {};
+          _autoDel.forEach(function(n){
+            var _r0 = +((L.h[n] || {}).r) || 0;
+            var _adP = window._lxpsSlotRemoveHeroesPatch(_sc, [n], {
+              at: _r0 + 1, by: 'system_auto_redelete', uid: uid, slot: 'login', source: 'admin_delete', adminAction: false,
+              reason: '自動移除:老師刪過的英雄被舊平板寫回(v5.281.0)', extra: { autoRedelete: true, lvBefore: (_adLv[n] || 0), redeletedAt: Date.now() }
+            });
+            if(_adP) Object.keys(_adP).forEach(function(k){ _sc[k] = _adP[k]; _scKeys[k] = 1; });
+          });
+          // 剛寫的移除也折進證明,之後的存檔閘門會擋它再被寫回
+          window._lxpsHeroLedgerFoldHistory(L, _lxpsArrFromSlot(_sc, '_heroUnlockHistory'), u12, _mainCut);
+          Object.keys(_scKeys).forEach(function(k){ data[k] = _sc[k]; });
+          _autoDel.forEach(function(n){ delete _final[n]; _removed.push(n); });
+        }
+      }catch(_eAD){ try{ console.warn('[v5.281.0 自動刪除寫回英雄] 例外(本次不刪)', _eAD); }catch(_){} _autoDel = []; }
       // ④ 清單裡的每一隻都記「看見持有」(弱):舊英雄紀錄早被擠掉的靠它保住;有過移除紀錄的,這筆不算擁有。
       var _now = Date.now();
       Object.keys(_final).forEach(function(n){
@@ -2191,6 +2257,60 @@
       }
       return data;
     }catch(e){ try{ console.warn('[永久擁有證明 v5.280.0] 登入對帳例外,沿用原資料(不影響登入)', e); }catch(_){} return data; }
+  };
+  // ════════════════════════════════════════════════════════════════════════
+  // ★ v5.281.0 GM「👤 學生資產總覽」用:讀主檔＋live/safe 兩槽,算出這位學生現在持有什麼、每隻英雄的擁有證明、
+  //   被移除的英雄(可救援)與「已刪但還在清單、學生下次登入會自動刪」的英雄。唯讀,不寫任何東西。
+  // ════════════════════════════════════════════════════════════════════════
+  window._fbAdminStudentAssetView = async function(uid){
+    if(!uid || !window._fbDb || !window._fbFns) throw new Error('雲端尚未就緒');
+    var F = window._fbFns;
+    var rd = async function(ref){ try{ var s = await F.getDoc(ref); return (s && s.exists()) ? (s.data() || {}) : null; }catch(_){ return null; } };
+    var main = await rd(F.doc(window._fbDb, 'players', uid));
+    if(!main) throw new Error('找不到這位學生的存檔');
+    var live = await rd(F.doc(window._fbDb, 'players', uid, 'saves', 'live'));
+    var safe = await rd(F.doc(window._fbDb, 'players', uid, 'saves', 'safe'));
+    var u12 = String(uid).slice(0, 12);
+    var all = [main].concat([live, safe].filter(Boolean));
+    var cut = 0; all.forEach(function(s){ var c = +s._lastResetAt || 0; if(c > cut) cut = c; });
+    // 與登入對帳同口徑:重置/還原之前存的槽不採(二審 L1)
+    all = [main].concat([live, safe].filter(function(s){ return s && (!cut || ((+s.savedAt || 0) > cut) || (+s._lastResetAt || 0) === cut); }));
+    var L = window._lxpsHeroLedgerMerge(all.map(function(s){ return s.heroOwnLedger_s; }), u12, cut);
+    var hist = [];
+    all.forEach(function(s){ _lxpsArrFromSlot(s, '_heroUnlockHistory').forEach(function(e){ if(e && e.name) hist.push(e); }); });
+    window._lxpsHeroLedgerFoldHistory(L, hist, u12, cut);
+    var rar = function(n){ try{ return (typeof window._getHeroRarity === 'function' && window._getHeroRarity(n)) || 'SR'; }catch(_){ return 'SR'; } };
+    var lv = _lxpsObjFromSlot(main, 'heroLevels');
+    var cst = window._lxpsCstMerge ? window._lxpsCstMerge(all.map(function(s){ return s.constellationData_s; })) : { got:{}, used:{}, lit:{} };
+    var held = function(k){ return Math.max(0, Math.min(6, (+(cst.got || {})[k] || 0) - (+(cst.used || {})[k] || 0))); };
+    var lit = function(k){ var r = (cst.lit || {})[k]; return (r && Array.isArray(r.s)) ? r.s.length : 0; };
+    // 每隻英雄最近一筆紀錄(本帳號 uid)
+    var lastEv = {};
+    hist.forEach(function(e){ var eu = String(e.uid || '').slice(0, 12); if(eu && eu !== u12) return; var p = lastEv[e.name]; if(!p || (+e.at || 0) > (+p.at || 0)) lastEv[e.name] = e; });
+    var list = _lxpsArrFromSlot(main, 'unlockedHeroes').filter(Boolean);
+    var inList = {}; list.forEach(function(n){ inList[n] = 1; });
+    var heroes = list.map(function(n){
+      var e = L.h[n] || {};
+      var proof = window._lxpsHeroLedgerStrong(L, n) ? 'strong' : (window._lxpsHeroLedgerOwned(L, n) ? 'weak' : 'none');
+      return { name:n, rarity:rar(n), lv:(+lv[n] || 1), held:held(n), lit:lit(n), proof:proof,
+               src:String(proof === 'strong' ? (e.ls || '') : (e.ws || '')), at:(proof === 'strong' ? (+e.l || 0) : (+e.w || 0)), first:(+e.f || 0),
+               pendingAutoDel: (function(){ try{ if(window._isProtagHero && window._isProtagHero(n)) return false; }catch(_){} return window._lxpsHeroShouldAutoRedelete(L, n, u12); })() };
+    });
+    var stash = _lxpsObjFromSlot(main, '_auditRecoveredLevels');
+    var removed = [];
+    Object.keys(L.h).forEach(function(n){
+      if(inList[n] || !window._lxpsHeroLedgerRemoved(L, n)) return;
+      var e = L.h[n], ev = lastEv[n] || {};
+      removed.push({ name:n, rarity:rar(n), at:(+e.r || 0), rs:String(e.rs || ''), reason:String(ev.reason || ''), by:String(ev.deletedBy || ev.by || ''),
+                     auto:!!ev.autoRedelete, student:(e.rs === 'audit_error_recovered'), lvStash:(+stash[n] || 0) });
+    });
+    removed.sort(function(a, b){ return b.at - a.at; });
+    var td = _lxpsObjFromSlot(main, 'taiwanTreasureData');
+    var treasures = Object.keys(td).map(function(id){ var r = td[id] || {}; var nm = ''; try{ nm = (window.TAIWAN_TREASURES && window.TAIWAN_TREASURES[id] && window.TAIWAN_TREASURES[id].name) || ''; }catch(_){} return { id:id, name:nm, lv:(+r.lv || 1), to:r.equippedTo || '' }; });
+    var bp = {}; try{ bp = (typeof main.playerBackpack_s === 'string') ? (JSON.parse(main.playerBackpack_s) || {}) : (main.playerBackpack || {}); }catch(_){ bp = main.playerBackpack || {}; }
+    var cstOther = {}; Object.keys(cst.got || {}).forEach(function(k){ if(inList[k]) return; var n = (+cst.got[k] || 0) - (+(cst.used || {})[k] || 0); if(n > 0) cstOther[k] = n; });
+    return { uid:uid, heroes:heroes, removed:removed, treasures:treasures, backpack:bp, coins:(+main.knowledgeCoins || 0), cstOther:cstOther,
+             savedAt:(+main.savedAt || +main.updatedAt || 0), hasLedger:!!main.heroOwnLedger_s, nick:String(main.displayName || main.nickname || '') };
   };
   window._lxpsMergeSlots = function(rawSlots){
     var slots = (Array.isArray(rawSlots) ? rawSlots : []).filter(function(s){ return s && typeof s === 'object'; });
@@ -6543,6 +6663,17 @@
   // 還原:把提供的 payload merge 進 players/{uid}(保留現有欄位)
   window._fbRestorePlayer = async function(uid, payload) {
     if(!uid || !payload) throw new Error('uid 與 payload 為必要');
+    // ★ v5.281.0(二審 M2)— 老師整份還原的英雄記成「老師還原」(實際獲得)進永久證明,
+    //   否則還原名單裡曾被刪過的英雄,之後會被「自動刪除寫回英雄」再刪掉
+    try{
+      if(Array.isArray(payload.unlockedHeroes) && payload.unlockedHeroes.length && typeof window._lxpsPatchOwnLedger === 'function'){
+        const _exR = await getDoc(doc(_fbDb, 'players', uid));
+        const _dR = _exR.exists() ? (_exR.data() || {}) : {};
+        payload = Object.assign({}, payload);
+        const _mgR = window._lxpsHeroLedgerMerge([_dR.heroOwnLedger_s, payload.heroOwnLedger_s], String(uid).slice(0, 12), 0);   // 兩份證明合併,不蓋掉主檔較新的
+        window._lxpsPatchOwnLedger(Object.assign({}, _dR, { heroOwnLedger_s: JSON.stringify(_mgR) }), payload, payload.unlockedHeroes.filter(Boolean), Date.now(), 'admin_restore', uid, 'acq');
+      }
+    }catch(_eRL){ console.warn('[急救 v5.281.0] 永久證明補記失敗(不影響還原)', _eRL); }
     // 用 setDoc + merge:true 保留未提及的欄位(如 _countedInStats、email、displayName 等)
     await setDoc(doc(_fbDb, 'players', uid), payload, { merge: true });
     console.info('✅ [急救] 已還原玩家資料', uid, payload);
@@ -10642,6 +10773,41 @@
   //   ⚠ 8 張養成表少清任何一張,_lxpsHeroFloorOntoMain 的 effort 判定就會把英雄撿回來
   //     (舊 _fbAdminBulkRemoveHeroes 只清 7 張,漏 heroCapsuleInvested)。
   //   ⚠ 帳本「一定寫」,即使該槽本來就沒有這隻 —— 那筆 admin_delete 才是「不復活」的唯一證據。
+  // ★ v5.281.0 — 老師刪除/救援/發放也直接寫進該槽的永久擁有證明 heroOwnLedger_s
+  //   理由:流水帳 _heroUnlockHistory 會被還沒更新的舊平板整包蓋掉(刪除證據跟著消失),
+  //   舊版程式不認得 heroOwnLedger_s ⇒ 不會碰它(merge 寫入保留)⇒ 證據留得住,自動刪除/永久持有都靠得住。
+  //   沒有 uid 不寫(分不出是誰的)。
+  function _lxpsPatchOwnLedger(d, patch, list, at, src, uid, kind){
+    try{
+      var u12 = String(uid || '').slice(0, 12);
+      if(!u12 || !list || !list.length || typeof window._lxpsHeroLedgerParse !== 'function') return;
+      var L = window._lxpsHeroLedgerParse(d && d.heroOwnLedger_s) || { v:1, h:{} };
+      list.forEach(function(n){
+        if(!n) return;
+        if(kind === 'rem'){ if(window._LXPS_HERO_REMOVE_SRC[String(src || '')]) window._lxpsHeroLedgerRem(L, n, at, src, u12); }
+        else window._lxpsHeroLedgerAcq(L, n, window._lxpsAcqStamp(d, n, at, u12), src, u12);
+      });
+      patch.heroOwnLedger_s = JSON.stringify(L);
+    }catch(_e){}
+  }
+  window._lxpsPatchOwnLedger = _lxpsPatchOwnLedger;
+  // ★ v5.281.0(二審 H2)— 獲得(救援/發放/還原)的時間戳一定晚於這份存檔已知的本帳號移除:
+  //   老師電腦與學生平板時鐘不一致時(平板走快寫了「不是我的」),救援才不會反而比移除早而失效。
+  window._lxpsAcqStamp = function(d, name, at, u12){
+    at = +at || Date.now();
+    try{
+      var mx = 0;
+      var L0 = window._lxpsHeroLedgerParse(d && d.heroOwnLedger_s);
+      var e0 = L0 && L0.h && L0.h[name];
+      if(e0 && (!e0.ru || String(e0.ru) === u12)) mx = +e0.r || 0;
+      var h = d ? (Array.isArray(d._heroUnlockHistory) ? d._heroUnlockHistory : (typeof d._heroUnlockHistory_s === 'string' ? JSON.parse(d._heroUnlockHistory_s) : [])) : [];
+      (Array.isArray(h) ? h : []).forEach(function(e){
+        if(e && e.name === name && window._LXPS_HERO_REMOVE_SRC[String(e.source || '')] && String(e.uid || '').slice(0, 12) === u12 && (+e.at || 0) > mx) mx = +e.at || 0;
+      });
+      if(mx >= at) at = mx + 1;
+    }catch(_){}
+    return at;
+  };
   window._lxpsSlotRemoveHeroesPatch = function(d, names, meta){
     d = d || {}; meta = meta || {};
     var _list = (Array.isArray(names) ? names : []).filter(Boolean);
@@ -10695,6 +10861,7 @@
     if(_hist.length > 300) _hist = _hist.slice(-300);
     _patch._heroUnlockHistory = _hist;
     try{ _patch._heroUnlockHistory_s = JSON.stringify(_hist); }catch(_){}
+    _lxpsPatchOwnLedger(d, _patch, _list, _now, (meta.source || 'admin_delete'), meta.uid, 'rem');
     return _patch;
   };
 
@@ -10734,6 +10901,7 @@
     if(_hist.length > 300) _hist = _hist.slice(-300);
     _patch._heroUnlockHistory = _hist;
     try{ _patch._heroUnlockHistory_s = JSON.stringify(_hist); }catch(_){}
+    _lxpsPatchOwnLedger(d, _patch, _list, _now, (meta.source || 'admin_grant'), meta.uid, 'acq');
     return _patch;
   };
 
@@ -11541,7 +11709,19 @@
       if(_d._auditLeveledRestoreV1) return { ok:true, alreadyDone:true, restored:[], levels:{} };
       const _stash = (_d._auditRecoveredLevels && typeof _d._auditRecoveredLevels === 'object') ? _d._auditRecoveredLevels : {};
       // 只還原練過的(暫存等級>1);Lv1 暫存維持回收(純污染)
-      const _toRestore = Object.keys(_stash).filter(function(n){ return n && (Number(_stash[n]) || 0) > 1; });
+      let _toRestore = Object.keys(_stash).filter(function(n){ return n && (Number(_stash[n]) || 0) > 1; });
+      // ★ v5.281.0 — 這支只救「v3.16.19 系統誤回收」;老師刪除(admin_delete)時也會把等級暫存到同一欄,不可被它當誤回收救回
+      try{
+        if(typeof window._lxpsHeroLedgerMerge === 'function'){
+          const _u12x = String(uid).slice(0, 12);
+          // 二審 L3:三槽都看(主檔流水帳可能被舊平板蓋掉,刪除證據只剩在 live/safe)
+          const _sx = [_d];
+          for(const _sn of ['live', 'safe']){ try{ const _ss = await getDoc(doc(_fbDb, 'players', uid, 'saves', _sn)); if(_ss.exists()) _sx.push(_ss.data() || {}); }catch(_eSx){} }
+          const _Lx = window._lxpsHeroLedgerMerge(_sx.map(function(s){ return s.heroOwnLedger_s; }), _u12x, +_d._lastResetAt || 0);
+          _sx.forEach(function(s){ var _hx = s._heroUnlockHistory; if(!Array.isArray(_hx)){ try{ _hx = JSON.parse(s._heroUnlockHistory_s || '[]'); }catch(_){ _hx = []; } } window._lxpsHeroLedgerFoldHistory(_Lx, Array.isArray(_hx) ? _hx : [], _u12x, +_d._lastResetAt || 0); });
+          _toRestore = _toRestore.filter(function(n){ var e = _Lx.h[n]; return !(e && e.rs === 'admin_delete' && window._lxpsHeroLedgerRemoved(_Lx, n)); });
+        }
+      }catch(_eLx){}
       const _now = Date.now();
       if(!_toRestore.length){
         try{ await updateDoc(_ref, { _auditLeveledRestoreV1: true, _auditLeveledRestoreAt: _now, _auditLeveledRestoreCount: 0 }); }catch(_eF){}
@@ -12019,6 +12199,7 @@
           _patch.taiwanTreasureData   = _tre;
           _patch.taiwanTreasureData_s = JSON.stringify(_tre);
         }
+        try{ if(typeof window._lxpsPatchOwnLedger === 'function') window._lxpsPatchOwnLedger(_d, _patch, _names, _now, 'admin_delete', uid, 'rem'); }catch(_eOL){}   // ★ v5.281.0 移除寫進永久證明
         await setDoc(_t.ref, _patch, { merge: true });
         _wrote.push(_t.label);
       }
@@ -12213,6 +12394,13 @@
         });
         if(_hist.length > 300) _hist = _hist.slice(-300);
         _patch._heroUnlockHistory = _hist;
+        // ★ v5.281.0 — 換出(移除)與換入(獲得)都寫進永久證明;先記移除再記獲得,同一份 patch 接著寫
+        try{
+          if(typeof window._lxpsPatchOwnLedger === 'function'){
+            window._lxpsPatchOwnLedger(_d, _patch, [fromName], _now, 'admin_delete', uid, 'rem');
+            window._lxpsPatchOwnLedger(Object.assign({}, _d, { heroOwnLedger_s: _patch.heroOwnLedger_s || _d.heroOwnLedger_s }), _patch, [toName], _now + 1, 'ticket_ur_swap', uid, 'acq');
+          }
+        }catch(_eOL){}
 
         await setDoc(_t.ref, _patch, { merge: true });
         _wrote.push(_t.label);
@@ -14388,6 +14576,7 @@
       if(hist.length > 300) hist = hist.slice(-300);
       P._heroUnlockHistory = hist;
       try{ P._heroUnlockHistory_s = JSON.stringify(hist); }catch(_){}
+      try{ window._lxpsPatchOwnLedger(dd, P, _deleted.map(function(s){ return s && s.name; }).filter(Boolean), _now, 'admin_restore', uid, 'acq'); }catch(_eOLp){}   // ★ v5.281.0 還原也寫進永久證明
       if(_deletedTre.length){
         var treHist = _lxpsSlotArr(dd, '_treasureUnlockHistory'); treHist = treHist ? treHist.slice() : [];
         _deletedTre.forEach(function(t){ if(t && t.id) treHist.push({ id:t.id, at:_now, source:'admin_restore', adminAction:true, uid:String(uid).slice(0,12), restoredBy:_adminEmail, fromPurge:purgeId, slot:slot }); });
@@ -14843,7 +15032,11 @@
     //   確保三槽對「這次補償」的證據永遠一致,不會有任何一槽獨漏。
     const _grantHeroEntries = [];
     try{
-      const _grantedNames = (_diff && Array.isArray(_diff.unlockedHeroesAdded)) ? _diff.unlockedHeroesAdded : [];
+      const _grantedNames = ((_diff && Array.isArray(_diff.unlockedHeroesAdded)) ? _diff.unlockedHeroesAdded : []).slice();
+      // ★ v5.281.0 — 救援時英雄可能「已被舊平板寫回清單、但最近一筆仍是移除」⇒ 不算新增也要寫 admin_grant,
+      //   否則學生下次登入會被「自動刪除寫回的已刪英雄」再刪一次(老師:救援後要永久持有)。
+      //   (二審 L2:只看主檔判斷「已強擁有」不可靠——別槽可能留著較晚的移除 ⇒ 老師這次指定的英雄一律寫)
+      _newUnlocked.forEach(function(_gn){ if(_gn && _grantedNames.indexOf(_gn) < 0) _grantedNames.push(_gn); });
       _grantedNames.forEach(function(_gn){
         if(_gn) _grantHeroEntries.push({ name:_gn, at:_now, source:'admin_grant', adminAction:true, uid:String(uid).slice(0,12), by: compensation.by || 'admin' });
       });
@@ -14855,6 +15048,16 @@
       return _h;
     };
     let _newHeroHist = _appendHeroHist(existing._heroUnlockHistory);
+    // ★ v5.281.0 — 這次發放/救援的英雄也寫進各槽永久擁有證明(流水帳會被舊平板整包蓋掉,證明不會)
+    const _cmpLedger = function(ex){
+      try{
+        if(!_grantHeroEntries.length || typeof window._lxpsHeroLedgerParse !== 'function') return null;
+        const _Lc = window._lxpsHeroLedgerParse(ex && ex.heroOwnLedger_s) || { v:1, h:{} };
+        const _u12c = String(uid).slice(0, 12);
+        _grantHeroEntries.forEach(function(e){ window._lxpsHeroLedgerAcq(_Lc, e.name, window._lxpsAcqStamp(ex, e.name, e.at, _u12c), 'admin_grant', _u12c); });
+        return JSON.stringify(_Lc);
+      }catch(_eCL){ return null; }
+    };
     const _entry = {
       at: _now,
       by: compensation.by || 'admin',
@@ -14985,6 +15188,7 @@
     payload._lastAdminCompensateAt = _now;
 
     // (1) 主文件 — 照舊
+    { const _lgM = _cmpLedger(existing); if(_lgM) payload.heroOwnLedger_s = _lgM; }   // ★ v5.281.0
     await setDoc(doc(_fbDb, 'players', uid), payload, { merge: true });
     console.info('✅ [補償 v3.9.0] (1/3) 主文件寫入完成 ' + uid);
 
@@ -15077,6 +15281,7 @@
         _compensationHistory_s: JSON.stringify(_newHistory)
       });
       // 直接 setDoc(不走 _fbSaveLive 的健康度守門,因為這是管理員授權的補償操作)
+      { const _lgL = _cmpLedger(_existingLive); if(_lgL) _livePayload.heroOwnLedger_s = _lgL; }   // ★ v5.281.0
       await setDoc(_liveRef, _livePayload);
       _liveWriteOk = true;
       console.info('✅ [補償 v3.9.0] (2/3) live 槽寫入完成 ' + uid
@@ -15188,6 +15393,7 @@
       });
       // ★ 強制 setDoc(不走 _fbWriteSafeIfHealthier 的健康度守門)
       //   理由:這是管理員授權的補償操作,且我們已經做了 max-merge 確保 safe 不會被弱化
+      { const _lgS = _cmpLedger(_existingSafe); if(_lgS) _safePayload.heroOwnLedger_s = _lgS; }   // ★ v5.281.0
       await setDoc(_safeRef, _safePayload);
       _safeWriteResult = { written: true, reason: 'force_write_admin_compensate' };
       console.info('✅ [補償 v3.9.2] (3/3) safe 槽強制寫入完成 ' + uid
@@ -21309,6 +21515,8 @@
         _gunnerUsedThisTurn: !!G._gunnerUsedThisTurn,
         _tarotSellBonus: G._tarotSellBonus != null ? G._tarotSellBonus : null,
         _assetGuard: G._assetGuard != null ? G._assetGuard : null,
+        // ★ v5.283.0 英魂陣型:房主判定的陣型一起傳(世界 BOSS 連線/PvP);接收端只顯示、不自己再套用能力加成
+        _fm: G._fm ? _wireDeepClone(G._fm, 0) : null,
       };
       return out;
     }
@@ -21352,6 +21560,8 @@
       G._gunnerUsedThisTurn = !!wire._gunnerUsedThisTurn;
       G._tarotSellBonus = wire._tarotSellBonus;
       G._assetGuard     = wire._assetGuard;
+      // ★ v5.283.0 英魂陣型:以房主為準;標記已套用 ⇒ 本機 startTurn 不會再自己判定、不會重複加 HP/特技
+      try{ if(wire._fm && typeof wire._fm === 'object') G._fm = wire._fm; else delete G._fm; G._fmDone = true; G._fmP2Ref = G.p2; }catch(_){}
       // 「目前選中」相關欄位 reset(由本機 UI 重建)
       G.activeChar = null;
       G.selMove = null;

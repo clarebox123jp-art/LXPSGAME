@@ -118,6 +118,8 @@ let _adventureStage = null;
 
 window._wbSetupAdvForBattle = function(opts){
   opts = opts || {};
+  // ★ v5.284.0 英魂陣型(平衡審查 H1):世界 BOSS 沿用舊的 G ⇒ 清掉上一場(例如鬥技場)殘留的陣型與命座上限計數,本場重新判定
+  try{ if(typeof G !== 'undefined' && G){ delete G._fm; G._fmDone = false; delete G._fmP2Ref; delete G._fmBid; delete G._cstCap; } }catch(_eFmWb){}
   try{
     _adventureMode  = true;
     _adventureStage = opts.stage || 'worldboss';
@@ -21284,7 +21286,10 @@ const ADMIN_ALL_HEROES = [
   W._lxpsHLRecordAcq = function(name, src){
     try{
       if(!name || !W._lxpsHLReady()) return;
-      W._lxpsHeroLedgerAcq(W._lxpsHLMem.L, name, Date.now(), src || 'unlock', W._lxpsHLMem.uid12);
+      // ★ v5.281.0 — 真的獲得一定晚於已知的移除(平板日期被調慢時,重新抽到的英雄才不會被當成「刪除後寫回」自動刪掉)
+      var _e0 = W._lxpsHLMem.L && W._lxpsHLMem.L.h && W._lxpsHLMem.L.h[name];
+      var _at = Date.now(); if(_e0 && (+_e0.r || 0) >= _at) _at = (+_e0.r) + 1;
+      W._lxpsHeroLedgerAcq(W._lxpsHLMem.L, name, _at, src || 'unlock', W._lxpsHLMem.uid12);
     }catch(_){}
   };
   var _lastFoldRaw = null;
@@ -35681,6 +35686,7 @@ function _rollbackToLastSnap() {
         G.inv        = JSON.parse(JSON.stringify(bs.inv  ||[]));
         G.inv2       = JSON.parse(JSON.stringify(bs.inv2 ||[]));
         G.round      = bs.round || 1;
+        try{ if(window._fmRestore) window._fmRestore(bs); }catch(_eFmRs3){}   // ★ v5.282.0 英魂陣型(審查 H1):存檔裡的陣型照用,不再重新套用能力加成
         G._resultShown = false;
         G.pendingTarget = null;
         G.activeChar = null;  // ★ v1.0.20260424.0800 — 清除 stale activeChar 引用
@@ -44376,16 +44382,19 @@ function _ptvMemberHtml(i, m, pt, d){
     : ('<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px;">'
         + ((typeof AVATARS !== 'undefined' && AVATARS[name]) || '⚔') + '</div>');
   var _imgBox;
+  // ★ v5.283.0 英魂陣型 魂格圓標(這一隊組成陣型 ⇒ 亮色呼吸;否則灰)
+  var _fmTag = '';
+  try{ if(typeof window._fmBadgeHtml === 'function') _fmTag = window._fmBadgeHtml(name, window._fmTeamOf(pt.heroes), _isAdv ? 24 : 6); }catch(_eFmPt){}
   if(_isAdv){
     _imgBox = '<div onclick="event.stopPropagation();_ptvOpenCodex(' + i + ',\'' + String(name).replace(/'/g, "\\'") + '\')"'
       + ' title="' + _ptvT('點我幫他換至寶、裝備、寵物！', '點擊開啟英雄圖鑑進行至寶／裝備／寵物／投資整備') + '"'
       + ' style="width:100%;height:128px;border-radius:9px;overflow:hidden;background:#0a0818;cursor:pointer;'
       + 'border:2px solid rgba(212,168,67,0.55);position:relative;">' + _imgInner
       + '<div style="position:absolute;left:0;right:0;bottom:0;padding:2px 0;text-align:center;font-size:13px;font-weight:800;'
-      + 'color:#ffe8a0;background:linear-gradient(transparent,rgba(20,10,0,0.9));">📖 ' + _ptvT('整備', '圖鑑整備') + '</div></div>';
+      + 'color:#ffe8a0;background:linear-gradient(transparent,rgba(20,10,0,0.9));">📖 ' + _ptvT('整備', '圖鑑整備') + '</div>' + _fmTag + '</div>';
   } else {
-    _imgBox = '<div style="width:100%;height:128px;border-radius:9px;overflow:hidden;background:#0a0818;'
-      + 'border:2px solid rgba(150,110,220,0.45);">' + _imgInner + '</div>';
+    _imgBox = '<div style="width:100%;height:128px;border-radius:9px;overflow:hidden;background:#0a0818;position:relative;'
+      + 'border:2px solid rgba(150,110,220,0.45);">' + _imgInner + _fmTag + '</div>';
   }
 
   return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:186px;'
@@ -44471,6 +44480,7 @@ function _ptvRender(){
               : _ptvT('這一隊有還沒儲存的修改，記得按「💾 儲存變更」喔！', '本欄有尚未儲存的修改（未儲存也可直接出戰，但存檔不會變動）。'))
           + '</div>';
       }
+      try{ if(typeof window._fmTeamLineHtml === 'function') html += window._fmTeamLineHtml(pt.heroes); }catch(_eFmTl){}   // ★ v5.283.0 英魂陣型
       html += '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-start;">';
       for(var m = 0; m < 4; m++){ html += _ptvMemberHtml(i, m, pt, d); }
       html += '</div>';
@@ -45597,7 +45607,8 @@ function _peMemberCellHtml(slotIdx, memIdx, name, elem, sk, isDraft){
   }
   var _cellInner = _empty
     ? '<div style="width:100%;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8866cc;font-size:44px;">＋<div style="font-size:16px;color:#7755aa;">' + _peT('點我選英雄', '點擊選擇英雄') + '</div></div>'
-    : ('<div style="width:100%;height:120px;border-radius:9px;overflow:hidden;background:#0a0818;">'
+    : ('<div style="width:100%;height:120px;border-radius:9px;overflow:hidden;background:#0a0818;position:relative;">'
+        + (function(){ try{ var _src = (isDraft ? window._peDrafts[slotIdx] : _advPresetTeams[slotIdx]) || _advPresetTeams[slotIdx] || window._peDrafts[slotIdx] || {}; return (typeof window._fmBadgeHtml === 'function') ? window._fmBadgeHtml(name, window._fmTeamOf(_src.heroes), 6) : ''; }catch(_eFmPe){ return ''; } })()   // ★ v5.283.0 英魂陣型 魂格圓標
         + (_img ? ('<div style="width:100%;height:100%;background:url(\'' + _img + '\') ' + _oPos + '/cover;"></div>')
                 : ('<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:44px;">' + ((typeof AVATARS !== 'undefined' && AVATARS[name]) || '⚔') + '</div>'))
       + '</div>');
@@ -45655,6 +45666,7 @@ function _peRender(){
           : ('<button onclick="event.stopPropagation();_peRenameSlot(' + i + ')" style="padding:4px 14px;font-size:16px;background:rgba(30,50,90,0.5);border:1.5px solid rgba(120,180,255,0.6);color:#aaddff;border-radius:7px;cursor:pointer;font-family:inherit;">📝 命名</button>'
             + '<button onclick="event.stopPropagation();_peDeleteSlot(' + i + ')" style="padding:4px 14px;font-size:16px;background:rgba(60,10,10,0.4);border:1.5px solid #e84040;color:#e84040;border-radius:7px;cursor:pointer;font-family:inherit;">🗑 刪除</button>'))
       + '</div></div>'
+      + ((typeof window._fmTeamLineHtml === 'function') ? window._fmTeamLineHtml(heroes) : '')   // ★ v5.283.0 英魂陣型
       + '<div style="display:flex;gap:12px;flex-wrap:wrap;">';
     for(var m = 0; m < 4; m++){
       var hn = heroes[m] || null;

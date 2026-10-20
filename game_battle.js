@@ -7129,6 +7129,7 @@ function _bvStatDownImmune(h, label){
 }
 function addStatus(h,t,dur=1){
   if(!h||h.curHp<=0) return;
+  try{ if(typeof G !== 'undefined' && G && G._fm && window._fmCtrlResist && window._fmCtrlResist(h, t)) return; }catch(_eFmCr){}   // ★ v5.282.0 英魂陣型 奔雷鐵騎/閃電風暴:受到硬控時機率抵抗(沒有陣型時不進來)
   try{ if(typeof G !== 'undefined' && G && G._cstJsB2 && h.side && G._cstJsB2[h.side] && window._cstJsB2Reflect(h, t, dur)) return; }catch(_eCstJsB2r){}   // ✨ 命星 ✦ 軍師 b2「空城反間星」:G._cstJsB2 只由點亮的 b2 寫入
   // ★ v3.13.73 — DoT 統一基礎回合數(含既有技能,Q1甲):中毒/猛毒=5、出血/強力出血=2
   if(t === 'poison') dur = 5;
@@ -11043,6 +11044,9 @@ function _rebuildPickNodes(){
         if(typeof _getHeroRarity !== 'function') return false;
         return _getHeroRarity(n) === _target;
       });
+    } else if(/^soul_[CQHX]$/.test(_hpickFilterKey)){
+      // ★ v5.283.0 英魂陣型 魂格篩選(主角萬用魂四種都列)
+      pool = pool.filter(n => (typeof window._fmFilterMatch === 'function') ? window._fmFilterMatch(n, _hpickFilterKey) : true);
     } else if(_hpickFilterKey === 'cond'){
       // ★ v3.15.88 — 條件搜尋:具備所有勾選效果的英雄
       const _needs = (typeof _condSearchEffects !== 'undefined' && Array.isArray(_condSearchEffects)) ? _condSearchEffects : [];
@@ -11160,6 +11164,7 @@ function _buildHeroPickNodes(){
     arena.appendChild(grid);
     // ★ 好友英雄卡在 grid 進入 DOM 後才注入
     try{ _injectFriendHeroCard(); }catch(_){}
+    try{ if(window._fmTagPickNodes) window._fmTagPickNodes(); }catch(_eFmTag){}   // ★ v5.283.0 英魂陣型 魂格圓標
     return;
   }
 
@@ -11253,6 +11258,7 @@ function _buildHeroPickNodes(){
   starBtn.onclick=()=>_refreshHeroPool();
   // ★ 不再把星星按鈕放在arena裡，改為放在底部bar左邊（由HTML提供）
   // arena.appendChild(starBtn);  // 停用
+  try{ if(window._fmTagPickNodes) window._fmTagPickNodes(); }catch(_eFmTag2){}   // ★ v5.283.0 英魂陣型 魂格圓標
 }
 
 // 記錄已出現過的英雄（跨刷新循環）
@@ -13017,6 +13023,7 @@ function updatePickedBadges(){
   //   掛在 _lxpsRenderEnemyNeedTags 後面的理由與它一致：updatePickedBadges 是編組頁所有狀態變動
   //   （進頁／選人／換路線／按推薦）的共同收口點，單點接線即涵蓋全部入口，且威脅快取必為最新。
   try{ if(typeof window._lxpsRenderEnemyBrief === 'function') window._lxpsRenderEnemyBrief(); }catch(_eBf){}
+  try{ if(typeof window._fmRenderPickBar === 'function') window._fmRenderPickBar(); }catch(_eFmBar){}   // ★ v5.282.0 英魂陣型 即時顯示(同一個收口點)
   const cont=document.getElementById('picked-badges');
   cont.innerHTML='';
   for(let i=0;i<4;i++){
@@ -13169,7 +13176,7 @@ function updatePickedBadges(){
       slot.onclick=null;
     }
   }
-
+  try{ if(window._fmDecoratePick) window._fmDecoratePick(); }catch(_eFmDec){}   // ★ v5.283.0 英魂陣型 右上四張隊員立繪的魂格圓標(立繪剛重畫完)
 }
 
 function toggleHeroPick(idx, name){ focusHero(idx,name); } // legacy compat
@@ -16257,6 +16264,7 @@ function skillCost(s, actor, displayOnly=false, noFatigue=false, noCstFx=false){
     }
   }catch(_eCstFxB1){}
   try{ if(actor && actor._cstAstGuide && _cstBidOk(actor._cstAstGuide.b) && !(s && s.p)) c = window._cstCap.costCut(actor, c, 1, _cstCutAcc); }catch(_eCstAstT2c){}
+  try{ if(actor && s && !s.p && typeof window._fmCostCut === 'function') c = window._fmCostCut(actor, c, _cstCutAcc); }catch(_eFmCost){}   // ★ v5.282.0 英魂陣型 求知系耗能 −1(與命星共用 G4:合計 −2、最低 1;不含爆發)
   try{ if(actor && s && s.n === '瞬殺' && actor._cstRdCut && _cstBidOk(actor._cstRdCut.b) && window._cstHasN(actor,'s2','紅色玩家')) c = window._cstCap.costCut(actor, c, 2, _cstCutAcc); }catch(_eCstRdS2c){}   // ✨ v5.264.0 命星 紅色玩家 s2「反域連殺星」:連殺 3 層後下一次瞬殺耗能 −2(G4 最低 1)   // ✨ 命星 ✦ 占星師 t2「星軌指引」:下一次技能耗能 -1(G4:命星減免合計 ≤2、最低 1;確定性折扣,UI 也顯示)   // ★ v5.262.0 審查:(M9)
   return c;
 }
@@ -34043,6 +34051,7 @@ function doDmg(target, rawDmg, opts={}){
     }catch(_eBkSurvF){ console.warn('[鐵匠 工匠魂不倒-fixedDmg]', _eBkSurvF); }
     // ✨ 命星 鐵匠 s2「替身甲星」(fixedDmg):帶命星防具精煉的友方受致命傷 ⇒ 防具碎裂免死(1 HP);只認 _cstBkS2 標記 ⇒ 未點亮時不會進來
     try{ if(target && target.curHp>0 && rawDmg>0 && (target.curHp - rawDmg)<=0 && !opts.isHeal && !opts._ignoreDeathImmune && Array.isArray(target.buffs) && target.buffs.some(function(b){ return b && b._cstBkS2; }) && window._cstBkS2Save(target)) rawDmg = Math.max(0, target.curHp - 1); }catch(_eCstBkS2F){}
+    try{ if(target && target.curHp>0 && rawDmg>0 && (target.curHp - rawDmg)<=0 && !opts.isHeal && !opts._ignoreDeathImmune && typeof G !== 'undefined' && G && G._fm && window._fmSurvive(target)) rawDmg = Math.max(0, target.curHp - 1); }catch(_eFmSvF){}   // ★ v5.282.0 英魂陣型 真誠系保留 1 HP(固定傷害同樣擋;走 G7)
     // ★ v5.42.0 — 哪吒 天賦「蓮花化身」不倒(fixedDmg 路徑,鐵律1.202):受致命傷害時不倒下(HP剩1)
     //   並排程恢復最大HP 30%(+5%/天賦級,上限50%),每場戰鬥限 1 次(_nezhaLotusUsed)。天賦封印不觸發。
     try{
@@ -36010,6 +36019,7 @@ function doDmg(target, rawDmg, opts={}){
   }catch(_eCstVpT2d){}
   try{ dmg = window._cstS1Mod(target, dmg, opts, a); }catch(_eCstS1Md){}   // ✨ v5.264.0 命星 SSR 第一批 傷害加成(酒吞童子 t2 酒氣/超鬼神王 t2/輻射區濺射易傷/紅色玩家 b2 Combo)
   try{ dmg = window._cstS2Mod(target, dmg, opts, a); }catch(_eCstS2Md){}   // ✨ v5.265.0 命星 SSR 第二批 傷害加成(維京海盜船長 t2 戰利品)
+  try{ if(typeof G !== 'undefined' && G && G._fm && dmg > 0) dmg = window._fmDmgMod(target, dmg, opts, a); }catch(_eFmDm){}   // ★ v5.282.0 英魂陣型 造成/受到傷害(沒有陣型時 G._fm 不存在 ⇒ 不進來)
   // ★★★ v3.15.0 — 法老王天賦「法老威儀」傷害加成:每層威儀使其打出傷害 +10%(最多 10 層)。鐵律 1.110:置於 let dmg=rawDmg 之後
   try{
     const _aPhM = opts.actor;
@@ -36880,6 +36890,11 @@ function doDmg(target, rawDmg, opts={}){
       if(typeof _adventureMode !== 'undefined' && _adventureMode === false){
         _shAbsorbCap = Math.max(1, Math.ceil(target.shield * 0.25));
       }
+      // ★ v5.282.0 英魂陣型「護盾 +X%」:同一份護盾能多擋 X%(吸收上限放大、扣盾量等比縮小);沒有陣型時 _fmShM 恆 1
+      let _fmShM = 1;
+      try{ if(typeof G !== 'undefined' && G && G._fm && window._fmShieldMult) _fmShM = window._fmShieldMult(target) || 1; }catch(_eFmSh){ _fmShM = 1; }
+      if(_fmShM > 1) _shAbsorbCap = Math.floor(_shAbsorbCap * _fmShM);
+      const _fmShBefore = target.shield;
       const _absorb = Math.min(_shAbsorbCap, dmg);
       // ★ v5.67.0 — 華雄 天賦「溫酒未涼」後半段:對護盾造成的傷害加倍(老師 2026-08-18 裁定)。
       //   實作=護盾扣除量 ×2(HP 實傷仍只抵扣 _absorb,不會憑空增加對 HP 的傷害)→
@@ -36894,9 +36909,10 @@ function doDmg(target, rawDmg, opts={}){
           _hxShieldMult = 2;
         }
       }catch(_eHxSh){}
-      target.shield -= (_absorb * _hxShieldMult);
+      target.shield -= (_fmShM > 1 ? Math.ceil(_absorb * _hxShieldMult / _fmShM) : (_absorb * _hxShieldMult));
       dmg -= _absorb;
       if(target.shield <= 0) target.shield = 0;
+      try{ if(_fmShBefore > 0 && target.shield <= 0 && _absorb > 0 && typeof G !== 'undefined' && G && G._fm && window._fmShieldBroken) window._fmShieldBroken(target); }catch(_eFmShB){}   // ★ v5.282.0 守護磐石陣 共鳴
       if(_absorb > 0){
         log(`🛡 [${target.name}] 護盾吸收了 ${_absorb} 傷害（剩餘 ${target.shield}）`);
         try{ showShieldVFX(target, 'block'); }catch(_){}
@@ -37187,6 +37203,7 @@ function doDmg(target, rawDmg, opts={}){
   }catch(_eBkSurvM){ console.warn('[鐵匠 工匠魂不倒-主路徑]', _eBkSurvM); }
   // ✨ 命星 鐵匠 s2「替身甲星」(主路徑):帶命星防具精煉的友方受致命傷 ⇒ 防具碎裂免死(1 HP);只認 _cstBkS2 標記 ⇒ 未點亮時不會進來
   try{ if(target && target.curHp>0 && dmg>0 && (target.curHp - dmg)<=0 && !opts.isHeal && !opts._ignoreDeathImmune && Array.isArray(target.buffs) && target.buffs.some(function(b){ return b && b._cstBkS2; }) && window._cstBkS2Save(target)) dmg = Math.max(0, target.curHp - 1); }catch(_eCstBkS2M){}
+  try{ if(target && target.curHp>0 && dmg>0 && (target.curHp - dmg)<=0 && !opts.isHeal && !opts._ignoreDeathImmune && typeof G !== 'undefined' && G && G._fm && window._fmSurvive(target)) dmg = Math.max(0, target.curHp - 1); }catch(_eFmSvM){}   // ★ v5.282.0 英魂陣型 真誠系保留 1 HP(走 G7)
 
   // ★ v5.42.0 — 哪吒 天賦「蓮花化身」不倒(主路徑):受致命傷害時不倒下(HP剩1)並排程恢復
   //   最大HP 30%(+5%/天賦級,上限50%),每場戰鬥限 1 次(_nezhaLotusUsed 旗標,fixedDmg 路徑共用)。
@@ -37242,7 +37259,7 @@ function doDmg(target, rawDmg, opts={}){
   try{ if(dmg > 0 && G && Array.isArray(G._cstFcD) && G._cstFcD.length && target.curHp > 0 && (target.curHp - dmg) <= 0 && window._cstWsB2Eye(target, opts, a)) return 0; }catch(_eCstWsB2e){}   // ✨ v5.266.0 命星 風術士 b2 風眼(只在有命星戰場卡時檢查)
   try{ if(opts._cstOvf && dmg > target.curHp) opts._cstOvf.v = dmg - target.curHp; }catch(_eCstOvf){}   // ✨ v5.272.0 命星 關羽 b2:溢出量(_cstOvf 只由點亮的命星帶入)
   target.curHp=Math.max(0,target.curHp-dmg);
-  try{ if(dmg > 0 && target.curHp > 0 && (target.name === '呂布' || target.name === '摩羯星神' || target.name === '牛魔王')) window._cstS5Dmg(target, target.curHp + dmg, opts, a); }catch(_eCstS5Dm){}   // ✨ v5.268.0 命星 呂布 t2/摩羯 t2/牛魔王 t2(只對點亮的命星做事)
+  try{ if(opts && opts._fmRefPend){ const _fmRp = opts._fmRefPend; opts._fmRefPend = null; if(dmg > 0 && window._fmReflectFire) window._fmReflectFire(target, dmg, _fmRp, opts); } }catch(_eFmRf){}   // ★ v5.282.0 英魂陣型 金剛長城(審查 M1/M2):真的扣到血才反彈,以實際扣血量計  try{ if(dmg > 0 && target.curHp > 0 && (target.name === '呂布' || target.name === '摩羯星神' || target.name === '牛魔王')) window._cstS5Dmg(target, target.curHp + dmg, opts, a); }catch(_eCstS5Dm){}   // ✨ v5.268.0 命星 呂布 t2/摩羯 t2/牛魔王 t2(只對點亮的命星做事)
   try{ if(dmg > 0 && (target._cstBmLk || target._cstMmSeed || target._cstTzAcc || target._cstIlB2)) window._cstS8Dmg(target, dmg, opts, old); }catch(_eCstS8Dm){}   // ✨ v5.271.0 命星 ⚙ 炸彈客 s2 引線/火柴人 b2 火種(只認命星寫入的欄位)
   // ✨ 命星 牛魔王 b1「焚天鐵蹄星」 🔧 v5.258.0 舊 bug:(命星審查)以牛魔王實際受到(扣血)的傷害 ×65% 反彈,並使攻擊者燃燒 1 回合;_cstNmRefPend 只在點亮時寫入
   try{
@@ -37857,7 +37874,8 @@ function doDmg(target, rawDmg, opts={}){
                            + ((a && Array.isArray(a.buffs) && a.buffs.some(function(b){ return b && b.type==='_blkWeaponBuff' && b._critUp; })) ? 0.30 : 0)  // ★ v3.15.71 鐵匠 S1 武器精煉強化:暴擊率+30%(舊版 buff·v5.30.0 後不再施加,保留消費零風險)
                            + ((typeof _gearVal === 'function' && a) ? _gearVal(a, 'crit', 'atk') / 100 : 0)  // ★ v5.30.0 裝備暴擊率(鐵匠 S1 放大)
                            + ((a && Array.isArray(a.buffs) && (function(){ var _gc=a.buffs.find(function(b){ return b && b.type==='_gearCritUp'; }); return _gc && typeof _gc._pct==='number' ? _gc._pct : 0; })()) || 0)
-                           + ((a && a.side === 'p1' && typeof window._alchFxGet === 'function') ? (window._alchFxGet('critRate') || 0) : 0));  // ★ v5.109.0 天機借運丹:我方暴擊率 +50%(_alchFxGet 內建中國關戰鬥守門,其他模式恆回 0)
+                           + ((a && a.side === 'p1' && typeof window._alchFxGet === 'function') ? (window._alchFxGet('critRate') || 0) : 0)
+                           + ((a && typeof window._fmCrit === 'function') ? window._fmCrit(a) : 0));  // ★ v5.282.0 英魂陣型 暴擊率(沒有陣型時恆 0) ｜ ★ v5.109.0 天機借運丹:我方暴擊率 +50%(_alchFxGet 內建中國關戰鬥守門,其他模式恆回 0)
   if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
     try{ const _cstScY = opts.actor || a; if(_cstScY && _cstScY.name === '天蠍星神') window._cstScT2Crit(_cstScY, target, opts); }catch(_eCstScT2c){}   // ✨ v5.268.0 命星 天蠍星神 t2 尾宿八毒針(只對點亮的命星做事)
     try{ const _cstIlY = opts.actor || a; if(_cstIlY && _cstIlY.name === '魔劍姬‧伊莉雅' && _cstIlY._cst) window._cstIlT2Crit(_cstIlY, target, opts); }catch(_eCstIlT2c){}   // ✨ v5.269.0 命星 伊莉雅 t2 血紋刻印
@@ -40185,7 +40203,8 @@ function _healCurseGate(target, amt){
 try{ window._healCurseGate = _healCurseGate; }catch(_eHCG2){}
 
 function doHeal(target, rawAmt, opts={}){
-  try{ if(rawAmt > 0 && typeof G !== 'undefined' && G && G._cstMyHalf) rawAmt = window._cstS9Heal(rawAmt, opts); }catch(_eCstS9H){}   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹:治療 50%(G._cstMyHalf 只由點亮的命星寫入)
+  try{ if(rawAmt > 0 && typeof G !== 'undefined' && G && G._cstMyHalf) rawAmt = window._cstS9Heal(rawAmt, opts); }catch(_eCstS9H){}
+  try{ if(rawAmt > 0 && target && typeof G !== 'undefined' && G && G._fm && window._fmHealMod) rawAmt = window._fmHealMod(target, rawAmt, opts); }catch(_eFmHeal){}   // ★ v5.282.0 英魂陣型 治療 +X%/仁智雙輝/春風疾行(沒有陣型時不進來)   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹:治療 50%(G._cstMyHalf 只由點亮的命星寫入)
   // ★ v3.3.2 — 世界 BOSS 戰守門:火山炎龍王不能用任何手段恢復 HP
   //   老師需求:「世界BOSS不會用任何手段恢復HP」
   //   守門範圍:不論是誰呼叫(BOSS 自己技能、寵物 hpRegen、buff 治療、答題獎勵誤呼叫等),
@@ -44238,6 +44257,7 @@ window._lxpsAquariusMarkAdd = function(t, dur, _cstMaxL){   // ✨ 命星 水瓶
 //   放在 doDmg 的 _critChance 計算式旁(見下方 _sagittariusCritBonus 變數宣告處)。
 
 function execSkill(a, sk, cost, stype){
+  try{ if(a) a._fmArm = !!(sk && !sk.p); }catch(_eFmNc){}   // ★ v5.282.0 英魂陣型(審查 M3):這裡只「預約」;玩家能量在 endAction 才扣,那時才算用掉「每回合第一次技能 −1」(取消選目標不算)
   // ★★ v5.80.0(老師裁定⑤)— 出血「自己行動」觸發點:普攻/技能/爆發各觸發 1 次(每回合上限 2·同一次行動只計 1)
   try{ window._bleedTryProc(a, 'act'); }catch(_eBldS){}
   // ★ v3.5.4 — 樂觀更新中(_wbClientOptimistic=true)例外通過!
@@ -46418,7 +46438,7 @@ function execSkill(a, sk, cost, stype){
       try{ if(typeof playSkillFX==='function') playSkillFX('即刻發明',a,[a]); }catch(_){}
       // 扣能量 + 再行動 1 次(不呼叫 endAction,不推進回合)
       try{ G.energy[a.side]=Math.max(0, (G.energy[a.side]||0) - (cost||0)); }catch(_){}
-      try{ if(a._nsdArm){ a._nsdArm=false; if(cost>0) _lxpsConsumeNextSkillDiscount(a); } }catch(_eNsdInv){}   // 🔧 v5.258.0(審查 A1):即刻發明直接扣能量不經 endAction ⇒ 在這裡消耗「下次技能省能」
+      try{ if(a._nsdArm){ a._nsdArm=false; if(cost>0) _lxpsConsumeNextSkillDiscount(a); } }catch(_eNsdInv){} try{ if(a._fmArm){ a._fmArm=false; if(cost>0 && window._fmNoteCast) window._fmNoteCast(a, {}); } }catch(_eFmInv){}   // 🔧 v5.258.0(審查 A1):即刻發明直接扣能量不經 endAction ⇒ 在這裡消耗「下次技能省能」
       a.acted=false;
       try{ if(window._cstHasN(a,'s1','科學發明家') && typeof G!=='undefined' && G && a._cstInvDiscR !== G.round){ a._cstInvDiscR = G.round; a._cstInvDisc = true; log('✨ ['+a.name+'] 命星:工作台擴建!這次再行動使用其他技能能量 -1(每回合 1 次)'); } }catch(_eCstSciS1a){}   // ✨ 命星 科學發明家 s1(後半)
       try{ updateUI(); }catch(_){}
@@ -47962,7 +47982,7 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('命運塔羅牌',a,[]);
     // 先扣能量，再抽卡
     G.energy[a.side]=Math.max(0,G.energy[a.side]-cost);
-    try{ if(a._nsdArm){ a._nsdArm=false; if(cost>0) _lxpsConsumeNextSkillDiscount(a); } }catch(_eNsdTarot){}   // 🔧 v5.258.0(審查 A1):命運塔羅牌不經 endAction ⇒ 在這裡消耗「下次技能省能」
+    try{ if(a._nsdArm){ a._nsdArm=false; if(cost>0) _lxpsConsumeNextSkillDiscount(a); } }catch(_eNsdTarot){} try{ if(a._fmArm){ a._fmArm=false; if(cost>0 && window._fmNoteCast) window._fmNoteCast(a, {}); } }catch(_eFmTarot){}   // 🔧 v5.258.0(審查 A1):命運塔羅牌不經 endAction ⇒ 在這裡消耗「下次技能省能」
     a.acted=true;
     let _cstTrS1 = false; try{ _cstTrS1 = !!(a.name==='占星師' && window._cstHasN(a,'s1','占星師')); }catch(_eCstTrS1){ _cstTrS1 = false; }   // ✨ 命星 占星師 s1「塔羅雙牌星」:抽 2 選 1
     const drawnCard=drawItem();
@@ -53036,7 +53056,8 @@ function endAction(a, cost, noFinish=false){
     G.lastSkillName=null;
   }
   // 🔧 v5.258.0 舊 bug(審查 M5):玩家主動技能真正扣能量(還沒被凡人/煉金命星免費前,cost 已是折扣後的價錢)時才消耗「下次技能省能」
-  try{ if(a && a._nsdArm && (!noFinish || cost>0)){ a._nsdArm = false; if(cost>0) _lxpsConsumeNextSkillDiscount(a); } }catch(_eNsdE){}   /* 審查 A1:兵貴神速之計走 endAction(a,cost,true) 也要消耗 */
+  try{ if(a && a._nsdArm && (!noFinish || cost>0)){ a._nsdArm = false; if(cost>0) _lxpsConsumeNextSkillDiscount(a); } }catch(_eNsdE){}
+  try{ if(a && a._fmArm && (!noFinish || cost>0)){ a._fmArm = false; if(cost>0 && window._fmNoteCast) window._fmNoteCast(a, {}); } }catch(_eFmE){}   // ★ v5.282.0 英魂陣型(審查 M3)   /* 審查 A1:兵貴神速之計走 endAction(a,cost,true) 也要消耗 */
   // 凡人天賦：使用技能時40%不消耗能量
   let _cstFanT1 = false;
   try{ _cstFanT1 = !!(a.name==='凡人' && window._cstHasN(a,'t1','凡人') && window._cstCap.freeOk(a)); }catch(_eCstFanT1){ _cstFanT1 = false; }   // ★ v5.262.0 命座 G4:重演/複製中只走原本 40% 天賦,不吃命星加成與保底
@@ -55631,6 +55652,7 @@ function startTurn(){
   }catch(_eCstMlB1){}
   try{ window._cstS1ReTurn(); }catch(_eCstS1ReT){}   // ✨ v5.264.0 命星 再行動排程(鋁合金暴龍 b2)
   try{ window._cstAsB2Turn(); }catch(_eCstAsB2s){}   // ✨ 命星 刺客 b2「收割名單星」:強力出血目標倒下 ⇒ 刺客這次行動結束後立即再行動(只讀寫命星寫入的 _cstCaB2R)
+  // ★ v5.283.0 英魂陣型判定移到 PvP 握手閘門之後(審查 H1:閘門前 G.p2 還是佔位的電腦隊伍)
   // ★ v5.192.0 — 獅子星神 天賦「王者威光」:戰鬥開始(round 1)套用一次,G._leoMajestyDone 防重複套用
   try{
     if(typeof G !== 'undefined' && G && (G.round||1)===1 && !G._leoMajestyDone){
@@ -55649,6 +55671,14 @@ function startTurn(){
   // ★ v3.14.6 — PvP 連線對戰:① 握手閘門(編組完成、雙方隊伍未交換前攔下,等握手)
   //   ② 房主每手推送(host 在每位行動者回合開始時推送權威戰局 wire,內含自我守門)
   try{ if(typeof window._pvpSyncGate === 'function' && window._pvpSyncGate()) return; }catch(_ePvpGate){}
+  // ★ v5.282.0 — 英魂陣型:戰鬥開始(round 1)依出戰成員判定一次(之後成員倒下陣型不變),G._fmDone 防重複
+  //   位置在 PvP 閘門之後、房主推送之前 ⇒ 第一次推送就帶著陣型與加成後的 HP
+  try{
+    if(typeof G !== 'undefined' && G && (G.round||1)===1){
+      if(!G._fmDone){ G._fmDone = true; G._fmP2Ref = G.p2; if(window._fmApply) window._fmApply(); }
+      else if(G._fm && G._fmP2Ref !== G.p2){ G._fmP2Ref = G.p2; G._fmBid = Date.now() + Math.random(); try{ if(window._fmNewBattle) window._fmNewBattle(); }catch(_eFmNb){} }   // v5.284.0:每場開場能量重給、免死每場次數重算   // 審查 H2:冒險同一關內的下一場(小怪→BOSS 共用 G)⇒ 換新場次編號,免死/反彈「每場/每回合」重新計;能力加成不重複套
+    }
+  }catch(_eFmApply){ console.warn('[英魂陣型] 開場套用失敗(本場不套)', _eFmApply); }
   try{ if(typeof window._pvpHostTurnPush === 'function') window._pvpHostTurnPush(); }catch(_ePvpPush){}
   try{ if(typeof window._pvpTurnUiTick === 'function') window._pvpTurnUiTick(); }catch(_ePvpTick){}
   // ★ v3.13.98 — 世界BOSS:每位角色「回合開始」時,把 BOSS 的「本回合累計受傷」歸零。
@@ -56138,11 +56168,13 @@ function startTurn(){
   const _cstHasteAdj0 = h => { try{ if(!h || !h.buffs) return 0; const _hb = h.buffs.find(b => b && b.type==='haste' && b._cstSpd); if(!_hb) return 0; return (fieldHas('reverse') ? -1 : 1) * Math.floor(Math.abs(h.spd) * (_hb._cstSpd - 1)); }catch(_eCstHsAdj){ return 0; } };
   // ✨ 命星 呂布 t1「飛將絕境星」:HP<30% 時速度 +20%(只在命星點亮時加,未點亮恆 0 ⇒ 排序不變)
   const _cstLbSpdAdj = h => { try{ if(!h || h.name !== '呂布' || !(h.curHp > 0) || !(h.hp > 0) || h.curHp >= h.hp * 0.30 || !window._cstHasN(h,'t1','呂布')) return 0; if(typeof G !== 'undefined' && G && h._cstLbSpdR !== G.round){ h._cstLbSpdR = G.round; log('✨ [' + h.name + '] 命星:飛將絕境!HP 低於 30%,速度 +20%!'); } return (fieldHas('reverse') ? -1 : 1) * Math.floor(Math.abs(h.spd) * 0.20); }catch(_eCstLbSpd){ return 0; } };
-  const _cstHasteAdj = h => _cstHasteAdj0(h) + _cstLbSpdAdj(h) + window._cstS2SpdAdj(h);   // ✨ v5.265.0 命星 救醫馬 t2 速度 +5(只認命星標記;沒有 ⇒ 0)
+  const _fmSpdAdj = h => { try{ return (typeof G !== 'undefined' && G && G._fm && window._fmSpd) ? ((fieldHas('reverse') ? -1 : 1) * window._fmSpd(h)) : 0; }catch(_eFmSpd){ return 0; } };   // ★ v5.282.0 英魂陣型 速度 +X% / 第一回合全隊先手(沒有陣型時恆 0)
+  const _cstHasteAdj = h => _cstHasteAdj0(h) + _cstLbSpdAdj(h) + window._cstS2SpdAdj(h) + _fmSpdAdj(h);   // ✨ v5.265.0 命星 救醫馬 t2 速度 +5(只認命星標記;沒有 ⇒ 0)
   const _effSpd = h => hasStatus(h,'spddown') ? -9999 : (h.spd + ((h && h._treasureEff && h._treasureEff.spdRampPerRound) ? Math.floor(h.spd * Math.min(30, ((typeof G!=='undefined' && G.round) ? G.round : 1) * h._treasureEff.spdRampPerRound) / 100) : 0) - ((h && h._cstPush) ? ((fieldHas('reverse') ? -1 : 1) * Math.floor(Math.abs(h.spd) * h._cstPush)) : 0) + _cstHasteAdj(h));
   const sortFn = fieldHas('reverse')
     ? (a,b)=>_effSpd(a)-_effSpd(b)
     : (a,b)=>_effSpd(b)-_effSpd(a);
+  try{ window._lxpsTurnEffSpd = _effSpd; }catch(_eTes){}   // ★ v5.284.0 行動順序條改用同一套「實際速度」排序(含英魂陣型速度/先手、命星加速、至寶等)
 
   G.waitFor=null; // 清除等待旗標
   // 還原被暴風雪/擊退效果降低的spd（在排序前還原，避免永久降速）
@@ -58841,7 +58873,8 @@ G.p1.concat(G.p2).forEach(h=>{
   // 能量補充（每回合固定+3）
   G.energy.p1=Math.min(10,G.energy.p1+3);
   G.energy.p2=Math.min(10,G.energy.p2+3);
-  try{ if(window._cstCap && window._cstCap.noteBase) window._cstCap.noteBase(); }catch(_eCstG5b){}   // ★ v5.262.0 命座 G5:敵方基本 +3 先入帳 ⇒ 標記入帳並結算延後的命星扣能(沒有命星扣能時只寫 G._cstCap 記號)
+  try{ if(window._cstCap && window._cstCap.noteBase) window._cstCap.noteBase(); }catch(_eCstG5b){}
+  try{ if(typeof G !== 'undefined' && G && G._fm && window._fmRoundStart) window._fmRoundStart(); }catch(_eFmRs){}   // ★ v5.282.0 英魂陣型 每回合回復 X% 最大 HP(沒有陣型時不進來)   // ★ v5.262.0 命座 G5:敵方基本 +3 先入帳 ⇒ 標記入帳並結算延後的命星扣能(沒有命星扣能時只寫 G._cstCap 記號)
   try{ window._cstC8Round(); }catch(_eCstC8r){}   // ✨ 命星 舞者 b2 / 聖騎士 s2:持續效果結束結算(基本 +3 入帳後;只讀寫命星寫入的欄位)
   try{ if(typeof window._cstA8Round === 'function' && (G._cstAstS2 || G._cstAstB2)) window._cstA8Round(); }catch(_eCstA8R){}   // ✨ 命星 ✦ 占星師 s2 結算/b2 祝福結束(兩個欄位只由點亮的命星寫入)
   // ✨ 命星 雙子星神 s1:帶 _cstGmS1 的禁書封鎖(只由點亮 s1 的逆位塔羅寫入)還在身上 ⇒ 每回合開始該陣營 -1 能量
@@ -60529,6 +60562,7 @@ function _realAiAct(a){
   }
 }
 function aiUseSkill(a,sk,cost,pref){
+  try{ if(window._fmNoteCast) window._fmNoteCast(a, sk); }catch(_eFmNc){}   // ★ v5.282.0 英魂陣型
   G.lastSkill={...sk,actor:a};
   try{ if(G._cstFcD && G._cstFcD.length && sk && !sk.p) window._cstPhB2Eye(a); }catch(_eCstPhB2a){}   // ✨ v5.266.0 命星 法老王 b2 拉神之眼(只在有命星戰場卡時)
   // ★ v4.31.0 技能鑲嵌動畫:自動戰鬥時玩家方(p1)特定技能+條件才播(魔劍姬覺醒 0 消耗 S1)
@@ -69366,6 +69400,8 @@ function _saveBattleRoundSnapshot(){
         inv2:        JSON.parse(JSON.stringify(G.inv2||[])),
         fieldCards:  JSON.parse(JSON.stringify((typeof fieldCards !== 'undefined' && fieldCards) || G.fieldCards || [])),
         round:       G.round || 1,
+        fm:          (G._fm ? JSON.parse(JSON.stringify(G._fm)) : null),
+        fmBid:       (G._fm && G._fmBid) ? G._fmBid : null,   // v5.284.0 續戰沿用場次編號(防重新整理重置每場 1 次的免死)   // ★ v5.282.0 英魂陣型(審查 H1):續戰時沿用,不重新套用能力加成
         isMini:      !!_advMiniBattleActive,  // ★ 記錄是否為小怪戰
         pendingReward: _advPendingReward ? JSON.parse(JSON.stringify(_advPendingReward)) : null,
         rewardOptions: _advRewardOptions ? JSON.parse(JSON.stringify(_advRewardOptions)) : [],
@@ -72928,7 +72964,15 @@ function renderTurnOrderBar(){
 
   if(!G || !G.p1 || !G.p2) return;
 
-  const sortFn2 = fieldHas('reverse') ? (a,b)=>a.spd-b.spd : (a,b)=>b.spd-a.spd;
+  // ★ v5.284.0(老師 2026-10-20 需求 4)— 順序條與實際出手順序同一套速度(startTurn 的 _effSpd:含英魂陣型速度與第一回合先手);
+  //   還沒跑過 startTurn 時退回「原速度 + 陣型速度」。任何例外一律退回原本的 h.spd 排序。
+  const _tobSpd = function(h){
+    try{
+      if(typeof window._lxpsTurnEffSpd === 'function') return window._lxpsTurnEffSpd(h);
+      return (h.spd || 0) + ((G && G._fm && typeof window._fmSpd === 'function') ? (fieldHas('reverse') ? -1 : 1) * window._fmSpd(h) : 0);
+    }catch(_eTob){ return h.spd || 0; }
+  };
+  const sortFn2 = fieldHas('reverse') ? (a,b)=>_tobSpd(a)-_tobSpd(b) : (a,b)=>_tobSpd(b)-_tobSpd(a);
   const allHeroes = [...G.p1,...G.p2].filter(h=>h.hp>0||h.curHp>0);
   // Sort: alive unacted first (by spd), then alive acted, then dead
   const unacted = allHeroes.filter(h=>h.curHp>0&&!h.acted).sort(sortFn2);
@@ -72992,7 +73036,14 @@ function renderTurnOrderBar(){
     slot.dataset.heroKey = h.side+'-'+h.pos;
     slot.innerHTML = '<div class="tob-av">'+h.av+'</div>'
       + '<div class="tob-name">'+h.name+'</div>'
-      + '<div class="tob-spd">SPD:'+h.spd+'</div>';
+      + '<div class="tob-spd">SPD:'+(function(){   // ★ v5.284.0 顯示含英魂陣型速度加成的數值;第一回合先手另標「先手」
+          try{
+            if(!(G && G._fm && typeof window._fmSpd === 'function')) return h.spd;
+            var _fs = window._fmSpd(h), _first = _fs >= 100000;
+            if(_first) _fs -= 100000;
+            return (h.spd + _fs) + (_fs > 0 ? '↑' : '') + (_first ? ' 先手' : '');
+          }catch(_eTobS){ return h.spd; }
+        })()+'</div>';
     wrapper.appendChild(slot);
     if(isNext){
       const nextLabel = document.createElement('div');
@@ -83285,6 +83336,7 @@ function _advRestoreBattleState(snap, bs){
   G.inv        = JSON.parse(JSON.stringify(bs.inv  ||[]));
   G.inv2       = JSON.parse(JSON.stringify(bs.inv2 ||[]));
   G.round      = bs.round || 1;
+  try{ if(window._fmRestore) window._fmRestore(bs); }catch(_eFmRs1){}   // ★ v5.282.0 英魂陣型(審查 H1)
   G._resultShown = false;
   G.pendingTarget = null;
   G.sellUsed   = new Set();
@@ -83591,6 +83643,7 @@ function _arenaRestoreBattleState(snap, bs){
   G.inv    = JSON.parse(JSON.stringify(bs.inv ||[]));
   G.inv2   = JSON.parse(JSON.stringify(bs.inv2||[]));
   G.round  = bs.round || snap.round || 1;
+  try{ if(window._fmRestore) window._fmRestore(bs); }catch(_eFmRs2){}   // ★ v5.282.0 英魂陣型(審查 H1)
   G.fieldCards = bs.fieldCards || [];
   try{ fieldCards = G.fieldCards; }catch(_){}
   // 清瞬時行動狀態(防殘留)
@@ -85033,5 +85086,789 @@ function _previewCheckQuizAchievements(){
 // 把 preview_perfect_50 加進「大類最難獎章」的設定,改在 _MEDAL_TOP_TIER 宣告處統一處理
 // (此處不再動態 add,避免載入順序問題)
 
+
+/* ═════════════════════════════════════════════════════════════════════════════
+ * ★★ v5.282.0(2026-10-20・老師裁定 1甲～7甲)英魂陣型(魂格陣型)★★
+ *   設計書:專案知識庫 claude/英魂陣型_設計書.md。四種魂格=力行國小校訓:真誠(治療輔助)/求知(特技)/活力(坦克)/行動(速度控場)。
+ *   出戰成員的魂格組成 ⇒ 一個陣型(戰鬥開始判定一次,之後成員倒下陣型不變),整場永久生效,與英雄原有技能疊加。
+ *   裁定:1甲 四魂陣 +15%/−10%;2甲 主角=萬用魂(自動算成組出最強陣型的那一種);3甲 鬥技場雙方都有;
+ *        4甲 冒險模式只給玩家方(敵人/BOSS 沒有);5甲 少於 4 人只判定雙魂/三魂;6甲 求知耗能固定 −1、不含爆發;7甲 不另設回合上限。
+ *   ⚠ 解讀(待老師確認):原設計「控制命中 +N 點」— 引擎沒有統一的命中擲骰(各技能自己擲),無法全域加 ⇒
+ *     疾風先鋒陣改「對受控制敵人傷害 +10%」、雷霆奔襲陣併成「對受控制敵人傷害 +25%」、閃電風暴改「對受控制敵人傷害 +30%、受到硬控 20% 抵抗」。
+ *   防疊加(擴大裁定 12甲):增傷走命星 G9 同一池(capHit 'dmg',每擊 ≤+60%);耗能減免走 G4(與命星合計 ≤−2、最低 1);
+ *     保留 1HP 走 G7 trySurvive(每人每回合 1、每場 2),另限每人每場 1 次;反彈屬於反應(G8:不再觸發反應、每擊反應 ≤3);
+ *     護盾被擊破治療、回能(仁智雙輝)走 G3 gainEnergy(gift:本回合不能拿去放爆發)。
+ *   ★ 沒有陣型的戰鬥(G._fm 不存在)所有接點一律不進來 ⇒ 與舊版行為完全相同。
+ * ═════════════════════════════════════════════════════════════════════════════ */
+window._FM_SOUL = window._FM_SOUL || {
+  // C=真誠 Q=求知 H=活力 X=行動(v5.282.0 草案:依英雄現有主要定位自動分類,老師可逐一調整;主角不在表內=萬用魂)
+  // 真誠(25)
+  '藝天使．克雷爾':'C', '天照大神':'C', '巫女':'C', '雙星姊妹':'C', '死靈法師':'C', '布奶鳥獸':'C', '救醫馬':'C', '水狐':'C', '米鈴':'C', '菇女':'C', '魔界花使‧朱玥':'C', '風術士':'C', '科學發明家':'C', '御雲使‧沐雲雪':'C', '巨蟹星神':'C', '處女星神':'C', '陰陽師':'C', '木靈使':'C', '舞者':'C', '祭司':'C', '煉金術師':'C', '吟遊詩人':'C', '煉丹小藥童':'C', '田徑隊員':'C', '弦樂團員':'C',
+  // 求知(35)
+  '月讀大神':'Q', '大天狗':'Q', '玉藻前':'Q', '科技生化人':'Q', '暗魔將·血':'Q', '紅色玩家':'Q', '地府酋長':'Q', '學霸(轉學生)':'Q', '天神宙斯':'Q', '武器精靈':'Q', '火柴人':'Q', '青炎龍王':'Q', '鳳凰':'Q', '美人魚‧角角':'Q', '幽幽':'Q', '死神':'Q', '雅典娜':'Q', '阿蘇火山龍王':'Q', '法老王':'Q', '喚龍使‧蜜鶴林':'Q', '熔岩巨人':'Q', '電腦老師':'Q', '聖冥法師':'Q', '炎火超少女':'Q', '貓人族長':'Q', '幽魂暗狐':'Q', '諸葛亮':'Q', '獅子星神':'Q', '學者':'Q', '刺客':'Q', '火法師':'Q', '雷法師':'Q', '神射手':'Q', '籃球隊員':'Q', '程式設計師':'Q',
+  // 活力(16)
+  '主神奧汀':'H', '究極神兵':'H', '神槍手':'H', '操偶師':'H', '麻吉喵‧Nico':'H', '牛魔王':'H', '金牛星神':'H', '摩羯星神':'H', '占星師':'H', '守衛':'H', '聖騎士':'H', '動物學家':'H', '小力':'H', '電腦繪圖師':'H', '小劇團員':'H', '機關王雙人組':'H',
+  // 行動(48)
+  '魔劍姬‧伊莉雅':'X', '酒吞童子':'X', '窮奇':'X', '鋁合金暴龍':'X', '超鬼神王':'X', '炸彈客':'X', '維京海盜船長':'X', '小丑':'X', '火爆女':'X', '網路駭客':'X', '地獄將軍':'X', '小鬼貓與兔':'X', '我的豚豚':'X', '埃及豔后':'X', '拘留者':'X', '魔術師':'X', '大刀勇士':'X', '哪吒':'X', '孫悟空':'X', '關羽':'X', '姜子牙':'X', '呂布':'X', '蚩尤':'X', '牡羊星神':'X', '雙子星神':'X', '天秤星神':'X', '天蠍星神':'X', '射手星神':'X', '水瓶星神':'X', '雙魚星神':'X', '凡人':'X', '軍師':'X', '神偷':'X', '吸血鬼':'X', '武士':'X', '時空法師':'X', '機械師':'X', '大力士':'X', '劍士':'X', '冰法師':'X', '光法師':'X', '暗法師':'X', '武鬥家':'X', '警長':'X', '鐵匠':'X', '偵探':'X', '幼兒園小孩':'X', '直笛團員':'X',
+};
+window._FM_SOUL_NAME = { C:'真誠', Q:'求知', H:'活力', X:'行動' };
+window._FM_SOUL_ICON = { C:'💗', Q:'📘', H:'🛡️', X:'⚡' };
+window._FM_DEFS = {
+  // 四魂(1+1+1+1)
+  'CQHX': { tier:'四魂陣', name:'力行校訓陣', score:40, fx:{ dmg:0.15, heal:0.15, shield:0.15, dr:0.10 } },
+  // 雙魂(2+1+1)
+  'C2': { tier:'雙魂陣', name:'誠心守望陣', score:15, fx:{ heal:0.20, survive:0.25 } },
+  'Q2': { tier:'雙魂陣', name:'博學智囊陣', score:15, fx:{ cut:1, sp:0.10 } },
+  'H2': { tier:'雙魂陣', name:'朝氣鐵壁陣', score:15, fx:{ hp:0.12, shield:0.20 } },
+  'X2': { tier:'雙魂陣', name:'疾風先鋒陣', score:15, fx:{ spd:0.20, vsCtrl:0.10 } },
+  // 三魂(3+1)
+  'C3': { tier:'三魂陣', name:'聖光庇佑陣', score:33, fx:{ heal:0.35, survive:0.35, regen:0.02 } },
+  'Q3': { tier:'三魂陣', name:'群星智慧陣', score:33, fx:{ cut:2, sp:0.20, crit:0.05, energy:1 } },   // v5.284.0 老師 1甲:開場能量 +2→+1、耗能 −1 只對 4 以上
+  'H3': { tier:'三魂陣', name:'不動山岳陣', score:33, fx:{ hp:0.18, shield:0.20, dr:0.10 } },
+  'X3': { tier:'三魂陣', name:'雷霆奔襲陣', score:33, fx:{ spd:0.25, first:1, vsCtrl:0.25 } },
+  // 純魂(4 同魂)
+  'C4': { tier:'純魂陣', name:'真誠之心‧永恆光環', score:48, fx:{ heal:0.45, shield:0.20, survive:0.40, regen:0.03 } },
+  'Q4': { tier:'純魂陣', name:'求知之心‧萬象天書', score:48, fx:{ cut:2, sp:0.20, crit:0.10, energy:2 } },   // v5.284.0 老師 1甲:特技 +25%→+20%、開場能量 +3→+2、耗能 −1 只對 4 以上
+  'H4': { tier:'純魂陣', name:'活力之心‧金剛長城', score:48, fx:{ hp:0.25, dr:0.15, reflect:0.10 } },
+  'X4': { tier:'純魂陣', name:'行動之心‧閃電風暴', score:48, fx:{ spd:0.35, vsCtrl:0.30, ctrlRes:0.20 } },
+  // 雙核(2+2)= 兩組雙魂效果 + 共鳴
+  'CQ': { tier:'雙核陣', name:'仁智雙輝陣', score:35, res:'healEnergy', resTxt:'施放治療技能時陣營能量 +1(每回合 1 次,當回合不能拿來放爆發)' },
+  'CH': { tier:'雙核陣', name:'守護磐石陣', score:35, res:'shieldHeal', resTxt:'護盾被擊破時回復 10% 最大 HP(每人每回合 1 次)' },
+  'CX': { tier:'雙核陣', name:'春風疾行陣', score:35, res:'healCleanse', resTxt:'每回合第一次治療技能額外移除 1 個不利狀態' },
+  'QH': { tier:'雙核陣', name:'智勇雙全陣', score:35, res:'hpHigh', resTxt:'HP 高於 50% 的成員造成傷害 +10%' },
+  'QX': { tier:'雙核陣', name:'奇謀迅擊陣', score:35, fxAdd:{ vsCtrl:0.15 }, resTxt:'對受控制敵人傷害再 +15%' },
+  'HX': { tier:'雙核陣', name:'奔雷鐵騎陣', score:35, fxAdd:{ ctrlRes:0.25 }, resTxt:'受到暈眩/冰凍/睡眠等硬控時 25% 機率抵抗' }
+};
+(function(){
+  var W = window, ORDER = ['C','Q','H','X'];
+  if(typeof W._FM_ADMIN_ONLY === 'undefined') W._FM_ADMIN_ONLY = true;   // ★ 測試期:只有 GM 帳號看得到、生效(老師確認後改 false)
+  W._fmOpenForMe = function(){ try{ if(W._FM_ADMIN_ONLY !== true) return true; return (typeof W._isAdminUser === 'function' && !!W._isAdminUser()); }catch(_){ return false; } };
+  function _merge(a, b){ var o = {}; [a || {}, b || {}].forEach(function(x){ Object.keys(x).forEach(function(k){ if(k === 'survive') o[k] = Math.max(o[k] || 0, x[k]); else if(k === 'cut') o[k] = Math.max(o[k] || 0, x[k]); else o[k] = (o[k] || 0) + x[k]; }); }); return o; }
+  function _isProtag(n){ try{ return !!(W._isProtagHero && W._isProtagHero(n)); }catch(_){ return false; } }
+  W._fmSoulOf = function(n){ if(!n) return null; if(_isProtag(n)) return '*'; var s = W._FM_SOUL[n]; return s || null; };
+  // 依「魂格計數」判定(不含萬用魂);n = 參與判定的人數(少於 4 人只判雙魂/三魂,裁定 5甲)
+  function _judge(cnt, n){
+    var ks = ORDER.filter(function(k){ return cnt[k] > 0; });
+    var by = ks.slice().sort(function(a, b){ return cnt[b] - cnt[a] || ORDER.indexOf(a) - ORDER.indexOf(b); });
+    var top = by[0], c1 = top ? cnt[top] : 0;
+    if(n >= 4){
+      if(c1 >= 4) return { key: top + '4' };
+      if(c1 === 3) return { key: top + '3' };
+      if(ks.length === 4) return { key: 'CQHX' };
+      if(c1 === 2 && cnt[by[1]] === 2){ var pr = [by[0], by[1]].sort(function(a, b){ return ORDER.indexOf(a) - ORDER.indexOf(b); }).join(''); return { key: pr, pair: [by[0], by[1]] }; }
+      if(c1 === 2) return { key: top + '2' };
+      return null;
+    }
+    if(c1 >= 3) return { key: top + '3' };
+    if(c1 === 2) return { key: top + '2' };
+    return null;
+  }
+  function _build(j){
+    if(!j) return null;
+    var d = W._FM_DEFS[j.key]; if(!d) return null;
+    var fx;
+    if(d.tier === '雙核陣'){
+      var p = j.key.split('');
+      fx = _merge(W._FM_DEFS[p[0] + '2'].fx, W._FM_DEFS[p[1] + '2'].fx);
+      if(d.fxAdd) fx = _merge(fx, d.fxAdd);
+    } else fx = _merge(d.fx, null);
+    return { key: j.key, name: d.name, tier: d.tier, score: d.score, fx: fx, res: d.res || '', resTxt: d.resTxt || '' };
+  }
+  W._fmBuildPublic = function(key){ return _build({ key: key }); };   // 陣型推薦清單顯示效果用
+  // names:出戰成員名字陣列 ⇒ { key,name,tier,fx,res,souls:{名字:魂格},wild:主角選成的魂格 } 或 null
+  W._fmCompute = function(names){
+    try{
+      names = (names || []).filter(Boolean);
+      var souls = {}, cnt = { C:0, Q:0, H:0, X:0 }, wild = [], n = 0;
+      names.forEach(function(nm){ var s = W._fmSoulOf(nm); if(s === '*'){ wild.push(nm); n++; } else if(s){ cnt[s]++; souls[nm] = s; n++; } });
+      var best = null, bestS = null;
+      var tryW = function(c, assign){ var f = _build(_judge(c, n)); if(f && (!best || f.score > best.score)){ best = f; bestS = assign; } };
+      if(!wild.length) tryW(cnt, null);
+      else {
+        // 萬用魂:每位主角各自試四種,取等效最高(同分取 ORDER 前者)
+        var combos = [[]];
+        wild.forEach(function(){ var nx = []; combos.forEach(function(c){ ORDER.forEach(function(k){ nx.push(c.concat([k])); }); }); combos = nx; });
+        combos.forEach(function(cb){ var c = { C:cnt.C, Q:cnt.Q, H:cnt.H, X:cnt.X }; cb.forEach(function(k){ c[k]++; }); tryW(c, cb); });
+      }
+      if(best){
+        wild.forEach(function(nm, i){ souls[nm] = bestS ? bestS[i] : null; });
+        best.souls = souls; best.wild = bestS;
+      }
+      return best;
+    }catch(e){ return null; }
+  };
+  // 給編隊畫面的提示:「再換 1 位 ○ 魂就能組成 △△陣」(只看比目前更強的,最多 2 條)
+  W._fmHints = function(names){
+    try{
+      names = (names || []).filter(Boolean);
+      var cur = W._fmCompute(names), curS = cur ? cur.score : 0, out = [], seen = {};
+      if(names.length < 4){
+        ORDER.forEach(function(k){
+          var f = W._fmComputeSouls(names, k); if(f && f.score > curS && !seen[f.key]){ seen[f.key] = 1; out.push({ add:k, f:f }); }
+        });
+      } else {
+        names.forEach(function(drop, i){
+          ORDER.forEach(function(k){
+            var arr = names.slice(); arr.splice(i, 1);
+            var f = W._fmComputeSouls(arr, k);
+            if(f && f.score > curS && !seen[f.key]){ seen[f.key] = 1; out.push({ add:k, drop:drop, f:f }); }
+          });
+        });
+      }
+      out.sort(function(a, b){ return b.f.score - a.f.score; });
+      return out.slice(0, 2);
+    }catch(_){ return []; }
+  };
+  W._fmComputeSouls = function(names, extraSoul){   // names + 一位「虛擬的 extraSoul 魂格成員」
+    var tag = '\u0000fm_' + extraSoul;
+    W._FM_SOUL[tag] = extraSoul;
+    try{ return W._fmCompute(names.concat([tag])); } finally { delete W._FM_SOUL[tag]; }
+  };
+  W._fmDescFx = function(f){
+    if(!f) return '';
+    var x = f.fx || {}, a = [];
+    var P = function(v){ return Math.round(v * 100) + '%'; };
+    if(x.dmg) a.push('造成傷害 +' + P(x.dmg));
+    if(x.heal) a.push('治療 +' + P(x.heal));
+    if(x.shield) a.push('護盾 +' + P(x.shield));
+    if(x.dr) a.push('受到傷害 −' + P(x.dr));
+    if(x.hp) a.push('最大 HP +' + P(x.hp));
+    if(x.sp) a.push('特技 +' + P(x.sp));
+    if(x.crit) a.push('暴擊率 +' + P(x.crit));
+    if(x.cut === 1) a.push('每回合第一次技能耗能 −1');
+    if(x.cut === 2) a.push('耗能 4 以上的技能耗能 −1');
+    if(x.energy) a.push('開場陣營能量 +' + x.energy);
+    if(x.spd) a.push('速度 +' + P(x.spd));
+    if(x.first) a.push('第一回合全隊先手');
+    if(x.vsCtrl) a.push('對受控制敵人傷害 +' + P(x.vsCtrl));
+    if(x.ctrlRes) a.push('受到硬控 ' + P(x.ctrlRes) + ' 抵抗');
+    if(x.survive) a.push('致命傷 ' + P(x.survive) + ' 保留 1 HP');
+    if(x.regen) a.push('每回合回復 ' + P(x.regen) + ' 最大 HP');
+    if(x.reflect) a.push('受擊反彈 ' + P(x.reflect));
+    if(f.resTxt) a.push('共鳴:' + f.resTxt);
+    return a.join('、');
+  };
+
+  /* ── 戰鬥接點 ── */
+  function F(side){ try{ return (G && G._fm && G._fm[side]) ? G._fm[side].fx : null; }catch(_){ return null; } }
+  function _bid(){ try{ return G._fmBid || 0; }catch(_){ return 0; } }
+  function _hardCtrled(t){ try{ var H = W._cstCap.HARD_CTRL; return (t.status || []).some(function(s){ return s && H.indexOf(s.type) >= 0; }); }catch(_){ return false; } }
+  // v5.284.0 老師 2甲:是不是 BOSS 戰(冒險真 BOSS、世界 BOSS)
+  function _fmBossBattle(){
+    try{
+      if(!(typeof _adventureMode !== 'undefined' && _adventureMode === true)) return false;   // 鬥技場/PvP 沒有 BOSS(玉藻前等英雄名字與 BOSS 同名,不能只看名字)
+      if(W._pvpCtx && W._pvpCtx.battleLive) return false;
+      if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') return true;
+      return (G.p2 || []).some(function(h){ return h && h.curHp > 0 && W._cstCap.isBoss && W._cstCap.isBoss(h); });
+    }catch(_){ return false; }
+  }
+  W._fmBossBattle = _fmBossBattle;
+  // v5.284.0 老師 3:召喚物 HP 跟著主人一起放大(戰鬥開始前就召喚好的:操偶師人偶、月讀衛月、蜜鶴林天青龍、陰陽師式神)
+  //   開戰後才召喚的本來就用主人「目前」的最大 HP 計算 ⇒ 自然吃到加成,不必另外處理。
+  var _SUM_NUM = [['_puppetHp','_puppetHpMax'], ['_moonHp','_moonHpMax'], ['_dragonHp','_dragonHpMax']];
+  var _SUM_OBJ = ['_shikigamiXuanwuBaihu','_shikigamiZhuque','_shikigamiQinglong'];
+  W._fmScaleSummons = function(h, r){
+    if(!h || !(r > 1) || !isFinite(r)) return;
+    try{
+      _SUM_NUM.forEach(function(p){
+        if(typeof h[p[1]] === 'number' && h[p[1]] > 0) h[p[1]] = Math.max(1, Math.floor(h[p[1]] * r));
+        if(typeof h[p[0]] === 'number' && h[p[0]] > 0) h[p[0]] = Math.max(1, Math.floor(h[p[0]] * r));
+      });
+      _SUM_OBJ.forEach(function(k){
+        var o = h[k];
+        if(o && typeof o === 'object'){
+          if(typeof o.hpMax === 'number' && o.hpMax > 0) o.hpMax = Math.max(1, Math.floor(o.hpMax * r));
+          if(typeof o.hp === 'number' && o.hp > 0) o.hp = Math.max(1, Math.floor(o.hp * r));
+        }
+      });
+    }catch(_){}
+  };
+  W._fmApply = function(){
+    if(typeof G === 'undefined' || !G) return;
+    // ★ 老師 2026-10-20:世界 BOSS 與 PvP 連線也要套。連線戰鬥由「房主」權威計算並把 G._fm 經 wire 傳給其他人
+    //   (game_cloud _GToWire/_applyWireToG),接收端(PvP guest、世界 BOSS 連線 client)不自己判定,避免重複加成或不同步。
+    var pvp = false;
+    try{
+      if(W._pvpCtx && W._pvpCtx.battleLive){ if(!W._pvpCtx.isHost) return; pvp = true; }   // 審查 M1:只認進行中的連線戰(殘留的 _pvpCtx 不算)
+      if(W._wbClientMode === true || W._wbConnectedClientMode === true) return;
+    }catch(_){}
+    if(!W._fmOpenForMe()) return;   // 測試期只有 GM 帳號生效(連線戰鬥以房主為準;老師確認後把 _FM_ADMIN_ONLY 改 false 全面開放)
+    var arena = pvp || (typeof _adventureMode !== 'undefined' && _adventureMode === false);
+    var sides = arena ? ['p1','p2'] : ['p1'];   // 3甲 鬥技場/PvP 雙方;4甲 冒險(含世界 BOSS)只給玩家方
+    var fm = {}, any = false;
+    sides.forEach(function(sd){
+      var team = (G[sd] || []).filter(function(h){ return h && h.name && !h._isSummon && !h._summoned; });
+      var f = W._fmCompute(team.map(function(h){ return h.name; }));
+      if(f){ fm[sd] = f; any = true; }
+    });
+    if(!any) return;
+    G._fm = fm; G._fmBid = Date.now() + Math.random();
+    Object.keys(fm).forEach(function(sd){
+      var f = fm[sd], x = f.fx;
+      (G[sd] || []).forEach(function(h){
+        if(!h || !(h.curHp > 0)) return;
+        if(x.hp > 0 && h.hp > 0){ var _h0 = h.hp; var d = Math.floor(h.hp * x.hp); h.hp += d; h.curHp = Math.min(h.hp, h.curHp + d); W._fmScaleSummons(h, h.hp / _h0); }
+        if(x.sp > 0 && h.sp > 0){ h.sp += Math.floor(h.sp * x.sp); }
+        try{ if(h._initState && (x.hp > 0 || x.sp > 0)){ h._initState.hp = h.hp; h._initState.sp = h.sp; } }catch(_){}   // 審查 L1:時間倒轉還原到「含陣型加成」的初始值
+        try{ renderCard(h); }catch(_){}
+      });
+      if(x.energy > 0 && G.energy){ G.energy[sd] = Math.min(10, (G.energy[sd] || 0) + x.energy); }
+      try{
+        log('🏫 ' + (sd === 'p1' ? '我方' : '對方') + '英魂陣型【' + f.name + '】(' + f.tier + ')發動!' + W._fmDescFx(f));
+        var lead = (G[sd] || []).find(function(h){ return h && h.curHp > 0; });
+        if(lead) bannerFX(lead, '🏫 ' + f.name, '#ffd36a', 1400);
+      }catch(_){}
+    });
+    try{ if(typeof updateEnergy === 'function') updateEnergy(); }catch(_){}
+  };
+  // 續戰還原(審查 H1):存檔裡的最大 HP/特技已是加成後的值 ⇒ 只還原陣型本身,標記已套用
+  //   v5.284.0(平衡審查 L4):沿用存檔裡的場次編號 ⇒ 重新整理續戰不會把「每場 1 次」的保留 1 HP 重置
+  W._fmRestore = function(bs){
+    if(typeof G === 'undefined' || !G) return;
+    var f = bs && bs.fm;
+    if(f && typeof f === 'object' && (f.p1 || f.p2)) G._fm = f; else delete G._fm;
+    G._fmDone = true; G._fmP2Ref = G.p2; G._fmBid = (bs && bs.fmBid) ? bs.fmBid : (Date.now() + Math.random());
+  };
+  // 冒險同一關的下一場(小怪 → BOSS 共用 G,能量會被重設為 2):開場能量重新給;命座/陣型共用的免死「每場 2 次」重新計
+  W._fmNewBattle = function(){
+    Object.keys(G._fm || {}).forEach(function(sd){
+      var x = G._fm[sd] && G._fm[sd].fx;
+      if(x && x.energy > 0 && G.energy){ G.energy[sd] = Math.min(10, (G.energy[sd] || 0) + x.energy); try{ log('🏫 ' + G._fm[sd].name + ':開場陣營能量 +' + x.energy); }catch(_){} }
+    });
+    try{ if(G._cstCap){ G._cstCap.svB = {}; } }catch(_){}
+    try{ if(typeof updateEnergy === 'function') updateEnergy(); }catch(_){}
+  };
+  W._fmDmgMod = function(target, dmg, opts, a){
+    if(!target || !(dmg > 0) || (opts && opts.isHeal)) return dmg;
+    opts = opts || {};
+    var at = opts.actor || a;
+    if(at && at.side && at.side !== target.side && !opts._isDot && !opts._isDotTick && !opts._fromBurn && !opts.fixedDmg){   // 平衡審查 L6:中毒/出血等持續傷害不吃陣型增傷(與燃燒、固定傷害一致)
+      var xa = F(at.side);
+      if(xa){
+        var pct = (xa.dmg || 0) + ((xa.vsCtrl > 0 && _hardCtrled(target)) ? xa.vsCtrl : 0);
+        if(G._fm[at.side].res === 'hpHigh' && at.hp > 0 && at.curHp > at.hp * 0.5) pct += 0.10;
+        if(pct > 0){ var k = W._cstCap.capHit(opts, 'dmg', pct); if(k > 0) dmg = Math.max(1, Math.floor(dmg * (1 + k))); }
+      }
+    }
+    var xt = F(target.side);
+    if(xt){
+      if(xt.dr > 0){
+        // 平衡檢查:陣型減傷不可把這一擊壓到「原始傷害 30%」以下(合計減傷 ≤70%;其他來源已經減很多時陣型減傷就不再生效)
+        var _nd = Math.ceil(dmg * (1 - W._cstCap.combineDr([xt.dr])));
+        var _orig = +opts._gearBossOrig || 0;
+        if(_orig > 0){ var _fl = Math.ceil(_orig * 0.30); if(_nd < _fl) _nd = Math.min(dmg, _fl); }
+        dmg = Math.max(1, _nd);
+      }
+      if(xt.reflect > 0 && at && at.side && at.side !== target.side && at.curHp > 0 && !opts.isRebound && !opts._isDot && !opts._isDotTick && !opts._fromBurn && W._cstCap.reactOk(opts)
+         && !(target._fmRfB === _bid() && target._fmRfR === G.round)){
+        opts._fmRefPend = { at: at, rate: xt.reflect };   // 審查 M1/M2:先記下,doDmg 真正扣血之後才反彈(被護盾/免疫擋掉就不反彈)
+      }
+    }
+    return dmg;
+  };
+  W._fmReflectFire = function(target, dmg, p, opts){
+    if(!p || !p.at || !target || typeof G === 'undefined' || !G || G._resultShown) return;
+    var at = p.at;
+    if(!(at.curHp > 0) || (target._fmRfB === _bid() && target._fmRfR === G.round)) return;
+    var amt = Math.min(Math.floor(dmg * p.rate), Math.floor((target.hp || 0) * 0.10));
+    if(!(amt > 0)) return;
+    target._fmRfB = _bid(); target._fmRfR = G.round;
+    W._cstCap.noteReact(opts);
+    try{ log('🛡️ [' + target.name + '] 金剛長城!反彈 ' + amt + ' 傷害給 [' + at.name + ']'); }catch(_){}
+    var _sv = G.activeChar; G.activeChar = target;
+    try{ doDmg(at, amt, { actor:target, isRebound:true, _cstReact:1, noReflect:true, noCounter:true }); } finally { G.activeChar = _sv; }
+  };
+  W._fmHealMod = function(target, amt, opts){
+    opts = opts || {};
+    if(opts._fmRegen || opts.isChaos) return amt;
+    var x = F(target.side);
+    if(x && x.heal > 0) amt = Math.floor(amt * (1 + x.heal));
+    try{
+      var hl = opts.actor;
+      if(hl && hl.side === target.side && G._fm[hl.side] && G.lastSkill && G.lastSkill.actor === hl && typeof W._curSkillName === 'string' && W._curSkillName === G.lastSkill.n){
+        var res = G._fm[hl.side].res;
+        if(res === 'healEnergy' && !(hl._fmHeB === _bid() && hl._fmHeR === G.round)){
+          hl._fmHeB = _bid(); hl._fmHeR = G.round;
+          var got = W._cstCap.gainEnergy(hl.side, 1, { gift:true });
+          if(got > 0) log('🏫 仁智雙輝![' + hl.name + '] 施放治療技能,陣營能量 +1(本回合不能用來放爆發)');
+        }
+        if(res === 'healCleanse' && !(hl._fmClB === _bid() && hl._fmClR === G.round) && Array.isArray(target.status)){
+          var bad = target.status.find(function(s){ return s && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.indexOf(s.type) >= 0; });
+          if(bad){
+            hl._fmClB = _bid(); hl._fmClR = G.round;
+            target.status = target.status.filter(function(s){ return s !== bad; });
+            log('🏫 春風疾行![' + hl.name + '] 的治療替 [' + target.name + '] 移除了「' + ((typeof statusName === 'function') ? statusName(bad.type) : bad.type) + '」');
+          }
+        }
+      }
+    }catch(_){}
+    return amt;
+  };
+  W._fmShieldMult = function(t){ var x = t && F(t.side); return (x && x.shield > 0) ? 1 + x.shield : 1; };
+  W._fmShieldBroken = function(t){
+    if(!t || !G._fm[t.side] || G._fm[t.side].res !== 'shieldHeal' || !(t.curHp > 0)) return;
+    if(t._fmSbB === _bid() && t._fmSbR === G.round) return;
+    t._fmSbB = _bid(); t._fmSbR = G.round;
+    var h = Math.max(1, Math.floor((t.hp || 0) * 0.10));
+    log('🏫 守護磐石![' + t.name + '] 護盾碎裂,回復 ' + h + ' HP');
+    doHeal(t, h, { actor:t, isHeal:true, noDice:true, _fmRegen:true });
+  };
+  W._fmSpd = function(h){
+    var x = h && F(h.side); if(!x) return 0;
+    var v = 0;
+    if(x.spd > 0) v += Math.floor(Math.abs(h.spd || 0) * x.spd);
+    if(x.first && (G.round || 1) === 1 && !_fmBossBattle()) v += 100000;   // v5.284.0 老師 2甲:BOSS 戰(冒險真 BOSS、世界 BOSS)第一回合不先手
+    return v;
+  };
+  W._fmCrit = function(a){ var x = a && F(a.side); return (x && x.crit > 0) ? x.crit : 0; };
+  W._fmCostCut = function(actor, c, acc){
+    var x = actor && F(actor.side); if(!x || !x.cut) return c;
+    if(!(c > 1)) return c;   // 平衡審查 L1:原本 0 耗能的技能不能被拉成 1
+    if(x.cut === 1 && actor._fmCutB === _bid() && actor._fmCutR === G.round) return c;
+    if(x.cut === 2 && c < 4) return c;   // v5.284.0 老師 1甲:三魂/純魂只對耗能 4 以上的技能 −1(3 能量的暈眩不會變 2)
+    return W._cstCap.costCut(actor, c, 1, acc);
+  };
+  W._fmNoteCast = function(a, sk){
+    if(!a || !sk || sk.p || typeof G === 'undefined' || !G || !G._fm) return;
+    var x = F(a.side); if(!x || x.cut !== 1) return;
+    a._fmCutB = _bid(); a._fmCutR = G.round;
+  };
+  W._fmSurvive = function(t){
+    var x = F(t.side); if(!x || !(x.survive > 0)) return false;
+    if(t._fmSvB === _bid()) return false;           // 每人每場 1 次
+    if(Math.random() >= x.survive) return false;
+    if(!W._cstCap.trySurvive(t)) return false;       // G7:每人每回合 1、每場 2(不分來源)
+    t._fmSvB = _bid();
+    try{ log('🏫 [' + t.name + '] 英魂守護!受到致命傷,以 1 HP 撐住!'); bannerFX(t, '💗 英魂守護', '#ff9ab8', 900); }catch(_){}
+    return true;
+  };
+  W._fmCtrlResist = function(h, t){
+    var x = h && F(h.side); if(!x || !(x.ctrlRes > 0)) return false;
+    if(W._cstCap.HARD_CTRL.indexOf(t) < 0) return false;
+    var src = G.activeChar; if(!src || src.side === h.side) return false;   // 審查 M4:只抵抗「敵人」施加的硬控(午睡時間等自己/隊友施加的不擋)
+    if(Math.random() >= x.ctrlRes) return false;
+    try{ log('🏫 [' + h.name + '] 英魂陣型:抵抗了「' + ((typeof statusName === 'function') ? statusName(t) : t) + '」!'); bannerFX(h, '⚡ 抵抗', '#ffd36a', 700); }catch(_){}
+    return true;
+  };
+  W._fmRoundStart = function(){
+    Object.keys(G._fm || {}).forEach(function(sd){
+      var x = G._fm[sd].fx; if(!(x.regen > 0)) return;
+      var n = 0;
+      (G[sd] || []).forEach(function(h){
+        if(!h || !(h.curHp > 0) || !(h.hp > 0) || h.curHp >= h.hp) return;
+        var amt = Math.max(1, Math.floor(h.hp * x.regen));
+        var got = doHeal(h, amt, { actor:h, isHeal:true, noDice:true, _fmRegen:true });
+        if(got > 0) n++;
+      });
+      if(n) try{ log('🏫 ' + G._fm[sd].name + ':' + (sd === 'p1' ? '我方' : '對方') + '全隊回復 ' + Math.round(x.regen * 100) + '% 最大 HP'); }catch(_){}
+    });
+  };
+})();
+
+/* ═════════════════════════════════════════════════════════════════════════════
+ * ★ v5.283.0 英魂陣型 — 編組介面(老師 2026-10-20 08:05 需求 2/3)
+ *   ① 編組頁上方陣型列(#fm-pick-bar)+「?」說明鈕(再次開啟說明,按 ✕ 或任意處關閉)
+ *   ② 每張英雄圖片右下角魂格圓標「真/知/力/行」(主角「萬」):沒發動陣型=灰色;發動=魂格顏色+呼吸光暈
+ *      位置:編組格子(冒險/鬥技場卡片)、右上四張隊員立繪、常用預設陣容視窗、圖鑑預設陣容編輯器
+ *   ③ 陣型「新發動或換成別的陣型」時:音效 sfx-powerup(倉庫既有「能力上升.mp3」)+ 在四張隊員立繪上方 2 秒小視窗(名稱+說明)
+ *   ④ 篩選列新增「魂格」四顆(data-filter=soul_C/Q/H/X,主角萬用魂四種都列)
+ *   ⑤ 推薦鈕旁新增「🏫 陣型推薦」:列出 19 種陣型(名稱+效果+能不能湊),點選後自動挑 4 位最強的組成該陣型
+ *   ★ 介面一律跟 _fmOpenForMe(測試期 GM 限定);關閉時全部不顯示。所有尺寸用畫布 px(在縮放後的 #gc 內,鐵律 〇之二)。
+ * ═════════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var W = window;
+  var LETTER = { C:'真', Q:'知', H:'力', X:'行' };
+  var COLOR  = { C:'#ff6f9f', Q:'#5aa2ff', H:'#3fc779', X:'#ffb02e' };
+  var ORDER = ['C','Q','H','X'];
+  function _on(){ try{ return !!(W._fmOpenForMe && W._fmOpenForMe()); }catch(_){ return false; } }
+  function _e(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function _css(){
+    if(document.getElementById('fm-css2')) return;
+    var o = document.getElementById('fm-css'); if(o) o.remove();
+    var st = document.createElement('style'); st.id = 'fm-css2';
+    st.textContent = [
+      '#fm-pick-bar{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:6px auto 0;max-width:1180px;box-sizing:border-box;padding:8px 16px;border-radius:14px;background:rgba(20,16,48,0.82);border:2px solid rgba(255,211,106,0.6);color:#f3ecd2;font-size:20px;line-height:1.35;text-align:left;}',
+      '#fm-pick-bar .fm-name{font-weight:900;color:#ffd36a;font-size:24px;white-space:nowrap;}',
+      '#fm-pick-bar .fm-tier{font-size:16px;color:#cfc3ff;border:1px solid rgba(207,195,255,0.55);border-radius:9px;padding:1px 8px;white-space:nowrap;}',
+      '#fm-pick-bar .fm-q{width:36px;height:36px;border-radius:50%;border:2px solid #ffd36a;background:rgba(255,211,106,0.15);color:#ffd36a;font-size:22px;font-weight:900;cursor:pointer;font-family:inherit;line-height:1;padding:0;flex-shrink:0;}',
+      '#fm-pick-bar .fm-fx{flex:1 1 420px;min-width:0;font-size:18px;color:#efe8cc;}',
+      '#fm-pick-bar .fm-hint{flex:1 1 100%;font-size:17px;color:#9fe6c0;}',
+      '#fm-pick-bar .fm-none{color:#d8d8d8;font-size:19px;}',
+      /* 魂格圓標 */
+      '.fm-soul-tag{position:absolute;right:5px;bottom:5px;z-index:6;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;line-height:1;pointer-events:none;box-sizing:border-box;background:rgba(70,72,84,0.92);color:#c9cbd4;border:2px solid rgba(190,192,204,0.7);font-family:inherit;}',
+      '.fm-soul-tag.on{color:#fff;border-color:#fff;background:var(--fmc);animation:fmBreath 1.6s ease-in-out infinite;}',
+      '@keyframes fmBreath{0%,100%{box-shadow:0 0 4px 1px var(--fmc),0 0 0 0 var(--fmc);}50%{box-shadow:0 0 14px 5px var(--fmc),0 0 26px 8px rgba(255,255,255,0.25);}}',
+      '@media (prefers-reduced-motion:reduce){.fm-soul-tag.on{animation:none;box-shadow:0 0 10px 3px var(--fmc);}}',
+      /* 2 秒小視窗/說明視窗 */
+      '#fm-pop{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;width:min(640px,96%);box-sizing:border-box;padding:16px 22px;border-radius:18px;background:rgba(18,12,46,0.95);border:3px solid #ffd36a;box-shadow:0 0 30px rgba(255,211,106,0.55);color:#f6efd5;text-align:center;}',
+      '#fm-pop.fixed{position:fixed;z-index:1000002;}',
+      '#fm-pop .fm-pop-t{font-size:30px;font-weight:900;color:#ffd36a;}',
+      '#fm-pop .fm-pop-tier{font-size:18px;color:#cfc3ff;margin-top:2px;}',
+      '#fm-pop .fm-pop-fx{font-size:20px;line-height:1.55;margin-top:8px;text-align:left;}',
+      '#fm-pop .fm-pop-x{position:absolute;top:6px;right:8px;width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);background:rgba(0,0,0,0.4);color:#fff;font-size:22px;cursor:pointer;font-family:inherit;}',
+      '#fm-pop-mask{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000001;background:rgba(0,0,0,0.01);}',
+      '@keyframes fmPopIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.85);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}',
+      '#fm-pop{animation:fmPopIn 0.25s ease-out;}',
+      /* 陣型推薦清單 */
+      '#fm-rec-ov{position:fixed;top:0;left:0;right:0;bottom:0;overflow-y:auto;z-index:1000001;display:flex;align-items:safe center;justify-content:center;background:rgba(3,4,18,0.78);}',
+      '#fm-rec-box{position:relative;width:min(1000px,96vw);max-height:92vh;max-height:92dvh;overflow-y:auto;box-sizing:border-box;padding:20px 24px;border-radius:20px;background:linear-gradient(160deg,#141034,#0a0820);border:2.5px solid rgba(255,211,106,0.7);color:#f3ecd2;}',
+      '#fm-rec-box h3{margin:0 0 4px;font-size:30px;color:#ffd36a;text-align:center;}',
+      '#fm-rec-box .fm-rec-sub{font-size:17px;color:#bdb3e6;text-align:center;margin-bottom:12px;}',
+      '#fm-rec-box .fm-rec-tier{font-size:20px;font-weight:900;color:#cfc3ff;margin:12px 0 6px;}',
+      '#fm-rec-box .fm-rec-row{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;text-align:left;padding:10px 14px;margin-bottom:6px;border-radius:12px;border:2px solid rgba(255,211,106,0.45);background:rgba(40,30,80,0.7);color:#f3ecd2;font-family:inherit;cursor:pointer;min-height:44px;}',
+      '#fm-rec-box .fm-rec-row:disabled{cursor:default;opacity:0.45;border-color:rgba(160,160,180,0.35);}',
+      '#fm-rec-box .fm-rec-souls{flex-shrink:0;display:flex;gap:3px;}',
+      '#fm-rec-box .fm-rec-souls span{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;}',
+      '#fm-rec-box .fm-rec-main{flex:1;min-width:0;}',
+      '#fm-rec-box .fm-rec-name{font-size:21px;font-weight:900;color:#ffd36a;}',
+      '#fm-rec-box .fm-rec-fx{font-size:16px;color:#e6dfc4;line-height:1.45;}',
+      '#fm-rec-box .fm-rec-miss{font-size:15px;color:#ff9a9a;}',
+      '#fm-rec-x{position:absolute;top:10px;right:12px;width:46px;height:46px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);background:rgba(0,0,0,0.4);color:#fff;font-size:24px;cursor:pointer;font-family:inherit;}',
+      '.fm-filter-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}',
+      '.fm-filter-row .fm-fbtn-dot{display:inline-block;width:20px;height:20px;border-radius:50%;color:#fff;font-size:13px;font-weight:900;line-height:20px;text-align:center;margin-right:3px;vertical-align:middle;}',
+      '.fm-team-line{font-size:17px;color:#ffe9a8;margin:0 0 8px;padding:4px 10px;border-radius:8px;background:rgba(255,211,106,0.10);border:1px solid rgba(255,211,106,0.35);}',
+      '.fm-team-line.off{color:#aaa;background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);}'
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+  W._fmEnsureCss = _css;
+
+  /* ── 魂格圓標 HTML ── name=英雄;f=所屬隊伍目前的陣型(可為 null);bottomPx=距底(預設 5) */
+  W._fmBadgeHtml = function(name, f, bottomPx){
+    if(!_on() || !name) return '';
+    _css();
+    var s = (f && f.souls && f.souls[name]) || W._fmSoulOf(name);
+    if(!s) return '';
+    var on = !!(f && f.souls && f.souls[name]);
+    var letter = (s === '*') ? '萬' : (LETTER[s] || '');
+    var col = COLOR[s] || '#c9a7ff';
+    var tip = (s === '*') ? '萬用魂' : (W._FM_SOUL_NAME[s] || '');
+    return '<span class="fm-soul-tag' + (on ? ' on' : '') + '" title="' + _e(tip) + '" style="--fmc:' + col + ';' + (bottomPx != null ? ('bottom:' + bottomPx + 'px;') : '') + '">' + letter + '</span>';
+  };
+  function _attachBadge(el, name, f, bottomPx){
+    if(!el) return;
+    var old = el.querySelector(':scope > .fm-soul-tag'); if(old) old.remove();
+    var h = W._fmBadgeHtml(name, f, bottomPx); if(!h) return;
+    if(!el.style.position && getComputedStyle(el).position === 'static') el.style.position = 'relative';   // 卡片本來就有 inline position ⇒ 不必每張都算樣式(審查 L3)
+    el.insertAdjacentHTML('beforeend', h);
+  }
+  /* 預設陣容一列的陣型說明 */
+  W._fmTeamLineHtml = function(heroes){
+    if(!_on()) return '';
+    _css();
+    var arr = (heroes || []).filter(Boolean);
+    if(!arr.length) return '';
+    var f = W._fmCompute(arr);
+    if(!f) return '<div class="fm-team-line off">🏫 英魂陣型:沒有組成陣型</div>';
+    return '<div class="fm-team-line">🏫 <b>' + _e(f.name) + '</b>(' + _e(f.tier) + ')' + _e(W._fmDescFx(f)) + '</div>';
+  };
+  W._fmTeamOf = function(heroes){ try{ return _on() ? W._fmCompute((heroes || []).filter(Boolean)) : null; }catch(_){ return null; } };
+
+  /* ── 2 秒小視窗 / 說明視窗 ── sticky=true:不自動關,按 ✕ 或任意處關閉 */
+  function _closePop(){ var p = document.getElementById('fm-pop'); if(p) p.remove(); var m = document.getElementById('fm-pop-mask'); if(m) m.remove(); if(W._fmPopT){ clearTimeout(W._fmPopT); W._fmPopT = null; } }
+  W._fmClosePop = _closePop;
+  W._fmShowPop = function(f, sticky){
+    if(!f) return;
+    _css(); _closePop();
+    var host = document.getElementById('hpick-side-team');
+    var hostOk = !!(host && host.offsetParent !== null && host.getBoundingClientRect().height > 40);
+    var p = document.createElement('div'); p.id = 'fm-pop';
+    if(!hostOk) p.className = 'fixed';
+    p.innerHTML = (sticky ? '<button type="button" class="fm-pop-x" aria-label="關閉">✕</button>' : '')
+      + '<div class="fm-pop-t">🏫 ' + _e(f.name) + '</div>'
+      + '<div class="fm-pop-tier">' + _e(f.tier) + '・英魂陣型發動!</div>'
+      + '<div class="fm-pop-fx">' + _e(W._fmDescFx(f)).replace(/、/g, '<br>・').replace(/^/, '・') + '</div>';
+    if(hostOk && sticky){
+      // 說明視窗要壓在遮罩上面 ⇒ 掛 body、用畫面座標對齊四張立繪中央(審查 M3)
+      var rc = host.getBoundingClientRect();
+      p.className = 'fixed';
+      p.style.left = Math.round(rc.left + rc.width / 2) + 'px';
+      p.style.top = Math.round(rc.top + rc.height / 2) + 'px';
+      var k = (host.offsetWidth > 0) ? (rc.width / host.offsetWidth) : 1;   // #gc 畫布縮放倍率(手機/iPad 會小於 1)
+      if(!(k > 0) || k > 3) k = 1;
+      p.style.animation = 'none';
+      p.style.transform = 'translate(-50%,-50%) scale(' + k.toFixed(3) + ')';
+      document.body.appendChild(p);
+    } else {
+      (hostOk ? host : document.body).appendChild(p);
+    }
+    if(sticky){
+      var m = document.createElement('div'); m.id = 'fm-pop-mask';
+      document.body.appendChild(m);
+      var close = function(ev){ try{ ev.stopPropagation(); }catch(_){} _closePop(); };
+      m.addEventListener('click', close);
+      p.addEventListener('click', close);
+    } else {
+      W._fmPopT = setTimeout(_closePop, 2000);
+    }
+  };
+
+  /* ── 編組頁:陣型列 + 標籤 + 發動提示(updatePickedBadges 開頭與結尾、_buildHeroPickNodes 結尾都會呼叫)── */
+  W._fmRenderPickBar = function(){
+    try{
+      var sel = (typeof _heroPickSelected !== 'undefined' && Array.isArray(_heroPickSelected)) ? _heroPickSelected : null;
+      var host = document.getElementById('hero-pick-topbar');
+      if(!sel || !host) return;
+      if(!_on()){
+        ['fm-pick-bar','fm-rec-btn','fm-rec-btn-m'].forEach(function(id){ var x = document.getElementById(id); if(x) x.remove(); });
+        document.querySelectorAll('.fm-filter-row').forEach(function(x){ x.remove(); });
+        return;
+      }
+      _css();
+      _ensureFilterRow(); _ensureRecBtn();
+      var bar = document.getElementById('fm-pick-bar');
+      if(!bar){ bar = document.createElement('div'); bar.id = 'fm-pick-bar'; host.appendChild(bar); }
+      var N = W._FM_SOUL_NAME, I = W._FM_SOUL_ICON;
+      var f = W._fmCompute(sel);
+      var h = '';
+      if(f) h += '<span class="fm-name">🏫 ' + _e(f.name) + '</span><span class="fm-tier">' + _e(f.tier) + '</span>'
+        + '<button type="button" class="fm-q" id="fm-q-btn" title="陣型說明">?</button><span class="fm-fx">' + _e(W._fmDescFx(f)) + '</span>';
+      else h += '<span class="fm-none">🏫 英魂陣型:' + (sel.length ? '目前沒有組成陣型(至少 2 位同魂格)' : '選英雄後會顯示陣型') + '</span>';
+      var hs = sel.length ? W._fmHints(sel) : [];
+      if(hs.length){
+        h += '<span class="fm-hint">💡 ' + hs.map(function(x){
+          return (x.drop ? ('把「' + _e(x.drop) + '」換成 ') : '再加 ') + '1 位' + I[x.add] + N[x.add] + ' → 【' + _e(x.f.name) + '】';
+        }).join(';') + '</span>';
+      }
+      bar.innerHTML = h;
+      var qb = document.getElementById('fm-q-btn');
+      if(qb) qb.onclick = function(ev){ ev.stopPropagation(); try{ playSfx('sfx-sel', 0.5); }catch(_){} W._fmShowPop(W._fmCompute(_heroPickSelected), true); };
+      // 發動提示:陣型「新出現或換成別的」時才響音效、跳 2 秒小視窗(反覆重繪不重複觸發)
+      var key = f ? f.key : null;
+      if(key && key !== W._fmLastKey){
+        try{ playSfx('sfx-powerup', 0.8); }catch(_){}
+        setTimeout(function(){ try{ W._fmShowPop(W._fmCompute(_heroPickSelected), false); }catch(_){} }, 60);
+      }
+      W._fmLastKey = key;
+      W._fmDecoratePick();
+    }catch(e){ try{ console.warn('[英魂陣型] 編組頁顯示失敗', e); }catch(_){} }
+  };
+  /* 編組格子與右上四張立繪掛魂格標 */
+  W._fmDecoratePick = function(){
+    try{
+      if(!_on()) return;
+      var sel = (typeof _heroPickSelected !== 'undefined' && Array.isArray(_heroPickSelected)) ? _heroPickSelected : [];
+      var f = W._fmCompute(sel);
+      var pool = (typeof _heroPickPool !== 'undefined' && Array.isArray(_heroPickPool)) ? _heroPickPool : [];
+      document.querySelectorAll('.hpick-adv-node[id^="hpick-"],.hpick-arena-card[id^="hpick-"]').forEach(function(node){
+        var name = node.getAttribute('data-fm-hero');
+        if(!name){ var idx = parseInt(String(node.id).slice(6), 10); name = pool[idx]; }
+        if(!name) return;
+        _attachBadge(node, name, (sel.indexOf(name) >= 0) ? f : null, null);
+        var tag = node.querySelector(':scope > .fm-soul-tag');
+        if(tag){ tag.style.top = '84px'; tag.style.bottom = 'auto'; }   // 卡片圖高 120px ⇒ 貼圖片右下角(不壓到名字列)
+      });
+      for(var i = 0; i < 4; i++){
+        var slot = document.getElementById('hpick-side-' + i);
+        var img = slot && slot.querySelector('.hpick-slot-img');
+        if(!img) continue;
+        var n = sel[i];
+        if(!n){ var o = img.querySelector(':scope > .fm-soul-tag'); if(o) o.remove(); continue; }
+        _attachBadge(img, n, f, 8);
+      }
+    }catch(e){ try{ console.warn('[英魂陣型] 標籤失敗', e); }catch(_){} }
+  };
+  /* _buildHeroPickNodes 結尾呼叫:當下的 _heroPickPool 是「篩選後」的池 ⇒ 把名字記在節點上 */
+  W._fmTagPickNodes = function(){
+    try{
+      var pool = (typeof _heroPickPool !== 'undefined' && Array.isArray(_heroPickPool)) ? _heroPickPool : [];
+      document.querySelectorAll('.hpick-adv-node[id^="hpick-"],.hpick-arena-card[id^="hpick-"]').forEach(function(node){
+        var idx = parseInt(String(node.id).slice(6), 10);
+        if(pool[idx]) node.setAttribute('data-fm-hero', pool[idx]);
+      });
+      W._fmDecoratePick();
+    }catch(_){}
+  };
+
+  /* ── 篩選列:魂格 ── */
+  function _ensureFilterRow(){
+    if(document.querySelector('.fm-filter-row')) return;
+    var anyBtn = document.querySelector('#hpick-sort-bar .hpick-filter-btn');
+    var row0 = anyBtn && anyBtn.parentNode;
+    if(!row0) return;
+    var row = document.createElement('div'); row.className = 'fm-filter-row';
+    row.innerHTML = '<span style="font-size:17px;color:#aaa;margin-right:2px;white-space:nowrap;">魂格：</span>'
+      + ORDER.map(function(k){
+          return '<button class="hpsort-btn hpick-filter-btn" data-filter="soul_' + k + '" style="border-color:' + COLOR[k] + ';color:#fff;">'
+            + '<span class="fm-fbtn-dot" style="background:' + COLOR[k] + ';">' + LETTER[k] + '</span>' + W._FM_SOUL_NAME[k] + '</button>';
+        }).join('');
+    row.querySelectorAll('button').forEach(function(b){
+      b.addEventListener('click', function(){ try{ playSfx('sfx-sel', 0.4); }catch(_){} if(typeof hpickFilterClick === 'function') hpickFilterClick(b); });
+    });
+    row0.parentNode.insertBefore(row, row0.nextSibling);
+  }
+  W._fmFilterMatch = function(name, key){
+    var k = String(key || '').replace('soul_', '');
+    var s = W._fmSoulOf(name);
+    return s === k || s === '*';
+  };
+
+  /* ── 陣型推薦 ── */
+  function _ensureRecBtn(){
+    // 手機橫放:編組頁按鈕改由右側直排鏡像(#_mobile-pick,index.html 建立)⇒ 也要補一顆
+    try{
+      var mp = document.getElementById('_mobile-pick');
+      if(mp && !document.getElementById('fm-rec-btn-m')){
+        var mb = document.createElement('button');
+        mb.id = 'fm-rec-btn-m'; mb.type = 'button'; mb.className = 'mp-btn random';
+        mb.style.borderColor = '#ffd36a'; mb.style.color = '#ffe9a8';
+        mb.innerHTML = '<span style="font-size:18px;">🏫</span><span>陣型推薦</span>';
+        var _t = false;
+        var go = function(e){ try{ e.stopPropagation(); e.preventDefault(); }catch(_){} try{ playSfx('sfx-sel', 0.6); }catch(_){} W._fmOpenRec(); };
+        mb.addEventListener('click', function(e){ if(_t) return; go(e); });
+        mb.addEventListener('touchend', function(e){ _t = true; go(e); setTimeout(function(){ _t = false; }, 300); }, { passive:false });
+        var cf = mp.querySelector('.mp-btn.confirm');
+        if(cf) mp.insertBefore(mb, cf); else mp.appendChild(mb);
+      }
+    }catch(_){}
+    if(document.getElementById('fm-rec-btn')) return;
+    var ref = null;
+    document.querySelectorAll('#hero-pick-overlay button').forEach(function(b){ if(!ref && /recommendTeamPick\(/.test(b.getAttribute('onclick') || '')) ref = b; });
+    if(!ref) return;
+    var b = document.createElement('button');
+    b.id = 'fm-rec-btn'; b.type = 'button';
+    b.setAttribute('style', ref.getAttribute('style') || '');
+    b.title = '選一種英魂陣型,自動挑出能組成它的最強 4 位英雄';
+    b.innerHTML = '<span style="font-size:30px;line-height:1;">🏫</span><span>陣型<br>推薦</span>';
+    b.style.display = 'flex'; b.style.flexDirection = 'column'; b.style.alignItems = 'center'; b.style.gap = '2px'; b.style.marginLeft = '8px';
+    b.addEventListener('click', function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} W._fmOpenRec(); });
+    ref.parentNode.insertBefore(b, ref.nextSibling);
+  }
+  function _recPool(){
+    var isAdv = false; try{ isAdv = !!(_adventureMode && _adventureStage); }catch(_){}
+    var pool = [];
+    try{
+      if(isAdv){
+        var base = (typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL[_adventureStage]) ? ADV_HERO_POOL[_adventureStage].slice() : [];
+        var un = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+        var sr = (typeof SUMMON_RARE_HEROES !== 'undefined') ? SUMMON_RARE_HEROES : [];
+        var seen = {};
+        base.concat(un).forEach(function(n){
+          if(!n || seen[n]) return;
+          if(typeof BOSS_NAMES !== 'undefined' && BOSS_NAMES.indexOf(n) >= 0 && sr.indexOf(n) < 0) return;
+          seen[n] = 1; pool.push(n);
+        });
+        // 編組頁實際看得到的才算(鎖住/不在池的不推)
+        var vis = (typeof _heroPickPool !== 'undefined' && Array.isArray(_heroPickPool)) ? _heroPickPool : null;
+        if(vis && vis.length) pool = pool.filter(function(n){ return vis.indexOf(n) >= 0; });
+      } else {
+        pool = (typeof _heroPickPool !== 'undefined' && Array.isArray(_heroPickPool)) ? _heroPickPool.slice() : [];
+      }
+    }catch(_){}
+    return { pool: pool, adv: isAdv };
+  }
+  function _score(n, adv){
+    var s = 0;
+    try{ if(typeof window._lxpsHeroCounterScore === 'function') s += window._lxpsHeroCounterScore(n, (window._lxpsCurThreat && window._lxpsCurThreat.counterWeight) || {}); }catch(_){}
+    try{ if(adv && typeof getHeroLevel === 'function') s += getHeroLevel(n) * 0.5; }catch(_){}
+    try{ var r = (typeof _getHeroRarity === 'function') ? _getHeroRarity(n) : 'SR'; s += ({ UR:6, SSR:4, SR:2, R:0 })[r] || 0; }catch(_){}
+    return s;
+  }
+  function _isUR(n){ try{ return typeof _getHeroRarity === 'function' && _getHeroRarity(n) === 'UR'; }catch(_){ return false; } }
+  // 陣型 key ⇒ 可能的魂格需求組合(陣列的陣列)
+  function _needs(key){
+    if(key === 'CQHX') return [['C','Q','H','X']];
+    var m = /^([CQHX])([234])$/.exec(key);
+    if(m){
+      var s = m[1], k = +m[2], others = ORDER.filter(function(x){ return x !== s; });
+      if(k === 4) return [[s,s,s,s]];
+      if(k === 3) return others.map(function(o){ return [s,s,s,o]; });
+      var out = []; for(var i = 0; i < others.length; i++) for(var j = i + 1; j < others.length; j++) out.push([s,s,others[i],others[j]]);
+      return out;
+    }
+    if(/^[CQHX]{2}$/.test(key)) return [[key[0],key[0],key[1],key[1]]];
+    return [];
+  }
+  // 依需求組合挑人;主角(萬用)可補任一格。回傳 {pick, miss}
+  function _pickFor(key, P){
+    var by = { C:[], Q:[], H:[], X:[] }, wild = [];
+    P.pool.forEach(function(n){ var s = W._fmSoulOf(n); if(s === '*') wild.push(n); else if(by[s]) by[s].push(n); });
+    ORDER.forEach(function(k){ by[k].sort(function(a, b){ return _score(b, P.adv) - _score(a, P.adv); }); });
+    var best = null, bestMiss = null;
+    _needs(key).forEach(function(need){
+      [false, true].forEach(function(useWild){
+        var used = {}, pick = [], miss = {}, ur = 0, wildLeft = useWild ? wild.slice() : [];
+        need.forEach(function(s){
+          var cand = by[s].filter(function(n){ return !used[n] && !(P.adv && ur >= 2 && _isUR(n)); });
+          if(cand.length){ var n = cand[0]; used[n] = 1; pick.push(n); if(_isUR(n)) ur++; }
+          else if(wildLeft.length){ var w = wildLeft.shift(); used[w] = 1; pick.push(w); }
+          else miss[s] = (miss[s] || 0) + 1;
+        });
+        if(pick.length === 4){
+          var f = W._fmCompute(pick);
+          if(f && f.key === key){
+            var sc = pick.reduce(function(a, n){ return a + _score(n, P.adv); }, 0);
+            if(!best || sc > best.sc) best = { pick: pick, sc: sc };
+          }
+        } else if(!bestMiss || Object.keys(miss).length < Object.keys(bestMiss).length){ bestMiss = miss; }
+      });
+    });
+    return best ? { pick: best.pick } : { miss: bestMiss || {} };
+  }
+  function _closeRec(){ var o = document.getElementById('fm-rec-ov'); if(o) o.remove(); }
+  W._fmOpenRec = function(){
+    _css(); _closeRec();
+    var P = _recPool();
+    var ov = document.createElement('div'); ov.id = 'fm-rec-ov';
+    var tiers = ['四魂陣','雙魂陣','雙核陣','三魂陣','純魂陣'];
+    var keys = Object.keys(W._FM_DEFS);
+    var html = '<div id="fm-rec-box"><button type="button" id="fm-rec-x" aria-label="關閉">✕</button>'
+      + '<h3>🏫 陣型推薦</h3><div class="fm-rec-sub">選一種陣型,自動挑出能組成它、最強的 4 位英雄(之後仍可自己換人)</div>';
+    tiers.forEach(function(t){
+      var ks = keys.filter(function(k){ return W._FM_DEFS[k].tier === t; });
+      if(!ks.length) return;
+      html += '<div class="fm-rec-tier">' + t + '</div>';
+      ks.forEach(function(k){
+        var d = W._FM_DEFS[k];
+        var need = _needs(k)[0] || [];
+        var r = _pickFor(k, P);
+        var fx = W._fmDescFx(W._fmBuildPublic(k));
+        var souls = (k.length === 2 && /^[CQHX][234]$/.test(k))
+          ? need.slice(0, +k[1]).concat(['＋'])
+          : need;
+        var soulsHtml = souls.map(function(s){ return s === '＋' ? '<span style="background:transparent;color:#ccc;">＋</span>' : '<span style="background:' + COLOR[s] + ';">' + LETTER[s] + '</span>'; }).join('');
+        var miss = r.miss ? Object.keys(r.miss).map(function(s){ return '缺 ' + r.miss[s] + ' 位' + W._FM_SOUL_NAME[s]; }).join('、') : '';
+        html += '<button type="button" class="fm-rec-row" data-fm-key="' + k + '"' + (r.pick ? '' : ' disabled') + '>'
+          + '<span class="fm-rec-souls">' + soulsHtml + '</span>'
+          + '<span class="fm-rec-main"><div class="fm-rec-name">' + _e(d.name) + '</div><div class="fm-rec-fx">' + _e(fx) + '</div>'
+          + (r.pick ? '' : ('<div class="fm-rec-miss">湊不出來:' + _e(miss || '英雄不夠') + '</div>')) + '</span></button>';
+      });
+    });
+    html += '</div>';
+    ov.innerHTML = html;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(ev){
+      if(ev.target === ov || (ev.target.id === 'fm-rec-x')){ _closeRec(); return; }
+      var row = ev.target.closest && ev.target.closest('.fm-rec-row');
+      if(!row || row.disabled) return;
+      var k = row.getAttribute('data-fm-key');
+      var r = _pickFor(k, _recPool());
+      if(!r.pick) return;
+      _closeRec();
+      W._fmApplyPick(r.pick);
+    });
+  };
+  W._fmApplyPick = function(pick){
+    try{
+      _heroPickSelected = [];
+      _buildHeroPickNodes();
+      pick.forEach(function(name){
+        if(_heroPickSelected.length >= 4) return;
+        _heroPickSelected.push(name);
+        var idx = _heroPickPool.indexOf(name);
+        var node = idx >= 0 ? document.getElementById('hpick-' + idx) : null;
+        if(node) node.classList.add('picked');
+      });
+      try{ _buildHeroPickNodes(); }catch(_){}
+      updatePickedBadges();
+      var c = document.getElementById('hero-pick-count');
+      if(c) c.textContent = '請選擇 4 名英雄加入冒險者小隊（已選 ' + _heroPickSelected.length + ' / 4）';
+      var cf = document.getElementById('hero-pick-confirm');
+      if(cf) cf.disabled = _heroPickSelected.length < 4;
+      if(typeof dismissFocus === 'function') dismissFocus();
+      try{ playSfx('sfx-deal', 0.6); }catch(_){}
+    }catch(e){ console.warn('[英魂陣型] 陣型推薦套用失敗', e); }
+  };
+})();
 
 ;(window._LXPS_MOD_OK || (window._LXPS_MOD_OK = {}))['game_battle.js'] = 1;   /* ★ v5.235.0 載入完成記號(必須是本檔最後一行) */
