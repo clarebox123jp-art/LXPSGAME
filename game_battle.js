@@ -83605,8 +83605,65 @@ function _advRestoreBattleState(snap, bs){
         G._resultShown = false;
         startTurn();
       }catch(e){ console.error('[restore startTurn]',e); }
+      // ★ v5.285.0(2026-10-21・老師裁定甲)— 當機快照恢復的戰鬥補上「全滅保險網」。
+      //   原本 _advAllDeadWatchdog 只在 advStartBattle 開戰時安裝;快照恢復走本函式、不經過 advStartBattle
+      //   ⇒ 恢復後的戰鬥若結算鏈斷掉(敵方全滅/我方全滅/主 BOSS 死小怪活卻沒人呼叫 checkWin)就永久卡住。
+      //   做法:比照 advStartBattle 的三項監測(game_adv.js「防卡死保險網③」),同名 interval(下一場 advStartBattle 會自動清掉換新)。
+      //   守門一致:非冒險/世界 BOSS/結算已顯示 ⇒ 停錶;答題或接關視窗開著 ⇒ 暫停計時。
+      try{ _advRestoreInstallAllDeadWatchdog(); }catch(_eRW){ console.warn('[v5.285.0 恢復戰鬥保險網] 安裝失敗', _eRW); }
     }, 800);
   }, 300);
+}
+function _advRestoreInstallAllDeadWatchdog(){
+  if(window._advAllDeadWatchdog){ clearInterval(window._advAllDeadWatchdog); window._advAllDeadWatchdog = null; }
+  var _tP2 = 0, _tP1 = 0, _tBoss = 0;
+  console.log('🛡 [v5.285.0] 恢復的戰鬥已掛上全滅保險網');
+  window._advAllDeadWatchdog = setInterval(function(){
+    try{
+      if(typeof _adventureMode === 'undefined' || !_adventureMode
+         || (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss')
+         || !G || !Array.isArray(G.p2) || G._resultShown){
+        clearInterval(window._advAllDeadWatchdog); window._advAllDeadWatchdog = null; return;
+      }
+      var _qo = document.getElementById('adv-quiz-overlay'), _co = document.getElementById('adv-continue-overlay');
+      if((_qo && _qo.classList && _qo.classList.contains('show')) || (_co && _co.classList && _co.classList.contains('show'))) return;
+      // ① 敵方全滅 → 約 4 秒未結算就收場
+      var _p2Dead = G.p2.length > 0 && G.p2.every(function(h){ return !h || h.curHp <= 0; });
+      if(!_p2Dead){ _tP2 = 0; } else if(++_tP2 >= 2){
+        _tP2 = -15;
+        console.warn('🛡 [v5.285.0 恢復戰鬥保險網] 敵方全滅未結算 → 強制收場');
+        try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+        try{
+          if(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive && typeof advFinishMiniBattle === 'function') advFinishMiniBattle(true);
+          else if(typeof _showResultWithDrama === 'function') _showResultWithDrama(true);
+        }catch(_eF){ console.error('[v5.285.0 恢復戰鬥保險網] 強制結算例外', _eF); }
+        return;
+      }
+      // ② 我方全滅 → 約 6 秒未彈接關就 checkWin(內建接關流程)
+      var _p1Dead = Array.isArray(G.p1) && G.p1.length > 0 && G.p1.every(function(h){ return !h || h.curHp <= 0; });
+      if(!_p1Dead){ _tP1 = 0; } else if(++_tP1 >= 3){
+        _tP1 = -15;
+        console.warn('🛡 [v5.285.0 恢復戰鬥保險網] 我方全滅未結算 → 強制 checkWin');
+        try{ if(typeof checkWin === 'function' && checkWin()) return; }catch(_){}
+        try{ if(typeof _showResultWithDrama === 'function') _showResultWithDrama(false); }catch(_eL){}
+        return;
+      }
+      // ③ 主 BOSS(非分身)已死、小怪還活著 → 約 6 秒 checkWin(內建小怪投降);埃及雙王互救屬正常暫態,排除
+      var _bd = false;
+      try{
+        if(!(typeof _advMiniBattleActive !== 'undefined' && _advMiniBattleActive) && !_p2Dead && !_p1Dead
+           && !(typeof _adventureStage !== 'undefined' && _adventureStage === 'egypt')
+           && typeof _ZEUS_TRUE_BOSSES !== 'undefined'){
+          _bd = G.p2.some(function(h){ return h && h.name && !h._isBossClone && _ZEUS_TRUE_BOSSES.has(h.name) && h.curHp <= 0; })
+             && G.p2.some(function(h){ return h && h.curHp > 0; });
+        }
+      }catch(_){}
+      if(!_bd){ _tBoss = 0; } else if(++_tBoss >= 3){
+        _tBoss = -15;
+        try{ if(typeof checkWin === 'function') checkWin(); }catch(_eB){}
+      }
+    }catch(_eTick){}
+  }, 2000);
 }
 
 // ════════════════════════════════════════════════════════════════════

@@ -65922,6 +65922,79 @@ function advFinishMiniBattle(win) {
   }
 }
 
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.285.0(2026-10-20・玩家 BUG「小怪打完後沒有勝利」,猫空,Mac Safari)— 小怪結算防卡死外殼
+//   現場:G.p2 四隻 HP 全 0、_advMiniBattleActive=false、結算頁沒顯示、回合照走(輪到菇女)。
+//   這組狀態只有一種來源:advFinishMiniBattle 已開跑(會先把 _advMiniBattleActive=false、
+//   G._resultShown=true、_advFinishingMini=true),卻在顯示 adv-mini-result 之前中斷
+//   (中途拋例外,或升級演出 callback 沒回來)。中斷後:
+//     ‧ G._resultShown=true → 全滅 watchdog 自動停錶,保險網失效
+//     ‧ _advFinishingMini=true → 之後任何補呼叫都被重入守衛擋掉
+//   → 永遠卡在「敵人全倒、沒有勝利」。
+//   修法:不改原函式內容,外包一層:
+//     (1) 同步例外 → 記 console.error(進 BUG 回報)後走補救
+//     (2) 不論是否例外,win=true 時 6 秒後檢查:結算頁/升級演出都沒在畫面上 → 補顯示結算頁
+//         (待確認參數不存在就用目前全域現值補建),「繼續冒險」按鈕照原流程走 advMiniResultConfirm。
+//   發獎安全:原函式的戰鬥 ID 已在 _advBattleSettledIds,補救只顯示視窗、不再發獎。
+//   不干涉:已回學校(_adventureMode=false)、本場結算頁出現過(_miniResultShownForBattleId)、
+//           新小怪已上場(p2 有活口)、玩家正在按繼續/回學校。
+// ════════════════════════════════════════════════════════════════════
+(function(){
+  try{
+    if(typeof advFinishMiniBattle !== 'function' || advFinishMiniBattle._lxpsSafeWrapped) return;
+    const _raw = advFinishMiniBattle;
+    const _rescue = function(reason){
+      try{
+        const _el = document.getElementById('adv-mini-result');
+        const _shown = !!(_el && _el.classList && _el.classList.contains('show')) || !!window._advMiniResultShowing;
+        if(_shown) return;
+        if(typeof _adventureMode === 'undefined' || !_adventureMode) return;   // 已回學校/離開冒險
+        const _bid = window._advCurrentBattleId;
+        if(_bid && window._miniResultShownForBattleId === _bid) return;       // 本場結算頁已出現過(玩家已按過)
+        const _lvOv = document.getElementById('_levelup-ov');
+        if(_lvOv && _lvOv.offsetParent !== null) return;              // 升級演出還在跑,讓它自己收尾
+        if(!(typeof G !== 'undefined' && G && Array.isArray(G.p2))) return;
+        if(G.p2.length && G.p2.some(h => h && h.curHp > 0)) return;    // 已進下一場(新小怪活著)→ 不干涉
+        if(window._advMiniResultGoingHome || window._advMiniResultConfirming) return;
+        console.error('🆘 [v5.285.0 小怪結算防卡死] 結算頁沒出來(' + reason + ')→ 補顯示結算頁');
+        if(!window._advMiniResultPending){
+          window._advMiniResultPending = {
+            savedBossTeam:   (typeof _advBossTeamSaved !== 'undefined') ? _advBossTeamSaved : null,
+            savedPlayerPets: window._advPlayerPetsSaved,
+            nextScene:       (typeof _advMiniBattleNextScene !== 'undefined') ? _advMiniBattleNextScene : 0,
+            stage:           (typeof _adventureStage !== 'undefined') ? _adventureStage : ''
+          };
+        }
+        try{ if(typeof _closeAllBattleModals === 'function') _closeAllBattleModals(); }catch(_){}
+        if(_bid) window._miniResultShownForBattleId = _bid;
+        if(_el){
+          _el.style.display = 'flex';
+          _el.classList.add('show');
+          ['adv-mini-result-btn','adv-mini-result-home-btn'].forEach(function(id){
+            const b = document.getElementById(id);
+            if(b){ b.disabled = false; b.style.pointerEvents = ''; b.style.opacity = '1'; }
+          });
+        } else if(typeof advMiniResultConfirm === 'function'){
+          advMiniResultConfirm();
+        }
+      }catch(_eR){ try{ console.error('[v5.285.0 小怪結算防卡死] 補救失敗', _eR); }catch(_){} }
+    };
+    advFinishMiniBattle = function(win){
+      let _ret;
+      try{
+        _ret = _raw.apply(this, arguments);
+      }catch(_eFin){
+        try{ console.error('💥 [advFinishMiniBattle] 結算中途例外 → 啟動補救', _eFin); }catch(_){}
+        if(win) setTimeout(function(){ _rescue('例外'); }, 300);
+        return _ret;
+      }
+      if(win) setTimeout(function(){ _rescue('6 秒逾時'); }, 6000);
+      return _ret;
+    };
+    advFinishMiniBattle._lxpsSafeWrapped = true;
+  }catch(_eWrap){ try{ console.warn('[v5.285.0 小怪結算外殼] 安裝失敗', _eWrap); }catch(_){} }
+})();
+
 // ★ 小怪戰勝利確認：玩家按下「繼續冒險」後執行
 // ★ 小怪戰結算「先回學校」：保存 EXP/幣 進度後回首頁
 // ── 小怪戰答題獎勵（答對後出現，玩家選擇後繼續遊戲）──
