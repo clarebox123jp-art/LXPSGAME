@@ -1573,8 +1573,19 @@
   //         「有限等待(最壞約 server 9s + cache 4s)後給可重整的友善提示」。
   window._FB_GET_SERVER_TIMEOUT_MS = 9000;   // getDocFromServer(走網路)逾時
   window._FB_GET_CACHE_TIMEOUT_MS  = 4000;   // getDoc fallback(優先快取)逾時
+  // ★ v5.286.0(老師「2019 iPad 登入困難」裁定甲)— 慢裝置自動放寬:所有雲端讀取逾時乘上 window._lxpsSlowFactor
+  //   (index.html _lxpsSlowDeviceProbe 依 CPU 測速設定;新機 = 1 行為不變)。第二個訊號:從開頁到本模組能執行
+  //   超過 15 秒 ⇒ 至少 ×1.5,超過 30 秒 ⇒ ×2(只限本次)。逾時上限 30 秒,避免真的斷網時等太久。
+  try{
+    var _pnow = (window.performance && performance.now) ? performance.now() : 0;
+    window._lxpsCloudModuleAtMs = Math.round(_pnow);
+    //   ★ v5.286.0 稽核修正:這個訊號多半代表「網路塞」(全班同時下載)而非裝置慢 ⇒ 只影響本次頁載、不寫 7 天記憶,
+    //     門檻放寬為 >15 秒 ×1.5、>30 秒 ×2。
+    if(_pnow > 30000 && window._lxpsSlowSet) window._lxpsSlowSet(2, '開頁到雲端模組 ' + Math.round(_pnow / 1000) + ' 秒', false);
+    else if(_pnow > 15000 && window._lxpsSlowSet) window._lxpsSlowSet(1.5, '開頁到雲端模組 ' + Math.round(_pnow / 1000) + ' 秒', false);
+  }catch(_eSlow){}
   window._fbRaceTimeout = function(p, ms, label){
-    var _ms = ms || 9000;
+    var _ms = Math.min(30000, Math.round((ms || 9000) * (window._lxpsSlowFactor > 1 ? window._lxpsSlowFactor : 1)));
     return Promise.race([
       p,
       new Promise(function(_res, _rej){

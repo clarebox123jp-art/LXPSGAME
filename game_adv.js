@@ -65943,20 +65943,40 @@ function advFinishMiniBattle(win) {
   try{
     if(typeof advFinishMiniBattle !== 'function' || advFinishMiniBattle._lxpsSafeWrapped) return;
     const _raw = advFinishMiniBattle;
-    const _rescue = function(reason){
+    /* ★★ v5.286.0 稽核修正(獨立稽核發現 v5.285.0 三個漏洞)★★
+       ①舊碼用「目前的」戰鬥 ID 判斷 ⇒ 玩家快速按繼續、下一場小怪戰在 6 秒內開打(入口先清 G.p2=[]、換新 ID),
+         補救會誤把「新戰鬥 ID」標成已顯示 ⇒ 新戰鬥打完結算頁被擋 ⇒ 反而製造卡死。
+         ⇒ 改成:呼叫當下記住戰鬥 ID(_bidAtCall),補救時 ID 必須仍是同一場才動作。
+       ②主線劇情(_msRealBattleActive / mainstory)與世界 BOSS 也會經過本函式(原函式會改派),舊碼照樣排補救 ⇒
+         可能在劇情上蓋出冒險結算頁。⇒ 這兩種一律不排補救。
+       ③升級演出 #_levelup-ov 是 position:fixed,offsetParent 恆為 null ⇒ 舊判斷永遠當成「沒在演」。
+         ⇒ 改用 isConnected + computed display;演出中延後再查,最多延 5 次(約 30 秒)仍卡住才補救。
+       ④舊碼「G.p2 有活口就不管」:原函式中段就把 G.p2 換回滿血 BOSS 陣容,之後才出錯的情況補救永遠不動作。
+         ⇒ 有了①的同一場 ID 判斷,這條改成不需要,刪除。
+       ⑤只有「本場第一次結算呼叫」才排補救(重複呼叫被原函式擋下的不排,避免一堆計時器)。 */
+    const _isStoryOrWb = function(){
       try{
+        if(window._msRealBattleActive === true) return true;
+        if(typeof _adventureStage !== 'undefined' && (_adventureStage === 'mainstory' || _adventureStage === 'worldboss')) return true;
+      }catch(_){}
+      return false;
+    };
+    const _rescue = function(reason, _bidAtCall, _tries){
+      try{
+        if(!_bidAtCall || window._advCurrentBattleId !== _bidAtCall) return;   // 已經是另一場戰鬥了
+        if(window._miniResultShownForBattleId === _bidAtCall) return;          // 本場結算頁已出現過
         const _el = document.getElementById('adv-mini-result');
         const _shown = !!(_el && _el.classList && _el.classList.contains('show')) || !!window._advMiniResultShowing;
         if(_shown) return;
         if(typeof _adventureMode === 'undefined' || !_adventureMode) return;   // 已回學校/離開冒險
-        const _bid = window._advCurrentBattleId;
-        if(_bid && window._miniResultShownForBattleId === _bid) return;       // 本場結算頁已出現過(玩家已按過)
-        const _lvOv = document.getElementById('_levelup-ov');
-        if(_lvOv && _lvOv.offsetParent !== null) return;              // 升級演出還在跑,讓它自己收尾
-        if(!(typeof G !== 'undefined' && G && Array.isArray(G.p2))) return;
-        if(G.p2.length && G.p2.some(h => h && h.curHp > 0)) return;    // 已進下一場(新小怪活著)→ 不干涉
+        if(_isStoryOrWb()) return;
         if(window._advMiniResultGoingHome || window._advMiniResultConfirming) return;
-        console.error('🆘 [v5.285.0 小怪結算防卡死] 結算頁沒出來(' + reason + ')→ 補顯示結算頁');
+        const _lvOv = document.getElementById('_levelup-ov');
+        let _lvOn = false;
+        try{ _lvOn = !!(_lvOv && _lvOv.isConnected && window.getComputedStyle(_lvOv).display !== 'none'); }catch(_){}
+        if(_lvOn && (_tries | 0) < 5){ setTimeout(function(){ _rescue(reason, _bidAtCall, (_tries | 0) + 1); }, 6000); return; }
+        const _bid = _bidAtCall;
+        console.error('🆘 [v5.286.0 小怪結算防卡死] 結算頁沒出來(' + reason + ',id=' + _bid + ')→ 補顯示結算頁');
         if(!window._advMiniResultPending){
           window._advMiniResultPending = {
             savedBossTeam:   (typeof _advBossTeamSaved !== 'undefined') ? _advBossTeamSaved : null,
@@ -65981,14 +66001,18 @@ function advFinishMiniBattle(win) {
     };
     advFinishMiniBattle = function(win){
       let _ret;
+      const _bidAtCall = window._advCurrentBattleId || null;
+      let _first = false;
+      try{ _first = !!_bidAtCall && !(window._advBattleSettledIds && window._advBattleSettledIds.has(_bidAtCall)); }catch(_){}
+      const _arm = !!win && _first && !_isStoryOrWb();
       try{
         _ret = _raw.apply(this, arguments);
       }catch(_eFin){
         try{ console.error('💥 [advFinishMiniBattle] 結算中途例外 → 啟動補救', _eFin); }catch(_){}
-        if(win) setTimeout(function(){ _rescue('例外'); }, 300);
+        if(_arm) setTimeout(function(){ _rescue('例外', _bidAtCall, 0); }, 300);
         return _ret;
       }
-      if(win) setTimeout(function(){ _rescue('6 秒逾時'); }, 6000);
+      if(_arm) setTimeout(function(){ _rescue('6 秒逾時', _bidAtCall, 0); }, 6000);
       return _ret;
     };
     advFinishMiniBattle._lxpsSafeWrapped = true;
