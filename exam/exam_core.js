@@ -18,7 +18,7 @@
                     '三下自然','三下社會','四下自然','四下社會','五下自然','五下社會','六下自然','六下社會'];
 
   var C = {
-    _v: 'v1.0.0',
+    _v: 'v1.2.0',
     base: '',                 /* 題庫資料夾網址前綴,大對抗 'exam/'、小遊戲 '../exam/' */
     gmDefault: '',            /* GM 全校預設版本('南一'/'翰林'/'康軒'/'') */
     hooks: { uid:null, loadPref:null, savePref:null },
@@ -36,7 +36,53 @@
     C._pref = null;
     return C;
   };
+  /* ── ★ v1.1.0 評量複習加成(GM 在「🎓 課堂獎勵加成」勾選;資料在 gameConfig/reviewBoost.examTerms/examTermUnits) ── */
+  var TERM_KEYS = ['1mid', '1final', '2mid', '2final'];
+  var TERM_NAME = { '1mid':'上學期期中評量', '1final':'上學期期末評量', '2mid':'下學期期中評量', '2final':'下學期期末評量' };
+  var TERM_DEF_UNITS = { '1mid':[1,2], '1final':[3,4,5,6], '2mid':[1,2], '2final':[3,4,5,6] };
+  C.TERM_KEYS = TERM_KEYS; C.TERM_NAME = TERM_NAME; C.TERM_DEF_UNITS = TERM_DEF_UNITS;
+  C.terms = null;   /* { active:{ '1mid':true }, units:{ '1mid':[1,2] } } */
+  C.setTerms = function(cfg){
+    var t = { active: {}, units: {} }, i, k, u;
+    try{
+      for(i = 0; i < TERM_KEYS.length; i++){
+        k = TERM_KEYS[i];
+        if(cfg && cfg.examTerms && cfg.examTerms[k] === true) t.active[k] = true;
+        u = cfg && cfg.examTermUnits && cfg.examTermUnits[k];
+        t.units[k] = (u instanceof Array && u.length) ? u.slice() : TERM_DEF_UNITS[k].slice();
+      }
+    }catch(e){}
+    C.terms = t; return t;
+  };
+  C.termUnits = function(k){ return (C.terms && C.terms.units[k]) || TERM_DEF_UNITS[k] || []; };
+  C.termLabel = function(k){ return TERM_NAME[k] || ''; };
+  C.activeTerms = function(){ var o = [], i; if(!C.terms) return o; for(i = 0; i < TERM_KEYS.length; i++){ if(C.terms.active[TERM_KEYS[i]]) o.push(TERM_KEYS[i]); } return o; };
+  C.bookSem = function(book){ var c = String(book || '').charAt(1); return c === '上' ? '1' : (c === '下' ? '2' : ''); };
+  /* 這一冊目前開著的評量加成(依學期) */
+  C.bookActiveTerms = function(book){ var a = C.activeTerms(), o = [], i, sem = C.bookSem(book); for(i = 0; i < a.length; i++){ if(a[i].charAt(0) === sem) o.push(a[i]); } return o; };
+  /* 選擇範圍是否落在某個開啟中的評量範圍:有勾單元且每個勾的單元都在範圍內 ⇒ 回傳該評量鍵,否則 '' */
+  C.selBoostTerm = function(sel){
+    if(!sel || !sel.book || !sel.units || !sel.units.length) return '';
+    var ts = C.bookActiveTerms(sel.book), i, j, ok, n, allow;
+    for(i = 0; i < ts.length; i++){
+      allow = C.termUnits(ts[i]); ok = true;
+      for(j = 0; j < sel.units.length; j++){ n = parseInt(String(sel.units[j]).replace(/^[NHK]/, ''), 10); if(allow.indexOf(n) < 0){ ok = false; break; } }
+      if(ok) return ts[i];
+    }
+    return '';
+  };
   C.setGmDefault = function(v){ C.gmDefault = (v === '南一' || v === '翰林' || v === '康軒') ? v : ''; };
+  /* ★ v1.2.0 學校版本依「年級+科目」分別設定(上下冊共用),鍵如 '五社會';GM 寫 gameConfig/examReview.byBook,沒寫用各模式給的預設 */
+  C.schoolMap = null;
+  C.setSchoolMap = function(m){
+    var o = {}, k, ok = false;
+    if(m && typeof m === 'object'){ for(k in m){ if(m.hasOwnProperty(k) && (m[k] === '南一' || m[k] === '翰林' || m[k] === '康軒')){ o[k] = m[k]; ok = true; } } }
+    C.schoolMap = ok ? o : null;
+  };
+  C.schoolVer = function(book){
+    var b = String(book || ''), k = b.charAt(0) + b.slice(2);   /* '五上社會' → '五社會' */
+    return (C.schoolMap && C.schoolMap[k]) || C.gmDefault || '';
+  };
   C.verName = function(c){ return VER_NAME[c] || c; };
   C.books = function(){
     var ix = window.EXAM_INDEX, out = [], i;
@@ -53,7 +99,7 @@
     try{ if(C.hooks.loadPref) p = C.hooks.loadPref(); }catch(e){}
     if(!p){ try{ p = JSON.parse(localStorage.getItem('lxps_exam_pref_' + _uid()) || 'null'); }catch(e2){ p = null; } }
     if(!p || typeof p !== 'object') p = {};
-    if(!(p.vers instanceof Array) || !p.vers.length) p.vers = C.gmDefault ? [C.gmDefault] : ['南一','翰林','康軒'];
+    if(!(p.vers instanceof Array) || !p.vers.length){ var _sv = p.book ? C.schoolVer(p.book) : C.gmDefault; p.vers = _sv ? [_sv] : ['南一','翰林','康軒']; }
     C._pref = p;
     return p;
   };
@@ -197,6 +243,13 @@
     var pref = C.getPref();
     var st = { book: pref.book || '', units: [], vers: pref.vers.slice() }, _pu = pref.units || [], _z;
     for(_z = 0; _z < _pu.length; _z++){ if(typeof _pu[_z] === 'string' && /^[NHK]\d+$/.test(_pu[_z])) st.units.push(_pu[_z]); }
+    /* 依評量範圍一鍵勾單元(只勾目前版本裡真的有的單元) */
+    var pickTerm = function(k){
+      var allow = C.termUnits(k), out = [], i, j, us;
+      for(i = 0; i < st.vers.length; i++){ us = C.units(st.book, st.vers[i]); for(j = 0; j < us.length; j++){ if(allow.indexOf(us[j].u) >= 0) out.push(VER_CODE[st.vers[i]] + us[j].u); } }
+      st.units = out.sort();
+    };
+    if(opts.preTerm && st.book && C.bookSem(st.book) === String(opts.preTerm).charAt(0)) pickTerm(opts.preTerm);
 
     var render = function(){
       var books = C.books(), h = '', i, b, bk, cnt, vs = ['南一','翰林','康軒'], us, j, on, have;
@@ -204,7 +257,7 @@
       for(i = 0; i < vs.length; i++){
         on = st.vers.indexOf(vs[i]) >= 0;
         h += '<button class="exr-b exr-x' + (on ? ' on' : '') + '" data-ver="' + vs[i] + '">' + (on ? '☑ ' : '☐ ') + vs[i]
-           + (C.gmDefault === vs[i] ? '<span class="exr-tag">' + (opts.cute ? '學校用的' : '學校版本') + '</span>' : '') + '</button>';
+           + ((st.book ? C.schoolVer(st.book) : C.gmDefault) === vs[i] ? '<span class="exr-tag">' + (opts.cute ? '學校用的' : '學校版本') + '</span>' : '') + '</button>';
       }
       h += '</div><div class="exr-sec">' + (opts.cute ? '② 選年級' : '② 年級冊') + '</div><div class="exr-row">';
       for(i = 0; i < books.length; i++){
@@ -215,6 +268,20 @@
       if(!books.length) h += '<div class="exr-sub">目前還沒有題庫。</div>';
       h += '</div>';
       if(st.book){
+        /* ★ v1.1.0 評量複習加成:一鍵勾範圍 + 目前是否符合 */
+        var _ts = C.bookActiveTerms(st.book);
+        if(_ts.length){
+          h += '<div class="exr-sec" style="color:#ffcf5a">' + (opts.cute ? '⭐ 考試範圍加碼!' : '⭐ 評量複習加成(老師開放中)') + '</div><div class="exr-row">';
+          for(i = 0; i < _ts.length; i++){
+            h += '<button class="exr-b exr-x" data-term="' + _ts[i] + '" style="border-color:#ffcf5a;color:#ffe9a8">⭐ ' + (opts.cute ? '選' : '一鍵選') + C.termLabel(_ts[i])
+               + '範圍<small>第 ' + C.termUnits(_ts[i]).join('、') + ' 單元</small></button>';
+          }
+          var _bt = C.selBoostTerm({ book: st.book, units: st.units });
+          h += '</div><div class="exr-sub" style="color:' + (_bt ? '#ffe27a' : '#b9c4dc') + '">'
+             + (_bt ? ('⭐ 這個範圍是「' + C.termLabel(_bt) + '」複習,' + (opts.cute ? '獎勵再多 +25%!' : '冒險結算獎勵再 +25%(每天一次)。'))
+                    : (opts.cute ? '只勾考試範圍裡的單元,獎勵會再多 +25% 喔。' : '只勾選評量範圍內的單元,才享有再 +25% 加成。'))
+             + '</div>';
+        }
         h += '<div class="exr-sec">' + (opts.cute ? '③ 選單元(都不選就是全部)' : '③ 單元(可複選,不選 = 全部單元)') + '</div><div class="exr-row">';
         /* 依版本列出各自的單元名;同單元序號不同版本名稱不同,分版本列 */
         for(i = 0; i < st.vers.length; i++){
@@ -246,8 +313,10 @@
         var keep = [], z; for(z = 0; z < st.units.length; z++){ if(st.vers.indexOf(VER_NAME[st.units[z].charAt(0)]) >= 0) keep.push(st.units[z]); }
         st.units = keep; render(); return;
       }
-      if(bk){ sfx('tap'); st.book = bk; st.units = []; render(); return; }
+      if(bk){ sfx('tap'); st.book = bk; st.units = []; var _sv2 = C.schoolVer(bk); if(_sv2) st.vers = [_sv2]; render(); return; }   /* 選冊就自動切到該冊的學校版本(玩家仍可改勾) */
       if(u){ sfx('tap'); ix = st.units.indexOf(u); if(ix >= 0) st.units.splice(ix, 1); else st.units.push(u); st.units.sort(); render(); return; }
+      var tk = t.getAttribute('data-term');
+      if(tk){ sfx('tap'); pickTerm(tk); render(); return; }
       if(a === 'cancel'){ sfx('cancel'); close(); if(opts.onCancel) opts.onCancel(); return; }
       if(a === 'off'){ sfx('cancel'); close(); if(opts.onOff) opts.onOff(); return; }
       if(a === 'go'){

@@ -3031,6 +3031,14 @@ function _kingDeckAdvance(){
 //     不只 _kingGetReviewSubjects() 要加掃描,這裡也必須同步加!
 function _kingDrawQuestions(subject, count){
   count = count || 20;
+  // ★ v5.288.0 — 知識王「📝 評量複習」:科目字串 '考試複習｜…' ⇒ 從考試複習題庫抽(冊檔已在選單時下載)
+  if(typeof window._advExamIsSubject === 'function' && window._advExamIsSubject(subject)){
+    try{
+      const _ex = _advExamPool(subject, '').filter(q => q && q.subject && q.subject.indexOf('考試複習｜') === 0);
+      for(let i = _ex.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); const t = _ex[i]; _ex[i] = _ex[j]; _ex[j] = t; }
+      return _ex.slice(0, Math.min(count, _ex.length));
+    }catch(_eEx){ return []; }
+  }
   const _pool = [];
   const _scan = arr => {
     if(!Array.isArray(arr)) return;
@@ -4286,12 +4294,27 @@ function _kingStartWithSubject(subject){
   try{ _kingStartChallenge(); }catch(_e){ console.warn('[_kingStartWithSubject]', _e); }
 }
 
+// ★ v5.288.0 — 知識王「📝 ○○評量複習」:選冊/版本(單元自動勾好評量範圍)→ 以課堂複習側開始(吃 🎁 +25% 擲骰)
+function _kingStartExamTerm(termKey){
+  _kingRemovePopup();
+  _advExamOpenPicker(function(subj){
+    const _kc = window._kingChallenge;
+    _kc._curSubjectReview = subj;
+    _kc._rerollCount = 0;
+    try{ _kingStartChallenge('review'); }catch(_e){ console.warn('[_kingStartExamTerm]', _e); }
+  }, function(){
+    try{ _kingShowSubjectChoice(); }catch(_){}
+  }, termKey);
+}
+
 // ── 主題選擇彈窗(v5840):加倍複習主題直接選 / 其他主題走隨機 ──
 function _kingShowSubjectChoice(){
   _kingRemovePopup();
   const _doubled = _kingGetDoubledReviewTopics();
+  // ★ v5.288.0 — GM 開啟的評量複習(期中/期末)也列成直達鈕
+  const _examTerms = (typeof window._advExamActiveTerms === 'function') ? window._advExamActiveTerms() : [];
   // 沒有加倍複習主題 → 直接走原本隨機流程,跳過此步驟讓老玩家無感
-  if(_doubled.length === 0){
+  if(_doubled.length === 0 && _examTerms.length === 0){
     _kingShowStartPopup(false);
     return;
   }
@@ -4302,7 +4325,10 @@ function _kingShowSubjectChoice(){
   const _doubledBtns = _doubled.map(t => {
     const _esc = String(t).replace(/'/g,"\\'").replace(/"/g,'&quot;');
     return `<button class="king-btn king-btn-go" style="background:linear-gradient(135deg,#ffb84d,#ff8c2a);border-color:#ffd180;margin:4px 6px;padding:10px 16px;font-size:16px;" onclick="playSfx('sfx-sel',0.5);_kingStartWithSubject('${_esc}')">⭐ ${t}</button>`;
-  }).join('');
+  }).join('') + _examTerms.map(k =>
+    // ★ v5.288.0 評量複習直達鈕:開考試複習選單(自動勾好該評量範圍)→ 以課堂複習模式開始(🎁 +25%)
+    `<button class="king-btn king-btn-go" style="background:linear-gradient(135deg,#ffd84d,#ffb020);border-color:#fff0a0;color:#3a2600;margin:4px 6px;padding:10px 16px;font-size:16px;" onclick="playSfx('sfx-sel',0.5);_kingStartExamTerm('${k}')">📝 ${_ADV_EXAM_TERM_NAME[k]}複習</button>`
+  ).join('');
   _wrap.innerHTML = `
     <div class="king-box">
       <div class="king-title">🎯 選擇挑戰主題</div>
@@ -5267,7 +5293,7 @@ window._scGrantReward=_scGrantReward;
 //   玩家勾選 → window._lxpsExamPref(存檔欄位 examPref_s);GM 學校預設版本 → gameConfig/examReview.defaultVer。
 // ════════════════════════════════════════════════════════════════════
 const _ADV_EXAM_CHOICE = '📝 考試複習';
-const _ADV_EXAM_CORE_VER = '20261022';
+const _ADV_EXAM_CORE_VER = '20261022b';   // ★ v5.288.0 exam_core v1.1.0(評量範圍)
 window._advExamIsSubject = function(s){ return typeof s === 'string' && s.indexOf('考試複習｜') === 0; };
 function _advExamUid(){ try{ return (window._fbUser && window._fbUser.uid) || String(window._gUserId || '') || 'guest'; }catch(_){ return 'guest'; } }
 function _advExamEnsureCore(cb){
@@ -5287,8 +5313,39 @@ function _advExamSetup(){
     savePref: function(p){ window._lxpsExamPref = p; }   // 隨下一次一般存檔上雲(不額外寫入)
   });
   C.setGmDefault(window._lxpsExamGmDefault || '');
+  try{ C.setTerms(window._reviewBoostCfg || null); }catch(_){}   // ★ v5.288.0 評量複習加成範圍(gameConfig/reviewBoost.examTerms)
+  try{ C.setSchoolMap(window._lxpsExamByBook || _ADV_EXAM_SCHOOL_DEFAULT); }catch(_){}   // ★ v5.288.0 學校版本依年級+科目
   return C;
 }
+// ★ v5.288.0(老師「GM 可以直接勾選上學期期中評量複習加成…包含知識王;其他還有上學期期末、下學期期中、下學期期末」)
+//   gameConfig/reviewBoost.examTerms = { '1mid':true, '1final':false, '2mid':false, '2final':false }
+//   gameConfig/reviewBoost.examTermUnits = { '1mid':[1,2], '1final':[3,4,5,6], … }(GM 可改;沒設用預設)
+//   規則:考試複習選的冊屬於該學期、且勾的單元全部落在評量範圍內 ⇒ 等同「⭐ 加強複習」再 +25%(與加強複習共用每日一次的領取旗標)。
+//   這個開關獨立於「⭐ 加強複習期間」總開關(不受 doubledEnabled 影響)。
+// ★ v5.288.0(老師 2026-10-22 確認 115 學年度力行國小版本:自然三~六年級南一;社會三、四、六年級康軒,五年級翰林)
+//   GM 沒在 gameConfig/examReview.byBook 設定時用這份;鍵 = 年級+科目(上下冊共用)。
+const _ADV_EXAM_SCHOOL_DEFAULT = { '三自然':'南一', '四自然':'南一', '五自然':'南一', '六自然':'南一', '三社會':'康軒', '四社會':'康軒', '五社會':'翰林', '六社會':'康軒' };
+const _ADV_EXAM_TERM_NAME = { '1mid':'上學期期中評量', '1final':'上學期期末評量', '2mid':'下學期期中評量', '2final':'下學期期末評量' };
+window._advExamActiveTerms = function(){
+  const _o = [];
+  try{
+    const _t = window._reviewBoostCfg && window._reviewBoostCfg.examTerms;
+    if(_t) ['1mid','1final','2mid','2final'].forEach(k => { if(_t[k] === true) _o.push(k); });
+  }catch(_){}
+  return _o;
+};
+// 科目字串(考試複習｜…)目前是否落在開啟中的評量範圍 ⇒ 回傳評量鍵或 ''
+window._advExamBoostTermFor = function(subject){
+  try{
+    if(!window._advExamIsSubject(subject) || !window.ExamCore || !window._advExamActiveTerms().length) return '';
+    const C = window.ExamCore; C.setTerms(window._reviewBoostCfg || null);
+    return C.selBoostTerm(_advExamSelFor(subject)) || '';
+  }catch(_){ return ''; }
+};
+window._advExamTermsBadge = function(){
+  const _a = window._advExamActiveTerms();
+  return _a.length ? ('⭐ ' + _a.map(k => _ADV_EXAM_TERM_NAME[k]).join('、') + '範圍 再 +25%') : '';
+};
 // GM 學校預設版本:開選單時讀一次(10 分鐘內不重讀),讀不到就維持舊值/不指定
 function _advExamRefreshGm(cb){
   const _now = Date.now();
@@ -5300,11 +5357,12 @@ function _advExamRefreshGm(cb){
     window._fbGetExamConfig().then(function(d){
       window._lxpsExamGmAt = Date.now();
       window._lxpsExamGmDefault = (d && typeof d.defaultVer === 'string') ? d.defaultVer : '';
+      window._lxpsExamByBook = (d && d.byBook && typeof d.byBook === 'object') ? d.byBook : null;   // ★ v5.288.0
       _fin();
     }).catch(_fin);
   }catch(_){ _fin(); }
 }
-function _advExamOpenPicker(onDone, onCancel){
+function _advExamOpenPicker(onDone, onCancel, preTerm){
   _advExamEnsureCore(function(ok){
     if(!ok){
       try{ bannerFX(null, (window._artStyle === 'cute') ? '題庫下載失敗,等一下再試' : '考試複習題庫下載失敗,請確認網路後再試', '#ff8888', 2200); }catch(_){}
@@ -5315,6 +5373,7 @@ function _advExamOpenPicker(onDone, onCancel){
       C.resetPrefCache();
       C.openPicker({
         cute: window._artStyle === 'cute',
+        preTerm: preTerm || '',
         sfx: function(n){ try{ playSfx(n === 'cancel' ? 'sfx-tap' : (n === 'ok' ? 'sfx-confirm' : 'sfx-tap'), 0.4); }catch(_){} },
         onCancel: onCancel,
         onPick: function(sel){
@@ -9193,6 +9252,8 @@ window._advCalcRewardMult = function(subject){
       _isDoubledSubject = KING_DOUBLED_REVIEW_TOPICS.indexOf(subject) >= 0;
     }
   }catch(_){}
+  // ★ v5.288.0 — 考試複習且範圍落在 GM 開啟的評量(期中/期末)範圍 ⇒ 同樣再 +25%(不受加強複習總開關影響)
+  try{ if(!_isDoubledSubject && typeof window._advExamBoostTermFor === 'function' && window._advExamBoostTermFor(subject)) _isDoubledSubject = true; }catch(_){}
   // ★ v3.11.6(2026-05-27)鐵律 1.98 — 兩條 +25% 加成「一天各領一次」
   //   先把旗標跨日重置(_kingCheckReset 內含 _todayDateStr 比對),再決定是否套用
   try{ if(typeof _kingCheckReset === 'function') _kingCheckReset(); }catch(_){}
@@ -12653,7 +12714,8 @@ function advShowChoicePanel(stage, sceneIdx) {
       groupGrid.style.cssText = 'justify-content:flex-start;';
       g.items.forEach(c => {
         // ★ v1.0.20260510.5880 — 加強複習主題(KING_DOUBLED_REVIEW_TOPICS)額外加上「獎勵再 +25%」外框/badge
-        const _isDoubled = (typeof window._doubledReviewActive !== 'function' || window._doubledReviewActive()) && (typeof KING_DOUBLED_REVIEW_TOPICS !== 'undefined' && Array.isArray(KING_DOUBLED_REVIEW_TOPICS) && KING_DOUBLED_REVIEW_TOPICS.indexOf(c) >= 0);
+        const _isExamTermBtn = (c === _ADV_EXAM_CHOICE && window._advExamActiveTerms().length > 0);   // ★ v5.288.0 評量複習加成期間,考試複習鈕也掛 ⭐
+        const _isDoubled = _isExamTermBtn || ((typeof window._doubledReviewActive !== 'function' || window._doubledReviewActive()) && (typeof KING_DOUBLED_REVIEW_TOPICS !== 'undefined' && Array.isArray(KING_DOUBLED_REVIEW_TOPICS) && KING_DOUBLED_REVIEW_TOPICS.indexOf(c) >= 0));
         const btn = document.createElement('button');
         btn.className = 'adv-choice-btn';
         const _styleStr = (typeof _advGetSubjectBtnStyle === 'function') ? _advGetSubjectBtnStyle(c) : '';
@@ -12706,7 +12768,7 @@ function advShowChoicePanel(stage, sceneIdx) {
           } else {
             _badge.className = 'reward-flash';
             _badge.style.cssText = 'font-size:13px;color:#ffaa28;letter-spacing:1px;text-align:center;line-height:1.2;';
-            _badge.textContent = '⭐ 加強複習期間獎勵再 +25%';
+            _badge.textContent = _isExamTermBtn ? window._advExamTermsBadge() : '⭐ 加強複習期間獎勵再 +25%';
           }
           _wrap.appendChild(_badge);
           _wrap.appendChild(btn);
@@ -12996,7 +13058,8 @@ function _advRenderMultiStep(panel, box, stage, sceneIdx){
       groupGrid.style.cssText = 'justify-content:flex-start;';
       g.items.forEach(c => {
         // ★ v1.0.20260510.5880 — 多步驟流程也補上「加強複習期間獎勵再 +25%」標示
-        const _isDoubledMS = (typeof window._doubledReviewActive !== 'function' || window._doubledReviewActive()) && (typeof KING_DOUBLED_REVIEW_TOPICS !== 'undefined' && Array.isArray(KING_DOUBLED_REVIEW_TOPICS) && KING_DOUBLED_REVIEW_TOPICS.indexOf(c) >= 0);
+        const _isExamTermMS = (c === _ADV_EXAM_CHOICE && window._advExamActiveTerms().length > 0);   // ★ v5.288.0
+        const _isDoubledMS = _isExamTermMS || ((typeof window._doubledReviewActive !== 'function' || window._doubledReviewActive()) && (typeof KING_DOUBLED_REVIEW_TOPICS !== 'undefined' && Array.isArray(KING_DOUBLED_REVIEW_TOPICS) && KING_DOUBLED_REVIEW_TOPICS.indexOf(c) >= 0));
         const _btnMS = makeBtn(c, _advGetSubjectBtnStyle(c));
         if(_isDoubledMS){
           // ★ v3.11.6(2026-05-27)鐵律 1.98 — 今天「⭐ 加強複習」加成已領則改為灰底樸素版
@@ -13019,7 +13082,7 @@ function _advRenderMultiStep(panel, box, stage, sceneIdx){
           } else {
             _badgeMS.className = 'reward-flash';
             _badgeMS.style.cssText = 'font-size:13px;color:#ffaa28;letter-spacing:1px;text-align:center;line-height:1.2;';
-            _badgeMS.textContent = '⭐ 加強複習期間獎勵再 +25%';
+            _badgeMS.textContent = _isExamTermMS ? window._advExamTermsBadge() : '⭐ 加強複習期間獎勵再 +25%';
           }
           _wrapMS.appendChild(_badgeMS);
           _wrapMS.appendChild(_btnMS);
