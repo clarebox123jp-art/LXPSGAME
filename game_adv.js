@@ -5259,6 +5259,100 @@ window._scGrantReward=_scGrantReward;
 //   └─────────────────────────────────────────────────────────────────┘
 //   grade 參數實際未被使用(歷史遺留,保留簽名相容),
 //   difficulty 參數實際未被使用(同上)。
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.287.0(老師需求「冒險關卡、小遊戲、荒島求生共同加入考試複習題庫」)
+//   題庫放 repo 的 exam/ 資料夾(三模式共用):exam_core.js(選單+取題)、exam_index.js(目錄)、
+//   q_<冊碼>.js(每冊一檔,選了才下載)。科目字串 = '考試複習｜<冊>｜<版本>｜<單元>'
+//   (不吃年級單元 regex,不進知識王/鬥技場/龍王戰一般池;冒險結算課堂複習 +25% 另行納入)。
+//   玩家勾選 → window._lxpsExamPref(存檔欄位 examPref_s);GM 學校預設版本 → gameConfig/examReview.defaultVer。
+// ════════════════════════════════════════════════════════════════════
+const _ADV_EXAM_CHOICE = '📝 考試複習';
+const _ADV_EXAM_CORE_VER = '20261022';
+window._advExamIsSubject = function(s){ return typeof s === 'string' && s.indexOf('考試複習｜') === 0; };
+function _advExamUid(){ try{ return (window._fbUser && window._fbUser.uid) || String(window._gUserId || '') || 'guest'; }catch(_){ return 'guest'; } }
+function _advExamEnsureCore(cb){
+  if(window.ExamCore){ cb(true); return; }
+  const _s = document.createElement('script');
+  _s.src = 'exam/exam_core.js?v=' + _ADV_EXAM_CORE_VER;
+  _s.onload = function(){ cb(!!window.ExamCore); };
+  _s.onerror = function(){ cb(false); };
+  document.head.appendChild(_s);
+}
+function _advExamSetup(){
+  const C = window.ExamCore;
+  C.init({
+    base: 'exam/',
+    uid: _advExamUid,
+    loadPref: function(){ return window._lxpsExamPref || null; },
+    savePref: function(p){ window._lxpsExamPref = p; }   // 隨下一次一般存檔上雲(不額外寫入)
+  });
+  C.setGmDefault(window._lxpsExamGmDefault || '');
+  return C;
+}
+// GM 學校預設版本:開選單時讀一次(10 分鐘內不重讀),讀不到就維持舊值/不指定
+function _advExamRefreshGm(cb){
+  const _now = Date.now();
+  if(window._lxpsExamGmAt && _now - window._lxpsExamGmAt < 600000){ cb(); return; }
+  let _done = false; const _fin = function(){ if(_done) return; _done = true; cb(); };
+  setTimeout(_fin, 2500);
+  try{
+    if(typeof window._fbGetExamConfig !== 'function'){ _fin(); return; }
+    window._fbGetExamConfig().then(function(d){
+      window._lxpsExamGmAt = Date.now();
+      window._lxpsExamGmDefault = (d && typeof d.defaultVer === 'string') ? d.defaultVer : '';
+      _fin();
+    }).catch(_fin);
+  }catch(_){ _fin(); }
+}
+function _advExamOpenPicker(onDone, onCancel){
+  _advExamEnsureCore(function(ok){
+    if(!ok){
+      try{ bannerFX(null, (window._artStyle === 'cute') ? '題庫下載失敗,等一下再試' : '考試複習題庫下載失敗,請確認網路後再試', '#ff8888', 2200); }catch(_){}
+      if(onCancel) onCancel(); return;
+    }
+    _advExamRefreshGm(function(){
+      const C = _advExamSetup();
+      C.resetPrefCache();
+      C.openPicker({
+        cute: window._artStyle === 'cute',
+        sfx: function(n){ try{ playSfx(n === 'cancel' ? 'sfx-tap' : (n === 'ok' ? 'sfx-confirm' : 'sfx-tap'), 0.4); }catch(_){} },
+        onCancel: onCancel,
+        onPick: function(sel){
+          window._advExamSel = sel;
+          try{ localStorage.setItem('lxps_exam_lastsel_' + _advExamUid(), JSON.stringify(sel)); }catch(_){}
+          onDone('考試複習｜' + C.selLabel(sel));
+        }
+      });
+    });
+  });
+}
+// 取得目前科目對應的選擇範圍(中途重整/resume 時從本機備份還原)
+function _advExamSelFor(subject){
+  let _sel = window._advExamSel || null;
+  if(!_sel){ try{ _sel = JSON.parse(localStorage.getItem('lxps_exam_lastsel_' + _advExamUid()) || 'null'); }catch(_){ _sel = null; } }
+  if(!_sel || !_sel.book) return null;
+  try{ if(window.ExamCore && ('考試複習｜' + window.ExamCore.selLabel(_sel)) !== subject) return null; }catch(_){}
+  return _sel;
+}
+// 考試複習題 → 冒險題目格式(answer 字母、_examWhy/_examRange 供作答後顯示)
+function _advExamPool(subject, difficulty){
+  const _sel = _advExamSelFor(subject);
+  const C = window.ExamCore;
+  if(!_sel || !C || !window.EXAM_Q || !window.EXAM_Q[_sel.book]){
+    // 冊檔還沒載入(例如重整後直接續玩):背景補載,這一輪先用一般「自然/社會」題撐場,不讓題庫變空
+    try{ if(_sel){ _advExamEnsureCore(function(ok){ if(ok){ _advExamSetup(); window.ExamCore.loadBook(_sel.book, function(){}); } }); } }catch(_){}
+    const _fb = (_sel && /社會/.test(_sel.book)) ? '社會' : '自然';
+    return ADV_QUIZ_DB.filter(q => q.subject === _fb);
+  }
+  const _diff = (difficulty === '沒自信' || difficulty === '普通' || difficulty === '我很會') ? difficulty : '';
+  const _L = ['A','B','C','D'];
+  return C.pool({ book: _sel.book, units: _sel.units, vers: _sel.vers, diff: _diff }).map(function(e){
+    const _o = { id: 'EX-' + e.id, grade: e.b, subject: '考試複習｜' + e.b,   /* 答對紀錄以「冊」為單位,換單元/版本組合不重來 */ difficulty: e.d, question: e.q,
+                 options: e.o.slice(), answer: _L[e.a], hint: '', _examWhy: e.why, _examRange: e.range, _examVer: e.v };
+    if(e.pic) _o.pic = e.pic;
+    return _o;
+  });
+}
 function advGetQuizPool(grade, subject, difficulty) {
   try{ _pcqWeeklyResetCheck(); }catch(_){} // ★ v3.16.52 — 進題庫前先判定本週是否需重置累積答對進度
   function _filterPersistent(rawPool, subjectKey){
@@ -5279,6 +5373,14 @@ function advGetQuizPool(grade, subject, difficulty) {
       return rawPool;
     }
     return filtered.length > 0 ? filtered : rawPool;
+  }
+  // ★ v5.287.0 — 考試複習(南一/翰林/康軒 單元題庫,依玩家選的冊/單元/版本)
+  if (window._advExamIsSubject(subject)) {
+    const _exRaw = _advExamPool(subject, difficulty);
+    const _pool = (_exRaw.length && _exRaw[0].subject && _exRaw[0].subject.indexOf('考試複習｜') === 0)
+      ? _filterPersistent(_exRaw, _exRaw[0].subject) : _exRaw.slice();
+    for(let i = _pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [_pool[i], _pool[j]] = [_pool[j], _pool[i]]; }
+    return _pool;
   }
   if (subject === '照顧與陪伴幼兒' || subject === '領養與照顧狗狗' || subject === '世界機關王大賽') {
     const _full = (subject === '照顧與陪伴幼兒') ? ADV_QUIZ_CARE_INFANT
@@ -5456,7 +5558,8 @@ const ADV_SCENES = {
       // ★ v1.0.20260424.0810 — 移除年級調查(不再有難度差異),只問挑戰主題
       choiceType: 'subject',
       choiceTitle: '📚 這次想挑戰的問答主題是？',
-      choices: ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','四下自然第三單元','四下自然第四單元','五下自然期中評量','五下自然第三單元','五下自然第四單元','六上自然第一單元','六上自然第二單元','六上自然第三單元','六上自然第四單元','關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗','世界機關王大賽'],
+      // ★ v5.287.0 — 「📝 考試複習」(南一/翰林/康軒 自然・社會 單元題庫,點了開選單選冊/單元/版本;歸在課堂複習群組最前)
+      choices: ['📝 考試複習','國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','四下自然第三單元','四下自然第四單元','五下自然期中評量','五下自然第三單元','五下自然第四單元','六上自然第一單元','六上自然第二單元','六上自然第三單元','六上自然第四單元','關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗','世界機關王大賽'],
     },
     {
       key:'trail',
@@ -9078,8 +9181,9 @@ window._advCalcRewardMult = function(subject){
   // 課堂複習判定:跟視覺分群 _advGroupSubjects / _advGetSubjectBtnStyle 同一條規則
   // ★ v3.30.0 — GM 開關 _reviewBaseActive 套閘:關閉時基礎 +25% 不發、下游 isReview UI 一併消失
   const _reviewRe = /^(低|中|高|國[一二三]|[一二三四五六七八九十]+)[上下]/;
+  // ★ v5.287.0 — 考試複習也算「課堂複習」(吃 🎁 +25%);科目字串以「考試複習｜」開頭
   const _isReviewSubject = (typeof window._reviewBaseActive !== 'function' || window._reviewBaseActive())
-    && !!(subject && typeof subject === 'string' && _reviewRe.test(subject));
+    && !!(subject && typeof subject === 'string' && (_reviewRe.test(subject) || subject.indexOf('考試複習｜') === 0));
   // 期間加乘:管理員從教師端「加強複習提醒區間」整合進 KING_DOUBLED_REVIEW_TOPICS
   // ★ v3.30.0 — GM 開關 _doubledReviewActive 套閘:關閉時不再發「再+25%」
   let _isDoubledSubject = false;
@@ -12561,6 +12665,20 @@ function advShowChoicePanel(stage, sceneIdx) {
           box.querySelectorAll('.adv-choice-btn').forEach(b => { b.style.pointerEvents = 'none'; });
           box.querySelectorAll('.adv-choice-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
+          // ★ v5.287.0 — 考試複習:先開「冊/單元/版本」選單,選好才記錄科目;按取消則解鎖按鈕可重選
+          if(c === _ADV_EXAM_CHOICE){
+            playSfx('sfx-tap', 0.5);
+            _advExamOpenPicker(function(subj){
+              _advTempChoice = subj;
+              playSfx('sfx-confirm2', 0.85);
+              setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
+            }, function(){
+              _choiceLocked = false;
+              btn.classList.remove('selected');
+              box.querySelectorAll('.adv-choice-btn').forEach(b => { b.style.pointerEvents = ''; });
+            });
+            return;
+          }
           _advTempChoice = c;
           playSfx('sfx-confirm2', 0.85);
           setTimeout(() => advConfirmChoice(stage, sceneIdx), 320);
@@ -12741,6 +12859,7 @@ function _advGroupSubjects(choices){
     else if(c === '照顧與陪伴幼兒' || c === '領養與照顧狗狗' || c === '世界機關王大賽')  byKey.care.items.push(c);
     else if(c === '生活常識')                                                    byKey.life.items.push(c);
     else if(/交流$/.test(c))                                                     byKey.intl.items.push(c);
+    else if(c === _ADV_EXAM_CHOICE)                                              byKey.review.items.unshift(c);   // ★ v5.287.0 考試複習排課堂複習最前
     else if(/^(低|中|高|國[一二三]|[一二三四五六七八九十]+)[上下]/.test(c))        byKey.review.items.push(c);
     // ★ v3.32.0 — 本日獎勵題庫科目移入 daily 群組(不留在一般學科·避免同科目重複兩顆按鈕)
     else if(_dailySubj && c === _dailySubj)                                      byKey.daily.items.push(c);
@@ -13557,7 +13676,7 @@ function advSkipCutscene() {
   ].join('');
     if(window.innerWidth > 1180){ box.style.width='min(96vw,1000px)'; box.style.fontSize='170%'; }
 
-  const subjOpts  = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','六上自然第一單元','六上自然第二單元','六上自然第三單元','六上自然第四單元','關島交流','木柵動物園','木柵動物園'];
+  const subjOpts  = ['📝 考試複習','國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','六上自然第一單元','六上自然第二單元','六上自然第三單元','六上自然第四單元','關島交流','木柵動物園','木柵動物園'];
   const diffOpts  = ['沒自信','普通','我很會'];
 
   if(!_advPlayerGrade) _advPlayerGrade = '綜合';
@@ -13584,6 +13703,16 @@ function advSkipCutscene() {
         b.style.background = 'rgba(120,90,255,0.5)';
         b.style.borderColor = '#aa88ff';
         b.style.color = '#fff';
+        if (key==='subject' && o === _ADV_EXAM_CHOICE) {
+          // ★ v5.287.0 — 考試複習:開選單選冊/單元/版本,選好後按鈕文字換成所選範圍
+          _advExamOpenPicker(function(subj){
+            _advPlayerSubject = subj;
+            b.textContent = '📝 ' + subj.replace(/^考試複習｜/, '');
+            const _cb = document.getElementById('adv-skip-confirm-btn');
+            if (_cb && _advPlayerSubject && _advPlayerDifficulty) { _cb.disabled = false; _cb.style.opacity = '1'; }
+          }, function(){});
+          return;
+        }
         if (key==='subject') {
           _advPlayerSubject = o;
           // ★ 期中評量：難度自動填入「普通」，不需玩家另選
@@ -16521,6 +16650,7 @@ function advPickQuestion() {
        || _advPlayerSubject === '五下自然第四單元'
        // ★ v5.115.0 — 六上自然四單元同款「本場避免重複池」(前綴判定,日後加單元自動涵蓋)
        || (_advPlayerSubject && _advPlayerSubject.indexOf('六上自然') === 0)
+       || (_advPlayerSubject && _advPlayerSubject.indexOf('考試複習｜') === 0)   // ★ v5.287.0
        || (_advPlayerSubject && _advPlayerSubject.includes('評量')))) {
     // 從 _advSessionQuestions 中過濾掉本場已用過的
     const _used = _advUsedQuestionIds || new Set();
@@ -16545,6 +16675,7 @@ function advPickQuestion() {
        && (_advPlayerSubject === '五下自然第三單元'
          || _advPlayerSubject === '五下自然第四單元'
          || (_advPlayerSubject && _advPlayerSubject.indexOf('六上自然') === 0)   // ★ v5.115.0
+         || (_advPlayerSubject && _advPlayerSubject.indexOf('考試複習｜') === 0)   // ★ v5.287.0
          || (_advPlayerSubject && _advPlayerSubject.includes('評量')))){
       if(!_advUsedQuestionIds || typeof _advUsedQuestionIds.add !== 'function'){
         _advUsedQuestionIds = new Set();
@@ -17147,6 +17278,25 @@ function advSubmitAnswer(letter, isCorrectOverride) {
       else if(btn.dataset.letter === letter && !isCorrect) btn.classList.add('wrong');
     }
   });
+  // ★ v5.287.0 — 考試複習題:公布答案時在選項下方顯示「出題範圍+解說」(答對答錯都顯示,幫助複習)
+  try{
+    if(!_hasExtraChance && q && q._examWhy){
+      const _ob = document.querySelector('.aqo-btn');
+      const _host = _ob && _ob.parentNode;
+      if(_host && _host.parentNode){
+        let _wy = document.getElementById('adv-exam-why');
+        if(!_wy){ _wy = document.createElement('div'); _wy.id = 'adv-exam-why'; _host.parentNode.insertBefore(_wy, _host.nextSibling); }
+        _wy.style.cssText = 'margin:8px auto 0;max-width:96%;padding:8px 14px;border-radius:10px;font-size:19px;line-height:1.45;text-align:left;'
+          + 'background:' + (isCorrect ? 'rgba(80,200,120,0.16)' : 'rgba(255,120,120,0.16)') + ';border:1px solid ' + (isCorrect ? 'rgba(120,230,150,0.6)' : 'rgba(255,150,150,0.6)') + ';color:#fff;';
+        const _cuteW = (window._artStyle === 'cute');
+        _wy.textContent = (isCorrect ? (_cuteW ? '⭕ 答對!' : '✅ 正確。') : (_cuteW ? '❌ 正確答案是 ' : '❌ 正解：') + (q.answer || '') + '。') + ' ' + q._examWhy;
+        const _rg = document.createElement('div');
+        _rg.style.cssText = 'font-size:14px;color:#cfe8ff;margin-top:3px;opacity:.85;';
+        _rg.textContent = '📝 ' + (q._examRange || '');
+        _wy.appendChild(_rg);
+      }
+    }
+  }catch(_eWhy){}
 
   if (isCorrect) {
     _advStats.correctCount++;
@@ -26297,6 +26447,8 @@ function _buildSafeData() {
     //   _s 字串版繞過 Firebase merge:true 對 map 的殘留;載入優先採信 _s。
     autoBattleCfg: (function(){ try{ return window._autoBattleHeroCfg || {}; }catch(_){ return {}; } })(),
     autoBattleCfg_s: (function(){ try{ return JSON.stringify(window._autoBattleHeroCfg || {}); }catch(_){ return '{}'; } })(),
+    // ★ v5.287.0 — 考試複習勾選(版本/冊/單元;純偏好,不含任何養成資料;自寫欄位不需改 firestore.rules)
+    examPref_s: (function(){ try{ return JSON.stringify(window._lxpsExamPref || null); }catch(_){ return 'null'; } })(),
     // ★ v1.0.20260428.1700 — 台灣環島至寶資料(等級/經驗/裝備英雄)
     taiwanTreasureData: _taiwanTreasureData,
     taiwanTreasureData_s: JSON.stringify(_taiwanTreasureData||{}),
@@ -27545,6 +27697,14 @@ function _applySafeData(raw) {
       try{ localStorage.setItem('lxps_auto_battle_cfg', JSON.stringify(_abcLoaded)); }catch(_eAbcLs){}
     }
   }catch(_eAbcLoad){ console.warn('[自動戰鬥設定] 載入失敗,沿用本機', _eAbcLoad); }
+  // ★ v5.287.0 — 載入考試複習勾選(共用 iPad:一律以本帳號雲端值覆蓋,沒有就清空,不沿用上一位玩家的)
+  try{
+    var _exP = null;
+    if(typeof data.examPref_s === 'string'){ try{ _exP = JSON.parse(data.examPref_s); }catch(_eExP){ _exP = null; } }
+    window._lxpsExamPref = (_exP && typeof _exP === 'object') ? _exP : null;
+    window._advExamSel = null;
+    try{ if(window.ExamCore) window.ExamCore.resetPrefCache(); }catch(_eExR){}
+  }catch(_eExLoad){}
   // ★ v1.0.20260428.1700 — 載入台灣環島至寶資料
   // ★ v3.14.17 — 整顆覆蓋改為「逐件取較高」合併(鐵律 1.41 延伸到至寶):
   //   災情(第 1 名陳同學):領獎寫入龍牙+神話至寶 → 下次登入三槽選了較舊的 safe 槽

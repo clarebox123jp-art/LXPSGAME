@@ -4409,6 +4409,15 @@
     }
   };
 
+  // ★ v5.287.0 — 考試複習「學校預設版本」(gameConfig/examReview = { defaultVer:'南一'|'翰林'|'康軒'|'', updatedAt, updatedBy })
+  //   玩家開考試複習選單時才讀一次(不掛 onSnapshot,零常駐讀取);docId 不帶 gm_ 前綴 ⇒ 登入者可讀·isAdmin 可寫,免改 firestore.rules。
+  window._fbGetExamConfig = async function(){
+    try{
+      const snap = await getDoc(doc(_fbDb, 'gameConfig', 'examReview'));
+      return snap.exists() ? (snap.data() || null) : null;
+    }catch(e){ console.warn('[考試複習] 讀取學校版本失敗', e); return null; }
+  };
+
   // ★★ v5.116.0(老師需求:「讓 GM 可以勾選是否顯示各單元題庫，或出現在知識王、競技場、龍王戰」)★★
   //   gameConfig/quizVisibility = { hidden:{ adv:[], king:[], arena:[], wb:[] }, updatedAt, updatedBy }
   //   ★ 只存「被關掉的」黑名單 ⇒ 日後新增任何題庫預設一律可見(符合直覺,不必每次上線都回後台補勾)。
