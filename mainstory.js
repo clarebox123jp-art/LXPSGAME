@@ -3496,7 +3496,7 @@
         try{ window._msSkipChapter = true; }catch(_){}
         /* ★ v5.291.0 — 撤退時 _msRunChapter 的 done()(含強制主線連播的結束回呼)不會執行
          *   ⇒ 舊版 _msForceChainRunning 永遠卡 true,輪詢守門每次都以為「正在連播」而收起鎖定層 = 新手強制主線被繞過。
-         *   這裡主動歸零。(另註:輪詢守門的 _isInBattleNow 少了 (),鎖定層線上其實從未生效,啟用與否待老師裁定。) */
+         *   這裡主動歸零。(另註:輪詢守門的 _isInBattleNow 少了 (),鎖定層線上其實從未生效,v5.292.0 老師裁定一律不鎖,見 _MS_FORCE_LOCK_ENABLED。) */
         try{ _msForceChainRunning = false; }catch(_){}
         /* ★ v4.89.0(第二版)撤退時 _msRunChapter 的 done() 不會執行 → 回顧旗標不會被清。
          *   雖然下一次 _msRunChapter 開頭就會重設,仍在此主動歸零(零殘留·防任何中途讀取誤判)。 */
@@ -4804,8 +4804,15 @@
     "taiwan-cutscene-overlay","taiwan-dialog-overlay","style-onboarding-modal","_member-profile-modal",
     "_member-hub-modal","_rescue-guide-modal","_audit-ov","adv-wb-crash-notice","adv-crash-recovery-box",
     "login-gate-modal","_camp-overlay"];
+  /* ★ v5.292.0(2026-10-23・老師裁定「改成一律不鎖」)— 新玩家強制主線鎖永久關閉。
+   *   背景:v5.291.0 稽核發現輪詢守門寫 `_isInBattleNow` 少了 (),鎖定層線上從未出現過;老師聽完開啟影響後裁定一律不鎖。
+   *   ⇒ 守門恆回 false(輪詢不啟動、不蓋層、不自動連播);新玩家分類 _fg 也不再寫入(下方 _msMaybeFirstLogin)。
+   *   既有 _fg 欄位保留在雲端不刪(誤刪是大忌),只是不再有任何作用。要恢復時把本常數改 true,並先修好
+   *   _msForceGateTick 的 _isInBattleNow() 與「畫面有沒有視窗」的 offsetParent 判斷(fixed 元素恆 null)。 */
+  var _MS_FORCE_LOCK_ENABLED = false;
   function _msForceGateActive(){
     try{
+      if(!_MS_FORCE_LOCK_ENABLED) return false;   // ★ v5.292.0 一律不鎖
       if(typeof window._isAdminUser === "function" && window._isAdminUser()) return false;  // GM 豁免
       if(!window._msEntryAllowed()) return false;
       var p = _msProgress();
@@ -4907,7 +4914,7 @@
       try{ if(typeof _isInBattleNow !== "undefined" && _isInBattleNow){ _msForceLayerHide(); _msForceIdleTicks = 0; return; } }catch(_){}
       if(_msForceChainRunning){ _msForceLayerHide(); _msForceIdleTicks = 0; return; }  // 章節/場景銜接空窗
       /* ★ v5.291.0 註:上方 _isInBattleNow 少了 () ⇒ 函式參照恆為真,本守門其實從未蓋上鎖定層(強制主線鎖線上一直沒生效)。
-       *   是否啟用屬行為重大變更,待老師裁定;本版只在撤退鈕歸零 _msForceChainRunning(啟用後才有作用)。 */
+       *   v5.292.0 老師裁定一律不鎖 ⇒ _MS_FORCE_LOCK_ENABLED=false,本守門不再啟動。 */
       _msForceLayerShow();
       _msForceIdleTicks++;
       if(_msForceIdleTicks >= 2){ _msForceIdleTicks = 0; _msForceChainRun(); }         // 層在場約 3 秒 → 自動續播
@@ -4931,7 +4938,7 @@
       try{
         var _pc = _msProgress();
         var _isAdm = (typeof window._isAdminUser === "function" && window._isAdminUser());
-        if(!_isAdm && !(typeof _pc._fg === "number" && _pc._fg > 0)){
+        if(_MS_FORCE_LOCK_ENABLED && !_isAdm && !(typeof _pc._fg === "number" && _pc._fg > 0)){   // ★ v5.292.0 一律不鎖 ⇒ 不再分類寫入
           var _entered = (_pc.prologue === "done") || ((typeof _pc["_sc_prologue"] === "number") && _pc["_sc_prologue"] > 0);
           var _anyDone = false;
           MAINSTORY_DB.order.forEach(function(cid){ if(_pc[cid] === "done") _anyDone = true; });
