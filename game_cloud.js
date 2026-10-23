@@ -3077,6 +3077,20 @@
               newSummary: _newSummary, existingSummary: _existingSummary, diff: _diff
             };
           }
+          // ★ v5.291.0 — live 槽 unlockedHeroes 不縮減(比照主文件 v3.13.90 乙-3):
+          //   守門只擋「少 5 隻以上」,少 1~4 隻會放行,而 merge 寫入對陣列是整包取代 ⇒ live 槽獨有的英雄被縮掉、三槽不一致。
+          //   ⇒ 與雲端既有清單聯集(已被刪除/替換的英雄依 _heroUnlockHistory 排除;老師強制還原不聯集)。
+          try{
+            if(!(data && data._adminForceRestore) && Array.isArray(_liveWriteData.unlockedHeroes) && _existing && Array.isArray(_existing.unlockedHeroes)){
+              const _uSetL = new Set(_liveWriteData.unlockedHeroes);
+              let _addedBackL = 0;
+              _existing.unlockedHeroes.forEach(function(n){ if(n && !_uSetL.has(n) && !_gateRemovedSetL[n] && _gIsPHN(n)){ _uSetL.add(n); _addedBackL++; } });
+              if(_addedBackL > 0){
+                _liveWriteData = Object.assign({}, _liveWriteData, { unlockedHeroes: Array.from(_uSetL) });
+                console.warn('🛡️ [_fbSaveLive v5.291.0 聯集] 要寫的 unlockedHeroes 比 live 槽少 ' + _addedBackL + ' 隻 → 已聯集補回(只增不減)');
+              }
+            }
+          }catch(_eUL){ console.warn('[_fbSaveLive v5.291.0 聯集] 例外(照原資料寫入)', _eUL); }
           // 通過 → 寫入(★ v3.13.47 用皮膚聯集後的 _liveWriteData,確保皮膚只增不減)
           tx.set(_liveRef, _liveWriteData, { merge: true });
           return { written: true, reason: 'health_check_passed' };
@@ -9217,11 +9231,48 @@
   window._msHydrateFromCloud = async function(){
     try{
       const _uid = (window._fbUser && window._fbUser.uid) || window._gUserId || null;
-      if(!_uid || !_fbDb){ if(typeof window._msHydrateProgress === 'function') window._msHydrateProgress(null); return; }
+      if(!_uid || !_fbDb){ window._msCloudReadOk = true; if(typeof window._msHydrateProgress === 'function') window._msHydrateProgress(null); return; }
       let _pd = {};
       let _pdOk = false;   /* ★ v5.131.0 — 雲端主檔是否真的讀到(含「文件不存在」=合法的全新玩家);讀取失敗絕不解除造型上雲守門 */
-      try{ const _ps = await getDocFromServer(doc(_fbDb, 'players', _uid)); _pdOk = true; if(_ps.exists()) _pd = _ps.data() || {}; }catch(_ep){}
-      if(typeof window._msHydrateProgress === 'function') window._msHydrateProgress(_pd.mainStoryProgress || null);
+      /* ★ v5.291.0 — 讀取失敗(校網不穩/25 台同時登入)時:
+       *   ① 先重試 2 次(間隔 1.5 秒、3 秒);
+       *   ② 仍失敗 ⇒ 只用本機鏡像 hydrate、「不補寫上雲」(舊版把本機舊進度整份補寫上雲,會撤銷老師的主線回溯),
+       *      並標記 window._msCloudReadOk=false:章節選單改顯示「讀取中」、首登導入暫停(避免舊玩家被當新玩家、章節獎勵重發);
+       *   ③ 20 秒後背景再讀一次,讀到就正式 hydrate。換帳號後若 uid 已不同就放棄這次結果。 */
+      for(let _try = 0; _try < 3 && !_pdOk; _try++){
+        if(_try > 0){ await new Promise(function(r){ setTimeout(r, _try * 1500); }); }
+        const _uidNow = (window._fbUser && window._fbUser.uid) || window._gUserId || null;
+        if(_uidNow !== _uid) return;   // 讀取期間已換帳號 ⇒ 交給新帳號自己的流程
+        try{
+          const _pReq = getDocFromServer(doc(_fbDb, 'players', _uid));
+          // 加逾時:請求卡住不 settle 時,章節選單的「讀取中」不會永遠鎖住
+          const _ps = (typeof window._fbRaceTimeout === 'function')
+            ? await window._fbRaceTimeout(_pReq, window._FB_GET_SERVER_TIMEOUT_MS || 8000, 'msHydrate')
+            : await _pReq;
+          _pdOk = true; if(_ps.exists()) _pd = _ps.data() || {}; }catch(_ep){ console.warn('[主線進度讀取] 第 ' + (_try + 1) + ' 次失敗', _ep && _ep.code); }
+      }
+      {
+        const _uidNow2 = (window._fbUser && window._fbUser.uid) || window._gUserId || null;
+        if(_uidNow2 !== _uid) return;
+      }
+      window._msCloudReadOk = _pdOk;
+      if(!_pdOk){
+        if(typeof window._msHydrateProgress === 'function') window._msHydrateProgress(null, { cloudFailed: true });
+        try{
+          clearTimeout(window._msHydrateRetryT);
+          window._msHydrateRetryT = setTimeout(function(){
+            try{
+              const _uidR = (window._fbUser && window._fbUser.uid) || window._gUserId || null;
+              if(_uidR === _uid && window._msCloudReadOk === false && typeof window._msHydrateFromCloud === 'function'){
+                window._msHydrateFromCloud().then(function(){
+                  try{ if(window._msCloudReadOk === true && typeof window._msMaybeFirstLogin === 'function') window._msMaybeFirstLogin(); }catch(_){}
+                }).catch(function(){});
+              }
+            }catch(_){}
+          }, 20000);
+        }catch(_eRt){}
+        // 不 return:下面的「卡片歸屬校正」照跑;_pd 為空 ⇒ 回溯/對帳段落自然不動作(上雲另有 _pdOk 守門)
+      } else if(typeof window._msHydrateProgress === 'function') window._msHydrateProgress(_pd.mainStoryProgress || null);
       // ★ v5.7.0 — GM 回溯:avatarCard 帶 rst(後台重置寫入)且比本機 card 記錄的新 → 整份採用雲端重置版
       //   (cfg=預設・未覺醒・主線部件已剔),覆寫本機鏡像;同步覺醒旗標、清暱稱本機鍵、立繪簽章歸零重畫。
       //   只有被 GM 重置過的帳號才會有 rst 欄位,其他玩家此段零影響。
@@ -21113,6 +21164,20 @@
           if(!window._gUserId) return { written: false, reason: 'no_uid' };
           if(!window._progressLoaded) return { written: false, reason: 'progress_not_loaded' };
           if(window._kickedFromSession) return { written: false, reason: 'kicked' };
+          /* ★ v5.291.0 — 比照主存檔 gameCloudSave 的三道守門(safe 槽原本缺):
+           *   ① 老師剛對這個帳號做了補償/刪除/還原(重載前)⇒ 舊畫面的記憶體是過時的,不准寫 safe 槽
+           *     (舊版:5 分鐘定時/離頁/閒置登出把舊狀態寫進 safe,下次登入三槽合併 ⇒ 老師的操作被部分還原);
+           *   ② uid 漂移(快取≠權威)/ 權威 uid 與要寫的 uid 不同 ⇒ 換帳號進行中;
+           *   ③ 記憶體擁有者不是這個 uid ⇒ 換帳號後尚未重新載入。
+           *   另:救援後 30 秒 autosave 暫停期間同樣不寫。 */
+          if(window._authoritativeReloadTriggered) return { written: false, reason: 'authoritative_reload_pending' };
+          if(window._autoSavePausedUntil && Date.now() < window._autoSavePausedUntil) return { written: false, reason: 'rescue_pause' };
+          try{
+            if(typeof window._lxpsUidDrift === 'function' && window._lxpsUidDrift()) return { written: false, reason: 'uid_drift' };
+            const _authU = (typeof window._lxpsAuthUid === 'function') ? window._lxpsAuthUid() : window._gUserId;
+            if(_authU && _authU !== window._gUserId) return { written: false, reason: 'auth_mismatch' };
+            if(window._memoryOwnerUid && window._memoryOwnerUid !== window._gUserId) return { written: false, reason: 'memory_owner_mismatch' };
+          }catch(_eSG){}
           if(typeof _buildSafeData !== 'function') return { written: false, reason: 'no_builder' };
           if(!window._fbWriteSafeIfHealthier) return { written: false, reason: 'no_api' };
           const _candidate = _buildSafeData();

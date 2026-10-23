@@ -20751,6 +20751,27 @@ function advGiveUp() {
 // ════════════════════════════════
 function advRestartBattle() {
   _customConfirm('確定要重新開戰嗎？\n目前進度將失去，但考題不變。', function(){
+  // ★ v5.291.0 — 重打是一場「新戰鬥」:比照 advStartBattle 解除上一場的結算/快照鎖。
+  //   舊版勝利後按「🔄 重新打一次」:_advBattleResultShown 殘留 true ⇒ 整場不存續戰快照、雲端快照被清掉(當機就整場白打),
+  //   再贏時結算頁要等救援/保險網 1~5 秒才出來。
+  try{
+    let _rbBoss = '';
+    try{ const _b0 = (G && Array.isArray(G.p2)) ? G.p2.find(h => h && h.name) : null; if(_b0) _rbBoss = _b0.name; }catch(_eRb0){}
+    window._advCurrentBattleId = (typeof window._advNewBattleId === 'function')
+      ? window._advNewBattleId(_rbBoss)
+      : ('boss-' + Date.now() + '-' + Math.floor(Math.random() * 100000));
+    window._advBattleResultShown = false;
+    window._advSuppressSnapSave = false;
+    if(G){ G._resultShown = false; G._lastBattleSnapRound = null; }
+  }catch(_eRbFlags){ console.warn('[v5.291.0 重新開戰] 旗標重置例外', _eRbFlags); }
+  // ★ v5.291.0 — 命座「本場免死 2 次」、命星戰鬥序號重新計;有英魂陣型時開場陣營能量重新給(舊版重打後求知陣能量消失)
+  try{
+    if(G){
+      if(G._cstCap) G._cstCap.svB = {};
+      G._cstBidD = Date.now() + Math.random();
+      G._fmBid = Date.now() + Math.random();
+    }
+  }catch(_eRbCst){}
   // 重置隊伍
   // ★ v3.13.69 — 重新開戰要恢復 BOSS「尊嚴能力」:50% 鎖血 / 1HP 鎖血 / 保命爆發反擊
   //   都是「整場一次性」旗標,不清的話第二場 BOSS 直接失去鎖血+爆發反擊(老師回報)。
@@ -20768,6 +20789,7 @@ function advRestartBattle() {
   // ★ v3.16.46 — 連招疲勞同步歸零(與正常開戰一致)
   G.comboFatigue = 0; G.comboFatigueByHero = {}; G.lastSkillName = null; G.lastSkillByHero = {};
   G.energy={p1:2,p2:2};
+  try{ if(G._fm && typeof window._fmNewBattle === 'function') window._fmNewBattle(); }catch(_eRbFm){}   // ★ v5.291.0 陣型開場能量重給
   // 重置法寶（從過場備份取回，未實作備份則隨機三個）
   _advTreasures = [null,null,null];
   // ★ 隨機不重複分配3個法寶
@@ -21474,7 +21496,9 @@ async function advShowBattleResult(win) {
     try{
       const _borrowedHero = !!window._friendHeroInParty;
       if(_borrowedHero && typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero){
-        const _friendUid = _invitedFriendHero.uid || 'unknown';
+        // ★ v5.291.0 — 好友英雄物件的好友 uid 欄位是 _ownerUid(representativeHero 本身沒有 uid)
+        //   舊版恆為 'unknown' ⇒「同一位好友每天 3 次」變成「所有好友共用 3 次」
+        const _friendUid = _invitedFriendHero._ownerUid || _invitedFriendHero.uid || 'unknown';
         const _friendName = _invitedFriendHero.name || '(好友)';
         // ★ v3.13.12 鐵律 1.142 對齊台灣 8:00
         const _dayKey = (typeof window._lxpsGetGameDayKey === 'function')
@@ -26135,6 +26159,14 @@ window._clearAccountLocalData = function(reason){
     //   只清記憶體、不動雲端(誤刪是大忌),清空後由新帳號自己的雲端載入原樣還原。
     try{ window._mainStoryProgress = {}; }catch(_){}
     try{ window._mainStoryProgressUid = ''; }catch(_){}
+    // ★ v5.291.0 — 換帳號(不重新整理)殘留補清:主線雲端讀取狀態、好友借用英雄、本週答對紀錄、冒險最高分
+    //   (舊版:B 的選角頁出現 A 的好友英雄還能借;缺欄位的舊存檔會接收 A 的本週答對並上雲;A 的最高分帶給 B)
+    try{ window._msCloudReadOk = undefined; window._msSelWaiting = false; clearTimeout(window._msHydrateRetryT); }catch(_){}
+    try{ if(typeof _invitedFriendHero !== 'undefined') _invitedFriendHero = null; }catch(_){}
+    try{ window._friendHeroInParty = false; }catch(_){}
+    try{ if(typeof _persistentCorrectQuestions !== 'undefined') _persistentCorrectQuestions = {}; }catch(_){}
+    try{ if(typeof _persistentCorrectWeekKey !== 'undefined') _persistentCorrectWeekKey = ''; }catch(_){}
+    try{ if(typeof _advBestScore !== 'undefined') _advBestScore = 0; }catch(_){}
     try{ window._avatarLocalCard = null; }catch(_){}      // 下次開造型工房 _avatarLoadLocal 依新 uid key 重讀
     try{ window._protagAwakened  = false; }catch(_){}     // 覺醒旗標隨新帳號 avatarCard 重新判定
     try{ window._avatarNickname  = ''; }catch(_){}        // 主線 __hero 顯示名不殘留前一位
@@ -26461,6 +26493,10 @@ window._clearAccountLocalData = function(reason){
         try { await _withTimeout(window._trySaveSafeIfHealthier('idle_auto_logout'), 8000); } catch(_) {}
       }
       if(typeof gameCloudSave === 'function' && window._gUserId){
+        // ★ v5.291.0 — 戰鬥中 gameCloudSave 有 15 秒節流:上面強制快照那次已把「直通旗標」用掉,
+        //   這次會被節流成 15 秒後的尾端補寫,8 秒逾時後就登出、uid 清空 ⇒ 尾端補寫被拒,最後一筆等於沒寫。
+        //   ⇒ 這次再設一次直通旗標,保證立即寫入並等它完成。
+        try { window._lxpsCloudSaveForceNext = true; } catch(_) {}
         try { await _withTimeout(gameCloudSave(), 8000); } catch(_) {}
       }
     } catch(e) { console.warn('[閒置自動登出] 存檔失敗', e); }
@@ -31231,6 +31267,16 @@ window.gameCloudLoad = async function(uid) {
     }
   }catch(_eOwn){ console.warn('[Layer B v3.13.64] ownerUid 驗證例外(保守跳過,續用既有守門)', _eOwn); }
 
+  // ★ v5.291.0 — 換帳號競態守門:上面的雲端讀取可能等了好幾秒(慢 iPad/25 台同時登入),
+  //   期間共用 iPad 已不重新整理就換成下一位登入 ⇒ 這份是「上一位」的資料,絕不可套到現在的記憶體
+  //   (舊版會把上一位的命星 hydrate 進去,下一位存檔時再寫上雲)。
+  try{
+    const _authNow = (typeof window._lxpsAuthUid === 'function') ? window._lxpsAuthUid() : ((window._fbUser && window._fbUser.uid) || window._gUserId || null);
+    if(_authNow && _authNow !== uid){
+      console.warn('⛔ [v5.291.0 gameCloudLoad] 載入期間已換帳號(' + String(uid).slice(0,8) + '… → ' + String(_authNow).slice(0,8) + '…),丟棄這份舊資料');
+      return;
+    }
+  }catch(_eAuthStale){}
   // ④ 有資料 → 套用
   _applySafeData(data);
   try{ if(typeof window._lxpsRepairLevelExpDesync === 'function') window._lxpsRepairLevelExpDesync(); }catch(_eDsync2){}  // ★ v3.16.3 — 載入後修等級↔經驗 desync(Lv1-高經驗)
@@ -79939,6 +79985,12 @@ function makeRadar(dims, size) {
     try{
       var cloud = data ? data.constellationData_s : null;
       var hasCloud = (typeof cloud === 'string' && cloud.length > 0);
+      /* ★ v5.291.0 — 記憶體歸屬 uid 守門(第二道防線):記憶體是別的帳號 hydrate 的(換帳號競態)⇒ 視同沒載入過,只信雲端 */
+      var _uOwn = _uid12();
+      if(W._cstHydrated && W._cstHydratedUid && _uOwn && W._cstHydratedUid !== _uOwn){
+        console.warn('[命座] 記憶體屬於其他帳號,丟棄後只採用雲端');
+        W._cstData = _fresh(); W._cstHydrated = false;
+      }
       var mem = W._cstHydrated ? JSON.stringify(D()) : null;   /* 本帳號已載入過才合併記憶體;第一次載入只信雲端 */
       var merged = (typeof W._lxpsCstMerge === 'function') ? W._lxpsCstMerge([cloud, mem]) : (W._lxpsCstParse ? (W._lxpsCstParse(cloud) || _fresh()) : _fresh());
       var u = _uid12();
@@ -79952,6 +80004,7 @@ function makeRadar(dims, size) {
          ⇒ 'empty' 時只有記憶體真的有內容(拿到第一顆命星等)才寫雲端,避免舊快照的「沒有欄位」把雲端命星洗成空的(風險 A2)。 */
       if(hasCloud || W._cstHydrated === true) W._cstHydrated = true;
       else W._cstHydrated = 'empty';
+      W._cstHydratedUid = _uOwn || '';   // ★ v5.291.0
       try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑已開著時,十字星跟著雲端資料更新
       if(got.length || swept){ setTimeout(_save, 1500); }
       if(got.length && W._cstOpenForMe()){ setTimeout(function(){ _toast(_T('✨ 老師送你命星!\n' + got.join('、'), '✨ 收到老師發放的命星\n' + got.join('、'))); }, 2500); }
@@ -79976,7 +80029,7 @@ function makeRadar(dims, size) {
   };
   /* ── 換帳號清空(由 _clearAccountLocalData 呼叫)── */
   W._cstResetMemory = function(){
-    W._cstData = _fresh(); W._cstHydrated = false;
+    W._cstData = _fresh(); W._cstHydrated = false; W._cstHydratedUid = '';
     try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 換帳號:圖鑑格子若還在畫面上,十字星立刻歸零(只改畫面,不寫存檔)
     try{ var ov = document.getElementById('cst-map-ov'); if(ov) ov.remove(); }catch(_){}
     try{ var sy = document.getElementById('cst-synth-ov'); if(sy) sy.remove(); }catch(_){}

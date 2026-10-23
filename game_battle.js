@@ -16077,6 +16077,21 @@ function _lxpsShAmt(b){
   ['_amt','amt','val'].forEach(function(k){ if(typeof b[k] === 'number' && b[k] === b[k]) v = (v === null) ? b[k] : Math.max(v, b[k]); });
   return v;
 }
+// ★ v5.291.0 — 巫女「神籤」抽到「護盾」:addBuff 依 type 去重,目標身上已有「數值護盾」時只會延長那個盾、拿不到「抵擋 1 次」盾。
+//   ⇒ 已有數值盾、但還沒有抵擋 1 次盾時,另外放一個抵擋 1 次盾;其他情況照舊走 addBuff。手動版與 AI 版共用。
+function _lxpsOmikujiBuff(h, pick, dur){
+  try{
+    // 倒地/有利封印/神偷標記等特殊情況一律交給 addBuff(保留它的守門與連動效果)
+    if(pick === 'shield' && h && Array.isArray(h.buffs) && (h.curHp || 0) > 0
+       && !(typeof hasBuff === 'function' && hasBuff(h, '_buffSeal')) && !h._cstThMk
+       && h.buffs.some(function(b){ return b && b.type === 'shield' && _lxpsShAmt(b) !== null; })
+       && !h.buffs.some(function(b){ return b && b.type === 'shield' && _lxpsShAmt(b) === null; })){
+      h.buffs.push({ type:'shield', dur:dur });
+      return;
+    }
+  }catch(_eOmk){}
+  addBuff(h, pick, dur);
+}
 function _lxpsShSet(b, v){
   if(!b) return;
   var hit = false;
@@ -34793,21 +34808,7 @@ function doDmg(target, rawDmg, opts={}){
   //   修正(以 fd 為準):這裡只處理沒有數值的「抵擋 1 次攻擊」型 → 維持整擊全擋,只移除該 1 個(數值盾保留)。
   //   帶數值的護盾(fd 寫「可擋 X 傷害 / +X 護盾」)→ 審查 M2:改到下方「bigshield 之前」吸收(在減傷/易傷/隱身/守護分攤之後,與 bigshield 同口徑)。
   //   神槍手穿透護盾(opts.pierceShield,fd「穿透護盾扣HP」):照 bigshield 雙重結算 ⇒ 抵擋 1 次盾被打破、傷害照常進來。
-  if(hasBuff(target,'shield')&&!opts.ignoreBuffs){
-    const _shOnce = target.buffs.find(function(b){ return b && b.type === 'shield' && _lxpsShAmt(b) === null; });
-    if(_shOnce){
-      target.buffs = target.buffs.filter(function(b){ return b !== _shOnce; });
-      try{ window._cstShBreak2(target, a, opts, [_shOnce]); }catch(_eCstShBk0){}   // ✨ v5.265.0 命星 護盾被打破(神槍手 t2;只對點亮的命星做事)
-      if(opts.pierceShield){
-        try{ showShieldVFX(target,'block'); }catch(_){}
-        log(`💥 [${target.name}] 護盾被穿透並破碎!`);
-        try{ renderCard(target); }catch(_){}
-      } else {
-        showShieldVFX(target,'block'); showPopup(target,'🛡','miss'); log(`[${target.name}] 護盾抵擋了傷害！`); renderCard(target); return 0;
-      }
-    }
-  }
-    // Hidden：只擋單體攻擊，不擋全體技能/物品
+  // Hidden：只擋單體攻擊，不擋全體技能/物品
   // ✨ v5.266.0 命星 我的豚豚 b2「超萌結界星」:超萌模式(只由點亮的命星掛上)中,對手的單體攻擊選不中豚豚
   if(!opts.piercing && !opts.noHidden && !opts.isAoe && target && Array.isArray(target.buffs) && target.buffs.length){
     try{ if(window._cstPigB2Block(target, a, opts)) return 0; }catch(_eCstPigB2){}
@@ -34823,6 +34824,21 @@ function doDmg(target, rawDmg, opts={}){
       showPopup(target,'MISS','miss'); log(`[${target.name}] 隱身中無法被選為目標！`);
       _showMissOnActor(a);  // ★ v3.13.1 — 行動者卡片彈未命中 + 迴避音
       return 0;
+    }
+  }
+  // ★ v5.291.0 — 順序調整:隱身 MISS／豚豚超萌結界 先判定,才輪到「抵擋 1 次」護盾(舊版護盾先被吃掉,畫面卻顯示 MISS = 白白消失)
+  if(hasBuff(target,'shield')&&!opts.ignoreBuffs){
+    const _shOnce = target.buffs.find(function(b){ return b && b.type === 'shield' && _lxpsShAmt(b) === null; });
+    if(_shOnce){
+      target.buffs = target.buffs.filter(function(b){ return b !== _shOnce; });
+      try{ window._cstShBreak2(target, a, opts, [_shOnce]); }catch(_eCstShBk0){}   // ✨ v5.265.0 命星 護盾被打破(神槍手 t2;只對點亮的命星做事)
+      if(opts.pierceShield){
+        try{ showShieldVFX(target,'block'); }catch(_){}
+        log(`💥 [${target.name}] 護盾被穿透並破碎!`);
+        try{ renderCard(target); }catch(_){}
+      } else {
+        showShieldVFX(target,'block'); showPopup(target,'🛡','miss'); log(`[${target.name}] 護盾抵擋了傷害！`); renderCard(target); return 0;
+      }
     }
   }
   if(target && target.name==='死靈法師' && hasBuff(target,'hidden') && opts.isAoe
@@ -47679,7 +47695,7 @@ function execSkill(a, sk, cost, stype){
       for(let k=0;k<(_cstMiS1Few ? 3 : 2) && _pool.length;k++){
         const idx = Math.floor(Math.random()*_pool.length);
         const pick = _pool.splice(idx,1)[0];
-        addBuff(h,pick,2);
+        _lxpsOmikujiBuff(h,pick,2);   // ★ v5.291.0(原:addBuff(h,pick,2))
         bannerFX(h,'🎋 '+buffName(pick),'#ffee88',700);
       }
       // 依特技恢復 HP
@@ -55676,7 +55692,15 @@ function startTurn(){
   try{
     if(typeof G !== 'undefined' && G && (G.round||1)===1){
       if(!G._fmDone){ G._fmDone = true; G._fmP2Ref = G.p2; if(window._fmApply) window._fmApply(); }
-      else if(G._fm && G._fmP2Ref !== G.p2){ G._fmP2Ref = G.p2; G._fmBid = Date.now() + Math.random(); try{ if(window._fmNewBattle) window._fmNewBattle(); }catch(_eFmNb){} }   // v5.284.0:每場開場能量重給、免死每場次數重算   // 審查 H2:冒險同一關內的下一場(小怪→BOSS 共用 G)⇒ 換新場次編號,免死/反彈「每場/每回合」重新計;能力加成不重複套
+      else if(G._fmP2Ref !== G.p2){
+        // ★ v5.291.0 — 冒險同一關「小怪戰 → BOSS 戰」共用 G。舊版只有「有陣型(G._fm)」時才做每場重置
+        //   ⇒ 沒組成陣型/未解鎖時,命星「本場免死 2 次」在小怪戰用掉就帶到 BOSS 戰(變成整關 2 次),
+        //     戰鬥序號 _cstBidD 也整關不換(命星「同一場」旗標跨場殘留)。⇒ 不論有沒有陣型都重置。
+        G._fmP2Ref = G.p2; G._fmBid = Date.now() + Math.random();
+        try{ if(G._cstCap){ G._cstCap.svB = {}; } }catch(_eSvB){}
+        try{ G._cstBidD = Date.now() + Math.random(); }catch(_eBid){}
+        if(G._fm){ try{ if(window._fmNewBattle) window._fmNewBattle(); }catch(_eFmNb){} }
+      }   // v5.284.0:每場開場能量重給、免死每場次數重算   // 審查 H2:冒險同一關內的下一場(小怪→BOSS 共用 G)⇒ 換新場次編號,免死/反彈「每場/每回合」重新計;能力加成不重複套
     }
   }catch(_eFmApply){ console.warn('[英魂陣型] 開場套用失敗(本場不套)', _eFmApply); }
   try{ if(typeof window._pvpHostTurnPush === 'function') window._pvpHostTurnPush(); }catch(_ePvpPush){}
@@ -60692,7 +60716,7 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='黃金護甲'){ // 聖甲蟲 S2:友方全體護盾60+狀態免疫1回 ★v3.15.2 護盾30→60+視覺回饋
     try{ bannerFX(a,'🪲 黃金護甲!','#ffd86b',1000); }catch(_){}
     try{ log(`🪲 [${a.name}] 黃金護甲!友方全體獲得 60 點護盾 + 狀態免疫 1 回合!`); }catch(_){}
-    allies.forEach(f=>{ if(f.curHp>0){ if(!Array.isArray(f.buffs)) f.buffs=[]; f.buffs=f.buffs.filter(b=>b.type!=='shield'); f.buffs.push({type:'shield',val:60,dur:99}); addBuff(f,'statusImmune',1); try{ bannerFX(f,'🛡 護盾+60','#ffe08a',800); }catch(_){} try{ renderCard(f); }catch(_){} } });
+    allies.forEach(f=>{ if(f.curHp>0){ if(!Array.isArray(f.buffs)) f.buffs=[]; f.buffs=f.buffs.filter(b=>!(b&&b.type==='shield'&&b._src==='黃金護甲')); f.buffs.push({type:'shield',val:60,dur:99,_src:'黃金護甲'}); /* ★ v5.291.0 只換自己這招的盾,不清掉其他來源的護盾 */ addBuff(f,'statusImmune',1); try{ bannerFX(f,'🛡 護盾+60','#ffe08a',800); }catch(_){} try{ renderCard(f); }catch(_){} } });
   }
   // ★ v3.16.41 — 御雲使‧沐雲雪 S1「浮雲入夢」AI 路徑(鐵律 1.128):
   //   直接挑「倒下且具備爆發、尚未喚醒至上限、攻/特最高」的隊友,喚發其自身極限爆發(不復活)。
@@ -60876,7 +60900,7 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='吞金納福'){ // 貔貅 S1:回自身25%HP+護盾60
     const _pxHeal=Math.floor(a.hp*0.25); a.curHp=Math.min(a.hp,a.curHp+_healCurseGate(a,_pxHeal));
     if(!Array.isArray(a.buffs)) a.buffs=[];
-    a.buffs=a.buffs.filter(b=>b.type!=='shield'); a.buffs.push({type:'shield',val:60,dur:99});
+    a.buffs=a.buffs.filter(b=>!(b&&b.type==='shield'&&b._src==='吞金納福')); a.buffs.push({type:'shield',val:60,dur:99,_src:'吞金納福'}); /* ★ v5.291.0 只換自己這招的盾 */
     log(`🦁 [${a.name}] 吞金納福!吞下金銀財氣,恢復 ${_pxHeal} HP + 護盾 60!`);
     try{ bannerFX(a,'💰 吞金納福','#ffd700',900); }catch(_){}
     try{ renderCard(a); }catch(_){}
@@ -61009,7 +61033,7 @@ function aiUseSkill(a,sk,cost,pref){
   }
   else if(n==='古之惡來'){ // 典韋 S2:自身護盾100+減傷½2回
     if(!Array.isArray(a.buffs)) a.buffs=[];
-    a.buffs=a.buffs.filter(b=>b.type!=='shield'); a.buffs.push({type:'shield',val:100,dur:99});
+    a.buffs=a.buffs.filter(b=>!(b&&b.type==='shield'&&b._src==='古之惡來')); a.buffs.push({type:'shield',val:100,dur:99,_src:'古之惡來'}); /* ★ v5.291.0 只換自己這招的盾 */
     addBuff(a,'halfDmg',2);
     log(`🛡 [${a.name}] 古之惡來!如猛士般擋在陣前,護盾 100 + 減傷½!`);
     try{ bannerFX(a,'🛡 古之惡來','#ccddff',900); }catch(_){}
@@ -62231,7 +62255,7 @@ function aiUseSkill(a,sk,cost,pref){
     }catch(_eMiHealA){ _miHealA = Math.max(1, spv(a)); }
     _tgts.forEach(h=>{
       const _p=[..._pool];
-      for(let k=0;k<(_cstMiS1FewA ? 3 : 2) && _p.length;k++){ const i=Math.floor(Math.random()*_p.length); addBuff(h,_p.splice(i,1)[0],2); }
+      for(let k=0;k<(_cstMiS1FewA ? 3 : 2) && _p.length;k++){ const i=Math.floor(Math.random()*_p.length); _lxpsOmikujiBuff(h,_p.splice(i,1)[0],2); }   /* ★ v5.291.0 */
       doHeal(h,_miHealA,{actor:a,isHeal:true});
     });
   }
@@ -69423,6 +69447,10 @@ function _saveBattleRoundSnapshot(){
         //   兩者一併存入,由 _advRestoreBattleState 對稱還原。
         alchUsed:    (G._alchUsed|0),
         alchFx:      G._alchFx ? JSON.parse(JSON.stringify(G._alchFx)) : null,
+        // ★ v5.291.0 — 續戰補存:接關次數(舊版重新整理就重置成 2 次可用)、台灣關 BOSS(舊版續戰打贏拿不到至寶、BGM/背景錯)
+        contCount:   (typeof _advContinueCount === 'number') ? _advContinueCount : 0,
+        twBoss:      window._advSelectedTaiwanBoss || null,
+        twBossCur:   window._taiwanCurrentBossId || null,
       }
     };
     localStorage.setItem('adv_battle_snap', JSON.stringify(snap));
@@ -83374,6 +83402,21 @@ function _advRestoreBattleState(snap, bs){
   }catch(_v360RaE2){ console.warn('[v3.11.36 _advRestoreBattleState acted 還原] 例外', _v360RaE2); }
   G.fieldCards = bs.fieldCards || [];
   fieldCards   = G.fieldCards; // 同步全域 fieldCards
+  // ★ v5.291.0 — 當機續戰(主要路徑)補上與「⏪ 回到上一回合」(_rollbackToLastSnap)對稱的還原:
+  //   舊版這條路徑完全沒還原 ⇒ 重新整理後 ① 丹藥「每場 3 顆」歸零可無限吃 ② 疾風丹/迷魂散直加的速度整場鎖死
+  //   ③ 連招疲勞歸零 ④ 接關次數重置(用完 2 次後重新整理又能接關)⑤ 台灣關 BOSS 不見(打贏拿不到至寶、BGM/背景錯)。
+  //   舊快照(本版前存的)沒有這些欄位 ⇒ 行為與修正前相同,不會報錯。
+  try{
+    if(typeof bs.comboFatigue === 'number') G.comboFatigue = bs.comboFatigue;
+    if(bs.comboFatigueByHero) G.comboFatigueByHero = JSON.parse(JSON.stringify(bs.comboFatigueByHero));
+    if('lastSkillName' in bs) G.lastSkillName = bs.lastSkillName || null;
+    if(bs.lastSkillByHero) G.lastSkillByHero = JSON.parse(JSON.stringify(bs.lastSkillByHero));
+    G._alchUsed = (typeof bs.alchUsed === 'number') ? (bs.alchUsed|0) : 0;
+    G._alchFx   = bs.alchFx ? JSON.parse(JSON.stringify(bs.alchFx)) : null;
+    if(typeof bs.contCount === 'number' && typeof _advContinueCount !== 'undefined') _advContinueCount = bs.contCount;
+    if(bs.twBoss) window._advSelectedTaiwanBoss = bs.twBoss;
+    if(bs.twBossCur) window._taiwanCurrentBossId = bs.twBossCur;
+  }catch(_eRs291){ console.warn('[v5.291.0 續戰還原補強] 例外', _eRs291); }
 
   // ── 還原法寶欄（從快照）──
   if(Array.isArray(snap.treasures)) _advTreasures = snap.treasures;

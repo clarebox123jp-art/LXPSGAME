@@ -658,8 +658,10 @@
     try{ if(typeof window._msRefreshEntryVisibility === "function") window._msRefreshEntryVisibility(); }catch(_){}
   }
   // 登入後由 gameCloudLoad 呼叫:把雲端 mainStoryProgress 併入 window(雲端優先·union done)
-  window._msHydrateProgress = function(cloudObj){
+  window._msHydrateProgress = function(cloudObj, opts){
     try{
+      // ★ v5.291.0 — opts.cloudFailed:雲端主檔讀取失敗(不是「雲端沒有進度」)⇒ 只併本機鏡像/記憶體,絕不「補寫上雲」
+      var _cloudFailed = !!(opts && opts.cloudFailed);
       var uid = (window._fbUser && window._fbUser.uid) || window._gUserId || "";
       // ★ v4.78.0 UID 守門(雙保險·任務3):記憶體進度綁 uid;偵測到與上次 hydrate 的 uid 不同
       //   → 先清空記憶體再 union,杜絕共用 iPad 換帳號(未 reload)把前一位的 done 併進來。
@@ -742,7 +744,8 @@
           if(!Object.prototype.hasOwnProperty.call(p, _hk)) continue;
           if(src[_hk] === undefined){ _needUp = true; break; }
         }
-        if(_needUp && typeof window._fbSaveMainStoryProgress === "function") window._fbSaveMainStoryProgress(p);
+        // ★ v5.291.0 — 讀取失敗時 src 是空的,每個鍵都會被誤判成「雲端沒有」⇒ 整份舊進度補寫上雲 = 撤銷老師的主線回溯。讀失敗一律不補寫。
+        if(_needUp && !_cloudFailed && typeof window._fbSaveMainStoryProgress === "function") window._fbSaveMainStoryProgress(p);
       }catch(_eUp){}
       // ★ v5.6.0 丙2 — 「ch6 已完成、主角卻未覺醒」自我修復(覺醒走 avatarCard 那條線,
       //   雲端寫失敗+換裝置會卡在死角;回顧模式又刻意不跑狀態套用 → 玩家自己永遠修不回來)。
@@ -966,7 +969,7 @@
           var _msBg = window._avatarBgUnlockOnChapterClear(cid) || [];
           if(_msBg.length){
             setTimeout(function(){
-              try{ if(typeof _showInGameToast === "function") _showInGameToast("\u1f5bc\ufe0f 卡片背景解鎖：" + _msBg.join("、") + "！", "#8ad4ff", 5200); }catch(_){}
+              try{ if(typeof _showInGameToast === "function") _showInGameToast("\uD83D\uDDBC\uFE0F " + _msT("卡片背景解鎖：", "得到新的卡片背景：") + _msBg.join("、") + "！", "#8ad4ff", 5200); }catch(_){}   /* ★ v5.291.0 圖示改代理對(原 u1f5bc 跳脫 JS 只吃 4 碼 ⇒ 顯示「Ὓc」亂碼);補簡單風 */
             }, 2600);
           }
         }
@@ -3221,6 +3224,9 @@
       G.energyMax = 10;
       G._resultShown = false;
       G._everHadEnemies = false;
+      // ★ v5.291.0 — 比照 _wbSetupAdvForBattle:清掉上一場(鬥技場/冒險/上一場劇情戰)殘留的英魂陣型與命座上限計數,
+      //   否則 _fmDone 殘留 true ⇒ 第七章教學戰的「力行校訓陣」不發動,或沿用上一場(甚至鬥技場對手)的陣型。
+      delete G._fm; G._fmDone = false; delete G._fmP2Ref; delete G._fmBid; delete G._cstCap; delete G._cstBidD;
     }catch(_eG){ console.error("[主線戰鬥] G 重置例外", _eG); }
     /* ★ v4.91.0 全黑根治·保險網 —— 主線場景切換有 new Image() 預載 + 1.5s 逾時兜底等非同步排程,
      *   理論上進戰鬥後不會再重建 backdrop;但為保證「絕不再出現整片深藍蓋住戰鬥」,
@@ -3488,6 +3494,10 @@
         try{ _msClearBattleField(); }catch(_){}   // ★ v5.2.0 撤退離場清戰場(解 PGI 誤鎖)
         // 撤退:本章不算通關(進度不落 done),回章節選單;下次進章節可重新挑戰(可用⏭快速跳到戰鬥)
         try{ window._msSkipChapter = true; }catch(_){}
+        /* ★ v5.291.0 — 撤退時 _msRunChapter 的 done()(含強制主線連播的結束回呼)不會執行
+         *   ⇒ 舊版 _msForceChainRunning 永遠卡 true,輪詢守門每次都以為「正在連播」而收起鎖定層 = 新手強制主線被繞過。
+         *   這裡主動歸零。(另註:輪詢守門的 _isInBattleNow 少了 (),鎖定層線上其實從未生效,啟用與否待老師裁定。) */
+        try{ _msForceChainRunning = false; }catch(_){}
         /* ★ v4.89.0(第二版)撤退時 _msRunChapter 的 done() 不會執行 → 回顧旗標不會被清。
          *   雖然下一次 _msRunChapter 開頭就會重設,仍在此主動歸零(零殘留·防任何中途讀取誤判)。 */
         try{ window._msReviewMode = false; }catch(_){}
@@ -4559,6 +4569,24 @@
 
   window._msOpenChapterSelect = function(){
     if(!window._msEntryAllowed()){ try{ if(typeof _toast==="function") _toast("主線劇情準備中"); }catch(_){} return; }
+    /* ★ v5.291.0 — 雲端主線進度還沒讀到(登入後前 5 秒/校網讀取失敗)就開選單,舊玩家會看到 0 章、
+     *   重玩序章被當成第一次(捏臉、章節獎勵可能重發)。⇒ 先讀雲端,讀到才畫選單;讀不到就提示稍後再試。 */
+    try{
+      var _gUidSel = (window._fbUser && window._fbUser.uid) || window._gUserId || "";
+      if(_gUidSel && window._msCloudReadOk !== true && typeof window._msHydrateFromCloud === "function"){
+        if(window._msSelWaiting) return;   // 連點防重入
+        window._msSelWaiting = true;
+        try{ if(typeof _toast === "function") _toast(_msT("📖 正在讀取主線進度…", "📖 正在找你的冒險紀錄…")); }catch(_){}
+        window._msHydrateFromCloud().then(function(){
+          window._msSelWaiting = false;
+          var _uidNow = (window._fbUser && window._fbUser.uid) || window._gUserId || "";
+          if(_uidNow !== _gUidSel) return;
+          if(window._msCloudReadOk === true) window._msOpenChapterSelect();
+          else { try{ if(typeof _toast === "function") _toast(_msT("網路不太穩,主線進度暫時讀不到,請稍後再按一次。", "網路有點慢,等一下再按一次喔!")); }catch(_){} }
+        }).catch(function(){ window._msSelWaiting = false; });
+        return;
+      }
+    }catch(_eSelG){ window._msSelWaiting = false; }
     // ★ v5.6.0 丙2 — 開章節選單時補一次覺醒對帳(此時 avatarCard 必已載入完成,是最可靠的修復點;冪等)
     try{ if(_msChapterDone("ch6") && !window._protagAwakened) _msEnsureChapterState("ch6"); }catch(_){}
     try{ var _old = document.getElementById("mainstory-select-overlay"); if(_old) _old.remove(); }catch(_){}
@@ -4878,6 +4906,8 @@
       }
       try{ if(typeof _isInBattleNow !== "undefined" && _isInBattleNow){ _msForceLayerHide(); _msForceIdleTicks = 0; return; } }catch(_){}
       if(_msForceChainRunning){ _msForceLayerHide(); _msForceIdleTicks = 0; return; }  // 章節/場景銜接空窗
+      /* ★ v5.291.0 註:上方 _isInBattleNow 少了 () ⇒ 函式參照恆為真,本守門其實從未蓋上鎖定層(強制主線鎖線上一直沒生效)。
+       *   是否啟用屬行為重大變更,待老師裁定;本版只在撤退鈕歸零 _msForceChainRunning(啟用後才有作用)。 */
       _msForceLayerShow();
       _msForceIdleTicks++;
       if(_msForceIdleTicks >= 2){ _msForceIdleTicks = 0; _msForceChainRun(); }         // 層在場約 3 秒 → 自動續播
@@ -4894,6 +4924,8 @@
   window._msMaybeFirstLogin = function(){
     try{
       if(!window._msEntryAllowed()) return; // 主線開關關閉時僅管理員(現已全員開放)
+      // ★ v5.291.0 — 雲端主線進度讀取失敗 ⇒ 不做新玩家分類/首登導入(本機空 ≠ 新玩家);20 秒後背景重讀成功會再呼叫本函式
+      if(window._msCloudReadOk === false) return;
       // ★ v5.28.0 丙案 — 新玩家分類(只在 hydrate 完成後的本 gate 跑一次;寫入即上雲):
       //   「從來沒進過序章」= 序章未完成 && 無序章續播點 && 無任何章完成。GM 不分類。
       try{
