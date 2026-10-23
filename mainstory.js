@@ -1,5 +1,10 @@
 // ════════════════════════════════════════════════════════════════════════
 //  mainstory.js — 主線劇情引擎 + MAINSTORY_DB(自 index.html 拆出)
+//  ★ v5.290.0(2026-10-22)— 主線第七章「墜落的星空」(老師:「生成大對抗的主線故事新章節,學習前面章節沒有提到的新系統和關卡」·範圍裁定甲):
+//     ①ch7 加入 order(進度分母 7→8;已領全通關獎勵/獎章者不重發)②五個新系統多頁教學卡 _msActTutPages(英魂陣型/裝備/好友支援/命座/世界BOSS·雙版·三平台)
+//     ③兩場劇情戰 battle_ch7_1(日本・古老神社)/battle_ch7_boss(埃及・寶庫王座 法老王‧星蝕附身·主線版寫定素質)·兩隊都是四魂各一 ⇒ 力行校訓陣
+//     ④主角未開放時的替補改可指定(protagFb)·補上缺的英魂 ⑤第一件裝備「獎牌」冪等發放(_r_gear_ch7·登入補發)
+//     ⑥主線建隊改走 _applyBattlePrepToHero 單一入口(先前漏套裝備與命星)⑦章節選單待續卡改第八章、全通關文案不寫死章數
 //  ★ v5.57.0(2026-08-18)— 主線商店教學二修(老師回報 BUG):①召喚水晶持有滿 99 → shopBuyItem「背包已滿」擋購買 → 教學卡死第二課:buy 課進入點+防呆巡邏雙保險偵測 ≥99 → 視同完成本課(比照今日限購路徑)直跳召喚課(召喚消耗 1 顆恢復正常);②「略過教學」必定有用:略過鈕改教學條內建二次確認列(同元素同圖層 z9930 絕不被蓋·再按一次略過=直接跳),廢止 _customConfirm/原生 confirm 依賴(iPad PWA 靜默失敗案例·舊路徑留註解);_msShopTutFinish 硬化=先取 doneCb 再 cleanup,清理任何例外改走最小清理,劇情保證續播
 //  ★ v5.28.0(2026-08-12)— 丙案:新玩家強制主線 序章→第二章 連播+總鎖引導層(老師裁定):①分類=「從來沒進過序章」(序章未完成&&無 _sc_prologue 續播點&&無任何章 done)→ 首登 gate 寫入 _fg 時間戳(上雲+hydrate 三來源 union 取最早·跨裝置一致·GM 豁免·GM 回溯 _rst 作廢後重新分類) ②強制中(_fg && ch2 未 done):_msForceChainRun 從第一個未完成章連播 序章→ch1→ch2(onAllDone 串鏈零空窗),ch2 完成→釋放+恭喜 toast 雙版 ③總鎖引導層 ms-force-gate-layer(z=9700·1.5s 輪詢):非劇情/戰鬥/銜接空窗/前置彈窗時全螢幕蓋住,「▶ 繼續主線冒險」鈕+約 3 秒自動續播,重整中離逃不掉 ④進過序章的舊玩家維持 v4.65.0 原行為(progress 空只導序章一次·不鎖) ｜ ★ v5.27.0(2026-08-11)— 舊寵物卡系統改名配套:註解 EQUIP_DB→CARRY_PET_DB(純註解一處·零行為變更;裝備系統 Phase 1 本體全在 index.html v5.27.0) ｜ ★ v5.26.0(2026-08-10)— 手機適配 CSS 錨點(老師手機解析度優化需求):三處純加 className(章節選單 head=ms-sel-head/章節卡+第七章待續卡=ms-ch-card/對白框=ms-dlg-wrap·對白框特意用 class 不用 id 避開 v4.89.0 舊場景拔 id 機制),零行為變更;實際手機版型/字級/捲動規則全在 index.html v5.26.0 media query(max-width:600px 手機直向/max-height:520px 手機橫向·iPad 均不命中) ｜ ★ v5.12.0(2026-08-04)— 額度瘦身丙案第一刀:自 index.html L144205-148311 整段搬出(4,107行/約228KB),零行為變更;傳統 script 共享全域 scope,載入位置維持原點(_advSystemReady 設定後由 document.write 同步載入);破快取走 _LXPS_FILE_VERSIONS['mainstory.js'] ?v= + sw.js SHELL_URLS ｜ ★ 更早的版本歷史請見 git 提交紀錄與 MEMORY_HANDOFF(鐵律:本註解僅保留最近20版)
 // ════════════════════════════════════════════════════════════════════════
@@ -10,7 +15,7 @@
 //   內容:資料表 MAINSTORY_DB(序章完整+一~六章 meta/對白骨架)+ 過場播放引擎
 //        (獨立 overlay 鏈式串接·打字機·可跳過·影片插槽缺檔靜默 fallback·防卡死 watchdog)
 //        + self-write 存檔讀寫 + 發獎冪等 + 關卡頁入口刷新 + 首登自動導入 gate。
-//   ★測試期 gating:_MAINSTORY_ADMIN_ONLY(比照 avatar _AVATAR_ADMIN_ONLY);正式開放改 false。
+//   ★開放開關:_MAINSTORY_ADMIN_ONLY(比照 avatar _AVATAR_ADMIN_ONLY);v5.19.0 起 false = 全員開放。
 //   ★演出動作(造型工房/四隊員加入/教學掛接/劇情戰)由批次2/3 接既有系統,此處以 act 佔位。
 // ════════════════════════════════════════════════════════════════════
 (function(){
@@ -44,7 +49,10 @@
   //   who   :說話者名(對白框標題);"__narr"=旁白;"__hero"=主角(顯示玩家暱稱)
   //   text/cute:鐵律1.232 雙版(精緻風/簡單風);cute 省略時退回 text
   var MAINSTORY_DB = {
-    order: ["prologue","ch1","ch2","ch3","ch4","ch5","ch6"],
+    /* ★ v5.290.0 第七章正式加入 order(舊值備查:["prologue","ch1","ch2","ch3","ch4","ch5","ch6"])。
+     *   連動:章節選單進度分母 7→8、已全通關的學生會看到第七章亮起為「目前進度」;
+     *   全通關獎勵(SSR 卷)與獎章「主線全通」已領過的不重發(冪等旗標),還沒領的要通過第七章才發。 */
+    order: ["prologue","ch1","ch2","ch3","ch4","ch5","ch6","ch7"],
     chapters: {
       prologue: {
         id:"prologue", titleP:"序章・穿越到異世界", titleC:"序章・穿越了", reward:null,
@@ -480,6 +488,131 @@
               cute:"黑暗球消失了，貓空的茶香又變甜了。你的冒險先告一段落——但夥伴們的故事，才要開始！" }
           ]}
         ]
+      },
+      /* ════════════════════════════════════════════════════════════════════
+       * ★★ v5.290.0(老師 2026-10-22「生成大對抗主線新章節,學習前面章節沒有提到的新系統和關卡」·範圍裁定甲)
+       *   第七章・墜落的星空 —— 黑暗球最後的碎片把星光扯落,碎片墜在日本古老神社與埃及沙漠。
+       *   本章教的五個系統(前六章都沒教過):
+       *     ① 英魂陣型(tutorial_formation)——完成本章才解鎖(老師裁定);本章兩場劇情戰例外先套用
+       *     ② 裝備(tutorial_gear)——發放第一件裝備「獎牌」(史詩·冪等)
+       *     ③ 好友英雄借用(tutorial_friend)
+       *     ④ 命座/命星(tutorial_constellation)——主角第三命星由 _CST_PROTAG_CHAPTERS 加 ch7 自動發放
+       *     ⑤ 世界 BOSS 預告(tutorial_worldboss)
+       *   兩場劇情戰:battle_ch7_1(日本・古老神社小怪)/ battle_ch7_boss(埃及・寶庫王座 法老王·星蝕附身)
+       *   兩隊都排成「四魂各一」⇒ 自動觸發四魂陣「力行校訓陣」(主角=萬用魂;主角未開放時用 protagFb 指定同魂替補)。
+       *   新素材(缺檔一律漸層/靜默 fallback,不擋劇情):主線_封面_第七章.jpg、主線_第七章_墜落星空.jpg、
+       *     主線_第七章_星光歸位.jpg、主線_第七章_龍王之影.jpg、starfall.m4a、roar.m4a、desert.m4a
+       *   其餘全部沿用既有素材(社團教室、古老神社、埃及沙漠、寶庫王座、日本/埃及/世界 BOSS 既有 BGM)。
+       * ════════════════════════════════════════════════════════════════════ */
+      ch7: {
+        id:"ch7", titleP:"第七章・墜落的星空", titleC:"第七章・星星掉下來了", reward:"crystal5",
+        cover:{ img:"主線_封面_第七章.jpg", bgm:"主線_開場_第七章.m4a" },
+        scenes:[
+          { img:"主線_第二章_社團教室.jpg", amb:"classroom", bgm:"bgm-menu-01", lines:[
+            { who:"__narr", text:"打倒黑暗球後的第三個夜晚。電腦繪圖與程式設計校隊的教室裡，大家趴在窗邊數星星——直到夜空像一片薄玻璃，無聲地裂開了一道細縫。",
+              cute:"打敗黑暗球三天後，大家在社團教室看星星。突然，天空像玻璃一樣裂開一條縫！", sfx:"crack" },
+            { who:"電腦繪圖師", text:"等等……星星在動？不對，它們在『掉』——一顆、兩顆、好幾顆，全都拖著黑色的尾巴往下墜！",
+              cute:"星星在動？不對，是在往下掉！還拖著黑色的尾巴！", sfx:"starfall" },
+            { who:"程式設計師", text:"定位完成。墜落點只有兩個：一個在東方的古老神社，一個在西方的沙漠金字塔。訊號特徵……跟黑暗球一模一樣。",
+              cute:"查到了！星星掉在兩個地方：古老神社和沙漠金字塔。訊號跟黑暗球一樣！", sfx:"keyboard", hl:["古老神社","沙漠金字塔"] },
+            { who:"動物學家", text:"是黑暗球最後的碎片。它被打散的那一刻，把星空的光也一起扯了下來——再不把碎片找回來，這片夜空會一顆星星都不剩。",
+              cute:"那是黑暗球剩下的碎片！它把星星的光也拉下來了。不找回來，天上就沒有星星了。" },
+            { who:"__hero", text:"（心想）覺醒時那股熱度又回來了……而且這一次，它好像在胸口指著某個方向。",
+              cute:"（心想）胸口又熱熱的了……好像在告訴我要往哪裡走。" }
+          ]},
+          { img:"主線_第七章_墜落星空.jpg", amb:"darkness", bgm:"bgm-taiwan-cutscene", act:"tutorial_formation", lines:[
+            { who:"弦樂團員", text:"（閉上眼睛聽）碎片落地的聲音分成四個音……Do、Mi、Sol，還有高八度的 Do。是一個完整的和弦呢。",
+              cute:"（閉眼聽）碎片掉下來的聲音有四個音，剛好是一個好聽的和弦耶。" },
+            { who:"小劇團員", text:"四個音？我懂了——這是劇本給的提示！要解開碎片的封印，得讓四種不同的英魂一起登台！",
+              cute:"四個音？這一定是提示！要四種不同的英魂一起上場才行！" },
+            { who:"動物學家", text:"善行這次說得沒錯。每位英雄心裡都住著一種「英魂」——真誠、求知、活力、行動。剛好就是我們學校的校訓。",
+              cute:"沒錯！每個英雄心裡都有一種英魂：真誠、求知、活力、行動。就是我們的校訓喔！", hl:["真誠","求知","活力","行動"] },
+            { who:"直笛團員", text:"所以以後排隊伍，不能只挑最強的四個。",
+              cute:"所以以後不能只挑最強的四個人。" },
+            { who:"__hero", text:"（心想）原來校訓不只是寫在穿堂牆上的四個大字……在這個世界，它是真的會發光的。",
+              cute:"（心想）原來校訓不只寫在牆上，在這裡還會發光！" }
+          ]},
+          { act:"blackout", lines:[
+            { who:"__narr", text:"大家牽起手，一起踏進碎片劃開的光之裂縫。腳下一空——下一秒，鼻尖聞到的是潮濕的青苔，和淡淡的線香。",
+              cute:"大家手牽手走進發光的裂縫。一下子，就聞到青苔和香的味道了。", sfx:"fall" }
+          ]},
+          { img:"古老神社 第二場景 大天狗路線.png", amb:"forest", bgm:"bgm-japan-scene2", lines:[
+            { who:"__narr", text:"古老神社的鳥居下，一顆黑色的星光碎片斜插在石階上。河童、雪女和獨眼小僧圍著它打轉，眼睛裡閃著不屬於自己的紫光。",
+              cute:"神社石階上插著一顆黑色碎片。河童、雪女和獨眼小僧圍著它，眼睛都變成紫色的了。" },
+            { who:"守衛", text:"被碎片控制了……就跟當初杏花妖對我做的一樣。這一次，換我把他們打醒。",
+              cute:"他們被碎片控制了，就像我以前被杏花妖控制一樣。這次換我把他們打醒！", sfx:"shield" },
+            { who:"祭司", text:"劍士在前、守衛擋住、我在後面撐著大家——再加上你，正好四種英魂。",
+              cute:"劍士在前面、守衛擋住、我幫大家補血，再加上你，剛好四種英魂！" },
+            { who:"劍士", text:"那就讓他們見識一下，「力行校訓陣」是什麼樣子。",
+              cute:"讓他們看看「力行校訓陣」有多厲害！", sfx:"sword", hl:["力行校訓陣"] }
+          ]},
+          { img:"古老神社 第二場景 大天狗路線.png", act:"battle_ch7_1", lines:[] },
+          { img:"古老神社 第二場景 大天狗路線.png", amb:"forest", bgm:"bgm-taiwan-cutscene", act:"tutorial_gear", lines:[
+            { who:"__narr", text:"碎片離開石階的瞬間化成一團柔和的星光，在空中轉了兩圈，凝成一枚閃閃發亮的獎牌，輕輕落進你的手心。",
+              cute:"碎片變成星光，轉了兩圈，變成一枚亮亮的獎牌，掉到你手上。", sfx:"treasure" },
+            { who:"刺客", text:"星光凝成的「裝備」。戴上它的英雄會變強——不過記住，裝備要穿在英雄身上才有用，收在背包裡可不會發揮任何力量。",
+              cute:"這是星光做的「裝備」！要穿在英雄身上才有用，放背包裡沒有用喔。", hl:["裝備"] },
+            { who:"火法師", text:"我在老街的超商也看過鍋鏟、雨傘這些生活小物在賣。在這個世界，連一本字典都能拿來當護甲。",
+              cute:"超商也有賣鍋鏟、雨傘這些東西，在這裡連字典都可以當盔甲！" },
+            { who:"__hero", text:"（心想）用字典擋攻擊……我們班那本又厚又重的國語辭典，搞不好是傳說級裝備。",
+              cute:"（心想）用字典擋攻擊？我們班那本超厚的辭典，可能是傳說裝備吧！" }
+          ]},
+          { act:"blackout", lines:[
+            { who:"__narr", text:"第二道裂縫把一行人吐了出來。熱風撲面而來，放眼望去，全是金黃色的沙。",
+              cute:"第二道裂縫打開，熱風吹過來，到處都是金黃色的沙子。", sfx:"fall" }
+          ]},
+          { img:"埃及冒險第一關 沙漠.png", amb:"desert", bgm:"bgm-egypt-menu", act:"tutorial_friend", lines:[
+            { who:"__narr", text:"金字塔的方向傳來低沉的轟鳴。最後一顆、也是最大的一顆碎片，嵌在法老王的權杖上——連沙漠之王，都被它吞掉了心智。",
+              cute:"金字塔那邊傳來轟隆聲。最大的碎片卡在法老王的權杖上，連法老王都被控制了！" },
+            { who:"籃球隊員", text:"對手是王。打王這種事，人越多越好。",
+              cute:"對手是國王！打國王要越多人越好。" },
+            { who:"田徑隊員", text:"（已經繞沙丘跑完一圈回來）我剛剛去叫人了。你們的朋友說馬上到。",
+              cute:"（已經跑完一圈回來）我去找人了，你們的朋友說馬上來！" },
+            { who:"程式設計師", text:"這就是「好友支援」。冒險時可以邀請好友的代表英雄一起出戰——連他自己練好、點亮的命星，都會一起帶過來。",
+              cute:"這叫「好友支援」！冒險時可以借朋友的代表英雄一起打，他練好的命星也會一起來！", hl:["好友支援"] },
+            { who:"__hero", text:"（心想）在異世界，朋友居然可以「借」。……要是考試也能這樣就好了。",
+              cute:"（心想）朋友可以借來幫忙？要是考試也能借就好了！" }
+          ]},
+          { img:"埃及冒險BOSS戰背景 寶庫王座.png", amb:"darkness", bgm:"bgm-egypt-boss", lines:[
+            { who:"__narr", text:"寶庫王座上，法老王緩緩站起身。權杖頂端的黑色碎片一跳一跳地脈動著，像一顆不屬於他的心臟。",
+              cute:"法老王從王座站起來，權杖上的黑碎片一直跳動，好像別人的心臟。", sfx:"darkrise" },
+            { who:"火法師", text:"沙漠的王，被黑暗當成了木偶……那就用火，把綁住他的線燒斷！",
+              cute:"法老王被黑暗當成木偶了！用火把綁住他的線燒掉！", sfx:"fire" },
+            { who:"祭司", text:"陣型已經站好了。這一次，換我們把光還給星空。",
+              cute:"大家站好位置了！這次要把光還給星星！" }
+          ]},
+          { img:"埃及冒險BOSS戰背景 寶庫王座.png", act:"battle_ch7_boss", lines:[] },
+          { img:"主線_第七章_星光歸位.jpg", amb:"classroom", bgm:"bgm-taiwan-cutscene", act:"tutorial_constellation", lines:[
+            { who:"__narr", text:"法老王手中的權杖一鬆，碎片化成漫天星屑。星屑沒有飛回天上，而是排成一個你從沒見過的星座，靜靜落進你的胸口。",
+              cute:"權杖一放開，碎片變成好多星星。星星排成一個新的星座，飛進你的胸口。", sfx:"restore" },
+            { who:"弦樂團員", text:"聽——你的心跳裡多了一個音。那是只屬於你的星星。",
+              cute:"你聽！你的心跳多了一個音，那是你自己的星星。" },
+            { who:"動物學家", text:"那叫「命星」。每位英雄都有自己的星座，最多可以點亮六顆；點亮得越多，力量就越完整。",
+              cute:"那叫「命星」！每個英雄都有自己的星座，最多可以點亮六顆，越多越強！", hl:["命星"] },
+            { who:"__hero", text:"（心想）異界旅人座……第三顆星，亮了。",
+              cute:"（心想）我的星座，第三顆星亮了！" }
+          ]},
+          { img:"主線_第七章_龍王之影.jpg", amb:"darkness", bgm:"bgm-wb-menu", act:"tutorial_worldboss", lines:[
+            { who:"__narr", text:"回程的裂縫正要闔上，遠方的天空卻被一道火光撕開。一對巨大的翅膀遮住了半邊月亮——那不是碎片，而是活生生的龍王。",
+              cute:"要回家的時候，遠方天空出現一道火光。好大的翅膀遮住半個月亮——是龍王！", sfx:"roar" },
+            { who:"程式設計師", text:"訊號……強到量表直接爆掉。這不是一支隊伍打得贏的對手。",
+              cute:"訊號太強了，量表都爆了！一隊人一定打不贏。" },
+            { who:"籃球隊員", text:"一隊打不贏，那就全校一起打。",
+              cute:"一隊打不贏，那就全校一起打！" },
+            { who:"小劇團員", text:"第七幕，落幕。下一幕的標題我已經想好了——「全校總動員」！",
+              cute:"第七幕結束！下一幕叫做「全校總動員」！" }
+          ]},
+          { img:"主線_第二章_社團教室.jpg", amb:"classroom", bgm:"bgm-menu-01", lines:[
+            { who:"__narr", text:"回到教室，窗外的星空重新亮了起來，而且多了四顆特別亮的星——真誠、求知、活力、行動，剛好排成一個正方形。",
+              cute:"回到教室，星星又亮了，還多了四顆特別亮的星，排成一個正方形。" },
+            { who:"直笛團員", text:"阿動還是不在。",
+              cute:"阿動還是不在。" },
+            { who:"田徑隊員", text:"（從窗外探出頭）我在屋頂。你們快上來看啦。",
+              cute:"（從窗戶探頭）我在屋頂！快上來看啦！" },
+            { who:"__narr", text:"英魂陣型已經在你的隊伍裡甦醒。下一次出發冒險時，試著讓四種英魂一起上場吧。",
+              cute:"英魂陣型醒過來了！下次冒險，讓四種英魂一起上場吧！", hl:["英魂陣型"] }
+          ]}
+        ]
       }
     }
   };
@@ -620,6 +753,13 @@
         _awFix();
         setTimeout(_awFix, 8000);
       }catch(_eAw){}
+      /* ★ v5.290.0 第七章「第一件裝備」保底補發:演出當下若裝備存檔還沒載入完(_gearHydrated 未就緒)會先略過,
+       *   這裡在登入後 9 秒、30 秒各補檢查一次(冪等旗標 _r_gear_ch7;讀的都是「當下帳號」的記憶體 ⇒ 換帳號不串)。 */
+      try{
+        var _gFix = function(){ try{ if(_msChapterDone("ch7") && !_msRewardFlagGet("gear_ch7")) _msGrantStoryGear(); }catch(_){} };
+        setTimeout(_gFix, 9000);
+        setTimeout(_gFix, 30000);
+      }catch(_eGf){}
       // ★ v5.6.0 — 雲端進度 hydrate 完成後刷新入口進度徽章(登入非同步回填可能晚於關卡頁首次顯示)
       try{ if(typeof window._msRefreshEntryVisibility === "function") window._msRefreshEntryVisibility(); }catch(_){}
     }catch(_e){ console.warn("[主線] hydrate 失敗", _e); }
@@ -801,6 +941,16 @@
       //   夥伴已在 join_ch3 / join_ch4 演出當下就發過並落了 hero_{cid} 旗標,這裡再跑一次會早退(冪等),
       //   不會因為「已擁有」而又白送一次 +5 召喚水晶;若玩家跳過演出沒跑到 join,這裡就是保底發放點。
       _msGrantStoryHeroes(cid);
+      // ★ v5.290.0 第七章:①第一件裝備保底發放(演出當下已發就早退·冪等旗標 _r_gear_ch7)
+      //   ②英魂陣型解鎖提示(解鎖本身是「ch7 已完成」的衍生判定,見 game_battle.js _fmOpenForMe;這裡只負責告訴學生)
+      if(cid === "ch7"){
+        try{ _msGrantStoryGear(); }catch(_eG7){ console.warn("[主線] 第七章裝備發放失敗", _eG7); }
+        try{
+          var _fmTx = "🏫 " + _msT("英魂陣型已解鎖！之後的冒險關卡與世界 BOSS，四種英魂組成陣型就會發動。",
+                                   "英魂陣型打開了！之後冒險時，讓四種英魂一起上場就會發動喔！");
+          setTimeout(function(){ try{ if(typeof _showInGameToast === "function") _showInGameToast(_fmTx, "#ffd36a", 6500); }catch(_){} }, 4200);
+        }catch(_eFt){}
+      }
       // ★ v4.79.0 老師指示:章節通關解鎖造型部件(序章~第六章各一款·寫入 avatarCard.unlock 帳本)
       try{
         var _av = _MS_STORY_AVATAR_GRANTS[cid];
@@ -1255,6 +1405,330 @@
       if(ok) ok.onclick = function(){ try{ if(typeof playSfx==="function") playSfx("sfx-confirm2",0.6); }catch(_){} finish(); };
       setTimeout(finish, 300000);  // ★ v4.81.0 A4 — 舊值 30000(30秒)：教學卡一大段文字加吐槽條，學生還在讀就被自動關掉續播；已有「我知道了」鈕，這只是兜底→ 5 分
     }catch(e){ console.error("[主線 tutorial]", kind, e); if(onDone) onDone(); }
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★★ v5.290.0 — 第七章五個新系統教學:多頁圖文卡(英魂陣型/裝備/好友支援/命座/世界 BOSS)
+  // ────────────────────────────────────────────────────────────────────
+  //   ・雙版文案(鐵律 1.232):每頁 p=精緻風 / c=簡單風,依 _artStyle 切換。
+  //   ・三平台(鐵律〇之二):掛在 document.body(不在縮放的 #gc 內,可用 vh/dvh);卡片 max-height + 內捲,
+  //     overlay 用 align-items:safe center(短螢幕按鈕不會被推出畫面);手機橫向另有 media query 縮字縮距。
+  //   ・純顯示層:只有「裝備」那一課會發 1 件裝備(_msGrantStoryGear,冪等旗標 _r_gear_ch7),其餘零寫入。
+  //   ・逃生門:5 分鐘沒操作自動續播(比照 _msActTutorial),任何例外直接續播,絕不卡劇情。
+  // ════════════════════════════════════════════════════════════════════
+  var _MS_GEAR_CH7 = "acc_medal";   // 第七章第一件裝備:🏅 獎牌(飾品·史詩)——劇情「碎片凝成獎牌」
+  function _msGrantStoryGear(){
+    var key = "gear_ch7";
+    try{
+      if(_msRewardFlagGet(key)) return { already:true };
+      if(typeof _gearGrant !== "function" || typeof GEAR_DB === "undefined" || !GEAR_DB[_MS_GEAR_CH7]) return { ok:false };
+      if(window._gearHydrated !== true) return { ok:false, wait:true };   // 裝備存檔還沒載入 ⇒ 先不發(登入後保底補發)
+      window._msRewardGranting = window._msRewardGranting || {};
+      if(window._msRewardGranting[key]) return { ok:false };
+      window._msRewardGranting[key] = 1;
+      var uid = null;
+      try{ uid = _gearGrant(_MS_GEAR_CH7, "mainstory_ch7"); }catch(_eG){ uid = null; }
+      try{ delete window._msRewardGranting[key]; }catch(_){}
+      if(uid){
+        _msRewardFlagSet(key);
+        try{ if(typeof window._lxpsInstantPersist === "function") window._lxpsInstantPersist("主線第七章裝備"); }catch(_eIP){}
+        return { ok:true, uid:uid };
+      }
+      return { ok:false, full:true };   // 已達持有上限 100 件(_gearGrant 自己會跳提示);不落旗標 ⇒ 騰出空間後下次登入補發
+    }catch(_e){ console.warn("[主線] 第七章裝備發放例外", _e); return { ok:false }; }
+  }
+  function _msTpStyle(){
+    if(document.getElementById("ms-tp-style")) return;
+    var st = document.createElement("style");
+    st.id = "ms-tp-style";
+    st.textContent =
+      ".ms-tp-ov{position:fixed;inset:0;z-index:9860;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;padding:16px;box-sizing:border-box;" +
+        "background:radial-gradient(circle at 50% 44%,rgba(30,24,60,0.78),rgba(6,4,16,0.94));opacity:0;transition:opacity 0.4s;font-family:'M PLUS Rounded 1c','Nunito',sans-serif;}" +
+      ".ms-tp-card{width:100%;max-width:900px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;padding:clamp(18px,3vw,34px) clamp(18px,3.4vw,40px);" +
+        "border-radius:24px;background:linear-gradient(135deg,rgba(30,18,52,0.97),rgba(46,28,74,0.97));border:3px solid rgba(255,205,110,0.8);box-shadow:0 0 44px rgba(255,190,90,0.4);text-align:center;color:#fff;}" +
+      /* 內容區自己捲動、按鈕列固定在卡片底部(實測 1366×768 裝備第 1 頁內容較長時,按鈕曾被擠到捲動範圍外) */
+      ".ms-tp-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}" +
+      ".ms-tp-foot{flex:0 0 auto;padding-top:4px;}" +
+      ".ms-tp-step{font-size:clamp(15px,1.5vw,19px);font-weight:800;color:#c9b8ff;letter-spacing:2px;margin-bottom:4px;}" +
+      ".ms-tp-icon{font-size:clamp(44px,5.4vw,64px);line-height:1.1;margin-bottom:4px;}" +
+      ".ms-tp-title{font-size:clamp(26px,3.2vw,38px);font-weight:900;color:#ffe08a;letter-spacing:2px;margin-bottom:12px;text-shadow:0 0 18px rgba(255,200,100,0.5);}" +
+      ".ms-tp-body{font-size:clamp(18px,2vw,25px);line-height:1.7;font-weight:600;text-align:left;}" +
+      ".ms-tp-body b{color:#ffe08a;}" +
+      ".ms-tp-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:12px 0 4px;}" +
+      ".ms-tp-chip{flex:1 1 150px;max-width:200px;padding:10px 8px;border-radius:14px;background:rgba(255,255,255,0.07);border:2px solid rgba(160,200,255,0.4);box-sizing:border-box;}" +
+      ".ms-tp-chip .i{font-size:clamp(26px,3vw,36px);}" +
+      ".ms-tp-chip .n{font-size:clamp(17px,1.8vw,22px);font-weight:900;margin-top:2px;}" +
+      ".ms-tp-chip .d{font-size:clamp(13px,1.3vw,16px);color:#cfe4ff;margin-top:3px;line-height:1.4;}" +
+      ".ms-tp-stars{font-size:clamp(30px,4vw,46px);letter-spacing:8px;margin:8px 0;}" +
+      ".ms-tp-dots{margin-top:14px;font-size:16px;letter-spacing:6px;color:#8f86b0;}" +
+      ".ms-tp-dots .on{color:#ffe08a;}" +
+      ".ms-tp-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px;}" +
+      ".ms-tp-btn{padding:12px 30px;font-size:clamp(18px,2vw,24px);font-weight:800;letter-spacing:2px;border-radius:16px;cursor:pointer;touch-action:manipulation;font-family:inherit;}" +
+      ".ms-tp-btn.go{border:none;color:#fff;background:linear-gradient(135deg,#ff9a3c,#ff6ab0);}" +
+      ".ms-tp-btn.back{border:2px solid rgba(160,200,255,0.5);color:#cfe4ff;background:rgba(255,255,255,0.08);}" +
+      "@media (orientation:landscape) and (max-height:520px){" +
+        ".ms-tp-ov{padding:8px;}" +
+        ".ms-tp-card{padding:12px 18px;border-radius:16px;}" +
+        ".ms-tp-icon{font-size:34px;}" +
+        ".ms-tp-title{font-size:22px;margin-bottom:6px;}" +
+        ".ms-tp-body{font-size:15px;line-height:1.55;}" +
+        ".ms-tp-chip{flex-basis:120px;padding:6px;}" +
+        ".ms-tp-chip .i{font-size:22px;}.ms-tp-chip .n{font-size:15px;}.ms-tp-chip .d{font-size:12px;}" +
+        ".ms-tp-stars{font-size:26px;margin:4px 0;}" +
+        ".ms-tp-btn{padding:8px 20px;font-size:16px;}" +
+        ".ms-tp-dots{margin-top:8px;}" +
+      "}";
+    document.head.appendChild(st);
+  }
+  function _msTpChips(list){
+    var h = "<div class=\"ms-tp-chips\">";
+    for(var i = 0; i < list.length; i++){
+      var x = list[i];
+      h += "<div class=\"ms-tp-chip\" style=\"border-color:" + (x.col || "rgba(160,200,255,0.4)") + ";\">"
+        + "<div class=\"i\">" + x.i + "</div><div class=\"n\" style=\"color:" + (x.col || "#fff") + ";\">" + x.n + "</div>"
+        + (x.d ? "<div class=\"d\">" + x.d + "</div>" : "") + "</div>";
+    }
+    return h + "</div>";
+  }
+  function _msProtagOpenForMe(){
+    try{ return !!(typeof window._protagHeroOpenForMe === "function" && window._protagHeroOpenForMe()); }catch(_){ return false; }
+  }
+  // 每一課的頁面(函式:讓「裝備」頁能顯示發放結果、「命座」頁依主角是否開放切換內容)
+  function _msTpPages(kind, ctx){
+    var C = _msArtCute();
+    var T = function(p, c){ return C ? c : p; };
+    if(kind === "formation"){
+      return { quip:["（心想）以後排隊伍不能只看誰最強，還要看誰的心是哪一種……這比排座位還難。",
+                     "（心想）排隊伍還要看大家的英魂……比排座位還難耶！"], pages:[
+        { i:"🏫", t:T("四種英魂","四種英魂"),
+          b:T("每位英雄心裡都住著一種「英魂」，剛好就是力行的校訓：",
+              "每個英雄心裡都有一種英魂，就是我們的校訓：")
+            + _msTpChips([
+                { i:"💗", n:"真誠", col:"#ff9ec7", d:T("治療、支援","補血、幫忙") },
+                { i:"📘", n:"求知", col:"#8fc8ff", d:T("特技、技能","用技能打") },
+                { i:"🛡️", n:"活力", col:"#9be59b", d:T("坦克、護盾","擋攻擊") },
+                { i:"⚡", n:"行動", col:"#ffd36a", d:T("速度、控制","跑得快") }
+              ])
+            + T("主角是<b>萬用魂</b>：會自動變成隊伍最缺的那一種。",
+                "主角是<b>萬用魂</b>，會自動變成隊伍缺的那一種！") },
+        { i:"✨", t:T("組成陣型","排出陣型"),
+          b:T("出戰 4 位的英魂組合會發動「英魂陣型」，<b>整場戰鬥都有效</b>，還能和技能效果疊加：<br>"
+              + "・四種各一位 ＝ <b>四魂陣「力行校訓陣」</b>：傷害、治療、護盾 +15%，受到的傷害 −10%<br>"
+              + "・兩位同英魂 ＝ <b>雙魂陣</b>　・三位同英魂 ＝ <b>三魂陣</b><br>"
+              + "・四位全同 ＝ <b>純魂陣</b>　・兩兩一組 ＝ <b>雙核陣</b>",
+              "4 位隊友的英魂會排出「英魂陣型」，<b>整場都有效</b>！<br>"
+              + "・四種各一個 ＝ <b>力行校訓陣</b>：攻擊、補血、護盾變強，受傷變少<br>"
+              + "・兩個一樣 ＝ 雙魂陣　・三個一樣 ＝ 三魂陣<br>"
+              + "・四個都一樣 ＝ 純魂陣　・兩個兩個 ＝ 雙核陣") },
+        { i:"🔍", t:T("在哪裡看","去哪裡看"),
+          b:T("・<b>選角頁</b>：英雄圖片右下角的圓形小標「真／知／力／行」，組成陣型時會亮起來。<br>"
+              + "・<b>篩選</b>可以用英魂找英雄；<b>自動推薦</b>可以選「依陣型推薦」。<br>"
+              + "・<b>開戰時</b>四位頭像上方會跳出陣型名稱，按「？」可以再看一次說明。",
+              "・<b>選角頁</b>：英雄圖片右下角有「真／知／力／行」小圓圈，排出陣型會亮起來！<br>"
+              + "・可以用英魂<b>篩選</b>英雄，也可以按<b>自動推薦</b>選陣型。<br>"
+              + "・<b>開打時</b>會跳出陣型名字，按「？」可以再看一次。") },
+        { i:"🔓", t:T("什麼時候能用","什麼時候可以用"),
+          b:T("<b>完成第七章</b>後，英魂陣型就會在冒險關卡與世界 BOSS 生效。<br>"
+              + "鬥技場與連線對戰則是<b>雙方一律套用</b>。<br>"
+              + "這一章的兩場戰鬥，會先讓你體驗「力行校訓陣」的威力！",
+              "<b>看完第七章</b>以後，冒險和世界 BOSS 就可以用英魂陣型了！<br>"
+              + "鬥技場和連線對戰是<b>兩邊都會有</b>。<br>"
+              + "這一章的兩場戰鬥，先讓你試試「力行校訓陣」！") }
+      ]};
+    }
+    if(kind === "gear"){
+      var g = (ctx && ctx.gear) || {};
+      var gearName = "獎牌";
+      try{ if(typeof GEAR_DB !== "undefined" && GEAR_DB[_MS_GEAR_CH7]) gearName = GEAR_DB[_MS_GEAR_CH7].n || gearName; }catch(_){}
+      var got = g.ok ? T("🏅 <b>" + gearName + "（史詩）</b>已經放進你的裝備背包！現在就去替英雄穿上吧。",
+                         "🏅 <b>" + gearName + "（史詩）</b>已經放進你的裝備背包！快去幫英雄戴上吧！")
+              : g.already ? T("🏅 <b>" + gearName + "</b>先前已經發給你了，記得替英雄穿上。",
+                              "🏅 <b>" + gearName + "</b>之前已經給你了，記得幫英雄戴上喔！")
+              : g.full ? T("你的裝備背包已經滿了（100 件）。先賣掉或送出幾件，下次登入就會補發 🏅 " + gearName + "。",
+                           "裝備背包滿了（100 件）！先賣掉幾件，下次登入就會補給你 🏅 " + gearName + "。")
+              : T("🏅 " + gearName + "會在你的裝備資料載入完成後自動發放，稍後就會出現在裝備背包。",
+                  "🏅 " + gearName + "等一下就會出現在你的裝備背包！");
+      return { quip:["（心想）一枚獎牌就能讓英雄變強……那我抽屜裡那疊運動會獎狀，是不是也該好好收藏起來。",
+                     "（心想）一枚獎牌就能變強？那我的運動會獎狀也要收好！"], pages:[
+        { i:"🛡️", t:T("裝備是什麼","什麼是裝備"),
+          b:T("在這個世界，生活小物會變成英雄的<b>裝備</b>。每位英雄有 6 個部位可以穿：",
+              "在這裡，生活用品可以變成英雄的<b>裝備</b>！每個英雄有 6 個地方可以穿：")
+            + _msTpChips([
+                { i:"🪖", n:"頭部" }, { i:"🧥", n:"身軀" }, { i:"🔨", n:"主手" },
+                { i:"🛡️", n:"副手" }, { i:"👟", n:"腿部" }, { i:"🏅", n:"飾品" }
+              ])
+            + _msTpChips([
+                { i:"◆", n:"稀有", col:"#66ddff", d:T("1 條詞條","1 個效果") },
+                { i:"◆", n:"史詩", col:"#aa66ff", d:T("2 條詞條","2 個效果") },
+                { i:"◆", n:"傳說", col:"#ffaa44", d:T("3 條詞條","3 個效果") },
+                { i:"◆", n:"神話", col:"#ff44ff", d:T("4 條詞條","4 個效果") }
+              ]) },
+        { i:"👕", t:T("怎麼穿上","怎麼穿"),
+          b:T("・打開<b>英雄圖鑑</b> → 點一位英雄 → 往下找到「🛡️ 裝備欄位」。<br>"
+              + "・點一個部位，就能挑選要穿的裝備；同一件裝備一次只能穿在一位英雄身上。<br>"
+              + "・<b>穿上才有效</b>，收在背包裡不會有任何效果。",
+              "・打開<b>英雄圖鑑</b> → 點一個英雄 → 往下找「🛡️ 裝備欄位」。<br>"
+              + "・點一個位置，就可以挑裝備穿上；一件裝備一次只能給一個英雄穿。<br>"
+              + "・<b>要穿上才有用</b>，放在背包裡沒有用喔！") },
+        { i:"🎁", t:T("去哪裡拿","哪裡拿得到"),
+          b:T("・冒險打<b>小怪、BOSS</b> 有機會掉落<br>"
+              + "・<b>星空召喚</b>有機會召喚出裝備<br>"
+              + "・<b>不可思議超商</b>每天都會上架新裝備<br>"
+              + "・好友也能<b>送你裝備</b>；用不到的可以<b>半價賣出</b>，最多持有 100 件<br>"
+              + "・裝備只在冒險模式與世界 BOSS 生效，鬥技場一律不吃裝備（公平制）。",
+              "・冒險打<b>小怪、BOSS</b> 有機會掉<br>"
+              + "・<b>星空召喚</b>有機會抽到<br>"
+              + "・<b>超商</b>每天會賣新裝備<br>"
+              + "・朋友也可以<b>送你</b>；不要的可以半價賣掉，最多放 100 件<br>"
+              + "・鬥技場不能用裝備，這樣比賽才公平！") },
+        { i:"🏅", t:T("你的第一件裝備","你的第一件裝備"), b:got }
+      ]};
+    }
+    if(kind === "friend"){
+      return { quip:["（心想）借來的英雄還會帶著朋友練好的命星……所以我也得好好練我的代表英雄，免得被借走的時候丟臉。",
+                     "（心想）朋友也會借我的英雄……那我的代表英雄要好好練，不能丟臉！"], pages:[
+        { i:"🤝", t:T("邀請好友英雄","借朋友的英雄"),
+          b:T("・冒險頁下方按「🤝 好友」打開好友名單。<br>"
+              + "・在好友那一列按<b>邀請</b>，他的<b>代表英雄</b>就會跟著你。<br>"
+              + "・回到選角頁，好友英雄會出現在英雄列表裡，把他編進隊伍就能一起出戰。",
+              "・冒險頁下面按「🤝 好友」，打開好友名單。<br>"
+              + "・在朋友那一排按<b>邀請</b>，他的<b>代表英雄</b>就會來幫你！<br>"
+              + "・回到選角頁，就能把朋友的英雄放進隊伍一起打。") },
+        { i:"🌟", t:T("借來的英雄","借來的英雄有多強"),
+          b:T("・好友英雄會帶著<b>好友自己的等級、養成和已點亮的命星</b>一起出戰。<br>"
+              + "・你不能改動他的命星、裝備或任何投資——那是好友的英雄。<br>"
+              + "・借用好友英雄通關，還會額外拿到<b>精裝英雄經驗之書</b>。",
+              "・朋友的英雄會帶著<b>朋友練好的等級和命星</b>一起來！<br>"
+              + "・你不能改他的命星和裝備，因為那是朋友的英雄。<br>"
+              + "・借朋友的英雄過關，還會多拿到<b>精裝英雄經驗之書</b>！") },
+        { i:"📌", t:T("要注意的地方","要記得"),
+          b:T("・<b>世界 BOSS</b> 不能借用好友英雄；主線劇情戰是故事安排好的固定隊伍。<br>"
+              + "・鬥技場可以借，但一律以 Lv1 基礎數值出戰。<br>"
+              + "・點冒險頁上方的<b>代表英雄</b>小卡，設定你自己的代表英雄，朋友才借得到你！",
+              "・<b>世界 BOSS</b> 不能借朋友的英雄；主線劇情的隊伍是故事排好的。<br>"
+              + "・鬥技場可以借，但大家都是 Lv1。<br>"
+              + "・點冒險頁上面的<b>代表英雄</b>，設定你的代表英雄，朋友才能借你的！") }
+      ]};
+    }
+    if(kind === "constellation"){
+      var pOpen = _msProtagOpenForMe();
+      var p3 = pOpen
+        ? { i:"🌠", t:T("主角的命星","主角的命星"),
+            b:"<div class=\"ms-tp-stars\"><span style=\"color:#ffe08a;\">★★★</span><span style=\"color:#5a5478;\">☆☆☆</span></div>"
+              + T("主角不在召喚池裡，命星<b>只能靠主線大章節</b>取得：第三章、第六章、第七章各一顆。<br>"
+                  + "主角覺醒後才能點亮；剩下三顆，會在之後的章節等著你。",
+                  "主角不能用召喚拿命星，<b>只能看主線故事拿</b>：第三、六、七章各一顆！<br>"
+                  + "主角覺醒以後才能點亮；剩下三顆，之後的章節會給你。") }
+        : { i:"🔮", t:T("命星合成","把命星變成想要的"),
+            b:T("用不到的命星不會浪費：到<b>召喚星空</b>的「✨ 命星工坊」，3 顆可以合成 1 顆<b>自選命星</b>，"
+                + "再送給你最想培養的英雄（SR 和 SSR 不能互換）。",
+                "用不到的命星不要丟！到<b>召喚星空</b>的「✨ 命星工坊」，3 顆可以變成 1 顆<b>自選命星</b>，"
+                + "送給你最喜歡的英雄！") };
+      return { quip:["（心想）每位英雄都有自己的星座……那我們社團的大家，應該也都有一片屬於自己的夜空吧。",
+                     "（心想）每個英雄都有自己的星座，那我們社團的大家也都有吧！"], pages:[
+        { i:"✨", t:T("命座與命星","什麼是命星"),
+          b:"<div class=\"ms-tp-stars\" style=\"color:#ffe08a;\">✦ ✦ ✦ ✦ ✦ ✦</div>"
+            + T("每位英雄（R 卡以外）都有自己的<b>星座</b>，最多可以點亮 <b>6 顆命星</b>。<br>"
+                + "召喚時抽到<b>已經擁有的英雄</b>，就會變成那位英雄的一顆命星。",
+                "每個英雄（R 卡以外）都有自己的<b>星座</b>，最多可以點亮 <b>6 顆命星</b>！<br>"
+                + "召喚抽到<b>已經有的英雄</b>，就會變成他的命星。") },
+        { i:"🗺️", t:T("怎麼點亮","怎麼點"),
+          b:T("・打開<b>英雄圖鑑</b> → 點英雄 → 按「✨ 命座」打開星圖。<br>"
+              + "・星圖中央是英雄，往外選一條你想走的路線點亮：強化天賦、技能或極限爆發，有些星還會帶來新招式。<br>"
+              + "・點錯了可以重置（要花 5000 知識幣）。命星只在冒險模式與世界 BOSS 生效，鬥技場不吃命星。",
+              "・打開<b>英雄圖鑑</b> → 點英雄 → 按「✨ 命座」。<br>"
+              + "・中間是英雄，選一條路線點亮星星：天賦、技能、大絕招都會變強！<br>"
+              + "・點錯可以重來（要 5000 知識幣）。鬥技場不能用命星喔。") },
+        p3
+      ]};
+    }
+    if(kind === "worldboss"){
+      return { quip:["（心想）「全校總動員」……善行，你這個標題取得太好了，好到我有點擔心期末考也會變成這樣。",
+                     "（心想）全校一起打龍王！聽起來好熱血，好想快點去！"], pages:[
+        { i:"🐉", t:T("世界 BOSS 討伐戰","世界 BOSS"),
+          b:T("冒險關卡列表裡那個冒著火焰的入口，就是<b>世界 BOSS 討伐戰</b>。<br>"
+              + "龍王強大到一支隊伍打不倒，要和<b>全校同學一起</b>挑戰，比一比誰造成的傷害最高。",
+              "冒險關卡裡那個一直冒火的入口，就是<b>世界 BOSS</b>！<br>"
+              + "龍王太強了，要和<b>全校同學一起</b>打，看誰打得最多！") },
+        { i:"📋", t:T("挑戰前要知道","要記得"),
+          b:T("・有<b>開戰期</b>和<b>休戰期</b>，入口會顯示下一次開戰時間；每天的挑戰次數有限。<br>"
+              + "・不能借用好友英雄；你的<b>裝備、命星</b>都會生效，完成第七章後<b>英魂陣型</b>也會生效。<br>"
+              + "・依排名可以拿到龍王專屬的獎勵。",
+              "・龍王有<b>開打的時間</b>和<b>休息的時間</b>，每天能打的次數有限。<br>"
+              + "・不能借朋友的英雄；你的<b>裝備、命星</b>都有用，看完第七章後<b>英魂陣型</b>也有用！<br>"
+              + "・打得越好，獎勵越棒！") }
+      ]};
+    }
+    return null;
+  }
+  function _msActTutPages(kind, onDone){
+    var _done = false;
+    var finish = function(){ if(_done) return; _done = true; try{ if(onDone) onDone(); }catch(e){ console.error("[主線 tutpages done]", e); } };
+    try{
+      var ctx = {};
+      if(kind === "gear"){ try{ ctx.gear = _msGrantStoryGear(); }catch(_eG){ ctx.gear = {}; } }
+      var def = _msTpPages(kind, ctx);
+      if(!def || !def.pages || !def.pages.length){ finish(); return; }
+      _msTpStyle();
+      var pages = def.pages.filter(function(x){ return !!x; });
+      var idx = 0;
+      var ov = document.createElement("div");
+      ov.id = "ms-tutpages-fx";
+      ov.className = "ms-tp-ov";
+      var card = document.createElement("div");
+      card.className = "ms-tp-card";
+      ov.appendChild(card);
+      var close = function(){
+        try{ ov.style.opacity = "0"; }catch(_){}
+        setTimeout(function(){ try{ ov.remove(); }catch(_){} finish(); }, 380);
+      };
+      var render = function(){
+        var pg = pages[idx], last = (idx === pages.length - 1);
+        var dots = "";
+        for(var d = 0; d < pages.length; d++) dots += (d === idx ? "<span class=\"on\">●</span>" : "●");
+        card.innerHTML = "";
+        var sc = document.createElement("div");
+        sc.className = "ms-tp-scroll";
+        sc.innerHTML =
+          "<div class=\"ms-tp-step\">" + _msT("新系統教學", "新功能小教室") + "　" + (idx + 1) + " / " + pages.length + "</div>" +
+          "<div class=\"ms-tp-icon\">" + pg.i + "</div>" +
+          "<div class=\"ms-tp-title\">📖 " + pg.t + "</div>" +
+          "<div class=\"ms-tp-body\">" + pg.b + "</div>";
+        if(last && def.quip){ try{ sc.appendChild(_msQuipBar(def.quip[0], def.quip[1])); }catch(_){} }
+        card.appendChild(sc);
+        var foot = document.createElement("div");
+        foot.className = "ms-tp-foot";
+        card.appendChild(foot);
+        var btns = document.createElement("div");
+        btns.className = "ms-tp-btns";
+        if(idx > 0){
+          var bk = document.createElement("button");
+          bk.className = "ms-tp-btn back";
+          bk.textContent = "◀ " + _msT("上一頁", "上一頁");
+          bk.onclick = function(){ try{ if(typeof playSfx==="function") playSfx("sfx-sel",0.5); }catch(_){} idx--; render(); };
+          btns.appendChild(bk);
+        }
+        var go = document.createElement("button");
+        go.className = "ms-tp-btn go";
+        go.textContent = last ? ("✔ " + _msT("我知道了", "我知道了")) : (_msT("下一頁", "下一頁") + " ▶");
+        go.onclick = function(){
+          try{ if(typeof playSfx==="function") playSfx(last ? "sfx-confirm2" : "sfx-sel", 0.6); }catch(_){}
+          if(last){ close(); } else { idx++; render(); }
+        };
+        btns.appendChild(go);
+        foot.appendChild(btns);
+        var dw = document.createElement("div");
+        dw.className = "ms-tp-dots";
+        dw.innerHTML = dots;
+        foot.appendChild(dw);
+        try{ sc.scrollTop = 0; }catch(_){}
+      };
+      render();
+      document.body.appendChild(ov);
+      requestAnimationFrame(function(){ ov.style.opacity = "1"; });
+      try{ if(typeof playSfx === "function") playSfx(kind === "gear" ? "sfx-medal-unlock" : "sfx-confirm", 0.55); }catch(_){}
+      setTimeout(function(){ if(!_done) close(); }, 300000);   // 兜底:5 分鐘沒操作 → 續播(比照 _msActTutorial)
+    }catch(e){ console.error("[主線 tutpages]", kind, e); finish(); }
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -1740,7 +2214,14 @@
                       lc:"閉氣快點打！把深坑的發酵秘方搶回來！" },
     battle_ch6_boss:{ icon:"🌑", np:"吞噬色彩的黑暗球",          nc:"黑暗球",         tut:false,
                       lp:"覺醒後的你站上了最前線——這一擊，是為了把整座城鎮的色彩帶回來。",
-                      lc:"覺醒的你站到最前面——這一下，要把顏色通通帶回來！" }
+                      lc:"覺醒的你站到最前面——這一下，要把顏色通通帶回來！" },
+    /* ★ v5.290.0 第七章兩場(兩隊都是四魂各一 ⇒ 開戰自動發動四魂陣「力行校訓陣」,教學看得到效果) */
+    battle_ch7_1:   { icon:"⛩️", np:"被碎片控制的神社妖怪",       nc:"被碎片控制的妖怪", tut:false,
+                      lp:"劍士(行動)在前、守衛(活力)擋招、祭司(真誠)療傷，再加上你這個萬用魂——四種英魂到齊，開戰就會發動「力行校訓陣」！",
+                      lc:"劍士、守衛、祭司，再加上你，四種英魂都到齊了！一開打就會發動「力行校訓陣」！" },
+    battle_ch7_boss:{ icon:"👑", np:"法老王 · 星蝕附身",          nc:"被控制的法老王",   tut:false,
+                      lp:"火法師(求知)、守衛(活力)、祭司(真誠)，加上你——四魂陣再度成形。燒斷黑暗的絲線，把最後一顆碎片從權杖上取下來！",
+                      lc:"火法師、守衛、祭司，再加上你，又是四種英魂！把權杖上的黑碎片拿下來！" }
   };
   // 第一幕:戰鬥開場(敵人現身)
   function _msBattleIntro(host, d, next){
@@ -1970,7 +2451,16 @@
     battle_ch5_boss:{ heroes:["主角","守衛","刺客","祭司"],                 elems:["light","earth","dark","grass"], exp:150,
                       bgm:"bgm-taiwan-boss",  bg:"臭豆腐BOSS.png" },
     battle_ch6_boss:{ heroes:["主角","劍士","祭司","火法師"],               elems:["light","fire","grass","fire"],  exp:180,
-                      bgm:"bgm-boss-darkorb", bg:"主線_第六章_黑暗球降臨.jpg" }
+                      bgm:"bgm-boss-darkorb", bg:"主線_第六章_黑暗球降臨.jpg" },
+    /* ★ v5.290.0 第七章:兩隊都排成「四魂各一」(主角=萬用魂)。
+     *   protagFb = 主角未開放時的指定替補(要補上「缺的那一種英魂」,否則四魂陣會破掉):
+     *     ch7_1 隊上 劍士(行動)/守衛(活力)/祭司(真誠) 缺求知 ⇒ 程式設計師(求知)
+     *     ch7_boss 隊上 火法師(求知)/守衛(活力)/祭司(真誠) 缺行動 ⇒ 直笛團員(行動)
+     *   元素:對齊 ch3~ch6 既有口徑(劍士=fire/祭司=grass/火法師=fire);守衛=earth(同 ch5)。 */
+    battle_ch7_1:   { heroes:["主角","劍士","守衛","祭司"],                 elems:["light","fire","earth","grass"], exp:200,
+                      bgm:"bgm-japan-battle", bg:"古老神社 第二場景 大天狗路線.png", protagFb:"程式設計師" },
+    battle_ch7_boss:{ heroes:["主角","火法師","守衛","祭司"],               elems:["light","fire","earth","grass"], exp:220,
+                      bgm:"bgm-egypt-boss",   bg:"埃及冒險BOSS戰背景 寶庫王座.png", protagFb:"直笛團員" }
   };
   // 主角未解鎖(測試閘門未開)時的替補池:取第一位「不在隊上」的初始 8 隻,絕不開天窗、絕不重複
   var _MS_PROTAG_FALLBACK = ["動物學家","小劇團員","直笛團員","弦樂團員","籃球隊員","田徑隊員","程式設計師","電腦繪圖師"];
@@ -2022,6 +2512,22 @@
         return [{ name:"臭氣魔王・發酵公", element:"grass" }];
       }
       if(key === "battle_ch6_boss"){ return [{ name:"黑暗球‧希望型態", element:"dark" }]; }
+      /* ★ v5.290.0 第七章(全部現成敵人·零新建):屬性寫死成「正好被我方剋」(相剋環 水→火→草→土→風→水),
+       *   延續 ch1 的相剋教學口徑:劍士 fire 剋 grass、祭司 grass 剋 earth、守衛 earth 剋 wind。 */
+      if(key === "battle_ch7_1"){
+        return [
+          { name:"河童",     element:"earth" },
+          { name:"雪女",     element:"wind"  },
+          { name:"獨眼小僧", element:"grass" }
+        ];
+      }
+      if(key === "battle_ch7_boss"){
+        return [
+          { name:"木乃伊貓",   element:"grass" },
+          { name:"法老王",     element:"earth" },
+          { name:"流沙眼鏡蛇", element:"wind"  }
+        ];
+      }
     }catch(_e){ console.warn("[主線戰鬥] 敵方陣容建構例外", key, _e); }
     return [];
   }
@@ -2043,8 +2549,18 @@
         : { s1: 0, s2: 0 };
       h._burstLvAdv = (typeof _heroBurstLevels !== "undefined" && _heroBurstLevels && _heroBurstLevels[name]) || 0;
     }catch(_){}
-    try{ if(typeof _applyTaiwanTreasureToHero === "function") _applyTaiwanTreasureToHero(h); }catch(_){}
-    try{ if(typeof window._applyFollowPetToHero === "function") window._applyFollowPetToHero(h); }catch(_){}
+    /* ★ v5.290.0 — 改走全遊戲共用的戰前套用單一入口 _applyBattlePrepToHero(至寶 → 裝備 → 寵物 → 命星)。
+     *   根因:主線建隊原本只套至寶與跟隨寵物,漏了裝備(v5.27.0 起)與命星(v5.254.0 起),
+     *   學生在劇情戰看不到自己穿的裝備、主角命星也不生效(違反 v5.74.0「所有建隊入口共用單一收口」)。
+     *   入口不存在(舊快取)時退回原本兩行,行為與 v5.288.0 相同。舊碼備查(誤刪是大忌):
+     *   try{ if(typeof _applyTaiwanTreasureToHero === "function") _applyTaiwanTreasureToHero(h); }catch(_){}
+     *   try{ if(typeof window._applyFollowPetToHero === "function") window._applyFollowPetToHero(h); }catch(_){} */
+    var _prepOk = false;
+    try{ if(typeof window._applyBattlePrepToHero === "function"){ window._applyBattlePrepToHero(h, "mainstory"); _prepOk = true; } }catch(_ePrep){ console.warn("[主線戰鬥] 戰前套用失敗,退回舊路徑", _ePrep); }
+    if(!_prepOk){
+      try{ if(typeof _applyTaiwanTreasureToHero === "function") _applyTaiwanTreasureToHero(h); }catch(_){}
+      try{ if(typeof window._applyFollowPetToHero === "function") window._applyFollowPetToHero(h); }catch(_){}
+    }
     return h;
   }
   // 我方名單解算:主角未解鎖 → 替補;同名重複防呆
@@ -2061,7 +2577,9 @@
       try{ isP = !!(typeof window._isProtagHero === "function" && window._isProtagHero(names[i])); }catch(_){}
       if(isP && !protagOk){
         var sub = null;
-        for(var j = 0; j < _MS_PROTAG_FALLBACK.length; j++){
+        /* ★ v5.290.0 本場指定替補(protagFb)優先:第七章靠「四魂各一」觸發陣型,替補要補上缺的那一種英魂 */
+        try{ if(team.protagFb && names.indexOf(team.protagFb) < 0) sub = team.protagFb; }catch(_){}
+        for(var j = 0; !sub && j < _MS_PROTAG_FALLBACK.length; j++){
           if(names.indexOf(_MS_PROTAG_FALLBACK[j]) < 0){ sub = _MS_PROTAG_FALLBACK[j]; break; }
         }
         names[i] = sub || "動物學家";
@@ -2610,6 +3128,31 @@
         }
       }catch(_eNerf){ console.warn("[主線 ch6 初始型態降強度] 套用失敗(維持原素質)", _eNerf); }
     }
+    /* ★ v5.290.0 第七章 BOSS 戰降強度(比照 ch6 黑暗球「主線限定·只動本場物件」做法):
+     *   法老王原本是埃及關卡 BOSS(HP 11500),遠超主線難度曲線(ch5 臭氣魔王 3960、ch6 黑暗球降半後 750)。
+     *   主線版寫定 HP 1500、攻擊 18、特技 26、速度 18,顯示名「法老王‧星蝕附身」;
+     *   兩隻埃及小怪 HP/攻擊/特技 ×0.6。冒險模式埃及關的法老王與小怪完全不受影響(只改本場 G.p2 物件)。
+     *   本章是解鎖英魂陣型的必經關,難度刻意放在「學生剛打完第六章就打得過」。 */
+    if(key === "battle_ch7_boss"){
+      try{
+        for(var _pi = 0; _pi < p2.length; _pi++){
+          var _ph = p2[_pi]; if(!_ph) continue;
+          if(_ph.name === "法老王"){
+            /* 實測(沙盒整章實跑)發現:主線建敵方時 _adventureMode 尚未設為 true ⇒ newHero 給的是「招募弱化版」
+             *   (EGYPT_BOSS_HERO_STATS,HP 只有 75),比旁邊的小怪還弱。改成直接寫定主線版素質:
+             *   HP 1500 / 攻擊 18 / 特技 26 / 速度 18(≈ BOSS 版攻特 ×0.6;HP 介於 ch5 3960 與 ch6 750 之間)。 */
+            _ph._displayName = "法老王‧星蝕附身";
+            _ph.hp = 1500; _ph.curHp = 1500;
+            _ph.atk = 18; _ph.sp = 26; _ph.spd = 18;
+          } else if(_ph.name === "木乃伊貓" || _ph.name === "流沙眼鏡蛇"){
+            if(typeof _ph.hp  === "number" && _ph.hp  > 0){ _ph.hp  = Math.max(1, Math.round(_ph.hp  * 0.6)); _ph.curHp = _ph.hp; }
+            if(typeof _ph.atk === "number" && _ph.atk > 0){ _ph.atk = Math.max(1, Math.round(_ph.atk * 0.6)); }
+            if(typeof _ph.sp  === "number" && _ph.sp  > 0){ _ph.sp  = Math.max(1, Math.round(_ph.sp  * 0.6)); }
+          }
+          try{ if(_ph._initState){ _ph._initState.hp = _ph.hp; _ph._initState.sp = _ph.sp; } }catch(_eIs){}
+        }
+      }catch(_eN7){ console.warn("[主線 ch7 法老王降強度] 套用失敗(維持原素質)", _eN7); }
+    }
     // ── 戰鬥情境旗標(照 _wbSetupAdvForBattle 清殘留)──
     window._msRealBattleActive = true;
     /* ★ v4.91.0 —— ctx 帶上本場專屬 BGM 與戰場背景圖(advStartBattle 的 mainstory 分支讀取) */
@@ -3030,7 +3573,8 @@
   //   ★ 只略過「操作/教學類」;戰鬥演出、加入夥伴、發劍、黑幕轉場一律照播(那些是劇情的一部分)。
   var _MS_REVIEW_SKIP_ACTS = {
     open_avatar_studio: 1, set_card: 1,
-    tutorial_king: 1, tutorial_levelup: 1, tutorial_shop: 1
+    tutorial_king: 1, tutorial_levelup: 1, tutorial_shop: 1,
+    tutorial_formation: 1, tutorial_gear: 1, tutorial_friend: 1, tutorial_constellation: 1, tutorial_worldboss: 1   // ★ v5.290.0 第七章
   };
   /* ★★ v4.86.0 老師需求3 —— 「序章沒有正常出現造型工房」根因與修法
    *   根因:老師是用「🔁 回顧劇情」重看序章,而 v4.81.0(B7)把 open_avatar_studio / set_card
@@ -3072,6 +3616,32 @@
       dp:"這是回顧模式，教學可看可跳；看完按下一步就會接著播劇情。",
       dc:"重看模式，教學可以看也可以跳過；看完就繼續看故事。",
       yp:"好，我要複習", yc:"好，我要看" },
+    /* ★ v5.290.0 第七章五個新系統教學(回顧模式詢問卡) */
+    tutorial_formation: { icon:"🏫",
+      tp:"要複習「英魂陣型」的教學嗎？", tc:"要再看一次「英魂陣型」嗎？",
+      dp:"這是回顧模式，教學可看可跳；看完就會接著播劇情。",
+      dc:"重看模式，教學可以看也可以跳過；看完就繼續看故事。",
+      yp:"好，我要複習", yc:"好，我要看" },
+    tutorial_gear:      { icon:"🛡️",
+      tp:"要複習「裝備」的教學嗎？", tc:"要再看一次「裝備怎麼穿」嗎？",
+      dp:"這是回顧模式，教學可看可跳；第一件裝備先前已發過，不會重複發放。",
+      dc:"重看模式，教學可以看也可以跳過；裝備之前給過了，不會再給一次喔。",
+      yp:"好，我要複習", yc:"好，我要看" },
+    tutorial_friend:    { icon:"🤝",
+      tp:"要複習「好友支援」的教學嗎？", tc:"要再看一次「借朋友的英雄」嗎？",
+      dp:"這是回顧模式，教學可看可跳；看完就會接著播劇情。",
+      dc:"重看模式，教學可以看也可以跳過；看完就繼續看故事。",
+      yp:"好，我要複習", yc:"好，我要看" },
+    tutorial_constellation: { icon:"✨",
+      tp:"要複習「命座與命星」的教學嗎？", tc:"要再看一次「命星怎麼點」嗎？",
+      dp:"這是回顧模式，教學可看可跳；看完就會接著播劇情。",
+      dc:"重看模式，教學可以看也可以跳過；看完就繼續看故事。",
+      yp:"好，我要複習", yc:"好，我要看" },
+    tutorial_worldboss: { icon:"🐉",
+      tp:"要複習「世界 BOSS」的介紹嗎？", tc:"要再看一次「世界 BOSS」嗎？",
+      dp:"這是回顧模式，介紹可看可跳；看完就會接著播劇情。",
+      dc:"重看模式，介紹可以看也可以跳過；看完就繼續看故事。",
+      yp:"好，我要看", yc:"好，我要看" },
     /* ★★ v4.89.0(第二版)老師指示:回顧也要能完整打一場真實戰鬥。
      *   np/nc = 「不要」鈕的自訂文字(未給則沿用預設「不用，繼續劇情」·舊條目零影響)。 */
     battle:             { icon:"⚔️",
@@ -3128,6 +3698,10 @@
         if(act === "tutorial_king"){     _msReviewOptionalAct(act, ov, function(){ _msActTutorial("king", done); }, done); return; }
         if(act === "tutorial_levelup"){  _msReviewOptionalAct(act, ov, function(){ _msActTutorial("levelup", done); }, done); return; }
         if(act === "tutorial_shop"){     _msReviewOptionalAct(act, ov, function(){ _msActTutorial("shop", done); }, done); return; }
+        /* ★ v5.290.0 第七章五個教學:回顧模式同樣「詢問是否觀看」(裝備不會重複發,由冪等旗標保證) */
+        if(/^tutorial_(formation|gear|friend|constellation|worldboss)$/.test(act)){
+          _msReviewOptionalAct(act, ov, function(){ _msActTutPages(act.replace("tutorial_", ""), done); }, done); return;
+        }
         done(); return;   /* 保留:日後若再有 act 進 _MS_REVIEW_SKIP_ACTS 而未給文案 → 維持略過不卡 */
       }
     }catch(_){}
@@ -3183,7 +3757,15 @@
         case "battle_ch3_boss":
         case "battle_ch4_boss":
         case "battle_ch5_boss":
-        case "battle_ch6_boss":     _msActBattle(act, done); return;
+        case "battle_ch6_boss":
+        case "battle_ch7_1":                                                  // ★ v5.290.0 第七章:日本・古老神社(四魂陣教學戰)
+        case "battle_ch7_boss":     _msActBattle(act, done); return;          // ★ v5.290.0 第七章:埃及・寶庫王座 法老王
+        // ★ v5.290.0 第七章五個新系統教學(多頁圖文卡·雙版·三平台)
+        case "tutorial_formation":
+        case "tutorial_gear":
+        case "tutorial_friend":
+        case "tutorial_constellation":
+        case "tutorial_worldboss":  _msActTutPages(act.replace("tutorial_", ""), done); return;
         default:                   done(); return;                    // 未知 act → 直接續播(不擋劇情)
       }
     }catch(e){ console.error("[主線 act 分派內]", act, e); done(); }
@@ -3512,7 +4094,8 @@
   var _MS_MENU_BGM = "bgm-adv-march";   // 章節選擇視窗 + 前期章節
   var _MS_CH_BGM = {
     prologue:"bgm-adv-march", ch1:"bgm-adv-march", ch2:"bgm-adv-march",
-    ch3:"bgm-taiwan-cutscene", ch4:"bgm-taiwan-cutscene", ch5:"bgm-taiwan-cutscene", ch6:"bgm-taiwan-cutscene"
+    ch3:"bgm-taiwan-cutscene", ch4:"bgm-taiwan-cutscene", ch5:"bgm-taiwan-cutscene", ch6:"bgm-taiwan-cutscene",
+    ch7:"bgm-taiwan-cutscene"   // ★ v5.290.0 第七章
   };
   function _msBgmForChapter(cid){ return _MS_CH_BGM[cid] || _MS_MENU_BGM; }
   function _msEnterStoryBgm(cid){
@@ -3639,7 +4222,9 @@
     stink:     "sfx-powerdown",      // 臭氣 → 洩氣衰弱(逗趣)
     treasure:  "sfx-medal-unlock",   // 至寶 → 獲得獎章(閃亮)
     darkrise:  "sfx-wb-boss-skill",  // 黑暗崛起 → 龍的呼嘯(低沉轟鳴)
-    restore:   "sfx-heal"            // 恢復 → 治癒魔法
+    restore:   "sfx-heal",           // 恢復 → 治癒魔法
+    starfall:  "sfx-summon-reveal",  // ★ v5.290.0 第七章 流星墜落 → 召喚角色(閃亮下墜)
+    roar:      "sfx-wb-boss-skill"   // ★ v5.290.0 第七章 龍王咆哮 → 龍的呼嘯
   };
   function _msFbUrl(key){
     try{
@@ -3768,7 +4353,8 @@
     ch3:      { p:"貓空茶園褪成灰白，劍士與祭司並肩加入，一同破除了封住靈氣的褪色邪術。", c:"茶園變灰了，劍士和祭司加入，一起破解邪術。" },
     ch4:      { p:"杏花妖以妖術魅惑了守衛與刺客，火法師燒開妖花林，救回被奪走的心。", c:"火法師燒開被迷惑的花林，救回被搶走的心。" },
     ch5:      { p:"深坑老街臭氣沖天，眾人擊退發酵魔王，尋得傳說中的神劍至寶。", c:"打敗臭味魔王，拿到神劍。" },
-    ch6:      { p:"黑暗球降臨吞噬所有色彩，主角覺醒，迎向最終決戰。", c:"黑暗球吞掉色彩，主角覺醒，最後大決戰。" }
+    ch6:      { p:"黑暗球降臨吞噬所有色彩，主角覺醒，迎向最終決戰。", c:"黑暗球吞掉色彩，主角覺醒，最後大決戰。" },
+    ch7:      { p:"黑暗球的碎片扯落星光，四種英魂合力，從神社與沙漠找回夜空。", c:"碎片把星星拉下來，四種英魂一起把星星找回來。" }   // ★ v5.290.0
   };
   function _msRecapForCover(cid){
     try{
@@ -3967,7 +4553,8 @@
     ch3:      { p:"貓空靈氣被封印，劍士與祭司並肩淨化靈地", c:"貓空被邪術封住，劍士和祭司一起守護" },
     ch4:      { p:"杏花妖魅惑守衛與刺客，火法師破開妖林", c:"火法師用火燒開被迷惑的花林" },
     ch5:      { p:"深坑臭氣魔王作亂，神劍至寶就此現世", c:"打敗臭味魔王，得到神劍至寶" },
-    ch6:      { p:"黑暗球降臨，主角覺醒的最終決戰", c:"黑暗球出現，主角覺醒的大決戰" }
+    ch6:      { p:"黑暗球降臨，主角覺醒的最終決戰", c:"黑暗球出現，主角覺醒的大決戰" },
+    ch7:      { p:"星空墜落，四種英魂合力組成陣型", c:"星星掉下來了，四種英魂一起排陣型" }   // ★ v5.290.0
   };
 
   window._msOpenChapterSelect = function(){
@@ -4102,7 +4689,8 @@
      *     order 是進度分母(X / 7)、解鎖判定(firstUndone)、全通關獎勵(_msGrantAllClearReward)、
      *     首登導入 hasAny 判定 的共同來源。若把 ch7 加進 order,現有玩家會瞬間變成「還沒全通關」、
      *     全通關獎勵發不出去、進度條倒退 → 故本卡為「純顯示層靜態卡」,零資料影響。
-     *   ★ 日後第七章正式做好時:把 ch7 寫進 MAINSTORY_DB.chapters + order,並刪掉這張靜態卡即可。 */
+     *   ★ 日後第七章正式做好時:把 ch7 寫進 MAINSTORY_DB.chapters + order,並刪掉這張靜態卡即可。
+     *   ★ v5.290.0 第七章已正式加入 order ⇒ 本卡改為「第八章・待續…」(下一章做好時同樣:寫進 chapters + order,再把本卡改成下一章)。 */
     (function _msComingSoonCard(){
       try{
         var csCard = document.createElement("div");
@@ -4120,7 +4708,7 @@
         csMid.style.cssText = "flex:1 1 auto;min-width:0;";
         csMid.innerHTML =
           "<div style=\"font-size:30px;font-weight:900;color:#b9b3cc;letter-spacing:1px;\">" +
-            _msT("第七章・待續…", "第七章・待續…") + "</div>" +
+            _msT("第八章・待續…", "第八章・待續…") + "</div>" +
           "<div style=\"font-size:20px;color:#9d97b4;margin-top:5px;line-height:1.4;\">" +
             _msT("異世界的故事還沒結束。新的篇章正在撰寫中，敬請期待！", "故事還沒完喔！新的一章正在寫，等一下下！") + "</div>" +
           "<div style=\"font-size:18px;font-weight:800;color:#a9a9be;margin-top:7px;letter-spacing:1px;\">📝 " +
@@ -4133,19 +4721,20 @@
         csBtn.style.cssText = "flex:0 0 auto;padding:14px 22px;border-radius:16px;font-size:22px;font-weight:800;letter-spacing:1px;cursor:not-allowed;border:none;color:#fff;touch-action:manipulation;background:rgba(90,90,110,0.6);";
         csBtn.onclick = function(ev){
           if(ev) ev.stopPropagation();
-          try{ if(typeof _toast === "function") _toast(_msT("第七章還在製作中，敬請期待！", "第七章還在做，等一下下喔！")); }catch(_){}
+          try{ if(typeof _toast === "function") _toast(_msT("第八章還在製作中，敬請期待！", "第八章還在做，等一下下喔！")); }catch(_){}
         };
         csRight.appendChild(csBtn);
         csCard.appendChild(csRight);
         wrap.appendChild(csCard);
-      }catch(_csErr){ console.warn("[主線] 第七章待續卡建立失敗", _csErr); }
+      }catch(_csErr){ console.warn("[主線] 下一章待續卡建立失敗", _csErr); }
     })();
 
     // 全通關提示
     if(doneCnt === order.length){
       var clr = document.createElement("div");
       clr.style.cssText = "text-align:center;margin:6px auto 0 auto;font-size:24px;font-weight:900;color:#ffe08a;letter-spacing:2px;text-shadow:0 0 18px rgba(255,200,100,0.5);";
-      clr.textContent = "🏆 " + _msT("全六章通關！你已走完異世界的旅程。", "全部通關！你走完異世界的旅程囉！");
+      /* ★ v5.290.0 舊文案「全六章通關！」改成不寫死章數(之後再加章節也不必改) */
+      clr.textContent = "🏆 " + _msT("目前開放的章節全部通關！新的篇章正在撰寫中。", "目前的章節全部看完了！新的一章快來囉！");
       wrap.appendChild(clr);
     }
 
@@ -4304,7 +4893,7 @@
   // ════════ 首登自動導入 gate(排 onAuth 序列最後·防疊加)════════
   window._msMaybeFirstLogin = function(){
     try{
-      if(!window._msEntryAllowed()) return; // 測試期僅管理員
+      if(!window._msEntryAllowed()) return; // 主線開關關閉時僅管理員(現已全員開放)
       // ★ v5.28.0 丙案 — 新玩家分類(只在 hydrate 完成後的本 gate 跑一次;寫入即上雲):
       //   「從來沒進過序章」= 序章未完成 && 無序章續播點 && 無任何章完成。GM 不分類。
       try{

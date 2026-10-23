@@ -18,7 +18,7 @@
                     '三下自然','三下社會','四下自然','四下社會','五下自然','五下社會','六下自然','六下社會'];
 
   var C = {
-    _v: 'v1.2.0',
+    _v: 'v1.3.0',
     base: '',                 /* 題庫資料夾網址前綴,大對抗 'exam/'、小遊戲 '../exam/' */
     gmDefault: '',            /* GM 全校預設版本('南一'/'翰林'/'康軒'/'') */
     hooks: { uid:null, loadPref:null, savePref:null },
@@ -228,7 +228,7 @@
   }
   function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
 
-  /* opts: { title, sub, onPick(sel, pool), onCancel(), sfx(name) , minQ } */
+  /* opts: { title, sub, onPick(sel, pool), onCancel(), sfx(name) , minQ, extraLabel, onExtra() } */
   C.openPicker = function(opts){
     opts = opts || {};
     _css();
@@ -296,6 +296,7 @@
       }
       h += '<div class="exr-msg"></div><div class="exr-foot">'
          + (opts.offLabel ? '<button class="exr-b exr-x" data-act="off" style="margin-right:auto;border-color:rgba(255,150,150,.6);color:#ffd0d0;">' + _esc(opts.offLabel) + '</button>' : '')
+         + (opts.extraLabel ? '<button class="exr-b exr-x" data-act="extra" style="' + (opts.offLabel ? '' : 'margin-right:auto;') + 'border-color:#ffd84d;color:#ffe9a8;">' + _esc(opts.extraLabel) + '</button>' : '')
          + '<button class="exr-b exr-x" data-act="cancel">取消</button>'
          + '<button class="exr-b exr-go" data-act="go">' + (opts.cute ? '出發!▶' : '開始複習 ▶') + '</button></div>';
       body.innerHTML = h;
@@ -319,6 +320,7 @@
       if(tk){ sfx('tap'); pickTerm(tk); render(); return; }
       if(a === 'cancel'){ sfx('cancel'); close(); if(opts.onCancel) opts.onCancel(); return; }
       if(a === 'off'){ sfx('cancel'); close(); if(opts.onOff) opts.onOff(); return; }
+      if(a === 'extra'){ sfx('tap'); close(); if(opts.onCancel) opts.onCancel(); if(opts.onExtra) opts.onExtra(); return; }   /* ★ v1.3.0 額外按鈕(大對抗:🏆 考試複習挑戰) */
       if(a === 'go'){
         if(!st.book){ msg('請先選年級冊。'); return; }
         msg('題目下載中…');

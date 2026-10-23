@@ -1452,7 +1452,7 @@ P.bg = [
 
   /* ── BOSS 純背景(解鎖=以「我很會」難度通關該 BOSS)───────────────────
    *   ★ id2~7/9/13 是 v4.60.0 既有款,原為免費;本版依老師裁定改為 BOSS 解鎖制。
-   *     因 _AVATAR_ADMIN_ONLY = true(造型工房仍測試中),目前零學生受影響;
+   *     造型工房已全員開放(_AVATAR_ADMIN_ONLY=false),這些款式目前對所有學生都需 BOSS 解鎖;
    *     若日後想改回免費,把該款 lock 改回 null 即可(id 與檔名皆未變·舊存檔相容)。 */
   { id:7,  n:'彰化老街', ns:'彰化老街', lock:{t:'quest'}, file:'彰化老街.png', grp:'boss', boss:'油膩魔王・滷汁大鍋' },
   { id:22, n:'台中鳳梨酥工廠', ns:'鳳梨酥工廠', lock:{t:'quest'}, file:'台中鳳梨酥工廠.png', grp:'boss', boss:'酥脆狂魔・熱浪糕師' },
@@ -2828,7 +2828,7 @@ function _avSfx(kind){
 }
 
 window._avatarOpenPanel = function(){
-  /* ★ v4.55.0 管理員測試期守門(雙保險;入口按鈕本身已隱藏) */
+  /* ★ v4.55.0 造型開關守門(雙保險;開關關閉時入口按鈕本身也會隱藏) */
   if(typeof window._avatarGateAllowed === 'function' && !window._avatarGateAllowed()){
     alert(_avT('主角造型功能測試中,即將開放,敬請期待!','主角打扮功能快開放了,再等等喔!'));
     return;
@@ -3588,7 +3588,7 @@ function _avatarAnyHairImg(){
 
 window._avatarSaveClick = function(){
   _avSfx('confirm');   /* ★ v4.64.0 需求6:確認音效 */
-  /* ★ v4.83.0 儲存造型後立即重刷「主角英雄立繪」(index.html 的 HERO_IMGS)，
+  /* ★ v4.83.0 儲存造型後立即重刷「主角英雄立繪」(hero_db.js 的 HERO_IMGS)，
    *   讓圖鑑/戰鬥卡/編組馬上看到新造型。函式不存在就静默跳過。 */
   try{ if(typeof window._lxpsProtagPortraitRefresh === 'function') window._lxpsProtagPortraitRefresh(); }catch(_ePp){}
   var btn = document.getElementById('_av-save-btn');
@@ -3693,7 +3693,7 @@ window._avatarCardRerender = function(){
 
 /* 好友名單用:傳入好友 players doc(fd)與顯示名 → 開名片 */
 window._avatarOpenFriendCard = function(label, fd){
-  /* ★ v4.55.0 管理員測試期守門(雙保險;好友卡片 📇 按鈕本身已條件渲染) */
+  /* ★ v4.55.0 造型開關守門(雙保險;好友卡片 📇 按鈕本身已條件渲染) */
   if(typeof window._avatarGateAllowed === 'function' && !window._avatarGateAllowed()){
     alert(_avT('冒險者名片功能測試中,即將開放,敬請期待!','名片功能快開放了,再等等喔!'));
     return;
@@ -3707,10 +3707,9 @@ window._avatarOpenFriendCard = function(label, fd){
 };
 
 /* ════════════════════════════════════════
- * 8. 管理員測試期 gating(老師指示 2026-07-17:先讓管理員測試,對一般玩家隱藏)
- *    ★ 正式開放時:把下面 _AVATAR_ADMIN_ONLY 這一行改成 false,即全員可見(單一開關)
+ * 8. 開放開關 _AVATAR_ADMIN_ONLY(單一開關;v5.19.0 起 false = 全員可見,改 true 則僅管理員)
  *    - 入口按鈕(#adv-avatar-btn)靜態 HTML 預設 display:none,
- *      由 _avatarRefreshEntryVisibility 於登入後判定管理員才顯示
+ *      由 _avatarRefreshEntryVisibility 於登入後依開關判定是否顯示
  *    - 好友卡片 📇 按鈕:渲染時同開關判定(index.html _renderFriendPanelImpl 內)
  *    - _avatarOpenPanel / _avatarOpenFriendCard 開頭雙保險守門
  * ════════════════════════════════════════ */

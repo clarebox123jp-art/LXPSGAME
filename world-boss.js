@@ -425,7 +425,7 @@
       const tid = (typeof tidOverride === 'string' && tidOverride)
         ? tidOverride
         : (roll.treasureId || 'dragon_fang_fire');
-      // 檢查是否已擁有(讀 window 端的 _taiwanTreasureData,index.html 內已掛 window)
+      // 檢查是否已擁有(讀 window 端的 _taiwanTreasureData,由 game_battle.js / game_adv.js 掛到 window)
       const _td = (typeof window._taiwanTreasureData !== 'undefined') ? window._taiwanTreasureData : null;
       const _owned = _td && _td[tid] && (_td[tid].lv >= 1);
       if(_owned){
@@ -1583,7 +1583,7 @@
             // 只收有 q 跟 a 欄位的題目(過濾掉設定資料)
             if(q && (q.q || q.question) && (q.a || q.answer || q.options)){
               // ★ v5.116.0(老師需求)— 套用 GM「題庫可見性」的 'wb'(世界龍王戰)開關。
-              //   單一真相在 index.html:window._lxpsQuizItemVisible(q, scene)。
+              //   單一真相:window._lxpsQuizItemVisible(q, scene)(v5.235.0 拆檔後在 game_battle.js)。
               //   ⚠ 函式不存在(舊版 index / 載入順序)一律放行 = 舊行為零回歸。
               if(typeof window._lxpsQuizItemVisible === 'function'
                  && !window._lxpsQuizItemVisible(q, 'wb')) continue;
@@ -3356,7 +3356,7 @@
   // ★ v3.15.98 — 深淵海龍王專屬 AI(絕對零度 / 萬丈寒淵 / 絕對零度·冰封終焉)
   //   主軸:冰凍 CC + 招牌封技(天賦每回合 + 爆發全體)。傷害走 doDmg → cap5000。
   //   ⚠ 封技 = seal(無法用技能) + _burstSeal(無法爆發)組合(老師①甲:零引擎風險)。
-  //   ⚠ 對玩家施加的冰凍正常(1~2 回合);海龍王自己被冰凍的 dur 壓制在 index.html addStatus。
+  //   ⚠ 對玩家施加的冰凍正常(1~2 回合);海龍王自己被冰凍的 dur 壓制在 addStatus(現位於 game_battle.js)。
   // ════════════════════════════════════════════════════════════════════
   // S1:絕對零度 — 特技 130% 全體水屬性傷害 + 全體 50% 機率冰凍 1 回合
   function _wbWaterBossS1(boss){
@@ -3901,7 +3901,7 @@
   }
 
   // ─ 代執行玩家動作 ───────────────────────────────────────────────
-  //   主要呼叫者:index.html 內房主收到 pendingAction 時
+  //   主要呼叫者:房主收到 pendingAction 時(v5.235.0 拆檔後在 game_cloud.js)
   //   actorPos: 0~3
   //   action: { type:'atk'|'s1'|'s2'|'burst'|'rest'|'skip' }
   window._wbExecPlayerAction = function(actorPos, action){

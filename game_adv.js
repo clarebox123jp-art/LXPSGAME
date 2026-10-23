@@ -3034,8 +3034,9 @@ function _kingDrawQuestions(subject, count){
   // ★ v5.288.0 — 知識王「📝 評量複習」:科目字串 '考試複習｜…' ⇒ 從考試複習題庫抽(冊檔已在選單時下載)
   if(typeof window._advExamIsSubject === 'function' && window._advExamIsSubject(subject)){
     try{
-      const _ex = _advExamPool(subject, '').filter(q => q && q.subject && q.subject.indexOf('考試複習｜') === 0);
+      let _ex = _advExamPool(subject, '').filter(q => q && q.subject && q.subject.indexOf('考試複習｜') === 0);
       for(let i = _ex.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); const t = _ex[i]; _ex[i] = _ex[j]; _ex[j] = t; }
+      try{ const _chO = (typeof window._advExamChalOrder === 'function') ? window._advExamChalOrder(_ex) : null; if(_chO) _ex = _chO; }catch(_){}   // ★ v5.289.0 挑戰範圍未答對題優先
       return _ex.slice(0, Math.min(count, _ex.length));
     }catch(_eEx){ return []; }
   }
@@ -4581,6 +4582,7 @@ function _kingPickAnswer(pickIdx){
       const _q = _kc._curQuestions[_kc._curIdx];
       const _kSubject = (_q && _q.subject) || '';
       if(_q && _q.id != null && _kSubject){
+        try{ if(typeof window._advExamChalOnCorrect === 'function') window._advExamChalOnCorrect(_q.id); }catch(_eCh){}   // ★ v5.289.0 考試複習挑戰計數
         if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions){
           window._persistentCorrectQuestions = _persistentCorrectQuestions = {};
         }
@@ -5293,7 +5295,7 @@ window._scGrantReward=_scGrantReward;
 //   玩家勾選 → window._lxpsExamPref(存檔欄位 examPref_s);GM 學校預設版本 → gameConfig/examReview.defaultVer。
 // ════════════════════════════════════════════════════════════════════
 const _ADV_EXAM_CHOICE = '📝 考試複習';
-const _ADV_EXAM_CORE_VER = '20261022b';   // ★ v5.288.0 exam_core v1.1.0(評量範圍)
+const _ADV_EXAM_CORE_VER = '20261023';   // ★ v5.289.0 exam_core v1.3.0(選單額外按鈕:🏆 考試複習挑戰)
 window._advExamIsSubject = function(s){ return typeof s === 'string' && s.indexOf('考試複習｜') === 0; };
 function _advExamUid(){ try{ return (window._fbUser && window._fbUser.uid) || String(window._gUserId || '') || 'guest'; }catch(_){ return 'guest'; } }
 function _advExamEnsureCore(cb){
@@ -5376,6 +5378,9 @@ function _advExamOpenPicker(onDone, onCancel, preTerm){
         preTerm: preTerm || '',
         sfx: function(n){ try{ playSfx(n === 'cancel' ? 'sfx-tap' : (n === 'ok' ? 'sfx-confirm' : 'sfx-tap'), 0.4); }catch(_){} },
         onCancel: onCancel,
+        // ★ v5.289.0 挑戰期間選單左下多一顆「🏆 考試複習挑戰」(看進度/鎖定範圍)
+        extraLabel: (function(){ try{ return (typeof _advExchActive === 'function' && _advExchActive() && _advExamUid() !== 'guest') ? '🏆 考試複習挑戰' : ''; }catch(_){ return ''; } })(),
+        onExtra: function(){ try{ window._advExamChalOpen(false); }catch(_){} },
         onPick: function(sel){
           window._advExamSel = sel;
           try{ localStorage.setItem('lxps_exam_lastsel_' + _advExamUid(), JSON.stringify(sel)); }catch(_){}
@@ -5412,6 +5417,367 @@ function _advExamPool(subject, difficulty){
     return _o;
   });
 }
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.289.0(老師需求「登入遊戲時先看考試複習獎勵,只要在 115 學年度 11/8(日)前完成自己年級的考試複習題庫
+//   所有題目(不重複),就可以額外獲得 GM 獎勵:召喚水晶 10 顆、知識幣 10 萬…登入提醒視窗要請學生慎重選擇
+//   自己要複習的科目、版本和年級及學期。目前的考前加成是上學期期中評量範圍」+ 更正「每個科目可以獲得最多 3 次」)
+//   老師確認規則:同一鎖定範圍完成 3 輪(每輪該範圍每一題都答對過一次)/範圍 = 評量範圍(期中 1、2 單元)。
+//   ‧GM 設定:gameConfig/examChallenge = { on, term:'1mid', end:'2026-11-08', cry:10, coin:100000, max:3 }(沒設用預設)
+//   ‧玩家進度:存檔欄位 examChal_s = { key, subs:{ '自然':{ book, ver, units:[1,2], done:{題id:1}, claims, at }, '社會':{…} } }
+//     key = term|end(GM 換一檔評量就自動開新一期);每科只能鎖定一次範圍,鎖定後不能改。
+//   ‧計數:冒險(小怪/BOSS)與知識王答對考試複習題 ⇒ 題 id 落在鎖定範圍(版本+冊+單元)就記一題。
+//   ‧共用 iPad:本機備份鍵帶 uid;載入時以本帳號雲端值為準並與同 uid 本機備份逐科取較大(領獎次數只增不減)。
+// ════════════════════════════════════════════════════════════════════
+const _ADV_EXCH_DEF = { on: true, term: '1mid', end: '2026-11-08', cry: 10, coin: 100000, max: 3 };
+const _ADV_EXCH_SUBJ = ['自然', '社會'];
+window._lxpsExamChal = window._lxpsExamChal || null;
+window._lxpsExamChalCfg = window._lxpsExamChalCfg || null;
+function _advExchCfg(){
+  const g = window._lxpsExamChalCfg || {}, d = _ADV_EXCH_DEF;
+  const _n = (v, def, lo, hi) => { v = parseInt(v, 10); return (isFinite(v) && v >= lo && v <= hi) ? v : def; };
+  return {
+    on: (typeof g.on === 'boolean') ? g.on : d.on,
+    term: (['1mid','1final','2mid','2final'].indexOf(g.term) >= 0) ? g.term : d.term,
+    end: (typeof g.end === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(g.end)) ? g.end : d.end,
+    cry: _n(g.cry, d.cry, 0, 99), coin: _n(g.coin, d.coin, 0, 10000000), max: _n(g.max, d.max, 1, 10)
+  };
+}
+function _advExchDeadline(cfg){ return Date.parse(cfg.end + 'T23:59:59+08:00'); }
+function _advExchActive(){ const c = _advExchCfg(); return c.on && Date.now() <= _advExchDeadline(c); }
+function _advExchKey(){ const c = _advExchCfg(); return c.term + '|' + c.end; }
+function _advExchEndLabel(cfg){
+  try{ const p = cfg.end.split('-'); const w = '日一二三四五六'.charAt(new Date(cfg.end + 'T12:00:00+08:00').getDay()); return (+p[1]) + '/' + (+p[2]) + '(' + w + ')'; }catch(_){ return cfg.end; }
+}
+function _advExchUnits(){
+  const c = _advExchCfg();
+  try{ if(window.ExamCore){ window.ExamCore.setTerms(window._reviewBoostCfg || null); const u = window.ExamCore.termUnits(c.term); if(u && u.length) return u.slice(); } }catch(_){}
+  try{ const u2 = window._reviewBoostCfg && window._reviewBoostCfg.examTermUnits && window._reviewBoostCfg.examTermUnits[c.term]; if(u2 instanceof Array && u2.length) return u2.slice(); }catch(_){}
+  return (c.term.indexOf('mid') > 0) ? [1, 2] : [3, 4, 5, 6];
+}
+function _advExchLsKey(){ return 'lxps_exam_chal_' + _advExamUid(); }
+function _advExchState(){
+  let s = window._lxpsExamChal;
+  const k = _advExchKey();
+  // GM 設定還沒讀到前不因 key 不同而清空(避免用預設 key 誤清掉 GM 自訂期限的進度)
+  if(!s || typeof s !== 'object'){ s = { key: k, subs: {} }; window._lxpsExamChal = s; }
+  else if(s.key !== k){ if(window._lxpsExamChalCfgAt || !s.key){ s = { key: k, subs: {} }; window._lxpsExamChal = s; } }
+  if(!s.subs || typeof s.subs !== 'object') s.subs = {};
+  return s;
+}
+function _advExchPersist(cloud){
+  try{ localStorage.setItem(_advExchLsKey(), JSON.stringify(window._lxpsExamChal || null)); }catch(_){}
+  if(cloud){ try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){} }
+}
+// 冊名 → 題 id 用的冊碼:'五上自然' → '5AS'
+function _advExchBookCode(book){
+  const b = String(book || '');
+  const g = { '三':'3', '四':'4', '五':'5', '六':'6' }[b.charAt(0)], t = { '上':'A', '下':'B' }[b.charAt(1)], s = { '自然':'S', '社會':'O' }[b.slice(2)];
+  return (g && t && s) ? (g + t + s) : '';
+}
+function _advExchPrefixes(sub){
+  const vc = { '南一':'N', '翰林':'H', '康軒':'K' }[sub.ver] || '', bc = _advExchBookCode(sub.book);
+  if(!vc || !bc) return [];
+  return (sub.units || []).map(u => vc + bc + u + '-');
+}
+function _advExchInRange(sub, rawId){ const p = _advExchPrefixes(sub); for(let i = 0; i < p.length; i++){ if(rawId.indexOf(p[i]) === 0) return true; } return false; }
+// 鎖定範圍目前的題目 id(冊檔已載入才有;否則 null)
+function _advExchIds(sub){
+  const raw = window.EXAM_Q && window.EXAM_Q[sub.book];
+  if(!raw) return null;
+  const out = [];
+  for(let i = 0; i < raw.length; i++){ if(_advExchInRange(sub, raw[i][0])) out.push(raw[i][0]); }
+  return out;
+}
+function _advExchTotal(sub){
+  const ids = _advExchIds(sub);
+  if(ids) return ids.length;
+  try{
+    if(window.ExamCore && window.EXAM_INDEX){ let n = 0; window.ExamCore.units(sub.book, sub.ver).forEach(x => { if((sub.units || []).indexOf(x.u) >= 0) n += x.n; }); if(n) return n; }
+  }catch(_){}
+  return sub.total || 0;
+}
+function _advExchDoneCnt(sub){
+  const ids = _advExchIds(sub), d = sub.done || {};
+  if(!ids) return Object.keys(d).length;
+  let n = 0; for(let i = 0; i < ids.length; i++){ if(d[ids[i]]) n++; }
+  return n;
+}
+// 冒險/知識王答對一題考試複習題時呼叫(id = 'EX-N5AS1-abcdef')
+window._advExamChalOnCorrect = function(qid){
+  try{
+    if(typeof qid !== 'string' || qid.indexOf('EX-') !== 0 || !_advExchActive()) return;
+    if(_advExamUid() === 'guest') return;
+    const rid = qid.slice(3), s = _advExchState(), c = _advExchCfg();
+    for(let i = 0; i < _ADV_EXCH_SUBJ.length; i++){
+      const sub = s.subs[_ADV_EXCH_SUBJ[i]];
+      if(!sub || !sub.book || (sub.claims || 0) >= c.max || !_advExchInRange(sub, rid)) continue;
+      sub.done = sub.done || {};
+      if(sub.done[rid]) continue;
+      sub.done[rid] = 1;
+      _advExchPersist(false);
+      _advExchCheck(_ADV_EXCH_SUBJ[i]);
+    }
+  }catch(e){ console.warn('[考試複習挑戰] 計數失敗', e); }
+};
+function _advExchCheck(subName){
+  const s = _advExchState(), c = _advExchCfg(), sub = s.subs[subName];
+  if(!sub || (sub.claims || 0) >= c.max) return;
+  const ids = _advExchIds(sub);
+  if(!ids || !ids.length) return;   // 冊檔沒載入:不判定(避免用舊題數誤發)
+  for(let i = 0; i < ids.length; i++){ if(!sub.done[ids[i]]) return; }
+  // ── 完成一輪:先記次數並存檔,再發獎(防重複領) ──
+  sub.claims = (sub.claims || 0) + 1;
+  sub.done = {};
+  sub.lastClaimAt = Date.now();
+  _advExchPersist(true);
+  const _src = '考試複習挑戰(' + sub.book + '・' + sub.ver + '・第' + sub.claims + '輪)';
+  try{ if(c.cry > 0 && typeof backpackAdd === 'function') backpackAdd('summon_crystal', c.cry, _src); }catch(e1){ console.warn('[考試複習挑戰] 水晶發放失敗', e1); }
+  try{ if(c.coin > 0 && typeof addKnowledgeCoins === 'function') addKnowledgeCoins(c.coin, _src); }catch(e2){ console.warn('[考試複習挑戰] 知識幣發放失敗', e2); }
+  try{ if(typeof window._logActivity === 'function') window._logActivity('reward', { source: 'exam_challenge', book: sub.book, ver: sub.ver, round: sub.claims, items: ['summon_crystal x' + c.cry, 'knowledge_coin x' + c.coin] }); }catch(_){}
+  try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+  try{ playSfx('sfx-confirm', 0.6); }catch(_){}
+  setTimeout(function(){ _advExchShowClaim(subName, sub, c); }, 600);
+}
+function _advExchShowClaim(subName, sub, c){
+  try{
+    const cute = window._artStyle === 'cute';
+    const ov = document.createElement('div');
+    ov.id = '_exch-claim';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483100;background:rgba(5,10,25,.82);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+    const left = c.max - sub.claims;
+    ov.innerHTML = '<div style="width:min(520px,94vw);background:linear-gradient(160deg,#3a2a08,#1d1606);border:3px solid #ffd84d;border-radius:20px;padding:20px;color:#fff6c8;text-align:center;font-family:inherit;box-shadow:0 0 40px rgba(255,216,77,.5);">'
+      + '<div style="font-size:46px;line-height:1;">🏆</div>'
+      + '<div style="font-size:24px;font-weight:900;color:#ffd84d;margin:8px 0;">' + (cute ? '全部答對了!好厲害!' : '考試複習挑戰完成!') + '</div>'
+      + '<div style="font-size:16px;line-height:1.6;">' + sub.book + '・' + sub.ver + '・第' + sub.units.join('、') + '單元<br>第 ' + sub.claims + ' 輪完成</div>'
+      + '<div style="font-size:20px;font-weight:800;margin:12px 0;color:#fff;">💎 召喚水晶 ×' + c.cry + '<br>🪙 知識幣 ' + c.coin.toLocaleString() + '</div>'
+      + '<div style="font-size:14px;color:#e8d9a0;line-height:1.6;">' + (left > 0 ? ('這個科目還可以再挑戰 ' + left + ' 輪(每一題重新答對一次)。') : '這個科目的挑戰獎勵已全部領完!') + '</div>'
+      + '<button style="margin-top:14px;min-height:46px;padding:10px 30px;font-size:18px;font-weight:900;border-radius:12px;border:2px solid #ffd84d;background:linear-gradient(135deg,#ffd84d,#ffb020);color:#3a2600;cursor:pointer;font-family:inherit;">' + (cute ? '太棒了!' : '收下獎勵') + '</button></div>';
+    ov.querySelector('button').onclick = function(){ try{ playSfx('sfx-tap', 0.4); }catch(_){} ov.remove(); };
+    document.body.appendChild(ov);
+  }catch(e){ try{ bannerFX(null, '🏆 考試複習挑戰完成!獲得水晶 ×' + c.cry + '、知識幣 ' + c.coin, '#ffd84d', 4000); }catch(_){} }
+}
+// 題目排序:挑戰鎖定範圍內「這一輪還沒答對」的題目排最前面(其餘照舊隨機)
+// needOnly=true(冒險 BOSS/小怪是從整池隨機抽):未答對題 ≥5 題時只回傳未答對題;快完成時再混入其他題避免同一題連續重複
+window._advExamChalOrder = function(pool, needOnly){
+  try{
+    if(!pool || !pool.length || !_advExchActive()) return null;
+    const s = _advExchState(), c = _advExchCfg(), subs = [];
+    _ADV_EXCH_SUBJ.forEach(k => { const x = s.subs[k]; if(x && x.book && (x.claims || 0) < c.max) subs.push(x); });
+    if(!subs.length) return null;
+    const a = [], b = [];
+    pool.forEach(q => {
+      const rid = String(q.id || '').replace(/^EX-/, '');
+      let need = false;
+      for(let i = 0; i < subs.length; i++){ if(_advExchInRange(subs[i], rid) && !(subs[i].done || {})[rid]){ need = true; break; } }
+      (need ? a : b).push(q);
+    });
+    if(!a.length) return null;
+    const sh = arr => { for(let i = arr.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; };
+    if(needOnly && a.length >= 5) return sh(a);
+    return sh(a).concat(needOnly ? sh(b).slice(0, 10) : sh(b));
+  }catch(_){ return null; }
+};
+// 存檔載入:本帳號雲端值 + 同 uid 本機備份,逐科合併(領獎次數取大;同次數合併答對紀錄)
+window._advExamChalLoad = function(str){
+  let cl = null, lc = null;
+  try{ if(typeof str === 'string') cl = JSON.parse(str); }catch(_){ cl = null; }
+  try{ lc = JSON.parse(localStorage.getItem(_advExchLsKey()) || 'null'); }catch(_){ lc = null; }
+  const ok0 = x => x && typeof x === 'object' && typeof x.key === 'string' && x.subs && typeof x.subs === 'object';
+  const k = ok0(cl) ? cl.key : (ok0(lc) ? lc.key : _advExchKey()), out = { key: k, subs: {} };
+  const ok = x => ok0(x) && x.key === k;
+  const A = ok(cl) ? cl.subs : {}, B = ok(lc) ? lc.subs : {};
+  _ADV_EXCH_SUBJ.forEach(n => {
+    const a = A[n], b = B[n];
+    if(!a && !b) return;
+    if(!a || !b){ out.subs[n] = a || b; return; }
+    const same = a.book === b.book && a.ver === b.ver && String(a.units) === String(b.units);
+    const ca = a.claims || 0, cb = b.claims || 0;
+    if(!same){ out.subs[n] = (cb > ca) ? b : a; return; }
+    const m = JSON.parse(JSON.stringify(cb > ca ? b : a));
+    if(ca === cb){ m.done = Object.assign({}, a.done || {}, b.done || {}); }
+    out.subs[n] = m;
+  });
+  window._lxpsExamChal = out;
+  try{ localStorage.setItem(_advExchLsKey(), JSON.stringify(out)); }catch(_){}
+};
+window._advExamChalSaveStr = function(){ try{ return JSON.stringify(window._lxpsExamChal || null); }catch(_){ return 'null'; } };
+// GM 設定(gameConfig/examChallenge,10 分鐘內不重讀)
+function _advExchRefreshCfg(cb){
+  const now = Date.now();
+  if(window._lxpsExamChalCfgAt && now - window._lxpsExamChalCfgAt < 600000){ cb(); return; }
+  let done = false; const fin = function(){ if(done) return; done = true; cb(); };
+  setTimeout(fin, 2500);
+  try{
+    if(typeof window._fbGetExamChallenge !== 'function'){ fin(); return; }
+    window._fbGetExamChallenge().then(function(d){ window._lxpsExamChalCfgAt = Date.now(); window._lxpsExamChalCfg = d || null; fin(); }).catch(fin);
+  }catch(_){ fin(); }
+}
+// ── 登入提醒 / 挑戰面板 ──
+const _ADV_EXCH_BLOCKERS = ['style-onboarding-modal','_camp-overlay','adv-wb-crash-notice','adv-crash-recovery-box','_global-reward-notice','redeem-overlay','_ph-lock-modal','adv-continue-overlay','login-gate-modal','_member-profile-modal','_member-hub-modal','_rescue-guide-modal','_audit-ov'];
+function _advExchBlocked(){
+  try{
+    for(let i = 0; i < _ADV_EXCH_BLOCKERS.length; i++){ const el = document.getElementById(_ADV_EXCH_BLOCKERS[i]); if(el && el.offsetParent !== null && el.style.display !== 'none') return true; }
+    if(document.querySelector('.exr-ov')) return true;
+    if(window._petT1Active) return true;
+  }catch(_){}
+  return false;
+}
+function _advExchMuteKey(){ return 'lxps_exam_chal_mute_' + _advExamUid(); }
+function _advExchToday(){ try{ return new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10); }catch(_){ return ''; } }
+window._advExamChalLoginPopup = function(_try){
+  _try = _try || 0;
+  try{
+    if(_advExamUid() === 'guest') return;
+    _advExchRefreshCfg(function(){
+      if(!_advExchActive()) return;
+      const s = _advExchState(), c = _advExchCfg();
+      let allDone = true;
+      _ADV_EXCH_SUBJ.forEach(k => { const x = s.subs[k]; if(!x || (x.claims || 0) < c.max) allDone = false; });
+      if(allDone) return;
+      try{ if(localStorage.getItem(_advExchMuteKey()) === _advExchToday()) return; }catch(_){}
+      if(_advExchBlocked() || document.getElementById('_exch-ov')){
+        if(_try < 40) setTimeout(function(){ window._advExamChalLoginPopup(_try + 1); }, 2000);
+        return;
+      }
+      window._advExamChalOpen(true);
+    });
+  }catch(e){ console.warn('[考試複習挑戰] 登入提醒失敗', e); }
+};
+window._advExamChalOpen = function(fromLogin){
+  _advExamEnsureCore(function(ok){
+    if(!ok){ try{ bannerFX(null, '考試複習題庫下載失敗,請確認網路後再試', '#ff8888', 2200); }catch(_){} return; }
+    _advExamRefreshGm(function(){
+      _advExchRefreshCfg(function(){
+        const C = _advExamSetup();
+        C.loadIndex(function(ok2){ _advExchRender(!!fromLogin, ok2); });
+      });
+    });
+  });
+};
+function _advExchRender(fromLogin, idxOk){
+  const old = document.getElementById('_exch-ov'); if(old) old.remove();
+  if(!document.getElementById('_exch-style')){   // 手機橫向(矮螢幕)縮小字級與間距
+    const _cs = document.createElement('style'); _cs.id = '_exch-style';
+    _cs.textContent = '@media (orientation:landscape) and (max-height:520px){#_exch-ov ._exch-card{padding:10px 14px!important;font-size:13px}#_exch-ov ._exch-card>div:first-child{font-size:19px!important}#_exch-ov ._exch-card div{font-size:13px!important;line-height:1.45!important}#_exch-ov ._exch-card b{font-size:inherit!important}#_exch-ov button{font-size:14px!important;min-height:34px!important;padding:5px 10px!important}}';
+    document.head.appendChild(_cs);
+  }
+  const C = window.ExamCore, c = _advExchCfg(), s = _advExchState(), units = _advExchUnits();
+  const cute = window._artStyle === 'cute', active = _advExchActive();
+  const esc = x => String(x == null ? '' : x).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  const termName = _ADV_EXAM_TERM_NAME[c.term] || '';
+  const semDef = c.term.charAt(0) === '2' ? '下' : '上';
+  const ui = window._exchUi = window._exchUi || {};
+  const ov = document.createElement('div');
+  ov.id = '_exch-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:2147482900;background:rgba(5,10,25,.85);display:flex;align-items:safe center;justify-content:center;padding:12px;box-sizing:border-box;';
+  const B = 'appearance:none;-webkit-appearance:none;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#f3f0e6;border-radius:12px;padding:8px 14px;font-size:16px;font-weight:700;cursor:pointer;min-height:42px;font-family:inherit;';
+  const BON = 'border-color:#ffd84d;background:rgba(255,216,77,.22);color:#fff6c8;';
+  let h = '<div class="_exch-card" style="width:min(880px,96vw);max-height:min(92dvh,92vh);overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;background:linear-gradient(160deg,#1d2a4a,#141c33);border:2px solid #ffd84d;border-radius:18px;padding:16px 20px;color:#f3f0e6;font-family:inherit;">';
+  h += '<div style="font-size:24px;font-weight:900;color:#ffd84d;">🏆 考試複習挑戰' + (active ? '' : '(已結束)') + '</div>';
+  h += '<div style="font-size:15px;line-height:1.65;margin:6px 0 4px;color:#e6ecf8;">'
+     + (cute ? ('在 <b style="color:#ffd84d;">' + _advExchEndLabel(c) + ' 晚上 11:59</b> 以前,把你選好的「' + termName + '」範圍(第 ' + units.join('、') + ' 單元)<b>每一題都答對一次</b>,就可以拿到老師的獎勵:')
+             : ('期限:<b style="color:#ffd84d;">115 學年度 ' + _advExchEndLabel(c) + ' 23:59</b> 前。範圍:<b>' + termName + '(第 ' + units.join('、') + ' 單元)</b>。把鎖定範圍的考試複習題目<b>每一題都答對過一次(不重複)</b>,即可獲得 GM 獎勵:'))
+     + '<br><b style="color:#fff;font-size:17px;">💎 召喚水晶 ×' + c.cry + '　🪙 知識幣 ' + c.coin.toLocaleString() + '</b>'
+     + '<br>每個科目最多 <b>' + c.max + '</b> 輪:領完一輪後,同一範圍每題要再重新答對一次才能領下一輪。</div>';
+  h += '<div style="font-size:13.5px;color:#b9c4dc;line-height:1.55;">在「冒險關卡」選 📝 考試複習,或在「知識王」選 📝 ' + esc(termName) + '複習,答對就會算進度。</div>';
+  h += '<div style="margin:8px 0;padding:8px 12px;border-radius:10px;background:rgba(255,120,90,.14);border:1.5px solid rgba(255,140,110,.55);font-size:15px;color:#ffd8cc;line-height:1.55;">⚠ <b>請慎重選擇!</b>每個科目只能鎖定一次範圍,鎖定後就<b>不能更改</b>。請選<b>你自己的年級、學期和學校用的課本版本</b>。</div>';
+  _ADV_EXCH_SUBJ.forEach(function(sn){
+    const sub = s.subs[sn];
+    h += '<div style="margin-top:10px;padding:10px 12px;border-radius:14px;border:2px solid ' + (sub ? 'rgba(120,230,170,.55)' : 'rgba(159,211,255,.4)') + ';background:rgba(255,255,255,.04);">';
+    h += '<div style="font-size:19px;font-weight:900;color:' + (sn === '自然' ? '#9fe8a8' : '#ffc89a') + ';">' + (sn === '自然' ? '🔬 ' : '🌏 ') + sn + '</div>';
+    if(sub){
+      const tot = _advExchTotal(sub), dn = Math.min(_advExchDoneCnt(sub), tot || 0), cl = sub.claims || 0;
+      const pct = tot ? Math.round(dn * 100 / tot) : 0;
+      h += '<div style="font-size:15px;margin:4px 0;">🔒 ' + esc(sub.book) + '・' + esc(sub.ver) + '・第 ' + sub.units.join('、') + ' 單元</div>';
+      if(cl >= c.max){
+        h += '<div style="font-size:16px;font-weight:800;color:#ffd84d;">🎉 ' + c.max + ' 輪全部完成,獎勵已領完!</div>';
+      }else{
+        h += '<div style="font-size:14px;color:#cfe8ff;">第 ' + (cl + 1) + ' 輪進度:' + dn + ' / ' + (tot || '?') + ' 題(已領 ' + cl + ' / ' + c.max + ' 次)</div>'
+           + '<div style="height:12px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin:4px 0 6px;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#7be0a0,#ffd84d);"></div></div>'
+           + (active ? '<button data-go="' + sn + '" style="' + B + 'border-color:#7be0a0;color:#d9ffe6;">📝 用這個範圍去複習</button>' : '');
+      }
+    }else if(!active){
+      h += '<div style="font-size:14px;color:#b9c4dc;">沒有參加。</div>';
+    }else{
+      const st = ui[sn] = ui[sn] || { g: '', t: semDef, v: '' };
+      const book = st.g ? (st.g + st.t + sn) : '';
+      const sv = book ? (C.schoolVer(book) || '') : '';
+      if(book && !st.v) st.v = sv || '南一';
+      h += '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0;"><span style="min-width:56px;font-size:14px;color:#9fd3ff;">年級</span>';
+      ['三','四','五','六'].forEach(g => { h += '<button data-sn="' + sn + '" data-g="' + g + '" style="' + B + (st.g === g ? BON : '') + '">' + g + '年級</button>'; });
+      h += '</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0;"><span style="min-width:56px;font-size:14px;color:#9fd3ff;">學期</span>';
+      ['上','下'].forEach(t => { h += '<button data-sn="' + sn + '" data-t="' + t + '" style="' + B + (st.t === t ? BON : '') + '">' + t + '學期' + (t === semDef ? '<span style="font-size:12px;color:#ffe27a;"> (這次考試)</span>' : '') + '</button>'; });
+      h += '</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0;"><span style="min-width:56px;font-size:14px;color:#9fd3ff;">版本</span>';
+      ['南一','翰林','康軒'].forEach(v => { h += '<button data-sn="' + sn + '" data-v="' + v + '" style="' + B + (st.v === v ? BON : '') + '">' + v + (sv === v ? '<span style="font-size:12px;color:#9ff0e0;"> 學校用的</span>' : '') + '</button>'; });
+      h += '</div>';
+      if(book){
+        let n = 0; const tl = [];
+        try{ C.units(book, st.v).forEach(x => { if(units.indexOf(x.u) >= 0){ n += x.n; tl.push('第' + x.u + '單元 ' + x.t); } }); }catch(_){}
+        st.n = n;
+        h += '<div style="font-size:14.5px;line-height:1.55;margin:4px 0;color:' + (n ? '#e6ecf8' : '#ffb3a7') + ';">'
+           + (n ? ('範圍:' + esc(book) + '・' + esc(st.v) + '・' + esc(tl.join('、')) + '(共 ' + n + ' 題)') : ('「' + esc(book) + '・' + esc(st.v) + '」目前沒有第 ' + units.join('、') + ' 單元的題目,請改選。'))
+           + (sv && st.v !== sv ? '<br><span style="color:#ffcf5a;">提醒:學校' + book.charAt(0) + '年級' + sn + '用的是「' + sv + '」版。</span>' : '') + '</div>';
+        if(n){
+          if(st.confirm){
+            h += '<div style="padding:8px 10px;border-radius:10px;background:rgba(255,216,77,.12);border:1.5px solid #ffd84d;font-size:15px;line-height:1.55;">確定要鎖定「' + esc(book) + '・' + esc(st.v) + '・第 ' + units.join('、') + ' 單元」嗎?<b>鎖定後不能更改。</b>'
+               + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;"><button data-sn="' + sn + '" data-lock="1" style="' + B + 'background:linear-gradient(135deg,#ffd84d,#ffb020);color:#3a2600;border-color:#ffd84d;">✅ 確定鎖定</button><button data-sn="' + sn + '" data-unconfirm="1" style="' + B + '">再想想</button></div></div>';
+          }else{
+            h += '<button data-sn="' + sn + '" data-ask="1" style="' + B + 'border-color:#ffd84d;color:#ffe9a8;">🔒 鎖定這個範圍</button>';
+          }
+        }
+      }else{
+        h += '<div style="font-size:14px;color:#b9c4dc;">先選你的年級。</div>';
+      }
+    }
+    h += '</div>';
+  });
+  if(!idxOk) h += '<div style="color:#ffb3a7;font-size:14px;margin-top:8px;">題庫目錄下載失敗,題數可能無法顯示;請確認網路後再打開一次。</div>';
+  h += '<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;position:sticky;bottom:-16px;padding:10px 0 4px;background:linear-gradient(180deg,rgba(20,28,51,0),#141c33 35%);">'
+     + (fromLogin && active ? '<button data-mute="1" style="' + B + 'margin-right:auto;font-size:14px;">今天先不提醒</button>' : '')
+     + '<button data-close="1" style="' + B + 'background:linear-gradient(135deg,#ffd84d,#ffb020);color:#3a2600;border-color:#ffd84d;font-size:18px;padding:8px 26px;">知道了</button></div>';
+  h += '</div>';
+  ov.innerHTML = h;
+  document.body.appendChild(ov);
+  ov.onclick = function(ev){
+    let t = ev.target; while(t && t !== ov && t.tagName !== 'BUTTON') t = t.parentNode;
+    if(!t || t === ov) return;
+    const sn = t.getAttribute('data-sn'), st = sn ? (ui[sn] = ui[sn] || { g: '', t: semDef, v: '' }) : null;
+    const tap = () => { try{ playSfx('sfx-tap', 0.4); }catch(_){} };
+    const rerender = () => { const sc = ov.querySelector('._exch-card'); const y = sc ? sc.scrollTop : 0; _advExchRender(fromLogin, idxOk); const n2 = document.querySelector('#_exch-ov ._exch-card'); if(n2) n2.scrollTop = y; };
+    if(t.getAttribute('data-close')){ tap(); ov.remove(); return; }
+    if(t.getAttribute('data-mute')){ tap(); try{ localStorage.setItem(_advExchMuteKey(), _advExchToday()); }catch(_){} ov.remove(); return; }
+    if(st && t.getAttribute('data-g')){ tap(); st.g = t.getAttribute('data-g'); st.v = ''; st.confirm = false; rerender(); return; }
+    if(st && t.getAttribute('data-t')){ tap(); st.t = t.getAttribute('data-t'); st.v = ''; st.confirm = false; rerender(); return; }
+    if(st && t.getAttribute('data-v')){ tap(); st.v = t.getAttribute('data-v'); st.confirm = false; rerender(); return; }
+    if(st && t.getAttribute('data-ask')){ tap(); st.confirm = true; rerender(); return; }
+    if(st && t.getAttribute('data-unconfirm')){ tap(); st.confirm = false; rerender(); return; }
+    if(st && t.getAttribute('data-lock')){
+      if(!_advExchActive()) return;
+      const s2 = _advExchState();
+      if(s2.subs[sn]) { rerender(); return; }   // 已鎖定(另一裝置/重複點)
+      const book = st.g + st.t + sn;
+      s2.subs[sn] = { book: book, ver: st.v, units: units.slice(), total: st.n || 0, done: {}, claims: 0, at: Date.now() };
+      _advExchPersist(true);
+      try{ playSfx('sfx-confirm', 0.5); }catch(_){}
+      try{ if(typeof window._logActivity === 'function') window._logActivity('exam_challenge_lock', { subject: sn, book: book, ver: st.v, units: units }); }catch(_){}
+      delete ui[sn];
+      rerender(); return;
+    }
+    const go = t.getAttribute('data-go');
+    if(go){
+      tap();
+      const sub = _advExchState().subs[go]; if(!sub) return;
+      const vc = { '南一':'N', '翰林':'H', '康軒':'K' }[sub.ver];
+      const sel = { book: sub.book, units: sub.units.map(u => vc + u), vers: [sub.ver] };
+      try{ C.setPref({ vers: sel.vers, book: sel.book, units: sel.units }); }catch(_){}
+      try{ localStorage.setItem('lxps_exam_lastsel_' + _advExamUid(), JSON.stringify(sel)); }catch(_){}
+      window._advExamSel = sel;
+      try{ C.loadBook(sub.book, function(){}); }catch(_){}
+      ov.remove();
+      try{ bannerFX(null, cute ? '範圍選好了!去冒險選「📝 考試複習」吧' : '已選好範圍:到冒險關卡選「📝 考試複習」或知識王「📝 評量複習」開始', '#7be0a0', 3200); }catch(_){}
+    }
+  };
+}
 function advGetQuizPool(grade, subject, difficulty) {
   try{ _pcqWeeklyResetCheck(); }catch(_){} // ★ v3.16.52 — 進題庫前先判定本週是否需重置累積答對進度
   function _filterPersistent(rawPool, subjectKey){
@@ -5436,6 +5802,8 @@ function advGetQuizPool(grade, subject, difficulty) {
   // ★ v5.287.0 — 考試複習(南一/翰林/康軒 單元題庫,依玩家選的冊/單元/版本)
   if (window._advExamIsSubject(subject)) {
     const _exRaw = _advExamPool(subject, difficulty);
+    // ★ v5.289.0 考試複習挑戰期間:鎖定範圍內本輪還沒答對的題目優先出(不受每週答對過濾影響,才能每題都輪到)
+    try{ const _chO = (typeof window._advExamChalOrder === 'function') ? window._advExamChalOrder(_exRaw, true) : null; if(_chO) return _chO; }catch(_){}
     const _pool = (_exRaw.length && _exRaw[0].subject && _exRaw[0].subject.indexOf('考試複習｜') === 0)
       ? _filterPersistent(_exRaw, _exRaw[0].subject) : _exRaw.slice();
     for(let i = _pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [_pool[i], _pool[j]] = [_pool[j], _pool[i]]; }
@@ -5618,7 +5986,7 @@ const ADV_SCENES = {
       choiceType: 'subject',
       choiceTitle: '📚 這次想挑戰的問答主題是？',
       // ★ v5.287.0 — 「📝 考試複習」(南一/翰林/康軒 自然・社會 單元題庫,點了開選單選冊/單元/版本;歸在課堂複習群組最前)
-      choices: ['📝 考試複習','國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','四下自然第三單元','四下自然第四單元','五下自然期中評量','五下自然第三單元','五下自然第四單元','六上自然第一單元','六上自然第二單元','六上自然第三單元','六上自然第四單元','關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗','世界機關王大賽'],
+      choices: ['📝 考試複習','國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識',/* ★ v5.289.0 四下/五下/六上自然舊單元題庫已整合進「📝 考試複習」(南一版),選單不再單列 */'關島交流','木柵動物園','照顧與陪伴幼兒','領養與照顧狗狗','世界機關王大賽'],
     },
     {
       key:'trail',
@@ -5877,10 +6245,10 @@ try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
 //   Phase 2:小怪 9+貔貅|Phase 3:五路線 BOSS 實裝+chinaProgress 雲端同步(鐵律1.41)+_ZEUS_TRUE_BOSSES(鐵律1.31)
 // ═══════════════════════════════════════════════════════════════════
 
-// ── 1. 英雄池:沿用貓空力行英雄池(日本/埃及同款;招募池 ? 鈕待 Phase 4 英雄實裝後開) ──
+// ── 1. 英雄池:沿用貓空力行英雄池(日本/埃及同款;中國 8 位英雄已實裝,招募見 _advGetHeroPoolForStage china 分支) ──
 ADV_HERO_POOL.china = [...(ADV_HERO_POOL.maokong || [])];
 
-// ── 2. 預設 BOSS 陣容 + 五路線變體(Phase 1 僅資料;BOSS 戰由 _CHINA_BOSS_READY 守門,Phase 3 實裝後開) ──
+// ── 2. 預設 BOSS 陣容 + 五路線變體(BOSS 戰已實裝,_CHINA_BOSS_READY=true) ──
 ADV_BOSS_TEAMS.china = [
   {name:'琵琶精', element:'dark'},
   {name:'妲己',   element:'dark'},
@@ -5916,7 +6284,7 @@ window._buildChinaBossTeam = function(variant){
   return team;
 };
 
-// ── 3. 三神物/進度 stub(Phase 1 in-memory 預設;Phase 3 依鐵律 1.41 五項檢查表接 chinaProgress 雲端持久,
+// ── 3. 三神物/進度(已依鐵律 1.41 五項檢查表接 chinaProgress 雲端持久;以下為記憶體預設值,
 //      100% 沿用三神器範式、不入至寶系統[v3.15.97 教訓]、零 localStorage 鏡像) ──
 // ════════════════════════════════════════════════════════════════════════════
 // ★★ v5.101.0(老師 2026-08-21 裁定·乙)— 三神物「消耗」由布林 false 改單調遞增計數 ★★
@@ -6062,7 +6430,7 @@ window._showChiyouTreasureChoice = function(onDone){
   if(_byYes) _byYes.onclick = () => _cyPick(true);
   if(_byNo)  _byNo.onclick  = () => _cyPick(false);
 };
-// ★ Phase 1 守門:BOSS 戰於 Phase 3 實裝後改 true(單一開關);目前場景三結束後顯示骨架驗收彈窗並安全退場
+// ★ BOSS 守門開關:Phase 3 已實裝 ⇒ 現值 true,BOSS 戰正常開打(改回 false 才會在場景三結束後安全退場)
 // ★ v5.41.0 — Phase 3 實裝完成(五路線妖王 HERO_DB/AI/被動 hook/三神物發放與消耗/chinaProgress 雲端)→ 開閘
 window._CHINA_BOSS_READY = true;   // ★ Phase 1 原值 false(誤刪是大忌·留存註記)
 
@@ -9405,7 +9773,7 @@ window._egyptShowLockedModal = function(count){
 
 // ════════════════════════════════════════════════════════════════
 // ★ v5.39.0 — 中國關《史詩神話繪卷》入口閘門(Phase 1 骨架)
-//   三重閘門:①_CHINA_ADMIN_ONLY=true 測試期(學生點擊=「即將開放」預告;正式開放改 false 單一開關)
+//   三重閘門:①_CHINA_ADMIN_ONLY(v5.101.0 起 false=已正式開放;改回 true 則學生只看到「即將開放」預告)
 //            ②埃及雙王通關(_medals['egypt_first_clear'] 雲端持久獎章)③4 名英雄達 Lv.45
 //   管理員一律直進(比照日本/埃及前例)。
 // ════════════════════════════════════════════════════════════════
@@ -9567,7 +9935,7 @@ window._chinaTrySelect = function(btnEl){
   try{ window._chinaEliteDone = false; }catch(_){}
   const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
   if(!_isAdmin){
-    // 閘門①:測試期僅管理員
+    // 閘門①:中國關開關(現值 false = 已全員開放)
     if(window._CHINA_ADMIN_ONLY){ window._chinaShowComingSoon(); return; }
     // 閘門②③:埃及雙王通關 + 4 名英雄 Lv.45
     const _egCleared = !!(typeof _medals !== 'undefined' && _medals && _medals['egypt_first_clear']);
@@ -13739,7 +14107,7 @@ function advSkipCutscene() {
   ].join('');
     if(window.innerWidth > 1180){ box.style.width='min(96vw,1000px)'; box.style.fontSize='170%'; }
 
-  const subjOpts  = ['📝 考試複習','國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識','五下自然期中評量','五下自然第三單元','五下自然第四單元','六上自然第一單元','六上自然第二單元','六上自然第三單元','六上自然第四單元','關島交流','木柵動物園','木柵動物園'];
+  const subjOpts  = ['📝 考試複習','國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識',/* ★ v5.289.0 舊單元已整合進考試複習 */'關島交流','木柵動物園','木柵動物園'];
   const diffOpts  = ['沒自信','普通','我很會'];
 
   if(!_advPlayerGrade) _advPlayerGrade = '綜合';
@@ -13899,9 +14267,8 @@ function _advSkipGiveTreasures() {
 
 function advFinishCutscene() {
   if(!_adventureMode){ exitAdventureMode(); return; }
-  // ★ v5.39.0 — 中國關 Phase 1 守門:五路線 BOSS 於 Phase 3 實裝(HERO_DB/AI/三神物發放),
-  //   實裝前 _CHINA_BOSS_READY=false → 場景三結束後顯示骨架驗收彈窗並安全退場,絕不進入缺資料的 BOSS 戰。
-  //   Phase 3 交付時改 _CHINA_BOSS_READY=true(單一開關),本守門自動失效、零改動。
+  // ★ v5.39.0 — 中國關 BOSS 守門:_CHINA_BOSS_READY=false 時場景三結束後安全退場,不進入 BOSS 戰。
+  //   五路線 BOSS 已實裝,現值 true ⇒ 本守門不生效(保留作為安全網)。
   if(typeof _adventureStage !== 'undefined' && _adventureStage === 'china' && !window._CHINA_BOSS_READY){
     try{
       const _oldP1 = document.getElementById('china-phase1-done'); if(_oldP1) _oldP1.remove();
@@ -17388,6 +17755,7 @@ function advSubmitAnswer(letter, isCorrectOverride) {
         if(_wqIsArenaSrc){ _bSubject = '鬥技場'; }
       }catch(_eWqArenaSrc){}
       if(q && q.id != null && _bSubject){
+        try{ if(typeof window._advExamChalOnCorrect === 'function') window._advExamChalOnCorrect(q.id); }catch(_eCh){}   // ★ v5.289.0 考試複習挑戰計數
         if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions){
           window._persistentCorrectQuestions = _persistentCorrectQuestions = {};
         }
@@ -21736,7 +22104,7 @@ function advGetUnlockedHeroes() {
   try {
     if(typeof window._isAdminUser === 'function' && window._isAdminUser()){
       var _adminList = ADMIN_ALL_HEROES.slice();
-      // ★ PHASE 2 A1 — 主角:管理員帳號持有(測試期閘門開放對象),避免管理員圖鑑/編組看不到主角
+      // ★ PHASE 2 A1 — 主角:管理員帳號一律持有(v5.290.0 起閘門對全體開放,學生走下方 advGetUnlockedHeroes 同一判定)
       try{ if(window._protagHeroOpenForMe && window._protagHeroOpenForMe() && window._PROTAG_HERO_NAME && _adminList.indexOf(window._PROTAG_HERO_NAME) < 0) _adminList.push(window._PROTAG_HERO_NAME); }catch(_){}
       return _adminList;
     }
@@ -24294,7 +24662,7 @@ async function advStartWinSequence() {
     _bossCoins = Math.round(_battleExpC * 0.3 * _blessMultCoin * _gearGoldMult * _petGoldMult);
   }catch(_coinE){ console.warn('[BOSS 結算金幣] 計算失敗:', _coinE); }
   if(_bossCoins > 0) addKnowledgeCoins(_bossCoins, '收入:BOSS 結算');
-  // ★ v5.31.0 — 裝備 Phase 3:冒險 BOSS 裝備掉落 75%(傳說80/神話20;世界BOSS 不走此結算路徑;測試期僅 GM)
+  // ★ v5.31.0 — 裝備 Phase 3:冒險 BOSS 裝備掉落 75%(傳說80/神話20;世界BOSS 不走此結算路徑;隨裝備開關,已全員開放)
   try{ if(typeof window._gearTryDrop === 'function') window._gearTryDrop('boss', '[BOSS] '); }catch(_gearBDropE){ console.warn('[裝備BOSS掉落]', _gearBDropE); }
   // ★ 成就：BOSS打倒
   if(G && G.p2) G.p2.forEach(h=>{ try{ _checkMedalDefeat(h.name); }catch(_){} });
@@ -26512,6 +26880,8 @@ function _buildSafeData() {
     autoBattleCfg_s: (function(){ try{ return JSON.stringify(window._autoBattleHeroCfg || {}); }catch(_){ return '{}'; } })(),
     // ★ v5.287.0 — 考試複習勾選(版本/冊/單元;純偏好,不含任何養成資料;自寫欄位不需改 firestore.rules)
     examPref_s: (function(){ try{ return JSON.stringify(window._lxpsExamPref || null); }catch(_){ return 'null'; } })(),
+    // ★ v5.289.0 — 考試複習挑戰(鎖定範圍/本輪答對題/已領次數;自寫欄位不需改 firestore.rules)
+    examChal_s: (function(){ try{ return (typeof window._advExamChalSaveStr === 'function') ? window._advExamChalSaveStr() : 'null'; }catch(_){ return 'null'; } })(),
     // ★ v1.0.20260428.1700 — 台灣環島至寶資料(等級/經驗/裝備英雄)
     taiwanTreasureData: _taiwanTreasureData,
     taiwanTreasureData_s: JSON.stringify(_taiwanTreasureData||{}),
@@ -27768,6 +28138,8 @@ function _applySafeData(raw) {
     window._advExamSel = null;
     try{ if(window.ExamCore) window.ExamCore.resetPrefCache(); }catch(_eExR){}
   }catch(_eExLoad){}
+  // ★ v5.289.0 — 載入考試複習挑戰(本帳號雲端值 + 同 uid 本機備份逐科合併;沒有就清空,不沿用上一位玩家)
+  try{ window._lxpsExamChal = null; if(typeof window._advExamChalLoad === 'function') window._advExamChalLoad(typeof data.examChal_s === 'string' ? data.examChal_s : null); }catch(_eChLoad){}
   // ★ v1.0.20260428.1700 — 載入台灣環島至寶資料
   // ★ v3.14.17 — 整顆覆蓋改為「逐件取較高」合併(鐵律 1.41 延伸到至寶):
   //   災情(第 1 名陳同學):領獎寫入龍牙+神話至寶 → 下次登入三槽選了較舊的 safe 槽
@@ -32411,12 +32783,11 @@ window._showNewbieGuide = function(startPage){
     { tabLabel:'⑤ 每日習慣', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第5章</span>每天登入好習慣</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">每天只要幾分鐘，英雄慢慢越來越強！</div><div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px;"><div style="display:flex;align-items:flex-start;gap:12px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:9px;padding:9px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:2px;">🔮</div><div style="font-size:clamp(13px,1.5vw,19px);color:#aabbcc;line-height:1.55;"><b style="color:#88ddff;">每日免費召喚 1 次</b><br>第一次按「召喚 1 次」完全免費，搞不好抽到 SSR！</div></div><div style="display:flex;align-items:flex-start;gap:12px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:9px;padding:9px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:2px;">💪</div><div style="font-size:clamp(13px,1.5vw,19px);color:#aabbcc;line-height:1.55;"><b style="color:#88ddff;">代表英雄自動獲得 EXP</b><br>登入後代表英雄免費獲得 EXP 10%，不用戰鬥！</div></div><div style="display:flex;align-items:flex-start;gap:12px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:9px;padding:9px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:2px;">📚</div><div style="font-size:clamp(13px,1.5vw,19px);color:#aabbcc;line-height:1.55;"><b style="color:#88ddff;">知識王答題</b><br>累積 5 天每天 ≥80 分 → SR 英雄召喚卷！<br>累積 10 天每天 ≥90 分 → 🌈 SSR 英雄召喚卷！</div></div><div style="display:flex;align-items:flex-start;gap:12px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:9px;padding:9px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:2px;">⚔️</div><div style="font-size:clamp(13px,1.5vw,19px);color:#aabbcc;line-height:1.55;"><b style="color:#88ddff;">打一場冒險或鬥技場</b><br>賺 EXP、知識幣、材料，每場都有成長！</div></div><div style="display:flex;align-items:flex-start;gap:12px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:9px;padding:9px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:2px;">🎁</div><div style="font-size:clamp(13px,1.5vw,19px);color:#aabbcc;line-height:1.55;"><b style="color:#88ddff;">送禮給好友</b><br>友情之心集滿 100 顆 → 自動換發 SSR 英雄召喚卷！</div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>新手成長路線</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">1</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">先玩木柵貓空，熟悉戰鬥</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">打小怪升等，讓英雄到 Lv.15 以上再挑戰 BOSS</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">每天做免費召喚，累積角色</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">找到喜歡的英雄組合，建立自己的陣容風格</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">英雄達 Lv.20 → 台灣環島！</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">更強 BOSS、更多知識題、更值錢的至寶掉落</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">4</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">加入世界 BOSS 討伐戰</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">和全校同學一起打龍王，累積貢獻拿排行獎勵！</div></div></div></div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">🆘 <b>戰鬥卡住？</b>畫面右側有「🆘 卡死自救」按鈕，點一下自動修復繼續戰鬥！</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第5章</span>每天玩一下</div><div class="nbg-daily-list"><div class="nbg-daily-item"><div class="nbg-daily-icon">🔮</div><div class="nbg-daily-text"><b>免費召喚</b>每天第一次不用花水晶</div></div><div class="nbg-daily-item"><div class="nbg-daily-icon">💪</div><div class="nbg-daily-text"><b>代表英雄</b>登入自動加經驗</div></div><div class="nbg-daily-item"><div class="nbg-daily-icon">📚</div><div class="nbg-daily-text"><b>知識王答題</b>連續高分拿好禮物</div></div><div class="nbg-daily-item"><div class="nbg-daily-icon">⚔️</div><div class="nbg-daily-text"><b>打一場</b>冒險或鬥技場</div></div><div class="nbg-daily-item"><div class="nbg-daily-icon">🎁</div><div class="nbg-daily-text"><b>送禮給好友</b>集滿友情之心換召喚卷</div></div></div><div class="nbg-step-list"><div class="nbg-step"><div class="nbg-step-num">1</div><div class="nbg-step-body"><div class="nbg-step-title">先玩木柵貓空熟悉戰鬥</div></div></div><div class="nbg-step"><div class="nbg-step-num">2</div><div class="nbg-step-body"><div class="nbg-step-title">每天召喚,收集英雄</div></div></div><div class="nbg-step"><div class="nbg-step-num">3</div><div class="nbg-step-body"><div class="nbg-step-title">英雄夠強就去台灣環島</div></div></div><div class="nbg-step"><div class="nbg-step-num">4</div><div class="nbg-step-body"><div class="nbg-step-title">加入世界BOSS討伐</div></div></div></div><div class="nbg-tip">🆘 卡住了嗎?按右邊的「卡死自救」按鈕就能修好!</div>'; }},
     { tabLabel:'⑥ 寵物系統', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第6章</span>寵物馴養系統</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">40 隻可愛動物寵物與神獸等你收服!馴養牠、陪伴牠,牠會成為英雄最可靠的夥伴!</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>怎麼馴養寵物?</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">1</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">到超商買「寵物飼料」🥫</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">便宜(30%)/高級(60%)/頂級(100%)三種基礎成功率,稀有寵物會扣一些</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">戰鬥中攜帶「未馴養」的寵物,按 🐾 馴養</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">額外行動,不消耗回合!每位英雄每回合限 1 次</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-size:clamp(13px,1.6vw,18px);font-weight:900;display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">回答 1 題「寵物知識問答」📝</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">答對成功率 ×1.5、答錯 ×0.5!題目取自寵物圖鑑的科普資料(別名/主食/習性/天敵)</div></div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>跟隨英雄 &amp; 好感度</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;gap:10px;align-items:flex-start;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:10px;padding:10px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:1px;">🎓</div><div><div style="font-size:clamp(14px,1.6vw,20px);font-weight:800;color:#88ddff;margin-bottom:2px;">跟隨英雄一起升級</div><div style="font-size:clamp(12px,1.4vw,17px);color:#8899aa;line-height:1.5;">馴養好的寵物可跟隨 1 位英雄:出戰自動加素質+寵物效果,打贏戰鬥會獲得經驗(最高 Lv.20,愈高加成愈多)</div></div></div><div style="display:flex;gap:10px;align-items:flex-start;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:10px;padding:10px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:1px;">💖</div><div><div style="font-size:clamp(14px,1.6vw,20px);font-weight:800;color:#88ddff;margin-bottom:2px;">好感度 &amp; 忠誠夥伴</div><div style="font-size:clamp(12px,1.4vw,17px);color:#8899aa;line-height:1.5;">一起戰鬥(每場 20% 機率+1)、打贏 BOSS(+1)、小屋互動(+1~+2)累積好感度(上限 100)。好感度 25/50/75/100 時,主人倒下的瞬間寵物會救活他(回 10/20/30/40% HP,每場 1 次);滿 100 寵物極限爆發可多用 1 次!<br>🌟 <b style="color:#e0b8ff;">寵物極限爆發的威力也隨好感度提升</b>:有點陌生 25% → 已經熟識 50% → 有點親密 75% → 非常親密 100% → 不離不棄 125%!好感越高,寵物大絕越強!</div></div></div><div style="display:flex;gap:10px;align-items:flex-start;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:10px;padding:10px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:1px;">🏠</div><div><div style="font-size:clamp(14px,1.6vw,20px);font-weight:800;color:#88ddff;margin-bottom:2px;">寵物小屋</div><div style="font-size:clamp(12px,1.4vw,17px);color:#8899aa;line-height:1.5;">寵物圖鑑上方的大按鈕!邀請 3 隻寵物入住,每天可以撫摸🤚、玩耍🎾、餵食🍽 各一次。餵食要從食物表選出牠的「主食」:餵對好感+2、EXP+1,餵錯好感−1(可以重試,順便學動物知識!)</div></div></div><div style="display:flex;gap:10px;align-items:flex-start;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.22);border-radius:10px;padding:10px 12px;"><div style="font-size:clamp(18px,2vw,26px);flex-shrink:0;margin-top:1px;">🎟️</div><div><div style="font-size:clamp(14px,1.6vw,20px);font-weight:800;color:#88ddff;margin-bottom:2px;">隨機寵物召喚卷</div><div style="font-size:clamp(12px,1.4vw,17px);color:#8899aa;line-height:1.5;">老師獎勵發放的珍貴道具!在寵物圖鑑上方使用,直接收服 1 隻未馴養寵物(SSR 10%/SR 30%/R 60%)</div></div></div></div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">💡 <b>小提醒:</b>寵物圖鑑裡每隻寵物都有科普資料(主食、習性、天敵…),先讀熟,馴養問答和小屋餵食都會更順利!</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第6章</span>寵物系統</div><div class="nbg-desc">收服 40 隻可愛動物寵物,和牠們一起冒險!</div><div class="nbg-step-list"><div class="nbg-step"><div class="nbg-step-num">1</div><div class="nbg-step-body"><div class="nbg-step-title">超商買寵物飼料🥫</div></div></div><div class="nbg-step"><div class="nbg-step-num">2</div><div class="nbg-step-body"><div class="nbg-step-title">戰鬥帶寵物,按 🐾 馴養</div></div></div><div class="nbg-step"><div class="nbg-step-num">3</div><div class="nbg-step-body"><div class="nbg-step-title">答對寵物問答,成功率 ×1.5!</div></div></div></div><div class="nbg-grow-list"><div class="nbg-grow-item"><div class="nbg-grow-icon">🎓</div><div class="nbg-grow-body"><div class="nbg-grow-title">跟隨英雄</div><div class="nbg-grow-desc">加素質,打贏一起升級(最高 Lv.20)</div></div></div><div class="nbg-grow-item"><div class="nbg-grow-icon">💖</div><div class="nbg-grow-body"><div class="nbg-grow-title">好感度</div><div class="nbg-grow-desc">夠高時,主人倒下寵物會救活他!和寵物越要好,寵物大絕越強(最高 125%)!</div></div></div><div class="nbg-grow-item"><div class="nbg-grow-icon">🏠</div><div class="nbg-grow-body"><div class="nbg-grow-title">寵物小屋</div><div class="nbg-grow-desc">每天撫摸、玩耍、餵主食(餵對好感+2)</div></div></div></div><div class="nbg-tip">💡 先看寵物圖鑑的科普資料,問答和餵食都會更容易答對!</div>'; }},
     /* ★★ v4.86.0 老師需求1 —— 主線任務 + 我的主角造型工房 完整併入教學指引(雙版·鐵律1.232) */
-    { tabLabel:'⑦ 主線劇情', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第7章</span>主線劇情（故事任務）</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">你追著一隻藍鵲跑進步道，一轉身就掉進了異世界——這就是主線劇情的開頭。主線是一段一段的故事，你會遇見夥伴、學會戰鬥、拿到神劍，最後迎戰黑暗球。</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>怎麼進去玩</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">1</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">關卡選擇頁 → 📖 主線劇情</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">會打開「章節選擇」視窗，上面有進度條，看得出你走到第幾章。</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">按 ▶ 開始冒險 / 繼續冒險</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">中途離開不會白跑，下次會從你停下來的那一段接著播。</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">打完的章節會變 ✅，可以 🔁 回顧劇情</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">回顧只是重看故事，獎勵不會再發一次，也不會影響你的進度。</div></div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>對白畫面怎麼操作</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;"><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">▼ 點畫面 / 下一句 ▶</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">字還在跑的時候點一下＝整句話立刻顯示完；再點一次才換下一句。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">◀ 上一句</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">看太快漏掉了？按上一句可以往回看，隨時補讀。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">⏭ 跳過這一段</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">只快轉「目前這一段對白」，戰鬥、夥伴加入、獎勵都不會被跳過。</div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>會發生什麼事 &amp; 有什麼獎勵</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">捏出你的模樣</b>：序章會打開造型工房，做出屬於你的主角（詳見下一章）<br>・<b style="color:#ffcc88;">夥伴加入</b>：每一章都會有角色加入隊伍，跳出大卡介紹他的技能與極限爆發<br>・<b style="color:#ffcc88;">劇情戰鬥與教學</b>：第一章河堤初戰會帶你認識回合、能量與大絕招<br>・<b style="color:#ffcc88;">神劍至寶</b>：第五章擊敗臭氣魔王後，神劍至寶現世<br>・<b style="color:#ffcc88;">主角覺醒</b>：第六章對決黑暗球，主角由 R 覺醒成 SSR，圖鑑會多一張新卡<br>・<b style="color:#ffcc88;">章節獎勵</b>：每章通關固定給 🔮 召喚水晶 ×5 ＋ 💰 知識幣 20,000，綁定帳號、一輩子只領一次</div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">💡 <b>小提醒：</b>章節要照順序玩，前一章沒完成，下一章會是 🔒；還沒解鎖的章節標題會顯示「？？？」，不會先爆雷給你。目前故事走到第六章，<b style="color:#ffd98a;">第七章還在製作中（待續…）</b>，敬請期待！</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第7章</span>主線故事</div><div class="nbg-desc">你掉進異世界了！跟著故事走，認識夥伴、變強、打大魔王。</div><div class="nbg-step-list"><div class="nbg-step"><div class="nbg-step-num">1</div><div class="nbg-step-body"><div class="nbg-step-title">關卡頁按 📖 主線劇情</div><div class="nbg-step-desc">會看到每一章，還有進度條</div></div></div><div class="nbg-step"><div class="nbg-step-num">2</div><div class="nbg-step-body"><div class="nbg-step-title">按 ▶ 開始玩</div><div class="nbg-step-desc">中途走掉沒關係，下次接著看</div></div></div><div class="nbg-step"><div class="nbg-step-num">3</div><div class="nbg-step-body"><div class="nbg-step-title">看完會變 ✅，可以重看</div><div class="nbg-step-desc">重看不會再拿一次獎勵</div></div></div></div><div class="nbg-card-grid"><div class="nbg-card"><div class="nbg-card-icon">▼</div><div class="nbg-card-title">點一下</div><div class="nbg-card-desc">字跑一半＝先跑完；再點才換下一句</div></div><div class="nbg-card"><div class="nbg-card-icon">◀</div><div class="nbg-card-title">上一句</div><div class="nbg-card-desc">看太快可以往回看</div></div><div class="nbg-card"><div class="nbg-card-icon">⏭</div><div class="nbg-card-title">跳過這一段</div><div class="nbg-card-desc">只快轉這段話，獎勵不會少</div></div></div><div class="nbg-tip">🎁 每玩完一章：🔮 召喚水晶 ×5 ＋ 💰 知識幣 20,000（一輩子只給一次）</div><div class="nbg-tip">💡 要照順序玩喔！第七章還在做，敬請期待！</div>'; }},
+    { tabLabel:'⑦ 主線劇情', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第7章</span>主線劇情（故事任務）</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">你追著一隻藍鵲跑進步道，一轉身就掉進了異世界——這就是主線劇情的開頭。主線是一段一段的故事，你會遇見夥伴、學會戰鬥、拿到神劍，最後迎戰黑暗球。</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>怎麼進去玩</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">1</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">關卡選擇頁 → 📖 主線劇情</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">會打開「章節選擇」視窗，上面有進度條，看得出你走到第幾章。</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">按 ▶ 開始冒險 / 繼續冒險</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">中途離開不會白跑，下次會從你停下來的那一段接著播。</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">打完的章節會變 ✅，可以 🔁 回顧劇情</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">回顧只是重看故事，獎勵不會再發一次，也不會影響你的進度。</div></div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>對白畫面怎麼操作</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;"><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">▼ 點畫面 / 下一句 ▶</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">字還在跑的時候點一下＝整句話立刻顯示完；再點一次才換下一句。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">◀ 上一句</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">看太快漏掉了？按上一句可以往回看，隨時補讀。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">⏭ 跳過這一段</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">只快轉「目前這一段對白」，戰鬥、夥伴加入、獎勵都不會被跳過。</div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>會發生什麼事 &amp; 有什麼獎勵</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">捏出你的模樣</b>：序章會打開造型工房，做出屬於你的主角（詳見下一章）<br>・<b style="color:#ffcc88;">夥伴加入</b>：每一章都會有角色加入隊伍，跳出大卡介紹他的技能與極限爆發<br>・<b style="color:#ffcc88;">劇情戰鬥與教學</b>：第一章河堤初戰會帶你認識回合、能量與大絕招<br>・<b style="color:#ffcc88;">神劍至寶</b>：第五章擊敗臭氣魔王後，神劍至寶現世<br>・<b style="color:#ffcc88;">主角覺醒</b>：第六章對決黑暗球，主角由 R 覺醒成 SSR，圖鑑會多一張新卡<br>・<b style="color:#ffcc88;">章節獎勵</b>：每章通關固定給 🔮 召喚水晶 ×5 ＋ 💰 知識幣 20,000，綁定帳號、一輩子只領一次</div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">💡 <b>小提醒：</b>章節要照順序玩，前一章沒完成，下一章會是 🔒；還沒解鎖的章節標題會顯示「？？？」，不會先爆雷給你。目前故事走到第七章，<b style="color:#ffd98a;">第八章還在製作中（待續…）</b>，敬請期待！</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第7章</span>主線故事</div><div class="nbg-desc">你掉進異世界了！跟著故事走，認識夥伴、變強、打大魔王。</div><div class="nbg-step-list"><div class="nbg-step"><div class="nbg-step-num">1</div><div class="nbg-step-body"><div class="nbg-step-title">關卡頁按 📖 主線劇情</div><div class="nbg-step-desc">會看到每一章，還有進度條</div></div></div><div class="nbg-step"><div class="nbg-step-num">2</div><div class="nbg-step-body"><div class="nbg-step-title">按 ▶ 開始玩</div><div class="nbg-step-desc">中途走掉沒關係，下次接著看</div></div></div><div class="nbg-step"><div class="nbg-step-num">3</div><div class="nbg-step-body"><div class="nbg-step-title">看完會變 ✅，可以重看</div><div class="nbg-step-desc">重看不會再拿一次獎勵</div></div></div></div><div class="nbg-card-grid"><div class="nbg-card"><div class="nbg-card-icon">▼</div><div class="nbg-card-title">點一下</div><div class="nbg-card-desc">字跑一半＝先跑完；再點才換下一句</div></div><div class="nbg-card"><div class="nbg-card-icon">◀</div><div class="nbg-card-title">上一句</div><div class="nbg-card-desc">看太快可以往回看</div></div><div class="nbg-card"><div class="nbg-card-icon">⏭</div><div class="nbg-card-title">跳過這一段</div><div class="nbg-card-desc">只快轉這段話，獎勵不會少</div></div></div><div class="nbg-tip">🎁 每玩完一章：🔮 召喚水晶 ×5 ＋ 💰 知識幣 20,000（一輩子只給一次）</div><div class="nbg-tip">💡 要照順序玩喔！第八章還在做，敬請期待！</div>'; }},
     { tabLabel:'⑧ 我的主角', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第8章</span>我的主角・造型工房</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">在這個世界裡，「你」也是一位角色。造型工房就像紙娃娃：一層一層把體型、髮型、衣服、配件疊上去，做出獨一無二的自己，然後印成一張冒險者名片。</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>入口在哪裡</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・英雄圖鑑頁的 <b style="color:#ffcc88;">👤 主角造型</b> 按鈕，隨時都能進去改<br>・主線序章第一次穿越時，也會自動打開造型工房請你「捏出自己的樣子」</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>可以調整什麼</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;"><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">🧍 體型與膚色</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">少年／少女／男童／女童四種體型，膚色色票任你挑。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">💇 髮型・髮色・瞳色</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">換髮型是「整顆頭」一起換；髮色與瞳色可以另外調。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">👕 整套裝扮＋配色</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">制服、和服、法師袍……選了整套會連髮型一起換；按「預設裝扮（素體）」就整個回到原本的樣子。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">🎩 頭戴・眼鏡・嘴巴小物</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">帽子、眼鏡、棒棒糖、口罩……還能用方向鍵微調位置與大小。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">🖼️ 卡片背景</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">純白底、左右漸層色，或直接放一張你打過的關卡風景圖當背景。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">💬 座右銘</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">從語錄清單挑一句放在名片上（校園安全考量，不開放自由輸入）。</div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>四顆重要按鈕</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">🔍 放大／🔎 縮小</b>：左邊預覽在「看全身」與「看特寫」之間切換<br>・<b style="color:#ffcc88;">🎲 隨機組合</b>：一鍵亂數搭配，沒靈感時很好用<br>・<b style="color:#ffcc88;">↩️ 重來</b>：全部回到預設造型（會先問你一次）<br>・<b style="color:#ffcc88;">✅ 確認儲存</b>：<b style="color:#ff9a9a;">一定要按這顆才會存起來</b>，直接關掉視窗不會保存</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>做好之後會用在哪</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">📇 冒險者名片</b>：立繪＋暱稱＋稱號「異界旅人」＋座右銘，好友名單點 📇 就看得到你<br>・<b style="color:#ffcc88;">英雄圖鑑的「主角」卡</b>：圖鑑裡那張主角，用的就是你捏的臉<br>・<b style="color:#ffcc88;">主線劇情</b>：故事裡出現的主角立繪，也會跟著你的造型變</div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">💡 <b>小提醒：</b>有 🔒 的款式表示還沒解鎖，點下去會先告訴你取得方法（打贏 BOSS、通關某一章、鬥技場兌換…）。沒解鎖的款式可以先「試穿」看看，但按確認儲存時會被脫下來，等真的拿到才能永久穿上。</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第8章</span>我的主角</div><div class="nbg-desc">像玩紙娃娃一樣，做出你自己的角色！</div><div class="nbg-card-grid"><div class="nbg-card"><div class="nbg-card-icon">🧍</div><div class="nbg-card-title">體型膚色</div><div class="nbg-card-desc">四種身體，膚色自己選</div></div><div class="nbg-card"><div class="nbg-card-icon">💇</div><div class="nbg-card-title">髮型髮色</div><div class="nbg-card-desc">換頭髮、換顏色</div></div><div class="nbg-card"><div class="nbg-card-icon">👕</div><div class="nbg-card-title">整套衣服</div><div class="nbg-card-desc">制服、和服…還能換配色</div></div><div class="nbg-card"><div class="nbg-card-icon">🎩</div><div class="nbg-card-title">帽子眼鏡</div><div class="nbg-card-desc">還有嘴巴小物，可以調位置</div></div><div class="nbg-card"><div class="nbg-card-icon">🖼️</div><div class="nbg-card-title">卡片背景</div><div class="nbg-card-desc">白底、漸層，或放風景圖</div></div><div class="nbg-card"><div class="nbg-card-icon">💬</div><div class="nbg-card-title">座右銘</div><div class="nbg-card-desc">挑一句話放在名片上</div></div></div><div class="nbg-tip">📍 進去的地方：英雄圖鑑的 👤 主角造型</div><div class="nbg-tip">✅ <b>打扮好一定要按「確認儲存」</b>，直接關掉不會存喔！</div><div class="nbg-tip">📇 做好的樣子會出現在你的名片、圖鑑的主角卡和故事裡。</div><div class="nbg-tip">🔒 有鎖的款式可以先試穿，真的拿到才能一直穿著。</div>'; }}
   ];
-  /* ★★ v4.86.0 章節總數改動態(_nbgTotal):兩個新章節仍在管理員測試期(_MAINSTORY_ADMIN_ONLY /
-   *   _AVATAR_ADMIN_ONLY 皆為 true),對還看不到入口的學生先隱藏,免得照著教學找不到按鈕。
-   *   ★ 功能正式開放(兩個旗標改 false)時,這兩章會自動出現在指引,不必再改這裡。 */
+  /* ★★ v4.86.0 章節總數改動態(_nbgTotal):依 _MAINSTORY_ADMIN_ONLY / _AVATAR_ADMIN_ONLY 決定是否顯示這兩章;
+   *   兩個開關現值皆為 false(已全員開放)⇒ 兩章對所有學生顯示。 */
   try{
     var _nbgAvOk = (typeof window._avatarGateAllowed === 'function') ? !!window._avatarGateAllowed() : true;
     var _nbgMsOk = (typeof window._msEntryAllowed === 'function') ? !!window._msEntryAllowed() : true;
@@ -37831,7 +38202,7 @@ function openShopOverlay(){
 }
 
 // ★ v3.13.32(2026-06-03) — 鬥技之證兌換商店(老師需求 2)
-//   階段:商品 8 項列出,顯示「持有 / 累積獲得」鬥技之證,但兌換按鈕暫不開放(顯示「即將開放」)
+//   商品 8 項列出,顯示「持有 / 累積獲得」鬥技之證;兌換功能已於 v3.13.60 開放(見下方功能版)
 //   商品清單(老師指定;★ v3.15.54 調價):
 //     1. SSR英雄召喚卷     = 30 證
 //     2. SR 英雄召喚卷     = 15 證
@@ -37902,7 +38273,7 @@ function _arenaGrantSummonVoucher(rarity){
     // ★★ v5.66.0(老師 2026-08-18 裁定)— 鬥技場召喚卷補「測試階段角色」凍結。
     //   舊碼完全沒過濾 → 學生用鬥技之證換 SSR 卷即可抽到測試期未公開的中國 8 位。
     //   用 _summonTestPhaseLocked(非永久排除):日本/埃及已正式開放故照常可得,
-    //   中國關 _CHINA_ADMIN_ONLY 改 false 後自動入池,不必再改程式。
+    //   中國關 _CHINA_ADMIN_ONLY 已於 v5.101.0 改 false ⇒ 現已自動入池。
     //   (原版保留備查:
     //    if(rarity === 'SSR'){ pool = SUMMON_RARE_HEROES.filter(function(h){ return unlocked.indexOf(h) < 0; }); }
     //    else { pool = all.filter(function(n){ return _getHeroRarity(n) === 'SR' && unlocked.indexOf(n) < 0; }); } )
@@ -38966,7 +39337,7 @@ function openSummonOverlay(){
   _syncSummonCrystalDisplay();
   // 顯示
   ov.style.display = 'block';
-  // ★ v5.254.0 命座:「✨ 命星工坊」按鈕(測試期只有 GM 看得到;非開放對象會被移除)
+  // ★ v5.254.0 命座:「✨ 命星工坊」按鈕(隨命座開關;v5.274.0 起全員可見)
   try{ if(typeof window._cstEnsureSummonBtn === 'function') window._cstEnsureSummonBtn(); }catch(_eCstBtn){}
   // ★ v5.84.0(P1 甲)— 動態背景影片改「進這一頁才載」(開機不再預抓)
   try{ if(window._lxpsActivateBgVideo) window._lxpsActivateBgVideo('summon-bg-video'); }catch(_){}
@@ -39233,7 +39604,7 @@ function _rollOneSummon(_batchExcl){
     return { kind:'burst_fruit', id:'burst_upgrade_fruit', name:'超越極限果實', icon:'🍑', qty:1, isRare:true };
   }
   // ★ v5.31.0 — 裝備 Phase 3:星空召喚 20% 出裝備(前置擲骰=原池自動×0.8 重配,機率總和仍 100%;
-  //   測試期僅 GM;裝備滿 100 件自動跳過走原池零損失;稀有度 稀有60/史詩25/傳說11/神話4=設計表)
+  //   隨裝備開關(已全員開放);裝備滿 100 件自動跳過走原池零損失;稀有度 稀有60/史詩25/傳說11/神話4=設計表)
   if(typeof window._gearSummonPreRoll === 'function'){
     const _gearRwd = window._gearSummonPreRoll();
     if(_gearRwd) return _gearRwd;
@@ -39776,7 +40147,7 @@ function _playSummon10xFx(onDone){
 // 取得某稀有度「尚未收錄」的英雄清單
 // ★★ v5.67.0(老師 2026-08-18 裁定「自選卷都不排除」)— 新增第二參數 forPick:
 //   forPick=true(自選召喚卷三消費點:面板開啟/確認選人/自選剩餘數)→ **不套用** _summonTestPhaseLocked,
-//     測試階段角色(現為中國關 8 位)也能被自選;老師裁定:自選卷是玩家主動指名,不做測試期遮蔽。
+//     測試階段角色(目前沒有;中國關已開放)也能被自選;老師裁定:自選卷是玩家主動指名,不做測試期遮蔽。
 //   forPick=false(預設·隨機召喚卷與隨機剩餘數)→ 維持 v5.66.0 測試期凍結行為完全不變。
 //   ⚠ 永久關卡限定 _summonStageLocked(星空召喚/黑暗球)不在本函式範圍,兩者互不影響。
 /* ══════════════════════════════════════════════════════════════════════════
@@ -39842,7 +40213,7 @@ function _summonTicketUnrecorded(rarity, forPick){
       //   「SSR 隨機卷 / SSR 自選卷 / 面板剩餘數顯示」三處,舊碼完全沒過濾 → 學生用知識王或
       //   碎片合成的 SSR 卷即可直接抽/自選到測試期未公開的中國 8 位(自選清單還會直接列出名字=劇透)。
       //   用 _summonTestPhaseLocked:日本 4/埃及 2 已正式開放照常可得(符合老師「正式開放時由
-      //   隨機/自選召喚卷獲得」),中國關翻旗後自動入池。
+      //   隨機/自選召喚卷獲得」),中國關已於 v5.101.0 翻旗 ⇒ 現已入池。
       //   (原 v3.16.82 版本保留備查:return _pool.filter(n => !_unlocked.includes(n)); )
       // ★★ v5.67.0 — 改走 _tpLocked(forPick=true 的自選卷不排除·老師裁定)
       //   (原 v5.66.0 版本保留備查:
@@ -40282,7 +40653,7 @@ function _openSummonTicketPickModal(tier){
     const _have = (typeof backpackGet === 'function') ? backpackGet(_ticketId) : 0;
     if(_have <= 0){ _showInGameToast('沒有這張自選召喚卷了', '#ff8844', 2000); return; }
     const _pool = _summonTicketUnrecorded(tier, true);   /* ★ v5.67.0 forPick=true:自選卷不排除測試期角色(老師裁定) */
-    // ★ v5.254.0 命座(裁定 4甲／風險 A7):UR 自選卷多一區「已擁有的 UR → 轉 1 顆命星」(滿 6 命者不列;測試期只有 GM)
+    // ★ v5.254.0 命座(裁定 4甲／風險 A7):UR 自選卷多一區「已擁有的 UR → 轉 1 顆命星」(滿 6 命者不列;隨命座開關,已全員開放)
     /* ★ v5.279.0(老師 2026-10-19「自選召喚卷無法選取已收錄英雄」)— SR/SSR 比照 UR:已收錄、未滿 6 命的同稀有度英雄
        另列一區,選了轉 1 顆命星(_cstTicketStarCandidates)。全收錄＋全滿 6 命才會走到下面的「保留」提示。 */
     const _cstURList = (typeof window._cstTicketStarCandidates === 'function') ? window._cstTicketStarCandidates(tier)
@@ -41920,7 +42291,7 @@ function _renderShopProducts(){
   // 各分類商品數(分頁標籤顯示數量)
   const _catCount = {};
   _shopBaseProducts.forEach(p => { const c = window._shopProductCat(p); _catCount[c] = (_catCount[c]||0) + 1; });
-  // ★ v5.31.0 — 裝備 Phase 3:超商每日裝備貨架分頁(測試期僅 GM 可見;6 部位各 1 件·日期種子零寫入)
+  // ★ v5.31.0 — 裝備 Phase 3:超商每日裝備貨架分頁(隨裝備開關,已全員開放;6 部位各 1 件·日期種子零寫入)
   const _gearShopOn = !!(window._gearAcqEnabled && window._gearAcqEnabled());
   const _catDefs = _gearShopOn ? (window._SHOP_CAT_DEFS||[]).concat([{ id:'gear', label:'🛡️ 裝備' }]) : (window._SHOP_CAT_DEFS||[]);
   if(_gearShopOn) _catCount['gear'] = 6;
@@ -43660,10 +44031,13 @@ function useBackpackItem(id){
       };
     }catch(e){ console.error('[treasure_reset_potion]', e); }
 
-  } else if(id==='summon_crystal'){
-    // ★ 召喚水晶：目前功能尚未開放，顯示說明
-    _showInGameToast('🔮 召喚水晶：超極稀有英雄召喚功能尚未開放，水晶已為你保留！', '#cc88ff', 4000);
   }
+  /* ★ v5.290.0 — 這裡原本有第二個 summon_crystal 分支(「召喚功能尚未開放」提示),但同一串 else-if 上方
+   *   v1.0.20260424.0920 的 summon_crystal 分支(跳轉召喚星空)永遠先攔下 ⇒ 本分支從未執行、說法也早已過時,改為註解保留。
+   *   舊碼備查(誤刪是大忌):
+   *   } else if(id==='summon_crystal'){
+   *     _showInGameToast('🔮 召喚水晶：超極稀有英雄召喚功能尚未開放，水晶已為你保留！', '#cc88ff', 4000);
+   *   } */
 }
 
 // 英雄選擇彈窗 (背包用)
@@ -50465,9 +50839,9 @@ try{ window._getHeroRarity = _getHeroRarity; }catch(_){}
 // ═══════════════════════════════════════════════════════════════════════
 // ★ PHASE 2 主線劇情 · 批次A-1(A1)— 主角戰鬥英雄「資料地基」(2026-07-21)
 //   主角 = 玩家自訂 avatar 化身的戰鬥英雄。本區塊只做「資料 + 持有 + 稽核安全 + 圖鑑」地基;
-//   技能/覺醒/avatar 立繪/重置留待 A2(技能資料與 execSkill 邏輯緊耦合須一起寫·序章本就無技能)。
-//   ★測試期閘門:_PROTAG_HERO_PUBLIC=false → 只有管理員帳號持有主角(比照寵物 _PET_SYS_PUBLIC);
-//     老師改為 true 一行即對全體 900 位學生開放。稽核白名單不分閘門一律守(管理員也不被回收)。
+//   技能/覺醒/avatar 立繪/重置已於 A2 完成(主角技能、第六章覺醒、動態立繪皆已上線)。
+//   ★開放閘門 _PROTAG_HERO_PUBLIC:★ v5.290.0(老師 2026-10-22「開主角」)改為 true ⇒ 全體學生持有主角戰鬥英雄
+//     (圖鑑看得到主角、主線劇情戰不再由替補代打);改回 false 即退回只有管理員持有。稽核白名單不分閘門一律守(管理員也不被回收)。
 // ═══════════════════════════════════════════════════════════════════════
 (function(){
   try{
@@ -50475,14 +50849,15 @@ try{ window._getHeroRarity = _getHeroRarity; }catch(_){}
     var _PN = window._PROTAG_HERO_NAME;
     // 身分判定(單一真相·全域各稽核/持有/稀有度點共用)
     window._isProtagHero = function(n){ return n === window._PROTAG_HERO_NAME; };
-    // 測試期公開閘門(false=僅管理員;老師改 true 對全體開放)
-    if(typeof window._PROTAG_HERO_PUBLIC === "undefined") window._PROTAG_HERO_PUBLIC = false;
+    // 公開閘門(true=全體學生;false=僅管理員)。★ v5.290.0 老師「開主角」⇒ 預設改 true。
+    //   舊值備查(誤刪是大忌):if(typeof window._PROTAG_HERO_PUBLIC === "undefined") window._PROTAG_HERO_PUBLIC = false;
+    if(typeof window._PROTAG_HERO_PUBLIC === "undefined") window._PROTAG_HERO_PUBLIC = true;
     window._protagHeroOpenForMe = function(){
       try{ if(window._PROTAG_HERO_PUBLIC) return true; }catch(_){}
       try{ if(typeof window._isAdminUser === "function" && window._isAdminUser()) return true; }catch(_){}
       return false;
     };
-    // 覺醒旗標讀取(A1 恆 false → 主角稀有度 R;A2 由第六章覺醒 act 寫入持久化 → 動態 SSR)
+    // 覺醒旗標讀取(第六章覺醒 act 寫入並持久化;未覺醒 = 主角稀有度 R,覺醒後 = 動態 SSR)
     window._lxpsProtagAwakened = function(){ try{ return !!window._protagAwakened; }catch(_){ return false; } };
     // 顯示名稱(內部名固定「主角」·對外顯示玩家暱稱·A2 接入各渲染點·helper 先備妥)
     /* ★★ v4.87.0 需求B3 —— 主角顯示暱稱「單一真相」+ 隱私修補
@@ -51057,7 +51432,7 @@ function _buildHeroGrid() {
   const _JP_HERO_BOSSES = ['大天狗','酒吞童子','玉藻前'];
   _JP_HERO_BOSSES.forEach(n => BOSS_SET.delete(n));
   let allKnown = [...new Set([...unlocked, ...advPool, ...ALL_HEROES, ..._JP_HERO_BOSSES])].filter(n=>!BOSS_SET.has(n));
-  // ★ PHASE 2 A1 — 主角測試期閘門:HERO_DB 已含主角條目(Object.keys 會撈出),閘門關閉時從圖鑑 roster 濾掉,避免對學生現身(顯示為未持有)
+  // ★ PHASE 2 A1 — 主角開放閘門:HERO_DB 已含主角條目(Object.keys 會撈出),閘門關閉(_PROTAG_HERO_PUBLIC=false)時從圖鑑 roster 濾掉;v5.290.0 起閘門開啟,學生圖鑑看得到主角
   try{ if(!(window._protagHeroOpenForMe && window._protagHeroOpenForMe())) allKnown = allKnown.filter(n => !(window._isProtagHero && window._isProtagHero(n))); }catch(_){}
   // ★★ v4.83.0 老師需求2 —— 主角 R 卡 / SSR 卡兩階段互藏(圖鑑顯示層·存檔永遠只有一隻)
   //   未覺醒 → 只顯示「主角」(R)；第六章通關覺醒後 → 只顯示「主角‧覺醒」(SSR)。
@@ -60404,8 +60779,7 @@ window._openFriendAvatarCard = function(i){
 //     已整份 players doc 讀回,零額外讀取);未捏臉好友 → 預設造型 + 「尚未設定造型」角標。
 //   - 縮圖渲染:window._avatarRenderSVG(cfg, null, true)(v4.61.0 名片同款上半身特寫)。
 //   - 點縮圖 → _openFriendAvatarCard(i) 開完整名片(v4.55.0 既有)。
-//   - 管理員測試期 gating:與 📇 名片按鈕同口徑(_AVATAR_ADMIN_ONLY),
-//     一般玩家看不到切換按鈕;正式開放時改 avatar_db.js 單一開關即全員可用。
+//   - 開放判定:與 📇 名片按鈕同口徑(_AVATAR_ADMIN_ONLY,現值 false = 全員可用)。
 //   - 燈號:縮圖右上角沿用 class="_friend-presence-dot" data-friend-uid,
 //     _applyFriendPresenceDots / onSnapshot 推送不用改就能套上。
 // ════════════════════════════════════════════════════════════════════
@@ -60413,7 +60787,7 @@ window._friendPanelCardMode = false;
 try{ window._friendPanelCardMode = (localStorage.getItem('_friendPanelCardMode') === '1'); }catch(_e){}
 
 window._friendCardModeAllowed = function(){
-  // 與 📇 名片按鈕同 gating:測試期僅管理員;另需 avatar_db.js 已載入(渲染函式存在)
+  // 與 📇 名片按鈕同 gating(_AVATAR_ADMIN_ONLY,現值已全員開放);另需 avatar_db.js 已載入(渲染函式存在)
   const _gateOn = (typeof window._AVATAR_ADMIN_ONLY === 'undefined') || window._AVATAR_ADMIN_ONLY === true;
   const _isAdm = (typeof window._isAdminUser === 'function' && window._isAdminUser());
   if(_gateOn && !_isAdm) return false;
@@ -60617,7 +60991,7 @@ function _renderFriendPanelImpl() {
         //   送禮邏輯:_openGiftDialog(i) 打開禮物選擇彈窗,_giftCanSendToFriend(uid) 判定今日是否已送過
         + `<div style="display:flex;gap:5px;padding:0 12px 12px;">`
         // ★ v4.55.0 — 📇 名片按鈕(主角捏臉系統 Phase 1;好友未捏臉則顯示預設造型)
-        //   管理員測試期 gating:_AVATAR_ADMIN_ONLY=true 時僅管理員渲染此按鈕(正式開放改 avatar_db.js 開關即可)
+        //   開放判定:_AVATAR_ADMIN_ONLY(現值 false = 全員渲染;改 true 則僅管理員)
         + (function(){
             const _gateOn = (typeof window._AVATAR_ADMIN_ONLY === 'undefined') || window._AVATAR_ADMIN_ONLY === true;
             const _isAdm = (typeof window._isAdminUser === 'function' && window._isAdminUser());
@@ -60674,7 +61048,7 @@ function _renderFriendPanelImpl() {
     + 'background:linear-gradient(to right,rgba(40,15,30,0.85),rgba(20,8,18,0.85));gap:24px;flex-wrap:wrap;">'
     + '<div style="font-size:' + _fpFs + ';font-weight:900;color:#ff88cc;letter-spacing:3px;text-shadow:0 0 20px rgba(255,130,200,0.55);">🤝 好友英雄</div>'
     + '<div style="font-size:' + _fpSub + ';color:#ccc;">邀請好友英雄加入你的冒險!</div>'
-    // ★ v4.63.0 — 「🪪 切換成名片」檢視模式切換(與 📇 名片按鈕同 gating,測試期僅管理員可見)
+    // ★ v4.63.0 — 「🪪 切換成名片」檢視模式切換(與 📇 名片按鈕同 gating,已全員開放)
     + (function(){
         if(!(typeof window._friendCardModeAllowed === 'function' && window._friendCardModeAllowed())) return '';
         const _cm = (window._friendPanelCardMode === true);
@@ -64079,7 +64453,7 @@ const MONSTER_DROPS = {
   ],
   '貔貅': [
     { icon:'💰', name:'知識幣 3500~7000', rate:'100%', note:'打倒時必定獲得' },
-    { icon:'🛡️', name:'史詩/傳說裝備×1',  rate:'50%',  note:'裝備系統(測試期功能)' },
+    { icon:'🛡️', name:'史詩/傳說裝備×1',  rate:'50%',  note:'' },
     { icon:'📘', name:'技能升級書×2~3',   rate:'50%',  note:'' },
     { icon:'📕', name:'EXP書(精裝版)×2~3', rate:'50%', note:'' },
     { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
@@ -64224,6 +64598,15 @@ function _advMiniGetQuizPool(sceneIdx) {
       return rawPool;
     }
     return filtered.length > 0 ? filtered : rawPool;
+  }
+  // ★ v5.289.0 — 考試複習(小怪戰路徑):原本落到最後的 ADV_QUIZ_DB 篩選 ⇒ 永遠 0 題、跳「題目都出過」重選。
+  //   改走 BOSS 戰同一個 advGetQuizPool(依玩家選的冊/單元/版本,挑戰範圍未答對題優先),再扣本場已出過的題。
+  if(typeof window._advExamIsSubject === 'function' && window._advExamIsSubject(subject)){
+    try{
+      const _exAll = advGetQuizPool(grade, subject, diff) || [];
+      const _exLeft = _exAll.filter(q => !window._miniQuizUsedIds.has(q.id));
+      return _exLeft.length >= 2 ? _exLeft : _exAll;
+    }catch(_eExMini){ return ADV_QUIZ_DB.filter(q => q.subject === '自然'); }
   }
   // ★ v1.0.20260424.0750 — 照顧與陪伴幼兒 / 領養與照顧狗狗 (專屬題庫,獨立記錄已答對)
   //   修復 Bug:選這兩個題庫進小怪戰跳出「所有題目都出過」重選視窗
@@ -64663,6 +65046,7 @@ function _advMiniQuizSubmit(letter, isCorrect) {
       const _curQ = window._miniQuizCurrentQ;
       const _curSubject = (_curQ && _curQ.subject) || _advPlayerSubject;
       if(_curQ && _curQ.id != null && _curSubject){
+        try{ if(typeof window._advExamChalOnCorrect === 'function') window._advExamChalOnCorrect(_curQ.id); }catch(_eCh){}   // ★ v5.289.0 考試複習挑戰計數
         if(typeof _persistentCorrectQuestions !== 'object' || !_persistentCorrectQuestions){
           window._persistentCorrectQuestions = _persistentCorrectQuestions = {};
         }
@@ -65677,7 +66061,7 @@ function advFinishMiniBattle(win) {
     const _blessMultDrop = (typeof window._gameBlessingMult === 'function') ? window._gameBlessingMult() : 1.0;
     const _dropMult = ((typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00) * _blessMultDrop;
     // ★ v5.31.0 — 裝備 Phase 3:小怪裝備掉落(特殊小怪 50% 史詩75/傳說25;其餘路邊/菁英 10% 稀有90/史詩10;
-    //   測試期僅 GM;敗戰時快照為空陣列自動無事;機率獨立擲骰,不吃 _dropMult 難度倍率=設計表固定值)
+    //   隨裝備開關(已全員開放);敗戰時快照為空陣列自動無事;機率獨立擲骰,不吃 _dropMult 難度倍率=設計表固定值)
     try{ if(typeof window._gearMiniBattleDrops === 'function') window._gearMiniBattleDrops(_miniMobSnapshot); }catch(_gearMDropE){ console.warn('[裝備小怪掉落]', _gearMDropE); }
     // ★ v5.56.0 — 神農鼎煉丹材料/配方掉落(函式內部 _adventureStage==='china' 守門·台日埃零影響;貔貅必掉極品+仙品)
     try{ if(typeof window._alchMiniBattleDrops === 'function') window._alchMiniBattleDrops(_miniMobSnapshot); }catch(_alchMDropE){ console.warn('[神農鼎小怪掉落]', _alchMDropE); }
@@ -71826,7 +72210,7 @@ function _buildMonsterPage() {
   const EG_RARE_LIST = ['聖甲蟲'];
 
   // ★ v5.40.0 — 中國關(史詩神話繪卷 1-3):路邊小怪 9(封神/西遊/三國各 3)+ 稀有 1(貔貅);
-  //   五路線妖王 BOSS 於 Phase 3 實裝後再補 CN_BOSS_LIST
+  //   五路線妖王 BOSS 已實裝,CN_BOSS_LIST 已補齊(見下一行)
   const CN_MOB_LIST  = ['狐妖小卒','天兵殘影','石磯童子','巡山小妖','蜘蛛精','白骨小兵','黃巾賊','藤甲兵','連弩兵'];
   const CN_RARE_LIST = ['貔貅'];
   // ★ v5.41.0 — 中國關 Phase 3 五路線妖王(5 主王 + 8 菁英守衛)
@@ -73339,6 +73723,7 @@ const MEDAL_DEFS = [
   { id:'ms_ch4_done',       icon:'🌸', name:'並肩作戰',     desc:'完成主線劇情第四章',                 cute:'和夥伴一起打完第四章!',             cat:'主角' },
   { id:'ms_ch5_done',       icon:'🌀', name:'異界之謎',     desc:'完成主線劇情第五章',                 cute:'第五章的祕密被你解開了!',           cat:'主角' },
   { id:'ms_ch6_done',       icon:'⚡', name:'覺醒之刻',     desc:'完成主線劇情第六章',                 cute:'看完第六章,超熱血的!',             cat:'主角' },
+  { id:'ms_ch7_done',       icon:'🌠', name:'星空歸位',     desc:'完成主線劇情第七章',                 cute:'看完第七章,把星星找回來了!',       cat:'主角' },   // ★ v5.290.0
   { id:'ms_all_done',       icon:'🏆', name:'主線全通',     desc:'完成目前開放的全部主線章節',         cute:'主線故事全部看完,你超棒!',         cat:'主角' },
   { id:'protag_awaken',     icon:'🌟', name:'真正的覺醒',   desc:'主角覺醒為 SSR 英雄',                cute:'主角覺醒變成 SSR 了!',              cat:'主角' },
   { id:'protag_inherit_skill', icon:'🧬', name:'繼承初體驗', desc:'第一次確認繼承其他英雄的技能',      cute:'第一次學會別的英雄的招式!',         cat:'主角' },
@@ -76943,6 +77328,7 @@ window._protagMedalSweep = function(){
       if(done('ch4')) U('ms_ch4_done');
       if(done('ch5')) U('ms_ch5_done');
       if(done('ch6')) U('ms_ch6_done');
+      if(done('ch7')) U('ms_ch7_done');   // ★ v5.290.0
       var DB = window.MAINSTORY_DB;
       if(DB && DB.chapters){
         var ids = Object.keys(DB.chapters);
@@ -79238,8 +79624,8 @@ function makeRadar(dims, size) {
  *     ⑥ UR 自選卷選已擁有 UR → 命星 ⑦ UR 替換卷退回命星 ⑧ 主角章節命星 ⑨ 圖鑑「✨ 命座」星圖(三平台)
  *     ⑩ 戰前套用框架 _cstApplyToHero(G1/G2/G3/G7 在 game_battle.js window._cstCap)
  *     ★ 星星的「戰鬥效果」下一輪起分批接(登錄表 window._CST_EFFECTS);本輪點亮的星會在效果接上後自動生效。
- *   ★ 測試期閘門 _CST_ADMIN_ONLY=true:非 GM 帳號 **所有行為與 v5.253.0 完全相同**(召喚不改權重、圖鑑不出現命座、
- *     星空不出現工坊),老師測完改 false 即全體開放(比照荒島/中國關/寵物系統的開放方式)。
+ *   ★ 開關 _CST_ADMIN_ONLY:v5.274.0 起 false = 全體開放;改回 true 則非 GM 帳號行為退回 v5.253.0
+ *     (召喚不改權重、圖鑑不出現命座、星空不出現工坊)。
  *
  *   【資料】window._cstData = { v:1, got:{k:n}, used:{k:n}, lit:{英雄:{s:[槽…],at}}, ga:{GM單號:at}, pc:{章:at}, hist:[] }
  *     k = 英雄名 / '#void_SR' '#void_SSR'(虛無的命星)/ '#pick_SR' '#pick_SSR' '#pick_UR'(自選命星)
@@ -79253,7 +79639,7 @@ function makeRadar(dims, size) {
   var W = window;
   W._CST_ADMIN_ONLY = false;           /* ★ v5.274.0(老師 2026-10-17 13:45「正式開放命星」)全體開放;要退回測試期改回 true(單一開關) */
   W._CST_RESET_COST = 5000;            /* 重置星圖收的知識幣(老師 2026-10-15 裁定 5000;原預設 1000) */
-  W._CST_PROTAG_CHAPTERS = ['ch3', 'ch6'];   /* 主角命星:依序第 1、2 顆(設計書第八節建議;老師尚未最後確認,改這裡即可) */
+  W._CST_PROTAG_CHAPTERS = ['ch3', 'ch6', 'ch7'];   /* 主角命星:依序第 1、2、3 顆(★ v5.290.0 第七章給第 3 顆;舊值備查 ['ch3', 'ch6']) */
   W._CST_MAX = 6;
   var SLOTS = ['t1', 't2', 's1', 's2', 'b1', 'b2'];
   var PRE = { t2:'t1', s2:'s1', b2:'b1' };
@@ -79480,7 +79866,7 @@ function makeRadar(dims, size) {
   /* ── 主角章節命星(衍生值;這裡只負責第一次看到時寫帳本,登入冪等)── */
   function _protagLedgerSweep(){
     try{
-      if(!W._cstOpenForMe()) return false;   /* 測試期:非 GM 帳號完全不寫命星資料 */
+      if(!W._cstOpenForMe()) return false;   /* 命座開關關閉時:非 GM 帳號完全不寫命星資料 */
       var d = D(), p = W._mainStoryProgress || {}, ch = false;
       (W._CST_PROTAG_CHAPTERS || []).forEach(function(c){
         if(p[c] === 'done' && !d.pc[c]){ d.pc[c] = Date.now(); _log('get', _protagKey(), 1, 'story:' + c); ch = true; }
@@ -79745,7 +80131,7 @@ function makeRadar(dims, size) {
     if(h._isFriendHero) return;
     try{ if(typeof _invitedFriendHero !== 'undefined' && _invitedFriendHero && W._friendHeroInParty && _invitedFriendHero.name === h.name) return; }catch(_){}
     var inAdv = false;
-    try{ inAdv = (typeof _adventureMode !== 'undefined' && _adventureMode === true) || /^WB-/.test(String(tag || '')); }catch(_){}
+    try{ inAdv = (typeof _adventureMode !== 'undefined' && _adventureMode === true) || /^(WB-|mainstory$)/.test(String(tag || '')); }catch(_){}   /* ★ v5.290.0 主線劇情戰建隊時 _adventureMode 尚未設成 true ⇒ 以來源標記 mainstory 認定 */
     if(!inAdv) return;   /* 裁定 2甲:鬥技場不生效(鬥技場本來就不走這支,這裡再守一次) */
     var k = W._cstKey(h.name);
     if(!W._cstEligible(k)) return;
@@ -80111,8 +80497,8 @@ function makeRadar(dims, size) {
     var canLight = _ready() && (!_isProtag(k) || _awakened());
     var protagNote = '';
     if(_isProtag(k)){
-      protagNote = '<div class="cst-stat" style="color:#ffcf8a;">' + _T('主角的命星要靠主線劇情拿:第三章、第六章各 1 顆,第 3～6 顆在第七章以後開放。' + (_awakened() ? '' : '(覺醒後才能點亮)'),
-        '主角命星僅由主線大章節取得:第三章、第六章通關各 1 顆;第 3～6 顆於第七章以後開放。' + (_awakened() ? '' : '(覺醒後才能點亮)')) + '</div>';
+      protagNote = '<div class="cst-stat" style="color:#ffcf8a;">' + _T('主角的命星要靠主線劇情拿:第三、六、七章各 1 顆,第 4～6 顆之後的章節開放。' + (_awakened() ? '' : '(覺醒後才能點亮)'),
+        '主角命星僅由主線大章節取得:第三、六、七章通關各 1 顆;第 4～6 顆於之後的章節開放。' + (_awakened() ? '' : '(覺醒後才能點亮)')) + '</div>';
     }
     var html = '<div class="cst-card" role="dialog" aria-modal="true">'
       + '<button type="button" class="cst-x" data-cst-act="close" aria-label="關閉">✕</button>'

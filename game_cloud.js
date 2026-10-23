@@ -4417,6 +4417,14 @@
       return snap.exists() ? (snap.data() || null) : null;
     }catch(e){ console.warn('[考試複習] 讀取學校版本失敗', e); return null; }
   };
+  // ★ v5.289.0 — 考試複習挑戰 GM 設定(gameConfig/examChallenge = { on, term, end:'YYYY-MM-DD', cry, coin, max })
+  //   登入提醒時讀一次(10 分鐘快取,不掛 onSnapshot);同 gameConfig 條款「登入者可讀·isAdmin 可寫」,免改 rules。
+  window._fbGetExamChallenge = async function(){
+    try{
+      const snap = await getDoc(doc(_fbDb, 'gameConfig', 'examChallenge'));
+      return snap.exists() ? (snap.data() || null) : null;
+    }catch(e){ console.warn('[考試複習挑戰] 讀取設定失敗', e); return null; }
+  };
 
   // ★★ v5.116.0(老師需求:「讓 GM 可以勾選是否顯示各單元題庫，或出現在知識王、競技場、龍王戰」)★★
   //   gameConfig/quizVisibility = { hidden:{ adv:[], king:[], arena:[], wb:[] }, updatedAt, updatedBy }
@@ -20533,6 +20541,14 @@
           catch(_eRg){ console.warn('[帳號救援說明] 觸發例外', _eRg); }
         }, 2500);
       }catch(_eRgT){ console.warn('[帳號救援說明] 排程失敗', _eRgT); }
+      // ★ v5.289.0 — 登入到關卡頁後,彈「🏆 考試複習挑戰」提醒(GM 獎勵/期限/慎選範圍);
+      //   延 3200ms 排在救援說明之後;內建防疊加:其他登入彈窗還開著就每 2 秒再看一次(最多 80 秒)。
+      try{
+        setTimeout(function(){
+          try{ if(typeof window._advExamChalLoginPopup === 'function') window._advExamChalLoginPopup(0); }
+          catch(_eEc){ console.warn('[考試複習挑戰] 觸發例外', _eEc); }
+        }, 3200);
+      }catch(_eEcT){ console.warn('[考試複習挑戰] 排程失敗', _eEcT); }
       // ★ v3.16.26 — 登入到關卡頁後,自動還原「被 v3.16.19 誤回收的練過英雄」(一次性·排在 orchestrator 之前)。
       //   延 1200ms:讓雲端 load 完成;內含雲端旗標 _auditLeveledRestoreV1 + 本機旗標防重跑。
       //   只把暫存等級>1(練過)的英雄補回 + 還原等級 + 補合法紀錄(不被出口過濾隱藏);不寫 _authoritativeRestoreAt(不重載·改記憶體/本機同步即時顯示)。
@@ -20593,7 +20609,7 @@
           catch(_eAu){ console.warn('[自我審查登入提示] 觸發例外', _eAu); }
         }, 4200);
       }catch(_eAuT){ console.warn('[自我審查登入提示] 排程失敗', _eAuT); }
-      // ★ v4.65.0 — 主線劇情首登自動導入(排最後 5000ms·防疊加;先 hydrate 雲端進度再判首登·僅 progress 空且測試期管理員)
+      // ★ v4.65.0 — 主線劇情首登自動導入(排最後 5000ms·防疊加;先 hydrate 雲端進度再判首登·僅 progress 空;主線已全員開放)
       try{
         setTimeout(function(){
           try{
@@ -22799,7 +22815,7 @@
 
     // ★ v3.12.14(2026-05-31)— 標記單一房間為 ended(給 world-boss.js 結算後呼叫)
     //   world-boss.js 是 IIFE,沒有 import 的 updateDoc/doc 可用,
-    //   所以在 index.html 暴露這支 API 讓它呼叫。
+    //   所以在本檔(game_cloud.js)暴露這支 API 讓它呼叫。
     //   冪等:寫多次無害,失敗也不擋戰鬥流程。
     window._wbMarkRoomEnded = async function(roomId, reason){
       if(!roomId) return { ok:false, reason:'no_roomId' };
@@ -25655,7 +25671,7 @@
                 //     單一真相=優先採用 world-boss.js 的 window._WB_DRAGON_TREASURE_MAP(登入時已載入·同步已補齊 8 筆),
                 //     本地保留完整 8 筆為 base(Object.assign 先鋪本地再讓雲端 map 覆蓋/追加)→ 未來新增龍王:
                 //     於 world-boss.js _WB_DRAGON_TREASURE_MAP 加一筆即自動對應(本地 base 亦建議同步補·雙保險防載入順序/離線)。
-                //   ★ 單一真相:走 index.html 的 window._lxpsDragonTreasureMapFull()(完整 8 龍王·見 TAIWAN_TREASURES export 後定義);
+                //   ★ 單一真相:走 window._lxpsDragonTreasureMapFull()(現位於 game_battle.js)(完整 8 龍王·見 TAIWAN_TREASURES export 後定義);
                 //     若該 helper 尚未就緒(理論上登入結算時早已載入)則用等價 inline 完整 8 筆 fallback,絕不落回 3 筆。
                 const _WB_DRAGON_T_MAP = (typeof window._lxpsDragonTreasureMapFull === 'function')
                   ? window._lxpsDragonTreasureMapFull()

@@ -3839,7 +3839,7 @@ try {
 //     • _summonTestPhaseLocked = **測試期**凍結   → 擋「隨機/自選召喚卷、鬥技場召喚卷、寵物召喚卷」,
 //                                 一旦該關卡正式開放(_CHINA_ADMIN_ONLY=false)**自動解凍入池**
 //   → 日本關/埃及已正式開放,故其英雄本來就能從券取得(符合老師「正式開放時由隨機/自選召喚卷獲得」)。
-//   ★ 正式開放時老師只要改 _CHINA_ADMIN_ONLY 一個開關,券池自動放行,不必再回頭改任何召喚邏輯。
+//   ★ 中國關已於 v5.101.0 正式開放(_CHINA_ADMIN_ONLY=false)⇒ 中國 8 位英雄目前不凍結、照常入券池。
 //   ★ 未來新關卡:在 _SUMMON_TEST_PHASE_GROUPS 追加一筆(testing 判斷式 + names 取得式)即全自動生效。
 // ════════════════════════════════════════════════════════════════════════════
 var _SUMMON_TEST_PHASE_GROUPS = [
@@ -3868,7 +3868,7 @@ var _SUMMON_TEST_PHASE_GROUPS = [
 //         v5.66.0 則把牠們以「測試期凍結」排除「隨機寵物召喚卷」,原設計是中國關開放後自動入池。
 //         老師本輪裁定改為**永久**,與 v5.62.0 星空池、以及活動介紹卡文案「於中國古代關馴養」
 //         及 v5.62.0 公告「只能在中國關取得」三方口徑一致 → 神獸只能靠中國古代關戰鬥馴養。
-//   ⚠ 與英雄口徑刻意不同:中國 8 位英雄仍走測試期凍結,關卡開放後照常進召喚卷池(老師既有裁定不變)。
+//   ⚠ 與英雄口徑刻意不同:中國 8 位英雄走測試期凍結(關卡已開放 ⇒ 現已照常進召喚卷池),神獸則永久排除。
 //   ★ 未來若有其他「永久不進券池」的角色,在本表 push 一組即全自動生效,不必再改召喚邏輯。
 // ════════════════════════════════════════════════════════════════════════════
 var _SUMMON_PERMA_LOCK_GROUPS = [
@@ -3924,7 +3924,7 @@ try {
 // ★★ v5.66.0(老師 2026-08-18 裁定)— 關卡專屬題庫科目清單(單一真相點)★★
 //   老師原話:「鬥技題庫一起修不要外洩測試期內容。」
 //   起因:鐵律 1.234 只修了知識王科目池,`_arenaQuizPool = ADV_QUIZ_DB.slice()` 完全沒過濾,
-//         中國關 200 題(測試期未公開)與日本關 150 題/埃及 30 題都會在鬥技場答題出現。
+//         中國關 200 題(當時測試期未公開)與日本關 150 題/埃及 30 題都會在鬥技場答題出現。
 //   本常數同時餵養 _kingGetSubjects()(知識王)與鬥技場題庫初始化 → 日後新關卡只要加一項即雙處生效。
 //   ⚠ 「台灣環島」刻意**不列入**(v5740 老師裁定:台灣題庫納入科目池,答對可獲台灣關至寶經驗)。
 // ════════════════════════════════════════════════════════════════════════════
@@ -9299,7 +9299,7 @@ function _arenaStartSoloBattle(){
       if(typeof ADV_QUIZ_DB !== 'undefined' && Array.isArray(ADV_QUIZ_DB) && ADV_QUIZ_DB.length){
         // ★★ v5.66.0(老師 2026-08-18 裁定)— 鬥技場題庫排除「關卡/活動專屬題庫」★★
         //   老師原話:「鬥技題庫一起修不要外洩測試期內容。」
-        //   舊碼 _arenaQuizPool = ADV_QUIZ_DB.slice() 完全沒過濾 → 中國關 200 題(測試期未公開)
+        //   舊碼 _arenaQuizPool = ADV_QUIZ_DB.slice() 完全沒過濾 → 中國關 200 題(當時測試期未公開)
         //   與日本關 150 題/埃及 30 題都會在鬥技場答題出現,等同繞過鐵律 1.234 的知識王防線。
         //   改走 _isStageOnlySubject 單一真相點(與 _kingGetSubjects 完全同口徑)→ 日後新關卡
         //   只要在 STAGE_ONLY_SUBJECTS 加一項,知識王與鬥技場雙處同時生效。
@@ -11351,8 +11351,8 @@ const MONSTER_LORE = {
   '山岳禁咒・崩天巨人':   '要讓玉山「下沉」,奪走台灣的脊樑!我要拳~~~碎~~~這座山!什麼?這就是我自己的山?等一下我重來……',
   // ★ FIX 20260516 — 世界 BOSS:火山炎龍王
   '火山炎龍王': '沉睡於義大利那不勒斯灣維蘇威火山口的古老火龍「炎之翼」。西元 79 年牠首次甦醒咆哮,使整座火山噴發兩天兩夜,將山下的羅馬古城龐貝完全掩埋於火山灰下。2026 年因近年地殼活動頻繁,火龍王第四度甦醒,需要四位英雄遠渡重洋前往那不勒斯封印,以免人類再蒙浩劫。',
-  // ★ v3.14.5 — 第二隻世界 BOSS 預告:翠綠森龍王(玩家可先在圖鑑預覽)
-  '翠綠森龍王': '🌱【即將登場】棲息於亞馬遜雨林最深處的太古翠玉龍。相傳全世界植物生命力最旺盛之地——這片浩瀚綠海——正是牠藤蔓盤結的軀體所化。平時牠與千年巨木融為一體靜靜沉睡,一旦有人砍伐焚林、破壞這片「世界之肺」,牠便會甦醒:萬千翠藤自地底竄出絞殺入侵者,飛葉如刀、劇毒蔓延。傳說牠唯一畏懼的是烈火,再堅韌的藤葉也擋不住火焰的吞噬。火龍王之後,下一位挑戰者就是牠——敬請期待!',
+  // ★ v3.14.5 — 第二隻世界 BOSS:翠綠森龍王(已進入世界 BOSS 輪替可挑戰;★ v5.290.0 拿掉玩家看得到的「即將登場/敬請期待」字樣)
+  '翠綠森龍王': '🌱棲息於亞馬遜雨林最深處的太古翠玉龍。相傳全世界植物生命力最旺盛之地——這片浩瀚綠海——正是牠藤蔓盤結的軀體所化。平時牠與千年巨木融為一體靜靜沉睡,一旦有人砍伐焚林、破壞這片「世界之肺」,牠便會甦醒:萬千翠藤自地底竄出絞殺入侵者,飛葉如刀、劇毒蔓延。傳說牠唯一畏懼的是烈火,再堅韌的藤葉也擋不住火焰的吞噬。',
   // ★ v3.15.55(2026-06-19)— 埃及關(環遊世界第二站)雙王 BOSS + 6 路邊小怪 + 1 稀有小怪 完整介紹
   // ── 雙王 BOSS(此為「BOSS 能力版」介紹,登場於金字塔寶庫王座戰) ──
   '法老王': '古埃及至高無上的王者,被尊為太陽神「拉」在人間的化身。沉睡千年後從黃金面具下甦醒,手持王權法杖喚起黃沙風暴,並降下「太陽神的審判」以烈日灼燒一切入侵者。他身負「法老威儀」——愈是受到攻擊,威儀層數愈高、傷害愈強;只要埃及豔后仍在身旁,便能不斷被她以生命喚回王座。是守護「黃金與詛咒之地」的雙王之一。',
@@ -73336,9 +73336,9 @@ const TAIWAN_TREASURES = {
     isDragonTreasure: true,    // 龍王至寶白名單(讓 _getTaiwanTreasureEffectBonus 用 +3%/級)
   },
   // ════════════════════════════════════════════════════════════════════
-  // ★ v3.14.27 — 其餘 6 隻龍王的排名專屬至寶(老師提供名稱+圖;基礎能力與固有效果「尚未開放」)
-  //   comingSoon:true → 至寶圖鑑顯示灰色「尚未開放」佔位;baseStats 全 0、specialEffects 空、
-  //   不影響任何戰鬥邏輯;待老師日後補上能力時移除 comingSoon 並填入 baseStats/specialEffects/abilityText。
+  // ★ v3.14.27 — 其餘 6 隻龍王的排名專屬至寶(老師提供名稱+圖)。
+  //   能力已全部由老師指定並正式開放(各條目的 comingSoon 皆已移除,baseStats/specialEffects/abilityText 齊備);
+  //   圖鑑的 comingSoon 灰色佔位邏輯保留給日後新龍王至寶使用。
   //   id 一旦上線即不可改(發放後雲端存 id);圖檔沿用老師指定檔名(非由新龍王名推導)。
   // ════════════════════════════════════════════════════════════════════
   dragon_scale_earth: {
@@ -73856,7 +73856,7 @@ function _getTaiwanTreasureEffectBonus(treasureId, lv){
   const def = TAIWAN_TREASURES[treasureId];
   if(!def || !def.specialEffects) return {};
   // ★ v3.12.0(2026-05-29)— 龍王至寶白名單:每級 +3%(其他至寶維持 +2%)
-  //   isDragonTreasure 標記在至寶定義上,目前只有 dragon_fang_fire,未來可擴充
+  //   isDragonTreasure 標記在至寶定義上(目前 8 隻龍王至寶都有標記)
   const _perLv = (def.isDragonTreasure === true) ? 3 : 2;
   const _addPct = Math.max(0, ((lv||0) - 1)) * _perLv;
   // 「布林旗標」類效果:這些 key 是布林意義(0/1),不是百分比,不參與 +2%/級的加成
@@ -75810,13 +75810,13 @@ function _getHeroEquippedTreasures(heroName){
 // 鐵律相容:1.31(詞條無即死/HP%/固定大額傷害)/1.207(刻意無能量類詞條,普攻不產能量)
 //           /1.232(60 件 dp 精緻風+ds 簡單風雙版創建期一次到位)。
 // PVP 公平制:鬥技場建隊路徑不呼叫 _applyGearToHero(比照至寶「不套用」同點),鐵律 1.153。
-// Phase 2 預告:格擋/貫穿/沉默/三上限(減傷50·抗性50·格擋35)/丙案 40% 下限/鐵匠改版,
-//   屆時消費 h._gearEff 與 h._gearCount;本期 _gearEff 僅彙總+顯示,不進戰鬥計算。
+// Phase 2(v5.30.0 已接線):格擋/貫穿/沉默/三上限(減傷50·抗性50·格擋35)/丙案 40% 下限/鐵匠改版,
+//   戰鬥計算(doDmg/doHeal/addStatus…)已消費 h._gearEff 與 h._gearCount。
 // 屬性對照:設計表原「雷屬性」引擎無對應(ELEMENT_DB=water/fire/wind/grass/earth/light/dark)
 //   → 老師裁定(2026-08-11):絕緣工作服基礎效果=受到風屬性傷害 -25% + 抵抗麻痺 +30%。
 // 老師同輪裁定:厚字典=減傷2%+攻擊+2;同名裝備可重複獲得(詞條各異)全部保留,
 //   全帳號持有上限 100 件(_GEAR_MAX_OWNED·_gearGrant 守門·GM 補發 ignoreCap 豁免);
-//   測試期 _GEAR_ADMIN_ONLY=true 學生完全看不到裝備欄位區塊(正式開放改 false 單一開關)。
+//   開放狀態由 _GEAR_ADMIN_ONLY 單一開關決定(v5.35.0 起 false = 全體開放)。
 // ════════════════════════════════════════════════════════════════════
 const GEAR_DB = {
   head_straw_hat: { slot:'head', n:'草帽', icon:'👒', r:'rare', eff:[{"k":"dr","v":2}],
@@ -76134,8 +76134,7 @@ const _GEAR_CONFLICT = {
 };
 
 // ── 全域狀態(★ 雲端唯一權威·不做 localStorage 本機鏡像·換帳號由 _clearAccountLocalData 重置)──
-// ★ 測試期閘門(老師裁定 2026-08-11):true=學生完全看不到圖鑑「裝備欄位」區塊(GM 不受限);
-//   正式開放時改 false 即全員可見(比照 _MAINSTORY_ADMIN_ONLY / _AVATAR_ADMIN_ONLY 單一開關前例)。
+// ★ 裝備開關:現值 false = 已對全體開放;改回 true 只有 GM 看得到裝備(單一開關)。
 // ★ v5.35.0(2026-08-13)— 老師裁定六大風險驗證通過(複製/遺失/失效/上限/雲端同步/共機汙染)→ 正式開放,
 //   單一開關 true→false:圖鑑裝備欄位/裝備圖鑑頁/小怪與BOSS掉落/星空召喚20%/超商裝備分頁/好友送禮/素質面板 全員自動生效。
 window._GEAR_ADMIN_ONLY = false;
@@ -76864,7 +76863,7 @@ function _gearHydrateFromCloud(data){
   }catch(_e){ console.warn('[裝備系統] hydrate 失敗', _e); window._gearHydrated = true; }
 }
 
-// ── GM 測試發放:全部 60 件各 1 件(冪等·以 src=gm_grant 判定;老師裁定)──
+// ── GM 測試發放:GEAR_DB 全部裝備各 1 件(目前 72 件;冪等·以 src=gm_grant 判定;老師裁定)──
 function _gearEnsureGmTestSet(){
   try{
     if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
@@ -76926,7 +76925,7 @@ function _gearItemLineHtml(x, showDesc){
 window._renderHeroGearSection = function(heroName){
   try{
     if(typeof GEAR_DB === 'undefined') return '';
-    if(!window._gearVisibleForMe()) return '';   // ★ 測試期閘門:學生不渲染整個區塊(老師裁定)
+    if(!window._gearVisibleForMe()) return '';   // ★ 裝備開關守門(開關關閉時不渲染整個區塊)
     const nameEsc = String(heroName).replace(/'/g, "\\'");
     const rows = GEAR_SLOT_ORDER.map(slot => {
       const info = GEAR_SLOT_INFO[slot];
@@ -76993,7 +76992,7 @@ window._renderHeroGearSection = function(heroName){
 };
 
 window._showGearSlotPicker = function(heroName, slot){
-  if(!window._gearVisibleForMe()) return;   // ★ 測試期閘門保險(區塊已不渲染,此為第二道)
+  if(!window._gearVisibleForMe()) return;   // ★ 裝備開關守門第二道(區塊已不渲染時的保險)
   try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
   try{ _gearRepairEquipped(); }catch(_){}
   const old = document.getElementById('_hero-gear-picker-modal');
@@ -77152,7 +77151,7 @@ window._gearPickerReroll = function(eqUid, heroName, slot){
 //   ④ 星空召喚 20% 出裝備(前置擲骰=原池自動×0.8 重配;稀有度 稀有60/史詩25/傳說11/神話4=設計表召喚權重)
 //   ⑤ 不可思議超商:日期種子每日 6 件(6 部位各 1·台灣 08:00 刷新·零寫入零污染=新系統鐵則⑧)·定價=GEAR_RARITY.price
 //   ⑥ 半價賣出:售價=定價÷2;賣出=刪實例+帳本 source:'sold'(多槽合併稽核感知 → 殘槽不復活)
-//   閘門:_gearAcqEnabled()=測試期僅 GM(隨 _GEAR_ADMIN_ONLY 單一開關)+ 雲端 hydrate 完成(防資料未載入先發);
+//   閘門:_gearAcqEnabled()=裝備開關開放(_GEAR_ADMIN_ONLY)+ 雲端 hydrate 完成(防資料未載入先發);
 //   持有上限 100 一律由 _gearGrant 守門;召喚滿載自動跳過改走原池=玩家零損失。機率全集中於下方常數,老師可單點調。
 // ════════════════════════════════════════════════════════════════════
 window._gearAcqEnabled = function(){
@@ -77418,9 +77417,9 @@ window._gearSell = function(eqUid, heroName, slot){
 };
 // ════════════════════════════════════════════════════════════════
 // ★ v5.33.0 — 裝備 Phase 5:裝備圖鑑頁(老師裁定:與至寶圖鑑共用背景圖與 BGM,僅左側列表不同)
-//   ・入口:至寶圖鑑 header「🛡️ 裝備圖鑑」互切鈕(_gearVisibleForMe 守門=測試期僅 GM·開閘全員自動);
+//   ・入口:至寶圖鑑 header「🛡️ 裝備圖鑑」互切鈕(_gearVisibleForMe 守門·已全員開放);
 //     兩頁互切經 window._galleryBgmCarry 轉交「進圖鑑前的原 BGM」→ 互切 BGM 不斷、返回正確切回。
-//   ・左側:60 件 GEAR_DB 依部位 6 段(段標題+3 欄)·卡=插畫(onerror 退 emoji)+名稱+稀有度框色+
+//   ・左側:GEAR_DB 全部裝備(目前 72 件)依部位 6 段(段標題+3 欄)·卡=插畫(onerror 退 emoji)+名稱+稀有度框色+
 //     持有 ×N/裝備中 ⚔/未收錄灰階;收錄口徑=「現持有 ∪ 帳本曾獲得」(賣掉/送掉仍算收錄過)。
 //   ・右側:大圖+雙版說明(dp/ds 依 _artStyle·鐵律1.232 資料層已雙版)+基礎效果+詞條數+定價/半價+
 //     取得管道(雙版)+「我的這件裝備」實例清單(詞條/裝備中/來源/受贈);未收錄=灰階+取得管道。
@@ -78503,7 +78502,7 @@ window.openTaiwanTreasurePage = function(){
   header.innerHTML =
     '<div style="display:flex;gap:10px;align-items:center;">' +
       '<button id="tt-page-back" style="padding:10px 24px;font-size:22px;font-weight:800;background:rgba(40,30,0,0.8);border:2px solid rgba(255,200,80,0.5);color:#ffe8a0;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;">← 返回</button>' +
-      // ★ v5.33.0 — 裝備圖鑑互切鈕(_gearVisibleForMe 守門=測試期僅 GM·開閘全員自動顯示)
+      // ★ v5.33.0 — 裝備圖鑑互切鈕(_gearVisibleForMe 守門·已全員開放)
       ((typeof window._gearVisibleForMe === 'function' && window._gearVisibleForMe())
         ? '<button id="tt-to-gear" style="padding:10px 18px;font-size:17px;font-weight:800;background:rgba(10,25,50,0.75);border:2px solid rgba(120,180,255,0.5);color:#cfe0ff;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;">🛡️ 裝備圖鑑</button>'
         : '') +
@@ -78584,7 +78583,7 @@ const _TAIWAN_TREASURE_ORDER = [
   //   v3.14.24 新增 dragon_whisker_grass 定義/發放/動態名時,漏加進本順序陣列
   //   → 至寶圖鑑(_renderTaiwanTreasureGrid 以本陣列 forEach 生成卡片)看不到此至寶。補上。
   'dragon_whisker_grass',
-  // ★ v3.14.27 — 其餘 6 隻龍王至寶(照龍王輪替序:土→風→水→暗→光→幻;能力尚未開放,圖鑑顯示灰色佔位)
+  // ★ v3.14.27 — 其餘 6 隻龍王至寶(照龍王輪替序:土→風→水→暗→光→幻;能力已正式開放)
   'dragon_scale_earth',
   'dragon_wing_thunder',
   'dragon_claw_sea',
@@ -80293,7 +80292,7 @@ function openAdventureOverlay(){
   //   _petT1 的觸發輪詢改成「必須此旗標=true 才放行」,杜絕登入/雲端載入途中 adventure-overlay
   //   已 display:block 就誤判在關卡頁而提前彈教學(害玩家錯過點擊教學+首次召喚)。
   try{ window._petT1EnteredLevelPage = true; }catch(_){}
-  // ★ v4.65.0 — 關卡頁顯示時刷新主線劇情入口鈕可見性(測試期 admin gating)
+  // ★ v4.65.0 — 關卡頁顯示時刷新主線劇情入口鈕可見性(主線已全員開放·保留刷新呼叫)
   try{ if(typeof window._msRefreshEntryVisibility === 'function') window._msRefreshEntryVisibility(); }catch(_){}
   // ★ 回到關卡選擇頁時，若有待處理的版本更新通知（來自戰鬥中偵測到的），現在跳出
   try{ if(window._flushPendingUpdateIfAny) setTimeout(window._flushPendingUpdateIfAny, 500); }catch(_){}
@@ -80347,7 +80346,7 @@ function openAdventureOverlay(){
   // ★ v1.0.20260424.0720 — 新角色登場通知視窗(小力 + 幼兒園小孩)
   try{ _showNewHeroAnnouncement(); }catch(_e){ console.warn('新角色視窗失敗', _e); }
 
-  // ★ v1.0.20260424.0790 — 召喚按鈕顯示判定(管理員限定)
+  // ★ v1.0.20260424.0790 — 召喚按鈕顯示判定(現已對所有玩家顯示,函式保留為空殼)
   try{ _refreshSummonBtnVisibility(); }catch(_){}
 
   // ★ v1.0.20260515.6810 — 更新「有可強化英雄 / 有可升級至寶」徽章
@@ -81836,7 +81835,7 @@ function _showNewHeroAnnouncement(forceShow){
       + '</div></div>';
   };
   // ★ v5.6.0 — 主線劇情故事與自訂主角系統介紹卡(登入近期活動·老師需求2·鐵律1.232 簡單風/精緻風雙版)
-  //   測試期(_MAINSTORY_ADMIN_ONLY=true)顯示「搶先預告」橫幅;正式開放(改 false)本卡自動切換「NEW!」文案,免再改本卡。
+  //   雙態:_MAINSTORY_ADMIN_ONLY=true 顯示「搶先預告」橫幅;false(v5.19.0 起現值)顯示「NEW!」文案。
   /* ★ v5.20.0(2026-08-08·老師需求)—— 主線活動介紹卡「圖文並茂」大改版(純顯示層·舊版純文字五格卡見 git v5.19.0):
    *   ①頂部序章封面大橫幅 ②「捏出你的主角」升級為置頂主打區(雙月河堤場景圖+三步驟晶片+鼓勵語,鼓勵孩子創造自己的主角)
    *   ③七章封面縮圖帶(素材=章節選單同一組封面圖,零新圖檔) ④其餘特色卡改圖+文
@@ -82653,7 +82652,7 @@ function _showNewHeroAnnouncement(forceShow){
     { id:'china', emoji:'🏯', accent:'#ffb36b', title:((window._CHINA_ADMIN_ONLY===false)?'NEW!第三關:中國古代史詩神話繪卷':'即將推出！第三關:中國古代史詩神話繪卷（預告）'), sub:'五大路線 · 中華至寶 · 神兵12件 · 神獸寵物12隻 · 百題問答', imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['哪吒']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['孫悟空']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['關羽']) || ''], detail: buildChinaStageSection() + buildChinaHeroesSection() },
     // ★ v5.35.0 — 裝備系統(最新功能置頂;_GEAR_ADMIN_ONLY===false 自動切 NEW! 正式文案·true 顯預告,免再改本卡)
     { id:'gear', emoji:'🛡️', accent:'#9ec8ff', title:((window._GEAR_ADMIN_ONLY===false)?'NEW!裝備系統':'即將推出！裝備系統（預告）'), sub:((window._GEAR_ADMIN_ONLY===false)?(((window._gearDbTotal && window._gearDbTotal()) || 72) + ' 件裝備 · 隨機詞條 · 六大部位 · 裝備圖鑑'):('敬請期待 · ' + ((window._gearDbTotal && window._gearDbTotal()) || 72) + ' 件裝備 · 隨機詞條 · 裝備圖鑑')), imgs:['./' + encodeURIComponent('騎士頭盔.png'), './' + encodeURIComponent('武士刀.png')], detail: buildGearSystemSection() },
-    // ★ v5.6.0 — 主線劇情故事與自訂主角系統(老師需求2·置頂最新功能;測試期標題帶「預告」,_MAINSTORY_ADMIN_ONLY 改 false 後自動換 NEW!)
+    // ★ v5.6.0 — 主線劇情故事與自訂主角系統(老師需求2·置頂最新功能;標題依 _MAINSTORY_ADMIN_ONLY 雙態切換,現值 false ⇒ NEW!)
     { id:'mainstory', emoji:'📖', accent:'#c9a0ff', title:((window._MAINSTORY_ADMIN_ONLY===false)?'NEW!主線劇情故事與自訂主角系統':'即將推出！主線劇情故事與自訂主角系統（預告）'), sub:'捏出你自己的主角 · 七章異世界冒險 · 覺醒成 SSR', imgs:['./' + encodeURIComponent('主線_封面_序章.jpg'), './' + encodeURIComponent('主線_序章_雙月河堤.jpg')], detail: buildMainStorySection() },   // ★ v5.20.0 — 選單列補 2 張縮圖(封面+雙月河堤·零新圖)·sub 捏主角前置
     { id:'pets',   emoji:'🐾', accent:'#7dffb0', title:((window._petSysPublicOpen&&window._petSysPublicOpen())?'NEW!寵物馴養大系統':'即將推出！寵物馴養大系統（預告）'), sub:((window._petSysPublicOpen&&window._petSysPublicOpen())?'馴養寵物 · 寵物小屋 · 好感度與忠誠夥伴 · 知識問答':'敬請期待 · 馴養寵物 · 寵物小屋 · 好感度 · 知識問答'), imgs:[_imgPetHouse], detail: buildPetSystemSection() },
     { id:'guide',  emoji:'📚', accent:'#7dffb0', title:'遊戲指引（新手必看）', sub:'戰鬥、英雄、模式全攻略 · 圖文章節說明', imgs:[], detail: '<div style="text-align:center;padding:24px 16px 18px;"><div style="font-size:52px;margin-bottom:12px;">📚</div><div style="font-size:clamp(22px,2.6vw,30px);font-weight:900;color:#7dffb0;margin-bottom:10px;">遊戲指引（新手必看）</div><div style="font-size:clamp(16px,1.8vw,21px);color:#cceedd;line-height:1.7;margin-bottom:20px;">圖文章節說明，帶你快速了解所有遊戲系統！<br>① 認識遊戲　② 戰鬥系統　③ 英雄培育<br>④ 遊戲模式　⑤ 每日習慣　⑥ 寵物系統<br>⑦ 主線劇情　⑧ 我的主角</div><button onclick="try{this.closest(\'[style*=z-index:9970]\').remove();}catch(_){}try{this.closest(\'[style*=z-index:9960]\').remove();}catch(_){}try{playSfx(\'sfx-confirm\',0.6);}catch(_){}setTimeout(function(){try{window._showNewbieGuide(0);}catch(e){}},200);" style="padding:16px 48px;font-size:clamp(20px,2.3vw,28px);font-weight:900;background:linear-gradient(135deg,rgba(40,120,70,0.95),rgba(60,180,100,0.95));border:2.5px solid rgba(100,255,160,0.9);color:#d0ffe8;border-radius:14px;cursor:pointer;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;letter-spacing:1px;box-shadow:0 0 24px rgba(80,220,140,0.5);">📖 開啟遊戲指引</button></div>' },
@@ -85198,8 +85197,23 @@ window._FM_DEFS = {
 };
 (function(){
   var W = window, ORDER = ['C','Q','H','X'];
-  if(typeof W._FM_ADMIN_ONLY === 'undefined') W._FM_ADMIN_ONLY = true;   // ★ 測試期:只有 GM 帳號看得到、生效(老師確認後改 false)
-  W._fmOpenForMe = function(){ try{ if(W._FM_ADMIN_ONLY !== true) return true; return (typeof W._isAdminUser === 'function' && !!W._isAdminUser()); }catch(_){ return false; } };
+  /* ★ v5.290.0(老師 2026-10-22 裁定)— 英魂陣型改為「完成主線第七章才解鎖」(每位玩家各自解鎖):
+   *   _FM_ADMIN_ONLY 仍是總開關:true = 整個系統只給 GM 測試;false(現值)= 依下面的個人解鎖判定。
+   *   個人解鎖 = GM 帳號 或 主線進度 ch7 === 'done'(_mainStoryProgress 換帳號會清空 ⇒ 共用 iPad 不殘留)。
+   *   第七章自己的劇情戰鬥(battle_ch7_*)例外先套用,讓教學看得到陣型效果。
+   *   鬥技場/PvP 連線:老師裁定丙 = 不看解鎖、雙方一律套用(見下方 _fmApply)。
+   *   舊值備查(誤刪是大忌):if(typeof W._FM_ADMIN_ONLY === 'undefined') W._FM_ADMIN_ONLY = true; */
+  if(typeof W._FM_ADMIN_ONLY === 'undefined') W._FM_ADMIN_ONLY = false;
+  W._fmIsAdmin = function(){ try{ return (typeof W._isAdminUser === 'function' && !!W._isAdminUser()); }catch(_){ return false; } };
+  W._fmUnlockedByStory = function(){ try{ var p = W._mainStoryProgress; return !!(p && p.ch7 === 'done'); }catch(_){ return false; } };
+  W._fmStoryTutorialBattle = function(){ try{ var c = W._msBattleCtx; return !!(W._msRealBattleActive === true && c && /^battle_ch7_/.test(String(c.key || ''))); }catch(_){ return false; } };
+  W._fmOpenForMe = function(){
+    try{
+      if(W._fmIsAdmin()) return true;
+      if(W._FM_ADMIN_ONLY === true) return false;
+      return W._fmUnlockedByStory() || W._fmStoryTutorialBattle();
+    }catch(_){ return false; }
+  };
   function _merge(a, b){ var o = {}; [a || {}, b || {}].forEach(function(x){ Object.keys(x).forEach(function(k){ if(k === 'survive') o[k] = Math.max(o[k] || 0, x[k]); else if(k === 'cut') o[k] = Math.max(o[k] || 0, x[k]); else o[k] = (o[k] || 0) + x[k]; }); }); return o; }
   function _isProtag(n){ try{ return !!(W._isProtagHero && W._isProtagHero(n)); }catch(_){ return false; } }
   W._fmSoulOf = function(n){ if(!n) return null; if(_isProtag(n)) return '*'; var s = W._FM_SOUL[n]; return s || null; };
@@ -85349,8 +85363,11 @@ window._FM_DEFS = {
       if(W._pvpCtx && W._pvpCtx.battleLive){ if(!W._pvpCtx.isHost) return; pvp = true; }   // 審查 M1:只認進行中的連線戰(殘留的 _pvpCtx 不算)
       if(W._wbClientMode === true || W._wbConnectedClientMode === true) return;
     }catch(_){}
-    if(!W._fmOpenForMe()) return;   // 測試期只有 GM 帳號生效(連線戰鬥以房主為準;老師確認後把 _FM_ADMIN_ONLY 改 false 全面開放)
     var arena = pvp || (typeof _adventureMode !== 'undefined' && _adventureMode === false);
+    // ★ v5.290.0 解鎖判定:總開關 _FM_ADMIN_ONLY=true 時一律只給 GM;
+    //   否則鬥技場/PvP 不看解鎖、雙方一律套用(老師裁定丙),冒險/世界 BOSS 依個人解鎖(連線戰以房主為準)。
+    if(W._FM_ADMIN_ONLY === true){ if(!W._fmIsAdmin()) return; }
+    else if(!arena && !W._fmOpenForMe()) return;
     var sides = arena ? ['p1','p2'] : ['p1'];   // 3甲 鬥技場/PvP 雙方;4甲 冒險(含世界 BOSS)只給玩家方
     var fm = {}, any = false;
     sides.forEach(function(sd){
@@ -85530,7 +85547,7 @@ window._FM_DEFS = {
  *   ③ 陣型「新發動或換成別的陣型」時:音效 sfx-powerup(倉庫既有「能力上升.mp3」)+ 在四張隊員立繪上方 2 秒小視窗(名稱+說明)
  *   ④ 篩選列新增「魂格」四顆(data-filter=soul_C/Q/H/X,主角萬用魂四種都列)
  *   ⑤ 推薦鈕旁新增「🏫 陣型推薦」:列出 19 種陣型(名稱+效果+能不能湊),點選後自動挑 4 位最強的組成該陣型
- *   ★ 介面一律跟 _fmOpenForMe(測試期 GM 限定);關閉時全部不顯示。所有尺寸用畫布 px(在縮放後的 #gc 內,鐵律 〇之二)。
+ *   ★ 介面一律跟 _fmOpenForMe(GM 或完成主線第七章的玩家才開;v5.290.0 起);關閉時全部不顯示。所有尺寸用畫布 px(在縮放後的 #gc 內,鐵律 〇之二)。
  * ═════════════════════════════════════════════════════════════════════════════ */
 (function(){
   var W = window;
