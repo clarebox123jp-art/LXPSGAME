@@ -7551,7 +7551,7 @@ body.isl-def-on #toast{bottom:auto !important;top:70px;}   /* ★ v1.288.0(老�
 (function(){
 'use strict';
 
-var MG_VER = 'v1.406.0';   /* ★ v1.406.0(2026-10-22・老師「尋寶或製作出新設施或裝飾時,進到營地後統一先集中到左上方營地造景視窗(NEW!),點進去最上方先列最新獲得還沒布置的物品,按開始布置後放進左側空白區,讓玩家拖曳到營地中配置」)— 新物品(劇情裝飾/尋寶收藏品/展示櫃/新蓋設施/製作裝飾/商店裝飾)加 pend:1 不畫在營地;營地造景鈕 NEW! 標籤、視窗頂端「🆕 最新獲得・還沒布置」+「🧺 開始布置」(pend→2);營地左側 #isl-camp-pend 暫放區,往右拖進營地放手才擺上(islPendList/islPendPaint/islPendDragBind);設施照常倒數與生效;帆船完工自動擺上;好友名片不發布未布置物件。三平台 CSS 在 island-style 最後。island_db 零改動(?v= 不跟)。 */   void 'v1.405.0';   /* ★ v1.405.0(2026-10-22・與大對抗 v5.288.0 同期)— 考試複習「學校版本」改依年級+科目(MG_EXAM_SCHOOL_DEFAULT:自然三~六南一;社會三四六康軒、五翰林;GM 可在 gameConfig/examReview.byBook 改),選冊自動切版本;exam_core v1.2.0(MG_EXAM_CORE_VER 20261022b)。island_db 零改動(?v= 不跟)。 */   void 'v1.404.0';   /* ★ v1.404.0(2026-10-22・與大對抗 v5.287.0 同期,老師「冒險關卡、小遊戲、荒島求生共同加入考試複習題庫」)— 新增第 16 關「📝 考試複習大挑戰」(MG_EXAM_GAME,開關卡先選版本/冊/單元)、荒島 ☰ 更多「📝 考試複習」(開啟後 islQuizPick 改出考試題,isl_exam_on_<uid> 本機記住範圍);題庫共用 ../exam/(exam_core.js),GM 學校版本讀 gameConfig/examReview。island_db 零改動(?v= 不跟)。 */   void 'v1.403.0';   /* ★ v1.403.0(2026-10-21・與大對抗 v5.286.0 同期)— 獨立稽核修正:開機更新遮罩 6 秒後若頁面沒換掉就自動收起(iOS 偶爾靜默吞掉換頁)。island_db 零改動(?v= 不跟)。 */   /*★ v1.402.0(2026-10-21・與大對抗 v5.285.0 同期,老師裁定「開遊戲先查版本、舊了才清」)— 開機自動對版 6 秒→0.3 秒;開機 20 秒內只有戰鬥/活動/小遊戲進行中才延後(?mode=island 直入不再整節課卡舊版);更新時全螢幕「更新中」遮罩;只清程式、素材全保留。island_db 零改動(?v= 不跟)。 */   /*★ v1.401.0(2026-10-19・老師「荒島求生是否也有類似問題,有的話一起解決」,與大對抗 v5.280.0 同期)— 🏝 荒島存檔被取代前永久備份:換平板時雲端/本機兩份存檔較舊那份不再直接丟棄,先寫入 minigameIsland/{uid}/archive(只增不改不刪,GM 可在主後台「🏝 荒島存檔備份」查看與還原);同一座島兩份存檔的圖鑑/寵物圖鑑/科技/拼圖/回顧/回憶取聯集(islMergeKeep);衝突視窗「用雲端的」「確定覆蓋」兩鍵都先備份被蓋掉的那份(islArchive);本機記錄最後一次雲端寫入成功時間(isl_cloud_ok_<uid>)判斷哪份是沒上傳的進度。island_db 零改動(?v= 不跟)。 */   void 'v1.400.0';   /* ★ v1.400.0(2026-10-19・老師「荒島營地的設施和裝飾在 iPad 擺放好,到了 PC 和手機位置和尺寸比例又不正確,請讓三個裝置統一」,裁定甲)— 🏕 營地改固定世界圖:畫布固定 1024×768(=營地背景圖原始像素),背景圖搬進畫布(#isl-camp-wbg)跟所有物件同一層,整張 contain 等比縮放到視窗(雙指最多放大 3 倍),比例不是 4:3 的螢幕兩側用模糊暗化背景補邊;物件尺寸只剩一套(設施 164、裝飾 96×sz、主角/寵物跟設施連動),移除 iPad 132px/手機 64px 設施與手機裝飾 zoom:.68 三條裝置覆寫;畫布內出口/小木屋門口/設施名稱/告示牌文字用 --isl-cinv 反向縮放維持原字級;舊存檔設施/裝飾座標依「iPad 1080×810 舊畫面」一次性換算(islNormalize→islCampGeoMigrate,camp.geo 1→2),好友名片加 campGeo:2、舊名片參觀時換算副本顯示;出口對準背景石板小徑(52,91);視窗縮放/旋轉自動重 fit。沙箱實測 iPad 1080×810/1180×820、PC 1920×1080/1366×640、手機 891×411 五種視窗:物件位置%、設施高÷畫布高 0.214、主角高 0.149 全部一致。 */   void 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 🧭 自製羅盤探測(躲貓貓四段距離音效＋星星變色＋思考泡泡)/🪏 挖掘(挖到才扣 ⚡1、稀有連打)/每日重生/🗺 藏寶圖/古老藏寶圖/11 件收藏品/尋寶手冊/阿獺舊羅盤小任務;程式搜尋 islTr,數字在 island_db D.TREASURE */   void 'v1.398.0';   /* ★ v1.398.0(2026-10-14・老師「iPad 荒島加好友時無法輸入 wasd」)— 野外/營地鍵盤監聽在打字時(焦點在輸入框)不再攔 WASD/方向鍵/空白/Enter,新增 islIsTypingEv;island_db 零改動(?v= 維持 v1.396.0) */   void 'v1.397.0';   /* ★ v1.397.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」,與大對抗 v5.250.0 同包)— 素材帳本(_mgLedgerMake)只記本站檔、舊帳本外站網址略過並清出;補不回的(逾時/5xx)累計 2 次從帳本淘汰(L.strike);開機對帳 8→4 秒沒結果就不擋;先進入鈕 5→3 秒;最多擋 2→1 分鐘。island_db 零改動(?v= 不跟)。 */  void 'v1.396.0';   /*★ v1.396.0(2026-10-13・老師六項)— ①開機素材對帳 mgAssetRepairBoot/_mgLedgerMake(快取不見的素材先補回再進場,荒島直入等補完;5 秒後可先進入)②物品包「賣普通材料」可勾 ★/★★/★★★(islBulkQ);點單一物品改 islBagItemOpen:丟掉 N 個(+−/全部)、營地內賣出 N 個 ③速度顯示 islNum1 四捨五入到小數第一位(只改顯示)④跳躍 islJumpPlan:沿面向量障礙寬度、矮障礙(獨立 ≤8 格不碰邊)/窄水(走 1、跑 3 格)可跳,高障礙/藤蔓不可,講原因 ⑤移動加成封頂 +50%(islMoveBonus,腳程 30 = +50%)、腳程減遇敵最高 50%(islEncDodge)⑥天賦「目前點亮收益」改加總(ISL_SK_SUM)⑦商店賣東西/倉庫改物品包格子(islQTileHtml),物品包/倉庫/賣東西頂端排列列 islSortBar(分類+價格/品質/數量 升降序),賣出/存入/取出步進器 islQStep 0~全部循環(0 按 − 跳最大、最大按 + 跳 1;點格子 0↔全部),底部一次結帳。island_db v1.396.0(腳程說明,?v= 同步)。 */  void 'v1.395.0';   /*★ v1.395.0(2026-10-12・老師「上週五沒登出的平板,週一直接登進上週那位的帳號」+「30分鐘沒按確認遊玩就強制登出,且不可再被下一個使用者免輸入密碼登入」)— 新增 mgIdle 閒置模組(本程式之前完全沒有閒置登出):30 分鐘無觸碰/按鍵 → 確認視窗倒數 60 秒 → 未按「繼續遊戲」就荒島立即存檔+signOut+重整;超過 30 分 60 秒(睡眠跨夜)醒來直接登出;視窗內觸碰不算活動、逾時後第一下觸碰救不回時間。裝置層 lxps_idle_last 與大對抗 v5.248.0 共用;onUser 第六道判定:逾時帳號不吃任何放行鑰匙(含同分頁 sessionStorage 章)。island_db 零改動(?v= 不跟)。 */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成隨機情境(依天氣、晝夜、現場環境),選對措施才會造成傷害」+ 選項用圖示+做法短句、地下層也改、巧思 14 以上刪一個錯誤選項)— 新函式 islWitEnv/islWitOk/islWitEnvText/islWitPick;islBtOutwit 改讀情境題(m._witQ 保留到答題、m._witLast 避免連續同題);islBtWitHint 上方小視窗改顯示環境+情境;islDgToolPick 改情境題(C.wq);CSS 2×2 做法方格(三平台)。題庫 island_db D.WIT_SC。夜襲防衛戰維持固定工具。 */  void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師兩項)— ①同一隻魔物(含頭目)重複被智取,傷害每次減半(m.witN 計次)②智取威力改由巧思決定:新函式 islBtWitDmg = 攻擊力×(1.5+巧思×0.04) + 最大HP×min(7.5%,巧思×0.15%)(頭目 HP 部分 ×0.5),取代 v1.284.0「攻擊力×2+最大HP×20%」;智取選單顯示預估傷害與衰減。island_db D.BT.OUTWIT_* 參數。 */  void 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
+var MG_VER = 'v1.407.0';   /* ★ v1.407.0(2026-10-24・老師「甲」:《繪卷新章》七位 SSR 照設計書收錄小遊戲)— MG_HEROES 76→83:楊戩/劉備/張飛/趙雲/唐三藏/豬八戒/沙悟淨;七種新天賦(eyeflash 天眼閃正解/comfortmiss 連錯救援/timeoutguard 超時再給 5 秒/streakautoclear 連對 7 題下一題直接過/calmtime 倒數變慢/buns 包子保命/debuffcarry 負面減半+首錯免傷)與七種新爆發第二效果(negateburst 看破/overhealshield 溢補轉盾/multiblock 斷橋/rescuedash 單騎救主/tightband 緊箍咒/bellyslam 天蓬肚擊/cleanseconvert 流沙反捲);新增點數護盾 hpShield 與「到第幾題為止」型狀態(mgCn2*);⭐本關推薦 7 關各加 1 位。island_db 零改動(D.VER 與 ?v= 維持 v1.399.0)。 */   void 'v1.406.0';   /* ★ v1.406.0(2026-10-22・老師「尋寶或製作出新設施或裝飾時,進到營地後統一先集中到左上方營地造景視窗(NEW!),點進去最上方先列最新獲得還沒布置的物品,按開始布置後放進左側空白區,讓玩家拖曳到營地中配置」)— 新物品(劇情裝飾/尋寶收藏品/展示櫃/新蓋設施/製作裝飾/商店裝飾)加 pend:1 不畫在營地;營地造景鈕 NEW! 標籤、視窗頂端「🆕 最新獲得・還沒布置」+「🧺 開始布置」(pend→2);營地左側 #isl-camp-pend 暫放區,往右拖進營地放手才擺上(islPendList/islPendPaint/islPendDragBind);設施照常倒數與生效;帆船完工自動擺上;好友名片不發布未布置物件。三平台 CSS 在 island-style 最後。island_db 零改動(?v= 不跟)。 */   void 'v1.405.0';   /* ★ v1.405.0(2026-10-22・與大對抗 v5.288.0 同期)— 考試複習「學校版本」改依年級+科目(MG_EXAM_SCHOOL_DEFAULT:自然三~六南一;社會三四六康軒、五翰林;GM 可在 gameConfig/examReview.byBook 改),選冊自動切版本;exam_core v1.2.0(MG_EXAM_CORE_VER 20261022b)。island_db 零改動(?v= 不跟)。 */   void 'v1.404.0';   /* ★ v1.404.0(2026-10-22・與大對抗 v5.287.0 同期,老師「冒險關卡、小遊戲、荒島求生共同加入考試複習題庫」)— 新增第 16 關「📝 考試複習大挑戰」(MG_EXAM_GAME,開關卡先選版本/冊/單元)、荒島 ☰ 更多「📝 考試複習」(開啟後 islQuizPick 改出考試題,isl_exam_on_<uid> 本機記住範圍);題庫共用 ../exam/(exam_core.js),GM 學校版本讀 gameConfig/examReview。island_db 零改動(?v= 不跟)。 */   void 'v1.403.0';   /* ★ v1.403.0(2026-10-21・與大對抗 v5.286.0 同期)— 獨立稽核修正:開機更新遮罩 6 秒後若頁面沒換掉就自動收起(iOS 偶爾靜默吞掉換頁)。island_db 零改動(?v= 不跟)。 */   /*★ v1.402.0(2026-10-21・與大對抗 v5.285.0 同期,老師裁定「開遊戲先查版本、舊了才清」)— 開機自動對版 6 秒→0.3 秒;開機 20 秒內只有戰鬥/活動/小遊戲進行中才延後(?mode=island 直入不再整節課卡舊版);更新時全螢幕「更新中」遮罩;只清程式、素材全保留。island_db 零改動(?v= 不跟)。 */   /*★ v1.401.0(2026-10-19・老師「荒島求生是否也有類似問題,有的話一起解決」,與大對抗 v5.280.0 同期)— 🏝 荒島存檔被取代前永久備份:換平板時雲端/本機兩份存檔較舊那份不再直接丟棄,先寫入 minigameIsland/{uid}/archive(只增不改不刪,GM 可在主後台「🏝 荒島存檔備份」查看與還原);同一座島兩份存檔的圖鑑/寵物圖鑑/科技/拼圖/回顧/回憶取聯集(islMergeKeep);衝突視窗「用雲端的」「確定覆蓋」兩鍵都先備份被蓋掉的那份(islArchive);本機記錄最後一次雲端寫入成功時間(isl_cloud_ok_<uid>)判斷哪份是沒上傳的進度。island_db 零改動(?v= 不跟)。 */   void 'v1.400.0';   /* ★ v1.400.0(2026-10-19・老師「荒島營地的設施和裝飾在 iPad 擺放好,到了 PC 和手機位置和尺寸比例又不正確,請讓三個裝置統一」,裁定甲)— 🏕 營地改固定世界圖:畫布固定 1024×768(=營地背景圖原始像素),背景圖搬進畫布(#isl-camp-wbg)跟所有物件同一層,整張 contain 等比縮放到視窗(雙指最多放大 3 倍),比例不是 4:3 的螢幕兩側用模糊暗化背景補邊;物件尺寸只剩一套(設施 164、裝飾 96×sz、主角/寵物跟設施連動),移除 iPad 132px/手機 64px 設施與手機裝飾 zoom:.68 三條裝置覆寫;畫布內出口/小木屋門口/設施名稱/告示牌文字用 --isl-cinv 反向縮放維持原字級;舊存檔設施/裝飾座標依「iPad 1080×810 舊畫面」一次性換算(islNormalize→islCampGeoMigrate,camp.geo 1→2),好友名片加 campGeo:2、舊名片參觀時換算副本顯示;出口對準背景石板小徑(52,91);視窗縮放/旋轉自動重 fit。沙箱實測 iPad 1080×810/1180×820、PC 1920×1080/1366×640、手機 891×411 五種視窗:物件位置%、設施高÷畫布高 0.214、主角高 0.149 全部一致。 */   void 'v1.399.0';   /* ★ v1.399.0(2026-10-18・老師「荒島求生新增尋寶系統」)— 🧭 自製羅盤探測(躲貓貓四段距離音效＋星星變色＋思考泡泡)/🪏 挖掘(挖到才扣 ⚡1、稀有連打)/每日重生/🗺 藏寶圖/古老藏寶圖/11 件收藏品/尋寶手冊/阿獺舊羅盤小任務;程式搜尋 islTr,數字在 island_db D.TREASURE */   void 'v1.398.0';   /* ★ v1.398.0(2026-10-14・老師「iPad 荒島加好友時無法輸入 wasd」)— 野外/營地鍵盤監聽在打字時(焦點在輸入框)不再攔 WASD/方向鍵/空白/Enter,新增 islIsTypingEv;island_db 零改動(?v= 維持 v1.396.0) */   void 'v1.397.0';   /* ★ v1.397.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」,與大對抗 v5.250.0 同包)— 素材帳本(_mgLedgerMake)只記本站檔、舊帳本外站網址略過並清出;補不回的(逾時/5xx)累計 2 次從帳本淘汰(L.strike);開機對帳 8→4 秒沒結果就不擋;先進入鈕 5→3 秒;最多擋 2→1 分鐘。island_db 零改動(?v= 不跟)。 */  void 'v1.396.0';   /*★ v1.396.0(2026-10-13・老師六項)— ①開機素材對帳 mgAssetRepairBoot/_mgLedgerMake(快取不見的素材先補回再進場,荒島直入等補完;5 秒後可先進入)②物品包「賣普通材料」可勾 ★/★★/★★★(islBulkQ);點單一物品改 islBagItemOpen:丟掉 N 個(+−/全部)、營地內賣出 N 個 ③速度顯示 islNum1 四捨五入到小數第一位(只改顯示)④跳躍 islJumpPlan:沿面向量障礙寬度、矮障礙(獨立 ≤8 格不碰邊)/窄水(走 1、跑 3 格)可跳,高障礙/藤蔓不可,講原因 ⑤移動加成封頂 +50%(islMoveBonus,腳程 30 = +50%)、腳程減遇敵最高 50%(islEncDodge)⑥天賦「目前點亮收益」改加總(ISL_SK_SUM)⑦商店賣東西/倉庫改物品包格子(islQTileHtml),物品包/倉庫/賣東西頂端排列列 islSortBar(分類+價格/品質/數量 升降序),賣出/存入/取出步進器 islQStep 0~全部循環(0 按 − 跳最大、最大按 + 跳 1;點格子 0↔全部),底部一次結帳。island_db v1.396.0(腳程說明,?v= 同步)。 */  void 'v1.395.0';   /*★ v1.395.0(2026-10-12・老師「上週五沒登出的平板,週一直接登進上週那位的帳號」+「30分鐘沒按確認遊玩就強制登出,且不可再被下一個使用者免輸入密碼登入」)— 新增 mgIdle 閒置模組(本程式之前完全沒有閒置登出):30 分鐘無觸碰/按鍵 → 確認視窗倒數 60 秒 → 未按「繼續遊戲」就荒島立即存檔+signOut+重整;超過 30 分 60 秒(睡眠跨夜)醒來直接登出;視窗內觸碰不算活動、逾時後第一下觸碰救不回時間。裝置層 lxps_idle_last 與大對抗 v5.248.0 共用;onUser 第六道判定:逾時帳號不吃任何放行鑰匙(含同分頁 sessionStorage 章)。island_db 零改動(?v= 不跟)。 */  void 'v1.394.0';   /* ★ v1.394.0(2026-10-12・老師「智取改成隨機情境(依天氣、晝夜、現場環境),選對措施才會造成傷害」+ 選項用圖示+做法短句、地下層也改、巧思 14 以上刪一個錯誤選項)— 新函式 islWitEnv/islWitOk/islWitEnvText/islWitPick;islBtOutwit 改讀情境題(m._witQ 保留到答題、m._witLast 避免連續同題);islBtWitHint 上方小視窗改顯示環境+情境;islDgToolPick 改情境題(C.wq);CSS 2×2 做法方格(三平台)。題庫 island_db D.WIT_SC。夜襲防衛戰維持固定工具。 */  void 'v1.393.0';   /* ★ v1.393.0(2026-10-11・老師兩項)— ①同一隻魔物(含頭目)重複被智取,傷害每次減半(m.witN 計次)②智取威力改由巧思決定:新函式 islBtWitDmg = 攻擊力×(1.5+巧思×0.04) + 最大HP×min(7.5%,巧思×0.15%)(頭目 HP 部分 ×0.5),取代 v1.284.0「攻擊力×2+最大HP×20%」;智取選單顯示預估傷害與衰減。island_db D.BT.OUTWIT_* 參數。 */  void 'v1.392.0';   /* ★ v1.392.0(2026-10-09・老師四項,全部選甲)— ①營地設施耐久條平常隱藏,按住設施才浮出,< 50% 常駐(islBldHpPct)。②設施損壞分級(D.BLD_DMG):< 50% 扣舒適度、≤ 20% 嚴重受損 = islCampHasBld 不算有(全島功能停擺、解鎖它的區域進不去、帆船開不了)、0 倒塌移除要重蓋;islBldDamage 單一出口(颱風/夜襲);舊存檔 islBldDmgMigrate 一次性保護。③外島:出航/回航各 ⚡3、⛺ 紮營過夜(露宿損害 islSeaNightHarm、隔天 AP 回一半)、第 2 天保留 ⚡3 + 強制回航(islSeaApBlock/islSeaForceTry)、外島倒下免費救回。④天賦 🌊 遠洋星域 21 節點(sea_db;seaGate 第一次出海後開放、seaOnly 只在外島生效)。對應 island_db v1.392.0、sea_db v1.392.0、sw v1.392.0。 */
 void 'v1.391.0';   /* ★ v1.391.0(2026-10-09・老師「倉庫堆滿的材料堆在背包中,新增一鍵賣出背包普通材料(容易採集大量取得的)」)— 營地裡打開物品包,標題列多一顆「💰 賣普通材料」:只賣物品包裡 D.SHOP.bulkSell 清單(收購價 1 貝幣的基礎採集物)的 ★ 品質,先列清單+總價確認再賣;★★/★★★、倉庫、料理與稀有材料一律不動。新函式 islBulkSellList/islBulkSellAsk。對應 island_db v1.391.0(新增 D.SHOP.bulkSell + D.LOG 一筆)、sw v1.391.0(SHELL v1.391.0)。 */
 void 'v1.390.0';   /* ★ v1.390.0(2026-10-08・老師「第六章之後確認沒問題就先開到第八章」)— ISL_CH6_OPEN false→true,第六~八章(時間倒轉之貝/島的抉擇/島的新樣貌)對學生開放;已停在第五章完成的玩家會自動接上 c6 開場(islMainTick 原本就在等這個旗標,存檔結構不用動)。外島篇 c9 之後仍由 ⚙ GM「外島開關」(gameConfig/islandSea)控制,本輪不動。檢查時找到 c8 卡關點(目標營地 Lv4,但營地最高 Lv3),在 island_db 改成圖鑑 50 種。 */     /* v1.389.0(2026-10-08・老師兩項裁定)— ①「當天行動力用掉一半以上(切換至夜晚)才能睡」:islRest 開頭以 islIsNight() 擋門(與夜間模式同一個門檻 D.NIGHT.apUsedPct),白天按休息只跳說明「再用 N 點就天黑」;體力 0 一律准睡(安全閥,避免卡死)。②「每日登島禮和留言板的一天一次改成看島上日誌的時間」:登島禮改記 ISL.giftDay=島上天數(進島+睡醒換日各檢查一次),留言改 ISL.msgDay=ISL.day(舊的日期字串歸 0)。island_db 零改動(?v= 不跟)。 */   void 'v1.388.0';   /* v1.388.0(2026-10-08・老師「檢查荒島還有哪些 bug 可能導致玩家可以無限刷獎勵或資源」)— 九項:①拜訪好友島已採/已撿改記在自己存檔 ISL.coopDaily(按島主分開),進出拜訪不再全部重生 ②夜襲結算記 ISL.raidDone,重新整理不能重打同一場刷科技點 ③收信改「先刪雲端信、成功才給」+ISL.mailGot 記已收 id,離線收信關 App 不能重複收 ④資源點各組數量當天凍結 daily.want,工程修復/打撈失誤改變受損度不再讓已採點重生 ⑤傳說夥伴考試/訓練師上課開始就記次數,按 ✕ 不能重考 ⑥islActResult 只結算一次 ⑦商店買價保底高於賣回價(空氣瓶特價套利)⑧料理賣價不超過材料價(islSellUnit 單一出口)⑨附禮留言立刻雲端存檔、存檔衝突中不能附禮、換帳號清信箱快取。island_db 零改動(?v= 不跟)。 */   void 'v1.387.0';   /* v1.387.0(2026-10-08・老師「檢查荒島行動力和體力還沒睡覺休息就莫名被重置全滿的原因並修復」)— ①AP 根因:islDailyCheck 在「真實日期換日」時把 ISL.ap 設回 apMax,荒島的一天只靠睡覺(islNewDay)推進,隔天重新進荒島就沒睡覺也補滿 ⇒ 拿掉,只留每日登島禮貝幣 +5。②體力:islSkApplyHp 在上限變高時會補等量體力,換飾品(泥心墜飾/年輪護符 +10% 上限)脫下再戴回就能一直回血到滿;讀檔重算上限、冒險升級(原本重複補兩次)也走同一條 ⇒ 新增 noHeal 參數,換飾品與讀檔只調上限不補體力,升級只補一次。island_db 零改動(?v= 不跟)。 */   void 'v1.386.0';   /* v1.386.0(2026-10-07・老師兩項:①「荒島經常玩到一半,突然畫面讀取不到圖片」(附圖:山谷底圖消失只剩可走格子、資源點/頭目巢穴只剩名字)②「荒島 BOSS 的經驗值和貝幣要按照比例提升」)— ①根因:圖不在快取時 SW 走網路 15 秒逾時回 504,而荒島每張圖的 onerror 都一次就永久放棄(底圖 display:none、換 emoji、islPicProbe 記 false 整場不重試)。修法:全域捕獲階段安全網 islImgRetryCatch/islImgRetryRun/islImgRetryApply(fetch 判斷 404=真的沒圖就放棄,ok=放回原圖並拿掉備援 emoji,逾時/斷線=3→8→20→45→90→180 秒退避最多 6 次;切回前景、online 立刻重試),islPicProbe 暫時性失敗 20 秒後重探(islImgFailKind 分辨 404)。②island_db D.BOSS_RULE.reward.hpRef=80;islBossRewardMul(b)=頭目 hp÷hpRef(現在 ×5,v1.299.0 HP×5 時獎勵沒跟上),乘在頭目貝幣(islBossReward)、主角頭目經驗(xpMul×倍率)、寵物頭目經驗(islPetsGainAfterWin),圖鑑「貝幣約 N 起」同步;核心素材/首殺天賦點/飾品不變。③老師「外島的頭目也要掉落特殊功能飾品」:island_db D.ACCS 新增 4 件(sea:1;猛瑪冰牙 shieldStartP/古樹年輪 regenP/風眼羅盤 autoDodgeN/深淵墨囊 inkBlindP),index 消費點 islAccBtStart(islBtOpen)、islAccTurnRegen(islBtPlayerTurn)、islAccWindDodge(islBtDodgeQte)、islBtAffixOnHit;飾品面板還不能出海時不列外島問號卡;舊存檔打倒過島主的由 islNormalize 既有掃描補發。④老師「頭目第二次以後打倒可強化該頭目飾品,每級 +10% 最多 +5;頭目每次重生 +3 級」:island_db D.ACC_UP(MAX 5/P 10/FLAG/COUNT/TXT)、BOSS_RULE.grow{lv:3,max:5};存檔 accLv;islAccLv/islAccUpVal 接進 islAccEff 與 islResist 兩個出口(全部飾品效果自動吃強化),islAccUpgrade 在 islBossReward 再次擊敗時 +1,islBossLv(z)=基礎+min(擊敗次數,max)×3 用在挑戰/巢穴/頭目一覽/經驗;面板顯示強化後實際數值 islAccEffText。 */   void 'v1.385.0';   /* v1.385.0(2026-10-07・老師問「荒島借用好友角色,好友在戰鬥中會自動施展天賦技能嗎?」→ 答:不會(cmd:null、islPetTal 只認寵物、快照只有五個數字)→ 老師選「甲」:帶好友本人的技能)— ①名片 bt 快照多存 sk(islSkActDef 目前武器的絕招)/cmds(裝設的戰鬥特殊指令,白名單 D.FRIEND_BT.CMDS,不含煙霧彈);協助邀請 islFriendNpcInvite 把 sk/cmds 跟數值一起凍結;名片規則只驗 uid/code,不必改 firestore.rules。②islBtMakeAllies 好友單位帶 fsk(經 islFriendSkClean 驗 id;舊協助快照沒有這兩欄時退回讀名片)+gauge。③計量 islBtGaugeTick/Paint/Ready 與 HP 框計量條支援好友(技能用完灰掉);islBtAllyAct 好友分支 → islBtFriendSkPick(倒下→急救、半血→呼喚夥伴/急救、≥2 隻或預告→陷阱、沒增益→號令、其餘→絕招;不符合就保留計量)→ islBtFriendSkCast/islBtFriendAct,每招每場 1 次,不吃手動模式。④戰鬥中點好友 islBtFriendSkPreview 看技能/用過沒/計量;選隊友卡與編組卡加技能圖示 islFriendSkIcons。 */   void 'v1.384.0';   /* v1.384.0(2026-10-06・老師「所有重複感太強的都重新設計,目前沒有的效果和威力,這些外島寵物可以更強大些」「BOSS技能也要有創新機制和難度,以及QTE」「腕足選甲。開工」)— ①外島戰鬥擴充區塊 islSea*(在主程式閉包內、islBtOnMonDown 前面;所有掛點先問 islSeaOn()):12 位外島夥伴新機制(企鵝分攤/抱團、雪鴞鎖定處決、北極狐閃避冰凍、水豚光環增幅、鸚鵡學舌抗毒、美洲豹穿甲破甲、海鸚存魚急救、象龜封頂無敵、信天翁多行動連鎖、旗魚速度貫穿、海獺手牽手淨化、具足蟲殘血減傷吸收爆發)+4 隻島主新招式/第二階段/部位單位(氣根、腕足)+4 種 QTE(冰面裂縫方向滑動/割斷氣根劃線/十七級強風逆時針畫圈/深淵之眼按住放開,三平台樣式在最後一個 style 區塊尾端)。②本檔掛點:islBtHurtUnit/islBtBossDmg/islBtMonAct/islBtMonHitSeq/islBtMonSkill/islBtMonSkillRun/islBtGrdRelease/islBtGrdTaken/islBtGrdAfter/islBtBossUlt/islBtBossPhaseCheck/islBtOnMonDown/islBtStatusTick/islBtOpen/islBattleEnd/islBtAllyTurn/islBtAllySeq/islBtAllyAct/islBtHealNeeded/islBtAllyBasic/islBtPetCmd/islBtResolveAttack/islSkAct/islBtOutwit/islPetDmgMul/islPetHealMul/islAdvXpOf/islBtHp/islBtFxSkill、ISL_FX_POW_KEYS;野外特長(體溫/水分/氧氣/陣風)。③sea_db ?v= → v1.384.0;腕足圖 6 張(大王魷本體圖裁切暫代)。 */   void 'v1.383.0';   /* v1.383.0(2026-10-06・老師「現在正式開放上述做得到的好友互動功能,檢查是否做好了」)— 稽核:對照 firestore.rules 全部好友相關寫入(名片/好友碼查詢/信箱選句+附禮/拜訪名額/位置心跳/通知/presences/大對抗好友連結),沙盒 puppeteer + 依 rules 驗欄位的模擬雲端實跑三帳號全流程零拒絕零錯誤。修一個真 bug:拜訪名額 slotUids 只在按「離開拜訪」時移除,直接關平板/切 App 的名額永久佔住,4 次後該島永遠「人滿了」⇒ islCoopJoin 進場前先讀 players 子集合,心跳超過 COOP_STALE_SEC 或已標 npc 的名額在交易裡清掉;離開整個荒島模式(islLeave)時也補 islCoopSlotRelease+離開通知。 */   void 'v1.382.0';   /* v1.382.0(2026-10-05・老師「荒島的日誌,上限改成300筆。改成每天都保留至少3件重要的事情(採集、掉落雜物、點天賦這些都不用記),避免再清除前面的記錄。已經被刪除的重要記錄要幫玩家補回來(如果可以)」)— LOG_MAX 150→300;islLog 先過 islLogSkip(D.LOG_SKIP:戰鬥掉落/天賦/採集不記);超過上限改 islLogTrim(每天依 ENDING.pri 分數留 LOG_DAY_KEEP=3 件,其餘依分數低→日子早刪,不再從最前面整筆砍);讀檔 islLogRestore 一次(flags.logRestore):清舊雜項+從 ISL.mem 與存檔現況補回已被刪的大事(各區用該區第一筆圖鑑日、科技/解謎/料理用圖鑑日、夥伴 petDex 日、好友 day、建築用解鎖區前一天或最早紀錄前一天並標「(補回)」),日期 islLogDateFor 依留著的紀錄內插;補回後 toast 告知件數。日曆格子圖示改 islFirstGlyph(舊 slice(0,1) 切半個 emoji)。pri 新增低分項(<memMin,只給日誌排序,islMemPick 已過濾不進回憶)。 */   void 'v1.381.0';   /* v1.381.0(2026-10-05・老師三項)—①營地帆船圖基本尺寸放大 100%(BUILDINGS.ship.baseK=2,islCampBldApplyTransforms 與拜訪好友營地兩處都乘上,玩家自己的縮放疊在上面)。②島嶼回顧:每張投影片加 1~2 句感性話語(island_db D.ENDING.feel:各區生態見解、建築、夥伴 PETS.sci+情感句、料理 RECIPES.why、馴養 ANIMALS.d…;islMemFeel)、每張都配相關圖片(islMemImg:舊紀錄的 bld_xxx 鍵其實不存在,改依分類找場景/建築_1/夥伴/料理/動物圖,最後退營地)、有話語的停留 feelSec 7.2 秒;帆船完成時自動收藏一份到 ISL.recaps(islRecapSave),側欄 🎬 回憶 改開收藏清單 islRecapOpen 隨時重看,音樂沿用 bgm-isl-ending;字幕加暗色漸層底,三平台字級。③冰天雪地島拿掉踩雪聲(snowstep),腳步聲改回本島規則。 */   void 'v1.380.0';   /* v1.380.0(2026-10-04・老師「完成帆船後的回顧,沒有從第一天開始。應該多注重在完成重要設施、第一次踏進場景、發現寵物、製作料理…等比較生活有意思的回顧點」)— 根因:ISL.log 上限 150 筆從最前面輪替刪除(第一天紀錄早被刪光)+ 結局從 log 平均抽樣(大半是戰鬥掉落/每日戰鬥統計等瑣碎紀錄)。修法:新增 ISL.mem 回憶精選(island_db D.ENDING.pri 打分表,≥memMin 另存、不受輪替)、islMemAll 合併 mem+log+存檔現況補齊(舊存檔被刪的早期事件:漂流/營地/營火/各區/建築/夥伴/料理/馴養)、islMemPick 第一天漂流開頭+帆船完成結尾、中間依分數+分組上限挑選後照時間排;新增三個回憶點 🍳 第一次做出料理、👀 第一次遇見寵物、🐣 第一次馴養動物;投影片無圖時的大圖示改取完整 emoji(islFirstGlyph,舊 charAt(0) 切半個代理對)。②老師「寵物到冰天雪地島打 5X 級的小怪經驗值還是只有 24,寵物獲得經驗值應該跟玩家一樣」— islPetsGainAfterWin 小怪經驗由固定 PET_XP.win×隻數 改成與主角同一公式 islAdvXpOf(打輸 ×ADV.lose、劇情分支加成同套),頭目戰取「同主角」與 v1.375.0 頭目公式較高者。 */   void 'v1.379.0';   /* v1.379.0(2026-10-04・老師三項)—①洞窟不下雨、沒有颳風飄葉與雲影(islAmbWx 回 'cave');洞窟裡雨聲/雷聲 ×0.35、沒有狂風吹樹與閃電聲(islWxSndProfileOf)②野外戰鬥維持雨與閃電:#isl-battle 內加 .isl-bt-wx 畫布(islBtWxAttach/islBtWxTick),天氣音效層在野外戰鬥照播 ×0.7(洞窟/地下層/防衛戰不播);回到野外 islShowScreen('zone') 延後一拍檢查動態背景不在就重掛(原本戰鬥/活動後雨和雷消失)③颱風天(本島、非洞窟、非外島)遇敵池去掉 D.MON_TYPHOON 6 種(islEncMonPool,安全網同夜行性)。island_db 有改(?v= 同步),sea_db 零改動維持 v1.378.0。 */   void 'v1.378.0';   /* v1.378.0(2026-10-04・老師三項)— ①⛵ 外島篇主線 c9~c13(資料在 sea_db;index 新增目標類型 sail/seaObs/armor/tool/seaPets、islMainSeaWait 閘門、islSeaSail 記出海次數 trips)②採集/伐木/採石/捕魚/打撈海廢題庫各 +50(island_db);islQuizPick 題庫變大時從新題開始出 ③品質小遊戲新增 ⭕縮圈 islQteRing/👊連打 islQteMash/🧠記憶順序 islQteSeq,採集/伐木/採石/捕魚由 islQteVariant 輪替(不連續兩次同一種)④⚙ 設定新增「⛵ 外島開關(GM)」:雲端 gameConfig/islandSea.open(islSeaAdminOnly 單一出口,取代直接讀 ISL_SEA_ADMIN_ONLY);上鎖時造好帆船的玩家看到「⛵ 出海探險 🔒」敬請期待 ⑤颱風/雷雨天:動態背景大雨(斜打、更粗更快)、白光閃電後播閃電聲、間歇遠雷、雨聲+狂風吹樹循環(老師上傳 4 個音效 wx-isl-*;天氣音效層 islWxSnd*,狂風暴雨島/雨林午後雷陣雨也套用)。 */   void 'v1.377.0';   /* v1.377.0(2026-10-04・老師「洞穴中的地圖新增可以直接撿取的蜘蛛絲」)— island_db D.SCENE.cave.pick.items 加入 silk(蛛絲)兩份(每個撿取點約 1/3 機率);index 零邏輯改動(撿取流程 islPickUp 本來就吃任何 D.ITEMS 素材,圖示直接用素材 emoji 🕸)。 */   void 'v1.376.0';   /* v1.376.0(2026-10-04・老師「天賦點完後冷卻太短,戰鬥變得很沒難度;全部按照建議;希望每種寵物都值得培養且有獨特不可取代之處」)— ①新增 islPetCmdCd(base,cut)=max(ceil(base/2), base−cut, 1),兩個施放點(islBtManualCast 手動/islBtAllyAct 自動)改用它,三種縮減來源(生死之交/馴獸專精精通/水晶風鈴)仍可疊加但最多縮一半 ②夥伴詳情卡冷卻顯示實際值 ③island_db 基礎冷卻:石虎 1→2、黑面琵鷺 2→3、綠蠵龜 4→3、螢火蟲 6→5、雲豹 4→3。 */   void 'v1.375.0';   /* v1.375.0(2026-10-04・老師「荒島的 boss 戰給寵物的經驗值太少了,修正」)— 根因:islPetsGainAfterWin 只把 k==='guardian' 當頭目,地圖頭目(m.boss)與出海島主全被當小怪,每場只給 PET_XP.win(6);改成 guardian 或 m.boss 都算頭目、頭目經驗只算一份(不被召喚幫手重複乘)、公式 PET_XP.boss + bossPerLv × 頭目等級(island_db 新增 bossPerLv:4)。同輪(老師「阿獺商店新增重新喚醒頭目可再次戰鬥的道具,一個 100 元、每日限購 1 個;挑戰頭目改成需要 1 AP」):①D.BOSS_RULE.ap 2→1(挑戰鈕/提示文字都讀 R.ap) ②新道具 boss_wake「🔔 頭目喚醒鈴」:islShopDailyEntries 虛擬商品 id=bosswake(打倒過任一頭目才上架,不進每日輪替與特價,不套數量步進器),每日限購 ISL.shop.bwDay/bwN 對 D.SHOP.bossWake.limit;頭目巢穴在沉睡(cool)時出現「🔔 使用喚醒鈴」鈕 → islBossWake 扣 1 個、sv.lastDay=ISL.day−respawnDays 使狀態變 ready(kills/best 不動)。 */   void 'v1.374.0';   /* v1.374.0(2026-10-04・老師「檢查還有沒有其他地方也有相同的 bug,一起修」)— 稽核全檔約 57 處觸控/指標事件綁定(動作鈕 touchend 開面板、passive 觸控+滑鼠雙綁、touchstart+mousedown 雙綁):戰鬥動作鈕(v1.373.0 已修)之外,僅營地主角/寵物長按綁定 islLongTapBind 屬同類(passive touchstart 擋不住 Android 補發的滑鼠事件 ⇒ 單點被算兩次 ⇒ 營地「連點兩下=跑步」規則誤判單點也跑步),已比照 islCampViewBindDrag 加 800ms 幽靈滑鼠過濾;其餘路徑(野外搖桿/設施裝飾小木屋拖曳/釣魚/閃避「!」鈕/三消/拖曳題)touchstart 本來就 preventDefault 或為純點擊,無需改動。 */   void 'v1.373.0';   /* v1.373.0(2026-10-04・老師回報「只在 Android 手機版:①回力鏢第一次按完 Bar 就消失、只打一段 ②按智取沒跳選項、直接套用某個結果」)— 同一根因:動作鈕在 touchend 就開面板且沒 preventDefault,Android 補發的幽靈 click 落在剛彈出的 #isl-bt-qte 面板上,把「打!」鈕/智取某個選項直接按掉。修法:islBtActsBindTip 的 touchend 一律 preventDefault+面板捕獲階段 450ms 保險(說明見該函式內)。island_db 零改動(?v= 維持 v1.363.0)。 */   void 'v1.372.0';   /* v1.372.0(2026-10-04・老師「完整下載主程式非常久,檢查原因並設法提高下載速度」)— ①出海探險素材(約 65MB,學生進不去)在 ISL_SEA_ADMIN_ONLY=true 時不列入下載 ②安裝請求帶 X-Lxps-Install 標頭,SW 不攔截(原本每檔存兩份+15 秒逾時回 504) ③單檔 90 秒逾時+暫時性失敗重試 1 次 ④並行 6→10 ⑤大小提示由「60~120MB」改實測的約 230MB(含出海約 300MB)。 */   void 'v1.371.0';   /* v1.371.0(2026-10-04・老師「角色都是完整的,不需要 GM 調整髮型位置了,隱藏,改回跟玩家一樣的完整髮型/髮色/染色切換」)— 設定選單的「造型工房(GM)」與換造型面板的「調髮型/調服裝」兩顆入口隱藏(旗標 ISL_LAYER_LAB_ON=false,程式整套保留);GM 的換造型面板本來就與玩家同一套(髮型/髮色/膚色/服裝染色),只是 GM 不吃 1 小時冷卻;🗡 武器工房保留。 */   /* 上一版註解接續如下 */   void 'v1.370.0';   /* ★ v1.370.0(2026-10-04・老師「359 張新圖已上傳,檢查確認,重建可走區域,確保主角移動不會被卡死」)—
    ①外島 20 區遮罩改用真場景圖重建(資料在 minigame_sea_db.js 檔尾覆寫區);翻頁地圖區域標記對齊 4 張全景圖。
@@ -9358,6 +9358,7 @@ function startTimer(sec){
   stopTimer();
   var _trTb = (_BT && _BT.p && _BT.p.trTimeBonus) ? _BT.p.trTimeBonus : 0;   /* ★ v1.75.0 — 天賦「時間加成」:每一題都加,不是只有第一題(整關持續生效才有感) */
   sec = sec + _trTb;
+  if(_BT && _BT.p && _BT.p.trComfortTime > 0){ sec += _BT.p.trComfortTime; _BT.p.trComfortTime = 0; }   /* ★ v1.407.0 劉備「仁德之心」:沒有選項可刪的玩法,連錯後這一題倒數 +4 秒 */
   if(_BT && _BT.p && _BT.p.trStartTimeBonusV > 0 && !_BT.p.trStartTimeBonusUsed){ _BT.p.trStartTimeBonusUsed = true; sec += _BT.p.trStartTimeBonusV; }   /* ★ v1.87.0 — 天賦「東風助力」(諸葛亮):進入關卡第一題一次性額外加秒,整場限1次 */
   MG.tleft = sec;
   MG.ttotal = sec;   /* ★ v1.4.0 記住總長,暫停後續跑同一條 */
@@ -9374,7 +9375,7 @@ function _timerRun(){
   var total = MG.ttotal || 1, bar = $('timebar');
   MG.timer = setInterval(function(){
     if(mgBattleFrozen()) return;   /* ★ v1.29.0 控場型爆發:計時暫停 10 秒(倒數不扣、環不動) */
-    MG.tleft -= 0.1;
+    MG.tleft -= 0.1 * ((_BT && _BT.p && _BT.p.trCalmK > 0) ? _BT.p.trCalmK : 1);   /* ★ v1.407.0 唐三藏「心靜時緩」:倒數流速變慢(trCalmK=0.85);原行 MG.tleft -= 0.1; */
     if(MG.tleft < 0) MG.tleft = 0;
     var pct = (MG.tleft / total) * 100;
     bar.style.width = pct + '%';
@@ -9500,6 +9501,16 @@ function _ringPaint(pct, sec){
 }
 function onTimeout(){
   if(MG.answered) return;
+  /* ★ v1.407.0 張飛「據水斷橋」:每關前 2 次時間到不算錯,這題重新給 5 秒(還是要自己答對) */
+  if(_BT && _BT.p && !_BT.over && _BT.p.trTimeoutGuardLeft > 0){
+    _BT.p.trTimeoutGuardLeft--;
+    var _tgS = _BT.p.trTimeoutGuardSec || 5;
+    MG.tleft = _tgS; MG.ttotal = _tgS;
+    try{ var _tgBar = $('timebar'); if(_tgBar){ _tgBar.classList.remove('low'); _tgBar.style.width = '100%'; } _ringPaint(100, _tgS); }catch(_eTg0){}
+    try{ playSfx('sfx-powerup', 0.6); mgBattleFloatOn('p', (MG.lang === 'en' ? '🌉 +' + _tgS + 's!' : '🌉 張飛大喝:再給你 ' + _tgS + ' 秒!'), 'heal'); }catch(_eTg){}
+    _timerRun();
+    return;
+  }
   MG.answered = true;
   MG.combo = 0;
   mgBattleHit(false);   /* ★ v1.29.0 超時 = 答錯:玩家 −10 */
@@ -9565,6 +9576,8 @@ function renderQuestion(keepState){
   if(_BT && _BT.p && _BT.p.trMapClear5 > 0 && _eng === 'map'){
     try{ mgBurstAtkApply('map', _BT.p.trMapClear5); }catch(_eMc){}
   }
+  /* ★ v1.407.0 — 《繪卷新章》新天賦三個「題目出現時」消費點(楊戩天眼/劉備仁德/趙雲七進七出),見 mgCn2OnQuestion */
+  if(!keepState){ try{ mgCn2OnQuestion(_eng); }catch(_eCn2Q){} }
   /* ★ v1.10.0 課堂複習題角落標籤 + 記入本輪已出清單(專注模式時) */
   mgCrTagApply(q);
   if(!keepState && q && q.cr && mgCrActive()) mgCrSeenAdd(x.id, q);
@@ -12476,6 +12489,35 @@ function mgEff2Text(h, isNpc){
     s: '使用當下幫' + self_ + '補 10 滴血,同時扣' + foe + ' 3 格爆發充能',
     f: '' + self_ + '恢復 10 點 HP,同時扣除' + foe + ' 3 格爆發充能',
     en: '; also heals ' + selfEn + ' 10 HP and drains 3 charge from ' + foeEn };
+  /* ★ v1.407.0 《繪卷新章》七位 SSR 的第二效果文案(s 簡單風 / f 精緻風 / en 英文) */
+  if(e.t === 'negateburst') return {
+    s: '在' + foe + '身上留下天眼印,' + foe + '下一次大絕會直接失效',
+    f: '' + foe + '身上留下「天眼印」:' + foe + '下一次極限爆發直接失效(能量照扣),持續到下一次爆發為止',
+    en: "; marks " + foeEn + " with the Third Eye — " + foeEn + "'s next burst is nullified (charge still spent)" };
+  if(e.t === 'overhealshield') return {
+    s: '幫' + self_ + '補 ' + e.v + ' 滴血,補太多的部分會變成護盾',
+    f: '' + self_ + '恢復 ' + e.v + ' 點 HP,超過最大 HP 的部分全部轉為護盾(護盾最多 30 點)',
+    en: '; heals ' + selfEn + ' ' + e.v + ' HP; any overflow becomes a shield (up to 30)' };
+  if(e.t === 'multiblock') return {
+    s: foe + '接下來 3 回合只能單擊,攻擊還會變弱',
+    f: '' + foe + '接下來 3 回合的連擊一律變成單擊,且攻擊傷害減少 ' + e.v + '%',
+    en: "; for 3 rounds " + foeEn + "'s multi-hits become single hits and deal " + e.v + '% less damage' };
+  if(e.t === 'rescuedash') return {
+    s: '接下來 3 回合' + self_ + '快沒血時,趙雲會衝出來救援',
+    f: '接下來 3 回合內,若' + self_ + 'HP 跌破 30%,立刻恢復 ' + e.v + ' 點 HP 並反擊' + foe + ' 15 點(觸發一次就結束)',
+    en: '; for 3 rounds, if ' + selfEn + ' drop below 30% HP, instantly heal ' + e.v + ' HP and counter for 15 (once)' };
+  if(e.t === 'tightband') return {
+    s: foe + '接下來 3 回合一攻擊就頭痛,還可能打不中',
+    f: '' + foe + '接下來 3 回合每次攻擊前先受到 ' + e.v + ' 點頭痛傷害,且有 30% 機率攻擊落空',
+    en: "; for 3 rounds " + foeEn + " takes " + e.v + ' headache damage before each attack and has a 30% chance to miss' };
+  if(e.t === 'bellyslam') return {
+    s: '把口袋裡的包子全吃掉,每吃 1 個多 15 護盾、再打' + foe + ' ' + e.v + ' 點',
+    f: '吃掉口袋所有包子:每吃 1 個,' + self_ + '護盾 +15、對' + foe + '追加 ' + e.v + ' 點傷害;沒有包子時護盾固定 +10',
+    en: '; eats every bun: each gives +15 shield and ' + e.v + ' extra damage to ' + foeEn + ' (no buns: +10 shield)' };
+  if(e.t === 'cleanseconvert') return {
+    s: '把' + self_ + '身上的壞狀態全甩掉,甩掉幾個就打' + foe + '幾次',
+    f: '解除' + self_ + '身上所有不利狀態,每解除 1 個對' + foe + '造成 ' + e.v + ' 點傷害(沒有可解除時固定 ' + e.v + ' 點)',
+    en: '; removes all debuffs from ' + selfEn + ', dealing ' + e.v + ' damage per debuff removed (min ' + e.v + ')' };
   return { s:'', f:'', en:'' };
 }
 /* ★ v1.65.0(老師需求「附加後面整段都用黃色,附加前面空2格跟基本效果段落做區分」)—
@@ -12754,7 +12796,7 @@ function mgBattleInit(x){
           n: { h: nh, hp: MG_BT.HP, charge: 0, shield: 0, used: 0, healBuff: 0, dmgReduceLeft: 0, dotLeft: 0, healAmt: 0, dotAmt: 0, sealLeft: 0, confuseLeft: 0, thornLeft: 0, immuneLeft: 0, noAtkLeft: 0, multiHitLeft: 0, lowhpScale: false, counterLeft: 0,
             chargeLockLeft: 0, dmgDownLeft: 0, dmgImmuneLeft: 0, dodgeLeft: 0, reflectHealLeft: 0, reflectHalfLeft: 0, dmgBankLeft: 0, dmgBankAmt: 0, healRedirectLeft: 0, healRedirectTo: '', lifestealLeft: 0, dmgUpLeft: 0, regenLeft: 0, regenAmt: 0, poisonLeft: 0, poisonAmt: 0, thornDmgLeft: 0, maxHpBonus: 0, phoenixUsed: false, dodgeChanceLeft: 0, surviveLeft: 0, dmgTakenUpLeft: 0, statusPopupOpen: false, reviveWinLeft: 0, reviveAmt: 0, counterAmt: 0 },
           over: false, result: '', hits: 0, miss: 0, freezeUntil: 0, npcT: null, endT: null };
-  mgApplyTrait(_BT.p);   /* ★ v1.75.0 — 天賦被動(tr):只作用在玩家自己這側,整關從頭生效到尾,見函式註解 */
+  mgApplyTrait(_BT.p, x);   /* ★ v1.407.0 多傳 x(唐三藏「心靜時緩」要看這關有沒有統一倒數) ｜ ★ v1.75.0 — 天賦被動(tr):只作用在玩家自己這側,整關從頭生效到尾,見函式註解 */
   var pi = $('bt-p-img'), ni = $('bt-n-img');
   if(pi){ pi.style.display = ''; pi.src = mgHeroUrl(ph.img); }
   if(ni){ ni.style.display = ''; ni.src = mgHeroUrl(nh.img); }
@@ -12893,7 +12935,26 @@ var MG_STATUS_DEFS = [
     desc: function(S){ return 'HP 上限永久提升 ' + S.maxHpBonus + '(整場都有效)'; } },
   { f: 'reviveWinLeft', kind: 'buff', icon: '💫', zh: '復活保護', en: 'Revive Window',
     active: function(S){ return S.reviveWinLeft > 0; }, n: function(S){ return S.reviveWinLeft; },
-    desc: function(S){ return '接下來 ' + S.reviveWinLeft + ' 回合內,若 HP 歸零會立即復活回 ' + (S.reviveAmt || 20) + ' HP'; } }
+    desc: function(S){ return '接下來 ' + S.reviveWinLeft + ' 回合內,若 HP 歸零會立即復活回 ' + (S.reviveAmt || 20) + ' HP'; } },
+  /* ★ v1.407.0 《繪卷新章》七位 SSR 新狀態(到期型用 mgCn2Left 算剩幾題) */
+  { f: 'hpShield', kind: 'buff', icon: '🛡', zh: '點數護盾', en: 'Shield Pts',
+    active: function(S){ return S.hpShield > 0; }, n: function(S){ return S.hpShield; },
+    desc: function(S){ return '還有 ' + S.hpShield + ' 點護盾,受到攻擊時先扣護盾再扣血'; } },
+  { f: 'buns', kind: 'buff', icon: '🥟', zh: '包子', en: 'Buns',
+    active: function(S){ return S.trBunsHeal > 0 && S.buns > 0; }, n: function(S){ return S.buns; },
+    desc: function(S){ return '口袋裡還有 ' + S.buns + ' 個包子,HP 低於 40% 時會自動吃掉恢復 ' + S.trBunsHeal + ' HP'; } },
+  { f: 'rescueUntil', kind: 'buff', icon: '🐉', zh: '單騎救主', en: 'Rescue',
+    active: function(S){ return mgCn2On(S, 'rescueUntil'); }, n: function(S){ return mgCn2Left(S, 'rescueUntil'); },
+    desc: function(S){ return '接下來幾題內 HP 跌破 30% 時,趙雲會衝出來恢復 ' + (S.rescueAmt || 25) + ' HP 並反擊 15'; } },
+  { f: 'negateArmed', kind: 'bad', icon: '👁', zh: '天眼印', en: 'Third Eye Mark',
+    active: function(S){ return !!S.negateArmed; }, n: function(S){ return 1; },
+    desc: function(S){ return '被天眼盯上了,下一次極限爆發會直接失效'; } },
+  { f: 'multiBlockUntil', kind: 'bad', icon: '🌉', zh: '斷橋', en: 'Bridge Held',
+    active: function(S){ return mgCn2On(S, 'multiBlockUntil'); }, n: function(S){ return mgCn2Left(S, 'multiBlockUntil'); },
+    desc: function(S){ return '連擊變單擊,攻擊傷害減少 ' + (S.multiBlockPct || 40) + '%'; } },
+  { f: 'tightUntil', kind: 'bad', icon: '📿', zh: '緊箍', en: 'Headband',
+    active: function(S){ return mgCn2On(S, 'tightUntil'); }, n: function(S){ return mgCn2Left(S, 'tightUntil'); },
+    desc: function(S){ return '每次攻擊前先頭痛受到 ' + (S.tightAmt || 6) + ' 點傷害,還有 30% 機率打不中'; } }
 ];
 function mgStatusActiveList(S){
   var out = [], i, d;
@@ -13035,6 +13096,15 @@ function mgBattleFloatOn(side, text, cls){ try{ var el = $('bt-' + side + '-imgw
 function mgHpCap(S){ return MG_BT.HP + (S && S.maxHpBonus ? S.maxHpBonus : 0); }
 function mgDealDamage(atk, def, base, fxFrom, rawFixed){
   var dmg = base;
+  /* ★ v1.407.0 唐三藏「緊箍咒」(eff2 tightband):被套緊箍的一方每次出手前先頭痛自傷,且 30% 機率攻擊落空(含每回合固定攻擊) */
+  if(mgCn2On(atk, 'tightUntil')){
+    var _tgA = atk.tightAmt || 6, _tgSide = mgSideOf(atk);
+    atk.hp = Math.max(0, atk.hp - _tgA);
+    try{ mgBattleFloatOn(_tgSide, '📿−' + _tgA, 'block'); }catch(_eTb1){}
+    if(Math.random() < 0.3){ try{ playSfx('sfx-cancel', 0.35); mgBattleFloatOn(_tgSide, (MG.lang === 'en' ? 'HEADACHE MISS' : '頭痛落空!'), 'block'); }catch(_eTb2){} return; }
+  }
+  /* ★ v1.407.0 張飛「斷橋怒吼」(eff2 multiblock):被斷橋的一方攻擊傷害 −40%(含固定攻擊),連擊一律變單擊(見函式尾 multiHitLeft) */
+  if(!rawFixed && mgCn2On(atk, 'multiBlockUntil')) dmg = Math.max(1, Math.round(dmg * (1 - (atk.multiBlockPct || 40) / 100)));   /* rawFixed(每回合固定攻擊)依鐵律不吃減傷 */
   if(!rawFixed){   /* ★ v1.57.0 — rawFixed=true 用於 NPC_TURN_DMG 全域固定回合傷害,鐵律「不可被護盾/減傷擋下」維持不變,跳過下面幾行常規加成/減傷計算 */
     if(atk.lowhpScale){ var _miss = 1 - (atk.hp / MG_BT.HP); dmg = Math.round(dmg * (1 + Math.floor(_miss * 10) * 0.1)); }   /* 呂布 */
     if(atk.dmgUpLeft > 0){ atk.dmgUpLeft--; dmg = Math.round(dmg * 1.5); }   /* 菇女/關羽:接下來3次攻擊+50% */
@@ -13061,9 +13131,16 @@ function mgDealDamage(atk, def, base, fxFrom, rawFixed){
     mgBattleFloatOn(defSide, '+' + _hl, 'heal'); mgBattleFloatOn(atkSide, '−' + _rf, 'block');
     return;
   }
+  /* ★ v1.407.0 劉備「溢補轉盾」/豬八戒「天蓬肚擊」/沙悟淨「挑擔護法」的點數護盾 hpShield:先吸收傷害點數(跟格數制 shield 是兩套) */
+  if(def.hpShield > 0 && !rawFixed){   /* rawFixed(每回合固定攻擊)依鐵律不可被護盾擋下 */
+    var _hsAb = Math.min(def.hpShield, dmg); def.hpShield -= _hsAb; dmg -= _hsAb;
+    try{ mgBattleFloatOn(defSide, '🛡−' + _hsAb, 'block'); }catch(_eHs){}
+    if(dmg <= 0){ playSfx('sfx-cancel', 0.35); return; }
+  }
   playSfx('sfx-normalatk', 0.7); mgBattleFxAttack(fxFrom, '−' + dmg);
   if(def.hp - dmg <= 0 && def.surviveLeft > 0){ def.surviveLeft--; def.hp = 1; mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'SURVIVE!' : '挺住了!'), 'block'); }   /* ★ v1.58.0 — 炎火超少女:HP≤10時接下來3次不會被打死,固定留1HP */
   else{ def.hp = Math.max(0, def.hp - dmg); }
+  try{ mgCn2AfterHurt(def, atk); }catch(_eCn2H){}   /* ★ v1.407.0 趙雲「單騎救主」(HP 跌破 30% 衝出救援)/豬八戒「包子存糧」(HP 低於 40% 自動吃) */
   if(def.reflectHalfLeft > 0){ def.reflectHalfLeft--; atk.hp = Math.max(0, atk.hp - dmg); mgBattleFloatOn(atkSide, '−' + dmg, 'block'); }   /* 紅色玩家:剩下的一半反彈回去 */
   if(def.dmgBankLeft > 0){   /* 學霸:累積3次受到的傷害,倒數到0時一次還給對手 */
     def.dmgBankLeft--; def.dmgBankAmt = (def.dmgBankAmt || 0) + dmg;
@@ -13071,7 +13148,8 @@ function mgDealDamage(atk, def, base, fxFrom, rawFixed){
   }
   if(def.counterLeft > 0){ def.counterLeft--; var _cv = def.counterAmt || 10; atk.hp = Math.max(0, atk.hp - _cv); mgBattleFxAttack(defSide, '−' + _cv); mgBattleFloatOn(defSide, (MG.lang === 'en' ? 'COUNTER' : '反擊!'), 'block'); }   /* 蚩尤(固定10,counterAmt未設走預設)/牛魔王(★v1.65.2改版,counterAmt:5) */
   if(atk.lifestealLeft > 0){ atk.lifestealLeft--; var _ls = Math.round(dmg * 0.5); atk.hp = Math.min(mgHpCap(atk), atk.hp + _ls); mgBattleFloatOn(atkSide, '+' + _ls, 'heal'); }   /* 幽幽/死靈法師/酒吞童子 */
-  if(atk.multiHitLeft > 0){ atk.multiHitLeft--; def.hp = Math.max(0, def.hp - dmg); mgBattleFxAttack(fxFrom, '−' + dmg); }   /* 哪吒:原封不動追加同傷害一次,不重新跑上面判定避免鏈式無限 */
+  if(atk.multiHitLeft > 0 && mgCn2On(atk, 'multiBlockUntil')){ atk.multiHitLeft--; try{ mgBattleFloatOn(atkSide, (MG.lang === 'en' ? '🌉 SINGLE HIT' : '🌉 斷橋:只剩單擊'), 'block'); }catch(_eMb){} }   /* ★ v1.407.0 張飛斷橋:連擊變單擊(用量照扣) */
+  else if(atk.multiHitLeft > 0){ atk.multiHitLeft--; def.hp = Math.max(0, def.hp - dmg); mgBattleFxAttack(fxFrom, '−' + dmg); }   /* 哪吒:原封不動追加同傷害一次,不重新跑上面判定避免鏈式無限 */
 }
 /* ★ v1.57.0 — 地獄將軍(regen 5回合+6)/小鬼貓與兔(poison 5回合−5)/青炎龍王與魔界花使(regen+poison 3回合±5)這類
    「每回合」型效果,統一在 mgBattleHit 的 500ms 全域節拍(NPC_TURN_DMG 那個 setTimeout)一併結算,
@@ -13097,6 +13175,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
   if(N.noHealLeft > 0) N.noHealLeft--;
   if(ok){
     _BT.hits++;
+    try{ mgCn2OnAnswer(true); }catch(_eCn2A1){}   /* ★ v1.407.0 劉備/趙雲/豬八戒天賦計數(連錯/連對) */
     if(P.confuseLeft > 0){   /* ★ v1.36.0 — 魅惑:出手方(玩家)被魅惑,這次攻擊改打自己 */
       P.confuseLeft--; var dmgSelfP = MG_BT.DMG;
       P.hp = Math.max(0, P.hp - dmgSelfP); playSfx('sfx-normalatk', 0.7); mgBattleFxAttack('n', '−' + dmgSelfP); mgBattleFloatOn('p', (MG.lang === 'en' ? 'CONFUSED' : '魅惑!'), 'block');
@@ -13179,6 +13258,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
     }
   }else{
     _BT.miss++;
+    try{ mgCn2OnAnswer(false); }catch(_eCn2A2){}   /* ★ v1.407.0 劉備/趙雲/豬八戒天賦計數(連錯/連對) */
     if(P.trCounterStackMax > 0 && (P.trCounterStack || 0) < P.trCounterStackMax) P.trCounterStack = (P.trCounterStack || 0) + 1;   /* ★ v1.87.0 — 天賦「血債血還」(蚩尤):答錯累積怒氣層數,消費點在上面 ok 分支 */
     if(N.confuseLeft > 0){   /* ★ v1.36.0 — 魅惑:出手方(NPC)被魅惑,這次攻擊改打自己 */
       N.confuseLeft--; var dmgSelfN = MG_BT.DMG;
@@ -13186,6 +13266,7 @@ function mgBattleHit(ok, customDmg, skipTurnDmg, customMissDmg){
     }
     else if(P.shield > 0){ P.shield--; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? 'BLOCK' : '護盾擋下'), 'block'); }
     else if(N.noAtkLeft > 0){ N.noAtkLeft--; mgBattleFloatOn('n', (MG.lang === 'en' ? 'SILENCED' : '無法攻擊!'), 'block'); }   /* ★ v1.55.0 — 同上,答錯時 NPC 的反擊也可能被魔術師封住 */
+    else if(P.trCarryFreeMiss && !P.trCarryFreeUsed){ P.trCarryFreeUsed = true; playSfx('sfx-cancel', 0.35); mgBattleFloatOn('p', (MG.lang === 'en' ? '🔱 CARRIED!' : '🔱 沙悟淨挑走了!'), 'block'); }   /* ★ v1.407.0 沙悟淨「挑擔護法」:每關第 1 次答錯不扣 HP(像挑走了第一個擔子) */
     else{
       var dmgN = (typeof customMissDmg === 'number' && customMissDmg > 0) ? Math.round(customMissDmg) : MG_BT.DMG;   /* ★ v1.65.4 算數大進擊三數混合運算題:射錯時對玩家造成雙倍傷害 */
       mgDealDamage(N, P, dmgN, 'n');   /* ★ v1.57.0 — NPC 版同款,見 mgDealDamage 註解 */
@@ -13364,8 +13445,170 @@ function mgEff2ApplyBad(caster, foe, kind, val){
    整關持續生效,不會用完、不會倒數。P 身上新增的欄位(trMistakePct/trStreakN/trStreakPct/
    trScorePct/trSecondChance/trSecondUsed/trTimeBonus/trTrapPct)平常不存在,消費點一律用
    `P.xxx > 0` 或 `P.xxx &&` 判斷,沒有天賦或天賦不是對應類型時自然是 undefined,判斷式安全。 */
-function mgApplyTrait(P){
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v1.407.0(老師 2026-10-24「甲」)《繪卷新章》七位 SSR 小遊戲機制共用小工具(ES5)
+ *   回合型狀態一律記「到第幾題為止」(xxxUntil = 施放當下已作答題數 + 3),不必在各處逐題倒數:
+ *   作答題數 = _BT.hits + _BT.miss;同一題的「答題攻擊」與「之後 0.5 秒的固定攻擊」都算在同一題內。
+ * ══════════════════════════════════════════════════════════════════════════ */
+function mgCn2Q(){ return _BT ? ((_BT.hits || 0) + (_BT.miss || 0)) : 0; }
+function mgCn2Immune(S){   /* 對手身上有「免疫不利」(電腦老師等)⇒ 擋下這次新不利狀態,比照 mgEff2ApplyBad 口徑 */
+  if(S && S.immuneLeft > 0){ S.immuneLeft--; try{ mgBattleFloatOn(mgSideOf(S), (MG.lang === 'en' ? 'IMMUNE' : '免疫!'), 'block'); }catch(e){} return true; }
+  return false;
+}
+function mgCn2On(S, f){ return !!(S && S[f] > 0 && mgCn2Q() <= S[f]); }
+function mgCn2Left(S, f){ return (S && S[f] > 0) ? Math.max(0, S[f] - mgCn2Q() + 1) : 0; }
+/* 楊戩「天眼通明」:正確答案發金光一瞬間(選擇題類直接標出正解;其他玩法改用一次提示),回傳 true = 真的用到 */
+function mgCn2Glow(el, ms){
+  if(!el) return false;
+  var o1 = el.style.boxShadow, o2 = el.style.outline, o3 = el.style.filter;
+  el.style.boxShadow = '0 0 18px 6px rgba(255,230,120,0.95)'; el.style.outline = '3px solid #ffe066'; el.style.filter = 'drop-shadow(0 0 8px #ffe066)';
+  setTimeout(function(){ try{ el.style.boxShadow = o1; el.style.outline = o2; el.style.filter = o3; }catch(e){} }, ms || 600);
+  return true;
+}
+function mgCn2EyeFlash(eng, ms){
+  var q = MG.order[MG.idx], x = MG.cur, i;
+  try{
+    if(eng === 'quiz' || eng === 'sort' || eng === 'colorq'){
+      var ansIdx = q.a;
+      if(eng === 'sort'){ var bins = mgBins(x, q); ansIdx = -1; for(i = 0; i < bins.length; i++){ if(bins[i].id === q.b) ansIdx = i; } }
+      var btns = (eng === 'colorq') ? $('cq-opts').getElementsByClassName('cq-opt') : $('opts').getElementsByTagName('button');
+      for(i = 0; i < btns.length; i++){
+        var isAns = (eng === 'colorq') ? (q.opts[i] === q.a) : (parseInt(btns[i].getAttribute('data-i'), 10) === ansIdx);
+        if(isAns) return mgCn2Glow(btns[i], ms);
+      }
+      return false;
+    }
+    if(eng === 'drag'){
+      var bins2 = mgBins(x, q), dbins = $('drag-bins').getElementsByClassName('dbin');
+      for(i = 0; i < dbins.length; i++){ if(bins2[i] && bins2[i].id === q.b) return mgCn2Glow(dbins[i], ms); }
+      return false;
+    }
+    if(eng === 'map') return mgCn2Glow($('sp-' + q.a), ms);
+    if(eng === 'paint') return false;
+    if(eng === 'match3') return false;   /* 消消樂沒有「正確答案」,不消耗天眼 */
+    return mgBurstAtkApply(eng, 1);      /* 排排站/連連看/聽音坊/迷宮/算數大進擊:改成點出 1 個提示 */
+  }catch(e){}
+  return false;
+}
+/* 題目出現時(renderQuestion 尾端,keepState=false 才呼叫) */
+function mgCn2OnQuestion(eng){
+  if(!_BT || _BT.over || !_BT.p) return;
+  var P = _BT.p;
+  /* 楊戩「天眼通明」:每關 3 次,自動用在接下來的題目 */
+  if(P.trEyeFlashLeft > 0){
+    var _ms = P.trEyeFlashMs || 600;
+    setTimeout(function(){
+      try{
+        if(!_BT || _BT.over || MG.answered || !(P.trEyeFlashLeft > 0)) return;
+        if(mgCn2EyeFlash(eng, _ms)){ P.trEyeFlashLeft--; playSfx('sfx-powerup', 0.4); mgBattleFloatOn('p', (MG.lang === 'en' ? '👁 THIRD EYE' : '👁 天眼!'), 'heal'); }
+      }catch(_e1){}
+    }, 220);
+  }
+  /* 劉備「仁德之心」:連錯後的這一題排除 2 個錯誤選項(沒有選項的玩法改成倒數 +4 秒) */
+  if(P.trComfortArm){
+    P.trComfortArm = false;
+    var _done = false;
+    if(MG_HINTCLEAR_ENGINES[eng]){ try{ _done = mgBurstAtkApply(eng, 2); }catch(_e2){} }
+    if(!_done){
+      if(eng === 'react' && _RC && typeof _RC.endAt === 'number') _RC.endAt += 4000;
+      else P.trComfortTime = 4;   /* 消費點:startTimer */
+    }
+    try{ mgBattleFloatOn('p', (MG.lang === 'en' ? '🍑 HELPING HAND' : (_done ? '🍑 仁德:排除 2 個錯誤選項' : '🍑 仁德:多 4 秒')), 'heal'); }catch(_e3){}
+  }
+  /* 趙雲「七進七出」:連對 7 題後,這一題直接算答對(單次送出的玩法);其他玩法改成點出 3 個提示 */
+  if(P.trStreakAutoArm){
+    P.trStreakAutoArm = false;
+    if(MG_AUTOCLEAR_ENGINES[eng]){
+      setTimeout(function(){
+        try{
+          if(!_BT || _BT.over || MG.answered) return;
+          stopTimer(); MG.answered = true;
+          mgBattleFloatOn('p', (MG.lang === 'en' ? '🐉 BREAKTHROUGH!' : '🐉 七進七出!直接過關'), 'heal');
+          scoreIt(true);
+          showFeedback(true, (MG.lang === 'en' ? '🐉 Zhao Yun breaks through — auto-cleared!' : '🐉 趙雲殺出重圍,這題直接算你答對!'), txw(MG.order[MG.idx])); lockOptions(-1);
+        }catch(_e4){}
+      }, 450);
+    } else {
+      var _h3 = false; try{ _h3 = mgBurstAtkApply(eng, 3); }catch(_e5){}
+      if(_h3){ try{ mgBattleFloatOn('p', (MG.lang === 'en' ? '🐉 BREAKTHROUGH!' : '🐉 七進七出!'), 'heal'); }catch(_e6){} }
+    }
+  }
+}
+/* 每次作答(mgBattleHit 對/錯兩分支最前面) */
+function mgCn2OnAnswer(ok){
+  if(!_BT || !_BT.p) return;
+  var P = _BT.p;
+  if(P.trComfortN > 0){   /* 劉備:連錯 v 題 ⇒ 恢復 10 HP+下一題幫忙(每關最多 m 次) */
+    if(ok) P.trComfortWrong = 0;
+    else{
+      P.trComfortWrong = (P.trComfortWrong || 0) + 1;
+      if(P.trComfortWrong >= P.trComfortN && (P.trComfortUsed || 0) < (P.trComfortMax || 3)){
+        P.trComfortWrong = 0; P.trComfortUsed = (P.trComfortUsed || 0) + 1; P.trComfortArm = true;
+        if(mgHealOk(P)){ P.hp = Math.min(mgHpCap(P), P.hp + 10); try{ mgBattleFloatOn('p', '+10', 'heal'); }catch(_e1){} }
+        try{ mgBattleFloatOn('p', (MG.lang === 'en' ? '🍑 Liu Bei helps you up!' : '🍑 劉備扶你起來!'), 'heal'); }catch(_e2){}
+      }
+    }
+  }
+  if(P.trStreakAutoN > 0){   /* 趙雲:連對 v 題 ⇒ 下一題自動答對;答錯歸零 */
+    if(ok){ P.trStreakAutoCnt = (P.trStreakAutoCnt || 0) + 1; if(P.trStreakAutoCnt >= P.trStreakAutoN){ P.trStreakAutoCnt = 0; P.trStreakAutoArm = true; } }
+    else P.trStreakAutoCnt = 0;
+  }
+  if(P.trBunsHeal > 0){   /* 豬八戒:每連對 5 題再得 1 個包子(最多存 m 個) */
+    if(ok){ P.trBunsStreak = (P.trBunsStreak || 0) + 1; if(P.trBunsStreak >= 5){ P.trBunsStreak = 0; if((P.buns || 0) < (P.trBunsMax || 2)){ P.buns = (P.buns || 0) + 1; try{ mgBattleFloatOn('p', '🥟+1', 'heal'); }catch(_e3){} } } }
+    else P.trBunsStreak = 0;
+  }
+}
+/* 受到傷害扣血之後(mgDealDamage) */
+function mgCn2AfterHurt(def, atk){
+  if(!def || def.hp <= 0) return;
+  var cap = mgHpCap(def), side = mgSideOf(def);
+  /* 趙雲「單騎救主」(eff2 rescuedash):3 題內 HP 跌破 30% ⇒ 恢復 25+反擊 15,觸發一次就結束 */
+  if(mgCn2On(def, 'rescueUntil') && def.hp < cap * 0.30){
+    def.rescueUntil = 0;
+    var _ra = def.rescueAmt || 25;
+    if(mgHealOk(def)){ def.hp = Math.min(cap, def.hp + _ra); try{ mgBattleFloatOn(side, '+' + _ra, 'heal'); }catch(_e1){} }
+    if(atk && atk !== def){ atk.hp = Math.max(0, atk.hp - 15); try{ mgBattleFxAttack(side, '−15'); }catch(_e2){} }
+    try{ playSfx('sfx-powerup', 0.6); mgBattleFloatOn(side, (MG.lang === 'en' ? '🐉 RESCUE!' : '🐉 趙雲衝出救援!'), 'heal'); }catch(_e3){}
+  }
+  /* 豬八戒「包子存糧」:HP 低於 40% 自動吃 1 個包子 */
+  if(def.trBunsHeal > 0 && (def.buns || 0) > 0 && def.hp < cap * 0.40 && mgHealOk(def)){
+    def.buns--;
+    def.hp = Math.min(cap, def.hp + def.trBunsHeal);
+    try{ playSfx('sfx-powerup', 0.5); mgBattleFloatOn(side, (MG.lang === 'en' ? '🥟 +' + def.trBunsHeal : '🥟 吃包子 +' + def.trBunsHeal), 'heal'); }catch(_e4){}
+  }
+}
+/* 沙悟淨「挑擔護法」與「流沙反捲」共用:不利狀態欄位清單(計數型 + 到期型) */
+var MG_CN2_BAD_CNT = ['dotLeft','sealLeft','confuseLeft','noAtkLeft','chargeLockLeft','dmgDownLeft','dmgTakenUpLeft','poisonLeft','noHealLeft'];
+var MG_CN2_BAD_UNTIL = ['multiBlockUntil','tightUntil'];
+function mgCn2BadCount(S){
+  var n = 0, i;
+  for(i = 0; i < MG_CN2_BAD_CNT.length; i++){ if(S[MG_CN2_BAD_CNT[i]] > 0) n++; }
+  for(i = 0; i < MG_CN2_BAD_UNTIL.length; i++){ if(mgCn2On(S, MG_CN2_BAD_UNTIL[i])) n++; }
+  if(S.negateArmed) n++;
+  return n;
+}
+function mgCn2ClearBad(S){
+  var i;
+  for(i = 0; i < MG_CN2_BAD_CNT.length; i++) S[MG_CN2_BAD_CNT[i]] = 0;
+  for(i = 0; i < MG_CN2_BAD_UNTIL.length; i++) S[MG_CN2_BAD_UNTIL[i]] = 0;
+  S.dotAmt = 0; S.negateArmed = false;
+}
+function mgApplyTrait(P, x){
   var t = P.h && P.h.tr; if(!t) return;
+  /* ★ v1.407.0(老師 2026-10-24「甲」)《繪卷新章》七位 SSR 的七種全新天賦(設計書 claude/繪卷新章SSR_小遊戲天賦技能設計書.md),
+     消費點:renderQuestion 尾端(eyeflash/comfortmiss/streakautoclear)、_timerRun(calmtime)、onTimeout(timeoutguard)、
+     mgBattleHit(comfortmiss/streakautoclear/buns 計數、debuffcarry 第一次答錯免傷)、mgCn2AfterHurt(buns 自動吃)、mgApplyEff2 外層(debuffcarry 減半+護盾)。 */
+  if(t.t === 'eyeflash'){ P.trEyeFlashLeft = t.v || 3; P.trEyeFlashMs = t.m || 600; return; }   /* 楊戩「天眼通明」 */
+  if(t.t === 'comfortmiss'){ P.trComfortN = t.v || 2; P.trComfortMax = t.m || 3; P.trComfortUsed = 0; P.trComfortWrong = 0; return; }   /* 劉備「仁德之心」 */
+  if(t.t === 'timeoutguard'){ P.trTimeoutGuardLeft = t.v || 2; P.trTimeoutGuardSec = t.m || 5; return; }   /* 張飛「據水斷橋」 */
+  if(t.t === 'streakautoclear'){ P.trStreakAutoN = t.v || 7; P.trStreakAutoCnt = 0; return; }   /* 趙雲「七進七出」 */
+  if(t.t === 'calmtime'){   /* 唐三藏「心靜時緩」:倒數流速 −v%;沒有統一倒數的關卡(迷宮/消消樂/算數/調色)改成結算分數 +5% */
+    P.trCalmK = Math.max(0.5, 1 - (t.v || 15) / 100);
+    try{ var _ce = (x && x.engine) || ''; if(_ce === 'maze' || _ce === 'match3' || _ce === 'react' || _ce === 'paint') P.trScorePct = (P.trScorePct || 0) + 5; }catch(_eCt){}
+    return;
+  }
+  if(t.t === 'buns'){ P.trBunsHeal = t.v || 35; P.trBunsMax = t.m || 2; P.buns = 1; P.trBunsStreak = 0; return; }   /* 豬八戒「包子存糧」 */
+  if(t.t === 'debuffcarry'){ P.trCarryPct = t.v || 50; P.trCarryShield = t.m || 4; P.trCarryFreeMiss = true; return; }   /* 沙悟淨「挑擔護法」 */
   if(t.t === 'headstart') P.charge = Math.min(MG_BT.CHARGE - 1, (P.charge || 0) + t.v);   /* 進場直接視同已充能+v格,但不能因此直接滿槽免費爆發 */
   else if(t.t === 'mistakeshield') P.trMistakePct = t.v;   /* 消費點:mgDealDamage,答錯挨打的傷害減 v% */
   else if(t.t === 'streakbonus'){ P.trStreakN = t.v; P.trStreakPct = t.m; }   /* 消費點:scoreIt,連續答對每滿v題,那一題得分再加 m% */
@@ -13557,13 +13800,36 @@ function mgTraitText(h){
   if(t.t === 'reactdodgeonmiss') return {
     s: '危機反射:每回合第1次射錯可以閃過反擊', f: '危機反射:每回合第1次打中錯誤目標時,可以完全閃過那次的反擊傷害(僅算數大進擊生效)',
     en: 'Trait: the first wrong hit each round fully dodges the counter-damage (Coin Rush only)' };
+  /* ★ v1.407.0 《繪卷新章》七位 SSR 的天賦文案 */
+  if(t.t === 'eyeflash') return {
+    s: '天眼通明:第三隻眼會偷偷閃一下正確答案(每關 ' + t.v + ' 次)', f: '天眼通明:每關 ' + t.v + ' 次,題目出現時正確答案發出金光一瞬間;沒有選項的玩法改成點出 1 個提示',
+    en: 'Trait: the Third Eye flashes the correct answer for a moment (' + t.v + ' times per level)' };
+  if(t.t === 'comfortmiss') return {
+    s: '仁德之心:連錯 ' + t.v + ' 題時劉備會幫你,補血還幫你刪掉錯的', f: '仁德之心:連續答錯 ' + t.v + ' 題時,恢復 10 點 HP,下一題自動排除 2 個錯誤選項(沒有選項的玩法改成倒數 +4 秒;每關最多 ' + t.m + ' 次)',
+    en: 'Trait: after ' + t.v + ' wrong answers in a row, heal 10 HP and remove 2 wrong options next question (up to ' + t.m + ' times)' };
+  if(t.t === 'timeoutguard') return {
+    s: '據水斷橋:時間到也不怕,張飛大吼一聲再給你 ' + t.m + ' 秒(每關 ' + t.v + ' 次)', f: '據水斷橋:每關前 ' + t.v + ' 次時間到不算答錯,這一題重新給 ' + t.m + ' 秒(仍需自己答對)',
+    en: 'Trait: the first ' + t.v + ' time-outs per level give you ' + t.m + ' more seconds instead of counting as wrong' };
+  if(t.t === 'streakautoclear') return {
+    s: '七進七出:連對 ' + t.v + ' 題,下一題趙雲幫你直接過', f: '七進七出:每連續答對 ' + t.v + ' 題,下一題自動答對(單次送出的玩法;其他玩法改成點出 3 個提示),答錯重新計算',
+    en: 'Trait: every ' + t.v + ' correct answers in a row, the next question is cleared for you' };
+  if(t.t === 'calmtime') return {
+    s: '心靜時緩:唐三藏在旁邊唸經,時間走得慢一點', f: '心靜時緩:整關倒數計時的流速變慢 ' + t.v + '%(沒有倒數的玩法改成結算分數 +5%)',
+    en: 'Trait: the countdown runs ' + t.v + '% slower (levels without a countdown: +5% score)' };
+  if(t.t === 'buns') return {
+    s: '包子存糧:口袋有包子,快沒血時會自己吃(回 ' + t.v + ' 滴血)', f: '包子存糧:開局口袋有 1 個包子,HP 低於 40% 時自動吃掉恢復 ' + t.v + ' 點 HP;每連續答對 5 題再得 1 個(最多存 ' + t.m + ' 個)',
+    en: 'Trait: start with 1 bun; below 40% HP it is eaten automatically for ' + t.v + ' HP; +1 bun every 5 correct in a row (max ' + t.m + ')' };
+  if(t.t === 'debuffcarry') return {
+    s: '挑擔護法:壞效果都被沙悟淨扛走一半,第一次答錯也不扣血', f: '挑擔護法:對手施加的不利效果持續時間減半,每被施加 1 個獲得 ' + t.m + ' 點護盾;每關第 1 次答錯不扣 HP',
+    en: 'Trait: debuffs on you last half as long and each grants a ' + t.m + '-point shield; your first wrong answer per level costs no HP' };
   return { s:'', f:'', en:'' };
 }
 function mgTraitHtml(txt){ return txt ? ('<br><span style="color:#7ee8fa;">' + esc(txt) + '</span>') : ''; }   /* ★ v1.75.0 — 跟 mgEff2Html 的黃色(#ffe066,爆發第二效果)區分,天賦被動改用青色,文字本身已含「天賦:」開頭不必再加「附加:」 */
 /* ★ v1.77.0(老師需求「完全用大對抗隊伍編組頁的元素,只要改成小遊戲專用版本的內容」)— 大對抗清單卡片在
    稀有度徽章下方會有 1~2 個效果標籤小藥丸(讀敵情分析引擎產生);小遊戲沒有那一整套威脅分析系統,改用
    「內容改成小遊戲有的」思路:直接讀該英雄自己的天賦家族(MG_HEROES.tr.t)當短標籤,不重建新系統。 */
-var MG_TR_TAG_ZH = { headstart:'搶跑充能', mistakeshield:'容錯', streakbonus:'連擊加成', scoreboost:'分數加成', secondchance:'續命機會', timebonus:'時間加成', trapimmune:'陷阱免疫', randomvariant:'隨機加成', hintclear:'提示清除', autoclear:'即刻過關', healoncorrect:'答對回血', timeoncorrect:'答對加時', chargeoncorrect:'答對加充能', mazetrap:'陷阱標記', m3merge:'顏色合併', reactclear:'額外刪錯' };   /* ★ v1.78.0 — 6 種「關卡有幫助」新天賦短標籤 */
+var MG_TR_TAG_ZH = { headstart:'搶跑充能', mistakeshield:'容錯', streakbonus:'連擊加成', scoreboost:'分數加成', secondchance:'續命機會', timebonus:'時間加成', trapimmune:'陷阱免疫', randomvariant:'隨機加成', hintclear:'提示清除', autoclear:'即刻過關', healoncorrect:'答對回血', timeoncorrect:'答對加時', chargeoncorrect:'答對加充能', mazetrap:'陷阱標記', m3merge:'顏色合併', reactclear:'額外刪錯',
+  eyeflash:'天眼閃答案', comfortmiss:'連錯救援', timeoutguard:'超時再給秒', streakautoclear:'連對直接過', calmtime:'時間變慢', buns:'包子保命', debuffcarry:'負面減半' };   /* ★ v1.407.0 《繪卷新章》七位 SSR */   /* ★ v1.78.0 — 6 種「關卡有幫助」新天賦短標籤 */
 function mgTraitTagShort(h){
   var t = h && h.tr, label = t && MG_TR_TAG_ZH[t.t]; if(!label) return '';
   return '<span class="hm-tag">' + esc(label) + '</span>';
@@ -13572,7 +13838,36 @@ function mgTraitTagShort(h){
    ⚠ 刻意做成一支小函式而不是散落各處的 if:回血點有五處(第二效果回血/天賦答對回血/爆發回復型/
      立即回血/反彈回血),日後新增回血機制時只要記得問一次 mgHealOk 就不會漏掉。 */
 function mgHealOk(f){ return !(f && f.noHealLeft > 0); }
+/* ★ v1.407.0 — mgApplyEff2 外層:沙悟淨「挑擔護法」(天賦 debuffcarry)= 對手第二效果施加到自己身上的不利狀態持續減半,
+   每被施加 1 個獲得 m 點點數護盾。做法:施放前後比對受方不利欄位,新增/延長的部分砍半(核心邏輯不必逐分支改)。 */
 function mgApplyEff2(caster, foe){
+  var snap = null, i, f;
+  try{
+    if(foe && foe.trCarryPct > 0){
+      snap = {};
+      for(i = 0; i < MG_CN2_BAD_CNT.length; i++){ f = MG_CN2_BAD_CNT[i]; snap[f] = foe[f] || 0; }
+      for(i = 0; i < MG_CN2_BAD_UNTIL.length; i++){ f = MG_CN2_BAD_UNTIL[i]; snap[f] = foe[f] || 0; }
+    }
+  }catch(_e0){ snap = null; }
+  _mgApplyEff2Core(caster, foe);
+  if(!snap) return;
+  try{
+    var got = 0, keep = (100 - foe.trCarryPct) / 100, q = mgCn2Q();
+    for(i = 0; i < MG_CN2_BAD_CNT.length; i++){
+      f = MG_CN2_BAD_CNT[i];
+      if((foe[f] || 0) > snap[f]){ foe[f] = snap[f] + Math.max(1, Math.ceil((foe[f] - snap[f]) * keep)); got++; }
+    }
+    for(i = 0; i < MG_CN2_BAD_UNTIL.length; i++){
+      f = MG_CN2_BAD_UNTIL[i];
+      if((foe[f] || 0) > snap[f] && foe[f] >= q){ foe[f] = q + Math.max(0, Math.ceil((foe[f] - q) * keep)); got++; }
+    }
+    if(got > 0){
+      foe.hpShield = (foe.hpShield || 0) + got * (foe.trCarryShield || 4);
+      mgBattleFloatOn(mgSideOf(foe), (MG.lang === 'en' ? '🔱 CARRIED ' : '🔱 挑擔減半 🛡+') + (got * (foe.trCarryShield || 4)), 'block');
+    }
+  }catch(_e1){}
+}
+function _mgApplyEff2Core(caster, foe){
   var e = caster.h && caster.h.eff2; if(!e) return;
   if(e.t === 'heal'){ caster.healBuff = MG_BT.EFF2_N; caster.healAmt = e.v; }
   else if(e.t === 'dmgred') caster.dmgReduceLeft = MG_BT.EFF2_N;
@@ -13679,6 +13974,52 @@ function mgApplyEff2(caster, foe){
   else if(e.t === 'stealcharge1'){ foe.charge = Math.max(0, foe.charge - 1); caster.charge = Math.min(MG_BT.CHARGE - 1, caster.charge + 1); try{ mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? 'STOLEN' : '奪取!'), 'block'); }catch(_e13){} }   /* 鋁合金暴龍:立即從對手爆發條奪1格加給自己 */
   else if(e.t === 'shieldbreak'){ foe.shield = 0; try{ mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? 'BREAK!' : '破盾!'), 'block'); }catch(_e14){} }   /* 炸彈客:立即清空對手所有護盾格 */
   else if(e.t === 'executelow15'){ if(foe.hp < MG_BT.HP * 0.3){ foe.hp = Math.max(0, foe.hp - 15); try{ mgBattleFxAttack(mgSideOf(caster), '−15'); }catch(_e15){} } }   /* 死神:HP低於30%的對手直接扣15HP,沒到門檻則這次爆發不觸發額外傷害 */
+  /* ══ ★ v1.407.0(老師 2026-10-24「甲」)《繪卷新章》七位 SSR 的七種全新第二效果(設計書 claude/繪卷新章SSR_小遊戲天賦技能設計書.md)══ */
+  else if(e.t === 'negateburst'){   /* 楊戩·看破:在對手身上留「天眼印」,對手下一次極限爆發直接失效(能量照扣);消費點 mgBattleBurst/mgBattleNpcBurst 開頭 */
+    if(mgCn2Immune(foe)) return;
+    foe.negateArmed = true;
+    try{ mgBattleFloatOn(mgSideOf(foe), (MG.lang === 'en' ? '👁 MARKED' : '👁 天眼印'), 'block'); }catch(_eNb){}
+  }
+  else if(e.t === 'overhealshield'){   /* 劉備·溢補轉盾:恢復 v HP,超過最大 HP 的部分變成點數護盾(護盾上限 30) */
+    if(mgHealOk(caster)){
+      var _ohCap = mgHpCap(caster), _ohNew = caster.hp + (e.v || 30), _ohOver = Math.max(0, _ohNew - _ohCap);
+      caster.hp = Math.min(_ohCap, _ohNew);
+      if(_ohOver > 0) caster.hpShield = Math.min(30, (caster.hpShield || 0) + _ohOver);
+      try{ mgBattleFloatOn(mgSideOf(caster), '+' + (e.v || 30) + (_ohOver > 0 ? (' 🛡' + caster.hpShield) : ''), 'heal'); }catch(_eOh){}
+    }
+  }
+  else if(e.t === 'multiblock'){   /* 張飛·斷橋怒吼:對手接下來 3 回合連擊變單擊、攻擊傷害 −v% */
+    if(mgCn2Immune(foe)) return;
+    foe.multiBlockUntil = mgCn2Q() + 3; foe.multiBlockPct = e.v || 40;
+    try{ mgBattleFloatOn(mgSideOf(foe), (MG.lang === 'en' ? '🌉 BRIDGE HELD' : '🌉 斷橋!'), 'block'); }catch(_eMbk){}
+  }
+  else if(e.t === 'rescuedash'){   /* 趙雲·單騎救主:3 回合內 HP 跌破 30% 時立刻衝出,恢復 v HP 並反擊 15(觸發一次就結束);消費點 mgCn2AfterHurt */
+    caster.rescueUntil = mgCn2Q() + 3; caster.rescueAmt = e.v || 25;
+  }
+  else if(e.t === 'tightband'){   /* 唐三藏·緊箍咒:對手 3 回合內每次攻擊前先頭痛自傷 v 點,且 30% 機率落空;消費點 mgDealDamage 開頭 */
+    if(mgCn2Immune(foe)) return;
+    foe.tightUntil = mgCn2Q() + 3; foe.tightAmt = e.v || 6;
+    try{ mgBattleFloatOn(mgSideOf(foe), (MG.lang === 'en' ? '📿 HEADBAND' : '📿 緊箍!'), 'block'); }catch(_eTbd){}
+  }
+  else if(e.t === 'bellyslam'){   /* 豬八戒·天蓬肚擊:吃光口袋所有包子,每個 +15 點數護盾、對對手追加 v 點傷害;沒包子時固定 +10 護盾 */
+    var _bn = caster.buns || 0;
+    if(_bn > 0){
+      caster.buns = 0;
+      caster.hpShield = (caster.hpShield || 0) + 15 * _bn;
+      foe.hp = Math.max(0, foe.hp - (e.v || 12) * _bn);
+      try{ mgBattleFloatOn(mgSideOf(caster), '🥟×' + _bn + ' 🛡+' + (15 * _bn), 'block'); mgBattleFxAttack(mgSideOf(caster), '−' + ((e.v || 12) * _bn)); }catch(_eBs1){}
+    } else {
+      caster.hpShield = (caster.hpShield || 0) + 10;
+      try{ mgBattleFloatOn(mgSideOf(caster), '🛡+10', 'block'); }catch(_eBs2){}
+    }
+  }
+  else if(e.t === 'cleanseconvert'){   /* 沙悟淨·流沙反捲:解除自己所有不利狀態,每解除 1 個對對手造成 v 點傷害(沒有可解除時固定 v 點) */
+    var _cc = mgCn2BadCount(caster);
+    mgCn2ClearBad(caster);
+    var _ccD = (e.v || 10) * Math.max(1, _cc);
+    foe.hp = Math.max(0, foe.hp - _ccD);
+    try{ if(_cc > 0) mgBattleFloatOn(mgSideOf(caster), (MG.lang === 'en' ? 'CLEANSED ×' : '淨化 ×') + _cc, 'heal'); mgBattleFxAttack(mgSideOf(caster), '−' + _ccD); }catch(_eCc){}
+  }
 }
 /* ★ v1.54.0(老師需求「小遊戲的回復型英雄,把大對抗巫女/米鈴這類解除不利狀態的效果也加進去」)—
    小遊戲目前會落在「自己身上」的不利狀態只有三種(全部是對手 eff2 打過來的第二效果):
@@ -13688,6 +14029,9 @@ function mgApplyEff2(caster, foe){
 function mgBattleCleanseBad(S){
   var had = (S.dotLeft > 0) || (S.sealLeft > 0) || (S.confuseLeft > 0);
   S.dotLeft = 0; S.dotAmt = 0; S.sealLeft = 0; S.confuseLeft = 0;
+  /* ★ v1.407.0 《繪卷新章》新不利狀態(緊箍/斷橋/天眼印)也一起淨化 */
+  if(mgCn2On(S, 'tightUntil') || mgCn2On(S, 'multiBlockUntil') || S.negateArmed) had = true;
+  S.tightUntil = 0; S.multiBlockUntil = 0; S.negateArmed = false;
   return had;
 }
 /* ── 玩家極限爆發 ── */
@@ -13701,6 +14045,8 @@ window.mgBattleBurst = function(){
   if((cls === 'atk' || cls === 'ctrl') && eng !== 'react' && MG.answered){ toast(MG.style === 's' ? '等下一題開始再用!' : '這一型的爆發要在作答中使用,等下一題開始再按'); playSfx('sfx-cancel', 0.35); return; }
   if(cls === 'atk' && !mgBurstAtkApply(eng)){ toast(MG.style === 's' ? '這裡沒有可以打掉的錯誤答案' : '目前畫面沒有可刪除的錯誤答案,先留著'); playSfx('sfx-cancel', 0.35); return; }
   P.charge = 0; P.used++;
+  /* ★ v1.407.0 楊戩·看破(NPC 是楊戩時):身上有天眼印 ⇒ 這次爆發直接失效(能量照扣、次數照算) */
+  if(P.negateArmed){ P.negateArmed = false; try{ playSfx('sfx-cancel', 0.5); mgBattleFloatOn('p', (MG.lang === 'en' ? '👁 SEEN THROUGH!' : '👁 被看破了!'), 'block'); toast(MG.lang === 'en' ? 'Your burst was seen through by the Third Eye!' : '爆發被楊戩的天眼看破,這次沒有效果!'); }catch(_eNg1){} mgBattlePaint(); return; }
   /* ★ v1.52.0(老師需求「傷害和治療、狀態都在爆發動畫演示結束後才生效」)— 比照大對抗:控場型(暫停計時)
      維持立即生效(不然動畫播的這幾秒計時器會白白繼續倒數,失去暫停的意義);heal/shd/atk 的實際扣血/回血/
      護盾與逐英雄第二效果(mgApplyEff2)全部搬進 mgBurstCinematic 的完成回呼,動畫(名稱大字+全螢幕GIF)播完
@@ -13731,6 +14077,8 @@ function mgBattleNpcBurst(){
   if(N.sealLeft > 0) return;   /* ★ v1.36.0 — 封印爆發技能,NPC 版直接不觸發 */
   var cls = mgHeroCls(N.h), d = mgBurstDef(cls), eng = MG.cur ? mgEng(MG.cur, MG.order[MG.idx]) : '';
   N.charge = 0; N.used++;
+  /* ★ v1.407.0 楊戩·看破:對手身上有天眼印 ⇒ 這次爆發直接失效(能量照扣、次數照算) */
+  if(N.negateArmed){ N.negateArmed = false; try{ playSfx('sfx-powerup', 0.6); mgBattleFloatOn('n', (MG.lang === 'en' ? '👁 SEEN THROUGH!' : '👁 看破!'), 'block'); }catch(_eNg2){} mgBattlePaint(); return; }
   /* ★ v1.52.0 — 同玩家版,控場型(扣玩家剩餘時間)維持立即生效,其餘效果延到動畫播完見下方回呼 */
   if(cls === 'ctrl'){
     if(eng === 'react'){ if(_RC && !_RC.paused) _RC.endAt = Math.max((new Date()).getTime() + 1000, _RC.endAt - MG_BT.CTRL_MS); }

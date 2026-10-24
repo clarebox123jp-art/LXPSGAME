@@ -4383,7 +4383,17 @@ window.MG_HEROES = [
   { n:'射手星神', cls:'atk', img:'%E5%B0%84%E6%89%8B%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'天穹裂空・萬矢歸墟', gif:'%E5%A4%9A%E7%81%AB%E7%90%83%E5%B0%84%E7%B7%9A.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,150,60,0.16)', dur:2400 , pos:'20%' , eff2:{t:'critboost3',v:0}, tr:{t:'mapclear5',v:5} },
   { n:'摩羯星神', cls:'shd', img:'%E6%91%A9%E7%BE%AF%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'千仞崩岩', gif:'%E9%BE%8D%E6%8D%B2%E9%A2%A8.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(180,180,220,0.22)', dur:2400 , pos:'20%' , eff2:{t:'thorn',v:0}, tr:{t:'streakbonus',v:3,m:25} },
   { n:'水瓶星神', cls:'ctrl', img:'%E6%B0%B4%E7%93%B6%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'星海覆滅・時代革新', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(125,249,255,0.18)', dur:2400 , pos:'20%' , eff2:{t:'noheal2',v:0}, tr:{t:'weakenoncorrect',v:3,p:50} },
-  { n:'雙魚星神', cls:'ctrl', img:'%E9%9B%99%E9%AD%9A%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'雙生幻滅・鏡海沉淪', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(170,220,255,0.18)', dur:2400 , pos:'20%' , eff2:{t:'halfreflect3',v:0}, tr:{t:'illusiononcorrect',v:1,p:35} }
+  { n:'雙魚星神', cls:'ctrl', img:'%E9%9B%99%E9%AD%9A%E6%98%9F%E7%A5%9E_%E5%A0%B4%E6%99%AF.jpg', bn:'雙生幻滅・鏡海沉淪', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(170,220,255,0.18)', dur:2400 , pos:'20%' , eff2:{t:'halfreflect3',v:0}, tr:{t:'illusiononcorrect',v:1,p:35} },
+  /* ★ v1.407.0(老師 2026-10-24「甲」:照設計書做)— 主程式《繪卷新章》七位新 SSR 收錄(76→83 隻);
+     設計書 Project Knowledge claude/繪卷新章SSR_小遊戲天賦技能設計書.md。每人 1 種全新天賦 tr + 1 種全新爆發第二效果 eff2,
+     與冒險模式同一個招牌概念;立繪=主程式 repo 根目錄「<名>.webp」(唐三藏/豬八戒/沙悟淨隨冒險包 v5.295.0 一起上傳),爆發 GIF 全部沿用小遊戲已在用的檔(零上傳)。 */
+  { n:'楊戩', cls:'atk', img:'%E6%A5%8A%E6%88%A9.webp', bn:'劈山救母・開天神斧', gif:'%E5%A4%A9%E9%9B%B7.gif', sfx:[['sfx-burst',1],['sfx-crit',0.8]], tint:'rgba(255,242,168,0.22)', dur:2400 , pos:'20%' , eff2:{t:'negateburst',v:0}, tr:{t:'eyeflash',v:3,m:600} },
+  { n:'劉備', cls:'heal', img:'%E5%8A%89%E5%82%99.webp', bn:'桃園結義・三英同心', gif:'%E8%8A%B1%E8%8D%89%E6%90%96%E6%9B%B3.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,170,200,0.22)', dur:2400 , pos:'20%' , eff2:{t:'overhealshield',v:30}, tr:{t:'comfortmiss',v:2,m:3} },
+  { n:'張飛', cls:'atk', img:'%E5%BC%B5%E9%A3%9B.webp', bn:'喝斷長坂橋', gif:'%E4%B8%89%E9%81%93%E5%9C%B0%E8%A3%82.gif', sfx:[['sfx-explode',1],['sfx-burst',0.8]], tint:'rgba(170,40,30,0.24)', dur:2400 , pos:'20%' , eff2:{t:'multiblock',v:40}, tr:{t:'timeoutguard',v:2,m:5} },
+  { n:'趙雲', cls:'atk', img:'%E8%B6%99%E9%9B%B2.webp', bn:'單騎救主・長坂龍吟', gif:'%E5%8A%8D%E7%A5%9E%E9%80%A3%E6%96%AC.gif', sfx:[['sfx-sword',1],['sfx-crit',0.8]], tint:'rgba(220,235,255,0.22)', dur:2400 , pos:'20%' , eff2:{t:'rescuedash',v:25}, tr:{t:'streakautoclear',v:7} },
+  { n:'唐三藏', cls:'heal', img:'%E5%94%90%E4%B8%89%E8%97%8F.webp', bn:'西天取經・萬佛朝宗', gif:'%E6%8C%81%E7%BA%8C%E7%A5%9E%E8%81%96%E5%85%89%E8%8A%92.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,224,120,0.22)', dur:2400 , pos:'20%' , eff2:{t:'tightband',v:6}, tr:{t:'calmtime',v:15} },
+  { n:'豬八戒', cls:'shd', img:'%E8%B1%AC%E5%85%AB%E6%88%92.webp', bn:'天蓬元帥・銀河翻浪', gif:'%E6%B0%B4%E9%BE%8D%E6%94%BB%E6%93%8A.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(255,170,200,0.20)', dur:2400 , pos:'20%' , eff2:{t:'bellyslam',v:12}, tr:{t:'buns',v:35,m:2} },
+  { n:'沙悟淨', cls:'ctrl', img:'%E6%B2%99%E6%82%9F%E6%B7%A8.webp', bn:'流沙河・降妖九珠', gif:'%E6%B7%B1%E6%B5%B7%E5%A4%A7%E6%BC%A9%E6%B8%A6.gif', sfx:[['sfx-burst',1],['sfx-powerup',0.7]], tint:'rgba(180,150,80,0.22)', dur:2400 , pos:'20%' , eff2:{t:'cleanseconvert',v:10}, tr:{t:'debuffcarry',v:50,m:4} }
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4402,20 +4412,20 @@ window.MG_HEROES = [
  * ⚠ 沒列到的關卡=不推薦任何人(選角頁的「本關推薦」分類會顯示「這一關沒有特別推薦的英雄」)。
  * ══════════════════════════════════════════════════════════════════════════ */
 window.MG_REC = {
-  coinrush:      { tr:['reactclear'],        tr2:['speedstrike','reactdodgeonmiss','timebonus'], eff2:['multihit','critboost3','truedmg'],           why:'算數關開場清錯誤答案' },
-  maze:          { tr:['mazetrap','trapimmune','mazephase'], tr2:['hintclear'],                  eff2:['dmgimmune3','shield','heal10dr3'],            why:'迷宮陷阱剋星' },
-  scale:         { tr:['m3merge','m3healoncombo'], tr2:['streakbonus'],                          eff2:['multihit','heal','shield'],                   why:'消消樂連鎖加成' },
+  coinrush:      { tr:['reactclear','streakautoclear'], tr2:['speedstrike','reactdodgeonmiss','timebonus'], eff2:['multihit','critboost3','truedmg'],           why:'算數關開場清錯誤答案' },
+  maze:          { tr:['mazetrap','trapimmune','mazephase','eyeflash'], tr2:['hintclear'],                  eff2:['dmgimmune3','shield','heal10dr3'],            why:'迷宮陷阱剋星' },
+  scale:         { tr:['m3merge','m3healoncombo','buns'], tr2:['streakbonus'],                          eff2:['multihit','heal','shield'],                   why:'消消樂連鎖加成' },
   map:           { tr:['mapclear5'],         tr2:['hintclear','hintonce2'],                      eff2:['seal','noheal2'],                             why:'地圖開場點亮地名' },
-  music:         { tr:['earsolfa'],          tr2:['hintclear','timebonus'],                      eff2:['heal10dr3','dmgimmune3'],                     why:'聽音直接看唱名' },
-  teaorder:      { tr:['orderends'],         tr2:['hintonce2','timebonus'],                      eff2:['cleanseheal15','shield'],                     why:'排排站頭尾先定位' },
+  music:         { tr:['earsolfa','calmtime'], tr2:['hintclear','timebonus'],                      eff2:['heal10dr3','dmgimmune3'],                     why:'聽音直接看唱名' },
+  teaorder:      { tr:['orderends','debuffcarry'], tr2:['hintonce2','timebonus'],                      eff2:['cleanseheal15','shield'],                     why:'排排站頭尾先定位' },
   proverb_match: { tr:['twinbonus'],         tr2:['streakbonus','timebonus'],                    eff2:['pausepick5','charge'],                        why:'翻牌配對加成' },
   species:       { tr:['hintclear','autoclear'], tr2:['hintonce2','illusiononcorrect'],          eff2:['averagehp','seal'],                           why:'三選一自動排除錯項' },
   rock:          { tr:['streakbonus'],       tr2:['scoreboost','mistakeshield'],                 eff2:['thorn','dmgimmune3','immune'],                why:'連對加成最吃香' },
   heat:          { tr:['mistakeshield'],     tr2:['healoncorrect','passiveheal'],                eff2:['immune','shield','dmgimmune3'],               why:'答錯傷害減半' },
   recycle:       { tr:['weakenoncorrect'],   tr2:['dmgoncorrect','chargeoncorrect'],             eff2:['noheal2','weaken3','seal'],                   why:'答對就削弱對手' },
-  history:       { tr:['illusiononcorrect'], tr2:['hintclear','stealbuffoncorrect'],             eff2:['halfreflect3','confuse'],                     why:'答對機率閃避攻擊' },
+  history:       { tr:['illusiononcorrect','timeoutguard'], tr2:['hintclear','stealbuffoncorrect'],             eff2:['halfreflect3','confuse'],                     why:'答對機率閃避攻擊' },
   weather:       { tr:['hintclear'],         tr2:['timeoncorrect','autoclear'],                  eff2:['averagehp','heal'],                           why:'選擇題自動排除錯項' },
-  proverb:       { tr:['hintonce2'],         tr2:['hintclear','streakbonus'],                    eff2:['charge','heal'],                              why:'首題直接排除兩個錯項' },
+  proverb:       { tr:['hintonce2','comfortmiss'], tr2:['hintclear','streakbonus'],                    eff2:['charge','heal'],                              why:'首題直接排除兩個錯項' },
   animal:        { tr:['mistakeshield'],     tr2:['hintclear','healoncorrect'],                  eff2:['shield','heal','immune'],                     why:'二分法答錯不怕' }
 };
 /* ★ v1.33.0(老師需求「讓64張SSR的額外技能效果都不一樣,根據他們原本大對抗中的爆發技能設計」)—

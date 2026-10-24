@@ -535,6 +535,9 @@ const BOSS_NAMES = [
   //   妲己(僅敵方不可招募)/曹操(二期候補)與 8 菁英守衛維持在列。
   '妲己','琵琶精','雉雞精','金角大王','銀角大王','華雄','貂蟬','曹操','典韋','許褚',
 ];
+// ★ v5.293.0 — 《繪卷新章》6 新 BOSS + 15 新菁英:純敵方角色 → 從英雄圖鑑/鬥技場排除,改列魔物圖鑑「中國探險」區
+//   (SOP §5.4「BOSS_NAMES 漏加會被當 SR 混進英雄圖鑑」;名單由 window._CN2 登錄表單一供應)
+try{ if(window._CN2){ (window._CN2.bossNames || []).concat(window._CN2.eliteNames || []).forEach(function(n){ if(BOSS_NAMES.indexOf(n) < 0) BOSS_NAMES.push(n); }); } }catch(_eCn2BN){ console.warn('[v5.293.0 CN2 BOSS_NAMES]', _eCn2BN); }
 // ★ v3.13.27(2026-06-03)— 把 BOSS_NAMES 掛上 window,給 admin_panel.js 等外部檔案使用
 //   鐵律 1.50/1.52 — 跨檔案存取常數必須掛 window,不可只靠 Script scope
 try { window.BOSS_NAMES = BOSS_NAMES; } catch(_eBN){ console.warn('[v3.13.27] window.BOSS_NAMES', _eBN); }
@@ -6623,6 +6626,60 @@ ADV_SCENES.china = {
 };
 try{ window.ADV_SCENES = ADV_SCENES; }catch(_){}
 
+// ════════════════════════════════════════════════════════════════════════════
+// ★★ v5.293.0 — 中國關擴充《繪卷新章》:六條新路線接入(資料=hero_db.js window._CN2 登錄表)
+//   ① 變體:append 在既有 5 條之後(索引 5~10;既有 0~4 不動 ⇒ 舊存檔/雲端的 _advSelectedVariantIdx 零影響)
+//      hidden:true + needMedal ⇒ _advIsHiddenVariantLocked 依「前一條路線的雲端獎章」判定解鎖(GM 全開)。
+//   ② 場景:三過場對白 dialogsByVariant 由登錄表填入;背景改走 CSS 多層疊放 _cn2BgCss
+//      (新場景圖在上、該時空原圖在下 ⇒ 新圖未上傳時自動露出原圖,不會黑底,上傳即生效)。
+// ════════════════════════════════════════════════════════════════════════════
+try{
+  if(window._CN2 && Array.isArray(window._CN2.routes) && ADV_BOSS_VARIANTS.china){
+    window._CN2.routes.forEach(function(r){
+      if(ADV_BOSS_VARIANTS.china.some(function(v){ return v && v.id === r.id; })) return;   // 冪等
+      ADV_BOSS_VARIANTS.china.push({ id:r.id, main:r.main, fixedTeam:true, eliteTeam:r.eliteTeam.slice(), minions:[],
+        element:r.element, hidden:true, needMedal:r.needMedal, cn2:true, era:r.era, tier:r.tier, bossBgm:r.bossBgm,
+        treasureName:'—(首通:知識幣 ' + r.reward.coins + '+召喚水晶 ' + r.reward.crystal + ')' });
+      // 背景圖登錄(新檔名;素材未上傳前由多層背景自動退回時空原圖)
+      try{
+        _CN_BG['cn2r_' + r.id] = _CN_BG_BASE + encodeURIComponent(r.bg.route);
+        _CN_BG['cn2l_' + r.id] = _CN_BG_BASE + encodeURIComponent(r.bg.lair);
+      }catch(_eCn2Bg){}
+      // 三過場對白
+      try{
+        var _sc = ADV_SCENES.china.scenes;
+        var _eD = window._CN2.enemies[r.main] && window._CN2.enemies[r.main].scene;
+        if(_eD){
+          if(_sc[0] && _sc[0].dialogsByVariant) _sc[0].dialogsByVariant[r.id] = _eD.s1;
+          if(_sc[1] && _sc[1].dialogsByVariant) _sc[1].dialogsByVariant[r.id] = _eD.s2;
+          if(_sc[2] && _sc[2].dialogsByVariant) _sc[2].dialogsByVariant[r.id] = _eD.s3;
+        }
+      }catch(_eCn2Sc){ console.warn('[v5.293.0 CN2 過場對白]', _eCn2Sc); }
+    });
+  }
+}catch(_eCn2Var){ console.warn('[v5.293.0 CN2 路線變體]', _eCn2Var); }
+// 背景 CSS 多層疊放:kind='route' → 新路線圖 / 時空原路線圖;kind='lair' → 新巢穴圖 / 時空原巢穴圖 / 妖王座前
+window._cn2BgCss = function(v, kind){
+  try{
+    if(!v || !v.cn2 || !window._CN2) return null;
+    var r = window._CN2.routeById[v.id]; if(!r) return null;
+    var B = window._CN_BG || {};
+    var layers = (kind === 'lair')
+      ? [B['cn2l_' + r.id], B[r.bg.lairFb], B.throne]
+      : [B['cn2r_' + r.id], B[r.bg.routeFb], B.shang];
+    layers = layers.filter(function(u){ return !!u; });
+    if(!layers.length) return null;
+    return layers.map(function(u){ return 'url("' + u + '")'; }).join(', ');
+  }catch(_){ return null; }
+};
+window._cn2CurVariant = function(){
+  try{
+    var vs = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.china) || [];
+    var v = vs[(typeof window._advSelectedVariantIdx === 'number' ? window._advSelectedVariantIdx : 0) % Math.max(1, vs.length)];
+    return (v && v.cn2) ? v : null;
+  }catch(_){ return null; }
+};
+
 // ── 6.《九州輿圖》古地圖頁 = 路線入口(台灣地圖選關頁架構;水墨畫卷風) ──
 //   路線釘:朝歌→封神 / 火焰山→西遊 / 虎牢關→呂布(擊破後同釘出現「官渡」→曹操) / 涿鹿→蚩尤(集齊三神物浮現)
 //   介紹釘:長安 / 赤壁 / 崑崙山 / 花果山(朝代年表定位+故事簡介;知識問答連結待 Phase 6 題庫)
@@ -6805,8 +6862,27 @@ window._showChinaMap = function(opts){
       icon:'🐒', color:'#aad077', intro:'孫悟空的老家!水簾洞後別有洞天,美猴王率領猴子猴孫在此逍遙——齊天大聖傳說的起點!' },
   ];
 
+  // ★ v5.293.0 — 《繪卷新章》六條新路線圖釘(赤壁由介紹釘升格為路線釘;其餘新增)。
+  //   新路線釘「永遠看得到」但未解鎖時顯示 🔒 與解鎖條件(讓學生知道下一步要打哪裡),GM 全開可直接測。
+  try{
+    if(window._CN2 && Array.isArray(window._CN2.routes)){
+      window._CN2.routes.forEach(function(r){
+        var p = r.pin;
+        var obj = { key:p.key, x:p.x, y:p.y, label:p.label, era:p.era, type:'route', vId:r.id,
+                    needMedal:r.needMedal, needName:r.needName, icon:p.icon, color:p.color, intro:p.intro, cn2:true };
+        var ex = _cnPins.find(function(x){ return x.key === p.key; });
+        if(ex){ for(var k in obj) ex[k] = obj[k]; } else _cnPins.push(obj);
+      });
+    }
+    if(typeof window._cn2ProbeImgs === 'function') setTimeout(function(){ window._cn2ProbeImgs(false); }, 1200);   // 新敵人立繪探測(上傳即生效)
+  }catch(_eCn2Pins){ console.warn('[v5.293.0 CN2 輿圖圖釘]', _eCn2Pins); }
+  const _pinLocked = (p) => {
+    if(!p || !p.needMedal || _isAdmin) return false;
+    try{ return !(typeof _medals !== 'undefined' && _medals && _medals[p.needMedal]); }catch(_){ return true; }
+  };
   const _pinVisible = (p) => {
     if(p.type === 'intro') return true;
+    if(p.needMedal) return true;   // ★ v5.293.0 新路線:可見,鎖定與否由 _pinLocked 決定
     if(p.needLvbu) return _isAdmin || _lvbuOk;
     if(p.needTreasures) return _isAdmin || (_treCnt >= 3);
     return true;
@@ -6819,7 +6895,7 @@ window._showChinaMap = function(opts){
     const variants = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.china) || [];
     const vIdx = p.vId ? variants.findIndex(v => v.id === p.vId) : -1;
     const v = vIdx >= 0 ? variants[vIdx] : null;
-    const _elemName = {dark:'🌑 暗', fire:'🔥 火', wind:'🍃 風', earth:'⛰ 土'};
+    const _elemName = {dark:'🌑 暗', fire:'🔥 火', wind:'🍃 風', earth:'⛰ 土', water:'💧 水', light:'☀️ 光', grass:'🌿 草'};   // ★ v5.293.0 補水/光/草(新路線)
     const card = document.createElement('div');
     card.id = 'china-pin-detail';
     card.style.cssText =
@@ -6832,8 +6908,21 @@ window._showChinaMap = function(opts){
       '<div style="font-size:30px;font-weight:900;color:#ffcf8a;letter-spacing:3px;margin-bottom:2px;">' + p.label + '</div>' +
       '<div style="font-size:16px;color:#c8a878;letter-spacing:1px;margin-bottom:12px;">🕰️ ' + p.era + '</div>' +
       '<div style="font-size:19px;color:#efe0c8;line-height:1.75;text-align:left;padding:12px 16px;background:rgba(255,200,120,0.07);border-left:3px solid ' + (p.color||'#e6b450') + ';border-radius:0 10px 10px 0;margin-bottom:16px;">' + p.intro + '</div>';
+    // ★ v5.293.0 — 新路線未解鎖:顯示解鎖條件(雙版文字),不給出發鈕
+    if(p.type === 'route' && v && _pinLocked(p)){
+      const _lkCute = (typeof window._artStyle === 'string' ? window._artStyle : 'cute') !== 'premium';
+      inner +=
+        '<div style="font-size:19px;color:#ffcc88;line-height:1.7;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,0.35);border:1.5px dashed rgba(255,200,120,0.55);">' +
+          '🔒 ' + (_lkCute ? ('先打贏「<b>' + (p.needName || '前一條路線') + '</b>」,這條路線就會打開喔!')
+                           : ('解鎖條件:通關「<b>' + (p.needName || '前一條路線') + '</b>」。')) +
+          '<br><span style="font-size:16px;color:#c8a878;">⚔ 路線妖王:' + v.main + '(' + (_elemName[v.element]||v.element) + ')</span>' +
+        '</div>' +
+        '<button data-act="close" style="padding:12px 40px;font-size:20px;font-weight:800;background:rgba(255,190,110,0.2);border:2px solid #e6b450;color:#ffd9a8;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>';
+    } else
     if(p.type === 'route' && v){
-      const _mins = (v.minions && v.minions.length) ? '菁英守衛:' + v.minions.join('、') + '｜' : '';
+      // ★ v5.293.0 — 菁英守衛改讀 eliteTeam(三戰四場制的第三場);舊路線無 eliteTeam 者沿用 minions(官渡雙衛)
+      const _eliteList = (v.eliteTeam && v.eliteTeam.length) ? v.eliteTeam : (v.minions || []);
+      const _mins = _eliteList.length ? '菁英守衛:' + _eliteList.join('、') + '｜' : '';
       inner +=
         '<div style="font-size:18px;color:#99ccff;line-height:1.6;margin-bottom:14px;">' +
           '⚔ 路線妖王:<span style="color:#ffd9a8;font-weight:900;">' + v.main + '</span>(' + (_elemName[v.element]||v.element) + ')<br>' +
@@ -6882,8 +6971,19 @@ window._showChinaMap = function(opts){
       'position:absolute;left:' + p.x + '%;top:' + p.y + '%;transform:translate(-50%,-100%);z-index:10;cursor:pointer;' +
       'display:flex;flex-direction:column;align-items:center;gap:2px;' +
       (p.type==='route' ? 'animation:cnPinPulse 2.6s ease-in-out infinite;' : 'opacity:0.92;');
-    const _badge = (p.needLvbu && !_lvbuOk && _isAdmin) ? '<span style="font-size:11px;color:#ffb;background:rgba(0,0,0,0.55);border-radius:6px;padding:1px 6px;">GM預覽</span>'
+    let _badge = (p.needLvbu && !_lvbuOk && _isAdmin) ? '<span style="font-size:11px;color:#ffb;background:rgba(0,0,0,0.55);border-radius:6px;padding:1px 6px;">GM預覽</span>'
                  : (p.needTreasures && _treCnt < 3 && _isAdmin) ? '<span style="font-size:11px;color:#ffb;background:rgba(0,0,0,0.55);border-radius:6px;padding:1px 6px;">GM預覽</span>' : '';
+    // ★ v5.293.0 — 《繪卷新章》新路線:未解鎖 🔒(半透明、不跳動);GM 未達條件標 GM預覽;新開放標 NEW
+    try{
+      if(p.needMedal){
+        const _hasMd = !!(typeof _medals !== 'undefined' && _medals && _medals[p.needMedal]);
+        const _clrMd = !!(typeof _medals !== 'undefined' && _medals && window._CN2 && window._CN2.routeById[p.vId] && _medals[window._CN2.routeById[p.vId].medal.id]);
+        if(_pinLocked(p)) _badge = '<span style="font-size:12px;color:#fff;background:rgba(0,0,0,0.65);border-radius:6px;padding:1px 7px;">🔒 未解鎖</span>';
+        else if(!_hasMd && _isAdmin) _badge = '<span style="font-size:11px;color:#ffb;background:rgba(0,0,0,0.55);border-radius:6px;padding:1px 6px;">GM預覽</span>';
+        else if(!_clrMd) _badge = '<span style="font-size:12px;font-weight:900;color:#3a1a00;background:#ffd84d;border-radius:6px;padding:1px 7px;">NEW</span>';
+      }
+    }catch(_eCn2Bd){}
+    try{ if(_pinLocked(p)){ pin.style.animation = 'none'; pin.style.opacity = '0.62'; pin.style.filter = 'grayscale(0.6)'; } }catch(_){}
     pin.innerHTML =
       '<div style="font-size:' + (p.type==='route'?'40px':'30px') + ';filter:drop-shadow(0 3px 5px rgba(0,0,0,0.55));">' + p.icon + '</div>' +
       '<div style="font-size:' + (p.type==='route'?'17px':'14px') + ';font-weight:900;letter-spacing:2px;color:#fff;background:rgba(30,16,6,0.82);border:1.5px solid ' + (p.color||'#e6b450') + ';border-radius:999px;padding:3px 12px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,0.7);">' + (p.type==='route'?'⚔ ':'') + p.label + '</div>' + _badge;
@@ -7023,6 +7123,13 @@ window._showChinaMap = function(opts){
     '關羽':  '三國路線 S 評價通關,15% 機率加入',
     '呂布':  '三國路線 S 評價通關,15% 機率加入',
     '諸葛亮':'五條路線全部通關,100% 必定加入',
+    '楊戩':  '《繪卷新章》六條新路線 BOSS S 評價各 15%;六條全部通關 100% 必定加入',   // ★ v5.293.0
+    '劉備':  '赤壁(周瑜)或南中(孟獲)S 評價通關,各 15% 機率加入;赤壁+南中都首通時必定加入三國新英雄其中 1 位',
+    '張飛':  '南中(孟獲)S 評價通關,15% 機率加入;赤壁+南中都首通時必定加入三國新英雄其中 1 位',
+    '趙雲':  '赤壁(周瑜)S 評價通關,15% 機率加入;赤壁+南中都首通時必定加入三國新英雄其中 1 位',
+    '唐三藏':'白虎嶺(白骨夫人)或獅駝嶺(大鵬)S 評價通關,各 15% 機率加入;兩路線都首通時必定加入西遊新英雄其中 1 位',
+    '豬八戒':'獅駝嶺(大鵬金翅鵰)S 評價通關,15% 機率加入;兩路線都首通時必定加入西遊新英雄其中 1 位',
+    '沙悟淨':'白虎嶺(白骨夫人)S 評價通關,15% 機率加入;兩路線都首通時必定加入西遊新英雄其中 1 位',
   };
   const _cnEras = [
     { id:'fengshen', icon:'📜', name:'封神時空', era:'商周・上古神話', color:'#c07be0',
@@ -7038,9 +7145,18 @@ window._showChinaMap = function(opts){
       introP:'東漢末年,天下大亂,群雄逐鹿。虎牢關前呂布獨戰三英,官渡曹操以寡擊眾,赤壁東風一炬定三分——武聖關羽與臥龍諸葛亮的傳說,皆生於這個時代。',
       introC:'三國英雄大集合!呂布守虎牢關超級強,打贏他還會出現曹操的官渡挑戰;關羽和諸葛亮也都在這個時空等你收服!' },
   ];
+  // ★ v5.293.0 — 《繪卷新章》三時空導覽補新路線圖釘;楊戩(封神與西遊皆有登場)歸封神時空卡
+  try{
+    _cnEras.forEach(function(e){
+      if(window._CN2){ window._CN2.routes.forEach(function(r){ if(r.era === e.id && e.pins.indexOf(r.pin.key) < 0) e.pins.push(r.pin.key); }); }
+    });
+    if(window._CN2 && window._CN2.hero && _cnEras[0].heroes.indexOf(window._CN2.hero.name) < 0) _cnEras[0].heroes.push(window._CN2.hero.name);
+    // ★ v5.293.0 三國/西遊新 SSR 六位歸各自時空卡
+    if(window._CN2 && window._CN2.eraHeroes){ _cnEras.forEach(function(e){ (window._CN2.eraHeroes[e.id] || []).forEach(function(hn){ if(e.heroes.indexOf(hn) < 0) e.heroes.push(hn); }); }); }
+  }catch(_eCn2Era){}
   const _cnUnlockedNow = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
   const _cnEraProg = (e) => e.heroes.filter(h => _cnUnlockedNow.includes(h)).length;
-  const _cnAllHeroes8 = ['哪吒','姜子牙','孫悟空','牛魔王','關羽','呂布','蚩尤','諸葛亮'];
+  const _cnAllHeroes8 = ['哪吒','姜子牙','孫悟空','牛魔王','關羽','呂布','蚩尤','諸葛亮'].concat((window._CN2 && window._CN2.allHeroNames) ? window._CN2.allHeroNames : ((window._CN2 && window._CN2.hero) ? [window._CN2.hero.name] : []));   // ★ v5.293.0 變數名沿用(實為 15 位:楊戩 + 三國/西遊新 SSR 六位)
   const _cnTotalGot = _cnAllHeroes8.filter(h => _cnUnlockedNow.includes(h)).length;
 
   const _openEraDetail = (e) => {
@@ -7163,7 +7279,7 @@ window._showChinaMap = function(opts){
   totalChip.style.cssText =
     'margin-left:auto;display:flex;align-items:center;gap:8px;padding:8px 16px;min-height:48px;border-radius:14px;' +
     'background:rgba(20,10,4,0.6);border:1.5px solid rgba(255,190,110,0.4);color:#ffcf8a;font-weight:900;font-size:17px;letter-spacing:1px;';
-  totalChip.innerHTML = '🏯 中華英雄 <span style="color:' + (_cnTotalGot>=8 ? '#aaffcc' : '#ffdd66') + ';">' + _cnTotalGot + '/8</span>';
+  totalChip.innerHTML = '🏯 中華英雄 <span style="color:' + (_cnTotalGot>=_cnAllHeroes8.length ? '#aaffcc' : '#ffdd66') + ';">' + _cnTotalGot + '/' + _cnAllHeroes8.length + '</span>';   // ★ v5.293.0 分母改動態(8→9)
   eraBar.appendChild(totalChip);
   ov.insertBefore(eraBar, mainArea);
 
@@ -11132,6 +11248,70 @@ window._onChinaBossDefeated = function(){
       }catch(_eCyCons){ console.warn('[中國關 三神物消耗]', _eCyCons); }
     }
   }
+  // ★★★ v5.293.0 — 《繪卷新章》六條新路線結算(老師 2026-08-15 永久裁定:高價值獎勵一律首通限定,以雲端獎章 gate)
+  //   首通:知識幣 + 召喚水晶 + 豪華典藏版經驗之書;重複通關只得一般戰鬥結算(EXP/知識幣/SSR 碎片×2 照舊)。
+  //   首通同時宣告下一條路線浮現;六條全部首通 → 新 SSR 楊戩 100% 必定加入(比照諸葛亮保底)+「繪卷新章全通」獎章。
+  if(v.cn2 && window._CN2 && window._CN2.routeById && window._CN2.routeById[v.id]){
+    try{
+      const _r2 = window._CN2.routeById[v.id];
+      const _md2 = _r2.medal.id;
+      const _first2 = !(typeof _medals !== 'undefined' && _medals && _medals[_md2]);
+      if(_first2){
+        if(typeof addKnowledgeCoins === 'function') addKnowledgeCoins(_r2.reward.coins, '收入:' + _r2.place + '首通');
+        backpackAdd('summon_crystal', _r2.reward.crystal, _r2.place + '首通');
+        backpackAdd('hero_exp_book_premium', _r2.reward.book);
+        if(typeof log === 'function') log('📜 繪卷新章首通!擊敗' + _r2.main + '!獲得【知識幣 ×' + _r2.reward.coins + '】【召喚水晶 ×' + _r2.reward.crystal + '】【豪華典藏版經驗之書 ×' + _r2.reward.book + '】!');
+        _showInGameToast('📜 ' + _r2.pin.label + '首捷!知識幣' + _r2.reward.coins + '+水晶' + _r2.reward.crystal + '+豪華書×' + _r2.reward.book, '#ffdd66', 4500);
+        const _nx2 = window._CN2.routes.find(function(x){ return x.needMedal === _md2; });
+        if(_nx2){
+          setTimeout(function(){
+            try{ log('🗺 九州輿圖上,「' + _nx2.pin.label + '」的路線悄然浮現……(' + _nx2.main + ' 正在等你)'); }catch(_){}
+            try{ _showInGameToast('🗺 新路線「' + _nx2.pin.label + '・' + _nx2.main + '」已在九州輿圖浮現!', '#cc99ff', 4200); }catch(_){}
+          }, 1600);
+        }
+      } else {
+        if(typeof log === 'function') log('📜 再次擊敗' + _r2.main + '!(首通大獎已領過,本次獲得一般戰鬥結算獎勵)');
+      }
+      _unlockMedal(_md2);
+      // ★ v5.293.0 時空保底:三國(赤壁+南中)/西遊(白虎嶺+獅駝嶺)兩條都首通的那一場 → 該時空新 SSR 未擁有者隨機 1 位必定加入
+      try{
+        const _eraHs2 = window._CN2.eraHeroes && window._CN2.eraHeroes[_r2.era];
+        if(_first2 && _eraHs2){
+          const _eraRs2 = window._CN2.routes.filter(function(x){ return x.era === _r2.era; });
+          const _eraDone2 = (typeof _medals !== 'undefined') && _medals && _eraRs2.every(function(x){ return !!_medals[x.medal.id]; });
+          if(_eraDone2){
+            const _unE = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+            const _candE = _eraHs2.filter(function(hn){ return !_unE.includes(hn); });
+            if(_candE.length){
+              const _pickE = _candE[Math.floor(Math.random() * _candE.length)];
+              advSaveUnlockedHero(_pickE, 'china_cn2_era_clear');
+              try{ if(typeof window._checkChinaRecruitMedal === 'function') window._checkChinaRecruitMedal(); }catch(_){}
+              try{ if(typeof window._checkChinaHeroCountMedals === 'function') window._checkChinaHeroCountMedals(); }catch(_){}
+              try{ log('✨ ' + (_r2.era === 'sanguo' ? '三國' : '西遊') + '時空的兩條新路線都打通了!繪卷光芒一閃——[' + _pickE + '] 被你們的勇氣感動,加入隊伍!(時空雙路線首通保底·必定獲得)'); }catch(_){}
+              setTimeout(function(){ try{ _showInGameToast('✨ 新 SSR 登場![' + _pickE + '] 加入夥伴!(' + (_r2.era === 'sanguo' ? '赤壁+南中' : '白虎嶺+獅駝嶺') + '雙首通・必定獲得)', '#fff2a8', 6000); }catch(_){} }, 2000);
+              try{ _setNavDot('英雄', true); }catch(_){}
+            }
+          }
+        }
+      }catch(_eCn2EraG){ console.warn('[v5.293.0 時空保底]', _eCn2EraG); }
+      // 六條全通 → 楊戩保底 + 全通獎章
+      const _allMd2 = window._CN2.routes.map(function(x){ return x.medal.id; });
+      const _allClr2 = (typeof _medals !== 'undefined') && _medals && _allMd2.every(function(_id){ return !!_medals[_id]; });
+      if(_allClr2){
+        _unlockMedal('china_cn2_all');
+        const _yjName = window._CN2.hero.name;
+        const _un2 = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+        if(!_un2.includes(_yjName)){
+          advSaveUnlockedHero(_yjName, 'china_cn2_all_clear');
+          try{ _unlockMedal('china_yangjian'); }catch(_){}
+          try{ if(typeof window._checkChinaRecruitMedal === 'function') window._checkChinaRecruitMedal(); }catch(_){}
+          try{ log('👁️ 六條新路線的繪卷同時亮起——一道天眼神光劈開雲層,神犬長嘯,二郎顯聖真君「楊戩」現身:「天眼看見了你們的勇氣。從今天起,我與你們並肩作戰!」(六路線全通保底·必定獲得)'); }catch(_){}
+          setTimeout(function(){ try{ _showInGameToast('👁️ 新 SSR 登場![楊戩] 加入夥伴!(繪卷新章六路線全通・必定獲得)', '#fff2a8', 6000); }catch(_){} }, 2400);
+          try{ _setNavDot('英雄', true); }catch(_){}
+        }
+      }
+    }catch(_eCn2Rw){ console.warn('[v5.293.0 繪卷新章 結算]', _eCn2Rw); }
+  }
   // ★★★ v5.46.0 — Phase 7 諸葛亮「全通關保底」(老師 3甲 裁定):
   //   五路線(封神/西遊/三國/曹操/蚩尤)全部首通 → 諸葛亮 100% 加入。
   //   判定=五枚既有雲端持久獎章(_unlockMedal 於上方各 v.id 分支同函式內先行發放,
@@ -11283,7 +11463,7 @@ function getAdvBossIntroLines(){
   //   落到下方 G.p2.find 固定清單外 → fallback 成「九尾空貓怪」通用開場白。
   try{
     if(!_mainBossName && typeof _adventureStage !== 'undefined' && _adventureStage === 'china'){
-      const _CN_MAINS = ['妲己','牛魔王','呂布','曹操','蚩尤'];
+      const _CN_MAINS = ['妲己','牛魔王','呂布','曹操','蚩尤'].concat((window._CN2 && window._CN2.bossNames) || []);   // ★ v5.293.0 補《繪卷新章》6 BOSS
       if(typeof G !== 'undefined' && G && Array.isArray(G.p2)){
         const _cnHit = G.p2.find(h => h && _CN_MAINS.indexOf(h.name) >= 0);
         if(_cnHit) _mainBossName = _cnHit.name;
@@ -11465,6 +11645,15 @@ function getAdvBossIntroLines(){
       '「勇敢的小英雄,接受戰神的考驗吧——答錯就會被大風暴捲走喔!」',
     ],
   };
+  // ★ v5.293.0 — 《繪卷新章》6 BOSS 戰前開場白(雙版·鐵律 1.232;資料在 window._CN2 登錄表)
+  try{
+    if(window._CN2 && window._CN2.enemies){
+      (window._CN2.bossNames || []).forEach(function(_bn){
+        var _it = window._CN2.enemies[_bn] && window._CN2.enemies[_bn].intro;
+        if(_it){ if(!_CN_BOSS_INTROS_PREMIUM[_bn]) _CN_BOSS_INTROS_PREMIUM[_bn] = _it.p; if(!_CN_BOSS_INTROS_CUTE[_bn]) _CN_BOSS_INTROS_CUTE[_bn] = _it.c; }
+      });
+    }
+  }catch(_eCn2Intro){}
   const _CN_BOSS_INTROS = (window._artStyle === 'premium') ? _CN_BOSS_INTROS_PREMIUM : _CN_BOSS_INTROS_CUTE;
   if(_CN_BOSS_INTROS[_mainBossName]){
     return _CN_BOSS_INTROS[_mainBossName];
@@ -12245,11 +12434,18 @@ function advLoadScene(stage, idx) {
     }
   }catch(_){}
 
+  // ★ v5.293.0 — 《繪卷新章》新路線第二/第三過場:新場景圖疊在時空原圖上(多層背景;新圖未上傳=自動露出原圖)
+  let _cn2SceneCss = null;
+  try{
+    if(stage === 'china' && (idx === 1 || idx === 2) && typeof window._cn2CurVariant === 'function' && window._cn2CurVariant()){
+      _cn2SceneCss = window._cn2BgCss(window._cn2CurVariant(), idx === 1 ? 'route' : 'lair');
+    }
+  }catch(_){ _cn2SceneCss = null; }
   // 背景淡入
   const bg = document.getElementById('adv-scene-bg');
   bg.classList.remove('visible');
   setTimeout(() => {
-    bg.style.backgroundImage = `url("${_bgUrl}")`;
+    bg.style.backgroundImage = _cn2SceneCss || `url("${_bgUrl}")`;
     bg.classList.add('visible');
   }, 400);
 
@@ -12316,7 +12512,7 @@ function _transformSceneLineByVariant(txt){
     if(_adventureStage === 'china'){
       const _cnPlace = {
         fengshen:'朝歌宮闕', xiyou:'火焰山', sanguo:'虎牢關', caocao:'官渡戰場', chiyou:'涿鹿古戰場',
-      }[variant.id] || '妖氣瀰漫之地';
+      }[variant.id] || ((window._CN2 && window._CN2.routeById && window._CN2.routeById[variant.id]) ? window._CN2.routeById[variant.id].place : '') || '妖氣瀰漫之地';   // ★ v5.293.0 補《繪卷新章》新路線地名
       return txt
         .replace(/\{CHINA_BOSS\}/g, variant.main || '妖王')
         .replace(/\{CHINA_ROUTE_PLACE\}/g, _cnPlace);
@@ -15417,6 +15613,8 @@ function advStartBattle(){
           } else {
             _bgCls = 'bg-boss';
           }
+          // ★ v5.293.0 《繪卷新章》新路線巢穴圖:新圖 → 時空原巢穴圖 → 妖王座前 三層疊放(缺檔自動露出下一層)
+          try{ if(_cnVarB && _cnVarB.cn2 && typeof window._cn2BgCss === 'function'){ const _cn2LairCss = window._cn2BgCss(_cnVarB, 'lair'); if(_cn2LairCss){ _bb.style.backgroundImage = _cn2LairCss; _bb.style.backgroundSize = 'cover'; _bb.style.backgroundPosition = 'center'; _bgCls = ''; } } }catch(_){}
         }catch(_eCnBossBg){ _bgCls = 'bg-boss'; }
       } else if(_stage === 'taiwan'){
         // ★ v1.0.20260428.2800 — 台灣關依玩家選的 BOSS 套用場景圖(inline style)
@@ -15563,6 +15761,7 @@ function advShowBossIntro() {
     // ★ v5.61.0 — 中國關五妖王:優先偵測 G.p2 在場妖王,兜底用 ADV_BOSS_VARIANTS.china 當前變體 main,
     //   避免落到下方 G.p2.find 固定清單外 → BOSS 名/圖標 fallback 成「🐱 九尾空貓怪」(BUG② 修正)
     const _CN_BOSS_ICONS = {'妲己':'🦊','牛魔王':'🐂','呂布':'🗡','曹操':'🏯','蚩尤':'⚔'};
+    try{ if(window._CN2){ (window._CN2.bossNames || []).forEach(function(_bn){ var _e = window._CN2.enemies[_bn]; if(_e && !_CN_BOSS_ICONS[_bn]) _CN_BOSS_ICONS[_bn] = _e.emoji || '👹'; }); } }catch(_){}   // ★ v5.293.0
     if(!_mainBoss && typeof _adventureStage !== 'undefined' && _adventureStage === 'china'){
       let _cnName = null;
       if(G && Array.isArray(G.p2)){
@@ -24087,16 +24286,21 @@ function _advGetHeroPoolForStage(stageKey){
       // ★ v5.42.0 — 中國關 Phase 4 一梯 4 位(乙案:對應妖王擊破 + S 評價 15% 機率加入)
       // ★ v5.46.0 — Phase 7 二梯 4 位(牛魔王/呂布/蚩尤=S評價15% 收服本尊·諸葛亮=五路線全通保底)
       const _chinaPool = ['哪吒','孫悟空','關羽','姜子牙','牛魔王','呂布','蚩尤','諸葛亮'];
+      // ★ v5.293.0 — 《繪卷新章》新 SSR 楊戩
+      try{ if(window._CN2 && window._CN2.allHeroNames) window._CN2.allHeroNames.forEach(function(hn){ if(_chinaPool.indexOf(hn) < 0) _chinaPool.push(hn); }); }catch(_){}   // ★ v5.293.0 楊戩 + 三國/西遊新 SSR 六位
       return {
         pool: _chinaPool,
         totalCount: _chinaPool.length,
         stageName: '中國',
         stageEmoji: '🏯',
         footer: [
-          '📌 名單範圍:中國古代關可獲得的 8 位中華英雄(兩梯)',
+          '📌 名單範圍:中國古代關可獲得的 ' + _chinaPool.length + ' 位中華英雄(兩梯 + 繪卷新章)',
           '📌 以 S 評價擊敗對應妖王,各有 15% 機率加入(各自獨立擲):妲己→哪吒與姜子牙/牛魔王→孫悟空與牛魔王本尊/呂布→關羽與呂布本尊/蚩尤→蚩尤本尊',
           '📌 收服的妖王(牛魔王/呂布/蚩尤)轉為弱化英雄版數值加入你的隊伍',
-          '📌 五條路線(封神/西遊/三國/曹操/蚩尤)全部首通 → 千古軍師「諸葛亮」必定加入!'
+          '📌 五條路線(封神/西遊/三國/曹操/蚩尤)全部首通 → 千古軍師「諸葛亮」必定加入!',
+          '📌 繪卷新章六條新路線(陳塘關/絕龍嶺/白虎嶺/獅駝嶺/赤壁/南中)BOSS 以 S 評價擊敗各 15% → 三眼神將「楊戩」;六條全部首通必定加入!',
+          '📌 三國新英雄:赤壁(周瑜)→ 劉備/趙雲、南中(孟獲)→ 張飛/劉備,S 評價各 15%;赤壁+南中都首通 → 三位中隨機 1 位必定加入',
+          '📌 西遊新英雄:白虎嶺(白骨夫人)→ 唐三藏/沙悟淨、獅駝嶺(大鵬)→ 豬八戒/唐三藏,S 評價各 15%;兩條都首通 → 三位中隨機 1 位必定加入'
         ]
       };
     }
@@ -25144,6 +25348,8 @@ async function advStartWinSequence() {
       if(_winGrade && _winGrade.includes('S')){
       // ★ v5.46.0 — Phase 7 二梯(老師 2甲 裁定):妖王本尊(牛魔王/呂布/蚩尤)同樣 S 評價 15%,與一梯夥伴各自獨立擲
       const _CN_RECRUIT_MAP = { '妲己':['哪吒','姜子牙'], '牛魔王':['孫悟空','牛魔王'], '呂布':['關羽','呂布'], '蚩尤':['蚩尤'] };
+      // ★ v5.293.0 — 《繪卷新章》六位新 BOSS → 新 SSR 楊戩(S 評價 15%;六路線全通另有保底,見 _onChinaBossDefeated)
+      try{ if(window._CN2 && window._CN2.recruit){ Object.keys(window._CN2.recruit).forEach(function(_b){ _CN_RECRUIT_MAP[_b] = window._CN2.recruit[_b].slice(); }); } }catch(_eCn2Rc){}
       const _cnBossInTeam = (G && G.p2) ? G.p2.find(h => h && h.name && _CN_RECRUIT_MAP[h.name] && !h._isBossClone) : null;
       if(_cnBossInTeam){
         const _cnUnlockedSet = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
@@ -25164,6 +25370,21 @@ async function advStartWinSequence() {
               log('🐎 方天畫戟拄地,呂布凝視著你,眼中傲氣化作敬意:「能勝我者……值得我並肩而戰!」(S評價 15%機率)');
             } else if(_hn === '蚩尤'){
               log('⚔️ 風沙散盡,上古戰神單膝觸地——蚩尤沉聲道:「數千年來,你是第一個讓我盡興之人。我的八十一位兄弟,聽你號令!」(S評價 15%機率)');
+            } else if(_hn === '楊戩'){   // ★ v5.293.0
+              log('👁️ 雲端傳來一聲犬吠——三隻眼的神將踏雲而下:「天眼看見了你們的勇氣。二郎楊戩,願與你們同行!」(S評價 15%機率)');
+              try{ _unlockMedal('china_yangjian'); }catch(_){}
+            } else if(_hn === '劉備'){   // ★ v5.293.0 三國/西遊新 SSR
+              log('🍑 桃花瓣隨風飄落,一位溫和的青年拱手行禮:「在下劉備,字玄德。願與諸位同心協力,共護天下百姓!」(S評價 15%機率)');
+            } else if(_hn === '張飛'){
+              log('🐯 一聲雷鳴般的大笑響徹戰場:「哈哈哈!痛快!俺張翼德最喜歡跟有種的人並肩作戰!」(S評價 15%機率)');
+            } else if(_hn === '趙雲'){
+              log('🐉 白馬銀槍自煙塵中現身,年輕將軍抱拳一笑:「常山趙子龍,願為諸位護衛左右!」(S評價 15%機率)');
+            } else if(_hn === '唐三藏'){
+              log('📿 一陣柔和的金光灑落,俊秀的僧人雙手合十:「阿彌陀佛,貧僧玄奘。諸位心懷善念,貧僧願隨諸位同行。」(S評價 15%機率)');
+            } else if(_hn === '豬八戒'){
+              log('🐷 圓滾滾的小豬扛著釘耙蹦了出來:「嘿嘿!打妖怪我最在行了!不過……可以先請我吃個包子嗎?」(S評價 15%機率)');
+            } else if(_hn === '沙悟淨'){
+              log('🔱 流沙退去,一位沉穩的帥氣和尚挑起擔子:「捲簾大將沙悟淨,從今以後,行李和夥伴都交給我守護。」(S評價 15%機率)');
             } else {
               log(`✨ 奇蹟!英靈 [${_hn}] 被你的實力所折服,自繪卷中現身加入冒險者行列!(S評價 15%機率)`);
             }
@@ -25738,6 +25959,18 @@ const _BOSS_REACT_MAP = {
   'WRONG_CHIYOU':      BOSS_REACT_WRONG_CHIYOU,
   'TIMEOUT_CHIYOU':    BOSS_REACT_TIMEOUT_CHIYOU,
 };
+// ★ v5.293.0 — 《繪卷新章》6 BOSS 答題反應台詞(後綴 _CN2_<路線id>;資料在 window._CN2 登錄表)
+window._CN2_REACT_SUFFIX = {};
+try{
+  if(window._CN2){
+    window._CN2.routes.forEach(function(r){
+      var _e = window._CN2.enemies[r.main]; if(!_e || !_e.react) return;
+      var _sx = '_CN2_' + r.id.toUpperCase();
+      window._CN2_REACT_SUFFIX[r.main] = _sx;
+      ['CORRECT','WRONG','TIMEOUT'].forEach(function(k){ if(_e.react[k]) _BOSS_REACT_MAP[k + _sx] = _e.react[k]; });
+    });
+  }
+}catch(_eCn2Rx){}
 function advShowBossReact(type) {
   // ★ v3.13.25(2026-06-02) — 鬥技場不顯示 BOSS 答題反應對話(老師裁示,鐵律 1.161)
   //   原本 G.p2 找不到對應 BOSS 名時會 fallback 到九尾空貓怪預設台詞,
@@ -25759,6 +25992,7 @@ function advShowBossReact(type) {
     ? G.p2.find(h => h && h.curHp>0 &&
         (['杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇','黑暗球‧希望型態','法老王','埃及豔后',
           '妲己','牛魔王','呂布','曹操','蚩尤'].includes(h.name)   // ★ v5.41.0 中國五主王
+         || (window._CN2_REACT_SUFFIX && window._CN2_REACT_SUFFIX[h.name])   // ★ v5.293.0 繪卷新章 6 BOSS
          || _TW_BOSS_NAMES.includes(h.name)))
     : null;
   // ★ v1.1.0 — 台灣 10 BOSS 各自的個性化對白後綴(從共用 _TAIWAN 改成個別)
@@ -25793,7 +26027,8 @@ function advShowBossReact(type) {
       '呂布':     '_LVBU',
       '曹操':     '_CAOCAO',
       '蚩尤':     '_CHIYOU',
-    })[_mainReactBoss.name] || ''
+    })[_mainReactBoss.name]
+    || ((window._CN2_REACT_SUFFIX && window._CN2_REACT_SUFFIX[_mainReactBoss.name]) || '')   // ★ v5.293.0
   ) : '';
   // ★ v1.0.20260424.0810 — 改用 _BOSS_REACT_MAP 查找,不再透過 window
   const _typeKey = type === 'correct' ? 'CORRECT'
@@ -38874,6 +39109,8 @@ const SUMMON_FX_10X_GIF = './%E5%8D%81%E9%80%A3%E6%8A%BD.gif';            // 十
 const SUMMON_FX_10X_MP4 = './%E5%8D%81%E9%80%A3%E6%8A%BD.mp4';
 
 const SUMMON_RARE_HEROES = ['大天狗','玉藻前','酒吞童子','巫女','窮奇','科技生化人','鋁合金暴龍','超鬼神王','雙星姊妹','暗魔將·血','死靈法師','布奶鳥獸','炸彈客','紅色玩家','地府酋長','救醫馬','水狐','米鈴','學霸(轉學生)','天神宙斯','維京海盜船長','武器精靈','神槍手','火柴人','青炎龍王','鳳凰','操偶師','菇女','小丑','美人魚‧角角','火爆女','幽幽','網路駭客','死神','地獄將軍','魔界花使‧朱玥','小鬼貓與兔','風術士','我的豚豚','雅典娜','阿蘇火山龍王','法老王','埃及豔后','喚龍使‧蜜鶴林','熔岩巨人','拘留者','科學發明家','電腦老師','御雲使‧沐雲雪','魔術師','聖冥法師','大刀勇士','炎火超少女','貓人族長','幽魂暗狐','麻吉喵‧Nico','哪吒','孫悟空','關羽','姜子牙','牛魔王','呂布','蚩尤','諸葛亮','牡羊星神','金牛星神','雙子星神','巨蟹星神','獅子星神','處女星神','天秤星神','天蠍星神','射手星神','摩羯星神','水瓶星神','雙魚星神'];  // ★ v5.193.0 — 十二星神 第三批(射手/摩羯/水瓶/雙魚·SSR):同前兩批口徑,只加本陣列,不加任何排除名單;十二星神至此全數到齊(12/12) ｜ ★ v5.192.0 — 十二星神 第二批(獅子/處女/天秤/天蠍·SSR):同第一批口徑,只加本陣列,不加任何排除名單 ｜ ★ v5.191.0 — 十二星神 第一批(牡羊/金牛/雙子/巨蟹·SSR·官方星神英雄):老師指定「可在召喚星空召喚或召喚卷獲得」→ 只加本陣列即可(v3.15.43 IIFE 自動同步 ADMIN_ALL_HEROES / _PLAYER_HERO_NAMES),且刻意**不**加入任何排除名單(CHINA_SUMMON_EXCLUDE / _SUMMON_STAGE_LOCK_SETS / _DARK_ORB_LOCK_SETS 皆不動) ｜ ★ v5.46.0 — 中國關 Phase 7 二梯四英雄(牛魔王/呂布/蚩尤/諸葛亮·取 SSR 稀有度·CHINA_SUMMON_EXCLUDE 排除召喚抽取·自動同步 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES) ｜ ★ v4.52.0 — 幽魂暗狐(4年7班 于廷晞) ｜ ★ v4.53.0 — 麻吉喵‧Nico(5年5班 熊梓芸·SSR·🛡坦克) ｜ ★ v5.42.0 — 中國關 Phase 4 一梯四英雄(哪吒/孫悟空/關羽/姜子牙·中國關限定·比照日本四英雄一併入召喚池)
+try{ if(window._CN2 && window._CN2.hero && SUMMON_RARE_HEROES.indexOf(window._CN2.hero.name) < 0) SUMMON_RARE_HEROES.push(window._CN2.hero.name); }catch(_){}
+try{ if(window._CN2 && window._CN2.heroes2) window._CN2.heroes2.forEach(function(H){ if(SUMMON_RARE_HEROES.indexOf(H.name) < 0) SUMMON_RARE_HEROES.push(H.name); }); }catch(_){}   // ★ v5.293.0 三國/西遊新 SSR 六位(取 SSR 稀有度;CHINA_SUMMON_EXCLUDE 已排除召喚水晶池 ⇒ 只走 BOSS 招募/保底/召喚卷)   // ★ v5.293.0 新 SSR 楊戩(取 SSR 稀有度;星空只走 1% 專屬槽,一般池由 _summonStageLocked 排除)
 try{ window.SUMMON_RARE_HEROES = SUMMON_RARE_HEROES; }catch(_){}  // ★ v3.13.39 — 暴露給 <script type="module"> 的汙染掃描 _fbAdminScanInflatedRosters 使用
 
 // ★ v3.15.43 — 防新英雄漏列(血淚:蜜鶴林 v3.15.41 加進 SUMMON_RARE_HEROES 卻漏列 ADMIN_ALL_HEROES/_PLAYER_HERO_NAMES
@@ -46594,6 +46831,21 @@ const SKILL_UPGRADE_DEF = {
   '迷幻月光':     { cat:'special_pis_s1',    label:'技能傷害' },   // 特技150% 升;60%混亂機率固定
   '深淵幻光':     { cat:'special_pis_s2',    label:'持續回合' },   // 2回合(Lv6~10=3回合);反彈50%固定
   // ★ v5.42.0 — 中國關 Phase 4 一梯四英雄(固定值[貫穿/暈眩/封印機率外的固定%與門檻]不隨級,由專屬 case 精準控制)
+  '天眼神光':     { cat:'dmg', label:'技能傷害' },   // ★ v5.293.0 楊戩 S1:攻210% 升(fd 唯一百分數;失明「一半機率」與看穿迴避/隱身為固定效果)
+  '神犬撲咬':     { cat:'dmg', label:'技能傷害' },
+  // ★ v5.293.0 三國/西遊新 SSR 六位(fd 只有一個百分數 = 升級成長的那個;機率/回合數固定)
+  '仁德之心':     { cat:'heal', label:'治療量' },
+  '雙股劍':       { cat:'dmg', label:'技能傷害' },
+  '丈八蛇矛':     { cat:'dmg', label:'技能傷害', first:1 },   // ★ v5.295.0 first:只有第一個百分數(230%)成長;「30%機率」暈眩固定
+  '斷橋怒吼':     { cat:'mixed', label:'群攻減傷' },   // ★ v5.295.0 張飛 S2 改版(當陽怒吼 → 斷橋怒吼):群攻減傷 30% ×(1+5%/級)(上限 60%;實作 _cn2RunFx fx.bridge)
+  '龍膽亮銀槍':   { cat:'dmg', label:'技能傷害' },
+  '七進七出':     { cat:'dmg', label:'技能傷害' },
+  '緊箍真言':     { cat:'dmg', label:'技能傷害' },
+  '慈悲普渡':     { cat:'heal', label:'治療量' },
+  '九齒釘鈀':     { cat:'dmg', label:'技能傷害', first:1 },   // ★ v5.295.0 first:「50%機率」破防固定
+  '天蓬吃飽飽':   { cat:'heal', label:'治療量' },   // ★ v5.295.0 改版:肚量 100% 平均分給全體(fd 唯一百分數 = 成長值)
+  '降妖寶杖':     { cat:'dmg', label:'技能傷害', first:1 },   // ★ v5.295.0 first:「35%機率」暈眩固定
+  '流沙捲浪':     { cat:'dmg', label:'技能傷害' },   // ★ v5.293.0 楊戩 S2:攻100%×3 升(出血「三成機率」固定)
   '風火輪‧連環踏': { cat:'special_nezha_s1',  label:'技能傷害' },   // 110%×4段 升;每段 30% 貫穿固定(v5.53.0 3段→4段)
   '乾坤圈':        { cat:'special_nezha_s2',  label:'技能傷害' },   // 95% 升;50% 暈眩固定(v5.53.0 30→50%)
   '如意金箍棒':    { cat:'special_wukong_s1', label:'技能傷害' },   // 260% 隨機×2 升;每擊 50% 貫穿固定(v5.53.0 單體→隨機兩擊)
@@ -47067,7 +47319,10 @@ function _renderSkillFdWithLv(skillName, originalFd, skLv){
   // 找 fd 中所有 N% 數值,替換為(N + N*lv*0.05).round() %
   if(cat === 'dmg' || cat === 'heal' || cat === 'mixed'){
     const _mult = 1 + skLv * 0.05;
+    let _firstN = 0;   // ★ v5.295.0 def.first:只放大 fd 中第一個百分數(其後的機率/固定比例不動)
     fd = fd.replace(/(\d+(?:\.\d+)?)%/g, function(m, num){
+      _firstN++;
+      if(def.first && _firstN > 1) return m;
       const newVal = Math.round(parseFloat(num) * _mult);
       return HL(newVal + '%');
     });
@@ -65781,7 +66036,14 @@ function advStartMiniBattle(nextSceneIdx) {
             _cnUrl = window._CN_BG[_cnVarBgMap[(_cnVar && _cnVar.id) || 'fengshen']] || window._CN_BG.shang;
           }catch(_eCnBgV){ _cnUrl = window._CN_BG.shang; }
         }
-        _advBgEl.style.backgroundImage = 'url("' + _cnUrl + '")';
+        // ★ v5.293.0 — 《繪卷新章》新路線:路線場景/妖王巢穴圖改多層背景(新圖未上傳=自動露出時空原圖)
+        let _cn2BattleCss = null;
+        try{
+          const _cn2V = (typeof window._cn2CurVariant === 'function') ? window._cn2CurVariant() : null;
+          if(_cn2V && sceneKey === 'china-route') _cn2BattleCss = window._cn2BgCss(_cn2V, 'route');
+          else if(_cn2V && sceneKey === 'china-throne') _cn2BattleCss = window._cn2BgCss(_cn2V, 'lair');
+        }catch(_){ _cn2BattleCss = null; }
+        _advBgEl.style.backgroundImage = _cn2BattleCss || ('url("' + _cnUrl + '")');
         _advBgEl.style.backgroundSize = 'cover';
         _advBgEl.style.backgroundPosition = 'center';
       } else {
@@ -67108,6 +67370,16 @@ window._CHINA_ELITE_DIALOG = {
       premium:'關樓之上，溫侯呂布正俯瞰此戰。某便先取爾等首級，權作獻禮!' }
   ]
 };
+// ★ v5.293.0 — 《繪卷新章》六條新路線菁英戰開場對白(雙版·資料在 window._CN2 登錄表 BOSS 條目的 elite 欄)
+try{
+  if(window._CN2){
+    window._CN2.routes.forEach(function(r){
+      var _e = window._CN2.enemies[r.main];
+      if(!_e || !Array.isArray(_e.elite) || window._CHINA_ELITE_DIALOG[r.id]) return;
+      window._CHINA_ELITE_DIALOG[r.id] = _e.elite.map(function(L){ return { who:L.who, icon:L.icon, cute:L.c, premium:L.p }; });
+    });
+  }
+}catch(_eCn2Ed){}
 // 逐句推進的自建對白視窗(不動既有 cutscene 引擎=零風險);結束/跳過才呼叫 doneCb 開戰。
 // 安全網:資料缺漏、DOM 異常、任何例外一律直接 doneCb() 開戰,絕不卡住流程。
 window._chinaEliteDialog = function(vid, doneCb){
@@ -72260,8 +72532,9 @@ function _buildMonsterPage() {
   const CN_MOB_LIST  = ['狐妖小卒','天兵殘影','石磯童子','巡山小妖','蜘蛛精','白骨小兵','黃巾賊','藤甲兵','連弩兵'];
   const CN_RARE_LIST = ['貔貅'];
   // ★ v5.41.0 — 中國關 Phase 3 五路線妖王(5 主王 + 8 菁英守衛)
-  const CN_BOSS_LIST  = ['妲己','牛魔王','呂布','曹操','蚩尤'];
-  const CN_ELITE_LIST = ['琵琶精','雉雞精','金角大王','銀角大王','華雄','貂蟬','典韋','許褚'];
+  const CN_BOSS_LIST  = ['妲己','牛魔王','呂布','曹操','蚩尤'].concat((window._CN2 && window._CN2.bossNames) || []);   // ★ v5.293.0 +6
+  const CN_ELITE_LIST = ['琵琶精','雉雞精','金角大王','銀角大王','華雄','貂蟬','典韋','許褚'].concat((window._CN2 && window._CN2.eliteNames) || []);   // ★ v5.293.0 +15
+  try{ if(typeof window._cn2ProbeImgs === 'function') window._cn2ProbeImgs(false); }catch(_){}   // ★ v5.293.0 新敵人立繪探測(上傳即生效)
 
   const MONSTER_AVTR = {
     '九尾空貓怪': '🐱', '杏花妖': '🌸', '綠竹筍小妖': '🎋', '茶葉精靈': '🍃',
@@ -72298,6 +72571,7 @@ function _buildMonsterPage() {
     '曹操':'👑','典韋':'🛡️','許褚':'💪',
     '蚩尤':'⚡',
   };
+  try{ if(window._CN2){ Object.keys(window._CN2.enemies).forEach(function(n){ if(!MONSTER_AVTR[n]) MONSTER_AVTR[n] = window._CN2.enemies[n].emoji || '👾'; }); } }catch(_){}   // ★ v5.293.0
 
   function makeCard(name, tier) {
     const b = HERO_DB[name];
@@ -72356,7 +72630,7 @@ function _buildMonsterPage() {
     //   五路線妖王 BOSS(妲己/牛魔王/呂布/曹操/蚩尤)Phase 3 實裝後補列
     //   ★ v5.41.0 — Phase 3 實裝:補列 5 主王 + 8 菁英守衛
     `<div style="font-size:40px;font-weight:900;color:#ffb3a0;margin:40px 0 18px;letter-spacing:3px;border-bottom:3px solid rgba(255,150,110,0.5);padding-bottom:10px;">🏯 中國古代探險</div>` +
-    makeSection('👑 五路線妖王', CN_BOSS_LIST, 'boss') +
+    makeSection('👑 中國妖王(五路線 + 繪卷新章)', CN_BOSS_LIST, 'boss') +
     makeSection('⚡ 菁英守衛', CN_ELITE_LIST, 'elite') +
     makeSection('🌿 路邊小怪', CN_MOB_LIST, 'mob') +
     makeSection('💜 稀有小怪', CN_RARE_LIST, 'rare') +
@@ -72530,11 +72804,11 @@ function openMonsterDetail(name) {
     '法老王','埃及豔后',                                     // 埃及雙王
     '妲己','牛魔王','呂布','曹操','蚩尤',                     // 中國五路線妖王
     '山岳地龍王','風暴雷龍王','深淵海龍王','邪骨暗龍王','神聖光龍王','星辰幻龍王',   // 世界 BOSS 龍王(v3.15.17/v3.15.51 新增後漏補)
-  ];
+  ].concat((window._CN2 && window._CN2.bossNames) || []);   // ★ v5.293.0 繪卷新章 6 BOSS
   const ELITE_LIST=['綠竹筍小妖','茶葉精靈','烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐',
     // ★ v5.62.0 — 中國關菁英守衛 8 隻(原本漏加 → 詳情頁誤顯示「路邊小怪」)
     '琵琶精','雉雞精','金角大王','銀角大王','華雄','貂蟬','典韋','許褚',
-  ];
+  ].concat((window._CN2 && window._CN2.eliteNames) || []);   // ★ v5.293.0 繪卷新章 15 菁英
   const RARE_LIST=['寶箱怪','小惡魔','行走的二宮尊德像','座敷童子',
     // ★ v5.62.0 — 埃及/中國稀有小怪(原本漏加 → 詳情頁誤顯示「路邊小怪」)
     '聖甲蟲','貔貅',
@@ -73591,6 +73865,17 @@ const MEDAL_DEFS = [
   { id:'china_treasures_all',  icon:'✨', name:'三神物集齊',       desc:'集齊封神榜、芭蕉扇、傳國玉璽',        cat:'中國古代關' },
   { id:'china_caocao_clear',   icon:'🏰', name:'官渡霸主',         desc:'擊敗亂世奸雄曹操',                    cat:'中國古代關' },
   { id:'china_chiyou_clear',   icon:'⚔', name:'戰神隕落',         desc:'擊敗遠古戰神蚩尤',                    cat:'中國古代關' },
+  // ── ★ v5.293.0 中國關擴充《繪卷新章》(8 個)── id 一經上線永不更名(雲端紀錄沿用、冪等不重發)
+  { id:'china_chentang_clear', icon:'🌊', name:'鬧海英雄',         desc:'在陳塘關擊敗東海龍王',                cat:'中國古代關' },
+  { id:'china_jielong_clear',  icon:'⚡', name:'絕龍嶺破陣',       desc:'在絕龍嶺擊敗聞太師',                  cat:'中國古代關' },
+  { id:'china_baihu_clear',    icon:'💀', name:'三打白骨精',       desc:'在白虎嶺擊敗白骨夫人',                cat:'中國古代關' },
+  { id:'china_shituo_clear',   icon:'🦅', name:'獅駝嶺降魔',       desc:'在獅駝嶺擊敗大鵬金翅鵰',              cat:'中國古代關' },
+  { id:'china_chibi_clear',    icon:'⛵', name:'赤壁東風',         desc:'在赤壁擊敗周瑜',                      cat:'中國古代關' },
+  { id:'china_nanzhong_clear', icon:'🐘', name:'七擒孟獲',         desc:'在南中擊敗南蠻王孟獲',                cat:'中國古代關' },
+  { id:'china_cn2_all',        icon:'📜', name:'繪卷新章全通',     desc:'繪卷新章六條新路線全部通關',          cat:'中國古代關' },
+  { id:'china_yangjian',       icon:'👁', name:'二郎真君',         desc:'請出三眼神將楊戩加入隊伍',            cat:'中國古代關' },
+  { id:'china_taoyuan',        icon:'🍑', name:'桃園三結義',       desc:'劉備、關羽、張飛三兄弟都加入隊伍',    cat:'中國古代關' },
+  { id:'china_xiyou4',         icon:'📿', name:'取經四人組',       desc:'唐三藏與孫悟空、豬八戒、沙悟淨師徒四人都加入隊伍', cat:'中國古代關' },
   // ── 中國關 Phase 6 追加(5 個)── ★ v5.45.0(比照埃及 unlock/s_clear/scarab/recruit 四型 + 至寶集齊)
   { id:'china_unlock',         icon:'🏯', name:'繪卷旅人',         desc:'解鎖中國古代探險,踏入史詩神話繪卷',      cat:'中國古代關' },
   { id:'china_s_clear',        icon:'⭐', name:'妖王剋星',         desc:'以 S 評價通關任一中國路線妖王戰',    cat:'中國古代關' },
@@ -74481,6 +74766,9 @@ window._checkChinaHeroCountMedals = function(){
     if(_cnt >= 4) _unlockMedal('china_hero_4');
     if(_cnt >= 8) _unlockMedal('china_hero_all_8');
     if(_set['諸葛亮']) _unlockMedal('china_zhuge');
+    if(_set['楊戩'])   _unlockMedal('china_yangjian');   // ★ v5.293.0(召喚/招募/保底任一管道取得皆算)
+    if(_set['劉備'] && _set['關羽'] && _set['張飛']) _unlockMedal('china_taoyuan');            // ★ v5.293.0 桃園三結義
+    if(_set['唐三藏'] && _set['孫悟空'] && _set['豬八戒'] && _set['沙悟淨']) _unlockMedal('china_xiyou4');   // ★ v5.293.0 取經四人組
     _saveMedals();
   }catch(_e){ console.warn('[中國關獎章] 英雄收服檢查失敗', _e); }
 };

@@ -1048,6 +1048,14 @@ const _ELITE_ENEMY_NAMES = new Set([
   // 中國關菁英守衛(v5.67.0 eliteTeam + 官渡陪同;★ 藤甲兵/連弩兵 見上方說明刻意不列)
   '琵琶精','雉雞精','金角大王','銀角大王','華雄','貂蟬','典韋','許褚',
 ]);
+// ★ v5.293.0 — 中國關擴充《繪卷新章》:6 新 BOSS 進真 BOSS 名單(尊嚴鎖血/爆發反擊/秒殺保護·鐵律 1.31)、
+//   15 新菁英進菁英名單(秒殺/HP%/DoT 上限保護)。名單由 hero_db.js 的 window._CN2 登錄表單一供應。
+try{
+  if(window._CN2){
+    (window._CN2.bossNames || []).forEach(function(n){ _ZEUS_TRUE_BOSSES.add(n); });
+    (window._CN2.eliteNames || []).forEach(function(n){ _ELITE_ENEMY_NAMES.add(n); });
+  }
+}catch(_eCn2Sets){ console.warn('[v5.293.0 CN2 BOSS/菁英名單]', _eCn2Sets); }
 window._ELITE_ENEMY_NAMES = _ELITE_ENEMY_NAMES;
 window._isEliteEnemy = function(t){
   try{ return !!(t && t.name && _ELITE_ENEMY_NAMES.has(t.name)); }catch(_){ return false; }
@@ -3688,6 +3696,11 @@ const CHINA_BOSS_HEROES = new Set(['牛魔王','呂布','蚩尤']);
 //   故一梯四位(哪吒/孫悟空/關羽/姜子牙·v5.42.0 曾比照日本四英雄放進召喚池)自此一併排除,全 8 位皆改為「中國關限定取得」。
 //   (原 v5.46.0 版本保留備查:const CHINA_SUMMON_EXCLUDE = new Set(['牛魔王','呂布','蚩尤','諸葛亮']);)
 const CHINA_SUMMON_EXCLUDE = new Set(['哪吒','孫悟空','關羽','姜子牙','牛魔王','呂布','蚩尤','諸葛亮']);
+// ★ v5.293.0 — 《繪卷新章》新 SSR 楊戩:中國關限定(圖鑑 🏯 標示 / 中華英雄收服計數 / 黑暗球排除自動涵蓋)。
+//   取得=六條新路線 BOSS S 評價 15% + 六路線全通保底;召喚只走星空 1% 專屬槽(見 _SUMMON_SPOTLIGHT_HEROES)。
+try{ if(window._CN2 && window._CN2.hero){ CHINA_EXCLUSIVE_HEROES.add(window._CN2.hero.name); CHINA_SUMMON_EXCLUDE.add(window._CN2.hero.name); } }catch(_eCn2Ex){}
+// ★ v5.293.0 — 三國/西遊新 SSR 六位(劉備/張飛/趙雲/唐三藏/豬八戒/沙悟淨):同為中國關限定(BOSS S 評價 15% + 召喚卷;不進召喚水晶池、不進 1% 專屬槽)
+try{ if(window._CN2 && window._CN2.heroes2){ window._CN2.heroes2.forEach(function(H){ CHINA_EXCLUSIVE_HEROES.add(H.name); CHINA_SUMMON_EXCLUDE.add(H.name); }); } }catch(_eCn2Ex2){}
 try {
   window.CHINA_EXCLUSIVE_HEROES = CHINA_EXCLUSIVE_HEROES;
   window.CHINA_BOSS_HEROES = CHINA_BOSS_HEROES;
@@ -3766,6 +3779,7 @@ function _bossHeroNoRandom(name){
 //   ⚠ 與 ① 是交集為空的兩張表:BOSS 同名英雄永不進本表(進了也會被 ① 二度擋下·雙保險)。
 var _SUMMON_SPOTLIGHT_HEROES = new Set([
   '哪吒','孫悟空','關羽','姜子牙',     // ★ v5.101.0 當期=中國古代關一梯四英雄(非 BOSS)
+  '楊戩',                             // ★ v5.293.0 《繪卷新章》新 SSR(只加入、不輪替舊四位:舊四位的圖鑑取得說明寫著「1% 專屬格」,輪替與否待老師裁定)
 ]);
 function _summonSpotlightHero(name){
   if(!name) return false;
@@ -5387,6 +5401,8 @@ const PET_KNOWLEDGE = {
 
 
 const STATUS_DESCS = {
+  jingu:        '緊箍：每次使用技能都會頭痛受到傷害，並有機率技能失敗（BOSS 不會失敗）',   // ★ v5.295.0 唐三藏 緊箍真言
+  yjMark:       '天眼印：被楊戩的天眼鎖定，對方全體對他的攻擊必定命中，哮天犬也會優先咬他',   // ★ v5.295.0 楊戩 天眼神光
   stun:         '暈眩：本回合無法行動',
   freeze:       '冰凍：本回合無法行動',
   sleep:        '睡眠：無法行動（5回合）；受到傷害必中且立刻醒來，沒被打到每回合也有30%機會自己醒',   // ★ v5.80.0 老師裁定⑥
@@ -5438,6 +5454,8 @@ const STATUS_DESCS = {
   _dreamDebuff: '夢境弱化：攻擊和特技降低 25%（每次施展+1 回合）',
 };
 const BUFF_DESCS = {
+  _cn2Bridge:    '斷橋：敵方的全體/群體攻擊只能打張飛，張飛受到的群體傷害減少（BOSS 群攻改為一半照常分攤）',   // ★ v5.295.0 張飛 斷橋怒吼
+  _cn2Rescue:    '救主護身：趙雲衝到身前，擋下下一次受到的攻擊',   // ★ v5.295.0 趙雲 單騎救主
   immune:        '無敵：持續期間免疫傷害和不利狀態',
   _amaReflect:   '日暮反照：受到對手直接傷害時，把傷害加倍反彈給攻擊者',   // ★ v5.232.0 天照大神 S1
   _amaSunAtk:    '烈日之光：攻擊力上升（依天照大神的特技）',   // ★ v5.237.0 天照大神 S2 追加
@@ -5652,6 +5670,57 @@ const BURST_UPGRADE_DEF = {
     [2,'攻擊×180% × 6 段隨機 + 減傷80%・六臂 2 回合'],
     [3,'攻擊×195% × 6 段隨機 + 減傷80%・六臂 2 回合'],
     [4,'攻擊×210% × 6 段隨機 + 減傷80%・六臂 2 回合(MAX)'],
+  ] },
+  // ★ v5.293.0 — 《繪卷新章》新 SSR 楊戩爆發升級(每升 1 級 +10% 乘算 _burstMult;破防/攻擊強化固定不隨等級變)
+  '楊戩': { rows: [
+    [0,'攻擊×700% 光屬性 → 1 名對手(必中/無視有利)+ 目標「破防」2 回合 + 自身「攻擊強化」2 回合 + 天眼看破次數 +1'],   // ★ v5.295.0 +看破
+    [1,'攻擊×770% 單體 + 破防 2 回合 + 自身攻擊強化 2 回合 + 看破 +1'],
+    [2,'攻擊×840% 單體 + 破防 2 回合 + 自身攻擊強化 2 回合 + 看破 +1'],
+    [3,'攻擊×910% 單體 + 破防 2 回合 + 自身攻擊強化 2 回合 + 看破 +1'],
+    [4,'攻擊×980% 單體 + 破防 2 回合 + 自身攻擊強化 2 回合 + 看破 +1(MAX)'],
+  ] },
+  // ★ v5.293.0 — 三國/西遊新 SSR 六位爆發升級(每升 1 級 +10% 乘算 _burstMult;附帶狀態固定不隨等級變)
+  '劉備': { rows: [
+    [0,'特技×200% 我方全體恢復 + 各解除 1 個不利狀態 + 全體「攻擊強化」2 回合;三英齊聚時關羽、張飛立即各再行動 1 次'],   // ★ v5.295.0 +三英再行動
+    [1,'特技×220% 我方全體恢復 + 各解除 1 個不利狀態 + 全體「攻擊強化」2 回合 + 三英再行動'],
+    [2,'特技×240% 我方全體恢復 + 各解除 1 個不利狀態 + 全體「攻擊強化」2 回合 + 三英再行動'],
+    [3,'特技×260% 我方全體恢復 + 各解除 1 個不利狀態 + 全體「攻擊強化」2 回合 + 三英再行動'],
+    [4,'特技×280% 我方全體恢復 + 各解除 1 個不利狀態 + 全體「攻擊強化」2 回合 + 三英再行動(MAX)'],
+  ] },
+  '張飛': { rows: [
+    [0,'攻擊×650% 土屬性 → 敵全體分攤(必中)+ 各 40%「暈眩」1 回合 + 自身「斷橋」1 回合'],   // ★ v5.295.0 +斷橋
+    [1,'攻擊×715% 土屬性 → 敵全體分攤(必中)+ 各 40%「暈眩」1 回合 + 斷橋 1 回合'],
+    [2,'攻擊×780% 土屬性 → 敵全體分攤(必中)+ 各 40%「暈眩」1 回合 + 斷橋 1 回合'],
+    [3,'攻擊×845% 土屬性 → 敵全體分攤(必中)+ 各 40%「暈眩」1 回合 + 斷橋 1 回合'],
+    [4,'攻擊×910% 土屬性 → 敵全體分攤(必中)+ 各 40%「暈眩」1 回合 + 斷橋 1 回合(MAX)'],
+  ] },
+  '趙雲': { rows: [
+    [0,'攻擊×170% 風屬性 × 5 段隨機(必中/每段獨立暴擊)+ 自身「迴避」1 回合 + 重置「單騎救主」'],   // ★ v5.295.0 +重置救主
+    [1,'攻擊×187% 風屬性 × 5 段隨機(必中/每段獨立暴擊)+ 自身「迴避」1 回合 + 重置救主'],
+    [2,'攻擊×204% 風屬性 × 5 段隨機(必中/每段獨立暴擊)+ 自身「迴避」1 回合 + 重置救主'],
+    [3,'攻擊×221% 風屬性 × 5 段隨機(必中/每段獨立暴擊)+ 自身「迴避」1 回合 + 重置救主'],
+    [4,'攻擊×238% 風屬性 × 5 段隨機(必中/每段獨立暴擊)+ 自身「迴避」1 回合 + 重置救主(MAX)'],
+  ] },
+  '唐三藏': { rows: [
+    [0,'特技×200% 光屬性 → 敵全體分攤(必中)+ 特技×220% 我方全體恢復 + 全體「減傷½」1 回合'],
+    [1,'特技×220% 光屬性 → 敵全體分攤(必中)+ 特技×242% 我方全體恢復 + 全體「減傷½」1 回合'],
+    [2,'特技×240% 光屬性 → 敵全體分攤(必中)+ 特技×264% 我方全體恢復 + 全體「減傷½」1 回合'],
+    [3,'特技×260% 光屬性 → 敵全體分攤(必中)+ 特技×286% 我方全體恢復 + 全體「減傷½」1 回合'],
+    [4,'特技×280% 光屬性 → 敵全體分攤(必中)+ 特技×308% 我方全體恢復 + 全體「減傷½」1 回合(MAX)'],
+  ] },
+  '豬八戒': { rows: [
+    [0,'攻擊×600% 水屬性 → 敵全體分攤(必中)+ 全體「緩速」2 回合 + 自身護盾(最大HP 25%)+ 肚量全部加進傷害'],   // ★ v5.295.0 +肚量
+    [1,'攻擊×660% 水屬性 → 敵全體分攤(必中)+ 全體「緩速」2 回合 + 自身護盾(最大HP 25%)+ 肚量加傷'],
+    [2,'攻擊×720% 水屬性 → 敵全體分攤(必中)+ 全體「緩速」2 回合 + 自身護盾(最大HP 25%)+ 肚量加傷'],
+    [3,'攻擊×780% 水屬性 → 敵全體分攤(必中)+ 全體「緩速」2 回合 + 自身護盾(最大HP 25%)+ 肚量加傷'],
+    [4,'攻擊×840% 水屬性 → 敵全體分攤(必中)+ 全體「緩速」2 回合 + 自身護盾(最大HP 25%)+ 肚量加傷(MAX)'],
+  ] },
+  '沙悟淨': { rows: [
+    [0,'特技×650% 土屬性 → 敵全體分攤(必中)+ 全體「破防」2 回合'],
+    [1,'特技×715% 土屬性 → 敵全體分攤(必中)+ 全體「破防」2 回合'],
+    [2,'特技×780% 土屬性 → 敵全體分攤(必中)+ 全體「破防」2 回合'],
+    [3,'特技×845% 土屬性 → 敵全體分攤(必中)+ 全體「破防」2 回合'],
+    [4,'特技×910% 土屬性 → 敵全體分攤(必中)+ 全體「破防」2 回合(MAX)'],
   ] },
   '孫悟空': { rows: [
     [0,'攻擊×840% 風屬性 → 敵全體分攤(必中/無視有利)+ 命中者「強力混亂」1 回合 + 自身「攻增」2 回合'],
@@ -6561,6 +6630,13 @@ function _teamFormAdjustObjPos(name, baseObjPos, where){
     '貓人族長':     { grid:-20, preview:0 },
     '幽魂暗狐':     { grid:-20, preview:0 },
     '哪吒':         { grid:-20, preview:0 },
+    '楊戩':         { grid:-20, preview:0 },   // ★ v5.293.0 新 SSR(比照中國一梯四位)
+    '劉備':         { grid:-20, preview:0 },   // ★ v5.293.0 三國/西遊新 SSR 六位
+    '張飛':         { grid:-20, preview:0 },
+    '趙雲':         { grid:-20, preview:0 },
+    '唐三藏':       { grid:-20, preview:0 },
+    '豬八戒':       { grid:-20, preview:0 },
+    '沙悟淨':       { grid:-20, preview:0 },
     '孫悟空':       { grid:-20, preview:0 },
     '關羽':         { grid:-20, preview:0 },
     '姜子牙':       { grid:-20, preview:0 },
@@ -6734,6 +6810,13 @@ const CHINA_ENEMY_MOB_NAMES = new Set([
   '金角大王','銀角大王','華雄','貂蟬','琵琶精','雉雞精','典韋','許褚',
 ]);
 const CHINA_ENEMY_BOSS_NAMES = new Set(['妲己','牛魔王','呂布','曹操','蚩尤']);
+// ★ v5.293.0 — 《繪卷新章》新菁英 15 / 新 BOSS 6 同樣吃中國關敵人倍率(HP×2、攻特速×1.5;僅冒險+中國關+敵方 p2)
+try{
+  if(window._CN2){
+    (window._CN2.eliteNames || []).forEach(function(n){ CHINA_ENEMY_MOB_NAMES.add(n); });
+    (window._CN2.bossNames  || []).forEach(function(n){ CHINA_ENEMY_BOSS_NAMES.add(n); });
+  }
+}catch(_eCn2Mult){ console.warn('[v5.293.0 CN2 敵人倍率名單]', _eCn2Mult); }
 const CHINA_ENEMY_RARE_FIXED_HP = { '貔貅': 999 };   // 稀有小怪:HP 固定值(不吃 ×2)
 const CHINA_ENEMY_HP_MULT  = 2.0;    // 小怪 + BOSS 基礎 HP ×2
 const CHINA_ENEMY_ATK_MULT = 1.5;    // 攻擊 / 特技 / 速度 ×1.5
@@ -9731,6 +9814,17 @@ const SKILL_FORCE_ELEMENT = {
   // ⚠ 金牛 S2「仁王不動」/ 爆發「大地審判」/ 雙子 S1「逆位塔羅」「命運轉輪」/ 巨蟹三招
   //   皆無傷害或為純治療,刻意不登錄屬性(登錄了也沒有 doDmg 會去讀)。
 };
+// ★ v5.293.0 — 《繪卷新章》敵方技能/爆發屬性由 window._CN2 登錄表自動補登(只補未登錄者;多屬性招式 es 不登錄,引擎逐擊指定);
+//   新 SSR 楊戩三招一律光屬性。
+try{
+  if(window._CN2 && window._CN2.skillMap){
+    Object.keys(window._CN2.skillMap).forEach(function(sn){
+      var _fx = window._CN2.skillMap[sn].fx || {};
+      if(_fx.dmg && _fx.dmg.e && !_fx.dmg.es && !SKILL_FORCE_ELEMENT[sn]) SKILL_FORCE_ELEMENT[sn] = _fx.dmg.e;
+    });
+  }
+  ['天眼神光','神犬撲咬','劈山救母・開天神斧'].forEach(function(sn){ if(!SKILL_FORCE_ELEMENT[sn]) SKILL_FORCE_ELEMENT[sn] = 'light'; });
+}catch(_eCn2Elem){ console.warn('[v5.293.0 CN2 技能屬性]', _eCn2Elem); }
 
 const SKILL_RANDOM_ELEMENTS = {
   // 八岐大蛇 S2 暗冰雷焰吐息:fd 寫「暗焰、冰雪、落雷、烈焰」混合,
@@ -10760,6 +10854,10 @@ window._advIsHiddenVariantLocked = function(stage, v){
   if(stage === 'china' && v.id === 'chiyou'){
     return !((typeof window._chinaTreasureCount === 'function') && window._chinaTreasureCount() >= 3);
   }
+  // ★ v5.293.0 — 《繪卷新章》六條新路線:以「前一條路線的雲端持久獎章」判定解鎖(v.needMedal)
+  if(stage === 'china' && v.needMedal){
+    try{ return !(typeof _medals !== 'undefined' && _medals && _medals[v.needMedal]); }catch(_){ return true; }
+  }
   return true; // 其他未識別的 hidden 路線預設鎖定
 };
 function _cycleAdvBossVariant(){
@@ -11392,6 +11490,12 @@ const MONSTER_LORE = {
   // ── 稀有小怪 ──
   '聖甲蟲': '古埃及最神聖的甲蟲(糞金龜)。古人見牠推著糞球橫越沙地,聯想到太陽神「凱布利」每日推動太陽昇起,於是把牠視為「重生與永生」的聖物,刻成護身符隨身佩戴。這隻金光閃閃的稀有聖甲蟲會以聖光治癒同伴、灑下黃金護甲守護全隊;雖然難纏,但擊倒牠能獲得大量經驗值與珍貴寶物!⚠ 牠膽小又惜命——只要撐到第 4 回合還沒被打倒,牠就會推著黃金糞球溜之大吉,務必速戰速決!',
 };
+// ★ v5.293.0 — 《繪卷新章》21 個新敵人的魔物圖鑑典故(教育性說明文)由 window._CN2 登錄表補登
+try{
+  if(window._CN2 && window._CN2.enemies){
+    Object.keys(window._CN2.enemies).forEach(function(n){ var _e = window._CN2.enemies[n]; if(_e && _e.lore && !MONSTER_LORE[n]) MONSTER_LORE[n] = _e.lore; });
+  }
+}catch(_eCn2Lore){ console.warn('[v5.293.0 CN2 魔物典故]', _eCn2Lore); }
 
 
 let _focusedHeroIdx = -1;
@@ -15075,7 +15179,7 @@ function renderCard(h){
   const statTags=[
     ...h.status.map(s=>`<span class="stag ${s.type}${_isBadLocked(s)?' stag-locked-bad':''}">${statusName(s.type, s)}</span>`),
     ...h.buffs.map(b=>`<span class="stag ${buffClass(b.type)}${_isGoodLocked(b)?' stag-locked-good':''}">${buffName(b.type)}${b.type==='_echoEvade'&&b._stacks?(' ×'+b._stacks):''}</span>`)
-  ].join('');
+  ].join('') + ((typeof window._cn2CardTags === 'function') ? window._cn2CardTags(h) : '');   // ★ v5.295.0 新 SSR:肚量條/看破次數/羈絆標籤
   const isTauntTarget=G.taunted&&G.taunted.target===h;
   const isTaunted=G.taunted&&G.taunted.attacker===h;
   const imgUrl=typeof HERO_IMGS!=='undefined'&&HERO_IMGS[h.name]?HERO_IMGS[h.name]:'';
@@ -15611,6 +15715,7 @@ function statusName(t, st){
   const m={stun:'暈眩',freeze:'冰凍',sleep:'睡眠',trap:'禁動',para:'麻痺',seal:'封印',noatk:'無力',deathmark:'死亡宣告',nosell:'查封',forecast:'失明',spddown:'遲緩',hellfire:'燃燒',poison:'中毒',noheal_curse:'不治詛咒',stubbornDebuff:'怨念強化',berserk:'狂亂',strongTaunt:'強力挑釁',exhaust:'消耗',confused:'疑惑',traitSlow:'緩速（特質）',traitWeak:'迷戀',traitRage:'怒火（特質）',dmgVuln:'承傷+50%',healReduced:'治療減半',burstReflect:'正義反彈',weakened:'虛弱',comboFatigue:'連招疲勞',_mayin:'魔音',charm:'魅惑',pursuit:'追擊',breakDef:'💣 破防',
   // ★ v3.15.64 — 拘留者 S1「神刃之力」附加狀態:拘留(無法行動,可疊2層)
   detain:'🚨 拘留',
+  jingu:'📿 緊箍', yjMark:'👁 天眼印',   // ★ v5.295.0 唐三藏 緊箍真言 / 楊戩 天眼神光
   _cstBloodMark:'🩸 血痕',   // ✨ 命星 ✦ 吸血鬼 s2
   _traitSeal:'🔍 天賦失效', _burstSeal:'🚫 爆發封印', _confess:'⚖️ 認罪',
   imprison:'🔒 禁錮', _passiveSeal:'🎭 被動失效',
@@ -15761,6 +15866,7 @@ function buffName(t){
   _youyouDarkwalk:'🌑 暗行',               // 幽幽暗行(buff 版,同時也是 status 鍵)
   _youyouWraith:'🌫 遊魂',                 // 幽幽遊魂(buff 版,同時也是 status 鍵)
   azGaze:'👁 凝視',                        // 安茲凝視
+  _cn2Bridge:'🌉 斷橋', _cn2Rescue:'🐉 救主護身',   // ★ v5.295.0 張飛 斷橋怒吼 / 趙雲 單騎救主
   _echoEvade:'🐬 回聲閃避',                // ★ v3.13.87 — 我的豚豚 S2 回聲閃避(100% 閃避,疊層,抵銷傷害/不利各 -1 層)
   _gmLink:'🔗 連結',                       // ★ v3.14.10 — 機關王雙人組 S1:受傷減少後由全隊平分
   _gmLinkStrong:'🔗 強力連結',             // ★ v3.14.10 — 機關王雙人組爆發:同連結且不可消除/奪取/交換
@@ -16640,6 +16746,10 @@ window._cstPgS1Live = function(a){
   mark('月讀大神', ['b2']);
   // ── v5.274.0:主角‧覺醒 ✦ 兩顆(正式開放前補齊)⇒ 684 顆全部有戰鬥效果 ──
   mark('主角‧覺醒', ['t2','b2']);
+  // ── v5.293.0:中國關《繪卷新章》新 SSR 楊戩(天眼司法座)6 顆一次接齊(效果本體在 CN2 引擎 _cn2Yj*)──
+  mark('楊戩', ['t1','t2','s1','s2','b1','b2']);
+  // ── v5.293.0:三國/西遊新 SSR 六位 36 顆(資料驅動:hero_db _CN2.heroes2[].cst.s[].m ⇒ 引擎 _cn2FxCst/_cn2TraitsOf 套用)──
+  ['劉備','張飛','趙雲','唐三藏','豬八戒','沙悟淨'].forEach(function(n){ mark(n, ['t1','t2','s1','s2','b1','b2']); });
 })();
 window._cstCap = (function(){
   function _st(){
@@ -18339,7 +18449,14 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '射手星神': { url: _BV_RAW('射手星神動畫.mp4') },
   '摩羯星神': { url: _BV_RAW('摩羯星神動畫.mp4') },
   '水瓶星神': { url: _BV_RAW('水瓶星神動畫.mp4') },
-  '雙魚星神': { url: _BV_RAW('雙魚星神動畫.mp4') }
+  '雙魚星神': { url: _BV_RAW('雙魚星神動畫.mp4') },
+  // ★ v5.294.0(2026-10-24)— UR 三神爆發動畫對接(老師 Google Vids/Veo 生成;疊在 v5.293.0《繪卷新章》之上)。
+  //   標準流程一筆=戰鬥爆發+圖鑑欣賞雙處自動生效;冒險開戰預熱(game_adv.js ③)也自動納入。
+  //   三位皆玩家 UR 英雄、無 BOSS 版 → 不帶 bossSide。影片全程只有音效、無音樂無人聲(2026-10-18 裁定)。
+  //   檔案為 540×960 faststart 輕量版(各約 1.4～1.9MB);本筆上線前尚無玩家抓過這三個檔名,不需 bump _BV_ASSET_VER。
+  '天照大神': { url: _BV_RAW('天照大神動畫.mp4') },
+  '月讀大神': { url: _BV_RAW('月讀大神動畫.mp4') },
+  '究極神兵': { url: _BV_RAW('究極神兵動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
@@ -18851,6 +18968,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
   }catch(_eSsRun){ console.warn('[幽魂暗狐 換魂奪爆發] 失敗', _eSsRun); }
   // ★ v5.254.0 命座 G1 被動記帳(只記「本回合誰放了爆發」,不擋、不改任何數值;鬥技場一樣記但沒有命星會讀它)
+  // ★ v5.295.0 楊戩「天眼看破」:敵方楊戩還有看破次數 ⇒ 這次爆發完全無效(能量已在 execBurst 扣掉;BOSS/鬥技場改減半版,照常往下跑)
+  try{ if(typeof window._cn2YjNegate === 'function' && window._cn2YjNegate(h, _mimicSourceName)){ try{ updateUI(); }catch(_){} _burstFinish(h, _interrupted); return; } }catch(_eCn2YjNg){ console.warn('[v5.295.0 看破]', _eCn2YjNg); }
   try{ if(window._cstCap) window._cstCap.noteBurst(h, _mimicSourceName); }catch(_eCstB){}
   try{ if(G._cstFcD && G._cstFcD.length) window._cstPhB2Eye(h); }catch(_eCstPhB2b){}   // ✨ v5.266.0 命星 法老王 b2 拉神之眼(極限爆發也算)
   // ★ v1.0.20260423.2900 — 診斷:若 h.name 與 bd 對應不上,印 console error 方便追查
@@ -18910,7 +19029,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   //   非模仿狀態為 undefined → 1.0(無影響)
   const _mimicMult = (h.name === '凡人' && typeof h._mimicBurstMult === 'number') ? h._mimicBurstMult : 1.0;
   // ★ v5.59.0 神農鼎丹藥 B輪 — 龍魂爆發丹:我方(p1)爆發技傷害 ×(1+50%);_burstMult 單點乘算 → 全部爆發案自動生效(僅中國關戰鬥·_alchBurstMult 內建守門·其他模式恆回 1)
-  const _burstMult = (1.0 + _burstLv * 0.10) * _mimicMult * ((typeof window._alchBurstMult === 'function') ? window._alchBurstMult(h) : 1);
+  const _burstMult = (1.0 + _burstLv * 0.10) * _mimicMult * ((typeof window._alchBurstMult === 'function') ? window._alchBurstMult(h) : 1)
+    * ((typeof window._cn2BurstBond === 'function') ? window._cn2BurstBond(h, _mimicSourceName) : 1);   // ★ v5.295.0 桃園羈絆:關羽極限爆發 +20%(鬥技場 +10%)
 
   const _lv5Extra = (_burstLv >= 4) ? 1 : 0;
   // ★ v3.15.67 — 科學發明家 S2「發明家的靈感」:任意角色使用極限爆發時,雙方各自發明家 20% 生成 1 張新發明卡
@@ -23251,6 +23371,27 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   //   均傷分攤原則全走 doDmg(鐵律1.31 零破口);BOSS 版由鎖血強制反擊/AI 憤怒/能量爆發觸發,
   //   影片對接走 _BURST_VIDEO_DB bossSide(僅中國關 p2 放行)。
   // ════════════════════════════════════════════════════════════════
+  // ── ★ v5.293.0 《繪卷新章》六位新 BOSS 爆發(資料驅動 window._cn2RunFx;倍率 × _burstMult;必中/無視有利依 fx.dmg.must)──
+  if(window._CN2 && window._CN2.skillMap && window._CN2.skillMap[burstName] && window._CN2.skillMap[burstName].slot === 'burst'){
+    if(!G[opp].some(x => x && x.curHp > 0)){ _burstFinish(h, _interrupted); return; }
+    try{ log(`💥 [${h.name}] 極限爆發「${burstName}」!`); }catch(_){}
+    try{ flashScreen('rgba(255,200,120,0.25)', 600); }catch(_){}
+    try{ const _cn2BM = window._CN2.skillMap[burstName]; window._cn2RunFx(h, (_cn2BM.hero && typeof window._cn2FxCst === 'function') ? window._cn2FxCst(h, 'bu', _cn2BM.fx) : _cn2BM.fx, side, { mult:_burstMult, isBurst:true, label:burstName, pref:(side === 'p1' && typeof _pickAutoBurstTarget === 'function') ? _pickAutoBurstTarget(G[opp].filter(x => x && x.curHp > 0)) : null }); }
+    catch(_eCn2Bu){ console.warn('[v5.293.0 CN2 BOSS 爆發]', _eCn2Bu); }
+    _pSetTimeout(() => { try{ updateUI(); }catch(_){} _burstFinish(h, _interrupted); }, 700);
+    return;
+  }
+  // ── ★ v5.293.0 新 SSR 楊戩「劈山救母・開天神斧」:攻擊700%(×_burstMult)單體光(必中/無視有利)+ 破防2 + 自身攻擊強化2 ──
+  //   目標:玩家方自動鎖定主要 BOSS(_pickAutoBurstTarget,v3.7.10 範式),敵方隨機。
+  if(burstName==='劈山救母・開天神斧'){
+    const _yjBFoes = G[opp].filter(x => x && x.curHp > 0);
+    if(!_yjBFoes.length){ _burstFinish(h, _interrupted); return; }
+    const _yjBT = (side === 'p1') ? (_pickAutoBurstTarget(_yjBFoes) || _yjBFoes[0]) : _yjBFoes[Math.floor(Math.random() * _yjBFoes.length)];
+    try{ beginBatchTotals(); }catch(_){}
+    try{ window._cn2YjBurst(h, _yjBT, _burstMult); }catch(_eYjBu){ console.warn('[楊戩 爆發]', _eYjBu); }
+    _pSetTimeout(() => { try{ setTimeout(endBatchTotals, 50); }catch(_){} try{ updateUI(); }catch(_){} _burstFinish(h, _interrupted); }, 700);
+    return;
+  }
   // ── 妲己「傾國傾城・九尾燎原」:特技650%(×_burstMult)由敵全體分攤暗屬性 + 全體「燃燒」2 回合 ──
   if(burstName==='傾國傾城・九尾燎原'){
     const _djBFoes = G[opp].filter(x => x && x.curHp > 0);
@@ -25847,6 +25988,7 @@ function _lxpsMuyunTakeHold(h){
 function _burstFinish(h, _interrupted){
   // ★ v1.0.20260423.2300 — 清除爆發保護旗標
   window._burstCastActive = false;
+  try{ if(typeof window._cn2BurstEnd === 'function') window._cn2BurstEnd(h); }catch(_eCn2BEnd){}   // ★ v5.295.0 楊戩看破(減半版)記號收尾
   try{ if(typeof G !== 'undefined' && G && G._cstMyHalf) window._cstMyB2Done(h); }catch(_eCstMyB2d){}   // ✨ v5.272.0 命星 沐雲雪 b2:雙虹爆發結束(只認命星寫入的 G._cstMyHalf)
   try{ if(h && h._cstDreamCloudBy) _cstMuyunDreamCloud(h); }catch(_eCstMyS1f){}   // ✨ 命星 沐雲雪 s1
   try{ window._bossQuizInFlight = false; }catch(_){}
@@ -35374,6 +35516,8 @@ function doDmg(target, rawDmg, opts={}){
       }
     }
   }catch(_eCnEliteDr){ console.warn('[v5.67.0 中國菁英減傷三筆] 失敗', _eCnEliteDr); }
+  // ★ v5.293.0 — 《繪卷新章》新敵人天賦減傷/弱點(drAll/drElem/drAoe/drOf/drExcept/weakTo;資料驅動·守門=冒險+中國關+p2+天賦未封印)
+  try{ if(typeof window._cn2DmgTaken === 'function' && target && rawDmg > 0) rawDmg = window._cn2DmgTaken(target, rawDmg, opts, a); }catch(_eCn2Dr){ console.warn('[v5.293.0 CN2 減傷]', _eCn2Dr); }
   // ★ v5.63.0 批次二 — 蚩尤 天賦「兵主戰魂」新增段(老師 2026-08-18):受到傷害時,自身陣營 +1 能量(上限10)。
   //   ★ 老師追加裁定(2026-08-18):「多段攻擊只算 1 次」→ 每回合至多觸發 1 次(_cyEnergyThisRound,
   //     於 nextRound 重置)。8 連擊/全體分攤等多段路徑只會回 1 點能量,不會被刷爆。
@@ -35589,6 +35733,9 @@ function doDmg(target, rawDmg, opts={}){
       }, 350);
     }
   }
+  // ★ v5.293.0 — 《繪卷新章》新敵人受傷天賦(counter 反施狀態 / counterDmg 反擊 / enrage 怒氣門檻)
+  //   守門同華雄(冒險+中國關+p2+天賦未封印;排除反彈/共傷/混沌/DoT/固定值/治療 ⇒ 無反擊連鎖)。
+  try{ if(typeof window._cn2OnDamaged === 'function' && rawDmg > 0) window._cn2OnDamaged(target, rawDmg, opts); }catch(_eCn2Od){ console.warn('[v5.293.0 CN2 受傷天賦]', _eCn2Od); }
   // ★ v5.53.0 — 牛魔王 天賦「鐵背牛皮」改版(老師第二批修改):受到「普通攻擊」時必定以攻擊
   //   150%(+10%/天賦級·上限200%)反擊攻擊者(原 30% 機率反擊 100% 廢止;技能/爆發攻擊不觸發反擊);
   //   常駐「受傷減少30%」在 doDmg 減傷區另有 hook。範式=窮奇「凶獠」;
@@ -44341,6 +44488,9 @@ function execSkill(a, sk, cost, stype){
   // ✨ 命星 ✦ 軍師 t2「連環計星」:疑惑中的施放者 30%(BOSS 15%)技能落空(比照失明 MISS:照扣能量、不執行);只有對面有點亮的軍師才會擲骰
   let _cstJsMiss = false; try{ if(sk && !sk.p && !_isCleanseSk && typeof window._cstJsT2Miss === 'function') _cstJsMiss = window._cstJsT2Miss(a, sk); }catch(_eCstJsT2m){ _cstJsMiss = false; }
   if(_cstJsMiss){ endAction(a, cost); return; }
+  // ★ v5.295.0 唐三藏「緊箍」:被套緊箍的施放者施放技能 ⇒ 頭痛受傷,30%(BOSS 不會、鬥技場 15%)技能失敗(能量照扣)
+  let _cn2JgFail = false; try{ if(sk && !sk.p && !_isCleanseSk && typeof window._cn2JinguCast === 'function') _cn2JgFail = window._cn2JinguCast(a, sk); }catch(_eCn2Jg){ _cn2JgFail = false; }
+  if(_cn2JgFail){ endAction(a, cost); return; }
   try{ if(sk && !sk.p && typeof G !== 'undefined' && G && G._cstAstB2) a._cstAstArm = (G._actSeq || 0); }catch(_eCstAstArm){}   // ✨ 命星 ✦ 占星師 b2:預約「這次行動用了技能」,endAction 確認(取消選目標改普攻不算)
   const n=sk.n;
   try{ if(a && a._cst) window._cstPgS1Arm(a, sk, false); }catch(_eCstPgS1m){}
@@ -45540,6 +45690,41 @@ function execSkill(a, sk, cost, stype){
     });
     try{ if(_cstQkL) window._cstNzS2Ring(a, _cstQkL, 1); }catch(_eCstNzS2){}
     updateUI(); setTimeout(endBatchTotals, 50); endAction(a, cost);
+  }
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.293.0 — 《繪卷新章》新 SSR 楊戩 玩家路徑(鐵律 1.128 上半;AI 路徑在 aiUseSkill 同版,效果本體共用 window._cn2YjS1/_cn2YjS2)
+  //   技能等級:doDmg 依 _activeSkLvMult 自動放大 isSkill 傷害 ⇒ 本路徑傳 lvMult=1 不重複乘。
+  //   固定值(失明一半機率/出血三成機率/3 次撲咬)不隨技能等級變動。鐵律 1.31:純倍率走 doDmg,對 BOSS 零破口。
+  // ════════════════════════════════════════════════════════════════
+  else if(n==='天眼神光'){
+    setPending('enemy', t => {
+      beginBatchTotals();
+      try{ window._cn2YjS1(a, t, 1); }catch(_eYjS1p){ console.warn('[楊戩 S1]', _eYjS1p); }
+      updateUI(); setTimeout(endBatchTotals, 50); endAction(a, cost);
+    });
+  }
+  else if(n==='神犬撲咬'){
+    const _yjOpp = a.side==='p1' ? 'p2' : 'p1';
+    if(!G[_yjOpp].some(h=>h && h.curHp>0)){ endAction(a, cost); return; }
+    beginBatchTotals();
+    try{ window._cn2YjS2(a, 1); }catch(_eYjS2p){ console.warn('[楊戩 S2]', _eYjS2p); }
+    updateUI(); setTimeout(endBatchTotals, 50); endAction(a, cost);
+  }
+  // ★ v5.293.0 — 新 SSR 三國/西遊六位(劉備/張飛/趙雲/唐三藏/豬八戒/沙悟淨)玩家路徑(鐵律 1.128 上半;AI 路徑=aiUseSkill 的 CN2 skillMap 分支)
+  //   單體技(dmg.t==='one' 或無傷害但有 foe 不利)→ setPending 選敵;其餘直接施放。技能等級由 doDmg/doHeal 的 _activeSkLvMult 自動套 ⇒ mult=1。
+  //   命座修正 window._cn2FxCst(只在冒險模式點亮的星生效)。
+  else if(window._CN2 && window._CN2.skillMap && window._CN2.skillMap[n] && window._CN2.skillMap[n].hero && window._CN2.skillMap[n].slot !== 'burst'){
+    const _h2M = window._CN2.skillMap[n];
+    const _h2Fx = (typeof window._cn2FxCst === 'function') ? window._cn2FxCst(a, _h2M.slot, _h2M.fx) : _h2M.fx;
+    const _h2Opp = a.side==='p1' ? 'p2' : 'p1';
+    const _h2Need = _h2Fx.dmg ? (_h2Fx.dmg.t === 'one') : !!(_h2Fx.foe && _h2Fx.foe.length);
+    const _h2Run = function(t){
+      try{ window._cn2RunFx(a, _h2Fx, a.side, { mult:1, label:n, pref:t || null }); }catch(_eH2p){ console.warn('[v5.293.0 新SSR ' + n + ']', _eH2p); }
+      updateUI(); endAction(a, cost);
+    };
+    if(_h2Fx.dmg && !G[_h2Opp].some(h=>h && h.curHp>0)){ endAction(a, cost); return; }
+    if(_h2Need) setPending('enemy', t => _h2Run(t));
+    else _h2Run(null);
   }
   // ── 孫悟空 S1「如意金箍棒」:攻擊260% 對隨機對手攻擊2次,每擊各50%貫穿格擋(v5.53.0 改版·免選角) ──
   else if(n==='如意金箍棒'){
@@ -55667,7 +55852,7 @@ function startTurn(){
     }
   }catch(_eCstMlB1){}
   try{ window._cstS1ReTurn(); }catch(_eCstS1ReT){}   // ✨ v5.264.0 命星 再行動排程(鋁合金暴龍 b2)
-  try{ window._cstAsB2Turn(); }catch(_eCstAsB2s){}   // ✨ 命星 刺客 b2「收割名單星」:強力出血目標倒下 ⇒ 刺客這次行動結束後立即再行動(只讀寫命星寫入的 _cstCaB2R)
+  try{ if(typeof window._cn2ReTurn === 'function') window._cn2ReTurn(); }catch(_eCn2ReT){}   // ★ v5.295.0 新 SSR 再行動排程(劉備三英同心/趙雲七進七出;非命星,不吃 G2)  try{ window._cstAsB2Turn(); }catch(_eCstAsB2s){}   // ✨ 命星 刺客 b2「收割名單星」:強力出血目標倒下 ⇒ 刺客這次行動結束後立即再行動(只讀寫命星寫入的 _cstCaB2R)
   // ★ v5.283.0 英魂陣型判定移到 PvP 握手閘門之後(審查 H1:閘門前 G.p2 還是佔位的電腦隊伍)
   // ★ v5.192.0 — 獅子星神 天賦「王者威光」:戰鬥開始(round 1)套用一次,G._leoMajestyDone 防重複套用
   try{
@@ -55687,6 +55872,7 @@ function startTurn(){
   // ★ v3.14.6 — PvP 連線對戰:① 握手閘門(編組完成、雙方隊伍未交換前攔下,等握手)
   //   ② 房主每手推送(host 在每位行動者回合開始時推送權威戰局 wire,內含自我守門)
   try{ if(typeof window._pvpSyncGate === 'function' && window._pvpSyncGate()) return; }catch(_ePvpGate){}
+  try{ if(typeof G !== 'undefined' && G && (G.round || 1) === 1 && typeof window._cn2RoundBond === 'function') window._cn2RoundBond(); }catch(_eCn2Rb1){}   // ★ v5.295.0 第 1 回合:羈絆橫幅+師徒能量(PvP 閘門之後;之後由 nextRound 每回合呼叫,內部每回合只算一次)
   // ★ v5.282.0 — 英魂陣型:戰鬥開始(round 1)依出戰成員判定一次(之後成員倒下陣型不變),G._fmDone 防重複
   //   位置在 PvP 閘門之後、房主推送之前 ⇒ 第一次推送就帶著陣型與加成後的 HP
   try{
@@ -58257,6 +58443,9 @@ function nextRound(){
   try{
     if(typeof window._dajiTraitRoundProc === 'function') window._dajiTraitRoundProc();
   }catch(_eDjNr){ console.warn('[v5.81.0 妲己 媚亂朝歌 nextRound] 例外', _eDjNr); }
+  // ★ v5.293.0 — 《繪卷新章》新敵人回合天賦(回血/回合控場/全隊鼓舞/怒氣)+ 新 SSR 楊戩「天眼通明」失明(敵我對稱)
+  try{ if(typeof window._cn2RoundProc === 'function') window._cn2RoundProc(); }catch(_eCn2Nr){ console.warn('[v5.293.0 CN2 回合天賦]', _eCn2Nr); }
+  try{ if(typeof window._cn2RoundBond === 'function') window._cn2RoundBond(); }catch(_eCn2Rb){ console.warn('[v5.295.0 回合羈絆]', _eCn2Rb); }
   // ════════════════════════════════════════════════════════════════
   // ★ v3.13.0(2026-05-31)— 冬 winter 速度 -50%:用「進入時記錄、戰場卡 dur<=0 時還原」模式
   //   實作:每回合開始檢查若冬戰場卡剛消失,把所有 _winterOrigSpd 還原
@@ -60127,6 +60316,10 @@ function _realAiAct(a){
   // ── HELPER: 估算技能傷害 ──
   function estSkillDmg(sk){
     const n=sk.n, foes=enemies;
+    // ★ v5.293.0 — 《繪卷新章》新敵人技能估值(資料驅動)+ 新 SSR 楊戩
+    try{ if(window._CN2 && window._CN2.skillMap && window._CN2.skillMap[n] && typeof window._cn2EstSkill === 'function'){ const _cn2V = window._cn2EstSkill(a, n, foes.length); if(_cn2V !== null) return _cn2V; } }catch(_eCn2Est){}
+    if(n==='天眼神光') return Math.floor((a.atk||0)*2.1) + (foes.some(function(e){ return e && (e.buffs||[]).some(function(b){ return b && (b.type==='evasion'||b.type==='hidden'); }); }) ? 40 : 15);   // 攻210% + 看穿/失明(控場加值)
+    if(n==='神犬撲咬') return Math.floor((a.atk||0)*3.0) + 10;   // 攻100%×3隨機 + 出血
     if(n==='迅雷連斬') return a.atk*3;  // ★ v3.13.31:2 hit → 3 hit(對齊 hero_db.js 描述)
     if(['火焰球','冰凍之矛','麻痺落雷','瞄準射擊'].includes(n)) return Math.floor(a.sp)+10;
     if(n==='降龍伏虎拳') return Math.floor((a.atk+a.sp)*2.0);
@@ -60585,6 +60778,1139 @@ function _realAiAct(a){
     a.acted=true; _pSetTimeout(startTurn,400);
   }
 }
+// ════════════════════════════════════════════════════════════════════════════
+// ★★★ v5.293.0 — 中國關擴充《繪卷新章》資料驅動戰鬥引擎(敵方技能/爆發/天賦 + 新 SSR 楊戩共用效果) ★★★
+//   資料來源:hero_db.js 的 window._CN2(技能 fx / 天賦 fx 參數表)。
+//   ★ 作用域鐵則(SOP §二-9):本區在 execSkill/aiUseSkill 之外 ⇒ 一律 window._lxpsAtkv / window._lxpsSpv。
+//   ★ 鐵律 1.31:所有傷害走 doDmg(BOSS 保護/世界 BOSS cap/格擋/屬性相剋/各種減傷自動生效),
+//     狀態走 addStatus(免疫/控制免疫/英魂陣型抵抗自動生效),零即死/零固定傷害/零 HP% 傷害。
+//   ★ 天賦只在「冒險模式 + 中國關」生效(敵人本來就只出現在中國關;多一道守門=零外溢)。
+//   ★ 任何例外一律吞掉並寫 console,絕不中斷回合推進(AI 路徑由 aiUseSkill 鏈尾收尾、爆發由 _burstFinish 收尾)。
+// ════════════════════════════════════════════════════════════════════════════
+(function(){
+  var W = window;
+  function _atkv(a){ try{ return W._lxpsAtkv(a); }catch(_){ return Math.floor(((a && a.atk) || 0) * (1 + ((a && a.atk) || 0) * 0.01)); } }
+  function _spv(a){ try{ return W._lxpsSpv(a); }catch(_){ return Math.floor(((a && a.sp) || 0) * (1 + ((a && a.sp) || 0) * 0.01)); } }
+  function _base(a, s){
+    if(s === 'atk') return _atkv(a);
+    if(s === 'both') return _atkv(a) + _spv(a);
+    return _spv(a);
+  }
+  function _alive(arr){ return (arr || []).filter(function(x){ return x && x.curHp > 0; }); }
+  function _rnd(arr){ return arr.length ? arr[Math.floor(Math.random() * arr.length)] : null; }
+  function _stName(st, strong){
+    try{ if(typeof statusName === 'function'){ var nm = statusName(st, strong ? { _strong:true } : null); if(nm) return nm; } }catch(_){}
+    return st;
+  }
+  W._cn2InChina = function(){
+    try{ return (typeof _adventureMode !== 'undefined' && _adventureMode) && (typeof _adventureStage !== 'undefined' && _adventureStage === 'china'); }catch(_){ return false; }
+  };
+  // 天賦失效:天賦封印/禁錮/被動封印(對齊中國菁英守衛既有守門)
+  W._cn2TraitOff = function(h){
+    try{ return (h.status || []).some(function(s){ return s && (s.type === '_traitSeal' || s.type === 'imprison' || s.type === '_passiveSeal'); }); }catch(_){ return false; }
+  };
+  // ── ★ v5.293.0 新 SSR(三國/西遊六位)命座:對 fx 做參數修正(只在冒險模式、該星已點亮時;h._cst 由 _applyBattlePrepToHero 建立)──
+  //   slot:'s1'|'s2'|'bu'(爆發)。修正種類:p 倍率 / h 段數 / heal 治療量 / add·set 欄位 / ch 機率 / foe 追加不利 / self·allies 追加有利 / selfD 延長自身有利。
+  function _cn2HeroDef(n){ try{ return (W._CN2 && W._CN2.heroByName && W._CN2.heroByName[n]) || null; }catch(_){ return null; } }
+  function _cn2LitStars(h, H){
+    var out = [];
+    try{
+      if(!H || !H.cst || !h || !h._cst || !h._cst.lit) return out;
+      ['t1','t2','s1','s2','b1','b2'].forEach(function(k){ if(h._cst.lit[k] && H.cst.s[k]) out.push({ k:k, st:H.cst.s[k] }); });
+    }catch(_){}
+    return out;
+  }
+  W._cn2FxCst = function(h, slot, fx){
+    try{
+      if(slot === 'burst') slot = 'bu';
+      var H = _cn2HeroDef(h && h.name); if(!H || !fx) return fx;
+      var lit = _cn2LitStars(h, H); if(!lit.length) return fx;
+      var f2 = null, names = [];
+      lit.forEach(function(L){
+        (L.st.m || []).forEach(function(m){
+          if(m.to !== slot) return;
+          if(!f2) f2 = JSON.parse(JSON.stringify(fx));
+          if(names.indexOf(L.st.n) < 0) names.push(L.st.n);
+          if(m.k === 'p' && f2.dmg) f2.dmg.p = (f2.dmg.p || 0) + m.v;
+          else if(m.k === 'h' && f2.dmg) f2.dmg.h = (f2.dmg.h || 1) + m.v;
+          else if(m.k === 'heal' || m.k === 'add') f2[m.f] = (f2[m.f] || 0) + m.v;
+          else if(m.k === 'set') f2[m.f] = JSON.parse(JSON.stringify(m.v));
+          else if(m.k === 'ch') (f2.foe || []).forEach(function(sp){ if(typeof sp.ch === 'number') sp.ch = Math.min(100, sp.ch + m.v); });
+          else if(m.k === 'foe'){ f2.foe = f2.foe || []; f2.foe.push({ st:m.st, d:m.d || 1, ch:m.ch }); }
+          else if(m.k === 'self' || m.k === 'allies'){ f2[m.k] = f2[m.k] || []; f2[m.k].push({ b:m.b, d:m.d, v:m.v, pct:m.pct }); }
+          else if(m.k === 'selfD'){ (f2.self || []).forEach(function(b){ if(b.b === m.b) b.d = (b.d || 1) + m.v; }); }
+        });
+      });
+      if(!f2) return fx;
+      try{ log('✨ [' + h.name + '] 命星:' + names.join('、') + '!'); }catch(_){}
+      return f2;
+    }catch(_e){ console.warn('[CN2 命座 fx]', _e); return fx; }
+  };
+  // ── ★ v5.293.0 天賦清單(敵方《繪卷新章》菁英/BOSS:只在中國關 p2;新 SSR 六位:不分陣營,含天賦等級成長與命座 t1/t2)──
+  W._cn2TraitsOf = function(h){
+    try{
+      if(!h || !W._CN2) return null;
+      if(h.side === 'p2' && W._cn2InChina() && W._CN2.traitMap && W._CN2.traitMap[h.name]) return W._CN2.traitMap[h.name];
+      var base = W._CN2.heroTraitMap && W._CN2.heroTraitMap[h.name];
+      if(!base) return null;
+      var lv = 0;
+      try{ lv = (h.side === 'p1' && typeof _getTraitLv === 'function') ? (_getTraitLv(h.name) || 0) : 0; }catch(_){ lv = 0; }
+      var H = _cn2HeroDef(h.name), lit = _cn2LitStars(h, H);
+      var key = lv + '|' + lit.map(function(L){ return L.k; }).join(',');
+      if(h._cn2TrC && h._cn2TrC.key === key) return h._cn2TrC.list;
+      var list = base.map(function(t){
+        var c = JSON.parse(JSON.stringify(t));
+        if(c.lv && lv > 0){ c[c.lv.f] = Math.min(c.lv.max, (c[c.lv.f] || 0) + c.lv.per * lv); }
+        return c;
+      });
+      lit.forEach(function(L){
+        (L.st.m || []).forEach(function(m){
+          if(m.to !== 'tr') return;
+          if(m.k === 'trv'){ var e = list.find(function(t){ return t.k === m.kind; }); if(e) e[m.f] = Math.min(m.max || 999, (e[m.f] || 0) + m.v); }
+          else if(m.k === 'tradd'){ var a2 = JSON.parse(JSON.stringify(m.t)); a2._cstN = L.st.n; list.push(a2); }
+        });
+      });
+      h._cn2TrC = { key:key, list:list };
+      return list;
+    }catch(_e){ return null; }
+  };
+  function _trInfo(n){
+    try{
+      if(W._CN2.enemies && W._CN2.enemies[n]) return W._CN2.enemies[n].tr;
+      var H = _cn2HeroDef(n); return H ? H.tr : null;
+    }catch(_){ return null; }
+  }
+  // ── 狀態施加(機率逐一擲骰;strong=強力版旗標;回傳是否真的掛上)──
+  W._cn2ApplySt = function(t, sp){
+    try{
+      if(!t || t.curHp <= 0 || !sp || !sp.st) return false;
+      if(typeof sp.ch === 'number' && sp.ch < 100 && Math.random() * 100 >= sp.ch) return false;
+      var had = (t.status || []).some(function(s){ return s && s.type === sp.st; });
+      addStatus(t, sp.st, sp.d || (sp.st === 'poison' ? 5 : (sp.st === 'bleed' ? 2 : 1)));   // ★ 審查:未指定回合時,中毒 5、出血 2(對齊既有慣例)
+      var obj = (t.status || []).find(function(s){ return s && s.type === sp.st; });
+      if(!obj) return false;
+      if(sp.strong) obj._strong = true;
+      try{ bannerFX(t, _stName(sp.st, sp.strong) + '!', '#ffcc88', 700); }catch(_){}
+      if(!had){ try{ log('  └ [' + t.name + '] 陷入「' + _stName(sp.st, sp.strong) + '」!'); }catch(_){} }
+      try{ renderCard(t); }catch(_){}
+      return true;
+    }catch(_e){ console.warn('[CN2 狀態]', _e); return false; }
+  };
+  // ── 有利狀態 / 護盾 ──
+  W._cn2ApplyBuff = function(h, b){
+    try{
+      if(!h || h.curHp <= 0 || !b || !b.b) return;
+      if(b.b === 'shield'){
+        if(!Array.isArray(h.buffs)) h.buffs = [];
+        var src = 'cn2_' + h.name;
+        h.buffs = h.buffs.filter(function(x){ return !(x && x.type === 'shield' && x._src === src); });   // 只換自己這招的盾(v5.291.0 口徑)
+        var _shV = b.pct ? Math.max(1, Math.floor((h.hp || 0) * b.pct / 100)) : (b.v || 100);   // ★ v5.293.0 pct=以受盾者最大HP%計(新 SSR 用)
+        h.buffs.push({ type:'shield', val: _shV, dur: 99, _src: src });
+        try{ bannerFX(h, '🛡 護盾 ' + _shV, '#99ccff', 700); }catch(_){}
+      } else {
+        addBuff(h, b.b, b.d || 1);
+        var lbl = b.b === 'halfDmg' ? '🛡 減傷½' : (b.b === 'dmgup' ? '⚔ 攻擊強化' : b.b);
+        try{ bannerFX(h, lbl, '#ffdd66', 700); }catch(_){}
+      }
+      try{ renderCard(h); }catch(_){}
+    }catch(_e){ console.warn('[CN2 有利]', _e); }
+  };
+  function _heal(h, amt, actor){
+    if(!h || h.curHp <= 0 || !(amt > 0)) return 0;
+    try{ if(actor && typeof W._cn2HealMul === 'function') amt = amt * W._cn2HealMul(actor); }catch(_){}   // ★ v5.295.0 劉備 桃園結義:每位結義兄弟治療量 +20%
+    var _hb = h.curHp;
+    try{ doHeal(h, Math.max(1, Math.floor(amt)), { actor: actor || h, isHeal:true, noDice:true, noWarhorn:true }); }
+    catch(_){ try{ h.curHp = Math.min(h.hp, h.curHp + Math.floor(amt)); }catch(__){} }
+    try{ renderCard(h); }catch(_){}
+    return Math.max(0, h.curHp - _hb);
+  }
+  function _lowAlly(side){ var l = _alive(G[side]); if(!l.length) return null; return l.slice().sort(function(x, y){ return (x.curHp / Math.max(1, x.hp)) - (y.curHp / Math.max(1, y.hp)); })[0]; }
+  function _cleanse(h, n){ try{ if(typeof _ur4CleanseN === 'function'){ var k = _ur4CleanseN(h, n) || 0; if(k) try{ renderCard(h); }catch(_){} return k; } }catch(_){} return 0; }
+  function _drain(side, n, who){
+    try{
+      if(!(n > 0) || !G.energy) return;
+      if(G._assetGuard && G._assetGuard[side] > 0){ log('🦁 動物學家的守護擋下了能量削減!'); return; }
+      var before = G.energy[side] || 0;
+      G.energy[side] = Math.max(0, before - n);
+      if(before - G.energy[side] > 0){ log('⚡ [' + who + '] 擾亂對手!對手隊伍減少 ' + (before - G.energy[side]) + ' 能量!'); try{ if(typeof sndEnergy === 'function') sndEnergy(); }catch(_){} }
+    }catch(_){}
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // 核心:依 fx 參數執行一次技能/爆發。opts:{ mult, isBurst, label, pref }
+  //   mult = 倍率乘數(AI 技能=1+技能等級×0.05、BOSS 技能等級 0 ⇒ 1;爆發=_burstMult)
+  // ════════════════════════════════════════════════════════════════
+  W._cn2RunFx = function(a, fx, side, opts){
+    opts = opts || {};
+    if(!a || !fx) return;
+    var opp = side === 'p1' ? 'p2' : 'p1';
+    var mult = (typeof opts.mult === 'number' && opts.mult > 0) ? opts.mult : 1;
+    var label = opts.label || '';
+    try{ if(fx.banner) bannerFX(a, fx.banner, '#ffd27a', 1000); }catch(_){}
+    var dealt = 0, hitT = [];
+    var d = fx.dmg;
+    try{ if(typeof beginBatchTotals === 'function') beginBatchTotals(); }catch(_){}
+    if(d){
+      var foes = _alive(G[opp]);
+      var base = _base(a, d.s);
+      var per = Math.max(1, Math.floor(base * (d.p / 100) * mult));
+      // ★ v5.295.0 豬八戒 銀河翻浪:把目前肚量 × bellyDmg% 加進這次傷害(分攤前加總),肚量歸零
+      if(fx.bellyDmg && typeof W._cn2BellyGet === 'function'){
+        var _bl = W._cn2BellyGet(a);
+        if(_bl > 0){ var _blAdd = Math.floor(W._cn2BellyTake(a) * fx.bellyDmg / 100); per += _blAdd; try{ log('🐷 [' + a.name + '] 把肚子裡存的 ' + _bl + ' 一口氣化成天河巨浪!傷害 +' + _blAdd + '!'); }catch(_){} }
+      }
+      var mk = function(elem, extra){
+        var o = { actor:a, isSkill:true, element:elem, elem:elem, skillLabel:label };
+        if(d.t !== 'one') o.isAoe = true;
+        if(d.must || opts.isBurst){ o.mustHit = true; o.ignoreEvasion = true; }
+        if(d.must && opts.isBurst){ o.ignoreBuffs = true; o.noGuard = true; o.noHidden = true; }
+        if(extra) for(var k in extra) o[k] = extra[k];
+        return o;
+      };
+      var hitOne = function(t, amt, elem, extra){
+        if(!t || t.curHp <= 0) return;
+        var before = t.curHp;
+        try{ doDmg(t, amt, mk(elem, extra)); }catch(_eD){ console.warn('[CN2 doDmg]', _eD); }
+        dealt += Math.max(0, before - Math.max(0, t.curHp));
+        if(hitT.indexOf(t) < 0) hitT.push(t);
+        try{ renderCard(t); }catch(_){}
+      };
+      var hits = Math.max(1, d.h || 1);
+      var elemOf = function(i){ return (d.es && d.es.length) ? d.es[i % d.es.length] : (d.e || ''); };
+      if(d.t === 'one'){
+        var t1 = (opts.pref && opts.pref.side === opp && opts.pref.curHp > 0) ? opts.pref : _rnd(foes);
+        var _t1Live = !!(t1 && t1.curHp > 0);
+        for(var i = 0; i < hits; i++){ if(t1 && t1.curHp > 0) hitOne(t1, per, elemOf(i), i > 0 ? { noCounter:true } : null); }
+        if(t1) (fx.foe || []).forEach(function(sp){ W._cn2ApplySt(t1, sp); });
+        // ★ v5.295.0 唐三藏 緊箍真言:套上「緊箍」(記下施術者特技值與失敗率,施法懲罰在 _cn2JinguCast)
+        if(fx.jingu && t1 && t1.curHp > 0){
+          if(W._cn2ApplySt(t1, { st:'jingu', d:fx.jingu.d || 2 })){
+            try{ var _jo = (t1.status || []).filter(function(s){ return s && s.type === 'jingu'; })[0]; if(_jo){ _jo._jgP = Math.max(1, Math.floor(_spv(a) * (fx.jingu.p || 60) / 100)); _jo._jgF = fx.jingu.fail || 30; _jo._jgBy = a.name; _jo._jgSide = a.side; } }catch(_){}
+            try{ log('  └ 📿 金箍套上 [' + t1.name + '] 的頭!他每用一次技能都會頭痛' + ((typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(t1)) ? '' : ',還可能失敗') + '!'); }catch(_){}
+          }
+        }
+        // ★ v5.295.0 趙雲 七進七出:打倒目標 ⇒ 這次行動結束後再行動 1 次(每回合 1 次)
+        if(fx.killAgain && _t1Live && t1 && t1.curHp <= 0 && typeof W._cn2KillAgain === 'function') W._cn2KillAgain(a);
+      } else if(d.t === 'all'){
+        foes.forEach(function(t){ hitOne(t, per, elemOf(0)); if(t.curHp > 0) (fx.foe || []).forEach(function(sp){ W._cn2ApplySt(t, sp); }); });
+      } else if(d.t === 'split'){
+        var each = Math.max(1, Math.floor(per / Math.max(1, foes.length)));
+        try{ log('  └ 傷害由全體 ' + foes.length + ' 名對手分攤(每名 ' + each + ')'); }catch(_){}
+        foes.forEach(function(t){ hitOne(t, each, elemOf(0)); if(t.curHp > 0) (fx.foe || []).forEach(function(sp){ W._cn2ApplySt(t, sp); }); });
+      } else {   // rand:隨機連擊,每擊各自判定附加狀態
+        for(var j = 0; j < hits; j++){
+          var live = _alive(G[opp]); if(!live.length) break;
+          var tr = _rnd(live);
+          hitOne(tr, per, elemOf(j), j > 0 ? { noCounter:true } : null);
+          if(tr && tr.curHp > 0) (fx.foe || []).forEach(function(sp){ W._cn2ApplySt(tr, sp); });
+        }
+      }
+    } else if(fx.foe && fx.foe.length){
+      var tt = (opts.pref && opts.pref.side === opp && opts.pref.curHp > 0) ? opts.pref : _rnd(_alive(G[opp]));
+      if(tt) fx.foe.forEach(function(sp){ W._cn2ApplySt(tt, sp); });
+    }
+    // 無傷害的全體不利(例:周瑜 都督軍令)
+    if(fx.foeAll) _alive(G[opp]).forEach(function(t){ fx.foeAll.forEach(function(sp){ W._cn2ApplySt(t, sp); }); });
+    // 自身不利(例:黃蓋 苦肉計)
+    if(fx.selfSt) fx.selfSt.forEach(function(sp){ W._cn2ApplySt(a, sp); });
+    // 吸血
+    if(fx.steal && dealt > 0 && a.curHp > 0){
+      var st = Math.floor(dealt * fx.steal / 100);
+      if(st > 0){ _heal(a, st, a); try{ log('🩸 [' + a.name + '] 吸收傷害,恢復 ' + st + ' HP!'); }catch(_){} }
+    }
+    if(fx.healSelf && a.curHp > 0){
+      var hs = Math.floor((a.hp || 0) * fx.healSelf / 100);
+      _heal(a, hs, a); try{ log('💚 [' + a.name + '] 恢復 ' + hs + ' HP!'); }catch(_){}
+    }
+    if(fx.healAll){
+      var ha = Math.floor(_spv(a) * fx.healAll / 100 * mult);
+      _alive(G[side]).forEach(function(f){ _heal(f, ha, a); });
+      try{ log('💚 [' + a.name + '] 我方全體各恢復 ' + ha + ' HP!'); }catch(_){}
+    }
+    // ★ v5.293.0 新 SSR(劉備/唐三藏/豬八戒/趙雲)用:單體補最低 HP 比例友方 / 解除不利狀態
+    if(fx.healLow || fx.healLowPct || fx.lowBuff || fx.cleanseLow){
+      var lowF = _lowAlly(side);
+      if(lowF){
+        if(fx.healLow){
+          var hl = Math.floor(_spv(a) * fx.healLow / 100 * mult);
+          var _hlWant = Math.floor(hl * ((typeof W._cn2HealMul === 'function') ? W._cn2HealMul(a) : 1));
+          var _hlGot = _heal(lowF, hl, a);
+          try{ log('💚 [' + a.name + '] 為 [' + lowF.name + '] 恢復 ' + (_hlGot || hl) + ' HP!'); }catch(_){}
+          // ★ v5.295.0 劉備 仁德之心:溢出的治療量轉成護盾(護盾上限=受盾者最大HP 四成)
+          if(fx.ovShield && lowF.curHp >= lowF.hp){
+            var _ov = Math.max(0, _hlWant - (_hlGot || 0));
+            if(_ov > 0){
+              if(!Array.isArray(lowF.buffs)) lowF.buffs = [];
+              var _ovCap = Math.max(1, Math.floor((lowF.hp || 0) * 0.40));
+              var _ovB = lowF.buffs.filter(function(b){ return b && b.type === 'shield' && b._src === 'cn2ovs'; })[0];
+              var _ovNew = Math.min(_ovCap, (_ovB ? (_ovB.val || 0) : 0) + _ov);
+              if(_ovB) _ovB.val = _ovNew; else lowF.buffs.push({ type:'shield', val:_ovNew, dur:99, _src:'cn2ovs' });
+              try{ log('🍑 [' + a.name + '] 仁德之心:補滿還多出來的 ' + _ov + ' 化成護盾!([' + lowF.name + '] 護盾 ' + _ovNew + ')'); bannerFX(lowF, '🛡 溢補轉盾', '#9be08a', 800); renderCard(lowF); }catch(_){}
+            }
+          }
+        }
+        if(fx.healLowPct){ var hp2 = Math.floor((lowF.hp || 0) * fx.healLowPct / 100); _heal(lowF, hp2, a); try{ log('💚 [' + lowF.name + '] 恢復 ' + hp2 + ' HP(最大HP ' + fx.healLowPct + '%)!'); }catch(_){} }
+        if(fx.cleanseLow){ var c1 = _cleanse(lowF, fx.cleanseLow); if(c1) try{ log('✨ [' + lowF.name + '] 解除了 ' + c1 + ' 個不利狀態!'); }catch(_){} }
+        if(fx.lowBuff) fx.lowBuff.forEach(function(b){ W._cn2ApplyBuff(lowF, b); });
+      }
+    }
+    if(fx.cleanseAll){ var cn = 0; _alive(G[side]).forEach(function(f){ cn += _cleanse(f, fx.cleanseAll); }); if(cn) try{ log('✨ 我方共解除 ' + cn + ' 個不利狀態!'); }catch(_){} }
+    if(fx.cleanseSelf && a.curHp > 0){ var cs = _cleanse(a, fx.cleanseSelf); if(cs) try{ log('✨ [' + a.name + '] 解除了自身 ' + cs + ' 個不利狀態!'); }catch(_){} }
+    if(fx.self) fx.self.forEach(function(b){ W._cn2ApplyBuff(a, b); });
+    if(fx.allies) _alive(G[side]).forEach(function(f){ fx.allies.forEach(function(b){ W._cn2ApplyBuff(f, b); }); });
+    if(fx.drain) _drain(opp, fx.drain, a.name);
+    // ════ ★ v5.295.0 七位新 SSR 獨特機制(資料欄位 → 行為)════
+    try{
+      // 豬八戒 天蓬吃飽飽:吐出全部肚量 × bellyOut%(命星 s2 再 × bellyMul%),由我方全體存活友方平均恢復
+      if(fx.bellyOut && typeof W._cn2BellyTake === 'function'){
+        var _bo = W._cn2BellyTake(a);
+        var _boL = _alive(G[side]);
+        if(_bo > 0 && _boL.length){
+          var _boTot = Math.floor(_bo * fx.bellyOut / 100 * (fx.bellyMul ? fx.bellyMul / 100 : 1) * mult);
+          var _boEach = Math.max(1, Math.floor(_boTot / _boL.length));
+          log('🐷 [' + a.name + '] 「嗝~」把肚子裡存的 ' + _bo + ' 全部吐出來分給大家!我方全體各恢復 ' + _boEach + ' HP!');
+          _boL.forEach(function(f){ _heal(f, _boEach, a); });
+        } else {
+          log('🐷 [' + a.name + '] 肚子空空,沒有東西可以吐……只好先抱著肚子防禦!');
+        }
+      }
+      // 沙悟淨 流沙捲浪:解除自身全部不利狀態,每解除 1 個對全體追加特技 sandPurge% 傷害
+      if(fx.sandPurge && a.curHp > 0){
+        var _sp = _cleanse(a, 99);
+        if(_sp > 0){
+          log('🔱 [' + a.name + '] 把扛下的苦一口氣甩開!解除 ' + _sp + ' 個不利狀態,流沙追擊 ' + _sp + ' 次!');
+          var _spDmg = Math.max(1, Math.floor(_spv(a) * fx.sandPurge / 100 * mult));
+          for(var _si = 0; _si < _sp; _si++){
+            _alive(G[opp]).forEach(function(t){ try{ doDmg(t, _spDmg, { actor:a, isSkill:true, isAoe:true, element:'water', elem:'water', noCounter:true, skillLabel:label }); renderCard(t); }catch(_){} });
+          }
+        }
+      }
+      // 張飛 斷橋:進入「斷橋」fx.bridge 回合;群攻減傷 30% 隨技能二等級 ×(1+5%/級)(上限 60%)
+      if(fx.bridge && a.curHp > 0){
+        var _lv2 = 0;
+        try{ if(a._skLv && typeof a._skLv.s2 === 'number') _lv2 = a._skLv.s2; else if(typeof _adventureMode !== 'undefined' && _adventureMode && a.side === 'p1' && typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[a.name]) _lv2 = _heroSkillLevels[a.name].s2 || 0; }catch(_){ _lv2 = 0; }
+        var _red = Math.min(0.60, 0.30 * (1 + _lv2 * 0.05));
+        try{ if(typeof W._cn2MState === 'function') W._cn2MState(a).bridgeRed = _red; }catch(_){}
+        var _bExist = (a.buffs || []).filter(function(b){ return b && b.type === '_cn2Bridge'; })[0];
+        if(_bExist) _bExist.dur = Math.max(_bExist.dur || 0, fx.bridge); else addBuff(a, '_cn2Bridge', fx.bridge);
+        try{ log('🌉 [' + a.name + '] 斷橋!' + fx.bridge + ' 回合內敵方群體攻擊只能打張飛(群攻減傷 ' + Math.round(_red * 100) + '%)!'); bannerFX(a, '🌉 斷橋!', '#e0b060', 1000); renderCard(a); }catch(_){}
+      }
+      // 劉備 三英同心:三英齊聚 ⇒ 關羽、張飛立即各再行動 1 次(鬥技場隨機 1 人)
+      if(fx.taoAct && typeof W._cn2Tao === 'function' && typeof W._cn2ReAct === 'function'){
+        var _tao = W._cn2Tao(a);
+        if(_tao.all){
+          var _who = [_tao.gy, _tao.zf];
+          if(_tao.k < 1) _who = [_who[Math.floor(Math.random() * 2)]];
+          _who.forEach(function(x){ if(x) W._cn2ReAct(x, '桃園結義・三英同心!大哥一聲令下,再行動 1 次!'); });
+          log('🍑 [' + a.name + '] 三英同心!' + _who.map(function(x){ return x.name; }).join('、') + ' 立即再行動 1 次!');
+        }
+      }
+      // 趙雲 長坂龍吟:重置「單騎救主」觸發次數
+      if(fx.rescueReset && typeof W._cn2RescueReset === 'function') W._cn2RescueReset(a);
+    }catch(_eCn2New){ console.warn('[v5.295.0 新SSR fx]', _eCn2New); }
+    try{ setTimeout(function(){ try{ endBatchTotals(); }catch(_){} }, 50); }catch(_){}
+  };
+
+  // ── AI 技能入口(aiUseSkill 鏈中呼叫;能量已扣、鏈尾統一收尾)──
+  W._cn2SkillAI = function(a, n, pref){
+    var m = W._CN2 && W._CN2.skillMap && W._CN2.skillMap[n];
+    if(!m) return false;
+    var lv = 0;
+    try{ lv = (a._skLv && typeof a._skLv[m.slot] === 'number') ? a._skLv[m.slot] : 0; }catch(_){ lv = 0; }
+    try{ W._cn2RunFx(a, m.hero ? W._cn2FxCst(a, m.slot, m.fx) : m.fx, a.side, { mult: 1 + lv * 0.05, label:n, pref:pref }); }
+    catch(_e){ console.warn('[CN2 AI 技能] ' + n, _e); }
+    return true;
+  };
+  // AI 估值(estSkillDmg 用;回傳正值=願意施放)
+  W._cn2EstSkill = function(a, n, nFoes){
+    try{
+      var m = W._CN2.skillMap[n]; if(!m) return null;
+      var fx = m.fx || {}, d = fx.dmg;
+      var v = 0;
+      if(d){
+        var b = d.s === 'atk' ? (a.atk || 0) : (d.s === 'both' ? (a.atk || 0) + (a.sp || 0) : (a.sp || 0));
+        var tg = (d.t === 'all') ? Math.max(1, nFoes) : 1;
+        v = Math.floor(b * d.p / 100 * (d.h || 1) * tg);
+      }
+      if(fx.foe && fx.foe.length) v += 15;
+      if(fx.foeAll) v += 30;
+      if(fx.allies || fx.self || fx.healSelf || fx.healAll) v += 35;
+      // ★ v5.293.0 新 SSR 補師:只在有友方受傷時才願意放單補
+      if(fx.healLow || fx.cleanseLow){ var hurt = 0; try{ hurt = _alive(G[a.side]).filter(function(f){ return f.curHp < f.hp * 0.7; }).length; }catch(_){} v += hurt ? 60 : 0; if(!d && !hurt) return 5; }
+      // ★ v5.295.0 豬八戒「天蓬吃飽飽」:肚量越多越想吐;肚量少或沒人受傷 ⇒ 幾乎不放
+      if(fx.bellyOut){ var _bv = (typeof W._cn2BellyGet === 'function') ? W._cn2BellyGet(a) : 0; var _hurt2 = 0; try{ _hurt2 = _alive(G[a.side]).filter(function(f){ return f.curHp < f.hp * 0.75; }).length; }catch(_){} if(_bv < (a.hp || 0) * 0.15 || !_hurt2) return 5; return Math.max(40, Math.floor(_bv / 2)); }
+      // ★ v5.295.0 張飛「斷橋怒吼」:已在斷橋中不重放;我方隊友越多越值得放
+      if(fx.bridge && !d){ var _inB = (a.buffs || []).some(function(b){ return b && b.type === '_cn2Bridge'; }); if(_inB) return 5; return 30 + 10 * Math.max(0, _alive(G[a.side]).length - 1); }
+      return Math.max(10, v);
+    }catch(_){ return null; }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 天賦 hook ①:受到傷害前的減傷/增傷(doDmg 中國菁英減傷區呼叫)
+  // ════════════════════════════════════════════════════════════════
+  W._cn2DmgTaken = function(target, rawDmg, opts, a){
+    try{
+      if(!target || !(rawDmg > 0)) return rawDmg;
+      var tl = W._cn2TraitsOf(target);   // ★ v5.293.0 敵方(中國關 p2)+ 新 SSR 六位(不分陣營)
+      if(!tl || !tl.length || W._cn2TraitOff(target)) return rawDmg;
+      if(opts && (opts.isHeal || opts._cnIgnoreDRPct)) return rawDmg;
+      var elem = '';
+      try{
+        elem = (opts && (opts.elem || opts.element)) || '';
+        if(!elem && typeof W._curSkillName === 'string' && typeof SKILL_FORCE_ELEMENT !== 'undefined' && SKILL_FORCE_ELEMENT[W._curSkillName] && opts && opts.isSkill) elem = SKILL_FORCE_ELEMENT[W._curSkillName];
+        if(!elem && a && a.element) elem = a.element;
+      }catch(_){}
+      var hasElem = !!(elem && elem !== 'none' && elem !== 'normal');
+      var k = 1;
+      tl.forEach(function(t){
+        if(t.k === 'drAll') k *= (1 - t.v / 100);
+        else if(t.k === 'drElem' && hasElem) k *= (1 - t.v / 100);
+        else if(t.k === 'drAoe' && opts && opts.isAoe) k *= (1 - t.v / 100);
+        else if(t.k === 'drOf' && elem === t.e) k *= (1 - t.v / 100);
+        else if(t.k === 'drExcept' && elem !== t.e) k *= (1 - t.v / 100);
+        else if(t.k === 'weakTo' && elem === t.e) k *= (1 + t.v / 100);
+      });
+      if(k === 1) return rawDmg;
+      var out = Math.max(1, Math.ceil(rawDmg * k));
+      if(k > 1){ try{ log('🔥 [' + target.name + '] 弱點!受到的傷害增加!'); }catch(_){} }
+      return out;
+    }catch(_e){ console.warn('[CN2 減傷]', _e); return rawDmg; }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 天賦 hook ②:受到傷害後的反制(counter 掛狀態 / counterDmg 反擊)
+  //   守門=華雄「溫酒未涼」同款:排除反彈/共傷/混沌/DoT/固定值/治療,防反擊連鎖。
+  // ════════════════════════════════════════════════════════════════
+  W._cn2OnDamaged = function(target, rawDmg, opts){
+    try{
+      if(!target || !(rawDmg > 0) || target.curHp <= 0) return;
+      var tl = W._cn2TraitsOf(target);   // ★ v5.293.0 敵方(中國關 p2)+ 新 SSR 六位(不分陣營)
+      if(!tl || !tl.length || W._cn2TraitOff(target)) return;
+      if(!opts || !opts.actor || opts.actor === target || opts.actor.side === target.side || opts.actor.curHp <= 0) return;
+      if(opts.fixedDmg || opts.isRebound || opts.isTraitShare || opts.isChaos || opts._isDot || opts._isDotTick || opts._fromBurn || opts._fromBleedProc || opts.isHeal || opts._lockedSkipTraits || opts._cn2Counter) return;
+      try{ if(typeof hasStatus === 'function' && hasStatus(target, 'confused')) return; }catch(_){}
+      var atkr = opts.actor;
+      var ti = _trInfo(target.name);
+      // ★ v5.293.0 審查:多段攻擊只擲一次反制(第 2 擊起 noCounter;同一攻擊者 0.9 秒內的連擊視為同一招)
+      var _ctrSkip = !!opts.noCounter;
+      try{ var _now = Date.now(); if(!_ctrSkip && target._cn2CtrLatch && target._cn2CtrLatch.who === atkr && _now - target._cn2CtrLatch.t < 900) _ctrSkip = true; if(!_ctrSkip) target._cn2CtrLatch = { who: atkr, t: _now }; }catch(_){}
+      tl.forEach(function(t){
+        if(_ctrSkip && (t.k === 'counter' || t.k === 'counterDmg')) return;
+        if(t.k === 'counter' && Math.random() * 100 < t.ch){
+          setTimeout(function(){   // ★ 審查:等這一擊扣完血再判定(本擊擊倒 → 不反制)
+            try{ if(target.curHp <= 0 || atkr.curHp <= 0) return; log((ti ? ti.icon : '✨') + ' [' + target.name + '] 天賦:' + (ti ? ti.name : '') + '!'); W._cn2ApplySt(atkr, { st:t.st, d:t.d || 1 }); }catch(_){}
+          }, 0);
+        } else if(t.k === 'counterDmg' && Math.random() * 100 < ((typeof W._cn2CtrCh === 'function') ? W._cn2CtrCh(target, t.ch) : t.ch)){   // ★ v5.295.0 張飛:桃園 +20%、斷橋中 ×2
+          var amt = Math.max(1, Math.floor(_base(target, t.s) * t.p / 100));
+          try{ log((ti ? ti.icon : '✨') + ' [' + target.name + '] 天賦:' + (ti ? ti.name : '') + '!立即反擊 [' + atkr.name + ']!'); }catch(_){}
+          try{ bannerFX(target, (ti ? ti.icon : '') + ' 反擊!', '#ffaa66', 800); }catch(_){}
+          setTimeout(function(){
+            try{ if(target.curHp > 0 && atkr.curHp > 0) doDmg(atkr, amt, { actor:target, isRebound:true, _cn2Counter:true, ignoreEvasion:true, noGuard:true, element:t.e, elem:t.e }); try{ renderCard(atkr); }catch(_){} }catch(_){}
+          }, 350);
+        }
+      });
+      // 怒氣(enrage):受傷後檢查 HP 門檻(★ 審查:延到本擊扣血之後再看,不再慢一擊)
+      setTimeout(function(){ try{ W._cn2CheckEnrage(target); }catch(_){} }, 0);
+    }catch(_e){ console.warn('[CN2 反制]', _e); }
+  };
+  W._cn2CheckEnrage = function(h){
+    try{
+      if(!h || h.curHp <= 0 || h._cn2Enraged) return;
+      var tl = W._cn2TraitsOf(h); if(!tl) return;
+      var en = tl.find(function(t){ return t.k === 'enrage'; }); if(!en) return;
+      if(W._cn2TraitOff(h)) return;
+      if(h.curHp > h.hp * (en.hp / 100)) return;
+      h._cn2Enraged = true;
+      addBuff(h, 'dmgup', 99);
+      var ti = _trInfo(h.name);
+      try{ log('💢 [' + h.name + '] 天賦:' + (ti ? ti.name : '') + '!怒氣爆發,攻擊強化直到戰鬥結束!'); }catch(_){}
+      try{ bannerFX(h, '💢 怒氣爆發!', '#ff6644', 1000); }catch(_){}
+      try{ renderCard(h); }catch(_){}
+    }catch(_){}
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 天賦 hook ③:每個新回合開始(nextRound 天賦集中區呼叫)
+  //   敵方:roundHeal / roundFoe / roundAlly;我方或敵方的楊戩:天眼通明失明。
+  // ════════════════════════════════════════════════════════════════
+  W._cn2RoundProc = function(){
+    try{
+      if(typeof G === 'undefined' || !G) return;
+      // ★ v5.293.0 敵方《繪卷新章》(中國關 p2)+ 新 SSR 六位(不分陣營)共用:W._cn2TraitsOf 決定誰有天賦清單
+      ['p1','p2'].forEach(function(sd){
+        var foeSd = sd === 'p1' ? 'p2' : 'p1';
+        _alive(G[sd]).forEach(function(h){
+          var tl = W._cn2TraitsOf(h);
+          if(!tl || !tl.length || W._cn2TraitOff(h)) return;
+          var ti = _trInfo(h.name);
+          var icon = ti ? ti.icon : '✨', tn0 = ti ? ti.name : '';
+          tl.forEach(function(t){
+            var tn = t._cstN ? ('命星 ' + t._cstN) : tn0;
+            if(t.k === 'roundHeal' && h.curHp < h.hp){
+              var amt = Math.floor(h.hp * t.v / 100);
+              _heal(h, amt, h);
+              try{ log(icon + ' [' + h.name + '] ' + (t._cstN ? '' : '天賦:') + tn + '!恢復 ' + amt + ' HP!'); }catch(_){}
+            } else if(t.k === 'roundFoe' && Math.random() * 100 < t.ch){
+              var v = _rnd(_alive(G[foeSd]));
+              if(v){ try{ log(icon + ' [' + h.name + '] 天賦:' + tn + '!'); }catch(_){} W._cn2ApplySt(v, { st:t.st, d:t.d || 1, strong:t.strong }); }
+            } else if(t.k === 'roundAlly' && Math.random() * 100 < t.ch){
+              try{ log(icon + ' [' + h.name + '] ' + (t._cstN ? '' : '天賦:') + tn + '!我方全體獲得鼓舞!'); }catch(_){}
+              _alive(G[sd]).forEach(function(f){ W._cn2ApplyBuff(f, { b:t.b, d:t.d || 1 }); });
+            } else if(t.k === 'roundSelf' && Math.random() * 100 < t.ch){
+              try{ log(icon + ' [' + h.name + '] ' + (t._cstN ? '' : '天賦:') + tn + '!'); }catch(_){}
+              W._cn2ApplyBuff(h, { b:t.b, d:t.d || 1 });
+            } else if(t.k === 'roundHealLow'){
+              var lowF = _lowAlly(sd);
+              if(lowF && lowF.curHp < lowF.hp){
+                var hl = Math.floor(_spv(h) * t.p / 100);
+                _heal(lowF, hl, h);
+                try{ log(icon + ' [' + h.name + '] 天賦:' + tn + '!為 [' + lowF.name + '] 恢復 ' + hl + ' HP!'); }catch(_){}
+              }
+            } else if(t.k === 'roundHealAll'){
+              var ha = Math.floor(_spv(h) * (t.p + ((typeof W._cn2ShituHealBonus === 'function') ? W._cn2ShituHealBonus(h) : 0)) / 100);   // ★ v5.295.0 師徒四人齊聚 +特技10%
+              if(_alive(G[sd]).some(function(f){ return f.curHp < f.hp; })){
+                _alive(G[sd]).forEach(function(f){ _heal(f, ha, h); });
+                try{ log(icon + ' [' + h.name + '] 天賦:' + tn + '!我方全體各恢復 ' + ha + ' HP!'); }catch(_){}
+              }
+            } else if(t.k === 'roundCleanse' && Math.random() * 100 < t.ch){
+              var cn = 0; _alive(G[sd]).forEach(function(f){ cn += _cleanse(f, 1); });
+              if(cn){ try{ log(icon + ' [' + h.name + '] ' + tn + '!我方共解除 ' + cn + ' 個不利狀態!'); }catch(_){} }
+            }
+          });
+          W._cn2CheckEnrage(h);
+        });
+      });
+      // 楊戩「天眼通明」:每個新回合開始 30%(+5%/天賦級·上限50%)使 1 名隨機對手失明 1 回合(敵我對稱)
+      ['p1','p2'].forEach(function(sd){
+        _alive(G[sd]).forEach(function(h){
+          if(h.name !== '楊戩' || W._cn2TraitOff(h)) return;
+          var lv = 0;
+          try{ lv = (sd === 'p1' && typeof _getTraitLv === 'function') ? (_getTraitLv('楊戩') || 0) : 0; }catch(_){ lv = 0; }
+          var ch = Math.min(0.50, 0.30 + lv * 0.05);
+          if(_yjN(h, 't1')) ch = Math.min(0.65, ch + 0.15);   // ✨ t1 天眼洞徹星:+15%(上限 65%)
+          var rolls = _yjEyeOpen(h) ? 2 : 1, used = [];       // ✨ b2 天眼大開:每回合判定 2 次(不同對手)
+          for(var r = 0; r < rolls; r++){
+            if(Math.random() >= ch) continue;
+            var foe = _rnd(_alive(G[sd === 'p1' ? 'p2' : 'p1']).filter(function(x){ return used.indexOf(x) < 0; }));
+            if(!foe) break;
+            used.push(foe);
+            try{ log('👁️ [楊戩] 天賦:天眼通明!神光照向 [' + foe.name + ']!'); }catch(_){}
+            if(W._cn2ApplySt(foe, { st:'forecast', d:1 })) W._cn2YjT2Mirror(h, foe);
+          }
+        });
+      });
+    }catch(_e){ console.warn('[CN2 回合天賦]', _e); }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // 新 SSR 楊戩:技能效果本體(玩家 execSkill 與 AI aiUseSkill 共用 ⇒ 鐵律 1.128 同口徑)
+  //   lvMult:玩家路徑傳 1(doDmg 的 _activeSkLvMult 自動套技能等級);AI 路徑傳 1+技能等級×0.05。
+  //   天賦「天眼通明」前半:技能與爆發必定命中(無視迴避/隱身)——天賦失效時退回一般判定。
+  // ════════════════════════════════════════════════════════════════
+  function _yjHitOpts(a, extra){
+    var o = { actor:a, isSkill:true, element:'light', elem:'light' };
+    if(!W._cn2TraitOff(a)){ o.mustHit = true; o.ignoreEvasion = true; o.noHidden = true; }
+    if(extra) for(var k in extra) o[k] = extra[k];
+    return o;
+  }
+  // ✨ v5.293.0 楊戩命座(天眼司法座)共用小工具
+  function _yjN(a, slot){ try{ return !!(window._cstHasN && window._cstHasN(a, slot, '楊戩')); }catch(_){ return false; } }
+  function _yjBoss(t){ try{ return !!((typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(t)) || (typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(t))); }catch(_){ return false; } }
+  function _yjBlind(t){ try{ return !!(t && (t.status || []).some(function(s){ return s && s.type === 'forecast'; })); }catch(_){ return false; } }
+  // t1 天眼洞徹星:對失明中的對手傷害 +20%
+  function _yjT1Mult(a, t){ if(_yjN(a, 't1') && _yjBlind(t)){ try{ log('✨ [' + a.name + '] 命星:天眼洞徹!看不見的 [' + t.name + '] 多受 20% 傷害!'); }catch(_){} return 1.20; } return 1; }
+  // b2 二郎顯聖星:天眼大開期間(爆發後 2 回合)
+  function _yjEyeOpen(a){ try{ return !!(a && a._cstYjEyeUntil && typeof G !== 'undefined' && (G.round || 0) <= a._cstYjEyeUntil); }catch(_){ return false; } }
+  function _yjEyeBlind(a, t){
+    if(!t || t.curHp <= 0 || !_yjEyeOpen(a)) return;
+    if(_yjBoss(t) && Math.random() >= 0.5) return;
+    if(W._cn2ApplySt(t, { st:'forecast', d:1 })){ try{ log('✨ [' + a.name + '] 命星:二郎顯聖!天眼大開,[' + t.name + '] 失明 1 回合!'); }catch(_){} }
+  }
+  // t2 照妖寶鏡星:天眼通明使對手失明時 → 消除 1 個有利狀態(迴避/隱身/護盾優先);BOSS 改破防 1 回合
+  W._cn2YjT2Mirror = function(h, foe){
+    try{
+      if(!_yjN(h, 't2') || !foe || foe.curHp <= 0) return;
+      if(_yjBoss(foe)){ W._cn2ApplySt(foe, { st:'breakDef', d:1 }); try{ log('✨ [' + h.name + '] 命星:照妖寶鏡![' + foe.name + '] 的破綻被照出,破防 1 回合!'); }catch(_){} return; }
+      var bs = foe.buffs || []; if(!bs.length) return;
+      var pri = ['evasion','hidden','spdAvoid','_windEvade','shield'];
+      var idx = -1;
+      for(var p = 0; p < pri.length && idx < 0; p++){ for(var j = 0; j < bs.length; j++){ if(bs[j] && bs[j].type === pri[p]){ idx = j; break; } } }
+      if(idx < 0){ for(var k = 0; k < bs.length; k++){ if(bs[k] && bs[k].type && String(bs[k].type).charAt(0) !== '_'){ idx = k; break; } } }
+      if(idx < 0) return;
+      var rm = bs.splice(idx, 1)[0];
+      try{ log('✨ [' + h.name + '] 命星:照妖寶鏡![' + foe.name + '] 現出原形,有利狀態「' + ((typeof buffName === 'function' && buffName(rm.type)) || rm.type) + '」被照散!'); bannerFX(foe, '🪞 現形!', '#fff2a8', 800); }catch(_){}
+      try{ renderCard(foe); }catch(_){}
+    }catch(_e){ console.warn('[楊戩 t2]', _e); }
+  };
+  W._cn2YjS1 = function(a, t, lvMult){
+    if(!a || !t || t.curHp <= 0) return;
+    try{ bannerFX(a, '👁️ 天眼神光!', '#fff2a8', 1000); }catch(_){}
+    try{ log('👁️ [' + a.name + '] 天眼神光!額上天眼射出破邪神光,直取 [' + t.name + ']!'); }catch(_){}
+    var _yjS1N = _yjN(a, 's1');   // ✨ s1 神光貫目星:210%→250%、失明 50%→75%(BOSS 維持 50%)
+    if(_yjS1N){ try{ log('✨ [' + a.name + '] 命星:神光貫目!天眼神光提升為攻擊 250%!'); }catch(_){} }
+    var dmg = Math.max(1, Math.floor(_atkv(a) * (_yjS1N ? 2.50 : 2.10) * (lvMult || 1) * _yjT1Mult(a, t)));
+    try{ doDmg(t, dmg, _yjHitOpts(a)); }catch(_e){ console.warn('[天眼神光]', _e); }
+    if(t.curHp > 0){
+      try{
+        var before = (t.buffs || []).length;
+        t.buffs = (t.buffs || []).filter(function(b){ return !(b && (b.type === 'evasion' || b.type === 'hidden' || b.type === 'spdAvoid' || b.type === '_windEvade')); });
+        if((t.buffs || []).length < before){ log('  └ [' + t.name + '] 的「迴避/隱身」被天眼看穿而消除!'); try{ bannerFX(t, '👁 現形!', '#fff2a8', 800); }catch(_){} }
+      }catch(_){}
+      if(Math.random() < ((_yjS1N && !_yjBoss(t)) ? 0.75 : 0.5)) W._cn2ApplySt(t, { st:'forecast', d:2 });
+      _yjEyeBlind(a, t);
+      // ★ v5.295.0 天眼印 2 回合:我方全體對他的攻擊必定命中、哮天犬優先咬他
+      if(t.curHp > 0 && W._cn2ApplySt(t, { st:'yjMark', d:2 })){ try{ log('  └ 👁 [' + t.name + '] 被打上「天眼印」2 回合!我方攻擊必定命中!'); }catch(_){} }
+    }
+    try{ renderCard(t); }catch(_){}
+  };
+  W._cn2YjS2 = function(a, lvMult){
+    if(!a) return;
+    var opp = a.side === 'p1' ? 'p2' : 'p1';
+    try{ bannerFX(a, '🐕 神犬撲咬!', '#fff2a8', 1000); }catch(_){}
+    try{ log('🐕 [' + a.name + '] 一聲口哨,哮天犬疾撲而出!'); }catch(_){}
+    var dmg = Math.max(1, Math.floor(_atkv(a) * 1.00 * (lvMult || 1)));
+    var _yjS2N = _yjN(a, 's2'), _yjBites = new Map();   // ✨ s2 哮天追魂星:被咬 2 次以上必定出血 2;咬失明者 +30%
+    for(var i = 0; i < 3; i++){
+      var live = _alive(G[opp]); if(!live.length) break;
+      var _mkd = live.filter(function(x){ return (x.status || []).some(function(s){ return s && s.type === 'yjMark'; }); });   // ★ v5.295.0 優先咬帶「天眼印」的對手
+      var t = _rnd(_mkd.length ? _mkd : live);
+      var _hpB = t.curHp;
+      var d1 = dmg;
+      if(_yjS2N && _yjBlind(t)){ d1 = Math.floor(d1 * 1.30); try{ log('✨ [' + a.name + '] 命星:哮天追魂!神犬循氣味咬住看不見的 [' + t.name + '](+30%)!'); }catch(_){} }
+      d1 = Math.max(1, Math.floor(d1 * _yjT1Mult(a, t)));
+      var _r1 = 0;
+      try{ _r1 = doDmg(t, d1, _yjHitOpts(a, { isAoe:false, noCounter: i > 0 })) || 0; }catch(_e){ console.warn('[神犬撲咬]', _e); }
+      if((_r1 > 0 || t.curHp < _hpB) && typeof W._cn2YjSense === 'function') W._cn2YjSense(a);   // ★ v5.295.0 咬中 1 次累積 1 層神識,滿 3 層看破 +1
+      _yjBites.set(t, (_yjBites.get(t) || 0) + 1);
+      if(t.curHp > 0 && Math.random() < 0.30) W._cn2ApplySt(t, { st:'bleed' });
+      _yjEyeBlind(a, t);
+      try{ renderCard(t); }catch(_){}
+    }
+    if(_yjS2N){
+      _yjBites.forEach(function(n, t){
+        if(n >= 2 && t && t.curHp > 0){
+          try{ (t.status || []).forEach(function(s){ if(s && s.type === 'bleed') s.dur = Math.max(s.dur || 0, 2); }); }catch(_){}
+          if(!(t.status || []).some(function(s){ return s && s.type === 'bleed'; })) W._cn2ApplySt(t, { st:'bleed', d:2 });
+          try{ log('✨ [' + a.name + '] 命星:哮天追魂![' + t.name + '] 被連咬 ' + n + ' 口,出血 2 回合!'); }catch(_){}
+        }
+      });
+    }
+  };
+  // 爆發「劈山救母・開天神斧」:攻擊700%×_burstMult 單體光(必中/無視有利)+ 破防2 + 自身攻擊強化2
+  W._cn2YjBurst = function(h, t, burstMult){
+    if(!h || !t || t.curHp <= 0) return;
+    var _yjB1N = _yjN(h, 'b1'), _yjBase = _yjB1N ? 8.50 : 7.00;   // ✨ b1 開天裂地星:700%→850%、破防 2→3 回合
+    if(_yjB1N){ try{ log('✨ [' + h.name + '] 命星:開天裂地!神斧倍率提升為攻擊 850%!'); }catch(_){} }
+    var dmg = Math.max(1, Math.floor(_atkv(h) * _yjBase * (burstMult || 1) * _yjT1Mult(h, t)));
+    try{ log('🪓 [' + h.name + '] 劈山救母・開天神斧!當年劈開桃山的一擊再現,攻擊 ' + Math.round(_yjBase * (burstMult || 1) * 100) + '% 劈向 [' + t.name + ']!'); }catch(_){}
+    try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,240,160,0.30)', 600); }catch(_){}
+    try{ doDmg(t, dmg, { actor:h, isSkill:true, element:'light', elem:'light', mustHit:true, ignoreBuffs:true, ignoreEvasion:true, noGuard:true, noHidden:true, skillLabel:'劈山救母・開天神斧' }); }catch(_e){ console.warn('[開天神斧]', _e); }
+    if(t.curHp > 0) W._cn2ApplySt(t, { st:'breakDef', d: _yjB1N ? 3 : 2 });
+    W._cn2ApplyBuff(h, { b:'dmgup', d:2 });
+    try{ if(typeof W._cn2YjGain === 'function') W._cn2YjGain(h, '劈開桃山的神斧讓天眼更清明'); }catch(_){}   // ★ v5.295.0 爆發後「天眼看破」次數 +1(本場最多 2 次)
+    if(_yjN(h, 'b2')){   // ✨ b2 二郎顯聖星:天眼大開 2 回合(本回合+下 1 回合;G1 借來的爆發也一樣只開一次眼)
+      try{ h._cstYjEyeUntil = ((typeof G !== 'undefined' && G.round) || 0) + 1; log('✨ [' + h.name + '] 命星:二郎顯聖!天眼大開 2 回合——技能命中必定失明,天眼通明每回合判定 2 次!'); bannerFX(h, '👁 天眼大開!', '#fff2a8', 1000); }catch(_){}
+    }
+    try{ renderCard(t); }catch(_){}
+  };
+})();
+// ★★★ v5.293.0 《繪卷新章》資料驅動戰鬥引擎 END ★★★
+// ════════════════════════════════════════════════════════════════════
+// ★★★ v5.295.0(老師 2026-10-24「甲甲乙」:全採、鬥技場減半、一次做完)《繪卷新章》七位新 SSR 獨特機制 ★★★
+//   設計書:Project Knowledge claude/繪卷新章SSR獨特機制_設計書.md
+//   楊戩 天眼看破/天眼印/神識 ｜ 劉備 桃園羈絆+三英生命連結+溢補轉盾+三英再行動 ｜ 張飛 斷橋(群攻只打張飛)
+//   趙雲 單騎救主(隊友跌破 30% 插隊救援)+七進七出斬殺再行動 ｜ 唐三藏 緊箍(施法懲罰)+師徒同心
+//   豬八戒 大肚能容(肚量)+吐出全隊補血/爆發加傷 ｜ 沙悟淨 挑擔護法(替隊友承擔不利狀態)
+//   接點:doDmg / addStatus 外層包裝(只在本段)、_runBurst 入口看破、_burstFinish 收尾、execSkill/aiUseSkill 施法懲罰、
+//        startTurn 再行動排程、renderCard 狀態列附加標籤;資料欄位在 hero_db _CN2(fx 新鍵 bridge/killAgain/jingu/bellyOut/bellyDmg/sandPurge/taoAct/rescueReset/ovShield)。
+//   每場戰鬥的機制狀態一律綁 _cstBidD() 戰鬥序號(h._cn2M),換場自動歸零,不寫存檔、不碰雲端。
+//   鬥技場(非冒險模式)一律減半:羈絆數值×½、三英只分擔一半、斷橋與看破改 BOSS 版、救主改減傷½+反擊減半、緊箍失敗率減半、挑擔每回合 1 次。
+// ════════════════════════════════════════════════════════════════════
+(function(){
+  var W = window;
+  function _alive(arr){ return (arr || []).filter(function(x){ return x && x.curHp > 0; }); }
+  function _bid(){ try{ return _cstBidD(); }catch(_){ return 0; } }
+  function _rd(){ try{ return (typeof G !== 'undefined' && G && G.round) || 1; }catch(_){ return 1; } }
+  function _st(h){
+    if(!h) return {};
+    var b = _bid();
+    if(!h._cn2M || h._cn2M.bid !== b) h._cn2M = { bid:b };
+    return h._cn2M;
+  }
+  W._cn2MState = _st;
+  function _arena(){ try{ return (typeof _adventureMode === 'undefined') || !_adventureMode; }catch(_){ return false; } }
+  W._cn2Arena = _arena;
+  function _boss(t){ try{ return !!(t && ((typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(t)) || (typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(t)))); }catch(_){ return false; } }
+  function _off(h){ try{ return !h || !!(W._cn2TraitOff && W._cn2TraitOff(h)); }catch(_){ return false; } }
+  function _find(side, name){ try{ if(typeof G === 'undefined' || !G) return null; return _alive(G[side]).filter(function(x){ return x.name === name; })[0] || null; }catch(_){ return null; } }
+  function _trait(h, k){ try{ var tl = W._cn2TraitsOf ? W._cn2TraitsOf(h) : null; if(!tl) return null; for(var i = 0; i < tl.length; i++){ if(tl[i] && tl[i].k === k) return tl[i]; } }catch(_){} return null; }
+  function _atkv(a){ return Math.floor((a.atk || 0) * (1 + (a.atk || 0) * 0.01)); }
+  function _spv(a){ return Math.floor((a.sp || 0) * (1 + (a.sp || 0) * 0.01)); }
+  function _cp(o, extra){ var r = {}; var k; for(k in o) r[k] = o[k]; for(k in extra) r[k] = extra[k]; return r; }
+  function _rcard(h){ try{ if(h) renderCard(h); }catch(_){} }
+  function _say(msg){ try{ log(msg); }catch(_){} }
+  function _ban(h, txt, col, ms){ try{ bannerFX(h, txt, col || '#ffd27a', ms || 900); }catch(_){} }
+  function _cantAct(h){ try{ return (h.status || []).some(function(s){ return s && ['stun','freeze','sleep','trap','detain','imprison','_confess','locked'].indexOf(s.type) >= 0; }); }catch(_){ return false; } }
+  function _skLv(a, slot){
+    try{
+      if(a && a._skLv && typeof a._skLv[slot] === 'number') return a._skLv[slot];
+      if(typeof _adventureMode !== 'undefined' && _adventureMode && a && a.side === 'p1' && typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[a.name]) return _heroSkillLevels[a.name][slot] || 0;
+    }catch(_){}
+    return 0;
+  }
+  function _onceAct(key){   // 同一個行動只印一次的 log 記號
+    try{ var q = (G._actSeq || 0) + ':' + _rd(); G._cn2Once = G._cn2Once || {}; if(G._cn2Once[key] === q) return false; G._cn2Once[key] = q; return true; }catch(_){ return true; }
+  }
+
+  // ── 狀態/有利狀態登錄(顯示名 + 不利狀態清單;只新增不覆蓋)──
+  try{ if(typeof BAD_STATUS !== 'undefined'){ ['jingu','yjMark'].forEach(function(t){ if(BAD_STATUS.indexOf(t) < 0) BAD_STATUS.push(t); }); } }catch(_){}
+
+  // ════════════════ 同隊羈絆 ════════════════
+  W._cn2Tao = function(h){   // 桃園結義(劉備天賦):h 所在陣營
+    var r = { on:false, bro:0, lb:null, gy:null, zf:null, all:false, k:(_arena() ? 0.5 : 1) };
+    try{
+      if(!h) return r;
+      var lb = _find(h.side, '劉備'); if(!lb || _off(lb) || !_trait(lb, 'taoyuan')) return r;
+      var gy = _find(h.side, '關羽'), zf = _find(h.side, '張飛');
+      r.lb = lb; r.gy = gy; r.zf = zf; r.bro = (gy ? 1 : 0) + (zf ? 1 : 0);
+      r.on = r.bro > 0; r.all = !!(gy && zf);
+    }catch(_){}
+    return r;
+  };
+  W._cn2Shitu = function(h){   // 師徒同心(唐三藏天賦):h 所在陣營
+    var r = { ts:null, wk:null, zb:null, sw:null, all:false, k:(_arena() ? 0.5 : 1) };
+    try{
+      if(!h) return r;
+      var ts = _find(h.side, '唐三藏'); if(!ts || _off(ts) || !_trait(ts, 'shitu')) return r;
+      r.ts = ts; r.wk = _find(h.side, '孫悟空'); r.zb = _find(h.side, '豬八戒'); r.sw = _find(h.side, '沙悟淨');
+      r.all = !!(r.wk && r.zb && r.sw);
+    }catch(_){}
+    return r;
+  };
+  // 劉備治療量加成(每位結義兄弟 +v%;命星 t1 沒有兄弟時 +solo%)
+  W._cn2HealMul = function(actor){
+    try{
+      if(!actor || actor.name !== '劉備' || _off(actor)) return 1;
+      var tr = _trait(actor, 'taoyuan'); if(!tr) return 1;
+      var t = W._cn2Tao(actor);
+      if(t.bro > 0) return 1 + (tr.v || 20) / 100 * t.bro * t.k;
+      return 1 + (tr.solo || 0) / 100;
+    }catch(_){ return 1; }
+  };
+  // 關羽極限爆發 +20%(桃園羈絆;鬥技場 +10%)
+  W._cn2BurstBond = function(h, mimic){
+    try{ if(!h || mimic || h.name !== '關羽') return 1; var t = W._cn2Tao(h); return t.on ? (1 + 0.20 * t.k) : 1; }catch(_){ return 1; }
+  };
+  // 張飛反擊機率加成:桃園 +20%(鬥技場 +10%);斷橋中 ×2
+  W._cn2CtrCh = function(h, base){
+    try{
+      if(!h || h.name !== '張飛') return base;
+      var ch = base, t = W._cn2Tao(h);
+      if(t.on) ch += 20 * t.k;
+      if(typeof hasBuff === 'function' && hasBuff(h, '_cn2Bridge')) ch *= 2;
+      return Math.min(100, ch);
+    }catch(_){ return base; }
+  };
+  function _gyS1(){ try{ return (HERO_DB['關羽'] && HERO_DB['關羽'].s1 && HERO_DB['關羽'].s1.n) || ''; }catch(_){ return ''; } }
+
+  // ════════════════ 群體攻擊判定(斷橋用)════════════════
+  var _descIdx = null, _aoeCache = {};
+  function _descOf(n){
+    try{
+      if(!_descIdx){
+        _descIdx = {};
+        if(typeof HERO_DB !== 'undefined') Object.keys(HERO_DB).forEach(function(k){ var e = HERO_DB[k]; ['s1','s2'].forEach(function(sl){ var s = e && e[sl]; if(s && s.n && !_descIdx[s.n]) _descIdx[s.n] = (s.d || '') + ' ' + (s.fd || ''); }); });
+        if(typeof BURST_DB !== 'undefined') Object.keys(BURST_DB).forEach(function(k){ var b = BURST_DB[k]; if(b && b.n && !_descIdx[b.n]) _descIdx[b.n] = (b.d || '') + ' ' + (b.fd || ''); });
+      }
+      return _descIdx[n] || '';
+    }catch(_){ return ''; }
+  }
+  function _isAoeHit(opts){
+    try{
+      if(!opts) return false;
+      if(opts.isAoe) return true;
+      if(!opts.isSkill) return false;
+      var n = W._curSkillName; if(!n) return false;
+      if(Object.prototype.hasOwnProperty.call(_aoeCache, n)) return _aoeCache[n];
+      var v = /(對|由)(敵方|敵)?全體|全體(存活)?(對手|敵)|敵全體|分攤|群體/.test(_descOf(n));
+      _aoeCache[n] = v; return v;
+    }catch(_){ return false; }
+  }
+
+  // ════════════════ 豬八戒:大肚能容 ════════════════
+  function _bellyCap(h){
+    var tr = _trait(h, 'belly'); var cap = tr ? (tr.cap || 60) : 60;
+    var sh = W._cn2Shitu(h); if(sh.ts && sh.zb === h) cap = cap * (1 + 0.5 * sh.k);   // 師徒同心:肚量上限 +50%(鬥技場 +25%)
+    return Math.max(1, Math.floor((h.hp || 0) * cap / 100));
+  }
+  W._cn2BellyGet = function(h){ try{ return (h && h.name === '豬八戒') ? (_st(h).belly || 0) : 0; }catch(_){ return 0; } };
+  W._cn2BellyTake = function(h){ try{ var s = _st(h); var v = s.belly || 0; s.belly = 0; _rcard(h); return v; }catch(_){ return 0; } };
+  W._cn2BellyAdd = function(h, lost){
+    try{
+      if(!h || h.name !== '豬八戒' || !(lost > 0) || _off(h)) return;
+      var tr = _trait(h, 'belly'); if(!tr) return;
+      var s = _st(h), cap = _bellyCap(h), b0 = s.belly || 0;
+      var add = Math.floor(lost * (tr.v || 40) / 100); if(add <= 0) return;
+      s.belly = Math.min(cap, b0 + add);
+      if(s.belly > b0 && s.belly >= cap && b0 < cap){ _say('🐷 [' + h.name + '] 天賦:大肚能容!肚子吃得圓滾滾,肚量滿了(' + s.belly + ')!'); _ban(h, '🐷 肚量滿滿!', '#ffb0c8', 900); }
+      _rcard(h);
+    }catch(_){}
+  };
+
+  // ════════════════ 楊戩:天眼看破 / 神識 ════════════════
+  function _yjS(yj){ var s = _st(yj); if(typeof s.kp !== 'number'){ s.kp = 1; s.kpUsed = 0; s.sense = 0; } return s; }
+  W._cn2YjGain = function(yj, why){
+    try{
+      if(!yj || _off(yj)) return;
+      var s = _yjS(yj);
+      if((s.kpUsed + s.kp) >= 2){ return; }   // 本場最多看破 2 次(已用+可用)
+      s.kp++;
+      _say('👁️ [' + yj.name + '] ' + why + '!「天眼看破」次數 +1(目前 ' + s.kp + ' 次)');
+      _ban(yj, '👁 看破 +1', '#fff2a8', 900); _rcard(yj);
+    }catch(_){}
+  };
+  W._cn2YjSense = function(yj){
+    try{
+      if(!yj || _off(yj)) return;
+      var s = _yjS(yj); s.sense = (s.sense || 0) + 1;
+      if(s.sense >= 3){ s.sense -= 3; W._cn2YjGain(yj, '神識滿 3 層'); }
+      _rcard(yj);
+    }catch(_){}
+  };
+  // _runBurst 入口:回傳 true = 這次爆發完全無效(呼叫端直接 _burstFinish);BOSS/鬥技場改減半版(回傳 false,打上減半記號)
+  W._cn2YjNegate = function(h, mimic){
+    try{
+      if(!h || typeof G === 'undefined' || !G) return false;
+      var opp = h.side === 'p1' ? 'p2' : 'p1';
+      var yj = _find(opp, '楊戩'); if(!yj || _off(yj)) return false;
+      var s = _yjS(yj); if(!(s.kp > 0)) return false;
+      s.kp--; s.kpUsed++;
+      var half = _boss(h) || _arena();
+      try{ if(typeof flashScreen === 'function') flashScreen('rgba(255,240,160,0.30)', 500); }catch(_){}
+      _ban(yj, '👁 天眼看破!', '#fff2a8', 1200);
+      if(half){
+        _say('👁️ [' + yj.name + '] 天眼看破![' + h.name + '] 的極限爆發被看穿破綻,傷害減半、施加的不利狀態一半機率被擋下!');
+        G._cn2YjHalf = { bid:_bid(), side:yj.side };
+        h._cn2YjHalf = _bid();
+        _ban(h, '👁 爆發被看破(減半)', '#fff2a8', 1100);
+        _rcard(yj);
+        return false;
+      }
+      _say('👁️ [' + yj.name + '] 天眼看破![' + h.name + '] 的極限爆發「' + ((typeof BURST_DB !== 'undefined' && BURST_DB[mimic || h.name] && BURST_DB[mimic || h.name].n) || '極限爆發') + '」被天眼看穿,完全無效!(能量照扣)');
+      _ban(h, '👁 爆發被看破!', '#fff2a8', 1200);
+      try{ showPopup(h, 'MISS', 'miss'); }catch(_){}
+      _rcard(yj); _rcard(h);
+      return true;
+    }catch(_e){ console.warn('[v5.295.0 楊戩看破]', _e); return false; }
+  };
+  W._cn2BurstEnd = function(h){
+    try{ if(h && h._cn2YjHalf){ delete h._cn2YjHalf; if(typeof G !== 'undefined' && G) G._cn2YjHalf = null; } }catch(_){}
+  };
+
+  // ════════════════ 趙雲:單騎救主 ════════════════
+  function _rescue(t, a, foeHit){
+    try{
+      var zy = _find(t.side, '趙雲'); if(!zy || zy === t || _off(zy) || _cantAct(zy)) return;
+      var tr = _trait(zy, 'rescue'); if(!tr) return;
+      var s = _st(zy); s.rescued = s.rescued || {};
+      var key = (t.pos == null ? '' : t.pos) + ':' + t.name;
+      if(s.rescued[key]) return;
+      s.rescued[key] = 1;
+      var ar = _arena();
+      _say('🐉 [' + zy.name + '] 天賦:單騎救主!不等回合,插隊衝到 [' + t.name + '] 身前!');
+      _ban(zy, '🐉 單騎救主!', '#a8d8ff', 1100);
+      if(ar){ try{ addBuff(t, 'halfDmg', 1); }catch(_){} _ban(t, '🛡 減傷½', '#a8d8ff', 800); }
+      else { try{ addBuff(t, '_cn2Rescue', 2); }catch(_){} _ban(t, '🐉 救主護身', '#a8d8ff', 900); }
+      if(tr.heal > 0 && t.curHp > 0){
+        var hv = Math.max(1, Math.floor((t.hp || 0) * tr.heal / 100));
+        try{ doHeal(t, hv, { actor:zy, isHeal:true, noDice:true, noWarhorn:true }); }catch(_){ t.curHp = Math.min(t.hp, t.curHp + hv); }
+        _say('✨ [' + zy.name + '] 命星:龍膽無懼![' + t.name + '] 恢復 ' + hv + ' HP!');
+      }
+      if(foeHit && a && a.curHp > 0){
+        var dmg = Math.max(1, Math.floor(_atkv(zy) * (tr.p || 120) / 100 * (ar ? 0.5 : 1)));
+        setTimeout(function(){
+          try{ if(zy.curHp > 0 && a.curHp > 0){ _say('  └ 🐉 [' + zy.name + '] 銀槍回刺 [' + a.name + ']!'); doDmg(a, dmg, { actor:zy, isRebound:true, _cn2Counter:true, ignoreEvasion:true, noGuard:true, element:'wind', elem:'wind' }); _rcard(a); } }catch(_){}
+        }, 350);
+      }
+      _rcard(t); _rcard(zy);
+    }catch(_e){ console.warn('[v5.295.0 趙雲救主]', _e); }
+  }
+  W._cn2RescueReset = function(zy){ try{ var s = _st(zy); s.rescued = {}; _say('🐉 [' + zy.name + '] 長坂龍吟!「單騎救主」觸發次數全部重置!'); }catch(_){} };
+
+  // ════════════════ 再行動排程(劉備三英、趙雲七進七出;非命星,不吃 G2)════════════════
+  W._cn2ReAct = function(o, msg){ try{ if(o && o.curHp > 0) o._cn2Re = { bid:_bid(), r:_rd(), m:msg || '再行動 1 次!' }; }catch(_){} };
+  W._cn2ReTurn = function(){
+    try{
+      if(typeof G === 'undefined' || !G) return;
+      (G.p1 || []).concat(G.p2 || []).forEach(function(o){
+        var q = o && o._cn2Re; if(!q) return;
+        if(q.bid !== _bid() || q.r !== _rd() || !(o.curHp > 0)){ delete o._cn2Re; return; }
+        if(!o.acted) return;
+        delete o._cn2Re;
+        if(!_alive(G[o.side === 'p1' ? 'p2' : 'p1']).length) return;
+        o.acted = false;
+        _say('✨ [' + o.name + '] ' + q.m);
+        _ban(o, '⚡ 再行動!', '#ffcc44', 900); _rcard(o);
+      });
+    }catch(_){}
+  };
+  W._cn2KillAgain = function(a){
+    try{ var s = _st(a); if(s.kaR === _rd()) return; s.kaR = _rd(); W._cn2ReAct(a, '七進七出!斬將奪旗,再行動 1 次!'); _say('🐎 [' + a.name + '] 七進七出!打倒目標,這次行動結束後再行動 1 次(每回合 1 次)!'); }catch(_){}
+  };
+
+  // ════════════════ 唐三藏:緊箍(施法懲罰)════════════════
+  //   execSkill / aiUseSkill 真正施放(失明/疑惑判定之後)呼叫;回傳 true = 技能失敗(能量照扣,呼叫端結束行動)
+  W._cn2JinguCast = function(a, sk){
+    try{
+      if(!a || !sk || sk.p || typeof G === 'undefined' || !G) return false;
+      var o = (a.status || []).filter(function(s){ return s && s.type === 'jingu'; })[0]; if(!o) return false;
+      var seq = (G._actSeq || 0) + ':' + _rd();
+      if(a._cn2JgSeq === seq) return false;   // 玩家取消選目標後重選:同一次行動只罰一次
+      a._cn2JgSeq = seq;
+      var src = _find(o._jgSide, o._jgBy);
+      var dmg = Math.max(1, o._jgP || 1);
+      _say('📿 [' + a.name + '] 頭上的緊箍收緊了!施放 [' + sk.n + '] 時頭痛欲裂!');
+      _ban(a, '📿 頭好痛!', '#ffe08a', 900);
+      try{ doDmg(a, dmg, src ? { actor:src, isSkill:true, element:'light', elem:'light', mustHit:true, ignoreEvasion:true, noGuard:true, noCounter:true, _cn2Counter:true } : { fixedDmg:true, _cn2Counter:true }); }catch(_){}
+      _rcard(a);
+      if(!(a.curHp > 0)) return true;
+      if(_boss(a)) return false;
+      var f = (o._jgF || 30) * (_arena() ? 0.5 : 1);
+      if(Math.random() * 100 < f){
+        _say('  └ 📿 [' + a.name + '] 痛到念不完咒,[' + sk.n + '] 施放失敗!(能量照扣)');
+        _ban(a, '📿 技能失敗!', '#ffe08a', 900);
+        try{ showPopup(a, 'MISS', 'miss'); }catch(_){}
+        return true;
+      }
+      return false;
+    }catch(_e){ console.warn('[v5.295.0 緊箍]', _e); return false; }
+  };
+
+  // ════════════════ 每回合開始:羈絆橫幅、師徒能量 ════════════════
+  W._cn2RoundBond = function(){
+    try{
+      if(typeof G === 'undefined' || !G) return;
+      var r = _rd();
+      ['p1','p2'].forEach(function(sd){
+        var any = _alive(G[sd])[0]; if(!any) return;
+        var t = W._cn2Tao(any);
+        if(t.on){
+          var s = _st(t.lb);
+          if(!s.taoAnn){
+            s.taoAnn = 1;
+            _say('🍑 [劉備] 天賦:桃園結義!' + [t.gy ? '關羽' : '', t.zf ? '張飛' : ''].filter(Boolean).join('、') + ' 同隊,羈絆觸發' + (t.all ? '——三英齊聚,生命連結!' : '!') + (t.k < 1 ? '(鬥技場效果減半)' : ''));
+            [t.lb, t.gy, t.zf].forEach(function(x){ if(x) _ban(x, t.all ? '🍑 三英齊聚!' : '🍑 桃園羈絆!', '#9be08a', 1200); });
+          }
+        }
+        var sh = W._cn2Shitu(any);
+        if(sh.ts){
+          var s2 = _st(sh.ts);
+          if((sh.wk || sh.zb || sh.sw) && !s2.stAnn){
+            s2.stAnn = 1;
+            _say('📿 [唐三藏] 天賦:師徒同心!' + [sh.wk ? '孫悟空' : '', sh.zb ? '豬八戒' : '', sh.sw ? '沙悟淨' : ''].filter(Boolean).join('、') + ' 同隊' + (sh.all ? '——師徒四人齊聚!' : '!') + (sh.k < 1 ? '(鬥技場效果減半)' : ''));
+            [sh.ts, sh.wk, sh.zb, sh.sw].forEach(function(x){ if(x) _ban(x, sh.all ? '📿 師徒四人!' : '📿 師徒同心!', '#ffe08a', 1200); });
+          }
+          G._cn2EnR = G._cn2EnR || {};
+          var _enKey = _bid() + ':' + r;
+          if(sh.wk && G.energy && G._cn2EnR[sd] !== _enKey && (sh.k >= 1 || (r % 2) === 1)){
+            G._cn2EnR[sd] = _enKey;
+            var e0 = G.energy[sd] || 0;
+            G.energy[sd] = Math.min(10, e0 + 1);
+            if(G.energy[sd] > e0){ _say('📿 師徒同心:孫悟空護師,我方能量 +1'); try{ showPopup(sh.wk, '+1E', 'energy'); }catch(_){} }
+          }
+        }
+      });
+    }catch(_e){ console.warn('[v5.295.0 回合羈絆]', _e); }
+  };
+  W._cn2ShituHealBonus = function(h){   // 師徒四人齊聚:金蟬法身每回合回復 +特技10%(鬥技場 +5%)
+    try{ if(!h || h.name !== '唐三藏') return 0; var sh = W._cn2Shitu(h); return (sh.ts === h && sh.all) ? 10 * sh.k : 0; }catch(_){ return 0; }
+  };
+
+  // ════════════════ 卡片附加標籤(肚量條/看破次數/羈絆)════════════════
+  W._cn2CardTags = function(h){
+    try{
+      if(!h || typeof G === 'undefined' || !G) return '';
+      var out = '';
+      if(h.name === '豬八戒' && _trait(h, 'belly')){
+        var bv = _st(h).belly || 0, cap = _bellyCap(h), pc = Math.max(0, Math.min(100, Math.round(bv / cap * 100)));
+        out += '<span class="stag" style="background:rgba(255,176,200,0.22);border:1px solid #ffb0c8;color:#ffd6e2;white-space:nowrap;">🐷 肚量 ' + bv
+          + ' <i style="display:inline-block;vertical-align:middle;width:3.2em;height:0.5em;border-radius:0.25em;background:rgba(0,0,0,0.35);overflow:hidden;"><b style="display:block;height:100%;width:' + pc + '%;background:linear-gradient(90deg,#ff9ec0,#ffd0e0);"></b></i></span>';
+      }
+      if(h.name === '楊戩' && h.curHp > 0){
+        var ys = _yjS(h);
+        out += '<span class="stag" style="background:rgba(255,242,168,0.18);border:1px solid #fff2a8;color:#fff2a8;white-space:nowrap;">👁 看破×' + (ys.kp || 0) + ' ・神識 ' + (ys.sense || 0) + '/3</span>';
+      }
+      if(h.name === '劉備' || h.name === '關羽' || h.name === '張飛'){
+        var t = W._cn2Tao(h);
+        if(t.on) out += '<span class="stag" style="background:rgba(155,224,138,0.18);border:1px solid #9be08a;color:#c8f4bc;white-space:nowrap;">🍑 ' + (t.all ? '三英齊聚' : '桃園羈絆') + '</span>';
+      }
+      if(h.name === '唐三藏' || h.name === '孫悟空' || h.name === '豬八戒' || h.name === '沙悟淨'){
+        var sh = W._cn2Shitu(h);
+        if(sh.ts && (sh.wk || sh.zb || sh.sw) && (h === sh.ts || h === sh.wk || h === sh.zb || h === sh.sw)) out += '<span class="stag" style="background:rgba(255,224,138,0.16);border:1px solid #ffe08a;color:#ffeeb0;white-space:nowrap;">📿 ' + (sh.all ? '師徒四人' : '師徒同心') + '</span>';
+      }
+      return out;
+    }catch(_){ return ''; }
+  };
+
+  // ════════════════ doDmg 外層包裝 ════════════════
+  function _post(t, before, a, foeHit){
+    try{
+      if(!t) return;
+      var lost = Math.max(0, before - Math.max(0, t.curHp));
+      if(!(lost > 0)) return;
+      if(t.name === '豬八戒') W._cn2BellyAdd(t, lost);
+      if(t.curHp > 0 && before >= (t.hp || 0) * 0.30 && t.curHp < (t.hp || 0) * 0.30) _rescue(t, a, foeHit);
+    }catch(_){}
+  }
+  var _origDoDmg = doDmg;
+  doDmg = function(target, rawDmg, opts){
+    if(!opts) opts = {};
+    var plan = null;
+    try{
+      if(target && typeof G !== 'undefined' && G && rawDmg > 0 && !opts.isHeal){
+        var a = opts.actor || null;
+        var foeHit = !!(a && a.side && target.side && a.side !== target.side);
+        var dot = !!(opts._isDot || opts._isDotTick || opts._fromBurn || opts._fromBleedProc || opts.fixedDmg);
+        // ① 楊戩看破(減半版):被看破的這次爆發傷害減半
+        if(a && a._cn2YjHalf && a._cn2YjHalf === _bid()) rawDmg = Math.max(1, Math.floor(rawDmg * 0.5));
+        // ② 天眼印:我方對帶印的對手攻擊必定命中
+        if(foeHit && !opts.mustHit && (target.status || []).some(function(s){ return s && s.type === 'yjMark'; })) opts = _cp(opts, { mustHit:true, ignoreEvasion:true, noHidden:true });
+        // ③ 桃園:關羽「青龍斬」(技能一)必定暴擊(鬥技場暴擊率 +50%)
+        if(a && a.name === '關羽' && opts.isSkill && W._curSkillName && W._curSkillName === _gyS1()){ var _t0 = W._cn2Tao(a); if(_t0.on) opts = _cp(opts, { critBoost:(typeof opts.critBoost === 'number' ? opts.critBoost : 0) + (_t0.k >= 1 ? 1.0 : 0.5) }); }
+        if(foeHit && !dot && !opts.isRebound && !opts._cn2Redir && !opts._taoShare){
+          // ④ 趙雲「救主護身」:擋下下一次傷害
+          if(Array.isArray(target.buffs) && target.buffs.some(function(b){ return b && b.type === '_cn2Rescue'; })){
+            var _ix = -1; target.buffs.forEach(function(b, i){ if(_ix < 0 && b && b.type === '_cn2Rescue') _ix = i; });
+            if(_ix >= 0) target.buffs.splice(_ix, 1);
+            _say('🐉 [' + target.name + '] 救主護身擋下了這次攻擊!');
+            _ban(target, '🐉 擋下!', '#a8d8ff', 800); try{ showPopup(target, 'BLOCK', 'miss'); }catch(_){}
+            _rcard(target);
+            return 0;
+          }
+          // ⑤ 張飛「斷橋」:群體攻擊只能打張飛
+          if(_isAoeHit(opts)){
+            var zf = _find(target.side, '張飛');
+            if(zf && Array.isArray(zf.buffs) && zf.buffs.some(function(b){ return b && b.type === '_cn2Bridge'; })){
+              var red = _st(zf).bridgeRed || 0.30, half = _boss(a) || _arena();
+              if(target === zf){ rawDmg = Math.max(1, Math.floor(rawDmg * (1 - red))); }
+              else if(!half){
+                if(_onceAct('bridge' + target.side)){ _say('🌉 [張飛] 斷橋!長坂橋只容一人過,群體攻擊只能打張飛,隊友不受波及!'); _ban(zf, '🌉 斷橋!', '#e0b060', 900); }
+                _ban(target, '🌉 斷橋護住', '#e0b060', 700);
+                return 0;
+              } else {
+                var toZf = Math.max(1, Math.floor(rawDmg * 0.5 * (1 - red)));
+                var _tzB = W._cn2Tao(zf); if(_tzB.on) toZf = Math.max(1, Math.floor(toZf * (1 - 0.15 * _tzB.k)));   // 桃園:張飛受傷 −15%
+                rawDmg = Math.max(1, Math.floor(rawDmg * 0.5));
+                if(_onceAct('bridgeH' + target.side)) _say('🌉 [張飛] 斷橋!' + (_arena() ? '(鬥技場)' : '(BOSS 群攻)') + '一半傷害由張飛承受!');
+                plan = plan || {}; plan.zf = zf; plan.toZf = toZf;
+              }
+            }
+          }
+          // ⑥ 桃園:張飛受到的傷害 −15%(鬥技場 −7.5%)
+          if(target.name === '張飛'){ var _t1 = W._cn2Tao(target); if(_t1.on) rawDmg = Math.max(1, Math.floor(rawDmg * (1 - 0.15 * _t1.k))); }
+          // ⑦ 三英齊聚:生命連結,傷害三人平均分擔(鬥技場只分擔一半)
+          if(!opts.isTraitShare && !opts.isChaos && (target.name === '劉備' || target.name === '關羽' || target.name === '張飛')){
+            var _t3 = W._cn2Tao(target);
+            if(_t3.all){
+              var part = Math.max(1, Math.floor(rawDmg * _t3.k / 3));
+              var mates = [_t3.lb, _t3.gy, _t3.zf].filter(function(x){ return x && x !== target && x.curHp > 0; });
+              if(mates.length){
+                plan = plan || {};
+                plan.share = { part:part, mates:mates };
+                rawDmg = Math.max(1, Math.floor(rawDmg * (1 - _t3.k)) + part);
+              }
+            }
+          }
+        }
+        plan = plan || {};
+        plan.a = a; plan.foeHit = foeHit;
+      }
+    }catch(_e){ console.warn('[v5.295.0 新SSR doDmg 前置]', _e); plan = null; }
+    var before = target ? target.curHp : 0;
+    var r = _origDoDmg(target, rawDmg, opts);
+    if(plan){
+      try{
+        _post(target, before, plan.a, plan.foeHit);
+        if(plan.zf && plan.zf.curHp > 0){
+          var bz = plan.zf.curHp;
+          _origDoDmg(plan.zf, plan.toZf, _cp(opts, { _cn2Redir:true, noCounter:true, mustHit:true, ignoreEvasion:true, isAoe:false }));
+          _post(plan.zf, bz, plan.a, plan.foeHit);
+          _rcard(plan.zf);
+        }
+        if(plan.share && ((r > 0) || (target && target.curHp < before))){
+          if(_onceAct('taoShare' + target.side)) _say('🍑 三英生命連結![' + target.name + '] 受到的傷害由三兄弟一起分擔!');
+          plan.share.mates.forEach(function(m){
+            if(!(m.curHp > 0)) return;
+            var pv = plan.share.part;
+            if(m.name === '張飛'){ var _tz = W._cn2Tao(m); if(_tz.on) pv = Math.max(1, Math.floor(pv * (1 - 0.15 * _tz.k))); }
+            var bm = m.curHp;
+            _origDoDmg(m, pv, _cp(opts, { _taoShare:true, isTraitShare:true, noCounter:true, mustHit:true, ignoreEvasion:true, noGuard:true, isAoe:false }));
+            _post(m, bm, plan.a, plan.foeHit);
+            _rcard(m);
+          });
+        }
+      }catch(_e2){ console.warn('[v5.295.0 新SSR doDmg 後置]', _e2); }
+    }
+    return r;
+  };
+
+  // ════════════════ addStatus 外層包裝 ════════════════
+  var _CARRY_SKIP = ['taunt','strongTaunt','locked','phoenixFeather','lightshadow','_aquariusMark','reverseDomainCurse'];
+  var _origAddStatus = addStatus;
+  function _durOf(h, t){ try{ var o = (h.status || []).filter(function(s){ return s && s.type === t; })[0]; return o ? (o.dur || 0) : -1; }catch(_){ return -1; } }
+  addStatus = function(h, t, dur){
+    try{
+      if(h && h.curHp > 0 && typeof G !== 'undefined' && G && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.indexOf(t) >= 0){
+        // 楊戩看破(減半版):被看破的爆發施加的不利狀態一半機率擋下
+        var yh = G._cn2YjHalf;
+        if(yh && yh.bid === _bid() && h.side === yh.side && W._burstCastActive && Math.random() < 0.5){
+          _say('👁️ 天眼看破:[' + h.name + '] 擋下了「' + ((typeof statusName === 'function') ? statusName(t) : t) + '」!');
+          return;
+        }
+        // 沙悟淨「挑擔護法」:隊友即將被附加不利狀態 ⇒ 改由沙悟淨承受
+        if(!W._cn2CarryBusy && h.name !== '沙悟淨' && _CARRY_SKIP.indexOf(t) < 0 && !(typeof hasBuff === 'function' && (hasBuff(h, 'badimmune') || hasBuff(h, 'immune')))){
+          var sw = _find(h.side, '沙悟淨');
+          var tr = (sw && !_off(sw)) ? _trait(sw, 'carry') : null;
+          if(tr){
+            var s = _st(sw), r = _rd();
+            if(s.cR !== r){ s.cR = r; s.cN = 0; }
+            var ar = _arena();
+            var cap = ar ? 1 : (tr.n || 2);
+            var sh = W._cn2Shitu(sw); if(sh.ts && sh.sw === sw && (!ar || (r % 2) === 1)) cap += 1;   // 師徒同心:承擔次數 +1(鬥技場隔回合)
+            if(s.cN < cap){
+              s.cN++;
+              W._cn2CarryBusy = true;
+              try{
+                addStatus(sw, t, dur);
+                _say('🔱 [沙悟淨] 天賦:挑擔護法!替 [' + h.name + '] 扛下「' + ((typeof statusName === 'function') ? statusName(t) : t) + '」!');
+                _ban(sw, '🔱 挑擔護法!', '#b0c8e0', 900);
+                var shv = Math.max(1, Math.floor((sw.hp || 0) * (tr.sh || 8) / 100));
+                if(!Array.isArray(sw.buffs)) sw.buffs = [];
+                var ex = sw.buffs.filter(function(b){ return b && b.type === 'shield' && b._src === 'cn2carry'; })[0];
+                if(ex) ex.val = (ex.val || 0) + shv; else sw.buffs.push({ type:'shield', val:shv, dur:99, _src:'cn2carry' });
+                _ban(sw, '🛡 護盾 +' + shv, '#99ccff', 700);
+              }finally{ W._cn2CarryBusy = false; }
+              _rcard(sw); _rcard(h);
+              return;
+            }
+          }
+        }
+      }
+    }catch(_e){ console.warn('[v5.295.0 新SSR addStatus 前置]', _e); }
+    // 沙悟淨自己身上的不利狀態持續回合 −1(最少 1)
+    var _swCut = false, _prev = -1;
+    try{ if(h && h.name === '沙悟淨' && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.indexOf(t) >= 0 && !_off(h) && _trait(h, 'carry')){ _swCut = true; _prev = _durOf(h, t); } }catch(_){ _swCut = false; }
+    var res = (arguments.length >= 3) ? _origAddStatus(h, t, dur) : _origAddStatus(h, t);
+    if(_swCut){
+      try{
+        var o = (h.status || []).filter(function(s){ return s && s.type === t; })[0];
+        if(o && (o.dur || 0) > _prev && (o.dur || 0) > 1){ o.dur = Math.max(1, o.dur - 1); _rcard(h); }
+      }catch(_){}
+    }
+    return res;
+  };
+})();
+// ★★★ v5.295.0 七位新 SSR 獨特機制 END ★★★
 function aiUseSkill(a,sk,cost,pref){
   try{ if(window._fmNoteCast) window._fmNoteCast(a, sk); }catch(_eFmNc){}   // ★ v5.282.0 英魂陣型
   G.lastSkill={...sk,actor:a};
@@ -60678,6 +62004,9 @@ function aiUseSkill(a,sk,cost,pref){
   // ✨ 命星 ✦ 軍師 t2(AI):疑惑中的施放者技能落空(能量已扣);落空 ⇒ 比照偵探守門直接結束行動
   let _cstJsMissA = false; try{ if(sk && !sk.p && typeof window._cstJsT2Miss === 'function') _cstJsMissA = window._cstJsT2Miss(a, sk); }catch(_eCstJsT2a){ _cstJsMissA = false; }
   if(_cstJsMissA){ a.acted=true; try{ updateUI(); }catch(_){} _pSetTimeout(startTurn,500); return; }
+  // ★ v5.295.0 唐三藏「緊箍」(AI):同玩家路徑口徑
+  let _cn2JgFailA = false; try{ if(sk && !sk.p && !(typeof _CLEANSE_SKILLS !== 'undefined' && _CLEANSE_SKILLS.has(sk.n)) && typeof window._cn2JinguCast === 'function') _cn2JgFailA = window._cn2JinguCast(a, sk); }catch(_eCn2JgA){ _cn2JgFailA = false; }
+  if(_cn2JgFailA){ a.acted=true; try{ updateUI(); }catch(_){} _pSetTimeout(startTurn,500); return; }
   try{ if(sk && !sk.p && typeof G !== 'undefined' && G && G._cstAstB2) window._cstAstB2Note(a); }catch(_eCstAstB2a){}   // ✨ 命星 ✦ 占星師 b2(AI):真正施放技能 ⇒ 點亮星點
   try{ if(a && a._cst) window._cstPgS1Arm(a, sk, true); }catch(_eCstPgS1a){}   // ✨ 命星 主角‧覺醒 s1(AI):過了偵探/貓人改普攻守門、真正施放 ⇒ 武裝並計次
 
@@ -66136,6 +67465,23 @@ function aiUseSkill(a,sk,cost,pref){
   }
 
 
+  // ★ v5.293.0 — 《繪卷新章》21 個新敵人技能(資料驅動·AI 路徑):純效果、不呼叫 endAction,由鏈尾統一收尾;
+  //   能量已於鏈頭扣除;引擎在 aiUseSkill 之外 ⇒ 內部一律 window._lxpsAtkv/_lxpsSpv(作用域鐵則)。
+  else if(window._CN2 && window._CN2.skillMap && window._CN2.skillMap[n] && window._CN2.skillMap[n].slot !== 'burst'){
+    try{ window._cn2SkillAI(a, n, pref); }catch(_eCn2Ai){ console.warn('[v5.293.0 CN2 AI 技能]', _eCn2Ai); }
+  }
+  // ★ v5.293.0 — 新 SSR 楊戩 AI 路徑(鐵律 1.128 下半;玩家路徑在 execSkill 同版)。AI 不經 _activeSkLvMult ⇒ 手動乘 (1+技能等級×0.05)
+  else if(n==='天眼神光'){
+    const _yjLv1=(a._skLv && typeof a._skLv.s1==='number')?a._skLv.s1:0;
+    // 優先瞄準身上有迴避/隱身的對手(天眼看穿),否則用既有 t
+    let _yjT = t;
+    try{ const _yjHid = enemies.find(function(e){ return e && e.curHp>0 && (e.buffs||[]).some(function(b){ return b && (b.type==='evasion'||b.type==='hidden'); }); }); if(_yjHid) _yjT = _yjHid; }catch(_){}
+    try{ window._cn2YjS1(a, _yjT, 1 + _yjLv1*0.05); }catch(_eYjS1a){ console.warn('[楊戩 S1 AI]', _eYjS1a); }
+  }
+  else if(n==='神犬撲咬'){
+    const _yjLv2=(a._skLv && typeof a._skLv.s2==='number')?a._skLv.s2:0;
+    try{ window._cn2YjS2(a, 1 + _yjLv2*0.05); }catch(_eYjS2a){ console.warn('[楊戩 S2 AI]', _eYjS2a); }
+  }
   // ★ v5.18.0 — 動態英雄泛用技能引擎(三期・AI 路徑):純效果、不呼叫 endAction,
   //   由鏈尾統一收尾(a.acted=true → startTurn);能量已於鏈頭扣除;
   //   AI 路徑不經 _activeSkLvMult → 引擎內手動乘 (1+skLv×0.05)。
@@ -68714,11 +70060,49 @@ const CHINA_SANGUO_BGM_LIST=['bgm-china-mob-sanguo01','bgm-china-mob-sanguo02','
 // ⚠ 兜底曲 bgm-china-boss(中國BOSS戰BGM.m4a)老師裁定不製作,raw 實為 404;
 //   正常五路線必命中前五條,永不落到兜底(落到也只是靜默,不影響戰鬥)。
 // ════════════════════════════════════════════════════════════════
+// ★ v5.293.0 — 《繪卷新章》六條新路線專屬 BOSS 曲「上傳即生效」探測(開機 20 秒後低優先 HEAD;成功才建 <audio preload=none loop>)
+window._cn2BgmReady = window._cn2BgmReady || {};
+window._cn2ProbeBgm = function(){
+  try{
+    if(!window._CN2 || !window._CN2.routes || typeof fetch !== 'function') return;
+    window._CN2.routes.forEach(function(r){
+      if(!r.bgmFile || window._cn2BgmReady[r.id]) return;
+      // 先找 .m4a(較小、與既有 BGM 同格式),沒有再找同名 .mp3
+      var cands = [r.bgmFile, r.bgmFile.replace(/\.m4a$/i, '.mp3')].filter(function(f, i, a){ return a.indexOf(f) === i; });
+      var tryOne = function(k){
+        if(k >= cands.length) return;
+        var url = './' + encodeURIComponent(cands[k]);
+        fetch(url, { method:'HEAD', cache:'no-store' }).then(function(res){
+          if(!res || !res.ok){ tryOne(k + 1); return; }
+          gotIt(url);
+        }).catch(function(){ tryOne(k + 1); });
+      };
+      var gotIt = function(url){
+        try{
+          var id = 'bgm-cn2-' + r.id;
+          if(!document.getElementById(id)){
+            var au = document.createElement('audio');
+            au.id = id; au.preload = 'none'; au.loop = true; au.src = url;
+            document.body.appendChild(au);
+          }
+          window._cn2BgmReady[r.id] = true;
+        }catch(_){}
+      };
+      tryOne(0);
+    });
+  }catch(_e){}
+};
+try{ setTimeout(function(){ try{ window._cn2ProbeBgm(); }catch(_){} }, 20000); }catch(_){}
 window._chinaBossBgmId = function(p2Names){
   try{
     var _n = Array.isArray(p2Names) ? p2Names : [];
     var _cv = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.china)
       ? ADV_BOSS_VARIANTS.china[window._advSelectedVariantIdx] : null;
+    // ★ v5.293.0 — 《繪卷新章》新路線:變體自帶 bossBgm(沿用既有妖王曲)優先;中斷恢復失憶時以 p2 新 BOSS 名兜底
+    //   ★ 新路線專屬曲(Suno 生成,檔名見 _CN2.routes[].bgmFile)「上傳即生效」:_cn2ProbeBgm 探測到檔案才建立 <audio> 並登記 ready,否則沿用舊曲
+    var _cn2Own = function(rid){ try{ return (window._cn2BgmReady && window._cn2BgmReady[rid] && document.getElementById('bgm-cn2-' + rid)) ? ('bgm-cn2-' + rid) : null; }catch(_){ return null; } };
+    if(_cv && _cv.bossBgm){ return _cn2Own(_cv.id) || _cv.bossBgm; }
+    try{ if(window._CN2){ for(var _ri = 0; _ri < window._CN2.routes.length; _ri++){ var _rr = window._CN2.routes[_ri]; if(_n.indexOf(_rr.main) >= 0 && _rr.bossBgm) return _cn2Own(_rr.id) || _rr.bossBgm; } } }catch(_eCn2Bgm){}
     if((_cv && _cv.id === 'fengshen') || _n.indexOf('妲己')   >= 0) return 'bgm-china-boss-daji';
     if((_cv && _cv.id === 'xiyou')    || _n.indexOf('牛魔王') >= 0) return 'bgm-china-boss-niumowang';
     if((_cv && _cv.id === 'sanguo')   || _n.indexOf('呂布')   >= 0) return 'bgm-china-boss-lvbu';
@@ -68734,6 +70118,7 @@ function _chinaGetMobBgmList(){
     var _v = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.china)
       ? ADV_BOSS_VARIANTS.china[(typeof window._advSelectedVariantIdx === 'number' ? window._advSelectedVariantIdx : 0)] : null;
     if(_v && (_v.id === 'sanguo' || _v.id === 'caocao')) return CHINA_SANGUO_BGM_LIST;
+    if(_v && _v.era === 'sanguo') return CHINA_SANGUO_BGM_LIST;   // ★ v5.293.0 《繪卷新章》赤壁/南中 = 三國時空小怪曲
   }catch(_){}
   return CHINA_BATTLE_BGM_LIST;
 }
@@ -69686,7 +71071,7 @@ function _detectCurrentBgm(){
       }
       // ★ v5.39.0 — 中國關:BOSS 戰依變體(曹操/蚩尤專屬曲,其餘妖王共用);小怪戰兩首輪播(埃及同款)
       if(typeof _adventureStage !== 'undefined' && _adventureStage === 'china'){
-        const _cnBosses = ['妲己','牛魔王','呂布','曹操','蚩尤'];
+        const _cnBosses = ['妲己','牛魔王','呂布','曹操','蚩尤'].concat((window._CN2 && window._CN2.bossNames) || []);   // ★ v5.293.0 補《繪卷新章》6 BOSS
         if(_names.some(n => _cnBosses.includes(n))){
           // ★ v5.69.1 — 改讀單一真相 window._chinaBossBgmId(偵測與實際播放不再分裂);舊逐條判定保留備查(勿刪):
           //   const _cv = (...ADV_BOSS_VARIANTS.china[window._advSelectedVariantIdx]...);
@@ -82008,6 +83393,10 @@ function _showNewHeroAnnouncement(forceShow){
       + _cnCard('🗺️', '九州輿圖・五大路線',
           '朝歌打妲己、火焰山戰牛魔王、虎牢關挑戰呂布!打贏呂布還會出現官渡的曹操,集齊三神物更能挑戰隱藏戰神蚩尤!',
           '封神(妲己)、西遊(牛魔王)、三國(呂布)三線開放;擊破呂布解鎖官渡・曹操進階路線,集齊三神物後涿鹿浮現——上古戰神蚩尤的隱藏決戰。')
+      // ★ v5.293.0 — 《繪卷新章》三時空各 +2 條新路線(雙版文字·鐵律 1.232)
+      + _cnCard('📜', '繪卷新章・六條新路線',
+          '打贏妲己會出現陳塘關(東海龍王)→ 再打贏會出現絕龍嶺(聞太師)!<br>打贏牛魔王會出現白虎嶺(白骨夫人)→ 獅駝嶺(大鵬金翅鵰)!<br>打贏呂布會出現赤壁(周瑜)→ 南中(孟獲)!<br>15 位新菁英守門,第一次通關有知識幣和召喚水晶;六條都打通,三隻眼的天神「楊戩」一定會加入!',
+          '三時空各延伸兩條進階路線:封神=陳塘關・東海龍王 → 絕龍嶺・聞太師;西遊=白虎嶺・白骨夫人 → 獅駝嶺・大鵬金翅鵰;三國=赤壁・周瑜 → 南中・孟獲。每條路線以前一關通關解鎖,共 15 名新菁英守衛;首通發放知識幣與召喚水晶,六條全通保底招募新 SSR「楊戩」。')
       // ★ v5.103.0(老師 2026-08-21:「內文有些已經不符實」)— 舊文寫「各路線首次通關必定獲得對應至寶」,
       //   但實際只有三條路線掛至寶(妲己→打神鞭 / 牛魔王→金箍棒 / 呂布→青龍偃月刀),官渡曹操與涿鹿蚩尤不掛,
       //   學生打完曹操沒拿到至寶會以為是 BUG。改為逐條寫明對應關係。
@@ -82118,6 +83507,37 @@ function _showNewHeroAnnouncement(forceShow){
         get:['把五條路線(封神/西遊/三國/官渡/涿鹿)全部打通一次,諸葛亮 100% 必定加入!隨機抽是抽不到他的，另外只能用<b>自選召喚卷</b>指名。', '五路線(封神/西遊/三國/官渡/涿鹿)全部首次通關，SSR 軍師諸葛亮 100% 保底加入。★ 與 BOSS 同處置:不進任何隨機池(星空／隨機卷／鬥技場卷／黑暗球皆無)，自選召喚卷可指名。'],
         intro:['超聰明的軍師!會放戰場卡、射連弩、借東風讓大家變強;場上有卡的時候他還打不死!',
                '千古軍師臥龍。八陣圖抽卡設陣再封敵天賦、諸葛連弩五段連射;戰場卡每有異動即對殘敵發動火計,卡在人在、殺招不侵——全遊戲唯一操縱戰場卡的戰術核心。'] },
+      // ★ v5.293.0 — 《繪卷新章》新 SSR(非 BOSS·取得管道同一梯四位 + 六路線全通保底)
+      { n:'楊戩', c:'#fff2a8', role:'👁️ 必中破邪',
+        get:['在《繪卷新章》六條新路線(陳塘關/絕龍嶺/白虎嶺/獅駝嶺/赤壁/南中)用 S 評價打贏 BOSS,每次 15% 機會加入!六條全部打通一次就一定會加入!也可以用召喚卷，或在召喚星空的 1% 專屬格抽到喔!',
+             '《繪卷新章》六條新路線 BOSS 以 S 評價擊破,各 15% 機率加入;六條新路線全部首通 → 100% 必定加入。另可由隨機/自選召喚卷取得,或召喚星空「當期最新英雄」1% 專屬槽;不在星空一般池、黑暗球不出。'],
+        intro:['額頭有第三隻眼的天神!技能一定打得中,敵人放大絕時還能看穿讓它失效,神犬哮天犬會專咬被天眼盯上的敵人!',
+               '二郎顯聖真君。天眼神光看破迴避與隱身並留下天眼印(全隊必中),哮天犬循印撲咬累積神識;天眼看破讓敵方極限爆發完全無效(BOSS 減半)——全遊戲唯一能封住敵方大絕的破邪戰神。'] },
+      // ★ v5.293.0 — 三國/西遊新 SSR 六位(赤壁/南中、白虎嶺/獅駝嶺 S 評價 15% + 時空雙路線首通保底 + 召喚卷)
+      { n:'劉備', c:'#9be08a', role:'🍑 仁德補師',
+        get:['赤壁(周瑜)或南中(孟獲)用 S 評價打贏,15% 機會加入!赤壁和南中都打通一次,三國新英雄一定會來 1 位!也可以用召喚卷。',
+             '赤壁(周瑜)/南中(孟獲)S 評價擊破各 15% 機率加入;赤壁+南中雙首通保底三國新 SSR 1 位;另可由召喚卷取得,不在召喚水晶池。'],
+        intro:['溫柔的大哥!跟關羽、張飛一起出戰,三兄弟都會變超強!補滿的血還會變成護盾!', '蜀漢之主。桃園結義讓關羽必定暴擊、張飛更耐打,三英齊聚共用生命連結;仁德之心溢補轉盾,三英同心讓兩位弟弟立即再行動——全遊戲第一位同隊羈絆英雄。'] },
+      { n:'張飛', c:'#e0b060', role:'🐯 怒吼猛將',
+        get:['南中(孟獲)用 S 評價打贏,15% 機會加入!赤壁和南中都打通一次,三國新英雄一定會來 1 位!也可以用召喚卷。',
+             '南中(孟獲)S 評價擊破 15% 機率加入;赤壁+南中雙首通保底三國新 SSR 1 位;另可由召喚卷取得。'],
+        intro:['大嗓門猛將!大吼一聲守住橋,敵人的範圍攻擊只能打張飛,隊友都安全了!', '燕人張翼德。斷橋怒吼讓敵方全體/群體攻擊只能打張飛並減傷,斷橋中反擊加倍;喝斷長坂橋分攤重擊、群體暈眩後自動斷橋——全遊戲唯一能封鎖群攻的守橋猛將。'] },
+      { n:'趙雲', c:'#a8d8ff', role:'🐉 七進七出',
+        get:['赤壁(周瑜)用 S 評價打贏,15% 機會加入!赤壁和南中都打通一次,三國新英雄一定會來 1 位!也可以用召喚卷。',
+             '赤壁(周瑜)S 評價擊破 15% 機率加入;赤壁+南中雙首通保底三國新 SSR 1 位;另可由召喚卷取得。'],
+        intro:['白馬銀槍的帥氣將軍!隊友快不行時會馬上衝過去救人,打倒敵人還能再動一次!', '常山趙子龍。單騎救主在隊友瀕危時插隊擋下攻擊並反擊;七進七出斬殺目標可再行動,長坂龍吟五段必中並重置救援次數——唯一能即時救急的英雄。'] },
+      { n:'唐三藏', c:'#ffe08a', role:'📿 佛光補師',
+        get:['白虎嶺(白骨夫人)或獅駝嶺(大鵬)用 S 評價打贏,15% 機會加入!兩條都打通一次,西遊新英雄一定會來 1 位!也可以用召喚卷。',
+             '白虎嶺(白骨夫人)/獅駝嶺(大鵬金翅鵰)S 評價擊破各 15% 機率加入;雙首通保底西遊新 SSR 1 位;另可由召喚卷取得。'],
+        intro:['溫柔帥氣的師父!每回合幫全隊補血,唸緊箍咒讓敵人一用技能就頭痛!跟三個徒弟一起更厲害!', '取經高僧玄奘。緊箍真言讓敵人每次施法都受傷並可能失敗;金蟬法身每回合全隊回血,師徒同心強化孫悟空/豬八戒/沙悟淨——施法懲罰與師徒羈絆的核心。'] },
+      { n:'豬八戒', c:'#ffb0c8', role:'🐷 肉肉坦克',
+        get:['獅駝嶺(大鵬金翅鵰)用 S 評價打贏,15% 機會加入!兩條都打通一次,西遊新英雄一定會來 1 位!也可以用召喚卷。',
+             '獅駝嶺(大鵬金翅鵰)S 評價擊破 15% 機率加入;雙首通保底西遊新 SSR 1 位;另可由召喚卷取得。'],
+        intro:['圓滾滾的小豬弟弟!被打越多肚子存越多,吐出來幫全隊補血,還能變成超強大絕!', '天蓬元帥轉世。大肚能容把挨打存成肚量,天蓬吃飽飽吐出全隊平均回復,銀河翻浪把肚量加進傷害——唯一能把挨打轉成全隊治療的坦克。'] },
+      { n:'沙悟淨', c:'#b0c8e0', role:'🔱 流沙控場',
+        get:['白虎嶺(白骨夫人)用 S 評價打贏,15% 機會加入!兩條都打通一次,西遊新英雄一定會來 1 位!也可以用召喚卷。',
+             '白虎嶺(白骨夫人)S 評價擊破 15% 機率加入;雙首通保底西遊新 SSR 1 位;另可由召喚卷取得。'],
+        intro:['沉穩帥氣的和尚!隊友要被暈眩、魅惑時會挑起來扛,扛完再用流沙打回去!', '捲簾大將。挑擔護法替隊友承擔不利狀態並獲得護盾;流沙捲浪甩開身上不利、每個都轉成追加傷害,降妖九珠全體破防——讓主力完全不吃控制的護法。'] },
     ];
     const _chCard = function(cfg){
       try{
@@ -83549,14 +84969,17 @@ function _advRestoreBattleState(snap, bs){
       if(_adventureStage === 'china' && typeof window._CN_BG !== 'undefined'){
         try{
           let _cnUrlR = window._CN_BG.palace;
+          let _cnCssR = null;   // ★ v5.293.0 新路線多層背景
           if(sceneKey === 'china-throne'){ _cnUrlR = window._CN_BG.throne; }
           else if(sceneKey === 'china-route'){
             const _cnVarR = (typeof ADV_BOSS_VARIANTS !== 'undefined' && ADV_BOSS_VARIANTS.china)
               ? ADV_BOSS_VARIANTS.china[(typeof _advSelectedVariantIdx === 'number' ? _advSelectedVariantIdx : 0)] : null;
             const _cnVarBgMapR = { fengshen:'shang', xiyou:'flame', sanguo:'hulao', caocao:'guandu', chiyou:'zhuolu' };
             _cnUrlR = window._CN_BG[_cnVarBgMapR[(_cnVarR && _cnVarR.id) || 'fengshen']] || window._CN_BG.shang;
+            // ★ v5.293.0 《繪卷新章》新路線:新場景圖疊在時空原圖上(CSS 多層背景;新圖未上傳=自動露出原圖)
+            try{ if(_cnVarR && _cnVarR.cn2 && typeof window._cn2BgCss === 'function') _cnCssR = window._cn2BgCss(_cnVarR, 'route'); }catch(_){}
           }
-          _bb.style.backgroundImage = 'url("' + _cnUrlR + '")';
+          _bb.style.backgroundImage = _cnCssR || ('url("' + _cnUrlR + '")');
           _bb.style.backgroundSize = 'cover';
           _bb.style.backgroundPosition = 'center';
           // (visible class 由本 if 區塊下方統一的 _bb.classList.add('visible') 收尾,此處不重複)
@@ -83600,6 +85023,8 @@ function _advRestoreBattleState(snap, bs){
           } else {
             _bgCls = 'bg-boss';
           }
+          // ★ v5.293.0 《繪卷新章》新路線巢穴圖:新圖 → 該時空原巢穴圖 → 妖王座前 三層疊放(缺檔自動露出下一層)
+          try{ if(_cnVarB2 && _cnVarB2.cn2 && typeof window._cn2BgCss === 'function'){ const _cn2LairCss2 = window._cn2BgCss(_cnVarB2, 'lair'); if(_cn2LairCss2){ _bb.style.backgroundImage = _cn2LairCss2; _bb.style.backgroundSize = 'cover'; _bb.style.backgroundPosition = 'center'; _bgCls = ''; } } }catch(_){}
         }catch(_eCnBossBgR){ _bgCls = 'bg-boss'; }
       } else if(_adventureStage === 'taiwan'){
         // ★ v1.0.20260428.2800 — 台灣關 BOSS 戰背景:依玩家在地圖選的 BOSS 套用對應場景圖
@@ -85210,6 +86635,8 @@ window._FM_SOUL = window._FM_SOUL || {
   // 行動(48)
   '魔劍姬‧伊莉雅':'X', '酒吞童子':'X', '窮奇':'X', '鋁合金暴龍':'X', '超鬼神王':'X', '炸彈客':'X', '維京海盜船長':'X', '小丑':'X', '火爆女':'X', '網路駭客':'X', '地獄將軍':'X', '小鬼貓與兔':'X', '我的豚豚':'X', '埃及豔后':'X', '拘留者':'X', '魔術師':'X', '大刀勇士':'X', '哪吒':'X', '孫悟空':'X', '關羽':'X', '姜子牙':'X', '呂布':'X', '蚩尤':'X', '牡羊星神':'X', '雙子星神':'X', '天秤星神':'X', '天蠍星神':'X', '射手星神':'X', '水瓶星神':'X', '雙魚星神':'X', '凡人':'X', '軍師':'X', '神偷':'X', '吸血鬼':'X', '武士':'X', '時空法師':'X', '機械師':'X', '大力士':'X', '劍士':'X', '冰法師':'X', '光法師':'X', '暗法師':'X', '武鬥家':'X', '警長':'X', '鐵匠':'X', '偵探':'X', '幼兒園小孩':'X', '直笛團員':'X',
 };
+try{ if(!window._FM_SOUL['楊戩']) window._FM_SOUL['楊戩'] = 'X'; }catch(_eFmYj){}   // ★ v5.293.0 新 SSR 楊戩(主傷害型)=行動魂
+try{ var _fmCn2 = { '劉備':'C', '唐三藏':'C', '張飛':'H', '豬八戒':'H', '趙雲':'X', '沙悟淨':'Q' }; Object.keys(_fmCn2).forEach(function(k){ if(!window._FM_SOUL[k]) window._FM_SOUL[k] = _fmCn2[k]; }); }catch(_eFmCn2){}   // ★ v5.293.0 三國/西遊新 SSR 六位:補師=真誠、坦克型=活力、速攻=行動、特技控場=求知
 window._FM_SOUL_NAME = { C:'真誠', Q:'求知', H:'活力', X:'行動' };
 window._FM_SOUL_ICON = { C:'💗', Q:'📘', H:'🛡️', X:'⚡' };
 window._FM_DEFS = {
