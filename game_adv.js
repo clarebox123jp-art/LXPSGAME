@@ -37807,7 +37807,9 @@ function addHeroExp(name, exp) {
         try{
           const _info = (typeof _TRAIT_LV_INFO !== 'undefined') ? _TRAIT_LV_INFO[name] : null;
           if(_info){
-            if(_info.bonus && _info.bonus.indexOf('固定') === 0){
+            if(Array.isArray(_info.lvRows) && _info.lvRows[_tl]){   // ★ v5.296.0 逐級效果表(lvRows)優先
+              _curEffectTxt = `${_info.effect}：<b style="color:#ffee88;">${_info.lvRows[_tl]}</b>`;
+            } else if(_info.bonus && _info.bonus.indexOf('固定') === 0){
               _curEffectTxt = `效果：${_info.base}（固定）`;
             } else {
               const _bm = (_info.base||'').match(/(\d+)%/);
@@ -73513,7 +73515,17 @@ function _showTraitLvPopup(heroName, el){
     + 'box-shadow:0 0 40px rgba(255,220,0,0.3);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
   var rows = '';
   var lvNames = ['Lv1（基礎）','Lv2（英雄Lv10）','Lv3（英雄Lv20）','Lv4（英雄Lv30）','Lv5（英雄Lv40）'];
-  if(info && info.bonus !== '固定（不隨天賦升級）'){
+  // ★ v5.296.0 _TRAIT_LV_INFO 可帶 lvRows(5 個字串=Lv1~Lv5 實際效果):有就直接逐級顯示,
+  //   用於「兩項同時成長」或「每級 +2.5% 這類非整數」的天賦(舊解析只抓第一個整數,會顯示錯)。
+  if(info && Array.isArray(info.lvRows) && info.lvRows.length === 5){
+    for(var _lr=0;_lr<=4;_lr++){
+      var _lrCur = (_lr===traitLv);
+      rows += '<div style="display:flex;justify-content:space-between;gap:16px;padding:4px 0;border-bottom:1px solid rgba(255,220,0,0.1);'+(_lrCur?'background:rgba(255,220,0,0.15);border-radius:6px;padding:4px 8px;':'')+'">'+
+        '<span style="color:'+(_lrCur?'#ffe066':'#aaa')+';white-space:nowrap;">'+(_lrCur?'▶ ':'')+lvNames[_lr]+'</span>'+
+        '<span style="color:'+(_lrCur?'#ffe066':'#fff')+';font-weight:'+(_lrCur?'900':'400')+';text-align:right;">'+info.lvRows[_lr]+'</span>'+
+        '</div>';
+    }
+  } else if(info && info.bonus !== '固定（不隨天賦升級）'){
     var baseMatch = info.base.match(/(\d+)%/) || info.base.match(/(\d+)/);
     var bonusMatch = info.bonus.match(/\+(\d+)%/) || info.bonus.match(/\+(\d+)/);
     var hasPct = info.base.includes('%');

@@ -30097,7 +30097,8 @@ window._cstNmS2Share = function(t, rawDmg, opts){   // s2「大力牛魔星」:�
     var low = _cstS1Alive(t.side).filter(function(x){ return x !== nm; }).sort(function(x, y){ return x.curHp - y.curHp; })[0];
     if(low !== t) return rawDmg;
     var share = Math.floor(rawDmg * 0.30); if(!(share > 0)) return rawDmg;
-    var self = Math.max(1, Math.ceil(share * 0.70));
+    var _nmS2Tl = 0; try{ _nmS2Tl = (nm.side === 'p1' && typeof _getTraitLv === 'function') ? Math.min(4, _getTraitLv('牛魔王') || 0) : 0; }catch(_eNmS2Tl){ _nmS2Tl = 0; }   // ★ v5.296.0 鐵背牛皮減傷隨天賦成長,代承段同步
+    var self = Math.max(1, Math.ceil(share * (0.70 - 0.025 * _nmS2Tl)));
     log('✨ [' + nm.name + '] 命星:大力牛魔!大白牛替 HP 最低的 [' + t.name + '] 扛下 30% 傷害(' + self + ')!');
     doDmg(nm, self, { actor:at, fixedDmg:true, noGuard:true, noCounter:true, _cstNmShared:1, _cstReact:1 });
     try{ renderCard(nm); }catch(_){}
@@ -35440,14 +35441,18 @@ function doDmg(target, rawDmg, opts={}){
   //   ★ 減傷段為固定 30%(不吃天賦等級)→ BOSS/玩家版強度一致,無 Lv0 口徑問題。
   if(target.name==='牛魔王' && rawDmg>0
      && !(target.status||[]).some(function(st){ return st && (st.type==='_traitSeal'||st.type==='imprison'); })){
-    rawDmg = Math.max(1, Math.ceil(rawDmg * 0.70));
+    // ★ v5.296.0 天賦強化(老師甲):減傷 Lv1 30% → Lv5 40%(每級+2.5%;天賦等級內部 0~4 = 顯示 Lv1~5);BOSS/敵方(p2)版固定 30%(同反擊段 Lv0 口徑)。
+    let _nmDrTl = 0; try{ _nmDrTl = (target.side === 'p1' && typeof _getTraitLv === 'function') ? Math.min(4, _getTraitLv('牛魔王') || 0) : 0; }catch(_eNmDr){ _nmDrTl = 0; }
+    rawDmg = Math.max(1, Math.ceil(rawDmg * (0.70 - 0.025 * _nmDrTl)));
   }
   // ★ v5.193.0 — 摩羯星神 天賦「岩甲反震」常駐段:自身受到的所有傷害另外-10%(固定值不吃天賦等級)。
   //   反震段(受到傷害時50%機率以攻擊反震)在 doDmg 尾端反擊 hook 另行處理(見上方牛魔王反擊 hook 附近)。
   if(target.name==='摩羯星神' && rawDmg>0
      && !(target.status||[]).some(function(st){ return st && (st.type==='_traitSeal'||st.type==='imprison'); })
      && !(target._cst && window._cstCpT2Goat(target))){   // ✨ v5.268.0 命星 摩羯星神 t2:羊魚形態期間額外 10% 減傷失效(只認命星標記)
-    rawDmg = Math.max(1, Math.ceil(rawDmg * 0.90));
+    // ★ v5.296.0 天賦強化(老師甲):減傷 Lv1 10% → Lv5 20%(每級+2.5%);敵方(p2)版固定 10%。
+    let _capDrTl = 0; try{ _capDrTl = (target.side === 'p1' && typeof _getTraitLv === 'function') ? Math.min(4, _getTraitLv('摩羯星神') || 0) : 0; }catch(_eCapDr){ _capDrTl = 0; }
+    rawDmg = Math.max(1, Math.ceil(rawDmg * (0.90 - 0.025 * _capDrTl)));
   }
   // ★ v5.67.0 — 典韋 天賦「惡來護主」後半段:自身受到的傷害減少 50%(老師 2026-08-18 官渡改版裁定)。
   //   守門三條缺一不可:① 冒險模式 ② 中國關 ③ 典韋在 p2 → 鬥技場/世界BOSS/台日埃零影響。
@@ -35529,14 +35534,16 @@ function doDmg(target, rawDmg, opts={}){
   try{
     if(target && target.name==='蚩尤' && rawDmg>0 && target.curHp>0
        && !opts.isHeal && !opts.isRebound && !opts.isTraitShare && !opts.isChaos
-       && !target._cyEnergyThisRound
+       && (Number(target._cyEnergyThisRound) || 0) < (function(){ try{ return (target.side === 'p1' && typeof _getTraitLv === 'function' && (_getTraitLv('蚩尤') || 0) >= 2) ? 2 : 1; }catch(_eCyCap){ return 1; } })()   // ★ v5.296.0 天賦強化(老師甲):顯示 Lv3(內部 2)起每回合 2 次(敵方版固定 1 次)
+       && !(typeof G !== 'undefined' && G && target._cyEnergyAct === G._actSeq)   // ★ v5.296.0 同一次行動(多段攻擊)只算 1 次,維持老師 2026-08-18 裁定
        && !(target.status||[]).some(function(st){ return st && (st.type==='_traitSeal'||st.type==='imprison'); })){
-      target._cyEnergyThisRound = true;   // 本回合額度用畢(nextRound 重置)
+      target._cyEnergyThisRound = (Number(target._cyEnergyThisRound) || 0) + 1;   // 本回合已用次數(nextRound 重置為 false=0)
+      try{ target._cyEnergyAct = G._actSeq; }catch(_eCyAct){}
       if(typeof G !== 'undefined' && G && G.energy && typeof G.energy[target.side] === 'number'){
         const _cyEOld = G.energy[target.side];
         G.energy[target.side] = Math.min(10, _cyEOld + 1);
         if(G.energy[target.side] > _cyEOld){
-          try{ log(`⚔️ [${target.name}] 天賦:兵主戰魂!痛楚化為戰意 — ${target.side==='p1'?'我方':'敵方'}陣營 +1 能量!(每回合1次)`); }catch(_){}
+          try{ log(`⚔️ [${target.name}] 天賦:兵主戰魂!痛楚化為戰意 — ${target.side==='p1'?'我方':'敵方'}陣營 +1 能量!(本回合第${target._cyEnergyThisRound}次)`); }catch(_){}
           try{ bannerFX(target, '⚔️ 戰意 +1能量', '#ddaa66', 700); }catch(_){}
           try{ updateUI(); }catch(_){}
         }
@@ -35563,7 +35570,10 @@ function doDmg(target, rawDmg, opts={}){
   if(hasStatus(target,'_aquariusMark')){
     const _amSt = target.status.find(s=>s.type==='_aquariusMark');
     const _amLayers = Math.min((_amSt && _amSt._cstCap5) ? 5 : 3, (_amSt && _amSt._layers) || 1);   // ✨ 命星 水瓶星神 t1:上限 3→5
-    rawDmg = Math.ceil(rawDmg * (1 + _amLayers * 0.05));
+    // ★ v5.296.0 天賦強化(老師甲):每層 Lv1 5% → Lv5 10%(每級+1.25%)。刻印只會由「對手陣營」的水瓶刻上,
+    //   所以被刻印者在 p2 ⇒ 刻印者是玩家方水瓶 ⇒ 讀玩家天賦等級;被刻印者在 p1(敵方水瓶刻的)⇒ 一律 Lv1 基準 5%。
+    let _amPer = 0.05; try{ if(target.side === 'p2' && typeof _getTraitLv === 'function') _amPer = 0.05 + 0.0125 * Math.min(4, _getTraitLv('水瓶星神') || 0); }catch(_eAmPer){ _amPer = 0.05; }
+    rawDmg = Math.ceil(rawDmg * (1 + _amLayers * _amPer));
   }
   // ★ v3.15.72 — 偵探爆發「認罪」(_confess):受到的傷害 +100%(×2.0),與 dmgVuln/breakDef 分開疊乘
   if(hasStatus(target,'_confess')){ rawDmg=Math.ceil(rawDmg * 2.0); }
@@ -35756,7 +35766,7 @@ function doDmg(target, rawDmg, opts={}){
     {
       const _nmIsBossVer = (target.side==='p2' && typeof _adventureMode!=='undefined' && _adventureMode);
       const _nmTl = _nmIsBossVer ? 0 : ((typeof _getTraitLv === 'function') ? (_getTraitLv('牛魔王')||0) : 0);
-      const _nmMult0 = Math.min(2.00, 1.50 + _nmTl * 0.10);
+      const _nmMult0 = Math.min(2.50, 1.50 + Math.min(4, _nmTl) * 0.25);   // ★ v5.296.0 天賦強化(老師甲):Lv1 150% → Lv5 250%(每級+25%;舊:+10%/級上限200%);BOSS 版仍鎖 150%
       let _cstNmT1 = false; try{ _cstNmT1 = !!(window._cstHasN(target,'t1','牛魔王') && !window._cstCap.inReact(opts)); }catch(_eCstNmT1){ _cstNmT1 = false; }   // ★ v5.262.0 命座 G8
       const _nmMult = _cstNmT1 ? _nmMult0 * (200/150) : _nmMult0;   // ✨ 命星 牛魔王 t1:反擊 150%→200%(×4/3,保留天賦成長)
       const _nmAtkr = opts.actor;
@@ -35781,7 +35791,7 @@ function doDmg(target, rawDmg, opts={}){
      && opts.actor.side !== target.side
      && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && target.curHp>0
      && !(target.status||[]).some(st=>st && (st.type==='_traitSeal'||st.type==='imprison'))){
-    const _capTl = (typeof _getTraitLv === 'function') ? (_getTraitLv('摩羯星神')||0) : 0;
+    const _capTl = (target.side === 'p1' && typeof _getTraitLv === 'function') ? Math.min(4, _getTraitLv('摩羯星神')||0) : 0;   // ★ v5.296.0 敵方版鎖 Lv0(同牛魔王口徑)
     let _cstCapRate = 0.50; try{ if(window._cstHasN(target,'t1','摩羯星神')) _cstCapRate = 0.70; }catch(_eCstCpT1){ _cstCapRate = 0.50; }   // ✨ 命星 摩羯星神 t1:50%→70%
     try{ if(target._cst && window._cstCpT2Goat(target)) _cstCapRate = 1.00; }catch(_eCstCpT2r){}   // ✨ v5.268.0 命星 摩羯星神 t2 羊魚形態:反震 100%(多出的部分仍受 G8)
     let _cstCapS1 = false; try{ _cstCapS1 = window._cstHasN(target,'s1','摩羯星神') && window._cstCap.reactOk(opts) && (opts.actor.status||[]).some(function(s){ return s && s.type==='taunt' && s._cstCapRam === target; }); }catch(_eCstCpS1){ _cstCapS1 = false; }   // ★ v5.262.0 命座 G8:必定反震屬命星觸發的反應   // ✨ 命星 摩羯星神 s1:被山嶽衝撞嘲諷者攻擊時必定反震
@@ -35789,7 +35799,7 @@ function doDmg(target, rawDmg, opts={}){
     let _cstCapK = 0; if(!_cstCapS1) _cstCapK = window._cstCap.rollBand(0.50, _cstCapRate, function(){ return window._cstCap.reactOk(opts); });   // ★ v5.262.0 命座 G8:命星多出的 20% = 命星觸發的反震
     const _cstCapStar = !!(_cstCapS1 || _cstCapK === 2); if(_cstCapStar) window._cstCap.noteReact(opts);
     if(_cstCapS1 || _cstCapK){
-      const _capMult = 1.00 + _capTl * 0.10;
+      const _capMult = 1.00 + _capTl * 0.25;   // ★ v5.296.0 天賦強化(老師甲):Lv1 100% → Lv5 200%(每級+25%;舊 +10%/級)
       const _capAtkr = opts.actor;
       const _capDmg = Math.max(1, Math.floor(window._lxpsAtkv(target) * _capMult));
       log(`🐐 [摩羯星神] 天賦:岩甲反震!以攻擊 ${Math.round(_capMult*100)}% 反震給 [${_capAtkr.name}]!`);
@@ -38230,7 +38240,7 @@ function doDmg(target, rawDmg, opts={}){
        && !opts.isHeal && !opts.isRebound && !opts.isReflect && !opts.isTraitShare
        && !opts._isDot && !opts._isDotTick && !opts._fromBurn && !opts._fromBleedProc
        && !(_aqTA.status||[]).some(function(s){ return s && (s.type==='_traitSeal'||s.type==='imprison'||s.type==='confused'); })
-       && Math.random() < 0.50){
+       && Math.random() < (function(){ try{ return 0.50 + ((_aqTA.side === 'p1' && typeof _getTraitLv === 'function') ? 0.075 * Math.min(4, _getTraitLv('水瓶星神') || 0) : 0); }catch(_eAqTl){ return 0.50; } })()){   // ★ v5.296.0 天賦強化:Lv1 50% → Lv5 80%(每級+7.5%);敵方版固定 50%
       try{ log('♒ [' + _aqTA.name + '] 星圖刻印!在 [' + target.name + '] 身上刻下印記!'); }catch(_){}
       window._lxpsAquariusMarkAdd(target, 2, (function(){ try{ return window._cstHasN(_aqTA,'t1','水瓶星神') ? 5 : undefined; }catch(_eCstAqT1){ return undefined; } })());
     }
@@ -38363,7 +38373,7 @@ function doDmg(target, rawDmg, opts={}){
         // ★ v5.63.0 批次二(老師 2026-08-18)— 追擊倍率 特技40%→100%,成長 +4%/級→+10%/級(Lv5=150%)
         //   (原 v5.46.0 保留備查:const _cyMult = 0.40 + _cyTl * 0.04;)
         let _cstCyT1 = false; try{ _cstCyT1 = !!window._cstHasN(a,'t1','蚩尤'); }catch(_eCstCyT1){ _cstCyT1 = false; }
-        const _cyMult = (1.00 + _cyTl * 0.10) * (_cstCyT1 ? 1.2 : 1);   // ✨ 命星 蚩尤 t1:追擊 100%→120%(×1.2,保留天賦成長)
+        const _cyMult = (1.00 + Math.min(4, _cyTl) * 0.25) * (_cstCyT1 ? 1.2 : 1);   // ★ v5.296.0 天賦強化(老師甲):Lv1 100% → Lv5 200%(每級+25%);舊行:(1.00 + _cyTl * 0.10)   // ✨ 命星 蚩尤 t1:追擊 100%→120%(×1.2,保留天賦成長)
         const _cyDmg = Math.max(1, Math.floor(window._lxpsSpv(a) * _cyMult));   // ★ v5.90.0 修正:doDmg 讀不到 spv → 蚩尤天賦追擊被 try 吞掉=從來沒生效(舊行:spv(a))
         log(`⚔️ [蚩尤] 天賦:兵主戰魂!遠古戰意餘震 — 以特技 ${Math.round(_cyMult*100)}% 追擊 [${target.name}]!`);
         try{ bannerFX(a, '⚔️ 戰魂餘震!', '#ddaa66', 800); }catch(_){}
@@ -44203,10 +44213,14 @@ window._lxpsPiscesTidalHeart = function(){
         return _pct < _minPct ? h : min;
       }, null);
       if(!_lowest) return;
-      if((_lowest.curHp / (_lowest.hp || 1)) >= 0.50) return;
+      // ★ v5.296.0 天賦強化(老師甲):減傷 Lv1 30% → Lv5 50%(每級+5%)、觸發門檻 HP Lv1 30% → Lv5 50%(每級+5%;老師追加裁定,原 Lv1 門檻 50%)。
+      //   天賦等級內部 0~4 = 顯示 Lv1~5。敵方(p2)版一律 Lv1 基準(同牛魔王口徑:不讓「玩家自己養的等級」改變敵人強度)。
+      var _pisTl = 0; try{ _pisTl = (_sd === 'p1' && typeof _getTraitLv === 'function') ? Math.min(4, _getTraitLv('雙魚星神') || 0) : 0; }catch(_ePisTl){ _pisTl = 0; }
+      var _pisDr = 0.30 + 0.05 * _pisTl, _pisGate = 0.30 + 0.05 * _pisTl;
+      if((_lowest.curHp / (_lowest.hp || 1)) >= _pisGate) return;
       try{ _lowest.buffs = (_lowest.buffs || []).filter(function(b){ return b.type !== 'niuGuard'; }); }catch(_){}
-      try{ _lowest.buffs.push({type:'niuGuard', dur:1, _dr:0.30}); }catch(_){}
-      try{ log(`🐟 [${_pis.name}] 天賦:潮汐之心!為 [${_lowest.name}] 罩上減傷30%,守護1回合。`); }catch(_){}
+      try{ _lowest.buffs.push({type:'niuGuard', dur:1, _dr:_pisDr}); }catch(_){}
+      try{ log(`🐟 [${_pis.name}] 天賦:潮汐之心!為 [${_lowest.name}] 罩上減傷${Math.round(_pisDr*100)}%,守護1回合。`); }catch(_){}
       try{ bannerFX(_lowest, '🐟 潮汐之心', '#66aadd', 800); }catch(_){}
       try{ if(_pis._cst) window._cstPsT2Rope(_pis, _lowest); }catch(_eCstPsT2){}   // ✨ v5.268.0 命星 雙魚星神 t2 外屏七繩結(只對點亮的命星做事)
       try{ if(window._cstHasN(_pis,'t1','雙魚星神') && typeof _clearOneBadStatus === 'function'){ var _cstPsCl = _clearOneBadStatus(_lowest); if(_cstPsCl) log('✨ [' + _pis.name + '] 命星:右更二潮光,解除 [' + _lowest.name + '] 的 [' + statusName(_cstPsCl) + ']!'); } }catch(_eCstPsT1){}   // ✨ 命星 雙魚星神 t1
@@ -44325,7 +44339,12 @@ window._lxpsLibraOrderWatch = function(next){
                 });
     });
     if(!_lb) return false;
-    if(Math.random() >= 0.40) return false;
+    // ★ v5.296.0 老師追加裁定:每位天秤每回合最多「成功」發動 1 次(失敗的判定不佔額度;敵我雙方同規則)。
+    try{ if(typeof G !== 'undefined' && G && _lb._lbOkRound === (G.round || 0)) return false; }catch(_eLbOnce){}
+    // ★ v5.296.0 天賦強化(老師甲):Lv1 40% → Lv5 50%(每級+2.5%);敵方(p2)天秤固定 40%。
+    var _lbRate = 0.40; try{ if(_lb.side === 'p1' && typeof _getTraitLv === 'function') _lbRate = 0.40 + 0.025 * Math.min(4, _getTraitLv('天秤星神') || 0); }catch(_eLbTl){ _lbRate = 0.40; }
+    if(Math.random() >= _lbRate) return false;
+    try{ _lb._lbOkRound = (G.round || 0); }catch(_eLbOk){}   // ★ v5.296.0 本回合額度用掉
     try{ log(`⚖️ [${_lb.name}] 秩序警戒!【${next.name}】被判定越權,直接放棄本回合行動!`); }catch(_){}
     try{ bannerFX(next, '⚖️ 放棄行動!', '#ffdd44', 900); }catch(_){}
     // ✨ 命星 天秤星神 t1「氐宿一南秤」:被判越權而放棄行動的對手,其陣營額外流失 1 點能量(並記帳,供 s1「同一名對手每回合最多因天秤流失 1 點」判斷)
@@ -60860,7 +60879,7 @@ function _realAiAct(a){
       if(h._cn2TrC && h._cn2TrC.key === key) return h._cn2TrC.list;
       var list = base.map(function(t){
         var c = JSON.parse(JSON.stringify(t));
-        if(c.lv && lv > 0){ c[c.lv.f] = Math.min(c.lv.max, (c[c.lv.f] || 0) + c.lv.per * lv); }
+        if(c.lv && lv > 0){ [].concat(c.lv).forEach(function(L){ if(L && L.f) c[L.f] = Math.min(L.max, (c[L.f] || 0) + L.per * lv); }); }   // ★ v5.296.0 lv 可為陣列(趙雲:反擊倍率+回復量兩項同時成長)
         return c;
       });
       lit.forEach(function(L){
@@ -61624,7 +61643,7 @@ function _realAiAct(a){
       if(tr.heal > 0 && t.curHp > 0){
         var hv = Math.max(1, Math.floor((t.hp || 0) * tr.heal / 100));
         try{ doHeal(t, hv, { actor:zy, isHeal:true, noDice:true, noWarhorn:true }); }catch(_){ t.curHp = Math.min(t.hp, t.curHp + hv); }
-        _say('✨ [' + zy.name + '] 命星:龍膽無懼![' + t.name + '] 恢復 ' + hv + ' HP!');
+        _say('🐉 [' + zy.name + '] 救主療傷![' + t.name + '] 恢復 ' + hv + ' HP(最大HP ' + tr.heal + '%)!');   // ★ v5.296.0 回復量改由天賦等級+命星共同組成,不再只寫命星
       }
       if(foeHit && a && a.curHp > 0){
         var dmg = Math.max(1, Math.floor(_atkv(zy) * (tr.p || 120) / 100 * (ar ? 0.5 : 1)));
