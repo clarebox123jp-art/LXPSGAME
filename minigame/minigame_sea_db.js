@@ -23,7 +23,8 @@
   if(!D || D.SEA) return;
   var _imgKeys0 = {}, _k0;
   for(_k0 in D.IMG){ if(D.IMG.hasOwnProperty(_k0)) _imgKeys0[_k0] = 1; }
-  D.SEA_VER = 'v1.392.0';   /* ★ v1.392.0 外島 AP/紮營過夜/露宿不良狀態(D.SEA.CAMP、D.STATUS fever/chill/earache)+ 🌊 遠洋星域 21 節點(檔尾 v1.392.0 區塊) */
+  D.SEA_VER = 'v1.408.0';   /* ★ v1.408.0(2026-10-25)外島材料製作品:新設施 4/營地 Lv4/新裝飾 10/新工具 4(檔尾 v1.408.0 區塊) */
+  void 'v1.392.0';   /* ★ v1.392.0 外島 AP/紮營過夜/露宿不良狀態(D.SEA.CAMP、D.STATUS fever/chill/earache)+ 🌊 遠洋星域 21 節點(檔尾 v1.392.0 區塊) */
   void 'v1.384.0';   /* ★ v1.384.0 外島夥伴與島主新機制(見檔頭);★ v1.378.0 外島篇主線 c9~c13 + 4 位說話者(檔尾 v1.378.0 區塊);終章最後一句改「本島篇完結」 */
 
   /* ══════════════════════════════════════════════════════════════════════════
@@ -1858,6 +1859,136 @@
       D.SK_NODES.push(n);
     }
   })();
+
+  /* ═════════════════════════════════════════════════════════════════
+   * ★ v1.408.0(2026-10-25・老師「設計荒島求生外島材料可製作新設施、新營地裝飾、新工具」,草案老師選「甲」全做)
+   *   外島材料原本大多只能賣,這一包讓四座外島各有自己的「帶回本島」用途:
+   *   ①新設施 4 棟(一島一棟):needIsle = 那座島開放後才出現在建造清單(本島玩家看不到外島名稱,不劇透)
+   *     daily[Lv-1] = 每天早上自動送進倉庫的產物;eff[Lv-1] = 效果(index islSeaBldEff 加總):
+   *       raidP 夜襲機率(%)/resCut 研究材料減少(%)/farmAdd 農田收成 +N/dishP 料理恢復(%)/fireHp 夜襲營火血 +N
+   *   ②營地擴建 Lv4(設施 16 → 20 棟;13 棟舊設施 + 4 棟新設施會超過舊上限)
+   *   ③新裝飾 10 件(needIsle 同上;out:1 = 戶外頁)④新工具 4 件(needIsle 同上;特殊效果在 index:乳膠手套/硫磺火石)
+   *   圖鍵全部先登記(落在 D.SEA_IMG 選配清單裡),圖還沒上傳前一律退回 emoji;圖檔名見 Project Knowledge
+   *   claude/外島製作品_圖片需求清單.md。
+   * ═════════════════════════════════════════════════════════════════ */
+  (function(){
+    var B = {
+      icehouse: { n:'冰窖', e:'🧊', img:'bld_icehouse', needIsle:'ice', sea:1, cost:{ ice:20, stone:12, qiviut:4, lichen:6 },
+        desc:'把冰天雪地島的冰搬回來冷藏:每天產冰塊,升級後食物保鮮、料理更營養。',
+        lvText:['每日冰塊 3','每日冰塊 5','料理恢復 +10%(冷藏保鮮)','每日冰塊 7','每日再加磷蝦 2'],
+        daily:[ { ice:3 }, { ice:5 }, { ice:5 }, { ice:7 }, { ice:7, krill:2 } ],
+        eff:[ {}, {}, { dishP:10 }, { dishP:10 }, { dishP:10 } ],
+        sci:'冰融化時會吸收周圍的熱,所以冰窖能一直保持低溫;低溫讓細菌長得很慢,食物就不容易壞。',
+        parts:[ { k:'wall',  n:'厚石牆',   need:'stone',  hint:'又厚又重的牆,外面的熱傳不太進來', e:'🪨' },
+                { k:'insul', n:'隔熱層',   need:'qiviut', hint:'細細的絨毛鎖住不流動的空氣,熱很難穿過', e:'🧶' },
+                { k:'icebk', n:'冰磚',     need:'ice',    hint:'冰塊堆滿整間,彼此一起保冷', e:'🧊' },
+                { k:'seal',  n:'門縫填塞', need:'lichen', hint:'乾燥的地衣塞住縫隙,冷空氣不外漏', e:'🍂' } ] },
+      greenhouse: { n:'熱帶溫室', e:'🌴', img:'bld_greenhouse', needIsle:'jungle', sea:1, cost:{ wood:20, latex:6, cacao:4, banana:4, leaf:10 },
+        desc:'用乳膠薄膜蓋一座溫室,把雨林的作物種在營地:每天收熱帶作物,升級後連農田都長得更好。',
+        lvText:['每日熱帶作物 2','每日熱帶作物 3','農田收成 +1','每日熱帶作物 5','每日熱帶作物 6'],
+        daily:[ { banana:1, coconut:1 }, { banana:1, coconut:1, cacao:1 }, { banana:2, coconut:1, cacao:1 }, { banana:2, coconut:2, cacao:1 }, { banana:2, coconut:2, cacao:2 } ],
+        eff:[ {}, {}, { farmAdd:1 }, { farmAdd:1 }, { farmAdd:1 } ],
+        sci:'陽光穿過透明的膜照進來,地面變暖後放出的熱卻不容易散出去——這就是「溫室效應」,讓熱帶植物在本島也長得好。',
+        parts:[ { k:'frame', n:'骨架',     need:'wood',  hint:'撐起整片薄膜的支架', e:'🪵' },
+                { k:'film',  n:'透明薄膜', need:'latex', hint:'薄薄的乳膠膜讓陽光進來、熱留在裡面', e:'🧴' },
+                { k:'seed',  n:'幼苗',     need:'cacao', hint:'可可要種在又溫暖又潮濕的地方', e:'🫘' },
+                { k:'soil',  n:'落葉堆肥', need:'leaf',  hint:'落葉腐爛後會變成植物的養分', e:'🍃' } ] },
+      windgen: { n:'風力發電機', e:'🌀', img:'bld_windgen', needIsle:'storm', sea:1, cost:{ wood:18, ore:10, fiber:12, latex:4 },
+        desc:'學狂風暴雨島的強風,讓營地有電:夜裡電燈亮著,魔物比較不敢來;研究時也有電動工具幫忙。',
+        lvText:['夜襲機率 −5%','研究材料 −10%','夜襲機率 −10%','研究材料 −20%','夜襲機率 −15%、營火血 +1'],
+        daily:[ {}, {}, {}, {}, {} ],
+        eff:[ { raidP:-5 }, { raidP:-5, resCut:10 }, { raidP:-10, resCut:10 }, { raidP:-10, resCut:20 }, { raidP:-15, resCut:20, fireHp:1 } ],
+        sci:'風吹動葉片讓轉軸轉動,轉軸帶著線圈在磁鐵旁邊轉,就會產生電——把風的動能變成電能。',
+        parts:[ { k:'blade', n:'葉片',     need:'wood',  hint:'又輕又長,才吃得到風', e:'🪵' },
+                { k:'coil',  n:'線圈與磁鐵', need:'ore', hint:'金屬線圈在磁鐵旁轉動就會發電', e:'🟫' },
+                { k:'rope',  n:'固定索',   need:'fiber', hint:'強風也拉得住塔身', e:'🌿' },
+                { k:'wire',  n:'電線外皮', need:'latex', hint:'橡膠是絕緣體,電才不會亂跑', e:'🧴' } ] },
+      tidefarm: { n:'潮汐養殖池', e:'🪸', img:'bld_tidefarm', needIsle:'deep', sea:1, cost:{ stone:20, coralbit:8, kelp:6, urchin:2 },
+        desc:'在岸邊圍一座養殖池,每天漲潮把新鮮海水送進來:巨藻和海膽自己長,升級後還能收集空氣瓶。',
+        lvText:['每日巨藻 2、海膽 1','每日巨藻 3、海膽 2','再加空氣瓶 1','每日巨藻 4、海膽 3','空氣瓶 2'],
+        daily:[ { kelp:2, urchin:1 }, { kelp:3, urchin:2 }, { kelp:3, urchin:2, airtank:1 }, { kelp:4, urchin:3, airtank:1 }, { kelp:4, urchin:3, airtank:2 } ],
+        eff:[ {}, {}, {}, {}, {} ],
+        sci:'潮汐每天漲退約兩次,每次漲潮都換進帶著氧氣和浮游生物的新鮮海水;海膽吃巨藻,兩邊數量要平衡,池子才養得久。',
+        parts:[ { k:'dam',   n:'石堤',     need:'stone',    hint:'堆在岸邊,退潮時把海水留住', e:'🪨' },
+                { k:'reef',  n:'人工礁',   need:'coralbit', hint:'珊瑚碎有很多小孔,小生物最愛躲在裡面', e:'🪸' },
+                { k:'forest',n:'巨藻苗',   need:'kelp',     hint:'巨藻長得快,是海膽的食物', e:'🌿' },
+                { k:'stock', n:'種苗',     need:'urchin',   hint:'放幾隻海膽進去慢慢繁殖', e:'🟣' } ] }
+    }, k, ORDER = ['icehouse', 'greenhouse', 'windgen', 'tidefarm'], i, it, j;
+    for(i = 0; i < ORDER.length; i++){
+      k = ORDER[i]; D.BUILDINGS[k] = B[k];
+      if(D.BUILD_ORDER.indexOf(k) < 0){ j = D.BUILD_ORDER.indexOf('ship'); if(j < 0) D.BUILD_ORDER.push(k); else D.BUILD_ORDER.splice(j, 0, k); }   /* 排在帆船前面(帆船永遠是最後一張) */
+      D.IMG['bld_' + k + '_1'] = 'island_bld_' + k + '.png'; D.IMG['bld_' + k + '_3'] = 'island_bld_' + k + '_lv3.png';
+    }
+    D.SEA_BLD = ORDER;
+
+    /* 營地 Lv4:20 棟設施(index islCampExpand 會檢查 needIsle) */
+    D.CAMP_LV[4] = { grid:5, cols:5, rows:4, n:20, ap:5, fireHp:6, cost:{ wood:100, stone:60, ice:20, frostcrystal:4, latex:8 }, tech:20, needIsle:'jungle' };
+    D.CAMP_MAX_LV = 4;
+
+    /* 新裝飾 10 件(價錢/賣價/AP 由 island_db 的 decoPrice/decoSell/decoAp 依 cost 與 comfort 自動算) */
+    var DC = [
+      { id:'icesculpt',  n:'冰晶天鵝雕', e:'🦢', comfort:5,  out:1, needIsle:'ice',    cost:{ ice:12, frostcrystal:2 },               d:'冰塊和冰晶雕成的天鵝;冰是透明的,陽光照進去會折射出亮晶晶的光。' },
+      { id:'igloolamp',  n:'雪屋燈',     e:'🛖', comfort:4,  out:1, needIsle:'ice',    cost:{ ice:8, lichen:2, fiber:2 },             d:'迷你雪屋裡點一盞燈;雪裡面有很多空氣,所以雪屋反而很保暖。' },
+      { id:'ivoryarch',  n:'猛瑪象牙拱門', e:'⛩', comfort:7, out:1, needIsle:'ice',    cost:{ ivory:2, stone:10, wood:6 },            d:'冰河時期的猛瑪象牙立成一道拱門,紀念登上冰天雪地島的旅程。', sz:1.3 },
+      { id:'qiviutrug',  n:'麝牛絨地毯', e:'🧶', comfort:5,           needIsle:'ice',    cost:{ qiviut:6, fiber:4 },                    d:'比羊毛暖好幾倍的麝牛絨,赤腳踩上去軟綿綿。' },
+      { id:'cocohammock',    n:'椰子吊床',   e:'🏝', comfort:6,  out:1, needIsle:'jungle', cost:{ coconut:4, latex:2, fiber:8, wood:4 },  d:'綁在兩根柱子中間的吊床;離開潮濕的地面睡,涼快又不怕蟲。' },
+      { id:'cacaopot',   n:'可可樹盆栽', e:'🪴', comfort:4,           needIsle:'jungle', cost:{ cacao:3, nut:2, stone:4 },             d:'可可的花和果實直接長在樹幹上,這叫「幹生花」。' },
+      { id:'lighthouse', n:'燈塔模型',   e:'🗼', comfort:6,  out:1, needIsle:'storm',  cost:{ stone:14, ore:5, frostcrystal:1 },      d:'照著沉船燈塔灣的燈塔做的模型;燈塔的透鏡把光集中成一束,照得很遠。', sz:1.2 },
+      { id:'coraltank',  n:'珊瑚魚缸',   e:'🐠', comfort:7,           needIsle:'deep',   cost:{ coralbit:6, kelp:3, frostcrystal:2, water:4 }, d:'一小缸會呼吸的海;珊瑚其實是動物,和藻類住在一起互相幫忙。' },
+      { id:'urchinlamp', n:'發光海膽燈', e:'💡', comfort:4,           needIsle:'deep',   cost:{ urchin:2, coralbit:2, latex:1 },        d:'仿深海發光生物做的小夜燈;很多深海生物靠身體裡的化學反應自己發光。' },
+      { id:'kingstatue', n:'四島主紀念碑', e:'👑', comfort:10, out:1, needIsle:'deep', uniq:1, sz:1.4, cost:{ core_mammoth:1, core_treespirit:1, core_hurricane:1, core_giantsquid:1, stone:30 }, d:'用四座外島島主的核心立起的紀念碑——你已經走遍整片大海了!(全島只能有一座)' }
+    ];
+    for(i = 0; i < DC.length; i++){
+      it = DC[i]; it.img = 'deco_' + it.id; it.sea = 1;
+      D.IMG['deco_' + it.id] = 'island_deco_' + it.id + '.png';
+      D.DECOS.push(it);
+      if(it.out && D.DECO_TAB_OUT) D.DECO_TAB_OUT[it.id] = 1;
+    }
+    if(D.NIGHT_GLOW){ D.NIGHT_GLOW.bld.push('windgen'); D.NIGHT_GLOW.deco.push('igloolamp', 'lighthouse', 'urchinlamp'); }
+
+    /* 新工具 4 件(eff = 活動產量 +N,islToolBonus 加總;gloves/sulfurflint 另有 index 特殊效果) */
+    var TL = [
+      { id:'icepick', n:'象牙冰鎬', e:'⛏', needIsle:'ice', cost:{ ivory:1, frostcrystal:2, wood:4, fiber:3 }, eff:{ quarry:3 },
+        d:'猛瑪象牙做的鎬尖又硬又有韌性:採石一次多 3。',
+        parts:[ { k:'head', n:'鎬尖', need:'ivory', hint:'象牙又硬又有韌性,敲石頭不容易崩裂', e:'🦣' }, { k:'edge', n:'冰晶刃口', need:'frostcrystal', hint:'晶體很硬,磨尖了可以劈開岩縫', e:'❄' },
+                { k:'shaft', n:'鎬柄', need:'wood', hint:'長柄=長槓桿,更省力', e:'🪵' }, { k:'grip', n:'握把纏繩', need:'fiber', hint:'纏緊防滑', e:'🌿' } ] },
+      { id:'gloves', n:'乳膠手套', e:'🧤', needIsle:'jungle', cost:{ latex:4, fiber:2 }, eff:{ gather:1 },
+        d:'戴著採集不怕刺:採集多 1;包紮傷口時保持乾淨,用纖維治療只要 1 份。',
+        parts:[ { k:'film', n:'手套膜', need:'latex', hint:'手模沾乳膠、晾乾,就是一層不透水的膜', e:'🧴' }, { k:'cuff', n:'袖口', need:'fiber', hint:'綁緊袖口,髒東西跑不進去', e:'🌿' } ] },
+      { id:'krillnet', n:'磷蝦網', e:'🥅', needIsle:'jungle', cost:{ fiber:12, latex:2, stone:3 }, eff:{ fish:2 },
+        d:'網眼細密、泡水不爛的拖網:捕魚多 2 條。',
+        parts:[ { k:'mesh', n:'網目', need:'fiber', hint:'網眼要小,小魚小蝦才跑不掉', e:'🌿' }, { k:'coat', n:'防水塗層', need:'latex', hint:'塗上乳膠,網子泡水也不爛', e:'🧴' },
+                { k:'sinker', n:'沉子', need:'stone', hint:'重物讓網子沉到水裡張開', e:'🪨' } ] },
+      { id:'sulfurflint', n:'硫磺火石', e:'🔥', needIsle:'deep', cost:{ sulfide:2, ore:2, fiber:2 }, eff:{},
+        d:'熱泉邊的硫磺做成的打火石:生火一定點得著;火候穩,做料理品質 +1 ★。',
+        parts:[ { k:'striker', n:'打火鐵', need:'ore', hint:'鐵和硬石用力摩擦會擦出火花', e:'🟫' }, { k:'sulfur', n:'硫磺頭', need:'sulfide', hint:'硫的燃點很低,一點火花就燒起來', e:'🟨' },
+                { k:'wrap', n:'火絨', need:'fiber', hint:'乾燥的細纖維最容易接住火花', e:'🌿' } ] }
+    ];
+    for(i = 0; i < TL.length; i++){ TL[i].sea = 1; D.TOOLS.push(TL[i]); }
+    if(D.MAKE_FEE && D.MAKE_FEE.lv){ D.MAKE_FEE.lv.icepick = 3; D.MAKE_FEE.lv.gloves = 2; D.MAKE_FEE.lv.krillnet = 2; D.MAKE_FEE.lv.sulfurflint = 3; }
+
+    /* 營地物件專屬對白(index islObjTalk 讀不到 ISL_OBJ_TALK 時改讀這裡) */
+    D.OBJ_TALK = D.OBJ_TALK || {};
+    D.OBJ_TALK.icehouse   = ['冰窖裡涼颼颼的,東西放在這裡不容易壞。', '從冰天雪地島搬回來的冰,在這裡可以撐很久。'];
+    D.OBJ_TALK.greenhouse = ['溫室裡熱呼呼的,好像又回到雨林了。', '香蕉、椰子、可可,在本島也長得好好的。'];
+    D.OBJ_TALK.windgen   = ['風一吹,營地的燈就亮了!', '狂風暴雨島學到的事:風也可以變成電。'];
+    D.OBJ_TALK.tidefarm   = ['漲潮的時候,海水嘩啦嘩啦灌進池子裡。', '海膽和巨藻要剛剛好,太多海膽會把巨藻吃光。'];
+    D.OBJ_TALK.icesculpt  = ['陽光一照,冰天鵝閃閃發亮。', '希望它不要太快融化……'];
+    D.OBJ_TALK.igloolamp  = ['雪屋裡的小燈,看起來好溫暖。', '雪裡面藏著好多空氣,所以很保暖。'];
+    D.OBJ_TALK.ivoryarch  = ['每次走過這道拱門,都會想起冰河上的猛瑪象。', '這是冰天雪地島的紀念。'];
+    D.OBJ_TALK.qiviutrug  = ['好軟!赤腳踩上去好舒服。', '麝牛絨真的比羊毛暖好多。'];
+    D.OBJ_TALK.cocohammock    = ['躺上去搖啊搖,差點睡著。', '離地睡覺,蟲子就爬不上來了。'];
+    D.OBJ_TALK.cacaopot   = ['可可的花長在樹幹上,好特別。', '等它結果,說不定能做熱可可。'];
+    D.OBJ_TALK.lighthouse = ['燈塔照亮航線,船才不會撞上礁石。', '看著它就想起狂風暴雨島的那一夜。'];
+    D.OBJ_TALK.coraltank  = ['魚在珊瑚之間游來游去,看不膩。', '珊瑚其實是動物喔。'];
+    D.OBJ_TALK.urchinlamp = ['晚上發出藍藍的光,像在深海裡一樣。', '深海的生物會自己發光,好神奇。'];
+    D.OBJ_TALK.kingstatue = ['四座外島,全部都走過了!', '冰河猛瑪王、絞殺巨木靈、颶風元靈、深淵巨魷……每一場都好難忘。'];
+  })();
+  D.LOG.unshift({ v: 'v1.408.0', d: '2026-10-25', items: [
+    '🧊 外島材料可以帶回本島做東西了!新設施:冰窖、熱帶溫室、風力發電機、潮汐養殖池(登上那座外島後才能蓋)。',
+    '🏕 營地可以擴建到 Lv4,最多蓋 20 棟設施。',
+    '🪴 10 件外島新裝飾(冰晶天鵝雕、椰子吊床、珊瑚魚缸、四島主紀念碑……)和 4 件新工具(象牙冰鎬、乳膠手套、磷蝦網、硫磺火石)。'
+  ] });
 
   /* 本檔新增的圖鍵全部列為選配:圖還沒上傳前「完整下載」不會因此算失敗(index 端 islInstallUrls 讀 D.SEA_IMG) */
   D.SEA_IMG = {};

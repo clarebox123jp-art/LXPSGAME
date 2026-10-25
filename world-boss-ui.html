@@ -5538,7 +5538,9 @@ try{
     });
     console.log('[WB-Notif] ✅ 邀請通知訂閱已啟動');
   }
-  window._wbStartInviteNotifSub = _wbStartInviteNotifSub;
+  // ★ v5.300.0 老師「玩家在非冒險關卡或戰鬥中的任意可停留頁面都可以收到入隊邀請」— 收邀請改由開機就載入的 world-boss.js 輕量模組負責
+  //   (window._wbInvLite);本檔要等玩家點過龍王戰入口才 lazy load,以前沒點過的人整場收不到邀請。輕量模組在時本檔不搶訂閱/不覆寫出口。
+  if(!window._wbInvLite) window._wbStartInviteNotifSub = _wbStartInviteNotifSub;
 
   function _wbStopInviteNotifSub(){
     if(_wbInvitesUnsub){
@@ -5554,7 +5556,7 @@ try{
     const stack = document.getElementById('wb-invite-notif-stack');
     if(stack) stack.innerHTML = '';
   }
-  window._wbStopInviteNotifSub = _wbStopInviteNotifSub;
+  if(!window._wbInvLite) window._wbStopInviteNotifSub = _wbStopInviteNotifSub;   /* ★ v5.300.0 同上 */
 
   function _wbRenderInviteNotifs(){
     const stack = document.getElementById('wb-invite-notif-stack');
@@ -5676,7 +5678,8 @@ try{
     if(dom) dom.remove();
   }
 
-  window._wbInviteAccept = async function(inviteId, roomId){
+  // ★ v5.300.0 接受邀請的本體另存成 window._wbInviteAcceptCore,給 world-boss.js 輕量模組在「載入本檔之後」呼叫(每日場次/回覆/進房流程只此一份)
+  const _wbInviteAcceptCore = async function(inviteId, roomId){
     if(!_wbCanAcceptInvite()){
       _wbGameAlert('⚔ 你正在戰鬥中,結束戰鬥後才能接受邀請');
       return;
@@ -5739,7 +5742,10 @@ try{
     }
   };
 
-  window._wbInviteDecline = async function(inviteId){
+  window._wbInviteAcceptCore = _wbInviteAcceptCore;
+  if(!window._wbInvLite) window._wbInviteAccept = _wbInviteAcceptCore;   /* ★ v5.300.0 輕量模組在時,由它包一層(先載入本檔再呼叫 Core) */
+
+  if(!window._wbInvLite) window._wbInviteDecline = async function(inviteId){   /* ★ v5.300.0 輕量模組在時用它自己的拒絕(不必載入本檔) */
     if(!inviteId) return;
     if(window._wbNet && window._wbNet.respondInvite){
       try{ await window._wbNet.respondInvite(inviteId, 'declined'); }catch(_){}

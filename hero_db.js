@@ -8119,26 +8119,26 @@ var _LXPS_HERO_SD = {
   CN2.routes.forEach(function(r){ (CN2.routeHeroes[r.id] || []).forEach(function(hn){ if(CN2.recruit[r.main] && CN2.recruit[r.main].indexOf(hn) < 0) CN2.recruit[r.main].push(hn); }); });
   CN2.allHeroNames = [CN2.hero.name].concat(CN2.heroes2.map(function(H){ return H.name; }));
 
-  // ── 五、立繪「上傳即生效」探測 ──
-  //   立繪沒上傳前,HERO_IMGS 不登記 ⇒ 圖鑑/戰鬥卡片自動顯示 emoji,不會出現破圖;
-  //   探測只在「進入九州輿圖 / 魔物圖鑑 / 英雄圖鑑」時才做(不在開機時搶頻寬,對齊 v5.84.0 下載權重),
-  //   成功載入才寫入 HERO_IMGS,之後所有畫面自然換成立繪。
+  // ── 五、立繪登錄(v5.293.0 原為「上傳即生效」探測;v5.299.0 素材全數上傳後改為開機直接登錄,見下方註解)──
+  // ★ v5.299.0(2026-10-25・老師「中國關的新增精英怪和 BOSS 的圖片沒有對到,請檢查程式中檔名是否要修正」)
+  //   查證:repo 根目錄 21 張敵人 + 7 張新 SSR 的 `<名字>.webp` 檔名全部正確、圖片內容也逐張對過,檔名不必改。
+  //   真正原因是「探測式」載入:① 只在開九州輿圖 1.2 秒後 / 開魔物圖鑑時才探測,先畫好的卡片拿不到圖、一直顯示 emoji;
+  //   ② 走 raw.githubusercontent(依 IP 限流,一班 iPad 共用學校 IP 常吃 429);③ 每張只探一次,失敗不重試。
+  //   修法:素材已全部上傳 ⇒ 改成開機就直接登錄 HERO_IMGS(與華雄/呂布等既有中國關敵人同一做法,所有畫面一開始就有圖),
+  //   網址改同源相對路徑(GitHub Pages CDN,不限流、sw.js 同源快取攔得到;取不到時 index.html 的 v5.210.0 全域 error 網會自動改回 raw 重試一次)。
+  //   已有登錄者(老師換圖、畫風切換)一律不覆蓋。_cn2ProbeImgs 保留為相容空殼,呼叫點不必改。
   CN2._probed = {};
-  window._cn2ProbeImgs = function(onlyHero){
+  window._cn2RegImgs = function(){
     try{
       if(typeof HERO_IMGS === 'undefined') return;
-      var list = onlyHero ? CN2.allHeroNames.slice() : Object.keys(CN2.enemies).concat(CN2.allHeroNames);
-      list.forEach(function(name){
-        if(CN2._probed[name] || HERO_IMGS[name]) return;
-        CN2._probed[name] = 1;
+      Object.keys(CN2.enemies).concat(CN2.allHeroNames).forEach(function(name){
+        if(HERO_IMGS[name]) return;
         var file = (name === CN2.hero.name) ? CN2.hero.img : (name + '.webp');
-        var url = RAW + encodeURIComponent(file);
-        var im = new Image();
-        im.onload = function(){ try{ if(!HERO_IMGS[name]) HERO_IMGS[name] = url; }catch(_){} };
-        im.src = url;
+        HERO_IMGS[name] = './' + encodeURIComponent(file);
       });
-    }catch(_e){ console.warn('[CN2 立繪探測]', _e); }
+    }catch(_e){ console.warn('[CN2 立繪登錄]', _e); }
   };
-  try{ setTimeout(function(){ window._cn2ProbeImgs(true); }, 9000); }catch(_){}   // 楊戩 1 張:開機 9 秒後低優先探測
+  window._cn2RegImgs();
+  window._cn2ProbeImgs = function(){ window._cn2RegImgs(); };   // 舊呼叫點(九州輿圖/魔物圖鑑)相容:補登漏網者
 })();
 // ★★★ v5.293.0 中國關擴充《繪卷新章》登錄表 END ★★★

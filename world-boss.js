@@ -5522,5 +5522,239 @@
   }
   _wbInstallAllAdvHooks();
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ★ v5.300.0(2026-10-25・老師「優化龍王戰的連線功能,改成玩家在非冒險關卡或戰鬥中的任意可停留頁面(商店、圖鑑、背包...)都可以收到入隊邀請」)
+  //   根因:收邀請(訂閱 worldBossInvites + 左側卡片)原本寫在 world-boss-ui.html,那個檔要等玩家「自己點過一次龍王戰入口」才 lazy load ⇒
+  //         沒點過的玩家不管停在哪一頁都收不到邀請(邀請人看得到對方在線,對方畫面卻什麼都沒出現)。
+  //   修法:本檔開機就載入 ⇒ 把「訂閱 + 卡片 + 倒數 + 拒絕 + 逾時回 busy」搬到這裡(輕量,不載 800KB 的 UI 檔);
+  //         按「接受」那一刻才 _wbEnsureUi() 載入 UI,再呼叫 UI 檔的 window._wbInviteAcceptCore(每日場次/回覆 accepted/進房/隊伍確認頁只此一份)。
+  //   戰鬥中(冒險關卡或龍王戰)卡片照樣出現但「接受」灰掉,戰鬥結束 30 秒內仍可接受(老師裁定甲,與舊版相同)。
+  //   出口名稱沿用舊的 window._wbStartInviteNotifSub / _wbStopInviteNotifSub / _wbInviteAccept / _wbInviteDecline:
+  //         game_cloud.js 登入/登出鉤子照舊呼叫;world-boss-ui.html 看到 window._wbInvLite 就不再覆寫(見該檔 v5.300.0 註解)。
+  //   共用平板防汙染:登出鉤子會呼叫 _wbStopInviteNotifSub ⇒ 退訂 + 清空卡片;訂閱條件 toUid == 目前登入者,換人登入重新訂閱。
+  //   三平台:卡片掛 body(不在縮放畫布 #gc 內),PC/iPad 用原尺寸,手機橫向(高 ≤520)與直向窄螢幕另縮小。
+  // ═══════════════════════════════════════════════════════════════════
+  (function _wbInviteLiteModule(){
+    if(window._wbInvLite) return;
+    window._wbInvLite = true;
+    const TOTAL = 30000;
+    let _list = [], _unsub = null, _uid = null, _accepting = false, _retryT = null;
+    const _timers = {}, _seen = {};
+
+    function _css(){
+      if(document.getElementById('wb-inv-lite-css')) return;
+      const st = document.createElement('style');
+      st.id = 'wb-inv-lite-css';
+      st.textContent =
+        '#wb-inv-lite-stack{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:2147483645;display:flex;flex-direction:column;gap:24px;pointer-events:none;max-width:640px;}' +
+        '#wb-inv-lite-stack .wbl-card{pointer-events:auto;position:relative;min-width:520px;box-sizing:border-box;background:linear-gradient(160deg,#2a1545 0%,#150a25 100%);border:5px solid #ffe066;border-radius:28px;padding:28px 32px;box-shadow:0 0 48px rgba(255,224,102,.5),0 12px 40px rgba(0,0,0,.7);color:#ffe8a0;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;animation:wblIn .4s ease-out;}' +
+        '@keyframes wblIn{from{transform:translateX(-120%);opacity:0}to{transform:translateX(0);opacity:1}}' +
+        '#wb-inv-lite-stack .wbl-hdr{font-size:24px;color:#ffe066;letter-spacing:2px;text-shadow:0 0 16px rgba(255,224,102,.6);margin-bottom:8px;font-weight:800;}' +
+        '#wb-inv-lite-stack .wbl-from{font-size:30px;color:#fff;font-weight:700;letter-spacing:1px;}' +
+        '#wb-inv-lite-stack .wbl-room{font-size:22px;color:#aaa;margin-top:6px;letter-spacing:1px;}' +
+        '#wb-inv-lite-stack .wbl-barw{height:10px;background:rgba(0,0,0,.5);border-radius:6px;margin:16px 0;overflow:hidden;}' +
+        '#wb-inv-lite-stack .wbl-bar{height:100%;background:linear-gradient(90deg,#ffe066,#ff8855);border-radius:6px;transition:width .3s linear;}' +
+        '#wb-inv-lite-stack .wbl-bar.danger{background:linear-gradient(90deg,#ff6644,#cc2200);}' +
+        '#wb-inv-lite-stack .wbl-btns{display:flex;gap:16px;margin-top:12px;}' +
+        '#wb-inv-lite-stack .wbl-btn{flex:1;padding:16px 12px;font-size:26px;font-weight:700;border-radius:16px;cursor:pointer;font-family:inherit;border:none;letter-spacing:2px;}' +
+        '#wb-inv-lite-stack .wbl-btn.ok{background:linear-gradient(135deg,#5dcaa5,#3aa580);color:#fff;}' +
+        '#wb-inv-lite-stack .wbl-btn.ok:disabled{background:#444;color:#888;cursor:not-allowed;}' +
+        '#wb-inv-lite-stack .wbl-btn.no{background:rgba(255,80,80,.25);color:#ffaaaa;border:3px solid rgba(255,100,100,.4);}' +
+        '#wb-inv-lite-stack .wbl-busy{font-size:22px;color:#ffaa88;margin-top:8px;letter-spacing:1px;text-align:center;}' +
+        /* 手機直向/窄螢幕(寬 ≤ 700) */
+        '@media (max-width:700px){#wb-inv-lite-stack{left:8px;top:auto;bottom:12px;transform:none;gap:10px;max-width:calc(100vw - 16px);}' +
+          '#wb-inv-lite-stack .wbl-card{min-width:0;width:calc(100vw - 16px);max-width:360px;padding:12px 14px;border-width:3px;border-radius:16px;}' +
+          '#wb-inv-lite-stack .wbl-hdr{font-size:14px;margin-bottom:4px}#wb-inv-lite-stack .wbl-from{font-size:17px}#wb-inv-lite-stack .wbl-room{font-size:13px;margin-top:2px}' +
+          '#wb-inv-lite-stack .wbl-barw{height:6px;margin:8px 0}#wb-inv-lite-stack .wbl-btns{gap:8px;margin-top:6px}' +
+          '#wb-inv-lite-stack .wbl-btn{font-size:16px;padding:9px 6px;border-radius:10px;letter-spacing:1px}#wb-inv-lite-stack .wbl-busy{font-size:13px;margin-top:4px}}' +
+        /* 手機橫向(高 ≤ 520)— 放最後,蓋過上面兩組 */
+        '@media (orientation:landscape) and (max-height:520px){#wb-inv-lite-stack{left:10px;top:50%;bottom:auto;transform:translateY(-50%);gap:8px;max-width:300px;}' +
+          '#wb-inv-lite-stack .wbl-card{min-width:0;width:290px;padding:10px 12px;border-width:3px;border-radius:14px;}' +
+          '#wb-inv-lite-stack .wbl-hdr{font-size:13px;margin-bottom:2px}#wb-inv-lite-stack .wbl-from{font-size:16px}#wb-inv-lite-stack .wbl-room{font-size:12px;margin-top:2px}' +
+          '#wb-inv-lite-stack .wbl-barw{height:5px;margin:6px 0}#wb-inv-lite-stack .wbl-btns{gap:8px;margin-top:4px}' +
+          '#wb-inv-lite-stack .wbl-btn{font-size:15px;padding:7px 6px;border-radius:9px;letter-spacing:1px}#wb-inv-lite-stack .wbl-busy{font-size:12px;margin-top:3px}}';
+      document.head.appendChild(st);
+    }
+    function _stack(){
+      let s = document.getElementById('wb-inv-lite-stack');
+      if(!s){
+        _css();
+        s = document.createElement('div');
+        s.id = 'wb-inv-lite-stack';
+        document.body.appendChild(s);
+      }
+      return s;
+    }
+    function _esc(t){
+      return String(t == null ? '' : t).replace(/[<>&"']/g, function(c){ return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; });
+    }
+    // 戰鬥中(任何冒險關卡戰鬥,含龍王戰)不能接受;其餘任何頁面(首頁/關卡頁/商店/圖鑑/背包/召喚/寵物…)都可以
+    function _canAccept(){
+      try{
+        const stage = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : null;
+        if(stage) return false;
+        if(document.body && document.body.classList.contains('wb-in-worldboss-battle')) return false;
+        // 鬥技場等非冒險戰鬥:戰鬥中才會顯示「🚪 離開戰場」鈕(ctrlBattleToggle(true)),結束時收起
+        //   保險:有些結束路徑沒收這顆鈕 ⇒ 只有「冒險頁(#adventure-overlay)與首頁(#overlay)都沒開著」時才當作戰鬥中,
+        //   人已經回到關卡頁/商店/背包等頁面就一定能接受,不會被殘留的鈕卡住。
+        const lb = document.getElementById('ctrl-leave-battle');
+        if(lb && lb.style.display !== 'none'){
+          const _vis = function(id){ const e = document.getElementById(id); return !!(e && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden'); };
+          if(!_vis('adventure-overlay') && !_vis('overlay')) return false;
+        }
+        return true;
+      }catch(_){ return true; }
+    }
+    function _clearTimer(id){
+      if(_timers[id]){ try{ clearInterval(_timers[id]); }catch(_){} delete _timers[id]; }
+    }
+    function _removeLocal(id){
+      _clearTimer(id);
+      _list = _list.filter(function(i){ return i.inviteId !== id; });
+      const dom = document.querySelector('#wb-inv-lite-stack [data-inv-id="' + id + '"]');
+      if(dom && dom.parentNode) dom.parentNode.removeChild(dom);
+    }
+    function _cardHtml(inv){
+      const left = Math.max(0, inv.expiresAt - Date.now());
+      const sec = Math.ceil(left / 1000);
+      const can = _canAccept();
+      return '<div class="wbl-card" data-inv-id="' + _esc(inv.inviteId) + '">' +
+        '<div class="wbl-hdr">🐉 龍王戰組隊邀請</div>' +
+        '<div class="wbl-from">👤 ' + _esc(inv.fromName || '玩家') + '</div>' +
+        '<div class="wbl-room">房號 ' + _esc(inv.roomId) + ' · ' + sec + ' 秒內回應</div>' +
+        '<div class="wbl-barw"><div class="wbl-bar' + (sec <= 5 ? ' danger' : '') + '" style="width:' + Math.max(0, Math.min(100, left / TOTAL * 100)).toFixed(1) + '%"></div></div>' +
+        '<div class="wbl-btns">' +
+          '<button class="wbl-btn ok" data-act="ok"' + (can ? '' : ' disabled') + '>✓ 接受</button>' +
+          '<button class="wbl-btn no" data-act="no">✕ 拒絕</button>' +
+        '</div>' +
+        (can ? '' : '<div class="wbl-busy">⚔ 戰鬥中,結束後才能接受</div>') +
+      '</div>';
+    }
+    function _render(){
+      const s = _stack();
+      Object.keys(_timers).forEach(function(id){
+        if(!_list.some(function(i){ return i.inviteId === id; })) _clearTimer(id);
+      });
+      if(!_list.length){ s.innerHTML = ''; return; }
+      // 新邀請出現時提示音(同一則只響一次)
+      let fresh = false;
+      _list.forEach(function(inv){ if(!_seen[inv.inviteId]){ _seen[inv.inviteId] = 1; fresh = true; } });
+      if(fresh){ try{ if(typeof playSfx === 'function') playSfx('sfx-popup', 0.6); }catch(_){} }
+      s.innerHTML = _list.map(_cardHtml).join('');
+      // 掛在 body 最後,確保蓋過稍後才插入 body 的一般頁面層
+      if(s.parentNode === document.body && document.body.lastElementChild !== s){ try{ document.body.appendChild(s); }catch(_){} }
+      _list.forEach(function(inv){
+        const dom = s.querySelector('[data-inv-id="' + inv.inviteId + '"]');
+        if(!dom) return;
+        dom.querySelector('[data-act="ok"]').addEventListener('click', function(){ window._wbInviteAccept(inv.inviteId, inv.roomId); });
+        dom.querySelector('[data-act="no"]').addEventListener('click', function(){ window._wbInviteDecline(inv.inviteId); });
+        _installTimer(inv);
+      });
+    }
+    function _installTimer(inv){
+      if(_timers[inv.inviteId]) return;
+      _timers[inv.inviteId] = setInterval(function(){
+        const left = inv.expiresAt - Date.now();
+        if(left <= 0){
+          _removeLocal(inv.inviteId);
+          try{ if(window._wbNet && window._wbNet.respondInvite) window._wbNet.respondInvite(inv.inviteId, 'busy').catch(function(){}); }catch(_){}
+          return;
+        }
+        const dom = document.querySelector('#wb-inv-lite-stack [data-inv-id="' + inv.inviteId + '"]');
+        if(!dom) return;
+        const sec = Math.ceil(left / 1000);
+        const bar = dom.querySelector('.wbl-bar');
+        if(bar){ bar.style.width = (left / TOTAL * 100).toFixed(1) + '%'; bar.classList.toggle('danger', sec <= 5); }
+        const rm = dom.querySelector('.wbl-room');
+        if(rm) rm.textContent = '房號 ' + inv.roomId + ' · ' + sec + ' 秒內回應';
+        const ok = dom.querySelector('[data-act="ok"]');
+        const busy = dom.querySelector('.wbl-busy');
+        const can = _canAccept() && !_accepting;
+        if(ok) ok.disabled = !can;
+        if(can && busy) busy.parentNode.removeChild(busy);
+        if(!can && !busy && !_accepting){
+          const m = document.createElement('div');
+          m.className = 'wbl-busy';
+          m.textContent = '⚔ 戰鬥中,結束後才能接受';
+          dom.appendChild(m);
+        }
+      }, 500);
+    }
+
+    function _start(){
+      if(!window._gUserId) return;
+      if(_unsub && _uid === window._gUserId) return;
+      if(_unsub) _stop();   // 換人登入:先退掉上一位的訂閱
+      if(!window._wbNet || typeof window._wbNet.subscribeInvites !== 'function'){
+        if(!_retryT) _retryT = setTimeout(function(){ _retryT = null; _start(); }, 500);
+        return;
+      }
+      _uid = window._gUserId;
+      _unsub = window._wbNet.subscribeInvites(function(list){
+        if(window._gUserId !== _uid){ _list = []; _render(); return; }
+        _list = (list || []).slice();
+        _render();
+      });
+      console.log('[WB-InvLite v5.300.0] ✅ 全頁面邀請通知已啟動');
+    }
+    function _stop(){
+      if(_retryT){ clearTimeout(_retryT); _retryT = null; }
+      if(_unsub){ try{ _unsub(); }catch(_){} }
+      _unsub = null; _uid = null;
+      Object.keys(_timers).forEach(_clearTimer);
+      _list = [];
+      const s = document.getElementById('wb-inv-lite-stack');
+      if(s) s.innerHTML = '';
+    }
+    window._wbStartInviteNotifSub = _start;
+    window._wbStopInviteNotifSub = _stop;
+
+    window._wbInviteAccept = async function(inviteId, roomId){
+      if(!_canAccept()){ _wbGameAlert('⚔ 你正在戰鬥中,結束戰鬥後才能接受邀請'); return; }
+      if(!inviteId || !roomId || _accepting) return;
+      _accepting = true;
+      const dom = document.querySelector('#wb-inv-lite-stack [data-inv-id="' + inviteId + '"]');
+      const okBtn = dom ? dom.querySelector('[data-act="ok"]') : null;
+      if(okBtn){ okBtn.disabled = true; okBtn.textContent = '⏳ 連線中…'; }
+      try{
+        try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(_){}
+        const ok = await _wbEnsureUi();
+        if(!ok || typeof window._wbInviteAcceptCore !== 'function'){
+          _wbGameAlert('龍王戰畫面載入失敗,請檢查網路後再試一次。');
+          if(okBtn){ okBtn.disabled = false; okBtn.textContent = '✓ 接受'; }
+          return;
+        }
+        _clearTimer(inviteId);
+        // 一般頁面(商店/背包/召喚/圖鑑…)都在縮放畫布 #gc 裡,龍王戰畫面(body 層 z 9000)本來就蓋得過;
+        //   唯一比它高的是鬥技場大廳 #arenaLobbyOverlay(body 層 z 9520)⇒ 從鬥技場大廳接受時先把大廳收起來
+        try{
+          const al = document.getElementById('arenaLobbyOverlay');
+          if(al && getComputedStyle(al).display !== 'none' && typeof window._closeArenaLobby === 'function') window._closeArenaLobby();
+        }catch(_){}
+        await window._wbInviteAcceptCore(inviteId, roomId);   // 每日場次 → 回覆 accepted → 進房 → 隊伍確認頁(都在 UI 檔)
+        _removeLocal(inviteId);
+      }catch(e){
+        console.warn('[WB-InvLite] 接受邀請例外', e);
+        _removeLocal(inviteId);
+      }finally{
+        _accepting = false;
+      }
+    };
+    window._wbInviteDecline = async function(inviteId){
+      if(!inviteId) return;
+      _removeLocal(inviteId);
+      try{ if(window._wbNet && window._wbNet.respondInvite) await window._wbNet.respondInvite(inviteId, 'declined'); }catch(_){}
+    };
+
+    // 本檔是 defer 載入:若登入早已完成(登入鉤子的 30 秒重試已過),這裡自己補啟動一次;之後每 5 秒確認一次登入者有沒有換人
+    setTimeout(function(){ try{ _start(); }catch(_){} }, 800);
+    setInterval(function(){
+      try{
+        if(window._gUserId && (!_unsub || _uid !== window._gUserId)) _start();
+        else if(!window._gUserId && _unsub) _stop();
+      }catch(_){}
+    }, 5000);
+  })();
+
   _wbBootstrap();
 })();
