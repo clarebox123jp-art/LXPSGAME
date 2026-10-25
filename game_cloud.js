@@ -23806,6 +23806,7 @@
                 peakRoundSnaps: _mergePeakSnaps(_cur.peakRoundSnaps, _peakRoundSnaps),
                 lastBattleAt: Date.now(),
                 lastBattleDmg: addDmg,
+                bestBattleDmg: Math.max(Number(_cur.bestBattleDmg) || 0, Math.floor(addDmg) || 0),   // ★ v5.298.0 單場最高傷害(參加獎門檻 5,000 用)
                 // ★ v3.10.0 — 每場戰績歷史(最新 10 場)
                 battleHistory: _newHistory,
               };
@@ -23838,6 +23839,7 @@
                 peakRoundSnaps: _peakRoundSnaps,
                 lastBattleAt: Date.now(),
                 lastBattleDmg: addDmg,
+                bestBattleDmg: Math.floor(addDmg) || 0,   // ★ v5.298.0 單場最高傷害(參加獎門檻 5,000 用)
                 // ★ v3.10.0 — 第一場直接初始化 battleHistory
                 battleHistory: [_thisBattleRecord],
               });
@@ -25719,6 +25721,15 @@
               if(!_entry || !_entry.teamKey) continue;
               const _tier = _getRewardTier ? _getRewardTier(_rank) : 'memorial';
               const _cfg = _rewardsCfg[_tier] || {};
+              // ★ v5.298.0(老師 2026-10-25「龍王戰參加獎的最低標準,單場戰鬥中至少對龍王造成5000傷害」)
+              //   分級表有 minBattleDmg(目前只有參加獎 5,000)⇒ 這支隊伍的「單場最高傷害」未達門檻就不發獎。
+              //   單場最高 = bestBattleDmg(v5.298.0 起每場記錄)、近 10 場 battleHistory、lastBattleDmg 三者取最大(舊紀錄沒有 bestBattleDmg 也能判斷)。
+              if(_cfg.minBattleDmg > 0){
+                let _bestOne = Number(_entry.bestBattleDmg) || 0;
+                try{ (Array.isArray(_entry.battleHistory) ? _entry.battleHistory : []).forEach(function(b){ if(b && (Number(b.dmg) || 0) > _bestOne) _bestOne = Number(b.dmg) || 0; }); }catch(_){}
+                _bestOne = Math.max(_bestOne, Number(_entry.lastBattleDmg) || 0);
+                if(_bestOne < _cfg.minBattleDmg) continue;
+              }
               // 從 teamKey 拆 uid(同隊伍可能有重複 uid,例如房主代打 4 槽)
               const _uids = String(_entry.teamKey).split('|').filter(Boolean);
               const _seen = new Set();
@@ -25763,6 +25774,7 @@
                   expBookDeluxe: _cfg.expBookDeluxe || 0,
                   dragonTreasureId: _WB_DRAGON_T_MAP[bossId] || _cfg.dragonTreasureId || '',
                   dragonTreasureChance: _cfg.dragonTreasureChance || 0,
+                  cstPickChance: (typeof _cfg.cstPickChance === 'number') ? _cfg.cstPickChance : (_cfg.dragonTreasureChance || 0),   // ★ v5.298.0 SSR 自選命星(比照龍王至寶機率)
                   treasureChance: _cfg.treasureChance || 0,
                   treasureRarity: _cfg.treasureRarity || '',
                   treasureLabel: _cfg.treasureLabel || '',
@@ -26131,6 +26143,26 @@
               }catch(eT){ console.warn('[WbSettle claim 未收錄至寶]', eT); return { won:false, error:eT.message }; }
             })();
 
+            // ★ v5.298.0(老師 2026-10-25「新增龍王戰獎勵,比照至寶的機率,額外獲得自選命星×1」「自選命星是SSR」)
+            //   (2b) SSR 自選命星:機率 = 該名次的「龍王至寶」機率(救世主 100%/勇者 75%/大英雄 50%/小英雄 25%/參加獎 5%)。
+            //   結算快照有 cstPickChance 就用快照(新版結算寫入);舊版結算的 pending 沒有這欄 ⇒ 依名次分級表即時補算。
+            //   發放走命座模組 _cstGrantPick('SSR');已領旗標由上面的 transaction(claimedAt)保證只擲一次。
+            const _cstPickResult = (function(){
+              try{
+                let _ch = (typeof _result.cstPickChance === 'number') ? _result.cstPickChance : null;
+                if(_ch === null){
+                  const _tc = (window._WORLD_BOSS_TEAM_REWARDS || {})[_result.tier] || {};
+                  _ch = (typeof _tc.cstPickChance === 'number') ? _tc.cstPickChance : (_tc.dragonTreasureChance || 0);
+                }
+                if(!(_ch > 0)) return { rolled:false, won:false };
+                const _won = (_ch >= 1) || (Math.random() < _ch);
+                if(!_won) return { rolled:true, won:false, chance:_ch };
+                if(typeof window._cstGrantPick !== 'function') return { rolled:true, won:true, granted:false, chance:_ch, error:'_cstGrantPick 不存在' };
+                window._cstGrantPick('SSR', 1, 'wb_rank_reward:' + (_result.bossId || '') + ':' + (_result.roundKey || ''));
+                return { rolled:true, won:true, granted:true, chance:_ch };
+              }catch(eP){ console.warn('[WbSettle claim SSR 自選命星]', eP); return { rolled:false, won:false, error:eP.message }; }
+            })();
+
             // (3) 「屠龍者」稱號(僅第 1 名)
             const _titleResult = (function(){
               try{
@@ -26160,6 +26192,7 @@
             _result._dragonResult = _dragonResult;
             _result._treasureResult = _treasureResult;
             _result._titleResult = _titleResult;
+            _result._cstPickResult = _cstPickResult;   // ★ v5.298.0
 
             // ★ v3.14.19 — 把「實際擲骰/發放結果」寫回 wbPendingAward.grantedManifest(雲端永久留底)
             //   背景:5408 第 2 名學生災情 — claim 當下龍牙擲中+必得至寶都有發,之後被覆蓋吃掉;
@@ -26175,6 +26208,7 @@
                     treasureGranted: !!(_treasureResult && _treasureResult.granted),
                     treasureId: (_treasureResult && _treasureResult.id) || null,
                     treasureName: (_treasureResult && _treasureResult.name) || null,
+                    cstPickSsr: (_cstPickResult && _cstPickResult.granted) ? 1 : 0,   // ★ v5.298.0 SSR 自選命星(補償比對用)
                   }
                 }
               }, { merge: true });
@@ -26389,6 +26423,12 @@
         }
         if(_pending.treasureChance > 0 && _pending.treasureLabel) _rows.push('✨ ' + _esc(_pending.treasureLabel));
         else if(_pending.treasureLabel && _pending.tier !== 'rare' && _pending.tier !== 'normal') _rows.push('✨ ' + _esc(_pending.treasureLabel));
+        // ★ v5.298.0 SSR 自選命星(機率比照龍王至寶;舊結算沒有 cstPickChance 就看名次分級表)
+        try{
+          const _cpP = (typeof _pending.cstPickChance === 'number') ? _pending.cstPickChance
+                     : ((((window._WORLD_BOSS_TEAM_REWARDS || {})[_pending.tier]) || {}).cstPickChance || _pending.dragonTreasureChance || 0);
+          if(_cpP > 0) _rows.push(_cpP >= 1 ? '✨ SSR 自選命星 ×1(必得)' : ('✨ SSR 自選命星(' + Math.round(_cpP * 100) + '% 機率)'));
+        }catch(_eCpP){}
         if(_pending.isChampion) _rows.push('👑 專屬稱號【' + _esc(String(_pending.championTitleTemplate || '屠龍者・{bossName}').replace('{bossName}', _pending.bossName || '')) + '】');
         const _ov = document.createElement('div');
         _ov.id = 'wb-award-modal-overlay';
@@ -26440,7 +26480,7 @@
           const _d = _r._dragonResult || {};
           const _dtNmR = (function(){ try{ const _t = window.TAIWAN_TREASURES && window.TAIWAN_TREASURES[_r.dragonTreasureId]; return (_t && _t.name) || '火龍王之牙'; }catch(_){ return '火龍王之牙'; } })();  // ★ v3.14.20
           if(_d.granted)            _out.push('🐉 <b style="color:#ff8866;">' + _esc(_dtNmR) + ' 獲得!</b>(至寶圖鑑查看)');
-          else if(_d.alreadyOwned)  _out.push('🐉 ' + _esc(_dtNmR) + '已擁有 → 補發 📜 至寶EXP卷軸 ×3');
+          else if(_d.alreadyOwned)  _out.push('🐉 ' + _esc(_dtNmR) + '已擁有 → 補發 📜 至寶EXP卷軸 ×5');   // ★ v5.298.0 文字對齊(實際補 5 張,v3.15.86 起)
           else if(_d.rolled !== false && _r.dragonTreasureChance > 0 && _r.dragonTreasureChance < 1)
             _out.push('🐉 ' + _esc(_dtNmR) + '…這次沒掉落(' + Math.round(_r.dragonTreasureChance * 100) + '% 機率),下次再挑戰!');
           const _t = _r._treasureResult || {};
@@ -26449,6 +26489,11 @@
           else if(_t.rolled)             _out.push('✨ 未收錄至寶…這次沒掉落,下次再挑戰!');
           const _ti = _r._titleResult || {};
           if(_ti.granted) _out.push('👑 <b style="color:#ffe066;">獲得稱號【' + _esc(_ti.title) + '】!</b>');
+          // ★ v5.298.0 SSR 自選命星結果
+          const _cp = _r._cstPickResult || {};
+          if(_cp.granted)    _out.push('✨ <b style="color:#ffd97a;">獲得 SSR 自選命星 ×1!</b>(到召喚星空的「✨ 命星工坊」選一位 SSR 英雄使用)');
+          else if(_cp.won)   _out.push('✨ SSR 自選命星中獎,但發放暫時失敗,請重新登入或找老師補發');
+          else if(_cp.rolled) _out.push('✨ SSR 自選命星…這次沒抽中(' + Math.round((_cp.chance || 0) * 100) + '% 機率),下次再挑戰!');
           if(_body) _body.innerHTML = _out.map(function(r){ return '<div style="font-size:clamp(16px,2vw,20px);color:#ffeecc;line-height:1.9;">' + r + '</div>'; }).join('')
             || '<div style="text-align:center;color:#ffeecc;">獎勵已入帳!</div>';
           _btn.textContent = '🎉 太棒了!';

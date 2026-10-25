@@ -38048,6 +38048,7 @@ function doDmg(target, rawDmg, opts={}){
                            + ((typeof _gearVal === 'function' && a) ? _gearVal(a, 'crit', 'atk') / 100 : 0)  // ★ v5.30.0 裝備暴擊率(鐵匠 S1 放大)
                            + ((a && Array.isArray(a.buffs) && (function(){ var _gc=a.buffs.find(function(b){ return b && b.type==='_gearCritUp'; }); return _gc && typeof _gc._pct==='number' ? _gc._pct : 0; })()) || 0)
                            + ((a && a.side === 'p1' && typeof window._alchFxGet === 'function') ? (window._alchFxGet('critRate') || 0) : 0)
+                           + ((a && a.name === '火山炎龍王' && a.side === 'p2') ? 0.30 : 0)  // ★ v5.298.0 火山炎龍王天賦「炎之意志」暴擊率永久 +30%(說明早就寫了、從未實作;圖鑑為準)
                            + ((a && typeof window._fmCrit === 'function') ? window._fmCrit(a) : 0));  // ★ v5.282.0 英魂陣型 暴擊率(沒有陣型時恆 0) ｜ ★ v5.109.0 天機借運丹:我方暴擊率 +50%(_alchFxGet 內建中國關戰鬥守門,其他模式恆回 0)
   if(dmg>0 && !opts.isRebound && !opts.isTraitShare && !opts.isChaos && Math.random() < _critChance){
     try{ const _cstScY = opts.actor || a; if(_cstScY && _cstScY.name === '天蠍星神') window._cstScT2Crit(_cstScY, target, opts); }catch(_eCstScT2c){}   // ✨ v5.268.0 命星 天蠍星神 t2 尾宿八毒針(只對點亮的命星做事)
@@ -58508,6 +58509,21 @@ function nextRound(){
   G.p1.concat(G.p2).forEach(h=>{
     if(hasStatus(h,'deathmark') && h.curHp>0){
       const bombSt=h.status.find(s=>s.type==='deathmark'&&s._bomb);
+      // ★ v5.298.0 邪骨暗龍王「死亡宣告」(_wbDoom):自己倒數,_wbDoomAt 回合開始時才觸發 ⇒ 該英雄 HP 變 1。
+      //   倒數中每個新回合把 dur 校正成「剩餘回合 +1」(本回合 tickStatus 扣 1 後剛好等於剩餘),避免狀態提早被計時移除。
+      //   不走下方「冒險 BOSS/菁英」分支(那個分支在世界 BOSS 戰會把玩家英雄也當成 BOSS,只扣 20% 當前 HP)。
+      const _wbDoomSt = (bombSt || h.side !== 'p1') ? null : h.status.find(s=>s.type==='deathmark'&&s._wbDoom);   // 只認玩家方(被轉移到龍王/敵人身上的宣告走原本 BOSS 分支,不會把龍王打成 1 HP)
+      if(_wbDoomSt){
+        const _wbR = (G && G.round) || 1;
+        const _wbLeft = (_wbDoomSt._wbDoomAt || _wbR) - _wbR;
+        if(_wbLeft > 0){ _wbDoomSt.dur = _wbLeft + 1; return; }
+        clearStatus(h,['deathmark']);
+        h.curHp = 1;
+        try{ log(`💀 黃泉之門開啟!死亡宣告倒數結束,【${h.name}】的 HP 只剩 1!`); }catch(_){}
+        try{ bannerFX(h, '💀 死亡宣告!', '#cc44ff', 1100); }catch(_){}
+        try{ renderCard(h); }catch(_){}
+        return;
+      }
       if(bombSt){
         // 定時炸彈爆炸
         // ★ v1.0.20260424.0510 — 若 _bombFixed 標記 → 用 doDmg(fixedDmg:true) 路徑
@@ -82250,7 +82266,7 @@ function _showNewHeroAnnouncement(forceShow){
             </div>
             <div style="text-align:center;">
               <div style="font-size:15px;color:#ffaa99;letter-spacing:1px;">攻擊</div>
-              <div style="font-size:25px;color:#ff9966;font-weight:900;">49</div>
+              <div style="font-size:25px;color:#ff9966;font-weight:900;">50</div>
             </div>
             <div style="text-align:center;">
               <div style="font-size:15px;color:#ffaa99;letter-spacing:1px;">特技</div>
@@ -82264,7 +82280,8 @@ function _showNewHeroAnnouncement(forceShow){
           <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;
             font-size:17px;color:#ffd;line-height:1.6;">
             <b style="color:#ff8866;">屬性:</b>🔥 火屬性
-            ・ <b style="color:#ffcc66;">單次受傷上限:</b>每擊最多 <span style="color:#ff7755;font-weight:900;">5,000</span> 傷害(固定值,不隨 HP 變動)
+            ・ <b style="color:#ffcc66;">單次受傷上限:</b>每擊最多 <span style="color:#ff7755;font-weight:900;">5,000</span> 傷害(固定值,不隨 HP 變動;每位英雄一次出手合計也最多 5,000)
+            ・ <b style="color:#ffcc66;">暴擊率:</b>永久 +30%
           </div>
         </div>
 
@@ -82278,7 +82295,7 @@ function _showNewHeroAnnouncement(forceShow){
             <!-- ★ v3.13.7(2026-05-31) — 對齊實際數值與新抵抗規則:
                  S1 能量 6(配合追擊普攻設計)、燃燒每回合 -6HP、
                  爆發抵抗規則改為「護盾/減傷可擋,無敵改減傷 50%,迴避無效」 -->
-            <b style="color:#ff8866;">🦷 普通攻擊</b>:ATK × 1.0~1.3 火屬性單體傷害(基礎命中率 +30%)<br>
+            <b style="color:#ff8866;">🦷 普通攻擊</b>:ATK × 1.0~1.3 無屬性單體傷害(基礎命中率 +30%;追擊普攻打目前 HP 最低的對手)<br>
             <b style="color:#ff8866;">✨ S1 業火灼燒</b>(能量 6):特技 150% 全體火傷害 + 全體燃燒 2 回合
               (行動前後各 -6 HP,基礎命中率 +30%)<br>
             <b style="color:#ff8866;">🐉 S2 龍吼震懾</b>(能量 4):特技 75% 全體無屬性傷害 + 50% 機率眩暈 1 回合(基礎命中率 +30%)<br>
@@ -82287,8 +82304,8 @@ function _showNewHeroAnnouncement(forceShow){
             (HP 考核機制 — 玩家最大 HP 至少要 <span style="color:#ffe066;">110</span> 才能撐過後續燃燒)
             <br>・全體強力燃燒 3 回合(行動前後各 -9 HP)
             <br>・隨機 1 名額外陷入「強力暈眩 + 強力易傷」各 1 回合
-            <br>・<b style="color:#ffcc66;">抵抗規則</b>:可被「<b style="color:#88ddff;">護盾</b>」「<b style="color:#88ddff;">減傷</b>」抵擋,
-              但<b style="color:#ff5544;">無敵 BUFF 強制改為減傷 50%</b>,<b style="color:#ff5544;">迴避無效必中</b>
+            <br>・<b style="color:#ffcc66;">抵抗規則</b>:<b style="color:#ff5544;">無視無敵、免疫、護盾、反射</b>,
+              「<b style="color:#88ddff;">減傷</b>」類效果最多只能擋下一半,<b style="color:#ff5544;">迴避無效必中</b>
           </div>
         </div>
 
@@ -82301,14 +82318,14 @@ function _showNewHeroAnnouncement(forceShow){
           <div style="font-size:19px;color:#e8ffd8;line-height:1.85;">
             <!-- ★ v3.11.7(2026-05-28) — 護盾啟動回合對齊實際邏輯 3/5/7/9 -->
             兩千年沉睡淬煉的意志:<b>單次受傷上限固定 5,000 傷害</b>(不隨 HP 變動)<br>
-            戰鬥的第 <b style="color:#ff9966;">3 / 5 / 7 / 9</b> 回合會自動啟動「四元素護盾」:
+            戰鬥的第 <b style="color:#ff9966;">5 / 9</b> 回合會自動啟動「四元素護盾」:
             <br>・身上同時浮現 <b style="color:#ff6644;">火</b> / <b style="color:#88dddd;">風</b> /
             <b style="color:#bb8855;">土</b> / <b style="color:#cc99ff;">暗</b> 四種護盾,每個元素各 <b>1 層</b>
             <br>・所有傷害 <b style="color:#ffaa66;">再減 80%</b>
             <br>・即使是 <b style="color:#ff8866;">無視有利狀態的攻擊也無法打穿</b>
             <br>・需使用對應剋制屬性(<b style="color:#3296ff;">水剋火</b> / <b style="color:#bb8855;">土剋風</b> /
             <b style="color:#5dcaa5;">草剋土</b> / <b style="color:#ffd966;">光剋暗</b>)各攻擊 <b>1 次</b>即可破除該護盾
-            <br>・整場共 4 次護盾、16 層,務必平均培養 4 種破盾屬性英雄
+            <br>・整場共 2 次護盾、8 層,務必平均培養 4 種破盾屬性英雄
           </div>
           <div style="margin-top:8px;padding:8px 12px;background:rgba(80,180,255,0.12);
             border:1px solid rgba(80,180,255,0.4);border-radius:8px;
@@ -82383,27 +82400,27 @@ function _showNewHeroAnnouncement(forceShow){
             <div style="background:rgba(255,200,80,0.15);border:1.5px solid rgba(255,200,80,0.4);
               border-radius:8px;padding:8px 10px;">
               <div style="color:#ffd966;font-weight:900;margin-bottom:3px;">🏆 第 1 名</div>
-              <div style="color:#dda;line-height:1.4;">100,000 幣 + 未收錄神話至寶 + 10 召喚水晶 + 屠龍稱號<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 ×1 必得</span></div>
+              <div style="color:#dda;line-height:1.4;">200,000 幣 + 未收錄神話至寶 + 20 召喚水晶 + 10 豪華典藏經驗書 + 5 至寶經驗卷軸 + 屠龍稱號<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 ×1 必得</span><br><span style="color:#ffd97a;font-weight:800;">✨ SSR 自選命星 ×1 必得</span></div>
             </div>
             <div style="background:rgba(180,200,255,0.12);border:1.5px solid rgba(180,200,255,0.4);
               border-radius:8px;padding:8px 10px;">
               <div style="color:#bbccff;font-weight:900;margin-bottom:3px;">🥈 第 2-5 名</div>
-              <div style="color:#dde;line-height:1.4;">60,000 幣 + 未收錄史詩、稀有至寶 + 7 召喚水晶<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 75%</span></div>
+              <div style="color:#dde;line-height:1.4;">120,000 幣 + 未收錄傳說至寶 + 14 召喚水晶 + 6 豪華典藏經驗書 + 3 至寶經驗卷軸<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 75%</span><br><span style="color:#ffd97a;font-weight:800;">✨ SSR 自選命星 75%</span></div>
             </div>
             <div style="background:rgba(255,180,140,0.12);border:1.5px solid rgba(255,180,140,0.4);
               border-radius:8px;padding:8px 10px;">
               <div style="color:#ffbb88;font-weight:900;margin-bottom:3px;">🥉 第 6-10 名</div>
-              <div style="color:#ed8;line-height:1.4;">30,000 幣 + 60% 機率傳說至寶 + 5 召喚水晶<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 50%</span></div>
+              <div style="color:#ed8;line-height:1.4;">60,000 幣 + 60% 機率傳說至寶 + 10 召喚水晶 + 4 豪華典藏經驗書 + 2 至寶經驗卷軸<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 50%</span><br><span style="color:#ffd97a;font-weight:800;">✨ SSR 自選命星 50%</span></div>
             </div>
             <div style="background:rgba(200,200,200,0.1);border:1.5px solid rgba(200,200,200,0.35);
               border-radius:8px;padding:8px 10px;">
               <div style="color:#ccc;font-weight:900;margin-bottom:3px;">📦 第 11-20 名</div>
-              <div style="color:#ccc;line-height:1.4;">15,000 幣 + 30% 機率傳說至寶 + 3 召喚水晶<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 25%</span></div>
+              <div style="color:#ccc;line-height:1.4;">30,000 幣 + 30% 機率傳說至寶 + 6 召喚水晶 + 2 豪華典藏經驗書 + 1 至寶經驗卷軸<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 25%</span><br><span style="color:#ffd97a;font-weight:800;">✨ SSR 自選命星 25%</span></div>
             </div>
             <div style="background:rgba(150,180,180,0.08);border:1.5px solid rgba(150,180,180,0.3);
               border-radius:8px;padding:8px 10px;grid-column:1 / -1;">
               <div style="color:#aac;font-weight:900;margin-bottom:3px;">🎁 第 21 名以後・參加獎</div>
-              <div style="color:#bbc;line-height:1.4;">7,000 幣 + 1 召喚水晶(只要有出戰並造成傷害即可獲得)<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 5%</span> — 重複獲得自動轉至寶經驗卷軸 ×3</div>
+              <div style="color:#bbc;line-height:1.4;">14,000 幣 + 2 召喚水晶 + 2 豪華典藏經驗書 + 1 至寶經驗卷軸(單場戰鬥至少對龍王造成 5,000 傷害才能獲得)<br><span style="color:#ff8866;font-weight:800;">🐉 當前龍王至寶 5%</span> — 重複獲得自動轉至寶經驗卷軸 ×5<br><span style="color:#ffd97a;font-weight:800;">✨ SSR 自選命星 5%</span></div>
             </div>
           </div>
         </div>
@@ -84089,8 +84106,8 @@ function _showNewHeroAnnouncement(forceShow){
             '已滿 6 命的角色再次取得時轉為「虛無的命星」;同稀有度任意 3 顆(虛無或未點亮的角色命星)可於「✨ 命星工坊」合成 1 顆自選命星,SR/SSR 分開計算。', [],
             _orb('void', _T2('虛無', '虛無')) + _orb('void', _T2('虛無', '虛無')) + _orb('hero', _T2('沒用的', '未點亮')) + _op('→') + _orb('pick', _T2('自選命星', '自選命星')))
       +   _fCard('👑', 'UR 和主角也有命星', 'UR 與主角命星',
-            'UR 英雄也有 6 顆星!主角的命星要靠主線劇情拿:第三章、第六章通關各 1 顆(覺醒後才能點亮)。',
-            'UR 角色同樣擁有六命;主角命星僅由主線大章節取得:第三章、第六章通關各 1 顆(需先覺醒才能點亮)。', ['藝天使．克雷爾', '主神奧汀', '天照大神'])
+            'UR 英雄也有 6 顆星!主角的命星要靠主線劇情拿:第三、六、七章通關各 1 顆(覺醒後才能點亮)。',   /* ★ v5.297.0 補第七章(v5.290.0 起第七章給第 3 顆) */
+            'UR 角色同樣擁有六命;主角命星僅由主線大章節取得:第三、六、七章通關各 1 顆(需先覺醒才能點亮)。', ['藝天使．克雷爾', '主神奧汀', '天照大神'])
       +   _fCard('🤝', '借好友英雄也帶命星', '好友英雄同步命星',
             '跟好友借代表英雄時,好友點亮的命星也會一起來幫忙!不過你不能幫好友點星、換裝備或升級喔,那是好友自己的英雄。',
             '借用好友代表英雄時,自動套用好友本人已點亮的命星(冒險模式);借用者無法變更好友角色的命星、裝備或任何培育投資。', [],

@@ -1047,7 +1047,7 @@
       <div class="wb-boss-info">
         <div class="wb-boss-name">⚔️ <span class="wb-curboss-nm">火山炎龍王</span> <span style="font-size:12px;color:#ffd966;background:rgba(255,200,80,0.2);border-radius:6px;padding:2px 8px;margin-left:6px;letter-spacing:1px;">★5</span></div>
         <div class="wb-curboss-desc" style="font-size:13px;color:#aaa;line-height:1.5;">
-          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 3/5/7/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
+          沉睡於義大利那不勒斯維蘇威火山口的古老火龍,西元 79 年掩埋龐貝古城的元凶。第 5/9 回合啟動四元素護盾(火/風/土/暗,每屬性各 1 層),用對應剋制屬性(水/土/草/光)各攻擊 1 次即可打破。10 回合內必須擊敗 BOSS,否則戰場崩毀全員陣亡!
         </div>
         <div class="wb-boss-stats">
           <span>❤️ 10,000,000 HP</span>
@@ -1323,6 +1323,16 @@
         title="點看${_dtNm}能力簡介">?</span>`;
       items.push(_mainText + _helpBtn);
     }
+    // ★ v5.298.0 — 參加獎門檻(單場戰鬥對龍王至少 minBattleDmg 傷害)
+    if(r.minBattleDmg > 0) items.push(`⚠ 領獎資格:單場戰鬥至少對龍王造成 ${Number(r.minBattleDmg).toLocaleString()} 傷害`);
+    // ★ v5.298.0 — SSR 自選命星(機率比照龍王至寶;沒有 cstPickChance 欄位就沿用龍王至寶機率)
+    {
+      const _cpCh = (typeof r.cstPickChance === 'number') ? r.cstPickChance : (r.dragonTreasureChance || 0);
+      if(_cpCh > 0){
+        const _cpPct = Math.round(_cpCh * 100);
+        items.push(_cpPct >= 100 ? `✨ <b style="color:#ffd97a;">SSR 自選命星 ×1 必得</b>` : `✨ SSR 自選命星 (${_cpPct}% 機率)`);
+      }
+    }
     // ★ FIX 20260518 — 排行榜字體放大 200%(玩家反應字太小)
     //   tier 標題 14→28、名次 11→22、獎勵項目 11→22,padding/border 同步放大
     return `
@@ -1376,7 +1386,7 @@ window._wbApplyCurrentBossSkin = function(){
       const _descEl = document.querySelector('.wb-curboss-desc');
       if(_descEl){
         let _d = _b.desc || '';
-        if(_shDisp2){ _d += ' 第 3/5/7/9 回合啟動元素護盾(' + _shDisp2 + '),用剋制屬性(' + _brkDisp2 + ')各攻擊 1 次即可打破。10 回合內未擊敗則戰場崩毀進入結算。'; }
+        if(_shDisp2){ _d += ' 第 5/9 回合啟動元素護盾(' + _shDisp2 + '),用剋制屬性(' + _brkDisp2 + ')各攻擊 1 次即可打破。10 回合內未擊敗則戰場崩毀進入結算。'; }
         _descEl.textContent = _d;
       }
       const _elemEl = document.querySelector('.wb-curboss-elem');
@@ -1467,7 +1477,7 @@ window._wbApplyNextBossPreview = function(){
     if(_descEl){
       let _d = _nb.desc || '';
       if(_shDisp){
-        _d += ' 第 3/5/7/9 回合啟動元素護盾(' + _shDisp + '),用剋制屬性(' + _brkDisp
+        _d += ' 第 5/9 回合啟動元素護盾(' + _shDisp + '),用剋制屬性(' + _brkDisp
             + ')各攻擊 1 次即可打破;拖到第 11 回合場地會崩壞、強制結算。點下方「能力詳細介紹」可看完整招式與專屬天賦。';
       }
       _descEl.textContent = _d;
@@ -3946,7 +3956,7 @@ try{
         <div style="font-size:18px;font-weight:800;color:#e84040;">⚔ <span class="wb-curboss-nm">火山炎龍王</span></div>
         <div style="font-size:12px;color:#aaa;line-height:1.4;margin-top:2px;">
           <!-- ★ v5.22.0 — 屬性/三招名加 class 掛勾,由 _wbApplyCurrentBossSkin 依當前龍王動態換(原寫死火龍王) -->
-          HP 10,000,000 ✦ <span class="wb-curboss-elemline">🔥 火屬性</span> ✦ 4 階段護盾<br>
+          HP 10,000,000 ✦ <span class="wb-curboss-elemline">🔥 火屬性</span> ✦ 2 階段護盾<br>
           <span class="wb-curboss-skills">🔥 業火灼燒 / 🐉 龍吼震懾 / ⚡ 天崩之炎</span>
         </div>
       </div>
@@ -10948,7 +10958,7 @@ try{
           chips.push(`<span class="wb-boss-status-chip stun">⚡ 眩暈 ${boss._wbStun}</span>`);
         }
         shieldsRow.innerHTML = chips.length ? chips.join('') :
-          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 3 回合啟動)</span>';
+          '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 5 回合啟動)</span>';
       }
 
       // ★ v3.7.9(2026-05-25) — 配合 10 回合節奏壓縮,警告回合改成:
@@ -13769,7 +13779,7 @@ try{
           </div>
         </div>
         <div id="wb-adv-mega-shields-row" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(第 3 回合啟動)</span>
+          <span style="font-size:18px;color:#888;letter-spacing:1.5px;">尚無護盾(第 5 回合啟動)</span>
         </div>
       </div>
 
@@ -13991,7 +14001,7 @@ try{
       }catch(_eStatusChips){ console.warn('[WB-Adv] BOSS 狀態 chip 渲染失敗', _eStatusChips); }
 
       shieldsRow.innerHTML = chips.length ? chips.join('') :
-        '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 3 回合啟動)</span>';
+        '<span style="font-size:12px;color:#888;letter-spacing:1px;">尚無護盾(第 5 回合啟動)</span>';
     }
 
     const burstWarn = document.getElementById('wb-adv-burst-warn');
@@ -14110,7 +14120,7 @@ try{
     // 整場總護盾層數(每階層數 × 4 階)
     let _layersPerStage = 0;
     _shieldEls.forEach(function(e){ _layersPerStage += (_shieldLayers && _shieldLayers[e]) || 1; });
-    const _totalShieldLayers = _layersPerStage * 4;
+    const _totalShieldLayers = _layersPerStage * 2;   // ★ v5.298.0 護盾改第 5、9 回合兩階段(舊 ×4)
     // 招式 / 爆發 / 天賦文案(讀既有資料,缺漏才用後備)
     const _s1n = (_hd && _hd.s1 && _hd.s1.n) || 'S1';
     const _s1d = (_hd && _hd.s1 && (_hd.s1.fd || _hd.s1.d)) || '';
@@ -14170,10 +14180,8 @@ try{
           🛡 護盾啟動回合(每階:${_shieldDisp})
         </h3>
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
-          <li>第 3 回合:第 1 階段護盾啟動(${_shieldDisp})</li>
-          <li>第 5 回合:第 2 階段護盾啟動(同上)</li>
-          <li>第 7 回合:第 3 階段護盾啟動(同上)</li>
-          <li>第 9 回合:第 4 階段護盾啟動(同上,最後一道防線)</li>
+          <li>第 5 回合:第 1 階段護盾啟動(${_shieldDisp})</li>
+          <li>第 9 回合:第 2 階段護盾啟動(同上,最後一道防線)</li>
         </ul>
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
           用<b style="color:${_th.soft};">破盾元素(${_breakDisp})</b>各攻擊 1 次即可削減對應護盾,
@@ -14190,7 +14198,7 @@ try{
             border-left:6px solid ${_th.sub};">
             <div style="font-weight:800;color:${_th.soft};font-size:30px;">🦷 普通攻擊</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              對單體隨機目標造成 ATK × 1.0~1.3 倍${_bossElemName}屬性傷害,<b style="color:#ffe066;">基礎命中率 +30%</b>
+              對單體隨機目標造成 ATK × 1.0~1.3 倍無屬性傷害(追擊普攻改打目前 HP 最低的對手),<b style="color:#ffe066;">基礎命中率 +30%</b>
             </div>
           </div>
           <div style="background:${_th.cardBg};padding:14px 20px;border-radius:12px;
@@ -14215,7 +14223,7 @@ try{
             border-left:6px solid #aa3322;">
             <div style="font-weight:800;color:#ff4422;font-size:30px;">💥 戰場崩毀(第 11 回合)</div>
             <div style="font-size:26px;color:#e8d0b8;margin-top:6px;line-height:1.6;">
-              戰場崩毀,進入最終結算。龍王 500 萬 HP 無法單場擊敗,
+              戰場崩毀,進入最終結算。龍王 1,000 萬 HP 無法單場擊敗,
               <b style="color:#ffd966;">你累積打出的傷害會即時計入全伺服器排行榜!</b>
             </div>
           </div>
@@ -14235,9 +14243,9 @@ try{
         <!-- ★ v3.14.25 — 攻略提示破盾屬性依當前龍王動態(火龍王 水土草光;草龍王 火風暗) -->
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:${_th.soft};">${_breakDisp}</b>全部破盾屬性</li>
-          <li>BOSS 單次受傷上限<b style="color:#ffe066;">固定 5,000</b>(不隨 HP 變動),要靠多場累積拚排名</li>
+          <li>BOSS 單次受傷上限<b style="color:#ffe066;">固定 5,000</b>(不隨 HP 變動),每位英雄一次出手(多段、暴擊合計)也最多 5,000,要靠多場累積拚排名</li>
           <li>第 4 / 9 回合改放<b style="color:#88ddff;">「減傷 / 護盾 / 免死」</b>類技能擋下爆發(不是補血)</li>
-          <li>3/5/7/9 每階段護盾啟動,記得當回合就破掉避免硬扛 80% 減傷</li>
+          <li>第 5、9 回合護盾啟動,記得當回合就破掉避免硬扛 80% 減傷</li>
           <li>留意 BOSS 的控場與 DoT(禁動 / 暈眩 / 燃燒 / 猛毒 / 出血等),評估用爆發或休息抵抗</li>
           <li>累積答對 <b style="color:#ffe066;">5 / 10 題</b>會在選完獎勵後發動全隊聯手攻擊(5,000 傷害,
             <b style="color:${_th.soft};">但有護盾時會被衰減為 1,000</b>,盡速破盾是關鍵!)</li>
