@@ -27171,6 +27171,8 @@ function _buildSafeData() {
     heroSlot2Unlocked: (typeof _heroSlot2Unlocked !== 'undefined' && Array.isArray(_heroSlot2Unlocked)) ? _heroSlot2Unlocked : [],
     // ★ v1.0.20260501.4720 — 每日免費召喚記錄(YYYY/M/D 格式,台灣時區)
     dailyFreeSummonDate: (typeof _dailyFreeSummonDate === 'string') ? _dailyFreeSummonDate : null,
+    // ★ v5.302.0 🌠 祈願狀態(字串;載入時與本機/雲端 summonWishLog 單調合併,同週用過永遠算用過)
+    summonWish_s: (function(){ try{ return (typeof window._wishForCloud === 'function') ? window._wishForCloud() : ''; }catch(_){ return ''; } })(),
     // ★★ v5.125.0 — 好友借用獎勵的每日計數(改雲端;原本純 localStorage 可跨裝置重刷)★★
     //   形狀:{ '<gameDayKey>': { '<friendUid>': n } }，只留當日一鍵(寫入時汰舊,不會無限膨脹)。
     //   ⚠ 跟著既有 gameCloudSave 一起寫＝**零額外寫入次數**(學生回報過 write stream exhausted,
@@ -28551,6 +28553,8 @@ function _applySafeData(raw) {
     };
     window._petTutCloudFlagsReady = true;
   }catch(_ePf){}
+  // ★ v5.302.0 🌠 祈願:存檔值 + 主檔永久紀錄 summonWishLog 單調合併(舊存檔/換裝置都洗不回次數)
+  try{ if(typeof window._wishMergeCloud === 'function') window._wishMergeCloud(data.summonWish_s, data.summonWishLog); }catch(_eWishLd){}
   // ★ v1.0.20260501.4720 — 載入每日免費召喚記錄
   if(typeof data.dailyFreeSummonDate === 'string'){
     _dailyFreeSummonDate = data.dailyFreeSummonDate;
@@ -39948,6 +39952,8 @@ function openSummonOverlay(){
   ov.style.display = 'block';
   // ★ v5.254.0 命座:「✨ 命星工坊」按鈕(隨命座開關;v5.274.0 起全員可見)
   try{ if(typeof window._cstEnsureSummonBtn === 'function') window._cstEnsureSummonBtn(); }catch(_eCstBtn){}
+  // ★ v5.302.0 🌠 祈願(星形按鈕,召喚 1 次左邊)
+  try{ if(typeof window._wishEnsureBtn === 'function') window._wishEnsureBtn(); }catch(_eWishBtn){}
   // ★ v5.84.0(P1 甲)— 動態背景影片改「進這一頁才載」(開機不再預抓)
   try{ if(window._lxpsActivateBgVideo) window._lxpsActivateBgVideo('summon-bg-video'); }catch(_){}
   // 啟動螢火蟲
@@ -42385,6 +42391,10 @@ function doSummon(times){
   const btn1 = document.getElementById('summon-1x-btn');
   const btn10 = document.getElementById('summon-10x-btn');
   if(btn1 && btn1.disabled) return;
+  // ★ v5.302.0 🌠 祈願:有啟用中的願望 ⇒ 先向伺服器確認(時間+雲端已用紀錄)才准召喚(扣水晶之前擋,不浪費)
+  let _wishCtx = null;
+  try{ if(typeof window._wishPrepare === 'function') _wishCtx = window._wishPrepare(); }catch(_eWishP){ _wishCtx = null; }
+  if(_wishCtx && _wishCtx.block) return;
   const _isFreeSingleSummon = (times === 1)
     && (typeof _isDailyFreeSummonAvailable === 'function')
     && _isDailyFreeSummonAvailable();
@@ -42453,6 +42463,8 @@ function doSummon(times){
         if(_batchTreasure >= 1){ _one = _capCommonReward(); } else { _batchTreasure++; }
       }
     }
+    // ★ v5.302.0 🌠 祈願:本批第一個 SSR/SR 英雄(含重複→命星)換成指定英雄(上限計數已在上面算過,稀有度不變)
+    if(_wishCtx && typeof window._wishApply === 'function') _one = window._wishApply(_one, _wishCtx);
     if(_one && (_one.kind === 'rare_hero' || _one.kind === 'cst_star') && _one.heroName) _batchClaimedHeroes.add(_one.heroName);
     if(_one && _one.kind === 'rare_pet' && _one.petName) _batchClaimedHeroes.add(_one.petName);   // ★ v4.1.0 寵物同批排除(名稱與英雄不重疊)
     results.push(_one);
@@ -42593,6 +42605,7 @@ function _showSummonResults(results){
       + (r._dupConverted ? '<div style="font-size:10px;color:#7fe7c4;margin-top:2px;line-height:1.1;font-weight:700;">🔄 重複轉換</div>' : '')
       + (r.kind === 'rare_pet' ? '<div style="font-size:10px;color:#aaffcc;margin-top:2px;line-height:1.1;font-weight:700;">🐾 直接馴養成功</div>' : '')
       + (r.kind === 'cst_star' ? '<div style="font-size:10px;color:#ffe08a;margin-top:2px;line-height:1.1;font-weight:700;">' + (r._cstVoid ? '🌑 已滿 6 命・可拿去合成' : '✨ 重複角色→命星 +1') + '</div>' : '')
+      + (r._wished ? '<div style="font-size:11px;color:#3a1600;background:#ffd23a;border-radius:8px;margin-top:3px;padding:1px 4px;line-height:1.2;font-weight:900;">🌠 願望實現!</div>' : '')
       + '</div>';
   });
   content += '</div>';
@@ -81503,6 +81516,428 @@ function makeRadar(dims, size) {
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if(confirm(msg2)) go2();
     }
   }
+})();
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * ★ v5.302.0（2026-10-26・老師「召喚星空新增『祈願』」）— 🌠 祈願之星
+ * ────────────────────────────────────────────────────────────────────────────
+ * 【玩法】召喚 1 次左邊的星形「祈願」按鈕 → 英雄清單(帶圖片)分 SSR / SR 兩頁,
+ *   每週各可指定 1 名「召喚星空機率池或自選召喚卷挑得到」的英雄。
+ *   本週第一次在召喚星空召喚出 SSR(或 SR)英雄時,必定換成指定的那一位;
+ *   召喚後該稀有度本週次數用盡,下週一 08:00(台灣)重置。SSR 與 SR 分開計次。
+ *   次數還沒用掉以前可隨時更換指定英雄。已擁有的英雄 ⇒ 變成 1 顆命星(與召喚重複角色同規則)。
+ *   寵物不算英雄,SSR/SR 槽抽到寵物時不觸發、不消耗願望。
+ * 【防洗次數(老師需求 2)】
+ *   ① 週別用「伺服器時間」算:開召喚星空/開祈願視窗/召喚前取 version.json 回應的 Date 標頭
+ *     求出時差,調快裝置時鐘也跳不到下一週;取不到伺服器時間 ⇒ 祈願暫停(不消耗、不套用,也不讓這抽白白浪費)。
+ *   ② 每次實現願望都 arrayUnion 一筆到 players/{uid}.summonWishLog(只會增加、不會被 gameCloudSave 覆蓋),
+ *     同時寫 summonWish_s;載入任何存檔、換裝置、讀到舊存檔時「同一週只要任何一份資料說用過 = 用過」(單調合併)。
+ *   ③ 召喚前一定先向雲端重讀一次 summonWishLog(15 分鐘內讀過才免重讀),另一台裝置剛用掉的也擋得住。
+ *   ④ 換帳號(共用 iPad):狀態以 uid 分開保存,uid 一變立刻換成新帳號自己的資料。
+ * ════════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var W = window;
+  var TIERS = ['SSR', 'SR'];
+  var FRESH_MS = 15 * 60 * 1000;
+  function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function _toast(m, c, d){ try{ if(typeof _showInGameToast === 'function') _showInGameToast(m, c || '#ffe066', d || 2600); }catch(_){} }
+  function _uid(){ try{ return W._gUserId || ''; }catch(_){ return ''; } }
+  /* 週別 = 該週星期一的日期(台灣週一 08:00 = UTC 週一 00:00) */
+  function _wkOf(ms){
+    var d = new Date(ms), back = (d.getUTCDay() + 6) % 7;
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back)).toISOString().slice(0, 10);
+  }
+  function _blankTier(){ return { h:'', at:0, used:false, uh:'', ua:0 }; }
+  function _blank(wk){ return { wk:wk || '', SSR:_blankTier(), SR:_blankTier() }; }
+  function _clean(o){
+    var r = _blank(o && typeof o.wk === 'string' ? o.wk : '');
+    TIERS.forEach(function(t){
+      var x = o && o[t];
+      if(x && typeof x === 'object'){
+        r[t].h = (typeof x.h === 'string') ? x.h : ''; r[t].at = +x.at || 0;
+        r[t].used = !!x.used; r[t].uh = (typeof x.uh === 'string') ? x.uh : ''; r[t].ua = +x.ua || 0;
+      }
+    });
+    return r;
+  }
+  /* 單調合併:較新的週為準;同一週「任何一份說用過 = 用過」;指定英雄取最後修改的那份 */
+  function _merge(a, b){
+    a = _clean(a); b = _clean(b);
+    if(a.wk !== b.wk) return (a.wk > b.wk) ? a : b;
+    var r = _blank(a.wk);
+    TIERS.forEach(function(t){
+      var x = a[t], y = b[t];
+      var pick = (y.at > x.at) ? y : x;
+      r[t].h = pick.h; r[t].at = pick.at;
+      r[t].used = x.used || y.used;
+      var u = x.used ? x : y; if(x.used && y.used && y.ua > x.ua) u = y;
+      r[t].uh = r[t].used ? u.uh : ''; r[t].ua = r[t].used ? u.ua : 0;
+    });
+    return r;
+  }
+  function _foldLog(st, log){
+    if(!Array.isArray(log) || !st.wk) return st;
+    log.forEach(function(e){
+      try{
+        var p = String(e).split('|');
+        if(p[0] === st.wk && (p[1] === 'SSR' || p[1] === 'SR') && !st[p[1]].used){
+          st[p[1]].used = true; st[p[1]].uh = p[2] || ''; st[p[1]].ua = +p[3] || 0;
+        }
+      }catch(_){}
+    });
+    return st;
+  }
+
+  /* ── 伺服器時間 ── */
+  var _srv = { off:null, at:0 };
+  function _srvOk(){ return _srv.off !== null && (Date.now() - _srv.at) < FRESH_MS; }
+  function _now(){ return Date.now() + (_srv.off || 0); }
+
+  /* ── 本機狀態(以 uid 分開) ── */
+  var S = null, SU = null, _logReadAt = 0, _logUid = '';
+  function _lsKey(u){ return 'lxps_summon_wish_' + u; }
+  function _st(){
+    var u = _uid();
+    if(SU !== u || !S){
+      SU = u; S = _blank('');
+      if(u){ try{ var raw = localStorage.getItem(_lsKey(u)); if(raw) S = _clean(JSON.parse(raw)); }catch(_){} }
+      _logReadAt = 0;
+    }
+    if(_srvOk()){
+      var cw = _wkOf(_now());
+      if(cw > S.wk) S = _blank(cw);   /* 進入新的一週:兩種稀有度都重置 */
+    }
+    return S;
+  }
+  function _saveLocal(){ try{ var u = _uid(); if(u && S && SU === u) localStorage.setItem(_lsKey(u), JSON.stringify(S)); }catch(_){} }
+  W._wishForCloud = function(){
+    try{ var s = _st(); return JSON.stringify(s); }catch(_){ return JSON.stringify(_blank('')); }
+  };
+  /* 存檔載入(_applySafeData)時呼叫:雲端值與本機值單調合併 */
+  W._wishMergeCloud = function(s_str, log){
+    try{
+      var s = _st(), c = null;
+      if(typeof s_str === 'string' && s_str){ try{ c = JSON.parse(s_str); }catch(_){ c = null; } }
+      if(c) S = _merge(s, c);
+      if(Array.isArray(log)) _foldLog(S, log);
+      _saveLocal(); W._wishRefreshBtn();
+    }catch(e){ console.warn('[祈願] 載入合併', e); }
+  };
+
+  /* ── 雲端寫入(不經 _lxpsCloudInstantUnlock:那支對管理員會早退,老師測試時也要能真的記下來) ── */
+  function _cloudWrite(logEntry, label){
+    try{
+      var u = _uid(), F = W._fbFns;
+      if(!u || !W._fbDb || !F || typeof F.updateDoc !== 'function' || typeof F.doc !== 'function') return;
+      if(SU !== u) return;
+      var patch = { summonWish_s: JSON.stringify(S) };
+      if(logEntry && typeof F.arrayUnion === 'function') patch.summonWishLog = F.arrayUnion(logEntry);
+      var ref = F.doc(W._fbDb, 'players', u);
+      var go = function(n){
+        try{
+          Promise.resolve(F.updateDoc(ref, patch)).then(function(){ try{ console.log('[祈願] ✅ 雲端寫入', label || ''); }catch(_){} })
+            .catch(function(e){ if(n > 0) setTimeout(function(){ go(n - 1); }, 4000); else console.warn('[祈願] 雲端寫入失敗(交 gameCloudSave 補 summonWish_s)', e); });
+        }catch(_){ if(n > 0) setTimeout(function(){ go(n - 1); }, 4000); }
+      };
+      go(3);
+    }catch(e){ console.warn('[祈願] 雲端寫入例外', e); }
+  }
+
+  /* ── 向伺服器確認:時間 + 雲端已用紀錄 ── */
+  var _vBusy = null;
+  W._wishVerify = function(force){
+    if(!force && _srvOk() && _logUid === _uid() && (Date.now() - _logReadAt) < FRESH_MS) return Promise.resolve(true);
+    if(_vBusy) return _vBusy;
+    var u0 = _uid();
+    _vBusy = new Promise(function(res){
+      var done = function(ok){ _vBusy = null; res(ok); };
+      var t0 = Date.now();
+      var timer = setTimeout(function(){ done(false); }, 9000);
+      var fin = function(ok){ clearTimeout(timer); done(ok); };
+      try{
+        fetch('version.json?wish=' + t0, { cache:'no-store' }).then(function(r){
+          var dh = r && r.headers && r.headers.get('Date');
+          var ms = dh ? Date.parse(dh) : NaN;
+          if(!isFinite(ms)) throw new Error('no Date header');
+          var t1 = Date.now();
+          _srv.off = ms - Math.round((t0 + t1) / 2); _srv.at = t1;
+          var u = _uid();
+          if(!u || u !== u0){ fin(false); return; }
+          var F = W._fbFns;
+          if(!W._fbDb || !F || typeof F.getDocFromServer !== 'function'){ fin(false); return; }
+          return Promise.resolve(F.getDocFromServer(F.doc(W._fbDb, 'players', u))).then(function(snap){
+            if(_uid() !== u){ fin(false); return; }
+            var d = (snap && snap.exists && snap.exists()) ? snap.data() : {};
+            _st();
+            var c = null; try{ if(typeof d.summonWish_s === 'string' && d.summonWish_s) c = JSON.parse(d.summonWish_s); }catch(_){}
+            if(c) S = _merge(S, c);
+            _st();   /* 合併後再套一次週別重置 */
+            _foldLog(S, d.summonWishLog);
+            _logReadAt = Date.now(); _logUid = u;
+            _saveLocal(); W._wishRefreshBtn();
+            fin(true);
+          });
+        }).catch(function(e){ console.warn('[祈願] 伺服器確認失敗', e); fin(false); });
+      }catch(e){ fin(false); }
+    });
+    return _vBusy;
+  };
+
+  /* ── 候選英雄 ── */
+  function _owned(n){ try{ return (typeof advGetUnlockedHeroes === 'function') && advGetUnlockedHeroes().indexOf(n) >= 0; }catch(_){ return false; } }
+  function _cstOn(){ try{ return !!(W._cstOpenForMe && W._cstOpenForMe()); }catch(_){ return false; } }
+  function _held(n){ try{ return (typeof W._cstHeld === 'function') ? (W._cstHeld(n) | 0) : 0; }catch(_){ return 0; } }
+  function _okHero(tier, n){
+    if(!n) return false;
+    var uni = []; try{ uni = (typeof W._summonTicketPickUniverse === 'function') ? (W._summonTicketPickUniverse(tier) || []) : []; }catch(_){}
+    if(uni.indexOf(n) < 0) return false;
+    if(!_owned(n)) return true;
+    if(!_cstOn()) return false;
+    if(typeof W._cstEligible === 'function' && !W._cstEligible(n)) return false;
+    return _held(n) < (W._CST_MAX || 6);
+  }
+  W._wishCandidates = function(tier){
+    var uni = []; try{ uni = (typeof W._summonTicketPickUniverse === 'function') ? (W._summonTicketPickUniverse(tier) || []) : []; }catch(_){}
+    var a = [], b = [];
+    uni.forEach(function(n){ if(_okHero(tier, n)) (_owned(n) ? b : a).push(n); });
+    return a.concat(b);
+  };
+
+  /* ── 狀態查詢 ── */
+  function _active(t){ var s = _st(); return !s[t].used && !!s[t].h; }
+  W._wishStatus = function(){
+    var s = _st();
+    var allUsed = s.SSR.used && s.SR.used;
+    var anyUp = _active('SSR') || _active('SR');
+    return { s:s, allUsed:allUsed, anyUp:anyUp };
+  };
+
+  /* ── doSummon 前置:有啟用中的願望 ⇒ 一定要先完成伺服器確認才可召喚 ── */
+  W._wishPrepare = function(){
+    try{
+      var u = _uid();
+      if(!u) return null;
+      var s = _st();
+      if(!_active('SSR') && !_active('SR')) return null;
+      if(!(_srvOk() && _logUid === u && (Date.now() - _logReadAt) < FRESH_MS)){
+        W._wishVerify(false).then(function(ok){
+          _toast(ok ? '🌠 願望已確認!請再按一次召喚' : '🌠 現在連不上星空(網路),祈願先暫停;要不要先不指定英雄再召喚?', ok ? '#ffe066' : '#ffaa44', 3200);
+        });
+        return { block:true };
+      }
+      s = _st();
+      if(_wkOf(_now()) !== s.wk){ return { block:true }; }
+      return { block:false, SSR:(_active('SSR') ? s.SSR.h : ''), SR:(_active('SR') ? s.SR.h : ''), uid:u };
+    }catch(e){ console.warn('[祈願] 前置', e); return null; }
+  };
+  /* ── 套用:本批第一個 SSR/SR 英雄結果換成指定英雄 ── */
+  W._wishApply = function(one, ctx){
+    try{
+      if(!one || !ctx || ctx.block) return one;
+      if(!(one.kind === 'rare_hero' || one.kind === 'cst_star')) return one;
+      var t = one._rarityTier; if(t !== 'SSR' && t !== 'SR') return one;
+      var h = ctx[t]; if(!h) return one;
+      ctx[t] = '';   /* 同一批只換一次 */
+      if(_uid() !== ctx.uid) return one;
+      if(!_okHero(t, h)){
+        setTimeout(function(){ _toast('🌠 指定的「' + h + '」現在不能實現(已滿 6 命或暫不開放),這次照原本結果,願望保留', '#ffaa44', 4200); }, 2500);
+        return one;
+      }
+      var r;
+      if(_owned(h)){
+        r = { kind:'cst_star', heroName:h, name:'命星・' + h, icon:'⭐', qty:1, isRare:true, _rarityTier:t, _cstVoid:false };
+      } else {
+        r = { kind:'rare_hero', name:h, heroName:h, icon:(t === 'SSR' ? '🌈' : '⭐'), qty:1, isRare:true, _rarityTier:t };
+        if(t === 'SSR') r.isSuperRare = !!one.isSuperRare;
+      }
+      r._wished = true;
+      /* 立刻記為已用(本機 + 雲端 arrayUnion 永久紀錄) */
+      var s = _st(), ts = _now();
+      s[t].used = true; s[t].uh = h; s[t].ua = ts;
+      _saveLocal();
+      _cloudWrite(s.wk + '|' + t + '|' + h + '|' + ts, '實現 ' + t + ' ' + h);
+      W._wishRefreshBtn();
+      return r;
+    }catch(e){ console.warn('[祈願] 套用例外 → 原結果', e); return one; }
+  };
+
+  /* ── 指定 / 取消 ── */
+  function _setWish(t, h){
+    var u = _uid();
+    if(!u){ _toast('🌠 要先登入才能祈願喔', '#ffaa44'); return; }
+    if(W._progressLoaded !== true){ _toast('資料還在載入,等一下再試', '#ffaa44'); return; }
+    if(!h){   /* 取消指定不需連線(離線時也能取消,好讓召喚不被擋住) */
+      var s0 = _st();
+      if(!s0[t].used){ s0[t].h = ''; s0[t].at = Date.now() + (_srv.off || 0); _saveLocal(); _cloudWrite(null, '取消 ' + t); }
+      try{ playSfx('sfx-sel', 0.6); }catch(_){}
+      _render(); W._wishRefreshBtn(); return;
+    }
+    W._wishVerify(false).then(function(ok){
+      if(!ok){ _toast('🌠 現在連不上星空(網路),等一下再試', '#ffaa44'); return; }
+      if(_uid() !== u) return;
+      var s = _st();
+      if(s[t].used){ _toast('本週的 ' + t + ' 願望已經實現了,下週一早上 8:00 再來許願吧!', '#ffaa44', 3200); _render(); return; }
+      if(h && !_okHero(t, h)){ _toast('這位英雄現在不能指定', '#ffaa44'); _render(); return; }
+      s[t].h = h || ''; s[t].at = _now();
+      _saveLocal(); _cloudWrite(null, '指定 ' + t + ' ' + (h || '(取消)'));
+      try{ playSfx(h ? 'sfx-medal-unlock' : 'sfx-sel', 0.7); }catch(_){}
+      if(h) _toast('🌠 已指定 ' + t + ':「' + h + '」!本週第一次召喚出 ' + t + ' 英雄就是他!', '#ffe066', 3600);
+      _render(); W._wishRefreshBtn();
+    });
+  }
+
+  /* ── 樣式 ── */
+  function _css(){
+    if(document.getElementById('wish-css')) return;
+    var st = document.createElement('style'); st.id = 'wish-css';
+    st.textContent = [
+      '#summon-wish-btn{position:absolute;right:calc(100% + 4px);bottom:8px;width:112px;height:112px;padding:0;border:0;background:none;cursor:pointer;z-index:11;',
+      '  filter:drop-shadow(0 0 10px rgba(255,214,110,0.85)) drop-shadow(0 0 4px rgba(255,255,255,0.6));-webkit-tap-highlight-color:transparent;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}',
+      '#summon-wish-btn .wstar{position:absolute;inset:0;clip-path:polygon(50% 0%,61.8% 34.5%,97.6% 34.5%,68.9% 56.1%,79.4% 90.5%,50% 69.4%,20.6% 90.5%,31.1% 56.1%,2.4% 34.5%,38.2% 34.5%);',
+      '  background:linear-gradient(160deg,#fff6c2 0%,#ffd45a 35%,#ff9edb 70%,#b98cff 100%);animation:wishStarSpin 6s ease-in-out infinite;}',
+      '#summon-wish-btn .wstar2{position:absolute;inset:9px;clip-path:polygon(50% 0%,61.8% 34.5%,97.6% 34.5%,68.9% 56.1%,79.4% 90.5%,50% 69.4%,20.6% 90.5%,31.1% 56.1%,2.4% 34.5%,38.2% 34.5%);',
+      '  background:linear-gradient(170deg,rgba(90,40,160,0.95),rgba(40,20,100,0.95));}',
+      '#summon-wish-btn .wlbl{position:absolute;left:0;right:0;top:44%;text-align:center;font-size:23px;font-weight:900;color:#fff4c8;letter-spacing:2px;line-height:1;text-shadow:0 0 8px #ffcf5a,0 2px 2px #3a1460;}',
+      '#summon-wish-btn:active .wstar{transform:scale(0.92);}',
+      '#summon-wish-btn.used .wstar{background:linear-gradient(160deg,#d9d9e6,#9a9ab0 60%,#6d6d86);animation:none;}',
+      '#summon-wish-btn.used{filter:drop-shadow(0 0 4px rgba(180,180,200,0.5));}',
+      '#summon-wish-tag{position:absolute;right:-4px;bottom:calc(100% + 4px);white-space:nowrap;padding:5px 12px;border-radius:999px;font-size:19px;font-weight:900;',
+      '  color:#3a1600;background:linear-gradient(135deg,#fff3a8,#ffb347);border:2px solid #fff;box-shadow:0 0 12px rgba(255,190,80,0.9);animation:wishTagBounce 1.1s ease-in-out infinite;pointer-events:none;}',
+      '#summon-wish-tag.idle{background:linear-gradient(135deg,#d6f3ff,#9fd0ff);color:#0a2a50;box-shadow:0 0 10px rgba(130,200,255,0.8);}',
+      '#summon-wish-tag.done{background:#8a8a98;color:#eeeef4;border-color:#c4c4d0;box-shadow:none;animation:none;}',
+      'body.gc-short #summon-wish-btn{width:150px;height:150px;bottom:2px;} body.gc-short #summon-wish-btn .wstar2{inset:12px;} body.gc-short #summon-wish-btn .wlbl{font-size:31px;}',
+      'body.gc-short #summon-wish-tag{font-size:24px;padding:6px 14px;}',
+      '@keyframes wishTagBounce{0%,100%{transform:translateY(0)}45%{transform:translateY(-9px)}60%{transform:translateY(-3px)}}',
+      '@keyframes wishStarSpin{0%,100%{transform:rotate(0deg) scale(1)}50%{transform:rotate(8deg) scale(1.04)}}',
+      '#wish-ov{position:fixed;inset:0;z-index:10700;display:flex;align-items:safe center;justify-content:center;background:rgba(3,4,18,0.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;padding:12px;box-sizing:border-box;overflow:auto;}',
+      '#wish-ov .wcard{position:relative;width:min(960px,96vw);max-height:94vh;overflow-y:auto;background:linear-gradient(160deg,rgba(22,16,60,0.97),rgba(48,24,96,0.97));border:3px solid rgba(255,214,120,0.75);border-radius:18px;padding:16px 18px 18px;box-sizing:border-box;box-shadow:0 10px 60px rgba(160,100,255,0.5);color:#fff;}',
+      '#wish-ov .wx{position:absolute;top:10px;right:12px;width:48px;height:48px;border-radius:50%;border:2px solid rgba(200,210,255,0.6);background:rgba(10,14,40,0.85);color:#fff;font-size:24px;font-weight:900;cursor:pointer;line-height:1;}',
+      '#wish-ov .wtitle{font-size:28px;font-weight:900;color:#ffe9a8;text-shadow:0 0 12px rgba(255,200,90,0.8);padding-right:56px;}',
+      '#wish-ov .wlore{font-size:15px;color:#d8d0ff;margin-top:4px;line-height:1.5;}',
+      '#wish-ov .wtabs{display:flex;gap:8px;margin:12px 0 8px;flex-wrap:wrap;}',
+      '#wish-ov .wtab{min-height:46px;padding:8px 18px;font-size:18px;font-weight:900;border-radius:12px;border:2px solid rgba(160,180,255,0.6);background:rgba(20,26,70,0.8);color:#dfe6ff;cursor:pointer;font-family:inherit;}',
+      '#wish-ov .wtab.on{background:linear-gradient(135deg,#ffd97a,#ffb347);color:#2a1600;border-color:#ffe9a8;}',
+      '#wish-ov .wstate{background:rgba(8,12,40,0.7);border:1.5px solid rgba(255,214,120,0.45);border-radius:12px;padding:10px 12px;font-size:16px;line-height:1.5;display:flex;flex-wrap:wrap;align-items:center;gap:10px;}',
+      '#wish-ov .wstate b{color:#ffe08a;}',
+      '#wish-ov .wclr{min-height:44px;padding:6px 14px;border-radius:10px;border:2px solid rgba(200,200,255,0.5);background:rgba(30,30,70,0.85);color:#fff;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;}',
+      '#wish-ov .wgrid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px;}',
+      '#wish-ov .whero{position:relative;width:108px;background:rgba(40,0,40,0.7);border:2px solid #ffb3e666;border-radius:11px;cursor:pointer;padding:0 0 6px;font-family:inherit;overflow:hidden;color:#fff;}',
+      '#wish-ov .whero img{width:100%;height:96px;object-fit:cover;border-radius:9px 9px 0 0;background:#0a0a18;display:block;}',
+      '#wish-ov .whero .wn{font-size:13px;font-weight:800;margin-top:5px;padding:0 4px;line-height:1.25;}',
+      '#wish-ov .whero .ws{font-size:11px;font-weight:800;color:#9fe8ff;}',
+      '#wish-ov .whero.sel{border-color:#ffe066;box-shadow:0 0 16px rgba(255,220,90,0.95);background:rgba(90,60,0,0.75);}',
+      '#wish-ov .whero.sel::after{content:"🌠 指定中";position:absolute;top:4px;left:4px;font-size:11px;font-weight:900;background:#ffd23a;color:#3a1600;border-radius:8px;padding:2px 6px;}',
+      '#wish-ov .whero:disabled{opacity:0.45;cursor:default;}',
+      '#wish-ov .wnote{font-size:15px;color:#c8cff0;text-align:center;padding:14px;}',
+      '@media (max-width:700px),(max-height:520px){',
+      '  #wish-ov{padding:4px;} #wish-ov .wcard{max-height:98vh;padding:10px 10px 12px;} #wish-ov .wtitle{font-size:21px;} #wish-ov .wlore{font-size:13px;}',
+      '  #wish-ov .wx{width:44px;height:44px;top:6px;right:8px;font-size:20px;} #wish-ov .whero{width:92px;} #wish-ov .whero img{height:80px;}',
+      '}'
+    ].join('\n');
+    document.head.appendChild(st);
+  }
+
+  /* ── 星形按鈕(召喚 1 次左邊) ── */
+  W._wishEnsureBtn = function(){
+    try{
+      _css();
+      var b1 = document.getElementById('summon-1x-btn'); if(!b1 || !b1.parentNode) return;
+      var b = document.getElementById('summon-wish-btn');
+      if(!b){
+        b = document.createElement('button');
+        b.id = 'summon-wish-btn'; b.type = 'button'; b.setAttribute('aria-label', '祈願');
+        b.innerHTML = '<span class="wstar"></span><span class="wstar2"></span><span class="wlbl">祈願</span><span id="summon-wish-tag"></span>';
+        b.addEventListener('click', function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} W._wishOpen(); });
+        b1.parentNode.insertBefore(b, b1);
+      }
+      W._wishRefreshBtn();
+      W._wishVerify(false);
+    }catch(e){ console.warn('[祈願] 按鈕', e); }
+  };
+  W._wishRefreshBtn = function(){
+    try{
+      var b = document.getElementById('summon-wish-btn'), tg = document.getElementById('summon-wish-tag');
+      if(!b || !tg) return;
+      var st = W._wishStatus();
+      if(st.allUsed){ b.className = 'used'; tg.className = 'done'; tg.textContent = '本週已實現願望'; }
+      else if(st.anyUp){ b.className = ''; tg.className = ''; tg.textContent = '指定英雄UP中'; }
+      else { b.className = ''; tg.className = 'idle'; tg.textContent = '本週可以許願'; }
+    }catch(_){}
+  };
+
+  /* ── 英雄清單視窗 ── */
+  var _tab = 'SSR';
+  function _nextReset(){
+    var n = _now(), d = new Date(n), back = (d.getUTCDay() + 6) % 7;
+    var mon = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back) + 7 * 86400000;
+    var left = Math.max(0, mon - n), dd = Math.floor(left / 86400000), hh = Math.floor(left % 86400000 / 3600000);
+    return (dd > 0 ? dd + ' 天 ' : '') + hh + ' 小時';
+  }
+  function _render(){
+    var ov = document.getElementById('wish-ov'); if(!ov) return;
+    var s = _st(), t = _tab, x = s[t];
+    var h = '<div class="wcard" role="dialog" aria-modal="true"><button type="button" class="wx" data-w="close" aria-label="關閉">✕</button>'
+      + '<div class="wtitle">🌠 祈願之星</div>'
+      + '<div class="wlore">每週可以各指定 <b>1 位 SSR</b> 和 <b>1 位 SR</b> 英雄。這週第一次在召喚星空召喚出 SSR(或 SR)英雄時,<b>一定是你指定的英雄</b>!<br>'
+      + '願望實現後要等<b>下週一早上 8:00</b> 才能再許願;還沒實現前隨時可以換人。已經擁有的英雄會變成 1 顆命星。(寵物不算英雄)</div>'
+      + '<div class="wtabs">' + TIERS.map(function(k){
+          var y = s[k], lab = y.used ? '✅ 已實現' : (y.h ? '🌠 UP中' : '可許願');
+          return '<button type="button" class="wtab' + (k === t ? ' on' : '') + '" data-w="tab" data-v="' + k + '">' + k + '(' + lab + ')</button>';
+        }).join('') + '</div>';
+    if(!_srvOk()){
+      h += '<div class="wstate">⏳ 正在向星空確認願望資料…(需要網路)</div>';
+    } else if(x.used){
+      h += '<div class="wstate">✨ 本週的 ' + t + ' 願望已實現:<b>' + _esc(x.uh || '?') + '</b>。下次許願:<b>' + _nextReset() + '</b>後(週一 08:00)</div>';
+    } else {
+      h += '<div class="wstate">' + (x.h ? '🌠 目前指定:<b>' + _esc(x.h) + '</b>(本週第一次召喚出 ' + t + ' 英雄時必定出現)' : '還沒有指定 ' + t + ' 英雄,點下面的英雄來許願!')
+        + (x.h ? '<button type="button" class="wclr" data-w="clear">取消指定</button>' : '')
+        + '<span style="color:#aab;font-size:14px;">距離重置:' + _nextReset() + '</span></div>';
+    }
+    var list = W._wishCandidates(t);
+    if(x.used && x.uh && list.indexOf(x.uh) < 0) list.unshift(x.uh);
+    if(!list.length) h += '<div class="wnote">目前沒有可以指定的 ' + t + ' 英雄。</div>';
+    else {
+      h += '<div class="wgrid">';
+      list.forEach(function(n){
+        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[n]) ? HERO_IMGS[n] : '';
+        var own = _owned(n);
+        var sel = x.used ? (n === x.uh) : (n === x.h);
+        h += '<button type="button" class="whero' + (sel ? ' sel' : '') + '" data-w="pick" data-v="' + _esc(n) + '"' + ((x.used || !_srvOk()) ? ' disabled' : '') + '>'
+          + (img ? '<img src="' + _esc(img) + '" alt="" loading="lazy">' : '<div style="height:96px;display:flex;align-items:center;justify-content:center;font-size:34px;">🌟</div>')
+          + '<div class="wn">' + _esc(n) + '</div>'
+          + '<div class="ws">' + (own ? '⭐ 命星 ' + _held(n) + '/6 → +1' : '🆕 尚未擁有') + '</div></button>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+    ov.innerHTML = h;
+  }
+  W._wishOpen = function(){
+    try{
+      if(!_uid()){ _toast('🌠 要先登入才能祈願喔', '#ffaa44'); return; }
+      _css();
+      var ov = document.getElementById('wish-ov');
+      if(!ov){
+        ov = document.createElement('div'); ov.id = 'wish-ov';
+        ov.addEventListener('click', function(ev){
+          if(ev.target === ov){ ov.remove(); return; }
+          var tt = ev.target;
+          while(tt && tt !== ov && !(tt.getAttribute && tt.getAttribute('data-w'))) tt = tt.parentNode;
+          if(!tt || tt === ov || tt.disabled) return;
+          var a = tt.getAttribute('data-w'), v = tt.getAttribute('data-v');
+          if(a === 'close'){ try{ playSfx('sfx-gentle', 0.5); }catch(_){} ov.remove(); return; }
+          if(a === 'tab'){ _tab = (v === 'SR') ? 'SR' : 'SSR'; try{ playSfx('sfx-sel', 0.5); }catch(_){} _render(); return; }
+          if(a === 'clear'){ _setWish(_tab, ''); return; }
+          if(a === 'pick'){ _setWish(_tab, v); return; }
+        });
+        document.body.appendChild(ov);
+      }
+      _render();
+      W._wishVerify(true).then(function(){ if(document.getElementById('wish-ov')) _render(); });
+    }catch(e){ console.warn('[祈願] 視窗', e); }
+  };
+  /* 每分鐘更新一次按鈕標籤(跨週一 08:00 時自動恢復) */
+  setInterval(function(){ try{ var so = document.getElementById('summon-overlay'); if(so && so.style.display !== 'none') W._wishRefreshBtn(); }catch(_){} }, 60000);
 })();
 
 window._advSystemReady = true;
