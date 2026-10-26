@@ -70588,8 +70588,12 @@ document.addEventListener('keydown', function(e){
   hit.id = '_admin-mobile-trigger';
   hit.style.cssText = ''
     + 'position:fixed;top:0;right:60px;width:50px;height:50px;'
-    + 'z-index:99988;background:transparent;pointer-events:auto;'
-    + 'touch-action:none;-webkit-user-select:none;user-select:none;';
+    + 'z-index:99988;background:transparent;pointer-events:none;'   /* ★ v5.301.0 auto → none(見下方說明) */
+    + '-webkit-user-select:none;user-select:none;';
+  /* ★ v5.301.0(老師「檢查手機版所有頁面是否有按鈕…按了無效或很難按到」)— 實測抓到:這塊 50×50 透明熱區(z 99988、pointer-events:auto)
+     蓋在所有頁面右上角,手機上剛好壓住右上功能鍵列的「重新開始」「帳號與指引」、鬥技場的「✕ 離開」等按鈕的一部分 ⇒ 學生點到那一塊就「按了沒反應」。
+     改法:熱區本身不再吃任何點擊(pointer-events:none),改在 document 上聽「兩指」觸控,兩根手指都落在熱區範圍內才開始計時 2 秒
+     ⇒ 單指點擊完全穿透到底下的按鈕;老師的兩指長按 2 秒開管理面板照舊可用。 */
   if(document.body){
     document.body.appendChild(hit);
   } else {
@@ -70606,8 +70610,9 @@ document.addEventListener('keydown', function(e){
     startTouches = null;
   }
 
-  hit.addEventListener('touchstart', (e) => {
-    if(e.touches.length !== 2){ _cancelHold(); return; }
+  function _inHit(t){ const r = hit.getBoundingClientRect(); return t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom; }
+  document.addEventListener('touchstart', (e) => {
+    if(e.touches.length !== 2 || !_inHit(e.touches[0]) || !_inHit(e.touches[1])){ _cancelHold(); return; }
     startTouches = [
       { x: e.touches[0].clientX, y: e.touches[0].clientY },
       { x: e.touches[1].clientX, y: e.touches[1].clientY },
@@ -70629,8 +70634,9 @@ document.addEventListener('keydown', function(e){
     }, HOLD_MS);
   }, { passive: true });
 
-  hit.addEventListener('touchmove', (e) => {
-    if(!startTouches || e.touches.length !== 2){ _cancelHold(); return; }
+  document.addEventListener('touchmove', (e) => {
+    if(!startTouches) return;
+    if(e.touches.length !== 2){ _cancelHold(); return; }
     for(let i = 0; i < 2; i++){
       const dx = e.touches[i].clientX - startTouches[i].x;
       const dy = e.touches[i].clientY - startTouches[i].y;
@@ -70638,8 +70644,8 @@ document.addEventListener('keydown', function(e){
     }
   }, { passive: true });
 
-  hit.addEventListener('touchend', _cancelHold, { passive: true });
-  hit.addEventListener('touchcancel', _cancelHold, { passive: true });
+  document.addEventListener('touchend', function(){ if(startTouches || holdTimer) _cancelHold(); }, { passive: true });
+  document.addEventListener('touchcancel', function(){ if(startTouches || holdTimer) _cancelHold(); }, { passive: true });
 })();
 
 // ★ 管理員人數統計工具面板
@@ -73341,6 +73347,26 @@ window._lxpsSafeBottomPx = (function(){
   };
 })();
 
+/* ★ v5.301.0 四邊 safe-area(px)。橫/直向會變,所以依視窗尺寸快取、尺寸變了重量一次。 */
+window._lxpsSafeInsets = (function(){
+  var _key = '', _val = { l: 0, r: 0, t: 0, b: 0 };
+  return function(){
+    var k = (window.innerWidth || 0) + 'x' + (window.innerHeight || 0);
+    if(k === _key) return _val;
+    try{
+      var el = document.createElement('div');
+      el.style.cssText = 'position:fixed;left:-9999px;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+        'padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);';
+      document.body.appendChild(el);
+      var cs = getComputedStyle(el);
+      _val = { l: parseFloat(cs.paddingLeft) || 0, r: parseFloat(cs.paddingRight) || 0, t: parseFloat(cs.paddingTop) || 0, b: parseFloat(cs.paddingBottom) || 0 };
+      document.body.removeChild(el);
+      _key = k;
+    }catch(_si){}
+    return _val;
+  };
+})();
+
 function scaleToViewport(){
   const gc=document.getElementById('gc');
   if(!gc) return;
@@ -73359,7 +73385,7 @@ function scaleToViewport(){
   );
   const _isTouchDevice = _isMobile || _isiPad || (('ontouchstart' in window) || (navigator.maxTouchPoints||0) > 0);
   const _padX = _isMobile ? Math.max(4, vw * 0.01) : 0;
-  const _padY = _isMobile ? Math.max(12, vh * 0.025) : (_isiPad ? 6 : 0);
+  const _padY = _isMobile ? 4 : (_isiPad ? 6 : 0);   /* ★ v5.301.0 手機 max(12, 2.5%) → 4(老師「不要有黑邊」;#_gc_wrapper 自己有 safe-area 內距) */
   const _availW = vw - _padX * 2;
   let _availH = vh - _padY * 2;
   /* ══ ★★ v5.219.0(2026-09-19・老師「iPad 開啟遊戲首頁以及玩故事冒險模式時,上方和底部有黑邊區域,
@@ -73391,15 +73417,49 @@ function scaleToViewport(){
     _availH = Math.max(1, _availH - _reservePx);
     needH = (sW > 0) ? (_availH / sW) : H;
   }
-  var designH = H, scale;
-  if(needH > H + 1){
+  var designH = H, scale, _navShift = 0, _shiftY = 0;
+  /* ══ ★★ v5.301.0(2026-10-26・老師附手機截圖「首頁、冒險關卡選擇頁尺寸都變成跟 iPad 和電腦版一樣清楚、字大,
+       且不要有被裁切或看不到的地方,也不要有黑邊」)★★ ══
+     【黑邊與字小從哪來】手機橫式約 2.17:1,比 16:9 更寬 ⇒ 舊碼走 else 分支:畫布維持 1920×1080、以「高度」塞進螢幕,
+       左右各留一條黑邊;再加上手機版上下各扣 12px(_padY)⇒ 縮放只有約 0.35,字跟著變很小。
+     【做法·與 v5.219.0 iPad 拉高同一套思路反過來】手機寬螢幕改成「寬度永遠貼齊 1920、設計高度跟著螢幕變矮」:
+       designH = 可用高 ÷ (可用寬/1920),下限 H_MIN_PHONE(800)。畫布沒有被裁切,是「畫布本身變矮」——
+       inset:0 / 百分比 / flex 排版自動跟著重排;縮放倍率從約 0.35 變成約 0.42~0.45(字大約 20~30%)。
+       ⚠ 寬度維持 1920 ⇒ 全專案十多處 gcR.width/1920 的換算(特效/彈窗定位)完全不受影響。
+       ⚠ 冒險頁左側鏡像選單 #_mobile-nav(body._mobile-nav-active)以前放在黑邊裡;黑邊沒了就先扣掉它的寬度,
+         畫布整塊往右挪半個選單寬(translateX),不會被選單蓋住。選單出現/收起時 index.html _syncMobileNav 會重呼本函式。
+       ⚠ 手機版上下 12px 留白改成 4px(#_gc_wrapper 已有 safe-area 內距),黑邊不再出現。
+       ⚠ 只作用在 _isMobile(視窗寬 ≤900)且螢幕比 16:9 寬;iPad / PC 一字未改。 */
+  var H_MIN_PHONE = 800;
+  /* ★ v5.301.0(老師 09:16「檢查手機版所有頁面是否有按鈕在畫面底部或螢幕邊緣,可能導致按了無效或很難按到」)—
+     index.html 用 viewport-fit=cover ⇒ iPhone 橫放時左右各有約 47px 被瀏海/圓角吃掉、底部約 21px 是 Home 橫條手勢區。
+     以前畫布兩側有黑邊剛好避開;畫布填滿之後就要自己扣掉 safe-area,邊緣的按鈕(左側選單、右上功能鍵、底部按鈕)才不會落在按不到的地方。
+     另外每邊至少再留 6px(左右)/ 10px(底)當手指緩衝。 */
+  var _ins = (typeof window._lxpsSafeInsets === 'function') ? window._lxpsSafeInsets() : { l: 0, r: 0, t: 0, b: 0 };
+  /* 大螢幕手機橫放(iPhone Pro Max 932×430、部分 Android)寬度 >900,_isMobile 抓不到 ⇒ 觸控且高度 ≤520 也算手機(iPad 最矮 744,不會誤判) */
+  var _isPhoneLand = _isMobile || (_isTouchDevice && vh <= 520);   /* ⚠ 不能用 !_isiPad:上面 _isiPad 的 UA 判斷把寬 >900 的 iPhone 也算進去 */
+  if(_isPhoneLand && needH < H - 1){
+    var _navEl = document.getElementById('_mobile-nav');
+    var _navW = (document.body && document.body.classList.contains('_mobile-nav-active') && _navEl) ? (_navEl.offsetWidth || 0) : 0;
+    var _sideL = Math.max(6, _ins.l), _sideR = Math.max(6, _ins.r), _bot = Math.max(10, _ins.b), _top = Math.max(0, _ins.t);
+    /* 鏡像選單本身已經自己避開左側 safe-area(index.html #_mobile-nav padding-left),它的寬度已含那一段 ⇒ 有選單時左邊只扣選單寬 */
+    var _leftUsed = _navW > 0 ? _navW + 4 : _sideL;
+    var _availW2 = Math.max(1, vw - _leftUsed - _sideR);
+    var _availH2 = Math.max(1, vh - _top - _bot - 4);
+    var _sW2 = _availW2 / W;
+    designH = Math.max(H_MIN_PHONE, Math.min(H, Math.round(_availH2 / _sW2)));
+    scale = Math.min(_sW2, _availH2 / designH);
+    /* 畫布在 wrapper 裡置中;要讓它落在「左側已用寬 ~ 右側保留」之間、「頂部 ~ 底部保留」之間 ⇒ 位移 = 兩邊差的一半 */
+    _navShift = (_leftUsed - _sideR) / 2;
+    var _shiftY = (_top - _bot) / 2;
+  } else if(needH > H + 1){
     designH = Math.min(H_MAX, Math.round(needH));
     scale = Math.min(sW, _availH / designH);
   } else {
     scale = Math.min(sW, _availH / H);
   }
   gc.style.height = designH + 'px';
-  gc.style.transform = `scale(${scale})`;
+  gc.style.transform = (_navShift || _shiftY) ? `translate(${_navShift || 0}px, ${_shiftY || 0}px) scale(${scale})` : `scale(${scale})`;
   // Store scale for VFX coord calculations
   window._gcScale = scale;
   /* ★ v5.219.0 供 CSS 與 JS 取用「這一刻的畫布設計高度」——
@@ -73407,6 +73467,10 @@ function scaleToViewport(){
   window._gcDesignH = designH;
   try{ document.documentElement.style.setProperty('--gc-h', designH + 'px'); }catch(_gch){}
   try{ document.body.classList.toggle('gc-tall', designH > H + 1); }catch(_gct){}
+  try{ document.body.classList.toggle('gc-short', designH < H - 1); }catch(_gcs){}   /* ★ v5.301.0 手機寬螢幕畫布變矮(800~1079) */
+  /* ★ v5.301.0 戰鬥英雄卡固定 430 設計 px 高;畫布變矮後上下兩區(各 flex:1)各只剩 designH/2,卡片會頂出區域 ⇒
+     給 CSS 一個等比縮小倍率(index.html body.gc-short #z1/#z2 .card{zoom:var(--gc-card-zoom)});1080 高以上恆為 1。 */
+  try{ document.documentElement.style.setProperty('--gc-card-zoom', String(Math.min(1, Math.max(0.7, (designH / 2 - 40) / 430)).toFixed(3))); }catch(_gcz){}
 }
 
 function _scaleToViewportRetry(){
