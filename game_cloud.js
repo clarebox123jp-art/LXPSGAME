@@ -438,6 +438,7 @@
         window._lxpsOAuthDirectResumedUid = u.uid;
         _fbDiag('oauthDirect:✅ signInWithCredential 成功 user=' + (u.email || u.uid));
         try{ if(typeof window._addRecentAccount === 'function') window._addRecentAccount(u); }catch(_){}
+        try{ if(typeof window._lxpsMarkActiveSignIn === 'function') window._lxpsMarkActiveSignIn(u, 'oauthDirect'); }catch(_){}   // ★ v5.304.0
         return u;
       }
       _fbDiag('oauthDirect:signInWithCredential 無 user', 'warn');
@@ -523,6 +524,8 @@
       _fbDiag('signIn:嘗試 signInWithPopup');
       const result = await signInWithPopup(_fbAuth, provider);
       _fbDiag('signIn:✅ signInWithPopup 成功 user=' + (result && result.user && result.user.email));
+      // ★ v5.304.0 — 記「本人親自登入成功」序號(同帳號重新登入不會觸發新的 onAuth,要靠這個讓殘留那一輪接手,見 _lxpsMarkActiveSignIn)
+      try{ if(result && result.user && typeof window._lxpsMarkActiveSignIn === 'function') window._lxpsMarkActiveSignIn(result.user, 'popup'); }catch(_){}
       // ★ v3.16.43 — PC 安裝版切換帳號清單只剩一個根治:登入成功的最早一刻(profile 最完整)就記錄到「最近帳號」,
       //   不再單靠 onAuth 深層那一處(避免 PC popup 流程下任何 race/早退漏記)。result.user 為 Google 帳號必有 email。
       try{ if(result && result.user && typeof window._addRecentAccount === 'function') window._addRecentAccount(result.user); }catch(_){}
@@ -19557,8 +19560,52 @@
   };
   window._lxpsAuthFlowStale = _lxpsAuthFlowStale;
 
+  // ════════════════════════════════════════════════════════════════════
+  // ★★ v5.304.0（2026-10-27・老師「今天還是發生學生在首頁已經成功登入過一秒又立刻變成未登入」）★★
+  //   v5.245.0 的過期守門只比「uid 是否相同」,漏掉最常見的一種：**同一位學生自己的 iPad**。
+  //   情境：學生 A 上次用完沒登出 ⇒ 今天開機 Firebase 從 IndexedDB 還原 A 的 token ⇒ onAuth(A) 這一輪
+  //         判定「自動還原」,正在 await 信任裝置查詢(最多 6 秒,25 台同時開時常常等滿)。
+  //         這段期間 A 本人按「開始遊戲」→ Google 選帳號 → 登入成功(畫面已是 A)。
+  //         查詢回來「不信任」⇒ 過期守門比對 uid:目前登入者也是 A ⇒ 判「沒過期」⇒ 照樣 signOut ⇒ **A 剛登入就被登出**。
+  //   更糟的是 Firebase onAuthStateChanged 只在 uid「改變」時才通知(SDK notifyAuthListeners 的 lastNotifiedUid 比對),
+  //   同一個帳號再登入一次**不會再觸發新的一輪** ⇒ 沒有任何流程接手 ⇒ 畫面停在未登入＋「請重新登入」卡。
+  //   修法：每次主動登入成功記一個遞增序號(_lxpsMarkActiveSignIn);每一輪 onAuth 開始時記下當時序號。
+  //         要以「自動還原」名義登出前,若發現：目前登入者 uid 相同,而且(序號在這一輪開始後增加過 或 currentUser 已換成新的 User 物件)
+  //         ⇒ 代表本人剛剛親自登入成功 ⇒ 這一輪改當「主動登入」繼續跑完(不登出、不跳卡),因為不會有新的一輪來接手。
+  //   ⚠ 共用平板防線不變：沒有人親自按登入成功,殘留 token 照樣被攔;不同 uid 仍由 v5.245.0 過期守門交給新的一輪。
+  //   ⚠ 用「登入成功」才記序號,不用「按下登入鈕」:按了又取消 Google 視窗不能變成放行殘留帳號的後門。
+  // ════════════════════════════════════════════════════════════════════
+  window._lxpsActiveSignInGen = window._lxpsActiveSignInGen || 0;
+  const _lxpsMarkActiveSignIn = function(u, via){
+    try{
+      if(!u || !u.uid) return;
+      window._lxpsActiveSignInGen = (window._lxpsActiveSignInGen || 0) + 1;
+      window._lxpsActiveSignInLast = { uid: u.uid, gen: window._lxpsActiveSignInGen, at: Date.now(), via: via || '' };
+    }catch(_){}
+  };
+  window._lxpsMarkActiveSignIn = _lxpsMarkActiveSignIn;
+  const _lxpsSameUidReSignedIn = function(u, roundGen){
+    try{
+      if(!u || !u.uid) return false;
+      const _c = _fbAuth && _fbAuth.currentUser;
+      if(!_c || _c.uid !== u.uid) return false;
+      const _last = window._lxpsActiveSignInLast;
+      const _genMoved = !!(_last && _last.uid === u.uid && (Number(_last.gen) || 0) > (Number(roundGen) || 0));
+      const _newObj = (_c !== u);   // 登入成功時 SDK 一定換一個新的 User 物件;token 自動續期不會換
+      return _genMoved || _newObj;
+    }catch(_){ return false; }
+  };
+  window._lxpsSameUidReSignedIn = _lxpsSameUidReSignedIn;
+
   // 登入狀態變化
   onAuthStateChanged(_fbAuth, async (user) => {
+    // ★ v5.304.0 — 記下這一輪開始時的「主動登入序號」,供下方判斷「這一輪期間本人有沒有親自登入成功」
+    const _lxpsRoundSignInGen = window._lxpsActiveSignInGen || 0;
+    // ★ v5.304.0(老師「小破口修好」)— 記下本頁第一次 onAuth 收到的 User 物件 = 開機從 IndexedDB 還原的那一個(殘留帳號)。
+    //   必須在任何 await 之前記,之後才能分辨「這個 user 是按登入產生的新物件,還是開機就在的殘留物件」。
+    try{
+      if(!window._lxpsFirstAuthSeen){ window._lxpsFirstAuthSeen = true; window._lxpsRestoredAuthUser = user || null; }
+    }catch(_){}
     // ★ FIX 20260517(ee) — 等 redirect 處理完才推 UI,避免 user=null 先把 UI 推到未登入
     try{ await window._fbRedirectReady; }catch(_){}
     // ★ v5.245.0 — 等待期間若已換人登入(或已登出),這一輪的 user 是過期的 ⇒ 交給新的那一輪處理
@@ -19611,7 +19658,19 @@
       //     省下不必要的雲端讀取;玩家下次主動登入時才會被檢查到維修/停權)
       // ════════════════════════════════════════════════════════════
       try {
-        const _activeThisPage  = (window._lxpsActiveSignInThisPageload === true);
+        let _activeThisPage  = (window._lxpsActiveSignInThisPageload === true);
+        // ★★ v5.304.0(老師「小破口修好」)★★ — _doSignInFlow 在「按下登入鈕」那一刻就設這個旗標(登入成功前)。
+        //   破口:殘留帳號這一輪還沒判定前,有人按了登入又把 Google 視窗關掉 ⇒ 旗標已是 true ⇒ 殘留帳號被當成「主動登入」放行,
+        //   直接坐進上一位的帳號。
+        //   修法:旗標只對「登入產生的新 User 物件」有效。這一輪的 user 若正是開機還原的那個物件(登入一定會建立新物件,
+        //   SDK 不會沿用舊物件),代表沒有人真的登入成功 ⇒ 不算主動登入,照常走共用平板攔截。
+        //   ⚠ 自家重整、跨程式交接、redirect、信任裝置各有自己的判定變數,不受影響。
+        try{
+          if(_activeThisPage && user && window._lxpsRestoredAuthUser && user === window._lxpsRestoredAuthUser){
+            _activeThisPage = false;
+            _fbDiag('onAuth:按過登入鈕,但這一輪的 user 仍是開機還原的殘留物件(' + (user.email || String(user.uid).slice(0, 8)) + ')→ 不算主動登入', 'warn');
+          }
+        }catch(_){}
         // ★ v5.136.0 — 併入 runtime 旗標(見 _handlePendingRedirect 內註解):
         //   sessionStorage 這一半會被 iPad Safari 的 Storage Partitioning 清掉,
         //   runtime 那一半是從 localStorage 撈出來轉存的,兩者任一成立即視為「本次頁載的合法 redirect 登入」。
@@ -19829,7 +19888,18 @@
           }
         }
 
-        if((_isAutoRestore || _idleExpiredRestore) && !_bypassAutoLoginBlock && !_isDeviceTrusted){   // ★ v5.248.0 加 || _idleExpiredRestore
+        // ★ v5.304.0 — 這一輪等待期間,同一位學生已經親自登入成功(同 uid、新的 User 物件/序號前進)⇒
+        //   不是殘留帳號,改當主動登入跑完;Firebase 不會為同一個帳號再觸發新的一輪,這裡若登出就沒人接手。
+        let _sameUidReSignedIn = false;
+        if((_isAutoRestore || _idleExpiredRestore) && !_bypassAutoLoginBlock && !_isDeviceTrusted){
+          try{ _sameUidReSignedIn = _lxpsSameUidReSignedIn(user, _lxpsRoundSignInGen); }catch(_){}
+          if(_sameUidReSignedIn){
+            _fbDiag('onAuth:殘留帳號那一輪等待期間,本人(' + (user.email || String(user.uid).slice(0, 8)) + ')已親自登入成功 → 改當主動登入,不登出', 'warn');
+            try{ if(_fbAuth.currentUser && _fbAuth.currentUser.uid === user.uid) user = _fbAuth.currentUser; }catch(_){}
+            window._lxpsActiveSignInThisPageload = true;
+          }
+        }
+        if((_isAutoRestore || _idleExpiredRestore) && !_bypassAutoLoginBlock && !_isDeviceTrusted && !_sameUidReSignedIn){   // ★ v5.248.0 加 || _idleExpiredRestore ｜ ★ v5.304.0 加 && !_sameUidReSignedIn
           // ★ v5.248.0 — 上面自家 reload／交接鑰匙分支可能已把本頁標成「主動登入」;逾時情境要撤回,不留後門
           if(_idleExpiredRestore){ try{ window._lxpsActiveSignInThisPageload = false; }catch(_){} }
           console.warn('[禁止自動登入 v3.10.1] 偵測到 Firebase 自動還原 token,' +
@@ -19914,6 +19984,9 @@
         // 流程合法 → 在 runtime 變數標記「本次頁面載入已完成主動登入」
         // (這個變數會隨 reload / 關閉而清空,完全不需要清理)
         window._lxpsActiveSignInThisPageload = true;
+        // ★ v5.304.0 — 先前殘留帳號那一輪若已跳出「🔐 請重新登入確認身份」卡,本人隨後登入成功時這張卡還蓋在畫面上,
+        //   看起來就像「登入後又變未登入」⇒ 合法登入放行的這一刻一律收掉。
+        try{ const _blk = document.getElementById('_auto-login-blocked'); if(_blk) _blk.remove(); }catch(_){}
       } catch(_eAR) {
         console.warn('[禁止自動登入] 例外,放行避免鎖死', _eAR);
       }
