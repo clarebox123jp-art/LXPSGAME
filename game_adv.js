@@ -23537,7 +23537,8 @@ window._advRecordBattleResult = function(battleId, type, payload){
         const _data = _d.data() || {};
         if(_data.read === true) return;  // 已讀跳過
         // ★ v3.14.0 — 本地「以後不再顯示」旗標:即使雲端刪除失敗(離線等),也不再騷擾玩家
-        try{ if(localStorage.getItem('lxps_notif_hide_' + _d.id)) return; }catch(_){}
+        // ★ v5.303.0 — 退場的歸屬確認通知不看本機旗標:這台以前藏過、但雲端沒刪掉的那筆,也要趁這次登入清掉。
+        try{ if(!(_data.type === 'overRestoreReview' && !window._LXPS_OVR_REVIEW_POPUP) && localStorage.getItem('lxps_notif_hide_' + _d.id)) return; }catch(_){}
         _items.push({ id: _d.id, ref: doc(window._fbDb, 'pendingAdminNotifications', uid, 'items', _d.id), data: _data });
       });
       if(!_items.length) return;
@@ -23549,6 +23550,21 @@ window._advRecordBattleResult = function(battleId, type, payload){
         const _it = _items[i];
         // ★ v3.16.86 — 過度補回自我審核(學生端)分流:不走一般通知 modal,改開逐項勾選審核視窗。
         //   送出後寫本地 hide 旗標(瞬間·保證即使 reload 打斷 deleteDoc 也不重彈)+ deleteDoc 雙保險消化。
+        // ★★ v5.303.0（2026-10-27・老師「許宇慶和林夏天兩位同學每次登入都會跳出確認英雄是不是自己的，按完都沒有成功送出，
+        //   讓這個視窗不要再出現，現在已經改了所有權判定了」）——「請確認這些是不是你的」登入彈窗整個退場。
+        //   根因（三個疊加）：①GM「掃全體→全部派發」每跑一次就替同一位學生再寫一筆新通知，學生名下可能積了好幾筆；
+        //     送出一筆後 3.5 秒自動重載，迴圈來不及處理下一筆 → 下次登入換下一筆再跳。②送出時若移除／補償寫入逾時，
+        //     視窗刻意不結案（顯示「沒有送出成功，請再按一次」）→ 校網壅塞時永遠送不出去。③消化靠的本機隱藏旗標只存在
+        //     那一台 iPad，換平板就又看到。
+        //   修法：所有權已改由 v5.280.0「英雄永久擁有證明」判定（擁有 ⇔ 最近一次是獲得；移除只認老師刪除／UR 替換／
+        //     學生圖鑑「不是我的」），這份舊的自審清單已無作用 ⇒ 登入時**一律不彈、直接靜默消化**（本機旗標＋雲端刪除，
+        //     名下有幾筆就清幾筆），**不改任何英雄／至寶資料**。學生仍可從英雄圖鑑手動「不是我的」。
+        //   要恢復舊彈窗：把 _LXPS_OVR_REVIEW_POPUP 改成 true。
+        if(_it.data && _it.data.type === 'overRestoreReview' && !window._LXPS_OVR_REVIEW_POPUP){
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ await _lxpsNotifDeleteRetry(deleteDoc, _it.ref); console.info('[v5.303.0 歸屬確認退場] 已靜默消化舊通知', _it.id); }catch(_eDelR){ console.warn('[v5.303.0 歸屬確認退場] 雲端刪除失敗(本機旗標已寫·下次登入再刪)', _eDelR); }
+          continue;
+        }
         if(_it.data && _it.data.type === 'overRestoreReview'){
           let _revRes;
           try{ if(typeof window._showOverRestoreReviewModal === 'function') _revRes = await window._showOverRestoreReviewModal(uid, _it.data); }catch(_eRev){ console.warn('[過度補回自審] 視窗錯誤', _eRev); }
@@ -57453,6 +57469,8 @@ window._maybeShowAccountAuditOnLogin = async function(_retry){
     try{ _postReclaim99 = (!!_puid99 && localStorage.getItem('_gmcrPostReclaimAudit_' + _puid99) === '1'); }catch(_){}
     if(!_postReclaim99) return;                    // 非剛回收帳號 → 不彈(維持止血)
     try{ localStorage.removeItem('_gmcrPostReclaimAudit_' + _puid99); }catch(_){}                  // 一次性:消耗階段2旗標
+    // ★ v5.303.0 — 所有權改由永久擁有證明判定,登入時的「確認是不是我的」二次審查也一併退場(旗標照樣消耗,不彈)。
+    if(!window._LXPS_OVR_REVIEW_POPUP) return;
     try{ if(typeof window._AUDIT_PROMPT_DONE_KEY === 'function') localStorage.removeItem(window._AUDIT_PROMPT_DONE_KEY()); }catch(_){}   // 清封存旗標 → 讓本次二次審查能跑(審完若乾淨會重新封存)
   }catch(_eP99){ return; }
   /* eslint-disable no-unreachable */
