@@ -3732,7 +3732,7 @@ function _kingShowEntryPopup(){
             🎁 查看獎勵
           </button>
           <div style="font-size:13px;color:#9a9aac;text-align:center;line-height:1.6;">
-            每週一 08:00 結算<br>頒發前 10 名豐厚獎勵
+            每週一 08:00 結算<br>頒發前 50 名豐厚獎勵
           </div>
         </div>
         ${_specialCardHtml}
@@ -3826,12 +3826,17 @@ function _showWeeklyQuizRewardsInfo(){
 
   // 獎勵列資料(跟 _calcAwardByRank 完全對齊,圖示 + 樣式)
   const _rewardRows = [
-    { rank: 1,         rankIcon: '🥇', rankLabel: '第 1 名',     coins: 50000, crystals: 10, books: 10,
+    // ★ v5.307.0(老師 2026-10-28)— 前三檔知識幣 10萬/7萬/5萬;新增 11-30、31-50 名(與 game_cloud.js _calcAwardByRank 對齊)
+    { rank: 1,         rankIcon: '🥇', rankLabel: '第 1 名',     coins: 100000, crystals: 10, books: 10, n: 1,
       bg: 'linear-gradient(90deg,rgba(255,215,0,0.32),rgba(255,180,0,0.14))', border: 'rgba(255,215,0,0.75)', medal: '#ffe066' },
-    { rank: '2-5',     rankIcon: '🥈', rankLabel: '第 2-5 名',   coins: 35000, crystals: 6,  books: 6,
+    { rank: '2-5',     rankIcon: '🥈', rankLabel: '第 2-5 名',   coins: 70000, crystals: 6,  books: 6, n: 4,
       bg: 'linear-gradient(90deg,rgba(210,210,220,0.28),rgba(160,160,170,0.12))', border: 'rgba(220,220,220,0.6)', medal: '#dde4ee' },
-    { rank: '6-10',    rankIcon: '🥉', rankLabel: '第 6-10 名',  coins: 20000, crystals: 3,  books: 3,
+    { rank: '6-10',    rankIcon: '🥉', rankLabel: '第 6-10 名',  coins: 50000, crystals: 3,  books: 3, n: 5,
       bg: 'linear-gradient(90deg,rgba(205,127,50,0.28),rgba(160,90,40,0.14))', border: 'rgba(220,140,80,0.65)', medal: '#e8a878' },
+    { rank: '11-30',   rankIcon: '🎀', rankLabel: '第 11-30 名', coins: 30000, crystals: 2,  books: 2, n: 20,
+      bg: 'linear-gradient(90deg,rgba(120,200,255,0.22),rgba(80,140,220,0.10))', border: 'rgba(130,190,255,0.6)', medal: '#a8d8ff' },
+    { rank: '31-50',   rankIcon: '⭐', rankLabel: '第 31-50 名', coins: 10000, crystals: 1,  books: 1, n: 20,
+      bg: 'linear-gradient(90deg,rgba(150,230,170,0.20),rgba(90,170,120,0.10))', border: 'rgba(140,220,170,0.55)', medal: '#b8f0c8' },
   ];
 
   const _fmt = function(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
@@ -3873,9 +3878,9 @@ function _showWeeklyQuizRewardsInfo(){
   });
 
   // 計算總額(說明用)
-  const _totalCoins = 50000 + 35000 * 4 + 20000 * 5;       // 290,000
-  const _totalCrystals = 10 + 6 * 4 + 3 * 5;                // 49
-  const _totalBooks = 10 + 6 * 4 + 3 * 5;                   // 49
+  // ★ v5.307.0 — 改由上方獎勵列自動加總(1,430,000 幣 / 109 水晶 / 109 書),改獎勵不必再手算
+  let _totalCoins = 0, _totalCrystals = 0, _totalBooks = 0;
+  _rewardRows.forEach(function(r){ _totalCoins += r.coins * r.n; _totalCrystals += r.crystals * r.n; _totalBooks += r.books * r.n; });
 
   const _pop = document.createElement('div');
   _pop.id = 'weekly-quiz-rewards-popup';
@@ -3901,9 +3906,9 @@ function _showWeeklyQuizRewardsInfo(){
     + '<div style="margin-bottom:12px;padding:9px 13px;background:rgba(255,180,80,0.12);border:1.5px solid rgba(255,180,80,0.4);'
     +   'border-radius:8px;font-size:13px;color:#ffe2b2;line-height:1.65;">'
     + (_isSimpleWQ
-        ? ('⏰ <b>每週一早上 8:00</b> 自動算「上禮拜前 10 名」，獎勵直接寄到信箱！<br>'
+        ? ('⏰ <b>每週一早上 8:00</b> 自動算「上禮拜前 50 名」，獎勵直接寄到信箱！<br>'
            + '📈 分數來源：<b>冒險關卡 + 世界 BOSS + 知識王</b> 答對的題目（同一題只算一次）')
-        : ('⏰ <b>每週一 08:00 自動結算上週前 10 名</b>,獎勵直接寄到信箱。<br>'
+        : ('⏰ <b>每週一 08:00 自動結算上週前 50 名</b>,獎勵直接寄到信箱。<br>'
            + '📈 累計來源:<b>冒險關卡 + 世界 BOSS + 知識王</b>(不重複題目答對數)'))
     + '</div>'
     // 獎勵卡片
@@ -39386,6 +39391,31 @@ function _arenaShowExchangePlaceholder(){
       + 'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
 
     // 商品卡片網格
+    // ★ v5.307.0(老師「鬥技場兌換商店加『持有數量』」)— 兌換品 → 背包道具鍵(與 _arenaGrantExchangeItem 發放對齊);
+    //   召喚卷類連同 gm_ 前綴的同種卷一起算;知識幣顯示目前知識幣;卡片背景不顯示(一次性解鎖)。
+    var _ARENA_X_HOLD_KEYS = {
+      arena_x_ssr_summon:      ['summon_ticket_ssr', 'gm_summon_ticket_ssr'],
+      arena_x_sr_summon:       ['summon_ticket_sr', 'gm_summon_ticket_sr'],
+      arena_x_burst_fruit:     ['burst_upgrade_fruit'],
+      arena_x_exp_book:        ['hero_exp_book_premium'],
+      arena_x_skill_book:      ['skill_upgrade_book'],
+      arena_x_treasure_summon: ['summon_ticket_treasure_pick', 'gm_summon_ticket_treasure_pick'],
+      arena_x_treasure_exp:    ['treasure_exp_scroll'],
+      arena_x_summon_crystal:  ['summon_crystal']
+    };
+    var _arenaHoldHtml = function(it){
+      try{
+        var _n = null;
+        if(it.id === 'arena_x_coins_10k'){ _n = (typeof _knowledgeCoins !== 'undefined') ? (_knowledgeCoins || 0) : null; }
+        else if(_ARENA_X_HOLD_KEYS[it.id] && typeof backpackGet === 'function'){
+          _n = 0; _ARENA_X_HOLD_KEYS[it.id].forEach(function(k){ _n += (backpackGet(k) || 0); });
+        }
+        if(_n === null) return '';
+        return '<div style="font-size:12px;font-weight:800;color:#9fd8ff;margin-top:3px;">🎒 '
+          + ((typeof _artStyle !== 'undefined' && _artStyle === 'cute') ? '我有 ' : '目前持有 ')
+          + Number(_n).toLocaleString() + (it.id === 'arena_x_coins_10k' ? ' 知識幣' : '') + '</div>';
+      }catch(_){ return ''; }
+    };
     var itemsHtml = '';
     ARENA_EXCHANGE_ITEMS.forEach(function(it){
       var _afford = _shopOpen && (_zheng >= it.cost);
@@ -39415,6 +39445,7 @@ function _arenaShowExchangePlaceholder(){
         +     '<div style="flex:1;min-width:0;">'
         +       '<div style="font-size:15px;font-weight:800;color:#ffe066;line-height:1.3;">' + it.name + '</div>'
         +       '<div style="font-size:11px;color:#ccc;line-height:1.4;margin-top:2px;">' + it.desc + '</div>'
+        +       _arenaHoldHtml(it)
         +     '</div>'
         +   '</div>'
         +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;'
@@ -43239,6 +43270,7 @@ function _renderShopProducts(){
       ${_topVisualHtml}
       <div style="font-size:20px;font-weight:900;color:#ffcc44;text-align:center;line-height:1.25;min-height:50px;display:flex;align-items:center;justify-content:center;padding:0 4px;">${prod.name}</div>
       <div style="font-size:16px;color:${(_alreadyOwned||_isDailyCapped)?'#888':(prod.dailyLimit>0?'#88ffcc':'#ffdd88')};text-align:center;">${_stockTxt}</div>
+      ${_isPortraitProd ? '' : `<div style="font-size:15px;font-weight:800;color:#9fd8ff;text-align:center;line-height:1.2;">🎒 ${(typeof _artStyle!=='undefined'&&_artStyle==='cute')?'我有':'目前持有'} ${(function(){ try{ return (backpackGet(prod.id)||0).toLocaleString(); }catch(_){ return '0'; } })()}</div>`}
       ${_priceHtml}
       <div style="display:flex;align-items:center;justify-content:center;gap:4px;${_alreadyOwned?'opacity:0.4;pointer-events:none;':''}">
         <!-- ★ v1.0.20260510.5770 — 限購 1 個的物品(stock:'限購1' 或 oneTime:true)無法調整數量,+/- 按鈕變灰禁用 -->
@@ -46527,6 +46559,87 @@ function _deletePresetSlot(slotIdx){
 //   ⚠ 既有呼叫點(_ptv 之外全部)只傳一個參數 ⇒ overridePt 為 undefined ⇒ 行為與修改前一字不差。
 //   ⚠ 下方所有邏輯(冒險合法性檢查 / 鬥技場 UR 守門 v5.91.0 / 戰前養成套用 v5.74.0 /
 //     寵物還原 v4.33.0 / variant 切換)全部照舊讀同一個 pt，**一行未動**。
+// ★ v5.307.0 — 預設陣容「整備三項」還原(原在 _applyPresetTeam 內,內容一字未改搬出;龍王戰單人開房共用)
+window._lxpsRestorePresetPrep = function(pt){
+    if(!pt || !Array.isArray(pt.heroes)) return;
+    // ★ v4.33.0(任務1·甲)— 套用冒險預設陣容時,還原「存檔當時各英雄攜帶的跟隨寵物」。
+    //   跟隨寵物是「每英雄全域一隻」,套用即把全域跟隨槽寫回此陣容的寵物組合;
+    //   寵物已不在馴養名單(退養/未擁有)則靜默略過,不影響英雄本身套用。戰前 _applyFollowPetToHero 會據此上寵物。
+    try{
+      if(pt.pets && Array.isArray(pt.pets) && typeof window._petSetFollow === 'function'){
+        pt.heroes.forEach(function(hn, i){
+          var _pn = pt.pets[i];
+          if(_pn && (typeof window._petIsTamed !== 'function' || window._petIsTamed(_pn))){
+            try{ window._petSetFollow(_pn, hn); }catch(_ePsf){}
+          }
+        });
+      }
+    }catch(_ePresetPetApply){ console.warn('[預設陣容 還原寵物]', _ePresetPetApply); }
+    // ════════════════════════════════════════════════════════════════════
+    // ★★ v5.107.0(老師裁定「寵物、至寶、裝備的更換都要一起重新儲存」)— 還原至寶與裝備 ★★
+    //   一個陣容 = 一套完整整備組合,套用即把四位隊員的至寶／裝備切回本陣容存的那一套。
+    //   ⚠ 只動**本陣容這四位英雄**身上的至寶／裝備,其他英雄一律不碰。
+    //   ⚠ 快照裡的至寶／裝備可能已被賣掉／送人／被 GM 收回 → 查無資料一律靜默略過
+    //     (同 pets 的 `_petIsTamed` 守門口徑),絕不因此中斷整個套用流程。
+    //   ⚠ `Array.isArray` 守門:舊存檔沒有這兩個欄位 → 整段跳過,行為與 v5.106.0 完全一致(零回歸)。
+    //   ⚠ 至寶採「先卸這四位、再依快照低階寫回」:刻意**不走** `_equipTaiwanTreasureToHero`,
+    //     那支帶自動卸舊／同槽衝突／槽位上限邏輯,而快照本來就是一組合法組合,
+    //     走它反而可能連鎖卸掉不該卸的;低階寫回精準且冪等。
+    //   ⚠ 裝備反過來**要走** `window._gearEquipToHero`:它負責同部位衝突、轉裝與 `at2` 時間戳,
+    //     繞過去自己寫 `equippedTo` 會讓 `_gearRepairEquipped` 的「同部位只留最新一件」判錯。
+    // ════════════════════════════════════════════════════════════════════
+    try{
+      if(Array.isArray(pt.treasures) && typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
+        var _teamSet = {};
+        pt.heroes.forEach(function(hn){ if(hn) _teamSet[hn] = true; });
+        // ① 先卸下本陣容四位身上現有的全部至寶
+        Object.keys(_taiwanTreasureData).forEach(function(_tid){
+          var _rec = _taiwanTreasureData[_tid];
+          if(_rec && _rec.equippedTo && _teamSet[_rec.equippedTo]) _rec.equippedTo = null;
+        });
+        // ② 依快照逐位還原(該至寶若正裝在隊外英雄身上,先清掉:一個至寶不能同時裝兩人)
+        pt.heroes.forEach(function(hn, i){
+          if(!hn) return;
+          var _ids = pt.treasures[i];
+          if(!Array.isArray(_ids)) return;
+          _ids.forEach(function(_tid){
+            if(!_tid) return;
+            var _rec = _taiwanTreasureData[_tid];
+            if(!_rec) return;                                   // 已賣出/送人/被收回 → 略過
+            if(typeof TAIWAN_TREASURES !== 'undefined' && !TAIWAN_TREASURES[_tid]) return;
+            _rec.equippedTo = hn;
+          });
+        });
+        try{ if(typeof _saveTaiwanTreasureData === 'function') _saveTaiwanTreasureData(); }catch(_){}
+      }
+    }catch(_ePresetTreApply){ console.warn('[預設陣容 還原至寶]', _ePresetTreApply); }
+    try{
+      if(Array.isArray(pt.gear) && typeof _gearGetHeroEquipped === 'function'
+         && typeof window._gearEquipToHero === 'function' && typeof window._gearUnequip === 'function'){
+        // ① 先卸下本陣容四位身上現有的全部裝備
+        pt.heroes.forEach(function(hn){
+          if(!hn) return;
+          try{
+            (_gearGetHeroEquipped(hn) || []).forEach(function(x){
+              if(x && x.eqUid) window._gearUnequip(x.eqUid);
+            });
+          }catch(_){}
+        });
+        // ② 依快照逐位還原(走既有 API,同部位衝突與轉裝交給它處理)
+        pt.heroes.forEach(function(hn, i){
+          if(!hn) return;
+          var _ids = pt.gear[i];
+          if(!Array.isArray(_ids)) return;
+          _ids.forEach(function(_uid){
+            if(!_uid) return;
+            try{ window._gearEquipToHero(_uid, hn); }catch(_){}   // 實例不存在時該支自己回 false,不拋
+          });
+        });
+        try{ if(typeof _gearRepairEquipped === 'function') _gearRepairEquipped(); }catch(_){}
+      }
+    }catch(_ePresetGearApply){ console.warn('[預設陣容 還原裝備]', _ePresetGearApply); }
+};
+
 function _applyPresetTeam(slotIdx, overridePt){
   const pt = overridePt || _getCurrentPresetTeams()[slotIdx];
   if(!pt){ _showInGameToast('此欄位沒有儲存的陣容', '#ff8844', 1500); return; }
@@ -46621,82 +46734,9 @@ function _applyPresetTeam(slotIdx, overridePt){
         : { s1: 0, s2: 0 };
       h._burstLvAdv = (_heroBurstLevels && _heroBurstLevels[h.name]) || 0;
     });
-    // ★ v4.33.0(任務1·甲)— 套用冒險預設陣容時,還原「存檔當時各英雄攜帶的跟隨寵物」。
-    //   跟隨寵物是「每英雄全域一隻」,套用即把全域跟隨槽寫回此陣容的寵物組合;
-    //   寵物已不在馴養名單(退養/未擁有)則靜默略過,不影響英雄本身套用。戰前 _applyFollowPetToHero 會據此上寵物。
-    try{
-      if(pt.pets && Array.isArray(pt.pets) && typeof window._petSetFollow === 'function'){
-        pt.heroes.forEach(function(hn, i){
-          var _pn = pt.pets[i];
-          if(_pn && (typeof window._petIsTamed !== 'function' || window._petIsTamed(_pn))){
-            try{ window._petSetFollow(_pn, hn); }catch(_ePsf){}
-          }
-        });
-      }
-    }catch(_ePresetPetApply){ console.warn('[預設陣容 還原寵物]', _ePresetPetApply); }
-    // ════════════════════════════════════════════════════════════════════
-    // ★★ v5.107.0(老師裁定「寵物、至寶、裝備的更換都要一起重新儲存」)— 還原至寶與裝備 ★★
-    //   一個陣容 = 一套完整整備組合,套用即把四位隊員的至寶／裝備切回本陣容存的那一套。
-    //   ⚠ 只動**本陣容這四位英雄**身上的至寶／裝備,其他英雄一律不碰。
-    //   ⚠ 快照裡的至寶／裝備可能已被賣掉／送人／被 GM 收回 → 查無資料一律靜默略過
-    //     (同 pets 的 `_petIsTamed` 守門口徑),絕不因此中斷整個套用流程。
-    //   ⚠ `Array.isArray` 守門:舊存檔沒有這兩個欄位 → 整段跳過,行為與 v5.106.0 完全一致(零回歸)。
-    //   ⚠ 至寶採「先卸這四位、再依快照低階寫回」:刻意**不走** `_equipTaiwanTreasureToHero`,
-    //     那支帶自動卸舊／同槽衝突／槽位上限邏輯,而快照本來就是一組合法組合,
-    //     走它反而可能連鎖卸掉不該卸的;低階寫回精準且冪等。
-    //   ⚠ 裝備反過來**要走** `window._gearEquipToHero`:它負責同部位衝突、轉裝與 `at2` 時間戳,
-    //     繞過去自己寫 `equippedTo` 會讓 `_gearRepairEquipped` 的「同部位只留最新一件」判錯。
-    // ════════════════════════════════════════════════════════════════════
-    try{
-      if(Array.isArray(pt.treasures) && typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
-        var _teamSet = {};
-        pt.heroes.forEach(function(hn){ if(hn) _teamSet[hn] = true; });
-        // ① 先卸下本陣容四位身上現有的全部至寶
-        Object.keys(_taiwanTreasureData).forEach(function(_tid){
-          var _rec = _taiwanTreasureData[_tid];
-          if(_rec && _rec.equippedTo && _teamSet[_rec.equippedTo]) _rec.equippedTo = null;
-        });
-        // ② 依快照逐位還原(該至寶若正裝在隊外英雄身上,先清掉:一個至寶不能同時裝兩人)
-        pt.heroes.forEach(function(hn, i){
-          if(!hn) return;
-          var _ids = pt.treasures[i];
-          if(!Array.isArray(_ids)) return;
-          _ids.forEach(function(_tid){
-            if(!_tid) return;
-            var _rec = _taiwanTreasureData[_tid];
-            if(!_rec) return;                                   // 已賣出/送人/被收回 → 略過
-            if(typeof TAIWAN_TREASURES !== 'undefined' && !TAIWAN_TREASURES[_tid]) return;
-            _rec.equippedTo = hn;
-          });
-        });
-        try{ if(typeof _saveTaiwanTreasureData === 'function') _saveTaiwanTreasureData(); }catch(_){}
-      }
-    }catch(_ePresetTreApply){ console.warn('[預設陣容 還原至寶]', _ePresetTreApply); }
-    try{
-      if(Array.isArray(pt.gear) && typeof _gearGetHeroEquipped === 'function'
-         && typeof window._gearEquipToHero === 'function' && typeof window._gearUnequip === 'function'){
-        // ① 先卸下本陣容四位身上現有的全部裝備
-        pt.heroes.forEach(function(hn){
-          if(!hn) return;
-          try{
-            (_gearGetHeroEquipped(hn) || []).forEach(function(x){
-              if(x && x.eqUid) window._gearUnequip(x.eqUid);
-            });
-          }catch(_){}
-        });
-        // ② 依快照逐位還原(走既有 API,同部位衝突與轉裝交給它處理)
-        pt.heroes.forEach(function(hn, i){
-          if(!hn) return;
-          var _ids = pt.gear[i];
-          if(!Array.isArray(_ids)) return;
-          _ids.forEach(function(_uid){
-            if(!_uid) return;
-            try{ window._gearEquipToHero(_uid, hn); }catch(_){}   // 實例不存在時該支自己回 false,不拋
-          });
-        });
-        try{ if(typeof _gearRepairEquipped === 'function') _gearRepairEquipped(); }catch(_){}
-      }
-    }catch(_ePresetGearApply){ console.warn('[預設陣容 還原裝備]', _ePresetGearApply); }
+    // ★ v5.307.0 — 寵物/至寶/裝備還原三段(v4.33.0/v5.107.0)原封不動搬到頂層 window._lxpsRestorePresetPrep,
+    //   這裡照舊立即執行(行為零改動);龍王戰單人開房「📋 套用預設陣容」共用同一份還原邏輯(單一真相)。
+    window._lxpsRestorePresetPrep(pt);
     // ════════════════════════════════════════════════════════════════════
     // ★★ v5.74.0(老師 2026-08-18 回報·裁定丙)— 本路徑漏套「至寶 + 裝備 + 跟隨寵物」根治
     //   【症狀】老師回報大天狗圖鑑特技 96、進戰鬥只剩 43(= 基礎 15 + 投資/膠囊,
@@ -56883,6 +56923,7 @@ window._openRescueReq = async function(){
     if(s === 'shop_purchase') return '商店購買';
     if(s === 'student_designer') return '學生設計英雄';
     if(s === 'admin_grant' || s === 'compensation') return '老師補發';
+    if(s === 'pollution_attrib') return '老師確認正式擁有';   // ★ v5.307.0
     if(s.indexOf('wb_') === 0 || s === 'wb_drop') return '世界 BOSS 獲得';
     if(s.indexOf('boss_') === 0 || s === 'boss_drop') return 'BOSS 戰獲得';
     return '其他來源';
@@ -57183,6 +57224,7 @@ window._openAccountAudit = async function(){
     if(s === 'shop_purchase') return '商店購買';
     if(s === 'student_designer') return '學生設計英雄';
     if(s === 'admin_grant' || s === 'compensation') return '老師補發';
+    if(s === 'pollution_attrib') return '老師確認正式擁有';   // ★ v5.307.0
     if(s.indexOf('wb_') === 0 || s === 'wb_drop') return '世界 BOSS 獲得';
     if(s.indexOf('boss_') === 0 || s === 'boss_drop') return 'BOSS 戰獲得';
     return '其他來源';

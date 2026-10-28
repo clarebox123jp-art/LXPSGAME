@@ -3842,6 +3842,50 @@ try{
     0%,100%{box-shadow:0 0 24px rgba(255,217,102,0.5);}
     50%    {box-shadow:0 0 48px rgba(255,217,102,0.95),0 0 80px rgba(255,217,102,0.5);}
   }
+  /* ★ v5.307.0 — 龍王戰單人開房:套用/儲存預設陣容(PC 預設 → iPad → 手機橫向,三平台同步) */
+  .wb-tc-preset-bar{ display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:4px auto 6px; }
+  .wb-tc-preset-btn{ padding:8px 18px;font-size:20px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;
+    background:rgba(120,90,220,0.28);border:2px solid #b08cff;color:#e6dbff; }
+  .wb-tc-preset-btn.save{ background:rgba(60,170,120,0.25);border-color:#5adca0;color:#c8ffe0; }
+  .wb-tc-preset-btn:active{ transform:scale(0.96); }
+  .wb-tc-preset-tip{ font-size:14px;color:#bba; }
+  .wb-ps-modal{ position:fixed;inset:0;z-index:10800;background:rgba(0,0,8,0.88);display:flex;align-items:safe center;justify-content:center;padding:16px;
+    font-family:'M PLUS Rounded 1c','Nunito',sans-serif; }
+  .wb-ps-card{ width:min(720px,100%);max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch;
+    background:linear-gradient(160deg,#120d26,#0a0818);border:2.5px solid rgba(176,140,255,0.7);border-radius:18px;padding:20px 22px;color:#eee; }
+  .wb-ps-title{ font-size:28px;font-weight:900;color:#d6c2ff;text-align:center;margin-bottom:6px; }
+  .wb-ps-sub{ font-size:16px;color:#bbb;text-align:center;margin-bottom:12px;line-height:1.5; }
+  .wb-ps-row{ display:block;width:100%;text-align:left;margin:0 0 9px;padding:10px 14px;border-radius:12px;cursor:pointer;font-family:inherit;
+    background:rgba(255,255,255,0.06);border:2px solid rgba(176,140,255,0.45);color:#eee; }
+  .wb-ps-row.cur{ border-color:#5adca0;background:rgba(60,170,120,0.14); }
+  .wb-ps-name{ font-size:20px;font-weight:800;color:#e6dbff;margin-bottom:4px; }
+  .wb-ps-heroes{ display:flex;flex-wrap:wrap;gap:6px; }
+  .wb-ps-h{ font-size:15px;padding:2px 9px;border-radius:9px;background:rgba(255,220,120,0.14);color:#ffe8a0; }
+  .wb-ps-h.ban{ background:rgba(255,90,90,0.18);color:#ffb0b0;text-decoration:line-through; }
+  .wb-ps-h.empty{ opacity:.5; }
+  .wb-ps-empty{ text-align:center;color:#aaa;font-size:17px;padding:16px;line-height:1.6; }
+  .wb-ps-input{ display:block;width:100%;box-sizing:border-box;margin:0 0 12px;padding:10px 14px;font-size:20px;font-family:inherit;text-align:center;
+    background:rgba(20,15,40,0.9);border:2px solid rgba(176,140,255,0.6);border-radius:10px;color:#e6dbff; }
+  .wb-ps-close{ display:block;margin:6px auto 0;padding:9px 34px;font-size:18px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;
+    background:rgba(90,20,20,0.35);border:2px solid #e86060;color:#ffb0b0; }
+  @media (max-width:1180px){
+    .wb-tc-preset-btn{ font-size:17px;padding:7px 14px; }
+    .wb-tc-preset-tip{ font-size:13px; }
+  }
+  @media (orientation:landscape) and (max-height:520px){
+    .wb-tc-preset-bar{ gap:6px;margin:2px auto 3px; }
+    .wb-tc-preset-btn{ font-size:14px;padding:5px 10px;border-radius:8px;min-height:34px; }
+    .wb-tc-preset-tip{ display:none; }
+    .wb-ps-modal{ padding:8px; }
+    .wb-ps-card{ padding:12px 14px;border-radius:12px; }
+    .wb-ps-title{ font-size:20px; }
+    .wb-ps-sub{ font-size:13px;margin-bottom:8px; }
+    .wb-ps-row{ padding:7px 10px;margin-bottom:6px; }
+    .wb-ps-name{ font-size:16px; }
+    .wb-ps-h{ font-size:13px; }
+    .wb-ps-input{ font-size:16px;padding:7px 10px;margin-bottom:8px; }
+    .wb-ps-close{ font-size:15px;padding:7px 26px; }
+  }
 </style>
 
 <!-- ════════════════════════════════════════════════════════════════════ -->
@@ -4073,6 +4117,12 @@ try{
     </div>
     <div class="wb-tc-title">⚔ 出戰前隊伍確認</div>
     <div class="wb-tc-sub">空位可邀請好友加入,或由房主指派自己的英雄補位</div>
+    <!-- ★ v5.307.0 — 房主一個人時:套用/儲存預設陣容(含寵物、裝備) -->
+    <div id="wb-tc-preset-bar" class="wb-tc-preset-bar" style="display:none;">
+      <button class="wb-tc-preset-btn" onclick="_wbTcOpenPresetPicker()">📋 套用預設陣容</button>
+      <button class="wb-tc-preset-btn save" onclick="_wbTcOpenPresetSave()">💾 儲存陣容</button>
+      <span class="wb-tc-preset-tip">裝備、寵物:點英雄的「換英雄」→「📖 圖鑑整備」調整</span>
+    </div>
 
     <!-- ★ FIX 20260517 — BOSS 護盾提示簡化:只留「隊伍需要破盾元素」一行,
                           原本「BOSS 護盾元素 = 火/風/土/暗」那行隱藏(資訊冗餘)
@@ -5056,7 +5106,7 @@ try{
     let rooms = [];
     try{
       if(window._wbNet && window._wbNet.listPublicRooms){
-        rooms = await window._wbNet.listPublicRooms();
+        rooms = await window._wbNet.listPublicRooms({ clean:true });   // ★ v5.307.0 重整時順手關掉沒人在的死房
       }
     }catch(e){
       console.error('[WB-UI] 載入公開房失敗', e);
@@ -7036,6 +7086,8 @@ try{
     const meIsHost = (snap?.meta?.hostUid === myUid);
     // ★ FIX 20260516 v7 — 至寶各自分開裝,不再計算「隊友佔用」
     const treasureTakenByPeer = new Set();  // 維持函式簽名,內容永遠空
+    // ★ v5.307.0 — 房主一個人(沒邀人/單人練習)才顯示「套用/儲存預設陣容」;隊友一進房就收起來
+    try{ const _psBar = document.getElementById('wb-tc-preset-bar'); if(_psBar) _psBar.style.display = _wbPsSoloHost() ? '' : 'none'; }catch(_){}
 
     // ★ FIX 20260517(v) — 若 me 還沒選英雄(剛開房 setMyHero 尚未 round-trip),
     //   先在記憶體裡注入預設 loadout(代表英雄 + 至寶 + 推薦屬性),
@@ -12752,6 +12804,209 @@ try{
       console.log('[WB-Solo Loadout] 已清除');
       return true;
     }catch(e){ return false; }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v5.307.0(老師 2026-10-28「龍王戰單人開房(不邀請好友連線)新增套用預設陣容的功能鍵,
+  //   套用後可以編輯陣容(包含調整裝備、寵物等)並儲存」)
+  // ────────────────────────────────────────────────────────────────────
+  //   出現條件:我是房主、房裡沒有其他真人玩家(開房沒邀人 / 單人練習)。
+  //   📋 套用預設陣容:從冒險「常用預設陣容」(_advPresetTeams,與圖鑑📋編輯器同一份)挑一組 ⇒
+  //     ① 寵物/至寶/裝備照該陣容還原(window._lxpsRestorePresetPrep,與冒險套用同一支)
+  //     ② 第 1 位放進我的槽,其餘依序放進房主代打槽(英雄+屬性+至寶)
+  //     龍王戰禁用角、沒解鎖、重複的英雄自動跳過(該槽留空,可自己補)。
+  //   編輯:沿用原本每一槽的「換英雄/屬性/至寶」,裝備與寵物用換英雄視窗裡的「📖 圖鑑整備」。
+  //   💾 儲存陣容:把目前 4 槽(英雄/屬性/至寶)+ 當下的寵物、裝備存回任一組預設陣容(雲端存檔),
+  //     冒險模式與下次龍王戰都能直接套用。
+  // ════════════════════════════════════════════════════════════════════
+  function _wbPsEsc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function _wbPsTeams(){
+    try{ if(typeof _advPresetTeams !== 'undefined' && Array.isArray(_advPresetTeams)) return _advPresetTeams; }catch(_){}
+    return null;
+  }
+  // 目前隊伍確認頁是否「房主一個人」
+  function _wbPsSoloHost(){
+    try{
+      if(window._wbSoloPracticeMode) return true;
+      const snap = window._wbNet && window._wbNet.getSnapshot && window._wbNet.getSnapshot();
+      if(!snap || !snap.meta || snap.meta.hostUid !== window._gUserId) return false;
+      const humans = (snap.players || []).filter(function(p){ return p && p.uid; });
+      return humans.length <= 1;
+    }catch(_){ return false; }
+  }
+  window._wbPsSoloHost = _wbPsSoloHost;
+  function _wbPsMySlot(){
+    try{
+      if(window._wbSoloPracticeMode) return 0;
+      const snap = window._wbNet.getSnapshot();
+      const ps = (snap && snap.players) || [];
+      for(let i = 0; i < 4; i++){ if(ps[i] && ps[i].uid === window._gUserId) return i; }
+    }catch(_){}
+    return 0;
+  }
+  // 目前 4 槽內容 [{heroName, element, treasures}|null]
+  function _wbPsCurrentSlots(){
+    const out = [null, null, null, null];
+    try{
+      const my = _wbPsMySlot();
+      const snap = window._wbNet.getSnapshot();
+      const ps = (snap && snap.players) || [];
+      const me = window._wbSoloPracticeMode ? (_wbSoloFakePlayers && _wbSoloFakePlayers[0]) : ps[my];
+      if(me && me.heroName){
+        const ext = _wbTcParsePlayerExt(me);
+        out[my] = { heroName: me.heroName, element: (ext.es && ext.es[0]) || ext.e || null, treasures: Array.isArray(ext.t) ? ext.t.slice(0, 2) : [] };
+      }
+      const asg = window._wbHostAssignedSlots || {};
+      for(let i = 0; i < 4; i++){
+        if(i === my) continue;
+        const a = asg[i];
+        if(a && a.heroName) out[i] = { heroName: a.heroName, element: a.element || null, treasures: Array.isArray(a.treasures) ? a.treasures.slice(0, 2) : [] };
+      }
+    }catch(e){ console.warn('[WB 預設陣容] 讀目前槽位失敗', e); }
+    return out;
+  }
+  function _wbPsModal(html){
+    let ov = document.getElementById('wb-ps-modal');
+    if(ov) ov.remove();
+    ov = document.createElement('div');
+    ov.id = 'wb-ps-modal';
+    ov.className = 'wb-ps-modal';
+    ov.innerHTML = '<div class="wb-ps-card">' + html + '</div>';
+    ov.addEventListener('click', function(ev){ if(ev.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+    return ov;
+  }
+  window._wbPsClose = function(){ const ov = document.getElementById('wb-ps-modal'); if(ov) ov.remove(); };
+  function _wbPsTeamLine(pt){
+    return (pt.heroes || []).map(function(h){
+      if(!h) return '<span class="wb-ps-h empty">空</span>';
+      const ban = !!(window._wbIsHeroBanned && window._wbIsHeroBanned(h));
+      return '<span class="wb-ps-h' + (ban ? ' ban' : '') + '">' + _wbPsEsc(h) + (ban ? '(龍王戰不能用)' : '') + '</span>';
+    }).join('');
+  }
+
+  window._wbTcOpenPresetPicker = function(){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.5); }catch(_){}
+    if(!_wbPsSoloHost()){ _wbGameAlert('有隊友在房裡時不能套用預設陣容(每位隊友選自己的英雄)'); return; }
+    const teams = _wbPsTeams();
+    const rows = [];
+    (teams || []).forEach(function(pt, i){
+      if(!pt || !Array.isArray(pt.heroes) || !pt.heroes.some(Boolean)) return;
+      rows.push('<button class="wb-ps-row" onclick="_wbTcApplyPreset(' + i + ')">'
+        + '<div class="wb-ps-name">' + (i + 1) + '. ' + _wbPsEsc(pt.name || ('陣容' + (i + 1))) + '</div>'
+        + '<div class="wb-ps-heroes">' + _wbPsTeamLine(pt) + '</div></button>');
+    });
+    _wbPsModal('<div class="wb-ps-title">📋 套用預設陣容</div>'
+      + '<div class="wb-ps-sub">英雄、屬性、至寶、寵物、裝備會照這組陣容換好;套用後每一槽都還能再改。</div>'
+      + (rows.length ? rows.join('') : '<div class="wb-ps-empty">還沒有任何預設陣容。<br>可以先在這裡排好隊伍,再按「💾 儲存陣容」存起來。</div>')
+      + '<button class="wb-ps-close" onclick="_wbPsClose()">關閉</button>');
+  };
+
+  window._wbTcApplyPreset = function(idx){
+    const teams = _wbPsTeams();
+    const pt = teams && teams[idx];
+    if(!pt || !Array.isArray(pt.heroes)){ _wbGameAlert('這組陣容是空的'); return; }
+    if(!_wbPsSoloHost()){ _wbGameAlert('有隊友在房裡時不能套用預設陣容'); return; }
+    _wbPsClose();
+    const pool = new Set((typeof _wbGetAvailableHeroes === 'function') ? (_wbGetAvailableHeroes() || []) : []);
+    const used = {}, skipped = [], picks = [];
+    pt.heroes.forEach(function(h, i){
+      if(!h) return;
+      if(window._wbIsHeroBanned && window._wbIsHeroBanned(h)){ skipped.push(h + '(龍王戰不能用)'); return; }
+      if(pool.size && !pool.has(h)){ skipped.push(h + '(未解鎖)'); return; }
+      if(used[h]) return;
+      used[h] = 1;
+      const tr = (Array.isArray(pt.treasures) && Array.isArray(pt.treasures[i])) ? pt.treasures[i].filter(Boolean) : null;
+      picks.push({ heroName: h, element: (Array.isArray(pt.elements) && pt.elements[i]) || null, treasures: tr, srcIdx: i });
+    });
+    if(!picks.length){ _wbGameAlert('這組陣容沒有可以出戰龍王的英雄' + (skipped.length ? (':' + skipped.join('、')) : '')); return; }
+    // ① 寵物/至寶/裝備照陣容還原(只動這組陣容的英雄,與冒險套用同一支)
+    try{ if(typeof window._lxpsRestorePresetPrep === 'function') window._lxpsRestorePresetPrep(pt); }catch(e){ console.warn('[WB 預設陣容] 整備還原失敗', e); }
+    // 至寶:陣容有存就用陣容的,沒有就用該英雄現在裝著的
+    picks.forEach(function(p){
+      if(!p.treasures){
+        try{
+          const ids = [];
+          if(typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
+            Object.keys(_taiwanTreasureData).forEach(function(tid){ const r = _taiwanTreasureData[tid]; if(r && r.equippedTo === p.heroName) ids.push(tid); });
+          }
+          p.treasures = ids;
+        }catch(_){ p.treasures = []; }
+      }
+      const max = (typeof _wbTcIsHeroSlot2Unlocked === 'function' && _wbTcIsHeroSlot2Unlocked(p.heroName)) ? 2 : 1;
+      p.treasures = p.treasures.slice(0, max);
+    });
+    // ② 放進槽位:第 1 位 → 我的槽,其餘 → 其他空槽(房主代打)
+    const my = _wbPsMySlot();
+    const others = [0, 1, 2, 3].filter(function(i){ return i !== my; });
+    const asg = {};
+    picks.slice(1, 4).forEach(function(p, k){ asg[others[k]] = { heroName: p.heroName, element: p.element, treasures: p.treasures }; });
+    window._wbHostAssignedSlots = asg;
+    const first = picks[0];
+    let el = first.element;
+    if(!el){ try{ el = _wbTcGetMyDefaultLoadout().recommendedElement || null; }catch(_){ el = null; } }
+    const ext = { e: el, es: el ? [el] : [], t: first.treasures };
+    try{
+      Promise.resolve(window._wbNet.setMyHero(first.heroName, _wbTcStringifyExtWithGrowth(ext, first.heroName)))
+        .then(function(){ try{ _wbTcRenderTeamConfirm(); }catch(_){} })
+        .catch(function(e){ console.warn('[WB 預設陣容] 寫入我的槽失敗', e); });
+    }catch(e){ console.warn('[WB 預設陣容] setMyHero 失敗', e); }
+    window._wbPsAppliedIdx = idx;
+    try{ _wbTcRenderTeamConfirm(); }catch(_){}
+    try{ if(typeof _showInGameToast === 'function') _showInGameToast('📋 已套用「' + (pt.name || ('陣容' + (idx + 1))) + '」' + (skipped.length ? (';略過 ' + skipped.join('、')) : ''), '#88ddaa', 3200); }catch(_){}
+    console.log('[WB 預設陣容 v5.307.0] 套用', idx, picks, '略過', skipped);
+  };
+
+  window._wbTcOpenPresetSave = function(){
+    try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.5); }catch(_){}
+    if(!_wbPsSoloHost()){ _wbGameAlert('有隊友在房裡時不能儲存陣容'); return; }
+    const cur = _wbPsCurrentSlots();
+    if(cur.some(function(s){ return !s; })){ _wbGameAlert('四個位置都要有英雄才能存成預設陣容'); return; }
+    const teams = _wbPsTeams();
+    if(!teams){ _wbGameAlert('讀不到預設陣容資料,請重新整理後再試'); return; }
+    const def = (typeof window._wbPsAppliedIdx === 'number') ? window._wbPsAppliedIdx : -1;
+    let rows = '';
+    for(let i = 0; i < 5; i++){
+      const pt = teams[i];
+      rows += '<button class="wb-ps-row' + (i === def ? ' cur' : '') + '" onclick="_wbTcPresetSaveTo(' + i + ')">'
+        + '<div class="wb-ps-name">' + (i + 1) + '. ' + (pt ? _wbPsEsc(pt.name || ('陣容' + (i + 1))) : '(空欄位)') + (i === def ? ' ・剛剛套用的' : '') + '</div>'
+        + (pt ? ('<div class="wb-ps-heroes">' + _wbPsTeamLine(pt) + '</div>') : '') + '</button>';
+    }
+    _wbPsModal('<div class="wb-ps-title">💾 儲存陣容</div>'
+      + '<div class="wb-ps-sub">存到哪一欄?(會覆蓋該欄)英雄、屬性、至寶,和英雄現在帶的寵物、裝備都會一起存。</div>'
+      + '<input id="wb-ps-name" class="wb-ps-input" maxlength="10" placeholder="陣容名稱(最多 10 字)" value="'
+      + _wbPsEsc((def >= 0 && teams[def] && teams[def].name) || '龍王隊') + '">'
+      + rows + '<button class="wb-ps-close" onclick="_wbPsClose()">取消</button>');
+  };
+
+  window._wbTcPresetSaveTo = function(idx){
+    const teams = _wbPsTeams();
+    if(!teams) return;
+    const cur = _wbPsCurrentSlots();
+    if(cur.some(function(s){ return !s; })){ _wbGameAlert('四個位置都要有英雄才能存'); return; }
+    const nmEl = document.getElementById('wb-ps-name');
+    const name = ((nmEl && nmEl.value) || '').trim().slice(0, 10) || ('陣容' + (idx + 1));
+    if(teams[idx] && !confirm('要用目前隊伍覆蓋「' + (teams[idx].name || ('陣容' + (idx + 1))) + '」嗎?')) return;
+    const heroes = cur.map(function(s){ return s.heroName; });
+    const old = teams[idx];
+    const pt = {
+      name: name,
+      heroes: heroes,
+      elements: cur.map(function(s){ return s.element || ''; }),
+      skills: (old && Array.isArray(old.skills) && old.heroes && old.heroes.join('|') === heroes.join('|')) ? old.skills.slice() : [null, null, null, null]
+    };
+    // 寵物/裝備 = 英雄現在帶的(圖鑑整備改完就是最新);至寶 = 龍王戰各槽選的
+    try{
+      const prep = (typeof window._lxpsPresetPrepSnapshot === 'function') ? window._lxpsPresetPrepSnapshot(heroes, false) : null;
+      if(prep){ pt.pets = prep.pets; pt.gear = prep.gear; }
+    }catch(e){ console.warn('[WB 預設陣容] 整備快照失敗', e); }
+    pt.treasures = cur.map(function(s){ return (s.treasures || []).slice(0, 2); });
+    teams[idx] = pt;
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(e){ console.warn('[WB 預設陣容] 雲端存檔失敗', e); }
+    window._wbPsAppliedIdx = idx;
+    _wbPsClose();
+    try{ if(typeof _showInGameToast === 'function') _showInGameToast('💾 已存成預設陣容「' + name + '」', '#88ddaa', 2600); }catch(_){}
+    console.log('[WB 預設陣容 v5.307.0] 儲存到欄位', idx, pt);
   };
 
   // ════════════════════════════════════════════════════════════════════

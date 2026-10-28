@@ -13024,6 +13024,7 @@
     if(s === 'admin_delete') return 'deleted';   // 刪除稽核紀錄(不算擁有來源)
     if(s.indexOf('summon') === 0 || s.indexOf('ticket') === 0) return 'summon';
     if(s === 'admin_grant' || s === 'compensation' || s === 'student_designer' || s === 'event_quest') return 'gm';
+    if(s === 'pollution_attrib') return 'gm';   // ★ v5.307.0 老師裁定汙染英雄正式解鎖(GM 判定的正式來源,稽核不再當可疑)
     if(s === 'maokong_50pct' || s === 'darkorb_5pct' || s === 'japan_boss_5pct' || s === 'yamata_miko_5pct'
        || s === 'taiwan_clear' || s === 'japan_clear' || s === 'boss_drop' || s === 'wb_drop'
        || s.indexOf('wb_') === 0 || s.indexOf('boss_') === 0) return 'boss';
@@ -16510,6 +16511,233 @@
     _affected.sort(function(a,b){ return b.count - a.count; });
     console.log('[_fbAdminScanAllOverRestored] 掃描 ' + _scanned + ' 名玩家,' + _affected.length + ' 名疑似過度補回(英雄 ' + _totalHeroes + ' 隻/至寶 ' + _totalTre + ' 件)');
     return { scanned:_scanned, affectedCount:_affected.length, totalHeroes:_totalHeroes, totalTreasures:_totalTre, affected:_affected };
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★★ v5.307.0(老師裁定 2026-10-28「英雄解鎖紀錄有別人 uid 的 ⇒ 直接變成正式解鎖」)★★
+  //   掃描(完全唯讀)→ 老師看報表 → 逐位或全部執行。
+  //   【候選】目前持有、解鎖紀錄裡有「別位同學 uid」的取得紀錄,而且:
+  //     ・不是初始 8 隻、不是主角、不是這位學生自己設計的英雄
+  //     ・本人沒有任何真實取得紀錄(召喚/券/BOSS/老師發放…;看見持有類 seen/legacy 不算)
+  //     ・永久擁有證明裡沒有本人「實際獲得」(有的話本來就是正式的,不用動)
+  //     ⇒ 自己召喚、老師發的、自選卷換的英雄,一定有本人紀錄或證明,永遠不會進候選名單。
+  //   【SR/SSR】一律正式解鎖:三槽各寫一筆本人 uid 的 pollution_attrib 取得紀錄 + 永久擁有證明(實際獲得)。
+  //   【UR】只看 GM 發放紀錄(老師 2026-10-28):
+  //     ① 老師直接發過這隻(課堂獎勵/序號/全體獎勵/補償),而且之後沒再被老師移除 ⇒ 保留(admin_grant)
+  //        發了又被老師移除 ⇒ 算正式回收 ⇒ 移除
+  //     ② 老師發過 UR 券、而且那張券真的用掉了(券額度 − 本人其他券換 UR − 手上還沒用的券 > 0)⇒ 保留(ticket_ur_pick)
+  //        幽靈券不在老師發出的額度裡,自然不算
+  //     ③ 都沒有 ⇒ 移除 + 卸下裝備(比照 2026-10-28 克雷爾)
+  //     ④ 有「沒有 uid 的舊紀錄」(分不出是誰的)⇒ 列「待老師判斷」,預設不勾
+  //   【原主人】順便檢查紀錄上那位同學現在是否還持有;沒有的只列報表,不自動補。
+  //   【老師曾移除】永久證明最近一次是老師移除的 ⇒ 不歸屬、不動,只列報表。
+  //   執行前對該生最新雲端資料重新判一次,只動仍然符合的英雄。
+  // ════════════════════════════════════════════════════════════════════
+  var _PA_SKIP_SRC = { migration_seal:1, admin_delete:1, audit_error_recovered:1 };
+  var _PA_GM_SRC   = { admin_grant:1, compensation:1, student_designer:1, event_quest:1 };
+  window._LXPS_PA_REASON = '舊版共用平板汙染英雄,老師 2026-10-28 裁定正式解鎖';
+  window._LXPS_PA_SRC_ATTRIB = 'pollution_attrib';
+  function _paArr(o, k){
+    try{
+      if(Array.isArray(o[k])) return o[k];
+      if(typeof o[k + '_s'] === 'string'){ var p = JSON.parse(o[k + '_s']); if(Array.isArray(p)) return p; }
+    }catch(_){}
+    return [];
+  }
+  function _paObj(o, k){
+    try{
+      if(o[k] && typeof o[k] === 'object' && !Array.isArray(o[k])) return o[k];
+      if(typeof o[k + '_s'] === 'string'){ var p = JSON.parse(o[k + '_s']); if(p && typeof p === 'object' && !Array.isArray(p)) return p; }
+    }catch(_){}
+    return {};
+  }
+  // 第一段:逐位學生找候選(純函式,不讀不寫雲端)
+  function _paStage1(d, uid){
+    var u12 = String(uid || '').slice(0, 12);
+    var out = { u12:u12, cands:[], teacherRemoved:[], ownGm:{}, ownRemAt:{}, L:null };
+    if(!d || !u12) return out;
+    var cur = _paArr(d, 'unlockedHeroes').filter(Boolean);
+    if(!cur.length) return out;
+    try{ if((window._CAMP_ADMIN_EMAILS || []).indexOf(String(d.email || '').toLowerCase()) >= 0) return out; }catch(_){}   // GM 帳號本來就全收錄,不處理
+    var init = {}; (window._ARENA_INITIAL_HEROES || []).forEach(function(n){ init[n] = 1; });
+    var cut = +d._lastResetAt || 0;
+    try{ out.L = window._lxpsHeroLedgerMerge([d.heroOwnLedger_s], u12, cut); }catch(_){ out.L = null; }
+    var soft = window._LXPS_HERO_SOFT_SRC || {};
+    var own = {}, noUid = {}, other = {};
+    _paArr(d, '_heroUnlockHistory').forEach(function(e){
+      if(!e || !e.name) return;
+      var src = String(e.source || ''), eu = String(e.uid || '').slice(0, 12), at = +e.at || 0;
+      if(_PA_SKIP_SRC[src]){
+        if(eu === u12 && at > (out.ownRemAt[e.name] || 0)) out.ownRemAt[e.name] = at;
+        return;
+      }
+      if(!eu){ if(src && !soft[src] && src !== 'player_confirmed') noUid[e.name] = 1; return; }
+      if(eu === u12){
+        if(cut && at && at <= cut) return;
+        if(src !== 'player_confirmed' && !soft[src]) own[e.name] = 1;
+        if(_PA_GM_SRC[src]) out.ownGm[e.name] = 1;
+        return;
+      }
+      var o = other[e.name] || (other[e.name] = { uids:{}, at:0, srcs:{} });
+      o.uids[eu] = 1; o.srcs[src || '(空白)'] = 1;
+      if(at && (!o.at || at < o.at)) o.at = at;
+    });
+    var lv = _paObj(d, 'heroLevels');
+    var email = String(d.email || '');
+    var seen = {};
+    cur.forEach(function(n){
+      if(seen[n]) return; seen[n] = 1;
+      if(!other[n] || init[n] || own[n]) return;
+      try{ if(window._isProtagHero && window._isProtagHero(n)) return; }catch(_){}
+      try{ if(window._lxpsIsOwnDesignerHero && window._lxpsIsOwnDesignerHero(email, n)) return; }catch(_){}
+      try{ if(out.L && window._lxpsHeroLedgerStrong(out.L, n)) return; }catch(_){}
+      var rar = 'SR'; try{ rar = (window._getHeroRarity && window._getHeroRarity(n)) || 'SR'; }catch(_){}
+      var it = { name:n, rar:rar, lv:((typeof lv[n] === 'number' && lv[n] > 0) ? lv[n] : 1),
+                 otherUids:Object.keys(other[n].uids), otherAt:other[n].at, otherSrcs:Object.keys(other[n].srcs),
+                 noUid:!!noUid[n] };
+      var removed = false;
+      try{ removed = !!(out.L && window._lxpsHeroLedgerRemoved(out.L, n)); }catch(_){}
+      if(removed){ out.teacherRemoved.push(it); return; }
+      out.cands.push(it);
+    });
+    return out;
+  }
+  // 最近一次「本帳號」的老師移除時間(流水帳 + 永久證明取較晚者)
+  function _paRemAt(s1, n){
+    var t = s1.ownRemAt[n] || 0;
+    try{
+      var e = s1.L && s1.L.h && s1.L.h[n];
+      if(e && (+e.r || 0) > t && (!e.ru || String(e.ru).slice(0, 12) === s1.u12)) t = +e.r;
+    }catch(_){}
+    return t;
+  }
+  // 第二段:UR 候選依 GM 發放紀錄判定(唯讀,沿用 v5.251.0 單人獎勵查核的發放/券額度資料)
+  async function _paStage2UR(uid, s1){
+    var urC = s1.cands.filter(function(c){ return c.rar === 'UR'; });
+    var res = { keep:[], remove:[], hold:[], calc:null };
+    if(!urC.length) return res;
+    if(typeof window._fbAdminAuditOnePlayerRewards !== 'function') throw new Error('UR 發放查核引擎未載入');
+    var A = await window._fbAdminAuditOnePlayerRewards(uid);
+    var direct = {};
+    (A.grants || []).forEach(function(g){
+      (g.heroes || []).forEach(function(h){ var at = +g.at || 1; if(!direct[h] || at > direct[h]) direct[h] = at; });
+    });
+    var candSet = {}; urC.forEach(function(c){ candSet[c.name] = 1; });
+    var Q = Math.max(0, +A.urQuota || 0);
+    var held = Math.max(0, +(A.urTk && A.urTk.held) || 0);
+    var consumed = 0;
+    (A.ownedUR || []).forEach(function(n){
+      if(candSet[n] || direct[n] || s1.ownGm[n]) return;
+      consumed++;   // 本人其他非老師直接發的 UR,每隻都用掉過一張券
+    });
+    var left = Math.max(0, Q - consumed - held);
+    res.calc = { quota:Q, consumed:consumed, held:held, left:left, granted:(A.granted && A.granted.ur) || 0,
+                 quotaAdj:A.quotaAdj || 0, arenaTk:A.arenaTk || 0 };
+    urC.slice().sort(function(a, b){ return (a.otherAt || 0) - (b.otherAt || 0); }).forEach(function(c){
+      var r = _paRemAt(s1, c.name);
+      if(direct[c.name]){
+        if(r > 0 && r >= direct[c.name]){ c.why = '老師發過、之後又被老師回收(算正式回收)'; res.remove.push(c); }
+        else { c.why = '老師直接發放過這隻'; c.src = 'admin_grant'; res.keep.push(c); }
+        return;
+      }
+      if(left > 0){ left--; c.why = '老師發的 UR 券換的(券已用掉、在額度內)'; c.src = 'ticket_ur_pick'; res.keep.push(c); return; }
+      if(c.noUid){ c.why = '有分不出是誰的舊紀錄(沒有 uid),請老師判斷'; res.hold.push(c); return; }
+      c.why = '查無 GM 發放紀錄'; res.remove.push(c);
+    });
+    return res;
+  }
+  async function _paJudge(uid, d){
+    var s1 = _paStage1(d, uid);
+    var row = { uid:uid, email:String(d.email || '').toLowerCase(), name:String(d.displayName || d.displayLabel || ''),
+                attrib:[], urKeep:[], urRemove:[], urHold:[], teacherRemoved:s1.teacherRemoved, ownerMissing:[], urCalc:null, err:'' };
+    s1.cands.forEach(function(c){
+      if(c.rar !== 'UR'){ c.src = window._LXPS_PA_SRC_ATTRIB; c.why = '舊版汙染 → 正式解鎖'; row.attrib.push(c); }
+    });
+    if(s1.cands.some(function(c){ return c.rar === 'UR'; })){
+      try{
+        var r2 = await _paStage2UR(uid, s1);
+        row.urKeep = r2.keep; row.urRemove = r2.remove; row.urHold = r2.hold; row.urCalc = r2.calc;
+      }catch(e){
+        row.err = 'UR 發放紀錄讀取失敗:' + ((e && e.message) || e) + '(UR 這次不歸屬也不移除)';
+        s1.cands.forEach(function(c){ if(c.rar === 'UR'){ c.why = '讀不到發放紀錄,暫不處理'; row.urHold.push(c); } });
+      }
+    }
+    return row;
+  }
+
+  // 掃全體(唯讀)
+  window._fbAdminScanPollutionAttrib = async function(onProgress){
+    var snap = await getDocs(collection(_fbDb, 'players'));
+    var docs = [];
+    snap.forEach(function(s){ docs.push({ id:s.id, d:(s.data() || {}) }); });
+    var idx = {};
+    docs.forEach(function(x){
+      var set = {}; _paArr(x.d, 'unlockedHeroes').forEach(function(n){ if(n) set[n] = 1; });
+      idx[String(x.id).slice(0, 12)] = { uid:x.id, set:set, name:String(x.d.displayName || x.d.displayLabel || ''), email:String(x.d.email || '') };
+    });
+    var rows = [], tot = { scanned:docs.length, players:0, attrib:0, urKeep:0, urRemove:0, urHold:0, teacherRemoved:0, ownerMissing:0 };
+    for(var i = 0; i < docs.length; i++){
+      var x = docs[i];
+      var quick = _paStage1(x.d, x.id);
+      if(!quick.cands.length && !quick.teacherRemoved.length){ if(onProgress && i % 50 === 0) onProgress(i + 1, docs.length); continue; }
+      var row = await _paJudge(x.id, x.d);
+      [].concat(row.attrib, row.urKeep, row.urRemove, row.urHold).forEach(function(c){
+        c.otherUids.forEach(function(ou){
+          var o = idx[ou];
+          if(!o){ row.ownerMissing.push({ hero:c.name, ownerUid12:ou, ownerName:'', state:'查無此帳號' }); return; }
+          if(!o.set[c.name]) row.ownerMissing.push({ hero:c.name, ownerUid12:ou, ownerUid:o.uid, ownerName:(o.name || o.email), state:'原主人現在沒有這隻' });
+        });
+      });
+      tot.players++; tot.attrib += row.attrib.length; tot.urKeep += row.urKeep.length; tot.urRemove += row.urRemove.length;
+      tot.urHold += row.urHold.length; tot.teacherRemoved += row.teacherRemoved.length; tot.ownerMissing += row.ownerMissing.length;
+      rows.push(row);
+      if(onProgress) onProgress(i + 1, docs.length);
+    }
+    rows.sort(function(a, b){ return (b.urRemove.length - a.urRemove.length) || ((b.attrib.length + b.urKeep.length) - (a.attrib.length + a.urKeep.length)); });
+    console.log('[汙染英雄正式解鎖 v5.307.0] 掃描 ' + tot.scanned + ' 位,' + tot.players + ' 位有候選', tot);
+    return { rows:rows, tot:tot };
+  };
+
+  // 執行(單一學生):sel = { attrib:[名], urKeep:[名], urRemove:[名] };先對最新雲端重判,只動仍符合的
+  window._fbAdminApplyPollutionAttrib = async function(uid, sel){
+    if(!uid) throw new Error('缺少 uid');
+    sel = sel || {};
+    var _snap = null;
+    try{ _snap = await getDocFromServer(doc(_fbDb, 'players', uid)); }catch(_e){ throw new Error('讀不到最新雲端資料,這次不執行:' + ((_e && _e.message) || _e)); }
+    if(!(_snap && _snap.exists())) throw new Error('查無玩家主檔');
+    var fresh = await _paJudge(uid, _snap.data() || {});
+    if(fresh.err) throw new Error(fresh.err);
+    var pick = function(list, names){ var s = {}; (names || []).forEach(function(n){ s[n] = 1; }); return list.filter(function(c){ return s[c.name]; }); };
+    var attrib = pick(fresh.attrib, sel.attrib).concat(pick(fresh.urKeep, sel.urKeep));
+    var remove = pick(fresh.urRemove.concat(fresh.urHold), sel.urRemove).map(function(c){ return c.name; });
+    var by = (window._fbUser && window._fbUser.email) || 'admin';
+    var now = Date.now();
+    var out = { uid:uid, attributed:[], removed:[], skipped:[], slots:[] };
+    var groups = {};
+    attrib.forEach(function(c){ (groups[c.src] = groups[c.src] || []).push(c.name); });
+    var wanted = [].concat(sel.attrib || [], sel.urKeep || [], sel.urRemove || []);
+    var done = {};
+    var srcs = Object.keys(groups);
+    for(var gi = 0; gi < srcs.length; gi++){
+      var src = srcs[gi], names = groups[src];
+      var r = await window._lxpsAdminApplyAllSlots(uid, function(d, slot){
+        return window._lxpsSlotGrantHeroesPatch(d, names, {
+          at:now, source:src, by:by, uid:uid, slot:slot, reason:window._LXPS_PA_REASON,
+          extra:{ pollutionAttrib:true }
+        });
+      }, { label:'汙染英雄正式解鎖', stampRestore:false,
+           lastAction:{ type:'pollution_attrib', count:names.length, at:now, by:by } });
+      out.slots.push(r);
+      names.forEach(function(n){ out.attributed.push(n); done[n] = 1; });
+    }
+    if(remove.length){
+      var rr = await window._fbAdminBulkRemoveHeroes(uid, remove, { reason:'UR 查無 GM 發放紀錄(舊版汙染,老師 2026-10-28 裁定)' });
+      if(!rr || !rr.ok) throw new Error('UR 移除失敗:' + ((rr && rr.reason) || '未知') + '(歸屬部分已完成)');
+      (rr.heroes || remove).forEach(function(n){ out.removed.push(n); done[n] = 1; });
+    }
+    wanted.forEach(function(n){ if(!done[n]) out.skipped.push(n); });
+    console.info('[汙染英雄正式解鎖 v5.307.0] uid=' + String(uid).slice(0, 8) + ' 正式解鎖 ' + out.attributed.length + ' 隻、移除 UR ' + out.removed.length + ' 隻、略過 ' + out.skipped.length, out);
+    return out;
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -23312,7 +23540,15 @@
     // ─── G-1. 列出目前公開且還在 waiting/picking 階段的房間 ─────────
     //   開戰後 status 變 fighting → 自動從列表消失(query 過濾)
     //   依 createdAt 降冪、最多 20 筆
-    async function listPublicRooms(){
+    async function listPublicRooms(opts){
+      opts = opts || {};
+      // ★ v5.307.0(老師 2026-10-28「龍王戰公開房列表重新整理要清除」)
+      //   舊版只靠 online 旗標判斷幽靈房;房主直接關平板時 online 永遠停在 true ⇒ 死房一直掛在列表。
+      //   新規則:心跳每 20 秒更新 lastSeen ⇒ 房內所有人 lastSeen 都超過 3 分鐘 = 沒人在了;
+      //   舊資料沒有 lastSeen 的,建立超過 30 分鐘也算。列表一律不顯示;
+      //   玩家按「🔄 重整」(opts.clean)時順手把這些死房標成 ended,全校都不會再看到。
+      const _STALE_MS = 3 * 60 * 1000, _STALE_NOLS_MS = 30 * 60 * 1000;
+      const _staleIds = [];
       // ★ v3.10.0 — 機會式清掃:fire-and-forget,不阻塞回傳
       //   每個進公開房列表的玩家都會檢查「距上次清掃是否 ≥ 60 分鐘」,
       //   若是則順手清一波;若否則 transaction 內直接 return,毫秒級開銷
@@ -23354,6 +23590,16 @@
             }, 0);
             if(_maxLastSeen > 0 && (_now - _maxLastSeen) > _GHOST_THRESHOLD_MS){
               console.log('[WBNet v3.5.6] 過濾掉幽靈房(全部離線>10分):', s.id);
+              _staleIds.push(s.id);
+              return;
+            }
+          }
+          // (c) ★ v5.307.0 — 不看 online 旗標:所有人心跳都停了超過 3 分鐘(或舊資料沒心跳、房間開超過 30 分鐘)= 死房
+          {
+            const _mx = _players.reduce((m, p) => { const _ls = (p && typeof p.lastSeen === 'number') ? p.lastSeen : 0; return _ls > m ? _ls : m; }, 0);
+            const _ca = (d.meta && d.meta.createdAt) || 0;
+            if((_mx > 0 && (_now - _mx) > _STALE_MS) || (_mx === 0 && _ca > 0 && (_now - _ca) > _STALE_NOLS_MS)){
+              _staleIds.push(s.id);
               return;
             }
           }
@@ -23371,6 +23617,18 @@
             }))
           });
         });
+        // ★ v5.307.0 — 按「🔄 重整」時把死房關掉(fire-and-forget,失敗不影響列表;關房寫法同 v3.10.0 定時清掃)
+        if(opts.clean && _staleIds.length){
+          try{
+            const _endAt = Date.now();
+            _staleIds.forEach(function(_rid){
+              updateDoc(doc(_fbDb, 'worldBossRooms', _rid), {
+                'meta.status': 'ended', 'meta.endedReason': 'list_refresh_stale', 'meta.endedAt': _endAt
+              }).catch(function(_eK){ console.warn('[WBNet v5.307.0] 重整清除死房失敗', _rid, _eK && _eK.code); });
+            });
+            console.log('[WBNet v5.307.0] 重整清除死房 ' + _staleIds.length + ' 間', _staleIds);
+          }catch(_eC){}
+        }
         return rooms;
       }catch(e){
         console.error('[WBNet] listPublicRooms 失敗', e);
@@ -25060,9 +25318,12 @@
 
       // ── 獎勵分檔(老師指定) ──
       function _calcAwardByRank(rank){
-        if(rank === 1)            return { coins: 50000, crystals: 10, books: 10 };
-        if(rank >= 2 && rank <= 5) return { coins: 35000, crystals:  6, books:  6 };
-        if(rank >= 6 && rank <= 10) return { coins: 20000, crystals:  3, books:  3 };
+        // ★ v5.307.0(老師 2026-10-28)— 前三檔知識幣提升為 10萬/7萬/5萬(水晶、書不變);新增 11-30、31-50 名
+        if(rank === 1)            return { coins: 100000, crystals: 10, books: 10 };
+        if(rank >= 2 && rank <= 5) return { coins: 70000, crystals:  6, books:  6 };
+        if(rank >= 6 && rank <= 10) return { coins: 50000, crystals:  3, books:  3 };
+        if(rank >= 11 && rank <= 30) return { coins: 30000, crystals: 2, books: 2 };
+        if(rank >= 31 && rank <= 50) return { coins: 10000, crystals: 1, books: 1 };
         return null;
       }
 
@@ -25107,7 +25368,7 @@
               if(a.correct !== b.correct) return b.correct - a.correct;
               return (a.lastAt || 0) - (b.lastAt || 0);
             });
-            const _top10 = _list.slice(0, 10);
+            const _top10 = _list.slice(0, 50);   // ★ v5.307.0 — 發獎名額 10 → 50 名(變數名沿用)
             if(_top10.length === 0){
               // 沒人上榜,寫入空結算記錄避免重複觸發
               const _newSettled = Object.assign({}, _settled);
@@ -25490,10 +25751,11 @@
 
       // ── 獎勵分檔(老師指定) ──
       function _calcAwardByRank(rank){
-        if(rank === 1)               return { crystals: 15, zheng: 15, coins: 30000 };
-        if(rank >= 2 && rank <= 5)   return { crystals: 10, zheng: 10, coins: 20000 };
-        if(rank >= 6 && rank <= 10)  return { crystals: 5,  zheng: 5,  coins: 10000 };
-        return { crystals: 2, zheng: 2, coins: 5000 };  // 11 名以後(本週有得證即發)
+        // ★ v5.307.0(老師 2026-10-28)— 知識幣依類組提升為 10萬/7萬/5萬/3萬(水晶、鬥技之證不變)
+        if(rank === 1)               return { crystals: 15, zheng: 15, coins: 100000 };
+        if(rank >= 2 && rank <= 5)   return { crystals: 10, zheng: 10, coins: 70000 };
+        if(rank >= 6 && rank <= 10)  return { crystals: 5,  zheng: 5,  coins: 50000 };
+        return { crystals: 2, zheng: 2, coins: 30000 };  // 11 名以後(本週有得證即發)
       }
 
       // ── 結算上週(週一 08:00 後 + GM 開關開啟才執行) ──
