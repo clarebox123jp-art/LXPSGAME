@@ -972,6 +972,7 @@ function _isBossForSlowmo(target){
       '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
       '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
       '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+      ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》10 BOSS(hero_db.js window._TW2 登錄表)
       '火山炎龍王',
     ]);
     if(_mainBosses.has(target.name)) return true;
@@ -1001,6 +1002,7 @@ const _ZEUS_TRUE_BOSSES = new Set([
   '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
   '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
   '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+  ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》10 BOSS:尊嚴鎖血/爆發反擊/秒殺保護(鐵律 1.31)
   // 世界 BOSS
   '火山炎龍王',
   '翠綠森龍王',   /* ★ v3.13.73 — 第二隻世界 BOSS */
@@ -11497,6 +11499,12 @@ try{
     Object.keys(window._CN2.enemies).forEach(function(n){ var _e = window._CN2.enemies[n]; if(_e && _e.lore && !MONSTER_LORE[n]) MONSTER_LORE[n] = _e.lore; });
   }
 }catch(_eCn2Lore){ console.warn('[v5.293.0 CN2 魔物典故]', _eCn2Lore); }
+// ★ v5.308.0 — 台灣《寶島二部曲》10 BOSS 魔物圖鑑典故(教育性說明文)由 window._TW2 登錄表補登
+try{
+  if(window._TW2 && window._TW2.bosses){
+    window._TW2.bosses.forEach(function(b){ if(b && b.lore && !MONSTER_LORE[b.name]) MONSTER_LORE[b.name] = b.lore; });
+  }
+}catch(_eTw2Lore){ console.warn('[v5.308.0 TW2 魔物典故]', _eTw2Lore); }
 
 
 let _focusedHeroIdx = -1;
@@ -19069,6 +19077,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
       '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
       '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+      ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》
       '火山炎龍王',
     ];
     // 菁英(貓空關 BOSS 戰小怪 + 日本關稀有怪)
@@ -59575,6 +59584,7 @@ window.ADV_QUIZ_BOSS_NAMES = [
   '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
   '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者',
   '山岳禁咒・崩天巨人',
+  ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》
   '火山炎龍王',
 ];
 
@@ -60893,6 +60903,10 @@ function _realAiAct(a){
     try{ if(typeof statusName === 'function'){ var nm = statusName(st, strong ? { _strong:true } : null); if(nm) return nm; } }catch(_){}
     return st;
   }
+  // ★ v5.308.0 台灣《寶島二部曲》天賦守門:冒險模式 + 台灣關(敵人本來就只出現在台灣關第二章;多一道守門=零外溢)
+  W._tw2InTaiwan = function(){
+    try{ return !!((typeof _adventureMode !== 'undefined' && _adventureMode) && (typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan')); }catch(_){ return false; }
+  };
   W._cn2InChina = function(){
     try{ return (typeof _adventureMode !== 'undefined' && _adventureMode) && (typeof _adventureStage !== 'undefined' && _adventureStage === 'china'); }catch(_){ return false; }
   };
@@ -60942,6 +60956,7 @@ function _realAiAct(a){
     try{
       if(!h || !W._CN2) return null;
       if(h.side === 'p2' && W._cn2InChina() && W._CN2.traitMap && W._CN2.traitMap[h.name]) return W._CN2.traitMap[h.name];
+      if(h.side === 'p2' && W._tw2InTaiwan() && W._TW2 && W._TW2.byName && W._TW2.byName[h.name] && W._CN2.traitMap && W._CN2.traitMap[h.name]) return W._CN2.traitMap[h.name];   // ★ v5.308.0 台灣《寶島二部曲》10 BOSS 天賦(只在冒險模式台灣關 p2)
       var base = W._CN2.heroTraitMap && W._CN2.heroTraitMap[h.name];
       if(!base) return null;
       var lv = 0;
@@ -60968,6 +60983,7 @@ function _realAiAct(a){
   function _trInfo(n){
     try{
       if(W._CN2.enemies && W._CN2.enemies[n]) return W._CN2.enemies[n].tr;
+      if(W._TW2 && W._TW2.byName && W._TW2.byName[n]) return W._TW2.byName[n].tr;   // ★ v5.308.0 台灣《寶島二部曲》
       var H = _cn2HeroDef(n); return H ? H.tr : null;
     }catch(_){ return null; }
   }
@@ -68108,6 +68124,7 @@ function checkWin(){
       '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
       '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
       '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+      ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》
       // ★ v3.8.2(2026-05-26) — 木柵第三隻 BOSS:黑暗球‧希望型態
       '黑暗球‧希望型態',
       // ★ v3.8.3(2026-05-26) — 世界 BOSS:火山炎龍王
@@ -68492,8 +68509,9 @@ function _showResultWithDrama(win){
         '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
         '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
         '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+        ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》
       ]);
-      const _hasTwBoss = G.p2.some(h => h && _TW_BOSS_SET.has(h.name));
+      const _hasTwBoss =G.p2.some(h => h && _TW_BOSS_SET.has(h.name));
       if(_hasTwBoss){
         console.log('🏝 [台灣關結算判定] 強制走 BOSS 結算流程(_advMiniBattleActive='+_advMiniBattleActive+',但 G.p2 含台灣 BOSS)');
         // 強制清掉 mini 旗標,避免後續流程錯亂
@@ -75078,6 +75096,12 @@ const TAIWAN_TREASURES = {
 // ★ v3.13.49(2026-06-05)— 暴露到 window(比照 _getHeroRarity):讓 admin_panel / 其餘模組能查至寶名稱,
 //   同時修好既有 window.TAIWAN_TREASURES 參照(之前 const 沒掛 window → 那些參照其實取到 undefined)。
 try{ window.TAIWAN_TREASURES = TAIWAN_TREASURES; }catch(_){}
+// ★ v5.308.0 — 台灣《寶島二部曲》10 件新至寶(資料在 hero_db.js window._TW2 登錄表;只新增、不覆蓋既有 id)
+try{
+  if(window._TW2 && window._TW2.treasures){
+    Object.keys(window._TW2.treasures).forEach(function(tid){ if(!TAIWAN_TREASURES[tid]) TAIWAN_TREASURES[tid] = window._TW2.treasures[tid]; });
+  }
+}catch(_eTw2Tr){ console.warn('[v5.308.0 TW2 至寶]', _eTw2Tr); }
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v4.32.0 — 全 8 龍王「排名獎勵/顯示至寶」單一真相映射(index.html 內·不依賴 world-boss.js)
@@ -75223,6 +75247,8 @@ const TAIWAN_IMG_MAP = {
   taipei_101_warlord:  { boss:'101大樓BOSS.png',     scene:'台北101.png'       },
   yushan_giant:        { boss:'玉山BOSS.png',        scene:'玉山頂.png'        },
 };
+// ★ v5.308.0 — 台灣《寶島二部曲》10 關立繪/場景圖(webp;未上傳前 BOSS 退 emoji、場景退預設背景)
+try{ if(window._TW2) window._TW2.bosses.forEach(function(b){ if(!TAIWAN_IMG_MAP[b.id]) TAIWAN_IMG_MAP[b.id] = { boss:b.img.boss, scene:b.img.scene }; }); }catch(_eTw2Img){}
 // 工具函式:取得指定 BOSS 的圖片 URL(自動 URL encode)
 function _getTaiwanBossImage(bossId){
   const m = TAIWAN_IMG_MAP[bossId];
@@ -75396,6 +75422,17 @@ const TAIWAN_BOSSES = {
     bossStats: { hp: 6750, atk: 45, sp: 63, spd: 1 },
   },
 };
+// ★ v5.308.0 — 台灣《寶島二部曲》(台灣關第二章)10 關,難度 ★3～★7;chapter:2 供地圖分頁/進度統計區分
+try{
+  if(window._TW2){
+    window._TW2.bosses.forEach(function(b){
+      if(TAIWAN_BOSSES[b.id]) return;
+      TAIWAN_BOSSES[b.id] = { id:b.id, name:b.name, location:b.location, stars:b.stars, suggestLv:b.suggestLv,
+        bossEmoji:b.emoji, bgImage:'', bossImage:'', desc:b.desc, mainline:false, chapter:2,
+        treasure:b.treasure.id, bossStats:{ hp:b.st.hp, atk:b.st.atk, sp:b.st.sp, spd:b.st.spd } };
+    });
+  }
+}catch(_eTw2Boss){ console.warn('[v5.308.0 TW2 TAIWAN_BOSSES]', _eTw2Boss); }
 
 // ★ 至寶等級系統:1~10 級,每級提升 10% 基礎屬性
 //   累積經驗值需求:lv1→2 = 10 EXP, lv2→3 = 20, ...每級 +10
@@ -79825,6 +79862,16 @@ window._TAIWAN_BOSS_DROPS = {
   taipei_101_warlord:  { id:'tw_skybreaker_core', icon:'🌟', name:'夜空爆裂石',  color:'#ffee44', price:6000, rate:0.50 },
   yushan_giant:        { id:'tw_yushan_core',     icon:'⛰',  name:'崩天巨人核',  color:'#cc8855', price:8000, rate:0.15 }, // 玉山改為 15%
 };
+// ★ v5.308.0 — 台灣《寶島二部曲》10 關:小怪名單(沿用台灣既有小怪)/ BOSS 屬性 / 賣錢掉落物(定義在 hero_db.js window._TW2)
+try{
+  if(window._TW2){
+    window._TW2.bosses.forEach(function(b){
+      if(!TAIWAN_BOSS_MINIONS[b.id]) TAIWAN_BOSS_MINIONS[b.id] = b.minions.slice();
+      if(!TAIWAN_BOSS_ELEMENT[b.id]) TAIWAN_BOSS_ELEMENT[b.id] = b.elem;
+      if(!window._TAIWAN_BOSS_DROPS[b.id]){ var d = b.drop; window._TAIWAN_BOSS_DROPS[b.id] = { id:d.id, icon:d.icon, name:d.name, color:d.color, price:d.price, rate:d.rate }; }
+    });
+  }
+}catch(_eTw2Tbl){ console.warn('[v5.308.0 TW2 台灣關資料表]', _eTw2Tbl); }
 
 window._onTaiwanBossDefeated = function(){
   if(_adventureStage !== 'taiwan') return;
@@ -80177,6 +80224,8 @@ const _TAIWAN_TREASURE_ORDER = [
   'stinky_tofu_sword', 'alishan_tea_staff', 'lanyu_bow', 'sanxia_indigo_robe',
   'pearl_grail', 'sun_moon_mirror', 'taipei_101_spear',
   'yushan_shield',
+  // ★ v5.308.0 — 台灣《寶島二部曲》10 件新至寶(依關卡難度 ★3→★7;漏加進本陣列 = 至寶圖鑑看不到,v3.14.26/v5.150.0 同型事故)
+  ...((window._TW2 && window._TW2.bossIds) ? window._TW2.bosses.map(function(b){ return b.treasure.id; }) : []),
   // ★ v3.12.0 — 火龍王之牙(世界 BOSS 排名獎勵專屬,圖鑑排最末)
   'dragon_fang_fire',
   // ★ v3.14.26 — 草龍王之鬚(翠綠森龍王 世界 BOSS 排名獎勵專屬,龍王至寶第 2 件)
@@ -80257,6 +80306,14 @@ const _TAIWAN_TREASURE_TRIVIA = {
     text: '維蘇威火山位於義大利南部那不勒斯灣畔,是歐洲大陸唯一仍在活動的火山。西元 79 年 8 月 24 日,維蘇威火山猛烈爆發,將山腳下繁華的羅馬古城「龐貝」完全掩埋,整座城市在火山灰下沉睡了 1700 多年。古羅馬人相信火山內住著鍛造之神「武爾坎努斯(Vulcanus)」——英文「火山 Volcano」一詞就是從祂的名字而來。傳說武爾坎努斯飼養著一頭巨大的火龍,每當火龍憤怒時,山頂就會噴出岩漿與火焰。火龍王的獠牙鋒利如刀,據說是用上古地心熔岩鍛造而成,能咬穿千年神木——因此佩戴它的英雄,攻擊力大幅提升,更能剋制草木屬性的敵人。1748 年龐貝古城被重新挖掘出來,至今仍是世界上保存最完整的古羅馬遺址之一,每年吸引超過 250 萬人前往參觀。',
   },
 };
+// ★ v5.308.0 — 台灣《寶島二部曲》10 件新至寶的特產科普(取 _TW2 登錄表的地點典故)
+try{
+  if(window._TW2){
+    window._TW2.bosses.forEach(function(b){
+      if(!_TAIWAN_TREASURE_TRIVIA[b.treasure.id]) _TAIWAN_TREASURE_TRIVIA[b.treasure.id] = { title: b.icon + ' ' + b.location, text: b.lore };
+    });
+  }
+}catch(_eTw2Tv){}
 
 function _renderTaiwanTreasureGrid(){
   const grid = document.getElementById('tt-grid');
@@ -85674,7 +85731,7 @@ function _previewCheckBrowseAchievements(stage){
       if(seenCount >= total) _unlockMedal('preview_cn_browse');
     } else if(stage === 'taiwan'){
       const total = (typeof TAIWAN_PREVIEW_CONTENT !== 'undefined' && TAIWAN_PREVIEW_CONTENT.sections)
-        ? TAIWAN_PREVIEW_CONTENT.sections.length : 10;
+        ? Math.min(10, TAIWAN_PREVIEW_CONTENT.sections.length) : 10;   // ★ v5.308.0 第二章新增 10 章後門檻維持 10 章(獎章說明為台灣 10 主題,不因新章節變難)
       const seenCount = Object.keys(_medalStats.previewTwSeen || {}).length;
       if(seenCount >= total) _unlockMedal('preview_tw_browse');
     }
@@ -86155,6 +86212,15 @@ const TAIWAN_PREVIEW_CONTENT = {
     },
   ]
 };
+// ★ v5.308.0 — 台灣《寶島二部曲》10 個新地點的知識預習章節(資料在 hero_db.js window._TW2;id 對應 BOSS 詳情頁「預習這個地點」)
+try{
+  if(window._TW2){
+    window._TW2.bosses.forEach(function(b){
+      if(b.preview && !TAIWAN_PREVIEW_CONTENT.sections.some(function(s){ return s && s.id === b.preview.id; })) TAIWAN_PREVIEW_CONTENT.sections.push(b.preview);
+    });
+    TAIWAN_PREVIEW_CONTENT.intro = TAIWAN_PREVIEW_CONTENT.intro.replace('以下用 10 個地點主題', '以下用 ' + TAIWAN_PREVIEW_CONTENT.sections.length + ' 個地點主題');
+  }
+}catch(_eTw2Pv){ console.warn('[v5.308.0 TW2 預習章節]', _eTw2Pv); }
 
 // ★ v3.15.10 — 埃及知識預習內容(仿 JAPAN/TAIWAN_PREVIEW_CONTENT 格式)
 const EGYPT_PREVIEW_CONTENT = {

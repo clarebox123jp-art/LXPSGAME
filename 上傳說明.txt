@@ -1,0 +1,12 @@
+LXPSGAME v5.308.0 台灣至寶《寶島二部曲》更新包
+上傳順序(全部放 repo 根目錄,覆蓋同名檔):
+ 1. game_changelog.js
+ 2. admin_panel.js
+ 3. adv_quiz_db.js
+ 4. hero_db.js
+ 5. game_battle.js
+ 6. game_adv.js
+ 7. 30 張 .webp 新圖(10 BOSS、10 場景、10 至寶;圖晚傳也不會壞,會先顯示 emoji)
+ 8. index.html
+ 9. version.json(永遠最後)
+MEMORY_HANDOFF.md 請同步更新到專案知識庫(已前插本輪段落)。

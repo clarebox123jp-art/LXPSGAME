@@ -502,6 +502,7 @@ const BOSS_NAMES = [
   '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
   '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
   '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+  ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》10 BOSS:純敵方 → 排除英雄圖鑑/鬥技場,列魔物圖鑑
   // ★ FIX 20260516 — 火山炎龍王(世界 BOSS):
   //   之前漏加 → 跑去英雄圖鑑了,現在加進 BOSS_NAMES,正確顯示於魔物圖鑑
   '火山炎龍王',
@@ -2210,6 +2211,7 @@ function markAdventureBossCards(){
     '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師',
     '臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
     '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+    ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》主 BOSS 金邊
     '黑暗球‧希望型態','火山炎龍王',
   ];
   G.p2.forEach(h=>{
@@ -10279,9 +10281,54 @@ window._showTaiwanMap = function(){
       'box-shadow:0 4px 14px rgba(0,80,160,0.4);font-family:inherit;flex-shrink:0;">← 返回</button>' +
     '<div style="text-align:left;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;">' +
       '<div style="font-size:clamp(24px,3vw,38px);font-weight:900;color:#ffdd66;letter-spacing:5px;text-shadow:0 0 24px rgba(255,200,80,0.7);">🏝 台灣環島歷險記</div>' +
-      '<div style="font-size:clamp(13px,1.3vw,17px);color:#aaeeff;letter-spacing:1.5px;opacity:0.85;">點擊 BOSS 卡片,看看牠們藏在台灣的哪個角落</div>' +
+      '<div class="tw-map-sub" style="font-size:clamp(13px,1.3vw,17px);color:#aaeeff;letter-spacing:1.5px;opacity:0.85;">點擊 BOSS 卡片,看看牠們藏在台灣的哪個角落</div>' +
     '</div>';
   ov.appendChild(header);
+  // ★ v5.308.0 — 台灣關分章切換:第一章《環島歷險記》10 關 / 第二章《寶島二部曲》10 關(難度 ★3～★7)
+  //   章節只影響左右兩欄的 BOSS 卡片;點分頁 = 記住章節後重開地圖(單一渲染路徑,不另寫一套)。
+  const _twCh = (window._twMapChapter === 2 && window._TW2) ? 2 : 1;
+  try{
+    if(window._TW2){
+      const _chWrap = document.createElement('div');
+      _chWrap.className = 'tw-ch-tabs';
+      _chWrap.style.cssText = 'display:flex;gap:10px;flex-shrink:0;margin-left:auto;margin-right:clamp(250px,17vw,260px);';
+      // 三平台:手機橫放(矮螢幕)收掉副標、分頁縮小,避免標題列長高壓到地圖(鐵則〇之二)
+      if(!document.getElementById('_tw-ch-css')){
+        const _cs = document.createElement('style');
+        _cs.id = '_tw-ch-css';
+        _cs.textContent = '@media (orientation:landscape) and (max-height:520px){' +
+          '#taiwan-map-overlay .tw-map-sub{display:none!important;}' +
+          '#taiwan-map-overlay .tw-ch-tabs{gap:6px!important;}' +
+          '#taiwan-map-overlay .tw-ch-tab{padding:5px 10px!important;font-size:15px!important;}' +
+          '}';
+        document.head.appendChild(_cs);
+      }
+      const _mkTab = function(ch, label, sub){
+        const on = (ch === _twCh);
+        const b = document.createElement('button');
+        b.className = 'tw-ch-tab';
+        b.style.cssText = 'padding:8px 16px;border-radius:12px;cursor:pointer;font-family:inherit;line-height:1.15;text-align:center;' +
+          'font-size:clamp(15px,1.5vw,20px);font-weight:900;letter-spacing:1.5px;white-space:nowrap;' +
+          (on ? 'background:linear-gradient(135deg,#ffcc44,#ff9933);color:#3a2000;border:2.5px solid #fff0b0;box-shadow:0 0 18px rgba(255,200,80,0.7);'
+              : 'background:rgba(0,30,60,0.85);color:#aaccff;border:2px solid rgba(120,200,255,0.55);');
+        b.innerHTML = label + '<div style="font-size:0.62em;font-weight:700;letter-spacing:1px;opacity:0.9;">' + sub + '</div>';
+        b.onclick = function(){
+          if(ch === _twCh) return;
+          try{ playSfx('sfx-sel', 0.6); }catch(_){}
+          window._twMapChapter = ch;
+          window._showTaiwanMap();
+        };
+        return b;
+      };
+      _chWrap.appendChild(_mkTab(1, '第一章', '環島歷險記 ★4～★6'));
+      _chWrap.appendChild(_mkTab(2, '第二章 🆕', '寶島二部曲 ★3～★7'));
+      header.appendChild(_chWrap);
+      if(_twCh === 2){
+        const _sub = header.querySelector('.tw-map-sub');
+        if(_sub) _sub.textContent = '寶島二部曲:10 個新地點、10 件新至寶,難度從 ★3 到 ★7!';
+      }
+    }
+  }catch(_eTwCh){ console.warn('[v5.308.0 台灣分章]', _eTwCh); }
 
   // ★ v1.1.0 — 台灣地圖專屬控制按鈕列(右上角)
   //   原因:外部 #ctrl-bar 雖然 z-index:99999,但實測在台灣 overlay 開啟時並未正常顯示在右上角
@@ -10489,7 +10536,7 @@ window._showTaiwanMap = function(){
           'onerror="this.outerHTML=\'<span style=&quot;font-size:56px;line-height:1;&quot;>' + (boss.bossEmoji||'👹') + '</span>\'">'
         : (boss.bossEmoji||'👹')) +
       '</div>';
-    const _stars = '★'.repeat(boss.stars||3) + '☆'.repeat(Math.max(0, 6-(boss.stars||3)));
+    const _stars = '★'.repeat(boss.stars||3) + '☆'.repeat(Math.max(0, (boss.chapter === 2 ? 7 : 6)-(boss.stars||3)));   // ★ v5.308.0 第二章難度到 ★7
     // ★ v1.1.0 — 檢查玩家是否已獲得此 BOSS 的至寶
     let _hasTreasureBadge = '';
     let _treasureName = '';
@@ -10560,7 +10607,7 @@ window._showTaiwanMap = function(){
     'border:1.5px solid rgba(120,200,255,0.25);' +
     'box-shadow:0 8px 24px rgba(0,0,0,0.5);' +
     'justify-content:space-around;z-index:10;';
-  TAIWAN_LEFT_BOSSES.forEach(bossId => {
+  ((_twCh === 2) ? window._TW2.leftIds : TAIWAN_LEFT_BOSSES).forEach(bossId => {   // ★ v5.308.0 依章節
     const c = buildBossCard(bossId);
     if(c) leftCol.appendChild(c);
   });
@@ -10650,7 +10697,7 @@ window._showTaiwanMap = function(){
     'border:1.5px solid rgba(120,200,255,0.25);' +
     'box-shadow:0 8px 24px rgba(0,0,0,0.5);' +
     'justify-content:space-around;z-index:10;';
-  TAIWAN_RIGHT_BOSSES.forEach(bossId => {
+  ((_twCh === 2) ? window._TW2.rightIds : TAIWAN_RIGHT_BOSSES).forEach(bossId => {   // ★ v5.308.0 依章節
     const c = buildBossCard(bossId);
     if(c) rightCol.appendChild(c);
   });
@@ -10694,7 +10741,7 @@ function _showTaiwanBossDetail(bossId){
   const _rn = _rarityName[treasure ? treasure.rarity : 'rare'] || '稀有';
 
   // 難度星
-  const _stars = '★'.repeat(boss.stars) + '☆'.repeat(Math.max(0, 6 - boss.stars));
+  const _stars = '★'.repeat(boss.stars) + '☆'.repeat(Math.max(0, (boss.chapter === 2 ? 7 : 6) - boss.stars));   // ★ v5.308.0 第二章到 ★7
 
   // ★ v1.0.20260428.3780 — BOSS 立繪 + 屬性 + 建議反制屬性
   const _bossImg = (typeof _getTaiwanBossImage === 'function') ? _getTaiwanBossImage(bossId) : '';
@@ -10848,6 +10895,7 @@ function _showTaiwanBossDetail(bossId){
       'taipei_101_warlord':   'tw_taipei101',
       'yushan_giant':         'tw_yushan',
     };
+    try{ if(window._TW2) window._TW2.bosses.forEach(function(b){ _bossToSection[b.id] = b.preview.id; }); }catch(_){}   // ★ v5.308.0 第二章 10 個預習章節
     const _focusSid = _bossToSection[bossId] || null;
     try{
       if(typeof window._showPreviewPage === 'function'){
@@ -11494,7 +11542,7 @@ function getAdvBossIntroLines(){
   }catch(_){}
   if(!_mainBossName){
     // ★ v1.0.20260428.3870 — 補上台灣 10 個 BOSS 名稱(原本只查貓空+日本關)
-    const _TW_BOSS_NAMES = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人'];
+    const _TW_BOSS_NAMES = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人', ...(window._TW2_BOSS_NAMES || [])];   // ★ v5.308.0 +台灣《寶島二部曲》
     // ★ v3.8.1 — 木柵第三隻 BOSS:黑暗球‧希望型態
     _mainBossName = (typeof G !== 'undefined' && G && G.p2)
       ? (G.p2.find(h => h.name==='杏花妖' || h.name==='九尾空貓怪' || h.name==='黑暗球‧希望型態'
@@ -11594,6 +11642,13 @@ function getAdvBossIntroLines(){
   if(_TW_BOSS_INTROS[_mainBossName]){
     return _TW_BOSS_INTROS[_mainBossName];
   }
+  // ★ v5.308.0 — 台灣《寶島二部曲》10 BOSS 專屬戰前對白(資料在 hero_db.js window._TW2;不套貓空模板)
+  try{
+    const _tw2B = (window._TW2 && window._TW2.byName) ? window._TW2.byName[_mainBossName] : null;
+    if(_tw2B){
+      return [ _tw2B.emoji + '「' + _tw2B.dialog[0] + '」', '「' + _tw2B.dialog[1] + '」', '「想通過' + _tw2B.location.split('・').pop() + '?先答對我的考題吧!答錯的話……就別想離開!」' ];
+    }
+  }catch(_eTw2In){}
   // ★ v3.15.9 — 埃及關雙王(法老王 + 埃及豔后)專屬戰前開場白(不套年級/科目/難度模板)
   //   設計概念:沉睡千年的法老王與埃及豔后聯手守護金字塔寶藏;法老王莊嚴威嚴、豔后嬌媚帶刺。
   //   兩王皆在場 → 不論主 BOSS 偵測成哪一位,都回傳同一段雙王對白(法老王開場 + 豔后接話 + 兩王齊聲)。
@@ -15756,6 +15811,7 @@ function advShowBossIntro() {
       '摩天魔將・夜空爆裂者':'🎆',
       '山岳禁咒・崩天巨人':'⛰',
     };
+    try{ if(window._TW2) window._TW2.bosses.forEach(function(b){ if(!_TW_BOSS_ICONS[b.name]) _TW_BOSS_ICONS[b.name] = b.emoji; }); }catch(_){}   // ★ v5.308.0 台灣《寶島二部曲》
     // ★ v1.0.20260422.0100 — 日本關優先用 _currentBossVariantInfo.main 決定 BOSS 名稱，
     //   避免 G.p2 尚未 ready 或結構異常時 fallback 到「九尾空貓怪」預設圖示/文字。
     let _mainBoss = null;
@@ -19442,6 +19498,7 @@ function advOnQuizSkip() {
       '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
       '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
       '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+      ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》
       '黑暗球‧希望型態','火山炎龍王','翠綠森龍王'];
     const _boss = G.p2
       ? (G.p2.find(h => h.curHp > 0 && _SKIP_MAIN_BOSS_SET.includes(h.name))
@@ -24998,7 +25055,7 @@ async function advStartWinSequence() {
       //   forEach 對 G.p1 逐一檢查,_checkMedalExtreme 內 heroLevel<=1 即解 → 即「隊伍中存在 1 名 Lv1」。
       const _TW_BOSS_NAMES_EX = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公',
         '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
-        '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人'];
+        '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人', ...(window._TW2_BOSS_NAMES || [])];   // ★ v5.308.0
       const _isTaiwanBossWin = (G && Array.isArray(G.p2)) && G.p2.some(h => h && _TW_BOSS_NAMES_EX.includes(h.name));
       if(_isTaiwanBossWin && G && G.p1 && typeof _heroLevels === 'object' && _heroLevels){
         G.p1.forEach(h => {
@@ -26045,6 +26102,18 @@ const _BOSS_REACT_MAP = {
   'WRONG_CHIYOU':      BOSS_REACT_WRONG_CHIYOU,
   'TIMEOUT_CHIYOU':    BOSS_REACT_TIMEOUT_CHIYOU,
 };
+// ★ v5.308.0 — 台灣《寶島二部曲》10 BOSS 答題反應台詞(後綴 _TW2_<key>;資料在 window._TW2 登錄表)
+window._TW2_REACT_SUFFIX = {};
+try{
+  if(window._TW2){
+    window._TW2.bosses.forEach(function(b){
+      if(!b.react) return;
+      var _sx = '_TW2_' + b.key.toUpperCase();
+      window._TW2_REACT_SUFFIX[b.name] = _sx;
+      ['CORRECT','WRONG','TIMEOUT'].forEach(function(k){ if(b.react[k]) _BOSS_REACT_MAP[k + _sx] = b.react[k]; });
+    });
+  }
+}catch(_eTw2Rx){}
 // ★ v5.293.0 — 《繪卷新章》6 BOSS 答題反應台詞(後綴 _CN2_<路線id>;資料在 window._CN2 登錄表)
 window._CN2_REACT_SUFFIX = {};
 try{
@@ -26073,7 +26142,7 @@ function advShowBossReact(type) {
 
   const _TW_BOSS_NAMES = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公',
     '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
-    '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人'];
+    '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人', ...(window._TW2_BOSS_NAMES || [])];   // ★ v5.308.0
   const _mainReactBoss = (typeof G !== 'undefined' && G && G.p2)
     ? G.p2.find(h => h && h.curHp>0 &&
         (['杏花妖','大天狗','酒吞童子','玉藻前','八岐大蛇','黑暗球‧希望型態','法老王','埃及豔后',
@@ -26094,6 +26163,7 @@ function advShowBossReact(type) {
     '摩天魔將・夜空爆裂者': '_SKYBREAKER',
     '山岳禁咒・崩天巨人':   '_YUSHAN',
   };
+  try{ if(window._TW2_REACT_SUFFIX) Object.keys(window._TW2_REACT_SUFFIX).forEach(function(n){ if(!_TW_BOSS_SUFFIX[n]) _TW_BOSS_SUFFIX[n] = window._TW2_REACT_SUFFIX[n]; }); }catch(_){}   // ★ v5.308.0 台灣《寶島二部曲》
   const _reactSuffix = _mainReactBoss ? (
     _TW_BOSS_SUFFIX[_mainReactBoss.name] // 台灣 BOSS 用各自後綴
     || ({
@@ -32072,6 +32142,8 @@ const BACKPACK_ITEM_DEF = {
   'tw_mirror_shard':  { name:'倒映幻鏡片', icon:'💎', desc:'水靈反魔殘留的鏡像碎片,映照出真假難辨的幻象。',               type:'sell_only', sellPrice:4800 },
   'tw_skybreaker_core':{name:'夜空爆裂石',icon:'🌟', desc:'摩天魔將煙火翅膀的能量核心,蓄滿了 101 大樓的擎天能量。',     type:'sell_only', sellPrice:6000 },
   'tw_yushan_core':   { name:'崩天巨人核', icon:'⛰', desc:'山岳禁咒身軀深處的山岩核心,蘊含台灣最高峰玉山的神話之力。', type:'sell_only', sellPrice:8000 },
+  // ★ v5.308.0 台灣《寶島二部曲》10 BOSS 賣錢物品(定義在 hero_db.js window._TW2;BACKPACK_ITEM_DEF 與 SHOP_SELL_ITEMS 必須同時補,中國關漏過一次)
+  ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.reduce(function(o, b){ var d = b.drop; o[d.id] = { name:d.name, icon:d.icon, desc:d.desc, type:'sell_only', sellPrice:d.price }; return o; }, {}) : {}),
   // ★ 召喚水晶
   // ★ v1.0.20260424.0920 — 召喚已開放,更新描述
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，每次召喚消耗 1 顆，可獲得稀有英雄、技能升級書、BOSS 賣錢物品、超越極限果實等獎勵。', type:'use', useLabel:'前往召喚星空' },
@@ -32397,6 +32469,7 @@ const SHOP_SELL_ITEMS = [
   { id:'tw_mirror_shard',    name:'倒映幻鏡片', icon:'💎', sellPrice:4800 },
   { id:'tw_skybreaker_core', name:'夜空爆裂石', icon:'🌟', sellPrice:6000 },
   { id:'tw_yushan_core',     name:'崩天巨人核', icon:'⛰',  sellPrice:8000 },
+  ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.map(function(b){ return { id:b.drop.id, name:b.drop.name, icon:b.drop.icon, sellPrice:b.drop.price }; }) : []),   // ★ v5.308.0 台灣《寶島二部曲》
 ];
 
 // 背包工具函式
@@ -73123,6 +73196,7 @@ function _buildMonsterPage() {
     '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
     '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
     '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+    ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0 台灣《寶島二部曲》10 BOSS(魔物圖鑑台灣區)
   ];
 
   // ★ FIX 20260516 — 世界 BOSS(全伺服器合作打的超大型 BOSS)
@@ -73160,6 +73234,7 @@ function _buildMonsterPage() {
     '山靈古魔・千年怒木':'🌲','深海惡靈・觸手大蛟':'🐙','染靈幻魔・藍色憂鬱':'👻',
     '珍奶吸魂魔・大波霸':'🧋','水靈反魔・倒映女':'👁️','摩天魔將・夜空爆裂者':'🎆',
     '山岳禁咒・崩天巨人':'🗻',
+    ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.reduce(function(o, b){ o[b.name] = b.emoji; return o; }, {}) : {}),   // ★ v5.308.0 台灣《寶島二部曲》
     // ★ FIX 20260516 — 世界 BOSS
     '火山炎龍王':'🐉',
     '翠綠森龍王':'🐉',   // ★ v3.14.5
@@ -73300,6 +73375,7 @@ const MONSTER_ELEMENT = {
   '水靈反魔・倒映女':'water',
   '摩天魔將・夜空爆裂者':'wind',
   '山岳禁咒・崩天巨人':'earth',
+  ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.reduce(function(o, b){ o[b.name] = b.elem; return o; }, {}) : {}),   // ★ v5.308.0 台灣《寶島二部曲》
 };
 
 function openMonsterDetail(name) {
@@ -73405,6 +73481,7 @@ function openMonsterDetail(name) {
     '油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公','山靈古魔・千年怒木',
     '深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱','珍奶吸魂魔・大波霸','水靈反魔・倒映女',
     '摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人',
+    ...(window._TW2_BOSS_NAMES || []),   // ★ v5.308.0
     '黑暗球‧希望型態','火山炎龍王',
     '翠綠森龍王',   // ★ v3.14.5 — 世界 BOSS 預告:圖鑑詳細頁正確顯示「終極BOSS」
     // ★ v5.62.0(老師 2026-08-18 回報 BUG)— 埃及/中國/後期世界 BOSS 全部漏加,詳情頁一律誤顯示「🌿 路邊小怪」。
@@ -73692,7 +73769,7 @@ function openMonsterDetail(name) {
       let _twDropHtml = '';
       const _twBossNames = ['油膩魔王・滷汁大鍋','酥脆狂魔・熱浪糕師','臭氣魔王・發酵公',
         '山靈古魔・千年怒木','深海惡靈・觸手大蛟','染靈幻魔・藍色憂鬱',
-        '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人'];
+        '珍奶吸魂魔・大波霸','水靈反魔・倒映女','摩天魔將・夜空爆裂者','山岳禁咒・崩天巨人', ...(window._TW2_BOSS_NAMES || [])];   // ★ v5.308.0
       if(_twBossNames.includes(name) && typeof TAIWAN_BOSSES !== 'undefined'){
         // 找對應的 bossId
         const _twEntry = Object.entries(TAIWAN_BOSSES).find(([id, def]) => def.name === name);
@@ -74418,6 +74495,9 @@ const MEDAL_DEFS = [
   { id:'tw_kill_sunmoon',     icon:'🪞', name:'打破鏡像',         desc:'第一次擊敗水靈反魔・倒映女',       cat:'台灣關' },
   { id:'tw_kill_taipei101',   icon:'🎆', name:'煙火止熄',         desc:'第一次擊敗摩天魔將・夜空爆裂者',   cat:'台灣關' },
   { id:'tw_kill_yushan',      icon:'🗻', name:'登頂玉山',         desc:'第一次擊敗山岳禁咒・崩天巨人',     cat:'台灣關' },
+  // ── ★ v5.308.0 台灣《寶島二部曲》(11 個)── id 一經上線永不更名(雲端紀錄沿用、冪等不重發)
+  ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.map(function(b){ return { id:b.medal.id, icon:b.medal.icon, name:b.medal.name, desc:b.medal.desc, cat:'台灣關' }; }) : []),
+  { id:'tw2_all_clear',       icon:'🏝', name:'寶島二部曲全制霸', desc:'台灣第二章《寶島二部曲》10 隻 BOSS 全部至少擊敗 1 次', cat:'台灣關' },
 
   // ── 台灣 BOSS 累積擊敗 / 全員擊破(5 個) ──
   { id:'tw_kills_5',          icon:'⚔', name:'環島起跑',         desc:'累積擊敗 5 隻台灣 BOSS(可重複計算)', cat:'台灣關' },
@@ -75094,7 +75174,15 @@ window._checkTaiwanWinMedals = function(opts){
     if(_medalStats.twTotalKills >= 50) _unlockMedal('tw_kills_50');
 
     // 3. 全員擊破(10 種 BOSS 都至少一次)
-    if(Object.keys(_medalStats.twBossKills).length >= 10) _unlockMedal('tw_unique_all_10');
+    // ★ v5.308.0 只數第一章 10 隻(獎章說明=台灣原 10 BOSS;第二章另有「寶島二部曲全制霸」)
+    if(Object.keys(_TW_BOSS_MEDAL_MAP).filter(function(k){ return !!_medalStats.twBossKills[k]; }).length >= 10) _unlockMedal('tw_unique_all_10');
+    try{
+      if(window._TW2){
+        const _tw2B = window._TW2.byId[bid];
+        if(_tw2B && _tw2B.medal) _unlockMedal(_tw2B.medal.id);
+        if(window._TW2.bossIds.every(function(k){ return !!_medalStats.twBossKills[k]; })) _unlockMedal('tw2_all_clear');
+      }
+    }catch(_eTw2M){ console.warn('[v5.308.0 TW2 獎章]', _eTw2M); }
 
     // 4. 完成趟數
     _medalStats.twClears = (_medalStats.twClears||0) + 1;
