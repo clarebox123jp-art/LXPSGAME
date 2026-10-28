@@ -9428,6 +9428,7 @@ window._arenaStartSoloBattle = _arenaStartSoloBattle;
 function initGame(){
   // ★ v1.1.0 — 標記遊戲已開始,啟動方向監聽(手機直立時自動顯示提示)
   window._gameInitialized = true;
+  try{ window._burstCastActive = false; window._burstWatch = null; }catch(_){}   // ★ v5.305.0 新戰鬥不繼承上一場卡住的「爆發施放中」
   try{
     if(typeof window._setupOrientationWatcher === 'function'){
       window._setupOrientationWatcher();
@@ -18245,6 +18246,7 @@ function execBurst(side, pos, expectedName){
   }
   h._burstUsed = (h._burstUsed||0) + 1;  // ★ 最多2次
   h.acted=true;
+  try{ h._burstForceFinished = false; }catch(_){}   // ★ v5.305.0 新一次爆發 ⇒ 清掉「看門狗已代為收尾」記號
   // ★ log 剩餘次數，讓玩家清楚看到
   // ★ v5.69.0(老師需求④)— 改走 _burstNoLimit 單一真相(舊行保留備查,勿刪):
   //   const _isBossHero2 = typeof BOSS_NAMES!=='undefined' && BOSS_NAMES.includes(h.name);
@@ -18263,10 +18265,13 @@ function execBurst(side, pos, expectedName){
   //   第一步(先出現)= 爆發音效(上面 sfx-burst)+ 招式名文字(下面 bannerFX)+ 右側特寫大圖 + 集中線(_showBurstCinematic);
   //   全螢幕色彩遮罩(flashScreen)由「開頭」延到「動畫完畢後」,與 GIF 技能特效+傷害/治療同時出現。
   //   ★色彩遮罩只對「影片路徑」延後;無影片英雄/世界BOSS(else 分支)沒有動畫要等,維持開頭放,時序零改動。
-  bannerFX(h,'⚡'+bd.n,'#ffcc00',1500);
-  updateBurstEffects();
-  updateUI();
-  renderCard(h);
+  /* ★ v5.305.0(老師「深度檢查…戰鬥中卡死」甲)— 這四個畫面更新在 h.acted=true 之後、排程 _runBurst 之前;
+     任何一個丟例外(新英雄資料缺欄位等)舊版就整個中止 ⇒ 已標記行動卻沒有人推進回合 ⇒ 戰鬥停住只能按 🆘。
+     改成各自 try:畫面少一個演出,爆發照常生效、回合照常推進。 */
+  try{ bannerFX(h,'⚡'+bd.n,'#ffcc00',1500); }catch(_eXb1){ console.warn('[execBurst bannerFX]', _eXb1); }
+  try{ updateBurstEffects(); }catch(_eXb2){ console.warn('[execBurst updateBurstEffects]', _eXb2); }
+  try{ updateUI(); }catch(_eXb3){ console.warn('[execBurst updateUI]', _eXb3); }
+  try{ renderCard(h); }catch(_eXb4){ console.warn('[execBurst renderCard]', _eXb4); }
   // ★ v4.33.0(任務2)— 爆發影片時序重排(僅「有爆發影片的玩家英雄」且「非世界BOSS」才走):
   //   同時起播:爆發字幕(大字)+集中效果線+爆發音效(上面 sfx-burst)+全屏光彩(上面 flashScreen)+影片(置中上方);
   //   大字/集中線「撐到影片結束」;影片結束/跳過時才放原有 GIF 特效+顯示傷害/治療數字。
@@ -18340,14 +18345,17 @@ function execBurst(side, pos, expectedName){
       }, 200);
     };
     // t=0 起播影片(置中上方),結束/跳過/失敗/10s 兜底任一路徑都只觸發一次 _bvDone
-    _playBurstVideo(_bvUrl, _bvDone);
+    // ★ v5.305.0 播放器本身丟例外 ⇒ 直接當作影片結束,照常生效爆發(舊版會卡在已行動、沒人推進)
+    try{ _playBurstVideo(_bvUrl, _bvDone); }
+    catch(_eBvP){ console.warn('[爆發影片 播放器例外 ⇒ 直接生效]', _eBvP); try{ _bvDone(); }catch(_eBvD){ console.error('[爆發影片 收尾例外]', _eBvD); } }
   } else {
     // ★ v4.39.0/v5.22.0 — 無影片英雄:沒有影片動畫要等,色彩遮罩維持在開頭放(與 v4.38.0 前時序一致,零改動;
     //   v5.22.0 起「有影片英雄」即使在世界BOSS戰也走上方影片重排路徑,不再落到此分支)。
     try{ flashScreen('rgba(255,150,0,1)',600); }catch(_){}
     setTimeout(function(){ try{ flashScreen('rgba(255,255,255,1)',300); }catch(_){} }, 200);
     // 需求4：角色圖片全螢幕浮現 + 技能名稱震動發光(原路徑,無影片英雄/世界BOSS)
-    _showBurstCinematic(h, bd);
+    // ★ v5.305.0 包 try:特寫圖/資料缺漏丟例外時,下面 _runBurst 仍要排程(舊版裸呼叫 ⇒ 例外後 _runBurst 永遠沒排上 ⇒ 卡死)
+    try{ _showBurstCinematic(h, bd); }catch(_eCine2){ console.warn('[爆發 cinematic 無影片路徑]', _eCine2); }
     // ★ v3.4.7 — 老師明確需求:「個人極限爆發要所有玩家端都同步看見」
     //   capture cinematic 事件 → client 端 replay 時呼叫 _showBurstCinematic,
     //   _showBurstCinematic 內部 1.3s 後會自己呼叫 _showBurstGif,所以不用額外 capture GIF
@@ -18983,6 +18991,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
   }catch(_){}
   window._burstCastActive = true;
+  try{ window._burstWatch = { h: h, intr: _interrupted, at: Date.now(), idle: 0, hp: -1 }; h._burstForceFinished = false; }catch(_){}   // ★ v5.305.0 爆發看門狗登記
   const burstName = bd.n; // ★ 修正：burstName 從爆發資料取得
   // ★ v3.15.72 — 偵探 S1「察覺蛛絲馬跡」:記錄施術者本次爆發名,供下次禁連招(AI 爆發決策處)比對。
   try{ h._lastActionName = bd.n; }catch(_){}
@@ -25985,7 +25994,50 @@ function _lxpsMuyunTakeHold(h){
   try{ if(h && h._muyunHoldTurnUntil){ h._muyunHoldTurnUntil = 0; return true; } }catch(_eMyHold){}
   return false;
 }
+/* ★ v5.305.0(2026-10-28・老師「深度檢查…戰鬥中卡死」甲)— 爆發看門狗
+   多段爆發(劍士 7 連斬等)是一串 _pSetTimeout 鏈,中途某一段丟例外 ⇒ 鏈斷掉、_burstFinish 永遠不會被呼叫 ⇒
+   英雄已標記行動、_burstCastActive 卡在 true(之後我方攻擊必中、多個天賦/命星失效,還會帶到下一場),戰鬥停住只能按 🆘。
+   看門狗每 3 秒看一次:爆發施放中、沒有暫停/畫面在背景/影片播放/玩家選擇視窗,而且雙方血量連續 45 秒都沒變 ⇒
+   代為 _burstFinish 收尾(回合照常推進);之後那條斷掉的鏈若又回來呼叫 _burstFinish,用 h._burstForceFinished 擋掉,不會重複推進。 */
+(function _lxpsBurstWatchdogInit(){
+  if(window._lxpsBurstWdInt) return;
+  window._lxpsBurstWdInt = setInterval(function(){
+    try{
+      var w = window._burstWatch;
+      if(!window._burstCastActive || !w || !w.h){ return; }
+      if(window._wbClientMode) return;                                  // 世界 BOSS 隊友端由房主推進
+      // 施術者已不在目前戰場(戰鬥已結束/換了一場)⇒ 只清掉殘留旗標,不推進任何回合
+      var _inField = false;
+      try{ _inField = !!(typeof G !== 'undefined' && G && [].concat(G.p1 || [], G.p2 || []).indexOf(w.h) >= 0); }catch(_){}
+      if(!_inField){ window._burstWatch = null; window._burstCastActive = false; return; }
+      var hold = false;
+      try{ if(document.hidden) hold = true; }catch(_){}
+      try{ if(typeof _gamePaused !== 'undefined' && _gamePaused) hold = true; }catch(_){}
+      try{ if(document.getElementById('_bv-overlay')) hold = true; }catch(_){}   // 爆發影片播放中
+      try{ if(typeof window._lxpsLegitModalOpen === 'function' && window._lxpsLegitModalOpen()) hold = true; }catch(_){}   // 選目標/確認等玩家操作中
+      try{ if(typeof pendingCb !== 'undefined' && pendingCb) hold = true; }catch(_){}                                       // 正在等玩家點目標
+      try{ ['burst-target-pick','burst-confirm-modal','active-passive-modal','pause-overlay','adv-quiz-overlay'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el && ((el.classList && el.classList.contains('show')) || (el.style.display && el.style.display !== 'none' && el.offsetParent !== null))) hold = true;
+      }); }catch(_){}
+      var hp = 0;
+      try{ if(typeof G !== 'undefined' && G){ (G.p1 || []).forEach(function(x){ hp += (x && x.curHp) || 0; }); (G.p2 || []).forEach(function(x){ hp += (x && x.curHp) || 0; }); } }catch(_){}
+      if(hold || hp !== w.hp){ w.hp = hp; w.idle = 0; return; }
+      w.idle += 3000;
+      if(w.idle < 45000) return;
+      var h = w.h, intr = w.intr;
+      window._burstWatch = null;
+      console.warn('[爆發看門狗 v5.305.0] 爆發 45 秒沒有進展 ⇒ 代為收尾', h && h.name);
+      try{ log('⚠️ 爆發演出中斷,已自動收尾繼續戰鬥。'); }catch(_){}
+      try{ _burstFinish(h, intr); }catch(_eWdF){ console.error('[爆發看門狗 收尾失敗]', _eWdF); window._burstCastActive = false; }
+      try{ if(h) h._burstForceFinished = true; }catch(_){}
+    }catch(_eWd){}
+  }, 3000);
+})();
 function _burstFinish(h, _interrupted){
+  // ★ v5.305.0 看門狗已代為收尾 ⇒ 晚到的這一次不再重複推進回合
+  if(h && h._burstForceFinished){ try{ console.warn('[爆發看門狗] 已代為收尾,略過重複的 _burstFinish', h.name); }catch(_){} return; }
+  try{ window._burstWatch = null; }catch(_){}
   // ★ v1.0.20260423.2300 — 清除爆發保護旗標
   window._burstCastActive = false;
   try{ if(typeof window._cn2BurstEnd === 'function') window._cn2BurstEnd(h); }catch(_eCn2BEnd){}   // ★ v5.295.0 楊戩看破(減半版)記號收尾
@@ -37432,7 +37484,9 @@ function doDmg(target, rawDmg, opts={}){
   try{ if(dmg > 0 && G && Array.isArray(G._cstFcD) && G._cstFcD.length && target.curHp > 0 && (target.curHp - dmg) <= 0 && window._cstWsB2Eye(target, opts, a)) return 0; }catch(_eCstWsB2e){}   // ✨ v5.266.0 命星 風術士 b2 風眼(只在有命星戰場卡時檢查)
   try{ if(opts._cstOvf && dmg > target.curHp) opts._cstOvf.v = dmg - target.curHp; }catch(_eCstOvf){}   // ✨ v5.272.0 命星 關羽 b2:溢出量(_cstOvf 只由點亮的命星帶入)
   target.curHp=Math.max(0,target.curHp-dmg);
-  try{ if(opts && opts._fmRefPend){ const _fmRp = opts._fmRefPend; opts._fmRefPend = null; if(dmg > 0 && window._fmReflectFire) window._fmReflectFire(target, dmg, _fmRp, opts); } }catch(_eFmRf){}   // ★ v5.282.0 英魂陣型 金剛長城(審查 M1/M2):真的扣到血才反彈,以實際扣血量計  try{ if(dmg > 0 && target.curHp > 0 && (target.name === '呂布' || target.name === '摩羯星神' || target.name === '牛魔王')) window._cstS5Dmg(target, target.curHp + dmg, opts, a); }catch(_eCstS5Dm){}   // ✨ v5.268.0 命星 呂布 t2/摩羯 t2/牛魔王 t2(只對點亮的命星做事)
+  try{ if(opts && opts._fmRefPend){ const _fmRp = opts._fmRefPend; opts._fmRefPend = null; if(dmg > 0 && window._fmReflectFire) window._fmReflectFire(target, dmg, _fmRp, opts); } }catch(_eFmRf){}   // ★ v5.282.0 英魂陣型 金剛長城(審查 M1/M2):真的扣到血才反彈,以實際扣血量計
+  // ★ v5.305.0 下面這行在 v5.282.0 被插到上一行的註解尾巴(整行變成註解 ⇒ 一般傷害路徑的呂布/摩羯/牛魔王命星 t2 從此沒生效,只剩固定傷害路徑),拆回獨立一行
+  try{ if(dmg > 0 && target.curHp > 0 && (target.name === '呂布' || target.name === '摩羯星神' || target.name === '牛魔王')) window._cstS5Dmg(target, target.curHp + dmg, opts, a); }catch(_eCstS5Dm){}   // ✨ v5.268.0 命星 呂布 t2/摩羯 t2/牛魔王 t2(只對點亮的命星做事)
   try{ if(dmg > 0 && (target._cstBmLk || target._cstMmSeed || target._cstTzAcc || target._cstIlB2)) window._cstS8Dmg(target, dmg, opts, old); }catch(_eCstS8Dm){}   // ✨ v5.271.0 命星 ⚙ 炸彈客 s2 引線/火柴人 b2 火種(只認命星寫入的欄位)
   // ✨ 命星 牛魔王 b1「焚天鐵蹄星」 🔧 v5.258.0 舊 bug:(命星審查)以牛魔王實際受到(扣血)的傷害 ×65% 反彈,並使攻擊者燃燒 1 回合;_cstNmRefPend 只在點亮時寫入
   try{
@@ -55872,7 +55926,9 @@ function startTurn(){
     }
   }catch(_eCstMlB1){}
   try{ window._cstS1ReTurn(); }catch(_eCstS1ReT){}   // ✨ v5.264.0 命星 再行動排程(鋁合金暴龍 b2)
-  try{ if(typeof window._cn2ReTurn === 'function') window._cn2ReTurn(); }catch(_eCn2ReT){}   // ★ v5.295.0 新 SSR 再行動排程(劉備三英同心/趙雲七進七出;非命星,不吃 G2)  try{ window._cstAsB2Turn(); }catch(_eCstAsB2s){}   // ✨ 命星 刺客 b2「收割名單星」:強力出血目標倒下 ⇒ 刺客這次行動結束後立即再行動(只讀寫命星寫入的 _cstCaB2R)
+  try{ if(typeof window._cn2ReTurn === 'function') window._cn2ReTurn(); }catch(_eCn2ReT){}   // ★ v5.295.0 新 SSR 再行動排程(劉備三英同心/趙雲七進七出;非命星,不吃 G2)
+  // ★ v5.305.0 下面這行在 v5.295.0 被插到上一行的註解尾巴(整行變成註解,刺客 b2 從此沒生效),拆回獨立一行
+  try{ window._cstAsB2Turn(); }catch(_eCstAsB2s){}   // ✨ 命星 刺客 b2「收割名單星」:強力出血目標倒下 ⇒ 刺客這次行動結束後立即再行動(只讀寫命星寫入的 _cstCaB2R)
   // ★ v5.283.0 英魂陣型判定移到 PvP 握手閘門之後(審查 H1:閘門前 G.p2 還是佔位的電腦隊伍)
   // ★ v5.192.0 — 獅子星神 天賦「王者威光」:戰鬥開始(round 1)套用一次,G._leoMajestyDone 防重複套用
   try{
@@ -69646,9 +69702,15 @@ function _openAllElemPopup(cx,cy){
   window._epOpen=true; window._epKey='__all__';
 }
 // ====== LOG ======
+/* ★ v5.305.0(2026-10-28・老師「深度檢查…戰鬥中閃退」甲)— 戰鬥 LOG 上限 300 行＋不再整段重排。
+   舊版每加一行就把整段 innerHTML 轉字串再整段重新解析;冒險/世界 BOSS/主線結束時又清錯元素(找 'battle-log',不存在),
+   同一堂課連打幾場 LOG 無限長大 ⇒ 每行越來越慢、記憶體越吃越多 ⇒ 2019 iPad 越打越卡最後閃退。
+   現在:insertAdjacentHTML 只解析新的那一行;超過 300 行從最舊的開始刪(展開 LOG 仍可往上看最近 300 行)。 */
 function log(m){
   const l=document.getElementById('log');
-  l.innerHTML=`<div>> ${m}</div>`+l.innerHTML;
+  if(!l) return;
+  l.insertAdjacentHTML('afterbegin', `<div>> ${m}</div>`);
+  try{ while(l.childElementCount > 300 && l.lastElementChild) l.removeChild(l.lastElementChild); }catch(_){}
 }
 // ★ v3.16.56 — 戰鬥 LOG 展開/收合(展開時 #log 絕對定位覆蓋整個 #sb·可向上捲讀完整戰鬥過程)
 //   設計:用 window.* 指派(跨 <script> 區塊安全);展開只改 #log 行內樣式·收合清回 ''
@@ -74628,6 +74690,9 @@ scaleToViewport();
   let _scheduled = false;
   function _snapBack(){
     if(window._allowDocScroll === true) return;
+    // ★ v5.305.0(老師「會員資料無法正常輸入」)— iPad 叫出鍵盤時,瀏覽器會捲動頁面把輸入格露出來;
+    //   舊版立刻把頁面捲回 0,0 ⇒ 輸入格被鍵盤蓋住、游標亂跳,學生看起來就是「打不了字」。打字中先不歸位,收鍵盤後再歸位。
+    try{ if(typeof window._lxpsTypingActive === 'function' && window._lxpsTypingActive()) return; }catch(_){}
     // 已經在 0,0,不必做事
     const sx = window.pageXOffset || document.documentElement.scrollLeft || 0;
     const sy = window.pageYOffset || document.documentElement.scrollTop  || 0;
@@ -74646,6 +74711,8 @@ scaleToViewport();
       _snapBack();
     });
   }, {passive: true, capture: true});
+  // ★ v5.305.0 收鍵盤(離開輸入格)後補一次歸位(打字中被略過的那次)
+  try{ document.addEventListener('focusout', function(){ setTimeout(function(){ try{ _snapBack(); }catch(_){} }, 1700); }, true); }catch(_){}
   // 初始化也跑一次(防止頁面載入時就被某個 anchor / hash 捲走)
   _snapBack();
   // 暴露手動歸位 API(玩家或除錯時可用)
@@ -75540,6 +75607,13 @@ function _lxpsGetHeroUnlockInfo(name){
     var _soSrc = _lxpsStoryOwnedSource(name);
     if(_soSrc) return { cat:'known', at:0, source:_soSrc, confirmed:false, foreign:false };
   }catch(_){}
+  // ★ v5.305.0 設計者本人的英雄 ⇒ 'known'(圖鑑不再標「❓ 來源不明」、不出現「不是我的」🗑 鈕)
+  try{
+    if(window._fbUser && window._fbUser.email && typeof window._lxpsIsOwnDesignerHero === 'function'
+       && window._lxpsIsOwnDesignerHero(window._fbUser.email, name)){
+      return { cat:'known', at:0, source:'student_designer', confirmed:false, foreign:false };
+    }
+  }catch(_){}
   var _uid12 = String(window._gUserId || '').slice(0, 12);
   var _initial = (window._ARENA_INITIAL_HEROES || []);
   var _hist = [];
@@ -75590,6 +75664,20 @@ function _lxpsConfirmOwnHero(name){
   var _uid = window._gUserId || '';
   if(!name || !_uid) return false;
   var _u12 = String(_uid).slice(0, 12);
+  /* ★ v5.305.0(2026-10-28・老師「陳睿智當前的 UR 應該要刪除(GM 並沒有發給)」)— UR 不能自己按「這是我的」認領。
+     實查:陳睿智的藝天使‧克雷爾所有取得紀錄都帶別人的帳號編號(共用平板汙染),10/14 他在圖鑑按「這是我的」⇒ player_confirmed
+     ⇒ 之後所有稽核都把它當本人確認而放過。UR 只能由老師發放(GM 獎勵/UR 自選卷/替換卷),本帳號沒有這類真實取得紀錄就不給自認。 */
+  try{
+    if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'UR'){
+      var _hs = []; try{ var _r0 = localStorage.getItem('adv_hero_unlock_history'); _hs = _r0 ? JSON.parse(_r0) : []; if(!Array.isArray(_hs)) _hs = []; }catch(_){ _hs = []; }
+      var _ownReal = _hs.some(function(e){ return e && e.name === name && String(e.uid || '').slice(0, 12) === _u12
+        && ['player_confirmed','admin_delete','audit_error_recovered','migration_seal','legacy_grandfather','legacy_owned','seen'].indexOf(String(e.source || '')) < 0; });
+      if(!_ownReal){
+        try{ if(typeof _showInGameToast === 'function') _showInGameToast('UR 英雄只能由老師發放,這隻查不到你的取得紀錄,請找老師確認。', '#ffcc66', 3600); }catch(_){}
+        return false;
+      }
+    }
+  }catch(_eUr){}
   var _entry = { name: name, at: Date.now(), source: 'player_confirmed', uid: _u12 };
   try{
     var _raw = localStorage.getItem('adv_hero_unlock_history');

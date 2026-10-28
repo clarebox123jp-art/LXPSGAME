@@ -5619,7 +5619,16 @@ function _advExchRefreshCfg(cb){
 const _ADV_EXCH_BLOCKERS = ['style-onboarding-modal','_camp-overlay','adv-wb-crash-notice','adv-crash-recovery-box','_global-reward-notice','redeem-overlay','_ph-lock-modal','adv-continue-overlay','login-gate-modal','_member-profile-modal','_member-hub-modal','_rescue-guide-modal','_audit-ov'];
 function _advExchBlocked(){
   try{
-    for(let i = 0; i < _ADV_EXCH_BLOCKERS.length; i++){ const el = document.getElementById(_ADV_EXCH_BLOCKERS[i]); if(el && el.offsetParent !== null && el.style.display !== 'none') return true; }
+    // ★ v5.305.0 — 舊版用 offsetParent 判斷「看得見」,但這些視窗幾乎都是 position:fixed ⇒ offsetParent 永遠是 null
+    //   ⇒ 守門形同虛設:考試挑戰提醒會疊在「會員資料」表單上面、搶走輸入焦點(學生打不了字/送不出去)。改用實際排版+計算樣式判斷。
+    for(let i = 0; i < _ADV_EXCH_BLOCKERS.length; i++){
+      const el = document.getElementById(_ADV_EXCH_BLOCKERS[i]);
+      if(!el) continue;
+      let _vis = false;
+      try{ const _cs = getComputedStyle(el); _vis = _cs.display !== 'none' && _cs.visibility !== 'hidden' && el.getClientRects().length > 0; }catch(_){ _vis = el.style.display !== 'none'; }
+      if(_vis) return true;
+    }
+    try{ if(typeof window._lxpsTypingActive === 'function' && window._lxpsTypingActive()) return true; }catch(_){}   // 學生正在打字 ⇒ 晚點再跳
     if(document.querySelector('.exr-ov')) return true;
     if(window._petT1Active) return true;
   }catch(_){}
@@ -5638,6 +5647,9 @@ window._advExamChalLoginPopup = function(_try){
       _ADV_EXCH_SUBJ.forEach(k => { const x = s.subs[k]; if(!x || (x.claims || 0) < c.max) allDone = false; });
       if(allDone) return;
       try{ if(localStorage.getItem(_advExchMuteKey()) === _advExchToday()) return; }catch(_){}
+      // ★ v5.305.0 老師「重複跳出已經確認過的視窗」:今天已按過「知道了/今天先不提醒」(雲端記錄,換平板也算)、或這次是自動重整 ⇒ 不再跳
+      try{ if(window._lxpsQuietReload && window._lxpsQuietReload()) return; }catch(_){}
+      try{ if(window._lxpsAckGetSync && window._lxpsAckGetSync('examChalDay') === _advExchToday()) return; }catch(_){}
       if(_advExchBlocked() || document.getElementById('_exch-ov')){
         if(_try < 40) setTimeout(function(){ window._advExamChalLoginPopup(_try + 1); }, 2000);
         return;
@@ -5747,8 +5759,9 @@ function _advExchRender(fromLogin, idxOk){
     const sn = t.getAttribute('data-sn'), st = sn ? (ui[sn] = ui[sn] || { g: '', t: semDef, v: '' }) : null;
     const tap = () => { try{ playSfx('sfx-tap', 0.4); }catch(_){} };
     const rerender = () => { const sc = ov.querySelector('._exch-card'); const y = sc ? sc.scrollTop : 0; _advExchRender(fromLogin, idxOk); const n2 = document.querySelector('#_exch-ov ._exch-card'); if(n2) n2.scrollTop = y; };
-    if(t.getAttribute('data-close')){ tap(); ov.remove(); return; }
-    if(t.getAttribute('data-mute')){ tap(); try{ localStorage.setItem(_advExchMuteKey(), _advExchToday()); }catch(_){} ov.remove(); return; }
+    // ★ v5.305.0 登入彈出的這一張:「知道了」也算今天看過(舊版只有「今天先不提醒」有記,而且只記在這台 iPad)⇒ 雲端記 examChalDay
+    if(t.getAttribute('data-close')){ tap(); if(fromLogin){ try{ window._lxpsAckSet && window._lxpsAckSet('examChalDay', _advExchToday()); }catch(_){} } ov.remove(); return; }
+    if(t.getAttribute('data-mute')){ tap(); try{ localStorage.setItem(_advExchMuteKey(), _advExchToday()); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('examChalDay', _advExchToday()); }catch(_){} ov.remove(); return; }
     if(st && t.getAttribute('data-g')){ tap(); st.g = t.getAttribute('data-g'); st.v = ''; st.confirm = false; rerender(); return; }
     if(st && t.getAttribute('data-t')){ tap(); st.t = t.getAttribute('data-t'); st.v = ''; st.confirm = false; rerender(); return; }
     if(st && t.getAttribute('data-v')){ tap(); st.v = t.getAttribute('data-v'); st.confirm = false; rerender(); return; }
@@ -22623,6 +22636,8 @@ window._advHasGenuineUnlock = function(name, ctx, _skipLevelKeep){
     if(!name) return false;
     // ★ PHASE 2 A1 — 主角:預設持有、綁 UID、不進召喚池、無解鎖帳本紀錄 → 一律判為真實持有(同初始8),稽核不回收
     try{ if(window._isProtagHero && window._isProtagHero(name)) return true; }catch(_){}
+    // ★ v5.305.0 設計者本人的英雄 ⇒ 一律真實持有(自我審查不列「查無紀錄」、幻影過濾/過度補回稽核都不動它)
+    try{ if(window._fbUser && window._fbUser.email && window._lxpsIsOwnDesignerHero(window._fbUser.email, name)) return true; }catch(_){}
     /* ★★ v4.87.0 需求1 —— 主線劇情已解鎖的夥伴同樣視為「真實持有」,永不再被要求確認。
      *   影響面(刻意):本函式同時被 _advHasHardEvidence(登入自我審查 PENDING 名單)、
      *   advGetUnlockedHeroes 自癒、幻影過濾、GM 過度補回稽核共用 → 一處早退全部涵蓋。
@@ -22955,6 +22970,42 @@ window._lxpsLogTicketScrollUse = function(item){
       '券改贈卷軸(無解鎖紀錄):' + _e.item
     );
   }catch(_e2){ try{ console.warn('[_lxpsLogTicketScrollUse]', _e2); }catch(_){} }
+};
+
+/* ★ v5.305.0(2026-10-28・老師「設計者自己擁有的英雄被刪除」甲)— 設計者「本人設計」證明
+   舊版設計者英雄補發只在英雄「還不在清單」時寫取得紀錄(advSaveUnlockedHero 的 _isNew);早期就拿到、用 GM 一鍵補發拿到、
+   或紀錄被擠出 200 筆的設計者,雲端完全沒有 student_designer 紀錄(2026-10-28 實查:46 位中 31 位沒有)⇒ 各種清查工具
+   (查無紀錄過度補償/汙染暴增 SSR/持有者審查/圖鑑「不是我的」)把設計者自己的英雄判成來源不明而刪掉。
+   現在設計者每次登入都檢查:本機紀錄沒有「本帳號、這隻、student_designer」就補一筆,並同步寫永久擁有證明與雲端。 */
+window._lxpsEnsureDesignerProof = function(name){
+  try{
+    if(!name || !window._gUserId) return false;
+    const _u12 = String(window._gUserId).slice(0, 12);
+    let _history = [];
+    try{ const _raw = localStorage.getItem('adv_hero_unlock_history'); _history = _raw ? JSON.parse(_raw) : []; if(!Array.isArray(_history)) _history = []; }catch(_){ _history = []; }
+    if(_history.some(function(e){ return e && e.name === name && e.source === 'student_designer' && e.uid === _u12; })) return false;
+    const _entry = { name: name, at: Date.now(), source: 'student_designer', uid: _u12 };
+    _history.push(_entry);
+    if(_history.length > 200) _history = _history.slice(-200);
+    try{ localStorage.setItem('adv_hero_unlock_history', JSON.stringify(_history)); }catch(_){}
+    try{ if(typeof window._lxpsHLRecordAcq === 'function') window._lxpsHLRecordAcq(name, 'student_designer'); }catch(_){}
+    try{
+      if(typeof window._lxpsCloudInstantUnlock === 'function' && window._fbFns && typeof window._fbFns.arrayUnion === 'function'){
+        window._lxpsCloudInstantUnlock({ _heroUnlockHistory: window._fbFns.arrayUnion(_entry) }, '設計者證明:' + name);
+      }
+    }catch(_){}
+    console.log('🎨 [設計者證明 v5.305.0] 已補寫「' + name + '」本人設計紀錄');
+    return true;
+  }catch(e){ console.warn('[設計者證明] 失敗', e); return false; }
+};
+/* ★ v5.305.0 — 單一判斷:這隻英雄是不是「這個信箱的學生」自己設計的(讀 index.html 的 STUDENT_DESIGNER_HEROES;
+   一位設計者可能有兩個信箱(火柴人:個人 Gmail + 學校帳號),兩個都登錄)。清查/收回工具一律先問這個。 */
+window._lxpsIsOwnDesignerHero = function(email, name){
+  try{
+    if(!email || !name || typeof STUDENT_DESIGNER_HEROES === 'undefined') return false;
+    const _i = STUDENT_DESIGNER_HEROES[String(email).toLowerCase()];
+    return !!(_i && _i.hero === name);
+  }catch(_){ return false; }
 };
 
 function advSaveUnlockedHero(name, source) {
@@ -23478,6 +23529,10 @@ window._advRecordBattleResult = function(battleId, type, payload){
     const _u = (window._fbAuth && window._fbAuth.currentUser);
     const _fns = window._fbFns;
     if(!_u || !_fns || !window._fbDb) return;
+    // ★ v5.305.0(老師「重複跳出已經確認過的視窗」)— 等登入流程真正放行這個帳號(_gUserId 一致)才抓:
+    //   共用平板開機時 Firebase 先還原的常是「上一位、隨後會被登出」的帳號,舊版綁到那個人 ⇒ 真正登入的學生這一頁抓不到通知,
+    //   延到之後某次登入才跳出來,看起來就像「處理完了又跳」。
+    if(!window._gUserId || window._gUserId !== _u.uid) return;
     if(_started){ clearInterval(_bootTimer); return; }
     _started = true;
     clearInterval(_bootTimer);
@@ -23511,6 +23566,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
   window._lxpsConsumeNotifItem = async function(uid, itemId){
     if(!uid || !itemId) return false;
     try{ localStorage.setItem('lxps_notif_hide_' + itemId, String(Date.now())); }catch(_){}
+    try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + itemId, Date.now()); }catch(_){}   // ★ v5.305.0 雲端也記(刪除失敗時換平板也不再跳)
     try{
       const { doc, deleteDoc } = window._fbFns;
       await _lxpsNotifDeleteRetry(deleteDoc, doc(window._fbDb, 'pendingAdminNotifications', uid, 'items', String(itemId)));
@@ -23532,6 +23588,9 @@ window._advRecordBattleResult = function(battleId, type, payload){
         // orderBy 可能因索引不存在 fallback
         _snap = await getDocs(_colRef);
       }
+      // ★ v5.305.0 — 雲端已讀記錄(players/{uid}._ack.nh_<id>):換平板、清快取也認得「這則按過了」
+      try{ if(window._lxpsAckLoad) await window._lxpsAckLoad(); }catch(_){}
+      if(window._gUserId !== uid) return;   // 抓的途中換了帳號 ⇒ 不彈給下一個人
       const _items = [];
       _snap.forEach(function(_d){
         const _data = _d.data() || {};
@@ -23539,6 +23598,12 @@ window._advRecordBattleResult = function(battleId, type, payload){
         // ★ v3.14.0 — 本地「以後不再顯示」旗標:即使雲端刪除失敗(離線等),也不再騷擾玩家
         // ★ v5.303.0 — 退場的歸屬確認通知不看本機旗標:這台以前藏過、但雲端沒刪掉的那筆,也要趁這次登入清掉。
         try{ if(!(_data.type === 'overRestoreReview' && !window._LXPS_OVR_REVIEW_POPUP) && localStorage.getItem('lxps_notif_hide_' + _d.id)) return; }catch(_){}
+        try{
+          if(!(_data.type === 'overRestoreReview' && !window._LXPS_OVR_REVIEW_POPUP) && window._lxpsAckGetSync && window._lxpsAckGetSync('nh_' + _d.id)){
+            try{ deleteDoc(doc(window._fbDb, 'pendingAdminNotifications', uid, 'items', _d.id)).catch(function(){}); }catch(_){}   // 順手再試刪一次
+            return;
+          }
+        }catch(_){}
         _items.push({ id: _d.id, ref: doc(window._fbDb, 'pendingAdminNotifications', uid, 'items', _d.id), data: _data });
       });
       if(!_items.length) return;
@@ -23561,7 +23626,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
         //     名下有幾筆就清幾筆），**不改任何英雄／至寶資料**。學生仍可從英雄圖鑑手動「不是我的」。
         //   要恢復舊彈窗：把 _LXPS_OVR_REVIEW_POPUP 改成 true。
         if(_it.data && _it.data.type === 'overRestoreReview' && !window._LXPS_OVR_REVIEW_POPUP){
-          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
           try{ await _lxpsNotifDeleteRetry(deleteDoc, _it.ref); console.info('[v5.303.0 歸屬確認退場] 已靜默消化舊通知', _it.id); }catch(_eDelR){ console.warn('[v5.303.0 歸屬確認退場] 雲端刪除失敗(本機旗標已寫·下次登入再刪)', _eDelR); }
           continue;
         }
@@ -23570,7 +23635,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
           try{ if(typeof window._showOverRestoreReviewModal === 'function') _revRes = await window._showOverRestoreReviewModal(uid, _it.data); }catch(_eRev){ console.warn('[過度補回自審] 視窗錯誤', _eRev); }
           // ★ v3.16.91 — 學生按「這不是我的帳號→切換帳號」:不消化此帳號 pending(正登出中),停止處理 → 下次正確學生登入此帳號時會再跳出審查。
           if(_revRes && _revRes.switched){ break; }
-          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
           try{ await _lxpsNotifDeleteRetry(deleteDoc, _it.ref); }catch(_eDel2){ console.warn('[過度補回自審 刪除失敗,已寫本地旗標]', _eDel2); }
           continue;
         }
@@ -23583,7 +23648,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
           try{ if(typeof window._showURSurplusReviewModal === 'function') _ursRes = await window._showURSurplusReviewModal(uid, _it.data); }catch(_eUrs){ console.warn('[UR 超額自審] 視窗錯誤', _eUrs); }
           if(_ursRes && _ursRes.switched){ break; }
           if(_ursRes && _ursRes.postponed){ continue; }
-          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
           try{ await _lxpsNotifDeleteRetry(deleteDoc, _it.ref); }catch(_eDel3){ console.warn('[UR 超額自審 刪除失敗,已寫本地旗標]', _eDel3); }
           continue;
         }
@@ -23600,7 +23665,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
           let _ascDone = false;
           try{ if(typeof window._fbAssetSelfCheckAnswered === 'function') _ascDone = await window._fbAssetSelfCheckAnswered(uid); }catch(_eAD){}
           if(_ascDone){
-            try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+            try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
             try{ await _lxpsNotifDeleteRetry(deleteDoc, _it.ref); }catch(_eD5){ console.warn('[召喚卷確認 已回答→消化] 刪除失敗，已寫本地旗標', _eD5); }
           }
           continue;
@@ -23610,7 +23675,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
           try{ if(typeof window._showAssetSelfCheckModal === 'function') _ascRes = await window._showAssetSelfCheckModal(uid, _it.data, { id: _it.id }); }catch(_eAsc){ console.warn('[召喚卷確認] 視窗錯誤', _eAsc); }
           if(_ascRes && _ascRes.switched){ break; }
           if(_ascRes && _ascRes.postponed){ continue; }
-          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
           try{ await _lxpsNotifDeleteRetry(deleteDoc, _it.ref); }catch(_eDel4){ console.warn('[召喚卷確認 刪除失敗,已寫本地旗標]', _eDel4); }
           continue;
         }
@@ -23640,7 +23705,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
         const _ackRes = await _showNotificationModal(_it.data, i + 1, _items.length);
         // ★ v3.14.0 — 勾「以後不再顯示」→ 先寫本地旗標(硬保證不再彈)
         if(_ackRes && _ackRes.dontShowAgain){
-          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
         }
         // ★ v3.14.0 修正(老師回報「GM 收回英雄通知按了我知道也關不掉」根因):
         //   原本用 updateDoc({read:true}) 標記已讀,但 Firestore 規則(pendingAdminNotifications)
@@ -23650,7 +23715,7 @@ window._advRecordBattleResult = function(battleId, type, payload){
           await _lxpsNotifDeleteRetry(deleteDoc, _it.ref);
         }catch(_eDel){
           console.warn('[管理員通知 刪除失敗,改寫本地旗標保險]', _eDel);
-          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){}
+          try{ localStorage.setItem('lxps_notif_hide_' + _it.id, String(Date.now())); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('nh_' + _it.id, Date.now()); }catch(_){}
         }
       }
     }catch(e){
@@ -25564,7 +25629,7 @@ async function advStartWinSequence() {
     const _tbar = document.getElementById('turn-bar');
     if(_tbar) _tbar.innerHTML = '';
     // 清除戰鬥log不讓它在畫面上殘留
-    const _logEl = document.getElementById('battle-log');
+    const _logEl = document.getElementById('log');   // ★ v5.305.0 舊版找 'battle-log'(全專案沒有這個元素)⇒ 從來沒清過
     if(_logEl) _logEl.innerHTML = '';
     // 清除暫停/結果 overlay
     ['battle-start-overlay','result-headline'].forEach(id=>{
@@ -26756,13 +26821,18 @@ window._clearAccountLocalData = function(reason){
       if(window._fbSignOut) await _withTimeout(window._fbSignOut(), 6000);
     } catch(e) { console.warn('[閒置自動登出] signOut 失敗', e); }
     try { window._gUserId = null; window._fbUser = null; window._lxpsLoggedInThisSession = false; } catch(_){}
+    try { if(typeof window._lxpsClearPwPassed === 'function') window._lxpsClearPwPassed(); } catch(_){}   // ★ v5.305.0 二次密碼通過標記一併清掉
     // 3) 更新提示文字
     try {
       if(_doneMsg) _doneMsg.innerHTML = '已存檔並登出 ✅<br>畫面 3 秒後會回到首頁，要玩請重新登入自己的帳號。';
     } catch(_){}
     // 4) 3 秒後強制重整(這樣才會回到「未登入的乾淨首頁」)— ⚠ 刻意裸 reload,不設放行旗標(v5.141.0 裁定)
+    //    ★ v5.305.0(老師裁定乙)— 學生帳號改為「一併登出 Google 再回到首頁」,避免下一位在 Google 選帳號免密碼進入
     setTimeout(function(){
-      try { window.location.reload(); } catch(_) {}
+      try {
+        if(typeof window._lxpsGoogleLogoutAndReturn === 'function') window._lxpsGoogleLogoutAndReturn();
+        else window.location.reload();
+      } catch(_) { try { window.location.reload(); } catch(__) {} }
     }, 3000);
   }
 
@@ -29519,7 +29589,13 @@ async function gameCloudSave() {
       try{ console.warn('[本地鏡像] 清理後仍寫入失敗,跳過本地鏡像,直接雲端同步(權威)', _eQuota2); }catch(_){}
     }
   }
+  /* ★ v5.305.0(2026-10-28・老師「深度檢查…重要遊玩記錄遺失」甲)— 雲端寫入「全部失敗」不再回報成功。
+     舊版不論 live/主檔寫入結果都 return true ⇒ 依賴回傳值的補救路徑(新英雄待上傳清單、斷線重連同步、
+     知識王召喚卷保存、本機暫存回寫雲端)全部以為已存好而停止重試;下次登入雲端讀得到時又不看本機備份 ⇒ 進度倒退。
+     現在:至少一個雲端槽寫入成功才回 true;全部失敗回 false,並排程自動補傳(15s→30s→60s→2m→4m→5m,成功即停)。 */
+  let _cloudOk = null;
   if(window._gUserId) {
+    _cloudOk = false;
     const _saveOps = [];
     if(window._fbSaveLive) _saveOps.push({ name: 'live',   p: window._fbSaveLive(window._gUserId, data) });
     if(window._fbSave)     _saveOps.push({ name: 'legacy', p: window._fbSave(window._gUserId, data) });
@@ -29528,6 +29604,7 @@ async function gameCloudSave() {
         const _results = await Promise.allSettled(_saveOps.map(o => o.p));
         const _ok = _results.filter(r => r.status === 'fulfilled' && r.value !== false).length;
         const _failed = _results.map((r, i) => r.status === 'rejected' ? _saveOps[i].name : null).filter(Boolean);
+        if(_ok > 0) _cloudOk = true;
         if(_ok > 0 && _failed.length === 0){
           /* ★ v3.16.56 — 移除「☁️ 雲端已同步」戰鬥 LOG 洗頻(存檔極頻繁·改僅 console) */
           try{ console.log('☁️ 雲端已同步'); }catch(_){}
@@ -29539,13 +29616,32 @@ async function gameCloudSave() {
         }
       } catch(e) { console.error('[雲端存檔失敗]', e); }
     }
+    try{
+      if(_cloudOk){
+        window._lxpsSaveRetryN = 0;
+        if(window._lxpsSaveRetryT){ clearTimeout(window._lxpsSaveRetryT); window._lxpsSaveRetryT = null; }
+      } else if(!window._lxpsSaveRetryT){
+        const _rn = window._lxpsSaveRetryN || 0;
+        const _RD = [15000, 30000, 60000, 120000, 240000, 300000];
+        if(_rn < _RD.length){
+          const _rUid = window._gUserId;
+          if(_rn === 0){ try{ if(typeof window._lxpsToast === 'function') window._lxpsToast('⚠ 網路忙碌,雲端存檔暫時沒成功。進度先存在這台平板,會自動補傳,請不要登出。', 'warn'); }catch(_){} }
+          window._lxpsSaveRetryT = setTimeout(function(){
+            window._lxpsSaveRetryT = null;
+            window._lxpsSaveRetryN = _rn + 1;
+            if(!window._gUserId || window._gUserId !== _rUid) return;   // 換帳號就不補(新帳號自己的存檔流程會接手)
+            try{ window._lxpsCloudSaveForceNext = true; Promise.resolve(gameCloudSave()).catch(function(){}); }catch(_){}
+          }, _RD[_rn]);
+        }
+      }
+    }catch(_eRetry){}
     // ★ v3.16.1 — 代表英雄快照保鮮(修正:好友邀請借用未套用最高等級+裝備至寶):
     //   representativeHero 原僅在「設定代表英雄」當下擷取一次快照,之後升級/換至寶/投資點/技能爆發升級
     //   都不會更新雲端快照(根因:_refreshMyRepHeroCloud 全程零呼叫點)→ 好友借用時拿到舊等級/沒至寶。
     //   修法:任何進度存檔後觸發刷新(內建 1.5s 防抖 + 只在有代表英雄時寫 + 重讀 live 等級/裝備至寶,安全)。
     try{ if(typeof window._refreshMyRepHeroCloud === 'function') window._refreshMyRepHeroCloud(); }catch(_){}
   }
-  return true;
+  return _cloudOk !== false;   // ★ v5.305.0 全部雲端寫入失敗 ⇒ false(未登入時沿用舊行為回 true)
 }
 
 // ★ v1.0.20260419.1930：_fbLoad 改為 throw on error，此處也需用 try/catch 區分
@@ -29671,10 +29767,15 @@ async function gameCloudLoad() {
     //        f. 學生按「我了解了」→ 寫入 lastSeenRescueTs 標記已消化
     //   注意:對比視窗是「告知性」的(不允許學生拒絕救援,因為老師救援是權威操作)
     //         但保留本地備份在 localStorage 30 天,出問題可以還原
+    // ★ v5.305.0(老師「重複跳出已經確認過的視窗」)— 救援/汙染檢查信號的「看過了」也比對雲端 _ack(舊版只看這台 iPad ⇒
+    //   被老師救援過的學生每換一台平板就再跳一次對比視窗,還順便清本機、暫停自動存檔 30 秒)
+    let _ackRS = null;
+    try{ if(data && (data._adminRescueSignal || data._adminPollutionCheckSignal) && typeof window._lxpsAckLoad === 'function') _ackRS = await window._lxpsAckLoad(); }catch(_){}
     try {
       const _signal = data._adminRescueSignal;
       const _localLastSeenKey = 'lxps_' + window._gUserId + '_lastSeenRescueTs';
-      const _localLastSeen = parseInt(localStorage.getItem(_localLastSeenKey) || '0', 10);
+      const _localLastSeen = Math.max(parseInt(localStorage.getItem(_localLastSeenKey) || '0', 10) || 0,
+                                      (_ackRS && typeof _ackRS.rescueSignalTs === 'number') ? _ackRS.rescueSignalTs : 0);
       if(_signal && _signal.ts && _signal.ts > _localLastSeen){
         console.warn('🆘 [救援信號 v3.5.40] 偵測到管理員救援標記', _signal,
           '本地上次見到=' + _localLastSeen + ' 雲端=' + _signal.ts);
@@ -29734,6 +29835,7 @@ async function gameCloudLoad() {
             if(!_pending){ return; }
             const _markSeen = function(){
               try { localStorage.setItem(_pending.lastSeenKey, String(_pending.signal.ts)); } catch(_){}
+              try { window._lxpsAckSet && window._lxpsAckSet('rescueSignalTs', _pending.signal.ts); } catch(_){}   // ★ v5.305.0 雲端也記
               try { delete window._pendingRescueCompareDialog; } catch(_){}
             };
             if(typeof window._showDataCompareDialog !== 'function'){
@@ -29785,7 +29887,8 @@ async function gameCloudLoad() {
     try {
       const _pSignal = data._adminPollutionCheckSignal;
       const _pSeenKey = 'lxps_' + window._gUserId + '_lastSeenPollutionCheckTs';
-      const _pSeenTs = parseInt(localStorage.getItem(_pSeenKey) || '0', 10);
+      const _pSeenTs = Math.max(parseInt(localStorage.getItem(_pSeenKey) || '0', 10) || 0,
+                                (_ackRS && typeof _ackRS.pollutionSignalTs === 'number') ? _ackRS.pollutionSignalTs : 0);   // ★ v5.305.0 雲端已看過
       if(_pSignal && _pSignal.ts && _pSignal.ts > _pSeenTs){
         console.warn('📢 [污染檢查信號 v3.5.72] 偵測到老師寄送的污染檢查提醒', _pSignal);
         // 不動本地、不暫停 autosave、不清殘留 — 跟 _adminRescueSignal 不一樣
@@ -29816,6 +29919,7 @@ async function gameCloudLoad() {
             // 標記已看過 + 24 小時內健康度守門不發 BUG report
             const _markSeenAndCooldown = function(){
               try{ localStorage.setItem(_pending.seenKey, String(_pending.signal.ts)); }catch(_){}
+              try{ window._lxpsAckSet && window._lxpsAckSet('pollutionSignalTs', _pending.signal.ts); }catch(_){}   // ★ v5.305.0 雲端也記
               try{
                 const _cdKey = 'lxps_' + window._gUserId + '_pollutionCheckHandledAt';
                 localStorage.setItem(_cdKey, String(Date.now()));
@@ -29848,7 +29952,9 @@ async function gameCloudLoad() {
                 '<b style="color:#ffcc99;">如果左邊「本地」才是你真正的進度</b>(雲端可能是別人的)→ 按「📵 保留本地」<br>' +
                 '<span style="color:#ff9999;">⚠ 不論選哪個,接下來 24 小時內這個提醒不會再跳出來,所以請好好想清楚再選</span></span>'
             }).then(function(_chooseRight){
-              _markSeenAndCooldown();
+              // ★ v5.305.0 — 「用雲端覆蓋」要真的寫成功才算處理完;寫入失敗(平板儲存空間滿等)不標已看過,
+              //   改跳紅色提示,下次登入會再問一次(舊版先標已看過再寫,失敗了學生也不知道、老師的提醒就此失效)。
+              if(!_chooseRight) _markSeenAndCooldown();
               if(_chooseRight){
                 // 學生選「用雲端覆蓋」→ 把雲端 data 寫回本地 progress,並標記繞過守門
                 console.warn('📢 [污染檢查 v3.5.72] 學生選擇用雲端覆蓋本地');
@@ -29858,6 +29964,7 @@ async function gameCloudLoad() {
                     'lxps_' + window._gUserId + '_progress',
                     JSON.stringify(_pending.cloudData)
                   );
+                  _markSeenAndCooldown();   // ★ v5.305.0 寫成功才標記
                   // 標記 _adminForceRestore,讓接下來 30 秒的 autosave 繞過守門(理論上不需要,但保險)
                   window._adminForceRestore = true;
                   setTimeout(function(){ window._adminForceRestore = false; }, 30 * 1000);
@@ -29879,6 +29986,17 @@ async function gameCloudLoad() {
                   setTimeout(function(){ try{ window._lxpsReloadKeepLogin(); }catch(_){ try{ location.reload(); }catch(__){} } }, 3000);   // ★ v5.141.0 — 自家重載設放行旗標
                 }catch(_eOverwrite){
                   console.error('📢 [污染檢查 v3.5.72] 覆蓋本地失敗', _eOverwrite);
+                  try{ delete window._pendingPollutionCheckDialog; }catch(_){}   // 這次不再重彈;沒標已看過 ⇒ 下次登入會再問
+                  try{
+                    const _te = document.createElement('div');
+                    _te.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:99999;' +
+                      'background:rgba(90,25,25,0.96);border:3px solid #ff7777;color:#ffdddd;' +
+                      'font-size:14px;padding:14px 22px;border-radius:12px;max-width:92vw;' +
+                      'box-shadow:0 8px 32px rgba(0,0,0,0.6);text-align:center;line-height:1.7;';
+                    _te.innerHTML = '⚠ <b>沒有覆蓋成功</b><br><span style="font-size:13px;">這台平板暫時存不進去,你的進度沒有被改動。<br>下次登入會再問你一次;如果一直失敗,請用「🐛 卡死或 BUG 回報」告訴老師。</span>';
+                    document.body.appendChild(_te);
+                    setTimeout(function(){ if(_te.parentNode) _te.remove(); }, 9000);
+                  }catch(_){}
                 }
               } else {
                 // 學生選「保留本地」→ 只記錄已看過,本地不動
@@ -29903,7 +30021,7 @@ async function gameCloudLoad() {
             // 標記已看過避免無限重彈
             try{
               const _p = window._pendingPollutionCheckDialog;
-              if(_p){ localStorage.setItem(_p.seenKey, String(_p.signal.ts)); delete window._pendingPollutionCheckDialog; }
+              if(_p){ localStorage.setItem(_p.seenKey, String(_p.signal.ts)); try{ window._lxpsAckSet && window._lxpsAckSet('pollutionSignalTs', _p.signal.ts); }catch(_){} delete window._pendingPollutionCheckDialog; }
             }catch(_){}
           }
         }, 2500);
@@ -34696,6 +34814,7 @@ function _startDeadlockWatchdog(){
     }
     return null;
   };
+  try{ window._lxpsLegitModalOpen = _isAnyLegitModalOpen; }catch(_){}   // ★ v5.305.0 給 game_battle.js 爆發看門狗共用同一份「玩家操作中視窗」清單
 
   const _check = () => {
     try{
@@ -35269,6 +35388,8 @@ function _showAdminReplyToast(items, totalCount){
       _closeBtn.onclick = function(ev){
         try{ ev.stopPropagation(); }catch(_){}
         try{ _wrap.remove(); }catch(_){}
+        // ★ v5.305.0(老師「重複跳出已經確認過的視窗」)— 按 × 也算已讀(舊版只移除小卡,60 秒輪詢一到又跳、下次登入也跳)
+        try{ if(typeof window._markPendingBugRepliesAsRead === 'function') window._markPendingBugRepliesAsRead(); }catch(_){}
       };
     }
     _wrap.onclick = function(){
@@ -36515,6 +36636,9 @@ window._deadlockRescueSkipTurn = function(){
       try{ window._advMiniResultShowing = false; }catch(_){}
       try{ if(typeof _advQuizResolveCb !== 'undefined') _advQuizResolveCb = null; }catch(_){}
       try{ window._advQuizBoss = null; }catch(_){}
+      // ★ v5.305.0 — 🆘 跳過也要清「爆發施放中」(舊版不清 ⇒ 之後我方攻擊必中、天賦/命星失效,還帶到下一場)
+      try{ if(window._burstWatch && window._burstWatch.h) window._burstWatch.h._burstForceFinished = true; }catch(_){}
+      try{ window._burstCastActive = false; window._burstWatch = null; }catch(_){}
       // ★ v3.6.0 — 卡死自救:清掉新回合答題狀態
       try{
         window._advRoundQuizPending = false;
@@ -39966,6 +40090,19 @@ function openSummonOverlay(){
   _syncSummonCrystalDisplay();
   // 顯示
   ov.style.display = 'block';
+  // ★ v5.305.0(老師「深度檢查…召喚中卡死」甲)— 召喚鈕自癒:按鈕只有結果卡的「確 認」能解鎖,
+  //   但結果卡可能被外部關掉(主線第二章商店教學按「我學會了」會 closeSummonOverlay ⇒ 結果卡被清掉),
+  //   之後召喚鈕永遠是灰的,只能重整。進召喚頁時:沒有結果卡、也不在召喚動畫期間 ⇒ 解鎖。
+  try{
+    const _b1 = document.getElementById('summon-1x-btn'), _b10 = document.getElementById('summon-10x-btn');
+    const _fxL = document.getElementById('summon-fx-layer');
+    const _fxEmpty = !_fxL || !_fxL.innerHTML || _fxL.style.display === 'none';
+    if(((_b1 && _b1.disabled) || (_b10 && _b10.disabled)) && _fxEmpty && Date.now() > (window._summonAnimUntil || 0)){
+      if(_b1){ _b1.disabled = false; _b1.style.opacity = '1'; }
+      if(_b10){ _b10.disabled = false; _b10.style.opacity = '1'; }
+      console.warn('[召喚 v5.305.0] 進入召喚頁時發現召喚鈕被鎖且沒有結果卡 ⇒ 已自動解鎖');
+    }
+  }catch(_eUnl){}
   // ★ v5.254.0 命座:「✨ 命星工坊」按鈕(隨命座開關;v5.274.0 起全員可見)
   try{ if(typeof window._cstEnsureSummonBtn === 'function') window._cstEnsureSummonBtn(); }catch(_eCstBtn){}
   // ★ v5.302.0 🌠 祈願(星形按鈕,召喚 1 次左邊)
@@ -39989,6 +40126,13 @@ function closeSummonOverlay(){
   // 清除任何特效層
   const fxLayer = document.getElementById('summon-fx-layer');
   if(fxLayer){ fxLayer.innerHTML = ''; fxLayer.style.display = 'none'; }
+  // ★ v5.305.0 結果卡還沒按確認就離開召喚頁 ⇒ 主線商店教學仍算「召喚完成」(否則教學卡在召喚步驟要再花水晶)
+  try{
+    if(window._summonTutPending){
+      window._summonTutPending = false;
+      if(typeof window._msShopTutNotify === 'function') window._msShopTutNotify('summon');
+    }
+  }catch(_msTutE6){}
   try{
     if(typeof _detectCurrentBgm === 'function'){
       const _newTarget = _detectCurrentBgm();
@@ -42440,7 +42584,9 @@ function doSummon(times){
   }catch(e){ console.error('[扣水晶]', e); }
   _syncSummonCrystalDisplay();
   // ★ v4.97.0 主線第二章商店實戰教學 — 召喚已成立通知(教學未啟動時為 no-op)
-  try{ if(typeof window._msShopTutNotify === 'function') window._msShopTutNotify('summon'); }catch(_msTutE4){}
+  //   ★ v5.305.0 改到 _dismissSummonResults(按結果卡「確 認」之後)才通知:舊版在動畫開始前就通知 ⇒
+  //   教學立刻跳「✅ 我學會了」蓋在結果卡上,學生一按就把召喚頁連同結果卡關掉 ⇒ 召喚鈕永久鎖住。
+  try{ window._summonTutPending = true; }catch(_msTutE4){}
 
   // ★ v1.0.20260501.4720 — 用了免費召喚就標記今日已用
   if(_isFreeSingleSummon){
@@ -42453,6 +42599,7 @@ function doSummon(times){
   if(btn10) btn10.disabled = true;
   if(btn1) btn1.style.opacity = '0.5';
   if(btn10) btn10.style.opacity = '0.5';
+  try{ window._summonAnimUntil = Date.now() + 20000; }catch(_){}   // ★ v5.305.0 動畫期間(最長約 20 秒)不自癒解鎖
 
   // ★ v1.0.20260501.4710 — 「連續召喚 10 次」優惠:消耗 10 顆水晶但實際抽 11 次(額外送 1 次免費!)
   //   times===10 → 抽 11 次,扣 10 顆;其他次數正常
@@ -42663,6 +42810,14 @@ function _dismissSummonResults(){
   const btn10 = document.getElementById('summon-10x-btn');
   if(btn1){ btn1.disabled = false; btn1.style.opacity = '1'; }
   if(btn10){ btn10.disabled = false; btn10.style.opacity = '1'; }
+  try{ window._summonAnimUntil = 0; }catch(_){}
+  // ★ v5.305.0 主線商店教學「召喚完成」通知移到這裡(學生看完結果按確認後才跳「我學會了」)
+  try{
+    if(window._summonTutPending){
+      window._summonTutPending = false;
+      if(typeof window._msShopTutNotify === 'function') window._msShopTutNotify('summon');
+    }
+  }catch(_msTutE5){}
   // 同步水晶顯示
   _syncSummonCrystalDisplay();
   // ★ v3.16.88 — 若此次結果視窗來自「召喚卷儀式」,關閉後自動重開召喚卷面板(沿用原連續使用體驗)
@@ -56071,13 +56226,18 @@ function _updateDownloadAuthUI(perm){
     //   - 延遲 1.5 秒讓使用者注意到按鈕亮起,再彈說明
     try{
       const _BENEFIT_KEY = 'lxps_install_benefits_shown';
-      if(!localStorage.getItem(_BENEFIT_KEY) && typeof window._showInstallBenefitsDialog === 'function'){
+      // ★ v5.305.0 — 雲端也記「看過了」(換平板不再跳);老師/領獎觸發的自動重整這次也不跳
+      const _benAck = (typeof window._lxpsAckGetSync === 'function') ? window._lxpsAckGetSync('installBenefits') : undefined;
+      const _benQuiet = (typeof window._lxpsQuietReload === 'function') && window._lxpsQuietReload();
+      if(!_benAck && !_benQuiet && !localStorage.getItem(_BENEFIT_KEY) && typeof window._showInstallBenefitsDialog === 'function'){
         setTimeout(function(){
           // 二次確認:此時按鈕仍可見 + 仍未顯示過,才彈
           if(localStorage.getItem(_BENEFIT_KEY)) return;
+          if(typeof window._lxpsAckGetSync === 'function' && window._lxpsAckGetSync('installBenefits')) return;
           if(document.getElementById('_install-benefits-dialog')) return;
           window._showInstallBenefitsDialog();
           try{ localStorage.setItem(_BENEFIT_KEY, String(Date.now())); }catch(_){}
+          try{ window._lxpsAckSet && window._lxpsAckSet('installBenefits', Date.now()); }catch(_){}
         }, 1500);
       }
     }catch(_){}
@@ -57579,6 +57739,9 @@ window._showRescueGuidePopup = function(force){
     // 已勾「不再顯示」→ 自動觸發時跳過(force=true 由按鈕主動開啟則無視)
     if(!force){
       try{ if(localStorage.getItem(window._RESCUE_GUIDE_DISMISS_KEY())) return; }catch(_){}
+      // ★ v5.305.0(老師裁定:按「我知道了」就算看過、記在雲端)— 換平板也不再自動跳;自動重整後也不跳
+      try{ if(window._lxpsAckGetSync && window._lxpsAckGetSync('rescueGuideSeen')) return; }catch(_){}
+      try{ if(window._lxpsQuietReload && window._lxpsQuietReload()) return; }catch(_){}
       // 有更高優先的「續戰提示」或「課堂練習營」或「風格選擇」開著時不疊加(晚點再說明)
       if(document.getElementById('adv-wb-crash-notice') || document.getElementById('adv-crash-recovery-box') || document.getElementById('_camp-overlay') || document.getElementById('_member-profile-modal') || document.getElementById('_member-hub-modal') || (document.getElementById('style-onboarding-modal') && document.getElementById('style-onboarding-modal').style.display !== 'none')) return;
     }
@@ -57652,12 +57815,10 @@ window._showRescueGuidePopup = function(force){
     document.body.appendChild(_ov);
 
     const _close = function(){
-      try{
-        const _cb = document.getElementById('_rg-dontshow');
-        if(_cb && _cb.checked){
-          try{ localStorage.setItem(window._RESCUE_GUIDE_DISMISS_KEY(), String(Date.now())); }catch(_){}
-        }
-      }catch(_){}
+      // ★ v5.305.0(老師裁定)— 不論有沒有勾「以後不要再顯示」,關掉就算看過:本機＋雲端都記(換平板也不會再自動跳;
+      //   之後要看隨時可從「📨帳號與指引」選單主動打開)
+      try{ localStorage.setItem(window._RESCUE_GUIDE_DISMISS_KEY(), String(Date.now())); }catch(_){}
+      try{ window._lxpsAckSet && window._lxpsAckSet('rescueGuideSeen', Date.now()); }catch(_){}
       try{ playSfx('sfx-confirm', 0.5); }catch(_){}
       _ov.remove();
     };
@@ -57939,7 +58100,9 @@ window._maybeShowApologyNotice = function(){
     var _key = 'lxps_apology_20260625_' + _uid;
     var _done = false;
     try{ _done = !!localStorage.getItem(_key); }catch(_){}
+    try{ if(!_done && typeof window._lxpsAckGetSync === 'function' && window._lxpsAckGetSync('apology0625')) _done = true; }catch(_){}   // ★ v5.305.0 雲端已看過
     if(_done) return;
+    try{ if(typeof window._lxpsQuietReload === 'function' && window._lxpsQuietReload()) return; }catch(_){}   // ★ v5.305.0 自動重整後不重播
     if(window._auditReloadPending) return;   // ★ v3.16.19 — 回收已觸發 piece3 乾淨重載 → 等重載後再彈(列出回收清單),避免重載前先閃一下
     try{
       if(document.getElementById('_apology-modal') || document.getElementById('_audit-ov')
@@ -58004,7 +58167,7 @@ window._showApologyNotice = function(){
       + '</div>';
     document.body.appendChild(ov);
     var _btn = ov.querySelector('#_apology-ok');
-    if(_btn) _btn.onclick = function(){ try{ localStorage.setItem(_key, '1'); }catch(_){} try{ ov.remove(); }catch(_){} };
+    if(_btn) _btn.onclick = function(){ try{ localStorage.setItem(_key, '1'); }catch(_){} try{ window._lxpsAckSet && window._lxpsAckSet('apology0625', Date.now()); }catch(_){} try{ ov.remove(); }catch(_){} };
   }catch(_e){ try{ console.warn('[道歉公告] 顯示例外', _e); }catch(_){} }
 };
 
@@ -58342,6 +58505,12 @@ window._openMemberProfileForm = async function(mode){
   // 讀現有資料(編輯預填 + 判斷是否已領獎)
   let _state = null;
   try{ _state = await window._fbGetMemberProfile(window._gUserId); }catch(_){}
+  // ★ v5.305.0 — 讀不到雲端(網路壅塞)⇒ 不開空白表單:首登這次先不跳(下次登入再判斷);編輯則提示稍後再試。
+  //   舊版讀失敗當成「沒填過」⇒ 已填過的學生看到空白表單、還被當成首次建立。
+  if(!_state || _state.error){
+    if(!_isFirst && typeof _showSimpleToast === 'function') _showSimpleToast('⚠️ 暫時讀不到雲端的會員資料,請過一下再按一次', 'warn');
+    return;
+  }
   const _p = (_state && _state.profile) ? _state.profile : {};
   const _alreadyRewarded = !!(_state && _state.rewarded);
   const _willReward = !_alreadyRewarded;   // 未領過才發(編輯既有資料通常已領→不再發)
@@ -58554,34 +58723,57 @@ window._memberProfileSubmit = async function(_modal, _btn, mode, _alreadyRewarde
   _setMsg('#ffd98a', '⏳ 正在儲存…');
 
   var _recoverOnly = false;
+  var _rewardDeferred = false;
   try{
-    // ★ v5.212.0 ① 等遊戲進度載入完(載入前發的獎勵會被雲端進度蓋掉)
-    if(_willReward && !window._progressLoaded){
-      _setMsg('#ffd98a', '⏳ 遊戲資料還在載入,載完會自動幫你送出…(不用重按)');
-      if(!(await window._memberWaitProgressLoaded(30000))){ var _eNl = new Error('遊戲資料尚未載入完成'); _eNl.code = 'lxps/not-loaded'; throw _eNl; }
-      _setMsg('#ffd98a', '⏳ 正在儲存…');
-    }
+    // ★ v5.305.0(老師「無法正常輸入和儲存送出的玩家個人資料」)— 資料本身不再等遊戲進度載入:
+    //   舊版「遊戲還在載入」會先卡 30 秒、逾時就整筆不送 ⇒ 學生以為送不出去。
+    //   現在:先把資料存上雲端;只有「發獎」才等載入完成(載入前發的獎勵會被雲端進度蓋掉)。
     // ★ v5.212.0 ② 送出前重讀雲端:上次「逾時」其實可能已經寫進去了
     var _mkS = null; try{ _mkS = localStorage.getItem(window._memberRewardMarkKey(window._gUserId)); }catch(_){}
+    var _rewardUnknown = false;
     if(_willReward){
       var _fresh = null; try{ _fresh = await window._fbGetMemberProfile(window._gUserId); }catch(_){}
-      if(_fresh && _fresh.rewarded){ _willReward = false; _recoverOnly = !!_mkS; }
+      if(!_fresh || _fresh.error){
+        // ★ v5.305.0 讀不到雲端 ⇒ 不確定領過沒:資料照存(不帶獎勵旗標),獎勵交給「本機暫存→下次登入/連線恢復自動補」判斷,絕不重複發
+        _rewardUnknown = true; _willReward = false;
+      } else if(_fresh.rewarded){ _willReward = false; _recoverOnly = !!_mkS; }
     }
     if(_willReward){ try{ localStorage.setItem(window._memberRewardMarkKey(window._gUserId), 'w'); }catch(_){} }
     // 旗標先寫雲端(at-most-once):willReward=true 時一併設 memberProfileRewarded
-    // ★ v5.126.0 — 加逾時保護;★ v5.212.0 內部已有 SDK→REST→小文件三段備援,總逾時放寬到 45 秒
-    await window._lxpsFbAwait(window._fbSaveMemberProfile(window._gUserId, _profile, _willReward), '會員資料·儲存', 45000);
-
-    // 本地一次性發獎(僅未領過;或上次旗標已上雲但沒發到的補發)
-    if(_willReward || _recoverOnly){
-      window._memberRewardGrantLocal(window._gUserId, _recoverOnly ? 'member_profile_recover' : 'member_profile_create');
-    }
+    // ★ v5.126.0 — 加逾時保護;★ v5.212.0 內部已有 SDK→REST→小文件三段備援;★ v5.305.0 總逾時 45→75 秒(三段備援最長要 60 多秒)
+    await window._lxpsFbAwait(window._fbSaveMemberProfile(window._gUserId, _profile, _willReward), '會員資料·儲存', 75000);
 
     if(_modal) _modal.remove();
     try{ localStorage.removeItem(window._memberProfilePendingKey(window._gUserId)); }catch(_){}
+    if(_rewardUnknown){
+      // 留一份「要領獎」的暫存:下次讀得到雲端時,若真的還沒領才補發
+      try{ window._memberProfileStash(window._gUserId, _profile, true); }catch(_){}
+      setTimeout(function(){ try{ window._memberProfileRetryPending('reward-check'); }catch(_){} }, 20000);
+    }
+
+    // 本地一次性發獎(僅未領過;或上次旗標已上雲但沒發到的補發)— 要等遊戲進度載入完
     if(_willReward || _recoverOnly){
+      if(window._progressLoaded || (await window._memberWaitProgressLoaded(30000))){
+        window._memberRewardGrantLocal(window._gUserId, _recoverOnly ? 'member_profile_recover' : 'member_profile_create');
+      } else {
+        // 'w' 記號留著 ⇒ _memberProfileRetryPending ① 會在載入完成後補發(同一台、只發一次)
+        _rewardDeferred = true;
+        var _rdTry = 0;
+        var _rdLoop = function(){ _rdTry++; try{ Promise.resolve(window._memberProfileRetryPending('reward-after-load')).then(function(){
+          var _left = null; try{ _left = localStorage.getItem(window._memberRewardMarkKey(window._gUserId)); }catch(_){}
+          if(_left && _rdTry < 6) setTimeout(_rdLoop, 30000);
+        }); }catch(_){} };
+        setTimeout(_rdLoop, 15000);
+      }
+    }
+
+    if(_rewardDeferred){
+      if(typeof _showSimpleToast === 'function') _showSimpleToast('✅ 會員資料已存好!遊戲載入完成後會自動發放獎勵 🔮×10 + 💰20,000 + 🌈SSR券×1', 'ok');
+    } else if(_willReward || _recoverOnly){
       if(typeof _showSimpleToast === 'function') _showSimpleToast('🎉 會員資料建立完成!已發放 🔮×10 + 💰20,000 + 🌈SSR券×1', 'ok');
       else alert('會員資料建立完成,獎勵已發放!');
+    } else if(_rewardUnknown){
+      if(typeof _showSimpleToast === 'function') _showSimpleToast('✅ 會員資料已存好!獎勵確認中,稍後會自動發放', 'ok');
     } else {
       if(typeof _showSimpleToast === 'function') _showSimpleToast('✅ 會員資料已更新', 'ok');
     }
@@ -58592,7 +58784,7 @@ window._memberProfileSubmit = async function(_modal, _btn, mode, _alreadyRewarde
     const _ec = String((e && e.code) || '');
     // ★ v5.147.0(老師回報)— 不管什麼原因失敗,先把表單存在本機(綁 uid),之後登入/連線恢復自動補送;學生不用重填、不會白填
     var _stashed = false;
-    if(_ec !== 'lxps/uid-mismatch'){ try{ window._memberProfileStash(window._gUserId, _profile, _willReward); _stashed = true; }catch(_){} }
+    if(_ec !== 'lxps/uid-mismatch'){ try{ window._memberProfileStash(window._gUserId, _profile, _willReward || _rewardUnknown); _stashed = true; }catch(_){} }
     var _tail = _stashed ? '\n📦 你填的資料已先存在這台裝置,下次登入或網路恢復會自動幫你送出,不用重填。' : '';
     if(_ec === 'lxps/not-loaded'){
       _setMsg('#ffcc66', '⚠ 遊戲資料載入太久了,這次先不送出。請等畫面上的關卡都出現後,再按一次(你填的資料還在)' + _tail);
@@ -58623,6 +58815,7 @@ window._maybeShowMemberProfileFirstLogin = async function(){
        (document.getElementById('style-onboarding-modal') && document.getElementById('style-onboarding-modal').style.display !== 'none')) return;
     let _st = null;
     try{ _st = await window._fbGetMemberProfile(window._gUserId); }catch(_){}
+    if(!_st || _st.error) return;     // ★ v5.305.0 讀不到雲端 ≠ 沒填過 ⇒ 這次不彈(下次登入再判斷)
     if(_st && _st.complete) return;   // 已建立 → 不再彈
     // ★ v5.147.0 本機有暫存(上次沒送成功)⇒ 不再要學生重填,交給自動補送
     try{ if(localStorage.getItem(window._memberProfilePendingKey(window._gUserId))){ window._memberProfileRetryPending('first-login'); return; } }catch(_){}
@@ -71868,7 +72061,11 @@ window._petT1Blocked = function(){
       'login-gate-modal','_member-profile-modal','_member-hub-modal','_rescue-guide-modal','_audit-ov'];
     for(var i=0;i<ids.length;i++){
       var el = document.getElementById(ids[i]);
-      if(el && el.offsetParent !== null && el.style.display !== 'none') return true;
+      if(!el) continue;
+      // ★ v5.305.0 — 同考試挑戰守門:fixed 視窗的 offsetParent 永遠是 null,舊判斷擋不住 ⇒ 教學會蓋在會員資料表單上
+      var _vis = false;
+      try{ var _cs = getComputedStyle(el); _vis = _cs.display !== 'none' && _cs.visibility !== 'hidden' && el.getClientRects().length > 0; }catch(_){ _vis = el.style.display !== 'none'; }
+      if(_vis) return true;
     }
   }catch(_){}
   return false;
@@ -78920,7 +79117,11 @@ function _sessionForceLogout(){
   try{ sessionStorage.setItem('lxps_just_logged_out', String(Date.now())); }catch(_){}
   if(window._fbSignOut){
     Promise.resolve(window._fbSignOut()).catch(function(e){ console.warn('[被踢下線登出] 失敗(仍重載)', e); })
-      .then(function(){ setTimeout(function(){ try{ window.location.reload(); }catch(_){} }, 1500); });
+      .then(function(){ setTimeout(function(){
+        // ★ v5.305.0(老師裁定乙)— 一併登出 Google 再回首頁
+        try{ if(typeof window._lxpsGoogleLogoutAndReturn === 'function') window._lxpsGoogleLogoutAndReturn(); else window.location.reload(); }
+        catch(_){ try{ window.location.reload(); }catch(__){} }
+      }, 1500); });
   } else {
     setTimeout(function(){ try{ window.location.reload(); }catch(_){} }, 1500);
   }
@@ -79598,6 +79799,7 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
 // 已看過的公告 ID(localStorage,跨 session 不重複觸發)
 function _gmBroadcastSeen(id){
   if(!id) return false;
+  try{ if(window._lxpsAckGetSync && window._lxpsAckGetSync('gmBc_' + id)) return true; }catch(_){}   // ★ v5.305.0 雲端已看過(換平板不再跳)
   try{
     const list = JSON.parse(localStorage.getItem('lxps_gm_seen') || '[]');
     return Array.isArray(list) && list.includes(id);
@@ -79615,11 +79817,16 @@ function _gmBroadcastMarkSeen(id){
       localStorage.setItem('lxps_gm_seen', JSON.stringify(list));
     }
   }catch(_){}
+  try{ if(window._gUserId && window._lxpsAckSet) window._lxpsAckSet('gmBc_' + id, Date.now()); }catch(_){}   // ★ v5.305.0
 }
 
 // 顯示 GM 公告(依 type 分流)
 window._showGmBroadcast = function(b){
   if(!b || !b.id) return;
+  // ★ v5.305.0(老師「重複跳出已經確認過的視窗」)— 未登入不顯示也不記「看過」:舊版開頁 3 秒就監聽,未登入時彈過一次並把
+  //   「看過」記在未登入專用區(@@nouid),登入後讀不到 ⇒ 同一則公告再彈;之後 stats/global 任何欄位變動又再彈。
+  //   登入後(_gUserId 有值、看過了雲端記錄已讀進來)stats/global 的下一次變動就會正常顯示一次。
+  if(!window._gUserId) return;
   if(_gmBroadcastSeen(b.id)) return;
   // 過濾太舊的公告(超過 24 小時的不顯示,避免新登入時收到歷史公告)
   if(b.timestamp && (Date.now() - b.timestamp) > 24 * 60 * 60 * 1000){
@@ -79972,7 +80179,13 @@ async function _showLogoutPin(){
     // ★ v5.137.0 — 告訴 reload 後的 onAuth「這是登出造成的重載」,本次一律不吃裝置信任放行。
     //   沒有這一行,信任裝置上按登出會被信任機制當場又登回原帳號 ⇒ 登出等於沒用。
     try{ sessionStorage.setItem('lxps_just_logged_out', String(Date.now())); }catch(_){}
-    setTimeout(function(){ try{ window.location.reload(); }catch(_){} }, 1500);   // ★ v5.136.0 留 1.5 秒讓「已登出」提示看得到
+    // ★ v5.305.0(老師裁定乙)— 學生帳號登出時一併登出 Google 再回到首頁(老師帳號/雲端開關關閉時照舊只重新整理)
+    setTimeout(function(){
+      try{
+        if(typeof window._lxpsGoogleLogoutAndReturn === 'function') window._lxpsGoogleLogoutAndReturn();
+        else window.location.reload();
+      }catch(_){ try{ window.location.reload(); }catch(__){} }
+    }, 1500);   // ★ v5.136.0 留 1.5 秒讓「已登出」提示看得到
   };
 }
 

@@ -664,6 +664,98 @@
     return await _doSignInFlow(provider);
   };
 
+  /* ════════════════════════════════════════════════════════════════════
+   * ★ v5.305.0(2026-10-28・老師「重複跳出已經確認過的視窗」甲)— 「看過了」雲端記錄 players/{uid}._ack
+   *   舊版各種登入提醒的「已看過」多半只記在這台 iPad 的 localStorage(換平板就重來),或根本沒記。
+   *   _ack 是學生自己主檔上的一個小 map(本人可寫,不需改規則;_buildSafeData 不含它 ⇒ 一般存檔不會蓋掉)。
+   *   _lxpsAckLoad():登入後讀一次並快取(換帳號自動失效);_lxpsAckGetSync(k):同步讀快取;_lxpsAckSet(k,v):記憶體立即生效＋雲端 merge 寫入。
+   *   _lxpsQuietReload():3 分鐘內是「老師/領獎觸發的自動重整」⇒ 純提醒類視窗這次不再跳。
+   * ════════════════════════════════════════════════════════════════════ */
+  window._lxpsAckMap = null; window._lxpsAckUid = null; window._lxpsAckLoadedUid = null;
+  window._lxpsAckLoad = async function(force){
+    const _u = window._gUserId;
+    if(!_u || !_fbDb) return {};
+    if(!force && window._lxpsAckLoadedUid === _u && window._lxpsAckUid === _u && window._lxpsAckMap) return window._lxpsAckMap;
+    try{
+      const _s = await Promise.race([ getDoc(doc(_fbDb, 'players', _u)), new Promise(function(_r, rj){ setTimeout(function(){ rj(new Error('ack_timeout')); }, 6000); }) ]);
+      const _d = _s.exists() ? (_s.data() || {}) : {};
+      const _a = (_d._ack && typeof _d._ack === 'object') ? _d._ack : {};
+      if(window._gUserId === _u){
+        const _prev = (window._lxpsAckUid === _u && window._lxpsAckMap) ? window._lxpsAckMap : {};
+        window._lxpsAckMap = Object.assign({}, _a, _prev);   // 本頁剛記的優先(雲端可能還沒寫到)
+        window._lxpsAckUid = _u;
+        window._lxpsAckLoadedUid = _u;   // 真的從雲端讀過(只有 _lxpsAckSet 先建的空表不算)
+      }
+      return window._lxpsAckMap || _a;
+    }catch(e){
+      return (window._lxpsAckUid === _u && window._lxpsAckMap) ? window._lxpsAckMap : null;   // null = 讀不到(呼叫端要當「不確定」)
+    }
+  };
+  window._lxpsAckGetSync = function(k){
+    return (window._lxpsAckUid && window._lxpsAckUid === window._gUserId && window._lxpsAckMap) ? window._lxpsAckMap[k] : undefined;
+  };
+  window._lxpsAckSet = function(k, v){
+    const _u = window._gUserId;
+    if(!_u || !_fbDb || !k) return;
+    if(window._lxpsAckUid !== _u || !window._lxpsAckMap){ window._lxpsAckMap = {}; window._lxpsAckUid = _u; }
+    window._lxpsAckMap[k] = v;
+    try{ setDoc(doc(_fbDb, 'players', _u), { _ack: { [k]: v } }, { merge: true }).catch(function(e){ console.warn('[看過了雲端記錄] 寫入失敗 ' + k, e); }); }catch(_){}
+  };
+  window._lxpsQuietReload = function(){
+    try{ const _t = parseInt(sessionStorage.getItem('lxps_quiet_reload') || '0', 10); return !!(_t && (Date.now() - _t) < 180000); }catch(_){ return false; }
+  };
+
+  /* ════════════════════════════════════════════════════════════════════
+   * ★ v5.305.0(2026-10-28・老師裁定「乙:登出時一併登出 Google」)
+   * ────────────────────────────────────────────────────────────────────
+   *   根因:遊戲登出只清得掉 Firebase 的登入,Safari 仍記得上一位學生的 Google 帳號;
+   *   下一位在 Google 帳號選擇器點那個帳號 ⇒ 不用密碼就進去了(違反 2026-10-12「不可免密碼登入」裁定)。
+   *   做法:手動登出、閒置自動登出在「存檔 → Firebase 登出」之後,整頁導向 Google 登出頁,
+   *        再經 appengine 登出頁轉回遊戲首頁(Google 只允許轉回 google 網域,appengine 那一跳負責轉回本站)。
+   *   ・老師帳號(三個管理員信箱)不登出 Google(老師電腦上的 Gmail/雲端硬碟不會被一起登出)。
+   *   ・緊急關閉:Firestore gameConfig/googleLogout = { enabled:false } ⇒ 回到舊行為(只重新整理),
+   *     不用改程式。登出前讀一次(1.5 秒逾時,讀不到就照預設「要登出 Google」)。
+   *   ・「➕ 加入其他帳號」也會呼叫 _fbSignOut,但不會導向(導向只在登出流程最後由呼叫端執行)。
+   * ════════════════════════════════════════════════════════════════════ */
+  const _LXPS_GLOGOUT_ADMIN = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
+  window._lxpsGoogleLogoutPrefetch = async function(){
+    try{
+      const _em = String((_fbAuth && _fbAuth.currentUser && _fbAuth.currentUser.email) || (window._fbUser && window._fbUser.email) || '').toLowerCase();
+      window._lxpsGLogoutWho = _em;
+      if(!_em || _LXPS_GLOGOUT_ADMIN.indexOf(_em) >= 0){ window._lxpsGLogoutOn = false; return; }
+      window._lxpsGLogoutOn = true;
+      const _snap = await Promise.race([
+        getDoc(doc(_fbDb, 'gameConfig', 'googleLogout')),
+        new Promise(function(r){ setTimeout(function(){ r(null); }, 1500); })
+      ]);
+      if(_snap && _snap.exists && _snap.exists() && (_snap.data() || {}).enabled === false) window._lxpsGLogoutOn = false;
+    }catch(_){ /* 讀不到 ⇒ 維持預設(學生帳號要登出 Google) */ }
+  };
+  // 在登出流程最後呼叫:要登出 Google ⇒ 整頁導向;否則照舊重新整理。
+  window._lxpsGoogleLogoutAndReturn = function(){
+    try{
+      if(window._lxpsGLogoutOn === true){
+        const _back = window.location.origin + window.location.pathname;
+        const _url = 'https://accounts.google.com/Logout?continue=' +
+          encodeURIComponent('https://appengine.google.com/_ah/logout?continue=' + encodeURIComponent(_back));
+        try{ sessionStorage.setItem('lxps_glogout_ts', String(Date.now())); }catch(_){}
+        window.location.assign(_url);
+        return;
+      }
+    }catch(_){}
+    try{ window.location.reload(); }catch(_){}
+  };
+  window._lxpsClearPwPassed = function(){
+    try{
+      const _ks = [];
+      for(let i = 0; i < sessionStorage.length; i++){
+        const k = sessionStorage.key(i);
+        if(k && k.indexOf('lxps_pw_passed_') === 0) _ks.push(k);
+      }
+      _ks.forEach(function(k){ try{ sessionStorage.removeItem(k); }catch(_){} });
+    }catch(_){}
+  };
+
   window._fbSignOut = async function() {
     // ★ v3.5.65(2026-05-23) — 登出前 flush 小博士本地累計到雲端(老師需求:三層保險之一)
     try{
@@ -673,6 +765,12 @@
     }catch(_e){ console.warn('[登出 flush 小博士] 失敗(不阻擋登出)', _e); }
     // ★ v3.10.1(2026-05-26) — 清掉「本次主動登入」runtime 旗標,確保下次完全重新登入
     try { window._lxpsActiveSignInThisPageload = false; } catch(_){}
+    // ★ v5.305.0 — 登出前先決定之後要不要「一併登出 Google」(要讀雲端開關,登出後就讀不到了)
+    try { await window._lxpsGoogleLogoutPrefetch(); } catch(_){}
+    // ★ v5.305.0(老師「深度檢查…誤登別人帳號」甲)— 清掉所有「二次密碼已通過」標記。
+    //   舊版只有「這不是我的帳號」鈕會清;閒置登出/手動登出後同一個分頁重整,sessionStorage 還留著 ⇒
+    //   下一位用 Google 選帳號進入上一位帳號時,二次密碼直接被跳過。
+    try { window._lxpsClearPwPassed(); } catch(_){}
     // ════════════════════════════════════════════════════════════════════
     // ★ v3.11.4(2026-05-27) — iPad 共用平板登出強化(BUG #8)
     //   老師回報:有同學在 iPad 上「無法登出別人帳號」— 點登出按鈕沒效果,
@@ -972,6 +1070,7 @@
       // ★ v3.16.24 — 雙重打破無限重載迴圈:① 持久化「已處理 restoreAt」到 localStorage(綁 @@uid·跨重載/關閉皆存);② 分頁斷路器計數(綁 uid)。
       //   兩者都「先落地」:即使下面延後到打完戰鬥才重載,基線/計數也已寫入,迴圈保護語意不變。
       try{ localStorage.setItem('_lxpsAuthRestoreSeen', String(ts)); }catch(_ePersist){}
+      try{ sessionStorage.setItem('lxps_quiet_reload', String(Date.now())); }catch(_eQr){}   // ★ v5.305.0 這次自動重整後,純提醒類視窗不再重播
       try{ var _ck='_lxpsAuthReloadCnt_'+(window._gUserId||'nouid'); var _cc=(parseInt(sessionStorage.getItem(_ck)||'0',10)||0)+1; sessionStorage.setItem(_ck,String(_cc)); }catch(_eCnt){}
       // ★ v3.16.82 — 戰鬥中不硬重載(老師需求:學生練到一半的進度別被「老師更新資料」中斷而回溯)。
       //   比照既有「即時版本更新」延後機制(_isInBattleNow + _flushPendingUpdateIfAny):戰鬥中先提示「打完回關卡選擇自動套用」,
@@ -1036,6 +1135,7 @@
         if(_gc && typeof _gc.at === 'number' && _gc.at > 0 && _gc.msg){
           var _gseen = window._gmChatSeenAt || 0;
           try{ var _gp = parseInt(localStorage.getItem('_lxpsGmChatSeen') || '0', 10); if(!isNaN(_gp) && _gp > _gseen) _gseen = _gp; }catch(_eGS){}
+          try{ var _gca = (d._ack && typeof d._ack.gmChatSeenAt === 'number') ? d._ack.gmChatSeenAt : 0; if(_gca > _gseen) _gseen = _gca; }catch(_eGA){}   // ★ v5.305.0 雲端已讀(換平板不再重彈舊訊息)
           if(_gc.at > _gseen && typeof window._gmChatIncoming === 'function'){
             window._gmChatIncoming(_gc);
           }
@@ -4889,7 +4989,13 @@
         inSubOnly: !!(sub && sub.memberProfileComplete && !d.memberProfileComplete),
         subData: sub
       };
-    }catch(e){ console.warn('[會員資料] 讀取失敗', e); return null; }
+    }catch(e){
+      console.warn('[會員資料] 讀取失敗', e);
+      // ★ v5.305.0(老師「無法正常輸入和儲存送出的玩家個人資料」)— 讀不到 ≠ 沒填過。
+      //   舊版讀失敗回 null,呼叫端一律當「還沒建立」⇒ 已填過的學生被當新玩家又跳首登表單、編輯畫面是空的、
+      //   自動重送還會當「沒領過獎」再發一次。改回傳 error:true,呼叫端遇到就「這次先不判斷」。
+      return { error: true, complete: false, rewarded: false, updatedAt: 0, profile: null, inSubOnly: false, subData: null };
+    }
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -5069,7 +5175,7 @@
         // ★ v5.147.0 仍被拒 ⇒ 把完整診斷丟到 console(規則版本/是否有 email_verified/doc 是否存在)供老師回報
         try{
           var _ex = 'unknown';
-          try{ var _snapP = await getDoc(doc(_fbDb, 'players', uid)); _ex = _snapP.exists() ? 'exists' : 'missing'; }catch(_eG){ _ex = 'read-denied:' + String(_eG && _eG.code); }
+          try{ var _snapP = await window._lxpsFbAwait(getDoc(doc(_fbDb, 'players', uid)), '會員資料·診斷讀取', 5000); _ex = _snapP.exists() ? 'exists' : 'missing'; }   /* ★ v5.305.0 診斷讀取也限 5 秒,別拖住整個送出 */catch(_eG){ _ex = 'read-denied:' + String(_eG && _eG.code); }
           console.error('[會員資料] ✗ 刷新憑證後仍被拒 code=' + String(_e2 && (_e2.code || _e2.message))
             + ' | uid=' + String(uid) + ' | email=' + String(_curUser && _curUser.email) + ' | verified=' + String(_curUser && _curUser.emailVerified)
             + ' | provider=' + String(_curUser && _curUser.providerData && _curUser.providerData.length && _curUser.providerData[0].providerId)
@@ -5092,6 +5198,10 @@
   //         就代表上次旗標寫進去了但獎勵沒發到 ⇒ 補發一次(記號綁這台裝置,不會跨裝置重複)。
   window._memberRewardMarkKey = function(uid){ return 'lxps_member_reward_w_' + String(uid || ''); };
   window._memberRewardGrantLocal = function(uid, source){
+    // ★ v5.305.0 — 同一頁面同一帳號只發一次(送出、登入自動補送、連線恢復補送可能同時跑到這裡)
+    window._mpGrantedThisPage = window._mpGrantedThisPage || {};
+    if(window._mpGrantedThisPage[uid]){ try{ localStorage.removeItem(window._memberRewardMarkKey(uid)); }catch(_){} console.warn('[會員資料發獎] 本頁已發過,略過重複呼叫(' + source + ')'); return; }
+    window._mpGrantedThisPage[uid] = Date.now();
     try{
       if(typeof backpackAdd === 'function'){ backpackAdd('summon_crystal', 10, '建立會員資料'); backpackAdd('summon_ticket_ssr', 1); }
       if(typeof addKnowledgeCoins === 'function'){ addKnowledgeCoins(20000, '收入:建立會員資料'); }
@@ -5127,6 +5237,7 @@
       var _hasSub0 = false; try{ _hasSub0 = !!localStorage.getItem('lxps_member_profile_sub_' + _uid); }catch(_){}
       if(_mk0 || _hasSub0){
         var _st0 = null; try{ _st0 = await window._fbGetMemberProfile(_uid); }catch(_){}
+        if(!_st0 || _st0.error) return false;   // ★ v5.305.0 讀不到雲端 ⇒ 這次什麼都不做(暫存/記號都留著,下次再試)
         if(_st0 && _st0.rewarded && _mk0){
           if(await window._memberWaitProgressLoaded(30000)){
             window._memberRewardGrantLocal(_uid, 'member_profile_recover');
@@ -5152,12 +5263,13 @@
       if(!_p || !_p.profile){ try{ localStorage.removeItem(window._memberProfilePendingKey(_uid)); }catch(_){} return false; }
       // 已在雲端建立過就不再重送(避免覆蓋更新的資料)
       var _st = null; try{ _st = await window._fbGetMemberProfile(_uid); }catch(_){}
-      if(_st && _st.complete && _st.updatedAt && _st.updatedAt >= (_p.profile.updatedAt || 0)){ try{ localStorage.removeItem(window._memberProfilePendingKey(_uid)); }catch(_){} return false; }
+      if(!_st || _st.error) return false;   // ★ v5.305.0 讀不到雲端 ⇒ 不重送、絕不在不確定下發獎(暫存留著下次再試)
+      if(_st && _st.complete && _st.updatedAt && _st.updatedAt >= (_p.profile.updatedAt || 0) && !(_p.grantReward && !_st.rewarded)){   /* ★ v5.305.0 資料到了但獎勵旗標還沒 ⇒ 仍要重送一次把獎勵補上 */ try{ localStorage.removeItem(window._memberProfilePendingKey(_uid)); }catch(_){} return false; }
       var _mk1 = null; try{ _mk1 = localStorage.getItem(window._memberRewardMarkKey(_uid)); }catch(_){}
       var _grant = !!_p.grantReward && !(_st && _st.rewarded);
       var _recover = !!_p.grantReward && !!(_st && _st.rewarded) && !!_mk1;   /* ★ v5.212.0 旗標已上雲但獎勵沒發到 */
       if(_grant || _recover){ try{ localStorage.setItem(window._memberRewardMarkKey(_uid), 'w'); }catch(_){} }
-      await window._lxpsFbAwait(window._fbSaveMemberProfile(_uid, _p.profile, _grant), '會員資料·自動重送(' + String(reason || '') + ')', 45000);
+      await window._lxpsFbAwait(window._fbSaveMemberProfile(_uid, _p.profile, _grant), '會員資料·自動重送(' + String(reason || '') + ')', 75000);
       try{ localStorage.removeItem(window._memberProfilePendingKey(_uid)); }catch(_){}
       try{ console.info('[會員資料] ✅ 本機暫存的會員資料已自動補送雲端(' + String(reason || '') + ')'); }catch(_){}
       if(_grant || _recover){
@@ -6488,6 +6600,7 @@
       // 立即標記已讀(記憶體+localStorage 綁 uid 命名空間),避免每次 snapshot 重複彈
       window._gmChatSeenAt = chat.at || Date.now();
       try{ localStorage.setItem('_lxpsGmChatSeen', String(window._gmChatSeenAt)); }catch(_){}
+      try{ if(typeof window._lxpsAckSet === 'function') window._lxpsAckSet('gmChatSeenAt', window._gmChatSeenAt); }catch(_){}   // ★ v5.305.0 已讀也記雲端
       const _old = document.getElementById('_gm-chat-ov');
       if(_old) _old.remove();
       const _esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -7383,19 +7496,73 @@
   //      玩家寫自己(hasOnly uid/list/updatedAt)、GM 讀全部;未部署則雲端寫入被拒,
   //      本地紀錄仍正常(belt-and-suspenders)。
   // ════════════════════════════════════════════════════════════════════
-  window._fbSaveSummonHistory = async function(list){
+  /* ════════════════════════════════════════════════════════════════════
+   * ★ v5.305.0(2026-10-28・老師「深度檢查…召喚卷使用記錄遺失」甲)— 帳本「交易合併」寫入
+   * ────────────────────────────────────────────────────────────────────
+   *   舊版 summonHistory / ticketLedger 一律「讀本機那份 → 加一筆 → setDoc(merge:false) 整份覆蓋雲端」:
+   *     ① 學生換一台平板(本機沒有舊紀錄)→ 第一次召喚/用券就把雲端整份換成這台的 1~2 筆;
+   *     ② 登入同步讀雲端失敗時回 [] ⇒ 被當成「雲端是空的」⇒ 用本機殘缺清單整份覆蓋;
+   *     ③ 上限 60 批 / 500 筆,舊紀錄被截掉(違反「永久保留」裁定;帳號救援審核也讀這份)。
+   *   新版:一律 runTransaction ── 交易內向伺服器讀現有雲端清單 → 與本次清單去重聯集 → 寫回。
+   *     ・讀不到(離線/壅塞)⇒ 交易失敗 ⇒ 什麼都不寫(本機那份保留,下次登入/下次記錄時再合併上去)。
+   *     ・沒有新增任何一筆 ⇒ 不寫(省寫入量)。
+   *     ・雲端上限改「容量制」:整份 ≤ 約 600KB(Firestore 單文件 1MB),約可存數千筆券紀錄/數百批召喚,
+   *       超過才從最舊的開始捨棄;本機只留最近 500 筆/60 批當快取(共用 iPad 25 人的 localStorage 有限)。
+   *     ・uid 在呼叫當下(第一個 await 前)就鎖定,換帳號中途不會寫到別人的文件。
+   *   Firestore 規則:不需修改(仍是 uid/list/updatedAt 三欄)。
+   * ════════════════════════════════════════════════════════════════════ */
+  const _LXPS_LEDGER_BYTES_MAX = 600000;
+  const _lxpsUtf8Len = function(s){
+    try{ return new TextEncoder().encode(s).length; }catch(_){ return String(s).length * 3; }
+  };
+  window._lxpsLedgerTxnMerge = async function(coll, uid, list, opt){
+    if(!uid || !_fbDb) return { ok: false, reason: 'no_uid' };
+    const _ref = doc(_fbDb, coll, String(uid));
+    const _incoming = Array.isArray(list) ? list : [];
+    return await runTransaction(_fbDb, async (tx) => {
+      const _snap = await tx.get(_ref);
+      const _d = _snap.exists() ? (_snap.data() || {}) : {};
+      const _cur = Array.isArray(_d.list) ? _d.list : [];
+      const _seen = {}; const _merged = []; let _added = 0;
+      _cur.forEach(function(b){
+        if(!b || typeof b !== 'object') return;
+        const k = opt.keyFn(b); if(_seen[k]) return; _seen[k] = 1; _merged.push(b);
+      });
+      _incoming.forEach(function(b){
+        if(!b || typeof b !== 'object') return;
+        const k = opt.keyFn(b); if(_seen[k]) return; _seen[k] = 1; _merged.push(b); _added++;
+      });
+      _merged.sort(opt.cmp);   // 排好後:opt.newestFirst=true ⇒ 最新在前;否則最新在後
+      if(_added === 0) return { ok: true, changed: false, list: _merged };
+      let _sizes = _merged.map(function(b){ return _lxpsUtf8Len(JSON.stringify(b)) + 1; });
+      let _total = _sizes.reduce(function(s, x){ return s + x; }, 0);
+      let _out = _merged;
+      if(_total > _LXPS_LEDGER_BYTES_MAX){
+        let _drop = 0;
+        if(opt.newestFirst){ let i = _merged.length - 1; while(i > 0 && _total > _LXPS_LEDGER_BYTES_MAX){ _total -= _sizes[i]; i--; _drop++; } _out = _merged.slice(0, _merged.length - _drop); }
+        else { let i = 0; while(i < _merged.length - 1 && _total > _LXPS_LEDGER_BYTES_MAX){ _total -= _sizes[i]; i++; _drop++; } _out = _merged.slice(_drop); }
+        try{ console.warn('[帳本 v5.305.0] ' + coll + ' 超過容量上限,捨棄最舊 ' + _drop + ' 筆'); }catch(_){}
+      }
+      tx.set(_ref, { uid: String(uid), list: _out, updatedAt: Date.now() });
+      return { ok: true, changed: true, list: _out };
+    });
+  };
+  const _LXPS_SH_OPT = {
+    keyFn: function(b){ return (b.t || 0) + '_' + (b.n || (b.items ? b.items.length : 0)); },
+    cmp: function(a, b){ return (b.t || 0) - (a.t || 0); },
+    newestFirst: true
+  };
+  window._fbSaveSummonHistory = async function(list, uidOpt){
+    const _uid = uidOpt || window._gUserId;   // ★ v5.305.0 第一個 await 前鎖定 uid
     try{
-      const _uid = window._gUserId;
       if(!_uid || !_fbDb) return false;
-      const _safe = Array.isArray(list) ? list.slice(0, 60) : [];
-      await setDoc(doc(_fbDb, 'summonHistory', _uid), {
-        uid: String(_uid),
-        list: _safe,
-        updatedAt: Date.now(),
-      }, { merge: false });
-      return true;
+      const _r = await window._lxpsLedgerTxnMerge('summonHistory', _uid, list, _LXPS_SH_OPT);
+      if(_r && _r.ok && Array.isArray(_r.list)){
+        try{ localStorage.setItem('lxps_summon_history_' + _uid, JSON.stringify(_r.list.slice(0, 60))); }catch(_){}
+      }
+      return !!(_r && _r.ok);
     }catch(e){
-      try{ console.warn('[_fbSaveSummonHistory] 召喚紀錄雲端寫入失敗(本地仍保留)', e); }catch(_){}
+      try{ console.warn('[_fbSaveSummonHistory] 召喚紀錄雲端合併失敗(本機保留,下次再合併;雲端不會被覆蓋)', e); }catch(_){}
       return false;
     }
   };
@@ -7419,19 +7586,22 @@
     'pet_summon_ticket':1,  /* ★ v4.0.0 隨機寵物召喚卷(使用紀錄供 GM 稽核) */
     'summon_ticket_ur_swap':1   /* ★ v5.246.0 UR 英雄替換卷(取得/使用寫帳本,GM「🔁 UR轉換紀錄」讀) */
   };
-  window._fbSaveTicketLedger = async function(list){
+  const _LXPS_TL_OPT = {
+    keyFn: function(b){ return (b.at || 0) + '_' + (b.ev || '') + '_' + (b.item || '') + '_' + (b.n || 0); },
+    cmp: function(a, b){ return (a.at || 0) - (b.at || 0); },
+    newestFirst: false
+  };
+  window._fbSaveTicketLedger = async function(list, uidOpt){
+    const _uid = uidOpt || window._gUserId;   // ★ v5.305.0 第一個 await 前鎖定 uid
     try{
-      const _uid = window._gUserId;
       if(!_uid || !_fbDb) return false;
-      const _safe = Array.isArray(list) ? list.slice(-500) : [];
-      await setDoc(doc(_fbDb, 'ticketLedger', _uid), {
-        uid: String(_uid),
-        list: _safe,
-        updatedAt: Date.now(),
-      }, { merge: false });
-      return true;
+      const _r = await window._lxpsLedgerTxnMerge('ticketLedger', _uid, list, _LXPS_TL_OPT);
+      if(_r && _r.ok && Array.isArray(_r.list)){
+        try{ localStorage.setItem('lxps_ticket_ledger_' + _uid, JSON.stringify(_r.list.slice(-500))); }catch(_){}
+      }
+      return !!(_r && _r.ok);
     }catch(e){
-      try{ console.warn('[_fbSaveTicketLedger] 召喚卷帳本雲端寫入失敗(本地仍保留)', e); }catch(_){}
+      try{ console.warn('[_fbSaveTicketLedger] 召喚卷帳本雲端合併失敗(本機保留,下次再合併;雲端不會被覆蓋)', e); }catch(_){}
       return false;
     }
   };
@@ -7471,7 +7641,7 @@
       });
       if(_list.length > 500) _list = _list.slice(-500);       // 封頂但只砍最舊,永不主動刪個別紀錄
       try{ localStorage.setItem(_key, JSON.stringify(_list)); }catch(_){}
-      try{ if(typeof window._fbSaveTicketLedger === 'function') window._fbSaveTicketLedger(_list); }catch(_){}  // fire-and-forget 上雲
+      try{ if(typeof window._fbSaveTicketLedger === 'function') window._fbSaveTicketLedger(_list, _uid); }catch(_){}  // fire-and-forget 上雲(★ v5.305.0 交易合併,不再整份覆蓋)
     }catch(_e){ try{ console.warn('[_recordTicketLedger] 記錄失敗(不影響召喚)', _e); }catch(_){} }
   };
   // 登入後:雲端 ↔ 本地合併(去重保最新 500·雲端與本地皆為權威·只增不減)
@@ -7482,17 +7652,9 @@
       const _key = 'lxps_ticket_ledger_' + _uid;
       let _local = [];
       try{ const _r = localStorage.getItem(_key); _local = _r ? JSON.parse(_r) : []; if(!Array.isArray(_local)) _local = []; }catch(_){ _local = []; }
-      const _cloud = await window._fbLoadTicketLedger(_uid);
-      const _seen = {}; const _merged = [];
-      [].concat(_cloud, _local).forEach(function(b){
-        if(!b || typeof b !== 'object') return;
-        const _k = (b.at || 0) + '_' + (b.ev || '') + '_' + (b.item || '') + '_' + (b.n || 0);
-        if(_seen[_k]) return; _seen[_k] = 1; _merged.push(b);
-      });
-      _merged.sort(function(a, b){ return (a.at || 0) - (b.at || 0); });
-      const _final = _merged.slice(-500);
-      try{ localStorage.setItem(_key, JSON.stringify(_final)); }catch(_){}
-      if(_final.length > _cloud.length){ try{ window._fbSaveTicketLedger(_final); }catch(_){} }
+      /* ★ v5.305.0 — 改為交易合併:交易內讀雲端 ∪ 本機 → 有新的才寫;讀不到就整個不寫(舊版讀失敗回 [] 會被當成雲端是空的而整份覆蓋)。
+         成功後本機快取換成合併結果的最近 500 筆(在 _fbSaveTicketLedger 內處理)。 */
+      await window._fbSaveTicketLedger(_local, _uid);
     }catch(e){ try{ console.warn('[_fbSyncTicketLedgerOnLogin] 同步失敗', e); }catch(_){} }
   };
 
@@ -7519,23 +7681,8 @@
       const _key = 'lxps_summon_history_' + _uid;
       let _local = [];
       try{ const _r = localStorage.getItem(_key); _local = _r ? JSON.parse(_r) : []; if(!Array.isArray(_local)) _local = []; }catch(_){ _local = []; }
-      const _cloud = await window._fbLoadSummonHistory(_uid);
-      const _seen = {};
-      const _merged = [];
-      [].concat(_cloud, _local).forEach(function(b){
-        if(!b || typeof b !== 'object') return;
-        const _k = (b.t || 0) + '_' + (b.n || (b.items ? b.items.length : 0));
-        if(_seen[_k]) return;
-        _seen[_k] = 1;
-        _merged.push(b);
-      });
-      _merged.sort(function(a, b){ return (b.t || 0) - (a.t || 0); });
-      const _final = _merged.slice(0, 60);
-      try{ localStorage.setItem(_key, JSON.stringify(_final)); }catch(_){}
-      // 合併後比雲端多(本地有離線紀錄)→ 回寫雲端讓雲端也完整
-      if(_final.length > _cloud.length){
-        try{ window._fbSaveSummonHistory(_final); }catch(_){}
-      }
+      /* ★ v5.305.0 — 同召喚卷帳本:交易合併(讀不到就不寫,有新的才寫),本機快取換成合併後最近 60 批。 */
+      await window._fbSaveSummonHistory(_local, _uid);
     }catch(e){
       try{ console.warn('[_fbSyncSummonHistoryOnLogin] 同步失敗', e); }catch(_){}
     }
@@ -8832,6 +8979,70 @@
   };
 
   // 玩家:兌換序號(單次使用)。回傳 { ok, itemsLabel, reason, _critical }
+  /* ════════════════════════════════════════════════════════════════════
+   * ★ v5.305.0(2026-10-28・老師「深度檢查…GM 獎勵遺失」甲)— 「補發佇列」_grantRetryQ
+   * ────────────────────────────────────────────────────────────────────
+   *   序號一定要「先標記已使用、再發獎」(防兩人搶同一組序號),全體獎勵也是「先佔位」;
+   *   舊版佔位後若發獎失敗(網路忙碌、讀不到玩家資料)⇒ 獎勵永久漏發,學生只能截圖找老師。
+   *   新版:發獎失敗就把「要發的內容」記進玩家自己主檔的 _grantRetryQ(self-write,不需改規則),
+   *   每次登入(_lxpsGrantRetryProcess,登入後 7 秒)自動補發;補發前先看 _compensationHistory
+   *   有沒有同一個 by 已入帳(防重複),補發成功才從佇列移除。
+   *   佇列最多 50 筆;GM 仍可從玩家主檔看到這個欄位。
+   * ════════════════════════════════════════════════════════════════════ */
+  window._lxpsGrantRetryEnqueue = async function(uid, item){
+    if(!uid || !_fbDb || !item || !item.by) return false;
+    try{
+      const _ref = doc(_fbDb, 'players', String(uid));
+      await runTransaction(_fbDb, async (tx) => {
+        const _s = await tx.get(_ref);
+        const _q = (_s.exists() && Array.isArray((_s.data() || {})._grantRetryQ)) ? _s.data()._grantRetryQ.slice() : [];
+        if(_q.some(function(x){ return x && x.by === item.by; })) return;
+        _q.push({ by: String(item.by), reward: item.reward || {}, reason: String(item.reason || '補發'), summary: String(item.summary || '').slice(0, 200), at: Date.now() });
+        tx.set(_ref, { _grantRetryQ: _q.slice(-50) }, { merge: true });
+      });
+      console.warn('[補發佇列 v5.305.0] 已記下待補發:' + item.by);
+      return true;
+    }catch(e){
+      console.error('[補發佇列 v5.305.0] 記錄待補發失敗(請老師補發)' + item.by, e);
+      return false;
+    }
+  };
+  window._lxpsGrantRetryProcess = async function(){
+    const _uid = (window._fbUser && window._fbUser.uid) || window._gUserId || null;
+    if(!_uid || !_fbDb || typeof window._fbCompensatePlayer !== 'function') return { granted: [] };
+    const _ref = doc(_fbDb, 'players', String(_uid));
+    let _q = [], _hist = [];
+    try{
+      const _s = await getDocFromServer(_ref);
+      if(!_s.exists()) return { granted: [] };
+      const _d = _s.data() || {};
+      _q = Array.isArray(_d._grantRetryQ) ? _d._grantRetryQ.slice() : [];
+      _hist = Array.isArray(_d._compensationHistory) ? _d._compensationHistory : [];
+    }catch(e){ return { granted: [] }; }
+    const _granted = [];
+    for(const _it of _q){
+      if(!_it || !_it.by) continue;
+      if(window._gUserId && window._gUserId !== _uid) break;   // 換帳號就停
+      const _done = _hist.some(function(h){ return h && h.by === _it.by; });
+      if(!_done){
+        try{
+          await window._fbCompensatePlayer(_uid, Object.assign({}, _it.reward || {}, {
+            reason: (_it.reason || '補發') + '(自動補發)', summary: _it.summary || '', by: _it.by
+          }));
+          _granted.push(_it);
+        }catch(e){ console.warn('[補發佇列 v5.305.0] 補發仍失敗,下次登入再試:' + _it.by, e); continue; }
+      }
+      try{
+        await runTransaction(_fbDb, async (tx) => {
+          const _s2 = await tx.get(_ref);
+          const _q2 = (_s2.exists() && Array.isArray((_s2.data() || {})._grantRetryQ)) ? _s2.data()._grantRetryQ : [];
+          tx.set(_ref, { _grantRetryQ: _q2.filter(function(x){ return !(x && x.by === _it.by); }) }, { merge: true });
+        });
+      }catch(_eRm){ console.warn('[補發佇列 v5.305.0] 移除已補發項目失敗(下次會以入帳紀錄判定已補發,不會重複)', _eRm); }
+    }
+    return { granted: _granted };
+  };
+
   window._fbRedeemCode = async function(code){
     const _uid = (window._fbUser && window._fbUser.uid) || null;
     if(!_uid) return { ok: false, reason: '尚未登入,請重新整理後再試' };
@@ -8900,6 +9111,12 @@
       }));
     }catch(e){
       console.error('[_fbRedeemCode] 已標記但發獎失敗(序號已消耗)', e);
+      /* ★ v5.305.0 — 改記進補發佇列,下次登入自動補發;連佇列都寫不進去才請學生截圖找老師 */
+      const _q = await window._lxpsGrantRetryEnqueue(_uid, {
+        by: 'redeem:' + _c, reward: _txResult.reward || {}, reason: '虛寶序號兌換',
+        summary: '虛寶序號:' + ((_txResult.itemsLabel || []).join(' + ') || _c)
+      });
+      if(_q) return { ok: false, reason: '網路忙碌,序號已收下。獎勵會在你下次登入時自動補發,不用重新輸入。', itemsLabel: _txResult.itemsLabel };
       return { ok: false, reason: '兌換異常,請截圖這個序號找老師補發', _critical: true, itemsLabel: _txResult.itemsLabel };
     }
     // ★ v3.17.8 — 發獎成功 → 自寫一筆 _redeemClaimLog(self-write·不需改 rule),
@@ -9108,6 +9325,7 @@
     const _now = Date.now();
     const _newlyClaimed = [];   // 本次真的領到的(供通知)
     const _toCacheAppend = [];  // 要補進 _grClaimed 快取的 id(含「已被認領」者,下次省 transaction)
+    let _forceCacheRewrite = false;   // ★ v5.305.0
 
     for(const _rw of _activeList){
       const _rid = _rw.id;
@@ -9115,30 +9333,43 @@
       if(_claimedSet.has(_rid)) continue;                       // 快取已標記 → 跳過
       if(_rw.expiresAt && _now > _rw.expiresAt) continue;        // 已過期 → 不領
       const _claimRef = doc(_fbDb, 'globalRewardClaims', _uid + '_' + _rid);
-      // ① transaction 原子認領(權威防重複,免疫存檔合併復活)
-      let _tx;
-      try{
-        _tx = await runTransaction(_fbDb, async (tx) => {
-          const _cs = await tx.get(_claimRef);
-          if(_cs.exists()) return { already: true };
-          tx.set(_claimRef, {
-            uid: _uid,
-            rewardId: _rid,
-            at: _now,
-            items: Array.isArray(_rw.items) ? _rw.items.slice(0, 40) : [],
+      /* ★ v5.305.0(老師「深度檢查…GM 獎勵遺失」甲)— 舊版 ① 先建立永久認領文件再發獎,發獎失敗就永久漏發且學生不知道。
+         新版:① 只讀認領文件 → ①.5 主檔 transaction 原子標記 _grClaimed(防兩台同時登入重複領)
+         → ② 發獎 → 成功(或已記進補發佇列)才建立永久認領文件。 */
+      const _mkClaimDoc = async function(){
+        try{
+          await runTransaction(_fbDb, async (tx) => {
+            const _cs = await tx.get(_claimRef);
+            if(_cs.exists()) return;
+            tx.set(_claimRef, { uid: _uid, rewardId: _rid, at: _now, items: Array.isArray(_rw.items) ? _rw.items.slice(0, 40) : [] });
           });
-          return { claimed: true };
-        });
+        }catch(_eCd){ console.warn('[全體獎勵] 建立認領文件失敗(主檔 _grClaimed 仍擋重複)rid=' + _rid, _eCd); }
+      };
+      // ① 讀永久認領文件(只讀)
+      try{
+        const _cs0 = await getDocFromServer(_claimRef);
+        if(_cs0.exists()){ _toCacheAppend.push(_rid); continue; }   // 別的裝置/分頁已領 → 補快取
       }catch(e){
         // permission/network → 本次略過,下次登入再試(未標記、未發獎,不會重複)
-        console.warn('[全體獎勵] 認領 transaction 失敗 rid=' + _rid, e);
+        console.warn('[全體獎勵] 讀取認領文件失敗 rid=' + _rid, e);
         continue;
       }
-      if(_tx && _tx.already){
-        _toCacheAppend.push(_rid);   // 別的裝置/分頁已領 → 補快取,下次省 transaction
+      // ①.5 主檔 transaction 原子標記
+      let _mk;
+      try{
+        _mk = await runTransaction(_fbDb, async (tx) => {
+          const _pref = doc(_fbDb, 'players', _uid);
+          const _ps2 = await tx.get(_pref);
+          const _gc = (_ps2.exists() && Array.isArray((_ps2.data() || {})._grClaimed)) ? _ps2.data()._grClaimed.slice() : [];
+          if(_gc.indexOf(_rid) >= 0) return { already: true };
+          tx.set(_pref, { _grClaimed: Array.from(new Set(_gc.concat([_rid]))).slice(-200) }, { merge: true });
+          return { marked: true };
+        });
+      }catch(e){
+        console.warn('[全體獎勵] 標記 _grClaimed 失敗(未發獎,下次登入再試)rid=' + _rid, e);
         continue;
       }
-      if(!_tx || !_tx.claimed) continue;
+      if(_mk && _mk.already){ _toCacheAppend.push(_rid); continue; }
       // ② 標記成功 → 發獎到自己(沿用 _fbCompensatePlayer 三槽寫入,union/max 合併不降級)
       try{
         if(typeof window._fbCompensatePlayer !== 'function') throw new Error('_fbCompensatePlayer 未載入');
@@ -9152,6 +9383,7 @@
         //   (比照 v3.16.97 GM課堂獎勵修法),免疫「沒重整就繼續遊戲→autosave 用舊背包沖掉剛領的獎勵」。
         _newlyClaimed.push({ id: _rid, title: _rw.title || '全體獎勵', items: _items, note: _rw.note || '', reward: _rw.reward || {} });
         _toCacheAppend.push(_rid);
+        await _mkClaimDoc();   // ★ v5.305.0 發獎成功後才建立永久認領文件
         // ★ v3.17.8 — 自寫一筆 _grClaimLog(self-write),供 _fbReconcileGlobalRewardTickets 登入回溯對帳
         try{
           const _lps = await getDocFromServer(doc(_fbDb, 'players', _uid));
@@ -9164,13 +9396,22 @@
           }
         }catch(_eGLog){ console.warn('[全體獎勵] 寫入 _grClaimLog 失敗(不影響已發獎·僅影響回溯對帳)', _eGLog); }
       }catch(e){
-        // 已標記但發獎異常 → 該獎勵這次漏發(認領文件已佔位,不會重複);記錄供老師補發
-        console.error('[全體獎勵] 已認領但發獎失敗 rid=' + _rid + '（已佔位,不會重複領）', e);
+        /* ★ v5.305.0 — 發獎失敗:記進補發佇列(下次登入自動補發)並視為已認領;
+           佇列也寫不進去 ⇒ 不加進 _toCacheAppend,下方 ③ 改寫 _grClaimed 時自然把這筆標記撤掉 ⇒ 下次登入重領。 */
+        console.error('[全體獎勵] 標記後發獎失敗 rid=' + _rid, e);
+        const _items2 = Array.isArray(_rw.items) ? _rw.items : [];
+        const _enq = await window._lxpsGrantRetryEnqueue(_uid, {
+          by: 'globalReward:' + _rid, reward: _rw.reward || {}, reason: '全體獎勵發放',
+          summary: '全體獎勵：' + (_rw.title || '') + (_items2.length ? ('（' + _items2.join('、') + '）') : '')
+        });
+        if(_enq){ _toCacheAppend.push(_rid); await _mkClaimDoc(); }
+        else { _forceCacheRewrite = true; }
       }
     }
 
     // ③ 更新玩家主檔 _grClaimed 快取(本次新領 + 已被認領者),下次登入直接跳過
-    if(_toCacheAppend.length){
+    //   ★ v5.305.0 有發獎失敗且未進佇列者(_forceCacheRewrite)也要改寫一次,把 ①.5 預先標記的那筆撤掉
+    if(_toCacheAppend.length || _forceCacheRewrite){
       try{
         const _merged = Array.from(new Set(_claimedCache.concat(_toCacheAppend))).slice(-200);
         await setDoc(doc(_fbDb, 'players', _uid), { _grClaimed: _merged }, { merge: true });
@@ -9653,34 +9894,34 @@
         }
       }
     }catch(_ePre){ /* 讀不到快取就往下走,後面 transaction / 標記仍會把關 */ }
-    // ② 最佳努力 transaction 跨裝置去重(規則部署時生效;未部署則 catch 後靜默改走 self-write 閘門)
-    let _txAlready = false;
+    /* ★ v5.305.0(2026-10-28・老師「深度檢查…GM 獎勵遺失」甲)— 認領順序改正。
+       舊版:② 先建立 gmClassRewardClaims 永久認領文件(create-only,玩家刪不掉)→ ③ 入帳失敗時只回滾 _gmcrClaimed
+       並顯示「已回復・可再領」⇒ 學生再按時 ② 看到認領文件已存在 ⇒「已經領過了」⇒ 獎勵永久遺失。
+       新版:② 只「讀」認領文件(舊版本領過的仍擋得住);②.5 主閘門改用玩家主檔 transaction 原子標記 _gmcrClaimed
+       (同時防兩台平板同時按);③ 入帳成功「之後」才建立永久認領文件 ⇒ 入帳失敗回滾後真的可以再領。 */
+    // ② 讀永久認領文件(只讀不寫)
     try{
-      const _tx = await runTransaction(_fbDb, async (tx) => {
-        const _cs = await tx.get(_claimRef);
-        if(_cs.exists()) return { already: true };
-        tx.set(_claimRef, { uid: _uid, rewardId: rewardId, at: _now, items: _itemsLabel.slice(0, 40) });
-        return { claimed: true };
-      });
-      if(_tx && _tx.already) _txAlready = true;
+      const _cs0 = await getDocFromServer(_claimRef);
+      if(_cs0.exists()) return { ok: false, already: true, reason: '這筆獎勵已經領過了' };
     }catch(_eTx){
-      console.warn('[GM獎勵] 認領 transaction 無法寫入(規則可能未部署),改用主檔 _gmcrClaimed 自寫閘門 rid=' + rewardId, _eTx);
+      console.warn('[GM獎勵] 讀取認領文件失敗(規則可能未部署),改由主檔 _gmcrClaimed 閘門把關 rid=' + rewardId, _eTx);
     }
-    if(_txAlready) return { ok: false, already: true, reason: '這筆獎勵已經領過了' };
-    // ②.5 ★ 主閘門:發獎「之前」先以 self-write 標記 _gmcrClaimed(read-modify-write,等效 arrayUnion)。
-    //   self-write 永遠可寫(players/{uid} 規則允許本人寫非停權欄位),標記成功 → 收件箱立即隱藏該筆。
+    // ②.5 ★ 主閘門:發獎「之前」以 transaction 原子標記 _gmcrClaimed(self-write 永遠可寫)。
     //   標記失敗才中止(可重試;尚未發獎不會重複扣發)。
     try{
-      const _ps = await getDocFromServer(_playerRef);
-      let _cacheBefore = [];
-      if(_ps.exists()){
-        const _pd = _ps.data() || {};
-        if(Array.isArray(_pd._gmcrClaimed)) _cacheBefore = _pd._gmcrClaimed.slice();
-      }
-      // 競態保險:重讀後再確認一次未領(防 ② 與此處之間被別處標記)
-      if(_cacheBefore.indexOf(rewardId) >= 0) return { ok: false, already: true, reason: '這筆獎勵已經領過了' };
-      const _markedCache = Array.from(new Set(_cacheBefore.concat([rewardId]))).slice(-300);
-      await setDoc(_playerRef, { _gmcrClaimed: _markedCache }, { merge: true });
+      const _mk = await runTransaction(_fbDb, async (tx) => {
+        const _ps = await tx.get(_playerRef);
+        let _cacheBefore = [];
+        if(_ps.exists()){
+          const _pd = _ps.data() || {};
+          if(Array.isArray(_pd._gmcrClaimed)) _cacheBefore = _pd._gmcrClaimed.slice();
+        }
+        if(_cacheBefore.indexOf(rewardId) >= 0) return { already: true };
+        const _markedCache = Array.from(new Set(_cacheBefore.concat([rewardId]))).slice(-300);
+        tx.set(_playerRef, { _gmcrClaimed: _markedCache }, { merge: true });
+        return { marked: true };
+      });
+      if(_mk && _mk.already) return { ok: false, already: true, reason: '這筆獎勵已經領過了' };
     }catch(_eMark){
       console.warn('[GM獎勵] 標記 _gmcrClaimed 失敗(尚未發獎·可重試)rid=' + rewardId, _eMark);
       return { ok: false, reason: '領取失敗,請稍後再試(未發放,可再試)' };
@@ -9702,8 +9943,28 @@
         if(_rb.exists()){ const _rbd = _rb.data() || {}; if(Array.isArray(_rbd._gmcrClaimed)) _rbCache = _rbd._gmcrClaimed.slice(); }
         const _rolled = _rbCache.filter(function(x){ return x !== rewardId; });
         await setDoc(_playerRef, { _gmcrClaimed: _rolled }, { merge: true });
-      }catch(_eRb){ console.error('[GM獎勵] 回滾標記也失敗(請通知老師補發)rid=' + rewardId, _eRb); }
+      }catch(_eRb){
+        console.error('[GM獎勵] 回滾標記也失敗 ⇒ 改記補發佇列 rid=' + rewardId, _eRb);
+        /* ★ v5.305.0 — 標記撤不掉(收件匣已隱藏這筆)⇒ 記進補發佇列,下次登入自動補發 */
+        const _enq = await window._lxpsGrantRetryEnqueue(_uid, {
+          by: 'gmClassReward:' + rewardId, reward: _rw.reward || {}, reason: '課堂獎勵領取',
+          summary: '課堂獎勵' + (_rw.merit ? ('（' + _rw.merit + '）') : '') + (_itemsLabel.length ? ('：' + _itemsLabel.join('、')) : '')
+        });
+        if(_enq) return { ok: false, reason: '網路忙碌,獎勵已收下,會在你下次登入時自動補發。' };
+        return { ok: false, reason: '入帳發生異常,請截圖找老師補發' };
+      }
       return { ok: false, reason: '入帳發生異常,請稍後再試(已回復·可再領)' };
+    }
+    // ③.5 ★ v5.305.0 入帳成功後才建立永久認領文件(最佳努力跨裝置去重;規則未部署則靜默略過,主檔 _gmcrClaimed 已把關)
+    try{
+      await runTransaction(_fbDb, async (tx) => {
+        const _cs = await tx.get(_claimRef);
+        if(_cs.exists()) return { already: true };
+        tx.set(_claimRef, { uid: _uid, rewardId: rewardId, at: _now, items: _itemsLabel.slice(0, 40) });
+        return { claimed: true };
+      });
+    }catch(_eTx2){
+      console.warn('[GM獎勵] 入帳後建立認領文件失敗(不影響已入帳;主檔 _gmcrClaimed 仍擋重複)rid=' + rewardId, _eTx2);
     }
     // ★ v3.17.6(老師需求 2)— 入帳成功 → 若本筆獎勵含 GM 召喚卷,記錄「發放理由(事蹟)+時間」到本機中繼資料,
     //   供背包/召喚星空顯示「🎁 老師發放理由…（時間）」。純本機顯示用,不影響入帳/存檔。
@@ -11093,9 +11354,43 @@
   };
 
   // ── API 2:刪除玩家異常解鎖英雄(寫 audit log,玩家本地會在下次登入時被雲端覆蓋) ──
+  /* ════════════════════════════════════════════════════════════════════
+   * ★ v5.305.0(2026-10-28・老師「設計者自己擁有的英雄被刪除」甲)— 設計者英雄保護(所有刪英雄的入口共用)
+   *   查無紀錄過度補償/汙染暴增 SSR/持有者審查/UR 對帳/一鍵盤查/學生自我審查「不是我的」/審核不通過…
+   *   全部最後都走 _fbAdminDeleteUnlockedHero / _fbAdminBulkRemoveHeroes / _fbAdminRejectAuditHeroes /
+   *   _fbStudentDisownHeroes / _fbApplyAuditErrorRecover / _fbApplyBadCompReclaim。
+   *   這裡統一:先查這個 uid 的信箱,名單中「這位學生自己設計的英雄」一律剔除不刪(console + 老師端提示)。
+   *   老師真的要刪設計者本人的英雄 ⇒ opts.allowDesigner = true。
+   * ════════════════════════════════════════════════════════════════════ */
+  const _lxpsDesEmailCache = {};
+  window._lxpsDropDesignerHeroes = async function(uid, names, opts){
+    const _list = (Array.isArray(names) ? names : []).filter(Boolean);
+    if(!uid || !_list.length || (opts && opts.allowDesigner) || typeof window._lxpsIsOwnDesignerHero !== 'function'){
+      return { keep: _list, skipped: [] };
+    }
+    let _em = _lxpsDesEmailCache[uid];
+    if(_em === undefined){
+      try{
+        if(window._gUserId === uid && window._fbUser && window._fbUser.email) _em = window._fbUser.email;
+        else { const _s = await getDoc(doc(_fbDb, 'players', uid)); _em = (_s.exists() && (_s.data() || {}).email) || ''; }
+        _lxpsDesEmailCache[uid] = _em;
+      }catch(_){ _em = ''; }
+    }
+    if(!_em) return { keep: _list, skipped: [] };
+    const _keep = [], _skipped = [];
+    _list.forEach(function(n){ (window._lxpsIsOwnDesignerHero(_em, n) ? _skipped : _keep).push(n); });
+    if(_skipped.length){
+      console.warn('🎨 [設計者保護 v5.305.0] ' + _em + ' 自己設計的英雄不刪:', _skipped);
+      try{ if(typeof window._isAdminUser === 'function' && window._isAdminUser() && typeof window._lxpsToast === 'function') window._lxpsToast('🎨 「' + _skipped.join('、') + '」是這位學生自己設計的英雄,已保護不刪', 'warn'); }catch(_){}
+    }
+    return { keep: _keep, skipped: _skipped };
+  };
+
   window._fbAdminDeleteUnlockedHero = async function(uid, heroName, opts){
     if(!uid || !heroName) throw new Error('uid 與 heroName 為必要');
     opts = opts || {};
+    { const _dg = await window._lxpsDropDesignerHeroes(uid, [heroName], opts);
+      if(!_dg.keep.length) return { ok: false, skippedDesigner: _dg.skipped, reason: '這是該學生自己設計的英雄,已保護不刪' }; }   // ★ v5.305.0
     const _adminEmail = (_fbAuth.currentUser && _fbAuth.currentUser.email) || 'unknown';
     // ★★ v5.130.0(老師裁定甲)— 改走三槽同寫單一真相 _lxpsAdminApplyAllSlots ★★
     //   舊版只寫主檔 ⇒ saves/live 與 saves/safe 仍有這隻英雄、養成表殘留、且沒有 admin_delete 帳本
@@ -11301,6 +11596,7 @@
         const _legitNames = new Set();
         if(Array.isArray(_hist)){
           _hist.forEach(h => { if(h && h.name && h.source !== 'admin_delete') _legitNames.add(h.name); });
+          try{ (Array.isArray(d.unlockedHeroes) ? d.unlockedHeroes : []).forEach(n => { if(window._lxpsIsOwnDesignerHero && window._lxpsIsOwnDesignerHero(d.email, n)) _legitNames.add(n); }); }catch(_eDsg2){}   // ★ v5.305.0 設計者本人的英雄不算汙染
         }
         const _ssrInRoster = _unlocked.filter(n => _ssrSet.has(n));
         const _suspected = _ssrInRoster.filter(n => !_legitNames.has(n));
@@ -11335,9 +11631,13 @@
   //   走 updateDoc 直接寫主文件(繞過 _fbSaveLive 健康度守門,因為這是管理員授權的縮減)。
   window._fbAdminBulkRemoveHeroes = async function(uid, heroNames, opts){
     if(!uid) throw new Error('必須提供 uid');
-    const _list = Array.isArray(heroNames) ? heroNames.filter(Boolean) : [];
+    let _list = Array.isArray(heroNames) ? heroNames.filter(Boolean) : [];
     if(!_list.length) return { ok:false, reason:'no_heroes' };
     opts = opts || {};
+    // ★ v5.305.0 設計者英雄保護:批次收回名單剔除這位學生自己設計的英雄
+    const _dgB = await window._lxpsDropDesignerHeroes(uid, _list, opts);
+    _list = _dgB.keep;
+    if(!_list.length) return { ok:false, reason:'designer_protected', skippedDesigner:_dgB.skipped };
     const _removeSet = new Set(_list);
     const _adminEmail = (window._fbUser && window._fbUser.email) || 'admin';
     // ★★ v5.130.0(老師裁定甲)— 改走三槽同寫單一真相 ★★
@@ -11496,7 +11796,7 @@
   // ════════════════════════════════════════════════════════════════════
   window._fbApplyAuditErrorRecover = async function(uid, lockNames){
     if(!uid) return { ok:false, reason:'no_uid' };
-    const _names = Array.isArray(lockNames) ? lockNames.filter(Boolean) : [];
+    const _names = (await window._lxpsDropDesignerHeroes(uid, Array.isArray(lockNames) ? lockNames.filter(Boolean) : [])).keep;   // ★ v5.305.0 設計者保護
     const _ref = doc(_fbDb, 'players', uid);
     try{
       const _snap = await getDoc(_ref);
@@ -11583,7 +11883,7 @@
   //   清養成全 _s,暫存原等級供無損還原,蓋 _authoritativeRestoreAt 乾淨重載(沿用 piece3)。
   window._fbApplyBadCompReclaim = async function(uid, names, verTag){
     if(!uid) return { ok:false, reason:'no_uid' };
-    var _names = Array.isArray(names) ? names.filter(Boolean) : [];
+    var _names = (await window._lxpsDropDesignerHeroes(uid, Array.isArray(names) ? names.filter(Boolean) : [])).keep;   // ★ v5.305.0 設計者保護
     var _ref = doc(_fbDb, 'players', uid);
     try{
       var _snap = await getDocFromServer(_ref);
@@ -11909,6 +12209,8 @@
   window._fbAdminRejectAuditHeroes = async function(uid, names){
     try{
       if(!uid || !names || !names.length || !window._fbDb || !window._fbFns) return false;
+      names = (await window._lxpsDropDesignerHeroes(uid, names)).keep;   // ★ v5.305.0 設計者保護
+      if(!names.length) return true;
       // ★★ v5.130.0(老師裁定甲)— 改走三槽同寫單一真相 ★★
       //   舊版不只單寫主檔,連養成表/_s 都沒清 ⇒ 審核不通過的英雄是最容易復活的一路;比照其他移除路徑修齊。
       var now = Date.now();
@@ -12038,7 +12340,7 @@
 
   window._fbStudentDisownHeroes = async function(uid, names){
     if(!uid) return { ok:false, reason:'no_uid' };
-    const _names = Array.isArray(names) ? names.filter(Boolean) : [];
+    const _names = (await window._lxpsDropDesignerHeroes(uid, Array.isArray(names) ? names.filter(Boolean) : [])).keep;   // ★ v5.305.0 設計者保護(設計者本人誤按「不是我的」也不刪)
     if(!_names.length) return { ok:true, removed:[] };
     // ★★ v5.130.0(老師裁定甲)— 改走三槽同寫單一真相 ★★
     //   舊版只寫主檔 ⇒ 學生自助移除後,live/safe 仍留著該英雄與養成資料、且沒有
@@ -14989,8 +15291,13 @@
       const snap = await getDocFromServer(doc(_fbDb, 'players', uid));
       if(snap.exists()) existing = snap.data() || {};
     } catch(e) {
-      // 讀取失敗就用空物件,後續 merge:true 仍會保留雲端未提及欄位
-      console.warn('[_fbCompensatePlayer] 讀取現有資料失敗,將以空白起點 merge', e);
+      /* ★ v5.305.0(2026-10-28・老師「深度檢查玩家重要記錄遺失」甲)— 讀不到就「中止、什麼都不寫」。
+         舊版:讀取失敗改用空物件當起點 ⇒ 知識幣=0+獎勵、背包={}+獎勵、heroOwnLedger_s 由空白重建,
+         但下方 payload 是無條件整欄寫入(merge:true 只保留「沒提到」的欄位,這些欄位全都有提到)⇒
+         25 台同時登入/校網壅塞(429、逾時)時,學生一領獎,知識幣與背包就被覆寫成只剩獎勵,且認領已成立無法重領。
+         現在:拋錯交給呼叫端(課堂獎勵會回滾可重領;全體獎勵/序號進補發佇列,見 _lxpsGrantRetry)。 */
+      console.error('[_fbCompensatePlayer] 讀取現有資料失敗 ⇒ 中止本次入帳(不以空白起點覆寫)', e);
+      throw new Error('讀取玩家資料失敗,本次未入帳(網路忙碌,稍後會再試)');
     }
 
     // 2) 合併 unlockedHeroes(union,不重複)
@@ -15284,8 +15591,10 @@
         const _liveSnap = await getDocFromServer(_liveRef);
         if(_liveSnap.exists()) _existingLive = _liveSnap.data() || {};
       } catch(_eRead){
-        // 讀失敗就用空白起點,後面 merge 仍然會把補償欄位寫進去
-        console.warn('[補償 v3.9.0] live 槽讀取失敗,將以空白起點寫入', _eRead);
+        /* ★ v5.305.0 — 讀失敗就跳過 live 槽(舊版以空白起點「整份覆寫」live ⇒ 槽內其他資料全毀)。
+           主檔已寫入並帶 _authoritativeRestoreAt 戳記,學生重載時以主檔為權威回填 live,不會漏獎勵。 */
+        console.warn('[補償 v5.305.0] live 槽讀取失敗 ⇒ 本次不寫 live 槽(避免空白起點整份覆寫)', _eRead);
+        throw _eRead;
       }
       // 對 unlockedHeroes 做 union(以 live 既有版本為基底,再 union 補償清單)
       const _liveExistUnlocked = Array.isArray(_existingLive.unlockedHeroes) ? _existingLive.unlockedHeroes : [];
@@ -15396,7 +15705,9 @@
         const _safeSnap = await getDocFromServer(_safeRef);
         if(_safeSnap.exists()) _existingSafe = _safeSnap.data() || {};
       } catch(_eReadSafe){
-        console.warn('[補償 v3.9.2] safe 槽讀取失敗,將以空白起點寫入', _eReadSafe);
+        /* ★ v5.305.0 — 同 live:讀不到就不寫 safe 槽(舊版空白起點整份覆寫)。 */
+        console.warn('[補償 v5.305.0] safe 槽讀取失敗 ⇒ 本次不寫 safe 槽(避免空白起點整份覆寫)', _eReadSafe);
+        throw _eReadSafe;
       }
       // unlockedHeroes union
       const _safeExistUnlocked = Array.isArray(_existingSafe.unlockedHeroes) ? _existingSafe.unlockedHeroes : [];
@@ -16067,6 +16378,8 @@
         if(_mine) _ownRec[e.name] = 1; else _otherRec[e.name] = 1;
       });
       var _curHeroes = {}; _arr(d, 'unlockedHeroes').forEach(function(n){ if(n) _curHeroes[n] = 1; });
+      // ★ v5.305.0 設計者保護:這位學生自己設計的英雄,不列入過度補回/查無紀錄(視同本人真實取得)
+      try{ Object.keys(_curHeroes).forEach(function(n){ if(typeof window._lxpsIsOwnDesignerHero === 'function' && window._lxpsIsOwnDesignerHero(d.email, n)){ _confirmed[n] = 1; } }); }catch(_eDsg){}
       var _curLevels = (d.heroLevels && typeof d.heroLevels === 'object') ? d.heroLevels : {};
       if(!(d.heroLevels && typeof d.heroLevels === 'object') && typeof d.heroLevels_s === 'string'){ try{ var _hl = JSON.parse(d.heroLevels_s); if(_hl && typeof _hl === 'object') _curLevels = _hl; }catch(_){} }
       var _heroes = [];
@@ -19688,7 +20001,11 @@
           const _ir = sessionStorage.getItem('lxps_intentional_reload');
           if(_ir){
             const _irTs = parseInt(_ir, 10) || 0;
-            if(Date.now() - _irTs < 30000){ _intentionalReload = true; }
+            /* ★ v5.305.0(老師「深度檢查…登入後又變未登入」甲)— 有效期 30 秒 → 3 分鐘。
+               入口更新會先清程式快取＋卸 SW 再重整,舊 iPad 重新下載約 18MB 程式(25 台同時)＋解析＋Firebase 初始化,
+               onAuth 常常超過 30 秒才跑到這裡 ⇒ 旗標過期 ⇒ 學生被當成殘留帳號登出、跳「請重新登入」。
+               安全不變:旗標只在「本頁真的登入過」才設、用完即清、同 uid 閒置 30 分鐘的否決照常生效。 */
+            if(Date.now() - _irTs < 180000){ _intentionalReload = true; }
             sessionStorage.removeItem('lxps_intentional_reload'); // 一次性,用完即清
           }
         }catch(_){}
@@ -19696,9 +20013,13 @@
         let _bypassAutoLoginBlock = false;
         try{
           const _url = new URL(window.location.href);
-          if(_url.searchParams.get('autologin') === '1'){
+          /* ★ v5.305.0(老師「深度檢查…誤登別人帳號」甲)— 後門只對老師帳號有效。
+             舊版任何人在網址加 ?autologin=1 就能跳過共用平板攔截與 30 分鐘逾時,直接進入上一位沒登出同學的帳號。 */
+          const _alEm = String((user && user.email) || '').toLowerCase();
+          if(_url.searchParams.get('autologin') === '1'
+             && ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'].indexOf(_alEm) >= 0){
             _bypassAutoLoginBlock = true;
-            console.log('[禁止自動登入 v3.10.1] URL ?autologin=1 後門啟用,跳過攔截');
+            console.log('[禁止自動登入 v3.10.1] URL ?autologin=1 後門啟用(老師帳號),跳過攔截');
           }
         }catch(_){}
 
@@ -21094,6 +21415,21 @@
           }
         }catch(_eMain){ console.warn('[全體獎勵 登入領取] 例外', _eMain); }
       }, 5500);
+
+      // ★ v5.305.0 — 登入 1.2 秒先把「看過了」雲端記錄讀進快取(登入提醒視窗大多在 2.5 秒之後才判斷)
+      setTimeout(function(){ try{ if(window._gUserId && typeof window._lxpsAckLoad === 'function') window._lxpsAckLoad(true); }catch(_){} }, 1200);
+
+      // ★ v5.305.0 — 登入 7 秒後處理「補發佇列」(上次序號/全體獎勵/課堂獎勵發放時網路失敗、已記下待補的)
+      setTimeout(async () => {
+        try{
+          if(!window._gUserId || typeof window._lxpsGrantRetryProcess !== 'function') return;
+          const _gr = await window._lxpsGrantRetryProcess();
+          const _gl = (_gr && Array.isArray(_gr.granted)) ? _gr.granted : [];
+          if(_gl.length && typeof window._lxpsToast === 'function'){
+            window._lxpsToast('🎁 上次沒送到的獎勵已自動補發:<br>' + _gl.map(function(x){ return String(x.summary || x.reason || '').replace(/[<>&]/g, ''); }).join('<br>'), 'ok');
+          }
+        }catch(_eGrq){ console.warn('[補發佇列] 登入處理例外', _eGrq); }
+      }, 7000);
 
       // ★ v3.16.65 — 登入後刷新「🎁 GM獎勵」鈕上方「有可領取獎勵」標籤(老師指派的待領課堂獎勵)
       setTimeout(function(){
