@@ -32198,6 +32198,11 @@ const SHOP_PRODUCTS = [
   { id:'hero_exp_book_premium', name:'英雄經驗值之書(豪華典藏版)', icon:'📚',
     desc:'金黃光芒環繞的稀世珍本,蘊含驚人的英雄成長能量。使用後可為選定英雄增加 5000 點經驗值。每日商店限購 10 本。',
     price:5000, stock:'每日10個', dailyLimit:10 },
+  // ★ v5.306.0(2026-10-28・老師「不思議超商追加技能升級書販賣,每天限購 10 本」)— 道具本體是既有 skill_upgrade_book(背包使用→選英雄升 1 個技能);
+  //   分類自動落在「強化」(id 不含 reset/summon/pet_food)。
+  { id:'skill_upgrade_book', name:'技能升級書', icon:'📖',
+    desc:'記載英雄招式奧義的祕笈。使用後選擇 1 名英雄,為他的一個技能提升 1 級。每日商店限購 10 本。',
+    price:2500, stock:'每日10個', dailyLimit:10 },   // 老師定價 2500
   // ★ v3.37.0 寵物馴養 — 三種寵物飼料(冒險戰鬥中攜帶「未馴養寵物」時按 🐾 馴養按鈕使用)
   { id:'pet_food_basic', name:'便宜的寵物飼料', icon:'🥫',
     desc:'普通的寵物飼料。冒險戰鬥中攜帶「未馴養」的寵物時,按下 🐾 馴養按鈕餵食,有機會讓寵物永遠跟隨你!(基礎成功率 30%,稀有度愈高愈難馴養)每日限購 10 個。',
@@ -38968,6 +38973,8 @@ const ARENA_EXCHANGE_ITEMS = [
   { id:'arena_x_sr_summon',      name:'SR 英雄召喚卷',     icon:'✨', cost:15, desc:'獲得 SR 英雄召喚卷 ×1，到召喚星空使用（必得 1 名未收錄 SR；已收齊可保留）' },
   { id:'arena_x_burst_fruit',    name:'超越極限果實',      icon:'🍎', cost:10, desc:'極限爆發之果,提升 1 級爆發等級' },
   { id:'arena_x_exp_book',       name:'豪華典藏經驗書',    icon:'📚', cost:3,  desc:'大量英雄經驗,加速練等' },
+  /* ★ v5.306.0 老師「鬥技場追加技能升級書販賣,沒有限購」 */
+  { id:'arena_x_skill_book',     name:'技能升級書',        icon:'📖', cost:2,  desc:'為 1 名英雄的一個技能提升 1 級(不限購)' },
   { id:'arena_x_treasure_summon',name:'自選至寶召喚卷',    icon:'💠', cost:40, desc:'獲得 自選至寶召喚卷 ×1，到召喚星空自己挑 1 件未擁有至寶（台灣 10 + 龍王 8 件，可挑龍王）' },
   { id:'arena_x_treasure_exp',   name:'至寶經驗卷軸',      icon:'📜', cost:5,  desc:'提升 1 件至寶的經驗值' },
   { id:'arena_x_coins_10k',      name:'知識幣 1 萬',       icon:'💰', cost:5,  desc:'10,000 知識幣' },
@@ -39125,6 +39132,9 @@ function _arenaGrantExchangeItem(it){
       case 'arena_x_exp_book':
         if(typeof backpackAdd === 'function') backpackAdd('hero_exp_book_premium', 1);
         return '✅ 兌換成功!獲得 豪華典藏版英雄經驗之書 ×1 📚';
+      case 'arena_x_skill_book':   // ★ v5.306.0
+        if(typeof backpackAdd === 'function') backpackAdd('skill_upgrade_book', 1, '兌換:鬥技場商店');
+        return '✅ 兌換成功!獲得 技能升級書 ×1 📖';
       case 'arena_x_treasure_exp':
         if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
         return '✅ 兌換成功!獲得 至寶經驗卷軸 ×1 📜';
@@ -39527,6 +39537,8 @@ function _arenaShowExchangePlaceholder(){
           }
           var curZheng = (typeof window._arenaGetZhengTotal === 'function') ? window._arenaGetZhengTotal() : _zheng;
           if(curZheng < cost){ _arenaToast('🎖 鬥技之證不足'); return; }
+          // ★ v5.306.0 — 技能升級書不限購,但背包每種最多 99 本:滿了先擋下,免得白扣鬥技之證
+          if(it.id === 'arena_x_skill_book' && typeof backpackGet === 'function' && backpackGet('skill_upgrade_book') >= 99){ _arenaToast('📖 技能升級書已經 99 本(背包上限),先用掉一些再來換吧'); return; }
           _arenaBuyConfirm(it, function(){
             // 1) 扣證(原子:不足/失敗就中止,不發放)
             var ok = (typeof window._arenaSpendZheng === 'function') ? window._arenaSpendZheng(cost) : false;
