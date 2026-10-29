@@ -7219,6 +7219,22 @@ function addStatus(h,t,dur=1){
   // ★ v3.13.73 — DoT 統一基礎回合數(含既有技能,Q1甲):中毒/猛毒=5、出血/強力出血=2
   if(t === 'poison') dur = 5;
   else if(t === 'bleed') dur = 2;
+  // ★ v5.312.0 — 台灣第二章至寶「不利狀態」系列(只認至寶效果 h._treasureEff;鬥技場不套至寶故不受影響)
+  //   debuffResist:機率抵抗不利狀態(合計上限 60%)/ debuffDurCut:受到的不利狀態少 1 回合(最少 1 回合)
+  //   例外:強力挑釁、夢魘(引擎慣例不可抵擋)、鳳凰之羽;死亡宣告不縮短回合(縮短反而提早倒下)。
+  try{
+    const _twE = h._treasureEff;
+    if(_twE && (_twE.debuffResist || _twE.debuffDurCut) && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(t)
+       && t !== 'strongTaunt' && t !== '_youyouNightmare' && t !== 'phoenixFeather'){
+      if(_twE.debuffResist > 0 && Math.random() < Math.min(0.60, _twE.debuffResist / 100)){
+        try{ if(typeof showShieldVFX === 'function') showShieldVFX(h,'immune'); }catch(_){}
+        try{ log(`🛡️ [${h.name}] 台灣至寶守護:抵抗 ${(typeof statusName==='function')?statusName(t):t}!`); }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(h, '🛡️ 至寶抵抗', '#88e0ff', 600); }catch(_){}
+        return;
+      }
+      if(_twE.debuffDurCut && t !== 'deathmark' && typeof dur === 'number' && dur > 1) dur = dur - 1;
+    }
+  }catch(_eTwDb){ console.warn('[v5.312.0 至寶 不利狀態抵抗/縮短]', _eTwDb); }
   // ★ v3.15.98 — 深淵海龍王弱點限制(老師②):對海龍王施加的冰凍(freeze)一律壓成 1 回合;
   //   且「冰層碎裂後」短暫免疫期(_wbIceImmuneTurns>0)免疫冰凍 → 防無限冰凍鎖控+刷能量。
   //   (僅針對海龍王本體;對玩家英雄的冰凍維持原本 1~2 回合不受影響)
@@ -7851,6 +7867,20 @@ function addStatus(h,t,dur=1){
   if(BAD_STATUS.includes(t) && h.curHp>0 && Array.isArray(h.buffs) && h.buffs.length && !hasBuff(h,'_teaParty')){
     try{ window._cstMlSealBlock(h, t); }catch(_eCstMlSl){}
   }
+  // ★ v5.312.0 — 台灣至寶「三星蔥龜甲靈杖」debuffHealPct:每回合第一次「真的被掛上」不利狀態時,恢復最大 HP 的 X%
+  //   (被免疫/抵抗/反彈/淨化掉的不算;走 doHeal ⇒ 禁療/減療照常生效)
+  try{
+    if(h.curHp > 0 && h._treasureEff && h._treasureEff.debuffHealPct > 0 && BAD_STATUS.includes(t)
+       && Array.isArray(h.status) && h.status.some(function(s){ return s && s.type === t; })){
+      const _twRd = (typeof G !== 'undefined' && G && G.round) ? G.round : 0;
+      if(h._twDebuffHealRound !== _twRd){
+        h._twDebuffHealRound = _twRd;
+        const _twAmt = Math.max(1, Math.floor((h.hp || 0) * (h._treasureEff.debuffHealPct / 100)));
+        try{ doHeal(h, _twAmt, {isHeal:true, noDice:true, noWarhorn:true}); }catch(_){}
+        try{ log(`🐢 [${h.name}] 三星蔥龜甲靈杖:神龜長壽,遭受不利狀態時恢復 HP!`); }catch(_){}
+      }
+    }
+  }catch(_eTwDh){ console.warn('[v5.312.0 至寶 不利狀態回血]', _eTwDh); }
 }
 function addBuff(h,t,dur=1){
   if(!h||h.curHp<=0) return;
@@ -7867,6 +7897,11 @@ function addBuff(h,t,dur=1){
         dur = dur + Math.max(1, Math.round(_weaselEq.jpBuffExtend * _weCb));
       }
     }catch(_eWeasel){}
+  }
+  // ★ v5.312.0 — 台灣至寶 buffDurPlus(紅毛城夕照披風/七美雙心石滬):自己獲得的有利狀態 +1 回合
+  //   口徑比照白鼬:排除下底線開頭的內部標記;多件不疊加(固定 +1);永久型(dur≥90)不動。
+  if(dur > 0 && dur < 90 && t && !String(t).startsWith('_') && h._treasureEff && h._treasureEff.buffDurPlus){
+    dur = dur + 1;
   }
   // ★ v1.0.20260501.5120 — 激戰之舞:目標有 _buffSeal 時,拒絕施加新的「有利狀態」(包含 buffs 和 status)
   //   _buffSeal/_costHalf/_passionBonus 等內部標記 buff(下底線開頭)不在此封鎖,維持系統運作
@@ -36915,6 +36950,24 @@ function doDmg(target, rawDmg, opts={}){
         }
       }catch(_eDsWhip){ console.warn('[打神鞭 hook v5.43.0]', _eDsWhip); }
     }
+    // ★ v5.312.0 — 台灣第二章至寶「狀態」系列增傷(排除持續傷害/固定傷害;玩家增傷仍經既有 BOSS cap)
+    //   vsDebuffedDmgBonus:目標身上有任一不利狀態 ⇒ +X% / perBuffDmgBonus:自身每個有利狀態 +X%(最多 5 層)
+    try{
+      if(!opts._isDot && !opts._fromBurn && !opts.fixedDmg && !opts.isHeal){
+        if(a._treasureEff.vsDebuffedDmgBonus && target && Array.isArray(target.status)
+           && target.status.some(function(s){ return s && BAD_STATUS.includes(s.type); })){
+          const _twVd = Math.floor(dmg * (a._treasureEff.vsDebuffedDmgBonus / 100));
+          if(_twVd > 0) dmg += _twVd;
+        }
+        if(a._treasureEff.perBuffDmgBonus && Array.isArray(a.buffs)){
+          const _twBn = Math.min(5, a.buffs.filter(function(b){ return b && b.type && !String(b.type).startsWith('_'); }).length);
+          if(_twBn > 0){
+            const _twPb = Math.floor(dmg * (a._treasureEff.perBuffDmgBonus * _twBn / 100));
+            if(_twPb > 0) dmg += _twPb;
+          }
+        }
+      }
+    }catch(_eTwSt){ console.warn('[v5.312.0 至寶 狀態增傷]', _eTwSt); }
   }
   // ════════════════════════════════════════════════════════════════
   // ★ v5.30.0 — 裝備 Phase 2:攻方增傷(照上方至寶格式;鐵匠 S1 放大)
@@ -36993,6 +37046,16 @@ function doDmg(target, rawDmg, opts={}){
     const _reduceRate = Math.min(0.85, target._treasureEff.dmgReduce / 100);
     dmg = Math.max(1, Math.floor(dmg * (1 - _reduceRate)));
   }
+  // ★ v5.312.0 — 台灣至寶「太魯閣大理石神鎧」perDebuffDmgReduce:自身每個不利狀態再減傷 X%(最多 5 層、合計上限 40%)
+  try{
+    if(dmg > 0 && target && target._treasureEff && target._treasureEff.perDebuffDmgReduce && !opts.isRebound && Array.isArray(target.status)){
+      const _twDn = Math.min(5, target.status.filter(function(s){ return s && BAD_STATUS.includes(s.type); }).length);
+      if(_twDn > 0){
+        const _twDr = Math.min(0.40, target._treasureEff.perDebuffDmgReduce * _twDn / 100);
+        dmg = Math.max(1, Math.floor(dmg * (1 - _twDr)));
+      }
+    }
+  }catch(_eTwDr){ console.warn('[v5.312.0 至寶 不利狀態減傷]', _eTwDr); }
   // ════════════════════════════════════════════════════════════════
   // ★ v5.30.0 — 裝備 Phase 2:受方減免(dr 上限 50%×鐵匠 S2 放大 + 屬性減免 + 開場防禦增益)
   //   屬性判定仿寵物段口徑:opts.element/elem → SKILL_FORCE_ELEMENT[_curSkillName] → 攻方 element;
@@ -56326,6 +56389,21 @@ function startTurn(){
           });
         }
       }catch(_treRe){ console.warn('[至寶 HP regen] 失敗', _treRe); }
+      // ★ v5.312.0 — 台灣至寶 cleanseRound(中元祭放水燈/金門風獅爺鎮煞印):新回合開始依機率解除自身 1 個不利狀態
+      //   (合計上限 80%;走 _clearOneBadStatus ⇒ 頑強詛咒/強力版/強力挑釁照引擎慣例不可解)
+      try{
+        if(G.p1){
+          G.p1.forEach(function(h){
+            if(!h || h.curHp <= 0 || !h._treasureEff || !h._treasureEff.cleanseRound) return;
+            if(Math.random() >= Math.min(0.80, h._treasureEff.cleanseRound / 100)) return;
+            const _twCl = (typeof _clearOneBadStatus === 'function') ? _clearOneBadStatus(h) : null;
+            if(_twCl){
+              try{ log(`🏮 [${h.name}] 台灣至寶淨化:解除 1 個不利狀態!`); }catch(_){}
+              try{ if(typeof bannerFX === 'function') bannerFX(h, '🏮 至寶淨化', '#ffdd88', 700); }catch(_){}
+            }
+          });
+        }
+      }catch(_twClE){ console.warn('[v5.312.0 至寶 每回合淨化]', _twClE); }
     }
   }catch(_){}
   // ★ 每回合開始儲存快照（F8密技）
@@ -69283,12 +69361,15 @@ function showHeroPreview(h, isEnemy){
           windDmgReduce:'受風屬性減免', waterDmgReduce:'受水屬性減免', waterDmgBonus:'對水屬性加成',
           fireDmgBonus:'對火屬性加成', lightDmgReduce:'受光屬性減免', lightDmgBonus:'對光屬性加成',
           darkDmgReduce:'受暗屬性減免', darkDmgBonus:'對暗屬性加成', normalAtkDmgReduce:'受普攻減免',
+          // ★ v5.312.0 — 台灣第二章至寶「有利/不利狀態」系列
+          debuffResist:'抵抗不利狀態', vsDebuffedDmgBonus:'對有不利狀態敵人傷害', perBuffDmgBonus:'每個有利狀態增傷',
+          perDebuffDmgReduce:'每個不利狀態減傷', cleanseRound:'每回合解除不利狀態', debuffHealPct:'中不利狀態時回血',
         };
         // ★ v1.0.20260501.5080 — 布林旗標型效果(非百分比),由 abilityText 完整描述,
         //   不要在這裡用 「+N%」格式顯示(會變成 「healPurifyOne +1%」很怪)
         // ★ v3.12.0 — immuneBurn 加入旗標白名單(跟 _formatTreasureEff 同步)
         // ★ v3.15.17 — 地龍王之麟 immuneStun/immuneStatDown/dmgReduceRampPerRound 加入白名單
-        const _effFlagSkip = new Set(['healPurifyOne', 'immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標
+        const _effFlagSkip = new Set(['debuffDurCut', 'buffDurPlus', 'healPurifyOne','immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標
         const _items = _eqT.map(e => {
           if(!e || !e.def || !e.record) return '';
           const def = e.def, rec = e.record;
@@ -75477,11 +75558,14 @@ function _getTaiwanTreasureEffectBonus(treasureId, lv){
   const _addPct = Math.max(0, ((lv||0) - 1)) * _perLv;
   // 「布林旗標」類效果:這些 key 是布林意義(0/1),不是百分比,不參與 +2%/級的加成
   // ★ v3.12.0 — immuneBurn 加入旗標白名單(火龍王之牙的免疫燃燒,永遠 1,不成長)
-  const _flagKeys = new Set(['healPurifyOne', 'immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound', 'blockRateFlat', 'dodgeRateFlat']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標;★ v5.154.0 +2 金箍棒固定格擋/迴避(不隨等級成長)
+  const _flagKeys = new Set(['debuffDurCut', 'buffDurPlus', 'healPurifyOne','immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound', 'blockRateFlat', 'dodgeRateFlat']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標;★ v5.154.0 +2 金箍棒固定格擋/迴避(不隨等級成長)
   const out = {};
   Object.keys(def.specialEffects).forEach(k => {
     if(_flagKeys.has(k)){
       out[k] = def.specialEffects[k]; // 旗標保留原值
+    } else if(k === 'perBuffDmgBonus' || k === 'perDebuffDmgReduce'){
+      // ★ v5.312.0 — 「每層」型效果(最多 5 層)成長減半:每級 +1%(避免 5 層 × 每級 +2% 膨脹過快)
+      out[k] = def.specialEffects[k] + Math.max(0, ((lv||0) - 1));
     } else {
       out[k] = def.specialEffects[k] + _addPct; // 百分比效果加 +2%(一般)/+3%(龍王) /級
     }
@@ -80587,11 +80671,18 @@ function _renderTaiwanTreasureDetail(treasureId){
     darkDmgReduce: '受暗屬性減免',
     darkDmgBonus: '對暗屬性加成',
     normalAtkDmgReduce: '受普攻減免',
+    // ★ v5.312.0 — 台灣第二章至寶「有利/不利狀態」系列
+    debuffResist: '抵抗不利狀態機率',
+    vsDebuffedDmgBonus: '對有不利狀態的敵人傷害',
+    perBuffDmgBonus: '每個有利狀態增傷(最多5層)',
+    perDebuffDmgReduce: '每個不利狀態減傷(最多5層)',
+    cleanseRound: '每回合解除不利狀態機率',
+    debuffHealPct: '被施加不利狀態時回復 HP',
   };
   // ★ v1.0.20260501.5080 — 布林旗標型效果不在 +N% 列表顯示,改在 abilityText 描述
   // ★ v3.12.0 — immuneBurn 加入旗標白名單(跟前兩處同步)
   // ★ v3.15.17 — 地龍王之麟 immuneStun/immuneStatDown/dmgReduceRampPerRound 加入白名單
-  const _EFF_FLAG_SKIP = new Set(['healPurifyOne', 'immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標
+  const _EFF_FLAG_SKIP = new Set(['debuffDurCut', 'buffDurPlus', 'healPurifyOne','immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標
   let _effHtml = '';
   Object.keys(_eff).forEach(k => {
     if(_EFF_FLAG_SKIP.has(k)) return;
@@ -84332,7 +84423,334 @@ function _showNewHeroAnnouncement(forceShow){
       + '</div></div>';
   };
 
+  // ★★ v5.311.0(2026-10-29·老師需求「把最近新增的中國關卡和新角色、台灣新關卡和新至寶,做進現有的圖文並茂的近期活動」)★★
+  //   新增兩張置頂介紹卡:①中國關《繪卷新章》六條新路線＋21 新敵人＋7 位新 SSR ②台灣第二章《寶島二部曲》10 地點＋10 件新至寶。
+  //   ★ 全部「讀單一真相登錄表」即時產生(hero_db.js window._CN2 / window._TW2):路線、解鎖條件、首通獎勵、敵人、招募對應、
+  //     至寶效果、圖檔名零手抄 ⇒ 日後登錄表增修,本卡自動跟上。登錄表不存在時整張卡不顯示(不破版)。
+  //   ★ 70 張圖(6 路線場景/21 敵人/7 SSR/10 BOSS/10 場景/10 至寶)已逐一核對 repo 檔名;缺圖一律 onerror 隱藏或退 emoji。
+  //   ★ 鐵律 1.232 簡單風/精緻風雙版;純顯示層,零機制改動。
+  const _nwImg = function(fn){ return fn ? ('./' + encodeURIComponent(fn)) : ''; };
+  const _nwPortrait = function(n){
+    try{ return (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[n]) || _nwImg(n + '.webp'); }catch(_){ return _nwImg(n + '.webp'); }
+  };
+  const _nwEsc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]; }); };
+  const _NW_ELEM = { fire:['🔥','火','#ff8a5c'], water:['💧','水','#6cc4ff'], earth:['🪨','土','#e0b072'], wind:['🌪️','風','#8fe6b8'],
+                     grass:['🌿','草','#8ad872'], light:['✨','光','#ffe27a'], dark:['🌑','暗','#c09cff'] };
+  const _nwElemChip = function(e){
+    const x = _NW_ELEM[e]; if(!x) return '';
+    return '<span style="display:inline-block;font-size:13px;font-weight:800;color:' + x[2] + ';background:rgba(0,0,0,0.35);border:1.5px solid ' + x[2] + ';border-radius:8px;padding:1px 8px;">' + x[0] + ' ' + x[1] + '屬性</span>';
+  };
+  // 立繪框(圖載入失敗 → 隱藏圖,露出底下 emoji)
+  const _nwFace = function(name, emoji, w, h, color, radius){
+    return '<div style="position:relative;flex:0 0 auto;width:' + w + 'px;height:' + h + 'px;border-radius:' + (radius || 10) + 'px;overflow:hidden;'
+      + 'border:2px solid ' + color + ';background:radial-gradient(circle,' + color + '33,rgba(0,0,0,0.55));display:flex;align-items:center;justify-content:center;">'
+      + '<span style="font-size:' + Math.round(Math.min(w, h) * 0.45) + 'px;line-height:1;">' + (emoji || '❔') + '</span>'
+      + '<img src="' + _nwPortrait(name) + '" alt="' + _nwEsc(name) + '" loading="lazy" '
+      +   'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%;display:block;" '
+      +   'onerror="this.style.display=\'none\';" />'
+      + '</div>';
+  };
+  const _nwChip = function(txt, color){
+    return '<span style="display:inline-block;font-size:13px;font-weight:800;color:' + color + ';background:rgba(0,0,0,0.32);border:1.5px solid ' + color + '88;border-radius:8px;padding:2px 9px;margin:2px 4px 2px 0;">' + txt + '</span>';
+  };
+
+  // ════ ① 中國關《繪卷新章》════
+  const buildChinaNewChapterSection = function(){
+    const C = window._CN2;
+    if(!C || !Array.isArray(C.routes) || !C.routes.length) return '';
+    const _cu = (window._artStyle === 'cute');
+    const _T = function(c, p){ return _cu ? c : p; };
+    try{
+      const _ERA = {
+        fengshen:{ n:'封神時空', icon:'📜', c:'#ffd27a', from:'妲己',   scene:'中國冒險第二場景 朝歌宮闕.webp' },
+        xiyou:   { n:'西遊時空', icon:'🐒', c:'#ffa36b', from:'牛魔王', scene:'中國冒險第二場景 火焰山.webp' },
+        sanguo:  { n:'三國時空', icon:'⚔️', c:'#8fd0ff', from:'呂布',   scene:'中國冒險第二場景 虎牢關.webp' }
+      };
+      const _en = C.enemies || {};
+      const _rec = C.recruit || {};
+      const _placeOf = {};
+      C.routes.forEach(function(r){ _placeOf[r.main] = (r.pin && r.pin.label) || r.place || ''; });
+      const _bossN = (C.bossNames || []).length, _eliteN = (C.eliteNames || []).length;
+
+      // ── 頂部:六位新 BOSS 立繪橫幅 ──
+      const _banner = '<div style="position:relative;margin-bottom:14px;border-radius:14px;overflow:hidden;border:2px solid rgba(255,180,100,0.55);box-shadow:0 6px 22px rgba(0,0,0,0.45);">'
+        + '<div style="display:grid;grid-template-columns:repeat(' + C.routes.length + ',1fr);height:clamp(150px,22vw,230px);">'
+        + C.routes.map(function(r){
+            const _e = _en[r.main] || {};
+            return '<div style="position:relative;overflow:hidden;background:radial-gradient(circle,' + ((r.pin && r.pin.color) || '#ffb36b') + '44,#160a04);display:flex;align-items:center;justify-content:center;">'
+              + '<span style="font-size:40px;">' + (_e.emoji || '👹') + '</span>'
+              + '<img src="' + _nwPortrait(r.main) + '" alt="' + _nwEsc(r.main) + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 15%;" onerror="this.style.display=\'none\';" />'
+              + '</div>';
+          }).join('')
+        + '</div>'
+        + '<div style="position:absolute;left:0;right:0;bottom:0;padding:22px 16px 10px;background:linear-gradient(transparent,rgba(20,8,0,0.92));">'
+        +   '<div style="font-size:clamp(21px,2.8vw,29px);font-weight:900;color:#fff;text-shadow:0 0 12px rgba(255,160,60,0.9),0 2px 6px #000;line-height:1.3;">'
+        +     _T('📜 繪卷又打開了!六條新路線等你闖!', '📜 繪卷新章——封神・西遊・三國三時空再啟')
+        +   '</div>'
+        +   '<div style="font-size:15px;color:#ffe0bb;margin-top:4px;">'
+        +     _T(_bossN + ' 隻新 BOSS、' + _eliteN + ' 隻新菁英、7 位新 SSR 英雄!', '新 BOSS ' + _bossN + '・新菁英 ' + _eliteN + '・新 SSR 7 位・各附六命命座')
+        +   '</div>'
+        + '</div></div>';
+
+      // ── 單一路線卡 ──
+      const _routeTile = function(r){
+        const _pc = (r.pin && r.pin.color) || '#ffb36b';
+        const _boss = _en[r.main] || {};
+        const _rw = r.reward || {};
+        const _elites = (r.eliteTeam || []).map(function(n){
+          const _x = _en[n] || {};
+          return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:62px;">'
+            + _nwFace(n, _x.emoji, 54, 54, _pc, 27)
+            + '<div style="font-size:12px;color:#ffe8cc;font-weight:800;text-align:center;line-height:1.2;">' + _nwEsc(n) + '</div></div>';
+        }).join('');
+        const _join = (_rec[r.main] || []).map(function(h){
+          return '<div style="display:flex;align-items:center;gap:4px;background:rgba(255,230,140,0.12);border:1.5px solid rgba(255,220,120,0.5);border-radius:20px;padding:2px 9px 2px 2px;">'
+            + _nwFace(h, '🦸', 26, 26, '#ffe08a', 13)
+            + '<span style="font-size:13px;color:#ffe9a8;font-weight:800;">' + _nwEsc(h) + '</span></div>';
+        }).join('');
+        return '<div style="background:rgba(40,20,10,0.55);border:2px solid ' + _pc + 'aa;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">'
+          // 場景＋BOSS 立繪
+          + '<div style="position:relative;height:150px;background:#1a0c04;">'
+          +   '<img src="' + _nwImg(r.bg && r.bg.route) + '" alt="' + _nwEsc(r.place) + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.9;" onerror="this.style.display=\'none\';" />'
+          +   '<div style="position:absolute;right:8px;bottom:8px;">' + _nwFace(r.main, _boss.emoji, 92, 118, _pc, 10) + '</div>'
+          +   '<span style="position:absolute;left:8px;top:8px;font-size:13px;font-weight:900;color:#2a1604;background:' + _pc + ';border-radius:8px;padding:2px 9px;">'
+          +     (r.tier === 2 ? _T('第 2 條新路線', '進階路線') : _T('第 1 條新路線', '新路線')) + '</span>'
+          +   '<div style="position:absolute;left:0;bottom:0;right:108px;padding:18px 10px 8px;background:linear-gradient(transparent,rgba(20,8,0,0.88));">'
+          +     '<div style="font-size:clamp(19px,2.2vw,23px);font-weight:900;color:#fff;text-shadow:0 2px 4px #000;">' + ((r.pin && r.pin.icon) || '🏯') + ' ' + _nwEsc((r.pin && r.pin.label) || r.place) + '</div>'
+          +     '<div style="font-size:14px;color:' + _pc + ';font-weight:800;text-shadow:0 1px 3px #000;">BOSS:' + _nwEsc(r.main) + '</div>'
+          +   '</div>'
+          + '</div>'
+          // 內文
+          + '<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">'
+          +   '<div>' + _nwElemChip(r.element) + ' ' + _nwChip('🔓 ' + _T('打贏「' + _nwEsc(r.needName) + '」就會出現', '解鎖:通關' + _nwEsc(r.needName)), '#ffd8a0') + '</div>'
+          +   '<div style="font-size:15px;color:#ffe8cc;line-height:1.6;">' + _nwEsc((r.pin && r.pin.intro) || '') + '</div>'
+          +   '<div style="font-size:14px;color:#ffcf8a;font-weight:800;">' + _T('🛡 守門的菁英', '🛡 菁英守衛') + '</div>'
+          +   '<div style="display:flex;gap:8px;flex-wrap:wrap;">' + _elites + '</div>'
+          +   (_join ? ('<div style="font-size:14px;color:#ffcf8a;font-weight:800;">' + _T('🎊 用 S 評價打贏可能加入(15%)', '🎊 S 評價擊破招募(各 15%)') + '</div>'
+          +     '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + _join + '</div>') : '')
+          +   '<div>' + _nwChip('🎁 ' + _T('第一次打贏', '首通'), '#ffe08a')
+          +     (_rw.coins ? _nwChip('💰 ' + Number(_rw.coins).toLocaleString(), '#ffd34d') : '')
+          +     (_rw.crystal ? _nwChip('🔮 召喚水晶 ×' + _rw.crystal, '#cc99ff') : '')
+          +     (_rw.book ? _nwChip('📗 豪華經驗書 ×' + _rw.book, '#88e0a0') : '')
+          +   '</div>'
+          // ★ v5.312.0 — BOSS 專屬賣錢物品(C.bossDrops;每次打贏都會判定)
+          +   ((C.bossDrops && C.bossDrops[r.main]) ? ('<div>' + _nwChip(C.bossDrops[r.main].icon + ' ' + _nwEsc(C.bossDrops[r.main].name) + ' ' + Math.round(C.bossDrops[r.main].rate * 100) + '%', '#ffd8a0')
+          +     _nwChip(_T('賣 ', '收購價 ') + Number(C.bossDrops[r.main].price).toLocaleString() + ' 知識幣', '#ffd34d') + '</div>') : '')
+          + '</div></div>';
+      };
+
+      // ── 三時空區塊(原路線 → 新路線一 → 新路線二)──
+      const _eraKeys = ['fengshen', 'xiyou', 'sanguo'];
+      const _eraHtml = _eraKeys.map(function(k){
+        const E = _ERA[k];
+        const _rs = C.routes.filter(function(r){ return r.era === k; }).sort(function(a, b){ return (a.tier || 0) - (b.tier || 0); });
+        if(!_rs.length) return '';
+        const _chain = [E.from].concat(_rs.map(function(r){ return (r.pin && r.pin.label) || r.place; }));
+        return '<div style="margin-top:6px;">'
+          + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 8px;">'
+          +   '<div style="width:74px;height:46px;border-radius:8px;overflow:hidden;border:2px solid ' + E.c + ';flex:0 0 auto;background:#1a0c04;">'
+          +     '<img src="' + _nwImg(E.scene) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display=\'none\';" /></div>'
+          +   '<div style="font-size:clamp(20px,2.4vw,25px);font-weight:900;color:' + E.c + ';text-shadow:0 0 10px rgba(0,0,0,0.6);">' + E.icon + ' ' + E.n + '</div>'
+          +   '<div style="font-size:15px;color:#ffe0bb;font-weight:800;">' + _chain.map(function(s, i){ return i === 0 ? ('VS ' + _nwEsc(s)) : _nwEsc(s); }).join(' <span style="color:' + E.c + ';">➜</span> ') + '</div>'
+          + '</div>'
+          + '<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));">' + _rs.map(_routeTile).join('') + '</div>'
+          + '</div>';
+      }).join('');
+
+      // ── 7 位新 SSR ──
+      const _HEROES = [
+        { n:'楊戩',   c:'#fff2a8', role:'👁️ 必中破邪', e:'👁️',
+          h:['額頭的第三隻眼每場能看穿 1 次敵人的大絕,讓它完全沒效!(打 BOSS 剩一半威力)被天眼照到的敵人,大家一定打得中!',
+             '天眼看破:每場 1 次令敵方極限爆發完全無效(BOSS 減半),條件達成可再 +1 次;天眼神光留下「天眼印」,全隊攻擊必中。'] },
+        { n:'劉備',   c:'#9be08a', role:'🍑 仁德補師', e:'🍑',
+          h:['跟關羽或張飛一起出戰會觸發「桃園結義」,兄弟們都變強!三兄弟到齊,誰被打傷害都三人平分!',
+             '桃園結義:與關羽/張飛同隊時強化兩位兄弟並提高治療量;三英齊聚共用生命連結,爆發令兩位兄弟立即再行動。'] },
+        { n:'張飛',   c:'#e0b060', role:'🐯 怒吼猛將', e:'🐯',
+          h:['大吼一聲守住長坂橋 2 回合,敵人的範圍攻擊只能打張飛,隊友都安全了!',
+             '斷橋怒吼:2 回合內敵方全體/群體攻擊只能指向張飛並減傷(BOSS 改為一半指向張飛)。'] },
+        { n:'趙雲',   c:'#a8d8ff', role:'🐉 七進七出', e:'🐉',
+          h:['隊友血量第一次掉到三成以下,趙雲馬上衝過去幫他擋下一次攻擊再打回去!打倒敵人還能再動一次!',
+             '單騎救主:隊友首次降至 30% 以下時插隊承受攻擊並反擊;七進七出擊倒目標可再行動。'] },
+        { n:'唐三藏', c:'#ffe08a', role:'📿 佛光補師', e:'📿',
+          h:['唸緊箍咒,敵人一用技能就頭痛!跟孫悟空、豬八戒、沙悟淨一起出戰,三個徒弟都會變強!',
+             '緊箍咒:敵方每次施放技能受到傷害並可能失敗(BOSS 僅受傷);師徒同心強化三位徒弟,四人齊聚每回合治療提升。'] },
+        { n:'豬八戒', c:'#ffb0c8', role:'🐷 肉肉坦克', e:'🐷',
+          h:['被打的傷害會存進肚子(卡片上有肚量條),再一口吐出來幫全隊補血,或在大絕時一起打出去!',
+             '大肚能容:承受的傷害累積為肚量,可轉為全隊平均治療,或併入極限爆發的傷害。'] },
+        { n:'沙悟淨', c:'#b0c8e0', role:'🔱 流沙控場', e:'🔱',
+          h:['隊友要被暈眩、魅惑、燃燒、中毒時,沙悟淨會挑起來扛,每扛一次還多一層護盾!',
+             '挑擔護法:每回合 2 次替隊友承擔暈眩/魅惑/燃燒/中毒等不利狀態,每次承擔獲得護盾。'] }
+      ];
+      const _getTxt = function(n){
+        const _from = Object.keys(_rec).filter(function(b){ return (_rec[b] || []).indexOf(n) >= 0; })
+          .map(function(b){ return (_placeOf[b] || '') + '(' + b + ')'; });
+        let s = _from.length ? (_T('在 ', '') + _from.join('、') + _T(' 用 S 評價打贏有 15% 機會加入', ' S 評價擊破各 15% 機率加入')) : '';
+        if(n === '楊戩') s += _T(';六條新路線全部打通一次,一定會加入!也可以用召喚卷或召喚星空 1% 專屬格抽到。', ';六條新路線全部首通必定加入;另可由召喚卷或召喚星空 1% 專屬槽取得。');
+        else if(['劉備','張飛','趙雲'].indexOf(n) >= 0) s += _T(';赤壁和南中都打通一次,三國新英雄一定會來 1 位!也可以用召喚卷。', ';赤壁＋南中雙首通保底三國新 SSR 1 位;另可由召喚卷取得。');
+        else s += _T(';白虎嶺和獅駝嶺都打通一次,西遊新英雄一定會來 1 位!也可以用召喚卷。', ';白虎嶺＋獅駝嶺雙首通保底西遊新 SSR 1 位;另可由召喚卷取得。');
+        return s;
+      };
+      const _heroTile = function(cfg){
+        return '<div style="background:linear-gradient(160deg,rgba(60,32,14,0.7),rgba(24,12,30,0.8));border:2px solid ' + cfg.c + ';border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">'
+          + '<div style="position:relative;height:200px;background:radial-gradient(circle,' + cfg.c + '44,#120806);display:flex;align-items:center;justify-content:center;">'
+          +   '<span style="font-size:64px;">' + cfg.e + '</span>'
+          +   '<img src="' + _nwPortrait(cfg.n) + '" alt="' + _nwEsc(cfg.n) + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 12%;" onerror="this.style.display=\'none\';" />'
+          +   '<span style="position:absolute;left:8px;top:8px;font-size:13px;font-weight:900;color:#2a1604;background:#cc99ff;border-radius:8px;padding:2px 9px;">🔮 SSR</span>'
+          +   '<span style="position:absolute;right:8px;top:8px;font-size:12px;font-weight:900;color:#fff;background:rgba(0,0,0,0.55);border:1.5px solid #ffd97a;border-radius:8px;padding:2px 8px;">✨ ' + _T('6 顆命星', '六命命座') + '</span>'
+          +   '<div style="position:absolute;left:0;right:0;bottom:0;padding:18px 10px 8px;background:linear-gradient(transparent,rgba(10,4,0,0.92));display:flex;align-items:flex-end;justify-content:space-between;gap:6px;flex-wrap:wrap;">'
+          +     '<span style="font-size:clamp(22px,2.6vw,27px);font-weight:900;color:' + cfg.c + ';text-shadow:0 2px 5px #000;">' + cfg.n + '</span>'
+          +     '<span style="font-size:13px;color:#2a1604;background:' + cfg.c + ';border-radius:8px;padding:2px 9px;font-weight:900;">' + cfg.role + '</span>'
+          +   '</div>'
+          + '</div>'
+          + '<div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">'
+          +   '<div style="font-size:15px;color:#fff3dc;line-height:1.6;">' + _T(cfg.h[0], cfg.h[1]) + '</div>'
+          +   '<div style="font-size:13px;color:#ffe0a8;line-height:1.55;background:rgba(120,90,30,0.25);border-left:3px solid ' + cfg.c + ';border-radius:6px;padding:6px 9px;">🏆 ' + _getTxt(cfg.n) + '</div>'
+          + '</div></div>';
+      };
+      const _heroHtml = '<div style="font-size:clamp(21px,2.5vw,26px);font-weight:900;color:#ffcf8a;text-shadow:0 0 10px rgba(255,150,60,0.5);margin:18px 0 6px;">🦸 '
+        + _T('7 位新 SSR 英雄登場!', '新 SSR 七位・獨特機制') + '</div>'
+        + '<div style="font-size:15px;color:#ffe0bb;line-height:1.6;margin-bottom:10px;">'
+        + _T('每位都有自己才會的絕活!完整技能可以在英雄圖鑑或「🏯 第三關」介紹卡裡看喔。', '每位皆具專屬機制;完整技能、爆發與天賦見英雄圖鑑或「🏯 第三關」介紹卡的英雄群像。') + '</div>'
+        + '<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));">' + _HEROES.map(_heroTile).join('') + '</div>';
+
+      // ── 小提醒 ──
+      const _tips = '<div style="margin-top:14px;padding:12px 16px;background:rgba(70,35,15,0.5);border-left:4px solid #ffb36b;border-radius:8px;font-size:16px;color:#ffe8cc;line-height:1.75;">'
+        + _T('💡 還沒開的路線在九州輿圖上會顯示 🔒,點一下就知道要先打贏哪一關。<br>🧠 南中的藤甲兵刀槍不入,可是很怕火!紅孩兒用火打他幾乎沒用——想想看要派誰上場。<br>📚 中國關多了 60 題新題目(哪吒鬧海、三打白骨精、赤壁之戰、七擒孟獲……),還有 10 枚新獎章等你收集!',
+             '💡 未解鎖路線於九州輿圖顯示 🔒,點選可查看前置條件。<br>🧠 南中藤甲兵物理防禦極高但懼火;紅孩兒的火焰對其幾乎無效,編隊時請留意屬性與職業搭配。<br>📚 新增 60 題中國關題目(哪吒鬧海/三打白骨精/赤壁之戰/七擒孟獲等)與 10 枚《繪卷新章》獎章。')
+        + '</div>';
+
+      return '<div class="new-hero-method-card" style="padding:18px 20px;border-color:rgba(255,170,90,0.6);">'
+        + _banner
+        + '<div style="font-size:16px;color:#ffe0bb;line-height:1.65;margin-bottom:6px;">'
+        + _T('故宮的《山海萬象繪卷》又發光了!封神、西遊、三國三個時空,每個都多了兩條新路線。打贏原本的妖王(妲己、牛魔王、呂布)就會出現第一條,再打贏就出現第二條!',
+             '《山海萬象繪卷》再度展開:封神、西遊、三國三時空各延伸兩條新路線。通關原路線 BOSS(妲己/牛魔王/呂布)開啟第一條,通關第一條再開啟第二條;入口位於「🏯 第三關:中國古代探險」九州輿圖。')
+        + '</div>'
+        + _eraHtml
+        + _heroHtml
+        + _tips
+        + '</div>';
+    }catch(_eCn2Card){ console.warn('[v5.311.0 繪卷新章介紹卡]', _eCn2Card); return ''; }
+  };
+
+  // ════ ② 台灣第二章《寶島二部曲》════
+  const buildTaiwan2Section = function(){
+    const T = window._TW2;
+    if(!T || !Array.isArray(T.bosses) || !T.bosses.length) return '';
+    const _cu = (window._artStyle === 'cute');
+    const _TT = function(c, p){ return _cu ? c : p; };
+    try{
+      const _RAR = { rare:['稀有','#44aaff'], epic:['史詩','#aa66ff'], legend:['傳說','#ffaa22'], mythic:['神話','#ff44dd'] };
+      const _rar = function(r){ return _RAR[r] || ['至寶', '#ffd34d']; };
+      const _stars = function(n){ return '★'.repeat(Math.max(0, n | 0)); };
+      const _N = T.bosses.length;
+
+      // ── 頂部:10 件新至寶寶物櫃 ──
+      const _banner = '<div style="margin-bottom:14px;border-radius:14px;overflow:hidden;border:2px solid rgba(110,224,208,0.55);box-shadow:0 6px 22px rgba(0,0,0,0.45);background:radial-gradient(ellipse at top,rgba(40,90,110,0.55),rgba(6,16,30,0.95));padding:14px 12px 12px;">'
+        + '<div style="text-align:center;font-size:clamp(21px,2.8vw,29px);font-weight:900;color:#fff;text-shadow:0 0 12px rgba(80,220,200,0.9),0 2px 6px #000;line-height:1.3;">'
+        +   _TT('🏝 寶島二部曲開張!' + _N + ' 件全新台灣至寶等你拿!', '🏝 寶島二部曲——' + _N + ' 件全新台灣至寶')
+        + '</div>'
+        + '<div style="text-align:center;font-size:15px;color:#c8f4ee;margin:4px 0 12px;">'
+        +   _TT('從北到南、從本島到離島,10 個新地點,難度 ★3 到 ★7!', '北台灣→南台灣→東台灣→離島,10 個新地點・難度 ★3～★7')
+        + '</div>'
+        + '<div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));">'
+        + T.bosses.map(function(b){
+            const t = b.treasure || {}; const r = _rar(t.rarity);
+            return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">'
+              + '<div style="position:relative;width:78px;height:78px;border-radius:12px;border:2.5px solid ' + r[1] + ';box-shadow:0 0 14px ' + r[1] + '88;background:radial-gradient(circle,' + r[1] + '33,rgba(0,0,0,0.6));display:flex;align-items:center;justify-content:center;overflow:hidden;">'
+              +   '<span style="font-size:34px;">' + (t.icon || '💎') + '</span>'
+              +   '<img src="' + _nwImg(t.file) + '" alt="' + _nwEsc(t.name) + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\';" />'
+              + '</div>'
+              + '<div style="font-size:12px;font-weight:900;color:' + r[1] + ';">' + r[0] + '</div>'
+              + '<div style="font-size:12px;color:#e6fbf7;font-weight:800;text-align:center;line-height:1.25;">' + _nwEsc(t.name) + '</div>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+
+      // ── 單一地點卡 ──
+      const _tile = function(b){
+        const t = b.treasure || {}; const r = _rar(t.rarity);
+        const _ec = (_NW_ELEM[b.elem] || [])[2] || '#7ec8ff';
+        const _prev = b.preview || {};
+        return '<div style="background:rgba(10,30,44,0.62);border:2px solid ' + _ec + 'aa;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">'
+          + '<div style="position:relative;height:150px;background:#06121c;">'
+          +   '<img src="' + _nwImg(b.img && b.img.scene) + '" alt="' + _nwEsc(b.location) + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.92;" onerror="this.style.display=\'none\';" />'
+          +   '<div style="position:absolute;right:8px;bottom:8px;width:96px;height:120px;border-radius:10px;overflow:hidden;border:2px solid ' + _ec + ';background:radial-gradient(circle,' + _ec + '33,rgba(0,0,0,0.6));display:flex;align-items:center;justify-content:center;">'
+          +     '<span style="font-size:44px;">' + (b.emoji || '👹') + '</span>'
+          +     '<img src="' + _nwImg(b.img && b.img.boss) + '" alt="' + _nwEsc(b.name) + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 15%;" onerror="this.style.display=\'none\';" />'
+          +   '</div>'
+          +   '<span style="position:absolute;left:8px;top:8px;font-size:14px;font-weight:900;color:#2a1a00;background:#ffd34d;border-radius:8px;padding:2px 9px;letter-spacing:1px;">' + _stars(b.stars) + '</span>'
+          +   '<div style="position:absolute;left:0;bottom:0;right:112px;padding:18px 10px 8px;background:linear-gradient(transparent,rgba(2,10,18,0.9));">'
+          +     '<div style="font-size:clamp(18px,2.1vw,22px);font-weight:900;color:#fff;text-shadow:0 2px 4px #000;">' + (b.icon || '📍') + ' ' + _nwEsc(b.location) + '</div>'
+          +     '<div style="font-size:14px;color:' + _ec + ';font-weight:800;text-shadow:0 1px 3px #000;">BOSS:' + _nwEsc(b.name) + '</div>'
+          +   '</div>'
+          + '</div>'
+          + '<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">'
+          +   '<div>' + _nwElemChip(b.elem) + ' ' + _nwChip('📈 ' + _TT('建議等級', '建議 Lv.') + (_cu ? ' Lv.' : '') + (b.suggestLv || '?'), '#a8e8ff') + '</div>'
+          +   '<div style="font-size:15px;color:#e0f4ff;line-height:1.6;">' + _nwEsc(b.desc || '') + '</div>'
+          // 至寶列
+          +   '<div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,0.3);border:1.5px solid ' + r[1] + '99;border-radius:10px;padding:8px;">'
+          +     '<div style="position:relative;flex:0 0 auto;width:64px;height:64px;border-radius:10px;border:2px solid ' + r[1] + ';overflow:hidden;background:radial-gradient(circle,' + r[1] + '33,rgba(0,0,0,0.6));display:flex;align-items:center;justify-content:center;">'
+          +       '<span style="font-size:30px;">' + (t.icon || '💎') + '</span>'
+          +       '<img src="' + _nwImg(t.file) + '" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\';" />'
+          +     '</div>'
+          +     '<div style="flex:1 1 auto;min-width:0;">'
+          +       '<div style="font-size:15px;font-weight:900;color:' + r[1] + ';">💎 ' + _nwEsc(t.name) + ' <span style="font-size:12px;color:#fff;background:' + r[1] + ';border-radius:6px;padding:1px 7px;">' + r[0] + '</span></div>'
+          +       '<div style="font-size:13px;color:#eaf6ff;line-height:1.5;margin-top:2px;">' + _nwEsc(t.abilityText || '') + '</div>'
+          +     '</div>'
+          +   '</div>'
+          +   (_prev.title ? ('<div style="font-size:13px;color:#bfe9ff;">📚 ' + _TT('預習:', '知識預習:') + _nwEsc(_prev.title) + '</div>') : '')
+          + '</div></div>';
+      };
+
+      // ── 依難度分組(★3～★7)──
+      const _LV = { 3:_TT('入門', '入門'), 4:_TT('進階', '進階'), 5:_TT('挑戰', '挑戰'), 6:_TT('高手', '高難'), 7:_TT('最強魔王(比玉山還難!)', '極限(難度高於玉山)') };
+      const _starList = [];
+      T.bosses.forEach(function(b){ if(_starList.indexOf(b.stars) < 0) _starList.push(b.stars); });
+      _starList.sort(function(a, b){ return a - b; });
+      const _groups = _starList.map(function(s){
+        const _bs = T.bosses.filter(function(b){ return b.stars === s; });
+        return '<div style="margin-top:6px;">'
+          + '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:12px 0 8px;">'
+          +   '<span style="font-size:clamp(20px,2.4vw,25px);font-weight:900;color:#ffd34d;letter-spacing:2px;text-shadow:0 0 10px rgba(255,200,60,0.5);">' + _stars(s) + '</span>'
+          +   '<span style="font-size:17px;font-weight:900;color:#bff3ea;">' + (_LV[s] || '') + '</span>'
+          + '</div>'
+          + '<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));">' + _bs.map(_tile).join('') + '</div>'
+          + '</div>';
+      }).join('');
+
+      const _how = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">'
+        + [ ['🗺️', _TT('打開台灣地圖,按右上角「第二章」', '台灣地圖右上角切換「第二章」')],
+            ['📚', _TT('點魔王卡片的「📚 預習這個地點」先讀再挑戰', '魔王卡片「📚 預習這個地點」先行預習')],
+            ['💎', _TT('打贏魔王有機會拿到新至寶', '擊敗 BOSS 機率獲得新至寶')] ].map(function(x, i){
+            return '<div style="flex:1 1 200px;display:flex;gap:10px;align-items:center;background:rgba(20,60,70,0.5);border:1.5px solid rgba(110,224,208,0.5);border-radius:10px;padding:9px 12px;">'
+              + '<span style="flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:#6fe0d0;color:#06222a;font-weight:900;font-size:17px;display:flex;align-items:center;justify-content:center;">' + (i + 1) + '</span>'
+              + '<span style="font-size:22px;">' + x[0] + '</span>'
+              + '<span style="font-size:15px;color:#e6fbf7;font-weight:800;line-height:1.45;">' + x[1] + '</span></div>';
+          }).join('')
+        + '</div>';
+
+      const _tips = '<div style="margin-top:14px;padding:12px 16px;background:rgba(14,52,62,0.55);border-left:4px solid #6fe0d0;border-radius:8px;font-size:16px;color:#e0f7f3;line-height:1.75;">'
+        + _TT('🎲 至寶掉落機率和第一章一樣:沒自信 7.5%、普通 15%、我很會 22.5%。<br>📝 每個新地點都有 30 題新題目,邊打邊認識台灣!<br>🏅 10 隻新魔王各有首殺獎章,全部打敗還有「寶島二部曲全制霸」!<br>⚠ ★7 的魔王比玉山還要強,記得先把隊伍練好再去喔!',
+              '🎲 至寶掉落率與第一章相同:沒自信 7.5%/普通 15%/我很會 22.5%。<br>📝 每個新地點附 30 題專屬題目與預習章節。<br>🏅 10 枚首殺獎章＋「寶島二部曲全制霸」(10 隻 BOSS 全數擊敗)。<br>⚠ ★7 難度高於第一章玉山,建議隊伍充分培養後挑戰。')
+        + '</div>';
+
+      return '<div class="new-hero-method-card" style="padding:18px 20px;border-color:rgba(110,224,208,0.6);">'
+        + _banner
+        + _how
+        + _groups
+        + _tips
+        + '</div>';
+    }catch(_eTw2Card){ console.warn('[v5.311.0 寶島二部曲介紹卡]', _eTw2Card); return ''; }
+  };
+
   const _themes = [
+    // ★ v5.311.0 — 台灣第二章《寶島二部曲》＋中國關《繪卷新章》介紹卡(最新內容置頂;登錄表缺席時整張不列出)
+    ...((window._TW2 && window._TW2.bosses) ? [
+      { id:'tw2', emoji:'🏝', accent:'#6fe0d0', title:'NEW!台灣第二章《寶島二部曲》', sub:'10 個新地點 · 難度 ★3～★7 · 10 件新台灣至寶 · 每關知識預習',
+        imgs:[_nwImg('七美雙心石滬至寶.webp'), _nwImg('金門風獅爺鎮煞印.webp'), _nwImg('鵝鑾鼻東亞之光燈.webp')], detail: buildTaiwan2Section() } ] : []),
+    ...((window._CN2 && window._CN2.routes) ? [
+      { id:'cn2', emoji:'📜', accent:'#ffb36b', title:'NEW!中國關《繪卷新章》', sub:'封神・西遊・三國各 +2 條新路線 · 21 個新敵人 · 7 位新 SSR',
+        imgs:[_nwPortrait('楊戩'), _nwPortrait('劉備'), _nwPortrait('豬八戒')], detail: buildChinaNewChapterSection() } ] : []),
     // ★ v5.275.0 — 英雄命座系統介紹卡(最新功能置頂;_CST_ADMIN_ONLY===false 自動切 NEW! 正式文案·true 顯預告)
     { id:'constellation', emoji:'✨', accent:'#ffd97a', title:((window._CST_ADMIN_ONLY===false)?'NEW!英雄命座系統正式開放':'即將推出！英雄命座系統（預告）'), sub:'每位英雄 6 顆專屬命星 · 天賦／技能／大絕三條路 · 好友借用也帶命星', imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['藝天使．克雷爾']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['孫悟空']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['獅子星神']) || ''], detail: buildConstellationSection() },
     // ★ v5.232.0 — 第四～六隻 UR 登場介紹卡(最新功能置頂;比照前三隻 UR 版型)

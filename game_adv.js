@@ -11317,6 +11317,22 @@ window._onChinaBossDefeated = function(){
   // ★★★ v5.293.0 — 《繪卷新章》六條新路線結算(老師 2026-08-15 永久裁定:高價值獎勵一律首通限定,以雲端獎章 gate)
   //   首通:知識幣 + 召喚水晶 + 豪華典藏版經驗之書;重複通關只得一般戰鬥結算(EXP/知識幣/SSR 碎片×2 照舊)。
   //   首通同時宣告下一條路線浮現;六條全部首通 → 新 SSR 楊戩 100% 必定加入(比照諸葛亮保底)+「繪卷新章全通」獎章。
+  // ★ v5.312.0 — 《繪卷新章》6 BOSS 專屬賣錢物品:不限評價、可重複刷,每次打贏獨立判定(× 龍王祝福,上限 95%)。
+  //   資料=hero_db.js window._CN2.bossDrops(比照埃及雙王 v3.15.55 寫法)。
+  if(v.cn2 && window._CN2 && window._CN2.routeById && window._CN2.routeById[v.id] && window._CN2.bossDrops){
+    try{
+      const _r2d = window._CN2.routeById[v.id];
+      const _cd = window._CN2.bossDrops[_r2d.main];
+      if(_cd){
+        const _blsCn = (typeof window._gameBlessingMult === 'function') ? window._gameBlessingMult() : 1.0;
+        if(Math.random() < Math.min(0.95, _cd.rate * _blsCn)){
+          backpackAdd(_cd.id, 1);
+          try{ if(typeof log === 'function') log(_cd.icon + ' [' + _r2d.main + '] 掉落了【' + _cd.name + '】!已放入背包。'); }catch(_){}
+          try{ _showInGameToast(_cd.icon + ' 獲得' + _cd.name + '!前往超商可賣出換取 ' + _cd.price.toLocaleString() + ' 知識幣', _cd.color, 3800); }catch(_){}
+        }
+      }
+    }catch(_eCn2Sell){ console.warn('[v5.312.0 繪卷新章 BOSS 賣錢物品]', _eCn2Sell); }
+  }
   if(v.cn2 && window._CN2 && window._CN2.routeById && window._CN2.routeById[v.id]){
     try{
       const _r2 = window._CN2.routeById[v.id];
@@ -21424,7 +21440,9 @@ async function advShowBattleResult(win) {
         // 知識幣 = 主獎勵 × 0.3
         const _bossCoins = Math.round(_totalExpEachFinal * 0.3);
         // 技能升級書:1(固定) + 1(score>500) + 1(correct>=3) = 1~3 本
-        const _bookCount = 1 + ((stats.totalQuizScore||0) > 500 ? 1 : 0) + (correct >= 3 ? 1 : 0);
+        // ★ v5.313.0(老師裁定 乙)— 實際勝利結算固定只給 1 本(advStartWinSequence),面板改照實顯示 1 本
+        //   (舊算式備查:1 + (totalQuizScore>500?1:0) + (correct>=3?1:0))
+        const _bookCount = 1;
         // 各加成標示
         const _ratioAddPct = Math.round(_ratioAddPanel * 100);
         const _confAddPct = Math.round(_confAddPanel * 100);
@@ -25096,6 +25114,30 @@ async function advStartWinSequence() {
     }catch(_){}
   }
   try{ console.log('[BOSS 戰結算] _mainBoss =', _mainBoss, 'G.p2.length =', (G&&G.p2)?G.p2.length:0); }catch(_){}
+  // ★ v5.313.0(老師裁定 甲)— 日本 6 菁英只在 BOSS 戰同場出現,小怪戰的菁英掉落分支永遠跑不到 ⇒ 圖鑑寫的戰利品拿不到。
+  //   改為 BOSS 戰勝利時,敵方陣容裡每一隻菁英各自判定(口徑同小怪戰菁英分支):專屬物 60% + 技能升級書 20%,× 難度 × 龍王祝福(上限 95%)。
+  try{
+    if(typeof _adventureStage !== 'undefined' && _adventureStage === 'japan' && G && Array.isArray(G.p2)){
+      const _JP_ELITE_BOSSFIGHT_DROP = { '烏天狗':'crow_feather', '木葉天狗':'mystic_leaf', '茨木童子':'oni_arm_bone',
+                                         '星熊童子':'star_bear_fang', '殺生石分身':'sessho_stone', '管狐':'fox_tube' };
+      const _jeMult = ((typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00)
+                    * ((typeof window._gameBlessingMult === 'function') ? window._gameBlessingMult() : 1.0);
+      G.p2.forEach(function(m){
+        if(!m || !m.name || m._isBossClone) return;
+        const _jeId = _JP_ELITE_BOSSFIGHT_DROP[m.name];
+        if(!_jeId) return;
+        if(Math.random() < Math.min(0.95, 0.60 * _jeMult)){
+          backpackAdd(_jeId, 1);
+          const _jeDef = (typeof BACKPACK_ITEM_DEF !== 'undefined') ? BACKPACK_ITEM_DEF[_jeId] : null;
+          try{ log('🎁 [' + m.name + '] 掉落了【' + ((_jeDef && _jeDef.name) || _jeId) + '】!已放入背包。'); }catch(_){}
+        }
+        if(Math.random() < Math.min(0.95, 0.20 * _jeMult)){
+          backpackAdd('skill_upgrade_book', 1);
+          try{ log('📘 [' + m.name + '] 掉落了【技能升級書】×1!'); }catch(_){}
+        }
+      });
+    }
+  }catch(_eJpElite){ console.warn('[v5.313.0 日本菁英 BOSS 戰掉落]', _eJpElite); }
   if(_JAPAN_BOSS_DROPS[_mainBoss]){
     const _jd = _JAPAN_BOSS_DROPS[_mainBoss];
     // ★ v3.14.13(丙)— 龍王的祝福:物品掉寶率 +25%(上限 95%)
@@ -25306,7 +25348,10 @@ async function advStartWinSequence() {
     }catch(eDarkDrop){ console.error('[黑暗球戰利品] 掉落失敗:', eDarkDrop); }
   } else {
     // 九尾空貓怪 20% 機率掉落骨董茶杯
-    if(Math.random() < 0.20){
+    // ★ v5.313.0(老師裁定 甲)— 舊 else 會套到所有非日本/杏花妖/黑暗球的 BOSS(埃及、中國、繪卷新章、台灣全部都在掉茶杯);
+    //   改為只有九尾空貓怪那一場才判定(主 BOSS 判定或敵方陣容裡有九尾空貓怪皆可)。
+    const _isNekoBoss = (_mainBoss === '九尾空貓怪') || !!(G && G.p2 && G.p2.some(function(h){ return h && h.name === '九尾空貓怪' && !h._isBossClone; }));
+    if(_isNekoBoss && Math.random() < 0.20){
       backpackAdd('antique_teacup', 1);
       log('🍵 [九尾空貓怪] 掉落了【骨董茶杯】！已放入背包。');
       _showInGameToast('🍵 獲得骨董茶杯！前往超商可賣出換取1000知識幣', '#ffcc44', 3000);
@@ -25618,7 +25663,12 @@ async function advStartWinSequence() {
       ? (HERO_DB[_bossHero.name].exp || 0) : 55;
     let _fruitDropRate = _bossBaseExp * 0.001;
     if(typeof _adventureStage !== 'undefined' && _adventureStage === 'egypt') _fruitDropRate = 0.25;
-    if(Math.random() < _fruitDropRate){
+    // ★ v5.313.0(老師裁定 甲)— 已有「專屬果實判定」的 BOSS 不再多擲這一次(原本兩次疊加,圖鑑只寫一次):
+    //   台灣關全部 BOSS(game_battle.js _onTaiwanBossDefeated:10%/玉山 25%)、八岐大蛇(10%)、黑暗球‧希望型態(10%)。
+    //   其餘 BOSS(貓空、日本三 BOSS、中國妖王、繪卷新章)仍以本判定為唯一果實來源;埃及維持固定 25%。
+    if((typeof _adventureStage !== 'undefined' && _adventureStage === 'taiwan')
+       || _mainBoss === '八岐大蛇' || _mainBoss === '黑暗球‧希望型態') _fruitDropRate = 0;
+    if(_fruitDropRate > 0 && Math.random() < _fruitDropRate){
       backpackAdd('burst_upgrade_fruit', 1);
       try{ if(typeof window._advSaveFruitHistory === 'function') window._advSaveFruitHistory('mainboss_drop', 1); }catch(_){}
       _burstFruitDropped = true;
@@ -32144,6 +32194,8 @@ const BACKPACK_ITEM_DEF = {
   'tw_yushan_core':   { name:'崩天巨人核', icon:'⛰', desc:'山岳禁咒身軀深處的山岩核心,蘊含台灣最高峰玉山的神話之力。', type:'sell_only', sellPrice:8000 },
   // ★ v5.308.0 台灣《寶島二部曲》10 BOSS 賣錢物品(定義在 hero_db.js window._TW2;BACKPACK_ITEM_DEF 與 SHOP_SELL_ITEMS 必須同時補,中國關漏過一次)
   ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.reduce(function(o, b){ var d = b.drop; o[d.id] = { name:d.name, icon:d.icon, desc:d.desc, type:'sell_only', sellPrice:d.price }; return o; }, {}) : {}),
+  // ★ v5.312.0 中國關《繪卷新章》6 BOSS 賣錢物品(定義在 hero_db.js window._CN2.bossDrops;SHOP_SELL_ITEMS 同步補)
+  ...((window._CN2 && window._CN2.bossDrops) ? Object.keys(window._CN2.bossDrops).reduce(function(o, k){ var d = window._CN2.bossDrops[k]; o[d.id] = { name:d.name, icon:d.icon, desc:d.desc, type:'sell_only', sellPrice:d.price }; return o; }, {}) : {}),
   // ★ 召喚水晶
   // ★ v1.0.20260424.0920 — 召喚已開放,更新描述
   'summon_crystal': { name:'召喚水晶', icon:'🔮', desc:'蘊含神秘能量的水晶，每次召喚消耗 1 顆，可獲得稀有英雄、技能升級書、BOSS 賣錢物品、超越極限果實等獎勵。', type:'use', useLabel:'前往召喚星空' },
@@ -32470,6 +32522,7 @@ const SHOP_SELL_ITEMS = [
   { id:'tw_skybreaker_core', name:'夜空爆裂石', icon:'🌟', sellPrice:6000 },
   { id:'tw_yushan_core',     name:'崩天巨人核', icon:'⛰',  sellPrice:8000 },
   ...((window._TW2 && window._TW2.bosses) ? window._TW2.bosses.map(function(b){ return { id:b.drop.id, name:b.drop.name, icon:b.drop.icon, sellPrice:b.drop.price }; }) : []),   // ★ v5.308.0 台灣《寶島二部曲》
+  ...((window._CN2 && window._CN2.bossDrops) ? Object.keys(window._CN2.bossDrops).map(function(k){ var d = window._CN2.bossDrops[k]; return { id:d.id, name:d.name, icon:d.icon, sellPrice:d.price }; }) : []),   // ★ v5.312.0 中國關《繪卷新章》6 BOSS
 ];
 
 // 背包工具函式
@@ -52656,13 +52709,22 @@ const _TAIWAN_TREASURE_EFFECT_LABEL = {
   spdRampPerRound:       '每回合速度遞增(最高+30%)',
   hpMaxRampPerRound:     '每回合最大HP遞增(最高+30%)',
   skillCostReducePerRound:'每回合技能消耗遞減',
+  // ★ v5.312.0 — 台灣第二章至寶「有利/不利狀態」系列
+  debuffResist:          '抵抗不利狀態機率',
+  debuffDurCut:          '受到的不利狀態 -1 回合',
+  buffDurPlus:           '獲得的有利狀態 +1 回合',
+  vsDebuffedDmgBonus:    '對有不利狀態的敵人傷害',
+  perBuffDmgBonus:       '每個有利狀態增傷(最多5層)',
+  perDebuffDmgReduce:    '每個不利狀態減傷(最多5層)',
+  cleanseRound:          '每回合解除不利狀態機率',
+  debuffHealPct:         '被施加不利狀態時回復 HP',
 };
 
 // 把 specialEffects 物件轉成人類可讀字串陣列(用 '/' join 顯示)
 function _formatTreasureEff(effObj){
   if(!effObj || typeof effObj !== 'object') return [];
   // ★ v3.12.0(2026-05-29)— immuneBurn 加入旗標白名單(跟 _getTaiwanTreasureEffectBonus 同步)
-  const _flagKeys = new Set(['healPurifyOne', 'immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound', 'blockRateFlat', 'dodgeRateFlat']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標;★ v5.154.0 +2 金箍棒固定格擋/迴避(不隨等級成長)
+  const _flagKeys = new Set(['debuffDurCut', 'buffDurPlus', 'healPurifyOne','immuneBurn', 'immuneHealBlock', 'atkRampPerRound', 'healRampPerRound', 'immuneStun', 'immuneStatDown', 'dmgReduceRampPerRound', 'immuneNoatk', 'immuneSleep', 'immunePoison', 'immuneParalyze', 'immuneSlow', 'immuneReflect', 'immuneFreeze', 'immuneNosell', 'immuneDeathmark', 'immuneSeal', 'immuneBlind', 'immuneCharm', 'immuneTaunt', 'spdRampPerRound', 'hpMaxRampPerRound', 'skillCostReducePerRound', 'blockRateFlat', 'dodgeRateFlat']);  // ★ v3.15.17;★ v3.15.51 +5 龍王至寶免疫/遞減旗標;★ v5.154.0 +2 金箍棒固定格擋/迴避(不隨等級成長)
   const out = [];
   Object.keys(effObj).forEach(k => {
     const label = _TAIWAN_TREASURE_EFFECT_LABEL[k] || k;
@@ -65279,14 +65341,14 @@ const MONSTER_DROPS = {
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'🍵', name:'骨董茶杯',         rate:'20%',  note:'賣出可得1000知識幣' },
     { icon:'🍑', name:'超越極限果實',     rate:'約5.5%', note:'極稀有(基礎EXP×0.1%)' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 62.5%' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~75%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 75%' },
   ],
   '杏花妖': [
     { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'💄', name:'杏花胭脂',         rate:'20%',  note:'賣出可得1500知識幣' },
     { icon:'🍑', name:'超越極限果實',     rate:'約7.5%', note:'極稀有(基礎EXP×0.1%)' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 62.5%' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~75%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 75%' },
   ],
   // ★ v3.15.60(2026-06-20)— 黑暗球‧希望型態(木柵第三隻 BOSS)掉落補完整(原本圖鑑漏列此 BOSS)
   '黑暗球‧希望型態': [
@@ -65299,7 +65361,7 @@ const MONSTER_DROPS = {
     { icon:'🍑', name:'超越極限果實',     rate:'10%',  note:'升級英雄極限爆發' },
     { icon:'🔮', name:'召喚水晶×1',       rate:'50%',  note:'每場固定機率' },
     { icon:'📜', name:'至寶經驗卷軸',     rate:'10%',  note:'' },
-    { icon:'🌟', name:'稀有 SSR 英雄(解鎖)', rate:'7.5~22.5%', note:'依難度:沒自信 7.5%/普通 15%/我很會 22.5%(優先未收錄;全收錄改贈豪華經驗書)' },
+    { icon:'🌟', name:'稀有 SSR 英雄(解鎖)', rate:'7.5~22.5%', note:'依難度:沒自信 7.5%/普通 15%/我很會 22.5%(只會出現還沒收錄的學生設計 SSR;全收錄時不掉)' },
   ],
   // ★ v1.0.20260421.3000z — 日本關魔物掉落
   // ── 路邊小怪 4 隻（通用日本物 50% + 英雄經驗書 25%）──
@@ -65350,42 +65412,42 @@ const MONSTER_DROPS = {
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'🪶', name:'天狗的羽扇',       rate:'20%',  note:'賣出可得1200知識幣' },
     { icon:'🗡', name:'草薙劍',           rate:'100%', note:'擊敗必得神器（全集齊可挑戰八岐大蛇）' },
-    { icon:'🍑', name:'超越極限果實',     rate:'約5%',   note:'極稀有' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約10%',  note:'極稀有(基礎EXP×0.1%)' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~75%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 75%' },
   ],
   '酒吞童子': [
     { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'🍶', name:'鬼王的酒盃',       rate:'20%',  note:'賣出可得1200知識幣' },
     { icon:'💎', name:'八尺瓊勾玉',       rate:'100%', note:'擊敗必得神器（全集齊可挑戰八岐大蛇）' },
-    { icon:'🍑', name:'超越極限果實',     rate:'約5%',   note:'極稀有' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約10%',  note:'極稀有(基礎EXP×0.1%)' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~75%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 75%' },
   ],
   '玉藻前': [
     { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
     { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'🦊', name:'九尾狐毛髮',       rate:'20%',  note:'賣出可得1800知識幣' },
     { icon:'🪞', name:'八咫鏡',           rate:'100%', note:'擊敗必得神器（全集齊可挑戰八岐大蛇）' },
-    { icon:'🍑', name:'超越極限果實',     rate:'約7.5%', note:'極稀有' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+    { icon:'🍑', name:'超越極限果實',     rate:'約10%',  note:'極稀有(基礎EXP×0.1%)' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~75%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 75%' },
   ],
   '八岐大蛇': [
-    { icon:'📚', name:'英雄經驗值之書×3', rate:'100%', note:'勝利必得' },
-    { icon:'📘', name:'技能升級書×2',     rate:'100%', note:'勝利必得' },
+    { icon:'📚', name:'英雄經驗值之書×2', rate:'100%', note:'勝利必得' },
+    { icon:'📘', name:'技能升級書×1',     rate:'100%', note:'勝利必得' },
     { icon:'📕', name:'英雄EXP書(精裝版)×10', rate:'100%', note:'隱藏BOSS必得' },
     { icon:'📖', name:'技能升級書×5',     rate:'100%', note:'隱藏BOSS必得' },
     { icon:'🐉', name:'龍鱗片',           rate:'50%',  note:'賣出可得3000知識幣' },
     { icon:'🍑', name:'超越極限果實',     rate:'10%',  note:'稀有度最高的隱藏BOSS獎勵' },
-    { icon:'🔮', name:'召喚水晶×1',       rate:'25~62.5%', note:'全英雄收錄時依難度決定' },
+    { icon:'🔮', name:'召喚水晶×1',       rate:'25~75%', note:'全英雄收錄(排除活動限定)時依難度決定:沒自信 25%/普通 50%/我很會 75%' },
   ],
   // ── 日本稀有小怪 2 隻 ──
   '行走的二宮尊德像': [
-    { icon:'💰', name:'知識幣 3000~6000', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'💰', name:'知識幣 2500~5000', rate:'100%', note:'打倒時必定獲得' },
     { icon:'🛍️', name:'隨機賣錢道具×2~3', rate:'50%',  note:'' },
     { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
   ],
   '座敷童子': [
-    { icon:'⭐', name:'英雄EXP 1200~2400（每人）', rate:'100%', note:'打倒時必定獲得' },
+    { icon:'⭐', name:'英雄EXP 1000~2000（每人）', rate:'100%', note:'打倒時必定獲得' },
     { icon:'📘', name:'技能升級書×2~3',   rate:'50%',  note:'' },
     { icon:'📕', name:'EXP書(精裝版)×2~3', rate:'50%', note:'' },
     { icon:'🍑', name:'超越極限果實',     rate:'2%',   note:'極稀有' },
@@ -65393,27 +65455,27 @@ const MONSTER_DROPS = {
   // ★ v3.15.0 — 埃及關 5 隻小怪掉落(圖鑑顯示;埃及小怪經驗書全程精裝版)
   '木乃伊貓': [
     { icon:'🧻', name:'千年裹屍布',       rate:'60%', note:'賣出可得 24 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '流沙眼鏡蛇': [
     { icon:'🐍', name:'眼鏡蛇的毒牙',     rate:'60%', note:'賣出可得 27 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '卡諾卜壇怪': [
     { icon:'🏺', name:'破裂的卡諾卜罈',   rate:'60%', note:'賣出可得 28 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '神秘圖騰': [
     { icon:'🗿', name:'圖騰的碎片',       rate:'60%', note:'賣出可得 25 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '沙漠毒蠍': [
     { icon:'🦂', name:'毒蠍的尾針',       rate:'60%', note:'賣出可得 26 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '仙人掌怪': [
     { icon:'🌵', name:'仙人掌的針葉',     rate:'60%', note:'賣出可得 22 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '聖甲蟲': [
     { icon:'⭐', name:'英雄EXP 3000~5000（每人）', rate:'100%', note:'打倒時必定獲得' },
@@ -65424,39 +65486,39 @@ const MONSTER_DROPS = {
   // ★ v5.40.0 — 中國關 9 隻小怪掉落(賣錢物 60% 同埃及;精裝經驗書由場景結算統一掉)+ 稀有瑞獸貔貅
   '狐妖小卒': [
     { icon:'🦊', name:'狐妖的絨尾毛',     rate:'60%', note:'賣出可得 32 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '天兵殘影': [
     { icon:'📜', name:'褪色的天兵符令',   rate:'60%', note:'賣出可得 33 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '石磯童子': [
     { icon:'🪨', name:'石磯的靈石碎片',   rate:'60%', note:'賣出可得 30 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '巡山小妖': [
     { icon:'🔔', name:'巡山小銅鑼',       rate:'60%', note:'賣出可得 31 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '蜘蛛精': [
     { icon:'🕸️', name:'蜘蛛精的蛛絲',     rate:'60%', note:'賣出可得 32 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '白骨小兵': [
     { icon:'🦴', name:'森森白骨片',       rate:'60%', note:'賣出可得 29 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '黃巾賊': [
     { icon:'🟡', name:'褪色的黃頭巾',     rate:'60%', note:'賣出可得 28 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '藤甲兵': [
     { icon:'🌿', name:'浸油藤甲碎片',     rate:'60%', note:'賣出可得 30 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '連弩兵': [
     { icon:'🏹', name:'諸葛連弩的弩箭',   rate:'60%', note:'賣出可得 31 知識幣' },
-    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'' },
+    { icon:'📕', name:'英雄經驗值之書(精裝版)', rate:'25%', note:'每場戰鬥判定 1 次' },
   ],
   '貔貅': [
     { icon:'💰', name:'知識幣 3500~7000', rate:'100%', note:'打倒時必定獲得' },
@@ -65487,16 +65549,54 @@ const MONSTER_DROPS = {
     { icon:'🍑', name:'超越極限果實 ×2',  rate:'首通', note:'首次通關限定' },
     { icon:'📚', name:'豪華典藏版經驗之書 ×5', rate:'首通', note:'使用三神物與否,獎勵相同' },
   ],
+  // ★ v5.312.0 — 中國關《繪卷新章》6 BOSS(資料讀 hero_db.js window._CN2:路線首通獎勵 routes[].reward、賣錢物品 bossDrops)
+  ...((window._CN2 && Array.isArray(window._CN2.routes) && window._CN2.bossDrops) ? window._CN2.routes.reduce(function(o, r){
+    var d = window._CN2.bossDrops[r.main];
+    var rows = [];
+    if(d) rows.push({ icon:d.icon, name:d.name, rate:Math.round(d.rate * 100) + '%', note:'每次打贏都會判定;賣出可得 ' + d.price.toLocaleString() + ' 知識幣' });
+    rows.push({ icon:'🔮', name:'SSR 靈魂碎片 ×2', rate:'100%', note:'每次打贏必得(煉丹材料見下方掉落情報)' });
+    var rh = (window._CN2.recruit && window._CN2.recruit[r.main]) || [];
+    if(rh.length) rows.push({ icon:'🎊', name:'英雄加入:' + rh.join('/'), rate:'15%', note:'S 評價打贏才會判定,每位各自 15%' });
+    if(r.reward){
+      rows.push({ icon:'🪙', name:'知識幣 ×' + r.reward.coins, rate:'首通', note:'首次通關限定' });
+      rows.push({ icon:'🔮', name:'召喚水晶 ×' + r.reward.crystal, rate:'首通', note:'首次通關限定' });
+      rows.push({ icon:'📚', name:'豪華典藏版經驗之書 ×' + r.reward.book, rate:'首通', note:'首次通關限定' });
+    }
+    o[r.main] = rows; return o;
+  }, {}) : {}),
   // ★ v3.15.55(2026-06-19)— 埃及雙王賣錢物品掉落(英雄圖鑑詳情頁顯示)
   '法老王': [
     { icon:'👑', name:'黃金法老面具',     rate:'20%',  note:'賣出可得 60,000 知識幣' },
-    { icon:'🍑', name:'超越極限果實',     rate:'25%',  note:'埃及關基礎掉落率' },
+    { icon:'🍑', name:'超越極限果實',     rate:'25%',  note:'雙王戰每場共判定 1 次(埃及關固定 25%)' },
   ],
   '埃及豔后': [
     { icon:'💎', name:'尼羅河女王之珠',   rate:'20%',  note:'賣出可得 55,000 知識幣' },
-    { icon:'🍑', name:'超越極限果實',     rate:'25%',  note:'埃及關基礎掉落率' },
+    { icon:'🍑', name:'超越極限果實',     rate:'25%',  note:'雙王戰每場共判定 1 次(埃及關固定 25%)' },
   ],
 };
+// ★ v5.312.0(老師「圖鑑掉率修正,全部都檢查修正」)— 賣錢物品的價格一律以超商實際收購價為準,不再手寫:
+//   v5.68.0 賣價 ×3 後,日本/埃及/中國小怪的圖鑑仍寫舊價、台灣小怪只寫「賣出可得知識幣」沒數字。
+//   做法:依物品名稱查 SHOP_SELL_ITEMS 的 sellPrice,把 note 裡的「賣出可得…知識幣」整句改寫(查不到就保留原文)。
+try{
+  (function(){
+    var _px = {};
+    (SHOP_SELL_ITEMS || []).forEach(function(it){ if(it && it.name && typeof it.sellPrice === 'number') _px[it.name] = it.sellPrice; });
+    Object.keys(MONSTER_DROPS).forEach(function(k){
+      (MONSTER_DROPS[k] || []).forEach(function(row){
+        if(!row || typeof row.note !== 'string' || row.note.indexOf('賣出可得') < 0 || typeof _px[row.name] !== 'number') return;
+        row.note = row.note.replace(/賣出可得\s*[\d,]*\s*知識幣/, '賣出可得 ' + _px[row.name].toLocaleString() + ' 知識幣');
+      });
+    });
+    // ★ v5.313.0 — 中國妖王(五路線＋繪卷新章)的果實只來自 BOSS 通用判定「基礎EXP×0.1%」,圖鑑原本完全沒列 ⇒ 依 HERO_DB.exp 自動補一列
+    var _cnBossList = ['妲己','牛魔王','呂布','曹操','蚩尤'].concat((window._CN2 && window._CN2.bossNames) || []);
+    _cnBossList.forEach(function(n){
+      if(!MONSTER_DROPS[n] || typeof HERO_DB === 'undefined' || !HERO_DB[n]) return;
+      if(MONSTER_DROPS[n].some(function(r){ return r && r.name === '超越極限果實'; })) return;
+      var _pct = Math.round((HERO_DB[n].exp || 0) * 0.1 * 10) / 10;
+      if(_pct > 0) MONSTER_DROPS[n].push({ icon:'🍑', name:'超越極限果實', rate:'約' + _pct + '%', note:'極稀有(基礎EXP×0.1%,每次打贏判定)' });
+    });
+  })();
+}catch(_eMdPx){ console.warn('[v5.312.0 圖鑑賣價對齊]', _eMdPx); }
 
 const MINI_BATTLE_INTROS = {
   river: [
@@ -73669,7 +73769,9 @@ function openMonsterDetail(name) {
       const _isCnMob   = (typeof CHINA_ENEMY_MOB_NAMES !== 'undefined') && CHINA_ENEMY_MOB_NAMES.has && CHINA_ENEMY_MOB_NAMES.has(name);
       const _isCnBoss  = (typeof CHINA_ENEMY_BOSS_NAMES !== 'undefined') && CHINA_ENEMY_BOSS_NAMES.has && CHINA_ENEMY_BOSS_NAMES.has(name);
       const _isPixiu   = (name === '貔貅');
-      if(_isCnMob || _isCnBoss || _isPixiu){
+      // ★ v5.312.0 — 只在 BOSS 戰同場出現的隨從(不會單獨打小怪戰)⇒ 沒有個別的煉丹/裝備判定,由 BOSS 戰統一判定
+      const _bossTeamOnly = ['綠竹筍小妖','茶葉精靈','烏天狗','木葉天狗','茨木童子','星熊童子','殺生石分身','管狐','貂蟬','典韋','許褚'].indexOf(name) >= 0;
+      if((_isCnMob || _isCnBoss || _isPixiu) && !_bossTeamOnly){
         let _alchRows = '';
         if(_isPixiu){
           _alchRows += _row('💠', '極品煉丹材料 ×1', '必定掉落', 0);
@@ -73677,7 +73779,7 @@ function openMonsterDetail(name) {
         } else if(_isCnBoss){
           _alchRows += _row('🌟', '仙品煉丹材料 ×2', '必定掉落', 0);
           _alchRows += _row('💠', '極品煉丹材料 ×2', '必定掉落', 0);
-          _alchRows += _row('📜', '該路線傳說丹方 ×1', '首次通關必得', 0);
+          if(!(window._CN2 && Array.isArray(window._CN2.bossNames) && window._CN2.bossNames.indexOf(name) >= 0)) _alchRows += _row('📜', '該路線傳說丹方 ×1', '首次通關必得', 0);   // ★ v5.312.0 繪卷新章 6 BOSS 沒有傳說丹方
         } else {
           _alchRows += _row('🌿', '煉丹材料 ×1', '60%', 0);
           _alchRows += `<div style="font-size:18px;color:#bbddbb;padding:2px 12px 6px;line-height:1.6;">
@@ -73688,7 +73790,10 @@ function openMonsterDetail(name) {
       }
       // ── ③ 裝備掉落率(v5.31.0 既有規則)──
       const _rareSet = ['寶箱怪','小惡魔','行走的二宮尊德像','座敷童子','聖甲蟲','貔貅'];
-      const _gearRate = BOSS_LIST.includes(name) ? '75%(傳說80/神話20)'
+      const _isWbDrop = !!(HERO_DB[name] && HERO_DB[name].isWorldBoss);   // ★ v5.312.0 世界龍王不走冒險勝利結算 ⇒ 不掉裝備
+      const _gearRate = _isWbDrop ? '不掉落裝備'
+                      : _bossTeamOnly ? '與 BOSS 同場,由 BOSS 戰統一判定 75%'
+                      : BOSS_LIST.includes(name) ? '75%(傳說80/神話20)'
                       : (_rareSet.indexOf(name) >= 0) ? '50%(史詩75/傳說25)'
                       : '10%(稀有90/史詩10)';
       _rows.push(`<div style="font-size:20px;color:#aaccff;font-weight:800;margin:8px 0 2px;">🛡️ 中華神兵/裝備</div>`
@@ -73698,7 +73803,7 @@ function openMonsterDetail(name) {
         <div style="font-size:26px;font-weight:900;color:#ffcc66;letter-spacing:2px;margin-bottom:8px;">📦 掉落情報</div>
         <div style="display:flex;flex-direction:column;gap:5px;">${_rows.join('')}</div>
         <div style="font-size:17px;color:#ccbb99;margin-top:8px;line-height:1.6;">
-          ※ 掉落率會受難度加成影響(沒自信 −50%／普通 ±0／我很會 +50%)。
+          ※ 🎁 戰利品的掉落率會受難度影響(沒自信 −50%／普通 ±0／我很會 +50%);煉丹材料和裝備的機率固定不變。
         </div>
       </div>`;
     }catch(_eDrop){ console.warn('[v5.67.0 魔物圖鑑掉落情報] 失敗', _eDrop); return ''; }
@@ -73816,7 +73921,7 @@ function openMonsterDetail(name) {
               <div style="flex:1;">
                 <div style="font-size:20px;font-weight:800;color:${_rarityColor};">🏆 至寶: ${_treasure.name} <span style="font-size:14px;background:${_rarityColor};color:#fff;padding:2px 8px;border-radius:5px;margin-left:6px;">${_rarityName}</span></div>
                 <div style="font-size:15px;color:#ccc;margin-top:3px;">⚡ ${_treasure.abilityText||''}</div>
-                <div style="font-size:14px;color:#ffcc88;margin-top:4px;">📊 掉落機率(依玩家難度):<b style="color:#ff8866;">沒自信 5%</b> / <b style="color:#ffcc44;">普通 10%</b> / <b style="color:#88ff88;">我很會 15%</b></div>
+                <div style="font-size:14px;color:#ffcc88;margin-top:4px;">📊 掉落機率(依玩家難度):<b style="color:#ff8866;">沒自信 7.5%</b> / <b style="color:#ffcc44;">普通 15%</b> / <b style="color:#88ff88;">我很會 22.5%</b>(已擁有就不會再掉)</div>
               </div>
             </div>`;
           }

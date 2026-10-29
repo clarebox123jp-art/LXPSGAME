@@ -1198,11 +1198,11 @@ Object.assign(HERO_DB, {
   },
 
   // ── 2 種稀有小怪（對應寶箱怪 / 小惡魔）──
-  '行走的二宮尊德像':{hp:119,atk:1,sp:1,spd:60,exp:0,_rewardType:'coins',_rewardMin:3000,_rewardMax:6000,
+  '行走的二宮尊德像':{hp:119,atk:1,sp:1,spd:60,exp:0,_rewardType:'coins',_rewardMin:2500,_rewardMax:5000,
     s1:{n:'石像護體',c:2,d:'使自己無敵1回合',fd:'披上石像硬皮，進入完全無敵狀態1回合，期間不受任何傷害。'},
     s2:{n:'書卷疾走',c:1,d:'100%逃跑，每回合30%機率觸發',fd:'(被動)背著柴薪讀著書飛快離去，每回合30%機率自動逃離戰場，不給予任何獎勵。',p:true}
   },
-  '座敷童子':{hp:300,atk:30,sp:30,spd:30,exp:0,_rewardType:'exp',_rewardMin:1200,_rewardMax:2400,
+  '座敷童子':{hp:300,atk:30,sp:30,spd:30,exp:0,_rewardType:'exp',_rewardMin:1000,_rewardMax:2000,
     s1:{n:'家神惡作劇',c:3,d:'使1名對手HP剩10%，無視有利狀態',fd:'調皮的家神現出笑臉，使1名目標HP強制降至最大HP的10%，無視所有有利狀態。'},
     s2:{n:'捉迷藏詛咒',c:2,d:'使1名對手強制普攻自己隊友',fd:'邀請對手玩捉迷藏，使1名對手在下回合強制普通攻擊自己的一名隊友。'}
   },
@@ -7899,6 +7899,25 @@ var _LXPS_HERO_SD = {
     bio:{ role:'三隻眼的天庭戰神', trait:'冷靜沉著、說到做到,最看不慣仗勢欺人', hobby:'和哮天犬去山裡巡邏、練七十三變(比孫悟空多一變!)', quote:'「天眼之下,妖邪無所遁形!」' }
   };
 
+  // ── 三之二、★ v5.312.0(老師:「中國關卡 BOSS 是否有掉落賣錢物品,沒有的話要新增」)6 位新 BOSS 專屬賣錢物品 ──
+  //   比照埃及雙王/日本 BOSS:不限評價,每次打贏獨立判定 rate(× 龍王祝福掉寶加成,上限 95%);可重複刷。
+  //   第 1 條新路線 30,000 / 第 2 條 45,000 知識幣;id 一經上線永不更名(背包/超商依此記帳)。
+  //   game_adv.js 的 BACKPACK_ITEM_DEF、SHOP_SELL_ITEMS、MONSTER_DROPS 與 _onChinaBossDefeated 一律讀本表,不另手抄。
+  CN2.bossDrops = {
+    '東海龍王':   { id:'cn2_dragon_pearl',   icon:'💠', name:'龍宮夜明珠',   color:'#4fb3e8', price:30000, rate:0.20,
+      desc:'東海龍宮寶庫裡最亮的一顆夜明珠,深海中也能照出一條路。前往超商可賣出。' },
+    '聞太師':     { id:'cn2_thunder_whip',   icon:'⚡', name:'雷部金鞭殘片', color:'#f0d060', price:45000, rate:0.20,
+      desc:'聞太師雌雄金鞭上崩落的一小截,摸起來還會微微發麻。前往超商可賣出。' },
+    '白骨夫人':   { id:'cn2_bone_hairpin',   icon:'💀', name:'白骨玉簪',     color:'#b9a4e0', price:30000, rate:0.20,
+      desc:'白骨夫人變身時插在髮上的玉簪,白得像月光,據說能看穿假象。前往超商可賣出。' },
+    '大鵬金翅鵰': { id:'cn2_golden_feather', icon:'🪶', name:'金翅大鵬羽',   color:'#ffb347', price:45000, rate:0.20,
+      desc:'大鵬金翅鵰掉落的一根金色長羽,輕輕一搧就颳起一陣風。前往超商可賣出。' },
+    '周瑜':       { id:'cn2_zither_string',  icon:'🎵', name:'周郎琴弦',     color:'#e08888', price:30000, rate:0.20,
+      desc:'周瑜古琴上的一根琴弦。「曲有誤,周郎顧」,彈錯一個音他都聽得出來。前往超商可賣出。' },
+    '孟獲':       { id:'cn2_ivory_tusk',     icon:'🐘', name:'南蠻王象牙',   color:'#7fcf6b', price:45000, rate:0.20,
+      desc:'南蠻王孟獲戰象的象牙,上面刻滿了南中部落的圖騰。前往超商可賣出。' }
+  };
+
   // ── 四、資料表註冊(鐵律:只新增、不覆蓋任何既有條目)──
   CN2.bossNames = [];
   CN2.eliteNames = [];
@@ -8183,8 +8202,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_keelung', icon:'🏮', name:'雨港點燈人', desc:'第一次擊敗雨港饕鬼・鼎邊阿飄' },
       treasure:{ id:'keelung_water_lantern', name:'中元祭放水燈', rarity:'rare', icon:'🏮', file:'中元祭放水燈.webp',
         desc:'一盞紙糊的蓮花水燈,燈光溫暖,能照亮雨港最濃的霧。',
-        baseStats:{ hp:0, atk:0, sp:10, spd:5 }, specialEffects:{ hpRegenPercent:6, healReceived:15 },
-        abilityText:'基礎特技+10、速度+5;每回合自動恢復 6% HP、受到治療 +15%' },
+        baseStats:{ hp:0, atk:0, sp:10, spd:5 }, specialEffects:{ hpRegenPercent:6, healReceived:15, cleanseRound:25 },   // ★ v5.312.0 +祈福燈火
+        abilityText:'基礎特技+10、速度+5;每回合自動恢復 6% HP、受到治療 +15%;【祈福燈火】每回合開始 25% 機率解除自身 1 個不利狀態' },
       preview:{ id:'tw2_keelung', icon:'🏮', title:'基隆 · 雨港與廟口夜市', desc:'北台灣的海港城市',
         paragraphs:['<b>基隆市</b>位於台灣<b>北部</b>,是重要的<b>海港</b>城市。因為雨下得特別多,被大家稱為「<b>雨港</b>」。',
           '<b>廟口夜市</b>就在<b>奠濟宮</b>廟前,有名的小吃有<b>鼎邊趖</b>(把米漿沿著大鍋邊煮成片狀)和<b>營養三明治</b>(炸麵包夾滷蛋、火腿、小黃瓜和美乃滋)。',
@@ -8213,8 +8232,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_tamsui', icon:'🌅', name:'夕陽下的勝利', desc:'第一次擊敗河口夕魔・阿給大胃王' },
       treasure:{ id:'tamsui_sunset_cloak', name:'紅毛城夕照披風', rarity:'rare', icon:'🧣', file:'紅毛城夕照披風.webp',
         desc:'染上淡水夕陽顏色的橘紅披風,披上後身手變得又輕又準。',
-        baseStats:{ hp:10, atk:0, sp:0, spd:5 }, specialEffects:{ dodgeRate:15, hitRate:15 },
-        abilityText:'基礎 HP+10、速度+5;閃避率 +15%、命中率 +15%' },
+        baseStats:{ hp:10, atk:0, sp:0, spd:5 }, specialEffects:{ dodgeRate:15, hitRate:15, buffDurPlus:1 },   // ★ v5.312.0 +夕照餘暉
+        abilityText:'基礎 HP+10、速度+5;閃避率 +15%、命中率 +15%;【夕照餘暉】自己獲得的有利狀態多持續 1 回合' },
       preview:{ id:'tw2_tamsui', icon:'🌅', title:'淡水 · 夕陽與紅毛城', desc:'淡水河的出海口',
         paragraphs:['<b>淡水</b>位於<b>新北市</b>,在<b>淡水河</b>的出海口,黃昏時的<b>夕陽</b>非常美麗。',
           '淡水有名的小吃是<b>阿給</b>:把<b>油豆腐</b>挖空、塞進<b>冬粉</b>,再用<b>魚漿</b>封口蒸熟,淋上甜辣醬。另外還有<b>魚丸湯</b>和<b>鐵蛋</b>。',
@@ -8243,8 +8262,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_jiufen', icon:'⛏️', name:'山城淘金客', desc:'第一次擊敗山城礦魔・黃金芋圓怪' },
       treasure:{ id:'jiufen_taro_hammer', name:'九份黃金芋圓錘', rarity:'epic', icon:'🔨', file:'九份黃金芋圓錘.webp',
         desc:'金礦鍛造的大錘,錘頭鑲滿彩色芋圓寶石,一敲就迸出金光。',
-        baseStats:{ hp:0, atk:10, sp:5, spd:0 }, specialEffects:{ critRate:15, critDmgBonus:25 },
-        abilityText:'基礎攻擊+10、特技+5;爆擊率 +15%、爆擊傷害 +25%' },
+        baseStats:{ hp:0, atk:10, sp:5, spd:0 }, specialEffects:{ critRate:15, critDmgBonus:25, vsDebuffedDmgBonus:15 },   // ★ v5.312.0 +趁勢重錘
+        abilityText:'基礎攻擊+10、特技+5;爆擊率 +15%、爆擊傷害 +25%;【趁勢重錘】對身上有不利狀態的敵人傷害 +15%' },
       preview:{ id:'tw2_jiufen', icon:'⛏️', title:'九份 · 黃金山城', desc:'因金礦而興起的山城',
         paragraphs:['<b>九份</b>位於<b>新北市</b>瑞芳區的山上,以前因為發現<b>金礦</b>而熱鬧起來,和旁邊的<b>金瓜石</b>一起被稱為「<b>亞洲金都</b>」。',
           '九份老街蓋在山坡上,有長長的<b>石階</b>和一整排<b>紅燈籠</b>,晚上非常漂亮。最有名的甜點是<b>芋圓</b>,用芋頭和地瓜做成,口感 QQ 的。',
@@ -8273,8 +8292,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_tainan', icon:'🏰', name:'府城守護者', desc:'第一次擊敗古堡砲魔・紅毛大砲將' },
       treasure:{ id:'anping_sword_lion', name:'安平劍獅守護符', rarity:'epic', icon:'🦁', file:'安平劍獅守護符.webp',
         desc:'獅頭咬著寶劍的守護符,能擋下災厄,還會把壞運氣彈回去。',
-        baseStats:{ hp:10, atk:5, sp:0, spd:0 }, specialEffects:{ dmgReduce:15, reflectChance:20 },
-        abilityText:'基礎 HP+10、攻擊+5;受到傷害 -15%、受到傷害時 20% 機率讓對手受到相同的傷害' },
+        baseStats:{ hp:10, atk:5, sp:0, spd:0 }, specialEffects:{ dmgReduce:15, reflectChance:20, debuffResist:20 },   // ★ v5.312.0 +劍獅辟邪
+        abilityText:'基礎 HP+10、攻擊+5;受到傷害 -15%、受到傷害時 20% 機率讓對手受到相同的傷害;【劍獅辟邪】20% 機率抵抗不利狀態' },
       preview:{ id:'tw2_tainan', icon:'🏰', title:'台南 · 安平古堡與劍獅', desc:'台灣最古老的城市',
         paragraphs:['<b>台南</b>是台灣<b>最古老的城市</b>,以前是台灣的首府,所以被稱為「<b>府城</b>」。',
           '<b>安平古堡</b>原名「<b>熱蘭遮城</b>」,是 <b>1624 年荷蘭人</b>建造的。<b>1662 年</b>,<b>鄭成功</b>打敗荷蘭人,在台南建立了根據地。',
@@ -8303,8 +8322,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_kaohsiung', icon:'⚓', name:'港都英雄', desc:'第一次擊敗港都鋼魔・貨櫃機甲獸' },
       treasure:{ id:'pier2_crane_arm', name:'駁二鋼鐵起重臂', rarity:'epic', icon:'🦾', file:'駁二鋼鐵起重臂.webp',
         desc:'港口起重機改造成的機械手臂,一拳就能把對手打到頭昏眼花。',
-        baseStats:{ hp:0, atk:15, sp:0, spd:0 }, specialEffects:{ normalAtkDmgBonus:20, stunChance:10 },
-        abilityText:'基礎攻擊+15;普攻傷害 +20%、造成傷害時有機率使目標暈眩 1 回合(機率 10%)' },
+        baseStats:{ hp:0, atk:15, sp:0, spd:0 }, specialEffects:{ normalAtkDmgBonus:20, stunChance:10, perBuffDmgBonus:5 },   // ★ v5.312.0 +鋼鐵增壓
+        abilityText:'基礎攻擊+15;普攻傷害 +20%、造成傷害時有機率使目標暈眩 1 回合(機率 10%);【鋼鐵增壓】自身每有 1 個有利狀態,造成傷害 +5%(最多 5 層)' },
       preview:{ id:'tw2_kaohsiung', icon:'⚓', title:'高雄 · 港都與駁二', desc:'台灣最大的港口城市',
         paragraphs:['<b>高雄市</b>位於台灣<b>南部</b>,被稱為「<b>港都</b>」。<b>高雄港</b>是台灣<b>最大的港口</b>,每天有許多<b>貨櫃輪</b>進出。',
           '港邊的舊倉庫改造成「<b>駁二藝術特區</b>」,有各種藝術展覽和大型裝置藝術;流過市區的<b>愛河</b>晚上燈光非常美麗。',
@@ -8333,8 +8352,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_kenting', icon:'🗼', name:'最南端的光', desc:'第一次擊敗燈塔光魔・落山風燈靈' },
       treasure:{ id:'eluanbi_light', name:'鵝鑾鼻東亞之光燈', rarity:'legend', icon:'💡', file:'鵝鑾鼻東亞之光燈.webp',
         desc:'縮小版的燈塔燈室,光束能看穿一切迷霧,讓技能百發百中。',
-        baseStats:{ hp:0, atk:0, sp:15, spd:0 }, specialEffects:{ skillDmgBonus:20, hitRate:20 },
-        abilityText:'基礎特技+15;特技傷害 +20%、命中率 +20%' },
+        baseStats:{ hp:0, atk:0, sp:15, spd:0 }, specialEffects:{ skillDmgBonus:20, hitRate:20, immuneBlind:1, debuffDurCut:1 },   // ★ v5.312.0 +燈塔照路
+        abilityText:'基礎特技+15;特技傷害 +20%、命中率 +20%;【燈塔照路】免疫失明,受到的不利狀態少 1 回合(最少 1 回合)' },
       preview:{ id:'tw2_kenting', icon:'🗼', title:'墾丁 · 鵝鑾鼻燈塔', desc:'台灣本島最南端',
         paragraphs:['<b>墾丁</b>位於<b>屏東縣</b>的<b>恆春半島</b>,是台灣<b>第一座國家公園</b>,有美麗的沙灘和<b>珊瑚礁</b>海岸。',
           '<b>鵝鑾鼻燈塔</b>建於 <b>1883 年</b>,燈光非常強,被稱為「<b>東亞之光</b>」,為經過的船隻指引方向。',
@@ -8363,8 +8382,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_taroko', icon:'🏔️', name:'峽谷征服者', desc:'第一次擊敗峽谷石魔・大理石巨蟒' },
       treasure:{ id:'taroko_marble_armor', name:'太魯閣大理石神鎧', rarity:'legend', icon:'🛡️', file:'太魯閣大理石神鎧.webp',
         desc:'用太魯閣大理石雕成的鎧甲,紋路像流動的溪水,堅固又能淨化傷痛。',
-        baseStats:{ hp:15, atk:0, sp:0, spd:0 }, specialEffects:{ dmgReduce:20, healReceived:10, healPurifyOne:1 },
-        abilityText:'基礎 HP+15;受到傷害 -20%、受到治療 +10%、被治療時消除 1 個不利狀態' },
+        baseStats:{ hp:15, atk:0, sp:0, spd:0 }, specialEffects:{ dmgReduce:20, healReceived:10, healPurifyOne:1, perDebuffDmgReduce:5 },   // ★ v5.312.0 +岩層硬化
+        abilityText:'基礎 HP+15;受到傷害 -20%、受到治療 +10%、被治療時消除 1 個不利狀態;【岩層硬化】自身每有 1 個不利狀態,受到傷害再 -5%(最多 5 層)' },
       preview:{ id:'tw2_taroko', icon:'🏔️', title:'太魯閣 · 大理石峽谷', desc:'花蓮的壯麗峽谷',
         paragraphs:['<b>太魯閣國家公園</b>位於<b>花蓮縣</b>,這裡的山大多是<b>大理石</b>。<b>立霧溪</b>經過很長很長的時間,把山切出又深又窄的<b>峽谷</b>。',
           '有名的景點有<b>燕子口</b>(峭壁上有很多小洞,以前常有燕子在這裡築巢)、彎彎曲曲的<b>九曲洞</b>,以及紀念開路人員的<b>長春祠</b>。',
@@ -8393,8 +8412,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_yilan', icon:'🐢', name:'龜山島探險家', desc:'第一次擊敗龜嶼蔥靈・三星神龜' },
       treasure:{ id:'sanxing_turtle_staff', name:'三星蔥龜甲靈杖', rarity:'legend', icon:'🪄', file:'三星蔥龜甲靈杖.webp',
         desc:'龜甲做杖頭、三星蔥纏繞杖身的靈杖,散發清新的生命力。',
-        baseStats:{ hp:5, atk:0, sp:10, spd:0 }, specialEffects:{ hpRegenPercent:8, skillDmgBonus:15 },
-        abilityText:'基礎 HP+5、特技+10;每回合自動恢復 8% HP、特技傷害 +15%' },
+        baseStats:{ hp:5, atk:0, sp:10, spd:0 }, specialEffects:{ hpRegenPercent:8, skillDmgBonus:15, debuffHealPct:8 },   // ★ v5.312.0 +神龜長壽
+        abilityText:'基礎 HP+5、特技+10;每回合自動恢復 8% HP、特技傷害 +15%;【神龜長壽】每回合第一次被施加不利狀態時,恢復 8% HP' },
       preview:{ id:'tw2_yilan', icon:'🐢', title:'宜蘭 · 龜山島與三星蔥', desc:'蘭陽平原的寶島',
         paragraphs:['<b>宜蘭縣</b>位於台灣<b>東北部</b>,大部分的人住在<b>蘭陽平原</b>上。',
           '<b>龜山島</b>在宜蘭<b>頭城</b>外海,從岸邊看就像一隻<b>浮在海上的大烏龜</b>,是宜蘭最有名的地標,也是一座火山島。',
@@ -8423,8 +8442,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_penghu', icon:'💞', name:'雙心守護者', desc:'第一次擊敗玄武海魔・雙心石滬龍' },
       treasure:{ id:'qimei_twin_heart', name:'七美雙心石滬', rarity:'mythic', icon:'💞', file:'七美雙心石滬至寶.webp',
         desc:'玄武岩堆成的雙心形護符,能留住潮水般源源不絕的生命力。',
-        baseStats:{ hp:10, atk:0, sp:5, spd:0 }, specialEffects:{ dmgReduce:15, hpRegenPercent:8, reflectChance:15 },
-        abilityText:'基礎 HP+10、特技+5;受到傷害 -15%、每回合自動恢復 8% HP、受到傷害時 15% 機率讓對手受到相同的傷害' },
+        baseStats:{ hp:10, atk:0, sp:5, spd:0 }, specialEffects:{ dmgReduce:15, hpRegenPercent:8, reflectChance:15, debuffResist:15, buffDurPlus:1 },   // ★ v5.312.0 +雙心相守
+        abilityText:'基礎 HP+10、特技+5;受到傷害 -15%、每回合自動恢復 8% HP、受到傷害時 15% 機率讓對手受到相同的傷害;【雙心相守】15% 機率抵抗不利狀態,自己獲得的有利狀態多持續 1 回合' },
       preview:{ id:'tw2_penghu', icon:'💞', title:'澎湖 · 玄武岩與雙心石滬', desc:'台灣海峽上的群島',
         paragraphs:['<b>澎湖縣</b>是位在<b>台灣海峽</b>上的<b>群島</b>,由很多大大小小的島嶼組成。',
           '澎湖有很多<b>玄武岩</b>,是火山熔岩冷卻後形成的,常常排成一根根<b>六角形的柱子</b>,非常壯觀。',
@@ -8453,8 +8472,8 @@ var _LXPS_HERO_SD = {
       medal:{ id:'tw2_kill_kinmen', icon:'🦁', name:'鎮風英雄', desc:'第一次擊敗風獅魔將・鎮風獅爺王' },
       treasure:{ id:'kinmen_windlion_seal', name:'金門風獅爺鎮煞印', rarity:'mythic', icon:'🦁', file:'金門風獅爺鎮煞印.webp',
         desc:'刻著風獅爺的石印,蘊含鎮風止煞的力量,專門對付最強大的魔王。',
-        baseStats:{ hp:0, atk:10, sp:0, spd:5 }, specialEffects:{ bossDmgBonus:25, critRate:20 },
-        abilityText:'基礎攻擊+10、速度+5;對 BOSS 造成的傷害 +25%、爆擊率 +20%' },
+        baseStats:{ hp:0, atk:10, sp:0, spd:5 }, specialEffects:{ bossDmgBonus:25, critRate:20, cleanseRound:30, vsDebuffedDmgBonus:10 },   // ★ v5.312.0 +鎮風止煞
+        abilityText:'基礎攻擊+10、速度+5;對 BOSS 造成的傷害 +25%、爆擊率 +20%;【鎮風止煞】每回合開始 30% 機率解除自身 1 個不利狀態,對身上有不利狀態的敵人傷害 +10%' },
       preview:{ id:'tw2_kinmen', icon:'🦁', title:'金門 · 風獅爺與閩南古厝', desc:'靠近中國大陸的島嶼',
         paragraphs:['<b>金門縣</b>是位在台灣海峽西側、很靠近中國大陸的島嶼,保存了很多<b>閩南式紅磚古厝</b>,屋頂兩端翹起像燕子尾巴,叫「<b>燕尾脊</b>」。',
           '金門冬天的<b>東北季風</b>很強,以前常颳起風沙。村民在村口立起「<b>風獅爺</b>」來<b>鎮風止煞</b>、守護村落。',
