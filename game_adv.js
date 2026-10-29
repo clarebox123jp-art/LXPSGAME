@@ -41163,6 +41163,11 @@ function _openSummonTicketModal(){
     // ★ v3.13.74 — isPick=true 時,按鈕改開「自選英雄」挑選面板(_openSummonTicketPickModal)
     const _card = function(tier, label, icon, accent, have, leftCount, isPick, starCount){
       starCount = isPick ? (starCount | 0) : 0;   /* ★ v5.279.0 自選卷:已收錄可換命星的人數 */
+      /* ★ v5.309.0 隨機卷套用祈願:顯示「這張券必出 X」;X 不在隨機池時(例:BOSS 同名英雄)券照樣可用 */
+      let _wishT = '';
+      try{ if(!isPick && typeof window._wishTicketTarget === 'function') _wishT = window._wishTicketTarget(tier) || ''; }catch(_){ _wishT = ''; }
+      const _wishXtra = (_wishT && _summonTicketUnrecorded(tier).indexOf(_wishT) < 0) ? 1 : 0;
+      leftCount = leftCount + _wishXtra;
       const _canUse = have > 0 && (leftCount + starCount) > 0;
       const _fnName = isPick ? '_openSummonTicketPickModal' : '_useSummonTicket';
       const _btnTxt = isPick ? ('🌟 使用自選 ' + tier + ' 卷') : ('✨ 使用 ' + tier + ' 召喚卷');
@@ -41202,6 +41207,7 @@ function _openSummonTicketModal(){
         + '<div style="font-size:13px;color:#aabbcc;text-align:center;margin-top:4px;">'
         +   '尚有 <b style="color:' + accent + ';">' + leftCount + '</b> 名 ' + tier + ' 英雄未收錄</div>'
         + (starCount > 0 ? ('<div style="font-size:12px;color:#ffd97a;text-align:center;margin-top:2px;">⭐ 已收錄的 ' + starCount + ' 名可換成命星</div>') : '')
+        + (_wishT ? ('<div style="font-size:14px;font-weight:900;color:#ffe066;text-align:center;margin-top:4px;">🌠 祈願中:這張券必出「' + _wishT + '」</div>') : '')
         + _btnHtml
         + '</div>';
     };
@@ -41392,7 +41398,9 @@ function _useGmTicket(gmId){
         var _tierG = (_base === 'summon_ticket_ssr') ? 'SSR' : 'SR';
         var _piG = (typeof window._lxpsTicketPoolInfo === 'function')
                  ? window._lxpsTicketPoolInfo(_tierG, false) : { usable: 1, lockedNew: 0 };
-        if(_piG.usable <= 0){
+        var _wishG = '';   /* ★ v5.309.0 祈願指定的未擁有英雄不在隨機池(例:BOSS 同名英雄)時,這張券仍用得出去 */
+        try{ _wishG = (typeof window._wishTicketTarget === 'function') ? (window._wishTicketTarget(_tierG) || '') : ''; }catch(_){ _wishG = ''; }
+        if(_piG.usable <= 0 && !_wishG){
           _gmBlock = (_piG.lockedNew > 0)
             ? ('🔒 目前沒有可召喚的 ' + _tierG + '，還有 ' + _piG.lockedNew + ' 名尚未開放；券先幫你留著，開放後再用')
             : ('🔒 ' + _tierG + ' 已全收錄，券先幫你留著，日後有新英雄就能用');
@@ -41447,8 +41455,26 @@ async function _useSummonTicket(tier){
     if((typeof backpackGet === 'function' ? backpackGet(_ticketId) : 0) <= 0){
       _showInGameToast('沒有這張召喚卷了', '#ff8844', 2000); return;
     }
+    // ★ v5.309.0(老師「隨機召喚卷也套用祈願」)— 本週願望未實現且指定英雄還沒擁有 ⇒ 先向伺服器確認,這張券必出指定英雄
+    //   確認不了 ⇒ 券不扣、願望不動(比照召喚星空擋住召喚);指定英雄已擁有 ⇒ 不套用(願望留給星空轉命星)
+    let _wishH = '', _wishUid = '';
+    try{
+      if(typeof window._wishTicketTarget === 'function' && typeof window._wishTicketResolve === 'function' && window._wishTicketTarget(tier)){
+        if(window._summonTicketWishWait || window._summonTicketUsing) return;   // 防連點:確認期間再按不重複進來
+        window._summonTicketWishWait = true;
+        let _wr = null;
+        try{ _wr = await window._wishTicketResolve(tier); } finally { window._summonTicketWishWait = false; }
+        if(_wr && _wr.block){ _showInGameToast(_wr.msg || '🌠 祈願確認不了,召喚卷先幫你留著', '#ffaa44', 4200); return; }
+        _wishH = (_wr && _wr.h) || ''; _wishUid = (_wr && _wr.uid) || '';
+        if((typeof backpackGet === 'function' ? backpackGet(_ticketId) : 0) <= 0){
+          _showInGameToast('沒有這張召喚卷了', '#ff8844', 2000); return;
+        }
+      }
+    }catch(_eWishT){ _wishH = ''; }
+    // ★ v5.310.0 等待確認的那一兩秒內,願望可能已被同裝置的召喚星空用掉 ⇒ 從這裡到記錄已用全是同步執行,最後再核一次
+    try{ if(_wishH && (typeof window._wishTicketTarget !== 'function' || window._wishTicketTarget(tier) !== _wishH)) _wishH = ''; }catch(_eWishR){ _wishH = ''; }
     const _pool = _summonTicketUnrecorded(tier);
-    if(!_pool.length){
+    if(!_pool.length && !_wishH){
       // 理論上按鈕已鎖,保險再擋一次(不消耗卷)
       // ★ v5.97.0 — 同面板文案：分辨「真的全收錄」與「新英雄還沒開放」（學生回報 BUG 的根因）
       var _piU = { lockedNew: 0 };
@@ -41466,7 +41492,7 @@ async function _useSummonTicket(tier){
     window._summonTicketUsing = true;
     try{
       // ★ v5.198.0 — 比照自選券改「先發英雄→驗證到手→才扣券」(見自選券該處說明)
-      const _picked = _pool[Math.floor(Math.random() * _pool.length)];
+      const _picked = _wishH || _pool[Math.floor(Math.random() * _pool.length)];   /* ★ v5.309.0 祈願優先 */
       /* ★ v5.227.0 開一筆可續傳的召喚交易帳(同步寫 localStorage,頁面當場死掉也留得住)。
          老師回報 MAC 版「動畫播到一半跳回資源載入中 0%,券沒扣英雄也沒拿到」的根因是
          發英雄與扣券的雲端落地都是非同步的,重載搶在它們前面 ⇒ 兩筆一起被回捲。
@@ -41486,6 +41512,8 @@ async function _useSummonTicket(tier){
         return;
       }
       try{ _lxpsSummonTxnStage('granted'); }catch(_eTx2){}   /* ★ v5.227.0 已驗證到手,下一步才扣券 */
+      /* ★ v5.309.0 指定英雄已確認到手 ⇒ 立刻記為本週願望已實現(本機＋雲端永久紀錄) */
+      if(_wishH && _picked === _wishH){ try{ if(typeof window._wishTicketCommit === 'function') window._wishTicketCommit(tier, _wishH, _wishUid); }catch(_eWc){} }
       backpackRemove(_ticketId, 1);
       try{ if(typeof window._logActivity === 'function') window._logActivity('ticket_use', { ticket: _ticketId }); }catch(_){}
       // ★★ v5.91.0（老師 2026-08-20 回報「一張券被用多次」）— 扣券即時落地 ★★
@@ -41501,6 +41529,7 @@ async function _useSummonTicket(tier){
       // 關面板 + 用召喚開場動畫呈現抽到的英雄(沿用單抽特效層)
       const _m = document.getElementById('_summon-ticket-modal'); if(_m) _m.remove();
       _showSummonTicketResult(tier, _picked);
+      if(_wishH && _picked === _wishH){ setTimeout(function(){ try{ _showInGameToast('🌠 願望實現!「' + _wishH + '」來了!(本週 ' + tier + ' 願望已用掉,下週一早上 8:00 重置)', '#ffe066', 4200); }catch(_){} }, 2600); }
     } finally {
       window._summonTicketUsing = false;
     }
@@ -42669,7 +42698,7 @@ function doSummon(times){
   if(btn1 && btn1.disabled) return;
   // ★ v5.302.0 🌠 祈願:有啟用中的願望 ⇒ 先向伺服器確認(時間+雲端已用紀錄)才准召喚(扣水晶之前擋,不浪費)
   let _wishCtx = null;
-  try{ if(typeof window._wishPrepare === 'function') _wishCtx = window._wishPrepare(); }catch(_eWishP){ _wishCtx = null; }
+  try{ if(typeof window._wishPrepare === 'function') _wishCtx = window._wishPrepare(function(){ doSummon(times); }); }catch(_eWishP){ _wishCtx = null; }   /* ★ v5.310.0 確認完自動接著召喚 */
   if(_wishCtx && _wishCtx.block) return;
   const _isFreeSingleSummon = (times === 1)
     && (typeof _isDailyFreeSummonAvailable === 'function')
@@ -81900,6 +81929,9 @@ function makeRadar(dims, size) {
  *   召喚後該稀有度本週次數用盡,下週一 08:00(台灣)重置。SSR 與 SR 分開計次。
  *   次數還沒用掉以前可隨時更換指定英雄。已擁有的英雄 ⇒ 變成 1 顆命星(與召喚重複角色同規則)。
  *   寵物不算英雄,SSR/SR 槽抽到寵物時不觸發、不消耗願望。
+ *   ★ v5.309.0(2026-10-29・老師「隨機召喚卷也套用祈願」):SSR/SR 隨機召喚卷也算「召喚」——願望未實現且
+ *   指定英雄還沒擁有 ⇒ 那張券必出指定英雄並用掉願望(見 _wishTicketTarget / _wishTicketResolve / _wishTicketCommit);
+ *   指定英雄已擁有 ⇒ 隨機卷不套用(隨機卷保證新英雄,不拿去換命星),願望留給星空。
  * 【防洗次數(老師需求 2)】
  *   ① 週別用「伺服器時間」算:開召喚星空/開祈願視窗/召喚前取 version.json 回應的 Date 標頭
  *     求出時差,調快裝置時鐘也跳不到下一週;取不到伺服器時間 ⇒ 祈願暫停(不消耗、不套用,也不讓這抽白白浪費)。
@@ -81912,6 +81944,10 @@ function makeRadar(dims, size) {
   var W = window;
   var TIERS = ['SSR', 'SR'];
   var FRESH_MS = 15 * 60 * 1000;
+  /* ★ v5.310.0(2026-10-29・老師「確認不會出現一週內重複祈願」)— 真正「套用願望」前,雲端已用紀錄必須是 60 秒內重讀的。
+     舊版沿用 15 分鐘快取:同一帳號兩台裝置都開著時,A 台剛用掉願望,B 台 15 分鐘內不重讀就會再實現一次。 */
+  var APPLY_MS = 60 * 1000;
+  var _prepBusy = false;
   function _esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
   function _toast(m, c, d){ try{ if(typeof _showInGameToast === 'function') _showInGameToast(m, c || '#ffe066', d || 2600); }catch(_){} }
   function _uid(){ try{ return W._gUserId || ''; }catch(_){ return ''; } }
@@ -82086,16 +82122,24 @@ function makeRadar(dims, size) {
   };
 
   /* ── doSummon 前置:有啟用中的願望 ⇒ 一定要先完成伺服器確認才可召喚 ── */
-  W._wishPrepare = function(){
+  W._wishPrepare = function(retry){
     try{
       var u = _uid();
       if(!u) return null;
       var s = _st();
       if(!_active('SSR') && !_active('SR')) return null;
-      if(!(_srvOk() && _logUid === u && (Date.now() - _logReadAt) < FRESH_MS)){
-        W._wishVerify(false).then(function(ok){
+      /* ★ v5.310.0 套用前一律重讀雲端(60 秒內讀過才免);確認成功就自動接著召喚,學生不用再按一次 */
+      if(!(_srvOk() && _logUid === u && (Date.now() - _logReadAt) < APPLY_MS)){
+        if(_prepBusy) return { block:true };
+        _prepBusy = true;
+        _toast('🌠 正在向星空確認願望…', '#ffe066', 1400);
+        W._wishVerify(true).then(function(ok){
+          _prepBusy = false;
+          var so = null; try{ so = document.getElementById('summon-overlay'); }catch(_){}
+          var still = !so || so.style.display !== 'none';
+          if(ok && still && typeof retry === 'function' && _uid() === u){ try{ retry(); }catch(_eR){ console.warn('[祈願] 自動召喚', _eR); } return; }
           _toast(ok ? '🌠 願望已確認!請再按一次召喚' : '🌠 現在連不上星空(網路),祈願先暫停;要不要先不指定英雄再召喚?', ok ? '#ffe066' : '#ffaa44', 3200);
-        });
+        }, function(){ _prepBusy = false; });
         return { block:true };
       }
       s = _st();
@@ -82134,6 +82178,47 @@ function makeRadar(dims, size) {
     }catch(e){ console.warn('[祈願] 套用例外 → 原結果', e); return one; }
   };
 
+  /* ── ★ v5.309.0(2026-10-29・老師「隨機召喚卷也套用祈願」)SSR/SR 隨機召喚卷 ──
+   *   本週該稀有度的願望還沒實現、而且指定英雄「還沒擁有」⇒ 這張隨機卷必出指定英雄,並消耗願望(與星空同一份紀錄、同一套防洗)。
+   *   指定英雄已擁有(星空會轉命星)⇒ 隨機卷不套用、願望保留給星空:隨機卷本來保證新英雄,換成 1 顆命星對學生是吃虧。
+   *   一定要先向伺服器確認(時間+雲端已用紀錄)才套用;確認不了 ⇒ 券不扣、願望不動(比照星空擋住召喚)。 */
+  W._wishTicketTarget = function(tier){   /* 同步(不連線):這張隨機卷「可能」套用祈願的指定英雄,沒有回 '' */
+    try{
+      if(tier !== 'SSR' && tier !== 'SR') return '';
+      if(!_uid()) return '';
+      var s = _st();
+      if(!_active(tier)) return '';
+      var h = s[tier].h;
+      if(!h || _owned(h)) return '';
+      return _okHero(tier, h) ? h : '';
+    }catch(_){ return ''; }
+  };
+  W._wishTicketResolve = function(tier){   /* 非同步:確認後回 { h:指定英雄或'', block:是否要擋下(券不扣), msg } */
+    try{
+      if(!W._wishTicketTarget(tier)) return Promise.resolve({ h:'', block:false });
+      var u = _uid();
+      return W._wishVerify(true).then(function(ok){   /* ★ v5.310.0 隨機卷套用前一律重讀雲端已用紀錄(不吃 15 分鐘快取) */
+        if(!ok) return { h:'', block:true, msg:'🌠 現在連不上星空(網路),確認不了願望;召喚卷先幫你留著,等一下再用(或先到召喚星空「祈願」取消指定)' };
+        if(_uid() !== u) return { h:'', block:true, msg:'帳號換過了,請重新打開召喚卷' };
+        var s = _st();
+        if(_wkOf(_now()) !== s.wk) return { h:'', block:true, msg:'🌠 願望資料正在換週,等一下再用召喚卷' };
+        return { h:W._wishTicketTarget(tier), block:false, uid:u };   /* 雲端合併後再判一次(別台裝置可能剛用掉) */
+      }, function(){ return { h:'', block:true, msg:'🌠 現在連不上星空(網路),召喚卷先幫你留著,等一下再用' }; });
+    }catch(e){ console.warn('[祈願] 隨機卷前置', e); return Promise.resolve({ h:'', block:false }); }
+  };
+  W._wishTicketCommit = function(tier, h, uid){   /* 英雄已確認到手後呼叫:記為已用(本機 + 雲端 arrayUnion 永久紀錄) */
+    try{
+      if((tier !== 'SSR' && tier !== 'SR') || !h) return;
+      if(uid && _uid() !== uid) return;
+      var s = _st(), ts = _now();
+      if(s[tier].used) return;
+      s[tier].used = true; s[tier].uh = h; s[tier].ua = ts;
+      _saveLocal();
+      _cloudWrite(s.wk + '|' + tier + '|' + h + '|' + ts, '隨機卷實現 ' + tier + ' ' + h);
+      W._wishRefreshBtn();
+    }catch(e){ console.warn('[祈願] 隨機卷記錄', e); }
+  };
+
   /* ── 指定 / 取消 ── */
   function _setWish(t, h){
     var u = _uid();
@@ -82154,7 +82239,7 @@ function makeRadar(dims, size) {
       s[t].h = h || ''; s[t].at = _now();
       _saveLocal(); _cloudWrite(null, '指定 ' + t + ' ' + (h || '(取消)'));
       try{ playSfx(h ? 'sfx-medal-unlock' : 'sfx-sel', 0.7); }catch(_){}
-      if(h) _toast('🌠 已指定 ' + t + ':「' + h + '」!本週第一次召喚出 ' + t + ' 英雄就是他!', '#ffe066', 3600);
+      if(h) _toast('🌠 已指定 ' + t + ':「' + h + '」!本週第一次召喚出 ' + t + ' 英雄(或用 ' + t + ' 隨機召喚卷)就是他!', '#ffe066', 3600);
       _render(); W._wishRefreshBtn();
     });
   }
@@ -82251,8 +82336,8 @@ function makeRadar(dims, size) {
     var s = _st(), t = _tab, x = s[t];
     var h = '<div class="wcard" role="dialog" aria-modal="true"><button type="button" class="wx" data-w="close" aria-label="關閉">✕</button>'
       + '<div class="wtitle">🌠 祈願之星</div>'
-      + '<div class="wlore">每週可以各指定 <b>1 位 SSR</b> 和 <b>1 位 SR</b> 英雄。這週第一次在召喚星空召喚出 SSR(或 SR)英雄時,<b>一定是你指定的英雄</b>!<br>'
-      + '願望實現後要等<b>下週一早上 8:00</b> 才能再許願;還沒實現前隨時可以換人。已經擁有的英雄會變成 1 顆命星。(寵物不算英雄)</div>'
+      + '<div class="wlore">每週可以各指定 <b>1 位 SSR</b> 和 <b>1 位 SR</b> 英雄。這週第一次在召喚星空召喚出 SSR(或 SR)英雄,或是第一次用 SSR(或 SR)<b>隨機召喚卷</b>時,<b>一定是你指定的英雄</b>!<br>'
+      + '願望實現後要等<b>下週一早上 8:00</b> 才能再許願;還沒實現前隨時可以換人。已經擁有的英雄在召喚星空會變成 1 顆命星(隨機召喚卷只在你還沒擁有他時才套用)。(寵物不算英雄)</div>'
       + '<div class="wtabs">' + TIERS.map(function(k){
           var y = s[k], lab = y.used ? '✅ 已實現' : (y.h ? '🌠 UP中' : '可許願');
           return '<button type="button" class="wtab' + (k === t ? ' on' : '') + '" data-w="tab" data-v="' + k + '">' + k + '(' + lab + ')</button>';
