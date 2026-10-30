@@ -22252,7 +22252,7 @@ const ADMIN_ALL_HEROES = [
     var s = { h:{}, t:{}, s:{}, b:{}, c:0 };
     try{ (advGetUnlockedHeroes() || []).forEach(function(n){ if(n) s.h[n] = (typeof _heroLevels === 'object' && _heroLevels && (+_heroLevels[n] || 0)) || 1; }); }catch(_){}
     try{ if(typeof _taiwanTreasureData === 'object' && _taiwanTreasureData) Object.keys(_taiwanTreasureData).forEach(function(id){ var r = _taiwanTreasureData[id]; if(r) s.t[id] = (+r.lv || 0) || 1; }); }catch(_){}
-    try{ var d = W._cstData; if(d && d.got){ Object.keys(d.got).forEach(function(k){ var n = (+d.got[k] || 0) - (+((d.used || {})[k]) || 0); if(n > 0) s.s[k] = n; }); } }catch(_){}
+    try{ var d = W._cstData; if(d && d.got){ Object.keys(d.got).forEach(function(k){ if(k.indexOf('#rshop_') === 0) return; var n = (+d.got[k] || 0) - (+((d.used || {})[k]) || 0); if(n > 0) s.s[k] = n; }); } }catch(_){}   /* ★ v5.314.0 '#rshop_<週>' 是 R 自選命星每週限購計數,不是資產 */
     try{ if(typeof _playerBackpack === 'object' && _playerBackpack) Object.keys(_playerBackpack).forEach(function(k){ var v = +_playerBackpack[k] || 0; if(v) s.b[k] = v; }); }catch(_){}
     try{ s.c = Math.round(+_knowledgeCoins || 0); }catch(_){}
     return s;
@@ -32332,6 +32332,12 @@ const SHOP_PRODUCTS = [
   { id:'skill_upgrade_book', name:'技能升級書', icon:'📖',
     desc:'記載英雄招式奧義的祕笈。使用後選擇 1 名英雄,為他的一個技能提升 1 級。每日商店限購 10 本。',
     price:2500, stock:'每日10個', dailyLimit:10 },   // 老師定價 2500
+  // ★ v5.314.0(2026-10-30・老師「超商每週限購 1 個自選 R 卡命星,價值 1 萬」;裁定 2乙)——
+  //   不進背包:買下直接變成命星資料裡的「R 自選命星」(召喚星空 ✨ 命星工坊 R 分頁使用;買完自動打開)。
+  //   每週計數另寫在命星資料(雲端取大值,換裝置不能重買);不參加每日 7 折特價。全部 R 卡滿命 ⇒ 按鈕灰掉「已全部滿命」。
+  { id:'cst_pick_r', name:'R 自選命星', icon:'🌟',
+    desc:'閃著暖暖光芒的小星星。買下後可以選 1 位已擁有、還沒滿 6 命的 R 卡英雄(主角除外),變成他的 1 顆命星,到英雄圖鑑「✨ 命座」點亮。買完會自動打開命星工坊;也可以之後到召喚星空的「✨ 命星工坊」→「R」分頁使用。每週限購 1 個(週一 08:00 重置)。',
+    price:10000, stock:'每週1個', weeklyLimit:1 },
   // ★ v3.37.0 寵物馴養 — 三種寵物飼料(冒險戰鬥中攜帶「未馴養寵物」時按 🐾 馴養按鈕使用)
   { id:'pet_food_basic', name:'便宜的寵物飼料', icon:'🥫',
     desc:'普通的寵物飼料。冒險戰鬥中攜帶「未馴養」的寵物時,按下 🐾 馴養按鈕餵食,有機會讓寵物永遠跟隨你!(基礎成功率 30%,稀有度愈高愈難馴養)每日限購 10 個。',
@@ -33441,9 +33447,10 @@ function _nbgFmList(cute){
 function _nbgPageCst(cute){
   var B = _nbgB, b = B.b;
   if(cute) return B.h('命座突破')
-    + B.p('SR、SSR、UR 英雄都有自己的 ' + b('星座') + ',最多可以點亮 ' + b('6 顆命星') + ',點亮後英雄會變強,有些星星還會帶來新招式!(R 卡沒有命座)')
+    + B.p('每位英雄(R、SR、SSR、UR)都有自己的 ' + b('星座') + ',最多可以點亮 ' + b('6 顆命星') + ',點亮後英雄會變強,有些星星還會帶來新招式!')
     + B.s('怎麼拿到命星?')
     + B.items([
+        ['🌟', 'R 卡的命星', '到「不可思議超商」買「R 自選命星」(1 萬知識幣,每週 1 個),選一位 R 卡英雄送給他!'],
         ['🔮', '抽到一樣的英雄', '召喚抽到已經有的英雄,就會變成他的 1 顆命星!'],
         ['🎟️', '自選召喚卷', '選已經有的英雄,可以換 1 顆命星。'],
         ['🎁', '老師的獎勵', '老師也會送命星當獎勵喔!'],
@@ -33462,9 +33469,10 @@ function _nbgPageCst(cute){
       ], 220)
     + B.tip('💡 命星在冒險、主線故事和世界 BOSS 有用,' + b('鬥技場不能用') + ',比賽才公平!戰鬥紀錄出現 ✨ 就是命星在幫忙。');
   return B.h('命座突破(英雄命星)')
-    + B.p('每位 SR、SSR、UR 英雄都擁有自己的星座,最多可點亮 ' + b('6 顆專屬命星') + ':強化天賦、主動技能或極限爆發,部分命星還會帶來全新機制。R 卡沒有命座。英雄圖鑑格子卡下方的 6 顆星亮滿,就是「滿命座」。')
+    + B.p('每位 R、SR、SSR、UR 英雄都擁有自己的星座,最多可點亮 ' + b('6 顆專屬命星') + ':強化天賦、主動技能或極限爆發,部分命星還會帶來全新機制。英雄圖鑑格子卡下方的 6 顆星亮滿,就是「滿命座」。')
     + B.s('取得命星')
     + B.items([
+        ['🌟', 'R 自選命星', 'R 卡不在召喚池,命星只能從不可思議超商購買「R 自選命星」(10,000 知識幣、每週限購 1 個,週一 08:00 重置)或由老師發放;可指定任一位已擁有、未滿 6 命的 R 卡(主角除外)。'],
         ['🔮', '重複召喚', '召喚到已擁有的 SR/SSR 英雄 ⇒ 轉為該英雄命星 ×1,結果畫面會標「✨ 重複角色→命星 +1」。召喚時尚未擁有的英雄出現機率是已擁有的 3 倍。'],
         ['🎟️', '自選召喚卷', 'SR/SSR/UR 自選召喚卷可選「已經有的英雄」換 1 顆命星(已滿 6 命的英雄不會出現在清單)。'],
         ['🎁', '老師獎勵', '課堂獎勵、全班獎勵、虛寶序號與補償都能發放指定英雄命星或自選命星;還沒擁有該英雄也會先存著。'],
@@ -43348,9 +43356,13 @@ function _renderShopProducts(){
     const _isWeeklyCapped = prod.weeklyLimit > 0 && _shopWeeklyBought(prod.id) >= prod.weeklyLimit;
     // ★ v5.227.0 — 每月限購售完判定(UR 英雄替換卷)
     const _isMonthlyCapped = prod.monthlyLimit > 0 && _shopMonthlyBought(prod.id) >= prod.monthlyLimit;
-    const _isCapped = _isDailyCapped || _isWeeklyCapped || _isMonthlyCapped;
+    // ★ v5.314.0 R 自選命星:全部 R 卡滿命 / 手上的已夠用 / 資料載入中 ⇒ 按鈕灰掉並寫出原因(裁定 2乙)
+    let _cstRLock = '';
+    try{ if(prod.id === 'cst_pick_r') _cstRLock = (typeof window._cstRShopLock === 'function') ? window._cstRShopLock() : '命座未開放'; }catch(_){ _cstRLock = ''; }
+    const _isCapped = _isDailyCapped || _isWeeklyCapped || _isMonthlyCapped || !!_cstRLock;
     const _btnEnabled = !_alreadyOwned && !_isCapped && canAfford;
     const _btnLabel   = _alreadyOwned ? '✓ 已擁有'
+                     : (_cstRLock && !_isWeeklyCapped) ? ('🌟 ' + _cstRLock)
                      : _isCapped ? '⏰ 售完'
                      : '💰 購買';
     const _btnColor   = (_alreadyOwned || _isCapped) ? '#666' : (canAfford ? '#44ff88' : '#666');
@@ -43748,8 +43760,10 @@ function _getShopWeeklyKey(){
 }
 function _shopWeeklyBought(id){
   const wk = _getShopWeeklyKey();
-  if(!_shopWeeklyData || _shopWeeklyData.week !== wk) return 0;
-  return _shopWeeklyData[id] || 0;
+  const _local = (!_shopWeeklyData || _shopWeeklyData.week !== wk) ? 0 : (_shopWeeklyData[id] || 0);
+  // ★ v5.314.0 R 自選命星:另以命星資料裡的本週計數為準(雲端三槽取大值 ⇒ 換 iPad/斷線/舊存檔都不能重洗),兩者取大
+  if(id === 'cst_pick_r'){ try{ if(typeof window._cstRShopWeekBought === 'function') return Math.max(_local, window._cstRShopWeekBought() | 0); }catch(_){} }
+  return _local;
 }
 function _shopWeeklyRecordBuy(id, qty){
   const wk = _getShopWeeklyKey();
@@ -43806,6 +43820,7 @@ function _shopGetEligibleDiscountIds(){
   if(typeof SHOP_PRODUCTS === 'undefined') return ids;
   SHOP_PRODUCTS.forEach(prod => {
     if(!prod || !prod.id || !(prod.price > 0)) return;
+    if(prod.id === 'cst_pick_r') return;   // ★ v5.314.0 R 自選命星固定 1 萬,不參加每日特價(老師「價值 1 萬」)
     // 一次性商品已擁有 → 排除
     if(prod.oneTime){
       const itemDef = (typeof BACKPACK_ITEM_DEF !== 'undefined') ? (BACKPACK_ITEM_DEF[prod.id]||{}) : {};
@@ -43894,6 +43909,14 @@ async function shopBuyItem(id, _portraitConfirmed){
       _showInGameToast(`🧪 本週只剩 ${_wkRemain} 個可購買!`, '#ffaa44', 2800); return;
     }
   }
+  // ★ v5.314.0 R 自選命星:一次 1 個;命星資料要已從雲端載入、還有 R 卡能用才可以買(避免白花 1 萬知識幣)
+  if(id === 'cst_pick_r'){
+    if(qty !== 1){ _showInGameToast('🌟 R 自選命星一次只能買 1 個', '#ffaa44', 2200); return; }
+    let _cstRLk = '命座未開放';
+    try{ _cstRLk = (typeof window._cstRShopLock === 'function') ? window._cstRShopLock() : '命座未開放'; }catch(_){ _cstRLk = '資料載入中'; }
+    if(_cstRLk){ _showInGameToast('🌟 現在不能買 R 自選命星:' + _cstRLk, '#ffaa44', 2800); return; }
+    if(typeof window._cstRShopGrant !== 'function'){ _showInGameToast('🌟 命座程式還沒載入,請重新整理後再試', '#ffaa44', 2800); return; }
+  }
   const effectivePrice = _shopGetEffectivePrice(prod);
   const total = effectivePrice * qty;
   if((_knowledgeCoins||0) < total){
@@ -43934,6 +43957,17 @@ async function shopBuyItem(id, _portraitConfirmed){
     }
     // 自動套用新肖像（玩家可事後在圖鑑切回原肖像）
     _switchHeroPortrait(_itemDef.heroName, _itemDef.portraitId);
+  } else if(id === 'cst_pick_r'){
+    // ★ v5.314.0 R 自選命星:不進背包,直接寫進命星資料(#pick_R +1、本週計數 +1、命星帳本);下方 gameCloudSave 三槽一起落地
+    let _cstROk = false;
+    try{ _cstROk = !!window._cstRShopGrant('shop'); }catch(_eCstRG){ console.warn('[R 自選命星] 發放失敗', _eCstRG); _cstROk = false; }
+    if(!_cstROk){
+      _knowledgeCoins = (_knowledgeCoins||0) + total;
+      try{ _logCoinTx(total, '退款:商店-' + prod.name + '(發放失敗)'); }catch(_){}
+      _syncCoinsDisplay();
+      _showInGameToast('🌟 發放失敗,知識幣已退回', '#ff8844', 2600);
+      return;
+    }
   } else {
     backpackAdd(id, qty);
     // ★ v3.13.94 — 若購買的是召喚券,寫入活動紀錄(供 GM 查證券來源/時間)
@@ -43956,6 +43990,8 @@ async function shopBuyItem(id, _portraitConfirmed){
   // ★ 不用 openShopOverlay() 避免觸發 BGM 重播；只重新渲染商品列表與背包欄
   _renderShopProducts();
   _renderShopBagPanel();
+  // ★ v5.314.0 R 自選命星:買完直接打開命星工坊的 R 分頁(選英雄)
+  if(id === 'cst_pick_r'){ setTimeout(function(){ try{ if(typeof window._cstOpenSynth === 'function') window._cstOpenSynth('R'); }catch(_){} }, 500); }
   // ★ 等待雲端同步完成
   try{ await gameCloudSave(); }catch(e){ console.error('[buy cloud save]', e); }
 }
@@ -80875,7 +80911,9 @@ function makeRadar(dims, size) {
   W._cstEligible = function(name){
     var k = W._cstKey(name);
     if(!_db()[k]) return false;
-    return W._cstRarity(k) !== 'R';
+    /* ★ v5.314.0(老師 2026-10-30「幫所有 R 卡(主角除外)設計命星」)R 卡也有命座:命座表有這位英雄就算(主角在 _cstRarity 是 'P',規則不變)。
+       舊行備查:return W._cstRarity(k) !== 'R'; */
+    return true;
   };
   function _owned(k){
     try{
@@ -80944,10 +80982,10 @@ function makeRadar(dims, size) {
       if(W._cstHeld(k) < W._CST_MAX){ d.got[k] = (d.got[k] | 0) + 1; star++; }
       else overflow++;
     }
-    var ovKey = (rar === 'UR') ? '#pick_UR' : ('#void_' + rar);
+    var ovKey = (rar === 'UR') ? '#pick_UR' : ((rar === 'R') ? '#pick_R' : ('#void_' + rar));   /* ★ v5.314.0 R 卡沒有虛無的命星:GM 發到滿 6 命的 R ⇒ 轉 R 自選命星 */
     if(overflow){ d.got[ovKey] = (d.got[ovKey] | 0) + overflow; }
     if(star) _log('get', k, star, src);
-    if(overflow) _log(rar === 'UR' ? 'pick_get' : 'void', ovKey, overflow, (src || '') + ':' + k);
+    if(overflow) _log((rar === 'UR' || rar === 'R') ? 'pick_get' : 'void', ovKey, overflow, (src || '') + ':' + k);
     return { star:star, overflow:overflow, ovKey:ovKey, rar:rar };
   };
 
@@ -80955,7 +80993,7 @@ function makeRadar(dims, size) {
    *   寫入 got['#pick_<rar>'] + 命星帳本 hist(來源 src)+ 存檔;永久資產帳本靠快照比對自動入帳(s:#pick_SSR +1)。
    *   命座資料還沒載入完成 ⇒ 每 2 秒重試,最多 60 次(2 分鐘);仍失敗就回 false 讓呼叫端記錄,不會重複發。 */
   W._cstGrantPick = function(rar, n, src, cb){
-    rar = (rar === 'SR' || rar === 'UR') ? rar : 'SSR'; n = Math.max(1, n | 0);
+    rar = (rar === 'SR' || rar === 'UR' || rar === 'R') ? rar : 'SSR'; n = Math.max(1, n | 0);   /* ★ v5.314.0 加 R */
     var tries = 0;
     var go = function(){
       if(!_ready()){
@@ -80970,6 +81008,36 @@ function makeRadar(dims, size) {
       if(cb) cb(true);
     };
     go();
+    return true;
+  };
+
+  /* ★ v5.314.0(老師 2026-10-30)不可思議超商「🌟 R 自選命星」:10,000 知識幣、每週限購 1 個(週一 08:00 重置,同商店每週限購)。
+   *   ★ 本週買過幾個以命星資料 got['#rshop_<本週一 YYYYMMDD>'] 記錄 ⇒ 跟命星一起走雲端三槽合併(got 取 max),
+   *     換 iPad、斷線、舊存檔都不能重洗;商店本身的每週紀錄 _shopWeeklyData 也照記,兩者取大值。
+   *   ★ 裁定 2乙:11 隻 R 卡全部滿 6 命後,商品照樣顯示但按鈕變灰、標「已全部滿命」。
+   *     另外手上沒用掉的 R 自選命星已經夠填滿所有已擁有 R 卡的空位時也鎖住(避免白花知識幣)。 */
+  W._cstRShopWeekKey = function(){ try{ return '#rshop_' + ((typeof _getShopWeeklyKey === 'function') ? _getShopWeeklyKey() : ''); }catch(_){ return '#rshop_'; } };
+  W._cstRShopWeekBought = function(){ try{ return (D().got[W._cstRShopWeekKey()] | 0); }catch(_){ return 0; } };
+  function _rHeroes(){ return Object.keys(_db()).filter(function(k){ return !_isProtag(k) && W._cstRarity(k) === 'R'; }); }
+  W._cstRShopLock = function(){   // '' = 可以買;否則回傳按鈕上的原因
+    try{
+      if(!W._cstOpenForMe()) return '命座未開放';
+      if(!_ready()) return '資料載入中';
+      var all = _rHeroes();
+      if(!all.length) return '命座資料未載入';
+      if(all.every(function(k){ return _owned(k) && W._cstHeld(k) >= W._CST_MAX; })) return '已全部滿命';
+      var room = 0;
+      W._cstPickCandidates('R').forEach(function(k){ room += Math.max(0, W._CST_MAX - W._cstHeld(k)); });
+      if(room - W._cstCount('#pick_R') <= 0) return '已夠用了';
+      return '';
+    }catch(_){ return '資料載入中'; }
+  };
+  W._cstRShopGrant = function(src){   // 由 shopBuyItem 在扣幣後呼叫(呼叫前已過 _cstRShopLock 與每週檢查)
+    var d = D(), pk = '#pick_R', wk = W._cstRShopWeekKey();
+    d.got[pk] = (d.got[pk] | 0) + 1;
+    d.got[wk] = (d.got[wk] | 0) + 1;
+    _log('pick_get', pk, 1, src || 'shop');
+    try{ W._cstGridStarsRefresh(); }catch(_){}
     return true;
   };
 
@@ -81102,7 +81170,7 @@ function makeRadar(dims, size) {
     Object.keys(gm).sort(function(a, b){ return (gm[a].at || 0) - (gm[b].at || 0); }).forEach(function(id){
       var g = gm[id], dd = D();
       if(!g || !g.k || dd.ga[id]) return;
-      var isPick = /^#pick_(SR|SSR|UR)$/.test(g.k);
+      var isPick = /^#pick_(R|SR|SSR|UR)$/.test(g.k);   /* ★ v5.314.0 加 R 自選命星 */
       if(!isPick && !dbReady) return;
       dd.ga[id] = g.at || Date.now();
       var n = Math.max(1, Math.min(6, g.n | 0));
@@ -81394,7 +81462,7 @@ function makeRadar(dims, size) {
       var snap = fh.cst;
       if(!snap || typeof snap !== 'object' || !Array.isArray(snap.s) || !snap.s.length) return;
       var k = String(snap.k || '');
-      if(!_db()[k] || W._cstRarity(k) === 'R') return;
+      if(!_db()[k]) return;   /* ★ v5.314.0 R 卡也有命座(舊:|| W._cstRarity(k) === 'R') */
       if(h.name !== fh.name) return;                    /* 只套在「這隻借來的英雄」本人身上 */
       var isP = _isProtag(k);                             /* 好友主角在本機叫唯一別名 ⇒ 不比對名字,以快照 k 認主角 */
       if(!isP && W._cstKey(h.name) !== k) return;
@@ -81544,7 +81612,7 @@ function makeRadar(dims, size) {
   W._cstGridStarsHtml = function(name){
     try{
       if(!W._cstOpenForMe() || !W._cstEligible(name)) return '';
-      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R') return ''; }catch(_){}   /* 主角 R 卡等:R 不顯示 */
+      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R' && _isProtag(W._cstKey(name))) return ''; }catch(_){}   /* 未覺醒主角(R 卡階段)不顯示;★ v5.314.0 其他 R 卡有命座,照常顯示 */
       var lit = W._cstLit(W._cstKey(name)).length;
       return '<div class="cst-gstars" data-cst-g="' + _esc(name) + '" title="' + _esc(_T('命星 ' + lit + '/6', '命座 ' + lit + '/6')) + '"'
         + ' style="display:flex;justify-content:center;gap:6px;padding:6px 0 2px;font-size:26px;line-height:1;letter-spacing:0;background:rgba(10,12,30,0.55);">'
@@ -81562,7 +81630,7 @@ function makeRadar(dims, size) {
       var side = document.getElementById('hero-detail-img-side'); if(!side) return;
       var b = document.getElementById('hero-detail-cst-btn');
       if(!W._cstOpenForMe() || !name || !W._cstEligible(name)){ if(b) b.style.display = 'none'; return; }
-      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R' && !_isProtag(W._cstKey(name))) { if(b) b.style.display = 'none'; return; } }catch(_){}
+      /* ★ v5.314.0 R 卡也有命座 ⇒ 不再隱藏(舊:R 且非主角 ⇒ 隱藏按鈕) */
       if(!b){ b = document.createElement('button'); b.type = 'button'; b.id = 'hero-detail-cst-btn'; side.appendChild(b); }
       var k = W._cstKey(name), lit = W._cstLit(k).length, held = W._cstHeld(k);
       var free = (unlocked && _owned(k)) ? Math.max(0, held - lit) : 0;
@@ -81929,11 +81997,11 @@ function makeRadar(dims, size) {
       + '<div class="cst-title">' + _T('✨ 命星合成屋', '✨ 命星工坊') + '</div>'
       + '<div class="cst-lore">' + _T('3 顆同樣稀有度的命星(虛無的命星或還沒點亮的角色命星)→ 合成 1 顆「自選命星」,可以送給自己想要的英雄!SR 和 SSR 不能混在一起。',
                                       '同稀有度任意 3 顆「虛無的命星」或「未點亮的角色命星」可合成 1 顆同稀有度「自選命星」,指定給已擁有、未滿 6 命的角色。SR 與 SSR 分開計算、不可互換;UR 命星與主角命星不能合成。') + '</div>'
-      + '<div class="cst-tabs">' + ['SR', 'SSR', 'UR'].map(function(t){
-          return '<button type="button" class="cst-tab' + (t === rar ? ' on' : '') + '" data-cst-sy="tab" data-v="' + t + '">' + t + '(' + _T('自選 ', '自選 ') + W._cstCount('#pick_' + t) + (t !== 'UR' ? '・' + _T('虛無 ', '虛無 ') + W._cstCount('#void_' + t) : '') + ')</button>';
+      + '<div class="cst-tabs">' + ['R', 'SR', 'SSR', 'UR'].map(function(t){   /* ★ v5.314.0 加 R 分頁(只有「使用自選命星」,不能合成) */
+          return '<button type="button" class="cst-tab' + (t === rar ? ' on' : '') + '" data-cst-sy="tab" data-v="' + t + '">' + t + '(' + _T('自選 ', '自選 ') + W._cstCount('#pick_' + t) + ((t === 'SR' || t === 'SSR') ? '・' + _T('虛無 ', '虛無 ') + W._cstCount('#void_' + t) : '') + ')</button>';
         }).join('') + '</div>';
     var body = '';
-    if(rar !== 'UR'){
+    if(rar === 'SR' || rar === 'SSR'){
       var mats = _synMaterials(rar), used = {};
       _syn.tray.forEach(function(k){ used[k] = (used[k] | 0) + 1; });
       body += '<div class="cst-sec"><h4>① ' + _T('放 3 顆進來合成', '選 3 顆材料合成') + '</h4><div class="cst-tray">';
@@ -81955,8 +82023,9 @@ function makeRadar(dims, size) {
       body += '</div><div style="font-size:13px;color:#ffcf8a;margin-top:6px;">' + _T('⚠ 角色命星放進去合成就會變成自選命星,那位英雄的命星會少 1 顆。', '⚠ 角色命星投入合成後即消耗,該角色持有命星 −1。') + '</div></div>';
     }
     var cands = W._cstPickCandidates(rar);
-    body += '<div class="cst-sec"><h4>' + (rar !== 'UR' ? '② ' : '') + _T('使用自選命星', '使用自選命星') + '(' + _T('有 ', '持有 ') + picks + ')</h4>';
+    body += '<div class="cst-sec"><h4>' + ((rar === 'SR' || rar === 'SSR') ? '② ' : '') + _T('使用自選命星', '使用自選命星') + '(' + _T('有 ', '持有 ') + picks + ')</h4>';
     if(rar === 'UR') body += '<div style="font-size:14px;color:#cdd6ff;margin-bottom:6px;">' + _T('UR 自選命星是 UR 替換卷退回來的,或老師發的,只能給你已經有的 UR。', 'UR 自選命星來自 UR 替換卷退回或老師發放,只能指定已擁有的 UR。') + '</div>';
+    if(rar === 'R') body += '<div style="font-size:14px;color:#cdd6ff;margin-bottom:6px;">' + _T('R 自選命星在「不可思議超商」買(每週限購 1 個),或老師發的;只能給你已經有的 R 卡(主角不行),不能拿去合成。', 'R 自選命星可於不可思議超商購買(每週限購 1 個)或由老師發放;只能指定已擁有的 R 卡(主角除外),不可用於合成。') + '</div>';   /* ★ v5.314.0 */
     if(!cands.length) body += '<div class="cst-note">' + _T('沒有可以選的英雄(要已經擁有、命星還沒滿 6 顆)。', '沒有符合條件的角色(需已擁有且命星未滿 6)。') + '</div>';
     else {
       body += '<div class="cst-chips">';
@@ -81969,7 +82038,7 @@ function makeRadar(dims, size) {
     body += '</div>';
     ov.innerHTML = head + body + '</div>';
   }
-  W._cstOpenSynth = function(){
+  W._cstOpenSynth = function(tab){
     try{
       if(!W._cstOpenForMe()) return;
       var ov = document.getElementById('cst-synth-ov');
@@ -81978,6 +82047,7 @@ function makeRadar(dims, size) {
         ov.addEventListener('click', _onSynthClick);
         document.body.appendChild(ov);
       }
+      if(tab === 'R' || tab === 'SR' || tab === 'SSR' || tab === 'UR') _syn.tab = tab;   /* ★ v5.314.0 超商買完 R 自選命星直接開 R 分頁 */
       _syn.tray = [];
       _renderSynth();
     }catch(e){ console.warn('[命座] 命星工坊', e); }

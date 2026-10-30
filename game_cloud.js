@@ -2422,7 +2422,7 @@
     var td = _lxpsObjFromSlot(main, 'taiwanTreasureData');
     var treasures = Object.keys(td).map(function(id){ var r = td[id] || {}; var nm = ''; try{ nm = (window.TAIWAN_TREASURES && window.TAIWAN_TREASURES[id] && window.TAIWAN_TREASURES[id].name) || ''; }catch(_){} return { id:id, name:nm, lv:(+r.lv || 1), to:r.equippedTo || '' }; });
     var bp = {}; try{ bp = (typeof main.playerBackpack_s === 'string') ? (JSON.parse(main.playerBackpack_s) || {}) : (main.playerBackpack || {}); }catch(_){ bp = main.playerBackpack || {}; }
-    var cstOther = {}; Object.keys(cst.got || {}).forEach(function(k){ if(inList[k]) return; var n = (+cst.got[k] || 0) - (+(cst.used || {})[k] || 0); if(n > 0) cstOther[k] = n; });
+    var cstOther = {}; Object.keys(cst.got || {}).forEach(function(k){ if(inList[k] || k.indexOf('#rshop_') === 0) return; var n = (+cst.got[k] || 0) - (+(cst.used || {})[k] || 0); if(n > 0) cstOther[k] = n; });
     return { uid:uid, heroes:heroes, removed:removed, treasures:treasures, backpack:bp, coins:(+main.knowledgeCoins || 0), cstOther:cstOther,
              savedAt:(+main.savedAt || +main.updatedAt || 0), hasLedger:!!main.heroOwnLedger_s, nick:String(main.displayName || main.nickname || '') };
   };
@@ -8334,7 +8334,7 @@
     if(!uid) throw new Error('缺少 uid');
     const _k = String(key || '');
     const _n = Math.max(1, Math.min(6, parseInt(n, 10) || 1));
-    const _isPick = /^#pick_(SR|SSR|UR)$/.test(_k);
+    const _isPick = /^#pick_(R|SR|SSR|UR)$/.test(_k);   // ★ v5.314.0 加 R 自選命星
     if(!_isPick){
       const _db = window.CONSTELLATION_DB || {};
       if(!_db[_k]) throw new Error('沒有這位角色的命座:' + _k);
@@ -8365,7 +8365,7 @@
     }
     try{
       if(typeof window._fbAdminSendNotificationToPlayer === 'function'){
-        const _label = _isPick ? ({ '#pick_SR':'SR 自選命星', '#pick_SSR':'SSR 自選命星', '#pick_UR':'UR 自選命星' })[_k] : ('「' + _k + '」的命星');
+        const _label = _isPick ? ({ '#pick_R':'R 自選命星', '#pick_SR':'SR 自選命星', '#pick_SSR':'SSR 自選命星', '#pick_UR':'UR 自選命星' })[_k] : ('「' + _k + '」的命星');
         await window._fbAdminSendNotificationToPlayer(uid, {
           title: '✨ 老師發給你命星',
           body: '老師發給你 ' + _label + ' ×' + _n + '!' + (_grant.why ? ('(' + _grant.why + ')') : '') + '下次登入後到英雄圖鑑的「✨ 命座」就能點亮。',
@@ -8397,9 +8397,9 @@
     (Array.isArray(list) ? list : []).slice(0, 60).forEach(function(it, i){
       const _k = String((it && it.k) || '');
       const _n = Math.max(1, Math.min(6, parseInt(it && it.n, 10) || 1));
-      const _isPick = /^#pick_(SR|SSR|UR)$/.test(_k);
+      const _isPick = /^#pick_(R|SR|SSR|UR)$/.test(_k);   // ★ v5.314.0 加 R 自選命星
       const _dbReady = Object.keys(_db).length > 0;   // 命座表沒載入(學生平板偶發)⇒ 先照寫,登入折入時 _cstGrantStar 會再檢查,不在這裡丟掉已領的獎勵
-      if(!_k || _k === _protag || (!_isPick && _dbReady && (!_db[_k] || _db[_k].r === 'R'))){ _skipped.push(_k); return; }
+      if(!_k || _k === _protag || (!_isPick && _dbReady && !_db[_k])){ _skipped.push(_k); return; }   // ★ v5.314.0 R 卡也有命座(舊:|| _db[_k].r === 'R')
       _grants[_base + '_' + i] = { k: _k, n: _n, at: _now, by: String(opt.by || 'admin').slice(0, 80), why: String(opt.why || '').slice(0, 80) };
     });
     const _ids = Object.keys(_grants);

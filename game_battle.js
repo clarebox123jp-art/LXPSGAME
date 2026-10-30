@@ -5506,6 +5506,7 @@ const BUFF_DESCS = {
   dribble:       '運球：普通攻擊變為2次攻擊',
   _relay:        '接力強化：下次造成的傷害或治療+50%',
   _sprint:       '起跑加速：速度+50%，免疫停止行動的狀態',
+  _cstTrRec:     '破紀錄加速：速度提升 20%(命星)',
   _sprintBurst:  '閃燃:下次造成的傷害×2(每級+0.1),持續到造成傷害為止',
   _inuGuard:     '忠犬守護：本回合代替隊友承受50%傷害',
   _slamSpd:      '灌籃加速：速度暫時大幅提升',
@@ -7788,7 +7789,8 @@ function addStatus(h,t,dur=1){
     // ★ v3.12.4(2026-05-30) — 平衡:反彈率 Lv1=30% 每級 +10%(Lv5=70%),取消「固定不升」設計
     const _violinTl = (typeof _getTraitLv === 'function') ? _getTraitLv('弦樂團員') : 0;
     const _reboundChance = Math.min(1, 0.30 + _violinTl * 0.10);
-    if(_violinist && _isDispellable && !_isFromRebound && Math.random()<_reboundChance){
+    let _cstVlT1 = 0; try{ _cstVlT1 = (_violinist && window._cstR.has(_violinist,'t1','弦樂團員')) ? 0.15 : 0; }catch(_){ _cstVlT1 = 0; }   // ✨ v5.314.0 命星 弦樂團員 t1 共鳴琴箱星(+15%;未點亮不多擲骰)
+    if(_violinist && _isDispellable && !_isFromRebound && (_cstVlT1 ? window._cstCap.rollBand(_reboundChance, Math.min(1, _reboundChance + _cstVlT1)) > 0 : Math.random()<_reboundChance)){
       // 1) 從 h 身上移除這個狀態
       const _lastIdx=h.status.map(s=>s.type).lastIndexOf(t);
       if(_lastIdx!==-1){ h.status.splice(_lastIdx,1); }
@@ -7807,6 +7809,7 @@ function addStatus(h,t,dur=1){
         showPopup(_target,'🎻被彈到!','crit');
         bannerFX(h,'弦音反彈！','#cc88ff',900);
         log(`🎻 [弦樂團員] 天賦:弦音反彈！將 [${h.name}] 的 [${statusName(t)}] 反彈到 [${_target.name}] 身上！`);
+        try{ window._cstR.violinT2(_violinist, h); }catch(_eCstVlT2){}   // ✨ v5.314.0 命星 弦樂團員 t2 和弦回音星(被施加的友方回 HP)
         renderCard(h);
         renderCard(_target);
       }
@@ -8464,7 +8467,8 @@ function tickStatus(h){
     if(s.type==='traitRage' && s._rageAtkBonus!==undefined){ h.atk=Math.max(1,h.atk-s._rageAtkBonus); }
     // ★ v1.0.20260421.3000o — 強力易傷到期清除 _vulnStrong 旗標
     if(s.type==='dmgVuln' && h._vulnStrong){ delete h._vulnStrong; }
-    if(s.type==='_sprint' && s._spdBoost!==undefined){ h.spd=Math.max(1,h.spd-s._spdBoost); h._sprintOrigSpd=undefined; log(`🏃 [${h.name}] 起跑衝刺結束，速度恢復！`); }
+    if(s.type==='_sprint' && s._spdBoost!==undefined){ h.spd=Math.max(1,h.spd-s._spdBoost); h._sprintOrigSpd=undefined; log(`🏃 [${h.name}] 起跑衝刺結束，速度恢復！`); try{ window._cstR.trackBreath(h); }catch(_eCstTrT2){} }   // ✨ v5.314.0 命星 田徑隊員 t2 第二呼吸星
+    if(s.type==='_cstTrRec' && s._spdBoost!==undefined){ h.spd=Math.max(1,h.spd-s._spdBoost); }   // ✨ v5.314.0 命星 田徑隊員 b2 破紀錄星:速度加成到期還原
     // ★ v1.0.20260424.0700 — 啼哭/夢境弱化到期還原 atk/sp
     if(s.type==='_cryDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
     if(s.type==='_dreamDebuff' && s._origAtk!==undefined){ h.atk=s._origAtk; h.sp=s._origSp; }
@@ -14562,7 +14566,7 @@ function _doConfirmSkillReplace(){
         // 取技能等級決定持續回合
         const _sprSlot = (h.s1 && h.s1.n==='起跑衝刺') ? 's1' : (h.s2 && h.s2.n==='起跑衝刺') ? 's2' : null;
         const _sprLv = (_sprSlot && h._skLv) ? (h._skLv[_sprSlot]||0) : 0;
-        const _sprDur = 5 + Math.floor(_sprLv/3);
+        const _sprDur = 5 + Math.floor(_sprLv/3) + ((window._cstR && window._cstR.trackS1Dur(h)) || 0);   // ✨ v5.314.0 命星 田徑隊員 s1 起跑反應星(+2 回合)
         h._sprintOrigSpd=h.spd;
         h.spd+=_sprintBoost;
         h.status=h.status.filter(s=>s.type!=='_sprint');
@@ -14747,7 +14751,7 @@ function _doConfirmSkillReplace(){
       // 取技能等級決定持續回合
       const _sprSlot2 = (h.s1 && h.s1.n==='起跑衝刺') ? 's1' : (h.s2 && h.s2.n==='起跑衝刺') ? 's2' : null;
       const _sprLv2 = (_sprSlot2 && h._skLv) ? (h._skLv[_sprSlot2]||0) : 0;
-      const _sprDur2 = 5 + Math.floor(_sprLv2/3);
+      const _sprDur2 = 5 + Math.floor(_sprLv2/3) + ((window._cstR && window._cstR.trackS1Dur(h)) || 0);   // ✨ v5.314.0 命星 田徑隊員 s1
       h._sprintOrigSpd=h.spd; h.spd+=_sprintBoost2;
       h.status=h.status.filter(s=>s.type!=='_sprint');
       h.status.push({type:'_sprint',dur:_sprDur2,_spdBoost:_sprintBoost2,_unremovable:true});
@@ -15765,7 +15769,7 @@ function statusName(t, st){
   imprison:'🔒 禁錮', _passiveSeal:'🎭 被動失效',
   // ★ v3.31.0 — 聖冥法師 爆發「聖光與暗影的調停」附加狀態:光影(受傷/不利複製給其他光影目標)
   lightshadow:'🌗 光影',
-  booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾',_youyouNightmare:'👻 惡夢',_youyouDevour:'🦷 等吞食',_youyouWraith:'🌫 遊魂',_youyouDarkwalk:'🌑 暗行',
+  booklock:'禁書封鎖',burstVamp:'鮮血吸收',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',_sprint:'起跑加速',_cstTrRec:'🏃 破紀錄加速',_cryDebuff:'啼哭弱化',_dreamDebuff:'夢境弱化',_napShield:'午睡護盾',_youyouNightmare:'👻 惡夢',_youyouDevour:'🦷 等吞食',_youyouWraith:'🌫 遊魂',_youyouDarkwalk:'🌑 暗行',
   // ★ v1.0.20260514.6770 — 地府酋長 S1「審判終結」狀態中文名
   judgmentEnd:'⚖️ 審判終結',
   // ★ v1.0.20260518.6930 — 天神宙斯 S1「驚雷」附加狀態:特技 -50%
@@ -15802,7 +15806,7 @@ _burstSellDouble:'💰 賣卡加倍',_timebomb:'💣 定時炸彈',_zhuyueParasi
   return m[t]||t;
 }
 function buffClass(t){
-  const m={immune:'immune',reviveImmune:'immune',shield:'shield',taunt:'taunt',evasion:'evasion',spdAvoid:'evasion',_windEvade:'evasion',hidden:'hidden',dmgup:'dmgup',absorb:'absorb',deathimmune:'deathimmune',immovable:'immune',halfDmg:'halfDmg',nezhaGuard:'halfDmg',niuGuard:'halfDmg',warhorn:'dmgup',noRecover:'noatk',bigshield:'shield',regen:'absorb',fieldImmune:'immune',protectBuff:'immune',discount:'immune',counter:'absorb',rebirth:'dmgup',misfortune:'dmgup',misfortune2:'dmgup',alchemist:'dmgup',guard:'shield',ctrlImmune:'immune',divineBlessing:'absorb',hpRegen:'absorb',zeroCost:'dmgup',doubleatk:'dmgup',strengthened:'dmgup',shutenBoost:'dmgup',conservation:'absorb',_relay:'dmgup',_sprint:'dmgup',
+  const m={immune:'immune',reviveImmune:'immune',shield:'shield',taunt:'taunt',evasion:'evasion',spdAvoid:'evasion',_windEvade:'evasion',hidden:'hidden',dmgup:'dmgup',absorb:'absorb',deathimmune:'deathimmune',immovable:'immune',halfDmg:'halfDmg',nezhaGuard:'halfDmg',niuGuard:'halfDmg',warhorn:'dmgup',noRecover:'noatk',bigshield:'shield',regen:'absorb',fieldImmune:'immune',protectBuff:'immune',discount:'immune',counter:'absorb',rebirth:'dmgup',misfortune:'dmgup',misfortune2:'dmgup',alchemist:'dmgup',guard:'shield',ctrlImmune:'immune',divineBlessing:'absorb',hpRegen:'absorb',zeroCost:'dmgup',doubleatk:'dmgup',strengthened:'dmgup',shutenBoost:'dmgup',conservation:'absorb',_relay:'dmgup',_sprint:'dmgup',_cstTrRec:'dmgup',
   dribble:'dmgup',elemBoost:'dmgup',trapShield:'shield',_inuGuard:'shield',_inuPity:'absorb',_slamSpd:'dmgup',_sprintBurst:'dmgup',burstVamp:'absorb',taunt:'taunt',
   // ★ v1.0.20260518.6920 — 學霸(轉學生) buff 視覺類別
   _scholarBreak:'dmgup',_pressureAbsorb:'absorb',
@@ -15870,7 +15874,7 @@ function buffName(t){
   _leoCharge:'🔥 蓄力中',       // 獅子星神 爆發附加:下次造成的傷害 +50%(一次性)
   _taurusAegis:'🛡 大地庇護',   // 金牛星神 爆發附加:本回合受到的傷害 -20%(+5%/爆發級)
   _geminiFortune:'🎡 命運轉輪', // 雙子星神 S2 附加:本回合受到傷害時替隊伍 +3 能量(每人限 1 次)
-  inuGuard:'忠犬守護中',_relay:'接力強化',_sprint:'起跑加速',
+  inuGuard:'忠犬守護中',_relay:'接力強化',_sprint:'起跑加速',_cstTrRec:'🏃 破紀錄加速',
   dribble:'運球',elemBoost:'元素增幅',trapShield:'天網護盾',_inuGuard:'忠犬守護中',_inuPity:'憐惜校犬',_slamSpd:'灌籃加速',_sprintBurst:'閃燃蓄力',burstVamp:'鮮血吸收',taunt:'嘲諷中',_napShield:'午睡護盾',burstVamp:'🦇嗜血',
   // ★ v1.0.20260515.6880 — 救醫馬爆發附加 buff
   _ponyMaxHpBuff:'🐎最大HP+',
@@ -16265,6 +16269,7 @@ function _lxpsConsumeNextSkillDiscount(actor){
     if(!actor) return;
     if(actor._thothDiscount){ actor._thothDiscount = false; actor._thothBeast = false; }
     if(actor._cstAstGuide){ delete actor._cstAstGuide; try{ log('✨ [' + actor.name + '] 命星:星軌指引用掉了(這次技能耗能 -1)'); }catch(_){} }   // ✨ 命星 ✦ 占星師 t2:真正付能量施放技能時消耗(與托特/五色鳥同一個消耗點)
+    if(actor._cstRelayCut){ var _cstRcOk = false; try{ _cstRcOk = !!(window._cstR && window._cstR.relayCutOk(actor, null)); }catch(_){} delete actor._cstRelayCut; if(_cstRcOk){ try{ log('✨ [' + actor.name + '] 命星:完美交棒用掉了(這次技能耗能 -1)'); }catch(_){} } }   // ✨ v5.314.0 命星 田徑隊員 s2
     if(Array.isArray(actor.buffs) && actor.buffs.some(function(b){ return b && b.type === '_petCostCut' && typeof b._pct === 'number'; })){
       actor.buffs = actor.buffs.filter(function(b){ return !(b && b.type === '_petCostCut'); });
     }
@@ -16429,6 +16434,7 @@ function skillCost(s, actor, displayOnly=false, noFatigue=false, noCstFx=false){
     }
   }catch(_eCstFxB1){}
   try{ if(actor && actor._cstAstGuide && _cstBidOk(actor._cstAstGuide.b) && !(s && s.p)) c = window._cstCap.costCut(actor, c, 1, _cstCutAcc); }catch(_eCstAstT2c){}
+  try{ if(actor && actor._cstRelayCut && window._cstR && window._cstR.relayCutOk(actor, s)) c = window._cstCap.costCut(actor, c, 1, _cstCutAcc); }catch(_eCstTrS2c){}   // ✨ v5.314.0 命星 田徑隊員 s2 完美交棒星(G4)
   try{ if(actor && s && !s.p && typeof window._fmCostCut === 'function') c = window._fmCostCut(actor, c, _cstCutAcc); }catch(_eFmCost){}   // ★ v5.282.0 英魂陣型 求知系耗能 −1(與命星共用 G4:合計 −2、最低 1;不含爆發)
   try{ if(actor && s && s.n === '瞬殺' && actor._cstRdCut && _cstBidOk(actor._cstRdCut.b) && window._cstHasN(actor,'s2','紅色玩家')) c = window._cstCap.costCut(actor, c, 2, _cstCutAcc); }catch(_eCstRdS2c){}   // ✨ v5.264.0 命星 紅色玩家 s2「反域連殺星」:連殺 3 層後下一次瞬殺耗能 −2(G4 最低 1)   // ✨ 命星 ✦ 占星師 t2「星軌指引」:下一次技能耗能 -1(G4:命星減免合計 ≤2、最低 1;確定性折扣,UI 也顯示)   // ★ v5.262.0 審查:(M9)
   return c;
@@ -16794,6 +16800,8 @@ window._cstPgS1Live = function(a){
   mark('楊戩', ['t1','t2','s1','s2','b1','b2']);
   // ── v5.293.0:三國/西遊新 SSR 六位 36 顆(資料驅動:hero_db _CN2.heroes2[].cst.s[].m ⇒ 引擎 _cn2FxCst/_cn2TraitsOf 套用)──
   ['劉備','張飛','趙雲','唐三藏','豬八戒','沙悟淨'].forEach(function(n){ mark(n, ['t1','t2','s1','s2','b1','b2']); });
+  // ── v5.314.0:R 卡 11 位 66 顆一次接齊(老師 2026-10-30 裁定 3乙;效果本體在 window._cstR 與各招式內 ✨ v5.314.0 標記處)──
+  ['電腦繪圖師','程式設計師','弦樂團員','小劇團員','田徑隊員','直笛團員','籃球隊員','動物學家','小力','幼兒園小孩','機關王雙人組'].forEach(function(n){ mark(n, ['t1','t2','s1','s2','b1','b2']); });
 })();
 window._cstCap = (function(){
   function _st(){
@@ -20220,8 +20228,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         const t=allies[i%allies.length];
         if(t&&!t.equip){ t.equip={...eq,uid:Math.random(),type:'equip'}; if(eq.onEquip) eq.onEquip(t); renderCard(t); }
       });
-      G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
-      allies.forEach(t=>{ addBuff(t,'protectBuff',2+_lv5Extra);
+      let _cstZoB1A = 0; try{ _cstZoB1A = window._cstR.zooB1(h); }catch(_){ _cstZoB1A = 0; }   // ✨ v5.314.0 命星 動物學家 b1 萬獸齊聚星(保護 +1 回合)
+      G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2+_cstZoB1A;
+      try{ window._cstR.zooB2(h, side); }catch(_eCstZoB2A){}   // ✨ v5.314.0 命星 動物學家 b2 群獸奔騰星
+      allies.forEach(t=>{ addBuff(t,'protectBuff',2+_lv5Extra+_cstZoB1A);
         if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2+_lv5Extra,_pct:_burstLv*0.10,_fromBurst:true}); }
       });
       // ★ v3.15.13 — 動物大軍追加:驅逐敵方全體攜帶的寵物
@@ -20254,8 +20264,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const picks=(typeof window._petRollByRarity==='function') ? window._petRollByRarity(CARRY_PET_LIST,4) : [...CARRY_PET_LIST].sort(()=>Math.random()-0.5).slice(0,4);
     const burstEquips=picks.map(eq=>({...eq,uid:Math.random(),type:'equip'}));
     log(`[${h.name}] 動物大軍！呼喚4隻寵物！`);
-    G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2;
-    allies.forEach(t=>{ addBuff(t,'protectBuff',2+_lv5Extra);
+    let _cstZoB1 = 0; try{ _cstZoB1 = window._cstR.zooB1(h); }catch(_){ _cstZoB1 = 0; }   // ✨ v5.314.0 命星 動物學家 b1 萬獸齊聚星(保護 +1 回合)
+    G._assetGuard=G._assetGuard||{}; G._assetGuard[side]=2+_cstZoB1;
+    try{ window._cstR.zooB2(h, side); }catch(_eCstZoB2){}   // ✨ v5.314.0 命星 動物學家 b2 群獸奔騰星
+    allies.forEach(t=>{ addBuff(t,'protectBuff',2+_lv5Extra+_cstZoB1);
       if(_burstLv>0){ t.buffs=t.buffs.filter(b=>b.type!=='_animalBurstShield'); t.buffs.push({type:'_animalBurstShield',dur:2+_lv5Extra,_pct:_burstLv*0.10,_fromBurst:true}); }
     });
     // ★ v3.15.13 — 動物大軍追加:驅逐敵方全體攜帶的寵物
@@ -20535,11 +20547,13 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   }
   if(name==='小力'){
     // 夾尾皺眉：全體對手無法使用造成傷害的技能或物品2回合
+    let _cstInuB1 = false; try{ _cstInuB1 = window._cstR.has(h,'b1','小力'); }catch(_){ _cstInuB1 = false; }   // ✨ v5.314.0 命星 小力 b1 可憐兮兮星(+1 回合,BOSS 不延長)
     enemies.forEach(t=>{
       t.status=t.status.filter(s=>s.type!=='_inuPity');
-      t.status.push({type:'_inuPity',dur:2+_lv5Extra,_unremovable:true});
+      t.status.push({type:'_inuPity',dur:2+_lv5Extra+((_cstInuB1 && !window._cstCap.isBoss(t)) ? 1 : 0),_unremovable:true});
       bannerFX(t,'憐惜校犬！','#ffaacc',1000);
     });
+    try{ window._cstR.inuB2Arm(h, side, 2+_lv5Extra+(_cstInuB1 ? 1 : 0)); }catch(_eCstInuB2){}   // ✨ v5.314.0 命星 小力 b2 安心依偎星(期間我方受到傷害 −15%)
     log(`🐕 [小力] 夾尾皺眉！全體對手陷入「憐惜校犬」2回合，無法使用造成傷害的技能！`);
     zoneFlash(opp,'rgba(255,170,200,0.3)',800);
     if(_burstLv>0){
@@ -20554,7 +20568,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       bannerFX(h,'絕殺灌籃！','#ff8800',1000);
       zoneFlash(side,'rgba(255,140,0,0.3)',600);
       playSfx('sfx-basketball',0.9);
-      doDmg(t,Math.floor(spv*7.5*_burstMult),{actor:h,isSkill:true,ignoreBuffs:true,mustHit:true});
+      doDmg(t,Math.floor(spv*(7.5 + ((window._cstR && window._cstR.has(h,'b1','籃球隊員')) ? 1.5 : 0))*_burstMult),{actor:h,isSkill:true,ignoreBuffs:true,mustHit:true});   // ✨ v5.314.0 命星 籃球隊員 b1 空中接力星(750%→900%)
+      try{ if(t && t.curHp<=0 && window._cstR.has(h,'b2','籃球隊員')){ window._cstS1ReAct(h, '壓哨絕殺!灌籃打倒對手,再行動 1 次!', '_cstBbB2G'); log('✨ [' + h.name + '] 命星:壓哨絕殺!這次爆發結束後再行動 1 次(每場 1 次)'); } }catch(_eCstBbB2){}   // ✨ v5.314.0 命星 籃球隊員 b2 壓哨絕殺星(G2)
       G[side].filter(x=>x.curHp>0).forEach(x=>{
         try{ _lxpsStatFxRestore(x, (x.status||[]).filter(s => s && s.type === '_slamSpd')); }catch(_){}   // ★ v5.239.0 重放先還原舊的,不疊加
         const _xBoost = Math.max(1, Math.ceil((x.spd||0) * 0.5));
@@ -20593,10 +20608,12 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _rdFoeN = _foesR.length;
     const _rdTotal = Math.max(_rdFoeN, Math.floor(spv*_dmgMult));
     const _rdDmg = _rdFoeN>0 ? Math.max(1, Math.floor(_rdTotal/_rdFoeN)) : 0;
+    let _cstFlB1 = false; try{ _cstFlB1 = window._cstR.has(h,'b1','直笛團員'); }catch(_){ _cstFlB1 = false; }   // ✨ v5.314.0 命星 直笛團員 b1 天籟延音星(狂亂 +1 回合,BOSS 不延長)
+    try{ window._cstR.fluteB2Arm(h); }catch(_eCstFlB2){}   // ✨ v5.314.0 命星 直笛團員 b2 安可合奏星
     _foesR.forEach(t=>{
       doDmg(t, _rdDmg, {actor:h, isSkill:true, isAoe:true});
       if(t.curHp>0){
-        addStatus(t, 'berserk', _berserkDur);
+        addStatus(t, 'berserk', _berserkDur + ((_cstFlB1 && !window._cstCap.isBoss(t)) ? 1 : 0));
         bannerFX(t, '🎵 狂亂', '#ff4466', 900);
         renderCard(t);
       }
@@ -20631,9 +20648,10 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     // (1) 用速度 × 200% × _burstMult 對敵方全體造成傷害 → ★ v3.15.16 改全體分攤(總量 速度×800% 由存活敵人均分)
     const _sprintFoes = G[opp].filter(x=>x.curHp>0);
     const _spFoeN = _sprintFoes.length;
-    const _spTotal = Math.max(_spFoeN, Math.floor((h.spd||0) * 8.0 * _burstMult));
+    const _spTotal = Math.max(_spFoeN, Math.floor((h.spd||0) * (8.0 + ((window._cstR && window._cstR.has(h,'b1','田徑隊員')) ? 2.0 : 0)) * _burstMult));   // ✨ v5.314.0 命星 田徑隊員 b1 衝線爆發星(800%→1000%)
     const _sprintDmg = _spFoeN>0 ? Math.max(1, Math.floor(_spTotal/_spFoeN)) : 0;
     _sprintFoes.forEach(t => doDmg(t, _sprintDmg, {actor:h, isSkill:true, isAoe:true}));
+    try{ window._cstR.trackB2Arm(h); }catch(_eCstTrB2){}   // ✨ v5.314.0 命星 田徑隊員 b2 破紀錄星(這次爆發之後的再行動擊倒目標才算)
 
     // (2) 獲得 7 能量
     G.energy[side] = Math.min(10, G.energy[side] + 7);
@@ -20672,7 +20690,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _dmgPct = 0.10 + _burstLv*0.05; // Lv0=10%,Lv4=30%
     // ★ v1.0.20260424.0700 — 攻擊和特技降低 25% 持續 (1+_burstLv) 回合(取代原本 50% 直到醒來)
     const _dreamReducePct = 0.25;
-    const _dreamDur = 1 + _burstLv;  // Lv1=1, Lv5=5
+    const _dreamDur = 1 + _burstLv + ((window._cstR && window._cstR.has(h,'b1','幼兒園小孩')) ? 1 : 0);  // Lv1=1, Lv5=5   ✨ v5.314.0 命星 幼兒園小孩 b1 夢境加深星(+1 回合)
     log(`[${h.name}] 夢境時光!對全體敵人造成HP ${Math.round(_dmgPct*100)}% 傷害,攻擊/特技-${Math.round(_dreamReducePct*100)}% 持續 ${_dreamDur} 回合!`);
     playSfx('sfx-burst',0.85); flashScreen('rgba(180,220,255,1)',500);
     _foes4.forEach(t=>{
@@ -20690,6 +20708,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         bannerFX(t,`夢境弱化! -${Math.round(_dreamReducePct*100)}%`,'#aaddff',900); renderCard(t);
       }
     });
+    try{ window._cstR.dreamB2(h, _foes4); }catch(_eCstKdB2){}   // ✨ v5.314.0 命星 幼兒園小孩 b2 一起做夢星(30% 睡 1 回合,BOSS 15%,G6)
     zoneFlash(opp,'rgba(150,200,255,0.4)',700);
     _pSetTimeout(()=>{ _burstFinish(h, _interrupted); }, 600);
     return;
@@ -20700,7 +20719,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       log(`[${h.name}] 萬物創生！特技600%傷害平均分攤！`);
       playSfx('sfx-burst',0.9); playSfx('sfx-explode',0.8);
       // ★ v1.0.20260423.4700 — 傷害倍率對齊升級表 Lv0=6.0
-      const _totalDmg=Math.floor(spv*6.0*_burstMult);
+      const _totalDmg=Math.floor(spv*(6.0 + ((window._cstR && window._cstR.has(h,'b1','電腦繪圖師')) ? 1.5 : 0))*_burstMult);   // ✨ v5.314.0 命星 電腦繪圖師 b1 萬象速寫星(600%→750%)
       const _each=Math.max(1,Math.floor(_totalDmg/_foes5.length));
       _foes5.forEach(t=>{ doDmg(t,_each,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true}); });
       bannerFX(h,'萬物創生！','#ff88cc',1200);
@@ -20712,6 +20731,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       bannerFX(h,'萬物創生！','#ff88cc',1200);
       playSfx('sfx-burst',0.9);
     }
+    try{ window._cstR.canvasArm(h); }catch(_eCstGdB2){}   // ✨ v5.314.0 命星 電腦繪圖師 b2 畫布成真星
     // ★ 抽3張物品卡，正確處理背包滿和裝備卡情況
     const _drawn3=[];
     let _tries3=0;
@@ -20759,7 +20779,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return; // ★ 非同步：由 _addNextCard3 最後呼叫 _burstFinish
   }
   if(name==='程式設計師'){
-    const _healPct = 0.50 + _burstLv * 0.10; // Lv0=0.50, Lv4=0.90
+    const _healPct = 0.50 + _burstLv * 0.10 + ((window._cstR && window._cstR.has(h,'b1','程式設計師')) ? 0.15 : 0); // Lv0=0.50, Lv4=0.90   ✨ v5.314.0 命星 程式設計師 b1 重構程式星(+15%)
     const _stunCount = (_burstLv >= 4) ? 3 : 2;
     log(`[${h.name}] BUG修復!不利轉有利 + 全體恢復${Math.round(_healPct*100)}%HP + ${_stunCount}名對手無法行動!`);
     playSfx('sfx-heal',0.9); playSfx('sfx-powerup',0.7);
@@ -20794,6 +20814,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     if(_stunTargets.length){
       log(`💫 [程式設計師] BUG修復!${_stunTargets.map(e=>e.name).join('、')} 陷入系統錯誤,無法行動!`);
     }
+    try{ window._cstR.coderB2(h, _stunTargets); }catch(_eCstCdB2){}   // ✨ v5.314.0 命星 程式設計師 b2 藍色當機星(非 BOSS 當機者陣營 −1 能量/人,G5)
 
     flashScreen('rgba(60,255,200,1)',400); zoneFlash(side,'rgba(60,255,200,0.3)',700);
     updateUI();
@@ -20801,7 +20822,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     return; // ★ 必須 return,防止再次呼叫 startTurn
   }
   if(name==='弦樂團員'){
-    const _hits2 = 3 + Math.floor(Math.random()*3); // 3~5 次
+    const _hits2 = (window._cstR && window._cstR.has(h,'b1','弦樂團員')) ? 5 : 3 + Math.floor(Math.random()*3); // 3~5 次   ✨ v5.314.0 命星 弦樂團員 b1 流浪終章星(固定 5 次)
+    try{ window._cstR.violinB2Arm(h); }catch(_eCstVlB2){}   // ✨ v5.314.0 命星 弦樂團員 b2 吉普賽餘韻星(之後 2 回合開始時觸發)
     log(`[${h.name}] 流浪者之歌!特技×${Math.round(40*_burstMult)}% 全體 ${_hits2} 次!無視有利狀態,必中!`);
     playSfx('sfx-burst',0.85); playSfx('sfx-fantasy',0.7);
     const _foes6=G[opp].filter(x=>x.curHp>0);
@@ -20848,7 +20870,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     bannerFX(h,'謝幕掌聲！能量+'+_energyGain,'#ffcc44',1000);
     log(`🎭 謝幕掌聲！倒下${_deadCount}人，獲得${_energyGain}能量！`);
     const _curEnergy=G.energy[side];
-    const _boost=Math.max(1,_curEnergy);
+    let _boost=Math.max(1,_curEnergy);
+    try{ if(window._cstR.has(h,'b1','小劇團員')){ _boost = Math.ceil(_boost * 1.2); log('✨ [' + h.name + '] 命星:滿場喝采!全隊加成 ×1.2(+' + _boost + ')'); } }catch(_eCstDrB1){}   // ✨ v5.314.0 命星 小劇團員 b1 滿場喝采星
+    try{ window._cstR.dramaB2(h, side); }catch(_eCstDrB2){}   // ✨ v5.314.0 命星 小劇團員 b2 落幕再起星(復活 1 名,20% HP,每場 1 次;被復活者也吃到下面的加成)
     G[side].forEach(t=>{
       if(t.curHp>0){
         t._curtainCallAtk=(t._curtainCallAtk||0)+_boost;
@@ -24448,7 +24472,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _gmBOpp = (side === 'p1') ? 'p2' : 'p1';
     const _gmBFoesInit = G[_gmBOpp].filter(x => x.curHp > 0);
     if(!_gmBFoesInit.length){ _burstFinish(h, _interrupted); return; }
-    const _gmBDmg = Math.max(1, Math.floor((h.hp||0) * 1.00 * _burstMult));   // ★ v3.14.20 老師裁示:最大HP 200% → 100%
+    const _gmBDmg = Math.max(1, Math.floor((h.hp||0) * ((window._cstR && window._cstR.has(h,'b1','機關王雙人組')) ? 1.20 : 1.00) * _burstMult));   // ★ v3.14.20 老師裁示:最大HP 200% → 100%   ✨ v5.314.0 命星 機關王雙人組 b1 加重配重星(100%→120%)
     const _gmLinkDur = 2 + _lv5Extra;  // MAX(_burstLv>=4) +1 回合
     let _gmBS1Lv = 0;
     if(h._skLv && typeof h._skLv.s1 === 'number') _gmBS1Lv = h._skLv.s1;
@@ -24477,6 +24501,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
               }catch(_){}
             });
             log(`🔗 [${h.name}] 全體友方獲得「強力連結」${_gmLinkDur} 回合(不可消除/奪取/交換)!`);
+            try{ window._cstR.gmB2Arm(h, side, _gmLinkDur); }catch(_eCstGmB2){}   // ✨ v5.314.0 命星 機關王雙人組 b2 連鎖機關星(強力連結期間蓄能,結束時發射)
           }catch(eGmBL){ console.error('[霸王投石機 強力連結]', eGmBL); }
           setTimeout(endBatchTotals, 50);
           _pSetTimeout(() => { try{ updateUI(); }catch(_){} _burstFinish(h, _interrupted); }, 800);
@@ -28282,6 +28307,7 @@ window._cstShBreak2 = function(t, a, opts, list){
     });
     try{ window._cstS3ShBreak(t, at, opts, list); }catch(_eCstS3Sb){}   // ✨ v5.266.0 地獄將軍 s2 戰旗反擊
     try{ window._cstS5ShBreak(t, at, opts, list); }catch(_eCstS5Sb){}   // ✨ v5.268.0 摩羯星神 b2 岩壁反震
+    try{ window._cstR.shBreak(t, at, opts, list); }catch(_eCstRSb){}   // ✨ v5.314.0 電腦繪圖師 t2 漸層暈染
     if(!foe) return;
     var gun = (G[t.side] || []).find(function(x){ return x && x.name === '神槍手' && x.curHp > 0 && window._cstHasN(x,'t2','神槍手'); });
     if(!gun) return;
@@ -32293,6 +32319,478 @@ window._cstS10RoundStart = function(){   // 由 _cstS8RoundStart 開頭呼叫
 /* ── 命星 trig 戰場卡(⚙ 第二批後半):埃及豔后 b2 河咒 ── */
 window._cstFcFire7 = function(e, F){ try{ if(e && e.k === 'clRiver') window._cstClB2Fire(e, F); }catch(_eCstFc7){ console.warn('[命星 trig 戰場卡 ⚙ 第二批後半]', _eCstFc7); } };
 
+/* ═════════════════════════════════════════════════════════════════════════════
+ * ✨ v5.314.0 R 卡命星(老師 2026-10-30「幫所有 R 卡(主角除外)設計命星」;裁定 1乙 2乙 3乙 ⇒ 66 顆一次做完)
+ *   設計書:專案知識庫 claude/R卡命星_設計書.md。規則同 SR/SSR 命星:
+ *   ① 一律先過 window._cstHasN(英雄, 槽, 主人名)⇒ 未點亮時不寫入、不多擲骰(機率帶走 rollBand,未點亮 total===base);
+ *   ② 受 G1～G9 約束(額外行動 _cstS1ReAct/tryExtraAction、回能 gainEnergy、扣能 drainEnergy、硬控 rollCtrl/markCtrl、反應 reactOk/noteReact);
+ *   ③ 只掛在 G 上或英雄物件(以戰鬥序號 _cstBidD 判斷同一場)⇒ 不跨場殘留、不進存檔。
+ * ═════════════════════════════════════════════════════════════════════════════ */
+window._cstR = (function(){
+  var R = {};
+  function H(h, s, n){ try{ return !!window._cstHasN(h, s, n); }catch(_){ return false; } }
+  function L(m){ try{ log('✨ ' + m); }catch(_){} }
+  function boss(t){ return _cstS1Boss(t); }
+  function sp(h, p){ return _cstS2Sp(h, p); }
+  function rc(h){ try{ renderCard(h); }catch(_){} }
+  function gs(){ try{ if(typeof G === 'undefined' || !G) return null; if(!G._cstRS || G._cstRS.b !== _cstBidD()) G._cstRS = { b:_cstBidD() }; return G._cstRS; }catch(_){ return null; } }
+  function lowest(side){ return _cstS1Alive(side).sort(function(x, y){ return (x.curHp / (x.hp || 1)) - (y.curHp / (y.hp || 1)); })[0] || null; }
+  function mergeShield(t, amt, tag){
+    try{
+      if(!t || !(amt > 0)) return;
+      if(!Array.isArray(t.buffs)) t.buffs = [];
+      var ex = t.buffs.find(function(b){ return b && b.type === 'bigshield'; });
+      if(ex) ex._hp = Math.max(ex._hp || 0, amt);
+      else { var o = { type:'bigshield', dur:99, _hp:amt }; if(tag) o[tag] = 1; t.buffs.push(o); }
+    }catch(_){}
+  }
+  R.has = H;
+
+  /* ── 電腦繪圖師 ── */
+  R.paintAmt = function(o, t, base){   // t1 厚塗護層星:上色護盾 +10;目標 HP<30% 時加倍
+    try{
+      if(!H(o,'t1','電腦繪圖師')) return base;
+      var v = base + 10;
+      if(t && t.hp && t.curHp < t.hp * 0.30) v *= 2;
+      return v;
+    }catch(_){ return base; }
+  };
+  R.paintTag = function(o, b){ try{ if(b && H(o,'t2','電腦繪圖師')){ b._cstPaint = _cstRefOf(o); b._cstPaintB = _cstBidD(); } }catch(_){} };
+  R.shBreak = function(t, at, opts, list){   // t2 漸層暈染星:上色護盾被打破 ⇒ 該友方回 10% HP,打破者失明 1 回合(BOSS 50%)
+    try{
+      (list || []).forEach(function(sh){
+        if(!sh || !sh._cstPaint || sh._cstPaintDone || !_cstBidOk(sh._cstPaintB)) return;
+        sh._cstPaintDone = 1;
+        var o = _cstRefGet(sh._cstPaint);
+        if(!o || !H(o,'t2','電腦繪圖師') || !t || !(t.curHp > 0)) return;
+        var r = _cstS1R();
+        if(_cstSameRec(t._cstPaintT2) && t._cstPaintT2.r === r) return;
+        t._cstPaintT2 = { b:_cstBidD(), r:r };
+        doHeal(t, Math.max(1, Math.floor((t.hp || 0) * 0.10)), { actor:o, isHeal:true, noDice:true, isPctHeal:true });
+        var tx = '';
+        var foe = !!(at && at !== t && at.side !== t.side && at.curHp > 0);
+        if(foe && window._cstCap.reactOk(opts) && (!boss(at) || Math.random() < 0.5)){
+          window._cstCap.noteReact(opts);
+          addStatus(at, 'forecast', 1);
+          if(hasStatus(at, 'forecast')) tx = ',[' + at.name + '] 被顏料噴到失明 1 回合';
+          rc(at);
+        }
+        L('[' + o.name + '] 命星:漸層暈染![' + t.name + '] 的上色護盾碎裂,回復 10% HP' + tx + '!');
+        rc(t);
+      });
+    }catch(_){}
+  };
+  R.layerMul = function(a, h){   // s1 圖層合併星:施放前身上有有利狀態的目標 ⇒ 傷害 +30%
+    try{
+      if(!H(a,'s1','電腦繪圖師') || !h) return 1;
+      var any = (h.buffs || []).some(function(b){ return b && b.type && b.type.charAt(0) !== '_' && !b._cstMk; });
+      return any ? 1.3 : 1;
+    }catch(_){ return 1; }
+  };
+  var PAINT = [ { icon:'⚔️', name:'增傷', lines:['造成的傷害提升','2 回合(效果 +50%)'], val:'dmgup' },
+                { icon:'🛡', name:'減傷', lines:['受到的傷害減少','2 回合(效果 +50%)'], val:'halfDmg' },
+                { icon:'💚', name:'持續恢復', lines:['每回合恢復 HP','2 回合(效果 +50%)'], val:'hpRegen' } ];
+  R.paintAuto = function(side){ return _cstS1Alive(side).some(function(x){ return x.curHp < (x.hp || 1) * 0.5; }) ? 'hpRegen' : 'dmgup'; };
+  R.paintName = function(v){ var o = PAINT.find(function(x){ return x.val === v; }); return o ? o.name : v; };
+  R.paintAsk = function(a, run){   // s2 調色自選星:回傳 false = 未點亮(照原本)/ true = 已開選擇視窗(選完才呼叫 run)/ 字串 = 自動戰鬥或電腦直接用這一種
+    try{
+      if(!H(a,'s2','電腦繪圖師')) return false;
+      if(a.side === 'p1' && !window._autoBattle){
+        var snap = (typeof window._lxpsTurnSnap === 'function') ? window._lxpsTurnSnap(a) : null;
+        window._cstPick7Open({ title:'🎨 調色自選', sub:'✨ 命星「調色自選星」:選 1 種有利狀態送給全隊', items:PAINT,
+          onPick:function(v){ try{ if(snap && typeof window._lxpsTurnStillOk === 'function' && !window._lxpsTurnStillOk(snap, true)) return; }catch(_){} run(v); } });
+        return true;
+      }
+      return R.paintAuto(a.side);
+    }catch(_){ return false; }
+  };
+  R.canvasArm = function(h){ try{ var s = gs(); if(s && H(h,'b2','電腦繪圖師')){ s.canvas = s.canvas || {}; s.canvas[h.side] = { by:_cstRefOf(h), until:G.round + 1, r:0, n:0 }; L('[' + h.name + '] 命星:畫布成真!鋪下畫布 2 回合,我方每用 1 張道具,全隊獲得護盾!'); } }catch(_){} };
+  R.onItem = function(u){   // b2 畫布成真星:畫布期間我方每使用 1 張物品卡 ⇒ 全隊護盾(繪圖師特技 30%,每回合最多 2 次)
+    try{
+      var s = gs(); if(!s || !s.canvas || !u || !u.side) return;
+      var c = s.canvas[u.side]; if(!c || G.round > c.until) return;
+      var o = _cstRefGet(c.by); if(!o || !H(o,'b2','電腦繪圖師')) return;
+      if(c.r !== G.round){ c.r = G.round; c.n = 0; }
+      if(c.n >= 2) return;
+      c.n++;
+      var amt = sp(o, 0.30);
+      _cstS1Alive(u.side).forEach(function(x){ mergeShield(x, amt); rc(x); });
+      L('[' + o.name + '] 命星:畫布成真!用道具的瞬間畫出護盾,全隊護盾 ' + amt + '(本回合 ' + c.n + '/2)');
+    }catch(_){}
+  };
+
+  /* ── 程式設計師 ── */
+  R.coderBonus = function(prog, base, tl){ try{ return H(prog,'t1','程式設計師') ? (5 + tl) : base; }catch(_){ return base; } };
+  R.coderDead = function(side){   // t2 例外處理星:倒下的程式設計師(已點亮)⇒ 加成保留一半
+    try{ return (G[side] || []).find(function(x){ return x && x.name === '程式設計師' && !(x.curHp > 0) && H(x,'t2','程式設計師'); }) || null; }catch(_){ return null; }
+  };
+  R.coderS2 = function(a, n){   // s2 熱修補星:每清 1 個不利 ⇒ 陣營 +1 能量(最多 +2,gift)
+    try{
+      if(!H(a,'s2','程式設計師') || !(n > 0)) return;
+      var g = window._cstCap.gainEnergy(a.side, Math.min(2, n), { gift:true });
+      if(g > 0){ L('[' + a.name + '] 命星:熱修補!清掉壞狀態,我方能量 +' + g + '(本回合不能用來施放極限爆發)'); try{ showPopup(a, '+' + g + 'E', 'energy'); }catch(_){} }
+    }catch(_){}
+  };
+  R.coderB2 = function(h, list){   // b2 藍色當機星:被定住的對手(非 BOSS)⇒ 陣營 −1 能量/人(G5)
+    try{
+      if(!H(h,'b2','程式設計師')) return;
+      var tot = 0;
+      (list || []).forEach(function(t){ if(!t || boss(t) || !hasStatus(t,'stun')) return; tot += window._cstCap.drainEnergy(h, t.side, 1, { quiet:true }); });
+      if(tot > 0) L('[' + h.name + '] 命星:藍色當機!當機的對手陣營能量 −' + tot);
+    }catch(_){}
+  };
+
+  /* ── 弦樂團員 ── */
+  R.violinT2 = function(v, h){ try{ if(H(v,'t2','弦樂團員') && h && h.curHp > 0){ var a = sp(v, 0.50); doHeal(h, a, { actor:v, isHeal:true, noDice:true }); L('[' + v.name + '] 命星:和弦回音!壞狀態被彈走,[' + h.name + '] 回復 HP!'); rc(h); } }catch(_){} };
+  R.violinS2 = function(a, list){   // s2 雙弦護持星
+    try{
+      if(!H(a,'s2','弦樂團員')) return;
+      var amt = sp(a, 0.20), sh = sp(a, 0.50);
+      (list || []).forEach(function(h){
+        if(!h || !(h.curHp > 0)) return;
+        h.buffs = (h.buffs || []).filter(function(b){ return !(b && b.type === 'hpRegen'); });
+        addBuff(h, 'hpRegen', 2); h._hpRegenAmt = Math.max(h._hpRegenAmt || 0, amt);
+        if(h._cstVlRev){ delete h._cstVlRev; mergeShield(h, sh); }
+        rc(h);
+      });
+      L('[' + a.name + '] 命星:雙弦護持!被治療的隊友持續恢復 2 回合(每回合 ' + amt + ')');
+    }catch(_){}
+  };
+  R.violinB2Arm = function(h){ try{ var s = gs(); if(s && H(h,'b2','弦樂團員')){ s.violin = { by:_cstRefOf(h), side:h.side, until:G.round + 2 }; L('[' + h.name + '] 命星:吉普賽餘韻!琴聲會再響 2 回合!'); } }catch(_){} };
+
+  /* ── 小劇團員 ── */
+  R.dramaT2 = function(t){   // t2 入戲太深星:吃苦觸發 ⇒ 入戲 +1(最多 3)
+    try{
+      if(!H(t,'t2','小劇團員')) return;
+      if(!_cstSameRec(t._cstDrIn)) t._cstDrIn = { b:_cstBidD(), n:0 };
+      if(t._cstDrIn.n >= 3) return;
+      t._cstDrIn.n++;
+      L('[' + t.name + '] 命星:入戲太深!入戲 ' + t._cstDrIn.n + '/3 層(下一次變臉戲法每層 +15%)');
+    }catch(_){}
+  };
+  R.dramaS1Mul = function(a){   // s1 百變臉譜星 +20%;t2 入戲每層 +15%(用掉)
+    var m = 1;
+    try{
+      if(a && a.name === '小劇團員'){
+        if(H(a,'s1','小劇團員')) m *= 1.2;
+        if(_cstSameRec(a._cstDrIn) && a._cstDrIn.n > 0 && H(a,'t2','小劇團員')){ var n = a._cstDrIn.n; m *= (1 + 0.15 * n); a._cstDrIn.n = 0; L('[' + a.name + '] 命星:入戲太深!用掉 ' + n + ' 層入戲,變臉戲法 +' + (n * 15) + '%'); }
+      }
+    }catch(_){}
+    return m;
+  };
+  R.dramaS1Dur = function(a){ return H(a,'s1','小劇團員') ? 2 : 1; };
+  R.dramaS2 = function(target, a, opts){   // s2 主角光環星:被聚光燈挑釁的敵人普攻小劇團員 ⇒ (攻+特)50% 反擊(每回合 2 次)
+    try{
+      if(!target || target.name !== '小劇團員' || !(target.curHp > 0) || !H(target,'s2','小劇團員')) return;
+      var at = (opts && opts.actor) || a;
+      if(!at || at === target || at.side === target.side || !(at.curHp > 0)) return;
+      if(!window._cstCap.isNormalAtk(opts) || !window._cstCap.reactOk(opts)) return;
+      var tauntOn = (at.status || []).some(function(s){ return s && s.type === 'taunt' && s._tauntTarget === target; })
+        || !!(G.taunted && G.taunted.attacker === at && G.taunted.target === target);
+      if(!tauntOn) return;
+      var r = _cstS1R();
+      if(!_cstSameRec(target._cstDrS2) || target._cstDrS2.r !== r) target._cstDrS2 = { b:_cstBidD(), r:r, n:0 };
+      if(target._cstDrS2.n >= 2) return;
+      target._cstDrS2.n++;
+      window._cstCap.noteReact(opts);
+      var d = Math.max(1, Math.floor(((target.atk || 0) + (target.sp || 0)) * 0.5));
+      L('[' + target.name + '] 命星:主角光環!聚光燈下的 [' + at.name + '] 一出手就被反打(攻擊+特技 50%,本回合 ' + target._cstDrS2.n + '/2)!');
+      setTimeout(function(){ try{ if(target.curHp > 0 && at.curHp > 0){ doDmg(at, d, { actor:target, isRebound:true, noGuard:true, ignoreEvasion:true, _cstReact:1 }); rc(at); } }catch(_){} }, 260);
+    }catch(_){}
+  };
+  R.dramaB2 = function(h, side){   // b2 落幕再起星:隨機復活 1 名倒下的隊友(20% HP,每場 1 次)
+    try{
+      if(!H(h,'b2','小劇團員') || _cstBidOk(h._cstDrB2G)) return;
+      var dead = (G[side] || []).filter(function(x){ return x && x !== h && !(x.curHp > 0) && !x._inuRetired; });
+      if(!dead.length) return;
+      var t = _cstS1Pick(dead);
+      var ok = doRevive(t, 0.20);
+      if(ok === false || !(t.curHp > 0)) return;
+      h._cstDrB2G = _cstBidD();
+      t.acted = true;
+      L('[' + h.name + '] 命星:落幕再起!掌聲把 [' + t.name + '] 叫回舞台(20% HP)!');
+      try{ bannerFX(t, '🎭 再起!', '#ffcc44', 900); }catch(_){}
+      rc(t);
+    }catch(_){}
+  };
+
+  /* ── 田徑隊員 ── */
+  R.trackBreath = function(h){   // t2 第二呼吸星:起跑衝刺自然結束 ⇒ 速度 +25% 到戰鬥結束(每場 1 次)
+    try{
+      if(!h || h.name !== '田徑隊員' || !(h.curHp > 0) || !H(h,'t2','田徑隊員') || _cstBidOk(h._cstTrBrG)) return;
+      h._cstTrBrG = _cstBidD();
+      var b = Math.max(1, Math.ceil((h.spd || 0) * 0.25));
+      h.spd += b;
+      L('[' + h.name + '] 命星:第二呼吸!起跑結束後換一口氣,速度 +' + b + '(到戰鬥結束)');
+      rc(h);
+    }catch(_){}
+  };
+  R.trackS1Dur = function(h){ return H(h,'s1','田徑隊員') ? 2 : 0; };
+  R.relayTag = function(a, nx){ try{ if(nx && H(a,'s2','田徑隊員')){ nx._cstRelayCut = { b:_cstBidD(), r:G.round }; L('[' + a.name + '] 命星:完美交棒![' + nx.name + '] 下一招少花 1 能量!'); } }catch(_){} };
+  R.relayCutOk = function(actor, s){ try{ return !!(actor && actor._cstRelayCut && _cstBidOk(actor._cstRelayCut.b) && (G.round - actor._cstRelayCut.r) <= 1 && !(s && s.p)); }catch(_){ return false; } };
+  R.trackB2Arm = function(h){ try{ if(H(h,'b2','田徑隊員')) h._cstTrB2 = { b:_cstBidD(), r:G.round }; }catch(_){} };
+
+  /* ── 直笛團員 ── */
+  R.fluteTag = function(a){ return H(a,'s1','直笛團員') ? _cstRefOf(a) : ''; };
+  R.fluteS1 = function(h, st){   // s1 刺耳高音星:魔音每回合多扣 1(G5)
+    try{
+      if(!st || !st._cstFl) return;
+      var o = _cstRefGet(st._cstFl);
+      if(!o || !H(o,'s1','直笛團員')) return;
+      var g = window._cstCap.drainEnergy(o, h.side, 1, { quiet:true });
+      if(g > 0) L('[' + o.name + '] 命星:刺耳高音![' + h.name + '] 的陣營能量再 −' + g);
+    }catch(_){}
+  };
+  R.fluteB2Arm = function(h){ try{ var s = gs(); if(s && H(h,'b2','直笛團員')){ s.flute = { by:_cstRefOf(h), side:h.side, until:G.round + 1, r:0, n:0 }; L('[' + h.name + '] 命星:安可合奏!接下來 2 回合,我方每用一次技能就飛出音符!'); } }catch(_){} };
+
+  /* ── 籃球隊員 ── */
+  R.bbCritMark = function(actor, leader){ try{ if(actor && leader && H(leader,'t2','籃球隊員')) actor._cstBbKill = { b:_cstBidD(), by:_cstRefOf(leader), sq:_cstS4Seq() }; }catch(_){} };
+  R.bbNextCrit = function(a){ try{ if(a && a.name === '籃球隊員' && _cstBidOk(a._cstBbNext) && H(a,'t2','籃球隊員')){ a._cstBbNext = null; L('[' + a.name + '] 命星:快攻反擊!這一球必定暴擊!'); return true; } }catch(_){} return false; };
+  R.dribbleTag = function(a, b){ try{ if(b && H(a,'s2','籃球隊員')) b._cstBb = _cstRefOf(a); }catch(_){} };
+  R.dribbleS2 = function(actor, t){   // s2 搶斷破防星:運球第二下命中 ⇒ 破防 1 回合(每名目標每回合 1 次)
+    try{
+      if(!actor || !t || !(t.curHp > 0)) return;
+      var b = (actor.buffs || []).find(function(x){ return x && x.type === 'dribble' && x._cstBb; });
+      if(!b) return;
+      var o = _cstRefGet(b._cstBb); if(!o || !H(o,'s2','籃球隊員')) return;
+      var r = _cstS1R();
+      if(_cstSameRec(t._cstBbS2) && t._cstBbS2.r === r) return;
+      t._cstBbS2 = { b:_cstBidD(), r:r };
+      addStatus(t, 'breakDef', 1);
+      if(hasStatus(t, 'breakDef')){ L('[' + o.name + '] 命星:搶斷破防!運球第二下打破 [' + t.name + '] 的防禦 1 回合!'); rc(t); }
+    }catch(_){}
+  };
+
+  /* ── 動物學家 ── */
+  R.zooT2 = function(z){   // t2 森林友伴星:驅除 1 隻對手寵物 ⇒ 送 1 隻隨機寵物給 HP 最低、沒帶寵物的友方(每場 2 次)
+    try{
+      if(!z || !H(z,'t2','動物學家')) return;
+      if(!_cstSameRec(z._cstZoT2)) z._cstZoT2 = { b:_cstBidD(), n:0 };
+      if(z._cstZoT2.n >= 2) return;
+      var t = _cstS1Alive(z.side).filter(function(x){ return !x.equip; }).sort(function(x, y){ return (x.curHp / (x.hp || 1)) - (y.curHp / (y.hp || 1)); })[0];
+      if(!t) return;
+      var pool = (typeof window._getEquipPoolForStage === 'function') ? window._getEquipPoolForStage() : CARRY_PET_DB.filter(function(e){ return e.n; });
+      var eq = _cstS1Pick(pool); if(!eq) return;
+      z._cstZoT2.n++;
+      t.equip = Object.assign({}, eq, { uid:Math.random(), type:'equip' });
+      try{ if(eq.onEquip) eq.onEquip(t); }catch(_){}
+      L('[' + z.name + '] 命星:森林友伴!新的動物朋友 [' + eq.n + '] 跑來陪 [' + t.name + '](本場 ' + z._cstZoT2.n + '/2)');
+      try{ bannerFX(t, '🐾 ' + eq.n, '#d4a843', 800); }catch(_){}
+      rc(t);
+    }catch(_){}
+  };
+  R.zooS2 = function(a, pct){ try{ var s = gs(); if(s && H(a,'s2','動物學家') && pct > 0){ s.zoo = s.zoo || {}; s.zoo[a.side] = { by:_cstRefOf(a), pct:Math.min(0.30, pct), until:G.round + 1 }; L('[' + a.name + '] 命星:庇護之森!寵物守護全隊,隊友受到傷害 −' + Math.round(Math.min(0.30, pct) * 100) + '%(2 回合)'); } }catch(_){} };
+  R.zooB1 = function(h){ return H(h,'b1','動物學家') ? 1 : 0; };
+  R.zooB2 = function(h, side){   // b2 群獸奔騰星:特技 40% × 我方存活人數,全體敵人必中分攤
+    try{
+      if(!H(h,'b2','動物學家')) return;
+      var foes = _cstS1Alive(_cstS1Opp(side)); if(!foes.length) return;
+      var n = Math.min(5, _cstS1Alive(side).length);
+      var tot = Math.max(foes.length, Math.floor(window._lxpsSpv(h) * 0.40 * n));
+      var each = Math.max(1, Math.floor(tot / foes.length));
+      L('[' + h.name + '] 命星:群獸奔騰!' + n + ' 群動物衝向敵陣(特技 ' + (40 * n) + '% 全體分攤)!');
+      foes.forEach(function(t){ doDmg(t, each, { actor:h, isSkill:true, isAoe:true, mustHit:true, noCounter:true }); });
+    }catch(_){}
+  };
+  R.teamDr = function(target, raw, opts){   // 動物學家 s2 庇護之森 / 小力 b2 安心依偎:我方受到的傷害減少(合計受 G7 ≤70%)
+    try{
+      var s = (typeof G !== 'undefined' && G && G._cstRS && G._cstRS.b === _cstBidD()) ? G._cstRS : null;
+      if(!s || !target || !(raw > 0) || (opts && opts.ignoreBuffs) || (opts && opts._gmLinkShare)) return raw;
+      var at = opts && opts.actor;
+      if(at && at.side === target.side) return raw;
+      var lst = [];
+      var z = s.zoo && s.zoo[target.side];
+      if(z && G.round <= z.until && target.name !== '動物學家'){ var zo = _cstRefGet(z.by); if(zo && H(zo,'s2','動物學家')) lst.push(z.pct); }
+      var q = s.inu && s.inu[target.side];
+      if(q && G.round <= q.until){ var qo = _cstRefGet(q.by); if(qo && H(qo,'b2','小力')) lst.push(0.15); }
+      if(!lst.length) return raw;
+      var dr = window._cstCap.combineDr(lst);
+      return Math.max(1, Math.ceil(raw * (1 - dr)));
+    }catch(_){ return raw; }
+  };
+
+  /* ── 小力 ── */
+  R.inuT2 = function(inu, t){   // t2 舔舔療癒星:關心治療時解除 1 個不利(每回合 2 次)
+    try{
+      if(!H(inu,'t2','小力') || !t || !(t.curHp > 0)) return;
+      var r = _cstS1R();
+      if(!_cstSameRec(inu._cstInuT2) || inu._cstInuT2.r !== r) inu._cstInuT2 = { b:_cstBidD(), r:r, n:0 };
+      if(inu._cstInuT2.n >= 2) return;
+      var bad = (t.status || []).filter(function(s){ return s && BAD_STATUS.includes(s.type) && !s._unremovable && !(typeof NON_DISPELLABLE_STATUS !== 'undefined' && NON_DISPELLABLE_STATUS.includes(s.type)); });
+      if(!bad.length) return;
+      inu._cstInuT2.n++;
+      var x = bad[bad.length - 1];
+      clearStatus(t, [x.type]);
+      L('[' + inu.name + '] 命星:舔舔療癒!幫 [' + t.name + '] 舔掉 1 個壞狀態(' + statusName(x.type) + ')');
+      rc(t);
+    }catch(_){}
+  };
+  R.inuS2Stay = function(h){   // s2 搖尾歸來星(裁定 1乙):隱身結束不回去休息,繼續戰鬥(之後正常被鎖定、正常受傷)
+    try{
+      if(!H(h,'s2','小力')) return false;
+      var amt = Math.max(1, Math.floor(window._lxpsSpv(h) * 1.0));
+      mergeShield(h, amt);
+      L('[' + h.name + '] 命星:搖尾歸來!隱身結束了,小力搖著尾巴留下來繼續戰鬥(護盾 ' + amt + ';之後會正常被攻擊)!');
+      try{ bannerFX(h, '🐕 我還要陪大家!', '#ffaacc', 1200); }catch(_){}
+      return true;
+    }catch(_){ return false; }
+  };
+  R.inuB2Arm = function(h, side, dur){ try{ var s = gs(); if(s && H(h,'b2','小力')){ s.inu = s.inu || {}; s.inu[side] = { by:_cstRefOf(h), until:G.round + Math.max(1, dur) - 1 }; L('[' + h.name + '] 命星:安心依偎!' + dur + ' 回合內我方受到的傷害 −15%'); } }catch(_){} };
+
+  /* ── 幼兒園小孩 ── */
+  R.napEnergy = function(h){   // s2 好夢連連星:午睡中每回合陣營 +1 能量(每次午睡最多 +2,gift)
+    try{
+      if(!H(h,'s2','幼兒園小孩')) return;
+      if(!_cstSameRec(h._cstNapE)) h._cstNapE = { b:_cstBidD(), n:0 };
+      if(h._cstNapE.n >= 2) return;
+      var g = window._cstCap.gainEnergy(h.side, 1, { gift:true });
+      if(g > 0){ h._cstNapE.n += g; L('[' + h.name + '] 命星:好夢連連!睡得香甜,我方能量 +' + g + '(本回合不能用來施放極限爆發)'); }
+    }catch(_){}
+  };
+  R.napReset = function(h){ try{ if(h) h._cstNapE = { b:_cstBidD(), n:0 }; }catch(_){} };
+  R.dreamB2 = function(h, foes){   // b2 一起做夢星:每名敵人 30% 睡著 1 回合(BOSS 15%;G6)
+    try{
+      if(!H(h,'b2','幼兒園小孩')) return;
+      var C = window._cstCap, hit = [];
+      (foes || []).forEach(function(t){
+        if(!t || !(t.curHp > 0)) return;
+        var p = boss(t) ? 0.15 : 0.30;
+        if(C.rollCtrl(t, 0, p) !== 2) return;
+        var pre = C.ctrlPre(t, 'sleep');
+        addStatus(t, 'sleep', 1);
+        if(hasStatus(t, 'sleep') && C.markCtrl(t, 'sleep', pre)){ hit.push(t.name); rc(t); }
+      });
+      if(hit.length) L('[' + h.name + '] 命星:一起做夢!' + hit.join('、') + ' 也跟著睡著了(1 回合)!');
+    }catch(_){}
+  };
+
+  /* ── 機關王雙人組 ── */
+  R.gmT2 = function(g, n){ try{ if(H(g,'t2','機關王雙人組') && n > 0 && g.curHp > 0){ var a = Math.max(1, Math.floor((g.hp || 0) * Math.min(0.15, 0.03 * n))); mergeShield(g, a); L('[' + g.name + '] 命星:拆件再造!用拆下來的零件做成護盾 ' + a); rc(g); } }catch(_){} };
+  R.gmS2 = function(a, t){   // s2 位能轉換星:緩速 1 回合 + 擊退行動條 20%(BOSS 不擊退)
+    try{
+      if(!H(a,'s2','機關王雙人組') || !t || !(t.curHp > 0)) return;
+      addStatus(t, 'slow', 1);
+      var tx = hasStatus(t, 'slow') ? '緩速 1 回合' : '';
+      if(!boss(t)){ t._cstPush = Math.min(0.9, (t._cstPush || 0) + 0.2); tx += (tx ? '、' : '') + '行動條擊退 20%'; }
+      if(tx) L('[' + a.name + '] 命星:位能轉換![' + t.name + '] ' + tx + '!');
+      rc(t);
+    }catch(_){}
+  };
+  R.gmB2Arm = function(h, side, dur){ try{ var s = gs(); if(s && H(h,'b2','機關王雙人組')){ s.gm = s.gm || {}; s.gm[side] = { by:_cstRefOf(h), until:G.round + Math.max(1, dur) - 1, n:0 }; } }catch(_){} };
+  R.gmShare = function(target, lk){   // b2 連鎖機關星:強力連結分攤 1 次 ⇒ 蓄能 +1(最多 5)
+    try{
+      if(!lk || lk.type !== '_gmLinkStrong') return;
+      var s = gs(); var q = s && s.gm && s.gm[target.side];
+      if(!q || G.round > q.until || q.n >= 5) return;
+      q.n++;
+    }catch(_){}
+  };
+
+  /* ── 倒下事件(由 _cstOnKo 呼叫)── */
+  R.onKo = function(target, opts){
+    try{
+      if(!target || typeof G === 'undefined' || !G) return;
+      var k = (opts && opts.actor) || G.activeChar;
+      // 直笛團員 t2 失序合奏星:狂亂中的敵人擊倒自己的隊友 ⇒ 我方陣營 +2(每場 2 次,gift)
+      if(k && k !== target && k.side === target.side && hasStatus(k, 'berserk')){
+        var fl = _cstS1Alive(_cstS1Opp(k.side)).find(function(x){ return x.name === '直笛團員' && H(x,'t2','直笛團員'); });
+        if(fl){
+          if(!_cstSameRec(fl._cstFlT2)) fl._cstFlT2 = { b:_cstBidD(), n:0 };
+          if(fl._cstFlT2.n < 2){
+            fl._cstFlT2.n++;
+            var g = window._cstCap.gainEnergy(fl.side, 2, { gift:true });
+            L('[' + fl.name + '] 命星:失序合奏![' + k.name + '] 亂打倒了自己人 [' + target.name + '],我方能量 +' + g + '(本場 ' + fl._cstFlT2.n + '/2;本回合不能用來施放極限爆發)');
+          }
+        }
+      }
+      if(!k || k.side === target.side) return;
+      // 籃球隊員 t2 快攻反擊星
+      var m = k._cstBbKill;
+      if(m && _cstBidOk(m.b) && m.sq === _cstS4Seq()){
+        var o = _cstRefGet(m.by);
+        if(o && o.curHp > 0 && H(o,'t2','籃球隊員')){ o._cstBbNext = _cstBidD(); L('[' + o.name + '] 命星:快攻反擊![' + k.name + '] 的暴擊普攻打倒對手,籃球隊員下一顆三分球必定暴擊!'); }
+        k._cstBbKill = null;
+      }
+      // 田徑隊員 b2 破紀錄星:極速閃燃後的再行動擊倒目標 ⇒ 全隊速度 +20% 2 回合(每次爆發 1 次)
+      var q = k._cstTrB2;
+      if(q && _cstBidOk(q.b) && q.r === G.round && k.name === '田徑隊員' && G.activeChar === k && !k._cstTrB2Busy && H(k,'b2','田徑隊員')){
+        k._cstTrB2 = null;
+        _cstS1Alive(k.side).forEach(function(x){
+          x.status = (x.status || []).filter(function(s){ if(s && s.type === '_cstTrRec'){ x.spd = Math.max(1, x.spd - (s._spdBoost || 0)); return false; } return true; });
+          var bo = Math.max(1, Math.ceil((x.spd || 0) * 0.20));
+          x.spd += bo;
+          x.status.push({ type:'_cstTrRec', dur:2, _spdBoost:bo });
+          rc(x);
+        });
+        L('[' + k.name + '] 命星:破紀錄!再行動打倒 [' + target.name + '],全隊速度 +20%(2 回合)!');
+      }
+    }catch(_){}
+  };
+
+  /* ── 我方使用技能(execSkill/aiUseSkill 頂部呼叫)── */
+  R.onSkill = function(a, sk){
+    try{
+      if(!a || !sk || sk.p) return;
+      var s = (typeof G !== 'undefined' && G && G._cstRS && G._cstRS.b === _cstBidD()) ? G._cstRS : null;
+      var f = s && s.flute;
+      if(f && f.side === a.side && G.round <= f.until){   // 直笛團員 b2 安可合奏星
+        var o = _cstRefGet(f.by);
+        if(o && H(o,'b2','直笛團員')){
+          if(f.r !== G.round){ f.r = G.round; f.n = 0; }
+          if(f.n < 3){
+            var foes = _cstS1Alive(_cstS1Opp(a.side));
+            if(foes.length){
+              f.n++;
+              var t = _cstS1Pick(foes), d = sp(o, 0.30);
+              L('[' + o.name + '] 命星:安可合奏![' + a.name + '] 用技能,音符飛向 [' + t.name + '](特技 30%,本回合 ' + f.n + '/3)');
+              setTimeout(function(){ try{ if(t.curHp > 0) doDmg(t, d, { actor:o, isSkill:true, mustHit:true, noCounter:true, _cstReact:1 }); }catch(_){} }, 200);
+            }
+          }
+        }
+      }
+    }catch(_){}
+  };
+
+  /* ── 新回合開始(nextRound 在雙方 +3 能量後呼叫)── */
+  R.roundStart = function(){
+    try{
+      var s = (typeof G !== 'undefined' && G && G._cstRS && G._cstRS.b === _cstBidD()) ? G._cstRS : null;
+      if(!s) return;
+      // 弦樂團員 b2 吉普賽餘韻星:每回合開始打隨機 1 名敵人特技 40%(必中),同量補給 HP 最低的友方
+      var v = s.violin;
+      if(v && G.round <= v.until){
+        var o = _cstRefGet(v.by);
+        if(o && H(o,'b2','弦樂團員')){
+          var foes = _cstS1Alive(_cstS1Opp(v.side)), lo = lowest(v.side);
+          if(foes.length){
+            var t = _cstS1Pick(foes), d = sp(o, 0.40);
+            L('[' + o.name + '] 命星:吉普賽餘韻!琴聲還在迴盪,打中 [' + t.name + '](特技 40%)' + (lo ? ',[' + lo.name + '] 回復同樣的 HP' : '') + '!');
+            try{ doDmg(t, d, { actor:o, isSkill:true, mustHit:true, noCounter:true }); }catch(_){}
+            if(lo && lo.curHp > 0){ doHeal(lo, d, { actor:o, isHeal:true, noDice:true }); rc(lo); }
+          }
+        }
+      } else if(v){ s.violin = null; }
+      // 機關王雙人組 b2 連鎖機關星:強力連結結束 ⇒ 每格蓄能打隨機對手(雙人組最大 HP 20%,必中)
+      if(s.gm){
+        Object.keys(s.gm).forEach(function(sd){
+          var q = s.gm[sd];
+          if(!q || G.round <= q.until) return;
+          s.gm[sd] = null;
+          var g = _cstRefGet(q.by);
+          if(!g || !H(g,'b2','機關王雙人組') || !(q.n > 0)) return;
+          var d = Math.max(1, Math.floor((g.hp || 0) * 0.20));
+          L('[' + g.name + '] 命星:連鎖機關!強力連結結束,蓄滿的 ' + q.n + ' 格能量一口氣發射(每發最大 HP 20%)!');
+          for(var i = 0; i < q.n; i++){
+            var foes2 = _cstS1Alive(_cstS1Opp(sd)); if(!foes2.length) break;
+            try{ doDmg(_cstS1Pick(foes2), d, { actor:g, isSkill:true, fixedDmg:true, mustHit:true, noCounter:true }); }catch(_){}
+          }
+        });
+      }
+    }catch(_eCstRRs){ console.warn('[R 卡命星 回合開始]', _eCstRRs); }
+  };
+  return R;
+})();
+
 window._cstOnKo = function(target, opts){
   try{
     if(!target || typeof G === 'undefined' || !G) return;
@@ -32335,6 +32833,7 @@ window._cstOnKo = function(target, opts){
     }
     try{ window._cstS1Ko(target, opts); }catch(_eCstS1KoC){}   // ✨ v5.264.0 命座 ✦ SSR 第一批 倒下事件
     try{ window._cstS2Ko(target, opts); }catch(_eCstS2KoC){}   // ✨ v5.265.0 命座 ✦ SSR 第二批 倒下事件(獵物轉舵/羽化歸巢/孢子炸裂)
+    try{ window._cstR.onKo(target, opts); }catch(_eCstRKo){}   // ✨ v5.314.0 R 卡命星 倒下事件(直笛 t2/籃球 t2/田徑 b2)
   }catch(_eCstKo){ console.warn('[命星 ✦ 倒下事件]', _eCstKo); }
 };
 
@@ -35396,13 +35895,14 @@ function doDmg(target, rawDmg, opts={}){
         // ★ v1.0.20260424.0700 — 忠犬守護:每升 1 級轉移傷害+5%(基礎 50%, Lv10 達 95%)
         const _inuLv = (inuHero._skLv && typeof inuHero._skLv.s1==='number' && inuHero.s1 && inuHero.s1.n==='忠犬守護') ? inuHero._skLv.s1
                      : (inuHero._skLv && typeof inuHero._skLv.s2==='number' && inuHero.s2 && inuHero.s2.n==='忠犬守護') ? inuHero._skLv.s2 : 0;
-        const _transferRate = 0.5 + (_inuLv * 0.05);
+        let _cstInuS1 = false; try{ _cstInuS1 = window._cstR.has(inuHero,'s1','小力'); }catch(_){ _cstInuS1 = false; }   // ✨ v5.314.0 命星 小力 s1 不離不棄星(轉移 +10%,小力自己少受 20%)
+        const _transferRate = Math.min(0.95, 0.5 + (_inuLv * 0.05) + (_cstInuS1 ? 0.10 : 0));
         const transfer=Math.max(1,Math.ceil(rawDmg*_transferRate));
         rawDmg=Math.max(0,rawDmg-transfer);
         log(`🐕 [小力] 忠犬守護！替 [${target.name}] 吸收 ${transfer} 傷害！`);
         // 直接扣血並保底1，不走完整doDmg流程（避免遞迴/卡死）
         const before = inuHero.curHp;
-        inuHero.curHp = Math.max(1, inuHero.curHp - transfer);
+        inuHero.curHp = Math.max(1, inuHero.curHp - (_cstInuS1 ? Math.max(1, Math.ceil(transfer * 0.8)) : transfer));
         const actualTransfer = before - inuHero.curHp;
         if(actualTransfer>0){
           showPopup(inuHero, actualTransfer, 'dmg');
@@ -35441,7 +35941,8 @@ function doDmg(target, rawDmg, opts={}){
     try{
       const _gmLk = (target.buffs || []).find(b => b && (b.type === '_gmLink' || b.type === '_gmLinkStrong'));
       if(_gmLk){
-        const _gmReduce = Math.min(0.50, (typeof _gmLk._reducePct === 'number') ? _gmLk._reducePct : 0.10);
+        const _gmReduce = Math.min(0.55, (typeof _gmLk._reducePct === 'number') ? _gmLk._reducePct : 0.10);   // ✨ v5.314.0 上限 0.50→0.55(只有命星 s1 齒輪咬合星會超過 0.50;建立時原本就夾在 0.50 內 ⇒ 未點亮行為不變)
+        try{ if(_gmLk.type === '_gmLinkStrong') window._cstR.gmShare(target, _gmLk); }catch(_eCstGmB2s){}   // ✨ v5.314.0 命星 機關王雙人組 b2 連鎖機關星(分攤 1 次 ⇒ 蓄能 +1)
         const _gmTotal = Math.max(1, Math.floor(rawDmg * (1 - _gmReduce)));
         const _gmAllies = G[target.side].filter(x => x && x.curHp > 0);
         if(_gmAllies.length > 1){
@@ -35464,19 +35965,23 @@ function doDmg(target, rawDmg, opts={}){
       }
     }catch(_eGmLink){ console.warn('[機關連結 hook] 失敗', _eGmLink); }
   }
+  try{ if(target && target.name==='小劇團員') window._cstR.dramaS2(target, null, opts); }catch(_eCstDrS2){}   /* 鐵律 1.110:此段 a 尚未宣告 ⇒ 只讀 opts.actor */   // ✨ v5.314.0 命星 小劇團員 s2 主角光環星(被聚光燈挑釁的敵人普攻 ⇒ 反擊)
   // 小劇團員天賦：受傷時機率轉為治療
   if(target.name==='小劇團員' && target.curHp>0 && rawDmg>0 && !hasStatus(target,'confused') && !opts._lockedSkipTraits){
     // ★ v3.12.4(2026-05-30) — 平衡強化:Lv0=25%、每升級 +3%(Lv5=40%)
     const _traitLvConvert = _getTraitLv(target.name);
     const _convertChance = 0.25 + _traitLvConvert * 0.03;
-    if(Math.random() < _convertChance){
+    let _cstDrT1 = false; try{ _cstDrT1 = window._cstR.has(target,'t1','小劇團員'); }catch(_){ _cstDrT1 = false; }   // ✨ v5.314.0 命星 小劇團員 t1 苦盡甘來星(+10%;未點亮不多擲骰)
+    if(_cstDrT1 ? window._cstCap.rollBand(_convertChance, Math.min(1, _convertChance + 0.10)) > 0 : Math.random() < _convertChance){
       doHeal(target,rawDmg,{actor:target,isHeal:true,noDice:true});
       showPopup(target,'🎭轉化！','energy');
       bannerFX(target,'轉化治療！','#ff88aa',900);
       log(`🎭 [小劇團員] 天賦：傷害轉化！${rawDmg}傷害轉為治療！（機率${Math.round(_convertChance*100)}%）`);
+      try{ window._cstR.dramaT2(target); }catch(_eCstDrT2){}   // ✨ v5.314.0 命星 小劇團員 t2 入戲太深星
       return 0;
     }
   }
+  try{ rawDmg = window._cstR.teamDr(target, rawDmg, opts); }catch(_eCstRDr){}   // ✨ v5.314.0 命星 動物學家 s2 庇護之森/小力 b2 安心依偎(我方減傷;合計 ≤70%)
   // 動物學家天賦：動物守護減傷（每隻寵物-10%，最高40%）
   if(target.name==='動物學家' && target._zoologistDmgReduce>0 && !opts.ignoreBuffs){
     rawDmg=Math.max(1,Math.ceil(rawDmg*(1-target._zoologistDmgReduce)));
@@ -39879,11 +40384,14 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   if(target && target.curHp>0 && dmg>0 && !opts.noInuTrait){
     const inuAllies = G[target.side].filter(h=>h!==target&&h.curHp>0&&h.name==='小力'&&!hasStatus(h,'confused'));
     inuAllies.forEach(inu=>{
-      if(Math.random()<Math.min(1,0.35+_getTraitLv(inu.name)*0.05)){
+      const _cstInuBase = Math.min(1,0.35+_getTraitLv(inu.name)*0.05);
+      let _cstInuT1 = false; try{ _cstInuT1 = window._cstR.has(inu,'t1','小力'); }catch(_){ _cstInuT1 = false; }   // ✨ v5.314.0 命星 小力 t1 守望陪伴星(+15%;未點亮不多擲骰)
+      if(_cstInuT1 ? window._cstCap.rollBand(_cstInuBase, Math.min(1, _cstInuBase + 0.15)) > 0 : Math.random()<_cstInuBase){
         const healAmt=Math.max(1,Math.floor(inu.sp*(1+inu.sp*0.01)));
         doHeal(target,healAmt,{actor:inu,isHeal:true,noDice:true});
         log(`🐕 [小力] 天賦觸發！替 [${target.name}] 恢復 ${healAmt}HP！`);
         bannerFX(target,'小力守護！','#ffaacc',800);
+        try{ window._cstR.inuT2(inu, target); }catch(_eCstInuT2){}   // ✨ v5.314.0 命星 小力 t2 舔舔療癒星
       }
     });
   }
@@ -41095,7 +41603,7 @@ function doRevive(target, pct=0.5, full=false, opts={}){
       const _sprSlot = (target.s1 && target.s1.n==='起跑衝刺') ? 's1'
                      : (target.s2 && target.s2.n==='起跑衝刺') ? 's2' : null;
       const _sprLv = (_sprSlot && target._skLv) ? (target._skLv[_sprSlot]||0) : 0;
-      const _sprDur = 5 + Math.floor(_sprLv/3);
+      const _sprDur = 5 + Math.floor(_sprLv/3) + ((window._cstR && window._cstR.trackS1Dur(target)) || 0);   // ✨ v5.314.0 命星 田徑隊員 s1
       // 復活先清除可能殘留的 _sprint(避免疊加速度)
       if(target._sprintOrigSpd !== undefined){
         target.spd = target._sprintOrigSpd;
@@ -42047,11 +42555,14 @@ function execAtk(actor, target, dmg, opts={}){
     }catch(_eYYatk){ _finalDmg = Math.max(1, actor.sp || 1); }
   }
   const _bballLeader = actor.side ? G[actor.side].find(h=>h.curHp>0&&h.name==='籃球隊員'&&h!==actor) : null;
-  if(_bballLeader && !hasStatus(_bballLeader,'confused') && Math.random()<Math.min(1,0.50+_getTraitLv(_bballLeader.name)*0.05)){
+  const _cstBbBase = _bballLeader ? Math.min(1,0.50+_getTraitLv(_bballLeader.name)*0.05) : 0;
+  let _cstBbT1 = false; try{ _cstBbT1 = !!(_bballLeader && window._cstR.has(_bballLeader,'t1','籃球隊員')); }catch(_){ _cstBbT1 = false; }   // ✨ v5.314.0 命星 籃球隊員 t1 默契助攻星(+15%;未點亮不多擲骰)
+  if(_bballLeader && !hasStatus(_bballLeader,'confused') && (_cstBbT1 ? window._cstCap.rollBand(_cstBbBase, Math.min(1, _cstBbBase + 0.15)) > 0 : Math.random()<_cstBbBase)){
     _finalDmg = Math.floor(_finalDmg * 1.5);
     showPopup(actor,'🏀暴擊！','energy');
     bannerFX(actor,'暴擊！','#ff8800',600);
     log(`🏀 [籃球隊員] 天賦：隊友暴擊！[${actor.name}] 傷害×1.5！`);
+    try{ window._cstR.bbCritMark(actor, _bballLeader); }catch(_eCstBbT2){}   // ✨ v5.314.0 命星 籃球隊員 t2 快攻反擊星(這一擊打倒目標 ⇒ 三分球必暴)
   }
   // ★ v3.16.22 — 小鬼貓與兔天賦「惡作劇」已改版:不再於「對手普攻」時反彈傷害,
   //   改為「對手使用技能或極限爆發」時反噬固定傷害(能量消耗×50),實作見 _kgMischiefOnSkill()
@@ -42128,6 +42639,7 @@ function execAtk(actor, target, dmg, opts={}){
       if(actor.curHp>0 && target.curHp>0){
         log(`🏀 [運球] ${actor.name} 二連擊！`);
         execAtk(actor, target, actor.atk, {_dribble2nd:true});
+        try{ window._cstR.dribbleS2(actor, target); }catch(_eCstBbS2){}   // ✨ v5.314.0 命星 籃球隊員 s2 搶斷破防星
       }
     }, 300);
   }
@@ -42665,14 +43177,14 @@ function execAtk(actor, target, dmg, opts={}){
   // ── 注意：吸血鬼特質在 doDmg hook 中處理（見下方），此處不重複
 
   // 直笛團員：普攻時50%使目標狂亂1回合
-  if(name==='直笛團員' && Math.random()<Math.min(1,0.50+_tl*0.05) && target.curHp>0){
+  if(name==='直笛團員' && ((window._cstR && window._cstR.has(actor,'t1','直笛團員') && !window._cstCap.isBoss(target)) ? window._cstCap.rollBand(Math.min(1,0.50+_tl*0.05), Math.min(1,0.65+_tl*0.05)) > 0 : Math.random()<Math.min(1,0.50+_tl*0.05)) && target.curHp>0){   // ✨ v5.314.0 命星 直笛團員 t1 走音魔笛星(+15%;對 BOSS 維持原機率;未點亮不多擲骰)
     addStatus(target,'berserk',1);
     _traitLabel('魔笛狂亂');
     log(`🎵 [直笛團員] 天賦：魔笛旋律！[${target.name}] 陷入狂亂1回合！`);
     bannerFX(target,'狂亂！','#ff55cc',900);
   }
   // 田徑隊員：行動時60%使未行動友方提前到下一個
-  if(name==='田徑隊員' && Math.random()<Math.min(1,0.60+_tl*0.04)){
+  if(name==='田徑隊員' && ((window._cstR && window._cstR.has(actor,'t1','田徑隊員')) ? window._cstCap.rollBand(Math.min(1,0.60+_tl*0.04), Math.min(1,0.80+_tl*0.04)) > 0 : Math.random()<Math.min(1,0.60+_tl*0.04))){   // ✨ v5.314.0 命星 田徑隊員 t1 接力交棒星(+20%;未點亮不多擲骰)
     const _sortFn3=fieldHas('reverse')?(x,y)=>x.spd-y.spd:(x,y)=>y.spd-x.spd;
     const _nextAlly2=G[actor.side].filter(h=>h.curHp>0&&h!==actor&&!h.acted).sort(_sortFn3)[0];
     if(_nextAlly2){
@@ -44687,6 +45199,7 @@ function execSkill(a, sk, cost, stype){
   try{ if(sk && !sk.p && typeof _inventInspirationTrigger==='function') _inventInspirationTrigger(); }catch(_eII){}
   // ★ v3.16.22 — 小鬼貓與兔天賦「惡作劇」:任意角色使用(主動)技能時,敵方小鬼貓與兔機率反噬固定傷害(能量消耗×50)
   try{ if(sk && !sk.p && typeof _kgMischiefOnSkill==='function') _kgMischiefOnSkill(a, cost); }catch(_eKg1){}
+  try{ if(sk && !sk.p && window._cstR) window._cstR.onSkill(a, sk); }catch(_eCstROnSk1){}   // ✨ v5.314.0 R 卡命星:我方使用技能(直笛 b2 安可合奏)
   try{ if(sk && !sk.p && typeof G !== 'undefined' && G && (G[a.side] || []).some(function(d){ return d && d._cstDcB2; })) a._cstDcArm = (G._actSeq || 0); }catch(_eCstDb2s1){}   // ★ v5.262.0 審查:(review8_2 M1)舞者 b2 手動:只「預約」,endAction 確認真的施放了技能才計次(選目標時取消再改選不再灌水;_cstDcB2 只由點亮的 b2 寫入)
   // ====== 劍士 ======
   // ★ v3.13.31(2026-06-03) — 修正:hero_db.js 描述為「連續攻擊3次」,但原實作只打 2 次
@@ -47773,11 +48286,20 @@ function execSkill(a, sk, cost, stype){
       log(`[${a.name}] 三分投射！`);
       playSfx('sfx-basketball', 0.85);
       const _spv=spv(a);
-      const _isCrit=Math.random()<0.5; // 基礎50%暴擊，天賦另外觸發
-      const _dmg=Math.floor(_spv*2.5*(_isCrit?1.5:1));
+      // ✨ v5.314.0 命星 籃球隊員 s1 空心入網星(250%→320%、暴擊率 +20%)/t2 快攻反擊星(必定暴擊)。星帶來的暴擊回能走 G3(gainEnergy);未點亮時擲骰與原本完全相同
+      let _cstBbS1 = false; try{ _cstBbS1 = window._cstR.has(a,'s1','籃球隊員'); }catch(_){ _cstBbS1 = false; }
+      let _cstBbForce = false; try{ _cstBbForce = window._cstR.bbNextCrit(a); }catch(_){ _cstBbForce = false; }
+      const _cstBbRoll = _cstBbForce ? 2 : (_cstBbS1 ? window._cstCap.rollBand(0.5, 0.7) : (Math.random()<0.5 ? 1 : 0));
+      const _isCrit=_cstBbRoll>0; // 基礎50%暴擊，天賦另外觸發
+      const _dmg=Math.floor(_spv*(_cstBbS1 ? 3.2 : 2.5)*(_isCrit?1.5:1));
       playSkillFX('三分投射',a,[t]);
       doDmg(t,_dmg,{actor:a,isSkill:true});
-      if(_isCrit){
+      if(_isCrit && _cstBbRoll===2){
+        const _cstBbE = window._cstCap.gainEnergy(a.side, 2);
+        if(_cstBbE>0) showPopup(a,'+'+_cstBbE+'E','energy');
+        bannerFX(a,'暴擊+'+_cstBbE+'能量！','#ff8800',900);
+        log(`🏀 [${a.name}] 三分暴擊(命星)！獲得${_cstBbE}能量！`);
+      } else if(_isCrit){
         G.energy[a.side]=Math.min(10,G.energy[a.side]+2);
         showPopup(a,'+2E','energy');
         bannerFX(a,'暴擊+2能量！','#ff8800',900);
@@ -47791,7 +48313,7 @@ function execSkill(a, sk, cost, stype){
     log(`🏀 [${a.name}] 運球!友方全體普攻×2 持續 ${_dribbleDur} 回合!`);
     const _allies=G[a.side].filter(h=>h.curHp>0);
     playSkillFX('運球',a,_allies);
-    _allies.forEach(h=>addBuff(h,'dribble',_dribbleDur));
+    _allies.forEach(h=>{ addBuff(h,'dribble',_dribbleDur); try{ window._cstR.dribbleTag(a, (h.buffs||[]).find(b=>b && b.type==='dribble')); }catch(_){} });   // ✨ v5.314.0 命星 籃球隊員 s2(運球帶記號)
     bannerFX(a,'運球!普攻×2!','#ff8800',1000);
     endAction(a, cost);
   }
@@ -47813,7 +48335,7 @@ function execSkill(a, sk, cost, stype){
       const _dmg=Math.min(Math.max(1,Math.floor(h.curHp*_dmgPct)), window._hpPctCap(h, _cryHeroLv*20));   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
       doDmg(h,_dmg,{actor:a,isSkill:true,ignoreBuffs:false,_pierceBossReduce:true});
       // ★ debuff機率每升 1 級+2%(基礎 75%)、降低效果 10%+2%/級(基礎 10%, Lv10 達 28%- 修正:原本只有 +1% Lv10=20%);不可堆疊(已有則只刷新回合)
-      const _cryDebuffRate = Math.min(1.0, 0.75 + _activeSkLv * 0.02);
+      const _cryDebuffRate = (window._cstR && window._cstR.has(a,'s1','幼兒園小孩')) ? 1.0 : Math.min(1.0, 0.75 + _activeSkLv * 0.02);   // ✨ v5.314.0 命星 幼兒園小孩 s1 哭不停星(必定弱化)
       const _cryReducePct = 0.10 + _activeSkLv * 0.018;  // 10%~28%(每升+1.8%,Lv10=28%)
       const _cryMult = 1.0 - _cryReducePct;             // 0.9 ~ 0.72
       if(h.curHp>0 && Math.random()<_cryDebuffRate){
@@ -47851,6 +48373,7 @@ function execSkill(a, sk, cost, stype){
     playSkillFX('午睡時間',a,[a]);
     addStatus(a,'sleep',5);   /* ★ v5.80.0 睡眠基礎回合統一 5(受傷立即解除+每回合30%自解+被攻擊必中) */
     a._napMode=true; a._napHealPct = _napHealRate;
+    try{ window._cstR.napReset(a); }catch(_eCstKdS2r){}   // ✨ v5.314.0 命星 幼兒園小孩 s2(每次午睡重新計算能量上限)
     a.buffs=a.buffs.filter(b=>b.type!=='_napShield');
     a.buffs.push({type:'_napShield',dur:3,_hp:_napShieldHp});
     bannerFX(a,'午睡中...','#aaddff',1200);
@@ -47862,18 +48385,20 @@ function execSkill(a, sk, cost, stype){
     const _foes2=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     log(`[${a.name}] 圖層隱藏！消除對手有利狀態並造成傷害！`);
     playSkillFX('圖層隱藏',a,_foes2);
-    _foes2.forEach(h=>{ clearGoodBuffs(h); doDmg(h,spv(a),{actor:a,isSkill:true}); });
+    _foes2.forEach(h=>{ let _cstGdS1M = 1; try{ _cstGdS1M = window._cstR.layerMul(a, h); }catch(_){} clearGoodBuffs(h); doDmg(h,Math.floor(spv(a)*_cstGdS1M),{actor:a,isSkill:true}); });   // ✨ v5.314.0 命星 電腦繪圖師 s1 圖層合併星(施放前有有利狀態的目標 +30%)
     endAction(a,cost);
   }
   else if(n==='色彩噴濺'){
+   const _cstGdS2Run = function(_cstGdS2Pick){   // ✨ v5.314.0 命星 ⚙ 電腦繪圖師 s2 調色自選星:有傳入 ⇒ 全隊都拿玩家選的那一種(未點亮 = undefined ⇒ 原本的隨機)
     const _allies2=G[a.side].filter(h=>h.curHp>0);
     // ★ 隨機有利狀態池（效果+50%持續2回合）
     const _colorBuffPool=['evasion','dmgup','halfDmg','hpRegen','ctrlImmune','statusImmune','immune'];
     log(`[${a.name}] 色彩噴濺！友方全體獲得隨機有利狀態+護盾！`);
+    if(_cstGdS2Pick){ try{ log('✨ [' + a.name + '] 命星:調色自選!全隊都塗上「' + window._cstR.paintName(_cstGdS2Pick) + '」!'); }catch(_){} }
     playSkillFX('色彩噴濺',a,_allies2);
     _allies2.forEach(h=>{
       // 隨機1個有利狀態（2回合）
-      const _pick = _colorBuffPool[Math.floor(Math.random()*_colorBuffPool.length)];
+      const _pick = _cstGdS2Pick || _colorBuffPool[Math.floor(Math.random()*_colorBuffPool.length)];
       h.buffs=h.buffs.filter(b=>b.type!==_pick&&b.type!=='bigshield'&&b.type!=='_colorBoostMark');
       addBuff(h, _pick, 2);
       // ★ 護盾20傷害
@@ -47885,6 +48410,11 @@ function execSkill(a, sk, cost, stype){
       renderCard(h);
     });
     endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
+   };
+   let _cstGdS2Took = false; try{ _cstGdS2Took = window._cstR.paintAsk(a, _cstGdS2Run); }catch(_eCstGdS2){ _cstGdS2Took = false; }
+   if(_cstGdS2Took === true){ /* 已開選擇視窗,選完由 onPick 施放 */ }
+   else if(typeof _cstGdS2Took === 'string') _cstGdS2Run(_cstGdS2Took);
+   else _cstGdS2Run();
   }
   // ── 程式設計師 ──
   // ★ v1.1.0 — 修復:技能描述說「可倒下」,但原本 setPending 用 self_or_ally 只能選活著的
@@ -47917,6 +48447,7 @@ function execSkill(a, sk, cost, stype){
       }
       bannerFX(_target,'邏輯優化!🔄','#55ffcc',1000);
       renderCard(_target);
+      try{ window._cstR.coderS2(a, _badCount); }catch(_eCstCdS2){}   // ✨ v5.314.0 命星 程式設計師 s2 熱修補星(每清 1 個 +1 能量,最多 +2,gift)
       endAction(a,cost);
     });
   }
@@ -47930,13 +48461,16 @@ function execSkill(a, sk, cost, stype){
     const _ssvMult = 0.30 + _ssvS1Lv * 0.05;  // Lv0=30%, Lv10=75%
     log(`[${a.name}] 小星星變奏曲!特技 ${Math.round(_ssvMult*100)}%`);
     playSkillFX('小星星變奏曲',a,_foes3);
-    const _hits=3+Math.floor(Math.random()*2); // 3~4次
+    let _cstVlS1 = false; try{ _cstVlS1 = window._cstR.has(a,'s1','弦樂團員'); }catch(_){ _cstVlS1 = false; }   // ✨ v5.314.0 命星 弦樂團員 s1 主題再現星(固定 4 次,第 4 次 +50%)
+    const _hits=_cstVlS1 ? 4 : 3+Math.floor(Math.random()*2); // 3~4次
     let _hitIdx=0;
     function _doStar(){
       if(_hitIdx>=_hits){ endAction(a,cost); return; }
       const _alive=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
       if(!_alive.length){ endAction(a,cost); return; }
-      _alive.forEach(h=>doDmg(h,Math.floor(spv(a)*_ssvMult),{actor:a,isSkill:true,isAoe:true}));
+      const _cstVlS1M = (_cstVlS1 && _hitIdx === 3) ? 1.5 : 1;
+      if(_cstVlS1M > 1){ try{ log('✨ [' + a.name + '] 命星:主題再現!最後一段旋律 +50%!'); }catch(_){} }
+      _alive.forEach(h=>doDmg(h,Math.floor(spv(a)*_ssvMult*_cstVlS1M),{actor:a,isSkill:true,isAoe:true}));
       _hitIdx++;
       _pSetTimeout(_doStar,250);
     }
@@ -47947,10 +48481,12 @@ function execSkill(a, sk, cost, stype){
     const _allAllies=G[a.side].slice().sort((x,y)=>x.curHp-y.curHp).slice(0,2);
     playSkillFX('雙小提琴協奏曲',a,_allAllies);
     _allAllies.forEach(h=>{
-      if(h.curHp===0){ doRevive(h,0); doHeal(h,spv(a),{actor:a,isHeal:true}); }
+      if(h.curHp===0){ doRevive(h,0); doHeal(h,spv(a),{actor:a,isHeal:true}); if(h.curHp>0) h._cstVlRev = 1; }
       else { doHeal(h,spv(a),{actor:a,isHeal:true}); }
       bannerFX(h,'雙提琴協奏！','#cc88ff',900);
     });
+    try{ window._cstR.violinS2(a, _allAllies); }catch(_eCstVlS2){}   // ✨ v5.314.0 命星 弦樂團員 s2 雙弦護持星
+    try{ _allAllies.forEach(h=>{ delete h._cstVlRev; }); }catch(_){}
     endAction(a,cost);
   }
   // ── 小劇團員 ──
@@ -47961,10 +48497,12 @@ function execSkill(a, sk, cost, stype){
       // 隨機附加一個有利狀態
       const _goodBuffList=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','deathimmune'];
       const _randBuff=_goodBuffList[Math.floor(Math.random()*_goodBuffList.length)];
-      addBuff(a,_randBuff,1);
+      let _cstDrDur = 1; try{ _cstDrDur = window._cstR.dramaS1Dur(a); }catch(_){ _cstDrDur = 1; }   // ✨ v5.314.0 命星 小劇團員 s1 百變臉譜星(有利狀態 2 回合)
+      addBuff(a,_randBuff,_cstDrDur);
       bannerFX(a,'變臉！'+buffName(_randBuff),'#ffcc44',800);
       // 傷害 = 特技 + 攻擊 + 速度
-      const _totalDmg=Math.max(1,(a.sp||0)+(a.atk||0)+(a.spd||0));
+      let _cstDrMul = 1; try{ _cstDrMul = window._cstR.dramaS1Mul(a); }catch(_){ _cstDrMul = 1; }   // ✨ v5.314.0 命星 小劇團員 s1 +20%／t2 入戲每層 +15%
+      const _totalDmg=Math.max(1,Math.floor(((a.sp||0)+(a.atk||0)+(a.spd||0))*_cstDrMul));
       doDmg(t,_totalDmg,{actor:a,isSkill:true});
       renderCard(a);
       endAction(a,cost);
@@ -50859,7 +51397,8 @@ function execSkill(a, sk, cost, stype){
     log(`🦁 [${a.name}] 動物召喚!特技×${Math.round(_zoMult*100)}% 攻擊 [${_tgt3?_tgt3.name:'無目標'}] (${_hitMin}~${_hitMax}次)+召喚寵物!`);
     playSkillFX('動物召喚',a,_tgt3?[_tgt3]:[]);
     if(_tgt3){
-      const _hits3 = _hitMin + Math.floor(Math.random() * (_hitMax - _hitMin + 1));
+      let _cstZoS1 = false; try{ _cstZoS1 = window._cstR.has(a,'s1','動物學家'); }catch(_){ _cstZoS1 = false; }   // ✨ v5.314.0 命星 動物學家 s1 群獸圍獵星(次數固定取上限)
+      const _hits3 = _cstZoS1 ? _hitMax : _hitMin + Math.floor(Math.random() * (_hitMax - _hitMin + 1));
       for(let _hi=0;_hi<_hits3;_hi++){
         if(_tgt3.curHp>0) doDmg(_tgt3, Math.floor(spv(a) * _zoMult), {actor:a,isSkill:true});
       }
@@ -50891,6 +51430,7 @@ function execSkill(a, sk, cost, stype){
     const _petCount3=G[a.side].filter(h=>h.equip).length;
     a._zoologistDmgReduce=Math.min(_capRed, _petCount3*_perPetRed);
     if(a._zoologistDmgReduce>0) bannerFX(a,'減傷'+Math.round(a._zoologistDmgReduce*100)+'%！','#44ffcc',900);
+    try{ window._cstR.zooS2(a, _petCount3*0.10); }catch(_eCstZoS2){}   // ✨ v5.314.0 命星 動物學家 s2 庇護之森星(全隊每隻寵物 −10%,最多 30%)
     endAction(a,cost);
   }
 
@@ -51233,7 +51773,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
       doDmg(h, Math.floor(spv(a) * _practiceMult), {actor:a,isSkill:true,isAoe:true});
       if(h.curHp>0){
         h.status=h.status.filter(s=>s.type!=='_mayin');
-        h.status.push({type:'_mayin',dur:2});
+        h.status.push({type:'_mayin',dur:2,_cstFl:((window._cstR && window._cstR.fluteTag(a)) || undefined)});   // ✨ v5.314.0 命星 直笛團員 s1 刺耳高音星(魔音帶施術者記號)
         bannerFX(h,'魔音!','#cc55ff',900);
       }
     });
@@ -51246,16 +51786,18 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
     const _rrAllies=G[a.side].filter(h=>h.curHp>0);
     const _rrFoes=G[a.side==='p1'?'p2':'p1'].filter(h=>h.curHp>0);
     playSkillFX('持續恢復',a,_rrAllies);
+    let _cstFlS2 = false; try{ _cstFlS2 = window._cstR.has(a,'s2','直笛團員'); }catch(_){ _cstFlS2 = false; }   // ✨ v5.314.0 命星 直笛團員 s2 繞樑三日星(持續恢復 12→18;魔音中的對手中毒 12→18)
+    if(_cstFlS2){ try{ log('✨ [' + a.name + '] 命星:繞樑三日!持續恢復每回合 18,魔音中的對手中毒每回合 18!'); }catch(_){} }
     _rrAllies.forEach(h=>{
       h.buffs=h.buffs.filter(b=>b.type!=='hpRegen');
       addBuff(h,'hpRegen',3);
-      h._hpRegenAmt=12;
+      h._hpRegenAmt=_cstFlS2 ? 18 : 12;
       bannerFX(h,'餘音繞樑！持續恢復！','#44ee77',800);
       renderCard(h);
     });
     _rrFoes.forEach(h=>{
       addStatus(h,'poison',5);   /* ★ v5.80.0 中毒基礎回合統一 5(老師裁定⑥:中毒本來就該持久·本身也好解) */
-      h._poisonAmt=12; // ★ 固定12HP/回合（與技能描述一致）
+      h._poisonAmt=(_cstFlS2 && hasStatus(h,'_mayin')) ? 18 : 12; // ★ 固定12HP/回合（與技能描述一致）   ✨ v5.314.0 命星 直笛團員 s2
       bannerFX(h,'🎵中毒！','#88ff44',800);
       renderCard(h);
     });
@@ -51277,6 +51819,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
         _nextAlly.buffs.push({type:'_relay',dur:1});
         bannerFX(_nextAlly,'接力強化！','#44ffcc',900);
         log(`🏃 [${_nextAlly.name}] 獲得接力強化！下次傷害/治療+50%！`);
+        try{ window._cstR.relayTag(a, _nextAlly); }catch(_eCstTrS2){}   // ✨ v5.314.0 命星 田徑隊員 s2 完美交棒星(接棒者下一招 −1 能量,G4)
         renderCard(_nextAlly);
       }
       endAction(a,_activeSkLv>=9?Math.max(2,cost-1):cost);
@@ -51991,7 +52534,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
   //   ★ 實際分攤邏輯在 doDmg 的 _gmLink hook;此處只負責掛 buff(帶 _reducePct)
   else if(n==='機關連結'){
     const _gmS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
-    const _gmReduce = Math.min(0.50, 0.10 + _gmS1Lv * 0.03);
+    const _gmReduce = Math.min(0.50, 0.10 + _gmS1Lv * 0.03) + ((window._cstR && window._cstR.has(a,'s1','機關王雙人組')) ? 0.05 : 0);   // ✨ v5.314.0 命星 機關王雙人組 s1 齒輪咬合星(減傷 +5 個百分點)
     const _gmAllies = G[a.side].filter(h => h && h.curHp > 0);
     log(`⚙️ [${a.name}] 機關連結!全體友方串聯傳動裝置,獲得「連結」2 回合(傷害 -${Math.round(_gmReduce*100)}% 後全隊平分)!`);
     try{ bannerFX(a, '🔗 機關連結!', '#88ccff', 900); }catch(_){}
@@ -52021,6 +52564,7 @@ if(a.name==='吸血鬼' && !hasStatus(a,'confused') && a.curHp>0){
       try{ bannerFX(a, '⚙️ 重力加速攻擊!', '#ffaa44', 900); }catch(_){}
       try{ playSfx('sfx-crit', 0.9); }catch(_){}
       doDmg(t, _gmDmg, { actor:a, isSkill:true, fixedDmg:true, mustHit:true, ignoreBuffs:true });
+      try{ window._cstR.gmS2(a, t); }catch(_eCstGmS2){}   // ✨ v5.314.0 命星 機關王雙人組 s2 位能轉換星(緩速 1 + 擊退 20%,BOSS 不擊退)
       endAction(a, cost);
     });
   }
@@ -54063,13 +54607,15 @@ function applyItemOnTarget(it,a,t,extraOpts){
   extraOpts=extraOpts||{};
   const _user2 = (a && a.name) ? a : (G && G.activeChar ? G.activeChar : null);
   if(_user2) showActionLabel(_user2, '📦 '+it.n+'！');
+  try{ if(_user2) window._cstR.onItem(_user2); }catch(_eCstGdItem){}   // ✨ v5.314.0 命星 電腦繪圖師 b2 畫布成真星(畫布期間我方用道具 ⇒ 全隊護盾)
   // 程式設計師天賦：修改代碼 — 使用物品時依賣價×10對敵方1人造成傷害
   if(_user2 && _user2.name==='程式設計師' && !hasStatus(_user2,'confused') && (_user2.s1.n==='修改代碼'||_user2.s2.n==='修改代碼')){
-    const _codeDmg=Math.max(1,(it.sell||1)*10);
+    let _cstCdS1 = false; try{ _cstCdS1 = window._cstR.has(_user2,'s1','程式設計師'); }catch(_){ _cstCdS1 = false; }   // ✨ v5.314.0 命星 程式設計師 s1 編譯最佳化星(×10→×13、必中)
+    const _codeDmg=Math.max(1,(it.sell||1)*(_cstCdS1 ? 13 : 10));
     const _opp=_user2.side==='p1'?'p2':'p1';
     const _codeTarget=G[_opp].filter(h=>h.curHp>0).sort((x,y)=>x.curHp-y.curHp)[0];
     if(_codeTarget){
-      doDmg(_codeTarget,_codeDmg,{actor:_user2,isSkill:true,ignoreBuffs:false});
+      doDmg(_codeTarget,_codeDmg,_cstCdS1 ? {actor:_user2,isSkill:true,ignoreBuffs:false,mustHit:true} : {actor:_user2,isSkill:true,ignoreBuffs:false});
       showPopup(_codeTarget,_codeDmg,'dmg');
       try{ playSkillFX('修改代碼', _user2, [_codeTarget]); }catch(_){}
       bannerFX(_user2,'修改代碼！-'+_codeDmg,'#55ffcc',800);
@@ -56485,15 +57031,24 @@ function startTurn(){
     // ★ v1.0.20260423.8000 — 幼兒園小孩「賣萌」改為可升級:
     //   Lv0=-20%, 每升 1 級再 -2%(Lv5 滿級 = -30%)
     const _kinderTl = _inu ? (typeof _getTraitLv==='function' ? _getTraitLv('幼兒園小孩') : 0) : 0;
-    const _kinderMul = 1 - (0.20 + _kinderTl * 0.02); // Lv0 → 0.80, Lv5 → 0.70
+    let _cstKdT1 = false, _cstKdT2 = false; try{ _cstKdT1 = !!(_inu && window._cstR.has(_inu,'t1','幼兒園小孩')); _cstKdT2 = !!(_inu && window._cstR.has(_inu,'t2','幼兒園小孩')); }catch(_){}   // ✨ v5.314.0 命星 幼兒園小孩 t1 萌力全開星(再 −5%)/t2 長不大星(5 回合後保留一半到戰鬥結束)
+    const _cstKdPct = (0.20 + _kinderTl * 0.02) + (_cstKdT1 ? 0.05 : 0);
+    const _cstKdHalf = !!(_inu && _cstKdT2 && _inu._kinderRounds!==undefined && _inu._kinderRounds>=5);
+    const _kinderMul = 1 - (_cstKdHalf ? _cstKdPct / 2 : _cstKdPct); // Lv0 → 0.80, Lv5 → 0.70
     G[opp].forEach(h=>{
       if(h.curHp>0){
-        if(_inu && (_inu._kinderRounds===undefined || _inu._kinderRounds<5)){
+        if(_inu && (_cstKdHalf || _inu._kinderRounds===undefined || _inu._kinderRounds<5)){
+          if(h._kinderDebuff && !!h._cstKdHalf !== _cstKdHalf){   // 切到「一半效果」:先還原再用新倍率套一次(只發生一次)
+            if(h._kinderOrigAtk!==undefined) h.atk=h._kinderOrigAtk;
+            if(h._kinderOrigSp!==undefined)  h.sp=h._kinderOrigSp;
+            h._kinderDebuff=false;
+          }
           if(!h._kinderDebuff){
             h._kinderOrigAtk=h.atk; h._kinderOrigSp=h.sp;
             h.atk=Math.max(1,Math.floor(h.atk*_kinderMul));
             h.sp=Math.max(0,Math.floor(h.sp*_kinderMul));
             h._kinderDebuff=true;
+            h._cstKdHalf=_cstKdHalf;
           }
         } else {
           // 無幼兒園小孩或超過5回合：還原
@@ -56511,10 +57066,15 @@ function startTurn(){
 
   // ── 程式設計師天賦：存活時友方全體攻擊和特技+3 ──
   ['p1','p2'].forEach(side=>{
-    const _prog=G[side].find(h=>h.curHp>0&&h.name==='程式設計師'&&!hasStatus(h,'confused'));
+    const _progLive=G[side].find(h=>h.curHp>0&&h.name==='程式設計師'&&!hasStatus(h,'confused'));
+    // ✨ v5.314.0 命星 程式設計師 t2 例外處理星:倒下的(已點亮)程式設計師 ⇒ 加成保留一半(被復活後恢復完整)
+    let _progDeadT2 = null; try{ _progDeadT2 = _progLive ? null : window._cstR.coderDead(side); }catch(_){ _progDeadT2 = null; }
+    const _prog = _progLive || _progDeadT2;
     // ★ v1.0.20260423.8200 — 每升 1 級 +1 (原 +2 太多)
     const _progTl = _prog ? _getTraitLv('程式設計師') : 0;
-    const _progBonus = 3 + _progTl*1; // Lv0=3, Lv5=8
+    let _progBonus = 3 + _progTl*1; // Lv0=3, Lv5=8
+    try{ if(_prog) _progBonus = window._cstR.coderBonus(_prog, _progBonus, _progTl); }catch(_){}   // ✨ v5.314.0 命星 程式設計師 t1 全域變數星(+3→+5)
+    if(_progDeadT2) _progBonus = Math.ceil(_progBonus / 2);
     G[side].forEach(h=>{
       if(h.curHp>0){
         if(_prog && h!==_prog._processed){
@@ -56988,8 +57548,10 @@ function startTurn(){
       _lowest.buffs=_lowest.buffs.filter(b=>b.type!=='bigshield');
       // ★ v1.0.20260423.8200 — 每升 1 級 +5 護盾(原 +10 太多)
       const _gdTraitLv = _getTraitLv('電腦繪圖師');
-      const _gdShield = 20 + _gdTraitLv * 5;
+      let _gdShield = 20 + _gdTraitLv * 5;
+      try{ _gdShield = window._cstR.paintAmt(next, _lowest, _gdShield); }catch(_eCstGdT1){}   // ✨ v5.314.0 命星 電腦繪圖師 t1 厚塗護層星(+10;目標 HP<30% 加倍)
       const _bsBuff={type:'bigshield',dur:1,_hp:_gdShield};
+      try{ window._cstR.paintTag(next, _bsBuff); }catch(_eCstGdT2){}   // ✨ v5.314.0 命星 電腦繪圖師 t2 漸層暈染星(護盾帶記號,被打破時觸發)
       _lowest.buffs.push(_bsBuff);
       showPopup(_lowest,'🎨護盾','energy');
       bannerFX(_lowest,'繪圖師護盾！','#ff88cc',800);
@@ -57028,7 +57590,8 @@ function startTurn(){
     try{
       const _gmTl = (typeof _getTraitLv === 'function') ? (_getTraitLv('機關王雙人組') || 0) : 0;
       const _gmChance = Math.min(1, 0.60 + _gmTl * 0.05);
-      if(Math.random() < _gmChance){
+      let _cstGmT1 = false; try{ _cstGmT1 = window._cstR.has(next,'t1','機關王雙人組'); }catch(_){ _cstGmT1 = false; }   // ✨ v5.314.0 命星 機關王雙人組 t1 精密拆解星(+20%;未點亮不多擲骰)
+      if(_cstGmT1 ? window._cstCap.rollBand(_gmChance, Math.min(1, _gmChance + 0.20)) > 0 : Math.random() < _gmChance){
         const _gmCount = 1 + _gmTl;
         const _gmOppSide = (next.side === 'p1') ? 'p2' : 'p1';
         let _gmRemovedTotal = 0;
@@ -57046,6 +57609,7 @@ function startTurn(){
         });
         if(_gmRemovedTotal > 0){
           log(`🔍 [機關王雙人組] 天賦:機關分析!拆解對手機關構造,消除全體對手共 ${_gmRemovedTotal} 個有利狀態(含強力版)!`);
+          try{ window._cstR.gmT2(next, _gmRemovedTotal); }catch(_eCstGmT2){}   // ✨ v5.314.0 命星 機關王雙人組 t2 拆件再造星(每個 3% 最大 HP 護盾,最多 15%)
           try{ showActionLabel(next, '🔍 機關分析 天賦'); }catch(_){}
           try{ bannerFX(next, '🔍 機關分析!', '#ffcc66', 900); }catch(_){}
           try{ playSfx('sfx-passive', 0.7); }catch(_){}
@@ -57702,7 +58266,8 @@ function startTurn(){
     try{
       const _zlTl = (typeof _getTraitLv==='function') ? (_getTraitLv('動物學家')||0) : 0;
       const _zlChance = Math.min(0.90, 0.50 + _zlTl*0.10);
-      if(Math.random() < _zlChance){
+      let _cstZoT1 = false; try{ _cstZoT1 = window._cstR.has(next,'t1','動物學家'); }catch(_){ _cstZoT1 = false; }   // ✨ v5.314.0 命星 動物學家 t1 野性呼喚星(+20%,最高 100%;未點亮不多擲骰)
+      if(_cstZoT1 ? window._cstCap.rollBand(_zlChance, Math.min(1, _zlChance + 0.20)) > 0 : Math.random() < _zlChance){
         const _oppZ = (next.side==='p1') ? 'p2' : 'p1';
         const _petTargets = (G[_oppZ]||[]).filter(x => x && x.curHp>0 && x.equip && !(window._petIsProtectedEquip && window._petIsProtectedEquip(x)));  // ★ v4.18.0 已馴養寵物不被獸盟驅除
         if(_petTargets.length){
@@ -57713,6 +58278,7 @@ function startTurn(){
           try{ bannerFX(_vic, '🦁 寵物被驅離！', '#ffcc44', 1000); }catch(_){}
           try{ log(`🦁 [${next.name}] 獸盟威壓！驅除了 [${_vic.name}] 的寵物 [${_petName}]！`); }catch(_){}
           try{ renderCard(_vic); }catch(_){}
+          try{ window._cstR.zooT2(next); }catch(_eCstZoT2){}   // ✨ v5.314.0 命星 動物學家 t2 森林友伴星
         }
       }
     }catch(_eZooStrip){ console.warn('[動物學家 驅除寵物 hook] 失敗', _eZooStrip); }
@@ -58762,6 +59328,7 @@ function nextRound(){
     try{ if(h && h._statusFrozen>0 && h.curHp<=0){ h._statusFrozen = 0; } }catch(_eTsFrzClr){}
   });
 
+  try{ window._cstR.roundStart(); }catch(_eCstRRs0){}   // ✨ v5.314.0 R 卡命星 回合開始(弦樂 b2 吉普賽餘韻／機關王 b2 連鎖機關)
   // 魔音：每回合-2能量（直笛團員技能）
   G.p1.concat(G.p2).forEach(h=>{
     if(h.curHp>0 && hasStatus(h,'_mayin')){
@@ -58769,6 +59336,7 @@ function nextRound(){
       G.energy[_ms]=Math.max(0,G.energy[_ms]-2);
       showPopup(h,'-2E','dmg');
       log(`🎵 魔音！[${h.name}] 能量-2！`);
+      try{ window._cstR.fluteS1(h, (h.status||[]).find(s=>s && s.type==='_mayin')); }catch(_eCstFlS1){}   // ✨ v5.314.0 命星 直笛團員 s1 刺耳高音星(再 −1,G5)
     }
   });
   // 午睡時間：每回合恢復25%HP
@@ -58777,6 +59345,7 @@ function nextRound(){
       const _heal=Math.max(1,Math.floor(h.hp*0.25));
       doHeal(h,_heal,{actor:null,_healSrc:h,isHeal:true,noDice:true}); // ★ v3.16.46 午睡自療歸屬自身
       log(`💤 [${h.name}] 午睡恢復！+${_heal}HP！`);
+      try{ if(h.name==='幼兒園小孩') window._cstR.napEnergy(h); }catch(_eCstKdS2){}   // ✨ v5.314.0 命星 幼兒園小孩 s2 好夢連連星(每回合 +1 能量,每次午睡最多 +2)
       if(h.curHp>=h.hp){
         // HP回滿：醒來
         clearStatus(h,['sleep']); h._napMode=false;
@@ -59050,8 +59619,13 @@ G.p1.concat(G.p2).forEach(h=>{
       }
     }
     tickStatus(h);
+    let _cstInuStay = false;
     if(_hadInuInvisible && !h.buffs.some(b=>b.type==='inuInvisible')){
       h.buffs=h.buffs.filter(b=>b.type!=='immune');
+      try{ _cstInuStay = window._cstR.inuS2Stay(h); }catch(_eCstInuS2){ _cstInuStay = false; }   // ✨ v5.314.0 命星 小力 s2 搖尾歸來星(裁定 1乙:不回去休息,之後正常被鎖定、正常受傷)
+      if(_cstInuStay){ renderCard(h); }
+    }
+    if(!_cstInuStay && _hadInuInvisible && !h.buffs.some(b=>b.type==='inuInvisible')){
       h.inuGuardActive=false;
       h._inuRetired=true;
       h.curHp=0;
@@ -62152,6 +62726,7 @@ function aiUseSkill(a,sk,cost,pref){
   try{ if(sk && !sk.p && typeof _inventInspirationTrigger==='function') _inventInspirationTrigger(); }catch(_eIIai){}
   // ★ v3.16.22 — 小鬼貓與兔天賦「惡作劇」:AI 使用(主動)技能時,敵方小鬼貓與兔機率反噬固定傷害(能量消耗×50)
   try{ if(sk && !sk.p && typeof _kgMischiefOnSkill==='function') _kgMischiefOnSkill(a, cost); }catch(_eKg2){}
+  try{ if(sk && !sk.p && window._cstR) window._cstR.onSkill(a, sk); }catch(_eCstROnSk2){}   // ✨ v5.314.0 R 卡命星(AI)
   try{ window._cstDcB2Skill(a, sk); }catch(_eCstDb2s2){}   // ✨ 命星 舞者 b2:激戰之舞期間我方技能計數(AI)
   // ★ v1.0.20260428.3740 — 設定 _curSkillName 讓 doDmg 能套用 SKILL_FORCE_ELEMENT 屬性
   //   (原本只有 execSkill 有設,aiUseSkill 沒設導致 BOSS 技能屬性套不對)
@@ -63687,14 +64262,14 @@ function aiUseSkill(a,sk,cost,pref){
     if(t){ doDmg(t,Math.floor(a.atk*1.5),{actor:a,isSkill:true}); }
     const _sortFn4=fieldHas('reverse')?(x,y)=>x.spd-y.spd:(x,y)=>y.spd-x.spd;
     const _nextA=allies.filter(h=>h!==a&&h.curHp>0&&!h.acted).sort(_sortFn4)[0];
-    if(_nextA){ _nextA.buffs=_nextA.buffs.filter(b=>b.type!=='_relay'); _nextA.buffs.push({type:'_relay',dur:1}); bannerFX(_nextA,'接力強化！','#44ffcc',700); log(`[${_nextA.name}] 獲得接力強化！`); renderCard(_nextA); }
+    if(_nextA){ _nextA.buffs=_nextA.buffs.filter(b=>b.type!=='_relay'); _nextA.buffs.push({type:'_relay',dur:1}); bannerFX(_nextA,'接力強化！','#44ffcc',700); log(`[${_nextA.name}] 獲得接力強化！`); try{ window._cstR.relayTag(a, _nextA); }catch(_eCstTrS2A){} renderCard(_nextA); }
   }
   else if(n==='大聲啼哭'){
     enemies.forEach(h=>{
       const _cryHeroLvA=(typeof _heroLevels!=='undefined'&&_heroLevels[a.name])?_heroLevels[a.name]:1;
       const _dmg=Math.min(Math.max(1,Math.floor(h.curHp*0.1)), window._hpPctCap(h, _cryHeroLvA*20)); doDmg(h,_dmg,{actor:a,isSkill:true,_pierceBossReduce:true});   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)
       // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
-      if(h.curHp>0 && Math.random()<0.75){
+      if(h.curHp>0 && ((window._cstR && window._cstR.has(a,'s1','幼兒園小孩')) || Math.random()<0.75)){   // ✨ v5.314.0 命星 幼兒園小孩 s1(AI:必定弱化)
         if(typeof checkElemImmune === 'function' && checkElemImmune(h, '_cryDebuff')) return;
         if(typeof _bvStatDownImmune === 'function' && _bvStatDownImmune(h, '啼哭弱化')) return;  // ★ v3.34.0 — 大刀勇士 不會被降低能力
         const _ec=h.status.find(s=>s.type==='_cryDebuff');
@@ -63706,12 +64281,15 @@ function aiUseSkill(a,sk,cost,pref){
     // ★ v3.12.3(2026-05-30) — 平衡削弱:最多 4T→3T
     addStatus(a,'sleep',5); a._napMode=true; a._napHealPct=0.25;   /* ★ v5.80.0 睡眠基礎回合統一 5(受傷立即解除+每回合30%自解+被攻擊必中) */
     a.buffs=a.buffs.filter(b=>b.type!=='_napShield'); a.buffs.push({type:'_napShield',dur:3,_hp:50});
+    try{ window._cstR.napReset(a); }catch(_eCstKdS2rA){}   // ✨ v5.314.0 命星 幼兒園小孩 s2(每次午睡重新計算能量上限)
   }
   else if(n==='圖層隱藏'){
-    enemies.forEach(h=>{ clearGoodBuffs(h); doDmg(h,Math.floor(a.sp*(1+a.sp*0.01)),{actor:a,isSkill:true}); });
+    enemies.forEach(h=>{ let _cstGdS1MA = 1; try{ _cstGdS1MA = window._cstR.layerMul(a, h); }catch(_){} clearGoodBuffs(h); doDmg(h,Math.floor(a.sp*(1+a.sp*0.01)*_cstGdS1MA),{actor:a,isSkill:true}); });   // ✨ v5.314.0 命星 電腦繪圖師 s1(AI)
   }
   else if(n==='色彩噴濺'){
-    allies.forEach(h=>{ h._colorBoost=true; h.buffs=h.buffs.filter(b=>b.type!=='bigshield'); h.buffs.push({type:'bigshield',dur:2,_hp:20}); renderCard(h); });
+    let _cstGdS2A = false; try{ _cstGdS2A = window._cstR.has(a,'s2','電腦繪圖師') ? window._cstR.paintAuto(a.side) : false; }catch(_){ _cstGdS2A = false; }   // ✨ v5.314.0 命星 ⚙ 電腦繪圖師 s2(AI/自動戰鬥:有人 HP<50% 給持續恢復,否則增傷)
+    allies.forEach(h=>{ h._colorBoost=true; h.buffs=h.buffs.filter(b=>b.type!=='bigshield'); h.buffs.push({type:'bigshield',dur:2,_hp:20}); if(typeof _cstGdS2A === 'string'){ h.buffs=h.buffs.filter(b=>b.type!==_cstGdS2A); addBuff(h,_cstGdS2A,2); } renderCard(h); });
+    if(typeof _cstGdS2A === 'string'){ try{ log('✨ [' + a.name + '] 命星:調色自選!全隊塗上「' + window._cstR.paintName(_cstGdS2A) + '」2 回合!'); }catch(_){} }
   }
   else if(n==='邏輯優化'){
     const _tgt=allies.find(h=>h.status.length>0)||allies[0]||a;
@@ -63728,22 +64306,28 @@ function aiUseSkill(a,sk,cost,pref){
         log(`🔧 [${a.name}] 邏輯優化!清除 [${_tgt.name}] ${_loBadA}個不利狀態,恢復${_loHealA}HP,免疫2回合!`);
       }
     }catch(_eLoHealA){ console.warn('[🔧 AI 邏輯優化 治療] 失敗', _eLoHealA); }
+    try{ window._cstR.coderS2(a, _loBadA); }catch(_eCstCdS2A){}   // ✨ v5.314.0 命星 程式設計師 s2(AI)
   }
   else if(n==='小星星變奏曲'){
-    const _h2=3+Math.floor(Math.random()*3);
-    for(let _i=0;_i<_h2;_i++){ enemies.filter(h=>h.curHp>0).forEach(h=>doDmg(h,Math.floor(a.sp*(1+a.sp*0.01)*0.3),{actor:a,isSkill:true,isAoe:true})); }
+    let _cstVlS1A = false; try{ _cstVlS1A = window._cstR.has(a,'s1','弦樂團員'); }catch(_){ _cstVlS1A = false; }   // ✨ v5.314.0 命星 弦樂團員 s1(AI):固定 4 次,第 4 次 +50%
+    const _h2=_cstVlS1A ? 4 : 3+Math.floor(Math.random()*3);
+    for(let _i=0;_i<_h2;_i++){ const _cstVlMA = (_cstVlS1A && _i === 3) ? 1.5 : 1; enemies.filter(h=>h.curHp>0).forEach(h=>doDmg(h,Math.floor(a.sp*(1+a.sp*0.01)*0.3*_cstVlMA),{actor:a,isSkill:true,isAoe:true})); }
   }
   else if(n==='雙小提琴協奏曲'){
     // ★ v1.0.20260423.4600 — 同樣用 slice() 避免原地改變 G.p1 陣列
     const _low2=G[a.side].slice().sort((x,y)=>x.curHp-y.curHp).slice(0,2);
-    _low2.forEach(h=>{ if(h.curHp===0)doRevive(h,0); doHeal(h,Math.floor(a.sp*(1+a.sp*0.01)),{actor:a,isHeal:true}); });
+    _low2.forEach(h=>{ if(h.curHp===0){ doRevive(h,0); if(h.curHp>0) h._cstVlRev = 1; } doHeal(h,Math.floor(a.sp*(1+a.sp*0.01)),{actor:a,isHeal:true}); });
+    try{ window._cstR.violinS2(a, _low2); }catch(_eCstVlS2A){}   // ✨ v5.314.0 命星 弦樂團員 s2(AI)
+    try{ _low2.forEach(h=>{ delete h._cstVlRev; }); }catch(_){}
   }
   else if(n==='變臉戲法'){
     if(t){
       const _gb2=['immune','shield','evasion','dmgup','halfDmg','hpRegen','ctrlImmune','deathimmune'];
       // ★ v1.0.20260423.4100 — 對齊玩家版本:1 回合(技能描述寫 1 回合)
-      addBuff(a,_gb2[Math.floor(Math.random()*_gb2.length)],1);
-      const _td2=Math.max(1,(a.sp||0)+(a.atk||0)+(a.spd||0));
+      let _cstDrDurA = 1; try{ _cstDrDurA = window._cstR.dramaS1Dur(a); }catch(_){ _cstDrDurA = 1; }   // ✨ v5.314.0 命星 小劇團員 s1(AI)
+      addBuff(a,_gb2[Math.floor(Math.random()*_gb2.length)],_cstDrDurA);
+      let _cstDrMulA = 1; try{ _cstDrMulA = window._cstR.dramaS1Mul(a); }catch(_){ _cstDrMulA = 1; }
+      const _td2=Math.max(1,Math.floor(((a.sp||0)+(a.atk||0)+(a.spd||0))*_cstDrMulA));
       doDmg(t,_td2,{actor:a,isSkill:true});
     }
   }
@@ -63846,11 +64430,12 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='不熟練習曲'){
     enemies.forEach(h=>{
       doDmg(h,Math.floor(spv(a)*0.7),{actor:a,isSkill:true,isAoe:true});
-      if(h.curHp>0){ h.status=h.status.filter(s=>s.type!=='_mayin'); h.status.push({type:'_mayin',dur:2}); }
+      if(h.curHp>0){ h.status=h.status.filter(s=>s.type!=='_mayin'); h.status.push({type:'_mayin',dur:2,_cstFl:((window._cstR && window._cstR.fluteTag(a)) || undefined)}); }   // ✨ v5.314.0 命星 直笛團員 s1(AI)
     });
   }
   else if(n==='餘音繞樑'){
-    allies.forEach(h=>{ h.buffs=h.buffs.filter(b=>b.type!=='hpRegen'); addBuff(h,'hpRegen',5); h._hpRegenAmt=8; });
+    let _cstFlS2A = false; try{ _cstFlS2A = window._cstR.has(a,'s2','直笛團員'); }catch(_){ _cstFlS2A = false; }   // ✨ v5.314.0 命星 直笛團員 s2(AI:持續恢復 ×1.5)
+    allies.forEach(h=>{ h.buffs=h.buffs.filter(b=>b.type!=='hpRegen'); addBuff(h,'hpRegen',5); h._hpRegenAmt=_cstFlS2A ? 12 : 8; });
   }
   else if(n==='黑暗封印'){
     let _cstDkS2OnA = false; try{ _cstDkS2OnA = !!window._cstHasN(a,'s2','暗法師'); }catch(_){ _cstDkS2OnA = false; }
@@ -65018,7 +65603,7 @@ function aiUseSkill(a,sk,cost,pref){
   }
   // ★ 運球：AI使用 - 友方全體普攻×2
   else if(n==='運球'){
-    G[a.side].filter(h=>h.curHp>0).forEach(h=>addBuff(h,'dribble',1));
+    G[a.side].filter(h=>h.curHp>0).forEach(h=>{ addBuff(h,'dribble',1); try{ window._cstR.dribbleTag(a, (h.buffs||[]).find(b=>b && b.type==='dribble')); }catch(_){} });   // ✨ v5.314.0 命星 籃球隊員 s2(AI)
     log(`[${a.name}] 運球！友方全體普攻×2！`);
   }
   // ★ 神之賜福：使1名友方HP上限+20%並完全治癒（不可疊加）
@@ -65043,10 +65628,16 @@ function aiUseSkill(a,sk,cost,pref){
   // ★ 三分投射：特技 250% 傷害，暴擊 +2 能量（籃球隊員）
   else if(n==='三分投射'){
     if(t){
-      const _crit = Math.random() < 0.3;
-      const _dmg = Math.floor(spv(a) * 2.5) * (_crit ? 2 : 1);
+      let _cstBbS1A = false; try{ _cstBbS1A = window._cstR.has(a,'s1','籃球隊員'); }catch(_){ _cstBbS1A = false; }   // ✨ v5.314.0 命星 籃球隊員 s1/t2(AI)
+      let _cstBbForceA = false; try{ _cstBbForceA = window._cstR.bbNextCrit(a); }catch(_){ _cstBbForceA = false; }
+      const _cstBbRollA = _cstBbForceA ? 2 : (_cstBbS1A ? window._cstCap.rollBand(0.3, 0.5) : (Math.random() < 0.3 ? 1 : 0));
+      const _crit = _cstBbRollA > 0;
+      const _dmg = Math.floor(spv(a) * (_cstBbS1A ? 3.2 : 2.5)) * (_crit ? 2 : 1);
       doDmg(t, _dmg, {actor:a, isSkill:true});
-      if(_crit){
+      if(_crit && _cstBbRollA === 2){
+        const _cstBbEA = window._cstCap.gainEnergy(a.side, 2);
+        log('['+a.name+'] 三分投射暴擊(命星)！+'+_cstBbEA+'能量！');
+      } else if(_crit){
         G.energy[a.side] = Math.min(10, G.energy[a.side] + 2);
         log('['+a.name+'] 三分投射暴擊！+2能量！');
       }
@@ -65290,7 +65881,7 @@ function aiUseSkill(a,sk,cost,pref){
     // 呼叫動物：依特技攻擊HP最低敵方1~2次
     if(enemies.length){
       const _low = enemies.sort((x,y)=>x.curHp-y.curHp)[0];
-      const _hits = 1 + Math.floor(Math.random()*2);
+      const _hits = (n==='動物召喚' && window._cstR && window._cstR.has(a,'s1','動物學家')) ? 2 : 1 + Math.floor(Math.random()*2);   // ✨ v5.314.0 命星 動物學家 s1(AI:固定 2 次)
       for(let i=0; i<_hits && _low.curHp>0; i++){
         doDmg(_low, spv(a), {actor:a, isSkill:true});
       }
@@ -67149,7 +67740,7 @@ function aiUseSkill(a,sk,cost,pref){
   // ── 機關王雙人組 S1:機關連結(AI:全體友方掛「連結」2 回合;鐵律 1.128 與 execSkill 同步) ──
   else if(n==='機關連結'){
     const _gmS1Lv = (a._skLv && typeof a._skLv.s1 === 'number') ? a._skLv.s1 : 0;
-    const _gmReduce = Math.min(0.50, 0.10 + _gmS1Lv * 0.03);
+    const _gmReduce = Math.min(0.50, 0.10 + _gmS1Lv * 0.03) + ((window._cstR && window._cstR.has(a,'s1','機關王雙人組')) ? 0.05 : 0);   // ✨ v5.314.0 命星 機關王雙人組 s1 齒輪咬合星(減傷 +5 個百分點)
     const _gmAllies = G[a.side].filter(h => h && h.curHp > 0);
     log(`⚙️ [${a.name}] 機關連結!全體友方獲得「連結」2 回合(傷害 -${Math.round(_gmReduce*100)}% 後全隊平分)!`);
     try{ bannerFX(a, '🔗 機關連結!', '#88ccff', 900); }catch(_){}
@@ -67174,6 +67765,7 @@ function aiUseSkill(a,sk,cost,pref){
       try{ bannerFX(a, '⚙️ 重力加速攻擊!', '#ffaa44', 900); }catch(_){}
       try{ playSfx('sfx-crit', 0.9); }catch(_){}
       doDmg(t, _gmDmg, { actor:a, isSkill:true, fixedDmg:true, mustHit:true, ignoreBuffs:true });
+      try{ window._cstR.gmS2(a, t); }catch(_eCstGmS2){}   // ✨ v5.314.0 命星 機關王雙人組 s2 位能轉換星(緩速 1 + 擊退 20%,BOSS 不擊退)
     }
   }
 
