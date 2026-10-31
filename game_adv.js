@@ -2120,6 +2120,7 @@ function startAdventureGame(stage){
     const hdo=document.getElementById('hero-detail-overlay');
     if(hpo) hpo.style.display='none';
     if(hdo) hdo.style.display='none';
+    if(window._lxpsExpBookModalClose) window._lxpsExpBookModalClose();   // ★ v5.315.0
   }catch(_){}
   const advOv = document.getElementById('adventure-overlay');
   if(advOv){ advOv.style.display='none'; advOv.classList.remove('show'); }
@@ -33778,7 +33779,7 @@ window._maybeShowNewbieGuide = function(){
 var _hutStep = 0;
 var HUT_STEPS = [
   { anchor:'_hut-anchor-level', icon:'📈', title:'怎麼讓英雄升級？',
-    desc:'英雄有兩種升級方式:<br>① <b>派英雄出戰、打贏戰鬥</b>會獲得經驗值。<br>② 在這個畫面<b>使用「經驗書」</b>道具,可直接增加經驗。<br>經驗集滿就會升級,等級上限是 <b>Lv.50</b>。等級越高、能力越強!' },
+    desc:'英雄有兩種升級方式:<br>① <b>派英雄出戰、打贏戰鬥</b>會獲得經驗值。<br>② 按等級數字旁的<b>「📚 使用經驗書」</b>,在跳出的視窗使用經驗書,可直接增加經驗。<br>經驗集滿就會升級,等級上限是 <b>Lv.50</b>。等級越高、能力越強!' },
   { anchor:'_hut-anchor-stats', icon:'💪', title:'分配四項能力',
     desc:'每升 1 級可獲得 <b>1 點能力點</b>,自由分配到四項:<br>❤️ <b>HP</b>:更耐打,每 1 點 +0.2% 減傷（<b>最多減 50%</b>）與 +0.2% 受治療量。<br>⚔️ <b>攻擊</b>:普攻與技能傷害,並提升暴擊（<b>暴擊率最高疊到 100%</b>）。<br>✨ <b>特技</b>:技能威力與治療量（<b>無上限</b>）。<br>💨 <b>速度</b>:越快越先出手,並提升命中與迴避（<b>迴避最多 60%</b>）。' },
   { anchor:'_hut-anchor-treasure', icon:'💎', title:'裝備「至寶」',
@@ -53146,6 +53147,7 @@ function openHeroDetail(name) {
   const ov = document.getElementById('hero-detail-overlay');
   const box = document.getElementById('hero-detail-content');
   if(!ov || !box) return;
+  try{ if(window._lxpsExpBookModalClose) window._lxpsExpBookModalClose(); }catch(_){}   // ★ v5.315.0 重新開詳情頁一律從關閉狀態開始(不讓上次沒關的經驗書視窗殘留)
   /* ══════════════════════════════════════════════════════════════════
      ★ v5.196.0(2026-09-14・老師回報「十二星神圖鑑點進去畫面全黑」)— 資料檔缺漏守門
      【事故經過】index.html 已上到 v5.195.0(含十二星神全部邏輯與圖鑑顯示),但 repo 的
@@ -53222,6 +53224,7 @@ function heroDetailNext() {
   _renderHeroDetail(_heroDetailList[_heroDetailIdx], document.getElementById('hero-detail-content'));
 }
 function closeHeroDetail() {
+  try{ if(window._lxpsExpBookModalClose) window._lxpsExpBookModalClose(); }catch(_){}   // ★ v5.315.0 經驗書視窗跟著關
   document.getElementById('hero-detail-overlay').style.display = 'none';
   // ★ v1.0.20260501.5060 — 關閉英雄詳細視窗時,清空所有 pending 待投資點數
   //   避免下次再開時殘留錯位的 pending 數值
@@ -53591,18 +53594,23 @@ function _renderHeroDetail(name, box) {
           return '';
         })()}
         ${(!_heroIsUnlocked && (name === '幼兒園小孩' || name === '小力' || name === '機關王雙人組')) ? `<div style="margin:6px 0 10px;padding:10px 16px;background:rgba(255,200,80,0.12);border:2px solid rgba(255,200,80,0.5);border-radius:10px;font-size:20px;color:#ffe066;line-height:1.5;font-weight:600;">🔓 <b>解鎖條件：</b>${name === '幼兒園小孩' ? '累積答對「<b style=\"color:#ffaadd;\">照顧與陪伴幼兒</b>」題庫全部 20 題(答錯不歸零、進度永久保留)' : name === '小力' ? '累積答對「<b style=\"color:#ffaadd;\">領養與照顧狗狗</b>」題庫全部 20 題(答錯不歸零、進度永久保留)' : '累積答對「<b style=\"color:#ffbb55;\">世界機關王大賽</b>」題庫 20 題(答錯不歸零、進度永久保留)'}</div>` : ''}
-        <div id="_hut-anchor-level" style="font-size:32px;color:#88aaff;margin-bottom:6px;">Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</div>
+        <div id="_hut-anchor-level" style="font-size:32px;color:#88aaff;margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;"><span>Lv.${lv}${lv>=50?'<span style="color:#ffcc44;"> MAX</span>':''}</span>${(() => {
+          // ★ v5.315.0(老師 2026-10-31「把使用經驗書的按鈕整合成一個按鈕，按下去打開視窗使用，不要佔據原本的圖鑑排版；按鈕放在等級數字的後面」)
+          //   原本 EXP 條下方 6 顆按鈕(📗/📕/📚 各「使用」＋「全部使用」)收進 _lxpsExpBookModalOpen 視窗;此處只留一顆入口鈕。
+          //   顯示條件沿用舊版:已收錄、未滿 Lv50、背包三種書合計 > 0。
+          try{
+            if(window._lxpsExpModalName && window._lxpsExpModalName !== name && window._lxpsExpBookModalClose) window._lxpsExpBookModalClose();   // 上一位/下一位換英雄 ⇒ 關掉舊視窗
+            else if(window._lxpsExpModalName === name) setTimeout(function(){ try{ window._lxpsExpBookModalRefresh && window._lxpsExpBookModalRefresh(); }catch(_){} }, 0);   // 用書後詳情重繪 ⇒ 視窗數字同步
+          }catch(_){}
+          const _ebTot = (backpackGet('hero_exp_book')||0) + (backpackGet('hero_exp_book_deluxe')||0) + (backpackGet('hero_exp_book_premium')||0);
+          if(!_heroIsUnlocked || lv >= 50 || _ebTot <= 0) return '';
+          return `<button class="_lxps-expbook-entry" onclick="playSfx('sfx-sel',0.6);_lxpsExpBookModalOpen(this.getAttribute('data-hero'))" data-hero="${String(name).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" style="padding:6px 18px;font-size:24px;font-weight:800;background:linear-gradient(135deg,rgba(60,180,80,0.28),rgba(255,200,60,0.28));border:2px solid #ffd700;color:#fff0a0;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 0 10px rgba(255,215,0,0.35);line-height:1.2;">📚 使用經驗書 <span style="background:rgba(0,0,0,0.35);color:#ffe090;font-size:20px;border-radius:999px;padding:1px 10px;">×${_ebTot}</span></button>`;
+        })()}</div>
         ${lv < 50 ? `<div style="font-size:22px;color:#778;margin-bottom:4px;">EXP: ${exp} / ${expNeed}
           <div style="height:6px;background:rgba(100,100,150,0.3);border-radius:4px;margin-top:3px;">
             <div style="height:100%;width:${Math.min(100,Math.round(exp/expNeed*100))}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:4px;"></div>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:6px;max-width:448px;">${_heroIsUnlocked && backpackGet('hero_exp_book')>0 ? `<button onclick="playSfx('sfx-powerup',0.7);_useExpBookForHero('${name}')" style="margin-top:7px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(60,180,80,0.25);border:1.5px solid #44ff88;color:#44ff88;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📗 使用經驗值之書 <span style="color:#aaffcc;font-size:17px;">×${backpackGet('hero_exp_book')}</span></button>` : ''}
-          ${_heroIsUnlocked && backpackGet('hero_exp_book')>1 ? `<button onclick="playSfx('sfx-powerup',0.7);_useAllExpBookForHero('${name}', false)" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(40,140,60,0.35);border:1.5px solid #66ff99;color:#aaffcc;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">📗 全部使用</button>` : ''}
-          ${(_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>0) ? `<div style="flex-basis:100%;height:0;"></div>` : ''}${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>0 ? `<button onclick="playSfx('sfx-powerup',0.75);_useExpBookDeluxeForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(255,180,60,0.22);border:1.5px solid #ffcc44;color:#ffcc44;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">📕 使用精裝版經驗值之書 <span style="color:#ffe090;font-size:17px;">×${backpackGet('hero_exp_book_deluxe')}</span></button>` : ''}
-          ${_heroIsUnlocked && backpackGet('hero_exp_book_deluxe')>1 ? `<button onclick="playSfx('sfx-powerup',0.75);_useAllExpBookForHero('${name}', true)" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(255,140,40,0.35);border:1.5px solid #ffaa44;color:#ffe090;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">📕 全部使用</button>` : ''}
-          ${/* ★ v5690 — 豪華典藏版按鈕(金黃光芒) */ ''}
-          ${(_heroIsUnlocked && backpackGet('hero_exp_book_premium')>0) ? `<div style="flex-basis:100%;height:0;"></div>` : ''}${_heroIsUnlocked && backpackGet('hero_exp_book_premium')>0 ? `<button onclick="playSfx('sfx-powerup',0.75);_useExpBookPremiumForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 16px;font-size:20px;font-weight:700;background:rgba(255,210,80,0.28);border:1.5px solid #ffd700;color:#ffd700;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 0 10px rgba(255,215,0,0.4);">📚 使用豪華典藏版 <span style="color:#fff0a0;font-size:17px;">×${backpackGet('hero_exp_book_premium')}</span></button>` : ''}
-          ${_heroIsUnlocked && backpackGet('hero_exp_book_premium')>1 ? `<button onclick="playSfx('sfx-powerup',0.75);_useAllExpBookPremiumForHero('${name}')" style="margin-top:7px;margin-left:6px;padding:5px 14px;font-size:18px;font-weight:700;background:rgba(255,180,60,0.45);border:1.5px solid #ffd700;color:#fff0a0;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 0 8px rgba(255,215,0,0.5);">📚 全部使用</button>` : ''}</div>
+          ${/* ★ v5.315.0 — 原本這裡的 6 顆經驗書按鈕(📗/📕/📚 使用＋全部使用)已整合成等級旁一顆「📚 使用經驗書」⇒ _lxpsExpBookModalOpen 視窗;不再佔圖鑑版面 */ ''}
         </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
       ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
@@ -74169,6 +74177,108 @@ async function _useAllExpBookForHero(name, isDeluxe) {
       _color, 2400);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ★ v5.315.0 — 英雄詳情頁「📚 使用經驗書」整合視窗
+//   老師 2026-10-31:「把使用經驗書的按鈕整合成一個按鈕，按下去打開視窗使用，不要佔據原本的圖鑑排版；按鈕放在等級數字的後面」
+//   ・入口鈕在 _renderHeroDetail 的 #_hut-anchor-level(Lv 數字後面);原本 EXP 條下 6 顆按鈕移除。
+//   ・視窗只是「外殼」:每顆按鈕仍呼叫原本的 6 支函式(_useExpBookForHero / _useAllExpBookForHero / _useExpBookDeluxeForHero /
+//     _useExpBookPremiumForHero / _useAllExpBookPremiumForHero),好友借用/審查中守門、只用剛好升滿的本數、
+//     雲端存檔、升級動畫全部沿用,行為與舊版一模一樣。
+//   ・視窗掛在 #hero-detail-overlay 裡(position:absolute、px 尺寸,隨 #gc 畫布縮放 ⇒ PC/iPad/手機同比例,不用 vh/vw);
+//     升級動畫、確認框、toast 都掛在 body、層級更高 ⇒ 一樣蓋在視窗上面。
+//   ・原函式用完書會重繪詳情頁 ⇒ 詳情頁模板裡的 hook 會呼叫 _lxpsExpBookModalRefresh,數字自動同步(含「全部使用」確認後才執行的路徑)。
+//   ・換英雄(上一位/下一位)或關閉詳情頁 ⇒ 視窗自動關閉。
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+  const BOOKS = [
+    { id:'hero_exp_book',         icon:'📗', name:'經驗值之書',         exp:50,   color:'#44ff88', soft:'#aaffcc', bg:'rgba(60,180,80,0.16)',
+      one:(n)=>_useExpBookForHero(n),          all:(n)=>_useAllExpBookForHero(n, false) },
+    { id:'hero_exp_book_deluxe',  icon:'📕', name:'精裝版經驗值之書',   exp:500,  color:'#ffcc44', soft:'#ffe090', bg:'rgba(255,180,60,0.14)',
+      one:(n)=>_useExpBookDeluxeForHero(n),    all:(n)=>_useAllExpBookForHero(n, true) },
+    { id:'hero_exp_book_premium', icon:'📚', name:'豪華典藏版經驗值之書', exp:5000, color:'#ffd700', soft:'#fff0a0', bg:'rgba(255,210,80,0.16)',
+      one:(n)=>_useExpBookPremiumForHero(n),   all:(n)=>_useAllExpBookPremiumForHero(n) },
+  ];
+  const _esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  let _busy = false;
+  window._lxpsExpModalName = null;
+
+  window._lxpsExpBookModalClose = function(){
+    try{ const el = document.getElementById('_lxps-expbook-modal'); if(el) el.remove(); }catch(_){}
+    window._lxpsExpModalName = null;
+    _busy = false;
+  };
+
+  window._lxpsExpBookModalRefresh = function(){
+    const ov = document.getElementById('_lxps-expbook-modal');
+    const name = window._lxpsExpModalName;
+    if(!ov || !name) return;
+    // 詳情頁被關掉(display:none)⇒ 視窗跟著收
+    try{ const hdo = document.getElementById('hero-detail-overlay'); if(hdo && ov.parentNode === hdo && hdo.style.display === 'none'){ window._lxpsExpBookModalClose(); return; } }catch(_){}
+    const lv  = (typeof getHeroLevel === 'function') ? getHeroLevel(name) : ((_heroLevels && _heroLevels[name]) || 1);
+    const exp = (typeof getHeroExp === 'function') ? getHeroExp(name) : 0;
+    const need = (lv < 50 && typeof _expForLevel === 'function') ? _expForLevel(lv) : 0;
+    const pct = need > 0 ? Math.min(100, Math.round(exp / need * 100)) : 100;
+    const atMax = lv >= 50;
+    const rows = BOOKS.map((b, i) => {
+      const cnt = backpackGet(b.id) || 0;
+      const can1 = !atMax && cnt > 0 && !_busy;
+      const canA = !atMax && cnt > 1 && !_busy;
+      const btn = (ok, label, all) => `<button ${ok ? `onclick="window._lxpsExpBookUse(${i}, ${all})"` : 'disabled'} style="min-width:150px;padding:10px 18px;font-size:24px;font-weight:800;border-radius:10px;border:2px solid ${ok ? b.color : 'rgba(150,150,170,0.35)'};background:${ok ? (all ? 'rgba(0,0,0,0.30)' : b.bg) : 'rgba(80,80,100,0.18)'};color:${ok ? b.soft : '#667'};cursor:${ok ? 'pointer' : 'default'};">${label}</button>`;
+      return `<div style="display:flex;align-items:center;gap:16px;padding:14px 18px;border-radius:14px;background:${cnt > 0 ? b.bg : 'rgba(255,255,255,0.03)'};border:1.5px solid ${cnt > 0 ? b.color + '88' : 'rgba(255,255,255,0.08)'};${cnt > 0 ? '' : 'opacity:0.55;'}">
+        <div style="font-size:44px;line-height:1;flex:0 0 auto;">${b.icon}</div>
+        <div style="flex:1 1 auto;min-width:0;">
+          <div style="font-size:26px;font-weight:800;color:${b.color};">${b.name}</div>
+          <div style="font-size:21px;color:#aab4cc;margin-top:2px;">每本 +${b.exp} EXP ｜ 擁有 <b style="color:${b.soft};font-size:24px;">${cnt}</b> 本</div>
+        </div>
+        <div style="display:flex;gap:10px;flex:0 0 auto;">${btn(can1, '使用 1 本', false)}${btn(canA, '全部使用', true)}</div>
+      </div>`;
+    }).join('');
+    const card = ov.querySelector('._lxps-expbook-card');
+    if(!card) return;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:34px;font-weight:900;color:#ffe066;flex:1;">📚 使用經驗書 <span style="font-size:26px;color:#c8d8f0;font-weight:700;">— ${_esc(typeof window._heroDisplayName === 'function' ? window._heroDisplayName(name) : name)}</span></div>
+        <button onclick="playSfx('sfx-cancel',0.6);window._lxpsExpBookModalClose()" style="width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;font-size:30px;cursor:pointer;flex:0 0 auto;">✕</button>
+      </div>
+      <div style="margin-bottom:16px;padding:12px 16px;border-radius:12px;background:rgba(80,110,200,0.12);border:1px solid rgba(120,150,255,0.25);">
+        <div style="font-size:30px;font-weight:800;color:#88aaff;">Lv.${lv}${atMax ? '<span style="color:#ffcc44;"> MAX ✨ 已達最高等級</span>' : ''}</div>
+        ${atMax ? '' : `<div style="font-size:22px;color:#99a;margin-top:2px;">EXP: ${exp} / ${need}</div>
+        <div style="height:10px;background:rgba(100,100,150,0.3);border-radius:6px;margin-top:6px;"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#4a9eff,#cc88ff);border-radius:6px;"></div></div>`}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">${rows}</div>
+      <div style="font-size:20px;color:#8890a8;margin-top:14px;line-height:1.5;">💡 「全部使用」只會用到剛好升到 Lv.50 的本數，多的書會自動幫你留著。</div>`;
+  };
+
+  window._lxpsExpBookModalOpen = function(name){
+    if(!name) return;
+    window._lxpsExpBookModalClose();
+    const host = document.getElementById('hero-detail-overlay') || document.getElementById('gc') || document.body;
+    const ov = document.createElement('div');
+    ov.id = '_lxps-expbook-modal';
+    ov.style.cssText = 'position:' + (host === document.body ? 'fixed' : 'absolute') + ';inset:0;z-index:60;display:flex;align-items:safe center;justify-content:center;background:rgba(0,0,0,0.62);padding:24px;box-sizing:border-box;';
+    ov.addEventListener('click', function(e){ if(e.target === ov){ try{ playSfx('sfx-cancel',0.6); }catch(_){} window._lxpsExpBookModalClose(); } });
+    const card = document.createElement('div');
+    card.className = '_lxps-expbook-card';
+    card.style.cssText = 'width:min(860px,100%);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:22px 24px;border-radius:20px;background:linear-gradient(160deg,#141a33,#0a0d1c);border:2px solid rgba(255,215,0,0.55);box-shadow:0 10px 40px rgba(0,0,0,0.7),0 0 24px rgba(255,215,0,0.18);font-family:inherit;';
+    ov.appendChild(card);
+    host.appendChild(ov);
+    window._lxpsExpModalName = name;
+    window._lxpsExpBookModalRefresh();
+  };
+
+  window._lxpsExpBookUse = async function(idx, all){
+    const name = window._lxpsExpModalName;
+    const b = BOOKS[idx];
+    if(!name || !b || _busy) return;
+    _busy = true;
+    window._lxpsExpBookModalRefresh();   // 先把按鈕灰掉,避免連點重複扣書
+    try{ playSfx('sfx-powerup', 0.72); }catch(_){}
+    try{ await (all ? b.all(name) : b.one(name)); }catch(e){ console.warn('[ExpBookModal]', e); }
+    _busy = false;
+    window._lxpsExpBookModalRefresh();
+  };
+})();
 
 // ★ 在英雄圖鑑直接使用英雄經驗值之書
 async function _useExpBookForHero(name) {
