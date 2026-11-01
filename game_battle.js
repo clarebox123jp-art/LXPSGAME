@@ -5412,6 +5412,7 @@ const STATUS_DESCS = {
   trap:         '禁動：本回合無法行動',
   seal:         '封印：無法使用技能',
   noatk:        '無力：無法進行普通攻擊',
+  _iliyaRest:   '調息：魔尊覺醒的反噬，只能休息或使用物品（不能普攻、技能、爆發，無法被消除）',   // ★ v5.316.0
   nosell:       '查封：無法使用或販賣物品',
   forecast:     '失明：行動成功率減半',
   _cstRod:      '避雷針（命星）：雷法師的連鎖閃電與怒雷狂襲的第 1 跳優先打中此目標，且對它傷害+30%',   // ★ v5.262.0 裁定乙
@@ -6939,6 +6940,7 @@ function newHero(name,side,pos){
     if(name === '魔劍姬‧伊莉雅'){
       _h._iliyaAtkMul = 1;
       _h._iliyaTriggersThisTurn = 0;
+      _h._iliyaDrUsedThisTurn = 0;   // ★ v5.316.0 魔皇鬥氣減傷每回合只發動 1 次
       _h._iliyaBurstActive = false;
     }
     // ★ v3.14.27 — 主神奧汀(第三隻 UR,陳祈宏老師設計)初始化
@@ -8426,6 +8428,24 @@ function clearGoodBuffs(h){
   // ★ v5.237.0 — 烈日「攻擊力上升」被消除 ⇒ 立刻還原攻擊力
   try{ _amaSunAtkReconcile(h); }catch(_){}
 }
+// ★★ v5.316.0(2026-11-01 老師裁定)— 魔劍姬‧伊莉雅 調整
+//   ① 爆發「魔尊覺醒」副作用:效果結束後強制進入「調息」(_iliyaRest)2 回合,期間只能休息或使用物品(含丹藥)。
+//      ・_iliyaRest 放在 h.status,但「不在 BAD_STATUS」⇒ 淨化/解除不利都拿不掉;另標 _protected/_noStripe。
+//      ・守門點:行動面板(技能/普攻鈕灰掉+提示條;知識化為力量是全隊答題獎勵、不佔行動,不擋)、requestAction/selMove 入口、_canBurst(含寵物爆發與插隊爆發)、
+//        _realAiAct(自動戰鬥/凡人臨摹以外的 AI ⇒ 直接休息)、玩家逾時 AI 代管(⇒ 休息)。
+//   ② 魔皇鬥氣累積的攻擊提升,在神魔滅殺造成傷害後清除(可重新累積)。
+window._iliyaIsResting = function(h){
+  try{ return !!(h && Array.isArray(h.status) && h.status.some(function(s){ return s && s.type === '_iliyaRest' && (s.dur||0) > 0; })); }catch(_){ return false; }
+};
+window._iliyaClearDouki = function(a){
+  if(!a || a.name !== '魔劍姬‧伊莉雅') return;   // 凡人臨摹等其他施放者不受影響
+  if((a._iliyaAtkMul || 1) > 1){
+    a._iliyaAtkMul = 1;
+    try{ log('🗡️ [' + a.name + '] 神魔滅殺斬出,魔皇鬥氣累積的攻擊提升清除,重新累積!'); }catch(_){}
+    try{ bannerFX(a, '🗡️ 鬥氣釋放 攻擊加成歸零', '#9b6dff', 800); }catch(_){}
+    try{ renderCard(a); }catch(_){}
+  }
+};
 function tickStatus(h){
   // ★ v5.237.0 — 烈日「攻擊力上升」自我校正:buff 已被任何路徑拿掉但增量還掛在 atk 上 ⇒ 還原
   // ★ v5.239.0 — 擴大為全部「英雄欄位記帳」類(虛弱咒/顛倒乾坤/明鏡止水/BUG疊加/下課時光/救醫馬HP/烈日)
@@ -8448,7 +8468,7 @@ function tickStatus(h){
     }
   }catch(_eCstFrz){}
   // ★ v3.13.76 — 魔劍姬‧伊莉雅 S2「魔皇鬥氣」每回合觸發計數重置(回合開始)
-  if(h.name === '魔劍姬‧伊莉雅') h._iliyaTriggersThisTurn = 0;
+  if(h.name === '魔劍姬‧伊莉雅'){ h._iliyaTriggersThisTurn = 0; h._iliyaDrUsedThisTurn = 0; }   // ★ v5.316.0 減傷次數一併重置
   const _CE=['stun','freeze','sleep','para','trap','berserk'];
   const _exp=h.status.filter(s=>_CE.includes(s.type)&&s.dur===1);
   // 天賦狀態到期時還原數值
@@ -8667,6 +8687,16 @@ function tickStatus(h){
       delete h._iliyaBurstOrig;
       try{ log(`🗡️ [${h.name}] 魔尊覺醒結束,能力恢復正常。`); }catch(_){}
       try{ if(h._cstIlB2) window._cstIlB2End(h); }catch(_eCstIlB2e){}   // ✨ v5.273.0 命星 ⚙ 伊莉雅 b2(只認命星寫入的 _cstIlB2)
+      // ★ v5.316.0(老師裁定)副作用:強制「調息」2 回合(只能休息或使用物品)。
+      //   本段在 tickStatus 的「buff 到期處理」內,同一次 tickStatus 稍後會把所有 status dur-1 ⇒ 寫 3,實際涵蓋接下來 2 個回合。
+      try{
+        if(h.curHp > 0){
+          h.status = (h.status || []).filter(function(s){ return !(s && s.type === '_iliyaRest'); });
+          h.status.push({ type:'_iliyaRest', dur:3, _strong:true, _protected:true, _noStripe:true });
+          log(`🧘 [${h.name}] 魔尊之力反噬,進入「調息」2 回合:只能休息或使用物品!`);
+          try{ bannerFX(h, '🧘 調息中(2回合)', '#9b8cff', 1100); }catch(_){}
+        }
+      }catch(_eIlRest){}
       try{ renderCard(h); }catch(_){}
     }
     // ★ v1.0.20260421.0700 — 酒吞童子「乾杯」(原「酒宴」,v1080 改名)到期還原攻擊與特技
@@ -15938,7 +15968,7 @@ _cstWsWind:'🍃 順風', _cstPigCute:'💕 超萌模式', _cstPhRoyal:'👑 王
 _cstMgClone:'🎭 幻影分身', _cstFxShell:'👻 魂殼', _cstWkEye:'🔥 火眼金睛', _cstWkMonkey:'🐒 猴毛分身', _cstGyRage:'⚔️ 義憤',   // ✨ v5.267.0 命星 ✦ SSR 第四批
 _cstLbWu:'🐎 無雙', _cstArFleece:'🐏 金羊毛', _cstTzJudge:'⚖️ 天關審判', _cstCaShell:'🦀 蟹殼', _cstLeoSun:'☀️ 太陽威光', _cstLeoRoar:'🦁 王者咆哮', _cstVgAegis:'🌾 星女正義', _cstScAmb:'🦂 暗影伏擊', _cstCpGoat:'🐐 羊魚形態', _cstAqFlow:'♒ 乾坤倒注', _cstPsRope:'🪢 星繩',   // ✨ v5.268.0 命星 ✦ SSR 第五批
 _cstClDodge:'🖼 守護畫像', _cstOdEmber:'🌅 黃昏餘燼', _cstAmMoonSun:'🌗 日月同輝',   // ✨ v5.269.0 命星 ✦ UR
-_odinGaze:'👁 注視',_odinGuard:'🛡 英靈殿守望',_amaReflect:'🌇 日暮反照',_amaSunAtk:'☀️ 烈日之光',_iliyaBurst:'👑 魔尊覺醒',badimmune:'✨ 不利免疫',berserkViking:'🪓 狂暴',
+_odinGaze:'👁 注視',_odinGuard:'🛡 英靈殿守望',_amaReflect:'🌇 日暮反照',_amaSunAtk:'☀️ 烈日之光',_iliyaBurst:'👑 魔尊覺醒',_iliyaRest:'🧘 調息',badimmune:'✨ 不利免疫',berserkViking:'🪓 狂暴',
   firegodbody:'🔥 火神附體',               // ★ v4.46.0 — 炎火超少女 爆發:受傷減半/不倒/受火轉治療/造成傷害必中無視有利+禁益
   haste:'💨 加速'                          // 增強術/天賦觸發加速
 };
@@ -16117,7 +16147,8 @@ function updateUI(){
     s2b.innerHTML=`<b style="font-size:36px;white-space:normal;line-height:1.25;display:block">${a.s2.n} ${_s2costHtml} <span class="csk-detail-btn-lg" data-skname="${a.s2.n}" data-skmeta="${_s2meta}" data-skdesc="${_s2FdFinal.replace(/"/g,'&quot;')}" onclick="event.stopPropagation();showSkillDetailPopup(this)" style="border-radius:50%;width:30px;height:30px;line-height:30px;font-size:20px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:4px">?</span>${_s2LvTag}</b><span style="font-size:22px;color:#cccccc;font-weight:500;display:block;margin-top:3px;line-height:1.4;white-space:normal">${a.s2.d||''}</span>`;
     const s1IsPassive = !!(a.s1.p);
     const s2IsPassive = !!(a.s2.p);
-    const isSealed = hasStatus(a,'seal') || fieldHas('sealall', a.side);
+    const _ilResting = window._iliyaIsResting(a);   // ★ v5.316.0 魔劍姬「調息」:技能/普攻/爆發全部不可用
+    const isSealed = hasStatus(a,'seal') || fieldHas('sealall', a.side) || _ilResting;
     // 按鈕 disabled 判斷：已行動 or 能量不足 or 封印 or 被動
     s1b.disabled = a.acted || s1IsPassive || G.energy.p1<c1 || isSealed;
     s2b.disabled = a.acted || s2IsPassive || G.energy.p1<c2 || (a.s2.once&&a.s2used) || isSealed;
@@ -16164,7 +16195,12 @@ function updateUI(){
         var _shBurstSealed = false;
         try{ _shBurstSealed = hasStatus(a, '_burstSeal'); }catch(_){}
         var _shMsg = '';
-        if(isSealed && _shBurstSealed){
+        if(_ilResting){
+          var _ilRestSt = (a.status||[]).find(function(s){ return s && s.type === '_iliyaRest'; });
+          var _ilRestLeft = _ilRestSt ? Math.max(1, (_ilRestSt.dur||1)) : 1;   // dur 含本回合(回合開始 tickStatus 已扣過)
+          _shMsg = _shCute ? ('🧘 魔劍姬在調息!只能休息或用物品(還剩 ' + _ilRestLeft + ' 回合)')
+                           : ('🧘 魔尊覺醒反噬,調息中:僅能休息或使用物品(剩餘 ' + _ilRestLeft + ' 回合)');
+        } else if(isSealed && _shBurstSealed){
           _shMsg = _shCute ? '🚫 被封印了!技能和爆發都不能用,可以普攻或休息!'
                            : '🚫 技能與極限爆發都被封印!本回合可改用普通攻擊、休息或物品卡。';
         } else if(isSealed){
@@ -16178,7 +16214,7 @@ function updateUI(){
         else{ _sealHintEl.style.display = 'none'; }
       }
     }catch(_eSealHint){}
-    document.getElementById('b-atk').disabled = a.acted || hasStatus(a,'noatk');
+    document.getElementById('b-atk').disabled = a.acted || hasStatus(a,'noatk') || _ilResting;
     // ★ v3.14.25 — 普攻按鈕圖示改成英雄「目前攜帶的元素屬性」圖示,讓玩家知道普攻是什麼屬性傷害
     try{
       const _atkElemEl = document.getElementById('b-atk-elem');
@@ -17242,6 +17278,8 @@ function _canBurst(h){
   // ★ v3.15.72 — 偵探 S2「名偵探的凝視」封印的目標(_burstSeal)無法發動極限爆發(玩家+AI 共用此守門)
   //   ★ v5.53.0 — BOSS 尊嚴鎖血反擊(_lifelineForcedBurst)免疫此封印(老師裁定:尊嚴不可封)
   if(hasStatus(h,'_burstSeal') && !_lfForced) return false;
+  // ★ v5.316.0 — 魔劍姬「調息」期間不可發動極限爆發(含寵物爆發、插隊爆發;玩家+AI 共用此守門)
+  if(window._iliyaIsResting(h)) return false;
   // ★ v4.48.0 — 貓人族長 爆發「上級元素精靈‧引爆」需持有至少 1 隻小精靈才能發動(玩家+AI 共用)
   if(h.name==='貓人族長' && !(Array.isArray(h._catSprites) && h._catSprites.some(sp=>sp && (sp.hp||0)>0))) return false;
   return true;
@@ -37230,7 +37268,9 @@ function doDmg(target, rawDmg, opts={}){
   // ★ v3.13.76 — 魔劍姬‧伊莉雅 S2「魔皇鬥氣」:受到傷害 -15%
   //   ★ v3.14.18(2026-06-12,老師指正)— 升級效果改為「每升 1 級減傷 +3pp」(Lv10/skLv9 = 42%);
   //     原「每回合觸發次數隨等級增加」取消,觸發次數固定每回合 1 次(見下方 +2 能量 hook)
-  if(target && target.name === '魔劍姬‧伊莉雅' && !opts.isHeal && dmg > 0){
+  //   ★ v5.316.0(老師裁定)— 減傷每回合只發動 1 次(該回合第一次受傷;_iliyaDrUsedThisTurn 由 tickStatus 每回合歸零)
+  if(target && target.name === '魔劍姬‧伊莉雅' && !opts.isHeal && dmg > 0 && !target._iliyaDrUsedThisTurn){
+    target._iliyaDrUsedThisTurn = 1;
     const _ilDrLv = (target._skLv && typeof target._skLv.s2==='number' && target.s2 && target.s2.n==='魔皇鬥氣') ? target._skLv.s2
                   : (target._skLv && typeof target._skLv.s1==='number' && target.s1 && target.s1.n==='魔皇鬥氣') ? target._skLv.s1 : 0;
     const _ilDrPct = Math.min(0.42, 0.15 + _ilDrLv * 0.03);
@@ -39144,6 +39184,7 @@ function doDmg(target, rawDmg, opts={}){
   })(target);
   if(old>0 && target.curHp>0 && target.curHp<old) shake(target); // alive && took damage
   // ★ v3.13.76 — 魔劍姬‧伊莉雅 S2「魔皇鬥氣」:每回合受傷時 +2 能量 + 攻擊累計 +5%(上限 +50%)
+  //   ★ v5.316.0(老師裁定)累計改 +10%/次(上限 +50% 不變);神魔滅殺造成傷害後由 window._iliyaClearDouki 歸零
   //   ★ v3.14.18(老師指正):觸發次數固定每回合首次 1 次;升級效果改為減傷 +3pp/級(見上方減傷 hook)
   if(dmg>0 && old>0 && target.name==='魔劍姬‧伊莉雅' && a && a !== target && a.side!==target.side
      && !opts.isRebound && !opts.isTraitShare && !opts.isChaos){
@@ -39156,7 +39197,7 @@ function doDmg(target, rawDmg, opts={}){
         try{ if(typeof sndEnergy==='function') sndEnergy(); }catch(_){}
       }
       if((target._iliyaAtkMul||1) < 1.5){
-        target._iliyaAtkMul = Math.min(1.5, (target._iliyaAtkMul||1) + 0.05);
+        target._iliyaAtkMul = Math.min(1.5, (target._iliyaAtkMul||1) + 0.10);   // ★ v5.316.0(老師裁定)每次 +5%→+10%,上限 +50% 不變
         try{ bannerFX(target, '🗡️ 魔皇鬥氣 攻擊+'+Math.round((target._iliyaAtkMul-1)*100)+'%', '#b048ff', 700); }catch(_){}
         try{ if(target._iliyaAtkMul >= 1.5 && target._cst) window._cstIlS2Wave(target); }catch(_eCstIlS2w){}   // ✨ v5.273.0 命星 ⚙ 伊莉雅 s2 魔皇斬波(剛好集滿才觸發;只對點亮的命星做事)
       }
@@ -42202,6 +42243,8 @@ let _pendingActionType = null;
 
 function requestAction(type, btnEl){
   const a=G.activeChar; if(!a||a.acted) return;
+  // ★ v5.316.0 — 魔劍姬「調息」:只能休息或使用物品
+  if((type==='atk'||type==='s1'||type==='s2') && window._iliyaIsResting(a)){ log(`🧘 [${a.name}] 調息中,只能休息或使用物品!`); try{ bannerFX(a,'🧘 調息中','#9b8cff',800); }catch(_){} return; }
   // ★ v3.15.39 — 連發防護:上一個行動還在執行(動畫/結算未完)→ 忽略本次點擊(8 秒逾時保險)
   if(window._pActBusy && (Date.now() - (window._pActBusyTs || 0) < 8000)) return;
   // 如果已有確認欄且是同一個按鈕→取消
@@ -42316,6 +42359,8 @@ function confirmAction(){
 
 function selMove(type){
   const a=G.activeChar; if(!a||a.acted) return;
+  // ★ v5.316.0 — 魔劍姬「調息」:只能休息或使用物品(selMove 只處理普攻/技能,一律擋)
+  if(window._iliyaIsResting(a)){ log(`🧘 [${a.name}] 調息中,只能休息或使用物品!`); try{ bannerFX(a,'🧘 調息中','#9b8cff',800); }catch(_){} return; }
   try{ window._cstPgS1NewAct(a); }catch(_){}   // 🔧 v5.259.0 審查 M2:再行動(同一 _actSeq)開始新行動 ⇒ 解除上一發技能一的窗口
   const _cv=document.getElementById('charm-ov'); if(_cv) _cv.remove();
   if(G.pendingTarget||(G.selMove&&G.selMove._type===type)){clearSel();updateUI();return;}
@@ -45371,6 +45416,7 @@ function execSkill(a, sk, cost, stype){
       try{ bannerFX(a,'🗡️ 神魔滅殺','#b048ff',900); }catch(_){}
       beginBatchTotals();
       doDmg(t, _dmg, { actor:a, isSkill:true, mustHit:true, ignoreBuffs:true });
+      try{ window._iliyaClearDouki(a); }catch(_eIlClr){}   // ★ v5.316.0 神魔滅殺造成傷害後清除魔皇鬥氣累積的攻擊提升
       _pSetTimeout(() => {
         if(t && t.curHp > 0){
           // ① 消除全部有利狀態(含強力;排除受保護/不可剝奪。世界 BOSS 元素護盾存於 _wbShields,不在 buffs,天生安全)
@@ -60792,6 +60838,15 @@ function _realAiAct(a){
     _pSetTimeout(startTurn, 600);
     return;
   }
+  // ★ v5.316.0 — 魔劍姬「調息」:AI / 自動戰鬥只能休息(不普攻、不放技能、不爆發;休息效果與手動休息共用 _restEffects)
+  if(window._iliyaIsResting(a)){
+    _v3_12_17_trace('魔劍姬調息 → 休息');
+    log('🧘 [' + a.name + '] 調息中,休息恢復能量。');
+    a._lastActionName = '休息';
+    _restEffects(a);
+    a.acted = true; updateUI(); _pSetTimeout(startTurn, 500);
+    return;
+  }
   _v3_12_17_trace('通過暈眩判定');
   const opp_side = a.side==='p1'?'p2':'p1';
   const enemies = G[opp_side].filter(h=>h.curHp>0);
@@ -64043,6 +64098,7 @@ function aiUseSkill(a,sk,cost,pref){
       log(`🗡️ [${a.name}] 神魔滅殺 → [${_t.name}]!`);
       try{ if(typeof playSkillFX==='function') playSkillFX('神魔滅殺',a,[_t]); }catch(_){}
       doDmg(_t, _dmgI, { actor:a, isSkill:true, mustHit:true, ignoreBuffs:true });
+      try{ window._iliyaClearDouki(a); }catch(_eIlClrA){}   // ★ v5.316.0 神魔滅殺造成傷害後清除魔皇鬥氣累積的攻擊提升(AI 路徑同步)
       if(_t.curHp > 0){
         try{
           const _rm = (_t.buffs || []).filter(b => !b._protected && !b._noStripe);
@@ -74294,6 +74350,8 @@ function startTurnTimer(actor){
         },5000);
         // Attempt AI-style action
         try {
+          // ★ v5.316.0 — 魔劍姬「調息」:逾時代管只能休息
+          if(window._iliyaIsResting(actor)){ _aiDone=true; clearTimeout(_aiTimeout); doRest(); return; }
           // Pick best action: use highest-value skill if enough energy, else attack, else rest
           var _canS1=!actor.s1.p && G.energy.p1>=skillCost(actor.s1,actor,true) && !fieldHas('sealall', actor.side) && !hasStatus(actor,'seal');
           var _canS2=!actor.s2.p && !(actor.s2.once&&actor.s2used) && G.energy.p1>=skillCost(actor.s2,actor,true) && !fieldHas('sealall', actor.side) && !hasStatus(actor,'seal');
