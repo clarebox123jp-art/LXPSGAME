@@ -55151,6 +55151,15 @@ window._lxpsPWA = (function(){
         resolve(list || []);
       };
       var timer = setTimeout(function(){ finish([]); }, 20000);
+      /* ★ v5.319.0 — 同時抓 asset_manifest.json 的小遊戲素材表(minigame 欄),iframe 掃完後補上「程式私有變數/拼字組出來、深掃看不到」的題圖。
+         網址一律用小遊戲自己的 mgPicUrl(檔名) 組(含 ?v= 版號),與遊戲實際請求同一個 URL,minigame_sw 的 caches.match 才命中。 */
+      var _mgManP = new Promise(function(res){
+        try{
+          fetch('asset_manifest.json', { cache: 'no-cache', credentials: 'omit' })
+            .then(function(r){ return (r && r.ok) ? r.json() : null; })
+            .then(function(j){ res(j); }, function(){ res(null); });
+        }catch(_eMf){ res(null); }
+      });
       iframe.onerror = function(){ clearTimeout(timer); finish([]); };
       iframe.onload = function(){
         try{
@@ -55212,8 +55221,40 @@ window._lxpsPWA = (function(){
           try{
             MW.document.querySelectorAll('audio[src], audio source[src]').forEach(function(el){ addAbs(el.getAttribute('src')); });
           }catch(_){}
-          clearTimeout(timer);
-          finish(Array.from(urls));
+          // ★ v5.319.0 — 用素材總表補齊九款小遊戲的題圖/音檔(荒島的 island_/btl_/run_/walk_/jump_ 開頭由「完整下載荒島」那顆負責,這裡不收)
+          _mgManP.then(function(man){
+            try{
+              var list = (man && Array.isArray(man.minigame)) ? man.minigame : [];
+              if(list.length){
+                var covered = {}, stemOf = function(n){ return String(n).replace(/\.(png|jpe?g|webp|gif)$/i, '').toLowerCase(); };
+                urls.forEach(function(u){
+                  var p = u.split('?')[0], m = /\/minigame\/(img|audio)\/([^\/]+)$/.exec(p);
+                  if(!m) return;
+                  var nm = m[2]; try{ nm = decodeURIComponent(nm); }catch(_){}
+                  covered[m[1] + '/' + (m[1] === 'img' ? stemOf(nm) : nm.toLowerCase())] = 1;
+                });
+                var addN = 0;
+                list.forEach(function(rel){
+                  var mm = /^(img|audio)\/([^\/]+)$/.exec(String(rel || ''));
+                  if(!mm) return;
+                  var nm = mm[2];
+                  if(/^(island_|btl_|run_|walk_|jump_|battle_)/i.test(nm)) return;
+                  if(mm[1] === 'img'){
+                    if(covered['img/' + stemOf(nm)]) return;
+                    if(typeof MW.mgPicUrl !== 'function') return;   // 舊版小遊戲沒匯出就不猜網址(猜錯版號只會白抓)
+                    addAbs(MW.mgPicUrl(nm)); addN++;
+                  } else {
+                    if(covered['audio/' + nm.toLowerCase()]) return;
+                    addAbs('audio/' + encodeURIComponent(nm)); addN++;
+                  }
+                });
+                console.log('[PWA v5.319.0] 小遊戲素材總表補入 ' + addN + ' 個');
+              }
+            }catch(_eMx){}
+            clearTimeout(timer);
+            finish(Array.from(urls));
+          });
+          return;
         }catch(_e){
           clearTimeout(timer);
           finish([]);
@@ -55239,8 +55280,14 @@ window._lxpsPWA = (function(){
             var mA = /var\s+ASSET\s*=\s*'([^']+)'/.exec(swText || '');
             if(mA) assetName = mA[1];
           }catch(_){}
-          return Promise.all([caches.open(shellName), caches.open(assetName)]).then(function(cs){
-            var shellCache = cs[0], assetCache = cs[1];
+          var islName = 'lxps-mini-island-v1';
+          try{ var mI2 = /var\s+ISLAND\s*=\s*'([^']+)'/.exec(swText || ''); if(mI2) islName = mI2[1]; }catch(_){}
+          return Promise.all([caches.open(shellName), caches.open(assetName), caches.open(islName)]).then(function(cs){
+            var shellCache = cs[0], assetCache = cs[1], islCache = cs[2];
+            /* ★ v5.319.0 — 「已經有了」只認永不清的 ASSET / 荒島快取(SHELL 每版改名會被清,裡面的舊音檔不算有) */
+            var hasKept = function(u){
+              return assetCache.match(u).then(function(h){ return h || islCache.match(u); });
+            };
             var total = urls.length, settled = 0, idx = 0, CONC = 4;
             return new Promise(function(resolveAll){
               var next = function(){
@@ -55249,16 +55296,23 @@ window._lxpsPWA = (function(){
                 var isSameOriginShell = (function(){
                   try{
                     var uu = new URL(u);
+                    /* ★ v5.319.0 — 音檔/圖片一律進 ASSET(永不清);舊判斷只看 /minigame/img/,把 minigame/audio 的 BGM/音效放進
+                       每版改名、更新就被清掉的 SHELL ⇒ 違反「已下載音畫素材永不刪除」鐵律,小遊戲一更新音樂就要重抓。 */
+                    if(/\.(png|jpe?g|gif|webp|svg|mp3|m4a|wav|ogg|aac|mp4|webm)$/i.test(uu.pathname)) return false;
                     return uu.origin === location.origin && uu.pathname.indexOf('/minigame/img/') === -1;
                   }catch(_){ return false; }
                 })();
-                fetch(u, { mode: 'cors', cache: 'reload' })
-                  .then(function(res){
-                    if(res && res.ok){
-                      var target = isSameOriginShell ? shellCache : assetCache;
-                      try{ target.put(u, res.clone()); }catch(_){}
-                    }
-                  })
+                /* ★ v5.319.0 — 素材先查 ASSET/荒島快取,已經有的不重抓(舊碼每按一次就把幾百個檔整包 cache:'reload' 重新下載) */
+                (isSameOriginShell ? Promise.resolve(null) : hasKept(u)).then(function(hit){
+                  if(hit) return null;
+                  return fetch(u, { mode: 'cors', cache: 'reload' })
+                    .then(function(res){
+                      if(res && res.ok){
+                        var target = isSameOriginShell ? shellCache : assetCache;
+                        try{ target.put(u, res.clone()); }catch(_){}
+                      }
+                    });
+                })
                   .catch(function(){})
                   .then(function(){
                     settled++;
