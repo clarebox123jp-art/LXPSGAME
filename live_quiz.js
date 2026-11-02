@@ -1,5 +1,8 @@
 /* ════════════════════════════════════════════════════════════════════
- *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.321.0
+ *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.322.0
+ *  ★ v5.322.0(2026-11-02・老師「學生無法離開前一場,請修成學生可以退出前一場,重新進老師開的新場次」)
+ *    studentTryResume:上一場已結束/不存在/被踢 ⇒ 清本機紀錄不拉回;同一位主持人看板上有比上一場新的房 ⇒ 不自動拉回、輸入房號畫面顯示「↩ 回到上一場」;
+ *    studentQuit():送離線記號＋清本機紀錄＋回輸入房號;等候室下方房號＋「🚪 退出這一場」;✕ 改三選項(取消/暫時離開/退出這一場);結束頁「🚀 加入新的擂台」
  *  ★ v5.321.0(2026-11-02・老師「右邊排名看不到完整班級座號,請修改字體大小」)— 主持台公布畫面右側前五名(.lq-hside .lq-top5)
  *    字體 clamp(14px,1.7u,24px)、名字可換行不截斷、分數排到第二行
  *  ★ v5.320.0(2026-11-02・老師「學生平板顯示登入,老師電腦顯示離線,同步沒有即時;學生一直自動斷線又連線」「主持人選擇題庫時不要顯示答案」)
@@ -31,7 +34,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.321.0' };
+var LQ = window._LQ = { _v: 'v5.322.0' };
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -535,8 +538,15 @@ LQ.close = function(force){
                        '擂台仍在進行。<br>關閉主持台不會結束擂台,可從首頁「⚡ 搶答擂台」→「我要主持」接續。'), '先關掉', function(){ LQ.close(true); });
   }
   if(ST.pin && ST.room && ST.room.meta && ST.room.meta.status !== 'ended' && !force){
-    return confirmBox(T('要離開擂台嗎?<br>離開後再點「⚡ 搶答擂台」就會自動回到這一場,分數會保留。',
-                       '確定離開?<br>重新進入「⚡ 搶答擂台」會自動回到本場,成績保留。'), '離開', function(){ LQ.close(true); });
+    /* ★ v5.321.0 三個選項:取消/暫時離開(會自動回來)/退出這一場(換到老師開的新場次) */
+    modal('<div class="lq-p" style="text-align:left">' + T('要離開擂台嗎?<br>・<b>暫時離開</b>:再點「⚡ 搶答擂台」會自動回到這一場,分數保留。<br>・<b>退出這一場</b>:不再回到這一場,可以輸入老師給的新房號。',
+                                                         '確定離開?<br>・<b>暫時離開</b>:重新進入時自動回到本場,成績保留。<br>・<b>退出本場</b>:不再自動回到本場,可加入新的擂台。') + '</div>'
+      + '<div class="lq-row"><button class="lq-btn gray" id="lq-cf-no">取消</button><button class="lq-btn" id="lq-cf-away">' + T('暫時離開', '暫時離開') + '</button>'
+      + '<button class="lq-btn gold" id="lq-cf-quit">' + T('退出這一場', '退出本場') + '</button></div>');
+    $('lq-cf-no').onclick = closeModal;
+    $('lq-cf-away').onclick = function(){ closeModal(); LQ.close(true); };
+    $('lq-cf-quit').onclick = function(){ closeModal(); studentQuit(); };
+    return;
   }
   studentAway();   /* ★ v5.318.0 學生中途離開 ⇒ 主持台立刻顯示斷線 */
   ST.stop(); H.stop(); stopAuthWatch(); closeModal(); bgmBack(); fxClear();
@@ -597,7 +607,7 @@ var ST = {
     this.recvAt = 0; this.waitMs = 0; this.cutRm = -1; this.hintA = -1; this.used = { cut: false, hint: false }; this.pwWait = null;
     this.sfxQ = -1; this.streak = 0; this.priv = null; this.ans = {}; this.correctN = 0; this.lastStatus = ''; this.kicked = false;
     this.offset = null; this.syncRtt = 1e9; this.syncS = 0; this.syncPend = null; this.timeUp = false;
-    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; },
+    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; }
     if(this.beatRetry){ clearTimeout(this.beatRetry); this.beatRetry = null; } this.beatBusy = false; },
@@ -621,16 +631,44 @@ async function studentTryResume(){
   if(!raw) return false;
   var p = raw.split('|'), pin = p[0], ts = +p[1] || 0;
   if(!/^\d{6}$/.test(pin) || now() - ts > 12 * 3600 * 1000) return false;
+  /* ★ v5.321.0(老師「學生無法離開前一場,請修成學生可以退出前一場,重新進老師開的新場次」)
+     原本:只要本機記著上一場,一點「⚡ 搶答擂台」就硬拉回上一場(已結束的也會拉回 2 小時)⇒ 老師開了新場次,學生進不去。
+     改成:① 上一場已結束 ⇒ 不再拉回,直接到輸入房號;② 同一位老師已經開了比上一場新的房間(首頁看板)⇒ 不自動拉回,
+     改到輸入房號畫面並顯示「回到上一場」按鈕讓學生自己選;③ 其餘(上一場還在進行、沒有更新的場次)照舊自動回到上一場,分數保留。 */
   try{
     var s = await F.getDoc(roomRef(pin));
-    if(!s.exists()) return false;
+    if(!s.exists()){ clearLocalPin(pin); return false; }
     var r = s.data();
-    if(r.meta && r.meta.status === 'ended' && r.meta.endedAt && now() - r.meta.endedAt > 2 * 3600 * 1000) return false;
+    if(!r.meta || r.meta.status === 'ended'){ clearLocalPin(pin); return false; }
     var ps = await F.getDoc(sub(pin, 'players', u.uid));
-    if(!ps.exists() || ps.data().kicked) return false;
+    if(!ps.exists() || ps.data().kicked){ clearLocalPin(pin); return false; }
+    var newer = null;
+    try{
+      var b = await F.getDoc(F.doc(db(), 'liveQuizBoard', BOARD_DOC));
+      var rooms = (b.exists() && b.data().rooms) || {};
+      var mine = rooms[pin];
+      if(mine && mine.st === 'ended'){ clearLocalPin(pin); return false; }
+      Object.keys(rooms).forEach(function(k){
+        var e = rooms[k];
+        if(k === pin || !e || e.st === 'ended' || now() - (e.at || 0) > BOARD_TTL) return;
+        if(e.hostUid === r.meta.hostUid && (e.at || 0) > (r.meta.createdAt || 0)) newer = k;
+      });
+    }catch(_){}
+    if(newer){ ST.prevPin = pin; return false; }   /* 老師開新場了 ⇒ 讓學生自己選 */
     await studentEnter(pin, r, true);
     return true;
   }catch(_){ return false; }
+}
+function clearLocalPin(pin){ try{ localStorage.removeItem(lsKey('room')); localStorage.removeItem(lsKey('st') + '_' + pin); }catch(_){} }
+/* ★ v5.321.0 學生主動「退出這一場」:告訴主持台離開、清掉本機紀錄(之後不會再自動拉回),直接回到輸入房號畫面 */
+function studentQuit(){
+  var pin = ST.pin;
+  studentAway();
+  ST.stop(); closeModal(); bgmBack(); fxClear();
+  if(pin) clearLocalPin(pin);
+  ST.reset();
+  toast(T('已經退出上一場,輸入老師給的新房號吧!', '已退出上一場,請輸入新房號'));
+  studentJoinScreen();
 }
 
 function studentJoinScreen(){
@@ -649,7 +687,10 @@ function studentJoinScreen(){
   setBody('<div class="lq-card lq-join"><div class="lq-join-l"><div class="lq-h1">' + T('輸入老師給的房號', '輸入房號') + '</div>'
     + '<div class="lq-p" style="font-size:clamp(14px,1.8vmin,20px)">' + T('看大螢幕上的 6 個數字', '請輸入大螢幕上顯示的 6 碼房號') + '</div>'
     + '<div class="lq-pin" id="lq-pinbox"></div>'
-    + '<div class="lq-row"><button class="lq-btn gold" id="lq-join-go" disabled>🚀 ' + T('加入擂台', '加入') + '</button></div></div>'
+    + '<div class="lq-row"><button class="lq-btn gold" id="lq-join-go" disabled>🚀 ' + T('加入擂台', '加入') + '</button></div>'
+    + (ST.prevPin ? '<div class="lq-p" style="font-size:clamp(13px,1.6vmin,18px);opacity:.9">' + T('老師開了新的擂台喔!你上一場(房號 ' + esc(ST.prevPin) + ')還沒結束。', '主持人已開新場次;上一場(房號 ' + esc(ST.prevPin) + ')尚未結束。')
+        + '<br><button class="lq-btn gray" id="lq-join-prev" style="margin-top:6px">↩ ' + T('回到上一場', '回到上一場') + '</button></div>' : '')
+    + '</div>'
     + '<div class="lq-pad" id="lq-pad">' + pad + '</div></div>');
   $('lq-pad').onclick = function(e){
     var b = e.target.closest('button'); if(!b) return;
@@ -660,6 +701,7 @@ function studentJoinScreen(){
     sfx('sfx-gentle', 0.25); draw();
   };
   $('lq-join-go').onclick = go;
+  if($('lq-join-prev')) $('lq-join-prev').onclick = function(){ code = ST.prevPin; draw(); go(); };   /* ★ v5.321.0 學生自己選要回上一場 */
   draw();
   async function go(){
     var btn = $('lq-join-go'); btn.disabled = true; btn.textContent = '…';
@@ -846,7 +888,10 @@ function studentLobby(){
   var lw = $('lq-s-lobwall');
   if(lw){ setHtmlIfChanged(lw, studentLobbyWall(r)); return; }
   setTop('⚡ ' + (r.meta.title || T('搶答大挑戰', '英雄搶答擂台')), studentChips());
-  setCtl('');
+  /* ★ v5.321.0 等候室下方顯示目前房號＋「退出這一場」:跑錯房間/老師換新場次時,學生自己就能換 */
+  setCtl('<span style="font-weight:800;opacity:.85">🔑 ' + T('房號', '房號') + ' ' + esc(ST.pin) + ' ・ ' + T('不是老師現在這一場?', '非目前場次?') + '</span>'
+    + '<button class="lq-btn gray" id="lq-s-quit">🚪 ' + T('退出這一場', '退出本場') + '</button>');
+  $('lq-s-quit').onclick = function(){ confirmBox(T('確定要退出房號 <b>' + esc(ST.pin) + '</b> 這一場嗎?<br>退出後可以輸入老師給的新房號。', '確定退出房號 <b>' + esc(ST.pin) + '</b>?<br>退出後可加入新的擂台。'), T('退出這一場', '退出本場'), studentQuit); };
   setBody('<div class="lq-card"><div class="lq-h1">✅ ' + T('加入成功!', '已加入擂台') + '</div>'
     + '<div class="lq-p">' + T('看看大螢幕,你的名字已經出現囉!<br>等老師按開始~', '你的名稱已顯示在參加者列表。<br>等待主持人啟動擂台…') + '</div>'
     + '<div id="lq-s-lobwall" style="width:100%;display:flex;flex-direction:column;align-items:center">' + studentLobbyWall(r) + '</div>'
@@ -1076,7 +1121,8 @@ function studentEnded(){
       clearLocal();
     }
   }
-  h += '<div class="lq-row"><button class="lq-btn" id="lq-e-ok">' + T('回首頁', '離開') + '</button></div></div>';
+  h += '<div class="lq-row"><button class="lq-btn" id="lq-e-ok">' + T('回首頁', '離開') + '</button>'
+    + '<button class="lq-btn gold" id="lq-e-new">🚀 ' + T('加入新的擂台', '加入新擂台') + '</button></div></div>';   /* ★ v5.321.0 結束後可直接輸入老師新開的房號 */
   /* ★ v5.318.0 老師:結束時的排行榜顯示「名次、班級座號、獲得獎勵」 */
   h += '<div class="lq-card lq-final" style="margin-top:12px"><div class="lq-h1" style="font-size:clamp(18px,3vmin,26px)">🏆 ' + T('全班排行榜', '最終排行榜') + '</div>'
     + finalTableHtml(fin.list || [], { mine: ST.uid }) + '</div>';
@@ -1084,6 +1130,7 @@ function studentEnded(){
   setBody(h);
   if(ST.endFx) $('lq-body').scrollTop = sc;   /* 頒獎狀態更新時重畫,不要跳回頂端 */
   $('lq-e-ok').onclick = function(){ LQ.close(true); };
+  $('lq-e-new').onclick = studentQuit;
   /* 遊戲結束特效與音樂(只播一次) */
   if(!ST.endFx){
     ST.endFx = true;
