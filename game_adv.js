@@ -54916,10 +54916,27 @@ window._lxpsPWA = (function(){
 
   // ─── 收集所有需要快取的資源 URL ───
   // 從 DOM (audio/img src) + JS 資料庫 (HERO_DB, BURST_GIF_DB...) 中收集
-  function collectAllResourceUrls(){
+  /* ★★ v5.319.0(2026-11-02・老師回報「新平板完整下載後沒有遊戲圖片,卻顯示已是最新版本;故事冒險待下載只有 248 個」)★★
+     【根因】v5.210.0 把 331 處素材網址從 raw.githubusercontent 改成同源相對路徑(./檔名),
+       v5.235.0 又把英雄/場景資料拆到 game_*.js 外部檔;但本函式的 add() 一直只收「http 開頭的絕對網址」,
+       第 6 步全文掃描也只看得到 index.html 本身 ⇒ 所有 ./相對路徑的立繪、場景、寵物、至寶、音樂全被丟掉,
+       清單只剩少數殘留的 raw/github 舊網址(實測 headless 102 筆;repo 根目錄實際約 1,440 個素材)。
+       SW 把這份殘缺清單全部抓完就回報「已經是最新版本,沒有缺少的檔案」——其實圖片根本沒進快取。
+     【修法】①參數 _full=true(只有「完整下載」走這條)時,相對路徑一律用 location.href 轉成同源絕對網址再收;
+       背景補抓(不帶參數)維持舊行為,避免已安裝的平板開機就在背景搬幾百 MB 擠爆校網。
+       ②完整下載改走 _lxpsCollectFullAssetUrls():本清單 ∪ 同源 asset_manifest.json(交付時產生的 repo 素材總表)
+       ∪ GitHub 樹狀清單(抓得到才用,補老師之後自己上傳的新圖)。 */
+  function collectAllResourceUrls(_full){
     var urls = new Set();
     function add(u){
       if(!u || typeof u !== 'string') return;
+      if(_full && u.indexOf('http') !== 0 && u.indexOf('//') !== 0){
+        // ★ v5.319.0 — 完整下載:同源相對路徑(./檔名、檔名、%E5…編碼)轉成絕對網址;只收素材副檔名、不收小遊戲目錄
+        if(/^(data|blob|javascript):/i.test(u)) return;
+        if(!/\.(png|jpe?g|gif|webp|svg|mp3|m4a|wav|ogg|mp4|webm)(\?|#|$)/i.test(u)) return;
+        if(/^(\.\/)?minigame\//i.test(u)) return;
+        try{ u = new URL(u, location.href).href; }catch(_eRel){ return; }
+      }
       if(u.indexOf('http') !== 0 && u.indexOf('//') !== 0) return; // ★ v3.15.87 修正:原誤含「&& u.indexOf(data:)===0」使相對路徑(manifest/icon)被誤收進預載清單→sw.js new URL() 無 base 拋錯炸整批;改為只收絕對 URL(http/https///),相對資源由 install 的 SHELL_URLS 處理
       // 把 github blob 連結轉為 raw (與遊戲內邏輯一致)
       if(u.indexOf('//github.com/') !== -1 && u.indexOf('/raw/') === -1 && u.indexOf('/blob/') !== -1){
@@ -54993,6 +55010,114 @@ window._lxpsPWA = (function(){
     }catch(_){}
 
     return Array.from(urls);
+  }
+
+  /* ★ v5.319.0 — 完整下載專用的「完整清單」(Promise → {urls, bytes, manifestOk, treeOk})
+     三個來源取聯集,任一個失敗都只略過、不擋下載:
+       ①collectAllResourceUrls(true):遊戲執行中真正引用到的素材(含修好的相對路徑)。
+       ②同源 asset_manifest.json:每次交付時由 repo 產生的素材總表(根目錄＋avatar_parts/,不含 minigame/),
+         同一張圖若有 webp/jpg/png 多種格式只列一種(webp > jpg > png),附 totalBytes 供空間估算。
+       ③GitHub 樹狀清單(api.github.com,單次請求、8 秒逾時、限流就略過):補老師交付之後自己上傳的新圖。
+     同一張圖不同格式只下載一次(以「去掉圖片副檔名的檔名」去重,①的網址優先)。 */
+  function _lxpsCollectFullAssetUrls(){
+    var ASSET_RE = /\.(png|jpe?g|gif|webp|svg|mp3|m4a|wav|ogg|mp4|webm)$/i;
+    var baseDir = new URL('./', location.href).href;
+    var codeUrls = [];
+    try{ codeUrls = collectAllResourceUrls(true); }catch(_eC){ console.warn('[PWA v5.319.0] 程式內素材清單失敗', _eC); }
+
+    function fetchJson(url, ms){
+      return new Promise(function(resolve){
+        var done = false, ctl = null;
+        try{ ctl = (typeof AbortController === 'function') ? new AbortController() : null; }catch(_){}
+        var t = setTimeout(function(){ if(done) return; done = true; try{ ctl && ctl.abort(); }catch(_){} resolve(null); }, ms);
+        var opts = { cache: 'no-cache', credentials: 'omit' };
+        if(ctl) opts.signal = ctl.signal;
+        fetch(url, opts).then(function(r){ return (r && r.ok) ? r.json() : null; })
+          .then(function(j){ if(done) return; done = true; clearTimeout(t); resolve(j || null); })
+          .catch(function(){ if(done) return; done = true; clearTimeout(t); resolve(null); });
+      });
+    }
+    function logical(name){ return String(name).replace(/\.(png|jpe?g|webp)$/i, '.@img').toLowerCase(); }
+    function rank(name){
+      var m = /\.([a-z0-9]+)$/i.exec(name); var e = m ? m[1].toLowerCase() : '';
+      var R = { webp: 0, jpg: 1, jpeg: 1, png: 2 };
+      return Object.prototype.hasOwnProperty.call(R, e) ? R[e] : 0;
+    }
+    function okPath(p){ return !!p && ASSET_RE.test(p) && (p.indexOf('/') === -1 || p.indexOf('avatar_parts/') === 0); }
+
+    // GitHub repo 由 _LXPS_RAW_BASE 推得(不寫死第二份),推不出就不打 API
+    var treeUrl = null, _rawBases = [];
+    try{
+      var mRepo = /raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\//.exec(window._LXPS_RAW_BASE || '');
+      if(mRepo){
+        treeUrl = 'https://api.github.com/repos/' + mRepo[1] + '/' + mRepo[2] + '/git/trees/' + mRepo[3] + '?recursive=1';
+        _rawBases = [
+          'https://raw.githubusercontent.com/' + mRepo[1] + '/' + mRepo[2] + '/' + mRepo[3] + '/',
+          'https://raw.githubusercontent.com/' + mRepo[1] + '/' + mRepo[2] + '/refs/heads/' + mRepo[3] + '/',
+          'https://github.com/' + mRepo[1] + '/' + mRepo[2] + '/raw/' + mRepo[3] + '/'
+        ];
+      }
+    }catch(_){}
+
+    return Promise.all([
+      fetchJson('asset_manifest.json', 10000),
+      treeUrl ? fetchJson(treeUrl, 8000) : Promise.resolve(null)
+    ]).then(function(rs){
+      var man = rs[0], tree = rs[1];
+      var pick = {};   // logical → 檔名
+      function offer(name){
+        if(!okPath(name)) return;
+        var k = logical(name);
+        if(!pick[k] || rank(name) < rank(pick[k])) pick[k] = name;
+      }
+      var manifestOk = !!(man && Array.isArray(man.files) && man.files.length);
+      if(manifestOk) man.files.forEach(offer);
+      var treeOk = !!(tree && Array.isArray(tree.tree) && tree.tree.length);
+      if(treeOk){
+        var manHas = {};
+        Object.keys(pick).forEach(function(k){ manHas[k] = 1; });
+        var tPick = {};
+        tree.tree.forEach(function(e){
+          if(!e || e.type !== 'blob' || !okPath(e.path)) return;
+          var k = logical(e.path);
+          if(manHas[k]) return;   // 總表已有 ⇒ 以總表選的格式為準
+          if(!tPick[k] || rank(e.path) < rank(tPick[k])) tPick[k] = e.path;
+        });
+        Object.keys(tPick).forEach(function(k){ pick[k] = tPick[k]; });
+      }
+      // ①程式引用到的同源素材先佔位(它們的網址就是遊戲實際會請求的那一個)
+      var out = [], seenUrl = {}, covered = {};
+      codeUrls.forEach(function(u){
+        if(seenUrl[u]) return; seenUrl[u] = 1; out.push(u);
+        // 同源 ./檔名,或仍寫死成本 repo raw / github.com…/raw/ 舊網址的(遊戲就是請求那個網址) ⇒ 該圖已在清單,總表不再重複下載同源副本
+        var rel = null;
+        if(u.indexOf(baseDir) === 0) rel = u.slice(baseDir.length);
+        else if(_rawBases.length){
+          for(var _bi = 0; _bi < _rawBases.length; _bi++){
+            if(u.indexOf(_rawBases[_bi]) === 0){ rel = u.slice(_rawBases[_bi].length); break; }
+          }
+        }
+        if(rel !== null){
+          rel = rel.split(/[?#]/)[0];
+          try{ rel = decodeURIComponent(rel); }catch(_){}
+          covered[logical(rel)] = 1;
+        }
+      });
+      var added = 0;
+      Object.keys(pick).forEach(function(k){
+        if(covered[k]) return;
+        var u;
+        try{ u = new URL(pick[k].split('/').map(encodeURIComponent).join('/'), baseDir).href; }catch(_){ return; }
+        if(seenUrl[u]) return; seenUrl[u] = 1; out.push(u); added++;
+      });
+      var bytes = (manifestOk && typeof man.totalBytes === 'number') ? man.totalBytes : 0;
+      console.log('[PWA v5.319.0] 完整清單 ' + out.length + ' 個(程式引用 ' + codeUrls.length + '、總表/樹狀補入 ' + added +
+                  ';總表' + (manifestOk ? 'OK' : '失敗') + '、GitHub 樹狀' + (treeOk ? 'OK' : '略過') + ')');
+      return { urls: out, bytes: bytes, manifestOk: manifestOk, treeOk: treeOk };
+    }).catch(function(e){
+      console.warn('[PWA v5.319.0] 完整清單整理失敗,退回程式引用清單', e);
+      return { urls: codeUrls, bytes: 0, manifestOk: false, treeOk: false };
+    });
   }
 
   // ─── v5.163.0（老師需求「完整下載安裝要包括小遊戲」）───────────────────
@@ -55612,13 +55737,28 @@ window._lxpsPWA = (function(){
       //     - 若可用 < 500 MB → 彈視窗告知玩家「空間不足,只能用網頁版」
       //     - 若可用 500-700 MB → 彈視窗提示「空間吃緊,建議清出更多空間後再裝」
       //     - 若可用 > 700 MB → 直接安心開抓
+      // ★ v5.319.0 — 先整理「完整清單」(含 repo 素材總表),再用總表的實際大小估空間;清單交給 doPrecache 使用
+      var _fullList = null;
       function checkStorageThenStart(){
-        // ★ v3.5.20 — 三個門檻
-        var ESTIMATED_FULL_INSTALL_MB = 350;  // 完整下載預估大小
-        var MIN_REQUIRED_MB           = 500;  // 至少需要(完整 + 緩衝)
-        var COMFORTABLE_MB            = 700;  // 寬鬆(避免吃緊)
+        _showInstallProgress();
+        _updateInstallProgress(0, 0, '📋 正在整理完整下載清單...');
+        _lxpsCollectFullAssetUrls().then(function(full){
+          _fullList = full;
+          _checkStorageWithList(full);
+        });
+      }
+      function _checkStorageWithList(full){
+        // ★ v3.5.20 — 三個門檻;★ v5.319.0 — 預估大小改吃 asset_manifest.json 的 totalBytes(2026-11 實測約 584 MB),
+        //   讀不到總表才用 600 MB;已經下載過的部分(usage)不重複要求空間。
+        var ESTIMATED_FULL_INSTALL_MB = (full && full.bytes > 0) ? Math.ceil(full.bytes / 1048576) : 600;  // 完整下載預估大小
+        var MIN_REQUIRED_MB           = ESTIMATED_FULL_INSTALL_MB + 150;  // 至少需要(完整 + 緩衝)
+        var COMFORTABLE_MB            = ESTIMATED_FULL_INSTALL_MB + 350;  // 寬鬆(避免吃緊)
         if(navigator.storage && navigator.storage.estimate){
           navigator.storage.estimate().then(function(est){
+            var _usedMB = (est.usage || 0) / (1024 * 1024);
+            var _creditMB = Math.min(_usedMB, ESTIMATED_FULL_INSTALL_MB);   // 已抓過的素材已佔在 usage 裡,不必再留一次
+            MIN_REQUIRED_MB = Math.max(150, MIN_REQUIRED_MB - _creditMB);
+            COMFORTABLE_MB  = Math.max(300, COMFORTABLE_MB - _creditMB);
             var freeMB = ((est.quota || 0) - (est.usage || 0)) / (1024 * 1024);
             console.log('[PWA] 可用空間: ' + freeMB.toFixed(1) + ' MB (預估需要: '
               + ESTIMATED_FULL_INSTALL_MB + ' MB,門檻: ' + MIN_REQUIRED_MB + ' MB)');
@@ -55632,6 +55772,7 @@ window._lxpsPWA = (function(){
                 _showStorageInsufficientModal(freeMB, ESTIMATED_FULL_INSTALL_MB, MIN_REQUIRED_MB);
               }catch(_eM){ console.warn('[PWA] 空間不足視窗顯示失敗', _eM); }
               // 不寫 INSTALLED_KEY:下次玩家清出空間後重整,還能再試一次
+              try{ _hideInstallProgress(); }catch(_eH){}   // ★ v5.319.0 — 整理清單時已顯示讀條,空間不足要收掉
               return resolve({ done: 0, failed: 0, total: 0, lowStorage: true });
             }
             if(freeMB < COMFORTABLE_MB){
@@ -55655,7 +55796,8 @@ window._lxpsPWA = (function(){
       }
 
       function doPrecache(){
-        var urls = collectAllResourceUrls();
+        // ★ v5.319.0 — 用 checkStorageThenStart 整理好的完整清單;萬一沒有(舊路徑直接呼叫)才退回含相對路徑的程式引用清單
+        var urls = (_fullList && _fullList.urls && _fullList.urls.length) ? _fullList.urls : collectAllResourceUrls(true);
         console.log('[PWA] 準備預載 ' + urls.length + ' 個資源');
         if(urls.length === 0){
           return resolve({ done: 0, failed: 0, total: 0 });
@@ -59128,8 +59270,8 @@ window._showInstallBenefitsDialog = function(forceShow){
     ['啟動速度',     '🟢 秒開,不用等網路',          '🟡 需重新下載資源',   true],
     ['離線遊玩',     '🟢 沒網路也能玩(已下載部分)',  '🔴 無網路無法遊玩',   true],
     ['載入流暢度',   '🟢 圖片/音樂從本機讀,超順',    '🟡 偶爾要等網路',     true],
-    ['佔用空間',     '🟡 約 350 MB 永久空間',        '🟢 不佔空間',         false],
-    ['首次下載時間', '🟡 需 3~10 分鐘下載 350 MB',   '🟢 立即開玩',         false],
+    ['佔用空間',     '🟡 約 600 MB 永久空間',        '🟢 不佔空間',         false],
+    ['首次下載時間', '🟡 需 5~20 分鐘下載 600 MB',   '🟢 立即開玩',         false],
     ['進度同步',     '🟢 雲端自動同步,換裝置也讀得到', '🟢 雲端自動同步',     null],
     ['更新方式',     '🟡 老師更新後需重新整理才套用',  '🟢 重整即拿到最新版', null],
     ['共用裝置風險', '🔴 容易跟同學帳號互相干擾',     '🟢 每次重整都乾淨',   false],
@@ -59178,7 +59320,7 @@ window._showInstallBenefitsDialog = function(forceShow){
         '<div style="font-size:' + _S(34) + 'px;line-height:1;">📲 vs 🌐</div>' +
         '<h2 style="font-size:' + _S(22) + 'px;color:#ffd699;margin:' + _S(6) + 'px 0 ' + _S(4) + 'px;letter-spacing:1.5px;font-weight:900;">建議完整下載安裝</h2>' +
         '<p style="font-size:' + _S(13) + 'px;color:#cfe8dc;margin:0;line-height:1.6;">' +
-          '安裝後啟動更快、可離線遊玩,但會佔約 350 MB 空間。<br>' +
+          '安裝後啟動更快、可離線遊玩,但會佔約 600 MB 空間。<br>' +
           '請依下表決定:<b style="color:#ffd699;">「自己的裝置」建議裝;「共用裝置」建議用網頁版</b>。' +
         '</p>' +
       '</div>' +
