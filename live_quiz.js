@@ -1,5 +1,17 @@
 /* ════════════════════════════════════════════════════════════════════
- *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.322.0
+ *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.325.0
+ *  ★ v5.325.0(2026-11-02・老師「比賽結束時,要按確認發送獎勵才真正發送。如果是測試場或是有出現爭議,老師可以不發該場獎勵」)
+ *    「🎁 頒發獎勵」→ confirmGrant 確認視窗(各級人數＋內容)→「確認發送」才 hostGrant;還沒發出任何一份時可「🚫 本場不發獎勵」
+ *    (askNoAward:測試場/有爭議/其他＋說明)→ setNoAward 寫 room meta.noAward/noAwardReason/noAwardAt＋liveQuizHistory noAward*,移出看板;
+ *    可「↺ 改回要發獎勵」;已發出部分則不能改成不發;hostGrant 遇 noAward 直接擋;學生結束頁/擂台紀錄顯示不發獎勵。
+ *  ★ v5.324.0(2026-11-02・老師「接續之前未結束的房間,要有清除功能」)— hostHome 每場加 🗑、多場時「🧹 全部清除」;
+ *    clearRooms():未結束的房間寫 meta.status='ended'＋meta.cleared=true＋endedAt,再 boardRemove;已結束(待頒獎)的只移出看板;作答紀錄不刪。
+ *    學生端 studentEnded 遇 cleared 且無 final ⇒「老師已經關閉這一場了」＋加入新的擂台,並清本機紀錄。
+ *  ★ v5.323.0(2026-11-02・老師「思考如何穩定全班27人連線」→ 採甲＋乙＋丁)
+ *    甲 連線診斷:學生心跳順帶 rtt(上次心跳來回 ms)/lag(10 秒內最大畫面卡頓 ms)/dev(裝置標籤,舊 iPad=1080×810);主持台 👥 參加者 視窗下方
+ *       「📶 連線診斷」表(最差排最上、每人斷線次數 H.dcN、中位數/最慢、舊 iPad 統計);playerWrite 三段相容(新規則→v5.318→v5.317)
+ *    乙 比賽專心模式:擂台開著時 body.lq-focus ⇒ #_gc_wrapper 隱藏＋動畫暫停;window._lxpsLiveQuizFocus 旗標
+ *    丁 作答自動重送(截止後 4 秒內 0.6～2 秒重送,保留原 ms);主持台時間到後有在線同學沒收到答案就多等,最多 +4.5 秒;規則作答寬限 3→6 秒
  *  ★ v5.322.0(2026-11-02・老師「學生無法離開前一場,請修成學生可以退出前一場,重新進老師開的新場次」)
  *    studentTryResume:上一場已結束/不存在/被踢 ⇒ 清本機紀錄不拉回;同一位主持人看板上有比上一場新的房 ⇒ 不自動拉回、輸入房號畫面顯示「↩ 回到上一場」;
  *    studentQuit():送離線記號＋清本機紀錄＋回輸入房號;等候室下方房號＋「🚪 退出這一場」;✕ 改三選項(取消/暫時離開/退出這一場);結束頁「🚀 加入新的擂台」
@@ -34,7 +46,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.322.0' };
+var LQ = window._LQ = { _v: 'v5.325.0' };
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -340,6 +352,14 @@ var CSS = [
 '.lq-top5 .r .nm{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
 '.lq-top5 .r .sc{flex:0 0 auto;color:#ffd166;}',
 '.lq-top5 .r.mine{background:rgba(255,209,102,.3);outline:2px solid #ffd166;}',
+/* ★ v5.323.0 乙 比賽專心模式:背後的遊戲本體不繪製、動畫暫停 */
+'body.lq-focus #_gc_wrapper{visibility:hidden !important;}',
+'body.lq-focus #_gc_wrapper *{animation-play-state:paused !important;}',
+/* ★ v5.323.0 甲 連線診斷表 */
+'.lq-diag{width:100%;border-collapse:collapse;font-size:clamp(12px,1.5vmin,15px);}',
+'.lq-diag th,.lq-diag td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.12);text-align:center;white-space:nowrap;}',
+'.lq-diag th{position:sticky;top:0;background:#17364b;color:#ffd166;}',
+'.lq-diag td.nm{text-align:left;white-space:normal;}',
 /* ★ v5.321.0 老師:主持台公布畫面右側前五名看不到完整班級座號 ⇒ 側欄字體縮小、名字可換行不再被「…」截掉,分數改排在名字下一行 */
 '.lq-hside .lq-top5{width:100%;margin-top:0;}',
 '.lq-hside .lq-top5 .r{flex-wrap:wrap;gap:2px 8px;padding:6px 10px;font-size:clamp(14px,calc(var(--u)*1.7),24px);}',
@@ -488,7 +508,17 @@ function ensureRoot(){
     var t = document.createElement('div'); t.id = 'lq-toast'; document.body.appendChild(t);
   }
   r.style.display = 'flex';
+  focusMode(true);
   return r;
+}
+/* ★ v5.323.0 乙 比賽專心模式:擂台開著時,把後面的冒險遊戲畫面隱藏、動畫暫停(舊 iPad 不用再一邊畫背後的首頁/關卡動畫),
+   關掉擂台立刻恢復。只動 #_gc_wrapper(遊戲本體);閒置登出提醒、登入視窗等掛在 body 的彈窗不受影響。
+   window._lxpsLiveQuizFocus = true 供主遊戲其他背景工作日後判斷要不要暫停。 */
+function focusMode(on){
+  try{
+    window._lxpsLiveQuizFocus = !!on;
+    document.body.classList.toggle('lq-focus', !!on);
+  }catch(_){}
 }
 function setTop(title, chips, onClose){
   var h = '<div class="lq-ttl">' + esc(title) + '</div>';
@@ -518,7 +548,7 @@ function confirmBox(msg, okTxt, cb){
  * ═════════════════════════════════════════════════════════════════ */
 LQ.open = async function(mode){
   ensureRoot();
-  ST.reset(); H.reset();
+  ST.reset(); H.reset(); _lqLvl = 0;
   var u = me();
   if(!u){ return screenNeedLogin(); }
   try{ await fs(); }catch(e){ return screenError(e.message); }
@@ -552,6 +582,7 @@ LQ.close = function(force){
   ST.stop(); H.stop(); stopAuthWatch(); closeModal(); bgmBack(); fxClear();
   ST.pin = null;
   var r = $('lq-root'); if(r){ r.style.display = 'none'; $('lq-body').innerHTML = ''; }
+  focusMode(false);
 };
 var _authH = null, _authUid = null;
 function startAuthWatch(){
@@ -564,6 +595,7 @@ function startAuthWatch(){
       try{ ST.stop(); H.stop(); }catch(_){}
       stopAuthWatch(); closeModal(); bgmBack();
       var r = $('lq-root'); if(r) r.style.display = 'none';
+      focusMode(false);
     }
   }, 2000);
 }
@@ -607,7 +639,7 @@ var ST = {
     this.recvAt = 0; this.waitMs = 0; this.cutRm = -1; this.hintA = -1; this.used = { cut: false, hint: false }; this.pwWait = null;
     this.sfxQ = -1; this.streak = 0; this.priv = null; this.ans = {}; this.correctN = 0; this.lastStatus = ''; this.kicked = false;
     this.offset = null; this.syncRtt = 1e9; this.syncS = 0; this.syncPend = null; this.timeUp = false;
-    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; },
+    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; this.rtt = 0; this.lagMax = 0; this.tickAt = 0; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; }
     if(this.beatRetry){ clearTimeout(this.beatRetry); this.beatRetry = null; } this.beatBusy = false; },
@@ -763,22 +795,43 @@ async function studentEnter(pin, room, resumed){
 /* ★ v5.320.0 根因:v5.318.0 心跳多帶了 syncAt 欄位,雲端規則若還是 v5.317.0 版(players 只准改 lastSeen/name),
    每一次心跳都被拒絕、而且錯誤被吞掉 ⇒ 學生畫面顯示已加入,主持台 25 秒後就看成「斷線」,永遠回不來。
    改成:帶 syncAt 被拒(permission-denied)就自動改用不帶 syncAt 的寫法,本場之後都不再帶;不論規則有沒有重新發布都能運作。 */
-var _lqNoSync = false;
-function playerWrite(ref, data, create){
-  function attempt(withSync){
+/* ★ v5.323.0 擴充成三段相容:0=對時＋連線診斷(rtt/lag/dev,需 v5.323.0 規則) → 1=只帶對時(v5.318.0 規則) → 2=最基本(v5.317.0 規則)。
+   被雲端規則拒絕就往下降一段重送,本次開啟擂台期間記住(每次 LQ.open 重設回 0)。 */
+var _lqLvl = 0;
+function playerWrite(ref, data, create, diag){
+  function attempt(lvl){
     var d = {}; Object.keys(data).forEach(function(k){ d[k] = data[k]; });
-    if(withSync) d.syncAt = F.serverTimestamp();
+    if(lvl <= 1) d.syncAt = F.serverTimestamp();
+    if(lvl === 0 && diag && !create) Object.keys(diag).forEach(function(k){ d[k] = diag[k]; });
     return create ? F.setDoc(ref, d) : F.updateDoc(ref, d);
   }
-  if(_lqNoSync) return attempt(false);
-  return attempt(true).catch(function(e){
-    if(e && e.code === 'permission-denied'){
-      _lqNoSync = true;
-      try{ console.warn('[LQ] 雲端規則不收 syncAt,改用相容寫法(建議重新發布 firestore.rules)'); }catch(_){}
-      return attempt(false);
-    }
-    throw e;
-  });
+  function go(lvl){
+    return attempt(lvl).catch(function(e){
+      if(e && e.code === 'permission-denied' && lvl < 2){
+        var nx = lvl + 1;
+        if(nx === 1 && !(diag && !create)) nx = 2;   /* 這次本來就沒帶診斷 ⇒ 第 1 段和第 0 段一樣,直接跳到最基本 */
+        if(create) return go(nx);   /* 加入被拒可能是房間上鎖/已結束,不代表規則舊 ⇒ 不記住降級 */
+        _lqLvl = Math.max(_lqLvl, nx);
+        try{ console.warn('[LQ] 雲端規則較舊,改用相容寫法 L' + _lqLvl + '(建議發布新版 firestore.rules)'); }catch(_){}
+        return go(_lqLvl);
+      }
+      throw e;
+    });
+  }
+  return go(_lqLvl);
+}
+/* ★ v5.323.0 甲 連線診斷:裝置標籤(老師分辨新舊 iPad 用)。2019 iPad(第 7～9 代 10.2 吋)畫面 1080×810;新款 1180×820。 */
+var _lqDev = null;
+function devLabel(){
+  if(_lqDev) return _lqDev;
+  try{
+    var ua = navigator.userAgent || '', w = Math.max(screen.width, screen.height), h = Math.min(screen.width, screen.height);
+    var ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    var ios = (/OS (\d+)[_.]/.exec(ua) || [])[1] || ((/Version\/(\d+)/.exec(ua) || [])[1]) || '';
+    var kind = ipad ? 'iPad' : (/iPhone/.test(ua) ? 'iPhone' : (/Android/.test(ua) ? 'Android' : 'PC'));
+    _lqDev = (kind + ' ' + w + '×' + h + (ios && kind !== 'PC' && kind !== 'Android' ? ' iOS' + ios : '')).slice(0, 40);
+  }catch(_){ _lqDev = '?'; }
+  return _lqDev;
 }
 function studentBeat(){
   if(!ST.pin || !ST.uid || ST.kicked) return;
@@ -786,10 +839,14 @@ function studentBeat(){
   if(ST.beatBusy) return;
   ST.beatBusy = true;
   var a = now(), pin = ST.pin;
-  playerWrite(sub(pin, 'players', ST.uid), { lastSeen: now() }, false).then(function(){
+  /* ★ v5.323.0 甲:順便回報上一次心跳來回毫秒、這 10 秒內畫面最大卡頓毫秒、裝置型號 */
+  var diag = { rtt: Math.round(ST.rtt || 0), lag: Math.round(ST.lagMax || 0), dev: devLabel() };
+  ST.lagMax = 0;
+  playerWrite(sub(pin, 'players', ST.uid), { lastSeen: now() }, false, diag).then(function(){
     ST.beatBusy = false;
     if(ST.pin !== pin) return;
-    if(!_lqNoSync) ST.syncPend = { t0: a, t1: now() };
+    ST.rtt = now() - a;
+    if(_lqLvl <= 1) ST.syncPend = { t0: a, t1: now() };
     ST.lastOk = now(); netChip();
   }).catch(function(e){
     ST.beatBusy = false;
@@ -966,6 +1023,8 @@ function studentLeftMs(r){
   return Math.max(0, lim - (pnow() - ST.recvAt));
 }
 function studentTick(){
+  /* ★ v5.323.0 甲:本來每 250ms 跑一次,實際間隔越長＝平板越卡(舊 iPad 記憶體吃緊時會明顯變大) */
+  var tp = pnow(); if(ST.tickAt){ var lg = tp - ST.tickAt - 250; if(lg < 5000 && lg > (ST.lagMax || 0)) ST.lagMax = lg;   /* 超過 5 秒＝切到背景被系統暫停,不算卡頓 */ } ST.tickAt = tp;
   netChip();
   var r = ST.room; if(!r || r.meta.status !== 'question') return;
   var ms = studentLeftMs(r);
@@ -988,19 +1047,32 @@ async function studentAnswer(i){
   ST.choice = i; ST.pending = true; ST.ans[q] = i; saveLocal();
   snd('pick', 0.55); vib(25); drawStudentQuestion();
   var ms = Math.max(0, Math.round(pnow() - ST.recvAt - ST.waitMs));
-  try{
-    await F.setDoc(sub(ST.pin, 'answers', ST.uid + '_' + q), { uid: ST.uid, q: q, c: i, at: F.serverTimestamp(), ms: ms });
-    ST.pending = false;
-  }catch(e){
-    ST.pending = false;
-    if(e && e.code === 'permission-denied'){
-      if(ST.room && ST.room.meta.status === 'question' && ST.room.current.qIndex === q){
-        /* 可能是同一題已經送過(重整後) ⇒ 視為已作答;否則是時間到 */
-        toast(T('這題已經答過或時間到了', '本題已作答或已逾時'));
+  /* ★ v5.323.0 丁 作答自動重送:網路忙碌時不用學生再按一次,在本題截止後 4 秒內每 0.6～2 秒自動重送同一個答案
+     (作答秒數用按下當下量的 ms,重送不會被算得比較慢);被雲端規則拒絕(已答過/真的逾時)才停。 */
+  var give = pnow() + Math.max(0, studentLeftMs(r)) + 4000, tries = 0, pin = ST.pin;
+  for(;;){
+    try{
+      await F.setDoc(sub(pin, 'answers', ST.uid + '_' + q), { uid: ST.uid, q: q, c: i, at: F.serverTimestamp(), ms: ms });
+      ST.pending = false; break;
+    }catch(e){
+      if(ST.pin !== pin){ return; }
+      if(e && e.code === 'permission-denied'){
+        ST.pending = false;
+        if(ST.room && ST.room.meta.status === 'question' && ST.room.current.qIndex === q){
+          /* 可能是同一題已經送過(重整後) ⇒ 視為已作答;否則是時間到 */
+          toast(T('這題已經答過或時間到了', '本題已作答或已逾時'));
+        }
+        break;
       }
-    }else{
-      ST.choice = null; delete ST.ans[q]; saveLocal();
-      toast(T('網路忙碌,再按一次!', '傳送失敗,請再點一次'));
+      var stillOpen = ST.room && ST.room.current && ST.room.current.qIndex === q && ST.room.meta.status === 'question';
+      if(!stillOpen || pnow() > give){
+        ST.pending = false; ST.choice = null; delete ST.ans[q]; saveLocal();
+        toast(T('網路太忙,這題沒有送到 😢', '網路壅塞,本題未能送出'));
+        break;
+      }
+      tries++;
+      if(tries === 1) toast(T('網路有點忙,自動幫你重送中…', '網路忙碌,自動重送中…'), 2500);
+      await new Promise(function(res){ setTimeout(res, Math.min(2000, 600 * tries)); });
     }
   }
   drawStudentQuestion();
@@ -1098,6 +1170,15 @@ function studentEnded(){
   if(!fin) bgmBack();
   setTop('⚡ ' + (r.meta.title || T('搶答大挑戰', '英雄搶答擂台')), [{ html: '🙋 ' + esc(myLabel()) }]);
   setCtl('');
+  if(!fin && r.meta.cleared){   /* ★ v5.324.0 老師在主持台清除了這一場 */
+    clearLocalPin(ST.pin);
+    setBody('<div class="lq-card"><div class="lq-h1">👋 ' + T('老師已經關閉這一場了', '主持人已關閉本場') + '</div>'
+      + '<div class="lq-p">' + T('這一場不會繼續,請輸入老師給的新房號。', '本場已關閉,請加入新的擂台。') + '</div>'
+      + '<div class="lq-row"><button class="lq-btn" id="lq-cl-home">' + T('回首頁', '離開') + '</button><button class="lq-btn gold" id="lq-cl-new">🚀 ' + T('加入新的擂台', '加入新擂台') + '</button></div></div>');
+    $('lq-cl-home').onclick = function(){ LQ.close(true); };
+    $('lq-cl-new').onclick = studentQuit;
+    return;
+  }
   if(!fin){ setBody('<div class="lq-card"><div class="lq-h1">🏁 ' + T('比賽結束!老師正在統計…', '擂台結束,統計中…') + '</div></div>'); return; }
   var mine = null; (fin.list || []).forEach(function(e){ if(e.uid === ST.uid) mine = e; });
   var h = '<div class="lq-card">';
@@ -1108,7 +1189,11 @@ function studentEnded(){
     if(mine.score != null) h += '<div class="lq-p" style="font-size:1.3em">' + T('總分', '總分') + ' <b style="color:#ffd166">' + fmtPts(mine.score) + '</b> ' + T('分', '分')
       + (mine.bonus ? '<small style="color:#ffe9a8">(' + T('沒用法寶加成 +', '法寶保留加成 +') + mine.bonus + '%)</small>' : '') + '</div>';
     h += '<div class="lq-p">' + T('答對', '答對') + ' <b style="color:#ffd166">' + mine.correct + '</b> / ' + (r.meta.played || r.meta.qCount) + ' ' + T('題', '題') + '</div>';
-    if(mine.tier){
+    if(r.meta.noAward){   /* ★ v5.325.0 老師決定本場不發獎勵(測試場/有爭議) */
+      h += '<div class="lq-p" style="margin-top:10px;color:#ffd166">🚫 ' + T('這一場老師決定不發獎勵', '本場不發放獎勵')
+        + (r.meta.noAwardReason ? '<br><small style="opacity:.85">(' + esc(r.meta.noAwardReason) + ')</small>' : '') + '</div>';
+      clearLocal();
+    }else if(mine.tier){
       var t = TIERS[mine.tier];
       h += '<div class="lq-p" style="margin-top:10px">🎁 ' + t.name + ':' + t.items.join('、') + '</div>';
       var got = r.awarded && r.awarded[ST.uid];
@@ -1167,7 +1252,7 @@ var H = {
   reset: function(){ this.stop(); this.pin = null; this.room = null; this.status = null; this.qs = []; this.players = {}; this.joinQ = {};
     this.answers = {}; this.startAt = {}; this.power = {}; this.qIndex = -1; this.revealing = false; this.auto = false; this.autoH = null;
     this.qLocal = 0; this.createdAt = 0; this.title = ''; this.timeLimit = MAX_SEC; this.final = null; this.awarded = {}; this.granting = false;
-    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
+    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
     this.draft = this.draft || { qs: [], title: '', sec: MAX_SEC, shuf: true, classes: [] }; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     (this.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.qUnsubs = [];
@@ -1191,17 +1276,54 @@ async function hostHome(){
   }catch(_){}
   var h = '';
   if(mine.length){
-    h += '<div class="lq-card" style="margin-bottom:12px"><div class="lq-h1" style="font-size:22px">↩️ ' + T('回到你還沒關掉的擂台', '接續未關閉的擂台') + '</div><div class="lq-row">';
+    /* ★ v5.324.0(老師「接續之前未結束的房間,要有清除功能」)— 每一場旁邊加 🗑 清除,另有「🧹 全部清除」 */
+    h += '<div class="lq-card" style="margin-bottom:12px"><div class="lq-h1" style="font-size:22px">↩️ ' + T('回到你還沒關掉的擂台', '接續未關閉的擂台') + '</div>'
+      + '<div class="lq-p" style="font-size:14px;opacity:.85">' + T('按房號回到那一場;不要的舊房間按 🗑 清除(學生就不會再被拉回去)', '點選房號接續;不需要的舊場次可按 🗑 清除') + '</div><div class="lq-row">';
     mine.sort(function(a, b){ return (b.e.at || 0) - (a.e.at || 0); }).forEach(function(m){
-      h += '<button class="lq-btn green" data-pin="' + m.pin + '">' + m.pin + '・' + esc(m.e.title || '') + (m.e.st === 'ended' ? '(待頒獎/關閉)' : '') + '</button>';
+      h += '<span style="display:inline-flex;gap:4px;align-items:center"><button class="lq-btn green" data-pin="' + m.pin + '">' + m.pin + '・' + esc(m.e.title || '') + (m.e.st === 'ended' ? '(待頒獎/關閉)' : '') + '</button>'
+        + '<button class="lq-btn gray" data-clr="' + m.pin + '" title="清除這一場" style="padding-left:12px;padding-right:12px">🗑</button></span>';
     });
-    h += '</div></div>';
+    h += '</div>' + (mine.length > 1 ? '<div class="lq-row"><button class="lq-btn gray" id="lq-clr-all">🧹 ' + T('全部清除', '全部清除') + '(' + mine.length + ')</button></div>' : '') + '</div>';
   }
   setBody(h + '<div id="lq-setup"></div>');
   Array.prototype.forEach.call(document.querySelectorAll('#lq-body [data-pin]'), function(b){
     b.onclick = function(){ hostResume(b.getAttribute('data-pin')); };
   });
+  Array.prototype.forEach.call(document.querySelectorAll('#lq-body [data-clr]'), function(b){
+    var pin = b.getAttribute('data-clr'), m = mine.filter(function(x){ return x.pin === pin; })[0];
+    b.onclick = function(){
+      confirmBox(T('要清除房號 <b>' + pin + '</b>「' + esc((m && m.e.title) || '') + '」嗎?', '確定清除房號 <b>' + pin + '</b>?')
+        + '<br><small>' + T('還在這一場的同學會看到「老師已經關閉這一場」,可以改加入新的擂台。', '仍在本場的參加者會收到關閉通知,可改加入新擂台。')
+        + (m && m.e.st === 'ended' ? '<br>⚠ ' + T('這一場已經結束但可能還沒頒完獎,清除後就不能從這裡繼續頒獎。', '本場可能尚未頒獎完畢,清除後無法在此繼續頒獎。') : '') + '</small>',
+        T('清除', '清除'), function(){ clearRooms([m]); });
+    };
+  });
+  if($('lq-clr-all')) $('lq-clr-all').onclick = function(){
+    var notAw = mine.filter(function(x){ return x.e.st === 'ended'; }).length;
+    confirmBox(T('要清除全部 <b>' + mine.length + '</b> 個沒關掉的擂台嗎?', '確定清除全部 <b>' + mine.length + '</b> 個未關閉場次?')
+      + '<br><small>' + T('還在這些房間的同學會看到「老師已經關閉這一場」。', '仍在這些場次的參加者會收到關閉通知。')
+      + (notAw ? '<br>⚠ ' + T('其中 ' + notAw + ' 場已結束但可能還沒頒完獎,清除後就不能從這裡繼續頒獎。', '其中 ' + notAw + ' 場可能尚未頒獎完畢。') : '') + '</small>',
+      T('全部清除', '全部清除'), function(){ clearRooms(mine); });
+  };
   hostSetup();
+}
+/* ★ v5.324.0 清除舊房間:還沒結束的場次 ⇒ 房間標成已結束＋cleared(學生端改顯示「老師已經關閉這一場」、不會再被自動拉回);
+   再從首頁看板移除(首頁橫幅不再發亮、這裡也不再列出)。成績、作答紀錄不刪(雲端永久保留原則)。 */
+async function clearRooms(list){
+  var ok = 0, fail = 0;
+  for(var i = 0; i < list.length; i++){
+    var m = list[i]; if(!m) continue;
+    try{
+      var s = await F.getDoc(roomRef(m.pin));
+      if(s.exists() && s.data().meta && s.data().meta.status !== 'ended'){
+        await F.updateDoc(roomRef(m.pin), { 'meta.status': 'ended', 'meta.endedAt': now(), 'meta.cleared': true });
+      }
+      await boardRemove(m.pin);
+      ok++;
+    }catch(e){ fail++; try{ console.warn('[LQ] 清除失敗', m.pin, e && (e.code || e.message)); }catch(_){} }
+  }
+  toast(fail ? T('清除了 ' + ok + ' 個,' + fail + ' 個失敗(網路不穩?再試一次)', '已清除 ' + ok + ' 個,失敗 ' + fail + ' 個') : T('已清除 ' + ok + ' 個舊擂台', '已清除 ' + ok + ' 個場次'));
+  hostHome();
 }
 
 /* ───────── 選題 ───────── */
@@ -1771,7 +1893,7 @@ function checkOnline(silent){
     var p = H.players[k]; if(p.kicked) return;
     var on = isOnline(p), was = H.onl[k];
     if(was == null){ H.onl[k] = on; return; }
-    if(on !== was){ H.onl[k] = on; changed = true; (on ? up : dn).push(p.name); }
+    if(on !== was){ H.onl[k] = on; changed = true; (on ? up : dn).push(p.name); if(!on) H.dcN[k] = (H.dcN[k] || 0) + 1; }   /* ★ v5.323.0 甲:記每人斷線次數 */
   });
   /* 同時好幾個人上下線 ⇒ 合成一則提示,不會只看到最後一個 */
   if(!silent && H.status !== 'ended' && (dn.length || up.length)){
@@ -1853,7 +1975,41 @@ function hostRefreshPlayers(){
       return p.kicked ? '<div class="lq-tag off">' + esc(p.name) + ' <small>' + esc(p.account || '') + '・已請出</small><button class="k" style="background:rgba(80,200,120,.4)" data-unkick="' + p.uid + '">↺</button></div>' : playerTag(p, true);
     }).join(''));
   }
+  updDiag();
   if(H.status === 'question') updateAnswered();
+}
+/* ★ v5.323.0 甲 連線診斷:每位同學最後回報幾秒前、網路來回毫秒、畫面卡頓、裝置、斷線次數;最差的排最上面。
+   看法:全班一起變慢＝教室網路;只有特定幾台＝那幾台平板(多半是舊 iPad)。 */
+function updDiag(){
+  var dg = $('lq-h-diag'); if(!dg) return;
+  var sc = dg.querySelector('div[data-sc]'), top = sc ? sc.scrollTop : 0;   /* 每秒重畫時保留老師捲到的位置 */
+  if(setHtmlIfChanged(dg, diagHtml())){ sc = dg.querySelector('div[data-sc]'); if(sc) sc.scrollTop = top; }
+}
+function diagHtml(){
+  var tn = now(), rows = [], rtts = [], oldN = 0, oldDc = 0, newDc = 0;
+  Object.keys(H.players).forEach(function(k){
+    var p = H.players[k]; if(p.kicked) return;
+    var on = isOnline(p), age = H.seen[k] ? Math.round((tn - H.seen[k]) / 1000) : null;
+    var old = /iPad 1080×810/.test(p.dev || '');
+    if(old){ oldN++; oldDc += H.dcN[k] || 0; } else newDc += H.dcN[k] || 0;
+    if(p.rtt > 0) rtts.push(p.rtt);
+    var bad = (!on ? 1000 : 0) + (H.dcN[k] || 0) * 50 + (p.rtt || 0) / 100 + (p.lag || 0) / 200;
+    rows.push({ bad: bad, html: '<tr' + (on ? '' : ' style="color:#ffb05a"') + '><td class="nm">' + esc(p.name) + '</td>'
+      + '<td>' + (on ? (age == null ? '—' : age + ' 秒前') : '斷線') + '</td>'
+      + '<td' + ((p.rtt || 0) > 1500 ? ' style="color:#ff8080"' : '') + '>' + (p.rtt ? p.rtt + ' ms' : '—') + '</td>'
+      + '<td' + ((p.lag || 0) > 800 ? ' style="color:#ff8080"' : '') + '>' + (p.lag != null ? (p.lag / 1000).toFixed(1) + ' 秒' : '—') + '</td>'
+      + '<td>' + (H.dcN[k] || 0) + '</td><td style="font-size:.85em">' + esc(p.dev || '—') + (old ? ' <b style="color:#ffd166">舊</b>' : '') + '</td></tr>' });
+  });
+  if(!rows.length) return '';
+  rows.sort(function(a, b){ return b.bad - a.bad; });
+  rtts.sort(function(a, b){ return a - b; });
+  var med = rtts.length ? rtts[Math.floor(rtts.length / 2)] : 0, mx = rtts.length ? rtts[rtts.length - 1] : 0;
+  var anyDiag = Object.keys(H.players).some(function(k){ return H.players[k].dev; });
+  return '<div class="lq-p" style="font-size:14px;text-align:left;margin:4px 0">📶 <b>連線診斷</b>:網路來回 中位數 ' + (med || '—') + ' ms・最慢 ' + (mx || '—') + ' ms'
+    + (oldN ? '・舊 iPad ' + oldN + ' 台(斷線 ' + oldDc + ' 次)・其他斷線 ' + newDc + ' 次' : '')
+    + (anyDiag ? '' : '<br><small style="opacity:.8">⚠ 還沒收到診斷資料:請到 Firebase 主控台發布新版 firestore.rules(沒發布也能比賽,只是看不到這張表的數字)</small>') + '</div>'
+    + '<div data-sc="1" style="max-height:40vh;overflow:auto"><table class="lq-diag"><tr><th>同學</th><th>最後回報</th><th>網路來回</th><th>畫面卡頓</th><th>斷線</th><th>裝置</th></tr>'
+    + rows.map(function(r){ return r.html; }).join('') + '</table></div>';
 }
 /* ★ v5.318.0 點「還沒來」的座號 ⇒ 標記/取消請假(請假不算進應到人數) */
 document.addEventListener('click', function(e){
@@ -2009,7 +2165,12 @@ function hostQuestionScreen(){
   updateAnswered();
 }
 function playerDrawer(){
-  modal('<div class="lq-h1" style="font-size:22px">👥 參加者</div><div class="lq-p" style="font-size:14px;opacity:.8">灰色＝目前離線;✕ 請出房間、↺ 恢復</div><div class="lq-wall" id="lq-h-drawer-list"></div><div class="lq-row"><button class="lq-btn gray" id="lq-dr-x">關閉</button></div>');
+  modal('<div class="lq-h1" style="font-size:22px">👥 參加者</div><div class="lq-p" style="font-size:14px;opacity:.8">灰色＝目前離線;✕ 請出房間、↺ 恢復</div><div class="lq-wall" id="lq-h-drawer-list"></div>'
+    + '<div id="lq-h-diag"></div>'   /* ★ v5.323.0 甲 連線診斷表 */
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-dr-x">關閉</button></div>');
+  var mm = $('lq-modal'); if(mm && mm.firstChild) mm.firstChild.style.width = 'min(96vw,900px)';
+  if(H.drawerT) clearInterval(H.drawerT);
+  H.drawerT = setInterval(function(){ if(!$('lq-h-diag')){ clearInterval(H.drawerT); H.drawerT = null; return; } updDiag(); }, 1000);   /* 「幾秒前」每秒更新 */
   $('lq-dr-x').onclick = closeModal;
   hostRefreshPlayers();
 }
@@ -2036,7 +2197,12 @@ function hostTick(){
       if(left > 0 && left <= 5 && !H.revealing){ snd('tick', 0.45 + (5 - left) * 0.08); if(el){ el.classList.remove('warn'); void el.offsetWidth; el.classList.add('warn'); } }
       if(left === 0 && !H.revealing) snd('timeUp', 0.6);
     }
-    if(now() - H.qLocal > H.timeLimit * 1000 + 1500 && !H.revealing){ H.revealing = true; hostReveal(); }
+    /* ★ v5.323.0 丁:時間到後,還有在線同學沒收到答案 ⇒ 多等最多 4.5 秒(全班一起送時網路會塞車,晚到的答案還在路上);全收齊就立刻公布 */
+    var over = now() - H.qLocal - H.timeLimit * 1000;
+    if(over > 1500 && !H.revealing){
+      var got = H.answers[H.qIndex] || {}, waiting = activePlayers(true).some(function(p){ return !got[p.uid]; });
+      if(!waiting || over > 4500){ H.revealing = true; hostReveal(); }
+    }
   }
 }
 
@@ -2266,15 +2432,68 @@ function hostEndScreen(anim){
     list.forEach(function(x){ if(x.uid === uid) e = x; });
     if(e) showDetail(e, H.qs, H.timeLimit, null);
   };
-  setCtl('<button class="lq-btn gold" id="lq-h-grant" style="font-size:22px"' + (need && done < need ? '' : ' disabled') + '>🎁 ' + (done ? '繼續頒發' : '頒發獎勵') + '</button>'
-    + '<button class="lq-btn gray" id="lq-h-closeroom">🚪 關閉擂台</button>');
-  $('lq-h-grant').onclick = hostGrant;
+  /* ★ v5.325.0(老師「比賽結束時,要按確認發送獎勵才真正發送。如果是測試場或是有出現爭議,老師可以不發該場獎勵」)
+     ① 按「🎁 頒發獎勵」先跳確認(各級人數＋內容),按「確認發送」才真的寫進學生收件箱;
+     ② 還沒發出任何一份時可選「🚫 本場不發獎勵」(測試場/有爭議/其他＋可補充說明),記在房間與永久紀錄,學生端顯示老師決定不發;
+        發出前都可以「↺ 改回要發獎勵」。已經發出部分獎勵的場次不能再改成不發(已送出的不會自動收回)。 */
+  var nA = (H.room && H.room.meta && H.room.meta.noAward) || H.noAward;
+  if(nA){
+    var why = (H.room && H.room.meta && H.room.meta.noAwardReason) || H.noAwardReason || '';
+    var aw = $('lq-h-aw'); if(aw) aw.innerHTML = '🚫 <b>本場不發獎勵</b>' + (why ? '(' + esc(why) + ')' : '');
+    setCtl('<button class="lq-btn" id="lq-h-undo">↺ 改回要發獎勵</button><button class="lq-btn gray" id="lq-h-closeroom">🚪 關閉擂台</button>');
+    $('lq-h-undo').onclick = function(){ setNoAward(false, ''); };
+  }else{
+    setCtl('<button class="lq-btn gold" id="lq-h-grant" style="font-size:22px"' + (need && done < need ? '' : ' disabled') + '>🎁 ' + (done ? '繼續頒發' : '頒發獎勵') + '</button>'
+      + (need && !done ? '<button class="lq-btn gray" id="lq-h-noaward">🚫 本場不發獎勵</button>' : '')
+      + '<button class="lq-btn gray" id="lq-h-closeroom">🚪 關閉擂台</button>');
+    $('lq-h-grant').onclick = function(){ confirmGrant(cnt, need - done, done); };
+    if($('lq-h-noaward')) $('lq-h-noaward').onclick = askNoAward;
+  }
   $('lq-h-closeroom').onclick = function(){
-    var left = need - done;
+    var left = nA ? 0 : need - done;
     var go = async function(){ await boardRemove(H.pin); LQ.close(true); };
-    if(left > 0) confirmBox('還有 ' + left + ' 位同學的獎勵沒發,確定關閉?<br><small>之後可從「📜 擂台紀錄」重新開啟這場繼續頒發。</small>', '關閉', go);
+    if(left > 0) confirmBox('還有 ' + left + ' 位同學的獎勵沒發,確定關閉?<br><small>之後可從「📜 擂台紀錄」重新開啟這場繼續頒發;不打算發的話請先按「🚫 本場不發獎勵」。</small>', '關閉', go);
     else go();
   };
+}
+/* ★ v5.325.0 頒獎確認視窗 */
+function confirmGrant(cnt, left, done){
+  var line = function(k){ return cnt[k] ? '<div style="margin:4px 0"><b>' + TIERS[k].name + ' ' + cnt[k] + ' 人</b><br><small style="opacity:.85">' + TIERS[k].items.join('、') + '</small></div>' : ''; };
+  confirmBox('<div class="lq-h1" style="font-size:22px">🎁 確認發送獎勵?</div>'
+    + (done ? '<div>已發出 ' + done + ' 人,這次會發剩下的 <b>' + left + '</b> 人。</div>' : '<div>這次會發給 <b>' + left + '</b> 位同學:</div>')
+    + line('A') + line('B') + line('P')
+    + '<small>按「確認發送」後,獎勵會立刻送進學生的「🎁 GM獎勵」收件箱(學生本人按確認領取才入帳)。送出後無法從這裡收回;測試場或有爭議請改按「🚫 本場不發獎勵」。</small>',
+    '確認發送', hostGrant);
+}
+/* ★ v5.325.0 不發獎勵:選原因 */
+function askNoAward(){
+  modal('<div class="lq-h1" style="font-size:22px">🚫 本場不發獎勵</div>'
+    + '<div class="lq-p" style="text-align:left">這一場的名次和成績照樣保留在紀錄裡,只是不發獎勵。學生畫面會顯示「這一場老師決定不發獎勵」。<br>原因:</div>'
+    + '<div class="lq-row" id="lq-na-why"><button class="lq-btn gold" data-why="測試場">🧪 測試場</button><button class="lq-btn" data-why="有爭議">⚖️ 有爭議</button><button class="lq-btn" data-why="其他">📝 其他</button></div>'
+    + '<input id="lq-na-note" maxlength="60" placeholder="補充說明(可不填)" style="width:100%;font-size:17px;padding:8px 10px;border-radius:10px;border:2px solid #5fb3d9;background:#0c2233;color:#fff;margin-top:6px">'
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-na-no">取消</button><button class="lq-btn gold" id="lq-na-ok">確定不發</button></div>');
+  var pick = '測試場';
+  $('lq-na-why').onclick = function(e){
+    var b = e.target.closest('[data-why]'); if(!b) return; pick = b.getAttribute('data-why');
+    Array.prototype.forEach.call(document.querySelectorAll('#lq-na-why [data-why]'), function(x){ x.className = 'lq-btn' + (x === b ? ' gold' : ''); });
+  };
+  $('lq-na-no').onclick = closeModal;
+  $('lq-na-ok').onclick = function(){
+    var note = String(($('lq-na-note') || {}).value || '').trim().slice(0, 60);
+    closeModal(); setNoAward(true, pick + (note ? ':' + note : ''));
+  };
+}
+async function setNoAward(on, reason){
+  if(on && Object.keys(H.awarded || {}).length){ toast('已經發出部分獎勵,不能改成不發'); return; }
+  var o = { 'meta.noAward': !!on, 'meta.noAwardReason': on ? reason : '', 'meta.noAwardAt': on ? now() : 0 };
+  try{ await F.updateDoc(roomRef(H.pin), o); }catch(e){ toast('設定失敗:' + (e.code || e.message)); return; }
+  F.updateDoc(F.doc(db(), 'liveQuizHistory', H.pin + '_' + H.createdAt), { noAward: !!on, noAwardReason: on ? reason : '', noAwardAt: on ? now() : 0, noAwardBy: myEmail().slice(0, 60) }).catch(function(){});
+  H.noAward = !!on; H.noAwardReason = on ? reason : '';
+  if(H.room && H.room.meta){ H.room.meta.noAward = !!on; H.room.meta.noAwardReason = H.noAwardReason; }
+  /* 不發獎勵 ⇒ 首頁看板直接移除(不用再提醒老師待頒獎);改回要發 ⇒ 放回「待頒獎」 */
+  if(on) boardRemove(H.pin); else boardSet(H.pin, { title: H.title, hostName: myLabel(), hostUid: me().uid, at: now(), st: 'ended' });
+  toast(on ? '🚫 本場不發獎勵(' + reason + ')' : '↺ 已改回要發獎勵', 3500);
+  hostEndScreen(false);
 }
 /* ★ v5.318.0 丙(老師「甲+乙+丙」)— 老師端成績明細:每題作答選項/對錯/秒數/得分/法寶,學生有疑問時可直接查 */
 function showDetail(e, qs, limit, back){
@@ -2303,6 +2522,7 @@ function showDetail(e, qs, limit, back){
 }
 async function hostGrant(){
   if(H.granting) return;
+  if(H.noAward || (H.room && H.room.meta && H.room.meta.noAward)){ toast('本場已設定不發獎勵'); return; }   /* ★ v5.325.0 */
   H.granting = true;
   var btn = $('lq-h-grant'); if(btn){ btn.disabled = true; btn.textContent = '頒發中…'; }
   var list = (H.final && H.final.list) || [], rid = 'lq_' + H.pin + '_' + H.createdAt, u = me();
@@ -2358,9 +2578,9 @@ async function showHistory(){
       var need = (h.list || []).filter(function(e){ return e.tier; }).length, got = Object.keys(h.awarded || {}).length;
       var top3 = (h.list || []).filter(function(e){ return e.rank && e.rank <= 3; }).map(function(e){ return ['🥇', '🥈', '🥉'][e.rank - 1] + esc(e.name); }).join(' ');
       return '<div class="lq-qi" style="font-size:15px"><span class="tx"><b>' + esc(h.title) + '</b>(' + h.pin + ')<small>' + new Date(h.createdAt).toLocaleString() + '・' + esc(h.hostName || '') + '・'
-        + (h.list || []).length + ' 人・' + (h.played || h.qCount) + ' 題・頒獎 ' + got + '/' + need + '</small><small>' + top3 + '</small></span>'
+        + (h.list || []).length + ' 人・' + (h.played || h.qCount) + ' 題・' + (h.noAward ? '🚫 不發獎勵' + (h.noAwardReason ? '(' + esc(h.noAwardReason) + ')' : '') : '頒獎 ' + got + '/' + need) + '</small><small>' + top3 + '</small></span>'
         + '<button class="lq-btn gray" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-hres="' + h.pin + '_' + h.createdAt + '">📋 成績</button>'
-        + (got < need && h.hostUid === u.uid ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-reopen="' + h.pin + '">繼續頒發</button>' : '') + '</div>';
+        + (got < need && !h.noAward && h.hostUid === u.uid ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-reopen="' + h.pin + '">繼續頒發</button>' : '') + '</div>';
     }).join('') : '還沒有紀錄';
     $('lq-hist').onclick = function(e){
       var r = e.target.closest('[data-hres]');
