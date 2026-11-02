@@ -1,5 +1,13 @@
 /* ════════════════════════════════════════════════════════════════════
- *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.318.0
+ *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.321.0
+ *  ★ v5.321.0(2026-11-02・老師「右邊排名看不到完整班級座號,請修改字體大小」)— 主持台公布畫面右側前五名(.lq-hside .lq-top5)
+ *    字體 clamp(14px,1.7u,24px)、名字可換行不截斷、分數排到第二行
+ *  ★ v5.320.0(2026-11-02・老師「學生平板顯示登入,老師電腦顯示離線,同步沒有即時;學生一直自動斷線又連線」「主持人選擇題庫時不要顯示答案」)
+ *    ① 心跳/加入帶 syncAt 被雲端規則拒絕時自動改用不帶 syncAt 的寫法(playerWrite)——規則沒重新發布也不會變成永遠斷線
+ *    ② 所有即時監聽改走 live():出錯自動重新監聽(原本錯誤被吞、監聽永久停止 ⇒ 不同步)
+ *    ③ 學生切走 App 的離線記號持續 6 秒才算斷線(AWAY_GRACE_MS);心跳門檻 25→30 秒;心跳失敗 3 秒後補送
+ *    ④ 主持台自己網路卡住(fromCache 或全班同時沒心跳)⇒ 不跳「斷線了」,上方顯示「主持台網路不穩」
+ *    ⑤ 學生右上角顯示「網路不穩,重新連線中…」;⑥ 主持人選題清單不再顯示答案
  *  ★ v5.318.0(2026-11-01・老師「用甲案。沒用一個法寶+5%分,最多兩個法寶都沒用+10%」)— 計分改為 500＋速度分＋法寶保留加成(見 computeTally)
  *  ★ 2026-11-01 老師需求:小英雄首頁新增連線搶答模式(類似 KAHOOT),GM 主持題庫,
  *    學生登入後名稱和帳號出現在參加者列表,一題一題快問快答,結束直接看積分排名,
@@ -23,7 +31,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.318.0' };
+var LQ = window._LQ = { _v: 'v5.321.0' };
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -31,7 +39,8 @@ var MAX_SEC = 20;                       /* 老師:每題最多 20 秒 */
 var SEC_OPTIONS = [10, 15, 20];
 var MAX_Q = 30, MIN_Q = 3;
 var HEARTBEAT_MS = 10000;              /* ★ v5.318.0 心跳改 10 秒,斷線能更快顯示 */
-var OFFLINE_MS = 25000;                 /* 主持台這麼久沒收到心跳 ⇒ 視為斷線(不列入「全員作答」);以主持台本機收到時間計,不受學生時鐘影響 */
+var AWAY_GRACE_MS = 6000;               /* ★ v5.320.0 學生切走 App 的離線記號持續這麼久才算斷線 */
+var OFFLINE_MS = 30000;                 /* ★ v5.320.0 25→30 秒(心跳 10 秒,容許漏 2 次)。主持台這麼久沒收到心跳 ⇒ 視為斷線(不列入「全員作答」);以主持台本機收到時間計,不受學生時鐘影響 */
 var LAT_COMP_MS = 3000;                 /* 慢網路補償上限 3 秒 */
 var BOARD_DOC = 'live';
 var BOARD_TTL = 4 * 3600 * 1000;
@@ -212,6 +221,25 @@ async function fs(){
   F = m; return F;
 }
 function db(){ return window._fbDb; }
+/* ★ v5.320.0 老師回報「同步沒有即時、學生一直斷線又連線」— 根因之一:即時監聽一出錯(網路斷線、權限暫時失敗)就永久停止,
+   原本錯誤處理是空函式 ⇒ 之後畫面再也不會更新。改成出錯自動重新監聽(1→2→4→8 秒),回傳的函式可取消。 */
+function live(ref, opts, onNext){
+  var dead = false, un = null, tries = 0, tm = null;
+  function go(){
+    if(dead) return;
+    try{
+      un = F.onSnapshot(ref, opts || {}, function(s){ tries = 0; try{ onNext(s); }catch(e){ try{ console.warn('[LQ] snapshot handler', e); }catch(_){} } },
+        function(err){
+          try{ console.warn('[LQ] 監聽中斷,自動重連', err && (err.code || err.message)); }catch(_){}
+          try{ if(un) un(); }catch(_){} un = null;
+          if(dead) return;
+          tm = setTimeout(go, Math.min(8000, 1000 * Math.pow(2, tries++)));
+        });
+    }catch(_){ tm = setTimeout(go, 3000); }
+  }
+  go();
+  return function(){ dead = true; if(tm) clearTimeout(tm); try{ if(un) un(); }catch(_){} };
+}
 function roomRef(pin){ return F.doc(db(), 'liveQuizRooms', pin); }
 function sub(pin, col, id){ return F.doc(db(), 'liveQuizRooms', pin, col, id); }
 function subCol(pin, col){ return F.collection(db(), 'liveQuizRooms', pin, col); }
@@ -309,6 +337,12 @@ var CSS = [
 '.lq-top5 .r .nm{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
 '.lq-top5 .r .sc{flex:0 0 auto;color:#ffd166;}',
 '.lq-top5 .r.mine{background:rgba(255,209,102,.3);outline:2px solid #ffd166;}',
+/* ★ v5.321.0 老師:主持台公布畫面右側前五名看不到完整班級座號 ⇒ 側欄字體縮小、名字可換行不再被「…」截掉,分數改排在名字下一行 */
+'.lq-hside .lq-top5{width:100%;margin-top:0;}',
+'.lq-hside .lq-top5 .r{flex-wrap:wrap;gap:2px 8px;padding:6px 10px;font-size:clamp(14px,calc(var(--u)*1.7),24px);}',
+'.lq-hside .lq-top5 .r .n{width:1.5em;}',
+'.lq-hside .lq-top5 .r .nm{flex:1 1 0;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.25;}',
+'.lq-hside .lq-top5 .r .sc{flex:1 0 100%;padding-left:calc(1.5em + 8px);font-size:.85em;line-height:1.25;}',
 '@keyframes lqIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}',
 /* 主持台 */
 '.lq-hgrid{width:100%;display:flex;gap:14px;align-items:stretch;flex:1 1 auto;min-height:0;}',
@@ -563,9 +597,10 @@ var ST = {
     this.recvAt = 0; this.waitMs = 0; this.cutRm = -1; this.hintA = -1; this.used = { cut: false, hint: false }; this.pwWait = null;
     this.sfxQ = -1; this.streak = 0; this.priv = null; this.ans = {}; this.correctN = 0; this.lastStatus = ''; this.kicked = false;
     this.offset = null; this.syncRtt = 1e9; this.syncS = 0; this.syncPend = null; this.timeUp = false;
-    this.endFx = false; this.lastRank = null; this.lastLeft = 99; },
+    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
-    if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; } },
+    if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; }
+    if(this.beatRetry){ clearTimeout(this.beatRetry); this.beatRetry = null; } this.beatBusy = false; },
   unsubs: [], hb: null, tick: null
 };
 function lsKey(k){ return 'lxps_lq_' + k + '_' + (ST.uid || ''); }
@@ -651,19 +686,20 @@ async function studentEnter(pin, room, resumed){
   var t0 = now();
   if(ps.exists()){
     if(ps.data().kicked) throw new Error(T('老師請你先離開這個房間', '你已被主持人移出本房'));
-    await F.updateDoc(pref, { lastSeen: now(), name: myLabel(), syncAt: F.serverTimestamp() });
+    await playerWrite(pref, { lastSeen: now(), name: myLabel() }, false);
   }else{
     if(room.meta.locked) throw new Error(T('老師已經鎖住房間了', '房間已上鎖'));
-    await F.setDoc(pref, { uid: u.uid, name: myLabel(), account: myAccount(), email: myEmail(), joinedAt: now(), lastSeen: now(), kicked: false, syncAt: F.serverTimestamp() });
+    await playerWrite(pref, { uid: u.uid, name: myLabel(), account: myAccount(), email: myEmail(), joinedAt: now(), lastSeen: now(), kicked: false }, true);
   }
   ST.syncPend = { t0: t0, t1: now() };
+  ST.lastOk = now(); ST.netBad = false;
   saveLocal();
   snd('join', 0.5); vib(30);
   if(resumed) toast(T('回到擂台了!分數都還在', '已回到進行中的擂台'));
   ST.hb = setInterval(studentBeat, HEARTBEAT_MS);
   bindAway();
-  ST.unsubs.push(F.onSnapshot(roomRef(pin), function(s){ if(s.exists()){ ST.room = s.data(); studentRender(); } }, function(){}));
-  ST.unsubs.push(F.onSnapshot(pref, function(s){
+  ST.unsubs.push(live(roomRef(pin), null, function(s){ if(s.exists()){ ST.room = s.data(); studentRender(); } }));
+  ST.unsubs.push(live(pref, null, function(s){
     if(!s.exists()) return;
     var d = s.data();
     if(d.kicked && !ST.kicked){ ST.kicked = true; studentKicked(); }
@@ -675,18 +711,66 @@ async function studentEnter(pin, room, resumed){
         if(ST.offset == null || rtt <= ST.syncRtt + 80){ ST.offset = S - (P.t0 + P.t1) / 2; ST.syncRtt = rtt; }
       }
     }catch(_){}
-  }, function(){}));
-  ST.unsubs.push(F.onSnapshot(sub(pin, 'private', u.uid), function(s){ ST.priv = s.exists() ? s.data() : null; applyPrivate(); }, function(){}));
+  }));
+  ST.unsubs.push(live(sub(pin, 'private', u.uid), null, function(s){ ST.priv = s.exists() ? s.data() : null; applyPrivate(); }));
   ST.tick = setInterval(studentTick, 250);
   studentRender();
 }
 /* ★ v5.318.0 斷線即時顯示:心跳 10 秒一次;平板切走/鎖屏/關 App ⇒ 立刻送 lastSeen=0(主持台馬上顯示「某某斷線了」);
    切回來 ⇒ 立刻補一次心跳(主持台顯示「回來了」)。 */
+/* ★ v5.320.0 根因:v5.318.0 心跳多帶了 syncAt 欄位,雲端規則若還是 v5.317.0 版(players 只准改 lastSeen/name),
+   每一次心跳都被拒絕、而且錯誤被吞掉 ⇒ 學生畫面顯示已加入,主持台 25 秒後就看成「斷線」,永遠回不來。
+   改成:帶 syncAt 被拒(permission-denied)就自動改用不帶 syncAt 的寫法,本場之後都不再帶;不論規則有沒有重新發布都能運作。 */
+var _lqNoSync = false;
+function playerWrite(ref, data, create){
+  function attempt(withSync){
+    var d = {}; Object.keys(data).forEach(function(k){ d[k] = data[k]; });
+    if(withSync) d.syncAt = F.serverTimestamp();
+    return create ? F.setDoc(ref, d) : F.updateDoc(ref, d);
+  }
+  if(_lqNoSync) return attempt(false);
+  return attempt(true).catch(function(e){
+    if(e && e.code === 'permission-denied'){
+      _lqNoSync = true;
+      try{ console.warn('[LQ] 雲端規則不收 syncAt,改用相容寫法(建議重新發布 firestore.rules)'); }catch(_){}
+      return attempt(false);
+    }
+    throw e;
+  });
+}
 function studentBeat(){
   if(!ST.pin || !ST.uid || ST.kicked) return;
   if(document.visibilityState === 'hidden') return;   /* 切到別的 App/分頁時,背景計時器不要把自己又標回「在線」 */
-  var a = now();
-  F.updateDoc(sub(ST.pin, 'players', ST.uid), { lastSeen: now(), syncAt: F.serverTimestamp() }).then(function(){ ST.syncPend = { t0: a, t1: now() }; }).catch(function(){});
+  if(ST.beatBusy) return;
+  ST.beatBusy = true;
+  var a = now(), pin = ST.pin;
+  playerWrite(sub(pin, 'players', ST.uid), { lastSeen: now() }, false).then(function(){
+    ST.beatBusy = false;
+    if(ST.pin !== pin) return;
+    if(!_lqNoSync) ST.syncPend = { t0: a, t1: now() };
+    ST.lastOk = now(); netChip();
+  }).catch(function(e){
+    ST.beatBusy = false;
+    if(ST.pin !== pin) return;
+    try{ console.warn('[LQ] 心跳失敗', e && (e.code || e.message)); }catch(_){}
+    netChip();
+    /* ★ v5.320.0 失敗不等 10 秒,3 秒後再補一次,網路一恢復主持台就馬上看到 */
+    if(ST.beatRetry) clearTimeout(ST.beatRetry);
+    ST.beatRetry = setTimeout(function(){ ST.beatRetry = null; studentBeat(); }, 3000);
+  });
+}
+/* ★ v5.320.0 學生畫面右上角顯示自己的連線狀態:超過 25 秒沒有成功送達雲端 ⇒「📶 重新連線中…」(不再只看本機以為已加入) */
+function netChip(){
+  if(!ST.pin) return;
+  var bad = ST.lastOk && now() - ST.lastOk > OFFLINE_MS - 5000;
+  if(bad === ST.netBad && $('lq-s-net')) return;
+  ST.netBad = bad;
+  var top = $('lq-top'); if(!top) return;
+  var el = $('lq-s-net');
+  if(!el){ el = document.createElement('div'); el.id = 'lq-s-net'; el.className = 'lq-chip'; var x = $('lq-close'); if(x) top.insertBefore(el, x); else top.appendChild(el); }
+  el.style.display = bad ? '' : 'none';
+  el.setAttribute('data-warn', '1');
+  el.innerHTML = '📶 ' + T('網路不穩,重新連線中…', '連線不穩,重新連線中…');
 }
 function studentAway(){
   if(!ST.pin || !ST.uid || ST.kicked || !ST.room || !ST.room.meta || ST.room.meta.status === 'ended') return;
@@ -837,6 +921,7 @@ function studentLeftMs(r){
   return Math.max(0, lim - (pnow() - ST.recvAt));
 }
 function studentTick(){
+  netChip();
   var r = ST.room; if(!r || r.meta.status !== 'question') return;
   var ms = studentLeftMs(r);
   if(ms <= 0 && !ST.timeUp && ST.choice == null){
@@ -1035,7 +1120,7 @@ var H = {
   reset: function(){ this.stop(); this.pin = null; this.room = null; this.status = null; this.qs = []; this.players = {}; this.joinQ = {};
     this.answers = {}; this.startAt = {}; this.power = {}; this.qIndex = -1; this.revealing = false; this.auto = false; this.autoH = null;
     this.qLocal = 0; this.createdAt = 0; this.title = ''; this.timeLimit = MAX_SEC; this.final = null; this.awarded = {}; this.granting = false;
-    this.seen = {}; this.onl = {}; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
+    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
     this.draft = this.draft || { qs: [], title: '', sec: MAX_SEC, shuf: true, classes: [] }; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     (this.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.qUnsubs = [];
@@ -1334,7 +1419,7 @@ function hostSetup(){
   function drawList(){
     $('lq-f-cnt').textContent = '(' + D.qs.length + ' / ' + MAX_Q + ' 題)';
     $('lq-f-list').innerHTML = D.qs.map(function(q, i){
-      return '<div class="lq-qi"><span class="no">' + (i + 1) + '.</span><span class="tx">' + esc(q.t) + '<small>' + esc(q.src) + '|答案:' + OPT_LETTER[q.a] + '. ' + esc(q.o[q.a]) + '</small></span><button data-i="' + i + '">✕</button></div>';
+      return '<div class="lq-qi"><span class="no">' + (i + 1) + '.</span><span class="tx">' + esc(q.t) + '<small>' + esc(q.src) + (q.kind === 'tf' ? '|是非題' : '|選擇題') + '</small></span><button data-i="' + i + '">✕</button></div>';   /* ★ v5.320.0 老師:主持人選題時不顯示答案 */
     }).join('') || '<div class="lq-p" style="font-size:15px;opacity:.7">還沒有題目,從上面加入吧</div>';
     $('lq-f-list').onclick = function(e){ var b = e.target.closest('button'); if(!b) return; D.qs.splice(+b.getAttribute('data-i'), 1); drawList(); };
     $('lq-f-open').disabled = D.qs.length < MIN_Q;
@@ -1449,7 +1534,7 @@ async function hostResume(pin){
 
 function hostAttach(){
   var pin = H.pin;
-  H.unsubs.push(F.onSnapshot(roomRef(pin), function(s){
+  H.unsubs.push(live(roomRef(pin), null, function(s){
     if(!s.exists()) return;
     H.room = s.data();
     if(H.room.current && H.room.meta.status === 'question'){
@@ -1461,8 +1546,12 @@ function hostAttach(){
       }
     }
     H.awarded = H.room.awarded || {};
-  }, function(){}));
-  H.unsubs.push(F.onSnapshot(subCol(pin, 'players'), function(ss){
+  }));
+  /* ★ v5.320.0 參加者監聽帶 includeMetadataChanges:可得知主持台自己是不是在用離線快取(fromCache) ⇒ 主持台網路卡住時不誤判全班斷線 */
+  H.unsubs.push(live(subCol(pin, 'players'), { includeMetadataChanges: true }, function(ss){
+    var wasCache = H.netCache;
+    H.netCache = !!(ss.metadata && ss.metadata.fromCache);
+    if(wasCache && !H.netCache){ var tr = now(); Object.keys(H.seen).forEach(function(k){ if(H.onl[k]) H.seen[k] = Math.max(H.seen[k], tr - HEARTBEAT_MS); }); }   /* 主持台剛恢復連線:給大家一個心跳的時間回報,不立刻判斷線 */
     var changed = false;
     ss.docChanges().forEach(function(ch){
       var d = ch.doc.data();
@@ -1479,6 +1568,8 @@ function hostAttach(){
         /* 記錄心跳間隔:舊版快取(30 秒心跳)的平板也不會被誤判斷線 ⇒ 每人的斷線門檻 = max(25 秒, 2.2×實測心跳間隔),上限 80 秒 */
         if(prev && H.seen[d.uid] && prev.lastSeen > 0 && d.lastSeen > 0){ var gap = tn - H.seen[d.uid]; if(gap > 3000 && gap < 40000) H.gap[d.uid] = gap; }
         H.seen[d.uid] = tn;
+        if(d.lastSeen > 0) H.lastAny = tn;   /* ★ v5.320.0 任何一位同學的心跳到達時間 ⇒ 判斷「是主持台自己卡住,還是學生真的斷線」 */
+        if(d.lastSeen === 0){ if(!prev || prev.lastSeen !== 0) H.zeroAt[d.uid] = (!prev && !H.onlInit) ? tn - 60000 : tn; } else delete H.zeroAt[d.uid];
         /* 主持台重開時第一次讀到:學生自己記的最後心跳已是 3 分鐘以前 ⇒ 直接當作離線(不先顯示在線 25 秒) */
         if(!prev && !H.onlInit && d.lastSeen > 0 && tn - d.lastSeen > 180000) H.seen[d.uid] = tn - 600000;
       }
@@ -1495,7 +1586,7 @@ function hostAttach(){
     if(changed) pushLobby();
     checkOnline(!H.onlInit); H.onlInit = true;   /* 第一次載入名單不提示(避免主持台重開時洗版),之後的上下線變化都即時提示 */
     hostRefreshPlayers();
-  }, function(){}));
+  }));
   H.tick = setInterval(hostTick, 250);
   if(H.status === 'lobby') hostLobby();
   else if(H.status === 'question') hostListenQ(H.qIndex, true);
@@ -1566,9 +1657,18 @@ function rosterPlayer(r){
   });
   return best;
 }
+/* ★ v5.320.0 主持台自己網路卡住(監聽在用離線快取,或 ≥2 人在線卻全班同時超過門檻沒有任何心跳進來)
+   ⇒ 是老師這台的問題,不是學生斷線:維持原本的上線狀態、不跳「某某斷線了」,改在上方顯示「主持台網路不穩」。 */
+function hostStalled(){
+  if(H.netCache) return true;
+  var ks = Object.keys(H.onl).filter(function(k){ return H.onl[k] && H.players[k] && !H.players[k].kicked; });
+  return ks.length >= 2 && H.lastAny > 0 && now() - H.lastAny > OFFLINE_MS;
+}
 function isOnline(p){
   if(!p || p.kicked) return false;
-  if(p.lastSeen === 0) return false;                       /* 學生關掉/切走 App 時主動送出的離線記號 */
+  /* ★ v5.320.0 學生切走 App 送出的離線記號,要持續 6 秒才算斷線(拉下控制中心、跳出系統通知一下就回來,不再閃「斷線了／回來了」) */
+  if(p.lastSeen === 0) return !(now() - (H.zeroAt[p.uid] || 0) > AWAY_GRACE_MS);
+  if(H.onl[p.uid] != null && hostStalled()) return H.onl[p.uid];
   var lim = Math.min(80000, Math.max(OFFLINE_MS, 2.2 * (H.gap[p.uid] || 0)));
   return now() - (H.seen[p.uid] || 0) < lim;
 }
@@ -1643,13 +1743,19 @@ function setHtmlIfChanged(el, html){
   el._lqH = html; el.innerHTML = html; return true;
 }
 function nameList(a){ return a.length > 3 ? a.slice(0, 3).join('、') + ' 等 ' + a.length + ' 人' : a.join('、'); }
+/* ★ v5.320.0 上方警示:主持台自己網路卡住時顯示「主持台網路不穩」,否則顯示斷線人數 */
+function offChipHtml(){
+  if(H.pin && hostStalled()) return '📶 ' + T('主持台網路不穩,重新連線中…', '主持台連線不穩,重新連線中…');
+  var n = offlineCount(); return n ? '⚠ ' + n + T(' 人斷線', ' 人離線') : '';
+}
+function updOffChip(){ var oc = $('lq-h-offc'); if(!oc) return; var h = offChipHtml(); if(oc._lqH !== h){ oc._lqH = h; oc.innerHTML = h; } oc.style.display = h ? '' : 'none'; }
 function offlineCount(){ var n = 0; Object.keys(H.players).forEach(function(k){ var p = H.players[k]; if(!p.kicked && !isOnline(p)) n++; }); return n; }
 function hostChips(){
   var c = [{ html: '🔑 ' + H.pin }];
   if(H.status !== 'lobby' && H.status !== 'ended') c.push({ html: '第 ' + (H.qIndex + 1) + ' / ' + H.qs.length + ' 題' });
   c.push({ id: 'lq-h-pc', html: '👥 ' + activePlayers(true).length });
   var oc = offlineCount();
-  c.push({ id: 'lq-h-offc', html: oc ? '⚠ ' + oc + T(' 人斷線', ' 人離線') : '', warn: 1 });
+  c.push({ id: 'lq-h-offc', html: offChipHtml(), warn: 1 });
   return c;
 }
 /* 等候室名單:有應到名單 ⇒ 全班座號(暗=還沒來、亮=已加入、橘=斷線、灰底=請假,點暗色的那格可標請假);沒有 ⇒ 只列已加入的人 */
@@ -1687,7 +1793,7 @@ function playerTag(p, canKick, label){
 }
 function hostRefreshPlayers(){
   var pc = $('lq-h-pc'); if(pc) pc.innerHTML = '👥 ' + activePlayers(true).length;
-  var oc = $('lq-h-offc'); if(oc){ var n = offlineCount(); oc.innerHTML = n ? '⚠ ' + n + T(' 人斷線', ' 人離線') : ''; oc.style.display = n ? '' : 'none'; }
+  updOffChip();
   var w = $('lq-h-wall');
   if(w){
     /* 每 10 秒會收到每位同學的心跳 ⇒ 名單內容沒變就不重畫(避免整面名牌一直閃動畫) */
@@ -1818,13 +1924,13 @@ function hostListenQ(q, resumed){
   (H.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); H.qUnsubs = [];
   H.qLocal = resumed && H.startAt[q] ? (now() - Math.min(H.timeLimit * 1000, Math.max(0, now() - H.startAt[q]))) : now();
   H.answers[q] = H.answers[q] || {};
-  H.qUnsubs.push(F.onSnapshot(F.query(subCol(H.pin, 'answers'), F.where('q', '==', q)), function(ss){
+  H.qUnsubs.push(live(F.query(subCol(H.pin, 'answers'), F.where('q', '==', q)), null, function(ss){
     ss.forEach(function(d){ var a = d.data(); if(a.at) H.answers[q][a.uid] = { c: a.c, at: tsMs(a.at), ms: a.ms }; });
     updateAnswered();
-  }, function(){}));
-  H.qUnsubs.push(F.onSnapshot(F.query(subCol(H.pin, 'powerups'), F.where('q', '==', q)), function(ss){
+  }));
+  H.qUnsubs.push(live(F.query(subCol(H.pin, 'powerups'), F.where('q', '==', q)), null, function(ss){
     ss.docChanges().forEach(function(ch){ if(ch.type === 'added') servePower(ch.doc.data()); });
-  }, function(){}));
+  }));
   hostQuestionScreen();
 }
 function servePower(p){
@@ -1873,7 +1979,7 @@ function updateAnswered(){
   if(act.length && n >= act.length && !H.revealing){ H.revealing = true; snd('allIn', 0.6); fxPop('🙌 ' + T('全員作答!', '全員作答完畢'), '#7dffb0'); setTimeout(function(){ hostReveal(); }, 700); }
 }
 function hostTick(){
-  if(H.pin && now() - (H.onlT || 0) > 2000){ H.onlT = now(); checkOnline(false); var oc = $('lq-h-offc'); if(oc){ var n = offlineCount(); oc.innerHTML = n ? '⚠ ' + n + T(' 人斷線', ' 人離線') : ''; oc.style.display = n ? '' : 'none'; } }
+  if(H.pin && now() - (H.onlT || 0) > 2000){ H.onlT = now(); checkOnline(false); updOffChip(); }
   if(H.status === 'question'){
     var left = Math.max(0, Math.ceil((H.timeLimit * 1000 - (now() - H.qLocal)) / 1000));
     var el = $('lq-h-timer'); if(el){ el.textContent = left; el.classList.toggle('warn', left <= 5); }
