@@ -14,6 +14,9 @@
  *       預覽(對不到的可手打帳號)後寫進該生「🎁 GM獎勵」收件箱(文件 id 同一場固定 lq_{房號}_{開房時間},同一人不會重複);
  *       紀錄 liveQuizHistory.guestAwarded[座號]={uid,email,tier,at},房間 awarded[匿名uid] 同步標記。
  *    ⚠ 需老師:Firebase 主控台 Authentication → 登入方式 → 開啟「匿名」;並發布新版 firestore.rules(players 加免登入建立路徑)。
+ *    ⑥ 老師「斷線後重新登入的免登帳號,如果輸入已經在遊玩的同學暱稱,要擋下」⇒ guestJoin:同座號有帳號者/免登入且 30 秒內有心跳 ⇒ 擋;
+ *       同座號免登入已斷線 ⇒ 問「是你本人要接回分數嗎?」⇒ 加入帶 reclaim。主持台 hostReclaim 最後把關:舊身分其實還在線 ⇒ 請出後來的;
+ *       確實離線 ⇒ alias(舊→新,存 host/secret)＋作答/法寶/加入題號轉到新身分(putAns 同題取先到的),舊身分 kicked＋replacedBy。
  *    ⑤ 共用平板防汙染(老師要求檢查):匿名身分改存 sessionStorage(browserSessionPersistence),不進 firebaseLocalStorageDb ⇒
  *       主程式登出刪該資料庫不會被卡住、App 關掉重開就是新身分;關閉擂台 3 秒後/有人登入主程式時 deleteApp 收掉連線(guestTeardown)。
  *    ④ 老師「甲,匿名登入只在搶答擂台,不影響任何原有遊戲內的資料庫和存檔」⇒ firestore.rules 新增 isRealUser()(有登入且非匿名),
@@ -906,7 +909,7 @@ var ST = {
     this.offset = null; this.syncRtt = 1e9; this.syncS = 0; this.syncPend = null; this.timeUp = false;
     this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; this.rtt = 0; this.lagMax = 0; this.tickAt = 0;
     this.snapAt = 0; this.pollAt = 0; this.polling = false; this.staleN = 0; this.beatAt = 0; this.roomUn = null;
-    this.guest = false; this.code = ''; this.gName = ''; this.prevCode = ''; },   /* ★ v5.336.0 免登入 */
+    this.guest = false; this.code = ''; this.gName = ''; this.prevCode = ''; this.reclaim = ''; },   /* ★ v5.336.0 免登入 */
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; }
     if(this.beatRetry){ clearTimeout(this.beatRetry); this.beatRetry = null; } this.beatBusy = false; },
@@ -1135,16 +1138,36 @@ async function guestJoin(pin, code, hit){
   var r = s.data();
   if(r.meta.status === 'ended') throw new Error(T('這場擂台已經結束了', '本場擂台已結束'));
   if(!r.meta.guest) throw new Error(T('這一場要登入自己的帳號才能參加喔', '本場需登入帳號參加'));
-  var ss = await F.getDocs(subCol(pin, 'players')), dup = null;
+  /* ★ v5.336.0(老師「斷線後重新登入的免登帳號,如果輸入已經在遊玩的同學暱稱,要擋下」)
+     同座號的人:① 有登入帳號的 ⇒ 一律擋;② 免登入且還在線上(30 秒內有心跳)⇒ 擋;
+     ③ 免登入但已斷線 ⇒ 問「是你本人要接回來嗎?」,是 ⇒ 帶 reclaim(舊身分)加入,由主持台再確認舊的真的離線才把分數接過來。 */
+  var ss = await F.getDocs(subCol(pin, 'players')), dup = null, dupOn = false, dupAcct = false;
   ss.forEach(function(d){
     var p = d.data(); if(!p || p.kicked || d.id === ST.uid) return;
     var pc = p.code || ((rosterOf(p.email) || {}).c) || '';
-    if(pc === code) dup = p;
+    if(pc !== code) return;
+    if(!p.guest){ dupAcct = true; return; }
+    var on = p.lastSeen > 0 && Math.abs(now() - p.lastSeen) < OFFLINE_MS + 5000;
+    if(on) dupOn = true;
+    if(!dup || (p.joinedAt || 0) > (dup.joinedAt || 0)) dup = p;
   });
-  if(dup) throw new Error(T('座號 ' + code + ' 已經有人加入了!先確認有沒有打錯;如果是你剛剛關掉 App 又重開,請老師在名單把舊的 ' + code + ' 按 ✕ 再加入',
-                            '座號 ' + code + ' 已有人加入;如為本人重新開啟 App,請主持人先移除舊的 ' + code));
+  if(dupAcct) throw new Error(T('座號 ' + code + ' 的同學已經用自己的帳號在玩了,不能再用這個座號', '座號 ' + code + ' 已有同學以帳號參加,無法使用'));
+  if(dupOn) throw new Error(T('座號 ' + code + ' 的同學正在遊玩中,不能使用這個座號!先確認有沒有打錯;如果是你自己剛剛斷線,等 30 秒再試一次',
+                              '座號 ' + code + ' 正在遊玩中,無法使用;若為本人剛斷線,請 30 秒後再試'));
   ST.code = code;
   ST.gName = hit ? String(hit.n).slice(0, 24) : code;
+  if(dup){
+    var yes = await new Promise(function(res){
+      modal('<div class="lq-h1" style="font-size:22px">🔁 ' + T('座號 ', '座號 ') + esc(code) + T(' 剛剛斷線了', ' 目前離線') + '</div>'
+        + '<div class="lq-p">' + T('你是 <b>' + esc(dup.name || code) + '</b> 本人,要接回剛剛的分數嗎?<br>不是本人請按「不是我」,冒用別人座號老師會看到喔!',
+                                 '若你是 <b>' + esc(dup.name || code) + '</b> 本人,可接回原本的成績;非本人請勿使用。') + '</div>'
+        + '<div class="lq-row"><button class="lq-btn gray" id="lq-rc-no">🙅 ' + T('不是我', '不是我') + '</button><button class="lq-btn gold" id="lq-rc-yes">✅ ' + T('是我,接回分數', '是,接回成績') + '</button></div>');
+      $('lq-rc-no').onclick = function(){ closeModal(); res(false); };
+      $('lq-rc-yes').onclick = function(){ closeModal(); res(true); };
+    });
+    if(!yes) throw new Error(T('請重新輸入你自己的班級座號', '請輸入本人座號'));
+    ST.reclaim = dup.uid;
+  }
   await studentEnter(pin, r, false);
 }
 
@@ -1162,8 +1185,10 @@ async function studentEnter(pin, room, resumed){
   }else{
     if(room.meta.locked) throw new Error(T('老師已經鎖住房間了', '房間已上鎖'));
     /* ★ v5.336.0 免登入:沒有帳號/信箱,改帶 code(4 碼班級座號)＋guest:true(雲端規則只在房間開放免登入時放行) */
+    var gd = { uid: u.uid, name: stLabel(), account: '', email: '', code: ST.code, guest: true, joinedAt: now(), lastSeen: now(), kicked: false };
+    if(ST.guest && ST.reclaim) gd.reclaim = String(ST.reclaim).slice(0, 128);   /* ★ v5.336.0 斷線接回:主持台確認後把舊身分的分數接過來 */
     await playerWrite(pref, ST.guest
-      ? { uid: u.uid, name: stLabel(), account: '', email: '', code: ST.code, guest: true, joinedAt: now(), lastSeen: now(), kicked: false }
+      ? gd
       : { uid: u.uid, name: myLabel(), account: myAccount(), email: myEmail(), joinedAt: now(), lastSeen: now(), kicked: false }, true);
   }
   ST.syncPend = { t0: t0, t1: now() };
@@ -1790,7 +1815,7 @@ var H = {
   reset: function(){ this.stop(); this.pin = null; this.room = null; this.status = null; this.qs = []; this.players = {}; this.joinQ = {};
     this.answers = {}; this.startAt = {}; this.power = {}; this.qIndex = -1; this.revealing = false; this.auto = false; this.autoH = null;
     this.qLocal = 0; this.createdAt = 0; this.title = ''; this.timeLimit = MAX_SEC; this.final = null; this.awarded = {}; this.granting = false;
-    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.guestMode = false; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
+    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.guestMode = false; this.alias = {}; this.rcDone = {}; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
     this.draft = this.draft || { qs: [], title: '', sec: MAX_SEC, shuf: true, classes: [], guest: (function(){ try{ return localStorage.getItem('lxps_lq_guestpref') === '1'; }catch(_){ return false; } })() }; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     (this.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.qUnsubs = [];
@@ -2271,12 +2296,12 @@ async function hostResume(pin){
     var sd = sec.data();
     H.reset();
     H.pin = pin; H.room = r; H.status = r.meta.status; H.createdAt = r.meta.createdAt; H.title = r.meta.title; H.timeLimit = r.meta.timeLimit || MAX_SEC;
-    H.qs = (sd.qs || []).map(unpackQ); H.startAt = sd.startAt || {}; H.joinQ = sd.joinQ || {}; H.power = sd.power || {};
+    H.qs = (sd.qs || []).map(unpackQ); H.startAt = sd.startAt || {}; H.joinQ = sd.joinQ || {}; H.power = sd.power || {}; H.alias = sd.alias || {};
     H.roster = sd.roster || []; H.leave = sd.leave || {}; H.guestMode = !!(r.meta && r.meta.guest);
     H.final = r.final || null; H.awarded = r.awarded || {};
     H.qIndex = r.current ? r.current.qIndex : -1;
     var as = await F.getDocs(subCol(pin, 'answers'));
-    as.forEach(function(d){ var a = d.data(); (H.answers[a.q] = H.answers[a.q] || {})[a.uid] = { c: a.c, at: tsMs(a.at), ms: a.ms }; });
+    as.forEach(function(d){ putAns(d.data()); });   /* ★ v5.336.0 經 putAns(斷線接回的舊身分作答算到新身分) */
     hostAttach();
     toast('已回到擂台 ' + pin);
   }catch(e){ toast('接續失敗:' + (e.code || e.message)); }
@@ -2332,6 +2357,7 @@ function hostAttach(){
         H.joinQ[d.uid] = H.status === 'lobby' ? 0 : (H.status === 'question' ? H.qIndex : H.qIndex + 1);
         saveSecret();
       }
+      if(d.guest && d.reclaim && !d.kicked && !H.rcDone[d.uid]) hostReclaim(d);   /* ★ v5.336.0 免登入斷線接回 */
     });
     if(changed) pushLobby();
     checkOnline(!H.onlInit); H.onlInit = true;   /* 第一次載入名單不提示(避免主持台重開時洗版),之後的上下線變化都即時提示 */
@@ -2343,11 +2369,55 @@ function hostAttach(){
   else if(H.status === 'reveal') hostRevealScreen();
   else if(H.status === 'ended') hostEndScreen();
 }
+/* ═════════ ★ v5.336.0 免登入「斷線接回」(老師「斷線後重新登入的免登帳號,如果輸入已經在遊玩的同學暱稱,要擋下」)═════════
+   學生端已先擋「同座號還在線上」;主持台是最後把關:收到帶 reclaim(舊身分)的新加入 ⇒
+   ・舊的其實還在線上 ⇒ 請出後來的(不能冒用正在遊玩的同學)並在大螢幕提示;
+   ・舊的確實離線 ⇒ 舊身分的作答/法寶使用/加入題號都算到新身分(alias 存進 host/secret,主持台重開也接得上),舊身分請出(replacedBy)。 */
+function aliasOf(u){ var n = 0; while(H.alias && H.alias[u] && n++ < 10) u = H.alias[u]; return u; }
+function putAns(a){
+  if(!a || a.q == null) return;
+  var u = aliasOf(a.uid), A = (H.answers[a.q] = H.answers[a.q] || {});
+  var v = { c: a.c, at: tsMs(a.at), ms: a.ms, src: a.uid };
+  /* 同一人(新舊身分)同一題兩份作答 ⇒ 以先送達的那份為準 */
+  if(A[u] && A[u].src && A[u].src !== a.uid && (A[u].at || 0) <= (v.at || 0)) return;
+  A[u] = v;
+}
+function hostReclaim(d){
+  if(!H.onlInit){ setTimeout(function(){ if(H.pin && H.players[d.uid] && !H.rcDone[d.uid]) hostReclaim(H.players[d.uid]); }, OFFLINE_MS + 2000); return; }   /* 主持台剛載入,上線狀態還不準 ⇒ 等一輪心跳再判斷 */
+  H.rcDone[d.uid] = 1;
+  var old = H.players[d.reclaim];
+  if(!old || old.kicked || !old.guest || old.code !== d.code || H.status === 'ended') return;
+  if(isOnline(old)){
+    F.updateDoc(sub(H.pin, 'players', d.uid), { kicked: true }).catch(function(){});
+    fxAlert('⚠ ' + T('座號 ', '座號 ') + d.code + T(' 的同學還在遊玩中,已擋下另一台想用這個座號加入的平板', ' 仍在線上,已擋下重複使用此座號的裝置'), 'dc', 6000);
+    snd('dc', 0.6); return;
+  }
+  var nu = d.uid, ou = old.uid;
+  H.alias[ou] = nu;
+  Object.keys(H.answers).forEach(function(q){
+    var A = H.answers[q], e = A[ou]; if(!e) return;
+    delete A[ou];
+    if(!A[nu] || (A[nu].at || 0) > (e.at || 0)) A[nu] = e;
+  });
+  var pw = H.power[ou] || {}, np = H.power[nu] = H.power[nu] || {};
+  if(pw.cut != null && np.cut == null) np.cut = pw.cut;
+  if(pw.hint != null && np.hint == null) np.hint = pw.hint;
+  if(H.joinQ[ou] != null) H.joinQ[nu] = Math.min(H.joinQ[ou], H.joinQ[nu] != null ? H.joinQ[nu] : H.joinQ[ou]);
+  H.dcN[nu] = (H.dcN[ou] || 0) + 1;
+  saveSecret();
+  /* 已用過的法寶告訴新身分(q:-1 只標記「用過」,不顯示效果),學生畫面的法寶鈕會變灰 */
+  var o = {}; if(np.cut != null) o.cut = { q: -1, rm: -1 }; if(np.hint != null) o.hint = { q: -1, a: -1 };
+  if(Object.keys(o).length) F.setDoc(sub(H.pin, 'private', nu), o, { merge: true }).catch(function(){});
+  F.updateDoc(sub(H.pin, 'players', ou), { kicked: true, replacedBy: nu }).catch(function(){});
+  fxAlert('🔁 ' + (d.name || d.code) + T(' 斷線後回來了,分數已接回', ' 已重新連線,成績已接續'), 'back', 4000);
+  snd('back', 0.6);
+  pushLobby(); hostRefreshPlayers();
+}
 function saveSecret(){
   if(H.saveH) return;
   H.saveH = setTimeout(function(){
     H.saveH = null;
-    F.updateDoc(sub(H.pin, 'host', 'secret'), { startAt: H.startAt, joinQ: H.joinQ, power: H.power, leave: H.leave }).catch(function(){});
+    F.updateDoc(sub(H.pin, 'host', 'secret'), { startAt: H.startAt, joinQ: H.joinQ, power: H.power, leave: H.leave, alias: H.alias || {} }).catch(function(){});
   }, 1500);
 }
 /* ───────── ★ v5.318.0 應到名單 / 請假 / 斷線 ───────── */
@@ -2726,7 +2796,7 @@ function hostListenQ(q, resumed){
   H.qLocal = resumed && H.startAt[q] ? (now() - Math.min(H.timeLimit * 1000, Math.max(-_ldq, now() - (H.startAt[q] + _ldq)))) : now() + _ldq;
   H.answers[q] = H.answers[q] || {};
   H.qUnsubs.push(live(F.query(subCol(H.pin, 'answers'), F.where('q', '==', q)), null, function(ss){
-    ss.forEach(function(d){ var a = d.data(); if(a.at) H.answers[q][a.uid] = { c: a.c, at: tsMs(a.at), ms: a.ms }; });
+    ss.forEach(function(d){ var a = d.data(); if(a.at) putAns(a); });
     updateAnswered();
   }));
   H.qUnsubs.push(live(F.query(subCol(H.pin, 'powerups'), F.where('q', '==', q)), null, function(ss){
@@ -2736,7 +2806,8 @@ function hostListenQ(q, resumed){
 }
 function servePower(p){
   var q = p.q, Q = H.qs[q]; if(!Q || q !== H.qIndex) return;
-  var rec = H.power[p.uid] = H.power[p.uid] || {};
+  var pu = aliasOf(p.uid);   /* ★ v5.336.0 斷線接回:法寶次數跟著人走,不能換身分再用一次 */
+  var rec = H.power[pu] = H.power[pu] || {};
   if(rec[p.kind] != null) return;                       /* 已服務過(重新接續時避免重寫) */
   rec[p.kind] = q; saveSecret();
   var o = {};
@@ -2881,7 +2952,7 @@ async function hostReveal(why){
   try{
     var ss = await F.getDocsFromServer(F.query(subCol(H.pin, 'answers'), F.where('q', '==', q)));
     H.answers[q] = {};
-    ss.forEach(function(d){ var a = d.data(); H.answers[q][a.uid] = { c: a.c, at: tsMs(a.at), ms: a.ms }; });
+    ss.forEach(function(d){ putAns(d.data()); });
   }catch(_){}
   var dist = Q.o.map(function(){ return 0; });
   Object.keys(H.answers[q]).forEach(function(uid){ var c = H.answers[q][uid].c; if(c >= 0 && c < dist.length) dist[c]++; });
@@ -3555,7 +3626,8 @@ async function hostManager(){
 
 /* 測試用掛勾(沙盒驗證計分) */
 LQ._test = { computeTally: computeTally, rankList: rankList, scoreOf: scoreOf, parseCustom: parseCustom, TIERS: TIERS, H: H, ST: ST, hostEnd: hostEnd, fs: fs, showClassBoard: function(){ CB.arr = null; return showClassBoard(); }, classAgg: classAgg, buildRoster: buildRoster,
-  guestCodeOk: guestCodeOk, rosterByCode: rosterByCode, guestPending: guestPending, codeOf: codeOf, inRosterP: inRosterP, rosterPlayer: rosterPlayer, normAcct: normAcct, lobbyState: lobbyState, ui: { ensureRoot: ensureRoot, guestCodeScreen: guestCodeScreen, screenNeedLogin: screenNeedLogin } };   /* ★ v5.336.0 */
+  guestCodeOk: guestCodeOk, rosterByCode: rosterByCode, guestPending: guestPending, codeOf: codeOf, inRosterP: inRosterP, rosterPlayer: rosterPlayer, normAcct: normAcct, lobbyState: lobbyState, ui: { ensureRoot: ensureRoot, guestCodeScreen: guestCodeScreen, screenNeedLogin: screenNeedLogin },
+  putAns: putAns, aliasOf: aliasOf, hostReclaim: hostReclaim, powersUsed: powersUsed, _setF: function(x){ F = x; } };   /* ★ v5.336.0 */
 
 window._LXPS_MOD_OK = window._LXPS_MOD_OK || {};
 window._LXPS_MOD_OK['live_quiz.js'] = true;
