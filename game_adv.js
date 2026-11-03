@@ -32173,8 +32173,8 @@ const BACKPACK_ITEM_DEF = {
   // ★ v1.1.0 — 至寶重置靈水(可重置至寶投資點數並退回所有已使用的卷軸)
   'treasure_reset_potion': { name:'至寶重置靈水', icon:'💧', desc:'蘊含太古泉水的神秘靈藥,使用後可選擇 1 件至寶,將其等級重置為 Lv.1,並退回升級時實際花費的至寶經驗卷軸與知識幣。', type:'use', useLabel:'使用(選擇至寶)', sellPrice:2500 },
   // ★ v3.11.23 — 知識王「持之以恆」獎勵:英雄召喚卷(在召喚星空使用,必得隨機未收錄對應稀有度英雄)
-  'summon_ticket_ssr': { name:'SSR 英雄召喚卷', icon:'🌈', desc:'知識王「持之以恆」累積 10 天(每天 ≥90 分)的稀世獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!(若 SSR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
-  'summon_ticket_sr':  { name:'SR 英雄召喚卷',  icon:'⭐', desc:'知識王「持之以恆」累積 5 天(每天 ≥80 分)的努力獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!(若 SR 已全收錄則暫時無法使用,可保留以後再用)', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_ssr': { name:'SSR 英雄召喚卷', icon:'🌈', desc:'知識王「持之以恆」累積 10 天(每天 ≥90 分)的稀世獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!(若 SSR 已全收錄,改成隨機換一位已收錄 SSR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_sr':  { name:'SR 英雄召喚卷',  icon:'⭐', desc:'知識王「持之以恆」累積 5 天(每天 ≥80 分)的努力獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!(若 SR 已全收錄,改成隨機換一位已收錄 SR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用' },
   // ★ v3.13.74 — 自選召喚卷(老師指定):與「隨機券」並存,使用時可從尚未收錄的對應稀有度英雄中「自己挑一名」
   'summon_ticket_ssr_pick': { name:'SSR 自選召喚卷', icon:'🌟', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SSR 英雄中,親自挑選一名加入隊伍!已經收錄的 SSR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
   'summon_ticket_ur_pick': { name:'UR 自選召喚卷', icon:'👑', desc:'極為稀有的 UR 自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 UR 英雄中,親自挑選一名加入隊伍!已經收錄的 UR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
@@ -32185,8 +32185,8 @@ const BACKPACK_ITEM_DEF = {
   // ★ v3.17.6(老師需求 2)— GM 發放的召喚卷「獨立道具」:與學生自己合成/獲得的召喚卷永久區分,
   //   名稱標「GM獎勵…」、召喚星空另設「🎁 老師發放的召喚卷」專區、背包說明顯示老師發放理由+時間。
   //   使用時走 _useGmTicket(暫時實體化對應 base 卷 → 沿用既有使用流程,不動核心召喚引擎)。
-  'gm_summon_ticket_ssr':          { name:'🎁GM獎勵·SSR召喚卷',      icon:'🌈', desc:'老師親自發放的獎勵召喚卷!前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ssr' },
-  'gm_summon_ticket_sr':           { name:'🎁GM獎勵·SR召喚卷',       icon:'⭐', desc:'老師親自發放的獎勵召喚卷!前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr' },
+  'gm_summon_ticket_ssr':          { name:'🎁GM獎勵·SSR召喚卷',      icon:'🌈', desc:'老師親自發放的獎勵召喚卷!前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!(全收錄時改成隨機換一位已收錄 SSR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ssr' },
+  'gm_summon_ticket_sr':           { name:'🎁GM獎勵·SR召喚卷',       icon:'⭐', desc:'老師親自發放的獎勵召喚卷!前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!(全收錄時改成隨機換一位已收錄 SR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr' },
   'gm_summon_ticket_ssr_pick':     { name:'🎁GM獎勵·SSR自選召喚卷',  icon:'🌟', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SSR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ssr_pick' },
   'gm_summon_ticket_sr_pick':      { name:'🎁GM獎勵·SR自選召喚卷',   icon:'✨', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr_pick' },
   'gm_summon_ticket_ur_pick':      { name:'🎁GM獎勵·UR自選召喚卷',   icon:'👑', desc:'老師親自發放的極稀有 UR 自選卷!前往召喚星空使用,可從「尚未收錄」的 UR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ur_pick' },
@@ -41269,9 +41269,16 @@ function _openSummonTicketModal(){
       try{ if(!isPick && typeof window._wishTicketTarget === 'function') _wishT = window._wishTicketTarget(tier) || ''; }catch(_){ _wishT = ''; }
       const _wishXtra = (_wishT && _summonTicketUnrecorded(tier).indexOf(_wishT) < 0) ? 1 : 0;
       leftCount = leftCount + _wishXtra;
+      /* ★ v5.339.0(老師「SSR英雄召喚卷在全收錄時目前無法使用，但有了命座系統應該要開放可以召喚」「UR、SR也是一樣」)—
+         隨機卷:同稀有度沒有可抽的新英雄時,改成「隨機換一位已收錄英雄的 1 顆命星」(只挑本來就在隨機卷範圍內、未滿 6 命者) */
+      let _rndStar = false;
+      if(!isPick && leftCount <= 0){
+        try{ starCount = (typeof window._cstRandomTicketStarCandidates === 'function') ? (window._cstRandomTicketStarCandidates(tier).length | 0) : 0; }catch(_){ starCount = 0; }
+        _rndStar = starCount > 0;
+      }
       const _canUse = have > 0 && (leftCount + starCount) > 0;
       const _fnName = isPick ? '_openSummonTicketPickModal' : '_useSummonTicket';
-      const _btnTxt = isPick ? ('🌟 使用自選 ' + tier + ' 卷') : ('✨ 使用 ' + tier + ' 召喚卷');
+      const _btnTxt = isPick ? ('🌟 使用自選 ' + tier + ' 卷') : ('✨ 使用 ' + tier + ' 召喚卷' + (_rndStar ? '(換命星)' : ''));
       let _btnHtml;
       if(have <= 0){
         _btnHtml = '<div style="margin-top:8px;font-size:14px;color:#888;text-align:center;">尚未持有此召喚卷</div>';
@@ -41307,7 +41314,7 @@ function _openSummonTicketModal(){
         +   have + '</b> 張</div>'
         + '<div style="font-size:13px;color:#aabbcc;text-align:center;margin-top:4px;">'
         +   '尚有 <b style="color:' + accent + ';">' + leftCount + '</b> 名 ' + tier + ' 英雄未收錄</div>'
-        + (starCount > 0 ? ('<div style="font-size:12px;color:#ffd97a;text-align:center;margin-top:2px;">⭐ 已收錄的 ' + starCount + ' 名可換成命星</div>') : '')
+        + (starCount > 0 ? ('<div style="font-size:12px;color:#ffd97a;text-align:center;margin-top:2px;">' + (_rndStar ? ('⭐ 已全收錄!這張券會從已收錄的 ' + starCount + ' 名中隨機換 1 顆命星') : ('⭐ 已收錄的 ' + starCount + ' 名可換成命星')) + '</div>') : '')
         + (_wishT ? ('<div style="font-size:14px;font-weight:900;color:#ffe066;text-align:center;margin-top:4px;">🌠 祈願中:這張券必出「' + _wishT + '」</div>') : '')
         + _btnHtml
         + '</div>';
@@ -41398,15 +41405,26 @@ function _openSummonTicketModal(){
             else if(g.id === 'gm_summon_ticket_sr_pick')   _gmPi = window._lxpsTicketPoolInfo('SR',  true);
           }
         }catch(_ePi){ _gmPi = null; }
+        /* ★ v5.339.0 全收錄後:自選卷可挑已收錄英雄換命星(含 UR)、隨機卷隨機換命星、隨機卷祈願中 ⇒ 都還用得出去,不鎖 */
+        var _gmStar = 0;
+        try{
+          if(/_pick$/.test(g.id) && g.id.indexOf('treasure') < 0 && typeof window._cstTicketStarCandidates === 'function'){
+            _gmStar = window._cstTicketStarCandidates(g.id.indexOf('_ur_') >= 0 ? 'UR' : (g.id.indexOf('_ssr_') >= 0 ? 'SSR' : 'SR')).length | 0;
+          } else if(g.id === 'gm_summon_ticket_ssr' || g.id === 'gm_summon_ticket_sr'){
+            var _gTr = (g.id === 'gm_summon_ticket_ssr') ? 'SSR' : 'SR';
+            if(typeof window._cstRandomTicketStarCandidates === 'function') _gmStar = window._cstRandomTicketStarCandidates(_gTr).length | 0;
+            try{ if(typeof window._wishTicketTarget === 'function' && window._wishTicketTarget(_gTr)) _gmStar += 1; }catch(_){}
+          }
+        }catch(_eGs){ _gmStar = 0; }
         var _gmBtnHtml;
-        if(_gmPi && _gmPi.usable <= 0){
+        if(_gmPi && _gmPi.usable <= 0 && _gmStar <= 0){
           _gmBtnHtml = '<button disabled style="margin-top:8px;width:100%;padding:11px;font-size:14px;font-weight:800;'
             + 'background:rgba(80,80,90,0.5);border:2px solid #666;color:#aaa;border-radius:10px;cursor:not-allowed;'
             + 'font-family:inherit;">🔒 目前沒有可召喚的對象</button>'
             + '<div style="margin-top:4px;font-size:11px;color:#e6c8a0;text-align:center;line-height:1.5;">'
             + ((_gmPi.lockedNew > 0)
                 ? ('還有 ' + _gmPi.lockedNew + ' 名英雄尚未正式開放，開放後就能用。')
-                : '你已經全部收錄了，等有新英雄就能用。')
+                : '你已經全部收錄、而且都滿 6 命了，等有新英雄就能用。')
             + '券會一直保留著，不會消失。</div>';
         } else {
           _gmBtnHtml = '<button onclick="playSfx(\'sfx-sel\',0.7);_useGmTicket(\''+g.id+'\')" style="margin-top:8px;width:100%;padding:11px;font-size:16px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,'+g.accent+',rgba(255,200,120,0.92));border:none;color:#2a1500;border-radius:10px;font-family:inherit;letter-spacing:1px;box-shadow:0 0 14px '+g.accent+'88;">🎁 使用這張</button>';
@@ -41438,7 +41456,7 @@ function _openSummonTicketModal(){
         + '<div style="font-size:clamp(24px,3vw,32px);font-weight:900;color:#ffd9a0;text-align:center;'
           + 'letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 16px rgba(255,180,100,0.5);">🎟 使用召喚卷</div>'
         + '<div style="font-size:13px;color:#bbaadd;text-align:center;line-height:1.6;margin-bottom:14px;">'
-          + '<b style="color:#ffd9a0;">隨機券</b>:必得一個隨機「尚未擁有」的對應內容。<br>'
+          + '<b style="color:#ffd9a0;">隨機券</b>:必得一個隨機「尚未擁有」的對應內容(英雄全收錄時,改成隨機換一顆命星)。<br>'
           + '<b style="color:#ffe066;">自選券</b>:可從尚未擁有的對應內容中,<b>親自挑選一個</b>!</div>'
         + '<div style="font-size:clamp(15px,1.8vw,18px);font-weight:900;color:#ffcf9a;text-align:center;letter-spacing:1px;margin-bottom:8px;">🦸 英雄召喚卷</div>'
         + '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
@@ -41501,10 +41519,12 @@ function _useGmTicket(gmId){
                  ? window._lxpsTicketPoolInfo(_tierG, false) : { usable: 1, lockedNew: 0 };
         var _wishG = '';   /* ★ v5.309.0 祈願指定的未擁有英雄不在隨機池(例:BOSS 同名英雄)時,這張券仍用得出去 */
         try{ _wishG = (typeof window._wishTicketTarget === 'function') ? (window._wishTicketTarget(_tierG) || '') : ''; }catch(_){ _wishG = ''; }
-        if(_piG.usable <= 0 && !_wishG){
+        var _stG = 0;   /* ★ v5.339.0 全收錄 ⇒ 隨機卷改換命星,還有可換的對象就不擋 */
+        try{ _stG = (typeof window._cstRandomTicketStarCandidates === 'function') ? (window._cstRandomTicketStarCandidates(_tierG).length | 0) : 0; }catch(_){ _stG = 0; }
+        if(_piG.usable <= 0 && !_wishG && _stG <= 0){
           _gmBlock = (_piG.lockedNew > 0)
             ? ('🔒 目前沒有可召喚的 ' + _tierG + '，還有 ' + _piG.lockedNew + ' 名尚未開放；券先幫你留著，開放後再用')
-            : ('🔒 ' + _tierG + ' 已全收錄，券先幫你留著，日後有新英雄就能用');
+            : ('🔒 ' + _tierG + ' 已全收錄而且都滿 6 命了，券先幫你留著，日後有新英雄就能用');
         }
       } else if(_base === 'summon_ticket_ssr_pick' || _base === 'summon_ticket_sr_pick' || _base === 'summon_ticket_ur_pick'){
         var _tierP = (_base === 'summon_ticket_ur_pick') ? 'UR'
@@ -41576,6 +41596,15 @@ async function _useSummonTicket(tier){
     try{ if(_wishH && (typeof window._wishTicketTarget !== 'function' || window._wishTicketTarget(tier) !== _wishH)) _wishH = ''; }catch(_eWishR){ _wishH = ''; }
     const _pool = _summonTicketUnrecorded(tier);
     if(!_pool.length && !_wishH){
+      /* ★ v5.339.0 全收錄 ⇒ 改成隨機換一位已收錄英雄的 1 顆命星
+         (命座模組 _cstUseTicketForStar 隨機模式:確認框 → 按下確認當下才抽 → 先發命星 → 真的扣到券 → 背包＋命星原子落地) */
+      try{
+        if(typeof window._cstRandomTicketStarCandidates === 'function' && window._cstRandomTicketStarCandidates(tier).length > 0
+           && typeof window._cstUseTicketForStar === 'function'){
+          window._cstUseTicketForStar(tier, '', { random: true });
+          return;
+        }
+      }catch(_eRs){ try{ console.warn('[召喚卷→命星]', _eRs); }catch(_){} }
       // 理論上按鈕已鎖,保險再擋一次(不消耗卷)
       // ★ v5.97.0 — 同面板文案：分辨「真的全收錄」與「新英雄還沒開放」（學生回報 BUG 的根因）
       var _piU = { lockedNew: 0 };
@@ -81706,6 +81735,17 @@ function makeRadar(dims, size) {
     });
   };
   W._cstURStarCandidates = function(){ return W._cstTicketStarCandidates('UR'); };   /* 舊名保留(相容) */
+  /* ★ v5.339.0(老師「SSR英雄召喚卷在全收錄時…應該要開放可以召喚」「UR、SR也是一樣」)——
+   *   SR/SSR「隨機」召喚卷全收錄時可換命星的對象 = 自選卷可換命星的名單,再排除隨機卷本來就抽不到的
+   *   (BOSS 同名英雄 _bossHeroNoRandom、測試期 _summonTestPhaseLocked),避免隨機卷繞路拿到原本拿不到的角色命星。 */
+  W._cstRandomTicketStarCandidates = function(tier){
+    if(tier !== 'SR' && tier !== 'SSR') return [];
+    return W._cstTicketStarCandidates(tier).filter(function(n){
+      try{ if(typeof W._bossHeroNoRandom === 'function' && W._bossHeroNoRandom(n)) return false; }catch(_){}
+      try{ if(typeof W._summonTestPhaseLocked === 'function' && W._summonTestPhaseLocked(n)) return false; }catch(_){}
+      return true;
+    });
+  };
   W._cstTicketSectionHtml = function(tier, list){
     if(!list || !list.length) return '';
     var h = '<div style="flex-basis:100%;width:100%;margin:10px 0 2px;padding-top:10px;border-top:1px dashed rgba(255,200,255,0.4);'
@@ -81720,15 +81760,24 @@ function makeRadar(dims, size) {
     return h;
   };
   W._cstURTicketSectionHtml = function(list){ return W._cstTicketSectionHtml('UR', list); };   /* 舊名保留(相容) */
-  W._cstUseTicketForStar = function(tier, name){
+  /* ★ v5.339.0 opts.random=true:SR/SSR「隨機」召喚卷全收錄時使用 ⇒ 扣隨機卷、從 _cstRandomTicketStarCandidates 隨機挑一位(按下確認當下才抽) */
+  W._cstUseTicketForStar = function(tier, name, opts){
     if(tier !== 'SR' && tier !== 'SSR' && tier !== 'UR') tier = 'UR';
-    var tid = 'summon_ticket_' + tier.toLowerCase() + '_pick';
-    var srcTag = 'ticket_' + tier.toLowerCase() + '_pick';
+    var isRnd = !!(opts && opts.random) && tier !== 'UR';
+    var tid = 'summon_ticket_' + tier.toLowerCase() + (isRnd ? '' : '_pick');
+    var srcTag = 'ticket_' + tier.toLowerCase() + (isRnd ? '' : '_pick');
+    var tkNm = tier + (isRnd ? ' 召喚卷' : ' 自選卷');
+    var tkLog = tier + (isRnd ? '召喚卷' : '自選卷');
+    var _cands = function(){ return isRnd ? W._cstRandomTicketStarCandidates(tier) : W._cstTicketStarCandidates(tier); };
+    var _okName = function(){ var cl = _cands(); return isRnd ? cl.length > 0 : cl.indexOf(name) >= 0; };
     try{
       if(!_ready()){ _toast(_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試'), '#ffaa44'); return; }
-      if(W._cstTicketStarCandidates(tier).indexOf(name) < 0){ _toast(_T('這位 ' + tier + ' 不能選', '此 ' + tier + ' 不符合條件(未擁有或已滿 6 命)'), '#ffaa44'); return; }
-      if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tier + ' 自選卷了', '沒有 ' + tier + ' 自選召喚卷'), '#ffaa44'); return; }
-      var msg = _T('要用 1 張 ' + tier + ' 自選卷,換「' + name + '」的 1 顆命星嗎?\n(現在 ' + W._cstHeld(name) + '/6)',
+      if(!_okName()){ _toast(isRnd ? _T('沒有可以換命星的 ' + tier + ' 了', '已無可轉為命星的 ' + tier + ' 英雄') : _T('這位 ' + tier + ' 不能選', '此 ' + tier + ' 不符合條件(未擁有或已滿 6 命)'), '#ffaa44'); return; }
+      if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }
+      var msg = isRnd
+        ? _T(tier + ' 英雄你都收集齊了!\n要用 1 張 ' + tier + ' 召喚卷,隨機換一位 ' + tier + ' 的 1 顆命星嗎?\n(還沒滿 6 命的有 ' + _cands().length + ' 位)',
+             '您已收錄全部 ' + tier + ' 英雄。\n確定消耗 1 張 ' + tier + ' 召喚卷,隨機轉為一位已收錄 ' + tier + ' 英雄的 1 顆命星?\n(可轉命星:' + _cands().length + ' 位)')
+        : _T('要用 1 張 ' + tier + ' 自選卷,換「' + name + '」的 1 顆命星嗎?\n(現在 ' + W._cstHeld(name) + '/6)',
                    '確定消耗 1 張 ' + tier + ' 自選召喚卷,轉為「' + name + '」的 1 顆命星?\n(目前命星 ' + W._cstHeld(name) + '/6)');
       var uidAtAsk = _uid12();   /* 開確認框當下是哪個帳號 */
       var go = function(){
@@ -81741,8 +81790,13 @@ function makeRadar(dims, size) {
           try{ if(typeof W._lxpsUidDrift === 'function' && W._lxpsUidDrift()){ _toast(_T('帳號狀態不穩,等一下再試', '帳號狀態異常,請稍候再試'), '#ffaa44'); return; } }catch(_){}
           /* ★ v5.279.0 防幽靈卷:券實例還沒從雲端載入時不准用(否則扣的是背包數字、實例沒消耗,下次登入券會復活) */
           try{ if(typeof W._isTicketInstId === 'function' && W._isTicketInstId(tid) && !W._ticketHydrated){ _toast(_T('召喚卷資料還在載入,等一下再試', '召喚卷資料尚未載入完成,請稍候再試'), '#ffaa44'); return; } }catch(_){}
-          if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tier + ' 自選卷了', '沒有 ' + tier + ' 自選召喚卷'), '#ffaa44'); return; }
-          if(W._cstTicketStarCandidates(tier).indexOf(name) < 0){ _toast(_T('這位英雄已經滿 6 命了', '此角色已滿 6 命'), '#ffaa44'); return; }
+          if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }
+          if(isRnd){   /* ★ v5.339.0 隨機模式:按下確認這一刻才抽,抽的是當下仍可換的名單 */
+            var _cl = _cands();
+            if(!_cl.length){ _toast(_T('沒有可以換命星的 ' + tier + ' 了', '已無可轉為命星的 ' + tier + ' 英雄'), '#ffaa44'); return; }
+            name = _cl[Math.floor(Math.random() * _cl.length)];
+          }
+          if(_cands().indexOf(name) < 0){ _toast(_T('這位英雄已經滿 6 命了', '此角色已滿 6 命'), '#ffaa44'); return; }
           var k = W._cstKey(name), d0 = D(), gotBefore = d0.got[k] | 0, histBefore = d0.hist.length;
           /* 還原時只拿掉這一筆剛寫的帳本(由尾端往前找,帳本滿 300 筆被截過也找得到) */
           var _popMine = function(){
@@ -81763,7 +81817,7 @@ function makeRadar(dims, size) {
           }
           /* ★ v5.279.0 防洗命星:一定要真的扣到 1 張券(backpackRemove 以券實例為準);扣不到 ⇒ 把剛加的命星收回(同步、尚未存檔) */
           var took = 0;
-          try{ took = backpackRemove(tid, 1, tier + '自選卷→命星:' + name) | 0; }catch(_){ took = 0; }
+          try{ took = backpackRemove(tid, 1, tkLog + '→命星:' + name) | 0; }catch(_){ took = 0; }
           if(took < 1){
             d0 = D(); d0.got[k] = gotBefore; if(!gotBefore) delete d0.got[k];
             _popMine();
@@ -81780,15 +81834,16 @@ function makeRadar(dims, size) {
                 var bag = JSON.parse(JSON.stringify(_playerBackpack));
                 var patch = { playerBackpack: bag, playerBackpack_s: JSON.stringify(bag), constellationData_s: cf.constellationData_s };
                 try{ if(typeof W._ticketDataForCloud === 'function'){ var tk = W._ticketDataForCloud(); patch.ticketData = tk; patch.ticketData_s = JSON.stringify(tk); } }catch(_){}
-                W._lxpsCloudInstantUnlock(patch, tier + '自選卷→命星(扣券+命星):' + name);
+                W._lxpsCloudInstantUnlock(patch, tkLog + '→命星(扣券+命星):' + name);
                 atomicOk = true;
               }
             }
           }catch(eA){ console.warn('[命座] 自選卷轉命星原子寫入失敗,改走背包即時落地＋gameCloudSave', eA); }
-          if(!atomicOk){ try{ if(typeof W._lxpsInstantBackpackPersist === 'function') W._lxpsInstantBackpackPersist(tier + '自選卷→命星'); }catch(_){} }
+          if(!atomicOk){ try{ if(typeof W._lxpsInstantBackpackPersist === 'function') W._lxpsInstantBackpackPersist(tkLog + '→命星'); }catch(_){} }
           try{ if(typeof W._logActivity === 'function') W._logActivity('ticket_use', { ticket: tid, cst: name }); }catch(_){}
           _save();   /* 三槽完整存檔(命星欄位由 _buildSafeData 帶) */
           try{ var m = document.getElementById('_summon-ticket-pick-modal'); if(m) m.remove(); }catch(_){}
+          if(isRnd){ try{ var m2 = document.getElementById('_summon-ticket-modal'); if(m2) m2.remove(); }catch(_){} }   /* ★ v5.339.0 隨機卷從主面板來 */
           try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
           _toast(_T('⭐ ' + name + ' 拿到 1 顆命星!\n到英雄圖鑑「✨ 命座」點亮它吧!', '⭐ ' + name + ' 獲得命星 ×1\n請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
         }catch(e2){ console.warn('[命座] 自選卷轉命星例外', e2); _toast('發生錯誤:' + (e2 && e2.message ? e2.message : e2), '#ff8844'); }
