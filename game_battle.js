@@ -1391,6 +1391,121 @@ function noise(dur,vol){
   }catch(_){}
 })();
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★★ v5.337.0(2026-11-03・老師回報 2022 iPad 全班玩「很多按鈕按下去都很卡」,選乙:音效改 Web Audio)★★
+ * 【根因】89 個音效各是一個 <audio> 元素,87 個 preload="none";iPad 上每按一次鈕 playSfx 都要
+ *   currentTime=0(播放器 seek)+play(),第一次還要當場讀檔解碼、建立播放器 ⇒ 點擊那一拍主執行緒被卡住。
+ *   另外 iOS 的 <audio>.volume 是唯讀(設了沒用),所以 iPad 上音效一律以最大聲播放、音量面板對音效無效。
+ * 【做法】_lxpsWaSfx:沿用既有 AC(AudioContext),音效檔 fetch(經 SW 素材庫)→ decodeAudioData 成緩衝;
+ *   playSfx 先問 _lxpsWaSfx.play(),有緩衝且 AC 在跑就用 BufferSource+GainNode 播(零 seek、零播放器),
+ *   同一音效再按一次會先停掉上一聲(等同原本的 currentTime=0 重播);淡出時間點、長度與原本一致(fadeStartMs 後 0.3 秒淡出)。
+ *   沒緩衝 ⇒ 回 false 走原本 <audio> 路徑,同時背景解碼(下次就快)。第一次觸控後 4 秒,背景逐一預先解碼最常用的 24 個。
+ * 【音量】iPad/iPhone 以前 <audio> 一律全音量 ⇒ Web Audio 在 iOS 拿掉 0.49 這一層(PC 時代調的整體降量),
+ *   保留各音效自己的大小、使用者音效音量、暫停減半與聽音題壓低;PC 維持原公式。⇒ iPad 上音效音量面板第一次真正有效。
+ * 【記憶體】解碼後的緩衝總量上限 24MB(流暢模式 8MB、只預解碼 12 個),超過就丟掉最久沒用的(下次再解碼)。
+ * 【不動】直接操作 <audio> 元素的少數地方(答對/答錯/升級…)照舊;BGM 照舊;靜音(_sfxMuted)在 playSfx 入口已擋。
+ * 【緊急關閉】localStorage.lxps_wa_sfx = 'off' ⇒ 全部退回 <audio> 原路徑。
+ * 【靜音鍵】navigator.audioSession.type='playback'(iPadOS 17+):Web Audio 不受靜音模式影響,與原本 <audio> 行為一致。
+ * ══════════════════════════════════════════════════════════════════════════ */
+(function _lxpsWaSfxInit(){
+  var W = window._lxpsWaSfx = { bufs: {}, used: {}, loading: {}, failed: {}, cur: {}, bytes: 0, on: true, hit: 0, miss: 0 };
+  var IOS = false;
+  try{
+    var _ua = navigator.userAgent || '';
+    IOS = /iPad|iPhone|iPod/.test(_ua) || (/Macintosh/.test(_ua) && (navigator.maxTouchPoints || 0) > 1);
+  }catch(_){}
+  try{ if(localStorage.getItem('lxps_wa_sfx') === 'off') W.on = false; }catch(_){}
+  try{ if(navigator.audioSession && IOS) navigator.audioSession.type = 'playback'; }catch(_){}
+  function _ac(){ try{ return (typeof AC !== 'undefined' && AC) ? AC : null; }catch(_){ return null; } }
+  function _cap(){ return (window._lxpsLiteOn && window._lxpsLiteOn()) ? 8e6 : 24e6; }
+  function _srcOf(el){
+    var s = el.getAttribute('src') || el.getAttribute('data-src') || '';
+    if(!s){ var so = el.querySelector && el.querySelector('source'); if(so) s = so.getAttribute('src') || ''; }
+    return s;
+  }
+  function _sizeOf(b){ try{ return b.length * b.numberOfChannels * 4; }catch(_){ return 0; } }
+  function _evict(){
+    var cap = _cap();
+    while(W.bytes > cap){
+      var oldest = null, t = Infinity;
+      for(var k in W.bufs){ if(!W.cur[k] && (W.used[k] || 0) < t){ t = W.used[k] || 0; oldest = k; } }
+      if(!oldest) break;
+      W.bytes -= _sizeOf(W.bufs[oldest]); delete W.bufs[oldest]; delete W.used[oldest];
+    }
+  }
+  W.load = function(id, el, cb){
+    var ac = _ac();
+    if(!W.on || !ac || W.bufs[id] || W.loading[id] || W.failed[id]){ if(cb) cb(); return; }
+    el = el || document.getElementById(id);
+    var u = el ? _srcOf(el) : '';
+    if(!u || typeof fetch !== 'function'){ W.failed[id] = 1; if(cb) cb(); return; }
+    W.loading[id] = 1;
+    fetch(u, { credentials: 'omit' }).then(function(r){
+      if(!r || !r.ok) throw new Error('http ' + (r && r.status));
+      return r.arrayBuffer();
+    }).then(function(ab){
+      return new Promise(function(res, rej){
+        var p = ac.decodeAudioData(ab, res, rej);   // 舊 Safari 只吃回呼版;新版另回 Promise,兩邊都接
+        if(p && typeof p.then === 'function') p.then(res, rej);
+      });
+    }).then(function(buf){
+      delete W.loading[id];
+      if(!W.bufs[id]){ W.bufs[id] = buf; W.used[id] = Date.now(); W.bytes += _sizeOf(buf); _evict(); }
+      if(cb) cb();
+    }).catch(function(e){
+      delete W.loading[id]; W.failed[id] = 1;
+      try{ console.warn('[Web Audio 音效] ' + id + ' 解碼失敗,改用原播放方式', e && e.message); }catch(_){}
+      if(cb) cb();
+    });
+  };
+  W.play = function(id, el, v, fadeStartMs){
+    if(!W.on) return false;
+    var ac = _ac(); if(!ac) return false;
+    var buf = W.bufs[id];
+    if(!buf){ W.miss++; W.load(id, el); return false; }
+    if(ac.state !== 'running'){ try{ ac.resume(); }catch(_){} return false; }
+    var prev = W.cur[id];
+    if(prev){ try{ prev.stop(); }catch(_){} delete W.cur[id]; }
+    var g = IOS ? Math.min(1, v / 0.49) : v;
+    if(!isFinite(g) || g < 0) g = 0;
+    var src = ac.createBufferSource(), gn = ac.createGain();
+    src.buffer = buf; src.connect(gn); gn.connect(ac.destination);
+    var now = (typeof _safeAcTime === 'function') ? _safeAcTime() : ac.currentTime;
+    var fs = ((typeof fadeStartMs === 'number' && fadeStartMs > 0) ? fadeStartMs : 2700) / 1000;
+    gn.gain.setValueAtTime(g, now);
+    if(buf.duration > fs){
+      gn.gain.setValueAtTime(g, now + fs);
+      gn.gain.linearRampToValueAtTime(0, now + fs + 0.3);
+      src.start(now); src.stop(now + fs + 0.32);
+    } else {
+      src.start(now);
+    }
+    W.cur[id] = src; W.used[id] = Date.now(); W.hit++;
+    src.onended = function(){ if(W.cur[id] === src) delete W.cur[id]; try{ src.disconnect(); gn.disconnect(); }catch(_){} };
+    return true;
+  };
+  // 第一次觸控後 4 秒,背景一個一個預先解碼最常用的音效(一次只解一個,不搶戰鬥/畫面)
+  var HOT = ['sfx-sel','sfx-cancel','sfx-confirm','sfx-powerup','sfx-gentle','sfx-heal','sfx-fantasy','sfx-explode',
+             'sfx-sword','sfx-confirm2','sfx-burst','sfx-guard','sfx-statup','sfx-shoot','sfx-coin','sfx-medal-unlock',
+             'sfx-punch','sfx-goddess','sfx-passive','sfx-cantmove','sfx-equip','sfx-crit','sfx-battle-start','sfx-powerdown'];
+  var _pre = false;
+  function _preload(){
+    if(_pre || !W.on) return; _pre = true;
+    setTimeout(function(){
+      var i = 0, lim = (window._lxpsLiteOn && window._lxpsLiteOn()) ? 12 : HOT.length;   // 流暢模式只預解碼最常用的 12 個
+      (function next(){
+        if(i >= lim) return;
+        W.load(HOT[i++], null, function(){ setTimeout(next, 120); });
+      })();
+    }, 4000);
+  }
+  try{
+    ['pointerdown','touchend','mousedown','keydown'].forEach(function(_ev){
+      document.addEventListener(_ev, _preload, { once: true, capture: true, passive: true });
+    });
+  }catch(_){}
+})();
+
 function playSfx(id, vol, fadeStartMs){
   // ★ v3.3.3 — FX 同步:把音效事件加入佇列(client 後續會重播)
   //   ⚠ 注意:client 重播時會「再次」播放,所以這個 wrap 必須只在房主端 capture,
@@ -1405,15 +1520,18 @@ function playSfx(id, vol, fadeStartMs){
   const el=document.getElementById(id);
   if(!el) return;
   try{
-    if(el._fadeTimer){ clearTimeout(el._fadeTimer); el._fadeTimer=null; }
-    if(el._fadeIv){ clearInterval(el._fadeIv); el._fadeIv=null; }
-    el.currentTime=0;
     // 音效總音量再降30%（0.7→0.49），暫停時再降50%
     // ★ v5.37.0 — 再乘「使用者音效音量」(0~1·音量面板調整;window 屬性讀取極早期呼叫也安全)
     const _pauseMod = _gamePaused ? 0.5 : 1.0;
     const _userMod = (typeof window._sfxUserVol === 'number') ? window._sfxUserVol : 1;
     const _duckMod = (typeof window._lxpsEarDuckSfxMul === 'number') ? window._lxpsEarDuckSfxMul : 1;   // ★ v5.145.0 聽音題播放期間音效縮至 20%
     const v=(vol||0.7)*0.49*_pauseMod*_userMod*_duckMod;
+    // ★ v5.337.0(老師選乙)— 先走 Web Audio(已解碼的緩衝,按下立即出聲、不用每次 seek 播放器);
+    //   還沒解碼好/AudioContext 沒在跑 ⇒ 回 false,照舊用 <audio> 元素播(同時背景開始解碼,下次就走 Web Audio)。
+    try{ if(window._lxpsWaSfx && window._lxpsWaSfx.play(id, el, v, fadeStartMs)) return; }catch(_eWa){}
+    if(el._fadeTimer){ clearTimeout(el._fadeTimer); el._fadeTimer=null; }
+    if(el._fadeIv){ clearInterval(el._fadeIv); el._fadeIv=null; }
+    el.currentTime=0;
     el.volume=v;
     el.play().catch(()=>{});
     // ★ v1.0.20260422.0110 — 可選 fadeStartMs 參數：指定多少毫秒後開始淡出（預設 2700ms）

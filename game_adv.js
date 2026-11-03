@@ -39935,6 +39935,7 @@ function _initSummonStars(){
       'animation-delay:' + delay + 's',
       'pointer-events:none',
     ].join(';');
+    st.className = (i % 3 === 0) ? 'ss-st ss-keep' : 'ss-st';   // ★ v5.337.0 流暢模式只留每 3 顆的 1 顆(20/60)
     layer.appendChild(st);
   }
   // 少量大型亮星(約 8 顆)點綴
@@ -39958,6 +39959,7 @@ function _initSummonStars(){
       'animation-delay:' + delay + 's',
       'pointer-events:none',
     ].join(';');
+    st.className = (i % 3 === 0) ? 'ss-st ss-keep' : 'ss-st';   // ★ v5.337.0 流暢模式留 3/8 顆大星
     layer.appendChild(st);
   }
   _summonStarsInited = true;
@@ -40073,6 +40075,18 @@ function _startSummonFireflies(){
   // 一開始先生成 6 隻,讓畫面就有
   for(let i=0;i<6;i++) setTimeout(_spawnSummonFirefly, i*220);
   _summonFireflyTimer = setInterval(()=>{
+    // ★ v5.337.0 流暢模式:召喚動畫播放中(#summon-fx-layer 有內容)⇒ 標記 lxps-fx-on 讓背景星星/螢火蟲暫停、不生新螢火蟲;
+    //   平時螢火蟲約三分之一。非流暢模式行為完全不變。
+    let _lite = false;
+    try{ _lite = !!(window._lxpsLiteOn && window._lxpsLiteOn()); }catch(_){}
+    if(_lite){
+      let _fxOn = false;
+      try{ const _fxl = document.getElementById('summon-fx-layer'); _fxOn = !!(_fxl && _fxl.style.display !== 'none' && _fxl.firstChild); }catch(_){}
+      try{ const _so = document.getElementById('summon-overlay'); if(_so) _so.classList.toggle('lxps-fx-on', _fxOn); }catch(_){}
+      if(_fxOn || Math.random() > 0.45) return;
+      _spawnSummonFirefly();
+      return;
+    }
     // 每 0.45 秒生成 1~2 隻
     _spawnSummonFirefly();
     if(Math.random() < 0.5) _spawnSummonFirefly();
@@ -40092,7 +40106,11 @@ function _startSummonFireflies(){
     _scheduleShootingStar();
   }
   // 河面動態漣漪每 1.2~2.2 秒生成一個
-  if(!_summonRiverRippleTimer){
+  // ★ v5.337.0 河面層自 v3.16.54 起就是 display:none(改由動態影片呈現水面),計時器卻一直往看不見的層塞元素
+  //   ⇒ 河面層隱藏時不啟動漣漪計時器(畫面零差異,所有裝置都省)。
+  let _riverHidden = false;
+  try{ const _rv = document.getElementById('summon-river'); _riverHidden = !_rv || _rv.style.display === 'none'; }catch(_){}
+  if(!_summonRiverRippleTimer && !_riverHidden){
     _summonRiverRippleTimer = setInterval(()=>{
       try{ _spawnSummonRiverRipple(); }catch(_){}
       // 偶爾連續生成兩個漣漪,讓河面更生動
@@ -40302,9 +40320,14 @@ function openSummonOverlay(){
   // ★ v5.302.0 🌠 祈願(星形按鈕,召喚 1 次左邊)
   try{ if(typeof window._wishEnsureBtn === 'function') window._wishEnsureBtn(); }catch(_eWishBtn){}
   // ★ v5.84.0(P1 甲)— 動態背景影片改「進這一頁才載」(開機不再預抓)
-  try{ if(window._lxpsActivateBgVideo) window._lxpsActivateBgVideo('summon-bg-video'); }catch(_){}
+  // ★ v5.337.0 流暢模式不載/不播背景影片(露出原本的靜態星空圖);沒開流暢模式照舊
+  let _liteSum = false;
+  try{ _liteSum = !!(window._lxpsLiteOn && window._lxpsLiteOn()); }catch(_){}
+  if(!_liteSum){ try{ if(window._lxpsActivateBgVideo) window._lxpsActivateBgVideo('summon-bg-video'); }catch(_){} }
   // 啟動螢火蟲
   _startSummonFireflies();
+  // ★ v5.337.0 流暢模式「自動」:召喚星空開啟 0.8 秒後實測 1.5 秒畫面流暢度,太慢就自動開(本次開機只量一次)
+  try{ setTimeout(function(){ if(window._lxpsLiteProbe && ov.style.display !== 'none') window._lxpsLiteProbe('召喚星空'); }, 800); }catch(_){}
   // ★ v1.0.20260501.4720 — 啟動單抽按鈕倒數計時(每日免費召喚)
   try{ if(typeof _startSummonBtnTimer === 'function') _startSummonBtnTimer(); }catch(_){}
   // 切換 BGM
@@ -82971,7 +82994,7 @@ function makeRadar(dims, size) {
 (function(){
   if(window._lxpsOD) return;
   var OD = window._lxpsOD = {
-    ver: 'v5.330.0',
+    ver: 'v5.337.0',
     doneAreas: {},       // 本次開機已確認齊全的區域
     badUrls: {},         // 本次開機抓不到的網址(不再列入檢查)
     queue: [],           // 待抓網址(絕對網址)
@@ -82990,6 +83013,17 @@ function makeRadar(dims, size) {
     var _iosLike = /iPad|iPhone|iPod/.test(_ua) || (/Macintosh/.test(_ua) && (navigator.maxTouchPoints || 0) > 1);
     OD.conc = _iosLike ? 3 : 6;
   }catch(_){}
+  /* ★ v5.337.0(老師選丙「邊玩邊下載減量」)
+     ①流暢模式開著(舊平板)⇒ 同時只下載 1 個(原 iPad 3 個)——全班 25 台同時在學校 wifi 抓,舊平板記憶體也吃緊;
+     ②比對素材庫改成每批 20 個依序比(原本一個區域幾百個 caches.match 一次全丟,Safari 會卡一下);
+     ③正在戰鬥或召喚星空開著 ⇒ 只下載「眼前這一區要用的」(玩家點進去、在等的),背景補抓「其餘」先暫停,離開就接續。 */
+  OD.urgent = {};
+  function _concNow(){ try{ if(window._lxpsLiteOn && window._lxpsLiteOn()) return 1; }catch(_){} return OD.conc; }
+  function _busyPlay(){
+    try{ if(typeof _isInBattleNow === 'function' && _isInBattleNow()) return true; }catch(_){}
+    try{ var so = document.getElementById('summon-overlay'); if(so && so.style.display !== 'none' && so.getClientRects().length) return true; }catch(_){}
+    return false;
+  }
 
   function _cute(){ return (typeof window._artStyle === 'string' ? window._artStyle : 'cute') !== 'premium'; }
   OD.hasSW = function(){
@@ -83081,8 +83115,14 @@ function makeRadar(dims, size) {
         if(man && !man.set[_baseNoExt(a)]) return;   // repo 沒這個檔 ⇒ 不列入
         abs.push(a);
       });
-      return Promise.all(abs.map(function(a){ return OD.isCached(a).then(function(c){ return c ? null : a; }); }))
-        .then(function(rs){ return { total: abs.length, missing: rs.filter(Boolean) }; });
+      // ★ v5.337.0 每批 20 個依序比對(原本整區一次 Promise.all,幾百個 caches.match 同時丟)
+      var missing = [], k = 0;
+      function batch(){
+        if(k >= abs.length) return Promise.resolve({ total: abs.length, missing: missing });
+        var part = abs.slice(k, k + 20); k += 20;
+        return Promise.all(part.map(function(a){ return OD.isCached(a).then(function(c){ if(!c) missing.push(a); }); })).then(batch);
+      }
+      return batch();
     });
   };
 
@@ -83105,7 +83145,15 @@ function makeRadar(dims, size) {
   }
   function _pump(){
     if(_quizOn()) return;   // ★ v5.330.0 搶答擂台開著 ⇒ 不開始新的下載(離開擂台由 _lqTick 叫醒)
-    while(OD.inflight < OD.conc && OD.queue.length){
+    var _cc = _concNow(), _busy = _busyPlay();
+    while(OD.inflight < _cc && OD.queue.length){
+      // ★ v5.337.0 戰鬥/召喚中:只挑急件(眼前這一區在等的),背景補抓的先不開始;沒有急件就停(3 秒巡一次,離開後接續)
+      var _qi = 0;
+      if(_busy){
+        _qi = -1;
+        for(var _i = 0; _i < OD.queue.length; _i++){ if(OD.urgent[OD.queue[_i]]){ _qi = _i; break; } }
+        if(_qi < 0) break;
+      }
       (function(abs){
         OD.inflight++;
         var tries = 0;
@@ -83120,18 +83168,22 @@ function makeRadar(dims, size) {
         attempt().then(function(ok){
           OD.inflight--;
           delete OD._started[abs];
+          delete OD.urgent[abs];
           if(!ok) OD.badUrls[abs] = 1;
           var cbs = OD.waiters[abs] || []; delete OD.waiters[abs];
           cbs.forEach(function(cb){ try{ cb(ok); }catch(_){} });
           _pump();
         });
-      })(OD.queue.shift());
+      })(OD.queue.splice(_qi, 1)[0]);
     }
   }
+  // ★ v5.337.0 戰鬥/召喚中暫停的背景補抓:每 3 秒巡一次,有空位就接續(佇列空時什麼都不做)
+  setInterval(function(){ try{ if(OD.queue.length && OD.inflight < _concNow()) _pump(); }catch(_){} }, 3000);
   // low=true(v5.328.0):背景補抓的「其餘」素材排到隊伍最後,不搶眼前要用的
   OD.enqueue = function(absList, cb, low){
     var front = [];
     absList.forEach(function(a){
+      if(!low) OD.urgent[a] = 1;   // ★ v5.337.0 急件標記(戰鬥/召喚中只抓急件)
       if(OD.waiters[a]){ OD.waiters[a].push(cb); if(!low) front.push(a); return; }   // 已在排隊或下載中,搭便車(急件則提前)
       OD.waiters[a] = [cb]; front.push(a);
     });

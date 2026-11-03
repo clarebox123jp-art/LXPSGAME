@@ -44,6 +44,147 @@
       onSnapshot, increment, deleteDoc, deleteField, runTransaction };
   }catch(_eExpose){ console.warn('[v3.11.29] 暴露 Firestore 物件到 window 失敗', _eExpose); }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+   * ★★ v5.338.0(2026-11-03・老師「整個遊戲跑得非常順且不易斷線」選甲:stats/global 熱點拆分)★★
+   * 【根因】stats/global 一份文件同時裝了:小博士週排行(weeklyQuiz)、鬥技場週排行(arenaWeekly…)、
+   *   龍王血量/排行/結算(worldBossHp…)、GM 公告回應(gmAck)、維修/公告/人數統計。每位學生又開著 5 個監聽看它。
+   *   ⇒ 任何人打完小博士/鬥技場/龍王,整份大文件推給所有在線玩家;大家又用 transaction 搶寫同一份(單一文件
+   *     持續寫入約每秒 1 次),全班同時玩就互相重試、變慢、失敗。
+   * 【做法】高頻欄位搬到各自文件(欄位名稱完全不變,讀寫程式只換文件):
+   *     stats/weeklyQuiz  ← weeklyQuiz、weeklyQuizSettlement
+   *     stats/arenaWeekly ← arenaWeekly、arenaRankSettlement、arenaZhengCompLog、arenaShopOpen、arenaRankRewardEnabled
+   *     stats/worldBoss   ← worldBossHp、worldBossLeaderboard、wbBlessing、wbBossDownTimes、wbCurrentRound、wbSettlement、wbCurrentBossId、wbAdvanceLog
+   *     stats/gmAck       ← gmAck
+   *   stats/global 只留:維修、GM 公告本體、人數統計、龍王房間清掃鎖(都是小、低頻)。
+   * 【搬家】_lxpsStatsEnsure(群組):第一次用到該群組時,用 transaction 把 stats/global 的舊資料複製進新文件
+   *   (新文件已有的值優先、逐層合併),標 _migratedAt;之後一律只讀寫新文件。舊資料留在 stats/global 不刪(可回查)。
+   *   每個寫入路徑都先 await 它,確保新文件一定先帶著舊資料才開始寫。
+   * 【規則】不用改 firestore.rules:既有 /stats/{docId} 規則已允許登入者「更新」任何 stats 文件(維修/公告欄位除外),
+   *   但「建立」新文件只有管理員可以 ⇒ 由老師帳號登入時自動建立四份新文件並搬家(登入 3 秒後)。
+   *   ⚠ 上傳新版後請立刻用老師帳號登入一次;在那之前學生端搬家會被擋(主控台 warn),寫入暫時失敗、之後自動重試。
+   * ══════════════════════════════════════════════════════════════════════════ */
+  const _LXPS_STATS_GROUPS = {
+    wq:    { id: 'weeklyQuiz',  fields: ['weeklyQuiz', 'weeklyQuizSettlement', 'weeklyQuizDeletionLog'] },
+    arena: { id: 'arenaWeekly', fields: ['arenaWeekly', 'arenaRankSettlement', 'arenaZhengCompLog', 'arenaShopOpen', 'arenaRankRewardEnabled'] },
+    wb:    { id: 'worldBoss',   fields: ['worldBossHp', 'worldBossLeaderboard', 'wbBlessing', 'wbBossDownTimes', 'wbCurrentRound', 'wbSettlement', 'wbCurrentBossId', 'wbAdvanceLog', 'wbSettlementFailures', 'wbBossSpawnTimes'] },
+    ack:   { id: 'gmAck',       fields: ['gmAck'] }
+  };
+  function _lxpsStatsDoc(g){ return doc(_fbDb, 'stats', _LXPS_STATS_GROUPS[g].id); }
+  function _lxpsDeepMergeNewWins(oldV, newV){
+    if(newV === undefined) return oldV;
+    if(oldV && newV && typeof oldV === 'object' && typeof newV === 'object' && !Array.isArray(oldV) && !Array.isArray(newV)){
+      const out = Object.assign({}, oldV);
+      Object.keys(newV).forEach(function(k){ out[k] = _lxpsDeepMergeNewWins(oldV[k], newV[k]); });
+      return out;
+    }
+    return newV;
+  }
+  const _lxpsStatsEnsureP = {};
+  function _lxpsStatsEnsure(g){
+    if(_lxpsStatsEnsureP[g]) return _lxpsStatsEnsureP[g];
+    const G = _LXPS_STATS_GROUPS[g];
+    const p = (async function(){
+      const ref = _lxpsStatsDoc(g);
+      try{
+        const s0 = await getDoc(ref);
+        if(s0.exists() && (s0.data() || {})._migratedAt) return true;
+      }catch(_){}
+      try{
+        await runTransaction(_fbDb, async function(tx){
+          const sNew = await tx.get(ref);
+          const dNew = sNew.exists() ? (sNew.data() || {}) : {};
+          if(dNew._migratedAt) return;
+          const sOld = await tx.get(doc(_fbDb, 'stats', 'global'));
+          const dOld = sOld.exists() ? (sOld.data() || {}) : {};
+          const seed = Object.assign({}, dNew, { _migratedAt: Date.now(), _migratedFrom: 'stats/global' });
+          G.fields.forEach(function(f){
+            if(dOld[f] !== undefined || dNew[f] !== undefined) seed[f] = _lxpsDeepMergeNewWins(dOld[f], dNew[f]);
+          });
+          // 舊版公告回應寫成頂層「gmAck.公告id.uid」點號鍵 ⇒ 搬家時一併轉成巢狀 gmAck[公告id][uid]
+          if(g === 'ack'){
+            Object.keys(dOld).forEach(function(k){
+              if(k.indexOf('gmAck.') !== 0) return;
+              const parts = k.split('.'); if(parts.length < 3) return;
+              const bid = parts[1], u = parts.slice(2).join('.');
+              if(!seed.gmAck) seed.gmAck = {};
+              if(!seed.gmAck[bid]) seed.gmAck[bid] = {};
+              if(!seed.gmAck[bid][u]) seed.gmAck[bid][u] = dOld[k];
+            });
+          }
+          tx.set(ref, seed);   // 整份寫入(已含新文件原有內容),不留半套
+        });
+        console.info('[stats 拆分 v5.338.0] stats/' + G.id + ' 已就緒');
+        return true;
+      }catch(e){
+        console.warn('[stats 拆分 v5.338.0] stats/' + G.id + ' 搬家失敗(新文件要由老師帳號第一次登入時建立,稍後自動再試)', e && (e.code || e.message));
+        setTimeout(function(){ if(_lxpsStatsEnsureP[g] === p) delete _lxpsStatsEnsureP[g]; }, 0);   // 下次用到再試
+        return false;
+      }
+    })();
+    _lxpsStatsEnsureP[g] = p;
+    return p;
+  }
+  try{ window._lxpsStatsDoc = _lxpsStatsDoc; window._lxpsStatsEnsure = _lxpsStatsEnsure; window._LXPS_STATS_GROUPS = _LXPS_STATS_GROUPS; }catch(_){}
+  /* 清理:四份新文件都搬好之後,把 stats/global 裡已搬走的舊欄位(含舊版「gmAck.公告.uid」點號鍵)刪掉,
+     讓 stats/global 變回小文件(維修/公告/人數監聽每次推送才會輕)。刪之前先把整份舊資料備份到 stats/global_backup_v5338。
+     只有老師(管理員)帳號會執行;備份已存在就不覆蓋。 */
+  async function _lxpsStatsCleanupGlobal(){
+    const oks = await Promise.all(['wq', 'arena', 'wb', 'ack'].map(function(g){ return _lxpsStatsEnsure(g).catch(function(){ return false; }); }));
+    if(oks.indexOf(false) >= 0){ console.warn('[stats 拆分] 尚有群組未搬好,暫不清理 stats/global'); return { ok:false, reason:'not_migrated' }; }
+    const gRef = doc(_fbDb, 'stats', 'global');
+    const s = await getDoc(gRef);
+    if(!s.exists()) return { ok:true, removed:0 };
+    const d = s.data() || {};
+    const del = {};
+    Object.keys(_LXPS_STATS_GROUPS).forEach(function(g){ _LXPS_STATS_GROUPS[g].fields.forEach(function(f){ if(d[f] !== undefined) del[f] = deleteField(); }); });
+    Object.keys(d).forEach(function(k){ if(k.indexOf('gmAck.') === 0) del[k] = deleteField(); });
+    const n = Object.keys(del).length;
+    if(!n) return { ok:true, removed:0 };
+    const bRef = doc(_fbDb, 'stats', 'global_backup_v5338');
+    try{
+      const b = await getDoc(bRef);
+      if(!b.exists()) await setDoc(bRef, Object.assign({}, d, { _backupAt: Date.now(), _backupBy: (_fbAuth.currentUser && _fbAuth.currentUser.email) || '' }));
+    }catch(eB){ console.warn('[stats 拆分] 備份失敗,不清理', eB); return { ok:false, reason:'backup_failed' }; }
+    // 點號鍵要用 FieldPath 才刪得到;一般欄位用 updateDoc 一次刪
+    const plain = {}, dotted = [];
+    Object.keys(del).forEach(function(k){ if(k.indexOf('.') >= 0) dotted.push(k); else plain[k] = del[k]; });
+    if(Object.keys(plain).length) await updateDoc(gRef, plain);
+    if(dotted.length){
+      try{
+        const fsMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        for(let i = 0; i < dotted.length; i += 200){
+          const args = [];
+          dotted.slice(i, i + 200).forEach(function(k){ args.push(new fsMod.FieldPath(k), deleteField()); });
+          await updateDoc.apply(null, [gRef].concat(args));
+        }
+      }catch(eD){ console.warn('[stats 拆分] 點號鍵清理失敗(不影響遊戲)', eD); }
+    }
+    console.info('[stats 拆分 v5.338.0] stats/global 已清掉 ' + n + ' 個舊欄位(備份在 stats/global_backup_v5338)');
+    return { ok:true, removed:n };
+  }
+  window._fbStatsCleanupGlobal = _lxpsStatsCleanupGlobal;
+  // 登入(正式帳號)後 3 秒,四個群組各確認一次(新文件已存在就只是 1 次讀取;全校只有第一位會真的搬家);
+  // 老師帳號再多做一次「清理 stats/global 舊欄位」(本機記一次,做過就不再做)
+  try{
+    onAuthStateChanged(_fbAuth, function(u){
+      if(!u || u.isAnonymous) return;
+      setTimeout(function(){
+        ['wq', 'arena', 'wb', 'ack'].forEach(function(g){ try{ _lxpsStatsEnsure(g); }catch(_){} });
+        try{
+          const em = String(u.email || '').toLowerCase();
+          const isAdm = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'].indexOf(em) >= 0;
+          let done = false; try{ done = localStorage.getItem('lxps_stats_split_cleaned') === '1'; }catch(_){}
+          if(isAdm && !done){
+            setTimeout(function(){
+              _lxpsStatsCleanupGlobal().then(function(r){ if(r && r.ok){ try{ localStorage.setItem('lxps_stats_split_cleaned', '1'); }catch(_){} } })
+                .catch(function(e){ console.warn('[stats 拆分] 清理失敗', e); });
+            }, 8000);
+          }
+        }catch(_){}
+      }, 3000);
+    });
+  }catch(_eStatsAuth){}
+
 
   // ── D. 可見診斷面板(iPad 拍照用) ─────────────────────────────────
   window._fbDiagLogs = [];
@@ -3669,7 +3810,8 @@
       let _todayDmgSum = 0;
       const _myTeamKeys = [];
       try{
-        const _statsRef = doc(_fbDb, 'stats', 'global');
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}
+        const _statsRef = _lxpsStatsDoc('wb');   // ★ v5.338.0 龍王排行榜搬到 stats/worldBoss
         const _statsSnap = await getDoc(_statsRef);
         const _statsData = _statsSnap.exists() ? (_statsSnap.data() || {}) : {};
         const _lbMap = _statsData.worldBossLeaderboard || {};
@@ -4473,7 +4615,8 @@
     for(let _i = 0; _i < 5; _i++){
       try{
         const _patch = {}; _patch[field] = value;
-        await setDoc(doc(_fbDb, 'stats', 'global'), _patch, { merge: true });
+        try{ await _lxpsStatsEnsure('arena'); }catch(_){}
+        await setDoc(_lxpsStatsDoc('arena'), _patch, { merge: true });   // ★ v5.338.0 鬥技場旗標搬到 stats/arenaWeekly
         console.info('✅ [' + label + '] 已設定為', value, '(嘗試次數:' + (_i+1) + ')');
         return value;
       }catch(e){
@@ -4495,7 +4638,8 @@
   // GM 後台讀目前旗標值(無設定時:商店預設開、排名預設關)
   window._fbGetArenaFlags = async function(){
     try{
-      const snap = await getDoc(doc(_fbDb, 'stats', 'global'));
+      try{ await _lxpsStatsEnsure('arena'); }catch(_){}
+      const snap = await getDoc(_lxpsStatsDoc('arena'));   // ★ v5.338.0
       const d = snap.exists() ? (snap.data() || {}) : {};
       return {
         arenaShopOpen: (typeof d.arenaShopOpen === 'boolean') ? d.arenaShopOpen : true,
@@ -6508,12 +6652,16 @@
   window._fbAckGmBroadcast = async function(broadcastId, uid, name) {
     if(!broadcastId || !uid) return;
     try {
-      const ackData = {};
-      ackData['gmAck.' + broadcastId + '.' + uid] = {
+      // ★ v5.338.0 回應名單搬到 stats/gmAck,並改成真正的巢狀欄位(setDoc 的「點號鍵」不是路徑,
+      //   舊寫法其實在 stats/global 建出名為 "gmAck.公告.uid" 的頂層欄位;查詢端兩種都會讀)
+      const ackData = { gmAck: {} };
+      ackData.gmAck[broadcastId] = {};
+      ackData.gmAck[broadcastId][uid] = {
         name: name || '匿名',
         timestamp: Date.now(),
       };
-      await setDoc(doc(_fbDb, 'stats', 'global'), ackData, { merge: true });
+      try{ await _lxpsStatsEnsure('ack'); }catch(_){}
+      await setDoc(_lxpsStatsDoc('ack'), ackData, { merge: true });
       console.info('✅ [GM 公告回應] 已記錄 uid=' + uid + ' name=' + name);
     } catch(e) {
       console.warn('[GM 公告回應] 寫入失敗', e);
@@ -6523,9 +6671,22 @@
   // 管理員查詢 GM 公告回應名單
   window._fbGetGmAckList = async function(broadcastId) {
     try {
-      const snap = await getDoc(doc(_fbDb, 'stats', 'global'));
-      if(!snap.exists()) return { count: 0, list: [] };
-      const ack = (snap.data().gmAck || {})[broadcastId] || {};
+      // ★ v5.338.0 新文件 stats/gmAck ＋ 舊 stats/global(巢狀與「點號鍵」兩種舊格式)合併
+      const ack = {};
+      try{
+        const sNew = await getDoc(_lxpsStatsDoc('ack'));
+        if(sNew.exists()) Object.assign(ack, ((sNew.data() || {}).gmAck || {})[broadcastId] || {});
+      }catch(_){}
+      try{
+        const sOld = await getDoc(doc(_fbDb, 'stats', 'global'));
+        if(sOld.exists()){
+          const dOld = sOld.data() || {};
+          const nest = (dOld.gmAck || {})[broadcastId] || {};
+          Object.keys(nest).forEach(function(u){ if(!ack[u]) ack[u] = nest[u]; });
+          const pre = 'gmAck.' + broadcastId + '.';
+          Object.keys(dOld).forEach(function(k){ if(k.indexOf(pre) === 0){ const u = k.slice(pre.length); if(u && !ack[u]) ack[u] = dOld[k]; } });
+        }
+      }catch(_){}
       const list = Object.entries(ack).map(([uid, info]) => ({
         uid,
         name: info.name || '匿名',
@@ -24206,11 +24367,12 @@
     // ══════════════════════════════════════════════════════════════════
     (function setupWorldBossHpSync(){
       let _hpUnsub = null;
-      const STATS_DOC = () => doc(_fbDb, 'stats', 'global');
+      const STATS_DOC = () => _lxpsStatsDoc('wb');   // ★ v5.338.0 龍王欄位搬到 stats/worldBoss(原 stats/global)
 
       // 即時訂閱:把雲端 worldBossHp 同步到 window._cachedGlobalStats
       function subscribeWbHp(){
         if(_hpUnsub) return;
+        try{ _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0 背景搬家;搬完 onSnapshot 會自動收到新資料
         try{
           _hpUnsub = onSnapshot(STATS_DOC(), (snap) => {
             try{
@@ -24278,6 +24440,7 @@
       // bossId: 字串,deltaDmg: 正數
       // maxHp: 用於初始化(若雲端尚無此 boss 紀錄,先以 maxHp 為基準扣)
       async function dealDamage(bossId, deltaDmg, maxHp){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0 先確保 stats/worldBoss 已帶舊資料
         if(!bossId || typeof deltaDmg !== 'number' || deltaDmg <= 0) return null;
         try{
           // 用 transaction 確保「讀取-扣血-寫入」原子化(避免兩人同時扣血其中一人寫覆蓋)
@@ -24352,6 +24515,7 @@
 
       // 重置 BOSS HP(管理員用:新一輪開始 / 被 BUG 秒殺後還血)
       async function resetHp(bossId, newHp){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         try{
           const _hpMap = (window._cachedGlobalStats && window._cachedGlobalStats.worldBossHp) || {};
           const _new = Object.assign({}, _hpMap);
@@ -24411,6 +24575,7 @@
       //   bonusSource=null/undefined → 正常場次
       //   舊呼叫者沒傳 → 與 isBonus 連動:isBonus=true 視為 'admin'(向下相容)
       async function updateLeaderboard(bossId, teamKey, teamNames, addDmg, tiebreaker, teamHeroes, championStats, dmgSources, teamEmails, isBonus, bonusSource){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         if(!bossId || !teamKey || typeof addDmg !== 'number' || addDmg <= 0) return null;
         try{
           const result = await runTransaction(_fbDb, async (tx) => {
@@ -24796,6 +24961,7 @@
       //     - 用「點記法路徑」如 'worldBossLeaderboard.vesuvius_fire_dragon' 直接刪子欄位
       //     - bossId 改為呼叫端傳入(預設 vesuvius_fire_dragon),清更乾淨
       async function clearLeaderboard(bossId){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         try{
           const _ref = STATS_DOC();
           // 先讀現況看看要清掉哪些
@@ -24856,6 +25022,7 @@
       //     - clearLeaderboardEntries:只刪指定的 teamKey 列(可一次刪多筆),其他紀錄保留
       //   用 transaction 確保「讀-改-寫」一致(避免和玩家剛打完的 updateLeaderboard 衝突)
       async function clearLeaderboardEntries(bossId, teamKeys){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         if(!bossId || !Array.isArray(teamKeys) || teamKeys.length === 0){
           console.warn('[WB-HpSync] clearLeaderboardEntries 參數無效', bossId, teamKeys);
           return null;
@@ -24925,6 +25092,7 @@
       //   失敗回 null
       // ════════════════════════════════════════════════════════════════
       async function removeBattleFromHistory(bossId, teamKey, battleIndex){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         if(!bossId || !teamKey || typeof battleIndex !== 'number' || battleIndex < 0){
           console.warn('[WB-HpSync] removeBattleFromHistory 參數無效', bossId, teamKey, battleIndex);
           return null;
@@ -25049,6 +25217,7 @@
       //   失敗回 null
       // ════════════════════════════════════════════════════════════════
       async function markBattleAsDeleted(bossId, teamKey, battleIndex, reason){
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         if(!bossId || !teamKey || typeof battleIndex !== 'number' || battleIndex < 0){
           console.warn('[WB-HpSync] markBattleAsDeleted 參數無效', bossId, teamKey, battleIndex);
           return null;
@@ -25244,7 +25413,7 @@
     //   };
     // ════════════════════════════════════════════════════════════════════
     (function _setupWeeklyQuizV2(){
-      const STATS_DOC = () => doc(_fbDb, 'stats', 'global');
+      const STATS_DOC = () => _lxpsStatsDoc('wq');   // ★ v5.338.0 小博士欄位搬到 stats/weeklyQuiz(原 stats/global)
       const PLAYER_DOC = (uid) => doc(_fbDb, 'players', uid);
 
       // ── 取得「當前週 key」(YYYY-WW,以台灣時區週一 08:00 為跨週基準) ──
@@ -25391,6 +25560,7 @@
         }catch(_eAdmGate){ console.warn('[WeeklyQuiz v3.11.10] 管理員守門例外', _eAdmGate); }
         _flushInFlight = true;
         try{
+          try{ await _lxpsStatsEnsure('wq'); }catch(_){}   // ★ v5.338.0 先確保 stats/weeklyQuiz 已帶舊資料(放在防重入旗標之後)
           const _obj = _getOrInitLocal();
           const _diff = (_obj.correctCount || 0) - (_obj.flushedBaseline || 0);
           if(_diff <= 0){
@@ -25520,6 +25690,7 @@
       async function trySettleLastWeek(){
         if(!window._gUserId) return false;
         const _lastWk = getLastWeekKey();
+        try{ await _lxpsStatsEnsure('wq'); }catch(_){}   // ★ v5.338.0
         try{
           // Phase 1:用 transaction 嘗試搶結算鎖
           const _result = await runTransaction(_fbDb, async (tx) => {
@@ -25744,8 +25915,12 @@
 
       // ── 訂閱 stats/global 把 weeklyQuiz 同步到 _cachedGlobalStats ──
       let _wqUnsub = null;
+      // ★ v5.338.0 拆成兩個小文件的監聽:小博士 stats/weeklyQuiz、鬥技場 stats/arenaWeekly(欄位與快取鍵名完全不變;
+      //   兩份任一更新都照舊發 weeklyQuizSynced 事件,原本聽這個事件的畫面不用改)
+      let _awUnsub = null;
       function _subscribe(){
         if(_wqUnsub) return;
+        try{ _lxpsStatsEnsure('wq'); _lxpsStatsEnsure('arena'); }catch(_){}   // 背景搬家;搬完監聽會自動收到新資料
         try{
           _wqUnsub = onSnapshot(STATS_DOC(), function(snap){
             try{
@@ -25753,6 +25928,15 @@
               if(!window._cachedGlobalStats) window._cachedGlobalStats = {};
               window._cachedGlobalStats.weeklyQuiz = d.weeklyQuiz || {};
               window._cachedGlobalStats.weeklyQuizSettlement = d.weeklyQuizSettlement || {};
+              try{ document.dispatchEvent(new CustomEvent('weeklyQuizSynced')); }catch(_){}
+            }catch(eIn){ console.warn('[WeeklyQuiz] onSnapshot 處理失敗', eIn); }
+          }, function(err){
+            console.warn('[WeeklyQuiz] 訂閱失敗', err);
+          });
+          _awUnsub = onSnapshot(_lxpsStatsDoc('arena'), function(snap){
+            try{
+              const d = snap.exists() ? (snap.data() || {}) : {};
+              if(!window._cachedGlobalStats) window._cachedGlobalStats = {};
               // ★ v3.13.60 — 鬥技場 GM 開關旗標同步(商店預設開、排名發獎預設關)
               window._cachedGlobalStats.arenaShopOpen = (typeof d.arenaShopOpen === 'boolean') ? d.arenaShopOpen : true;
               window._cachedGlobalStats.arenaRankRewardEnabled = (typeof d.arenaRankRewardEnabled === 'boolean') ? d.arenaRankRewardEnabled : false;
@@ -25760,9 +25944,9 @@
               window._cachedGlobalStats.arenaWeekly = d.arenaWeekly || {};
               window._cachedGlobalStats.arenaRankSettlement = d.arenaRankSettlement || {};
               try{ document.dispatchEvent(new CustomEvent('weeklyQuizSynced')); }catch(_){}
-            }catch(eIn){ console.warn('[WeeklyQuiz] onSnapshot 處理失敗', eIn); }
+            }catch(eIn){ console.warn('[ArenaWeekly] onSnapshot 處理失敗', eIn); }
           }, function(err){
-            console.warn('[WeeklyQuiz] 訂閱失敗', err);
+            console.warn('[ArenaWeekly] 訂閱失敗', err);
           });
         }catch(e){
           console.warn('[WeeklyQuiz] _subscribe 例外', e);
@@ -25842,7 +26026,7 @@
     //     ・GM 開關:_arenaIsRankRewardEnabled() === false → 不結算(不發獎)
     // ════════════════════════════════════════════════════════════════════
     (function _setupArenaRankSettlement(){
-      const STATS_DOC = () => doc(_fbDb, 'stats', 'global');
+      const STATS_DOC = () => _lxpsStatsDoc('arena');   // ★ v5.338.0 鬥技場欄位搬到 stats/arenaWeekly(原 stats/global)
       const PLAYER_DOC = (uid) => doc(_fbDb, 'players', uid);
       const _ADMIN_EMAILS = new Set(['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com']);
 
@@ -25901,6 +26085,7 @@
         }catch(_){}
         _flushInFlight = true;
         try{
+          try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0 先確保 stats/arenaWeekly 已帶舊資料
           const o = _getOrInitLocal();
           const diff = (o.zheng || 0) - (o.flushedBaseline || 0);
           if(diff <= 0){ o.lastFlushAt = Date.now(); _writeLocal(o); return; }
@@ -25946,6 +26131,7 @@
       async function trySettleLastWeek(){
         if(!window._gUserId) return false;
         try{ if(typeof window._arenaIsRankRewardEnabled === 'function' && !window._arenaIsRankRewardEnabled()) return false; }catch(_){}
+        try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0
         const lastWk = getLastWeekKey();
         try{
           const result = await runTransaction(_fbDb, async (tx) => {
@@ -26000,6 +26186,7 @@
       function _claimedLocalKey(wk){ return 'lxps_arena_rank_claimed_' + wk; }
       async function claimMyAward(){
         if(!window._gUserId) return null;
+        try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0
         try{
           const gs = window._cachedGlobalStats || {};
           let settledMap = gs.arenaRankSettlement || null;
@@ -26106,6 +26293,7 @@
       async function reconcileLocalFromCloud(){
         try{
           if(!window._gUserId) return;
+          try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0
           try{ if(typeof window._isAdminUser === 'function' && window._isAdminUser()) return; }catch(_){}  // 管理員不列排行
           const wk = getWeekKey();
           let weekMap = null;
@@ -26123,6 +26311,7 @@
       }
 
       async function _fbAdminGrantArenaZheng(targetUid, amount, reason){
+        try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0
         amount = Math.round(Number(amount) || 0);
         if(!targetUid || amount === 0) return { ok:false, reason:'uid 或數量無效' };
         const wk = getWeekKey();
@@ -26155,6 +26344,7 @@
       //   本週排行:回傳 [{uid,name,zheng,rank}](並列同名次),供大廳「本週排行榜」用權威週數據,
       //             不再聚合 arenaBattles(便宜、自動週重置、不限 500 筆)。
       async function getCurrentWeekRanking(){
+        try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0
         try{
           const wk = getWeekKey();
           let weekMap = null;
@@ -26175,6 +26365,7 @@
       }
       // 歷史結算:回傳 [{weekKey,settledAt,count,list:[{uid,name,rank,zhengEarned,crystals,zheng,coins}]}](新→舊)
       async function getSettlementHistory(){
+        try{ await _lxpsStatsEnsure('arena'); }catch(_){}   // ★ v5.338.0
         try{
           let settledMap = null;
           try{ const gs = window._cachedGlobalStats || {}; if(gs.arenaRankSettlement) settledMap = gs.arenaRankSettlement; }catch(_){}
@@ -26446,7 +26637,7 @@
     //   Firestore Rules 需放行(hasOnly(['wbPendingAward']) 即允許其他玩家寫此欄位)
     // ════════════════════════════════════════════════════════════════════
     (function _setupWbSettlementV1(){
-      const STATS_DOC = () => doc(_fbDb, 'stats', 'global');
+      const STATS_DOC = () => _lxpsStatsDoc('wb');   // ★ v5.338.0 龍王結算欄位搬到 stats/worldBoss(原 stats/global)
       const PLAYER_DOC = (uid) => doc(_fbDb, 'players', uid);
 
       // ── 計算「BOSS 倒下後的下一個台灣時區 8:00」時間戳 ──
@@ -26512,6 +26703,7 @@
         if(!window._gUserId){
           return { settled:false, reason:'not_logged_in' };
         }
+        try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         const _force = !!(opts && opts.force);
         const _status = getStatus(bossId);
         // 守門:沒倒下 / 沒 roundKey / 已結算 → 一律擋(force 也擋,沒倒下就不該結算)
