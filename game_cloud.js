@@ -22997,12 +22997,20 @@
       //         原版只 try 一次 → 玩家點按鈕的 action 永久消失 → 房主以為玩家還沒操作 → 全場卡死
       //   修法:最多 3 次重試,指數退避(200ms → 400ms → 800ms)
       //         單次失敗的話 _emit('onError') 仍會發,但 toast 改在全部失敗才發
+      // ★ v5.347.0(2026-11-04・老師「甲」龍王戰連線傳輸修正)— 行動改寫進「行動佇列」actionQ.{編號}
+      //   根因:舊版所有隊友共用同一個 pendingAction 欄位,而房主每次推送戰場都順手寫 pendingAction:null
+      //         ⇒ 隊友剛好在房主推送的那一瞬間按下按鈕,他的行動就被清掉,要等卡死偵測(3~5 秒)才補救。
+      //   修法:每一筆行動用自己的編號存成 actionQ 底下的一格(updateDoc 點路徑只動這一格),
+      //         房主推送不再碰行動欄位;房主處理完才刪掉那一格。舊版 pendingAction 仍可讀(混版期相容)。
+      const _aid = String(window._gUserId || 'u').replace(/[^A-Za-z0-9]/g, '').slice(0, 10)
+                 + '_' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
       const _maxAttempts = 3;
       let _lastErr = null;
       for(let _attempt = 0; _attempt < _maxAttempts; _attempt++){
         try{
           await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), {
-            pendingAction: {
+            ['actionQ.' + _aid]: {
+              aid: _aid,
               actorUid: window._gUserId,
               actorSlot: WB.mySlot,
               action: action,
@@ -23091,9 +23099,10 @@
             _syncReason: newState._syncReason || 'unknown',
             _syncTs: Date.now(),
             _schemaV6: true,
-            // 也把整份 fullWireG 副本放在子欄位裡,讓 client applyWireToG(G, battle.fullWireG)
-            //  能順利取到完整資料(不依賴 spread)。
-            fullWireG: newState.fullWireG,
+            // ★ v5.347.0 — 拿掉「整份 fullWireG 副本」:戰場已展開在 battle 頂層,再放一份副本等於每次同步傳兩遍。
+            //   接收端 _wbClientApplyWire 看到 _schemaV6 就直接用 battle 本身(既有分支),不需要副本。
+            //   明確寫 null ⇒ 用 updateDoc 覆蓋 battle 時舊副本一併消失,文件立刻變小。
+            fullWireG: null,
             // ★ v3.3.3 — FX 事件清單(client 收到後重播,讓全隊看到同步特效)
             _wbFxEvents: _fxEvents,
             // ★ v3.4.20 — 修 BUG:龍王戰玩家「輪到我回答但看不到題目」,
@@ -23117,7 +23126,8 @@
             version: ((WB.lastSeenSnap?.battle?.version) || 1) + 1
           };
         }
-        const payload = { battle: battle, pendingAction: null };
+        // ★ v5.347.0 — 推送不再寫 pendingAction:null(會清掉隊友剛送出的行動);行動佇列由房主處理完逐格刪除
+        const payload = { battle: battle };
         if(newState.ended){
           payload['meta.status'] = 'ended';
           payload['meta.endedReason'] = newState.endedReason || 'battle_complete';
@@ -23304,6 +23314,33 @@
     }
     window._wbBroadcastQuizAnswer = broadcastQuizAnswer;
 
+    // ★ v5.347.0(老師「丁」BOSS 行動前題全隊同時作答)— 隊友答案改寫進 quizQ.{自己 uid}
+    //   不走 chat:chat 是「讀整串 → 接上一句 → 寫回整串」,四個人同時作答會互相蓋掉,
+    //   房主那邊也只看最後一句。quizQ 每人一格(updateDoc 點路徑只動自己那格),同時送也不會遺失;
+    //   每人只有一格、新題目直接覆蓋,文件不會越長越大。quizTs 對不上目前題目的答案,房主一律不算。
+    async function sendTeamQuizAnswer(letter, quizTs){
+      if(!WB.roomId) return false;
+      const _k = String(window._gUserId || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 40);
+      if(!_k) return false;
+      const myName = WB.lastSeenSnap?.players?.find(p => p.uid === window._gUserId)?.name || '玩家';
+      for(let _i = 0; _i < 3; _i++){
+        try{
+          await updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), {
+            ['quizQ.' + _k]: {
+              uid: window._gUserId, name: myName, slotIdx: WB.mySlot,
+              letter: String(letter || 'A'), quizTs: quizTs || 0, ts: Date.now()
+            }
+          });
+          return true;
+        }catch(e){
+          console.warn('[sendTeamQuizAnswer] 第 ' + (_i + 1) + ' 次失敗', e && e.message);
+          await new Promise(r => setTimeout(r, 250 * Math.pow(2, _i) + Math.floor(Math.random() * 100)));
+        }
+      }
+      return false;
+    }
+    window._wbSendTeamQuizAnswer = sendTeamQuizAnswer;
+
     // ─── E. 訂閱 / 心跳 ─────────────────────────────────────────
     function _subscribeRoom(roomId){
       _unsubscribeRoom();
@@ -23383,16 +23420,61 @@
         if(curLast && (!prevLast || prevLast.ts !== curLast.ts) && curLast.uid !== window._gUserId){
           _emit('onChatMessage', curLast);
         }
-        // 房主處理 pendingAction
-        if(WB.isHost && data.pendingAction){
-          const pa = data.pendingAction;
+        // ★ v5.347.0(丁)全隊同時作答:房主收隊友答案(world-boss.js _wbTeamQuizIngest 判定是不是目前這題)
+        if(WB.isHost && data.quizQ && typeof window._wbTeamQuizIngest === 'function'){
+          try{ window._wbTeamQuizIngest(data.quizQ, data.players || []); }
+          catch(_eTq){ console.warn('[WBNet] 全隊作答收件例外', _eTq); }
+        }
+        // 房主處理隊友行動
+        // ★ v5.347.0 — 來源改成「行動佇列 actionQ(每筆一格)」＋舊版 pendingAction(混版期相容)。
+        //   每一筆各自判定、各自清除(_clrPa 只刪自己那一格),不會再互相蓋掉。
+        //   _wbPaDone:已執行過的編號(防同一筆在刪除送達前被下一個快照再執行一次);
+        //   _wbPaSeen:第一次看到的時間(「保留等下次重判」的那幾種情況超過 8 秒就丟掉,免得舊行動留到之後別的回合才執行)。
+        if(WB.isHost && (data.pendingAction || data.actionQ)){
+          if(!WB._wbPaDone) WB._wbPaDone = {};
+          if(!WB._wbPaSeen) WB._wbPaSeen = {};
+          const _paItems = [];
+          try{
+            if(data.actionQ && typeof data.actionQ === 'object'){
+              Object.keys(data.actionQ).forEach(function(k){
+                const it = data.actionQ[k];
+                if(it && it.action) _paItems.push({ pa: it, key: k });
+              });
+              _paItems.sort(function(a, b){ return (a.pa.ts || 0) - (b.pa.ts || 0); });
+            }
+          }catch(_eQ){ console.warn('[WBNet] 讀取行動佇列例外', _eQ); }
+          if(data.pendingAction && data.pendingAction.action){
+            _paItems.push({ pa: data.pendingAction, key: null });
+          }
+          for(let _pi = 0; _pi < _paItems.length; _pi++){ (function(pa, _paKey){
+          const _clrPa = function(){
+            try{
+              if(_paKey){
+                WB._wbPaDone[_paKey] = Date.now();
+                delete WB._wbPaSeen[_paKey];
+                updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { ['actionQ.' + _paKey]: deleteField() })
+                  .catch(function(e){ console.warn('[WBNet] 清除行動佇列失敗', e && e.message); });
+              }else{
+                updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
+              }
+            }catch(_){}
+          };
+          // 保留重判的行動:同一筆超過 8 秒仍對不上就丟掉
+          const _paTooOld = function(){
+            if(!_paKey) return false;
+            const _seen = WB._wbPaSeen[_paKey] || (WB._wbPaSeen[_paKey] = Date.now());
+            return (Date.now() - _seen) > 8000;
+          };
+          if(_paKey && WB._wbPaDone[_paKey]){
+            // 已執行過、刪除還在路上 ⇒ 再補刪一次就好,不重複執行
+            try{ updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { ['actionQ.' + _paKey]: deleteField() }).catch(function(){}); }catch(_){}
+            return;
+          }
           if(pa && pa.action && pa.action.type === '_client_stuck_resync'){
             console.log('[WBNet host] 收到 client 卡死求救,重發 sync',
               { from: pa.actorUid, reason: pa.action.reason, actor: pa.action.actor });
-            // 清掉 pendingAction 避免重複觸發
-            try{
-              updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
-            }catch(_){}
+            // 清掉 pendingAction 避免重複觸發(v5.347.0:只清這一筆)
+            _clrPa();
             // ★ v3.13.57(2026-06-05)— BUG 1 根治:client 卡死求救時,若房主端 G.activeChar 卡在
             //   「已行動完(acted=true)的角色」,表示房主端 startTurn 漏跑/被擋住沒推進
             //   (這正是 client 卡死的根因 —— client 的 activeChar 推進完全靠房主廣播,
@@ -23454,9 +23536,7 @@
               if(_uidMatch && _slotMatch){
                 if(expectedPlayer.online === false){
                   console.log('[WBNet v3.5.25] 槽 ' + _activeSlot + ' 玩家已離線,忽略遲到的 pendingAction(房主接管中)');
-                  try{
-                    updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
-                  }catch(_){}
+                  _clrPa();
                   return;
                 }
                 // ★ v6 Phase 5 — 連線房主用主程式 execSkill / execAtk / execBurst
@@ -23464,10 +23544,8 @@
                   try{
                     console.log('[WBNet v3.5.25] 執行 ' + (expectedPlayer.name||'?') + ' 的 action: ' + (pa.action && pa.action.type));
                     window._wbExecPlayerAction(_activeSlot, pa.action);
-                    // 處理後清掉 pendingAction(避免下次 snapshot 再觸發)
-                    try{
-                      updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
-                    }catch(_){}
+                    // 處理後清掉 pendingAction(避免下次 snapshot 再觸發;v5.347.0:只清這一筆)
+                    _clrPa();
                   }catch(e){ console.error('[WBNet] _wbExecPlayerAction', e); }
                 }else if(typeof window._wbHostExecuteAction === 'function'){
                   // 舊版自製戰鬥引擎 fallback
@@ -23484,7 +23562,7 @@
                 //   → 會誤判 mismatch → 清掉合法的 pendingAction → 玩家永遠執行不到。
                 //   保護:_activeChar.acted=true 時不要急著清 pendingAction,
                 //         讓下一次 snapshot(startTurn 跑完後)再進來重判。
-                if(_activeChar && _activeChar.acted === true){
+                if(_activeChar && _activeChar.acted === true && !_paTooOld()){
                   console.log('[WBNet v3.5.25] mismatch 但上個 actor.acted=true(等 startTurn 推進中),'
                     + '保留 pendingAction 等下次 snapshot 重判 — actor=' + (_activeChar.name||'?')
                     + ' actorSlot=' + pa.actorSlot);
@@ -23495,10 +23573,8 @@
                   ' slot=' + pa.actorSlot +
                   ',但本機 active slot=' + _activeSlot +
                   ' expectedUid=' + ((expectedPlayer && expectedPlayer.uid) || 'none').slice(0, 8));
-                // 清掉 stale 的 pendingAction
-                try{
-                  updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
-                }catch(_){}
+                // 清掉 stale 的 pendingAction(v5.347.0:只清這一筆)
+                _clrPa();
                 // 重發 sync 給 client,讓他們看到正確的 active actor
                 try{
                   if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
@@ -23511,9 +23587,7 @@
             } else if(_activeIsP2){
               // 真正的 BOSS 回合卻收到玩家 action:可能是 client 端 sync 還沒同步到新回合
               console.warn('[WBNet v3.5.25] BOSS 回合中卻收到玩家 pendingAction(slot=' + pa.actorSlot + '),清掉並重發 sync');
-              try{
-                updateDoc(doc(_fbDb, 'worldBossRooms', WB.roomId), { pendingAction: null });
-              }catch(_){}
+              _clrPa();
               try{
                 if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
                   setTimeout(() => {
@@ -23528,8 +23602,10 @@
               console.warn('[WBNet v3.5.25] 收到 pendingAction 但 G.activeChar 異常(null 或非 p1/p2),'
                 + 'side=' + (_activeChar && _activeChar.side)
                 + ' — 保留 pendingAction 等下次 snapshot 重試');
+              if(_paTooOld()) _clrPa();
             }
           }
+          })(_paItems[_pi].pa, _paItems[_pi].key); }
         }
       }, (err) => {
         console.error('[WBNet] 監聽錯誤', err);
@@ -23539,6 +23615,8 @@
     function _unsubscribeRoom(){
       if(WB.roomUnsub){ try{ WB.roomUnsub(); }catch(_){} WB.roomUnsub = null; }
       WB.lastSeenSnap = null;
+      // ★ v5.347.0 換房/離房時清空行動佇列的已處理紀錄
+      WB._wbPaDone = {}; WB._wbPaSeen = {};
     }
     function _checkMyTurn(data){
       if(!data || !data.battle) return;

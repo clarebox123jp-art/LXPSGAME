@@ -2350,6 +2350,12 @@
         'question="' + payload.question.slice(0, 30) + '...",',
         'allowedSlot=' + payload.allowedSlot,
         ', label=' + (payload.label || '(none)'));
+      // ★ v5.347.0(丁)全隊同時作答:記下這一題的編號,隊友答案的 quizTs 要對得上才算
+      try{
+        if(payload.allowedSlot === -3 && window._wbTeamQuiz && !window._wbTeamQuiz.done){
+          window._wbTeamQuiz.qts = payload.timestamp;
+        }
+      }catch(_){}
       window._wbNet.hostPushBattleState({
         fullWireG: fullWireG,
         _syncReason: 'quiz-show',
@@ -2396,6 +2402,192 @@
     }catch(e){
       console.error('[WB-QuizSync] 廣播關題失敗', e);
     }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v5.347.0(2026-11-04・老師「丁」)— BOSS 行動前題:全隊同時作答
+  // ────────────────────────────────────────────────────────────────────
+  // 舊流程:每回合指定一位(或房主)回答,其他三人只能看。
+  // 新流程(只在「連線組隊、房內真人 ≥ 2」時;單人/實質單人照舊):
+  //   1. game_battle.js BOSS 行動前題把指派槽位設成 -3(全隊同答),題目照舊由房主抽、廣播給全隊
+  //   2. 每位在線真人各自作答:隊友答案寫進房間 quizQ.{uid}(game_cloud.js sendTeamQuizAnswer),
+  //      房主自己按選項時記在本機(game_adv.js advSubmitAnswer 攔截 -3)
+  //   3. 在線真人全部答完 ⇒ 立刻結算;沒答完就等原本的答題倒數,時間到用「已經答的人」結算,
+  //      一個人都沒答才走原本的超時
+  //   4. 結算:以房主本機題目重判每個人的答案(不信任隊友端的對錯),
+  //      有人答對 ⇒ 走答對流程,獎勵依答對人數加碼(world-boss-ui.html _wbOnQuizCorrect 讀 _wbTeamQuizResult);
+  //      都答錯 ⇒ 走答錯流程
+  //   「應答人數」= 房內有 uid、不是假人、沒被標離線的玩家(離線改房主代打的不算,免得全隊等他)。
+  // ════════════════════════════════════════════════════════════════════
+  window._wbTeamQuiz = null;          // { qts, answers:{uid:{letter,name,slot}}, done, startedAt }
+  window._wbTeamQuizResult = null;    // { n:答對人數, answered:作答人數, players:應答人數 }
+  window._wbTeamQuizSubmitting = false;
+  let _wbTqTick = null;
+
+  function _wbTqNeedUids(){
+    const out = [];
+    try{
+      const snap = (window._wbNet && typeof window._wbNet.getSnapshot === 'function') ? window._wbNet.getSnapshot() : null;
+      const players = (snap && Array.isArray(snap.players)) ? snap.players : [];
+      players.forEach(function(p){
+        if(!p) return;
+        const uid = p.uid || p.userId || '';
+        if(!uid) return;
+        if(uid === '__bot' || /^bot[-_]/i.test(uid)) return;
+        if(p.isBot === true || p.bot === true) return;
+        if(/補位|假人|練習用|bot/i.test(String(p.name || ''))) return;
+        if(p.online === false && uid !== window._gUserId) return;
+        out.push(uid);
+      });
+    }catch(_){}
+    if(window._gUserId && out.indexOf(window._gUserId) < 0) out.push(window._gUserId);
+    return out;
+  }
+
+  // 房主答題視窗標籤顯示「已作答 x/y」
+  function _wbTqRenderProgress(){
+    try{
+      const tq = window._wbTeamQuiz;
+      if(!tq || tq.done) return;
+      const need = _wbTqNeedUids();
+      const got = need.filter(function(u){ return !!tq.answers[u]; }).length;
+      let el = document.getElementById('wb-tq-progress');
+      const ov = document.getElementById('adv-quiz-overlay');
+      if(!el && ov){
+        el = document.createElement('div');
+        el.id = 'wb-tq-progress';
+        el.style.cssText = 'margin:6px auto 0;padding:4px 16px;border-radius:999px;display:table;'
+          + 'background:rgba(40,80,140,0.85);border:2px solid #66bbff;color:#e6f4ff;'
+          + 'font-weight:900;font-size:24px;letter-spacing:1px;';   // 答題視窗在縮放畫布內 ⇒ 用設計 px,不用 vh(三平台鐵律)
+        const lbl = document.getElementById('adv-quiz-label');
+        if(lbl && lbl.parentNode) lbl.parentNode.insertBefore(el, lbl.nextSibling);
+        else ov.appendChild(el);
+      }
+      if(el) el.textContent = '👥 全隊作答中:' + got + ' / ' + need.length + ' 人已作答';
+    }catch(_){}
+  }
+
+  window._wbTeamQuizBegin = function(){
+    window._wbTeamQuiz = { qts: 0, answers: {}, done: false, startedAt: Date.now() };
+    window._wbTeamQuizResult = null;
+    try{ const old = document.getElementById('wb-tq-progress'); if(old) old.remove(); }catch(_){}
+    try{ if(_wbTqTick) clearInterval(_wbTqTick); }catch(_){}
+    // 每秒重算一次:有人中途離線(改房主代打)時,不必等到倒數結束
+    _wbTqTick = setInterval(function(){
+      const tq = window._wbTeamQuiz;
+      if(!tq || tq.done){ try{ clearInterval(_wbTqTick); }catch(_){} _wbTqTick = null; return; }
+      _wbTqRenderProgress();
+      _wbTqMaybeFinish();
+    }, 1000);
+    setTimeout(_wbTqRenderProgress, 120);
+  };
+
+  window._wbTeamQuizIngest = function(quizQ, players){
+    const tq = window._wbTeamQuiz;
+    if(!tq || tq.done || !tq.qts || !quizQ) return;
+    let added = false;
+    Object.keys(quizQ).forEach(function(k){
+      const e = quizQ[k];
+      if(!e || !e.uid || e.quizTs !== tq.qts) return;
+      if(tq.answers[e.uid]) return;                       // 每人只算第一次
+      if(!/^[ABCD]$/.test(String(e.letter || ''))) return;
+      tq.answers[e.uid] = { letter: String(e.letter), name: e.name || '隊友', slot: e.slotIdx };
+      added = true;
+    });
+    if(added){ _wbTqRenderProgress(); _wbTqMaybeFinish(); }
+  };
+
+  // 房主自己按了選項(game_adv.js advSubmitAnswer 攔截 -3 時呼叫)
+  window._wbTeamQuizRecordHost = function(letter){
+    const tq = window._wbTeamQuiz;
+    if(!tq || tq.done) return false;
+    const me = window._gUserId || '__host';
+    if(tq.answers[me]) return true;
+    tq.answers[me] = { letter: String(letter || 'A'), name: '房主', slot: 0 };
+    try{
+      document.querySelectorAll('#adv-quiz-options .aqo-btn, #adv-quiz-options button').forEach(function(b){
+        b.disabled = true;
+        const bl = (b.dataset && b.dataset.letter) || (b.textContent || '').trim().charAt(0);
+        if(bl === String(letter)) b.style.outline = '4px solid #66bbff';
+      });
+    }catch(_){}
+    _wbTqRenderProgress();
+    _wbTqMaybeFinish();
+    return true;
+  };
+
+  function _wbTqMaybeFinish(){
+    const tq = window._wbTeamQuiz;
+    if(!tq || tq.done || !tq.qts) return;
+    const need = _wbTqNeedUids();
+    const allIn = need.length > 0 && need.every(function(u){ return !!tq.answers[u]; });
+    if(allIn) _wbTqFinish('all-answered');
+  }
+
+  // 原本的答題倒數到 0 時(game_adv.js advOnQuizTimeout 開頭)先問這裡:有人答過就用已答的結算
+  window._wbTeamQuizOnTimeout = function(){
+    const tq = window._wbTeamQuiz;
+    if(!tq || tq.done) return false;
+    if(Object.keys(tq.answers).length === 0){
+      tq.done = true;
+      window._wbTeamQuizResult = null;
+      try{ const el = document.getElementById('wb-tq-progress'); if(el) el.remove(); }catch(_){}
+      return false;                                        // 沒人答 ⇒ 照原本超時
+    }
+    _wbTqFinish('timeout');
+    return true;
+  };
+
+  function _wbTqFinish(reason){
+    const tq = window._wbTeamQuiz;
+    if(!tq || tq.done) return;
+    tq.done = true;
+    try{ if(_wbTqTick) clearInterval(_wbTqTick); }catch(_){}
+    _wbTqTick = null;
+    try{ const el = document.getElementById('wb-tq-progress'); if(el) el.remove(); }catch(_){}
+    let correct = null;
+    try{ correct = (typeof _advCurrentQuestion !== 'undefined' && _advCurrentQuestion) ? _advCurrentQuestion.answer : null; }catch(_){}
+    if(!correct){
+      try{ correct = window._advCurrentQuestion && window._advCurrentQuestion.answer; }catch(_){}
+    }
+    const uids = Object.keys(tq.answers);
+    let n = 0, firstWrong = null;
+    const rightNames = [];
+    uids.forEach(function(u){
+      const a = tq.answers[u];
+      if(correct && a.letter === correct){ n++; rightNames.push(a.name); }
+      else if(!firstWrong) firstWrong = a.letter;
+    });
+    const players = Math.max(_wbTqNeedUids().length, uids.length);
+    window._wbTeamQuizResult = { n: n, answered: uids.length, players: players };
+    console.log('[WB-TeamQuiz] 結算 reason=' + reason + ' 答對 ' + n + '/' + uids.length + '(應答 ' + players + ')');
+    try{
+      const msg = '📝 全隊作答:' + uids.length + '/' + players + ' 人作答,' + n + ' 人答對'
+        + (rightNames.length ? '(' + rightNames.slice(0, 4).join('、') + ')' : '')
+        + (correct ? ',正解是 ' + correct : '');
+      if(typeof log === 'function') log(msg);
+      // 隊友端用中央提示看到結果(房主自己看戰鬥紀錄)
+      if(typeof window._wbBroadcastCenterToast === 'function'){
+        const _p = window._wbBroadcastCenterToast(msg, n > 0 ? '#9cf7b4' : '#ffb0a0', 2600, n > 0 ? '✅' : '❌');
+        if(_p && typeof _p.catch === 'function') _p.catch(function(){});
+      }
+    }catch(_){}
+    const letter = (n > 0) ? correct : (firstWrong || 'A');
+    window._wbTeamQuizSubmitting = true;
+    try{
+      if(typeof advSubmitAnswer === 'function') advSubmitAnswer(letter);
+    }catch(eSub){ console.warn('[WB-TeamQuiz] 結算 advSubmitAnswer 例外', eSub); }
+    finally{ window._wbTeamQuizSubmitting = false; }
+  }
+
+  // 戰鬥結束/離房時清乾淨
+  window._wbTeamQuizReset = function(){
+    window._wbTeamQuiz = null;
+    window._wbTeamQuizResult = null;
+    window._wbTeamQuizSubmitting = false;
+    try{ if(_wbTqTick) clearInterval(_wbTqTick); }catch(_){}
+    _wbTqTick = null;
+    try{ const el = document.getElementById('wb-tq-progress'); if(el) el.remove(); }catch(_){}
   };
 
   // ─ 安裝 endAction sync hook ───────────────────────────────────
@@ -4484,7 +4676,8 @@
       return false;
     }
     // 設動畫結束時間戳(供 5.3 用,sync 進來時若還沒到此時間就延後 apply)
-    window._wbClientAnimEndTs = Date.now() + 1500;
+    // ★ v5.347.0(老師「甲」)— 1500 → 1000ms:縮短「房主結果到了也先不套用」的等待;若實測畫面會跳,改回 1500 即可
+    window._wbClientAnimEndTs = Date.now() + 1000;
     window._wbClientOptimistic = true;
 
     // ★ v3.5.1 — 記錄本次樂觀更新的 actor,給 watchdog 在強解時識別
@@ -5464,6 +5657,8 @@
     // ★ v6 Phase 5.3 — 清理動畫競態緩衝
     window._wbClientAnimEndTs = 0;
     window._wbClientOptimistic = false;
+    // ★ v5.347.0(丁)— 清掉全隊作答的暫存
+    try{ if(typeof window._wbTeamQuizReset === 'function') window._wbTeamQuizReset(); }catch(_){}
     if(window._wbClientPendingApplyTimer){
       try{ clearTimeout(window._wbClientPendingApplyTimer); }catch(_){}
       window._wbClientPendingApplyTimer = null;

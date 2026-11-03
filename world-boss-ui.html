@@ -10560,6 +10560,9 @@ try{
               }else if(_payload.allowedSlot === -2){
                 // ★ v3.4.7 — 房主代打槽位:設 -2 讓攔截器擋掉非房主
                 window._wbAssignedQuizSlot = -2;
+              }else if(_payload.allowedSlot === -3){
+                // ★ v5.347.0(老師「丁」)— 全隊同時作答:每個人都能答
+                window._wbAssignedQuizSlot = -3;
               }
             }catch(_eFlag){ console.warn('[WB-Client v3.4.6] 設定 quiz 旗標例外', _eFlag); }
             // 直接寫 DOM
@@ -10622,7 +10625,8 @@ try{
                           }else if(typeof window._wbAssignedQuizSlot === 'number'){
                             _allowedSlot = window._wbAssignedQuizSlot;
                           }
-                          if(_allowedSlot !== null){
+                          // ★ v5.347.0(丁)全隊同時作答(-3):每個人都能點,不攔
+                          if(_allowedSlot !== null && _allowedSlot !== -3){
                             let _mySlot = -1;
                             try{ const _ms = window._wbNet.getMySlot(); if(typeof _ms === 'number') _mySlot = _ms; }catch(_){}
                             if(_mySlot >= 0 && _mySlot !== _allowedSlot){
@@ -10635,8 +10639,15 @@ try{
                           }
                         }
                         // ── client 自己就是該答題者 → 純視覺反饋 + 送答案給房主 ──
+                        // ★ v5.347.0(丁)全隊同時作答:先不公布正解(免得先答的人讓後答的人照抄),
+                        //   只框出自己選的;正解等房主結算關題時大家一起看結果
+                        const _wbTeamQ = (window._wbAssignedQuizSlot === -3);
                         document.querySelectorAll('.aqo-btn').forEach(b => {
                           b.disabled = true;
+                          if(_wbTeamQ){
+                            if(b === btn) b.style.outline = '4px solid #66bbff';
+                            return;
+                          }
                           if(b.dataset.isCorrect === '1') b.classList.add('correct');
                           else if(b === btn && !opt.isCorrect) b.classList.add('wrong');
                         });
@@ -10645,7 +10656,11 @@ try{
                           + ' isCorrect=' + opt.isCorrect + ',送答案給房主');
                         // ★ v3.4.6 — 送答案給房主(走 firestore chat),房主端收到後幫忙跑 advSubmitAnswer
                         try{
-                          if(typeof window._wbBroadcastQuizAnswer === 'function'){
+                          if(_wbTeamQ && typeof window._wbSendTeamQuizAnswer === 'function'){
+                            // ★ v5.347.0(丁)全隊作答走 quizQ 每人一格,同時送不會互蓋
+                            const _pTq = window._wbSendTeamQuizAnswer(opt.letter || ['A','B','C','D'][i], _payload.timestamp);
+                            if(_pTq && typeof _pTq.catch === 'function') _pTq.catch(function(){});
+                          }else if(typeof window._wbBroadcastQuizAnswer === 'function'){
                             window._wbBroadcastQuizAnswer(
                               opt.letter || ['A','B','C','D'][i],
                               opt.isCorrect,
@@ -10666,7 +10681,7 @@ try{
                             + 'font-size:20px;font-weight:800;color:#bbeeff;letter-spacing:1.5px;'
                             + 'text-shadow:0 0 8px rgba(100,180,255,0.7);'
                             + 'box-shadow:0 0 24px rgba(100,180,255,0.5);pointer-events:none;';
-                          _wait.textContent = '⏳ 答案已送出,等待全隊推進...';
+                          _wait.textContent = _wbTeamQ ? '⏳ 答案已送出,等隊友作答完一起公布…' : '⏳ 答案已送出,等待全隊推進...';
                           document.body.appendChild(_wait);
                           setTimeout(() => { try{ _wait.remove(); }catch(_){} }, 5000);
                         }catch(_){}
@@ -11352,15 +11367,28 @@ try{
     //     G.energy.p1 += 1(整個 p1 隊伍能量 +1,最大 10)
     //     全隊還活著的英雄 HP +5%(走 doHeal 讓治療加成生效)
     //   ★ client mode 跳過這段,等房主 sync 過來覆寫(避免雙重計算)
+    // ★ v5.347.0(老師「丁」)— 全隊同時作答:獎勵依答對人數加碼
+    //   1 人答對:能量 +1、全隊 HP +5%(＝原本獎勵)
+    //   2 人以上答對:能量 +2、HP +5%
+    //   全員答對(應答 ≥ 2 人):能量 +3、HP +10%
+    //   (非全隊作答的題目 _wbTeamQuizResult 是 null ⇒ 維持原本 +1 / 5%)
+    const _tqr = window._wbTeamQuizResult;
+    window._wbTeamQuizResult = null;
+    let _tqEnergy = 1, _tqHealPct = 0.05, _tqTag = '';
+    if(_tqr && _tqr.n > 0){
+      if(_tqr.players >= 2 && _tqr.n >= _tqr.players){ _tqEnergy = 3; _tqHealPct = 0.10; _tqTag = '全員答對!'; }
+      else if(_tqr.n >= 2){ _tqEnergy = 2; _tqTag = _tqr.n + ' 人答對!'; }
+      else { _tqTag = '1 人答對!'; }
+    }
     if(!_isClient){
       try{
-        // 1) 隊伍能量 +1(共用資源,不是個別英雄的)
+        // 1) 隊伍能量 +1(共用資源,不是個別英雄的;v5.347.0 全隊作答依答對人數 +1~+3)
         G.energy = G.energy || { p1:0, p2:0 };
-        G.energy.p1 = Math.min(10, (G.energy.p1 || 0) + 1);
-        // 2) 全隊 HP +5%
+        G.energy.p1 = Math.min(10, (G.energy.p1 || 0) + _tqEnergy);
+        // 2) 全隊 HP +5%(v5.347.0 全員答對 +10%)
         G.p1.forEach(h => {
           if(!h || h.curHp <= 0) return;
-          const _healAmt = Math.max(1, Math.floor((h.hp || 100) * 0.05));
+          const _healAmt = Math.max(1, Math.floor((h.hp || 100) * _tqHealPct));
           if(typeof doHeal === 'function'){
             try{
               // noDice/noWarhorn 避免觸發其他附加效果,isHeal 走治療通道
@@ -11373,7 +11401,8 @@ try{
           }
           try{ if(typeof renderCard === 'function') renderCard(h); }catch(_){}
         });
-        _wbHostBroadcast([`✅ 答對!全隊恢復 5% HP + 隊伍能量 +1(現在 ${G.energy.p1}/10)`]);
+        _wbHostBroadcast([`✅ ${_tqTag || '答對!'}全隊恢復 ${Math.round(_tqHealPct * 100)}% HP + 隊伍能量 +${_tqEnergy}(現在 ${G.energy.p1}/10)`]);
+        try{ if(_tqTag && typeof log === 'function') log(`✅ ${_tqTag}全隊恢復 ${Math.round(_tqHealPct * 100)}% HP + 隊伍能量 +${_tqEnergy}(現在 ${G.energy.p1}/10)`); }catch(_){}
         // 連線房主直接改了 G 要 sync
         try{
           if(window._wbConnectedHostMode && typeof window._wbHostSyncG === 'function'){
@@ -11625,6 +11654,8 @@ try{
 
   // 答錯處理
   function _wbOnQuizWrong(actorPos, turnNum, isPunish){
+    // ★ v5.347.0(丁)全隊作答結果用完即清(答錯路徑)
+    window._wbTeamQuizResult = null;
     // ★ FIX 20260518(c) #1 — 同 _wbOnQuizCorrect,讀 v6 主程式 G 為主
     const G = (typeof window._wbGetG === 'function') ? (window._wbGetG() || window._wbHostG)
                                                      : (window._wbHostG || window.G);
@@ -12409,6 +12440,17 @@ try{
     if(msg && msg._wbQuizAnswer){
       try{
         const _isHost = !!(window._wbNet && window._wbNet.isHost && window._wbNet.isHost());
+        // ★ v5.347.0(丁)全隊同時作答期間:舊版隊友(還沒更新)從 chat 送來的答案也收進全隊答案,不直接結算
+        if(_isHost && window._wbAssignedQuizSlot === -3 && window._wbTeamQuiz && !window._wbTeamQuiz.done
+           && typeof window._wbTeamQuizIngest === 'function' && msg.uid){
+          const _one = {};
+          _one['chat_' + String(msg.uid).replace(/[^A-Za-z0-9]/g, '')] = {
+            uid: msg.uid, name: msg.name || '隊友', slotIdx: msg.slotIdx,
+            letter: msg.letter, quizTs: msg.quizTs
+          };
+          try{ window._wbTeamQuizIngest(_one, []); }catch(_){}
+          return;
+        }
         if(_isHost){
           // 房主端:幫忙跑 advSubmitAnswer
           //   守門 1:確認自己還在 quiz asking 狀態(避免重複跑)

@@ -17907,6 +17907,22 @@ function advSubmitAnswer(letter, isCorrectOverride) {
         // BOSS 行動前題:已指派的槽位
         _allowedSlot = window._wbAssignedQuizSlot;
       }
+      // ★ v5.347.0(老師「丁」)— _allowedSlot === -3 = BOSS 行動前題「全隊同時作答」:
+      //   房主按選項只是登記自己的答案(world-boss.js _wbTeamQuizRecordHost),等全隊答完或倒數結束,
+      //   由 _wbTqFinish 帶 _wbTeamQuizSubmitting 旗標再呼叫本函式,才真正結算。
+      //   隊友端的答案走 quizQ 送給房主,本機不結算(保險:直接擋下)。
+      if(_allowedSlot === -3){
+        if(window._wbTeamQuizSubmitting){
+          // 全隊結算:放行
+        }else if(window._wbConnectedHostMode && typeof window._wbTeamQuizRecordHost === 'function'){
+          window._wbTeamQuizRecordHost(letter);
+          _advQuizPhase = 'asking';
+          return;
+        }else{
+          _advQuizPhase = 'asking';
+          return;
+        }
+      }else
       // ★ v3.4.7 — _allowedSlot === -2 是「房主代打槽位」特殊值:
       //   只有房主可以答(其他 client 端不行)。
       //   判斷:_isWbHost=true → 通過(不擋);_isWbHost=false → 擋
@@ -18222,6 +18238,13 @@ function advSubmitAnswer(letter, isCorrectOverride) {
 
 function advOnQuizTimeout() {
   if (_advQuizPhase !== 'asking') return;
+  // ★ v5.347.0(老師「丁」)— 全隊同時作答:倒數到了但已經有人答 ⇒ 用已答的人結算(不算超時)
+  try{
+    if(window._wbAssignedQuizSlot === -3 && typeof window._wbTeamQuizOnTimeout === 'function'
+       && window._wbTeamQuizOnTimeout()){
+      return;
+    }
+  }catch(_eTqTo){ console.warn('[advOnQuizTimeout] 全隊作答結算例外', _eTqTo); }
   _advQuizPhase = 'answered';
   // ★ v3.3.2 — 加診斷 log:超時時印明確訊息,未來若玩家回報「沒看到題目」可從 console 確認
   //   是「玩家 60 秒沒按 = timeout」還是「題目壓根沒顯示」(advShowQuiz 走 early return)

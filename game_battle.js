@@ -60654,7 +60654,14 @@ function aiAct(a){
           //   單人(實際或實質)設 null(不攔截),其他模式設指派槽位
           // ★ v3.4.7 — 房主代打的槽位 → 設成 -1 讓房主可以點(房主 mySlot 不會等於 -1)
           //            攔截器只擋 _mySlot !== _allowedSlot,設 null 就完全不擋
-          if(_effectiveSolo){
+          // ★ v5.347.0(老師「丁」)— 連線組隊、房內真人 ≥ 2 ⇒ 全隊同時作答(-3),不再指定一人
+          //   收答案/結算在 world-boss.js _wbTeamQuiz*;單人與實質單人照舊(下面原分支)
+          const _wbTeamMode = !_effectiveSolo && _isHostFlag && typeof window._wbTeamQuizBegin === 'function';
+          window._wbTeamQuizActiveRound = _wbTeamMode ? _round : null;
+          if(_wbTeamMode){
+            window._wbAssignedQuizSlot = -3;
+            try{ window._wbTeamQuizBegin(); }catch(_eTqB){ console.warn('[WB-TeamQuiz] begin 例外', _eTqB); }
+          }else if(_effectiveSolo){
             window._wbAssignedQuizSlot = null;
           }else if(_expectedIsHostNpc){
             // 房主代打槽位 → 設 null,房主可以答
@@ -60671,7 +60678,7 @@ function aiAct(a){
           //   新行為:只在「指派槽位是離線玩家 + 沒有人接答」極端情境下才救援,延長到 60 秒
           //         (給隊友充裕思考時間,且最終 _quizDeadlockSaverCheck 還有 15+30 秒兜底)
           //   若指派槽位是房主代打 NPC → 不設 watchdog(房主自己會答)
-          if(_isHostFlag && !_isMyTurn && !_expectedIsHostNpc){
+          if(_isHostFlag && !_isMyTurn && !_expectedIsHostNpc && !_wbTeamMode){
             console.log('[WB-BossQuiz host] 房主自己不是被指派槽,設 60 秒 watchdog 等被指派玩家');
             window._wbBossQuizHostWatchdog = setTimeout(function(){
               console.warn('[WB-BossQuiz host] 60 秒沒收到被指派玩家答題,讓題目超時(advOnQuizTimeout)');
@@ -60711,6 +60718,10 @@ function aiAct(a){
               //   舊行為(v3.4.7):「⚡ 第 N 回合 BOSS 行動前題!【由 XX 回答】答對全隊+5%HP+1能量」
               //   新行為(v3.7.6):「⚡ 第 N 回合 BOSS 行動前題!【由房主回答,其他隊友可以按左上角發話討論】答對全隊+5%HP+1能量」
               _qLbl.textContent = `⚡ 第 ${_round} 回合 BOSS 行動前題!【由房主回答,其他隊友可以按左上角發話討論】答對全隊+5%HP+1能量`;
+              // ★ v5.347.0(丁)全隊同時作答的標籤
+              if(window._wbTeamQuizActiveRound === _round && window._wbAssignedQuizSlot === -3){
+                _qLbl.textContent = `⚡ 第 ${_round} 回合 BOSS 行動前題!【全隊一起作答】答對越多人,獎勵越大`;
+              }
             }
           }
         }catch(_eLbl){ console.warn('[WB-BossQuiz] label 覆寫例外', _eLbl); }
