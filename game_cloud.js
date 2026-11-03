@@ -4888,13 +4888,59 @@
     //   發現 data.ownerUid(舊uid)≠ 現在登入 uid(新uid)→ 判定「外來資料」拒絕套用 → 卡「載入失敗」視窗。
     //   修法:把新帳號主檔 + 兩槽存檔的 ownerUid 一律改寫成新 uid(只讀舊寫新,不碰母本)。
     _srcData.ownerUid = newUid;
-    await setDoc(doc(_fbDb, 'players', newUid), _srcData);
+    /* ★ v5.333.0(2026-11-03・老師「鐘豊為的帳號沒有完全繼承他的舊資料,請修復」)
+       根因:v5.280.0 起英雄擁有證明(heroOwnLedger_s)、解鎖流水帳(_heroUnlockHistory)、各種帳本每一筆都蓋著「哪個帳號(uid 前 12 碼)拿到的」章,
+       而且「別帳號的章一律不算」(防共用平板汙染)。舊的遷移只把資料整份搬過去、章沒改 ⇒ 新帳號一登入,舊帳號拿到的英雄全被當成別人的:
+       證明裡被丟掉、不受永久保護,汙染檢查也會把它們當成可疑。
+       修法:搬家時把資料裡所有舊 uid(完整 + 前 12 碼)換成新 uid;英雄證明與清單和新帳號現有的取聯集(只增不減);
+       另外補搬召喚紀錄、召喚卷帳本、永久資產帳本、小遊戲成績、荒島存檔、還沒領的 GM 獎勵收件匣。 */
+    const _o12 = String(oldUid).slice(0, 12), _n12 = String(newUid).slice(0, 12);
+    const _reUid = function(v){
+      if(typeof v === 'string') return (v.indexOf(_o12) < 0) ? v : v.split(oldUid).join(newUid).split(_o12).join(_n12);
+      if(Array.isArray(v)) return v.map(_reUid);
+      if(v && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype){
+        const o = {}; Object.keys(v).forEach(function(k){ o[k] = _reUid(v[k]); }); return o;
+      }
+      return v;   // Timestamp 等特殊物件原樣保留
+    };
+    let _dstOld = null;
+    try{ const _np = await getDoc(doc(_fbDb, 'players', newUid)); if(_np.exists()) _dstOld = _np.data(); }catch(_){}
+    const _mergeOwn = function(src, dst){
+      // 英雄擁有證明＋已解鎖清單:搬來的(已換章)與新帳號現有的取聯集
+      try{
+        if(!dst) return src;
+        if(typeof window._lxpsHeroLedgerMerge === 'function' && (src.heroOwnLedger_s || dst.heroOwnLedger_s)){
+          const _cut = +src._lastResetAt || 0;
+          src.heroOwnLedger_s = JSON.stringify(window._lxpsHeroLedgerMerge([src.heroOwnLedger_s, dst.heroOwnLedger_s], _n12, _cut));
+        }
+        if(Array.isArray(dst.unlockedHeroes)){
+          const _u = Array.isArray(src.unlockedHeroes) ? src.unlockedHeroes.slice() : [];
+          dst.unlockedHeroes.forEach(function(n){ if(n && _u.indexOf(n) < 0) _u.push(n); });
+          src.unlockedHeroes = _u;
+          if(typeof src.unlockedHeroes_s === 'string'){ try{ src.unlockedHeroes_s = JSON.stringify(_u); }catch(_){} }
+        }
+        if(Array.isArray(dst._heroUnlockHistory)){
+          const _h = Array.isArray(src._heroUnlockHistory) ? src._heroUnlockHistory.slice() : [], _seen = {};
+          _h.forEach(function(e){ if(e) _seen[(e.name || '') + '|' + (e.at || 0) + '|' + (e.source || '')] = 1; });
+          dst._heroUnlockHistory.forEach(function(e){ if(!e) return; const k = (e.name || '') + '|' + (e.at || 0) + '|' + (e.source || ''); if(!_seen[k]){ _h.push(e); _seen[k] = 1; } });
+          src._heroUnlockHistory = _h;
+        }
+      }catch(e){ console.warn('[帳號轉移] 英雄證明聯集例外(照搬舊帳號那份)', e); }
+      return src;
+    };
+    const _mainOut = _mergeOwn(_reUid(_srcData), _dstOld);
+    _mainOut.ownerUid = newUid;
+    _mainOut._migratedFrom = _o12; _mainOut._migratedAt = Date.now();
+    await setDoc(doc(_fbDb, 'players', newUid), _mainOut);
     _r.playersDoc = true;
     // 2) saves/live + saves/safe(同步把槽內 ownerUid 改成新 uid,否則三槽合併後 Layer B 仍會擋)
     const _copySlot = async (slot, key) => {
       const s = await getDoc(doc(_fbDb, 'players', oldUid, 'saves', slot));
       if(s.exists()){
-        const _slotData = Object.assign({}, s.data(), { ownerUid: newUid });
+        let _dstSlot = null;
+        try{ const _ns = await getDoc(doc(_fbDb, 'players', newUid, 'saves', slot)); if(_ns.exists()) _dstSlot = _ns.data(); }catch(_){}
+        const _slotData = _mergeOwn(_reUid(s.data()), _dstSlot || _dstOld);
+        _slotData.ownerUid = newUid;
         await setDoc(doc(_fbDb, 'players', newUid, 'saves', slot), _slotData); _r[key] = true;
       }
     };
@@ -4902,10 +4948,89 @@
     await _copySlot('safe', 'saveSafe');
     // 3) arenaTeams/{uid}(改 uid 欄為新 uid)
     try{ const a = await getDoc(doc(_fbDb, 'arenaTeams', oldUid));
-         if(a.exists()){ const _d = Object.assign({}, a.data(), { uid: newUid }); await setDoc(doc(_fbDb, 'arenaTeams', newUid), _d); _r.arenaTeams = true; } }catch(_){}
+         if(a.exists()){ const _d = Object.assign(_reUid(a.data()), { uid: newUid }); await setDoc(doc(_fbDb, 'arenaTeams', newUid), _d); _r.arenaTeams = true; } }catch(_){}
     // 4) wbDamageDetail/{uid}(改 uid 欄為新 uid)
     try{ const w = await getDoc(doc(_fbDb, 'wbDamageDetail', oldUid));
-         if(w.exists()){ const _d = Object.assign({}, w.data(), { uid: newUid }); await setDoc(doc(_fbDb, 'wbDamageDetail', newUid), _d); _r.wbDamage = true; } }catch(_){}
+         if(w.exists()){ const _d = Object.assign(_reUid(w.data()), { uid: newUid }); await setDoc(doc(_fbDb, 'wbDamageDetail', newUid), _d); _r.wbDamage = true; } }catch(_){}
+    // ★ v5.333.0 5) 召喚紀錄 / 召喚卷帳本(與新帳號現有的合併)
+    const _mergeList = async (col, key, max, tkey) => {
+      try{
+        const s = await getDoc(doc(_fbDb, col, oldUid)); if(!s.exists()) return;
+        const src = _reUid(s.data()); let list = Array.isArray(src.list) ? src.list.slice() : [];
+        try{ const n = await getDoc(doc(_fbDb, col, newUid)); if(n.exists() && Array.isArray(n.data().list)) list = list.concat(n.data().list); }catch(_){}
+        const seen = {}; list = list.filter(function(e){ const k = JSON.stringify(e); if(seen[k]) return false; seen[k] = 1; return true; });
+        list.sort(function(a, b){ return ((b && b[tkey]) || 0) - ((a && a[tkey]) || 0); });
+        await setDoc(doc(_fbDb, col, newUid), { uid: newUid, list: list.slice(0, max), updatedAt: Date.now() });
+        _r[key] = true;
+      }catch(e){ console.warn('[帳號轉移] ' + col + ' 複製失敗', e); }
+    };
+    await _mergeList('summonHistory', 'summonHistory', 60, 't');
+    await _mergeList('ticketLedger', 'ticketLedger', 500, 'at');
+    // ★ v5.333.0 6) 永久資產帳本(每頁只能新增,同 id 已存在就跳過)
+    try{
+      const ls = await getDocs(collection(_fbDb, 'players', oldUid, 'assetLedger'));
+      const pages = []; ls.forEach(function(d){ pages.push(d); });
+      let n = 0;
+      for(let i = 0; i < pages.length; i += 20){
+        await Promise.all(pages.slice(i, i + 20).map(async function(d){
+          try{
+            const ref = doc(_fbDb, 'players', newUid, 'assetLedger', 'mig_' + d.id);
+            const ex = await getDoc(ref); if(ex.exists()) return;
+            const pd = Object.assign(_reUid(d.data()), { uid: newUid });
+            await setDoc(ref, pd); n++;
+          }catch(_){}
+        }));
+      }
+      _r.assetLedger = n;
+    }catch(e){ console.warn('[帳號轉移] 永久資產帳本複製失敗', e); }
+    // ★ v5.333.0 7) 小遊戲最佳成績(同一款取較高分)
+    try{
+      const s = await getDoc(doc(_fbDb, 'minigameScores', oldUid));
+      if(s.exists()){
+        const src = _reUid(s.data()); let dst = null;
+        try{ const n = await getDoc(doc(_fbDb, 'minigameScores', newUid)); if(n.exists()) dst = n.data(); }catch(_){}
+        const games = Object.assign({}, (dst && dst.games) || {});
+        Object.keys(src.games || {}).forEach(function(g){ const a = src.games[g], b = games[g]; if(!b || ((a && a.score) || 0) > ((b && b.score) || 0)) games[g] = a; });
+        await setDoc(doc(_fbDb, 'minigameScores', newUid), Object.assign({}, dst || {}, src, { uid: newUid, games: games }));
+        _r.minigameScores = true;
+      }
+    }catch(e){ console.warn('[帳號轉移] 小遊戲成績複製失敗', e); }
+    // ★ v5.333.0 8) 荒島存檔:新帳號沒有島、或舊帳號的島天數比較多才搬(新帳號原本的島先整份備份)
+    try{
+      const s = await getDoc(doc(_fbDb, 'minigameIsland', oldUid));
+      if(s.exists()){
+        const src = _reUid(s.data()); let dst = null;
+        try{ const n = await getDoc(doc(_fbDb, 'minigameIsland', newUid)); if(n.exists()) dst = n.data(); }catch(_){}
+        if(!dst || ((src.day || 1) > (dst.day || 1))){
+          if(dst){
+            try{
+              const ds = JSON.stringify(dst);
+              await setDoc(doc(_fbDb, 'minigameIsland', newUid, 'archive', Date.now() + '_mig'), { uid: newUid, at: Date.now(), why: '帳號轉移:搬入舊帳號的島前先備份新帳號原本的島', from: 'cloud',
+                day: dst.day || 0, shell: dst.shell || 0, codexN: (dst.codex && typeof dst.codex === 'object') ? Object.keys(dst.codex).length : 0,
+                created: dst.created || 0, updatedAt: dst.updatedAt || 0, ver: 'migrate', data_s: ds });
+            }catch(_){}
+          }
+          src.uid = newUid; src.updatedAt = Date.now(); src.gmRestoredAt = Date.now();   // gmRestoredAt:新帳號平板上若有別的島,登入時以雲端這份為準
+          await setDoc(doc(_fbDb, 'minigameIsland', newUid), src);
+          _r.island = true;
+        }else _r.island = 'kept';
+      }
+    }catch(e){ console.warn('[帳號轉移] 荒島存檔複製失敗', e); }
+    // ★ v5.333.0 9) 還沒領的 GM 獎勵收件匣(舊帳號已領過的不搬,避免領兩次)
+    try{
+      const ls = await getDocs(collection(_fbDb, 'gmClassRewards', oldUid, 'items'));
+      let n = 0; const items = []; ls.forEach(function(d){ items.push(d); });
+      for(const d of items){
+        try{
+          const it = d.data(); if(it && it.enabled === false) continue;
+          const cl = await getDoc(doc(_fbDb, 'gmClassRewardClaims', oldUid + '_' + d.id)); if(cl.exists()) continue;
+          const ref = doc(_fbDb, 'gmClassRewards', newUid, 'items', d.id);
+          const ex = await getDoc(ref); if(ex.exists()) continue;
+          await setDoc(ref, Object.assign(_reUid(it), { uid: newUid })); n++;
+        }catch(_){}
+      }
+      _r.gmInbox = n;
+    }catch(e){ console.warn('[帳號轉移] GM 獎勵收件匣複製失敗', e); }
     console.log('[帳號轉移] 遷移完成 oldUid=' + oldUid + ' → newUid=' + newUid, _r);
     return _r;
   };

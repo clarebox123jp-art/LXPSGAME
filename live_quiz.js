@@ -1,5 +1,14 @@
 /* ════════════════════════════════════════════════════════════════════
- *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.332.0
+ *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.334.0
+ *  ★ v5.334.0(2026-11-03・老師四項:先按的人分數比晚按低／題目晚幾秒才顯示不公平／螢幕休眠離線／下一題直接結束是按鈕太近連擊)
+ *    ① 同步開放:出題先顯示題目 3 秒(LQ_LEAD_S),選項在雲端「開題＋3 秒」全班同時打開(current.lead;current.timeLimit 含準備秒數,規則截止跟著延後,不改規則)
+ *    ② 計分:作答秒數＝雲端時間的按下時刻 − max(開放作答, 自己看到選項);主持台以雲端收到時間夾住、慢網路補償 3→6 秒
+ *    ③ 螢幕不休眠:focusMode → keepAwake(Wake Lock＋iOS 內嵌靜音循環影片)
+ *    ④ 主持台:「現在公布」移最左＋確認、出題後 3 秒內(含準備)現在公布/提早結束不理會、「繼續下一題」連點只算一次;計時觸發的公布再驗經過時間
+ *    ⑤ 全場無人作答的題目不中斷學生連勝
+ *  ★ v5.333.0(2026-11-03・老師「選了六上第一二單元,出現的卻是三四單元」)考試複習換冊一律切到學校版本(GM 設定→學校預設表 LQ_EXAM_SCHOOL_DEFAULT),
+ *    下拉標「學校版本」、選別版顯示提醒、加入後顯示冊別｜版本｜單元(見 examSchoolVer/examRefreshGm)。
+ *    另修老師「13 題有 2 題一出來就直接公布答案」:hostAsk 等出題寫入期間 hostTick 用上一題的計時起點算 ⇒ 立刻判定時間到;改成先重設 H.qLocal＋H.asking 擋住。
  *  ★ v5.332.0(2026-11-03・老師「許多學生沒有成功輸入到答案,卡在『本題未作答』無法進到下一題;讓網速慢或斷線的學生也能接續遊玩」)
  *    SDK 即時連線在學校 wifi 塞車時會「卡住但不報錯」⇒ 加 Firestore REST 備援通道(見 roomStage/restGetRoom/studentWatch/sendAnswer):
  *    甲 房間看門狗(安靜 4/9 秒就讀雲端,雲端較新直接接上下一題並重接監聽、必要時 SDK 斷網重連);
@@ -51,7 +60,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.332.0' };
+var LQ = window._LQ = { _v: 'v5.334.0' };
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -61,7 +70,15 @@ var MAX_Q = 30, MIN_Q = 3;
 var HEARTBEAT_MS = 10000;              /* ★ v5.318.0 心跳改 10 秒,斷線能更快顯示 */
 var AWAY_GRACE_MS = 6000;               /* ★ v5.320.0 學生切走 App 的離線記號持續這麼久才算斷線 */
 var OFFLINE_MS = 30000;                 /* ★ v5.320.0 25→30 秒(心跳 10 秒,容許漏 2 次)。主持台這麼久沒收到心跳 ⇒ 視為斷線(不列入「全員作答」);以主持台本機收到時間計,不受學生時鐘影響 */
-var LAT_COMP_MS = 3000;                 /* 慢網路補償上限 3 秒 */
+/* ★ v5.334.0(老師「有些人題目出現後過了幾秒才顯示題目和選項,嚴重影響作答公平性」)— 同步開放作答:
+   出題後先只顯示題目、倒數 LQ_LEAD_MS 準備時間,選項在「雲端開題時間＋準備時間」那一刻全班同時打開(用雲端對時換算),
+   網路慢的同學在準備時間內收到就跟大家同時看到選項;超過準備時間才收到的,作答秒數從他自己看到選項那一刻算(最多補 6 秒)。
+   ⚠ 不改雲端規則:寫進房間的 current.timeLimit = 作答秒數＋準備秒數(規則的截止時間跟著往後延),current.lead = 準備秒數;
+     學生/主持台一律用 (timeLimit − lead) 當作答秒數。 */
+var LQ_LEAD_S = 3, LQ_LEAD_MS = LQ_LEAD_S * 1000;
+function qLeadMs(cur){ return (cur && typeof cur.lead === 'number' && cur.lead > 0) ? cur.lead * 1000 : 0; }
+function qLimMs(cur){ return Math.max(1000, ((cur && cur.timeLimit) || MAX_SEC) * 1000 - qLeadMs(cur)); }
+var LAT_COMP_MS = 6000;                 /* 慢網路補償上限:★ v5.334.0 3→6 秒(等於雲端規則的作答寬限;答案晚到 6 秒內都照「按下那一刻」計分) */
 var BOARD_DOC = 'live';
 var BOARD_TTL = 4 * 3600 * 1000;
 var KING_BGM = ['bgm-king-challenge', 'bgm-king-challenge-2'];
@@ -630,6 +647,62 @@ function focusMode(on){
     window._lxpsLiveQuizFocus = !!on;
     document.body.classList.toggle('lq-focus', !!on);
   }catch(_){}
+  keepAwake(on);   /* ★ v5.334.0 擂台開著時螢幕不休眠 */
+}
+/* ★ v5.334.0(老師「遊玩搶答擂台時,螢幕還是會休眠導致離線,請修正」)— 擂台開著時讓螢幕保持亮著(主持台與學生都適用)
+   ① 支援的瀏覽器用 Screen Wake Lock(navigator.wakeLock),切回前景自動重新要;
+   ② iPad/iPhone(加到主畫面的 App 在 iOS 18.4 以前 Wake Lock 會「答應了卻沒效」)另外播放一段看不見、靜音、循環的 3 秒小影片
+      (讓 iOS 不自動鎖定的通用做法;影片內嵌在本檔,不用下載);iOS 第一次播放要在觸控當下,所以也綁在每次點擊時補一次。
+   ⚠ 關掉擂台(focusMode(false))就全部釋放,不影響平常遊戲的自動鎖定。 */
+var LQ_NOSLEEP_MP4 = 'data:video/mp4;base64,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ZXNoPTAgcmNfbG9va2FoZWFkPTEwIHJjPWNyZiBtYnRyZWU9MSBjcmY9NDAuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAABpliIQP///8PRQABAx8mpOTrVddddddddddeAEYIAcBGCAHARggBwAAAAZBmiA/wjABGCAHARggBwAAAAZBmkA/wjABGCAHARggBwAAAAZBmmA/wjABGCAHARggBwAAAAZBmoA/wjABGCAHARggBwAAAAZBmqA/wjABGCAHARggBwAAAAZBmsA/wjABGCAHARggBwEYIAcAAAAGQZrgP8IwARggBwEYIAcAAAAGQZsAP8IwARggBwEYIAcAAAAGQZsgP8IwARggBwEYIAcAAAAGQZtAP8IwARggBwEYIAcAAAAGQZtgP8IwARggBwEYIAcAAAAGQZuAP8IwARggBwEYIAcAAAAGQZugP8IwARggBwEYIAcBGCAHAAAABkGbwD/CMAEYIAcBGCAHAAAABkGb4D/CMAEYIAcBGCAHAAAABkGaAD/CMAEYIAcBGCAHAAAABkGaID/CMAEYIAcBGCAHAAAABkGaQD/CMAEYIAcBGCAHAAAABkGaYD/CMAEYIAcBGCAHARggBwAAAAZBmoA/wjABGCAHARggBwAAAAZBmqA/wjABGCAHARggBwAAAAZBmsA/wjABGCAHARggBwAAAAZBmuA/wjABGCAHARggBwAAAAZBmwA/wjABGCAHARggBwAAAAZBmyA/wjABGCAHARggBwAAAAZBm0A/wjABGCAHARggBwEYIAcAAAAGQZtgP8IwARggBwEYIAcAAAAGQZuAO8IwARggBwEYIAcAAAAGQZugN8IwARggBwEYIAc=';
+var _lqWL = null, _lqWLOn = false, _lqNSV = null;
+function lqIsIOS(){ try{ var ua = navigator.userAgent || ''; return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); }catch(_){ return false; } }
+function lqNoSleepVideo(){
+  if(!_lqWLOn) return;
+  try{
+    if(!_lqNSV){
+      var v = document.createElement('video');
+      v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); v.setAttribute('muted', ''); v.muted = true; v.loop = true;
+      v.setAttribute('title', 'keep-awake');
+      v.style.cssText = 'position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:-1;';
+      v.src = LQ_NOSLEEP_MP4;
+      document.body.appendChild(v); _lqNSV = v;
+    }
+    if(_lqNSV.paused){ var p = _lqNSV.play(); if(p && p.catch) p.catch(function(){}); }
+  }catch(_){}
+}
+function lqWakeReq(){
+  if(!_lqWLOn || document.visibilityState !== 'visible') return;
+  try{
+    if(navigator.wakeLock && typeof navigator.wakeLock.request === 'function' && !(_lqWL && !_lqWL.released)){
+      navigator.wakeLock.request('screen').then(function(s){
+        if(!_lqWLOn){ try{ s.release(); }catch(_){} return; }
+        _lqWL = s; try{ s.addEventListener('release', function(){ if(_lqWL === s) _lqWL = null; }); }catch(_){}
+      }).catch(function(){ lqNoSleepVideo(); });
+    }
+  }catch(_){}
+  if(lqIsIOS() || !(navigator.wakeLock && navigator.wakeLock.request)) lqNoSleepVideo();
+}
+function lqWakeTouch(){ if(_lqWLOn) lqWakeReq(); }
+function lqWakeVis(){ if(_lqWLOn && document.visibilityState === 'visible') lqWakeReq(); }
+function keepAwake(on){
+  on = !!on;
+  if(on === _lqWLOn){ if(on) lqWakeReq(); return; }
+  _lqWLOn = on;
+  try{
+    if(on){
+      document.addEventListener('visibilitychange', lqWakeVis);
+      document.addEventListener('touchend', lqWakeTouch, true);
+      document.addEventListener('click', lqWakeTouch, true);
+      lqWakeReq();
+    }else{
+      document.removeEventListener('visibilitychange', lqWakeVis);
+      document.removeEventListener('touchend', lqWakeTouch, true);
+      document.removeEventListener('click', lqWakeTouch, true);
+      if(_lqWL){ try{ _lqWL.release(); }catch(_){} _lqWL = null; }
+      if(_lqNSV){ try{ _lqNSV.pause(); _lqNSV.removeAttribute('src'); _lqNSV.load(); _lqNSV.remove(); }catch(_){} _lqNSV = null; }
+    }
+  }catch(_){}
 }
 function setTop(title, chips, onClose){
   var h = '<div class="lq-ttl">' + esc(title) + '</div>';
@@ -1145,6 +1218,21 @@ function drawStudentQuestion(){
   var qEl = $('lq-s-q'); if(!qEl) return;
   if(qEl.getAttribute('data-txt') !== c.text){ qEl.textContent = c.text; qEl.setAttribute('data-txt', c.text); }
   var answered = ST.choice != null, locked = answered || ST.timeUp;
+  /* ★ v5.334.0 準備時間:只顯示題目＋倒數,選項與法寶等全班同時打開 */
+  var _pre = (!answered && !ST.timeUp) ? studentPreMs(r) : 0;
+  ST.isPre = _pre > 0;
+  if(_pre > 0){
+    var _oEl = $('lq-s-opts');
+    _oEl.style.gridTemplateColumns = '';
+    _oEl.onclick = null;
+    _oEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:10px 0"><div class="lq-p" style="font-weight:900">' + T('看清楚題目,選項馬上出現!', '請先閱讀題目,選項即將開放') + '</div>'
+      + '<div id="lq-s-pre" class="lq-big" data-n="' + Math.ceil(_pre / 1000) + '" style="font-size:clamp(48px,10vmin,110px);color:#ffd166">' + Math.ceil(_pre / 1000) + '</div></div>';
+    $('lq-s-pw').innerHTML = '';
+    $('lq-s-msg').innerHTML = '';
+    return;
+  }
+  /* 第一次看到這題選項的時間(作答秒數從「開放作答」與「自己看到選項」兩者較晚的那一刻起算) */
+  if(ST.shownQ !== q){ ST.shownQ = q; ST.shownP = pnow(); ST.shownS = (ST.offset != null) ? now() + ST.offset : null; }
   var h = '';
   for(var i = 0; i < n; i++){
     var cls = 'lq-opt ' + OPT_CLASS[i];
@@ -1179,12 +1267,20 @@ function drawStudentQuestion(){
 }
 /* ★ v5.318.0 甲:剩餘毫秒 —— 有雲端時差估計時以「雲端開題時間＋限時」為準;還沒估到就退回「收到題目起算」 */
 function studentLeftMs(r){
-  var lim = r.current.timeLimit * 1000, st = tsMs(r.current.startAt);
+  /* ★ v5.334.0 作答時間從「開放作答」那一刻起算(雲端開題時間＋準備秒數) */
+  var lead = qLeadMs(r.current), lim = qLimMs(r.current), st = tsMs(r.current.startAt);
   if(st && ST.offset != null){
-    var left = st + lim - (now() + ST.offset);
+    var left = st + lead + lim - (now() + ST.offset);
     return Math.max(0, Math.min(lim, left));
   }
-  return Math.max(0, lim - (pnow() - ST.recvAt));
+  return Math.max(0, Math.min(lim, lim - (pnow() - (ST.recvAt + lead))));
+}
+/* ★ v5.334.0 距離開放作答還有幾毫秒(> 0 = 準備中,選項還沒出現) */
+function studentPreMs(r){
+  var lead = qLeadMs(r.current); if(!lead) return 0;
+  var st = tsMs(r.current.startAt);
+  if(st && ST.offset != null) return Math.max(0, st + lead - (now() + ST.offset));
+  return Math.max(0, ST.recvAt + lead - pnow());
 }
 function studentTick(){
   /* ★ v5.323.0 甲:本來每 250ms 跑一次,實際間隔越長＝平板越卡(舊 iPad 記憶體吃緊時會明顯變大) */
@@ -1192,6 +1288,14 @@ function studentTick(){
   netChip();
   studentWatch();   /* ★ v5.332.0 甲 */
   var r = ST.room; if(!r || r.meta.status !== 'question') return;
+  /* ★ v5.334.0 準備時間:倒數到 0 的那一刻打開選項(全班同時) */
+  var pre = studentPreMs(r), isPre = pre > 0;
+  if(isPre !== !!ST.isPre){ ST.isPre = isPre; drawStudentQuestion(); }
+  if(isPre){
+    var pc = $('lq-s-pre'); if(pc){ var pn = Math.ceil(pre / 1000); if(pc.getAttribute('data-n') !== String(pn)){ pc.setAttribute('data-n', String(pn)); pc.textContent = pn; } }
+    var el0 = document.querySelector('#lq-s-timer .lq-timer'); if(el0) el0.textContent = Math.round(qLimMs(r.current) / 1000);
+    return;
+  }
   var ms = studentLeftMs(r);
   if(ms <= 0 && !ST.timeUp && ST.choice == null){
     ST.timeUp = true;
@@ -1208,10 +1312,28 @@ function studentTick(){
 }
 async function studentAnswer(i){
   var r = ST.room; if(!r || r.meta.status !== 'question' || ST.choice != null || ST.timeUp) return;
+  if(studentPreMs(r) > 0) return;   /* ★ v5.334.0 準備時間內不能作答 */
   var q = r.current.qIndex;
+  var _tapP = pnow(), _tapS = (ST.offset != null) ? now() + ST.offset : null;
   ST.choice = i; ST.pending = true; ST.ans[q] = i; saveLocal();
   snd('pick', 0.55); vib(25); drawStudentQuestion();
-  var ms = Math.max(0, Math.round(pnow() - ST.recvAt - ST.waitMs));
+  /* ★ v5.334.0(老師「兩位學生表示,先按正確答案的人,計分卻比晚按的人低,請優化網路延遲造成的計分方式」＋
+     「有些人題目出現後過了幾秒才顯示題目和選項,嚴重影響作答公平性」)
+     原本送「這台收到題目 → 按下」的反應時間,主持台再用「雲端收到答案的時間」夾住、慢網路最多補 3 秒
+     ⇒ 答案上傳塞車的人被多扣時間,題目晚到的人又從比較晚開始算 ⇒ 先按的人反而分數低。
+     改成:作答秒數 =「按下那一刻」−「開放作答那一刻」,兩個都換算成雲端時間(誰先按誰就快,跟答案上傳多久無關);
+     如果選項比開放時間更晚才出現在這台(網路太慢、準備時間內沒收到),就從「這台真的看到選項」那一刻起算,不吃虧。
+     沒有雲端對時才退回「看到選項 → 按下」。等法寶回應的時間照舊扣掉。 */
+  var _lim0 = qLimMs(r.current), ms;
+  var _st0 = tsMs(r.current.startAt), _open = _st0 ? _st0 + qLeadMs(r.current) : 0;
+  if(_tapS != null && _open){
+    var _from = Math.max(_open, ST.shownQ === q && ST.shownS != null ? ST.shownS : _open);
+    ms = Math.round(_tapS - _from - ST.waitMs);
+  }else{
+    var _fromP = (ST.shownQ === q && ST.shownP) ? ST.shownP : (ST.recvAt + qLeadMs(r.current));
+    ms = Math.round(_tapP - _fromP - ST.waitMs);
+  }
+  ms = Math.max(0, Math.min(_lim0, ms));
   /* ★ v5.323.0 丁 作答自動重送:網路忙碌時不用學生再按一次,在本題截止後 4 秒內每 0.6～2 秒自動重送同一個答案
      (作答秒數用按下當下量的 ms,重送不會被算得比較慢);被雲端規則拒絕(已答過/真的逾時)才停。 */
   var give = pnow() + Math.max(0, studentLeftMs(r)) + 4000, pin = ST.pin;
@@ -1316,7 +1438,8 @@ function studentReveal(){
   if(ST.sfxQ !== q){
     /* ★ v5.318.0 公布特效(每題只播一次;房間文件其他欄位更新時重畫畫面不會重播) */
     ST.sfxQ = q;
-    ST.streak = ok ? (ST.streak || 0) + 1 : 0;
+    /* ★ v5.334.0 全場沒有任何人作答的題目(例如網路卡住題目沒送到大家)不算斷連勝 */
+    ST.streak = ok ? (ST.streak || 0) + 1 : ((rv.answered === 0 && mine == null) ? (ST.streak || 0) : 0);
     var prevRank = ST.lastRank; ST.lastRank = rk ? rk[0] : null;
     if(ok){
       snd('correct', 0.7); vib([30, 40, 30]); fxShake('good');
@@ -1594,14 +1717,42 @@ function ensureExam(cb){
   s.onload = function(){ setupExam(); cb(!!window.ExamCore); }; s.onerror = function(){ cb(false); };
   document.head.appendChild(s);
 }
+/* ★ v5.332.0(老師「我選了考試範圍六上第一二單元,出現的題目卻是三四單元」)
+   根因:三個版本的單元編號不一樣(例:翰林六上社會第 1 單元「戰後經濟發展」＝康軒的第 3 單元)。搶答擂台的「版本」下拉選單
+   原本只在 GM 有另外存「各年級版本」時才跟著學校版本走 —— 一般情況讀不到 ⇒ 換冊時版本不會自動切換,停在上一冊的版本
+   (例:先看五上社會＝翰林,再換六上社會仍是翰林),勾第 1、2 單元抽到的就是別的版本的 1、2 單元＝學校課本的 3、4 單元。
+   修法:比照冒險模式的考試複習 —— 開頁時讀 GM 設定,沒設定就用學校預設版本表;換冊一律切到該冊的學校版本;
+   下拉選單標出「學校版本」,選到不同版本時顯示提醒;加入後顯示實際的冊別｜版本｜單元。 */
+var LQ_EXAM_SCHOOL_DEFAULT = { '三自然':'南一', '四自然':'南一', '五自然':'南一', '六自然':'南一', '三社會':'康軒', '四社會':'康軒', '五社會':'翰林', '六社會':'康軒' };   /* 與 game_adv.js _ADV_EXAM_SCHOOL_DEFAULT 一致 */
+function examSchoolKey(book){ var b = String(book || ''); return b.charAt(0) + b.slice(2); }
+function examSchoolVer(book){
+  var C = window.ExamCore, v = '';
+  try{ v = C && C.schoolVer ? C.schoolVer(book) : ''; }catch(_){}
+  return v || LQ_EXAM_SCHOOL_DEFAULT[examSchoolKey(book)] || '';
+}
 function setupExam(){
   try{
-    var C = window.ExamCore; if(!C || C._lqInit) return;
+    var C = window.ExamCore; if(!C) return;
     if(!C.base) C.init({ base: 'exam/' });
     try{ C.setTerms(window._reviewBoostCfg || null); }catch(_){}
-    try{ if(window._lxpsExamByBook) C.setSchoolMap(window._lxpsExamByBook); }catch(_){}
+    try{ C.setSchoolMap(window._lxpsExamByBook || LQ_EXAM_SCHOOL_DEFAULT); }catch(_){}
+    try{ if(window._lxpsExamGmDefault) C.setGmDefault(window._lxpsExamGmDefault); }catch(_){}
     C._lqInit = true;
   }catch(_){}
+}
+/* 開「考試複習」分頁時讀一次 GM 的版本設定(最多等 2.5 秒,讀不到就用學校預設表) */
+function examRefreshGm(cb){
+  var done = false; function fin(){ if(done) return; done = true; setupExam(); cb(); }
+  setTimeout(fin, 2500);
+  try{
+    if(typeof window._fbGetExamConfig !== 'function'){ fin(); return; }
+    window._fbGetExamConfig().then(function(d){
+      window._lxpsExamGmAt = Date.now();
+      window._lxpsExamGmDefault = (d && typeof d.defaultVer === 'string') ? d.defaultVer : '';
+      window._lxpsExamByBook = (d && d.byBook && typeof d.byBook === 'object') ? d.byBook : null;
+      fin();
+    }).catch(fin);
+  }catch(_){ fin(); }
 }
 function parseCustom(text){
   var out = [], bad = 0;
@@ -1722,6 +1873,7 @@ function hostSetup(){
       s.innerHTML = '<div class="lq-p" style="font-size:15px">載入考試複習題庫…</div>';
       ensureExam(function(ok){
         if(!ok){ s.innerHTML = '<div class="lq-p">考試複習題庫載入失敗,請檢查網路</div>'; return; }
+        examRefreshGm(function(){
         var C = window.ExamCore;
         C.loadIndex(function(ok2){
           if(!ok2){ s.innerHTML = '<div class="lq-p">考試複習目錄載入失敗</div>'; return; }
@@ -1731,13 +1883,18 @@ function hostSetup(){
           s.innerHTML = '<div><label>冊別 <select id="lq-e-b">' + books.map(function(b){ return '<option>' + esc(b) + '</option>'; }).join('') + '</select></label>'
             + '<label>版本 <select id="lq-e-v"><option>南一</option><option>翰林</option><option>康軒</option></select></label>'
             + '<button class="lq-btn gray" id="lq-e-term" style="padding:6px 12px;font-size:15px">⭐ 套用本次評量範圍</button></div>'
+            + '<div id="lq-e-vwarn" style="font-size:14px;margin:4px 0;color:#ffd166"></div>'
             + '<div id="lq-e-units" style="margin:6px 0"></div><div>' + nSel('lq-e-n') + ' <button class="lq-btn" id="lq-e-add" style="padding:8px 16px;font-size:16px">➕ 加入</button> <span id="lq-e-info" style="opacity:.7;font-size:14px"></span></div>';
           var units = function(){
-            var b = $('lq-e-b').value, v = $('lq-e-v').value;
+            var b = $('lq-e-b').value, v = $('lq-e-v').value, sv = examSchoolVer(b);
+            /* ★ v5.332.0 下拉選單標出學校版本;選到別的版本時提醒「單元編號不同」 */
+            Array.prototype.forEach.call($('lq-e-v').options, function(o){ var nm = o.value || o.text.replace(/(學校版本)$/, ''); o.value = nm; o.text = nm + (nm === sv ? '(學校版本)' : ''); });
+            $('lq-e-vwarn').innerHTML = (sv && v !== sv) ? ('⚠ 學校的' + esc(b) + '用<b>' + esc(sv) + '</b>,現在選的是<b>' + esc(v) + '</b>;不同版本的單元編號和內容不一樣。') : '';
             $('lq-e-units').innerHTML = C.units(b, v).map(function(u){ return '<label><input type="checkbox" value="' + u.u + '"> 第' + u.u + '單元 ' + esc(u.t) + '</label>'; }).join('');
             $('lq-e-info').textContent = '';
           };
-          var setVer = function(){ try{ var sv = C.schoolVer($('lq-e-b').value); if(sv) $('lq-e-v').value = sv; }catch(_){} units(); };
+          /* ★ v5.332.0 換冊一律切到這一冊的學校版本(原本讀不到就停在上一冊的版本) */
+          var setVer = function(){ try{ var sv = examSchoolVer($('lq-e-b').value); if(sv) $('lq-e-v').value = sv; }catch(_){} units(); };
           $('lq-e-b').onchange = setVer; $('lq-e-v').onchange = units;
           $('lq-e-term').onclick = function(){
             var b = $('lq-e-b').value, terms = (C.bookActiveTerms && C.bookActiveTerms(b)) || [];
@@ -1753,11 +1910,12 @@ function hostSetup(){
             C.loadBook(b, function(ok3){
               if(!ok3){ $('lq-e-info').textContent = '下載失敗'; return; }
               var pool = C.pool({ book: b, vers: [v], units: us }).filter(function(q){ return !q.pic && q.o && q.o.length === 4 && q.o.every(function(x){ return x !== '' && x != null; }); });
-              $('lq-e-info').textContent = '符合 ' + pool.length + ' 題';
+              $('lq-e-info').textContent = b + '｜' + v + '｜' + (us.length ? '第 ' + us.join('、') + ' 單元' : '全部單元') + ':符合 ' + pool.length + ' 題';
               addQs(pool.map(function(q){ return { t: q.q, o: q.o.map(String), a: q.a, kind: 'mc', src: q.range, why: q.why || '', key: 'ex' + b + q.id }; }), +$('lq-e-n').value);
             });
           };
           setVer();
+        });
         });
       });
     }else{
@@ -1902,7 +2060,7 @@ function hostAttach(){
       if(sa && !s.metadata.hasPendingWrites && !H.startAt[q]){
         H.startAt[q] = tsMs(sa); saveSecret();
         /* ★ v5.318.0 甲:主持台也用雲端開題時間對時,截止時間跟學生畫面的 0 秒一致 */
-        if(H.askT && H.askT.q === q){ var off = H.startAt[q] - (H.askT.t0 + H.askT.t1) / 2; H.qLocal = H.startAt[q] - off; }
+        if(H.askT && H.askT.q === q){ var off = H.startAt[q] - (H.askT.t0 + H.askT.t1) / 2; H.qLocal = H.startAt[q] - off + qLeadMs(H.room.current); }   /* ★ v5.334.0 ＋準備秒數 */
       }
     }
     H.awarded = H.room.awarded || {};
@@ -2299,15 +2457,21 @@ async function hostAsk(q){
   if(q >= H.qs.length) return hostEnd();
   if(H.autoH){ clearTimeout(H.autoH); H.autoH = null; }
   var Q = H.qs[q];
-  H.qIndex = q; H.status = 'question'; H.revealing = false;
+  /* ★ v5.333.0(老師「做了 13 題搶答,有 2 題一出來就直接公布答案,玩家完全沒有輸入的機會」)
+     根因:這裡先把狀態設成 question,再「等」出題寫進雲端;等待期間 hostTick(每秒好幾次)用的計時起點 H.qLocal
+     還是「上一題」的開題時間 ⇒ 一算就超過時間＋寬限,又因為新題目還沒人作答 ⇒ 立刻 hostReveal()。
+     網路快時寫入一下就回來、碰不到;主持台網路慢一點(1 秒以上)就會發生。
+     修法:出題送出前先把計時起點重設成現在、並標記 H.asking;寫入完成前 hostTick 一律不判定時間到。 */
+  H.qIndex = q; H.status = 'question'; H.revealing = false; H.asking = true; H.qLocal = now() + LQ_LEAD_MS; H.lastLeft = 99;   /* ★ v5.334.0 計時起點＝開放作答(出題＋準備秒數) */
   var t0 = now();
   try{
     await F.updateDoc(roomRef(H.pin), {
       'meta.status': 'question',
-      current: { qIndex: q, text: Q.t, options: Q.o, kind: Q.kind, timeLimit: H.timeLimit, startAt: F.serverTimestamp() },
+      current: { qIndex: q, text: Q.t, options: Q.o, kind: Q.kind, timeLimit: H.timeLimit + LQ_LEAD_S, lead: LQ_LEAD_S, startAt: F.serverTimestamp() },   /* ★ v5.334.0 timeLimit 含準備秒數(雲端規則截止跟著延後);lead=準備秒數 */
       reveal: null
     });
-  }catch(e){ toast('出題失敗:' + (e.code || e.message)); H.status = q ? 'reveal' : 'lobby'; return; }
+  }catch(e){ H.asking = false; toast('出題失敗:' + (e.code || e.message)); H.status = q ? 'reveal' : 'lobby'; return; }
+  H.asking = false;
   H.askT = { q: q, t0: t0, t1: now() };
   boardSet(H.pin, { title: H.title, hostName: myLabel(), hostUid: me().uid, at: now(), st: 'live' });
   hostListenQ(q, false);
@@ -2316,7 +2480,10 @@ async function hostAsk(q){
 }
 function hostListenQ(q, resumed){
   (H.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); H.qUnsubs = [];
-  H.qLocal = resumed && H.startAt[q] ? (now() - Math.min(H.timeLimit * 1000, Math.max(0, now() - H.startAt[q]))) : now();
+  /* ★ v5.334.0 計時起點＝開放作答(雲端開題＋準備秒數) */
+  var _ldq = (H.room && H.room.current && H.room.current.qIndex === q) ? qLeadMs(H.room.current) : LQ_LEAD_MS;
+  if(!resumed) _ldq = LQ_LEAD_MS;
+  H.qLocal = resumed && H.startAt[q] ? (now() - Math.min(H.timeLimit * 1000, Math.max(-_ldq, now() - (H.startAt[q] + _ldq)))) : now() + _ldq;
   H.answers[q] = H.answers[q] || {};
   H.qUnsubs.push(live(F.query(subCol(H.pin, 'answers'), F.where('q', '==', q)), null, function(ss){
     ss.forEach(function(d){ var a = d.data(); if(a.at) H.answers[q][a.uid] = { c: a.c, at: tsMs(a.at), ms: a.ms }; });
@@ -2349,10 +2516,16 @@ function hostQuestionScreen(){
   setBody('<div class="lq-hgrid"><div class="lq-hmain"><div class="lq-q lq-qin">' + esc(Q.t) + '</div><div class="lq-opts"' + (Q.o.length === 2 ? ' style="grid-template-columns:1fr 1fr"' : '') + '>' + opts + '</div></div>'
     + '<div class="lq-hside"><div class="lq-stat"><div class="v lq-timer" id="lq-h-timer">' + H.timeLimit + '</div><div class="k">' + T('剩下秒數', '剩餘秒數') + '</div></div>'
     + '<div class="lq-stat"><div class="v" id="lq-h-ans">0</div><div class="k" id="lq-h-ans-k">' + T('已作答', '已作答') + '</div></div></div></div>');
-  setCtl('<button class="lq-btn gray" id="lq-h-pl">👥 參加者</button><button class="lq-btn" id="lq-h-now">⏩ ' + T('現在公布', '立即公布') + '</button><button class="lq-btn red" id="lq-h-stop">🏁 提早結束</button>');
+  /* ★ v5.334.0(老師「下一題直接結束是因為兩個按鈕太近,滑鼠點擊判定成連擊而直接點到提早結束」)
+     上一畫面「▶ 繼續下一題」在最右邊,這個畫面同一位置原本是「⏩ 現在公布」/「🏁 提早結束」⇒ 連點第二下就把剛出的題目結束。
+     修法:①「現在公布」移到最左邊、「👥 參加者」放中間當緩衝,最右邊不放會結束題目的按鈕;
+           ② 題目畫面出現後 3 秒內(含準備時間)「現在公布」「提早結束」一律不理會;③「現在公布」再跳一次確認。 */
+  setCtl('<button class="lq-btn" id="lq-h-now">⏩ ' + T('現在公布', '立即公布') + '</button><button class="lq-btn gray" id="lq-h-pl">👥 參加者</button><button class="lq-btn red" id="lq-h-stop" style="margin-right:auto">🏁 提早結束</button>');
+  var _qsAt = now();
+  var _guard = function(fn){ return function(){ if(now() - _qsAt < 3000 || now() < (H.qLocal || 0)){ toast(T('題目剛出來,等一下再按', '題目剛開始,請稍候再操作'), 1500); return; } fn(); }; };
   $('lq-h-pl').onclick = playerDrawer;
-  $('lq-h-now').onclick = function(){ hostReveal(); };
-  $('lq-h-stop').onclick = earlyEnd;
+  $('lq-h-now').onclick = _guard(function(){ confirmBox(T('現在就公布這一題的答案?<br><small>還沒作答的同學這題就沒有分數。</small>', '立即公布本題答案?<br><small>未作答者本題不計分。</small>'), T('公布', '公布'), function(){ hostReveal(); }); });
+  $('lq-h-stop').onclick = _guard(earlyEnd);
   updateAnswered();
 }
 function playerDrawer(){
@@ -2379,9 +2552,14 @@ function updateAnswered(){
 }
 function hostTick(){
   if(H.pin && now() - (H.onlT || 0) > 2000){ H.onlT = now(); checkOnline(false); updOffChip(); }
-  if(H.status === 'question'){
-    var left = Math.max(0, Math.ceil((H.timeLimit * 1000 - (now() - H.qLocal)) / 1000));
-    var el = $('lq-h-timer'); if(el){ el.textContent = left; el.classList.toggle('warn', left <= 5); }
+  if(H.status === 'question' && !H.asking){   /* ★ v5.333.0 出題寫入完成前不計時、不判定時間到 */
+    var left = Math.max(0, Math.min(H.timeLimit, Math.ceil((H.timeLimit * 1000 - (now() - H.qLocal)) / 1000)));
+    var el = $('lq-h-timer');
+    if(now() < H.qLocal){   /* ★ v5.334.0 準備時間:大螢幕顯示「準備 N」,選項開放後才開始倒數 */
+      if(el){ el.textContent = '準備 ' + Math.ceil((H.qLocal - now()) / 1000); el.classList.remove('warn'); }
+      return;
+    }
+    if(el){ el.textContent = left; el.classList.toggle('warn', left <= 5); }
     /* ★ v5.318.0 大螢幕最後 5 秒滴答聲、歸零播時間到 */
     if(left !== H.lastLeft){
       H.lastLeft = left;
@@ -2392,14 +2570,15 @@ function hostTick(){
     var over = now() - H.qLocal - H.timeLimit * 1000;
     if(over > 1500 && !H.revealing){
       var got = H.answers[H.qIndex] || {}, waiting = activePlayers(true).some(function(p){ return !got[p.uid]; });
-      if(!waiting || over > 4500){ H.revealing = true; hostReveal(); }
+      if(!waiting || over > 4500){ H.revealing = true; hostReveal('time'); }
     }
   }
 }
 
 /* ───────── 公布 ───────── */
 function scoreOf(q, a){
-  var st = H.startAt[q] || 0, server = st ? Math.max(0, a.at - st) : (a.ms || 0);
+  /* ★ v5.334.0 雲端端的「經過時間」也從開放作答起算(開題＋準備秒數) */
+  var st = H.startAt[q] ? H.startAt[q] + LQ_LEAD_MS : 0, server = st ? Math.max(0, a.at - st) : (a.ms || 0);
   var lim = H.timeLimit * 1000;
   var ms = Math.max(server - LAT_COMP_MS, Math.min(server, a.ms == null ? server : a.ms));  /* 慢網路補償最多 3 秒 */
   return Math.max(0, Math.min(lim, ms));
@@ -2448,8 +2627,11 @@ function rankList(tally){
   return Object.keys(tally).map(function(k){ return tally[k]; }).filter(function(r){ var p = H.players[r.uid]; return p && !p.kicked; })
     .sort(function(a, b){ return (b.score - a.score) || (b.correct - a.correct) || (a.sec - b.sec) || (b.answered - a.answered) || (a.last - b.last); });
 }
-async function hostReveal(){
+async function hostReveal(why){
   if(H.status !== 'question') return;
+  /* ★ v5.334.0(老師「還是發生下一題沒有給作答時間直接結束,玩家的連勝就沒有了」)第二道保險:
+     由計時器觸發的公布,出題還沒寫完、或這一題實際經過的時間還不到限時 ⇒ 一律不公布(只有「現在公布」按鈕與全員作答可以提早)。 */
+  if(why === 'time' && (H.asking || now() - (H.qLocal || 0) < H.timeLimit * 1000)){ H.revealing = false; return; }
   H.revealing = true;
   var q = H.qIndex, Q = H.qs[q];
   H.status = 'reveal';
@@ -2501,6 +2683,9 @@ function hostRevealScreen(){
   $('lq-h-pl').onclick = playerDrawer;
   $('lq-h-stop').onclick = function(){ confirmBox('現在結束擂台並結算?', '結束並結算', function(){ hostEnd(true); }); };
   $('lq-h-next').onclick = function(){
+    /* ★ v5.334.0 連點只算一次 */
+    if(H.nextClickAt && now() - H.nextClickAt < 1500) return;
+    H.nextClickAt = now();
     if(H.autoH){ clearTimeout(H.autoH); H.autoH = null; }
     /* ★ v5.318.0 有人斷線 ⇒ 先提醒老師(老師:「只要不按繼續下一題就可以等他加入回來」) */
     var off = activePlayers().filter(function(p){ return !isOnline(p); }).map(function(p){ return p.name; });
