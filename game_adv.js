@@ -82880,6 +82880,596 @@ function makeRadar(dims, size) {
   setInterval(function(){ try{ var so = document.getElementById('summon-overlay'); if(so && so.style.display !== 'none') W._wishRefreshBtn(); }catch(_){} }, 60000);
 })();
 
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★★ v5.327.0(2026-11-02・老師需求「首頁完整下載主程式的三顆按鈕會顯示版本號正確,但其實遊戲資源都還沒下載完全,
+ *    增加『邊玩邊下載』的功能。有遇到的內容才下載,並且出現進度條。例如進入中國關卡時,先偵測是否有缺圖片、
+ *    進入圖鑑時是否有缺圖片....有缺就彈出小視窗開始下載圖片,告知學生耐心等候」)★★
+ *    老師裁定:涵蓋 冒險各地區關卡／英雄圖鑑與召喚／魔物・至寶・寵物圖鑑／主線劇情與龍王戰;
+ *             下載視窗可按「先進去,背景繼續下載」(乙);首頁主程式鈕加一行「素材 N／總數」(甲)。
+ *
+ * 【做法】window._lxpsOD.ensure(區域鍵, 顯示名稱, 網址清單, 進入函式)
+ *   ①沒有 Service Worker 控制本頁(網頁版/SW 未啟用)⇒ 直接進入,不檢查(沒有素材庫可存)。
+ *   ②首頁「完整下載」正在跑(window._lxpsPwaBusy())⇒ 直接進入,不開第二份下載搶網路。
+ *   ③本次開機已確認過這一區都在 ⇒ 立刻(同步)進入。開機 8 秒後背景先把各區比對一輪,點進去時多半已知道結果,
+ *     進入函式仍在玩家點擊的同一拍執行(iPad 音樂/全螢幕需要點擊當下)。
+ *   ④逐一比對素材庫:鍵名比照 sw.js cacheFirstAsset 的三鍵(webp → 原 png → jpg),任何一個命中就算有;
+ *     清單先用 asset_manifest.json 過濾,repo 裡根本沒有的檔(例如主線缺檔的環境音)不列入,免得永遠「缺 1 個」。
+ *   ⑤全都有 ⇒ 直接進入(不跳視窗);有缺 ⇒ 跳小視窗+進度條,缺的用 fetch() 抓——
+ *     網址與遊戲畫面實際請求的一模一樣,經過 SW 的 cacheFirstAsset,存進同一個 lxps-assets-v2、同一套鍵名與
+ *     webp/jpg 分流,不會存兩份、不會刪任何已下載素材(鐵律:素材只增不刪)。
+ *   ⑥全部抓完 ⇒ 視窗變成「▶ 準備好了,進入」(要玩家點,iPad 音樂才放得出來);
+ *     玩家按「先進去,背景繼續下載」⇒ 立刻進入,右下角留一顆小進度條,抓完自己消失;按「✕」⇒ 不進入,背景照樣下載。
+ *   ⑦抓不到的檔(重試 1 次仍失敗)不擋路,本次開機不再列入檢查(遊戲畫面載到時 SW 會再試)。
+ *   影片(mp4/webm)一律不在這裡先抓,維持播放時才載入。
+ * ══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  if(window._lxpsOD) return;
+  var OD = window._lxpsOD = {
+    ver: 'v5.327.0',
+    doneAreas: {},       // 本次開機已確認齊全的區域
+    badUrls: {},         // 本次開機抓不到的網址(不再列入檢查)
+    queue: [],           // 待抓網址(絕對網址)
+    waiters: {},         // 絕對網址 → [callback(ok)]
+    inflight: 0,
+    conc: 3,
+    job: null,
+    areas: {},           // 區域鍵 → { label, list:function }
+    disabled: false
+  };
+  var _jobSeq = 0;
+  try{
+    var _ua = navigator.userAgent || '';
+    var _iosLike = /iPad|iPhone|iPod/.test(_ua) || (/Macintosh/.test(_ua) && (navigator.maxTouchPoints || 0) > 1);
+    OD.conc = _iosLike ? 3 : 6;
+  }catch(_){}
+
+  function _cute(){ return (typeof window._artStyle === 'string' ? window._artStyle : 'cute') !== 'premium'; }
+  OD.hasSW = function(){
+    try{ return !!(navigator.serviceWorker && navigator.serviceWorker.controller && window.caches); }catch(_){ return false; }
+  };
+  OD.fullDlRunning = function(){
+    try{ if(typeof window._lxpsPwaBusy === 'function') return !!window._lxpsPwaBusy(); }catch(_){}
+    return false;
+  };
+
+  // ── 網址工具 ──
+  var _ASSET_RE = /\.(png|jpe?g|gif|webp|svg|mp3|m4a|wav|ogg)(\?|#|$)/i;
+  OD.norm = function(u){
+    if(!u || typeof u !== 'string') return null;
+    u = u.trim();
+    var m = u.match(/^url\((['"]?)(.*)\1\)$/i); if(m) u = m[2];
+    if(!u || /^(data|blob|javascript):/i.test(u)) return null;
+    if(/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(u)) return null;
+    if(!_ASSET_RE.test(u)) return null;
+    if(/^(\.\/)?minigame\//i.test(u)) return null;
+    // 裸檔名(沒有 ./、沒有網址、沒有 % 編碼)⇒ 比照遊戲 './'+encodeURIComponent(檔名)
+    if(!/^(https?:)?\/\//i.test(u) && u.indexOf('./') !== 0 && u.charAt(0) !== '/' && u.indexOf('%') === -1){
+      u = './' + encodeURIComponent(u);
+    }
+    try{ u = new URL(u, location.href).href; }catch(_){ return null; }
+    return u.split('#')[0];
+  };
+  function _baseNoExt(abs){
+    try{
+      var p = new URL(abs).pathname; p = p.substring(p.lastIndexOf('/') + 1);
+      try{ p = decodeURIComponent(p); }catch(_){}
+      return p.replace(/\.[^.]+$/, '').trim();
+    }catch(_){ return ''; }
+  }
+  function _slim(url){
+    if(!/\.png(\?|$)/i.test(url)) return false;
+    if(/\/icon-[^\/]*\.png(\?|$)/i.test(url)) return false;
+    if(url.indexOf('/avatar_parts/') !== -1) return false;
+    if(/\/body_[^\/]*\.png(\?|$)/i.test(url)) return false;
+    var dec = url; try{ dec = decodeURIComponent(url); }catch(_){}
+    if(dec.indexOf('_去背.png') !== -1) return false;
+    return true;
+  }
+  // 與 sw.js cacheFirstAsset 三鍵同口徑:webp → 原 png → jpg
+  OD.keysFor = function(abs){
+    var ks = [abs];
+    if(/\.png(\?|$)/i.test(abs) && !/\/icon-[^\/]*\.png(\?|$)/i.test(abs)){
+      ks.unshift(abs.replace(/\.png(\?|$)/i, '.webp$1'));
+      if(_slim(abs)) ks.push(abs.replace(/\.png(\?|$)/i, '.jpg$1'));
+    }
+    return ks;
+  };
+  OD.isCached = function(abs){
+    var ks = OD.keysFor(abs), i = 0;
+    function next(){
+      if(i >= ks.length) return Promise.resolve(false);
+      return caches.match(ks[i++]).then(function(r){ return r ? true : next(); }, function(){ return next(); });
+    }
+    return next();
+  };
+
+  // ── asset_manifest.json:repo 實際有哪些檔(檔名去副檔名),用來過濾清單 & 首頁素材數 ──
+  var _manP = null;
+  OD.manifest = function(){
+    if(_manP) return _manP;
+    _manP = fetch('asset_manifest.json', { cache: 'no-cache', credentials: 'omit' })
+      .then(function(r){ return (r && r.ok) ? r.json() : null; })
+      .then(function(j){
+        if(!j || !j.files || !j.files.length) return null;
+        var set = {};
+        j.files.forEach(function(f){
+          var b = String(f); b = b.substring(b.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '').trim();
+          set[b] = 1;
+        });
+        return { files: j.files, set: set, count: j.files.length };
+      })
+      .catch(function(){ return null; });
+    _manP.then(function(m){ if(!m) _manP = null; });   // 抓失敗下次再試
+    return _manP;
+  };
+
+  OD.findMissing = function(list){
+    return OD.manifest().then(function(man){
+      var seen = {}, abs = [];
+      (list || []).forEach(function(u){
+        var a = OD.norm(u);
+        if(!a || seen[a] || OD.badUrls[a]) return;
+        seen[a] = 1;
+        if(man && !man.set[_baseNoExt(a)]) return;   // repo 沒這個檔 ⇒ 不列入
+        abs.push(a);
+      });
+      return Promise.all(abs.map(function(a){ return OD.isCached(a).then(function(c){ return c ? null : a; }); }))
+        .then(function(rs){ return { total: abs.length, missing: rs.filter(Boolean) }; });
+    });
+  };
+
+  // ── 下載池:所有區域共用,新進來的區域排最前面 ──
+  var _webp = null;
+  function _supportsWebp(){
+    if(_webp !== null) return _webp;
+    try{ var c = document.createElement('canvas'); c.width = c.height = 1; _webp = c.toDataURL('image/webp').indexOf('data:image/webp') === 0; }catch(_){ _webp = false; }
+    return _webp;
+  }
+  function _fetchOne(abs){
+    var isImg = /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(abs);
+    var opt = { credentials: 'omit' };
+    // Accept 照瀏覽器 <img> 送,SW 才會走與畫面載圖一樣的 webp/jpg 分流與鍵名
+    if(isImg) opt.headers = { 'Accept': _supportsWebp() ? 'image/webp,image/apng,image/*,*/*;q=0.8' : 'image/png,image/*;q=0.8,*/*;q=0.5' };
+    return fetch(abs, opt).then(function(r){
+      if(!r || !r.ok) return false;
+      return r.blob().then(function(){ return true; }, function(){ return false; });
+    }, function(){ return false; });
+  }
+  function _pump(){
+    while(OD.inflight < OD.conc && OD.queue.length){
+      (function(abs){
+        OD.inflight++;
+        var tries = 0;
+        function attempt(){
+          tries++;
+          return _fetchOne(abs).then(function(ok){
+            if(!ok && tries < 2) return new Promise(function(r){ setTimeout(r, 800); }).then(attempt);
+            return ok;
+          });
+        }
+        attempt().then(function(ok){
+          OD.inflight--;
+          if(!ok) OD.badUrls[abs] = 1;
+          var cbs = OD.waiters[abs] || []; delete OD.waiters[abs];
+          cbs.forEach(function(cb){ try{ cb(ok); }catch(_){} });
+          _pump();
+        });
+      })(OD.queue.shift());
+    }
+  }
+  OD.enqueue = function(absList, cb){
+    var front = [];
+    absList.forEach(function(a){
+      if(OD.waiters[a]){ OD.waiters[a].push(cb); return; }   // 已在排隊或下載中,搭便車
+      OD.waiters[a] = [cb]; front.push(a);
+    });
+    if(front.length){
+      var fset = {}; front.forEach(function(a){ fset[a] = 1; });
+      OD.queue = front.concat(OD.queue.filter(function(a){ return !fset[a]; }));
+    }
+    _pump();
+  };
+
+  // ── 介面:小視窗 + 右下角小進度條(三平台:PC 預設／iPad body.gc-tall／手機橫向 max-height:520px) ──
+  function _css(){
+    if(document.getElementById('lxps-od-css')) return;
+    var st = document.createElement('style'); st.id = 'lxps-od-css';
+    st.textContent =
+      '#lxps-od-ov{position:fixed;inset:0;z-index:999990;display:flex;align-items:safe center;justify-content:center;background:rgba(4,10,24,.62);padding:16px;box-sizing:border-box}' +
+      '#lxps-od-card{position:relative;width:min(460px,92vw);max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;background:linear-gradient(160deg,#17305a 0%,#0b1830 100%);border:2px solid #5aa0ff;border-radius:18px;padding:20px 22px;color:#e8f2ff;box-shadow:0 10px 40px rgba(0,0,0,.55);text-align:center;font-family:inherit}' +
+      '#lxps-od-card .od-x{position:absolute;top:6px;right:8px;width:40px;height:40px;border:none;background:transparent;color:#9fb8dd;font-size:22px;cursor:pointer}' +
+      '#lxps-od-card .od-t{font-size:20px;font-weight:900;margin:0 26px 6px;letter-spacing:1px}' +
+      '#lxps-od-card .od-s{font-size:15px;line-height:1.6;color:#bcd6ff;margin:0 0 14px}' +
+      '.lxps-od-bar{height:16px;border-radius:9px;background:rgba(255,255,255,.14);overflow:hidden}' +
+      '.lxps-od-bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3fd2ff,#6cff9c);transition:width .25s}' +
+      '#lxps-od-card .od-n{font-size:15px;margin:8px 0 14px;color:#ffffff;font-weight:700}' +
+      '#lxps-od-card .od-b{display:block;width:100%;box-sizing:border-box;min-height:48px;border:none;border-radius:12px;font-size:17px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#ffb84d,#ff7a3d);color:#2b1300;padding:10px 12px}' +
+      '#lxps-od-card .od-b.ready{background:linear-gradient(135deg,#6cff9c,#2fd0a0);color:#03281a}' +
+      '#lxps-od-card .od-h{font-size:13px;color:#9fb8dd;margin-top:10px;line-height:1.5}' +
+      '#lxps-od-pill{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:999989;background:rgba(10,24,48,.92);border:1.5px solid #5aa0ff;border-radius:14px;padding:8px 12px;color:#e8f2ff;font-size:13px;font-weight:700;width:220px;box-sizing:border-box;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '#lxps-od-pill .lxps-od-bar{height:8px;margin-top:5px}' +
+      '@media (min-width:1400px) and (min-height:760px){#lxps-od-card{width:620px;padding:28px 34px;border-radius:22px}#lxps-od-card .od-t{font-size:28px}#lxps-od-card .od-s,#lxps-od-card .od-n{font-size:20px}.lxps-od-bar{height:20px}#lxps-od-card .od-b{min-height:62px;font-size:23px}#lxps-od-card .od-h{font-size:16px}#lxps-od-pill{width:300px;font-size:16px;padding:10px 14px}}' +
+      'body.gc-tall #lxps-od-card{width:min(540px,80vw);padding:24px 28px}body.gc-tall #lxps-od-card .od-t{font-size:24px}body.gc-tall #lxps-od-card .od-s,body.gc-tall #lxps-od-card .od-n{font-size:18px}body.gc-tall #lxps-od-card .od-b{min-height:56px;font-size:20px}body.gc-tall #lxps-od-card .od-h{font-size:15px}body.gc-tall #lxps-od-pill{width:260px;font-size:15px}' +
+      '@media (orientation:landscape) and (max-height:520px){#lxps-od-ov{padding:8px}#lxps-od-card{width:min(540px,86vw);padding:12px 16px;border-radius:14px}#lxps-od-card .od-x{width:36px;height:36px;top:2px;right:4px}#lxps-od-card .od-t{font-size:17px;margin-bottom:2px}#lxps-od-card .od-s{font-size:13px;margin-bottom:8px;line-height:1.45}#lxps-od-card .od-n{font-size:13px;margin:5px 0 8px}#lxps-od-card .od-b{min-height:44px;font-size:15px}#lxps-od-card .od-h{font-size:12px;margin-top:6px}#lxps-od-pill{width:190px;font-size:12px;padding:6px 10px}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  function _paint(job){
+    var pct = job.total ? Math.round(job.done * 100 / job.total) : 100;
+    var cute = _cute();
+    var ov = document.getElementById('lxps-od-ov');
+    if(ov && ov.getAttribute('data-job') === String(job.id)){
+      var f = ov.querySelector('.lxps-od-bar>i'); if(f) f.style.width = pct + '%';
+      var n = ov.querySelector('.od-n'); if(n) n.textContent = (cute ? '已經準備好 ' : '已下載 ') + job.done + ' / ' + job.total + '(' + pct + '%)';
+    }
+    var pill = document.getElementById('lxps-od-pill');
+    if(pill && pill.getAttribute('data-job') === String(job.id)){
+      var f2 = pill.querySelector('.lxps-od-bar>i'); if(f2) f2.style.width = pct + '%';
+      var t2 = pill.querySelector('span'); if(t2) t2.textContent = '⬇ ' + job.label + ' ' + job.done + '/' + job.total;
+    }
+  }
+  function _sfx(k){ try{ if(typeof playSfx === 'function') playSfx(k, 0.4); }catch(_){} }
+  function _showModal(job){
+    _css();
+    var cute = _cute();
+    var old = document.getElementById('lxps-od-ov'); if(old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'lxps-od-ov'; ov.setAttribute('data-job', String(job.id));
+    ov.innerHTML = '<div id="lxps-od-card">' +
+      '<button type="button" class="od-x" aria-label="close">✕</button>' +
+      '<div class="od-t">' + (cute ? '📦 正在準備「' + job.label + '」' : '📦 下載「' + job.label + '」素材') + '</div>' +
+      '<div class="od-s">' + (cute
+        ? '這裡有 ' + job.total + ' 個圖片和音樂還沒放進你的平板,<br>正在幫你下載,請耐心等一下下喔!'
+        : '本區有 ' + job.total + ' 個圖片／音樂素材尚未存進本機,<br>下載中,請耐心等候。') + '</div>' +
+      '<div class="lxps-od-bar"><i></i></div>' +
+      '<div class="od-n"></div>' +
+      '<button type="button" class="od-b">' + (cute ? '🚀 先進去玩,背景繼續下載' : '🚀 先進入,背景繼續下載') + '</button>' +
+      '<div class="od-h">' + (cute ? '先進去的話,還沒下載好的圖片會一邊玩一邊出現。下載好的圖片會一直留在平板裡,下次就不用再等了。'
+                                  : '提前進入時,尚未下載的圖片會在遊玩中陸續出現。已下載的素材會保留在本機,下次免再下載。') + '</div>' +
+      '</div>';
+    (document.body || document.documentElement).appendChild(ov);
+    ov.querySelector('.od-b').onclick = function(){
+      if(job.finished){ _sfx('sfx-confirm'); ov.remove(); job.go(); return; }
+      _sfx('sfx-click'); _toPill(job); job.go();
+    };
+    ov.querySelector('.od-x').onclick = function(){
+      _sfx('sfx-cancel'); _toPill(job);   // 不進入,背景照樣下載
+    };
+    _paint(job);
+  }
+  function _ready(job){
+    var ov = document.getElementById('lxps-od-ov');
+    if(!ov || ov.getAttribute('data-job') !== String(job.id)) return false;
+    var cute = _cute();
+    var tt = ov.querySelector('.od-t'); if(tt) tt.textContent = cute ? '🎉「' + job.label + '」準備好了!' : '✅「' + job.label + '」素材下載完成';
+    var b = ov.querySelector('.od-b'); if(b){ b.className = 'od-b ready'; b.textContent = cute ? '▶ 準備好了,進去玩吧!' : '▶ 下載完成,進入'; }
+    var s = ov.querySelector('.od-s');
+    if(s) s.innerHTML = job.failed
+      ? (cute ? '大部分都準備好了!有 ' + job.failed + ' 個等一下玩的時候會再試一次。' : '下載完成;' + job.failed + ' 個檔案稍後於遊玩時自動重試。')
+      : (cute ? '全部都放進你的平板了,下次來這裡就不用再等囉!' : '本區素材已全部存入本機。');
+    var h = ov.querySelector('.od-h'); if(h) h.style.display = 'none';
+    _sfx('sfx-powerup');
+    return true;
+  }
+  function _toPill(job){
+    var ov = document.getElementById('lxps-od-ov'); if(ov && ov.getAttribute('data-job') === String(job.id)) ov.remove();
+    if(job.finished) return;
+    _css();
+    var old = document.getElementById('lxps-od-pill'); if(old) old.remove();
+    var p = document.createElement('div'); p.id = 'lxps-od-pill'; p.setAttribute('data-job', String(job.id));
+    p.innerHTML = '<span></span><div class="lxps-od-bar"><i></i></div>';
+    (document.body || document.documentElement).appendChild(p);
+    _paint(job);
+  }
+  function _pillDone(job){
+    var p = document.getElementById('lxps-od-pill');
+    if(!p || p.getAttribute('data-job') !== String(job.id)) return;
+    var t = p.querySelector('span');
+    if(t) t.textContent = job.failed ? ('⚠ ' + job.label + ':' + job.failed + ' 個稍後再試') : ('✅ ' + job.label + ' 下載完成');
+    var f = p.querySelector('.lxps-od-bar>i'); if(f) f.style.width = '100%';
+    setTimeout(function(){ try{ if(p.parentNode) p.remove(); }catch(_){} }, 2500);
+  }
+
+  // ── 主入口 ──
+  OD.ensure = function(area, label, urls, go){
+    var _went = false;
+    function _go(){ if(_went) return; _went = true; try{ if(typeof go === 'function') go(); }catch(e){ console.error('[邊玩邊下載] 進入函式錯誤', e); } }
+    try{
+      if(OD.disabled || !OD.hasSW() || OD.fullDlRunning() || OD.doneAreas[area]){ _go(); return; }
+      if(document.getElementById('lxps-od-ov')){ _go(); return; }   // 已經有一個視窗了,不疊第二個
+      var list;
+      try{ list = (typeof urls === 'function') ? urls() : urls; }catch(eL){ console.warn('[邊玩邊下載] 清單建立失敗,直接進入', eL); _go(); return; }
+      var _t0 = Date.now(), _settled = false;
+      // 比對太久(超過 2.5 秒)就不等了,先進入;比對結果出來後缺的照樣在背景補抓
+      var _guard = setTimeout(function(){ if(!_settled){ _settled = true; _go(); } }, 2500);
+      OD.findMissing(list).then(function(res){
+        if(_settled){ if(res.missing.length) OD.enqueue(res.missing, function(){}); else OD.doneAreas[area] = 1; return; }
+        _settled = true; clearTimeout(_guard);
+        if(!res.missing.length){ OD.doneAreas[area] = 1; _go(); return; }
+        var job = { id: ++_jobSeq, area: area, label: label, total: res.missing.length, done: 0, failed: 0, finished: false, go: _go };
+        OD.job = job;
+        _showModal(job);
+        console.log('[邊玩邊下載 ' + OD.ver + '] ' + label + ':共 ' + res.total + ' 個素材,缺 ' + res.missing.length + ' 個,開始下載(比對 ' + (Date.now() - _t0) + 'ms)');
+        OD.enqueue(res.missing, function(ok){
+          if(job.finished) return;
+          job.done++; if(!ok) job.failed++;
+          _paint(job);
+          if(job.done >= job.total){
+            job.finished = true;
+            OD.doneAreas[area] = 1;            // 抓不到的已記進 badUrls,本次開機不再擋這區
+            if(OD.job === job) OD.job = null;
+            if(!_ready(job)) _pillDone(job);   // 視窗還開著 ⇒ 換成「進入」鈕;已先進去 ⇒ 小進度條收尾
+            try{ if(typeof window._lxpsODPaintMainBtn === 'function') window._lxpsODPaintMainBtn(); }catch(_){}
+          }
+        });
+      }).catch(function(e){
+        console.warn('[邊玩邊下載] 比對失敗,直接進入', e);
+        if(!_settled){ _settled = true; clearTimeout(_guard); _go(); }
+      });
+    }catch(e){
+      console.warn('[邊玩邊下載] 例外,直接進入', e);
+      _go();
+    }
+  };
+
+  /* ════════ 各區域素材清單(執行時從遊戲資料表即時組出,新增英雄/關卡自動涵蓋)════════ */
+  function _g(name){ try{ return (new Function('return (typeof ' + name + ' !== "undefined") ? ' + name + ' : undefined;'))(); }catch(_){ return undefined; } }
+  function _heroImgs(){ return _g('HERO_IMGS') || window.HERO_IMGS || {}; }
+  function _imgOf(name){ var H = _heroImgs(); return (name && typeof name === 'string' && H[name]) ? H[name] : null; }
+  function _audioSrc(id){
+    try{
+      var el = document.getElementById(id); if(!el) return null;
+      var s = el.getAttribute('src') || el.getAttribute('data-src');
+      if(!s){ var so = el.querySelector('source[src]'); if(so) s = so.getAttribute('src'); }
+      return s || null;
+    }catch(_){ return null; }
+  }
+  function _audioByPrefix(prefixes, out){
+    try{
+      var els = document.querySelectorAll('audio[id]');
+      for(var i = 0; i < els.length; i++){
+        var id = els[i].id;
+        for(var k = 0; k < prefixes.length; k++){
+          if(id.indexOf(prefixes[k]) === 0){ var s = _audioSrc(id); if(s) out.push(s); break; }
+        }
+      }
+    }catch(_){}
+  }
+  // 深走一個資料表:字串若是素材檔名/網址就收;若是 HERO_IMGS 的鍵(角色名)就收它的圖;若是 <audio> id 就收它的 src
+  function _walk(obj, out, depth, seen){
+    if(obj == null || depth > 7) return;
+    var t = typeof obj;
+    if(t === 'string'){
+      if(_ASSET_RE.test(obj)) out.push(obj);
+      else { var im = _imgOf(obj); if(im) out.push(im);
+             else if(/^(bgm|sfx)-/.test(obj)){ var a = _audioSrc(obj); if(a) out.push(a); } }
+      return;
+    }
+    if(t !== 'object') return;
+    if(obj.nodeType || obj === window) return;
+    try{ if(typeof Set !== 'undefined' && obj instanceof Set){ var arr = []; obj.forEach(function(v){ arr.push(v); }); obj = arr; } }catch(_){}
+    seen = seen || [];
+    if(seen.indexOf(obj) !== -1) return; seen.push(obj);
+    if(Array.isArray(obj)){ for(var i = 0; i < obj.length; i++) _walk(obj[i], out, depth + 1, seen); return; }
+    for(var k in obj){
+      if(!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+      var v; try{ v = obj[k]; }catch(_){ continue; }
+      if(typeof v === 'function') continue;
+      _walk(v, out, depth + 1, seen);
+    }
+  }
+  function _walkNamed(names, out){ (names || []).forEach(function(n){ _walk(_g(n), out, 0); }); }
+  function _stageLabel(stage){
+    try{ var s = (_g('ADV_STAGES') || window.ADV_STAGES || {})[stage]; if(s && s.name) return String(s.name).replace(/^[✈\s]+/, '').replace(/《.*$/, '').trim() || stage; }catch(_){}
+    return stage;
+  }
+  var _STAGE_SRC = {
+    maokong: { tables: ['MINI_MONSTERS'], audio: ['bgm-adv-', 'bgm-battle-', 'bgm-boss-'] },
+    japan:   { tables: ['MINI_MONSTERS_JP', '_JP_BG', 'JP_MONSTER_IMG'], audio: ['bgm-japan-'] },
+    egypt:   { tables: ['MINI_MONSTERS_EG', '_EG_BG', 'EGYPT_BATTLE_BGM_LIST'], extra: ['聖甲蟲'], audio: ['bgm-egypt-'] },
+    china:   { tables: ['MINI_MONSTERS_CN', '_CN_BG', 'CHINA_ENEMY_MOB_NAMES', 'CHINA_ENEMY_BOSS_NAMES', 'CHINA_BATTLE_BGM_LIST', 'CHINA_SANGUO_BGM_LIST'], extra: ['貔貅'], audio: ['bgm-china-'] },
+    taiwan:  { tables: ['MINI_MONSTERS', 'TAIWAN_IMG_MAP', 'TAIWAN_BOSS_MINIONS'], audio: ['bgm-taiwan-'] }
+  };
+  function _stageList(stage){
+    var out = [], src = _STAGE_SRC[stage] || { tables: [], audio: [] };
+    var sc = _g('ADV_SCENES') || window.ADV_SCENES; if(sc) _walk(sc[stage], out, 0);
+    var bv = _g('ADV_BOSS_VARIANTS'); if(bv) _walk(bv[stage], out, 0);
+    var bt = _g('ADV_BOSS_TEAMS'); if(bt) _walk(bt[stage], out, 0);
+    _walkNamed(src.tables, out);
+    if(src.extra) _walk(src.extra, out, 0);
+    if(stage === 'china' && window._CN2){ _walk(window._CN2.routes, out, 0); _walk(window._CN2.enemies ? Object.keys(window._CN2.enemies) : null, out, 0); }
+    if(stage === 'taiwan' && window._TW2){ _walk(window._TW2.bosses, out, 0); }
+    if(stage === 'japan' && window.ADV_SCENES && window.ADV_SCENES.japan && window.ADV_SCENES.japan.bossBg) out.push(window.ADV_SCENES.japan.bossBg);
+    _audioByPrefix(src.audio, out);
+    return out;
+  }
+  function _heroNames(){
+    var names = {}, i;
+    try{ var HD = _g('HERO_DB'); if(HD) for(var k in HD) names[k] = 1; }catch(_){}
+    try{ if(typeof window.advGetUnlockedHeroes === 'function'){ var u = window.advGetUnlockedHeroes() || []; for(i = 0; i < u.length; i++) names[u[i]] = 1; } }catch(_){}
+    try{ var P = _g('ADV_HERO_POOL'); if(P && P.maokong) for(i = 0; i < P.maokong.length; i++) names[P.maokong[i]] = 1; }catch(_){}
+    return Object.keys(names);
+  }
+  function _heroCodexList(){
+    var out = [];
+    _heroNames().forEach(function(n){ var im = _imgOf(n); if(im) out.push(im); });
+    return out;
+  }
+  function _summonList(){
+    var out = ['./' + encodeURIComponent('召喚星空(可愛版).png')];
+    _walkNamed(['SUMMON_FX_SMOKE_GIF', 'SUMMON_FX_REVEAL_GIF', 'SUMMON_FX_TREASURE_GIF', 'SUMMON_FX_SMOKE2_GIF', 'SUMMON_FX_1X_GIF', 'SUMMON_FX_FRUIT_GIF', 'SUMMON_FX_10X_GIF', 'SUMMON_RARE_HEROES'], out);
+    _walk(window.SUMMON_SR_HEROES, out, 0);
+    try{
+      var ids = _g('SUMMON_RANDOM_TREASURES') || [], TT = window.TAIWAN_TREASURES || {};
+      ids.forEach(function(id){ var key = (id && typeof id === 'object') ? (id.id || id.key) : id; if(TT[key] && TT[key].iconUrl) out.push(TT[key].iconUrl); });
+    }catch(_){}
+    return out;
+  }
+  function _monsterList(){
+    var out = [], H = _heroImgs(), HD = _g('HERO_DB') || {};
+    for(var k in H){ if(Object.prototype.hasOwnProperty.call(H, k) && !HD[k] && typeof H[k] === 'string') out.push(H[k]); }
+    // 可上場的 BOSS(牛魔王、呂布…)也在 HERO_DB 裡,用各區敵人名單補回來
+    _walkNamed(['BOSS_NAMES', 'MINI_MONSTERS', 'MINI_MONSTERS_JP', 'MINI_MONSTERS_EG', 'MINI_MONSTERS_CN', 'RARE_MINI_MONSTERS', 'JP_MONSTER_IMG',
+                'CHINA_ENEMY_MOB_NAMES', 'CHINA_ENEMY_BOSS_NAMES', 'TAIWAN_BOSS_MINIONS', 'ADV_BOSS_VARIANTS', 'ADV_BOSS_TEAMS'], out);
+    _walk(window._ELITE_ENEMY_NAMES, out, 0);
+    if(window._CN2 && window._CN2.enemies) _walk(Object.keys(window._CN2.enemies), out, 0);
+    _walk(window.WORLD_BOSS_LINEUP, out, 0);
+    if(window._TW2) _walk(window._TW2.bosses, out, 0);
+    return out;
+  }
+  function _treasureList(){
+    var out = ['./' + encodeURIComponent('至寶背景.png')], TT = window.TAIWAN_TREASURES || {};
+    for(var k in TT){ if(TT[k] && TT[k].iconUrl) out.push(TT[k].iconUrl); }
+    return out;
+  }
+  function _petList(){
+    var out = [];
+    var C = _g('CARRY_PET_DB');
+    if(C){ (Array.isArray(C) ? C : Object.keys(C).map(function(k){ return C[k]; })).forEach(function(p){ if(p && p.petImg) out.push(p.petImg); }); }
+    _walkNamed(['EGYPT_PETS', 'CHINA_PETS'], out);
+    return out;
+  }
+  function _storyVer(){ try{ return (window._LXPS_FILE_VERSIONS && window._LXPS_FILE_VERSIONS['index.html']) || 'v0'; }catch(_){ return 'v0'; } }
+  function _storyAsset(name){ return './' + encodeURIComponent(name) + '?v=' + _storyVer(); }   // 同 mainstory.js _msAsset
+  function _storyList(cid){
+    var out = [], db = window.MAINSTORY_DB, ch = db && db.chapters && db.chapters[cid];
+    if(!ch) return out;
+    if(ch.cover && ch.cover.img) out.push(_storyAsset(ch.cover.img));
+    out.push('./' + encodeURIComponent('章節音樂.m4a'));
+    (ch.scenes || []).forEach(function(sc){
+      if(!sc) return;
+      if(sc.img) out.push(_storyAsset(sc.img));
+      if(sc.amb) out.push('./' + encodeURIComponent(sc.amb + '.m4a') + '?v=' + _storyVer());   // 同 _msSndUrl
+      if(sc.bgm){ var a = _audioSrc(sc.bgm); if(a) out.push(a); }
+      (sc.lines || []).forEach(function(ln){
+        if(!ln) return;
+        if(ln.sfx) out.push('./' + encodeURIComponent(ln.sfx + '.m4a') + '?v=' + _storyVer());
+        var im = _imgOf(ln.who); if(im) out.push(im);
+      });
+    });
+    return out;
+  }
+  function _dragonList(){
+    var out = [];
+    _walk(window.WORLD_BOSS_LINEUP, out, 0);
+    _walkNamed(['_WB_FX_URLS'], out);
+    _walk(window._WB_FX_URLS, out, 0);
+    _audioByPrefix(['bgm-wb-'], out);
+    return out;
+  }
+  OD.lists = { stage: _stageList, heroCodex: _heroCodexList, summon: _summonList, monster: _monsterList, treasure: _treasureList, pet: _petList, story: _storyList, dragon: _dragonList };
+
+  /* ════════ 掛到各入口(包一層,原函式一行不動)════════ */
+  function _lbl(cuteTxt, premTxt){ return function(){ return _cute() ? cuteTxt : premTxt; }; }
+  var HOOKS = [
+    { fn: 'startAdventureGame', area: function(stage){ stage = stage || 'maokong'; return (_STAGE_SRC[stage] ? 'stage:' + stage : null); },
+      label: function(stage){ return _stageLabel(stage || 'maokong'); }, list: function(stage){ return _stageList(stage || 'maokong'); } },
+    { fn: 'openHeroPage', area: 'heroCodex', label: _lbl('英雄圖鑑', '英雄圖鑑'), list: _heroCodexList },
+    { fn: 'openSummonOverlay', area: 'summon', label: _lbl('召喚星空', '召喚星空'), list: _summonList },
+    { fn: 'openMonsterPage', area: 'monster', label: _lbl('魔物圖鑑', '魔物圖鑑'), list: _monsterList },
+    { fn: 'openTaiwanTreasurePage', area: 'treasure', label: _lbl('至寶圖鑑', '至寶圖鑑'), list: _treasureList },
+    { fn: 'openPetPage', area: 'pet', label: _lbl('寵物圖鑑', '寵物圖鑑'), list: _petList },
+    { fn: '_msRunChapter', area: function(cid){ return cid ? 'story:' + cid : null; },
+      label: function(cid){ try{ var ch = window.MAINSTORY_DB.chapters[cid]; var t = _cute() ? (ch.titleC || ch.titleP) : (ch.titleP || ch.titleC); return '主線' + (t ? '「' + String(t).replace(/<[^>]*>/g, '').slice(0, 14) + '」' : ''); }catch(_){ return '主線劇情'; } },
+      list: function(cid){ return _storyList(cid); } },
+    { fn: '_openWorldBossEntry', area: 'dragon', label: _lbl('龍王戰', '龍王戰'), list: _dragonList }
+  ];
+  function _resolve(v, args){ return (typeof v === 'function') ? v.apply(null, args) : v; }
+  function _install(){
+    var n = 0;
+    HOOKS.forEach(function(h){
+      var f = window[h.fn];
+      if(typeof f !== 'function' || f._lxpsOD) return;
+      var w = function(){
+        var self = this, args = arguments, ret;
+        var area = null; try{ area = _resolve(h.area, args); }catch(_){}
+        if(!area || OD.doneAreas[area] || !OD.hasSW()) return f.apply(self, args);
+        var label = h.fn; try{ label = _resolve(h.label, args); }catch(_){}
+        OD.ensure(area, label, function(){ return h.list.apply(null, args); }, function(){ ret = f.apply(self, args); });
+        return ret;   // 已確認齊全時是同步呼叫,回傳值照原樣
+      };
+      w._lxpsOD = 1; w._lxpsODOrig = f;
+      try{ window[h.fn] = w; n++; }catch(_){}
+    });
+    return n;
+  }
+  OD.install = _install;
+
+  // 背景預先比對:開機 8 秒後逐區比對一次,點進去時多半已知道齊不齊(齊 ⇒ 同一拍直接進入)
+  function _precheck(){
+    if(!OD.hasSW() || OD.fullDlRunning()) return;
+    var jobs = [];
+    ['maokong', 'taiwan', 'japan', 'egypt', 'china'].forEach(function(s){ jobs.push(['stage:' + s, function(){ return _stageList(s); }]); });
+    jobs.push(['heroCodex', _heroCodexList], ['summon', _summonList], ['monster', _monsterList], ['treasure', _treasureList], ['pet', _petList], ['dragon', _dragonList]);
+    var i = 0;
+    (function next(){
+      if(i >= jobs.length) return;
+      var j = jobs[i++];
+      if(OD.doneAreas[j[0]]){ setTimeout(next, 50); return; }
+      var lst; try{ lst = j[1](); }catch(_){ lst = null; }
+      if(!lst){ setTimeout(next, 50); return; }
+      OD.findMissing(lst).then(function(r){ if(!r.missing.length) OD.doneAreas[j[0]] = 1; }).catch(function(){}).then(function(){ setTimeout(next, 150); });
+    })();
+  }
+
+  /* ════════ 首頁「完整下載故事冒險主程式」鈕:加一行「素材 N／總數」(老師裁定甲)════════
+   * 總數 = asset_manifest.json 的 files(repo 根目錄＋avatar_parts/ 全部素材,含影片,與完整下載同口徑);
+   * 已下載 = 素材庫 lxps-assets-v2 裡的鍵,以「檔名去副檔名」比對(同一張圖存成 webp/jpg/png 任一種都算)。
+   * 沒有 SW(網頁版)⇒ 顯示「素材:邊玩邊下載」。全程 fail-safe,失敗就不顯示,不影響按鈕本身。 */
+  var _paintBusy = false, _paintAt = 0;
+  window._lxpsODPaintMainBtn = function(force){
+    try{
+      var btn = document.getElementById('download-install-btn'); if(!btn) return;
+      if(_paintBusy || (!force && Date.now() - _paintAt < 1500)) return;
+      _paintBusy = true; _paintAt = Date.now();
+      var sp = document.getElementById('dlver-main-assets');
+      if(!sp){
+        sp = document.createElement('span'); sp.id = 'dlver-main-assets';
+        sp.style.cssText = 'display:block;font-size:11px;font-weight:700;margin-top:2px;letter-spacing:.5px;line-height:1.3;';
+        var ref = document.getElementById('dlver-main');
+        if(ref && ref.parentNode === btn) btn.insertBefore(sp, ref.nextSibling); else btn.appendChild(sp);
+      }
+      var cute = _cute();
+      if(!OD.hasSW()){
+        sp.textContent = cute ? '素材:玩到哪裡下載到哪裡' : '素材:邊玩邊下載';
+        sp.style.color = '#cfe0ff'; _paintBusy = false; return;
+      }
+      Promise.all([OD.manifest(), caches.open('lxps-assets-v2').then(function(c){ return c.keys(); }).catch(function(){ return []; })]).then(function(rs){
+        var man = rs[0], keys = rs[1] || [];
+        if(!man){ _paintBusy = false; return; }
+        var have = {};
+        keys.forEach(function(rq){ var b = _baseNoExt(rq.url); if(b) have[b] = 1; });
+        var n = 0;
+        man.files.forEach(function(f){ var b = String(f); b = b.substring(b.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '').trim(); if(have[b]) n++; });
+        var total = man.count;
+        if(n >= total){
+          sp.textContent = cute ? '素材全部下載好了 ✅' : '素材已全部下載 ✅';
+          sp.style.color = '#bfffd6';
+        } else {
+          sp.textContent = (cute ? '素材 ' : '素材 ') + n + '/' + total + (cute ? '(還沒下載完)' : '(未完整)');
+          sp.style.color = '#ffcf7a';
+        }
+        _paintBusy = false;
+      }).catch(function(){ _paintBusy = false; });
+    }catch(_){ _paintBusy = false; }
+  };
+
+  function _boot(){
+    var n = _install();
+    console.log('[邊玩邊下載 ' + OD.ver + '] 已掛上 ' + n + ' 個入口');
+    setTimeout(function(){ _install(); }, 3000);     // world-boss.js(defer)等晚載的入口再掛一次
+    setTimeout(function(){ _install(); _precheck(); }, 8000);
+    setTimeout(function(){ window._lxpsODPaintMainBtn(true); }, 6000);
+    setInterval(function(){ _install(); }, 60000);   // 有模組重新定義入口時補掛(已掛過的會略過)
+    try{
+      if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', function(e){
+        var d = e && e.data; if(d && d.type === 'PRECACHE_COMPLETE') setTimeout(function(){ window._lxpsODPaintMainBtn(true); }, 800);
+      });
+    }catch(_){}
+  }
+  if(document.readyState === 'complete') setTimeout(_boot, 0);
+  else window.addEventListener('load', function(){ setTimeout(_boot, 0); });
+})();
 window._advSystemReady = true;
 
 ;(window._LXPS_MOD_OK || (window._LXPS_MOD_OK = {}))['game_adv.js'] = 1;   /* ★ v5.235.0 載入完成記號(必須是本檔最後一行) */
