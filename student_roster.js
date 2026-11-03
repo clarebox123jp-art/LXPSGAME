@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// student_roster.js — LXPSGAME 學生名冊(v3.6.0 依 115 學年度學生名條全面校正)
+// student_roster.js — LXPSGAME 學生名冊(v3.6.1 — 2026-11-03 鐘豊為帳號修正為 lsps110051a ｜ v3.6.0 依 115 學年度學生名條全面校正)
 //
 //   用途:把學生班級/座號/姓名等個資資料,跟主程式碼分開保管
 //
@@ -850,7 +850,7 @@ window._STUDENT_ROSTER = {
 
   // ─── 6年2班(115 學年度名條,已於 2026-09-22 校正) ─────────────────────────
   'lsps110191@stu.lsps.tp.edu.tw': { class:'6年2班', seatNo:1, surname:'李', fullName:'李堅強' },
-  'lsps110051@stu.lsps.tp.edu.tw': { class:'6年2班', seatNo:2, surname:'鐘', fullName:'鐘豊為' },
+  'lsps110051a@stu.lsps.tp.edu.tw': { class:'6年2班', seatNo:2, surname:'鐘', fullName:'鐘豊為' },  // ★ v3.6.1(2026-11-03)老師:帳號修正 lsps110051 → lsps110051a
   'lsps110153@stu.lsps.tp.edu.tw': { class:'6年2班', seatNo:3, surname:'萬', fullName:'萬睿楠' },
   'lsps110054@stu.lsps.tp.edu.tw': { class:'6年2班', seatNo:4, surname:'朱', fullName:'朱繹銨' },
   'lsps110028@stu.lsps.tp.edu.tw': { class:'6年2班', seatNo:5, surname:'張', fullName:'張博恩' },
