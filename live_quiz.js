@@ -81,7 +81,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.336.0' };
+var LQ = window._LQ = { _v: 'v5.341.0' };   /* ★ v5.341.0 刪題組確認/題組名稱改遊戲內視窗 */
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -2200,7 +2200,7 @@ function hostSetup(){
   }
   async function saveSet(){
     if(!D.qs.length){ toast('先加入題目'); return; }
-    var name = prompt('題組名稱', D.title); if(!name) return;
+    var name = (await window._lxpsPrompt('題組名稱', D.title)); if(!name) return;
     try{
       var u = me(), id = u.uid.slice(0, 10) + '_' + now();
       await F.setDoc(F.doc(db(), 'liveQuizSets', id), { ownerUid: u.uid, ownerEmail: myEmail(), name: String(name).slice(0, 40), qs: D.qs.map(packQ), at: now() });
@@ -2228,7 +2228,7 @@ function hostSetup(){
         if(b.hasAttribute('data-load')){
           D.qs = (x.d.qs || []).map(unpackQ).slice(0, MAX_Q); D.title = x.d.name || D.title;
           closeModal(); hostSetup(); toast('已載入「' + x.d.name + '」');
-        }else if(confirm('刪除題組「' + x.d.name + '」?')){
+        }else if((await window._lxpsConfirm('刪除題組「' + x.d.name + '」?'))){
           try{ await F.deleteDoc(F.doc(db(), 'liveQuizSets', id)); b.closest('.lq-qi').remove(); }catch(err){ toast('刪除失敗'); }
         }
       };

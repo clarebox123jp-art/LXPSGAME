@@ -12979,14 +12979,14 @@ try{
       + rows + '<button class="wb-ps-close" onclick="_wbPsClose()">取消</button>');
   };
 
-  window._wbTcPresetSaveTo = function(idx){
+  window._wbTcPresetSaveTo = async function(idx){
     const teams = _wbPsTeams();
     if(!teams) return;
     const cur = _wbPsCurrentSlots();
     if(cur.some(function(s){ return !s; })){ _wbGameAlert('四個位置都要有英雄才能存'); return; }
     const nmEl = document.getElementById('wb-ps-name');
     const name = ((nmEl && nmEl.value) || '').trim().slice(0, 10) || ('陣容' + (idx + 1));
-    if(teams[idx] && !confirm('要用目前隊伍覆蓋「' + (teams[idx].name || ('陣容' + (idx + 1))) + '」嗎?')) return;
+    if(teams[idx] && !(await window._lxpsConfirm('要用目前隊伍覆蓋「' + (teams[idx].name || ('陣容' + (idx + 1))) + '」嗎?'))) return;
     const heroes = cur.map(function(s){ return s.heroName; });
     const old = teams[idx];
     const pt = {

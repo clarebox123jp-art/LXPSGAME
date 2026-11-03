@@ -7096,7 +7096,7 @@
 
   // GM:傳訊給該玩家(玩家端 players/{uid} onSnapshot 即時彈窗+可回覆)
   window._gmolSendMsg = async function(uid){
-    const _msg = prompt('✉️ 輸入要傳給這位玩家的訊息(即時彈窗顯示·玩家可回覆):');
+    const _msg = (await window._lxpsPrompt('✉️ 輸入要傳給這位玩家的訊息(即時彈窗顯示·玩家可回覆):'));
     if(_msg === null) return;
     const _t = String(_msg).trim();
     if(!_t) return;
@@ -8175,7 +8175,7 @@
     if(_delBtn) _delBtn.onclick = async function(){
       var _sel = _getChecked();
       if(!_sel.heroNames.length && !_sel.treIds.length){ try{ alert('請先勾選要刪除的英雄/至寶'); }catch(_){} return; }
-      if(!confirm('確定「刪除(回收)」勾選的 ' + _sel.heroNames.length + ' 隻英雄 + ' + _sel.treIds.length + ' 件至寶?\n\n(寫三槽·不復活;已練英雄自動補償知識幣+召喚水晶;寄道歉通知給玩家)')) return;
+      if(!(await window._lxpsConfirm('確定「刪除(回收)」勾選的 ' + _sel.heroNames.length + ' 隻英雄 + ' + _sel.treIds.length + ' 件至寶?\n\n(寫三槽·不復活;已練英雄自動補償知識幣+召喚水晶;寄道歉通知給玩家)'))) return;
       _delBtn.disabled = true; if(_restoreBtn) _restoreBtn.disabled = true; _delBtn.textContent = '回收中…';
       try{
         var _r = await window._fbAdminReclaimOverRestoredForUid(_uid, _sel.heroNames, _sel.treIds);
@@ -8196,7 +8196,7 @@
     if(_restoreBtn) _restoreBtn.onclick = async function(){
       var _sel = _getChecked();
       if(!_sel.heroNames.length && !_sel.treIds.length){ try{ alert('請先勾選要救回的英雄/至寶'); }catch(_){} return; }
-      if(!confirm('確定「救回」勾選的 ' + _sel.heroNames.length + ' 隻英雄 + ' + _sel.treIds.length + ' 件至寶給這位學生?\n\n(寫合法紀錄·還原等級;之後不再被判過度補回。代表你已核對確認這些確實是這位學生的)')) return;
+      if(!(await window._lxpsConfirm('確定「救回」勾選的 ' + _sel.heroNames.length + ' 隻英雄 + ' + _sel.treIds.length + ' 件至寶給這位學生?\n\n(寫合法紀錄·還原等級;之後不再被判過度補回。代表你已核對確認這些確實是這位學生的)'))) return;
       _restoreBtn.disabled = true; if(_delBtn) _delBtn.disabled = true; _restoreBtn.textContent = '救回中…';
       try{
         var _hOk = 0, _tOk = 0;
@@ -8557,7 +8557,7 @@
       if(!(_lv >= 1)) _lv = 1;
       if(_lv > 20) _lv = 20;
       if(!_pn){ alert('請先選擇要補發的寵物'); return; }
-      if(!confirm('確定要補發寵物「' + _pn + '」(Lv.' + _lv + ')給這位玩家嗎?\n(只增不減:若已馴養且等級較高,不會降級)')) return;
+      if(!(await window._lxpsConfirm('確定要補發寵物「' + _pn + '」(Lv.' + _lv + ')給這位玩家嗎?\n(只增不減:若已馴養且等級較高,不會降級)'))) return;
       const _res = await window._fbAdminGrantPetToPlayer(uid, _pn, _lv);
       alert('✅ 補發完成:' + _pn + '\n' + ((_res && _res.msg) ? _res.msg : ''));
       try{ window._fbShowPlayerPetRecords(uid); }catch(_){}
@@ -9205,7 +9205,7 @@
       const _mode = _modeEl ? String(_modeEl.value) : 'reroll';
       if(!_pn){ alert('請先選擇要重置的寵物(需為該玩家已馴養者)'); return; }
       const _modeTxt = (_mode === 'full') ? '完全重置(退 Lv.1、重擲隨機素質;好感保留)' : '重擲隨機素質(等級/經驗/好感全保留)';
-      if(!confirm('確定要對玩家的寵物「' + _pn + '」執行:\n' + _modeTxt + ' 嗎?')) return;
+      if(!(await window._lxpsConfirm('確定要對玩家的寵物「' + _pn + '」執行:\n' + _modeTxt + ' 嗎?'))) return;
       const _res = await window._fbAdminResetPetForPlayer(uid, _pn, _mode);
       alert('✅ 重置完成:' + _pn + '\n' + ((_res && _res.msg) ? _res.msg : ''));
       try{ window._fbShowPlayerPetRecords(uid); }catch(_){}
@@ -10549,7 +10549,7 @@
         _b.onclick = async function(){
           var _rid = _b.getAttribute('data-rid');
           if(!_rid){ try{ alert('此筆缺少獎勵代碼,無法刪除'); }catch(_){} return; }
-          if(!confirm('確定刪除這筆 GM 獎勵紀錄?\n\n會一併從學生「🎁 GM 獎勵」收件箱移除(待領項 + 已領取紀錄)。\n\n⚠ 這只刪「紀錄」,不會自動扣回已經發出的獎勵 / 英雄。如需收回實際發出的東西,請另用「學生補償(負值扣回)」或「污染英雄刪除」工具。')) return;
+          if(!(await window._lxpsConfirm('確定刪除這筆 GM 獎勵紀錄?\n\n會一併從學生「🎁 GM 獎勵」收件箱移除(待領項 + 已領取紀錄)。\n\n⚠ 這只刪「紀錄」,不會自動扣回已經發出的獎勵 / 英雄。如需收回實際發出的東西,請另用「學生補償(負值扣回)」或「污染英雄刪除」工具。'))) return;
           _b.disabled = true; _b.textContent = '刪除中…';
           try{
             if(typeof window._fbAdminDeleteGmClassReward !== 'function') throw new Error('_fbAdminDeleteGmClassReward 未載入(index.html 可能尚未更新)');

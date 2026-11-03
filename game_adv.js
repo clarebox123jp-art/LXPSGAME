@@ -13025,7 +13025,7 @@ function advNextDialog(e) {
 //   設計考量:
 //   - 對白可能因任何 flag 殘留卡死,這個按鈕是「最後手段」
 //   - 強制 reset 所有可能殘留的 flags,然後直接呼叫 advStartMiniBattle 進入下一場
-function advSkipCurrentDialog() {
+async function advSkipCurrentDialog() {
   try{
     const stage = _adventureStage;
     const sceneIdx = _advSceneIdx;
@@ -13132,7 +13132,7 @@ function advSkipCurrentDialog() {
     if(typeof _customConfirm === 'function'){
       _customConfirm('確定要跳過當前劇情嗎？\n\n（若這一幕需要選題庫，會直接跳到選擇面板）', _doSkip, () => {});
     } else {
-      if(window.confirm('確定要跳過當前劇情？')) _doSkip();
+      if((await window._lxpsConfirm('確定要跳過當前劇情？'))) _doSkip();
     }
   }catch(eOut){
     console.error('[advSkipCurrentDialog 外層異常]', eOut);
@@ -14356,7 +14356,7 @@ function advConfirmTreasureUse(slotIdx) {
   playSfx('sfx-sel', 0.5);
 }
 
-function advSkipCutscene() {
+async function advSkipCutscene() {
   // ★ v1.0.20260420.1230 — 玩家在冒險開始前選擇「否,完整冒險」則拒絕所有跳過請求
   if (window._advDeclinedSkip) {
     console.warn('[advSkipCutscene] 玩家已選擇完整冒險,跳過按鈕應已隱藏');
@@ -14384,7 +14384,7 @@ function advSkipCutscene() {
       };
       if(typeof _customConfirm === 'function'){
         _customConfirm(_msg, _doUpfrontSkip);
-      } else if(confirm(_msg)){
+      } else if((await window._lxpsConfirm(_msg))){
         _doUpfrontSkip();
       }
       return;  // 確認流程已接管(custom 走 callback / native 走上面分支),不再往下重複跳過
@@ -26826,7 +26826,7 @@ window._clearAccountLocalData = function(reason){
     // ★ v5.248.0 — 三平台(手機橫向 411 高／iPad／PC)尺寸一律用 clamp 隨視窗高度縮放,
     //   卡片 max-height + overflow-y:auto、外層 align-items:safe center(對話框溢出慣例,按鈕永遠點得到)
     pop.style.cssText =
-      'position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,0.88);' +
+      'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,0.88);' +   /* ★ v5.342.0 99997→最高層:閒置登出倒數要蓋過所有視窗(含確認視窗、召喚 10 連、鬥技場面板) */
       'display:flex;align-items:safe center;justify-content:center;padding:12px;box-sizing:border-box;' +
       'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
     // 彈窗自己的點擊不算「使用者活動」(★ v5.248.0 真正的判斷在 _markActivity 開頭的 contains 檢查)
@@ -26901,7 +26901,7 @@ window._clearAccountLocalData = function(reason){
       const pop = document.createElement('div');
       pop.id = '_idle-logout-done';
       pop.style.cssText =
-        'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,0.94);' +
+        'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,0.94);' +   /* ★ v5.342.0 2147483000→最高層(已登出提示必須在最上面) */
         'display:flex;align-items:safe center;justify-content:center;padding:12px;box-sizing:border-box;' +
         'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
       const _block = function(e){ try{ e.stopPropagation(); if(e.cancelable) e.preventDefault(); }catch(_){} };
@@ -39164,7 +39164,7 @@ function _arenaToast(msg){
   try{ if(typeof _showInGameToast === 'function'){ _showInGameToast(msg, '#ffd54f', 3200); return; } }catch(_){}
   try{ alert(msg); }catch(_){}
 }
-function _arenaBuyConfirm(it, onOk){
+async function _arenaBuyConfirm(it, onOk){
   var msg = '確定用 ' + it.cost + ' 鬥技之證兌換「' + it.name + '」嗎?';
   if(typeof _customConfirm === 'function'){
     _customConfirm(msg, onOk);
@@ -39177,7 +39177,7 @@ function _arenaBuyConfirm(it, onOk){
       if(_ccOv && _ccOv.parentNode){ document.body.appendChild(_ccOv); }
     }catch(_){}
   }
-  else if(confirm(msg)) onOk();
+  else if((await window._lxpsConfirm(msg))) onOk();
 }
 // 召喚卷:保底發 1 名該稀有度「尚未擁有」英雄;全收錄 → fallback(對齊 _rollOneSummon)
 function _arenaGrantSummonVoucher(rarity){
@@ -41766,9 +41766,9 @@ function _openSummonTicketPickModal(tier){
 }
 
 // ★ v3.13.74 — 自選券:確認挑選某英雄(二次確認 → 扣券 + 解鎖)
-function _confirmSummonTicketPick(tier, heroName){
+async function _confirmSummonTicketPick(tier, heroName){
   try{
-    if(!confirm('確定要選擇「' + heroName + '」嗎?\n\n使用後將消耗 1 張 ' + tier + ' 自選召喚卷,並立即解鎖此英雄。')) return;
+    if(!(await window._lxpsConfirm('確定要選擇「' + heroName + '」嗎?\n\n使用後將消耗 1 張 ' + tier + ' 自選召喚卷,並立即解鎖此英雄。'))) return;
     /* ★★ v5.198.0 — `_useSummonTicketPick` 是 **async function**:它內部丟出的例外會變成
        「被拒絕的 Promise」,**外面這層 try/catch 一個字都接不到**(舊碼的 catch 從來沒有機會執行)
        ⇒ 學生按下去之後畫面就停在那裡、沒有任何訊息,這正是「白頻 + 不知道發生什麼事」的成因之一。
@@ -54899,7 +54899,7 @@ window._setupOrientationWatcher = function(){
 // ══════════════════════════════════════════════
 //  登入選擇視窗
 // ══════════════════════════════════════════════
-function _openInChrome() {
+async function _openInChrome() {
   // 偵測是否已在 Chrome（含 Chrome for iOS）
   const ua = navigator.userAgent || '';
   const isChrome = (ua.indexOf('Chrome') > -1 || ua.indexOf('CriOS') > -1)
@@ -54927,8 +54927,8 @@ function _openInChrome() {
     const iosScheme = 'googlechromes://' + chromeUrl;
     const fallback  = 'googlechrome://' + chromeUrl;
     // 嘗試跳轉，若失敗顯示提示
-    const _t = setTimeout(function(){
-      if(confirm('無法自動開啟 Chrome。請手動複製網址，在 Chrome 中貼上開啟。  ' + location.href)){
+    const _t = setTimeout(async function(){
+      if((await window._lxpsConfirm('無法自動開啟 Chrome。請手動複製網址，在 Chrome 中貼上開啟。  ' + location.href))){
         try{ navigator.clipboard.writeText(location.href); }catch(_){}
       }
     }, 1500);
@@ -54940,22 +54940,22 @@ function _openInChrome() {
       + '#Intent;scheme=' + location.protocol.replace(':','')
       + ';package=com.android.chrome;end';
     window.location.href = intent;
-    setTimeout(function(){
-      if(confirm('請在彈出的選單中選擇「Chrome」開啟。或複製網址手動貼到 Chrome：  ' + location.href)){
+    setTimeout(async function(){
+      if((await window._lxpsConfirm('請在彈出的選單中選擇「Chrome」開啟。或複製網址手動貼到 Chrome：  ' + location.href))){
         try{ navigator.clipboard.writeText(location.href); }catch(_){}
       }
     }, 1000);
   } else {
     // 桌面：直接提示複製網址
-    if(confirm('請用 Google Chrome 瀏覽器開啟以下網址以獲得最佳遊戲體驗：  ' + location.href + '  點確定複製網址')){
+    if((await window._lxpsConfirm('請用 Google Chrome 瀏覽器開啟以下網址以獲得最佳遊戲體驗：  ' + location.href + '  點確定複製網址'))){
       try{
         navigator.clipboard.writeText(location.href).then(function(){
           alert('✅ 已複製！請開啟 Chrome 貼上網址。');
-        }).catch(function(){
-          prompt('請複製以下網址：', location.href);
+        }).catch(async function(){
+          (await window._lxpsPrompt('請複製以下網址：', location.href, { copy: true }));
         });
       }catch(e){
-        prompt('請複製以下網址：', location.href);
+        (await window._lxpsPrompt('請複製以下網址：', location.href, { copy: true }));
       }
     }
   }
@@ -59016,7 +59016,7 @@ window._openDisownRequest = async function(){
     var _hasInit = _names.some(function(nm){ return _initial.indexOf(nm) >= 0; });
     var _confMsg = '確定要申請移除這 ' + _names.length + ' 隻英雄嗎?\n\n' + _names.join('、') + '\n\n(送出後老師會審核;確認後才會移除)';
     if(_hasInit) _confMsg = '⚠ 你勾選的英雄裡包含「初始角色」(每位玩家一開始就有的)。\n通常初始角色是你自己的,不需要移除。\n\n' + _confMsg;
-    if(!confirm(_confMsg)) return;
+    if(!(await window._lxpsConfirm(_confMsg))) return;
     var _btn = _byId('_dr-submit'); if(_btn){ _btn.disabled = true; _btn.textContent = '送出中…'; _btn.style.opacity = '0.6'; }
     if(_resEl) _resEl.innerHTML = '<span style="color:#cbb8e0;">送出中,請稍候…</span>';
     try{
@@ -72403,12 +72403,12 @@ window._openPetRetrainBookPicker = function(){
       b.innerHTML = '🐾 ' + pn + ' ' + (typeof window._petRarityBadgeHtml === 'function' ? window._petRarityBadgeHtml(pn, 13) : '')
         + ' <span style="color:#ffee88;">Lv.' + (rec.lv || 1) + '</span>'
         + '<div style="font-size:14px;color:#c8b48c;font-weight:600;margin-top:3px;">目前隨機素質:' + window._petRetrainDistStr(pn, rec) + '</div>';
-      b.onclick = function(){
+      b.onclick = async function(){
         if(backpackGet('pet_retrain_book') <= 0){ m.remove(); return; }
         var _before = window._petRetrainDistStr(pn, rec);
-        if(!confirm((_cute ? '要用 1 本重新訓練書幫 [' + pn + '] 擲出新的隨機素質嗎?\n' : '確定要消耗 1 本重新訓練書,為 [' + pn + '] 擲出新的隨機素質嗎?\n')
+        if(!(await window._lxpsConfirm((_cute ? '要用 1 本重新訓練書幫 [' + pn + '] 擲出新的隨機素質嗎?\n' : '確定要消耗 1 本重新訓練書,為 [' + pn + '] 擲出新的隨機素質嗎?\n')
             + '目前:' + _before + '\n'
-            + (_cute ? '擲出新的之後,可以自己選要留「原本的」還是「新的」喔!' : '擲出後將顯示「重訓前 vs 重訓後」對比,由你選擇保留哪一組(等級/經驗/好感/跟隨皆不變)。'))) return;
+            + (_cute ? '擲出新的之後,可以自己選要留「原本的」還是「新的」喔!' : '擲出後將顯示「重訓前 vs 重訓後」對比,由你選擇保留哪一組(等級/經驗/好感/跟隨皆不變)。')))) return;
         // ★ v4.14.0 需求1 — 消耗書 → 擲出「候選」新素質(不立即套用)→ 前後對比二選一,確認才寫入雲端(玩家自己 UID 存檔)
         backpackAdd('pet_retrain_book', -1);
         var _newSeed = window._petNewSeed();
@@ -74452,11 +74452,11 @@ async function _useAllExpBookForHero(name, isDeluxe) {
     + `只需要 ${_useCount} 本 ${_label} 就能升到最高等級，\n`
     + `所以系統會自動幫你保留剩下的 ${_keep} 本，不會浪費！\n\n`
     + `確定要使用 ${_useCount} 本嗎?`;
-    const _ok = await new Promise(resolve => {
+    const _ok = await new Promise(async resolve => {
       if(typeof _customConfirm === 'function'){
         _customConfirm(_msg, () => resolve(true), () => resolve(false));
       } else {
-        resolve(window.confirm(_msg));
+        resolve((await window._lxpsConfirm(_msg)));
       }
     });
     if(!_ok) return;
@@ -81761,7 +81761,7 @@ function makeRadar(dims, size) {
   };
   W._cstURTicketSectionHtml = function(list){ return W._cstTicketSectionHtml('UR', list); };   /* 舊名保留(相容) */
   /* ★ v5.339.0 opts.random=true:SR/SSR「隨機」召喚卷全收錄時使用 ⇒ 扣隨機卷、從 _cstRandomTicketStarCandidates 隨機挑一位(按下確認當下才抽) */
-  W._cstUseTicketForStar = function(tier, name, opts){
+  W._cstUseTicketForStar = async function(tier, name, opts){
     if(tier !== 'SR' && tier !== 'SSR' && tier !== 'UR') tier = 'UR';
     var isRnd = !!(opts && opts.random) && tier !== 'UR';
     var tid = 'summon_ticket_' + tier.toLowerCase() + (isRnd ? '' : '_pick');
@@ -81848,7 +81848,7 @@ function makeRadar(dims, size) {
           _toast(_T('⭐ ' + name + ' 拿到 1 顆命星!\n到英雄圖鑑「✨ 命座」點亮它吧!', '⭐ ' + name + ' 獲得命星 ×1\n請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
         }catch(e2){ console.warn('[命座] 自選卷轉命星例外', e2); _toast('發生錯誤:' + (e2 && e2.message ? e2.message : e2), '#ff8844'); }
       };
-      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if(confirm(msg)) go();
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if((await window._lxpsConfirm(msg))) go();
     }catch(e){ console.warn('[命座] 自選卷轉命星', e); }
   };
   W._cstUseURTicketForStar = function(name){ return W._cstUseTicketForStar('UR', name); };   /* 舊名保留(相容) */
@@ -82351,7 +82351,7 @@ function makeRadar(dims, size) {
       }catch(_){}
     }, 120);
   }
-  function _onMapClick(ev){
+  async function _onMapClick(ev){
     var ov = document.getElementById('cst-map-ov'); if(!ov) return;
     if(ev.target === ov){ ov.remove(); _refreshCodex(); return; }
     var t = ev.target;
@@ -82374,7 +82374,7 @@ function makeRadar(dims, size) {
         try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑格子卡十字星立即亮起
         _cstLitFx(sl);   // ★ v5.275.0 變強回饋(音效＋按鈕/星星/頭像呼吸光芒 2 秒)
       };
-      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if(confirm(msg)) go();
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if((await window._lxpsConfirm(msg))) go();
       return;
     }
     if(act === 'reset'){
@@ -82389,7 +82389,7 @@ function makeRadar(dims, size) {
         _mapState.sel = ''; _renderMap();
         try{ W._cstGridStarsRefresh(); }catch(_){}   // ★ v5.265.0 圖鑑格子卡十字星同步熄滅
       };
-      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if(confirm(msg2)) go2();
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if((await window._lxpsConfirm(msg2))) go2();
     }
   }
   document.addEventListener('keydown', function(ev){
@@ -82501,7 +82501,7 @@ function makeRadar(dims, size) {
       _renderSynth();
     }catch(e){ console.warn('[命座] 命星工坊', e); }
   };
-  function _onSynthClick(ev){
+  async function _onSynthClick(ev){
     var ov = document.getElementById('cst-synth-ov'); if(!ov) return;
     if(ev.target === ov){ ov.remove(); return; }
     var t = ev.target;
@@ -82526,7 +82526,7 @@ function makeRadar(dims, size) {
         _toast(_T('✨ 合成成功!得到 1 顆 ' + rar + ' 自選命星', '✨ 合成完成:' + rar + ' 自選命星 ×1'), '#ffd97a');
         _renderSynth();
       };
-      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if(confirm(msg)) go();
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if((await window._lxpsConfirm(msg))) go();
       return;
     }
     if(a === 'pick'){
@@ -82539,7 +82539,7 @@ function makeRadar(dims, size) {
         _toast(_T('⭐ ' + k + ' 拿到 1 顆命星!到英雄圖鑑點亮它吧!', '⭐ ' + k + ' 命星 +1,請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
         _renderSynth();
       };
-      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if(confirm(msg2)) go2();
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if((await window._lxpsConfirm(msg2))) go2();
     }
   }
 })();

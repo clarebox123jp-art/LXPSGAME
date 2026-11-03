@@ -71943,13 +71943,13 @@ console.log('⏱️ [v3.6.0] 30 秒兜底已停用,改為「每回合 startTurn 
 // ====== 自訂確認視窗（iOS/iPad 安全，取代原生 confirm()）======
 // 避免 iPad WKWebView 在 App 切換時自動 dismiss confirm() 造成誤確認
 let _customConfirmCb = null;
-function _customConfirm(msg, onOk) {
+async function _customConfirm(msg, onOk) {
   const ov = document.getElementById('custom-confirm-overlay');
   const msgEl = document.getElementById('custom-confirm-msg');
   const okBtn = document.getElementById('custom-confirm-ok');
   if(!ov || !msgEl || !okBtn) {
     // fallback: 若 DOM 尚未就緒則用原生 confirm
-    if(confirm(msg)) onOk();
+    if((await window._lxpsConfirm(msg))) onOk();
     return;
   }
   // ★★ v5.104.0(2026-08-21・老師回報「超出經驗視窗階層太低，被圖鑑蓋住」)— 根因與根治 ★★
@@ -77071,9 +77071,9 @@ window._showURSurplusReviewModal = function(uid, data){
           if(_appealSend.disabled) return;
           var _reason = String(_appealTxt ? _appealTxt.value : '').trim().slice(0, 100);
           if(!_reason) return;
-          if(!confirm((_cute ? '要把這段話送給老師嗎？\n\n' : '確定要送出申訴給老師嗎？\n\n')
+          if(!(await window._lxpsConfirm((_cute ? '要把這段話送給老師嗎？\n\n' : '確定要送出申訴給老師嗎？\n\n')
             + '「' + _reason + '」\n\n'
-            + (_cute ? '送出後你的角色都不會被移除，等老師回覆你。' : '送出後不會移除你的任何角色，老師會在遊戲內回覆你。'))) return;
+            + (_cute ? '送出後你的角色都不會被移除，等老師回覆你。' : '送出後不會移除你的任何角色，老師會在遊戲內回覆你。')))) return;
           _appealSend.disabled = true; _appealSend.textContent = _cute ? '送出中…' : '送出中…';
           try{
             if(typeof window._fbSubmitURSurplusAppeal !== 'function') throw new Error('申訴通道未載入');
@@ -77692,9 +77692,9 @@ window._showAssetSelfCheckModal = function(uid, data, opts){
 };
 
 // 快捷鈕 handler(window 掛載供 onclick 呼叫)
-window._codexConfirmMine = function(type, key){
+window._codexConfirmMine = async function(type, key){
   var _w = (type === 'hero') ? '英雄' : '至寶';
-  if(!confirm('確定這個' + _w + '是你自己的嗎?\n\n確認後會永久標記為「你擁有」,把擁有證明存到雲端(三槽),之後不會再被當成可疑、也不會再顯示這些按鈕。')) return;
+  if(!(await window._lxpsConfirm('確定這個' + _w + '是你自己的嗎?\n\n確認後會永久標記為「你擁有」,把擁有證明存到雲端(三槽),之後不會再被當成可疑、也不會再顯示這些按鈕。'))) return;
   var _ok = (type === 'hero') ? _lxpsConfirmOwnHero(key) : _lxpsConfirmOwnTreasure(key);
   if(_ok){
     try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.7); }catch(_){}
@@ -77702,17 +77702,17 @@ window._codexConfirmMine = function(type, key){
     _codexRerenderCurrent(type, key);
   }
 };
-window._codexReqDisown = function(type, key){
+window._codexReqDisown = async function(type, key){
   var _w = (type === 'hero') ? '英雄' : '至寶';
   if(_codexActionUsedToday(type, key)){ try{ if(typeof _showInGameToast === 'function') _showInGameToast('這個' + _w + '今天已經申請過了,明天可以再調整。', '#ffaa44', 2600); }catch(_){} return; }
-  if(!confirm('要申請「移除」這個' + _w + '嗎?\n\n會送老師審核,確認後才會移除(你只是申請、不會馬上被刪)。每個' + _w + '一天只能申請一次。')) return;
+  if(!(await window._lxpsConfirm('要申請「移除」這個' + _w + '嗎?\n\n會送老師審核,確認後才會移除(你只是申請、不會馬上被刪)。每個' + _w + '一天只能申請一次。'))) return;
   _codexSubmitClaim(type, key, 'disown');
 };
-window._codexReqLost = function(type, key){
+window._codexReqLost = async function(type, key){
   var _w = (type === 'hero') ? '英雄' : '至寶';
   if(_codexLostPendingAt(type, key)){ try{ if(typeof _showInGameToast === 'function') _showInGameToast('這個' + _w + '的救回申請正在 GM 審查中,請等審查結果。', '#ffaa44', 2800); }catch(_){} return; }   // ★ v3.16.70 — 審查中防重複送出
   if(_codexActionUsedToday(type, key)){ try{ if(typeof _showInGameToast === 'function') _showInGameToast('這個' + _w + '今天已經申請過了,明天可以再調整。', '#ffaa44', 2600); }catch(_){} return; }
-  if(!confirm('要申請「救回」這個' + _w + '嗎?\n\n如果它其實是你的、卻被誤判或鎖住,送老師確認後會幫你補回/解鎖。每個' + _w + '一天只能申請一次。')) return;
+  if(!(await window._lxpsConfirm('要申請「救回」這個' + _w + '嗎?\n\n如果它其實是你的、卻被誤判或鎖住,送老師確認後會幫你補回/解鎖。每個' + _w + '一天只能申請一次。'))) return;
   _codexSubmitClaim(type, key, 'lost');
 };
 
@@ -79875,7 +79875,7 @@ window._gearRenderShopGrid = function(listEl){
   }catch(_e){ console.warn('[裝備超商] 渲染失敗', _e); }
 };
 // ── 半價賣出(售價=該稀有度定價÷2;帳本 source:'sold' → 多槽合併稽核感知不復活)──
-window._gearSell = function(eqUid, heroName, slot){
+window._gearSell = async function(eqUid, heroName, slot){
   try{
     if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_sell', 800)) return;
     const inst = _gearGetInstance(eqUid); if(!inst) return;
@@ -79901,7 +79901,7 @@ window._gearSell = function(eqUid, heroName, slot){
       }catch(_e2){ console.warn('[裝備賣出] 執行失敗', _e2); }
     };
     if(typeof _customConfirm === 'function'){ _customConfirm(_msg, _doSell); }
-    else if(confirm(_msg)){ _doSell(); }
+    else if((await window._lxpsConfirm(_msg))){ _doSell(); }
   }catch(_e){ console.warn('[裝備賣出] 失敗', _e); }
 };
 // ════════════════════════════════════════════════════════════════

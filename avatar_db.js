@@ -2512,12 +2512,12 @@ window._avatarSetPartDefault = function(key){
   try{ _avRenderOpts(); }catch(_e2){}
 };
 /* 管理員:匯出目前全部預設 JSON(供日後寫進 avatar_db.js 永久保存·丙案) */
-window._avatarExportPartDefaults = function(){
+window._avatarExportPartDefaults = async function(){
   if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
   var j = '';
   try{ j = JSON.stringify(window._avatarPartDefaults || {}); }catch(_e){ j = '{}'; }
   try{ console.log('[avatar] AVATAR_PART_DEFAULTS 匯出:\n' + j); }catch(_e2){}
-  try{ window.prompt(_avT('複製這段預設 JSON 交給開發者寫進程式永久保存:','複製這段給老師:'), j); }catch(_e3){}
+  try{ (await window._lxpsPrompt(_avT('複製這段預設 JSON 交給開發者寫進程式永久保存:','複製這段給老師:'), j, { copy: true })); }catch(_e3){}
 };
 /* ── ★ v4.95.0(2026-07-25)造型部件「命名/移除」雲端通道(gameConfig/avatarPieceMeta·同 avatarLocks 模式·
  *   僅 GM 可寫·登入者可讀·走 gameConfig 既有 rules 免新增條款):
@@ -2562,14 +2562,14 @@ function _avWritePieceMeta(){
   }catch(_e){}
   try{ window._avatarCacheTables(); }catch(_eC){}
 }
-window._avatarGmRenamePiece = function(cat, id){
+window._avatarGmRenamePiece = async function(cat, id){
   if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
   if(!window._avatarPieceMeta) window._avatarPieceMeta = { names:{}, removed:{} };
   if(!window._avatarPieceMeta.names) window._avatarPieceMeta.names = {};
   var k = _avPieceKey(cat, id);
   var cur = window._avatarPieceMeta.names[k] || '';
   var nv = null;
-  try{ nv = window.prompt(_avT('輸入這款的新名稱(全體玩家都會看到;留空並按確定=還原內建名稱):','幫這個改名字(空白=用原本的):'), cur); }catch(_e){ return; }
+  try{ nv = (await window._lxpsPrompt(_avT('輸入這款的新名稱(全體玩家都會看到;留空並按確定=還原內建名稱):','幫這個改名字(空白=用原本的):'), cur)); }catch(_e){ return; }
   if(nv === null) return;
   nv = ('' + nv).replace(/[<>]/g, '').slice(0, 20).replace(/^\s+|\s+$/g, '');
   if(nv){ window._avatarPieceMeta.names[k] = nv; }
@@ -2577,10 +2577,10 @@ window._avatarGmRenamePiece = function(cat, id){
   _avWritePieceMeta(); try{ _avSfx('confirm'); }catch(_eS){}
   try{ _avRenderOpts(); }catch(_e2){}
 };
-window._avatarGmRemovePiece = function(cat, id){
+window._avatarGmRemovePiece = async function(cat, id){
   if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
   var ok = false;
-  try{ ok = window.confirm(_avT('確定把這款從全體玩家的選單「移除」嗎?(之後可在該分類最下方「已移除」區復原)','確定移除這款嗎?可以再復原喔。')); }catch(_e){ ok = true; }
+  try{ ok = (await window._lxpsConfirm(_avT('確定把這款從全體玩家的選單「移除」嗎?(之後可在該分類最下方「已移除」區復原)','確定移除這款嗎?可以再復原喔。'))); }catch(_e){ ok = true; }
   if(!ok) return;
   if(!window._avatarPieceMeta) window._avatarPieceMeta = { names:{}, removed:{} };
   if(!window._avatarPieceMeta.removed) window._avatarPieceMeta.removed = {};
