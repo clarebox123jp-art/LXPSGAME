@@ -5666,6 +5666,22 @@ window._advExamChalLoginPopup = function(_try){
     });
   }catch(e){ console.warn('[考試複習挑戰] 登入提醒失敗', e); }
 };
+/* ★ v5.335.0(老師「關卡選擇頁沒看到考試複習的按鈕。請做出來放在『關卡選擇』標籤右邊」)
+   關卡選擇頁「📝 考試複習」入口:老師開著考試複習挑戰(且已登入)⇒ 直接開挑戰面板(可鎖定範圍、看進度、領獎);
+   沒有挑戰 ⇒ 開考試複習選單設定自己的冊別/版本/單元(之後冒險關卡、知識王選「📝 考試複習」就出這個範圍)。 */
+window._advExamEntryOpen = function(){
+  try{ playSfx('sfx-sel', 0.6); }catch(_){}
+  try{
+    _advExchRefreshCfg(function(){
+      let _act = false;
+      try{ _act = _advExchActive() && _advExamUid() !== 'guest'; }catch(_){}
+      if(_act){ window._advExamChalOpen(false); return; }
+      _advExamOpenPicker(function(subj){
+        try{ bannerFX(null, (window._artStyle === 'cute') ? '📝 記住你的考試範圍了!打關卡時選「📝 考試複習」就會出這些題目' : '📝 已設定考試複習範圍:冒險關卡與知識王選「📝 考試複習」即出此範圍', '#88ddff', 3200); }catch(_){}
+      }, function(){});
+    });
+  }catch(e){ console.warn('[考試複習入口] 開啟失敗', e); }
+};
 window._advExamChalOpen = function(fromLogin){
   _advExamEnsureCore(function(ok){
     if(!ok){ try{ bannerFX(null, '考試複習題庫下載失敗,請確認網路後再試', '#ff8888', 2200); }catch(_){} return; }
@@ -60788,7 +60804,7 @@ window._friendPanelRefresh = async function(){
       if(typeof window._fbLoad === 'function' && window._gUserId){
         const _data = await window._fbLoad(window._gUserId);
         if(_data && Array.isArray(_data.friends)){
-          _friendList = _data.friends;
+          _friendList = _lxpsFriendListClean(_data.friends);   // ★ v5.335.0 去重
         }
       }
     }catch(_eLd){ console.warn('[friendPanelRefresh] 重讀 friends 失敗', _eLd); }
@@ -61298,6 +61314,23 @@ async function _saveNickname() {
 // ══════════════════════════════════════════════════════
 let _myRepHero = null;      // 自己的代表英雄資料
 let _friendList = [];       // [{uid, email, name}]
+/* ★ v5.335.0(老師「加入好友時點太快會發生重複的好友出現在列表中」)— 讀進來的好友名單一律去重(同 uid 只留一筆);
+   雲端名單真的有重複時,背景寫回去重後的版本(一個帳號這次開遊戲只清一次)。 */
+function _lxpsFriendListClean(list){
+  const raw = Array.isArray(list) ? list : [];
+  let out = raw;
+  try{
+    if(typeof window._lxpsFriendDedupe === 'function') out = window._lxpsFriendDedupe(raw);
+    else{ const seen = {}; out = raw.filter(function(f){ if(!f) return false; const k = f.uid || f.email; if(!k) return true; if(seen[k]) return false; seen[k] = 1; return true; }); }
+    if(out.length < raw.length && window._gUserId && typeof window._fbDedupeFriends === 'function' && window._lxpsFriendDedupedFor !== window._gUserId){
+      window._lxpsFriendDedupedFor = window._gUserId;
+      window._fbDedupeFriends(window._gUserId).catch(function(){});
+    }
+  }catch(_){}
+  return out;
+}
+/* 加好友進行中(查詢＋寫入可能要好幾秒,冷卻 3 秒擋不住):同一時間只跑一個 */
+let _friendAddBusy = false;
 let _friendHeroData = {};   // {uid: heroData} 快取
 let _invitedFriendHero = null; // 本場邀請的好友英雄
 
@@ -61876,7 +61909,7 @@ async function openFriendPanel() {
     if (!window._fbLoad) { window._friendPanelLoading = false; return; }
     const data = await window._fbLoad(window._gUserId);
     if (data) {
-      const newList = data.friends || [];
+      const newList = _lxpsFriendListClean(data.friends || []);   // ★ v5.335.0 去重
       // 只有資料有變化才重新渲染
       if (JSON.stringify(newList) !== JSON.stringify(_friendList)) {
         _friendList = newList;
@@ -64142,6 +64175,8 @@ async function _addFriendByInviteCode(){
     bannerFX(null, '好友功能載入中,請稍後再試', '#ff9944', 2000);
     return;
   }
+  if(_friendAddBusy){ bannerFX(null, '正在加好友中,請稍等一下', '#ffcc44', 1500); return; }   // ★ v5.335.0
+  _friendAddBusy = true;
   try{
     bannerFX(null, '🔍 搜尋中...', '#88ccff', 2000);
     let found = null;
@@ -64180,7 +64215,7 @@ async function _addFriendByInviteCode(){
       inviteCode: code
     };
     await window._fbAddFriend(window._gUserId, friendInfo);
-    _friendList.push(friendInfo);
+    if(!_friendList.some(f => f && f.uid === friendInfo.uid)) _friendList.push(friendInfo);   // ★ v5.335.0 寫入期間別處已加過就不再推一次
     bannerFX(null, '✅ 已加 ' + friendInfo.name + ' 為好友!', '#44ff88', 1800);
     playSfx('sfx-confirm', 0.6);
     input.value = '';
@@ -64188,6 +64223,8 @@ async function _addFriendByInviteCode(){
   }catch(e){
     console.error('[加好友]', e);
     bannerFX(null, '加好友失敗:' + (e.message || '未知錯誤'), '#ff6666', 3000);
+  }finally{
+    _friendAddBusy = false;
   }
 }
 
@@ -64230,6 +64267,8 @@ async function _addFriendByEmail() {
   }
   // ★ 鎖定按鈕避免重複點擊
   const btn = document.querySelector('#_friend-panel button[onclick="_addFriendByEmail()"]');
+  if (_friendAddBusy) { bannerFX(null, '正在加好友中,請稍等一下', '#ffcc44', 1500); return; }   // ★ v5.335.0
+  _friendAddBusy = true;
   if (btn) { btn.disabled = true; btn.textContent = '搜尋中...'; }
   try {
     bannerFX(null, '🔍 搜尋中...', '#88ccff', 2000);
@@ -64258,7 +64297,7 @@ async function _addFriendByEmail() {
     }
     const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
     await window._fbAddFriend(window._gUserId, friendInfo);
-    _friendList.push(friendInfo);
+    if (!_friendList.some(f => f && f.uid === friendInfo.uid)) _friendList.push(friendInfo);   // ★ v5.335.0
     bannerFX(null, '✅ 已加 ' + friendInfo.name + ' 為好友！', '#44ff88', 1800);
     playSfx('sfx-confirm', 0.6);
     _renderFriendPanel();
@@ -64266,6 +64305,7 @@ async function _addFriendByEmail() {
     console.error('[加好友]', e);
     bannerFX(null, '加好友失敗：' + (e.code || e.message || '未知錯誤'), '#ff6666', 3000);
   } finally {
+    _friendAddBusy = false;
     if (btn) { btn.disabled = false; btn.textContent = '+ 加好友'; }
   }
 }
@@ -64598,7 +64638,7 @@ async function _loadFriendSystemData() {
     if (data) {
       _myRepHero  = data.representativeHero || null;
       try{ window._myRepHero = _myRepHero; }catch(_){}   // ★ v3.16.43 — local + window 同步(避免簽到流程/即時監聽讀到不一致的舊 window 值)
-      _friendList = data.friends || [];
+      _friendList = _lxpsFriendListClean(data.friends || []);   // ★ v5.335.0 去重
     }
   } catch(e) { console.warn('[好友系統] 讀取失敗', e); }
   _loadRepHeroBar();

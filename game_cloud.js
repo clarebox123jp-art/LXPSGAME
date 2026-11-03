@@ -4033,17 +4033,76 @@
   };
 
   // 加好友（存在自己的資料中）
+  /* ★ v5.335.0(老師「加入好友時點太快會發生重複的好友出現在列表中的 bug」)
+     arrayUnion 只會擋「整個物件一模一樣」的重複;同一位好友名字不同(暱稱改過/用信箱或邀請碼加)就會被當成兩筆。
+     改成交易:先讀目前名單,同一個 uid 已在名單裡就不再加,順便把以前留下的重複清掉(同 uid 只留第一筆)。 */
   window._fbAddFriend = async function(myUid, friendInfo) {
     try {
-      await setDoc(doc(_fbDb, 'players', myUid), {
-        friends: arrayUnion({ uid: friendInfo.uid, email: friendInfo.email, name: friendInfo.name || friendInfo.email })
-      }, { merge: true });
+      const ref = doc(_fbDb, 'players', myUid);
+      const entry = { uid: friendInfo.uid, email: friendInfo.email, name: friendInfo.name || friendInfo.email };
+      await runTransaction(_fbDb, async function(tx){
+        const s = await tx.get(ref);
+        const cur = (s.exists() && Array.isArray(s.data().friends)) ? s.data().friends : [];
+        const out = window._lxpsFriendDedupe(cur);
+        const has = out.some(function(f){ return f && f.uid && f.uid === entry.uid; });
+        if(has && out.length === cur.length) return;   // 已經是好友、名單也沒有重複 ⇒ 不寫
+        if(!has) out.push(entry);
+        tx.set(ref, { friends: out }, { merge: true });
+      });
       return true;
-    } catch(e) { console.error('加好友失敗', e); return false; }
+    } catch(e) {
+      console.error('加好友失敗(交易),改用一般寫入', e);
+      try {
+        await setDoc(doc(_fbDb, 'players', myUid), {
+          friends: arrayUnion({ uid: friendInfo.uid, email: friendInfo.email, name: friendInfo.name || friendInfo.email })
+        }, { merge: true });
+        return true;
+      } catch(e2) { console.error('加好友失敗', e2); return false; }
+    }
+  };
+  // ★ v5.335.0 好友名單去重(同 uid 只留第一筆;沒有 uid 的舊資料用 email 判斷)
+  window._lxpsFriendDedupe = function(list){
+    const seen = {}, out = [];
+    (Array.isArray(list) ? list : []).forEach(function(f){
+      if(!f || typeof f !== 'object') return;
+      const k = f.uid ? ('u:' + f.uid) : (f.email ? ('e:' + String(f.email).toLowerCase()) : '');
+      if(!k){ out.push(f); return; }
+      if(seen[k]) return;
+      seen[k] = 1; out.push(f);
+    });
+    return out;
+  };
+  // ★ v5.335.0 名單裡有重複就寫回去重後的版本(交易:以雲端當下名單為準再去重,不會蓋掉別處剛加的好友)
+  window._fbDedupeFriends = async function(myUid){
+    try {
+      const ref = doc(_fbDb, 'players', myUid);
+      let removed = 0;
+      await runTransaction(_fbDb, async function(tx){
+        const s = await tx.get(ref);
+        const cur = (s.exists() && Array.isArray(s.data().friends)) ? s.data().friends : [];
+        const out = window._lxpsFriendDedupe(cur);
+        removed = cur.length - out.length;
+        if(removed > 0) tx.set(ref, { friends: out }, { merge: true });
+      });
+      return removed;
+    } catch(e) { console.warn('[好友去重] 失敗', e); return 0; }
   };
 
   // 刪好友
   window._fbRemoveFriend = async function(myUid, friendInfo) {
+    /* ★ v5.335.0 同一位好友若因舊 bug 存了好幾筆(名字不同),arrayRemove 只會刪到一模一樣的那筆 ⇒ 改成交易刪掉同 uid 的全部 */
+    if(friendInfo && friendInfo.uid){
+      try {
+        const ref = doc(_fbDb, 'players', myUid);
+        await runTransaction(_fbDb, async function(tx){
+          const s = await tx.get(ref);
+          const cur = (s.exists() && Array.isArray(s.data().friends)) ? s.data().friends : [];
+          const out = cur.filter(function(f){ return !(f && f.uid === friendInfo.uid); });
+          if(out.length !== cur.length) tx.set(ref, { friends: out }, { merge: true });
+        });
+        return true;
+      } catch(eTx) { console.warn('刪好友(交易)失敗,改用一般刪除', eTx); }
+    }
     try {
       await setDoc(doc(_fbDb, 'players', myUid), {
         friends: arrayRemove({ uid: friendInfo.uid, email: friendInfo.email, name: friendInfo.name || friendInfo.email })
