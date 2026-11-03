@@ -1,5 +1,23 @@
 /* ════════════════════════════════════════════════════════════════════
- *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.334.0
+ *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.336.0
+ *  ★ v5.336.0(2026-11-03・老師「搶答擂台新增免登入模式,讓玩家自己輸入班級座號(只能輸入數字)。老師的班級選擇新增『現場加入』(不看名單)。
+ *    排行榜出來可以留下記錄在 GM 端,再一併匯入獎勵」)
+ *    ① 免登入:主持台開房勾「🔢 允許免登入」⇒ room meta.guest=true。沒登入的平板按「⚡ 搶答擂台」可選「免登入參加」,
+ *       用獨立的 Firebase App「lqGuest」做匿名登入(signInAnonymously)——跟主程式的 Google 登入完全分開,
+ *       不會變成「已登入」、不會建立/讀寫任何存檔;只拿來寫這一場的參加者/作答/法寶文件(雲端規則照樣綁 uid)。
+ *       輸入房號 → 輸入 4 碼班級座號(年級 1-6＋班級 1-9＋座號 01-99,只能按數字鍵盤)→ 名冊查得到就顯示「你是 5302 王小明 嗎?」再確認。
+ *       同一場同一個班級座號只能有一位(被請出的不算);同一台平板換人時自動換一個新的匿名身分,不會接到上一位的分數。
+ *       免登入不自動拉回上一場,改在輸入房號畫面顯示「↩ 回到上一場(座號 XXXX)」。
+ *    ② 班級選擇新增「🙋 現場加入(不看名單)」:不帶應到名單,誰加入就列誰(免登入同學依輸入的座號對到名冊格子也會亮)。
+ *    ③ 獎勵:免登入同學沒有帳號 ⇒ 結算照常排名,主持台頒獎只發「有登入帳號」的同學,免登入的成績永久留在 liveQuizHistory;
+ *       GM 在「📜 擂台紀錄」按「📥 匯入免登入獎勵」(單場或「一併匯入」全部待匯入場次)⇒ 以班級座號對名冊 → 帳號 → uid,
+ *       預覽(對不到的可手打帳號)後寫進該生「🎁 GM獎勵」收件箱(文件 id 同一場固定 lq_{房號}_{開房時間},同一人不會重複);
+ *       紀錄 liveQuizHistory.guestAwarded[座號]={uid,email,tier,at},房間 awarded[匿名uid] 同步標記。
+ *    ⚠ 需老師:Firebase 主控台 Authentication → 登入方式 → 開啟「匿名」;並發布新版 firestore.rules(players 加免登入建立路徑)。
+ *    ⑤ 共用平板防汙染(老師要求檢查):匿名身分改存 sessionStorage(browserSessionPersistence),不進 firebaseLocalStorageDb ⇒
+ *       主程式登出刪該資料庫不會被卡住、App 關掉重開就是新身分;關閉擂台 3 秒後/有人登入主程式時 deleteApp 收掉連線(guestTeardown)。
+ *    ④ 老師「甲,匿名登入只在搶答擂台,不影響任何原有遊戲內的資料庫和存檔」⇒ firestore.rules 新增 isRealUser()(有登入且非匿名),
+ *       原本所有 request.auth != null 一律改用它;只有 liveQuizRooms/{pin} 底下與 liveQuizBoard 讀取、lqAnswerOk/lqPowerOk 允許匿名。
  *  ★ v5.334.0(2026-11-03・老師四項:先按的人分數比晚按低／題目晚幾秒才顯示不公平／螢幕休眠離線／下一題直接結束是按鈕太近連擊)
  *    ① 同步開放:出題先顯示題目 3 秒(LQ_LEAD_S),選項在雲端「開題＋3 秒」全班同時打開(current.lead;current.timeLimit 含準備秒數,規則截止跟著延後,不改規則)
  *    ② 計分:作答秒數＝雲端時間的按下時刻 − max(開放作答, 自己看到選項);主持台以雲端收到時間夾住、慢網路補償 3→6 秒
@@ -60,7 +78,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.334.0' };
+var LQ = window._LQ = { _v: 'v5.336.0' };
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -218,6 +236,60 @@ function myLabel(){
   return String(out).slice(0, 24);
 }
 function myAccount(){ return myEmail().split('@')[0].slice(0, 40); }
+/* ★ v5.336.0 免登入模式(老師「讓玩家自己輸入班級座號」)
+   沒登入的平板用「獨立的 Firebase App(lqGuest)」做匿名登入:跟主程式的 Google 登入(window._fbAuth)完全分開,
+   主程式不會以為有人登入、不會建立或讀寫任何存檔;這個匿名身分只拿來寫搶答擂台這一場的參加者/作答/法寶文件。 */
+var APP_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+var AUTH_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+var GU = null;   /* { U:auth 模組, app, auth, db } */
+async function guestInit(fresh){
+  await fs();
+  if(_guDel){ try{ await _guDel; }catch(_){} }   /* 上一次收掉的連線還在關閉中 ⇒ 等它關完再開新的 */
+  if(!GU){
+    if(!window._fbApp || !window._fbApp.options) throw new Error(T('雲端還沒準備好,等一下再試', '雲端模組尚未就緒'));
+    var A = await import(APP_URL), U = await import(AUTH_URL);
+    var app = null;
+    try{ app = A.getApps().filter(function(a){ return a.name === 'lqGuest'; })[0] || null; }catch(_){}
+    if(!app) app = A.initializeApp(window._fbApp.options, 'lqGuest');
+    /* ★ v5.336.0 共用平板防汙染:匿名身分只存在「這次開著的 App」(sessionStorage),不寫進 IndexedDB——
+       ① 不會跟主程式的 Google 登入共用 firebaseLocalStorageDb,主程式登出時刪除該資料庫不會被這裡卡住(blocked);
+       ② App 關掉重開就是全新身分,下一位同學拿不到上一位的匿名身分。重新整理頁面(同一次開啟)仍可接續。 */
+    var auth = null;
+    try{ auth = U.initializeAuth(app, { persistence: U.browserSessionPersistence }); }catch(_){ auth = U.getAuth(app); }
+    try{ if(typeof auth.authStateReady === 'function') await auth.authStateReady(); }catch(_){}
+    GU = { U: U, app: app, auth: auth, db: F.getFirestore(app) };
+  }
+  /* fresh:同一台平板換另一位同學 ⇒ 換一個新的匿名身分,不會接到上一位的分數 */
+  if(fresh && GU.auth.currentUser){ try{ await GU.U.signOut(GU.auth); }catch(_){} }
+  if(!GU.auth.currentUser){
+    try{ await GU.U.signInAnonymously(GU.auth); }
+    catch(e){
+      var c = (e && e.code) || '';
+      if(c === 'auth/operation-not-allowed' || c === 'auth/admin-restricted-operation')
+        throw new Error(T('老師還沒打開「免登入」功能(雲端匿名登入),請先登入帳號參加', '尚未啟用匿名登入,請老師至 Firebase 主控台開啟'));
+      throw new Error(T('免登入連線失敗,檢查網路再試一次', '匿名連線失敗,請重試') + (c ? '(' + c + ')' : ''));
+    }
+  }
+  return GU.auth.currentUser;
+}
+/* ★ v5.336.0 關閉擂台/有人登入主程式 ⇒ 收掉免登入的連線(匿名身分仍留在本次開啟的 sessionStorage,同一次開啟可接續) */
+var _guDel = null;
+function guestTeardown(only){
+  if(!GU || (only && GU !== only)) return;   /* only:延後收的時候,中途又重新打開了就不收 */
+  var g = GU; GU = null;
+  _guDel = import(APP_URL).then(function(A){ return A.deleteApp(g.app); }).catch(function(){}).then(function(){ _guDel = null; });
+}
+/* 學生端目前的身分:免登入 ⇒ 匿名使用者;一般 ⇒ 主程式登入的帳號 */
+function stUser(){ if(ST.guest) return (GU && GU.auth) ? GU.auth.currentUser : null; return me(); }
+function stLabel(){ return ST.guest ? (ST.gName || (ST.code ? ST.code : '🔢 ' + T('免登入', '免登入'))) : myLabel(); }
+/* 用 4 碼班級座號查名冊:回傳 { c, n:'5302王小明', e:最可能的帳號, es:[同座號全部帳號] } 或 null */
+function rosterByCode(c){
+  c = String(c || ''); if(!/^\d{4}$/.test(c)) return null;
+  var hit = null;
+  try{ buildRoster([c.charAt(0) + '年' + c.charAt(1) + '班']).forEach(function(r){ if(r.c === c) hit = r; }); }catch(_){}
+  return hit;
+}
+function guestCodeOk(c){ return /^[1-6][1-9]\d{2}$/.test(String(c || '')) && String(c).slice(2) !== '00'; }
 function toast(msg, ms){
   var t = $('lq-toast'); if(!t) return;
   t.textContent = msg; t.classList.add('on');
@@ -257,7 +329,7 @@ async function fs(){
   if(!m || !m.serverTimestamp) throw new Error('雲端模組載入失敗');
   F = m; return F;
 }
-function db(){ return window._fbDb; }
+function db(){ return (ST.guest && GU) ? GU.db : window._fbDb; }   /* ★ v5.336.0 免登入學生走獨立 App 的連線 */
 /* ★ v5.320.0 老師回報「同步沒有即時、學生一直斷線又連線」— 根因之一:即時監聽一出錯(網路斷線、權限暫時失敗)就永久停止,
    原本錯誤處理是空函式 ⇒ 之後畫面再也不會更新。改成出錯自動重新監聽(1→2→4→8 秒),回傳的函式可取消。 */
 function live(ref, opts, onNext){
@@ -322,7 +394,7 @@ function restVal(v){
 function restFields(f){ var o = {}; Object.keys(f || {}).forEach(function(k){ o[k] = restVal(f[k]); }); return o; }
 function restFetch(url, opt, ms){
   return new Promise(function(resolve, reject){
-    var u = me();
+    var u = stUser();   /* ★ v5.336.0 免登入學生用匿名身分的憑證 */
     if(!u || typeof u.getIdToken !== 'function'){ reject(new Error('no-auth')); return; }
     var ctl = null; try{ ctl = new AbortController(); }catch(_){}
     var tm = setTimeout(function(){ try{ if(ctl) ctl.abort(); }catch(_){} reject(new Error('timeout')); }, ms || 6000);
@@ -734,7 +806,7 @@ LQ.open = async function(mode){
   ensureRoot();
   ST.reset(); H.reset(); _lqLvl = 0;
   var u = me();
-  if(!u){ return screenNeedLogin(); }
+  if(!u){ return screenNeedLogin(mode); }
   try{ await fs(); }catch(e){ return screenError(e.message); }
   startAuthWatch();
   if(mode === 'host'){ if(await amHost()) return hostHome(); return screenError(T('只有老師可以主持喔', '你的帳號沒有主持權限')); }
@@ -767,6 +839,8 @@ LQ.close = function(force){
   ST.pin = null;
   var r = $('lq-root'); if(r){ r.style.display = 'none'; $('lq-body').innerHTML = ''; }
   focusMode(false);
+  /* ★ v5.336.0 等「離開」記號送出(3 秒)再收掉免登入連線;這 3 秒內又打開擂台就不收 */
+  if(GU){ var g0 = GU; setTimeout(function(){ var rr = $('lq-root'); if(!rr || rr.style.display === 'none') guestTeardown(g0); }, 3000); }
 };
 var _authH = null, _authUid = null;
 function startAuthWatch(){
@@ -777,6 +851,7 @@ function startAuthWatch(){
     if(id !== _authUid){
       /* 共用 iPad:換人/登出 ⇒ 立刻離房,下一位同學看不到上一位的畫面 */
       try{ ST.stop(); H.stop(); }catch(_){}
+      guestTeardown(); ST.guest = false;   /* ★ v5.336.0 免登入中有人登入主程式 ⇒ 收掉免登入身分,兩邊不混用 */
       stopAuthWatch(); closeModal(); bgmBack();
       var r = $('lq-root'); if(r) r.style.display = 'none';
       focusMode(false);
@@ -785,14 +860,20 @@ function startAuthWatch(){
 }
 function stopAuthWatch(){ if(_authH){ clearInterval(_authH); _authH = null; } }
 
-function screenNeedLogin(){
+function screenNeedLogin(mode){
+  var canGuest = !mode;   /* ★ v5.336.0 只有「參加」入口可以免登入;主持/管理一定要登入 */
   setTop('⚡ ' + T('搶答大挑戰', '英雄搶答擂台'));
   setCtl('');
-  setBody('<div class="lq-card"><div class="lq-h1">🔑 ' + T('先登入自己的帳號喔', '請先登入帳號') + '</div>'
-    + '<div class="lq-p">' + T('搶答擂台要用<b>自己的帳號</b>參加,名字才會出現在老師的螢幕上,得到的獎勵也會送到你的帳號!',
-                             '搶答擂台需以個人帳號參加,名稱與帳號將顯示於參加者列表,獎勵直接寄送至該帳號。') + '</div>'
-    + '<div class="lq-row"><button class="lq-btn gray" id="lq-nl-no">取消</button><button class="lq-btn gold" id="lq-nl-go">🔑 先登入帳號</button></div></div>');
+  setBody('<div class="lq-card"><div class="lq-h1">' + (canGuest ? '🙋 ' + T('要怎麼參加呢?', '選擇參加方式') : '🔑 ' + T('先登入自己的帳號喔', '請先登入帳號')) + '</div>'
+    + '<div class="lq-p">' + T('用<b>自己的帳號</b>參加,得到的獎勵會直接送到你的帳號!',
+                             '以個人帳號參加,獎勵直接寄送至該帳號。')
+    + (canGuest ? '<br>' + T('老師開的是<b>免登入</b>擂台的話,也可以不登入,只要輸入<b>班級座號</b>就能玩;獎勵之後由老師一起匯入。',
+                             '若主持人開放免登入,也可直接輸入班級座號參加;獎勵由老師日後統一匯入。') : '') + '</div>'
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-nl-no">取消</button>'
+    + (canGuest ? '<button class="lq-btn green" id="lq-nl-guest">🔢 ' + T('免登入參加', '免登入參加') + '</button>' : '')
+    + '<button class="lq-btn gold" id="lq-nl-go">🔑 ' + (canGuest ? T('登入帳號參加', '登入帳號') : '先登入帳號') + '</button></div></div>');
   $('lq-nl-no').onclick = function(){ LQ.close(true); };
+  if($('lq-nl-guest')) $('lq-nl-guest').onclick = studentGuestStart;
   $('lq-nl-go').onclick = function(){
     LQ.close(true);
     try{ window._lxpsMarkPendingEntry('lq'); }catch(_){}
@@ -824,7 +905,8 @@ var ST = {
     this.sfxQ = -1; this.streak = 0; this.priv = null; this.ans = {}; this.correctN = 0; this.lastStatus = ''; this.kicked = false;
     this.offset = null; this.syncRtt = 1e9; this.syncS = 0; this.syncPend = null; this.timeUp = false;
     this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; this.rtt = 0; this.lagMax = 0; this.tickAt = 0;
-    this.snapAt = 0; this.pollAt = 0; this.polling = false; this.staleN = 0; this.beatAt = 0; this.roomUn = null; },
+    this.snapAt = 0; this.pollAt = 0; this.polling = false; this.staleN = 0; this.beatAt = 0; this.roomUn = null;
+    this.guest = false; this.code = ''; this.gName = ''; this.prevCode = ''; },   /* ★ v5.336.0 免登入 */
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; }
     if(this.beatRetry){ clearTimeout(this.beatRetry); this.beatRetry = null; } this.beatBusy = false; },
@@ -833,7 +915,7 @@ var ST = {
 function lsKey(k){ return 'lxps_lq_' + k + '_' + (ST.uid || ''); }
 function saveLocal(){
   try{
-    localStorage.setItem(lsKey('room'), ST.pin + '|' + now());
+    localStorage.setItem(lsKey('room'), ST.pin + '|' + now() + (ST.guest ? '|' + ST.code : ''));   /* ★ v5.336.0 免登入多記座號 */
     localStorage.setItem(lsKey('st') + '_' + ST.pin, JSON.stringify({ ans: ST.ans, used: ST.used }));
   }catch(_){}
 }
@@ -879,19 +961,20 @@ async function studentTryResume(){
 function clearLocalPin(pin){ try{ localStorage.removeItem(lsKey('room')); localStorage.removeItem(lsKey('st') + '_' + pin); }catch(_){} }
 /* ★ v5.321.0 學生主動「退出這一場」:告訴主持台離開、清掉本機紀錄(之後不會再自動拉回),直接回到輸入房號畫面 */
 function studentQuit(){
-  var pin = ST.pin;
+  var pin = ST.pin, g = ST.guest;
   studentAway();
   ST.stop(); closeModal(); bgmBack(); fxClear();
   if(pin) clearLocalPin(pin);
-  ST.reset();
+  ST.reset(); ST.guest = g;   /* ★ v5.336.0 免登入退出後仍是免登入,下一場重新輸入座號 */
   toast(T('已經退出上一場,輸入老師給的新房號吧!', '已退出上一場,請輸入新房號'));
   studentJoinScreen();
 }
 
 function studentJoinScreen(){
-  var u = me(); ST.uid = u.uid;
+  var u = stUser(); if(!u) return screenNeedLogin();
+  ST.uid = u.uid;
   var code = '';
-  setTop('⚡ ' + T('搶答大挑戰', '英雄搶答擂台'), [{ html: '🙋 ' + esc(myLabel()) }]);
+  setTop('⚡ ' + T('搶答大挑戰', '英雄搶答擂台'), [{ html: '🙋 ' + esc(stLabel()) }]);
   setCtl('');
   function draw(){
     var boxes = '';
@@ -905,8 +988,11 @@ function studentJoinScreen(){
     + '<div class="lq-p" style="font-size:clamp(14px,1.8vmin,20px)">' + T('看大螢幕上的 6 個數字', '請輸入大螢幕上顯示的 6 碼房號') + '</div>'
     + '<div class="lq-pin" id="lq-pinbox"></div>'
     + '<div class="lq-row"><button class="lq-btn gold" id="lq-join-go" disabled>🚀 ' + T('加入擂台', '加入') + '</button></div>'
-    + (ST.prevPin ? '<div class="lq-p" style="font-size:clamp(13px,1.6vmin,18px);opacity:.9">' + T('老師開了新的擂台喔!你上一場(房號 ' + esc(ST.prevPin) + ')還沒結束。', '主持人已開新場次;上一場(房號 ' + esc(ST.prevPin) + ')尚未結束。')
-        + '<br><button class="lq-btn gray" id="lq-join-prev" style="margin-top:6px">↩ ' + T('回到上一場', '回到上一場') + '</button></div>' : '')
+    + (ST.prevPin ? '<div class="lq-p" style="font-size:clamp(13px,1.6vmin,18px);opacity:.9">'
+        + (ST.guest ? T('這台平板上一場(房號 ' + esc(ST.prevPin) + ')還沒結束。', '本裝置上一場(房號 ' + esc(ST.prevPin) + ')尚未結束。')
+                    : T('老師開了新的擂台喔!你上一場(房號 ' + esc(ST.prevPin) + ')還沒結束。', '主持人已開新場次;上一場(房號 ' + esc(ST.prevPin) + ')尚未結束。'))
+        + '<br><button class="lq-btn gray" id="lq-join-prev" style="margin-top:6px">↩ ' + T('回到上一場', '回到上一場') + (ST.guest && ST.prevCode ? '(' + T('座號 ', '座號 ') + esc(ST.prevCode) + ')' : '') + '</button></div>' : '')
+    + (ST.guest ? '<div class="lq-p" style="font-size:clamp(12px,1.5vmin,16px);opacity:.75">🔢 ' + T('免登入參加:下一步輸入你的班級座號', '免登入:下一步輸入班級座號') + '</div>' : '')
     + '</div>'
     + '<div class="lq-pad" id="lq-pad">' + pad + '</div></div>');
   $('lq-pad').onclick = function(e){
@@ -927,6 +1013,11 @@ function studentJoinScreen(){
       if(!s.exists()) throw new Error(T('找不到這個房號,再看一次大螢幕', '查無此房號'));
       var r = s.data();
       if(r.meta.status === 'ended') throw new Error(T('這場擂台已經結束了', '本場擂台已結束'));
+      if(ST.guest){   /* ★ v5.336.0 免登入:房間要有開放免登入,再輸入班級座號 */
+        if(!r.meta.guest) throw new Error(T('這一場要登入自己的帳號才能參加喔', '本場需登入帳號參加'));
+        await studentGuestCode(code, r);
+        return;
+      }
       await studentEnter(code, r, false);
     }catch(e){
       toast((e && e.code === 'permission-denied') ? T('老師已經鎖住房間了', '房間已上鎖或無法加入') : (e.message || '加入失敗'));
@@ -935,8 +1026,130 @@ function studentJoinScreen(){
   }
 }
 
+/* ═════════ ★ v5.336.0 免登入參加 ═════════ */
+async function studentGuestStart(){
+  setTop('⚡ ' + T('搶答大挑戰', '英雄搶答擂台')); setCtl('');
+  setBody('<div class="lq-card"><div class="lq-p">' + T('連線中…', '連線中…') + '</div></div>');
+  try{ await guestInit(false); }catch(e){ return screenError(e.message || '連線失敗'); }
+  ST.guest = true; ST.uid = stUser().uid;
+  startAuthWatch();
+  /* 免登入不自動拉回上一場(共用平板可能已換人)⇒ 在輸入房號畫面給「回到上一場」按鈕,按了還會再問「你是 XXXX 嗎?」 */
+  try{
+    var raw = localStorage.getItem(lsKey('room'));
+    if(raw){
+      var p = raw.split('|');
+      if(/^\d{6}$/.test(p[0]) && now() - (+p[1] || 0) < 12 * 3600 * 1000){ ST.prevPin = p[0]; ST.prevCode = p[2] || ''; }
+    }
+  }catch(_){}
+  studentJoinScreen();
+}
+/* 房號對了 ⇒ 這台平板在這一場已經有身分?有就問「你是 XXXX 嗎?」,沒有就輸入班級座號 */
+async function studentGuestCode(pin, r){
+  var u = stUser(); ST.uid = u.uid;
+  var ps = null; try{ ps = await F.getDoc(sub(pin, 'players', u.uid)); }catch(_){}
+  if(ps && ps.exists()){
+    var d = ps.data();
+    if(!d.kicked && d.code){
+      setTop('⚡ ' + (r.meta.title || T('搶答大挑戰', '英雄搶答擂台'))); setCtl('');
+      setBody('<div class="lq-card"><div class="lq-h1">🙋 ' + T('你是 ', '你是 ') + '<b style="color:#ffd166">' + esc(d.name || d.code) + '</b> ' + T('嗎?', '嗎?') + '</div>'
+        + '<div class="lq-p">' + T('這台平板剛剛用這個座號參加這一場,是你的話分數都還在!', '本裝置已用此座號加入本場;是你本人即可接續,成績保留。') + '</div>'
+        + '<div class="lq-row"><button class="lq-btn gray" id="lq-gs-no">🙅 ' + T('不是我', '不是我') + '</button><button class="lq-btn gold" id="lq-gs-yes">✅ ' + T('是我,回到擂台', '是,接續') + '</button></div></div>');
+      $('lq-gs-yes').onclick = async function(){
+        ST.code = d.code; ST.gName = d.name || d.code;
+        try{ await studentEnter(pin, r, true); }catch(e){ toast(e.message || '加入失敗'); studentJoinScreen(); }
+      };
+      $('lq-gs-no').onclick = async function(){
+        try{ await guestInit(true); ST.uid = stUser().uid; }catch(e){ return screenError(e.message); }
+        guestCodeScreen(pin, r);
+      };
+      return;
+    }
+    /* 這個匿名身分在這一場被請出了/資料不完整 ⇒ 換新身分 */
+    await guestInit(true); ST.uid = stUser().uid;
+  }
+  guestCodeScreen(pin, r);
+}
+/* 輸入 4 碼班級座號(只有數字鍵盤):年級 1 碼＋班級 1 碼＋座號 2 碼 */
+function guestCodeScreen(pin, r){
+  var code = '';
+  setTop('⚡ ' + (r.meta.title || T('搶答大挑戰', '英雄搶答擂台')), [{ html: '🔑 ' + esc(pin) }]);
+  setCtl('');
+  var pad = '';
+  ['1','2','3','4','5','6','7','8','9','⌫','0','🆗'].forEach(function(k){ pad += '<button data-k="' + k + '">' + k + '</button>'; });
+  setBody('<div class="lq-card lq-join"><div class="lq-join-l"><div class="lq-h1">' + T('輸入你的班級座號', '輸入班級座號') + '</div>'
+    + '<div class="lq-p" style="font-size:clamp(14px,1.8vmin,20px)">' + T('年級＋班級＋座號,一共 4 個數字<br>例:5 年 3 班 2 號 ⇒ <b>5302</b>', '年級(1)＋班級(1)＋座號(2),共 4 碼<br>例:5 年 3 班 2 號 ⇒ <b>5302</b>') + '</div>'
+    + '<div class="lq-pin lq-gcode" id="lq-gcbox"></div>'
+    + '<div class="lq-p" id="lq-gc-hint" style="font-size:clamp(13px,1.6vmin,18px);min-height:1.5em"></div>'
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-gc-back">⬅ ' + T('換房號', '換房號') + '</button><button class="lq-btn gold" id="lq-gc-go" disabled>🚀 ' + T('加入擂台', '加入') + '</button></div></div>'
+    + '<div class="lq-pad" id="lq-gcpad">' + pad + '</div></div>');
+  var lab = [T('年', '年'), T('班', '班'), T('座', '座'), T('號', '號')];
+  function draw(){
+    var boxes = '';
+    for(var i = 0; i < 4; i++) boxes += '<span class="' + (i === code.length ? 'cur' : '') + '">' + (code[i] || '<small style="opacity:.35;font-size:.45em">' + lab[i] + '</small>') + '</span>';
+    $('lq-gcbox').innerHTML = boxes;
+    var ok = code.length === 4 && guestCodeOk(code);
+    $('lq-gc-go').disabled = !ok;
+    var hint = '';
+    if(code.length >= 1 && !/^[1-6]/.test(code)) hint = T('年級要是 1～6', '年級須為 1～6');
+    else if(code.length >= 2 && code.charAt(1) === '0') hint = T('班級要是 1～9', '班級須為 1～9');
+    else if(code.length === 4 && code.slice(2) === '00') hint = T('座號不能是 00', '座號不可為 00');
+    else if(code.length === 4) hint = code.charAt(0) + T(' 年 ', ' 年 ') + code.charAt(1) + T(' 班 ', ' 班 ') + (+code.slice(2)) + T(' 號', ' 號');
+    $('lq-gc-hint').innerHTML = hint ? (ok ? '✅ ' : '⚠ ') + esc(hint) : '';
+  }
+  $('lq-gcpad').onclick = function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    var k = b.getAttribute('data-k');
+    if(k === '⌫') code = code.slice(0, -1);
+    else if(k === '🆗'){ if(code.length === 4 && guestCodeOk(code)) go(); return; }
+    else if(code.length < 4) code += k;
+    sfx('sfx-gentle', 0.25); draw();
+  };
+  $('lq-gc-back').onclick = studentJoinScreen;
+  $('lq-gc-go').onclick = go;
+  draw();
+  function go(){
+    if(!guestCodeOk(code)) return;
+    var hit = rosterByCode(code);
+    setBody('<div class="lq-card"><div class="lq-h1">' + (hit ? '🙋 ' + T('你是 ', '你是 ') + '<b style="color:#ffd166">' + esc(hit.n) + '</b> ' + T('嗎?', '嗎?')
+                                                          : '🤔 ' + T('名冊裡找不到 ', '名冊查無 ') + '<b style="color:#ffd166">' + esc(code) + '</b>') + '</div>'
+      + '<div class="lq-p">' + (hit ? T('確認是你自己再加入喔!打錯座號,獎勵會送到別人的帳號。', '請確認為本人座號;座號錯誤將導致獎勵匯入他人帳號。')
+                                    : T('確定沒有打錯嗎?找不到的座號,老師之後可能沒辦法幫你匯入獎勵。', '請確認座號無誤;名冊查無的座號可能無法匯入獎勵。')) + '</div>'
+      + '<div class="lq-row"><button class="lq-btn gray" id="lq-gc-re">✏️ ' + T('重新輸入', '重新輸入') + '</button><button class="lq-btn gold" id="lq-gc-ok">✅ ' + (hit ? T('是我,加入!', '確認加入') : T('沒打錯,加入', '確認加入')) + '</button></div></div>');
+    $('lq-gc-re').onclick = function(){ guestCodeScreen(pin, r); };
+    $('lq-gc-ok').onclick = async function(){
+      var bt = $('lq-gc-ok'); bt.disabled = true; bt.textContent = '…';
+      try{ await guestJoin(pin, code, hit); }
+      catch(e){
+        toast((e && e.code === 'permission-denied')
+          ? T('加入失敗:房間可能鎖住了,或老師還沒更新雲端規則', '加入失敗:房間已上鎖或雲端規則未更新')
+          : (e.message || '加入失敗'), 4200);
+        guestCodeScreen(pin, r);
+      }
+    };
+  }
+}
+async function guestJoin(pin, code, hit){
+  /* 讀最新房間(可能剛被上鎖/結束)＋同一場同一個座號只能一位(被請出的不算) */
+  var s = await F.getDoc(roomRef(pin));
+  if(!s.exists()) throw new Error(T('找不到這個房號', '查無此房號'));
+  var r = s.data();
+  if(r.meta.status === 'ended') throw new Error(T('這場擂台已經結束了', '本場擂台已結束'));
+  if(!r.meta.guest) throw new Error(T('這一場要登入自己的帳號才能參加喔', '本場需登入帳號參加'));
+  var ss = await F.getDocs(subCol(pin, 'players')), dup = null;
+  ss.forEach(function(d){
+    var p = d.data(); if(!p || p.kicked || d.id === ST.uid) return;
+    var pc = p.code || ((rosterOf(p.email) || {}).c) || '';
+    if(pc === code) dup = p;
+  });
+  if(dup) throw new Error(T('座號 ' + code + ' 已經有人加入了!先確認有沒有打錯;如果是你剛剛關掉 App 又重開,請老師在名單把舊的 ' + code + ' 按 ✕ 再加入',
+                            '座號 ' + code + ' 已有人加入;如為本人重新開啟 App,請主持人先移除舊的 ' + code));
+  ST.code = code;
+  ST.gName = hit ? String(hit.n).slice(0, 24) : code;
+  await studentEnter(pin, r, false);
+}
+
 async function studentEnter(pin, room, resumed){
-  var u = me(); ST.uid = u.uid; ST.pin = pin; ST.room = room;
+  var u = stUser(); ST.uid = u.uid; ST.pin = pin; ST.room = room;
   loadLocal(pin);
   var pref = sub(pin, 'players', u.uid);
   var ps = await F.getDoc(pref);
@@ -945,10 +1158,13 @@ async function studentEnter(pin, room, resumed){
   var t0 = now();
   if(ps.exists()){
     if(ps.data().kicked) throw new Error(T('老師請你先離開這個房間', '你已被主持人移出本房'));
-    await playerWrite(pref, { lastSeen: now(), name: myLabel() }, false);
+    await playerWrite(pref, { lastSeen: now(), name: stLabel() }, false);
   }else{
     if(room.meta.locked) throw new Error(T('老師已經鎖住房間了', '房間已上鎖'));
-    await playerWrite(pref, { uid: u.uid, name: myLabel(), account: myAccount(), email: myEmail(), joinedAt: now(), lastSeen: now(), kicked: false }, true);
+    /* ★ v5.336.0 免登入:沒有帳號/信箱,改帶 code(4 碼班級座號)＋guest:true(雲端規則只在房間開放免登入時放行) */
+    await playerWrite(pref, ST.guest
+      ? { uid: u.uid, name: stLabel(), account: '', email: '', code: ST.code, guest: true, joinedAt: now(), lastSeen: now(), kicked: false }
+      : { uid: u.uid, name: myLabel(), account: myAccount(), email: myEmail(), joinedAt: now(), lastSeen: now(), kicked: false }, true);
   }
   ST.syncPend = { t0: t0, t1: now() };
   ST.lastOk = now(); ST.netBad = false;
@@ -1145,7 +1361,7 @@ function studentChips(){
   var r = ST.room, c = [];
   if(r && r.current && r.meta.status !== 'lobby' && r.meta.status !== 'ended') c.push({ html: '第 ' + (r.current.qIndex + 1) + ' / ' + r.meta.qCount + ' 題' });
   if(r && r.meta.status === 'question') c.push({ id: 'lq-s-timer', html: '⏱ <span class="lq-timer">--</span>' });
-  c.push({ html: '🙋 ' + esc(myLabel()) });
+  c.push({ html: '🙋 ' + esc(stLabel()) });
   return c;
 }
 function studentRender(){
@@ -1201,7 +1417,7 @@ function studentLobbyWall(r){
   var inn = {}, off = {}, lv = {};
   (L.in || []).forEach(function(c){ inn[c] = 1; }); (L.off || []).forEach(function(c){ off[c] = 1; }); (L.lv || []).forEach(function(c){ lv[c] = 1; });
   var here = 0, need = L.exp.length - (L.lv || []).length;
-  var mine = (/^(\d{4})/.exec(myLabel()) || [])[1] || '';
+  var mine = ST.guest ? ST.code : ((/^(\d{4})/.exec(myLabel()) || [])[1] || '');
   var h = L.exp.map(function(c){
     var cls = inn[c] ? 'in' : (off[c] ? 'dc' : (lv[c] ? 'lv' : 'no'));
     if(inn[c]) here++;
@@ -1482,7 +1698,7 @@ function top5Html(list, mineUid){
 function studentEnded(){
   var r = ST.room, fin = r.final;
   if(!fin) bgmBack();
-  setTop('⚡ ' + (r.meta.title || T('搶答大挑戰', '英雄搶答擂台')), [{ html: '🙋 ' + esc(myLabel()) }]);
+  setTop('⚡ ' + (r.meta.title || T('搶答大挑戰', '英雄搶答擂台')), [{ html: '🙋 ' + esc(stLabel()) }]);
   setCtl('');
   if(!fin && r.meta.cleared){   /* ★ v5.324.0 老師在主持台清除了這一場 */
     clearLocalPin(ST.pin);
@@ -1511,10 +1727,18 @@ function studentEnded(){
       var t = TIERS[mine.tier];
       h += '<div class="lq-p" style="margin-top:10px">🎁 ' + t.name + ':' + t.items.join('、') + '</div>';
       var got = r.awarded && r.awarded[ST.uid];
+      if(ST.guest || mine.guest){   /* ★ v5.336.0 免登入:獎勵之後由老師依班級座號一起匯入 */
+        h += '<div class="lq-p" style="margin-top:6px;color:' + (got ? '#7dffb0' : '#ffd166') + '">'
+          + (got ? T('老師已經把獎勵匯入你的帳號了!登入後到冒險模式的「🎁 GM獎勵」按確認領取喔!', '獎勵已匯入,請登入後至「🎁 GM獎勵」確認領取。')
+                 : T('你是免登入參加,老師之後會依班級座號 <b>' + esc(mine.code || ST.code) + '</b> 把獎勵匯入你的帳號,登入後到「🎁 GM獎勵」領取!',
+                     '免登入參加:獎勵將由老師依班級座號 <b>' + esc(mine.code || ST.code) + '</b> 匯入帳號,登入後至「🎁 GM獎勵」領取。')) + '</div>';
+        clearLocal();
+      }else{
       h += '<div class="lq-p" style="margin-top:6px;color:' + (got ? '#7dffb0' : '#ffd166') + '">'
         + (got ? T('獎勵已經送到你的帳號了!到冒險模式的「🎁 GM獎勵」按確認領取喔!', '獎勵已寄送,請至冒險模式「🎁 GM獎勵」確認領取。')
                : T('老師正在頒發獎勵,等一下下~', '主持人頒發中…')) + '</div>';
       if(got){ clearLocal(); }
+      }
     }else{
       h += '<div class="lq-p" style="margin-top:10px;opacity:.8">' + T('這次作答的題數還不夠一半,下次要多搶答喔!', '本場作答題數未達一半,未符合參加獎資格。') + '</div>';
       clearLocal();
@@ -1548,11 +1772,11 @@ function finalTableHtml(list, o){
     var medal = e.rank === 1 ? '🥇' : (e.rank === 2 ? '🥈' : (e.rank === 3 ? '🥉' : (e.rank || '—')));
     var rw = e.tier ? '<span class="lq-badge ' + e.tier + '">' + TIERS[e.tier].short + '</span> ' + esc(TIERS[e.tier].mini) : '<small style="opacity:.7">' + T('作答未達一半', '未達參加門檻') + '</small>';
     return '<tr class="' + (e.rank ? (e.rank <= 5 ? 'top' : '') : 'ne') + (e.uid === o.mine ? ' mine' : '') + '" style="animation-delay:' + Math.min(i * 0.04, 1.6) + 's">'
-      + '<td><b>' + medal + '</b></td><td class="cd">' + esc(cc.c || '—') + '</td><td class="nm">' + esc(nameNoCode(e.name)) + (o.host ? ' <small style="opacity:.55">' + esc(e.account || '') + '</small>' : '') + '</td>'
+      + '<td><b>' + medal + '</b></td><td class="cd">' + esc(cc.c || '—') + '</td><td class="nm">' + esc(nameNoCode(e.name)) + (o.host ? ' <small style="opacity:.55">' + esc(e.guest ? '🔢免登入' : (e.account || '')) + '</small>' : '') + '</td>'
       + '<td><b>' + (e.score != null ? fmtPts(e.score) : '—') + '</b>' + (e.bonus ? '<small style="color:#ffe9a8"> +' + e.bonus + '%</small>' : '') + '</td>'
       + '<td>' + e.correct + ' / ' + (e.avail || e.answered) + '</td>'
       + '<td class="rw">' + rw + '</td>'
-      + (o.host ? '<td>' + (aw ? '✅' : (e.tier ? '…' : '')) + '</td><td>' + (e.d ? '<button class="lq-dbtn" data-detail="' + e.uid + '">📋</button>' : '') + '</td>' : '')
+      + (o.host ? '<td>' + (aw ? '✅' : (e.tier ? (e.guest ? '<span title="免登入:待 GM 匯入">🔢</span>' : '…') : '')) + '</td><td>' + (e.d ? '<button class="lq-dbtn" data-detail="' + e.uid + '">📋</button>' : '') + '</td>' : '')
       + '</tr>';
   }).join('');
   return '<div style="overflow-x:auto;width:100%"><table class="lq-table lq-final" style="width:100%"><tr><th>' + T('名次', '名次') + '</th><th>' + T('班級座號', '班級座號') + '</th><th>' + T('名字', '姓名') + '</th><th>' + T('總分', '總分') + '</th><th>' + T('答對', '答對') + '</th><th>' + T('獲得獎勵', '獲得獎勵') + '</th>'
@@ -1566,8 +1790,8 @@ var H = {
   reset: function(){ this.stop(); this.pin = null; this.room = null; this.status = null; this.qs = []; this.players = {}; this.joinQ = {};
     this.answers = {}; this.startAt = {}; this.power = {}; this.qIndex = -1; this.revealing = false; this.auto = false; this.autoH = null;
     this.qLocal = 0; this.createdAt = 0; this.title = ''; this.timeLimit = MAX_SEC; this.final = null; this.awarded = {}; this.granting = false;
-    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
-    this.draft = this.draft || { qs: [], title: '', sec: MAX_SEC, shuf: true, classes: [] }; },
+    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.guestMode = false; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
+    this.draft = this.draft || { qs: [], title: '', sec: MAX_SEC, shuf: true, classes: [], guest: (function(){ try{ return localStorage.getItem('lxps_lq_guestpref') === '1'; }catch(_){ return false; } })() }; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     (this.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.qUnsubs = [];
     if(this.tick){ clearInterval(this.tick); this.tick = null; } if(this.autoH){ clearTimeout(this.autoH); this.autoH = null; }
@@ -1786,7 +2010,9 @@ function hostSetup(){
     + '<label>名稱 <input type="text" id="lq-f-title" maxlength="30" value="' + esc(D.title) + '" style="width:min(70vw,380px)"></label>'
     + '<label>每題 <select id="lq-f-sec">' + secOpts + '</select></label>'
     + '<label><input type="checkbox" id="lq-f-shuf"' + (D.shuf ? ' checked' : '') + '> 選項順序打亂</label>'
-    + '<div style="font-size:14px;opacity:.75;margin-top:4px">全員作答完會立刻公布並計分。計分:答對 500 分＋速度分最多 500 分;每保留一個沒用的法寶總分 +5%(兩個都沒用 +10%)。同分比答對題數、再比秒數。法寶每人每場各 1 次。</div></div>'
+    + '<label title="沒登入的平板也能參加:學生輸入 4 碼班級座號"><input type="checkbox" id="lq-f-guest"' + (D.guest ? ' checked' : '') + '> 🔢 允許免登入(學生輸入班級座號)</label>'
+    + '<div style="font-size:14px;opacity:.75;margin-top:4px">全員作答完會立刻公布並計分。計分:答對 500 分＋速度分最多 500 分;每保留一個沒用的法寶總分 +5%(兩個都沒用 +10%)。同分比答對題數、再比秒數。法寶每人每場各 1 次。</div>'
+    + '<div style="font-size:14px;opacity:.75;margin-top:4px">🔢 免登入:沒登入的同學按「免登入參加」輸入班級座號就能玩;有登入的同學照樣用帳號。免登入同學的獎勵不會當場發出,成績會留在「📜 擂台紀錄」,由 GM 依班級座號一併匯入帳號。</div></div>'
     + '<div class="lq-fs"><h3>② 加入題目(可混合三種來源)</h3>'
     + '<div class="lq-tabs" id="lq-f-tabs"><button data-t="adv" class="on">📚 小英雄題庫</button><button data-t="exam">📝 考試複習</button><button data-t="custom">✍️ 自訂題目</button></div>'
     + '<div id="lq-f-src"></div></div>'
@@ -1794,12 +2020,13 @@ function hostSetup(){
     + '<div class="lq-row"><button class="lq-btn gray" id="lq-f-clear">清空</button><button class="lq-btn gray" id="lq-f-save">💾 存成題組</button><button class="lq-btn gray" id="lq-f-sets">📂 我的題組</button><button class="lq-btn gray" id="lq-f-hist">📜 擂台紀錄</button><button class="lq-btn gray" id="lq-f-cb">🏫 班級排行榜</button>'
     + (isAdmin() ? '<button class="lq-btn gray" id="lq-f-hosts">👥 主持人管理</button>' : '') + '</div></div>'
     + '<div class="lq-fs"><h3>④ 應到名單(勾選參賽班級)<span id="lq-f-clsn" style="font-size:.8em;opacity:.8"></span></h3><div class="lq-cls" id="lq-f-cls"></div>'
-    + '<div style="font-size:14px;opacity:.75;margin-top:4px">勾了班級,等候室會先列出全班座號(暗色),同學加入就會亮起來;沒來的可以點一下標「請假」。不勾也可以開房,就只顯示已加入的人。</div></div>'
+    + '<div style="font-size:14px;opacity:.75;margin-top:4px">勾了班級,等候室會先列出全班座號(暗色),同學加入就會亮起來;沒來的可以點一下標「請假」。選「🙋 現場加入」就不看名單,誰加入就列誰。</div></div>'
     + '<div class="lq-row" style="margin-bottom:20px"><button class="lq-btn gold" id="lq-f-open" style="font-size:24px;padding:14px 34px">🚪 開房!</button></div>'
     + '</div>';
   $('lq-f-title').oninput = function(){ D.title = this.value; };
   $('lq-f-sec').onchange = function(){ D.sec = Math.min(MAX_SEC, +this.value || MAX_SEC); };
   $('lq-f-shuf').onchange = function(){ D.shuf = this.checked; };
+  $('lq-f-guest').onchange = function(){ D.guest = this.checked; try{ localStorage.setItem('lxps_lq_guestpref', D.guest ? '1' : '0'); }catch(_){} };   /* ★ v5.336.0 記住老師上次的選擇 */
   $('lq-f-tabs').onclick = function(e){
     var b = e.target.closest('button'); if(!b) return;
     Array.prototype.forEach.call(this.children, function(x){ x.classList.toggle('on', x === b); });
@@ -1831,10 +2058,14 @@ function hostSetup(){
       all.forEach(function(c){ var r = buildRoster([c]); if(r.some(function(x){ return x.f > 0; })) drawCls.cnt[c] = r.length; });
     }
     all = all.filter(function(c){ return drawCls.cnt[c] != null; });
-    el.innerHTML = all.map(function(c){ var on = D.classes.indexOf(c) >= 0; return '<label class="' + (on ? 'on' : '') + '"><input type="checkbox" data-cls="' + esc(c) + '"' + (on ? ' checked' : '') + '> ' + esc(c) + ' <small style="opacity:.6">' + (drawCls.cnt[c] || 0) + '</small></label>'; }).join('');
+    /* ★ v5.336.0 老師「班級選擇新增『現場加入』(不看名單)」— 放第一格;選它＝清掉所有班級;勾任何班級就自動取消 */
+    var liveOn = !D.classes.length;
+    el.innerHTML = '<label class="' + (liveOn ? 'on' : '') + '" style="border-color:#ffd166"><input type="checkbox" data-live="1"' + (liveOn ? ' checked' : '') + '> 🙋 現場加入 <small style="opacity:.7">(不看名單)</small></label>'
+      + all.map(function(c){ var on = D.classes.indexOf(c) >= 0; return '<label class="' + (on ? 'on' : '') + '"><input type="checkbox" data-cls="' + esc(c) + '"' + (on ? ' checked' : '') + '> ' + esc(c) + ' <small style="opacity:.6">' + (drawCls.cnt[c] || 0) + '</small></label>'; }).join('');
     var n = buildRoster(D.classes).length;
-    $('lq-f-clsn').textContent = D.classes.length ? '  → 應到 ' + n + ' 人' : '';
+    $('lq-f-clsn').textContent = D.classes.length ? '  → 應到 ' + n + ' 人' : '  → 現場加入(誰來就列誰)';
     el.onchange = function(e){
+      if(e.target && e.target.getAttribute('data-live')){ D.classes = []; drawCls(); return; }
       var c = e.target && e.target.getAttribute('data-cls'); if(!c) return;
       var i = D.classes.indexOf(c);
       if(e.target.checked && i < 0) D.classes.push(c); else if(!e.target.checked && i >= 0) D.classes.splice(i, 1);
@@ -2006,7 +2237,8 @@ async function hostCreate(){
     var roster = buildRoster(D.classes || []);   /* ★ v5.318.0 老師「甲」:開房勾班級 ⇒ 應到名單(email 只存房主私有文件) */
     await F.setDoc(roomRef(pin), {
       meta: { hostUid: u.uid, hostEmail: myEmail(), hostName: myLabel(), title: title, status: 'lobby', locked: false,
-              createdAt: createdAt, endedAt: 0, qCount: qs.length, timeLimit: sec, lobbyCount: 0, version: 1, classes: (D.classes || []).slice(0, 20) },
+              createdAt: createdAt, endedAt: 0, qCount: qs.length, timeLimit: sec, lobbyCount: 0, version: 1, classes: (D.classes || []).slice(0, 20),
+              guest: !!D.guest, live: !(D.classes || []).length },   /* ★ v5.336.0 guest=允許免登入;live=現場加入(不看名單) */
       lobby: { exp: roster.map(function(r){ return r.c; }), in: [], off: [], lv: [], ex: [] },
       current: null, reveal: null, final: null, awarded: {}
     });
@@ -2014,7 +2246,7 @@ async function hostCreate(){
     await boardSet(pin, { title: title, hostName: myLabel(), hostUid: u.uid, at: now(), st: 'lobby' });
     H.reset(); H.draft = D;
     H.pin = pin; H.qs = qs; H.createdAt = createdAt; H.title = title; H.timeLimit = sec; H.status = 'lobby';
-    H.roster = roster; H.leave = {};
+    H.roster = roster; H.leave = {}; H.guestMode = !!D.guest;
     hostAttach();
     sfx('sfx-confirm', 0.5);
   }catch(e){
@@ -2040,7 +2272,7 @@ async function hostResume(pin){
     H.reset();
     H.pin = pin; H.room = r; H.status = r.meta.status; H.createdAt = r.meta.createdAt; H.title = r.meta.title; H.timeLimit = r.meta.timeLimit || MAX_SEC;
     H.qs = (sd.qs || []).map(unpackQ); H.startAt = sd.startAt || {}; H.joinQ = sd.joinQ || {}; H.power = sd.power || {};
-    H.roster = sd.roster || []; H.leave = sd.leave || {};
+    H.roster = sd.roster || []; H.leave = sd.leave || {}; H.guestMode = !!(r.meta && r.meta.guest);
     H.final = r.final || null; H.awarded = r.awarded || {};
     H.qIndex = r.current ? r.current.qIndex : -1;
     var as = await F.getDocs(subCol(pin, 'answers'));
@@ -2169,7 +2401,9 @@ function rosterSlotOf(em){
 function rosterPlayer(r){
   var es = r.es || [r.e], best = null, score = -1;
   Object.keys(H.players).forEach(function(k){
-    var p = H.players[k]; if(es.indexOf(String(p.email || '').toLowerCase()) < 0) return;
+    var p = H.players[k];
+    /* ★ v5.336.0 免登入同學依輸入的班級座號對到名冊格子 */
+    if(p.guest ? p.code !== r.c : es.indexOf(String(p.email || '').toLowerCase()) < 0) return;
     var sc = p.kicked ? 0 : (isOnline(p) ? 2 : 1);
     if(sc > score){ best = p; score = sc; }
   });
@@ -2190,10 +2424,14 @@ function isOnline(p){
   var lim = Math.min(80000, Math.max(OFFLINE_MS, 2.2 * (H.gap[p.uid] || 0)));
   return now() - (H.seen[p.uid] || 0) < lim;
 }
-function inRosterP(p){ return !!rosterSlotOf(p && p.email); }
+function inRosterP(p){
+  if(p && p.guest){ var hit = false; (H.roster || []).forEach(function(r){ if(r.c === p.code) hit = true; }); return hit; }   /* ★ v5.336.0 */
+  return !!rosterSlotOf(p && p.email);
+}
 /* ★ v5.318.0 班級座號:優先查名冊,查不到就從名稱開頭 4 碼推(舊紀錄也適用);回傳 {c:'5302', cls:'5年3班'} */
 function codeFromName(name){ var m = /^(\d)(\d)(\d{2})/.exec(String(name || '')); return m ? { c: m[0], cls: m[1] + '年' + m[2] + '班' } : { c: '', cls: '' }; }
 function codeOf(p){
+  if(p && p.guest && p.code) return { c: p.code, cls: codeFromName(p.code).cls };   /* ★ v5.336.0 免登入:自己輸入的班級座號 */
   var r = rosterOf(p && p.email);
   if(r){ var m = /^(\d)(\d)/.exec(r.c); return { c: r.c, cls: r.cls || (m ? m[1] + '年' + m[2] + '班' : '') }; }
   return codeFromName(p && p.name);
@@ -2210,7 +2448,7 @@ function lobbyState(){
   });
   Object.keys(H.players).forEach(function(k){
     var p = H.players[k]; if(p.kicked || inRosterP(p)) return;
-    var r = rosterOf(p.email); var tag = r ? r.c : T('訪客', '來賓');
+    var r = rosterOf(p.email); var tag = p.guest ? (p.code || T('訪客', '來賓')) : (r ? r.c : T('訪客', '來賓'));
     ex.push(tag); (isOnline(p) ? inn : off).push(tag);
   });
   return { exp: exp, in: inn, off: off, lv: lv, ex: ex };
@@ -2304,7 +2542,7 @@ function rosterCountHtml(){
 function playerTag(p, canKick, label){
   var on = isOnline(p);
   var pw = H.power[p.uid] || {};
-  return '<div class="lq-tag' + (on ? (label ? ' lq-rs in' : '') : ' off lq-rs dc') + '">' + esc(label || p.name) + (label ? '' : ' <small>' + esc(p.account || '') + '</small>')
+  return '<div class="lq-tag' + (on ? (label ? ' lq-rs in' : '') : ' off lq-rs dc') + '">' + esc(label || p.name) + (label ? (p.guest ? ' <small>🔢</small>' : '') : ' <small>' + esc(p.guest ? '🔢 免登入' : (p.account || '')) + '</small>')
     + (on ? '' : ' <small>' + T('斷線', '離線') + '</small>')
     + (pw.cut != null ? '<span class="pw" title="斬卻 第' + (pw.cut + 1) + '題">🗡️</span>' : '') + (pw.hint != null ? '<span class="pw" title="天啟 第' + (pw.hint + 1) + '題">💡</span>' : '')
     + (canKick ? '<button class="k" data-kick="' + p.uid + '" title="請出房間">✕</button>' : '') + '</div>';
@@ -2385,7 +2623,9 @@ function hostLobby(){
   H.status = 'lobby';
   setTop('🎤 ' + H.title, hostChips(), function(){ LQ.close(); });
   var locked = H.room && H.room.meta && H.room.meta.locked;
-  setBody('<div class="lq-p" style="margin-top:4px">' + T('打開小英雄首頁 → 點「⚡ 搶答擂台」→ 輸入房號', '首頁點選「⚡ 搶答擂台」並輸入下方房號') + '</div>'
+  var gst = H.guestMode || (H.room && H.room.meta && H.room.meta.guest);   /* ★ v5.336.0 */
+  setBody('<div class="lq-p" style="margin-top:4px">' + T('打開小英雄首頁 → 點「⚡ 搶答擂台」→ 輸入房號', '首頁點選「⚡ 搶答擂台」並輸入下方房號')
+    + (gst ? '<br><b style="color:#ffd166">🔢 ' + T('沒登入也可以:選「免登入參加」→ 輸入房號 → 輸入 4 碼班級座號', '未登入者:選「免登入參加」→ 房號 → 4 碼班級座號') + '</b>' : '') + '</div>'
     + '<div class="lq-bigpin">' + H.pin + '</div>'
     + '<div class="lq-p" style="font-size:clamp(14px,1.7vmin,20px);opacity:.8">' + H.qs.length + ' 題・每題 ' + H.timeLimit + ' 秒・' + T('每人法寶 🗡️💡 各一次', '法寶 🗡️ 斬卻 / 💡 天啟 各一次') + '</div>'
     + '<div class="lq-p" style="font-weight:900;font-size:clamp(14px,1.9vmin,22px)">⏳ ' + T('等待所有玩家加入…', '等待所有玩家加入…') + ' <span id="lq-h-rules-n"></span></div>'
@@ -2731,13 +2971,13 @@ async function hostEnd(early){
   var out = [];
   elig.forEach(function(r, i){
     var p = H.players[r.uid] || {}, rank = i + 1, cc = codeOf(p);
-    out.push({ uid: r.uid, name: p.name || '', account: p.account || '', email: p.email || '', code: cc.c, cls: cc.cls, avail: played - (H.joinQ[r.uid] || 0), correct: r.correct, answered: r.answered,
+    out.push({ uid: r.uid, name: p.name || '', account: p.account || '', email: p.email || '', code: cc.c, cls: cc.cls, guest: !!p.guest, avail: played - (H.joinQ[r.uid] || 0), correct: r.correct, answered: r.answered,
                sec: Math.round(r.sec), score: r.score, base: r.base, bonus: r.bonus, used: r.used, d: r.d, pw: H.power[r.uid] || {}, joinQ: H.joinQ[r.uid] || 0,
                rank: rank, tier: rank <= 5 ? 'A' : (rank <= 10 ? 'B' : 'P') });
   });
   ne.forEach(function(r){
     var p = H.players[r.uid] || {}, cc = codeOf(p);
-    out.push({ uid: r.uid, name: p.name || '', account: p.account || '', email: p.email || '', code: cc.c, cls: cc.cls, avail: played - (H.joinQ[r.uid] || 0), correct: r.correct, answered: r.answered, sec: Math.round(r.sec),
+    out.push({ uid: r.uid, name: p.name || '', account: p.account || '', email: p.email || '', code: cc.c, cls: cc.cls, guest: !!p.guest, avail: played - (H.joinQ[r.uid] || 0), correct: r.correct, answered: r.answered, sec: Math.round(r.sec),
                score: r.score, base: r.base, bonus: r.bonus, used: r.used, d: r.d, pw: H.power[r.uid] || {}, joinQ: H.joinQ[r.uid] || 0, rank: 0, tier: '' });
   });
   H.final = { list: out, at: now(), played: played };
@@ -2752,6 +2992,7 @@ async function hostEnd(early){
       qCount: H.qs.length, played: played, timeLimit: H.timeLimit,
       questions: H.qs.slice(0, played).map(function(Q){ return { t: Q.t, o: Q.o, a: Q.a, s: Q.src || '' }; }),
       list: out, power: H.power, awarded: {},
+      guest: !!H.guestMode, guestN: out.filter(function(e){ return e.guest && e.tier; }).length, guestAwarded: {},   /* ★ v5.336.0 免登入獎勵待 GM 匯入 */
       /* ★ v5.318.0 應到名單紀錄(班級、應到、請假、缺席座號),日後查詢用 */
       classes: (H.room && H.room.meta && H.room.meta.classes) || [],
       roster: (H.roster || []).map(function(r){
@@ -2775,8 +3016,9 @@ function hostEndScreen(anim){
     var delay = anim ? (rk === 3 ? 0.3 : (rk === 2 ? 1.3 : 2.4)) : 0;
     pod += '<div class="lq-pod p' + rk + '" style="animation-delay:' + delay + 's"><div class="who">' + esc(e.name) + '<small>' + (e.score != null ? fmtPts(e.score) + ' 分・' : '') + T('答對 ', '答對 ') + e.correct + ' 題</small></div><div class="blk">' + rk + '</div></div>';
   });
-  var cnt = { A: 0, B: 0, P: 0 }, done = 0, need = 0;
-  list.forEach(function(e){ if(e.tier){ cnt[e.tier]++; need++; if(H.awarded[e.uid]) done++; } });
+  var cnt = { A: 0, B: 0, P: 0 }, done = 0, need = 0, gN = 0, gDone = 0;
+  /* ★ v5.336.0 免登入同學沒有帳號 ⇒ 不在這裡發,另外計數,由 GM 在「📜 擂台紀錄」一併匯入 */
+  list.forEach(function(e){ if(!e.tier) return; if(e.guest){ gN++; if(H.awarded[e.uid]) gDone++; return; } cnt[e.tier]++; need++; if(H.awarded[e.uid]) done++; });
   var sc0 = anim ? 0 : ($('lq-body') ? $('lq-body').scrollTop : 0);
   setBody('<div class="lq-podium">' + pod + '</div>'
     + '<div class="lq-final" style="margin-top:4px"><div class="lq-h1" style="font-size:clamp(18px,2.6vmin,28px)">🏆 ' + T('最終排行榜', '最終排行榜') + '</div>'
@@ -2785,7 +3027,10 @@ function hostEndScreen(anim){
     + TIERS.A.name + ' ' + cnt.A + ' 人・' + TIERS.B.name + ' ' + cnt.B + ' 人・' + TIERS.P.name + ' ' + cnt.P + ' 人'
     + '<br><small style="color:#fff;opacity:.75">' + TIERS.A.name + ':' + TIERS.A.items.join('、') + '<br>' + TIERS.B.name + ':' + TIERS.B.items.join('、') + '<br>' + TIERS.P.name + ':' + TIERS.P.items.join('、')
     + '<br>參加獎門檻:作答題數達加入後題數的一半;前 10 名不另給參加獎。獎勵會送進學生的「🎁 GM獎勵」收件箱,學生本人登入按確認領取才入帳。</small></div>'
-    + '<div class="lq-p" id="lq-h-aw">' + (need ? ('已頒發 ' + done + ' / ' + need + ' 人') : '沒有符合獎勵資格的同學') + '</div></div>'
+    + '<div class="lq-p" id="lq-h-aw">' + (need ? ('已頒發 ' + done + ' / ' + need + ' 人') : (gN ? '登入帳號的同學沒有待發獎勵' : '沒有符合獎勵資格的同學')) + '</div>'
+    + (gN ? '<div class="lq-p" style="color:#9ad0ff">🔢 ' + T('免登入同學 ', '免登入 ') + gN + T(' 人有獎勵', ' 人符合獎勵') + (gDone ? '(已匯入 ' + gDone + ')' : '')
+        + '<br><small style="color:#fff;opacity:.75">成績已存進「📜 擂台紀錄」,由 GM 依班級座號一併匯入帳號' + (isAdmin() ? ';也可以現在按下方「📥 匯入免登入獎勵」' : '') + '。</small></div>' : '')
+    + '</div>'
     + (classSummaryHtml(list) || '') + '<div style="height:20px"></div>');
   if(sc0) $('lq-body').scrollTop = sc0;   /* 頒獎後重畫維持原捲動位置 */
   /* ★ v5.318.0 遊戲結束特效與音樂:第 3 名 → 第 2 名 → 冠軍依序登台,冠軍出場放勝利曲＋掌聲＋彩帶 */
@@ -2820,10 +3065,12 @@ function hostEndScreen(anim){
     $('lq-h-undo').onclick = function(){ setNoAward(false, ''); };
   }else{
     setCtl('<button class="lq-btn gold" id="lq-h-grant" style="font-size:22px"' + (need && done < need ? '' : ' disabled') + '>🎁 ' + (done ? '繼續頒發' : '頒發獎勵') + '</button>'
-      + (need && !done ? '<button class="lq-btn gray" id="lq-h-noaward">🚫 本場不發獎勵</button>' : '')
+      + ((need || gN) && !done && !gDone ? '<button class="lq-btn gray" id="lq-h-noaward">🚫 本場不發獎勵</button>' : '')
+      + (isAdmin() && gN > gDone ? '<button class="lq-btn" id="lq-h-gimp">📥 匯入免登入獎勵(' + (gN - gDone) + ')</button>' : '')
       + '<button class="lq-btn gray" id="lq-h-closeroom">🚪 關閉擂台</button>');
     $('lq-h-grant').onclick = function(){ confirmGrant(cnt, need - done, done); };
     if($('lq-h-noaward')) $('lq-h-noaward').onclick = askNoAward;
+    if($('lq-h-gimp')) $('lq-h-gimp').onclick = function(){ guestImportByIds([H.pin + '_' + H.createdAt], function(){ hostEndScreen(false); }); };
   }
   $('lq-h-closeroom').onclick = function(){
     var left = nA ? 0 : need - done;
@@ -2903,9 +3150,9 @@ async function hostGrant(){
   var btn = $('lq-h-grant'); if(btn){ btn.disabled = true; btn.textContent = '頒發中…'; }
   var list = (H.final && H.final.list) || [], rid = 'lq_' + H.pin + '_' + H.createdAt, u = me();
   var ok = 0, fail = 0, total = 0, done = 0;
-  list.forEach(function(e){ if(e.tier) total++; });
+  list.forEach(function(e){ if(e.tier && !e.guest) total++; });
   for(var i = 0; i < list.length; i++){
-    var e = list[i]; if(!e.tier) continue;
+    var e = list[i]; if(!e.tier || e.guest) continue;   /* ★ v5.336.0 免登入同學由 GM 匯入,這裡不發(匿名身分沒有收件箱) */
     if(H.awarded[e.uid]){ done++; continue; }
     var t = TIERS[e.tier];
     var merit = (e.tier === 'P' ? ('⚡搶答擂台參加獎｜' + H.title) : ('⚡搶答擂台｜' + H.title + '｜第' + e.rank + '名／共' + list.length + '人')).slice(0, 120);
@@ -2940,6 +3187,118 @@ async function markAwarded(uid, tier){
   F.updateDoc(F.doc(db(), 'liveQuizHistory', H.pin + '_' + H.createdAt), o).catch(function(){});
 }
 
+/* ═════════ ★ v5.336.0 免登入獎勵匯入(GM 專用)═════════
+   老師「排行榜出來可以留下記錄在 GM 端,再一併匯入獎勵」:
+   免登入同學的成績/名次已在 liveQuizHistory;GM 選一場或「一併匯入」全部待匯入場次 ⇒
+   班級座號 → 名冊(同座號多帳號時優先入學年對得上的)→ players 用 email 查 uid → 預覽(對不到的可手打帳號)→ 確認後
+   寫 gmClassRewards/{uid}/items/lq_{房號}_{開房時間}(跟當場頒獎同一個 id ⇒ 同一人同一場不會拿兩份)。 */
+function guestPending(h){
+  if(!h || h.noAward) return [];
+  var ga = h.guestAwarded || {};
+  return (h.list || []).filter(function(e){ return e.guest && e.tier && e.code && !ga[e.code]; });
+}
+var _uidCache = {};
+async function uidByEmail(em){
+  em = String(em || '').trim().toLowerCase(); if(!em) return null;
+  if(_uidCache[em] !== undefined) return _uidCache[em];
+  var id = null;
+  try{
+    var ss = await F.getDocs(F.query(F.collection(db(), 'players'), F.where('email', '==', em), F.limit(3)));
+    ss.forEach(function(d){ if(!id) id = d.id; });
+  }catch(_){}
+  _uidCache[em] = id; return id;
+}
+function normAcct(s){
+  s = String(s || '').trim().toLowerCase(); if(!s) return '';
+  if(s.indexOf('@') < 0 && /^lsps\w+$/.test(s)) s += '@stu.lsps.tp.edu.tw';
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : '';
+}
+async function guestImportByIds(ids, after){
+  if(!isAdmin()){ toast('只有 GM 可以匯入免登入獎勵'); return; }
+  modal('<div class="lq-h1" style="font-size:22px">📥 匯入免登入獎勵</div><div class="lq-p">讀取紀錄中…</div>');
+  var hs = [];
+  for(var i = 0; i < ids.length; i++){
+    try{ var s = await F.getDoc(F.doc(db(), 'liveQuizHistory', ids[i])); if(s.exists()) hs.push(s.data()); }catch(_){}
+  }
+  guestImport(hs, after);
+}
+async function guestImport(hs, after){
+  if(!isAdmin()){ toast('只有 GM 可以匯入免登入獎勵'); return; }
+  var rows = [];
+  hs.forEach(function(h){ guestPending(h).forEach(function(e){ rows.push({ h: h, e: e, slot: rosterByCode(e.code), uid: null, email: '' }); }); });
+  if(!rows.length){ closeModal(); toast('沒有待匯入的免登入獎勵'); if(after) after(); return; }
+  modal('<div class="lq-h1" style="font-size:22px">📥 匯入免登入獎勵</div><div class="lq-p" id="lq-gi-st">對照名冊與帳號中… 0 / ' + rows.length + '</div>');
+  for(var i = 0; i < rows.length; i++){
+    var R = rows[i], cand = [];
+    if(R.slot){ cand.push(R.slot.e); (R.slot.es || []).forEach(function(x){ if(cand.indexOf(x) < 0) cand.push(x); }); }
+    for(var j = 0; j < cand.length && !R.uid; j++){ var id = await uidByEmail(cand[j]); if(id){ R.uid = id; R.email = cand[j]; } }
+    var st = $('lq-gi-st'); if(st) st.textContent = '對照名冊與帳號中… ' + (i + 1) + ' / ' + rows.length;
+  }
+  var nSes = {}; rows.forEach(function(R){ nSes[R.h.pin + '_' + R.h.createdAt] = 1; });
+  var body = rows.map(function(R, i){
+    var e = R.e, t = TIERS[e.tier];
+    return '<tr' + (R.uid ? '' : ' class="ne"') + '><td class="nm" style="font-size:13px">' + esc(R.h.title || '') + '<br><small style="opacity:.6">' + new Date(R.h.createdAt).toLocaleDateString() + '・' + esc(R.h.pin) + '</small></td>'
+      + '<td>' + (e.rank || '') + '</td><td class="cd">' + esc(e.code) + '</td>'
+      + '<td class="nm">' + esc(R.slot ? nameNoCode(R.slot.n) : '—') + '</td>'
+      + '<td><span class="lq-badge ' + e.tier + '">' + t.short + '</span></td>'
+      + '<td style="font-size:13px">' + (R.uid ? '✅ ' + esc(R.email.split('@')[0])
+          : '<input data-gi="' + i + '" placeholder="' + (R.slot ? '名冊帳號查無玩家,' : '名冊查無,') + '手打帳號(lsps…)" style="width:13em;font-size:14px;padding:4px 6px;border-radius:8px;border:1px solid #5fb3d9;background:#0c2233;color:#fff">') + '</td></tr>';
+  }).join('');
+  var ok0 = rows.filter(function(R){ return R.uid; }).length;
+  var m = modal('<div class="lq-h1" style="font-size:22px">📥 匯入免登入獎勵</div>'
+    + '<div class="lq-p" style="font-size:14px">共 ' + Object.keys(nSes).length + ' 場・' + rows.length + ' 人;依班級座號對到帳號 <b>' + ok0 + '</b> 人。'
+    + (ok0 < rows.length ? '<br>對不到的可以在右邊手打帳號(例:lsps113025),不填就先略過,之後還可以再匯入。' : '') + '</div>'
+    + '<div style="overflow-x:auto;max-height:52vh"><table class="lq-table" style="width:100%;font-size:14px"><tr><th>場次</th><th>名次</th><th>座號</th><th>名冊姓名</th><th>獎勵</th><th>帳號</th></tr>' + body + '</table></div>'
+    + '<div class="lq-p" style="font-size:13px;opacity:.75">獎勵會送進該生「🎁 GM獎勵」收件箱(本人登入按確認領取才入帳);同一人同一場已經有獎勵就不會重複。</div>'
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-gi-no">取消</button><button class="lq-btn gold" id="lq-gi-ok">📥 確認匯入</button></div>');
+  m.firstChild.style.width = 'min(97vw,1000px)';
+  $('lq-gi-no').onclick = function(){ closeModal(); if(after) after(); };
+  $('lq-gi-ok').onclick = async function(){
+    var bt = $('lq-gi-ok'); bt.disabled = true; bt.textContent = '匯入中…';
+    var ins = m.querySelectorAll('input[data-gi]');
+    for(var k = 0; k < ins.length; k++){
+      var R = rows[+ins[k].getAttribute('data-gi')], em = normAcct(ins[k].value);
+      if(!em) continue;
+      var id = await uidByEmail(em);
+      if(id){ R.uid = id; R.email = em; } else toast('查無帳號:' + em, 3000);
+    }
+    var ok = 0, skip = 0, fail = 0;
+    for(var i = 0; i < rows.length; i++){
+      var R = rows[i]; if(!R.uid){ skip++; continue; }
+      try{ await guestGrantOne(R); ok++; }catch(err){ fail++; try{ console.warn('[LQ] 匯入失敗', R.e.code, err); }catch(_){} }
+      bt.textContent = '匯入中… ' + (i + 1) + ' / ' + rows.length;
+    }
+    closeModal();
+    toast('📥 匯入完成 ' + ok + ' 人' + (skip ? ',略過 ' + skip + ' 人(沒對到帳號)' : '') + (fail ? ',失敗 ' + fail + ' 人(可再匯入一次)' : ''), 5000);
+    if(ok){ snd('coin', 0.7); fxConfetti(40, true); }
+    if(after) after();
+  };
+}
+async function guestGrantOne(R){
+  var h = R.h, e = R.e, t = TIERS[e.tier], rid = 'lq_' + h.pin + '_' + h.createdAt;
+  var merit = (e.tier === 'P' ? ('⚡搶答擂台參加獎(免登入)｜' + (h.title || '')) : ('⚡搶答擂台(免登入)｜' + (h.title || '') + '｜第' + e.rank + '名／共' + (h.list || []).length + '人')).slice(0, 120);
+  var label = String((R.slot && R.slot.n) || e.name || e.code).slice(0, 80);
+  var ref = F.doc(db(), 'gmClassRewards', R.uid, 'items', rid);
+  var ex = await F.getDoc(ref);
+  if(!ex.exists()){
+    await F.setDoc(ref, { uid: R.uid, label: label, email: R.email.slice(0, 80), reward: JSON.parse(JSON.stringify(t.reward)), itemsLabel: t.items.slice(),
+                          merit: merit, by: myEmail().slice(0, 60), at: now(), enabled: true, lq: h.pin });
+    if(typeof window._fbWriteGmGiftLog === 'function'){
+      window._fbWriteGmGiftLog({ uid: R.uid, label: label, email: R.email, items: t.items, by: myEmail(), merit: merit, rewardId: rid, kind: 'liveQuizGuest' }).catch(function(){});
+    }
+  }
+  var o = {};
+  o['guestAwarded.' + e.code] = { uid: R.uid, email: R.email, tier: e.tier, at: now(), by: myEmail().slice(0, 60), dup: ex.exists() };
+  o['awarded.' + e.uid] = e.tier;
+  await F.updateDoc(F.doc(db(), 'liveQuizHistory', h.pin + '_' + h.createdAt), o);
+  h.guestAwarded = h.guestAwarded || {}; h.guestAwarded[e.code] = o['guestAwarded.' + e.code];
+  h.awarded = h.awarded || {}; h.awarded[e.uid] = e.tier;
+  /* 房間也標記(學生結束畫面會顯示「已匯入」;房間不在了就算了) */
+  var ro = {}; ro['awarded.' + e.uid] = e.tier;
+  F.updateDoc(roomRef(h.pin), ro).catch(function(){});
+  if(H.pin === h.pin && H.createdAt === h.createdAt) H.awarded[e.uid] = e.tier;
+}
+
 /* ───────── 擂台紀錄 ───────── */
 async function showHistory(){
   modal('<div class="lq-h1" style="font-size:22px">📜 擂台紀錄</div><div id="lq-hist" class="lq-p" style="text-align:left">讀取中…</div><div class="lq-row"><button class="lq-btn gray" id="lq-hi-x">關閉</button></div>');
@@ -2950,15 +3309,25 @@ async function showHistory(){
     var ss = await F.getDocs(qq), arr = [];
     ss.forEach(function(d){ arr.push(d.data()); });
     arr.sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
-    $('lq-hist').innerHTML = arr.length ? arr.slice(0, 40).map(function(h){
-      var need = (h.list || []).filter(function(e){ return e.tier; }).length, got = Object.keys(h.awarded || {}).length;
+    /* ★ v5.336.0 GM:待匯入的免登入獎勵總覽＋「一併匯入」 */
+    var gIds = [], gTot = 0;
+    arr.slice(0, 40).forEach(function(h){ var n = guestPending(h).length; if(n){ gIds.push(h.pin + '_' + h.createdAt); gTot += n; } });
+    var gTop = (isAdmin() && gTot) ? '<div class="lq-row" style="justify-content:flex-start;margin:0 0 8px"><button class="lq-btn gold" id="lq-hi-gall">📥 一併匯入免登入獎勵(' + gIds.length + ' 場・' + gTot + ' 人)</button></div>' : '';
+    $('lq-hist').innerHTML = gTop + (arr.length ? arr.slice(0, 40).map(function(h){
+      var need = (h.list || []).filter(function(e){ return e.tier && !e.guest; }).length, got = (h.list || []).filter(function(e){ return e.tier && !e.guest && (h.awarded || {})[e.uid]; }).length;
+      var gp = guestPending(h).length, gAll = (h.list || []).filter(function(e){ return e.tier && e.guest; }).length;
       var top3 = (h.list || []).filter(function(e){ return e.rank && e.rank <= 3; }).map(function(e){ return ['🥇', '🥈', '🥉'][e.rank - 1] + esc(e.name); }).join(' ');
       return '<div class="lq-qi" style="font-size:15px"><span class="tx"><b>' + esc(h.title) + '</b>(' + h.pin + ')<small>' + new Date(h.createdAt).toLocaleString() + '・' + esc(h.hostName || '') + '・'
-        + (h.list || []).length + ' 人・' + (h.played || h.qCount) + ' 題・' + (h.noAward ? '🚫 不發獎勵' + (h.noAwardReason ? '(' + esc(h.noAwardReason) + ')' : '') : '頒獎 ' + got + '/' + need) + '</small><small>' + top3 + '</small></span>'
+        + (h.list || []).length + ' 人・' + (h.played || h.qCount) + ' 題・' + (h.noAward ? '🚫 不發獎勵' + (h.noAwardReason ? '(' + esc(h.noAwardReason) + ')' : '') : '頒獎 ' + got + '/' + need
+          + (gAll ? '・🔢 免登入 ' + (gp ? '待匯入 ' + gp + '/' + gAll : '已匯入 ' + gAll) : '')) + '</small><small>' + top3 + '</small></span>'
         + '<button class="lq-btn gray" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-hres="' + h.pin + '_' + h.createdAt + '">📋 成績</button>'
-        + (got < need && !h.noAward && h.hostUid === u.uid ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-reopen="' + h.pin + '">繼續頒發</button>' : '') + '</div>';
-    }).join('') : '還沒有紀錄';
+        + (got < need && !h.noAward && h.hostUid === u.uid ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-reopen="' + h.pin + '">繼續頒發</button>' : '')
+        + (gp && isAdmin() ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-gimp="' + h.pin + '_' + h.createdAt + '">📥 匯入</button>' : '') + '</div>';
+    }).join('') : '還沒有紀錄');
+    if($('lq-hi-gall')) $('lq-hi-gall').onclick = function(){ guestImport(arr.filter(function(h){ return gIds.indexOf(h.pin + '_' + h.createdAt) >= 0; }), showHistory); };
     $('lq-hist').onclick = function(e){
+      var gi = e.target.closest('[data-gimp]');
+      if(gi){ var gk = gi.getAttribute('data-gimp'); guestImport(arr.filter(function(x){ return x.pin + '_' + x.createdAt === gk; }), showHistory); return; }
       var r = e.target.closest('[data-hres]');
       if(r){ var key = r.getAttribute('data-hres'), h = null; arr.forEach(function(x){ if(x.pin + '_' + x.createdAt === key) h = x; }); if(h) histResult(h); return; }
       var b = e.target.closest('[data-reopen]'); if(!b) return; closeModal(); hostResume(b.getAttribute('data-reopen'));
@@ -3127,9 +3496,13 @@ function histResult(h, back){
     + finalTableHtml(list, { host: true, awarded: h.awarded || {} })
     + classSummaryHtml(list, h.played || h.qCount)
     + histRosterHtml(h)
-    + '<div class="lq-row"><button class="lq-btn gray" id="lq-hr-back">⬅ ' + (back ? '返回' : '擂台紀錄') + '</button><button class="lq-btn gray" id="lq-hr-x">關閉</button></div>');
+    + (guestPending(h).length ? '<div class="lq-p" style="font-size:14px;color:#9ad0ff">🔢 免登入同學 ' + guestPending(h).length + ' 人的獎勵還沒匯入' + (isAdmin() ? '' : ',請 GM 從「📜 擂台紀錄」匯入') + '</div>' : '')
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-hr-back">⬅ ' + (back ? '返回' : '擂台紀錄') + '</button>'
+    + (isAdmin() && guestPending(h).length ? '<button class="lq-btn gold" id="lq-hr-gimp">📥 匯入免登入獎勵(' + guestPending(h).length + ')</button>' : '')
+    + '<button class="lq-btn gray" id="lq-hr-x">關閉</button></div>');
   m.firstChild.style.width = 'min(97vw,1100px)';
   $('lq-hr-x').onclick = closeModal;
+  if($('lq-hr-gimp')) $('lq-hr-gimp').onclick = function(){ guestImport([h], function(){ histResult(h, back); }); };
   $('lq-hr-back').onclick = back || showHistory;
   m.onclick = function(ev){
     var b = ev.target.closest && ev.target.closest('[data-detail]'); if(!b) return;
@@ -3181,7 +3554,8 @@ async function hostManager(){
 }
 
 /* 測試用掛勾(沙盒驗證計分) */
-LQ._test = { computeTally: computeTally, rankList: rankList, scoreOf: scoreOf, parseCustom: parseCustom, TIERS: TIERS, H: H, ST: ST, hostEnd: hostEnd, fs: fs, showClassBoard: function(){ CB.arr = null; return showClassBoard(); }, classAgg: classAgg, buildRoster: buildRoster };
+LQ._test = { computeTally: computeTally, rankList: rankList, scoreOf: scoreOf, parseCustom: parseCustom, TIERS: TIERS, H: H, ST: ST, hostEnd: hostEnd, fs: fs, showClassBoard: function(){ CB.arr = null; return showClassBoard(); }, classAgg: classAgg, buildRoster: buildRoster,
+  guestCodeOk: guestCodeOk, rosterByCode: rosterByCode, guestPending: guestPending, codeOf: codeOf, inRosterP: inRosterP, rosterPlayer: rosterPlayer, normAcct: normAcct, lobbyState: lobbyState, ui: { ensureRoot: ensureRoot, guestCodeScreen: guestCodeScreen, screenNeedLogin: screenNeedLogin } };   /* ★ v5.336.0 */
 
 window._LXPS_MOD_OK = window._LXPS_MOD_OK || {};
 window._LXPS_MOD_OK['live_quiz.js'] = true;
