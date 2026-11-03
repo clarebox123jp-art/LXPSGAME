@@ -82907,11 +82907,13 @@ function makeRadar(dims, size) {
 (function(){
   if(window._lxpsOD) return;
   var OD = window._lxpsOD = {
-    ver: 'v5.327.0',
+    ver: 'v5.329.0',
     doneAreas: {},       // 本次開機已確認齊全的區域
     badUrls: {},         // 本次開機抓不到的網址(不再列入檢查)
     queue: [],           // 待抓網址(絕對網址)
     waiters: {},         // 絕對網址 → [callback(ok)]
+    _started: {},        // 正在下載中(已離開 queue)的網址
+    bgJob: null,         // v5.328.0 背景補抓「其餘」的工作
     inflight: 0,
     conc: 3,
     job: null,
@@ -83049,8 +83051,10 @@ function makeRadar(dims, size) {
             return ok;
           });
         }
+        OD._started[abs] = 1;
         attempt().then(function(ok){
           OD.inflight--;
+          delete OD._started[abs];
           if(!ok) OD.badUrls[abs] = 1;
           var cbs = OD.waiters[abs] || []; delete OD.waiters[abs];
           cbs.forEach(function(cb){ try{ cb(ok); }catch(_){} });
@@ -83059,15 +83063,19 @@ function makeRadar(dims, size) {
       })(OD.queue.shift());
     }
   }
-  OD.enqueue = function(absList, cb){
+  // low=true(v5.328.0):背景補抓的「其餘」素材排到隊伍最後,不搶眼前要用的
+  OD.enqueue = function(absList, cb, low){
     var front = [];
     absList.forEach(function(a){
-      if(OD.waiters[a]){ OD.waiters[a].push(cb); return; }   // 已在排隊或下載中,搭便車
+      if(OD.waiters[a]){ OD.waiters[a].push(cb); if(!low) front.push(a); return; }   // 已在排隊或下載中,搭便車(急件則提前)
       OD.waiters[a] = [cb]; front.push(a);
     });
     if(front.length){
       var fset = {}; front.forEach(function(a){ fset[a] = 1; });
-      OD.queue = front.concat(OD.queue.filter(function(a){ return !fset[a]; }));
+      var others = OD.queue.filter(function(a){ return !fset[a]; });
+      // 已在下載中的不會在 queue 裡,只把還在排隊的挪位置
+      var inQ = front.filter(function(a){ return OD.queue.indexOf(a) !== -1 || !OD._started[a]; });
+      OD.queue = low ? others.concat(inQ) : inQ.concat(others);
     }
     _pump();
   };
@@ -83118,9 +83126,11 @@ function makeRadar(dims, size) {
     ov.innerHTML = '<div id="lxps-od-card">' +
       '<button type="button" class="od-x" aria-label="close">✕</button>' +
       '<div class="od-t">' + (cute ? '📦 正在準備「' + job.label + '」' : '📦 下載「' + job.label + '」素材') + '</div>' +
-      '<div class="od-s">' + (cute
-        ? '這裡有 ' + job.total + ' 個圖片和音樂還沒放進你的平板,<br>正在幫你下載,請耐心等一下下喔!'
-        : '本區有 ' + job.total + ' 個圖片／音樂素材尚未存進本機,<br>下載中,請耐心等候。') + '</div>' +
+      '<div class="od-s">' + (job.rest && job.rest.length
+        ? (cute ? '先幫你下載最需要的 ' + job.total + ' 個圖片(' + (job.firstNote || '最先看到的') + '),<br>請耐心等一下下喔!其他的會在背景慢慢下載。'
+                : '優先下載必要的 ' + job.total + ' 個素材(' + (job.firstNote || '首屏') + '),<br>請稍候;其餘素材將於背景下載。')
+        : (cute ? '這裡有 ' + job.total + ' 個圖片和音樂還沒放進你的平板,<br>正在幫你下載,請耐心等一下下喔!'
+                : '本區有 ' + job.total + ' 個圖片／音樂素材尚未存進本機,<br>下載中,請耐心等候。')) + '</div>' +
       '<div class="lxps-od-bar"><i></i></div>' +
       '<div class="od-n"></div>' +
       '<button type="button" class="od-b">' + (cute ? '🚀 先進去玩,背景繼續下載' : '🚀 先進入,背景繼續下載') + '</button>' +
@@ -83129,11 +83139,11 @@ function makeRadar(dims, size) {
       '</div>';
     (document.body || document.documentElement).appendChild(ov);
     ov.querySelector('.od-b').onclick = function(){
-      if(job.finished){ _sfx('sfx-confirm'); ov.remove(); job.go(); return; }
+      if(job.finished){ _sfx('sfx-confirm'); ov.remove(); job.go(); _bgPill(job); return; }
       _sfx('sfx-click'); _toPill(job); job.go();
     };
     ov.querySelector('.od-x').onclick = function(){
-      _sfx('sfx-cancel'); _toPill(job);   // 不進入,背景照樣下載
+      _sfx('sfx-cancel'); _toPill(job); _bgPill(job);   // 不進入,背景照樣下載
     };
     _paint(job);
   }
@@ -83144,9 +83154,12 @@ function makeRadar(dims, size) {
     var tt = ov.querySelector('.od-t'); if(tt) tt.textContent = cute ? '🎉「' + job.label + '」準備好了!' : '✅「' + job.label + '」素材下載完成';
     var b = ov.querySelector('.od-b'); if(b){ b.className = 'od-b ready'; b.textContent = cute ? '▶ 準備好了,進去玩吧!' : '▶ 下載完成,進入'; }
     var s = ov.querySelector('.od-s');
+    var restN = (job.bg && !job.bg.finished) ? (job.bg.total - job.bg.done) : 0;
     if(s) s.innerHTML = job.failed
       ? (cute ? '大部分都準備好了!有 ' + job.failed + ' 個等一下玩的時候會再試一次。' : '下載完成;' + job.failed + ' 個檔案稍後於遊玩時自動重試。')
-      : (cute ? '全部都放進你的平板了,下次來這裡就不用再等囉!' : '本區素材已全部存入本機。');
+      : (restN
+        ? (cute ? '最需要的都準備好了!其他 ' + restN + ' 個會在背景慢慢下載,可以先進去玩。' : '必要素材已存入本機;其餘 ' + restN + ' 個於背景下載中。')
+        : (cute ? '全部都放進你的平板了,下次來這裡就不用再等囉!' : '本區素材已全部存入本機。'));
     var h = ov.querySelector('.od-h'); if(h) h.style.display = 'none';
     _sfx('sfx-powerup');
     return true;
@@ -83170,8 +83183,37 @@ function makeRadar(dims, size) {
     setTimeout(function(){ try{ if(p.parentNode) p.remove(); }catch(_){} }, 2500);
   }
 
+  // ── v5.328.0 背景補抓「其餘」:排在隊伍最後,只用右下角小進度條,不擋畫面 ──
+  function _startBg(area, label, rest){
+    if(OD.bgJob && OD.bgJob.area === area && !OD.bgJob.finished) return OD.bgJob;   // 同區已在背景補,不重開
+    var bj = { id: ++_jobSeq, area: area, label: label + (_cute() ? '(其他)' : '(其餘)'), total: rest.length, done: 0, failed: 0, finished: false, bg: true, go: function(){} };
+    OD.bgJob = bj;
+    OD.enqueue(rest, function(ok){
+      if(bj.finished) return;
+      bj.done++; if(!ok) bj.failed++;
+      _paint(bj);
+      if(bj.done >= bj.total){
+        bj.finished = true;
+        OD.doneAreas[area] = 1;
+        if(OD.bgJob === bj) OD.bgJob = null;
+        _pillDone(bj);
+        try{ if(typeof window._lxpsODPaintMainBtn === 'function') window._lxpsODPaintMainBtn(); }catch(_){}
+      }
+    }, true);
+    return bj;
+  }
+  // 主工作的視窗/小進度條收掉後,換上「其餘」的小進度條(若還在下載)
+  function _bgPill(job){
+    var bj = job && job.bg;
+    if(!bj || bj.finished || document.getElementById('lxps-od-ov')) return;
+    var p = document.getElementById('lxps-od-pill');
+    if(p && p.getAttribute('data-job') !== String(job.id) && p.getAttribute('data-job') !== String(bj.id)) return;   // 別的區域正在用小進度條
+    _toPill(bj);
+  }
+
   // ── 主入口 ──
-  OD.ensure = function(area, label, urls, go){
+  // opts.first(v5.328.0):回傳「必要」清單的函式;有給時視窗只等必要的,其餘排到最後在背景補
+  OD.ensure = function(area, label, urls, go, opts){
     var _went = false;
     function _go(){ if(_went) return; _went = true; try{ if(typeof go === 'function') go(); }catch(e){ console.error('[邊玩邊下載] 進入函式錯誤', e); } }
     try{
@@ -83182,23 +83224,44 @@ function makeRadar(dims, size) {
       var _t0 = Date.now(), _settled = false;
       // 比對太久(超過 2.5 秒)就不等了,先進入;比對結果出來後缺的照樣在背景補抓
       var _guard = setTimeout(function(){ if(!_settled){ _settled = true; _go(); } }, 2500);
+      var firstSet = null;
+      if(opts && typeof opts.first === 'function'){
+        try{ firstSet = {}; (opts.first() || []).forEach(function(u){ var a = OD.norm(u); if(a) firstSet[a] = 1; }); }catch(_){ firstSet = null; }
+      }
       OD.findMissing(list).then(function(res){
-        if(_settled){ if(res.missing.length) OD.enqueue(res.missing, function(){}); else OD.doneAreas[area] = 1; return; }
+        var need = res.missing, rest = [];
+        if(firstSet){ need = []; res.missing.forEach(function(a){ (firstSet[a] ? need : rest).push(a); }); }
+        if(_settled){
+          if(need.length) OD.enqueue(need, function(){});
+          if(rest.length) _startBg(area, label, rest);
+          if(!res.missing.length) OD.doneAreas[area] = 1;
+          return;
+        }
         _settled = true; clearTimeout(_guard);
         if(!res.missing.length){ OD.doneAreas[area] = 1; _go(); return; }
-        var job = { id: ++_jobSeq, area: area, label: label, total: res.missing.length, done: 0, failed: 0, finished: false, go: _go };
+        console.log('[邊玩邊下載 ' + OD.ver + '] ' + label + ':共 ' + res.total + ' 個素材,缺 ' + res.missing.length + ' 個' + (firstSet ? '(必要 ' + need.length + '、背景 ' + rest.length + ')' : '') + ',開始下載(比對 ' + (Date.now() - _t0) + 'ms)');
+        if(!need.length){   // 必要的都在了 ⇒ 直接進去,其餘背景補
+          _go();
+          var bj0 = _startBg(area, label, rest);
+          if(!document.getElementById('lxps-od-ov') && !document.getElementById('lxps-od-pill')) _toPill(bj0);
+          return;
+        }
+        var job = { id: ++_jobSeq, area: area, label: label, total: need.length, done: 0, failed: 0, finished: false, go: _go, rest: rest, firstNote: (opts && opts.note) || '' };
         OD.job = job;
         _showModal(job);
-        console.log('[邊玩邊下載 ' + OD.ver + '] ' + label + ':共 ' + res.total + ' 個素材,缺 ' + res.missing.length + ' 個,開始下載(比對 ' + (Date.now() - _t0) + 'ms)');
-        OD.enqueue(res.missing, function(ok){
+        OD.enqueue(need, function(ok){
           if(job.finished) return;
           job.done++; if(!ok) job.failed++;
           _paint(job);
           if(job.done >= job.total){
             job.finished = true;
-            OD.doneAreas[area] = 1;            // 抓不到的已記進 badUrls,本次開機不再擋這區
+            if(rest.length) job.bg = _startBg(area, label, rest);
+            else OD.doneAreas[area] = 1;       // 抓不到的已記進 badUrls,本次開機不再擋這區
             if(OD.job === job) OD.job = null;
-            if(!_ready(job)) _pillDone(job);   // 視窗還開著 ⇒ 換成「進入」鈕;已先進去 ⇒ 小進度條收尾
+            if(!_ready(job)){                  // 視窗還開著 ⇒ 換成「進入」鈕;已先進去 ⇒ 小進度條收尾
+              if(job.bg){ var p0 = document.getElementById('lxps-od-pill'); if(!p0 || p0.getAttribute('data-job') === String(job.id)) _toPill(job.bg); }
+              else _pillDone(job);
+            }
             try{ if(typeof window._lxpsODPaintMainBtn === 'function') window._lxpsODPaintMainBtn(); }catch(_){}
           }
         });
@@ -83270,18 +83333,23 @@ function makeRadar(dims, size) {
     china:   { tables: ['MINI_MONSTERS_CN', '_CN_BG', 'CHINA_ENEMY_MOB_NAMES', 'CHINA_ENEMY_BOSS_NAMES', 'CHINA_BATTLE_BGM_LIST', 'CHINA_SANGUO_BGM_LIST'], extra: ['貔貅'], audio: ['bgm-china-'] },
     taiwan:  { tables: ['MINI_MONSTERS', 'TAIWAN_IMG_MAP', 'TAIWAN_BOSS_MINIONS'], audio: ['bgm-taiwan-'] }
   };
+  // ★ v5.328.0 同區排序:先抓「第一眼會看到的」——①場景/背景 ②一般小怪 ③BOSS 與其他 ④音樂(音樂沒抓到時 <audio> 自己會串流,最不急)
   function _stageList(stage){
-    var out = [], src = _STAGE_SRC[stage] || { tables: [], audio: [] };
-    var sc = _g('ADV_SCENES') || window.ADV_SCENES; if(sc) _walk(sc[stage], out, 0);
-    var bv = _g('ADV_BOSS_VARIANTS'); if(bv) _walk(bv[stage], out, 0);
-    var bt = _g('ADV_BOSS_TEAMS'); if(bt) _walk(bt[stage], out, 0);
-    _walkNamed(src.tables, out);
-    if(src.extra) _walk(src.extra, out, 0);
-    if(stage === 'china' && window._CN2){ _walk(window._CN2.routes, out, 0); _walk(window._CN2.enemies ? Object.keys(window._CN2.enemies) : null, out, 0); }
-    if(stage === 'taiwan' && window._TW2){ _walk(window._TW2.bosses, out, 0); }
-    if(stage === 'japan' && window.ADV_SCENES && window.ADV_SCENES.japan && window.ADV_SCENES.japan.bossBg) out.push(window.ADV_SCENES.japan.bossBg);
-    _audioByPrefix(src.audio, out);
-    return out;
+    var bg = [], mob = [], boss = [], aud = [], src = _STAGE_SRC[stage] || { tables: [], audio: [] };
+    var sc = _g('ADV_SCENES') || window.ADV_SCENES; if(sc) _walk(sc[stage], bg, 0);
+    (src.tables || []).forEach(function(n){ _walk(_g(n), /_BG$/.test(n) ? bg : (/^MINI_MONSTERS/.test(n) ? mob : boss), 0); });
+    if(stage === 'china' && window._CN2) _walk(window._CN2.routes, bg, 0);
+    if(stage === 'japan' && window.ADV_SCENES && window.ADV_SCENES.japan && window.ADV_SCENES.japan.bossBg) boss.push(window.ADV_SCENES.japan.bossBg);
+    var bv = _g('ADV_BOSS_VARIANTS'); if(bv) _walk(bv[stage], boss, 0);
+    var bt = _g('ADV_BOSS_TEAMS'); if(bt) _walk(bt[stage], boss, 0);
+    if(src.extra) _walk(src.extra, boss, 0);
+    if(stage === 'china' && window._CN2) _walk(window._CN2.enemies ? Object.keys(window._CN2.enemies) : null, boss, 0);
+    if(stage === 'taiwan' && window._TW2){ _walk(window._TW2.bosses, boss, 0); }
+    _audioByPrefix(src.audio, aud);
+    // 表格裡夾帶的音訊(BGM 清單等)也挪到最後
+    var imgs = bg.concat(mob, boss), out = [], tail = [];
+    imgs.forEach(function(u){ (/\.(mp3|m4a|wav|ogg)(\?|#|$)/i.test(u) ? tail : out).push(u); });
+    return out.concat(tail, aud);
   }
   function _heroNames(){
     var names = {}, i;
@@ -83290,10 +83358,16 @@ function makeRadar(dims, size) {
     try{ var P = _g('ADV_HERO_POOL'); if(P && P.maokong) for(i = 0; i < P.maokong.length; i++) names[P.maokong[i]] = 1; }catch(_){}
     return Object.keys(names);
   }
-  function _heroCodexList(){
+  // ★ v5.328.0 英雄圖鑑分批:自己擁有的英雄先抓(要等的只有這批),其他英雄背景慢慢補
+  function _ownedHeroImgs(){
     var out = [];
-    _heroNames().forEach(function(n){ var im = _imgOf(n); if(im) out.push(im); });
+    try{ if(typeof window.advGetUnlockedHeroes === 'function'){ (window.advGetUnlockedHeroes() || []).forEach(function(n){ var im = _imgOf(String(n || '').trim()); if(im) out.push(im); }); } }catch(_){}
     return out;
+  }
+  function _heroCodexList(){
+    var out = _ownedHeroImgs();
+    _heroNames().forEach(function(n){ var im = _imgOf(n); if(im) out.push(im); });
+    return out;   // 重複的由 findMissing 去掉,順序保留「擁有的在前」
   }
   function _summonList(){
     var out = ['./' + encodeURIComponent('召喚星空(可愛版).png')];
@@ -83364,7 +83438,7 @@ function makeRadar(dims, size) {
   var HOOKS = [
     { fn: 'startAdventureGame', area: function(stage){ stage = stage || 'maokong'; return (_STAGE_SRC[stage] ? 'stage:' + stage : null); },
       label: function(stage){ return _stageLabel(stage || 'maokong'); }, list: function(stage){ return _stageList(stage || 'maokong'); } },
-    { fn: 'openHeroPage', area: 'heroCodex', label: _lbl('英雄圖鑑', '英雄圖鑑'), list: _heroCodexList },
+    { fn: 'openHeroPage', area: 'heroCodex', label: _lbl('英雄圖鑑', '英雄圖鑑'), list: _heroCodexList, first: _ownedHeroImgs, note: _lbl('你擁有的英雄', '已擁有英雄') },
     { fn: 'openSummonOverlay', area: 'summon', label: _lbl('召喚星空', '召喚星空'), list: _summonList },
     { fn: 'openMonsterPage', area: 'monster', label: _lbl('魔物圖鑑', '魔物圖鑑'), list: _monsterList },
     { fn: 'openTaiwanTreasurePage', area: 'treasure', label: _lbl('至寶圖鑑', '至寶圖鑑'), list: _treasureList },
@@ -83385,7 +83459,8 @@ function makeRadar(dims, size) {
         var area = null; try{ area = _resolve(h.area, args); }catch(_){}
         if(!area || OD.doneAreas[area] || !OD.hasSW()) return f.apply(self, args);
         var label = h.fn; try{ label = _resolve(h.label, args); }catch(_){}
-        OD.ensure(area, label, function(){ return h.list.apply(null, args); }, function(){ ret = f.apply(self, args); });
+        OD.ensure(area, label, function(){ return h.list.apply(null, args); }, function(){ ret = f.apply(self, args); },
+                  h.first ? { first: function(){ return h.first.apply(null, args); }, note: (function(){ try{ return _resolve(h.note, args); }catch(_){ return ''; } })() } : null);
         return ret;   // 已確認齊全時是同步呼叫,回傳值照原樣
       };
       w._lxpsOD = 1; w._lxpsODOrig = f;
@@ -83430,7 +83505,8 @@ function makeRadar(dims, size) {
         if(ref && ref.parentNode === btn) btn.insertBefore(sp, ref.nextSibling); else btn.appendChild(sp);
       }
       var cute = _cute();
-      if(!OD.hasSW()){
+      // ★ v5.329.0 只要有 Cache Storage 就照算(瀏覽器清掉網站資料後第一次開,SW 還沒接管也看得到缺幾個)
+      if(!window.caches || !('serviceWorker' in navigator)){
         sp.textContent = cute ? '素材:玩到哪裡下載到哪裡' : '素材:邊玩邊下載';
         sp.style.color = '#cfe0ff'; _paintBusy = false; return;
       }
@@ -83441,14 +83517,20 @@ function makeRadar(dims, size) {
         keys.forEach(function(rq){ var b = _baseNoExt(rq.url); if(b) have[b] = 1; });
         var n = 0;
         man.files.forEach(function(f){ var b = String(f); b = b.substring(b.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '').trim(); if(have[b]) n++; });
-        var total = man.count;
-        if(n >= total){
+        var total = man.count, miss = total - n;
+        // ★ v5.329.0 素材變少了(被瀏覽器清掉)⇒ 本次開機記的「已齊全區域」作廢,下次進入重新比對、跳視窗補抓
+        if(typeof OD._lastHave === 'number' && n < OD._lastHave){ OD.doneAreas = {}; console.log('[邊玩邊下載] 素材從 ' + OD._lastHave + ' 減少為 ' + n + ',重新檢查各區'); }
+        OD._lastHave = n; OD.missingCount = miss;
+        if(miss <= 0){
           sp.textContent = cute ? '素材全部下載好了 ✅' : '素材已全部下載 ✅';
           sp.style.color = '#bfffd6';
         } else {
-          sp.textContent = (cute ? '素材 ' : '素材 ') + n + '/' + total + (cute ? '(還沒下載完)' : '(未完整)');
+          // ★ v5.329.0 老師「左上方安裝鈕可以看到缺失檔案的數量並可重新下載補回」⇒ 直接寫「缺幾個」,按下去只補缺的
+          sp.textContent = cute ? ('還缺 ' + miss + ' 個圖片音樂(共 ' + total + '),點我補回')
+                                : ('缺少 ' + miss + ' / ' + total + ' 個素材,點此補齊');
           sp.style.color = '#ffcf7a';
         }
+        try{ if(typeof window._lxpsDlHubPaint === 'function') window._lxpsDlHubPaint(); }catch(_){}
         _paintBusy = false;
       }).catch(function(){ _paintBusy = false; });
     }catch(_){ _paintBusy = false; }
@@ -83461,6 +83543,10 @@ function makeRadar(dims, size) {
     setTimeout(function(){ _install(); _precheck(); }, 8000);
     setTimeout(function(){ window._lxpsODPaintMainBtn(true); }, 6000);
     setInterval(function(){ _install(); }, 60000);   // 有模組重新定義入口時補掛(已掛過的會略過)
+    // ★ v5.329.0 停在首頁時每 2 分鐘重算一次素材數(列 1,440 個快取鍵約數十毫秒;不在首頁不算)
+    setInterval(function(){
+      try{ var o = document.getElementById('overlay'); if(o && o.offsetParent !== null && !OD.fullDlRunning()) window._lxpsODPaintMainBtn(true); }catch(_){}
+    }, 120000);
     try{
       if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', function(e){
         var d = e && e.data; if(d && d.type === 'PRECACHE_COMPLETE') setTimeout(function(){ window._lxpsODPaintMainBtn(true); }, 800);
