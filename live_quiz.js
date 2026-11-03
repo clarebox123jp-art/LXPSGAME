@@ -1815,7 +1815,7 @@ var H = {
   reset: function(){ this.stop(); this.pin = null; this.room = null; this.status = null; this.qs = []; this.players = {}; this.joinQ = {};
     this.answers = {}; this.startAt = {}; this.power = {}; this.qIndex = -1; this.revealing = false; this.auto = false; this.autoH = null;
     this.qLocal = 0; this.createdAt = 0; this.title = ''; this.timeLimit = MAX_SEC; this.final = null; this.awarded = {}; this.granting = false;
-    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.guestMode = false; this.alias = {}; this.rcDone = {}; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
+    this.seen = {}; this.onl = {}; this.zeroAt = {}; this.lastAny = 0; this.netCache = false; this.dcN = {}; this.noAward = false; this.noAwardReason = ''; this.guestMode = false; this.alias = {}; this.rcDone = {}; this.histPending = null; this.roster = []; this.leave = {}; this.lobbyKey = ''; this.onlT = 0; this.onlInit = false; this.gap = {};
     this.draft = this.draft || { qs: [], title: '', sec: MAX_SEC, shuf: true, classes: [], guest: (function(){ try{ return localStorage.getItem('lxps_lq_guestpref') === '1'; }catch(_){ return false; } })() }; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     (this.qUnsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.qUnsubs = [];
@@ -2303,6 +2303,7 @@ async function hostResume(pin){
     var as = await F.getDocs(subCol(pin, 'answers'));
     as.forEach(function(d){ putAns(d.data()); });   /* ★ v5.336.0 經 putAns(斷線接回的舊身分作答算到新身分) */
     hostAttach();
+    if(H.status === 'ended') ensureHist();   /* ★ v5.336.0 紀錄不在就補建 */
     toast('已回到擂台 ' + pin);
   }catch(e){ toast('接續失敗:' + (e.code || e.message)); }
 }
@@ -3057,8 +3058,13 @@ async function hostEnd(early){
     await F.updateDoc(roomRef(H.pin), { 'meta.status': 'ended', 'meta.endedAt': now(), 'meta.played': played, final: H.final });
   }catch(e){ toast('結算寫入失敗:' + (e.code || e.message)); H.status = 'reveal'; return; }
   boardSet(H.pin, { title: H.title, hostName: myLabel(), hostUid: me().uid, at: now(), st: 'ended' });
-  try{
-    await F.setDoc(F.doc(db(), 'liveQuizHistory', H.pin + '_' + H.createdAt), {
+  await saveHist(buildHist(played, out));
+  hostEndScreen(true);
+}
+/* ★ v5.336.0 場次永久紀錄:GM 之後「依排行發獎」全靠這份。原本寫入失敗就靜靜略過 ⇒ 這一場會從擂台紀錄消失、獎勵永遠補不到。
+   改成:失敗自動重試 3 次;仍失敗 ⇒ 結束畫面出現「💾 重試保存紀錄」;主持台重開已結束的場次時,紀錄不在就用房間的結算自動補建。 */
+function buildHist(played, out){
+  return {
       pin: H.pin, createdAt: H.createdAt, endedAt: now(), title: H.title, hostUid: me().uid, hostEmail: myEmail(), hostName: myLabel(),
       qCount: H.qs.length, played: played, timeLimit: H.timeLimit,
       questions: H.qs.slice(0, played).map(function(Q){ return { t: Q.t, o: Q.o, a: Q.a, s: Q.src || '' }; }),
@@ -3070,9 +3076,33 @@ async function hostEnd(early){
         var p = rosterPlayer(r);
         return { c: r.c, n: r.n, st: p && !p.kicked ? 'in' : (p && p.kicked ? 'kicked' : (H.leave[r.e] ? 'leave' : 'absent')) };
       })
-    });
+  };
+}
+async function saveHist(obj){
+  var ref = F.doc(db(), 'liveQuizHistory', H.pin + '_' + H.createdAt);
+  for(var i = 0; i < 3; i++){
+    try{
+      /* 已經存在(例如重開後補建、或上一次其實寫成功)⇒ 不覆蓋已發獎標記 */
+      var ex = null; try{ ex = await F.getDoc(ref); }catch(_){}
+      if(ex && ex.exists()){ H.histPending = null; return true; }
+      obj.awarded = JSON.parse(JSON.stringify(H.awarded || {}));
+      await F.setDoc(ref, obj);
+      H.histPending = null; return true;
+    }catch(e){ try{ console.warn('[LQ] 場次紀錄寫入失敗,重試', i + 1, e && (e.code || e.message)); }catch(_){} await new Promise(function(r){ setTimeout(r, 1500 * (i + 1)); }); }
+  }
+  H.histPending = obj;
+  toast('⚠ 這一場的紀錄還沒存進雲端(網路不穩),請按「💾 重試保存紀錄」', 6000);
+  return false;
+}
+/* 主持台重開已結束的場次:紀錄不在 ⇒ 用房間的結算補建 */
+async function ensureHist(){
+  try{
+    var ex = await F.getDoc(F.doc(db(), 'liveQuizHistory', H.pin + '_' + H.createdAt));
+    if(ex.exists()) return;
+    var fin = H.final || (H.room && H.room.final); if(!fin || !fin.list || fin.canceled) return;
+    await saveHist(buildHist(fin.played || (H.room && H.room.meta && H.room.meta.played) || H.qs.length, fin.list));
+    if(H.status === 'ended') hostEndScreen(false);
   }catch(_){}
-  hostEndScreen(true);
 }
 function hostEndScreen(anim){
   H.status = 'ended';
@@ -3138,14 +3168,17 @@ function hostEndScreen(anim){
     setCtl('<button class="lq-btn gold" id="lq-h-grant" style="font-size:22px"' + (need && done < need ? '' : ' disabled') + '>🎁 ' + (done ? '繼續頒發' : '頒發獎勵') + '</button>'
       + ((need || gN) && !done && !gDone ? '<button class="lq-btn gray" id="lq-h-noaward">🚫 本場不發獎勵</button>' : '')
       + (isAdmin() && gN > gDone ? '<button class="lq-btn" id="lq-h-gimp">📥 匯入免登入獎勵(' + (gN - gDone) + ')</button>' : '')
+      + (H.histPending ? '<button class="lq-btn red" id="lq-h-histre">💾 重試保存紀錄</button>' : '')
       + '<button class="lq-btn gray" id="lq-h-closeroom">🚪 關閉擂台</button>');
     $('lq-h-grant').onclick = function(){ confirmGrant(cnt, need - done, done); };
     if($('lq-h-noaward')) $('lq-h-noaward').onclick = askNoAward;
     if($('lq-h-gimp')) $('lq-h-gimp').onclick = function(){ guestImportByIds([H.pin + '_' + H.createdAt], function(){ hostEndScreen(false); }); };
+    if($('lq-h-histre')) $('lq-h-histre').onclick = async function(){ this.disabled = true; if(await saveHist(H.histPending)) toast('💾 紀錄已保存'); hostEndScreen(false); };
   }
   $('lq-h-closeroom').onclick = function(){
     var left = nA ? 0 : need - done;
     var go = async function(){ await boardRemove(H.pin); LQ.close(true); };
+    if(H.histPending){ toast('⚠ 這一場的紀錄還沒存進雲端,先按「💾 重試保存紀錄」再關閉', 5000); return; }   /* ★ v5.336.0 沒紀錄就補發不到獎勵 */
     if(left > 0) confirmBox('還有 ' + left + ' 位同學的獎勵沒發,確定關閉?<br><small>之後可從「📜 擂台紀錄」重新開啟這場繼續頒發;不打算發的話請先按「🚫 本場不發獎勵」。</small>', '關閉', go);
     else go();
   };
@@ -3268,6 +3301,16 @@ function guestPending(h){
   var ga = h.guestAwarded || {};
   return (h.list || []).filter(function(e){ return e.guest && e.tier && e.code && !ga[e.code]; });
 }
+/* ★ v5.336.0(老師「確認 GM 可以直接根據每場的排行結果發送對應獎勵,不會有重複發送或缺少的問題」)
+   GM 依本場排行一次發:有登入的同學(awarded[uid] 還沒標)＋免登入的同學(guestAwarded[座號] 還沒標)。
+   不重複的保證:每人每場的獎勵文件 id 固定 lq_{房號}_{開房時間}(主持台當場頒獎、GM 補發、免登入匯入都用同一個 id,先讀、已存在就只補標記);
+   學生領取的認領文件 gmClassRewardClaims/{uid}_{id} 只能建立一次。不缺少:沒對到帳號/寫入失敗的人不會被標記,會一直留在「待發」清單。 */
+function acctPending(h){
+  if(!h || h.noAward) return [];
+  var aw = h.awarded || {};
+  return (h.list || []).filter(function(e){ return e.tier && !e.guest && e.uid && !aw[e.uid]; });
+}
+function awardPending(h){ return acctPending(h).concat(guestPending(h)); }
 var _uidCache = {};
 async function uidByEmail(em){
   em = String(em || '').trim().toLowerCase(); if(!em) return null;
@@ -3285,8 +3328,8 @@ function normAcct(s){
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) ? s : '';
 }
 async function guestImportByIds(ids, after){
-  if(!isAdmin()){ toast('只有 GM 可以匯入免登入獎勵'); return; }
-  modal('<div class="lq-h1" style="font-size:22px">📥 匯入免登入獎勵</div><div class="lq-p">讀取紀錄中…</div>');
+  if(!isAdmin()){ toast('只有 GM 可以從紀錄發送獎勵'); return; }
+  modal('<div class="lq-h1" style="font-size:22px">📥 發送本場獎勵</div><div class="lq-p">讀取紀錄中…</div>');
   var hs = [];
   for(var i = 0; i < ids.length; i++){
     try{ var s = await F.getDoc(F.doc(db(), 'liveQuizHistory', ids[i])); if(s.exists()) hs.push(s.data()); }catch(_){}
@@ -3294,13 +3337,17 @@ async function guestImportByIds(ids, after){
   guestImport(hs, after);
 }
 async function guestImport(hs, after){
-  if(!isAdmin()){ toast('只有 GM 可以匯入免登入獎勵'); return; }
+  if(!isAdmin()){ toast('只有 GM 可以從紀錄發送獎勵'); return; }
   var rows = [];
-  hs.forEach(function(h){ guestPending(h).forEach(function(e){ rows.push({ h: h, e: e, slot: rosterByCode(e.code), uid: null, email: '' }); }); });
-  if(!rows.length){ closeModal(); toast('沒有待匯入的免登入獎勵'); if(after) after(); return; }
-  modal('<div class="lq-h1" style="font-size:22px">📥 匯入免登入獎勵</div><div class="lq-p" id="lq-gi-st">對照名冊與帳號中… 0 / ' + rows.length + '</div>');
+  hs.forEach(function(h){
+    acctPending(h).forEach(function(e){ rows.push({ h: h, e: e, acct: true, slot: null, uid: e.uid, email: String(e.email || '') }); });
+    guestPending(h).forEach(function(e){ rows.push({ h: h, e: e, slot: rosterByCode(e.code), uid: null, email: '' }); });
+  });
+  if(!rows.length){ closeModal(); toast('這些場次的獎勵都已經發完了'); if(after) after(); return; }
+  modal('<div class="lq-h1" style="font-size:22px">📥 發送本場獎勵</div><div class="lq-p" id="lq-gi-st">對照名冊與帳號中… 0 / ' + rows.length + '</div>');
   for(var i = 0; i < rows.length; i++){
     var R = rows[i], cand = [];
+    if(R.acct) continue;   /* 有登入的同學本來就有帳號 uid */
     if(R.slot){ cand.push(R.slot.e); (R.slot.es || []).forEach(function(x){ if(cand.indexOf(x) < 0) cand.push(x); }); }
     for(var j = 0; j < cand.length && !R.uid; j++){ var id = await uidByEmail(cand[j]); if(id){ R.uid = id; R.email = cand[j]; } }
     var st = $('lq-gi-st'); if(st) st.textContent = '對照名冊與帳號中… ' + (i + 1) + ' / ' + rows.length;
@@ -3309,23 +3356,25 @@ async function guestImport(hs, after){
   var body = rows.map(function(R, i){
     var e = R.e, t = TIERS[e.tier];
     return '<tr' + (R.uid ? '' : ' class="ne"') + '><td class="nm" style="font-size:13px">' + esc(R.h.title || '') + '<br><small style="opacity:.6">' + new Date(R.h.createdAt).toLocaleDateString() + '・' + esc(R.h.pin) + '</small></td>'
-      + '<td>' + (e.rank || '') + '</td><td class="cd">' + esc(e.code) + '</td>'
-      + '<td class="nm">' + esc(R.slot ? nameNoCode(R.slot.n) : '—') + '</td>'
+      + '<td>' + (e.rank || '') + '</td><td class="cd">' + esc(e.code || '—') + '</td>'
+      + '<td class="nm">' + esc(R.acct ? nameNoCode(e.name) : (R.slot ? nameNoCode(R.slot.n) : '—')) + '</td>'
       + '<td><span class="lq-badge ' + e.tier + '">' + t.short + '</span></td>'
-      + '<td style="font-size:13px">' + (R.uid ? '✅ ' + esc(R.email.split('@')[0])
+      + '<td style="font-size:13px">' + (R.acct ? '🔑 ' + esc(e.account || R.email.split('@')[0] || '登入帳號')
+          : R.uid ? '🔢→✅ ' + esc(R.email.split('@')[0])
           : '<input data-gi="' + i + '" placeholder="' + (R.slot ? '名冊帳號查無玩家,' : '名冊查無,') + '手打帳號(lsps…)" style="width:13em;font-size:14px;padding:4px 6px;border-radius:8px;border:1px solid #5fb3d9;background:#0c2233;color:#fff">') + '</td></tr>';
   }).join('');
   var ok0 = rows.filter(function(R){ return R.uid; }).length;
-  var m = modal('<div class="lq-h1" style="font-size:22px">📥 匯入免登入獎勵</div>'
-    + '<div class="lq-p" style="font-size:14px">共 ' + Object.keys(nSes).length + ' 場・' + rows.length + ' 人;依班級座號對到帳號 <b>' + ok0 + '</b> 人。'
-    + (ok0 < rows.length ? '<br>對不到的可以在右邊手打帳號(例:lsps113025),不填就先略過,之後還可以再匯入。' : '') + '</div>'
+  var nAcct = rows.filter(function(R){ return R.acct; }).length;
+  var m = modal('<div class="lq-h1" style="font-size:22px">📥 發送本場獎勵(依排行)</div>'
+    + '<div class="lq-p" style="font-size:14px">共 ' + Object.keys(nSes).length + ' 場・待發 ' + rows.length + ' 人(🔑 登入 ' + nAcct + ' 人・🔢 免登入 ' + (rows.length - nAcct) + ' 人);可以發送 <b>' + ok0 + '</b> 人。'
+    + (ok0 < rows.length ? '<br>免登入對不到帳號的,可以在右邊手打帳號(例:lsps113025);不填就先略過,會留在待發清單,之後還可以再發。' : '') + '</div>'
     + '<div style="overflow-x:auto;max-height:52vh"><table class="lq-table" style="width:100%;font-size:14px"><tr><th>場次</th><th>名次</th><th>座號</th><th>名冊姓名</th><th>獎勵</th><th>帳號</th></tr>' + body + '</table></div>'
     + '<div class="lq-p" style="font-size:13px;opacity:.75">獎勵會送進該生「🎁 GM獎勵」收件箱(本人登入按確認領取才入帳);同一人同一場已經有獎勵就不會重複。</div>'
-    + '<div class="lq-row"><button class="lq-btn gray" id="lq-gi-no">取消</button><button class="lq-btn gold" id="lq-gi-ok">📥 確認匯入</button></div>');
+    + '<div class="lq-row"><button class="lq-btn gray" id="lq-gi-no">取消</button><button class="lq-btn gold" id="lq-gi-ok">📥 確認發送</button></div>');
   m.firstChild.style.width = 'min(97vw,1000px)';
   $('lq-gi-no').onclick = function(){ closeModal(); if(after) after(); };
   $('lq-gi-ok').onclick = async function(){
-    var bt = $('lq-gi-ok'); bt.disabled = true; bt.textContent = '匯入中…';
+    var bt = $('lq-gi-ok'); bt.disabled = true; bt.textContent = '發送中…';
     var ins = m.querySelectorAll('input[data-gi]');
     for(var k = 0; k < ins.length; k++){
       var R = rows[+ins[k].getAttribute('data-gi')], em = normAcct(ins[k].value);
@@ -3336,18 +3385,19 @@ async function guestImport(hs, after){
     var ok = 0, skip = 0, fail = 0;
     for(var i = 0; i < rows.length; i++){
       var R = rows[i]; if(!R.uid){ skip++; continue; }
-      try{ await guestGrantOne(R); ok++; }catch(err){ fail++; try{ console.warn('[LQ] 匯入失敗', R.e.code, err); }catch(_){} }
-      bt.textContent = '匯入中… ' + (i + 1) + ' / ' + rows.length;
+      try{ await guestGrantOne(R); ok++; }catch(err){ fail++; try{ console.warn('[LQ] 發送失敗', R.e.code || R.e.uid, err); }catch(_){} }
+      bt.textContent = '發送中… ' + (i + 1) + ' / ' + rows.length;
     }
     closeModal();
-    toast('📥 匯入完成 ' + ok + ' 人' + (skip ? ',略過 ' + skip + ' 人(沒對到帳號)' : '') + (fail ? ',失敗 ' + fail + ' 人(可再匯入一次)' : ''), 5000);
+    toast('📥 發送完成 ' + ok + ' 人' + (skip ? ',略過 ' + skip + ' 人(沒對到帳號,留在待發)' : '') + (fail ? ',失敗 ' + fail + ' 人(留在待發,可再發一次)' : ''), 5000);
     if(ok){ snd('coin', 0.7); fxConfetti(40, true); }
     if(after) after();
   };
 }
 async function guestGrantOne(R){
   var h = R.h, e = R.e, t = TIERS[e.tier], rid = 'lq_' + h.pin + '_' + h.createdAt;
-  var merit = (e.tier === 'P' ? ('⚡搶答擂台參加獎(免登入)｜' + (h.title || '')) : ('⚡搶答擂台(免登入)｜' + (h.title || '') + '｜第' + e.rank + '名／共' + (h.list || []).length + '人')).slice(0, 120);
+  var gtag = R.acct ? '' : '(免登入)';
+  var merit = (e.tier === 'P' ? ('⚡搶答擂台參加獎' + gtag + '｜' + (h.title || '')) : ('⚡搶答擂台' + gtag + '｜' + (h.title || '') + '｜第' + e.rank + '名／共' + (h.list || []).length + '人')).slice(0, 120);
   var label = String((R.slot && R.slot.n) || e.name || e.code).slice(0, 80);
   var ref = F.doc(db(), 'gmClassRewards', R.uid, 'items', rid);
   var ex = await F.getDoc(ref);
@@ -3355,14 +3405,14 @@ async function guestGrantOne(R){
     await F.setDoc(ref, { uid: R.uid, label: label, email: R.email.slice(0, 80), reward: JSON.parse(JSON.stringify(t.reward)), itemsLabel: t.items.slice(),
                           merit: merit, by: myEmail().slice(0, 60), at: now(), enabled: true, lq: h.pin });
     if(typeof window._fbWriteGmGiftLog === 'function'){
-      window._fbWriteGmGiftLog({ uid: R.uid, label: label, email: R.email, items: t.items, by: myEmail(), merit: merit, rewardId: rid, kind: 'liveQuizGuest' }).catch(function(){});
+      window._fbWriteGmGiftLog({ uid: R.uid, label: label, email: R.email, items: t.items, by: myEmail(), merit: merit, rewardId: rid, kind: R.acct ? 'liveQuiz' : 'liveQuizGuest' }).catch(function(){});
     }
   }
   var o = {};
-  o['guestAwarded.' + e.code] = { uid: R.uid, email: R.email, tier: e.tier, at: now(), by: myEmail().slice(0, 60), dup: ex.exists() };
+  if(!R.acct) o['guestAwarded.' + e.code] = { uid: R.uid, email: R.email, tier: e.tier, at: now(), by: myEmail().slice(0, 60), dup: ex.exists() };
   o['awarded.' + e.uid] = e.tier;
   await F.updateDoc(F.doc(db(), 'liveQuizHistory', h.pin + '_' + h.createdAt), o);
-  h.guestAwarded = h.guestAwarded || {}; h.guestAwarded[e.code] = o['guestAwarded.' + e.code];
+  if(!R.acct){ h.guestAwarded = h.guestAwarded || {}; h.guestAwarded[e.code] = o['guestAwarded.' + e.code]; }
   h.awarded = h.awarded || {}; h.awarded[e.uid] = e.tier;
   /* 房間也標記(學生結束畫面會顯示「已匯入」;房間不在了就算了) */
   var ro = {}; ro['awarded.' + e.uid] = e.tier;
@@ -3375,16 +3425,17 @@ async function showHistory(){
   modal('<div class="lq-h1" style="font-size:22px">📜 擂台紀錄</div><div id="lq-hist" class="lq-p" style="text-align:left">讀取中…</div><div class="lq-row"><button class="lq-btn gray" id="lq-hi-x">關閉</button></div>');
   $('lq-hi-x').onclick = closeModal;
   try{
-    var u = me(), qq = isAdmin() ? F.query(F.collection(db(), 'liveQuizHistory'), F.orderBy('createdAt', 'desc'), F.limit(40))
+    var u = me(), qq = isAdmin() ? F.query(F.collection(db(), 'liveQuizHistory'), F.orderBy('createdAt', 'desc'), F.limit(100))
                                  : F.query(F.collection(db(), 'liveQuizHistory'), F.where('hostUid', '==', u.uid));
     var ss = await F.getDocs(qq), arr = [];
     ss.forEach(function(d){ arr.push(d.data()); });
     arr.sort(function(a, b){ return (b.createdAt || 0) - (a.createdAt || 0); });
     /* ★ v5.336.0 GM:待匯入的免登入獎勵總覽＋「一併匯入」 */
     var gIds = [], gTot = 0;
-    arr.slice(0, 40).forEach(function(h){ var n = guestPending(h).length; if(n){ gIds.push(h.pin + '_' + h.createdAt); gTot += n; } });
-    var gTop = (isAdmin() && gTot) ? '<div class="lq-row" style="justify-content:flex-start;margin:0 0 8px"><button class="lq-btn gold" id="lq-hi-gall">📥 一併匯入免登入獎勵(' + gIds.length + ' 場・' + gTot + ' 人)</button></div>' : '';
-    $('lq-hist').innerHTML = gTop + (arr.length ? arr.slice(0, 40).map(function(h){
+    /* ★ v5.336.0 GM 看得到所有場次「還沒發的獎勵」(登入＋免登入),一次依排行發完;最近 100 場 */
+    arr.slice(0, 100).forEach(function(h){ var n = awardPending(h).length; if(n){ gIds.push(h.pin + '_' + h.createdAt); gTot += n; } });
+    var gTop = (isAdmin() && gTot) ? '<div class="lq-row" style="justify-content:flex-start;margin:0 0 8px"><button class="lq-btn gold" id="lq-hi-gall">📥 一併發送待發獎勵(' + gIds.length + ' 場・' + gTot + ' 人)</button></div>' : '';
+    $('lq-hist').innerHTML = gTop + (arr.length ? arr.slice(0, 100).map(function(h){
       var need = (h.list || []).filter(function(e){ return e.tier && !e.guest; }).length, got = (h.list || []).filter(function(e){ return e.tier && !e.guest && (h.awarded || {})[e.uid]; }).length;
       var gp = guestPending(h).length, gAll = (h.list || []).filter(function(e){ return e.tier && e.guest; }).length;
       var top3 = (h.list || []).filter(function(e){ return e.rank && e.rank <= 3; }).map(function(e){ return ['🥇', '🥈', '🥉'][e.rank - 1] + esc(e.name); }).join(' ');
@@ -3392,8 +3443,8 @@ async function showHistory(){
         + (h.list || []).length + ' 人・' + (h.played || h.qCount) + ' 題・' + (h.noAward ? '🚫 不發獎勵' + (h.noAwardReason ? '(' + esc(h.noAwardReason) + ')' : '') : '頒獎 ' + got + '/' + need
           + (gAll ? '・🔢 免登入 ' + (gp ? '待匯入 ' + gp + '/' + gAll : '已匯入 ' + gAll) : '')) + '</small><small>' + top3 + '</small></span>'
         + '<button class="lq-btn gray" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-hres="' + h.pin + '_' + h.createdAt + '">📋 成績</button>'
-        + (got < need && !h.noAward && h.hostUid === u.uid ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-reopen="' + h.pin + '">繼續頒發</button>' : '')
-        + (gp && isAdmin() ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-gimp="' + h.pin + '_' + h.createdAt + '">📥 匯入</button>' : '') + '</div>';
+        + (got < need && !h.noAward && h.hostUid === u.uid && !isAdmin() ? '<button class="lq-btn" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-reopen="' + h.pin + '">繼續頒發</button>' : '')
+        + (isAdmin() && awardPending(h).length ? '<button class="lq-btn gold" style="width:auto;height:auto;padding:5px 10px;font-size:14px" data-gimp="' + h.pin + '_' + h.createdAt + '">📥 發送(' + awardPending(h).length + ')</button>' : '') + '</div>';
     }).join('') : '還沒有紀錄');
     if($('lq-hi-gall')) $('lq-hi-gall').onclick = function(){ guestImport(arr.filter(function(h){ return gIds.indexOf(h.pin + '_' + h.createdAt) >= 0; }), showHistory); };
     $('lq-hist').onclick = function(e){
@@ -3567,9 +3618,10 @@ function histResult(h, back){
     + finalTableHtml(list, { host: true, awarded: h.awarded || {} })
     + classSummaryHtml(list, h.played || h.qCount)
     + histRosterHtml(h)
-    + (guestPending(h).length ? '<div class="lq-p" style="font-size:14px;color:#9ad0ff">🔢 免登入同學 ' + guestPending(h).length + ' 人的獎勵還沒匯入' + (isAdmin() ? '' : ',請 GM 從「📜 擂台紀錄」匯入') + '</div>' : '')
+    + (awardPending(h).length ? '<div class="lq-p" style="font-size:14px;color:#9ad0ff">🎁 還有 ' + awardPending(h).length + ' 人的獎勵沒發(🔑 登入 ' + acctPending(h).length + '・🔢 免登入 ' + guestPending(h).length + ')'
+        + (isAdmin() ? '' : ',免登入的請 GM 從「📜 擂台紀錄」發送') + '</div>' : '')
     + '<div class="lq-row"><button class="lq-btn gray" id="lq-hr-back">⬅ ' + (back ? '返回' : '擂台紀錄') + '</button>'
-    + (isAdmin() && guestPending(h).length ? '<button class="lq-btn gold" id="lq-hr-gimp">📥 匯入免登入獎勵(' + guestPending(h).length + ')</button>' : '')
+    + (isAdmin() && awardPending(h).length ? '<button class="lq-btn gold" id="lq-hr-gimp">📥 依排行發送獎勵(' + awardPending(h).length + ')</button>' : '')
     + '<button class="lq-btn gray" id="lq-hr-x">關閉</button></div>');
   m.firstChild.style.width = 'min(97vw,1100px)';
   $('lq-hr-x').onclick = closeModal;
@@ -3627,7 +3679,7 @@ async function hostManager(){
 /* 測試用掛勾(沙盒驗證計分) */
 LQ._test = { computeTally: computeTally, rankList: rankList, scoreOf: scoreOf, parseCustom: parseCustom, TIERS: TIERS, H: H, ST: ST, hostEnd: hostEnd, fs: fs, showClassBoard: function(){ CB.arr = null; return showClassBoard(); }, classAgg: classAgg, buildRoster: buildRoster,
   guestCodeOk: guestCodeOk, rosterByCode: rosterByCode, guestPending: guestPending, codeOf: codeOf, inRosterP: inRosterP, rosterPlayer: rosterPlayer, normAcct: normAcct, lobbyState: lobbyState, ui: { ensureRoot: ensureRoot, guestCodeScreen: guestCodeScreen, screenNeedLogin: screenNeedLogin },
-  putAns: putAns, aliasOf: aliasOf, hostReclaim: hostReclaim, powersUsed: powersUsed, _setF: function(x){ F = x; } };   /* ★ v5.336.0 */
+  putAns: putAns, aliasOf: aliasOf, hostReclaim: hostReclaim, acctPending: acctPending, awardPending: awardPending, guestGrantOne: guestGrantOne, powersUsed: powersUsed, _setF: function(x){ F = x; } };   /* ★ v5.336.0 */
 
 window._LXPS_MOD_OK = window._LXPS_MOD_OK || {};
 window._LXPS_MOD_OK['live_quiz.js'] = true;

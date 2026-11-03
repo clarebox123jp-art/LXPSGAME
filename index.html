@@ -1893,7 +1893,7 @@ document.addEventListener('DOMContentLoaded', function(){
      ⚡ 搶答擂台橫幅:本體程式在 live_quiz.js(點了才下載);這裡只有按鈕、看板監聽(liveQuizBoard/live,1 份文件)與定位。
      ⚠ 定位用 JS 量三顆入口的實際位置(畫布座標),放在它們正上方、寬度對齊三顆的總寬;三顆在各種螢幕的排法(並排/上下堆疊/手機)
        都由 main.css 與 #lxps-phone-css 決定,這裡跟著它們走,不另寫一套斷點 ⇒ 三平台自動對齊(鐵律 〇之二)。 -->
-<button id="livequiz-btn" type="button" onclick="window._lqEntry&&window._lqEntry()"><span class="lqb-ico">⚡</span><span class="lqb-txt">搶答擂台</span><span class="lqb-sub" id="livequiz-btn-sub"></span><span class="lqb-tag" id="livequiz-btn-tag">老師開擂台了！</span></button>
+<button id="livequiz-btn" type="button" onclick="window._lqEntry&&window._lqEntry()"><span class="lqb-ico">⚡</span><span class="lqb-txt">搶答擂台</span><span class="lqb-free">🔢 免登入可玩</span><span class="lqb-sub" id="livequiz-btn-sub"></span><span class="lqb-tag" id="livequiz-btn-tag">老師開擂台了！</span></button>
 <style id="lxps-lq-banner-css">
 #overlay #livequiz-btn{position:absolute;z-index:3;left:50%;top:56%;transform:translateX(-50%);width:1416px;height:68px;
   display:flex;align-items:center;justify-content:center;gap:16px;padding:0 28px;box-sizing:border-box;border-radius:999px;cursor:pointer;
@@ -1902,7 +1902,10 @@ document.addEventListener('DOMContentLoaded', function(){
   box-shadow:0 0 18px rgba(0,0,0,.45),0 4px 0 rgba(0,0,0,.35);text-shadow:0 2px 0 rgba(0,0,0,.45);opacity:.92;transition:filter .2s,opacity .2s;}
 #overlay #livequiz-btn:active{filter:brightness(1.15);}
 #overlay #livequiz-btn .lqb-ico{font-size:1.15em;}
-#overlay #livequiz-btn .lqb-sub{font-size:.62em;letter-spacing:1px;font-weight:700;color:#ffe9a8;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%;}
+#overlay #livequiz-btn .lqb-sub{font-size:.62em;letter-spacing:1px;font-weight:700;color:#ffe9a8;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%;}
+/* ★ v5.336.0 老師「搶答擂台的按鈕上標示『免登入可玩』」— 字級跟著按鈕(em),三平台一起縮放 */
+#overlay #livequiz-btn .lqb-free{flex:none;font-size:.6em;letter-spacing:1px;font-weight:900;color:#0b3a1e;white-space:nowrap;text-shadow:none;
+  background:linear-gradient(135deg,#9dffc4,#4fd38a);border:2px solid #eafff2;border-radius:999px;padding:.12em .7em;box-shadow:0 2px 0 rgba(0,0,0,.3);}
 #overlay #livequiz-btn .lqb-tag{display:none;position:absolute;right:28px;top:-20px;font-size:20px;letter-spacing:1px;font-weight:900;color:#3a1d00;
   background:linear-gradient(135deg,#ffe066,#ff9f2e);border:2px solid #fff;border-radius:999px;padding:2px 14px;text-shadow:none;animation:lqbBreath 1.4s ease-in-out infinite;}
 #overlay #livequiz-btn.lq-live{opacity:1;color:#fff;background:linear-gradient(90deg,#ff5f6d,#ffb347,#ff5f6d);background-size:200% 100%;
