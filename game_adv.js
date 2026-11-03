@@ -55622,6 +55622,12 @@ window._lxpsPWA = (function(){
       + '<div style="margin-top:24px;font-size:clamp(11px,1.2vw,13px);color:#666;line-height:1.7;">'
       +   '💡 安裝後遊戲資源將永久保存在裝置上<br>之後開啟不再需要下載,離線也能玩!'
       + '</div>'
+      /* ★ v5.330.0(老師「遊戲縮到背景執行時可以保持下載嗎」→ 丙)iPad 切到背景會暫停下載,提醒留在畫面上;回來會自動接續 */
+      + '<div id="_pwa-install-stay" style="margin-top:12px;font-size:clamp(12px,1.3vw,15px);font-weight:800;color:#ffd27a;line-height:1.6;">'
+      +   (((typeof window._artStyle === 'string' ? window._artStyle : 'cute') === 'premium')
+            ? '📱 下載期間請保持本畫面在前景;切到背景會暫停,回來後自動接續。'
+            : '📱 下載的時候請不要離開遊戲畫面喔!<br>切出去會暫停,回來會自動接著下載。')
+      + '</div>'
       + '<div style="margin-top:18px;">'
       +   '<button id="_pwa-skip-install" style="padding:6px 18px;font-size:12px;background:transparent;border:1px solid #444;color:#666;border-radius:8px;cursor:pointer;font-family:inherit;">略過安裝(下次再說)</button>'
       + '</div>'
@@ -55735,6 +55741,7 @@ window._lxpsPWA = (function(){
         if(_finished) return;
         _finished = true;
         window._lxpsPwaDownloading = false;
+        window._lxpsPwaResumeNow = null;   // ★ v5.330.0 下載結束就不再接續
         _precacheInFlight = null;
         try{ resolveRaw(r); }catch(_){}
       };
@@ -55921,6 +55928,23 @@ window._lxpsPWA = (function(){
         //   （第一筆非 scanning 的 PRECACHE_PROGRESS，此時 d.done 就是 sw.js 算出的「已快取數量」）
         //   算出真正缺少幾個檔案 _missingCount，之後的進度條改以「缺少的檔案裡補了幾個」為分母顯示，
         //   缺 0 個就直接顯示「已經是最新版本」，不再讓玩家誤以為整包都在重新下載。
+        /* ★ v5.330.0(老師「遊戲縮到背景執行時可以保持下載嗎」→ 甲)— iPad 切到背景時 SW 會被暫停/回收,
+           回到前景不必乾等 180 秒停滯看門狗:立刻重送一次 PRECACHE_URLS 續抓(同 batchId;sw.js v3.8.2 防重入:
+           還在跑就只回報進度、真的停了才重新掃描,只補缺的)。不計入 _stallRetry 次數。 */
+        window._lxpsPwaResumeNow = function(tag){
+          try{
+            if(!navigator.serviceWorker.controller) return false;
+            console.log('[PWA v5.330.0] 回到前景(' + (tag || '') + '),立即接續完整下載');
+            navigator.serviceWorker.controller.postMessage({
+              type: 'PRECACHE_URLS', urls: urls, batchId: batchId,
+              supportsWebp: (function(){ try{ return document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0; }catch(_eW){ return false; } })()
+            });
+            var _stEl2 = document.getElementById('_pwa-install-status');
+            if(_stEl2) _stEl2.textContent = '🔄 歡迎回來,正在接著下載…';
+            _armStall();
+            return true;
+          }catch(_eRn){ return false; }
+        };
         var _missingCount = null;
         var handler = function(ev){
           var d = ev.data || {};
@@ -82907,7 +82931,7 @@ function makeRadar(dims, size) {
 (function(){
   if(window._lxpsOD) return;
   var OD = window._lxpsOD = {
-    ver: 'v5.329.0',
+    ver: 'v5.330.0',
     doneAreas: {},       // 本次開機已確認齊全的區域
     badUrls: {},         // 本次開機抓不到的網址(不再列入檢查)
     queue: [],           // 待抓網址(絕對網址)
@@ -83040,6 +83064,7 @@ function makeRadar(dims, size) {
     }, function(){ return false; });
   }
   function _pump(){
+    if(_quizOn()) return;   // ★ v5.330.0 搶答擂台開著 ⇒ 不開始新的下載(離開擂台由 _lqTick 叫醒)
     while(OD.inflight < OD.conc && OD.queue.length){
       (function(abs){
         OD.inflight++;
@@ -83096,6 +83121,11 @@ function makeRadar(dims, size) {
       '#lxps-od-card .od-b{display:block;width:100%;box-sizing:border-box;min-height:48px;border:none;border-radius:12px;font-size:17px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#ffb84d,#ff7a3d);color:#2b1300;padding:10px 12px}' +
       '#lxps-od-card .od-b.ready{background:linear-gradient(135deg,#6cff9c,#2fd0a0);color:#03281a}' +
       '#lxps-od-card .od-h{font-size:13px;color:#9fb8dd;margin-top:10px;line-height:1.5}' +
+      '#lxps-od-card .od-stay{font-size:13px;color:#ffd27a;font-weight:800;margin-top:8px;line-height:1.5}' +
+      '#lxps-od-card .od-b.ready~.od-stay{display:none}' +
+      '@media (min-width:1400px) and (min-height:760px){#lxps-od-card .od-stay{font-size:17px}}' +
+      'body.gc-tall #lxps-od-card .od-stay{font-size:16px}' +
+      '@media (orientation:landscape) and (max-height:520px){#lxps-od-card .od-stay{font-size:11px;margin-top:4px}}' +
       '#lxps-od-pill{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:999989;background:rgba(10,24,48,.92);border:1.5px solid #5aa0ff;border-radius:14px;padding:8px 12px;color:#e8f2ff;font-size:13px;font-weight:700;width:220px;box-sizing:border-box;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '#lxps-od-pill .lxps-od-bar{height:8px;margin-top:5px}' +
       '@media (min-width:1400px) and (min-height:760px){#lxps-od-card{width:620px;padding:28px 34px;border-radius:22px}#lxps-od-card .od-t{font-size:28px}#lxps-od-card .od-s,#lxps-od-card .od-n{font-size:20px}.lxps-od-bar{height:20px}#lxps-od-card .od-b{min-height:62px;font-size:23px}#lxps-od-card .od-h{font-size:16px}#lxps-od-pill{width:300px;font-size:16px;padding:10px 14px}}' +
@@ -83136,6 +83166,9 @@ function makeRadar(dims, size) {
       '<button type="button" class="od-b">' + (cute ? '🚀 先進去玩,背景繼續下載' : '🚀 先進入,背景繼續下載') + '</button>' +
       '<div class="od-h">' + (cute ? '先進去的話,還沒下載好的圖片會一邊玩一邊出現。下載好的圖片會一直留在平板裡,下次就不用再等了。'
                                   : '提前進入時,尚未下載的圖片會在遊玩中陸續出現。已下載的素材會保留在本機,下次免再下載。') + '</div>' +
+      // ★ v5.330.0 丙:iPad 切到背景會暫停下載
+      '<div class="od-stay">' + (cute ? '📱 下載的時候請不要離開遊戲畫面喔!切出去會暫停,回來會自動接著下載。'
+                                       : '📱 下載期間請保持遊戲在前景;切到背景會暫停,回到遊戲後自動接續。') + '</div>' +
       '</div>';
     (document.body || document.documentElement).appendChild(ov);
     ov.querySelector('.od-b').onclick = function(){
@@ -83210,6 +83243,117 @@ function makeRadar(dims, size) {
     if(p && p.getAttribute('data-job') !== String(job.id) && p.getAttribute('data-job') !== String(bj.id)) return;   // 別的區域正在用小進度條
     _toPill(bj);
   }
+
+  /* ════════ v5.330.0 背景執行(老師「遊戲縮到背景執行時可以保持下載嗎」→ 甲乙丙都做)════════
+     iOS 切到背景/鎖屏會暫停網頁與 SW,系統不開放網頁背景下載 ⇒ 改成:
+     乙 下載進行中(邊玩邊下載佇列或完整下載)向瀏覽器要「螢幕保持亮著」(Screen Wake Lock),下載完就放掉;
+        切到背景時瀏覽器會自動收回,回到前景再要一次。不支援的瀏覽器靜默略過。
+     甲 回到前景(離開 ≥2 秒):①邊玩邊下載剛才失敗的(badUrls)全部重新排隊,右下角小進度條「補抓」
+        ②完整下載進行中 ⇒ 立即續抓(window._lxpsPwaResumeNow,定義在 precacheAllAssets)③重算首頁素材數。 */
+  var _wl = null, _wlBusy = false;
+  function _needWake(){
+    try{
+      if(document.hidden || _quizOn()) return false;
+      if(OD.queue.length || OD.inflight > 0) return true;
+      return OD.fullDlRunning();
+    }catch(_){ return false; }
+  }
+  function _wakeSync(){
+    try{
+      if(!navigator.wakeLock || typeof navigator.wakeLock.request !== 'function') return;
+      var need = _needWake();
+      if(need && !_wl && !_wlBusy){
+        _wlBusy = true;
+        navigator.wakeLock.request('screen').then(function(l){
+          _wlBusy = false; _wl = l;
+          try{ l.addEventListener('release', function(){ if(_wl === l) _wl = null; }); }catch(_){}
+          if(!_needWake()){ try{ l.release(); }catch(_){} }
+        }, function(){ _wlBusy = false; });
+      } else if(!need && _wl){
+        var l2 = _wl; _wl = null; try{ l2.release(); }catch(_){}
+      }
+    }catch(_){ _wlBusy = false; }
+  }
+  OD.wakeSync = _wakeSync;
+  var _hiddenAt = 0;
+  function _retryBad(){
+    var bad = Object.keys(OD.badUrls || {});
+    if(!bad.length || !OD.hasSW()) return 0;
+    OD.badUrls = {};
+    var cute = _cute();
+    var rj = { id: ++_jobSeq, area: '_retry', label: cute ? '補抓剛才中斷的' : '續傳中斷素材', total: bad.length, done: 0, failed: 0, finished: false, bg: true, go: function(){} };
+    OD.enqueue(bad, function(ok){
+      if(rj.finished) return;
+      rj.done++; if(!ok) rj.failed++;
+      _paint(rj);
+      if(rj.done >= rj.total){ rj.finished = true; _pillDone(rj); try{ window._lxpsODPaintMainBtn(true); }catch(_){} }
+    });
+    if(!document.getElementById('lxps-od-ov') && !document.getElementById('lxps-od-pill')) _toPill(rj);
+    console.log('[邊玩邊下載 ' + OD.ver + '] 回到前景,重新排隊 ' + bad.length + ' 個剛才中斷的素材');
+    return bad.length;
+  }
+  OD.retryBad = _retryBad;
+  function _onVisible(){
+    var away = _hiddenAt ? (Date.now() - _hiddenAt) : 0; _hiddenAt = 0;
+    _wakeSync();
+    if(away < 2000) return;
+    // 等 iOS 把剛恢復的網路/SW 接回來,再補抓(剛醒來那一瞬間 fetch 常直接失敗)
+    setTimeout(function(){
+      try{ _retryBad(); }catch(_){}
+      try{ if(!_quizOn() && OD.fullDlRunning() && typeof window._lxpsPwaResumeNow === 'function') window._lxpsPwaResumeNow('visible'); }catch(_){}
+      try{ if(_quizOn()) _swPause(true); }catch(_){}   // SW 可能剛被系統重啟、忘了暫停 ⇒ 再說一次
+      try{ if(typeof window._lxpsODPaintMainBtn === 'function') window._lxpsODPaintMainBtn(true); }catch(_){}
+    }, 1200);
+  }
+  try{
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){ _hiddenAt = Date.now(); return; }
+      _onVisible();
+    });
+    window.addEventListener('pageshow', function(e){ if(e && e.persisted){ _hiddenAt = _hiddenAt || (Date.now() - 5000); _onVisible(); } });
+  }catch(_){}
+  setInterval(_wakeSync, 2000);
+
+  /* ════════ v5.330.0 搶答擂台開著時暫停下載(老師「把『搶答時暫停下載』一起做進 v5.330.0」)════════
+     搶答要即時收發答案(v5.323.0 才把全班 27 人連線調穩),不讓背景下載跟全班搶學校網路。
+     判斷依據:live_quiz.js focusMode() 設的 window._lxpsLiveQuizFocus(擂台開著=true,關掉/換人=false)。
+     ①邊玩邊下載:_pump 不開始新檔(下載中的那幾個讓它跑完),右下角小進度條藏起來;離開擂台立刻 _pump 接續。
+     ②完整下載(在 sw.js 裡跑):送 PRECACHE_PAUSE{on} 給 SW,SW 在批次之間等待(sw.js v3.8.7);
+       擂台開著每 30 秒續一次暫停,SW 那邊 90 秒沒續就自動恢復(頁面當掉也不會永遠卡住)。讀條畫面一併藏起來。
+     ③螢幕保持亮著:擂台期間不要求(_needWake)。
+     ⚠ 小遊戲/荒島的完整下載不在此列(另一套流程)。 */
+  function _quizOn(){ try{ return window._lxpsLiveQuizFocus === true; }catch(_){ return false; } }
+  OD.quizOn = _quizOn;
+  try{
+    var _pst = document.createElement('style'); _pst.id = 'lxps-od-lqpause-css';
+    _pst.textContent = 'body.lxps-dl-paused #lxps-od-pill,body.lxps-dl-paused #lxps-od-ov,body.lxps-dl-paused #_pwa-install-overlay{display:none !important}';
+    (document.head || document.documentElement).appendChild(_pst);
+  }catch(_){}
+  var _lqWas = false, _lqPing = 0;
+  function _swPause(on){
+    try{ var c = navigator.serviceWorker && navigator.serviceWorker.controller; if(c) c.postMessage({ type: 'PRECACHE_PAUSE', on: !!on }); }catch(_){}
+  }
+  function _lqTick(){
+    try{
+      var on = _quizOn();
+      if(on !== _lqWas){
+        _lqWas = on; _lqPing = Date.now();
+        if(document.body) document.body.classList.toggle('lxps-dl-paused', on);
+        _swPause(on);
+        console.log('[邊玩邊下載 ' + OD.ver + '] ' + (on ? '搶答擂台開啟,下載暫停' : '離開搶答擂台,下載接續'));
+        if(!on){
+          _pump();
+          // 擂台期間 SW 若被系統回收,完整下載工作會消失 ⇒ 離開擂台時重送一次(還在跑就只回報進度,不會開第二份)
+          try{ if(OD.fullDlRunning() && typeof window._lxpsPwaResumeNow === 'function') setTimeout(function(){ window._lxpsPwaResumeNow('quiz-end'); }, 600); }catch(_){}
+          try{ if(typeof window._lxpsODPaintMainBtn === 'function') window._lxpsODPaintMainBtn(true); }catch(_){}
+        }
+        _wakeSync();
+        return;
+      }
+      if(on && Date.now() - _lqPing > 30000){ _lqPing = Date.now(); _swPause(true); }
+    }catch(_){}
+  }
+  setInterval(_lqTick, 1000);
 
   // ── 主入口 ──
   // opts.first(v5.328.0):回傳「必要」清單的函式;有給時視窗只等必要的,其餘排到最後在背景補
