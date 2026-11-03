@@ -81594,7 +81594,8 @@ function makeRadar(dims, size) {
   };
   W._cstGmSelfSet = function(key, target){
     try{
-      if(window._isAdminUser !== true) return { ok:false, why:'不是 GM 帳號' };
+      var _adm = false; try{ _adm = (typeof window._isAdminUser === 'function') ? !!window._isAdminUser() : (window._isAdminUser === true); }catch(_){ _adm = false; }   /* ★ v5.346.1 _isAdminUser 是函式 */
+      if(!_adm) return { ok:false, why:'不是 GM 帳號' };
       if(!_ready()) return { ok:false, why:'命星資料還沒載入' };
       var k = /^#/.test(key) ? key : W._cstKey(key);
       if(!k || _isProtag(k)) return { ok:false, why:'主角命星由主線章節決定,不能直接改' };
