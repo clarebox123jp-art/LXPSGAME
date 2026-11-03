@@ -1,5 +1,10 @@
 /* ════════════════════════════════════════════════════════════════════
- *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.325.0
+ *  live_quiz.js — ⚡ 搶答擂台(連線搶答模式)v5.332.0
+ *  ★ v5.332.0(2026-11-03・老師「許多學生沒有成功輸入到答案,卡在『本題未作答』無法進到下一題;讓網速慢或斷線的學生也能接續遊玩」)
+ *    SDK 即時連線在學校 wifi 塞車時會「卡住但不報錯」⇒ 加 Firestore REST 備援通道(見 roomStage/restGetRoom/studentWatch/sendAnswer):
+ *    甲 房間看門狗(安靜 4/9 秒就讀雲端,雲端較新直接接上下一題並重接監聽、必要時 SDK 斷網重連);
+ *    乙 作答雙通道(SDK 2.5 秒沒回應 ⇒ REST 送同一筆,文件 id 固定只算一次);丙 心跳 5 秒沒回應 ⇒ REST 補 lastSeen。
+ *    房間監聽收到比畫面舊的狀態一律忽略。不需改 firestore.rules。
  *  ★ v5.325.0(2026-11-02・老師「比賽結束時,要按確認發送獎勵才真正發送。如果是測試場或是有出現爭議,老師可以不發該場獎勵」)
  *    「🎁 頒發獎勵」→ confirmGrant 確認視窗(各級人數＋內容)→「確認發送」才 hostGrant;還沒發出任何一份時可「🚫 本場不發獎勵」
  *    (askNoAward:測試場/有爭議/其他＋說明)→ setNoAward 寫 room meta.noAward/noAwardReason/noAwardAt＋liveQuizHistory noAward*,移出看板;
@@ -46,7 +51,7 @@
 (function(){
 'use strict';
 if(window._LQ && window._LQ._v) return;
-var LQ = window._LQ = { _v: 'v5.325.0' };
+var LQ = window._LQ = { _v: 'v5.332.0' };
 
 /* ───────────── 常數 ───────────── */
 var FS_URL = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -254,6 +259,112 @@ function live(ref, opts, onNext){
   }
   go();
   return function(){ dead = true; if(tm) clearTimeout(tm); try{ if(un) un(); }catch(_){} };
+}
+/* ═════════════════════════════════════════════════════════════════
+ * ★ v5.332.0(2026-11-03・老師「有許多學生沒有成功輸入到答案,就卡在『本題未作答』的畫面,無法繼續進到下一個題目畫面。
+ *   請檢查並修正,讓網速慢或斷線的學生也能順利的接續遊玩」)
+ *   根因:iPad 在學校 wifi 塞車時,Firestore 的即時連線常常「卡住但不報錯」——
+ *     ① 房間監聽不再收到新狀態、也不觸發錯誤 ⇒ v5.320.0 的自動重新監聽不會啟動,學生永遠停在上一題的公布畫面;
+ *     ② setDoc 送作答時,連線卡住的 Promise 不會失敗也不會成功 ⇒ v5.323.0 的自動重送迴圈根本跑不到,
+ *        直到超時才清掉答案 ⇒「本題未作答」;心跳也一樣卡住 ⇒ 主持台把他看成斷線。
+ *   修法(學生端,不需改雲端規則):走一條「跟 SDK 長連線無關」的備援通道 —— Firestore REST(一般 HTTPS 請求,用同一個登入憑證,
+ *     雲端規則照樣檢查):
+ *     甲 房間看門狗:房間文件安靜太久就用 REST 讀一次;雲端進度比畫面新 ⇒ 直接用雲端那份畫下一題/公布/結束,並重接 SDK 監聽,
+ *        連續卡住就讓 SDK 斷網重連一次(30 秒最多一次)。
+ *     乙 作答雙通道:SDK 2.5 秒沒回應 ⇒ 同時用 REST 送同一筆答案(文件 id 固定、只能建立一次,不會重複計分);
+ *        被擋時讀回自己的作答確認是不是其實已經送到。
+ *     丙 心跳備援:SDK 心跳 5 秒沒回應 ⇒ 用 REST 補送 lastSeen,主持台不會誤判斷線而不等他作答。
+ *   房間監聽收到「比畫面還舊」的狀態一律忽略(避免卡住的連線事後吐出舊資料把畫面倒回去)。
+ * ═════════════════════════════════════════════════════════════════ */
+function roomStage(r){
+  try{
+    if(!r || !r.meta) return -1;
+    var st = r.meta.status, q = (r.current && typeof r.current.qIndex === 'number') ? r.current.qIndex : -1;
+    if(st === 'ended') return 1e6 + (r.final ? 2 : 0) + (r.meta.cleared ? 1 : 0);
+    if(st === 'question') return 10 + q * 4;
+    if(st === 'reveal') return 10 + q * 4 + ((r.reveal && r.reveal.qIndex === q) ? 2 : 1);
+    return 0;
+  }catch(_){ return -1; }
+}
+function restProject(){ var p = ''; try{ p = db().app.options.projectId; }catch(_){} return p || 'lxpsgame'; }
+function restDocName(path){ return 'projects/' + restProject() + '/databases/(default)/documents/' + path; }
+function restUrl(path){ return 'https://firestore.googleapis.com/v1/' + restDocName(path); }
+function restVal(v){
+  if(!v || typeof v !== 'object') return null;
+  if('nullValue' in v) return null;
+  if('booleanValue' in v) return !!v.booleanValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return Number(v.doubleValue);
+  if('stringValue' in v) return v.stringValue;
+  if('timestampValue' in v){ var t = Date.parse(v.timestampValue); return isNaN(t) ? 0 : t; }   /* tsMs() 收數字 */
+  if('mapValue' in v) return restFields((v.mapValue || {}).fields);
+  if('arrayValue' in v) return ((v.arrayValue || {}).values || []).map(restVal);
+  if('referenceValue' in v) return v.referenceValue;
+  return null;
+}
+function restFields(f){ var o = {}; Object.keys(f || {}).forEach(function(k){ o[k] = restVal(f[k]); }); return o; }
+function restFetch(url, opt, ms){
+  return new Promise(function(resolve, reject){
+    var u = me();
+    if(!u || typeof u.getIdToken !== 'function'){ reject(new Error('no-auth')); return; }
+    var ctl = null; try{ ctl = new AbortController(); }catch(_){}
+    var tm = setTimeout(function(){ try{ if(ctl) ctl.abort(); }catch(_){} reject(new Error('timeout')); }, ms || 6000);
+    u.getIdToken().then(function(tok){
+      var o = { method: opt.method || 'GET', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' }, cache: 'no-store' };
+      if(opt.body) o.body = JSON.stringify(opt.body);
+      if(ctl) o.signal = ctl.signal;
+      return fetch(url, o);
+    }).then(function(res){
+      return res.text().then(function(txt){ var j = null; try{ j = txt ? JSON.parse(txt) : null; }catch(_){} clearTimeout(tm); resolve({ status: res.status, json: j }); });
+    }).catch(function(e){ clearTimeout(tm); reject(e); });
+  });
+}
+/* 讀房間:回傳房間資料(跟 SDK 的 s.data() 同形狀,時間欄位換成毫秒數字);房間不存在回 null */
+function restGetRoom(pin){
+  return restFetch(restUrl('liveQuizRooms/' + pin), {}, 6000).then(function(r){
+    if(r.status === 404) return null;
+    if(r.status !== 200 || !r.json) throw new Error('http ' + r.status);
+    return restFields(r.json.fields);
+  });
+}
+/* 讀自己這題的作答文件是否已在雲端(規則允許本人讀自己的作答) */
+function restMine(pin, uid, q){
+  return restFetch(restUrl('liveQuizRooms/' + pin + '/answers/' + uid + '_' + q), {}, 5000)
+    .then(function(r){ return r.status === 200; }).catch(function(){ return false; });
+}
+/* 送作答:'ok' 已建立 | 'exists' 已經有了 | 'denied' 被規則擋(可能已存在或逾時) | 'net' 網路失敗 */
+function restAnswer(pin, uid, q, c, ms){
+  var body = { writes: [{
+    update: { name: restDocName('liveQuizRooms/' + pin + '/answers/' + uid + '_' + q),
+              fields: { uid: { stringValue: uid }, q: { integerValue: String(q) }, c: { integerValue: String(c) }, ms: { integerValue: String(Math.round(ms)) } } },
+    updateTransforms: [{ fieldPath: 'at', setToServerValue: 'REQUEST_TIME' }],
+    currentDocument: { exists: false }
+  }] };
+  return restFetch('https://firestore.googleapis.com/v1/projects/' + restProject() + '/databases/(default)/documents:commit', { method: 'POST', body: body }, 7000)
+    .then(function(r){
+      if(r.status === 200) return 'ok';
+      var st = (r.json && r.json.error && r.json.error.status) || '';
+      if(r.status === 409 || st === 'ALREADY_EXISTS' || st === 'FAILED_PRECONDITION') return 'exists';
+      if(r.status === 403 || st === 'PERMISSION_DENIED') return 'denied';
+      return 'net';
+    }).catch(function(){ return 'net'; });
+}
+/* 心跳備援:只改 lastSeen(規則允許本人只改這個欄位) */
+function restBeat(pin, uid){
+  return restFetch(restUrl('liveQuizRooms/' + pin + '/players/' + uid) + '?updateMask.fieldPaths=lastSeen&currentDocument.exists=true',
+    { method: 'PATCH', body: { fields: { lastSeen: { integerValue: String(now()) } } } }, 6000)
+    .then(function(r){ return r.status === 200; }).catch(function(){ return false; });
+}
+/* SDK 長連線卡住 ⇒ 讓 SDK 斷網再重連一次(排隊中的寫入不會遺失);30 秒最多一次 */
+function sdkKick(why){
+  if(!F || typeof F.disableNetwork !== 'function' || typeof F.enableNetwork !== 'function') return;
+  if(now() - (ST.kickAt || 0) < 30000) return;
+  ST.kickAt = now();
+  try{ console.warn('[LQ] 雲端連線卡住,重新連線(' + why + ')'); }catch(_){}
+  var d = db();
+  F.disableNetwork(d).catch(function(){}).then(function(){ return F.enableNetwork(d); }).catch(function(){
+    setTimeout(function(){ try{ F.enableNetwork(d).catch(function(){}); }catch(_){} }, 1500);
+  });
 }
 function roomRef(pin){ return F.doc(db(), 'liveQuizRooms', pin); }
 function sub(pin, col, id){ return F.doc(db(), 'liveQuizRooms', pin, col, id); }
@@ -639,7 +750,8 @@ var ST = {
     this.recvAt = 0; this.waitMs = 0; this.cutRm = -1; this.hintA = -1; this.used = { cut: false, hint: false }; this.pwWait = null;
     this.sfxQ = -1; this.streak = 0; this.priv = null; this.ans = {}; this.correctN = 0; this.lastStatus = ''; this.kicked = false;
     this.offset = null; this.syncRtt = 1e9; this.syncS = 0; this.syncPend = null; this.timeUp = false;
-    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; this.rtt = 0; this.lagMax = 0; this.tickAt = 0; },
+    this.endFx = false; this.lastRank = null; this.lastLeft = 99; this.lastOk = 0; this.netBad = false; this.beatBusy = false; this.prevPin = null; this.rtt = 0; this.lagMax = 0; this.tickAt = 0;
+    this.snapAt = 0; this.pollAt = 0; this.polling = false; this.staleN = 0; this.beatAt = 0; this.roomUn = null; },
   stop: function(){ (this.unsubs || []).forEach(function(f){ try{ f(); }catch(_){} }); this.unsubs = [];
     if(this.hb){ clearInterval(this.hb); this.hb = null; } if(this.tick){ clearInterval(this.tick); this.tick = null; }
     if(this.beatRetry){ clearTimeout(this.beatRetry); this.beatRetry = null; } this.beatBusy = false; },
@@ -772,7 +884,9 @@ async function studentEnter(pin, room, resumed){
   if(resumed) toast(T('回到擂台了!分數都還在', '已回到進行中的擂台'));
   ST.hb = setInterval(studentBeat, HEARTBEAT_MS);
   bindAway();
-  ST.unsubs.push(live(roomRef(pin), null, function(s){ if(s.exists()){ ST.room = s.data(); studentRender(); } }));
+  ST.snapAt = now();
+  studentListenRoom();
+  ST.unsubs.push(function(){ if(ST.roomUn){ try{ ST.roomUn(); }catch(_){} ST.roomUn = null; } });
   ST.unsubs.push(live(pref, null, function(s){
     if(!s.exists()) return;
     var d = s.data();
@@ -789,6 +903,49 @@ async function studentEnter(pin, room, resumed){
   ST.unsubs.push(live(sub(pin, 'private', u.uid), null, function(s){ ST.priv = s.exists() ? s.data() : null; applyPrivate(); }));
   ST.tick = setInterval(studentTick, 250);
   studentRender();
+}
+/* ★ v5.332.0 房間監聽(可單獨重接);收到比畫面舊的狀態一律忽略 */
+function studentListenRoom(){
+  if(ST.roomUn){ try{ ST.roomUn(); }catch(_){} ST.roomUn = null; }
+  var pin = ST.pin;
+  ST.roomUn = live(roomRef(pin), null, function(s){
+    if(ST.pin !== pin || !s.exists()) return;
+    if(!(s.metadata && s.metadata.fromCache)) ST.snapAt = now();
+    var d = s.data();
+    if(roomStage(d) < roomStage(ST.room)) return;
+    ST.room = d; studentRender();
+  });
+}
+/* ★ v5.332.0 甲 房間看門狗(studentTick 每 250ms 呼叫,內部自己節流):
+   等公布/等下一題/等結算時房間文件安靜 4 秒,或任何時候安靜 9 秒 ⇒ 用 REST 讀一次雲端;雲端比畫面新就直接接上。 */
+function studentWatch(){
+  if(!ST.pin || ST.kicked || ST.polling) return;
+  var r = ST.room; if(!r || !r.meta) return;
+  if(r.meta.status === 'ended' && (r.final || r.meta.cleared)) return;
+  if(document.visibilityState === 'hidden') return;
+  var t = now(), quiet = t - (ST.snapAt || 0);
+  var st = r.meta.status;
+  var waiting = st === 'reveal' || st === 'ended' || (st === 'question' && (ST.timeUp || ST.choice != null || studentLeftMs(r) <= 0));
+  if(quiet < (waiting ? 4000 : 9000)) return;
+  if(t - (ST.pollAt || 0) < (waiting ? 4000 : 8000)) return;
+  ST.pollAt = t; ST.polling = true;
+  var pin = ST.pin;
+  restGetRoom(pin).then(function(d){
+    ST.polling = false;
+    if(ST.pin !== pin || !d) return;
+    ST.lastOk = now(); netChip();
+    if(roomStage(d) > roomStage(ST.room)){
+      try{ console.warn('[LQ] 即時連線落後,改用雲端最新狀態', roomStage(ST.room), '→', roomStage(d)); }catch(_){}
+      ST.room = d; ST.staleN = (ST.staleN || 0) + 1;
+      studentRender();
+      if(ST.staleN >= 2) sdkKick('房間監聽落後'); else studentListenRoom();
+    }else{
+      ST.staleN = 0;
+    }
+  }).catch(function(e){
+    ST.polling = false;
+    try{ console.warn('[LQ] 看門狗讀取失敗', e && e.message); }catch(_){}
+  });
 }
 /* ★ v5.318.0 斷線即時顯示:心跳 10 秒一次;平板切走/鎖屏/關 App ⇒ 立刻送 lastSeen=0(主持台馬上顯示「某某斷線了」);
    切回來 ⇒ 立刻補一次心跳(主持台顯示「回來了」)。 */
@@ -836,9 +993,16 @@ function devLabel(){
 function studentBeat(){
   if(!ST.pin || !ST.uid || ST.kicked) return;
   if(document.visibilityState === 'hidden') return;   /* 切到別的 App/分頁時,背景計時器不要把自己又標回「在線」 */
-  if(ST.beatBusy) return;
-  ST.beatBusy = true;
-  var a = now(), pin = ST.pin;
+  /* ★ v5.332.0 丙:SDK 連線卡住時 Promise 永遠不回來,beatBusy 會一直是 true ⇒ 之後再也不送心跳。超過 20 秒就當作卡住,不再擋。 */
+  if(ST.beatBusy && now() - (ST.beatAt || 0) < 20000) return;
+  ST.beatBusy = true; ST.beatAt = now();
+  var a = now(), pin = ST.pin, uid0 = ST.uid;
+  /* ★ v5.332.0 丙:5 秒沒回應 ⇒ 用 REST 補送 lastSeen,主持台才不會把他當斷線、不等他作答;卡超過 12 秒就讓 SDK 重新連線 */
+  setTimeout(function(){
+    if(ST.pin !== pin || ST.beatAt !== a || !ST.beatBusy) return;
+    restBeat(pin, uid0).then(function(ok){ if(ok && ST.pin === pin){ ST.lastOk = now(); netChip(); } });
+  }, 5000);
+  setTimeout(function(){ if(ST.pin === pin && ST.beatAt === a && ST.beatBusy) sdkKick('心跳卡住'); }, 12000);
   /* ★ v5.323.0 甲:順便回報上一次心跳來回毫秒、這 10 秒內畫面最大卡頓毫秒、裝置型號 */
   var diag = { rtt: Math.round(ST.rtt || 0), lag: Math.round(ST.lagMax || 0), dev: devLabel() };
   ST.lagMax = 0;
@@ -1026,6 +1190,7 @@ function studentTick(){
   /* ★ v5.323.0 甲:本來每 250ms 跑一次,實際間隔越長＝平板越卡(舊 iPad 記憶體吃緊時會明顯變大) */
   var tp = pnow(); if(ST.tickAt){ var lg = tp - ST.tickAt - 250; if(lg < 5000 && lg > (ST.lagMax || 0)) ST.lagMax = lg;   /* 超過 5 秒＝切到背景被系統暫停,不算卡頓 */ } ST.tickAt = tp;
   netChip();
+  studentWatch();   /* ★ v5.332.0 甲 */
   var r = ST.room; if(!r || r.meta.status !== 'question') return;
   var ms = studentLeftMs(r);
   if(ms <= 0 && !ST.timeUp && ST.choice == null){
@@ -1049,33 +1214,59 @@ async function studentAnswer(i){
   var ms = Math.max(0, Math.round(pnow() - ST.recvAt - ST.waitMs));
   /* ★ v5.323.0 丁 作答自動重送:網路忙碌時不用學生再按一次,在本題截止後 4 秒內每 0.6～2 秒自動重送同一個答案
      (作答秒數用按下當下量的 ms,重送不會被算得比較慢);被雲端規則拒絕(已答過/真的逾時)才停。 */
-  var give = pnow() + Math.max(0, studentLeftMs(r)) + 4000, tries = 0, pin = ST.pin;
-  for(;;){
-    try{
-      await F.setDoc(sub(pin, 'answers', ST.uid + '_' + q), { uid: ST.uid, q: q, c: i, at: F.serverTimestamp(), ms: ms });
-      ST.pending = false; break;
-    }catch(e){
-      if(ST.pin !== pin){ return; }
-      if(e && e.code === 'permission-denied'){
-        ST.pending = false;
-        if(ST.room && ST.room.meta.status === 'question' && ST.room.current.qIndex === q){
-          /* 可能是同一題已經送過(重整後) ⇒ 視為已作答;否則是時間到 */
-          toast(T('這題已經答過或時間到了', '本題已作答或已逾時'));
-        }
-        break;
-      }
-      var stillOpen = ST.room && ST.room.current && ST.room.current.qIndex === q && ST.room.meta.status === 'question';
-      if(!stillOpen || pnow() > give){
-        ST.pending = false; ST.choice = null; delete ST.ans[q]; saveLocal();
-        toast(T('網路太忙,這題沒有送到 😢', '網路壅塞,本題未能送出'));
-        break;
-      }
-      tries++;
-      if(tries === 1) toast(T('網路有點忙,自動幫你重送中…', '網路忙碌,自動重送中…'), 2500);
-      await new Promise(function(res){ setTimeout(res, Math.min(2000, 600 * tries)); });
-    }
+  var give = pnow() + Math.max(0, studentLeftMs(r)) + 4000, pin = ST.pin;
+  /* ★ v5.332.0 乙 作答雙通道:原本只等 SDK 的 setDoc —— 連線卡住時它不會失敗也不會成功,重送迴圈根本跑不到,
+     等到逾時就把答案清掉 ⇒ 學生明明按了卻顯示「本題未作答」。改成 SDK 送出的同時計時,2.5 秒沒回應就用 REST 再送同一筆
+     (文件 id 固定＝自己+題號、規則只准建立一次 ⇒ 兩條路都到也只算一次,作答秒數仍用按下當下量的 ms)。 */
+  var res = await sendAnswer(pin, ST.uid, q, i, ms, give);
+  if(ST.pin !== pin) return;
+  ST.pending = false;
+  if(res === 'denied'){
+    if(ST.room && ST.room.meta.status === 'question' && ST.room.current.qIndex === q) toast(T('這題已經答過或時間到了', '本題已作答或已逾時'));
+  }else if(res === 'fail'){
+    ST.choice = null; delete ST.ans[q]; saveLocal();
+    toast(T('網路太忙,這題沒有送到 😢', '網路壅塞,本題未能送出'));
   }
   drawStudentQuestion();
+}
+/* 回傳 'ok' 已送到 | 'denied' 雲端拒收(已答過或逾時) | 'fail' 到期限都沒送到 | 'gone' 已離開這一場 */
+function sendAnswer(pin, uid, q, c, ms, give){
+  return new Promise(function(resolve){
+    var done = false, restBusy = false, tries = 0, nextAt = 0, warned = false, finalCheck = false, t0 = pnow(), iv = null;
+    function fin(v){ if(done) return; done = true; if(iv) clearInterval(iv); resolve(v); }
+    function deniedCheck(){ restMine(pin, uid, q).then(function(ex){ fin(ex ? 'ok' : 'denied'); }); }
+    try{
+      F.setDoc(sub(pin, 'answers', uid + '_' + q), { uid: uid, q: q, c: c, at: F.serverTimestamp(), ms: ms })
+        .then(function(){ fin('ok'); })
+        .catch(function(e){
+          if(done) return;
+          /* 被擋:可能是 REST 那條已經先送到(第二次寫入變成「修改」被拒),讀回確認 */
+          if(e && e.code === 'permission-denied') deniedCheck();
+          /* 其他錯誤交給下面的 REST 重送 */
+        });
+    }catch(_){}
+    iv = setInterval(function(){
+      if(done) return;
+      if(ST.pin !== pin){ fin('gone'); return; }
+      var open = ST.room && ST.room.current && ST.room.current.qIndex === q && ST.room.meta.status === 'question';
+      if(pnow() > give || (!open && pnow() - t0 > 3000)){
+        if(finalCheck) return;
+        finalCheck = true;
+        restMine(pin, uid, q).then(function(ex){ fin(ex ? 'ok' : 'fail'); });
+        return;
+      }
+      if(pnow() - t0 < 2500 || restBusy || pnow() < nextAt) return;
+      restBusy = true; tries++;
+      if(!warned){ warned = true; toast(T('網路有點忙,自動幫你重送中…', '網路忙碌,自動重送中…'), 2500); }
+      restAnswer(pin, uid, q, c, ms).then(function(rr){
+        restBusy = false;
+        if(done) return;
+        if(rr === 'ok' || rr === 'exists'){ ST.lastOk = now(); fin('ok'); }
+        else if(rr === 'denied') deniedCheck();
+        else nextAt = pnow() + Math.min(2000, 600 * tries);
+      });
+    }, 300);
+  });
 }
 /* ★ v5.318.0(老師「使用法寶前要有影響總分的確認說明」)— 先跳確認,講清楚用了之後總分加成會變多少;
    ⚠ 確認期間倒數照走(那是學生自己的思考時間);題目時間到會自動關掉這個視窗。 */
