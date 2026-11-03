@@ -14771,6 +14771,7 @@
     // ════════════════════════════════════════════════════════════════════
     const _LEGIT_SOURCES = new Set([
       'summon_rare','ticket_ssr','ticket_sr',                                  // 召喚
+      'cst_pick_ssr','cst_pick_sr',                                            // ★ v5.345.0 自選命星換未擁有英雄(命星帳本 pickhero)
       'maokong_50pct','japan_boss_5pct','darkorb_5pct','yamata_miko_5pct',      // 擊敗 BOSS(英雄)
       'egypt_boss_clear',                                                       // ★ v3.15.0 埃及雙王解鎖
       'taiwan_clear','japan_clear','boss_drop',                                // 擊敗 BOSS(至寶/通用)

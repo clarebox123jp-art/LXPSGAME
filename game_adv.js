@@ -33481,7 +33481,7 @@ function _nbgPageCst(cute){
       ])
     + B.items([
         ['🌫️', '虛無的命星', '6 顆都亮了又抽到,會變成「虛無的命星」。'],
-        ['✨', '命星合成屋', '在召喚星空,3 顆一樣稀有度的命星可以合成 1 顆自選命星!'],
+        ['✨', '命星合成屋', '在召喚星空,3 顆一樣稀有度的命星可以合成 1 顆自選命星!SR/SSR 自選命星還能直接換到你還沒有的英雄喔!'],
         ['🔄', '點錯了?', '花 5000 知識幣,星星全部退回來重新點。']
       ], 220)
     + B.tip('💡 命星在冒險、主線故事和世界 BOSS 有用,' + b('鬥技場不能用') + ',比賽才公平!戰鬥紀錄出現 ✨ 就是命星在幫忙。');
@@ -33505,7 +33505,7 @@ function _nbgPageCst(cute){
     + B.s('多出來的命星')
     + B.items([
         ['🌫️', '虛無的命星', '6 命已滿的英雄再次取得時,轉為「虛無的命星」。'],
-        ['✨', '命星工坊', '召喚星空的「✨ 命星工坊」:同稀有度任意 3 顆(虛無或未點亮的角色命星)合成 1 顆自選命星;SR、SSR 分開計算,自選命星不能給 UR 或主角。'],
+        ['✨', '命星工坊', '召喚星空的「✨ 命星工坊」:同稀有度任意 3 顆(虛無或未點亮的角色命星)合成 1 顆自選命星;SR、SSR 分開計算,自選命星不能給 UR 或主角;SR/SSR 自選命星也可直接兌換未擁有的同稀有度英雄(0 命)。'],
         ['🔄', '星圖重置', '花 5000 知識幣,已點亮的命星全數退回,可重新分配或拿去合成。']
       ])
     + B.tip('💡 ' + b('命星只在冒險模式生效') + '(冒險關卡、主線劇情戰、世界 BOSS),鬥技場不生效以維持公平。借用好友英雄時會自動帶著好友本人點亮的命星,但借用者不能更動。命星效果設有全隊上限,不會無限疊加。');
@@ -41267,7 +41267,10 @@ function _openSummonTicketModal(){
       /* ★ v5.309.0 隨機卷套用祈願:顯示「這張券必出 X」;X 不在隨機池時(例:BOSS 同名英雄)券照樣可用 */
       let _wishT = '';
       try{ if(!isPick && typeof window._wishTicketTarget === 'function') _wishT = window._wishTicketTarget(tier) || ''; }catch(_){ _wishT = ''; }
-      const _wishXtra = (_wishT && _summonTicketUnrecorded(tier).indexOf(_wishT) < 0) ? 1 : 0;
+      /* ★ v5.345.0 指定英雄已擁有 ⇒ 這張券換他的 1 顆命星(不算「未收錄」人數,但券照樣可用) */
+      let _wishStar = false;
+      try{ _wishStar = !!_wishT && typeof window._wishTicketIsStar === 'function' && window._wishTicketIsStar(tier); }catch(_){ _wishStar = false; }
+      const _wishXtra = (_wishT && !_wishStar && _summonTicketUnrecorded(tier).indexOf(_wishT) < 0) ? 1 : 0;
       leftCount = leftCount + _wishXtra;
       /* ★ v5.339.0(老師「SSR英雄召喚卷在全收錄時目前無法使用，但有了命座系統應該要開放可以召喚」「UR、SR也是一樣」)—
          隨機卷:同稀有度沒有可抽的新英雄時,改成「隨機換一位已收錄英雄的 1 顆命星」(只挑本來就在隨機卷範圍內、未滿 6 命者) */
@@ -41276,13 +41279,14 @@ function _openSummonTicketModal(){
         try{ starCount = (typeof window._cstRandomTicketStarCandidates === 'function') ? (window._cstRandomTicketStarCandidates(tier).length | 0) : 0; }catch(_){ starCount = 0; }
         _rndStar = starCount > 0;
       }
-      const _canUse = have > 0 && (leftCount + starCount) > 0;
+      const _wishPlus = _wishStar ? 1 : 0;
+      const _canUse = have > 0 && (leftCount + starCount + _wishPlus) > 0;
       const _fnName = isPick ? '_openSummonTicketPickModal' : '_useSummonTicket';
-      const _btnTxt = isPick ? ('🌟 使用自選 ' + tier + ' 卷') : ('✨ 使用 ' + tier + ' 召喚卷' + (_rndStar ? '(換命星)' : ''));
+      const _btnTxt = isPick ? ('🌟 使用自選 ' + tier + ' 卷') : ('✨ 使用 ' + tier + ' 召喚卷' + ((_rndStar || _wishStar) ? '(換命星)' : ''));
       let _btnHtml;
       if(have <= 0){
         _btnHtml = '<div style="margin-top:8px;font-size:14px;color:#888;text-align:center;">尚未持有此召喚卷</div>';
-      } else if((leftCount + starCount) <= 0){
+      } else if((leftCount + starCount + _wishPlus) <= 0){
         // ★★ v5.97.0（學生回報「無法使用 SSR 隨機召喚券」）— 文案要講實話 ★★
         //   舊碼一律寫「已全收錄」，但真正的原因常常是「還沒開放的新英雄不入池」
         //   （v5.66.0 測試期凍結）⇒ 學生明明沒收滿卻被告知全收錄 ⇒ 以為券壞了。
@@ -41314,8 +41318,9 @@ function _openSummonTicketModal(){
         +   have + '</b> 張</div>'
         + '<div style="font-size:13px;color:#aabbcc;text-align:center;margin-top:4px;">'
         +   '尚有 <b style="color:' + accent + ';">' + leftCount + '</b> 名 ' + tier + ' 英雄未收錄</div>'
-        + (starCount > 0 ? ('<div style="font-size:12px;color:#ffd97a;text-align:center;margin-top:2px;">' + (_rndStar ? ('⭐ 已全收錄!這張券會從已收錄的 ' + starCount + ' 名中隨機換 1 顆命星') : ('⭐ 已收錄的 ' + starCount + ' 名可換成命星')) + '</div>') : '')
-        + (_wishT ? ('<div style="font-size:14px;font-weight:900;color:#ffe066;text-align:center;margin-top:4px;">🌠 祈願中:這張券必出「' + _wishT + '」</div>') : '')
+        + ((starCount > 0 && !_wishT) ? ('<div style="font-size:12px;color:#ffd97a;text-align:center;margin-top:2px;">' + (_rndStar ?('⭐ 已全收錄!這張券會從已收錄的 ' + starCount + ' 名中隨機換 1 顆命星') : ('⭐ 已收錄的 ' + starCount + ' 名可換成命星')) + '</div>') : '')
+        + (_wishT ? ('<div style="font-size:14px;font-weight:900;color:#ffe066;text-align:center;margin-top:4px;">🌠 祈願中:這張券必出「' + _wishT + '」' + (_wishStar ? '的 1 顆命星(你已經有他了)' : '') + '</div>'
+            + '<div style="font-size:11px;color:#e8d8a0;text-align:center;margin-top:2px;">用了就算本週第一次召喚 ' + tier + ',願望會用掉</div>') : '')
         + _btnHtml
         + '</div>';
     };
@@ -41594,6 +41599,15 @@ async function _useSummonTicket(tier){
     }catch(_eWishT){ _wishH = ''; }
     // ★ v5.310.0 等待確認的那一兩秒內,願望可能已被同裝置的召喚星空用掉 ⇒ 從這裡到記錄已用全是同步執行,最後再核一次
     try{ if(_wishH && (typeof window._wishTicketTarget !== 'function' || window._wishTicketTarget(tier) !== _wishH)) _wishH = ''; }catch(_eWishR){ _wishH = ''; }
+    /* ★ v5.345.0(老師「隨機卷也算本週第一次召喚出 SSR/SR」)— 指定英雄已擁有 ⇒ 這張券換指定英雄 1 顆命星並用掉願望
+       (走命座模組既有「先發命星 → 真的扣到券 → 原子落地」流程,確認框會先告訴學生) */
+    try{
+      if(_wishH && typeof window._wishTicketIsStar === 'function' && window._wishTicketIsStar(tier)
+         && typeof window._cstUseTicketForStar === 'function'){
+        window._cstUseTicketForStar(tier, _wishH, { random: true, wish: { h: _wishH, uid: _wishUid } });
+        return;
+      }
+    }catch(_eWs){ try{ console.warn('[祈願→命星]', _eWs); }catch(_){} }
     const _pool = _summonTicketUnrecorded(tier);
     if(!_pool.length && !_wishH){
       /* ★ v5.339.0 全收錄 ⇒ 改成隨機換一位已收錄英雄的 1 顆命星
@@ -52452,7 +52466,11 @@ function _heroRarityBadge(heroName, cardImgHeight){
       + '60%{border-color:#66ccff;box-shadow:0 0 12px rgba(102,204,255,0.5),0 0 22px rgba(102,204,255,0.25)}'
       + '80%{border-color:#cc66ff;box-shadow:0 0 12px rgba(204,102,255,0.5),0 0 22px rgba(204,102,255,0.25)}'
       + '100%{border-color:#ff66cc;box-shadow:0 0 12px rgba(255,102,204,0.5),0 0 22px rgba(255,102,204,0.25)}'
-      + '}';
+      + '}'
+      // ★ v5.344.0(老師 2026-11-03「英雄圖鑑個人頁左上稀有度標籤和命座按鈕在平板上縮小,會蓋住角色的臉」)
+      //   iPad(body.gc-tall)畫布變高、立繪寬 42% 不變 ⇒ 臉落在左上,60px 標籤會蓋住;平板改 36px、貼近邊角。
+      //   (標籤是 inline style,所以要 !important;PC、手機不受影響)
+      + 'body.gc-tall #hero-detail-rarity-badge{font-size:36px !important;padding:6px 18px !important;top:10px !important;left:10px !important;letter-spacing:1px !important;}';
     (document.head || document.documentElement).appendChild(_st);
   }catch(_){}
 })();
@@ -81550,6 +81568,98 @@ function makeRadar(dims, size) {
     _save();
     return { ok:true };
   };
+  /* ── ★ v5.345.0(老師 2026-11-03「0命星、未持有的英雄，召喚指定命星也可以召喚該英雄(0命)」)──
+   *   SR/SSR 自選命星也能選「還沒擁有」的同稀有度英雄 ⇒ 直接得到這位英雄(0 命),用掉 1 顆自選命星。
+   *   名單 = 同稀有度自選召喚卷挑得到的英雄(_summonTicketPickUniverse)扣掉已擁有、主角。
+   *   UR、R 不開放:UR 擁有權只認老師發放紀錄(2026-10-28 裁定)、R 卡不在召喚池,維持只能給已擁有者。
+   *   順序比照自選卷「先發英雄 → 驗證到手 → 才扣」:英雄沒寫進解鎖清單就整筆作廢,自選命星不扣;
+   *   扣完立刻把命星資料即時寫雲端(避免重新整理後自選命星復活)。 */
+  /* ── ★ v5.346.0(老師 2026-11-03「讓GM可以修改自己的存檔。包括持有知識幣、物品數量、命星數量等」「在GM選單中修改」)──
+   *   GM 選單「✏️ 修改我的存檔」用。只限 GM 帳號、只動自己的命星資料。
+   *   三槽合併 got/used 都取最大值 ⇒「減少」一律用加 used 達成(直接減 got 會在下次合併被蓋回來);增加用加 got。
+   *   英雄持有 0～6(點亮數超過持有時 _cstLit 會自動截斷);虛無/自選命星 0～99;主角命星是章節衍生值,不可改。 */
+  W._cstGmSelfList = function(){
+    var out = { heroes:[], pools:[] };
+    try{
+      if(!_ready()) return null;
+      Object.keys(_db()).forEach(function(k){
+        if(_isProtag(k)) return;
+        var d = D(), raw = (d.got[k] | 0) - (d.used[k] | 0);
+        if(!_owned(k) && raw <= 0) return;   /* 沒擁有又沒存命星的不列(清單太長) */
+        out.heroes.push({ k:k, r:W._cstRarity(k), held:W._cstHeld(k), lit:W._cstLit(k).length, owned:_owned(k) });
+      });
+      ['#void_SR', '#void_SSR', '#pick_R', '#pick_SR', '#pick_SSR', '#pick_UR'].forEach(function(k){ out.pools.push({ k:k, n:W._cstCount(k) }); });
+    }catch(e){ console.warn('[命座] GM 自改清單', e); return null; }
+    return out;
+  };
+  W._cstGmSelfSet = function(key, target){
+    try{
+      if(window._isAdminUser !== true) return { ok:false, why:'不是 GM 帳號' };
+      if(!_ready()) return { ok:false, why:'命星資料還沒載入' };
+      var k = /^#/.test(key) ? key : W._cstKey(key);
+      if(!k || _isProtag(k)) return { ok:false, why:'主角命星由主線章節決定,不能直接改' };
+      var isPool = /^#(void|pick)_(R|SR|SSR|UR)$/.test(k);
+      if(!isPool && !_db()[k]) return { ok:false, why:'命座表沒有這位英雄' };
+      var cap = isPool ? 99 : W._CST_MAX;
+      target = Math.max(0, Math.min(cap, parseInt(target, 10) || 0));
+      var d = D(), raw = (d.got[k] | 0) - (d.used[k] | 0);
+      var cur = isPool ? Math.max(0, raw) : W._cstHeld(k);
+      if(target === cur) return { ok:true, diff:0 };
+      if(target > cur){ d.got[k] = (d.got[k] | 0) + (target - Math.max(0, raw)); }
+      else { d.used[k] = (d.used[k] | 0) + (raw - target); }
+      _log('gm_self', k, target - cur, 'gm_self');
+      return { ok:true, diff:target - cur };
+    }catch(e){ return { ok:false, why:String(e && e.message || e) }; }
+  };
+  W._cstGmSelfCommit = function(){
+    try{
+      if(W._progressLoaded === true && typeof W._lxpsCloudInstantUnlock === 'function'){
+        var cf = W._cstSafeField();
+        if(cf && cf.constellationData_s) W._lxpsCloudInstantUnlock({ constellationData_s: cf.constellationData_s }, 'GM 自己修改命星');
+      }
+    }catch(e){ console.warn('[命座] GM 自改即時寫入', e); }
+    _save();
+    try{ if(typeof W._cstGridStarsRefresh === 'function') W._cstGridStarsRefresh(); }catch(_){}
+  };
+  W._cstPickNewCandidates = function(rar){
+    var out = [];
+    if(rar !== 'SR' && rar !== 'SSR') return out;
+    try{
+      var uni = (typeof W._summonTicketPickUniverse === 'function') ? (W._summonTicketPickUniverse(rar) || []) : [];
+      uni.forEach(function(n){
+        var k = W._cstKey(n);
+        if(!k || _isProtag(k) || _owned(k) || out.indexOf(k) >= 0) return;
+        if(W._cstRarity(k) !== rar) return;
+        out.push(k);
+      });
+    }catch(_){}
+    return out;
+  };
+  W._cstUsePickNew = function(rar, name, uidAtAsk){
+    var k = W._cstKey(name), pk = '#pick_' + rar;
+    if(rar !== 'SR' && rar !== 'SSR') return { ok:false, why:_T('這種自選命星不能換英雄', '此稀有度自選命星不可兌換英雄') };
+    if(!_ready()) return { ok:false, why:_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試') };
+    if(uidAtAsk && _uid12() !== uidAtAsk) return { ok:false, why:_T('帳號換過了,請重新打開命星工坊', '帳號已變更,請重新開啟命星工坊') };
+    try{ if(typeof W._lxpsUidDrift === 'function' && W._lxpsUidDrift()) return { ok:false, why:_T('帳號狀態不穩,等一下再試', '帳號狀態異常,請稍候再試') }; }catch(_){}
+    if(W._cstCount(pk) <= 0) return { ok:false, why:_T('沒有這種自選命星', '沒有此稀有度的自選命星') };
+    if(W._cstPickNewCandidates(rar).indexOf(k) < 0) return { ok:false, why:_T('這位英雄不能選(可能已經有了)', '此角色不符合條件(可能已擁有)') };
+    /* ① 先發英雄並驗證到手 */
+    try{ if(typeof advSaveUnlockedHero === 'function') advSaveUnlockedHero(k, 'cst_pick_' + rar.toLowerCase()); }catch(eU){ console.warn('[命座] 自選命星換英雄:解鎖失敗', eU); }
+    if(!_owned(k)) return { ok:false, why:_T('英雄沒有成功拿到,自選命星還在', '英雄解鎖失敗,自選命星未扣除') };
+    /* ② 到手才扣自選命星 */
+    var d = D();
+    d.used[pk] = (d.used[pk] | 0) + 1;
+    _log('pickhero', k, 0, pk);
+    try{
+      if(W._progressLoaded === true && typeof W._lxpsCloudInstantUnlock === 'function' && typeof W._cstSafeField === 'function'){
+        var cf = W._cstSafeField();
+        if(cf && cf.constellationData_s) W._lxpsCloudInstantUnlock({ constellationData_s: cf.constellationData_s }, rar + '自選命星→英雄:' + k);
+      }
+    }catch(eA){ console.warn('[命座] 自選命星換英雄:命星資料即時寫入失敗(交 gameCloudSave)', eA); }
+    _save();
+    try{ if(typeof _setNavDot === 'function') _setNavDot('英雄', true); }catch(_){}
+    return { ok:true };
+  };
 
   /* ── UR 替換卷(13甲):被換掉的 UR 身上所有命星(含已點亮)退回成等量「UR 自選命星」── */
   W._cstOnURSwap = function(fromName){
@@ -81764,17 +81874,25 @@ function makeRadar(dims, size) {
   W._cstUseTicketForStar = async function(tier, name, opts){
     if(tier !== 'SR' && tier !== 'SSR' && tier !== 'UR') tier = 'UR';
     var isRnd = !!(opts && opts.random) && tier !== 'UR';
+    /* ★ v5.345.0 opts.wish={h,uid}:隨機卷祈願中、指定英雄已擁有 ⇒ 扣隨機卷、固定換指定英雄 1 顆命星、用掉本週願望 */
+    var wish = (isRnd && opts && opts.wish && opts.wish.h) ? opts.wish : null;
+    if(wish) name = wish.h;
     var tid = 'summon_ticket_' + tier.toLowerCase() + (isRnd ? '' : '_pick');
     var srcTag = 'ticket_' + tier.toLowerCase() + (isRnd ? '' : '_pick');
     var tkNm = tier + (isRnd ? ' 召喚卷' : ' 自選卷');
     var tkLog = tier + (isRnd ? '召喚卷' : '自選卷');
-    var _cands = function(){ return isRnd ? W._cstRandomTicketStarCandidates(tier) : W._cstTicketStarCandidates(tier); };
-    var _okName = function(){ var cl = _cands(); return isRnd ? cl.length > 0 : cl.indexOf(name) >= 0; };
+    var _cands = function(){ return (isRnd && !wish) ? W._cstRandomTicketStarCandidates(tier) : W._cstTicketStarCandidates(tier); };
+    var _okName = function(){ var cl = _cands(); return (isRnd && !wish) ? cl.length > 0 : cl.indexOf(name) >= 0; };
+    /* 願望還是這一位、還沒被用掉(確認框開著時別台裝置/召喚星空可能剛用掉) */
+    var _wishStill = function(){ try{ return !wish || (typeof W._wishTicketTarget === 'function' && W._wishTicketTarget(tier) === wish.h); }catch(_){ return false; } };
     try{
       if(!_ready()){ _toast(_T('資料還在載入,等一下再試', '資料尚未載入完成,請稍候再試'), '#ffaa44'); return; }
       if(!_okName()){ _toast(isRnd ? _T('沒有可以換命星的 ' + tier + ' 了', '已無可轉為命星的 ' + tier + ' 英雄') : _T('這位 ' + tier + ' 不能選', '此 ' + tier + ' 不符合條件(未擁有或已滿 6 命)'), '#ffaa44'); return; }
       if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }
-      var msg = isRnd
+      var msg = wish
+        ? _T('🌠 祈願中!這是你本週第一次召喚 ' + tier + '。\n「' + name + '」你已經有了,這張 ' + tier + ' 召喚卷會換成「' + name + '」的 1 顆命星,並用掉本週的 ' + tier + ' 願望。\n(現在 ' + W._cstHeld(name) + '/6;不想這樣的話,先到召喚星空「祈願」取消指定)',
+             '🌠 祈願生效:本週首次 ' + tier + ' 召喚。\n「' + name + '」已收錄,本張 ' + tier + ' 召喚卷將轉為「' + name + '」命星 ×1,並消耗本週 ' + tier + ' 願望。\n(目前命星 ' + W._cstHeld(name) + '/6;如不需要,請先至召喚星空「祈願」取消指定)')
+        : isRnd
         ? _T(tier + ' 英雄你都收集齊了!\n要用 1 張 ' + tier + ' 召喚卷,隨機換一位 ' + tier + ' 的 1 顆命星嗎?\n(還沒滿 6 命的有 ' + _cands().length + ' 位)',
              '您已收錄全部 ' + tier + ' 英雄。\n確定消耗 1 張 ' + tier + ' 召喚卷,隨機轉為一位已收錄 ' + tier + ' 英雄的 1 顆命星?\n(可轉命星:' + _cands().length + ' 位)')
         : _T('要用 1 張 ' + tier + ' 自選卷,換「' + name + '」的 1 顆命星嗎?\n(現在 ' + W._cstHeld(name) + '/6)',
@@ -81791,7 +81909,8 @@ function makeRadar(dims, size) {
           /* ★ v5.279.0 防幽靈卷:券實例還沒從雲端載入時不准用(否則扣的是背包數字、實例沒消耗,下次登入券會復活) */
           try{ if(typeof W._isTicketInstId === 'function' && W._isTicketInstId(tid) && !W._ticketHydrated){ _toast(_T('召喚卷資料還在載入,等一下再試', '召喚卷資料尚未載入完成,請稍候再試'), '#ffaa44'); return; } }catch(_){}
           if(((typeof backpackGet === 'function') ? backpackGet(tid) : 0) <= 0){ _toast(_T('沒有 ' + tkNm + '了', '沒有 ' + tkNm), '#ffaa44'); return; }
-          if(isRnd){   /* ★ v5.339.0 隨機模式:按下確認這一刻才抽,抽的是當下仍可換的名單 */
+          if(wish && !_wishStill()){ _toast(_T('🌠 本週願望已經用掉了,請重新打開召喚卷', '🌠 本週願望已使用,請重新開啟召喚卷'), '#ffaa44'); return; }
+          if(isRnd && !wish){   /* ★ v5.339.0 隨機模式:按下確認這一刻才抽,抽的是當下仍可換的名單 */
             var _cl = _cands();
             if(!_cl.length){ _toast(_T('沒有可以換命星的 ' + tier + ' 了', '已無可轉為命星的 ' + tier + ' 英雄'), '#ffaa44'); return; }
             name = _cl[Math.floor(Math.random() * _cl.length)];
@@ -81823,6 +81942,8 @@ function makeRadar(dims, size) {
             _popMine();
             _toast(_T('券沒有扣成功,命星沒有發,券還在', '扣券失敗,未發放命星'), '#ff8844'); return;
           }
+          /* ★ v5.345.0 命星到手、券也扣到 ⇒ 立刻記為本週願望已實現(本機＋雲端 arrayUnion 永久紀錄,與召喚星空同一份) */
+          if(wish){ try{ if(typeof W._wishTicketCommit === 'function') W._wishTicketCommit(tier, name, wish.uid); }catch(_eWc){ console.warn('[祈願] 隨機卷命星記錄', _eWc); } }
           /* ★ v5.279.0 扣券＋命星「同一次」即時原子寫入雲端(背包、券實例、命星三者一起落地,含重試)。
              舊 UR 流程是背包走快車道、命星走 gameCloudSave 慢車道 ⇒ App 被切走可能「券扣了、命星沒上雲」。
              _cstSafeField 在命星資料未載入時回空物件 ⇒ 這裡 _ready() 已保證載入,不會拿空資料蓋雲端。 */
@@ -81846,6 +81967,7 @@ function makeRadar(dims, size) {
           if(isRnd){ try{ var m2 = document.getElementById('_summon-ticket-modal'); if(m2) m2.remove(); }catch(_){} }   /* ★ v5.339.0 隨機卷從主面板來 */
           try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
           _toast(_T('⭐ ' + name + ' 拿到 1 顆命星!\n到英雄圖鑑「✨ 命座」點亮它吧!', '⭐ ' + name + ' 獲得命星 ×1\n請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
+          if(wish){ setTimeout(function(){ try{ _toast(_T('🌠 願望實現!(本週 ' + tier + ' 願望已用掉,下週一早上 8:00 重置)', '🌠 願望已實現(本週 ' + tier + ' 願望已使用,下週一 08:00 重置)'), '#ffe066'); }catch(_){} }, 2600); }
         }catch(e2){ console.warn('[命座] 自選卷轉命星例外', e2); _toast('發生錯誤:' + (e2 && e2.message ? e2.message : e2), '#ff8844'); }
       };
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if((await window._lxpsConfirm(msg))) go();
@@ -82016,6 +82138,8 @@ function makeRadar(dims, size) {
       '#hero-detail-cst-btn.hot{animation:cstSbHot 1.4s ease-in-out infinite;}',
       '@keyframes cstSbHot{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 10px rgba(255,210,90,0.45);}50%{box-shadow:0 4px 16px rgba(0,0,0,0.6),0 0 26px rgba(255,220,110,1);}}',
       '.cst-gfree{animation:cstPulse 1.2s ease-in-out infinite;}',
+      /* ★ v5.344.0 iPad(body.gc-tall):命座按鈕縮小、貼近邊角,不蓋住角色的臉(位置仍由 JS 排在稀有度標籤正下方) */
+      'body.gc-tall #hero-detail-cst-btn{left:10px;min-height:50px;padding:5px 14px;gap:6px;font-size:20px;border-width:2px;border-radius:12px;} body.gc-tall #hero-detail-cst-btn .cst-sb-n{font-size:16px;} body.gc-tall #hero-detail-cst-btn .cst-sb-free{font-size:15px;padding:2px 8px;}',
       /* 圖鑑詳情在遊戲畫布內、手機橫放整張畫布縮到約 0.4 倍 ⇒ 反向放大,讓實際按鈕高度 ≥ 44px(三平台鐵律) */
       '@media (orientation:landscape) and (max-height:520px){#hero-detail-cst-btn{font-size:46px;min-height:124px;padding:12px 26px;gap:12px;border-width:4px;border-radius:22px;} #hero-detail-cst-btn .cst-sb-n{font-size:34px;} #hero-detail-cst-btn .cst-sb-free{font-size:32px;padding:4px 14px;}}',
       /* iPad(1024~1366 寬):星圖略小、說明字略大 */
@@ -82444,8 +82568,8 @@ function makeRadar(dims, size) {
     var head = '<div class="cst-card" role="dialog" aria-modal="true">'
       + '<button type="button" class="cst-x" data-cst-sy="close" aria-label="關閉">✕</button>'
       + '<div class="cst-title">' + _T('✨ 命星合成屋', '✨ 命星工坊') + '</div>'
-      + '<div class="cst-lore">' + _T('3 顆同樣稀有度的命星(虛無的命星或還沒點亮的角色命星)→ 合成 1 顆「自選命星」,可以送給自己想要的英雄!SR 和 SSR 不能混在一起。',
-                                      '同稀有度任意 3 顆「虛無的命星」或「未點亮的角色命星」可合成 1 顆同稀有度「自選命星」,指定給已擁有、未滿 6 命的角色。SR 與 SSR 分開計算、不可互換;UR 命星與主角命星不能合成。') + '</div>'
+      + '<div class="cst-lore">' + _T('3 顆同樣稀有度的命星(虛無的命星或還沒點亮的角色命星)→ 合成 1 顆「自選命星」,可以送給自己想要的英雄!還沒有的 SR/SSR 英雄也可以選,會直接得到他(0 命)。SR 和 SSR 不能混在一起。',
+                                      '同稀有度任意 3 顆「虛無的命星」或「未點亮的角色命星」可合成 1 顆同稀有度「自選命星」,指定給已擁有、未滿 6 命的角色;SR/SSR 自選命星亦可選擇未擁有的同稀有度英雄,直接獲得該英雄(0 命)。SR 與 SSR 分開計算、不可互換;UR 命星與主角命星不能合成。') + '</div>'
       + '<div class="cst-tabs">' + ['R', 'SR', 'SSR', 'UR'].map(function(t){   /* ★ v5.314.0 加 R 分頁(只有「使用自選命星」,不能合成) */
           return '<button type="button" class="cst-tab' + (t === rar ? ' on' : '') + '" data-cst-sy="tab" data-v="' + t + '">' + t + '(' + _T('自選 ', '自選 ') + W._cstCount('#pick_' + t) + ((t === 'SR' || t === 'SSR') ? '・' + _T('虛無 ', '虛無 ') + W._cstCount('#void_' + t) : '') + ')</button>';
         }).join('') + '</div>';
@@ -82475,12 +82599,23 @@ function makeRadar(dims, size) {
     body += '<div class="cst-sec"><h4>' + ((rar === 'SR' || rar === 'SSR') ? '② ' : '') + _T('使用自選命星', '使用自選命星') + '(' + _T('有 ', '持有 ') + picks + ')</h4>';
     if(rar === 'UR') body += '<div style="font-size:14px;color:#cdd6ff;margin-bottom:6px;">' + _T('UR 自選命星是 UR 替換卷退回來的,或老師發的,只能給你已經有的 UR。', 'UR 自選命星來自 UR 替換卷退回或老師發放,只能指定已擁有的 UR。') + '</div>';
     if(rar === 'R') body += '<div style="font-size:14px;color:#cdd6ff;margin-bottom:6px;">' + _T('R 自選命星在「不可思議超商」買(每週限購 1 個),或老師發的;只能給你已經有的 R 卡(主角不行),不能拿去合成。', 'R 自選命星可於不可思議超商購買(每週限購 1 個)或由老師發放;只能指定已擁有的 R 卡(主角除外),不可用於合成。') + '</div>';   /* ★ v5.314.0 */
-    if(!cands.length) body += '<div class="cst-note">' + _T('沒有可以選的英雄(要已經擁有、命星還沒滿 6 顆)。', '沒有符合條件的角色(需已擁有且命星未滿 6)。') + '</div>';
+    if(!cands.length && !W._cstPickNewCandidates(rar).length) body += '<div class="cst-note">' + _T('沒有可以選的英雄(要已經擁有、命星還沒滿 6 顆)。', '沒有符合條件的角色(需已擁有且命星未滿 6)。') + '</div>';
     else {
       body += '<div class="cst-chips">';
       cands.forEach(function(k){
         var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="">' : '⭐';
         body += '<button type="button" class="cst-chip" data-cst-sy="pick" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + _esc(k) + ' ' + W._cstHeld(k) + '/6</button>';
+      });
+      body += '</div>';
+    }
+    /* ★ v5.345.0 還沒擁有的 SR/SSR:自選命星直接換到這位英雄(0 命) */
+    var candsNew = W._cstPickNewCandidates(rar);
+    if(candsNew.length){
+      body += '<div style="font-size:14px;font-weight:800;color:#ffd6f0;margin:12px 0 6px;">' + _T('🆕 還沒有的 ' + rar + ' → 用 1 顆自選命星直接得到這位英雄(0 命)', '🆕 未擁有的 ' + rar + ' → 消耗 1 顆自選命星直接獲得該英雄(0 命)') + '</div>';
+      body += '<div class="cst-chips">';
+      candsNew.forEach(function(k){
+        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="">' : '⭐';
+        body += '<button type="button" class="cst-chip" data-cst-sy="pickhero" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + _esc(k) + ' ' + _T('🆕 新英雄', '🆕 未擁有') + '</button>';
       });
       body += '</div>';
     }
@@ -82541,6 +82676,20 @@ function makeRadar(dims, size) {
       };
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if((await window._lxpsConfirm(msg2))) go2();
     }
+    if(a === 'pickhero'){   /* ★ v5.345.0 自選命星換未擁有英雄(0 命) */
+      var rar3 = _syn.tab, k3 = t.getAttribute('data-k'), uidAsk = _uid12();
+      var msg3 = _T('要用 1 顆 ' + rar3 + ' 自選命星,直接得到「' + k3 + '」嗎?\n(拿到時是 0 命,之後的命星再慢慢收集)', '確定消耗 1 顆 ' + rar3 + ' 自選命星,直接獲得「' + k3 + '」?\n(獲得時為 0 命)');
+      var go3 = function(){
+        if(W._cstPickHeroBusy) return;
+        W._cstPickHeroBusy = true; setTimeout(function(){ W._cstPickHeroBusy = false; }, 1500);
+        var r = W._cstUsePickNew(rar3, k3, uidAsk);
+        if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
+        try{ playSfx('sfx-medal-unlock', 0.85); }catch(_){}
+        _toast(_T('🎉 「' + k3 + '」加入你的隊伍了!到英雄圖鑑看看吧!', '🎉 已獲得「' + k3 + '」,請至英雄圖鑑查看'), '#ffd97a', 4200);
+        _renderSynth();
+      };
+      if(typeof _customConfirm === 'function') _customConfirm(_esc(msg3), go3); else if((await window._lxpsConfirm(msg3))) go3();
+    }
   }
 })();
 
@@ -82556,6 +82705,8 @@ function makeRadar(dims, size) {
  *   ★ v5.309.0(2026-10-29・老師「隨機召喚卷也套用祈願」):SSR/SR 隨機召喚卷也算「召喚」——願望未實現且
  *   指定英雄還沒擁有 ⇒ 那張券必出指定英雄並用掉願望(見 _wishTicketTarget / _wishTicketResolve / _wishTicketCommit);
  *   指定英雄已擁有 ⇒ 隨機卷不套用(隨機卷保證新英雄,不拿去換命星),願望留給星空。
+ *   ★ v5.345.0(2026-11-03・老師「隨機SSR/SR召喚卷的召喚次數也包含在該週第一次召喚出SSR/SR次數內」)取代上一行:
+ *   指定英雄已擁有 ⇒ 隨機卷一樣算本週第一次,換成指定英雄的 1 顆命星並用掉願望(_wishTicketIsStar → _cstUseTicketForStar opts.wish)。
  * 【防洗次數(老師需求 2)】
  *   ① 週別用「伺服器時間」算:開召喚星空/開祈願視窗/召喚前取 version.json 回應的 Date 標頭
  *     求出時差,調快裝置時鐘也跳不到下一週;取不到伺服器時間 ⇒ 祈願暫停(不消耗、不套用,也不讓這抽白白浪費)。
@@ -82805,6 +82956,7 @@ function makeRadar(dims, size) {
   /* ── ★ v5.309.0(2026-10-29・老師「隨機召喚卷也套用祈願」)SSR/SR 隨機召喚卷 ──
    *   本週該稀有度的願望還沒實現、而且指定英雄「還沒擁有」⇒ 這張隨機卷必出指定英雄,並消耗願望(與星空同一份紀錄、同一套防洗)。
    *   指定英雄已擁有(星空會轉命星)⇒ 隨機卷不套用、願望保留給星空:隨機卷本來保證新英雄,換成 1 顆命星對學生是吃虧。
+   *   ★ v5.345.0 老師改裁定:隨機卷一律算本週第一次 ⇒ 已擁有時換指定英雄 1 顆命星並用掉願望(使用前確認框會講清楚)。
    *   一定要先向伺服器確認(時間+雲端已用紀錄)才套用;確認不了 ⇒ 券不扣、願望不動(比照星空擋住召喚)。 */
   W._wishTicketTarget = function(tier){   /* 同步(不連線):這張隨機卷「可能」套用祈願的指定英雄,沒有回 '' */
     try{
@@ -82813,9 +82965,15 @@ function makeRadar(dims, size) {
       var s = _st();
       if(!_active(tier)) return '';
       var h = s[tier].h;
-      if(!h || _owned(h)) return '';
+      /* ★ v5.345.0(老師「讓隨機SSR/SR召喚卷的召喚次數也包含在該週第一次召喚出SSR/SR次數內」)——
+         取代 v5.309.0「指定英雄已擁有 ⇒ 隨機卷不套用」:已擁有也一樣算本週第一次 ⇒ 這張券換成指定英雄的 1 顆命星(與召喚星空同規則)。
+         滿 6 命/不開放由 _okHero 擋(願望保留,券照原本規則用)。 */
+      if(!h) return '';
       return _okHero(tier, h) ? h : '';
     }catch(_){ return ''; }
+  };
+  W._wishTicketIsStar = function(tier){   /* ★ v5.345.0 這張隨機卷的願望會變成「指定英雄的 1 顆命星」(已擁有) */
+    try{ var h = W._wishTicketTarget(tier); return !!h && _owned(h); }catch(_){ return false; }
   };
   W._wishTicketResolve = function(tier){   /* 非同步:確認後回 { h:指定英雄或'', block:是否要擋下(券不扣), msg } */
     try{
@@ -82961,7 +83119,7 @@ function makeRadar(dims, size) {
     var h = '<div class="wcard" role="dialog" aria-modal="true"><button type="button" class="wx" data-w="close" aria-label="關閉">✕</button>'
       + '<div class="wtitle">🌠 祈願之星</div>'
       + '<div class="wlore">每週可以各指定 <b>1 位 SSR</b> 和 <b>1 位 SR</b> 英雄。這週第一次在召喚星空召喚出 SSR(或 SR)英雄,或是第一次用 SSR(或 SR)<b>隨機召喚卷</b>時,<b>一定是你指定的英雄</b>!<br>'
-      + '願望實現後要等<b>下週一早上 8:00</b> 才能再許願;還沒實現前隨時可以換人。已經擁有的英雄在召喚星空會變成 1 顆命星(隨機召喚卷只在你還沒擁有他時才套用)。(寵物不算英雄)</div>'
+      + '願望實現後要等<b>下週一早上 8:00</b> 才能再許願;還沒實現前隨時可以換人。已經擁有的英雄會變成 1 顆命星(召喚星空和隨機召喚卷都一樣)。(寵物不算英雄)</div>'
       + '<div class="wtabs">' + TIERS.map(function(k){
           var y = s[k], lab = y.used ? '✅ 已實現' : (y.h ? '🌠 UP中' : '可許願');
           return '<button type="button" class="wtab' + (k === t ? ' on' : '') + '" data-w="tab" data-v="' + k + '">' + k + '(' + lab + ')</button>';
