@@ -32204,7 +32204,7 @@ const BACKPACK_ITEM_DEF = {
   'summon_ticket_sr_pick':  { name:'SR 自選召喚卷',  icon:'✨', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SR 英雄中,親自挑選一名加入隊伍!已經收錄的 SR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
   // ★ v3.13.82 — 至寶召喚卷(GM 課堂獎勵發放新增):隨機券 = 直接抽 1 件未擁有的台灣至寶;自選券 = 從未擁有的至寶中親自挑 1 件。已全收錄時自動轉至寶經驗卷軸 ×5。
   'summon_ticket_treasure':      { name:'隨機至寶召喚卷', icon:'💎', desc:'閃耀寶石般的召喚卷!使用後必定獲得一件隨機「尚未擁有」的台灣至寶!(若至寶已全收齊,改贈 至寶經驗卷軸 ×5)', type:'use', useLabel:'使用(召喚至寶)' },
-  'summon_ticket_treasure_pick': { name:'自選至寶召喚卷', icon:'💠', desc:'珍貴的自選至寶召喚卷!使用時可從所有「尚未擁有」的至寶（台灣 10 + 龍王 8 件）中,親自挑選一件加入收藏!(若至寶已全收齊,改贈 至寶經驗卷軸 ×5)', type:'use', useLabel:'使用(自選至寶)' },
+  'summon_ticket_treasure_pick': { name:'自選至寶召喚卷', icon:'💠', desc:'珍貴的自選至寶召喚卷!使用時可從所有「尚未擁有」的至寶（台灣、寶島二部曲、龍王、中國古代,之後新推出的至寶也自動加入）中,親自挑選一件加入收藏!(若至寶已全收齊,改贈 至寶經驗卷軸 ×5)', type:'use', useLabel:'使用(自選至寶)' },
   // ★ v3.17.6(老師需求 2)— GM 發放的召喚卷「獨立道具」:與學生自己合成/獲得的召喚卷永久區分,
   //   名稱標「GM獎勵…」、召喚星空另設「🎁 老師發放的召喚卷」專區、背包說明顯示老師發放理由+時間。
   //   使用時走 _useGmTicket(暫時實體化對應 base 卷 → 沿用既有使用流程,不動核心召喚引擎)。
@@ -32214,7 +32214,7 @@ const BACKPACK_ITEM_DEF = {
   'gm_summon_ticket_sr_pick':      { name:'🎁GM獎勵·SR自選召喚卷',   icon:'✨', desc:'老師親自發放的獎勵自選卷!前往召喚星空使用,可從「尚未收錄」的 SR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_sr_pick' },
   'gm_summon_ticket_ur_pick':      { name:'🎁GM獎勵·UR自選召喚卷',   icon:'👑', desc:'老師親自發放的極稀有 UR 自選卷!前往召喚星空使用,可從「尚未收錄」的 UR 英雄中親自挑選一名!已收錄的也能選,會換成 1 顆命星。', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_ur_pick' },
   'gm_summon_ticket_treasure':     { name:'🎁GM獎勵·隨機至寶召喚卷',  icon:'💎', desc:'老師親自發放的獎勵至寶卷!使用後必定獲得一件隨機「尚未擁有」的台灣至寶!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_treasure' },
-  'gm_summon_ticket_treasure_pick':{ name:'🎁GM獎勵·自選至寶召喚卷',  icon:'💠', desc:'老師親自發放的獎勵自選至寶卷!使用時可從所有「尚未擁有」的至寶（台灣 10 + 龍王 8 件）中親自挑一件!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_treasure_pick' },
+  'gm_summon_ticket_treasure_pick':{ name:'🎁GM獎勵·自選至寶召喚卷',  icon:'💠', desc:'老師親自發放的獎勵自選至寶卷!使用時可從所有「尚未擁有」的至寶（台灣、寶島二部曲、龍王、中國古代,之後新推出的也自動加入）中親自挑一件!', type:'use', useLabel:'前往召喚星空使用', _gmReward:true, _base:'summon_ticket_treasure_pick' },
   // ★ v3.13.95(2026-06-09)— 靈魂碎片系統:打 BOSS 機率解鎖關「沒解鎖」時的安慰獎。
   //   ★ v3.15.42乙起改「手動合成」、★ v3.15.54 門檻減半:集滿(SSR 20 / SR 10)在召喚星空🔨手動合成自選召喚卷。
   //   可賣店換知識幣、可贈送好友(送出方加友情之心)。不列入「一鍵賣出」(SHOP_SELL_ITEMS 不含),
@@ -39143,18 +39143,19 @@ function openShopOverlay(){
 //     2. SR 英雄召喚卷     = 15 證
 //     3. 超越極限果實      = 10 證
 //     4. 豪華典藏經驗書    =  3 證
-//     5. 至寶召喚卷        = 40 證(★ v3.15.54 起含台灣+龍王系列)
+//     5. 至寶召喚卷        = 40 證(★ v3.15.54 起含台灣+龍王系列;★ v5.348.0 起發自選至寶卷、可挑全部至寶,見 _lxpsAllTreasureIds)
 //     6. 至寶經驗卷軸      =  5 證
 //     7. 知識幣 1 萬       =  5 證
 //     8. 召喚水晶          =  3 證
 const ARENA_EXCHANGE_ITEMS = [
-  { id:'arena_x_ssr_summon',     name:'SSR 英雄召喚卷',    icon:'🌟', cost:30, desc:'獲得 SSR 英雄召喚卷 ×1，到召喚星空使用（必得 1 名未收錄 SSR；已收齊可保留）' },
-  { id:'arena_x_sr_summon',      name:'SR 英雄召喚卷',     icon:'✨', cost:15, desc:'獲得 SR 英雄召喚卷 ×1，到召喚星空使用（必得 1 名未收錄 SR；已收齊可保留）' },
+  /* ★ v5.348.0 說明對齊現況:全收錄後不是「保留」,而是換 1 名已收錄英雄的命星(v5.339.0 起) */
+  { id:'arena_x_ssr_summon',     name:'SSR 英雄召喚卷',    icon:'🌟', cost:30, desc:'獲得 SSR 英雄召喚卷 ×1，到召喚星空使用（必得 1 名未收錄 SSR；全部收齊改換已收錄英雄 1 顆命星）' },
+  { id:'arena_x_sr_summon',      name:'SR 英雄召喚卷',     icon:'✨', cost:15, desc:'獲得 SR 英雄召喚卷 ×1，到召喚星空使用（必得 1 名未收錄 SR；全部收齊改換已收錄英雄 1 顆命星）' },
   { id:'arena_x_burst_fruit',    name:'超越極限果實',      icon:'🍎', cost:10, desc:'極限爆發之果,提升 1 級爆發等級' },
   { id:'arena_x_exp_book',       name:'豪華典藏經驗書',    icon:'📚', cost:3,  desc:'大量英雄經驗,加速練等' },
   /* ★ v5.306.0 老師「鬥技場追加技能升級書販賣,沒有限購」 */
   { id:'arena_x_skill_book',     name:'技能升級書',        icon:'📖', cost:2,  desc:'為 1 名英雄的一個技能提升 1 級(不限購)' },
-  { id:'arena_x_treasure_summon',name:'自選至寶召喚卷',    icon:'💠', cost:40, desc:'獲得 自選至寶召喚卷 ×1，到召喚星空自己挑 1 件未擁有至寶（台灣 10 + 龍王 8 件，可挑龍王）' },
+  { id:'arena_x_treasure_summon',name:'自選至寶召喚卷',    icon:'💠', cost:40, desc:'獲得 自選至寶召喚卷 ×1，到召喚星空自己挑 1 件未擁有至寶（全部至寶都能挑：台灣、寶島二部曲、龍王、中國古代，之後新推出的也自動加入）' },
   { id:'arena_x_treasure_exp',   name:'至寶經驗卷軸',      icon:'📜', cost:5,  desc:'提升 1 件至寶的經驗值' },
   { id:'arena_x_coins_10k',      name:'知識幣 1 萬',       icon:'💰', cost:5,  desc:'10,000 知識幣' },
   { id:'arena_x_summon_crystal', name:'召喚水晶',          icon:'🔮', cost:3,  desc:'用於各種召喚的水晶' },
@@ -39264,7 +39265,10 @@ const _ARENA_DRAGON_TREASURE_IDS = [
 function _arenaGrantTreasureVoucher(){
   try{
     // 台灣 10 件 + 龍王 8 件合併池(只在鬥技場至寶卷生效)
-    var ids = (typeof SUMMON_RANDOM_TREASURES !== 'undefined' && Array.isArray(SUMMON_RANDOM_TREASURES)) ? SUMMON_RANDOM_TREASURES.slice() : [];
+    // ★ v5.348.0 — 舊版直接發至寶的備用路徑(現行兌換發「自選至寶卷」,本函式已無呼叫者):池同步改成全部至寶
+    var ids = (typeof window._lxpsAllTreasureIds === 'function' && window._lxpsAllTreasureIds().length)
+      ? window._lxpsAllTreasureIds()
+      : ((typeof SUMMON_RANDOM_TREASURES !== 'undefined' && Array.isArray(SUMMON_RANDOM_TREASURES)) ? SUMMON_RANDOM_TREASURES.slice() : []);
     try{
       _ARENA_DRAGON_TREASURE_IDS.forEach(function(_dId){
         // 只加實際存在於 TAIWAN_TREASURES 的龍王至寶,且避免重複
@@ -39335,7 +39339,7 @@ function _arenaGrantExchangeItem(it){
       case 'arena_x_treasure_summon':
         if(typeof backpackAdd === 'function') backpackAdd('summon_ticket_treasure_pick', 1);
         try{ if(typeof window._lxpsLogExtraTicketGrant === 'function') window._lxpsLogExtraTicketGrant('summon_ticket_treasure_pick', 'arena'); }catch(_){}
-        return '✅ 兌換成功！獲得 自選至寶召喚卷 ×1 💠（請到召喚星空挑選，含龍王至寶）';
+        return '✅ 兌換成功！獲得 自選至寶召喚卷 ×1 💠（請到召喚星空挑選，全部至寶都能挑）';
       /* ★ v4.83.0 主角卡片背景：鬥技場場景圖(鬥技之證 ×20)
        *   帳本走 avatarCard.unlock（key = bg:<id>），與其他背景同一組鍵。
        *   avatar_db.js 未載入 → 實話告知且不扣點(回傳失敗訊息前本函式已在扣點後，
@@ -39536,6 +39540,118 @@ window._arenaShowDmgRank = function(){
   }catch(e){ console.warn('[鬥技場傷害排行顯示]', e); }
 };
 
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.348.0(2026-11-04・老師「在商品中補充可召喚角色/至寶的清單」)— 鬥技場召喚卷「📋 可召喚清單」
+//   清單一律用「召喚星空實際使用卷時的同一組條件」即時算出,不寫死名單 ⇒ 之後新英雄/新至寶自動出現:
+//   ・SSR/SR 英雄卷:與 _summonTicketUnrecorded(隨機卷)相同的條件(排除 BOSS 同名英雄、測試期角色、沒有資料的英雄),
+//     只是不先濾掉已擁有,改成標示「✅ 已擁有 / 🆕 還沒有」
+//   ・自選至寶卷:window._lxpsAllTreasureIds()(全部至寶)
+// ════════════════════════════════════════════════════════════════════
+window._lxpsTicketHeroFullPool = function(rarity){
+  try{
+    var _ok = function(n){
+      if(typeof _bossHeroNoRandom === 'function' && _bossHeroNoRandom(n)) return false;
+      if(typeof _summonTestPhaseLocked === 'function' && _summonTestPhaseLocked(n)) return false;
+      if(typeof _lxpsHeroDataReady === 'function' && !_lxpsHeroDataReady(n)) return false;
+      return true;
+    };
+    if(rarity === 'SSR'){
+      var _p = (typeof SUMMON_RARE_HEROES !== 'undefined' && Array.isArray(SUMMON_RARE_HEROES)) ? SUMMON_RARE_HEROES : [];
+      return _p.filter(_ok);
+    }
+    var _all = (typeof ADMIN_ALL_HEROES !== 'undefined' && Array.isArray(ADMIN_ALL_HEROES)) ? ADMIN_ALL_HEROES : [];
+    return _all.filter(function(n){ return (typeof _getHeroRarity === 'function' && _getHeroRarity(n) === 'SR') && _ok(n); });
+  }catch(_){ return []; }
+};
+var _ARENA_POOL_KIND = { arena_x_ssr_summon:'SSR', arena_x_sr_summon:'SR', arena_x_treasure_summon:'TREASURE' };
+function _arenaPoolBtnHtml(it){
+  var k = it && _ARENA_POOL_KIND[it.id];
+  if(!k) return '';
+  return '<button class="_arenaPoolBtn" data-kind="' + k + '" '
+    + 'style="margin-top:6px;padding:4px 12px;font-size:12px;font-weight:800;cursor:pointer;'
+    + 'background:rgba(40,70,110,0.75);border:1.5px solid #88c8ff;color:#d6ecff;border-radius:6px;'
+    + 'font-family:inherit;white-space:nowrap;">📋 可召喚清單</button>';
+}
+function _arenaShowPoolList(kind){
+  try{
+    try{ var _old = document.getElementById('arenaPoolListOverlay'); if(_old) _old.remove(); }catch(_){}
+    var _esc = function(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+    var items = [];   // { name, img, icon, owned, sub, color }
+    var title = '', note = '';
+    if(kind === 'TREASURE'){
+      var T = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES) ? TAIWAN_TREASURES : (window.TAIWAN_TREASURES || {});
+      var _td = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData) ? _taiwanTreasureData : (window._taiwanTreasureData || {});
+      var _RN = { mythic:'神話', legend:'傳說', legendary:'傳說', epic:'史詩', rare:'稀有', normal:'普通' };
+      var _RC = { mythic:'#ff66cc', legend:'#ffcc44', legendary:'#ffcc44', epic:'#c77dff', rare:'#7fc8ff', normal:'#cfd8e0' };
+      var _grp = function(d, id){
+        if(d.isDragonTreasure) return '龍王';
+        if(d.isChinaTreasure) return '中國古代';
+        try{ if(window._TW2 && window._TW2.treasures && window._TW2.treasures[id]) return '寶島二部曲'; }catch(_){}
+        return '台灣';
+      };
+      (typeof window._lxpsAllTreasureIds === 'function' ? window._lxpsAllTreasureIds() : Object.keys(T)).forEach(function(id){
+        var d = T[id]; if(!d) return;
+        items.push({ name: d.name || id, img: d.iconUrl || '', icon: d.icon || '💎',
+          owned: !!_td[id], sub: _grp(d, id) + '・' + (_RN[d.rarity] || ''), color: _RC[d.rarity] || '#7fc8ff' });
+      });
+      title = '💠 自選至寶召喚卷 — 可召喚的至寶';
+      note = '到召喚星空使用時,可以從「🆕 還沒有」的至寶中挑一件。之後新推出的至寶會自動加入這份清單。全部收齊時改送至寶經驗卷軸 ×5。';
+    } else {
+      var _rar = (kind === 'SSR') ? 'SSR' : 'SR';
+      var _un = (typeof advGetUnlockedHeroes === 'function') ? (advGetUnlockedHeroes() || []) : [];
+      (window._lxpsTicketHeroFullPool(_rar) || []).forEach(function(n){
+        items.push({ name: n, img: (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[n]) ? HERO_IMGS[n] : '', icon: '🦸',
+          owned: _un.indexOf(n) >= 0, sub: _rar, color: _rar === 'SSR' ? '#ffcc44' : '#c77dff' });
+      });
+      title = (_rar === 'SSR' ? '🌟' : '✨') + ' ' + _rar + ' 英雄召喚卷 — 可召喚的英雄';
+      note = '到召喚星空使用時,會從「🆕 還沒有」的英雄中隨機出現 1 名(本週祈願指定的英雄優先)。全部收齊時改換已收錄英雄 1 顆命星。';
+    }
+    var _have = items.filter(function(x){ return x.owned; }).length;
+    // 還沒有的排前面
+    items.sort(function(a, b){ return (a.owned ? 1 : 0) - (b.owned ? 1 : 0); });
+    var cards = items.map(function(x){
+      var pic = x.img
+        ? '<img src="' + _esc(x.img) + '" alt="" loading="lazy" style="width:64px;height:64px;object-fit:' + (kind === 'TREASURE' ? 'contain' : 'cover') + ';border-radius:8px;background:#0a0a18;' + (x.owned ? 'filter:grayscale(0.55) brightness(0.8);' : '') + '">'
+        : '<div style="font-size:44px;line-height:64px;">' + x.icon + '</div>';
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;border-radius:10px;'
+        + 'background:' + (x.owned ? 'rgba(40,40,55,0.6)' : 'rgba(20,40,70,0.75)') + ';border:1.5px solid ' + (x.owned ? 'rgba(150,150,170,0.4)' : x.color) + ';">'
+        + pic
+        + '<div style="font-size:14px;font-weight:800;color:' + (x.owned ? '#aab' : x.color) + ';text-align:center;line-height:1.25;word-break:break-word;">' + _esc(x.name) + '</div>'
+        + '<div style="font-size:11px;color:#9ab;">' + _esc(x.sub) + '</div>'
+        + '<div style="font-size:12px;font-weight:800;color:' + (x.owned ? '#8f8' : '#ffe066') + ';">' + (x.owned ? '✅ 已擁有' : '🆕 還沒有') + '</div>'
+        + '</div>';
+    }).join('');
+    var ov = document.createElement('div');
+    ov.id = 'arenaPoolListOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,0.82);'
+      + 'display:flex;align-items:safe center;justify-content:center;padding:16px;box-sizing:border-box;'
+      + 'font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;';
+    ov.innerHTML = '<div style="background:linear-gradient(160deg,#10203a,#0a1426);border:2px solid #88c8ff;border-radius:16px;'
+      + 'max-width:760px;width:100%;max-height:min(90dvh,90vh);display:flex;flex-direction:column;box-sizing:border-box;'
+      + 'box-shadow:0 0 50px rgba(120,190,255,0.35);color:#fff;overflow:hidden;">'
+      +   '<div style="padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1.5px solid rgba(136,200,255,0.4);">'
+      +     '<div style="font-size:20px;font-weight:900;color:#cfe8ff;">' + title + '</div>'
+      +     '<button id="_arenaPoolClose" style="flex:0 0 auto;padding:8px 16px;font-size:15px;font-weight:800;background:rgba(60,10,10,0.5);'
+      +       'border:1.5px solid #e84040;color:#ff9999;border-radius:8px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+      +   '</div>'
+      +   '<div style="padding:10px 18px;font-size:14px;color:#cde;line-height:1.6;">'
+      +     '共 <b style="color:#fff;">' + items.length + '</b> 個 ・ 你已擁有 <b style="color:#8f8;">' + _have + '</b> ・ 還沒有 <b style="color:#ffe066;">' + (items.length - _have) + '</b>'
+      +     '<div style="font-size:12px;color:#9bb;margin-top:4px;">' + note + '</div>'
+      +   '</div>'
+      +   '<div style="flex:1;overflow-y:auto;padding:4px 18px 18px;">'
+      +     (items.length
+            ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;">' + cards + '</div>'
+            : '<div style="padding:24px;text-align:center;color:#aab;">清單讀取中,請稍後再開一次</div>')
+      +   '</div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    var _close = function(){ try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.4); }catch(_){} try{ ov.remove(); }catch(_){} };
+    try{ ov.querySelector('#_arenaPoolClose').onclick = _close; }catch(_){}
+    ov.addEventListener('click', function(e){ if(e.target === ov) _close(); });
+  }catch(e){ console.warn('[鬥技場可召喚清單]', e); }
+}
+window._arenaShowPoolList = _arenaShowPoolList;
+
 function _arenaShowExchangePlaceholder(){
   try{
     // ★ v3.13.60 — GM 開關:商店關閉時仍可開窗看商品,但兌換鈕鎖住並顯示關閉提示
@@ -39620,6 +39736,7 @@ function _arenaShowExchangePlaceholder(){
         +       '<div style="font-size:15px;font-weight:800;color:#ffe066;line-height:1.3;">' + it.name + '</div>'
         +       '<div style="font-size:11px;color:#ccc;line-height:1.4;margin-top:2px;">' + it.desc + '</div>'
         +       _arenaHoldHtml(it)
+        +       _arenaPoolBtnHtml(it)
         +     '</div>'
         +   '</div>'
         +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px;'
@@ -39692,7 +39809,9 @@ function _arenaShowExchangePlaceholder(){
       +       '・<b>持有鬥技之證</b>是可以拿來「兌換商品」的數量(兌換會扣減)<br>'
       +       '・<b>累積獲得鬥技之證</b>是你打鬥技場以來的總獲得,不會因為兌換而減少<br>'
       +       '・鬥技之證的取得:勝 +3 / 平 +2 / 敗 +1(每場都有,不會白打)<br>'
-      +       '・召喚卷會保底給你「還沒有的」該稀有度英雄;若都收齊了會改送對應好禮'
+      +       '・英雄召喚卷會保底給你「還沒有的」該稀有度英雄;都收齊了改換已收錄英雄 1 顆命星<br>'
+      +       '・自選至寶召喚卷可以挑任何一件還沒有的至寶(之後新推出的至寶也會自動加入);全部收齊改送至寶經驗卷軸 ×5<br>'
+      +       '・按商品上的「📋 可召喚清單」可以看到每張卷能召喚哪些英雄/至寶,以及你已經擁有哪些'
       +     '</div>'
       +   '</div>'
 
@@ -39725,6 +39844,17 @@ function _arenaShowExchangePlaceholder(){
         _cbtn.parentNode.insertBefore(_lbtn, _cbtn);
       }
     }catch(_){}
+
+    // ★ v5.348.0 「📋 可召喚清單」按鈕(商店關閉時也能看)
+    try{
+      ov.querySelectorAll('._arenaPoolBtn').forEach(function(pb){
+        pb.onclick = function(ev){
+          try{ if(ev) ev.stopPropagation(); }catch(_){}
+          try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+          _arenaShowPoolList(pb.getAttribute('data-kind'));
+        };
+      });
+    }catch(_ePb){ console.warn('[鬥技場可召喚清單] 綁定例外', _ePb); }
 
     // 綁定兌換按鈕(僅商店開放時)
     if(_shopOpen){
@@ -41496,7 +41626,7 @@ function _openSummonTicketModal(){
         + '</div>'
         // ★ v3.15.64 — 至寶召喚卷分組(與英雄券同面板對齊;後端沿用既有至寶券系統)
         + '<div style="font-size:clamp(15px,1.8vw,18px);font-weight:900;color:#aee0ff;text-align:center;letter-spacing:1px;margin:18px 0 4px;">💎 至寶召喚卷</div>'
-        + '<div style="font-size:12px;color:#aac8e0;text-align:center;line-height:1.55;margin-bottom:8px;">隨機券必得隨機「尚未擁有」的台灣至寶;自選券可從台灣 10 + 龍王 8 件中親自挑一件</div>'
+        + '<div style="font-size:12px;color:#aac8e0;text-align:center;line-height:1.55;margin-bottom:8px;">隨機券必得隨機「尚未擁有」的台灣至寶;自選券可從全部至寶(台灣、寶島二部曲、龍王、中國古代)中親自挑一件</div>'
         + '<div style="display:flex;gap:14px;flex-wrap:wrap;">'
           + _treaCard('隨機至寶召喚卷', '💎', '#7fc8ff', _treaRandCnt, _treaRandLeft, false)
           + _treaCard('自選至寶召喚卷', '💠', '#66e6ff', _treaPickCnt, _treaPickLeft, true)
@@ -42568,11 +42698,36 @@ function _treasureTicketNotOwned(){
   }catch(_){ return []; }
 }
 // ★ v3.15.56 — 自選至寶召喚卷專用池:台灣 10 + 龍王 8(老師裁示:隨機券不含龍王、自選券可挑龍王)
+//   ★ v5.348.0 起改為「全部至寶」(上方 window._lxpsAllTreasureIds;含中國 3、寶島二部曲 10 與日後新增),下方台灣+龍王只剩讀不到主表時的退路
 //   ⚠ 只給「自選券」用;隨機券(_useTreasureTicket)仍走 _treasureTicketNotOwned(台灣 10),
 //      星空召喚 random 亦不受影響(維持龍王 noSummon,v3.15.52 結論不動)。
 //   龍王至寶與台灣至寶同存 TAIWAN_TREASURES,_grantTaiwanTreasure 通用,可直接挑選發放。
+// ★ v5.348.0(2026-11-04・老師「鬥技場商店的召喚卷要能召喚新推出的台灣和中國關至寶,以後都自動可以召喚所有至寶」)
+//   全部至寶 id 的單一真相:直接讀至寶主表 TAIWAN_TREASURES(台灣 10、龍王 8、中國 3、寶島二部曲 10…),
+//   日後任何新至寶只要登錄進主表就自動出現在自選至寶卷清單,不必再改這裡。
+//   只排除日本三神器(任務物品、不是至寶;與 GM 一鍵解鎖全部至寶同一道守門)。順序照主表。
+window._lxpsAllTreasureIds = function(){
+  var out = [];
+  try{
+    var T = (typeof TAIWAN_TREASURES !== 'undefined' && TAIWAN_TREASURES) ? TAIWAN_TREASURES : (window.TAIWAN_TREASURES || {});
+    Object.keys(T).forEach(function(id){
+      var d = T[id];
+      if(!d || !d.name) return;
+      try{ if(window._isJapanTreasureKey && window._isJapanTreasureKey(id)) return; }catch(_){}
+      out.push(id);
+    });
+  }catch(_){}
+  return out;
+};
 function _treasureTicketPickNotOwned(){
   try{
+    // ★ v5.348.0 — 自選至寶卷改用「全部至寶」(含中國 3 件、寶島二部曲 10 件與未來新增);讀不到主表才退回舊的台灣+龍王 18 件
+    var _allIds = (typeof window._lxpsAllTreasureIds === 'function') ? window._lxpsAllTreasureIds() : [];
+    if(_allIds.length){
+      return _allIds.filter(function(tid){
+        try{ return !(typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData && _taiwanTreasureData[tid]); }catch(_){ return true; }
+      });
+    }
     var ids = (typeof SUMMON_RANDOM_TREASURES !== 'undefined' && Array.isArray(SUMMON_RANDOM_TREASURES)) ? SUMMON_RANDOM_TREASURES.slice() : [];
     try{
       if(typeof _ARENA_DRAGON_TREASURE_IDS !== 'undefined' && Array.isArray(_ARENA_DRAGON_TREASURE_IDS)){

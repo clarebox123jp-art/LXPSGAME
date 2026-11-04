@@ -81303,7 +81303,7 @@ function _renderTaiwanTreasureDetail(treasureId){
                     '🎟️ 或使用 <b style="color:#ffd07b;">GM 發放的「自選至寶選擇卷」</b>兌換指定龍王至寶' +
                   '</div>' +
                   '<div style="margin-top:8px;padding:8px 12px;background:rgba(120,200,160,0.12);border:1px solid rgba(120,200,160,0.4);border-radius:8px;font-size:14px;line-height:1.8;">' +
-                    '⚔ 或於 <b style="color:#9be0b0;">鬥技場兌換商店「至寶召喚卷」</b>(40 鬥技之證)隨機抽取(台灣+龍王系列共 18 件)' +
+                    '⚔ 或於 <b style="color:#9be0b0;">鬥技場兌換商店「自選至寶召喚卷」</b>(40 鬥技之證)親自挑選(全部至寶都能挑)' +   /* ★ v5.348.0 舊文「隨機抽取(台灣+龍王系列共 18 件)」已過時 */
                   '</div>' +
                   '<div style="margin-top:10px;font-size:13px;color:#ff9988;font-weight:700;">※ 龍王至寶<b>無法</b>從星空召喚(召喚池)抽到</div>';
     }else if(def.isChinaTreasure){
@@ -81311,6 +81311,10 @@ function _renderTaiwanTreasureDetail(treasureId){
       _howToGet = '🏯 在<b style="color:#ffcc66;">冒險關卡《中國古代史詩神話繪卷》</b><br>' +
                   '<span style="color:#ffaa66;font-weight:700;">' + (def.routeLabel || '對應路線') + '</span><br>' +
                   '<b style="color:#9be0b0;">首次通關必定獲得!</b>' +
+                  /* ★ v5.348.0(老師「鬥技場商店召喚卷要能召喚中國關至寶」)— 自選至寶卷也能挑 */
+                  '<div style="margin-top:8px;padding:8px 12px;background:rgba(120,200,160,0.12);border:1px solid rgba(120,200,160,0.4);border-radius:8px;font-size:14px;line-height:1.8;">' +
+                    '⚔ 或於 <b style="color:#9be0b0;">鬥技場兌換商店「自選至寶召喚卷」</b>(40 鬥技之證)親自挑選' +
+                  '</div>' +
                   '<div style="margin-top:10px;font-size:13px;color:#ff9988;font-weight:700;">※ 中華至寶<b>無法</b>從星空召喚(召喚池)抽到</div>';
     }else if(def.bossId && typeof TAIWAN_BOSSES === 'object' && TAIWAN_BOSSES[def.bossId]){
       const _bossInfo = TAIWAN_BOSSES[def.bossId];
