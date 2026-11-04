@@ -33436,7 +33436,7 @@ window._nbgModeMatrix = function(cute){
     var rows = [
       ['🛡️ ' + (cute ? '裝備' : '裝備'), [Y, Y, N]],
       ['✨ ' + (cute ? '命星' : '命星'), [Y, Y, N]],
-      ['🏫 ' + (cute ? '英魂陣型' : '英魂陣型'), [Y + sm(cute ? '看完第七章' : '完成主線第七章後・只有我方'), Y + sm(cute ? '看完第七章' : '完成主線第七章後'), Y + sm(cute ? '兩邊都有' : '雙方一律套用')]],
+      ['🏫 ' + (cute ? '英魂陣型' : '英魂陣型'), [Y + sm(cute ? '有(只有我方)' : '只有我方'), Y + sm(cute ? '有' : '有'), Y + sm(cute ? '兩邊都有' : '雙方一律套用')]],   /* ★ v5.350.0 陣型全體開放,不再寫「完成第七章後」 */
       ['🤝 ' + (cute ? '借朋友英雄' : '借好友英雄'), [Y + sm(cute ? '主線劇情戰不行' : '主線劇情戰除外'), N, Y + sm(cute ? '大家都是 Lv1' : '一律 Lv1 基礎數值')]]
     ];
     var cell = 'padding:7px 6px;border-bottom:1px solid rgba(80,160,255,0.18);text-align:center;vertical-align:middle;';
@@ -33556,7 +33556,7 @@ function _nbgPageFm(cute){
         ['可以用英魂篩選英雄', '也可以按自動推薦,選「依陣型推薦」'],
         ['開打時會跳出陣型名字', '按「?」可以再看一次']
       ])
-    + B.tip('🔓 ' + b('看完主線第七章') + '以後,冒險和世界 BOSS 才能用英魂陣型;鬥技場和連線對戰是兩邊都會有!敵人和 BOSS 沒有陣型喔。', 'rgba(255,216,77,0.6)');
+    + B.tip('🔓 英魂陣型' + b('所有人都能用') + '!冒險和世界 BOSS 只有我方有陣型,鬥技場和連線對戰是兩邊都會有!敵人和 BOSS 沒有陣型喔。', 'rgba(255,216,77,0.6)');   /* ★ v5.350.0 陣型全體開放 */
   return B.h('英魂陣型(魂格)')
     + B.p('每位英雄都屬於一種「英魂」——四種英魂正好是力行國小的校訓。出戰成員的英魂組合會發動 ' + b('英魂陣型') + ':開戰時判定一次、整場有效(成員倒下也不變),並與英雄原有技能效果疊加。')
     + souls
@@ -33571,7 +33571,7 @@ function _nbgPageFm(cute){
       ])
     + B.s('什麼時候生效')
     + B.items([
-        ['🔓', '冒險關卡・世界 BOSS', '完成主線第七章「墜落的星空」後解鎖(第七章的劇情戰鬥會先讓你體驗);冒險模式只有我方有陣型,敵人與 BOSS 沒有。'],
+        ['🔓', '冒險關卡・世界 BOSS', '所有玩家都能使用(v5.350.0 起不必先完成主線第七章);冒險模式只有我方有陣型,敵人與 BOSS 沒有。'],
         ['⚔️', '鬥技場・連線對戰', '不看是否解鎖,雙方一律套用;連線對戰由房主計算,大家看到的陣型一樣。']
       ]);
 }
@@ -46942,7 +46942,7 @@ function openPresetTeamPanel_LEGACY_v5102(){
               <div style="width:200px;height:160px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(200,150,255,0.4);background:#0a0818;position:relative;flex-shrink:0;">
                 ${imgUrl?`<div style="width:100%;height:100%;background:url('${imgUrl}') ${_oPos}/cover;"></div>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;">${(typeof AVATARS!=='undefined'&&AVATARS[name])||'⚔'}</div>`}
               </div>
-              <div style="font-size:19px;font-weight:800;color:#ddd;">${name}${_lvLabel}</div>
+              <div style="font-size:19px;font-weight:800;color:#ddd;">${name}${_lvLabel}${(typeof window._cstPickBadge === 'function') ? window._cstPickBadge(name, (typeof _adventureStage !== 'undefined' && _adventureStage != null) ? null : { noEffect:true }) : ''}</div>   <!-- ★ v5.350.0 命星數(鬥技場陣容灰色:不生效) -->
               <div style="font-size:17px;color:#88aaff;">${elem?_presetElemLabel(elem):''}</div>
               <div style="font-size:15px;color:#cc99ff;text-align:center;max-width:200px;word-break:break-all;">${skLabel}</div>
               ${_petHtml}
@@ -47511,7 +47511,8 @@ function _peMemberCellHtml(slotIdx, memIdx, name, elem, sk, isDraft){
     + ' style="width:170px;cursor:pointer;border:2px solid ' + (_empty ? 'rgba(150,100,255,0.35)' : 'rgba(200,150,255,0.55)') + ';border-radius:11px;padding:4px;background:rgba(20,12,44,0.85);transition:border-color 0.15s;"'
     + ' onmouseover="this.style.borderColor=\'rgba(230,180,255,0.95)\'" onmouseout="this.style.borderColor=\'' + (_empty ? 'rgba(150,100,255,0.35)' : 'rgba(200,150,255,0.55)') + '\'">'
     + _cellInner
-    + (_empty ? '' : ('<div style="font-size:17px;font-weight:800;color:#eee;text-align:center;margin-top:4px;">' + _dispName + (_lv > 0 ? (' <span style="color:#88ccff;font-size:14px;">Lv' + _lv + '</span>') : '') + '</div>'
+    + (_empty ? '' : ('<div style="font-size:17px;font-weight:800;color:#eee;text-align:center;margin-top:4px;">' + _dispName + (_lv > 0 ? (' <span style="color:#88ccff;font-size:14px;">Lv' + _lv + '</span>') : '')
+        + ((typeof window._cstPickBadge === 'function') ? window._cstPickBadge(name) : '') + '</div>'   /* ★ v5.350.0 命星數 */
         + '<div style="font-size:14px;color:#88aaff;text-align:center;">' + (elem ? _presetElemLabel(elem) : '') + '</div>'
         + '<div style="font-size:13px;color:#cc99ff;text-align:center;word-break:break-all;">' + _skLabel + '</div>'))
     + '</div>'
@@ -47617,7 +47618,7 @@ function _peOpenHeroPicker(slotIdx, memIdx, isDraft){
       + (_img ? ('<div style="width:100%;height:100%;background:url(\'' + _img + '\') ' + _oPos + '/cover;"></div>')
               : ('<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;">' + ((typeof AVATARS !== 'undefined' && AVATARS[n]) || '⚔') + '</div>'))
       + '</div>'
-      + '<div style="font-size:16px;font-weight:800;color:#eee;text-align:center;margin-top:5px;">' + _dispName + (_lv > 0 ? (' <span style="color:#88ccff;font-size:13px;">Lv' + _lv + '</span>') : '') + (_isCur ? ' <span style="color:#88ffaa;font-size:13px;">✓目前</span>' : '') + '</div>'
+      + '<div style="font-size:16px;font-weight:800;color:#eee;text-align:center;margin-top:5px;">' + _dispName + (_lv > 0 ? (' <span style="color:#88ccff;font-size:13px;">Lv' + _lv + '</span>') : '') + ((typeof window._cstPickBadge === 'function') ? window._cstPickBadge(n) : '') /* ★ v5.350.0 命星數 */ + (_isCur ? ' <span style="color:#88ffaa;font-size:13px;">✓目前</span>' : '') + '</div>'
       + '</div>';
   });
   html += '</div>'
@@ -82172,10 +82173,13 @@ function makeRadar(dims, size) {
     if(!inAdv) return;   /* 裁定 2甲:鬥技場不生效(鬥技場本來就不走這支,這裡再守一次) */
     var k = W._cstKey(h.name);
     if(!W._cstEligible(k)) return;
-    if(_isProtag(k) && !_awakened()) return;
-    var lit = W._cstLit(k);
+    /* ★ v5.351.0 龍王戰連線:隊友槽由房主建隊,舊版一律讀「房主本機」命星(隊友吃到房主的命星)。
+     *   房主建隊時把隊友廣播的快照放在 h._cstRemote(null = 隊友沒點/舊版客戶端 ⇒ 0 顆);有這個欄位就只認快照,不讀本機。 */
+    var _remote = Object.prototype.hasOwnProperty.call(h, '_cstRemote');
+    if(!_remote && _isProtag(k) && !_awakened()) return;
+    var lit = _remote ? (W._cstSnapLit(h._cstRemote, h.name) || []) : W._cstLit(k);
     if(!lit.length){ h._cst = null; return; }
-    var cst = { k:k, lit:{}, n:lit.length, src:'cst' };
+    var cst = { k:k, lit:{}, n:lit.length, src:(_remote ? 'teammate' : 'cst') };
     lit.forEach(function(s){ cst.lit[s] = 1; });
     h._cst = cst;
     var reg = (W._CST_EFFECTS && W._CST_EFFECTS[k]) || null, on = [];
@@ -82201,6 +82205,23 @@ function makeRadar(dims, size) {
       if(_isProtag(k) && !_awakened()) return null;
       var lit = W._cstLit(k);
       return lit.length ? { k:k, s:lit.slice(0, W._CST_MAX) } : null;
+    }catch(_){ return null; }
+  };
+  /* ★ v5.351.0 驗證一份命星快照 {k, s:[槽…]}(規則同 _cstApplyFriend ③:槽位白名單、不重複、貳要有壹、最多 6 顆、英雄對得上)⇒ 回傳槽位陣列;不符回 null。 */
+  W._cstSnapLit = function(snap, name){
+    try{
+      if(!snap || typeof snap !== 'object' || !Array.isArray(snap.s) || !snap.s.length) return null;
+      var k = String(snap.k || '');
+      if(!_db()[k] || W._cstKey(name) !== k) return null;
+      var seen = {}, out = [];
+      for(var j = 0; j < snap.s.length; j++){
+        var sv = snap.s[j];
+        if(SLOTS.indexOf(sv) < 0 || seen[sv]) return null;
+        seen[sv] = 1; out.push(sv);
+      }
+      if(!out.length || out.length > W._CST_MAX) return null;
+      for(var i = 0; i < out.length; i++){ if(PRE[out[i]] && !seen[PRE[out[i]]]) return null; }
+      return out;
     }catch(_){ return null; }
   };
   W._cstApplyFriend = function(h, fh){
@@ -82369,6 +82390,28 @@ function makeRadar(dims, size) {
       return '<div class="cst-gstars" data-cst-g="' + _esc(name) + '" title="' + _esc(_T('命星 ' + lit + '/6', '命座 ' + lit + '/6')) + '"'
         + ' style="display:flex;justify-content:center;gap:6px;padding:6px 0 2px;font-size:26px;line-height:1;letter-spacing:0;background:rgba(10,12,30,0.55);">'
         + W._cstGridStarsInner(name) + '</div>';
+    }catch(_){ return ''; }
+  };
+  /* ════════════ ★ v5.350.0(2026-11-04・老師「所有的英雄編組清單中,都顯示該英雄的命星數量」)════════════
+   *   編組清單共用的小徽章「✦N」(N = 已點亮命星數 0~6;6 顆 = 滿命金光)。
+   *   呼叫點:冒險/主線/鬥技場編組頁(game_battle.js _buildHeroPickNodes)、預設陣容面板與編輯器、
+   *           龍王戰隊伍確認頁與換英雄清單(world-boss-ui.html)。
+   *   opts.noEffect = true(鬥技場):命座在鬥技場不生效 ⇒ 改灰色並在說明寫明,數字照樣顯示。
+   *   不符資格(命座未開放/未覺醒主角/查不到資料)回傳空字串,畫面不受影響。 */
+  W._cstPickBadge = function(name, opts){
+    try{
+      opts = opts || {};
+      if(!name || !W._cstOpenForMe() || !W._cstEligible(name)) return '';
+      /* ★ v5.351.0 opts.n = 隊友的命星數(龍王戰隊伍確認頁:由隊友廣播的快照算出,不讀本機)⇒ 不做本機主角覺醒檢查 */
+      var _remoteN = (typeof opts.n === 'number' && opts.n >= 0) ? Math.floor(opts.n) : -1;
+      if(_remoteN < 0){ try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R' && _isProtag(W._cstKey(name))) return ''; }catch(_){} }
+      var lit = Math.min(W._CST_MAX, _remoteN >= 0 ? _remoteN : W._cstLit(W._cstKey(name)).length);
+      var full = lit >= W._CST_MAX, off = !!opts.noEffect;
+      var col = off ? '#9aa3b8' : (lit > 0 ? '#ffd97a' : '#aab3cc');
+      var glow = (!off && full) ? 'text-shadow:0 0 6px rgba(255,200,80,0.95);' : '';
+      var tip = _T('命星 ' + lit + '/6', '命座 ' + lit + '/6') + (off ? _T('(鬥技場和對戰不生效)', '(鬥技場與對戰不生效)') : '');
+      return '<span class="cst-pk" title="' + _esc(tip) + '" style="display:inline-block;white-space:nowrap;font-weight:900;color:' + col + ';' + glow
+        + 'font-size:' + (opts.size || '0.9em') + ';margin-left:' + (opts.gap || '6px') + ';' + (off ? 'opacity:0.75;' : '') + '">✦' + lit + '</span>';
     }catch(_){ return ''; }
   };
   /* ════════════ ★ v5.276.0(老師 2026-10-17 15:09「我找不到命星去哪裡點」)英雄詳情左側大圖「✨ 命座」浮動按鈕 ════════════

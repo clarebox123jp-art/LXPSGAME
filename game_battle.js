@@ -11380,6 +11380,11 @@ function _rebuildPickNodes(){
   _heroPickPool = savedPool; // restore full pool for selection logic
 }
 
+/* ★ v5.350.0(老師「所有的英雄編組清單中,都顯示該英雄的命星數量」)— 編組卡名字列後面的「✦N」
+ *   arena=true(鬥技場):命座不生效 ⇒ 灰色並註明。徽章本體在 game_adv.js window._cstPickBadge。 */
+function _cstPkB(name, arena){
+  try{ return (typeof window._cstPickBadge === 'function') ? window._cstPickBadge(name, arena ? { noEffect:true } : null) : ''; }catch(_){ return ''; }
+}
 function _buildHeroPickNodes(){
   // ★ v5.87.0 — 先算好本關威脅（單一真相 _lxpsEnsureThreat，內建以敵方名單為 key 的快取），
   //   讓下方每張卡片的「本關需求能力」標籤一進頁就能顯示，不必先按「⭐ 推薦陣容」。
@@ -11426,9 +11431,9 @@ function _buildHeroPickNodes(){
       const _rarityBadge_adv = (typeof _heroRarityBadge === 'function') ? _heroRarityBadge(name, 120) : '';
       node.innerHTML = (img
         ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;object-position:${(typeof _teamFormAdjustObjPos==='function'&&typeof getHeroThumbObjPos==='function')?_teamFormAdjustObjPos(name,getHeroThumbObjPos(name),'grid'):((typeof getHeroThumbObjPos==='function')?getHeroThumbObjPos(name):'center center')};display:block;"/>
-           <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:15px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`
+           <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:15px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name)}</div>`
         : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>
-           <div style="font-size:16px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`)
+           <div style="font-size:16px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name)}</div>`)
       + _rarityBadge_adv
       // ★ v5.87.0（老師需求 2）— 卡片左下角自動浮現「這位剛好對得上本關 BOSS 需求」的能力標籤（最多 2 個・字級縮至 0.8）。
       //   目的＝老師：「如此玩家仍可以自主選擇適合且想練的英雄」——不必按推薦陣容也看得出誰對得上這一關。
@@ -11500,9 +11505,9 @@ function _buildHeroPickNodes(){
     const _rarityBadge_arena = (typeof _heroRarityBadge === 'function') ? _heroRarityBadge(name, 120) : '';
     node.innerHTML = (img
       ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;object-position:${(typeof _teamFormAdjustObjPos==='function'&&typeof getHeroThumbObjPos==='function')?_teamFormAdjustObjPos(name,getHeroThumbObjPos(name),'grid'):((typeof getHeroThumbObjPos==='function')?getHeroThumbObjPos(name):'center center')};display:block;"/>
-         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`
+         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name, true)}</div>`
       : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:58px;">${av}</div>
-         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>`)
+         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name, true)}</div>`)
     + _rarityBadge_arena
     // ★ v5.87.0（老師需求 2）— 卡片左下角自動浮現「這位剛好對得上本關 BOSS 需求」的能力標籤（最多 2 個・字級縮至 0.8）。
     //   目的＝老師：「如此玩家仍可以自主選擇適合且想練的英雄」——不必按推薦陣容也看得出誰對得上這一關。
@@ -88132,10 +88137,15 @@ window._FM_DEFS = {
   W._fmIsAdmin = function(){ try{ return (typeof W._isAdminUser === 'function' && !!W._isAdminUser()); }catch(_){ return false; } };
   W._fmUnlockedByStory = function(){ try{ var p = W._mainStoryProgress; return !!(p && p.ch7 === 'done'); }catch(_){ return false; } };
   W._fmStoryTutorialBattle = function(){ try{ var c = W._msBattleCtx; return !!(W._msRealBattleActive === true && c && /^battle_ch7_/.test(String(c.key || ''))); }catch(_){ return false; } };
+  /* ★ v5.350.0(2026-11-04・老師「開放陣型」)— 英魂陣型對全體玩家開放,不再需要完成主線第七章。
+   *   _FM_STORY_LOCK:true = 回到 v5.290.0 的「完成第七章才解鎖」;false(現值)= 所有玩家一律可用。
+   *   _FM_ADMIN_ONLY 總開關不變(true 仍只給 GM)。第七章的教學與「已解鎖」提示保留,只是不再當門檻。 */
+  if(typeof W._FM_STORY_LOCK === 'undefined') W._FM_STORY_LOCK = false;
   W._fmOpenForMe = function(){
     try{
       if(W._fmIsAdmin()) return true;
       if(W._FM_ADMIN_ONLY === true) return false;
+      if(W._FM_STORY_LOCK !== true) return true;   // ★ v5.350.0 全體開放
       return W._fmUnlockedByStory() || W._fmStoryTutorialBattle();
     }catch(_){ return false; }
   };
@@ -88472,7 +88482,7 @@ window._FM_DEFS = {
  *   ③ 陣型「新發動或換成別的陣型」時:音效 sfx-powerup(倉庫既有「能力上升.mp3」)+ 在四張隊員立繪上方 2 秒小視窗(名稱+說明)
  *   ④ 篩選列新增「魂格」四顆(data-filter=soul_C/Q/H/X,主角萬用魂四種都列)
  *   ⑤ 推薦鈕旁新增「🏫 陣型推薦」:列出 19 種陣型(名稱+效果+能不能湊),點選後自動挑 4 位最強的組成該陣型
- *   ★ 介面一律跟 _fmOpenForMe(GM 或完成主線第七章的玩家才開;v5.290.0 起);關閉時全部不顯示。所有尺寸用畫布 px(在縮放後的 #gc 內,鐵律 〇之二)。
+ *   ★ 介面一律跟 _fmOpenForMe(v5.290.0 起 GM 或完成主線第七章的玩家才開;★ v5.350.0 起全體開放,見 _FM_STORY_LOCK);關閉時全部不顯示。所有尺寸用畫布 px(在縮放後的 #gc 內,鐵律 〇之二)。
  * ═════════════════════════════════════════════════════════════════════════════ */
 (function(){
   var W = window;

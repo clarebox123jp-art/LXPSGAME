@@ -6109,7 +6109,9 @@ try{
         lv: _lv,
         skLv: { s1: (_sk.s1 || 0), s2: (_sk.s2 || 0) },
         burst: _bu,
-        inv: { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) }
+        inv: { hp: (_iv.hp || 0), atk: (_iv.atk || 0), sp: (_iv.sp || 0), spd: (_iv.spd || 0) },
+        // ★ v5.351.0 命星快照 {k, s:[已點亮槽…]}(沒點/不符資格 = null)— 給隊友的隊伍確認頁顯示 ✦N、房主開戰時套用「隊友自己的」命星
+        cst: (function(){ try{ return (typeof window._cstRepSnap === 'function') ? (window._cstRepSnap(heroName) || null) : null; }catch(_){ return null; } })()
       };
     }catch(e){ console.warn('[WB-TC v3.5.72] _wbTcBuildMyGrowthSnap 失敗', e); return null; }
   }
@@ -7543,6 +7545,18 @@ try{
   //   - 為 number:房主代打槽位 → 排版與真人玩家完全相同,但所有「自己」的互動
   //     (換英雄、選元素、換至寶、技能查看用本地等級)都導向 _wbTcAssignedSlot* 系列。
   //   讓代打槽可選英雄、屬性、至寶,UI 與房主槽結構一致。
+  // ★ v5.351.0 隊伍確認頁命星徽章:自己/代打槽讀本機;隊友讀對方廣播的 ext.g.cst 快照
+  //   (隊友是舊版、還沒送過快照 ⇒ ext.g 沒有 cst 欄位 ⇒ 不顯示,避免把「不知道」顯示成 ✦0)
+  function _wbTcCstBadge(heroName, isMe, ext){
+    try{
+      if(typeof window._cstPickBadge !== 'function' || !heroName || heroName === '?') return '';
+      if(isMe) return window._cstPickBadge(heroName);
+      const g = ext && ext.g;
+      if(!g || !Object.prototype.hasOwnProperty.call(g, 'cst')) return '';
+      const lit = (typeof window._cstSnapLit === 'function') ? window._cstSnapLit(g.cst, heroName) : null;
+      return window._cstPickBadge(heroName, { n: lit ? lit.length : 0 });
+    }catch(_){ return ''; }
+  }
   function _wbTcRenderOneSlot(p, idx, myUid, treasureTakenByPeer, meIsHost, assignedSlotIdx){
     // ★ 代打槽:把這槽當「房主本人在編輯副卡」處理 → isMe 視同 true(可選/可編輯)
     const isAssigned = (typeof assignedSlotIdx === 'number');
@@ -7685,6 +7699,7 @@ try{
         <div class="wb-tc-bc-header">
           ${lv ? `<span class="wb-tc-bc-lv">Lv.${lv}</span>` : '<span class="wb-tc-bc-lv">Lv.?</span>'}
           <span class="wb-tc-bc-name">${heroName}</span>
+          ${_wbTcCstBadge(heroName, isMe, ext)}
           ${mainElem ? `<span class="wb-tc-bc-elem">${_wbTcElemIcon(mainElem)}</span>` : ''}
         </div>
         <div class="wb-tc-bc-hp-wrap">
@@ -8026,7 +8041,7 @@ try{
         </div>
         <div class="wb-tc-si-name" style="${_dim}">${name}</div>
         <div class="wb-tc-si-codex" onclick="event.preventDefault();event.stopPropagation();_wbOpenCodexFromSwap('${safeName}', ${targetSlotIdx});" style="pointer-events:auto;margin:4px auto 2px;width:max-content;font-size:15px;font-weight:800;color:#ffe8a0;background:linear-gradient(135deg,rgba(70,48,0,0.92),rgba(45,32,0,0.88));border:1.5px solid rgba(212,168,67,0.7);border-radius:8px;padding:4px 10px;letter-spacing:1px;cursor:pointer;">📖 圖鑑整備</div>
-        <div class="wb-tc-si-meta" style="${_dim}">Lv.${lv}</div>
+        <div class="wb-tc-si-meta" style="${_dim}">Lv.${lv}${(typeof window._cstPickBadge === 'function') ? window._cstPickBadge(name) : ''}</div>
         ${cur ? '<div class="wb-tc-si-note">當前</div>' : (_isUsed ? '<div class="wb-tc-si-note" style="color:#888;">已選</div>' : '')}
       </button>`;
     }).join('');
@@ -9274,6 +9289,15 @@ try{
       //     至寶則優先讀各槽 h._wbTreasureIds(各玩家自己的)→ 至寶本來就是逐玩家正確的。
       //   舊行依鐵則保留備查(勿刪):
       //   try{ if(typeof window._applyFollowPetToHero === 'function') window._applyFollowPetToHero(h); }catch(ePet){ console.warn('[WB 跟隨寵物套用] 失敗', ePet); }
+      // ★ v5.351.0 隊友槽的命星改用「隊友自己廣播的快照」(舊版:讀房主本機 ⇒ 隊友吃到房主的命星)。
+      //   有 _cstRemote 欄位 ⇒ _cstApplyToHero 只認快照;隊友沒點/舊版客戶端沒送 ⇒ null ⇒ 0 顆。房主自己與代打槽照舊讀本機。
+      try{
+        const _myUidC = (typeof window._gUserId !== 'undefined') ? window._gUserId : null;
+        if(p && p.uid && _myUidC && p.uid !== _myUidC){
+          const _exC = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+          h._cstRemote = (_exC && _exC.g && _exC.g.cst) || null;
+        }
+      }catch(_eCstR){}
       try{
         if(typeof window._applyBattlePrepToHero === 'function'){ window._applyBattlePrepToHero(h, 'WB-Host'); }
         else if(typeof window._applyFollowPetToHero === 'function'){ window._applyFollowPetToHero(h); }

@@ -22853,7 +22853,9 @@
           lv: lv,
           skLv: { s1: (sk.s1 || 0), s2: (sk.s2 || 0) },
           burst: bu,
-          inv: { hp: (iv.hp || 0), atk: (iv.atk || 0), sp: (iv.sp || 0), spd: (iv.spd || 0) }
+          inv: { hp: (iv.hp || 0), atk: (iv.atk || 0), sp: (iv.sp || 0), spd: (iv.spd || 0) },
+          // ★ v5.351.0 命星快照 {k, s:[已點亮槽…]}(沒點 = null):隊友的隊伍確認頁顯示 ✦N、房主開戰時套用「這位玩家自己的」命星
+          cst: (function(){ try{ return (typeof window._cstRepSnap === 'function') ? (window._cstRepSnap(heroName) || null) : null; }catch(_){ return null; } })()
         };
       }catch(e){
         console.warn('[WB-Growth] _wbBuildMyGrowth 失敗', e);
