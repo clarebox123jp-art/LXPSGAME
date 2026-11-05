@@ -4438,6 +4438,8 @@
         existed = playerSnap.exists();
         data = existed ? (playerSnap.data() || {}) : {};
       }
+      // ★ v5.353.0 帳號永久紀錄(首次登入/班級變動;不 await,失敗不影響統計)
+      try{ if(typeof window._lxpsAcctLog === 'function') window._lxpsAcctLog(uid, data, existed); }catch(_eAl){}
       // 未被計入過的玩家（舊玩家首次回歸也會被標記）
       const needsCounting = !data._countedInStats;
       // 是否是真正的全新玩家（文件根本不存在）
@@ -4472,6 +4474,184 @@
     } catch(e) {
       console.error('❌ [人數統計] 更新失敗 code=' + (e && e.code) + '（可能原因：Firestore 規則未允許寫入 stats 集合）', e);
     }
+  };
+
+  /* ════════════════════════════════════════════════════════════════════
+   * ★★ v5.353.0(2026-11-05・老師「所有玩家帳號首次登入、年級升級、帳號繼承轉移都要保留永久記錄可以查詢」)★★
+   *   accountLog/{uid}         摘要 { uid, email, firstAt, firstSrc, backfill, cls, seat, code, upd, ver, src }
+   *   accountLog/{uid}/ev/{id} 事件(rules:只能新增,連 GM 都不能改、不能刪):
+   *     first 首次登入 / cls_init 第一次記到班級座號 / grade_up 升年級 / class_change 換班或座號 / graduate 畢業
+   *     xfer_in・xfer_out 帳號繼承轉移(GM 遷移時兩個帳號各記一筆)
+   *     欄位 { uid, t, at(裝置時間), srv(伺服器時間,不能偽造), src 'main'|'mini'|'gm', email, from, to, fromUid, toUid, by, note, ver, backfill }
+   *   ・年級/班級變動 = 登入時比對「目前名冊(student_roster.js)」與上次記錄;老師每學年更新名冊後,學生下一次登入自動記一筆。
+   *   ・文件 id 固定(first、cls_<舊碼>_<新碼>、xfer_in_<編號>…)⇒ 多台同時登入只會有一筆。
+   *   ・省讀取:本機 lxps_acctlog_<uid>(小遊戲共用)記住上次的班級座號,沒變就 0 讀 0 寫。
+   *   ・小遊戲 minigame_index.html v1.420.0 mgAcctLog 寫同一套(src:'mini');GM 查詢/補建在 admin_panel.js「🪪 帳號永久紀錄」。
+   * ════════════════════════════════════════════════════════════════════ */
+  let _acctFsMod = null;
+  async function _acctFs(){ if(!_acctFsMod) _acctFsMod = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"); return _acctFsMod; }
+  function _acctRoster(email){
+    const em = String(email || '').toLowerCase().trim();
+    let e = null; try{ e = (typeof window._getRosterEntry === 'function') ? window._getRosterEntry(em) : null; }catch(_){}
+    let code = ''; try{ code = (typeof window._classSeatCode4 === 'function') ? (window._classSeatCode4(em) || '') : ''; }catch(_){}
+    return { cls: (e && typeof e.class === 'string') ? e.class : '', seat: (e && Number(e.seatNo || e.seat)) || 0, code: code, name: (e && e.fullName) ? String(e.fullName) : '' };
+  }
+  function _acctLab(x){ return x.code ? (x.code + ' ' + (x.cls || '')) : (x.cls || ''); }
+  function _acctGrade(c){ const m = String(c || '').match(/^(\d+)年/); return m ? parseInt(m[1], 10) : 0; }
+  function _acctKind(c0, c1){ if(/畢業/.test(String(c1 || ''))) return 'graduate'; return _acctGrade(c1) > _acctGrade(c0) ? 'grade_up' : 'class_change'; }
+  function _acctSafe(s){ return String(s || 'none').replace(/[^0-9A-Za-z一-鿿]/g, '').slice(0, 20) || 'none'; }
+  // 寫一筆事件(create-only;已存在就不寫)。fresh=true 表示剛建立的帳號,不必先讀
+  async function _acctEv(uid, id, o, fresh){
+    const fs = await _acctFs();
+    const ref = doc(_fbDb, 'accountLog', uid, 'ev', id);
+    if(!fresh){ try{ const s = await getDoc(ref); if(s.exists()) return false; }catch(_){} }
+    const d = Object.assign({ uid: uid, at: Date.now(), srv: fs.serverTimestamp(), ver: String(window._GAME_LOADED_VERSION || '') }, o);
+    Object.keys(d).forEach(function(k){ if(d[k] === undefined) delete d[k]; });
+    await setDoc(ref, d);
+    return true;
+  }
+  window._lxpsAcctLog = async function(uid, pdata, existed){
+    try{
+      const u = _fbAuth.currentUser;
+      if(!u || u.uid !== uid || u.isAnonymous || !u.email) return;
+      const email = String(u.email).toLowerCase(), r = _acctRoster(email), lk = 'lxps_acctlog_' + uid;
+      let loc = null; try{ loc = JSON.parse(localStorage.getItem(lk) || 'null'); }catch(_){}
+      if(loc && loc.v === 1 && loc.code === r.code && loc.cls === r.cls) return;
+      const ref = doc(_fbDb, 'accountLog', uid), now = Date.now(), ver = String(window._GAME_LOADED_VERSION || '');
+      const snap = await getDoc(ref);
+      const base = { src: 'main', email: email };
+      if(!snap.exists()){
+        const pd = pdata || {}, old = !!existed;
+        const fa = old ? (Number(pd._firstLoginAt) || Number(pd.createdAt) || 0) : 0;
+        await setDoc(ref, { uid: uid, email: email, firstAt: fa || now, firstSrc: 'main', backfill: old, cls: r.cls, seat: r.seat, code: r.code, upd: now, ver: ver, src: 'main' });
+        await _acctEv(uid, 'first', Object.assign({ t: 'first', at: fa || now, backfill: old, to: _acctLab(r),
+          note: old ? (fa ? '本紀錄系統上線前就玩過;首次登入時間取自存檔' : '本紀錄系統上線前就玩過;存檔沒有更早的時間,以這次登入補記') : '第一次登入小英雄' }, base));
+        if(r.cls) await _acctEv(uid, 'cls_' + _acctSafe(r.code || r.cls), Object.assign({ t: 'cls_init', to: _acctLab(r), note: '第一次記錄班級座號' }, base));
+      } else {
+        const s = snap.data() || {};
+        if(r.cls && (s.code !== r.code || s.cls !== r.cls)){
+          if(!s.cls && !s.code){
+            await _acctEv(uid, 'cls_' + _acctSafe(r.code || r.cls), Object.assign({ t: 'cls_init', to: _acctLab(r), note: '第一次記錄班級座號' }, base));
+          } else {
+            const k = _acctKind(s.cls, r.cls);
+            await _acctEv(uid, 'cls_' + _acctSafe(s.code || s.cls) + '_' + _acctSafe(r.code || r.cls), Object.assign({ t: k, from: _acctLab({ code: s.code || '', cls: s.cls || '' }), to: _acctLab(r),
+              note: k === 'grade_up' ? ('升上 ' + _acctGrade(r.cls) + ' 年級') : (k === 'graduate' ? '畢業' : '班級或座號變動') }, base));
+          }
+          await setDoc(ref, { cls: r.cls, seat: r.seat, code: r.code, email: email, upd: now, ver: ver, src: 'main' }, { merge: true });
+        }
+      }
+      try{ localStorage.setItem(lk, JSON.stringify({ v: 1, code: r.code, cls: r.cls, at: now })); }catch(_){}
+    }catch(e){ console.warn('[帳號永久紀錄] 寫入失敗(規則未發布時正常,下次登入再試)', e && (e.code || e.message)); }
+  };
+  // 帳號繼承轉移:新舊帳號各記一筆(GM 遷移完成時呼叫;meta = { mode:'request'|'gm_direct'|'backfill', id?, at?, oldEmail?, newEmail?, backfill? })
+  window._lxpsAcctXfer = async function(oldUid, newUid, meta){
+    meta = meta || {};
+    const by = (_fbAuth.currentUser && _fbAuth.currentUser.email) || '';
+    let oe = String(meta.oldEmail || ''), ne = String(meta.newEmail || '');
+    try{ if(!oe){ const s = await getDoc(doc(_fbDb, 'players', oldUid)); oe = s.exists() ? String((s.data() || {}).email || '') : ''; } }catch(_){}
+    try{ if(!ne){ const s = await getDoc(doc(_fbDb, 'players', newUid)); ne = s.exists() ? String((s.data() || {}).email || '') : ''; } }catch(_){}
+    oe = oe.toLowerCase(); ne = ne.toLowerCase();
+    const at = Number(meta.at) || Date.now(), id = String(meta.id || at);
+    const note = ({ request: '學生申請、老師核准轉移', gm_direct: '老師直接轉移', backfill: '補記(依舊的轉移申請紀錄)' })[meta.mode] || String(meta.mode || '帳號轉移');
+    const common = { src: 'gm', by: by, fromUid: oldUid, toUid: newUid, from: oe, to: ne, note: note, backfill: !!meta.backfill, at: at };
+    const a = await _acctEv(newUid, 'xfer_in_' + _acctSafe(id), Object.assign({ t: 'xfer_in', email: ne }, common));
+    const b = await _acctEv(oldUid, 'xfer_out_' + _acctSafe(id), Object.assign({ t: 'xfer_out', email: oe }, common));
+    return { inWritten: a, outWritten: b };
+  };
+  // GM 查詢:摘要 + 全部事件(依時間排序)
+  window._fbAcctLogRead = async function(uid){
+    if(!uid) throw new Error('uid 必填');
+    const s = await getDoc(doc(_fbDb, 'accountLog', uid));
+    const evs = await getDocs(collection(_fbDb, 'accountLog', uid, 'ev'));
+    const list = [];
+    evs.forEach(function(d){ const x = d.data() || {}; x._id = d.id; x._srvMs = (x.srv && typeof x.srv.toMillis === 'function') ? x.srv.toMillis() : 0; list.push(x); });
+    list.sort(function(a, b){ return (Number(a.at) || a._srvMs || 0) - (Number(b.at) || b._srvMs || 0); });
+    return { sum: s.exists() ? s.data() : null, list: list };
+  };
+  // GM 一次性補建:所有 players 沒有摘要的帳號 → 摘要+首次登入(backfill)+班級;再把「已核准的舊轉移申請」補記成轉移事件
+  window._fbAcctLogBackfillAll = async function(onProg){
+    const by = (_fbAuth.currentUser && _fbAuth.currentUser.email) || '';
+    const ver = String(window._GAME_LOADED_VERSION || '');
+    const ps = await getDocs(collection(_fbDb, 'players'));
+    const arr = []; ps.forEach(function(d){ arr.push({ uid: d.id, d: d.data() || {} }); });
+    let made = 0, skip = 0, fail = 0, i = 0;
+    for(const p of arr){
+      i++;
+      try{
+        const ref = doc(_fbDb, 'accountLog', p.uid);
+        const s = await getDoc(ref);
+        if(s.exists()){ skip++; }
+        else {
+          const email = String(p.d.email || '').toLowerCase(), r = _acctRoster(email), now = Date.now();
+          const fa = Number(p.d._firstLoginAt) || Number(p.d.createdAt) || 0;
+          await setDoc(ref, { uid: p.uid, email: email, firstAt: fa || now, firstSrc: 'gm', backfill: true, cls: r.cls, seat: r.seat, code: r.code, upd: now, ver: ver, src: 'gm' });
+          await _acctEv(p.uid, 'first', { t: 'first', src: 'gm', email: email, at: fa || now, backfill: true, by: by, to: _acctLab(r),
+            note: fa ? '老師補建:首次登入時間取自存檔' : '老師補建:存檔沒有更早的時間紀錄,以補建當下為準(實際首次登入更早)' }, true);
+          if(r.cls) await _acctEv(p.uid, 'cls_' + _acctSafe(r.code || r.cls), { t: 'cls_init', src: 'gm', email: email, by: by, to: _acctLab(r), backfill: true, note: '老師補建:依目前名冊' }, true);
+          made++;
+        }
+      }catch(e){ fail++; }
+      if(onProg && (i % 20 === 0 || i === arr.length)){ try{ onProg(i, arr.length, made, skip, fail); }catch(_){} }
+    }
+    let xf = 0, xfFail = 0;
+    try{
+      const tr = await getDocs(collection(_fbDb, 'accountTransferRequests'));
+      const reqs = []; tr.forEach(function(d){ reqs.push(d); });
+      for(const d of reqs){
+        const x = d.data() || {};
+        if(x.status !== 'approved' || !x.oldUid) continue;
+        try{ await window._lxpsAcctXfer(x.oldUid, d.id, { mode: 'backfill', backfill: true, id: 'req_' + d.id, at: Number(x.migratedAt) || Number(x.resolvedAt) || 0 }); xf++; }catch(_){ xfFail++; }
+      }
+    }catch(_){}
+    return { total: arr.length, made: made, skip: skip, fail: fail, xfer: xf, xferFail: xfFail };
+  };
+  // GM「排行榜姓名更新」:小遊戲週排行(本週+已結算週的得獎名單/前十名)裡的名字一律換成目前名冊的班級座號
+  //   名字格式比照小遊戲 mgPlayerLabel:4 碼班級座號 + 姓名中間字遮罩「6125王○妘」(兩字名「6125王○」)
+  function _mgRankLabel(email){
+    const r = _acctRoster(email);
+    if(!r.code || !r.name) return '';
+    const n = r.name;
+    if(n.length <= 1) return r.code + n;
+    if(n.length === 2) return r.code + n.charAt(0) + '○';
+    return r.code + n.charAt(0) + '○' + n.charAt(n.length - 1);
+  }
+  window._fbMgRankNameRefresh = async function(onProg){
+    const ref = doc(_fbDb, 'stats', 'minigameWeekly');
+    const snap = await getDoc(ref);
+    if(!snap.exists()) return { users: 0, labeled: 0, changed: 0 };
+    const data = snap.data() || {}, uids = new Set();
+    Object.keys(data.weeks || {}).forEach(function(w){ Object.keys(data.weeks[w] || {}).forEach(function(u){ uids.add(u); }); });
+    Object.keys(data.settlement || {}).forEach(function(w){
+      const st = data.settlement[w] || {};
+      Object.keys(st.awards || {}).forEach(function(u){ uids.add(u); });
+      Object.keys(st.top || {}).forEach(function(g){ (st.top[g] || []).forEach(function(x){ if(x && x.uid) uids.add(x.uid); }); });
+    });
+    const lab = {}; let i = 0;
+    for(const u of uids){
+      i++;
+      try{ const p = await getDoc(doc(_fbDb, 'players', u)); const em = p.exists() ? String((p.data() || {}).email || '').toLowerCase() : ''; const l = em ? _mgRankLabel(em) : ''; if(l) lab[u] = l; }catch(_){}
+      if(onProg && (i % 10 === 0 || i === uids.size)){ try{ onProg(i, uids.size); }catch(_){} }
+    }
+    let changed = 0;
+    await runTransaction(_fbDb, async function(tx){
+      const s2 = await tx.get(ref);
+      const d = s2.exists() ? (s2.data() || {}) : {}, weeks = d.weeks || {}, st = d.settlement || {}, upd = {};
+      changed = 0;
+      Object.keys(weeks).forEach(function(w){ Object.keys(weeks[w] || {}).forEach(function(u){
+        const e = weeks[w][u]; if(lab[u] && e && e.n !== lab[u]){ upd.weeks = upd.weeks || {}; (upd.weeks[w] = upd.weeks[w] || {})[u] = { n: lab[u] }; changed++; } }); });
+      Object.keys(st).forEach(function(w){
+        const S = st[w] || {}, o = {};
+        Object.keys(S.awards || {}).forEach(function(u){ if(lab[u] && S.awards[u] && S.awards[u].name !== lab[u]){ (o.awards = o.awards || {})[u] = { name: lab[u] }; changed++; } });
+        Object.keys(S.top || {}).forEach(function(g){
+          let ch = false;
+          const na = (S.top[g] || []).map(function(x){ if(x && lab[x.uid] && x.name !== lab[x.uid]){ ch = true; changed++; return Object.assign({}, x, { name: lab[x.uid] }); } return x; });
+          if(ch){ (o.top = o.top || {})[g] = na; }
+        });
+        if(Object.keys(o).length){ upd.settlement = upd.settlement || {}; upd.settlement[w] = o; }
+      });
+      if(changed) tx.set(ref, upd, { merge: true });
+    });
+    return { users: uids.size, labeled: Object.keys(lab).length, changed: changed };
   };
 
   // 冒險次數:每次玩家按「整裝出發」啟動一次冒險時呼叫,全域計數 +1
@@ -5234,6 +5414,12 @@
       }
       _r.gmInbox = n;
     }catch(e){ console.warn('[帳號轉移] GM 獎勵收件匣複製失敗', e); }
+    // ★ v5.353.0 帳號永久紀錄:新舊兩個帳號各記一筆轉移事件(只能新增、不能改刪)
+    try{
+      const _xm = Object.assign({ oldEmail: String((_srcData && _srcData.email) || '') }, (arguments.length > 2 && arguments[2]) ? arguments[2] : {});
+      const _xr = await window._lxpsAcctXfer(oldUid, newUid, _xm);
+      _r.acctLog = !!(_xr && (_xr.inWritten || _xr.outWritten));
+    }catch(e){ _r.acctLog = 'fail'; console.warn('[帳號轉移] 帳號永久紀錄寫入失敗(規則未發布?)', e && (e.code || e.message)); }
     console.log('[帳號轉移] 遷移完成 oldUid=' + oldUid + ' → newUid=' + newUid, _r);
     return _r;
   };

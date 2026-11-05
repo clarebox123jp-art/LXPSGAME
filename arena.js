@@ -542,7 +542,8 @@
               ...slot,
               _ownerUid: data.uid,
               _ownerEmail: data.email,
-              _ownerLabel: data.displayLabel || '神秘玩家',
+              // ★ v5.353.0(老師「班級座號還是舊版的」)— 陣容是以前上傳的,名牌開頭可能還是去年的 4 碼;顯示時依目前名冊換成新班級座號
+              _ownerLabel: ((typeof window._lxpsRefreshRosterCode === 'function' && data.email) ? window._lxpsRefreshRosterCode(data.displayLabel || '', data.email) : data.displayLabel) || '神秘玩家',
               _slotKey: slotKey,
             });
           }
