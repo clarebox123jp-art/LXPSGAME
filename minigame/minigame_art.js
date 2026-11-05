@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -442,6 +442,9 @@ var CSS = [
 '.art-obj{position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;line-height:1;filter:drop-shadow(0 .4vmin .3vmin rgba(0,0,0,.3))}',
 /* 手機橫向(矮螢幕):整體字放大(鐵律〇之二) */
 '@media (orientation:landscape) and (max-height:520px){#art-modal .abtn,#art-tut .abtn{font-size:3.4vmin}#art-modal .asub,#art-modal .cost,#art-modal .acard [style*="font-size:2"]{font-size:3vmin !important}#art-modal .acard [style*="minmax(24vmin"]{grid-template-columns:repeat(auto-fill,minmax(38vmin,1fr)) !important}#art-modal .lvcard .st{font-size:3.6vmin}#art-root .achip{font-size:3.4vmin}#art-root .dock button,#art-root .abtn{font-size:3.6vmin}#art-modal .acard{font-size:3.6vmin}#art-modal h3{font-size:4.4vmin}#art-tut .bubble{font-size:3.8vmin}#art-lv .top .tt,#art-lv .foot .ask{font-size:3.8vmin}.art-opt{font-size:3.6vmin}.art-label{font-size:3.4vmin}#art-tut .sprite{width:12vmin;height:14vmin}}',
+/* ★ v1.1.3(檢查報告第 10 項):無 Home 鍵 iPad/手機的安全區 — 下緣按鈕離開 Home 手勢條、左右按鈕避開瀏海圓角(沒有安全區的機器 env() = 0,位置不變) */
+'#art-root .dock{right:calc(1.6vmin + env(safe-area-inset-right));bottom:calc(1.6vmin + env(safe-area-inset-bottom))}#art-root .lchips{left:calc(1.6vmin + env(safe-area-inset-left)) !important;bottom:calc(1.6vmin + env(safe-area-inset-bottom)) !important}#art-root .hud{left:calc(1.6vmin + env(safe-area-inset-left));right:calc(1.6vmin + env(safe-area-inset-right));top:calc(1.6vmin + env(safe-area-inset-top))}',
+'#art-lv .top{padding-left:calc(1.8vmin + env(safe-area-inset-left));padding-right:calc(1.8vmin + env(safe-area-inset-right));padding-top:calc(1.4vmin + env(safe-area-inset-top))}#art-lv .foot{padding-left:calc(1.8vmin + env(safe-area-inset-left));padding-right:calc(1.8vmin + env(safe-area-inset-right));padding-bottom:calc(1.4vmin + env(safe-area-inset-bottom))}',
 /* ★ v1.1.0 新畫面的手機橫向版(放最後,鐵律〇之二) */
 '@media (orientation:landscape) and (max-height:520px){#art-modal .scard{font-size:3.1vmin}#art-modal .wall{grid-template-columns:repeat(auto-fill,minmax(36vmin,1fr))}#art-modal .wcard{font-size:2.8vmin}#art-modal .mini{font-size:2.9vmin}#art-modal select,#art-modal input[type=text]{font-size:3.4vmin}#art-modal .mcard{font-size:2.8vmin}#art-root .arr-bar{font-size:3.4vmin;bottom:14vmin}.art-mt{font-size:3.2vmin}.art-mt .slot{min-width:22vmin}#art-root .dock{gap:.8vmin}#art-root .dock button{padding:.8vmin 1.4vmin}}'
 ].join('\n');
@@ -457,7 +460,7 @@ function modal(html, btns, opt){
   btns = btns || [{ t: '好' }];
   for(i = 0; i < btns.length; i++){ (function(bd){
     b = document.createElement('button'); b.className = 'abtn ' + (bd.cls || 'go'); b.innerHTML = bd.t; b.disabled = !!bd.dis;
-    b.onclick = function(ev){ ev.stopPropagation(); sfx('sfx-tap', 0.3); if(!bd.keep) modalClose(); if(bd.cb) bd.cb(); };
+    b.onclick = function(ev){ ev.stopPropagation(); sfx('sfx-tap', 0.3); if(!bd.keep) modalClose(); if(bd.cb) bd.cb(); if(!bd.keep) modalNext(); };
     row.appendChild(b);
   })(btns[i]); }
   if(opt && opt.onOpen) opt.onOpen(m);
@@ -477,6 +480,10 @@ document.addEventListener('click', function(e){
   b._artT = k;
 }, true);
 function modalClose(){ var m = $('art-modal'); if(m && m.parentNode) m.parentNode.removeChild(m); }
+/* ★ v1.1.3(檢查報告第 9 項):背景跑完才跳的視窗(雲端找回、交件成功、過關結算)不可蓋掉學生正在看的視窗 ⇒ 有視窗開著就排隊,關掉後再出來 */
+var MQ = [];
+function modalLater(html, btns, opt){ if($('art-modal') || $('art-tut')){ MQ.push([html, btns, opt]); return null; } return modal(html, btns, opt); }
+function modalNext(){ setTimeout(function(){ if(!MQ.length || $('art-modal') || $('art-tut') || !A.on) return; var q = MQ.shift(); modal(q[0], q[1], q[2]); }, 0); }
 function confirmBox(msg, cb){ modal('<p>' + msg + '</p>', [{ t: '取消', cls: 'ghost', cb: function(){ cb(false); } }, { t: '確定', cb: function(){ cb(true); } }]); }
 
 /* ══ 彩筆精靈(GPT 圖到位前的程式畫替身) ══ */
@@ -496,7 +503,7 @@ function tutRun(key, done, force){
   if(!steps || (!force && A.save && A.save.tut[key])){ if(done) done(); return; }
   el = document.createElement('div'); el.id = 'art-tut'; if(A.style === 'p') el.className = 'premium';
   document.body.appendChild(el);
-  function finish(){ if(el.parentNode) el.parentNode.removeChild(el); if(A.save && !A.save.tut[key]){ A.save.tut[key] = 1; saveSoon(); } if(done) done(); }
+  function finish(){ if(el.parentNode) el.parentNode.removeChild(el); if(A.save && !A.save.tut[key]){ A.save.tut[key] = 1; saveSoon(); } if(done) done(); modalNext(); }
   function show(){
     var st = steps[i], tgt = st.spot ? document.querySelector(st.spot) : null, r, h = '', dots = '', j, pos = 'bottom';
     for(j = 0; j < steps.length; j++) dots += '<i class="' + (j === i ? 'on' : '') + '"></i>';
@@ -726,7 +733,7 @@ function helpPanel(){
   h += '<div class="scard">❓ <b>忘記怎麼玩</b>:每座工坊、每一關、畫布的右上角都有 <b>❓ 怎麼玩</b>,隨時打開看。</div>';
   h += '<div class="scard">📅 <b>今日挑戰</b>:每天 3 個小任務(左下角),完成拿額外資源和積分。⚔️ <b>比賽</b>、🗓 <b>每週主題</b>開放時也會出現在左下角。</div>';
   h += '<div class="scard">📒 <b>收藏</b>:一座工坊全部 ⭐⭐⭐ 就拿到那位大師的卡;大師卡會解鎖特殊筆刷,星星越多貼紙越多,還能蓋村子裝飾、按 ✋ 擺設換位置。</div>';
-  h += '<div class="scard">🎨 <b>畫布</b>:平板兩指捏縮放、兩指點一下復原、三指點一下重做、長按吸色。電腦:B 筆刷、E 橡皮擦、I 吸管、[ ] 粗細、Ctrl+Z 復原、空白鍵拖曳平移、滾輪縮放、Shift 畫直線、? 看快捷鍵。</div>';
+  h += '<div class="scard">🎨 <b>畫布</b>:平板兩指捏縮放、兩指點一下復原、三指點一下重做、手指在畫好的顏色上按住不動吸色。電腦:B 筆刷、E 橡皮擦、I 吸管、[ ] 粗細、Ctrl+Z 復原、空白鍵拖曳平移、滾輪縮放、Shift 畫直線、? 看快捷鍵。</div>';
   modal(h, [{ t: '重看新手教學', cls: 'ghost', cb: function(){ tutRun('welcome', null, true); } }, { t: '看懂了' }]);
 }
 function setPanel(){
@@ -947,7 +954,7 @@ function cloudRestore(){
         if(!todo.length){ toast('☁ 雲端的作品這台都有了'); return; }
         todo.forEach(function(it){ it.getDownloadURL().then(function(u){ return fetch(u); }).then(function(r){ return r.json(); }).then(function(rec){
             if(rec && rec.uid === uid && rec.id){ idbPut(uid + '|' + rec.id, rec, function(){}); got++; } else bad++; })['catch'](function(){ bad++; })
-          .then(function(){ if(got + bad === todo.length){ toast(got ? '☁ 找回 ' + got + ' 件作品/草稿' : '☁ 下載不到(老師要先開 Storage 的 CORS,見補丁說明)'); if(got && !$('art-cv')) studioOpen(); } }); });
+          .then(function(){ if(got + bad === todo.length){ toast(got ? '☁ 找回 ' + got + ' 件作品/草稿' : '☁ 下載不到(老師要先開 Storage 的 CORS,見補丁說明)'); if(got && !$('art-cv') && !$('art-modal') && !$('art-tut') && !$('art-lv')) studioOpen(); } }); });
       });
     })['catch'](function(){ toast('☁ 雲端備份讀不到(請老師確認 storage.rules 已發布)'); });
   });
@@ -1027,7 +1034,7 @@ function evSubmit(ev, img, cv, auto){
       idbDel(A.uid + '|draft_ev_' + ev.id);
       sfx('sfx-clap', 0.5);
       cv.close(true);
-      modal('<h3 style="text-align:center">📤 交件成功!</h3><div style="text-align:center"><img src="' + th + '" style="max-width:60%;border:.4vmin solid #3a2f45;border-radius:1.4vmin"></div><p style="text-align:center">系統初評:<b>' + sys + ' 分</b> ' + '★★★'.slice(0, r.stars) + '</p>'
+      modalLater('<h3 style="text-align:center">📤 交件成功!</h3><div style="text-align:center"><img src="' + th + '" style="max-width:60%;border:.4vmin solid #3a2f45;border-radius:1.4vmin"></div><p style="text-align:center">系統初評:<b>' + sys + ' 分</b> ' + '★★★'.slice(0, r.stars) + '</p>'
         + (r.card || []).map(function(c){ return '<div class="scard">' + (c.ok ? '✅ ' : '💡 ') + esc(c.t) + '</div>'; }).join('') + '<p style="font-size:2.2vmin;color:#6b6178;text-align:center">老師看完作品會再加減分,公布後到 🎨 畫室 → 🖼 作品牆 看結果' + (ev.type === 'week' ? ';截止前還可以重新交件' : '') + '。</p>', [{ t: '回村子', cb: function(){ paintHub(); } }]);
     })['catch'](function(e){
       A.evBusy = false;
@@ -1049,7 +1056,7 @@ function evClaim(){
       if(!o || !(o.award > 0) || A.save.ev.hasOwnProperty(eid)) return;
       A.save.ev[eid] = clamp(o.award | 0, 0, 200); ledAdd('ev', { id: eid, g: A.save.ev[eid] }); saveSoon();
       sfx('sfx-medal', 0.5); toast('🏅 活動結果公布了!第 ' + (o.rank | 0) + ' 名,藝術積分 +' + A.save.ev[eid]);
-      if(A.screen === 'hub' && !$('art-lv') && !$('art-cv')) paintHub();
+      if(A.screen === 'hub' && !$('art-lv') && !$('art-cv') && !A.arrange) paintHub();   /* ★ v1.1.3 第 15 項:擺設中不重畫(拖到一半的裝飾才不會丟) */
     })['catch'](function(){});
   });
 }
@@ -1228,11 +1235,20 @@ function dragify(el, opt){
       if(ghost){ ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px'; }
       hotSet(ev.clientX, ev.clientY);
       if(opt.onMove) opt.onMove(ev.clientX, ev.clientY); }
-    function cleanup(){ clearTimeout(lt); try{ if(hot) hot.classList.remove('drop'); }catch(_){} hot = null; el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); if(ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost); ghost = null; el.style.opacity = ''; }
-    function up(ev){ if(ev.pointerId !== pid) return; var wasMoved = moved; cleanup(); if(!wasMoved){ if(opt.onTap) opt.onTap(); return; } var t = document.elementFromPoint(ev.clientX, ev.clientY); if(opt.onDrop) opt.onDrop(ev.clientX, ev.clientY, t); }
-    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    /* ★ v1.1.3(檢查報告第 2、17 項):監聽改掛 window ⇒ 被拖的那塊中途被重畫(innerHTML 換掉)也收得到放開,浮動複本一定會清掉;
+       pointercancel / 失去捕捉 = 取消(不算放下);被拖的那塊已經不在畫面上 ⇒ 只清掉、不放下 */
+    function cleanup(){ clearTimeout(lt); try{ if(hot) hot.classList.remove('drop'); }catch(_){} hot = null; window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); el.removeEventListener('lostpointercapture', lost); if(ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost); ghost = null; el.style.opacity = ''; var q = DRAGS.indexOf(cleanup); if(q >= 0) DRAGS.splice(q, 1); }
+    function up(ev){ if(ev.pointerId !== pid) return; var wasMoved = moved, alive = document.body.contains(el); cleanup(); if(!alive) return; if(!wasMoved){ if(opt.onTap) opt.onTap(); return; } var t = document.elementFromPoint(ev.clientX, ev.clientY); if(opt.onDrop) opt.onDrop(ev.clientX, ev.clientY, t); }
+    function cancel(ev){ if(ev.pointerId !== pid) return; cleanup(); }
+    function lost(ev){ if(ev.pointerId !== pid) return; setTimeout(function(){ if(DRAGS.indexOf(cleanup) >= 0 && !document.body.contains(el)) cleanup(); }, 0); }
+    DRAGS.push(cleanup);
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', cancel); el.addEventListener('lostpointercapture', lost);
   });
 }
+var DRAGS = [];
+function dragsClear(){ var a = DRAGS.slice(), i; for(i = 0; i < a.length; i++){ try{ a[i](); }catch(_){} } DRAGS = []; var g = document.querySelectorAll('.art-drag'); for(i = 0; i < g.length; i++){ if(g[i].parentNode) g[i].parentNode.removeChild(g[i]); } }
+window.addEventListener('blur', dragsClear);
+document.addEventListener('visibilitychange', function(){ if(document.hidden) dragsClear(); });
 function upFind(t, attr){ while(t && t.getAttribute){ if(t.getAttribute(attr) != null) return t; t = t.parentNode; } return null; }
 function shake(el){ if(!el || !el.animate) return; try{ el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-1.2vmin)' }, { transform: 'translateX(1.2vmin)' }, { transform: 'translateX(0)' }], { duration: 300 }); }catch(e){} }
 
@@ -1256,7 +1272,8 @@ function lvStart(id){
     prog: function(s){ $('art-lv-prog').textContent = s || ''; },
     act: function(label, cb){ var b = $('art-lv-act'); if(!label){ b.style.display = 'none'; return; } b.style.display = ''; b.innerHTML = label; b.onclick = function(){ sfx('sfx-tap', 0.3); cb(); }; },
     miss: function(){ A.lv.miss++; sfx('sfx-ng', 0.35); },
-    win: function(stars, card){ lvFinish(stars, card); }
+    win: function(stars, card){ if(!ctx.alive()) return; lvFinish(stars, card); },
+    alive: function(){ return !!(A.lv && A.lv.id === id && !A.lv.done && document.body.contains(ctx.body)); }   /* ★ v1.1.3 延遲回呼先確認還在同一關 */
   };
   ctx.ask(esc(L.ask || ''));
   (R[L.type] || R.quiz)(L, ctx);
@@ -1278,7 +1295,7 @@ function howHtml(id){
   return h;
 }
 function howShow(id, done){ modal(howHtml(id), [{ t: done ? '我知道了,開始!' : '好', cb: done || null }]); }
-function lvClose(silent){ var el = $('art-lv'); if(el && el.parentNode) el.parentNode.removeChild(el); if(!silent){ A.lv = null; if(A.on) music('hub'); } }
+function lvClose(silent){ dragsClear(); var el = $('art-lv'); if(el && el.parentNode) el.parentNode.removeChild(el); if(!silent){ A.lv = null; if(A.on) music('hub'); } }
 function lvFinish(stars, card){
   var lv = A.lv, L, id, old, gain = 0, cap, today, k, W, res = {}, j, h, next, a, i;
   if(!lv || lv.done) return;
@@ -1307,7 +1324,7 @@ function lvFinish(stars, card){
     if(!hadCard && hasCard(L.ws) && D.CARDS[L.ws]) h += '<div class="scard" style="text-align:center;background:#fff3b0">🃏 <b>得到大師卡:' + D.CARDS[L.ws].e + ' ' + esc(D.CARDS[L.ws].n) + '</b><br>' + esc(T(D.CARDS[L.ws])) + (D.CARDS[L.ws].brush ? '<br>🖌 解鎖特殊筆刷:' + esc(D.SPECIAL_BRUSH[D.CARDS[L.ws].brush]) : '') + '</div>';
   }
   a = D.WS_LEVELS[L.ws]; next = a[a.indexOf(id) + 1];
-  modal(h, [{ t: '🔁 再玩一次', cls: 'ghost', cb: function(){ lvStart(id); } }].concat(next && stars ? [{ t: '下一關 ▶', cb: function(){ lvStart(next); } }] : []).concat([{ t: '回村子', cls: 'ghost', cb: function(){ lvClose(); paintHub(); } }]), { onOpen: function(m){
+  modalLater(h, [{ t: '🔁 再玩一次', cls: 'ghost', cb: function(){ lvStart(id); } }].concat(next && stars ? [{ t: '下一關 ▶', cb: function(){ lvStart(next); } }] : []).concat([{ t: '回村子', cls: 'ghost', cb: function(){ lvClose(); paintHub(); } }]), { onOpen: function(m){
     var bs = m.querySelectorAll('[data-cnt]'), q;
     for(q = 0; q < bs.length; q++) (function(b, n, dl){ b.textContent = '0'; var t0 = 0, iv = setTimeout(function(){ t0 = now(); var it = setInterval(function(){ var p = Math.min(1, (now() - t0) / 600); b.textContent = String(Math.round(n * p)); if(p >= 1) clearInterval(it); }, 40); }, dl); })(bs[q], +bs[q].getAttribute('data-cnt'), 400 + stars * 350 + q * 200);
     for(q = 0; q < stars; q++) (function(k2){ setTimeout(function(){ sfx('sfx-coin', 0.35); }, 250 + k2 * 350); })(q);
@@ -1404,7 +1421,7 @@ R.wheel = function(L, ctx){
     var ts = ctx.body.querySelectorAll('[data-c]'), j;
     for(j = 0; j < ts.length; j++) (function(t){ dragify(t, { dropAttr: 'data-wi', dropOk: function(d){ return !!blank[+d.getAttribute('data-wi')]; }, onDrop: function(x, y, tg){ var w = upFind(tg, 'data-wi'), ci = +t.getAttribute('data-c'), wi; if(!w) return; wi = +w.getAttribute('data-wi');
       if(!blank[wi]) return;
-      if(wi === ci){ delete blank[wi]; left.splice(left.indexOf(ci), 1); sfx('sfx-ok', 0.35); paint(); if(!left.length) setTimeout(function(){ ctx.win(starsByMiss(A.lv.miss, total)); }, 400); }
+      if(wi === ci){ delete blank[wi]; left.splice(left.indexOf(ci), 1); sfx('sfx-ok', 0.35); paint(); if(!left.length) setTimeout(function(){ ctx.win(starsByMiss(A.lv.miss, total)); }, 400); }   /* ctx.win 內已檢查 ctx.alive */
       else { ctx.miss(); toast(D.WHEEL[ci].n + ' 應該放在 ' + D.WHEEL[(ci + 11) % 12].n + ' 和 ' + D.WHEEL[(ci + 1) % 12].n + ' 中間喔'); shake(t); } } }); })(ts[j]);
   }
   paint();
@@ -1413,8 +1430,10 @@ R.wheel = function(L, ctx){
 R.pickWheel = function(L, ctx){
   var ri = 0, bases = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), RD = shuffle(L.rounds.map(function(r, k){ return { rel: r.rel, base: bases[k % 12] }; }));   /* ★ v1.1.0 第 13/18 項:題目順序與基準色每次都不一樣 */
   L = { rounds: RD };
+  var tok = 0, busy = false;   /* ★ v1.1.3(檢查報告第 1 項):換題中鎖住;舊題的延遲重畫看回合編號,換題後不再蓋掉新題 */
   function round(){
-    var rd = L.rounds[ri], base = rd.base, need, mark = {}, got = {}, nm = D.WHEEL[base].n, txt;
+    var rd = L.rounds[ri], base = rd.base, need, mark = {}, got = {}, nm = D.WHEEL[base].n, txt, my = ++tok;
+    busy = false;
     if(rd.rel === 'comp'){ need = [(base + 6) % 12]; txt = '點出 <b>' + nm + '</b> 的 <b>互補色</b>(正對面)'; }
     else if(rd.rel === 'near'){ need = [(base + 1) % 12, (base + 11) % 12]; txt = '點出 <b>' + nm + '</b> 的兩個 <b>相近色</b>(左右鄰居)'; }
     else { need = [(base + 4) % 12, (base + 8) % 12, (base + 5) % 12, (base + 7) % 12]; txt = '點出 <b>' + nm + '</b> 的一個 <b>對比色</b>(相隔約 120°~150°)'; }
@@ -1425,12 +1444,12 @@ R.pickWheel = function(L, ctx){
       var ps = ctx.body.querySelectorAll('[data-wi]'), j;
       for(j = 0; j < ps.length; j++) ps[j].onclick = function(){
         var wi = +this.getAttribute('data-wi'), k, gn = 0;
-        if(wi === base || got[wi]) return;
+        if(busy || my !== tok || wi === base || got[wi] || mark[wi] === '✖') return;
         if(need.indexOf(wi) >= 0){ got[wi] = 1; mark[wi] = '✔'; sfx('sfx-ok', 0.35);
           for(k in got){ if(got.hasOwnProperty(k)) gn++; }
-          if((rd.rel === 'near' && gn >= 2) || (rd.rel !== 'near' && gn >= 1)){ paint(); ri++; setTimeout(function(){ if(ri >= L.rounds.length) ctx.win(starsByMiss(A.lv.miss, L.rounds.length)); else round(); }, 650); return; }
+          if((rd.rel === 'near' && gn >= 2) || (rd.rel !== 'near' && gn >= 1)){ busy = true; paint(); ri++; setTimeout(function(){ if(my !== tok || !ctx.alive()) return; if(ri >= L.rounds.length) ctx.win(starsByMiss(A.lv.miss, L.rounds.length)); else round(); }, 650); return; }
           paint();
-        } else { ctx.miss(); mark[wi] = '✖'; paint(); setTimeout(function(){ delete mark[wi]; paint(); }, 600); toast(rd.rel === 'comp' ? '互補色在正對面喔' : (rd.rel === 'near' ? '相近色是緊鄰的左右兩格' : '對比色隔開 4~5 格')); }
+        } else { ctx.miss(); mark[wi] = '✖'; paint(); setTimeout(function(){ if(my !== tok) return; delete mark[wi]; paint(); }, 600); toast(rd.rel === 'comp' ? '互補色在正對面喔' : (rd.rel === 'near' ? '相近色是緊鄰的左右兩格' : '對比色隔開 4~5 格')); }
       };
     }
     paint();
@@ -1444,7 +1463,7 @@ R.mix = function(L, ctx){
   function hex2(c){ return [parseInt(c.substr(1, 2), 16), parseInt(c.substr(3, 2), 16), parseInt(c.substr(5, 2), 16)]; }
   function avg(a, b){ var x = hex2(a), y = hex2(b), i, o = '#'; for(i = 0; i < 3; i++) o += ('0' + Math.round((x[i] + y[i]) / 2).toString(16)).slice(-2); return o; }
   function round(){
-    var rd = L.rounds[ri], h, k, bc;
+    var rd = L.rounds[ri], h, k, bc, lock = false;   /* ★ v1.1.3:兩罐倒進去之後到換題/洗碗前鎖住 */
     bowl = [];
     function paint(){
       bc = bowl.length === 2 ? ((bowl.slice().sort().join() === rd.a.slice().sort().join()) ? rd.c : avg(D.PAINTS[bowl[0]].c, D.PAINTS[bowl[1]].c)) : (bowl.length ? D.PAINTS[bowl[0]].c : '#f4efe6');
@@ -1456,9 +1475,9 @@ R.mix = function(L, ctx){
       ctx.body.innerHTML = h + '</div></div>';
       ctx.prog('第 ' + (ri + 1) + '/' + L.rounds.length + ' 色'); ctx.ask('調出「' + rd.t + '」:把兩罐顏料拖進碗裡');
       var ts = ctx.body.querySelectorAll('[data-pt]'), j;
-      for(j = 0; j < ts.length; j++) (function(t){ dragify(t, { dropAttr: 'data-bowl', onDrop: function(x, y, tg){ if(!upFind(tg, 'data-bowl')) return; var p = t.getAttribute('data-pt'); if(bowl.length >= 2) bowl = []; if(bowl.indexOf(p) >= 0) return; bowl.push(p); sfx('sfx-tap', 0.3); paint();
-        if(bowl.length === 2){ if(bowl.slice().sort().join() === rd.a.slice().sort().join()){ sfx('sfx-ok', 0.4); toast('🎨 ' + D.PAINTS[bowl[0]].n + ' + ' + D.PAINTS[bowl[1]].n + ' = ' + rd.t + '!'); ri++; setTimeout(function(){ if(ri >= L.rounds.length) ctx.win(starsByMiss(A.lv.miss, L.rounds.length)); else round(); }, 900); }
-          else { ctx.miss(); toast('變成另一個顏色了,碗洗乾淨再試一次'); setTimeout(function(){ bowl = []; paint(); }, 1000); } } } }); })(ts[j]);
+      for(j = 0; j < ts.length; j++) (function(t){ dragify(t, { dropAttr: 'data-bowl', onDrop: function(x, y, tg){ if(lock || !upFind(tg, 'data-bowl')) return; var p = t.getAttribute('data-pt'); if(bowl.length >= 2) bowl = []; if(bowl.indexOf(p) >= 0) return; bowl.push(p); sfx('sfx-tap', 0.3); paint();
+        if(bowl.length === 2){ lock = true; if(bowl.slice().sort().join() === rd.a.slice().sort().join()){ sfx('sfx-ok', 0.4); toast('🎨 ' + D.PAINTS[bowl[0]].n + ' + ' + D.PAINTS[bowl[1]].n + ' = ' + rd.t + '!'); ri++; setTimeout(function(){ if(!ctx.alive()) return; if(ri >= L.rounds.length) ctx.win(starsByMiss(A.lv.miss, L.rounds.length)); else round(); }, 900); }
+          else { ctx.miss(); toast('變成另一個顏色了,碗洗乾淨再試一次'); setTimeout(function(){ if(!ctx.alive()) return; lock = false; bowl = []; paint(); }, 1000); } } } }); })(ts[j]);
     }
     paint();
   }
@@ -1480,7 +1499,12 @@ R.label = function(L, ctx){
     var ts = ctx.body.querySelectorAll('[data-lb]'), j;
     for(j = 0; j < ts.length; j++) (function(t){ var nm = t.getAttribute('data-lb'); dragify(t, { dropAttr: 'data-spot', dropOk: function(d){ return !placed[+d.getAttribute('data-spot')]; },
       onLong: function(){ modal('<h3>🏷 ' + esc(nm) + '</h3><p>' + esc(D.GLOSS[nm] || '') + '</p>'); },
-      onDrop: function(x, y, tg){ var sp = upFind(tg, 'data-spot'), si; if(!sp) return; si = +sp.getAttribute('data-spot'); if(placed[si]) return;
+      onDrop: function(x, y, tg){ var sp = upFind(tg, 'data-spot'), si, q, r, d2, best = 1e9, sps;
+        /* ★ v1.1.3 第 11 項:靠很近的兩圈(明暗交界線/反光)改成「放開的點離哪個沒貼的圈心最近」;放在圈外附近也算,太遠才提示 */
+        sps = ctx.body.querySelectorAll('[data-spot]'); sp = null;
+        for(q = 0; q < sps.length; q++){ if(placed[+sps[q].getAttribute('data-spot')]) continue; r = sps[q].getBoundingClientRect(); d2 = Math.pow(x - (r.left + r.width / 2), 2) + Math.pow(y - (r.top + r.height / 2), 2); if(d2 < best){ best = d2; sp = sps[q]; } }
+        if(!sp || best > Math.pow(Math.min(window.innerWidth, window.innerHeight) * 0.07, 2)){ toast('把名牌放到球上的虛線圈裡喔'); return; }
+        si = +sp.getAttribute('data-spot'); if(placed[si]) return;
         if(L.spots[si].a === nm){ placed[si] = 1; left.splice(left.indexOf(nm), 1); sfx('sfx-ok', 0.35); paint(); if(!left.length) setTimeout(function(){ ctx.win(starsByMiss(A.lv.miss, L.spots.length)); }, 500); }
         else { ctx.miss(); toast('不是這裡喔:「' + nm + '」是' + (D.GLOSS[nm] || '')); } } }); })(ts[j]);
   }
@@ -1502,8 +1526,10 @@ R.shadow = function(L, ctx){
     ctx.ask('燈在 <b>' + lt.n + '</b>,球的影子會落在哪裡?點正確的那一張');
     ctx.prog('第 ' + (ri + 1) + '/' + L.rounds + ' 題');
     var bs = ctx.body.querySelectorAll('[data-o]'), j;
+    var lock = false;   /* ★ v1.1.3 第 5 項:答對後到下一題前鎖住(不會跳題、不會誤扣分);同一個錯的選項只扣一次 */
     for(j = 0; j < bs.length; j++) bs[j].onclick = function(){ var o = +this.getAttribute('data-o');
-      if(opts[o] === lt.sx){ this.className += ' right'; sfx('sfx-ok', 0.35); ri++; setTimeout(function(){ if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
+      if(lock || this.className.indexOf('wrong') >= 0) return;
+      if(opts[o] === lt.sx){ lock = true; this.className += ' right'; sfx('sfx-ok', 0.35); ri++; setTimeout(function(){ if(!ctx.alive()) return; if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
       else { this.className += ' wrong'; ctx.miss(); toast(opts[o] === 0 ? '影子不會躲在球正下方,光是斜斜照過來的' : '影子在光的「相反邊」喔'); } };
   }
   round();
@@ -1531,10 +1557,10 @@ R.quiz = function(L, ctx){
     else { for(i = 0; i < q.opts.length; i++) h += '<button class="art-opt" data-o="' + i + '" style="min-width:22vmin;padding:1.6vmin 2.4vmin">' + esc(q.opts[i]) + '</button>'; }
     ctx.body.innerHTML = h + '</div></div>';
     ctx.ask(''); ctx.prog('第 ' + (qi + 1) + '/' + qs.length + ' 題');
-    var bs = ctx.body.querySelectorAll('[data-o]'), j;
+    var bs = ctx.body.querySelectorAll('[data-o]'), j, lock = false;   /* ★ v1.1.3 第 5 項 */
     for(j = 0; j < bs.length; j++) bs[j].onclick = function(){ var o = +this.getAttribute('data-o');
-      if(this.className.indexOf('wrong') >= 0) return;
-      if(o === q.a){ this.className += ' right'; sfx('sfx-ok', 0.35); ctx.ask('✅ ' + esc(q.why)); qi++; setTimeout(function(){ if(qi >= qs.length) ctx.win(starsByMiss(A.lv.miss, qs.length)); else round(); }, 1500); }
+      if(lock || this.className.indexOf('wrong') >= 0) return;
+      if(o === q.a){ lock = true; this.className += ' right'; sfx('sfx-ok', 0.35); ctx.ask('✅ ' + esc(q.why)); qi++; setTimeout(function(){ if(!ctx.alive()) return; if(qi >= qs.length) ctx.win(starsByMiss(A.lv.miss, qs.length)); else round(); }, 1500); }
       else { this.className += ' wrong'; ctx.miss(); wrong++;
         if(wrong >= 2){ var k2; for(k2 = 0; k2 < bs.length; k2++){ if(+bs[k2].getAttribute('data-o') !== q.a && bs[k2].className.indexOf('wrong') < 0) bs[k2].className += ' fade'; }
           ctx.ask('💡 只剩下一個答案了,先看看小提示');
@@ -1561,9 +1587,10 @@ R.odd = function(L, ctx){
     }
     ctx.body.innerHTML = h + '</div>';
     ctx.ask('哪一個破壞了「統一」?點它!'); ctx.prog('第 ' + (ri + 1) + '/' + L.rounds + ' 題');
-    var bs = ctx.body.querySelectorAll('[data-o]'), j;
+    var bs = ctx.body.querySelectorAll('[data-o]'), j, lock = false;   /* ★ v1.1.3 第 5 項 */
     for(j = 0; j < bs.length; j++) bs[j].onclick = function(){ var o = +this.getAttribute('data-o');
-      if(o === odd){ this.className += ' right'; sfx('sfx-ok', 0.35); toast({ color: '顏色不一樣!', shape: '形狀不一樣!', size: '大小不一樣!', outline: '只有它是空心的!' }[kind]); ri++; setTimeout(function(){ if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
+      if(lock || this.className.indexOf('wrong') >= 0) return;
+      if(o === odd){ lock = true; this.className += ' right'; sfx('sfx-ok', 0.35); toast({ color: '顏色不一樣!', shape: '形狀不一樣!', size: '大小不一樣!', outline: '只有它是空心的!' }[kind]); ri++; setTimeout(function(){ if(!ctx.alive()) return; if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
       else { this.className += ' wrong'; ctx.miss(); } };
   }
   round();
@@ -1573,8 +1600,14 @@ R.compose = function(L, ctx){
   var objs = JSON.parse(JSON.stringify(L.objs)), fr, i, guide = '', PT = [[33.33, 33.33, '左上'], [66.66, 33.33, '右上'], [33.33, 66.66, '左下'], [66.66, 66.66, '右下']], tgt = PT[Math.floor(Math.random() * 4)];
   var fw = 'min(86vmin,74vw)', fh = 'min(64.5vmin,55.5vw)';
   /* ★ v1.1.0 第 18 項:物件起始位置隨機(避開目標);三分法每次指定一個交叉點 */
-  for(i = 0; i < objs.length; i++){ objs[i].x = clamp(Math.round(12 + Math.random() * 76), 8, 92); objs[i].y = clamp(Math.round(14 + Math.random() * 72), 10, 90);
-    if(L.rule === 'thirds' && objs[i].main){ objs[i].x = 50 + (Math.random() - 0.5) * 8; objs[i].y = 50 + (Math.random() - 0.5) * 8; } }
+  /* ★ v1.1.3(檢查報告第 16 項):真的避開目標點、物件彼此不疊在一起(最多試 40 次,試不到就用最後一次) */
+  for(i = 0; i < objs.length; i++) objs[i].x = null;
+  objs.slice().sort(function(a, b){ return (b.main ? 1 : 0) - (a.main ? 1 : 0); }).forEach(function(o){ (function(o){ var t, k, ok, q;
+    if(L.rule === 'thirds' && o.main){ o.x = 50 + (Math.random() - 0.5) * 8; o.y = 50 + (Math.random() - 0.5) * 8; return; }
+    for(t = 0; t < 40; t++){ o.x = clamp(Math.round(12 + Math.random() * 76), 8, 92); o.y = clamp(Math.round(14 + Math.random() * 72), 10, 90); ok = true;
+      if(L.rule === 'thirds' && Math.abs(o.x - tgt[0]) + Math.abs(o.y - tgt[1]) < 16) ok = false;
+      for(k = 0; ok && k < objs.length; k++){ q = objs[k]; if(q === o || q.x == null) continue; if(Math.abs(q.x - o.x) < 14 && Math.abs(q.y - o.y) < 16) ok = false; }
+      if(ok) break; } })(o); });
   if(L.rule === 'thirds') ctx.ask('把主角「🏠 房子」拖到 <b>' + tgt[2] + '</b> 的三分線交叉點');
   if(L.rule === 'thirds') guide = '<div class="g" style="left:33.33%;top:0;bottom:0;width:.3vmin"></div><div class="g" style="left:66.66%;top:0;bottom:0;width:.3vmin"></div><div class="g" style="top:33.33%;left:0;right:0;height:.3vmin"></div><div class="g" style="top:66.66%;left:0;right:0;height:.3vmin"></div>';
   else if(L.rule === 'symmetry') guide = '<div class="g" style="left:50%;top:0;bottom:0;width:.3vmin;opacity:.6"></div>';
@@ -1792,6 +1825,8 @@ function canvasOpen(opt){
     + '#art-cv .cvb small{font-size:1.6vmin;font-weight:900}#art-cv .cvb.on{background:#ffd93b;box-shadow:0 0 0 .4vmin #ff7a59}'
     + '#art-cv .vsl{writing-mode:vertical-lr;direction:rtl;width:4vmin;height:18vmin;-webkit-appearance:slider-vertical;appearance:slider-vertical}'
     + '#art-cv .slab{font-size:1.6vmin;font-weight:900;text-align:center}'
+    + '#art-cv .srow{display:flex;align-items:center;gap:.6vmin}#art-cv .hsl{flex:1;min-width:0;width:100%;margin:0;height:4.4vmin;touch-action:none}#art-cv .srow .sv{min-width:4.2vmin;text-align:right}#art-cv .cvl{overflow-x:hidden}'
+    + '#art-cv .cvtop{padding-left:calc(1.4vmin + env(safe-area-inset-left));padding-right:calc(1.4vmin + env(safe-area-inset-right))}#art-cv .cvmain{padding-bottom:env(safe-area-inset-bottom)}#art-cv .cvl{padding-left:calc(1vmin + env(safe-area-inset-left))}#art-cv .cvr{padding-right:calc(1vmin + env(safe-area-inset-right))}'
     + '#art-cv .stage{flex:1;position:relative;overflow:hidden;touch-action:none;cursor:crosshair}'
     + '#art-cv .stage canvas{position:absolute;left:0;top:0;width:100%;height:100%}'
     + '#art-cv .sw{width:4.6vmin;height:4.6vmin;border-radius:1vmin;border:.3vmin solid #3a2f45;cursor:pointer;display:inline-block;margin:.3vmin}'
@@ -1806,9 +1841,13 @@ function canvasOpen(opt){
     + (opt.endMs ? '<span class="cvtimer" id="art-cv-timer">⏱</span>' : '')
     + '<button class="abtn" data-c="undo" title="復原 (Ctrl+Z)">↶</button><button class="abtn" data-c="redo" title="重做 (Ctrl+Shift+Z)">↷</button><button class="abtn" data-c="grid" title="三分法格線">#️⃣</button><button class="abtn" data-c="fit" title="置中 (Ctrl+0)">⤢</button><button class="abtn" data-c="keys" title="快捷鍵 (?)">⌨</button><button class="abtn" data-c="how" title="怎麼玩">❓</button>'
     + (opt.task ? '<button class="abtn go" id="art-cv-done" data-c="done">' + (opt.submitLabel || '✅ 交件') + '</button>' : '<button class="abtn go" id="art-cv-done" data-c="save">💾 儲存</button>') + '</div>'
-    + '<div class="cvmain"><div class="cvl" id="art-cv-left">' + bh + '<div class="slab">粗細</div><input class="vsl" type="range" min="1" max="100" id="art-cv-size"><div class="slab" id="art-cv-sizev"></div><div class="slab">透明度</div><input class="vsl" type="range" min="5" max="100" id="art-cv-op"><div class="slab" id="art-cv-opv"></div></div>'
+    + '<div class="cvmain"><div class="cvl" id="art-cv-left">' + bh + '</div>'
     + '<div class="stage" id="art-cv-stage"><canvas id="art-cv-c"></canvas></div>'
-    + '<div class="cvr" id="art-cv-right"><div style="display:flex;align-items:center;gap:1vmin"><span class="sw" id="art-cv-cur" style="width:7vmin;height:7vmin"></span><span class="slab" id="art-cv-hex"></span></div>' + (allowed.indexOf('stamp') >= 0 ? '<div class="slab" style="text-align:left">🏷 貼紙</div><div id="art-cv-stk"></div>' : '') + '<div id="art-cv-pal"></div><div class="slab" style="text-align:left">🕘 最近</div><div id="art-cv-rec"></div><div class="slab" style="text-align:left;margin-top:1vmin">📚 圖層</div><div id="art-cv-lyr"></div><div style="display:flex;gap:.6vmin;flex-wrap:wrap"><button class="mini" data-c="ladd">＋新增</button><button class="mini" data-c="lup">▲</button><button class="mini" data-c="ldn">▼</button><button class="mini" data-c="ldel">🗑</button></div></div></div>';
+    + '<div class="cvr" id="art-cv-right"><div style="display:flex;align-items:center;gap:1vmin"><span class="sw" id="art-cv-cur" style="width:7vmin;height:7vmin"></span><span class="slab" id="art-cv-hex"></span></div>'
+    /* ★ v1.1.3(檢查報告第 6 項):粗細/透明度從左欄(工具多時要捲才看得到)搬到右欄最上面,改成橫向滑桿,三種平台都一眼看得到 */
+    + '<div class="srow"><span class="slab">粗細</span><input class="hsl" type="range" min="1" max="100" id="art-cv-size"><span class="slab sv" id="art-cv-sizev"></span></div>'
+    + '<div class="srow"><span class="slab">透明</span><input class="hsl" type="range" min="5" max="100" id="art-cv-op"><span class="slab sv" id="art-cv-opv"></span></div>' + '<div class="slab" style="text-align:left;margin-top:.6vmin">📚 圖層</div><div id="art-cv-lyr"></div><div style="display:flex;gap:.6vmin;flex-wrap:wrap"><button class="mini" data-c="ladd">＋新增</button><button class="mini" data-c="lup">▲</button><button class="mini" data-c="ldn">▼</button><button class="mini" data-c="ldel">🗑</button></div>'   /* ★ v1.1.3:圖層區移到調色盤上面,不用捲到底才找得到 */
+    + (allowed.indexOf('stamp') >= 0 ? '<div class="slab" style="text-align:left">🏷 貼紙</div><div id="art-cv-stk"></div>' : '') + '<div class="slab" style="text-align:left">🕘 最近</div><div id="art-cv-rec"></div><div class="slab" style="text-align:left">🎨 調色盤</div><div id="art-cv-pal"></div></div></div>';
   root.appendChild(wrap);
   var stage = $('art-cv-stage'), dc = $('art-cv-c'), dx = dc.getContext('2d'), dpr = A.lite ? 1 : Math.min(2, window.devicePixelRatio || 1);   /* ★ v1.1.1 省電:螢幕畫布不用 2 倍解析度(Retina iPad 每幀像素少 3/4) */
   /* 舊作品的圖層:全部載完再「照順序」放回去(原本誰先載完誰先放,順序可能亂掉) */
@@ -1902,7 +1941,9 @@ function canvasOpen(opt){
   function strokeMove(e){
     var st = S.stroke, evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e], i, p, q;
     if(!st) return;
-    if(st.shift){ /* Shift:直線(每次重畫) */ p = toWorld(e.clientX, e.clientY); if(st.mode === 'erase'){ return; } scx.clearRect(0, 0, W, H); seg({ x: st.start.x, y: st.start.y, p: 0.6 }, { x: p.x, y: p.y, p: 0.6 }); st.end = p; req(); return; }
+    if(st.shift){ /* Shift:直線(每次重畫) */ p = toWorld(e.clientX, e.clientY);
+      if(st.mode === 'erase'){ /* ★ v1.1.3 第 19 項:Shift+橡皮擦也能擦直線 — 每次先把圖層還原成下筆前,再擦一條 */ var ex = S.layers[st.li].c.getContext('2d'); ex.clearRect(0, 0, W, H); ex.drawImage(snap, 0, 0); seg({ x: st.start.x, y: st.start.y, p: 0.6 }, { x: p.x, y: p.y, p: 0.6 }); st.end = p; req(); return; }
+      scx.clearRect(0, 0, W, H); seg({ x: st.start.x, y: st.start.y, p: 0.6 }, { x: p.x, y: p.y, p: 0.6 }); st.end = p; req(); return; }
     if(!evs.length) evs = [e];
     for(i = 0; i < evs.length; i++){ p = toWorld(evs[i].clientX, evs[i].clientY); q = { x: p.x, y: p.y, p: evs[i].pressure || st.last.p }; seg(st.last, q); st.last = q; }
     req();
@@ -1917,15 +1958,21 @@ function canvasOpen(opt){
     S.stroke = null; S.strokes++; S.dirty++; req(); paintLayersSoon(); draftSoon();
   }
   function cancelStroke(){ if(!S.stroke) return; scx.clearRect(0, 0, W, H); if(S.stroke.mode === 'erase'){ var x = S.layers[S.stroke.li].c.getContext('2d'); x.clearRect(0, 0, W, H); x.drawImage(snap, 0, 0); } S.stroke = null; req(); }
-  function pick(cx, cy){
-    var p = toWorld(cx, cy), c = document.createElement('canvas'), x, i, d, L, a;
-    if(p.x < 0 || p.y < 0 || p.x >= W || p.y >= H) return;
-    c.width = 1; c.height = 1; x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 1, 1);
+  /* ★ v1.1.3(檢查報告第 3 項):fromLong = 手指長按吸色;按在空白紙上不吸(原本會吸到白色,之後畫的都看不見) */
+  function pick(cx, cy, fromLong){
+    var p = toWorld(cx, cy), c = document.createElement('canvas'), x, i, d, L, a, al = 0;
+    if(p.x < 0 || p.y < 0 || p.x >= W || p.y >= H) return false;
+    c.width = 1; c.height = 1; x = c.getContext('2d');
+    for(i = 0; i < S.layers.length; i++){ L = S.layers[i]; if(!L.vis) continue; x.globalAlpha = L.a; x.drawImage(L.c, Math.floor(p.x), Math.floor(p.y), 1, 1, 0, 0, 1, 1); }
+    al = x.getImageData(0, 0, 1, 1).data[3];
+    if(fromLong && al < 8) return false;
+    x.globalAlpha = 1; x.clearRect(0, 0, 1, 1); x.fillStyle = '#fff'; x.fillRect(0, 0, 1, 1);
     for(i = 0; i < S.layers.length; i++){ L = S.layers[i]; if(!L.vis) continue; x.globalAlpha = L.a; x.drawImage(L.c, Math.floor(p.x), Math.floor(p.y), 1, 1, 0, 0, 1, 1); }
     d = x.getImageData(0, 0, 1, 1).data; a = '#' + ('0' + d[0].toString(16)).slice(-2) + ('0' + d[1].toString(16)).slice(-2) + ('0' + d[2].toString(16)).slice(-2);
     if(opt.gray){ var lum = Math.round(0.299 * d[0] + 0.587 * d[1] + 0.114 * d[2]), h2 = ('0' + lum.toString(16)).slice(-2); a = '#' + h2 + h2 + h2; }
-    setColor(a); sfx('sfx-tap', 0.25); toast('🧪 吸到顏色 ' + a);
+    setColor(a); sfx('sfx-tap', 0.25); toast(al < 8 || /^#f[a-f0-9]f[a-f0-9]f[a-f0-9]$/i.test(a) ? '🧪 吸到白色 ' + a + ':畫在白紙上會看不見,記得換顏色喔' : '🧪 吸到顏色 ' + a);
     if(S.eyedrop){ S.eyedrop = false; paintTools(); }
+    return true;
   }
 
   /* ── 指標事件:筆/滑鼠/觸控 ── */
@@ -1938,15 +1985,18 @@ function canvasOpen(opt){
     if(e.pointerType === 'pen') S.penSeen = true;
     S.ptr[e.pointerId] = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: now(), type: e.pointerType };
     var touches = pts().filter(function(p){ return p.type === 'touch'; });
-    if(e.pointerType === 'touch' && touches.length >= 2){ cancelStroke(); clearTimeout(S.lp); S.gest = { n: touches.length, t: now(), moved: false, d0: dist(touches[0], touches[1]), c0: mid(touches[0], touches[1]), v0: { s: S.view.s, x: S.view.x, y: S.view.y } }; return; }
+    if(e.pointerType === 'touch' && touches.length >= 2){ cancelStroke(); clearTimeout(S.lp); S.stampPend = null; S.gest = { n: touches.length, t: now(), moved: false, d0: dist(touches[0], touches[1]), c0: mid(touches[0], touches[1]), v0: { s: S.view.s, x: S.view.x, y: S.view.y } }; return; }
     if(e.pointerType === 'touch' && S.penSeen) return;   /* 防手掌誤觸:用過筆之後,手指只負責手勢 */
     if(e.pointerType === 'mouse' && e.button === 2){ ctxMenu(e.clientX, e.clientY); return; }
     if(S.space || e.button === 1){ S.pan = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y }; return; }
     if(S.eyedrop || e.altKey || (e.pointerType === 'pen' && (e.buttons & 2))){ pick(e.clientX, e.clientY); return; }
     var tool = S.tool;
     if(e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32))) tool = allowed.indexOf('eraser') >= 0 ? 'eraser' : tool;   /* 筆尾橡皮擦 */
+    /* ★ v1.1.3 第 7 項:手指蓋貼紙改成「放開才蓋」,中途變成兩指縮放就取消(原本每縮放一次多一張貼紙) */
+    if(e.pointerType === 'touch' && BRUSH[tool] && BRUSH[tool].mode === 'stamp'){ S.stampPend = { id: e.pointerId, clientX: e.clientX, clientY: e.clientY, sx: e.clientX, sy: e.clientY }; return; }
     strokeStart(e, tool);
-    if(e.pointerType !== 'mouse'){ clearTimeout(S.lp); S.lp = setTimeout(function(){ var p0 = S.ptr[e.pointerId]; if(p0 && Math.abs(p0.x - p0.sx) + Math.abs(p0.y - p0.sy) < 8){ cancelStroke(); pick(p0.x, p0.y); S.lpDone = e.pointerId; } }, 520); }
+    /* ★ v1.1.3 第 3 項:長按吸色只給手指(筆停下來想一下不再吸色),要按住 0.8 秒且幾乎沒動;按在空白紙上不吸、照常畫 */
+    if(e.pointerType === 'touch' && S.stroke){ clearTimeout(S.lp); S.lp = setTimeout(function(){ var p0 = S.ptr[e.pointerId]; if(p0 && S.stroke && S.stroke.pid === e.pointerId && Math.abs(p0.x - p0.sx) + Math.abs(p0.y - p0.sy) < 8){ if(pick(p0.x, p0.y, true)){ cancelStroke(); S.lpDone = e.pointerId; } } }, 800); }
   });
   stage.addEventListener('pointermove', function(e){
     var p = S.ptr[e.pointerId], ts;
@@ -1958,6 +2008,7 @@ function canvasOpen(opt){
         wx = (S.gest.c0.x - r.left - S.gest.v0.x) / S.gest.v0.s; wy = (S.gest.c0.y - r.top - S.gest.v0.y) / S.gest.v0.s;
         S.view.s = s; S.view.x = c.x - r.left - wx * s; S.view.y = c.y - r.top - wy * s; req(); } return; }
     if(S.pan){ S.view.x = S.pan.vx + e.clientX - S.pan.x; S.view.y = S.pan.vy + e.clientY - S.pan.y; req(); return; }
+    if(S.stampPend && S.stampPend.id === e.pointerId){ S.stampPend.clientX = e.clientX; S.stampPend.clientY = e.clientY; if(Math.abs(e.clientX - S.stampPend.sx) + Math.abs(e.clientY - S.stampPend.sy) > 24) S.stampPend = null; return; }
     if(S.stroke && S.stroke.pid === e.pointerId){ if(Math.abs(p.x - p.sx) + Math.abs(p.y - p.sy) >= 8) clearTimeout(S.lp); strokeMove(e); }
   });
   function upH(e){
@@ -1965,6 +2016,7 @@ function canvasOpen(opt){
     delete S.ptr[e.pointerId]; clearTimeout(S.lp);
     if(g){ if(!pts().filter(function(q){ return q.type === 'touch'; }).length){ S.gest = null; if(!g.moved && now() - g.t < 350){ if(g.n === 2) undo(); else if(g.n >= 3) redo(); } } return; }
     if(S.pan){ S.pan = null; return; }
+    if(S.stampPend && S.stampPend.id === e.pointerId){ var sp = S.stampPend; S.stampPend = null; if(e.type === 'pointerup') stampAt(sp); return; }
     if(S.lpDone === e.pointerId){ S.lpDone = null; return; }
     if(S.stroke && S.stroke.pid === e.pointerId) strokeEnd();
   }
@@ -2009,7 +2061,7 @@ function canvasOpen(opt){
     if(R) h += '<div class="scard">📋 <b>系統怎麼評分</b><br>' + nl2br(T(R)) + '</div>';
     h += '<div class="scard">🖌 左邊選筆刷,兩條滑桿調<b>粗細</b>和<b>透明度</b>;右邊選顏色、管理<b>圖層</b>(👁 隱藏、▲▼ 調順序、🗑 刪除)。</div>';
     h += '<div class="scard">↶ <b>復原</b>:平板兩指點一下/電腦 Ctrl+Z;↷ <b>重做</b>:三指點一下/Ctrl+Shift+Z。畫筆、刪圖層、調順序、新增圖層都能復原(最多 ' + undoMax + ' 步)。</div>';
-    h += '<div class="scard">🧪 長按畫面吸取顏色(電腦 Alt+點一下);兩指捏放大縮小;#️⃣ 開三分法格線;⤢ 把畫布放回中間。</div>';
+    h += '<div class="scard">🧪 按 🧪 吸管、或手指在畫好的顏色上按住不動,可以吸取顏色(Apple Pencil 用吸管鈕;電腦 Alt+點一下);兩指捏放大縮小;#️⃣ 開三分法格線;⤢ 把畫布放回中間。</div>';
     h += '<div class="scard">' + (opt.task ? '✅ 畫好按右上角 <b>交件</b>,系統給評分卡;沒過關可以繼續修改。畫到一半離開,下次會問你要不要接著畫。' : '💾 按右上角 <b>儲存</b> 存到你的畫室。') + '</div>';
     modal(h, [{ t: '好', cls: 'go' }, { t: '⌨ 電腦快捷鍵', cls: 'ghost', cb: keysHelp }]);
   }
@@ -2070,7 +2122,13 @@ function canvasOpen(opt){
   /* 草稿自動存(IndexedDB,鍵帶 uid;畫到一半被閒置登出也不會讓下一位看到) */
   var dId = opt.draftId || opt.task, dT = 0, draftKey = opt.task ? (A.uid + '|draft_' + dId) : (opt.workId ? (A.uid + '|' + opt.workId) : '');
   /* ★ v1.1.0 第 3 項:草稿除了存這台(IndexedDB),登入時也每 20 秒備份到雲端 Storage */
-  function draftSoon(){ if(!opt.task || !draftKey) return; clearTimeout(dT); dT = setTimeout(function(){ if(S.closed) return; var rec = { uid: A.uid, id: 'draft_' + dId, t: now(), ratio: ratio, layers: S.layers.map(function(l){ return l.c.toDataURL('image/png'); }) }; idbPut(draftKey, rec); cloudDraftSoon(rec); }, 2500); }
+  /* ★ v1.1.3(檢查報告第 13 項):畫室自由創作也自動存草稿(鍵 uid|sdraft,只存這台,不進作品清單);按 💾 儲存或確定離開才清掉 */
+  var sKey = (!opt.task && A.uid) ? (A.uid + '|sdraft') : '';
+  function sDraftNow(){ if(!sKey || !S.dirty) return; try{ idbPut(sKey, { uid: A.uid, id: 'sdraft', t: now(), ratio: ratio, title: opt.title || '', workId: opt.workId || '', layers: S.layers.map(function(l){ return l.c.toDataURL('image/png'); }) }); }catch(e){} }
+  function sDraftSoon(){ clearTimeout(dT); dT = setTimeout(function(){ if(!S.closed) sDraftNow(); }, 2500); }
+  function onHide(){ if(document.hidden && !S.closed && sKey){ clearTimeout(dT); sDraftNow(); } }   /* 切背景/睡眠前先存 */
+  document.addEventListener('visibilitychange', onHide);
+  function draftSoon(){ if(sKey){ sDraftSoon(); return; } if(!opt.task || !draftKey) return; clearTimeout(dT); dT = setTimeout(function(){ if(S.closed) return; var rec = { uid: A.uid, id: 'draft_' + dId, t: now(), ratio: ratio, layers: S.layers.map(function(l){ return l.c.toDataURL('image/png'); }) }; idbPut(draftKey, rec); cloudDraftSoon(rec); }, 2500); }
   /* 貼紙列 */
   function paintStk(){ var el = $('art-cv-stk'), a = stickersOwned(), h = '', i; if(!el) return; if(a.indexOf(S.sticker) < 0) S.sticker = a[0] || '⭐';
     for(i = 0; i < a.length; i++) h += '<span class="stk' + (a[i] === S.sticker ? ' on' : '') + '" data-stk="' + a[i] + '">' + a[i] + '</span>'; el.innerHTML = h; }
@@ -2091,7 +2149,7 @@ function canvasOpen(opt){
     if(t.getAttribute('data-vis') != null){ var vi = +t.getAttribute('data-vis'); S.layers[vi].vis = !S.layers[vi].vis; sfx('sfx-tap', 0.2); paintLayers(); req(); return; }
     if(t.getAttribute('data-li') != null){ S.li = +t.getAttribute('data-li'); sfx('sfx-tap', 0.15); paintLayers(); req(); return; }
     a = t.getAttribute('data-c'); sfx('sfx-tap', 0.25);
-    if(a === 'x'){ if(S.dirty && !opt.task){ confirmBox('還沒儲存,確定離開畫布?', function(ok){ if(ok) close(); }); } else close(); }
+    if(a === 'x'){ if(S.dirty && !opt.task){ confirmBox('還沒儲存,確定離開畫布?(這張畫會丟掉)', function(ok){ if(ok){ S.dirty = 0; clearTimeout(dT); if(sKey) idbDel(sKey); close(); } }); } else close(); }
     else if(a === 'undo') undo(); else if(a === 'redo') redo();
     else if(a === 'grid'){ S.grid = !S.grid; req(); }
     else if(a === 'fit') fit(); else if(a === 'keys') keysHelp();
@@ -2114,20 +2172,33 @@ function canvasOpen(opt){
   function saveWork(){
     if(!opt.workId) opt.workId = 'w' + now().toString(36);
     var th = flatten(320).toDataURL('image/jpeg', 0.82), rec = { uid: A.uid, id: opt.workId, t: now(), title: opt.title || '我的作品', ratio: ratio, thumb: th, layers: S.layers.map(function(l){ return l.c.toDataURL('image/png'); }) };
-    idbPut(A.uid + '|' + opt.workId, rec, function(ok){ if(ok){ S.dirty = 0; sfx('sfx-coin', 0.4); toast(A.guest ? '💾 已存到你的畫室(這台平板)' : '💾 已存到你的畫室,也備份到雲端 ☁'); } else toast('儲存失敗:這台平板的空間可能不夠'); });
+    idbPut(A.uid + '|' + opt.workId, rec, function(ok){ if(ok){ S.dirty = 0; clearTimeout(dT); if(sKey) idbDel(sKey); sfx('sfx-coin', 0.4); toast(A.guest ? '💾 已存到你的畫室(這台平板)' : '💾 已存到你的畫室,也備份到雲端 ☁'); } else toast('儲存失敗:這台平板的空間可能不夠'); });
     cloudWorkPut(rec);   /* ★ v1.1.0 第 3 項 */
     try{ dailyHit('paint', paintInfo(analyzeImg())); }catch(e){}   /* ★ v1.1.0 第 19 項:畫室作品類的每日挑戰 */
   }
-  function close(silent){ if(S.closed) return; S.closed = true; clearTimeout(dT); clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('resize', resize); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
+  function close(silent){ if(S.closed) return; clearTimeout(dT); sDraftNow(); document.removeEventListener('visibilitychange', onHide); S.closed = true; clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('resize', resize); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
   var cvObj = { close: close, flatten: flatten };
   music(opt.endMs ? 'contest' : 'cv');   /* ★ v1.1.1 畫畫用安靜的曲子;比賽用緊湊的 */
   A.cv = cvObj;
   window.addEventListener('resize', resize);
   paintTools(); paintColor(); paintLayers(); paintStk();
-  setTimeout(function(){ resize(); fit(); tutRun('canvas'); }, 30);
+  /* ★ v1.1.3(檢查報告第 8 項):有草稿要問「接著畫嗎?」時,新手教學等問完再出來(原本教學蓋在確認框上) */
+  var draftAsk = !!(opt.task && !opt.layers && draftKey);
+  setTimeout(function(){ resize(); fit(); if(!draftAsk) tutRun('canvas'); }, 30);
+  function tutAfter(){ if(!S.closed) tutRun('canvas'); }
   /* 有沒交件的草稿 ⇒ 問要不要接著畫(只找本人 uid 的) */
-  if(opt.task && !opt.layers && draftKey) idbGet(draftKey, function(r){ if(!r || r.uid !== A.uid || S.closed || !r.layers || !r.layers.length) return;
-    confirmBox('上次這題還沒交件的畫,要接著畫嗎?', function(ok){ if(!ok){ idbDel(draftKey); return; } var n = 0, i; S.layers = []; S.li = 0; S.undo = []; S.redo = []; for(i = 0; i < r.layers.length; i++) (function(src, ix){ var im = new Image(); im.onload = function(){ var c = mkC(); c.getContext('2d').drawImage(im, 0, 0, W, H); S.layers[ix] = { c: c, vis: true, a: 1, n: '圖層 ' + (ix + 1), id: ++S.lid }; n++; if(n === r.layers.length){ S.li = S.layers.length - 1; S.strokes = 3; cacheDirty(); paintLayers(); req(); } }; im.onerror = function(){ n++; }; im.src = src; })(r.layers[i], i); }); });
+  if(draftAsk) idbGet(draftKey, function(r){ if(S.closed) return; if(!r || r.uid !== A.uid || !r.layers || !r.layers.length){ tutAfter(); return; }
+    confirmBox('上次這題還沒交件的畫,要接著畫嗎?', function(ok){ if(!ok){ idbDel(draftKey); tutAfter(); return; } draftLoad(r.layers, function(){ S.strokes = 3; }); tutAfter(); }); });
+  /* ★ v1.1.3(檢查報告第 4 項):草稿圖層全部載完(成功或壞掉)才一起換上,壞掉的略過;全壞 ⇒ 留一張新畫紙。原本壞一層整張畫布每幀出錯、畫不出來 */
+  function draftLoad(srcs, after){ var n = 0, i, ims = [], bad = 0;
+    function fin(){ var j, c, ly = []; if(S.closed) return;
+      for(j = 0; j < ims.length; j++){ if(!ims[j]) continue; c = mkC(); c.getContext('2d').drawImage(ims[j], 0, 0, W, H); ly.push({ c: c, vis: true, a: 1, n: '圖層 ' + (ly.length + 1), id: ++S.lid }); }
+      if(!ly.length){ toast('😢 草稿讀不出來,先用新的畫紙'); return; }
+      S.layers = ly; S.li = ly.length - 1; S.undo = []; S.redo = []; if(after) after();
+      if(bad) toast('有 ' + bad + ' 個圖層讀不出來,已經略過');
+      cacheDirty(); paintLayers(); req(); }
+    for(i = 0; i < srcs.length; i++) (function(src, ix){ var im = new Image(); im.onload = function(){ ims[ix] = im; n++; if(n === srcs.length) fin(); }; im.onerror = function(){ bad++; n++; if(n === srcs.length) fin(); }; im.src = src; })(srcs[i], i); }
+  if(opt.fromDraft){ S.dirty = 1; }
   return cvObj;
 }
 
@@ -2237,17 +2308,23 @@ function dotCount(img){
 
 /* ══ 🎨 個人畫室 ══ */
 function studioOpen(){
+  idbGet(A.uid + '|sdraft', function(sd){ studioOpen2(sd && sd.uid === A.uid && sd.layers && sd.layers.length ? sd : null); });
+}
+function studioOpen2(sd){
   idbList(A.uid + '|w', function(list){
     var h = '<h3>🎨 我的畫室</h3><p style="margin:0;color:#6b6178;font-size:2.2vmin">' + (A.guest ? '訪客的作品只存在這台平板。' : '作品存在這台平板,也會自動備份到雲端 ☁(平板被清掉也找得回來);只有你登入時看得到。') + '</p>', i, w;
     h += '<div style="display:flex;gap:1vmin;flex-wrap:wrap;margin-top:1vmin"><button class="abtn ghost" data-wall="1" style="font-size:2.2vmin">🖼 作品牆</button>' + (A.guest ? '' : '<button class="abtn ghost" data-cloud="1" style="font-size:2.2vmin">☁ 從雲端找回作品</button>') + '</div>';
     list.sort(function(a, b){ return b.t - a.t; });
     h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(24vmin,1fr));gap:1.4vmin;margin-top:1.4vmin">';
+    if(sd) h += '<div class="scard" style="grid-column:1/-1;background:#fff3b0;display:flex;align-items:center;gap:1.4vmin;flex-wrap:wrap">🩹 <b>上次還沒儲存的畫</b>(' + new Date(sd.t).toLocaleString() + ')<span style="flex:1"></span><button class="abtn go" data-sdr="1" style="font-size:2.2vmin">接著畫</button><button class="abtn ghost" data-sdx="1" style="font-size:2.2vmin">丟掉</button></div>';   /* ★ v1.1.3 第 13 項 */
     h += '<button class="abtn go" data-new="1" style="min-height:18vmin;font-size:3vmin">＋ 新畫布</button>';
     for(i = 0; i < list.length; i++){ w = list[i]; if(w.uid !== A.uid) continue;
       h += '<div class="lvcard" style="flex-direction:column;align-items:stretch;margin:0"><img src="' + w.thumb + '" style="width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-radius:1vmin" alt=""><div style="display:flex;gap:.8vmin;margin-top:.8vmin"><button class="abtn go" data-open="' + w.id + '" style="flex:1;font-size:2.2vmin">開啟</button><button class="abtn ghost" data-sub="' + w.id + '" style="font-size:2.2vmin">📤</button><button class="abtn ghost" data-del="' + w.id + '" style="font-size:2.2vmin">🗑</button></div></div>'; }
     h += '</div>';
     modal(h, [{ t: '回村子', cls: 'ghost' }], { onOpen: function(m){
-      m.onclick = function(ev){ var t = upFind(ev.target, 'data-new') || upFind(ev.target, 'data-open') || upFind(ev.target, 'data-del') || upFind(ev.target, 'data-sub') || upFind(ev.target, 'data-wall') || upFind(ev.target, 'data-cloud'), id, j, rec = null;
+      m.onclick = function(ev){ if(sd && upFind(ev.target, 'data-sdr')){ modalClose(); canvasOpen({ title: sd.title || '我的作品', ratio: sd.ratio, layers: sd.layers, workId: sd.workId || '', fromDraft: true, onClose: studioOpen }); return; }
+        if(sd && upFind(ev.target, 'data-sdx')){ confirmBox('丟掉這張還沒儲存的畫?(不能復原)', function(ok){ if(ok) idbDel(A.uid + '|sdraft', function(){ studioOpen(); }); else studioOpen(); }); return; }
+        var t = upFind(ev.target, 'data-new') || upFind(ev.target, 'data-open') || upFind(ev.target, 'data-del') || upFind(ev.target, 'data-sub') || upFind(ev.target, 'data-wall') || upFind(ev.target, 'data-cloud'), id, j, rec = null;
         if(!t) return;
         if(t.getAttribute('data-wall')){ wallList(); return; }
         if(t.getAttribute('data-cloud')){ modalClose(); cloudRestore(); return; }
