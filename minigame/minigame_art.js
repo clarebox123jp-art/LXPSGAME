@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.1';
+var ART_VER = 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -47,6 +47,7 @@ function esc(s){ return String(s == null ? '' : s).replace(/&/g, '&amp;').replac
 function toast(m){ try{ if(B.toast) B.toast(m); }catch(e){} }
 function sfx(id, v){ try{ if(B.sfx) B.sfx(id, v); }catch(e){} }
 function user(){ try{ return B.user ? B.user() : null; }catch(e){ return null; } }
+function uName(u){ var n = ''; if(!u) return ''; try{ if(window.mgPlayerFull) n = window.mgPlayerFull(u) || ''; }catch(e){} return n || u.displayName || u.email || ''; }   /* ★ v1.1.2 目前班級座號+姓名 */
 /* ★ v1.1.1(老師「找現有適合的來用就好」)— 背景音樂借用小遊戲現有曲目(音量跟著學生在小遊戲設定的音樂音量;⚙ 可單獨關)
    村子=寵物小屋 BGM(溫和)、關卡=知識王問答、畫布=自訂角色名片(安靜適合畫畫)、比賽=知識王問答(1)(較緊湊)、過關=Win 一次 */
 var BGM = { hub: 'bgm-pet-house', lv: 'bgm-play', cv: 'bgm-avatar-card', contest: 'bgm-king-challenge-2', win: 'bgm-result' };
@@ -240,7 +241,7 @@ function ptsSanitize(m, cloud){
 }
 /* 給雲端的版本:只留 rules 白名單欄位 */
 function cloudDoc(m, uid){
-  var u = user(), o = { uid: uid, v: m.v | 0, at: now(), name: String((u && (u.displayName || u.email)) || '').slice(0, 60), ver: ART_VER,
+  var u = user(), o = { uid: uid, v: m.v | 0, at: now(), name: String(uName(u)).slice(0, 60), ver: ART_VER,
     stars: m.stars, first: m.first, builds: m.builds, tut: m.tut, pts: m.pts, pd: m.pd, dq: m.dq, dp: m.dp, ev: m.ev, ej: m.ej, pos: m.pos, pen: m.pen }, f = FV();
   if(f) o.srv = f.serverTimestamp();
   return o;
@@ -338,7 +339,7 @@ function onUser(u){
   A.save = null;
   var _st = accessCheck(u); if(_st !== 'ok'){ gate(_st); return; }   /* ★ v1.0.2 */
   A.evs = []; A.gm = null; A.dl = null; A.dlKey = '';
-  loadFor(u, function(){ paintHub(); toast(u ? ('🎨 歡迎 ' + (u.displayName || u.email || '')) : '目前是訪客:進度只存在這台平板'); afterEnter(); });
+  loadFor(u, function(){ paintHub(); toast(u ? ('🎨 歡迎 ' + uName(u)) : '目前是訪客:進度只存在這台平板'); afterEnter(); });
 }
 
 /* ══ 樣式 ══ */
@@ -568,7 +569,7 @@ function hubHtml(){
   h += '<div class="vil" id="art-vil"><div class="vg">' + villageSvg(true) + '</div><div class="vc" id="art-vc" style="opacity:' + (op / 100).toFixed(3) + '">' + villageSvg(false) + '</div></div>';
   if(pct < 100) h += '<div class="ghostm" style="opacity:' + (0.35 + 0.65 * g).toFixed(2) + ';transform:scale(' + (0.6 + 0.4 * g).toFixed(2) + ')"><div></div></div>';
   h += '<div class="hud">';
-  h += '<div class="achip btn" data-k="who">' + (u ? '👤 ' + esc(String(u.displayName || u.email || '').slice(0, 10)) : '👤 訪客 🔑') + '</div>';
+  h += '<div class="achip btn" data-k="who">' + (u ? '👤 ' + esc(String(uName(u)).slice(0, 10)) : '👤 訪客 🔑') + '</div>';
   h += '<div class="achip restore" id="art-restore">🌈 <div class="bar"><i style="width:' + pct + '%"></i></div> ' + pct + '%</div>';
   h += '<div class="achip" title="顏料" id="art-r-paint">' + D.RES.paint.e + ' ' + Math.max(0, r.paint) + '</div><div class="achip" title="靈感" id="art-r-idea">' + D.RES.idea.e + ' ' + Math.max(0, r.idea) + '</div><div class="achip" title="畫材" id="art-r-mat">' + D.RES.mat.e + ' ' + Math.max(0, r.mat) + '</div>';
   h += '<div class="achip" title="本週藝術積分">⭐ ' + weekPts() + '</div>';
@@ -1015,7 +1016,7 @@ function evSubmit(ev, img, cv, auto){
   function writeDocs(url){
     var er = fb.db.collection('artEvents').doc(ev.id).collection('entries').doc(uid), wr = fb.db.collection('artEvents').doc(ev.id).collection('who').doc(uid), bt = fb.db.batch();
     bt.set(er, { uid: uid, pen: penOf(), cls: cls, sys: sys, st: r.stars, card: (r.card || []).slice(0, 8).map(function(c){ return { ok: c.ok ? 1 : 0, t: String(c.t).slice(0, 80) }; }), url: url || '', th: th, at: f.serverTimestamp(), n: ((A.evN && A.evN[ev.id]) | 0) + 1 });
-    bt.set(wr, { uid: uid, nm: String((u && u.displayName) || '').slice(0, 60), em: String((u && u.email) || '').slice(0, 80), at: f.serverTimestamp() });
+    bt.set(wr, { uid: uid, nm: String(uName(u)).slice(0, 60), em: String((u && u.email) || '').slice(0, 80), at: f.serverTimestamp() });
     return bt.commit();
   }
   sto(function(s){
