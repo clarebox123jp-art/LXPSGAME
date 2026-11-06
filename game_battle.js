@@ -21065,15 +21065,31 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     let _cstMiB1 = false; try{ _cstMiB1 = window._cstHasN(h,'b1','巫女'); }catch(_eCstMiB1){ _cstMiB1 = false; }
     const _healAmt = _cstMiB1 ? Math.max(1, Math.round(spv * 2.0 * _burstMult)) : Math.max(1, Math.round(spv * 1.5 * _burstMult));   // ✨ 命星 巫女 b1:全隊治療 特技 150% → 200%(×_burstMult 照乘)
     if(_cstMiB1){ try{ log('✨ ['+h.name+'] 命星:神樂舞治療提升至特技 200%!'); }catch(_eCstMiB1L){} }
+    // ★ v5.359.0(老師回報「組隊打暗龍王時,巫女使用爆發技,沒有成功幫隊友回血和復活」)
+    //   根因:原本順序是 ①治療/復活 → ②解除不利。暗龍王每回合給全隊「不治詛咒」,①時詛咒還在 ⇒ doHeal 直接 return 0(活著的隊友一滴都沒回),
+    //         ②才把詛咒解掉,已經來不及。修法:解除不利搬到最前面(神樂舞本來就會解除一切不利),再復活與治療。
+    //   倒下的隊友由 doRevive 清狀態(原本就會),不受影響。只改先後,數值與效果完全照設計書。
+    _allTeam.forEach(t => {
+      if(!t || t.curHp <= 0) return;
+      try{ _lxpsStatFxRestoreAll(t, 'status'); }catch(_){}
+      t.status = [];
+    });
     _allTeam.forEach(t => {
       if(!t) return;
+      // ★ v5.359.0(老師「加上失敗提示」):復活/治療沒成功時,直接在那位隊友頭上顯示「復活失敗/治療失敗＋原因」,戰鬥紀錄也寫一行。
+      //   (舊版不管 doRevive 成不成功都寫「被神樂舞喚回」⇒ 看起來像救了其實沒救;改成依回傳值顯示。)
       if(t.curHp <= 0){
         // 倒下 → 先復活(0 HP 復活)再治療
-        try{ doRevive(t, 0); }catch(_){}
-        log(`✨ [${t.name}] 被神樂舞喚回!`);
-        bannerFX(t, '✨ 復活!', '#ffeebb', 1100);
+        let _mkRevOk = false;
+        try{ _mkRevOk = (doRevive(t, 0) === true) && t.curHp > 0; }catch(_){ _mkRevOk = false; }
+        if(_mkRevOk){
+          log(`✨ [${t.name}] 被神樂舞喚回!`);
+          bannerFX(t, '✨ 復活!', '#ffeebb', 1100);
+        }else{
+          return;   // 沒救回來就不治療(「💔 復活失敗:原因」由 doRevive 統一顯示,v5.359.0)
+        }
       }
-      // 治療(可堆在剛復活的之上)
+      // 治療(可堆在剛復活的之上);被擋時「💔 治療失敗:原因」由 doHeal 統一顯示(v5.359.0)
       try{ doHeal(t, _healAmt, {actor:h, isHeal:true}); }catch(_){}
     });
 
@@ -33417,6 +33433,17 @@ function _lxpsYyDevourOnKill(target, opts){
           }
         }
 }
+// ★ v5.359.0(老師「同房間的傷害、總傷害也要有同步」)龍王戰傷害貢獻要記在「出手英雄的主人」名下:
+//   房主建隊時每隻我方英雄都標了 _wbOwnerUid(玩家 uid;房主代打/補位槽 = host_npc_N)。
+//   舊版一律記在「這台裝置」的 uid ⇒ 房主那邊全隊傷害都算房主的、隊友端各算各的 ⇒ 每個人看到的數字不同。
+function _wbContribUid(opts){
+  try{
+    let a = opts && opts.actor;
+    if(!(a && a.side === 'p1') && typeof G !== 'undefined' && G && G.activeChar && G.activeChar.side === 'p1') a = G.activeChar;
+    if(a && a._wbOwnerUid) return a._wbOwnerUid;
+  }catch(_){}
+  return window._gUserId || 'solo_user';
+}
 function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹 50%/射手星神 s2 箭囊(G._cstMyHalf、actor._cstSgQv 只由點亮的命星寫入 ⇒ 未點亮時條件恆不成立)
@@ -35176,8 +35203,9 @@ function doDmg(target, rawDmg, opts={}){
        && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
        && window._wbNet && typeof window._wbNet.addContribution === 'function'){
       try{
-        const myUid = window._gUserId || 'solo_user';
-        window._wbNet.addContribution(myUid, 'dmgDealt', rawDmg);
+        // ★ v5.359.0(老師「同房間的傷害、總傷害也要有同步」)傷害記到「出手英雄的主人」名下;隊友端不記(以房主廣播的為準,避免重複)
+        const myUid = _wbContribUid(opts);
+        if(!window._wbClientMode) window._wbNet.addContribution(myUid, 'dmgDealt', rawDmg);
         // ★ v3.7.6 — fixedDmg 路徑也要更新「本場總傷」UI(對齊主 doDmg 路徑)
         //   老師 2026/5/25:全隊累積總傷顯示。
         try{
@@ -38711,8 +38739,9 @@ function doDmg(target, rawDmg, opts={}){
      && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
      && window._wbNet && typeof window._wbNet.addContribution === 'function'){
     try{
-      const myUid = window._gUserId || 'solo_user';
-      window._wbNet.addContribution(myUid, 'dmgDealt', dmg);
+      // ★ v5.359.0 同上:記到出手英雄主人名下;隊友端不記(房主權威,隨戰場同步)
+      const myUid = _wbContribUid(opts);
+      if(!window._wbClientMode) window._wbNet.addContribution(myUid, 'dmgDealt', dmg);
       // ★ v3.7.6 — 本場總傷改顯示「全隊累積總傷」(對齊老師 v3.6.9 需求)
       //   老師 2026/5/25 回報 BUG:「本場總傷只有房主看得到,2p~4p 看不到而且要同步」
       //   舊邏輯(v3.5.69):host 在這裡讀 _prev + dmg(只算本機累計),client 從 contributions 算全隊。
@@ -41162,9 +41191,9 @@ window._heroHealNeed = _heroHealNeed;
 function _healCurseGate(target, amt){
   amt = Math.floor(amt || 0);
   if(!target || amt <= 0) return 0;
-  try{ if(typeof fieldHas === 'function' && fieldHas('noheal', target.side)) return 0; }catch(_eHCG1){}
+  try{ if(typeof fieldHas === 'function' && fieldHas('noheal', target.side)){ try{ _lxpsFailFX(target, 'heal', '受詛咒的神像'); }catch(_){} return 0; } }catch(_eHCG1){}
   if(target.status){
-    if(target.status.some(function(s){ return s && (s.type === 'noheal_curse' || s.type === 'imprison'); })){ try{ if(target.status.some(function(s){ return s && s._cstAqBy; })) window._cstAqB2Flow(target, amt, {}); }catch(_eCstAqB2g){} return 0; }   // ✨ v5.272.0 命星 水瓶星神 b2(只認命星寫入的 _cstAqBy)
+    if(target.status.some(function(s){ return s && (s.type === 'noheal_curse' || s.type === 'imprison'); })){ try{ _lxpsFailFX(target, 'heal', target.status.some(function(s){ return s && s.type === 'noheal_curse'; }) ? '不治詛咒' : '被禁錮'); }catch(_){} try{ if(target.status.some(function(s){ return s && s._cstAqBy; })) window._cstAqB2Flow(target, amt, {}); }catch(_eCstAqB2g){} return 0; }   // ✨ v5.272.0 命星 水瓶星神 b2(只認命星寫入的 _cstAqBy)
     var _hr = target.status.find(function(s){ return s && s.type === 'healReduced'; });
     if(_hr) amt = Math.ceil(amt * (_hr._strong ? 0.25 : 0.50));
   }
@@ -41242,8 +41271,8 @@ function doHeal(target, rawAmt, opts={}){
     }
   }
   // ★ v1.0.20260424.0800 — 受詛咒的神像(不利)只對對手陣營生效(軍師卡):用 target.side 過濾
-  if(fieldHas('noheal', target&&target.side)&&!opts.isChaos){ log(`🚫 受詛咒的神像：無法恢復HP！`); return 0; }
-  if(target && (hasStatus(target,'noheal_curse')||hasStatus(target,'imprison'))&&!opts.isChaos){ log(`🚫 不治詛咒：[${target.name}] 無法恢復HP！`); try{ window._cstTmHealSteal(target, rawAmt, opts); }catch(_eCstTmT2h){} try{ if(rawAmt > 0 && hasStatus(target,'noheal_curse')) window._cstHmS2Rev(target, rawAmt, opts); }catch(_eCstHmS2){} try{ if(rawAmt > 0 && (target.status || []).some(function(_s){ return _s && _s._cstAqBy; })) window._cstAqB2Flow(target, rawAmt, opts); }catch(_eCstAqB2h){} return 0; }   // ✨ 命星 時空法師 t2:被攔截的治療 50% 轉給施術方(只認 _cstTmSd 標記)
+  if(fieldHas('noheal', target&&target.side)&&!opts.isChaos){ log(`🚫 受詛咒的神像：無法恢復HP！`); try{ _lxpsFailFX(target, 'heal', '受詛咒的神像'); }catch(_){} return 0; }
+  if(target && (hasStatus(target,'noheal_curse')||hasStatus(target,'imprison'))&&!opts.isChaos){ log(`🚫 不治詛咒：[${target.name}] 無法恢復HP！`); try{ _lxpsFailFX(target, 'heal', hasStatus(target,'noheal_curse') ? '不治詛咒' : '被禁錮'); }catch(_){} try{ window._cstTmHealSteal(target, rawAmt, opts); }catch(_eCstTmT2h){} try{ if(rawAmt > 0 && hasStatus(target,'noheal_curse')) window._cstHmS2Rev(target, rawAmt, opts); }catch(_eCstHmS2){} try{ if(rawAmt > 0 && (target.status || []).some(function(_s){ return _s && _s._cstAqBy; })) window._cstAqB2Flow(target, rawAmt, opts); }catch(_eCstAqB2h){} return 0; }   // ✨ 命星 時空法師 t2:被攔截的治療 50% 轉給施術方(只認 _cstTmSd 標記)
   // healReduced (朱雀召喚：治療量減半)
   if(target && hasStatus(target,'healReduced')){ const _hr=target.status.find(s=>s.type==='healReduced'); rawAmt=Math.ceil(rawAmt*((_hr&&_hr._strong)?0.25:0.50)); }  // ★ v3.13.46 普通治療-50% / 強力-75%
   // ★ v5.63.0 批次二 — 諸葛亮爆發戰場卡「東風」新增段(老師 2026-08-18):我方全體「受到的治療 +40%」。
@@ -41567,6 +41596,21 @@ function _reviveFX(h){
     .finished.then(()=>{ if(f.parentNode) f.remove(); });
   }
 }
+// ★ v5.359.0(老師:「無法復活的對象不是只有巫女,所有的復活、回復手段都要有同樣的提示」)
+//   全遊戲共用的「復活失敗 / 治療失敗」頭頂提示:doRevive 三種禁止復活、doHeal 受詛咒神像/不治詛咒/禁錮被擋時呼叫。
+//   同一個角色同一種提示 1.2 秒內只跳一次(全體治療、多段回血、每回合回復才不會洗版)。戰鬥紀錄原本就有的那行照舊。
+function _lxpsFailFX(target, kind, why){
+  try{
+    if(!target || typeof bannerFX !== 'function') return;
+    const now = Date.now();
+    const k = '_lxFailFx_' + kind;
+    if(target[k] && now - target[k] < 1200) return;
+    target[k] = now;
+    const txt = (kind === 'revive' ? '💔 復活失敗' : '💔 治療失敗') + (why ? ':' + why : '');
+    bannerFX(target, txt, '#ff8899', 1500);
+  }catch(_){}
+}
+try{ window._lxpsFailFX = _lxpsFailFX; }catch(_){}
 function doRevive(target, pct=0.5, full=false, opts={}){
   try{ if(target && target._cstGrit && target.curHp <= 0) target._cstGrit = 0; }catch(_eCstFanT2r){}   // ✨ 命星 ✦ 凡人 t2:倒下(含不經 doDmg 的即死)後被復活 ⇒ 韌性歸零
   // ★ v3.34.0 — 大刀勇士 天賦「愈戰愈勇」:累積加成「直到倒下」,復活時歸零重練
@@ -41623,11 +41667,12 @@ function doRevive(target, pct=0.5, full=false, opts={}){
   // ════════════════════════════════════════════════════════════════
   if(target.curHp>0){ return false; }
   // 小力：強力隱身到期後回去休息，無法被復活
-  if(target._inuRetired){ log(`🐕 [${target.name}] 在休息中，無法被復活！`); bannerFX(target,'在休息中...','#ffaacc',800); return false; }
+  // ★ v5.359.0(老師「所有的復活、回復手段都要有同樣的提示」)— 三種「無法復活」一律在目標頭上顯示「💔 復活失敗:原因」(_lxpsFailFX)
+  if(target._inuRetired){ log(`🐕 [${target.name}] 在休息中，無法被復活！`); try{ _lxpsFailFX(target, 'revive', '正在休息'); }catch(_){} return false; }
   // 時空法師爆發：無法被復活
-  if(target._burstNoRevive>0){ log(`⏳ [${target.name}] 時間壓縮：無法被復活！`); bannerFX(target,'無法復活！','#cc44ff',800); return false; }
+  if(target._burstNoRevive>0){ log(`⏳ [${target.name}] 時間壓縮：無法被復活！`); try{ _lxpsFailFX(target, 'revive', '時間壓縮中'); }catch(_){} return false; }
   // ★ v4.5.0 Phase C — 阿努比斯胡狼「冥界審判」:目標禁止復活 2 回合(獨立旗標,與禁療分開)
-  if(target._petNoRevive>0){ try{ log(`⚰️ [${target.name}] 冥界審判:無法被復活!`); }catch(_){} try{ bannerFX(target,'⚰️ 無法復活','#9944cc',900); }catch(_){} return false; }
+  if(target._petNoRevive>0){ try{ log(`⚰️ [${target.name}] 冥界審判:無法被復活!`); }catch(_){} try{ _lxpsFailFX(target, 'revive', '冥界審判中'); }catch(_){} return false; }
   try{ if(typeof G !== 'undefined' && G && G._cstMyHalf && window._cstMyB2NoRev(target)) return false; }catch(_eCstMyB2r){}   // ✨ v5.272.0 命星 沐雲雪 b2:雙虹喚發的爆發不附帶復活
   // 不治詛咒：復活時HP只有1
   let reviveHp = (hasStatus(target,'noheal_curse')||hasStatus(target,'imprison')) ? 1 : (full ? target.hp : Math.max(1,Math.floor(target.hp*pct)));

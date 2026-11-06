@@ -4985,6 +4985,7 @@
     // 立刻 set 旗標,防止 race(任何 async/await/setTimeout 之前)
     window._wbResultExecuting = true;
     console.log('[WB-Result v3.12.12] ✅ 本場首次結算,正常執行 (win=' + win + ')');
+    try{ if(window._fbWbRejoin) window._fbWbRejoin.clear(); }catch(_){}   // ★ v5.360.0 戰鬥結束 ⇒ 清掉「回到戰鬥」指標
 
     // ════════════════════════════════════════════════════════════════
     // ★ v3.11.8(2026-05-27) — 結算傷害來源修正 + 模式區分
@@ -5100,6 +5101,16 @@
             }
           });
         }
+        // ★ v5.359.0(老師「同房間的傷害、總傷害也要有同步」)全隊總傷一律用龍王本場失血量(與戰鬥中左上「本場總傷」、
+        //   排行榜/雲端扣血同一個數字,而且龍王血量是同步的 ⇒ 每個隊友結算看到的全隊總傷一樣)。
+        try{
+          const _GtD = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+          const _bTD = (_GtD && Array.isArray(_GtD.p2)) ? _GtD.p2.find(function(h){ return h && window._wbIsBossName && window._wbIsBossName(h.name); }) : null;
+          if(_bTD && typeof _bTD.hp === 'number' && typeof _bTD.curHp === 'number'){
+            const _lostTD = Math.max(0, Math.floor(_bTD.hp - _bTD.curHp));
+            if(_lostTD > 0) teamDmg = _lostTD;
+          }
+        }catch(_eTD){}
         // ★ v3.12.15 兜底:連線模式若 teamDmg 仍 0(極端情況例如沒人寫過 contribution),
         //   改從場上 BOSS 實際失血量取(boss.hp 為本場起始血,boss.curHp 為當前)
         if(teamDmg === 0){
@@ -6261,6 +6272,127 @@
         if(_unsub) _autoClean();
       }catch(_){}
     }, 3000);
+  })();
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v5.360.0(2026-11-06・老師「龍王戰斷線出去的玩家,要能再回到還沒結束的戰鬥中,接管操作自己的英雄」)
+  //   斷線/關掉 App/按了離開的隊友,回到遊戲任何一般頁面(首頁、關卡頁、商店…)時,畫面上方出現提示卡:
+  //   「⚔ 你有一場還沒結束的龍王戰」→「回到戰鬥」⇒ 載入龍王戰畫面、以重連身分回房(不扣每日場次)、用房主目前的戰場重建畫面,
+  //   房主那邊自動把代打交還給你(正輪到你的英雄時,等這回合結束才交還)。
+  //   指標由隊友端開戰時寫入(window._fbWbRejoin,本機＋雲端),戰鬥結算時清除;房間已結束/房主離開 ⇒ 自動清除不再提示。
+  //   房主斷線房間會直接結束,所以只有隊友能回到戰鬥。外觀沿用龍王戰邀請小卡。
+  // ════════════════════════════════════════════════════════════════════
+  (function _lxWbRejoinUi(){
+    let _info = null, _snoozeUntil = 0, _checking = false, _busy = false, _uid = null;
+    function _css(){
+      if(document.getElementById('lx-wbrj-css')) return;
+      try{ if(typeof window._wbInvLiteCss === 'function') window._wbInvLiteCss(); }catch(_){}
+      const base = document.getElementById('wb-inv-lite-css');
+      const st = document.createElement('style');
+      st.id = 'lx-wbrj-css';
+      st.textContent = (base ? base.textContent.split('#wb-inv-lite-stack').join('#lx-wbrj-stack') : '') +
+        '#lx-wbrj-stack{left:50%;right:auto;top:90px;bottom:auto;transform:translateX(-50%);}' +
+        '#lx-wbrj-stack .wbl-card{animation:none;}' +
+        '#lx-wbrj-stack .rj-sub{font-size:22px;color:#e8dcff;margin-top:6px;line-height:1.45;}' +
+        '@media (max-width:700px){#lx-wbrj-stack{left:50%;right:auto;top:10px;bottom:auto;transform:translateX(-50%);}#lx-wbrj-stack .rj-sub{font-size:13px}}' +
+        '@media (orientation:landscape) and (max-height:520px){#lx-wbrj-stack{left:50%;right:auto;top:8px;bottom:auto;transform:translateX(-50%);}#lx-wbrj-stack .rj-sub{font-size:12px;margin-top:3px}}';
+      document.head.appendChild(st);
+    }
+    function _stack(){
+      let s = document.getElementById('lx-wbrj-stack');
+      if(!s){
+        _css();
+        s = document.createElement('div');
+        s.id = 'lx-wbrj-stack';
+        document.body.appendChild(s);
+        s.addEventListener('click', _onClick);
+      }
+      return s;
+    }
+    function _esc(t){ return String(t == null ? '' : t).replace(/[<>&"']/g, function(c){ return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+    function _hide(){ const s = document.getElementById('lx-wbrj-stack'); if(s) s.innerHTML = ''; }
+    function _blocked(){
+      try{
+        if(window._wbInWorldBossMode || window._wbRejoining) return true;
+        if(typeof window._wbInvBattleOnScreen === 'function' && window._wbInvBattleOnScreen()) return true;
+        const lob = document.getElementById('wb-lobby-overlay');
+        if(lob && getComputedStyle(lob).display !== 'none') return true;
+      }catch(_){}
+      return false;
+    }
+    function _render(){
+      if(!_info || _blocked() || Date.now() < _snoozeUntil){ _hide(); return; }
+      const s = _stack();
+      s.innerHTML = '<div class="wbl-card">' +
+        '<div class="wbl-hdr">⚔ 你有一場還沒結束的龍王戰!</div>' +
+        '<div class="rj-sub">房號 ' + _esc(_info.roomId) + (_info.heroName ? ' · 你的英雄:' + _esc(_info.heroName) : '') +
+          '<br>現在回去就能接回自己的英雄繼續打' + (_info.online ? '' : '(目前由房主代打中)') + '</div>' +
+        '<div class="wbl-btns">' +
+          '<button class="wbl-btn ok" type="button" data-act="go"' + (_busy ? ' disabled' : '') + '>' + (_busy ? '⏳ 連線中…' : '⚔ 回到戰鬥') + '</button>' +
+          '<button class="wbl-btn no" type="button" data-act="later"' + (_busy ? ' disabled' : '') + '>稍後</button>' +
+        '</div></div>';
+    }
+    async function _onClick(ev){
+      const b = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
+      if(!b || _busy) return;
+      ev.stopPropagation();
+      const act = b.getAttribute('data-act');
+      try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+      if(act === 'later'){ _snoozeUntil = Date.now() + 2 * 60 * 1000; _hide(); return; }
+      if(act !== 'go' || !_info) return;
+      _busy = true; _render();
+      try{
+        const chk = await window._fbWbRejoin.check(_info.roomId);
+        if(!chk.ok){
+          _wbGameAlert('這場龍王戰已經結束了(或房主已離開),沒辦法再回去囉。');
+          try{ window._fbWbRejoin.clear(); }catch(_){}
+          _info = null; return;
+        }
+        try{
+          const al = document.getElementById('arenaLobbyOverlay');
+          if(al && getComputedStyle(al).display !== 'none' && typeof window._closeArenaLobby === 'function') window._closeArenaLobby();
+        }catch(_){}
+        const ok = await _wbEnsureUi();
+        if(!ok || typeof window._wbUiRejoinBattle !== 'function'){ _wbGameAlert('龍王戰畫面載入失敗,請檢查網路後再試一次。'); return; }
+        const rid = _info.roomId;
+        _info = null; _hide();
+        await window._wbUiRejoinBattle(rid);
+      }catch(e){
+        console.warn('[WB-Rejoin] 回到戰鬥失敗', e);
+        _wbGameAlert('回到戰鬥沒有成功,請再試一次。');
+      }finally{ _busy = false; _render(); }
+    }
+    async function _check(){
+      if(_checking || !window._gUserId || !window._fbWbRejoin) return;
+      if(_uid !== window._gUserId){ _uid = window._gUserId; _info = null; _snoozeUntil = 0; }
+      if(_blocked()){ _hide(); return; }
+      _checking = true;
+      try{
+        const v = await window._fbWbRejoin.get();
+        if(!v){ _info = null; _hide(); return; }
+        try{ if(window._wbNet && window._wbNet.getRoomId && window._wbNet.getRoomId() === v.roomId && window._wbInWorldBossMode){ _info = null; _hide(); return; } }catch(_){}
+        const chk = await window._fbWbRejoin.check(v.roomId);
+        if(_uid !== window._gUserId) return;
+        if(!chk.ok){
+          if(chk.why !== 'err'){ try{ window._fbWbRejoin.clear(); }catch(_){} }
+          _info = null; _hide(); return;
+        }
+        const fresh = !_info || _info.roomId !== v.roomId;
+        _info = { roomId: v.roomId, heroName: chk.heroName, online: chk.online };
+        if(fresh){ try{ if(typeof playSfx === 'function') playSfx('sfx-popup', 0.6); }catch(_){} }
+        _render();
+      }catch(_){}
+      finally{ _checking = false; }
+    }
+    setTimeout(function(){ try{ _check(); }catch(_){} }, 4000);
+    setInterval(function(){
+      try{
+        if(!window._gUserId){ _info = null; _uid = null; _hide(); return; }
+        _check();
+      }catch(_){}
+    }, 20000);
+    // 戰鬥畫面出現/消失時即時收放(不必等 20 秒)
+    setInterval(function(){ try{ if(_info) _render(); }catch(_){} }, 1500);
   })();
 
   _wbBootstrap();

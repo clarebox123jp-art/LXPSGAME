@@ -4288,6 +4288,59 @@
       return t > 0 && (Date.now() - t) < 7 * 60 * 1000;
     }catch(_){ return false; }
   };
+  // ═════════════════════════════════════════════════════════════════
+  // ★ v5.360.0(2026-11-06・老師「龍王戰斷線出去的玩家,要能再回到還沒結束的戰鬥中,接管操作自己的英雄」)
+  //   「回到戰鬥」指標:隊友端開戰時記下房號(本機 localStorage ＋ 自己的 players 主檔 wbRejoin 欄位,換平板也找得到)。
+  //   check(roomId):房間還在、狀態 fighting、自己仍在 players 名單 ⇒ ok(房主斷線房間會被標 ended,無法回去)。
+  //   不需改 firestore.rules(只寫自己的 players 主檔、只讀 worldBossRooms)。
+  // ═════════════════════════════════════════════════════════════════
+  window._fbWbRejoin = {
+    _lsKey: function(){ return 'lxps_wb_rejoin_' + (window._gUserId || ''); },
+    set: function(roomId){
+      const me = window._gUserId;
+      if(!me || !roomId) return;
+      const v = { roomId: String(roomId), at: Date.now() };
+      try{ localStorage.setItem(this._lsKey(), JSON.stringify(v)); }catch(_){}
+      try{ setDoc(doc(_fbDb, 'players', me), { wbRejoin: v }, { merge: true }).catch(function(){}); }catch(_){}
+    },
+    clear: function(){
+      const me = window._gUserId;
+      if(!me) return;
+      try{ localStorage.removeItem(this._lsKey()); }catch(_){}
+      try{ setDoc(doc(_fbDb, 'players', me), { wbRejoin: null }, { merge: true }).catch(function(){}); }catch(_){}
+    },
+    get: async function(){
+      const me = window._gUserId;
+      if(!me) return null;
+      let v = null;
+      try{ v = JSON.parse(localStorage.getItem(this._lsKey()) || 'null'); }catch(_){ v = null; }
+      if(!v || !v.roomId){
+        try{
+          const s = await getDoc(doc(_fbDb, 'players', me));
+          const c = s.exists() ? s.data().wbRejoin : null;
+          if(c && c.roomId) v = c;
+        }catch(_){}
+      }
+      if(!v || !v.roomId) return null;
+      if(Date.now() - (Number(v.at) || 0) > 90 * 60 * 1000) return null;   // 超過 90 分鐘一定打完了
+      return v;
+    },
+    check: async function(roomId){
+      const me = window._gUserId;
+      if(!me || !roomId) return { ok: false };
+      try{
+        const s = await getDoc(doc(_fbDb, 'worldBossRooms', String(roomId)));
+        if(!s.exists()) return { ok: false, why: 'gone' };
+        const d = s.data() || {};
+        const st = d.meta && d.meta.status;
+        const p = (d.players || []).find(function(x){ return x && x.uid === me; });
+        if(st !== 'fighting' || !d.battle) return { ok: false, why: 'ended' };
+        if(!p) return { ok: false, why: 'notMember' };
+        if(d.meta && d.meta.hostUid === me) return { ok: false, why: 'host' };
+        return { ok: true, heroName: p.heroName || '', online: p.online !== false, round: (d.battle && (d.battle.round || d.battle.turn)) || 0 };
+      }catch(e){ return { ok: false, why: 'err' }; }
+    }
+  };
   window._fbFriendReq = {
     // 送出好友邀請(對方的好友名單裡已經有我 ⇒ 不送)。回傳 'sent' | 'exists' | 'already' | 'fail'
     send: async function(toUid, toData){
@@ -23552,6 +23605,9 @@
             //   修法:明確帶上 _wbQuizPayload(若 newState 有的話),保持向下相容。
             //   同步帶上未來可能擴充的 _wb* 廣播欄位,避免相同 bug 再來一次。
             _wbQuizPayload: newState._wbQuizPayload || null,
+            // ★ v5.359.0(老師「同房間的傷害、總傷害也要有同步」)房主的傷害貢獻表隨每次戰場同步一起送,
+            //   隊友端直接採用 ⇒ 全隊每個人看到的個人傷害/總傷害都是同一份(房主權威)。
+            _wbContrib: (function(){ try{ return JSON.parse(JSON.stringify(WB.contributions || {})); }catch(_){ return null; } })(),
           });
         }else{
           // 舊 schema 相容(舊 _wbHostExecuteAction 等地方還沒改完前用)
@@ -24756,6 +24812,8 @@
       getMySlot:   () => WB.mySlot,
       getSnapshot: () => WB.lastSeenSnap,
       getContributions: () => WB.contributions,
+      // ★ v5.359.0 隊友端:用房主廣播的貢獻表整份取代本機(房主權威)
+      setContributionsFromHost: (m) => { try{ if(m && typeof m === 'object' && !WB.isHost) WB.contributions = JSON.parse(JSON.stringify(m)); }catch(_){} },
     };
     window.addEventListener('beforeunload', () => { _stopHeartbeat(); });
     console.log('[WBNet] ✅ 世界 BOSS 連線層 v0.1 已載入');

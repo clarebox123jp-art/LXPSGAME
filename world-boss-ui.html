@@ -5793,6 +5793,45 @@ try{
   };
 
   window._wbInviteAcceptCore = _wbInviteAcceptCore;
+
+  // ★ v5.360.0(老師「龍王戰斷線出去的玩家,要能再回到還沒結束的戰鬥中,接管操作自己的英雄」)
+  //   由 world-boss.js「回到戰鬥」提示卡呼叫(已先 _wbEnsureUi)。流程:
+  //   ① 若還掛在別的房間先離開 ② 重設「首次戰場更新」旗標 ③ joinRoom(已在名單 ⇒ 走重連分支,任何狀態都放行、把自己標回 online,
+  //      不扣每日場次)④ 訂閱收到目前戰場 ⇒ 既有「首次 onBattleUpdate」流程用房主的戰場重建 #gc 戰鬥畫面
+  //   ⑤ 房主收到「玩家上線」⇒ 既有 onPlayerOnlineChange 把代打交還(若正輪到這隻英雄,等這回合結束才交還)。
+  window._wbUiRejoinBattle = async function(roomId){
+    if(!roomId || !window._wbNet) return false;
+    try{
+      const cur = window._wbNet.getRoomId && window._wbNet.getRoomId();
+      if(cur && cur !== roomId && window._wbNet.leaveRoom) await window._wbNet.leaveRoom();
+    }catch(_){}
+    try{
+      window._wbRejoining = true;
+      window._wbClientFirstBattleUpdate = true;
+      window._wbClientLastVersion = 0;
+      window._wbAdvBattleEnded = false;
+      window._wbClientForceCheckWin = false;
+      window._wbResultExecuting = false;
+      window._wbRoomClosedHandled = false;
+    }catch(_){}
+    const ok = await window._wbNet.joinRoom(roomId);
+    if(!ok){
+      window._wbRejoining = false;
+      _wbGameAlert('回不去這場龍王戰了,可能已經結束或房主離開了。');
+      try{ if(window._fbWbRejoin) window._fbWbRejoin.clear(); }catch(_){}
+      return false;
+    }
+    try{ const entryOv = document.getElementById('wb-entry-overlay'); if(entryOv) entryOv.style.display = 'none'; }catch(_){}
+    // 8 秒還沒收到戰場(網路慢)⇒ 提示一下
+    setTimeout(function(){
+      try{
+        if(window._wbRejoining && window._wbClientFirstBattleUpdate){
+          _wbGameAlert('正在連回戰場,網路比較慢,請再等一下…');
+        }
+      }catch(_){}
+    }, 8000);
+    return true;
+  };
   if(!window._wbInvLite) window._wbInviteAccept = _wbInviteAcceptCore;   /* ★ v5.300.0 輕量模組在時,由它包一層(先載入本檔再呼叫 Core) */
 
   if(!window._wbInvLite) window._wbInviteDecline = async function(inviteId){   /* ★ v5.300.0 輕量模組在時用它自己的拒絕(不必載入本檔) */
@@ -9214,6 +9253,8 @@ try{
       //   套成功 ⇒ h._wbPrepRemote = true,下方 _applyBattlePrepToHero 只再套命座(隊友讀 _cstRemote)。
       //   隊友是舊版(沒有 g.ps)、房主代打/自動補位槽 ⇒ 走下方原本流程,行為不變。
       let _psDone = false;
+      // ★ v5.359.0 標記這隻英雄的主人(傷害貢獻記到主人名下;房主代打/補位槽記 host_npc_N,結算算房主的)
+      try{ h._wbOwnerUid = (p && p.uid) ? p.uid : ('host_npc_' + i); }catch(_){}
       try{
         const _myUidPs = (typeof window._gUserId !== 'undefined') ? window._gUserId : null;
         if(p && p.uid && typeof window._wbApplyPrepSnap === 'function'){
@@ -10403,6 +10444,9 @@ try{
         window._wbInWorldBossMode = true;
         window._wbConnectedClientMode = true;
         window._wbClientMode = true;      // ★ 鎖死本機戰鬥引擎
+        // ★ v5.360.0 記下「回到戰鬥」指標(斷線/關掉 App 後,首頁會提示回到這場還沒結束的龍王戰)
+        try{ if(window._fbWbRejoin && window._wbNet && window._wbNet.getRoomId) window._fbWbRejoin.set(window._wbNet.getRoomId()); }catch(_){}
+        try{ window._wbRejoining = false; }catch(_){}
         window._wbConnectedHostMode = false;
         window._wbSoloPracticeMode = false;
         window._wbAdvBattleEnded = false;
@@ -10952,9 +10996,54 @@ try{
           }
         }
       }catch(_eP1Dead){ console.warn('[WB-Client v3.15.48] p1 全滅 fallback 例外', _eP1Dead); }
+      // ★ v5.359.0(老師「同房間的傷害、總傷害也要有同步」)採用房主廣播的傷害貢獻表(個人傷害/結算以它為準)
+      try{
+        if(battle && battle._wbContrib && window._wbNet && typeof window._wbNet.setContributionsFromHost === 'function'){
+          window._wbNet.setContributionsFromHost(battle._wbContrib);
+        }
+      }catch(_eCtb){}
+      try{ if(typeof window._wbSyncTeamDmgDisplay === 'function') window._wbSyncTeamDmgDisplay(); }catch(_){}
+      // ★ v5.359.0 同類保險:龍王 HP 已經 0(勝利)但房主的「結束」遲遲沒送到(房主斷線/當機)⇒ 等 8 秒還沒結算就自主結算
+      try{
+        var _Gb = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+        var _bossB = (_Gb && Array.isArray(_Gb.p2)) ? _Gb.p2.find(function(h){ return h && typeof window._wbIsBossName === 'function' && window._wbIsBossName(h.name); }) : null;
+        if(_bossB && (_bossB.curHp || 0) <= 0 && !window._wbAdvBattleEnded && !window._wbClientBossDownTimer){
+          window._wbClientBossDownTimer = setTimeout(function(){
+            window._wbClientBossDownTimer = null;
+            try{
+              if(!window._wbAdvBattleEnded){
+                console.warn('[WB-Client v5.359.0] 龍王已倒 8 秒仍未收到結束 → 自主結算');
+                window._wbClientForceCheckWin = true;
+                if(typeof window.checkWin === 'function') window.checkWin();
+              }
+            }catch(_eBd){ console.warn('[WB-Client v5.359.0] 龍王倒下 fallback 例外', _eBd); }
+          }, 8000);
+        }
+      }catch(_eBossDown){}
     }catch(eA){
       console.error('[WB-Client v6] applyWireToG 失敗', eA);
     }
+  }
+
+  // ★ v5.359.0(老師「同房間的傷害、總傷害也要有同步。我剛才看有同隊伍中的累積傷害沒有同步的情況」)
+  //   左上「📜 本場總傷」改成一律 = 龍王本場失血量(boss.hp − boss.curHp)。龍王血量隨每次戰場同步給全隊,
+  //   所以每台螢幕一定一樣;也正是排行榜/雲端扣血實際用的數字(world-boss.js _dealt)。
+  //   舊版:房主讀本機累加、隊友讀自己樂觀更新＋「不准倒退」⇒ 各台數字不同,而且一旦多算就永遠降不回來。
+  window._wbSyncTeamDmgDisplay = function(){
+    try{
+      const el = document.getElementById('wb-solo-cur-dmg-display');
+      if(!el) return;
+      if(typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() !== 'worldboss') return;
+      const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+      const boss = (G && Array.isArray(G.p2)) ? G.p2.find(function(h){ return h && typeof window._wbIsBossName === 'function' && window._wbIsBossName(h.name); }) : null;
+      if(!boss || typeof boss.hp !== 'number' || typeof boss.curHp !== 'number') return;
+      const lost = Math.max(0, Math.floor(boss.hp - boss.curHp));
+      const txt = lost.toLocaleString();
+      if(el.textContent !== txt) el.textContent = txt;
+    }catch(_){}
+  };
+  if(!window._wbTeamDmgSyncTimer){
+    window._wbTeamDmgSyncTimer = setInterval(function(){ try{ window._wbSyncTeamDmgDisplay(); }catch(_){} }, 400);
   }
 
   // ★ v6 Phase 4 — 檢查 ended 狀態,觸發結算
@@ -11017,7 +11106,34 @@ try{
     // 表情列強制收起(改用 class 控制)
     try{ document.getElementById('wb-emoji-bar-real').classList.remove('wb-eb-show'); }catch(_){}
     try{
-      if(info.reason === 'battle_complete' || info.winner){
+      // ★ v5.359.0(老師回報「龍王戰結束後,玩家沒有跟著一起離開戰鬥畫面,卡在戰鬥畫面的最後(部分玩家)」)
+      //   根因:房主結束時把「最後戰場 + meta.status='ended'」一次寫進同一份文件;隊友的訂閱看到 ended 就直接
+      //         發 onRoomClosed 並關掉訂閱 ⇒ 這份最後戰場不會再走「戰場更新 → _wbClientCheckEnded → checkWin」那條路,
+      //         隊友本機永遠沒跑到真正的結算(_wbShowAdvBattleResult),只叫出舊版小結算頁(被戰鬥畫面蓋住)⇒ 卡在戰場最後一幕。
+      //         只有剛好在 ended 之前另外收到一次戰場更新、而且動畫緩衝計時器還沒被清掉的人才會正常結束 ⇒ 「部分玩家」。
+      //   修法:收到「戰鬥正常結束」的關房事件時,若本機正在龍王戰戰場而且還沒結算 ⇒
+      //         先把 info.finalBattle(最後戰場)套進本機,放行 checkWin 走真正的結算;
+      //         1.5 秒後仍沒結算(最後戰場沒帶到/勝負判不出)⇒ 直接依房主宣告的勝負叫出結算畫面。
+      const _wbEngineBattle = !window._wbAdvBattleEnded
+        && ((typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss')
+            || (document.body && document.body.classList.contains('wb-in-worldboss-battle')));
+      if((info.reason === 'battle_complete' || info.winner) && _wbEngineBattle){
+        console.warn('[WB onRoomClosed v5.359.0] 戰鬥結束但本機未結算 → 套最後戰場並自主結算', info.reason, info.winner);
+        try{ if(info.finalBattle && typeof _wbClientApplyWire === 'function') _wbClientApplyWire(info.finalBattle); }catch(_eFw){ console.warn('[WB onRoomClosed v5.359.0] 套最後戰場失敗', _eFw); }
+        window._wbClientForceCheckWin = true;
+        setTimeout(function(){
+          try{ if(!window._wbAdvBattleEnded && typeof window.checkWin === 'function') window.checkWin(); }catch(_eCw){ console.warn('[WB onRoomClosed v5.359.0] checkWin 例外', _eCw); }
+        }, 300);
+        setTimeout(function(){
+          try{
+            if(!window._wbAdvBattleEnded && typeof window._wbShowAdvBattleResult === 'function'){
+              window._wbAdvBattleEnded = true;
+              console.warn('[WB onRoomClosed v5.359.0] checkWin 沒結算 → 依房主宣告勝負直接開結算', info.winner);
+              window._wbShowAdvBattleResult(info.winner === 'p1');
+            }
+          }catch(_eRs){ console.warn('[WB onRoomClosed v5.359.0] 直接結算例外', _eRs); }
+        }, 1800);
+      }else if(info.reason === 'battle_complete' || info.winner){
         if(typeof _wbShowResult === 'function') _wbShowResult(info);
       }else{
         // 房主中離等其他情況
