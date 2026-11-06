@@ -4253,6 +4253,110 @@
     } catch(e) { console.error('刪好友失敗', e); return false; }
   };
 
+  // ═════════════════════════════════════════════════════════════════
+  // ★ v5.358.0(2026-11-06・老師「新增加入好友邀請確認視窗,單方面邀請被接受雙方自動成為互相的好友;可非線上邀請;
+  //   上線時在首頁列出還沒接受的好友邀請;加好友一律顯示班級座號姓名(隱藏第二個字);不想成為好友可選隱藏邀請,
+  //   隱藏時對方無法得知,也不影響原有單向好友功能」)
+  //   資料:
+  //     friendRequests/{邀請者uid}_{被邀請者uid} = { fromUid, toUid, status:'pending', createdAt }
+  //       ・邀請者加好友時(原本的單向加好友照舊立刻生效)順便建立;被邀請者「接受」⇒ 把邀請者加進自己的好友、刪掉這份。
+  //       ・「隱藏邀請」不碰這份文件(邀請者讀到的永遠是 pending,無從得知被隱藏),只寫被邀請者自己的
+  //         friendReqHidden/{自己uid} = { uid, list:[被隱藏的邀請者uid…], updatedAt }(只有本人讀寫)。
+  //       ・被邀請者已經把對方加為好友(例如自己也加過對方)⇒ 邀請自動消化刪除,不再跳出來。
+  //   ⚠ 需在 Firebase 主控台貼上 friendRequests / friendReqHidden 兩條規則(firestore_rules_好友邀請補丁_v5.358.0.txt)。
+  //     規則沒貼之前:建立/讀取被拒 ⇒ 加好友照舊單向成功,只是對方收不到邀請(不影響原功能)。
+  // ═════════════════════════════════════════════════════════════════
+  // 班級座號＋姓名(隱藏第二個字):「5324王○明」「5324王○」;名冊沒有 ⇒ 用暱稱同樣遮第二個字
+  window._lxpsFriendLabel = function(email, fallbackName){
+    const em = String(email || '').toLowerCase().trim();
+    let e = null, code = '';
+    try{ e = (em && typeof window._getRosterEntry === 'function') ? window._getRosterEntry(em) : null; }catch(_){}
+    try{ code = (em && typeof window._classSeatCode4 === 'function') ? (window._classSeatCode4(em) || '') : ''; }catch(_){}
+    let n = (e && e.fullName) ? String(e.fullName) : ((e && e.surname) ? String(e.surname) : '');
+    if(!n){
+      n = String(fallbackName || '').trim();
+      if(!n || n.indexOf('@') >= 0) n = '同學';
+    }
+    const chars = Array.from(n);
+    const masked = (chars.length >= 2) ? (chars[0] + '○' + chars.slice(2).join('')) : n;
+    return (code ? code : '') + masked;
+  };
+  // 對方是否在線上:players 主檔 lastSeenAt / lastLoginAt(心跳每 4 分鐘鏡射一次)7 分鐘內
+  window._lxpsIsOnlineByData = function(d){
+    try{
+      const t = Math.max(Number(d && d.lastSeenAt) || 0, Number(d && d.lastLoginAt) || 0);
+      return t > 0 && (Date.now() - t) < 7 * 60 * 1000;
+    }catch(_){ return false; }
+  };
+  window._fbFriendReq = {
+    // 送出好友邀請(對方的好友名單裡已經有我 ⇒ 不送)。回傳 'sent' | 'exists' | 'already' | 'fail'
+    send: async function(toUid, toData){
+      const me = window._gUserId;
+      if(!me || !toUid || toUid === me) return 'fail';
+      try{
+        const fl = (toData && Array.isArray(toData.friends)) ? toData.friends : [];
+        if(fl.some(function(f){ return f && f.uid === me; })) return 'already';
+        const ref = doc(_fbDb, 'friendRequests', me + '_' + toUid);
+        try{ const s = await getDoc(ref); if(s.exists()) return 'exists'; }catch(_){}
+        await setDoc(ref, { fromUid: me, toUid: toUid, status: 'pending', createdAt: Date.now() });
+        return 'sent';
+      }catch(e){ console.warn('[好友邀請] 送出失敗(規則未部署或網路)', e); return 'fail'; }
+    },
+    // 訂閱「寄給我」的邀請(最近的排前面)
+    subscribe: function(onUpdate){
+      const me = window._gUserId;
+      if(!me) return null;
+      try{
+        const q = query(collection(_fbDb, 'friendRequests'), where('toUid', '==', me));
+        return onSnapshot(q, function(snap){
+          const list = [];
+          snap.forEach(function(s){
+            const d = s.data() || {};
+            if(d.status === 'pending' && d.fromUid && d.toUid === me) list.push({ id: s.id, fromUid: d.fromUid, createdAt: Number(d.createdAt) || 0 });
+          });
+          list.sort(function(a, b){ return b.createdAt - a.createdAt; });
+          try{ onUpdate(list); }catch(_){}
+        }, function(err){ console.warn('[好友邀請] 訂閱失敗(規則未部署?)', err); try{ onUpdate([]); }catch(_){} });
+      }catch(e){ console.warn('[好友邀請] 訂閱例外', e); return null; }
+    },
+    loadHidden: async function(){
+      const me = window._gUserId;
+      if(!me) return [];
+      try{
+        const s = await getDoc(doc(_fbDb, 'friendReqHidden', me));
+        return (s.exists() && Array.isArray(s.data().list)) ? s.data().list.slice() : [];
+      }catch(_){ return []; }
+    },
+    hide: async function(fromUid){
+      const me = window._gUserId;
+      if(!me || !fromUid) return false;
+      try{
+        const ref = doc(_fbDb, 'friendReqHidden', me);
+        await runTransaction(_fbDb, async function(tx){
+          const s = await tx.get(ref);
+          const cur = (s.exists() && Array.isArray(s.data().list)) ? s.data().list.slice() : [];
+          if(cur.indexOf(fromUid) < 0) cur.push(fromUid);
+          tx.set(ref, { uid: me, list: cur.slice(-500), updatedAt: Date.now() });
+        });
+        return true;
+      }catch(e){ console.warn('[好友邀請] 隱藏失敗', e); return false; }
+    },
+    remove: async function(reqId){
+      try{ await deleteDoc(doc(_fbDb, 'friendRequests', reqId)); return true; }catch(_){ return false; }
+    },
+    // 接受:把邀請者加進我的好友(與原本加好友同一支交易,不會重複),再刪邀請
+    accept: async function(req, fromData){
+      const me = window._gUserId;
+      if(!me || !req || !req.fromUid) return false;
+      const info = { uid: req.fromUid, email: (fromData && fromData.email) || '',
+                     name: (fromData && (fromData.displayName || fromData.email)) || '好友' };
+      const ok = await window._fbAddFriend(me, info);
+      if(!ok) return false;
+      try{ await deleteDoc(doc(_fbDb, 'friendRequests', req.id)); }catch(_){}
+      return info;
+    }
+  };
+
   // ════════════════════════════════════════════════════════════════════
   // ★ v3.12.0(2026-05-29)— 好友送禮 Firebase API
   //

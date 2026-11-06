@@ -5756,18 +5756,22 @@
         '#wb-inv-lite-stack .wbl-btn.ok:disabled{background:#444;color:#888;cursor:not-allowed;}' +
         '#wb-inv-lite-stack .wbl-btn.no{background:rgba(255,80,80,.25);color:#ffaaaa;border:3px solid rgba(255,100,100,.4);}' +
         '#wb-inv-lite-stack .wbl-busy{font-size:22px;color:#ffaa88;margin-top:8px;letter-spacing:1px;text-align:center;}' +
+        /* ★ v5.356.0 「🔄 重新整理」鈕(只在接受鈕灰掉時出現) */
+        '#wb-inv-lite-stack .wbl-rf{display:block;width:100%;margin-top:8px;padding:12px 10px;font-size:22px;font-weight:700;border-radius:14px;cursor:pointer;font-family:inherit;' +
+          'border:3px solid rgba(120,190,255,.55);background:rgba(70,140,230,.28);color:#cfe6ff;letter-spacing:1px;}' +
+        '#wb-inv-lite-stack .wbl-rf:active{transform:scale(.97);}' +
         /* 手機直向/窄螢幕(寬 ≤ 700) */
         '@media (max-width:700px){#wb-inv-lite-stack{left:8px;top:auto;bottom:12px;transform:none;gap:10px;max-width:calc(100vw - 16px);}' +
           '#wb-inv-lite-stack .wbl-card{min-width:0;width:calc(100vw - 16px);max-width:360px;padding:12px 14px;border-width:3px;border-radius:16px;}' +
           '#wb-inv-lite-stack .wbl-hdr{font-size:14px;margin-bottom:4px}#wb-inv-lite-stack .wbl-from{font-size:17px}#wb-inv-lite-stack .wbl-room{font-size:13px;margin-top:2px}' +
           '#wb-inv-lite-stack .wbl-barw{height:6px;margin:8px 0}#wb-inv-lite-stack .wbl-btns{gap:8px;margin-top:6px}' +
-          '#wb-inv-lite-stack .wbl-btn{font-size:16px;padding:9px 6px;border-radius:10px;letter-spacing:1px}#wb-inv-lite-stack .wbl-busy{font-size:13px;margin-top:4px}}' +
+          '#wb-inv-lite-stack .wbl-btn{font-size:16px;padding:9px 6px;border-radius:10px;letter-spacing:1px}#wb-inv-lite-stack .wbl-busy{font-size:13px;margin-top:4px}#wb-inv-lite-stack .wbl-rf{font-size:15px;padding:8px 6px;margin-top:6px;border-radius:10px;border-width:2px}}' +
         /* 手機橫向(高 ≤ 520)— 放最後,蓋過上面兩組 */
         '@media (orientation:landscape) and (max-height:520px){#wb-inv-lite-stack{left:10px;top:50%;bottom:auto;transform:translateY(-50%);gap:8px;max-width:300px;}' +
           '#wb-inv-lite-stack .wbl-card{min-width:0;width:290px;padding:10px 12px;border-width:3px;border-radius:14px;}' +
           '#wb-inv-lite-stack .wbl-hdr{font-size:13px;margin-bottom:2px}#wb-inv-lite-stack .wbl-from{font-size:16px}#wb-inv-lite-stack .wbl-room{font-size:12px;margin-top:2px}' +
           '#wb-inv-lite-stack .wbl-barw{height:5px;margin:6px 0}#wb-inv-lite-stack .wbl-btns{gap:8px;margin-top:4px}' +
-          '#wb-inv-lite-stack .wbl-btn{font-size:15px;padding:7px 6px;border-radius:9px;letter-spacing:1px}#wb-inv-lite-stack .wbl-busy{font-size:12px;margin-top:3px}}';
+          '#wb-inv-lite-stack .wbl-btn{font-size:15px;padding:7px 6px;border-radius:9px;letter-spacing:1px}#wb-inv-lite-stack .wbl-busy{font-size:12px;margin-top:3px}#wb-inv-lite-stack .wbl-rf{font-size:14px;padding:6px 6px;margin-top:4px;border-radius:9px;border-width:2px}}';
       document.head.appendChild(st);
     }
     function _stack(){
@@ -5814,8 +5818,73 @@
       }catch(_){}
       return null;
     }
+    // ★ v5.356.0 追加(老師:「在受邀請視窗新增重新整理功能,按了就清除舊判斷,變成可以接受邀請的狀態」)
+    //   按「🔄 重新整理」⇒ _wbInvStaleCleared = true:之後不再看殘留的關卡代號/龍王戰 class/離開戰場鈕等「舊判斷」,
+    //   只剩一道保險 ── 戰鬥畫面「真的在眼前、而且雙方都還有人活著」才擋(避免正在打仗按了被拉出戰場)。
+    //   邀請卡全部消失後自動恢復原本判斷。只改本模組的判斷旗標;另外順手拔掉不在龍王戰時殘留的 wb-in-worldboss-battle class。
+    let _wbInvStaleCleared = false;
+    const _WB_INV_BATTLE_POPUPS = ['adv-quiz-overlay', 'adv-continue-overlay', 'adv-boss-intro', 'adv-cutscene-overlay',
+      'battle-start-overlay', 'dice-overlay', 'hero-detail-overlay', 'skill-replace-overlay', 'pause-overlay', 'surrender-overlay', 'elem-pick-overlay'];
+    function _wbInvTopIn(el){
+      try{
+        if(!el || !el.getClientRects || el.getClientRects().length === 0) return false;
+        const cs = getComputedStyle(el);
+        if(cs.display === 'none' || cs.visibility === 'hidden') return false;
+        const r = el.getBoundingClientRect();
+        if(r.width < 20 || r.height < 20) return false;
+        const pts = [[0.5, 0.5], [0.2, 0.5], [0.8, 0.5]];
+        for(let k = 0; k < pts.length; k++){
+          const x = Math.min(window.innerWidth - 2,  Math.max(1, r.left + r.width  * pts[k][0]));
+          const y = Math.min(window.innerHeight - 2, Math.max(1, r.top  + r.height * pts[k][1]));
+          const hit = document.elementFromPoint(x, y);
+          if(hit && (hit === el || el.contains(hit))) return true;
+        }
+      }catch(_){}
+      return false;
+    }
+    // 戰鬥是否「真的正在眼前進行」:雙方都有活著的角色,且戰場(我方列 #z1/敵方列 #z2)或戰鬥中的彈窗(答題/過場…)在最上層
+    function _wbInvBattleOnScreen(){
+      try{
+        const live = (typeof G !== 'undefined' && G && Array.isArray(G.p1) && Array.isArray(G.p2)
+          && G.p1.some(function(h){ return h && h.curHp > 0; }) && G.p2.some(function(h){ return h && h.curHp > 0; }));
+        if(!live) return false;
+        if(_wbInvTopIn(document.getElementById('z1')) || _wbInvTopIn(document.getElementById('z2'))) return true;
+        for(let i = 0; i < _WB_INV_BATTLE_POPUPS.length; i++){
+          if(_wbInvTopIn(document.getElementById(_WB_INV_BATTLE_POPUPS[i]))) return true;
+        }
+      }catch(_){}
+      return false;
+    }
+    function _wbInvRefresh(){
+      try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+      if(_wbInvBattleOnScreen()){
+        _wbGameAlert('⚔ 畫面上這場戰鬥還在進行中,打完再按「接受」喔!');
+        return;
+      }
+      _wbInvStaleCleared = true;
+      try{
+        if(!window._wbInWorldBossMode && !window._wbSoloPracticeMode && document.body)
+          document.body.classList.remove('wb-in-worldboss-battle');
+      }catch(_){}
+      console.log('[WB-InvLite v5.356.0] 重新整理:清除舊的戰鬥中判斷');
+      // 立刻更新每張卡(不用等 0.5 秒計時)
+      try{
+        document.querySelectorAll('#wb-inv-lite-stack .wbl-card').forEach(function(dom){
+          const can = _canAccept() && !_accepting;
+          const ok = dom.querySelector('[data-act="ok"]');
+          if(ok) ok.disabled = !can;
+          const busy = dom.querySelector('.wbl-busy');
+          if(can && busy) busy.parentNode.removeChild(busy);
+        });
+      }catch(_){}
+    }
+    function _wbInvBusyHtml(){
+      return '<div class="wbl-busy">⚔ 戰鬥中,結束後才能接受' +
+        '<button class="wbl-rf" data-act="rf" type="button">🔄 重新整理(已經離開戰鬥請按我)</button></div>';
+    }
     function _canAccept(){
       try{
+        if(_wbInvStaleCleared) return !_wbInvBattleOnScreen();
         if(_wbInvPageOpen()) return true;
         const stage = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : null;
         if(stage) return false;
@@ -5837,6 +5906,7 @@
     function _removeLocal(id){
       _clearTimer(id);
       _list = _list.filter(function(i){ return i.inviteId !== id; });
+      if(!_list.length) _wbInvStaleCleared = false;   // ★ v5.356.0 邀請都處理完 ⇒ 恢復原本判斷
       const dom = document.querySelector('#wb-inv-lite-stack [data-inv-id="' + id + '"]');
       if(dom && dom.parentNode) dom.parentNode.removeChild(dom);
     }
@@ -5853,7 +5923,7 @@
           '<button class="wbl-btn ok" data-act="ok"' + (can ? '' : ' disabled') + '>✓ 接受</button>' +
           '<button class="wbl-btn no" data-act="no">✕ 拒絕</button>' +
         '</div>' +
-        (can ? '' : '<div class="wbl-busy">⚔ 戰鬥中,結束後才能接受</div>') +
+        (can ? '' : _wbInvBusyHtml()) +
       '</div>';
     }
     function _render(){
@@ -5861,7 +5931,14 @@
       Object.keys(_timers).forEach(function(id){
         if(!_list.some(function(i){ return i.inviteId === id; })) _clearTimer(id);
       });
-      if(!_list.length){ s.innerHTML = ''; return; }
+      if(!_list.length){ s.innerHTML = ''; _wbInvStaleCleared = false; return; }
+      // ★ v5.356.0 「🔄 重新整理」鈕用事件委派(灰掉提示列會被計時器重建);用 onclick 屬性確保只掛一個
+      s.onclick = function(ev){
+        try{
+          const b = ev.target && ev.target.closest ? ev.target.closest('[data-act="rf"]') : null;
+          if(b){ ev.stopPropagation(); _wbInvRefresh(); }
+        }catch(_){}
+      };
       // 新邀請出現時提示音(同一則只響一次)
       let fresh = false;
       _list.forEach(function(inv){ if(!_seen[inv.inviteId]){ _seen[inv.inviteId] = 1; fresh = true; } });
@@ -5899,10 +5976,7 @@
         if(ok) ok.disabled = !can;
         if(can && busy) busy.parentNode.removeChild(busy);
         if(!can && !busy && !_accepting){
-          const m = document.createElement('div');
-          m.className = 'wbl-busy';
-          m.textContent = '⚔ 戰鬥中,結束後才能接受';
-          dom.appendChild(m);
+          dom.insertAdjacentHTML('beforeend', _wbInvBusyHtml());   // ★ v5.356.0 帶「🔄 重新整理」鈕
         }
       }, 500);
     }
@@ -5971,6 +6045,9 @@
       _removeLocal(inviteId);
       try{ if(window._wbNet && window._wbNet.respondInvite) await window._wbNet.respondInvite(inviteId, 'declined'); }catch(_){}
     };
+    // ★ v5.358.0 給「好友邀請確認視窗」共用:同一套卡片外觀與「戰場在眼前」判斷
+    window._wbInvLiteCss = function(){ try{ _css(); }catch(_){} };
+    window._wbInvBattleOnScreen = function(){ try{ return _wbInvBattleOnScreen(); }catch(_){ return false; } };
 
     // 本檔是 defer 載入:若登入早已完成(登入鉤子的 30 秒重試已過),這裡自己補啟動一次;之後每 5 秒確認一次登入者有沒有換人
     setTimeout(function(){ try{ _start(); }catch(_){} }, 800);
@@ -5980,6 +6057,210 @@
         else if(!window._gUserId && _unsub) _stop();
       }catch(_){}
     }, 5000);
+  })();
+
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v5.358.0(2026-11-06・老師「用這個介面新增加入好友邀請確認視窗,只要單方面邀請成為好友被接受,雙方自動成為互相的好友。
+  //   加好友可以非線上邀請(顯示此玩家目前不在線上,等他上線會自動收到邀請),上線時在遊戲首頁會直接列出最近還沒接受的好友邀請清單。
+  //   為了方便辨識玩家,加好友一律顯示班級座號姓名(隱藏第二個字)。」＋「如果不希望成為好友,可以選隱藏邀請。
+  //   邀請被隱藏時玩家無法得知,也不影響原有單向好友功能。」)
+  //   ・外觀沿用龍王戰邀請小卡(同一份 CSS,換容器 id、放右側,不跟龍王戰邀請疊在一起)。
+  //   ・登入後訂閱 friendRequests(寄給我的、pending),一張卡列出全部未處理邀請(最近的在上面),每筆「✓ 接受」「🙈 隱藏邀請」。
+  //   ・接受 ⇒ 把對方加進我的好友(對方加我時早就把我加進他的好友)⇒ 雙方互為好友;邀請文件刪除。
+  //   ・隱藏 ⇒ 只記在我自己的 friendReqHidden(對方讀不到),邀請文件原封不動 ⇒ 對方看不出來;對方的單向好友照舊。
+  //   ・對方已經在我的好友名單 ⇒ 邀請自動消化。戰場在眼前時整張卡先收起,離開戰鬥自動出現。
+  //   ・「稍後再說」⇒ 收成右側小按鈕「👥 好友邀請 N」,點一下再展開。
+  // ════════════════════════════════════════════════════════════════════
+  (function _lxFriendReqUi(){
+    let _unsub = null, _uid = null, _list = [], _hidden = [], _info = {}, _busy = {}, _collapsed = false, _sfxSeen = {};
+    function _esc(t){
+      return String(t == null ? '' : t).replace(/[<>&"']/g, function(c){ return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; });
+    }
+    function _css(){
+      if(document.getElementById('lx-frq-css')) return;
+      try{ if(typeof window._wbInvLiteCss === 'function') window._wbInvLiteCss(); }catch(_){}
+      const base = document.getElementById('wb-inv-lite-css');
+      const st = document.createElement('style');
+      st.id = 'lx-frq-css';
+      st.textContent = (base ? base.textContent.split('#wb-inv-lite-stack').join('#lx-frq-stack') : '') +
+        // 位置:放右側(龍王戰邀請在左側)
+        '#lx-frq-stack{left:auto;right:28px;}' +
+        '#lx-frq-stack .frq-list{max-height:min(52vh,460px);overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:6px;}' +
+        '#lx-frq-stack .frq-row{border-top:2px solid rgba(255,224,102,.25);padding:12px 0 6px;}' +
+        '#lx-frq-stack .frq-row:first-child{border-top:none;padding-top:4px;}' +
+        '#lx-frq-stack .frq-name{font-size:30px;font-weight:800;color:#fff;letter-spacing:1px;}' +
+        '#lx-frq-stack .frq-sub{font-size:20px;color:#c9b8e8;margin-top:2px;}' +
+        '#lx-frq-stack .frq-later{display:block;width:100%;margin-top:10px;padding:10px;font-size:20px;border-radius:12px;cursor:pointer;font-family:inherit;' +
+          'background:rgba(255,255,255,.08);color:#ddd;border:2px solid rgba(255,255,255,.25);}' +
+        '#lx-frq-stack .frq-pill{pointer-events:auto;padding:14px 20px;font-size:24px;font-weight:800;border-radius:999px;cursor:pointer;font-family:inherit;' +
+          'background:linear-gradient(135deg,#7a4fd0,#4a2a90);color:#fff;border:4px solid #ffe066;box-shadow:0 6px 20px rgba(0,0,0,.45);}' +
+        '#lx-frq-stack .wbl-btn.hide{background:rgba(140,140,170,.25);color:#ddd;border:3px solid rgba(200,200,230,.35);}' +
+        '@media (max-width:700px){#lx-frq-stack{left:auto;right:8px;top:12px;bottom:auto;transform:none;}' +
+          '#lx-frq-stack .frq-name{font-size:18px}#lx-frq-stack .frq-sub{font-size:12px}#lx-frq-stack .frq-row{padding:8px 0 4px}' +
+          '#lx-frq-stack .frq-later{font-size:14px;padding:7px;margin-top:6px}#lx-frq-stack .frq-pill{font-size:15px;padding:9px 14px;border-width:3px}' +
+          '#lx-frq-stack .frq-list{max-height:40vh}}' +
+        '@media (orientation:landscape) and (max-height:520px){#lx-frq-stack{left:auto;right:10px;top:50%;bottom:auto;transform:translateY(-50%);}' +
+          '#lx-frq-stack .frq-name{font-size:16px}#lx-frq-stack .frq-sub{font-size:11px}#lx-frq-stack .frq-row{padding:6px 0 3px}' +
+          '#lx-frq-stack .frq-later{font-size:13px;padding:5px;margin-top:5px}#lx-frq-stack .frq-pill{font-size:14px;padding:7px 12px;border-width:3px}' +
+          '#lx-frq-stack .frq-list{max-height:52vh}}';
+      document.head.appendChild(st);
+    }
+    function _stack(){
+      let s = document.getElementById('lx-frq-stack');
+      if(!s){
+        _css();
+        s = document.createElement('div');
+        s.id = 'lx-frq-stack';
+        document.body.appendChild(s);
+        s.addEventListener('click', _onClick);
+      }
+      return s;
+    }
+    function _myFriendUids(){
+      try{ return (typeof _friendList !== 'undefined' && Array.isArray(_friendList)) ? _friendList.map(function(f){ return f && f.uid; }).filter(Boolean) : []; }catch(_){ return []; }
+    }
+    function _ago(ts){
+      const s = Math.max(0, Math.floor((Date.now() - (ts || 0)) / 1000));
+      if(s < 60) return '剛剛';
+      if(s < 3600) return Math.floor(s / 60) + ' 分鐘前';
+      if(s < 86400) return Math.floor(s / 3600) + ' 小時前';
+      return Math.floor(s / 86400) + ' 天前';
+    }
+    function _visible(){
+      const mine = _myFriendUids();
+      return _list.filter(function(r){
+        if(_hidden.indexOf(r.fromUid) >= 0) return false;
+        if(mine.indexOf(r.fromUid) >= 0) return false;
+        return true;
+      });
+    }
+    // 對方已經是我的好友 ⇒ 邀請自動消化(刪掉,不再跳)
+    function _autoClean(){
+      const mine = _myFriendUids();
+      _list.forEach(function(r){
+        if(mine.indexOf(r.fromUid) >= 0 && !_busy[r.id]){
+          _busy[r.id] = 1;
+          try{ window._fbFriendReq.remove(r.id).finally(function(){ delete _busy[r.id]; }); }catch(_){ delete _busy[r.id]; }
+        }
+      });
+    }
+    async function _loadInfo(r){
+      if(_info[r.fromUid]) return;
+      _info[r.fromUid] = { label: '…', data: null };
+      try{
+        const d = (typeof window._fbLoadFriend === 'function') ? await window._fbLoadFriend(r.fromUid) : null;
+        const lab = (typeof window._lxpsFriendLabel === 'function') ? window._lxpsFriendLabel(d && d.email, d && d.displayName) : ((d && d.displayName) || '同學');
+        _info[r.fromUid] = { label: lab, data: d };
+      }catch(_){ _info[r.fromUid] = { label: '同學', data: null }; }
+      _render();
+    }
+    function _render(){
+      const vis = _visible();
+      const s = _stack();
+      if(!vis.length){ s.innerHTML = ''; return; }
+      let fresh = false;
+      vis.forEach(function(r){ if(!_sfxSeen[r.id]){ _sfxSeen[r.id] = 1; fresh = true; } if(!_info[r.fromUid]) _loadInfo(r); });
+      if(fresh){ _collapsed = false; try{ if(typeof playSfx === 'function') playSfx('sfx-popup', 0.6); }catch(_){} }
+      if(_collapsed){
+        s.innerHTML = '<button class="frq-pill" data-act="open" type="button">👥 好友邀請 ' + vis.length + '</button>';
+      }else{
+        s.innerHTML = '<div class="wbl-card">' +
+          '<div class="wbl-hdr">👥 好友邀請(' + vis.length + ')</div>' +
+          '<div class="frq-list">' + vis.map(function(r){
+            const inf = _info[r.fromUid] || { label: '…' };
+            const b = !!_busy[r.id];
+            return '<div class="frq-row">' +
+              '<div class="frq-name">' + _esc(inf.label) + '</div>' +
+              '<div class="frq-sub">想和你成為好友 · ' + _ago(r.createdAt) + '</div>' +
+              '<div class="wbl-btns">' +
+                '<button class="wbl-btn ok" type="button" data-act="acc" data-id="' + _esc(r.id) + '"' + (b ? ' disabled' : '') + '>' + (b ? '⏳ 處理中' : '✓ 接受') + '</button>' +
+                '<button class="wbl-btn hide" type="button" data-act="hide" data-id="' + _esc(r.id) + '"' + (b ? ' disabled' : '') + '>🙈 隱藏邀請</button>' +
+              '</div></div>';
+          }).join('') + '</div>' +
+          '<button class="frq-later" type="button" data-act="later">稍後再說</button>' +
+        '</div>';
+      }
+      if(s.parentNode === document.body && document.body.lastElementChild !== s){ try{ document.body.appendChild(s); }catch(_){} }
+      _applyBattleHide();
+    }
+    // 戰場在眼前時先收起整張卡,離開戰鬥自動出現
+    function _applyBattleHide(){
+      const s = document.getElementById('lx-frq-stack');
+      if(!s) return;
+      let inBattle = false;
+      try{ inBattle = (typeof window._wbInvBattleOnScreen === 'function') && window._wbInvBattleOnScreen(); }catch(_){}
+      if(!inBattle){
+        try{ inBattle = !!(document.body && document.body.classList.contains('wb-in-worldboss-battle') && window._wbInWorldBossMode); }catch(_){}
+      }
+      s.style.display = inBattle ? 'none' : '';
+    }
+    function _find(id){ for(let i = 0; i < _list.length; i++){ if(_list[i].id === id) return _list[i]; } return null; }
+    async function _onClick(ev){
+      const b = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
+      if(!b) return;
+      ev.stopPropagation();
+      const act = b.getAttribute('data-act'), id = b.getAttribute('data-id');
+      try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
+      if(act === 'later'){ _collapsed = true; _render(); return; }
+      if(act === 'open'){ _collapsed = false; _render(); return; }
+      const r = _find(id);
+      if(!r || _busy[r.id]) return;
+      const lab = (_info[r.fromUid] && _info[r.fromUid].label) || '同學';
+      _busy[r.id] = 1; _render();
+      try{
+        if(act === 'acc'){
+          const info = await window._fbFriendReq.accept(r, _info[r.fromUid] && _info[r.fromUid].data);
+          if(info){
+            try{ if(typeof _friendList !== 'undefined' && Array.isArray(_friendList) && !_friendList.some(function(f){ return f && f.uid === info.uid; })) _friendList.push(info); }catch(_){}
+            _list = _list.filter(function(x){ return x.id !== r.id; });
+            try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(_){}
+            try{ if(typeof bannerFX === 'function') bannerFX(null, '🤝 你和 ' + lab + ' 已經互相是好友了!', '#44ff88', 2200); }catch(_){}
+            try{ if(document.getElementById('_friend-panel') && typeof _renderFriendPanel === 'function') _renderFriendPanel(); }catch(_){}
+          }else{
+            window._wbGameAlert('加好友沒有成功,請檢查網路後再試一次。');
+          }
+        }else if(act === 'hide'){
+          const ok = await window._fbFriendReq.hide(r.fromUid);
+          if(ok){ if(_hidden.indexOf(r.fromUid) < 0) _hidden.push(r.fromUid); }
+          else window._wbGameAlert('隱藏沒有成功,請檢查網路後再試一次。');
+        }
+      }catch(e){ console.warn('[好友邀請] 處理失敗', e); }
+      delete _busy[r.id];
+      _render();
+    }
+    let _starting = false;
+    async function _start(){
+      if(!window._gUserId || !window._fbFriendReq || _starting) return;
+      if(_unsub && _uid === window._gUserId) return;
+      _starting = true;
+      try{
+        _stop();
+        const u = window._gUserId;
+        const hid = await window._fbFriendReq.loadHidden();
+        if(u !== window._gUserId) return;   // 讀隱藏名單期間換人登入
+        _uid = u; _hidden = hid;
+        _unsub = window._fbFriendReq.subscribe(function(list){
+          _list = list || [];
+          _autoClean();
+          _render();
+        });
+      }finally{ _starting = false; }
+    }
+    function _stop(){
+      try{ if(_unsub) _unsub(); }catch(_){}
+      _unsub = null; _uid = null; _list = []; _hidden = []; _info = {}; _busy = {}; _collapsed = false;
+      const s = document.getElementById('lx-frq-stack');
+      if(s) s.innerHTML = '';
+    }
+    setTimeout(function(){ try{ _start(); }catch(_){} }, 1500);
+    setInterval(function(){
+      try{
+        if(window._gUserId && (!_unsub || _uid !== window._gUserId)) _start();
+        else if(!window._gUserId && _unsub) _stop();
+        _applyBattleHide();
+        if(_unsub) _autoClean();
+      }catch(_){}
+    }, 3000);
   })();
 
   _wbBootstrap();

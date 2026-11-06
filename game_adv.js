@@ -64405,6 +64405,22 @@ function _showGiftSummaryModal(giftList){
 // ════════════════════════════════════════════════════════════════════
 
 // ★ v1.0.20260424.1150 — 用邀請碼加好友(取代 email 查詢)
+// ★ v5.358.0(老師:好友邀請確認視窗;可非線上邀請;加好友一律顯示班級座號姓名(隱藏第二個字))
+//   加好友成功(原本單向照舊)後呼叫:送一份好友邀請給對方,回傳要顯示的訊息。送失敗(例如規則還沒部署)⇒ 仍只顯示加好友成功。
+async function _friendSendInviteMsg(found){
+  const lab = (typeof window._lxpsFriendLabel === 'function')
+    ? window._lxpsFriendLabel(found && found.email, found && found.displayName) : ((found && found.displayName) || '同學');
+  let r = 'fail';
+  try{ if(window._fbFriendReq && found && found.uid) r = await window._fbFriendReq.send(found.uid, found); }catch(_){}
+  const online = (typeof window._lxpsIsOnlineByData === 'function') ? window._lxpsIsOnlineByData(found) : true;
+  if(r === 'already') return '✅ 已加 ' + lab + ' 為好友!你們已經互相是好友了';
+  if(r === 'sent' || r === 'exists'){
+    return online
+      ? ('✅ 已加 ' + lab + ' 為好友,並送出好友邀請!\n對方接受後就會互相成為好友')
+      : ('✅ 已加 ' + lab + ' 為好友\n📨 此玩家目前不在線上,等他上線會自動收到邀請');
+  }
+  return '✅ 已加 ' + lab + ' 為好友!';
+}
 async function _addFriendByInviteCode(){
   // ★ v3.5.53 — 3 秒冷卻(加好友本來就是慢動作,防 spam)
   if(!window._btnCooldown('add_friend', 3000)) return;
@@ -64483,7 +64499,8 @@ async function _addFriendByInviteCode(){
     };
     await window._fbAddFriend(window._gUserId, friendInfo);
     if(!_friendList.some(f => f && f.uid === friendInfo.uid)) _friendList.push(friendInfo);   // ★ v5.335.0 寫入期間別處已加過就不再推一次
-    bannerFX(null, '✅ 已加 ' + friendInfo.name + ' 為好友!', '#44ff88', 1800);
+    // ★ v5.358.0 原本的單向加好友照舊;另外送「好友邀請」給對方,對方接受就互相成為好友
+    bannerFX(null, await _friendSendInviteMsg(found), '#44ff88', 3200);
     playSfx('sfx-confirm', 0.6);
     input.value = '';
     _renderFriendPanel();
@@ -64565,7 +64582,7 @@ async function _addFriendByEmail() {
     const friendInfo = { uid: found.uid, email: found.email || email, name: found.displayName || email };
     await window._fbAddFriend(window._gUserId, friendInfo);
     if (!_friendList.some(f => f && f.uid === friendInfo.uid)) _friendList.push(friendInfo);   // ★ v5.335.0
-    bannerFX(null, '✅ 已加 ' + friendInfo.name + ' 為好友！', '#44ff88', 1800);
+    bannerFX(null, await _friendSendInviteMsg(found), '#44ff88', 3200);   // ★ v5.358.0 同上:送好友邀請
     playSfx('sfx-confirm', 0.6);
     _renderFriendPanel();
   } catch(e) {
