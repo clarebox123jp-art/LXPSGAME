@@ -32078,11 +32078,29 @@ function _getTraitLv(name){
       if(_allTSeal.some(h => h && h.name === name && h.curHp > 0 && (h.status||[]).some(s => s.type === '_traitSeal' || s.type === 'imprison'))) return 0;
     }
   }catch(_){}
+  // ★ v5.355.0 龍王戰組隊:天賦等級改讀「這隻英雄主人」的(房主開戰時寫在我方英雄 _wbTraitLv,隨戰場同步給每位隊友);
+  //   原本讀這台裝置的 _heroTraitLevel ⇒ 隊友英雄的天賦強度吃房主自己的天賦等級。其他模式/沒有 _wbTraitLv ⇒ 照舊。
+  try{
+    if((window._wbInWorldBossMode || window._wbSoloPracticeMode) && typeof G !== 'undefined' && G && Array.isArray(G.p1)){
+      const _wbTh = G.p1.find(function(x){ return x && x.name === name && typeof x._wbTraitLv === 'number'; });
+      if(_wbTh) return Math.max(0, _wbTh._wbTraitLv | 0);
+    }
+  }catch(_){}
   if(typeof _adventureMode === 'undefined' || !_adventureMode) return 0;
   const stored = (_heroTraitLevel && _heroTraitLevel[name]) || 0;
   const heroLv = (typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[name]) || 1;
   return Math.max(stored, _expectedTraitLv(heroLv));
 }
+// ★ v5.355.0 龍王戰:「我自己」這隻英雄的天賦等級(與 _getTraitLv 冒險模式同一算式,但不看 _adventureMode / 戰場),
+//   在大廳選角時打包進房間的養成快照 g.tr,讓房主開戰時套到隊友英雄的 _wbTraitLv。只讀。
+window._wbLocalTraitLv = function(name){
+  try{
+    if(!name) return 0;
+    const stored = (typeof _heroTraitLevel !== 'undefined' && _heroTraitLevel && _heroTraitLevel[name]) || 0;
+    const heroLv = (typeof _heroLevels !== 'undefined' && _heroLevels && _heroLevels[name]) || 1;
+    return Math.max(stored, _expectedTraitLv(heroLv)) | 0;
+  }catch(_){ return 0; }
+};
 // ════════════════════════════════════════════════════════════════
 // ★ v5.119.0(老師裁定一·甲)— 菇女 S2「極限菇」每場可用次數(單一真相)
 //   內部技能等級 skLv 0~9 = 顯示 Lv.1~Lv.10。

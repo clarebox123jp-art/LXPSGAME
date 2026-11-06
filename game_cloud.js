@@ -23028,7 +23028,144 @@
     //   → 戰鬥中所有玩家技能威力都是 Lv.0
     //   解法:把這些資料塞進 element JSON 的 'g' 欄位(g = growth),
     //         房主開戰時讀出來套到 hero._skLv / _burstLvAdv 等
-    function _wbBuildMyGrowth(heroName){
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v5.355.0(老師回報「龍王戰不同隊友組隊,每個人螢幕上讀到的角色等級和能力沒有同步」)
+    //   根因:房主開戰時用「房主本機」的裝備/跟隨寵物套到每一隻英雄(隊友英雄吃到房主的裝備寵物、隊友自己的沒套),
+    //         極限膠囊與天賦等級完全沒傳;隊伍確認頁自己看自己有算至寶、別人看你沒算 ⇒ 同一隻英雄每台螢幕數字不同。
+    //   修法:每位玩家在「自己的裝置」用自己的資料把英雄完整算好(投資→膠囊→等級HP→至寶→裝備→寵物,與冒險模式同順序),
+    //         只把「跟原始英雄不一樣的欄位」打包成 g.ps 廣播;房主開戰時隊友槽直接套 g.ps(不再用房主本機資料),
+    //         隊伍確認頁所有人也都顯示 g.ps 的數值 ⇒ 每台螢幕同一份。g.tr = 天賦等級。
+    //   安全:只讀本機資料、不寫存檔;函式/DOM 等不可傳欄位一律略過;快照過大(>12000 字)就不送,房主自動退回舊算法。
+    // ════════════════════════════════════════════════════════════════════
+    const _WB_PS_SKIP = { name:1, side:1, pos:1, _cst:1, _cstRemote:1, _battlePrepApplied:1, _wbPrepRemote:1,
+      _wbIsNpc:1, _wbIsHostNpc:1, _wbPickedElement:1, element:1, burst:1, burstMax:1 };
+    function _wbPsClone(v, d){
+      if(d > 8) throw new Error('deep');
+      if(v === null) return null;
+      const t = typeof v;
+      if(t === 'number'){ if(!isFinite(v)) throw new Error('nan'); return v; }
+      if(t === 'string' || t === 'boolean') return v;
+      if(t === 'undefined') return undefined;
+      if(t !== 'object') throw new Error('fn');
+      if(Array.isArray(v)) return v.map(function(x){ const c = _wbPsClone(x, d + 1); return (c === undefined) ? null : c; });
+      if((typeof Set !== 'undefined' && v instanceof Set) || (typeof Map !== 'undefined' && v instanceof Map)
+         || (typeof window !== 'undefined' && window.Node && v instanceof window.Node)) throw new Error('obj');
+      const o = {};
+      for(const k in v){
+        if(!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        const c = _wbPsClone(v[k], d + 1);
+        if(c !== undefined) o[k] = c;
+      }
+      return o;
+    }
+    // 「我自己」這隻英雄的至寶清單 [{id, lv, inv}](有指定 tIds 用指定的,否則讀身上裝的)— 只讀
+    function _wbTrInfoFor(heroName, tIds){
+      try{
+        const _tdb = (typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData) ? _taiwanTreasureData : {};
+        const _ids = (Array.isArray(tIds) && tIds.length) ? tIds.filter(Boolean).slice(0, 2)
+                 : ((typeof window._getHeroEquippedTreasures === 'function') ? (window._getHeroEquippedTreasures(heroName) || []).map(function(e){ return e && e.id; }).filter(Boolean) : []);
+        return _ids.map(function(id){
+          const r = _tdb[id] || { lv: 1 };
+          const v = (typeof window._getTaiwanTreasureInvested === 'function') ? (window._getTaiwanTreasureInvested(id) || {}) : {};
+          return { id: id, lv: (r.lv || 1), inv: { hp: (v.hp || 0), atk: (v.atk || 0), sp: (v.sp || 0), spd: (v.spd || 0) } };
+        });
+      }catch(_){ return []; }
+    }
+    function _wbBuildPrepSnap(heroName, tIds){
+      try{
+        const _nh = (typeof window.newHero === 'function') ? window.newHero : null;
+        if(!heroName || !_nh || typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
+        const base = _nh(heroName, 'p1', 0);
+        const h    = _nh(heroName, 'p1', 0);
+        if(!base || !h) return null;
+        const lv = (typeof _heroLevels      !== 'undefined' && _heroLevels      && _heroLevels[heroName])      || 1;
+        const sk = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[heroName]) || {};
+        const bu = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[heroName]) || 0;
+        const iv = (typeof _heroStatInvested!== 'undefined' && _heroStatInvested&& _heroStatInvested[heroName]) || {};
+        // 1. 素質投資
+        if(iv.hp){ h.hp += iv.hp; h.curHp = h.hp; }
+        if(iv.atk) h.atk += iv.atk;
+        if(iv.sp)  h.sp  += iv.sp;
+        if(iv.spd) h.spd += iv.spd;
+        // 2. 極限膠囊(冒險模式 _applyAdvLevelHpBonus 同順序:先膠囊再等級 HP)
+        try{
+          const cp = (typeof _heroCapsuleInvested !== 'undefined' && _heroCapsuleInvested && _heroCapsuleInvested[heroName]) || null;
+          if(cp){
+            if(cp.hp){ h.hp += cp.hp; h.curHp = h.hp; }
+            if(cp.atk) h.atk += cp.atk;
+            if(cp.sp)  h.sp  += cp.sp;
+            if(cp.spd) h.spd += cp.spd;
+            h._capsuleApplied = true;
+          }
+        }catch(_eCp){}
+        // 3. 等級 HP(每級 +2%,與冒險模式同為無條件進位)
+        if(lv > 1 && h.hp){
+          const _b = Math.ceil(h.hp * 0.02 * (lv - 1));
+          if(_b > 0){ h.hp += _b; h.curHp = h.hp; }
+        }
+        // 4. 技能/爆發/等級/天賦
+        h._skLv = { s1: (sk.s1 || 0), s2: (sk.s2 || 0) };
+        h._burstLvAdv = bu;
+        h._advLv = lv;
+        h._wbTraitLv = (typeof window._wbLocalTraitLv === 'function') ? (window._wbLocalTraitLv(heroName) | 0) : 0;
+        // 5. 至寶(玩家在隊伍確認頁選的;沒選 ⇒ 讀自己身上裝的)→ 裝備 → 跟隨寵物(與 _applyBattlePrepToHero 同順序)
+        if(Array.isArray(tIds) && tIds.length) h._wbTreasureIds = tIds.filter(Boolean).slice(0, 2);
+        try{ if(typeof window._applyTaiwanTreasureToHero === 'function') window._applyTaiwanTreasureToHero(h); }catch(_eT){ console.warn('[WB-PS] 至寶', _eT); }
+        try{ if(typeof window._applyGearToHero === 'function') window._applyGearToHero(h); }catch(_eG){ console.warn('[WB-PS] 裝備', _eG); }
+        try{ if(typeof window._applyFollowPetToHero === 'function') window._applyFollowPetToHero(h); }catch(_eP){ console.warn('[WB-PS] 寵物', _eP); }
+        // 戰鬥中長按英雄卡的「至寶」欄要顯示「主人自己的」至寶與等級(否則每台螢幕顯示的是自己帳號同名英雄的至寶)
+        h._wbTrInfo = _wbTrInfoFor(heroName, h._wbTreasureIds);
+        // 只打包「跟原始英雄不同」的欄位
+        const f = {};
+        for(const k in h){
+          if(!Object.prototype.hasOwnProperty.call(h, k) || _WB_PS_SKIP[k]) continue;
+          let _a, _b2;
+          try{ _a = JSON.stringify(h[k]); _b2 = JSON.stringify(base[k]); }catch(_){ continue; }
+          if(_a === _b2) continue;
+          try{ const c = _wbPsClone(h[k], 0); if(c !== undefined) f[k] = c; }catch(_){ /* 含函式等不可傳欄位 ⇒ 略過 */ }
+        }
+        const ps = { v: 1, n: heroName, f: f };
+        if(JSON.stringify(ps).length > 12000){ console.warn('[WB-PS] 快照過大,不送', heroName); return null; }
+        return ps;
+      }catch(e){
+        console.warn('[WB-PS] _wbBuildPrepSnap 失敗', e);
+        return null;
+      }
+    }
+    // 房主端:把 g.ps 套到剛 newHero 出來的英雄。數值不合理(非數字/超過上限)⇒ 回 false,呼叫端退回舊算法。
+    function _wbApplyPrepSnap(h, ps){
+      try{
+        if(!h || !ps || ps.v !== 1 || !ps.f || typeof ps.f !== 'object') return false;
+        if(ps.n && ps.n !== h.name) return false;
+        const f = ps.f;
+        const _okNum = function(v){ return v === undefined || (typeof v === 'number' && isFinite(v) && v >= 0 && v <= 200000); };
+        if(!_okNum(f.hp) || !_okNum(f.atk) || !_okNum(f.sp) || !_okNum(f.spd) || !_okNum(f.curHp)) return false;
+        for(const k in f){
+          if(!Object.prototype.hasOwnProperty.call(f, k) || _WB_PS_SKIP[k]) continue;
+          try{ h[k] = _wbPsClone(f[k], 0); }catch(_){}
+        }
+        if(typeof h.curHp === 'number' && typeof h.hp === 'number' && h.curHp > h.hp) h.curHp = h.hp;
+        h._wbPrepRemote = true;
+        return true;
+      }catch(e){ console.warn('[WB-PS] _wbApplyPrepSnap 失敗', e); return false; }
+    }
+    try{
+      window._wbBuildPrepSnap = _wbBuildPrepSnap;
+      window._wbApplyPrepSnap = _wbApplyPrepSnap;
+      window._wbTrInfoFor = _wbTrInfoFor;
+    }catch(_){}
+    // 從 element JSON 讀出玩家在隊伍確認頁選的至寶 id
+    function _wbTidsFromElement(elementStr){
+      try{
+        if(typeof elementStr === 'string' && elementStr.charAt(0) === '{'){
+          const o = JSON.parse(elementStr);
+          if(o && Array.isArray(o.t)) return o.t.filter(Boolean).slice(0, 2);
+        }
+      }catch(_){}
+      return null;
+    }
+
+    function _wbBuildMyGrowth(heroName, tIds){
       if(!heroName) return null;
       try{
         const lv = (typeof _heroLevels    !== 'undefined' && _heroLevels    && _heroLevels[heroName])    || 1;
@@ -23041,7 +23178,10 @@
           burst: bu,
           inv: { hp: (iv.hp || 0), atk: (iv.atk || 0), sp: (iv.sp || 0), spd: (iv.spd || 0) },
           // ★ v5.351.0 命星快照 {k, s:[已點亮槽…]}(沒點 = null):隊友的隊伍確認頁顯示 ✦N、房主開戰時套用「這位玩家自己的」命星
-          cst: (function(){ try{ return (typeof window._cstRepSnap === 'function') ? (window._cstRepSnap(heroName) || null) : null; }catch(_){ return null; } })()
+          cst: (function(){ try{ return (typeof window._cstRepSnap === 'function') ? (window._cstRepSnap(heroName) || null) : null; }catch(_){ return null; } })(),
+          // ★ v5.355.0 天賦等級 + 自己裝置算好的完整戰前數值(含膠囊/至寶/裝備/寵物)
+          tr: (function(){ try{ return (typeof window._wbLocalTraitLv === 'function') ? (window._wbLocalTraitLv(heroName) | 0) : 0; }catch(_){ return 0; } })(),
+          ps: _wbBuildPrepSnap(heroName, tIds)
         };
       }catch(e){
         console.warn('[WB-Growth] _wbBuildMyGrowth 失敗', e);
@@ -23078,7 +23218,7 @@
       try{
         // ★ v3.4.16 — 自動把自己的養成資料 (技能等級/屬性點/爆發等級/英雄等級) 塞進 element JSON
         //   讓房主開戰時建構此玩家的 hero 物件能套上正確的技能威力
-        const _growth = _wbBuildMyGrowth(heroName);
+        const _growth = _wbBuildMyGrowth(heroName, _wbTidsFromElement(element));   // ★ v5.355.0 帶入選定至寶,快照才算得準
         const _elementWithGrowth = _wbInjectGrowthIntoElement(element, _growth);
         await runTransaction(_fbDb, async (tx) => {
           const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);
@@ -23114,6 +23254,13 @@
           if(!me) throw new Error('NOT_IN_ROOM');
           if(!me.heroName) throw new Error('NO_HERO');
           me.ready = !me.ready;
+          // ★ v5.355.0 按「準備」時重新打包一次最新養成(選完英雄後才升級/換裝備/換寵物/點命星,隊友與房主也拿得到最新的)
+          if(me.ready){
+            try{
+              const _g2 = _wbBuildMyGrowth(me.heroName, _wbTidsFromElement(me.element));
+              if(_g2) me.element = _wbInjectGrowthIntoElement(me.element, _g2);
+            }catch(_eG2){ console.warn('[WB-Growth] 準備時更新養成失敗(沿用舊快照)', _eG2); }
+          }
           tx.update(ref, { players: players });
         });
         return true;

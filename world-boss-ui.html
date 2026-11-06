@@ -7420,6 +7420,19 @@ try{
   function _wbTcGetHeroStats(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
+      // ★ v5.355.0 有「該玩家自己裝置算好的戰前數值」g.ps ⇒ 不論自己或隊友,所有人都顯示這一份(每台螢幕一致,
+      //   也與房主開戰套用的數值相同:含投資/膠囊/等級HP/至寶/裝備/寵物)。沒有 g.ps(舊版隊友/代打槽)⇒ 走下方舊算法。
+      try{
+        if(playerObj){
+          const _exPs = _wbTcParsePlayerExt(playerObj);
+          const _ps = _exPs && _exPs.g && _exPs.g.ps;
+          if(_ps && _ps.v === 1 && _ps.f && (!_ps.n || _ps.n === heroName)){
+            const _b0 = (typeof window.newHero === 'function') ? window.newHero(heroName, 'p1', 0) : HERO_DB[heroName];
+            const _pick = function(k){ return (typeof _ps.f[k] === 'number') ? _ps.f[k] : ((_b0 && _b0[k]) || 0); };
+            return { hp: _pick('hp'), atk: _pick('atk'), sp: _pick('sp'), spd: _pick('spd') };
+          }
+        }
+      }catch(_ePsS){}
       const base = HERO_DB[heroName];
       // 起始:HERO_DB 的 baseStats
       let hp  = base.hp  || 0;
@@ -9195,7 +9208,31 @@ try{
       //   - h._burstLvAdv = N: _runBurst 讀這個算爆發強度
       //   - 等級 HP 加成: 每級 +2% (跟主程式冒險模式 _applyAdvLevelHpBonus 一致)
       // ═══════════════════════════════════════════════════════════════
+      // ★ v5.355.0(老師:「龍王戰不同隊友組隊,每個人螢幕上讀到的角色等級和能力沒有同步」)
+      //   真人玩家槽:改套「該玩家自己裝置算好的完整戰前數值」g.ps(投資/膠囊/等級HP/技能/爆發/天賦/至寶/裝備/寵物),
+      //   不再用房主本機的裝備、寵物套到隊友英雄;房主自己的槽現場用同一支 builder 重算(與隊友同一套算法)。
+      //   套成功 ⇒ h._wbPrepRemote = true,下方 _applyBattlePrepToHero 只再套命座(隊友讀 _cstRemote)。
+      //   隊友是舊版(沒有 g.ps)、房主代打/自動補位槽 ⇒ 走下方原本流程,行為不變。
+      let _psDone = false;
       try{
+        const _myUidPs = (typeof window._gUserId !== 'undefined') ? window._gUserId : null;
+        if(p && p.uid && typeof window._wbApplyPrepSnap === 'function'){
+          let _ps = null;
+          if(_myUidPs && p.uid === _myUidPs){
+            _ps = (typeof window._wbBuildPrepSnap === 'function') ? window._wbBuildPrepSnap(heroName, h._wbTreasureIds || null) : null;
+          }else{
+            const _exPs = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+            _ps = (_exPs && _exPs.g && _exPs.g.ps) || null;
+          }
+          if(_ps && window._wbApplyPrepSnap(h, _ps)){
+            _psDone = true;
+            console.log('[WB-Growth v5.355.0] 槽', i, heroName, '套用玩家自己的戰前數值 Lv.' + h._advLv,
+              'hp=' + h.hp, 'atk=' + h.atk, 'sp=' + h.sp, 'spd=' + h.spd, '天賦=' + h._wbTraitLv,
+              (p.uid === _myUidPs ? '(房主自己)' : '(隊友)'));
+          }
+        }
+      }catch(_ePs){ console.warn('[WB-Growth v5.355.0] 套用戰前數值失敗,退回舊算法', _ePs); _psDone = false; }
+      if(!_psDone) try{
         let _growth = null;
         let _growthSource = 'none';
         if(p && p.element){
@@ -9289,6 +9326,20 @@ try{
       //     至寶則優先讀各槽 h._wbTreasureIds(各玩家自己的)→ 至寶本來就是逐玩家正確的。
       //   舊行依鐵則保留備查(勿刪):
       //   try{ if(typeof window._applyFollowPetToHero === 'function') window._applyFollowPetToHero(h); }catch(ePet){ console.warn('[WB 跟隨寵物套用] 失敗', ePet); }
+      // ★ v5.355.0 舊算法路徑的天賦等級:隊友有送 g.tr 就用;房主代打/自己槽用房主本機;舊版隊友沒送 ⇒ 不設(照舊讀本機)
+      if(!_psDone){
+        try{
+          const _myUidTr = (typeof window._gUserId !== 'undefined') ? window._gUserId : null;
+          if(p && p.uid && _myUidTr && p.uid !== _myUidTr){
+            const _exTr = (typeof _wbTcParsePlayerExt === 'function') ? _wbTcParsePlayerExt(p.element) : null;
+            if(_exTr && _exTr.g && typeof _exTr.g.tr === 'number') h._wbTraitLv = _exTr.g.tr | 0;
+          }else{
+            if(typeof window._wbLocalTraitLv === 'function') h._wbTraitLv = window._wbLocalTraitLv(heroName) | 0;
+            // 房主代打/自己槽:至寶資訊也打包(隊友長按這隻英雄時看到的是房主的至寶,不是隊友自己同名英雄的)
+            if(typeof window._wbTrInfoFor === 'function') h._wbTrInfo = window._wbTrInfoFor(heroName, h._wbTreasureIds || null);
+          }
+        }catch(_eTr){}
+      }
       // ★ v5.351.0 隊友槽的命星改用「隊友自己廣播的快照」(舊版:讀房主本機 ⇒ 隊友吃到房主的命星)。
       //   有 _cstRemote 欄位 ⇒ _cstApplyToHero 只認快照;隊友沒點/舊版客戶端沒送 ⇒ null ⇒ 0 顆。房主自己與代打槽照舊讀本機。
       try{
