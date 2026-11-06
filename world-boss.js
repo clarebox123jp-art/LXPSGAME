@@ -6326,7 +6326,7 @@
       s.innerHTML = '<div class="wbl-card">' +
         '<div class="wbl-hdr">⚔ 你有一場還沒結束的龍王戰!</div>' +
         '<div class="rj-sub">房號 ' + _esc(_info.roomId) + (_info.heroName ? ' · 你的英雄:' + _esc(_info.heroName) : '') +
-          '<br>現在回去就能接回自己的英雄繼續打' + (_info.online ? '' : '(目前由房主代打中)') + '</div>' +
+          '<br>現在回去就能接回自己的英雄繼續打' + (_info.asHost ? '(隊長那邊目前沒人在運算,回去後會由你接手戰鬥)' : (_info.online ? '' : '(目前由隊長代打中)')) + '</div>' +
         '<div class="wbl-btns">' +
           '<button class="wbl-btn ok" type="button" data-act="go"' + (_busy ? ' disabled' : '') + '>' + (_busy ? '⏳ 連線中…' : '⚔ 回到戰鬥') + '</button>' +
           '<button class="wbl-btn no" type="button" data-act="later"' + (_busy ? ' disabled' : '') + '>稍後</button>' +
@@ -6344,7 +6344,9 @@
       try{
         const chk = await window._fbWbRejoin.check(_info.roomId);
         if(!chk.ok){
-          _wbGameAlert('這場龍王戰已經結束了(或房主已離開),沒辦法再回去囉。');
+          if(chk.why === 'hostActive'){ _wbGameAlert('這場戰鬥正在你的另一台平板上進行中,請回到那台平板繼續。'); _info = null; _hide(); return; }   /* ★ v5.360.0 */
+          if(chk.why === 'err'){ _wbGameAlert('網路不太穩,請稍後再按一次「回到戰鬥」。'); return; }
+          _wbGameAlert(chk.why === 'abandoned' ? '全隊離開太久(超過 30 分鐘),這場龍王戰已經結束了。' : '這場龍王戰已經結束了,沒辦法再回去囉。');
           try{ window._fbWbRejoin.clear(); }catch(_){}
           _info = null; return;
         }
@@ -6374,11 +6376,11 @@
         const chk = await window._fbWbRejoin.check(v.roomId);
         if(_uid !== window._gUserId) return;
         if(!chk.ok){
-          if(chk.why !== 'err'){ try{ window._fbWbRejoin.clear(); }catch(_){} }
+          if(chk.why !== 'err' && chk.why !== 'hostActive'){ try{ window._fbWbRejoin.clear(); }catch(_){} }   /* ★ v5.360.0 另一台還在跑 ⇒ 指標留著 */
           _info = null; _hide(); return;
         }
         const fresh = !_info || _info.roomId !== v.roomId;
-        _info = { roomId: v.roomId, heroName: chk.heroName, online: chk.online };
+        _info = { roomId: v.roomId, heroName: chk.heroName, online: chk.online, asHost: !!chk.asHost };
         if(fresh){ try{ if(typeof playSfx === 'function') playSfx('sfx-popup', 0.6); }catch(_){} }
         _render();
       }catch(_){}

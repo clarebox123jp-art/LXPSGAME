@@ -4026,6 +4026,20 @@
       if(!_dialogStarted) return;
       _msAdvance();   // ★ v4.72.0 點畫面=下一句(打字中則補完;切換有效句時播翻頁音)
     };
+    /* ★ v5.360.0 電腦版:按一次空白鍵=跳一頁(同「下一句」·長按不連跳·本場景 overlay 移除後自動解除監聽) */
+    var _msSpaceKey = function(ev){
+      try{
+        if(!ov || !document.body.contains(ov) || ov.id !== "mainstory-overlay"){ document.removeEventListener("keydown", _msSpaceKey, true); return; }
+        if(!(ev.code === "Space" || ev.key === " " || ev.keyCode === 32)) return;
+        var tg = ev.target, tn = tg && tg.tagName ? tg.tagName.toUpperCase() : "";
+        if(tn === "INPUT" || tn === "TEXTAREA" || (tg && tg.isContentEditable)) return;
+        ev.preventDefault(); ev.stopPropagation();
+        if(ev.repeat) return;
+        if(!_dialogStarted) return;
+        _msAdvance();
+      }catch(_){}
+    };
+    document.addEventListener("keydown", _msSpaceKey, true);
     ov.appendChild(skipBtn);
     document.body.appendChild(ov);
 

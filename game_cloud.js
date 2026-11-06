@@ -4322,8 +4322,35 @@
         }catch(_){}
       }
       if(!v || !v.roomId) return null;
-      if(Date.now() - (Number(v.at) || 0) > 90 * 60 * 1000) return null;   // 超過 90 分鐘一定打完了
+      if(Date.now() - (Number(v.at) || 0) > 90 * 60 * 1000){   // 超過 90 分鐘一定打完了
+        // ★ v5.360.0 順手把那間房關掉(全隊早就不在才會關;還有人在打不會動)
+        const self = this, rid = v.roomId;
+        try{ getDoc(doc(_fbDb, 'worldBossRooms', String(rid))).then(function(s){ if(s.exists()) self._abandonIfDead(rid, s.data() || {}); }).catch(function(){}); }catch(_){}
+        try{ localStorage.removeItem(this._lsKey()); }catch(_){}
+        return null;
+      }
       return v;
+    },
+    // ★ v5.360.0(老師「全隊都斷線、沒人回來的房間要清掉」)— 戰鬥中但全隊心跳＋戰場同步都超過 30 分鐘沒動 ⇒ 標成結束(abandoned)。
+    //   沒有獎勵、沒有結算(沒人在打);只是不讓它永遠掛著「戰鬥中」。回傳 true=已判定死房。
+    ABANDON_MS: 30 * 60 * 1000,
+    _isDead: function(d, now){
+      if(!d || !d.meta || d.meta.status !== 'fighting') return false;
+      const lastSync = Number(d.battle && d.battle._syncTs) || 0;
+      if(now - lastSync <= this.ABANDON_MS) return false;
+      const ps = (d.players || []).filter(function(p){ return p && p.uid && !/^host_npc_/i.test(p.uid); });
+      for(let i = 0; i < ps.length; i++){ if(now - (Number(ps[i].lastSeen) || 0) <= this.ABANDON_MS) return false; }
+      return true;
+    },
+    _abandonIfDead: function(roomId, d){
+      const now = Date.now();
+      if(!this._isDead(d, now)) return false;
+      try{
+        setDoc(doc(_fbDb, 'worldBossRooms', String(roomId)),
+          { meta: { status: 'ended', endedReason: 'abandoned', endedAt: now } }, { merge: true }).catch(function(){});
+      }catch(_){}
+      console.warn('[WB-Rejoin v5.360.0] 全隊離開超過 30 分鐘,房間標為結束:', roomId);
+      return true;
     },
     check: async function(roomId){
       const me = window._gUserId;
@@ -4336,7 +4363,15 @@
         const p = (d.players || []).find(function(x){ return x && x.uid === me; });
         if(st !== 'fighting' || !d.battle) return { ok: false, why: 'ended' };
         if(!p) return { ok: false, why: 'notMember' };
-        if(d.meta && d.meta.hostUid === me) return { ok: false, why: 'host' };
+        if(this._abandonIfDead(roomId, d)) return { ok: false, why: 'abandoned' };
+        // ★ v5.360.0 我還掛著隊長:隊長這邊沒在運算(全隊斷線過)⇒ 可以回去(joinRoom 會空出隊長位置再自動接任);
+        //   隊長心跳/戰場同步都還新 ⇒ 是同帳號另一台還在跑,不要搶。
+        if(d.meta && d.meta.hostUid === me){
+          const now = Date.now();
+          const fresh = (p.online !== false) && ((now - (Number(p.lastSeen) || 0) <= 45000) || (now - (Number(d.battle && d.battle._syncTs) || 0) <= 30000));
+          if(fresh) return { ok: false, why: 'hostActive' };
+          return { ok: true, asHost: true, heroName: p.heroName || '', online: false, round: (d.battle && (d.battle.round || d.battle.turn)) || 0 };
+        }
         return { ok: true, heroName: p.heroName || '', online: p.online !== false, round: (d.battle && (d.battle.round || d.battle.turn)) || 0 };
       }catch(e){ return { ok: false, why: 'err' }; }
     }
@@ -22759,6 +22794,9 @@
         //         但 hero._wbIsHostNpc=true 永遠不會被設,房主不接手代打、離線玩家
         //         也看不到「房主代打中」遮罩 — 整套設計空轉。
         onPlayerOnlineChange: null,
+        // ★ v5.360.0 隊長(房主)斷線 ⇒ 戰鬥中自動換隊長:這台裝置剛成為隊長時通知 UI 接手戰鬥引擎
+        onBecameHost: null,
+        onLostHost: null,
       },
       _codeChars: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
     };
@@ -23091,9 +23129,20 @@
           const existIdx = players.findIndex(p => p.uid === window._gUserId);
           // ★ FIX 20260517(x) — 已在 players 內 → 視為重連,放行任何 status(含 fighting)
           if(existIdx >= 0){
-            players[existIdx].online = true; players[existIdx].lastSeen = Date.now();
-            tx.update(ref, { players: players });
-            return { slotIdx: existIdx, rejoin: true };
+            const _nowJ = Date.now();
+            // ★ v5.360.0(老師「四個人都斷線時,原隊長也要能回去」)— 戰鬥中、我還掛著隊長、但隊長這邊早已沒在運算(_wbHostStale)
+            //   ⇒ 我這台沒有在跑引擎(joinRoom 只從大廳/回到戰鬥呼叫),先把隊長位置空出來(host_vacant)、我以隊員身分接回戰場畫面,
+            //   _startHostWatch 5 秒內看到隊長不在 ⇒ 依加入順序挑線上的人接任(只有我在 ⇒ 就是我)⇒ onBecameHost 用雲端最後戰場恢復運算。
+            //   隊長沒過期(同帳號另一台還在跑)⇒ 不動,避免兩台搶。
+            let _vacate = false;
+            if(data.meta && data.meta.status === 'fighting' && data.meta.hostUid === window._gUserId && _wbHostStale(data, _nowJ)) _vacate = true;
+            players[existIdx].online = true; players[existIdx].lastSeen = _nowJ;
+            if(_vacate){
+              tx.update(ref, { players: players, 'meta.hostUid': 'host_vacant', 'meta.prevHostUid': window._gUserId, 'meta.hostMigratedAt': _nowJ });
+            }else{
+              tx.update(ref, { players: players });
+            }
+            return { slotIdx: existIdx, rejoin: true, vacated: _vacate };
           }
           // 新加入者:只能在 waiting/picking 階段
           if(data.meta.status !== 'waiting' && data.meta.status !== 'picking') throw new Error('ROOM_IN_BATTLE');
@@ -23112,6 +23161,8 @@
         });
         WB.roomId = code; WB.isHost = false; WB.mySlot = result.slotIdx;
         _subscribeRoom(code); _startHeartbeat();
+        _startHostWatch();   // ★ v5.360.0 隊員端監測隊長斷線,依加入順序自動接任
+        if(result.vacated) console.warn('[WB-HostMigrate v5.360.0] 原隊長回到無人運算的戰鬥:先以隊員接回畫面,稍後自動接任');
         // ★ v3.12.1(2026-05-30) — 進新房間時重置「onRoomClosed 已處理」守門旗標
         try{ window._wbRoomClosedHandled = false; }catch(_){}
         console.log('[WBNet] 加入房間:', code, '槽位', result.slotIdx);
@@ -23131,12 +23182,43 @@
     async function leaveRoom(){
       if(!WB.roomId) return;
       const roomId = WB.roomId;
-      _stopHeartbeat(); _stopOfflineWatchdog(); _unsubscribeRoom();
+      _stopHeartbeat(); _stopOfflineWatchdog(); _stopHostWatch(); _unsubscribeRoom();
       try{
         if(WB.isHost){
-          await updateDoc(doc(_fbDb, 'worldBossRooms', roomId), {
-            'meta.status': 'ended', 'meta.endedReason': 'host_left', 'meta.endedAt': Date.now()
-          });
+          // ★ v5.360.0 戰鬥中隊長離開 ⇒ 不關房,直接把隊長交給下一位在線玩家(依加入順序);原隊長標離線,回來就是隊員。
+          //   沒有其他在線玩家(或還沒開戰)⇒ 跟以前一樣關房。
+          let _handed = false;
+          try{
+            _handed = await runTransaction(_fbDb, async (tx) => {
+              const ref = doc(_fbDb, 'worldBossRooms', roomId);
+              const sn = await tx.get(ref);
+              if(!sn.exists()) return false;
+              const d = sn.data();
+              if(!d.meta || d.meta.status !== 'fighting') return false;
+              if(window._wbAdvBattleEnded || window._wbResultExecuting) return false;   // 隊長端已經結算(打完才離房)⇒ 不交棒,照舊關房
+              try{
+                const _bz = (d.battle && Array.isArray(d.battle.p2)) ? d.battle.p2.find(h => h && h.isWorldBoss !== false && typeof h.curHp === 'number') : null;
+                if(_bz && _bz.curHp <= 0) return false;                                   // 龍王已倒
+                const _p1z = (d.battle && Array.isArray(d.battle.p1)) ? d.battle.p1 : [];
+                if(_p1z.length && _p1z.every(h => !h || (h.curHp || 0) <= 0)) return false; // 全滅
+              }catch(_){}
+              const n2 = Date.now();
+              const succ = _wbPickSuccessor(d, n2, window._gUserId);
+              if(!succ) return false;
+              const players = d.players || [];
+              players.forEach(p => { if(p && p.uid === window._gUserId){ p.online = false; p.lastSeen = 0; } });
+              tx.update(ref, { 'meta.hostUid': succ.uid, 'meta.prevHostUid': window._gUserId,
+                               'meta.hostMigratedAt': n2, players: players });
+              return true;
+            });
+          }catch(_eHand){ _handed = false; }
+          if(!_handed){
+            await updateDoc(doc(_fbDb, 'worldBossRooms', roomId), {
+              'meta.status': 'ended', 'meta.endedReason': 'host_left', 'meta.endedAt': Date.now()
+            });
+          }else{
+            console.warn('[WB-HostMigrate v5.360.0] 戰鬥中隊長離開 ⇒ 已交棒給下一位玩家');
+          }
         }else{
           await runTransaction(_fbDb, async (tx) => {
             const ref = doc(_fbDb, 'worldBossRooms', roomId);
@@ -23865,7 +23947,28 @@
           return;
         }
         WB.mySlot = meIdx;
+        const _wasHostBefore = WB.isHost;
         WB.isHost = (data.meta && data.meta.hostUid === window._gUserId);
+        // ★ v5.360.0(老師「隊長斷線的話,立刻由第二位加入的玩家當作隊長,所有隊長的回答權限和資料權限都轉移。原本的隊長連回來就成為隊員」)
+        //   戰鬥中 hostUid 換成我(我是被選中的接任者,或原隊長按離開時直接交棒給我)⇒ 啟動隊長端離線監測、通知 UI 接手引擎。
+        if(!_wasHostBefore && WB.isHost && prev && data.meta && data.meta.status === 'fighting'){
+          try{
+            if(!WB.battleStartTs) WB.battleStartTs = Number(data.meta.startedAt) || Number(data.meta.hostMigratedAt) || Date.now();
+            _startOfflineWatchdog();
+            _stopHostWatch();
+            console.warn('[WB-HostMigrate v5.360.0] 我成為新隊長,接手戰鬥引擎');
+            _emit('onBecameHost', data);
+          }catch(_eBh){ console.warn('[WB-HostMigrate] onBecameHost 例外', _eBh); }
+        }
+        // ★ v5.360.0 反方向:我原本是隊長,斷線期間已被隊友接任(網路恢復後才收到)⇒ 降為隊員,不可再推戰場(hostPushBattleState 只認 WB.isHost)
+        if(_wasHostBefore && !WB.isHost && data.meta && data.meta.status === 'fighting'){
+          try{
+            _stopOfflineWatchdog();
+            _startHostWatch();
+            console.warn('[WB-HostMigrate v5.360.0] 隊長已由別人接任,我改為隊員');
+            _emit('onLostHost', data);
+          }catch(_eLh){ console.warn('[WB-HostMigrate] onLostHost 例外', _eLh); }
+        }
         if(data.meta && data.meta.status === 'ended'){
           _unsubscribeRoom();
           _emit('onRoomClosed', {
@@ -24191,6 +24294,76 @@
 
     const OFFLINE_THRESHOLD_MS = 45000;  // ★ v5.11.0 — 45 秒沒心跳 → 離線(舊 20000;心跳改 20s 故放寬,仍有 25 秒緩衝)
     const OFFLINE_CHECK_INTERVAL_MS = 15000;  // ★ v5.11.0 — 每 15 秒檢查一次(舊 5000;降低 Firestore 讀取量)
+
+    // ═════════════════════════════════════════════════════════════════
+    // ★ v5.360.0 隊長斷線自動換隊長(隊員端監測)
+    //   每 5 秒看一次房間快照:戰鬥中隊長「已標離線」或「45 秒沒心跳且 30 秒沒推戰場」⇒ 判定斷線;
+    //   接任者 = 依加入順序(players 陣列順序)第一位「在線、心跳新鮮、不是原隊長」的玩家(通常就是第二位加入的人)。
+    //   只有接任者本人會動手:交易內再確認一次 ⇒ meta.hostUid = 自己、記 prevHostUid/hostMigratedAt、把原隊長標離線。
+    //   其他人的裝置從快照看到 hostUid 變了,行動就自動送給新隊長(行動佇列處理只認 WB.isHost)。
+    // ═════════════════════════════════════════════════════════════════
+    const HOST_STALE_MS = 45000, HOST_SYNC_STALE_MS = 30000;
+    function _wbHostStale(data, now){
+      const hostUid = data.meta && data.meta.hostUid;
+      const h = (data.players || []).find(p => p && p.uid === hostUid);
+      if(!h) return true;
+      if(h.online === false) return true;
+      const lastBeat = Number(h.lastSeen) || 0;
+      const lastSync = Number(data.battle && data.battle._syncTs) || 0;
+      return (now - lastBeat > HOST_STALE_MS) && (now - lastSync > HOST_SYNC_STALE_MS);
+    }
+    function _wbPickSuccessor(data, now, excludeUid){
+      const players = data.players || [];
+      for(let i = 0; i < players.length; i++){
+        const p = players[i];
+        if(!p || !p.uid || p.uid === excludeUid) continue;
+        if(/^host_npc_/i.test(p.uid)) continue;
+        if(p.online === false) continue;
+        if(now - (Number(p.lastSeen) || 0) > HOST_STALE_MS) continue;
+        return p;
+      }
+      return null;
+    }
+    function _stopHostWatch(){ if(WB.hostWatchTimer){ clearInterval(WB.hostWatchTimer); WB.hostWatchTimer = null; } }
+    function _startHostWatch(){
+      _stopHostWatch();
+      WB.hostWatchTimer = setInterval(async () => {
+        try{
+          if(!WB.roomId || WB.isHost || !window._gUserId || WB._promoting) return;
+          const data = WB.lastSeenSnap;
+          if(!data || !data.meta || data.meta.status !== 'fighting') return;
+          const now = Date.now();
+          if(!_wbHostStale(data, now)) return;
+          const succ = _wbPickSuccessor(data, now, data.meta.hostUid);
+          if(!succ || succ.uid !== window._gUserId) return;
+          WB._promoting = true;
+          const ok = await runTransaction(_fbDb, async (tx) => {
+            const ref = doc(_fbDb, 'worldBossRooms', WB.roomId);
+            const sn = await tx.get(ref);
+            if(!sn.exists()) return false;
+            const d = sn.data();
+            const n2 = Date.now();
+            if(!d.meta || d.meta.status !== 'fighting') return false;
+            if(d.meta.hostUid === window._gUserId) return true;
+            if(!_wbHostStale(d, n2)) return false;
+            const s2 = _wbPickSuccessor(d, n2, d.meta.hostUid);
+            if(!s2 || s2.uid !== window._gUserId) return false;
+            const players = d.players || [];
+            const oldHost = d.meta.hostUid;
+            players.forEach(p => {
+              if(p && p.uid === oldHost){ p.online = false; p.lastSeen = 0; }
+              if(p && p.uid === window._gUserId){ p.online = true; p.lastSeen = n2; }
+            });
+            tx.update(ref, { 'meta.hostUid': window._gUserId, 'meta.prevHostUid': oldHost || null,
+                             'meta.hostMigratedAt': n2, players: players });
+            return true;
+          });
+          if(ok) console.warn('[WB-HostMigrate v5.360.0] 原隊長斷線,我接任隊長(等快照確認)');
+        }catch(e){
+          console.warn('[WB-HostMigrate] 接任失敗(下次再試)', e && e.message);
+        }finally{ WB._promoting = false; }
+      }, 5000);
+    }
 
     function _startOfflineWatchdog(){
       _stopOfflineWatchdog();

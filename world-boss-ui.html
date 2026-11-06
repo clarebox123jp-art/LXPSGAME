@@ -9440,6 +9440,8 @@ try{
     // ── 世界戰專屬旗標 ────────────────────────────────────────────
     window._wbInWorldBossMode = true;
     window._wbConnectedHostMode = true;    // ★ 連線房主旗標 → 讓 sync hooks 啟用
+    // ★ v5.360.0 隊長也記「回到戰鬥」指標:隊長斷線後由隊友接任,原隊長連回來可以用隊員身分回到戰場
+    try{ if(window._fbWbRejoin && window._wbNet && window._wbNet.getRoomId) window._fbWbRejoin.set(window._wbNet.getRoomId()); }catch(_){}
     window._wbSoloPracticeMode = false;
     window._wbQuizState = {};
     window._wbCorrectCnt = {};
@@ -10072,6 +10074,16 @@ try{
   // === 事件回呼 ===
   window._wbNet.on('onRoomUpdate', function(data){
     if(!data || !data.players) return;
+    // ★ v5.360.0 隊長換人通知(戰鬥中;自己成為隊長的提示在 onBecameHost)
+    try{
+      const _hu = data.meta && data.meta.hostUid;
+      if(_hu && window._wbLastHostUid && _hu !== window._wbLastHostUid && data.meta.status === 'fighting'
+         && _hu !== window._gUserId && _hu !== 'host_vacant' && window._wbInWorldBossMode){   /* host_vacant=原隊長回來先空出位置,幾秒內就有人接任,不提示 */
+        const _np = data.players.find(function(p){ return p && p.uid === _hu; });
+        _wbShowBattleToast('👑 原隊長斷線,由 ' + ((_np && _np.name) || '隊友') + ' 接任隊長', 'reconnecting');
+      }
+      if(_hu) window._wbLastHostUid = _hu;
+    }catch(_eHu){}
     // ★ v3.4.3 — 本場總傷同步:client 端從 meta.contributions 讀自己的傷害更新到 dmg display
     //   問題情境(老師 2026/5/20 回報):
     //     兩端的「本場總傷」數字沒同步 — client 永遠是 0
@@ -11075,6 +11087,90 @@ try{
   // ★ v3.12.1(2026-05-30) — 學生回報修補:房間已關閉彈窗無限跳出
   //   雖然主修補是 index.html 的 _emit 前 _unsubscribeRoom(),但加這層雙保險,
   //   萬一 firestore 訂閱層有別的路徑漏掉,UI 端也不會重複處理同一場關房事件。
+  // ★ v5.360.0(老師「隊長斷線的話,立刻由第二位加入的玩家當作隊長,所有隊長的回答權限和資料權限都轉移。原本的隊長連回來就成為隊員」)
+  //   game_cloud.js 發現 hostUid 換成我(依加入順序接任,或原隊長離開時直接交棒)⇒ 這台從「隊員端」切成「隊長端」:
+  //   ① 旗標:解鎖本機戰鬥引擎(_wbClientMode=false)、_wbConnectedHostMode=true ⇒ 出題/作答判定/行動佇列處理/戰場同步/結算寫入
+  //      (排行榜、雲端扣血、房間結束標記)全部改由這台負責;本機戰場就是原隊長最後一次同步的完整戰場。
+  //   ② 裝回隊長端掛鉤(空槽自動行動、交還操作)。
+  //   ③ 原隊長與其他已離線玩家的英雄改由新隊長代打(_wbIsHostNpc);原隊長連回來 ⇒ 既有「玩家上線交還」流程把英雄還給他,他就是一般隊員。
+  //   ④ 關掉隊員端的答題視窗(那是原隊長出的題,判定已經沒人做)⇒ 1 秒後推進:輪到的角色還沒行動就等他操作,否則跑下一位;並立刻推一次戰場。
+  window._wbNet.on('onBecameHost', function(data){
+    try{
+      if(!window._wbInWorldBossMode || window._wbAdvBattleEnded){
+        console.log('[WB-HostMigrate] 成為隊長但本機不在龍王戰中/已結算,不接手引擎');
+        return;
+      }
+      window._wbClientMode = false;
+      window._wbConnectedClientMode = false;
+      window._wbConnectedHostMode = true;
+      window._wbClientForceCheckWin = false;
+      window._wbClientOptimistic = false;
+      window._wbResultExecuting = false;
+      try{ if(window._wbClientPendingApplyTimer){ clearTimeout(window._wbClientPendingApplyTimer); window._wbClientPendingApplyTimer = null; } }catch(_){}
+      try{ if(window._wbClientBossDownTimer){ clearTimeout(window._wbClientBossDownTimer); window._wbClientBossDownTimer = null; } }catch(_){}
+      try{ _wbInstallNpcAutoActHook(); }catch(_e1){ console.warn('[WB-HostMigrate] NPC hook', _e1); }
+      try{ _wbInstallEndActionReturnControlHook(); }catch(_e2){ console.warn('[WB-HostMigrate] return-control hook', _e2); }
+      const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+      const players = (data && data.players) || [];
+      const myUid = window._gUserId;
+      if(G && Array.isArray(G.p1)){
+        G.p1.forEach(function(h, i){
+          if(!h) return;
+          const p = players[i];
+          if(p && p.uid === myUid){ h._wbIsHostNpc = false; h._wbPendingReturnControl = false; }
+          else if(!p || /^host_npc_/i.test(p.uid || '') || p.online === false
+                  || (Date.now() - (Number(p.lastSeen) || 0) > 45000)){ h._wbIsHostNpc = true; }   /* ★ v5.360.0 全隊斷線時沒人幫他們標離線,心跳過期也算不在 */
+        });
+      }
+      // 隊員端的答題視窗是原隊長出的題,關掉後由新隊長重新推進
+      try{
+        const _qOv = document.getElementById('adv-quiz-overlay');
+        if(_qOv){ _qOv.classList.remove('show'); _qOv.style.display = 'none'; }
+      }catch(_){}
+      try{ if(typeof window._wbTeamQuizReset === 'function') window._wbTeamQuizReset(); }catch(_){}
+      try{
+        const _resume = !!(data && data.meta && data.meta.prevHostUid === 'host_vacant');   /* ★ v5.360.0 全隊斷線後第一個回來的人 */
+        _wbShowBattleToast(_resume ? '▶ 全隊剛才都斷線了,由你接手繼續戰鬥!出題與結算由你負責' : '👑 原隊長斷線,你成為新隊長!出題與結算改由你負責', 'online');
+      }catch(_){}
+      try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.6); }catch(_){}
+      setTimeout(function(){
+        try{
+          if(!window._wbConnectedHostMode || window._wbAdvBattleEnded) return;
+          const G2 = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+          if(!G2) return;
+          try{ window._gamePaused = false; }catch(_){}
+          try{ if(typeof _resumeTimers === 'function') _resumeTimers(); }catch(_){}
+          // 先看是不是已經分出勝負(原隊長剛好在最後一擊斷線)
+          if(typeof window.checkWin === 'function' && window.checkWin()) return;
+          const a = G2.activeChar;
+          if(!a || a.side !== 'p1' || a.acted || (a.curHp || 0) <= 0){
+            console.warn('[WB-HostMigrate] 接手時輪到的角色已行動/是龍王 ⇒ startTurn 推進');
+            if(typeof window.startTurn === 'function') window.startTurn();
+          }else{
+            if(typeof window.updateUI === 'function') window.updateUI();
+          }
+          if(typeof window._wbHostSyncG === 'function') window._wbHostSyncG('host-migrated');
+        }catch(_eKick){ console.warn('[WB-HostMigrate] 推進例外', _eKick); }
+      }, 1000);
+    }catch(e){ console.warn('[WB-HostMigrate] onBecameHost 處理例外', e); }
+  });
+
+  // ★ v5.360.0 原隊長網路恢復(App 沒關)卻發現已被接任 ⇒ 本機改成隊員端:鎖引擎、以後只套新隊長的戰場;
+  //   自己的英雄等新隊長的「玩家上線交還」流程還回來。
+  window._wbNet.on('onLostHost', function(data){
+    try{
+      if(!window._wbInWorldBossMode) return;
+      window._wbConnectedHostMode = false;
+      window._wbConnectedClientMode = true;
+      window._wbClientMode = true;
+      window._wbClientForceCheckWin = false;
+      window._wbClientLastVersion = 0;   // 收新隊長的任何版本
+      try{ window._gamePaused = false; }catch(_){}
+      try{ _wbShowBattleToast('👑 你剛才斷線,隊長已由隊友接任;你現在是隊員,英雄稍後交還給你', 'reconnecting'); }catch(_){}
+      try{ if(data && data.battle && typeof _wbClientApplyWire === 'function') _wbClientApplyWire(data.battle); }catch(_){}
+    }catch(e){ console.warn('[WB-HostMigrate] onLostHost 處理例外', e); }
+  });
+
   window._wbNet.on('onRoomClosed', function(info){
     // ─ 0. 重複觸發守門(雙保險防無限彈窗) ──────────────────────────
     //   每場房間結束只處理一次。進新房間時 createRoom/joinRoom 會重置此旗標。
@@ -11117,7 +11213,9 @@ try{
       const _wbEngineBattle = !window._wbAdvBattleEnded
         && ((typeof window._wbGetAdvStage === 'function' && window._wbGetAdvStage() === 'worldboss')
             || (document.body && document.body.classList.contains('wb-in-worldboss-battle')));
-      if((info.reason === 'battle_complete' || info.winner) && _wbEngineBattle){
+      // ★ v5.360.0 補強:房主實際結束時寫的是 battle_settled(結算後標記)或 host_left(結算後離房),不一定有 winner
+      //   ⇒ 只要本機還在龍王戰戰場、而且不是自己被移出房間,一律走「套最後戰場 → 自主結算」。
+      if(info.reason !== 'kicked_or_left' && info.reason !== 'doc_deleted_by_me' && _wbEngineBattle){
         console.warn('[WB onRoomClosed v5.359.0] 戰鬥結束但本機未結算 → 套最後戰場並自主結算', info.reason, info.winner);
         try{ if(info.finalBattle && typeof _wbClientApplyWire === 'function') _wbClientApplyWire(info.finalBattle); }catch(_eFw){ console.warn('[WB onRoomClosed v5.359.0] 套最後戰場失敗', _eFw); }
         window._wbClientForceCheckWin = true;
@@ -11129,7 +11227,16 @@ try{
             if(!window._wbAdvBattleEnded && typeof window._wbShowAdvBattleResult === 'function'){
               window._wbAdvBattleEnded = true;
               console.warn('[WB onRoomClosed v5.359.0] checkWin 沒結算 → 依房主宣告勝負直接開結算', info.winner);
-              window._wbShowAdvBattleResult(info.winner === 'p1');
+              // 勝負:房主有宣告就照房主;沒有 ⇒ 看最後戰場(龍王倒下 = 勝)
+              let _winF = (info.winner === 'p1');
+              if(!info.winner){
+                try{
+                  const _Gf = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
+                  const _bf = (_Gf && Array.isArray(_Gf.p2)) ? _Gf.p2.find(function(h){ return h && window._wbIsBossName && window._wbIsBossName(h.name); }) : null;
+                  _winF = !!(_bf && (_bf.curHp || 0) <= 0);
+                }catch(_){}
+              }
+              window._wbShowAdvBattleResult(_winF);
             }
           }catch(_eRs){ console.warn('[WB onRoomClosed v5.359.0] 直接結算例外', _eRs); }
         }, 1800);
