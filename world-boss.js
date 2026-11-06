@@ -5784,8 +5784,39 @@
       return String(t == null ? '' : t).replace(/[<>&"']/g, function(c){ return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; });
     }
     // 戰鬥中(任何冒險關卡戰鬥,含龍王戰)不能接受;其餘任何頁面(首頁/關卡頁/商店/圖鑑/背包/召喚/寵物…)都可以
+    // ★ v5.356.0(老師回報「被邀請的學生明明已經離開之前的戰鬥,畫面在關卡頁或是商店,邀請視窗卻顯示還有未結束的戰鬥而無法按接收」)
+    //   根因:下面用來判斷「戰鬥中」的 _adventureStage(關卡代號)只有 exitAdventureMode 等少數路徑會清空;
+    //         打完關卡/龍王戰後從結算按回關卡頁、或從關卡頁再進商店時,_adventureStage 還留著上一關的代號
+    //         ⇒ 人明明在關卡頁/商店,卻一直被當成戰鬥中、接受鈕灰掉。
+    //   修法:先看畫面 ── 只要這些「戰鬥中絕不會出現」的頁面正開在眼前(關卡頁、首頁、商店、背包、英雄/魔物/寵物/獎章圖鑑、
+    //         召喚、兌換、鬥技場大廳),就一定不是戰鬥中,直接可以接受;不再理會殘留的關卡代號/旗標。
+    //         真正在戰鬥畫面時這些頁面都是關著的,判斷與原本相同(戰鬥中照樣灰掉)。只讀畫面,不改任何遊戲狀態。
+    const _WB_INV_PAGE_IDS = ['adventure-overlay', 'overlay', 'shop-overlay', 'backpack-overlay', 'hero-page-overlay',
+      'monster-page-overlay', 'pet-page-overlay', 'medal-page-overlay', 'summon-overlay', 'redeem-overlay', 'arenaLobbyOverlay'];
+    function _wbInvPageOpen(){
+      try{
+        for(let i = 0; i < _WB_INV_PAGE_IDS.length; i++){
+          const e = document.getElementById(_WB_INV_PAGE_IDS[i]);
+          if(!e || !e.getClientRects || e.getClientRects().length === 0) continue;   // 自己或祖先 display:none ⇒ 沒有方框
+          const cs = getComputedStyle(e);
+          if(cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity || '1') < 0.05) continue;
+          const r = e.getBoundingClientRect();
+          if(r.width < 40 || r.height < 40) continue;
+          // 還要真的「在最上面、看得到」:取頁面內 3 個點,任一點最上層元素屬於這個頁面才算(防止被戰鬥畫面蓋在底下卻誤判)
+          const pts = [[0.5, 0.5], [0.25, 0.3], [0.75, 0.7]];
+          for(let k = 0; k < pts.length; k++){
+            const x = Math.min(window.innerWidth - 2,  Math.max(1, r.left + r.width  * pts[k][0]));
+            const y = Math.min(window.innerHeight - 2, Math.max(1, r.top  + r.height * pts[k][1]));
+            const hit = document.elementFromPoint(x, y);
+            if(hit && (hit === e || e.contains(hit))) return _WB_INV_PAGE_IDS[i];
+          }
+        }
+      }catch(_){}
+      return null;
+    }
     function _canAccept(){
       try{
+        if(_wbInvPageOpen()) return true;
         const stage = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : null;
         if(stage) return false;
         if(document.body && document.body.classList.contains('wb-in-worldboss-battle')) return false;
