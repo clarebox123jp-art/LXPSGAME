@@ -10856,6 +10856,8 @@ try{
                           if(b.dataset.isCorrect === '1') b.classList.add('correct');
                           else if(b === btn && !opt.isCorrect) b.classList.add('wrong');
                         });
+                        // ★ v5.362.0 各科答對率:隊友在自己的裝置上作答 ⇒ 記在自己的帳號(房主代跑結算時不重複記,見 _wbRelayingRemoteAnswer)
+                        try{ if(window._quizAcc) window._quizAcc.record({ question: _payload.question, subject: _payload.subject || '' }, !!opt.isCorrect, 'wb'); }catch(_eQa){}
                         if(typeof _advQuizPhase !== 'undefined') _advQuizPhase = 'answered';
                         console.log('[WB-Client v3.4.6] 已答題 letter=' + (opt.letter || ['A','B','C','D'][i])
                           + ' isCorrect=' + opt.isCorrect + ',送答案給房主');
@@ -11664,6 +11666,7 @@ try{
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.idx);
         const isCorrect = (idx === correctIdx);
+        try{ if(window._quizAcc && q) window._quizAcc.record(q, isCorrect, 'wb'); }catch(_eQa){}   // ★ v5.362.0 各科答對率
         // disable 所有按鈕
         optsEl.querySelectorAll('.wb-quiz-opt-btn').forEach(b => {
           b.disabled = true;
@@ -12859,7 +12862,9 @@ try{
             try{
               if(typeof advSubmitAnswer === 'function'){
                 // ★ v3.5.24 — 第二參數 isCorrectOverride 故意不傳,讓主程式以 letter===q.answer 重判
-                advSubmitAnswer(msg.letter || 'A');
+                window._wbRelayingRemoteAnswer = true;   // ★ v5.362.0 代跑隊友的答案 ⇒ 不記到房主的答對率
+                try{ advSubmitAnswer(msg.letter || 'A'); }
+                finally{ window._wbRelayingRemoteAnswer = false; }
               }
             }catch(eSub){ console.warn('[WB-Host v3.5.24] 代跑 advSubmitAnswer 例外', eSub); }
             // 還原 — 但實際上 advSubmitAnswer 已走完,後續 quiz 狀態應該變 answered

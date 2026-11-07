@@ -3734,6 +3734,10 @@ function _kingShowEntryPopup(){
           <button onclick="playSfx('sfx-sel',0.5);_showWeeklyQuizRewardsInfo()" style="padding:11px 14px;font-size:17px;font-weight:700;background:linear-gradient(135deg,rgba(255,180,80,0.4),rgba(200,120,40,0.3));border:1.5px solid rgba(255,200,120,0.65);color:#ffe2b2;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1.5px;text-shadow:0 1px 2px rgba(0,0,0,0.5);">
             🎁 查看獎勵
           </button>
+          <!-- ★ v5.362.0(老師「新增每週答對率排行榜」)-->
+          <button onclick="playSfx('sfx-sel',0.5);window._showQuizAccLeaderboard&&window._showQuizAccLeaderboard()" style="padding:11px 14px;font-size:17px;font-weight:800;background:linear-gradient(135deg,rgba(60,180,140,0.5),rgba(30,120,90,0.4));border:1.5px solid rgba(140,255,210,0.75);color:#e0fff4;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:1px;">
+            🎯 答對率排行榜
+          </button>
           <div style="font-size:13px;color:#9a9aac;text-align:center;line-height:1.6;">
             每週一 08:00 結算<br>頒發前 50 名豐厚獎勵
           </div>
@@ -3930,6 +3934,149 @@ function _showWeeklyQuizRewardsInfo(){
 }
 window._showWeeklyQuizRewardsInfo = _showWeeklyQuizRewardsInfo;
 // ════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════
+// ★ v5.362.0(老師「新增每週答對率排行榜,只有在回答題目不重複達到 100 題以上的玩家才會上榜。獎勵同知識王」)
+//   資料:window._quizAcc(game_cloud.js);UI 雙版文字(簡單風/精緻風)
+// ════════════════════════════════════════════════════════════════
+window._showQuizAccLeaderboard = function(){
+  const _old = document.getElementById('quiz-acc-lb-popup'); if(_old) _old.remove();
+  if(!window._quizAcc){ try{ _showInGameToast('答對率排行榜載入中,請稍候...', '#88ffcc', 2000); }catch(_){} return; }
+  const QA = window._quizAcc, MIN = QA.MIN_Q || 100;
+  const _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+  const _esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  const _nm = function(e){
+    try{ if(e.email && typeof window._formatPlayerDisplayName === 'function'){ const f = window._formatPlayerDisplayName(e.name || '', e.email); if(f) return f; } }catch(_){}
+    return e.name || ('玩家' + String(e.uid || '').slice(0, 4));
+  };
+  const _pct = function(c, a){ return a > 0 ? (Math.round(c * 1000 / a) / 10) : 0; };
+  const _render = function(){
+    const top = QA.getTopN(50) || [];
+    const me = QA.getMyRank() || { rank: 0, a: 0, c: 0, need: MIN };
+    const myUid = window._gUserId || '';
+    let rows = '';
+    if(!top.length){
+      rows = '<div style="padding:26px;text-align:center;color:#9ab;font-size:17px;background:rgba(0,0,0,0.3);border-radius:12px;">'
+        + (_cute ? '這週還沒有人答滿 ' + MIN + ' 題,第一名等你來拿!' : '本週尚無玩家達到 ' + MIN + ' 題不重複作答門檻。') + '</div>';
+    } else {
+      top.forEach(function(e, i){
+        const rk = i + 1, isMe = e.uid === myUid;
+        const ic = rk === 1 ? '🥇' : rk === 2 ? '🥈' : rk === 3 ? '🥉' : ('#' + rk);
+        rows += '<div style="display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:9px 12px;'
+          + 'background:' + (isMe ? 'rgba(80,200,150,0.28)' : (rk % 2 ? 'rgba(0,0,0,0.38)' : 'rgba(0,0,0,0.22)')) + ';'
+          + 'border:' + (isMe ? '2px solid #8fffcf' : '1px solid rgba(120,220,180,0.2)') + ';border-radius:10px;">'
+          + '<div style="font-size:' + (rk <= 3 ? '26px' : '19px') + ';font-weight:900;text-align:center;color:#ffe066;">' + ic + '</div>'
+          + '<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px;font-weight:700;color:' + (isMe ? '#bfffe6' : '#fff') + ';">' + _esc(_nm(e)) + (isMe ? ' <span style="font-size:13px;color:#8fffcf;">(我)</span>' : '') + '</div>'
+          + '<div style="text-align:right;line-height:1.2;"><div style="font-size:20px;font-weight:900;color:#8fffcf;">' + _pct(e.c, e.a) + '%</div>'
+          + '<div style="font-size:12px;color:#9cc;">' + e.c + '/' + e.a + ' 題</div></div></div>';
+      });
+    }
+    let mine;
+    if(me.a >= MIN){
+      mine = (me.rank > 0)
+        ? ('🌟 ' + (_cute ? '我現在第 ' : '目前排名第 ') + '<b style="font-size:20px;">' + me.rank + '</b> 名 · ' + (_cute ? '答對率 ' : '答對率 ') + '<b style="font-size:20px;">' + _pct(me.c, me.a) + '%</b>(' + me.c + '/' + me.a + ')')
+        : ('✅ ' + (_cute ? '已經答滿 ' + MIN + ' 題,排名更新中…' : '已達上榜門檻,排名同步中…') + '(' + _pct(me.c, me.a) + '%,' + me.c + '/' + me.a + ')');
+    } else {
+      mine = (_cute ? '📝 這週已答 <b>' + me.a + '</b> 題(不重複),再答 <b>' + me.need + '</b> 題就能上榜!'
+                    : '📝 本週不重複作答 <b>' + me.a + '</b> 題,距上榜門檻尚差 <b>' + me.need + '</b> 題。');
+    }
+    const rule = _cute
+      ? ('📌 怎麼上榜?這一週(週一早上 8 點到下週一早上 8 點)答過的題目,<b>不重複滿 ' + MIN + ' 題</b>就能上榜,'
+         + '比的是<b>答對率</b>(答對題數 ÷ 答過題數)。同一題這週只算第一次作答喔!<br>'
+         + '冒險關卡、世界 BOSS、龍王戰、知識王、小遊戲、荒島的題目都算。')
+      : ('📌 上榜條件:本週(週一 08:00 起算)不重複作答滿 <b>' + MIN + ' 題</b>;依<b>答對率</b>(答對 ÷ 作答)排名,同率者題數多者優先。'
+         + '同一題每週僅計首次作答。<br>計入範圍:冒險關卡、世界 BOSS／龍王戰、知識王、小遊戲、荒島求生。');
+    const rw = function(r){ const a = QA.awardByRank(r); return a ? ('💰' + (a.coins / 10000) + '萬 💎×' + a.crystals + ' 📖×' + a.books) : ''; };
+    const rewards = '<div style="margin-top:8px;font-size:12.5px;color:#cde;line-height:1.7;">🎁 '
+      + (_cute ? '每週一 08:00 結算,前 50 名有獎勵(和小博士一樣):' : '每週一 08:00 結算,前 50 名發獎(與本週小博士同級距):')
+      + '<br>🥇第1名 ' + rw(1) + ' ・ 第2-5名 ' + rw(2) + ' ・ 第6-10名 ' + rw(6) + '<br>第11-30名 ' + rw(11) + ' ・ 第31-50名 ' + rw(31) + '</div>';
+    return '<div style="background:linear-gradient(160deg,#0f2a24 0%,#081512 100%);border:2.5px solid rgba(120,240,190,0.65);'
+      + 'border-radius:16px;padding:18px 22px;max-width:min(96vw,680px);width:100%;box-sizing:border-box;margin:auto 0;'
+      + 'display:flex;flex-direction:column;box-shadow:0 0 40px rgba(100,240,180,0.3);">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;">'
+      +   '<div style="font-size:26px;font-weight:900;color:#aaffdd;letter-spacing:1px;">🎯 本週答對率排行榜</div>'
+      +   '<button id="qacc-lb-close" style="padding:8px 18px;font-size:16px;font-weight:700;background:rgba(60,10,10,0.4);border:1.5px solid #e84040;color:#ffb0b0;border-radius:8px;cursor:pointer;font-family:inherit;">✕ 關閉</button>'
+      + '</div>'
+      + '<div style="padding:9px 12px;background:rgba(20,60,50,0.5);border:1px solid rgba(140,240,200,0.3);border-radius:8px;font-size:13.5px;color:#cfeee4;line-height:1.7;">' + rule + rewards + '</div>'
+      + '<div style="margin:10px 0;padding:10px 12px;background:rgba(80,200,150,0.16);border:1.5px solid rgba(140,255,210,0.5);border-radius:10px;font-size:15.5px;color:#d8fff0;text-align:center;">' + mine + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:6px;">' + rows + '</div>'
+      + '</div>';
+  };
+  const pop = document.createElement('div');
+  pop.id = 'quiz-acc-lb-popup';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:25001;background:rgba(0,10,8,0.85);display:flex;align-items:flex-start;justify-content:center;'
+    + 'padding:14px;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  pop.innerHTML = _render();
+  pop.addEventListener('click', function(e){ if(e.target === pop) pop.remove(); });
+  document.body.appendChild(pop);
+  const _bindClose = function(){ const b = document.getElementById('qacc-lb-close'); if(b) b.onclick = function(){ try{ playSfx('sfx-cancel',0.4); }catch(_){} pop.remove(); }; };
+  _bindClose();
+  // 先把自己的暫存送上去,再重畫一次(自己的格子才是最新)
+  try{ Promise.resolve(QA.flushNow(true)).then(function(){ setTimeout(function(){ if(document.body.contains(pop)){ pop.innerHTML = _render(); _bindClose(); } }, 1200); }); }catch(_){}
+};
+
+// ★ v5.362.0 我的各科答對率(只有本人看得到;資料在 minigameScores/{uid}.quizAcc,規則限本人/GM 讀)
+window._showMyQuizAccuracy = async function(){
+  if(!window._gUserId){ try{ _showInGameToast('請先登入 Google 帳號', '#ffaa66', 2200); }catch(_){} return; }
+  const _old = document.getElementById('my-quiz-acc-popup'); if(_old) _old.remove();
+  const _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+  const _esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  const pop = document.createElement('div');
+  pop.id = 'my-quiz-acc-popup';
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99985;background:rgba(0,0,0,0.86);display:flex;align-items:flex-start;justify-content:center;'
+    + 'padding:14px;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;'
+    + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+  const shell = function(inner){
+    return '<div style="background:linear-gradient(135deg,rgba(14,40,34,0.98),rgba(8,22,18,0.99));border:3px solid rgba(120,240,190,0.7);border-radius:18px;'
+      + 'padding:20px 22px;width:min(560px,100%);box-sizing:border-box;color:#fff;margin:auto 0;box-shadow:0 8px 36px rgba(80,220,160,0.3);">'
+      + '<div style="font-size:21px;font-weight:900;color:#aaffdd;text-align:center;margin-bottom:6px;">📈 ' + (_cute ? '我的各科答對率' : '我的各科答對率') + '</div>'
+      + '<div style="font-size:12.5px;color:#9cc;text-align:center;margin-bottom:12px;">🔒 ' + (_cute ? '只有你自己和老師看得到喔' : '本紀錄僅本人與老師可查看') + '</div>'
+      + inner
+      + '<button id="mqa-close" style="width:100%;margin-top:14px;padding:11px;font-size:15px;font-weight:700;background:rgba(40,70,60,0.7);border:1px solid #4a8a76;color:#cfeee4;border-radius:9px;cursor:pointer;font-family:inherit;">關閉</button>'
+      + '</div>';
+  };
+  pop.innerHTML = shell('<div style="text-align:center;padding:24px;color:#cfe;">⏳ 讀取中…</div>');
+  document.body.appendChild(pop);
+  const bind = function(){ const b = document.getElementById('mqa-close'); if(b) b.onclick = function(){ try{ playSfx('sfx-cancel',0.4); }catch(_){} pop.remove(); }; };
+  bind();
+  pop.addEventListener('click', function(e){ if(e.target === pop) pop.remove(); });
+  let qa = null;
+  try{ qa = window._quizAcc ? await window._quizAcc.readMine() : null; }catch(_){}
+  if(!document.body.contains(pop)) return;
+  if(!qa || qa.error){
+    pop.innerHTML = shell('<div style="text-align:center;padding:20px;color:#ffb0a0;">' + (_cute ? '現在連不到雲端,等一下再試一次喔' : '暫時無法讀取雲端紀錄,請稍後再試。') + '</div>');
+    bind(); return;
+  }
+  const pct = function(c, a){ return a > 0 ? (Math.round(c * 1000 / a) / 10) + '%' : '—'; };
+  const subj = qa.subj || {};
+  const keys = Object.keys(subj).sort(function(x, y){ return (subj[y].a || 0) - (subj[x].a || 0); });
+  let rows = '';
+  keys.forEach(function(k){
+    const s = subj[k] || {}, a = s.a || 0, c = s.c || 0, p = a > 0 ? c / a : 0;
+    const col = p >= 0.9 ? '#7dffb0' : p >= 0.7 ? '#cfff7d' : p >= 0.5 ? '#ffd27d' : '#ff9d7a';
+    rows += '<div style="padding:8px 10px;background:rgba(0,0,0,0.3);border-radius:9px;margin-bottom:6px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><b style="font-size:16px;">' + _esc(k) + '</b>'
+      + '<span style="font-size:19px;font-weight:900;color:' + col + ';">' + pct(c, a) + '</span></div>'
+      + '<div style="height:8px;background:rgba(255,255,255,0.1);border-radius:5px;margin:5px 0 3px;overflow:hidden;"><div style="height:100%;width:' + Math.round(p * 100) + '%;background:' + col + ';"></div></div>'
+      + '<div style="font-size:12px;color:#9cc;">' + (_cute ? '答對 ' + c + ' 題 / 一共答 ' + a + ' 題' : '答對 ' + c + ' / 作答 ' + a) + '</div></div>';
+  });
+  if(!rows) rows = '<div style="text-align:center;padding:16px;color:#9cc;">' + (_cute ? '還沒有作答紀錄,去答幾題吧!' : '尚無作答紀錄。') + '</div>';
+  const tot = qa.tot || { a: 0, c: 0 };
+  const MIN = (window._quizAcc && window._quizAcc.MIN_Q) || 100;
+  const wa = qa.wa || 0, wc = qa.wc || 0;
+  const week = '<div style="padding:10px 12px;background:rgba(80,200,150,0.16);border:1.5px solid rgba(140,255,210,0.5);border-radius:10px;margin-bottom:10px;font-size:14px;line-height:1.7;color:#d8fff0;">'
+    + '🎯 ' + (_cute ? '這週' : '本週') + '不重複作答 <b>' + wa + '</b> 題 · 答對率 <b>' + pct(wc, wa) + '</b><br>'
+    + (wa >= MIN ? (_cute ? '✅ 已經可以上答對率排行榜!' : '✅ 已達答對率排行榜門檻。')
+                 : (_cute ? '再答 <b>' + (MIN - wa) + '</b> 題(不重複)就能上答對率排行榜' : '距答對率排行榜門檻尚差 <b>' + (MIN - wa) + '</b> 題'))
+    + '<br>📚 ' + (_cute ? '全部加起來:' : '歷來累計:') + '答對 <b>' + (tot.c || 0) + '</b> / 作答 <b>' + (tot.a || 0) + '</b>(' + pct(tot.c || 0, tot.a || 0) + ')</div>';
+  const note = '<div style="font-size:11.5px;color:#8ab;margin-top:6px;line-height:1.6;">' + (_cute
+    ? '各科答對率算的是你每一次作答(同一題答很多次都會算);排行榜每週只算每題第一次。小遊戲和荒島要登入才會記錄喔。'
+    : '各科答對率依每次作答累計(含重複作答);每週排行僅計每題首次作答。小遊戲與荒島需登入帳號才會記錄。') + '</div>';
+  pop.innerHTML = shell(week + rows + note + '<button id="mqa-lb" style="width:100%;margin-top:10px;padding:11px;font-size:15px;font-weight:800;background:linear-gradient(135deg,rgba(60,180,140,0.6),rgba(30,120,90,0.5));border:1.5px solid rgba(140,255,210,0.8);color:#fff;border-radius:9px;cursor:pointer;font-family:inherit;">🎯 看答對率排行榜</button>');
+  bind();
+  const lb = document.getElementById('mqa-lb'); if(lb) lb.onclick = function(){ try{ playSfx('sfx-sel',0.5); }catch(_){} pop.remove(); window._showQuizAccLeaderboard(); };
+};
 
 function _showWeeklyQuizLeaderboard(){
   // 清除既有彈窗
@@ -4577,6 +4724,7 @@ function _kingPickAnswer(pickIdx){
   const _ansLetter = (_q.answer || '').toString().trim().toUpperCase();
   const _correctIdx = ['A','B','C','D'].indexOf(_ansLetter);
   const _isCorrect = (pickIdx === _correctIdx);
+  try{ if(window._quizAcc) window._quizAcc.record(_q, _isCorrect, 'king'); }catch(_eQa){}   // ★ v5.362.0 各科答對率/答對率排行(答錯也記)
   // 鎖定所有選項，避免連點
   const _opts = document.querySelectorAll('#king-options-area .king-option');
   _opts.forEach(b => { b.disabled = true; b.classList.add('king-option-locked'); });
@@ -17943,6 +18091,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
         if(window._wbTeamQuizSubmitting){
           // 全隊結算:放行
         }else if(window._wbConnectedHostMode && typeof window._wbTeamQuizRecordHost === 'function'){
+          // ★ v5.362.0 房主自己在「全隊同時作答」的作答 ⇒ 記到房主的答對率
+          try{ if(window._quizAcc && _advCurrentQuestion) window._quizAcc.record(_advCurrentQuestion, letter === _advCurrentQuestion.answer, 'wb'); }catch(_eQa){}
           window._wbTeamQuizRecordHost(letter);
           _advQuizPhase = 'asking';
           return;
@@ -18041,6 +18191,8 @@ function advSubmitAnswer(letter, isCorrectOverride) {
   }catch(_syncE){ console.warn('[題庫同步] BOSS 戰抽題後同步失敗:', _syncE); }
   // 支援選項隨機排列後的正確答案判斷
   const isCorrect = (isCorrectOverride !== undefined) ? isCorrectOverride : (letter === q.answer);
+  // ★ v5.362.0 各科答對率/答對率排行(答錯也記;龍王戰「全隊同時作答」由房主代結算的那一下不算,避免算成房主個人的作答)
+  try{ if(window._quizAcc && q && !window._wbTeamQuizSubmitting && !window._wbRelayingRemoteAnswer) window._quizAcc.record(q, isCorrect, 'battle'); }catch(_eQa){}
 
   // ★ 幸運流星沙判斷：若答錯且還有第二機會，先不公布正確答案
   const _hasExtraChance = !isCorrect && q && q._extraChance;
@@ -59100,6 +59252,13 @@ window._openMemberAccountHub = function(){
         'color:#eaf4ff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:1px;text-align:left;line-height:1.4;\">' +
         '✏️ 編輯會員資料<br><span style=\"font-size:12px;font-weight:600;color:#cfe4ff;\">修改暱稱/身分/年級/平台等個人資料</span>' +
       '</button>' +
+      // ★ v5.362.0(老師「各科答對率……可以在會員資料中,只讓玩家自己看得到」)
+      '<button id=\"_mh-acc\" style=\"width:100%;padding:14px 16px;margin-bottom:11px;font-size:16px;font-weight:800;' +
+        'background:linear-gradient(135deg,rgba(40,150,115,0.9),rgba(25,105,80,0.95));border:2px solid rgba(140,255,210,0.85);' +
+        'color:#e6fff6;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:1px;text-align:left;line-height:1.4;\">' +
+        '📈 我的各科答對率<br><span style=\"font-size:12px;font-weight:600;color:#c8f5e6;\">' +
+        ((typeof _artStyle !== 'undefined' && _artStyle === 'cute') ? '看看自己每一科答對多少·只有自己看得到' : '各科作答與答對統計·僅本人與老師可見') + '</span>' +
+      '</button>' +
       '<button id=\"_mh-pw\" style=\"width:100%;padding:14px 16px;margin-bottom:11px;font-size:16px;font-weight:800;' +
         'background:linear-gradient(135deg,rgba(95,70,165,0.9),rgba(62,45,125,0.95));border:2px solid rgba(175,145,255,0.85);' +
         'color:#efe8ff;border-radius:12px;cursor:pointer;font-family:inherit;letter-spacing:1px;text-align:left;line-height:1.4;\">' +
@@ -59127,6 +59286,7 @@ window._openMemberAccountHub = function(){
   document.body.appendChild(_ov);
   const _byId = (id) => document.getElementById(id);
   _byId('_mh-edit').onclick = function(){ try{ playSfx('sfx-sel',0.5); }catch(_){} _ov.remove(); window._openMemberProfileForm('edit'); };
+  _byId('_mh-acc').onclick = function(){ try{ playSfx('sfx-sel',0.5); }catch(_){} _ov.remove(); try{ window._showMyQuizAccuracy(); }catch(e){ console.error(e); } };   // ★ v5.362.0
   _byId('_mh-pw').onclick = function(){ try{ playSfx('sfx-sel',0.5); }catch(_){} _ov.remove(); try{ window._lxpsOpenSecondPwSetup(); }catch(e){ console.error(e); } };
   _byId('_mh-rescue').onclick = function(){ try{ playSfx('sfx-sel',0.5); }catch(_){} _ov.remove(); try{ window._openRescueReq(); }catch(e){ console.error(e); } };
   _byId('_mh-disown').onclick = function(){ try{ playSfx('sfx-sel',0.5); }catch(_){} _ov.remove(); try{ window._openDisownRequest(); }catch(e){ console.error(e); } };
@@ -59335,7 +59495,7 @@ window._openMemberProfileForm = async function(mode){
   _idRows += '</div>';
 
   // 年級下拉
-  let _gradeSel = '<select id=\"_mp-grade\" style=\"width:100%;padding:11px 12px;font-size:15px;background:rgba(0,0,0,0.4);' +
+  let _gradeSel = '<select id=\"_mp-grade\" style=\"width:100%;padding:11px 12px;font-size:16px;background:rgba(0,0,0,0.4);' +
     'border:1.5px solid rgba(255,200,120,0.4);border-radius:10px;color:#fff;font-family:inherit;\">';
   (window._MEMBER_GRADE_OPTS || []).forEach(function(opt){
     const _sel = (opt === _curGrade) ? 'selected' : '';
@@ -59386,7 +59546,7 @@ window._openMemberProfileForm = async function(mode){
     'display:flex;align-items:flex-start;justify-content:center;padding:18px 18px 45vh;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;-webkit-user-select:text;user-select:text;' +   /* ★ v5.212.0 iPad:鍵盤彈出時置中版面會把送出鈕推出畫面、捲不到;改靠上+底部留白。全站 html,body 設了 user-select:none,這裡解除讓輸入框可正常選字 */
     'font-family:\"M PLUS Rounded 1c\",\"Nunito\",sans-serif;';
 
-  const _inputCss = 'width:100%;padding:11px 12px;font-size:15px;background:rgba(0,0,0,0.4);' +
+  const _inputCss = 'width:100%;padding:11px 12px;font-size:16px;background:rgba(0,0,0,0.4);' +   /* ★ v5.362.0 15→16px:iOS 低於 16px 的輸入格聚焦會自動放大畫面(加保險) */
     'border:1.5px solid rgba(255,200,120,0.4);border-radius:10px;color:#fff;font-family:inherit;box-sizing:border-box;';
 
   _ov.innerHTML =
@@ -59432,7 +59592,7 @@ window._openMemberProfileForm = async function(mode){
       '<div id=\"_mp-msg\" style=\"min-height:18px;font-size:13.5px;color:#ff9d7a;margin:13px 0 10px;text-align:center;font-weight:700;\"></div>' +
       '<div style=\"display:flex;gap:10px;\">' +
         (_isFirst
-          ? '<button id=\"_mp-later\" style=\"flex:1;padding:12px 14px;font-size:14.5px;font-weight:700;background:rgba(60,55,40,0.6);border:1px solid #6a5a3a;color:#cbb98a;border-radius:9px;cursor:pointer;font-family:inherit;\">稍後再填</button>'
+          ? '<button id=\"_mp-later\" type=\"button\" style=\"flex:1;padding:12px 10px;font-size:13.5px;font-weight:700;background:rgba(60,55,40,0.6);border:1px solid #6a5a3a;color:#cbb98a;border-radius:9px;cursor:pointer;font-family:inherit;line-height:1.35;\">🚪 這不是我的帳號<br><span style=\"font-size:11.5px;\">(登出)</span></button>'
           : '<button id=\"_mp-later\" style=\"flex:1;padding:12px 14px;font-size:14.5px;font-weight:700;background:rgba(60,55,40,0.6);border:1px solid #6a5a3a;color:#cbb98a;border-radius:9px;cursor:pointer;font-family:inherit;\">取消</button>') +
         '<button id=\"_mp-submit\" style=\"flex:1.8;padding:12px 14px;font-size:15.5px;font-weight:900;' +
           'background:linear-gradient(135deg,rgba(230,170,60,0.85),rgba(180,120,30,0.95));border:2px solid #ffcf80;color:#fff;' +
@@ -59444,7 +59604,52 @@ window._openMemberProfileForm = async function(mode){
 
   document.body.appendChild(_ov);
 
-  document.getElementById('_mp-later').onclick = function(){ _ov.remove(); };
+  // ★ v5.362.0(老師「所有新申請帳號的玩家都一定要先填寫會員資料」)— 首登建立改為必填:拿掉「稍後再填」,
+  //   換成「這不是我的帳號(登出)」(共用 iPad 登錯帳號時的唯一出口,不能跳過填寫);編輯模式維持「取消」。
+  document.getElementById('_mp-later').onclick = _isFirst
+    ? function(){
+        const _go = function(){ try{ _ov.remove(); }catch(_){} try{ if(typeof window._fbSignOut === 'function') window._fbSignOut(); }catch(_eSo){ console.warn('[會員資料必填] 登出失敗', _eSo); } };
+        if(typeof window._lxpsConfirm === 'function'){
+          try{ Promise.resolve(window._lxpsConfirm('確定要登出嗎?\n會員資料要填寫完成才能開始玩;如果這不是你的帳號,請登出後換成自己的帳號。')).then(function(ok){ if(ok) _go(); }); return; }catch(_){}
+        }
+        _go();
+      }
+    : function(){ _ov.remove(); };
+  if(_isFirst){ try{ _ov.dataset.lxpsMandatory = '1'; }catch(_){} }
+  // ★ v5.362.0(老師「會員資料一定要 100% 可以順利填寫完成」)— 鍵盤防遮擋:本表單不在 v5.225.0 安全網
+  //   (.lxps-ovfit-card)範圍內,點輸入格時沒有自動捲到可視範圍。iPad 鍵盤不會縮小版面高度 ⇒ 輸入格可能被鍵盤蓋住。
+  //   ① 聚焦後 350ms(等鍵盤動畫)把欄位捲到「鍵盤以上可視區」的中間;② 鍵盤高度變化(visualViewport resize)時再對齊一次;
+  //   ③ 用表單自己的捲動(不捲整頁)。底部已有 45vh 留白,最後一格也捲得上來。
+  (function(){
+    function _fit(t){
+      try{
+        if(!t || !_ov.contains(t) || !document.body.contains(_ov)) return;
+        var vv = window.visualViewport;
+        var visTop = vv ? vv.offsetTop : 0;
+        var visH = vv ? vv.height : window.innerHeight;
+        var r = t.getBoundingClientRect();
+        var want = visTop + visH * 0.38;                 // 欄位放在可視區偏上(下方留給鍵盤上的工具列)
+        var cur = r.top + r.height / 2;
+        if(r.top < visTop + 8 || r.bottom > visTop + visH - 8 || Math.abs(cur - want) > visH * 0.3){
+          _ov.scrollTop += (cur - want);
+        }
+      }catch(_){}
+    }
+    _ov.addEventListener('focusin', function(e){
+      var t = e.target; if(!t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
+      if(/^(checkbox|radio)$/i.test(t.type || '')) return;
+      setTimeout(function(){ _fit(t); }, 350);
+      setTimeout(function(){ _fit(t); }, 800);
+    });
+    try{
+      if(window.visualViewport){
+        var _vvh = function(){ var a = document.activeElement; if(a && _ov.contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName)) setTimeout(function(){ _fit(a); }, 60); };
+        window.visualViewport.addEventListener('resize', _vvh);
+        var _mo2 = new MutationObserver(function(){ if(!document.body.contains(_ov)){ try{ window.visualViewport.removeEventListener('resize', _vvh); }catch(_){} _mo2.disconnect(); } });
+        _mo2.observe(document.body, {childList:true});
+      }
+    }catch(_){}
+  })();
   // 首登模式:點背景不關閉(必填守門,只能用按鈕);編輯模式:點背景可關
   if(!_isFirst){ _ov.onclick = function(ev){ if(ev.target === _ov) _ov.remove(); }; }
   document.getElementById('_mp-submit').onclick = function(){ window._memberProfileSubmit(_ov, this, mode, _alreadyRewarded); };
@@ -59599,26 +59804,78 @@ window._memberProfileSubmit = async function(_modal, _btn, mode, _alreadyRewarde
 };
 
 // 首登觸發:讀會員資料狀態,未建立則彈「會員資料建立」表單(優先於救援說明彈窗)
-window._maybeShowMemberProfileFirstLogin = async function(){
+// ★ v5.362.0(老師「確認所有新申請帳號的玩家是否都一定要先填寫會員資料?如果不是,請改成必須填寫」)
+//   稽核結果:舊版不是必填 —— ①表單有「稍後再填」②登入當下若有續戰/練習營/救援等視窗在場、或雲端一時讀不到,
+//   這次就直接放棄、要等「下次登入」才再判斷 ⇒ 學生可以一直不填。
+//   改為:①首登表單拿掉「稍後再填」(只留「這不是我的帳號・登出」)②沒填完就每 15 秒重試一次,
+//   等擋路的視窗關掉、不在戰鬥中、沒在打字時立刻補彈,直到雲端確認已填(或本機已有待補送的填寫)為止;換帳號/登出即停止。
+window._memberProfileGuardTimer = window._memberProfileGuardTimer || 0;
+window._memberProfileGuardUid = window._memberProfileGuardUid || '';
+function _mpGuardSchedule(uid, ms){
   try{
-    if(!window._gUserId) return;
-    // 有更高優先的續戰/練習營/救援申請/風格選擇在場時不疊加(晚點再彈)
-    if(document.getElementById('adv-wb-crash-notice') || document.getElementById('adv-crash-recovery-box') ||
-       document.getElementById('_camp-overlay') || document.getElementById('_rrq-modal') ||
-       document.getElementById('_member-profile-modal') ||
-       (document.getElementById('style-onboarding-modal') && document.getElementById('style-onboarding-modal').style.display !== 'none')) return;
+    if(window._memberProfileGuardTimer) clearTimeout(window._memberProfileGuardTimer);
+    window._memberProfileGuardUid = uid;
+    window._memberProfileGuardTimer = setTimeout(function(){
+      window._memberProfileGuardTimer = 0;
+      if(!window._gUserId || window._gUserId !== uid) return;   // 已登出/換人 ⇒ 停
+      window._maybeShowMemberProfileFirstLogin();
+    }, ms || 15000);
+  }catch(_){}
+}
+function _mpGuardVisible(id){
+  const el = document.getElementById(id);
+  if(!el) return false;
+  try{ const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; }catch(_){ return el.style.display !== 'none'; }
+}
+function _mpGuardBusy(){
+  try{
+    // 有更高優先的續戰/練習營/救援申請/風格選擇/登入閘門等在場 ⇒ 晚點再彈
+    const _ids = ['adv-wb-crash-notice','adv-crash-recovery-box','_crv_discard_confirm','_camp-overlay','_rrq-modal','style-onboarding-modal','login-gate-modal','lxps-dlg-ov','_adv_resume_loading'];
+    for(let i = 0; i < _ids.length; i++){ if(_mpGuardVisible(_ids[i])) return true; }
+    if(typeof window._lxpsTypingActive === 'function' && window._lxpsTypingActive()) return true;   // 正在別的欄位打字
+    const gc = document.getElementById('gc');
+    if(gc && gc.classList.contains('adv-battle') && _mpGuardVisible('gc')) return true;           // 冒險戰鬥中
+    if(typeof window._wbInvBattleOnScreen === 'function' && window._wbInvBattleOnScreen()) return true;   // 龍王戰畫面上
+  }catch(_){}
+  return false;
+}
+window._maybeShowMemberProfileFirstLogin = async function(){
+  const _uid = window._gUserId;
+  try{
+    if(!_uid) return;
+    if(document.getElementById('_member-profile-modal')) return;   // 表單已在畫面上
+    if(_mpGuardBusy()){ _mpGuardSchedule(_uid, 15000); return; }
     let _st = null;
-    try{ _st = await window._fbGetMemberProfile(window._gUserId); }catch(_){}
-    if(!_st || _st.error) return;     // ★ v5.305.0 讀不到雲端 ≠ 沒填過 ⇒ 這次不彈(下次登入再判斷)
+    try{ _st = await window._fbGetMemberProfile(_uid); }catch(_){}
+    if(window._gUserId !== _uid) return;
+    if(!_st || _st.error){ _mpGuardSchedule(_uid, 20000); return; }   // ★ v5.305.0 讀不到雲端 ≠ 沒填過 ⇒ 不開空白表單;★ v5.362.0 改成 20 秒後再查(不再等下次登入)
     if(_st && _st.complete) return;   // 已建立 → 不再彈
     // ★ v5.147.0 本機有暫存(上次沒送成功)⇒ 不再要學生重填,交給自動補送
-    try{ if(localStorage.getItem(window._memberProfilePendingKey(window._gUserId))){ window._memberProfileRetryPending('first-login'); return; } }catch(_){}
+    try{ if(localStorage.getItem(window._memberProfilePendingKey(_uid))){ window._memberProfileRetryPending('first-login'); return; } }catch(_){}
     // 再次確認沒有更高優先彈窗插隊
-    if(document.getElementById('_camp-overlay') || document.getElementById('_member-profile-modal') ||
-       (document.getElementById('style-onboarding-modal') && document.getElementById('style-onboarding-modal').style.display !== 'none')) return;
-    window._openMemberProfileForm('first');
-  }catch(_e){ console.warn('[會員資料首登] 例外', _e); }
+    if(document.getElementById('_member-profile-modal')) return;
+    if(_mpGuardBusy()){ _mpGuardSchedule(_uid, 15000); return; }
+    await window._openMemberProfileForm('first');
+    // 表單因故沒開出來(例如雲端讀取逾時)⇒ 稍後再試
+    if(!document.getElementById('_member-profile-modal')) _mpGuardSchedule(_uid, 20000);
+  }catch(_e){ console.warn('[會員資料首登] 例外', _e); try{ if(_uid) _mpGuardSchedule(_uid, 20000); }catch(_){} }
 };
+// ★ v5.362.0 — 必填守門:表單被任何程式意外移除、但雲端仍未完成 ⇒ 30 秒後自動再檢查一次(送出成功後雲端已 complete,不會再彈)
+try{
+  (function(){
+    var _mo = new MutationObserver(function(muts){
+      for(var i = 0; i < muts.length; i++){
+        var rm = muts[i].removedNodes;
+        for(var j = 0; j < rm.length; j++){
+          var n = rm[j];
+          if(n && n.id === '_member-profile-modal' && n.dataset && n.dataset.lxpsMandatory && window._gUserId){ _mpGuardSchedule(window._gUserId, 30000); return; }
+        }
+      }
+    });
+    if(document.body) _mo.observe(document.body, {childList:true});
+    else document.addEventListener('DOMContentLoaded', function(){ _mo.observe(document.body, {childList:true}); });
+  })();
+}catch(_eMpMo){}
 
 // ════════════════════════════════════════════════════════════════════
 // ★ v3.5.47(2026-05-23) — 安裝版 vs 網頁版「優缺點對比表」彈窗
@@ -61827,13 +62084,15 @@ window._showRepHeroMaxLvGiftModal = function(heroName, kind, coins){
       : '「'+heroName+'」已經滿等(Lv50),無法再獲得經驗值。<br>豪華典藏版經驗之書已達持有上限(99 本),<br>改贈你 <b style="color:#ffe066;">'+(coins||5000)+'</b> 枚知識幣 🪙';
     const modal = document.createElement('div');
     modal.id = 'rep-maxlv-gift-modal';
+    // ★ v5.362.0 — 手機橫放卡片比螢幕高 ⇒ 外層可捲＋上方對齊(卡片 margin:auto 維持置中),按鈕一定捲得到
     modal.style.cssText =
-      'position:fixed;inset:0;z-index:99996;display:flex;align-items:center;justify-content:center;' +
+      'position:fixed;inset:0;z-index:99996;display:flex;align-items:flex-start;justify-content:center;' +
+      'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:12px;box-sizing:border-box;' +
       'background:radial-gradient(circle at center,rgba(20,30,60,0.85),rgba(0,0,0,0.92));' +
       'backdrop-filter:blur(8px);animation:fadeIn 0.5s;';
     modal.onclick = function(e){ if(e.target === modal) modal.remove(); };
     modal.innerHTML =
-      '<div style="max-width:520px;width:92%;padding:32px 30px 26px;text-align:center;font-family:inherit;' +
+      '<div class="lxps-daily-card" style="max-width:520px;width:92%;margin:auto 0;box-sizing:border-box;padding:32px 30px 26px;text-align:center;font-family:inherit;' +
         'background:linear-gradient(160deg,rgba(80,40,20,0.98),rgba(40,20,8,0.98));' +
         'border:2.5px solid rgba(255,200,80,0.7);border-radius:24px;' +
         'box-shadow:0 0 80px rgba(255,180,60,0.55);animation:fadeIn 0.6s;" onclick="event.stopPropagation()">' +
@@ -61882,14 +62141,16 @@ function _showDailyRepHeroExpAnimation(heroName, bonusExp, curLv, needExp){
 
     const modal = document.createElement('div');
     modal.id = 'daily-rep-exp-modal';
+    // ★ v5.362.0(老師手機截圖:登入經驗值視窗捲不動、按不到「收下」)— 外層可捲＋上方對齊(卡片 margin:auto 維持置中)
     modal.style.cssText =
-      'position:fixed;inset:0;z-index:99996;display:flex;align-items:center;justify-content:center;' +
+      'position:fixed;inset:0;z-index:99996;display:flex;align-items:flex-start;justify-content:center;' +
+      'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:12px;box-sizing:border-box;' +
       'background:radial-gradient(circle at center,rgba(20,30,60,0.85),rgba(0,0,0,0.92));' +
       'backdrop-filter:blur(8px);animation:fadeIn 0.5s;';
     modal.onclick = function(e){ if(e.target === modal) modal.remove(); };
 
     modal.innerHTML =
-      '<div style="max-width:560px;width:92%;padding:36px 36px 28px;text-align:center;font-family:inherit;' +
+      '<div class="lxps-daily-card" style="max-width:560px;width:92%;margin:auto 0;box-sizing:border-box;padding:36px 36px 28px;text-align:center;font-family:inherit;' +
         'background:linear-gradient(160deg,rgba(80,40,20,0.98),rgba(40,20,8,0.98));' +
         'border:2.5px solid rgba(255,200,80,0.7);border-radius:24px;' +
         'box-shadow:0 0 80px rgba(255,180,60,0.55);animation:fadeIn 0.6s;" onclick="event.stopPropagation()">' +
@@ -66717,6 +66978,7 @@ function _advMiniQuizTutSkip() {
 function _advMiniQuizSubmit(letter, isCorrect) {
   if(window._miniQuizPhase !== 'asking') return;
   window._miniQuizPhase = 'done';
+  try{ if(window._quizAcc && window._miniQuizCurrentQ) window._quizAcc.record(window._miniQuizCurrentQ, !!isCorrect, 'mini'); }catch(_eQa){}   // ★ v5.362.0 各科答對率
 
   const optDiv = document.getElementById('adv-quiz-options');
   optDiv.querySelectorAll('.aqo-btn').forEach(btn => {

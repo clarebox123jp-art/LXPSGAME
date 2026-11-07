@@ -5803,6 +5803,37 @@
     }
   };
 
+  // ★ v5.362.0(老師「讓 GM 可以掌控當前玩家中,是力行國小學生包含畢業生的人數以及校外學生或非學生的人數」)
+  //   GM 專用:掃全部 players 主檔的會員資料,依「玩家身分」分四類計數(身分可複選 ⇒ 依優先序歸一類,總和=總帳號數):
+  //     ① 力行國小學生(含畢業校友)② 外校學生 ③ 非學生(教職員/家長/志工/教育界/產業/社會人士)④ 尚未填寫會員資料
+  //   另附各身分勾選人次與名單(暱稱/信箱/年級)。只讀不寫;讀取全體玩家文件,配額消耗大 ⇒ 只在 GM 按鈕時呼叫。
+  window._fbAdminMemberStats = async function(){
+    if(typeof _fbDb === 'undefined' || !_fbDb) throw new Error('雲端尚未連線');
+    const snap = await getDocs(collection(_fbDb, 'players'));
+    const cat = { lx:[], out:[], non:[], none:[] };
+    const idCount = {};
+    snap.forEach(function(d){
+      const x = d.data() || {};
+      const mp = (x.memberProfile && typeof x.memberProfile === 'object') ? x.memberProfile : null;
+      const ids = (mp && Array.isArray(mp.identities)) ? mp.identities : [];
+      const row = {
+        uid: d.id,
+        name: String(x.displayName || x.nickname || ''),
+        nick: mp ? String(mp.nickname || '') : '',
+        email: String((mp && mp.email) || x.email || ''),
+        grade: mp ? String(mp.grade || '') : '',
+        ids: ids.slice(),
+        at: (typeof x.memberProfileUpdatedAt === 'number') ? x.memberProfileUpdatedAt : 0
+      };
+      ids.forEach(function(k){ idCount[k] = (idCount[k] || 0) + 1; });
+      if(!x.memberProfileComplete || !ids.length){ cat.none.push(row); return; }
+      if(ids.indexOf('力行國小學生') >= 0 || ids.indexOf('力行國小畢業校友') >= 0){ cat.lx.push(row); return; }
+      if(ids.indexOf('外校學生') >= 0){ cat.out.push(row); return; }
+      cat.non.push(row);
+    });
+    return { total: snap.size, cat: cat, idCount: idCount, at: Date.now() };
+  };
+
   // 寫玩家會員資料(merge:true;grantReward=true 時一併設 rewarded 旗標)
   //   只寫 memberProfile / memberProfileComplete / memberProfileUpdatedAt
   //   (+ 視情況 memberProfileRewarded),不動其他玩家欄位。
@@ -22173,6 +22204,19 @@
               }
             }
           }catch(_eStreak){ console.warn('[小博士 streak 重置]', _eStreak); }
+          // ★ v5.362.0 答對率排行:結算上週＋領自己的獎勵(與小博士同一時機)
+          try{
+            if(window._quizAcc){
+              try{ await window._quizAcc.trySettleLastWeek(); }catch(_eQs){}
+              const _qr = await window._quizAcc.claimMyAward();
+              if(_qr && _qr.rank){
+                const _qm = '🎯 上週答對率排行第 ' + _qr.rank + ' 名(答對率 ' + (_qr.pct || 0) + '%)獎勵已入帳!\n'
+                  + '💰 ' + (_qr.coins || 0) + ' 知識幣 / 💎 ' + (_qr.crystals || 0) + ' 召喚水晶 / 📖 ' + (_qr.books || 0) + ' 本豪華典藏經驗書';
+                setTimeout(function(){ try{ if(typeof _showInGameToast === 'function') _showInGameToast(_qm, '#88ffcc', 6000); }catch(_){} }, 5500);
+              }
+              try{ window._quizAcc.flushNow().catch(function(){}); }catch(_){}
+            }
+          }catch(_eQa){ console.warn('[答對率 登入觸發]', _eQa); }
         }catch(_eMain){ console.warn('[WeeklyQuiz 登入觸發] 整體例外', _eMain); }
       }, 2500);
 
@@ -26677,6 +26721,9 @@
               if(!window._cachedGlobalStats) window._cachedGlobalStats = {};
               window._cachedGlobalStats.weeklyQuiz = d.weeklyQuiz || {};
               window._cachedGlobalStats.weeklyQuizSettlement = d.weeklyQuizSettlement || {};
+              // ★ v5.362.0 答對率排行榜(同一份 stats/weeklyQuiz 文件)
+              window._cachedGlobalStats.quizAccWeekly = d.quizAccWeekly || {};
+              window._cachedGlobalStats.quizAccSettlement = d.quizAccSettlement || {};
               try{ document.dispatchEvent(new CustomEvent('weeklyQuizSynced')); }catch(_){}
             }catch(eIn){ console.warn('[WeeklyQuiz] onSnapshot 處理失敗', eIn); }
           }, function(err){
@@ -26759,6 +26806,317 @@
       // ── 啟動訂閱 ──
       try{ _subscribe(); }catch(_){}
       console.log('[WeeklyQuiz v2] ✅ 本週小博士排行榜模組已掛載');
+    })();
+
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v5.362.0(2026-11-07・老師「玩家雲端資料中新增各科答對率,這個紀錄可以在會員資料中,只讓玩家自己看得到。
+    //   GM 也可以查詢。新增每週答對率排行榜,只有在回答題目不重複達到 100 題以上的玩家才會上榜。
+    //   新增答對率排行獎勵,獎勵同知識王」;追問後裁定:乙＝小遊戲、荒島的作答也算;獎勵＝小博士榜同級距)
+    // ────────────────────────────────────────────────────────────────────
+    //   ① 個人紀錄(只有本人＋GM 讀得到)放 minigameScores/{uid}.quizAcc —— 這個集合的既有規則本來就是
+    //      「本人/管理員才能讀、本人才能寫」,小遊戲也寫同一份 ⇒ 不用改 firestore.rules。
+    //      quizAcc = { v:1, subj:{科目:{a:作答,c:答對}}(歷來全部作答), tot:{a,c},
+    //                  wk:'2026-W45', wq:{題鍵:1答對|0答錯}(本週每題只算第一次作答), wa, wc, updatedAt }
+    //      ⚠ 用 tx.update 整個 quizAcc 欄位取代(set merge 會把舊週的題目深層合併留下來)。
+    //   ② 每週排行放 stats/weeklyQuiz(與小博士同一份文件,既有規則可寫):
+    //      quizAccWeekly[週][uid] = { n:遮罩名稱, e:email, a:本週不重複作答, c:其中答對, at }
+    //      ⇒ 欄位路徑寫入(只動自己那一格,不讀整份、不搶鎖);每人最多 3 分鐘寫一次＋離開時補寫(熱門文件寫入量控制)。
+    //   ③ 週一 08:00 後第一位登入者結算上週(transaction 鎖 quizAccSettlement[週]):
+    //      只收 a ≥ 100(本週不重複題目滿 100 題),依答對率(c/a)高→低,同率比題數多→早達成,
+    //      前 50 名照小博士 _calcAwardByRank 級距;結算包整包寫 stats,玩家登入自己領到自己的 players 文件
+    //      (players/{uid}.quizAccClaimed[週] 防重複,零跨玩家寫入、免改規則)。管理員不上榜。
+    //   ④ 題鍵:大對抗 'a'+題id(冒險/BOSS/小怪/知識王/龍王同一題庫 ⇒ 同一題跨模式只算一次);
+    //      小遊戲 'm'+題目文字雜湊、荒島 'i'+…(小遊戲端寫,見 minigame_index.html mgAcc*)。
+    // ════════════════════════════════════════════════════════════════════
+    (function _setupQuizAccuracy(){
+      const STATS_DOC = () => _lxpsStatsDoc('wq');
+      const PRIV_DOC = (uid) => doc(_fbDb, 'minigameScores', uid);
+      const PLAYER_DOC = (uid) => doc(_fbDb, 'players', uid);
+      const _ADMIN_EMAILS = new Set(['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com']);
+      const MIN_Q = 100;          // 上榜門檻:本週不重複題目數
+      const WQ_KEY_CAP = 6000;    // 本週題鍵上限(防文件過大;超過仍累計歷來各科,只是不再加新題鍵)
+      const STATS_GAP = 3 * 60 * 1000;
+
+      const getWeekKey = () => (window._weeklyQuiz && window._weeklyQuiz.getWeekKey) ? window._weeklyQuiz.getWeekKey() : '';
+      const getLastWeekKey = () => (window._weeklyQuiz && window._weeklyQuiz.getLastWeekKey) ? window._weeklyQuiz.getLastWeekKey() : '';
+
+      function _hash(s){ s = String(s || ''); let h = 5381; for(let i = 0; i < s.length; i++){ h = ((h << 5) + h + s.charCodeAt(i)) | 0; } return (h >>> 0).toString(36); }
+      function _normSubj(s){
+        s = String(s || '').split('·')[0].split(' ')[0].trim();
+        return s ? s.slice(0, 12) : '其他';
+      }
+      function qKey(q){
+        if(!q) return '';
+        if(q.id != null && q.id !== '') return 'a' + String(q.id).replace(/[.\/\[\]*`~]/g, '_').slice(0, 40);
+        return 'a#' + _hash(q.question || q.q || q.text || '');
+      }
+      function _pendKey(uid){ return 'lxps_qacc_pend_' + uid; }
+      function _readPend(uid){ try{ const r = localStorage.getItem(_pendKey(uid)); const a = r ? JSON.parse(r) : []; return Array.isArray(a) ? a : []; }catch(_){ return []; } }
+      function _writePend(uid, a){ try{ localStorage.setItem(_pendKey(uid), JSON.stringify(a.slice(-600))); }catch(_){} }
+      function _metaKey(uid){ return 'lxps_qacc_meta_' + uid; }
+      function _readMeta(uid){ try{ return JSON.parse(localStorage.getItem(_metaKey(uid)) || '{}') || {}; }catch(_){ return {}; } }
+      function _writeMeta(uid, m){ try{ localStorage.setItem(_metaKey(uid), JSON.stringify(m)); }catch(_){} }
+      function _isAdmin(){ try{ return typeof window._isAdminUser === 'function' && window._isAdminUser(); }catch(_){ return false; } }
+
+      let _timer = 0;
+      // 作答一題(答對/答錯都要記)。只記登入帳號;共用 iPad 依 uid 分開暫存。
+      function record(q, ok, src){
+        try{
+          const uid = window._gUserId; if(!uid || !q) return;
+          const k = qKey(q); if(!k) return;
+          const p = _readPend(uid);
+          p.push({ k: k, s: _normSubj(q.subject), ok: ok ? 1 : 0, w: getWeekKey(), t: Date.now(), src: src || '' });
+          _writePend(uid, p);
+          if(_timer) clearTimeout(_timer);
+          _timer = setTimeout(function(){ _timer = 0; flushNow().catch(function(){}); }, p.length >= 15 ? 500 : 15000);
+        }catch(e){ console.warn('[答對率] record 失敗', e); }
+      }
+
+      let _inFlight = false;
+      async function flushNow(forceStats){
+        if(_inFlight) return null;
+        const uid = window._gUserId; if(!uid || !_fbDb) return null;
+        const pend = _readPend(uid);
+        const n = pend.length;
+        _inFlight = true;
+        try{
+          const curWk = getWeekKey();
+          let res = null;
+          if(n > 0){
+            res = await runTransaction(_fbDb, async (tx) => {
+              const snap = await tx.get(PRIV_DOC(uid));
+              const d = snap.exists() ? (snap.data() || {}) : {};
+              const qa = (d.quizAcc && typeof d.quizAcc === 'object') ? d.quizAcc : {};
+              const subj = Object.assign({}, (qa.subj && typeof qa.subj === 'object') ? qa.subj : {});
+              const tot = { a: (qa.tot && qa.tot.a) || 0, c: (qa.tot && qa.tot.c) || 0 };
+              const same = (qa.wk === curWk);
+              const wq = Object.assign({}, (same && qa.wq && typeof qa.wq === 'object') ? qa.wq : {});
+              let wa = same ? (qa.wa || 0) : 0, wc = same ? (qa.wc || 0) : 0;
+              let keyN = Object.keys(wq).length;
+              pend.forEach(function(p){
+                const s = subj[p.s] || { a: 0, c: 0 };
+                subj[p.s] = { a: (s.a || 0) + 1, c: (s.c || 0) + (p.ok ? 1 : 0) };
+                tot.a += 1; tot.c += (p.ok ? 1 : 0);
+                if(p.w === curWk && !Object.prototype.hasOwnProperty.call(wq, p.k) && keyN < WQ_KEY_CAP){
+                  wq[p.k] = p.ok ? 1 : 0; keyN++; wa++; if(p.ok) wc++;
+                }
+              });
+              const nqa = { v: 1, subj: subj, tot: tot, wk: curWk, wq: wq, wa: wa, wc: wc, updatedAt: Date.now() };
+              if(snap.exists()) tx.update(PRIV_DOC(uid), { uid: uid, quizAcc: nqa });
+              else tx.set(PRIV_DOC(uid), { uid: uid, quizAcc: nqa });
+              return { wa: wa, wc: wc, wk: curWk };
+            });
+            // 只移除這次送出的(送出途中又答的題目保留)
+            const now = _readPend(uid);
+            _writePend(uid, now.slice(n));
+          }
+          // 排行榜格子:每人最多 3 分鐘寫一次(本週第一次立即);管理員不上榜
+          if(!_isAdmin()){
+            const meta = _readMeta(uid);
+            if(res){ meta.wk = res.wk; meta.wa = res.wa; meta.wc = res.wc; meta.dirty = true; _writeMeta(uid, meta); }
+            const due = meta.dirty && meta.wk === curWk && (forceStats || !meta.at || meta.statsWk !== curWk || (Date.now() - meta.at) >= STATS_GAP);
+            if(due){
+              try{ await _lxpsStatsEnsure('wq'); }catch(_){}
+              const email = ((window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.email) || '').toLowerCase();
+              const nameRaw = window._playerNickname || '玩家';
+              const name = (typeof window._formatPlayerDisplayName === 'function') ? (window._formatPlayerDisplayName(nameRaw, email) || nameRaw) : nameRaw;
+              const upd = {};
+              upd['quizAccWeekly.' + curWk + '.' + uid] = { n: name, e: email, a: meta.wa || 0, c: meta.wc || 0, at: Date.now() };
+              await updateDoc(STATS_DOC(), upd);
+              meta.at = Date.now(); meta.statsWk = curWk; meta.dirty = false; _writeMeta(uid, meta);
+            }
+          }
+          return res;
+        }catch(e){ console.warn('[答對率] flush 失敗(下次再送)', e); return null; }
+        finally{ _inFlight = false; }
+      }
+
+      // 讀自己的完整紀錄(會員資料「我的答對率」用)
+      async function readMine(){
+        const uid = window._gUserId; if(!uid) return null;
+        try{ await flushNow(); }catch(_){}
+        try{
+          const snap = await getDoc(PRIV_DOC(uid));
+          const d = snap.exists() ? (snap.data() || {}) : {};
+          const qa = d.quizAcc || null;
+          if(qa && qa.wk !== getWeekKey()){ qa.wa = 0; qa.wc = 0; qa.wq = {}; qa.wk = getWeekKey(); }
+          return qa || { subj: {}, tot: { a: 0, c: 0 }, wa: 0, wc: 0, wk: getWeekKey() };
+        }catch(e){ console.warn('[答對率] readMine 失敗', e); return { error: (e && e.code) || 'read-failed' }; }
+      }
+
+      function _rankList(weekMap, onlyEligible){
+        const list = [];
+        for(const uid in (weekMap || {})){
+          const e = weekMap[uid];
+          if(!e || !(e.a > 0)) continue;
+          if(_ADMIN_EMAILS.has(String(e.e || '').toLowerCase())) continue;
+          if(onlyEligible && e.a < MIN_Q) continue;
+          list.push({ uid: uid, name: e.n || '玩家', email: e.e || '', a: e.a || 0, c: Math.min(e.c || 0, e.a || 0), at: e.at || 0 });
+        }
+        list.sort(function(x, y){
+          const px = x.c / x.a, py = y.c / y.a;
+          if(Math.abs(px - py) > 1e-9) return py - px;
+          if(x.a !== y.a) return y.a - x.a;
+          return (x.at || 0) - (y.at || 0);
+        });
+        return list;
+      }
+      function getTopN(n){
+        try{
+          const gs = window._cachedGlobalStats || {};
+          const wm = (gs.quizAccWeekly && gs.quizAccWeekly[getWeekKey()]) || {};
+          return _rankList(wm, true).slice(0, n || 50);
+        }catch(_){ return []; }
+      }
+      function getMyRank(){
+        try{
+          const uid = window._gUserId;
+          const gs = window._cachedGlobalStats || {};
+          const wm = (gs.quizAccWeekly && gs.quizAccWeekly[getWeekKey()]) || {};
+          const list = _rankList(wm, true);
+          const idx = uid ? list.findIndex(function(e){ return e.uid === uid; }) : -1;
+          const meta = uid ? _readMeta(uid) : {};
+          const cloud = (uid && wm[uid]) || null;
+          let a = cloud ? (cloud.a || 0) : 0, c = cloud ? (cloud.c || 0) : 0;
+          if(meta.wk === getWeekKey() && (meta.wa || 0) > a){ a = meta.wa || 0; c = meta.wc || 0; }
+          return { rank: idx >= 0 ? idx + 1 : 0, a: a, c: c, total: list.length, need: Math.max(0, MIN_Q - a) };
+        }catch(_){ return { rank: 0, a: 0, c: 0, total: 0, need: MIN_Q }; }
+      }
+
+      // 與小博士同級距(老師:「獎勵同知識王」)
+      function _awardByRank(rank){
+        if(rank === 1)               return { coins: 100000, crystals: 10, books: 10 };
+        if(rank >= 2 && rank <= 5)   return { coins: 70000,  crystals: 6,  books: 6 };
+        if(rank >= 6 && rank <= 10)  return { coins: 50000,  crystals: 3,  books: 3 };
+        if(rank >= 11 && rank <= 30) return { coins: 30000,  crystals: 2,  books: 2 };
+        if(rank >= 31 && rank <= 50) return { coins: 10000,  crystals: 1,  books: 1 };
+        return null;
+      }
+
+      async function trySettleLastWeek(){
+        if(!window._gUserId || !_fbDb) return false;
+        const lastWk = getLastWeekKey(), curWk = getWeekKey();
+        if(!lastWk) return false;
+        try{ await _lxpsStatsEnsure('wq'); }catch(_){}
+        try{
+          const r = await runTransaction(_fbDb, async (tx) => {
+            const snap = await tx.get(STATS_DOC());
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            const settled = data.quizAccSettlement || {};
+            if(settled[lastWk]) return { settled: false };
+            const qaw = data.quizAccWeekly || {};
+            const list = _rankList(qaw[lastWk] || {}, true).slice(0, 50);
+            const awards = {};
+            list.forEach(function(e, i){
+              const a = _awardByRank(i + 1);
+              if(a) awards[e.uid] = Object.assign({ rank: i + 1, name: e.name, a: e.a, c: e.c, pct: Math.round(e.c * 1000 / e.a) / 10 }, a);
+            });
+            const sd = {};
+            sd[lastWk] = { settledAt: Date.now(), settledBy: window._gUserId, count: list.length, awards: awards, minQ: MIN_Q };
+            try{
+              const all = Array.from(new Set(Object.keys(settled).concat([lastWk]))).sort();
+              while(all.length > 6){ const drop = all.shift(); if(drop !== lastWk) sd[drop] = deleteField(); }
+            }catch(_){}
+            const wd = {};
+            Object.keys(qaw).forEach(function(w){ if(w !== curWk) wd[w] = deleteField(); });   // 只留本週(上週已結算進 settlement)
+            tx.set(STATS_DOC(), { quizAccSettlement: sd, quizAccWeekly: wd }, { merge: true });
+            return { settled: true, count: list.length };
+          });
+          if(r.settled) console.log('[答對率排行] ✅ 上週(' + lastWk + ')結算完成,上榜 ' + r.count + ' 位');
+          return !!r.settled;
+        }catch(e){ console.warn('[答對率排行] 結算失敗', e); return false; }
+      }
+
+      function _claimedLocalKey(uid, wk){ return 'lxps_qacc_claimed_' + uid + '_' + wk; }
+      async function claimMyAward(){
+        const uid = window._gUserId; if(!uid || !_fbDb) return null;
+        try{
+          const gs = window._cachedGlobalStats || {};
+          let sm = gs.quizAccSettlement || null;
+          if(!sm || !Object.keys(sm).length){
+            try{ const s = await getDoc(STATS_DOC()); sm = s.exists() ? ((s.data() || {}).quizAccSettlement || {}) : {}; }catch(_){ sm = {}; }
+          }
+          const weeks = Object.keys(sm).sort().reverse();
+          let wk = null, aw = null;
+          for(const w of weeks){
+            const a = (sm[w] && sm[w].awards) || {};
+            if(a[uid]){
+              try{ if(localStorage.getItem(_claimedLocalKey(uid, w)) === '1') continue; }catch(_){}
+              wk = w; aw = a[uid]; break;
+            }
+          }
+          if(!wk) return null;
+          const res = await runTransaction(_fbDb, async (tx) => {
+            const snap = await tx.get(PLAYER_DOC(uid));
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            const cm = (data.quizAccClaimed && typeof data.quizAccClaimed === 'object') ? data.quizAccClaimed : {};
+            if(cm[wk]) return { already: true };
+            const bp = Object.assign({}, (data.playerBackpack && typeof data.playerBackpack === 'object') ? data.playerBackpack : {});
+            bp['summon_crystal'] = Math.min(99, (bp['summon_crystal'] || 0) + (aw.crystals || 0));
+            bp['hero_exp_book_deluxe'] = Math.min(99, (bp['hero_exp_book_deluxe'] || 0) + (aw.books || 0));
+            const ncm = Object.assign({}, cm); ncm[wk] = Date.now();
+            tx.set(PLAYER_DOC(uid), {
+              knowledgeCoins: (data.knowledgeCoins || 0) + (aw.coins || 0),
+              playerBackpack: bp,
+              playerBackpack_s: JSON.stringify(bp),
+              quizAccClaimed: ncm,
+            }, { merge: true });
+            return Object.assign({ weekKey: wk }, aw);
+          });
+          try{ localStorage.setItem(_claimedLocalKey(uid, wk), '1'); }catch(_){}
+          if(!res || res.already) return null;
+          try{
+            if(typeof _knowledgeCoins !== 'undefined' && res.coins) window._knowledgeCoins = (_knowledgeCoins || 0) + res.coins;
+            if(typeof _playerBackpack === 'object' && _playerBackpack){
+              if(res.crystals > 0) _playerBackpack['summon_crystal'] = Math.min(99, (_playerBackpack['summon_crystal'] || 0) + res.crystals);
+              if(res.books > 0) _playerBackpack['hero_exp_book_deluxe'] = Math.min(99, (_playerBackpack['hero_exp_book_deluxe'] || 0) + res.books);
+            }
+            if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
+            if(typeof refreshAllCoinsDisplay === 'function') refreshAllCoinsDisplay();
+            if(typeof _logCrystalTx === 'function' && res.crystals > 0) _logCrystalTx(res.crystals, '答對率排行獎勵(第' + res.rank + '名)');
+            if(typeof _logCoinTx === 'function' && res.coins > 0) _logCoinTx(res.coins, '答對率排行獎勵(第' + res.rank + '名)');
+          }catch(_se){ console.warn('[答對率排行 領獎] 本地同步', _se); }
+          return res;
+        }catch(e){ console.warn('[答對率排行] 領獎失敗', e); return null; }
+      }
+
+      // GM:查單一玩家(uid 或 email)
+      async function adminLookup(q){
+        q = String(q || '').trim(); if(!q) throw new Error('請輸入信箱或 uid');
+        let uid = q, email = '', name = '';
+        if(q.indexOf('@') >= 0){
+          const s = await getDocs(query(collection(_fbDb, 'players'), where('email', '==', q.toLowerCase()), limit(3)));
+          if(s.empty) throw new Error('找不到這個信箱的玩家');
+          const d0 = s.docs[0]; uid = d0.id; email = (d0.data() || {}).email || q; name = (d0.data() || {}).displayName || '';
+        } else {
+          try{ const p = await getDoc(PLAYER_DOC(uid)); if(p.exists()){ email = (p.data() || {}).email || ''; name = (p.data() || {}).displayName || ''; } }catch(_){}
+        }
+        const snap = await getDoc(PRIV_DOC(uid));
+        const qa = snap.exists() ? ((snap.data() || {}).quizAcc || null) : null;
+        if(qa && qa.wk !== getWeekKey()){ qa.wa = 0; qa.wc = 0; qa.wk = getWeekKey(); }
+        return { uid: uid, email: email, name: name, quizAcc: qa };
+      }
+      // GM:本週全部(含未滿 100 題)
+      function adminWeekAll(){
+        const gs = window._cachedGlobalStats || {};
+        return _rankList((gs.quizAccWeekly && gs.quizAccWeekly[getWeekKey()]) || {}, false);
+      }
+
+      // 離開/切到背景:把暫存送出(排行榜格子也一併補寫)
+      function _onExit(){ try{ const uid = window._gUserId; if(uid && (_readPend(uid).length || _readMeta(uid).dirty)) flushNow(true).catch(function(){}); }catch(_){} }
+      try{
+        window.addEventListener('pagehide', _onExit);
+        document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') _onExit(); });
+        setInterval(function(){ try{ const uid = window._gUserId; if(uid && (_readPend(uid).length || _readMeta(uid).dirty)) flushNow().catch(function(){}); }catch(_){} }, 60 * 1000);
+      }catch(_){}
+
+      window._quizAcc = {
+        MIN_Q: MIN_Q, record: record, flushNow: flushNow, readMine: readMine, qKey: qKey,
+        getTopN: getTopN, getMyRank: getMyRank, awardByRank: _awardByRank,
+        trySettleLastWeek: trySettleLastWeek, claimMyAward: claimMyAward,
+        adminLookup: adminLookup, adminWeekAll: adminWeekAll, getWeekKey: getWeekKey
+      };
+      console.log('[答對率] ✅ 各科答對率＋每週答對率排行模組已掛載');
     })();
 
     // ════════════════════════════════════════════════════════════════════
