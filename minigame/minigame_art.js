@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -351,6 +351,15 @@ var CSS = [
 '#art-root *{box-sizing:border-box}',
 'html.art-mode #toast{z-index:9900 !important;font-size:max(17px,2.6vmin)}html.art-mode #loading{z-index:9800 !important}html.art-mode #page-home,html.art-mode #topbar{display:none !important}',
 '#art-root .vil{position:absolute;inset:0}',
+/* ★ v1.1.4 藝術村地圖首頁(三平台:contain 等比,兩側模糊補邊;入口標籤字級隨地圖寬) */
+'#art-root .vmap{background:#2b2335 center/cover no-repeat}#art-root .vmap::before{content:"";position:absolute;inset:0;backdrop-filter:blur(14px) brightness(.55);-webkit-backdrop-filter:blur(14px) brightness(.55)}',
+'#art-root .vmw{position:absolute;left:50%;top:50%;width:min(100vw,177.68vh);height:min(56.28vw,100vh);transform:translate(-50%,-50%);container-type:inline-size}',
+'#art-root .vmw img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;-webkit-user-drag:none}#art-root .vmw .mg{filter:grayscale(1) brightness(.92)}#art-root .vmw .mc{transition:opacity 1.6s ease}',
+'#art-root .spot{position:absolute;transform:translate(-50%,-50%);border:.3vmin solid #fff;border-radius:3vmin;background:rgba(43,35,53,.82);color:#fff;font-weight:900;font-size:clamp(13px,1.45cqw,26px);padding:.35em .7em;display:flex;align-items:center;gap:.3em;white-space:nowrap;box-shadow:0 .5vmin 1.2vmin rgba(0,0,0,.4);cursor:pointer;touch-action:manipulation;font-family:inherit}',
+'#art-root .spot:active{transform:translate(-50%,-50%) scale(.94)}#art-root .spot.lk{background:rgba(90,90,90,.8)}#art-root .spot.hot{background:linear-gradient(135deg,#ff7aa8,#8a5cf0)}',
+'#art-root .vmap~.ghostm{left:62%;top:44%}',   /* 地圖模式:褪色魔飄在噴泉右邊,不擋工坊 */
+'#art-root .vmap.nolb .spot .lb{display:none}#art-root .vmap.nolb .spot{font-size:clamp(18px,2.2cqw,34px);padding:.25em .4em}',
+'@media (orientation:landscape) and (max-height:520px){#art-root .spot{font-size:clamp(12px,1.9cqw,20px)}}',
 '#art-root .vil svg{width:100%;height:100%;display:block}',
 /* ★ v1.1.0 第 8 項:黑白底圖+彩色圖疊上去,用透明度淡入(不再整張 SVG 套灰階濾鏡,舊平板不卡) */
 '#art-root .vil .vg,#art-root .vil .vc{position:absolute;inset:0}#art-root .vil .vc{transition:opacity 1.6s ease;will-change:opacity}',
@@ -570,23 +579,44 @@ function villageSvg(gray){
   h += '</svg>';
   return h;
 }
+/* ══ ★ v1.1.4 藝術村地圖首頁:GPT 圖(D.MAP.img)整張等比放進畫面(contain,兩側模糊補邊),入口=地圖上的標籤鈕(D.MAP.spots,% 座標)
+   恢復度沿用:底圖黑白、上面疊彩色同一張圖,彩色層透明度 = 恢復度(與 SVG 村子同一個 #art-vc,建造後一樣淡入)。
+   擺設裝飾(✋)時暫時切回 SVG 村子;地圖圖片載入失敗也自動退回 SVG。名稱標籤可在右上 🏷 隱藏(art_nolb)。 */
+function mapOn(){ return !!(D.MAP && D.MAP.img && A.mapBad !== true && !A.arrange); }
+function mapUrl(){ try{ if(window.mgPicUrl) return window.mgPicUrl(D.MAP.img); }catch(e){} return 'img/' + D.MAP.img; }
+function mapHtml(op){
+  var h = '', i, s, W, lk, u = mapUrl(), nolb = lsGet('art_nolb') === '1';
+  h += '<div class="vil vmap' + (nolb ? ' nolb' : '') + '" id="art-vil" style="background-image:url(\'' + esc(u) + '\')"><div class="vmw">';
+  h += '<img class="mg" src="' + esc(u) + '" alt="" onerror="window.ARTW&&window.ARTW._mapBad()"><img class="mc" id="art-vc" src="' + esc(u) + '" alt="" style="opacity:' + (op / 100).toFixed(3) + '">';
+  for(i = 0; i < D.MAP.spots.length; i++){ s = D.MAP.spots[i]; lk = false;
+    if(s.k === 'ws'){ W = wsDef(s.id); if(!W) continue; lk = !wsOpen(W); h += '<button class="spot' + (lk ? ' lk' : '') + '" data-ws="' + s.id + '" style="left:' + s.x + '%;top:' + s.y + '%">' + (lk ? '🔒' : W.e) + '<span class="lb">' + esc(W.n) + '</span></button>'; }
+    else h += '<button class="spot' + (s.k === 'dsg' ? ' hot' : '') + '" data-k="' + s.k + '" style="left:' + s.x + '%;top:' + s.y + '%">' + s.e + '<span class="lb">' + esc(s.n) + '</span></button>'; }
+  return h + '</div></div>';
+}
+function boardPanel(){
+  var h = '<h3>📌 比賽活動看板</h3>', i, ev;
+  if(!A.evs.length) h += '<p>現在沒有進行中的比賽或每週主題,老師開了就會貼在這裡!</p>';
+  for(i = 0; i < A.evs.length; i++){ ev = A.evs[i]; h += '<div class="scard" data-ev="' + esc(ev.id) + '" style="cursor:pointer">' + (ev.type === 'contest' ? '⚔️ 比賽:' : '🗓 本週主題:') + esc(String(ev.title || '')) + '</div>'; }
+  modal(h, [{ t: '📅 今日挑戰', cls: 'ghost', cb: dailyPanel }, { t: '好' }], { onOpen: function(m){ m.onclick = function(e){ var t = upFind(e.target, 'data-ev'); if(!t) return; modalClose(); evOpen(t.getAttribute('data-ev')); }; } });
+}
 function hubHtml(){
   var u = user(), r = resNow(), pct = restorePct(), g = 1 - pct / 100, h = '', op = A.flashFrom != null ? A.flashFrom : pct, dl = dailyList(), dn = 0, i, ev;
   for(i = 0; i < dl.length; i++){ if(A.save.dq[dayKey() + '_' + dl[i].id]) dn++; }
-  h += '<div class="vil" id="art-vil"><div class="vg">' + villageSvg(true) + '</div><div class="vc" id="art-vc" style="opacity:' + (op / 100).toFixed(3) + '">' + villageSvg(false) + '</div></div>';
+  if(mapOn()) h += mapHtml(op);   /* ★ v1.1.4 老師:進入後先顯示藝術村背景地圖首頁(GPT 繪製),各項目入口放在地圖上 */
+  else h += '<div class="vil" id="art-vil"><div class="vg">' + villageSvg(true) + '</div><div class="vc" id="art-vc" style="opacity:' + (op / 100).toFixed(3) + '">' + villageSvg(false) + '</div></div>';
   if(pct < 100) h += '<div class="ghostm" style="opacity:' + (0.35 + 0.65 * g).toFixed(2) + ';transform:scale(' + (0.6 + 0.4 * g).toFixed(2) + ')"><div></div></div>';
   h += '<div class="hud">';
   h += '<div class="achip btn" data-k="who">' + (u ? '👤 ' + esc(String(uName(u)).slice(0, 10)) : '👤 訪客 🔑') + '</div>';
   h += '<div class="achip restore" id="art-restore">🌈 <div class="bar"><i style="width:' + pct + '%"></i></div> ' + pct + '%</div>';
   h += '<div class="achip" title="顏料" id="art-r-paint">' + D.RES.paint.e + ' ' + Math.max(0, r.paint) + '</div><div class="achip" title="靈感" id="art-r-idea">' + D.RES.idea.e + ' ' + Math.max(0, r.idea) + '</div><div class="achip" title="畫材" id="art-r-mat">' + D.RES.mat.e + ' ' + Math.max(0, r.mat) + '</div>';
   h += '<div class="achip" title="本週藝術積分">⭐ ' + weekPts() + '</div>';
-  h += '<div class="sp"></div>' + (isGm() ? '<div class="achip btn" data-k="gm" title="老師台">🧑‍🏫</div>' : '') + '<div class="achip btn" data-k="set">⚙</div>';
+  h += '<div class="sp"></div>' + (mapOn() ? '<div class="achip btn" data-k="lbl" title="顯示/隱藏地圖名稱">🏷</div>' : '') + (isGm() ? '<div class="achip btn" data-k="gm" title="老師台">🧑‍🏫</div>' : '') + '<div class="achip btn" data-k="set">⚙</div>';
   h += '</div>';
   /* 左下:每日挑戰+進行中的比賽/每週主題 */
   h += '<div class="lchips" style="position:absolute;left:1.6vmin;bottom:1.6vmin;display:flex;flex-direction:column;gap:1vmin;align-items:flex-start;z-index:5">';
   for(i = 0; i < A.evs.length; i++){ ev = A.evs[i]; h += '<div class="achip btn ev' + (ev.type === 'contest' ? ' hot' : '') + '" data-ev="' + esc(ev.id) + '">' + (ev.type === 'contest' ? '⚔️ 比賽:' : '🗓 本週主題:') + esc(String(ev.title || '').slice(0, 10)) + ' <span data-evt="' + esc(ev.id) + '">' + evLeftTxt(ev) + '</span></div>'; }
   h += '<div class="achip btn" data-k="daily" id="art-daily">📅 今日挑戰 ' + dn + '/' + dl.length + '</div></div>';
-  h += '<div class="dock"><button data-k="build" class="go">🏗 建造</button><button data-k="studio">🎨 畫室</button><button data-k="coll">📒 收藏</button><button data-k="rank">🏆 排行</button><button data-k="help">📖 說明</button><button data-k="exit">🚪 離開</button></div>';
+  h += '<div class="dock"><button data-k="build" class="go">🏗 建造</button><button data-k="studio">🎨 畫室</button><button data-k="coll">📒 收藏</button><button data-k="rank">🏆 排行</button><button data-k="help">📖 說明</button><button data-k="dsg">✏️ 設計師</button><button data-k="exit">🚪 離開</button></div>';   /* ★ v1.1.4 遊戲美術設計師工作室入口(獨立專案,?mode=designer) */
   if(A.arrange) h += '<div class="arr-bar">✋ 拖曳裝飾換位置 <button class="abtn ghost" data-k="arrReset">↺ 預設位置</button><button class="abtn go" data-k="arrDone">✅ 擺好了</button></div>';
   return h;
 }
@@ -611,6 +641,9 @@ function paintHub(){
     else if(k === 'rank') rankPanel();
     else if(k === 'help') helpPanel();
     else if(k === 'exit') exitAsk();
+    else if(k === 'dsg') exitNow('minigame_index.html?mode=designer&from=art');   /* ★ v1.1.4 */
+    else if(k === 'board') boardPanel();
+    else if(k === 'lbl'){ lsSet('art_nolb', lsGet('art_nolb') === '1' ? '0' : '1'); paintHub(); toast(lsGet('art_nolb') === '1' ? '🏷 地圖名稱已隱藏' : '🏷 地圖名稱已顯示'); }
     else if(k === 'set') setPanel();
     else if(k === 'daily') dailyPanel();
     else if(k === 'coll') collPanel();
@@ -761,14 +794,14 @@ function gate(kind){
 }
 function villageSvgEmpty(){ return '<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%"><rect width="1600" height="900" fill="#cfd6dc"/><path d="M0 470 Q400 340 800 450 T1600 420 L1600 900 L0 900 Z" fill="#9aa39a"/></svg>'; }
 function exitAsk(){ confirmBox('離開創藝工坊?進度已經存好了。', function(ok){ if(ok) exitNow(); }); }
-function exitNow(){
+function exitNow(toUrl){
   musicStop();
   try{ if(A.save && !A.guest && ownerOk()) saveNow(); else if(A.save) localWrite(false); }catch(e){}
   try{ if(A.cv && A.cv.close) A.cv.close(true); }catch(e2){}
   modalClose();
   try{ if(B.handoff) B.handoff(); }catch(e3){}
   if(B.loading) B.loading(true);
-  setTimeout(function(){ A.on = false; try{ location.href = '../'; }catch(e4){} }, 700);   /* 與荒島 islExitNow 相同:讓雲端寫入有 700ms 送出,回主程式首頁 */
+  setTimeout(function(){ A.on = false; try{ location.href = (typeof toUrl === 'string' && toUrl) ? toUrl : '../'; }catch(e4){} }, 700);   /* 與荒島 islExitNow 相同:讓雲端寫入有 700ms 送出,回主程式首頁(★ v1.1.4 也可指定去處:美術設計師工作室) */
 }
 
 /* ══ 進入 ══ */
@@ -2344,6 +2377,7 @@ function ratioPick(){
 
 /* ══ 對外 ══ */
 window.ARTW = { ver: ART_VER, enter: function(){ enter(); setTimeout(idbSweep, 4000); }, onUser: onUser, isOn: function(){ return A.on; },
+  _mapBad: function(){ if(A.mapBad) return; A.mapBad = true; try{ if(A.screen === 'hub' && !$('art-modal')) paintHub(); }catch(e){} },   /* ★ v1.1.4 地圖圖片載不到 ⇒ 退回 SVG 村子 */
   _test: { merge: merge, norm: norm, resEarned: resEarned, evalDraw: evalDraw, weekKey: weekKey, dayKey: dayKey, dayAdd: dayAdd, A: A, SRV: SRV, DEV: DEV, ptsAdd: ptsAdd, ptsSanitize: ptsSanitize, cloudDoc: cloudDoc,
     dailyList: dailyList, dailyHit: dailyHit, subjectCheck: subjectCheck, dotCount: dotCount, paintInfo: paintInfo, quizShuffle: quizShuffle, liteAuto: liteAuto, hasCard: hasCard, weekPts: weekPts, srvNow: srvNow, cloudSync: cloudSync, evRefresh: evRefresh, svgStyle: svgStyle } };
 })();
