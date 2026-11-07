@@ -3023,6 +3023,15 @@ try{
   }
   .wb-tc-start-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 0 40px rgba(255,200,80,0.95),0 6px 18px rgba(0,0,0,0.6);}
   .wb-tc-start-btn:active:not(:disabled){ transform:translateY(1px); }
+  /* ★ v5.361.0 房主選本場出題範圍(一般題庫 / 📝 考試複習) */
+  .wb-tc-quizsrc-btn{
+    padding:12px 18px;font-size:22px;font-weight:800;min-height:64px;max-width:340px;
+    border:2px solid #88ccff;color:#e8f4ff;border-radius:12px;cursor:pointer;font-family:inherit;
+    background:linear-gradient(135deg,#1f3b66,#162845);line-height:1.25;text-align:center;
+    white-space:normal;word-break:break-all;
+    user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  }
+  .wb-tc-quizsrc-btn.exam{ border-color:#7be0a0;background:linear-gradient(135deg,#1d5a3a,#123826);color:#eafff0; }
   .wb-tc-start-btn:disabled{
     background:#444;color:#888;cursor:not-allowed;box-shadow:none;opacity:0.55;
     border-color:#666;
@@ -3158,6 +3167,7 @@ try{
       padding:16px 30px;font-size:28px;letter-spacing:2.5px;
       min-height:68px;min-width:200px;
     }
+    .wb-tc-quizsrc-btn{ padding:10px 14px;font-size:19px;min-height:60px;max-width:280px; }   /* ★ v5.361.0 iPad */
     .wb-tc-back-btn{
       padding:6px 12px;font-size:16px;
     }
@@ -3182,6 +3192,7 @@ try{
     .wb-tc-start-btn{
       padding:14px 22px;font-size:22px;min-height:60px;min-width:160px;letter-spacing:2px;
     }
+    .wb-tc-quizsrc-btn{ padding:8px 10px;font-size:16px;min-height:52px;max-width:200px; }   /* ★ v5.361.0 手機 */
     .wb-tc-coverage{ font-size:15px; }
     /* 手機右上角壓更小 */
     .wb-tc-topright{ top:6px;right:8px;gap:5px; }
@@ -4156,6 +4167,8 @@ try{
                               離開房間請用右上角的「離開房間」按鈕 -->
     <div class="wb-tc-start-zone">
       <div id="wb-tc-coverage" class="wb-tc-coverage">⏳ 等待全員確認...</div>
+      <!-- ★ v5.361.0(老師「丙」)房主選本場出題範圍 -->
+      <button id="wb-tc-quizsrc-btn" class="wb-tc-quizsrc-btn" onclick="_wbTcPickQuizSource()" style="display:none;">📚 出題:一般題庫</button>
       <button id="wb-tc-start-btn" class="wb-tc-start-btn" onclick="_wbTcHostStartBattle()" disabled>
         ⚔ 開戰!
       </button>
@@ -7428,6 +7441,7 @@ try{
     }
     if(startBtn){
       startBtn.style.display = meIsHost ? 'inline-block' : 'none';
+      try{ _wbTcPaintQuizSource(meIsHost); }catch(_eQsP){}   // ★ v5.361.0 出題範圍鈕(只有房主看得到)
       // ★ FIX 20260517(bb) — 開戰條件加上「元素必須覆蓋齊」
       //   原本只擋 allHumanReady(全員按準備),沒擋元素覆蓋,造成沒選元素也能開戰。
       //   元素閘門:cov.missing.length === 0(已扣掉房主代打/未指派 NPC 補位)
@@ -8540,6 +8554,66 @@ try{
   // 切換準備
   window._wbTcToggleReady = async function(){
     await window._wbNet.toggleReady();
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.361.0(老師 2026-11-07「丙」)— 房主選「本場出題範圍」
+  //   龍王戰所有題目都由房主這台出、廣播給全隊 ⇒ 選擇只存房主本機 window._wbQuizSubjectChoice
+  //   ('' = 一般題庫;'考試複習｜冊｜版本｜單元' = 考試複習)。開戰時 world-boss.js 的題庫預備會套用。
+  //   每次進房預設回到「一般題庫」(不沿用上一場,避免換人當房主時誤用別人的範圍)。
+  // ════════════════════════════════════════════════════════════════
+  function _wbTcQuizSourceLabel(){
+    const s = window._wbQuizSubjectChoice || '';
+    const cute = (window._artStyle === 'cute');
+    if(!s) return cute ? '📚 出題:一般題目(點我換)' : '📚 本場出題:一般題庫(點擊更換)';
+    return (cute ? '📝 出題:考試複習\n' : '📝 本場出題:考試複習\n') + s.replace(/^考試複習｜/, '');
+  }
+  function _wbTcPaintQuizSource(meIsHost){
+    const b = document.getElementById('wb-tc-quizsrc-btn');
+    if(!b) return;
+    // 換了房間 ⇒ 回到一般題庫(不沿用上一場的範圍)
+    try{
+      const _rid = (window._wbNet && window._wbNet.getRoomId) ? (window._wbNet.getRoomId() || '') : '';
+      if(window._wbQuizSrcRoom !== _rid){ window._wbQuizSrcRoom = _rid; window._wbQuizSubjectChoice = ''; }
+    }catch(_eRid){}
+    b.style.display = meIsHost ? 'inline-block' : 'none';
+    b.textContent = _wbTcQuizSourceLabel();
+    b.style.whiteSpace = 'pre-line';
+    b.classList.toggle('exam', !!window._wbQuizSubjectChoice);
+  }
+  window._wbTcPickQuizSource = function(){
+    try{
+      const old = document.getElementById('wb-qs-ov'); if(old) old.remove();
+      const cute = (window._artStyle === 'cute');
+      const ov = document.createElement('div');
+      ov.id = 'wb-qs-ov';
+      ov.style.cssText = 'position:fixed;inset:0;display:flex;align-items:safe center;justify-content:center;z-index:100050;background:rgba(0,0,0,0.6);';
+      const cur = window._wbQuizSubjectChoice || '';
+      ov.innerHTML =
+        '<div class="lxps-ovfit-card" style="background:#141c33;border:2px solid #88ccff;border-radius:16px;padding:18px 20px;'
+        + 'width:min(560px,92vw);max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;color:#eef;text-align:center;font-family:inherit;">'
+        + '<div style="font-size:clamp(20px,2.4vw,28px);font-weight:900;margin-bottom:8px;">' + (cute ? '這場要出什麼題目?' : '選擇本場出題範圍') + '</div>'
+        + '<div style="font-size:clamp(14px,1.6vw,18px);color:#b9c4dc;line-height:1.5;margin-bottom:14px;">'
+        + (cute ? '你是房主,全隊都會答你選的題目喔!' : '龍王戰的題目由房主出給全隊,這裡的選擇會套用到本場所有題目(開戰題、行動前題、全隊同時作答)。')
+        + (cur ? '<br>目前:<b style="color:#7be0a0;">' + cur.replace(/^考試複習｜/, '📝 ') + '</b>' : '') + '</div>'
+        + '<button id="wb-qs-normal" style="display:block;width:100%;margin:8px 0;padding:14px;font-size:clamp(18px,2vw,24px);font-weight:800;border-radius:12px;border:2px solid #88ccff;background:#1f3b66;color:#fff;font-family:inherit;cursor:pointer;">📚 ' + (cute ? '一般題目' : '一般題庫(全部科目)') + '</button>'
+        + '<button id="wb-qs-exam" style="display:block;width:100%;margin:8px 0;padding:14px;font-size:clamp(18px,2vw,24px);font-weight:800;border-radius:12px;border:2px solid #7be0a0;background:#1d5a3a;color:#fff;font-family:inherit;cursor:pointer;">📝 ' + (cute ? '考試複習(選範圍)' : '考試複習(選冊別/版本/單元)') + '</button>'
+        + '<button id="wb-qs-cancel" style="display:block;width:100%;margin:8px 0 0;padding:10px;font-size:clamp(15px,1.7vw,19px);border-radius:10px;border:1px solid #667;background:transparent;color:#aab;font-family:inherit;cursor:pointer;">' + (cute ? '不改了' : '取消') + '</button>'
+        + '</div>';
+      document.body.appendChild(ov);
+      const close = function(){ try{ ov.remove(); }catch(_){} try{ _wbTcPaintQuizSource(true); }catch(_){} };
+      ov.addEventListener('click', function(ev){ if(ev.target === ov) close(); });
+      document.getElementById('wb-qs-cancel').onclick = close;
+      document.getElementById('wb-qs-normal').onclick = function(){ window._wbQuizSubjectChoice = ''; close(); };
+      document.getElementById('wb-qs-exam').onclick = function(){
+        try{ ov.remove(); }catch(_){}
+        if(typeof window._wbOpenExamPicker !== 'function'){ _wbGameAlert('⚠ 考試複習題庫還沒載入,請重新整理後再試'); return; }
+        window._wbOpenExamPicker(function(subj){
+          if(subj) window._wbQuizSubjectChoice = subj;
+          try{ _wbTcPaintQuizSource(true); }catch(_){}
+        });
+      };
+    }catch(e){ console.warn('[WB 出題範圍] 選單開啟失敗', e); }
   };
 
   // 房主開戰(在隊伍確認頁的「⚔ 開戰!」按鈕)
@@ -12213,6 +12287,13 @@ try{
   //   開戰題每次都走「龐貝城」fallback,毫無題目多樣性,console 還洩漏紅字警告。
   window._wbPickRandomQuestion = function(){
     try{
+      // ★ v5.361.0(老師「丙」)— 房主選了「📝 考試複習」⇒ 這一題也從考試複習範圍抽(原本固定全題庫隨機)
+      try{
+        if(typeof window._wbPickSessionQuestion === 'function'){
+          var _wbExQ = window._wbPickSessionQuestion();
+          if(_wbExQ) return _wbExQ;
+        }
+      }catch(_eWbExQ){}
       if(typeof ADV_QUIZ_DB === 'undefined' || !Array.isArray(ADV_QUIZ_DB) || !ADV_QUIZ_DB.length){
         return null;
       }
@@ -14786,7 +14867,7 @@ try{
         </ul>
         <p style="font-size:26px;color:#aac;margin-top:10px;line-height:1.6;">
           用<b style="color:${_th.soft};">破盾元素(${_breakDisp})</b>各攻擊 1 次即可削減對應護盾,
-          <b style="color:#ffd966;">${_traitN} 單次傷害固定上限 5,000</b>(不隨 HP 變動)。整場共 ${_totalShieldLayers} 層護盾需破除,
+          <b style="color:#ffd966;">${_traitN} 傷害軟上限:每位英雄一次出手超過 5,000 的部分只算一半,最多 9,999</b>。整場共 ${_totalShieldLayers} 層護盾需破除,
           <b style="color:#ffd966;">第 11 回合戰場崩毀進入結算,你累積打出的傷害會完整計入全伺服器排名</b>。
         </p>
 
@@ -14844,7 +14925,7 @@ try{
         <!-- ★ v3.14.25 — 攻略提示破盾屬性依當前龍王動態(火龍王 水土草光;草龍王 火風暗) -->
         <ul style="font-size:28px;line-height:1.8;padding-left:30px;color:#e8d0b8;">
           <li>隊伍最好涵蓋<b style="color:${_th.soft};">${_breakDisp}</b>全部破盾屬性</li>
-          <li>BOSS 單次受傷上限<b style="color:#ffe066;">固定 5,000</b>(不隨 HP 變動),每位英雄一次出手(多段、暴擊合計)也最多 5,000,要靠多場累積拚排名</li>
+          <li>BOSS 有<b style="color:#ffe066;">傷害軟上限</b>:每位英雄一次出手(多段、暴擊合計)超過 5,000 的部分只算一半,最多 9,999,要靠多場累積拚排名</li>
           <li>第 4 / 9 回合改放<b style="color:#88ddff;">「減傷 / 護盾 / 免死」</b>類技能擋下爆發(不是補血)</li>
           <li>第 5、9 回合護盾啟動,記得當回合就破掉避免硬扛 80% 減傷</li>
           <li>留意 BOSS 的控場與 DoT(禁動 / 暈眩 / 燃燒 / 猛毒 / 出血等),評估用爆發或休息抵抗</li>

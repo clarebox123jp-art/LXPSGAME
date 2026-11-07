@@ -1093,6 +1093,35 @@ window._isHpPctProtected = function(t){
 //     否則呂布戟舞 8 段／劍神連斬 7 連會被整組壓死，難度躍升過猛。
 // ══════════════════════════════════════════════════════════════════════
 window._ADV_DMG_CAP = 5000;   // ★ 單一調整點：老師要改冒險關單下上限只改這一行
+// ══════════════════════════════════════════════════════════════════════
+// ★★ v5.361.0(老師 2026-11-07 裁定)— 世界龍王「傷害軟上限」★★
+//   老師原話:「龍王戰新增傷害軟上限:超過 5000 的傷害一律減半,最高 9999」。
+//   口徑沿用 v3.13.98「每位角色每回合累計」:同一位角色這回合打到龍王的所有傷害(多段/爆擊補扣/固定傷害)
+//   先加總成「原始累計」R,實際扣血 = F(R):R ≤ 5000 原樣;超過 5000 的部分 ×0.5;最多 9999。
+//   ⇒ 原始累計要到 14,998 才會打滿 9,999。每一下的實扣 = F(R 之後) − F(R 之前),多段技順序不影響總數。
+//   ⚠ 冒險 BOSS/菁英的單下 5000(_ADV_DMG_CAP)不動;龍王護盾回合 ×0.2、山岳地龍王 ×0.7 等既有減傷照舊(在軟上限之前算)。
+// ══════════════════════════════════════════════════════════════════════
+window._WB_SOFT_CAP = 5000;    // 超過這個數字的部分減半
+window._WB_HARD_CAP = 9999;    // 每位角色每回合實際扣血最多
+window._WB_RAW_CEIL = window._WB_SOFT_CAP + 2 * (window._WB_HARD_CAP - window._WB_SOFT_CAP);   // 14998:原始累計到這裡就打滿
+window._wbSoftCapF = function(x){
+  x = Math.max(0, Math.floor(x || 0));
+  var S = window._WB_SOFT_CAP, M = window._WB_HARD_CAP;
+  if(x <= S) return x;
+  return Math.min(M, S + Math.floor((x - S) / 2));
+};
+// 把「這一下」的傷害 dmg 記進目標本回合的原始累計,回傳實際要扣的血量(並同步 _wbTurnDmgTaken = 已實扣累計)
+window._wbSoftBudget = function(target, dmg){
+  try{
+    dmg = Math.max(0, Math.floor(dmg || 0));
+    var R0 = target._wbTurnRaw || 0;
+    var R1 = Math.min(window._WB_RAW_CEIL, R0 + dmg);
+    var eff = Math.max(0, window._wbSoftCapF(R1) - window._wbSoftCapF(R0));
+    target._wbTurnRaw = R1;
+    target._wbTurnDmgTaken = window._wbSoftCapF(R1);
+    return eff;
+  }catch(_){ return Math.min(dmg || 0, 5000); }
+};
 window._advDmgCap = function(target, dmg){
   try{
     if(!(typeof dmg === 'number') || dmg <= window._ADV_DMG_CAP) return dmg;
@@ -1110,9 +1139,23 @@ window._advDmgCap = function(target, dmg){
 //                        對菁英 5,000  →   250(比舊 1,000 收緊)= 老師要的「BOSS 有意義·菁英不被秒」
 window._hpPctCap = function(target, lvCap){
   try{
+    // ★ v5.361.0(老師 2026-11-07 裁定)— 世界龍王(1000 萬血)例外:當前HP 5% = 50 萬 ⇒ HP% 技能 Lv1 就頂到龍王上限。
+    //   龍王一律改回各技能自己的「英雄等級×N」上限(多數招式 = Lv×20,與圖鑑「上限=Lv×20」一致;
+    //   炸彈客爆發原為 Lv×15,老師 2026-11-07 裁定統一成 Lv×20;天神宙斯爆發程式本就 Lv×20,圖鑑同步改寫)。冒險 BOSS/菁英維持當前HP 5%,零改動。
+    if(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target)) return Math.max(1, lvCap || 1);
     if(!window._isHpPctProtected(target)) return lvCap;
     return Math.max(1, Math.floor((target.curHp || 0) * 0.05));
   }catch(_){ return lvCap; }
+};
+// ★ v5.361.0 — 給「沒有走 _hpPctCap」的 HP% 傷害用(夢境時光/暗黑洞/雙子命星):目標是世界龍王 ⇒ 夾在施放者英雄等級×20。
+//   非龍王目標原樣回傳 = 舊行為零改動。
+window._wbHpPctLvCap = function(target, dmg, actor){
+  try{
+    if(!(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target))) return dmg;
+    var _lv = 1;
+    try{ _lv = (typeof _lxHeroLv === 'function' && actor) ? (_lxHeroLv(actor) || 1) : 1; }catch(_eLv){ _lv = 1; }
+    return Math.max(1, Math.min(dmg, _lv * 20));
+  }catch(_){ return dmg; }
 };
 // ★ DoT(中毒/出血)每回合傷害「百分比」單一真相(老師裁定的新上限)
 //   kind:'poison' | 'bleed';strong:是否強力版
@@ -1124,6 +1167,17 @@ window._dotPct = function(target, kind, strong){
     if(kind === 'bleed') return _prot ? (strong ? 0.06 : 0.03) : (strong ? 0.09 : 0.06);
     return _prot ? (strong ? 0.04 : 0.02) : (strong ? 0.08 : 0.04);
   }catch(_){ return 0.04; }
+};
+// ★ v5.361.0(老師 2026-11-07 裁定)— 世界龍王身上的中毒/出血改「固定值」:普通 1500/強力(猛毒) 3000。
+//   舊算法 = 最大HP 2%~6% = 20～60 萬 ⇒ 每跳都頂到龍王上限,培養多少都一樣。
+//   ⚠ 山岳地龍王「畏毒」(中毒固定 1500/3000、繞過上限/減傷/護盾)維持原樣:中毒 tick 裡它的分支在前面先處理,本函式只回傳給其他情況。
+//   一般龍王的固定值仍照常吃「龍王攻擊值減傷」與上限(⇒ 畏毒龍王的弱點依然比較痛)。回傳 0 = 不是龍王,呼叫端走原算法。
+window._wbDotFixed = function(h, kind, strong){
+  try{
+    if(!(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(h))) return 0;
+    if(kind === 'poison' && h && h.name === '山岳地龍王') return 0;
+    return strong ? 3000 : 1500;
+  }catch(_){ return 0; }
 };
 // ★ _poisonAmt 覆寫版的收口:十餘個技能把「取得當下算出的 最大HP N%」當成「固定值」寫進
 //   h._poisonAmt(刺客淬毒之刃 10%/劇毒煙霧彈 15%/強化BUG 15%/千年發酵核爆 15%/等死不救 5%…),
@@ -1156,6 +1210,7 @@ window._bleedProcDmg = function(h){
     const _bs = (h.status||[]).find(s=>s && s.type==='bleed');
     const _strong = !!(_bs && _bs._strong);
     let _amt = Math.max(1, Math.floor((h.hp||1) * window._dotPct(h, 'bleed', _strong)));
+    try{ const _wbBf = window._wbDotFixed(h, 'bleed', _strong); if(_wbBf > 0) _amt = _wbBf; }catch(_eWbBf){}   // ★ v5.361.0 世界龍王:出血固定 1500/3000
     try{ const _cstAsKb = window._cstAsT2K(h, 'bleed'); if(_cstAsKb > 1){ _amt = Math.max(1, Math.floor(_amt * _cstAsKb)); log('✨ [刺客] 命星:毒血交織![' + h.name + '] 同時中毒與出血,出血傷害提升為 1.5 倍!'); } }catch(_eCstAsT2b){}   // ✨ 命星 刺客 t2   // ★ v5.262.0 裁定乙
     if(typeof doDmg === 'function'){
       doDmg(h, _amt, { ignoreBuffs:true, noGuard:true, _arenaScalingExempt:true, _isDotTick:true,
@@ -6560,7 +6615,7 @@ const BURST_UPGRADE_DEF = {
   //   ⚠ 爆發上限是 Lv×15(S1/S2 仍維持 Lv×10,爆發享有 1.5 倍上限作為威力差異)
   //   ★ v1.0.20260518.7000 — 平衡削弱:上限 Lv×20 → Lv×15 (Lv50 全體總:4000→3000)
   '炸彈客':{ rows: [
-    [0,'固定 200+目標30%HP 全體傷害(上限=Lv×15),自損至 10%'],
+    [0,'固定 200+目標30%HP 全體傷害(上限=Lv×20),自損至 10%'],
     [1,'固定 250+目標32%HP 全體傷害'],
     [2,'固定 300+目標34%HP 全體傷害'],
     [3,'固定 350+目標36%HP 全體傷害'],
@@ -6610,11 +6665,11 @@ const BURST_UPGRADE_DEF = {
     [4,'蓄積壓力 3 回合+結束時反擊倍率 165% (MAX)'],
   ] },
   '天神宙斯':{ rows: [
-    [0,'特技 600% + HP 25%(上限 Lv×15);非BOSS剩1HP;全體強力麻痺1回合'],
-    [1,'特技 660% + HP 25%(上限 Lv×15);非BOSS剩1HP;全體強力麻痺1回合'],
-    [2,'特技 720% + HP 25%(上限 Lv×15);非BOSS剩1HP;全體強力麻痺1回合'],
-    [3,'特技 780% + HP 25%(上限 Lv×15);非BOSS剩1HP;全體強力麻痺1回合'],
-    [4,'特技 840% + HP 25%(上限 Lv×15);非BOSS剩1HP;全體強力麻痺1回合 (MAX)'],
+    [0,'特技 600% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
+    [1,'特技 660% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
+    [2,'特技 720% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
+    [3,'特技 780% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合'],
+    [4,'特技 840% + HP 25%(上限 Lv×20);非BOSS剩1HP;全體強力麻痺1回合 (MAX)'],
   ] },
   // ★ v3.13.8(2026-05-31)— 朱玥爆發「百花盛開」升級表(5 年 5 班 16 號 陳廷羽設計,74 號英雄)
   //   v3.13.0 漏註冊 → 圖鑑升級資訊顯示通用 fallback(鐵律 1.139)
@@ -20855,7 +20910,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     log(`[${h.name}] 夢境時光!對全體敵人造成HP ${Math.round(_dmgPct*100)}% 傷害,攻擊/特技-${Math.round(_dreamReducePct*100)}% 持續 ${_dreamDur} 回合!`);
     playSfx('sfx-burst',0.85); flashScreen('rgba(180,220,255,1)',500);
     _foes4.forEach(t=>{
-      const _dmg=Math.max(1,Math.floor(t.hp*(0.10+_burstLv*0.05)));
+      let _dmg=Math.max(1,Math.floor(t.hp*(0.10+_burstLv*0.05)));
+      try{ _dmg = window._wbHpPctLvCap(t, _dmg, h); }catch(_eWbHpD){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
       doDmg(t,_dmg,{actor:h,isSkill:true,ignoreBuffs:true,piercing:true,isAoe:true,_pierceBossReduce:true});
       if(t.curHp>0){
         // ★ v1.0.20260424.1420 — 加入元素免疫檢查(土屬性對能力降低類有 50% 抵抗)
@@ -22410,8 +22466,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     const _bombHeroLv = (typeof _heroLevels !== 'undefined' && _lxHeroLv(h)) ? _lxHeroLv(h) : 1;
     /* 🔧 v5.256.0 修 bug:原寫 window._hpPctCap(f, …) 但 f 在這裡尚未宣告 ⇒ ReferenceError,爆發中斷(beginBatchTotals 也沒結束)。
        改成:_lvCap 為 Lv×15 基準,每個目標在迴圈內各自套 _hpPctCap(與 S1/S2 炸彈投擲同一寫法)。 */
-    const _lvCap = _bombHeroLv * 15;   // ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:Lv×15)
-    log(`💥 [${h.name}] 超級大爆炸!整個工坊的炸彈一次點燃!固定 ${_fixedBase}+目標 ${Math.round(_hpPct*100)}%HP(上限 Lv×15=${_lvCap})`);
+    const _lvCap = _bombHeroLv * 20;   // ★ v5.361.0 老師「統一成等級乘以 20」(舊:Lv×15) ｜ ★ v5.80.0 HP% 上限改制(老師裁定:高血菁英/BOSS 改吃「目標當前HP 5%」·非受保護目標維持原 Lv×N)(舊:Lv×15)
+    log(`💥 [${h.name}] 超級大爆炸!整個工坊的炸彈一次點燃!固定 ${_fixedBase}+目標 ${Math.round(_hpPct*100)}%HP(上限 Lv×20=${_lvCap})`);
     bannerFX(h, '💥 超級大爆炸!', '#ff3322', 1400);
     beginBatchTotals();
     const _foes = G[_opp].filter(x => x.curHp > 0);
@@ -22426,7 +22482,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         if(f.curHp <= 0) return;
         const _raw = _fixedBase + Math.floor(f.hp * _hpPct);
         const _finalDmg = Math.min(_raw, window._hpPctCap(f, _lvCap));   // 🔧 v5.256.0 每個目標各自套 HP% 上限
-        log(`💥 → [${f.name}] 受 ${_finalDmg} 固定傷害(${_fixedBase}+${Math.floor(f.hp * _hpPct)},上限 Lv×15=${_lvCap})`);
+        log(`💥 → [${f.name}] 受 ${_finalDmg} 固定傷害(${_fixedBase}+${Math.floor(f.hp * _hpPct)},上限 Lv×20=${_lvCap})`);
         try{ bannerFX(f, `💥 ${_finalDmg}!`, '#ff4422', 900); }catch(_){}
         doDmg(f, _finalDmg, { fixedDmg:true, actor:h, isSkill:true, ignoreBuffs:true });
         renderCard(f);
@@ -30560,6 +30616,7 @@ window._cstGmS2Rev = function(a){   // s2「雙生逆轉輪」:自損最大 HP 1
     var self = Math.max(1, Math.floor((a.hp || 1) * 0.10)); a.curHp = Math.max(1, a.curHp - self);
     var t = L.slice().sort(function(x, y){ return y.curHp - x.curHp; })[0];
     var cut = Math.max(1, Math.floor(t.curHp * (_cstS1Boss(t) ? 0.05 : 0.10)));
+    try{ cut = window._wbHpPctLvCap(t, cut, a); }catch(_eWbHpGm){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
     log('✨ [' + a.name + '] 命星:雙生逆轉輪!轉輪逆轉,用 ' + self + ' HP 換走 [' + t.name + '] 當前 HP 的 ' + (_cstS1Boss(t) ? 5 : 10) + '%(' + cut + ')!(本場 ' + a._cstGmS2.n + '/2)');
     doDmg(t, cut, { actor:a, isSkill:true, fixedDmg:true, mustHit:true, ignoreEvasion:true, noCrit:true, noCounter:true, _cstReact:1 });
     var g = window._cstCap.gainEnergy(a.side, 2, { gift:true });
@@ -34902,17 +34959,13 @@ function doDmg(target, rawDmg, opts={}){
     try{
       if(target && _isWorldBossTarget(target) /* ★ v3.13.98 認所有世界BOSS龍王(WORLD_BOSS_LINEUP) */
          && _wbCapStageOk() /* ★ v4.34.0 乙:龍王一律 cap,不依賴 _adventureStage(舊: && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') */){
-        if(rawDmg > 5000){
-          try{ log(`🔒 [${target.name}] 終極 cap(fixedDmg):傷害 ${rawDmg} → 5000`); }catch(_){}
-          rawDmg = 5000;
+        // ★ v5.361.0 軟上限(取代「單下 5000 + 每回合累計 5000」;舊碼備查:if(rawDmg>5000) rawDmg=5000;
+        //   const _wbBudgetFx = Math.max(0, 5000 - (target._wbTurnDmgTaken||0)); rawDmg=min(rawDmg,_wbBudgetFx); _wbTurnDmgTaken += rawDmg;)
+        const _wbFxIn = rawDmg;
+        rawDmg = window._wbSoftBudget(target, rawDmg);
+        if(rawDmg !== _wbFxIn){
+          try{ log(`🔒 [${target.name}] 傷害軟上限(固定傷害):${_wbFxIn} → ${rawDmg}(本回合已扣 ${target._wbTurnDmgTaken}/${window._WB_HARD_CAP},超過 ${window._WB_SOFT_CAP} 的部分減半)`); }catch(_){}
         }
-        // ★ v3.13.98 — 每位角色每回合對世界BOSS「累計」傷害上限 5000(與主路徑共用 _wbTurnDmgTaken)
-        const _wbBudgetFx = Math.max(0, 5000 - (target._wbTurnDmgTaken || 0));
-        if(rawDmg > _wbBudgetFx){
-          try{ log(`🔒 [${target.name}] 回合累計 cap(fixedDmg):${rawDmg} → ${_wbBudgetFx}`); }catch(_){}
-          rawDmg = _wbBudgetFx;
-        }
-        target._wbTurnDmgTaken = (target._wbTurnDmgTaken || 0) + rawDmg;
       }
     }catch(_eFinalCapFx){}
     // ★★ v5.89.0（老師需求③・鐵律 1.110／1.202「所有早退路徑都要同款 hook」）—
@@ -38048,20 +38101,14 @@ function doDmg(target, rawDmg, opts={}){
   try{
     if(target && _isWorldBossTarget(target) /* ★ v3.13.98 認所有世界BOSS龍王(WORLD_BOSS_LINEUP) */
        && _wbCapStageOk() /* ★ v4.34.0 乙:龍王一律 cap,不依賴 _adventureStage(舊: && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') */){
-      if(dmg > 5000){
-        try{ log(`🔒 [${target.name}] 終極 cap:傷害 ${dmg} → 5000`); }catch(_){}
-        dmg = 5000;
+      // ★ v5.361.0 軟上限(取代「單下 5000 + 每回合累計 5000」):同回合主路徑/固定傷害/爆擊補扣三條路共用同一份原始累計,
+      //   _wbTurnRaw/_wbTurnDmgTaken 在每位角色 startTurn 歸零。舊碼備查:if(dmg>5000) dmg=5000;
+      //   const _wbBudgetMain = Math.max(0, 5000 - (target._wbTurnDmgTaken||0)); dmg=min(dmg,_wbBudgetMain); _wbTurnDmgTaken += dmg;
+      const _wbMainIn = dmg;
+      dmg = window._wbSoftBudget(target, dmg);
+      if(dmg !== _wbMainIn){
+        try{ log(`🔒 [${target.name}] 傷害軟上限:${_wbMainIn} → ${dmg}(本回合已扣 ${target._wbTurnDmgTaken}/${window._WB_HARD_CAP},超過 ${window._WB_SOFT_CAP} 的部分減半)`); }catch(_){}
       }
-      // ★ v3.13.98 — 每位角色每回合對世界BOSS「累計」傷害上限 5000
-      //   老師需求:多段技(如爆發劍神連斬 7 連擊)合計不得突破 5000。
-      //   _wbTurnDmgTaken 在每位角色 startTurn 重置歸零(見 startTurn),
-      //   故同一回合內主路徑/固定傷害/爆擊補扣三條路共用同一額度,合計鎖 5000。
-      const _wbBudgetMain = Math.max(0, 5000 - (target._wbTurnDmgTaken || 0));
-      if(dmg > _wbBudgetMain){
-        try{ log(`🔒 [${target.name}] 回合累計 cap:${dmg} → ${_wbBudgetMain}(本回合已累計 ${target._wbTurnDmgTaken||0}/5000)`); }catch(_){}
-        dmg = _wbBudgetMain;
-      }
-      target._wbTurnDmgTaken = (target._wbTurnDmgTaken || 0) + dmg;
     }
   }catch(_eFinalCap){}
 
@@ -38961,7 +39008,7 @@ function doDmg(target, rawDmg, opts={}){
         // dmg 是「本次傷害事件總值(主+爆擊)」;若 dmg-_critExtra(主) + _critExtra(額外)= dmg > 5000,
         // 需把 _critExtraToDeduct 夾到「5000 - 主傷」之間
         const _mainDeducted = dmg - _critExtra;
-        const _budget = Math.max(0, 5000 - _mainDeducted);
+        const _budget = Math.max(0, (window._WB_HARD_CAP || 5000) - _mainDeducted);   // ★ v5.361.0 單次事件(主+爆擊)最多 9999;實際扣多少由下面的軟上限決定
         if(_critExtra > _budget){
           try{ log(`🔒 [${target.name}] 終極 cap(爆擊補扣):額外 ${_critExtra} → ${_budget}`); }catch(_){}
           _wbCritExtraToDeduct = _budget;
@@ -38973,12 +39020,12 @@ function doDmg(target, rawDmg, opts={}){
     // ★ v3.13.98 — 爆擊補扣也納入「每位角色每回合累計 5000」(主傷已於主閘門計入 _wbTurnDmgTaken)
     try{
       if(target && _isWorldBossTarget(target) && _wbCapStageOk() /* ★ v4.34.0 乙:龍王一律 cap,不依賴 _adventureStage(舊: && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') */){
-        const _wbCritBudget = Math.max(0, 5000 - (target._wbTurnDmgTaken || 0));
-        if(_wbCritExtraToDeduct > _wbCritBudget){
-          try{ log(`🔒 [${target.name}] 回合累計 cap(爆擊補扣):${_wbCritExtraToDeduct} → ${_wbCritBudget}`); }catch(_){}
-          _wbCritExtraToDeduct = _wbCritBudget;
+        // ★ v5.361.0 軟上限(舊碼備查:const _wbCritBudget = Math.max(0, 5000 - (target._wbTurnDmgTaken||0)); 夾住後累加)
+        const _wbCrIn = _wbCritExtraToDeduct;
+        _wbCritExtraToDeduct = window._wbSoftBudget(target, _wbCritExtraToDeduct);
+        if(_wbCritExtraToDeduct !== _wbCrIn){
+          try{ log(`🔒 [${target.name}] 傷害軟上限(爆擊補扣):${_wbCrIn} → ${_wbCritExtraToDeduct}`); }catch(_){}
         }
-        target._wbTurnDmgTaken = (target._wbTurnDmgTaken || 0) + _wbCritExtraToDeduct;
       }
     }catch(_eCritCumCap){}
     // ★ v3.16.36 — 王者尊嚴:鎖血回合 BOSS 不可被擊殺(爆擊額外補扣也守地板 1 HP,堵「非致命主傷 + 致命爆擊」穿透鎖血)
@@ -49257,6 +49304,7 @@ function execSkill(a, sk, cost, stype){
         try{ _cstDhOn = window._cstHasN(a,'s1','超鬼神王'); if(_cstDhOn){ _cstDhBoss = !!((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(t)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(t))); _cstDhStunned = hasStatus(t,'stun'); } }catch(_eCstDh1){ _cstDhOn = false; }
         let _hpDmg = Math.max(1, Math.floor((t.hp || 1) * 0.10));
         try{ if(_cstDhOn){ if(_cstDhBoss){ const _cstDhLv = (typeof _heroLevels !== 'undefined' && _heroLevels && _lxHeroLv(a)) ? _lxHeroLv(a) : 1; _hpDmg = Math.max(1, Math.min(_hpDmg, window._hpPctCap(t, _cstDhLv * 20))); } else if(_cstDhStunned){ _hpDmg = Math.max(1, Math.floor((t.hp || 1) * 0.15)); log('✨ ['+a.name+'] 命星:['+t.name+'] 已在暈眩中,改損失最大 HP 15%!'); } } }catch(_eCstDh2){}
+        try{ _hpDmg = window._wbHpPctLvCap(t, _hpDmg, a); }catch(_eWbHpDh){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
         doDmg(t, _hpDmg, {actor:a, isSkill:true, isAoe:true, ignoreBuffs:true, piercing:true, _pierceBossReduce:true});
         // 60% 機率(可升級)暈眩 1 回合
         let _cstDhChance = _stunChance, _cstDhBlock = false;
@@ -54361,6 +54409,9 @@ function endAction(a, cost, noFinish=false){
       let _featherDmg = _perFeather * _featherCount;
       // ✨ 命星 鳳凰 b1:命星熾羽(帶 _cstPhLv)對 BOSS 時,每層「最大HP 3%」部分上限 = 鳳凰 Lv×5;未點亮的熾羽不帶旗標 ⇒ 原樣
       try{ if(_feathers.some(function(s){ return s && s._cstPhLv; }) && ((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(a)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(a)))){ let _cstPhSum = 0; _feathers.forEach(function(s){ _cstPhSum += (s && s._cstPhLv) ? (15 + Math.min(Math.floor(a.hp * 0.03), s._cstPhLv * 5)) : _perFeather; }); _featherDmg = _cstPhSum; } }catch(_eCstPhB1d){ _featherDmg = _perFeather * _featherCount; }
+      // ★ v5.361.0(老師 2026-11-07「改成固定值」)— 世界龍王:每層熾羽固定 300(5 層 = 1,500 = 普通中毒一跳),
+      //   取代「15 + 最大HP 3%」(對 1000 萬血龍王每層 30 萬 ⇒ 每跳都頂上限)。放在命星 b1 上限之後 ⇒ 龍王一律固定值。
+      try{ if(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(a)) _featherDmg = 300 * _featherCount; }catch(_eWbPhF){}
       try{
         log(`🪶 熾羽 ${_featherCount} 層灼燒 [${a.name}]!行動後 -${_featherDmg} HP`);
         try{ bannerFX(a, `🪶 -${_featherDmg}`, '#ff8866', 700); }catch(_){}
@@ -56807,7 +56858,7 @@ function startTurn(){
        && typeof G !== 'undefined' && G && Array.isArray(G.p2)){
       for(let _bi=0; _bi<G.p2.length; _bi++){
         const _b = G.p2[_bi];
-        if(_b && _isWorldBossTarget(_b)) _b._wbTurnDmgTaken = 0;
+        if(_b && _isWorldBossTarget(_b)){ _b._wbTurnDmgTaken = 0; _b._wbTurnRaw = 0; }   // ★ v5.361.0 軟上限:原始累計一起歸零
       }
     }
   }catch(_eWbTurnReset){}
@@ -59609,6 +59660,7 @@ function nextRound(){
             ? window._dotAmtCap(h, h._poisonAmt, 'poison', _strong)
             : Math.max(1, Math.floor((h.hp||1) * window._dotPct(h, 'poison', _strong))));
       let _cstAsAmt = _amt; try{ const _cstAsK = window._cstAsT2K(h, 'poison'); if(_cstAsK > 1){ _cstAsAmt = Math.max(1, Math.floor(_amt * _cstAsK)); log('✨ [刺客] 命星:毒血交織![' + h.name + '] 同時中毒與出血,中毒傷害提升為 1.5 倍!'); } }catch(_eCstAsT2p){ _cstAsAmt = _amt; }   // ✨ 命星 刺客 t2   // ★ v5.262.0 裁定乙
+      try{ const _wbPf = window._wbDotFixed(h, 'poison', _strong); if(_wbPf > 0 && !_earthDragonPoison){ let _wbPk = 1; try{ _wbPk = window._cstAsT2K(h, 'poison') || 1; }catch(_eWbPk){ _wbPk = 1; } _cstAsAmt = (_wbPk > 1) ? Math.max(1, Math.floor(_wbPf * _wbPk)) : _wbPf; } }catch(_eWbPf){}   // ★ v5.361.0 世界龍王(山岳地龍王除外):中毒固定 1500/3000(取代 _poisonAmt/百分比;刺客命星「毒血交織」×1.5 照算,與出血一致)
       const _cstHcHp0 = h.curHp;   // ✨ v5.264.0 命星 地府酋長 s2:記下結算前 HP(只讀)
       doDmg(h, _cstAsAmt, {ignoreBuffs:true, noGuard:true, _dotIgnoreShield:true, _arenaScalingExempt:true, _isDotTick:true, _dotBypassBossCap:_earthDragonPoison, actor:(_ps&&_ps._dotSrc)||undefined, skillName:(_strong?'猛毒':'中毒')});  // ★ v3.16.45 — 中毒 tick 歸給施術者
       log(`☠️ ${_strong?'猛毒':'中毒'}侵蝕 [${h.name}] -${_cstAsAmt}HP!${_earthDragonPoison?' (畏毒弱點!)':''}`);
@@ -65229,6 +65281,7 @@ function aiUseSkill(a,sk,cost,pref){
       try{ _cstDhOn2 = window._cstHasN(a,'s1','超鬼神王'); if(_cstDhOn2){ _cstDhBoss2 = !!((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(t2)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(t2))); _cstDhStunned2 = hasStatus(t2,'stun'); } }catch(_eCstDh5){ _cstDhOn2 = false; }
       let _hpDmg = Math.max(1, Math.floor((t2.hp || 1) * 0.10));
       try{ if(_cstDhOn2){ if(_cstDhBoss2){ const _cstDhLv2 = (typeof _heroLevels !== 'undefined' && _heroLevels && _lxHeroLv(a)) ? _lxHeroLv(a) : 1; _hpDmg = Math.max(1, Math.min(_hpDmg, window._hpPctCap(t2, _cstDhLv2 * 20))); } else if(_cstDhStunned2){ _hpDmg = Math.max(1, Math.floor((t2.hp || 1) * 0.15)); log('✨ ['+a.name+'] 命星:['+t2.name+'] 已在暈眩中,改損失最大 HP 15%!'); } } }catch(_eCstDh6){}
+      try{ _hpDmg = window._wbHpPctLvCap(t2, _hpDmg, a); }catch(_eWbHpDh2){}   // ★ v5.361.0 對世界龍王:上限 英雄等級×20
       doDmg(t2, _hpDmg, {actor:a, isSkill:true, isAoe:true, ignoreBuffs:true, piercing:true, _pierceBossReduce:true});
       let _cstDhChance2 = _stunChance, _cstDhBlock2 = false;
       try{ if(_cstDhOn2){ if(_cstDhBoss2){ if(typeof t2._cstDhStunR === 'number' && G.round <= t2._cstDhStunR + 2){ _cstDhBlock2 = true; } } else { _cstDhChance2 = Math.min(1, _stunChance + 0.15); } } }catch(_eCstDh7){}
@@ -83440,7 +83493,7 @@ function _showNewHeroAnnouncement(forceShow){
           <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;
             font-size:17px;color:#ffd;line-height:1.6;">
             <b style="color:#ff8866;">屬性:</b>🔥 火屬性
-            ・ <b style="color:#ffcc66;">單次受傷上限:</b>每擊最多 <span style="color:#ff7755;font-weight:900;">5,000</span> 傷害(固定值,不隨 HP 變動;每位英雄一次出手合計也最多 5,000)
+            ・ <b style="color:#ffcc66;">傷害軟上限:</b>每位英雄一次出手超過 <span style="color:#ff7755;font-weight:900;">5,000</span> 的部分只算一半,最多 <span style="color:#ff7755;font-weight:900;">9,999</span>
             ・ <b style="color:#ffcc66;">暴擊率:</b>永久 +30%
           </div>
         </div>
