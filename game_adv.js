@@ -55798,7 +55798,8 @@ window._lxpsPWA = (function(){
        主程式改用隱藏 iframe 把那一頁真的載起來,直接呼叫它自己的 window.islInstallUrls() 拿現成清單
        (與該頁實際請求同一個 URL,SW 的 caches.match 才會命中)——同 v5.163.0 小遊戲資源那顆的做法。
      ⚠ 清單裡標了 opt:true 的是「選配圖」(分層造型 24 張、裝飾/料理/戰鬥立繪等),沒上傳不算失敗,不計進 fail。 */
-  function _lxpsCollectIslandUrls(){
+  function _lxpsCollectIslandUrls(fnU, fnM){   /* ★ v5.363.0 fnU/fnM:清單函式名(預設荒島;創藝工坊傳 artInstallUrls/artInstallMark) */
+    fnU = fnU || 'islInstallUrls'; fnM = fnM || 'islInstallMark';
     return new Promise(function(resolve){
       var iframe = document.createElement('iframe');
       iframe.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:-9999px;border:0;';
@@ -55816,8 +55817,8 @@ window._lxpsPWA = (function(){
         var grab = function(){
           tries++;
           var list = null, mark = '';
-          try{ if(typeof MW.islInstallUrls === 'function') list = MW.islInstallUrls(); }catch(_){}
-          try{ if(typeof MW.islInstallMark === 'function') mark = MW.islInstallMark(); }catch(_){}
+          try{ if(typeof MW[fnU] === 'function') list = MW[fnU](); }catch(_){}
+          try{ if(typeof MW[fnM] === 'function') mark = MW[fnM](); }catch(_){}
           if(!list || !list.length){          // 小遊戲的資料表(minigame_island_db.js)可能還沒 parse 完,等它一下
             if(tries < 60){ setTimeout(grab, 250); return; }
             clearTimeout(timer); finish(null); return;
@@ -55837,8 +55838,9 @@ window._lxpsPWA = (function(){
       document.body.appendChild(iframe);
     });
   }
-  function _lxpsPrecacheIslandAssets(onProgress){
-    return _lxpsCollectIslandUrls().then(function(res){
+  function _lxpsPrecacheIslandAssets(onProgress, art){   /* ★ v5.363.0 art=true:🎨 創藝工坊(同一個 ISLAND 快取、記號寫 art_installed) */
+    var _mkKey = art ? 'art_installed' : 'isl_installed';
+    return (art ? _lxpsCollectIslandUrls('artInstallUrls', 'artInstallMark') : _lxpsCollectIslandUrls()).then(function(res){
       var items = (res && res.items) || [], mark = (res && res.mark) || '';
       if(!items.length) return { done: 0, total: 0, fail: 0 };
       return fetch('minigame/minigame_sw.js', { cache: 'no-store' })
@@ -55864,7 +55866,7 @@ window._lxpsPWA = (function(){
               }
               try{ if(typeof onProgress === 'function') onProgress(settled, total); }catch(_){}
               if(!toFetch.length){   /* 全部都已快取,一個都不用下載 */
-                if(mark){ try{ localStorage.setItem('isl_installed', mark); }catch(_){} try{ window._lxpsDlVerPaint(); }catch(_){} }   /* ★ v5.208.0 下載完成立刻重繪鈕內版號行 */
+                if(mark){ try{ localStorage.setItem(_mkKey, mark); }catch(_){} try{ window._lxpsDlVerPaint(); }catch(_){} }   /* ★ v5.208.0 下載完成立刻重繪鈕內版號行 */
                 return { done: settled, total: total, fail: 0 };
               }
               var idx = 0, CONC = 4;
@@ -55882,7 +55884,7 @@ window._lxpsPWA = (function(){
                       settled++;
                       try{ if(typeof onProgress === 'function') onProgress(settled, total); }catch(_){}
                       if(settled >= total){
-                        if(fail === 0 && mark){ try{ localStorage.setItem('isl_installed', mark); }catch(_){} try{ window._lxpsDlVerPaint(); }catch(_){} }   // 與小遊戲那邊同一個 key(同 origin),荒島 ⚙ 設定選單的鈕會顯示「✓ 已完整安裝」;★ v5.208.0 一併重繪鈕內版號行
+                        if(fail === 0 && mark){ try{ localStorage.setItem(_mkKey, mark); }catch(_){} try{ window._lxpsDlVerPaint(); }catch(_){} }   // 與小遊戲那邊同一個 key(同 origin),荒島 ⚙ 設定選單的鈕會顯示「✓ 已完整安裝」;★ v5.208.0 一併重繪鈕內版號行
                         resolveAll({ done: settled, total: total, fail: fail });
                         return;
                       }
@@ -56985,6 +56987,7 @@ window._lxpsPWA = (function(){
     //   分開才能讓老師只補裝其中一邊。
     precacheMinigameNow: _lxpsPrecacheMinigameAssets,
     precacheIslandNow: _lxpsPrecacheIslandAssets,   /* ★ v5.189.0 荒島求生完整離線資源 */
+    precacheArtNow: function(cb){ return _lxpsPrecacheIslandAssets(cb, true); },   /* ★ v5.363.0 🎨 創藝工坊完整離線資源 */
     updateProgress: _updateInstallProgress
   };
 })();
@@ -60080,8 +60083,8 @@ window._lxpsDlVerLocal = function(kind){
   try{
     if(kind === 'main') return String(window._GAME_LOADED_VERSION || '');
     if(kind === 'mg')   return String(localStorage.getItem('lxps_mg_local_ver') || '');
-    if(kind === 'isl'){
-      var raw = String(localStorage.getItem('isl_installed') || '');
+    if(kind === 'isl' || kind === 'art'){   /* ★ v5.363.0 創藝工坊同格式(art_installed = `創藝版|設計師版|小遊戲版`,取最後一段) */
+      var raw = String(localStorage.getItem(kind === 'art' ? 'art_installed' : 'isl_installed') || '');
       if(!raw) return '';
       var p = raw.split('|');
       return String(p[p.length - 1] || '');   /* 格式 `圖版號|程式版號`,取後半 */
@@ -60110,6 +60113,7 @@ window._lxpsDlVerPaint = function(){
     window._lxpsDlVerPaintOne('dlver-main', S.main, window._lxpsDlVerLocal('main'), '版本不明');
     window._lxpsDlVerPaintOne('dlver-mg',   S.mg,   window._lxpsDlVerLocal('mg'),   '尚未玩過');
     window._lxpsDlVerPaintOne('dlver-isl',  S.mg,   window._lxpsDlVerLocal('isl'),  '尚未下載');
+    window._lxpsDlVerPaintOne('dlver-art',  S.mg,   window._lxpsDlVerLocal('art'),  '尚未下載');   /* ★ v5.363.0 創藝工坊 */
   }catch(_){}
 };
 window._lxpsDlVerCheck = async function(){
@@ -60162,7 +60166,7 @@ try{
   setInterval(function(){ try{ window._lxpsDlVerCheck(); }catch(_){} }, 5 * 60 * 1000);
   setTimeout(function(){ try{ window._lxpsAskPersistStorage('boot'); }catch(_){} }, 3000);
   /* 三顆鈕的手勢時機:用 capture 監聽,不動那三個 onclick 屬性(避免和既有流程打架) */
-  ['download-install-btn', 'download-install-mg-btn', 'download-install-isl-btn'].forEach(function(id){
+  ['download-install-btn', 'download-install-mg-btn', 'download-install-isl-btn', 'download-install-art-btn'].forEach(function(id){   /* ★ v5.363.0 加創藝工坊 */
     try{
       document.addEventListener('click', function(ev){
         try{
@@ -60234,6 +60238,48 @@ window._tryStartIslandDownload = async function(){
       if(_r && _r.total > 0) _showSimpleToast('🏝 荒島資源已安裝完成,之後離線也能玩!', 'ok');
     }catch(_){}
   }, 2200);
+};
+/* ★ v5.363.0(2026-11-08・老師「正式開放藝術村前」;創藝工坊設計書第十八節)— 第四顆下載鈕「🎨 完整下載創藝工坊」。
+   權限判定與讀條完全比照 _tryStartIslandDownload;清單由小遊戲那邊 window.artInstallUrls() 算(四支程式+藝術村地圖+借用的 5 首 BGM)。 */
+window._tryStartArtDownload = async function(){
+  const _isGuestFreeDownload = !window._gUserId && window._LXPS_DL_PERM_FREE === true;
+  if(!window._gUserId && !_isGuestFreeDownload){ _showSimpleToast('⚠️ 請先以 Google 帳號登入', 'warn'); return; }
+  const _isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+  if(!_isAdmin && !_isGuestFreeDownload){
+    let _perm = null;
+    try { _perm = await window._fbGetDownloadPermission(window._gUserId); }
+    catch(e){ _showSimpleToast('❌ 無法驗證下載權限,請檢查網路', 'err'); return; }
+    if(!_perm || _perm.status !== 'approved' || !_perm.expiresAt || _perm.expiresAt < Date.now()){
+      _showSimpleToast('⚠️ 您目前沒有有效的下載權限,請先向管理員申請', 'warn');
+      if(typeof _updateDownloadAuthUI === 'function') _updateDownloadAuthUI(_perm);
+      return;
+    }
+  }
+  if(window._lxpsArtDlBusy){ _showSimpleToast('⏳ 創藝工坊正在下載中,請稍候…', 'warn'); return; }
+  if(!window._lxpsPWA || typeof window._lxpsPWA.precacheArtNow !== 'function'){ _showSimpleToast('⚠️ 安裝模組尚未載入,請重新整理後再試', 'warn'); return; }
+  window._lxpsArtDlBusy = true;
+  window._lxpsPwaDownloading = true;   // 下載中豁免閒置登出
+  try{ window._lxpsPWA.showProgress(); }catch(_){}
+  try{ window._lxpsPWA.updateProgress(0, 0, '🎨 正在整理創藝工坊的資源清單…'); }catch(_){}
+  let _r = null;
+  try{
+    _r = await window._lxpsPWA.precacheArtNow(function(done, total){
+      try{ window._lxpsPWA.updateProgress(done, total, '🎨 正在下載創藝工坊資源 (' + done + ' / ' + total + ')'); }catch(_){}
+    });
+  }catch(e){ console.warn('[v5.363.0] 創藝工坊資源下載失敗', e); }
+  try{
+    if(_r && _r.total > 0){
+      window._lxpsPWA.updateProgress(_r.total, _r.total, _r.fail > 0 ? ('✓ 創藝工坊安裝完成(' + _r.total + ' 個檔案,其中 ' + _r.fail + ' 個抓不到)') : ('✓ 創藝工坊安裝完成!共 ' + _r.total + ' 個檔案'));
+    } else {
+      window._lxpsPWA.updateProgress(1, 1, '⚠️ 這次沒有抓到創藝工坊資源,請檢查網路後再試一次');
+    }
+  }catch(_){}
+  setTimeout(function(){
+    try{ window._lxpsPWA.hideProgress(); }catch(_){}
+    window._lxpsPwaDownloading = false;
+    window._lxpsArtDlBusy = false;
+    try{ if(_r && _r.total > 0) _showSimpleToast('🎨 創藝工坊資源已安裝完成!', 'ok'); }catch(_){}
+  }, 1600);
 };
 window._tryStartMinigameDownload = async function(){
   // ★ v5.172.0（2026-09-10・老師回報「不登入按完整下載小遊戲時，跳出要先登入的提示」）—

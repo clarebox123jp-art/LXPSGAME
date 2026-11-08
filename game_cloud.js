@@ -22455,6 +22455,22 @@
         }catch(_eMain){ console.warn('[MinigameRank 登入觸發] 例外', _eMain); }
       }, 6500);
 
+      // ★ v5.363.0 — 🎨 創藝工坊每週排行:結算(週一 08:00 後第一位登入者)+ 領自己的大對抗獎勵(排在小遊戲排行 6500 之後)
+      setTimeout(async () => {
+        try{
+          if(!window._artRank || !window._gUserId) return;
+          try{ await window._artRank.trySettleLastWeek(); }catch(_eS){ console.warn('[ArtRank 登入結算]', _eS); }
+          const _r = await window._artRank.claimMyAward();
+          if(_r && _r.why && _r.why.length){
+            const _msg = '🎨 上週創藝工坊排行獎勵已自動入帳!(' + _r.why.join('、') + ')\n'
+              + '💰 ' + (_r.coins || 0) + ' 知識幣' + (_r.crystals ? ' / 🔮 ' + _r.crystals + ' 召喚水晶' : '') + (_r.books ? ' / 📖 ' + _r.books + ' 豪華經驗書' : '') + (_r.cst ? ' / ⭐ SSR 自選命星 ×' + _r.cst : '')
+              + '\n🏝 荒島的貝幣獎勵,進荒島就會自動領。';
+            if(typeof _showInGameToast === 'function') _showInGameToast(_msg, '#f8b4e0', 8000);
+            else console.log('[創藝排行領獎]', _msg);
+          }
+        }catch(_eA){ console.warn('[ArtRank 登入觸發] 例外', _eA); }
+      }, 7500);
+
       // ★ v3.5.16 + v3.5.17 — 登入完成後重新觸發 bootPWA
 
       // ★ v3.5.16 + v3.5.17 — 登入完成後重新觸發 bootPWA
@@ -27704,6 +27720,203 @@
         gameName: _gname,
       };
       console.log('[MinigameRank] ✅ 小遊戲每週排行榜結算模組已掛載 v5.146.0');
+    })();
+
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v5.363.0(2026-11-08・老師「正式開放藝術村前,先把每週排行結算、獎勵發到大對抗和荒島做完」;設計書 9-2/9-3,老師裁定 5 甲 每週一 08:00、7 甲 照表)
+    //   🎨 創藝工坊每週排行結算 + 大對抗領獎(荒島貝幣由小遊戲 v1.426.0 islArtRankClaim 自己領)
+    //   資料來源(創藝工坊 minigame_art.js 寫):artRank/{週一日期 YYYYMMDD}/u/{uid} = { uid, w, pen, cls, p, at }、artRank/{週}/c/{班級} = { c, m:{uid:積分} }
+    //   結算(週一 08:00 後第一位登入者):先用同網站 HTTP Date 對時(平板時鐘調快也不會提早結算;對不到時間就不結算)
+    //     → 讀上週全部個人格、班級格、上上週個人格(進步之星)、gameConfig/artGm.minClass(班級最少參加人數,預設 5)
+    //     → 前段候選者讀 players/{uid}.email 排除 GM 三信箱(老師測試的積分不佔名次)
+    //     → transaction 寫 stats/minigameWeekly.artSet[週] = { at, by, n, u:{ uid:{ r 個人名次, c 班級名次, s 進步之星名次, p 積分 } }, top:[前10], cls:[前3] }
+    //        (同一週只寫一次;只留最近 4 週)⇒ 零跨玩家寫入,沿用既有 stats 規則,不必改 firestore.rules
+    //   領獎(每人自己):minigameRankClaims/{uid}_art{週}(既有規則:create-only)+ 自己 players 主檔加幣/水晶/書 + artRankClaimed[週],同一個 transaction
+    //     ⇒ 跨裝置/多分頁/三槽合併都不會重複;第 1 名的 SSR 自選命星用固定單號 c_artRank_{週} 發(重跑不會重複)。
+    //   大對抗獎勵(可疊加):個人 1 名 10 萬/🔮5/📖3/SSR 自選命星 1、2~3 名 7 萬/🔮3/📖2、4~10 名 5 萬/🔮2/📖2、11~30 名 3 萬/🔮1/📖1、31~50 名 1 萬/📖1;
+    //     班級 1 名 3 萬/🔮2、2 名 2 萬/🔮1、3 名 1 萬/🔮1;進步之星前 10 名 2 萬/🔮1;本週有參加 3000。
+    //   設計書裡的稱號、頭像框、荒島限定裝飾/夥伴飾品需要新圖與新欄位,之後另做(本輪不發)。
+    // ════════════════════════════════════════════════════════════════════
+    (function _setupArtRankSettlement(){
+      const WEEK_DOC = () => doc(_fbDb, 'stats', 'minigameWeekly');
+      const PLAYER_DOC = (uid) => doc(_fbDb, 'players', uid);
+      const CLAIM_DOC = (uid, wk) => doc(_fbDb, 'minigameRankClaims', uid + '_art' + wk);
+      const _KEEP = 4;
+      const _ADMINS = ['clarebox123@gmail.com', 'clarebox123@lsps.tp.edu.tw', 'asemia@gmail.com'];
+      const _PERSONAL = [ [1, { coins: 100000, crystals: 5, books: 3, cst: 1 }], [3, { coins: 70000, crystals: 3, books: 2 }], [10, { coins: 50000, crystals: 2, books: 2 }],
+                          [30, { coins: 30000, crystals: 1, books: 1 }], [50, { coins: 10000, crystals: 0, books: 1 }] ];
+      const _CLASS = [ { coins: 30000, crystals: 2 }, { coins: 20000, crystals: 1 }, { coins: 10000, crystals: 1 } ];
+      const _STAR = { coins: 20000, crystals: 1 };
+      const _PART = { coins: 3000 };
+      // 週鍵與創藝工坊 minigame_art.js weekKey() 完全相同:台北週一 08:00 = UTC 週一 00:00 ⇒ 用 UTC 日期找週一,格式 YYYYMMDD
+      function artWeekKey(t){ const d = new Date(t), dow = (d.getUTCDay() + 6) % 7, mon = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - dow)); return String(mon.getUTCFullYear() * 10000 + (mon.getUTCMonth() + 1) * 100 + mon.getUTCDate()); }
+      async function srvNow(){
+        try{
+          const t0 = Date.now(), r = await fetch('version.json?srv=' + t0, { method: 'HEAD', cache: 'no-store' }), t1 = Date.now();
+          const d = Date.parse(r.headers.get('Date') || '');
+          return d > 1.6e12 ? d + 500 - Math.round((t1 - t0) / 2) + (t1 - t0) : 0;
+        }catch(_){ return 0; }
+      }
+      // ── 純函式:一個人的結算格 → 大對抗獎勵(可單元測試) ──
+      function rewardOf(e){
+        const o = { coins: 0, crystals: 0, books: 0, cst: 0, why: [] };
+        if(!e) return o;
+        const add = (x, w) => { o.coins += x.coins || 0; o.crystals += x.crystals || 0; o.books += x.books || 0; o.cst += x.cst || 0; o.why.push(w); };
+        const r = e.r | 0, c = e.c | 0, s = e.s | 0;
+        if(r > 0){ for(const [mx, x] of _PERSONAL){ if(r <= mx){ add(x, '個人榜第 ' + r + ' 名'); break; } } }
+        if(c >= 1 && c <= 3) add(_CLASS[c - 1], '班級榜第 ' + c + ' 名');
+        if(s >= 1 && s <= 10) add(_STAR, '進步之星第 ' + s + ' 名');
+        add(_PART, '參加獎');
+        return o;
+      }
+      // ── 純函式:週資料 → 結算包(可單元測試;admins = 要排除的 uid 集合) ──
+      function computeSet(rows, prevMap, classDocs, minClass, admins){
+        admins = admins || {};
+        const u = {};
+        const list = rows.filter((x) => x && x.uid && (x.p | 0) > 0 && !admins[x.uid]);
+        list.forEach((x) => { u[x.uid] = { p: x.p | 0 }; });
+        // 個人榜:積分高到低,同分同名次(競賽排名),同分先到者排前面顯示
+        list.sort((a, b) => (b.p - a.p) || ((a.at || 0) - (b.at || 0)));
+        let rank = 0;
+        list.forEach((x, i) => { if(i === 0 || x.p !== list[i - 1].p) rank = i + 1; if(rank <= 50) u[x.uid].r = rank; });
+        // 進步之星:本週 − 上週 > 0 的前 10 名(同分同名次);個人榜前 10 名不重複上進步之星(設計書:讓不是前段的學生也有機會)
+        const st = list.map((x) => ({ uid: x.uid, d: (x.p | 0) - ((prevMap && prevMap[x.uid]) | 0) })).filter((x) => x.d > 0 && !((u[x.uid].r | 0) >= 1 && (u[x.uid].r | 0) <= 10)).sort((a, b) => b.d - a.d);
+        rank = 0;
+        st.forEach((x, i) => { if(i === 0 || x.d !== st[i - 1].d) rank = i + 1; if(rank <= 10) u[x.uid].s = rank; });
+        // 班級榜:參加同學(本週積分 > 0、不是 GM)的平均積分;人數達門檻才排名次;前 3 名該班每位參加同學都拿
+        const cls = [];
+        (classDocs || []).forEach((cd) => {
+          const m = (cd && cd.m) || {}; let n = 0, sum = 0; const mem = [];
+          Object.keys(m).forEach((id) => { const v = m[id] | 0; if(v > 0 && !admins[id]){ n++; sum += v; mem.push(id); } });
+          if(n >= minClass) cls.push({ c: String(cd.c || ''), a: Math.round(sum / n), n: n, mem: mem });
+        });
+        cls.sort((a, b) => b.a - a.a);
+        rank = 0;
+        cls.forEach((x, i) => { if(i === 0 || x.a !== cls[i - 1].a) rank = i + 1; if(rank <= 3) x.mem.forEach((id) => { if(u[id]) u[id].c = rank; }); x.rank = rank; });
+        return {
+          n: list.length, u: u,
+          top: list.slice(0, 10).map((x) => ({ pen: String(x.pen || '').slice(0, 16), cls: String(x.cls || '').slice(0, 12), p: x.p | 0 })),
+          cls: cls.filter((x) => x.rank <= 3).map((x) => ({ c: x.c, a: x.a, n: x.n, r: x.rank }))
+        };
+      }
+      // ── 結算上週 ──
+      let _settling = false;
+      async function trySettleLastWeek(){
+        if(!window._gUserId || _settling) return false;
+        _settling = true;
+        try{
+          const now = await srvNow();
+          if(!now) return false;   // 對不到伺服器時間就不結算(寧可晚一點,也不讓調快時鐘的平板提早結算)
+          const lastWk = artWeekKey(now - 7 * 86400000), prevWk = artWeekKey(now - 14 * 86400000);
+          const ws = await getDoc(WEEK_DOC());
+          if(!ws.exists()) return false;
+          const set0 = (ws.data() || {}).artSet || {};
+          if(set0[lastWk]) return false;   // 已結算
+          const rows = [];
+          (await getDocs(collection(_fbDb, 'artRank', lastWk, 'u'))).forEach((d) => {
+            const x = d.data() || {}; if(x.uid !== d.id) return;
+            rows.push({ uid: d.id, p: x.p | 0, pen: x.pen || '', cls: x.cls || '', at: (x.at && typeof x.at.toMillis === 'function') ? x.at.toMillis() : 0 });
+          });
+          const prevMap = {};
+          if(rows.length){
+            try{ (await getDocs(collection(_fbDb, 'artRank', prevWk, 'u'))).forEach((d) => { const x = d.data() || {}; if(x.uid === d.id) prevMap[d.id] = x.p | 0; }); }catch(_){}
+          }
+          const classDocs = [];
+          if(rows.length){ try{ (await getDocs(collection(_fbDb, 'artRank', lastWk, 'c'))).forEach((d) => { const x = d.data() || {}; classDocs.push({ c: x.c || d.id, m: x.m || {} }); }); }catch(_){} }
+          let minClass = 5;
+          try{ const g = await getDoc(doc(_fbDb, 'gameConfig', 'artGm')); const v = g.exists() ? +((g.data() || {}).minClass) : NaN; if(v >= 1 && v <= 30) minClass = Math.round(v); }catch(_){}
+          // GM 排除:只查前段候選(個人前 60、進步前 15),其餘名次不會拿到名次獎
+          const admins = {};
+          if(rows.length){
+            const cand = new Set();
+            rows.slice().sort((a, b) => b.p - a.p).slice(0, 60).forEach((x) => cand.add(x.uid));
+            rows.map((x) => ({ uid: x.uid, d: x.p - (prevMap[x.uid] | 0) })).sort((a, b) => b.d - a.d).slice(0, 15).forEach((x) => cand.add(x.uid));
+            await Promise.all(Array.from(cand).map(async (id) => {
+              try{ const ps = await getDoc(PLAYER_DOC(id)); const em = ps.exists() ? String((ps.data() || {}).email || '').toLowerCase() : ''; if(_ADMINS.indexOf(em) >= 0) admins[id] = 1; }catch(_){}
+            }));
+          }
+          const res = computeSet(rows, prevMap, classDocs, minClass, admins);
+          const ok = await runTransaction(_fbDb, async (tx) => {
+            const snap = await tx.get(WEEK_DOC());
+            if(!snap.exists()) return false;
+            const set = (snap.data() || {}).artSet || {};
+            if(set[lastWk]) return false;
+            const delta = { artSet: {} };
+            delta.artSet[lastWk] = { at: Date.now(), srv: now, by: window._gUserId, n: res.n, minClass: minClass, u: res.u, top: res.top, cls: res.cls };
+            const all = Array.from(new Set(Object.keys(set).concat([lastWk]))).sort();
+            while(all.length > _KEEP){ const drop = all.shift(); if(drop !== lastWk) delta.artSet[drop] = deleteField(); }
+            tx.set(WEEK_DOC(), delta, { merge: true });
+            return true;
+          });
+          if(ok) console.log('[ArtRank] ✅ 創藝工坊上週(' + lastWk + ')結算完成:' + res.n + ' 人參加、班級前 3 名 ' + res.cls.length + ' 班');
+          return ok;
+        }catch(e){ console.warn('[ArtRank] 結算失敗(下次登入再試)', e); return false; }
+        finally{ _settling = false; }
+      }
+      // ── 領自己的大對抗獎勵 ──
+      const _lk = (uid, wk) => 'lxps_art_rank_claimed_' + uid + '_' + wk;
+      async function claimMyAward(){
+        const uid = window._gUserId;
+        if(!uid) return null;
+        try{ if(typeof window._isAdminUser === 'function' && window._isAdminUser()) return null; }catch(_){}
+        try{
+          let set = {};
+          try{ const s = await getDoc(WEEK_DOC()); set = s.exists() ? ((s.data() || {}).artSet || {}) : {}; }catch(_){ return null; }
+          let wk = null, mine = null;
+          for(const k of Object.keys(set).sort().reverse()){
+            const e = set[k] && set[k].u && set[k].u[uid];
+            if(!e) continue;
+            let done = false; try{ done = localStorage.getItem(_lk(uid, k)) === '1'; }catch(_){}
+            if(done) continue;
+            wk = k; mine = e; break;
+          }
+          if(!wk) return null;
+          const rw = rewardOf(mine);
+          const result = await runTransaction(_fbDb, async (tx) => {
+            const cs = await tx.get(CLAIM_DOC(uid, wk));
+            if(cs.exists()) return { already: true };
+            const ps = await tx.get(PLAYER_DOC(uid));
+            const data = ps.exists() ? (ps.data() || {}) : {};
+            const claimed = (data.artRankClaimed && typeof data.artRankClaimed === 'object') ? data.artRankClaimed : {};
+            if(claimed[wk]) return { already: true };
+            const bp = Object.assign({}, (data.playerBackpack && typeof data.playerBackpack === 'object') ? data.playerBackpack : {});
+            if(rw.crystals) bp['summon_crystal'] = Math.min(99, (bp['summon_crystal'] || 0) + rw.crystals);
+            if(rw.books) bp['hero_exp_book_deluxe'] = Math.min(99, (bp['hero_exp_book_deluxe'] || 0) + rw.books);
+            const nc = Object.assign({}, claimed); nc[wk] = Date.now();
+            tx.set(CLAIM_DOC(uid, wk), { uid: uid, weekKey: 'art' + wk, rank: mine.r | 0, gid: 'art', at: Date.now() });
+            tx.set(PLAYER_DOC(uid), { knowledgeCoins: (data.knowledgeCoins || 0) + rw.coins, playerBackpack: bp, playerBackpack_s: JSON.stringify(bp), artRankClaimed: nc }, { merge: true });
+            return { claimed: true };
+          });
+          try{ localStorage.setItem(_lk(uid, wk), '1'); }catch(_){}
+          if(!result || !result.claimed) return null;
+          // 本地即時同步(否則 autosave 用舊記憶體把剛領的沖掉)
+          try{
+            if(typeof _knowledgeCoins !== 'undefined' && rw.coins) window._knowledgeCoins = (_knowledgeCoins || 0) + rw.coins;
+            if(typeof _playerBackpack === 'object' && _playerBackpack){
+              if(rw.crystals) _playerBackpack['summon_crystal'] = Math.min(99, (_playerBackpack['summon_crystal'] || 0) + rw.crystals);
+              if(rw.books) _playerBackpack['hero_exp_book_deluxe'] = Math.min(99, (_playerBackpack['hero_exp_book_deluxe'] || 0) + rw.books);
+            }
+            if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
+            if(typeof refreshAllCoinsDisplay === 'function') refreshAllCoinsDisplay();
+            const why = '創藝工坊週排行獎勵(' + rw.why.join('、') + ')';
+            if(typeof _logCrystalTx === 'function' && rw.crystals) _logCrystalTx(rw.crystals, why);
+            if(typeof _logCoinTx === 'function' && rw.coins) _logCoinTx(rw.coins, why);
+          }catch(_se){ console.warn('[ArtRank claim] 本地同步', _se); }
+          // 第 1 名:SSR 自選命星(固定單號,重跑不重複;失敗只記錄,其他獎勵已入帳)
+          if(rw.cst > 0){
+            try{
+              if(typeof window._fbCstGrantMany === 'function') await window._fbCstGrantMany(uid, [{ k: '#pick_SSR', n: rw.cst }], { by: 'artRank', why: '創藝工坊週排行第 1 名', idBase: 'c_artRank_' + wk, quiet: true });
+            }catch(_ec){ console.warn('[ArtRank] 命星發放失敗(其他獎勵已入帳)', _ec); }
+          }
+          return Object.assign({ weekKey: wk }, rw);
+        }catch(e){
+          if(e && e.code === 'permission-denied') console.warn('[ArtRank] 認領文件寫入被 rules 拒絕 → 本次不發獎,下次登入再試');
+          else console.warn('[ArtRank] claimMyAward 失敗', e);
+          return null;
+        }
+      }
+      window._artRank = { artWeekKey, rewardOf, computeSet, trySettleLastWeek, claimMyAward };
+      console.log('[ArtRank] ✅ 創藝工坊每週排行結算模組已掛載 v5.363.0');
     })();
     // ════════════════════════════════════════════════════════════════════
     // ★ v3.13.5(2026-05-31)— 世界 BOSS 排名獎勵正式結算系統
