@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -278,7 +278,7 @@ function cloudSync(cb){
         tx.set(ref.collection('ledger').doc(), { uid: uid, at: f.serverTimestamp(), dev: DEV, ver: ART_VER, k: e.k, id: e.id, st: e.st, g: e.g, r: e.r, day: e.day, cl: e.cl }); }
       /* ★ v1.1.0 排行(第 17 項):本週積分有變才寫 artRank/{週}/u/{uid};有班級再寫 artRank/{週}/c/{班級}.m.{uid} */
       wp = weekPts(m);
-      if(f && String(wp) !== rankSent){
+      if(f && String(wp) !== rankSent && !isGm()){   /* ★ v1.1.5 GM 帳號(老師測試)不上排行榜,不佔學生名次 */
         tx.set(fb.db.collection('artRank').doc(wk).collection('u').doc(uid), { uid: uid, w: wk, pen: penOf(m), cls: cls || '', p: wp, at: f.serverTimestamp() });
         if(cls){ var cm = {}; cm[uid] = wp; tx.set(fb.db.collection('artRank').doc(wk).collection('c').doc(cls), { w: wk, c: cls, at: f.serverTimestamp(), m: cm }, { merge: true }); }
       }
@@ -732,6 +732,15 @@ function rankPanel(tab){
     h += '<p>本週你的藝術積分:<b>⭐ ' + weekPts() + '</b><br>今天:<b>' + (A.save.pts[dayKey()] | 0) + ' / ' + capNow() + '</b>(每天最多計 ' + capNow() + ' 分,所有平板加起來算;重玩只算比上次多的星星)</p>';
     h += '<div class="scard">🖋 你的筆名:<b>' + esc(penOf()) + '</b>(排行和作品牆只顯示筆名,到 ⚙ 設定可以換)</div>';
     h += '<div class="scard">⚔️ 比賽、🗓 每週主題得到的積分另外算,不受每日上限。每週一 08:00 重新計算。</div>';
+    /* ★ v1.1.5(2026-11-08)每週一 08:00 結算,獎勵同時送到大對抗與荒島(設計書 9-3;大對抗 v5.363.0 結算、小遊戲 v1.426.0 荒島領獎) */
+    h += '<div class="scard" style="line-height:1.7">🎁 <b>每週一 08:00 結算,獎勵送到大對抗 🗡 和荒島 🏝</b>(可以疊加)<br>'
+      + '🎨 個人榜 第 1 名:💰10 萬、🔮5、📖3、⭐SSR 自選命星|🐚2000<br>'
+      + '第 2~3 名:💰7 萬、🔮3、📖2|🐚1500;第 4~10 名:💰5 萬、🔮2、📖2|🐚1000<br>'
+      + '第 11~30 名:💰3 萬、🔮1、📖1|🐚600;第 31~50 名:💰1 萬、📖1|🐚300<br>'
+      + '🏘 班級榜 第 1/2/3 名(班上有參加的同學都拿):💰3 萬🔮2|🐚800、💰2 萬🔮1|🐚500、💰1 萬🔮1|🐚300<br>'
+      + '📈 進步之星(比上週多最多的前 10 名,個人榜前 10 名除外):💰2 萬、🔮1|🐚500<br>'
+      + '🙌 本週有拿到積分就有參加獎:💰3000|🐚100<br>'
+      + '<span style="opacity:.75">登入大對抗會自動入帳;荒島的貝幣進荒島就會自動領。</span></div>';
   } else h += '<p style="color:#6b6178">' + (A.guest || !fb ? '登入學校帳號才看得到排行榜。' : '讀取中…') + '</p>';
   h += '</div>';
   modal(h, [{ t: '關閉', cls: 'ghost' }], { onOpen: function(m){
