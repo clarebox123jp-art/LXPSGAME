@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
+var VER = 'v1.0.5';   /* ★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
 var S = { on: false, uid: '', guest: true, cfg: null, vkey: '', xwords: [], names: null, style: 'c', ed: null, gmTab: 'flag' };
@@ -225,7 +225,7 @@ var CSS = [
 '#dsg-paint{position:absolute;left:0;top:0;pointer-events:none}#dsg-stage.painting #dsg-paint{pointer-events:auto;cursor:crosshair}',
 /* ★ 老師 13:35:三種創作風格(自由手繪/像素點陣/向量繪圖)+ 功能名稱標籤可隱藏 */
 '#dsg-grid{position:absolute;left:0;top:0;pointer-events:none;display:none}#dsg-stage.pixmode #dsg-grid{display:block}',
-'#dsg-guide{position:absolute;left:0;top:0;pointer-events:none}.dsg-ref{margin:.6vmin 0;background:rgba(255,255,255,.08);border-radius:1.2vmin;padding:.4vmin .8vmin}.dsg-ref summary{cursor:pointer;font-weight:900;font-size:2.1vmin;padding:.8vmin .2vmin}.dsg-it.on{outline:.5vmin solid #ffd23f}',   /* ★ v1.0.3 動作骨架/參考圖片(描圖用,不進作品) */
+'#dsg-guide{position:absolute;left:0;top:0;pointer-events:none}#dsg-stage.posing #dsg-guide{pointer-events:auto;z-index:6;touch-action:none;cursor:grab}#dsg-stage.posing #dsg-sel{display:none!important}.dsg-pzrow{display:flex;flex-wrap:wrap;gap:.6vmin;margin:.5vmin 0}.dsg-pzrow button{flex:1 1 auto}.dsg-pzv{font-size:1.7vmin;opacity:.8;margin-top:.4vmin}.dsg-ref{margin:.6vmin 0;background:rgba(255,255,255,.08);border-radius:1.2vmin;padding:.4vmin .8vmin}.dsg-ref summary{cursor:pointer;font-weight:900;font-size:2.1vmin;padding:.8vmin .2vmin}.dsg-it.on{outline:.5vmin solid #ffd23f}',   /* ★ v1.0.3 動作骨架/參考圖片(描圖用,不進作品) */
 '#dsg-stage.vecmode{cursor:crosshair}#dsg-stage .ly svg{overflow:visible}',
 '#dsg-stage.painting .ly{pointer-events:none}#dsg-stage.pbelow #dsg-paint{z-index:0}#dsg-stage.pbelow .ly{z-index:1}#dsg-grid{z-index:2}#dsg-sel{z-index:3}',
 '.dsg-pm{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6vmin;margin-bottom:1vmin}.dsg-pm button{border:0;border-radius:1.2vmin;padding:1vmin .4vmin;font-size:1.8vmin;font-weight:900;background:rgba(255,255,255,.18);color:#fff}.dsg-pm button.on{background:#ffd45a;color:#4a2a00}.dsg-pm b{display:block;font-size:3.4vmin}',
@@ -472,7 +472,7 @@ function editorOpen(r){
   root.innerHTML = h;
   root.onclick = function(ev){ var t = ev.target, k = null; while(t && t !== root){ if(t.getAttribute) k = k || t.getAttribute('data-k'); t = t.parentNode; } if(!k) return; sfx('sfx-tap', 0.3); barCmd(k); };
   if(r.paint){ var im = new Image(); im.onload = function(){ try{ $('dsg-paint').getContext('2d').drawImage(im, 0, 0); }catch(e){} }; im.src = r.paint; }
-  tabsPaint(); libPaint(); layersPaint(); propPaint(); opsPaint(); stageBind(); pmApply(); fitStage(); guideDraw();
+  tabsPaint(); libPaint(); layersPaint(); propPaint(); opsPaint(); stageBind(); pzBind(); pmApply(); fitStage(); guideDraw();
   setTimeout(fitStage, 60);
   if(r.back && r.back.tip) modal('<h3>↩ 老師退件了</h3><p>📝 老師的建議:<b>' + esc(r.back.tip) + '</b></p>' + (r.back.why && r.back.why.length ? '<p>原因:' + esc(r.back.why.join('、')) + '</p>' : '') + '<p>照建議改好後,再按「📤 確認繳交」。</p>');
 }
@@ -493,7 +493,7 @@ function fitStage(){
   W = E.d.W; H = E.d.H; k = Math.min(mid.clientWidth / W, mid.clientHeight / H) * 0.94; if(!(k > 0)) k = 1;
   E.k = k; E.ox = (mid.clientWidth - W * k) / 2; E.oy = (mid.clientHeight - H * k) / 2;
   st.style.transform = 'translate(' + E.ox + 'px,' + E.oy + 'px) scale(' + k + ')';
-  selPaint();
+  selPaint(); if(pzEditing()) guideDraw();   /* ★ v1.0.5 關節把手大小跟著畫面縮放 */
 }
 /* 一次操作完成:記復原、計次數、存本機 */
 function snapNow(){ var E = S.ed; return { d: JSON.stringify(E.d), p: E.paintStr }; }
@@ -514,7 +514,7 @@ function endOp(add){ var E = S.ed, k, oh;
     if(k !== E._bk && oh.indexOf(k) < 0){ oh.push(k); E.d.ops = (E.d.ops | 0) + 1; }
     while(oh.length > 600) oh.shift(); }
   E._bk = null; opsPaint(); dirty(); }
-function restore(sn){ var E = S.ed, cv, im; E.d = JSON.parse(sn.d); E.r.d = E.d;
+function restore(sn){ var E = S.ed, cv, im, gd = E.d.guide; E.d = JSON.parse(sn.d); E.d.guide = gd; E.r.d = E.d;   /* ★ v1.0.5 復原/重做作品時,骨架姿勢維持現在的樣子(骨架有自己的上一步) */
   if(sn.p !== E.paintStr){ E.paintStr = sn.p; cv = $('dsg-paint'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); if(sn.p){ im = new Image(); im.onload = function(){ cv.getContext('2d').drawImage(im, 0, 0); }; im.src = sn.p; } }
   E.sel = -1; layersPaint(); libPaint(); propPaint(); dirty(); }
 function undo(){ var E = S.ed; if(locked() || !E.undo.length){ return; } var cur = snapNow(), ops = E.d.ops, oh = E.d.oh; E.redo.push(cur); restore(E.undo.pop()); E.d.ops = ops; E.d.oh = oh; opsPaint(); }   /* ★ v1.0.2 算過的畫面指紋 oh 也不跟著復原 */
@@ -547,7 +547,9 @@ function cloudRestore(){
   sto(function(s){ if(!s){ toast('☁ 雲端備份目前連不上'); return; }
     s.ref('designDrafts/' + uid).listAll().then(function(res){
       myDrafts(function(local){ var have = {}, i, todo = [], got = 0, bad = 0; for(i = 0; i < local.length; i++) have[local[i].id] = local[i].at || 0;
-        res.items.forEach(function(it){ var id = it.name.replace(/\.json$/, ''); if(!have[id]) todo.push(it); });
+        res.items.forEach(function(it){ var id = it.name.replace(/\.json$/, '');
+          if(id.charAt(0) === '_'){ if(id === '_poses') it.getDownloadURL().then(function(u){ return fetch(u); }).then(function(x){ return x.json(); }).then(function(o){ if(o && o.uid === uid && uid === S.uid){ var n = pzMineMerge(o.poses); if(n) toast('☁ 找回 ' + n + ' 個我的姿勢'); } })['catch'](function(){}); return; }   /* ★ v1.0.5 _poses.json = 我的姿勢,不是作品 */
+          if(!have[id]) todo.push(it); });
         if(!todo.length){ toast('☁ 雲端的作品這台都有了'); return; }
         todo.forEach(function(it){ it.getDownloadURL().then(function(u){ return fetch(u); }).then(function(x){ return x.json(); }).then(function(r){ if(r && r.uid === uid && r.id && r.d){ idbPut(uid + '|' + r.id, r, function(){}); got++; } else bad++; })['catch'](function(){ bad++; })
           .then(function(){ if(got + bad === todo.length){ toast(got ? '☁ 找回 ' + got + ' 件作品' : '☁ 下載不到(老師要先開 Storage 的 CORS)'); if(S.screen === 'hub') draftsPaint(); } }); });
@@ -562,29 +564,274 @@ function tabsPaint(){ var E = S.ed, a = D.TABS[E.r.kind], h = '', i; for(i = 0; 
 /* ★ 三種創作風格:自由手繪(畫筆層)、像素點陣(格子對齊上色+油漆桶)、向量繪圖(拖曳畫形狀,形狀是可再移動/縮放/改色的物件) */
 function pmApply(){ var E = S.ed, st = $('dsg-stage'), on = E.tab === 'paint'; if(!st) return;
   st.classList.toggle('painting', on && E.pm !== 'vector'); st.classList.toggle('pixmode', on && E.pm === 'pixel'); st.classList.toggle('vecmode', on && E.pm === 'vector'); st.classList.toggle('pbelow', !!E.d.pb);
-  if(on && E.pm === 'pixel') gridDraw(); }
+  st.classList.toggle('posing', pzEditing());   /* ★ v1.0.5 🦴 分頁:人偶浮到最上層可以拖 */
+  if(E.tab !== 'pose') E.pj = null;
+  if(on && E.pm === 'pixel') gridDraw();
+  guideDraw(); }
 function gridDraw(){ var E = S.ed, g = $('dsg-grid'), x, n = E.px.n, c = E.d.W / n, i; if(!g) return; x = g.getContext('2d'); x.clearRect(0, 0, g.width, g.height); x.strokeStyle = 'rgba(80,80,160,.28)'; x.lineWidth = 1;
   for(i = 0; i * c <= E.d.W + 0.5; i++){ x.beginPath(); x.moveTo(Math.round(i * c) + 0.5, 0); x.lineTo(Math.round(i * c) + 0.5, E.d.H); x.stroke(); }
   for(i = 0; i * c <= E.d.H + 0.5; i++){ x.beginPath(); x.moveTo(0, Math.round(i * c) + 0.5); x.lineTo(E.d.W, Math.round(i * c) + 0.5); x.stroke(); } }
 function avName(f){ var p = f.split('_'), i, n = []; for(i = 0; i < p.length; i++){ if(D.AV_WORD[p[i]]) n.push(D.AV_WORD[p[i]]); } return n.join('') || f; }
+/* ══ ★ v1.0.5(2026-11-08 13:06・老師「骨架改成有關節,可以 3D 拖曳調整人物姿勢」)3D 關節人偶 ══
+   資料:d.guide = { t:'pose', id:起手範本, on, a:濃淡, j:{關節:[x,y,z]}(畫布像素,z 朝鏡頭為正), yw:左右轉角度, pt:上下俯仰角度 }
+   · 舊草稿只有 {t:'pose', id} ⇒ pzEnsure 從範本推出 3D(站好量骨長;畫面上變短的骨頭 = 朝鏡頭伸出)。
+   · 拖關節:在「目前視角」的空間裡,把被拖的那節骨頭轉向手指(骨長不變;手指比骨頭近 ⇒ 剩下的長度往前或往後伸,沿用原本那一側),
+     下面接著的關節一起轉(拖肩/髖 = 兩邊肩膀或兩邊髖一起轉;拖腰 = 整個人移動)。拖空白處 = 轉視角(只改看的角度,不改姿勢)。
+   · 只當描圖參考:只改 d.guide,不記作品復原、不算操作次數、renderComposite 不畫;人偶自己有「↶ 上一步」(最多 30 步,不存檔)。
+   · 🦴 分頁開著時人偶浮到最上層可以拖(#dsg-stage.posing);切到 🖌 畫筆就回到畫筆層下面、照濃淡淡淡顯示。 */
+function pzEditing(){ var E = S.ed, g = E && E.d.guide; return !!(E && E.tab === 'pose' && g && g.t === 'pose' && g.on && !locked()); }
+function pzPreset(id){ var i; for(i = 0; i < D.POSES.length; i++){ if(D.POSES[i].id === id) return D.POSES[i]; } return D.POSES[0]; }
+/* 範本只有 15 個關節:脊椎 s1~s3 在腰與頸之間平均補(★ 13:19 脊椎多 3 節);臉方向點 fc 放在頭球正前方 */
+function pzP2(id){ var P = pzPreset(id).j, o = {}, k, i, t; for(k in P){ if(P.hasOwnProperty(k)) o[k] = P[k]; }
+  for(i = 1; i <= 3; i++){ t = i / 4; if(!o['s' + i]) o['s' + i] = [P.p[0] + (P.n[0] - P.p[0]) * t, P.p[1] + (P.n[1] - P.p[1]) * t]; } return o; }
+function pzHeadR(W){ return W * 0.075; }
+/* 身體前方(視角或世界都可用):(左肩−右肩)×(頸−胸椎下) */
+function pzFwd(J){ var a = v3sub(J.ls, J.rs), b = v3sub(J.n, J.s2 || J.p), f = v3cross(a, b), l = v3len(f) || 1; return [f[0] / l, f[1] / l, f[2] / l]; }
+function pzFixFc(j, W){ var f = pzFwd(j), R = pzHeadR(W); j.fc = [j.h[0] + f[0] * R, j.h[1] + f[1] * R, j.h[2] + f[2] * R]; }
+function pzFrom(id, W, H){
+  var R = pzP2('stand'), P = pzP2(id), zb = D.POSE_ZB[id] || {}, o = {}, i, k, pa, dx, dy, d, L, s, z;
+  o.p = [P.p[0] * W, P.p[1] * H, 0];
+  for(i = 1; i < D.POSE_ORD.length; i++){ k = D.POSE_ORD[i]; pa = D.POSE_PAR[k]; if(k === 'fc') continue;
+    L = Math.sqrt(Math.pow((R[k][0] - R[pa][0]) * W, 2) + Math.pow((R[k][1] - R[pa][1]) * H, 2));
+    dx = (P[k][0] - P[pa][0]) * W; dy = (P[k][1] - P[pa][1]) * H; d = Math.sqrt(dx * dx + dy * dy);
+    if(d >= L - 0.5 || d < 0.01){ s = d < 0.01 ? 0 : L / d; z = d < 0.01 ? L : 0; } else { s = 1; z = Math.sqrt(L * L - d * d); }
+    if(zb[k]) z = -z;
+    o[k] = [o[pa][0] + dx * s, o[pa][1] + dy * s, o[pa][2] + z]; }
+  pzFixFc(o, W);
+  return o;
+}
+function pzEnsure(g, W, H){ var k, ok = !!(g.j && g.j.p && g.j.p.length === 3 && g.j.n && g.j.h), i, t;
+  if(ok){ for(i = 1; i <= 3; i++){ t = i / 4; if(!(g.j['s' + i] && g.j['s' + i].length === 3)) g.j['s' + i] = [g.j.p[0] + (g.j.n[0] - g.j.p[0]) * t, g.j.p[1] + (g.j.n[1] - g.j.p[1]) * t, g.j.p[2] + (g.j.n[2] - g.j.p[2]) * t]; }
+    if(!(g.j.fc && g.j.fc.length === 3)) pzFixFc(g.j, W);
+    for(k in D.POSE_PAR){ if(D.POSE_PAR.hasOwnProperty(k) && !(g.j[k] && g.j[k].length === 3)) ok = false; } }
+  if(!ok) g.j = pzFrom(g.id || 'stand', W, H);
+  if(typeof g.yw !== 'number') g.yw = 0; if(typeof g.pt !== 'number') g.pt = 0; if(!(g.zm > 0)) g.zm = 1; }
+/* 視角:以腰 p 為中心,先左右轉 yw、再上下俯仰 pt、再拉近拉遠 zm;正交投影(畫面 x,y = 視角空間 x,y)。zm 只改看的大小,不改姿勢 */
+function pzVw(g){
+  var a = g.yw * Math.PI / 180, b = g.pt * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), c = g.j.p, m = g.zm > 0 ? g.zm : 1;
+  return {
+    f: function(w){ var x = w[0] - c[0], y = w[1] - c[1], z = w[2] - c[2], x1 = x * ca + z * sa, z1 = -x * sa + z * ca; return [x1 * m + c[0], (y * cb - z1 * sb) * m + c[1], (y * sb + z1 * cb) * m + c[2]]; },
+    inv: function(v){ var x1 = (v[0] - c[0]) / m, y2 = (v[1] - c[1]) / m, z2 = (v[2] - c[2]) / m, y = y2 * cb + z2 * sb, z1 = -y2 * sb + z2 * cb; return [x1 * ca - z1 * sa + c[0], y + c[1], x1 * sa + z1 * ca + c[2]]; } };
+}
+function pzAll(g){ var vw = pzVw(g), V = {}, k; for(k in g.j){ if(g.j.hasOwnProperty(k)) V[k] = vw.f(g.j[k]); } return V; }
+function pzBack(g, V){ var vw = pzVw(g), k, w; for(k in V){ if(V.hasOwnProperty(k)){ w = vw.inv(V[k]); g.j[k] = [Math.round(w[0] * 100) / 100, Math.round(w[1] * 100) / 100, Math.round(w[2] * 100) / 100]; } } }
+function pzKids(k){ var o = [], i, q, c; for(i = 0; i < D.POSE_ORD.length; i++){ q = D.POSE_ORD[i]; c = q; while(c && c !== k) c = D.POSE_PAR[c]; if(c === k) o.push(q); } return o; }
+/* 拖某個關節時:繞哪個點轉(piv)、哪些關節跟著動(set) */
+function pzRig(k){
+  if(k === 'ls' || k === 'rs') return { piv: 'n', set: pzKids('ls').concat(pzKids('rs')) };
+  if(k === 'lp' || k === 'rp') return { piv: 'p', set: pzKids('lp').concat(pzKids('rp')) };
+  return { piv: D.POSE_PAR[k], set: pzKids(k) };
+}
+function v3sub(a, b){ return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function v3len(a){ return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]); }
+function v3cross(a, b){ return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+/* 把 V[set] 繞 V[piv] 轉,讓 u 方向轉到 v 方向(Rodrigues) */
+function pzTurn(V, piv, set, u, v){
+  var lu = v3len(u), lv = v3len(v), ax, la, cs, sn, i, q, P = V[piv], r, kx, d;
+  if(lu < 1e-6 || lv < 1e-6) return;
+  ax = v3cross(u, v); la = v3len(ax); cs = (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (lu * lv);
+  if(la < 1e-9) return;
+  sn = la / (lu * lv); ax = [ax[0] / la, ax[1] / la, ax[2] / la];
+  for(i = 0; i < set.length; i++){ q = set[i]; r = v3sub(V[q], P); kx = v3cross(ax, r); d = ax[0] * r[0] + ax[1] * r[1] + ax[2] * r[2];
+    V[q] = [P[0] + r[0] * cs + kx[0] * sn + ax[0] * d * (1 - cs), P[1] + r[1] * cs + kx[1] * sn + ax[1] * d * (1 - cs), P[2] + r[2] * cs + kx[2] * sn + ax[2] * d * (1 - cs)]; }
+}
+/* 拖關節 k 到畫面點 (tx,ty) */
+function pzDragTo(g, k, tx, ty){
+  var V = pzAll(g), rg, P, u, L, dx, dy, d2, v, i, q;
+  if(k === 'p'){ dx = tx - V.p[0]; dy = ty - V.p[1]; for(q in V){ if(V.hasOwnProperty(q)){ V[q][0] += dx; V[q][1] += dy; } }
+    var vw0 = pzVw(g), np = vw0.inv(V.p); /* 整個人平移:世界座標直接加上同樣的位移(視角中心跟著腰走) */
+    var dw = v3sub(np, g.j.p); for(q in g.j){ if(g.j.hasOwnProperty(q)) g.j[q] = [Math.round((g.j[q][0] + dw[0]) * 10) / 10, Math.round((g.j[q][1] + dw[1]) * 10) / 10, Math.round((g.j[q][2] + dw[2]) * 10) / 10]; }
+    return; }
+  rg = pzRig(k); P = V[rg.piv]; u = v3sub(V[k], P); L = v3len(u);
+  dx = tx - P[0]; dy = ty - P[1]; d2 = dx * dx + dy * dy; if(d2 < 1 || L < 1) return;
+  if(d2 >= L * L){ i = L / Math.sqrt(d2); v = [dx * i, dy * i, 0]; } else v = [dx, dy, (u[2] >= 0 ? 1 : -1) * Math.sqrt(L * L - d2)];
+  pzTurn(V, rg.piv, rg.set, u, v); pzBack(g, V);
+}
+/* 把向量 r 繞單位軸 ax 轉 ang(弧度) */
+function v3rot(r, ax, ang){ var cs = Math.cos(ang), sn = Math.sin(ang), kx = v3cross(ax, r), d = ax[0] * r[0] + ax[1] * r[1] + ax[2] * r[2];
+  return [r[0] * cs + kx[0] * sn + ax[0] * d * (1 - cs), r[1] * cs + kx[1] * sn + ax[1] * d * (1 - cs), r[2] * cs + kx[2] * sn + ax[2] * d * (1 - cs)]; }
+/* ★ 13:20 向前/向後:選到的那一節往鏡頭(前)或遠離鏡頭(後)轉 15°;選到 ✥ 腰 = 整個人往前/往後傾 */
+function pzNudge(g, k, fwd){
+  var V = pzAll(g), ang = 15 * Math.PI / 180, rg, P, u, ax, la, a1, a2, v1, v2, set, i, q, r, pick;
+  if(k === 'p'){ P = V.p; set = []; for(q in V){ if(V.hasOwnProperty(q) && q !== 'p') set.push(q); }
+    ax = [1, 0, 0]; v1 = v3rot(v3sub(V.h, P), ax, ang); pick = (v1[2] > (V.h[2] - P[2])) === !!fwd ? ang : -ang;
+    for(i = 0; i < set.length; i++){ q = set[i]; r = v3rot(v3sub(V[q], P), ax, pick); V[q] = [P[0] + r[0], P[1] + r[1], P[2] + r[2]]; }
+    pzBack(g, V); return true; }
+  rg = pzRig(k); P = V[rg.piv]; u = v3sub(V[k], P);
+  ax = v3cross(u, [0, 0, 1]); la = v3len(ax); if(la < 1e-6){ ax = [1, 0, 0]; } else ax = [ax[0] / la, ax[1] / la, ax[2] / la];
+  v1 = v3rot(u, ax, ang); v2 = v3rot(u, ax, -ang); a1 = fwd ? v1[2] : -v1[2]; a2 = fwd ? v2[2] : -v2[2];
+  if(Math.max(a1, a2) <= (fwd ? u[2] : -u[2]) + 1e-6) return false;   /* 已經正對(或背對)鏡頭了 */
+  pzTurn(V, rg.piv, rg.set, u, a1 >= a2 ? v1 : v2); pzBack(g, V); return true;
+}
+function pzMirror(g){ var cx = g.j.p[0], o = {}, k, s;
+  for(k in g.j){ if(g.j.hasOwnProperty(k)){ s = k.charAt(0) === 'l' ? 'r' + k.slice(1) : (k.charAt(0) === 'r' ? 'l' + k.slice(1) : k); o[s] = [2 * cx - g.j[k][0], g.j[k][1], g.j[k][2]]; } }
+  g.j = o; g.yw = -g.yw; }
+/* 畫人偶:遠的先畫、近的後畫;左半邊藍、右半邊橘,讓轉身時分得出左右;近的粗一點、遠的淡一點;頭上的眼睛標出臉朝哪 */
+function pzDraw(x, g, W, H, edit){
+  var V = pzAll(g), items = [], i, b, a0, a1, zc = V.p[2], dep, it, k, ZM = g.zm > 0 ? g.zm : 1, R = pzHeadR(W) * ZM;
+  var TH = { s1: 0.05, s2: 0.05, s3: 0.05, n: 0.04, h: 0.03, ls: 0.026, rs: 0.026, le: 0.034, re: 0.034, lh: 0.028, rh: 0.028, lp: 0.03, rp: 0.03, lk: 0.046, rk: 0.046, lf: 0.038, rf: 0.038, sh: 0.03 };
+  function col(k){ return k.charAt(0) === 'l' ? '#2f7de1' : (k.charAt(0) === 'r' ? '#f0811f' : '#7a5cd6'); }
+  function dsc(z){ return Math.max(0.75, Math.min(1.3, 1 + (z - zc) / (H * 1.4))); }
+  function shade(z){ return Math.max(0.45, Math.min(1, 0.75 + (z - zc) / (H * 0.8))); }
+  /* 地面影子:腳底高度的一圈 */
+  var gy = Math.max(g.j.lf[1], g.j.rf[1]) + W * 0.02, vw = pzVw(g), gp = [], n;
+  for(n = 0; n < 28; n++) gp.push(vw.f([g.j.p[0] + Math.cos(n / 28 * Math.PI * 2) * W * 0.26, gy, g.j.p[2] + Math.sin(n / 28 * Math.PI * 2) * W * 0.26]));
+  x.save(); x.beginPath(); x.moveTo(gp[0][0], gp[0][1]); for(n = 1; n < gp.length; n++) x.lineTo(gp[n][0], gp[n][1]); x.closePath();
+  x.fillStyle = 'rgba(40,40,90,.10)'; x.fill(); x.strokeStyle = 'rgba(40,40,90,.22)'; x.lineWidth = 2; x.setLineDash([8, 8]); x.stroke(); x.restore();
+  /* 身體板:胸(兩肩 → 胸椎下)、腰臀(腰椎 → 兩髖),脊椎彎時兩塊跟著彎 */
+  /* ★ 13:24 老師「骨架模型用 3D 建模」:四肢 = 有明暗的圓柱(垂直骨頭方向的漸層,光從左上來)、關節 = 立體球、身體 = 有明暗的軀幹塊 */
+  function pal(k){ var c = k.charAt(0); return c === 'l' ? ['#1b4c96', '#3d8af0', '#cfe3ff'] : (c === 'r' ? ['#9a4a08', '#f28a2a', '#ffe0c2'] : ['#45308f', '#8467e0', '#e6ddff']); }
+  function ball(P, r, k, zz){ items.push({ z: zz + 0.01, f: function(){ var p3 = pal(k), gb = x.createRadialGradient(P[0] - r * 0.4, P[1] - r * 0.45, r * 0.1, P[0], P[1], r);
+    gb.addColorStop(0, p3[2]); gb.addColorStop(0.5, p3[1]); gb.addColorStop(1, p3[0]); x.globalAlpha = shade(zz); x.beginPath(); x.arc(P[0], P[1], r, 0, Math.PI * 2); x.fillStyle = gb; x.fill(); x.globalAlpha = 1; } }); }
+  function plate(pts, zz, al){ items.push({ z: zz, f: function(){ var q, mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9, gp2;
+    for(q = 0; q < pts.length; q++){ mnx = Math.min(mnx, pts[q][0]); mny = Math.min(mny, pts[q][1]); mxx = Math.max(mxx, pts[q][0]); mxy = Math.max(mxy, pts[q][1]); }
+    gp2 = x.createLinearGradient(mnx, mny, mxx, mxy); gp2.addColorStop(0, 'rgba(230,221,255,' + (al + 0.25) + ')'); gp2.addColorStop(0.55, 'rgba(132,103,224,' + (al + 0.15) + ')'); gp2.addColorStop(1, 'rgba(69,48,143,' + (al + 0.2) + ')');
+    x.globalAlpha = shade(zz); x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for(q = 1; q < pts.length; q++) x.lineTo(pts[q][0], pts[q][1]); x.closePath(); x.fillStyle = gp2; x.fill();
+    x.lineWidth = Math.max(2, W * 0.004); x.strokeStyle = 'rgba(69,48,143,.55)'; x.stroke(); x.globalAlpha = 1; } }); }
+  var hs = [(V.ls[0] - V.rs[0]) / 2, (V.ls[1] - V.rs[1]) / 2, (V.ls[2] - V.rs[2]) / 2], hp = [(V.lp[0] - V.rp[0]) / 2, (V.lp[1] - V.rp[1]) / 2, (V.lp[2] - V.rp[2]) / 2];
+  plate([V.ls, V.rs, [V.s2[0] - hs[0] * 0.75, V.s2[1] - hs[1] * 0.75], [V.s2[0] + hs[0] * 0.75, V.s2[1] + hs[1] * 0.75]], (V.ls[2] + V.rs[2] + V.s2[2] * 2) / 4, 0.17);
+  plate([[V.s1[0] + hp[0] * 0.95, V.s1[1] + hp[1] * 0.95], [V.s1[0] - hp[0] * 0.95, V.s1[1] - hp[1] * 0.95], V.rp, V.lp], (V.lp[2] + V.rp[2] + V.s1[2] * 2) / 4, 0.14);
+  for(i = 0; i < D.POSE_BONES3.length; i++){ b = D.POSE_BONES3[i];
+    (function(p0, p1){ var kk = D.POSE_PAR[p0] === p1 ? p0 : (D.POSE_PAR[p1] === p0 ? p1 : p0), zz = (V[p0][2] + V[p1][2]) / 2;
+      if((p0 === 'ls' && p1 === 'rs') || (p0 === 'lp' && p1 === 'rp')) kk = 'sh';
+      var ck = kk.charAt(0) === 'l' || kk.charAt(0) === 'r' ? kk : 'm';
+      items.push({ z: zz, f: function(){ var w = W * (TH[kk] || 0.03) * dsc(zz) * ZM, A = V[p0], B = V[p1], dx = B[0] - A[0], dy = B[1] - A[1], ln = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / ln, ny = dx / ln, gc, p3 = pal(ck), mx = (A[0] + B[0]) / 2, my = (A[1] + B[1]) / 2;
+        if(nx + ny > 0){ nx = -nx; ny = -ny; }   /* 亮面朝左上 */
+        gc = x.createLinearGradient(mx + nx * w / 2, my + ny * w / 2, mx - nx * w / 2, my - ny * w / 2);
+        gc.addColorStop(0, p3[2]); gc.addColorStop(0.35, p3[1]); gc.addColorStop(1, p3[0]);
+        x.globalAlpha = shade(zz); x.lineCap = 'round'; x.strokeStyle = gc; x.lineWidth = w;
+        x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.stroke(); x.globalAlpha = 1; } }); })(b[0], b[1]);
+  }
+  /* 關節球(肩/肘/腕/髖/膝/踝/脊椎/頸) */
+  for(k in V){ if(!V.hasOwnProperty(k) || k === 'h' || k === 'fc' || k === 'p') continue; ball(V[k], W * (TH[k] || 0.035) * 0.62 * dsc(V[k][2]) * ZM, k.charAt(0) === 'l' || k.charAt(0) === 'r' ? k : 'm', V[k][2]); }
+  ball(V.p, W * 0.04 * dsc(V.p[2]) * ZM, 'm', V.p[2]);
+  /* ★ 13:19 頭 = 球體 + 十字定位線(Loomis 畫法):
+     臉方向 fw = 頭心→fc;上方 up = 頸→頭(扣掉 fw 分量);右方 rt = up×fw。
+     直線 = 臉的中線(通過 up、fw 的大圓),橫線 = 眼睛線(通過 fw、rt 的大圓),兩線交點 = 臉正中央(鼻樑)。
+     面向鏡頭那半球的線畫實線、背面畫淡虛線 ⇒ 轉頭時看得出球的透視;眼睛在橫線上左右 28°,鼻子從交點往前下方凸出。 */
+  items.push({ z: V.h[2], f: function(){ var r = R, c = V.h, fw = v3sub(V.fc, c), lf = v3len(fw) || 1, up = v3sub(V.h, V.n), d0, lu, rt, t, n2, o, pts, vis, s2, ea, ez, ex, ey, nt, gr;
+    fw = [fw[0] / lf, fw[1] / lf, fw[2] / lf]; d0 = up[0] * fw[0] + up[1] * fw[1] + up[2] * fw[2]; up = [up[0] - fw[0] * d0, up[1] - fw[1] * d0, up[2] - fw[2] * d0]; lu = v3len(up) || 1; up = [up[0] / lu, up[1] / lu, up[2] / lu];
+    rt = v3cross(up, fw);
+    x.globalAlpha = shade(c[2]);
+    gr = x.createRadialGradient(c[0] - r * 0.38, c[1] - r * 0.42, r * 0.08, c[0], c[1], r);
+    gr.addColorStop(0, 'rgba(255,255,255,.85)'); gr.addColorStop(0.55, 'rgba(176,156,240,.45)'); gr.addColorStop(1, 'rgba(92,64,190,.55)');
+    x.beginPath(); x.arc(c[0], c[1], r, 0, Math.PI * 2); x.fillStyle = gr; x.fill(); x.lineWidth = Math.max(4, W * 0.012 * ZM); x.strokeStyle = '#7a5cd6'; x.stroke();
+    /* 大圓:沿 A cos t + B sin t;z ≥ 0 的點在前半球 */
+    function ring(A, B, colr, wd){ var seg = 48, q, prev = null, pv = null, P2;
+      for(q = 0; q <= seg; q++){ t = q / seg * Math.PI * 2; o = [A[0] * Math.cos(t) + B[0] * Math.sin(t), A[1] * Math.cos(t) + B[1] * Math.sin(t), A[2] * Math.cos(t) + B[2] * Math.sin(t)];
+        P2 = [c[0] + o[0] * r, c[1] + o[1] * r]; vis = o[2] >= 0;
+        if(prev){ x.beginPath(); x.moveTo(prev[0], prev[1]); x.lineTo(P2[0], P2[1]); if(vis && pv){ x.setLineDash([]); x.globalAlpha = shade(c[2]); x.strokeStyle = colr; x.lineWidth = wd; } else { x.setLineDash([4, 5]); x.globalAlpha = shade(c[2]) * 0.35; x.strokeStyle = colr; x.lineWidth = wd * 0.6; } x.stroke(); }
+        prev = P2; pv = vis; }
+      x.setLineDash([]); x.globalAlpha = shade(c[2]); }
+    ring(up, fw, '#3b2a80', Math.max(2.5, W * 0.0065 * ZM));   /* 直線:臉的中線 */
+    ring(fw, rt, '#d6336c', Math.max(2.5, W * 0.0065 * ZM));   /* 橫線:眼睛線 */
+    /* 眼睛:橫線上左右 28°,在前半球才畫,越側面越扁 */
+    for(s2 = -1; s2 <= 1; s2 += 2){ ea = 28 * Math.PI / 180 * s2;
+      o = [fw[0] * Math.cos(ea) + rt[0] * Math.sin(ea), fw[1] * Math.cos(ea) + rt[1] * Math.sin(ea), fw[2] * Math.cos(ea) + rt[2] * Math.sin(ea)];
+      ez = o[2]; if(ez <= 0.05) continue; ex = c[0] + o[0] * r; ey = c[1] + o[1] * r;
+      x.save(); x.translate(ex, ey); x.rotate(Math.atan2(o[1], o[0])); x.scale(Math.max(0.3, ez), 1);   /* 球面上的圓投影:沿半徑方向壓扁 = 朝鏡頭的程度 */
+      x.beginPath(); x.arc(0, 0, r * 0.12, 0, Math.PI * 2); x.fillStyle = '#ffffff'; x.fill(); x.lineWidth = Math.max(2, r * 0.04); x.strokeStyle = '#3b2a80'; x.stroke();
+      x.beginPath(); x.arc(0, 0, r * 0.06, 0, Math.PI * 2); x.fillStyle = '#3b2a80'; x.fill(); x.restore(); }
+    /* 鼻子:十字交點往前下方凸出 */
+    n2 = [c[0] + fw[0] * r, c[1] + fw[1] * r]; nt = [c[0] + (fw[0] * 1.22 - up[0] * 0.28) * r, c[1] + (fw[1] * 1.22 - up[1] * 0.28) * r];
+    if(fw[2] > -0.15){ x.beginPath(); x.moveTo(n2[0], n2[1]); x.lineTo(nt[0], nt[1]); x.lineWidth = Math.max(3, W * 0.009 * ZM); x.strokeStyle = '#3b2a80'; x.lineCap = 'round'; x.stroke();
+      x.beginPath(); x.arc(n2[0], n2[1], Math.max(2.5, r * 0.07), 0, Math.PI * 2); x.fillStyle = '#d6336c'; x.fill(); }
+    x.globalAlpha = 1; } });
+  items.sort(function(p, q){ return p.z - q.z; });
+  x.save(); x.lineJoin = 'round'; for(i = 0; i < items.length; i++) items[i].f(); x.restore();
+  /* 可拖的關節把手(只有 🦴 分頁開著時) */
+  if(edit){ var E = S.ed, hr = Math.min(W * 0.045, Math.max(W * 0.024, 15 / (E.k || 1)));
+    x.save();
+    for(k in V){ if(!V.hasOwnProperty(k)) continue; it = V[k]; dep = shade(it[2]);
+      x.globalAlpha = Math.max(0.6, dep); x.lineWidth = Math.max(3, hr * 0.28); x.strokeStyle = '#ffffff';
+      x.fillStyle = E.pj === k ? '#ffd23f' : (k === 'p' ? '#7a5cd6' : col(k));
+      if(k === 'p'){ x.beginPath(); x.rect(it[0] - hr * 1.15, it[1] - hr * 1.15, hr * 2.3, hr * 2.3); x.fill(); x.stroke();
+        x.fillStyle = '#fff'; x.font = 'bold ' + Math.round(hr * 1.4) + 'px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('✥', it[0], it[1] + 1); }
+      else if(k === 'h'){ it = pzHandleAt(V, 'h', R); x.beginPath(); x.arc(it[0], it[1], hr * 0.7, 0, Math.PI * 2); x.lineWidth = Math.max(3, hr * 0.22); x.strokeStyle = E.pj === k ? '#ffd23f' : '#7a5cd6'; x.stroke(); }   /* 頭:空心圈,不蓋住十字線 */
+      else if(k === 'fc'){ x.beginPath(); x.arc(it[0], it[1], hr * 0.62, 0, Math.PI * 2); x.fillStyle = E.pj === k ? '#ffd23f' : '#d6336c'; x.globalAlpha = it[2] >= V.h[2] ? 1 : 0.45; x.fill(); x.stroke(); }   /* 臉方向點(轉頭) */
+      else { x.beginPath(); x.arc(it[0], it[1], k.charAt(0) === 's' ? hr * 0.75 : hr, 0, Math.PI * 2); x.fill(); x.stroke(); } }
+    x.restore(); }
+}
+/* 把手位置:頭的把手放在頭頂(拖它 = 脖子彎、歪頭點頭),其餘就在關節上;臉方向點 fc 在鼻樑(拖它 = 轉頭) */
+function pzHandleAt(V, k, R){ if(k !== 'h') return V[k]; var u = v3sub(V.h, V.n), l = v3len(u) || 1; return [V.h[0] + u[0] / l * R * 0.95, V.h[1] + u[1] / l * R * 0.95, V.h[2] + u[2] / l * R * 0.95]; }
+function pzHit(g, px, py){ var V = pzAll(g), E = S.ed, best = null, bd = 1e9, k, d, hp, R = pzHeadR(E.d.W) * (g.zm > 0 ? g.zm : 1), lim = Math.min(E.d.W * 0.11, Math.max(E.d.W * 0.05, 30 / (E.k || 1)));
+  for(k in V){ if(!V.hasOwnProperty(k)) continue; hp = pzHandleAt(V, k, R); d = Math.sqrt(Math.pow(hp[0] - px, 2) + Math.pow(hp[1] - py, 2)) - (k === 'p' ? 4 : 0) - (k === 'fc' ? 3 : 0); if(d < bd){ bd = d; best = k; } }
+  return bd <= lim ? best : null; }
+/* 骨架自己的復原/重做(不存檔,最多 30 步;有新動作就清掉重做) */
+function pzPush(s){ var E = S.ed; E.pzU = E.pzU || []; E.pzU.push(s); if(E.pzU.length > 30) E.pzU.shift(); E.pzR = []; }
+function pzSnap(){ var E = S.ed, g = E.d.guide; if(!g || g.t !== 'pose') return; pzPush(JSON.stringify(g)); }
+function pzApply(g, o){ g.j = o.j; g.yw = o.yw || 0; g.pt = o.pt || 0; g.zm = o.zm > 0 ? o.zm : 1; if(o.id) g.id = o.id; }
+/* ★ 13:19 我的姿勢:玩家自己存、自己命名;存在這台平板(依帳號分開),登入時另備份到雲端 designDrafts/{uid}/_poses.json(「☁ 從雲端找回」會一起找回) */
+function pzMineKey(){ return 'dsg_poses_' + (S.guest ? 'guest' : S.uid); }
+function pzMine(){ var a; try{ a = JSON.parse(lsGet(pzMineKey()) || '[]'); }catch(e){ a = []; } return a && a.push ? a : []; }
+function pzMineSet(a, cloud){ lsSet(pzMineKey(), JSON.stringify(a)); if(cloud && !S.guest && ownerOk()){ var uid = S.uid, body = JSON.stringify({ uid: uid, at: now(), poses: a });
+  sto(function(s){ if(!s || uid !== S.uid) return; try{ s.ref('designDrafts/' + uid + '/_poses.json').putString(body, 'raw', { contentType: 'application/json' }).then(function(){}, function(){}); }catch(e){} }); } }
+function pzMineMerge(list){ var a = pzMine(), i, j, hit; if(!list || !list.push) return 0; var add = 0;
+  for(i = 0; i < list.length; i++){ if(!list[i] || !list[i].n || !list[i].j) continue; hit = -1; for(j = 0; j < a.length; j++){ if(a[j].n === list[i].n) hit = j; }
+    if(hit < 0){ a.push(list[i]); add++; } else if((list[i].at || 0) > (a[hit].at || 0)) a[hit] = list[i]; }
+  while(a.length > D.POSE_MINE_MAX) a.shift(); pzMineSet(a, false); return add; }
+function pzBind(){
+  var E = S.ed, cv = $('dsg-guide'), st = $('dsg-stage'), g0 = null;
+  if(!cv) return;
+  function pt(e){ var rc = st.getBoundingClientRect(); return { x: (e.clientX - rc.left) / E.k, y: (e.clientY - rc.top) / E.k }; }
+  cv.onpointerdown = function(e){ var g = E.d.guide, p, k;
+    if(!pzEditing() || g0) return; e.preventDefault(); e.stopPropagation(); p = pt(e); pzEnsure(g, E.d.W, E.d.H); k = pzHit(g, p.x, p.y);
+    g0 = { pid: e.pointerId, k: k, x: p.x, y: p.y, yw: g.yw, pt: g.pt, moved: false, sn: JSON.stringify(g) };
+    if(k){ g0.ox = pzAll(g)[k][0] - p.x; g0.oy = pzAll(g)[k][1] - p.y; if(E.pj !== k){ E.pj = k; libPaint(); } sfx('sfx-sel', 0.25); }
+    try{ cv.setPointerCapture(e.pointerId); }catch(x){}
+    guideDraw(); };
+  cv.onpointermove = function(e){ var g = E.d.guide, p;
+    if(!g0 || e.pointerId !== g0.pid) return; e.preventDefault(); p = pt(e);
+    if(!g0.moved){ if(Math.abs(p.x - g0.x) + Math.abs(p.y - g0.y) < 3) return; g0.moved = true; pzPush(g0.sn); }
+    if(g0.k) pzDragTo(g, g0.k, p.x + g0.ox, p.y + g0.oy);
+    else { g.yw = Math.round((g0.yw + (p.x - g0.x) * 0.6) % 360); if(g.yw > 180) g.yw -= 360; if(g.yw < -180) g.yw += 360; g.pt = Math.round(clamp(g0.pt - (p.y - g0.y) * 0.35, -70, 70)); }
+    guideDraw(); };
+  cv.onpointerup = cv.onpointercancel = function(e){
+    if(!g0 || e.pointerId !== g0.pid) return; var mv = g0.moved, wasView = !g0.k; g0 = null; if(mv){ dirty(); if(wasView) libPaint(); } };   /* 轉完視角:左欄視角按鈕與角度讀數跟著更新 */
+}
+function pzViewTxt(){ var g = S.ed.d.guide; if(!g || g.t !== 'pose') return ''; return '↔ ' + Math.round(g.yw || 0) + '°  ↕ ' + Math.round(-(g.pt || 0)) + '°  🔍 ' + Math.round((g.zm || 1) * 100) + '%'; }
+/* 🦴 分頁的按鈕:data-pz = 視角 v:id、mirror、big、small、flip、undo、reset */
+function pzCmd(c){
+  var E = S.ed, g = E.d.guide, i, msg = '';
+  if(!g || g.t !== 'pose'){ E.d.guide = g = { t: 'pose', id: 'stand', on: 1, a: (g && g.a) || 0.35 }; }
+  g.on = 1; pzEnsure(g, E.d.W, E.d.H);
+  var cur = JSON.stringify(g), o, a, nm, hs, j2;
+  if(c === 'undo' || c === 'redo'){ var from = c === 'undo' ? (E.pzU = E.pzU || []) : (E.pzR = E.pzR || []), to = c === 'undo' ? (E.pzR = E.pzR || []) : E.pzU;
+    if(!from.length){ toast(c === 'undo' ? '🦴 沒有上一步了' : '🦴 沒有可以重做的'); return; }
+    to.push(cur); pzApply(g, JSON.parse(from.pop())); msg = c === 'undo' ? '↶ 復原' : '↷ 重做'; }
+  else if(c === 'save'){   /* 💾 存成我的姿勢 */
+    hs = $('dsg-pzn'); nm = String((hs && hs.value) || E.pzName || '').replace(/^\s+|\s+$/g, '');
+    if(!nm){ toast(T({ c: '先幫這個姿勢取個名字', p: '請輸入姿勢名稱' })); if(hs) hs.focus(); return; }
+    if(nm.length > 10){ toast('名字最多 10 個字'); return; }
+    if(wordHits(nm).length){ toast('⚠ 這個名字有不適合的字詞,請換一個'); return; }
+    a = pzMine(); j2 = -1; for(i = 0; i < a.length; i++){ if(a[i].n === nm) j2 = i; }
+    if(j2 < 0 && a.length >= D.POSE_MINE_MAX){ toast('我的姿勢最多存 ' + D.POSE_MINE_MAX + ' 個,先刪掉不要的'); return; }
+    o = { n: nm, j: JSON.parse(JSON.stringify(g.j)), yw: g.yw, pt: g.pt, zm: g.zm, at: now() };
+    if(j2 >= 0) a[j2] = o; else a.push(o);
+    pzMineSet(a, true); E.pzName = ''; sfx('sfx-sel', 0.3); libPaint(); toast(j2 >= 0 ? '💾 「' + nm + '」更新好了' : '💾 存好了:「' + nm + '」'); return; }
+  else if(c.indexOf('ld:') === 0 || c.indexOf('del:') === 0){
+    a = pzMine(); i = +c.split(':')[1]; if(!a[i]) return;
+    if(c.indexOf('del:') === 0){ nm = a[i].n; confirmBox('刪掉姿勢「' + esc(nm) + '」?', function(ok){ if(!ok) return; var b2 = pzMine(), q; for(q = 0; q < b2.length; q++){ if(b2[q].n === nm){ b2.splice(q, 1); break; } } pzMineSet(b2, true); libPaint(); toast('🗑 刪掉了'); }, '刪掉'); return; }
+    pzPush(cur); pzApply(g, a[i]); msg = '📂 換成「' + a[i].n + '」'; }
+  else { pzPush(cur);
+    if(c.indexOf('v:') === 0){ for(i = 0; i < D.POSE_VIEWS.length; i++){ if(D.POSE_VIEWS[i].id === c.slice(2)){ g.yw = D.POSE_VIEWS[i].y; g.pt = D.POSE_VIEWS[i].p; } } }
+    else if(c === 'mirror'){ pzMirror(g); msg = '🪞 左右換過來了'; }
+    else if(c === 'zin' || c === 'zout'){ var z0 = g.zm || 1, z1 = Math.round(clamp(c === 'zin' ? z0 * 1.15 : z0 / 1.15, 0.5, 2.5) * 100) / 100;
+      if(z1 === z0){ E.pzU.pop(); toast(c === 'zin' ? '已經最近了' : '已經最遠了'); return; } g.zm = z1; }
+    else if(c === 'fwd' || c === 'back'){ if(!E.pj){ E.pzU.pop(); toast(T({ c: '先點一個圓點(手、手肘、膝蓋、腳、頭、脊椎…),再按向前/向後', p: '請先選取關節,再調整前後' })); return; }
+      if(!pzNudge(g, E.pj, c === 'fwd')){ E.pzU.pop(); toast(c === 'fwd' ? '這一節已經正對著你了' : '這一節已經背對著你了'); return; } }
+    else if(c === 'reset'){ g.j = pzFrom(g.id || 'stand', E.d.W, E.d.H); g.yw = 0; g.pt = 0; g.zm = 1; msg = '↺ 回到範本的樣子'; }
+  }
+  sfx('sfx-sel', 0.3); guideDraw(); libPaint(); dirty(); if(msg) toast(msg);
+}
 /* ★ v1.0.3 描圖參考層 #dsg-guide(在畫筆層下面、pointer-events:none;renderComposite 不會畫它 ⇒ 不進作品、不進縮圖、不進審核) */
 function guideDraw(){
   var E = S.ed, cv = $('dsg-guide'), g, x, W, H, P, i, j, k, b, im;
   if(!E || !cv) return;
   x = cv.getContext('2d'); W = cv.width; H = cv.height; x.clearRect(0, 0, W, H);
   g = E.d.guide; if(!g || !g.on) return;
-  cv.style.opacity = String(g.a || 0.35);
-  if(g.t === 'pose'){
-    for(i = 0; i < D.POSES.length; i++){ if(D.POSES[i].id === g.id) P = D.POSES[i].j; }
-    if(!P) return;
-    var pt = function(n){ return [P[n][0] * W, P[n][1] * H]; };
-    x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#2f7de1'; x.fillStyle = '#2f7de1';
-    x.lineWidth = Math.max(8, W * 0.022);
-    for(i = 0; i < D.POSE_BONES.length; i++){ b = D.POSE_BONES[i]; var a0 = pt(b[0]), a1 = pt(b[1]); x.beginPath(); x.moveTo(a0[0], a0[1]); x.lineTo(a1[0], a1[1]); x.stroke(); }
-    var hd = pt('h'), r = W * 0.075; x.beginPath(); x.arc(hd[0], hd[1], r, 0, Math.PI * 2); x.lineWidth = Math.max(6, W * 0.016); x.stroke();
-    for(k in P){ if(P.hasOwnProperty(k) && k !== 'h'){ j = pt(k); x.beginPath(); x.arc(j[0], j[1], W * 0.014, 0, Math.PI * 2); x.fill(); } }
-    return;
-  }
+  cv.style.opacity = String(pzEditing() ? 0.92 : (g.a || 0.35));
+  if(g.t === 'pose'){ pzEnsure(g, W, H); pzDraw(x, g, W, H, pzEditing()); return; }   /* ★ v1.0.5 3D 關節人偶 */
   if(g.t === 'ref' && g.src){
     im = new Image(); im.onload = function(){ if(!S.ed || S.ed.d.guide !== g) return; var k2 = Math.min(W * 0.9 / im.naturalWidth, H * 0.9 / im.naturalHeight), w2 = im.naturalWidth * k2, h2 = im.naturalHeight * k2; x.clearRect(0, 0, W, H); x.drawImage(im, (W - w2) / 2, (H - h2) / 2, w2, h2); };
     im.src = srcUrl(g.src);
@@ -620,10 +867,31 @@ function libPaint(){
     h += '<button class="dsg-b go" data-addtext="1" style="margin-top:1vmin">➕ 放進畫面</button>';
   } else if(E.tab === 'pose'){   /* ★ v1.0.3 🦴 人物動作骨架 */
     var gp = E.d.guide && E.d.guide.t === 'pose' ? E.d.guide : null;
-    h += '<div class="dsg-sec">🦴 動作骨架</div><div style="font-size:1.8vmin;opacity:.9;margin-bottom:.8vmin">' + esc(T({ c: '選一個姿勢,淡淡的骨架會出現在畫布上。照著它畫出身體比例和動作;骨架不會出現在作品裡。', p: '選擇姿勢後,骨架以淡色顯示於畫布作為比例與動作參考,不會納入作品。' })) + '</div><div class="dsg-chips">';
-    for(i = 0; i < D.POSES.length; i++) h += '<button data-gp="' + D.POSES[i].id + '"' + (gp && gp.on && gp.id === D.POSES[i].id ? ' class="on"' : '') + '>' + D.POSES[i].e + ' ' + esc(D.POSES[i].n) + '</button>';
-    h += '<button data-gp=""' + (!gp || !gp.on ? ' class="on"' : '') + '>🙈 不顯示</button></div>';
-    h += '<div style="font-size:1.8vmin;display:flex;gap:1vmin;align-items:center;margin-top:1vmin">👁 濃淡 <input type="range" min="10" max="80" value="' + Math.round(((E.d.guide && E.d.guide.a) || 0.35) * 100) + '" id="dsg-ga" style="flex:1"></div>';
+    /* ★ v1.0.5 3D 關節人偶:範本只是起手式,關節可以拖、視角可以轉 */
+    h += '<div class="dsg-sec">🦴 3D 動作骨架</div><div style="font-size:1.8vmin;opacity:.9;margin-bottom:.8vmin">' + esc(T({ c: '拖圓點彎手腳和頭,拖中間的 ✥ 方塊移動整個人,拖空白的地方把人偶轉一圈看。擺好了按「🖌 開始畫」照著畫;骨架不會出現在作品裡。', p: '拖曳圓點調整關節、拖曳 ✥ 移動人偶、拖曳空白處旋轉 3D 視角;完成後按「開始畫」描繪。骨架不會納入作品。' })) + '</div>';
+    h += '<div class="dsg-sec">① ' + esc(T({ c: '先選一個起手姿勢', p: '起手範本' })) + '</div><div class="dsg-chips">';
+    for(i = 0; i < D.POSES.length; i++) h += '<button data-gp="' + D.POSES[i].id + '"' + (gp && gp.on && gp.id === D.POSES[i].id ? ' class="on"' : '') + '>' + D.POSES[i].e + '<span class="lb"> ' + esc(D.POSES[i].n) + '</span></button>';
+    h += '<button data-gp=""' + (!gp || !gp.on ? ' class="on"' : '') + '>🙈<span class="lb"> 不顯示</span></button></div>';
+    if(gp && gp.on && !locked()){
+      h += '<div class="dsg-sec">② ' + esc(T({ c: '轉個角度看', p: '視角' })) + '</div><div class="dsg-chips dsg-pzrow">';
+      for(i = 0; i < D.POSE_VIEWS.length; i++) h += '<button data-pz="v:' + D.POSE_VIEWS[i].id + '"' + (Math.round(gp.yw || 0) === D.POSE_VIEWS[i].y && Math.round(gp.pt || 0) === D.POSE_VIEWS[i].p ? ' class="on"' : '') + '>' + D.POSE_VIEWS[i].e + '<span class="lb"> ' + esc(D.POSE_VIEWS[i].n) + '</span></button>';
+      h += '</div><div class="dsg-pzv" id="dsg-pzv">' + esc(pzViewTxt()) + '</div>';
+      /* ★ 13:20 老師「骨架調整視窗新增 復原、向前、向後、拉近、拉遠 等基礎功能鍵」 */
+      var pjOk = !!E.pj, pjN = pjOk ? (D.POSE_JN[E.pj] || E.pj) : '';
+      h += '<div class="dsg-sec">③ ' + esc(T({ c: '調整人偶', p: '調整' })) + (pjOk ? ' <small style="opacity:.85">— 選到:' + esc(pjN) + '</small>' : '') + '</div><div class="dsg-chips dsg-pzrow">';
+      h += '<button data-pz="undo">↶<span class="lb"> 復原</span></button><button data-pz="redo">↷<span class="lb"> 重做</span></button>';
+      h += '<button data-pz="fwd"' + (pjOk ? '' : ' style="opacity:.5"') + '>⏫<span class="lb"> 向前</span></button><button data-pz="back"' + (pjOk ? '' : ' style="opacity:.5"') + '>⏬<span class="lb"> 向後</span></button>';
+      h += '<button data-pz="zin">🔍<span class="lb"> 拉近</span></button><button data-pz="zout">🔭<span class="lb"> 拉遠</span></button>';
+      h += '<button data-pz="mirror">🪞<span class="lb"> 左右相反</span></button><button data-pz="reset">↺<span class="lb"> 回到範本</span></button></div>';
+      h += '<div class="dsg-tip">' + esc(T({ c: '💡 點一個圓點選好關節,按「⏫ 向前 / ⏬ 向後」它就往你這邊或往後轉一點(選 ✥ 是整個人前傾/後仰)。頭頂的圈 = 歪頭點頭,鼻子的紅點 = 轉頭;頭上的十字線交叉的地方就是臉的正中間。', p: '選取關節後以「向前/向後」調整前後角度(選取 ✥ 為全身前傾/後仰);頭頂圈調整頸部,鼻樑紅點調整面向;十字線交點即臉部中心。' })) + '</div>';
+      /* ★ 13:19/13:24 老師「玩家可以自己儲存調整好的姿勢並命名」 */
+      var mine = pzMine();
+      h += '<div class="dsg-sec">④ ' + esc(T({ c: '我的姿勢', p: '我的姿勢庫' })) + ' <small style="opacity:.75">(' + mine.length + '/' + D.POSE_MINE_MAX + ')</small></div>';
+      h += '<div style="display:flex;gap:.8vmin;align-items:center"><input type="text" id="dsg-pzn" maxlength="10" placeholder="' + esc(T({ c: '幫姿勢取名字', p: '姿勢名稱' })) + '" value="' + esc(E.pzName || '') + '" style="flex:1;min-width:0;font-size:2vmin;padding:.8vmin;border-radius:1vmin;border:0"><button class="dsg-b go" data-pz="save" style="white-space:nowrap">💾<span class="lb"> 儲存</span></button></div>';
+      if(mine.length){ h += '<div class="dsg-chips dsg-pzrow" style="margin-top:.6vmin">'; for(i = 0; i < mine.length; i++) h += '<span style="display:inline-flex;gap:.3vmin"><button data-pz="ld:' + i + '">📂 ' + esc(mine[i].n) + '</button><button data-pz="del:' + i + '" title="刪掉" style="flex:0 0 auto">🗑</button></span>'; h += '</div>'; }
+      else h += '<div class="dsg-pzv">' + esc(T({ c: '擺好喜歡的姿勢,取個名字按 💾,下次就能一鍵叫出來。', p: '儲存命名後可隨時載入。' })) + '</div>';
+    }
+    h += '<div style="font-size:1.8vmin;display:flex;gap:1vmin;align-items:center;margin-top:1vmin">👁 ' + esc(T({ c: '畫畫時的濃淡', p: '描繪時濃淡' })) + ' <input type="range" min="10" max="80" value="' + Math.round(((E.d.guide && E.d.guide.a) || 0.35) * 100) + '" id="dsg-ga" style="flex:1"></div>';
     h += '<button class="dsg-b go" data-tab2="paint" style="margin-top:1.2vmin">🖌 開始畫</button>';
   } else if(E.tab === 'ref'){   /* ★ v1.0.3 🖼 參考圖片(荒島裝飾):四組收合 */
     var gr = E.d.guide && E.d.guide.t === 'ref' && E.d.guide.on ? E.d.guide.src : '';
@@ -646,8 +914,10 @@ function libPaint(){
   }
   el.innerHTML = h;
   el.onclick = libClick;
+  var pzn = $('dsg-pzn'); if(pzn) pzn.onkeydown = function(ev){ if(ev.keyCode === 13){ ev.preventDefault(); pzCmd('save'); } };   /* 姿勢名稱按 Enter = 儲存 */
   el.oninput = function(ev){ var t = ev.target, sid = t.getAttribute('data-th');
     if(t.id === 'dsg-ga'){ if(E.d.guide){ E.d.guide.a = (+t.value) / 100; guideDraw(); dirty(); } return; }   /* ★ v1.0.3 參考濃淡 */
+    if(t.id === 'dsg-pzn'){ E.pzName = t.value; return; }   /* 我的姿勢名稱(重畫面板不會不見) */
     if(sid){ if(!E._tintOp){ beginOp(); E._tintOp = 1; } E.d.tint[sid] = [+t.value, 1]; layersPaint(); }
     if(t.id === 'dsg-bw'){ E.brush.w = +t.value; $('dsg-bwv').textContent = t.value; }
     if(t.id === 'dsg-pcol'){ E.brush.c = t.value; E.brush.er = false; if(E.px.tool === 'er') E.px.tool = 'pen'; }
@@ -684,12 +954,14 @@ function libClick(ev){
   if(locked()) return;
   /* ★ v1.0.3 描圖參考:🦴 骨架(data-gp)/🖼 參考圖片(data-gr)/🖌 開始畫(data-tab2)/參考組收合(summary)。只改 d.guide,不記復原、不算操作次數 */
   var g0 = t, gk = null, gv = null;
-  while(g0 && g0 !== this && !gk){ if(g0.getAttribute){ if(g0.hasAttribute('data-gp')){ gk = 'gp'; gv = g0.getAttribute('data-gp'); } else if(g0.hasAttribute('data-gr')){ gk = 'gr'; gv = g0.getAttribute('data-gr'); } else if(g0.hasAttribute('data-tab2')){ gk = 'tab'; gv = g0.getAttribute('data-tab2'); } else if(g0.tagName === 'SUMMARY'){ gk = 'sum'; gv = g0.parentNode.getAttribute('data-rg'); } } g0 = g0.parentNode; }
+  while(g0 && g0 !== this && !gk){ if(g0.getAttribute){ if(g0.hasAttribute('data-pz')){ gk = 'pz'; gv = g0.getAttribute('data-pz'); } else if(g0.hasAttribute('data-gp')){ gk = 'gp'; gv = g0.getAttribute('data-gp'); } else if(g0.hasAttribute('data-gr')){ gk = 'gr'; gv = g0.getAttribute('data-gr'); } else if(g0.hasAttribute('data-tab2')){ gk = 'tab'; gv = g0.getAttribute('data-tab2'); } else if(g0.tagName === 'SUMMARY'){ gk = 'sum'; gv = g0.parentNode.getAttribute('data-rg'); } } g0 = g0.parentNode; }
+  if(gk === 'pz'){ pzCmd(gv); return; }   /* ★ v1.0.5 3D 骨架按鈕 */
   if(gk === 'sum'){ setTimeout(function(){ var dd = $('dsg-lib') && $('dsg-lib').querySelector('details[data-rg="' + gv + '"]'); E.refOpen = dd && dd.open ? gv : (E.refOpen === gv ? null : E.refOpen); }, 0); return; }
   if(gk === 'tab'){ sfx('sfx-sel', 0.3); E.tab = gv; pmApply(); tabsPaint(); libPaint(); return; }
-  if(gk === 'gp' || gk === 'gr'){ sfx('sfx-sel', 0.3); var oa = (E.d.guide && E.d.guide.a) || 0.35;
-    E.d.guide = gv ? (gk === 'gp' ? { t: 'pose', id: gv, on: 1, a: oa } : { t: 'ref', src: gv, on: 1, a: oa }) : null;
-    guideDraw(); libPaint(); dirty(); if(gv) toast(gk === 'gp' ? '🦴 骨架放好了,按「🖌 開始畫」照著畫吧!' : '🖼 參考圖片放在畫布下面了,看著它自己畫出來吧!'); return; }
+  if(gk === 'gp' || gk === 'gr'){ sfx('sfx-sel', 0.3); var oa = (E.d.guide && E.d.guide.a) || 0.35, og = E.d.guide && E.d.guide.t === 'pose' ? E.d.guide : null;
+    if(gk === 'gp' && og) pzSnap();   /* ★ v1.0.5 換範本前記一步,按「↶ 骨架上一步」可以回來 */
+    E.d.guide = gv ? (gk === 'gp' ? { t: 'pose', id: gv, on: 1, a: oa, j: pzFrom(gv, E.d.W, E.d.H), yw: og ? (og.yw || 0) : 0, pt: og ? (og.pt || 0) : 0 } : { t: 'ref', src: gv, on: 1, a: oa }) : null;
+    E.pj = null; pmApply(); libPaint(); dirty(); if(gv) toast(gk === 'gp' ? T({ c: '🦴 人偶擺好了!拖圓點彎手腳,拖空白處轉一圈看', p: '🦴 已載入範本:拖曳關節調整姿勢,拖曳空白處旋轉視角' }) : '🖼 參考圖片放在畫布下面了,看著它自己畫出來吧!'); return; }
   while(t && t !== this){ if(t.getAttribute && !a){ if(t.getAttribute('data-add')) a = ['add', t.getAttribute('data-add')]; else if(t.getAttribute('data-slot')) a = ['slot', t.getAttribute('data-slot'), t.getAttribute('data-f')];
       else if(t.getAttribute('data-bt')) a = ['bt', t.getAttribute('data-bt')]; else if(t.getAttribute('data-tk')) a = ['tk', t.getAttribute('data-tk')]; else if(t.getAttribute('data-font')) a = ['font', t.getAttribute('data-font')];
       else if(t.getAttribute('data-addtext')) a = ['text']; else if(t.getAttribute('data-pc')) a = ['pc', t.getAttribute('data-pc')]; else if(t.getAttribute('data-pe')) a = ['pe', t.getAttribute('data-pe')]; else if(t.getAttribute('data-pclr')) a = ['pclr'];
@@ -786,7 +1058,7 @@ function propPaint(){
   var E = S.ed, el = $('dsg-prop'), h = '', it, nm;
   if(!el) return;
   if(E.sel < 0 || !E.d.items[E.sel]){
-    h += '<div class="dsg-sec">💡 小提示</div><div>' + (E.r.kind === 'skin' ? '用 🖌 畫筆從白紙開始畫;不知道怎麼畫身體,打開「🦴 動作骨架」照著姿勢畫。' : '用 🖌 畫筆畫出你的裝飾;想看荒島的東西長怎樣,打開「🖼 參考圖片」看著畫。') + '</div><div style="margin-top:1vmin">文字貼片和形狀可以點一下選它,拖曳移動、拉粉紅圓點放大縮小和轉方向。</div>';   /* ★ v1.0.3 手繪原創提示 */
+    h += '<div class="dsg-sec">💡 小提示</div><div>' + (E.r.kind === 'skin' ? '用 🖌 畫筆從白紙開始畫;不知道怎麼畫身體,打開「🦴 動作骨架」拖關節擺出 3D 姿勢,再照著畫。' : '用 🖌 畫筆畫出你的裝飾;想看荒島的東西長怎樣,打開「🖼 參考圖片」看著畫。') + '</div><div style="margin-top:1vmin">文字貼片和形狀可以點一下選它,拖曳移動、拉粉紅圓點放大縮小和轉方向。</div>';   /* ★ v1.0.3 手繪原創提示 */
     h += '<div class="dsg-sec">📏 繳交標準</div>' + qualityMini();
     el.innerHTML = h; el.onclick = null; el.oninput = null; return;
   }
