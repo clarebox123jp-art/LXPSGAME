@@ -42583,8 +42583,14 @@ function selMove(type){
   // ★ v3.15.39(2026-06-18)— 玩家行動防連發鎖:行動一旦進入執行(選目標/施放),立即上鎖,
   //   擋住動畫期間連點技能鍵重複觸發(學霸 五科滿分考卷等非同步多段技,endAction 在動畫末才扣能量/設 acted,
   //   舊版整段空窗可被連點再觸發 → 無限多段傷害)。clearSel/endAction/startTurn 解鎖 + 8 秒自動逾時保險(零卡死風險)。
-  try{ window._pActBusy = true; window._pActBusyTs = Date.now(); }catch(_){}
+  // ★ v5.365.0(2026-11-08 BUG 回報「按技能沒反應」)— 上鎖移到「檢查都通過、真的要出手」那一刻:
+  //   舊版在這裡就上鎖,下面技能分支任何一個檢查擋下來(地獄將軍 HP 不足、劍士劍心、被封印又不能爆發、
+  //   能量不足、只能用一次…)直接 return 卻沒解鎖 ⇒ 接下來 8 秒 requestAction/confirmAction 全部靜靜忽略,
+  //   普攻、技能、休息都按不動。檢查全是同步的,晚一點上鎖不會留下連點空窗。
+  //   (原行備查:try{ window._pActBusy = true; window._pActBusyTs = Date.now(); }catch(_){})
+  const _pActLock = function(){ try{ window._pActBusy = true; window._pActBusyTs = Date.now(); }catch(_){} };
   if(type==='atk'){
+    _pActLock();
     G.selMove={n:'攻擊',c:0,_type:'atk'};
     document.getElementById('b-atk').classList.add('sel');
     setPending('enemy',t=>{
@@ -42618,6 +42624,7 @@ function selMove(type){
     // ★ 被封印也可以發動極限爆發（爆發免疫封印）
     if(hasStatus(a,'seal')){
       if(_canBurst(a)){
+        _pActLock();
         execBurst(a.side, a.pos);
         return;
       }
@@ -42636,6 +42643,7 @@ function selMove(type){
         return;
       }
     }
+    _pActLock();
     G.selMove=sk;
     document.getElementById(type==='s1'?'b-s1':'b-s2').classList.add('sel');
     execSkill(a,sk,cost,type);
