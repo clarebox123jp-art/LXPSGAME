@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
+var VER = 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
 var S = { on: false, uid: '', guest: true, cfg: null, vkey: '', xwords: [], names: null, style: 'c', ed: null, gmTab: 'flag' };
@@ -418,9 +418,22 @@ function titleCheck(v){ v = String(v || '').replace(/\s+/g, ' ').replace(/^ | $/
 function nameAsk(cur, cb, okT){
   var h = '<h3>✏️ 幫作品取名字</h3><p style="font-size:2vmin;opacity:.85">' + esc(T({ c: '取一個好名字,老師和同學看作品時就會看到它!(最多 ' + TITLE_MAX + ' 個字)', p: '請為作品命名(最多 ' + TITLE_MAX + ' 字),審核與上架時會顯示此名稱。' })) + '</p>' +
     '<input type="text" id="dsg-title" maxlength="' + TITLE_MAX + '" value="' + esc(cur || '') + '" placeholder="例如:火焰魔法少年" style="width:100%;box-sizing:border-box;font-size:2.6vmin;padding:1vmin;border-radius:1vmin;border:0"><div id="dsg-titlem" style="min-height:2.6vmin;color:#ffb0b0;font-size:1.9vmin"></div>';
-  modal(h, [{ t: '取消', cls: 'ghost' }, { t: okT || '💾 存好回工作室', keep: true, cb: function(m){ var r = titleCheck($('dsg-title').value); if(r.e){ $('dsg-titlem').textContent = '⚠ ' + r.e; return; } modalClose(); cb(r.v); } }],
+  modal(h, [{ t: '取消', cls: 'ghost' }, { t: okT || '💾 存好回工作室', keep: true, cb: function(m){ var r = titleCheck($('dsg-title').value); if(r.e){ $('dsg-titlem').textContent = '⚠ ' + r.e; return; }
+    $('dsg-titlem').textContent = ''; if(m._chk) return; m._chk = 1;
+    shopTitleTaken(r.v, function(tk){ m._chk = 0; if(!$('dsg-title')) return; if(tk){ var mm = $('dsg-titlem'); if(mm) mm.textContent = '⚠ 已經有上架的作品叫「' + tk + '」了,作品名稱不能重複,請換一個名字'; return; } modalClose(); cb(r.v); });   /* ★ v1.0.4 不可與已上架商品同名 */
+  } }],
     { onOpen: function(m){ var ip = $('dsg-title'); if(ip){ setTimeout(function(){ try{ ip.focus(); ip.select(); }catch(e){} }, 80); ip.onkeydown = function(ev){ if(ev.keyCode === 13){ var bs = m.querySelectorAll('.btns button'); if(bs[1]) bs[1].click(); } }; } } });
 }
+/* ★ v1.0.4(2026-11-08・老師「作品名稱如果和已經上架的商品重複必須提醒玩家進行修改,不可重複」)
+   比對 designShopItems(所有已上架商品,含已下架的)的作品名;去掉空白、英文不分大小寫。讀一次快取 60 秒;讀不到(訪客/規則/網路)就不擋。 */
+function titleNorm(v){ return String(v || '').replace(/\s+/g, '').toLowerCase(); }
+function shopTitles(cb, force){
+  var f = fb();
+  if(!force && S.shopT && now() - S.shopT.at < 60000){ cb(S.shopT.m); return; }
+  if(!f || !f.db || !user()){ cb(null); return; }
+  f.db.collection('designShopItems').get().then(function(q){ var m = {}; q.forEach(function(d){ var o = d.data() || {}; if(o.title) m[titleNorm(o.title)] = { t: o.title, id: d.id }; }); S.shopT = { at: now(), m: m }; cb(m); }, function(){ cb(null); });
+}
+function shopTitleTaken(v, cb, exceptId, force){ shopTitles(function(m){ var o = m && m[titleNorm(v)]; cb(o && o.id !== exceptId ? o.t : ''); }, force); }
 function renameDraft(id){
   var a = S.drafts || [], i, r = null; for(i = 0; i < a.length; i++){ if(a[i].id === id) r = a[i]; }
   if(!r) return;
@@ -976,15 +989,42 @@ function submitStart(){
 }
 function titleForm(){
   var E = S.ed, r = E.r, h = '<h3>📝 作品資料</h3>', i, A = D.TITLE_A, Bs = D.TITLE_B[r.kind], pen = lsGet('dsg_pen_' + S.uid) || '';
-  h += '<label>作品名</label><div style="display:flex;gap:1vmin"><select id="dsg-ta">'; for(i = 0; i < A.length; i++) h += '<option>' + esc(A[i]) + '</option>'; h += '</select><select id="dsg-tb">'; for(i = 0; i < Bs.length; i++) h += '<option>' + esc(Bs[i]) + '</option>'; h += '</select></div>';
+  /* ★ v1.0.4 作品名改成可以自己打字(預設帶入回工作室時取的名字);下拉選字只是幫忙想名字;繳交前檢查不可和已上架商品同名 */
+  h += '<label>作品名(最多 ' + TITLE_MAX + ' 個字,不能和已上架的作品同名)</label><input type="text" id="dsg-tt" maxlength="' + TITLE_MAX + '" value="' + esc(r.title || '') + '" placeholder="例如:火焰魔法少年"><div id="dsg-ttm" style="color:#c0392b;min-height:2.6vmin"></div>';
+  h += '<div style="display:flex;gap:1vmin;align-items:center;font-size:2vmin">想不到?用詞組:<select id="dsg-ta">'; for(i = 0; i < A.length; i++) h += '<option>' + esc(A[i]) + '</option>'; h += '</select><select id="dsg-tb">'; for(i = 0; i < Bs.length; i++) h += '<option>' + esc(Bs[i]) + '</option>'; h += '</select><button type="button" class="dsg-b ghost" id="dsg-tuse" style="font-size:1.9vmin">⬆ 放進作品名</button></div>';
   h += '<label style="display:block;margin-top:1.4vmin">筆名(2~8 個字,上架時顯示;老師看得到你的真名)</label><input type="text" id="dsg-pen" maxlength="8" value="' + esc(pen) + '"><div id="dsg-penm" style="color:#c0392b;min-height:2.6vmin"></div>';
-  modal(h, [{ t: '取消', cls: 'ghost' }, { t: '下一步 ▶', keep: true, cb: function(){
-    var p = String($('dsg-pen').value || '').trim();
+  modal(h, [{ t: '取消', cls: 'ghost' }, { t: '下一步 ▶', keep: true, cb: function(m){
+    if(m._chk) return;
+    var p = String($('dsg-pen').value || '').trim(), tc = titleCheck($('dsg-tt').value);
+    $('dsg-ttm').textContent = ''; $('dsg-penm').textContent = '';
+    if(tc.e){ $('dsg-ttm').textContent = tc.e; return; }
     if(p.length < 2){ $('dsg-penm').textContent = '筆名要 2~8 個字'; return; }
     if(wordHits(p).length){ $('dsg-penm').textContent = '筆名有不適合的字詞(也不能用同學的名字),請換一個'; return; }
-    r.title = $('dsg-ta').value + $('dsg-tb').value; r.pen = p; lsSet('dsg_pen_' + S.uid, p); modalClose();
-    confirmBox('<b>確認繳交「' + esc(r.title) + '」?</b><br>繳交後作品就<b>鎖住不能修改</b>了;要等老師審核,老師退件(會附上修改建議)才能再改。', function(ok){ if(ok) moderate(); }, '📤 確認繳交');
-  } }]);
+    m._chk = 1;
+    shopTitleTaken(tc.v, function(tk){
+      m._chk = 0; if(!$('dsg-tt')) return;
+      if(tk){ var mm = $('dsg-ttm'); if(mm) mm.textContent = '已經有上架的作品叫「' + tk + '」了,作品名稱不能重複,請換一個名字'; return; }
+      r.title = tc.v; r.pen = p; lsSet('dsg_pen_' + S.uid, p); modalClose();
+      confirmBox('<b>確認繳交「' + esc(r.title) + '」?</b><br>繳交後作品就<b>鎖住不能修改</b>了;要等老師審核,老師退件(會附上修改建議)才能再改。', function(ok){ if(ok) moderate(); }, '📤 確認繳交');
+    }, null, true);
+  } }], { onOpen: function(m){ var bu = $('dsg-tuse'); if(bu) bu.onclick = function(){ var ip = $('dsg-tt'); if(ip) ip.value = ($('dsg-ta').value + $('dsg-tb').value).slice(0, TITLE_MAX); }; } });
+}
+/* ★ v1.0.4(2026-11-08・老師「冒險模式的主角造型工坊可以套用玩家在設計師工作室通過老師審核的圖片」)
+   繳交時的 th:角色皮膚改存「透明背景、盡量接近原尺寸 504×720」的圖(webp,不支援 webp 的平板退 png),
+   縮到 data URL ≤ 140,000 字(規則上限 150,000);老師通過上架時整張複製進 designShopItems.img,大對抗不必連 Storage 就能顯示。
+   荒島裝飾維持舊做法(白底 jpeg 240px 縮圖)。 */
+function thumbFor(png, kind){
+  var k, c, x, u, i, sz = [1, 0.85, 0.72, 0.6, 0.5, 0.42, 0.35];
+  function mk(sc, white, fmt, q){ c = document.createElement('canvas'); c.width = Math.max(1, Math.round(png.width * sc)); c.height = Math.max(1, Math.round(png.height * sc)); x = c.getContext('2d'); if(white){ x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); } x.drawImage(png, 0, 0, c.width, c.height); try{ return c.toDataURL(fmt, q); }catch(e){ return ''; } }
+  if(kind === 'skin'){
+    for(i = 0; i < sz.length; i++){
+      u = mk(sz[i], false, 'image/webp', 0.82);
+      if(u.indexOf('data:image/webp') !== 0) u = mk(sz[i], false, 'image/png');
+      if(u && u.length <= 140000) return u;
+    }
+  }
+  k = 240 / Math.max(png.width, png.height);
+  return mk(k, true, 'image/jpeg', 0.8);
 }
 /* ⑥ 智慧審核 */
 function textItemsBoxes(){ var E = S.ed, a = [], i, it, cx = document.createElement('canvas').getContext('2d'), b, w, h, c, s, ex, ey;
@@ -1000,7 +1040,7 @@ function moderate(){
   busy(true, '電腦正在檢查作品…');
   renderComposite(false, 0, function(png){
     renderComposite(true, 1024, function(flat){
-      E.png = png.toDataURL('image/png'); E.th = (function(){ var c = document.createElement('canvas'), k = 240 / Math.max(png.width, png.height); c.width = Math.round(png.width * k); c.height = Math.round(png.height * k); var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(png, 0, 0, c.width, c.height); return c.toDataURL('image/jpeg', 0.8); })();
+      E.png = png.toDataURL('image/png'); E.th = thumbFor(png, r.kind);   /* ★ v1.0.4 角色皮膚:存近原尺寸透明圖(上架後給大對抗造型工房直接用) */
       f.db.collection('designPass').doc(S.uid + '_' + hash).get().then(function(p){
         if(p && p.exists){ busy(false); uploadWork({ v: 'teacher' }); return; }
         visionCheck(flat, function(res){
@@ -1083,11 +1123,11 @@ function uploadWork(mod){
 /* ══ 🧑‍🏫 老師台(GM 限定):🚩 智慧審核未通過 / 📦 倉庫 / ⚙ 設定 ══ */
 function gmOpen(){ if(!isGm()) return; gmPaint(); }
 function gmPaint(){
-  var h = '<div class="dsg-gm"><h3>🧑‍🏫 美術設計師 老師台</h3><div class="tabs"><button data-g="flag"' + (S.gmTab === 'flag' ? ' class="on"' : '') + '>🚩 智慧審核未通過</button><button data-g="wh"' + (S.gmTab === 'wh' ? ' class="on"' : '') + '>📦 倉庫</button><button data-g="set"' + (S.gmTab === 'set' ? ' class="on"' : '') + '>⚙ 設定</button></div><div id="dsg-gmb">讀取中…</div></div>';
+  var h = '<div class="dsg-gm"><h3>🧑‍🏫 美術設計師 老師台</h3><div class="tabs"><button data-g="flag"' + (S.gmTab === 'flag' ? ' class="on"' : '') + '>🚩 智慧審核未通過</button><button data-g="wh"' + (S.gmTab === 'wh' ? ' class="on"' : '') + '>📦 倉庫</button><button data-g="shop"' + (S.gmTab === 'shop' ? ' class="on"' : '') + '>🛒 上架商品</button><button data-g="set"' + (S.gmTab === 'set' ? ' class="on"' : '') + '>⚙ 設定</button></div><div id="dsg-gmb">讀取中…</div></div>';
   var m = modal(h, [{ t: '關閉', cls: 'ghost' }], { cls: 'dsg-gmw' });
   m.querySelector('.box').style.width = 'min(96vw,150vmin)';
   m.querySelector('.tabs').onclick = function(ev){ var g = ev.target.getAttribute('data-g'); if(!g) return; S.gmTab = g; gmPaint(); };
-  if(S.gmTab === 'flag') gmFlags(); else if(S.gmTab === 'wh') gmWh(S.gmYm || ymOf()); else gmSet();
+  if(S.gmTab === 'flag') gmFlags(); else if(S.gmTab === 'wh') gmWh(S.gmYm || ymOf()); else if(S.gmTab === 'shop') gmShop(); else gmSet();
 }
 function gmBody(h){ var b = $('dsg-gmb'); if(b) b.innerHTML = h; return b; }
 function tsMs(t){ try{ return t && t.toMillis ? t.toMillis() : (+t || 0); }catch(e){ return 0; } }
@@ -1152,17 +1192,66 @@ function gmApprove(x){
   h += '<label>稀有度</label><select id="dsg-star"><option value="1">★1</option><option value="2" selected>★2</option><option value="3">★3</option></select>';
   h += '<div style="display:flex;gap:1vmin"><div style="flex:1"><label>大對抗 知識幣</label><input type="text" id="dsg-pc" value="' + D.PRICE[2].coin + '"></div><div style="flex:1"><label>荒島 貝幣</label><input type="text" id="dsg-ps" value="' + D.PRICE[2].shell + '"></div></div>';
   h += '<label>限量(0 = 不限量)</label><input type="text" id="dsg-lim" value="0">';
+  h += '<div id="dsg-dupw" style="color:#c0392b;font-weight:900;min-height:2.4vmin"></div><div style="font-size:1.9vmin;opacity:.75">知識幣是大對抗「👤 主角造型工房」的售價,上架後可以隨時在「🛒 上架商品」修改。</div>';
+  shopTitleTaken(x.title, function(tk){ var w = $('dsg-dupw'); if(w && tk) w.textContent = '⚠ 已經有上架的作品也叫「' + tk + '」(作品名不可重複),建議先退件請學生改名。'; }, x._id, true);   /* ★ v1.0.4 */
   modal(h, [{ t: '取消', cls: 'ghost', cb: gmPaint }, { t: '✅ 上架', keep: true, cb: function(){
     var f = fb(), F = FV(), u = user(), star = +$('dsg-star').value, g = { by: u.email, at: now(), star: star, price: { coin: Math.max(0, parseInt($('dsg-pc').value, 10) || 0), shell: Math.max(0, parseInt($('dsg-ps').value, 10) || 0) }, lim: Math.max(0, parseInt($('dsg-lim').value, 10) || 0) }, it, bt;
     if(x.kind === 'skin'){ g.hero = String($('dsg-hero').value || '').trim().slice(0, 20); g.isl = $('dsg-isl').checked; if(!g.hero){ toast('請寫要給哪位英雄'); return; } }
     else { g.comfort = +$('dsg-cf').value; g.out = $('dsg-out').checked; }
-    it = { uid: x.uid, ym: x.ym, kind: x.kind, bt: x.bt || '', title: x.title, pen: x.pen, path: x.path, hash: x.hash, star: g.star, price: g.price, lim: g.lim, hero: g.hero || '', isl: !!g.isl, comfort: g.comfort || 0, out: !!g.out, on: true, sold: 0, at: F.serverTimestamp(), by: u.email, ver: VER };
+    it = { uid: x.uid, ym: x.ym, kind: x.kind, bt: x.bt || '', title: x.title, pen: x.pen, path: x.path, hash: x.hash, star: g.star, price: g.price, lim: g.lim, hero: g.hero || '', isl: !!g.isl, comfort: g.comfort || 0, out: !!g.out, on: true, sold: 0, at: F.serverTimestamp(), by: u.email, ver: VER, img: x.th || '' };   /* ★ v1.0.4 img = 繳交時的透明全身圖(大對抗主角造型工房用) */
     bt = f.db.batch();
     bt.set(f.db.collection('designShopItems').doc(x._id), it);
     bt.update(f.db.collection('designSubmit').doc(x._id), { st: 'live', liveHash: x.hash, gm: g });
     bt.set(f.db.collection('designSubmit').doc(x._id).collection('log').doc(), { uid: x.uid, k: 'live', hash: x.hash, by: u.email, at: F.serverTimestamp() });
     bt.commit().then(function(){ toast('✅ 已上架成商品'); gmPaint(); }, function(e){ toast('寫入失敗:' + (e && e.code)); });
   } }]);
+}
+/* ★ v1.0.4(2026-11-08・老師「商品價格由 GM 來定,價格也可以隨時修正調整」「給設計者一部分」)
+   🛒 上架商品:列出 designShopItems → 改知識幣/貝幣售價、上架/下架、補全身圖(舊商品沒有 img 時從 designSubmit.th 複製);
+   設計者分紅比例 gameConfig/designerShop.roy(%,預設 20,0~50)。已售件數 = designSales 筆數(規則沒發布時顯示「—」)。 */
+function gmShop(){
+  var f = fb();
+  if(!f || !f.db){ gmBody('<p>連不上雲端</p>'); return; }
+  gmBody('<p>讀取中…</p>');
+  f.db.collection('gameConfig').doc('designerShop').get().then(function(c){ return c.exists ? (c.data() || {}) : {}; }, function(){ return {}; }).then(function(cfg){
+    S.gmShopCfg = cfg;
+    return f.db.collection('designShopItems').get().then(function(q){
+      var a = [];
+      q.forEach(function(d){ var o = d.data(); o._id = d.id; a.push(o); });
+      a.sort(function(p, q2){ return tsMs(q2.at) - tsMs(p.at); });
+      S.gmShopL = a;
+      return f.db.collection('designSales').get().then(function(q2){ var n = {}; q2.forEach(function(d){ var o = d.data() || {}; n[o.item] = (n[o.item] | 0) + 1; }); return n; }, function(){ return null; });
+    }).then(function(sold){ gmShopPaint(sold); });
+  })['catch'](function(e){ gmBody('<p>讀取失敗(' + esc(e && e.code) + ')</p>'); });
+}
+function gmShopPaint(sold){
+  var a = S.gmShopL || [], cfg = S.gmShopCfg || {}, roy = (cfg.roy == null ? 20 : (cfg.roy | 0)), h = '', i, x, pr;
+  h += '<div style="display:flex;flex-wrap:wrap;gap:1vmin;align-items:center;margin-bottom:1.4vmin;padding:1vmin 1.4vmin;background:#f6f1ff;border-radius:1.4vmin">💰 設計者分紅:別人買下作品時,原設計者拿售價的 <input type="text" id="dsg-roy" value="' + roy + '" style="width:8vmin;text-align:center"> %(0~50,登入大對抗自動入帳) <button class="dsg-b go" data-sroy="1">💾 存</button></div>';
+  if(!a.length){ gmBody(h + '<p>還沒有上架的作品。到「📦 倉庫」按「✅ 通過上架」。</p>'); return; }
+  h += '<div class="dsg-gl">';
+  for(i = 0; i < a.length; i++){ x = a[i]; pr = x.price || {};
+    h += '<div class="dsg-gc"' + (x.on === false ? ' style="opacity:.6"' : '') + '><div class="im">' + (x.img ? '<img src="' + esc(x.img) + '">' : '<span style="font-size:1.8vmin;color:#c0392b">沒有全身圖</span>') + '</div>' +
+      '<b>' + D.KINDS[x.kind].e + ' ' + esc(x.title || '') + '</b><br>筆名 ' + esc(x.pen || '') + ' ・ ★' + (x.star | 0) + ' ・ 已售 ' + (sold ? (sold[x._id] | 0) : '—') + (x.lim ? ' / 限量 ' + x.lim : '') + '<br>' +
+      (x.on === false ? '<span style="color:#c0392b">⛔ 已下架</span>' : '<span style="color:#1e8449">🟢 上架中</span>') +
+      '<div style="display:flex;gap:.8vmin;margin-top:.8vmin;align-items:center;font-size:2vmin">💰<input type="text" data-pc="' + i + '" value="' + (pr.coin | 0) + '" style="width:12vmin">' + (x.kind === 'deco' ? '🐚<input type="text" data-ps="' + i + '" value="' + (pr.shell | 0) + '" style="width:9vmin">' : '') + '</div>' +
+      '<div class="row"><button class="dsg-b go" data-sp="' + i + '">💾 改價格</button><button class="dsg-b ghost" data-on="' + i + '">' + (x.on === false ? '🟢 重新上架' : '⛔ 下架') + '</button>' + (!x.img && x.kind === 'skin' ? '<button class="dsg-b ghost" data-fix="' + i + '">📥 補全身圖</button>' : '') + '</div></div>'; }
+  h += '</div>';
+  var b = gmBody(h);
+  if(!b) return;
+  b.onclick = function(ev){
+    var t = ev.target, f = fb(), F = FV(), u = user(), k, x2, n, n2, ref;
+    if(!t || !t.getAttribute || !f) return;
+    if(t.getAttribute('data-sroy')){ n = parseInt($('dsg-roy').value, 10); if(!(n >= 0 && n <= 50)){ toast('分紅要 0~50'); return; }
+      f.db.collection('gameConfig').doc('designerShop').set({ roy: n, updatedAt: now(), updatedBy: u.email }, { merge: true }).then(function(){ S.gmShopCfg.roy = n; toast('✅ 分紅改成 ' + n + '%'); }, function(e){ toast('寫入失敗:' + (e && e.code)); }); return; }
+    k = t.getAttribute('data-sp'); if(k != null){ x2 = S.gmShopL[+k]; n = parseInt((b.querySelector('[data-pc="' + k + '"]') || {}).value, 10); n2 = b.querySelector('[data-ps="' + k + '"]');
+      if(!(n >= 0 && n <= 9999999)){ toast('價格要是 0 以上的整數'); return; }
+      var up = { 'price.coin': n, prAt: F.serverTimestamp(), prBy: u.email }; if(n2){ up['price.shell'] = Math.max(0, parseInt(n2.value, 10) || 0); }
+      f.db.collection('designShopItems').doc(x2._id).update(up).then(function(){ x2.price = x2.price || {}; x2.price.coin = n; toast('✅ 「' + x2.title + '」改成 ' + n + ' 知識幣'); }, function(e){ toast('寫入失敗:' + (e && e.code)); }); return; }
+    k = t.getAttribute('data-on'); if(k != null){ x2 = S.gmShopL[+k]; n = x2.on === false;
+      f.db.collection('designShopItems').doc(x2._id).update({ on: n }).then(function(){ x2.on = n; gmShopPaint(sold); toast(n ? '🟢 已重新上架' : '⛔ 已下架(買過的同學照樣可以穿)'); }, function(e){ toast('寫入失敗:' + (e && e.code)); }); return; }
+    k = t.getAttribute('data-fix'); if(k != null){ x2 = S.gmShopL[+k];
+      f.db.collection('designSubmit').doc(x2._id).get().then(function(d){ var th = d.exists ? (d.data() || {}).th : ''; if(!th){ toast('找不到繳交時的圖'); return null; } return f.db.collection('designShopItems').doc(x2._id).update({ img: th }).then(function(){ x2.img = th; gmShopPaint(sold); toast('✅ 補好了(這是舊版縮圖,比較小;要清楚的全身圖請學生重新繳交)'); }); })['catch'](function(e){ toast('失敗:' + (e && e.code)); }); return; }
+  };
 }
 function gmBack(x){
   var h = '<h3>↩ 退件:' + esc(x.title) + '</h3><p>勾原因,並寫下具體的修改建議(學生會看到):</p><div class="dsg-chips" id="dsg-bw">', i;

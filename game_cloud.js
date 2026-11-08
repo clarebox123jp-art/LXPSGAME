@@ -22471,6 +22471,20 @@
         }catch(_eA){ console.warn('[ArtRank 登入觸發] 例外', _eA); }
       }, 7500);
 
+      // ★ v5.364.0 — 🎨 設計師作品被買走的分紅(登入 9.5 秒,等存檔與知識幣載入後)
+      (function _dsgRoyTry(n){
+        setTimeout(async () => {
+          try{
+            if(!window._dsgShop || !window._gUserId) return;
+            const _r = await window._dsgShop.claimRoyalties();
+            if(_r && _r.wait){ if(n < 8) _dsgRoyTry(n + 1); return; }   // 存檔還沒載入 ⇒ 10 秒後再試(最多 8 次)
+            if(_r && _r.coins > 0 && typeof _showInGameToast === 'function'){
+              _showInGameToast('🎨 你設計的作品被同學買走了 ' + _r.n + ' 件!\n分紅 💰 ' + _r.coins + ' 知識幣已入帳', '#f8b4e0', 7000);
+            }
+          }catch(_eD){ console.warn('[DsgShop 登入分紅] 例外', _eD); }
+        }, n ? 10000 : 9500);
+      })(0);
+
       // ★ v3.5.16 + v3.5.17 — 登入完成後重新觸發 bootPWA
 
       // ★ v3.5.16 + v3.5.17 — 登入完成後重新觸發 bootPWA
@@ -27917,6 +27931,135 @@
       }
       window._artRank = { artWeekKey, rewardOf, computeSet, trySettleLastWeek, claimMyAward };
       console.log('[ArtRank] ✅ 創藝工坊每週排行結算模組已掛載 v5.363.0');
+    })();
+
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v5.364.0(2026-11-08・老師「冒險模式的主角造型工坊可以套用玩家在設計師工作室通過老師審核的圖片。也可以購買其他玩家的圖片。
+    //   商品價格由GM來定,價格也可以隨時修正調整。每件同名設計商品限購一次」;追問後:知識幣付款、給設計者一部分、整張取代主角全身)
+    //   🎨 設計師作品商店(window._dsgShop;介面在 avatar_db.js 造型工房「🎨 設計師作品」頁)
+    //   商品:designShopItems/{月}_{設計者uid}(GM 上架;kind=='skin' 才給主角穿;img = 繳交時的透明全身圖;price.coin = GM 定價;on=false 已下架)
+    //   購買:designSales/{買家uid}_{商品id}(create-only ⇒ 每件只能買一次)= { buyer, item, seller, title, price, roy, at }
+    //        規則逐欄核對 seller/price 必須等於商品文件、商品上架中;寫入成功才扣本機知識幣(寧可沒扣到也不重複扣)。
+    //        「同名限購一次」:作品名不可重複(設計師端擋),這裡再用作品名比一次,已擁有同名作品就不能再買。
+    //   分紅:gameConfig/designerShop.roy(%,預設 20,GM 在設計師老師台「🛒 上架商品」改)。設計者登入大對抗 9.5 秒後
+    //        claimRoyalties():找 seller == 自己 的銷售 → designRoyaltyClaims/{自己uid}_{銷售id}(create-only)→ 加知識幣。
+    //   ⚠ 需要 Firestore 規則補丁(designSales / designRoyaltyClaims;本包附 設計師商店_規則補丁_v5.364.0.txt)。
+    // ════════════════════════════════════════════════════════════════════
+    (function _setupDesignShop(){
+      const ITEM_DOC = (id) => doc(_fbDb, 'designShopItems', id);
+      const SALE_DOC = (id) => doc(_fbDb, 'designSales', id);
+      const _norm = (t) => String(t || '').replace(/\s+/g, '').toLowerCase();
+      let _cfgCache = null, _cfgAt = 0;
+      async function cfg(){
+        if(_cfgCache && Date.now() - _cfgAt < 120000) return _cfgCache;
+        let c = { roy: 20 };
+        try{ const s = await getDoc(doc(_fbDb, 'gameConfig', 'designerShop')); if(s.exists()){ const v = +((s.data() || {}).roy); if(v >= 0 && v <= 50) c.roy = Math.round(v); } }catch(_){}
+        _cfgCache = c; _cfgAt = Date.now();
+        return c;
+      }
+      // 全部角色皮膚商品(含已下架:買過的人照樣要看得到)
+      async function listSkins(){
+        const out = [];
+        const q = await getDocs(query(collection(_fbDb, 'designShopItems'), where('kind', '==', 'skin')));
+        q.forEach((d) => { const o = d.data() || {}; o._id = d.id; out.push(o); });
+        out.sort((a, b) => ((b.at && b.at.toMillis) ? b.at.toMillis() : 0) - ((a.at && a.at.toMillis) ? a.at.toMillis() : 0));
+        return out;
+      }
+      // 我擁有的:自己買的(designSales buyer==我)+ 自己設計的(商品 uid==我)
+      async function myOwned(items){
+        const uid = window._gUserId, own = {};
+        if(!uid) return own;
+        (items || []).forEach((o) => { if(o.uid === uid) own[o._id] = 'mine'; });
+        try{
+          const q = await getDocs(query(collection(_fbDb, 'designSales'), where('buyer', '==', uid)));
+          q.forEach((d) => { const o = d.data() || {}; if(o.item) own[o.item] = 'buy'; });
+        }catch(e){ console.warn('[DsgShop] 讀購買紀錄失敗(規則還沒發布?)', e && e.code); own.__err = (e && e.code) || 'err'; }
+        return own;
+      }
+      async function soldCount(itemId){
+        try{ const q = await getDocs(query(collection(_fbDb, 'designSales'), where('item', '==', itemId))); return q.size; }catch(_){ return -1; }
+      }
+      // 購買:回傳 { ok, why }
+      async function buy(item, items, owned){
+        const uid = window._gUserId;
+        if(!uid) return { ok: false, why: '請先登入' };
+        if(!item || !item._id) return { ok: false, why: '找不到商品' };
+        if(owned && owned[item._id]) return { ok: false, why: '你已經擁有這件作品了' };
+        if(item.uid === uid) return { ok: false, why: '這是你自己的作品,不用買就能穿' };
+        if(item.on === false) return { ok: false, why: '這件作品已經下架了' };
+        const nt = _norm(item.title);
+        for(const o of (items || [])){ if(o._id !== item._id && owned && owned[o._id] && _norm(o.title) === nt) return { ok: false, why: '你已經有同名的作品「' + o.title + '」了(同名作品只能買一次)' }; }
+        const price = Math.max(0, ((item.price && item.price.coin) | 0));
+        const coins = (typeof window._knowledgeCoins === 'number') ? window._knowledgeCoins : 0;
+        if(window._progressLoaded !== true) return { ok: false, why: '存檔還在載入,等一下再買' };
+        if(coins < price) return { ok: false, why: '知識幣不夠(要 ' + price + ',你有 ' + coins + ')' };
+        if((item.lim | 0) > 0){ const n = await soldCount(item._id); if(n >= (item.lim | 0)) return { ok: false, why: '這件限量作品已經賣完了' }; }
+        const c = await cfg();
+        const roy = Math.floor(price * c.roy / 100);
+        try{
+          const res = await runTransaction(_fbDb, async (tx) => {
+            const ss = await tx.get(SALE_DOC(uid + '_' + item._id));
+            if(ss.exists()) return 'dup';
+            const is = await tx.get(ITEM_DOC(item._id));
+            if(!is.exists()) return 'gone';
+            const it = is.data() || {};
+            if(it.on === false) return 'off';
+            if(((it.price && it.price.coin) | 0) !== price) return 'price';
+            tx.set(SALE_DOC(uid + '_' + item._id), { buyer: uid, item: item._id, seller: it.uid, title: String(it.title || '').slice(0, 20), price: price, roy: roy, at: Date.now() });
+            return 'ok';
+          });
+          if(res === 'dup') return { ok: false, why: '你已經買過這件了', owned: true };
+          if(res === 'gone' || res === 'off') return { ok: false, why: '這件作品已經下架了' };
+          if(res === 'price') return { ok: false, why: '老師剛剛改了價格,請重新開一次這一頁再買' };
+        }catch(e){
+          console.warn('[DsgShop] 購買寫入失敗', e);
+          return { ok: false, why: (e && e.code === 'permission-denied') ? '商店還沒開好(請老師確認規則已發布),這次沒有扣知識幣' : '網路不穩,這次沒有扣知識幣,請再試一次' };
+        }
+        // 銷售紀錄寫成功 ⇒ 扣本機知識幣(三槽存檔一起落地)
+        try{
+          window._knowledgeCoins = Math.max(0, (window._knowledgeCoins || 0) - price);
+          if(typeof _logCoinTx === 'function') _logCoinTx(-price, '消費:設計師作品-' + String(item.title || '').slice(0, 16));
+          if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay();
+          if(typeof refreshAllCoinsDisplay === 'function') refreshAllCoinsDisplay();
+          if(typeof gameCloudSave === 'function') gameCloudSave();
+        }catch(_eL){ console.warn('[DsgShop] 本機扣幣', _eL); }
+        return { ok: true, price: price };
+      }
+      // 設計者分紅:登入後自動領
+      let _claiming = false;
+      async function claimRoyalties(){
+        const uid = window._gUserId;
+        if(!uid || _claiming) return null;
+        if(typeof window._knowledgeCoins !== 'number' || window._progressLoaded !== true) return { wait: true };   // 存檔還沒載入:不能先加(會被載入蓋掉)
+        _claiming = true;
+        try{
+          const q = await getDocs(query(collection(_fbDb, 'designSales'), where('seller', '==', uid)));
+          const sales = [];
+          q.forEach((d) => { const o = d.data() || {}; if(o.seller === uid && (o.roy | 0) > 0){ let done = false; try{ done = localStorage.getItem('lxps_dsg_roy_' + uid + '_' + d.id) === '1'; }catch(_){} if(!done) sales.push({ id: d.id, roy: o.roy | 0, title: o.title || '' }); } });
+          if(!sales.length) return null;
+          const pick = sales.slice(0, 20);
+          const got = await runTransaction(_fbDb, async (tx) => {
+            const refs = pick.map((s) => doc(_fbDb, 'designRoyaltyClaims', uid + '_' + s.id));
+            const snaps = [];
+            for(const r of refs) snaps.push(await tx.get(r));
+            const ok = [];
+            pick.forEach((s, i) => { if(!snaps[i].exists()){ tx.set(refs[i], { uid: uid, sale: s.id, roy: s.roy, at: Date.now() }); ok.push(s); } });
+            return ok;
+          });
+          pick.forEach((s) => { try{ localStorage.setItem('lxps_dsg_roy_' + uid + '_' + s.id, '1'); }catch(_){} });
+          if(!got || !got.length) return null;
+          if(window._gUserId !== uid) return null;   // 期間換帳號:不套到別人身上(寧漏不重)
+          const sum = got.reduce((a, s) => a + s.roy, 0);
+          window._knowledgeCoins = (window._knowledgeCoins || 0) + sum;
+          try{ if(typeof _logCoinTx === 'function') _logCoinTx(sum, '設計師作品分紅(' + got.length + ' 件)'); }catch(_){}
+          try{ if(typeof _syncCoinsDisplay === 'function') _syncCoinsDisplay(); if(typeof refreshAllCoinsDisplay === 'function') refreshAllCoinsDisplay(); }catch(_){}
+          try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+          return { n: got.length, coins: sum, titles: got.map((s) => s.title) };
+        }catch(e){ if(!(e && e.code === 'permission-denied')) console.warn('[DsgShop] 分紅領取失敗(下次登入再試)', e); return null; }
+        finally{ _claiming = false; }
+      }
+      window._dsgShop = { cfg, listSkins, myOwned, buy, claimRoyalties, soldCount };
+      console.log('[DsgShop] ✅ 設計師作品商店模組已掛載 v5.364.0');
     })();
     // ════════════════════════════════════════════════════════════════════
     // ★ v3.13.5(2026-05-31)— 世界 BOSS 排名獎勵正式結算系統

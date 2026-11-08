@@ -1865,6 +1865,16 @@ window._avatarRenderSVG = function(cfg, sizeCss, portrait){
     _pngVb = '0 0 ' + _AV_CARD_W + ' ' + _AV_CARD_H;
     _charOpen = '<g transform="' + _AV_CARD_TF + '">' + _charOpen;
     _charClose = _charClose + '</g>';
+    /* ★ v5.364.0 設計師作品(cfg.dsk = designShopItems 商品 id):整張 504×720 透明圖對齊人物框 tf,取代全部人物圖層;背景照常。
+     *   圖還沒抓到(第一次/離線)→ 先畫原本造型,抓到後 _avDskRefreshAll 自動重畫(名片/預覽/戰鬥立繪)。 */
+    var _dskSrc = null;
+    try{ if(cfg.dsk && typeof window._avatarDskSrc === 'function') _dskSrc = window._avatarDskSrc(cfg.dsk); }catch(_eDsk){ _dskSrc = null; }
+    if(_dskSrc){
+      var _dskImg = '<image href="' + _dskSrc + '" xlink:href="' + _dskSrc + '" x="' + tf.x.toFixed(1) + '" y="' + tf.y.toFixed(1)
+        + '" width="' + tf.w.toFixed(1) + '" height="' + tf.h.toFixed(1) + '" preserveAspectRatio="xMidYMid meet"/>';
+      return '<svg viewBox="' + _pngVb + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="'
+        + (sizeCss || 'width:100%;height:100%;') + 'display:block;">' + _bgLayer() + _charOpen + _dskImg + _charClose + '</svg>';
+    }
     var png = ''
       + _bgLayer()   /* ★ v4.60.0 背景最底層(★ v4.62.0 特寫時不隨人物放大) */
       + _charOpen
@@ -2751,6 +2761,7 @@ var _AV_TABS = [
   { k:'randomAct', p:'隨機變裝', c:'隨機變裝', act:'random' },
   { k:'setTab',    p:'整套裝扮+配色', c:'套裝+顏色', cats:[['outfit','整套裝扮','整套裝扮'],['clothC','服裝配色','衣服顏色']],
     adj:[['ofh','套裝頭部位置','套裝頭位置'],['ofb','套裝身體位置','套裝身位置']] },
+  { k:'dsgTab',    p:'🎨 設計師作品', c:'🎨 設計師作品', dsg:1 },   /* ★ v5.364.0 同學在遊戲美術設計師畫、老師審核上架的角色皮膚(整張取代主角全身) */
   { k:'hairTab',   p:'髮型', c:'髮型', cats:[['hairhead','髮型(整頭更換)','換頭髮']],
     adj:[['hh','髮型頭部位置','頭髮位置']] },
   { k:'skinTab',   p:'膚色', c:'皮膚顏色', cats:[['skin','膚色','皮膚顏色']] },
@@ -3098,6 +3109,7 @@ window._avatarRandomize = function(){
   var cfg = window._avatarLocalCard.cfg;
   var PAL = window.AVATAR_PALETTES;
   _avSfx('select');
+  cfg.dsk = '';   /* ★ v5.364.0 隨機變裝 = 脫下設計師作品 */
   cfg.full = 0; cfg.headf = 0; cfg.bodyf = 0;
   var ofs = _avAvailIds('outfit').filter(function(x){ return x !== 0; });
   var hhs = _avAvailIds('hairhead').filter(function(x){ return x !== 0; });
@@ -3246,9 +3258,144 @@ window._avatarTogglePosDef = function(key){
   try{ _avRenderOpts(); }catch(_e){}
 };
 
+/* ════════════════════════════════════════
+ * ★ v5.364.0(2026-11-08・老師「冒險模式的主角造型工坊可以套用玩家在設計師工作室通過老師審核的圖片。也可以購買其他玩家的圖片。
+ *   商品價格由GM來定,價格也可以隨時修正調整。每件同名設計商品限購一次」;追問後:知識幣、給設計者分紅、整張取代主角全身)
+ *   🎨 設計師作品頁:列出 designShopItems(kind=skin)→ 自己畫的免費穿、別人的用知識幣買(game_cloud.js window._dsgShop.buy)
+ *   → 穿上 = cfg.dsk = 商品 id(按「確認儲存」才存);圖 = 商品文件 img(透明全身圖 data URL),快取在記憶體 + localStorage lxps_dsk_<id>。
+ *   _avatarRenderSVG 看到 cfg.dsk 且圖已抓到 ⇒ 背景 + 這張圖(整張取代人物圖層)。
+ * ════════════════════════════════════════ */
+var _avDskMem = {}, _avDskBusy = {}, _avDsgState = null;
+window._avatarDskSrc = function(id){
+  if(!id) return null;
+  if(_avDskMem[id]) return _avDskMem[id];
+  try{ var v = localStorage.getItem('lxps_dsk_' + id); if(v && v.indexOf('data:image') === 0){ _avDskMem[id] = v; return v; } }catch(_e){}
+  _avDskFetch(id);
+  return null;
+};
+function _avDskPut(id, img){
+  if(!id || !img || String(img).indexOf('data:image') !== 0) return false;
+  _avDskMem[id] = img;
+  try{ localStorage.setItem('lxps_dsk_' + id, img); }catch(_e){}
+  return true;
+}
+function _avDskFetch(id){
+  if(_avDskBusy[id] || !window._fbDb || !window._fbFns) return;
+  _avDskBusy[id] = 1;
+  try{
+    var F = window._fbFns;
+    F.getDoc(F.doc(window._fbDb, 'designShopItems', id)).then(function(snap){
+      var o = snap.exists() ? (snap.data() || {}) : {};
+      if(_avDskPut(id, o.img)) _avDskRefreshAll();
+    })['catch'](function(){}).then(function(){ setTimeout(function(){ _avDskBusy[id] = 0; }, 30000); });
+  }catch(_e){ _avDskBusy[id] = 0; }
+}
+function _avDskRefreshAll(){
+  try{ if(document.getElementById('_avatar-panel')){ _avRefreshPreview(); } }catch(_e1){}
+  try{ if(typeof window._avatarCardRerender === 'function') window._avatarCardRerender(); }catch(_e2){}
+  try{ window._lxpsProtagPortraitSig = ''; if(typeof window._lxpsProtagPortraitRefresh === 'function') window._lxpsProtagPortraitRefresh(); }catch(_e3){}
+}
+window._avDskWear = function(id){
+  var cfg = window._avatarLocalCard && window._avatarLocalCard.cfg; if(!cfg) return;
+  if(id){
+    var st = _avDsgState, it = null, i;
+    if(st && st.items){ for(i = 0; i < st.items.length; i++){ if(st.items[i]._id === id) it = st.items[i]; } }
+    if(!st || !st.owned || !st.owned[id]){ try{ alert(_avT('要先擁有這件作品才能穿喔!', '要先擁有這件才能穿喔!')); }catch(_){} return; }
+    if(it) _avDskPut(id, it.img);
+    if(!window._avatarDskSrc(id)){ try{ alert(_avT('這件作品的圖還沒準備好(請老師在設計師老師台「🛒 上架商品」補全身圖)', '這件的圖還沒準備好,請老師幫忙喔!')); }catch(_){} return; }
+  }
+  cfg.dsk = id || '';
+  _avSfx(id ? 'select' : 'cancel');
+  try{ _avRefreshPreview(); }catch(_e){}
+  try{ _avRenderOpts(); }catch(_e2){}
+};
+window._avDskBuy = function(id){
+  var st = _avDsgState, it = null, i;
+  if(!st || !window._dsgShop) return;
+  for(i = 0; i < st.items.length; i++){ if(st.items[i]._id === id) it = st.items[i]; }
+  if(!it) return;
+  var price = (it.price && it.price.coin) | 0;
+  var ask = _avT('確定用 💰 ' + price + ' 知識幣買下「' + it.title + '」(設計師 ' + (it.pen || '') + ')嗎?\n每件作品只能買一次,買了就可以一直穿。',
+                 '要花 💰 ' + price + ' 知識幣買「' + it.title + '」嗎?\n每件只能買一次,買了就能一直穿喔!');
+  var go = function(){
+    st.busy = id; _avRenderOpts();
+    window._dsgShop.buy(it, st.items, st.owned).then(function(r){
+      st.busy = '';
+      if(r && r.ok){ st.owned[id] = 'buy'; _avSfx('confirm'); _avDskPut(id, it.img); window._avDskWear(id);
+        try{ alert(_avT('✅ 買好了!已經幫你穿上「' + it.title + '」,記得按「確認儲存」。', '✅ 買到了!已經幫你穿上,記得按「確認存好」喔!')); }catch(_){} }
+      else { if(r && r.owned) st.owned[id] = 'buy'; try{ alert('⚠ ' + ((r && r.why) || '購買失敗')); }catch(_){} }
+      _avRenderOpts();
+    }, function(){ st.busy = ''; _avRenderOpts(); });
+  };
+  if(typeof window._customConfirm === 'function'){ window._customConfirm(ask, go); }
+  else if(typeof _customConfirm === 'function'){ _customConfirm(ask, go); }
+  else if(confirm(ask)) go();
+};
+function _avDsgOpts(box){
+  var cfg = window._avatarLocalCard.cfg;
+  if(!window._gUserId || !window._dsgShop){
+    box.innerHTML = '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#bcd0ff;font-size:16.5px;line-height:1.7;">🔑 '
+      + _avT('登入帳號後,就能看到同學設計、老師審核通過的角色造型。', '登入以後就能看到同學畫的造型喔!') + '</div>';
+    return;
+  }
+  var st = _avDsgState;
+  if(!st || st.uid !== window._gUserId || (Date.now() - st.at > 120000 && !st.loading)){
+    st = _avDsgState = { uid: window._gUserId, at: Date.now(), loading: true, items: [], owned: {}, busy: '' };
+    box.innerHTML = '<div style="padding:18px;color:#bcd0ff;font-size:16.5px;">⏳ ' + _avT('讀取設計師作品中…', '正在找同學畫的造型…') + '</div>';
+    window._dsgShop.listSkins().then(function(items){
+      st.items = items || [];
+      return window._dsgShop.myOwned(st.items).then(function(o){ st.owned = o || {}; });
+    }).then(function(){ st.loading = false; if(_AV_TABS[_avCurTab] && _AV_TABS[_avCurTab].dsg) _avRenderOpts(); },
+      function(e){ st.loading = false; st.err = (e && e.code) || 'err'; if(_AV_TABS[_avCurTab] && _AV_TABS[_avCurTab].dsg) _avRenderOpts(); });
+    return;
+  }
+  if(st.loading){ box.innerHTML = '<div style="padding:18px;color:#bcd0ff;font-size:16.5px;">⏳ ' + _avT('讀取中…', '找找看…') + '</div>'; return; }
+  var coins = (typeof window._knowledgeCoins === 'number') ? window._knowledgeCoins : 0, i, it, own, price, img, h = '';
+  h += '<div style="padding:12px 14px;margin:2px 2px 12px;background:rgba(255,140,210,0.12);border:1.5px solid rgba(255,170,220,0.5);border-radius:12px;color:#ffe0f4;font-size:15px;line-height:1.7;">🎨 '
+    + _avT('同學在「✏️ 遊戲美術設計師」親手畫、老師審核通過的角色造型。自己畫的免費穿;別人的作品用知識幣買(每件只能買一次),原設計者會拿到分紅。穿上後整個主角會換成這張圖,隨時可以換回原本造型。',
+           '這些是同學自己畫、老師說 OK 的造型!自己畫的免費穿,同學的要用知識幣買(每件買一次),畫的同學也會拿到獎勵喔。穿上以後主角就變成這張圖,隨時可以換回來。')
+    + '<div style="margin-top:6px;font-weight:800;color:#ffd97a;">💰 ' + _avT('你的知識幣:', '你有知識幣:') + coins + '</div></div>';
+  if(cfg.dsk){
+    h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 2px 12px;color:#ffd6f0;font-size:15.5px;">👕 ' + _avT('目前穿著設計師作品', '現在穿著同學設計的造型')
+      + '<button onclick="window._avDskWear(\'\')" style="padding:7px 14px;font-size:15px;font-weight:800;border-radius:10px;border:2px solid rgba(255,190,230,0.8);background:rgba(255,140,210,0.22);color:#ffe0f4;cursor:pointer;font-family:inherit;">↩ ' + _avT('換回原本造型', '換回原本的樣子') + '</button></div>';
+  }
+  if(st.err) h += '<div style="color:#ffb0b0;font-size:15px;margin:0 2px 10px;">⚠ ' + _avT('讀取失敗,請稍後再開一次。', '讀不到,等一下再試試看。') + '</div>';
+  if(st.owned && st.owned.__err) h += '<div style="color:#ffb0b0;font-size:14px;margin:0 2px 10px;">⚠ ' + _avT('購買紀錄讀不到(請老師確認設計師商店的規則已發布),暫時只能穿自己的作品。', '現在還不能買,請老師幫忙設定喔!') + '</div>';
+  var list = [];
+  for(i = 0; i < st.items.length; i++){ it = st.items[i]; if(it.on !== false || (st.owned && st.owned[it._id])) list.push(it); }
+  if(!list.length){
+    h += '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16px;">🖌 '
+      + _avT('還沒有上架的作品。到藝術村的「✏️ 遊戲美術設計師」畫一張角色皮膚,老師審核通過就會出現在這裡!', '還沒有作品喔!去藝術村的「✏️ 設計師」畫一張,老師說 OK 就會出現在這裡!') + '</div>';
+    box.innerHTML = h; return;
+  }
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">';
+  for(i = 0; i < list.length; i++){
+    it = list[i]; own = st.owned && st.owned[it._id]; price = (it.price && it.price.coin) | 0; img = it.img || '';
+    var on = (cfg.dsk === it._id), btn;
+    if(own){
+      btn = on ? '<div style="padding:7px;text-align:center;font-weight:900;color:#9effc0;">✅ ' + _avT('穿著中', '穿著中') + '</div>'
+        : '<button onclick="window._avDskWear(\'' + it._id + '\')" style="width:100%;padding:8px;font-size:15px;font-weight:800;border-radius:9px;border:2px solid rgba(100,230,150,0.8);background:rgba(80,200,120,0.22);color:#c8ffd9;cursor:pointer;font-family:inherit;">👕 ' + _avT('穿上', '穿上') + '</button>';
+    } else if(st.busy === it._id){
+      btn = '<div style="padding:7px;text-align:center;color:#ffd97a;">⏳ ' + _avT('購買中…', '買買中…') + '</div>';
+    } else {
+      var poor = coins < price;
+      btn = '<button onclick="window._avDskBuy(\'' + it._id + '\')"' + (poor ? ' disabled' : '') + ' style="width:100%;padding:8px;font-size:15px;font-weight:800;border-radius:9px;border:2px solid rgba(255,200,100,0.8);background:rgba(255,180,80,' + (poor ? '0.08' : '0.24') + ');color:' + (poor ? '#9a8a6a' : '#ffe2a8') + ';cursor:' + (poor ? 'default' : 'pointer') + ';font-family:inherit;">💰 ' + price + (poor ? ' ' + _avT('(不夠)', '(不夠)') : ' ' + _avT('購買', '買')) + '</button>';
+    }
+    h += '<div style="background:rgba(30,25,60,0.55);border:2px solid ' + (on ? '#9effc0' : 'rgba(150,140,220,0.45)') + ';border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;">'
+      + '<div style="aspect-ratio:7/10;background:rgba(255,255,255,0.92);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;">'
+      + (img ? '<img src="' + img + '" alt="" style="max-width:100%;max-height:100%;">' : '<span style="color:#998;font-size:13px;">' + _avT('圖片準備中', '圖還在準備') + '</span>') + '</div>'
+      + '<div style="font-weight:900;color:#fff;font-size:15.5px;line-height:1.3;">' + _avEscH(it.title || '') + '</div>'
+      + '<div style="color:#bcb6e6;font-size:13px;">✏️ ' + _avEscH(it.pen || '') + (own === 'mine' ? ' ・ <b style="color:#9effc0;">' + _avT('我的作品', '我畫的') + '</b>' : (own ? ' ・ ' + _avT('已擁有', '已擁有') : '')) + (it.on === false ? ' ・ ' + _avT('已下架', '已下架') : '') + '</div>'
+      + btn + '</div>';
+  }
+  h += '</div>';
+  box.innerHTML = h;
+}
+function _avEscH(t){ return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function _avRenderOpts(){
   var box = document.getElementById('_av-opts'); if(!box) return;
   var tab = _AV_TABS[_avCurTab];
+  if(tab && tab.dsg){ _avDsgOpts(box); return; }   /* ★ v5.364.0 🎨 設計師作品頁 */
   /* ★ v4.61.0 wip 頁(手持·日後開放)與 act/無 cats 防呆 */
   if(tab && (tab.wip || !tab.cats)){
     box.innerHTML = '<div style="padding:18px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16.5px;">🔒 '
@@ -3260,6 +3407,12 @@ function _avRenderOpts(){
   var _wipHtml = '<div style="padding:14px 16px;background:rgba(60,70,110,0.2);border:1.5px dashed rgba(150,170,220,0.5);border-radius:12px;color:#9aa8cc;font-size:16px;">🎨 '
     + _avT('此類素材繪製中,之後的更新會陸續加入,敬請期待!','這類的圖還在畫,等更新就會有囉!') + '</div>';
   var h = '';
+  /* ★ v5.364.0 正穿著設計師作品時,其他部件改了也看不到 → 提示並給「換回原本造型」 */
+  if(cfg.dsk){
+    h += '<div style="padding:12px 14px;margin:2px 2px 10px;background:rgba(255,120,200,0.14);border:2px dashed rgba(255,170,220,0.7);border-radius:12px;color:#ffd6f0;font-size:15.5px;line-height:1.6;">🎨 '
+      + _avT('目前穿著設計師作品,這裡的部件要換回原本造型才看得到。', '你現在穿著同學設計的造型,要換回原本的樣子才看得到這些喔!')
+      + ' <button onclick="window._avDskWear(\'\')" style="margin-left:6px;padding:6px 12px;font-size:14.5px;font-weight:800;border-radius:9px;border:2px solid rgba(255,190,230,0.8);background:rgba(255,140,210,0.22);color:#ffe0f4;cursor:pointer;font-family:inherit;">↩ ' + _avT('換回原本造型', '換回原本的樣子') + '</button></div>';
+  }
   /* ★★ v4.79.0 甲案提示條:目前身上有「還沒解鎖、只是預覽」的部件時,常駐提醒儲存會被脫下。
    *   用 _avatarStripLocked 同一組槽位定義逐槽重判(單一真相·不靠旗標)。 */
   try{

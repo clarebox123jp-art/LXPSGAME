@@ -1075,7 +1075,17 @@
     <!-- ★ v3.15.61 — 下一隻世界 BOSS 搶先看:改「資料驅動」(由 _wbApplyNextBossPreview 依 _wbGetNextBossId
          動態填入名稱/立繪/能力/屬性/數值/主題色),不再寫死土龍王,避免輪替推進後資訊過時。
          下方預設內容僅為後備,實際以 JS 套用為準。 -->
-    <div id="wb-next-boss-preview" class="wb-boss-preview" style="border-color:rgba(205,165,95,0.45);background:linear-gradient(160deg,rgba(46,36,18,0.55),rgba(20,14,6,0.65));--wb-boss-bg:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png');">
+    <!-- ★ v5.364.0(2026-11-08・老師「龍王戰主頁的『下一隻BOSS搶先看』的視窗改成預設收合,點開按鈕才展開」)
+         預設收合:只露出這顆按鈕;按一下展開/再按收起。不記憶(每次進大廳都是收合)。 -->
+    <button type="button" id="wb-next-boss-toggle" class="wb-nextboss-toggle" aria-expanded="false"
+      onclick="try{ var _p=document.getElementById('wb-next-boss-preview'); var _op=_p && _p.style.display==='none'; if(_p) _p.style.display=_op?'':'none'; this.setAttribute('aria-expanded', _op?'true':'false'); var _t=this.querySelector('.wb-nbt-arr'); if(_t) _t.textContent=_op?'▲ 收起':'▼ 點我展開'; if(_op && typeof window._wbApplyNextBossPreview==='function') window._wbApplyNextBossPreview(); if(typeof playSfx==='function') playSfx('sfx-confirm',0.4); }catch(_){}"
+      style="display:block;width:100%;margin-top:22px;padding:14px 18px;box-sizing:border-box;
+        background:linear-gradient(160deg,rgba(46,36,18,0.75),rgba(20,14,6,0.8));
+        border:2px solid rgba(205,165,95,0.6);border-radius:14px;color:#ffe6c2;cursor:pointer;font-family:inherit;
+        font-size:clamp(15px,1.6vw,26px);font-weight:800;letter-spacing:2px;box-shadow:0 0 12px rgba(200,150,70,0.25);">
+      🔮 下一隻世界 BOSS・搶先看 <span class="wb-nbt-arr" style="font-size:0.8em;opacity:0.9;margin-left:10px;">▼ 點我展開</span>
+    </button>
+    <div id="wb-next-boss-preview" class="wb-boss-preview" style="display:none;border-color:rgba(205,165,95,0.45);background:linear-gradient(160deg,rgba(46,36,18,0.55),rgba(20,14,6,0.65));--wb-boss-bg:url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png');">
       <div class="wb-boss-portrait" style="border-color:rgba(205,165,95,0.5);">
         <img class="wb-nextboss-img" src="https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/%E5%9C%B0%E9%BE%8D%E7%8E%8B.png"
              onerror="this.style.display='none';this.parentElement.innerHTML='🐉';"

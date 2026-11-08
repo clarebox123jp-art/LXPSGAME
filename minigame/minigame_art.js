@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.6';   /* ★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -607,9 +607,10 @@ function hubHtml(){
   if(pct < 100) h += '<div class="ghostm" style="opacity:' + (0.35 + 0.65 * g).toFixed(2) + ';transform:scale(' + (0.6 + 0.4 * g).toFixed(2) + ')"><div></div></div>';
   h += '<div class="hud">';
   h += '<div class="achip btn" data-k="who">' + (u ? '👤 ' + esc(String(uName(u)).slice(0, 10)) : '👤 訪客 🔑') + '</div>';
-  h += '<div class="achip restore" id="art-restore">🌈 <div class="bar"><i style="width:' + pct + '%"></i></div> ' + pct + '%</div>';
-  h += '<div class="achip" title="顏料" id="art-r-paint">' + D.RES.paint.e + ' ' + Math.max(0, r.paint) + '</div><div class="achip" title="靈感" id="art-r-idea">' + D.RES.idea.e + ' ' + Math.max(0, r.idea) + '</div><div class="achip" title="畫材" id="art-r-mat">' + D.RES.mat.e + ' ' + Math.max(0, r.mat) + '</div>';
-  h += '<div class="achip" title="本週藝術積分">⭐ ' + weekPts() + '</div>';
+  /* ★ v1.1.6(2026-11-08・老師「藝術村上面這些項目看不懂是什麼,追加點一下會展開說明小視窗」)— 恢復度/三種資源/積分都可以點(data-k="tip_…" → hudTip) */
+  h += '<div class="achip btn restore" id="art-restore" data-k="tip_restore">🌈 <div class="bar"><i style="width:' + pct + '%"></i></div> ' + pct + '%</div>';
+  h += '<div class="achip btn" title="顏料" id="art-r-paint" data-k="tip_paint">' + D.RES.paint.e + ' ' + Math.max(0, r.paint) + '</div><div class="achip btn" title="靈感" id="art-r-idea" data-k="tip_idea">' + D.RES.idea.e + ' ' + Math.max(0, r.idea) + '</div><div class="achip btn" title="畫材" id="art-r-mat" data-k="tip_mat">' + D.RES.mat.e + ' ' + Math.max(0, r.mat) + '</div>';
+  h += '<div class="achip btn" title="本週藝術積分" data-k="tip_pts">⭐ ' + weekPts() + '</div>';
   h += '<div class="sp"></div>' + (mapOn() ? '<div class="achip btn" data-k="lbl" title="顯示/隱藏地圖名稱">🏷</div>' : '') + (isGm() ? '<div class="achip btn" data-k="gm" title="老師台">🧑‍🏫</div>' : '') + '<div class="achip btn" data-k="set">⚙</div>';
   h += '</div>';
   /* 左下:每日挑戰+進行中的比賽/每週主題 */
@@ -632,10 +633,12 @@ function paintHub(){
     var t = ev.target, k = null, ws = null, ei = null;
     if(A.arrange && !upFind(t, 'data-k')) return;
     while(t && t !== root){ if(t.getAttribute){ k = k || t.getAttribute('data-k'); ws = ws || t.getAttribute('data-ws'); ei = ei || t.getAttribute('data-ev'); } t = t.parentNode; }
+    if(!k || k.indexOf('tip_') !== 0) tipClose();   /* ★ v1.1.6 點別的地方就收起說明小視窗 */
     if(ws){ sfx('sfx-tap', 0.3); wsOpenPanel(ws); return; }
     if(ei){ sfx('sfx-tap', 0.3); evOpen(ei); return; }
     if(!k) return;
     sfx('sfx-tap', 0.3);
+    if(k.indexOf('tip_') === 0){ hudTip(k.slice(4), upFind(ev.target, 'data-k')); return; }   /* ★ v1.1.6 */
     if(k === 'build') buildPanel();
     else if(k === 'studio') studioOpen();
     else if(k === 'rank') rankPanel();
@@ -1292,6 +1295,37 @@ function dragsClear(){ var a = DRAGS.slice(), i; for(i = 0; i < a.length; i++){ 
 window.addEventListener('blur', dragsClear);
 document.addEventListener('visibilitychange', function(){ if(document.hidden) dragsClear(); });
 function upFind(t, attr){ while(t && t.getAttribute){ if(t.getAttribute(attr) != null) return t; t = t.parentNode; } return null; }
+/* ★ v1.1.6(2026-11-08・老師「藝術村上面這些項目看不懂是什麼,追加點一下會展開說明小視窗的設計」)
+   頂部 HUD:🌈 恢復度、🎨 顏料、💡 靈感、🖌 畫材、⭐ 本週積分 —— 點一下在下方展開小說明框;再點同一顆、點小框或點別的地方就收起,8 秒後自動收起。 */
+var _tipK = null, _tipTm = 0;
+function tipClose(){ var e = $('art-tip'); if(e && e.parentNode) e.parentNode.removeChild(e); _tipK = null; if(_tipTm){ clearTimeout(_tipTm); _tipTm = 0; } }
+function hudTipText(k){
+  var r = resNow(), pct = restorePct();
+  if(k === 'restore') return '<b>🌈 村子恢復度 ' + pct + '%</b><br>' + esc(T({ c: '褪色魔把藝術村的顏色吸走了!到工坊過關拿資源,再按「🏗 建造」把建築蓋回來,村子就會一點一點變回彩色。到 100% 就完全恢復囉!', p: '藝術村的色彩恢復進度。於工坊過關取得資源後,以「🏗 建造」修復建築即可提高恢復度,達 100% 即完全恢復。' }));
+  if(k === 'paint' || k === 'idea' || k === 'mat'){
+    var nm = D.RES[k].n, e = D.RES[k].e;
+    return '<b>' + e + ' ' + esc(nm) + ':現在有 ' + Math.max(0, r[k] | 0) + '</b><br>' + esc(T({ c: '這是建造用的資源。在工坊過關、完成「📅 今日挑戰」都會得到,星星越多拿越多。按「🏗 建造」時會用掉' + nm + '、' + '把村子的建築和裝飾蓋起來。', p: '建造用資源。於工坊過關、完成每日挑戰可取得(星數越高越多);「🏗 建造」建築與裝飾時消耗。' })) + '<br><span style="opacity:.75">' + esc(T({ c: '三種資源:🎨 顏料、💡 靈感、🖌 畫材。', p: '資源共三種:🎨 顏料、💡 靈感、🖌 畫材。' })) + '</span>';
+  }
+  if(k === 'pts') return '<b>⭐ 本週藝術積分:' + weekPts() + '</b><br>' + esc(T({ c: '過關拿到的星星會變成積分(每天最多算 ' + capNow() + ' 分,重玩只算比上次多的星星)。每週一早上 8 點結算排行,前幾名在大對抗和荒島都有獎勵!按「🏆 排行」看看你的名次。', p: '關卡星數換算之每週積分(每日上限 ' + capNow() + ' 分;重玩僅計增加之星數)。每週一 08:00 結算排行,獎勵同時發至大對抗與荒島,詳見「🏆 排行」。' }));
+  return '';
+}
+function hudTip(k, el){
+  var root = $('art-root'), box, rr, er, x, y, w;
+  if(_tipK === k && $('art-tip')){ tipClose(); return; }
+  tipClose();
+  if(!root || !el) return;
+  box = document.createElement('div'); box.id = 'art-tip';
+  box.style.cssText = 'position:absolute;z-index:30;max-width:min(30em,86vw);box-sizing:border-box;background:#fffdf3;color:#3a2f45;border:3px solid #3a2f45;border-radius:14px;padding:.7em .9em;font-size:clamp(14px,2.3vmin,22px);line-height:1.55;box-shadow:0 6px 16px rgba(0,0,0,.3);font-weight:700;cursor:pointer';   /* 字級下限 14px:手機橫放也看得清楚 */
+  if(A.style === 'p'){ box.style.background = '#14213d'; box.style.color = '#f4e9c8'; box.style.borderColor = '#c9a227'; }
+  box.innerHTML = hudTipText(k) + '<div style="text-align:right;font-size:.8em;opacity:.6;margin-top:.3em">' + esc(T({ c: '點一下關起來', p: '點擊關閉' })) + '</div>';
+  box.onclick = function(e){ e.stopPropagation(); tipClose(); };
+  root.appendChild(box);
+  rr = root.getBoundingClientRect(); er = el.getBoundingClientRect(); w = box.offsetWidth;
+  x = er.left - rr.left; if(x + w > rr.width - 8) x = Math.max(8, rr.width - 8 - w);
+  y = er.bottom - rr.top + 8;
+  box.style.left = Math.round(x) + 'px'; box.style.top = Math.round(y) + 'px';
+  _tipK = k; _tipTm = setTimeout(tipClose, 8000);
+}
 function shake(el){ if(!el || !el.animate) return; try{ el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-1.2vmin)' }, { transform: 'translateX(1.2vmin)' }, { transform: 'translateX(0)' }], { duration: 300 }); }catch(e){} }
 
 function lvStart(id){
