@@ -85811,6 +85811,17 @@ function _showNewHeroAnnouncement(forceShow){
       + '</button>';
   }).join('');
 
+  scrollArea.classList.add('lxps-ev-zoom-menu');   /* ★ v5.367.0 主題選單也放大一級 */
+  if(!document.getElementById('lxps-ev-zoom-css')){
+    try{
+      const _evz = document.createElement('style');
+      _evz.id = 'lxps-ev-zoom-css';
+      _evz.textContent = '.lxps-ev-zoom{zoom:1.25;}.lxps-ev-zoom-menu{zoom:1.15;}'
+        + '@media (orientation:landscape) and (max-height:520px){.lxps-ev-zoom{zoom:1.05;}.lxps-ev-zoom-menu{zoom:1;}}'
+        + '@media (orientation:portrait) and (max-width:600px){.lxps-ev-zoom{zoom:1.05;}.lxps-ev-zoom-menu{zoom:1;}}';
+      document.head.appendChild(_evz);
+    }catch(_eEvz){}
+  }
   scrollArea.innerHTML = '<div style="text-align:center;color:#cbbce0;font-size:clamp(14px,1.8vw,18px);margin-bottom:8px;">👇 點主題看詳細介紹</div>'
     + '<div style="display:flex;flex-direction:column;gap:12px;max-width:780px;margin:0 auto;width:100%;">' + _menuHtml + '</div>'
     + '<div style="height:8px;flex:0 0 auto;"></div>';
@@ -85836,6 +85847,7 @@ function _showNewHeroAnnouncement(forceShow){
     const _ds = document.createElement('div');
     _ds.style.cssText = 'flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:clamp(14px,2.5vw,22px);display:flex;flex-direction:column;gap:16px;';
     _ds.innerHTML = t.detail;
+    _ds.className = 'lxps-ev-zoom';   /* ★ v5.367.0 老師「近期活動的字體也全部都要再放大」— 詳細內容整塊 zoom(PC/平板 1.25、手機 1.05,見 #lxps-ev-zoom-css) */
     _dbox.appendChild(_dh);
     _dbox.appendChild(_ds);
     _dov.appendChild(_dbox);

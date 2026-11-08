@@ -40742,7 +40742,7 @@ function _recordSummonHistory(results, isFree){
       else if(r && r.kind === 'rare_hero') _rar = 'SSR';
       else if(r && (r.kind === 'random_treasure' || r.isSuperRare)) _rar = '至寶';
       else if(r && r.isRare) _rar = '稀有';
-      return { n: String(_nm || '?'), ic: String((r && r.icon) || '🎁'), q: (r && r.qty > 1) ? r.qty : 1, r: _rar, hero: !!(r && r.kind === 'rare_hero') };
+      return { n: String(_nm || '?'), ic: String((r && r.icon) || '🎁'), q: (r && r.qty > 1) ? r.qty : 1, r: _rar, hero: !!(r && r.kind === 'rare_hero'), k: String((r && r.kind) || '') };   /* ★ v5.367.0 多存 k(kind)給召喚紀錄搜尋分類用;舊紀錄沒有 k 由 _shCat 依名稱/圖示判斷 */
     });
     _hist.unshift({ t: Date.now(), free: !!isFree, n: results.length, items: _items });
     if(_hist.length > 60) _hist = _hist.slice(0, 60);
@@ -40753,6 +40753,22 @@ function _recordSummonHistory(results, isFree){
 }
 
 // 顯示召喚結果紀錄彈窗
+// ★ v5.367.0(2026-11-09 老師「召喚紀錄的字體也要放大,新增『搜尋』欄位,可選 SR/SSR 的英雄、命星或寵物、裝備、至寶」
+//   「以上修改也同時檢查平板和手機是否都是舒適的字體大小」)
+//   ・改成蓋滿畫面的視窗(半透明底,點外面關閉)⇒ PC 大螢幕會被 lxps-pc-zoom 一起放大;卡片 min(96vw,960px)。
+//   ・字級:標題 26→34、紀錄時間 13→19、獎勵 14→21、稀有度 11→15(手機橫放 max-height:520px 另縮一級)。
+//   ・搜尋列:分類 全部/SSR 英雄/SR 英雄/命星/寵物/裝備/至寶 + 名稱關鍵字;只列出有符合的那幾次召喚,符合的獎勵其餘淡化隱藏。
+//   舊紀錄沒有 kind ⇒ _shCat 依名稱(命星・/裝備・)、圖示(🐾)、稀有度(至寶)判斷。
+function _shCat(it){
+  if(!it) return '';
+  var k = it.k || '', n = String(it.n || ''), r = it.r || '';
+  if(k === 'cst_star' || /^(命星|🌑)/.test(n) || n.indexOf('虛無的命星') >= 0) return 'cst';
+  if(k === 'rare_pet' || (!it.hero && it.ic === '🐾')) return 'pet';
+  if(k === 'gear' || n.indexOf('裝備・') >= 0) return 'gear';
+  if(k === 'random_treasure' || r === '至寶') return 'treasure';
+  if(it.hero || k === 'rare_hero'){ return (r === 'SR') ? 'sr' : 'ssr'; }
+  return 'item';
+}
 function _showSummonHistory(){
   // 再按一次關閉(與說明彈窗一致)
   const _old = document.getElementById('summon-history-popup');
@@ -40763,64 +40779,115 @@ function _showSummonHistory(){
   let _hist = [];
   try{ const _r = localStorage.getItem(_key); _hist = _r ? JSON.parse(_r) : []; if(!Array.isArray(_hist)) _hist = []; }catch(_){ _hist = []; }
 
+  if(!document.getElementById('summon-history-css')){
+    const st = document.createElement('style');
+    st.id = 'summon-history-css';
+    st.textContent =
+      '#summon-history-popup{position:fixed;inset:0;z-index:9990;background:rgba(6,4,20,0.72);display:flex;align-items:center;justify-content:center;padding:2vh 2vw;box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;animation:newHeroOvFadeIn 0.3s ease-out;}' +
+      '#summon-history-popup .shp-card{position:relative;width:min(96vw,960px);max-height:94vh;max-height:94dvh;display:flex;flex-direction:column;background:linear-gradient(160deg,rgba(20,15,55,0.98),rgba(40,25,80,0.98));border:2.5px solid rgba(255,200,140,0.8);border-radius:18px;box-shadow:0 10px 50px rgba(120,80,200,0.5);box-sizing:border-box;padding:20px 24px 14px;}' +
+      '#summon-history-popup .shp-title{font-size:34px;font-weight:900;color:#ffe6b8;letter-spacing:3px;text-align:center;}' +
+      '#summon-history-popup .shp-sub{font-size:19px;color:#cbb8ff;text-align:center;margin:2px 0 12px;}' +
+      '#summon-history-popup .shp-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}' +
+      '#summon-history-popup .shp-cat{font-family:inherit;font-size:20px;font-weight:800;padding:7px 14px;border-radius:12px;cursor:pointer;background:rgba(255,255,255,0.06);color:#d8ccff;border:2px solid rgba(180,150,255,0.35);}' +
+      '#summon-history-popup .shp-cat.on{background:linear-gradient(135deg,#ffcf6a,#ff9f45);color:#2a1500;border-color:#ffe2a0;}' +
+      '#summon-history-popup .shp-q{flex:1 1 220px;min-width:180px;font-family:inherit;font-size:20px;padding:8px 14px;border-radius:12px;border:2px solid rgba(180,150,255,0.5);background:rgba(0,0,20,0.55);color:#fff;outline:none;box-sizing:border-box;}' +
+      '#summon-history-popup .shp-count{font-size:18px;color:#ffe6b8;margin:0 0 6px;}' +
+      '#summon-history-popup .shp-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-right:6px;}' +
+      '#summon-history-popup .shp-batch{border-top:1px solid rgba(180,140,255,0.22);padding:10px 2px;}' +
+      '#summon-history-popup .shp-when{font-size:19px;color:#c8b8ee;margin-bottom:6px;font-weight:700;}' +
+      '#summon-history-popup .shp-free{margin-left:8px;font-size:16px;color:#ffe066;background:rgba(255,220,80,0.16);border:1px solid rgba(255,220,80,0.4);border-radius:6px;padding:1px 8px;}' +
+      '#summon-history-popup .shp-chip{display:inline-flex;align-items:center;gap:6px;margin:4px;padding:6px 12px;border-radius:10px;font-size:21px;line-height:1.3;}' +
+      '#summon-history-popup .shp-chip .rt{font-size:15px;}' +
+      '#summon-history-popup .shp-empty{text-align:center;color:#c0c0d8;padding:30px 10px;font-size:22px;line-height:1.6;}' +
+      '#summon-history-popup .shp-foot{text-align:center;padding-top:10px;}' +
+      '#summon-history-popup .shp-close{padding:10px 36px;font-size:22px;font-weight:800;background:rgba(120,80,200,0.75);border:2px solid rgba(200,160,255,0.7);color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;}' +
+      '@media (orientation:landscape) and (max-height:520px){' +
+        '#summon-history-popup .shp-card{padding:10px 14px 8px;}' +
+        '#summon-history-popup .shp-title{font-size:24px;}#summon-history-popup .shp-sub{font-size:14px;margin-bottom:6px;}' +
+        '#summon-history-popup .shp-cat{font-size:15px;padding:4px 10px;}#summon-history-popup .shp-q{font-size:16px;padding:5px 10px;}' +
+        '#summon-history-popup .shp-when{font-size:15px;}#summon-history-popup .shp-chip{font-size:16px;padding:4px 9px;margin:3px;}' +
+        '#summon-history-popup .shp-chip .rt{font-size:12px;}#summon-history-popup .shp-close{font-size:17px;padding:6px 26px;}#summon-history-popup .shp-count{font-size:14px;}' +
+        '#summon-history-popup .shp-bar{flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-bottom:6px;}#summon-history-popup .shp-cat{flex:0 0 auto;}#summon-history-popup .shp-q{min-width:150px;}' +
+      '}' +
+      '@media (max-width:600px) and (orientation:portrait){' +
+        '#summon-history-popup .shp-title{font-size:26px;}#summon-history-popup .shp-cat{font-size:16px;padding:5px 10px;}' +
+        '#summon-history-popup .shp-chip{font-size:17px;}#summon-history-popup .shp-when{font-size:16px;}' +
+      '}';
+    document.head.appendChild(st);
+  }
+
   const pop = document.createElement('div');
   pop.id = 'summon-history-popup';
-  pop.style.cssText = [
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9990;',
-    'max-width:min(96vw,620px);width:auto;',
-    'max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;',
-    'background:linear-gradient(160deg,rgba(20,15,55,0.97),rgba(40,25,80,0.97));',
-    'border:2.5px solid rgba(255,200,140,0.8);border-radius:16px;',
-    'padding:22px 26px 18px;text-align:left;',
-    'box-shadow:0 10px 50px rgba(120,80,200,0.5);',
-    'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;',
-    'animation:newHeroOvFadeIn 0.3s ease-out;',
-  ].join('');
+  const CATS = [['all','全部'],['ssr','🌈 SSR 英雄'],['sr','⭐ SR 英雄'],['cst','✨ 命星'],['pet','🐾 寵物'],['gear','🛡️ 裝備'],['treasure','💎 至寶']];
+  let html = '<div class="shp-card">'
+    + '<div class="shp-title">📜 召喚紀錄</div>'
+    + '<div class="shp-sub">最近 60 次召喚的結果</div>';
+  if(_hist.length){
+    html += '<div class="shp-bar">'
+      + CATS.map(function(c){ return '<button class="shp-cat' + (c[0] === 'all' ? ' on' : '') + '" data-c="' + c[0] + '">' + c[1] + '</button>'; }).join('')
+      + '<input class="shp-q" type="search" placeholder="🔍 搜尋名稱(例如:哪吒、命星)" autocomplete="off">'
+      + '</div><div class="shp-count"></div>';
+  }
+  html += '<div class="shp-list"></div>'
+    + '<div class="shp-foot"><button class="shp-close">關閉</button></div></div>';
+  pop.innerHTML = html;
+  document.body.appendChild(pop);
 
-  let html = '<div style="font-size:26px;font-weight:900;color:#ffe6b8;letter-spacing:3px;margin-bottom:6px;text-align:center;">📜 召喚紀錄</div>';
-  html += '<div style="font-size:14px;color:#cbb8ff;line-height:1.5;margin-bottom:14px;text-align:center;">最近 60 次召喚的結果(本裝置紀錄)</div>';
-
-  if(!_hist.length){
-    html += '<div style="text-align:center;color:#aab;padding:30px 10px;font-size:17px;line-height:1.6;">還沒有召喚紀錄喔!<br>快到下方按「🌟 召喚 1 次」抽抽看吧 🔮</div>';
-  } else {
-    html += '<div style="display:flex;flex-direction:column;gap:2px;">';
+  const listEl = pop.querySelector('.shp-list');
+  const countEl = pop.querySelector('.shp-count');
+  let _cat = 'all', _q = '';
+  function chipHtml(it){
+    const _isHi = (it && (it.r === 'SSR' || it.r === 'UR' || it.r === '至寶'));
+    const _isMid = (it && (it.r === 'SR' || it.r === '稀有'));
+    const _col = _isHi ? '#ffd33b' : _isMid ? '#88bbff' : '#d8d8ee';
+    const _bg  = _isHi ? 'rgba(255,200,80,0.15)' : _isMid ? 'rgba(80,140,255,0.15)' : 'rgba(255,255,255,0.06)';
+    return '<span class="shp-chip" style="background:' + _bg + ';border:1px solid ' + _col + '66;">'
+      + '<span>' + _esc((it && it.ic) || '🎁') + '</span>'
+      + '<span style="color:' + _col + ';font-weight:800;">' + _esc(it && it.n) + '</span>'
+      + ((it && it.q > 1) ? '<span style="color:#b8b8cc;">×' + it.q + '</span>' : '')
+      + ((it && it.r) ? '<span class="rt" style="color:' + _col + ';">[' + _esc(it.r) + ']</span>' : '')
+      + '</span>';
+  }
+  function render(){
+    if(!_hist.length){
+      listEl.innerHTML = '<div class="shp-empty">還沒有召喚紀錄喔!<br>快到下方按「🌟 召喚 1 次」抽抽看吧 🔮</div>';
+      return;
+    }
+    const q = _q.trim().toLowerCase();
+    const filtering = (_cat !== 'all' || q);
+    let out = '', nb = 0, ni = 0;
     _hist.forEach(function(b){
+      const items = ((b && b.items) || []).filter(function(it){
+        if(_cat !== 'all' && _shCat(it) !== _cat) return false;
+        if(q && String((it && it.n) || '').toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+      if(!items.length) return;
+      nb++; ni += items.length;
       const _d = new Date(b && b.t ? b.t : 0);
       const _dstr = (_d.getMonth()+1) + '/' + _d.getDate() + ' ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0');
       const _cnt = (b && b.n) || ((b && b.items) ? b.items.length : 0);
       const _title = (_cnt === 11) ? '10 + 1 連抽' : (_cnt > 1 ? (_cnt + ' 連抽') : '單抽');
-      const _freeBadge = (b && b.free) ? '<span style="margin-left:8px;font-size:12px;color:#ffe066;background:rgba(255,220,80,0.16);border:1px solid rgba(255,220,80,0.4);border-radius:6px;padding:1px 8px;">免費</span>' : '';
-      let _chips = '';
-      ((b && b.items) || []).forEach(function(it){
-        const _isHi = (it && (it.r === 'SSR' || it.r === '至寶'));
-        const _isMid = (it && (it.r === 'SR' || it.r === '稀有'));
-        const _col = _isHi ? '#ffd33b' : _isMid ? '#88bbff' : '#cfcfe6';
-        const _bg  = _isHi ? 'rgba(255,200,80,0.15)' : _isMid ? 'rgba(80,140,255,0.15)' : 'rgba(255,255,255,0.05)';
-        _chips += '<span style="display:inline-flex;align-items:center;gap:4px;margin:3px;padding:4px 10px;border-radius:8px;background:' + _bg + ';border:1px solid ' + _col + '55;font-size:14px;">'
-          + '<span>' + ((it && it.ic) || '🎁') + '</span>'
-          + '<span style="color:' + _col + ';font-weight:700;">' + _esc(it && it.n) + '</span>'
-          + ((it && it.q > 1) ? '<span style="color:#aab;">×' + it.q + '</span>' : '')
-          + ((it && it.r) ? '<span style="font-size:11px;color:' + _col + ';">[' + _esc(it.r) + ']</span>' : '')
-          + '</span>';
-      });
-      html += '<div style="border-top:1px solid rgba(180,140,255,0.18);padding:9px 2px;">'
-        + '<div style="font-size:13px;color:#bbaadd;margin-bottom:4px;font-weight:700;">🕐 ' + _dstr + ' ・ ' + _title + _freeBadge + '</div>'
-        + '<div style="line-height:1.7;">' + _chips + '</div></div>';
+      out += '<div class="shp-batch"><div class="shp-when">🕐 ' + _dstr + ' ・ ' + _title + ((b && b.free) ? '<span class="shp-free">免費</span>' : '') + '</div>'
+        + '<div>' + items.map(chipHtml).join('') + '</div></div>';
     });
-    html += '</div>';
+    if(countEl) countEl.textContent = filtering ? ('找到 ' + ni + ' 項(' + nb + ' 次召喚)') : '';
+    listEl.innerHTML = out || '<div class="shp-empty">最近 60 次召喚裡沒有符合的結果。</div>';
+    listEl.scrollTop = 0;
   }
-
-  html += '<div style="text-align:center;margin-top:10px;position:sticky;bottom:-18px;'
-    + 'background:linear-gradient(180deg,rgba(20,15,55,0) 0%,rgba(20,15,55,0.95) 30%,rgba(40,25,80,0.98) 100%);'
-    + 'padding:12px 0 6px;margin-left:-26px;margin-right:-26px;">';
-  html += '<button onclick="document.getElementById(\'summon-history-popup\').remove()" '
-    + 'style="padding:8px 28px;font-size:18px;font-weight:700;'
-    + 'background:rgba(120,80,200,0.7);border:2px solid rgba(200,160,255,0.7);'
-    + 'color:#fff;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:2px;">關閉</button>';
-  html += '</div>';
-
-  pop.innerHTML = html;
-  document.body.appendChild(pop);
+  render();
+  pop.querySelectorAll('.shp-cat').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      try{ playSfx('sfx-sel', 0.4); }catch(_){}
+      _cat = btn.getAttribute('data-c') || 'all';
+      pop.querySelectorAll('.shp-cat').forEach(function(x){ x.classList.toggle('on', x === btn); });
+      render();
+    });
+  });
+  const qEl = pop.querySelector('.shp-q');
+  if(qEl) qEl.addEventListener('input', function(){ _q = qEl.value || ''; render(); });
+  pop.querySelector('.shp-close').addEventListener('click', function(){ pop.remove(); });
+  pop.addEventListener('click', function(e){ if(e.target === pop) pop.remove(); });
 }
 
 function _showSummonHelp(){
@@ -44953,26 +45020,26 @@ window._BAG_TICKET_OVERVIEW_DEFS = [
   { id:'summon_ticket_treasure',      icon:'💎', label:'隨機至寶卷',   accent:'#7fc8ff' },
   { id:'summon_ticket_treasure_pick', icon:'💠', label:'自選至寶卷',   accent:'#66e6ff' },
 ];
-function _bagTicketOverviewHtml(){
+function _bagTicketOverviewHtml(){   /* ★ v5.367.0(2026-11-09 老師「上面的卷名稱字體要放大」)— 卷名 15→28、數量 26→40、圖示 30→44、標題 24→34、按鈕 16→26;老師卷子區同步。卡片最小寬 120→180。 */
   try{
     var _cards = window._BAG_TICKET_OVERVIEW_DEFS.map(function(t){
       var _n = (typeof backpackGet === 'function') ? (backpackGet(t.id)||0) : 0;
       var _has = _n > 0;
       var _bd  = _has ? t.accent : 'rgba(120,140,180,0.35)';
       var _cntColor = _has ? '#fff' : '#7f8aa0';
-      return '<div style="flex:1 1 130px;min-width:120px;background:rgba(0,4,22,0.55);border:2px solid ' + _bd + (_has?'':'55') + ';'
+      return '<div style="flex:1 1 200px;min-width:180px;background:rgba(0,4,22,0.55);border:2px solid ' + _bd + (_has?'':'55') + ';'
         +   'border-radius:12px;padding:10px 8px;text-align:center;' + (_has?'':'opacity:0.72;') + '">'
-        +   '<div style="font-size:30px;line-height:1;">' + t.icon + '</div>'
-        +   '<div style="font-size:15px;font-weight:900;color:' + t.accent + ';margin-top:4px;letter-spacing:0.5px;">' + t.label + '</div>'
-        +   '<div style="font-size:26px;font-weight:900;color:' + _cntColor + ';margin-top:2px;">×' + _n + '</div>'
+        +   '<div style="font-size:44px;line-height:1;">' + t.icon + '</div>'
+        +   '<div style="font-size:28px;font-weight:900;color:' + t.accent + ';margin-top:6px;letter-spacing:0.5px;line-height:1.2;">' + t.label + '</div>'
+        +   '<div style="font-size:40px;font-weight:900;color:' + _cntColor + ';margin-top:2px;">×' + _n + '</div>'
         + '</div>';
     }).join('');
     return '<div style="background:rgba(10,8,40,0.55);border:2px solid rgba(255,180,120,0.45);border-radius:16px;'
       +   'padding:14px 16px;margin-bottom:14px;">'
       +   '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
-      +     '<div style="font-size:24px;font-weight:900;color:#ffd9a0;letter-spacing:1px;text-shadow:0 0 12px rgba(255,180,100,0.4);">🎟 我的召喚卷（自己獲得）</div>'
+      +     '<div style="font-size:34px;font-weight:900;color:#ffd9a0;letter-spacing:1px;text-shadow:0 0 12px rgba(255,180,100,0.4);">🎟 我的召喚卷（自己獲得）</div>'
       +     '<button onclick="playSfx(\'sfx-sel\',0.6);(typeof _openSummonTicketModal===\'function\'?_openSummonTicketModal():0)" '
-      +       'style="padding:7px 16px;font-size:16px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#ffb347,rgba(255,210,90,0.9));'
+      +       'style="padding:10px 22px;font-size:26px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#ffb347,rgba(255,210,90,0.9));'
       +       'border:none;color:#2a1500;border-radius:10px;font-family:inherit;letter-spacing:1px;box-shadow:0 0 12px rgba(255,180,90,0.5);white-space:nowrap;">✨ 前往召喚星空使用</button>'
       +   '</div>'
       +   '<div style="display:flex;gap:8px;flex-wrap:wrap;">' + _cards + '</div>'
@@ -44991,17 +45058,17 @@ function _gmOverviewHtml(){
       if(_n <= 0) return '';
       var _tail = (typeof window._gmTicketDescTail === 'function') ? window._gmTicketDescTail(_gmId) : '';
       _tail = String(_tail).replace(/[<>&]/g,'');
-      return '<div style="flex:1 1 150px;min-width:140px;background:rgba(30,16,0,0.55);border:2px solid ' + t.accent + ';'
+      return '<div style="flex:1 1 220px;min-width:200px;background:rgba(30,16,0,0.55);border:2px solid ' + t.accent + ';'
         +   'border-radius:12px;padding:10px 8px;text-align:center;">'
-        +   '<div style="font-size:30px;line-height:1;">' + t.icon + '</div>'
-        +   '<div style="font-size:14px;font-weight:900;color:' + t.accent + ';margin-top:4px;letter-spacing:0.3px;">' + t.label + '</div>'
-        +   '<div style="font-size:26px;font-weight:900;color:#fff;margin-top:2px;">×' + _n + '</div>'
-        +   '<div style="font-size:10.5px;color:#ffe6b0;margin-top:3px;line-height:1.3;">' + _tail + '</div>'
+        +   '<div style="font-size:44px;line-height:1;">' + t.icon + '</div>'
+        +   '<div style="font-size:26px;font-weight:900;color:' + t.accent + ';margin-top:6px;letter-spacing:0.3px;line-height:1.2;">' + t.label + '</div>'
+        +   '<div style="font-size:38px;font-weight:900;color:#fff;margin-top:2px;">×' + _n + '</div>'
+        +   '<div style="font-size:18px;color:#ffe6b0;margin-top:3px;line-height:1.3;">' + _tail + '</div>'
         + '</div>';
     }).filter(Boolean).join('');
     if(!_cards) return '';
     return '<div style="margin-top:12px;padding-top:12px;border-top:2px solid rgba(255,200,120,0.5);">'
-      +   '<div style="font-size:20px;font-weight:900;color:#ffcf6a;letter-spacing:0.5px;margin-bottom:8px;text-shadow:0 0 10px rgba(255,180,80,0.45);">🎁 老師發放的召喚卷</div>'
+      +   '<div style="font-size:30px;font-weight:900;color:#ffcf6a;letter-spacing:0.5px;margin-bottom:8px;text-shadow:0 0 10px rgba(255,180,80,0.45);">🎁 老師發放的召喚卷</div>'
       +   '<div style="display:flex;gap:8px;flex-wrap:wrap;">' + _cards + '</div>'
       + '</div>';
   }catch(_e){ return ''; }
@@ -45111,7 +45178,7 @@ function _renderBackpackInto(container, showUse, mode){
       <div style="font-size:84px;flex-shrink:0;">${def.icon}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:44px;font-weight:900;color:#ddeeff;">${def.name}</div>
-        <div style="font-size:34px;color:#ffffff;margin-top:2px;line-height:1.4;">${def.desc.split('\\n').join('<br>')}${(def._gmReward && window._gmTicketDescTail)?('<br><span style=\"color:#ffcf6a;font-weight:800;\">'+String(window._gmTicketDescTail(id)).replace(/[<>]/g,'')+'</span>'):''}${(window._ticketDescTail && window._ticketDescTail(id))?('<br><span style=\"color:#9fe8ff;font-weight:800;font-size:0.8em;word-break:break-all;\">'+window._ticketDescTail(id)+'</span>'):''}</div>
+        <div style="font-size:34px;color:#ffffff;margin-top:2px;line-height:1.4;">${def.desc.split('\\n').join('<br>')}${(def._gmReward && window._gmTicketDescTail)?('<br><span style=\"color:#ffcf6a;font-weight:800;\">'+String(window._gmTicketDescTail(id)).replace(/[<>]/g,'')+'</span>'):''}${''/* ★ v5.367.0(2026-11-09 老師「背包關於卷編號這些不需要對玩家說明」)— 移除券編號/舊制券說明尾巴(window._ticketDescTail 保留,GM 後台「查詢券編號」照舊可查) */}</div>
       </div>
       <div style="font-size:48px;font-weight:900;color:#ffee88;min-width:36px;text-align:center;">×${cnt}</div>
       ${showUse && !isSellOnly
