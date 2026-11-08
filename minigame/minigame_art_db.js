@@ -288,7 +288,7 @@ D.GLOSS = {
 /* ══════════════════════════════════════════════════════════════════════════
    ★ v1.1.0(2026-11-04・老師「優化清單 22 項全部做」)
    ══════════════════════════════════════════════════════════════════════════ */
-D.VER = 'v1.1.4';   /* ★ v1.1.4(2026-11-07)藝術村地圖首頁 D.MAP(GPT 圖+14 個入口) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・檢查報告第 11 項)「明暗交界線」名牌圈從 (56,57) 移到 (44,65):仍在交界帶上,但和「反光」圈不再擠在同一條斜線上 */   void 'v1.1.0';
+D.VER = 'v1.1.8';   /* ★ v1.1.8(2026-11-09)D.dsgUnlock 設計師解鎖判斷 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)藝術村地圖首頁 D.MAP(GPT 圖+14 個入口) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・檢查報告第 11 項)「明暗交界線」名牌圈從 (56,57) 移到 (44,65):仍在交界帶上,但和「反光」圈不再擠在同一條斜線上 */   void 'v1.1.0';
 
 /* 第 22 項:其餘四座工坊(設計書第二節)。原圖一律程式畫的「風格示範」,不放任何受著作權保護的名作 */
 D.WORKSHOPS.push(
@@ -520,6 +520,20 @@ D.MAP = { img: 'art_village_map.webp', w: 1672, h: 941, spots: [
   { k: 'rank',   e: '🏆', n: '排行榜',         x: 48.7, y: 85 },  /* 頒獎台 */
   { k: 'exit',   e: '🚪', n: '離開',           x: 86.4, y: 88 }   /* 村口拱門 */
 ] };
+
+/* ★ v1.1.8(2026-11-09・老師「遊戲美術設計師改成有條件解鎖,至少要玩過所有關卡並且全部獲得至少 2 星」)
+   創藝工坊(minigame_art.js 地圖入口/dock)與設計師工作室(minigame_designer.js 直接網址也擋)共用這一個判斷,關卡清單 = 全部工坊 WS_LEVELS(以後新增關卡自動算進去)。
+   GM 不受限(兩邊各自判斷 isGm)。stars = 存檔的 {關卡id: 最佳星數}。 */
+D.DSG_UNLOCK_STAR = 2;
+D.dsgUnlock = function(stars){
+  var o = { need: D.DSG_UNLOCK_STAR, total: 0, ok: 0, miss: [], open: false }, i, j, W, a, L, st;
+  stars = stars || {};
+  for(i = 0; i < D.WORKSHOPS.length; i++){ W = D.WORKSHOPS[i]; a = D.WS_LEVELS[W.id] || [];
+    for(j = 0; j < a.length; j++){ L = D.LEVELS[a[j]]; if(!L) continue; o.total++; st = stars[a[j]] | 0;
+      if(st >= o.need) o.ok++; else o.miss.push({ ws: W.id, we: W.e, wn: W.n, id: a[j], n: L.n, st: st }); } }
+  o.open = o.total > 0 && o.ok === o.total;
+  return o;
+};
 
 window.ART_DB = D;
 })();

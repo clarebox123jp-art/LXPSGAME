@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
+var VER = 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
 var S = { on: false, uid: '', guest: true, cfg: null, vkey: '', xwords: [], names: null, style: 'c', ed: null, gmTab: 'flag' };
@@ -323,9 +323,12 @@ function enter(){
   accFetch(function(){
     var u = user();
     if(!(u && isGm()) && !dsgOpen()){ gate('closed'); return; }
-    rosterLoad();
-    hub();
-    setTimeout(idbSweep, 4000);
+    unlockCheck(function(o){   /* ★ v1.0.7 有條件解鎖:創藝工坊全部關卡都 ≥2★ */
+      if(!o.open){ gate('stars', o); return; }
+      rosterLoad();
+      hub();
+      setTimeout(idbSweep, 4000);
+    });
   });
   if(!S.tick) S.tick = setInterval(backupTick, 30000);
   document.addEventListener('visibilitychange', function(){ if(document.hidden && S.ed){ saveLocal(false); backupNow(false); } });
@@ -339,11 +342,44 @@ function onUser(u){
   if(nu === S.uid && !!u === !S.guest) return;
   /* 換帳號:前一位的草稿先存好(仍以前一位 uid 為鍵),畫面關掉,換新的人重讀 */
   if(S.ed){ try{ saveLocal(false); }catch(e){} S.ed = null; }
-  modalClose(); bindUser(u); S.cfg = null; S.vkey = ''; S.xwords = [];
-  accFetch(function(){ if(!(u && isGm()) && !dsgOpen()){ gate('closed'); return; } hub(); });
+  modalClose(); bindUser(u); S.cfg = null; S.vkey = ''; S.xwords = []; if(S.cs) S.cs.reset();
+  accFetch(function(){ if(!(u && isGm()) && !dsgOpen()){ gate('closed'); return; } unlockCheck(function(o){ if(!o.open){ gate('stars', o); return; } hub(); }); });
 }
-function gate(k){
-  var root = $('dsg-root');
+/* ★ v1.0.7(2026-11-09・老師「遊戲美術設計師改成有條件解鎖,至少要玩過所有關卡並且全部獲得至少 2 星」)
+   直接打網址 ?mode=designer 也擋。判斷用 ART_DB.dsgUnlock(index 會先載 minigame_art_db.js,與創藝工坊同一份)。
+   星數 = 這台的創藝工坊本機存檔 art_save_<uid> 與雲端 artPlayers/{uid} 取大;GM 不受限。 */
+function unlockCheck(cb){
+  var AD = window.ART_DB, u = user(), uid = u ? u.uid : 'guest', st = {}, done = false, t, f = fb();
+  if(u && isGm()){ cb({ open: true }); return; }
+  if(!AD || !AD.dsgUnlock){ cb({ open: false, err: 1, total: 0, ok: 0, miss: [] }); return; }
+  function add(s){ var k; if(!s || typeof s !== 'object') return; for(k in s){ if(s.hasOwnProperty(k)) st[k] = Math.max(st[k] | 0, s[k] | 0); } }
+  try{ var lo = JSON.parse(lsGet('art_save_' + uid) || 'null'); if(lo && (!lo.uid || lo.uid === uid)) add(lo.stars); }catch(e){}
+  function fin(){ if(done) return; done = true; clearTimeout(t); cb(AD.dsgUnlock(st)); }
+  if(!u || !f || !f.db){ fin(); return; }
+  t = setTimeout(fin, 5000);
+  try{ f.db.collection('artPlayers').doc(uid).get().then(function(d){ if(d && d.exists && user() && user().uid === uid) add((d.data() || {}).stars); fin(); })['catch'](fin); }catch(e2){ fin(); }
+}
+function gate(k, o){
+  var root = $('dsg-root'), h, i, m, g = {}, ord = [], pct;
+  if(k === 'stars'){
+    o = o || { total: 0, ok: 0, miss: [], need: 2 };
+    pct = o.total ? Math.round(o.ok * 100 / o.total) : 0;
+    h = '<div class="dsg-gate" style="overflow-y:auto;max-height:100%;box-sizing:border-box;padding:3vmin"><div style="font-size:9vmin">🔒</div><div><b>遊戲美術設計師 還沒解鎖</b></div>';
+    if(o.err) h += '<div>讀不到創藝工坊的進度,請檢查網路後重新整理。</div>';
+    else {
+      h += '<div style="max-width:90vw">' + esc(T({ c: '把創藝工坊的「全部 ' + o.total + ' 關」都玩過,而且每一關都拿到 ⭐⭐ 以上,就能進來當遊戲美術設計師!', p: '完成創藝工坊全部 ' + o.total + ' 關,且每關皆達 ' + (o.need || 2) + ' 星以上,即可解鎖。' })) + '</div>';
+      h += '<div style="width:min(70vmin,86vw);background:rgba(255,255,255,.25);border-radius:1vmin;overflow:hidden;height:2.4vmin"><i style="display:block;height:100%;width:' + pct + '%;background:linear-gradient(90deg,#ffb347,#ff6f91)"></i></div><div>目前 ' + o.ok + ' / ' + o.total + ' 關達成</div>';
+      for(i = 0; i < o.miss.length; i++){ m = o.miss[i]; if(!g[m.ws]){ g[m.ws] = []; ord.push(m); } g[m.ws].push(m); }
+      h += '<div style="text-align:left;font-size:2.1vmin;max-width:min(110vmin,92vw)">';
+      for(i = 0; i < ord.length; i++){ m = ord[i]; h += '<div style="margin:.6vmin 0">' + m.we + ' <b>' + esc(m.wn) + '</b>:' + g[m.ws].map(function(x){ return esc(x.n) + (x.st ? ' ' + new Array(x.st + 1).join('⭐') : '(還沒玩)'); }).join('、') + '</div>'; }
+      h += '</div>';
+    }
+    h += '<div style="display:flex;gap:1.4vmin;flex-wrap:wrap;justify-content:center"><button class="dsg-b go" id="dsg-gart">🎨 去創藝工坊</button><button class="dsg-b ghost" id="dsg-gx">🔙 回去</button></div></div>';
+    root.innerHTML = h;
+    $('dsg-gx').onclick = exitNow;
+    $('dsg-gart').onclick = function(){ try{ if(B.handoff) B.handoff(); }catch(e){} try{ if(B.loading) B.loading(true); }catch(e2){} setTimeout(function(){ S.on = false; location.href = 'minigame_index.html?mode=art'; }, 300); };
+    return;
+  }
   root.innerHTML = '<div class="dsg-gate"><div style="font-size:9vmin">🎨</div><div><b>遊戲美術設計師</b></div><div>' + (k === 'closed' ? '最後測試中,敬請期待!' : '請先登入') + '</div><button class="dsg-b go" id="dsg-gx">🔙 回去</button></div>';
   $('dsg-gx').onclick = exitNow;
 }
@@ -366,7 +402,7 @@ function hub(){
   h += '<button class="dsg-b ghost" data-k="rules">📖 規範</button><button class="dsg-b ghost" data-k="how">❓ 怎麼玩</button><button class="dsg-b ghost" data-k="style">' + (S.style === 'p' ? '🌸 簡單風' : '✨ 精緻風') + '</button><button class="dsg-b ghost" data-k="exit">🚪 離開</button></div>';
   h += '<div class="dsg-card" id="dsg-month">📅 <b>' + ymLabel(ymOf()) + '</b> 的作品:' + (S.guest ? '登入後才能繳交' : '讀取中…') + '<br><small>每人每月 1 件,' + ri.m + ' 月 1 日早上 8:00 換新的月份(還有 ' + ri.days + ' 天 ' + ri.hrs + ' 小時)</small></div>';
   h += '<div class="dsg-new"><button data-k="new-skin">🦸 新的角色皮膚<small>' + esc(T(D.KINDS.skin.d)) + '</small></button><button data-k="new-deco">🏝 新的荒島裝飾<small>' + esc(T(D.KINDS.deco.d)) + '</small></button></div>';
-  h += '<div class="top"><div class="dsg-sec" style="font-size:2.6vmin">📁 我的作品</div><div class="sp"></div>' + (S.guest ? '' : '<button class="dsg-b ghost" data-k="cloud">☁ 從雲端找回</button>') + '</div><div class="dsg-drafts" id="dsg-drafts">讀取中…</div></div>';
+  h += '<div class="top"><div class="dsg-sec" style="font-size:2.6vmin">📁 我的作品</div><div class="sp"></div>' + (S.guest ? '' : '<span id="dsg-cs" style="font-size:1.9vmin;opacity:.8;margin-right:1vmin">' + esc((csNow() && S.cs.status().msg) || '') + '</span><button class="dsg-b ghost" data-k="cloud">☁ 立即同步</button>') + '</div><div class="dsg-drafts" id="dsg-drafts">讀取中…</div></div>';   /* ★ v1.0.7 自動同步;按鈕 = 手動保險 */
   root.innerHTML = h;
   root.onclick = function(ev){
     var t = ev.target, k = null, did = null, dx = null, drn = null;
@@ -383,6 +419,7 @@ function hub(){
   };
   draftsPaint();
   monthRefresh();
+  if(!S.guest && csNow()) setTimeout(function(){ if(S.cs && S.screen === 'hub') S.cs.sync(false); }, 400);   /* ★ v1.0.7 回到工作室就自動同步(15 秒內不重複) */
   if(!lsGet('dsg_tut_' + (S.uid || 'guest'))){ lsSet('dsg_tut_' + (S.uid || 'guest'), '1'); setTimeout(function(){ if(S.screen === 'hub') howto('hub'); }, 500); }
 }
 function draftsPaint(){
@@ -393,7 +430,7 @@ function draftsPaint(){
     if(!a.length){ el.innerHTML = '<div style="opacity:.8;font-size:2.2vmin">還沒有作品,按上面的按鈕開始設計吧!</div>'; return; }
     for(i = 0; i < a.length; i++){ r = a[i];
       st = r.lock === 'sub' ? '<span class="dsg-chip pend">⏳ 已繳交・等老師審核</span>' : r.lock === 'live' ? '<span class="dsg-chip live">✅ 老師通過</span>' : (r.back ? '<span class="dsg-chip back">↩ 老師退件・可修改</span>' : '<span class="dsg-chip none">✏️ 編輯中</span>');
-      h += '<div class="dsg-dr" data-d="' + esc(r.id) + '"><div class="th">' + (r.th ? '<img src="' + r.th + '">' : D.KINDS[r.kind].e) + '</div><div>' + D.KINDS[r.kind].e + ' ' + esc(r.title || D.KINDS[r.kind].n) + '</div><div>' + st + '</div><div style="opacity:.75">操作 ' + ((r.d && r.d.ops) | 0) + ' 次</div>' + (r.lock ? '' : '<button class="x" data-x="' + esc(r.id) + '">✕</button><button class="x rn" data-rn="' + esc(r.id) + '" title="改名字">✏️</button>') + '</div>'; }
+      h += '<div class="dsg-dr" data-d="' + esc(r.id) + '"><div class="th">' + (r.th ? '<img src="' + r.th + '">' : D.KINDS[r.kind].e) + '</div><div>' + D.KINDS[r.kind].e + ' ' + esc(r.title || D.KINDS[r.kind].n) + '</div><div>' + st + '</div><div style="opacity:.75">操作 ' + ((r.d && r.d.ops) | 0) + ' 次' + (S.guest || !S.cs ? '' : (S.cs.synced(r) ? '・☁ 已同步' : '・⏳ 等待上傳')) + '</div>' + (r.lock ? '' : '<button class="x" data-x="' + esc(r.id) + '">✕</button><button class="x rn" data-rn="' + esc(r.id) + '" title="改名字">✏️</button>') + '</div>'; }
     el.innerHTML = h;
   });
 }
@@ -471,8 +508,8 @@ function newWork(kind){
   });
 }
 function openDraft(id){ var a = S.drafts || [], i; for(i = 0; i < a.length; i++){ if(a[i].id === id){ editorOpen(JSON.parse(JSON.stringify(a[i]))); return; } } }
-function delDraft(id){ confirmBox('刪掉這件作品?刪掉就找不回來了(雲端備份也會刪)。', function(ok){ if(!ok) return; idbDel(myKey(id), draftsPaint);
-  if(!S.guest && ownerOk()) sto(function(s){ if(s) try{ s.ref('designDrafts/' + S.uid + '/' + id + '.json')['delete']().then(function(){}, function(){}); }catch(e){} }); }, '刪掉'); }
+function delDraft(id){ confirmBox('刪掉這件作品?刪掉就找不回來了(雲端和其他平板上的也會一起刪)。', function(ok){ if(!ok) return; idbDel(myKey(id), draftsPaint);
+  if(!S.guest && ownerOk() && csNow()) S.cs.del(id); }, '刪掉'); }   /* ★ v1.0.7 雲端刪除+墓碑(別台平板開啟時一起刪) */
 
 /* ══ 編輯器 ══ */
 function editorOpen(r){
@@ -616,18 +653,40 @@ function saveLocal(withThumb, cb){
   if(withThumb) renderComposite(false, 200, function(cv){ try{ r.th = cv.toDataURL('image/png'); }catch(e){} put(); }); else put();
 }
 function backupTick(){ var E = S.ed; if(E && E.cloudDirty && now() - E.lastCloud >= D.CLOUD_BACKUP_MS) backupNow(false); }
+/* ★ v1.0.7(2026-11-09・老師「作品集、自定義設定都自動保持雲端同步,不需要玩家自己手動上傳下載(玩家仍可手動做一個保險)」)
+   改用 index 的共用引擎 MG_CSYNC:作品雙向同步(新的贏)、刪除留墓碑、設定(說明風格/名稱標籤/面板收合/畫風/像素格數/筆名/我的姿勢)跟著帳號走。
+   自動時機:進工作室/換人、回工作室、每 3 分鐘、回到前景、編輯中每 5 分鐘與存檔當下、設定一改。「☁ 立即同步」= 手動保險。 */
+var CS_SET = ['dsg_style', 'dsg_nolb', 'dsg_pc', 'dsg_pm', 'dsg_pxn'];
+function csNow(){
+  if(S.cs || !window.MG_CSYNC) return S.cs;
+  S.cs = window.MG_CSYNC({ pfx: 'dsgcs',
+    uid: function(){ return S.guest ? '' : (S.uid || ''); },
+    ok: function(){ return S.on && ownerOk(); },
+    base: function(u){ return 'designDrafts/' + u; },
+    sto: sto,
+    recT: function(r){ return +r.at || 0; },
+    listLocal: function(cb){ myDrafts(function(a){ var o = [], i; for(i = 0; i < a.length; i++){ if(a[i].uid === S.uid && a[i].id) o.push(a[i]); } cb(o); }); },
+    putLocal: function(r, cb){ if(!r.d){ cb(false); return; } r.uid = S.uid; idbPut(S.uid + '|' + r.id, r, cb); },
+    delLocal: function(id, cb){ idbDel(S.uid + '|' + id, cb); },
+    openId: function(){ return S.ed ? S.ed.r.id : ''; },
+    setKeys: function(u){ return CS_SET.concat(['dsg_pen_' + u, 'dsg_tut_' + u, 'dsg_poses_' + u]); },
+    onSet: function(){ S.style = lsGet('dsg_style') === 'p' ? 'p' : 'c'; var rt = $('dsg-root'); if(rt) rt.classList.toggle('nolb', lsGet('dsg_nolb') === '1'); if(S.screen === 'hub' && !$('dsg-modal')) hub(); },
+    onStatus: function(st){ var el = $('dsg-cs'); if(el) el.textContent = st.msg || ''; },
+    onPulled: function(n){ if(n) toast('☁ 從雲端同步了 ' + n + ' 件作品'); if(S.screen === 'hub') draftsPaint(); }
+  });
+  return S.cs;
+}
 function backupNow(say){
-  var E = S.ed; if(!E || S.guest || !ownerOk()) return;
-  var r = E.r, uid = S.uid, body;
+  var E = S.ed; if(!E || S.guest || !ownerOk() || !csNow()) return;
+  var r = E.r, uid = S.uid;
   if(r.uid !== uid) return;
   r.d = E.d; r.paint = E.paintStr;
-  body = JSON.stringify({ id: r.id, uid: uid, kind: r.kind, at: now(), title: r.title, d: r.d, paint: r.paint, th: r.th, lock: r.lock, sub: r.sub, back: r.back, ver: VER });
   E.cloudDirty = false; E.lastCloud = now();
-  sto(function(s){ if(!s || S.uid !== uid){ E.cloudDirty = true; return; }
-    try{ s.ref('designDrafts/' + uid + '/' + r.id + '.json').putString(body, 'raw', { contentType: 'application/json' }).then(function(){ if(say) toast('☁ 雲端備份好了'); }, function(){ E.cloudDirty = true; if(say) toast('☁ 雲端備份失敗(平板上的存檔還在)'); }); }catch(e){ E.cloudDirty = true; } });
+  S.cs.put(JSON.parse(JSON.stringify(r)), function(okk){ if(!okk){ E.cloudDirty = true; if(say) toast('☁ ' + (S.cs.status().msg || '雲端備份失敗') + '(平板上的存檔還在)'); } else if(say) toast('☁ 雲端備份好了'); });
 }
 function cloudRestore(){
   if(S.guest){ toast('登入後才有雲端備份'); return; }
+  if(csNow()){ toast('☁ 正在和雲端同步…'); S.cs.sync(true, function(okk){ toast(okk ? '☁ 同步完成,這台和雲端一樣了' : ('☁ ' + (S.cs.status().msg || '同步沒有成功'))); if(S.screen === 'hub') draftsPaint(); }); return; }   /* ★ v1.0.7 手動保險 = 立刻雙向同步 */
   var uid = S.uid; toast('☁ 正在找雲端備份…');
   sto(function(s){ if(!s){ toast('☁ 雲端備份目前連不上'); return; }
     s.ref('designDrafts/' + uid).listAll().then(function(res){
@@ -849,8 +908,7 @@ function pzApply(g, o){ g.j = o.j; g.yw = o.yw || 0; g.pt = o.pt || 0; g.zm = o.
 /* ★ 13:19 我的姿勢:玩家自己存、自己命名;存在這台平板(依帳號分開),登入時另備份到雲端 designDrafts/{uid}/_poses.json(「☁ 從雲端找回」會一起找回) */
 function pzMineKey(){ return 'dsg_poses_' + (S.guest ? 'guest' : S.uid); }
 function pzMine(){ var a; try{ a = JSON.parse(lsGet(pzMineKey()) || '[]'); }catch(e){ a = []; } return a && a.push ? a : []; }
-function pzMineSet(a, cloud){ lsSet(pzMineKey(), JSON.stringify(a)); if(cloud && !S.guest && ownerOk()){ var uid = S.uid, body = JSON.stringify({ uid: uid, at: now(), poses: a });
-  sto(function(s){ if(!s || uid !== S.uid) return; try{ s.ref('designDrafts/' + uid + '/_poses.json').putString(body, 'raw', { contentType: 'application/json' }).then(function(){}, function(){}); }catch(e){} }); } }
+function pzMineSet(a, cloud){ lsSet(pzMineKey(), JSON.stringify(a)); if(cloud && csNow() && S.cs.setCheck()) S.cs.sync(true); }   /* ★ v1.0.7 我的姿勢改成「設定」一起自動同步(_sync.json),不再單獨傳 _poses.json */
 function pzMineMerge(list){ var a = pzMine(), i, j, hit; if(!list || !list.push) return 0; var add = 0;
   for(i = 0; i < list.length; i++){ if(!list[i] || !list[i].n || !list[i].j) continue; hit = -1; for(j = 0; j < a.length; j++){ if(a[j].n === list[i].n) hit = j; }
     if(hit < 0){ a.push(list[i]); add++; } else if((list[i].at || 0) > (a[hit].at || 0)) a[hit] = list[i]; }

@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -596,8 +596,20 @@ function mapHtml(op){
   h += '<img class="mg" src="' + esc(u) + '" alt="" onerror="window.ARTW&&window.ARTW._mapBad()"><img class="mc" id="art-vc" src="' + esc(u) + '" alt="" style="opacity:' + (op / 100).toFixed(3) + '">';
   for(i = 0; i < D.MAP.spots.length; i++){ s = D.MAP.spots[i]; lk = false;
     if(s.k === 'ws'){ W = wsDef(s.id); if(!W) continue; lk = !wsOpen(W); h += '<button class="spot' + (lk ? ' lk' : '') + '" data-ws="' + s.id + '" style="left:' + s.x + '%;top:' + s.y + '%">' + (lk ? '🔒' : W.e) + '<span class="lb">' + esc(W.n) + '</span></button>'; }
+    else if(s.k === 'dsg' && dsgLocked()) h += '<button class="spot lk" data-k="dsg" style="left:' + s.x + '%;top:' + s.y + '%">🔒<span class="lb">' + esc(s.n) + '</span></button>';   /* ★ v1.1.8 還沒解鎖 */
     else h += '<button class="spot' + (s.k === 'dsg' ? ' hot' : '') + '" data-k="' + s.k + '" style="left:' + s.x + '%;top:' + s.y + '%">' + s.e + '<span class="lb">' + esc(s.n) + '</span></button>'; }
   return h + '</div></div>';
+}
+/* ★ v1.1.8(2026-11-09・老師「遊戲美術設計師改成有條件解鎖,至少要玩過所有關卡並且全部獲得至少 2 星」)判斷在 ART_DB.dsgUnlock(設計師工作室直接網址也用同一個) */
+function dsgLocked(){ if(isGm() || !D.dsgUnlock || !A.save) return false; return !D.dsgUnlock(A.save.stars).open; }
+function dsgLockPanel(){
+  var o = D.dsgUnlock(A.save.stars), pct = o.total ? Math.round(o.ok * 100 / o.total) : 0, h, i, m, g = {}, ord = [];
+  h = '<h3>🔒 遊戲美術設計師 還沒解鎖</h3><p>' + esc(T({ c: '把創藝工坊的「全部 ' + o.total + ' 關」都玩過,而且每一關都拿到 ⭐⭐ 以上,就能進去當遊戲美術設計師!', p: '完成創藝工坊全部 ' + o.total + ' 關,且每關皆達 ' + o.need + ' 星以上,即可解鎖遊戲美術設計師工作室。' })) + '</p>';
+  h += '<div class="scard"><b>目前 ' + o.ok + ' / ' + o.total + ' 關達成</b><div class="bar" style="height:2vmin;background:#eee;border-radius:1vmin;overflow:hidden;margin-top:.8vmin"><i style="display:block;height:100%;width:' + pct + '%;background:linear-gradient(90deg,#ffb347,#ff6f91)"></i></div></div>';
+  for(i = 0; i < o.miss.length; i++){ m = o.miss[i]; if(!g[m.ws]){ g[m.ws] = []; ord.push(m); } g[m.ws].push(m); }
+  for(i = 0; i < ord.length; i++){ m = ord[i];
+    h += '<div class="scard" data-ws="' + m.ws + '" style="cursor:pointer">' + m.we + ' <b>' + esc(m.wn) + '</b>(還差 ' + g[m.ws].length + ' 關)<br><small>' + g[m.ws].map(function(x){ return esc(x.n) + ' ' + (x.st ? new Array(x.st + 1).join('⭐') : '還沒玩'); }).join('・') + '</small></div>'; }
+  modal(h, [{ t: '好' }], { onOpen: function(mm){ mm.onclick = function(e){ var t = upFind(e.target, 'data-ws'); if(!t) return; var W = wsDef(t.getAttribute('data-ws')); modalClose(); if(W && wsOpen(W)) wsOpenPanel(W.id); else toast('🔒 這座工坊還沒開,先完成前一座'); }; } });
 }
 function boardPanel(){
   var h = '<h3>📌 比賽活動看板</h3>', i, ev;
@@ -623,7 +635,7 @@ function hubHtml(){
   h += '<div class="lchips" style="position:absolute;left:1.6vmin;bottom:1.6vmin;display:flex;flex-direction:column;gap:1vmin;align-items:flex-start;z-index:5">';
   for(i = 0; i < A.evs.length; i++){ ev = A.evs[i]; h += '<div class="achip btn ev' + (ev.type === 'contest' ? ' hot' : '') + '" data-ev="' + esc(ev.id) + '">' + (ev.type === 'contest' ? '⚔️ 比賽:' : '🗓 本週主題:') + esc(String(ev.title || '').slice(0, 10)) + ' <span data-evt="' + esc(ev.id) + '">' + evLeftTxt(ev) + '</span></div>'; }
   h += '<div class="achip btn" data-k="daily" id="art-daily">📅 今日挑戰 ' + dn + '/' + dl.length + '</div></div>';
-  h += '<div class="dock"><button data-k="build" class="go">🏗 建造</button><button data-k="studio">🎨 畫室</button><button data-k="coll">📒 收藏</button><button data-k="rank">🏆 排行</button><button data-k="help">📖 說明</button><button data-k="dsg">✏️ 設計師</button><button data-k="exit">🚪 離開</button></div>';   /* ★ v1.1.4 遊戲美術設計師工作室入口(獨立專案,?mode=designer) */
+  h += '<div class="dock"><button data-k="build" class="go">🏗 建造</button><button data-k="studio">🎨 畫室</button><button data-k="coll">📒 收藏</button><button data-k="rank">🏆 排行</button><button data-k="help">📖 說明</button><button data-k="dsg">' + (dsgLocked() ? '🔒' : '✏️') + ' 設計師</button><button data-k="exit">🚪 離開</button></div>';   /* ★ v1.1.4 遊戲美術設計師工作室入口(獨立專案,?mode=designer) */
   if(A.arrange) h += '<div class="arr-bar">✋ 拖曳裝飾換位置 <button class="abtn ghost" data-k="arrReset">↺ 預設位置</button><button class="abtn go" data-k="arrDone">✅ 擺好了</button></div>';
   return h;
 }
@@ -650,7 +662,7 @@ function paintHub(){
     else if(k === 'rank') rankPanel();
     else if(k === 'help') helpPanel();
     else if(k === 'exit') exitAsk();
-    else if(k === 'dsg') exitNow('minigame_index.html?mode=designer&from=art');   /* ★ v1.1.4 */
+    else if(k === 'dsg'){ if(dsgLocked()) dsgLockPanel(); else exitNow('minigame_index.html?mode=designer&from=art'); }   /* ★ v1.1.4;★ v1.1.8 有條件解鎖 */
     else if(k === 'board') boardPanel();
     else if(k === 'lbl'){ lsSet('art_nolb', lsGet('art_nolb') === '1' ? '0' : '1'); paintHub(); toast(lsGet('art_nolb') === '1' ? '🏷 地圖名稱已隱藏' : '🏷 地圖名稱已顯示'); }
     else if(k === 'set') setPanel();
@@ -893,6 +905,7 @@ function liteNotice(){
 /* 進村子之後才做的事(不擋畫面):讀 GM 設定、列出進行中的比賽/主題、領取已公布的活動獎勵 */
 function afterEnter(){
   var fb = B.fbNow ? B.fbNow() : null;
+  csNow(); if(A.cs){ A.cs.reset(); setTimeout(function(){ if(A.cs) A.cs.sync(true); }, 1200); }   /* ★ v1.1.8 進村子/換人:自動和雲端雙向同步作品集與設定 */
   if(!fb || !fb.db || !user()) return;
   try{ fb.db.collection('gameConfig').doc('artGm').get().then(function(d){ if(d && d.exists) A.gm = d.data() || null; })['catch'](function(){}); }catch(e){}
   evRefresh();
@@ -1004,21 +1017,41 @@ function sto(cb){
   function mk(){ try{ A.sto = window.firebase.storage(fb.app); }catch(e){ A.sto = null; } cb(A.sto); }
   if(window.firebase.storage) mk(); else loadJs((B.fbBase ? B.fbBase() : 'https://www.gstatic.com/firebasejs/10.12.0/') + 'firebase-storage-compat.js', function(ok){ if(ok && window.firebase.storage) mk(); else cb(null); });
 }
+/* ★ v1.1.8(2026-11-09・老師「創藝工坊和設計師的自定義設定、作品集,都自動保持雲端同步,不需要玩家自己去手動上傳下載」)
+   改用 index 的共用引擎 MG_CSYNC:作品集(畫室作品 w…、關卡草稿 draft_…)雙向同步、刪除留墓碑、設定(說明風格/省電畫布/背景音樂/地圖名稱)跟著帳號走。
+   自動時機:進村子/換人、每 3 分鐘、回到前景、存檔當下、設定一改。畫室「☁ 立即同步」= 手動保險。sdraft(還沒按儲存的畫)只留這台。 */
+var CS_SET = ['art_style', 'art_lite', 'art_bgm', 'art_nolb'];
+function csNow(){
+  if(A.cs || !window.MG_CSYNC) return A.cs;
+  A.cs = window.MG_CSYNC({ pfx: 'artcs',
+    uid: function(){ return A.guest ? '' : (A.uid || ''); },
+    ok: function(){ return A.on && !A.guest && ownerOk(); },
+    base: function(u){ return 'artWorks/' + u; },
+    sto: sto,
+    recT: function(r){ return +r.t || 0; },
+    listLocal: function(cb){ var uid = A.uid; idbList(uid + '|', function(a){ var o = [], i; for(i = 0; i < a.length; i++){ if(a[i] && a[i].uid === uid && a[i].id && a[i].id !== 'sdraft') o.push(a[i]); } cb(o); }); },
+    putLocal: function(r, cb){ idbPut(A.uid + '|' + r.id, r, cb); },
+    delLocal: function(id, cb){ idbDel(A.uid + '|' + id, cb); },
+    openId: function(){ return A.cv ? (A.cvId || '*') : ''; },
+    setKeys: function(){ return CS_SET; },
+    extraUp: function(s, rec){ if(rec.thumb && String(rec.id).indexOf('draft_') !== 0) s.ref('artWorks/' + A.uid + '/' + rec.id + '.jpg').putString(rec.thumb, 'data_url').then(function(){}, function(){}); },
+    onSet: function(){ A.style = lsGet('art_style') === 'p' ? 'p' : 'c'; A.lite = liteMode() === 'auto' ? liteAuto() : (liteMode() === 'on'); if(!musicOn()) musicStop(); if(A.screen === 'hub' && !$('art-modal') && !$('art-lv') && !$('art-cv')) paintHub(); },
+    onStatus: function(st){ var el = $('art-cs'); if(el) el.textContent = st.msg || ''; },
+    onPulled: function(n, d){ if(n) toast('☁ 從雲端同步了 ' + n + ' 件作品'); if($('art-cs') && !$('art-cv')){ modalClose(); studioOpen(); } }
+  });
+  return A.cs;
+}
 function cloudWorkPut(rec, isDraft){
   if(A.guest || !A.uid || !ownerOk() || !rec) return;
-  var uid = A.uid, base = 'artWorks/' + uid + '/' + rec.id;
-  sto(function(s){ if(!s || A.uid !== uid) return;
-    try{
-      s.ref(base + '.json').putString(JSON.stringify(rec), 'raw', { contentType: 'application/json' }).then(function(){ if(!isDraft) A.cloudOk = true; })['catch'](function(e){ try{ console.warn('[art sto]', e && e.code); }catch(_){} });
-      if(rec.thumb && !isDraft) s.ref(base + '.jpg').putString(rec.thumb, 'data_url').then(function(){}, function(){});
-    }catch(e){}
-  });
+  csNow(); if(!A.cs) return;
+  A.cs.put(rec, function(okk){ if(okk && !isDraft) A.cloudOk = true; });
 }
-function cloudWorkDel(id){ if(A.guest || !A.uid) return; var uid = A.uid; sto(function(s){ if(!s) return; try{ s.ref('artWorks/' + uid + '/' + id + '.json')['delete']().then(function(){}, function(){}); s.ref('artWorks/' + uid + '/' + id + '.jpg')['delete']().then(function(){}, function(){}); }catch(e){} }); }
+function cloudWorkDel(id){ if(A.guest || !A.uid) return; var uid = A.uid; csNow(); if(A.cs) A.cs.del(id); sto(function(s){ if(!s) return; try{ s.ref('artWorks/' + uid + '/' + id + '.jpg')['delete']().then(function(){}, function(){}); }catch(e){} }); }
 var cdT = {};
 function cloudDraftSoon(rec){ if(A.guest) return; clearTimeout(cdT[rec.id]); cdT[rec.id] = setTimeout(function(){ cloudWorkPut(rec, true); }, 20000); }   /* 草稿 20 秒合併一次上傳 */
 function cloudRestore(){
   if(A.guest){ toast('登入後才有雲端備份'); return; }
+  csNow(); if(A.cs){ toast('☁ 正在和雲端同步…'); A.cs.sync(true, function(okk){ var st = A.cs.status(); toast(okk ? '☁ 同步完成,這台和雲端一樣了' : ('☁ ' + (st.msg || '同步沒有成功'))); if(!$('art-cv') && !$('art-lv')){ modalClose(); studioOpen(); } }); return; }   /* ★ v1.1.8 手動保險 = 立刻雙向同步一次 */
   var uid = A.uid;
   toast('☁ 正在找雲端備份…');
   sto(function(s){
@@ -2287,7 +2320,7 @@ function canvasOpen(opt){
   function close(silent){ if(S.closed) return; clearTimeout(dT); sDraftNow(); document.removeEventListener('visibilitychange', onHide); S.closed = true; clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('resize', resize); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
   var cvObj = { close: close, flatten: flatten };
   music(opt.endMs ? 'contest' : 'cv');   /* ★ v1.1.1 畫畫用安靜的曲子;比賽用緊湊的 */
-  A.cv = cvObj;
+  A.cv = cvObj; A.cvId = opt.task ? ('draft_' + dId) : (opt.workId || '');   /* ★ v1.1.8 正在畫的那件,雲端同步不去覆蓋 */
   window.addEventListener('resize', resize);
   paintTools(); paintColor(); paintLayers(); paintStk();
   /* ★ v1.1.3(檢查報告第 8 項):有草稿要問「接著畫嗎?」時,新手教學等問完再出來(原本教學蓋在確認框上) */
@@ -2420,14 +2453,16 @@ function studioOpen(){
 }
 function studioOpen2(sd){
   idbList(A.uid + '|w', function(list){
-    var h = '<h3>🎨 我的畫室</h3><p style="margin:0;color:#6b6178;font-size:2.2vmin">' + (A.guest ? '訪客的作品只存在這台平板。' : '作品存在這台平板,也會自動備份到雲端 ☁(平板被清掉也找得回來);只有你登入時看得到。') + '</p>', i, w;
-    h += '<div style="display:flex;gap:1vmin;flex-wrap:wrap;margin-top:1vmin"><button class="abtn ghost" data-wall="1" style="font-size:2.2vmin">🖼 作品牆</button>' + (A.guest ? '' : '<button class="abtn ghost" data-cloud="1" style="font-size:2.2vmin">☁ 從雲端找回作品</button>') + '</div>';
+    var h = '<h3>🎨 我的畫室</h3><p style="margin:0;color:#6b6178;font-size:2.2vmin">' + (A.guest ? '訪客的作品只存在這台平板。' : '作品和設定會自動和雲端同步 ☁(換平板、平板被清掉都在);只有你登入時看得到。') + '</p>', i, w;
+    csNow();
+    h += '<div style="display:flex;gap:1vmin;flex-wrap:wrap;margin-top:1vmin;align-items:center"><button class="abtn ghost" data-wall="1" style="font-size:2.2vmin">🖼 作品牆</button>' + (A.guest ? '' : '<button class="abtn ghost" data-cloud="1" style="font-size:2.2vmin">☁ 立即同步</button><span id="art-cs" style="font-size:2vmin;color:#6b6178">' + esc((A.cs && A.cs.status().msg) || '') + '</span>') + '</div>';   /* ★ v1.1.8 自動同步;按鈕 = 手動保險 */
+    if(A.cs && !A.guest) setTimeout(function(){ if(A.cs) A.cs.sync(false); }, 300);
     list.sort(function(a, b){ return b.t - a.t; });
     h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(24vmin,1fr));gap:1.4vmin;margin-top:1.4vmin">';
     if(sd) h += '<div class="scard" style="grid-column:1/-1;background:#fff3b0;display:flex;align-items:center;gap:1.4vmin;flex-wrap:wrap">🩹 <b>上次還沒儲存的畫</b>(' + new Date(sd.t).toLocaleString() + ')<span style="flex:1"></span><button class="abtn go" data-sdr="1" style="font-size:2.2vmin">接著畫</button><button class="abtn ghost" data-sdx="1" style="font-size:2.2vmin">丟掉</button></div>';   /* ★ v1.1.3 第 13 項 */
     h += '<button class="abtn go" data-new="1" style="min-height:18vmin;font-size:3vmin">＋ 新畫布</button>';
     for(i = 0; i < list.length; i++){ w = list[i]; if(w.uid !== A.uid) continue;
-      h += '<div class="lvcard" style="flex-direction:column;align-items:stretch;margin:0"><img src="' + w.thumb + '" style="width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-radius:1vmin" alt=""><div style="display:flex;gap:.8vmin;margin-top:.8vmin"><button class="abtn go" data-open="' + w.id + '" style="flex:1;font-size:2.2vmin">開啟</button><button class="abtn ghost" data-sub="' + w.id + '" style="font-size:2.2vmin">📤</button><button class="abtn ghost" data-del="' + w.id + '" style="font-size:2.2vmin">🗑</button></div></div>'; }
+      h += '<div class="lvcard" style="flex-direction:column;align-items:stretch;margin:0"><img src="' + w.thumb + '" style="width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-radius:1vmin" alt=""><div style="display:flex;gap:.8vmin;margin-top:.8vmin"><button class="abtn go" data-open="' + w.id + '" style="flex:1;font-size:2.2vmin">開啟</button><button class="abtn ghost" data-sub="' + w.id + '" style="font-size:2.2vmin">📤</button><button class="abtn ghost" data-del="' + w.id + '" style="font-size:2.2vmin">🗑</button></div>' + (A.guest || !A.cs ? '' : '<div style="font-size:1.8vmin;color:#6b6178;margin-top:.4vmin">' + (A.cs.synced(w) ? '☁ 已同步' : '⏳ 等待上傳') + '</div>') + '</div>'; }
     h += '</div>';
     modal(h, [{ t: '回村子', cls: 'ghost' }], { onOpen: function(m){
       m.onclick = function(ev){ if(sd && upFind(ev.target, 'data-sdr')){ modalClose(); canvasOpen({ title: sd.title || '我的作品', ratio: sd.ratio, layers: sd.layers, workId: sd.workId || '', fromDraft: true, onClose: studioOpen }); return; }
