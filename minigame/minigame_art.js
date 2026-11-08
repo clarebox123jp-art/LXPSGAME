@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.6';   /* ★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -455,7 +455,13 @@ var CSS = [
 '#art-root .dock{right:calc(1.6vmin + env(safe-area-inset-right));bottom:calc(1.6vmin + env(safe-area-inset-bottom))}#art-root .lchips{left:calc(1.6vmin + env(safe-area-inset-left)) !important;bottom:calc(1.6vmin + env(safe-area-inset-bottom)) !important}#art-root .hud{left:calc(1.6vmin + env(safe-area-inset-left));right:calc(1.6vmin + env(safe-area-inset-right));top:calc(1.6vmin + env(safe-area-inset-top))}',
 '#art-lv .top{padding-left:calc(1.8vmin + env(safe-area-inset-left));padding-right:calc(1.8vmin + env(safe-area-inset-right));padding-top:calc(1.4vmin + env(safe-area-inset-top))}#art-lv .foot{padding-left:calc(1.8vmin + env(safe-area-inset-left));padding-right:calc(1.8vmin + env(safe-area-inset-right));padding-bottom:calc(1.4vmin + env(safe-area-inset-bottom))}',
 /* ★ v1.1.0 新畫面的手機橫向版(放最後,鐵律〇之二) */
-'@media (orientation:landscape) and (max-height:520px){#art-modal .scard{font-size:3.1vmin}#art-modal .wall{grid-template-columns:repeat(auto-fill,minmax(36vmin,1fr))}#art-modal .wcard{font-size:2.8vmin}#art-modal .mini{font-size:2.9vmin}#art-modal select,#art-modal input[type=text]{font-size:3.4vmin}#art-modal .mcard{font-size:2.8vmin}#art-root .arr-bar{font-size:3.4vmin;bottom:14vmin}.art-mt{font-size:3.2vmin}.art-mt .slot{min-width:22vmin}#art-root .dock{gap:.8vmin}#art-root .dock button{padding:.8vmin 1.4vmin}}'
+'@media (orientation:landscape) and (max-height:520px){#art-modal .scard{font-size:3.1vmin}#art-modal .wall{grid-template-columns:repeat(auto-fill,minmax(36vmin,1fr))}#art-modal .wcard{font-size:2.8vmin}#art-modal .mini{font-size:2.9vmin}#art-modal select,#art-modal input[type=text]{font-size:3.4vmin}#art-modal .mcard{font-size:2.8vmin}#art-root .arr-bar{font-size:3.4vmin;bottom:14vmin}.art-mt{font-size:3.2vmin}.art-mt .slot{min-width:22vmin}#art-root .dock{gap:.8vmin}#art-root .dock button{padding:.8vmin 1.4vmin}}',
+/* ★ v1.1.7(老師「手機版地圖下方資訊和入口重疊」)— dock 按鈕一律不換行;手機橫放 dock 改成右側直排(讓出地圖高度,mapFit 會把地圖放在左右之間);
+   直式窄螢幕 dock 鋪滿底部、按鈕平分寬度。放最後(鐵律〇之二)。 */
+'#art-root .dock button{white-space:nowrap}',
+'@media (orientation:landscape) and (max-height:520px){#art-root .dock{flex-direction:column;align-items:stretch;gap:5px;max-height:calc(100% - 12vmin)}#art-root .dock button{font-size:13px;padding:5px 8px;border-width:2px;border-radius:10px;flex:0 1 auto;min-height:0;text-align:left}}',
+'@media (orientation:portrait){#art-root .dock{left:calc(1.6vmin + env(safe-area-inset-left));gap:.8vmin}#art-root .dock button{flex:1 1 0;min-width:0;font-size:clamp(12px,2vmin,20px);padding:1vmin 2px;overflow:hidden;text-overflow:clip}}',
+'@media (orientation:portrait) and (max-width:520px){#art-root .dock{gap:3px}#art-root .dock button{font-size:11px;letter-spacing:-.5px;padding:7px 1px;border-width:2px;border-radius:9px}}'
 ].join('\n');
 function injectCss(){ if($('art-css')) return; var s = document.createElement('style'); s.id = 'art-css'; s.textContent = CSS; document.head.appendChild(s); }
 
@@ -656,6 +662,32 @@ function paintHub(){
     else if(k === 'who'){ if(B.login) B.login(); }
   };
   if(A.arrange) arrangeBind(root); else root.onpointerdown = root.onpointermove = root.onpointerup = root.onpointercancel = null;
+  if(mapOn()){ mapFit(); clearTimeout(A.mapFitT); A.mapFitT = setTimeout(mapFit, 350); }   /* ★ v1.1.7 字型晚到會改變 HUD 高度,再對一次 */
+}
+/* ★ v1.1.7(2026-11-08・老師「手機版:創意工坊地圖中的下方資訊和地圖入口按鈕有重疊」)
+   原本地圖 .vmw 以整個畫面 contain 置中 ⇒ 手機橫放(高度只有 ~400px)時地圖佔滿整個高度,上方 HUD、下方 dock 與「📅 今日挑戰」直接蓋在「排行榜/離開/我的畫室」等入口上。
+   改成:量出 HUD(上)、dock、左下 lchips 的實際位置,地圖只放進剩下的空間(仍 16:9 contain、置中,兩側照舊模糊補邊)⇒ 任何尺寸入口都不會被蓋住。
+   dock 與 lchips 各自試「從旁邊讓出」或「從下面讓出」,四種組合取地圖最大的那個(手機橫放 dock 是直排在右側,讓右邊;PC/iPad 橫排在下,讓下面)。
+   直式窄螢幕 dock 佔滿底部時,lchips 往上移到 dock 上方。褪色魔改放在地圖座標 (62%,44%)。 */
+function mapFit(){
+  var root = $('art-root'), vm = root && root.querySelector('.vmw'), rr, W, H, hud, dk, lc, gh, hr, dr, lr, base, best = null, a, b, c, w, h, s, mw, mh, L, T, gap = 6;
+  if(!vm || !D.MAP) return;
+  rr = root.getBoundingClientRect(); W = root.clientWidth; H = root.clientHeight;
+  hud = root.querySelector('.hud'); dk = root.querySelector('.dock'); lc = root.querySelector('.lchips'); gh = root.querySelector('.ghostm');
+  function R(el){ if(!el) return null; var q = el.getBoundingClientRect(); if(!q.width || !q.height) return null; return { l: q.left - rr.left, t: q.top - rr.top, r: q.right - rr.left, b: q.bottom - rr.top, w: q.width, h: q.height }; }
+  hr = R(hud); dr = R(dk);
+  if(lc){ lc.style.removeProperty('bottom'); lr = R(lc);
+    if(dr && lr && dr.w >= dr.h && lr.r > dr.l - gap && lr.b > dr.t - gap){ lc.style.setProperty('bottom', Math.round(H - dr.t + gap) + 'px', 'important'); lr = R(lc); } }
+  base = { l: 0, t: hr ? hr.b + gap : 0, r: W, b: H };
+  for(a = 0; a < 2; a++){ for(b = 0; b < 2; b++){ c = { l: base.l, t: base.t, r: base.r, b: base.b };
+    if(dr){ if(a === 0) c.r = Math.min(c.r, dr.l - gap); else c.b = Math.min(c.b, dr.t - gap); }
+    if(lr){ if(b === 0) c.l = Math.max(c.l, lr.r + gap); else c.b = Math.min(c.b, lr.t - gap); }
+    w = c.r - c.l; h = c.b - c.t; if(w < 60 || h < 60) continue;
+    s = Math.min(w / D.MAP.w, h / D.MAP.h); if(!best || s > best.s + 1e-6) best = { s: s, c: c, w: w, h: h }; } }
+  if(!best) return;
+  mw = Math.floor(D.MAP.w * best.s); mh = Math.floor(D.MAP.h * best.s); L = Math.round(best.c.l + (best.w - mw) / 2); T = Math.round(best.c.t + (best.h - mh) / 2);
+  vm.style.left = L + 'px'; vm.style.top = T + 'px'; vm.style.width = mw + 'px'; vm.style.height = mh + 'px'; vm.style.transform = 'none';
+  if(gh){ gh.style.left = Math.round(L + mw * 0.62) + 'px'; gh.style.top = Math.round(T + mh * 0.44) + 'px'; }
 }
 /* ★ v1.1.0 第 21 項:村子擺設 — 拖曳裝飾,位置存 save.pos(時間新的勝,兩台裝置不互蓋) */
 function arrangeBind(root){

@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.0.5';   /* ★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
+var VER = 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
 var S = { on: false, uid: '', guest: true, cfg: null, vkey: '', xwords: [], names: null, style: 'c', ed: null, gmTab: 'flag' };
@@ -263,7 +263,26 @@ var CSS = [
 ' #dsg-ed .tabs button{font-size:2.8vmin;padding:1vmin 1.3vmin}.dsg-grid{grid-template-columns:repeat(auto-fill,minmax(15vmin,1fr))}.dsg-it{height:15vmin;font-size:2.3vmin}.dsg-it img{max-height:10vmin}',
 ' .dsg-chips button{font-size:2.7vmin}.dsg-sec{font-size:2.9vmin}#dsg-ed .prop{font-size:2.9vmin}#dsg-ed .prop .row .dsg-b{font-size:2.7vmin}',
 ' .dsg-card{font-size:3.2vmin}.dsg-b{font-size:3.2vmin}.dsg-new button{font-size:4.4vmin}.dsg-new small{font-size:2.9vmin}.dsg-dr{font-size:2.8vmin}#dsg-hub h1{font-size:5.2vmin}',
-' .dsg-m .box{font-size:3.2vmin}.dsg-m h3{font-size:4.2vmin}.dsg-m .dsg-b{font-size:3.2vmin}.dsg-chip{font-size:2.8vmin}.dsg-gc{font-size:2.8vmin}.dsg-lockbar{font-size:3vmin}}'
+' .dsg-m .box{font-size:3.2vmin}.dsg-m h3{font-size:4.2vmin}.dsg-m .dsg-b{font-size:3.2vmin}.dsg-chip{font-size:2.8vmin}.dsg-gc{font-size:2.8vmin}.dsg-lockbar{font-size:3vmin}}',
+/* ★ v1.0.6(2026-11-08・老師「讓手機和平板都可以直式進行繪圖。面板優化讓繪圖區更寬敞」+ 雙指縮放)
+   ① 直式:上=工具列、中=畫布(佔滿整個寬度)、下=左右兩塊面板(工具|屬性),面板高約三分之一;手機直式字級比照手機橫式(以畫面短邊 vmin 計)。
+   ② ◧ 面板:收起兩側(直式是下方)面板 ⇒ 畫布最大;記在這台(dsg_pc)。
+   ③ 縮放比例鈕 #dsg-zb:放大/縮小/挪動過才出現在畫布左上角,點一下回到原本大小。
+   ④ 設計師模式不再出現「請把裝置轉成橫的」遮罩(index 也有同一條,這裡是保險)。放最後(鐵律〇之二)。 */
+'html.dsg-mode #mg-rotate-overlay,html.dsg-mode #rotate-overlay{display:none !important}',
+'.dsg-zb{position:absolute;left:calc(1vmin + env(safe-area-inset-left));top:1vmin;z-index:7;border:0;border-radius:2vmin;padding:.7vmin 1.4vmin;font-size:max(13px,1.9vmin);font-weight:900;background:rgba(0,0,0,.62);color:#fff;box-shadow:0 .3vmin .8vmin rgba(0,0,0,.35)}',
+'#dsg-ed.pc{grid-template-columns:0 1fr 0 !important}#dsg-ed.pc .lib,#dsg-ed.pc .prop{display:none}',
+'#dsg-ed .bar{flex-wrap:wrap;row-gap:.6vmin}',
+'@media (orientation:portrait){#dsg-ed{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) 34vh}',
+' #dsg-ed .bar{grid-column:1/3;grid-row:1}#dsg-ed .mid{grid-column:1/3;grid-row:2}#dsg-ed .lib{grid-column:1;grid-row:3;border-top:.4vmin solid rgba(255,255,255,.22);padding-left:0}#dsg-ed .prop{grid-column:2;grid-row:3;border-top:.4vmin solid rgba(255,255,255,.22);padding-bottom:calc(2vmin + env(safe-area-inset-bottom))}',
+' #dsg-ed .lbody{padding-bottom:calc(2vmin + env(safe-area-inset-bottom))}#dsg-ed .bar .t{max-width:40vw}',
+' #dsg-ed.pc{grid-template-columns:1fr 1fr !important;grid-template-rows:auto minmax(0,1fr) 0}.dsg-lockbar{white-space:normal;text-align:center;width:90%}}',
+'@media (orientation:portrait) and (max-width:600px){#dsg-ed{grid-template-rows:auto minmax(0,1fr) 38vh}#dsg-ed .bar .lb{display:none}#dsg-ed .bar .dsg-b{font-size:4.2vmin;padding:1.4vmin 2.2vmin}#dsg-ed .bar .t{font-size:3.8vmin;max-width:34vw}#dsg-ed .bar .ops{font-size:3.4vmin}',
+' #dsg-ed .tabs button{font-size:3.3vmin;padding:1.3vmin 1.6vmin}.dsg-grid{grid-template-columns:repeat(auto-fill,minmax(15vmin,1fr))}.dsg-it{height:15vmin;font-size:2.6vmin}.dsg-it img{max-height:10vmin}',
+' .dsg-chips button{font-size:3.2vmin}.dsg-sec{font-size:3.4vmin}#dsg-ed .prop{font-size:3.3vmin}#dsg-ed .prop .row .dsg-b{font-size:3.2vmin}#dsg-ed .prop label{font-size:3.3vmin}#dsg-ed .prop input[type=range]{height:6vmin}',
+' .dsg-tip{font-size:3.1vmin}.dsg-pm button{font-size:3.1vmin}.dsg-pm b{font-size:5vmin}.dsg-pzv{font-size:3vmin}.dsg-sw{width:7vmin;height:7vmin}#dsg-ed input[type=text],#dsg-ed select{font-size:3.6vmin}',
+' .dsg-card{font-size:3.6vmin}.dsg-b{font-size:3.6vmin}.dsg-new{grid-template-columns:1fr}.dsg-new button{font-size:5vmin}.dsg-new small{font-size:3.3vmin}.dsg-dr{font-size:3.2vmin}.dsg-drafts{grid-template-columns:repeat(auto-fill,minmax(40vmin,1fr))}.dsg-dr .th{height:40vmin}.dsg-dr .x{width:7vmin;height:7vmin;font-size:3.4vmin}#dsg-hub h1{font-size:6vmin}',
+' .dsg-m .box{font-size:3.7vmin}.dsg-m h3{font-size:4.8vmin}.dsg-m .dsg-b{font-size:3.7vmin}.dsg-chip{font-size:3.2vmin}.dsg-gc{font-size:3.2vmin}.dsg-lockbar{font-size:3.4vmin}.dsg-zb{font-size:13px}}'
 ].join('\n');
 function injectCss(){ if($('dsg-css')) return; var s = document.createElement('style'); s.id = 'dsg-css'; s.textContent = CSS; document.head.appendChild(s); }
 
@@ -460,19 +479,20 @@ function editorOpen(r){
   var root = $('dsg-root'), K = D.KINDS[r.kind], h = '', i0;
   for(i0 = 0; r.d && r.d.items && i0 < r.d.items.length; i0++) delete r.d.items[i0].im;
   S.screen = 'ed';
-  S.ed = { r: r, d: r.d, sel: -1, tab: D.TABS[r.kind][0].id, undo: [], redo: [], k: 1, dirty: false, cloudDirty: false, lastCloud: now(), paintStr: r.paint || '', brush: { c: '#1b1b1b', w: 12, er: false }, tk: 'sign', font: 'hei',
+  S.ed = { z: 1, panX: 0, panY: 0, r: r, d: r.d, sel: -1, tab: D.TABS[r.kind][0].id, undo: [], redo: [], k: 1, dirty: false, cloudDirty: false, lastCloud: now(), paintStr: r.paint || '', brush: { c: '#1b1b1b', w: 12, er: false }, tk: 'sign', font: 'hei',
     pm: lsGet('dsg_pm') || 'free', px: { n: +(lsGet('dsg_pxn') || 32), tool: 'pen' }, vec: { sh: 'rect', fill: '#ffd23f', st: '#1b1b1b', sw: 6 } };
-  h += '<div id="dsg-ed"' + (r.lock ? ' class="locked"' : '') + '><div class="bar"><button class="dsg-b ghost" data-k="back">🔙<span class="lb"> 回工作室</span></button><div class="t">' + K.e + ' ' + esc(r.title || K.n) + '</div>';
+  h += '<div id="dsg-ed" class="' + (r.lock ? 'locked' : '') + (lsGet('dsg_pc') === '1' ? ' pc' : '') + '"><div class="bar"><button class="dsg-b ghost" data-k="back">🔙<span class="lb"> 回工作室</span></button><div class="t">' + K.e + ' ' + esc(r.title || K.n) + '</div>';
   h += '<button class="dsg-b ghost" data-k="undo">↶<span class="lb"> 復原</span></button><button class="dsg-b ghost" data-k="redo">↷<span class="lb"> 重做</span></button><div class="ops" id="dsg-ops"></div><div class="sp"></div>';
+  h += '<button class="dsg-b ghost" data-k="pnl" title="收合/展開工具面板">◧<span class="lb"> 面板</span></button>';   /* ★ v1.0.6 老師「面板優化讓繪圖區更寬敞」:收起兩側(直式是下方)面板 */
   h += '<button class="dsg-b ghost" data-k="lbl" title="顯示/隱藏功能名稱">🏷<span class="lb"> 名稱</span></button><button class="dsg-b ghost" data-k="how">❓<span class="lb"> 怎麼玩</span></button><button class="dsg-b blue" data-k="save">💾<span class="lb"> 存檔</span></button><button class="dsg-b go" data-k="submit">📤<span class="lb"> 確認繳交</span></button></div>';
   h += '<div class="lib"><div class="tabs" id="dsg-tabs"></div><div class="lbody" id="dsg-lib"></div></div>';
-  h += '<div class="mid" id="dsg-mid"><div id="dsg-stage" style="width:' + K.W + 'px;height:' + K.H + 'px"><div class="ly" id="dsg-ly"></div><canvas id="dsg-guide" width="' + K.W + '" height="' + K.H + '" style="width:' + K.W + 'px;height:' + K.H + 'px"></canvas><canvas id="dsg-paint" width="' + K.W + '" height="' + K.H + '" style="width:' + K.W + 'px;height:' + K.H + 'px"></canvas><canvas id="dsg-grid" width="' + K.W + '" height="' + K.H + '" style="width:' + K.W + 'px;height:' + K.H + 'px"></canvas><div id="dsg-sel"><i data-h="1"></i></div></div>';
+  h += '<div class="mid" id="dsg-mid"><div id="dsg-stage" style="width:' + K.W + 'px;height:' + K.H + 'px"><div class="ly" id="dsg-ly"></div><canvas id="dsg-guide" width="' + K.W + '" height="' + K.H + '" style="width:' + K.W + 'px;height:' + K.H + 'px"></canvas><canvas id="dsg-paint" width="' + K.W + '" height="' + K.H + '" style="width:' + K.W + 'px;height:' + K.H + 'px"></canvas><canvas id="dsg-grid" width="' + K.W + '" height="' + K.H + '" style="width:' + K.W + 'px;height:' + K.H + 'px"></canvas><div id="dsg-sel"><i data-h="1"></i></div></div><button class="dsg-zb" id="dsg-zb" data-k="zreset" title="回到原本大小"></button>';   /* ★ v1.0.6 縮放比例鈕(放大/縮小時才出現,點一下回到原本大小) */
   if(r.lock) h += '<div class="dsg-lockbar">' + (r.lock === 'live' ? '✅ 老師已通過,這件作品不能再改了' : '🔒 已繳交,等老師審核;老師退件後才能修改') + '</div>';
   h += '</div><div class="prop" id="dsg-prop"></div></div>';
   root.innerHTML = h;
   root.onclick = function(ev){ var t = ev.target, k = null; while(t && t !== root){ if(t.getAttribute) k = k || t.getAttribute('data-k'); t = t.parentNode; } if(!k) return; sfx('sfx-tap', 0.3); barCmd(k); };
   if(r.paint){ var im = new Image(); im.onload = function(){ try{ $('dsg-paint').getContext('2d').drawImage(im, 0, 0); }catch(e){} }; im.src = r.paint; }
-  tabsPaint(); libPaint(); layersPaint(); propPaint(); opsPaint(); stageBind(); pzBind(); pmApply(); fitStage(); guideDraw();
+  tabsPaint(); libPaint(); layersPaint(); propPaint(); opsPaint(); stageBind(); pzBind(); zoomBind(); pmApply(); fitStage(); guideDraw();
   setTimeout(fitStage, 60);
   if(r.back && r.back.tip) modal('<h3>↩ 老師退件了</h3><p>📝 老師的建議:<b>' + esc(r.back.tip) + '</b></p>' + (r.back.why && r.back.why.length ? '<p>原因:' + esc(r.back.why.join('、')) + '</p>' : '') + '<p>照建議改好後,再按「📤 確認繳交」。</p>');
 }
@@ -482,6 +502,8 @@ function barCmd(k){
   if(k === 'back'){ if(locked()){ saveLocal(true); backupNow(false); hub(); return; } nameAsk(E.r.title || '', function(v){ E.r.title = v; var tt = $('dsg-root') && $('dsg-root').querySelector('#dsg-ed .bar .t'); if(tt) tt.textContent = D.KINDS[E.r.kind].e + ' ' + v; dirty(); saveLocal(true, function(){ backupNow(false); hub(); }); }); }   /* ★ v1.0.3 回工作室前先幫作品取名字 */
   else if(k === 'undo') undo(); else if(k === 'redo') redo();
   else if(k === 'how') howto('editor');
+  else if(k === 'zreset'){ zoomSet(1, 0, 0); toast('🔍 回到原本大小'); }   /* ★ v1.0.6 */
+  else if(k === 'pnl'){ var ed = $('dsg-ed'), pc = !(ed && ed.classList.contains('pc')); if(ed) ed.classList.toggle('pc', pc); lsSet('dsg_pc', pc ? '1' : '0'); toast(pc ? T({ c: '◧ 面板收起來了,畫畫的地方變大!再按一次「◧」打開', p: '◧ 已收合工具面板;再按一次即可展開' }) : T({ c: '◧ 面板打開了', p: '◧ 已展開工具面板' })); setTimeout(fitStage, 30); }   /* ★ v1.0.6 */
   else if(k === 'lbl'){ var off = lsGet('dsg_nolb') !== '1'; lsSet('dsg_nolb', off ? '1' : '0'); $('dsg-root').classList.toggle('nolb', off); toast(off ? '🏷 功能名稱已隱藏(只留圖示)' : '🏷 功能名稱已顯示'); setTimeout(fitStage, 30); }
   else if(k === 'save'){ if(locked()){ toast('🔒 這件作品已鎖定'); return; } saveLocal(true, function(ok){ toast(ok ? '💾 存好了(這台平板)' : '存檔失敗,請再試一次'); }); backupNow(true); }
   else if(k === 'submit') submitStart();
@@ -491,9 +513,72 @@ function fitStage(){
   var E = S.ed, mid = $('dsg-mid'), st = $('dsg-stage'), W, H, k;
   if(!E || !mid || !st) return;
   W = E.d.W; H = E.d.H; k = Math.min(mid.clientWidth / W, mid.clientHeight / H) * 0.94; if(!(k > 0)) k = 1;
-  E.k = k; E.ox = (mid.clientWidth - W * k) / 2; E.oy = (mid.clientHeight - H * k) / 2;
+  E.k0 = k; k = k * (E.z || 1);   /* ★ v1.0.6 E.k = 剛好放得下的大小 × 手指縮放倍率;pt() 換算座標都用 E.k,所以畫筆/拖曳/關節不必另外改 */
+  zoomClampPan(W * k, H * k, mid.clientWidth, mid.clientHeight);
+  E.k = k; E.ox = (mid.clientWidth - W * k) / 2 + (E.panX || 0); E.oy = (mid.clientHeight - H * k) / 2 + (E.panY || 0);
   st.style.transform = 'translate(' + E.ox + 'px,' + E.oy + 'px) scale(' + k + ')';
+  zoomBadge();
   selPaint(); if(pzEditing()) guideDraw();   /* ★ v1.0.5 關節把手大小跟著畫面縮放 */
+}
+/* ══ ★ v1.0.6(2026-11-08・老師「角色設計和荒島裝飾設計中,新增可以利用使用者食指和拇指滑動進行放大、縮小畫布檢視的功能」)
+   兩指捏合:放大縮小(0.6~6 倍)+兩指一起移動 = 挪畫布;手指中間那一點下面的畫面跟著手指走。PC:滑鼠滾輪(觸控板雙指捏合也會送滾輪)以游標為中心縮放;按住空白鍵或滑鼠中鍵拖曳 = 挪畫布。
+   第一根手指放下時已經開始畫(不延遲,畫筆手感不變);第二根手指放下 ⇒ 剛開始的那一筆(按下 0.35 秒內)整筆取消、不算操作、不留復原紀錄;
+   畫比較久的那一筆就照常收筆保留。拖物件/縮放物件/骨架拖關節同理(stage 的 E.gCancel、骨架的 E.pzCancel)。
+   捏合結束後還留在畫面上的那根手指不會開始畫,全部手指離開才恢復。只改「看的大小」:作品座標、存檔、縮圖、審核全部不受影響。 */
+var ZMIN = 0.6, ZMAX = 6;
+function zoomClampPan(sw, sh, cw, ch){ var E = S.ed, mx = Math.max(0, (sw + cw) / 2 - Math.min(sw, cw) * 0.3), my = Math.max(0, (sh + ch) / 2 - Math.min(sh, ch) * 0.3);   /* 畫布至少留三成在畫面裡,不會挪到找不到 */
+  E.panX = clamp(E.panX || 0, -mx, mx); E.panY = clamp(E.panY || 0, -my, my); }
+function zoomBadge(){ var b = $('dsg-zb'), E = S.ed; if(!b || !E) return; var z = E.z || 1, on = Math.abs(z - 1) > 0.01 || Math.abs(E.panX || 0) > 1 || Math.abs(E.panY || 0) > 1;
+  b.style.display = on ? '' : 'none'; if(on) b.innerHTML = '🔍 ' + Math.round(z * 100) + '% <span class="lb">↺</span>'; }
+function zoomSet(z, px, py){ var E = S.ed; if(!E) return; E.z = clamp(z, ZMIN, ZMAX); E.panX = px; E.panY = py; fitStage(); }
+/* 以畫面上 (cx,cy)(相對 #dsg-mid)為中心,把倍率改成 z1:那一點下面的作品座標保持不動 */
+function zoomAt(z1, cx, cy){ var E = S.ed, mid = $('dsg-mid'); if(!E || !mid) return; z1 = clamp(z1, ZMIN, ZMAX);
+  var k1 = E.k0 * z1, sx = (cx - E.ox) / E.k, sy = (cy - E.oy) / E.k;
+  E.z = z1; E.panX = cx - sx * k1 - (mid.clientWidth - E.d.W * k1) / 2; E.panY = cy - sy * k1 - (mid.clientHeight - E.d.H * k1) / 2; fitStage(); }
+function zoomBind(){
+  var E = S.ed, mid = $('dsg-mid'), T0 = {}, pin = null, hold = false, raf = 0, pan = null;
+  if(!mid) return;
+  function cnt(){ var n = 0, k; for(k in T0){ if(T0.hasOwnProperty(k)) n++; } return n; }
+  function two(){ var a = [], k; for(k in T0){ if(T0.hasOwnProperty(k)) a.push(T0[k]); } return a.slice(0, 2); }
+  function rel(e){ var rc = mid.getBoundingClientRect(); return { x: e.clientX - rc.left, y: e.clientY - rc.top }; }
+  function startPinch(){ var a = two(), dx = a[1].x - a[0].x, dy = a[1].y - a[0].y;
+    try{ if(E.gCancel) E.gCancel(); }catch(x1){} try{ if(E.pzCancel) E.pzCancel(); }catch(x2){}
+    pin = { d0: Math.max(20, Math.sqrt(dx * dx + dy * dy)), z0: E.z || 1, mx: (a[0].x + a[1].x) / 2, my: (a[0].y + a[1].y) / 2, k0: E.k, ox: E.ox, oy: E.oy }; hold = true; }
+  function movePinch(){ if(!pin) return; if(raf) return;
+    raf = (window.requestAnimationFrame || function(f){ return setTimeout(f, 16); })(function(){ raf = 0; if(!pin || cnt() < 2) return;
+      var a = two(), dx = a[1].x - a[0].x, dy = a[1].y - a[0].y, d = Math.max(20, Math.sqrt(dx * dx + dy * dy)), z1 = clamp(pin.z0 * d / pin.d0, ZMIN, ZMAX), mx = (a[0].x + a[1].x) / 2, my = (a[0].y + a[1].y) / 2, k1 = E.k0 * z1,
+        sx = (pin.mx - pin.ox) / pin.k0, sy = (pin.my - pin.oy) / pin.k0;   /* 捏合開始時兩指中間那一點的作品座標 ⇒ 永遠跟著兩指中間走 */
+      E.z = z1; E.panX = mx - sx * k1 - (mid.clientWidth - E.d.W * k1) / 2; E.panY = my - sy * k1 - (mid.clientHeight - E.d.H * k1) / 2; fitStage(); }); }
+  function block(e){ e.stopPropagation(); if(e.cancelable) e.preventDefault(); }
+  mid.addEventListener('pointerdown', function(e){
+    if(pan || (e.pointerType !== 'touch' && (e.button === 1 || S.spaceDown))){   /* PC:中鍵或按住空白鍵拖曳 = 挪畫布 */
+      if(!pan){ pan = { id: e.pointerId, x: e.clientX, y: e.clientY, px: E.panX || 0, py: E.panY || 0 }; try{ mid.setPointerCapture(e.pointerId); }catch(x){} }
+      block(e); return; }
+    if(e.pointerType !== 'touch') return;
+    T0[e.pointerId] = rel(e);
+    if(cnt() >= 2){ block(e); if(!pin) startPinch(); else { var a = two(); pin.d0 = Math.max(20, Math.sqrt((a[1].x - a[0].x) * (a[1].x - a[0].x) + (a[1].y - a[0].y) * (a[1].y - a[0].y))); pin.z0 = E.z; pin.mx = (a[0].x + a[1].x) / 2; pin.my = (a[0].y + a[1].y) / 2; pin.k0 = E.k; pin.ox = E.ox; pin.oy = E.oy; } return; }
+    if(hold) block(e);   /* 捏合後還有手指沒離開:不開始畫 */
+  }, true);
+  mid.addEventListener('pointermove', function(e){
+    if(pan && e.pointerId === pan.id){ E.panX = pan.px + e.clientX - pan.x; E.panY = pan.py + e.clientY - pan.y; fitStage(); block(e); return; }
+    if(e.pointerType !== 'touch' || !T0[e.pointerId]) return;
+    T0[e.pointerId] = rel(e);
+    if(pin){ block(e); movePinch(); }
+  }, true);
+  function up(e){
+    if(pan && e.pointerId === pan.id){ pan = null; block(e); return; }
+    if(e.pointerType !== 'touch') return;
+    var had = !!T0[e.pointerId]; delete T0[e.pointerId];
+    if(pin && cnt() < 2){ pin = null; }
+    if(hold){ if(had) block(e); if(!cnt()) hold = false; }
+  }
+  mid.addEventListener('pointerup', up, true); mid.addEventListener('pointercancel', up, true);
+  mid.addEventListener('wheel', function(e){ if(e.cancelable) e.preventDefault(); var p = rel(e), f = Math.exp(-clamp(e.deltaY, -120, 120) * (e.ctrlKey ? 0.012 : 0.0022)); zoomAt((E.z || 1) * f, p.x, p.y); }, { passive: false });
+  mid.addEventListener('gesturestart', function(e){ if(e.cancelable) e.preventDefault(); });   /* iOS Safari:不讓整頁跟著縮放 */
+  mid.addEventListener('gesturechange', function(e){ if(e.cancelable) e.preventDefault(); });
+  if(!S.spaceBound){ S.spaceBound = 1;
+    document.addEventListener('keydown', function(e){ if(e.keyCode === 32 && S.ed && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')){ S.spaceDown = true; if(e.cancelable) e.preventDefault(); } });
+    document.addEventListener('keyup', function(e){ if(e.keyCode === 32) S.spaceDown = false; }); }
 }
 /* 一次操作完成:記復原、計次數、存本機 */
 function snapNow(){ var E = S.ed; return { d: JSON.stringify(E.d), p: E.paintStr }; }
@@ -788,6 +873,10 @@ function pzBind(){
     guideDraw(); };
   cv.onpointerup = cv.onpointercancel = function(e){
     if(!g0 || e.pointerId !== g0.pid) return; var mv = g0.moved, wasView = !g0.k; g0 = null; if(mv){ dirty(); if(wasView) libPaint(); } };   /* 轉完視角:左欄視角按鈕與角度讀數跟著更新 */
+  /* ★ v1.0.6 第二根手指放下(要捏合縮放)⇒ 剛剛這一下拖關節/轉視角收回,姿勢回到按下前 */
+  E.pzCancel = function(){ if(!g0) return; var g = E.d.guide, sn = g0.sn, mv = g0.moved; g0 = null;
+    if(mv && g){ try{ pzApply(g, JSON.parse(sn)); }catch(x){} if(E.pzU && E.pzU.length) E.pzU.pop(); }
+    guideDraw(); };
 }
 function pzViewTxt(){ var g = S.ed.d.guide; if(!g || g.t !== 'pose') return ''; return '↔ ' + Math.round(g.yw || 0) + '°  ↕ ' + Math.round(-(g.pt || 0)) + '°  🔍 ' + Math.round((g.zm || 1) * 100) + '%'; }
 /* 🦴 分頁的按鈕:data-pz = 視角 v:id、mirror、big、small、flip、undo、reset */
@@ -1097,8 +1186,31 @@ function propPaint(){
 function stageBind(){
   var E = S.ed, st = $('dsg-stage'), cv = $('dsg-paint'), g = null, ctx = cv.getContext('2d');
   function pt(e){ var rc = st.getBoundingClientRect(); return { x: (e.clientX - rc.left) / E.k, y: (e.clientY - rc.top) / E.k }; }
+  /* ★ v1.0.6 捏合縮放用:按下時先記「復原的下一步清單」與時間;手指畫畫時另存一張畫筆層快照,第二指放下可整筆收回 */
   st.onpointerdown = function(e){
-    if(locked()) return;
+    if(locked() || g) return;
+    var rd0 = E.redo.slice(), t0 = now(), sn0 = null;
+    if(e.pointerType === 'touch' && E.tab === 'paint' && E.pm !== 'vector'){ try{ sn0 = ctx.getImageData(0, 0, cv.width, cv.height); }catch(x0){} }
+    downG(e);
+    if(g){ g.rd = rd0; g.t0 = t0; g.snap = sn0; }
+  };
+  function endG(){
+    if(g.m === 'paint' || g.m === 'px'){ ctx.globalCompositeOperation = 'source-over'; try{ E.paintStr = cv.toDataURL('image/png'); }catch(x){} endOp(g.m === 'paint' ? !E.brush.er : E.px.tool !== 'er'); }   /* 畫一筆/點格子/填色算增加,橡皮擦不算 */
+    else if(g.m === 'vec'){ if(!g.made){ beginOp(); E.d.items.push({ t: 'shape', sh: E.vec.sh, w: 120, h: E.vec.sh === 'line' ? 10 : 120, fill: E.vec.fill, st: E.vec.st, sw: E.vec.sw, x: g.x0, y: g.y0, s: 1, r: 0, fx: 1, a: 1 }); E.sel = E.d.items.length - 1; layersPaint(); }
+      endOp(true); propPaint(); }   /* 畫出一個新形狀 = 增加 */
+    else if(g.moved){ endOp(); propPaint(); }
+    g = null;
+  }
+  E.gCancel = function(){
+    if(!g) return; var q = g;
+    if(q.m === 'paint' || q.m === 'px'){
+      if(q.snap && now() - q.t0 < 350){ g = null; ctx.globalCompositeOperation = 'source-over'; try{ ctx.putImageData(q.snap, 0, 0); }catch(x){} E.undo.pop(); E.redo = q.rd || []; E._bk = null; return; }
+      endG(); return; }   /* 畫了比較久的那一筆:照常收筆保留 */
+    g = null;
+    if(q.m === 'vec'){ if(q.made){ restore(E.undo.pop()); E.redo = q.rd || []; E._bk = null; } return; }
+    if(q.moved){ restore(E.undo.pop()); E.redo = q.rd || []; E._bk = null; } else selPaint();
+  };
+  function downG(e){
     var t = e.target, p = pt(e), i, it, rc;
     if(E.tab === 'paint' && E.pm === 'pixel'){ e.preventDefault(); beginOp(); g = { m: 'px', pid: e.pointerId };
       try{ cv.setPointerCapture(e.pointerId); }catch(x){}
@@ -1120,7 +1232,7 @@ function stageBind(){
     e.preventDefault(); i = +i; if(E.sel !== i){ E.sel = i; propPaint(); } it = E.d.items[i];
     g = { m: 'mv', pid: e.pointerId, ox: it.x - p.x, oy: it.y - p.y, moved: false }; selPaint();
     try{ st.setPointerCapture(e.pointerId); }catch(x){}
-  };
+  }
   st.onpointermove = function(e){
     if(!g || e.pointerId !== g.pid) return;
     var p = pt(e), it, d;
@@ -1139,11 +1251,7 @@ function stageBind(){
   };
   st.onpointerup = st.onpointercancel = function(e){
     if(!g || e.pointerId !== g.pid) return;
-    if(g.m === 'paint' || g.m === 'px'){ ctx.globalCompositeOperation = 'source-over'; try{ E.paintStr = cv.toDataURL('image/png'); }catch(x){} endOp(g.m === 'paint' ? !E.brush.er : E.px.tool !== 'er'); }   /* 畫一筆/點格子/填色算增加,橡皮擦不算 */
-    else if(g.m === 'vec'){ if(!g.made){ beginOp(); E.d.items.push({ t: 'shape', sh: E.vec.sh, w: 120, h: E.vec.sh === 'line' ? 10 : 120, fill: E.vec.fill, st: E.vec.st, sw: E.vec.sw, x: g.x0, y: g.y0, s: 1, r: 0, fx: 1, a: 1 }); E.sel = E.d.items.length - 1; layersPaint(); }
-      endOp(true); propPaint(); }   /* 畫出一個新形狀 = 增加 */
-    else if(g.moved){ endOp(); propPaint(); }
-    g = null;
+    endG();   /* ★ v1.0.6 收筆邏輯搬進 endG(捏合時畫比較久的那一筆也走同一條) */
   };
 }
 
