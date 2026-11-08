@@ -52205,24 +52205,26 @@ function openCondSearch(mode){
   ['A','B','C','D','E'].forEach(function(g){
     var grp = DEFS[g]; if(!grp) return;
     var col = _gc[g] || '#cccccc';
-    body += `<div style="margin:14px 0 6px;font-size:19px;font-weight:bold;color:${col};border-left:5px solid ${col};padding-left:10px;">${grp.label}</div>`;
-    body += `<div style="display:flex;flex-wrap:wrap;gap:8px 12px;">`;
+    /* ★ v5.366.0(老師「條件搜尋的視窗和文字太小了,放大優化」)— 視窗掛在 body(不在縮放畫布 #gc 內),舊碼寫死 px ⇒ 大螢幕看起來很小;
+       改用 clamp(下限 px, vmin, 上限 px):1080p 約大 15%,2560×1440 約大 50%,手機橫放維持原本大小。 */
+    body += `<div style="margin:0.8em 0 0.35em;font-size:clamp(17px,2.15vmin,34px);font-weight:bold;color:${col};border-left:0.28em solid ${col};padding-left:0.5em;">${grp.label}</div>`;
+    body += `<div style="display:flex;flex-wrap:wrap;gap:0.5em 0.65em;font-size:clamp(15px,2vmin,31px);">`;
     grp.effects.forEach(function(ef){
-      body += `<label style="display:inline-flex;align-items:center;gap:5px;font-size:17px;color:#e8e8f0;cursor:pointer;background:rgba(255,255,255,0.06);padding:5px 11px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);"><input type="checkbox" class="cond-eff-cb" value="${ef}" style="width:17px;height:17px;cursor:pointer;"> ${ef}</label>`;
+      body += `<label style="display:inline-flex;align-items:center;gap:0.35em;font-size:1em;color:#e8e8f0;cursor:pointer;background:rgba(255,255,255,0.06);padding:0.35em 0.7em;border-radius:0.5em;border:1px solid rgba(255,255,255,0.12);"><input type="checkbox" class="cond-eff-cb" value="${ef}" style="width:1.1em;height:1.1em;cursor:pointer;margin:0;"> ${ef}</label>`;
     });
     body += `</div>`;
   });
   var ov = document.createElement('div');
   ov.id = 'cond-search-ov';
   ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:18px;';
-  ov.innerHTML = `<div style="background:linear-gradient(160deg,#1d2440,#141929);border:2px solid #4a7bd0;border-radius:18px;max-width:780px;width:96%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,0.6);">
-    <div style="padding:18px 22px 12px;font-size:24px;font-weight:bold;color:#aee3ff;border-bottom:1px solid rgba(255,255,255,0.12);">🔍 條件搜尋<div style="font-size:15px;color:#9aa3bb;font-weight:normal;margin-top:4px;">勾選技能效果,列出「同時具備」全部所選效果的英雄(僅搜尋已擁有英雄)</div></div>
-    <div style="padding:6px 22px 14px;overflow-y:auto;flex:1;">${body}</div>
-    <div style="padding:12px 22px;border-top:1px solid rgba(255,255,255,0.12);display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap;">
-      <span id="cond-count" style="font-size:15px;color:#9aa3bb;margin-right:auto;">已勾選 0 項</span>
-      <button onclick="_condClearAll()" style="font-size:17px;padding:8px 16px;border-radius:9px;background:rgba(255,255,255,0.08);color:#ccccdd;border:1px solid rgba(255,255,255,0.2);cursor:pointer;">清除</button>
-      <button onclick="closeCondSearch()" style="font-size:17px;padding:8px 16px;border-radius:9px;background:rgba(255,255,255,0.08);color:#ccccdd;border:1px solid rgba(255,255,255,0.2);cursor:pointer;">取消</button>
-      <button onclick="doCondSearch()" style="font-size:18px;font-weight:bold;padding:8px 24px;border-radius:9px;background:linear-gradient(135deg,#3a7bd5,#2a5ba5);color:#fff;border:1px solid #7fb0ff;cursor:pointer;">搜尋</button>
+  ov.innerHTML = `<div style="background:linear-gradient(160deg,#1d2440,#141929);border:2px solid #4a7bd0;border-radius:18px;max-width:min(96vw,max(780px,130vmin));width:96%;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;box-shadow:0 12px 48px rgba(0,0,0,0.6);">
+    <div style="padding:0.75em 0.9em 0.5em;font-size:clamp(22px,2.8vmin,42px);font-weight:bold;color:#aee3ff;border-bottom:1px solid rgba(255,255,255,0.12);">🔍 條件搜尋<div style="font-size:0.62em;color:#9aa3bb;font-weight:normal;margin-top:0.2em;">勾選技能效果,列出「同時具備」全部所選效果的英雄(僅搜尋已擁有英雄)</div></div>
+    <div style="padding:0.3em clamp(22px,2.2vmin,36px) 0.8em;overflow-y:auto;flex:1;">${body}</div>
+    <div style="padding:0.6em 1.1em;font-size:clamp(17px,2.1vmin,32px);border-top:1px solid rgba(255,255,255,0.12);display:flex;gap:0.6em;justify-content:flex-end;align-items:center;flex-wrap:wrap;">
+      <span id="cond-count" style="font-size:0.88em;color:#9aa3bb;margin-right:auto;">已勾選 0 項</span>
+      <button onclick="_condClearAll()" style="font-size:1em;padding:0.45em 0.95em;border-radius:0.5em;background:rgba(255,255,255,0.08);color:#ccccdd;border:1px solid rgba(255,255,255,0.2);cursor:pointer;">清除</button>
+      <button onclick="closeCondSearch()" style="font-size:1em;padding:0.45em 0.95em;border-radius:0.5em;background:rgba(255,255,255,0.08);color:#ccccdd;border:1px solid rgba(255,255,255,0.2);cursor:pointer;">取消</button>
+      <button onclick="doCondSearch()" style="font-size:1.06em;font-weight:bold;padding:0.45em 1.4em;border-radius:0.5em;background:linear-gradient(135deg,#3a7bd5,#2a5ba5);color:#fff;border:1px solid #7fb0ff;cursor:pointer;">搜尋</button>
     </div>
   </div>`;
   ov.addEventListener('click', function(e){ if(e.target===ov) closeCondSearch(); });

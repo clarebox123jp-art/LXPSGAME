@@ -21044,6 +21044,42 @@
           }
         }catch(_eHo){}
         const _isAutoRestore = !_activeThisPage && !_pendingRedirect && !_intentionalReload && !_appHandoff;   // ★ v5.175.0（舊:尾端沒有 && !_appHandoff）
+        /* ★★ v5.366.0(2026-11-08・老師「莫名地一直自動登出,無法正常遊玩」)★★
+           根因(實際發生):同一台電腦的同一個瀏覽器同時開著兩個遊戲分頁。A 分頁按登入成功後,Firebase 會把登入狀態同步給 B 分頁;
+             B 分頁沒有按過登入 ⇒ 被當成「共用平板殘留帳號」⇒ B 執行 signOut ⇒ 登出是全瀏覽器共用的,A 分頁也跟著被登出 ⇒ 再登入又被踢,無限循環。
+           修法:這一輪是合法登入(不是自動還原)時,在本機記 lxps_xtab_signin = {uid, t};
+             別的分頁收到「自動還原」而且同一個帳號 2 分鐘內剛在本機某個分頁合法登入過 ⇒ 不登出,只在這個分頁顯示「遊戲已在另一個分頁登入,請關閉這個分頁」並停止(不讀存檔、不寫任何東西)。
+           ⚠ 共用平板保護不變:必須是「同一個帳號、2 分鐘內、本機真的有人親自登入」才成立;週一還原上週帳號(幾天前)照樣強制登出。 */
+        try{
+          if(!_isAutoRestore && user && user.uid){ localStorage.setItem('lxps_xtab_signin', JSON.stringify({ uid: user.uid, t: Date.now() })); }
+          else if(_isAutoRestore && user && user.uid){
+            const _xtOk = function(){ try{ const _xt = JSON.parse(localStorage.getItem('lxps_xtab_signin') || 'null'); return !!(_xt && _xt.uid === user.uid && (Date.now() - (Number(_xt.t) || 0)) < 120000); }catch(_){ return false; } };
+            let _xtHit = _xtOk();
+            /* 兩個分頁幾乎同時收到登入事件,另一個分頁可能還沒寫好記號 ⇒ 這個 user 不是本頁開機還原的物件(= 本頁開著時才冒出來的登入)就等 2.5 秒再看一次 */
+            if(!_xtHit && !(window._lxpsRestoredAuthUser && user === window._lxpsRestoredAuthUser)){
+              await new Promise(function(r){ setTimeout(r, 2500); });
+              _xtHit = _xtOk();
+            }
+            if(_xtHit){
+              _fbDiag('onAuth:同一帳號 2 分鐘內剛在本機另一個分頁登入 → 這個分頁不登出(避免把另一個分頁一起登出),改顯示請關閉分頁', 'warn');
+              window._lxpsOtherTabOwnsLogin = true;
+              try{
+                if(!document.getElementById('lxps-xtab-ov')){
+                  const _xo = document.createElement('div');
+                  _xo.id = 'lxps-xtab-ov';
+                  _xo.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(5,8,20,0.92);display:flex;align-items:center;justify-content:center;padding:4vmin;';
+                  _xo.innerHTML = '<div style="max-width:min(92vw,760px);background:#1b2340;border:3px solid #ffcc55;border-radius:22px;padding:clamp(18px,3.5vmin,40px);color:#fff;text-align:center;font-family:inherit;">'
+                    + '<div style="font-size:clamp(40px,7vmin,80px);">🗂️</div>'
+                    + '<div style="font-size:clamp(22px,3.4vmin,40px);font-weight:900;color:#ffdd77;margin:0.4em 0;">遊戲已經在另一個分頁打開了</div>'
+                    + '<div style="font-size:clamp(16px,2.4vmin,28px);line-height:1.6;color:#dfe6ff;">同時開兩個分頁會互相把帳號登出。<br>請<b>關閉這個分頁</b>,回到另一個分頁繼續玩。</div>'
+                    + '<button onclick="try{window.close();}catch(e){}" style="margin-top:1em;font-size:clamp(17px,2.4vmin,28px);font-weight:900;padding:0.5em 1.6em;border-radius:14px;border:2px solid #ffcc55;background:#3a4a8a;color:#fff;cursor:pointer;">關閉這個分頁</button></div>';
+                  (document.body || document.documentElement).appendChild(_xo);
+                }
+              }catch(_eXo){}
+              return;   // 不登出、不往下讀存檔
+            }
+          }
+        }catch(_eXt){}
         // ★★ v5.248.0(2026-10-12・老師「週五沒登出的平板,週一直接登進上週那位的帳號」+「不可再被下一個使用者免輸入密碼登入」)★★
         //   App 被 iOS 關掉、週一重開 ⇒ Firebase 從 IndexedDB 還原上一位的 token。
         //   裝置層 lxps_idle_last({uid,t},game_adv.js 閒置模組 + 小遊戲共同寫入)記著這個帳號最後一次真的有人操作的時間;

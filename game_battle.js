@@ -6776,7 +6776,62 @@ function getHeroObjPos(name){
 //   ★ v3.15.71 — 加 where 參數分離 grid(編組選單左列縮圖)/ preview(右半部預覽詳情):
 //     拘留者 / 科學發明家:grid -20、preview -20;電腦老師:grid -20、preview -10;機關王雙人組:grid 0、preview -10。
 //     負值=往上(露出更多頭部);grid base 多為 'center center'(無%)→ 函式內視為 50% 再加偏移。
+/* ★ v5.366.0(2026-11-08・老師「檢查冒險模式中所有英雄的縮圖,只要頭部位置過高導致被裁切的圖片全部都調整成可以看得見臉部的高度」)
+   英雄縮圖(編組頁左列 155×120、代表英雄選單 130×110、寵物跟隨選單 — 三處都走 _teamFormAdjustObjPos(...,'grid'))是 object-fit:cover,
+   直式立繪只看得到約一半高度;舊預設 'center center'(50%)⇒ 頭在上方 10~20% 的全身立繪頭被切掉。
+   _LXPS_THUMB_FACE_YMAX = 圖檔名 → 「最多可以往下到幾 %,頭頂/臉才不會被切」:沙盒逐張看過 255 張英雄圖(HERO_IMGS+HERO_PORTRAIT_LIBRARY)的頭頂位置,
+     大頭特寫再用臉部偵測框的上緣;以最寬的縮圖比例 155:120 計算(較窄的縮圖看得到更多,自然也安全)。
+   _lxpsThumbFaceClamp:目前位置比上限還低才往上拉到上限;本來就看得到臉的不動。只作用在縮圖('grid'),戰鬥卡/預覽/圖鑑不受影響。
+   新增英雄圖時若表裡沒有就不調整(維持原本位置);要加進來:把頭頂在圖高的比例 t(0~1)換算 Y% = (t−0.03)×k/(k−1)×100,k = (圖高/圖寬)×155/120。 */
+window._LXPS_THUMB_FACE_YMAX = {"101大樓BOSS.png":40,"5年2班許同學設計 死靈法師.png":42,"BOSS杏花妖.png":20,"Q小劇團員(縮圖).png":40,"Q巫女(縮圖).png":51,"Q幼兒園小孩(縮圖).png":32,"Q弦樂團員(縮圖).png":20,"Q程式設計師(縮圖).png":27,"Q電腦繪圖師(縮圖).png":30,"主神奧汀.png":32,"九份BOSS.webp":0,"仙人掌怪.png":9,"偵探.png":33,"偷竹筍的哥布林.png":44,"兀突骨.webp":4,"光法師3.png":22,"光法師Q.png":51,"典韋.webp":26,"冰法師3.png":9,"冰法師Q.png":55,"凡人3.png":37,"凡人Q.png":29,"刺客3.png":15,"刺客Q.png":65,"劉備.webp":20,"劍士3.png":37,"劍士Q.png":37,"動物學家(縮圖).png":42,"動物學家3.png":9,"占星師3.png":33,"占星師Q.png":58,"卡諾卜壇怪.png":53,"吟遊詩人Q.png":58,"吸血鬼3.png":24,"吸血鬼Q.png":55,"呂布.webp":22,"周瑜.webp":20,"哪吒.webp":7,"唐三藏.webp":4,"喚龍使_蜜鶴林.png":33,"地府酋長.png":20,"地獄將軍.png":20,"埃及豔后.png":22,"基隆BOSS.webp":75,"墾丁BOSS.webp":58,"大刀勇士.png":27,"大力士3.png":20,"大力士Q.png":33,"大天狗.png":26,"大天狗3.png":19,"大鵬金翅鵰.webp":16,"天兵殘影.webp":20,"天照大神.webp":14,"天秤星神_場景.jpg":6,"天秤星神_異性版.jpg":7,"天蠍星神_場景.jpg":25,"天蠍星神_異性版.jpg":43,"太魯閣BOSS.webp":31,"女僕貓 米鈴.png":31,"妲己.webp":11,"姜子牙.webp":15,"孟獲.webp":20,"孫悟空.webp":11,"學者3.png":9,"學者Q.png":61,"守衛3.png":10,"守衛Q.png":60,"安平BOSS.webp":75,"宙斯.png":11,"宜蘭BOSS.webp":31,"寶箱怪.png":18,"射手星神_場景.jpg":45,"射手星神_異性版.jpg":26,"小丑.png":11,"小力Q版.png":22,"小惡魔.png":17,"小鬼貓兔.png":81,"巡山小妖.webp":26,"巡海夜叉.webp":16,"巨蟹星神_場景.jpg":8,"巨蟹星神_異性版.jpg":11,"巫女3.png":24,"布丁奶茶獸.png":52,"幽幽.png":20,"幽魂暗狐.webp":26,"張飛.webp":20,"御雲使_沐雲雪.png":57,"愛喝茶的史萊姆.png":35,"我的豚豚.png":11,"拘留者.png":11,"摩羯星神_場景.jpg":6,"摩羯星神_異性版.jpg":7,"操偶師.png":22,"救醫馬.png":15,"敖丙.webp":20,"日月潭BOSS.png":75,"時空法師3.png":15,"時空法師Q.png":26,"暗法師3.png":11,"暗法師Q.png":48,"暗魔將_血.png":11,"曹操.webp":9,"月讀大神.webp":10,"木乃伊貓.png":31,"木靈使3.png":11,"木靈使LV20.png":58,"木靈使Q.png":53,"木鹿大王.webp":11,"東海龍王.webp":7,"楊戩.webp":11,"機械師3.png":26,"機械師Q.png":58,"機關王選手.png":7,"武器精靈.png":26,"武士3.png":7,"武士Q.png":37,"武鬥家3.png":9,"武鬥家Q.png":35,"死神.png":20,"水狐.png":26,"水瓶星神_場景.jpg":10,"水瓶星神_異性版.jpg":7,"沙悟淨.webp":27,"沙漠毒蠍.png":40,"法老王BOSS.png":11,"流沙眼鏡蛇.png":40,"淡水BOSS.webp":97,"滷肉飯BOSS.png":53,"澎湖BOSS.webp":31,"火柴人.png":11,"火法師3.png":9,"火法師Q.png":44,"火爆女孩.png":11,"炎火超少女.png":38,"炸彈客.png":11,"煉丹小藥童.webp":20,"煉金術師3.png":11,"熔岩巨人.png":20,"牛魔王.webp":11,"牡羊星神_場景.jpg":10,"牡羊星神_異性版.jpg":11,"狐妖小卒.webp":20,"獅子星神_場景.jpg":6,"獅子星神_異性版.jpg":7,"玉山BOSS.png":53,"玉藻前.png":50,"玉藻前3.png":20,"琵琶精.webp":15,"甘寧.webp":11,"生化人.png":11,"田徑隊員.png":53,"白象精.webp":11,"白骨夫人.webp":11,"白骨小兵.webp":11,"直笛團員.png":53,"石磯童子.webp":11,"祝融夫人.webp":11,"神偷3.png":34,"神偷Q.png":60,"神射手3.png":12,"神射手Q.png":52,"神槍手.png":20,"神秘圖騰.png":31,"祭司3.png":9,"祭司Q.png":57,"科學發明家.png":11,"程式設計師3.png":10,"究極神兵.webp":10,"窮奇.png":26,"籃球隊員3.png":21,"籃球隊員Q.png":44,"紅孩兒.webp":38,"紅色玩家.png":20,"綠竹筍小妖.png":64,"維京海盜船長.png":11,"網路駭客.png":20,"美人魚_角角.png":24,"聖冥法師.png":9,"聖甲蟲.png":97,"聖騎士3.png":15,"聖騎士Q.png":42,"聞太師.webp":7,"臭豆腐BOSS.png":53,"舞者3.png":11,"舞者Q.png":47,"茶葉精靈.png":44,"菇女.png":44,"華雄.webp":20,"藍染BOSS.png":68,"藝天使.png":11,"藤甲兵.webp":4,"蘭嶼BOSS.png":31,"處女星神_場景.jpg":6,"處女星神_異性版.jpg":15,"蚩尤.webp":15,"蜘蛛精.webp":11,"蠍子精.webp":16,"許褚.webp":7,"諸葛亮.webp":11,"警長3.png":9,"警長Q.png":43,"豬八戒.webp":7,"貂蟬.webp":7,"貓人族長.png":11,"貔貅.webp":15,"超鬼神王.png":48,"趙公明.webp":7,"趙雲.webp":20,"軍師3.png":11,"軍師Q版.png":48,"轉學生學霸.png":34,"連弩兵.webp":20,"酒吞童子.png":26,"酒吞童子3.png":15,"金光聖母.webp":11,"金牛星神_場景.jpg":6,"金牛星神_異性版.jpg":11,"金角大王.webp":11,"金門BOSS.webp":31,"銀角大王.webp":15,"鋁合金暴龍.png":20,"鍊金術師Q.png":26,"鐵匠.png":11,"關羽.webp":20,"阿蘇火山龍王.png":11,"阿里山神木BOSS.png":75,"陰陽師3.png":26,"陰陽師Q.png":59,"雅典娜.png":20,"雉雞精.webp":11,"雙子星神_場景.jpg":10,"雙子星神_男生新版.jpg":11,"雙星姊妹.png":48,"雙魚星神_場景.jpg":10,"雙魚星神_異性版.jpg":11,"雷法師3.png":15,"雷法師Q.png":50,"電腦老師.png":11,"青炎龍王.png":20,"青獅精.webp":20,"風術士.png":11,"高雄BOSS.webp":31,"魔劍姬_伊莉雅.png":15,"魔界花使_朱玥.png":26,"魔禮青.webp":16,"魔術師.png":11,"鳳凰.png":4,"鳳梨酥BOSS.png":40,"麻吉喵Nico.webp":76,"黃巾賊.webp":26,"黃蓋.webp":27,"黃袍怪.webp":49,"黑暗球_希望型態.png":59};
+function _lxpsThumbFaceClamp(name, objPos){
+  try{
+    var url = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
+    if(!url) return objPos;
+    var fn = String(url).split('?')[0].split('#')[0].split('/').pop();
+    try{ fn = decodeURIComponent(fn); }catch(_d){}
+    var mx = window._LXPS_THUMB_FACE_YMAX[fn];
+    if(typeof mx !== 'number') return objPos;
+    var s = String(objPos || 'center center'), m = s.match(/-?\d+(?:\.\d+)?\s*%/g), y;
+    if(m) y = parseFloat(m[m.length - 1]);   /* 兩個 % 時第二個才是垂直 */
+    else if(/\btop\b/.test(s.replace(/^\s*\S+\s*/, ''))) y = 0;
+    else if(/\bbottom\b/.test(s.replace(/^\s*\S+\s*/, ''))) y = 100;
+    else y = 50;
+    return (y > mx) ? ('center ' + mx + '%') : objPos;
+  }catch(_c){ return objPos; }
+}
+/* ★ v5.366.0(老師附截圖第二輪:「右邊特寫圖裁切位置不佳…射手星神右邊特寫位置又太低導致完全沒看到頭」「敵方陣容也是裁切位置不佳導致看不到臉,甚至 BOSS 名稱」)
+   特寫(編組頁右側 .hf-illus,約 700×300)與 BOSS 陣容卡(200×95 / 280×130)都是很扁的框,直式立繪只看得到約三成高度 ⇒ 不能用固定 %,
+   改成「依這張圖的頭頂位置 + 這個框實際的寬高比」算:讓框的上緣剛好在頭頂上方一點點(臉一定在框裡)。
+   _LXPS_FACE_T[圖檔名] = [頭頂(含預留)在圖高的千分比, 圖高/圖寬 ×1000](同一批 255 張逐張判讀)。
+   window._lxpsFaceFitImg(img):掛在 <img onload>,量 img 實際大小後設定 object-position;表裡沒有的圖不動(維持原本位置)。 */
+window._LXPS_FACE_T = {"101大樓BOSS.png":[90,1000],"5年2班許同學設計 死靈法師.png":[192,1427],"BOSS杏花妖.png":[91,1426],"Q小劇團員(縮圖).png":[179,1404],"Q巫女(縮圖).png":[233,1427],"Q幼兒園小孩(縮圖).png":[160,1546],"Q弦樂團員(縮圖).png":[108,1690],"Q程式設計師(縮圖).png":[147,1702],"Q電腦繪圖師(縮圖).png":[166,1729],"主神奧汀.png":[169,1637],"九份BOSS.webp":[0,1000],"仙人掌怪.png":[20,1000],"偵探.png":[151,1429],"偷竹筍的哥布林.png":[238,1685],"兀突骨.webp":[18,1400],"光法師3.png":[111,1557],"光法師Q.png":[234,1430],"典韋.webp":[119,1426],"冰法師3.png":[49,1694],"冰法師Q.png":[252,1430],"凡人3.png":[170,1430],"凡人Q.png":[133,1430],"刺客3.png":[69,1427],"刺客Q.png":[298,1430],"劉備.webp":[89,1400],"劍士3.png":[170,1429],"劍士Q.png":[170,1430],"動物學家(縮圖).png":[192,1427],"動物學家3.png":[41,1429],"占星師3.png":[151,1427],"占星師Q.png":[266,1430],"卡諾卜壇怪.png":[120,1000],"吟遊詩人Q.png":[266,1430],"吸血鬼3.png":[122,1581],"吸血鬼Q.png":[252,1430],"呂布.webp":[101,1426],"周瑜.webp":[89,1400],"哪吒.webp":[32,1416],"唐三藏.webp":[18,1400],"喚龍使_蜜鶴林.png":[151,1429],"地府酋長.png":[92,1429],"地獄將軍.png":[92,1429],"埃及豔后.png":[101,1427],"基隆BOSS.webp":[169,1000],"墾丁BOSS.webp":[131,1000],"大刀勇士.png":[141,1623],"大力士3.png":[92,1429],"大力士Q.png":[151,1430],"大天狗.png":[119,1427],"大天狗3.png":[89,1454],"大鵬金翅鵰.webp":[72,1400],"天兵殘影.webp":[91,1426],"天照大神.webp":[68,1500],"天秤星神_場景.jpg":[29,1500],"天秤星神_異性版.jpg":[32,1429],"天蠍星神_場景.jpg":[121,1500],"天蠍星神_異性版.jpg":[191,1395],"太魯閣BOSS.webp":[70,1000],"女僕貓 米鈴.png":[142,1429],"妲己.webp":[50,1426],"姜子牙.webp":[69,1426],"孟獲.webp":[89,1400],"孫悟空.webp":[50,1426],"學者3.png":[41,1429],"學者Q.png":[280,1430],"守衛3.png":[51,1574],"守衛Q.png":[275,1430],"安平BOSS.webp":[169,1000],"宙斯.png":[50,1429],"宜蘭BOSS.webp":[70,1000],"寶箱怪.png":[69,1261],"射手星神_場景.jpg":[218,1500],"射手星神_異性版.jpg":[119,1429],"小丑.png":[50,1429],"小力Q版.png":[101,1427],"小惡魔.png":[69,1303],"小鬼貓兔.png":[371,1429],"巡山小妖.webp":[119,1426],"巡海夜叉.webp":[72,1400],"巨蟹星神_場景.jpg":[39,1500],"巨蟹星神_異性版.jpg":[50,1429],"巫女3.png":[122,1572],"布丁奶茶獸.png":[238,1427],"幽幽.png":[92,1429],"幽魂暗狐.webp":[119,1429],"張飛.webp":[89,1400],"御雲使_沐雲雪.png":[261,1429],"愛喝茶的史萊姆.png":[169,1497],"我的豚豚.png":[50,1429],"拘留者.png":[50,1429],"摩羯星神_場景.jpg":[29,1500],"摩羯星神_異性版.jpg":[31,1395],"操偶師.png":[101,1429],"救醫馬.png":[69,1429],"敖丙.webp":[89,1400],"日月潭BOSS.png":[169,1000],"時空法師3.png":[69,1429],"時空法師Q.png":[119,1430],"暗法師3.png":[50,1429],"暗法師Q.png":[220,1430],"暗魔將_血.png":[50,1429],"曹操.webp":[41,1426],"月讀大神.webp":[48,1500],"木乃伊貓.png":[70,1000],"木靈使3.png":[50,1429],"木靈使LV20.png":[266,1429],"木靈使Q.png":[243,1430],"木鹿大王.webp":[49,1400],"東海龍王.webp":[31,1400],"楊戩.webp":[49,1400],"機械師3.png":[119,1429],"機械師Q.png":[266,1430],"機關王選手.png":[32,1429],"武器精靈.png":[119,1429],"武士3.png":[32,1427],"武士Q.png":[170,1430],"武鬥家3.png":[41,1429],"武鬥家Q.png":[161,1430],"死神.png":[92,1429],"水狐.png":[119,1429],"水瓶星神_場景.jpg":[48,1500],"水瓶星神_異性版.jpg":[32,1427],"沙悟淨.webp":[121,1400],"沙漠毒蠍.png":[90,1000],"法老王BOSS.png":[50,1429],"流沙眼鏡蛇.png":[90,1000],"淡水BOSS.webp":[219,1000],"滷肉飯BOSS.png":[120,1000],"澎湖BOSS.webp":[70,1000],"火柴人.png":[50,1429],"火法師3.png":[48,1641],"火法師Q.png":[202,1430],"火爆女孩.png":[50,1429],"炎火超少女.png":[174,1429],"炸彈客.png":[50,1429],"煉丹小藥童.webp":[91,1426],"煉金術師3.png":[50,1429],"熔岩巨人.png":[92,1429],"牛魔王.webp":[50,1426],"牡羊星神_場景.jpg":[48,1500],"牡羊星神_異性版.jpg":[50,1429],"狐妖小卒.webp":[91,1426],"獅子星神_場景.jpg":[29,1500],"獅子星神_異性版.jpg":[32,1430],"玉山BOSS.png":[120,1000],"玉藻前.png":[229,1427],"玉藻前3.png":[92,1430],"珍奶BOSS.png":[226,1000],"琵琶精.webp":[69,1426],"甘寧.webp":[49,1400],"生化人.png":[50,1429],"田徑隊員.png":[242,1427],"白象精.webp":[49,1400],"白骨夫人.webp":[49,1402],"白骨小兵.webp":[50,1426],"直笛團員.png":[242,1427],"石磯童子.webp":[50,1426],"祝融夫人.webp":[49,1400],"神偷3.png":[156,1429],"神偷Q.png":[275,1430],"神射手3.png":[50,1333],"神射手Q.png":[238,1430],"神槍手.png":[92,1429],"神秘圖騰.png":[70,1000],"祭司3.png":[41,1429],"祭司Q.png":[261,1430],"科學發明家.png":[50,1429],"程式設計師3.png":[48,1500],"究極神兵.webp":[48,1500],"窮奇.png":[119,1429],"籃球隊員3.png":[119,1779],"籃球隊員Q.png":[202,1430],"紅孩兒.webp":[170,1400],"紅色玩家.png":[92,1429],"綠竹筍小妖.png":[293,1427],"維京海盜船長.png":[50,1429],"網路駭客.png":[92,1429],"美人魚_角角.png":[110,1429],"聖冥法師.png":[41,1429],"聖甲蟲.png":[219,1000],"聖騎士3.png":[69,1429],"聖騎士Q.png":[193,1430],"聞太師.webp":[31,1400],"臭豆腐BOSS.png":[120,1000],"舞者3.png":[50,1429],"舞者Q.png":[216,1430],"茶葉精靈.png":[200,1427],"菇女.png":[202,1429],"華雄.webp":[91,1426],"藍染BOSS.png":[154,1000],"藝天使.png":[50,1429],"藤甲兵.webp":[18,1426],"蘭嶼BOSS.png":[70,1000],"處女星神_場景.jpg":[29,1500],"處女星神_異性版.jpg":[69,1429],"蚩尤.webp":[69,1426],"蜘蛛精.webp":[50,1426],"蠍子精.webp":[72,1400],"許褚.webp":[32,1426],"諸葛亮.webp":[50,1424],"警長3.png":[41,1429],"警長Q.png":[197,1430],"豬八戒.webp":[31,1400],"貂蟬.webp":[32,1426],"貓人族長.png":[50,1429],"貔貅.webp":[68,1424],"超鬼神王.png":[220,1429],"趙公明.webp":[31,1400],"趙雲.webp":[90,1400],"軍師3.png":[50,1429],"軍師Q版.png":[220,1430],"轉學生學霸.png":[156,1429],"連弩兵.webp":[91,1426],"酒吞童子.png":[119,1427],"酒吞童子3.png":[69,1429],"金光聖母.webp":[49,1400],"金牛星神_場景.jpg":[29,1500],"金牛星神_異性版.jpg":[50,1429],"金角大王.webp":[50,1426],"金門BOSS.webp":[70,1000],"銀角大王.webp":[69,1426],"鋁合金暴龍.png":[92,1429],"鍊金術師Q.png":[119,1430],"鐵匠.png":[50,1429],"關羽.webp":[91,1426],"阿蘇火山龍王.png":[50,1429],"阿里山神木BOSS.png":[169,1000],"陰陽師3.png":[122,1460],"陰陽師Q.png":[271,1430],"雅典娜.png":[92,1429],"雉雞精.webp":[50,1426],"雙子星神_場景.jpg":[48,1500],"雙子星神_男生新版.jpg":[50,1429],"雙星姊妹.png":[220,1429],"雙魚星神_場景.jpg":[48,1500],"雙魚星神_異性版.jpg":[49,1400],"雷法師3.png":[69,1429],"雷法師Q.png":[229,1430],"電腦老師.png":[50,1429],"青炎龍王.png":[92,1429],"青獅精.webp":[89,1400],"風術士.png":[50,1429],"高雄BOSS.webp":[70,1000],"魔劍姬_伊莉雅.png":[69,1429],"魔界花使_朱玥.png":[119,1429],"魔禮青.webp":[70,1400],"魔術師.png":[50,1429],"鳳凰.png":[18,1429],"鳳梨酥BOSS.png":[90,1000],"麻吉喵Nico.webp":[348,1429],"黃巾賊.webp":[119,1426],"黃蓋.webp":[121,1400],"黃袍怪.webp":[219,1400],"黑暗球_希望型態.png":[270,1429]};
+/* _LXPS_FACE_FB[圖檔名] = 臉下緣(下巴)在圖高的千分比(臉部偵測+逐張目視修正;只有大頭 Q 版與特寫需要) */
+window._LXPS_FACE_FB = {"5年2班許同學設計 死靈法師.png":303,"BOSS杏花妖.png":362,"Q小劇團員(縮圖).png":527,"Q巫女(縮圖).png":524,"Q幼兒園小孩(縮圖).png":623,"Q弦樂團員(縮圖).png":567,"Q程式設計師(縮圖).png":568,"Q電腦繪圖師(縮圖).png":617,"偷竹筍的哥布林.png":550,"光法師Q.png":490,"冰法師Q.png":532,"凡人Q.png":370,"刺客Q.png":461,"劍士Q.png":388,"動物學家3.png":254,"占星師3.png":350,"占星師Q.png":479,"吟遊詩人Q.png":523,"吸血鬼3.png":330,"吸血鬼Q.png":512,"墾丁BOSS.webp":348,"大天狗3.png":245,"天蠍星神_場景.jpg":423,"天蠍星神_異性版.jpg":413,"學者Q.png":514,"守衛3.png":498,"守衛Q.png":535,"寶箱怪.png":550,"小力Q版.png":500,"小惡魔.png":550,"御雲使_沐雲雪.png":505,"愛喝茶的史萊姆.png":620,"操偶師.png":441,"日月潭BOSS.png":467,"時空法師Q.png":388,"暗法師Q.png":470,"木靈使LV20.png":519,"木靈使Q.png":501,"機械師3.png":379,"機械師Q.png":523,"機關王選手.png":252,"武器精靈.png":370,"武士3.png":318,"武士Q.png":470,"武鬥家Q.png":394,"水瓶星神_場景.jpg":460,"火法師Q.png":432,"火爆女孩.png":339,"炎火超少女.png":372,"煉丹小藥童.webp":377,"煉金術師3.png":316,"玉藻前.png":448,"田徑隊員.png":480,"直笛團員.png":471,"神偷3.png":395,"神偷Q.png":559,"神射手Q.png":432,"祭司3.png":316,"祭司Q.png":494,"程式設計師3.png":275,"籃球隊員Q.png":470,"綠竹筍小妖.png":675,"美人魚_角角.png":314,"聖騎士Q.png":434,"舞者3.png":236,"舞者Q.png":425,"茶葉精靈.png":450,"菇女.png":422,"藍染BOSS.png":443,"警長3.png":265,"警長Q.png":459,"軍師Q版.png":463,"轉學生學霸.png":360,"連弩兵.webp":324,"鍊金術師Q.png":334,"陰陽師Q.png":510,"雙星姊妹.png":519,"雷法師Q.png":530,"電腦老師.png":291,"魔術師.png":278,"鳳梨酥BOSS.png":303};
+window._lxpsFaceFitImg = function(img){
+  try{
+    if(!img) return;
+    var fn = String(img.getAttribute('src') || img.src || '').split('?')[0].split('#')[0].split('/').pop();
+    try{ fn = decodeURIComponent(fn); }catch(_d){}
+    var e = window._LXPS_FACE_T[fn];
+    if(!e) return;
+    var cw = img.clientWidth, ch = img.clientHeight;
+    if(!(cw > 0 && ch > 0)) return;
+    var a = (img.naturalWidth > 0 && img.naturalHeight > 0) ? (img.naturalHeight / img.naturalWidth) : (e[1] / 1000);
+    var k = a * (cw / ch);                       /* 縮放後圖高 ÷ 框高;≤1 表示沒有上下裁切 */
+    if(k <= 1.001) return;
+    var top = Math.max(0, e[0] / 1000 - 0.01);   /* 框上緣 = 頭頂再往上一點 */
+    var fb = window._LXPS_FACE_FB[fn];           /* 大頭 Q 版:臉的下緣(下巴)也要在框裡 ⇒ 框太扁時寧可切掉頭頂頭髮 */
+    if(typeof fb === 'number') top = Math.max(top, fb / 1000 + 0.03 - 1 / k);
+    var p = Math.max(0, Math.min(100, top * k / (k - 1) * 100));
+    img.style.objectPosition = 'center ' + p.toFixed(1) + '%';
+  }catch(_f){}
+};
 function _teamFormAdjustObjPos(name, baseObjPos, where){
+  if(where === 'grid') return _lxpsThumbFaceClamp(name, _teamFormAdjustObjPosRaw(name, baseObjPos, where));
+  return _teamFormAdjustObjPosRaw(name, baseObjPos, where);
+}
+function _teamFormAdjustObjPosRaw(name, baseObjPos, where){
   // ★ v3.15.71 — where 區分:'grid'(編組選單左列縮圖,base 多為 center center)|'preview'(右半部預覽詳情/戰鬥預覽)。未指定→'preview'(沿用舊行為)。
   //   負值=往上(露出更多頭部);grid 與 preview 可給不同 Y 偏移。
   const _ADJ = {
@@ -11072,16 +11127,19 @@ function _renderAdvBossPreview(){
     const w = isBoss ? '280px' : '200px';
     const displayName = b.charmedFromHero ? ('被魅惑的'+b.charmedFromHero) : b.name;
     const objPos = typeof getHeroObjPos==='function' ? getHeroObjPos(b.name) : 'center 20%';
-    return `<div onclick="advShowBossDetail('${b.name}')" style="cursor:pointer;width:${w};flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-      <div style="width:100%;height:${isBoss?'130px':'95px'};border-radius:12px;overflow:hidden;border:${isBoss?'2.5px solid #ff6600':'1.5px solid rgba(232,64,64,0.5)'};background:rgba(20,5,0,0.8);position:relative;">
-        ${imgUrl?`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover;object-position:${objPos};display:block;opacity:0.92;">`:`<span style="font-size:${isBoss?'64px':'48px'};line-height:1;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">${av}</span>`}
+    /* ★ v5.366.0(老師截圖「敵方陣容裁切位置不佳導致看不到臉,甚至 BOSS 名稱」)— 卡片高度跟著區塊(min-height:0)、圖片框可縮(flex:0 1,最高照舊 130/95)、
+       名字永遠留得下(flex-shrink:0);圖片載入後 _lxpsFaceFitImg 依頭頂位置對齊,臉一定在框裡。舊值:外層沒有 height/min-height、圖片框固定 height。 */
+    return `<div onclick="advShowBossDetail('${b.name}')" style="cursor:pointer;width:${w};flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;min-height:0;max-height:100%;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+      <div style="width:100%;height:${isBoss?'130px':'95px'};flex:0 1 ${isBoss?'130px':'95px'};min-height:48px;border-radius:12px;overflow:hidden;border:${isBoss?'2.5px solid #ff6600':'1.5px solid rgba(232,64,64,0.5)'};background:rgba(20,5,0,0.8);position:relative;">
+        ${imgUrl?`<img src="${imgUrl}" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)" style="width:100%;height:100%;object-fit:cover;object-position:${objPos};display:block;opacity:0.92;">`:`<span style="font-size:${isBoss?'64px':'48px'};line-height:1;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)">${av}</span>`}
         <span style="position:absolute;top:6px;right:8px;font-size:20px;">${elemIcon(b.element)}</span>
       </div>
-      <div style="font-size:${isBoss?'22px':'17px'};font-weight:${isBoss?'900':'700'};color:${isBoss?'#ff8844':'#ff9999'};letter-spacing:1px;margin-top:5px;text-align:center;">${displayName}</div>
-      <div style="font-size:14px;color:#888;letter-spacing:1px;margin-top:2px;">點擊查看詳情</div>
+      <div style="flex-shrink:0;font-size:${isBoss?'22px':'17px'};font-weight:${isBoss?'900':'700'};color:${isBoss?'#ff8844':'#ff9999'};letter-spacing:1px;margin-top:5px;text-align:center;line-height:1.2;white-space:nowrap;">${displayName}</div>
+      <div style="flex-shrink:0;font-size:14px;color:#888;letter-spacing:1px;margin-top:2px;">點擊查看詳情</div>
     </div>`;
   }).join('');
   slotsDiv.innerHTML = _switchBtnHtml + _teamHtml;
+  try{ slotsDiv.style.minHeight = '0'; slotsDiv.style.overflow = 'hidden'; }catch(_eSl){}   /* ★ v5.366.0 卡片縮在區塊內,名字不被切 */
 }
 // ★ v5.151.0 — 隱藏路線解鎖判定單一真相(見上方 _getCurrentAdvBossTeam 註解同一根因):
 //   各關卡自己的隱藏路線各自判定解鎖條件，未識別的關卡/路線一律維持保守鎖定(零回歸)。
@@ -11815,7 +11873,7 @@ function focusHero(idx, name){
   })();
   const _bdHtml='';
   const _imgHtml=(typeof HERO_IMGS!=='undefined'&&HERO_IMGS[name])
-    ? '<div class="hf-illus-wrap"><img src="'+HERO_IMGS[name]+'" class="hf-illus" style="object-position:'+_teamFormAdjustObjPos(name,getHeroObjPos(name),'preview')+'" alt="'+name+'" onerror="this.style.display=\'none\'"><div class="hf-illus-particles" id="hf-parts-'+name.charCodeAt(0)+'"></div></div>'
+    ? '<div class="hf-illus-wrap"><img src="'+HERO_IMGS[name]+'" class="hf-illus" style="object-position:'+_teamFormAdjustObjPos(name,getHeroObjPos(name),'preview')+'" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)" alt="'+name+'" onerror="this.style.display=\'none\'"><div class="hf-illus-particles" id="hf-parts-'+name.charCodeAt(0)+'"></div></div>'
     : '<div class="hf-av">'+av+'</div>';
   const _inviteLabel=isPicked?'✔ 離開隊伍':'＋ 邀請加入';
   const _inviteDisabled=full?'disabled':'';
@@ -74429,8 +74487,23 @@ function scaleToViewport(){
   const _vpH = (window.visualViewport && window.visualViewport.height) || window.innerHeight || 1080;
   const _innerW = window.innerWidth  || _vpW;
   const _innerH = window.innerHeight || _vpH;
-  const vw = Math.min(_vpW, _innerW);
-  const vh = Math.min(_vpH, _innerH);
+  let vw = Math.min(_vpW, _innerW);
+  let vh = Math.min(_vpH, _innerH);
+  /* ★ v5.366.0(2026-11-08・老師「PC 版全螢幕上下出現黑色邊條、首頁還要上下捲動」→ 查證是 Ctrl+滾輪放大造成;裁定「改成依遊戲外框實際大小縮放,並禁止整頁捲動」)
+     根因:Ctrl+滾輪(觸控板捏合也是送 Ctrl+滾輪)在 PC 上會做「畫面放大」(visual viewport 變小、版面不變)。舊碼取 min(visualViewport, inner)
+       ⇒ 用放大後「看得到的那一小塊」算縮放,畫布被縮小;外框 #_gc_wrapper(100dvh)仍是原本大小 ⇒ 畫布置中後上下露黑邊,再被放大 ⇒ 看起來上黑邊、下面切掉、還能捲動。
+     修法:PC(主要指標是滑鼠 pointer:fine、非 iPad、寬 >900)一律量外框 #_gc_wrapper 的實際內部大小 = 畫布真正要塞進去的空間,
+       不再看 visualViewport;手機/iPad 維持原本算法一字未改(它們的 visualViewport 處理是 v5.219/v5.301 的既有修正)。
+       另在檔案下方 _lxpsPcNoZoom:PC 上攔 Ctrl+滾輪(不讓畫面被放大、不會再出現捲軸);Ctrl+加減號的瀏覽器縮放不攔(那種縮放會觸發 resize,本函式依外框重算,畫面照樣滿版)。 */
+  var _pcFine = false;
+  try{ _pcFine = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches) && !/iPad|iPhone|iPod/.test(navigator.userAgent) && !(navigator.platform === 'MacIntel' && (navigator.maxTouchPoints||0) > 1); }catch(_pf){}
+  window._lxpsIsPcFine = _pcFine;
+  if(_pcFine){
+    var _wrapEl = document.getElementById('_gc_wrapper');
+    var _ww = _wrapEl ? _wrapEl.clientWidth : 0, _wh = _wrapEl ? _wrapEl.clientHeight : 0;
+    if(_ww > 900 && _wh > 200){ vw = _ww; vh = _wh; }
+    else { vw = _innerW; vh = _innerH; }
+  }
   const _isMobile = vw <= 900;
   const _isiPad = !_isMobile && (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -75624,6 +75697,20 @@ function renderTurnOrderBar(){
 }
 
 // Turn order bar updates via direct call in original updateUI
+
+/* ★ v5.366.0 _lxpsPcNoZoom — PC 攔 Ctrl+滾輪/觸控板捏合(不讓整頁被放大而出現黑邊與捲軸);手機/iPad 不掛。
+   window 層 passive:false 才擋得住 Chrome 的縮放;只看 ctrlKey,一般滾輪(捲動清單、圖鑑)完全不受影響。
+   另:頁面若曾被捲動(放大後拖過),回到 0,0。 */
+(function _lxpsPcNoZoom(){
+  try{
+    var _fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches && !/iPad|iPhone|iPod/.test(navigator.userAgent) && !(navigator.platform === 'MacIntel' && (navigator.maxTouchPoints||0) > 1);
+    if(!_fine) return;
+    window.addEventListener('wheel', function(e){ if(e.ctrlKey && e.cancelable) e.preventDefault(); }, { passive: false });
+    var _fixScroll = function(){ try{ if(window.scrollX || window.scrollY) window.scrollTo(0, 0); if(document.body && (document.body.scrollTop || document.body.scrollLeft)){ document.body.scrollTop = 0; document.body.scrollLeft = 0; } }catch(_fs){} };
+    window.addEventListener('scroll', _fixScroll, { passive: true });
+    window.addEventListener('resize', function(){ setTimeout(_fixScroll, 50); });
+  }catch(_nz){}
+})();
 
 window.addEventListener('resize',scaleToViewport);
 window.addEventListener('orientationchange',function(){
