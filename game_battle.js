@@ -74083,7 +74083,15 @@ function ctrlQuit(){
   document.querySelectorAll('audio').forEach(function(el){
     try{ el.pause(); el.currentTime=0; el.volume=0; }catch(_){}
   });
-  _bgmMuted=true; // prevent auto-restart
+  /* ★ v5.369.0(老師「學生關閉遊戲之後音樂仍然在播放,找不到關閉音樂的地方」)
+     舊版:停完聲音 0.3 秒後的備用流程又 bgmFadeTo('bgm-menu-01') 把首頁音樂放回來,再跳瀏覽器 alert「請手動關閉此分頁」
+       (iPad 主畫面 App 沒有分頁可關)⇒ 學生以為關了遊戲,音樂卻一直響;重開時又因為這個分頁還「活著」被擋在「另一個分頁」畫面。
+     新版:_lxpsMediaGuard.stopAll() 停掉所有聲音(含不在畫面上的故事音效、影片、Web Audio),之後任何播放都靜默(重新整理才解除);
+       清掉「本機剛登入」記號 ⇒ 重開遊戲不會再被擋;先存一次檔;備用流程改成遊戲內「遊戲已結束」畫面(不放音樂、不用 alert),可按「重新開始遊戲」。 */
+  try{ if(typeof gameCloudSave === 'function' && window._gUserId){ Promise.resolve(gameCloudSave()).catch(function(){}); } }catch(_){}
+  try{ if(window._lxpsMediaGuard) window._lxpsMediaGuard.stopAll(); else _bgmMuted=true; }catch(_){ _bgmMuted=true; }
+  try{ localStorage.removeItem('lxps_xtab_signin'); }catch(_){}
+  window._lxpsXtabSelf = null;
   clearTurnTimer();
   // Try to close the window/tab
   try {
@@ -74102,8 +74110,20 @@ function ctrlQuit(){
     if(_gamePaused){ _gamePaused=false; document.getElementById('pause-overlay').style.display='none'; }
     document.getElementById('action-panel').style.display='none';
     document.getElementById('overlay').style.display='flex';
-    bgmFadeTo('bgm-menu-01',400);
-    alert('請手動關閉此分頁。');
+    // ★ v5.369.0 移除 bgmFadeTo('bgm-menu-01',400)(會把音樂放回來)與瀏覽器 alert,改遊戲內「遊戲已結束」畫面
+    try{
+      if(!document.getElementById('lxps-quit-ov')){
+        const _qo = document.createElement('div');
+        _qo.id = 'lxps-quit-ov';
+        _qo.style.cssText = 'position:fixed;inset:0;z-index:2147483500;background:rgba(5,8,20,0.95);display:flex;align-items:center;justify-content:center;padding:4vmin;overflow-y:auto;';
+        _qo.innerHTML = '<div style="max-width:min(92vw,760px);margin:auto 0;background:#1b2340;border:3px solid #ffcc55;border-radius:22px;padding:clamp(18px,3.5vmin,40px);color:#fff;text-align:center;font-family:inherit;">'
+          + '<div style="font-size:clamp(40px,7vmin,80px);">👋</div>'
+          + '<div style="font-size:clamp(22px,3.4vmin,40px);font-weight:900;color:#ffdd77;margin:0.4em 0;">遊戲已結束</div>'
+          + '<div style="font-size:clamp(16px,2.4vmin,28px);line-height:1.6;color:#dfe6ff;">音樂和音效都已經關掉了,可以直接關掉這個畫面。<br>想再玩,按下面的按鈕。</div>'
+          + '<button type="button" onclick="try{location.reload();}catch(e){}" style="margin-top:1em;font-size:clamp(18px,2.6vmin,30px);font-weight:900;padding:0.6em 1.8em;border-radius:14px;border:2px solid #ffcc55;background:#2f7a3a;color:#fff;cursor:pointer;">▶ 重新開始遊戲</button></div>';
+        (document.body || document.documentElement).appendChild(_qo);
+      }
+    }catch(_eQo){}
   }, 300);
   }); // end _customConfirm
 }
@@ -74744,6 +74764,39 @@ function _scaleToViewportRetry(){
   setTimeout(_doScale, 5000);
 }
 window._scaleToViewportRetry = _scaleToViewportRetry;
+
+/* ★ v5.369.0(2026-11-09・老師附 iPad 戰鬥截圖「這畫面跑歪的情況一直出現,請修復」:最左一隻敵人/隊友被切掉、右邊約三成黑)
+   根因:#_gc_wrapper 與 #gc 都是 overflow:hidden,但 overflow:hidden 仍可以被「程式」捲動(scrollIntoView、focus 讓按鈕進入可視範圍、iOS 自動捲動)。
+     #gc 版面寬固定 1920(transform:scale 不改版面大小)⇒ iPad 1180 寬時外框可捲 (1920−1180)/2 = 370px、高度拉高時也可上下捲
+     ⇒ 一被捲動,整塊畫布往左(上)偏、右邊露出外框黑底,而且沒有任何東西會把它捲回來,要重開才好。
+   修法:外框與畫布本來就不該捲動 ⇒ 任何捲動事件(捕獲階段)一出現就歸零;另每秒巡一次、轉向/尺寸改變/回前台也巡(保險:有些捲動不發事件)。
+     只鎖這兩個元素;畫布裡面可捲的清單、彈窗、log 不受影響。 */
+(function _lxpsGcScrollLock(){
+  /* 正在畫布裡打字(輸入框在 #_gc_wrapper 內)時不鎖:那是 iPad 鍵盤防遮擋刻意的捲動(v5.225.0);打完字(focusout)再歸零 */
+  function _typingInside(){
+    try{
+      var a = document.activeElement, w = document.getElementById('_gc_wrapper');
+      if(!a || !w || !w.contains(a)) return false;
+      var tg = (a.tagName || '').toUpperCase();
+      return tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || !!a.isContentEditable;
+    }catch(_){ return false; }
+  }
+  function _fix(el){ try{ if(el && (el.scrollLeft || el.scrollTop) && !_typingInside()){ el.scrollLeft = 0; el.scrollTop = 0; window._lxpsGcScrollFixN = (window._lxpsGcScrollFixN || 0) + 1; } }catch(_){} }
+  function _sweep(){ _fix(document.getElementById('_gc_wrapper')); _fix(document.getElementById('gc')); }
+  window._lxpsGcScrollSweep = _sweep;
+  try{
+    document.addEventListener('scroll', function(e){
+      var t = e && e.target;
+      if(t && (t.id === '_gc_wrapper' || t.id === 'gc')) _fix(t);
+    }, true);
+  }catch(_){}
+  try{ setInterval(_sweep, 1000); }catch(_){}
+  try{ window.addEventListener('resize', _sweep); }catch(_){}
+  try{ window.addEventListener('orientationchange', function(){ setTimeout(_sweep, 300); setTimeout(_sweep, 900); }); }catch(_){}
+  try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(_sweep, 200); }); }catch(_){}
+  try{ document.addEventListener('focusin', function(){ setTimeout(_sweep, 0); setTimeout(_sweep, 400); }, true); }catch(_){}
+  try{ document.addEventListener('focusout', function(){ setTimeout(_sweep, 120); setTimeout(_sweep, 600); }, true); }catch(_){}
+})();
 
 // ====== REST & COUNTDOWN TIMER ======
 var _turnTimerHandle = null;

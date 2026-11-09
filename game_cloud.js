@@ -21051,7 +21051,7 @@
              別的分頁收到「自動還原」而且同一個帳號 2 分鐘內剛在本機某個分頁合法登入過 ⇒ 不登出,只在這個分頁顯示「遊戲已在另一個分頁登入,請關閉這個分頁」並停止(不讀存檔、不寫任何東西)。
            ⚠ 共用平板保護不變:必須是「同一個帳號、2 分鐘內、本機真的有人親自登入」才成立;週一還原上週帳號(幾天前)照樣強制登出。 */
         try{
-          if(!_isAutoRestore && user && user.uid){ localStorage.setItem('lxps_xtab_signin', JSON.stringify({ uid: user.uid, t: Date.now() })); }
+          if(!_isAutoRestore && user && user.uid){ localStorage.setItem('lxps_xtab_signin', JSON.stringify({ uid: user.uid, t: Date.now() })); window._lxpsXtabSelf = { uid: user.uid, t: Date.now() }; }   // ★ v5.369.0 _lxpsXtabSelf:本頁親自登入的記號(分頁互通回應「我還活著」用)
           else if(_isAutoRestore && user && user.uid){
             const _xtOk = function(){ try{ const _xt = JSON.parse(localStorage.getItem('lxps_xtab_signin') || 'null'); return !!(_xt && _xt.uid === user.uid && (Date.now() - (Number(_xt.t) || 0)) < 120000); }catch(_){ return false; } };
             let _xtHit = _xtOk();
@@ -21060,19 +21060,33 @@
               await new Promise(function(r){ setTimeout(r, 2500); });
               _xtHit = _xtOk();
             }
+            /* ★ v5.369.0(老師「學生關閉遊戲後重新開,出現『遊戲已經在另一個分頁打開了』沒辦法玩」)
+               舊版只看「2 分鐘內本機有人登入」就擋,不管那個分頁還在不在(按了結束遊戲、分頁已關、App 已滑掉都照擋 2 分鐘),
+               而且畫面上只有「關閉這個分頁」(iPad/PWA 的 window.close 沒作用)⇒ 學生卡住。
+               新版:本頁剛開機還原的登入 ⇒ 先用 _lxpsMediaGuard.probe 問 1.5 秒「還有沒有活著的分頁在玩這個帳號」,沒人回應就照一般流程(不擋)。
+               本頁開著時才冒出來的登入(= 另一個分頁剛按登入)維持原判斷(那個分頁可能還在載入、還答不出來,不能把它登出)。
+               擋下時畫面改成「▶ 在這裡繼續玩」:叫另一個分頁讓出(停聲音、停存檔、顯示已停止)後重新整理本頁。 */
+            if(_xtHit && window._lxpsRestoredAuthUser && user === window._lxpsRestoredAuthUser && window._lxpsMediaGuard && typeof window._lxpsMediaGuard.probe === 'function'){
+              try{
+                _xtHit = await window._lxpsMediaGuard.probe(user.uid, 1500);
+                if(!_xtHit) _fbDiag('onAuth:2 分鐘內有登入記號,但沒有活著的分頁回應(已結束/已關閉)→ 照一般流程', 'info');
+              }catch(_ePr){}
+            }
             if(_xtHit){
               _fbDiag('onAuth:同一帳號 2 分鐘內剛在本機另一個分頁登入 → 這個分頁不登出(避免把另一個分頁一起登出),改顯示請關閉分頁', 'warn');
               window._lxpsOtherTabOwnsLogin = true;
+              window._lxpsXtabUid = user.uid;
               try{
                 if(!document.getElementById('lxps-xtab-ov')){
                   const _xo = document.createElement('div');
                   _xo.id = 'lxps-xtab-ov';
-                  _xo.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(5,8,20,0.92);display:flex;align-items:center;justify-content:center;padding:4vmin;';
-                  _xo.innerHTML = '<div style="max-width:min(92vw,760px);background:#1b2340;border:3px solid #ffcc55;border-radius:22px;padding:clamp(18px,3.5vmin,40px);color:#fff;text-align:center;font-family:inherit;">'
+                  _xo.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(5,8,20,0.92);display:flex;align-items:center;justify-content:center;padding:4vmin;overflow-y:auto;';
+                  _xo.innerHTML = '<div style="max-width:min(92vw,760px);margin:auto 0;background:#1b2340;border:3px solid #ffcc55;border-radius:22px;padding:clamp(18px,3.5vmin,40px);color:#fff;text-align:center;font-family:inherit;">'
                     + '<div style="font-size:clamp(40px,7vmin,80px);">🗂️</div>'
                     + '<div style="font-size:clamp(22px,3.4vmin,40px);font-weight:900;color:#ffdd77;margin:0.4em 0;">遊戲已經在另一個分頁打開了</div>'
-                    + '<div style="font-size:clamp(16px,2.4vmin,28px);line-height:1.6;color:#dfe6ff;">同時開兩個分頁會互相把帳號登出。<br>請<b>關閉這個分頁</b>,回到另一個分頁繼續玩。</div>'
-                    + '<button onclick="try{window.close();}catch(e){}" style="margin-top:1em;font-size:clamp(17px,2.4vmin,28px);font-weight:900;padding:0.5em 1.6em;border-radius:14px;border:2px solid #ffcc55;background:#3a4a8a;color:#fff;cursor:pointer;">關閉這個分頁</button></div>';
+                    + '<div style="font-size:clamp(16px,2.4vmin,28px);line-height:1.6;color:#dfe6ff;">同時開兩個分頁會互相把帳號登出。<br>按下面的按鈕就能<b>改在這裡玩</b>,另一個分頁會自動停止(音樂也會關掉)。</div>'
+                    + '<button type="button" onclick="try{window._lxpsMediaGuard.takeover(window._lxpsXtabUid);}catch(e){location.reload();}" style="margin-top:1em;font-size:clamp(18px,2.6vmin,30px);font-weight:900;padding:0.6em 1.8em;border-radius:14px;border:2px solid #ffcc55;background:#2f7a3a;color:#fff;cursor:pointer;">▶ 在這裡繼續玩</button>'
+                    + '<div style="margin-top:0.8em;font-size:clamp(14px,2vmin,22px);color:#aab6dd;">也可以回到原本的分頁繼續玩。</div></div>';
                   (document.body || document.documentElement).appendChild(_xo);
                 }
               }catch(_eXo){}
