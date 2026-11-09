@@ -15697,6 +15697,59 @@ function advStartBattle(){
         _bb.style.backgroundPosition = 'center, center 35%';
         _bb.style.backgroundRepeat = 'no-repeat, no-repeat';
         _bb.style.backgroundColor = '#000';
+        // ★ v5.372.0 — 龍王頭部對齊 HP 條下緣(老師:「龍王戰的龍王圖片位置需要調整,目前龍王的頭部都被頂端的 HP 條蓋住了」)
+        //   根因:固定 center 35% 只看圖,不看 HP 條實際多高;HP 條(#wb-adv-battle-overlay)是真實 px、不隨 #gc 縮放,
+        //         iPad/手機上它佔畫布的比例更大;8 張龍王圖頭的位置也各不相同(水龍王角在 5%、火山龍王頭在 30%)。
+        //   修法:每 250ms(沿用下方點擊層同步計時器)量 HP 條下緣 → 換算成 #adv-battle-bg 內座標,
+        //         把該龍王「頭頂」(_WB_HEAD_TOP,圖高比例,依 8 張圖實測)放在 HP 條下方 14 設計 px;
+        //         圖往下移後頂端空出的部分用黑色漸層補。圖大小(高 175%)不變,只改垂直位置;點擊攻擊層不受影響。
+        (function(){
+          const _WB_HEAD_TOP = {
+            '火山炎龍王':0.30, '翠綠森龍王':0.09, '山岳地龍王':0.07, '風暴雷龍王':0.14,
+            '深淵海龍王':0.05, '邪骨暗龍王':0.07, '神聖光龍王':0.25, '星辰幻龍王':0.09
+          };
+          const _sideGrad = 'linear-gradient(to right,'
+            + ' #000 0%, rgba(0,0,0,0.4) 4%, rgba(0,0,0,0) 12%,'
+            + ' rgba(0,0,0,0) 88%, rgba(0,0,0,0.4) 96%, #000 100%)';
+          const _topFade = 'linear-gradient(to bottom, #000 0%, #000 55%, rgba(0,0,0,0) 100%)';
+          _bb.style.backgroundImage = _sideGrad + ',' + _topFade + ',' + `url("${_wbBgUrl}")`;
+          _bb.style.backgroundSize = 'auto 100%, 100% 0px, auto 175%';
+          _bb.style.backgroundPosition = 'center, center top, center 35%';
+          _bb.style.backgroundRepeat = 'no-repeat, no-repeat, no-repeat';
+          _bb.dataset.wbBossBg = _wbBossName;
+          window._wbFitBossBg = function(){
+            try{
+              const _el = document.getElementById('adv-battle-bg');
+              if(!_el || _el.dataset.wbBossBg !== _wbBossName) return;
+              const _st = (typeof window._wbGetAdvStage === 'function') ? window._wbGetAdvStage() : _adventureStage;
+              if(_st !== 'worldboss') return;
+              const _r = _el.getBoundingClientRect();
+              const _boxH = _el.clientHeight;
+              if(!_boxH || !_r.height) return;
+              const _sc = _r.height / _boxH;                  // #gc 縮放倍率(真實 px / 設計 px)
+              const _ov = document.getElementById('wb-adv-battle-overlay');
+              const _ovR = _ov ? _ov.getBoundingClientRect() : null;
+              const _botReal = (_ovR && _ovR.height > 20) ? _ovR.bottom : (_r.top + 190);
+              const _cover = Math.max(0, (_botReal - _r.top) / _sc);   // HP 條蓋到的設計 px
+              const _imgH = _boxH * 1.75;
+              const _ht = _WB_HEAD_TOP[_wbBossName] != null ? _WB_HEAD_TOP[_wbBossName] : 0.10;
+              let _y0 = _cover + 14 - _ht * _imgH;
+              _y0 = Math.min(_y0, _boxH * 0.35);              // 最多往下 35%,身體不整個沉到英雄卡後面
+              _y0 = Math.max(_y0, _boxH - _imgH);             // 圖底不離開畫面底部
+              _y0 = Math.round(_y0);
+              const _fadeH = _y0 > 0 ? (_y0 + 70) : 0;
+              const _pos = 'center, center top, center ' + _y0 + 'px';
+              const _siz = 'auto 100%, 100% ' + _fadeH + 'px, auto 175%';
+              if(_el.style.backgroundPosition !== _pos) _el.style.backgroundPosition = _pos;
+              if(_el.style.backgroundSize !== _siz) _el.style.backgroundSize = _siz;
+            }catch(_){}
+          };
+          window._wbFitBossBg();
+          if(!window._wbFitBossBgResizeBound){
+            window._wbFitBossBgResizeBound = true;
+            window.addEventListener('resize', function(){ try{ if(window._wbFitBossBg) window._wbFitBossBg(); }catch(_){} });
+          }
+        })();
         // ★ FIX 20260517(b) — 龍王整張圖可被點擊當作攻擊目標
         //   注意:#adv-battle-bg CSS 設定為 pointer-events:none,不能直接綁 click,
         //         故另外建立一個透明 click layer 浮在背景之上、UI overlay 之下
@@ -15771,6 +15824,7 @@ function advStartBattle(){
           try{
             const _clkEl = document.getElementById('wb-boss-click-layer');
             if(!_clkEl){ clearInterval(window._wbBossClkSyncTimer); return; }
+            try{ if(typeof window._wbFitBossBg === 'function') window._wbFitBossBg(); }catch(_){}   // ★ v5.372.0 龍王頭對齊 HP 條
             const _gNow = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
             const _pending = _gNow && _gNow.pendingTarget;
             const _needTarget = (_pending === 'enemy');  // 只在等選敵方目標時啟用
