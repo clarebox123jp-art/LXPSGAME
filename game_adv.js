@@ -2655,6 +2655,9 @@ window._kingConsumePendingTickets = async function(){
       try{ await window._waitForCloudReady(15000); }catch(_){}
     }
     if(window._progressLoaded !== true && window._cloudLoadDone !== true) return;
+    /* ★ v5.370.0 — 等命座資料載入(最多 8 秒),下面才看得到「隨機卷換命星」的使用紀錄;還沒載入就這次先不補,下次登入再判斷(寧可晚補,不可多補幽靈券) */
+    try{ for(var _cw = 0; _cw < 16 && window._cstHydrated !== true && window._cstHydrated !== 'empty'; _cw++){ await new Promise(function(r){ setTimeout(r, 500); }); } }catch(_){}
+    if(window._cstHydrated !== true && window._cstHydrated !== 'empty') return;
     // 帳本記的是「應該擁有但可能因保存失敗而遺失」的卷。
     // 安全補法:確保背包中該卷數量 ≥ 帳本未 synced 筆數(只補不超發)。
     // ════════════════════════════════════════════════════════════════
@@ -2700,6 +2703,17 @@ window._kingConsumePendingTickets = async function(){
           _usedAfter = _uHist.filter(function(_h){
             return _h && _h.source === _src && (_h.at || 0) >= _since;
           }).length;
+          /* ★ v5.370.0 — v5.339.0 起 SR/SSR 隨機卷全收錄時可換命星,那條路只寫命座帳本(s 同為 ticket_ssr/ticket_sr),
+             不寫英雄帳本 ⇒ 舊碼看不到這次使用 ⇒ 判「雲端缺券」再補一張(＝幽靈券)。命座帳本的使用一併算進來。 */
+          try{
+            var _cd = window._cstData, _u12 = String(_uid || '').slice(0, 12);
+            if(window._cstHydrated === true && _cd && Array.isArray(_cd.hist)){
+              _usedAfter += _cd.hist.filter(function(_e){
+                return _e && (String(_e.s || '') === _src || String(_e.s || '').indexOf(_src + ':') === 0) && (_e.at || 0) >= _since
+                  && (!_e.uid || String(_e.uid).slice(0, 12) === _u12);
+              }).length;
+            }
+          }catch(_eCst){}
         }
       }catch(_eCnt){ _usedAfter = 0; }
       const _actual = _cur + _usedAfter;
@@ -33887,7 +33901,7 @@ function _nbgPageAcct(cute){
     + B.tip('🚨 ' + b('戰鬥卡住?') + '真的卡死時畫面會自動亮起「🚨 卡死自救」,點一下修復繼續;戰鬥中左側的小按鈕也可以隨時回報問題。', 'rgba(255,120,120,0.6)');
 }
 
-window._showNewbieGuide = function(startPage){
+window._showNewbieGuide = function(startPage, custom){
   if(document.getElementById('_nbg-overlay')) return;
   _newbieGuideInjectCSS();
   const PAGES = [
@@ -33909,6 +33923,10 @@ window._showNewbieGuide = function(startPage){
     { tabLabel:'⑦ 主線劇情', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第7章</span>主線劇情（故事任務）</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">你追著一隻藍鵲跑進步道，一轉身就掉進了異世界——這就是主線劇情的開頭。主線是一段一段的故事，你會遇見夥伴、學會戰鬥、拿到神劍，最後迎戰黑暗球。</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>怎麼進去玩</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">1</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">關卡選擇頁 → 📖 主線劇情</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">會打開「章節選擇」視窗，上面有進度條，看得出你走到第幾章。</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">2</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">按 ▶ 開始冒險 / 繼續冒險</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">中途離開不會白跑，下次會從你停下來的那一段接著播。</div></div></div><div style="display:flex;gap:12px;align-items:flex-start;padding:10px 14px;background:rgba(10,25,60,0.7);border:1.5px solid rgba(80,160,255,0.25);border-radius:10px;"><div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(60,100,200,0.75);border:1.5px solid #4488ff;color:#aaccff;font-weight:900;display:flex;align-items:center;justify-content:center;">3</div><div><div style="font-size:clamp(15px,1.8vw,22px);font-weight:800;color:#88ddff;margin-bottom:3px;">打完的章節會變 ✅，可以 🔁 回顧劇情</div><div style="font-size:clamp(13px,1.5vw,19px);color:#8899aa;line-height:1.5;">回顧只是重看故事，獎勵不會再發一次，也不會影響你的進度。</div></div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>對白畫面怎麼操作</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;"><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">▼ 點畫面 / 下一句 ▶</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">字還在跑的時候點一下＝整句話立刻顯示完；再點一次才換下一句。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">◀ 上一句</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">看太快漏掉了？按上一句可以往回看，隨時補讀。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">⏭ 跳過這一段</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">只快轉「目前這一段對白」，戰鬥、夥伴加入、獎勵都不會被跳過。</div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>會發生什麼事 &amp; 有什麼獎勵</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">捏出你的模樣</b>：序章會打開造型工房，做出屬於你的主角（詳見下一章）<br>・<b style="color:#ffcc88;">夥伴加入</b>：每一章都會有角色加入隊伍，跳出大卡介紹他的技能與極限爆發<br>・<b style="color:#ffcc88;">劇情戰鬥與教學</b>：第一章河堤初戰會帶你認識回合、能量與大絕招<br>・<b style="color:#ffcc88;">神劍至寶</b>：第五章擊敗臭氣魔王後，神劍至寶現世<br>・<b style="color:#ffcc88;">主角覺醒</b>：第六章對決黑暗球，主角由 R 覺醒成 SSR，圖鑑會多一張新卡，主角也能編進隊伍上場戰鬥<br>・<b style="color:#ffcc88;">墜落的星空</b>：第七章一路教你英魂陣型、裝備、好友支援、命星和世界 BOSS，還會送一枚 🏅「獎牌」裝備；<b style="color:#ffd98a;">看完第七章就解鎖英魂陣型</b><br>・<b style="color:#ffcc88;">主角命星</b>：主角不在召喚池裡，命星只能靠主線拿——第三、六、七章各送 1 顆，覺醒後到命座星圖點亮<br>・<b style="color:#ffcc88;">裝備與命星也有用</b>：主線劇情戰會套用你幫英雄穿的裝備和點亮的命星<br>・<b style="color:#ffcc88;">章節獎勵</b>：每章通關固定給 🔮 召喚水晶 ×5 ＋ 💰 知識幣 20,000，綁定帳號、一輩子只領一次</div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">💡 <b>小提醒：</b>章節要照順序玩，前一章沒完成，下一章會是 🔒；還沒解鎖的章節標題會顯示「？？？」，不會先爆雷給你。目前故事走到第七章，<b style="color:#ffd98a;">第八章還在製作中（待續…）</b>，敬請期待！</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第7章</span>主線故事</div><div class="nbg-desc">你掉進異世界了！跟著故事走，認識夥伴、變強、打大魔王。</div><div class="nbg-step-list"><div class="nbg-step"><div class="nbg-step-num">1</div><div class="nbg-step-body"><div class="nbg-step-title">關卡頁按 📖 主線劇情</div><div class="nbg-step-desc">會看到每一章，還有進度條</div></div></div><div class="nbg-step"><div class="nbg-step-num">2</div><div class="nbg-step-body"><div class="nbg-step-title">按 ▶ 開始玩</div><div class="nbg-step-desc">中途走掉沒關係，下次接著看</div></div></div><div class="nbg-step"><div class="nbg-step-num">3</div><div class="nbg-step-body"><div class="nbg-step-title">看完會變 ✅，可以重看</div><div class="nbg-step-desc">重看不會再拿一次獎勵</div></div></div></div><div class="nbg-card-grid"><div class="nbg-card"><div class="nbg-card-icon">▼</div><div class="nbg-card-title">點一下</div><div class="nbg-card-desc">字跑一半＝先跑完；再點才換下一句</div></div><div class="nbg-card"><div class="nbg-card-icon">◀</div><div class="nbg-card-title">上一句</div><div class="nbg-card-desc">看太快可以往回看</div></div><div class="nbg-card"><div class="nbg-card-icon">⏭</div><div class="nbg-card-title">跳過這一段</div><div class="nbg-card-desc">只快轉這段話，獎勵不會少</div></div></div><div class="nbg-tip">🎁 每玩完一章：🔮 召喚水晶 ×5 ＋ 💰 知識幣 20,000（一輩子只給一次）</div><div class="nbg-tip">🌠 第六章主角會覺醒，可以上場打仗！第三、六、七章各送主角 1 顆命星。</div><div class="nbg-tip">🏫 第七章會教你英魂陣型、裝備、借朋友的英雄、命星和世界 BOSS，看完就能用英魂陣型！</div><div class="nbg-tip">💡 要照順序玩喔！第八章還在做，敬請期待！</div>'; }},
     { tabLabel:'⑧ 我的主角', render:function(){ return '<div style="font-size:clamp(22px,2.6vw,32px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">第8章</span>我的主角・造型工房</div><div style="font-size:clamp(16px,1.8vw,23px);color:#cce8ee;line-height:1.75;margin-bottom:16px;">在這個世界裡，「你」也是一位角色。造型工房就像紙娃娃：一層一層把體型、髮型、衣服、配件疊上去，做出獨一無二的自己，然後印成一張冒險者名片。</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>入口在哪裡</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・英雄圖鑑頁的 <b style="color:#ffcc88;">👤 主角造型</b> 按鈕，隨時都能進去改<br>・主線序章第一次穿越時，也會自動打開造型工房請你「捏出自己的樣子」</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>可以調整什麼</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;"><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">🧍 體型與膚色</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">少年／少女／男童／女童四種體型，膚色色票任你挑。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">💇 髮型・髮色・瞳色</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">換髮型是「整顆頭」一起換；髮色與瞳色可以另外調。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">👕 整套裝扮＋配色</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">制服、和服、法師袍……選了整套會連髮型一起換；按「預設裝扮（素體）」就整個回到原本的樣子。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">🎩 頭戴・眼鏡・嘴巴小物</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">帽子、眼鏡、棒棒糖、口罩……還能用方向鍵微調位置與大小。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">🖼️ 卡片背景</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">純白底、左右漸層色，或直接放一張你打過的關卡風景圖當背景。</div></div><div style="background:rgba(10,25,60,0.8);border:1.5px solid rgba(80,160,255,0.35);border-radius:11px;padding:13px 14px;"><div style="font-size:clamp(15px,1.7vw,21px);font-weight:800;color:#88ddff;margin-bottom:4px;">💬 座右銘</div><div style="font-size:clamp(13px,1.5vw,18px);color:#9fb6cc;line-height:1.55;">從語錄清單挑一句放在名片上（校園安全考量，不開放自由輸入）。</div></div></div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>四顆重要按鈕</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">🔍 放大／🔎 縮小</b>：左邊預覽在「看全身」與「看特寫」之間切換<br>・<b style="color:#ffcc88;">🎲 隨機組合</b>：一鍵亂數搭配，沒靈感時很好用<br>・<b style="color:#ffcc88;">↩️ 重來</b>：全部回到預設造型（會先問你一次）<br>・<b style="color:#ffcc88;">✅ 確認儲存</b>：<b style="color:#ff9a9a;">一定要按這顆才會存起來</b>，直接關掉視窗不會保存</div><div style="font-size:clamp(18px,2vw,26px);font-weight:900;color:#66ccff;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(100,180,255,0.25);"><span style="font-size:0.65em;color:#3d7799;margin-right:6px;">▶</span>做好之後會用在哪</div><div style="font-size:clamp(14px,1.6vw,20px);color:#cce8ee;line-height:1.8;margin-bottom:14px;">・<b style="color:#ffcc88;">📇 冒險者名片</b>：立繪＋暱稱＋稱號「異界旅人」＋座右銘，好友名單點 📇 就看得到你<br>・<b style="color:#ffcc88;">英雄圖鑑的「主角」卡</b>：圖鑑裡那張主角，用的就是你捏的臉<br>・<b style="color:#ffcc88;">主線劇情</b>：故事裡出現的主角立繪，也會跟著你的造型變</div><div style="background:rgba(20,50,100,0.5);border-left:3px solid rgba(100,200,255,0.55);border-radius:0 9px 9px 0;padding:10px 14px;font-size:clamp(13px,1.5vw,19px);color:#bbccd8;line-height:1.6;margin-bottom:14px;">💡 <b>小提醒：</b>有 🔒 的款式表示還沒解鎖，點下去會先告訴你取得方法（打贏 BOSS、通關某一章、鬥技場兌換…）。沒解鎖的款式可以先「試穿」看看，但按確認儲存時會被脫下來，等真的拿到才能永久穿上。</div>'; }, renderSimple:function(){ return '<div class="nbg-chapter-title"><span>第8章</span>我的主角</div><div class="nbg-desc">像玩紙娃娃一樣，做出你自己的角色！</div><div class="nbg-card-grid"><div class="nbg-card"><div class="nbg-card-icon">🧍</div><div class="nbg-card-title">體型膚色</div><div class="nbg-card-desc">四種身體，膚色自己選</div></div><div class="nbg-card"><div class="nbg-card-icon">💇</div><div class="nbg-card-title">髮型髮色</div><div class="nbg-card-desc">換頭髮、換顏色</div></div><div class="nbg-card"><div class="nbg-card-icon">👕</div><div class="nbg-card-title">整套衣服</div><div class="nbg-card-desc">制服、和服…還能換配色</div></div><div class="nbg-card"><div class="nbg-card-icon">🎩</div><div class="nbg-card-title">帽子眼鏡</div><div class="nbg-card-desc">還有嘴巴小物，可以調位置</div></div><div class="nbg-card"><div class="nbg-card-icon">🖼️</div><div class="nbg-card-title">卡片背景</div><div class="nbg-card-desc">白底、漸層，或放風景圖</div></div><div class="nbg-card"><div class="nbg-card-icon">💬</div><div class="nbg-card-title">座右銘</div><div class="nbg-card-desc">挑一句話放在名片上</div></div></div><div class="nbg-tip">📍 進去的地方：英雄圖鑑的 👤 主角造型</div><div class="nbg-tip">✅ <b>打扮好一定要按「確認儲存」</b>，直接關掉不會存喔！</div><div class="nbg-tip">📇 做好的樣子會出現在你的名片、圖鑑的主角卡和故事裡。</div><div class="nbg-tip">🔒 有鎖的款式可以先試穿，真的拿到才能一直穿著。</div>'; }}
   ];
+  /* ★ v5.370.0(老師「教學指引改成四種玩法入口的簡介」)— custom = { pages, title, mode } ⇒ 換成荒島/小遊戲/創藝工坊的指引(同一個外框與分頁);
+     沒有 custom = 故事冒險原本的指引。最後一頁底部改成「關閉指引」＋「▶ 開始遊玩○○」(window._nbgMode)。 */
+  window._nbgMode = (custom && custom.mode) ? custom.mode : window._lxpsGuideMode('adv');
+  if(custom && custom.pages){ PAGES.length = 0; custom.pages.forEach(function(p){ PAGES.push(p); }); }
   /* ★★ v4.86.0 章節總數改動態(_nbgTotal):依 _MAINSTORY_ADMIN_ONLY / _AVATAR_ADMIN_ONLY 決定是否顯示這兩章;
    *   兩個開關現值皆為 false(已全員開放)⇒ 兩章對所有學生顯示。 */
   try{
@@ -33944,7 +33962,7 @@ window._showNewbieGuide = function(startPage){
   var overlay = document.createElement('div');
   overlay.id = '_nbg-overlay';
   overlay.innerHTML = '<div id="_nbg-box">'
-    + '<div id="_nbg-header"><div id="_nbg-header-title">📚 遊戲指引</div>'
+    + '<div id="_nbg-header"><div id="_nbg-header-title">' + ((custom && custom.title) ? custom.title : '📚 遊戲指引') + '</div>'
     + '<button id="_nbg-close-btn" onclick="document.getElementById(\'_nbg-overlay\').remove()">✕</button></div>'
     + '<div id="_nbg-tabs">'
     + PAGES.map(function(p,i){ return '<button class="nbg-tab' + (i===_curPage?' active':'') + '" onclick="_nbgGoto(' + i + ')">' + p.tabLabel + '</button>'; }).join('')
@@ -33955,7 +33973,10 @@ window._showNewbieGuide = function(startPage){
     + '<div id="_nbg-footer">'
     + '<button class="nbg-nav-btn nbg-nav-prev" id="_nbg-prev" onclick="_nbgGoto(window._nbgCur-1)">◀ 上一章</button>'
     + '<span id="_nbg-progress">' + (_curPage+1) + ' / ' + PAGES.length + '</span>'
+    + '<span style="display:flex;gap:10px;align-items:center;">'
+    + '<button class="nbg-nav-btn nbg-nav-prev" id="_nbg-closeguide" style="display:none;" onclick="var o=document.getElementById(\'_nbg-overlay\');if(o)o.remove();">✕ 關閉指引</button>'   /* ★ v5.370.0 最後一頁才出現 */
     + '<button class="nbg-nav-btn nbg-nav-next" id="_nbg-next" onclick="_nbgGoto(window._nbgCur+1)">下一章 ▶</button>'
+    + '</span>'
     + '</div></div>';
   document.body.appendChild(overlay);
   window._nbgCur = _curPage;
@@ -33984,11 +34005,14 @@ window._nbgUpdateFooter = function(){
   var next=document.getElementById('_nbg-next');
   if(prog) prog.textContent=(n+1)+' / '+TOTAL;
   if(prev) prev.style.visibility=n===0?'hidden':'visible';
+  var cg=document.getElementById('_nbg-closeguide');   /* ★ v5.370.0 最後一頁:「✕ 關閉指引」＋「▶ 開始遊玩○○」 */
+  if(cg) cg.style.display=(n===TOTAL-1)?'':'none';
   if(next){
     if(n===TOTAL-1){
-      next.textContent='✅ 開始冒險！';
+      var md=window._nbgMode||window._lxpsGuideMode('adv');
+      next.textContent='▶ 開始遊玩'+md.name;
       next.className='nbg-nav-btn nbg-nav-close';
-      next.onclick=function(){ document.getElementById('_nbg-overlay').remove(); };
+      next.onclick=function(){ var o=document.getElementById('_nbg-overlay'); if(o) o.remove(); try{ md.start(); }catch(e){ console.warn('[遊戲指引] 開始遊玩', e); } };
     } else {
       next.textContent='下一章 ▶';
       next.className='nbg-nav-btn nbg-nav-next';
@@ -34005,6 +34029,276 @@ window._maybeShowNewbieGuide = function(){
       window._showNewbieGuide(0);
     },2000);
   }catch(_){}
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// ★ v5.370.0(2026-11-09・老師「首頁的遊戲介紹與說明書內的教學指引改成故事冒險、荒島求生、小遊戲、創藝工坊等四種玩法入口的簡介。
+//   依照四個圖文並茂的按鈕點進去看。原有的教學指引屬於故事冒險。同樣格式補做荒島、小遊戲、藝術村的指引。
+//   每個簡介的最後一頁底部新增「關閉指引」和「開始遊玩OOOO」」)
+//   ・window._lxpsGuideHub():四顆圖文按鈕(2×2,手機直式 1 欄)→ 各自的指引。
+//   ・故事冒險 = 原本的 _showNewbieGuide;其餘三種用同一個外框(_showNewbieGuide(0, {pages,title,mode}))。
+//   ・「▶ 開始遊玩」= 按首頁那顆入口(#adventure-btn/#island-btn/#minigame-btn/#art-btn),登入確認、開放設定、休息排程全照入口原本的規則;
+//     故事冒險若已經在冒險畫面裡(從「帳號存檔→遊戲指引」打開的)就只關掉指引。
+//   ・內容雙版(簡單風/精緻風,鐵律 1.232),純顯示、零寫入。
+// ══════════════════════════════════════════════════════════════════════
+window._lxpsGuideMode = function(k){
+  var press = function(id){ return function(){
+    try{ var gi = document.getElementById('game-info-modal'); if(gi){ gi.style.display = 'none'; document.documentElement.style.touchAction = ''; document.body.style.touchAction = ''; } }catch(_){}
+    var b = document.getElementById(id); if(b) b.click(); }; };
+  var M = {
+    adv:  { name:'故事冒險', start:function(){
+            var ov = document.getElementById('adventure-overlay'), inAdv = false;
+            try{ inAdv = !!(ov && window.getComputedStyle(ov).display !== 'none' && ov.offsetParent !== null); }catch(_){}
+            if(!inAdv) press('adventure-btn')(); } },
+    island: { name:'荒島求生', start:press('island-btn') },
+    mg:     { name:'小遊戲',   start:press('minigame-btn') },
+    art:    { name:'創藝工坊', start:press('art-btn') }
+  };
+  return M[k] || M.adv;
+};
+function _lxpsGuideCute(){ return (typeof _artStyle !== 'undefined' && _artStyle === 'cute'); }
+
+/* ── 🏝 荒島求生 ── */
+function _lxpsGuideIsland(){
+  var B = _nbgB, b = B.b, P = [];
+  P.push({ tabLabel:'認識荒島', renderSimple:function(){ return B.h('荒島求生是什麼?')
+      + B.p('你漂流到一座無人島!要' + b('採集材料、蓋營地、交動物朋友、打倒魔物') + ',一天一天把島變成自己的家,最後造一艘帆船出海!')
+      + B.items([
+          ['🔐', '要登入嗎?', '不登入也能玩,進度只存在這台平板;登入的話進度存在雲端,換平板也能接著玩。'],
+          ['☀️', '一天一天過', '每天有 ⚡ 體力(AP),做事情會用掉,用掉一半以上就天黑、可以回營地睡覺。'],
+          ['📜', '跟著故事走', '島上有劇情任務,一章一章帶你認識新地方。']
+        ], 220); },
+    render:function(){ return B.h('荒島求生')
+      + B.p('一場以' + b('台灣動植物') + '為主題的生存冒險:從沙灘醒來開始,採集、製作、建造營地、結識夥伴、擊退魔物與頭目,最後打造帆船航向外島。')
+      + B.items([
+          ['🔐', '進度存放', '免登入可直接遊玩,進度只留在本機;登入帳號後雲端存檔、可跨裝置接續。訪客的島不會匯入帳號。'],
+          ['☀️', '日夜與體力', '每天有固定 ⚡ AP,行動會消耗;當天用掉一半以上即入夜,可回營地就寢換日。'],
+          ['📜', '劇情主線', '依章節推進的故事任務,逐步開放新區域與新系統。']
+        ]); } });
+  P.push({ tabLabel:'探索與採集', renderSimple:function(){ return B.h('到處探索')
+      + B.steps([
+          ['打開大地圖,點一個區域', '先看區域介紹:有什麼材料、魔物、頭目和寶藏,再按「前往」'],
+          ['在野外走一走', '點地面就走過去,點兩下會跑步;遇到窄窄的小溪可以跳過去'],
+          ['靠近資源點就能採集', '砍樹、挖礦、釣魚會有小遊戲,做得好材料品質更高!']
+        ])
+      + B.tip('🧭 做出羅盤以後還能' + b('尋寶') + ':靠近寶藏會發出聲音、星星會變色,挖到才扣 1 點體力喔!'); },
+    render:function(){ return B.h('探索與採集')
+      + B.steps([
+          ['大地圖選區域', '點區域會先出現資訊卡(簡介、可得資源、魔物、頭目狀態、寶藏、訓練),確認後按「前往」。'],
+          ['野外移動', '點地面行走、連點兩下奔跑;可跳過窄溪與矮障礙;腳程越高移動越快、遇敵越少。'],
+          ['採集', '伐木、採礦、捕魚等都有操作小遊戲,表現越好材料品質(★)越高;知識題也可能出現在採集中。']
+        ])
+      + B.tip('🧭 解鎖洞窟後可製作羅盤進行尋寶:依距離提示音與星星顏色尋找寶藏,挖到才消耗 1 AP;每張地圖都有普通與稀有寶藏。'); } });
+  P.push({ tabLabel:'營地與製作', renderSimple:function(){ return B.h('蓋你的營地')
+      + B.items([
+          ['🔨', '製作', '用材料做工具、裝備、料理和裝飾。'],
+          ['🏕', '蓋設施', '營火、倉庫、農田、畜欄…設施越多,島上能做的事越多!'],
+          ['🪴', '擺裝飾', '新拿到的東西會先放在「營地造景」(NEW!),按「開始布置」再拖到營地喜歡的位置。'],
+          ['🦦', '阿獺商店', '可以買賣東西;「今日裝飾」每 12 小時換一次,還能送給好友!']
+        ], 220)
+      + B.tip('⚠️ 颱風和夜襲會讓設施壞掉,記得修理喔!'); },
+    render:function(){ return B.h('營地與製作')
+      + B.items([
+          ['🔨', '製作台', '以材料與貝幣製作工具、裝備、料理與裝飾;外島材料可做進階設施、裝飾與工具。'],
+          ['🏕', '營地設施', '營火、倉庫、農田、畜欄、水道等;設施帶來每日產出與新功能,營地等級提升可蓋更多。'],
+          ['🪴', '營地造景', '新取得的設施與裝飾先進「🏕 營地造景」(NEW!),按「開始布置」放到暫放區再拖進營地;「📍 重設位置」可救回拖出畫面的物件。'],
+          ['🦦', '阿獺雜貨鋪', '買賣物品;「今日裝飾」每現實 12 小時更新、每人不同,可送給好友。']
+        ])
+      + B.tip('⚠️ 設施有耐久度:低於 50% 會降低舒適度,20% 以下無法使用,歸零就要重建。颱風與夜襲都會造成損壞。'); } });
+  P.push({ tabLabel:'戰鬥與夥伴', renderSimple:function(){ return B.h('戰鬥和動物夥伴')
+      + B.items([
+          ['⚔️', '回合制戰鬥', '遇到魔物會開打,用攻擊、技能、道具,還可以「智取」:看天氣和地形選對方法!'],
+          ['🐾', '動物夥伴', '收服台灣的動物當夥伴,帶他們一起探險,每隻都有自己的技能。'],
+          ['🌟', '天賦星盤', '升級拿到點數,沿著線一顆一顆點亮,讓自己變強。'],
+          ['💪', '四種能力', '力氣、巧手、巧思、腳程,做不同的事會練不同的能力。']
+        ], 220)
+      + B.tip('⏸ 戰鬥中可以按「存檔」先離開,下次回來從同一回合接著打!'); },
+    render:function(){ return B.h('戰鬥與夥伴')
+      + B.items([
+          ['⚔️', '回合制戰鬥', '攻擊、技能、道具與「智取」:依天氣、晝夜與環境選擇正確措施造成傷害,同一目標重複智取效果遞減;威力取決於「巧思」。'],
+          ['🐾', '夥伴', '收服台灣動物成為夥伴並編入探險隊;每位夥伴有獨特技能,親密度靠每天餵食料理提升。'],
+          ['🌟', '天賦星盤', '升級獲得天賦點,須沿連線依序點亮;收益加總顯示。'],
+          ['💪', '四項能力', '力氣、巧手(捕魚等)、巧思(馴養、智取)、腳程(奔跑、逃脫);各自依對應行動成長。']
+        ])
+      + B.tip('⏸ 戰鬥中可按「⏸ 存檔」離開,下次進荒島(換平板也可)從同一回合繼續;頭目可重複挑戰,第二次起擊敗可強化頭目飾品。'); } });
+  P.push({ tabLabel:'好友與出海', renderSimple:function(){ return B.h('朋友和出海')
+      + B.items([
+          ['🤝', '加好友', '用好友碼加朋友,可以去拜訪他的島、留言、送禮物,晚上被魔物偷襲時也能互相幫忙!'],
+          ['⛵', '出海探險', '造好帆船就能出海,外島有 4 座、各有島主,每天可以出海一次。'],
+          ['📝', '考試複習', '「☰ 更多」打開考試複習,採集和釣魚的題目會變成你課本的範圍!']
+        ], 220); },
+    render:function(){ return B.h('好友與出海')
+      + B.items([
+          ['🤝', '好友', '好友碼加好友:拜訪好友島、留言板(每天一次,可附禮)、夜襲支援;協助好友時帶自己的天賦與技能。'],
+          ['⛵', '外島', '帆船完成後可出海:4 座外島各 5 區與島主;出海/回航各 3 AP、每天一次,可在外島露宿(有專屬不良狀態)。'],
+          ['📝', '考試複習', '☰ 更多 →「📝 考試複習」選範圍後,採集、釣魚的知識題改出課本範圍。']
+        ]); } });
+  return P;
+}
+
+/* ── 🎮 小遊戲 ── */
+function _lxpsGuideMg(){
+  var B = _nbgB, b = B.b, P = [];
+  P.push({ tabLabel:'認識小遊戲', renderSimple:function(){ return B.h('小遊戲是什麼?')
+      + B.p('一關一關的' + b('學習小遊戲') + ':天氣、岩石、台灣地圖、磁鐵、諺語、聽音樂、算數、迷宮…一邊玩一邊複習課本!')
+      + B.items([
+          ['🔐', '要登入嗎?', '不登入也能玩!登入的話成績會記下來,還能上排行榜。'],
+          ['⏱', '一關幾分鐘', '下課時間就能玩一關,很適合課堂複習。']
+        ], 220); },
+    render:function(){ return B.h('小遊戲(迷你遊戲模式)')
+      + B.p('十多種玩法的學習關卡:天氣與岩石分類、台灣特有種、熱的傳播、台灣地圖、磁鐵、步驟排序、諺語配對、聽音坊、算數射擊、元素消消樂、迷宮、科學小博士…,每關數分鐘,適合課堂與下課零碎時間。')
+      + B.items([
+          ['🔐', '免登入', '不登入即可遊玩;登入後成績上雲並參加每週排行榜。'],
+          ['📚', '題庫', '題目對應國小自然、社會與語文單元,另有共用的考試複習題庫。']
+        ]); } });
+  P.push({ tabLabel:'怎麼玩', renderSimple:function(){ return B.h('開始玩一關')
+      + B.steps([
+          ['選一個小遊戲', '每一關上面寫著要學什麼'],
+          ['挑一位英雄', '每位英雄有自己的天賦(像多一次機會、時間變慢),「⭐本關推薦」的英雄最適合這關!'],
+          ['答題闖關', '英雄陪你一起闖關,爆發條滿了就能放大絕招幫忙!']
+        ])
+      + B.tip('❓ 每一關都有「怎麼玩」說明,忘記時可以再打開看。'); },
+    render:function(){ return B.h('遊玩方式')
+      + B.steps([
+          ['選擇關卡', '大廳列出所有小遊戲,卡片標示學習主題。'],
+          ['選擇英雄', '小遊戲收錄 SSR 英雄,各有專屬天賦(如額外機會、倒數變慢、連錯救援);標「⭐本關推薦」者與該關最契合。'],
+          ['作答闖關', '英雄隨你作答出戰,爆發條集滿可施放極限爆發(每位英雄的第二效果不同),協助通過難關。']
+        ])
+      + B.tip('❓ 各關卡都有遊玩說明可隨時開啟。'); } });
+  P.push({ tabLabel:'複習與排行', renderSimple:function(){ return B.h('複習和排行榜')
+      + B.items([
+          ['📖', '課堂專注複習', '老師上課用的模式,可以選「📝 課本考試範圍」,題目照你的課本出!'],
+          ['📝', '考試複習大挑戰', '選版本、年級、單元,把段考範圍練熟!'],
+          ['🏆', '每週排行榜', '登入玩的成績會上排行榜,每週一結算,前幾名有獎勵!']
+        ], 220); },
+    render:function(){ return B.h('複習與排行')
+      + B.items([
+          ['📖', '課堂專注複習', '老師課堂使用;可選「📝 課本考試範圍」(版本/年級冊/單元),能出選擇題的關卡優先出考試題。'],
+          ['📝', '考試複習大挑戰', '第 16 關,開始前選版本、冊別與單元,與冒險模式共用同一份題庫。'],
+          ['🏆', '每週排行榜', '登入遊玩的成績列入每週排行,週一結算發獎;答對率也有排行。']
+        ]); } });
+  return P;
+}
+
+/* ── 🎨 創藝工坊(藝術村) ── */
+function _lxpsGuideArt(){
+  var B = _nbgB, b = B.b, P = [];
+  P.push({ tabLabel:'認識藝術村', renderSimple:function(){ return B.h('創藝工坊是什麼?')
+      + B.p('藝術村的顏色被「褪色魔」偷走了,整個村子變成黑白!到' + b('八座工坊') + '學畫畫的祕密,把顏色一個一個找回來!')
+      + B.chips([
+          ['✏️', '素描教室', '明暗、排線', '#c8c8d8'], ['🌈', '色彩實驗室', '調色、色相環', '#ff9a7a'],
+          ['📐', '美感原則館', '十大美感原則', '#8fc8ff'], ['🖼', '構圖畫室', '三分法、對稱', '#c8a0ff'],
+          ['🖌', '媒材工作室', '水彩、蠟筆、版畫', '#ffd27a'], ['🔍', '鑑賞迴廊', '看畫四步驟', '#7fe0c8'],
+          ['🏛', '藝術史長廊', '從山洞到現代', '#e0b48a'], ['🎭', '大師畫廊', '認識大畫家', '#ff9ac8']
+        ]); },
+    render:function(){ return B.h('創藝工坊・藝術村')
+      + B.p('以視覺藝術為主題的闖關與創作:藝術村的色彩被褪色魔奪走,玩家在' + b('八座工坊') + '學習素描、色彩、美感原則、構圖、媒材、鑑賞、藝術史與大師風格,讓村子重新恢復色彩。')
+      + B.chips([
+          ['✏️', '素描教室', '明度、排線、五調子', '#c8c8d8'], ['🌈', '色彩實驗室', '混色、色相環、色彩心理', '#ff9a7a'],
+          ['📐', '美感原則館', '十大形式原理', '#8fc8ff'], ['🖼', '構圖畫室', '三分法、對稱、透視', '#c8a0ff'],
+          ['🖌', '媒材工作室', '媒材特性與流程', '#ffd27a'], ['🔍', '鑑賞迴廊', '費德曼四步驟', '#7fe0c8'],
+          ['🏛', '藝術史長廊', '時代與流派、台灣美術', '#e0b48a'], ['🎭', '大師畫廊', '風格與藝術家', '#ff9ac8']
+        ]); } });
+  P.push({ tabLabel:'闖關與星星', renderSimple:function(){ return B.h('闖關拿星星')
+      + B.steps([
+          ['在藝術村地圖點一座工坊', '每座工坊有好幾關,前一座過 2 關就會打開下一座'],
+          ['玩關卡', '拖曳排序、調顏料、找不同、擺構圖、看圖判斷…還有要自己畫的「畫畫題」!'],
+          ['拿星星和資源', '錯越少星星越多;星星會變成顏料、靈感、畫材']
+        ])
+      + B.tip('🔁 題目每次都會換!重玩可以拿更多星星。忘記怎麼玩就按右上「❓ 怎麼玩」。'); },
+    render:function(){ return B.h('闖關與星等')
+      + B.steps([
+          ['選擇工坊', '藝術村地圖上點選工坊入口;前一座工坊通過 2 關即解鎖下一座。'],
+          ['關卡玩法', '拖曳排序、混色、色相環、貼名牌、光影判斷、找不同、構圖擺放、配對、看圖判斷,以及交件後系統評分的畫畫題(評分標準事先公開)。'],
+          ['星等與資源', '依失誤次數給 1~3 星,星數換算為顏料、靈感、畫材(依各關最佳成績計算,重玩可提升)。']
+        ])
+      + B.tip('🔁 題庫每次隨機抽題、選項重新組合;每關右上「❓ 怎麼玩」可隨時查看。'); } });
+  P.push({ tabLabel:'畫室與建造', renderSimple:function(){ return B.h('畫畫和蓋村子')
+      + B.items([
+          ['🎨', '我的畫室', '像 Procreate 一樣的畫布:有鉛筆、水彩、噴槍、圖層、復原,畫好的作品會自動存到雲端。'],
+          ['🏗', '建造', '用資源修好工坊、加裝飾,村子會一點一點變回彩色!'],
+          ['📅', '今日挑戰', '每天 3 個小任務,完成有額外獎勵。'],
+          ['📒', '收藏冊', '工坊全部 3 星可以拿大師卡,還有貼紙和特殊筆刷!']
+        ], 220); },
+    render:function(){ return B.h('畫室、建造與收藏')
+      + B.items([
+          ['🎨', '我的畫室', '多種筆刷、圖層、復原/重做、比例與三分格線;支援 Apple Pencil 與繪圖板。作品集與設定自動雲端同步。'],
+          ['🏗', '建造', '以資源修繕工坊與擺放裝飾,提升村子的色彩恢復度。'],
+          ['📅', '每日挑戰', '每人每天 3 個任務,完成可得資源與積分。'],
+          ['📒', '收藏冊', '工坊全數 3 星取得大師卡,另有貼紙印章與特殊筆刷可解鎖。']
+        ]); } });
+  P.push({ tabLabel:'比賽與排行', renderSimple:function(){ return B.h('比賽和排行榜')
+      + B.items([
+          ['📌', '比賽看板', '老師會開比賽或每週主題,在時間內畫好交件,老師看過會加分、貼貼紙!'],
+          ['🏆', '每週排行榜', '每週一早上 8 點結算,前幾名在故事冒險和荒島求生都能領獎!'],
+          ['✏️', '遊戲美術設計師', '全部關卡都拿到 2 星以上,就能當設計師,幫遊戲設計角色造型和荒島裝飾!']
+        ], 220); },
+    render:function(){ return B.h('比賽與排行')
+      + B.items([
+          ['📌', '比賽看板', '老師開設限時比賽或每週主題;交件後系統評完成度,老師再依主題與創意加減分並給予評語貼紙,公布前作品以編號匿名呈現。'],
+          ['🏆', '每週排行', '每週一 08:00 結算個人、班級與進步之星,獎勵同時發到故事冒險(知識幣、召喚水晶等)與荒島求生(貝幣)。'],
+          ['✏️', '遊戲美術設計師', '所有關卡皆達 2 星以上即解鎖,可設計角色造型與荒島裝飾,經老師審核後上架。']
+        ]); } });
+  return P;
+}
+
+window._lxpsShowModeGuide = function(k){
+  try{ var o = document.getElementById('_nbg-overlay'); if(o) o.remove(); }catch(_){}
+  if(k === 'adv' || !k){ window._showNewbieGuide(0, { title:'⚔️ 故事冒險 指引' }); return; }
+  var T = { island:'🏝 荒島求生 指引', mg:'🎮 小遊戲 指引', art:'🎨 創藝工坊 指引' };
+  var pages = k === 'island' ? _lxpsGuideIsland() : (k === 'mg' ? _lxpsGuideMg() : _lxpsGuideArt());
+  window._showNewbieGuide(0, { pages:pages, title:T[k] || '📚 遊戲指引', mode:window._lxpsGuideMode(k) });
+};
+
+/* 四種玩法入口(圖文並茂的按鈕) */
+window._lxpsGuideHub = function(){
+  if(document.getElementById('_lxps-ghub')) return;
+  try{ _newbieGuideInjectCSS(); }catch(_){}
+  var cute = _lxpsGuideCute();
+  var L = [
+    { k:'adv',    img:'./%E6%99%AF%E7%BE%8E%E6%BA%AA%E6%B2%B3%E5%A0%A4.png', t:'⚔️ 故事冒險', c:'#66ccff',
+      d: cute ? '組四人英雄隊,邊答題邊打怪,從景美溪一路冒險!' : '回合制 RPG:組建四人英雄隊伍,答題戰鬥、收集英雄、挑戰世界 BOSS 與主線劇情。' },
+    { k:'island', img:'minigame/img/island_camp_day.jpg', t:'🏝 荒島求生', c:'#7fe0a0',
+      d: cute ? '在無人島採集、蓋營地、交動物朋友,最後造船出海!' : '台灣動植物生存冒險:採集製作、建造營地、結識夥伴,打造帆船航向外島。' },
+    { k:'mg',     img:'./%E5%8A%9B%E8%A1%8C%E6%93%8D%E5%A0%B4.png', t:'🎮 小遊戲', c:'#ffd27a',
+      d: cute ? '一關幾分鐘的學習小遊戲,下課就能玩!' : '十多種學習小遊戲,課堂與下課零碎時間複習課本內容。' },
+    { k:'art',    img:'minigame/img/art_village_map.webp', t:'🎨 創藝工坊', c:'#ff9ac8',
+      d: cute ? '到八座工坊學畫畫,把藝術村的顏色找回來!' : '視覺藝術闖關與創作:八座工坊、自由畫室、比賽與每週排行。' }
+  ];
+  var ov = document.createElement('div');
+  ov.id = '_lxps-ghub';
+  ov.setAttribute('style', 'position:fixed;inset:0;z-index:9970;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto;font-family:inherit;');
+  var h = '<div style="position:relative;width:min(96vw,1100px);max-height:94vh;overflow-y:auto;background:linear-gradient(160deg,rgba(5,14,35,0.99),rgba(3,8,22,0.99));border:2.5px solid rgba(100,200,255,0.8);border-radius:22px;padding:clamp(14px,2.4vw,30px);box-sizing:border-box;">'
+    + '<button data-gh="x" style="position:absolute;top:10px;right:14px;font-size:clamp(24px,2.5vw,32px);color:#889;background:none;border:none;cursor:pointer;font-family:inherit;line-height:1;">✕</button>'
+    + '<div style="text-align:center;font-size:clamp(22px,2.8vw,34px);font-weight:900;color:#88ccff;margin:0 30px 6px;">📚 ' + (cute ? '你想玩哪一種?' : '四種玩法指引') + '</div>'
+    + '<div style="text-align:center;font-size:clamp(14px,1.6vw,19px);color:#8899aa;margin-bottom:14px;">' + (cute ? '點一個看看怎麼玩!' : '點選玩法,查看介紹與操作說明') + '</div>'
+    + '<div class="_ghub-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.6vw,18px);">';
+  L.forEach(function(x){
+    h += '<button data-gh="' + x.k + '" style="display:flex;flex-direction:column;text-align:left;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;background:rgba(10,25,60,0.75);border:2px solid ' + x.c + ';border-radius:16px;box-shadow:0 0 18px ' + x.c + '33;">'
+      + '<div class="_ghub-img" style="width:100%;aspect-ratio:16/6;background:#0a1020 url(\'' + x.img + '\') center/cover no-repeat;"></div>'
+      + '<div style="padding:clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);">'
+      + '<div style="font-size:clamp(19px,2.2vw,28px);font-weight:900;color:' + x.c + ';">' + x.t + '</div>'
+      + '<div style="font-size:clamp(13px,1.5vw,18px);color:#b8c8d8;line-height:1.5;margin-top:3px;">' + x.d + '</div>'
+      + '<div style="font-size:clamp(13px,1.4vw,17px);color:#ffd98a;font-weight:800;margin-top:6px;">📖 ' + (cute ? '看指引 ▶' : '查看指引 ▶') + '</div>'
+      + '</div></button>';
+  });
+  h += '</div></div>';
+  ov.innerHTML = h;
+  ov.onclick = function(ev){
+    var t = ev.target, k = null;
+    if(t === ov){ ov.remove(); return; }
+    while(t && t !== ov){ if(t.getAttribute && t.getAttribute('data-gh')){ k = t.getAttribute('data-gh'); break; } t = t.parentNode; }
+    if(!k) return;
+    try{ if(typeof playSfx === 'function') playSfx(k === 'x' ? 'sfx-cancel' : 'sfx-sel', 0.4); }catch(_){}
+    ov.remove();
+    if(k !== 'x') window._lxpsShowModeGuide(k);
+  };
+  document.body.appendChild(ov);
+  try{ if(!document.getElementById('_ghub-css')){ var st = document.createElement('style'); st.id = '_ghub-css';
+    st.textContent = '@media (max-width:600px) and (orientation:portrait){#_lxps-ghub ._ghub-grid{grid-template-columns:1fr !important;}}'
+      + '@media (orientation:landscape) and (max-height:520px){#_lxps-ghub ._ghub-grid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;}#_lxps-ghub ._ghub-img{aspect-ratio:4/3 !important;}}'
+      + '#_lxps-ghub button[data-gh]:not([data-gh="x"]):active{transform:scale(0.98);}';
+    document.head.appendChild(st); } }catch(_){}
 };
 
 // ══════════════════════════════════════════════════════════════════════

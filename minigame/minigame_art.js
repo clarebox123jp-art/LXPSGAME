@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -1482,8 +1482,47 @@ function svgHatch(gap, layers){
     else h += '<line x1="' + (x + 60) + '" y1="0" x2="' + (x + 60) + '" y2="120" stroke="#222" stroke-width="1.6"/>'; } }
   return h + '</svg>';
 }
+/* ★ v1.1.9(老師「題目重複性高、難度太低的重新設計」)美感原則圖每次隨機換一種畫法(顏色、圖案、方向、版本),
+   學生要認「原則」而不是背「這張圖」;約 1/4 機率仍用原本那張。回傳 null = 用原圖。 */
+function svgPrVar(k){
+  var r = Math.random, h = '<svg viewBox="0 0 240 150" width="100%" height="100%"><rect width="240" height="150" fill="#fffdf6"/>', i, j, x, y, v,
+      hue = Math.floor(r() * 360), col = 'hsl(' + hue + ',65%,55%)', dk = '#3a2f45';
+  function pick(a){ return a[Math.floor(r() * a.length)]; }
+  if(r() < 0.25) return null;
+  v = r() < 0.5 ? 0 : 1;
+  if(k === 'repeat'){
+    if(v === 0){ var em = pick(['🌸', '🐟', '🍀', '❤️', '🔺', '🌙', '🍎']), rows = r() < 0.5 ? 1 : 2;
+      for(j = 0; j < rows; j++) for(i = 0; i < 5; i++) h += '<text x="' + (30 + i * 45) + '" y="' + (rows === 1 ? 88 : 60 + j * 55) + '" font-size="' + (rows === 1 ? 40 : 34) + '" text-anchor="middle">' + em + '</text>'; }
+    else { for(j = 0; j < 3; j++) for(i = 0; i < 6; i++) h += '<rect x="' + (24 + i * 34) + '" y="' + (24 + j * 38) + '" width="24" height="24" rx="4" fill="' + col + '" stroke="' + dk + '" stroke-width="2"/>'; } }
+  else if(k === 'gradation'){ var rev = r() < 0.5;
+    if(v === 0){ for(i = 0; i < 6; i++){ j = rev ? 5 - i : i; h += '<circle cx="' + (22 + i * 40) + '" cy="75" r="' + (6 + j * 4) + '" fill="hsl(' + hue + ',65%,' + (82 - j * 9) + '%)"/>'; } }
+    else { for(i = 0; i < 7; i++){ j = rev ? 6 - i : i; h += '<rect x="' + (15 + i * 31) + '" y="30" width="28" height="90" fill="hsl(' + hue + ',60%,' + (88 - j * 11) + '%)" stroke="' + dk + '" stroke-width="1.5"/>'; } } }
+  else if(k === 'symmetry'){ h += '<line x1="120" y1="8" x2="120" y2="142" stroke="#bbb" stroke-dasharray="4 4"/>';
+    if(v === 0) h += '<path d="M60 62 L120 22 L180 62 Z" fill="' + col + '" stroke="' + dk + '" stroke-width="3"/><rect x="70" y="62" width="100" height="70" fill="#fff3dc" stroke="' + dk + '" stroke-width="3"/><rect x="108" y="96" width="24" height="36" fill="#8b5a2b"/><rect x="80" y="74" width="18" height="16" fill="#9fd0ff" stroke="' + dk + '" stroke-width="2"/><rect x="142" y="74" width="18" height="16" fill="#9fd0ff" stroke="' + dk + '" stroke-width="2"/>';
+    else h += '<ellipse cx="120" cy="76" rx="52" ry="62" fill="' + col + '" stroke="' + dk + '" stroke-width="3"/><circle cx="98" cy="62" r="10" fill="#fff" stroke="' + dk + '" stroke-width="2"/><circle cx="142" cy="62" r="10" fill="#fff" stroke="' + dk + '" stroke-width="2"/><path d="M120 70 L112 92 L128 92 Z" fill="' + dk + '"/><path d="M96 108 Q120 126 144 108" fill="none" stroke="' + dk + '" stroke-width="4"/>'; }
+  else if(k === 'contrast'){ var odd = Math.floor(r() * 18), oc = pick(['#e8302f', '#f7931e', '#c8338a', '#2e6fd8']);
+    if(v === 0){ for(i = 0; i < 18; i++){ x = 25 + (i % 6) * 38; y = 35 + Math.floor(i / 6) * 40; h += i === odd ? '<circle cx="' + x + '" cy="' + y + '" r="20" fill="' + oc + '" stroke="' + dk + '" stroke-width="3"/>' : '<circle cx="' + x + '" cy="' + y + '" r="9" fill="#b9b9c2"/>'; } }
+    else { h = h.replace('#fffdf6', '#1c1830'); for(i = 0; i < 24; i++) h += '<circle cx="' + Math.floor(12 + r() * 216) + '" cy="' + Math.floor(10 + r() * 130) + '" r="2" fill="#4a4560"/>'; h += '<text x="' + (60 + Math.floor(r() * 120)) + '" y="' + (70 + Math.floor(r() * 30)) + '" font-size="52" text-anchor="middle">⭐</text>'; } }
+  else if(k === 'balance'){ var c1 = col, c2 = 'hsl(' + ((hue + 150) % 360) + ',70%,60%)';
+    h += '<g' + (v ? ' transform="translate(240,0) scale(-1,1)"' : '') + '><line x1="20" y1="120" x2="220" y2="120" stroke="' + dk + '" stroke-width="4"/><path d="M120 120 L110 140 L130 140 Z" fill="' + dk + '"/><circle cx="60" cy="78" r="38" fill="' + c1 + '"/><circle cx="160" cy="100" r="16" fill="' + c2 + '"/><circle cx="190" cy="100" r="16" fill="' + c2 + '"/><circle cx="175" cy="72" r="16" fill="' + c2 + '"/></g>'; }
+  else if(k === 'rhythm'){ var ph = r() * 6;
+    if(v === 0){ for(i = 0; i < 9; i++){ x = 18 + i * 26; h += '<circle cx="' + x + '" cy="' + (75 - Math.sin(i * 0.8 + ph) * 40).toFixed(1) + '" r="' + (6 + (i % 3) * 5) + '" fill="' + col + '" stroke="' + dk + '" stroke-width="2"/>'; } }
+    else { var hs2 = [30, 60, 95, 60, 30, 60, 95, 60, 30]; for(i = 0; i < 9; i++) h += '<rect x="' + (16 + i * 24) + '" y="' + (130 - hs2[i]) + '" width="16" height="' + hs2[i] + '" rx="3" fill="' + col + '" stroke="' + dk + '" stroke-width="2"/>'; } }
+  else if(k === 'unity'){ var u = function(l){ return 'hsl(' + hue + ',62%,' + l + '%)'; };
+    h += '<rect x="20" y="48" width="44" height="44" rx="10" fill="' + u(52) + '"/><circle cx="100" cy="70" r="24" fill="' + u(58) + '"/><path d="M134 94 L156 44 L178 94 Z" fill="' + u(46) + '"/>' + (v ? '<path d="M206 46 L212 62 L229 62 L215 72 L220 89 L206 79 L192 89 L197 72 L183 62 L200 62 Z" fill="' + u(55) + '"/>' : '<ellipse cx="208" cy="70" rx="18" ry="26" fill="' + u(55) + '"/>'); }
+  else if(k === 'simple'){ x = pick([70, 120, 165]); y = pick([60, 75, 90]);
+    h += v ? '<rect x="' + (x - 20) + '" y="' + (y - 20) + '" width="40" height="40" fill="' + col + '"/>' : '<path d="M' + x + ' ' + (y - 24) + ' L' + (x - 24) + ' ' + (y + 18) + ' L' + (x + 24) + ' ' + (y + 18) + ' Z" fill="' + col + '"/>'; }
+  else if(k === 'harmony'){
+    if(v === 0){ for(i = 0; i < 5; i++) h += '<rect x="' + (20 + i * 40) + '" y="30" width="40" height="90" fill="hsl(' + ((hue + i * 14) % 360) + ',70%,58%)"/>'; }
+    else { for(i = 0; i < 5; i++) h += '<circle cx="120" cy="75" r="' + (66 - i * 13) + '" fill="hsl(' + ((hue + i * 14) % 360) + ',68%,60%)"/>'; } }
+  else if(k === 'proportion'){ if(!v) return null;
+    h += '<g transform="translate(240,0) scale(-1,1)"><rect x="25" y="20" width="190" height="117" fill="#fff3dc" stroke="' + dk + '" stroke-width="3"/><line x1="142" y1="20" x2="142" y2="137" stroke="' + dk + '" stroke-width="3"/><line x1="142" y1="92" x2="215" y2="92" stroke="' + dk + '" stroke-width="3"/><path d="M142 137 A117 117 0 0 1 25 20" fill="none" stroke="#ff7a59" stroke-width="3"/></g><text x="160" y="85" font-size="16" text-anchor="middle" fill="#6b6178">1.6</text><text x="62" y="62" font-size="16" text-anchor="middle" fill="#6b6178">1</text>'; }
+  else return null;
+  return h + '</svg>';
+}
 function svgPrinciple(k){
-  var h = '<svg viewBox="0 0 240 150" width="100%" height="100%"><rect width="240" height="150" fill="#fffdf6"/>', i, x;
+  var h = '<svg viewBox="0 0 240 150" width="100%" height="100%"><rect width="240" height="150" fill="#fffdf6"/>', i, x, vv = svgPrVar(k);
+  if(vv) return vv;
   if(k === 'repeat'){ for(i = 0; i < 5; i++) h += '<text x="' + (30 + i * 45) + '" y="85" font-size="40" text-anchor="middle">⭐</text>'; }
   else if(k === 'gradation'){ for(i = 0; i < 6; i++) h += '<circle cx="' + (22 + i * 40) + '" cy="75" r="' + (6 + i * 4) + '" fill="hsl(210,70%,' + (80 - i * 10) + '%)"/>'; }
   else if(k === 'symmetry'){ h += '<line x1="120" y1="10" x2="120" y2="140" stroke="#bbb" stroke-dasharray="4 4"/><path d="M120 75 C90 20 40 25 50 70 C40 110 90 125 120 80 C150 125 200 110 190 70 C200 25 150 20 120 75 Z" fill="#a36bff" stroke="#3a2f45" stroke-width="3"/><circle cx="80" cy="62" r="9" fill="#ffd93b"/><circle cx="160" cy="62" r="9" fill="#ffd93b"/>'; }
@@ -1523,6 +1562,19 @@ function wheelSvg(opt){
 var R = {};
 /* ↔️ 拖曳排序(灰階/明度/形的漸層):拖一塊到另一塊上 ⇒ 交換 */
 R.sort = function(L, ctx){
+  /* ★ v1.1.9 題目重新設計:sets = 每次隨機挑一組步驟;pick = 從題庫依序抽 N 項(時間軸每次不同);
+     gen = 'tone' 明度或彩度(隨機色相)/'size' 形的漸層(尺寸差更小、顏色隨機) */
+  (function(){ var o = {}, k, s, a, hh, i2, md;
+    for(k in L){ if(L.hasOwnProperty(k)) o[k] = L[k]; }
+    if(o.sets){ s = o.sets[Math.floor(Math.random() * o.sets.length)]; for(k in s){ if(s.hasOwnProperty(k)) o[k] = s[k]; } }
+    if(o.gen === 'tone'){ hh = [0, 25, 45, 120, 170, 210, 265, 310][Math.floor(Math.random() * 8)]; md = Math.random() < 0.5; a = [];
+      for(i2 = 0; i2 < 7; i2++) a.push({ c: md ? 'hsl(' + hh + ',65%,' + (90 - i2 * 12.5) + '%)' : 'hsl(' + hh + ',' + (92 - i2 * 15) + '%,52%)' });
+      o.items = a; o.ends = md ? ['最亮', '最暗'] : ['最鮮豔', '最灰濁']; o.ask = md ? '依「明度」把顏色從最亮(左)排到最暗(右)' : '依「彩度」把顏色從最鮮豔(左)排到最灰濁(右)'; }
+    if(o.gen === 'size'){ a = [18, 23, 28, 33, 38, 43, 48, 53]; hh = 'hsl(' + Math.floor(Math.random() * 360) + ',65%,58%)';
+      o.items = a.map(function(z){ return { s: z, col: hh }; }); o.pick = 6; }
+    if(o.pick && o.items.length > o.pick){ a = o.items.map(function(_, q){ return q; }); a = shuffle(a).slice(0, o.pick).sort(function(p, q){ return p - q; }); o.items = a.map(function(q){ return o.items[q]; }); }
+    L = o; })();
+  if(L.ask) ctx.ask(esc(L.ask));
   var n = L.items.length, ord = [], i, row, txt = !!L.items[0].t, w = txt ? Math.min(19, 96 / n) : Math.min(11, 84 / n);   /* ★ v1.1.0 文字方塊版(時間軸、步驟排序) */
   for(i = 0; i < n; i++) ord.push(i);
   do { shuffle(ord); } while(ord.join() === Array.apply(null, Array(n)).map(function(_, k){ return k; }).join());
@@ -1530,7 +1582,7 @@ R.sort = function(L, ctx){
     row = '<div style="display:flex;gap:1.2vmin;align-items:flex-end;justify-content:center;flex-wrap:nowrap">';
     for(i = 0; i < n; i++){ var it = L.items[ord[i]];
       row += '<div class="art-tile" data-p="' + i + '" style="width:' + w + 'vmin;height:' + (txt ? 14 : (L.shape ? w * 1.4 : w * 1.6)) + 'vmin;background:' + (it.c || (txt ? '#fff9ef' : '#fff')) + (txt ? ';font-size:2.3vmin;padding:.8vmin;text-align:center;line-height:1.3' : '') + '">'
-        + (txt ? esc(it.t) : '') + (L.shape ? '<div style="width:' + (it.s * 0.16) + 'vmin;height:' + (it.s * 0.16) + 'vmin;border-radius:50%;background:#4aa3ff;border:.3vmin solid #3a2f45"></div>' : '') + '</div>'; }
+        + (txt ? esc(it.t) : '') + (L.shape ? '<div style="width:' + (it.s * 0.16) + 'vmin;height:' + (it.s * 0.16) + 'vmin;border-radius:50%;background:' + (it.col || '#4aa3ff') + ';border:.3vmin solid #3a2f45"></div>' : '') + '</div>'; }
     row += '</div><div style="display:flex;justify-content:space-between;width:' + (n * (w + 1.2)) + 'vmin;margin:1.4vmin auto 0;font-weight:900;color:#6b6178;font-size:2.4vmin"><span>◀ ' + (L.ends ? L.ends[0] : (L.shape ? '最小' : '最亮')) + '</span><span>' + (L.ends ? L.ends[1] : (L.shape ? '最大' : '最暗')) + ' ▶</span></div>';
     ctx.body.innerHTML = '<div>' + row + '</div>';
     var ts = ctx.body.querySelectorAll('[data-p]'), j;
@@ -1653,12 +1705,14 @@ R.label = function(L, ctx){
 };
 /* 💡 光從哪裡來:看燈的位置,選出正確的影子 */
 R.shadow = function(L, ctx){
-  var ri = 0, LIGHTS = [{ n: '左上', x: 12, y: 12, sx: 1 }, { n: '右上', x: 88, y: 12, sx: -1 }, { n: '左邊低處', x: 8, y: 52, sx: 1.8 }, { n: '右邊低處', x: 92, y: 52, sx: -1.8 }];
+  var ri = 0, LIGHTS = [{ n: '左上', x: 12, y: 12, sx: 1 }, { n: '右上', x: 88, y: 12, sx: -1 }, { n: '左邊低處', x: 8, y: 52, sx: 1.8 }, { n: '右邊低處', x: 92, y: 52, sx: -1.8 }, { n: '正上方', x: 50, y: 8, sx: 0 }];
+  /* ★ v1.1.9 題目重新設計:燈的位置輪流出、不重複太多;多了「正上方」;錯誤選項改成「方向對但長短錯」⇒ 要同時判斷方向與光源高低 */
+  var LQ = shuffle(LIGHTS.slice()).concat(shuffle(LIGHTS.slice()));
   function pic(lx, ly, sx, showLamp){ return '<svg viewBox="0 0 100 80" width="100%" height="100%"><rect width="100" height="80" fill="#f4efe6"/><rect y="56" width="100" height="24" fill="#e2dccf"/>'
       + '<ellipse cx="' + (50 + sx * 16) + '" cy="62" rx="' + (12 + Math.abs(sx) * 7) + '" ry="4" fill="#333" opacity=".6"/><circle cx="50" cy="44" r="14" fill="#b0b0b0" stroke="#3a2f45" stroke-width="1.5"/>'
       + (showLamp ? '<text x="' + lx + '" y="' + ly + '" font-size="12" text-anchor="middle" dominant-baseline="middle">💡</text>' : '') + '</svg>'; }
   function round(){
-    var lt = LIGHTS[Math.floor(Math.random() * LIGHTS.length)], opts = [lt.sx, -lt.sx, 0], h, i;
+    var lt = LQ[ri % LQ.length], opts = lt.sx === 0 ? [0, 1, -1] : [lt.sx, -lt.sx, (lt.sx > 0 ? 1 : -1) * (Math.abs(lt.sx) === 1 ? 1.8 : 1)], h, i;
     shuffle(opts);
     h = '<div style="display:flex;flex-direction:column;align-items:center;gap:2vmin;width:100%"><div style="width:min(44vmin,46vw);height:min(35vmin,37vw);border:.5vmin solid #3a2f45;border-radius:1.4vmin;overflow:hidden">'
       + '<svg viewBox="0 0 100 80" width="100%" height="100%"><rect width="100" height="80" fill="#f4efe6"/><rect y="56" width="100" height="24" fill="#e2dccf"/><circle cx="50" cy="44" r="14" fill="#b0b0b0" stroke="#3a2f45" stroke-width="1.5"/><text x="' + lt.x + '" y="' + lt.y + '" font-size="12" text-anchor="middle" dominant-baseline="middle">💡</text><text x="50" y="72" font-size="6" text-anchor="middle" fill="#6b6178">影子在哪裡?</text></svg></div><div style="display:flex;gap:2.4vmin">';
@@ -1671,18 +1725,26 @@ R.shadow = function(L, ctx){
     for(j = 0; j < bs.length; j++) bs[j].onclick = function(){ var o = +this.getAttribute('data-o');
       if(lock || this.className.indexOf('wrong') >= 0) return;
       if(opts[o] === lt.sx){ lock = true; this.className += ' right'; sfx('sfx-ok', 0.35); ri++; setTimeout(function(){ if(!ctx.alive()) return; if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
-      else { this.className += ' wrong'; ctx.miss(); toast(opts[o] === 0 ? '影子不會躲在球正下方,光是斜斜照過來的' : '影子在光的「相反邊」喔'); } };
+      else { this.className += ' wrong'; ctx.miss(); toast(lt.sx === 0 ? '燈在正上方,影子會縮在球的正下方' : (opts[o] === 0 ? '影子不會躲在球正下方,光是斜斜照過來的' : (opts[o] * lt.sx > 0 ? '方向對了!再看長短:燈越低,影子拉得越長;燈越高,影子越短' : '影子在光的「相反邊」喔'))); } };
   }
   round();
 };
 /* ❓ 看圖判斷 */
 /* ★ v1.1.0 第 13 項:題目順序(有前後關係的關卡 noShuffleQ 除外)與選項每次打亂;第 10 項:同一題錯兩次 ⇒ 其他錯的選項淡掉+跳教學卡 */
+/* ★ v1.1.9:L.pick = 每次從題庫抽 N 題(noShuffleQ 的關卡抽完仍照原順序);
+   題目可寫成 { ans: 正解, wrong: [錯誤選項題庫], no: 選項數(預設 4) } ⇒ 每次隨機抽錯誤選項,不能靠背選項位置/組合過關 */
 function quizShuffle(L){
-  var qs = L.qs.map(function(q){ var o = JSON.parse(JSON.stringify(q)), n = (o.opts || o.sw || (typeof o.svg !== 'string' ? o.svg : null) || []).length, p = [], k, key;
+  var src = L.qs, ix0;
+  if(L.pick && L.pick < src.length){ ix0 = shuffle(src.map(function(_, k){ return k; })).slice(0, L.pick).sort(function(a, b){ return a - b; }); src = ix0.map(function(k){ return L.qs[k]; }); }
+  var qs = src.map(function(q){ var o = JSON.parse(JSON.stringify(q)), n, p = [], k, key, base;
+    if(o.wrong){ var mu = (o.must || []).slice(0, (o.no || 4) - 1), rest = shuffle(o.wrong.filter(function(x){ return mu.indexOf(x) < 0 && x !== o.ans; }));   /* must = 容易搞混、一定要出現的錯誤選項 */
+      o.opts = [o.ans].concat(mu, rest.slice(0, (o.no || 4) - 1 - mu.length)); o.a = 0; delete o.wrong; delete o.ans; delete o.no; delete o.must; }
+    n = (o.opts || o.sw || (typeof o.svg !== 'string' ? o.svg : null) || []).length;
     for(k = 0; k < n; k++) p.push(k);
     shuffle(p);
     key = o.opts ? 'opts' : (o.sw ? 'sw' : 'svg');
-    if(n > 1 && o[key] && typeof o[key] !== 'string'){ o[key] = p.map(function(ix){ return q[key][ix]; }); o.a = p.indexOf(q.a); }
+    base = o[key];
+    if(n > 1 && base && typeof base !== 'string'){ o[key] = p.map(function(ix){ return base[ix]; }); o.a = p.indexOf(o.a); }
     return o; });
   return L.noShuffleQ ? qs : shuffle(qs);
 }
@@ -1713,15 +1775,19 @@ R.quiz = function(L, ctx){
 };
 /* 🔍 誰破壞了統一 */
 R.odd = function(L, ctx){
-  var ri = 0, KINDS = shuffle(['color', 'shape', 'size', 'outline']), COLS = shuffle(['#4aa3ff', '#ff7a59', '#4fcf7a', '#a36bff', '#f5b700']);   /* ★ v1.1.0 第 18 項:種類順序、顏色、位置都隨機 */
+  var ri = 0, KINDS = shuffle(['color', 'tone', 'shape', 'size', 'outline', 'rotate']), HUES = shuffle([210, 15, 140, 270, 45, 330]);   /* ★ v1.1.0 第 18 項:種類順序、顏色、位置都隨機 */
+  /* ★ v1.1.9 題目重新設計:6 種差異(多了深淺、轉向);第 3 題起改 15 格、差異變小(色相只差一點、大小只差 2 成、只轉 15°),要仔細看 */
   function round(){
-    var kind = KINDS[ri % KINDS.length], n = 12, odd = Math.floor(Math.random() * n), h = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2vmin;width:min(70vmin,80vw)">', i, base = COLS[ri % COLS.length], st;
+    var kind = KINDS[ri % KINDS.length], sub = ri >= 2, n = sub ? 15 : 12, cols = sub ? 5 : 4, odd = Math.floor(Math.random() * n), i, hu = HUES[ri % HUES.length], base = 'hsl(' + hu + ',70%,58%)', st,
+        sq = kind === 'rotate', h = '<div style="display:grid;grid-template-columns:repeat(' + cols + ',1fr);gap:' + (sub ? 1.6 : 2) + 'vmin;width:min(' + (sub ? 84 : 70) + 'vmin,' + (sub ? 88 : 80) + 'vw)">', W = sub ? 8 : 9;
     for(i = 0; i < n; i++){
-      st = 'width:9vmin;height:9vmin;border-radius:50%;background:' + base + ';border:.4vmin solid #3a2f45;margin:auto';
+      st = 'width:' + W + 'vmin;height:' + W + 'vmin;border-radius:' + (sq ? '.6vmin' : '50%') + ';background:' + base + ';border:.4vmin solid #3a2f45;margin:auto';
       if(i === odd){
-        if(kind === 'color') st = st.replace(base, base === '#ff7a59' ? '#4aa3ff' : '#ff7a59');
-        else if(kind === 'shape') st = st.replace('border-radius:50%', 'border-radius:.6vmin');
-        else if(kind === 'size') st = st.replace('width:9vmin;height:9vmin', 'width:5.4vmin;height:5.4vmin');
+        if(kind === 'color') st = st.replace(base, 'hsl(' + ((hu + (sub ? 38 : 160)) % 360) + ',70%,58%)');
+        else if(kind === 'tone') st = st.replace(base, 'hsl(' + hu + ',70%,' + (sub ? 72 : 84) + '%)');
+        else if(kind === 'shape') st = st.replace('border-radius:50%', 'border-radius:' + (sub ? '26%' : '.6vmin'));
+        else if(kind === 'size') st = st.replace('width:' + W + 'vmin;height:' + W + 'vmin', 'width:' + (W * (sub ? 0.78 : 0.6)).toFixed(1) + 'vmin;height:' + (W * (sub ? 0.78 : 0.6)).toFixed(1) + 'vmin');
+        else if(kind === 'rotate') st += ';transform:rotate(' + (sub ? 15 : 45) + 'deg)';
         else st = st.replace('background:' + base, 'background:transparent');
       }
       h += '<button class="art-opt" data-o="' + i + '" style="height:13vmin;display:flex;align-items:center;justify-content:center"><span style="display:block;' + st + '"></span></button>';
@@ -1731,7 +1797,7 @@ R.odd = function(L, ctx){
     var bs = ctx.body.querySelectorAll('[data-o]'), j, lock = false;   /* ★ v1.1.3 第 5 項 */
     for(j = 0; j < bs.length; j++) bs[j].onclick = function(){ var o = +this.getAttribute('data-o');
       if(lock || this.className.indexOf('wrong') >= 0) return;
-      if(o === odd){ lock = true; this.className += ' right'; sfx('sfx-ok', 0.35); toast({ color: '顏色不一樣!', shape: '形狀不一樣!', size: '大小不一樣!', outline: '只有它是空心的!' }[kind]); ri++; setTimeout(function(){ if(!ctx.alive()) return; if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
+      if(o === odd){ lock = true; this.className += ' right'; sfx('sfx-ok', 0.35); toast({ color: '顏色不一樣!', tone: '顏色深淺不一樣!', shape: '形狀不一樣!', size: '大小不一樣!', outline: '只有它是空心的!', rotate: '只有它轉了方向!' }[kind]); ri++; setTimeout(function(){ if(!ctx.alive()) return; if(ri >= L.rounds) ctx.win(starsByMiss(A.lv.miss, L.rounds)); else round(); }, 700); }
       else { this.className += ' wrong'; ctx.miss(); } };
   }
   round();
@@ -1811,6 +1877,11 @@ R.compose = function(L, ctx){
 };
 /* 🔗 ★ v1.1.0 配對(媒材特性、鑑賞步驟、藝術家名片):把左邊名牌拖到右邊對應的句子 */
 R.match = function(L, ctx){
+  /* ★ v1.1.9 題目重新設計:L.pool + L.pick = 每次從題庫抽 N 組(同一個名牌只抽一句,例如鑑賞四步驟每步隨機一句) */
+  if(L.pool){ (function(){ var o = {}, k, used = {}, out = [], pl = shuffle(L.pool.slice()), q;
+    for(k in L){ if(L.hasOwnProperty(k)) o[k] = L[k]; }
+    for(q = 0; q < pl.length && out.length < (L.pick || pl.length); q++){ if(used[pl[q].a]) continue; used[pl[q].a] = 1; out.push(pl[q]); }
+    o.pairs = out; L = o; })(); }
   var rows = shuffle(L.pairs.map(function(p, k){ return { a: p.a, b: p.b, k: k }; })), left = shuffle(L.pairs.map(function(p){ return p.a; })), done = {};
   function paint(){
     var h = '<div style="display:flex;gap:3vmin;align-items:center;justify-content:center;width:100%;height:100%"><div style="display:flex;flex-direction:column;gap:1.4vmin">', i, r;
@@ -2489,5 +2560,5 @@ function ratioPick(){
 window.ARTW = { ver: ART_VER, enter: function(){ enter(); setTimeout(idbSweep, 4000); }, onUser: onUser, isOn: function(){ return A.on; },
   _mapBad: function(){ if(A.mapBad) return; A.mapBad = true; try{ if(A.screen === 'hub' && !$('art-modal')) paintHub(); }catch(e){} },   /* ★ v1.1.4 地圖圖片載不到 ⇒ 退回 SVG 村子 */
   _test: { merge: merge, norm: norm, resEarned: resEarned, evalDraw: evalDraw, weekKey: weekKey, dayKey: dayKey, dayAdd: dayAdd, A: A, SRV: SRV, DEV: DEV, ptsAdd: ptsAdd, ptsSanitize: ptsSanitize, cloudDoc: cloudDoc,
-    dailyList: dailyList, dailyHit: dailyHit, subjectCheck: subjectCheck, dotCount: dotCount, paintInfo: paintInfo, quizShuffle: quizShuffle, liteAuto: liteAuto, hasCard: hasCard, weekPts: weekPts, srvNow: srvNow, cloudSync: cloudSync, evRefresh: evRefresh, svgStyle: svgStyle } };
+    dailyList: dailyList, dailyHit: dailyHit, subjectCheck: subjectCheck, dotCount: dotCount, paintInfo: paintInfo, quizShuffle: quizShuffle, liteAuto: liteAuto, hasCard: hasCard, weekPts: weekPts, srvNow: srvNow, cloudSync: cloudSync, evRefresh: evRefresh, svgStyle: svgStyle, svgPrinciple: svgPrinciple, lvStart: lvStart } };
 })();

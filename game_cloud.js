@@ -2517,6 +2517,31 @@
   // ★ v5.281.0 GM「👤 學生資產總覽」用:讀主檔＋live/safe 兩槽,算出這位學生現在持有什麼、每隻英雄的擁有證明、
   //   被移除的英雄(可救援)與「已刪但還在清單、學生下次登入會自動刪」的英雄。唯讀,不寫任何東西。
   // ════════════════════════════════════════════════════════════════════════
+  // ★★ v5.370.0(老師「雲端對不到實際的角色持有,這問題很嚴重」)— 「學生登入後實際持有」的唯讀視圖 ★★
+  //   與登入同口徑:主檔＋live＋safe(重置前的槽不採)→ _lxpsMergeSlots → _lxpsHeroLedgerReconcile(永久擁有證明)。
+  //   GM 工具一律用它判斷持有,不再只看主檔。純計算、不寫任何東西;錯誤一律退回主檔。
+  //   回傳 { d: 合併後資料(email/名稱取主檔), gap: 實際持有但主檔清單沒有的英雄 }
+  window._lxpsActualHoldingView = function(main, live, safe, uid){
+    try{
+      if(!main) return { d: main, gap: [] };
+      var raw = [main, live, safe].filter(Boolean);
+      var cut = 0; raw.forEach(function(s){ var c = +s._lastResetAt || 0; if(c > cut) cut = c; });
+      var elig = raw.filter(function(s){ return s === main || !cut || ((+s.savedAt || 0) > cut) || (+s._lastResetAt || 0) === cut; });
+      var merged = (elig.length > 1 && typeof window._lxpsMergeSlots === 'function') ? (window._lxpsMergeSlots(JSON.parse(JSON.stringify(elig))) || main) : main;
+      merged = JSON.parse(JSON.stringify(merged));
+      if(typeof window._lxpsHeroLedgerReconcile === 'function'){
+        var _rep0 = window._lxpsHeroLedgerReport;
+        merged = window._lxpsHeroLedgerReconcile(merged, JSON.parse(JSON.stringify(elig)), uid) || merged;
+        window._lxpsHeroLedgerReport = _rep0;   // GM 自己的登入對帳報告不被學生資料蓋掉
+      }
+      merged.email = main.email; merged.displayName = main.displayName; merged.nickname = main.nickname;
+      var mainList = Array.isArray(main.unlockedHeroes) ? main.unlockedHeroes : [];
+      if(!mainList.length && typeof main.unlockedHeroes_s === 'string'){ try{ var _ms = JSON.parse(main.unlockedHeroes_s); if(Array.isArray(_ms)) mainList = _ms; }catch(_){} }
+      var inMain = {}; mainList.forEach(function(n){ inMain[n] = 1; });
+      var gap = (Array.isArray(merged.unlockedHeroes) ? merged.unlockedHeroes : []).filter(function(n){ return !inMain[n]; });
+      return { d: merged, gap: gap };
+    }catch(_eV){ try{ console.warn('[實際持有視圖 v5.370.0] 例外,退回主檔', _eV); }catch(_){} return { d: main, gap: [], err: true }; }
+  };
   window._fbAdminStudentAssetView = async function(uid){
     if(!uid || !window._fbDb || !window._fbFns) throw new Error('雲端尚未就緒');
     var F = window._fbFns;
@@ -2542,7 +2567,11 @@
     // 每隻英雄最近一筆紀錄(本帳號 uid)
     var lastEv = {};
     hist.forEach(function(e){ var eu = String(e.uid || '').slice(0, 12); if(eu && eu !== u12) return; var p = lastEv[e.name]; if(!p || (+e.at || 0) > (+p.at || 0)) lastEv[e.name] = e; });
-    var list = _lxpsArrFromSlot(main, 'unlockedHeroes').filter(Boolean);
+    /* ★ v5.370.0 — 英雄清單改用「學生登入後實際持有」(三槽合併＋永久擁有證明),不再只看主檔;主檔沒有的另記 mainGap */
+    var _vwA = window._lxpsActualHoldingView(main, live, safe, uid);
+    var list = _lxpsArrFromSlot((_vwA && _vwA.d) || main, 'unlockedHeroes').filter(Boolean);
+    var _mainGapA = (_vwA && _vwA.gap) || [];
+    try{ lv = _lxpsObjFromSlot((_vwA && _vwA.d) || main, 'heroLevels'); }catch(_){}   /* 等級也取合併後(槽裡練的等級才對) */
     var inList = {}; list.forEach(function(n){ inList[n] = 1; });
     var heroes = list.map(function(n){
       var e = L.h[n] || {};
@@ -2565,7 +2594,8 @@
     var bp = {}; try{ bp = (typeof main.playerBackpack_s === 'string') ? (JSON.parse(main.playerBackpack_s) || {}) : (main.playerBackpack || {}); }catch(_){ bp = main.playerBackpack || {}; }
     var cstOther = {}; Object.keys(cst.got || {}).forEach(function(k){ if(inList[k] || k.indexOf('#rshop_') === 0) return; var n = (+cst.got[k] || 0) - (+(cst.used || {})[k] || 0); if(n > 0) cstOther[k] = n; });
     return { uid:uid, heroes:heroes, removed:removed, treasures:treasures, backpack:bp, coins:(+main.knowledgeCoins || 0), cstOther:cstOther,
-             savedAt:(+main.savedAt || +main.updatedAt || 0), hasLedger:!!main.heroOwnLedger_s, nick:String(main.displayName || main.nickname || '') };
+             savedAt:(+main.savedAt || +main.updatedAt || 0), hasLedger:!!main.heroOwnLedger_s, nick:String(main.displayName || main.nickname || ''),
+             mainGap:_mainGapA };   // ★ v5.370.0
   };
   window._lxpsMergeSlots = function(rawSlots){
     var slots = (Array.isArray(rawSlots) ? rawSlots : []).filter(function(s){ return s && typeof s === 'object'; });
@@ -6992,6 +7022,50 @@
   //   ⚠ 同時有多封（後台重寄過）時取**最早**那一封，內容一樣、填一封就全部解除。
   // ════════════════════════════════════════════════════════════════════
   var _ascPendingCache = null;   // { uid, val, at }
+  // ════════════════════════════════════════════════════════════════════
+  // ★ v5.370.0（老師 2026-11-09「學生有成功用 UR 卷,系統仍判定少 UR 卷、要填問卷才能領 GM 獎勵箱」）
+  //   命座帳本裡「用自選/召喚卷換命星」的次數。cst = constellationData_s 字串或物件(含 window._cstData)。
+  //   只數本帳號(uid 前 12 碼相同;舊紀錄沒有 uid 也算),src 完全相同或以 src+':' 開頭。
+  // ════════════════════════════════════════════════════════════════════
+  window._lxpsCstTicketUseCount = function(cst, uid, src){
+    try{
+      var o = cst;
+      if(typeof o === 'string'){ o = o ? JSON.parse(o) : null; }
+      if(!o || typeof o !== 'object' || !Array.isArray(o.hist)) return 0;
+      var u12 = String(uid || '').slice(0, 12), s0 = String(src || ''), n = 0;
+      if(!s0) return 0;
+      o.hist.forEach(function(e){
+        if(!e) return;
+        var s = String(e.s || '');
+        if(s !== s0 && s.indexOf(s0 + ':') !== 0) return;
+        if(e.uid && u12 && String(e.uid).slice(0, 12) !== u12) return;   // 共用平板殘留的別人紀錄不算
+        n++;
+      });
+      return n;
+    }catch(_){ return 0; }
+  };
+  // ★ v5.370.0 — 舊口徑誤寄的問卷自動解除:問卷只有「💨券消失」(可含 ⏳未領),
+  //   且問卷是舊版算的(沒有 usedStar 欄位),本機命座帳本查得到換命星次數足以補上缺口 ⇒ 不是真的少券。
+  //   ⚠ 命座資料必須已從雲端載入(_cstHydrated===true);任何一項對不平、或有其他異常旗標 ⇒ 照舊要填。
+  function _ascFalseLostOnly(data, uid){
+    try{
+      if(window._cstHydrated !== true) return false;
+      var as = Array.isArray(data && data.assets) ? data.assets : [];
+      if(!as.length) return false;
+      var star = window._lxpsCstTicketUseCount(window._cstData, uid, 'ticket_ur_pick');
+      if(star <= 0) return false;
+      for(var i = 0; i < as.length; i++){
+        var a = as[i] || {};
+        if(a.kind !== 'ur') return false;
+        if(a.usedStar !== undefined && a.usedStar !== null) return false;   // 新口徑算的問卷 ⇒ 不重複扣抵
+        var ft = String(a.flagText || '').replace(/💨券消失\d*/g, '').replace(/⏳未領\d*/g, '').replace(/⚠額度估算\d*/g, '').replace(/[\s·・、,]/g, '');
+        if(ft) return false;                                                // 還有其他異常 ⇒ 要填
+        var q = parseInt(a.quota, 10) || 0, us = parseInt(a.used, 10) || 0, lf = parseInt(a.left, 10) || 0;
+        if(us + star + lf < q) return false;                                // 補上換命星仍不夠 ⇒ 真的少
+      }
+      return true;
+    }catch(_){ return false; }
+  }
   window._fbAssetSelfCheckPending = async function(uid, force){
     if(!uid) return null;
     if(!force && _ascPendingCache && _ascPendingCache.uid === uid
@@ -7008,6 +7082,19 @@
         var _at = parseInt(v.createdAt, 10) || 0;
         if(!_best || _at < _best.at) _best = { id: d.id, data: v, at: _at };
       });
+      // ★ v5.370.0 — 舊口徑誤判(券其實拿去換命星了)的問卷:自動解除,不再擋 GM 獎勵箱
+      if(_best && _ascFalseLostOnly(_best.data, uid)){
+        var _rel = 0;
+        var _docs = [], _keep = null;
+        _snap.forEach(function(d){ var v = d.data() || {}; if(v.type !== 'assetSelfCheck' || v.read === true) return;
+          if(_ascFalseLostOnly(v, uid)) _docs.push(d.ref);
+          else { var _a2 = parseInt(v.createdAt, 10) || 0; if(!_keep || _a2 < _keep.at) _keep = { id: d.id, data: v, at: _a2 }; } });   // 有一封不是誤判 ⇒ 那封照舊要填
+        for(var _di = 0; _di < _docs.length; _di++){
+          try{ await deleteDoc(_docs[_di]); _rel++; }catch(_eRel){ console.warn('[召喚卷確認 v5.370.0] 自動解除刪除失敗(本次仍不擋領獎)', _eRel); }
+        }
+        console.info('[召喚卷確認 v5.370.0] 券已用於換命星,問卷為舊口徑誤判 ⇒ 自動解除 ' + _rel + ' 封');
+        _best = _keep;
+      }
       _out = _best ? { id: _best.id, data: _best.data } : null;
     }catch(e){
       console.warn('[召喚卷確認] 查待填問卷失敗（視為沒有，不擋領獎）', e);
@@ -18240,6 +18327,13 @@
     var _snap = await getDoc(doc(_fbDb, 'players', uid));
     if(!(typeof _snap.exists === 'function' ? _snap.exists() : _snap.exists)) throw new Error('查無此玩家主檔');
     var _d = _snap.data() || {};
+    // ★ v5.370.0 — 改用三槽合併＋永久擁有證明後的「實際持有」(與登入、全體 UR 稽核同口徑);讀不到槽就只看主檔
+    var _mainGapOne = [];
+    try{
+      var _rdS = async function(nm){ try{ var s = await getDoc(doc(_fbDb, 'players', uid, 'saves', nm)); return (s && s.exists()) ? (s.data() || null) : null; }catch(_){ return null; } };
+      var _vw1 = window._lxpsActualHoldingView(_d, await _rdS('live'), await _rdS('safe'), uid);
+      if(_vw1 && _vw1.d){ _d = _vw1.d; _mainGapOne = _vw1.gap || []; }
+    }catch(_eVw1){ console.warn('[單人查核 v5.370.0] 三槽合併失敗,只看主檔', _eVw1); }
     // 持有 UR：陣列版優先，退回字串版（同 v5.124.0 補丁③）
     var _unlocked = Array.isArray(_d.unlockedHeroes) ? _d.unlockedHeroes : [];
     if(!_unlocked.length && typeof _d.unlockedHeroes_s === 'string'){
@@ -18643,6 +18737,7 @@
       uses: _uses,
       granted: _grantedN,
       used: _usedN,
+      mainGap: _mainGapOne,   // ★ v5.370.0 學生實際持有、主檔清單卻沒有的英雄
       left: _left,
       leftDetail: _leftDetail,             // ★ v5.133.0 — 手上的券分列（gm=老師發放通道 / base=鬥技場兌換或舊發放）
       tkGrants: _tkGrants,                 // ★ v5.133.0 — 券的取得/異動時間線（帳本 grant/revoke·僅供參考）
@@ -18907,6 +19002,39 @@
     // ⚠ v5.96.1 — 本行於 v5.96.0 加入管理員排除時被誤刪，導致 `_psnap is not defined`
     //   整支稽核當場中斷（老師實測截圖）。誤刪是大忌，保留此註記以防再犯。
     var _psnap = await getDocs(collection(_fbDb, 'players'));
+    // ════════════════════════════════════════════════════════════════════
+    // ★★ v5.370.0（老師 2026-11-09「雲端對不到實際的角色持有,這問題很嚴重」;6109林承佑平板上有 UR、稽核卻顯示持有 0）★★
+    //   存檔是「三槽」:主檔 players/{uid} ＋ players/{uid}/saves/live ＋ saves/safe。學生登入時遊戲把三槽合併
+    //   (_lxpsMergeSlots / 主檔權威＋_lxpsHeroFloorOntoMain)再做永久擁有證明對帳(_lxpsHeroLedgerReconcile),那才是學生「實際持有」。
+    //   舊稽核只讀主檔 ⇒ 英雄若只落在 live/safe 槽、或只在永久擁有證明裡,稽核就說「持有 0」「券消失」「短少」——全是誤判。
+    //   ⇒ 本稽核改用與登入同一套合併:先讀全部學生的 live/safe(多 2 次讀取/人,24 路並行),每位學生以合併後資料計算。
+    //   另記 mainGapUR = 實際持有但主檔清單沒有的 UR(主檔沒跟上 ⇒ 列給老師看,不再當成短少)。讀槽失敗的學生退回只看主檔,並標 slotErr。
+    // ════════════════════════════════════════════════════════════════════
+    var _slotMap = {}, _slotErrN = 0;
+    try{
+      var _sIds = []; _psnap.forEach(function(ds){ _sIds.push(ds.id); });
+      var _sNext = 0;
+      var _sRd = async function(ref){ try{ var s = await getDoc(ref); return (s && s.exists()) ? (s.data() || null) : null; }catch(_e){ return undefined; } };
+      var _sWorker = async function(){
+        while(_sNext < _sIds.length){
+          var _id = _sIds[_sNext++];
+          var _lv = await _sRd(doc(_fbDb, 'players', _id, 'saves', 'live'));
+          var _sf = await _sRd(doc(_fbDb, 'players', _id, 'saves', 'safe'));
+          if(_lv === undefined || _sf === undefined) _slotErrN++;
+          _slotMap[_id] = { live: _lv || null, safe: _sf || null, err: (_lv === undefined || _sf === undefined) };
+        }
+      };
+      var _sW = []; for(var _wi = 0; _wi < 24; _wi++) _sW.push(_sWorker());
+      await Promise.all(_sW);
+    }catch(_eSlot){ console.warn('[UR 稽核 v5.370.0] 讀取 live/safe 槽失敗,本次只看主檔', _eSlot); }
+    // 與登入同口徑的「學生實際持有」視圖(不寫任何東西;全程 try,任何錯誤退回主檔)
+    var _uraView = function(main, uid){
+      var sm = _slotMap[uid];
+      if(!sm) return { d: main, gap: [], err: true };
+      var v = window._lxpsActualHoldingView(main, sm.live, sm.safe, uid);
+      v.err = !!(sm.err || v.err);
+      return v;
+    };
     _psnap.forEach(function(ds){
       _scanned++;
       try{
@@ -18914,6 +19042,10 @@
         var _uid = ds.id;
         // ★ v5.96.0 — 管理員帳號直接略過（放在最前面＝完全不進任何統計與旗標運算）
         if(_URA_ADMIN_EMAILS[String(d.email || '').toLowerCase()]){ _adminSkipped++; return; }
+        // ★ v5.370.0 — 改用三槽合併＋永久擁有證明後的「實際持有」(見上方 _uraView)
+        var _vw = _uraView(d, _uid);
+        d = _vw.d;
+        var _mainGapAll = _vw.gap, _slotErr = !!_vw.err;
         var _unlocked = Array.isArray(d.unlockedHeroes) ? d.unlockedHeroes : [];
         // ★★ v5.124.0 ③【防禦性補丁】主檔只剩字串版 unlockedHeroes_s 時的備援 ★★
         //   舊碼只讀陣列版 ⇒ 主檔若只剩 `unlockedHeroes_s`（_buildSafeData 兩鍵同寫，
@@ -18969,6 +19101,15 @@
         // 用券總次數（含後來被刪掉的英雄；券一旦被用掉就是用掉了，不因刪角色而還原）
         var _usedReal = 0;
         _urHistAll.forEach(function(x){ if(_UR_TICKET_SRC[x.source]) _usedReal++; });
+        // ★★ v5.370.0（老師 2026-11-09 6109林承佑「我已經有ur」卻被判💨券消失1）★★
+        //   v5.254.0 起 UR 自選卷可以拿「已收錄的 UR」換 1 顆命星（_cstUseTicketForStar）。
+        //   那條路只寫命座帳本 constellationData_s.hist（s:'ticket_ur_pick'），**不寫** _heroUnlockHistory
+        //   ⇒ 舊版只數英雄帳本 → 用掉 0 次 → 券「憑空消失」→ 寄問卷、擋住 GM 獎勵箱（全是誤判）。
+        //   換命星同樣是用掉一張券，一律計入已用（主檔內現成欄位，零額外讀取）。
+        var _usedStar = 0;
+        try{ if(typeof window._lxpsCstTicketUseCount === 'function') _usedStar = window._lxpsCstTicketUseCount(d.constellationData_s || d.constellationData, _uid, 'ticket_ur_pick'); }catch(_eUS){ _usedStar = 0; }
+        var _usedHeroTk = _usedReal;
+        _usedReal += _usedStar;
 
         // ── (b) 稽核感知：帳本最後一筆為移除類者，即使 unlockedHeroes 殘留也不算持有 ──
         //   （與 _lxpsLatestDeletedMap 同口徑；此處自建以免依賴另一 script 區塊的載入順序）
@@ -19380,7 +19521,11 @@
           quotaFromLog: _quotaFromLog ? 1 : 0,   // 額度是否來自領取紀錄（0＝查無紀錄，已保守退回發出數）
           pendingTk: _pendingTk,           // 老師發了但查無領取紀錄的券
           unclaimedTk: _unclaimedTk,       // ★ 型態 B1：還在收件箱沒按「確認領取」（正常，不必處理）
-          usedReal: _usedReal,             // 帳本實查用券次數
+          usedReal: _usedReal,             // 帳本實查用券次數（★ v5.370.0 = 換英雄 + 換命星）
+          usedHeroTk: _usedHeroTk,         // ★ v5.370.0 其中換新英雄幾次（_heroUnlockHistory）
+          usedStar: _usedStar,             // ★ v5.370.0 其中換命星幾次（constellationData_s.hist）
+          mainGapUR: (_mainGapAll || []).filter(function(n){ return !!_urSet[n]; }),   // ★ v5.370.0 學生實際持有、主檔清單卻沒有的 UR(三槽/永久證明才有)
+          slotErr: _slotErr,               // ★ v5.370.0 live/safe 讀取失敗 ⇒ 這列只依主檔判斷
           leftBase: _leftBase,             // 背包 summon_ticket_ur_pick（換券殘留）
           leftGm: _leftGm,                 // 背包 gm_summon_ticket_ur_pick（老師發的）
           shouldLeft: _shouldLeft,         // 依帳本推算「應該還剩」幾張
@@ -19447,7 +19592,9 @@
     // ★ v5.96.0 — adminSkipped 一併回傳，UI 明示「已排除管理員 N 位」（不靜默篩掉）
     // ★ v5.124.0 甲案 — 兩個新增發放來源的統計與失敗警告一併回傳，UI 明示（讀不到絕不靜默）
     return { scanned:_scanned, giftDocs:_giftDocs, rows:_rows, adminSkipped:_adminSkipped,
-             extraGrant:_extraGrantStat };
+             extraGrant:_extraGrantStat,
+             slotMerge:{ players:Object.keys(_slotMap).length, err:_slotErrN,
+                         gapPlayers:_rows.filter(function(r){ return r && r.mainGapUR && r.mainGapUR.length; }).length } };   // ★ v5.370.0
   };
 
   //   掃全體:把所有玩家身上「無真實解鎖紀錄的 compensation 英雄」依台灣日期聚合成批次。
@@ -19846,6 +19993,8 @@
         granted: _granted,
         quota:   _quota,
         used:    Math.max(0, parseInt(a.used,   10) || 0),
+        // ★ v5.370.0 其中換命星的次數(有這個欄位 = 新口徑算的;學生端不會再用本機命座帳本重複扣抵)
+        usedStar: Math.max(0, parseInt(a.usedStar, 10) || 0),
         left:    Math.max(0, parseInt(a.left,   10) || 0),
         actual:  Math.max(0, parseInt(a.actual, 10) || 0),
         // ★ v5.99.0（老師修正①）— 稽核算出的短少數；學生選「用了沒拿到」時，
