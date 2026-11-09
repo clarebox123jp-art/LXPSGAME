@@ -6827,6 +6827,37 @@ window._lxpsFaceFitImg = function(img){
     img.style.objectPosition = 'center ' + p.toFixed(1) + '%';
   }catch(_f){}
 };
+/* ★ v5.368.0(2026-11-09・老師「近期活動介紹頁面中的英雄角色也有部分英雄臉部因為圖片太高位置導致被裁切的問題，比照上次的方式調整」)
+   window._lxpsFaceFitIn(root):把 root 底下所有 <img> 都交給 _lxpsFaceFitImg(同 v5.366.0 特寫/BOSS 卡的算法:依頭頂位置+框的實際寬高比對齊)。
+   只有在臉部對照表 _LXPS_FACE_T 裡的英雄/BOSS 圖會被調整;場景、裝備、寵物等表外的圖完全不動。
+   用 ResizeObserver 監看每張圖:圖載入、懶載入捲到、畫面轉向、視窗縮放、zoom 改變時都會重算(沒有 ResizeObserver 的舊機器退回 load + 視窗 resize)。 */
+window._lxpsFaceFitIn = function(root){
+  try{
+    if(!root || !root.querySelectorAll || typeof window._lxpsFaceFitImg !== 'function') return;
+    var ims = root.querySelectorAll('img'), ro = null;
+    if(typeof ResizeObserver === 'function'){
+      ro = new ResizeObserver(function(ents){ for(var j = 0; j < ents.length; j++){ window._lxpsFaceFitImg(ents[j].target); } });
+    }
+    for(var i = 0; i < ims.length; i++){
+      (function(im){
+        if(im._lxpsFF) return;
+        im._lxpsFF = 1;
+        im.addEventListener('load', function(){ window._lxpsFaceFitImg(im); });
+        if(ro) ro.observe(im);
+        if(im.complete && im.naturalWidth > 0) window._lxpsFaceFitImg(im);
+      })(ims[i]);
+    }
+    if(!ro && !root._lxpsFFrs){
+      root._lxpsFFrs = 1;
+      var _rs = function(){
+        if(!root.isConnected){ window.removeEventListener('resize', _rs); return; }
+        var a = root.querySelectorAll('img');
+        for(var k = 0; k < a.length; k++) window._lxpsFaceFitImg(a[k]);
+      };
+      window.addEventListener('resize', _rs);
+    }
+  }catch(_g){}
+};
 function _teamFormAdjustObjPos(name, baseObjPos, where){
   if(where === 'grid') return _lxpsThumbFaceClamp(name, _teamFormAdjustObjPosRaw(name, baseObjPos, where));
   return _teamFormAdjustObjPosRaw(name, baseObjPos, where);
@@ -11498,6 +11529,31 @@ function _rebuildPickNodes(){
 function _cstPkB(name, arena){
   try{ return (typeof window._cstPickBadge === 'function') ? window._cstPickBadge(name, arena ? { noEffect:true } : null) : ''; }catch(_){ return ''; }
 }
+/* ★ v5.368.0(老師「可加入英雄清單在名稱下方新增當前命星數量，六命的英雄邊框出現白色光暈」)
+ *   _cstPkLine:名字列下方獨立一行「✦ 命星 N/6」(取代原本接在 Lv 後面、常被擠到下一行的 ✦N);不符資格回空字串、不佔高度。
+ *   _cstPkFullGlow:6 命 ⇒ 卡片外圈白色光暈(疊在稀有度光暈外面,選中時也保留)。 */
+function _cstPkLine(name, arena){
+  try{
+    if(typeof window._cstPickBadge !== 'function') return '';
+    var o = { label:true, gap:'0', size:'15px' }; if(arena) o.noEffect = true;
+    var b = window._cstPickBadge(name, o);
+    return b ? ('<div style="text-align:center;margin:-2px 0 0;padding:0 4px 6px;line-height:1.2;">' + b + '</div>') : '';
+  }catch(_){ return ''; }
+}
+function _cstPkFullGlow(name, baseShadow){
+  try{
+    var n = (typeof window._cstPickLit === 'function') ? window._cstPickLit(name) : -1;
+    if(n < 6) return '';
+    /* SSR/UR 的稀有度跑燈動畫會改寫 box-shadow ⇒ 滿命卡改用自己的白光呼吸動畫(寫在稀有度 animation 之後,後者生效);邊框顏色仍是稀有度色 */
+    if(!document.getElementById('lxps-cst-fullglow-css')){
+      var st = document.createElement('style'); st.id = 'lxps-cst-fullglow-css';
+      st.textContent = '@keyframes _lxpsCstFullGlow{0%,100%{box-shadow:0 0 0 2px rgba(255,255,255,0.9),0 0 12px 3px rgba(255,255,255,0.6)}50%{box-shadow:0 0 0 2px rgba(255,255,255,1),0 0 22px 8px rgba(255,255,255,0.9)}}';
+      document.head.appendChild(st);
+    }
+    return 'box-shadow:0 0 0 2px rgba(255,255,255,0.95),0 0 16px 5px rgba(255,255,255,0.75)' + ((baseShadow && baseShadow !== 'none') ? (',' + baseShadow) : '') + ';'
+      + 'animation:_lxpsCstFullGlow 2.4s ease-in-out infinite;';
+  }catch(_){ return ''; }
+}
 function _buildHeroPickNodes(){
   // ★ v5.87.0 — 先算好本關威脅（單一真相 _lxpsEnsureThreat，內建以敵方名單為 key 的快取），
   //   讓下方每張卡片的「本關需求能力」標籤一進頁就能顯示，不必先按「⭐ 推薦陣容」。
@@ -11539,14 +11595,15 @@ function _buildHeroPickNodes(){
         + 'border:' + _rs_adv.border + ';'
         + 'box-shadow:' + _rs_adv.boxShadow + ';'
         + (_rs_adv.animation ? 'animation:' + _rs_adv.animation + ';' : '')
+        + _cstPkFullGlow(name, _rs_adv.boxShadow)   /* ★ v5.368.0 6 命白色光暈 */
         + 'background:rgba(10,12,25,0.92);transition:transform 0.15s,border-color 0.15s;flex-shrink:0;';
       // 稀有度標籤(圖高 120px → 字體 12px)
       const _rarityBadge_adv = (typeof _heroRarityBadge === 'function') ? _heroRarityBadge(name, 120) : '';
       node.innerHTML = (img
         ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;object-position:${(typeof _teamFormAdjustObjPos==='function'&&typeof getHeroThumbObjPos==='function')?_teamFormAdjustObjPos(name,getHeroThumbObjPos(name),'grid'):((typeof getHeroThumbObjPos==='function')?getHeroThumbObjPos(name):'center center')};display:block;"/>
-           <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:15px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name)}</div>`
+           <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:15px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>${_cstPkLine(name)}`
         : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;">${av}</div>
-           <div style="font-size:16px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name)}</div>`)
+           <div style="font-size:16px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>${_cstPkLine(name)}`)
       + _rarityBadge_adv
       // ★ v5.87.0（老師需求 2）— 卡片左下角自動浮現「這位剛好對得上本關 BOSS 需求」的能力標籤（最多 2 個・字級縮至 0.8）。
       //   目的＝老師：「如此玩家仍可以自主選擇適合且想練的英雄」——不必按推薦陣容也看得出誰對得上這一關。
@@ -11618,9 +11675,9 @@ function _buildHeroPickNodes(){
     const _rarityBadge_arena = (typeof _heroRarityBadge === 'function') ? _heroRarityBadge(name, 120) : '';
     node.innerHTML = (img
       ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;object-position:${(typeof _teamFormAdjustObjPos==='function'&&typeof getHeroThumbObjPos==='function')?_teamFormAdjustObjPos(name,getHeroThumbObjPos(name),'grid'):((typeof getHeroThumbObjPos==='function')?getHeroThumbObjPos(name):'center center')};display:block;"/>
-         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name, true)}</div>`
+         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>${_cstPkLine(name, true)}`
       : `<div style="width:100%;height:120px;display:flex;align-items:center;justify-content:center;font-size:58px;">${av}</div>
-         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span>${_cstPkB(name, true)}</div>`)
+         <div style="font-size:18px;text-align:center;padding:6px 4px 5px;color:#ffe8a0;font-weight:700;line-height:1.2;">${name} <span style="font-size:14px;color:#88ccff;font-weight:600;">Lv.${lv}</span></div>${_cstPkLine(name, true)}`)
     + _rarityBadge_arena
     // ★ v5.87.0（老師需求 2）— 卡片左下角自動浮現「這位剛好對得上本關 BOSS 需求」的能力標籤（最多 2 個・字級縮至 0.8）。
     //   目的＝老師：「如此玩家仍可以自主選擇適合且想練的英雄」——不必按推薦陣容也看得出誰對得上這一關。
@@ -12877,7 +12934,7 @@ window._lxpsRenderEnemyBrief = function(){
     var _th = (typeof window._lxpsEnsureThreat === 'function') ? window._lxpsEnsureThreat() : window._lxpsCurThreat;
     var _mech = (typeof window._lxpsThreatMechText === 'function')
       ? window._lxpsThreatMechText((_th && _th.list) || [], 3) : '';
-    if(!_mech){ _el.style.display = 'none'; _el.innerHTML = ''; return; }
+    if(!_mech){ _el.style.display = 'none'; _el.innerHTML = ''; try{ var _q0 = document.getElementById('hpick-enemy-brief-q'); if(_q0) _q0.style.display = 'none'; }catch(_){} return; }
     // ★ v5.89.0 第二輪（老師 2026-08-20：「編組隊伍頁的需求能力顯示一處就好」）—
     //   本列**不再重複列出需求能力**，只講「這關對手會做什麼」。
     //   需求能力統一由標題列右側的「🛡 本關最需要」彩色晶片列（#hpick-enemy-need・v5.87.0）負責：
@@ -12900,7 +12957,39 @@ window._lxpsRenderEnemyBrief = function(){
         + '🎯 金框＝最剋這一關　⚠ 紅標＝這位還需要整備　🔁 再按「推薦陣容」會換一批'
         + '</div>';
     _el.innerHTML = _h;
-    _el.style.display = 'block';
+    /* ★ v5.368.0(2026-11-09・老師「『這關對手會...』的視窗收合到『對手陣容』後面的 ?」)
+     *   常駐列改成收合:標題「🟥 對手陣容」後面一顆「?」,按了才在標題下方浮出這段說明(再按 ?、或點說明本身就收起)。
+     *   浮出時 position:absolute 疊在敵人縮圖上方,不再擠掉敵人縮圖的高度(之前敵人圖常被壓成一條)。
+     *   舊行備查:_el.style.display = 'block'; */
+    var _tt = document.getElementById('hpick-enemy-title-txt');
+    var _qb = document.getElementById('hpick-enemy-brief-q');
+    if(_tt && !_qb){
+      _qb = document.createElement('button');
+      _qb.type = 'button'; _qb.id = 'hpick-enemy-brief-q'; _qb.textContent = '?';
+      _qb.title = '這關對手會做什麼';
+      _qb.style.cssText = 'flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:2px solid #ff9a6a;background:rgba(255,154,106,0.16);color:#ffc9a8;'
+        + 'font-size:21px;font-weight:900;line-height:1;padding:0;cursor:pointer;font-family:inherit;margin-left:2px;';
+      _tt.parentNode.insertBefore(_qb, _tt.nextSibling);
+      var _tog = function(ev){
+        try{ ev.stopPropagation(); ev.preventDefault(); }catch(_){}
+        window._lxpsBriefOpen = !window._lxpsBriefOpen;
+        try{ playSfx('sfx-sel', 0.45); }catch(_){}
+        try{ window._lxpsRenderEnemyBrief(); }catch(_){}
+      };
+      _qb.addEventListener('click', _tog);
+      _el.style.pointerEvents = 'auto';
+      _el.addEventListener('click', function(ev){ if(window._lxpsBriefOpen) _tog(ev); });
+    }
+    if(_qb){ _qb.style.display = ''; _qb.style.background = window._lxpsBriefOpen ? 'rgba(255,154,106,0.55)' : 'rgba(255,154,106,0.16)'; }
+    var _ttl = document.getElementById('hpick-enemy-title');
+    _el.style.position = 'absolute';
+    _el.style.left = '0'; _el.style.right = '0'; _el.style.width = 'auto';
+    _el.style.top = ((_ttl && _ttl.offsetHeight) ? _ttl.offsetHeight : 40) + 'px';
+    _el.style.zIndex = '6';
+    _el.style.background = 'rgba(60,10,10,0.96)';
+    _el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.6)';
+    _el.style.cursor = 'pointer';
+    _el.style.display = window._lxpsBriefOpen ? 'block' : 'none';
   }catch(_eRb){ console.warn('[v5.89.0 對手陣容簡介列] 例外', _eRb); }
 };
 // 英雄對本關威脅的剋制得分
@@ -13595,7 +13684,35 @@ function updatePickedBadges(){
     }
   }
   try{ if(window._fmDecoratePick) window._fmDecoratePick(); }catch(_eFmDec){}   // ★ v5.283.0 英魂陣型 右上四張隊員立繪的魂格圓標(立繪剛重畫完)
+  try{ if(window._lxpsPickLayoutFit) setTimeout(window._lxpsPickLayoutFit, 0); }catch(_eFit){}   // ★ v5.368.0
 }
+
+/* ★ v5.368.0(2026-11-09・老師附 PC 截圖「右側的英雄特殊能力標籤被下方區塊覆蓋到了，調整標籤高度不要被遮蓋」「把對手陣容和友方陣容中間分開一點小縫隙」)
+ *   根因:#hpick-side-team 固定 bottom:140px、立繪 560px 高,但底部 #hero-pick-bar 實際高度 >140(兩行按鈕)⇒ 立繪下緣的能力標籤被蓋;
+ *         立繪頂端又剛好疊進 #hpick-enemy-preview(底緣 380px)約 10px,兩區黏在一起。
+ *   修法:量底部列實際高度 ⇒ 友方立繪列底部貼在它上方 6px;立繪高度 = 可用高度(對手陣容底緣往下留 12px 縫)，上限 560、下限 260。
+ *   全部用設計畫布座標(offsetTop/offsetHeight,不受 #gc 縮放影響);三平台同一套,iPad 高畫布(gc-tall)可用高度大就維持 560。 */
+window._lxpsPickLayoutFit = function(){
+  try{
+    var side = document.getElementById('hpick-side-team'), bar = document.getElementById('hero-pick-bar'), ep = document.getElementById('hpick-enemy-preview');
+    if(!side || !bar || !ep || !side.offsetParent) return;
+    var par = side.offsetParent, H = par.clientHeight;
+    var barH = (bar.offsetParent && bar.offsetHeight) ? bar.offsetHeight : 140;
+    var bottom = barH + 6;
+    side.style.bottom = bottom + 'px';
+    /* 手機橫放(畫布設計高度矮):#hpick-enemy-preview 固定 bottom:700px ⇒ 高度只剩 0~幾十 px、整塊被友方立繪蓋掉(v5.367.0 以前就如此)。
+     * 對手陣容至少保留 230 設計 px(標題列 + 敵人縮圖 110 + 名字列),友方立繪縮短讓位;夠高的畫布(PC/iPad)不動、清掉覆寫。 */
+    ep.style.bottom = '';
+    var EP_MIN = 230;
+    if(ep.offsetHeight < EP_MIN){ ep.style.bottom = Math.max(0, H - ep.offsetTop - EP_MIN) + 'px'; }
+    var epBottom = ep.offsetTop + ep.offsetHeight;
+    var cs = getComputedStyle(side), padV = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    var avail = H - bottom - epBottom - 12 - padV;
+    var hImg = Math.max(200, Math.min(560, Math.floor(avail)));
+    side.querySelectorAll('.hpick-slot-img').forEach(function(el){ el.style.height = hImg + 'px'; });
+  }catch(_e){}
+};
+try{ window.addEventListener('resize', function(){ try{ setTimeout(window._lxpsPickLayoutFit, 150); }catch(_){} }); }catch(_){}
 
 function toggleHeroPick(idx, name){ focusHero(idx,name); } // legacy compat
 
@@ -85751,7 +85868,91 @@ function _showNewHeroAnnouncement(forceShow){
     }catch(_eTw2Card){ console.warn('[v5.311.0 寶島二部曲介紹卡]', _eTw2Card); return ''; }
   };
 
+  // ★★ v5.368.0(2026-11-09・老師「近期活動與內容新增『魂格系統』介紹」·鐵律1.232 簡單風/精緻風雙版)★★
+  //   資料全部即時讀 window._FM_DEFS / _FM_SOUL / _fmBuildPublic / _fmDescFx(與編組頁、陣型推薦同一份),數值以後調整這張卡自動跟著變;
+  //   陣型系統檔案沒載入(_FM_DEFS 不存在)⇒ 整張卡不列出。
+  const _FM_INTRO_COL = { C:'#ff6f9f', Q:'#5aa2ff', H:'#3fc779', X:'#ffb02e' };
+  const _FM_INTRO_LET = { C:'真', Q:'知', H:'力', X:'行' };
+  const _FM_INTRO_HERO = { C:'救醫馬', Q:'大天狗', H:'聖騎士', X:'酒吞童子' };
+  const buildSoulFormationSection = function(){
+    try{
+      const D = window._FM_DEFS, S = window._FM_SOUL || {}, NM = window._FM_SOUL_NAME || {}, IC = window._FM_SOUL_ICON || {};
+      if(!D) return '';
+      const _cu = (window._artStyle === 'cute');
+      const _T = function(c, p){ return _cu ? c : p; };
+      const _esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]; }); };
+      const _cnt = { C:0, Q:0, H:0, X:0 };
+      Object.keys(S).forEach(function(k){ if(_cnt[S[k]] != null) _cnt[S[k]]++; });
+      const _soulDesc = {
+        C:_T('會補血、保護隊友的好夥伴', '治療與支援:回復、護盾、淨化隊友'),
+        Q:_T('特技很強、愛動腦的聰明夥伴', '特技輸出:技能傷害與能量運用'),
+        H:_T('血很厚、站在最前面的勇士', '坦克守護:高 HP、護盾、減傷'),
+        X:_T('跑得快、出手快的行動派', '速度與控場:先手、追擊、控制敵人')
+      };
+      const _ball = function(k, sz){ return '<span style="display:inline-flex;align-items:center;justify-content:center;width:' + sz + 'px;height:' + sz + 'px;border-radius:50%;background:' + _FM_INTRO_COL[k] + ';color:#fff;font-weight:900;font-size:' + Math.round(sz * 0.55) + 'px;border:2px solid #fff;box-shadow:0 0 10px ' + _FM_INTRO_COL[k] + ';flex:0 0 auto;">' + _FM_INTRO_LET[k] + '</span>'; };
+      let h = '<div style="text-align:center;padding:4px 10px 2px;">'
+        + '<div style="font-size:clamp(22px,2.6vw,28px);color:#ffeebb;line-height:1.5;font-weight:800;">🏫 ' + _T('每位英雄都有一顆「魂格」!', '每位英雄都屬於四種「魂格」之一') + '</div>'
+        + '<div style="font-size:clamp(16px,1.8vw,19px);color:#ddccff;margin-top:6px;line-height:1.6;">'
+        + _T('四種魂格就是我們力行國小的校訓:<b style="color:#ffd36a;">真誠、求知、活力、行動</b>。帶 4 位英雄出戰,魂格湊得好就會發動「英魂陣型」,整場戰鬥都有加成!',
+             '四種魂格取自力行國小校訓「<b style="color:#ffd36a;">真誠・求知・活力・行動</b>」。出戰 4 人的魂格組合會自動發動對應的「英魂陣型」,效果持續整場戰鬥,並與英雄技能、命星、裝備疊加。')
+        + '</div></div>';
+      // 四魂格卡
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">';
+      ['C','Q','H','X'].forEach(function(k){
+        const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[_FM_INTRO_HERO[k]]) || '';
+        h += '<div style="display:flex;gap:12px;align-items:center;background:rgba(20,16,48,0.75);border:2px solid ' + _FM_INTRO_COL[k] + ';border-radius:14px;padding:10px 12px;">'
+          + (img ? '<div style="position:relative;flex:0 0 auto;width:84px;height:84px;border-radius:12px;overflow:hidden;border:2px solid ' + _FM_INTRO_COL[k] + ';"><img src="' + img + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block;" onerror="this.style.display=\'none\'"><span style="position:absolute;right:3px;bottom:3px;">' + _ball(k, 26) + '</span></div>' : _ball(k, 56))
+          + '<div style="min-width:0;"><div style="font-size:22px;font-weight:900;color:' + _FM_INTRO_COL[k] + ';">' + (IC[k] || '') + ' ' + _esc(NM[k] || '') + _T('', '魂') + ' <span style="font-size:15px;color:#cfc3ff;font-weight:700;">' + _cnt[k] + _T(' 位英雄', ' 位') + '</span></div>'
+          + '<div style="font-size:16px;color:#f3ecd2;line-height:1.5;margin-top:2px;">' + _soulDesc[k] + '</div></div></div>';
+      });
+      h += '</div>';
+      h += '<div style="font-size:16px;color:#ffe6a8;line-height:1.6;padding:8px 14px;background:rgba(255,211,106,0.10);border-left:4px solid #ffd36a;border-radius:8px;">'
+        + '🌟 ' + _T('主角是「萬用魂」:會自動變成最適合隊伍的那一種魂格!', '主角為「萬用魂」:自動選擇讓隊伍陣型最強的魂格。') + '</div>';
+      // 陣型一覽(依階級)
+      const tiers = [
+        ['雙魂陣', _T('2 位同魂格', '2 位同魂(其餘不同)')],
+        ['雙核陣', _T('2+2 兩種魂格', '2 + 2 兩組雙魂,外加共鳴')],
+        ['三魂陣', _T('3 位同魂格', '3 位同魂')],
+        ['純魂陣', _T('4 位都同一種', '4 位全同魂')],
+        ['四魂陣', _T('四種魂格各 1 位', '真・知・力・行各 1 位')]
+      ];
+      h += '<div style="font-size:clamp(22px,2.6vw,28px);font-weight:900;color:#ffd36a;margin-top:4px;">📜 ' + _T('有哪些陣型?', '英魂陣型一覽') + '</div>';
+      tiers.forEach(function(tr){
+        const keys = Object.keys(D).filter(function(k){ return D[k].tier === tr[0]; });
+        if(!keys.length) return;
+        h += '<div style="font-size:19px;font-weight:900;color:#cfc3ff;margin:6px 0 2px;">◆ ' + tr[0] + ' <span style="font-size:15px;color:#bdb3e6;font-weight:700;">(' + tr[1] + ')</span></div>';
+        h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px;">';
+        keys.forEach(function(k){
+          const f = (typeof window._fmBuildPublic === 'function') ? window._fmBuildPublic(k) : null;
+          const fx = (f && typeof window._fmDescFx === 'function') ? window._fmDescFx(f) : '';
+          const souls = (k === 'CQHX') ? ['C','Q','H','X'] : (/^[CQHX][234]$/.test(k) ? Array(parseInt(k.charAt(1), 10)).fill(k.charAt(0)) : k.split('').reduce(function(a, c){ return a.concat([c, c]); }, []));
+          h += '<div style="background:rgba(40,30,80,0.7);border:2px solid rgba(255,211,106,0.45);border-radius:12px;padding:8px 12px;">'
+            + '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + souls.map(function(s){ return _ball(s, 24); }).join('')
+            + '<span style="font-size:19px;font-weight:900;color:#ffd36a;margin-left:4px;">' + _esc(D[k].name) + '</span></div>'
+            + '<div style="font-size:15px;color:#e6dfc4;line-height:1.5;margin-top:4px;">' + _esc(fx) + '</div></div>';
+        });
+        h += '</div>';
+      });
+      // 怎麼用
+      h += '<div class="new-hero-method-card" style="padding:16px 18px;border-color:rgba(255,211,106,0.55);">'
+        + '<div style="font-size:clamp(22px,2.6vw,28px);font-weight:900;color:#ffd36a;margin-bottom:8px;">🧭 ' + _T('怎麼用?', '使用方式') + '</div>'
+        + '<div style="font-size:17px;color:#ffe;line-height:1.75;">'
+        + '・' + _T('編組頁英雄圖片右下角的圓形小字(真/知/力/行)就是魂格,湊成陣型時會發光。', '編組頁英雄卡右下角圓標顯示魂格(真/知/力/行);成員組成陣型時圓標會呼吸發光並播放音效。') + '<br>'
+        + '・' + _T('上方「魂格」按鈕可以只看某一種魂格的英雄。', '篩選列「魂格」可只顯示特定魂格的英雄。') + '<br>'
+        + '・' + _T('按「🏫 陣型推薦」選一種陣型,系統幫你挑 4 位最強的英雄。', '「🏫 陣型推薦」:選定陣型後自動挑出能組成它的最強 4 人(之後仍可自由調整)。') + '<br>'
+        + '・' + _T('畫面下方「隊伍編成」後面會顯示目前的陣型,按「?」看詳細效果。', '底部「隊伍編成」右側顯示目前陣型與效果,按「?」可再看一次說明。') + '<br>'
+        + '・' + _T('冒險、龍王戰都能用;鬥技場和連線對戰雙方都有陣型。冒險關卡的 BOSS 沒有陣型。', '適用:故事冒險、世界龍王戰、鬥技場與連線對戰(對戰時雙方皆套用);冒險模式的敵方 BOSS 不套用陣型。')
+        + '</div></div>';
+      return h;
+    }catch(_eFmIntro){ console.warn('[v5.368.0 魂格系統介紹卡]', _eFmIntro); return ''; }
+  };
+
   const _themes = [
+    // ★ v5.368.0 — 魂格系統(英魂陣型)介紹卡(最新內容置頂;陣型系統沒載入時整張不列出)
+    ...((window._FM_DEFS) ? [
+      { id:'soul', emoji:'🏫', accent:'#ffd36a', title:'NEW!魂格系統・英魂陣型', sub:'真誠・求知・活力・行動四種魂格 · 湊成陣型整場加成 · 陣型推薦一鍵組隊',
+        imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS[_FM_INTRO_HERO.C]) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[_FM_INTRO_HERO.H]) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[_FM_INTRO_HERO.X]) || ''],
+        detail: buildSoulFormationSection() } ] : []),
     // ★ v5.311.0 — 台灣第二章《寶島二部曲》＋中國關《繪卷新章》介紹卡(最新內容置頂;登錄表缺席時整張不列出)
     ...((window._TW2 && window._TW2.bosses) ? [
       { id:'tw2', emoji:'🏝', accent:'#6fe0d0', title:'NEW!台灣第二章《寶島二部曲》', sub:'10 個新地點 · 難度 ★3～★7 · 10 件新台灣至寶 · 每關知識預習',
@@ -85852,6 +86053,7 @@ function _showNewHeroAnnouncement(forceShow){
     _dbox.appendChild(_ds);
     _dov.appendChild(_dbox);
     document.body.appendChild(_dov);
+    try{ window._lxpsFaceFitIn && window._lxpsFaceFitIn(_ds); }catch(_eFF){}   /* ★ v5.368.0 詳細內容的英雄圖依頭頂位置對齊,臉不被切 */
     _dov.addEventListener('click', function(e){ if(e.target === _dov){ try{ playSfx('sfx-cancel', 0.4); }catch(_){} _dov.remove(); } });
     try{ playSfx('sfx-sel', 0.5); }catch(_){}
   };
@@ -85869,6 +86071,7 @@ function _showNewHeroAnnouncement(forceShow){
       im.onerror = function(){ const _e = im.getAttribute('data-emoji') || '✨'; const _p = im.parentNode; if(_p){ _p.innerHTML = '<span style="font-size:30px;line-height:1;">' + _e + '</span>'; } };
     });
   }catch(_eBindMenu){ console.warn('[活動選單綁定]', _eBindMenu); }
+  try{ window._lxpsFaceFitIn && window._lxpsFaceFitIn(scrollArea); }catch(_eFFm){}   /* ★ v5.368.0 主題選單縮圖也依頭頂位置對齊 */
 
   // 底部按鈕列(固定)
   const footer = document.createElement('div');
@@ -88735,6 +88938,15 @@ window._FM_DEFS = {
       '#fm-pick-bar .fm-fx{flex:1 1 420px;min-width:0;font-size:18px;color:#efe8cc;}',
       '#fm-pick-bar .fm-hint{flex:1 1 100%;font-size:17px;color:#9fe6c0;}',
       '#fm-pick-bar .fm-none{color:#d8d8d8;font-size:19px;}',
+      /* ★ v5.368.0 陣型列搬到底部隊伍編成列:取代四顆圓頭像、寬度受限,字略縮;提示列最多兩行 */
+      '#hero-pick-bar.fm-in #picked-badges{display:none !important;}',
+      '#hero-pick-bar #fm-pick-bar{margin:0;flex:0 1 560px;width:560px;max-width:560px;min-width:0;padding:6px 12px;gap:3px 10px;font-size:18px;line-height:1.3;max-height:124px;overflow:hidden;}',
+      '#hero-pick-bar #fm-pick-bar .fm-name{font-size:22px;}',
+      '#hero-pick-bar #fm-pick-bar .fm-tier{font-size:15px;}',
+      '#hero-pick-bar #fm-pick-bar .fm-q{width:32px;height:32px;font-size:19px;}',
+      '#hero-pick-bar #fm-pick-bar .fm-fx{flex:1 1 100%;font-size:16px;}',
+      '#hero-pick-bar #fm-pick-bar .fm-hint{font-size:15px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
+      '#hero-pick-bar #fm-pick-bar .fm-none{font-size:17px;}',
       /* 魂格圓標 */
       '.fm-soul-tag{position:absolute;right:5px;bottom:5px;z-index:6;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900;line-height:1;pointer-events:none;box-sizing:border-box;background:rgba(70,72,84,0.92);color:#c9cbd4;border:2px solid rgba(190,192,204,0.7);font-family:inherit;}',
       '.fm-soul-tag.on{color:#fff;border-color:#fff;background:var(--fmc);animation:fmBreath 1.6s ease-in-out infinite;}',
@@ -88849,16 +89061,26 @@ window._FM_DEFS = {
     try{
       var sel = (typeof _heroPickSelected !== 'undefined' && Array.isArray(_heroPickSelected)) ? _heroPickSelected : null;
       var host = document.getElementById('hero-pick-topbar');
+      /* ★ v5.368.0(2026-11-09・老師「下方隊伍編成後面的四個圖示欄位移除(跟上面重複了)改成『當前魂格陣型』(頁面頂端的當前陣型移下來這裡)」)
+       *   陣型列改掛在底部 #hero-pick-bar 的「🚩 隊伍編成」後面、取代 #picked-badges 四顆圓形頭像(加 .fm-in 才隱藏;陣型未開放時照舊顯示圓頭像)。
+       *   #picked-badges 節點保留(updatePickedBadges 照常寫入,只是不顯示)。舊位置:#hero-pick-topbar 尾端。 */
+      var pbar = document.getElementById('hero-pick-bar');
       if(!sel || !host) return;
       if(!_on()){
         ['fm-pick-bar','fm-rec-btn','fm-rec-btn-m'].forEach(function(id){ var x = document.getElementById(id); if(x) x.remove(); });
         document.querySelectorAll('.fm-filter-row').forEach(function(x){ x.remove(); });
+        if(pbar) pbar.classList.remove('fm-in');
         return;
       }
       _css();
       _ensureFilterRow(); _ensureRecBtn();
       var bar = document.getElementById('fm-pick-bar');
-      if(!bar){ bar = document.createElement('div'); bar.id = 'fm-pick-bar'; host.appendChild(bar); }
+      if(!bar){ bar = document.createElement('div'); bar.id = 'fm-pick-bar'; }
+      if(pbar){
+        var pb = document.getElementById('picked-badges');
+        if(bar.parentNode !== pbar){ if(pb && pb.parentNode === pbar) pbar.insertBefore(bar, pb); else pbar.insertBefore(bar, document.getElementById('hero-pick-confirm')); }
+        pbar.classList.add('fm-in');
+      } else if(bar.parentNode !== host){ host.appendChild(bar); }
       var N = W._FM_SOUL_NAME, I = W._FM_SOUL_ICON;
       var f = W._fmCompute(sel);
       var h = '';
@@ -88882,6 +89104,7 @@ window._FM_DEFS = {
       }
       W._fmLastKey = key;
       W._fmDecoratePick();
+      try{ if(W._lxpsPickLayoutFit) setTimeout(W._lxpsPickLayoutFit, 0); }catch(_eFit2){}   // ★ v5.368.0 陣型列在底部列裡,高度可能變 ⇒ 重排友方立繪
     }catch(e){ try{ console.warn('[英魂陣型] 編組頁顯示失敗', e); }catch(_){} }
   };
   /* 編組格子與右上四張立繪掛魂格標 */

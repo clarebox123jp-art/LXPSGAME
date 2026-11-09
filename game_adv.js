@@ -40017,6 +40017,26 @@ function _arenaShowExchangePlaceholder(){
 
     document.body.appendChild(ov);
 
+    /* ★ v5.368.0(2026-11-09・老師「PC版鬥技場商店的視窗內字體也要隨螢幕解析度適當放大」)
+     *   本視窗卡片寬 760px、字 11~15px:v5.367.0 PC 整窗放大(1920=×1.15)後仍偏小 ⇒ 卡片本身再 zoom:
+     *   PC ×1.35(1920×1080 合計約 ×1.55、2560×1440 約 ×2)、平板 ×1.2、手機橫放(高 ≤520)不放大。
+     *   寬高上限改用 px 依「實際總倍率」換算(zoom 會連 vh 一起放大,不能沿用 90vh),內容照舊在卡片內捲動;換尺寸/轉向時重算。 */
+    try{
+      var _axCard = ov.firstElementChild;
+      var _axFit = function(){
+        try{
+          if(!ov.isConnected){ window.removeEventListener('resize', _axFit); return; }
+          var W = window.innerWidth || 0, H = window.innerHeight || 0;
+          var z = (H <= 520) ? 1 : (window._lxpsPcZoomOn ? 1.35 : 1.2);
+          var f = parseFloat(ov.style.zoom) || 1;
+          _axCard.style.zoom = z;
+          _axCard.style.maxWidth = Math.floor(Math.min(760 * (z > 1 ? 1.08 : 1), (W - 24) / (z * f))) + 'px';
+          _axCard.style.maxHeight = Math.floor(H * 0.92 / (z * f)) + 'px';
+        }catch(_){}
+      };
+      if(_axCard){ _axFit(); setTimeout(_axFit, 250); setTimeout(_axFit, 700); window.addEventListener('resize', _axFit); }
+    }catch(_eAxZ){}
+
     // 關閉視窗
     function _closeOv(){
       try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.4); }catch(_){}
@@ -82851,8 +82871,18 @@ function makeRadar(dims, size) {
       var glow = (!off && full) ? 'text-shadow:0 0 6px rgba(255,200,80,0.95);' : '';
       var tip = _T('命星 ' + lit + '/6', '命座 ' + lit + '/6') + (off ? _T('(鬥技場和對戰不生效)', '(鬥技場與對戰不生效)') : '');
       return '<span class="cst-pk" title="' + _esc(tip) + '" style="display:inline-block;white-space:nowrap;font-weight:900;color:' + col + ';' + glow
-        + 'font-size:' + (opts.size || '0.9em') + ';margin-left:' + (opts.gap || '6px') + ';' + (off ? 'opacity:0.75;' : '') + '">✦' + lit + '</span>';
+        + 'font-size:' + (opts.size || '0.9em') + ';margin-left:' + (opts.gap || '6px') + ';' + (off ? 'opacity:0.75;' : '') + '">✦'
+        + (opts.label ? (' ' + _T('命星', '命星') + ' ' + lit + '/' + W._CST_MAX) : lit) + '</span>';   /* ★ v5.368.0 opts.label:編組清單名稱下方獨立一行「✦ 命星 N/6」 */
     }catch(_){ return ''; }
+  };
+  /* ★ v5.368.0(老師「可加入英雄清單在名稱下方新增當前命星數量，六命的英雄邊框出現白色光暈」)
+   *   W._cstPickLit(name):回傳已點亮命星數 0~6;不符資格(命座未開放/R 主角未覺醒/查不到)回傳 -1。編組卡用來判斷要不要加滿命白光。 */
+  W._cstPickLit = function(name){
+    try{
+      if(!name || !W._cstOpenForMe() || !W._cstEligible(name)) return -1;
+      try{ if(typeof _getHeroRarity === 'function' && _getHeroRarity(name) === 'R' && _isProtag(W._cstKey(name))) return -1; }catch(_){}
+      return Math.min(W._CST_MAX, W._cstLit(W._cstKey(name)).length);
+    }catch(_){ return -1; }
   };
   /* ════════════ ★ v5.276.0(老師 2026-10-17 15:09「我找不到命星去哪裡點」)英雄詳情左側大圖「✨ 命座」浮動按鈕 ════════════
    *   原入口(_cstCodexEntryHtml)在右欄素質區下方、要往下捲才看得到 ⇒ 另在左側大圖放一顆一打開就看得到的按鈕
