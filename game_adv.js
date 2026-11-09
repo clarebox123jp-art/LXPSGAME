@@ -31827,6 +31827,13 @@ window.gameCloudLoad = async function(uid) {
       var _mainUC  = _flUnlocked(_main), _mainML = _flMaxLv(_main);
       var _anySlotRicher = [_live, _safe].some(function(s){
         if(!s || typeof s !== 'object') return false;
+        /* ★ v5.371.0 — 凍結的舊 safe 裡「已刪/無本帳號證明」的英雄不算更豐富(否則每次登入都被迫走三槽聯集,老師刪的英雄跟著被帶回) */
+        try{
+          if(typeof window._lxpsSlotRicherThanMain === 'function'){
+            var _rv = window._lxpsSlotRicherThanMain(s, _main, uid);
+            if(_rv === true || _rv === false) return _rv;
+          }
+        }catch(_eRich){}
         return (_flUnlocked(s) - _mainUC) >= 1 || (_flMaxLv(s) - _mainML) >= 3;
       });
       var _slots3 = [_live, _safe, _main].filter(function(d){ return d && typeof d === 'object'; });
@@ -39551,7 +39558,7 @@ async function _claimGmClassRewardFromInbox(rid, btn){
       if(r.reward && r.reward.backpack && typeof r.reward.backpack === 'object' && typeof backpackAdd === 'function'){
         Object.keys(r.reward.backpack).forEach(function(_bk){
           var _bq = Math.max(0, parseInt(r.reward.backpack[_bk], 10) || 0);
-          if(_bq > 0) backpackAdd(_bk, _bq, 'GM 課堂獎勵');
+          if(_bq > 0) backpackAdd(_bk, _bq, 'GM課堂獎勵#' + String(rid || '').slice(0, 24));   // ★ v5.371.0 召喚卷帳本 grant 標這筆獎勵編號 ⇒ GM「各期獎勵總表」可精準追每張卷用在哪
         });
       }
     }catch(_eApplyMem){ console.warn('[GM獎勵領取·甲] 套記憶體背包失敗(不影響·reload 會補)', _eApplyMem); }
@@ -82880,6 +82887,24 @@ function makeRadar(dims, size) {
           }
           /* ★ v5.345.0 命星到手、券也扣到 ⇒ 立刻記為本週願望已實現(本機＋雲端 arrayUnion 永久紀錄,與召喚星空同一份) */
           if(wish){ try{ if(typeof W._wishTicketCommit === 'function') W._wishTicketCommit(tier, name, wish.uid); }catch(_eWc){ console.warn('[祈願] 隨機卷命星記錄', _eWc); } }
+          /* ★ v5.371.0(老師 2026-11-09「召喚卷拿去換命星的也要留下記錄在召喚記錄和雲端。以後計算都要算 1 隻 UR」)
+             換命星的永久紀錄 _tkStarLog(主檔 arrayUnion,只增不減;跟扣券＋命星同一次原子寫入)＋召喚紀錄＋永久資產帳本。
+             對帳以 window._lxpsTicketStarCount 計數(命座帳本與本清單取大),UR 每顆算 1 隻 UR。 */
+          var _tsAt = Date.now();
+          var _tsRec = { id: _tsAt + '_' + Math.random().toString(36).slice(2, 7), at: _tsAt, h: String(name), t: tier, s: srcTag, tk: tid, u: _uid12() };
+          var _tsUnion = null;
+          try{ if(W._fbFns && typeof W._fbFns.arrayUnion === 'function') _tsUnion = W._fbFns.arrayUnion(_tsRec); }catch(_){ _tsUnion = null; }
+          try{
+            if(typeof _recordSummonHistory === 'function'){
+              _recordSummonHistory([{ kind: 'cst_star', name: '命星・' + name + '(' + tier + (isRnd ? ' 召喚卷' : ' 自選卷') + '換)', icon: '⭐', qty: 1, _rarityTier: tier }], false);
+            }
+          }catch(_eSH){ console.warn('[命座] 換命星寫召喚紀錄失敗', _eSH); }
+          try{
+            if(typeof W._lxpsAssetLedgerWrite === 'function' && W._gUserId){
+              W._lxpsAssetLedgerWrite(W._gUserId, [{ k: 's', id: String(name), d: 1, why: srcTag + '→命星' }, { k: 'b', id: tid, d: -1, why: '換命星:' + name }],
+                { kind: 'play', note: tier + (isRnd ? ' 召喚卷' : ' 自選卷') + '換命星:' + name + (tier === 'UR' ? '(算 1 隻 UR)' : '') });
+            }
+          }catch(_eAL){ console.warn('[命座] 換命星寫永久資產帳本失敗', _eAL); }
           /* ★ v5.279.0 扣券＋命星「同一次」即時原子寫入雲端(背包、券實例、命星三者一起落地,含重試)。
              舊 UR 流程是背包走快車道、命星走 gameCloudSave 慢車道 ⇒ App 被切走可能「券扣了、命星沒上雲」。
              _cstSafeField 在命星資料未載入時回空物件 ⇒ 這裡 _ready() 已保證載入,不會拿空資料蓋雲端。 */
@@ -82891,12 +82916,15 @@ function makeRadar(dims, size) {
                 var bag = JSON.parse(JSON.stringify(_playerBackpack));
                 var patch = { playerBackpack: bag, playerBackpack_s: JSON.stringify(bag), constellationData_s: cf.constellationData_s };
                 try{ if(typeof W._ticketDataForCloud === 'function'){ var tk = W._ticketDataForCloud(); patch.ticketData = tk; patch.ticketData_s = JSON.stringify(tk); } }catch(_){}
+                if(_tsUnion){ patch._tkStarLog = _tsUnion; _tsUnion = null; }   /* ★ v5.371.0 換命星永久紀錄同一次落地 */
                 W._lxpsCloudInstantUnlock(patch, tkLog + '→命星(扣券+命星):' + name);
                 atomicOk = true;
               }
             }
           }catch(eA){ console.warn('[命座] 自選卷轉命星原子寫入失敗,改走背包即時落地＋gameCloudSave', eA); }
           if(!atomicOk){ try{ if(typeof W._lxpsInstantBackpackPersist === 'function') W._lxpsInstantBackpackPersist(tkLog + '→命星'); }catch(_){} }
+          /* ★ v5.371.0 原子寫入沒走到 ⇒ 換命星永久紀錄單獨即時寫(arrayUnion,重試 2 次) */
+          if(_tsUnion){ try{ if(typeof W._lxpsCloudInstantUnlock === 'function') W._lxpsCloudInstantUnlock({ _tkStarLog: _tsUnion }, tkLog + '→命星紀錄:' + name); }catch(_){} }
           try{ if(typeof W._logActivity === 'function') W._logActivity('ticket_use', { ticket: tid, cst: name }); }catch(_){}
           _save();   /* 三槽完整存檔(命星欄位由 _buildSafeData 帶) */
           try{ var m = document.getElementById('_summon-ticket-pick-modal'); if(m) m.remove(); }catch(_){}
