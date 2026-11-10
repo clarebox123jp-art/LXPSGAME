@@ -83013,6 +83013,8 @@ window._lxpsFlushPendingToCloud = async function(fromVerifiedEntry){
 // ════════════════════════════════════════════════════════════════════════
 
 function openAdventureOverlay(){
+  // ★ v5.374.0 📊 四種模式遊玩人次:故事冒險(每人每天 1 次;未登入/GM 不計;同一天之後只查本機記號,不碰雲端)— 見 game_cloud.js _setupModePlays
+  try{ if(typeof window._lxpsModePlay === 'function') window._lxpsModePlay('adv'); }catch(_eMp){}
   // ★ v4.2.0 — 依「寵物系統 GM 測試限定」開關,隱藏/顯示主選單寵物鈕(cosmetic·存取另有守門)
   // ★ v4.3.0 — 首次進關卡頁時拉一次雲端開關(gameConfig/petSystemSwitch);載完會自行再套用一次 gate
   try{ if(window._petSysCloudOpen === null && window._fbLoadPetSysSwitch) window._fbLoadPetSysSwitch(); }catch(_){}

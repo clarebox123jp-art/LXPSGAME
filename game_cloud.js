@@ -587,9 +587,13 @@
           const _bk = String(rec.back || '');
           if(_bk && _bk.indexOf(window.location.origin + '/') === 0 && /\/minigame\/minigame_index\.html(?:[?#]|$)/.test(_bk)){
             window._lxpsOAuthBackTo = _bk;
+            // ★ v5.374.0(老師「檢查所有登入按鈕…不會再登入又被登出」稽核)— 本頁只停 0.4 秒,閒置模組來不及寫裝置層「最後操作時間」;
+            //   小遊戲攔截器第六道(lxps_idle_last 同 uid 超過 30 分鐘 ⇒ 不管交接鑰匙一律踢)會把剛親自登入的學生又踢成訪客
+            //   (同一台平板、同一帳號、上次玩是 30 分鐘以前就會中)。剛完成 Google 選帳號 = 真的有人在操作 ⇒ 立刻蓋新時間。
+            try{ localStorage.setItem('lxps_idle_last', JSON.stringify({ uid: u.uid, t: Date.now() })); }catch(_){}
             try{ if(typeof window._lxpsMarkAppHandoff === 'function') window._lxpsMarkAppHandoff(u.uid); }catch(_){}
             _fbDiag('oauthDirect:小遊戲發起的登入 → 回到 ' + _bk);
-            setTimeout(function(){ try{ if(typeof window._lxpsMarkAppHandoff === 'function') window._lxpsMarkAppHandoff(u.uid); }catch(_){} try{ window.location.replace(_bk); }catch(_){} }, 400);
+            setTimeout(function(){ try{ localStorage.setItem('lxps_idle_last', JSON.stringify({ uid: u.uid, t: Date.now() })); }catch(_){} try{ if(typeof window._lxpsMarkAppHandoff === 'function') window._lxpsMarkAppHandoff(u.uid); }catch(_){} try{ window.location.replace(_bk); }catch(_){} }, 400);
           }
         }catch(_eBk){}
         return u;
@@ -28381,6 +28385,136 @@
       }
       window._artRank = { artWeekKey, rewardOf, computeSet, trySettleLastWeek, claimMyAward };
       console.log('[ArtRank] ✅ 創藝工坊每週排行結算模組已掛載 v5.363.0');
+    })();
+
+    // ════════════════════════════════════════════════════════════════════
+    // ★ v5.374.0(2026-11-10・老師「遊戲首頁的四個模式按鈕的上方顯示累積個別人次(每人每天登入一個入口最多計1次),
+    //   gm選單可以看到玩家遊玩四種模式的人次比例。gm測試遊玩的次數不計入。」)
+    //   📊 四種模式遊玩人次(window._lxpsModePlay / window._lxpsModeStats;小遊戲端 minigame_index.html mgModePlay 同一套資料)
+    //   資料:stats/modePlays_0 ~ stats/modePlays_7(依帳號雜湊分 8 份,同時進場的人分散寫,不塞車)
+    //     = { adv, mg, isl, art(累積人次), d:{ 'YYYYMMDD'(台北日期): { 帳號雜湊8碼: 'amir'(今天玩過的模式字母) } } }
+    //     字母 a=故事冒險 m=迷你遊戲 i=荒島求生 r=創藝工坊。d 只留今天與昨天(寫入時順手刪更早的日子)。
+    //     去重表只存帳號 uid 的雜湊碼(FNV-1a),不存姓名/信箱/uid ⇒ 公開可讀也不洩漏誰玩了什麼。
+    //   規則:沿用既有 match /stats/{docId}(任何人可讀、登入者可更新已存在文件、建立只有 GM)⇒ 不需改 Firestore 規則;
+    //     8 份文件由 GM 帳號登入時自動建立(ensure),在那之前學生端寫入會失敗 ⇒ 不記本機「今天已算過」,之後再試。
+    //   計次:每人每天每個模式最多 1 次;transaction 讀到 d[今天][雜湊] 已含該字母就不加(跨裝置也不重複);
+    //     本機另記 lxps_mp_<uid>_<日期>_<模式>,同一天之後不再碰雲端。GM(_isAdminUser)一律不計。未登入(訪客)不計。
+    // ════════════════════════════════════════════════════════════════════
+    (function _setupModePlays(){
+      const N = 8, MODES = { adv: 'a', mg: 'm', isl: 'i', art: 'r' }, CACHE_KEY = 'lxps_mp_cache';
+      const SHARD = (i) => doc(_fbDb, 'stats', 'modePlays_' + i);
+      function _h(uid){ let h = 0x811c9dc5; const s = String(uid || ''); for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+      function _day(ms){ const d = new Date((ms || Date.now()) + 8 * 3600 * 1000); return '' + d.getUTCFullYear() + ('0' + (d.getUTCMonth() + 1)).slice(-2) + ('0' + d.getUTCDate()).slice(-2); }
+      function _isGm(){ try{ return typeof window._isAdminUser === 'function' && !!window._isAdminUser(); }catch(_){ return false; } }
+      const _busy = {};
+      // 計一次(mode:adv/mg/isl/art)。回傳 Promise<'ok'|'dup'|'skip'|'err'>
+      async function play(mode){
+        const L = MODES[mode]; if(!L) return 'skip';
+        const uid = window._gUserId || (window._fbUser && window._fbUser.uid) || '';
+        if(!uid || _isGm()) return 'skip';
+        const day = _day(), lk = 'lxps_mp_' + uid + '_' + day + '_' + mode;
+        try{ if(localStorage.getItem(lk) === '1') return 'dup'; }catch(_){}
+        if(_busy[mode]) return 'skip';
+        _busy[mode] = true;
+        try{
+          const h = _h(uid), ref = SHARD(parseInt(h, 16) % N);
+          const prev = day === _day() ? _day(Date.now() - 86400000) : '';
+          const r = await runTransaction(_fbDb, async (tx) => {
+            const s = await tx.get(ref);
+            if(!s.exists()) return 'noshard';
+            const d = (s.data() || {}).d || {};
+            const cur = String((d[day] || {})[h] || '');
+            if(cur.indexOf(L) >= 0) return 'dup';
+            const up = {}; up[mode] = increment(1); up['d.' + day + '.' + h] = cur + L;
+            Object.keys(d).forEach(function(k){ if(k !== day && k !== prev) up['d.' + k] = deleteField(); });
+            tx.update(ref, up);
+            return 'ok';
+          });
+          if(r === 'ok' || r === 'dup'){
+            try{ localStorage.setItem(lk, '1'); }catch(_){}
+            // 清掉前天以前的本機記號(只動 lxps_mp_ 開頭、且不是今天/昨天的)
+            try{ const keep = [day, prev]; for(let i = localStorage.length - 1; i >= 0; i--){ const k = localStorage.key(i); if(k && k.indexOf('lxps_mp_') === 0 && k !== CACHE_KEY && !keep.some(function(x){ return x && k.indexOf('_' + x + '_') > 0; })) localStorage.removeItem(k); } }catch(_){}
+            if(r === 'ok'){ try{ const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); if(c && c.tot){ c.tot[mode] = (c.tot[mode] || 0) + 1; localStorage.setItem(CACHE_KEY, JSON.stringify(c)); badges(c); } }catch(_){} }
+            return r;
+          }
+          return 'err';
+        }catch(e){ console.warn('[四模式人次] 記錄失敗', e && (e.code || e.message)); return 'err'; }
+        finally{ _busy[mode] = false; }
+      }
+      // 讀全部 8 份 → { tot:{adv,mg,isl,art}, today:{...}, day, at, ok(讀到幾份) }
+      async function load(force){
+        try{ if(!force){ const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); if(c && c.at && Date.now() - c.at < 10 * 60 * 1000) return c; } }catch(_){}
+        const day = _day(), tot = { adv: 0, mg: 0, isl: 0, art: 0 }, today = { adv: 0, mg: 0, isl: 0, art: 0 };
+        let ok = 0;
+        const snaps = await Promise.all(Array.from({ length: N }, function(_, i){ return getDoc(SHARD(i)).catch(function(){ return null; }); }));
+        snaps.forEach(function(s){
+          if(!s || !s.exists()) return;
+          ok++;
+          const v = s.data() || {};
+          Object.keys(tot).forEach(function(k){ tot[k] += Math.max(0, Number(v[k]) || 0); });
+          const m = (v.d || {})[day] || {};
+          Object.keys(m).forEach(function(hh){ const t = String(m[hh] || ''); Object.keys(MODES).forEach(function(k){ if(t.indexOf(MODES[k]) >= 0) today[k]++; }); });
+        });
+        const c = { tot: tot, today: today, day: day, at: Date.now(), ok: ok };
+        if(ok > 0){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify(c)); }catch(_){} }
+        return c;
+      }
+      // GM:建立還不存在的分片(學生沒有建立權限)
+      async function ensure(){
+        if(!_isGm()) return -1;
+        let made = 0;
+        for(let i = 0; i < N; i++){
+          try{ const s = await getDoc(SHARD(i)); if(!s.exists()){ await setDoc(SHARD(i), { adv: 0, mg: 0, isl: 0, art: 0, d: {} }, { merge: true }); made++; } }catch(e){ console.warn('[四模式人次] 建立分片失敗', i, e && e.code); }
+        }
+        return made;
+      }
+      // 首頁四顆入口上方的人次標籤
+      const BTN = { adv: 'adventure-btn', mg: 'minigame-btn', isl: 'island-btn', art: 'art-btn' };
+      function badges(c){
+        if(!c || !c.tot || !(c.ok > 0)) return;
+        Object.keys(BTN).forEach(function(k){
+          const b = document.getElementById(BTN[k]); if(!b) return;
+          let t = b.querySelector('.lxps-mp-cnt');
+          if(!t){ t = document.createElement('span'); t.className = 'lxps-mp-cnt'; b.appendChild(t); }
+          const n = Number(c.tot[k]) || 0;
+          t.innerHTML = '👥 ' + n.toLocaleString('en-US') + '<span class="lxps-mp-u"> 人次</span>';
+          t.title = '累積遊玩人次(每人每天算 1 次)';
+        });
+        fit();
+      }
+      // 平板/手機寬度時「故事冒險」左上的長標籤(登入自己的帳號才能遊玩)會跟右上的人次標籤撞在一起
+      // ⇒ 第一步改精簡版(縮字、拿掉「人次」二字,滑鼠停留仍有完整說明);還撞才疊到那個標籤上方
+      //   (不先疊上方:iPad 寬度上方緊貼「搶答擂台」橫條,疊上去會壓到它)
+      function fit(){
+        Object.keys(BTN).forEach(function(k){
+          const b = document.getElementById(BTN[k]); if(!b) return;
+          const t = b.querySelector('.lxps-mp-cnt'), g = b.querySelector('.lxps-entry-tag');
+          if(!t) return;
+          t.style.removeProperty('top'); t.classList.remove('lxps-mp-compact');
+          if(!g || !g.offsetParent || !t.offsetParent) return;
+          const hit = function(){ const a = t.getBoundingClientRect(), r = g.getBoundingClientRect();
+            return !(a.left >= r.right - 2 || a.right <= r.left + 2 || a.top >= r.bottom || a.bottom <= r.top); };
+          if(!hit()) return;
+          t.classList.add('lxps-mp-compact');
+          if(hit()) t.style.setProperty('top', (g.offsetTop - t.offsetHeight - 3) + 'px', 'important');
+        });
+      }
+      let _fitT = null;
+      window.addEventListener('resize', function(){ clearTimeout(_fitT); _fitT = setTimeout(fit, 250); });
+      setInterval(function(){ if(!document.hidden && document.querySelector('.lxps-mp-cnt')) fit(); }, 3000);   // 登入前後「登入才能玩」標籤會出現/消失
+      async function refreshBadges(force){ try{ const c = await load(force); badges(c); return c; }catch(_){ return null; } }
+      window._lxpsModePlay = function(mode){ try{ return play(mode); }catch(_){ return Promise.resolve('err'); } };
+      window._lxpsModeStats = { load: load, ensure: ensure, refreshBadges: refreshBadges, play: play, day: _day, N: N };
+      // 首頁:先用快取立刻畫,再背景讀雲端;之後每 10 分鐘更新一次
+      try{ const c0 = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); if(c0) badges(c0); }catch(_){}
+      setTimeout(function(){ refreshBadges(false); }, 2500);
+      setInterval(function(){ if(!document.hidden) refreshBadges(false); }, 10 * 60 * 1000);
+      // GM 登入後自動補建分片(只做一次)
+      let _ens = false;
+      const _ensIv = setInterval(function(){
+        if(_ens) { clearInterval(_ensIv); return; }
+        if(_isGm() && window._gUserId){ _ens = true; clearInterval(_ensIv); ensure().then(function(m){ if(m > 0){ console.log('[四模式人次] GM 已建立 ' + m + ' 份計數文件'); refreshBadges(true); } }); }
+      }, 5000);
     })();
 
     // ════════════════════════════════════════════════════════════════════
