@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -2197,7 +2197,34 @@ function canvasOpen(opt){
     if(e.pointerType === 'pen') S.penSeen = true;
     S.ptr[e.pointerId] = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: now(), type: e.pointerType };
     var touches = pts().filter(function(p){ return p.type === 'touch'; });
-    if(e.pointerType === 'touch' && touches.length >= 2){ cancelStroke(); clearTimeout(S.lp); S.stampPend = null; S.gest = { n: touches.length, t: now(), moved: false, d0: dist(touches[0], touches[1]), c0: mid(touches[0], touches[1]), v0: { s: S.view.s, x: S.view.x, y: S.view.y } }; return; }
+    if(e.pointerType === 'touch') S.lastDown = e;
+    if(e.pointerType === 'touch' && touches.length >= 2){ gestStart(touches); return; }
+    down1(e);
+  });
+  function gestStart(touches){ cancelStroke(); clearTimeout(S.lp); S.stampPend = null; S.gest = { n: touches.length, t: now(), moved: false, d0: dist(touches[0], touches[1]), c0: mid(touches[0], touches[1]), v0: { s: S.view.s, x: S.view.x, y: S.view.y } }; }
+  /* ★ v1.1.10(老師「一隻手指畫不出線條,反而變成縮放」)— 根因:iPad 偶爾漏送某根手指的 pointerup/pointercancel,
+     那根「幽靈手指」留在 S.ptr,之後每次單指按下都被算成兩指 ⇒ 進入縮放手勢、不畫線。
+     修法:①觸控事件的 e.touches 是系統真正按著的手指數,數量對不上就把最舊的幽靈手指清掉;
+     剛被誤判成兩指的那一下(還沒動)改回單指畫線。②遺失捕捉 lostpointercapture 時也清掉該指。 */
+  function tSync(te){
+    var n = te.touches ? te.touches.length : 0, tp = pts().filter(function(q){ return q.type === 'touch'; }), i, d;
+    if(tp.length <= n) return;
+    tp.sort(function(a, b){ return b.t - a.t; });
+    for(i = n; i < tp.length; i++) delete S.ptr[tp[i].id];
+    tp = tp.slice(0, n);
+    if(S.stroke && !S.ptr[S.stroke.pid] && S.ptrType === 'touch') strokeEnd();
+    if(S.stampPend && !S.ptr[S.stampPend.id]) S.stampPend = null;
+    if(!S.gest) return;
+    if(tp.length >= 2){ gestStart(tp); return; }
+    var wasNew = !S.gest.moved && now() - S.gest.t < 400; S.gest = null;
+    d = S.lastDown;
+    if(te.type === 'touchstart' && wasNew && tp.length === 1 && d && d.pointerId === tp[0].id) down1(d);
+  }
+  stage.addEventListener('touchstart', tSync, { passive: true });
+  stage.addEventListener('touchend', tSync, { passive: true });
+  stage.addEventListener('touchcancel', tSync, { passive: true });
+  stage.addEventListener('lostpointercapture', function(e){ if(S.ptr[e.pointerId]) upH(e); });
+  function down1(e){
     if(e.pointerType === 'touch' && S.penSeen) return;   /* 防手掌誤觸:用過筆之後,手指只負責手勢 */
     if(e.pointerType === 'mouse' && e.button === 2){ ctxMenu(e.clientX, e.clientY); return; }
     if(S.space || e.button === 1){ S.pan = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y }; return; }
@@ -2209,7 +2236,7 @@ function canvasOpen(opt){
     strokeStart(e, tool);
     /* ★ v1.1.3 第 3 項:長按吸色只給手指(筆停下來想一下不再吸色),要按住 0.8 秒且幾乎沒動;按在空白紙上不吸、照常畫 */
     if(e.pointerType === 'touch' && S.stroke){ clearTimeout(S.lp); S.lp = setTimeout(function(){ var p0 = S.ptr[e.pointerId]; if(p0 && S.stroke && S.stroke.pid === e.pointerId && Math.abs(p0.x - p0.sx) + Math.abs(p0.y - p0.sy) < 8){ if(pick(p0.x, p0.y, true)){ cancelStroke(); S.lpDone = e.pointerId; } } }, 800); }
-  });
+  }
   stage.addEventListener('pointermove', function(e){
     var p = S.ptr[e.pointerId], ts;
     if(e.pointerType !== 'touch'){ S.hover = toWorld(e.clientX, e.clientY); S.ptrType = e.pointerType; if(!S.stroke) req(); }
