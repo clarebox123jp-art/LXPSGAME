@@ -580,6 +580,18 @@
         _fbDiag('oauthDirect:✅ signInWithCredential 成功 user=' + (u.email || u.uid));
         try{ if(typeof window._addRecentAccount === 'function') window._addRecentAccount(u); }catch(_){}
         try{ if(typeof window._lxpsMarkActiveSignIn === 'function') window._lxpsMarkActiveSignIn(u, 'oauthDirect'); }catch(_){}   // ★ v5.304.0
+        // ★ v5.373.0(老師「學生在創藝工坊左上角登入,不到 3 秒又變訪客」)— 小遊戲/荒島/創藝工坊在 iPad 主畫面版
+        //   借用本頁的直連登入(Google 只授權本頁網址):rec.back = 發起登入的小遊戲網址。登入成功後蓋交接鑰匙(120 秒、限本 uid)
+        //   再整頁回去,小遊戲的共用裝置攔截器認得鑰匙就放行。只接受同網站 /minigame/minigame_index.html,其他一律忽略。
+        try{
+          const _bk = String(rec.back || '');
+          if(_bk && _bk.indexOf(window.location.origin + '/') === 0 && /\/minigame\/minigame_index\.html(?:[?#]|$)/.test(_bk)){
+            window._lxpsOAuthBackTo = _bk;
+            try{ if(typeof window._lxpsMarkAppHandoff === 'function') window._lxpsMarkAppHandoff(u.uid); }catch(_){}
+            _fbDiag('oauthDirect:小遊戲發起的登入 → 回到 ' + _bk);
+            setTimeout(function(){ try{ if(typeof window._lxpsMarkAppHandoff === 'function') window._lxpsMarkAppHandoff(u.uid); }catch(_){} try{ window.location.replace(_bk); }catch(_){} }, 400);
+          }
+        }catch(_eBk){}
         return u;
       }
       _fbDiag('oauthDirect:signInWithCredential 無 user', 'warn');

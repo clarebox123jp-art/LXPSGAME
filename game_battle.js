@@ -77309,7 +77309,7 @@ window._showURSurplusReviewModal = function(uid, data){
       _ov.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(8,6,10,0.94);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;backdrop-filter:blur(6px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow:hidden;';
 
       var _box = document.createElement('div');
-      _box.style.cssText = 'width:100%;max-width:700px;height:100%;height:100dvh;display:flex;flex-direction:column;';
+      _box.style.cssText = 'width:100%;max-width:700px;height:100%;height:100dvh;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-sizing:border-box;';   /* ★ v5.373.0 老師「選 UR 的欄位被擠成一條縫」— 整張卡片一起捲動,清單不再被上下固定區塊擠扁 */
 
       // ── 標題與說明（親切理性・雙版鐵律1.232）
       var _title = _cute ? '👑 你的 UR 角色數量要確認一下' : '👑 UR 角色數量確認';
@@ -77368,7 +77368,7 @@ window._showURSurplusReviewModal = function(uid, data){
         + '<button id="_urs-review-switch" style="margin-top:8px;padding:10px 16px;font-size:13px;font-weight:800;background:rgba(150,60,60,0.32);border:2px solid #ff8a8a;color:#ffd6d6;border-radius:8px;cursor:pointer;font-family:inherit;touch-action:manipulation;">🔄 這不是我的帳號，切換帳號重新登入</button>'
         + '</div>';
 
-      var _scroll = '<div id="_urs-review-scroll" style="flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 14px;"></div>';
+      var _scroll = '<div id="_urs-review-scroll" style="flex:0 0 auto;padding:4px 14px 14px;"></div>';   /* ★ v5.373.0 清單照內容高度完整展開(原 flex:1 1 auto 在 iPad 橫放被擠成一條縫) */
       // ★ v5.92.0 追加（老師需求）— 底部兩條互斥路徑：
       //   ①「我同意被收回」必須打勾才能送出（＋帳號本人確認＋剛好勾滿超額數，三個閘門缺一不可）
       //   ②「與事實不符，我要申訴」→ 展開最多 100 字理由，送出後**不移除任何角色**，
@@ -77811,7 +77811,7 @@ window._showAssetSelfCheckModal = function(uid, data, opts){
       _ov.id = '_asc-overlay';
       _ov.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(8,6,10,0.94);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;backdrop-filter:blur(6px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;overflow:hidden;';
       var _box = document.createElement('div');
-      _box.style.cssText = 'width:100%;max-width:700px;height:100%;height:100dvh;display:flex;flex-direction:column;';
+      _box.style.cssText = 'width:100%;max-width:700px;height:100%;height:100dvh;display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-sizing:border-box;';   /* ★ v5.373.0 老師「選 UR 的欄位被擠成一條縫」— 整張卡片一起捲動,清單不再被上下固定區塊擠扁 */
 
       var _title = _cute ? '🎫 你的召喚卷要確認一下' : '🎫 召喚卷確認';
       var _meritLine = _merit
@@ -77878,7 +77878,7 @@ window._showAssetSelfCheckModal = function(uid, data, opts){
         + '<button id="_asc-switch" style="margin-top:8px;padding:10px 16px;font-size:13px;font-weight:800;background:rgba(150,60,60,0.32);border:2px solid #ff8a8a;color:#ffd6d6;border-radius:8px;cursor:pointer;font-family:inherit;touch-action:manipulation;">🔄 這不是我的帳號，切換帳號重新登入</button>'
         + '</div>';
 
-      var _scroll = '<div id="_asc-scroll" style="flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 14px;"></div>';
+      var _scroll = '<div id="_asc-scroll" style="flex:0 0 auto;padding:4px 14px 14px;"></div>';   /* ★ v5.373.0 同 UR 收回視窗:清單完整展開,整張卡片一起捲動 */
       var _bar = '<div style="flex:0 0 auto;padding:10px 14px calc(12px + env(safe-area-inset-bottom));background:rgba(20,16,24,0.97);border-top:1px solid rgba(255,255,255,0.12);">'
         + '<div style="display:flex;gap:10px;align-items:center;">'
         +   '<div id="_asc-status" style="flex:1;font-size:13px;color:#ffcf8a;line-height:1.45;"></div>'
