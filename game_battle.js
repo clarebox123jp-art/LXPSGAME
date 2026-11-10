@@ -86,6 +86,8 @@ const _PLAYER_HERO_NAMES = new Set([
   // ★ v5.109.0 — 煉丹小藥童(官方異世界英雄,SR);同鐵匠/偵探手動列入
   //   ⚠ 漏列的後果:GM 工具 _cleanseHeroLevelsByEmail 會把不在白名單的 heroLevels 鍵刪除 ⇒ 正版持有者的等級被誤刪。
   '煉丹小藥童',
+  // ★ v5.376.0 — SR 七職人(官方異世界英雄,SR;老師 2026-11-10「甲甲甲」)存檔守門白名單(同鐵匠/偵探/煉丹小藥童)
+  '魔法少女','偶像歌手','點心師傅','漫畫家','美容師','主廚','太空人',
 ]);
 // 玩家英雄判定:支援 name 或 hero 物件
 //   ★ 不能只用 side==='p1',因為鬥技場 p1/p2 雙方都是玩家英雄,反之 BOSS 戰中 p2 是 BOSS
@@ -5742,6 +5744,56 @@ const BUFF_DESCS = {
 // Format: 'size% auto, vertical%'  (vertical% of image from top to show face)
 // ★ 極限爆發升級效果定義（每英雄的升級說明）
 const BURST_UPGRADE_DEF = {
+  // ★ v5.376.0 — SR 七職人爆發升級(每升 1 級 +10% 乘算 _burstMult;回合數/機率等固定效果不隨等級變;fd 都沒有固定百分數 ⇒ 圖鑑走通用引擎即正確)
+  '魔法少女': { rows: [
+    [0,'特技×650% 單體光屬性(必中)+ 失明 2 回合 + 自己重新變身 3 回合'],
+    [1,'特技×715% 單體 + 失明 2 回合 + 重新變身'],
+    [2,'特技×780% 單體 + 失明 2 回合 + 重新變身'],
+    [3,'特技×845% 單體 + 失明 2 回合 + 重新變身'],
+    [4,'特技×910% 單體 + 失明 2 回合 + 重新變身(MAX)'],
+  ] },
+  '偶像歌手': { rows: [
+    [0,'友方全體回復特技×100% HP + 加速 3 回合;敵方全體魅惑 1 回合(BOSS 機率減半)'],
+    [1,'友方全體回復特技×110% HP + 加速 3 回合 + 敵方魅惑 1 回合'],
+    [2,'友方全體回復特技×120% HP + 加速 3 回合 + 敵方魅惑 1 回合'],
+    [3,'友方全體回復特技×130% HP + 加速 3 回合 + 敵方魅惑 1 回合'],
+    [4,'友方全體回復特技×140% HP + 加速 3 回合 + 敵方魅惑 1 回合(MAX)'],
+  ] },
+  '點心師傅': { rows: [
+    [0,'友方全體回復特技×150% HP + 持續回HP 3 回合(每回合特技×30%)'],
+    [1,'友方全體回復特技×165% HP + 持續回HP 3 回合(每回合特技×33%)'],
+    [2,'友方全體回復特技×180% HP + 持續回HP 3 回合(每回合特技×36%)'],
+    [3,'友方全體回復特技×195% HP + 持續回HP 3 回合(每回合特技×39%)'],
+    [4,'友方全體回復特技×210% HP + 持續回HP 3 回合(每回合特技×42%)(MAX)'],
+  ] },
+  '漫畫家': { rows: [
+    [0,'特技×200% 全體暗屬性(必中)+ 封印技能 1 回合(BOSS 機率減半)'],
+    [1,'特技×220% 全體 + 封印技能 1 回合'],
+    [2,'特技×240% 全體 + 封印技能 1 回合'],
+    [3,'特技×260% 全體 + 封印技能 1 回合'],
+    [4,'特技×280% 全體 + 封印技能 1 回合(MAX)'],
+  ] },
+  '美容師': { rows: [
+    [0,'友方全體回復特技×120% HP + 解除全部不利狀態 + 免疫不利狀態 2 回合'],
+    [1,'友方全體回復特技×132% HP + 解除不利 + 免疫 2 回合'],
+    [2,'友方全體回復特技×144% HP + 解除不利 + 免疫 2 回合'],
+    [3,'友方全體回復特技×156% HP + 解除不利 + 免疫 2 回合'],
+    [4,'友方全體回復特技×168% HP + 解除不利 + 免疫 2 回合(MAX)'],
+  ] },
+  '主廚': { rows: [
+    [0,'自身攻擊×300% 護盾 + 嘲諷敵方 2 回合;友方全體回復主廚最大 HP×15%'],
+    [1,'攻擊×330% 護盾 + 嘲諷 2 回合;全體回復最大 HP×16.5%'],
+    [2,'攻擊×360% 護盾 + 嘲諷 2 回合;全體回復最大 HP×18%'],
+    [3,'攻擊×390% 護盾 + 嘲諷 2 回合;全體回復最大 HP×19.5%'],
+    [4,'攻擊×420% 護盾 + 嘲諷 2 回合;全體回復最大 HP×21%(MAX)'],
+  ] },
+  '太空人': { rows: [
+    [0,'特技×160% 全體風屬性(必中)+ 全體延後行動;隨機 1 名暈眩 1 回合(BOSS 機率減半)'],
+    [1,'特技×176% 全體 + 延後行動 + 隨機 1 名暈眩'],
+    [2,'特技×192% 全體 + 延後行動 + 隨機 1 名暈眩'],
+    [3,'特技×208% 全體 + 延後行動 + 隨機 1 名暈眩'],
+    [4,'特技×224% 全體 + 延後行動 + 隨機 1 名暈眩(MAX)'],
+  ] },
   // ★ v5.191.0 — 十二星神 第一批爆發升級(傷害/治療型每升 1 級 +10% 乘算 _burstMult;附帶固定效果不隨等級變)
   '牡羊星神': { rows: [
     [0,'攻擊×800% 單體火屬性(必中/無視有利)+ 自身「熾戰」1 回合(本回合再次造成的傷害 +35%)'],
@@ -7315,6 +7367,7 @@ function statTrack(hero, field, amount, opts){
   G.battleStats[k][field]=(G.battleStats[k][field]||0)+amount;
   // ★ v3.5.43 — 若不是 fixedDmg(答題獎勵/聯手爆發),累計到 *Real 欄位
   const _isFixed = !!(opts && opts.isFixed);
+  try{ if(field === 'dmg' && !_isFixed && amount > 0 && window._SR7) window._SR7.noteHit(hero, amount, opts); }catch(_eSr7Nh){}   // ★ v5.376.0 七職人 漫畫家「名場面重現」:記單次最高傷害
   if(!_isFixed){
     if(field === 'dmg')          G.battleStats[k].dmgReal       = (G.battleStats[k].dmgReal||0)       + amount;
     else if(field === 'heal')    G.battleStats[k].healReal      = (G.battleStats[k].healReal||0)      + amount;
@@ -7476,6 +7529,7 @@ function _bvStatDownImmune(h, label){
 }
 function addStatus(h,t,dur=1){
   if(!h||h.curHp<=0) return;
+  try{ if(h.name === '太空人' && window._SR7 && window._SR7.statusBlock(h, t)) return; }catch(_eSr7Sb){}   // ★ v5.376.0 SR 七職人:太空人天賦「太空訓練」不會暈眩/睡眠
   try{ if(typeof G !== 'undefined' && G && G._fm && window._fmCtrlResist && window._fmCtrlResist(h, t)) return; }catch(_eFmCr){}   // ★ v5.282.0 英魂陣型 奔雷鐵騎/閃電風暴:受到硬控時機率抵抗(沒有陣型時不進來)
   try{ if(typeof G !== 'undefined' && G && G._cstJsB2 && h.side && G._cstJsB2[h.side] && window._cstJsB2Reflect(h, t, dur)) return; }catch(_eCstJsB2r){}   // ✨ 命星 ✦ 軍師 b2「空城反間星」:G._cstJsB2 只由點亮的 b2 寫入
   // ★ v3.13.73 — DoT 統一基礎回合數(含既有技能,Q1甲):中毒/猛毒=5、出血/強力出血=2
@@ -9950,6 +10004,10 @@ function getElemDmgMod(attacker, target){
 }
 
 const SKILL_FORCE_ELEMENT = {
+  // ★ v5.376.0 SR 七職人(引擎內 doDmg 也帶 elem,此處登錄供屬性顯示/條件搜尋一致)
+  '愛心光束':'light', '奇蹟・閃耀星光砲':'light',
+  '速寫定格':'dark', '名場面重現':'dark', '完結篇・跨頁大格':'dark',
+  '無重力漂浮':'wind', '流星雨墜落':'wind',
   // ── 火 ──
   '火焰球':       'fire',  // 火法師 S1(特技150%+10必中)
   '地獄之火':     'fire',  // 火法師 S2(特技40%全體+燃燒)
@@ -14963,6 +15021,7 @@ function _doConfirmSkillReplace(){
     });
     // ★ v5.18.0 — 動態英雄天賦引擎:戰開模板 T1(自身)/T2(全隊)(三期;守門 _traitSeal/imprison/confused 在引擎內)
     try{ if(typeof window._dynTraitBattleStart === 'function') window._dynTraitBattleStart(); }catch(_eDynT12){ console.warn('[動態英雄 戰開天賦 hook] 失敗', _eDynT12); }
+    try{ if(window._SR7) window._SR7.battleStart(); }catch(_eSr7Bs){ console.warn('[SR 七職人 戰開天賦 hook] 失敗', _eSr7Bs); }   // ★ v5.376.0 魔法少女變身/美容師完美妝容
     // ★ v5.30.0 — 裝備開場效果(openBuff/openShield;飾品「開場增益」詞條與基礎功能)
     try{ if(typeof _gearBattleOpen === 'function') _gearBattleOpen(); }catch(_eGearOpen){ console.warn('[裝備戰開 hook] 失敗', _eGearOpen); }
     // ★ v3.4.11 — 神槍手天賦「武裝守護」戰開自動觸發(5 年 4 班莊同學設計)
@@ -19538,7 +19597,12 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   // ★ v5.18.0 — 動態英雄泛用爆發引擎(三期):爆發名派發鏈首;效果全走 doDmg/doHeal/addStatus
   //   → 世界BOSS 5000cap/鐵律1.31 自動;動畫音效由 execBurst 依 BURST_GIF_DB[bd.n] 自動播(註冊即生效);
   //   倍率=1+burstLv×0.05(引擎內手動乘,BURST_UPGRADE_DEF 五列自動對齊)。失敗不中斷,落回原鏈(無分支=無效果但流程完好)。
-  if(window._dynBurstEngine && window._DYN_HERO_REG && window._DYN_HERO_REG[name]){
+  // ★ v5.376.0 SR 七職人 爆發(鏈首;傳入既有 _burstMult ⇒ 爆發等級/煉丹/桃園羈絆加成全部沿用)
+  if(window._SR7 && window._SR7.isBurst(name)){
+    try{ window._SR7.burst(h, side, _burstMult, name); }
+    catch(_eSr7Bu){ console.warn('[SR 七職人] 爆發 hook 失敗', _eSr7Bu); }
+  }
+  else if(window._dynBurstEngine && window._DYN_HERO_REG && window._DYN_HERO_REG[name]){
     try{ window._dynBurstEngine(h, side); }
     catch(_eDynBu){ console.warn('[動態英雄] 爆發 hook 失敗', _eDynBu); }
   }
@@ -33678,6 +33742,8 @@ function _wbContribUid(opts){
 }
 function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
+  // ★ v5.376.0 SR 七職人:太空人迴避/主廚代替承傷(回 -1 = 這次不成立)、魔法少女變身增傷、主廚減傷
+  if(rawDmg > 0 && target && window._SR7){ try{ const _sr7r = window._SR7.preDmg(target, rawDmg, opts || {}); if(_sr7r === -1) return 0; if(typeof _sr7r === 'number' && _sr7r > 0) rawDmg = _sr7r; }catch(_eSr7Pd){} }
   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹 50%/射手星神 s2 箭囊(G._cstMyHalf、actor._cstSgQv 只由點亮的命星寫入 ⇒ 未點亮時條件恆不成立)
   if(rawDmg > 0 && opts && typeof G !== 'undefined' && G && (G._cstMyHalf || (opts.actor && opts.actor._cstSgQv))){ try{ rawDmg = window._cstS9Raw(target, rawDmg, opts); }catch(_eCstS9R){} }
   // ★ v5.30.0 — 丙案 BOSS 傷害下限基準:進入 doDmg 的最原始傷害(在任何 hook 修改前快照)
@@ -41426,6 +41492,7 @@ function _healCurseGate(target, amt){
 try{ window._healCurseGate = _healCurseGate; }catch(_eHCG2){}
 
 function doHeal(target, rawAmt, opts={}){
+  try{ if(rawAmt > 0 && window._SR7) window._SR7.onHeal(target, rawAmt, opts || {}); }catch(_eSr7Oh){}   // ★ v5.376.0 七職人 雙人合聲:技能治療跟唱
   try{ if(rawAmt > 0 && typeof G !== 'undefined' && G && G._cstMyHalf) rawAmt = window._cstS9Heal(rawAmt, opts); }catch(_eCstS9H){}
   try{ if(rawAmt > 0 && target && typeof G !== 'undefined' && G && G._fm && window._fmHealMod) rawAmt = window._fmHealMod(target, rawAmt, opts); }catch(_eFmHeal){}   // ★ v5.282.0 英魂陣型 治療 +X%/仁智雙輝/春風疾行(沒有陣型時不進來)   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹:治療 50%(G._cstMyHalf 只由點亮的命星寫入)
   // ★ v3.3.2 — 世界 BOSS 戰守門:火山炎龍王不能用任何手段恢復 HP
@@ -42904,6 +42971,7 @@ function _kgMischiefOnSkill(actor, cost, _cstKgIsBurst){
 }
 
 function execAtk(actor, target, dmg, opts={}){
+  try{ if(window._SR7 && !(opts && opts.isSkill) && !window._burstCastActive) window._SR7.clearMark(actor); }catch(_eSr7Cm){}   // ★ v5.376.0 七職人 雙人合聲:普攻不跟唱
   // ★★ v5.80.0(老師裁定⑤)— 出血「自己行動」觸發點:普攻/技能/爆發各觸發 1 次(每回合上限 2·同一次行動只計 1)
   //   ⚠ 多段普攻(哪吒六臂/雉雞精亂羽)每擊皆呼叫 execAtk → G._actSeq 只在 startTurn 遞增,故整組收斂為 1 次。
   try{ window._bleedTryProc(actor, 'act'); }catch(_eBldA){}
@@ -45521,6 +45589,7 @@ window._lxpsAquariusMarkAdd = function(t, dur, _cstMaxL){   // ✨ 命星 水瓶
 //   放在 doDmg 的 _critChance 計算式旁(見下方 _sagittariusCritBonus 變數宣告處)。
 
 function execSkill(a, sk, cost, stype){
+  try{ if(window._SR7) window._SR7.markSkill(a, sk); }catch(_eSr7Mk){}   // ★ v5.376.0 七職人 雙人合聲:標記「正在用技能」
   try{ if(a) a._fmArm = !!(sk && !sk.p); }catch(_eFmNc){}   // ★ v5.282.0 英魂陣型(審查 M3):這裡只「預約」;玩家能量在 endAction 才扣,那時才算用掉「每回合第一次技能 −1」(取消選目標不算)
   // ★★ v5.80.0(老師裁定⑤)— 出血「自己行動」觸發點:普攻/技能/爆發各觸發 1 次(每回合上限 2·同一次行動只計 1)
   try{ window._bleedTryProc(a, 'act'); }catch(_eBldS){}
@@ -45644,6 +45713,8 @@ function execSkill(a, sk, cost, stype){
   try{ if(sk && !sk.p && typeof _kgMischiefOnSkill==='function') _kgMischiefOnSkill(a, cost); }catch(_eKg1){}
   try{ if(sk && !sk.p && window._cstR) window._cstR.onSkill(a, sk); }catch(_eCstROnSk1){}   // ✨ v5.314.0 R 卡命星:我方使用技能(直笛 b2 安可合奏)
   try{ if(sk && !sk.p && typeof G !== 'undefined' && G && (G[a.side] || []).some(function(d){ return d && d._cstDcB2; })) a._cstDcArm = (G._actSeq || 0); }catch(_eCstDb2s1){}   // ★ v5.262.0 審查:(review8_2 M1)舞者 b2 手動:只「預約」,endAction 確認真的施放了技能才計次(選目標時取消再改選不再灌水;_cstDcB2 只由點亮的 b2 寫入)
+  // ★ v5.376.0 SR 七職人(玩家路徑):_activeSkLvMult 已設好 ⇒ 引擎傳基礎值,doDmg/doHeal 自動套等級;引擎自行選目標並 endAction
+  try{ if(window._SR7 && window._SR7.has(n) && window._SR7.skill(a, sk, cost)) return; }catch(_eSr7Sk){ console.warn('[SR 七職人] 玩家技能 hook 失敗', _eSr7Sk); }
   // ====== 劍士 ======
   // ★ v3.13.31(2026-06-03) — 修正:hero_db.js 描述為「連續攻擊3次」,但原實作只打 2 次
   //   改為 3 次(每次 a.atk,各自獨立暴擊;間隔 300ms;_activeSkLvMult 由 doDmg 自動套用)
@@ -54208,6 +54279,7 @@ window._cstAlchFreeCheck = function(a, cost){
   }catch(_eCstAlFree){ return false; }
 };
 function endAction(a, cost, noFinish=false){
+  try{ if(window._SR7) window._SR7.endMark(a); }catch(_eSr7Em){}   // ★ v5.376.0 七職人 雙人合聲:行動結束 1.2 秒後不再跟唱
   // ★ v3.15.39 — 行動完成即解除連發鎖,讓下一個行動可正常開始
   try{ window._pActBusy = false; }catch(_){}
   try{ if(a && a._cstAstArm !== undefined){ const _cstAstArmV = a._cstAstArm; delete a._cstAstArm; if(_cstAstArmV === (G._actSeq || 0) && G.lastSkill && G.lastSkill.actor === a) window._cstAstB2Note(a); } }catch(_eCstAstB2e){}   // ✨ 命星 ✦ 占星師 b2(手動):技能完成 ⇒ 點亮星點(_cstAstArm 只在祝福星存在時寫入)
@@ -55075,7 +55147,8 @@ function applyItemOnTarget(it,a,t,extraOpts){
   const _alchTraitLv = (_user && _user.name==='煉金術師') ? _getTraitLv('煉金術師') : 0;
   let _alchBoost = (_user && _user.name==='煉金術師' && !hasStatus(_user,'confused')) ? (1.5 + _alchTraitLv*0.10) + ((window._cstHasN(_user,'t1','煉金術師')) ? (0.5 + _alchTraitLv*0.10)*0.4 : 0) : 1.0;
   if(extraOpts._cstNoAlch) _alchBoost = 1;   // ✨ v5.270.0 命星 ⚙ 煉金術師 t2:第 2 次發動不吃煉化(只由命星傳入)
-  if(_alchBoost>1) log(`⚗️ [煉金術師] 天賦觸發！物品效果+${Math.round((_alchBoost-1)*100)}%！`);
+  try{ if(window._SR7 && _user) _alchBoost = _alchBoost * window._SR7.itemBoost(_user); }catch(_eSr7Ib){}   // ★ v5.376.0 SR 七職人:點心師傅天賦「甜蜜加成」物品效果 +30%
+  if(_alchBoost>1 && _user && _user.name==='煉金術師') log(`⚗️ [煉金術師] 天賦觸發！物品效果+${Math.round((_alchBoost-1)*100)}%！`);   // ★ v5.376.0 第二輪:點心師傅甜蜜加成/甜點融合也會讓倍率 >1,只有煉金術師本人用時才顯示這行(點心師傅自己有 log)
   try{ if(_user && window._cstHasN(_user,'t1','煉金術師') && _user._cstAlchItemR !== G.round){ _user._cstAlchItemR = G.round; const _cstAlE = window._cstCap.gainEnergy(_user.side, 1); if(_cstAlE>0) log('✨ ['+_user.name+'] 命星:本回合首次使用物品卡,回復 '+_cstAlE+' 能量'); } }catch(_eCstAlT1){}
 
   if(it._cstSage){   // ✨ v5.270.0 命星 ⚙ 煉金術師 s2「賢者碎片」:1 名友方回復 30% HP 並解除 1 個不利狀態(只有命星產生的碎片有這個欄位)
@@ -60287,6 +60360,7 @@ G.p1.concat(G.p2).forEach(h=>{
   // 能量補充（每回合固定+3）
   G.energy.p1=Math.min(10,G.energy.p1+3);
   G.energy.p2=Math.min(10,G.energy.p2+3);
+  try{ if(window._SR7) window._SR7.roundStart(); }catch(_eSr7Rs){ console.warn('[SR 七職人 回合開始 hook] 失敗', _eSr7Rs); }   // ★ v5.376.0 偶像歌手應援/漫畫家分鏡/變身與鐵鍋倒數
   try{ if(window._cstCap && window._cstCap.noteBase) window._cstCap.noteBase(); }catch(_eCstG5b){}
   try{ if(typeof G !== 'undefined' && G && G._fm && window._fmRoundStart) window._fmRoundStart(); }catch(_eFmRs){}   // ★ v5.282.0 英魂陣型 每回合回復 X% 最大 HP(沒有陣型時不進來)   // ★ v5.262.0 命座 G5:敵方基本 +3 先入帳 ⇒ 標記入帳並結算延後的命星扣能(沒有命星扣能時只寫 G._cstCap 記號)
   try{ window._cstC8Round(); }catch(_eCstC8r){}   // ✨ 命星 舞者 b2 / 聖騎士 s2:持續效果結束結算(基本 +3 入帳後;只讀寫命星寫入的欄位)
@@ -61464,8 +61538,8 @@ function _realAiAct(a){
     + ', canSeal=' + canSeal
     + ', invLen=' + inv.length);
 
-  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧','神籤','水盤守護','狐火護佑','巨蟹庇佑頌','豐收神光','淨土之風'];   // ★ v5.192.0 追加:處女星神 S1/S2(單體/全體治療+可復活+淨化):不登錄的話 AI 治療決策路徑永遠選不到它(評分函式已回 -1 排除於攻擊選擇) ｜ ★ v5.191.0 — 巨蟹星神 S2(全體治療+護盾+復活1名)同理
-  const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護','冰晶凝聚','樹葉守護','死氣結界','羽刃陣列','仁王不動','龍岩逆鱗'];   // ★ v5.191.0 — 金牛星神 S2(強化版仁王·代全隊承傷)同理登錄坦克決策清單 ｜ ★ v5.193.0 追加:摩羯星神 S2(自身2回合反震80%,純防禦不宜列入攻擊評分)
+  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧','神籤','水盤守護','狐火護佑','巨蟹庇佑頌','豐收神光','淨土之風','現烤馬卡龍','煥然一新'];   /* ★ v5.376.0 SR 七職人 點心師傅/美容師治療技 */   // ★ v5.192.0 追加:處女星神 S1/S2(單體/全體治療+可復活+淨化):不登錄的話 AI 治療決策路徑永遠選不到它(評分函式已回 -1 排除於攻擊選擇) ｜ ★ v5.191.0 — 巨蟹星神 S2(全體治療+護盾+復活1名)同理
+  const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護','冰晶凝聚','樹葉守護','死氣結界','羽刃陣列','仁王不動','龍岩逆鱗','中華鐵鍋'];   /* ★ v5.376.0 SR 七職人 主廚 */   // ★ v5.191.0 — 金牛星神 S2(強化版仁王·代全隊承傷)同理登錄坦克決策清單 ｜ ★ v5.193.0 追加:摩羯星神 S2(自身2回合反震80%,純防禦不宜列入攻擊評分)
   const isHealer = HEAL_SKILLS.includes(a.s1.n)||HEAL_SKILLS.includes(a.s2.n)||(typeof HERO_PRIMARY_CLASS!=='undefined' && HERO_PRIMARY_CLASS[a.name]==='heal');
   const isTank   = TANK_SKILLS.includes(a.s1.n)||TANK_SKILLS.includes(a.s2.n)||a.name==='守衛'||a.name==='武鬥家'||a.name==='大力士'||a.name==='小力';
 
@@ -61538,6 +61612,7 @@ function _realAiAct(a){
   // ── HELPER: 估算技能傷害 ──
   function estSkillDmg(sk){
     const n=sk.n, foes=enemies;
+    try{ if(window._SR7 && window._SR7.has(n)){ const _sr7V = window._SR7.est(a, n, foes); if(_sr7V !== null && _sr7V !== undefined) return _sr7V; } }catch(_eSr7Est){}   // ★ v5.376.0 SR 七職人 AI 估值(治療/坦克技回 -1,走下方 HEAL_SKILLS/TANK_SKILLS 決策)
     // ★ v5.293.0 — 《繪卷新章》新敵人技能估值(資料驅動)+ 新 SSR 楊戩
     try{ if(window._CN2 && window._CN2.skillMap && window._CN2.skillMap[n] && typeof window._cn2EstSkill === 'function'){ const _cn2V = window._cn2EstSkill(a, n, foes.length); if(_cn2V !== null) return _cn2V; } }catch(_eCn2Est){}
     if(n==='天眼神光') return Math.floor((a.atk||0)*2.1) + (foes.some(function(e){ return e && (e.buffs||[]).some(function(b){ return b && (b.type==='evasion'||b.type==='hidden'); }); }) ? 40 : 15);   // 攻210% + 看穿/失明(控場加值)
@@ -61783,7 +61858,7 @@ function _realAiAct(a){
     const _woundedCount = G[a.side].filter(h=>h&&h.curHp>0&&h.curHp<h.hp*0.75).length;
     const _preferGroupHeal = _woundedCount >= 2;
     // 群體治療技能(實際恢復「多名/全體」友方 HP 者;單體治療/復活/純淨化不列入)
-    const GROUP_HEAL_SKILLS = ['全體治療','治癒之風','天堂樂章','餘音繞樑','雙小提琴協奏曲','一壺鐵觀音','流浪者之歌','天籟之音','BUG修復','神籤'];
+    const GROUP_HEAL_SKILLS = ['全體治療','治癒之風','天堂樂章','餘音繞樑','雙小提琴協奏曲','一壺鐵觀音','流浪者之歌','天籟之音','BUG修復','神籤'];   /* ★ v5.376.0 點心師傅 S2 原本的「下午茶時間」已換成職人絕活「甜點融合」(非治療),第二輪移出 */
     const _isGroupHealSk = sk => sk && GROUP_HEAL_SKILLS.includes(sk.n);
     const healSks = (_abAllowHeal && healNeeded.curHp > 0)
       ? [a.s1,a.s2].filter(sk=>HEAL_SKILLS.includes(sk.n))
@@ -63140,6 +63215,7 @@ function _realAiAct(a){
 })();
 // ★★★ v5.295.0 七位新 SSR 獨特機制 END ★★★
 function aiUseSkill(a,sk,cost,pref){
+  try{ if(window._SR7) window._SR7.markSkill(a, sk); }catch(_eSr7Mk){}   // ★ v5.376.0 七職人 雙人合聲:標記「正在用技能」
   try{ if(window._fmNoteCast) window._fmNoteCast(a, sk); }catch(_eFmNc){}   // ★ v5.282.0 英魂陣型
   G.lastSkill={...sk,actor:a};
   try{ if(G._cstFcD && G._cstFcD.length && sk && !sk.p) window._cstPhB2Eye(a); }catch(_eCstPhB2a){}   // ✨ v5.266.0 命星 法老王 b2 拉神之眼(只在有命星戰場卡時)
@@ -68733,6 +68809,13 @@ function aiUseSkill(a,sk,cost,pref){
   // ★ v5.18.0 — 動態英雄泛用技能引擎(三期・AI 路徑):純效果、不呼叫 endAction,
   //   由鏈尾統一收尾(a.acted=true → startTurn);能量已於鏈頭扣除;
   //   AI 路徑不經 _activeSkLvMult → 引擎內手動乘 (1+skLv×0.05)。
+  // ★ v5.376.0 SR 七職人(AI 路徑):純效果,鏈尾統一收尾;「安可！」自己接手再行動 ⇒ 回 'return' 時直接結束本函式
+  else if(window._SR7 && window._SR7.has(n)){
+    let _sr7Ai = 'done';
+    try{ _sr7Ai = window._SR7.skillAI(a, sk, cost, t, al); }
+    catch(_eSr7Ai){ console.warn('[SR 七職人] AI 技能 hook 失敗', _eSr7Ai); }
+    if(_sr7Ai === 'return') return;
+  }
   else if(window._dynSkillEngineAI && window._DYN_SKILL_MAP && window._DYN_SKILL_MAP[n]){
     try{ window._dynSkillEngineAI(a, n, t, al); }
     catch(_eDynAi){ console.warn('[動態英雄] AI 技能 hook 失敗', _eDynAi); }
@@ -85324,6 +85407,72 @@ function _showNewHeroAnnouncement(forceShow){
   // ★ v5.200.0 — 十二星神登場介紹卡(比照 buildChinaHeroesSection 既有格式:立繪+定位晶片+素質+天賦+雙技+爆發+取得方式;
   //   四象分組[火/土/風/水]各三位·資料全部即時讀 HERO_DB/HERO_TRAIT/BURST_DB,不寫死任何戰鬥數值,
   //   之後任何一位星神改版,本卡自動同步顯示最新版本)
+  // ★ v5.376.0 — SR 七職人登場介紹(比照十二星神群像卡;資料一律即時讀 HERO_DB/HERO_TRAIT/BURST_DB,數值調整卡片自動跟)
+  const buildSr7HeroesSection = function(){
+    const _c7Cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+    const _c7T = function(cuteTxt, premTxt){ return _c7Cute ? cuteTxt : premTxt; };
+    const _c7Get = _c7T('召喚星空的 SR 池、隨機或自選 SR 召喚卷都抽得到！',
+                        '召喚星空 SR 池(召喚水晶)與隨機/自選 SR 召喚卷皆可取得,不限關卡。');
+    const _c7List = [
+      { n:'魔法少女', c:'#ff8fd0', role:'🪄 光系變身輸出・許願' },
+      { n:'偶像歌手', c:'#7fd0ff', role:'🎤 應援合聲輔助' },
+      { n:'點心師傅', c:'#ffb8d6', role:'🧁 回復＋物品卡融合補師' },
+      { n:'漫畫家',   c:'#b8b8ff', role:'✒️ 暗系定格・名場面重現' },
+      { n:'美容師',   c:'#d6a8ff', role:'💄 淨化＋換屬性補師' },
+      { n:'主廚',     c:'#ff9a5a', role:'👨‍🍳 鐵鍋護衛・套餐坦克' },
+      { n:'太空人',   c:'#9fc8ff', role:'🧑‍🚀 風系延後・無敵控場' }
+    ];
+    const _c7Card = function(cfg){
+      try{
+        const _hd = (typeof HERO_DB !== 'undefined' && HERO_DB[cfg.n]) || null;
+        if(!_hd || !_hd.s1 || !_hd.s2) return '';
+        const _bd = (typeof BURST_DB !== 'undefined' && BURST_DB[cfg.n]) || null;
+        const _tr = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[cfg.n]) || null;
+        const _img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[cfg.n]) || '';
+        const _av = (typeof AVATARS !== 'undefined' && AVATARS[cfg.n]) || '⭐';
+        const _lore = (typeof HERO_LORE !== 'undefined' && HERO_LORE[cfg.n]) || '';
+        const _skTxt = function(sk){ return (_c7Cute && sk.sd) ? sk.sd : sk.d; };
+        const _imgHtml = _img
+          ? '<img src="' + _img + '" alt="' + cfg.n + '" loading="lazy" style="display:block;width:100%;height:100%;object-fit:cover;object-position:center 18%;" '
+            + 'onerror="this.style.display=\'none\';this.parentNode.textContent=\'' + _av + '\';this.parentNode.style.fontSize=\'54px\';" />'
+          : '<span style="font-size:54px;">' + _av + '</span>';
+        const _row = function(head, body, cls){ return '<div class="' + cls + '" style="padding:10px 14px;"><div style="font-size:17px;font-weight:800;margin-bottom:3px;color:#aaccff;">' + head + '</div><div style="font-size:15px;color:#eef;line-height:1.55;">' + body + '</div></div>'; };
+        return '<div class="new-hero-card" style="border-color:' + cfg.c + ';padding:16px 18px;">'
+          + '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;">'
+          +   '<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:8px;">'
+          +     '<div style="width:128px;height:170px;border-radius:12px;overflow:hidden;border:2.5px solid ' + cfg.c + ';box-shadow:0 0 22px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);">' + _imgHtml + '</div>'
+          +     '<div style="font-size:clamp(24px,2.8vw,30px);font-weight:900;color:' + cfg.c + ';text-shadow:0 0 10px rgba(0,0,0,0.8);letter-spacing:1px;">' + cfg.n + '</div>'
+          +     '<span style="font-size:15px;color:#241608;background:' + cfg.c + ';border-radius:8px;padding:3px 12px;font-weight:800;">' + cfg.role + '</span>'
+          +   '</div>'
+          +   '<div style="flex:1 1 300px;min-width:0;">'
+          +     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'
+          +       '<span style="font-size:15px;color:#ff8866;background:rgba(255,80,80,0.16);border:1.5px solid rgba(255,80,80,0.45);border-radius:8px;padding:3px 10px;font-weight:800;">❤️ ' + _hd.hp + '</span>'
+          +       '<span style="font-size:15px;color:#ff9966;background:rgba(255,160,80,0.16);border:1.5px solid rgba(255,160,80,0.45);border-radius:8px;padding:3px 10px;font-weight:800;">⚔️ ' + _hd.atk + '</span>'
+          +       '<span style="font-size:15px;color:#aaccff;background:rgba(120,180,255,0.16);border:1.5px solid rgba(120,180,255,0.45);border-radius:8px;padding:3px 10px;font-weight:800;">✨ ' + _hd.sp + '</span>'
+          +       '<span style="font-size:15px;color:#aaff99;background:rgba(120,220,120,0.16);border:1.5px solid rgba(120,220,120,0.45);border-radius:8px;padding:3px 10px;font-weight:800;">💨 ' + _hd.spd + '</span>'
+          +       '<span style="font-size:15px;color:#ffd966;background:rgba(255,200,80,0.16);border:1.5px solid rgba(255,200,80,0.45);border-radius:8px;padding:3px 10px;font-weight:800;">🌟 SR</span>'
+          +     '</div>'
+          +     (_lore && !_c7Cute ? '<div style="background:rgba(0,0,25,0.35);border-left:4px solid ' + cfg.c + ';padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:15px;color:#ffe;line-height:1.6;">' + _lore + '</div>' : '')
+          +     (_tr ? '<div style="background:rgba(80,45,0,0.35);border:1.5px solid rgba(255,180,80,0.45);border-radius:10px;padding:10px 14px;margin-bottom:8px;">'
+          +       '<div style="font-size:17px;color:#ffcc66;font-weight:800;margin-bottom:3px;">' + (_tr.icon || '🌟') + ' 天賦:' + (_tr.name || '') + '</div>'
+          +       '<div style="font-size:15px;color:#ffe;line-height:1.55;">' + ((_c7Cute && _tr.sd) ? _tr.sd : (_tr.desc || '')) + '</div></div>' : '')
+          +     _row('💠 ' + _hd.s1.n + ' <span style="font-size:14px;color:#88aaff;font-weight:600;">(消耗 ' + (_hd.s1.c || 0) + ' 能量)</span>', _skTxt(_hd.s1), 'new-hero-skill-row')
+          +     _row('💠 ' + _hd.s2.n + ' <span style="font-size:14px;color:#88aaff;font-weight:600;">(消耗 ' + (_hd.s2.c || 0) + ' 能量)</span>', _skTxt(_hd.s2), 'new-hero-skill-row')
+          +     (_bd ? _row('<span style="color:#ffaaff;">⚡ 爆發技:' + _bd.n + '</span>', _skTxt(_bd), 'new-hero-burst-row') : '')
+          +     '<div style="margin-top:8px;padding:10px 14px;background:rgba(120,90,30,0.22);border-left:4px solid ' + cfg.c + ';border-radius:8px;font-size:15px;color:#ffe9c8;line-height:1.6;">🏆 <b>取得方式:</b>' + _c7Get + '</div>'
+          +   '</div>'
+          + '</div></div>';
+      }catch(_eC7){ console.warn('[七職人群卡]', cfg && cfg.n, _eC7); return ''; }
+    };
+    return '<div class="new-hero-method-card" style="padding:18px 20px;border-color:rgba(255,170,220,0.55);margin-top:14px;">'
+      + '<div style="font-size:clamp(24px,3vw,30px);font-weight:900;color:#ffb3e0;text-shadow:0 0 10px rgba(255,140,210,0.5);margin-bottom:6px;">🌟 ' + _c7T('七位職人新夥伴登場！', '七職人・全新 SR 英雄群像') + '</div>'
+      + '<div style="font-size:16px;color:#ffeef8;line-height:1.65;margin-bottom:10px;">'
+      + _c7T('魔法少女、偶像歌手、點心師傅、漫畫家、美容師、主廚、太空人一起加入！他們都是 SR，有人會打、有人會補、有人會保護大家，每個人的技能 2 都是只有自己會的「職人絕活」，快去召喚星空找他們！',
+             '七位以職業為主題的全新 SR 英雄同時上線:輸出、輔助、補師、控場與坦克一應俱全;每人的技能 2 是其他英雄都沒有的「職人絕活」,並各自擁有 6 顆專屬命星。')
+      + '</div>'
+      + _c7List.map(_c7Card).join('')
+      + '</div>';
+  };
   const buildZodiacHeroesSection = function(){
     const _zoCute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
     const _zoT = function(cuteTxt, premTxt){ return _zoCute ? cuteTxt : premTxt; };
@@ -86003,6 +86152,11 @@ function _showNewHeroAnnouncement(forceShow){
   };
 
   const _themes = [
+    // ★ v5.376.0 — SR 七職人登場介紹卡(最新內容置頂;登錄表缺席時整張不列出)
+    ...((window._SR7_LIST && window._SR7_LIST.length) ? [
+      { id:'sr7', emoji:'🌟', accent:'#ffb3e0', title:'NEW!七職人登場・全新 SR 英雄', sub:'魔法少女 · 偶像歌手 · 點心師傅 · 漫畫家 · 美容師 · 主廚 · 太空人 · 每位 6 顆命星',
+        imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['魔法少女']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['主廚']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['太空人']) || ''],
+        detail: buildSr7HeroesSection() } ] : []),
     // ★ v5.368.0 — 魂格系統(英魂陣型)介紹卡(最新內容置頂;陣型系統沒載入時整張不列出)
     ...((window._FM_DEFS) ? [
       { id:'soul', emoji:'🏫', accent:'#ffd36a', title:'NEW!魂格系統・英魂陣型', sub:'真誠・求知・活力・行動四種魂格 · 湊成陣型整場加成 · 陣型推薦一鍵組隊',
@@ -88587,7 +88741,8 @@ window._FM_SOUL = window._FM_SOUL || {
 };
 try{ if(!window._FM_SOUL['楊戩']) window._FM_SOUL['楊戩'] = 'X'; }catch(_eFmYj){}   // ★ v5.293.0 新 SSR 楊戩(主傷害型)=行動魂
 try{ var _fmCn2 = { '劉備':'C', '唐三藏':'C', '張飛':'H', '豬八戒':'H', '趙雲':'X', '沙悟淨':'Q' }; Object.keys(_fmCn2).forEach(function(k){ if(!window._FM_SOUL[k]) window._FM_SOUL[k] = _fmCn2[k]; }); }catch(_eFmCn2){}   // ★ v5.293.0 三國/西遊新 SSR 六位:補師=真誠、坦克型=活力、速攻=行動、特技控場=求知
-window._FM_SOUL_NAME = { C:'真誠', Q:'求知', H:'活力', X:'行動' };
+try{ var _fmSr7 = { '偶像歌手':'C', '點心師傅':'C', '美容師':'C', '主廚':'H', '魔法少女':'X', '漫畫家':'Q', '太空人':'Q' }; Object.keys(_fmSr7).forEach(function(k){ if(!window._FM_SOUL[k]) window._FM_SOUL[k] = _fmSr7[k]; }); }catch(_eFmSr7){}   // ★ v5.376.0 SR 七職人:補師/輔助=真誠、坦克=活力、輸出=行動、控場=求知(同上規則,老師可再調)
+window._FM_SOUL_NAME ={ C:'真誠', Q:'求知', H:'活力', X:'行動' };
 window._FM_SOUL_ICON = { C:'💗', Q:'📘', H:'🛡️', X:'⚡' };
 window._FM_DEFS = {
   // 四魂(1+1+1+1)
@@ -89388,6 +89543,970 @@ window._FM_DEFS = {
       try{ playSfx('sfx-deal', 0.6); }catch(_){}
     }catch(e){ console.warn('[英魂陣型] 陣型推薦套用失敗', e); }
   };
+})();
+
+// ════════════════════════════════════════════════════════════════════════
+// ★★★ v5.376.0 SR 新角色「七職人」戰鬥引擎 window._SR7(老師 2026-11-10「甲甲甲」)★★★
+//   魔法少女/偶像歌手/點心師傅/漫畫家/美容師/主廚/太空人。資料在 hero_db.js 檔尾「SR 七職人 登錄表」;
+//   設計書:專案知識庫 claude/SR新角色七職人_設計書.md v1.2;S2「職人絕活」見 claude/SR七職人_特色技能設計書.md(第二輪,老師 2026-11-11「甲」)。
+//   第二輪新增接線:execSkill/aiUseSkill 開頭 markSkill、endAction 開頭 endMark、execAtk 開頭 clearMark(雙人合聲跟唱判定)、
+//     doHeal 開頭 onHeal(跟唱治療)、statTrack(dmg) noteHit(名場面重現的單次最高傷害)。
+//   接線點(本檔各處只加一行 hook,全部 try 包住、找不到 window._SR7 時零影響):
+//     execSkill(玩家路徑,_activeSkLvMult 設好之後)→ _SR7.skill;aiUseSkill 鏈 → _SR7.skillAI;
+//     _runBurst 鏈首 → _SR7.burst(傳入既有 _burstMult);戰開天賦 → _SR7.battleStart;
+//     nextRound 每回合 +3 能量之後 → _SR7.roundStart;doDmg 最頂端 → _SR7.preDmg(迴避/代替承傷/增減傷);
+//     addStatus 最頂端 → _SR7.statusBlock(太空人免疫暈眩/睡眠);applyItemOnTarget 物品倍率 → _SR7.itemBoost;
+//     _realAiAct.estSkillDmg → _SR7.est。
+//   ★ 作用域鐵則(v5.69.2/v5.90.0):本區一律用 window._lxpsAtkv / window._lxpsSpv,不用區域 atkv/spv。
+//   ★ 技能等級:玩家路徑 doDmg/doHeal 由 _activeSkLvMult 自動乘(本區傳基礎值,嚴禁重複乘);
+//     AI 路徑不經 _activeSkLvMult ⇒ 本區手動乘 (1+技能等級×0.05)。護盾/加速等非 doDmg/doHeal 數值兩路徑都手動乘。
+//   ★ 命星:一律 window._cstHasN(英雄, 槽, 本名) 判斷(只認點亮的命星;鬥技場本來就不套命星)。
+//   ★ BOSS:暈眩/魅惑/封印/虛弱 對 _zeusIsTrueBoss 機率減半;全部是倍率傷害,沒有 HP% 或固定傷害破口(鐵律 1.31)。
+// ════════════════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  var NAMES = ['魔法少女','偶像歌手','點心師傅','漫畫家','美容師','主廚','太空人'];
+  var SK = {
+    // ★ v5.376.0 第二輪(老師 2026-11-11「甲」):七位的 S2 換成「職人絕活」(設計書 claude/SR七職人_特色技能設計書.md)
+    '愛心光束':'魔法少女', '星之願':'魔法少女',
+    '元氣應援歌':'偶像歌手', '雙人合聲':'偶像歌手',
+    '現烤馬卡龍':'點心師傅', '甜點融合':'點心師傅',
+    '速寫定格':'漫畫家', '名場面重現':'漫畫家',
+    '煥然一新':'美容師', '色彩診斷':'美容師',
+    '中華鐵鍋':'主廚', '三道式套餐':'主廚',
+    '無重力漂浮':'太空人', '重力反轉':'太空人'
+  };
+  var GRAV_MAX = 2;   // 太空人「重力反轉」每場可用次數
+  var BU = { '魔法少女':1, '偶像歌手':1, '點心師傅':1, '漫畫家':1, '美容師':1, '主廚':1, '太空人':1 };
+
+  function SPV(a){ try{ return window._lxpsSpv(a); }catch(_){ return Math.floor(((a&&a.sp)||0)*(1+((a&&a.sp)||0)*0.01)); } }
+  function ATKV(a){ try{ return window._lxpsAtkv(a); }catch(_){ return Math.floor(((a&&a.atk)||0)*(1+((a&&a.atk)||0)*0.01)); } }
+  function L(m){ try{ log(m); }catch(_){} }
+  function BN(h, t, c, d){ try{ bannerFX(h, t, c || '#ffd866', d || 800); }catch(_){} }
+  function RC(h){ try{ renderCard(h); }catch(_){} }
+  function alive(side){ return ((typeof G !== 'undefined' && G && G[side]) || []).filter(function(x){ return x && x.curHp > 0; }); }
+  function opp(side){ return side === 'p1' ? 'p2' : 'p1'; }
+  function rnd(arr){ return arr.length ? arr[Math.floor(Math.random() * arr.length)] : null; }
+  function isBoss(t){ try{ return typeof _zeusIsTrueBoss === 'function' && !!_zeusIsTrueBoss(t); }catch(_){ return false; } }
+  function star(h, slot){ try{ return !!(h && window._cstHasN && window._cstHasN(h, slot, h.name)); }catch(_){ return false; } }
+  function traitLv(name){ try{ return (typeof _getTraitLv === 'function') ? (_getTraitLv(name) || 0) : 0; }catch(_){ return 0; } }
+  function traitOff(h){
+    try{ return (h.status || []).some(function(s){ return s && (s.type === '_traitSeal' || s.type === 'imprison' || s.type === 'confused'); }); }catch(_){ return false; }
+  }
+  function slotOf(a, n){ return (a && a.s1 && a.s1.n === n) ? 's1' : 's2'; }
+  function skLvAI(a, n){ var sl = slotOf(a, n); try{ if(a._skLv && typeof a._skLv[sl] === 'number') return a._skLv[sl]; }catch(_){} return 0; }
+  function curSkLv(){ try{ return (typeof _activeSkLv === 'number') ? _activeSkLv : 0; }catch(_){ return 0; } }
+  function addShield(h, amt){
+    if(!h || h.curHp <= 0 || !(amt > 0)) return;
+    h.shield = (h.shield || 0) + Math.floor(amt);
+    try{ showShieldVFX(h, 'gain'); }catch(_){}
+    BN(h, '🛡 +' + Math.floor(amt), '#aaddff', 800); RC(h);
+  }
+  function addHaste(h, dur, mult){
+    if(!h || h.curHp <= 0) return;
+    try{ addBuff(h, 'haste', dur); var hb = (h.buffs || []).find(function(b){ return b && b.type === 'haste'; }); if(hb) hb._cstSpd = Math.max(hb._cstSpd || 1, mult || 1.25); }catch(_){}
+    RC(h);
+  }
+  function chanceStatus(t, ty, dur, p){
+    if(!t || t.curHp <= 0) return false;
+    if(isBoss(t)) p = p / 2;
+    if(Math.random() >= p){ L('💨 [' + t.name + '] 抵抗了「' + (typeof statusName === 'function' ? statusName(ty) : ty) + '」!'); return false; }
+    try{ addStatus(t, ty, dur); }catch(_){ return false; }
+    var ok = false; try{ ok = hasStatus(t, ty); }catch(_){}
+    RC(t); return ok;
+  }
+  function weaken(t){
+    try{
+      if(!t || t.curHp <= 0 || hasStatus(t, 'weakened')) return false;
+      if(typeof _bvStatDownImmune === 'function' && _bvStatDownImmune(t, '虛弱')) return false;
+      if(hasBuff(t, 'immune') || hasBuff(t, 'statusImmune')) return false;
+      t._weakenOrigAtk = t.atk; t._weakenOrigSp = t.sp; t._weakenOrigSpd = t.spd;
+      t.atk = Math.max(1, Math.floor(t.atk * 0.5)); t.sp = Math.max(1, Math.floor(t.sp * 0.5)); t.spd = Math.max(1, Math.floor(t.spd * 0.5));
+      if(!Array.isArray(t.status)) t.status = [];
+      t.status.push({ type:'weakened', dur:1 });
+      BN(t, '💤 虛弱', '#c9a0ff', 800); RC(t);
+      return true;
+    }catch(_){ return false; }
+  }
+  function cleanseOne(h){ try{ return (typeof _clearOneBadStatus === 'function') ? _clearOneBadStatus(h) : null; }catch(_){ return null; } }
+  function cleanseAll(h){ try{ clearBadStatus(h); }catch(_){} RC(h); }
+  function dispelAll(t, strongToo){
+    var n = 0;
+    try{
+      if(!t || !Array.isArray(t.buffs) || hasBuff(t, 'protectBuff')) return 0;
+      var pool = (typeof _lxpsDispelPool === 'function') ? _lxpsDispelPool(t) : [];
+      if(strongToo){
+        var keep = ['deathimmune','immovable','rebirth','misfortune','alchemist','counter','divineBlessing','reviveImmune','inuInvisible','_inuGuard','guard'];
+        (t.buffs || []).forEach(function(b){ if(b && b._strong && !b._fromBurst && keep.indexOf(b.type) < 0 && pool.indexOf(b) < 0) pool.push(b); });
+      }
+      if(!pool.length) return 0;
+      try{ _lxpsStatFxRestore(t, pool); }catch(_){}
+      t.buffs = t.buffs.filter(function(b){ return pool.indexOf(b) < 0; });
+      try{ if(typeof _amaSunAtkReconcile === 'function') _amaSunAtkReconcile(t); }catch(_){}
+      n = pool.length;
+      RC(t);
+    }catch(_){}
+    return n;
+  }
+  function gainEnergy(side, n, viaStar){
+    try{
+      if(viaStar && window._cstCap && window._cstCap.gainEnergy) return window._cstCap.gainEnergy(side, n);
+      var b = G.energy[side] || 0; G.energy[side] = Math.min(10, b + n); return G.energy[side] - b;
+    }catch(_){ return 0; }
+  }
+  function drainEnergy(side, n){
+    try{
+      if(G._assetGuard && G._assetGuard[side] > 0) return 0;
+      var b = G.energy[side] || 0; G.energy[side] = Math.max(0, b - n); return b - G.energy[side];
+    }catch(_){ return 0; }
+  }
+  function grantItem(side, cnt){
+    var got = 0;
+    for(var k = 0; k < cnt; k++){
+      try{
+        var inv = (typeof _invSideInv === 'function') ? _invSideInv(side) : (side === 'p1' ? G.inv : null);
+        if(!Array.isArray(inv)) break;
+        var slot = -1; for(var i = 0; i < inv.length; i++){ if(!inv[i]){ slot = i; break; } }
+        if(slot < 0) break;
+        var c = drawItem(), tr = 0;
+        while(c && c.type === 'equip' && tr < 10){ c = drawItem(); tr++; }
+        if(c && c.type !== 'equip'){ inv[slot] = c; got++; }
+      }catch(_){ break; }
+    }
+    if(got > 0 && side === 'p1'){ try{ renderItems(); }catch(_){} }
+    return got;
+  }
+  function taunt(by, foes, dur){
+    foes.forEach(function(t){
+      if(!t || t.curHp <= 0) return;
+      try{ if(typeof _tauntImmuneCheck === 'function' && _tauntImmuneCheck(t)) return; }catch(_){}
+      try{
+        addStatus(t, 'taunt', dur);
+        var st = (t.status || []).find(function(s){ return s && s.type === 'taunt'; });
+        if(st){ st._tauntTarget = by; t._tauntTarget = by; BN(t, '🍳 被吸引!', '#ffb066', 800); }
+      }catch(_){}
+      RC(t);
+    });
+  }
+  function healAmt(base, isAI, lv){ return Math.max(1, Math.floor(base * (isAI ? (1 + lv * 0.05) : 1))); }
+  function heal(t, amt, a){ try{ if(t && t.curHp > 0) doHeal(t, amt, { actor:a, isHeal:true, noDice:true, noWarhorn:true }); }catch(_){} }
+  function hit(t, amt, a, extra){
+    if(!t || t.curHp <= 0) return 0;
+    var o = { actor:a, isSkill:true }; if(extra){ for(var k in extra) o[k] = extra[k]; }
+    try{ return doDmg(t, Math.max(1, Math.floor(amt)), o) || 0; }catch(_){ return 0; }
+  }
+  function fx(n, a, ts){ try{ playSkillFX(n, a, ts || []); }catch(_){} }
+  function batchOn(){ try{ beginBatchTotals(); return true; }catch(_){ return false; } }
+  function batchOff(on){ if(on){ try{ setTimeout(function(){ try{ endBatchTotals(); }catch(_){} }, 60); }catch(_){} } }
+
+  // ── 魔法少女 變身 ──
+  function magicTransform(h, why){
+    if(!h || h.curHp <= 0) return;
+    var n = 3 + (star(h, 't1') ? 1 : 0);
+    h._sr7MagicN = Math.max(h._sr7MagicN || 0, n);
+    addShield(h, Math.floor((h.hp || 0) * 0.10));
+    L('✨ [' + h.name + '] ' + (why || '閃耀變身!') + '變身 ' + n + ' 回合:造成的傷害 +' + Math.round(magicBonus(h) * 100) + '%,並獲得護盾!');
+    BN(h, '✨ 變身!', '#ff9ad8', 1000);
+    try{ ringFX(h, '#ff9ad8', 700); }catch(_){}
+  }
+  function magicBonus(h){ return 0.20 + traitLv(h.name) * 0.03; }
+
+  // ══════════════════════ 技能效果本體(玩家/AI 共用)══════════════════════
+  //   isAI:AI 路徑(傷害/治療要手動乘等級);lv:技能等級(0~9)。回傳 true = 已處理。
+  var RUN = {
+    '愛心光束': function(a, t, isAI, lv){
+      if(!t) return;
+      L('💖 [' + a.name + '] 愛心光束!');
+      fx('愛心光束', a, [t]);
+      hit(t, SPV(a) * 2.6 * (isAI ? (1 + lv * 0.05) : 1), a, { elem:'light', element:'light' });
+      if(a._sr7MagicN > 0 && t.curHp > 0){
+        var p = star(a, 's1') ? 0.60 : 0.30;
+        if(Math.random() < p){ try{ addStatus(t, 'forecast', 1); BN(t, '💫 失明', '#ffe28a', 800); }catch(_){} RC(t); }
+      }
+    },
+    // 🌠 星之願:t 參數 = 願望種類 'heal'|'brave'|'guard';下一回合開始時由 roundStart → realizeWish 實現
+    '星之願': function(a, kind, isAI, lv){
+      if(!WISH[kind]) kind = 'heal';
+      a._sr7Wish = { kind:kind, lv:lv, dead:deadCount(a.side), r:(G.round || 0) };
+      L('🌠 [' + a.name + '] 星之願!許下了「' + WISH[kind] + '」,下一回合開始時實現!(這段時間沒有隊友倒下,奇蹟就會加倍)');
+      fx('星之願', a, [a]);
+      BN(a, '🌠 ' + WISH[kind], '#ffd6f5', 1000);
+    },
+    '元氣應援歌': function(a, t, isAI, lv){
+      var dur = 2 + (star(a, 's1') ? 1 : 0);
+      L('🎤 [' + a.name + '] 元氣應援歌!全隊回血並獲得攻擊強化 ' + dur + ' 回合!');
+      var al = alive(a.side); fx('元氣應援歌', a, al);
+      var amt = healAmt(SPV(a) * 0.4, isAI, lv);
+      al.forEach(function(x){ heal(x, amt, a); try{ addBuff(x, 'dmgup', dur); }catch(_){} RC(x); });
+    },
+    '現烤馬卡龍': function(a, t, isAI, lv){
+      if(!t || t.curHp <= 0) return;
+      L('🧁 [' + a.name + '] 現烤馬卡龍 → [' + t.name + ']!');
+      fx('現烤馬卡龍', a, [t]);
+      heal(t, healAmt(SPV(a) * 1.8, isAI, lv), a);
+      var k = star(a, 's1') ? 2 : 1, got = 0;
+      for(var i = 0; i < k; i++){ if(cleanseOne(t)) got++; }
+      if(got) BN(t, '✨ 解除不利', '#88ffcc', 800);
+      RC(t);
+    },
+    // 🍰 甜點融合:t 參數 = 背包格子索引陣列(≥2);不到 2 張時由呼叫端先走 fuseBake(烤 1 張、本次行動結束)
+    '甜點融合': function(a, picks, isAI, lv){
+      var inv = invOf(a.side);
+      if(!Array.isArray(inv) || !Array.isArray(picks) || picks.length < 2){ fuseBake(a); return; }
+      var items = [];
+      picks.forEach(function(i){ var it = inv[i]; if(it && fuseEligible(it, a.side)){ items.push(it); inv[i] = null; } });
+      if(items.length < 2){ items.forEach(function(it){ for(var j = 0; j < inv.length; j++){ if(!inv[j]){ inv[j] = it; break; } } }); fuseBake(a); return; }
+      var boost = 1 + 0.30 * (1 + lv * 0.05);
+      L('🍰 [' + a.name + '] 甜點融合!把「' + items.map(function(it){ return it.n; }).join('」＋「') + '」烤成特製甜點,一起端上桌!(效果 +' + Math.round((boost - 1) * 100) + '%)');
+      fx('甜點融合', a, [a]);
+      BN(a, '🍰 特製甜點!', '#ffc6e0', 1000);
+      a._sr7FuseBoost = boost;
+      try{
+        items.forEach(function(it){
+          itemTargets(it, a).forEach(function(t){ try{ applyItemOnTarget(it, a, t); }catch(e){ console.warn('[SR7 甜點融合]', it.n, e); } });
+        });
+      }finally{ delete a._sr7FuseBoost; }
+      if(a.side === 'p1'){ try{ renderItems(); }catch(_){} }
+      try{ checkWin(); }catch(_){}
+    },
+    '速寫定格': function(a, t, isAI, lv){
+      if(!t) return;
+      L('✒️ [' + a.name + '] 速寫定格!');
+      fx('速寫定格', a, [t]);
+      hit(t, SPV(a) * 2.2 * (isAI ? (1 + lv * 0.05) : 1), a, { elem:'dark', element:'dark' });
+      if(t.curHp > 0 && chanceStatus(t, 'stun', 1, star(a, 's1') ? 0.65 : 0.50)) BN(t, '💫 定格!', '#ccccff', 800);
+    },
+    // 🎞 名場面重現:讀 G._sr7Top[我方](statTrack 記錄的單次最高傷害)
+    '名場面重現': function(a, t, isAI, lv){
+      if(!t) return;
+      var top = (G._sr7Top && G._sr7Top[a.side]) || null;
+      var amt, msg;
+      if(top && top.amt > 0){
+        var pct = star(a, 's2') ? 0.85 : 0.70, cap = SPV(a) * (star(a, 's2') ? 5.2 : 4.5);
+        amt = Math.min(top.amt * pct, cap);
+        msg = '🎞 [' + a.name + '] 名場面重現!重畫第 ' + top.r + ' 回合 [' + top.who + ']' + (top.sk ? '「' + top.sk + '」' : '') + ' 打出的 ' + top.amt + ' 點!';
+      } else {
+        amt = SPV(a) * 1.5;
+        msg = '🎞 [' + a.name + '] 名場面重現!(這場還沒有名場面,先畫一張草稿)';
+      }
+      if(isBoss(t)) amt = amt * 0.5;
+      L(msg);
+      fx('名場面重現', a, [t]);
+      BN(a, '🎞 名場面!', '#d8c8ff', 900);
+      hit(t, amt * (isAI ? (1 + lv * 0.05) : 1), a, { elem:'dark', element:'dark' });
+    },
+    '煥然一新': function(a, t, isAI, lv){
+      if(!t || t.curHp <= 0) return;
+      L('💄 [' + a.name + '] 煥然一新 → [' + t.name + ']!');
+      fx('煥然一新', a, [t]);
+      cleanseAll(t);
+      heal(t, healAmt(SPV(a) * 1.5, isAI, lv), a);
+      if(star(a, 's1')){ try{ addBuff(t, 'halfDmg', 1); }catch(_){} L('✨ [' + a.name + '] 命星:亮麗光彩![' + t.name + '] 受到的傷害減半 1 回合!'); }
+      RC(t);
+    },
+    // 🎨 色彩診斷:回血 + 換成剋制最多敵人的元素屬性(連加護一起換;roundStart 倒數到 0 換回)
+    '色彩診斷': function(a, t, isAI, lv){
+      if(!t || t.curHp <= 0) return;
+      var dur = 3 + (star(a, 's2') ? 1 : 0);
+      fx('色彩診斷', a, [t]);
+      heal(t, healAmt(SPV(a) * 0.6, isAI, lv), a);
+      var be = bestElem(a.side);
+      if(!be){ L('🎨 [' + a.name + '] 色彩診斷!敵人身上找不到可以剋制的顏色,這次只幫 [' + t.name + '] 補了妝。'); return; }
+      var tgs = [t];
+      if(star(a, 's2')){
+        var t2 = alive(a.side).filter(function(x){ return x !== t; }).sort(function(x, y){ return Math.max(y.atk||0, y.sp||0) - Math.max(x.atk||0, x.sp||0); })[0];
+        if(t2) tgs.push(t2);
+      }
+      var ed = elemInfo(be.k);
+      tgs.forEach(function(x){ elemSwap(x, be.k, dur); BN(x, '🎨 ' + ed.icon + ed.name + '屬性', '#ffb3e6', 900); });
+      L('🎨 [' + a.name + '] 色彩診斷![' + tgs.map(function(x){ return x.name; }).join('、') + '] 換成「' + ed.icon + ed.name + '」屬性 ' + dur + ' 回合,剋制 ' + be.c + ' 名敵人!');
+      if(star(a, 's2') && tgs.length > 1) L('✨ [' + a.name + '] 命星:四季色票!一次診斷 2 名夥伴!');
+    },
+    '中華鐵鍋': function(a, t, isAI, lv){
+      var amt = Math.floor(ATKV(a) * 1.5 * (1 + lv * 0.05));
+      L('🍳 [' + a.name + '] 中華鐵鍋!');
+      fx('中華鐵鍋', a, t ? [a, t] : [a]);
+      addShield(a, amt);
+      var dur = 2 + (star(a, 's1') ? 1 : 0);
+      a._sr7WokN = Math.max(a._sr7WokN || 0, dur);
+      if(t && t !== a && t.curHp > 0){
+        t._sr7WokBy = a; t._sr7WokT = dur;
+        L('🍳 [' + a.name + '] 舉起鐵鍋擋在 [' + t.name + '] 身前,' + dur + ' 回合內代替承受傷害!');
+        BN(t, '🍳 主廚守護', '#ffcc88', 900); RC(t);
+      }
+    },
+    // 🍽 三道式套餐:前菜立刻;主菜/甜點(/命星餐後茶)由 roundStart → courseNext 依序上
+    '三道式套餐': function(a, t, isAI, lv){
+      var al = alive(a.side);
+      fx('三道式套餐', a, al);
+      var amt = healAmt(ATKV(a) * 1.2, isAI, lv);
+      L('🍽 [' + a.name + '] 三道式套餐!🥗 前菜上桌,全隊回復 HP!(🍖主菜下一回合、🍮甜點再下一回合)');
+      BN(a, '🍽 套餐開始!', '#ffcc88', 900);
+      al.forEach(function(x){ heal(x, amt, a); });
+      a._sr7Course = { step:1, lv:lv };
+    },
+    '無重力漂浮': function(a, t, isAI, lv){
+      if(!t) return;
+      L('🧑‍🚀 [' + a.name + '] 無重力漂浮!');
+      fx('無重力漂浮', a, [t]);
+      hit(t, SPV(a) * 1.8 * (isAI ? (1 + lv * 0.05) : 1), a, { elem:'wind', element:'wind' });
+      if(t.curHp > 0){
+        try{ addStatus(t, 'spddown', 1); }catch(_){}
+        try{ if(typeof _cstApplySlow === 'function') _cstApplySlow(t, 2 + (star(a, 's1') ? 1 : 0)); }catch(_){}
+        BN(t, '🌌 飄走了~', '#a8d8ff', 800); RC(t);
+      }
+    },
+    // 🌌 重力反轉(老師 2026-11-11 改:免疫任何攻擊 2 回合)= 既有「無敵」buff 'immune'(發威 BOSS 爆發擋一半等既有規則照舊)
+    '重力反轉': function(a, t, isAI, lv){
+      var dur = 2 + Math.floor((lv || 0) / 5);
+      a._sr7GravUse = (a._sr7GravUse || 0) + 1;
+      fx('重力反轉', a, [a]);
+      try{ addBuff(a, 'immune', dur); }catch(_){}
+      L('🌌 [' + a.name + '] 重力反轉!周圍的重力全部顛倒,所有攻擊都偏離軌道!無敵 ' + dur + ' 回合(本場還能用 ' + Math.max(0, GRAV_MAX - a._sr7GravUse) + ' 次)');
+      BN(a, '🌌 無敵!', '#9fd8ff', 1000);
+      try{ ringFX(a, '#9fd8ff', 700); }catch(_){}
+      RC(a);
+      if(star(a, 's2')){
+        var lw = alive(a.side).filter(function(x){ return x !== a; }).sort(function(x, y){ return (x.curHp / x.hp) - (y.curHp / y.hp); })[0];
+        if(lw){ try{ addBuff(lw, 'immune', 1); }catch(_){} L('✨ [' + a.name + '] 命星:失重護航![' + lw.name + '] 也無敵 1 回合!'); BN(lw, '🌌 無敵!', '#9fd8ff', 800); RC(lw); }
+      }
+    }
+  };
+  var WISH = { heal:'💗 治癒之願', brave:'⚔️ 勇氣之願', guard:'🛡 守護之願' };
+  function deadCount(side){ return ((typeof G !== 'undefined' && G && G[side]) || []).filter(function(x){ return x && x.curHp <= 0; }).length; }
+  function realizeWish(h){
+    var w = h._sr7Wish; delete h._sr7Wish;
+    var al = alive(h.side); if(!w || !al.length) return;
+    var ok = h.curHp > 0 && deadCount(h.side) <= w.dead;
+    var pw = 1 + (w.lv || 0) * 0.05, dbl = ok ? (star(h, 's2') ? 1.8 : 1.5) : 1;
+    var sp = SPV(h);
+    L('🌠 [' + h.name + '] 的願望實現了!「' + WISH[w.kind] + '」' + (ok ? '——大家都撐住了,奇蹟 ×' + dbl + '!' : ''));
+    if(ok && star(h, 's2')) L('✨ [' + h.name + '] 命星:流星許願!奇蹟加倍變成 1.8 倍!');
+    try{ fx('星之願', h, al); }catch(_){}
+    if(w.kind === 'heal'){
+      var amt = Math.max(1, Math.floor(sp * 0.8 * pw * dbl));
+      al.forEach(function(x){ heal(x, amt, h); });
+    } else if(w.kind === 'brave'){
+      var d = ok ? 3 : 2;
+      al.forEach(function(x){ try{ addBuff(x, 'dmgup', d); }catch(_){} RC(x); });
+      var g = gainEnergy(h.side, ok ? 2 : 1, false);
+      L('⚔️ 全隊攻擊強化 ' + d + ' 回合,我方能量 +' + g + '!');
+    } else {
+      var sh = Math.max(1, Math.floor(sp * 0.7 * pw * dbl));
+      al.forEach(function(x){ addShield(x, sh); });
+    }
+  }
+  function aiWishKind(a){
+    var al = alive(a.side); if(!al.length) return 'heal';
+    var avg = al.reduce(function(s, x){ return s + x.curHp / Math.max(1, x.hp); }, 0) / al.length;
+    if(avg < 0.6) return 'heal';
+    var foes = alive(opp(a.side));
+    if(foes.some(isBoss) || avg >= 0.85) return 'brave';
+    return 'guard';
+  }
+  // ── 雙人合聲:跟唱(markSkill/endMark 標記「這名隊友正在用技能」,preDmg/onHeal 觸發)──
+  function duetBy(A){
+    try{
+      var by = A && A._sr7DuetBy;
+      if(!by || !(A._sr7DuetN > 0) || by.curHp <= 0 || by.side !== A.side || by === A) return null;
+      var m = window._sr7Mark;
+      if(!m || m.a !== A || (m.until && Date.now() > m.until)) return null;
+      if(window._burstCastActive) return null;
+      if(by._sr7EchoR !== G.round){ by._sr7EchoR = G.round; by._sr7EchoC = 0; }
+      if((by._sr7EchoC || 0) >= 6) return null;
+      by._sr7EchoC = (by._sr7EchoC || 0) + 1;
+      return by;
+    }catch(_){ return null; }
+  }
+  function later(fn, ms){ try{ if(typeof _pSetTimeout === 'function') return _pSetTimeout(fn, ms); }catch(_){} return setTimeout(fn, ms); }
+  function noLv(fn){ try{ if(typeof _cstUrNoLv === 'function') return _cstUrNoLv(fn); }catch(_){} return fn(); }
+  // ── 甜點融合 零件 ──
+  function invOf(side){ try{ return (typeof _invSideInv === 'function') ? _invSideInv(side) : (side === 'p1' ? G.inv : G.inv2); }catch(_){ return null; } }
+  function fuseEligible(it, side){
+    if(!it || ['atk','heal','debuff','buff','revive'].indexOf(it.type) < 0) return false;
+    if(it.type === 'revive' && !((G[side] || []).some(function(x){ return x && x.curHp <= 0; }))) return false;
+    return true;
+  }
+  function fuseList(side){ var inv = invOf(side), out = []; (inv || []).forEach(function(it, i){ if(fuseEligible(it, side)) out.push(i); }); return out; }
+  function fuseBake(a){
+    var g = grantItem(a.side, 1);
+    L(g > 0 ? ('🍰 [' + a.name + '] 甜點融合!材料不夠,先烤好 1 張物品卡放進背包!') : ('🍰 [' + a.name + '] 甜點融合!材料不夠,背包也滿了,這次什麼都沒做成。'));
+    BN(a, g > 0 ? '🍰 出爐!' : '🍰 材料不足', '#ffc6e0', 800);
+  }
+  function itemTargets(it, a){
+    var side = a.side, fs = alive(opp(side)), ms = alive(side);
+    var byHp = function(arr){ return arr.slice().sort(function(x, y){ return (x.curHp / Math.max(1, x.hp)) - (y.curHp / Math.max(1, y.hp)); }); };
+    switch(it.target){
+      case 'e3': return fs;
+      case 'a3': case 'all_a': return ms;
+      case 'e':
+        if(it.effect === 'dispel') return fs.slice().sort(function(x, y){ return (y.buffs || []).length - (x.buffs || []).length; }).slice(0, 1);
+        if(it.type === 'atk') return fs.slice().sort(function(x, y){ return x.curHp - y.curHp; }).slice(0, 1);
+        return fs.slice().sort(function(x, y){ return (y.spd || 0) - (x.spd || 0); }).slice(0, 1);
+      case 'a':
+        if(it.type === 'revive'){ var d = (G[side] || []).filter(function(x){ return x && x.curHp <= 0; }); return d.slice(0, 1); }
+        if(it.effect === 'cleanse') return ms.slice().sort(function(x, y){ return badCount(y) - badCount(x); }).slice(0, 1);
+        return byHp(ms).slice(0, 1);
+      default: return ms.slice(0, 1);
+    }
+  }
+  function fuseScore(it, a){
+    var ms = alive(a.side), hurt = ms.filter(function(x){ return x.curHp < x.hp * 0.6; }).length;
+    if(it.type === 'revive') return 100;
+    if(it.type === 'heal') return (it.hp || 0) >= 9999 ? (hurt ? 90 : 10) : (hurt ? 40 + (it.hp || 0) : 5 + (it.effect === 'cleanse' ? 15 : 0));
+    if(it.type === 'atk') return 30 + (it.dmg || 0) * (it.target === 'e3' ? 1.5 : 1) / 2;
+    return 25 + (it.sell || 0) * 3;
+  }
+  function fuseAiPick(a, need){
+    var inv = invOf(a.side) || [];
+    return fuseList(a.side).sort(function(i, j){ return fuseScore(inv[j], a) - fuseScore(inv[i], a); }).slice(0, need);
+  }
+  // ── 色彩診斷 零件 ──
+  function elemInfo(k){ try{ return (typeof getElemData === 'function' ? getElemData(k) : null) || ELEMENT_DB[k] || { name:k, icon:'' }; }catch(_){ return { name:k, icon:'' }; } }
+  function bestElem(side){
+    try{
+      var foes = alive(opp(side)), best = null, bc = 0;
+      Object.keys(ELEMENT_DB).forEach(function(k){
+        var d = ELEMENT_DB[k];
+        var c = foes.filter(function(f){ return f.element && d.vs_adv && d.vs_adv.indexOf(f.element) >= 0; }).length;
+        if(c > bc){ bc = c; best = k; }
+      });
+      return best ? { k:best, c:bc } : null;
+    }catch(_){ return null; }
+  }
+  function elemBonusOff(h){
+    var e = elemInfo(h.element); if(!e || !h.element) return;
+    if(e.bonus_hp){ h.hp -= e.bonus_hp; if(h.curHp > 0) h.curHp = Math.max(1, Math.min(h.curHp, h.hp)); }
+    if(e.bonus_atk) h.atk -= e.bonus_atk;
+    if(e.bonus_sp) h.sp -= e.bonus_sp;
+    if(e.bonus_spd) h.spd -= e.bonus_spd;
+  }
+  function elemSwap(h, k, dur){
+    if(!h || !k) return;
+    if(h.element === k){ h._sr7ElemN = Math.max(h._sr7ElemN || 0, dur); return; }
+    if(!Object.prototype.hasOwnProperty.call(h, '_sr7ElemOrig')) h._sr7ElemOrig = h.element || null;
+    elemBonusOff(h);
+    h.element = k;
+    try{ applyElemBonus(h); }catch(_){}
+    h._sr7ElemN = dur;
+    RC(h);
+  }
+  function elemRestore(h, quiet){
+    if(!h || !Object.prototype.hasOwnProperty.call(h, '_sr7ElemOrig')) return;
+    var o = h._sr7ElemOrig;
+    elemBonusOff(h);
+    h.element = o || undefined;
+    if(o){ try{ applyElemBonus(h); }catch(_){} }
+    delete h._sr7ElemOrig; delete h._sr7ElemN;
+    if(!quiet && h.curHp > 0){ var ei = o ? elemInfo(o) : null; L('🎨 [' + h.name + '] 的色彩診斷時間到,換回' + (ei ? '「' + ei.icon + ei.name + '」' : '原本的') + '屬性。'); }
+    RC(h);
+  }
+  // ── 三道式套餐 依序上菜 ──
+  function courseNext(h){
+    var c = h._sr7Course; if(!c) return;
+    var al = alive(h.side);
+    if(c.step === 1){
+      L('🍖 [' + h.name + '] 主菜上桌!全隊「攻擊強化」2 回合!');
+      al.forEach(function(x){ try{ addBuff(x, 'dmgup', 2); }catch(_){} RC(x); });
+      BN(h, '🍖 主菜!', '#ffcc88', 800);
+      c.step = 2;
+    } else if(c.step === 2){
+      var sh = Math.max(1, Math.floor(ATKV(h) * 1.0));
+      L('🍮 [' + h.name + '] 甜點上桌!全隊解除 1 個不利狀態,並獲得 ' + sh + ' 護盾!');
+      al.forEach(function(x){ cleanseOne(x); addShield(x, sh); });
+      BN(h, '🍮 甜點!', '#ffcc88', 800);
+      if(star(h, 's2')) c.step = 3; else delete h._sr7Course;
+    } else {
+      var g = gainEnergy(h.side, 1, true);
+      L('✨ [' + h.name + '] 命星:主廚招待!🍵 餐後茶,我方能量 +' + g + '!');
+      delete h._sr7Course;
+    }
+  }
+  // ── 不能施放的原因(玩家路徑跳提示、AI 路徑退能量)──
+  function blockWhy(a, n){
+    if(n === '星之願' && a._sr7Wish) return '上一個願望還沒實現,等下一回合吧!';
+    if(n === '三道式套餐' && a._sr7Course) return '套餐還在上菜中,等這一套吃完再點!';
+    if(n === '重力反轉' && (a._sr7GravUse || 0) >= GRAV_MAX) return '本場的「重力反轉」已經用完了(每場 ' + GRAV_MAX + ' 次)!';
+    if(n === '雙人合聲' && !alive(a.side).some(function(x){ return x !== a; })) return '沒有可以一起同台的隊友!';
+    return '';
+  }
+  // ── 玩家用的選擇視窗(星之願三選一、甜點融合挑物品卡)──
+  function sr7Modal(cfg){
+    try{
+      var old = document.getElementById('sr7-modal'); if(old) old.remove();
+      var ov = document.createElement('div');
+      ov.id = 'sr7-modal';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:12500;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box;overflow-y:auto;';
+      var sel = [];
+      var multi = cfg.multi || 0;
+      var html = '<div style="background:linear-gradient(160deg,#2a2148,#191428);border:2px solid ' + (cfg.color || '#ffb3e6') + ';border-radius:18px;width:min(94vw,760px);max-height:92vh;overflow-y:auto;padding:clamp(12px,2.2vmin,26px);box-sizing:border-box;color:#fff;font-size:clamp(16px,2.1vmin,30px);margin:auto 0;">'
+        + '<div style="font-size:1.3em;font-weight:900;color:' + (cfg.color || '#ffb3e6') + ';margin-bottom:0.3em;">' + cfg.title + '</div>'
+        + (cfg.sub ? '<div style="font-size:0.85em;color:#d8d0ee;margin-bottom:0.7em;line-height:1.5;">' + cfg.sub + '</div>' : '')
+        + '<div id="sr7-mitems" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13em),1fr));gap:0.6em;">'
+        + cfg.items.map(function(it, i){
+            return '<button type="button" data-i="' + i + '" style="text-align:left;padding:0.7em 0.8em;border-radius:12px;border:2px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.07);color:#fff;font-size:1em;cursor:pointer;line-height:1.4;">'
+              + '<div style="font-weight:900;font-size:1.05em;">' + it.label + '</div>'
+              + (it.desc ? '<div style="font-size:0.8em;color:#cfc6e8;margin-top:0.25em;">' + it.desc + '</div>' : '') + '</button>';
+          }).join('')
+        + '</div>'
+        + '<div style="display:flex;gap:0.6em;justify-content:flex-end;margin-top:0.9em;flex-wrap:wrap;">'
+        + '<button type="button" id="sr7-mcancel" style="font-size:1em;padding:0.5em 1.1em;border-radius:10px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);color:#ddd;cursor:pointer;">取消</button>'
+        + (multi ? '<button type="button" id="sr7-mok" disabled style="font-size:1em;font-weight:900;padding:0.5em 1.3em;border-radius:10px;border:none;background:#666;color:#fff;cursor:pointer;">' + (cfg.okText || '確定') + '</button>' : '')
+        + '</div></div>';
+      ov.innerHTML = html;
+      document.body.appendChild(ov);
+      var close = function(){ try{ ov.remove(); }catch(_){} };
+      var okBtn = ov.querySelector('#sr7-mok');
+      var refresh = function(){
+        ov.querySelectorAll('#sr7-mitems button').forEach(function(b){
+          var on = sel.indexOf(+b.getAttribute('data-i')) >= 0;
+          b.style.borderColor = on ? (cfg.color || '#ffb3e6') : 'rgba(255,255,255,0.25)';
+          b.style.background = on ? 'rgba(255,179,230,0.22)' : 'rgba(255,255,255,0.07)';
+        });
+        if(okBtn){ var ready = sel.length >= (cfg.min || multi) && sel.length <= multi; okBtn.disabled = !ready; okBtn.style.background = ready ? 'linear-gradient(135deg,#ff7ab8,#c04a8a)' : '#666'; okBtn.textContent = (cfg.okText || '確定') + '(' + sel.length + '/' + multi + ')'; }
+      };
+      ov.querySelectorAll('#sr7-mitems button').forEach(function(b){
+        b.addEventListener('click', function(){
+          try{ playSfx('sfx-sel', 0.5); }catch(_){}
+          var i = +b.getAttribute('data-i');
+          if(!multi){ close(); cfg.onOk(cfg.items[i].k); return; }
+          var p = sel.indexOf(i);
+          if(p >= 0) sel.splice(p, 1); else if(sel.length < multi) sel.push(i);
+          refresh();
+        });
+      });
+      if(okBtn) okBtn.addEventListener('click', function(){ if(okBtn.disabled) return; close(); cfg.onOk(sel.map(function(i){ return cfg.items[i].k; })); });
+      ov.querySelector('#sr7-mcancel').addEventListener('click', function(){ close(); try{ playSfx('sfx-cancel', 0.4); }catch(_){} if(cfg.onCancel) cfg.onCancel(); });
+      refresh();
+      return true;
+    }catch(e){ console.warn('[SR7 視窗]', e); return false; }
+  }
+  // 目標類型:enemy / ally / ally_other / none / wish(三選一視窗)/ fuse(挑物品卡視窗)
+  var PICK = {
+    '愛心光束':'enemy', '星之願':'wish', '元氣應援歌':'none', '雙人合聲':'ally_other',
+    '現烤馬卡龍':'ally', '甜點融合':'fuse', '速寫定格':'enemy', '名場面重現':'enemy',
+    '煥然一新':'ally', '色彩診斷':'ally', '中華鐵鍋':'ally', '三道式套餐':'none',
+    '無重力漂浮':'enemy', '重力反轉':'none'
+  };
+  // 雙人合聲(玩家/AI 共用本體;目標由呼叫端挑)
+  RUN['雙人合聲'] = function(a, t, isAI, lv){
+    if(!t || t === a || t.curHp <= 0 || t.side !== a.side) return;
+    alive(a.side).forEach(function(x){ if(x._sr7DuetBy === a && x !== t){ delete x._sr7DuetBy; delete x._sr7DuetN; delete x._sr7DuetPct; RC(x); } });
+    t._sr7DuetBy = a; t._sr7DuetN = 2;
+    t._sr7DuetPct = (star(a, 's2') ? 0.70 : 0.50) * (1 + (lv || 0) * 0.05);
+    L('🎶 [' + a.name + '] 雙人合聲!和 [' + t.name + '] 同台演出 2 回合:他用技能打人或補血時,偶像歌手會跟唱一次(' + Math.round(t._sr7DuetPct * 100) + '% 效果)!');
+    if(star(a, 's2')) L('✨ [' + a.name + '] 命星:完美和聲!跟唱效果提升!');
+    fx('雙人合聲', a, [t]);
+    BN(t, '🎶 同台演出', '#9fe0ff', 900);
+    RC(t);
+  };
+
+  var SR7 = {
+    names: NAMES,
+    has: function(n){ return !!SK[n]; },
+    isBurst: function(name){ return !!BU[name]; },
+
+    // ── 玩家路徑(execSkill):自行選目標 + endAction ──
+    skill: function(a, sk, cost){
+      var n = sk && sk.n; if(!n || !SK[n] || !RUN[n]) return false;
+      var lv = curSkLv();
+      var cancel = function(msg){ if(msg){ L(msg); try{ _showInGameToast(msg); }catch(_){} } try{ clearSel(); updateUI(); }catch(_){} };
+      var go = function(t){ try{ RUN[n](a, t, false, lv); }catch(e){ console.warn('[SR7 技能]', n, e); } try{ updateUI(); }catch(_){} endAction(a, cost); };
+      var why = blockWhy(a, n);
+      if(why){ cancel('⚠ ' + why); return true; }
+      var pk = PICK[n];
+      if(pk === 'wish'){
+        var okW = sr7Modal({ title:'🌠 星之願:要許哪一個願望?', color:'#ffb3e6',
+          sub:'願望會在下一回合開始時實現;這段時間如果沒有隊友倒下,奇蹟加倍!',
+          items:[
+            { k:'heal',  label:'💗 治癒之願', desc:'友方全體回復 HP' },
+            { k:'brave', label:'⚔️ 勇氣之願', desc:'友方全體攻擊強化 2 回合、我方能量 +1' },
+            { k:'guard', label:'🛡 守護之願', desc:'友方全體獲得護盾' }
+          ],
+          onOk:function(k){ go(k); }, onCancel:function(){ cancel(''); } });
+        if(!okW) go(aiWishKind(a));
+        return true;
+      }
+      if(pk === 'fuse'){
+        var need = star(a, 's2') ? 3 : 2;
+        var list = fuseList(a.side);
+        if(list.length < 2){ go(null); return true; }   // 材料不夠 ⇒ 先烤 1 張(本次行動結束,沒有取消可刷卡的漏洞)
+        var inv = invOf(a.side);
+        var okF = sr7Modal({ title:'🍰 甜點融合:挑 ' + (need > 2 ? '2～' + need : '2') + ' 張物品卡', color:'#ffc6e0', multi:Math.min(need, list.length), min:2,
+          sub:'選好的物品卡會合成特製甜點立刻端上,效果同時發動並更強!(目標自動挑最需要的人)',
+          items:list.map(function(i){ var it = inv[i]; return { k:i, label:it.n, desc:it.d || '' }; }),
+          okText:'端上特製甜點', onOk:function(ks){ go(ks); }, onCancel:function(){ cancel(''); } });
+        if(!okF) go(fuseAiPick(a, need));
+        return true;
+      }
+      if(pk === 'ally_other'){
+        setPending('ally', function(t){
+          if(!t || t === a || t.curHp <= 0){ cancel('⚠ 請選擇其他隊友!'); return; }
+          go(t);
+        });
+        return true;
+      }
+      if(pk === 'enemy') setPending('enemy', go);
+      else if(pk === 'ally') setPending('ally', go);
+      else go(null);
+      return true;
+    },
+
+    // ── AI 路徑(aiUseSkill 鏈):能量已在鏈頭扣除;回 'return' = 本函式已接手收尾(aiUseSkill 要直接 return)──
+    skillAI: function(a, sk, cost, t, al){
+      var n = sk && sk.n; if(!n || !SK[n]) return false;
+      var lv = skLvAI(a, n);
+      var foes = alive(opp(a.side)), mates = alive(a.side);
+      try{
+        var why = blockWhy(a, n);
+        if(why){
+          L('[' + a.name + '] ' + why + '(改為休息,能量退回)');
+          try{ G.energy[a.side] = Math.min(10, (G.energy[a.side] || 0) + cost); }catch(_){}
+          return 'done';
+        }
+        var pk = PICK[n], tgt = null;
+        if(pk === 'wish') tgt = aiWishKind(a);
+        else if(pk === 'fuse'){ var fl = fuseList(a.side); tgt = fl.length >= 2 ? fuseAiPick(a, star(a, 's2') ? 3 : 2) : null; }
+        else if(pk === 'ally_other'){
+          var cand = mates.filter(function(x){ return x !== a; });
+          var ctrl = function(h){ return ['stun','freeze','sleep','para','imprison'].some(function(s){ return hasStatus(h, s); }); };
+          cand.sort(function(x, y){ var sx = Math.max(x.atk||0, x.sp||0) - (x.acted ? 3 : 0) - (ctrl(x) ? 50 : 0); var sy = Math.max(y.atk||0, y.sp||0) - (y.acted ? 3 : 0) - (ctrl(y) ? 50 : 0); return sy - sx; });
+          tgt = cand[0] || null;
+        }
+        else if(pk === 'enemy'){
+          tgt = t && t.curHp > 0 && t.side !== a.side ? t : rnd(foes);
+          if(n === '名場面重現'){ var lo = foes.slice().sort(function(x, y){ return x.curHp - y.curHp; })[0]; if(lo) tgt = lo; }
+          if(n === '無重力漂浮'){ var fa = foes.filter(function(x){ return !x.acted; }).sort(function(x, y){ return (y.spd||0) - (x.spd||0); })[0]; if(fa) tgt = fa; }
+        } else if(pk === 'ally'){
+          tgt = al && al.curHp > 0 ? al : mates.slice().sort(function(x, y){ return (x.curHp/x.hp) - (y.curHp/y.hp); })[0];
+          if(n === '煥然一新'){ var bd = mates.slice().sort(function(x, y){ return badCount(y) - badCount(x); })[0]; if(bd && badCount(bd) >= 2) tgt = bd; }
+          if(n === '中華鐵鍋'){ var lw = mates.filter(function(x){ return x !== a; }).sort(function(x, y){ return (x.curHp/x.hp) - (y.curHp/y.hp); })[0]; tgt = lw || a; }
+          if(n === '色彩診斷'){ var be = bestElem(a.side); var st = mates.filter(function(x){ return !(x._sr7ElemN > 0) && (!be || x.element !== be.k); }).sort(function(x, y){ return Math.max(y.atk||0, y.sp||0) - Math.max(x.atk||0, x.sp||0); })[0]; if(st) tgt = st; }
+        }
+        RUN[n](a, tgt, true, lv);
+      }catch(e){ console.warn('[SR7 AI 技能]', n, e); }
+      return 'done';
+    },
+
+    // ── 爆發(_runBurst 鏈首):bm = 既有 _burstMult(1+爆發Lv×0.10…)──
+    burst: function(h, side, bm, srcName){
+      var name = srcName || (h && h.name); if(!h || !BU[name]) return false;   // srcName:凡人「臨摹大師」借用爆發時是被模仿者的名字
+      bm = bm || 1;
+      var foes = alive(opp(side)), mates = alive(side);
+      var on = batchOn();
+      try{
+        if(name === '魔法少女'){
+          var t = foes.slice().sort(function(x, y){ return y.curHp - x.curHp; })[0];
+          if(t){
+            var blind = hasStatus(t, 'forecast');
+            var m = 6.5 * bm * ((star(h, 'b1') && blind) ? 1.2 : 1);
+            if(star(h, 'b1') && blind) L('✨ [' + h.name + '] 命星:看不見的奇蹟!對失明目標傷害 +20%!');
+            L('🌟 [' + h.name + '] 奇蹟・閃耀星光砲!');
+            hit(t, SPV(h) * m, h, { elem:'light', element:'light', mustHit:true, ignoreEvasion:true });
+            if(t.curHp > 0){ try{ addStatus(t, 'forecast', 2); }catch(_){} RC(t); }
+          }
+          magicTransform(h, '星光再臨!');
+          if(star(h, 'b2')){ var ge = gainEnergy(side, 1, true); if(ge > 0) L('✨ [' + h.name + '] 命星:星光回流!我方能量 +' + ge + '!'); }
+        }
+        else if(name === '偶像歌手'){
+          var hm = star(h, 'b1') ? 1.2 : 1;
+          var amt = Math.floor(SPV(h) * 1.0 * bm * hm);
+          var hd = 3 + (star(h, 'b2') ? 1 : 0);
+          L('🎤 [' + h.name + '] 巔峰演唱會!全隊回復 ' + amt + ' HP 並加速 ' + hd + ' 回合!');
+          mates.forEach(function(x){ heal(x, amt, h); addHaste(x, hd, 1.25); });
+          foes.forEach(function(f){ if(chanceStatus(f, 'charm', 1, 1)) BN(f, '💕 魅惑', '#ff99dd', 800); });
+        }
+        else if(name === '點心師傅'){
+          var amt2 = Math.floor(SPV(h) * 1.5 * bm), reg = Math.max(1, Math.floor(SPV(h) * 0.3 * bm));
+          var rd = 3 + (star(h, 'b1') ? 1 : 0);
+          L('🎂 [' + h.name + '] 夢幻甜點塔!全隊回復 ' + amt2 + ' HP,持續回血 ' + rd + ' 回合!');
+          mates.forEach(function(x){
+            heal(x, amt2, h);
+            try{ addBuff(x, 'hpRegen', rd); x._hpRegenAmt = Math.max(x._hpRegenAmt || 0, reg); }catch(_){}
+            if(star(h, 'b2')) cleanseOne(x);
+            RC(x);
+          });
+          if(star(h, 'b2')) L('✨ [' + h.name + '] 命星:甜點療癒!友方全體各解除 1 個不利狀態!');
+        }
+        else if(name === '漫畫家'){
+          L('📖 [' + h.name + '] 完結篇・跨頁大格!');
+          var sd = 1 + (star(h, 'b1') ? 1 : 0);
+          foes.forEach(function(f){
+            var m2 = 2.0 * bm;
+            if(star(h, 'b2') && f.hp > 0 && f.curHp < f.hp * 0.5) m2 *= 1.3;
+            hit(f, SPV(h) * m2, h, { isAoe:true, elem:'dark', element:'dark', mustHit:true, ignoreEvasion:true });
+            if(f.curHp > 0 && chanceStatus(f, 'seal', sd, 1)) BN(f, '🚫 封印', '#aa66ff', 800);
+          });
+        }
+        else if(name === '美容師'){
+          var hm2 = star(h, 'b2') ? 1.2 : 1;
+          var amt3 = Math.floor(SPV(h) * 1.2 * bm * hm2);
+          var id = 2 + (star(h, 'b1') ? 1 : 0);
+          L('💄 [' + h.name + '] 閃耀改造秀!全隊回復 ' + amt3 + ' HP、解除不利狀態並免疫 ' + id + ' 回合!');
+          mates.forEach(function(x){ cleanseAll(x); heal(x, amt3, h); try{ addBuff(x, 'statusImmune', id); }catch(_){} RC(x); });
+        }
+        else if(name === '主廚'){
+          var sh = Math.floor(ATKV(h) * 3.0 * bm * (star(h, 'b1') ? 1.3 : 1));
+          var pct = (star(h, 'b2') ? 0.20 : 0.15) * bm;
+          L('🍲 [' + h.name + '] 滿漢全席!');
+          addShield(h, sh);
+          taunt(h, foes, 2);
+          var amt4 = Math.max(1, Math.floor((h.hp || 0) * pct));
+          mates.forEach(function(x){ heal(x, amt4, h); });
+        }
+        else if(name === '太空人'){
+          L('☄️ [' + h.name + '] 流星雨墜落!');
+          foes.forEach(function(f){
+            hit(f, SPV(h) * 1.6 * bm, h, { isAoe:true, elem:'wind', element:'wind', mustHit:true, ignoreEvasion:true });
+            if(f.curHp > 0){
+              try{ addStatus(f, 'spddown', 1); }catch(_){}
+              if(star(h, 'b1')){ try{ if(typeof _cstApplySlow === 'function') _cstApplySlow(f, 1); }catch(_){} }
+              RC(f);
+            }
+          });
+          var left = alive(opp(side)), k = star(h, 'b2') ? 2 : 1;
+          for(var i = 0; i < k && left.length; i++){
+            var pick = left.splice(Math.floor(Math.random() * left.length), 1)[0];
+            if(chanceStatus(pick, 'stun', 1, 1)) BN(pick, '💫 暈眩', '#ccccff', 800);
+          }
+        }
+      }catch(e){ console.warn('[SR7 爆發]', name, e); }
+      batchOff(on);
+      try{ updateUI(); }catch(_){}
+      return true;
+    },
+
+    // ── 戰開天賦:魔法少女變身、美容師完美妝容、點心師傅命星 t2、美容師命星 t2 ──
+    battleStart: function(){
+      try{
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(h){
+          if(!h || h.curHp <= 0 || !BU[h.name]) return;
+          h._sr7MagicN = 0; h._sr7WokN = 0; h._sr7EvR = -1; h._sr7GravUse = 0; delete h._sr7Wish; delete h._sr7Course;
+          if(traitOff(h)) return;
+          if(h.name === '魔法少女') magicTransform(h, '閃耀變身!');
+          else if(h.name === '美容師'){
+            var p = 0.08 + traitLv(h.name) * 0.02 + (star(h, 't1') ? 0.04 : 0);
+            L('💅 [' + h.name + '] 完美妝容!友方全體獲得最大 HP ' + Math.round(p * 100) + '% 的護盾!');
+            alive(h.side).forEach(function(x){
+              addShield(x, Math.floor((x.hp || 0) * p));
+              if(star(h, 't2')){ try{ addBuff(x, 'statusImmune', 1); }catch(_){} }
+            });
+            if(star(h, 't2')) L('✨ [' + h.name + '] 命星:定妝噴霧!友方全體免疫不利狀態 1 回合!');
+          }
+          else if(h.name === '點心師傅' && star(h, 't2')){
+            var g = grantItem(h.side, 1);
+            if(g) L('✨ [' + h.name + '] 命星:開店招待!開戰送上 1 張物品卡!');
+          }
+        });
+        // 清掉上一場殘留的主廚守護標記
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(x){
+          if(!x) return;
+          if(x._sr7WokBy){ delete x._sr7WokBy; delete x._sr7WokT; }
+          delete x._sr7DuetBy; delete x._sr7DuetN; delete x._sr7DuetPct;
+          if(Object.prototype.hasOwnProperty.call(x, '_sr7ElemOrig')) elemRestore(x, true);
+        });
+        G._sr7Top = {};
+        window._sr7Mark = null;
+      }catch(e){ console.warn('[SR7 戰開天賦]', e); }
+    },
+
+    // ── 每回合開始(nextRound,+3 能量之後)──
+    roundStart: function(){
+      try{
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(h){
+          if(!h) return;
+          if(h._sr7WokT > 0){ h._sr7WokT--; if(h._sr7WokT <= 0){ delete h._sr7WokBy; delete h._sr7WokT; } }
+          // 職人絕活的跨回合效果(施術者倒下也要處理:願望照樣實現、套餐取消、屬性換回、同台結束)
+          if(h._sr7DuetN > 0){ h._sr7DuetN--; if(h._sr7DuetN <= 0){ delete h._sr7DuetBy; delete h._sr7DuetN; delete h._sr7DuetPct; if(h.curHp > 0) L('🎶 [' + h.name + '] 的同台演出結束了。'); RC(h); } }
+          if(h._sr7ElemN > 0){ h._sr7ElemN--; if(h._sr7ElemN <= 0) elemRestore(h, false); }
+          if(h._sr7Wish && h._sr7Wish.r !== (G.round || 0)) realizeWish(h);
+          if(h._sr7Course){
+            if(h.curHp <= 0){ L('🍽 [' + h.name + '] 倒下了,今天的套餐只能上到這裡……'); delete h._sr7Course; }
+            else courseNext(h);
+          }
+          if(!BU[h.name] || h.curHp <= 0) return;
+          if(h._sr7MagicN > 0){
+            h._sr7MagicN--;
+            if(h._sr7MagicN <= 0){
+              L('✨ [' + h.name + '] 變身時間結束。'); BN(h, '變身結束', '#ffc6ea', 700);
+              if(star(h, 't2')){ heal(h, Math.floor((h.hp || 0) * 0.15), h); L('✨ [' + h.name + '] 命星:餘暉星光!變身結束時回復 15% HP!'); }
+            }
+          }
+          if(h._sr7WokN > 0) h._sr7WokN--;
+          if(traitOff(h)) return;
+          var lv = traitLv(h.name);
+          if(h.name === '偶像歌手'){
+            var p = 0.25 + lv * 0.03 + (star(h, 't1') ? 0.10 : 0);
+            if(Math.random() < p){
+              var g = gainEnergy(h.side, 1, false);
+              L('📣 [' + h.name + '] 粉絲應援團!我方能量 +' + g + '!'); BN(h, '📣 應援!', '#9fe0ff', 800);
+              if(star(h, 't2')){ var amt = Math.max(1, Math.floor(SPV(h) * 0.2)); alive(h.side).forEach(function(x){ heal(x, amt, h); }); L('✨ [' + h.name + '] 命星:螢光棒海!全隊回復 ' + amt + ' HP!'); }
+            }
+          }
+          else if(h.name === '漫畫家'){
+            var p2 = 0.30 + lv * 0.04 + (star(h, 't1') ? 0.10 : 0);
+            if(Math.random() < p2){
+              var t = rnd(alive(opp(h.side)));
+              if(t){
+                try{ addStatus(t, 'spddown', 1); }catch(_){}
+                L('📖 [' + h.name + '] 分鏡預告![' + t.name + '] 這回合最後才能行動!'); BN(t, '📖 延後', '#ccccff', 800);
+                if(star(h, 't2')){ hit(t, SPV(h) * 0.5, h, { elem:'dark', element:'dark' }); L('✨ [' + h.name + '] 命星:伏筆回收!'); }
+                RC(t);
+              }
+            }
+          }
+          else if(h.name === '主廚' && star(h, 't2')){
+            heal(h, Math.max(1, Math.floor((h.hp || 0) * 0.03)), h);
+          }
+        });
+      }catch(e){ console.warn('[SR7 回合開始]', e); }
+    },
+
+    // ── doDmg 最頂端:回傳新的 rawDmg;回 -1 = 這次傷害不成立(迴避/轉給主廚)──
+    preDmg: function(target, raw, o){
+      if(!target || !(raw > 0) || !o || o.isHeal || o.isRebound || o.isReflect) return raw;
+      var A = o.actor;
+      var foeHit = !!(A && A.side && target.side && A.side !== target.side);
+      // 太空人 迴避
+      if(target.name === '太空人' && foeHit && !o.mustHit && !o.ignoreEvasion && !o._isDotTick && !o.fixedDmg && !o._sr7Redir && target.curHp > 0 && !traitOff(target)){
+        var ev = 0.15 + traitLv('太空人') * 0.02 + (star(target, 't1') ? 0.05 : 0);
+        if(Math.random() < ev){
+          L('🛰️ [' + target.name + '] 太空訓練!靈巧閃過攻擊!');
+          try{ showShieldVFX(target, 'evade'); showPopup(target, 'MISS', 'miss'); }catch(_){}
+          BN(target, '🛰️ 閃避', '#9fd8ff', 700);
+          if(star(target, 't2') && target._sr7EvR !== G.round){ target._sr7EvR = G.round; var g = gainEnergy(target.side, 1, true); if(g > 0) L('✨ [' + target.name + '] 命星:姿態控制!我方能量 +' + g + '!'); }
+          return -1;
+        }
+      }
+      // 主廚 代替承傷
+      var by = target._sr7WokBy;
+      if(by && by !== target && target._sr7WokT > 0 && by.curHp > 0 && by.side === target.side && foeHit && !o._isDotTick && !o._sr7Redir && !o.fixedDmg){
+        var o2 = {}; for(var k in o) o2[k] = o[k]; o2._sr7Redir = true;
+        L('🍳 [' + by.name + '] 鐵鍋一擋,代替 [' + target.name + '] 承受傷害!');
+        BN(by, '🍳 代替承傷!', '#ffcc88', 700);
+        try{ doDmg(by, raw, o2); }catch(_){}
+        return -1;
+      }
+      var r = raw;
+      // 魔法少女 變身增傷
+      if(A && A.name === '魔法少女' && A._sr7MagicN > 0 && !o.fixedDmg && !o._isDotTick) r = r * (1 + magicBonus(A));
+      // 主廚 減傷(鐵鍋 −30%;HP<50% 天賦 −20%+)
+      if(target.name === '主廚' && !o.fixedDmg){
+        if(target._sr7WokN > 0) r = r * 0.70;
+        if(!traitOff(target)){
+          var th = star(target, 't1') ? 0.60 : 0.50;
+          if(target.hp > 0 && target.curHp < target.hp * th) r = r * (1 - (0.20 + traitLv('主廚') * 0.03));
+        }
+      }
+      // 偶像歌手 雙人合聲:同台隊友的技能傷害 ⇒ 跟唱(同目標追加)
+      if(foeHit && !o._sr7Echo && !o._isDotTick && !o._isDot && !o._fromBurn && !o._sr7Redir && target.curHp > 0){
+        var by2 = duetBy(A);
+        if(by2){
+          var eAmt = Math.max(1, Math.floor(r * (A._sr7DuetPct || 0.5))), eTg = target;
+          later(function(){
+            try{
+              if(by2.curHp <= 0 || eTg.curHp <= 0) return;
+              L('🎶 [' + by2.name + '] 跟唱!對 [' + eTg.name + '] 追加一擊!');
+              BN(by2, '🎶 跟唱!', '#9fe0ff', 600);
+              noLv(function(){ doDmg(eTg, eAmt, { actor:by2, isSkill:true, _sr7Echo:true, mustHit:true }); });
+              RC(eTg); try{ updateUI(); }catch(_){} try{ checkWin(); }catch(_){}
+            }catch(_){}
+          }, 320);
+        }
+      }
+      return Math.max(1, Math.floor(r));
+    },
+
+    // ── addStatus 最頂端:太空人不會暈眩/睡眠 ──
+    statusBlock: function(h, t){
+      if(!h || h.name !== '太空人' || (t !== 'stun' && t !== 'sleep') || traitOff(h)) return false;
+      L('🛰️ [' + h.name + '] 太空訓練:不會' + (t === 'stun' ? '暈眩' : '睡著') + '!');
+      BN(h, '🛰️ 免疫', '#9fd8ff', 700);
+      return true;
+    },
+
+    // ── 物品卡倍率:使用者那一方有點心師傅存活 ⇒ ×(1.30+…)──
+    itemBoost: function(user){
+      try{
+        if(!user || !user.side) return 1;
+        var fu = (user._sr7FuseBoost > 1) ? user._sr7FuseBoost : 1;   // 甜點融合 +30%(只在融合施放當下由 RUN 設定)
+        var c = alive(user.side).filter(function(x){ return x.name === '點心師傅' && !traitOff(x); })[0];
+        if(!c) return fu;
+        var b = 0.30 + traitLv('點心師傅') * 0.05 + (star(c, 't1') ? 0.10 : 0);
+        L('🍬 [點心師傅] 甜蜜加成!物品效果 +' + Math.round(b * 100) + '%!');
+        return (1 + b) * fu;
+      }catch(_){ return 1; }
+    },
+
+    // ── 雙人合聲:標記「這名角色正在用技能」(execSkill / aiUseSkill 開頭)、行動結束後 1.2 秒失效(endAction)、普攻清掉 ──
+    markSkill: function(a, sk){ try{ if(a && sk && !sk.p) window._sr7Mark = { a:a, until:0 }; }catch(_){} },
+    endMark: function(a){ try{ var m = window._sr7Mark; if(m && m.a === a && !m.until) m.until = Date.now() + 1200; }catch(_){} },
+    clearMark: function(a){ try{ var m = window._sr7Mark; if(m && m.a === a) window._sr7Mark = null; }catch(_){} },
+    // doHeal 開頭:同台隊友的技能治療 ⇒ 跟唱(同目標追加回復)
+    onHeal: function(target, amt, o){
+      try{
+        if(!target || !(amt > 0) || !o || o._sr7Echo || !o.isHeal) return;
+        var A = o.actor; if(!A || A.side !== target.side) return;
+        var by = duetBy(A); if(!by) return;
+        var hAmt = Math.max(1, Math.floor(amt * (A._sr7DuetPct || 0.5)));
+        later(function(){
+          try{
+            if(by.curHp <= 0 || target.curHp <= 0) return;
+            L('🎶 [' + by.name + '] 跟唱![' + target.name + '] 再回復一些 HP!');
+            BN(by, '🎶 跟唱!', '#9fe0ff', 600);
+            noLv(function(){ doHeal(target, hAmt, { actor:by, isHeal:true, _sr7Echo:true, noDice:true, noWarhorn:true }); });
+            RC(target);
+          }catch(_){}
+        }, 320);
+      }catch(_){}
+    },
+    // statTrack(dmg) ⇒ 記各陣營本場單次最高傷害(漫畫家「名場面重現」用)
+    noteHit: function(hero, amount, o){
+      try{
+        if(!hero || !hero.side || !(amount > 0) || typeof G === 'undefined' || !G) return;
+        if(!G._sr7Top) G._sr7Top = {};
+        var cur = G._sr7Top[hero.side];
+        if(!cur || amount > cur.amt) G._sr7Top[hero.side] = { amt:Math.floor(amount), who:hero.name, sk:(o && o.skill) || '', r:(G.round || 1) };
+      }catch(_){}
+    },
+
+    // ── AI 估值(_realAiAct.estSkillDmg)──
+    est: function(a, n, foes){
+      if(!SK[n]) return null;
+      var mates = alive(a.side);
+      var hurt = mates.filter(function(x){ return x.curHp < x.hp * 0.7; }).length;
+      switch(n){
+        case '愛心光束': return Math.floor(SPV(a) * 2.6);
+        case '星之願': return a._sr7Wish ? -1 : Math.floor(SPV(a) * 0.5) * mates.length + hurt * 15;
+        case '元氣應援歌': return Math.floor(SPV(a) * 0.3) * mates.length + 20;
+        case '雙人合聲': return (mates.some(function(x){ return x !== a; }) && !mates.some(function(x){ return x._sr7DuetBy === a && x._sr7DuetN > 0; })) ? 55 : -1;
+        case '現烤馬卡龍': return -1;
+        case '甜點融合':
+          if(fuseList(a.side).length >= 2) return 60;
+          var inv = invOf(a.side); return (Array.isArray(inv) && inv.some(function(x){ return !x; })) ? 20 : -1;
+        case '速寫定格': return Math.floor(SPV(a) * 2.2) + 15;
+        case '名場面重現':
+          var tp = G._sr7Top && G._sr7Top[a.side];
+          return tp ? Math.floor(Math.min(tp.amt * 0.7, SPV(a) * 4.5)) : Math.floor(SPV(a) * 1.5);
+        case '煥然一新': return -1;
+        case '色彩診斷':
+          var be = bestElem(a.side);
+          return (be && mates.some(function(x){ return !(x._sr7ElemN > 0) && x.element !== be.k; })) ? 45 : (hurt ? 20 : 5);
+        case '中華鐵鍋': return -1;
+        case '三道式套餐': return a._sr7Course ? -1 : Math.floor(ATKV(a) * 1.2) * Math.max(1, hurt) + 30;
+        case '無重力漂浮': return Math.floor(SPV(a) * 1.8) + 15;
+        case '重力反轉': return ((a._sr7GravUse || 0) < GRAV_MAX && a.curHp < a.hp * 0.55 && !hasBuff(a, 'immune')) ? 90 : -1;
+      }
+      return null;
+    }
+  };
+  function badCount(h){ try{ return (h.status || []).filter(function(s){ return s && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.indexOf(s.type) >= 0; }).length; }catch(_){ return 0; } }
+  window._SR7 = SR7;
+  // 命星效果登錄(圖鑑據此顯示「效果已上線」;42 顆效果本體都在上面以 star() 守門)
+  try{
+    var R = window._CST_EFFECTS || (window._CST_EFFECTS = {});
+    NAMES.forEach(function(nm){ R[nm] = R[nm] || {}; ['t1','t2','s1','s2','b1','b2'].forEach(function(s){ R[nm][s] = { impl:1, partial:'' }; }); });
+  }catch(_eSr7Cst){}
 })();
 
 ;(window._LXPS_MOD_OK || (window._LXPS_MOD_OK = {}))['game_battle.js'] = 1;   /* ★ v5.235.0 載入完成記號(必須是本檔最後一行) */
