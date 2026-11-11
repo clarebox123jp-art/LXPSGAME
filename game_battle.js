@@ -6918,6 +6918,108 @@ window._lxpsFaceFitIn = function(root){
     }
   }catch(_g){}
 };
+/* ★ v5.381.0(2026-11-11・老師「所有龍王圖片出現的欄位都確保可以看到頭部」)
+   8 隻世界 BOSS 龍王立繪(皆 524×749)逐張看過頭頂(含角/冠)位置,補進臉部對照表:
+   火山炎(維蘇威火山龍王)0.28 / 翠綠森(草龍王)0.08 / 山岳地(地龍王)0.06 / 風暴雷(雷龍王)0.13 /
+   深淵海(水龍王)0.05 / 邪骨暗(邪龍王)0.07 / 神聖光(聖龍王)0.24 / 星辰幻(幻龍王)0.09(與 game_adv.js v5.372.0 戰鬥背景 _WB_HEAD_TOP 一致)。
+   另加全域監看 _lxpsDragonFit:任何地方新出現的龍王 <img>(object-fit:cover)或「單層 cover 背景圖」的元素,
+   不必逐處掛 onload,一律自動依頭頂位置對齊;戰鬥背景 #adv-battle-bg(多層、v5.372.0 自己算)不碰。 */
+try{
+  window._LXPS_DRAGON_FILES = {"維蘇威火山龍王.png":270,"草龍王.png":70,"地龍王.png":50,"雷龍王.png":120,
+    "水龍王.png":40,"邪龍王.png":60,"聖龍王.png":230,"幻龍王.png":80};
+  (function(){
+    var T = {}, Y = {};
+    for(var f in window._LXPS_DRAGON_FILES){
+      var t = window._LXPS_DRAGON_FILES[f];
+      T[f] = [t, 1429];
+      Y[f] = Math.max(0, Math.round(t / 1000 * 210));   /* 方形縮圖最多往下到幾 %(頭頂留在框內) */
+    }
+    Object.assign(window._LXPS_FACE_T, T);
+    Object.assign(window._LXPS_THUMB_FACE_YMAX, Y);
+  })();
+}catch(_eDrg){}
+window._lxpsDragonFileOf = function(url){
+  try{
+    var fn = String(url || '').split('?')[0].split('#')[0].split('/').pop();
+    try{ fn = decodeURIComponent(fn); }catch(_d){}
+    return (window._LXPS_DRAGON_FILES && window._LXPS_DRAGON_FILES[fn] != null) ? fn : '';
+  }catch(_){ return ''; }
+};
+/* 單層 cover 背景(div 的 background-image 只有一張龍王圖):算出讓頭頂落在框上緣附近的垂直位置 */
+window._lxpsDragonFitBg = function(el){
+  try{
+    if(!el || !el.style || (el.dataset && el.dataset.wbBossBg)) return;
+    var cs = getComputedStyle(el);
+    var bi = cs.backgroundImage || '';
+    if(bi.indexOf('url(') < 0 || bi.indexOf('url(') !== bi.lastIndexOf('url(')) return;   /* 只處理單一圖層 */
+    if(String(cs.backgroundSize).indexOf('cover') < 0) return;
+    var m = bi.match(/url\(["']?(.*?)["']?\)/); var fn = window._lxpsDragonFileOf(m && m[1]);
+    if(!fn) return;
+    var bw = el.clientWidth, bh = el.clientHeight;
+    if(!(bw > 0 && bh > 0)) return;
+    var a = 749 / 524, s = Math.max(bw, bh / a), imgH = s * a;
+    if(imgH <= bh + 1) return;
+    var top = Math.max(0, window._LXPS_DRAGON_FILES[fn] / 1000 - 0.01);
+    var y = Math.max(bh - imgH, Math.min(0, -top * imgH + bh * 0.03));
+    var pos = 'center ' + Math.round(y) + 'px';
+    if(el.style.backgroundPosition !== pos) el.style.backgroundPosition = pos;
+  }catch(_){}
+};
+window._lxpsDragonFitNode = function(node){
+  try{
+    if(!node || node.nodeType !== 1) return;
+    var list = (node.tagName === 'IMG') ? [node] : (node.getElementsByTagName ? node.getElementsByTagName('img') : []);
+    for(var i = 0; i < list.length; i++){
+      (function(im){
+        if(!window._lxpsDragonFileOf(im.getAttribute('src') || im.src)) return;
+        var go = function(){
+          try{ if(getComputedStyle(im).objectFit === 'cover' && window._lxpsFaceFitImg) window._lxpsFaceFitImg(im); }catch(_){}
+        };
+        if(!im._lxpsDrg){
+          im._lxpsDrg = 1;
+          im.addEventListener('load', go);
+          try{ if(typeof ResizeObserver === 'function'){ new ResizeObserver(go).observe(im); } }catch(_){}
+        }
+        if(im.complete) go();
+      })(list[i]);
+    }
+    /* 背景圖:只看這個節點本身與子孫中「行內 style 有龍王圖」的元素(便宜的字串比對) */
+    var bgs = [];
+    if(node.getAttribute && /龍王|%E9%BE%8D%E7%8E%8B/.test(node.getAttribute('style') || '')) bgs.push(node);
+    if(node.querySelectorAll){
+      var c = node.querySelectorAll('[style*="龍王"],[style*="%E9%BE%8D%E7%8E%8B"]');
+      for(var j = 0; j < c.length; j++) bgs.push(c[j]);
+    }
+    bgs.forEach(function(el){
+      window._lxpsDragonFitBg(el);
+      if(!el._lxpsDrgBg){
+        el._lxpsDrgBg = 1;
+        try{ if(typeof ResizeObserver === 'function'){ new ResizeObserver(function(){ window._lxpsDragonFitBg(el); }).observe(el); } }catch(_){}
+      }
+    });
+  }catch(_){}
+};
+(function(){
+  try{
+    if(typeof MutationObserver !== 'function') return;
+    var start = function(){
+      try{
+        window._lxpsDragonFitNode(document.body);
+        new MutationObserver(function(recs){
+          for(var i = 0; i < recs.length; i++){
+            var r = recs[i];
+            if(r.type === 'childList'){
+              for(var j = 0; j < r.addedNodes.length; j++) window._lxpsDragonFitNode(r.addedNodes[j]);
+            }else if(r.type === 'attributes' && r.target && r.target.tagName === 'IMG'){
+              window._lxpsDragonFitNode(r.target);
+            }
+          }
+        }).observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['src'] });
+      }catch(_){}
+    };
+    if(document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+  }catch(_){}
+})();
 function _teamFormAdjustObjPos(name, baseObjPos, where){
   if(where === 'grid') return _lxpsThumbFaceClamp(name, _teamFormAdjustObjPosRaw(name, baseObjPos, where));
   return _teamFormAdjustObjPosRaw(name, baseObjPos, where);
@@ -79928,7 +80030,7 @@ function _gearIconHtml(def, imgPx, emojiPx){
   return '<img src="' + url + '" alt="" loading="lazy" draggable="false" style="width:' + imgPx + 'px;height:' + imgPx + 'px;object-fit:contain;vertical-align:middle;flex-shrink:0;" onerror="this.style.display=\'none\';if(this.nextElementSibling)this.nextElementSibling.style.display=\'\';">'
        + '<span style="display:none;font-size:' + ep + 'px;line-height:1;">' + ico + '</span>';
 }
-function _gearItemLineHtml(x, showDesc){
+function _gearItemLineHtml(x, showDesc, noIcon){   // ★ v5.381.0 noIcon:選單左側另放大縮圖時,標題列不再放小圖示
   const rc = (GEAR_RARITY[x.def.r] && GEAR_RARITY[x.def.r].color) || '#66ddff';
   const rn = (GEAR_RARITY[x.def.r] && GEAR_RARITY[x.def.r].name) || '稀有';
   const cute = (window._artStyle === 'cute');
@@ -79936,7 +80038,7 @@ function _gearItemLineHtml(x, showDesc){
   const afTxt = (x.inst.affixes || []).map(af => '<span style="color:#aaddff;">◆ ' + _gearAffixText(af) + '</span>').join('<br>');
   const desc = showDesc ? ('<div style="font-size:14px;color:#99aabb;margin-top:4px;line-height:1.45;">' + (cute ? (x.def.ds || '') : (x.def.dp || '')) + '</div>') : '';
   return '<div style="line-height:1.4;">'
-    + '<div style="font-weight:900;color:' + rc + ';font-size:18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + _gearIconHtml(x.def, 30, 18) + '<span>' + x.def.n + '</span>'
+    + '<div style="font-weight:900;color:' + rc + ';font-size:18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + (noIcon ? '' : _gearIconHtml(x.def, 30, 18)) + '<span>' + x.def.n + '</span>'
     + ' <span style="font-size:13px;color:#ccc;font-weight:700;">' + rn + '</span>'
     + (x.inst.gifted ? ' <span style="font-size:12px;color:#ffaacc;border:1px solid rgba(255,150,200,0.5);border-radius:6px;padding:0 5px;">好友贈禮</span>' : '')
     + '</div>'
@@ -80047,7 +80149,10 @@ window._showGearSlotPicker = function(heroName, slot){
       : (elsewhere ? '<span style="font-size:12px;color:#ffcc88;border:1px solid rgba(255,200,120,0.5);border-radius:6px;padding:1px 6px;">裝備中:' + elsewhere + '</span>' : '');
     return '<div style="background:rgba(0,0,0,0.4);border:1.5px solid ' + rc + '55;border-radius:12px;padding:12px 14px;margin-bottom:10px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
-      + _gearItemLineHtml(x, true)
+      // ★ v5.381.0(老師「我希望是縮小圖片」)左側 76px 裝備縮圖(讀不到圖退回 emoji)
+      + '<div style="display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1;">'
+      + '<div style="width:76px;height:76px;border-radius:12px;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">' + _gearIconHtml(x.def, 72, 44) + '</div>'
+      + '<div style="min-width:0;flex:1;">' + _gearItemLineHtml(x, true, true) + '</div></div>'
       + '<div style="flex-shrink:0;text-align:right;">' + badge + '</div></div>'
       + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">' + btns + '</div></div>';
   }).join('') : '<div style="color:#8899aa;font-size:17px;padding:22px 8px;text-align:center;">' + ((window._artStyle === 'cute') ? '還沒有' + info.n + '裝備喔!去打怪、召喚星空或不可思議超商找找吧~' : '尚未擁有任何' + info.n + '裝備。可透過冒險掉落、星空召喚或不可思議超商取得。') + '</div>';
@@ -80056,10 +80161,11 @@ window._showGearSlotPicker = function(heroName, slot){
   modal.style.cssText = 'position:fixed;inset:0;z-index:100050;background:rgba(0,0,10,0.78);display:flex;align-items:center;justify-content:center;padding:16px;';
   modal.innerHTML = '<div style="background:linear-gradient(160deg,#101a30,#1a2440);border:2px solid rgba(120,170,255,0.55);border-radius:16px;max-width:640px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.6);">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(120,170,255,0.25);">'
-    + '<div style="font-size:22px;font-weight:900;color:#aaccff;letter-spacing:1px;">' + info.icon + ' 為 ' + heroName + ' 選擇' + info.n + '裝備</div>'
+    + '<div style="font-size:28px;font-weight:900;color:#aaccff;letter-spacing:1px;">' + info.icon + ' 為 ' + heroName + ' 選擇' + info.n + '裝備</div>'
     + '<button onclick="document.getElementById(\'_hero-gear-picker-modal\').remove()" style="font-size:22px;background:none;border:none;color:#8899bb;cursor:pointer;font-family:inherit;">✕</button></div>'
-    + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px;">' + cards + '</div></div>';
+    + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px;"><div class="_lxps-pick2col">' + cards + '</div></div></div>';   // ★ v5.381.0 兩欄並列
   modal.addEventListener('click', function(ev){ if(ev.target === modal) modal.remove(); });
+  try{ if(typeof window._lxpsPicker2Col === 'function') window._lxpsPicker2Col(modal, 1.5); }catch(_){}   // ★ v5.381.0 加寬＋清單字 ×1.5(game_adv.js 共用)
   document.body.appendChild(modal);
 };
 

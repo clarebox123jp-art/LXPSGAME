@@ -240,11 +240,29 @@
     cuiyu_grass_dragon:   'bgm-wb-cuiyu-battle',
     shanyue_earth_dragon: 'bgm-wb-shanyue-battle',   // ★ v3.15.17 — 地龍王戰BGM.m4a
     shenhai_water_dragon: 'bgm-wb-shenhai-battle',    // ★ v3.15.98 — 海龍王BGM.m4a
+    taifeng_wind_dragon:  'bgm-wb-taifeng-battle',    // ★ v5.381.0 — 雷龍王BGM.mp3(repo 早已上傳,之前漏接 ⇒ 播火山炎曲)
+    // ★ v5.381.0 — 三首 Suno 新曲(邪骨暗龍王BGM.mp3 / 神聖光龍王BGM.mp3 / 星辰幻龍王BGM.mp3)
+    bushi_dark_dragon:      'bgm-wb-bushi-battle',
+    shensheng_light_dragon: 'bgm-wb-shensheng-battle',
+    xingchen_omni_dragon:   'bgm-wb-xingchen-battle',
   };
   window._wbGetCurrentBossBattleBgmId = function(){
     try{
       const _id = window._wbGetCurrentBossId();
-      return window._WB_BATTLE_BGM_MAP[_id] || 'bgm-wb-vesuvius-battle';
+      const _bid = window._WB_BATTLE_BGM_MAP[_id] || 'bgm-wb-vesuvius-battle';
+      // ★ v5.381.0 — 專屬曲檔案讀不到(還沒上傳/404)時退回火山炎龍王曲,不讓龍王戰變成沒有音樂
+      try{
+        const _el = document.getElementById(_bid);
+        if(!_el || _el._wbMissing || (_el.error && _el.error.code)) return 'bgm-wb-vesuvius-battle';
+        if(!_el._wbErrHooked){
+          _el._wbErrHooked = true;
+          _el.addEventListener('error', function(){
+            _el._wbMissing = true;
+            try{ if(typeof _curBgm !== 'undefined' && _curBgm === _bid && typeof bgmFadeTo === 'function') bgmFadeTo('bgm-wb-vesuvius-battle', 400); }catch(_e2){}
+          });
+        }
+      }catch(_e1){}
+      return _bid;
     }catch(_){ return 'bgm-wb-vesuvius-battle'; }
   };
   // ★ v3.14.24(2026-06-13)— 當前龍王「排名專屬至寶」對照(對應 index.html TAIWAN_TREASURES 內定義)
@@ -1485,7 +1503,9 @@
       // ★ v3.1.2 — 切換到世界 BOSS 主頁面 BGM
       try{
         // 記下原 BGM 以便離開時還原
-        if(typeof _curBgm !== 'undefined' && _curBgm && _curBgm !== 'bgm-wb-menu' && _curBgm !== 'bgm-wb-vesuvius-battle'){
+        // ★ v5.381.0 — 原本只排除火山炎戰鬥曲;從草/地/海/雷龍王戰回到大廳時會把「龍王戰鬥曲」記成原 BGM,
+        //   關掉大廳後首頁/冒險頁還在播龍王戰鬥曲。改成排除所有 bgm-wb- 開頭的龍王戰曲目。
+        if(typeof _curBgm !== 'undefined' && _curBgm && String(_curBgm).indexOf('bgm-wb-') !== 0){
           window._wbPrevBgm = _curBgm;
         }
         if(typeof bgmFadeTo === 'function'){

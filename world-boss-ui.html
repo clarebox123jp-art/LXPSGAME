@@ -36,6 +36,12 @@
     padding:40px 20px; overflow-y:auto;
     font-family:'M PLUS Rounded 1c','Nunito',sans-serif;
   }
+  /* ★ v5.381.0(2026-11-11・老師截圖「高度問題」)— 大廳開啟時 #wb-entry-overlay 是 display:flex(預設 align-items:stretch),
+       .wb-card 被拉成「畫面高 − 上下內距」的固定高度(PC 剛好 1000px);GM 控制台＋BOSS 卡＋搶先看比這高時,
+       內容從紫框底部溢出、框外只剩半透明遮罩,看得到後面的冒險頁。改成依內容長高,外層照舊捲動。 */
+  #wb-entry-overlay > .wb-card, #wb-lobby-overlay > .wb-card, #wb-result-overlay > .wb-card{
+    align-self:flex-start; flex-shrink:0; height:auto;
+  }
   .wb-card{
     max-width:900px; margin:0 auto;
     background:linear-gradient(160deg,#1a1530 0%,#0d0a1f 100%);
@@ -104,7 +110,7 @@
     top:0;right:0;bottom:0;width:55%;
     background-image:var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png'));
     background-size:cover;
-    background-position:center;
+    background-position:var(--wb-boss-bgpos, center);   /* ★ v5.381.0 — 由 _wbFitPreviewBg 依各龍王頭頂位置設定(原固定 center ⇒ 龍頭被切掉) */
     background-repeat:no-repeat;
     opacity:0.55;
     -webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,0.4) 25%,#000 60%);
@@ -1515,6 +1521,108 @@ try{
   setTimeout(window._wbApplyNextBossPreview, 1850);   // 雲端快取/輪替狀態晚到時再套一次
 }catch(_){}
 
+// ────────────────────────────────────────────────────────────────────
+// ★ v5.381.0(2026-11-11・老師附邪骨暗龍王大廳卡截圖「看這圖片高度問題」)
+//   根因:大廳「當前龍王」卡與「下一隻龍王搶先看」卡的背景大圖(.wb-boss-preview::before,鋪右側 55%)
+//         固定 background-position:center;卡片是橫長方形、龍王圖是直式 524×749,cover 後只看得到圖的中段,
+//         龍頭(多在圖高 5%~30%)整個被切掉,只剩身體和爪子。
+//   修法:依各龍王「頭頂」位置(圖高比例,與 game_adv.js v5.372.0 戰鬥背景 _WB_HEAD_TOP 同一組實測值)
+//         算出 cover 後的垂直位移,讓頭頂落在框內上方約 6%;寫進 CSS 變數 --wb-boss-bgpos。
+//         量的是 ::before 的實際寬高(手機直式 @media 版也對),圖原始尺寸用 Image 讀(讀不到就當 524×749)。
+//   觸發:套用當前龍王/下一隻龍王之後、展開「搶先看」、視窗縮放、大廳開啟時。
+// ────────────────────────────────────────────────────────────────────
+(function(){
+  var _HEAD_TOP = {
+    '火山炎龍王':0.30, '翠綠森龍王':0.09, '山岳地龍王':0.07, '風暴雷龍王':0.14,
+    '深淵海龍王':0.05, '邪骨暗龍王':0.07, '神聖光龍王':0.25, '星辰幻龍王':0.09
+  };
+  window._WB_PREVIEW_HEAD_TOP = _HEAD_TOP;
+  var _natCache = {};
+  function _urlOf(el){
+    try{
+      var v = getComputedStyle(el, '::before').backgroundImage || '';
+      var m = v.match(/url\(["']?(.*?)["']?\)/);
+      return m ? m[1] : '';
+    }catch(_){ return ''; }
+  }
+  function _fitOne(el, name){
+    try{
+      if(!el || !name) return;
+      if(el.offsetParent === null && getComputedStyle(el).position !== 'fixed') return;   // 收合中:展開時再算
+      var cs = getComputedStyle(el, '::before');
+      var bw = parseFloat(cs.width) || 0, bh = parseFloat(cs.height) || 0;
+      if(bw < 10 || bh < 10) return;
+      var url = _urlOf(el);
+      var nat = _natCache[url];
+      if(!nat){
+        nat = { w:524, h:749 };
+        if(url){
+          var im = new Image();
+          im.onload = function(){ _natCache[url] = { w:im.naturalWidth || 524, h:im.naturalHeight || 749 }; try{ _fitOne(el, name); }catch(_){} };
+          im.src = url;
+        }
+      }
+      var s = Math.max(bw / nat.w, bh / nat.h);
+      var imgH = nat.h * s;
+      var ht = (_HEAD_TOP[name] != null) ? _HEAD_TOP[name] : 0.10;
+      var y = bh * 0.06 - ht * imgH;          // 頭頂放在框內上方 6%
+      y = Math.min(0, Math.max(bh - imgH, y)); // 不露出圖外的空白
+      var pos = 'center ' + Math.round(y) + 'px';
+      if(el.style.getPropertyValue('--wb-boss-bgpos') !== pos) el.style.setProperty('--wb-boss-bgpos', pos);
+    }catch(_){}
+  }
+  window._wbFitPreviewBg = function(){
+    try{
+      var cur = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+      var nid = (typeof window._wbGetNextBossId === 'function') ? window._wbGetNextBossId() : null;
+      var lu = window.WORLD_BOSS_LINEUP || [];
+      var nb = nid ? lu.find(function(b){ return b && b.id === nid; }) : null;
+      document.querySelectorAll('.wb-boss-preview').forEach(function(el){
+        var isNext = (el.id === 'wb-next-boss-preview');
+        _fitOne(el, isNext ? (nb && nb.name) : (cur && cur.name));
+      });
+      // 編組確認頁全螢幕背景(::before inset:0,同一張當前龍王圖)
+      var tc = document.getElementById('wb-team-confirm-overlay');
+      if(tc && cur) _fitOne(tc, cur.name);
+      // 小縮圖(大廳 mini、編組確認右上「點看 BOSS」等 img.wb-curboss-img / wb-nextboss-img)交給 game_battle.js 臉部對齊
+      try{
+        if(typeof window._lxpsDragonFitNode === 'function'){
+          document.querySelectorAll('img.wb-curboss-img, img.wb-nextboss-img').forEach(function(im){ window._lxpsDragonFitNode(im); });
+        }
+      }catch(_){}
+    }catch(_){}
+  };
+  // 掛在既有的兩個套用函式之後(包一層,不改原函式)
+  ['_wbApplyCurrentBossSkin', '_wbApplyNextBossPreview'].forEach(function(fn){
+    try{
+      var orig = window[fn];
+      if(typeof orig !== 'function' || orig._wbFitWrapped) return;
+      var wrapped = function(){
+        var r = orig.apply(this, arguments);
+        setTimeout(window._wbFitPreviewBg, 0);
+        setTimeout(window._wbFitPreviewBg, 400);
+        return r;
+      };
+      wrapped._wbFitWrapped = true;
+      window[fn] = wrapped;
+    }catch(_){}
+  });
+  try{ window.addEventListener('resize', function(){ try{ window._wbFitPreviewBg(); }catch(_){} }); }catch(_){}
+  try{ window.addEventListener('orientationchange', function(){ setTimeout(window._wbFitPreviewBg, 300); }); }catch(_){}
+  // 大廳(#wb-entry-overlay)打開時 display 由 none 變成可見 ⇒ 這時才量得到尺寸
+  try{
+    ['wb-entry-overlay', 'wb-team-confirm-overlay'].forEach(function(id){
+      var _ov = document.getElementById(id);
+      if(_ov && window.MutationObserver){
+        new MutationObserver(function(){ setTimeout(window._wbFitPreviewBg, 50); })
+          .observe(_ov, { attributes:true, attributeFilter:['style','class'] });
+      }
+    });
+  }catch(_){}
+  setTimeout(window._wbFitPreviewBg, 200);
+  setTimeout(window._wbFitPreviewBg, 2000);
+})();
+
   const _MAX_ROWS = 20;
   const _esc = function(s){
     return String(s == null ? '' : s)
@@ -2241,7 +2349,7 @@ try{
     content:'';position:absolute;inset:0;z-index:-1;
     background:
       linear-gradient(180deg,rgba(8,10,24,0.78) 0%,rgba(8,10,24,0.55) 40%,rgba(8,10,24,0.92) 100%),
-      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) center/cover no-repeat,
+      var(--wb-boss-bg, url('https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/維蘇威火山龍王.png')) var(--wb-boss-bgpos, center)/cover no-repeat,   /* ★ v5.381.0 龍頭對齊(_wbFitPreviewBg) */
       #1a0a08;
     pointer-events:none;
   }

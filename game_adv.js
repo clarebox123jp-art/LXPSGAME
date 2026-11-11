@@ -53755,6 +53755,38 @@ function _codexScaleFontSizes(rootEl, factor){
   }catch(_eScale){ /* 放大失敗不影響功能 */ }
 }
 
+/* ★ v5.381.0(2026-11-11・老師「英雄圖鑑的 至寶、裝備、寵物 選擇清單視窗文字放大並且改成2行並列的格式」)
+   三個選單共用:視窗加寬到 min(1180px,96vw)、清單容器 ._lxps-pick2col 改兩欄格線(窄於 560px 退回一欄)、
+   清單內行內字級 × factor(手機橫放等寬度 < 1000px 的畫面只放大一半,免得兩欄擠不下)。
+   呼叫點:_showHeroTreasureSlotPicker(本檔)、window._openFollowPetPicker(本檔)、window._showGearSlotPicker(game_battle.js)。 */
+window._lxpsPicker2Col = function(modal, factor){
+  try{
+    if(!modal) return;
+    if(!document.getElementById('lxps-pick2col-css')){
+      var st = document.createElement('style');
+      st.id = 'lxps-pick2col-css';
+      st.textContent = '._lxps-pick2col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px;align-items:stretch;}'
+        + '._lxps-pick2col > *{margin:0 !important;box-sizing:border-box;min-width:0;width:auto !important;}'
+        + '._lxps-pick2col > :only-child{grid-column:1 / -1;}'
+        + '@media (max-width:560px){._lxps-pick2col{grid-template-columns:1fr;}}';
+      document.head.appendChild(st);
+    }
+    var box = modal.firstElementChild;
+    if(box){ box.style.maxWidth = 'min(1180px, 96vw)'; box.style.width = '100%'; }
+    var f = factor || 1;
+    try{ if((window.innerWidth || 1200) < 1000) f = 1 + (f - 1) * 0.5; }catch(_){}
+    if(f === 1) return;
+    var lists = modal.querySelectorAll('._lxps-pick2col');
+    for(var li = 0; li < lists.length; li++){
+      var nodes = [lists[li]].concat(Array.prototype.slice.call(lists[li].querySelectorAll('[style*="font-size"]')));
+      for(var i = 0; i < nodes.length; i++){
+        var m = /^([\d.]+)px$/.exec((nodes[i].style && nodes[i].style.fontSize) || '');
+        if(m) nodes[i].style.fontSize = Math.round(parseFloat(m[1]) * f) + 'px';
+      }
+    }
+  }catch(_e2c){}
+};
+
 function _showHeroTreasureSlotPicker(heroName, slotIdx){
   try{ if(typeof playSfx === 'function') playSfx('sfx-sel', 0.5); }catch(_){}
   // ★ v3.3.4 — 進入裝備 modal 前主動修補一次資料(把舊版髒資料的 equippedSlot 補齊)
@@ -53872,7 +53904,7 @@ function _showHeroTreasureSlotPicker(heroName, slotIdx){
 
     return `<div ${_click} style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:rgba(0,0,0,0.45);border:2px solid ${_rc};border-radius:10px;margin-bottom:8px;cursor:${_cursor};opacity:${_opacity};transition:0.15s;box-shadow:0 0 12px ${_rc}33;"
         ${!_disabled ? `onmouseover="this.style.background='rgba(40,30,10,0.65)'" onmouseout="this.style.background='rgba(0,0,0,0.45)'"` : ''}>
-      <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:28px;margin-top:2px;">${(typeof _renderTaiwanTreasureIconHtml === 'function') ? _renderTaiwanTreasureIconHtml(def, 48, _rc) : (def.icon || '💎')}</div>
+      <div style="width:80px;height:80px;border-radius:10px;overflow:hidden;flex-shrink:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:40px;margin-top:2px;">${(typeof _renderTaiwanTreasureIconHtml === 'function') ? _renderTaiwanTreasureIconHtml(def, 80, _rc) : (def.icon || '💎')}</div>
       <div style="flex:1;min-width:0;line-height:1.3;overflow:hidden;">
         <div style="font-weight:900;color:${_rc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:19px;">${def.name}</div>
         <div style="font-size:14px;color:#cccccc;margin-top:2px;">${_rn}・Lv.${rec.lv || 1}</div>
@@ -53905,12 +53937,13 @@ function _showHeroTreasureSlotPicker(heroName, slotIdx){
     + `<div style="font-size:18px;color:#ffe8a0;text-align:center;margin-bottom:18px;">目標槽位：<b>${_slotLabel}</b></div>`
     + _unequipBtn
     + `<div style="font-size:16px;color:#aaa;margin-bottom:10px;letter-spacing:1px;">📋 你擁有的至寶（共 ${_all.length} 件）</div>`
-    + `<div>${_itemsHtml}</div>`
+    + `<div class="_lxps-pick2col">${_itemsHtml}</div>`
     + '<button onclick="document.getElementById(\'_hero-tr-picker-modal\').remove()" '
     + 'style="margin-top:12px;width:100%;padding:10px;font-size:18px;font-weight:700;background:rgba(80,80,100,0.4);border:1.5px solid #8888aa;color:#bbbbcc;border-radius:10px;cursor:pointer;font-family:inherit;letter-spacing:2px;">✕ 取消</button>'
     + '</div>';
   // ★ v3.16.70 — 至寶選擇 modal 字級同圖鑑放大(英文效果碼→中文已在 _TAIWAN_TREASURE_EFFECT_LABEL 補齊)
   try{ _codexScaleFontSizes(_modal, _CODEX_FONT_SCALE); }catch(_){}
+  try{ window._lxpsPicker2Col(_modal, 1.15); }catch(_){}   // ★ v5.381.0 兩欄＋清單字再放大(已 ×1.6,再 ×1.15)
   document.body.appendChild(_modal);
 }
 
@@ -71014,16 +71047,23 @@ window._openFollowPetPicker = function(heroName){
       }
     }catch(_){}
     return '<button onclick="playSfx(\'sfx-confirm\',0.6);window._petSetFollow(\''+pn.replace(/'/g,"\\'")+'\',\''+heroName.replace(/'/g,"\\'")+'\');document.getElementById(\'_pet-follow-modal\').remove();try{var _b=document.getElementById(\'hero-detail-content\');if(_b&&typeof _renderHeroDetail===\'function\')_renderHeroDetail(\''+heroName.replace(/'/g,"\\'")+'\',_b);}catch(_){}try{if(document.getElementById(\'pet-page-overlay\')&&document.getElementById(\'pet-page-overlay\').style.display!==\'none\'&&typeof _buildPetPage===\'function\')_buildPetPage();}catch(_){}" style="width:100%;margin:5px 0;padding:12px 14px;text-align:left;border-radius:12px;cursor:pointer;font-family:inherit;background:'+(isCur?'rgba(40,90,60,0.95)':'rgba(25,45,35,0.9)')+';border:2px solid '+(isCur?'rgba(120,255,180,0.9)':'rgba(80,220,140,0.45)')+';color:#ddffee;">'
-      + '<div style="font-size:20px;font-weight:900;">'+(eq&&eq.icon?eq.icon:'🐾')+' '+pn+' '+window._petRarityBadgeHtml(pn,13)+' <span style="color:#ffee88;">Lv.'+rec.lv+'</span> <span style="font-size:14px;color:#ff9ac0;font-weight:800;">💖'+_aff+(_affLbl?('('+_affLbl+')'):'')+'</span>'+(isCur?' <span style="color:#99ffcc;">✅ 跟隨中</span>':'')+'</div>'
+      // ★ v5.381.0(老師「清單中的是圖片還是icon?我希望是縮小圖片」)左側 76px 寵物縮圖(去背圖,讀不到退回原本的 emoji)
+      + '<div style="display:flex;gap:12px;align-items:flex-start;"><div style="width:76px;height:76px;border-radius:12px;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">'
+      +   ((typeof window._petNobgUrl === 'function')
+            ? '<img src="'+window._petNobgUrl(pn)+'" alt="" loading="lazy" draggable="false" style="width:72px;height:72px;object-fit:contain;" onerror="this.style.display=\'none\';if(this.nextElementSibling)this.nextElementSibling.style.display=\'block\';"><span style="display:none;font-size:44px;line-height:1;">'+(eq&&eq.icon?eq.icon:'🐾')+'</span>'
+            : '<span style="font-size:44px;line-height:1;">'+(eq&&eq.icon?eq.icon:'🐾')+'</span>')
+      + '</div><div style="flex:1;min-width:0;">'
+      + '<div style="font-size:20px;font-weight:900;">'+pn+' '+window._petRarityBadgeHtml(pn,13)+' <span style="color:#ffee88;">Lv.'+rec.lv+'</span> <span style="font-size:14px;color:#ff9ac0;font-weight:800;">💖'+_aff+(_affLbl?('('+_affLbl+')'):'')+'</span>'+(isCur?' <span style="color:#99ffcc;">✅ 跟隨中</span>':'')+'</div>'
       + '<div style="font-size:14px;color:#aaccbb;margin-top:3px;">素質 HP+'+b.hp+' 攻+'+b.atk+' 特+'+b.sp+' 速+'+b.spd+' ｜ 效果:'+((typeof _CARRY_PET_SHORT!=='undefined'&&_CARRY_PET_SHORT[pn])||(eq&&eq.d)||'—')+' <span style="color:#88aa99;">'+busy+'</span></div>'
-      + _pbHtml + '</button>';
+      + _pbHtml + '</div></div></button>';
   }).join('') : '<div style="font-size:17px;color:#99bbaa;padding:14px;text-align:center;">'+(_cute?'還沒有馴養的寵物。在戰鬥中攜帶寵物時按「🐾 馴養」試試!':'尚未馴養任何寵物。於戰鬥中攜帶未馴養寵物時,可使用「🐾 馴養」按鈕消耗飼料嘗試收服。')+'</div>';
   m.innerHTML = '<div style="background:linear-gradient(160deg,rgba(16,30,22,0.98),rgba(8,14,10,0.98));border:2px solid rgba(80,220,140,0.6);border-radius:18px;max-width:620px;width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px;">'
-    + '<div style="font-size:26px;font-weight:900;color:#aaffcc;letter-spacing:2px;margin-bottom:8px;">🐾 為 ['+heroName+'] 選擇跟隨寵物</div>'
-    + '<div style="font-size:15px;color:#cceedd;line-height:1.6;margin-bottom:10px;">'+(_cute?'選一隻寵物跟著這位英雄!出戰時牠會幫忙加素質、附上寵物效果。':'每位英雄限跟隨 1 隻;出戰時自動附加寵物素質與原寵物效果(與戰鬥中臨時攜帶同名寵物時效果不疊加)。')+'</div>'
-    + rows
+    + '<div style="font-size:30px;font-weight:900;color:#aaffcc;letter-spacing:2px;margin-bottom:8px;">🐾 為 ['+heroName+'] 選擇跟隨寵物</div>'
+    + '<div style="font-size:19px;color:#cceedd;line-height:1.6;margin-bottom:10px;">'+(_cute?'選一隻寵物跟著這位英雄!出戰時牠會幫忙加素質、附上寵物效果。':'每位英雄限跟隨 1 隻;出戰時自動附加寵物素質與原寵物效果(與戰鬥中臨時攜帶同名寵物時效果不疊加)。')+'</div>'
+    + '<div class="_lxps-pick2col">' + rows + '</div>'   // ★ v5.381.0 兩欄並列
     + (cur ? '<button onclick="playSfx(\'sfx-cancel\',0.5);window._petSetFollow(\''+cur.replace(/'/g,"\\'")+'\',null);document.getElementById(\'_pet-follow-modal\').remove();try{var _b=document.getElementById(\'hero-detail-content\');if(_b&&typeof _renderHeroDetail===\'function\')_renderHeroDetail(\''+heroName.replace(/'/g,"\\'")+'\',_b);}catch(_){}" style="width:100%;margin:8px 0 0;padding:10px;border-radius:10px;background:rgba(80,40,40,0.7);border:1.5px solid rgba(255,120,120,0.5);color:#ffbbaa;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;">🚫 取消跟隨(讓 ['+cur+'] 休息)</button>' : '')
     + '<div style="text-align:center;margin-top:14px;"><button onclick="playSfx(\'sfx-cancel\',0.4);document.getElementById(\'_pet-follow-modal\').remove()" style="padding:10px 32px;font-size:20px;font-weight:700;background:rgba(40,40,50,0.8);border:1.5px solid rgba(150,150,160,0.5);color:#ccc;border-radius:10px;cursor:pointer;font-family:inherit;">✕ 關閉</button></div></div>';
+  try{ window._lxpsPicker2Col(m, 1.5); }catch(_){}   // ★ v5.381.0 加寬＋清單字 ×1.5
   document.body.appendChild(m);
 };
 
