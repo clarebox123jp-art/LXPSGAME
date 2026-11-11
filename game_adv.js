@@ -54513,8 +54513,12 @@ function _renderHeroDetail(name, box) {
     </div>
     ${(window._isAuditPending && window._isAuditPending(name)) ? `<div style="margin-bottom:16px;padding:14px 18px;background:rgba(226,59,59,0.14);border:2px solid rgba(226,59,59,0.65);border-radius:12px;color:#ffd0d0;font-size:22px;line-height:1.6;font-weight:700;">🔺 <b style="color:#ff8a8a;">這隻英雄正在審查中</b><br><span style="font-size:19px;color:#ffc0c0;font-weight:500;">可以照常出戰、裝備至寶，但暫時無法升級、投資能力、提升技能或升級極限爆發。等老師審查完成後重新整理就會解鎖喔。</span></div>` : ''}
 
-    <!-- 名稱 + 角色簡介（並排）-->
-    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;">
+    <!-- ★ v5.380.0(老師 2026-11-11「右方介紹文字欄位寬度稍微減少，讓 HP/攻擊/特技/速度欄位往上移貼齊 Lv」)
+         改成左右兩欄：左欄＝名稱/Lv/EXP → 屬性格 → 天賦；右欄＝角色簡介(變窄) → 雷達圖/素質效果。
+         舊版是「名稱+簡介」一列、「屬性格+雷達」一列，簡介比左側高時屬性格被整列往下推、中間空一大塊。 -->
+    <div class="_hd-top2col" style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;">
+     <!-- 左欄：名稱/Lv/EXP + stats + 天賦 -->
+     <div class="_hd-colL" style="flex:1 1 420px;min-width:min(100%,380px);display:flex;flex-direction:column;gap:8px;">
       <div style="flex:0 0 auto;">
         <div data-noscale style="font-size:56px;font-weight:900;color:var(--gold2,#f0c060);margin-bottom:4px;">${(typeof window._heroDisplayName==='function'?window._heroDisplayName(name):name)}${!_heroIsUnlocked?'<span style="font-size:24px;color:#888;background:rgba(100,100,100,0.25);border:1.5px solid #666;border-radius:8px;padding:4px 12px;margin-left:14px;vertical-align:middle;">🔒 未收錄</span>':''}${(typeof JAPAN_EXCLUSIVE_HEROES !== 'undefined' && JAPAN_EXCLUSIVE_HEROES.has(name))?'<span style="font-size:22px;color:#ffcc44;background:rgba(255,180,50,0.2);border:1.5px solid rgba(255,200,60,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🗾 日本關卡機率獲得</span>':((typeof EVENT_ONLY_HEROES !== 'undefined' && EVENT_ONLY_HEROES.has(name))?((name==='小力'||name==='幼兒園小孩')?'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🏅 答題獎章獲得</span>':'<span style="font-size:22px;color:#ff99cc;background:rgba(255,100,180,0.2);border:1.5px solid rgba(255,120,180,0.6);border-radius:8px;padding:4px 12px;margin-left:10px;vertical-align:middle;letter-spacing:1px;font-weight:700;">🎪 活動獲得</span>'):'')}</div>
         ${(() => {
@@ -54564,36 +54568,7 @@ function _renderHeroDetail(name, box) {
           ${/* ★ v5.315.0 — 原本這裡的 6 顆經驗書按鈕(📗/📕/📚 使用＋全部使用)已整合成等級旁一顆「📚 使用經驗書」⇒ _lxpsExpBookModalOpen 視窗;不再佔圖鑑版面 */ ''}
         </div>` : '<div style="font-size:22px;color:#ffcc44;margin-bottom:4px;">✨ 已達最高等級</div>'}
       </div>
-      ${bio ? `<div style="flex:1;min-width:200px;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
-        <div style="font-size:20px;color:#c8d8f0;line-height:1.7;">
-          ${name}是${bio.role||''}，${bio.trait||''}的個性讓人印象深刻。平時最喜歡${bio.hobby||''}。
-        </div>
-        ${bio.quote?`<div style="font-size:19px;color:#ffcc44;margin-top:8px;padding:6px 12px;background:rgba(255,200,50,0.08);border-left:3px solid #ffcc44;border-radius:0 6px 6px 0;font-style:italic;">💬 ${bio.quote}</div>`:''}
-        ${bio.designer?(()=>{
-          // ★ v3.5.58 — 圖鑑設計師標示升級:從 _STUDENT_ROSTER 反查座號補上
-          //   名冊有資料 → 「5年3班24號蔣同學 設計」
-          //   名冊無資料 → fallback 為原樣「5年3班 蔣同學 設計」(現狀)
-          let _designerLabel = '';
-          try{
-            if(typeof window._getDesignerLabel === 'function'){
-              const _withSeat = window._getDesignerLabel(name);
-              if(_withSeat) _designerLabel = _withSeat;
-            }
-          }catch(_){}
-          if(!_designerLabel){
-            // fallback:用舊邏輯
-            _designerLabel = (bio.designer.class || '') + ' ' + (bio.designer.name || '');
-          }
-          const _yr = bio.designer.year || '';
-          return `<div style="font-size:17px;color:#aacbff;margin-top:8px;padding:5px 12px;background:rgba(80,140,220,0.12);border-left:3px solid #6699ee;border-radius:0 6px 6px 0;">✏️ 由 ${_designerLabel} 設計(${_yr} 年)</div>`;
-        })():''}
-      </div>` : ''}
-    </div>
-
-    <!-- 屬性格 + 雷達圖（左右並排），天賦在左欄下方 -->
-    <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;flex-wrap:wrap;">
-      <!-- 左欄：stats + 天賦 -->
-      <div style="flex:1 1 420px;min-width:min(100%,380px);display:flex;flex-direction:column;gap:8px;">
+      <!-- ★ v5.380.0 角色簡介已移到右欄(雷達圖上方);屬性格緊接在 Lv/EXP 下方 -->
         <div id="_hut-anchor-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         ${(()=>{
           // ★ v1.0.20260428.3730 — 計算至寶加成(基礎+投資點)
@@ -54916,8 +54891,33 @@ function _renderHeroDetail(name, box) {
         </div>`;
         })() : ''}
       </div>
-      <!-- 右欄：雷達圖 + 素質效果說明 -->
-      <div style="flex:1 1 320px;min-width:min(100%,300px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;gap:8px;">
+     <!-- 右欄：角色簡介(v5.380.0 由上方搬來、寬度收窄) + 雷達圖 + 素質效果說明 -->
+     <div class="_hd-colR" style="flex:0 1 460px;min-width:min(100%,300px);display:flex;flex-direction:column;gap:10px;">
+      ${bio ? `<div style="flex:0 0 auto;background:rgba(255,255,255,0.04);border-radius:12px;padding:12px 16px;border:1px solid rgba(255,255,255,0.1);">
+        <div style="font-size:20px;color:#c8d8f0;line-height:1.7;">
+          ${name}是${bio.role||''}，${bio.trait||''}的個性讓人印象深刻。平時最喜歡${bio.hobby||''}。
+        </div>
+        ${bio.quote?`<div style="font-size:19px;color:#ffcc44;margin-top:8px;padding:6px 12px;background:rgba(255,200,50,0.08);border-left:3px solid #ffcc44;border-radius:0 6px 6px 0;font-style:italic;">💬 ${bio.quote}</div>`:''}
+        ${bio.designer?(()=>{
+          // ★ v3.5.58 — 圖鑑設計師標示升級:從 _STUDENT_ROSTER 反查座號補上
+          //   名冊有資料 → 「5年3班24號蔣同學 設計」
+          //   名冊無資料 → fallback 為原樣「5年3班 蔣同學 設計」(現狀)
+          let _designerLabel = '';
+          try{
+            if(typeof window._getDesignerLabel === 'function'){
+              const _withSeat = window._getDesignerLabel(name);
+              if(_withSeat) _designerLabel = _withSeat;
+            }
+          }catch(_){}
+          if(!_designerLabel){
+            // fallback:用舊邏輯
+            _designerLabel = (bio.designer.class || '') + ' ' + (bio.designer.name || '');
+          }
+          const _yr = bio.designer.year || '';
+          return `<div style="font-size:17px;color:#aacbff;margin-top:8px;padding:5px 12px;background:rgba(80,140,220,0.12);border-left:3px solid #6699ee;border-radius:0 6px 6px 0;">✏️ 由 ${_designerLabel} 設計(${_yr} 年)</div>`;
+        })():''}
+      </div>` : ''}
+      <div style="flex:0 0 auto;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;gap:8px;">
         <button onclick="window._hutOpenManual&&window._hutOpenManual()" style="margin-bottom:2px;padding:9px 20px;font-size:clamp(15px,1.6vw,19px);font-weight:800;color:#fff;background:linear-gradient(135deg,#3a8fff,#6a5cff);border:none;border-radius:999px;box-shadow:0 3px 12px rgba(80,120,255,0.45);cursor:pointer;letter-spacing:1px;">📘 英雄強化教學</button>
         ${makeRadar(dims, 320)}
         ${(()=>{
@@ -55069,6 +55069,7 @@ function _renderHeroDetail(name, box) {
             </div>`;
         })()}
       </div>
+     </div>
     </div>
     ${(typeof window._cstCodexEntryHtml === 'function') ? window._cstCodexEntryHtml(name, _heroIsUnlocked) : ''}
     <!-- 技能區 -->
