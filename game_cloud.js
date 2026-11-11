@@ -21392,8 +21392,24 @@
                入口更新會先清程式快取＋卸 SW 再重整,舊 iPad 重新下載約 18MB 程式(25 台同時)＋解析＋Firebase 初始化,
                onAuth 常常超過 30 秒才跑到這裡 ⇒ 旗標過期 ⇒ 學生被當成殘留帳號登出、跳「請重新登入」。
                安全不變:旗標只在「本頁真的登入過」才設、用完即清、同 uid 閒置 30 分鐘的否決照常生效。 */
-            if(Date.now() - _irTs < 180000){ _intentionalReload = true; }
+            if(Date.now() - _irTs < 300000){ _intentionalReload = true; }   /* ★ v5.379.0 3 → 5 分鐘(強制更新時全班一起重抓程式,舊 iPad 更慢) */
             sessionStorage.removeItem('lxps_intentional_reload'); // 一次性,用完即清
+          }
+        }catch(_){}
+        /* ★ v5.379.0(老師「被迫自動更新/學生手動按更新時都要保持登入,每次登入都很卡」)— sessionStorage 那份被 iPad 清掉時,
+           改看 localStorage 副本 lxps_intentional_reload_ls({uid,t}):只有「本頁真的登入過」才會寫(index.html _lxpsMarkIntentionalReload),
+           這裡要求 uid 與還原的帳號相符、5 分鐘內;不論有沒有用到都立刻刪掉(一次性)。同帳號閒置 30 分鐘的否決照常在後面生效。 */
+        try{
+          const _irl = localStorage.getItem('lxps_intentional_reload_ls');
+          if(_irl){
+            localStorage.removeItem('lxps_intentional_reload_ls');
+            if(!_intentionalReload){
+              const _o = JSON.parse(_irl);
+              if(_o && user && _o.uid && String(_o.uid) === String(user.uid) && (Date.now() - (Number(_o.t) || 0)) < 300000){
+                _intentionalReload = true;
+                console.log('[禁止自動登入 v5.379.0] sessionStorage 放行旗標不見了,改用本機副本(同帳號、5 分鐘內)放行本次更新重整');
+              }
+            }
           }
         }catch(_){}
         // 後門:URL 加 ?autologin=1 可跳過(給老師除錯用)
@@ -21447,7 +21463,24 @@
             _appHandoff = window._lxpsConsumeAppHandoff(user && user.uid);
           }
         }catch(_eHo){}
-        const _isAutoRestore = !_activeThisPage && !_pendingRedirect && !_intentionalReload && !_appHandoff;   // ★ v5.175.0（舊:尾端沒有 && !_appHandoff）
+        /* ★★ v5.379.0(老師「學生會一直不知為何自動被登出」)— 第五道放行:同一個分頁(App 視窗)、同一個帳號的重新載入。
+           【根因】iPad 記憶體吃緊時會把在背景的遊戲網頁整個丟掉,學生切回來時系統自動重新載入(舊 iPad + 18MB 程式非常常見);
+             這次載入沒有按登入鈕、不是 redirect、沒有自家重整旗標、也不是跨程式交接 ⇒ 被當成「共用平板殘留帳號」強制登出。
+             小遊戲 v1.266.0 已用同一招修好(lxps_mg_sess_uid),大對抗一直沒跟上。
+           【為什麼安全】記號放 sessionStorage:同一個 App 視窗重新載入會保留,**App 被滑掉關閉、重新打開一定是空的**;
+             登入成功才寫、登出就刪、uid 必須相符。它涵蓋的情境 = 網頁沒被丟掉時本來就一直維持登入的情境,沒有放寬共用平板防線;
+             同帳號閒置 30 分鐘的否決(_idleExpiredRestore,v5.248.0)照常在後面生效 ⇒ 放著沒人碰的平板下一位同學仍然要重新登入。
+           ⚠ 這不是 v5.136.0 拆掉的 lxps_last_active_uid(localStorage、關 App 後仍在 = 真破口),兩者不可混為一談。 */
+        let _sameSessionReload = false;
+        try{
+          const _ssu = sessionStorage.getItem('lxps_sess_uid');
+          if(_ssu && user && user.uid && _ssu === String(user.uid)){
+            _sameSessionReload = true;
+            console.log('[禁止自動登入 v5.379.0] 同一個 App 視窗、同一個帳號重新載入(iPad 丟掉背景網頁後重載等)⇒ 放行');
+            window._lxpsActiveSignInThisPageload = true;
+          }
+        }catch(_){}
+        const _isAutoRestore = !_activeThisPage && !_pendingRedirect && !_intentionalReload && !_appHandoff && !_sameSessionReload;   // ★ v5.175.0（舊:尾端沒有 && !_appHandoff）｜★ v5.379.0 加 && !_sameSessionReload
         /* ★★ v5.366.0(2026-11-08・老師「莫名地一直自動登出,無法正常遊玩」)★★
            根因(實際發生):同一台電腦的同一個瀏覽器同時開著兩個遊戲分頁。A 分頁按登入成功後,Firebase 會把登入狀態同步給 B 分頁;
              B 分頁沒有按過登入 ⇒ 被當成「共用平板殘留帳號」⇒ B 執行 signOut ⇒ 登出是全瀏覽器共用的,A 分頁也跟著被登出 ⇒ 再登入又被踢,無限循環。
@@ -22044,6 +22077,7 @@
       // ★ v3.11.14(2026-05-28) — 標記「本 session 已真正登入過」,
       //   給強制登入閘門 openAdventureOverlay 判斷用(避免遊戲中 race 誤擋)。
       window._lxpsLoggedInThisSession = true;
+      try{ sessionStorage.setItem('lxps_sess_uid', String(user.uid)); }catch(_){}   // ★ v5.379.0 同分頁重載放行記號(見 onAuth _sameSessionReload)
       // ★ v5.141.0 — 帳號列先畫再說（不等下面 6～7 次 Firestore 讀寫）；雲端暱稱到貨後原段落會再覆蓋成最終值
       try{ window._lxpsPaintAccountBar(user); }catch(_){}
       // ════════════════════════════════════════════════════════════
@@ -23251,6 +23285,7 @@
       try { if(typeof window._lxpsRescueBadgeStop === 'function') window._lxpsRescueBadgeStop(); } catch(_){}
       // 清掉「上次活躍 uid」(避免下次匿名訪客誤觸發換帳號清理 — 不過反正都清過了不影響)
       try { localStorage.removeItem('lxps_last_active_uid'); } catch(_){}
+      try { sessionStorage.removeItem('lxps_sess_uid'); } catch(_){}   // ★ v5.379.0 登出就收回「同分頁重載放行」記號
       window._gUserId = null;
       const btnWrap = document.getElementById('google-login-btn-wrap');
       const userInfo = document.getElementById('google-user-info');
