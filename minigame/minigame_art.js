@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -2419,7 +2419,7 @@ function canvasOpen(opt){
   function down1(e){
     if(e.pointerType === 'touch' && S.penSeen) return;   /* 防手掌誤觸:用過筆之後,手指只負責手勢 */
     if(e.pointerType === 'mouse' && e.button === 2){ ctxMenu(e.clientX, e.clientY); return; }
-    if(S.space || e.button === 1){ S.pan = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y }; return; }
+    if(S.space || e.button === 1){ S.pan = { x: e.clientX, y: e.clientY, vx: S.view.x, vy: S.view.y }; stage.style.cursor = 'grabbing'; return; }   /* ★ v1.2.1 握拳游標 */
     if(S.float){ floatDown(e); return; }   /* ★ v1.2.0 剪下/變形中:只操作浮動圖片 */
     if(S.eyedrop || e.altKey || (e.pointerType === 'pen' && (e.buttons & 2))){ pick(e.clientX, e.clientY); return; }
     var tool = S.tool;
@@ -2452,7 +2452,7 @@ function canvasOpen(opt){
     var p = S.ptr[e.pointerId], g = S.gest;
     delete S.ptr[e.pointerId]; clearTimeout(S.lp);
     if(g){ if(!pts().filter(function(q){ return q.type === 'touch'; }).length){ S.gest = null; if(!g.moved && now() - g.t < 350){ if(g.n === 2) undo(); else if(g.n >= 3) redo(); } } return; }
-    if(S.pan){ S.pan = null; return; }
+    if(S.pan){ S.pan = null; stage.style.cursor = S.space ? 'grab' : 'crosshair'; return; }
     if(S.fdrag && S.fdrag.pid === e.pointerId){ floatUp(); return; }
     if(S.lasso && S.lasso.pid === e.pointerId){ if(e.type === 'pointerup') lassoEnd(); else { S.lasso = null; req(); } return; }
     if(S.bucketPend && S.bucketPend.id === e.pointerId){ var bp = S.bucketPend; S.bucketPend = null; if(e.type === 'pointerup' && bucketAt(bp.clientX, bp.clientY, S.color, S.tol)) tolShow(); return; }
@@ -2475,9 +2475,14 @@ function canvasOpen(opt){
   function onKey(e){
     if(S.closed || !$('art-cv')) return;
     var k2 = e.key, ctrl = e.ctrlKey || e.metaKey;
-    if(e.type === 'keyup'){ if(k2 === ' '){ S.space = false; stage.style.cursor = 'crosshair'; } return; }
+    /* ★ v1.2.1(2026-11-11 20:50・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)
+       注音輸入法開著時 e.key 是 Process(keyCode 229)⇒ 空白鍵、Ctrl+Z/Y 一律再認實體鍵位 e.code;
+       放開空白鍵也 preventDefault(不然剛點過的工具鈕/按鈕會被當成按一下);拖曳中游標變握拳。 */
+    if(e.code === 'Space') k2 = ' '; else if(ctrl && e.code === 'KeyZ') k2 = e.shiftKey ? 'Z' : 'z'; else if(ctrl && e.code === 'KeyY') k2 = 'y';
+    if(e.type === 'keyup'){ if(k2 === ' ' && S.space){ S.space = false; stage.style.cursor = S.pan ? 'grabbing' : 'crosshair'; e.preventDefault(); } return; }
+    if((k2 === 'Escape' || e.code === 'Escape') && S.lmenu && !$('art-modal')){ S.lmenu = 0; paintLayers(); e.preventDefault(); try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(_){} return; }   /* ★ v1.2.1(老師 21:12「圖層 ⋯ 選單按 Esc 要會關」)放在打字框檢查前:剛點過 ⋯ 裡的勾選框/滑桿時焦點在 input 上也要關;有說明視窗開著時先不動 */
     if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName) && e.target.type !== 'range') return;
-    if(k2 === ' '){ S.space = true; stage.style.cursor = 'grab'; e.preventDefault(); return; }
+    if(k2 === ' '){ if(ctrl || e.altKey) return; S.space = true; if(!S.pan) stage.style.cursor = 'grab'; e.preventDefault(); return; }
     if(ctrl && (k2 === 'z' || k2 === 'Z')){ e.preventDefault(); if(e.shiftKey) redo(); else undo(); return; }
     if(ctrl && (k2 === 'y' || k2 === 'Y')){ e.preventDefault(); redo(); return; }
     if(ctrl && k2 === '0'){ e.preventDefault(); fit(); return; }
@@ -2497,7 +2502,8 @@ function canvasOpen(opt){
     else return;
     e.preventDefault();
   }
-  document.addEventListener('keydown', onKey); document.addEventListener('keyup', onKey);
+  function onBlur(){ S.space = false; if(!S.pan) stage.style.cursor = 'crosshair'; }   /* ★ v1.2.1 切到別的視窗時放開空白鍵收不到 ⇒ 不要卡在手掌模式(下一筆畫不出來) */
+  document.addEventListener('keydown', onKey); document.addEventListener('keyup', onKey); window.addEventListener('blur', onBlur);
   /* ★ v1.0.3 畫布的遊玩說明:題目+評分標準(畫畫題)+畫布操作 */
   function cvHow(){
     var h = '<h3>🎨 ' + esc(opt.title || '創作畫布') + ' — 怎麼玩</h3>', R = opt.task && D.RUBRIC ? D.RUBRIC[opt.task] : null;
@@ -2513,7 +2519,7 @@ function canvasOpen(opt){
     h += '<div class="scard">' + (opt.task ? '✅ 畫好按右上角 <b>交件</b>,系統給評分卡;沒過關可以繼續修改。畫到一半離開,下次會問你要不要接著畫。' : '💾 按右上角 <b>儲存</b> 存到你的畫室。') + '</div>';
     modal(h, [{ t: '好', cls: 'go' }, { t: '⌨ 電腦快捷鍵', cls: 'ghost', cb: keysHelp }]);
   }
-  function keysHelp(){ modal('<h3>⌨ 快捷鍵</h3><div class="scard">B 筆刷・E 橡皮擦・I 吸管・G 油漆桶・L 剪刀・T 變形(Enter 完成、Esc 取消)・[ ] 粗細・1~9、0 透明度・X 換回上一個顏色</div><div class="scard">Ctrl+Z 復原・Ctrl+Shift+Z / Ctrl+Y 重做・Ctrl+0 置中</div><div class="scard">空白鍵+拖曳 平移・滾輪 縮放・Shift+拖曳 畫直線・Alt+點擊 吸色・右鍵 快捷選單</div><div class="scard">🖊 繪圖板:筆壓控制粗細、筆尾自動變橡皮擦、筆側鍵=吸管。平板:兩指捏縮放、兩指點一下復原、三指點一下重做、長按吸色</div>'); }
+  function keysHelp(){ modal('<h3>⌨ 快捷鍵</h3><div class="scard">B 筆刷・E 橡皮擦・I 吸管・G 油漆桶・L 剪刀・T 變形(Enter 完成、Esc 取消)・[ ] 粗細・1~9、0 透明度・X 換回上一個顏色</div><div class="scard">Ctrl+Z 復原・Ctrl+Shift+Z / Ctrl+Y 重做・Ctrl+0 置中</div><div class="scard">按住空白鍵(游標變 ✋)+拖曳 平移・滾輪 縮放・Shift+拖曳 畫直線・Alt+點擊 吸色・右鍵 快捷選單</div><div class="scard">🖊 繪圖板:筆壓控制粗細、筆尾自動變橡皮擦、筆側鍵=吸管。平板:兩指捏縮放、兩指點一下復原、三指點一下重做、長按吸色</div>'); }
 
   /* ── 工具列 / 調色盤 / 圖層 ── */
   function setTool(t){ if(S.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } if(BRUSH[t] && t !== 'eraser') S.lastBrush = t; S.tool = t; S.eyedrop = false; if(t !== 'bucket') tolClose(); paintTools(); req();
@@ -2664,7 +2670,7 @@ function canvasOpen(opt){
     cloudWorkPut(rec);   /* ★ v1.1.0 第 3 項 */
     try{ dailyHit('paint', paintInfo(analyzeImg())); }catch(e){}   /* ★ v1.1.0 第 19 項:畫室作品類的每日挑戰 */
   }
-  function close(silent){ if(S.closed) return; if(S.float) floatCommit(); tolClose(); try{ if(S.cdrag) S.cdrag.destroy(); if(S.wheel) S.wheel.destroy(); }catch(_){} clearTimeout(dT); sDraftNow(); document.removeEventListener('visibilitychange', onHide); S.closed = true; clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('resize', resize); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
+  function close(silent){ if(S.closed) return; if(S.float) floatCommit(); tolClose(); try{ if(S.cdrag) S.cdrag.destroy(); if(S.wheel) S.wheel.destroy(); }catch(_){} clearTimeout(dT); sDraftNow(); document.removeEventListener('visibilitychange', onHide); S.closed = true; clearInterval(tmr); clearTimeout(plT); clearTimeout(S.lp); document.removeEventListener('keydown', onKey); document.removeEventListener('keyup', onKey); window.removeEventListener('blur', onBlur); window.removeEventListener('resize', resize); if(wrap.parentNode) wrap.parentNode.removeChild(wrap); if(A.cv === cvObj) A.cv = null; if(A.on) music($('art-lv') ? 'lv' : 'hub'); if(!silent && opt.onClose) opt.onClose(); }
   var cvObj = { close: close, flatten: flatten };
   music(opt.endMs ? 'contest' : 'cv');   /* ★ v1.1.1 畫畫用安靜的曲子;比賽用緊湊的 */
   A.cv = cvObj; A.cvId = opt.task ? ('draft_' + dId) : (opt.workId || '');   /* ★ v1.1.8 正在畫的那件,雲端同步不去覆蓋 */

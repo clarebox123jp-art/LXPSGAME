@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
+var VER = 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
 var S = { on: false, uid: '', guest: true, cfg: null, vkey: '', xwords: [], names: null, style: 'c', ed: null, gmTab: 'flag' };
@@ -33,6 +33,15 @@ function isGm(){ var u = user(); return !!(u && u.email && D.GM_EMAILS.indexOf(S
 function T(o){ if(!o) return ''; if(typeof o === 'string') return o; return (S.style === 'p' && o.p) ? o.p : (o.c || o.p || ''); }
 function now(){ return Date.now(); }
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+/* ★ v1.1.1(2026-11-11・老師「設計師繪圖在 PC 版,手繪、點陣、像素畫出來的點(線)都比滑鼠游標低,要修精準」)
+   根因:PC 大螢幕會把 #dsg-root 整個 CSS zoom 放大(小遊戲 v1.430.0 #mg-pc-zoom-js,1920 寬 = 1.15 倍),
+   getBoundingClientRect / 滑鼠 clientX 是「螢幕上看到的」像素,E.k / E.ox / panX 卻是 zoom 之前的 CSS 像素 ⇒ 原本 (滑鼠 − 左上角) ÷ E.k 多乘了 zoom,
+   離畫布左上角越遠偏越多(往下、往右)。改成一律用「畫布在螢幕上實際的大小」換算(stPt),自動吃進 zoom / transform / 手指縮放,iPad 與手機(沒有 zoom)結果完全不變。
+   vzOf(el) = 這個元素 1 個 CSS 像素在螢幕上是幾個像素(zoom 倍率);#dsg-mid 的捏合中心與 PC 拖曳挪畫布也用它換回 CSS 像素。 */
+function vzOf(el){ var r, w; if(!el) return 1; try{ r = el.getBoundingClientRect(); w = el.offsetWidth; }catch(e){ return 1; } return (w > 0 && r.width > 0) ? r.width / w : 1; }
+function stPt(cx, cy){ var st = $('dsg-stage'), E = S.ed, rc, w, h; if(!st || !E) return { x: 0, y: 0 }; rc = st.getBoundingClientRect(); w = st.offsetWidth || E.d.W; h = st.offsetHeight || E.d.H;
+  if(!(rc.width > 0) || !(rc.height > 0)) return { x: (cx - rc.left) / E.k, y: (cy - rc.top) / E.k };
+  return { x: (cx - rc.left) * w / rc.width, y: (cy - rc.top) * h / rc.height }; }
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
 function fb(){ try{ return B.fbNow ? B.fbNow() : null; }catch(e){ return null; } }
@@ -228,6 +237,7 @@ var CSS = [
 '#dsg-grid{position:absolute;left:0;top:0;pointer-events:none;display:none}#dsg-stage.pixmode #dsg-grid{display:block}',
 '#dsg-guide{position:absolute;left:0;top:0;pointer-events:none}#dsg-stage.posing #dsg-guide{pointer-events:auto;z-index:6;touch-action:none;cursor:grab}#dsg-stage.posing #dsg-sel{display:none!important}.dsg-pzrow{display:flex;flex-wrap:wrap;gap:.6vmin;margin:.5vmin 0}.dsg-pzrow button{flex:1 1 auto}.dsg-pzv{font-size:1.7vmin;opacity:.8;margin-top:.4vmin}.dsg-ref{margin:.6vmin 0;background:rgba(255,255,255,.08);border-radius:1.2vmin;padding:.4vmin .8vmin}.dsg-ref summary{cursor:pointer;font-weight:900;font-size:2.1vmin;padding:.8vmin .2vmin}.dsg-it.on{outline:.5vmin solid #ffd23f}',   /* ★ v1.0.3 動作骨架/參考圖片(描圖用,不進作品) */
 '#dsg-stage.vecmode{cursor:crosshair}#dsg-stage .ly svg{overflow:visible}',
+'html.dsg-hand #dsg-mid,html.dsg-hand #dsg-mid *{cursor:grab!important}html.dsg-grabbing #dsg-mid,html.dsg-grabbing #dsg-mid *{cursor:grabbing!important}',   /* ★ v1.1.2 空白鍵 = 手掌游標 */
 '#dsg-stage.painting .ly{pointer-events:none}#dsg-grid{z-index:80}#dsg-sel{z-index:85}',
 /* ★ v1.1.0 圖層畫布(z-index = 圖層順序 1~)、一筆草稿層、效果層(剪刀/變形/倒數圈)、描圖參考在最下面 */
 '#dsg-stage canvas.dsg-pl,#dsg-scr,#dsg-fx{position:absolute;left:0;top:0;pointer-events:none}#dsg-scr{display:none}#dsg-fx{z-index:70}#dsg-guide{z-index:0}#dsg-stage.posing #dsg-guide{z-index:90}',
@@ -569,9 +579,9 @@ function editorOpen(r){
     colorOf: function(el){ if(!el.getAttribute || locked()) return null; if(el.id === 'dsg-cur') return S.ed.brush.c; return el.getAttribute('data-pc'); },
     over: function(cx, cy){ var E = S.ed, st = $('dsg-stage'), r; if(!E || E.float || !st) return false; r = $('dsg-mid').getBoundingClientRect(); if(cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) return false; r = st.getBoundingClientRect(); return cx >= r.left && cy >= r.top && cx < r.right && cy < r.bottom; },
     tol: function(){ return S.ed.tol; },
-    preview: function(cx, cy, hex, tol){ var r = $('dsg-stage').getBoundingClientRect(); colorSet(hex, false, false); bucketAt({ x: (cx - r.left) / S.ed.k, y: (cy - r.top) / S.ed.k }, hex, tol, false); return true; },
+    preview: function(cx, cy, hex, tol){ colorSet(hex, false, false); bucketAt(stPt(cx, cy), hex, tol, false); return true; },   /* ★ v1.1.1 PC zoom 也對準 */
     adjust: function(t){ S.ed.tol = t; bucketRe(t); },
-    drop: function(cx, cy, hex, tol, held){ var r = $('dsg-stage').getBoundingClientRect(); if(held){ S.ed.tol = tol; S.ed.lastFill = null; libPaintSoon(); return; } colorSet(hex, false, true); bucketAt({ x: (cx - r.left) / S.ed.k, y: (cy - r.top) / S.ed.k }, hex, tol, true); },
+    drop: function(cx, cy, hex, tol, held){ if(held){ S.ed.tol = tol; S.ed.lastFill = null; libPaintSoon(); return; } colorSet(hex, false, true); bucketAt(stPt(cx, cy), hex, tol, true); },
     cancel: function(){ if(S.ed && S.ed.lastFill){ undo(); S.ed.redo.pop(); } } }); }
   colorPanel(); lyPanel();
   tabsPaint(); libPaint(); layersPaint(); propPaint(); opsPaint(); stageBind(); pzBind(); zoomBind(); pmApply(); fitStage(); guideDraw();
@@ -623,7 +633,7 @@ function zoomBind(){
   if(!mid) return;
   function cnt(){ var n = 0, k; for(k in T0){ if(T0.hasOwnProperty(k)) n++; } return n; }
   function two(){ var a = [], k; for(k in T0){ if(T0.hasOwnProperty(k)) a.push(T0[k]); } return a.slice(0, 2); }
-  function rel(e){ var rc = mid.getBoundingClientRect(); return { x: e.clientX - rc.left, y: e.clientY - rc.top }; }
+  function rel(e){ var rc = mid.getBoundingClientRect(), z = vzOf(mid); return { x: (e.clientX - rc.left) / z, y: (e.clientY - rc.top) / z }; }   /* ★ v1.1.1 換回 #dsg-mid 的 CSS 像素(PC zoom) */
   function startPinch(){ var a = two(), dx = a[1].x - a[0].x, dy = a[1].y - a[0].y;
     try{ if(E.gCancel) E.gCancel(); }catch(x1){} try{ if(E.pzCancel) E.pzCancel(); }catch(x2){}
     pin = { d0: Math.max(20, Math.sqrt(dx * dx + dy * dy)), z0: E.z || 1, mx: (a[0].x + a[1].x) / 2, my: (a[0].y + a[1].y) / 2, k0: E.k, ox: E.ox, oy: E.oy }; hold = true; }
@@ -635,7 +645,7 @@ function zoomBind(){
   function block(e){ e.stopPropagation(); if(e.cancelable) e.preventDefault(); }
   mid.addEventListener('pointerdown', function(e){
     if(pan || (e.pointerType !== 'touch' && (e.button === 1 || S.spaceDown))){   /* PC:中鍵或按住空白鍵拖曳 = 挪畫布 */
-      if(!pan){ pan = { id: e.pointerId, x: e.clientX, y: e.clientY, px: E.panX || 0, py: E.panY || 0 }; try{ mid.setPointerCapture(e.pointerId); }catch(x){} }
+      if(!pan){ pan = { id: e.pointerId, x: e.clientX, y: e.clientY, px: E.panX || 0, py: E.panY || 0 }; try{ mid.setPointerCapture(e.pointerId); }catch(x){} S.panning = true; handSet(); }   /* ★ v1.1.2 握拳游標 */
       block(e); return; }
     if(e.pointerType !== 'touch') return;
     T0[e.pointerId] = rel(e);
@@ -643,13 +653,13 @@ function zoomBind(){
     if(hold) block(e);   /* 捏合後還有手指沒離開:不開始畫 */
   }, true);
   mid.addEventListener('pointermove', function(e){
-    if(pan && e.pointerId === pan.id){ E.panX = pan.px + e.clientX - pan.x; E.panY = pan.py + e.clientY - pan.y; fitStage(); block(e); return; }
+    if(pan && e.pointerId === pan.id){ var pz = vzOf(mid); E.panX = pan.px + (e.clientX - pan.x) / pz; E.panY = pan.py + (e.clientY - pan.y) / pz; fitStage(); block(e); return; }   /* ★ v1.1.1 挪畫布跟著滑鼠一樣多 */
     if(e.pointerType !== 'touch' || !T0[e.pointerId]) return;
     T0[e.pointerId] = rel(e);
     if(pin){ block(e); movePinch(); }
   }, true);
   function up(e){
-    if(pan && e.pointerId === pan.id){ pan = null; block(e); return; }
+    if(pan && e.pointerId === pan.id){ pan = null; S.panning = false; handSet(); block(e); return; }
     if(e.pointerType !== 'touch') return;
     var had = !!T0[e.pointerId]; delete T0[e.pointerId];
     if(pin && cnt() < 2){ pin = null; }
@@ -660,8 +670,28 @@ function zoomBind(){
   mid.addEventListener('gesturestart', function(e){ if(e.cancelable) e.preventDefault(); });   /* iOS Safari:不讓整頁跟著縮放 */
   mid.addEventListener('gesturechange', function(e){ if(e.cancelable) e.preventDefault(); });
   if(!S.spaceBound){ S.spaceBound = 1;
-    document.addEventListener('keydown', function(e){ if(e.keyCode === 32 && S.ed && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '')){ S.spaceDown = true; if(e.cancelable) e.preventDefault(); } });
-    document.addEventListener('keyup', function(e){ if(e.keyCode === 32) S.spaceDown = false; }); }
+    document.addEventListener('keydown', dsgKey); document.addEventListener('keyup', dsgKey);
+    window.addEventListener('blur', function(){ S.spaceDown = false; handSet(); }); }
+}
+/* ★ v1.1.2(2026-11-11 20:50・老師「新增 PC 版快捷鍵 CTRL+Z 復原;空白鍵可把游標切換成手掌圖案用來拖曳移動畫布的顯示位置」)
+   · Ctrl+Z(Mac ⌘Z)= 復原、Ctrl+Shift+Z / Ctrl+Y = 重做;🦴 動作骨架分頁擺姿勢時改成骨架自己的復原/重做(同 ③ 的 ↶ ↷)。打字框、視窗開著時不攔。
+   · 按住空白鍵:畫布區游標變 ✋ 手掌(grab),按下拖曳變握拳(grabbing)= 挪畫布,放開空白鍵恢復原本的筆/十字游標。
+   · 一律認實體鍵位 e.code(Space/KeyZ/KeyY):注音輸入法開著時 e.key 會變成 Process、keyCode 229(荒島 v1.422.0 踩過)。
+   · keyup 也 preventDefault:不然最後點過的按鈕(例如「確認繳交」)放開空白鍵時會被瀏覽器當成按一下。 */
+function handSet(){ var h = document.documentElement; if(!h || !h.classList) return; h.classList.toggle('dsg-hand', !!(S.spaceDown && S.ed)); h.classList.toggle('dsg-grabbing', !!(S.ed && S.panning)); }
+function dsgKey(e){
+  var tg = (e.target && e.target.tagName) || '', typing = (/^(INPUT|TEXTAREA|SELECT)$/.test(tg) && e.target.type !== 'range') || !!(e.target && e.target.isContentEditable),
+    sp = e.code === 'Space' || e.keyCode === 32 || e.key === ' ', ctrl, kz, ky, re;
+  if(e.type === 'keyup'){ if(sp && S.spaceDown){ S.spaceDown = false; handSet(); if(e.cancelable) e.preventDefault(); } return; }
+  if((e.key === 'Escape' || e.code === 'Escape') && S.ed && S.ed.lmenu && !$('dsg-modal')){ S.ed.lmenu = ''; lyPanel(); if(e.cancelable) e.preventDefault(); try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(x){} return; }   /* ★ v1.1.2(老師 21:12「圖層 ⋯ 選單按 Esc 要會關」)焦點在 ⋯ 裡的勾選框/滑桿也要關 */
+  if(!S.ed || !$('dsg-ed') || typing || $('dsg-modal')) return;
+  if(sp && !e.ctrlKey && !e.metaKey && !e.altKey){ if(!S.spaceDown){ S.spaceDown = true; handSet(); } if(e.cancelable) e.preventDefault(); return; }
+  ctrl = e.ctrlKey || e.metaKey; if(!ctrl || e.altKey) return;
+  kz = e.code === 'KeyZ' || e.key === 'z' || e.key === 'Z'; ky = e.code === 'KeyY' || e.key === 'y' || e.key === 'Y';
+  if(!kz && !ky) return;
+  e.preventDefault(); if(e.repeat && S.keyAt && now() - S.keyAt < 120) return; S.keyAt = now();
+  re = ky || e.shiftKey;
+  if(pzEditing()) pzCmd(re ? 'redo' : 'undo'); else if(re) redo(); else undo();
 }
 /* 一次操作完成:記復原、計次數、存本機 */
 function snapNow(){ var E = S.ed, p = {}, k; for(k in E.pls){ if(E.pls.hasOwnProperty(k)) p[k] = E.pls[k]; } return { d: JSON.stringify(E.d), p: p }; }   /* ★ v1.1.0 各圖層 PNG 字串(同一份字串共用,不多佔記憶體) */
@@ -964,7 +994,7 @@ function pzMineMerge(list){ var a = pzMine(), i, j, hit; if(!list || !list.push)
 function pzBind(){
   var E = S.ed, cv = $('dsg-guide'), st = $('dsg-stage'), g0 = null;
   if(!cv) return;
-  function pt(e){ var rc = st.getBoundingClientRect(); return { x: (e.clientX - rc.left) / E.k, y: (e.clientY - rc.top) / E.k }; }
+  function pt(e){ return stPt(e.clientX, e.clientY); }   /* ★ v1.1.1 用畫布在螢幕上的實際大小換算(PC zoom 不再往下偏) */
   cv.onpointerdown = function(e){ var g = E.d.guide, p, k;
     if(!pzEditing() || g0) return; e.preventDefault(); e.stopPropagation(); p = pt(e); pzEnsure(g, E.d.W, E.d.H); k = pzHit(g, p.x, p.y);
     g0 = { pid: e.pointerId, k: k, x: p.x, y: p.y, yw: g.yw, pt: g.pt, moved: false, sn: JSON.stringify(g) };
@@ -1314,7 +1344,7 @@ function propPaint(){
 /* ── 畫面手勢:選取/拖曳/縮放旋轉/畫筆 ── */
 function stageBind(){
   var E = S.ed, st = $('dsg-stage'), cv = null, g = null, ctx = null, PK = window.MGPK;
-  function pt(e){ var rc = st.getBoundingClientRect(); return { x: (e.clientX - rc.left) / E.k, y: (e.clientY - rc.top) / E.k }; }
+  function pt(e){ return stPt(e.clientX, e.clientY); }   /* ★ v1.1.1 用畫布在螢幕上的實際大小換算(PC zoom 不再往下偏) */
   /* ★ v1.0.6 捏合縮放用:按下時先記「復原的下一步清單」與時間 */
   st.onpointerdown = function(e){
     if(locked() || g) return;
