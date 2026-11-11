@@ -72671,6 +72671,8 @@ function _detectCurrentBgm(){
   // 冒險選關頁（若英雄圖鑑或魔物圖鑑疊在上方，不重播 BGM，維持現狀）
   if(isVisible('adventure-overlay')){
     if(isVisible('hero-page-overlay') || isVisible('monster-page-overlay') || isVisible('medal-page-overlay') || isVisible('pet-page-overlay')) return _curBgm;
+    // ★ v5.386.0 — 右側開著主線章節列表時維持主線曲(關掉圖鑑/超商等回來不被洗回關卡頁曲)
+    if(window._msStagePanelOn && window._msCurBgm) return window._msCurBgm;
     return 'bgm-menu-01';
   }
   // 超商
@@ -87592,6 +87594,8 @@ function selectAdvStage(key, btnEl){
     }
     if(typeof window._stageGateAdminHint === 'function') window._stageGateAdminHint(key);
   }catch(_eSg){ console.warn('[關卡閘門]', _eSg); }
+  // ★ v5.386.0 — 右側若正顯示主線章節列表(mainstory.js _msRenderStagePanel)⇒ 先收掉、還原關卡介紹與 BGM
+  try{ if(typeof window._msStagePanelClose === 'function') window._msStagePanelClose(key); }catch(_eMsP){}
   // ★ v1.0.20260421.1900 — 記錄當前選擇的關卡，給「開始冒險」按鈕讀取
   window._advSelectedStage = key;
   // 更新左側按鈕選中狀態

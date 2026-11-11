@@ -1,5 +1,7 @@
 // ════════════════════════════════════════════════════════════════════════
 //  mainstory.js — 主線劇情引擎 + MAINSTORY_DB(自 index.html 拆出)
+//  ★ v5.386.0(2026-11-12)— 主線章節列表改顯示在關卡選擇頁右側(#adv-info-window,_msRenderStagePanel)、開面板切主線選單曲、
+//     每章列出劇情戰出戰英雄(縮圖/Lv/屬性/命星,點頭像開圖鑑強化);選別的關卡由 selectAdvStage 呼叫 window._msStagePanelClose 收掉。
 //  ★ v5.290.0(2026-10-22)— 主線第七章「墜落的星空」(老師:「生成大對抗的主線故事新章節,學習前面章節沒有提到的新系統和關卡」·範圍裁定甲):
 //     ①ch7 加入 order(進度分母 7→8;已領全通關獎勵/獎章者不重發)②五個新系統多頁教學卡 _msActTutPages(英魂陣型/裝備/好友支援/命座/世界BOSS·雙版·三平台)
 //     ③兩場劇情戰 battle_ch7_1(日本・古老神社)/battle_ch7_boss(埃及・寶庫王座 法老王‧星蝕附身·主線版寫定素質)·兩隊都是四魂各一 ⇒ 力行校訓陣
@@ -4605,6 +4607,17 @@
     }catch(_eSelG){ window._msSelWaiting = false; }
     // ★ v5.6.0 丙2 — 開章節選單時補一次覺醒對帳(此時 avatarCard 必已載入完成,是最可靠的修復點;冪等)
     try{ if(_msChapterDone("ch6") && !window._protagAwakened) _msEnsureChapterState("ch6"); }catch(_){}
+    /* ★ v5.386.0(老師「主線劇情這些關卡列表改成直接顯示在關卡選擇頁點擊『主線劇情』後的右側,BGM 也會切換。
+     *   同時在每一關列出上陣的英雄+縮圖,幫助玩家戰備與強化」)
+     *   關卡選擇頁看得到時 ⇒ 章節列表畫在右側介紹視窗 #adv-info-window 裡(_msRenderStagePanel);
+     *   看不到(關卡頁被別的畫面蓋住/不在冒險頁)才退回原本的全螢幕章節視窗(下面整段原樣保留)。 */
+    try{
+      if(_msStagePanelCanShow()){
+        try{ var _oldOv = document.getElementById("mainstory-select-overlay"); if(_oldOv) _oldOv.remove(); }catch(_){}
+        _msRenderStagePanel();
+        return;
+      }
+    }catch(_ePnl){ console.warn("[主線] 右側章節列表失敗,改用全螢幕視窗", _ePnl); }
     try{ var _old = document.getElementById("mainstory-select-overlay"); if(_old) _old.remove(); }catch(_){}
     try{ _msEnsureBackdrop(); }catch(_){}             // ★ v4.68.1 常駐黑底
     try{ _msStopAmb(); }catch(_){}                    // ★ v4.70.0 進/回選單→停環境音(只留選單 BGM)
@@ -4800,6 +4813,416 @@
       window._msOpenChapterSelect();                   // 回章節選單
     }, { review: !!review });
   }
+
+  // ════════ ★ v5.386.0 主線章節列表 → 關卡選擇頁右側(#adv-info-window)════════
+  //   老師 2026-11-12:「主線劇情這些關卡列表改成直接顯示在關卡選擇頁點擊『主線劇情』後的右側(如木柵防衛戰的介紹區),
+  //     BGM 也會切換。同時在每一關列出上陣的英雄+縮圖,幫助玩家戰備與強化。」
+  //   ① 左邊按「📖 主線劇情」⇒ 右側介紹視窗加 class ms-mode(原本的關卡介紹子元素全部 display:none),
+  //      塞進 #ms-stage-panel:標題＋進度條＋每章卡片(狀態/開始・繼續・重看鈕/場景縮圖)＋該章每場劇情戰的出戰英雄。
+  //   ② BGM:進面板 = _msEnterStoryBgm(null)(主線選單曲 bgm-adv-march);點別的關卡 ⇒ selectAdvStage 開頭呼叫
+  //      window._msStagePanelClose(key) 收掉面板並還原(日/埃/中三關交給 selectAdvStage 自己切該關首頁曲)。
+  //      game_battle.js _detectCurrentBgm 在面板開著時回傳 _msCurBgm(關掉圖鑑/超商等回來不會被洗回 bgm-menu-01)。
+  //   ③ 出戰英雄 = _MS_BATTLE_TEAMS 經 _msResolveTeamNames(主角未開放時的替補與實際開戰一致),
+  //      顯示縮圖(臉部對齊)、名字(主角=暱稱)、Lv、本場固定屬性、命星;點英雄 ⇒ 開英雄圖鑑該英雄詳情去強化,關掉圖鑑回來面板自動刷新等級。
+  //   ④ 未解鎖章:標題/導言/場景照舊遮住(v4.81.0 B6 防劇透),敵人名也遮成「？？？」;出戰英雄照常顯示(讓玩家先練)。
+  //   ⑤ 看不到關卡頁時(_msStagePanelCanShow 為 false)_msOpenChapterSelect 退回原本全螢幕章節視窗。
+  function _msStagePanelCanShow(){
+    try{
+      var ao = document.getElementById("adventure-overlay");
+      var iw = document.getElementById("adv-info-window");
+      if(!ao || !iw) return false;
+      var cs = window.getComputedStyle(ao);
+      if(!cs || cs.display === "none" || cs.visibility === "hidden") return false;
+      return iw.getClientRects().length > 0;
+    }catch(_){ return false; }
+  }
+  window._msStagePanelCanShow = _msStagePanelCanShow;
+
+  function _msPanelCssEnsure(){
+    if(document.getElementById("ms-stage-panel-css")) return;
+    var st = document.createElement("style");
+    st.id = "ms-stage-panel-css";
+    st.textContent =
+      "#adv-info-window.ms-mode > :not(#ms-stage-panel){display:none !important;}" +
+      "#adv-mainstory-btn.ms-on{outline:4px solid #ffd98a;outline-offset:2px;box-shadow:0 0 26px rgba(255,210,120,0.75) !important;}" +
+      "#ms-stage-panel{font-family:'M PLUS Rounded 1c','Nunito',sans-serif;color:#fff;display:flex;flex-direction:column;gap:16px;padding-bottom:20px;}" +
+      "#ms-stage-panel .msp-head{text-align:center;}" +
+      "#ms-stage-panel .msp-title{font-size:52px;font-weight:900;color:#ffd98a;letter-spacing:4px;text-shadow:0 0 24px rgba(255,190,90,0.5);}" +
+      "#ms-stage-panel .msp-sub{font-size:28px;color:#cfc0ff;margin-top:4px;letter-spacing:2px;font-weight:700;}" +
+      "#ms-stage-panel .msp-bar{margin:14px auto 0;max-width:620px;background:rgba(0,0,0,0.4);border:2px solid rgba(200,170,255,0.55);border-radius:18px;height:34px;position:relative;overflow:hidden;}" +
+      "#ms-stage-panel .msp-bar > i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#8a6cff,#ffcf6a);}" +
+      "#ms-stage-panel .msp-bar > b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;text-shadow:0 1px 3px #000;letter-spacing:2px;}" +
+      "#ms-stage-panel .msp-tip{font-size:24px;line-height:1.6;color:#ffe9b0;font-weight:700;background:rgba(255,200,90,0.10);border:2px solid rgba(255,205,110,0.4);border-radius:14px;padding:10px 18px;}" +
+      "#ms-stage-panel .msp-card{border-radius:20px;padding:18px 20px;background:linear-gradient(135deg,rgba(30,18,52,0.92),rgba(46,28,74,0.92));border:3px solid rgba(150,150,170,0.4);box-shadow:0 4px 22px rgba(0,0,0,0.35);}" +
+      "#ms-stage-panel .msp-top{display:flex;align-items:center;gap:18px;}" +
+      "#ms-stage-panel .msp-badge{flex:0 0 auto;width:68px;height:68px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:36px;background:rgba(0,0,0,0.3);border:2px solid rgba(150,150,170,0.4);}" +
+      "#ms-stage-panel .msp-mid{flex:1 1 auto;min-width:0;}" +
+      "#ms-stage-panel .msp-ct{font-size:34px;font-weight:900;letter-spacing:1px;line-height:1.3;}" +
+      "#ms-stage-panel .msp-tz{font-size:24px;margin-top:4px;line-height:1.45;}" +
+      "#ms-stage-panel .msp-st{font-size:22px;font-weight:800;margin-top:6px;letter-spacing:1px;}" +
+      "#ms-stage-panel .msp-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;}" +
+      "#ms-stage-panel .msp-go{padding:14px 24px;border-radius:16px;font-size:26px;font-weight:900;letter-spacing:1px;cursor:pointer;border:none;color:#fff;touch-action:manipulation;font-family:inherit;white-space:nowrap;}" +
+      "#ms-stage-panel .msp-thumb{position:relative;overflow:hidden;width:220px;height:124px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.45);}" +
+      "#ms-stage-panel .msp-bt{margin-top:14px;padding:12px 14px 14px;border-radius:16px;background:rgba(0,0,0,0.28);border:2px solid rgba(140,200,255,0.3);}" +
+      "#ms-stage-panel .msp-btl{font-size:24px;font-weight:900;color:#9fd6ff;letter-spacing:1px;margin-bottom:10px;}" +
+      "#ms-stage-panel .msp-none{margin-top:12px;font-size:22px;color:#b9b3cc;font-weight:700;}" +
+      "#ms-stage-panel .msp-heroes{display:flex;flex-wrap:wrap;gap:12px;}" +
+      "#ms-stage-panel .msp-h{width:168px;box-sizing:border-box;padding:10px 8px 10px;border-radius:16px;background:rgba(255,255,255,0.07);border:2.5px solid rgba(160,200,255,0.45);text-align:center;cursor:pointer;touch-action:manipulation;font-family:inherit;color:#fff;}" +
+      "#ms-stage-panel .msp-h:active{transform:scale(0.96);}" +
+      "#ms-stage-panel .msp-h img{width:140px;height:140px;object-fit:cover;border-radius:12px;background:rgba(0,0,0,0.3);display:block;margin:0 auto;}" +
+      "#ms-stage-panel .msp-h .msp-emo{font-size:84px;line-height:140px;height:140px;}" +
+      "#ms-stage-panel .msp-hn{margin-top:6px;font-size:24px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}" +
+      "#ms-stage-panel .msp-hl{font-size:22px;font-weight:800;color:#ffe08a;margin-top:2px;}" +
+      "#ms-stage-panel .msp-he{font-size:20px;font-weight:700;color:#aee0ff;margin-top:2px;}" +
+      "#ms-stage-panel .msp-hx{font-size:18px;font-weight:700;color:#c8b6ff;margin-top:2px;}" +
+      "#ms-stage-panel .msp-hno{font-size:18px;font-weight:700;color:#ff9aa8;margin-top:2px;}" +
+      "#ms-stage-panel .msp-clr{text-align:center;font-size:28px;font-weight:900;color:#ffe08a;letter-spacing:2px;text-shadow:0 0 18px rgba(255,200,100,0.5);}" +
+      /* 手機橫放(畫布 gc-short 縮小約 0.45)⇒ 再放大一級,實際螢幕上的字不會太小 */
+      "body.gc-short #ms-stage-panel .msp-title{font-size:60px;}" +
+      "body.gc-short #ms-stage-panel .msp-sub,body.gc-short #ms-stage-panel .msp-tip{font-size:30px;}" +
+      "body.gc-short #ms-stage-panel .msp-ct{font-size:40px;}" +
+      "body.gc-short #ms-stage-panel .msp-tz,body.gc-short #ms-stage-panel .msp-btl{font-size:30px;}" +
+      "body.gc-short #ms-stage-panel .msp-st,body.gc-short #ms-stage-panel .msp-none{font-size:28px;}" +
+      "body.gc-short #ms-stage-panel .msp-go{font-size:32px;padding:16px 26px;}" +
+      "body.gc-short #ms-stage-panel .msp-h{width:200px;}" +
+      "body.gc-short #ms-stage-panel .msp-h img{width:170px;height:170px;}" +
+      "body.gc-short #ms-stage-panel .msp-h .msp-emo{line-height:170px;height:170px;}" +
+      "body.gc-short #ms-stage-panel .msp-hn{font-size:30px;}" +
+      "body.gc-short #ms-stage-panel .msp-hl{font-size:28px;}" +
+      "body.gc-short #ms-stage-panel .msp-he,body.gc-short #ms-stage-panel .msp-hx,body.gc-short #ms-stage-panel .msp-hno{font-size:24px;}";
+    document.head.appendChild(st);
+  }
+
+  // 一章裡依序出現的劇情戰 key(只認 _MS_BATTLE_TEAMS 有的)
+  function _msChapterBattles(cid){
+    var out = [];
+    try{
+      var ch = MAINSTORY_DB.chapters[cid];
+      (ch && ch.scenes || []).forEach(function(sc){
+        if(sc && sc.act && _MS_BATTLE_TEAMS[sc.act] && out.indexOf(sc.act) < 0) out.push(sc.act);
+      });
+    }catch(_){}
+    return out;
+  }
+
+  function _msPanelHeroChip(nm, elemKey){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "msp-h";
+    b.title = _msT("點我去英雄圖鑑強化", "點我去強化");
+    var src = _msHeroImgSrc(nm);
+    if(src){
+      var im = document.createElement("img");
+      im.alt = "";
+      im.loading = "lazy";
+      try{ if(typeof getHeroObjPos === "function") im.style.objectPosition = getHeroObjPos(nm); }catch(_){}
+      im.onload = function(){ try{ if(typeof window._lxpsFaceFitImg === "function") window._lxpsFaceFitImg(im); }catch(_){} };
+      im.onerror = function(){ try{ var e = document.createElement("div"); e.className = "msp-emo"; e.textContent = "🦸"; im.replaceWith(e); }catch(_){} };
+      im.src = src;
+      b.appendChild(im);
+    } else {
+      var em = document.createElement("div");
+      em.className = "msp-emo";
+      try{ em.textContent = (typeof AVATARS !== "undefined" && AVATARS[nm]) || "🦸"; }catch(_){ em.textContent = "🦸"; }
+      b.appendChild(em);
+    }
+    var n = document.createElement("div");
+    n.className = "msp-hn";
+    n.textContent = _msDispHeroName(nm);
+    b.appendChild(n);
+    var lv = 1;
+    try{ if(typeof getHeroLevel === "function") lv = getHeroLevel(nm) || 1; }catch(_){}
+    var l = document.createElement("div");
+    l.className = "msp-hl";
+    l.textContent = "Lv." + lv;
+    b.appendChild(l);
+    try{
+      var ed = (typeof ELEMENT_DB !== "undefined") ? ELEMENT_DB[elemKey] : null;
+      if(ed){
+        var e2 = document.createElement("div");
+        e2.className = "msp-he";
+        e2.textContent = ed.icon + " " + ed.name + _msT("屬性", "屬性");
+        b.appendChild(e2);
+      }
+    }catch(_){}
+    var isP = false;
+    try{ isP = !!(typeof window._isProtagHero === "function" && window._isProtagHero(nm)); }catch(_){}
+    try{
+      var lit = (typeof window._cstLit === "function") ? (window._cstLit(nm) || []).length : 0;
+      if(lit > 0){
+        var x = document.createElement("div");
+        x.className = "msp-hx";
+        x.textContent = "✦ " + _msT("命星", "命星") + " " + lit + "/6";
+        b.appendChild(x);
+      }
+    }catch(_){}
+    try{
+      if(!isP && typeof advGetUnlockedHeroes === "function"){
+        var un = advGetUnlockedHeroes() || [];
+        if(un.indexOf(nm) < 0){
+          var no = document.createElement("div");
+          no.className = "msp-hno";
+          no.textContent = _msT("尚未收錄", "還沒有他");
+          b.appendChild(no);
+        }
+      }
+    }catch(_){}
+    b.onclick = function(ev){ if(ev) ev.stopPropagation(); _msPanelOpenHero(nm); };
+    return b;
+  }
+
+  // 點英雄 ⇒ 開英雄圖鑑該英雄詳情(與關卡頁下方「英雄」同一套畫面;關掉回到關卡頁,面板刷新等級)
+  function _msPanelOpenHero(nm){
+    if(typeof openHeroPage !== "function" || typeof openHeroDetail !== "function") return;
+    try{ if(typeof playSfx === "function") playSfx("sfx-sel", 0.55); }catch(_){}
+    try{ openHeroPage(); }catch(_e){ console.warn("[主線面板] 開圖鑑失敗", _e); return; }
+    var tries = 30;
+    (function _t(){
+      var g = document.getElementById("hero-page-grid");
+      if((g && g.querySelector(".hero-grid-card")) || tries-- <= 0){ try{ openHeroDetail(nm); }catch(_e2){} return; }
+      setTimeout(_t, 100);
+    })();
+    // 圖鑑兩層都關掉後刷新面板(等級、命星可能變了)
+    try{ if(window._msPanelWatch) clearInterval(window._msPanelWatch); }catch(_){}
+    var t0 = Date.now(), seen = false;
+    window._msPanelWatch = setInterval(function(){
+      try{
+        var vis = function(id){ var e = document.getElementById(id); if(!e) return false; var c = window.getComputedStyle(e); return c.display !== "none" && c.visibility !== "hidden"; };
+        var open = vis("hero-page-overlay") || vis("hero-detail-overlay");
+        if(open){ seen = true; }
+        if((seen && !open) || Date.now() - t0 > 30 * 60 * 1000){
+          clearInterval(window._msPanelWatch); window._msPanelWatch = null;
+          if(seen && !open && window._msStagePanelOn && _msStagePanelCanShow()) _msRenderStagePanel({ keepScroll: true });
+        }
+      }catch(_){}
+    }, 600);
+  }
+
+  // 面板捲動容器:iPad/手機是介紹視窗自己捲,PC 是外層 #adv-right-panel 捲
+  function _msPanelScroller(){
+    var iw = document.getElementById("adv-info-window"), rp = document.getElementById("adv-right-panel");
+    try{ if(iw && iw.scrollHeight > iw.clientHeight + 4 && /auto|scroll/.test(window.getComputedStyle(iw).overflowY)) return iw; }catch(_){}
+    return rp || iw;
+  }
+
+  function _msRenderStagePanel(opt){
+    opt = opt || {};
+    var iw = document.getElementById("adv-info-window");
+    if(!iw) return;
+    _msPanelCssEnsure();
+    var sc0 = null, scTop = 0;
+    if(opt.keepScroll){ try{ sc0 = _msPanelScroller(); scTop = sc0 ? sc0.scrollTop : 0; }catch(_){} }
+    // 劇情播完回來:收掉主線常駐黑底與環境音(面板在關卡頁上,黑底會蓋住它)
+    try{ _msRemoveBackdrop(); }catch(_){}
+    try{ _msStopAmb(); }catch(_){}
+    // 左邊按鈕選取狀態
+    try{
+      document.querySelectorAll("#adv-left-panel .adv-stage-btn").forEach(function(b){ b.classList.remove("selected"); });
+      var mb = document.getElementById("adv-mainstory-btn"); if(mb) mb.classList.add("ms-on");
+    }catch(_){}
+    // BGM:主線選單曲
+    if(!window._msStagePanelOn || window._msCurBgm !== _MS_MENU_BGM){ try{ _msEnterStoryBgm(null); }catch(_){} }
+    window._msStagePanelOn = true;
+
+    var order = MAINSTORY_DB.order;
+    var firstUndone = order.length;
+    for(var _i = 0; _i < order.length; _i++){ if(!_msChapterDone(order[_i])){ firstUndone = _i; break; } }
+    var doneCnt = 0; for(var _j = 0; _j < order.length; _j++){ if(_msChapterDone(order[_j])) doneCnt++; }
+
+    // 背景 = 目前章(全破完 = 最後一章)的第一張場景圖
+    try{
+      var bgCid = order[Math.min(firstUndone, order.length - 1)];
+      var bgImg = _msFirstSceneImg(bgCid);
+      iw.style.setProperty("--stage-bg", bgImg ? ("url(\"" + _msAsset(bgImg) + "\")") : "none");
+    }catch(_){}
+
+    var old = document.getElementById("ms-stage-panel"); if(old) old.remove();
+    var pn = document.createElement("div");
+    pn.id = "ms-stage-panel";
+
+    var pct = Math.round(doneCnt / order.length * 100);
+    var head = document.createElement("div");
+    head.className = "msp-head";
+    head.innerHTML =
+      "<div class=\"msp-title\">📖 " + _msT("主線劇情", "主線故事") + "</div>" +
+      "<div class=\"msp-sub\">" + _msT("穿越異世界・和夥伴一起冒險", "穿越異世界・和夥伴冒險") + "</div>" +
+      "<div class=\"msp-bar\"><i style=\"width:" + pct + "%\"></i><b>" + _msT("進度", "進度") + " " + doneCnt + " / " + order.length + "</b></div>";
+    pn.appendChild(head);
+
+    var tip = document.createElement("div");
+    tip.className = "msp-tip";
+    tip.textContent = "⚔️ " + _msT(
+      "每一章的劇情戰會由下面這些英雄出戰,等級、技能、至寶與裝備都會照你練的算。點英雄頭像可以直接到圖鑑幫他強化!",
+      "每章打架會用下面這些英雄,練越強越好打!點英雄頭像就能去幫他變強!");
+    pn.appendChild(tip);
+
+    var curCard = null;
+    order.forEach(function(cid, idx){
+      var ch = MAINSTORY_DB.chapters[cid];
+      var title = _msArtCute() ? (ch.titleC || ch.titleP) : (ch.titleP || ch.titleC);
+      var tz = _MS_CH_TEASER[cid] || { p:"", c:"" };
+      var teaser = _msArtCute() ? (tz.c || tz.p) : (tz.p || tz.c);
+      var status = _msChapterDone(cid) ? "done" : (idx === firstUndone ? "current" : "locked");
+      var _lk = (status === "locked");
+      var accent = status === "done" ? "rgba(120,220,150,0.75)" : (status === "current" ? "rgba(255,205,110,0.9)" : "rgba(150,150,170,0.45)");
+
+      var card = document.createElement("div");
+      card.className = "msp-card";
+      card.setAttribute("data-cid", cid);
+      card.style.borderColor = accent;
+      if(status === "current"){ card.style.boxShadow = "0 0 26px rgba(255,200,90,0.35),0 4px 22px rgba(0,0,0,0.35)"; curCard = card; }
+
+      var top = document.createElement("div");
+      top.className = "msp-top";
+      if(_lk) top.style.opacity = "0.62";
+      var badge = document.createElement("div");
+      badge.className = "msp-badge";
+      var badgeTxt = status === "done" ? "✅" : (status === "current" ? "▶" : "🔒");
+      badge.textContent = badgeTxt;
+      badge.style.borderColor = accent;
+      top.appendChild(badge);
+
+      var mid = document.createElement("div");
+      mid.className = "msp-mid";
+      var stLabel = status === "done" ? _msT("已完成", "完成了") : (status === "current" ? _msT("未完成", "還沒玩") : _msT("尚未解鎖", "還沒開"));
+      var stColor = status === "done" ? "#8ee6a8" : (status === "current" ? "#ffd98a" : "#a9a9be");
+      var _shownTitle = _lk ? ("第 " + idx + " 章・？？？") : title;
+      if(_lk && cid === "prologue") _shownTitle = "序章・？？？";
+      var _shownTeaser = _lk ? _msT("完成前一章就會揭曉這一章的故事。", "玩完上一章就知道這章在演什麼囉！") : teaser;
+      mid.innerHTML =
+        "<div class=\"msp-ct\" style=\"color:" + (_lk ? "#b9b3cc" : "#fff") + ";\">" + _shownTitle + "</div>" +
+        (_shownTeaser ? ("<div class=\"msp-tz\" style=\"color:" + (_lk ? "#9d97b4" : "#cdbcff") + ";\">" + _shownTeaser + "</div>") : "") +
+        "<div class=\"msp-st\" style=\"color:" + stColor + ";\">" + badgeTxt + " " + stLabel + "</div>";
+      top.appendChild(mid);
+
+      var right = document.createElement("div");
+      right.className = "msp-right";
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "msp-go";
+      if(status === "done"){
+        btn.textContent = "🔁 " + _msT("回顧劇情", "重看一次");
+        btn.style.background = "linear-gradient(135deg,#4f86ff,#6a5cff)";
+        btn.onclick = function(ev){ if(ev) ev.stopPropagation(); try{ if(typeof playSfx==="function") playSfx("sfx-sel",0.55); }catch(_){} _msPlayFromSelect(cid, true); };
+      } else if(status === "current"){
+        var resuming = (_msGetScenePos(cid) > 0);
+        btn.textContent = resuming ? ("▶ " + _msT("繼續冒險", "繼續玩")) : ("▶ " + _msT("開始冒險", "開始玩"));
+        btn.style.background = "linear-gradient(135deg,#ff9a3c,#ff6ab0)";
+        btn.onclick = function(ev){ if(ev) ev.stopPropagation(); try{ if(typeof playSfx==="function") playSfx("sfx-sel",0.6); }catch(_){} _msPlayFromSelect(cid, false); };
+      } else {
+        btn.textContent = "🔒 " + _msT("未解鎖", "還沒開");
+        btn.style.background = "rgba(90,90,110,0.6)";
+        btn.style.cursor = "not-allowed";
+        btn.onclick = function(ev){ if(ev) ev.stopPropagation(); try{ if(typeof _toast==="function") _toast(_msT("先完成前一章才會解鎖喔", "先玩完前一章才會開喔")); }catch(_){} };
+      }
+      right.appendChild(btn);
+      var _thumbImg = ""; try{ _thumbImg = _msFirstSceneImg(cid); }catch(_){ _thumbImg = ""; }
+      if(_thumbImg){
+        var thumb = document.createElement("div");
+        thumb.className = "msp-thumb";
+        thumb.style.background = "url(\"" + _msAsset(_thumbImg) + "\") center center/cover no-repeat,#0a0618";
+        thumb.style.border = "2px solid " + accent;
+        if(_lk){
+          thumb.style.filter = "blur(9px) brightness(0.42) saturate(0.5)";
+          var lockWrap = document.createElement("div");
+          lockWrap.style.cssText = "position:relative;width:220px;height:124px;";
+          lockWrap.appendChild(thumb);
+          var lk = document.createElement("div");
+          lk.textContent = "🔒";
+          lk.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;text-shadow:0 2px 10px #000;pointer-events:none;";
+          lockWrap.appendChild(lk);
+          right.appendChild(lockWrap);
+        } else {
+          right.appendChild(thumb);
+        }
+      }
+      top.appendChild(right);
+      card.appendChild(top);
+
+      // 該章劇情戰 × 出戰英雄
+      var bts = _msChapterBattles(cid);
+      if(!bts.length){
+        var none = document.createElement("div");
+        none.className = "msp-none";
+        none.textContent = "📖 " + _msT("這一章只有劇情,沒有戰鬥。", "這一章只看故事,不用打架。");
+        card.appendChild(none);
+      }
+      bts.forEach(function(key, bi){
+        var team = _MS_BATTLE_TEAMS[key];
+        var names = []; try{ names = _msResolveTeamNames(team); }catch(_){ names = team.heroes.slice(); }
+        var d = _MS_BATTLE_DEFS[key] || {};
+        var box = document.createElement("div");
+        box.className = "msp-bt";
+        var lbl = document.createElement("div");
+        lbl.className = "msp-btl";
+        var foe = _lk ? "？？？" : ((d.icon ? d.icon + " " : "") + (_msArtCute() ? (d.nc || d.np || "") : (d.np || d.nc || "")));
+        lbl.textContent = "⚔️ " + _msT("劇情戰", "打架") + (bts.length > 1 ? (" " + (bi + 1)) : "") + "：" + foe + "  ·  " + _msT("出戰英雄", "上場的英雄");
+        box.appendChild(lbl);
+        var row = document.createElement("div");
+        row.className = "msp-heroes";
+        for(var i = 0; i < names.length; i++){ row.appendChild(_msPanelHeroChip(names[i], team.elems[i])); }
+        box.appendChild(row);
+        card.appendChild(box);
+      });
+      pn.appendChild(card);
+    });
+
+    // 下一章待續卡(與全螢幕章節視窗同文案)
+    try{
+      var cs = document.createElement("div");
+      cs.className = "msp-card";
+      cs.style.cssText = "border-style:dashed;opacity:0.72;";
+      cs.innerHTML =
+        "<div class=\"msp-top\"><div class=\"msp-badge\" style=\"border-style:dashed;color:#b9b3cc;font-weight:900;\">…</div>" +
+        "<div class=\"msp-mid\"><div class=\"msp-ct\" style=\"color:#b9b3cc;\">" + _msT("第八章・待續…", "第八章・待續…") + "</div>" +
+        "<div class=\"msp-tz\" style=\"color:#9d97b4;\">" + _msT("異世界的故事還沒結束。新的篇章正在撰寫中，敬請期待！", "故事還沒完喔！新的一章正在寫，等一下下！") + "</div>" +
+        "<div class=\"msp-st\" style=\"color:#a9a9be;\">📝 " + _msT("製作中", "還在做") + "</div></div></div>";
+      pn.appendChild(cs);
+    }catch(_){}
+
+    if(doneCnt === order.length){
+      var clr = document.createElement("div");
+      clr.className = "msp-clr";
+      clr.textContent = "🏆 " + _msT("目前開放的章節全部通關！新的篇章正在撰寫中。", "目前的章節全部看完了！新的一章快來囉！");
+      pn.appendChild(clr);
+    }
+
+    iw.appendChild(pn);
+    iw.classList.add("ms-mode");
+    try{ if(typeof window._lxpsFaceFitIn === "function") window._lxpsFaceFitIn(pn); }catch(_){}
+
+    // 捲動:刷新時留在原位;第一次打開捲到「目前這一章」(第一章以前就停在最上面)
+    try{
+      var scr = _msPanelScroller();
+      if(scr){
+        if(opt.keepScroll){ scr.scrollTop = scTop; }
+        else if(curCard && firstUndone > 0){
+          /* 畫布 #gc 有 transform:scale ⇒ 螢幕距離 ÷ 縮放倍率 = 版面距離 */
+          var r1 = scr.getBoundingClientRect(), r2 = curCard.getBoundingClientRect();
+          var k = (scr.offsetHeight > 0) ? (r1.height / scr.offsetHeight) : 1;
+          if(!(k > 0)) k = 1;
+          scr.scrollTop = Math.max(0, scr.scrollTop + (r2.top - r1.top) / k - 140);
+        } else { scr.scrollTop = 0; }
+      }
+    }catch(_){}
+  }
+  window._msRenderStagePanel = _msRenderStagePanel;
+
+  // 收掉右側主線面板(selectAdvStage 選別的關卡時呼叫);key = 要切去的關卡
+  window._msStagePanelClose = function(key){
+    try{ if(window._msPanelWatch){ clearInterval(window._msPanelWatch); window._msPanelWatch = null; } }catch(_){}
+    var wasOn = !!window._msStagePanelOn;
+    window._msStagePanelOn = false;
+    try{ var p = document.getElementById("ms-stage-panel"); if(p) p.remove(); }catch(_){}
+    try{ var iw = document.getElementById("adv-info-window"); if(iw) iw.classList.remove("ms-mode"); }catch(_){}
+    try{ var mb = document.getElementById("adv-mainstory-btn"); if(mb) mb.classList.remove("ms-on"); }catch(_){}
+    if(!wasOn) return;
+    try{ window._msInStory = false; window._msCurBgm = null; }catch(_){}
+    // 日本/埃及/中國由 selectAdvStage 自己切該關首頁曲;其餘還原關卡頁曲
+    if(key !== "japan" && key !== "egypt" && key !== "china"){
+      try{ if(typeof bgmFadeTo === "function") bgmFadeTo("bgm-menu-01", 700); }catch(_){}
+    }
+  };
 
   // ════════ v5.28.0 丙案 — 新玩家強制主線(序章→第一章→第二章 連播 + 總鎖引導層)════════
   //   老師裁定(2026-08-12):新建立帳號的玩家進入遊戲必定先直接進主線序章至第二章,
