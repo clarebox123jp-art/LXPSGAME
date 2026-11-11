@@ -84233,7 +84233,10 @@ function makeRadar(dims, size) {
         var own = _owned(n);
         var sel = x.used ? (n === x.uh) : (n === x.h);
         h += '<button type="button" class="whero' + (sel ? ' sel' : '') + '" data-w="pick" data-v="' + _esc(n) + '"' + ((x.used || !_srvOk()) ? ' disabled' : '') + '>'
-          + (img ? '<img src="' + _esc(img) + '" alt="" loading="lazy">' : '<div style="height:96px;display:flex;align-items:center;justify-content:center;font-size:34px;">🌟</div>')
+          /* ★ v5.377.0(老師 2026-11-11「召喚星空指定 up 的縮圖沒有調整到,很多角色臉部都被裁切到」):
+             原本沒有 object-position(預設置中 50%)⇒ 直式立繪切到臉。改成先用英雄的縮圖位置(getHeroObjPos),
+             圖載入後再由 _lxpsFaceFitImg 依臉部對照表的頭頂位置對齊(表裡沒有的圖維持 getHeroObjPos)。 */
+          + (img ? '<img src="' + _esc(img) + '" alt="" loading="lazy" style="object-position:' + _esc((typeof getHeroObjPos === 'function') ? getHeroObjPos(n) : 'center 15%') + '" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">' : '<div style="height:96px;display:flex;align-items:center;justify-content:center;font-size:34px;">🌟</div>')
           + '<div class="wn">' + _esc(n) + '</div>'
           + '<div class="ws">' + (own ? '⭐ 命星 ' + _held(n) + '/6 → +1' : '🆕 尚未擁有') + '</div></button>';
       });
@@ -84241,6 +84244,7 @@ function makeRadar(dims, size) {
     }
     h += '</div>';
     ov.innerHTML = h;
+    try{ window._lxpsFaceFitIn && window._lxpsFaceFitIn(ov); }catch(_eWff){}   /* ★ v5.377.0 縮圖依頭頂對齊(視窗大小/轉向改變也會重算) */
   }
   W._wishOpen = function(){
     try{
