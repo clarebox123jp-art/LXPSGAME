@@ -5064,6 +5064,18 @@
       }
     }catch(_eRid){ console.warn('[WB-Result v3.12.15] roomId 判定例外,沿用旗標', _eRid); }
     const isHost = !!window._wbConnectedHostMode;
+    // ★ v5.383.0(老師「這三個人一場次同樣傷害,應該只佔一個排名」)— 這一場的識別碼:房號＋房主開戰時間
+    //   每位隊友結算都會算出同一個值 ⇒ 排行榜/雲端扣血交易內看到同一場就只算一次。
+    let _wbBattleKey = '';
+    try{
+      if(!isSolo && window._wbNet && typeof window._wbNet.getRoomId === 'function'){
+        const _ridK = window._wbNet.getRoomId();
+        const _snK = (typeof window._wbNet.getSnapshot === 'function') ? window._wbNet.getSnapshot() : null;
+        const _mK = (_snK && _snK.meta) || {};
+        const _tK = Number(_mK.battleStartedAt) || Number(_mK.createdAt) || 0;
+        if(typeof _ridK === 'string' && /^[A-Z0-9]{6}$/.test(_ridK)) _wbBattleKey = 'wb_' + _ridK + '_' + _tK;
+      }
+    }catch(_eBk){}
     try{ console.log('[WB-Result v3.12.15] 最終判定 isSolo=' + isSolo + ', isHost=' + isHost
       + ', _wbSoloPracticeMode=' + !!window._wbSoloPracticeMode
       + ', roomId=' + (window._wbNet && window._wbNet.getRoomId ? window._wbNet.getRoomId() : '(無 _wbNet)')); }catch(_){}
@@ -5274,7 +5286,7 @@
         //       所以扣血量就是「真實本場貢獻」,不會把同一段血扣兩次
         const _dealt = Math.max(0, Math.floor(_wbBoss.hp - _wbBoss.curHp));
         if(_dealt > 0){
-          window._wbHpSync.dealDamage(bossId, _dealt, _wbBoss.hp).then(res => {
+          window._wbHpSync.dealDamage(bossId, _dealt, _wbBoss.hp, _wbBattleKey).then(res => {   // ★ v5.383.0 帶 battleKey,同一場只扣一次
             if(res && res.killed){
               console.log('[WB-HpSync] BOSS', bossId, '被擊敗 → 嘗試觸發休戰');
               // 嘗試自動切休戰(需要管理員權限,失敗則只留 HP=0 等管理員手動切)
@@ -5333,6 +5345,11 @@
                 const _snap = (window._wbNet && window._wbNet.getSnapshot) ? window._wbNet.getSnapshot() : null;
                 const _players = (_snap && Array.isArray(_snap.players)) ? _snap.players : [];
                 // ★ v3.5.6 — 解析 element JSON 拿 g.lv 的 helper
+                // ★ v5.383.0 空格/代打槽一律用「房主」補(舊版用「自己」補 ⇒ 每位隊友算出不同 teamKey,同一場佔好幾名)
+                const _hostUidK = (_snap && _snap.meta && _snap.meta.hostUid) || '';
+                const _hostP = _players.find(function(p){ return p && p.uid && p.uid === _hostUidK; })
+                            || _players.find(function(p){ return p && p.uid; }) || null;
+                const _fillIsMe = !_hostP || _hostP.uid === myUid;
                 const _parseG = function(elementStr){
                   if(!elementStr || typeof elementStr !== 'string') return null;
                   if(!elementStr.startsWith('{')) return null;
@@ -5387,13 +5404,14 @@
                     });
                   }else{
                     // 空槽 / 房主代打 → 用房主身份補位(用戶要求:單人開 4 隻顯示 4 次相同暱稱)
-                    _teamUids.push(myUid);
-                    _teamNames.push(_myNick);
+                    // ★ v5.383.0 隊友端也用「房主」補,不再用自己
+                    _teamUids.push(_fillIsMe ? myUid : _hostP.uid);
+                    _teamNames.push(_fillIsMe ? _myNick : (_hostP.name || '房主'));
                     // ★ v3.5.70 — 房主代打槽位,email 用房主自己的
-                    _teamEmails.push(_myEmail);
+                    _teamEmails.push(_fillIsMe ? _myEmail : (((_hostP.email || '') + '').toLowerCase()));
                     _teamHeroes.push({
                       name: _heroName || '?',
-                      lv: _getHeroLv(_i, _heroName, true),  // 房主代打,當作自己的英雄
+                      lv: _getHeroLv(_i, _heroName, _fillIsMe),  // 房主代打,當作房主的英雄
                     });
                   }
                 }
@@ -5523,11 +5541,15 @@
                 // ★ v3.5.43 — 把 championStats + dmgSources 也傳進去
                 // ★ v3.5.70 — 把 _teamEmails 也傳進去(排行榜班級座號顯示用)
                 // ★ v3.12.17 — 把 isBonus 旗標傳進去(補償場次計入排行榜總傷,但戰績/排行榜都標記出來)
-                window._wbHpSync.updateLeaderboard(
-                  bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes,
-                  _championStats, _dmgSources, _teamEmails, _v3_12_17_isBonusBattle
-                )
+                // ★ v5.383.0 帶 battleKey(同一場只記一次);隊友端晚 6 秒再寫,讓房主(答題/爆發數最完整)先記,
+                //   房主斷線沒寫到時才由隊友補上(交易內看到同一場就跳過)。
+                const _lbWriteArgs = [bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes,
+                  _championStats, _dmgSources, _teamEmails, _v3_12_17_isBonusBattle, undefined, _wbBattleKey];
+                const _lbDelay = (!isHost && _wbBattleKey) ? 6000 : 0;
+                new Promise(function(r){ setTimeout(r, _lbDelay); })
+                  .then(function(){ return window._wbHpSync.updateLeaderboard.apply(window._wbHpSync, _lbWriteArgs); })
                   .then(res => {
+                    if(res && res.dup){ console.log('[WB-Leaderboard v5.383.0] 這一場隊友已記過,不重複寫入 (' + _wbBattleKey + ')'); }
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg
                       + ', champions=', _championStats);
                     // ★ v3.12.14(2026-05-31)— 結算上榜後立即標記房間 ended

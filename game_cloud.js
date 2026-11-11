@@ -3977,7 +3977,7 @@
         const _statsSnap = await getDoc(_statsRef);
         const _statsData = _statsSnap.exists() ? (_statsSnap.data() || {}) : {};
         const _lbMap = _statsData.worldBossLeaderboard || {};
-        const _list = Array.isArray(_lbMap[_BOSS_ID]) ? _lbMap[_BOSS_ID] : [];
+        const _list = (typeof window._wbLbDedupe === "function") ? window._wbLbDedupe(Array.isArray(_lbMap[_BOSS_ID]) ? _lbMap[_BOSS_ID] : []) : (Array.isArray(_lbMap[_BOSS_ID]) ? _lbMap[_BOSS_ID] : []);   // ★ v5.383.0
         const _dateStrOf = (window._wbDailyLimit && typeof window._wbDailyLimit._dateStrOf === 'function')
           ? window._wbDailyLimit._dateStrOf
           : function(ts){
@@ -25756,6 +25756,142 @@
       let _hpUnsub = null;
       const STATS_DOC = () => _lxpsStatsDoc('wb');   // ★ v5.338.0 龍王欄位搬到 stats/worldBoss(原 stats/global)
 
+      // ★ v5.383.0(老師 2026-11-11「這三個人一場次同樣傷害,應該只佔一個排名,現在卻占了三名」)
+      //   根因:多人房結算時「每位隊友的平板」都各寫一次排行榜(與扣雲端龍王血);空的第 4 格又用「自己的 uid」補,
+      //         ⇒ 3 人房算出 3 個不同 teamKey(A|A|B|C / A|B|B|C / A|B|C|C),同一場佔 3 名;4 人滿房則同一隊被加 4 次。
+      //   修法:①寫入端帶「這一場」的 battleKey(房號＋開戰時間),排行榜/扣血交易內看到同一場就不再寫;空格一律用房主補;
+      //         ②本函式把已經寫進去的重複場次合併(同一群真人 uid、同傷害、3 分鐘內 = 同一場),顯示、結算發獎、下次寫入都先過它。
+      function _wbLbDedupe(list){
+        try{
+          if(!Array.isArray(list) || !list.length) return Array.isArray(list) ? list : [];
+          const _uset = function(e){
+            return Array.from(new Set(String((e && e.teamKey) || '').split('|').filter(Boolean))).sort().join('|');
+          };
+          const _sameBattle = function(a, b){
+            if(a.bk && b.bk) return a.bk === b.bk;
+            return Math.floor(a.dmg || 0) === Math.floor(b.dmg || 0) && Math.abs((a.at || 0) - (b.at || 0)) <= 180000;
+          };
+          const _groups = {};
+          list.forEach(function(e, i){ if(e && e.teamKey){ const k = _uset(e); (_groups[k] = _groups[k] || []).push(i); } });
+          let _changed = false;
+          const _drop = {};          // 被併掉的 entry index
+          const _replace = {};       // index → 合併後的新 entry
+          Object.keys(_groups).forEach(function(gk){
+            const idxs = _groups[gk];
+            const recs = [];
+            idxs.forEach(function(i){
+              const bh = Array.isArray(list[i].battleHistory) ? list[i].battleHistory : [];
+              bh.forEach(function(r, ri){ if(r && !r._deletedAt && r.at) recs.push({ r: r, i: i, ri: ri }); });
+            });
+            if(recs.length < 2) return;
+            recs.sort(function(a, b){ return (a.r.at || 0) - (b.r.at || 0); });
+            // 分群:同一場的紀錄
+            const clusters = [];
+            recs.forEach(function(x){
+              for(let c = clusters.length - 1; c >= 0 && c >= clusters.length - 6; c--){
+                if(_sameBattle(clusters[c][0].r, x.r)){ clusters[c].push(x); return; }
+              }
+              clusters.push([x]);
+            });
+            const dups = clusters.filter(function(c){ return c.length > 1; });
+            if(!dups.length) return;
+            _changed = true;
+            // 每個 entry 要扣掉的重複紀錄
+            const rm = {};            // i → Set(ri)
+            const par = {}; idxs.forEach(function(i){ par[i] = i; });
+            const _find = function(i){ while(par[i] !== i){ par[i] = par[par[i]]; i = par[i]; } return i; };
+            dups.forEach(function(c){
+              // 保留資料最完整的那筆(答題數→聯手爆發數→較早寫入,通常是房主)
+              c.sort(function(a, b){ return ((b.r.qc || 0) - (a.r.qc || 0)) || ((b.r.tb || 0) - (a.r.tb || 0)) || ((a.r.at || 0) - (b.r.at || 0)); });
+              for(let k = 1; k < c.length; k++){
+                (rm[c[k].i] = rm[c[k].i] || new Set()).add(c[k].ri);
+                const ra = _find(c[0].i), rb = _find(c[k].i);
+                if(ra !== rb) par[rb] = ra;
+              }
+            });
+            // 先各自扣掉重複紀錄
+            const fixed = {};
+            idxs.forEach(function(i){
+              const e = Object.assign({}, list[i]);
+              const s = rm[i];
+              if(s && s.size){
+                const bh = Array.isArray(e.battleHistory) ? e.battleHistory : [];
+                let dDmg = 0, dN = 0, dAdm = 0, dTk = 0;
+                const keep = [];
+                bh.forEach(function(r, ri){
+                  if(s.has(ri)){
+                    dDmg += Math.floor(r.dmg || 0); dN++;
+                    const src = r._bonusSource || (r._isBonus ? 'admin' : null);
+                    if(src === 'admin') dAdm++; else if(src === 'ticket') dTk++;
+                  }else keep.push(r);
+                });
+                e.battleHistory = keep;
+                e.totalDmg = Math.max(0, (e.totalDmg || 0) - dDmg);
+                e.battles = Math.max(0, (e.battles || 0) - dN);
+                e.bonusBattleCount = Math.max(0, (e.bonusBattleCount || 0) - dAdm);
+                e.bonusTicketCount = Math.max(0, (e.bonusTicketCount || 0) - dTk);
+              }
+              fixed[i] = e;
+            });
+            // 同一場連在一起的 entry 併成一筆(保留紀錄較多/較早的那筆當主體)
+            const comp = {};
+            idxs.forEach(function(i){ const r = _find(i); (comp[r] = comp[r] || []).push(i); });
+            Object.keys(comp).forEach(function(r){
+              const mem = comp[r];
+              if(mem.length === 1){ _replace[mem[0]] = fixed[mem[0]]; return; }
+              mem.sort(function(a, b){ return ((fixed[b].battles || 0) - (fixed[a].battles || 0)) || (a - b); });
+              const p = Object.assign({}, fixed[mem[0]]);
+              let allBh = [];
+              const tb = Object.assign({}, p.tiebreaker || {});
+              mem.forEach(function(i){
+                const e = fixed[i];
+                allBh = allBh.concat(Array.isArray(e.battleHistory) ? e.battleHistory : []);
+                if(i === mem[0]) return;
+                p.totalDmg = (p.totalDmg || 0) + (e.totalDmg || 0);
+                p.battles = (p.battles || 0) + (e.battles || 0);
+                p.bonusBattleCount = (p.bonusBattleCount || 0) + (e.bonusBattleCount || 0);
+                p.bonusTicketCount = (p.bonusTicketCount || 0) + (e.bonusTicketCount || 0);
+                p.bestBattleDmg = Math.max(Number(p.bestBattleDmg) || 0, Number(e.bestBattleDmg) || 0);
+                p.lastBattleAt = Math.max(p.lastBattleAt || 0, e.lastBattleAt || 0);
+                p.lastUpdated = Math.max(p.lastUpdated || 0, e.lastUpdated || 0);
+                const t2 = e.tiebreaker || {};
+                tb.turns = Math.min(tb.turns || 999, t2.turns || 999);
+                tb.quizCorrect = Math.max(tb.quizCorrect || 0, t2.quizCorrect || 0);
+                tb.aliveCount = Math.max(tb.aliveCount || 0, t2.aliveCount || 0);
+                tb.teamBurstCount = Math.max(tb.teamBurstCount || 0, t2.teamBurstCount || 0);
+                _drop[i] = true;
+              });
+              p.tiebreaker = tb;
+              p.battleHistory = allBh.sort(function(a, b){ return (b.at || 0) - (a.at || 0); }).slice(0, 10);
+              _replace[mem[0]] = p;
+            });
+          });
+          if(!_changed) return list;
+          const out = [];
+          list.forEach(function(e, i){
+            if(_drop[i]) return;
+            out.push(_replace[i] || e);
+          });
+          out.sort(function(a, b){
+            const _da = (b.totalDmg || 0) - (a.totalDmg || 0);
+            if(_da !== 0) return _da;
+            const ta = a.tiebreaker || {}, tb2 = b.tiebreaker || {};
+            return ((ta.turns || 999) - (tb2.turns || 999)) || ((tb2.quizCorrect || 0) - (ta.quizCorrect || 0)) || ((tb2.aliveCount || 0) - (ta.aliveCount || 0));
+          });
+          return out;
+        }catch(_eDd){
+          try{ console.warn('[WB-Leaderboard v5.383.0] 去重例外,沿用原清單', _eDd); }catch(_){}
+          return list;
+        }
+      }
+      try{ window._wbLbDedupe = _wbLbDedupe; }catch(_){}
+      function _wbLbDedupeMap(m){
+        if(!m || typeof m !== 'object') return {};
+        const o = {};
+        Object.keys(m).forEach(function(k){ o[k] = Array.isArray(m[k]) ? _wbLbDedupe(m[k]) : m[k]; });
+        return o;
+      }
+
       // 即時訂閱:把雲端 worldBossHp 同步到 window._cachedGlobalStats
       function subscribeWbHp(){
         if(_hpUnsub) return;
@@ -25767,7 +25903,7 @@
               if(!window._cachedGlobalStats) window._cachedGlobalStats = {};
               window._cachedGlobalStats.worldBossHp = d.worldBossHp || {};
               // ★ FIX 20260519(v12) — 順手快取排行榜
-              window._cachedGlobalStats.worldBossLeaderboard = d.worldBossLeaderboard || {};
+              window._cachedGlobalStats.worldBossLeaderboard = _wbLbDedupeMap(d.worldBossLeaderboard || {});   // ★ v5.383.0 同一場重複寫入合併
               // 連同 wbBlessing 等其他欄位也順手快取(world-boss.js 第 201/933 行有讀)
               if(d.wbBlessing) window._cachedGlobalStats.wbBlessing = d.wbBlessing;
               // ★ v3.14.14 — 祝福快取一更新就刷新入口標籤(不等 30 秒輪詢)
@@ -25826,7 +25962,7 @@
       // 扣血:把當前 HP 減 deltaDmg(無論之前是多少,以 max 為上限、0 為下限)
       // bossId: 字串,deltaDmg: 正數
       // maxHp: 用於初始化(若雲端尚無此 boss 紀錄,先以 maxHp 為基準扣)
-      async function dealDamage(bossId, deltaDmg, maxHp){
+      async function dealDamage(bossId, deltaDmg, maxHp, battleKey){
         try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0 先確保 stats/worldBoss 已帶舊資料
         if(!bossId || typeof deltaDmg !== 'number' || deltaDmg <= 0) return null;
         try{
@@ -25837,6 +25973,15 @@
             const _data = _snap.exists() ? (_snap.data() || {}) : {};
             const _hpMap = _data.worldBossHp || {};
             const _cur = (typeof _hpMap[bossId] === 'number') ? _hpMap[bossId] : (maxHp || 0);
+            // ★ v5.383.0 同一場多人房每位隊友都會結算 ⇒ 用 battleKey 只扣一次雲端龍王血(舊版會扣 N 倍)
+            let _settled = null;
+            if(battleKey){
+              _settled = Object.assign({}, _data.wbSettledHp || {});
+              if(_settled[battleKey]) return { prev: _cur, next: _cur, killed: false, dup: true };
+              const _nowS = Date.now();
+              Object.keys(_settled).forEach(function(k){ if(!(_nowS - (Number(_settled[k]) || 0) < 3 * 86400000)) delete _settled[k]; });
+              _settled[battleKey] = _nowS;
+            }
             const _next = Math.max(0, _cur - deltaDmg);
             const _newHpMap = Object.assign({}, _hpMap);
             _newHpMap[bossId] = _next;
@@ -25846,6 +25991,7 @@
             //   roundKey 格式:'<bossId>-YYYYMMDD' (倒下日當下,台灣時區),
             //   讓同一隻 BOSS 多次倒下都能各自結算一輪
             const _patch = { worldBossHp: _newHpMap };
+            if(_settled) _patch.wbSettledHp = _settled;   // ★ v5.383.0
             if(_killed){
               const _bossDownTimes = Object.assign({}, _data.wbBossDownTimes || {});
               const _now = Date.now();
@@ -25961,7 +26107,7 @@
       //   bonusSource='admin'  → GM 補償場次(粉色標籤:🎫 補償場次)
       //   bonusSource=null/undefined → 正常場次
       //   舊呼叫者沒傳 → 與 isBonus 連動:isBonus=true 視為 'admin'(向下相容)
-      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg, tiebreaker, teamHeroes, championStats, dmgSources, teamEmails, isBonus, bonusSource){
+      async function updateLeaderboard(bossId, teamKey, teamNames, addDmg, tiebreaker, teamHeroes, championStats, dmgSources, teamEmails, isBonus, bonusSource, battleKey){
         try{ await _lxpsStatsEnsure('wb'); }catch(_){}   // ★ v5.338.0
         if(!bossId || !teamKey || typeof addDmg !== 'number' || addDmg <= 0) return null;
         try{
@@ -25970,7 +26116,15 @@
             const _snap = await tx.get(_ref);
             const _data = _snap.exists() ? (_snap.data() || {}) : {};
             const _lbMap = _data.worldBossLeaderboard || {};
-            const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : [];
+            // ★ v5.383.0 先合併既有的重複場次(寫回時一併清乾淨)
+            const _list = _wbLbDedupe(Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : []).slice();
+            // ★ v5.383.0 同一場(battleKey)已經有隊友寫過 ⇒ 不再寫第二次
+            if(battleKey){
+              const _dupI = _list.findIndex(e => e && Array.isArray(e.battleHistory) && e.battleHistory.some(b => b && b.bk === battleKey));
+              if(_dupI >= 0){
+                return { rank: _dupI + 1, totalDmg: _list[_dupI].totalDmg || 0, dup: true };
+              }
+            }
             // 找到該隊伍紀錄,沒有就新增
             const _idx = _list.findIndex(e => e && e.teamKey === teamKey);
             // ★ tiebreaker 累計:取本場最佳值(留下對隊伍最有利的數字)
@@ -26099,6 +26253,8 @@
               turns: Math.floor(_newTb.turns || 0),
               qc: Math.floor(_newTb.quizCorrect || 0),
               tb: Math.floor(_newTb.teamBurstCount || 0),
+              // ★ v5.383.0 — 這一場的識別碼(房號＋開戰時間),隊友重複結算時用來辨認
+              ...(battleKey ? { bk: String(battleKey).slice(0, 60) } : {}),
               // ★ v3.12.17 — 補償場次旗標(只在 isBonus=true 時寫,節省欄位空間)
               ...(isBonus ? { _isBonus: true } : {}),
               // ★ v3.13.7 — bonusSource('ticket' | 'admin'),只在 isBonus=true 時寫
@@ -26421,7 +26577,7 @@
             const _snap = await tx.get(_ref);
             const _data = _snap.exists() ? (_snap.data() || {}) : {};
             const _lbMap = _data.worldBossLeaderboard || {};
-            const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId] : [];
+            const _list = _wbLbDedupe(Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : []);   // ★ v5.383.0
             let _removed = 0;
             const _filtered = _list.filter(function(e){
               if(e && _keySet.has(e.teamKey)){
@@ -26491,7 +26647,7 @@
             if(!_snap.exists()) return { ok:false, reason:'no_stats_doc' };
             const _data = _snap.data() || {};
             const _lbMap = _data.worldBossLeaderboard || {};
-            const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : [];
+            const _list = _wbLbDedupe(Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : []).slice();   // ★ v5.383.0 同一場重複寫入先合併
             const _idx = _list.findIndex(e => e && e.teamKey === teamKey);
             if(_idx < 0) return { ok:false, reason:'team_not_found' };
 
@@ -26616,7 +26772,7 @@
             if(!_snap.exists()) return { ok:false, reason:'no_stats_doc' };
             const _data = _snap.data() || {};
             const _lbMap = _data.worldBossLeaderboard || {};
-            const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : [];
+            const _list = _wbLbDedupe(Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : []).slice();   // ★ v5.383.0 同一場重複寫入先合併
             const _idx = _list.findIndex(e => e && e.teamKey === teamKey);
             if(_idx < 0) return { ok:false, reason:'team_not_found' };
             const _cur = _list[_idx];
@@ -28893,7 +29049,7 @@
             }
             // 讀當下排行榜(GM 修正後的最終版本)
             const _lbMap = _data.worldBossLeaderboard || {};
-            const _list = Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : [];
+            const _list = ((typeof window._wbLbDedupe === "function") ? window._wbLbDedupe : function(x){ return x; })(Array.isArray(_lbMap[bossId]) ? _lbMap[bossId].slice() : []).slice();   // ★ v5.383.0 同一場重複寫入先合併
             // 排序與正式排行榜一致:總傷由高到低 + tiebreaker
             _list.sort(function(a, b){
               const _da = (b.totalDmg||0) - (a.totalDmg||0);

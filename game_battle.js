@@ -13326,6 +13326,13 @@ function recommendTeamPick(){
       _pool = (typeof _heroPickPool !== 'undefined' && Array.isArray(_heroPickPool)) ? _heroPickPool.slice() : [];
     }
   }catch(_ePool){ console.warn('[v5.81.0 推薦陣容 建池] 失敗', _ePool); }
+  // ★ v5.383.0 故事冒險前鋒/後備:推薦時自動排除另一隊已有的英雄(後備書籤另排除好友借用英雄)
+  try{
+    if(window._RSV && typeof window._RSV.recExclude === 'function'){
+      var _rsvEx = window._RSV.recExclude(_pool) || [];
+      if(_rsvEx.length) _pool = _pool.filter(function(n){ return _rsvEx.indexOf(n) < 0; });
+    }
+  }catch(_eRsvRec){ console.warn('[v5.383.0 推薦陣容 排除另一隊]', _eRsvRec); }
   if(!_pool.length){ try{ _showInGameToast('目前沒有可推薦的英雄', '#ff8844', 1800); }catch(_){} return; }
 
   // ── ④ 評分排序 ──
@@ -90774,9 +90781,10 @@ window._FM_DEFS = {
                    + '<div class="rsv-tab" id="rsv-tab-rear"><span class="rsv-tt">後備隊伍</span><span class="rsv-tn"></span></div>'
                    + '<div class="rsv-tab rsv-swap" id="rsv-tab-swap"><span class="rsv-sw-i">⇅</span><span class="rsv-tt">一鍵交換</span></div>';
       hpo.appendChild(el);
-      el.querySelector('#rsv-tab-front').onclick = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} setTab('front'); };
-      el.querySelector('#rsv-tab-rear').onclick  = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} setTab('rear'); };
-      el.querySelector('#rsv-tab-swap').onclick  = function(){ try{ playSfx('sfx-deal', 0.6); }catch(_){} swapTeams(); };
+      /* ★ v5.383.0(老師 2026-11-11)切換前鋒/後備、一鍵交換的音效改成「知識化為力量.mp3」(sfx-rsv-switch) */
+      el.querySelector('#rsv-tab-front').onclick = function(){ try{ playSfx('sfx-rsv-switch', 0.7); }catch(_){} setTab('front'); };
+      el.querySelector('#rsv-tab-rear').onclick  = function(){ try{ playSfx('sfx-rsv-switch', 0.7); }catch(_){} setTab('rear'); };
+      el.querySelector('#rsv-tab-swap').onclick  = function(){ try{ playSfx('sfx-rsv-switch', 0.7); }catch(_){} swapTeams(); };
     }
     return el;
   }
@@ -91314,7 +91322,7 @@ window._FM_DEFS = {
       // ⚠ 不可 append 成最後一個子元素:main.css 手機版用「#elem-pick-overlay > div:last-child」抓底部按鈕列(會被改成 fixed 貼右邊)
       var _tb = document.getElementById('ep-topbar');
       if(_tb && _tb.parentNode === ov) ov.insertBefore(el, _tb); else ov.insertBefore(el, ov.firstChild);
-      Array.prototype.forEach.call(el.querySelectorAll('.rsv-tab'), function(b){ b.onclick = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} epSet(b.getAttribute('data-t')); }; });
+      Array.prototype.forEach.call(el.querySelectorAll('.rsv-tab'), function(b){ b.onclick = function(){ try{ playSfx('sfx-rsv-switch', 0.7); }catch(_){} epSet(b.getAttribute('data-t')); }; });
     }
     return el;
   }
@@ -91396,7 +91404,7 @@ window._FM_DEFS = {
       el.innerHTML = '<div class="rsv-htab" data-t="front">⚔ 前鋒隊伍<span class="rsv-tn"></span></div>'
                    + '<div class="rsv-htab" data-t="rear">🛡 後備隊伍<span class="rsv-tn"></span></div>';
       hd.appendChild(el);
-      Array.prototype.forEach.call(el.querySelectorAll('.rsv-htab'), function(b){ b.onclick = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} srSet(b.getAttribute('data-t')); }; });
+      Array.prototype.forEach.call(el.querySelectorAll('.rsv-htab'), function(b){ b.onclick = function(){ try{ playSfx('sfx-rsv-switch', 0.7); }catch(_){} srSet(b.getAttribute('data-t')); }; });
     }
     return el;
   }
@@ -91459,7 +91467,20 @@ window._FM_DEFS = {
   }
   function srConfirm(){ if(!SR.on) return; srToFront(); srSaveRear(); SR.on = false; }   // confirmSkillReplace 開頭
   function srBack(){ srToFront(); srSaveRear(); SR.on = false; try{ var ov = document.getElementById('skill-replace-overlay'); if(ov) ov.classList.remove('rsv-on'); }catch(_){} }
-  W._RSV = { onOpen: onOpen, afterBadges: afterBadges, blockInvite: blockInvite, isRearTab: function(){ return inAdvPick() && S.tab === 'rear'; },
+  /* ★ v5.383.0(老師 2026-11-11「編輯前鋒或後備隊伍時若使用推薦陣容,自動排除另一隊已經有的英雄」)
+   *   推薦陣容(recommendTeamPick)建候選池後問這裡:回傳「不可推薦」的名字 = 另一隊的英雄;後備書籤再加上好友借用英雄(只能放前鋒)。 */
+  function recExclude(pool){
+    try{
+      if(!inAdvPick()) return [];
+      var other = (S.tab === 'rear') ? frontList() : rearList();
+      var out = (other || []).slice();
+      if(S.tab === 'rear' && Array.isArray(pool)){
+        pool.forEach(function(n){ try{ if(isBorrowed(n) && out.indexOf(n) < 0) out.push(n); }catch(_){} });
+      }
+      return out;
+    }catch(_){ return []; }
+  }
+  W._RSV = { onOpen: onOpen, afterBadges: afterBadges, blockInvite: blockInvite, isRearTab: function(){ return inAdvPick() && S.tab === 'rear'; }, recExclude: recExclude,
              loadPreset: loadPreset, gate: gate, toFront: toFront, trySwap: trySwap, restoreFront: restoreFront, phaseTag: phaseTag,
              maybeIntro: maybeIntro, toCloud: toCloud, fromCloud: fromCloud, swapTeams: swapTeams,
              epShow: epShow, epAfterRender: epAfterRender, epFinishGate: epFinishGate, epBack: epBack,

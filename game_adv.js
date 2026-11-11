@@ -2187,13 +2187,20 @@ function startAdventureGame(stage){
   //   地圖選釘 → 設定 _advSelectedVariantIdx → showHeroPickOverlay(選角) → 三場景過場。
   //   _showChinaMap 意外不存在時 fallback 走通用路線選擇器,保證流程不斷。
   if(stage === 'china'){
-    fadeTransition(()=>{
+    const _cnOpenMap = function(){
       if(typeof window._showChinaMap === 'function'){
         window._showChinaMap({ mode:'route' });
       } else {
         _advShowBossRouteSelector(()=> showHeroPickOverlay());
       }
-    }, 350);
+    };
+    // ★ v5.383.0(老師 2026-11-11)— 按「開始整隊」後播「進入繪卷」動畫,播完(或跳過/缺檔/關閉動畫)直接開繪卷地圖。
+    //   動畫遮罩 z-index 10500 蓋在最上面,結束時先開地圖再淡出遮罩 ⇒ 不會閃到其他畫面。
+    if(typeof window._chinaPlayEntryCinematic === 'function'){
+      window._chinaPlayEntryCinematic(_cnOpenMap);
+    } else {
+      fadeTransition(_cnOpenMap, 350);
+    }
     return;
   }
   fadeTransition(()=>{
@@ -10292,12 +10299,10 @@ window._chinaTrySelect = function(btnEl){
   }
   // ★ v5.45.0 — 通過解鎖條件(或管理員)即發「繪卷旅人」獎章(比照台灣關 _checkTaiwanUnlockMedal 口徑)
   try{ if(typeof window._checkChinaUnlockMedal === 'function') window._checkChinaUnlockMedal(); }catch(_){}
-  // ★ v5.47.0 — 進入繪卷過場動畫(老師需求):影片結束/跳過/缺檔失敗 才進中國關首頁(絕不卡死)
-  if(typeof window._chinaPlayEntryCinematic === 'function'){
-    window._chinaPlayEntryCinematic(function(){ selectAdvStage('china', btnEl); });
-  } else {
-    selectAdvStage('china', btnEl);
-  }
+  // ★ v5.47.0 進入繪卷過場動畫原本在這裡(點選中國關卡就播)。
+  // ★ v5.383.0(老師 2026-11-11「中國繪卷的進場動畫改成在點擊『開始整隊，踏上冒險之旅！』之後播放。動畫結束就是直接到繪卷地圖畫面」)
+  //   ⇒ 點選關卡直接進中國關介紹頁;動畫改到 startAdventureGame('china') 播,播完直接開《九州輿圖》。
+  selectAdvStage('china', btnEl);
 };
 
 window._TAIWAN_ADMIN_ONLY = false;       // 改用 4 名英雄 20 級解鎖,不再限管理員
@@ -55181,10 +55186,13 @@ function _renderHeroDetail(name, box) {
           /* ★ v4.20.0(任務6·老師裁決) — 簡單風爆發說明也隨爆發等級動態顯示數值:sd 餵進
              _renderBurstFdWithLv 同一顆引擎(custom case regex 對 sd miss 時該數字維持 Lv1 基準·保守可接受;
              未列 case 的爆發走通用 ×(1+lv×0.10) 全 N% 替換·sd 保留關鍵數字必中)+ 一律附 Lv.X 標籤。 */
-          (_isSimple ? ('<div style="margin-bottom:10px;">' + _fullDescBtn('burst', name) + '</div>') : '')+
-          '<div style="background:rgba(5,8,20,0.85);border:1px solid rgba(255,120,50,0.2);border-radius:10px;padding:8px 6px;">'+
-          '<div style="font-size:18px;color:#ff9966;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:2px;">── 升級效果一覽 ──</div>'+
-          '<table style="width:100%;border-collapse:collapse;">'+_rows+'</table></div></div>';
+          /* ★ v5.383.0(老師 2026-11-11「英雄圖鑑的爆發技的升級效果一覽改成收合到『看完整說明』中」)
+             升級效果一覽不再直接列在詳情頁;表格內容存到 window._heroBurstUpgTbl,由「📖 看完整說明」彈窗(_showHeroFullDesc 'burst')顯示。
+             精緻風原本沒有這顆鈕 ⇒ 爆發區一律顯示(兩種畫風都看得到一覽表)。 */
+          (function(){ try{ window._heroBurstUpgTbl = { name: name, rows: _rows }; }catch(_){} return ''; })()+
+          '<div style="margin-bottom:4px;">' + (_isSimple ? _fullDescBtn('burst', name)
+            : `<button onclick="event.stopPropagation();_showHeroFullDesc('burst','${String(name).replace(/'/g, "\\'")}')" style="padding:6px 16px;font-size:18px;font-weight:800;background:linear-gradient(135deg,rgba(80,160,255,0.28),rgba(60,110,220,0.16));border:1.5px solid rgba(120,180,255,0.7);color:#bcdcff;border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;">📖 看完整說明</button>`) + '</div>'+
+          '</div>';
       })()}
       </div>
     </div>
@@ -76022,6 +76030,15 @@ function _showHeroFullDesc(kind, heroName){
       title = '\u26a1 ' + (bd.n || '\u6975\u9650\u7206\u767c');
       var _bfd = bd.fd || bd.d || '';
       bodyHtml = (typeof _renderBurstFdWithLv === 'function') ? _renderBurstFdWithLv(bd.n, _bfd, _bLv) : ((typeof colorizeSkillDesc === 'function') ? colorizeSkillDesc(_bfd) : _bfd);
+      /* ★ v5.383.0 升級效果一覽收合到這裡(詳情頁 _renderHeroDetail 存的同一份表格,含主角繼承來源) */
+      try{
+        var _ut = window._heroBurstUpgTbl;
+        if(_ut && _ut.name === heroName && _ut.rows){
+          bodyHtml += '<div class="_herofull-upg" style="margin-top:18px;background:rgba(5,8,20,0.85);border:1px solid rgba(255,120,50,0.3);border-radius:10px;padding:8px 6px;">' +
+            '<div style="font-size:clamp(16px,2vw,20px);color:#ff9966;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:2px;">── 升級效果一覽 ──</div>' +
+            '<table style="width:100%;border-collapse:collapse;">' + String(_ut.rows).replace(/font-size:24px/g, 'font-size:clamp(16px,2.1vw,21px)') + '</table></div>';
+        }
+      }catch(_eUt){}
     } else { return; }
 
     var ov = document.createElement('div');
