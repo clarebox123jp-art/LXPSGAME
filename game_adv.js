@@ -6930,6 +6930,60 @@ window._chinaMapStopBgVideo = function(){
     try{ _cnV.removeAttribute('src'); _cnV.load(); }catch(_){}
   }catch(_){}
 };
+// ★ v5.384.0(老師 2026-11-11「PC 版的中國地圖所有的按鈕、文字、視窗(煉丹、關卡路線等)都太小了,全部都放大」)
+//   根因:九州輿圖整頁含背景影片 ⇒ 被 #lxps-pc-zoom-js 排除(它跳過含 video 的層);路線/時空/神農鼎視窗不是蓋滿畫面 ⇒ 也不放大。
+//   2560×1440 螢幕上全部維持 1366 筆電的大小。修法:只在 PC(_lxpsPcZoomOn)用同一個倍率 _lxpsPcZoomFactor()
+//   (1920=1.15、2560≈1.53)對整頁與這幾個視窗套 CSS zoom;iPad/手機倍率恆為 1,一行不變。
+//   zoom 下 inset:0 仍貼滿螢幕、% 座標的圖釘位置不變;vw/vh 會被乘上倍率 ⇒ 視窗寬高改用 (vw÷倍率)。
+//   加 data-lxps-no-pczoom 讓全域 PC 放大不會再重複放大。視窗大小改變時 150ms 後重算。
+window._cnPcF = function(){
+  try{
+    if(!window._lxpsPcZoomOn || typeof window._lxpsPcZoomFactor !== 'function') return 1;
+    var f = +window._lxpsPcZoomFactor();
+    return (f && f > 1) ? f : 1;
+  }catch(_){ return 1; }
+};
+window._cnPhoneShort = function(){
+  try{ return (window.innerHeight || 0) <= 520 && (window.innerWidth || 0) > (window.innerHeight || 0); }catch(_){ return false; }
+};
+window._cnPcZoomOverlay = function(el){
+  try{
+    if(!el) return 1;
+    var f = window._cnPcF();
+    el.setAttribute('data-lxps-no-pczoom', '1');
+    el.style.zoom = (f > 1) ? String(f) : '';
+    return f;
+  }catch(_){ return 1; }
+};
+// 置中視窗:vwPct/maxPx = 原本 width:min(vwPct vw, maxPx px);vhPct = 原本 max-height(vh)
+window._cnPcZoomCard = function(el, vwPct, maxPx, vhPct){
+  try{
+    if(!el) return 1;
+    var f = window._cnPcF();
+    el._cnPcz = [vwPct, maxPx, vhPct];
+    el.setAttribute('data-lxps-no-pczoom', '1');
+    el.style.zoom = (f > 1) ? String(f) : '';
+    if(vwPct) el.style.width = 'min(' + (+(vwPct / f).toFixed(2)) + 'vw,' + maxPx + 'px)';
+    if(vhPct) el.style.maxHeight = (+(vhPct / f).toFixed(2)) + 'vh';
+    return f;
+  }catch(_){ return 1; }
+};
+if(!window._cnPcZoomResizeHooked){
+  window._cnPcZoomResizeHooked = true;
+  window.addEventListener('resize', function(){
+    clearTimeout(window._cnPcZoomResizeT);
+    window._cnPcZoomResizeT = setTimeout(function(){
+      try{
+        var ov = document.getElementById('china-map-overlay');
+        if(ov) window._cnPcZoomOverlay(ov);
+        ['china-pin-detail','china-era-detail','alch-panel-overlay','alch-intro-modal'].forEach(function(id){
+          var e = document.getElementById(id);
+          if(e && e._cnPcz) window._cnPcZoomCard(e, e._cnPcz[0], e._cnPcz[1], e._cnPcz[2]);
+        });
+      }catch(_){}
+    }, 150);
+  });
+}
 window._showChinaMap = function(opts){
   const old = document.getElementById('china-map-overlay');
   try{ if(typeof window._chinaMapStopBgVideo === 'function') window._chinaMapStopBgVideo(); }catch(_){}   // ★ v5.83.0 — 清舊圖前先收影片
@@ -6945,7 +6999,9 @@ window._showChinaMap = function(opts){
     kf.textContent =
       '@keyframes cnPinPulse{0%,100%{transform:translate(-50%,-100%) scale(1);}50%{transform:translate(-50%,-100%) scale(1.18);}}' +
       '@keyframes cnInkDrift{0%,100%{opacity:0.25;transform:translateX(0);}50%{opacity:0.45;transform:translateX(-24px);}}' +
-      '@keyframes cnDetailIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}' +
+      // ★ v5.384.0 — 補上 translate(-50%,-50%):四個用到它的視窗(路線/時空/神農鼎/介紹)都是 top/left 50% 置中,
+      //   舊版動畫期間只有 scale ⇒ 視窗先閃在右下角再跳回中間(放大後更明顯)。舊值:from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}
+      '@keyframes cnDetailIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}' +
       '.china-map-pin{transition:filter 0.15s;}' +
       '.china-map-pin:hover{filter:drop-shadow(0 0 12px rgba(255,190,90,0.9));}';
     document.head.appendChild(kf);
@@ -7132,43 +7188,48 @@ window._showChinaMap = function(opts){
     const _elemName = {dark:'🌑 暗', fire:'🔥 火', wind:'🍃 風', earth:'⛰ 土', water:'💧 水', light:'☀️ 光', grass:'🌿 草'};   // ★ v5.293.0 補水/光/草(新路線)
     const card = document.createElement('div');
     card.id = 'china-pin-detail';
+    // ★ v5.384.0(老師 2026-11-11「繪卷關卡內的 BOSS 介紹視窗放大(同日本冒險關卡)」)— 視窗寬 560→700、字與按鈕 ×1.25;
+    //   手機橫放(畫面高 ≤520)維持原尺寸(放大會超出畫面)。PC 再乘螢幕倍率(_cnPcZoomCard)。
+    const _pdBig = !window._cnPhoneShort();
+    const _pdK = _pdBig ? 1.25 : 1;
+    const _z = (n) => Math.round(n * _pdK) + 'px';
     card.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9750;width:min(92vw,560px);' +
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9750;' +
       'background:linear-gradient(160deg,rgba(48,26,10,0.99),rgba(24,12,5,0.99));border:3px solid ' + (p.color||'#e6b450') + ';' +
-      'border-radius:22px;padding:26px 30px;text-align:center;box-shadow:0 0 60px rgba(255,180,80,0.35);' +
-      'font-family:inherit;animation:cnDetailIn 0.25s;max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+      'border-radius:22px;padding:' + _z(26) + ' ' + _z(30) + ';text-align:center;box-shadow:0 0 60px rgba(255,180,80,0.35);' +
+      'font-family:inherit;animation:cnDetailIn 0.25s;overflow-y:auto;-webkit-overflow-scrolling:touch;';
     let inner =
-      '<div style="font-size:50px;margin-bottom:6px;">' + p.icon + '</div>' +
-      '<div style="font-size:30px;font-weight:900;color:#ffcf8a;letter-spacing:3px;margin-bottom:2px;">' + p.label + '</div>' +
-      '<div style="font-size:16px;color:#c8a878;letter-spacing:1px;margin-bottom:12px;">🕰️ ' + p.era + '</div>' +
-      '<div style="font-size:19px;color:#efe0c8;line-height:1.75;text-align:left;padding:12px 16px;background:rgba(255,200,120,0.07);border-left:3px solid ' + (p.color||'#e6b450') + ';border-radius:0 10px 10px 0;margin-bottom:16px;">' + p.intro + '</div>';
+      '<div style="font-size:' + _z(50) + ';margin-bottom:6px;">' + p.icon + '</div>' +
+      '<div style="font-size:' + _z(30) + ';font-weight:900;color:#ffcf8a;letter-spacing:3px;margin-bottom:2px;">' + p.label + '</div>' +
+      '<div style="font-size:' + _z(16) + ';color:#c8a878;letter-spacing:1px;margin-bottom:12px;">🕰️ ' + p.era + '</div>' +
+      '<div style="font-size:' + _z(19) + ';color:#efe0c8;line-height:1.75;text-align:left;padding:' + _z(12) + ' ' + _z(16) + ';background:rgba(255,200,120,0.07);border-left:3px solid ' + (p.color||'#e6b450') + ';border-radius:0 10px 10px 0;margin-bottom:16px;">' + p.intro + '</div>';
     // ★ v5.293.0 — 新路線未解鎖:顯示解鎖條件(雙版文字),不給出發鈕
     if(p.type === 'route' && v && _pinLocked(p)){
       const _lkCute = (typeof window._artStyle === 'string' ? window._artStyle : 'cute') !== 'premium';
       inner +=
-        '<div style="font-size:19px;color:#ffcc88;line-height:1.7;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,0.35);border:1.5px dashed rgba(255,200,120,0.55);">' +
+        '<div style="font-size:' + _z(19) + ';color:#ffcc88;line-height:1.7;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,0.35);border:1.5px dashed rgba(255,200,120,0.55);">' +
           '🔒 ' + (_lkCute ? ('先打贏「<b>' + (p.needName || '前一條路線') + '</b>」,這條路線就會打開喔!')
                            : ('解鎖條件:通關「<b>' + (p.needName || '前一條路線') + '</b>」。')) +
-          '<br><span style="font-size:16px;color:#c8a878;">⚔ 路線妖王:' + v.main + '(' + (_elemName[v.element]||v.element) + ')</span>' +
+          '<br><span style="font-size:' + _z(16) + ';color:#c8a878;">⚔ 路線妖王:' + v.main + '(' + (_elemName[v.element]||v.element) + ')</span>' +
         '</div>' +
-        '<button data-act="close" style="padding:12px 40px;font-size:20px;font-weight:800;background:rgba(255,190,110,0.2);border:2px solid #e6b450;color:#ffd9a8;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>';
+        '<button data-act="close" style="padding:' + _z(12) + ' ' + _z(40) + ';font-size:' + _z(20) + ';font-weight:800;background:rgba(255,190,110,0.2);border:2px solid #e6b450;color:#ffd9a8;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>';
     } else
     if(p.type === 'route' && v){
       // ★ v5.293.0 — 菁英守衛改讀 eliteTeam(三戰四場制的第三場);舊路線無 eliteTeam 者沿用 minions(官渡雙衛)
       const _eliteList = (v.eliteTeam && v.eliteTeam.length) ? v.eliteTeam : (v.minions || []);
       const _mins = _eliteList.length ? '菁英守衛:' + _eliteList.join('、') + '｜' : '';
       inner +=
-        '<div style="font-size:18px;color:#99ccff;line-height:1.6;margin-bottom:14px;">' +
+        '<div style="font-size:' + _z(18) + ';color:#99ccff;line-height:1.6;margin-bottom:14px;">' +
           '⚔ 路線妖王:<span style="color:#ffd9a8;font-weight:900;">' + v.main + '</span>(' + (_elemName[v.element]||v.element) + ')<br>' +
           _mins + '通關獎勵:<span style="color:#ffdd66;font-weight:800;">' + (v.treasureName||'—') + '</span>' +
         '</div>' +
         '<div style="display:flex;gap:10px;">' +
-          '<button data-act="close" style="flex:1;padding:12px;font-size:20px;font-weight:800;background:rgba(120,120,120,0.2);border:2px solid #887;color:#ddc;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>' +
-          '<button data-act="go" style="flex:2;padding:12px;font-size:24px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,' + (p.color||'#e6b450') + ',rgba(0,0,0,0.15));border:2px solid ' + (p.color||'#e6b450') + ';color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;text-shadow:0 0 6px rgba(0,0,0,0.5);">⚔ 選擇此路線</button>' +
+          '<button data-act="close" style="flex:1;padding:' + _z(13) + ';font-size:' + _z(20) + ';font-weight:800;background:rgba(120,120,120,0.2);border:2px solid #887;color:#ddc;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>' +
+          '<button data-act="go" style="flex:2;padding:' + _z(13) + ';font-size:' + _z(24) + ';font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,' + (p.color||'#e6b450') + ',rgba(0,0,0,0.15));border:2px solid ' + (p.color||'#e6b450') + ';color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;text-shadow:0 0 6px rgba(0,0,0,0.5);">⚔ 選擇此路線</button>' +
         '</div>';
     } else {
       inner +=
-        '<button data-act="close" style="padding:12px 40px;font-size:20px;font-weight:800;background:rgba(255,190,110,0.2);border:2px solid #e6b450;color:#ffd9a8;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>';
+        '<button data-act="close" style="padding:' + _z(12) + ' ' + _z(40) + ';font-size:' + _z(20) + ';font-weight:800;background:rgba(255,190,110,0.2);border:2px solid #e6b450;color:#ffd9a8;border-radius:10px;cursor:pointer;font-family:inherit;">返回地圖</button>';
     }
     card.innerHTML = inner;
     card.querySelector('[data-act="close"]').onclick = () => { try{ playSfx('sfx-cancel',0.5); }catch(_){} card.remove(); };
@@ -7194,6 +7255,7 @@ window._showChinaMap = function(opts){
       };
     }
     document.body.appendChild(card);
+    try{ window._cnPcZoomCard(card, 92, _pdBig ? 700 : 560, 86); }catch(_){}   // ★ v5.384.0 寬 700(手機 560)＋PC 依螢幕放大
   };
 
   // ── 落釘 ──
@@ -7458,6 +7520,7 @@ window._showChinaMap = function(opts){
       chip.onclick = function(){ card.remove(); _openPinDetail(p); };
     });
     document.body.appendChild(card);
+    try{ window._cnPcZoomCard(card, 92, 600, 88); }catch(_){}   // ★ v5.384.0 PC 時空詳情依螢幕放大
   };
 
   const eraBar = document.createElement('div');
@@ -7529,6 +7592,7 @@ window._showChinaMap = function(opts){
   header.querySelector('#china-map-back').onclick = () => { try{ playSfx('sfx-cancel',0.5); }catch(_){} window._chinaMapClose(); };
 
   document.body.appendChild(ov);
+  try{ window._cnPcZoomOverlay(ov); }catch(_){}   // ★ v5.384.0 PC 整頁(標題列/時空鈕/神農鼎鈕/圖釘/採集點)依螢幕放大
   // 地圖頁 BGM(素材未上傳前播放失敗自動靜默,不中斷)
   try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-china-map', 700); }catch(_){}
   // ★ v5.56.0 — 初次進入九州輿圖:墨靈介紹神農鼎(intro 旗標上雲一次性·結束贈 4 張基礎配方)
@@ -8459,6 +8523,7 @@ window._alchShowIntro = function(){
       }
     };
     document.body.appendChild(modal);
+    try{ window._cnPcZoomCard(modal, 92, 560, 0); }catch(_){}   // ★ v5.384.0 PC 依螢幕放大
   }catch(_e){ console.warn('[神農鼎 介紹] 失敗', _e); }
 };
 // ── 13. 神農鼎面板(三頁籤:煉丹[含配方圖鑑]/材料背包/丹藥背包;賣出皆在此·純本系統寫入) ──
@@ -8472,8 +8537,22 @@ window._alchOpenPanel = function(tab){
     var old = document.getElementById('alch-panel-overlay'); if(old) old.remove();
     var ov = document.createElement('div');
     ov.id = 'alch-panel-overlay';
+    // ★ v5.384.0(老師 2026-11-11「煉丹選單視窗改成兩欄」)— 三頁籤的清單改兩欄(._alch-grid;畫面寬 ≤640 才回一欄),
+    //   視窗寬 780→1180(仍受 94vw 限制);PC 再依螢幕倍率放大(_cnPcZoomCard,寬高換算回螢幕內)。
+    if(!document.getElementById('_alch-grid-css')){
+      var _agc = document.createElement('style');
+      _agc.id = '_alch-grid-css';
+      _agc.textContent =
+        '._alch-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10px;align-items:stretch;}' +
+        '._alch-grid>div{box-sizing:border-box;min-width:0;}' +
+        '._alch-sellcol{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}' +
+        '@media (max-width:640px){._alch-grid{grid-template-columns:minmax(0,1fr);}}' +
+        // 手機橫放(高 ≤520):煉丹頁每列有長標題＋煉丹鈕,兩欄會擠到斷字 ⇒ 只有煉丹頁回一欄;材料/丹藥維持兩欄
+        '@media (orientation:landscape) and (max-height:520px){._alch-grid-craft{grid-template-columns:minmax(0,1fr);}}';
+      document.head.appendChild(_agc);
+    }
     ov.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9745;width:min(94vw,780px);max-height:88vh;' +
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9745;width:min(94vw,1180px);max-height:88vh;' +
       'background:linear-gradient(160deg,rgba(44,24,9,0.99),rgba(22,11,4,0.99));border:3px solid #ffd966;border-radius:22px;' +
       'padding:18px 20px;font-family:inherit;animation:cnDetailIn 0.25s;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(255,200,80,0.35);';
     var remain = window._alchGatherRemain();
@@ -8524,6 +8603,7 @@ window._alchOpenPanel = function(tab){
             '</div>' +
           '</div>';
       }catch(_eStreakUi){ /* 顯示層失敗不阻塞面板 */ }
+      body += '<div class="_alch-grid _alch-grid-craft">';   // ★ v5.384.0 兩欄(手機橫放一欄)
       Object.keys(ALCH_RECIPE_DB).forEach(function(rid){
         var rc = ALCH_RECIPE_DB[rid], pill = ALCH_PILL_DB[rc.pill], rar = ALCH_RARITY[pill.r];
         var unlocked = !!d.r[rid];
@@ -8566,6 +8646,7 @@ window._alchOpenPanel = function(tab){
             '</div>';
         }
       });
+      body += '</div>';   // ★ v5.384.0 兩欄結束(說明文字跨兩欄)
       body += '<div style="font-size:13px;color:#c8a878;text-align:center;padding:8px 0 2px;line-height:1.6;">' +
         // ★ v5.72.0 — 補上實際秒數(記憶 3 秒 + 作答 5 秒),讓學生事先有預期;雙版(鐵律 1.232)。
         //   舊文案(未寫秒數)依鐵則保留備查(勿刪):
@@ -8586,6 +8667,7 @@ window._alchOpenPanel = function(tab){
         (_cute ? '🔥 按下煉丹會出現「五行小遊戲」!先花 3 秒記住神農鼎上方閃過的 5 個五行,再用 5 秒照順序點出來,每點對 1 次成功率就 +6%(最多 +30%,仙品最高衝到 90%!)提早點完就馬上看結果!<br>🎵 每個五行都會發出自己的聲音,記不住圖案的話,用耳朵記音高也可以喔!<br>⚗️ 煉好的丹藥可以在中國古代關戰鬥裡吃,一場最多 3 顆!'
                : '🔥 點擊煉丹後將進入「五行共鳴」小遊戲:先以 3 秒記憶神農鼎上方依序顯現的 5 個五行符文,再於 5 秒內依序點擊(點滿 5 下即刻結算),每答對 1 次本次煉丹成功率 +6%(累計上限 +30%;仙品 60% 全對可達 90%)。<br>🎵 符文顯現時同步奏出其所配之中國五聲音階,亦可循音高辨其屬性。<br>⚗️ 丹藥可於中國古代關戰鬥中服用,每場上限 3 顆。') + '</div>';
     } else if(tab === 'mat'){
+      body += '<div class="_alch-grid">';   // ★ v5.384.0 兩欄
       Object.keys(ALCH_MAT_DB).forEach(function(mk){
         var m = ALCH_MAT_DB[mk], rar = ALCH_RARITY[m.r], have = parseInt(d.m[mk])||0;
         body +=
@@ -8597,11 +8679,15 @@ window._alchOpenPanel = function(tab){
                 ' <span style="font-size:14px;color:#88ccaa;">×' + have + '/' + _ALCH_MAT_MAX + '</span></div>' +
               '<div style="font-size:13px;color:#e0cdb0;line-height:1.45;">' + (_cute ? m.ds : m.dp) + '　<span style="color:#ffdd66;font-weight:800;">賣價 ' + m.price.toLocaleString() + '</span></div>' +
             '</div>' +
+            '<div class="_alch-sellcol">' +   // ★ v5.384.0 兩欄時「賣1/全賣」上下疊,文字區較寬
             '<button data-sellmat="' + mk + '" data-qty="1" ' + (have ? '' : 'disabled ') + 'style="flex-shrink:0;padding:8px 12px;min-height:44px;font-size:15px;font-weight:800;border-radius:10px;font-family:inherit;touch-action:manipulation;' + (have ? 'background:rgba(255,220,120,0.15);border:2px solid #e6b450;color:#ffd9a8;cursor:pointer;' : 'background:rgba(80,80,80,0.3);border:2px solid #665;color:#887;cursor:default;') + '">💰 賣1</button>' +
             '<button data-sellmat="' + mk + '" data-qty="all" ' + (have ? '' : 'disabled ') + 'style="flex-shrink:0;padding:8px 12px;min-height:44px;font-size:15px;font-weight:800;border-radius:10px;font-family:inherit;touch-action:manipulation;' + (have ? 'background:rgba(255,180,80,0.2);border:2px solid #ffaa66;color:#ffcf8a;cursor:pointer;' : 'background:rgba(80,80,80,0.3);border:2px solid #665;color:#887;cursor:default;') + '">💰 全賣</button>' +
+            '</div>' +
           '</div>';
       });
+      body += '</div>';   // ★ v5.384.0 兩欄結束
     } else {
+      body += '<div class="_alch-grid">';   // ★ v5.384.0 兩欄
       Object.keys(ALCH_PILL_DB).forEach(function(pk){
         var p = ALCH_PILL_DB[pk], rar = ALCH_RARITY[p.r], have = parseInt(d.p[pk])||0;
         body +=
@@ -8613,10 +8699,13 @@ window._alchOpenPanel = function(tab){
                 ' <span style="font-size:14px;color:#88ccaa;">×' + have + '/' + _ALCH_PILL_MAX + '</span></div>' +
               '<div style="font-size:13px;color:#e0cdb0;line-height:1.45;">' + (_cute ? p.ds : p.dp) + '　<span style="color:#ffdd66;font-weight:800;">賣價 ' + p.price.toLocaleString() + '</span></div>' +
             '</div>' +
+            '<div class="_alch-sellcol">' +   // ★ v5.384.0 兩欄時「賣1/全賣」上下疊,文字區較寬
             '<button data-sellpill="' + pk + '" data-qty="1" ' + (have ? '' : 'disabled ') + 'style="flex-shrink:0;padding:8px 12px;min-height:44px;font-size:15px;font-weight:800;border-radius:10px;font-family:inherit;touch-action:manipulation;' + (have ? 'background:rgba(255,220,120,0.15);border:2px solid #e6b450;color:#ffd9a8;cursor:pointer;' : 'background:rgba(80,80,80,0.3);border:2px solid #665;color:#887;cursor:default;') + '">💰 賣1</button>' +
             '<button data-sellpill="' + pk + '" data-qty="all" ' + (have ? '' : 'disabled ') + 'style="flex-shrink:0;padding:8px 12px;min-height:44px;font-size:15px;font-weight:800;border-radius:10px;font-family:inherit;touch-action:manipulation;' + (have ? 'background:rgba(255,180,80,0.2);border:2px solid #ffaa66;color:#ffcf8a;cursor:pointer;' : 'background:rgba(80,80,80,0.3);border:2px solid #665;color:#887;cursor:default;') + '">💰 全賣</button>' +
+            '</div>' +
           '</div>';
       });
+      body += '</div>';   // ★ v5.384.0 兩欄結束
       body += '<div style="font-size:13px;color:#c8a878;text-align:center;padding:8px 0 2px;line-height:1.6;">' +
         (_cute ? '⚗️ 丹藥可以在中國古代關戰鬥裡吃囉!點戰鬥畫面的「🏺 丹藥」按鈕,一場最多用 3 顆!' : '⚗️ 丹藥可於中國古代關戰鬥中點選「🏺 丹藥」按鈕服用;此為額外行動不消耗回合,每場戰鬥上限 3 顆。') + '</div>';
     }
@@ -8636,6 +8725,7 @@ window._alchOpenPanel = function(tab){
       window._alchOpenPanel('pill');
     }; });
     document.body.appendChild(ov);
+    try{ window._cnPcZoomCard(ov, 94, 1180, 88); }catch(_){}   // ★ v5.384.0 PC 依螢幕放大
   }catch(_e){ console.warn('[神農鼎 面板] 失敗', _e); }
 };
 
@@ -10270,7 +10360,10 @@ window._chinaPlayEntryCinematic = function(next){
       }catch(_eBf){ window._chinaEntryVidBlobFetching = false; }
     }
     // BGM:提前淡入中國關首頁 BGM 墊在影片下(素材未上傳=播放失敗自動靜默;selectAdvStage 之後同曲重 fade 無害)
-    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-china-menu', 400); }catch(_){}
+    // ★ v5.384.0(老師 2026-11-11「進入繪卷動畫 BGM 改成跟九州輿圖同一首…跳過也不會有中斷感」)
+    //   動畫一開始就播九州輿圖 BGM(bgm-china-map);播完/跳過後 _showChinaMap 再呼叫同一首 ⇒ bgmFadeTo 看到同曲正在播直接略過,不會重頭或中斷。
+    //   舊:bgmFadeTo('bgm-china-menu', 400)(繪卷開場曲,進地圖再換九州輿圖曲 ⇒ 會切歌)。
+    try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-china-map', 400); }catch(_){}
     var _p = v.play();
     if(_p && _p.catch) _p.catch(function(){ _finish(); });   // 靜音起播仍被擋(極少見)→ 直進不卡
     // ★ v5.54.0 軟兜底 → v5.55.0 升級:5 秒沒出第一幀(載入 stall 黑屏)先當場退 raw 重試一次;
@@ -42551,18 +42644,21 @@ function _openSummonTicketPickModal(tier){
     const _old = document.getElementById('_summon-ticket-pick-modal'); if(_old) _old.remove();
     const _accent = (tier === 'UR') ? '#ff5e9c' : (tier === 'SSR') ? '#ffb347' : '#7fe0ff';
     // 英雄卡片(圖 + 名)— 點擊呼叫 _confirmSummonTicketPick
+    /* ★ v5.385.0(老師 2026-11-11 23:14「召喚星空的所有自選召喚卷/命星視窗圖片文字都放大，臉部被裁切的圖片都修正高度」)
+       卡片改用共用樣式 .stp-card(window._stpCssEnsure:寬 150/圖 176/名字 19px;手機橫放縮成 112/124/15px),
+       圖片加 getHeroObjPos ＋ _lxpsFaceFitImg(依頭頂位置對齊框上緣,臉不被切),開完整面板再 _lxpsFaceFitIn 監看。 */
+    try{ if(typeof window._stpCssEnsure === 'function') window._stpCssEnsure(); }catch(_){}
     const _heroCard = function(name){
       const _img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) ? HERO_IMGS[name] : '';
+      let _op = 'center 15%';
+      try{ if(typeof getHeroObjPos === 'function') _op = getHeroObjPos(name) || _op; }catch(_){}
       const _imgHtml = _img
-        ? '<img src="' + _img + '" alt="" loading="lazy" style="width:100%;height:96px;object-fit:cover;border-radius:9px 9px 0 0;background:#0a0a18;">'
-        : '<div style="width:100%;height:96px;display:flex;align-items:center;justify-content:center;font-size:34px;background:#0a0a18;border-radius:9px 9px 0 0;">❓</div>';
-      return '<button onclick="playSfx(\'sfx-sel\',0.6);_confirmSummonTicketPick(\'' + tier + '\',\'' + String(name).replace(/'/g,"\\'") + '\')" '
-        + 'style="width:108px;background:rgba(0,0,25,0.7);border:2px solid ' + _accent + '66;border-radius:11px;'
-        + 'cursor:pointer;padding:0 0 6px;font-family:inherit;overflow:hidden;transition:transform .12s,border-color .12s;" '
-        + 'onmouseover="this.style.transform=\'translateY(-3px)\';this.style.borderColor=\'' + _accent + '\';" '
-        + 'onmouseout="this.style.transform=\'\';this.style.borderColor=\'' + _accent + '66\';">'
+        ? '<img src="' + _img + '" alt="" loading="lazy" style="object-position:' + _op + ';" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">'
+        : '<div class="stp-ph">❓</div>';
+      return '<button class="stp-card" onclick="playSfx(\'sfx-sel\',0.6);_confirmSummonTicketPick(\'' + tier + '\',\'' + String(name).replace(/'/g,"\\'") + '\')" '
+        + 'style="--stp-ac:' + _accent + ';">'
         + _imgHtml
-        + '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:5px;padding:0 4px;line-height:1.25;">' + name + '</div>'
+        + '<div class="stp-nm">' + name + '</div>'
         + '</button>';
     };
     const _grid = _pool.map(_heroCard).join('')
@@ -42575,25 +42671,26 @@ function _openSummonTicketPickModal(tier){
       + "font-family:'M PLUS Rounded 1c','Nunito',sans-serif;";
     _modal.innerHTML =
       '<div style="background:linear-gradient(160deg,#1a1040,#0c0826);border:3px solid ' + _accent + 'aa;'
-        + 'border-radius:20px;padding:22px 24px;max-width:min(680px,94vw);max-height:88vh;display:flex;flex-direction:column;'
-        + 'box-shadow:0 0 50px ' + _accent + '55;">'
-        + '<div style="font-size:clamp(20px,2.6vw,28px);font-weight:900;color:' + _accent + ';text-align:center;'
-          + 'letter-spacing:2px;margin-bottom:4px;">' + (tier === 'SSR' ? '🌟 SSR' : tier === 'UR' ? '👑 UR' : '✨ SR') + ' 自選召喚卷</div>'
-        + '<div style="font-size:13px;color:#cfc4ff;text-align:center;margin-bottom:14px;">'
+        + 'border-radius:20px;padding:22px 24px;width:min(1040px,96vw);box-sizing:border-box;max-height:90vh;display:flex;flex-direction:column;'
+        + 'box-shadow:0 0 50px ' + _accent + '55;" class="stp-box">'
+        + '<div class="stp-title" style="font-size:36px;font-weight:900;color:' + _accent + ';text-align:center;'
+          + 'letter-spacing:2px;margin-bottom:6px;">' + (tier === 'SSR' ? '🌟 SSR' : tier === 'UR' ? '👑 UR' : '✨ SR') + ' 自選召喚卷</div>'
+        + '<div class="stp-sub" style="font-size:19px;color:#cfc4ff;text-align:center;margin-bottom:14px;line-height:1.5;">'
           + '點選你想要的英雄(共 <b style="color:' + _accent + ';">' + _pool.length + '</b> 名未收錄'
           + (_cstURList.length ? '、<b style="color:#ffd97a;">' + _cstURList.length + '</b> 名已收錄可換命星' : '')
           + ')・持有 <b style="color:#fff;">' + _have + '</b> 張</div>'
-        + '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;overflow-y:auto;padding:4px;flex:1;">'
+        + '<div class="stp-grid" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;overflow-y:auto;padding:4px;flex:1;min-height:0;">'
           + _grid
         + '</div>'
         + '<div style="text-align:center;margin-top:16px;">'
           + '<button onclick="playSfx(\'sfx-cancel\',0.5);(function(){var m=document.getElementById(\'_summon-ticket-pick-modal\');if(m)m.remove();if(typeof _openSummonTicketModal===\'function\')_openSummonTicketModal();})()" '
-          + 'style="padding:10px 32px;font-size:16px;font-weight:800;background:rgba(40,30,70,0.85);'
-          + 'border:2px solid rgba(180,140,255,0.6);color:#cfc4ff;border-radius:10px;cursor:pointer;'
+          + 'class="stp-back" style="padding:12px 44px;font-size:22px;font-weight:900;background:rgba(40,30,70,0.85);'
+          + 'border:2px solid rgba(180,140,255,0.6);color:#e4dcff;border-radius:12px;cursor:pointer;min-height:48px;'
           + 'font-family:inherit;letter-spacing:2px;">← 返回</button>'
         + '</div>'
       + '</div>';
     document.body.appendChild(_modal);
+    try{ if(typeof window._lxpsFaceFitIn === 'function') window._lxpsFaceFitIn(_modal); }catch(_){}   /* ★ v5.385.0 臉部對齊(含懶載入捲到才載的圖) */
     _modal.onclick = function(ev){ if(ev.target === _modal){ _modal.remove(); try{ _openSummonTicketModal(); }catch(_){} } };
   }catch(e){ console.warn('[自選召喚卷面板]', e); }
 }
@@ -44004,7 +44101,7 @@ function _showSummonRareHeroPreview(rareResults){
       html += '<div style="width:min(80vw,360px);aspect-ratio:1/1;border-radius:18px;overflow:hidden;'
         + 'border:3px solid rgba(255,200,100,0.85);box-shadow:0 0 30px rgba(255,200,80,0.65);'
         + 'background:rgba(20,15,40,0.7);">'
-        + '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover;" '
+        + '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover;object-position:' + ((typeof getHeroObjPos === 'function') ? (getHeroObjPos(heroName) || 'center 15%') : 'center 15%') + ';" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)" '
         + 'onerror="this.parentNode.innerHTML=\'<div style=&quot;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:120px;&quot;>' + av + '</div>\'"/>'
         + '</div>';
     }
@@ -44041,6 +44138,7 @@ function _showSummonRareHeroPreview(rareResults){
   inner.innerHTML = html;
   ov.appendChild(inner);
   document.body.appendChild(ov);
+  try{ if(typeof window._lxpsFaceFitIn === 'function') window._lxpsFaceFitIn(ov); }catch(_){}   /* ★ v5.385.0 立繪臉部對齊(方框不再切到頭) */
   try{ playSfx('sfx-summon-reveal', 0.7); }catch(_){}
 }
 
@@ -48495,11 +48593,11 @@ const SKILL_UPGRADE_DEF = {
   '星之願':       { cat:'mixed', first:true, label:'願望力量' },        // 100% 升(治癒 特80%/守護 特70% 都 ×(1+等級×0.05));勇氣之願回合/能量固定
   '元氣應援歌':   { cat:'heal',  first:true, label:'治療量' },          // 特40% 升;攻擊強化 2 回合固定
   '雙人合聲':     { cat:'mixed', first:true, label:'跟唱效果' },        // 50% 升(50×(1+等級×0.05));同台 2 回合/每回合 6 下固定
-  '現烤馬卡龍':   { cat:'heal',  first:true, label:'治療量' },          // 特180% 升;解除 1 個不利固定
+  '現烤馬卡龍':   { cat:'heal',  first:true, label:'治療量' },          // 特180% 升;解除 1 個不利、隨機有利 2 回合固定(v5.384.0)
   '甜點融合':     { cat:'mixed', first:true, label:'融合加成' },        // +30% 升(30×(1+等級×0.05))
-  '速寫定格':     { cat:'dmg',   first:true, label:'技能傷害' },        // 特220% 升;暈眩 50% 固定
+  '速寫定格':     { cat:'dmg',   first:true, label:'技能傷害' },        // 特220% 升;暈眩 80% 固定(v5.384.0 由 50% 提高)
   '名場面重現':   { cat:'dmg',   first:true, label:'重現傷害' },        // 70% 升(玩家路徑 doDmg 自動乘等級);上限特450%/BOSS 減半固定
-  '煥然一新':     { cat:'heal',  first:true, label:'治療量' },          // 特150% 升
+  '煥然一新':     { cat:'no_upgrade', label:'固定效果(不可升級):解除 1 名友方全部不利狀態並回復最大 HP 100%' },   // ★ v5.384.0 老師:能量 4、回復 100%、此技能無法升級(舊:heal 特150% 升)
   '色彩診斷':     { cat:'heal',  first:true, label:'治療量' },          // 特60% 升;換屬性 3 回合固定
   '中華鐵鍋':     { cat:'mixed', first:true, label:'護盾量' },          // 攻150% 護盾 升;代承傷 2 回合/−30% 固定
   '三道式套餐':   { cat:'heal',  first:true, label:'前菜治療量' },      // 攻120% 升;主菜/甜點固定
@@ -50729,6 +50827,21 @@ function _renderBurstFdWithLv(burstName, originalFd, burstLv){
   let _customHandled = false;
 
   switch(burstName){
+    // ★ v5.384.0 — SR 七職人爆發(老師 2026-11-11 改版):百分數照 _burstMult 放大(點心師傅「復活 25%」是固定值不放大);
+    //   爆發 MAX(Lv5)時,爆發給的所有狀態回合數 +1(與 game_battle.js _SR7.burst 的 X 同口徑)。fd 與 sd 都走這裡。
+    //   太空人「流星雨墜落」沒有狀態、沒有固定百分數 ⇒ 交給通用引擎。
+    case '奇蹟・閃耀星光砲': case '巔峰演唱會': case '夢幻甜點塔': case '完結篇・跨頁大格': case '閃耀改造秀': case '滿漢全席': {
+      if(burstLv > 0){
+        fd = fd.replace(/(\d+(?:\.\d+)?)\s*%/g, function(m, num){
+          if(burstName === '夢幻甜點塔' && num === '25') return m;   // 復活 25% 固定
+          return HL((Math.round(parseFloat(num) * _mult * 10) / 10) + '%');
+        });
+      }
+      if(burstLv >= 4){
+        fd = fd.replace(/(\d+)\s*回合/g, function(m, num){ return HL((parseInt(num, 10) + 1) + ' 回合'); });
+      }
+      _customHandled = true; break;
+    }
     // ★ v5.191.0 — 十二星神 第一批(四個爆發全部開專屬 case:
     //   牡羊/雙子/巨蟹 的 fd 內都另有「不該隨等級成長」的固定百分數,交給通用引擎會被一起乘大;
     //   金牛的 fd **完全沒有傷害百分數**,通用引擎抓不到 → 不開 case 圖鑑會永遠停在 Lv1。)
@@ -55241,7 +55354,7 @@ function upgradeBurst(name) {
       提升 <span style="color:#ff9966;font-weight:800;">【${name}】</span> 的極限爆發<br>
       Lv.${curLv+1} → <span style="color:#ffcc44;font-weight:900;">Lv.${nextLv+1}</span>（效果 +${nextLv*10}%）
     </div>
-    <div style="font-size:16px;color:#ff8888;margin-bottom:20px;">⚠ 此操作無法反悔，請慎重決定</div>
+    <div style="margin-bottom:20px;"></div><!-- ★ v5.384.0 老師 2026-11-11:刪除「此操作無法反悔」(商店有極限重置秘藥) -->
     <div style="display:flex;gap:12px;justify-content:center;">
       <button id="_burst_yes" style="padding:12px 36px;font-size:22px;font-weight:800;
         background:rgba(255,140,0,0.25);border:2px solid #ffaa44;color:#ffcc88;
@@ -55483,7 +55596,7 @@ function investStat(name, stat) {
       確定要將 <span style="color:#ffcc44;font-weight:800;">1 點</span> 素質投資到<br>
       <span style="color:#88ddff;font-weight:800;">【${name}】</span> 的 <span style="color:#${stat==='hp'?'ff8888':stat==='atk'?'ffaa44':stat==='sp'?'cc88ff':'44ddff'};font-weight:800;">${label}</span> 嗎？
     </div>
-    <div style="font-size:17px;color:#ff8888;margin-bottom:22px;margin-top:6px;">⚠ 此操作無法反悔，請慎重決定</div>
+    <div style="margin-bottom:22px;"></div><!-- ★ v5.384.0 老師 2026-11-11:刪除「此操作無法反悔」(商店有能力素質重置之書) -->
     <div style="display:flex;gap:12px;justify-content:center;">
       <button id="_invest_yes" style="padding:12px 40px;font-size:22px;font-weight:800;
         background:rgba(120,80,255,0.3);border:2px solid #aa77ff;color:#cc99ff;
@@ -55562,22 +55675,21 @@ function upgradeSkill(name, slot) {
   <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
     <!-- 左：確認資訊 -->
     <div style="flex:1;min-width:260px;text-align:center;">
-      <div style="font-size:56px;margin-bottom:10px;">📖</div>
-      <div style="font-size:32px;font-weight:900;color:#88ccff;margin-bottom:14px;">技能升級確認</div>
-      <div style="font-size:26px;color:#eee;margin-bottom:12px;line-height:1.7;">
+      <div style="font-size:68px;margin-bottom:10px;">📖</div>
+      <div style="font-size:42px;font-weight:900;color:#88ccff;margin-bottom:16px;">技能升級確認</div>
+      <div style="font-size:34px;color:#eee;margin-bottom:22px;line-height:1.7;">
         使用 <span style="color:#ffcc44;font-weight:800;">1 本</span> 技能升級書<br>
         提升 <span style="color:#88ddff;font-weight:800;">【${name}】</span> 的技能<br>
         <span style="color:#aaddff;font-weight:800;">【${skName}】</span><br>
         Lv.${nextLv} → <span style="color:#44ff88;font-weight:900;">Lv.${nextLv+1}</span>
       </div>
-      <div style="font-size:20px;color:#ff8888;margin-bottom:22px;">⚠ 此操作無法反悔，請慎重決定</div>
       <div style="display:flex;gap:14px;justify-content:center;">
-        <button id="_upg_yes2" style="padding:14px 36px;font-size:26px;font-weight:800;
+        <button id="_upg_yes2" style="padding:16px 40px;font-size:34px;white-space:nowrap;font-weight:800;
           background:rgba(50,120,255,0.3);border:3px solid #4499ff;color:#88ccff;
           border-radius:14px;cursor:pointer;font-family:inherit;"
           onmouseover="this.style.background='rgba(80,150,255,0.5)'"
           onmouseout="this.style.background='rgba(50,120,255,0.3)'">✔ 確定升級</button>
-        <button id="_upg_no2" style="padding:14px 28px;font-size:26px;font-weight:800;
+        <button id="_upg_no2" style="padding:16px 30px;font-size:34px;white-space:nowrap;font-weight:800;
           background:rgba(60,10,10,0.3);border:3px solid #e84040;color:#e84040;
           border-radius:14px;cursor:pointer;font-family:inherit;"
           onmouseover="this.style.background='rgba(232,64,64,0.25)'"
@@ -55585,12 +55697,32 @@ function upgradeSkill(name, slot) {
       </div>
     </div>
     <!-- 右：Lv.0~9 效果一覽 -->
-    <div style="width:min(480px,100%);flex-shrink:0;background:rgba(5,8,20,0.85);border:2px solid rgba(100,180,255,0.2);border-radius:18px;padding:10px 6px;">
-      <div style="font-size:16px;color:#88aaff;font-weight:700;text-align:center;margin-bottom:6px;letter-spacing:2px;">── 升級效果一覽 ──</div>
+    <div id="_upg2-tbl" style="width:min(540px,100%);flex-shrink:0;background:rgba(5,8,20,0.85);border:2px solid rgba(100,180,255,0.2);border-radius:18px;padding:10px 6px;">
+      <div style="font-size:24px;color:#88aaff;font-weight:700;text-align:center;margin-bottom:8px;letter-spacing:2px;">── 升級效果一覽 ──</div>
       ${(typeof buildSkillLvTable==='function') ? buildSkillLvTable(skName, nextLv-1) : ''}
     </div>
   </div>`;
   document.body.appendChild(boxU2);
+  // ★ v5.384.0(老師 2026-11-11「圖鑑的技能升級視窗內文字要放大」)— 左側字 26→34px、標題 32→42px;
+  //   右側升級一覽表(buildSkillLvTable 共用,只在本視窗內放大)每格 clamp(11~16px)→clamp(16~26px);
+  //   手機橫放(高 ≤520)整體縮回 0.72 倍免得一頁只放得下幾行;PC 再依螢幕倍率放大(同九州輿圖 _cnPcZoomCard)。
+  //   「⚠ 此操作無法反悔」刪除(商店有技能等級重置之書)。
+  try{
+    // main.css 對 ≤1180px 螢幕用 !important 把本視窗的表格 20px、按鈕 18px 壓回去 ⇒ 這裡一律帶 important
+    boxU2.querySelectorAll('#_upg2-tbl td').forEach(function(td){ td.style.setProperty('font-size', 'clamp(16px,1.9vw,26px)', 'important'); td.style.setProperty('padding', '5px 10px', 'important'); });
+    boxU2.querySelectorAll('#_upg_yes2,#_upg_no2').forEach(function(bt){ bt.style.setProperty('font-size', '30px', 'important'); bt.style.setProperty('padding', '14px 30px', 'important'); });
+    if(window._cnPhoneShort && window._cnPhoneShort()){   // 手機橫放:整窗縮 0.72 倍,寬高換算回螢幕內 ⇒ 左右兩欄並排(表格字 22px×0.72≈16px)
+      var _uz = 0.72;   // 用真實螢幕 px 換算(手機上 zoom 內的 vw/vh 各瀏覽器算法不一致,不用 vw)
+      boxU2.querySelectorAll('#_upg2-tbl td').forEach(function(td){ td.style.setProperty('font-size', '22px', 'important'); td.style.setProperty('padding', '3px 8px', 'important'); });
+      boxU2.style.zoom = String(_uz); boxU2.style.padding = '18px 24px';
+      var _uw = Math.floor(Math.min(window.innerWidth * 0.94, 1300 * _uz) / _uz), _uh = Math.floor(window.innerHeight * 0.92 / _uz);
+      boxU2.style.width = _uw + 'px';
+      boxU2.style.setProperty('max-width', _uw + 'px', 'important');   // main.css [id$="-confirm-box"] 有 max-width/max-height !important
+      boxU2.style.setProperty('max-height', _uh + 'px', 'important');
+      try{ var _uin = boxU2.firstElementChild; if(_uin) _uin.style.setProperty('max-width', 'none', 'important'); }catch(_){}   // main.css「#upgrade-confirm-box > div」也用 vw 夾寬
+    }
+    else if(window._cnPcZoomCard) window._cnPcZoomCard(boxU2, 92, 1200, 90);
+  }catch(_eUpg2Z){}
   // ★ v3.16.71 — 開技能升級視窗不再播音效(避免 iOS 連播兩音卡頓→視窗即時開啟);音效改在按下「✔ 確定升級」時才播
   document.getElementById('_upg_yes2').onclick = () => {
     try{ if(typeof playSfx === 'function') playSfx('sfx-statup', 0.7); }catch(_){}   // ★ v3.16.71 — 音效移到按下「確定升級」時
@@ -82511,6 +82643,107 @@ function makeRadar(dims, size) {
     }catch(_){}
   }
   W._cstToast = _toast;
+  /* ★ v5.385.0(老師 2026-11-11 23:15 附截圖「召喚出命星的視窗放大並顯示該英雄圖片(等同初次召喚時的視窗)」)
+     自選召喚卷/隨機召喚卷換命星、命星合成屋送出自選命星後,原本只跳一行小提示(_toast),
+     改成比照「🌟 召喚成功!」英雄登場視窗(_showSummonRareHeroPreview)的大視窗:英雄立繪(臉部對齊)＋名字＋6 顆命星進度＋
+     「✨ 現在去點亮」(直接開這位英雄的星圖)/「太棒了!」。PC 由 #lxps-pc-zoom-js 依螢幕放大;手機橫放改左圖右字。 */
+  W._cstStarGainShow = function(name, tier, opt){
+    opt = opt || {};
+    try{
+      var old = document.getElementById('cst-gain-ov'); if(old) old.remove();
+      if(!document.getElementById('cst-gain-css')){
+        var st = document.createElement('style'); st.id = 'cst-gain-css';
+        st.textContent = [
+          '#cst-gain-ov{position:fixed;inset:0;z-index:10760;display:flex;align-items:safe center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(5,3,15,0.92);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;animation:newHeroOvFadeIn .45s ease-out;overflow-y:auto;}',
+          '#cst-gain-ov .cg-card{background:linear-gradient(135deg,rgba(40,20,60,0.96),rgba(22,14,48,0.96));border:3px solid rgba(255,210,110,0.8);border-radius:20px;padding:20px 30px 22px;width:min(96vw,640px);box-sizing:border-box;max-height:94vh;overflow-y:auto;text-align:center;animation:newHeroGlow 2.4s ease-in-out infinite;}',
+          '#cst-gain-ov .cg-title{font-size:34px;font-weight:900;color:#ffe066;letter-spacing:4px;text-shadow:0 0 18px rgba(255,200,80,0.95),0 0 36px rgba(255,150,200,0.5);margin-bottom:10px;}',
+          '#cst-gain-ov .cg-body{display:flex;flex-direction:column;align-items:center;gap:10px;}',
+          '#cst-gain-ov .cg-pic{width:min(80vw,360px);height:min(400px,37vh);border-radius:18px;overflow:hidden;border:3px solid rgba(255,200,100,0.85);box-shadow:0 0 30px rgba(255,200,80,0.65);background:rgba(20,15,40,0.7);flex:0 0 auto;position:relative;}',
+          '#cst-gain-ov .cg-pic img{width:100%;height:100%;object-fit:cover;display:block;}',
+          '#cst-gain-ov .cg-pic .cg-badge{position:absolute;left:10px;top:10px;font-size:20px;font-weight:900;padding:3px 14px;border-radius:999px;color:#2a1600;}',
+          '#cst-gain-ov .cg-txt{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;}',
+          '#cst-gain-ov .cg-name{font-size:40px;font-weight:900;color:#ffe066;letter-spacing:4px;text-shadow:0 0 14px rgba(255,200,80,0.85);line-height:1.2;}',
+          '#cst-gain-ov .cg-stars{font-size:38px;letter-spacing:6px;line-height:1;}',
+          '#cst-gain-ov .cg-stars .on{color:#ffd24a;text-shadow:0 0 10px rgba(255,200,60,0.9);}',
+          '#cst-gain-ov .cg-stars .off{color:rgba(200,200,255,0.25);}',
+          '#cst-gain-ov .cg-stars .new{display:inline-block;animation:cstStarPop 0.9s cubic-bezier(.2,1.6,.4,1) 0.35s both;}',
+          '#cst-gain-ov .cg-cnt{font-size:22px;font-weight:900;color:#9fd8ff;}',
+          '#cst-gain-ov .cg-cnt b{color:#ffd97a;font-size:26px;}',
+          '#cst-gain-ov .cg-hint{font-size:21px;color:#fff3cf;line-height:1.6;font-weight:800;}',
+          '#cst-gain-ov .cg-wish{font-size:19px;color:#3a1600;background:#ffd23a;border-radius:12px;padding:6px 14px;font-weight:900;line-height:1.45;}',
+          '#cst-gain-ov .cg-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:14px;}',
+          '#cst-gain-ov .cg-btn{min-height:54px;padding:12px 34px;font-size:23px;font-weight:900;border-radius:14px;cursor:pointer;font-family:inherit;letter-spacing:2px;color:#fff;}',
+          '#cst-gain-ov .cg-go{border:2.5px solid #9fd8ff;background:linear-gradient(135deg,rgba(60,90,220,0.9),rgba(40,40,140,0.9));box-shadow:0 0 16px rgba(120,170,255,0.55);}',
+          '#cst-gain-ov .cg-ok{border:2.5px solid rgba(255,220,150,0.9);background:linear-gradient(135deg,rgba(180,100,40,0.9),rgba(220,140,60,0.9));box-shadow:0 0 18px rgba(255,180,80,0.6);}',
+          /* 手機橫放(約 891×411):左圖右字,一屏看完 */
+          '@media (orientation:landscape) and (max-height:520px){',
+          '  #cst-gain-ov{padding:6px;}',
+          '  #cst-gain-ov .cg-card{padding:10px 16px;width:min(98vw,760px);max-height:calc(100vh - 12px);border-radius:14px;}',
+          '  #cst-gain-ov .cg-title{font-size:22px;margin-bottom:6px;letter-spacing:2px;}',
+          '  #cst-gain-ov .cg-body{flex-direction:row;align-items:center;gap:16px;text-align:center;}',
+          '  #cst-gain-ov .cg-pic{width:190px;height:calc(100vh - 110px);max-height:270px;border-radius:12px;}',
+          '  #cst-gain-ov .cg-pic .cg-badge{font-size:15px;padding:2px 10px;}',
+          '  #cst-gain-ov .cg-txt{flex:1 1 auto;gap:6px;}',
+          '  #cst-gain-ov .cg-name{font-size:28px;} #cst-gain-ov .cg-stars{font-size:28px;letter-spacing:4px;} #cst-gain-ov .cg-cnt{font-size:17px;} #cst-gain-ov .cg-cnt b{font-size:20px;}',
+          '  #cst-gain-ov .cg-hint{font-size:16px;line-height:1.45;} #cst-gain-ov .cg-wish{font-size:14px;padding:4px 10px;}',
+          '  #cst-gain-ov .cg-btns{margin-top:6px;gap:10px;} #cst-gain-ov .cg-btn{min-height:44px;padding:8px 20px;font-size:18px;}',
+          '}'
+        ].join('\n');
+        (document.head || document.documentElement).appendChild(st);
+      }
+      var k = W._cstKey(name) || name;
+      var held = 0; try{ held = W._cstHeld(k) | 0; }catch(_){}
+      var lit = 0; try{ lit = W._cstLit(k).length | 0; }catch(_){}
+      var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) ? HERO_IMGS[name] : '';
+      var av = (typeof AVATARS !== 'undefined' && AVATARS[name]) || '⭐';
+      var op = 'center 15%';
+      try{ if(typeof getHeroObjPos === 'function') op = getHeroObjPos(name) || op; }catch(_){}
+      var t = tier || '';
+      var bc = t === 'UR' ? '#ff5e9c' : (t === 'SSR' ? '#ffb347' : (t === 'SR' ? '#7fe0ff' : '#ccd4e8'));
+      var stars = '';
+      for(var i = 0; i < W._CST_MAX; i++){
+        stars += '<span class="' + (i < held ? 'on' : 'off') + (i === held - 1 ? ' new' : '') + '">★</span>';
+      }
+      var free = Math.max(0, held - lit);
+      var html = '<div class="cg-card" role="dialog" aria-modal="true">'
+        + '<div class="cg-title">' + _T('⭐ 拿到 1 顆命星! ⭐', '⭐ 命星 +1 ⭐') + '</div>'
+        + '<div class="cg-body">'
+        +   '<div class="cg-pic">'
+        +     (img ? '<img src="' + _esc(img) + '" alt="" style="object-position:' + op + ';" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)" onerror="this.parentNode.insertAdjacentHTML(\'beforeend\',\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px;&quot;>' + _esc(av) + '</div>\');this.remove();">'
+                   : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px;">' + _esc(av) + '</div>')
+        +     (t ? '<div class="cg-badge" style="background:' + bc + ';">' + _esc(t) + '</div>' : '')
+        +   '</div>'
+        +   '<div class="cg-txt">'
+        +     '<div class="cg-name">' + _esc(name) + '</div>'
+        +     '<div class="cg-stars" aria-label="命星 ' + held + '/' + W._CST_MAX + '">' + stars + '</div>'
+        +     '<div class="cg-cnt">' + _T('命星 ', '命星 ') + '<b>' + held + '</b> / ' + W._CST_MAX + (free > 0 ? _T('(還有 ' + free + ' 顆可以點亮)', '(未點亮 ' + free + ' 顆)') : '') + '</div>'
+        +     '<div class="cg-hint">' + _T('到英雄圖鑑「✨ 命座」點亮它,<br>英雄就會變得更強!', '請至英雄圖鑑「✨ 命座」分配命星。') + '</div>'
+        +     (opt.wish ? '<div class="cg-wish">' + _T('🌠 願望實現!(本週 ' + _esc(t) + ' 願望已用掉,下週一早上 8:00 重置)', '🌠 願望已實現(本週 ' + _esc(t) + ' 願望已使用,下週一 08:00 重置)') + '</div>' : '')
+        +   '</div>'
+        + '</div>'
+        + '<div class="cg-btns">'
+        +   ((typeof W._cstOpenMap === 'function' && free > 0) ? '<button type="button" class="cg-btn cg-go" data-cg="go">' + _T('✨ 現在去點亮', '✨ 前往點亮') + '</button>' : '')
+        +   '<button type="button" class="cg-btn cg-ok" data-cg="ok">' + _T('太棒了!', '確認') + '</button>'
+        + '</div>'
+        + '</div>';
+      var ov = document.createElement('div'); ov.id = 'cst-gain-ov';
+      ov.innerHTML = html;
+      ov.addEventListener('click', function(ev){
+        var b = ev.target;
+        while(b && b !== ov && !(b.getAttribute && b.getAttribute('data-cg'))) b = b.parentNode;
+        if(!b || b === ov) return;
+        var a = b.getAttribute('data-cg');
+        try{ playSfx(a === 'go' ? 'sfx-sel' : 'sfx-confirm', 0.6); }catch(_){}
+        try{ ov.remove(); }catch(_){}
+        if(a === 'go'){ try{ var sy = document.getElementById('cst-synth-ov'); if(sy) sy.remove(); }catch(_){} try{ W._cstOpenMap(k); }catch(_){} }
+        else if(typeof opt.onClose === 'function'){ try{ opt.onClose(); }catch(_){} }
+      });
+      document.body.appendChild(ov);
+      try{ if(typeof W._lxpsFaceFitIn === 'function') W._lxpsFaceFitIn(ov); }catch(_){}
+      try{ playSfx('sfx-summon-reveal', 0.7); }catch(_){}
+      return true;
+    }catch(e){ console.warn('[命座] 命星獲得視窗', e); return false; }
+  };
 
   /* ── 取得命星(召喚重複 / GM / UR 自選卷)。英雄已滿 6 命 ⇒ 轉同稀有度「虛無的命星」(UR 滿 6 ⇒ UR 自選命星) ── */
   W._cstGrantStar = function(name, n, src){
@@ -82957,16 +83190,41 @@ function makeRadar(dims, size) {
   };
   W._cstTicketSectionHtml = function(tier, list){
     if(!list || !list.length) return '';
-    var h = '<div style="flex-basis:100%;width:100%;margin:10px 0 2px;padding-top:10px;border-top:1px dashed rgba(255,200,255,0.4);'
-      + 'font-size:14px;font-weight:800;color:#ffd6f0;text-align:center;">' + _T('✨ 已經有的 ' + tier + ' → 換成 1 顆命星', '✨ 已擁有的 ' + tier + '(轉為 1 顆命星)') + '</div>';
+    try{ if(typeof W._stpCssEnsure === 'function') W._stpCssEnsure(); }catch(_){}
+    /* ★ v5.385.0 放大＋臉部對齊(同 _openSummonTicketPickModal 的 .stp-card) */
+    var h = '<div class="stp-sec" style="flex-basis:100%;width:100%;margin:12px 0 4px;padding-top:12px;border-top:1px dashed rgba(255,200,255,0.4);'
+      + 'font-size:21px;font-weight:900;color:#ffd6f0;text-align:center;">' + _T('✨ 已經有的 ' + tier + ' → 換成 1 顆命星', '✨ 已擁有的 ' + tier + '(轉為 1 顆命星)') + '</div>';
     list.forEach(function(n){
       var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[n]) ? HERO_IMGS[n] : '';
-      h += '<button type="button" data-cst-urtk="' + _esc(n) + '" data-cst-tktier="' + tier + '" style="width:108px;background:rgba(40,0,40,0.7);border:2px solid #ffb3e666;border-radius:11px;cursor:pointer;padding:0 0 6px;font-family:inherit;overflow:hidden;">'
-        + (img ? '<img src="' + _esc(img) + '" alt="" loading="lazy" style="width:100%;height:96px;object-fit:cover;border-radius:9px 9px 0 0;background:#0a0a18;">' : '<div style="height:96px;display:flex;align-items:center;justify-content:center;font-size:34px;">⭐</div>')
-        + '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:5px;padding:0 4px;line-height:1.25;">' + _esc(n) + '</div>'
-        + '<div style="font-size:11px;color:#ffd97a;font-weight:800;">⭐ ' + W._cstHeld(n) + '/6 → +1</div></button>';
+      var op = 'center 15%';
+      try{ if(typeof getHeroObjPos === 'function') op = getHeroObjPos(n) || op; }catch(_){}
+      h += '<button type="button" class="stp-card stp-star" data-cst-urtk="' + _esc(n) + '" data-cst-tktier="' + tier + '" style="--stp-ac:#ffb3e6;">'
+        + (img ? '<img src="' + _esc(img) + '" alt="" loading="lazy" style="object-position:' + op + ';" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">' : '<div class="stp-ph">⭐</div>')
+        + '<div class="stp-nm">' + _esc(n) + '</div>'
+        + '<div class="stp-st">⭐ ' + W._cstHeld(n) + '/6 → +1</div></button>';
     });
     return h;
+  };
+  /* ★ v5.385.0 自選召喚卷/命星視窗共用的放大卡片樣式(PC 由 #lxps-pc-zoom-js 依螢幕再放大;手機橫放縮小一級) */
+  W._stpCssEnsure = function(){
+    if(document.getElementById('stp-css')) return;
+    var st = document.createElement('style'); st.id = 'stp-css';
+    st.textContent = [
+      '.stp-card{width:150px;flex:0 0 auto;background:rgba(0,0,25,0.7);border:2px solid var(--stp-ac,#7fe0ff);border-color:color-mix(in srgb,var(--stp-ac,#7fe0ff) 45%,transparent);border-radius:13px;cursor:pointer;padding:0 0 8px;font-family:inherit;overflow:hidden;transition:transform .12s,border-color .12s;}',
+      '.stp-card.stp-star{background:rgba(40,0,40,0.7);}',
+      '@media (hover:hover){.stp-card:hover{transform:translateY(-3px);border-color:var(--stp-ac,#7fe0ff);}}',
+      '.stp-card img,.stp-card .stp-ph{display:block;width:100%;height:176px;object-fit:cover;border-radius:11px 11px 0 0;background:#0a0a18;}',
+      '.stp-card .stp-ph{display:flex;align-items:center;justify-content:center;font-size:48px;}',
+      '.stp-nm{font-size:19px;font-weight:900;color:#fff;margin-top:6px;padding:0 4px;line-height:1.25;}',
+      '.stp-st{font-size:16px;color:#ffd97a;font-weight:900;margin-top:3px;}',
+      '@media (orientation:landscape) and (max-height:520px){',
+      '  .stp-box{padding:10px 12px !important;max-height:96vh !important;}',
+      '  .stp-title{font-size:24px !important;margin-bottom:2px !important;} .stp-sub{font-size:15px !important;margin-bottom:6px !important;}',
+      '  .stp-card{width:112px;} .stp-card img,.stp-card .stp-ph{height:124px;} .stp-nm{font-size:15px;} .stp-st{font-size:13px;}',
+      '  .stp-sec{font-size:16px !important;} .stp-back{font-size:17px !important;padding:8px 30px !important;min-height:44px !important;}',
+      '}'
+    ].join('\n');
+    (document.head || document.documentElement).appendChild(st);
   };
   W._cstURTicketSectionHtml = function(list){ return W._cstTicketSectionHtml('UR', list); };   /* 舊名保留(相容) */
   /* ★ v5.339.0 opts.random=true:SR/SSR「隨機」召喚卷全收錄時使用 ⇒ 扣隨機卷、從 _cstRandomTicketStarCandidates 隨機挑一位(按下確認當下才抽) */
@@ -83086,8 +83344,11 @@ function makeRadar(dims, size) {
           try{ var m = document.getElementById('_summon-ticket-pick-modal'); if(m) m.remove(); }catch(_){}
           if(isRnd){ try{ var m2 = document.getElementById('_summon-ticket-modal'); if(m2) m2.remove(); }catch(_){} }   /* ★ v5.339.0 隨機卷從主面板來 */
           try{ playSfx('sfx-medal-unlock', 0.8); }catch(_){}
+          /* ★ v5.385.0 改成大視窗(英雄圖＋命星進度);視窗開不出來才退回原本的小提示 */
+          if(!W._cstStarGainShow(name, tier, { wish: !!wish })){
           _toast(_T('⭐ ' + name + ' 拿到 1 顆命星!\n到英雄圖鑑「✨ 命座」點亮它吧!', '⭐ ' + name + ' 獲得命星 ×1\n請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
           if(wish){ setTimeout(function(){ try{ _toast(_T('🌠 願望實現!(本週 ' + tier + ' 願望已用掉,下週一早上 8:00 重置)', '🌠 願望已實現(本週 ' + tier + ' 願望已使用,下週一 08:00 重置)'), '#ffe066'); }catch(_){} }, 2600); }
+          }
         }catch(e2){ console.warn('[命座] 自選卷轉命星例外', e2); _toast('發生錯誤:' + (e2 && e2.message ? e2.message : e2), '#ff8844'); }
       };
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if((await window._lxpsConfirm(msg))) go();
@@ -83235,16 +83496,20 @@ function makeRadar(dims, size) {
       '.cst-entry{display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%;box-sizing:border-box;padding:12px 16px;margin:0 0 14px;border-radius:14px;cursor:pointer;font-family:inherit;text-align:left;border:2px solid rgba(160,180,255,0.75);background:linear-gradient(135deg,rgba(40,60,160,0.55),rgba(20,20,70,0.75));color:#fff;}',
       /* 命星工坊 */
       '.cst-tabs{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;}',
-      '.cst-tab{min-height:44px;padding:8px 18px;font-size:17px;font-weight:900;border-radius:12px;border:2px solid rgba(160,180,255,0.6);background:rgba(20,26,70,0.8);color:#dfe6ff;cursor:pointer;font-family:inherit;}',
+      '.cst-tab{min-height:50px;padding:8px 20px;font-size:20px;font-weight:900;border-radius:12px;border:2px solid rgba(160,180,255,0.6);background:rgba(20,26,70,0.8);color:#dfe6ff;cursor:pointer;font-family:inherit;}',
       '.cst-tab.on{background:linear-gradient(135deg,#ffd97a,#ffb347);color:#2a1600;border-color:#ffe9a8;}',
       '.cst-sec{background:rgba(8,12,40,0.7);border:1.5px solid rgba(140,170,255,0.35);border-radius:14px;padding:12px 14px;margin-top:10px;}',
-      '.cst-sec h4{margin:0 0 8px;font-size:18px;color:#ffe9a8;}',
-      '.cst-chips{display:flex;flex-wrap:wrap;gap:8px;}',
-      '.cst-chip{min-height:44px;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:12px;border:2px solid rgba(160,180,255,0.55);background:rgba(25,32,80,0.85);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}',
+      /* ★ v5.385.0 命星合成屋放大:頭像 34→60px(圓角方形＋臉部對齊)、字 15→19px、合成格 64→84px */
+      '.cst-sec h4{margin:0 0 10px;font-size:22px;color:#ffe9a8;}',
+      '.cst-chips{display:flex;flex-wrap:wrap;gap:10px;}',
+      '.cst-chip{min-height:72px;display:flex;align-items:center;gap:10px;padding:6px 16px 6px 6px;border-radius:14px;border:2px solid rgba(160,180,255,0.55);background:rgba(25,32,80,0.85);color:#fff;font-size:19px;font-weight:800;cursor:pointer;font-family:inherit;}',
+      /* 有英雄圖的按鈕改成直式卡片(圖 132×150,臉部對齊),名字在圖下方 */
+      '.cst-chip.cst-hc{flex-direction:column;align-items:stretch;gap:4px;width:140px;padding:4px 4px 8px;text-align:center;line-height:1.25;}',
+      '.cst-chip.cst-hc img{width:100%;height:150px;border-radius:10px;}',
       '.cst-chip[disabled]{opacity:0.4;cursor:not-allowed;}',
-      '.cst-chip img{width:34px;height:34px;border-radius:50%;object-fit:cover;}',
-      '.cst-tray{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;}',
-      '.cst-tslot{width:64px;height:64px;border-radius:50%;border:2px dashed rgba(200,210,255,0.6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#cfd8ff;text-align:center;overflow:hidden;background:rgba(10,14,40,0.8);}',
+      '.cst-chip img{width:60px;height:60px;border-radius:12px;object-fit:cover;object-position:center 12%;flex:0 0 auto;background:#0a0a18;}',
+      '.cst-tray{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0;}',
+      '.cst-tslot{width:84px;height:84px;border-radius:50%;border:2px dashed rgba(200,210,255,0.6);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#cfd8ff;text-align:center;overflow:hidden;background:rgba(10,14,40,0.8);}',
       '.cst-tslot.on{border-style:solid;border-color:#ffd97a;color:#ffe9a8;}',
       /* ★ v5.275.0(老師 2026-10-17 13:52)點亮命星回饋:按鈕按下閃光、星星爆開、英雄頭像邊框 2 秒呼吸光芒、飄字與粒子 */
       '.cst-btn.cst-press{animation:cstPress .38s ease-out;}',
@@ -83301,7 +83566,7 @@ function makeRadar(dims, size) {
       '  .cst-sname{font-size:19px;padding-right:50px;} .cst-desc{font-size:15px;} .cst-btn{font-size:16px;min-height:44px;padding:8px 16px;}',
       '  .cst-foot{margin-top:4px;font-size:12px;} .cst-foot details{display:none;}',
       '  .cst-pow{font-size:22px;}',
-      '  .cst-sec{padding:8px 10px;} .cst-sec h4{font-size:15px;} .cst-chip{font-size:13px;} .cst-tab{font-size:15px;}',
+      '  .cst-sec{padding:8px 10px;} .cst-sec h4{font-size:17px;} .cst-chip{font-size:15px;min-height:54px;gap:7px;padding:4px 12px 4px 4px;} .cst-chip img{width:44px;height:44px;border-radius:10px;} .cst-chip.cst-hc{width:104px;padding:3px 3px 6px;font-size:14px;} .cst-chip.cst-hc img{width:100%;height:108px;} .cst-tab{font-size:16px;} .cst-tslot{width:64px;height:64px;font-size:13px;}',
       '}'
     ].join('\n');
     (document.head || document.documentElement).appendChild(st);
@@ -83761,11 +84026,11 @@ function makeRadar(dims, size) {
       mats.forEach(function(m){
         var left = m.n - (used[m.k] | 0);
         if(m.n <= 0) return; any = true;
-        var img = (m.k.charAt(0) !== '#' && typeof HERO_IMGS !== 'undefined' && HERO_IMGS[m.k]) ? '<img src="' + _esc(HERO_IMGS[m.k]) + '" alt="">' : m.icon;
-        body += '<button type="button" class="cst-chip" data-cst-sy="add" data-k="' + _esc(m.k) + '"' + (left > 0 && _syn.tray.length < 3 ? '' : ' disabled') + '>' + img + _esc(m.label) + ' ×' + left + '</button>';
+        var img = (m.k.charAt(0) !== '#' && typeof HERO_IMGS !== 'undefined' && HERO_IMGS[m.k]) ? '<img src="' + _esc(HERO_IMGS[m.k]) + '" alt="" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">' : m.icon;
+        body += '<button type="button" class="cst-chip' + (m.k.charAt(0) !== '#' && typeof HERO_IMGS !== 'undefined' && HERO_IMGS[m.k] ? ' cst-hc' : '') + '" data-cst-sy="add" data-k="' + _esc(m.k) + '"' + (left > 0 && _syn.tray.length < 3 ? '' : ' disabled') + '>' + img + '<span>' + _esc(m.label) + ' ×' + left + '</span></button>';
       });
       if(!any) body += '<div class="cst-note">' + _T('現在沒有可以合成的命星。抽到已經有 6 命的英雄會得到虛無的命星;還沒點亮的角色命星也可以拿來合成。', '目前沒有可用材料。抽到已滿 6 命的角色會獲得虛無的命星;未點亮的角色命星亦可作為材料(重置退回的也可以)。') + '</div>';
-      body += '</div><div style="font-size:13px;color:#ffcf8a;margin-top:6px;">' + _T('⚠ 角色命星放進去合成就會變成自選命星,那位英雄的命星會少 1 顆。', '⚠ 角色命星投入合成後即消耗,該角色持有命星 −1。') + '</div></div>';
+      body += '</div><div style="font-size:16px;color:#ffcf8a;margin-top:8px;">' + _T('⚠ 角色命星放進去合成就會變成自選命星,那位英雄的命星會少 1 顆。', '⚠ 角色命星投入合成後即消耗,該角色持有命星 −1。') + '</div></div>';
     }
     var cands = W._cstPickCandidates(rar);
     body += '<div class="cst-sec"><h4>' + ((rar === 'SR' || rar === 'SSR') ? '② ' : '') + _T('使用自選命星', '使用自選命星') + '(' + _T('有 ', '持有 ') + picks + ')</h4>';
@@ -83775,24 +84040,25 @@ function makeRadar(dims, size) {
     else {
       body += '<div class="cst-chips">';
       cands.forEach(function(k){
-        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="">' : '⭐';
-        body += '<button type="button" class="cst-chip" data-cst-sy="pick" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + _esc(k) + ' ' + W._cstHeld(k) + '/6</button>';
+        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">' : '⭐';
+        body += '<button type="button" class="cst-chip' + (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k] ? ' cst-hc' : '') + '" data-cst-sy="pick" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + '<span>' + _esc(k) + ' ' + W._cstHeld(k) + '/6</span></button>';
       });
       body += '</div>';
     }
     /* ★ v5.345.0 還沒擁有的 SR/SSR:自選命星直接換到這位英雄(0 命) */
     var candsNew = W._cstPickNewCandidates(rar);
     if(candsNew.length){
-      body += '<div style="font-size:14px;font-weight:800;color:#ffd6f0;margin:12px 0 6px;">' + _T('🆕 還沒有的 ' + rar + ' → 用 1 顆自選命星直接得到這位英雄(0 命)', '🆕 未擁有的 ' + rar + ' → 消耗 1 顆自選命星直接獲得該英雄(0 命)') + '</div>';
+      body += '<div style="font-size:18px;font-weight:800;color:#ffd6f0;margin:14px 0 8px;">' + _T('🆕 還沒有的 ' + rar + ' → 用 1 顆自選命星直接得到這位英雄(0 命)', '🆕 未擁有的 ' + rar + ' → 消耗 1 顆自選命星直接獲得該英雄(0 命)') + '</div>';
       body += '<div class="cst-chips">';
       candsNew.forEach(function(k){
-        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="">' : '⭐';
-        body += '<button type="button" class="cst-chip" data-cst-sy="pickhero" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + _esc(k) + ' ' + _T('🆕 新英雄', '🆕 未擁有') + '</button>';
+        var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k]) ? '<img src="' + _esc(HERO_IMGS[k]) + '" alt="" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">' : '⭐';
+        body += '<button type="button" class="cst-chip' + (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[k] ? ' cst-hc' : '') + '" data-cst-sy="pickhero" data-k="' + _esc(k) + '"' + (picks > 0 ? '' : ' disabled') + '>' + img + '<span>' + _esc(k) + '<br>' + _T('🆕 新英雄', '🆕 未擁有') + '</span></button>';
       });
       body += '</div>';
     }
     body += '</div>';
     ov.innerHTML = head + body + '</div>';
+    try{ if(typeof W._lxpsFaceFitIn === 'function') W._lxpsFaceFitIn(ov); }catch(_){}   /* ★ v5.385.0 頭像臉部對齊 */
   }
   W._cstOpenSynth = function(tab){
     try{
@@ -83843,8 +84109,9 @@ function makeRadar(dims, size) {
         var r = W._cstUsePick(rar2, k);
         if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
         try{ playSfx('sfx-medal-unlock', 0.85); }catch(_){}
-        _toast(_T('⭐ ' + k + ' 拿到 1 顆命星!到英雄圖鑑點亮它吧!', '⭐ ' + k + ' 命星 +1,請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
         _renderSynth();
+        /* ★ v5.385.0 改成大視窗(英雄圖＋命星進度),疊在合成屋上方 */
+        if(!W._cstStarGainShow(k, rar2)) _toast(_T('⭐ ' + k + ' 拿到 1 顆命星!到英雄圖鑑點亮它吧!', '⭐ ' + k + ' 命星 +1,請至英雄圖鑑「✨ 命座」分配'), '#ffd97a');
       };
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg2), go2); else if((await window._lxpsConfirm(msg2))) go2();
     }
@@ -83857,8 +84124,17 @@ function makeRadar(dims, size) {
         var r = W._cstUsePickNew(rar3, k3, uidAsk);
         if(!r.ok){ _toast(r.why, '#ffaa44'); return; }
         try{ playSfx('sfx-medal-unlock', 0.85); }catch(_){}
-        _toast(_T('🎉 「' + k3 + '」加入你的隊伍了!到英雄圖鑑看看吧!', '🎉 已獲得「' + k3 + '」,請至英雄圖鑑查看'), '#ffd97a', 4200);
         _renderSynth();
+        /* ★ v5.385.0 改用「🌟 召喚成功!」英雄登場大視窗(立繪＋技能),疊在合成屋上方;開不出來才退回小提示 */
+        var _shown = false;
+        try{
+          if(typeof _showSummonRareHeroPreview === 'function'){
+            _showSummonRareHeroPreview([{ kind: 'rare_hero', heroName: k3, name: k3, _rarityTier: rar3 }]);
+            var _pv = document.getElementById('summon-rare-preview-ov');
+            if(_pv){ _pv.style.zIndex = '10760'; _shown = true; }
+          }
+        }catch(_ePv){ _shown = false; }
+        if(!_shown) _toast(_T('🎉 「' + k3 + '」加入你的隊伍了!到英雄圖鑑看看吧!', '🎉 已獲得「' + k3 + '」,請至英雄圖鑑查看'), '#ffd97a', 4200);
       };
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg3), go3); else if((await window._lxpsConfirm(msg3))) go3();
     }
