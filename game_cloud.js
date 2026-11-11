@@ -18518,6 +18518,81 @@
     return _o;
   };
 
+  // ★ v5.382.0(老師 2026-11-11「GM搜尋學生遊玩記錄存檔時,優先把獲得UR獎勵的記錄(是否領取)…置頂」)
+  //   GM:列出某玩家所有「含 UR」的獎勵與領取狀態 —— 課堂獎勵收件箱 gmClassRewards/{uid}/items ＋ 全體獎勵 globalRewards。
+  //   領取判斷:認領文件 gmClassRewardClaims/{uid}_{id}(權威)或主檔 _gmcrClaimed 快取;全體獎勵看 globalRewardClaims/{uid}_{id}。
+  //   ★ 純讀取零寫入。回傳 { uid, rows:[{kind,id,title,merit,at,urTk,urHeroes,items,status,claimedAt,by}], warn:[] }(新→舊)
+  //     status:'claimed' 已領取 / 'pending' 未領取 / 'disabled' 已停用(收回) / 'expired' 已過期
+  window._fbAdminPlayerURRewards = async function(uid){
+    if(!_fbDb) throw new Error('Firestore 未就緒');
+    if(!uid) throw new Error('缺少 uid');
+    var _uid = String(uid), _warn = [], _rows = [], _now = Date.now();
+    var _urNames = [];
+    try{ if(Array.isArray(window._LXPS_RARITY_UR)) _urNames = window._LXPS_RARITY_UR.slice(); }catch(_){}
+    var _parse = function(reward, items){ try{ return window._lxpsParseGrantDoc(reward, items, _urNames) || {}; }catch(_){ return {}; } };
+    var _exists = function(s){ return !!(s && ((typeof s.exists === 'function') ? s.exists() : s.exists)); };
+    var _claimedSet = {}, _extraBag = {};
+    try{
+      var _ps = await getDoc(doc(_fbDb, 'players', _uid));
+      if(_exists(_ps)){
+        var _pd = _ps.data() || {};
+        if(Array.isArray(_pd._gmcrClaimed)) _pd._gmcrClaimed.forEach(function(id){ _claimedSet[String(id)] = 1; });
+        // 召喚卷逐張帳本(_TICKET_INST_IDS)沒收的券(UR 英雄替換卷)→ 直接報主檔背包張數(字串版優先)
+        var _bg = {};
+        try{ _bg = (typeof _pd.playerBackpack_s === 'string') ? (JSON.parse(_pd.playerBackpack_s) || {}) : (_pd.playerBackpack || {}); }catch(_){ _bg = _pd.playerBackpack || {}; }
+        _extraBag = { summon_ticket_ur_swap: (parseInt(_bg.summon_ticket_ur_swap, 10) || 0) };
+      }
+    }catch(_){}
+    // ① 課堂獎勵收件箱
+    try{
+      var _ibs = await getDocs(collection(_fbDb, 'gmClassRewards', _uid, 'items'));
+      var _ib = [];
+      _ibs.forEach(function(d){ _ib.push(Object.assign({ id: d.id }, d.data() || {})); });
+      for(var i = 0; i < _ib.length; i++){
+        var x = _ib[i];
+        var _lbl = Array.isArray(x.itemsLabel) ? x.itemsLabel : [];
+        var p = _parse(x.reward, _lbl);
+        var _urH = (p.heroes || []).filter(function(n){ return _urNames.indexOf(n) >= 0; });
+        if(!(p.ticketN > 0) && !_urH.length) continue;
+        var _st = '', _cAt = 0;
+        try{
+          var _cs = await getDoc(doc(_fbDb, 'gmClassRewardClaims', _uid + '_' + x.id));
+          if(_exists(_cs)){ _st = 'claimed'; _cAt = +((_cs.data() || {}).at) || 0; }
+        }catch(_){}
+        if(!_st && _claimedSet[x.id]) _st = 'claimed';
+        if(!_st){ _st = (x.enabled === false) ? 'disabled' : ((x.expiresAt && _now > x.expiresAt) ? 'expired' : 'pending'); }
+        _rows.push({ kind:'class', id:x.id, title:String(x.label || '課堂獎勵'), merit:String(x.merit || ''),
+                     at:(+x.at || 0), urTk:(p.ticketN || 0), urHeroes:_urH, items:_lbl.join('、'),
+                     status:_st, claimedAt:_cAt, by:String(x.by || ''), term:String(x.termName || '') });
+      }
+    }catch(_e1){ _warn.push('課堂獎勵收件箱讀取失敗:' + ((_e1 && _e1.message) || _e1)); }
+    // ② 全體獎勵
+    try{
+      var _grs = await getDocs(collection(_fbDb, 'globalRewards'));
+      var _defs = [];
+      _grs.forEach(function(r){
+        var _r = r.data() || {};
+        var _p = _parse(_r.reward, _r.items);
+        var _gH = (_p.heroes || []).filter(function(n){ return _urNames.indexOf(n) >= 0; });
+        if(!(_p.ticketN > 0) && !_gH.length) return;
+        _defs.push({ id:r.id, r:_r, p:_p, h:_gH });
+      });
+      for(var j = 0; j < _defs.length; j++){
+        var _d = _defs[j], _st2 = '', _cAt2 = 0;
+        try{
+          var _cs2 = await getDoc(doc(_fbDb, 'globalRewardClaims', _uid + '_' + _d.id));
+          if(_exists(_cs2)){ _st2 = 'claimed'; _cAt2 = +((_cs2.data() || {}).at) || 0; }
+        }catch(_){}
+        if(!_st2){ _st2 = (_d.r.enabled === false) ? 'disabled' : ((_d.r.expiresAt && _now > _d.r.expiresAt) ? 'expired' : 'pending'); }
+        _rows.push({ kind:'global', id:_d.id, title:String(_d.r.title || '全體獎勵'), merit:'',
+                     at:(+(_d.r.createdAt || _d.r.at) || 0), urTk:(_d.p.ticketN || 0), urHeroes:_d.h,
+                     items:(Array.isArray(_d.r.items) ? _d.r.items.join('、') : ''), status:_st2, claimedAt:_cAt2, by:'' });
+      }
+    }catch(_e2){ _warn.push('全體獎勵讀取失敗:' + ((_e2 && _e2.message) || _e2)); }
+    _rows.sort(function(a, b){ return (b.at || 0) - (a.at || 0); });
+    return { uid:_uid, rows:_rows, warn:_warn, extraBag:_extraBag };
+  };
+
   // ════════════════════════════════════════════════════════════════════
   // ★★ v5.127.0【老師需求 2026-09-01】🔎 單人期末獎勵查核 ★★
   // ────────────────────────────────────────────────────────────────────
