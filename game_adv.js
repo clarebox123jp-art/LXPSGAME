@@ -41423,8 +41423,8 @@ function _showSummonHelp(){
       + '<span style="font-size:22px;font-weight:900;color:#88bbff;min-width:50px;">20%</span>'
       + '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:#88bbff;">🛡️ 隨機裝備 ×1</div>'
       + '<div style="font-size:14px;color:#aab;line-height:1.4;margin-top:2px;">'
-      + (_isSimpleSH ? '召喚出一件裝備!稀有 60%/史詩 25%/傳說 11%/神話 4%,詞條當場隨機決定。裝備滿 100 件時不會抽到裝備(機率回到原本的樣子,不會浪費)。'
-                     : '隨機獲得裝備 1 件(稀有度:稀有 60%/史詩 25%/傳說 11%/神話 4%,詞條於取得當下隨機生成並永久固定);裝備持有達 100 件上限時自動改依下列原機率抽取,絕不空手。')
+      + (_isSimpleSH ? '召喚出一件裝備!稀有 60%/史詩 25%/傳說 11%/神話 4%,詞條當場隨機決定。裝備滿 ' + (window._GEAR_MAX_OWNED || 300) + ' 件時不會抽到裝備(機率回到原本的樣子,不會浪費)。'
+                     : '隨機獲得裝備 1 件(稀有度:稀有 60%/史詩 25%/傳說 11%/神話 4%,詞條於取得當下隨機生成並永久固定);裝備持有達 ' + (window._GEAR_MAX_OWNED || 300) + ' 件上限時自動改依下列原機率抽取,絕不空手。')
       + '</div></div></div>';
   }
   SUMMON_RATES.forEach(r => {
@@ -45195,6 +45195,7 @@ function openBackpackOverlay(){
   }catch(_eGb){}
   const ov = document.getElementById('backpack-overlay');
   if(ov) ov.style.display='block';
+  try{ window._lxpsBagCapRender(); }catch(_eCap){}   // ★ v5.387.0 格數列(_renderBackpackMain 也會畫;這裡保險)
 }
 
 function closeBackpackOverlay(){
@@ -45466,7 +45467,384 @@ function _renderBackpackMain(){
   const grid = document.getElementById('backpack-grid');
   if(!grid) return;
   _renderBackpackInto(grid, true); // true=顯示使用按鈕
+  try{ if(typeof window._lxpsBagCapRender === 'function') window._lxpsBagCapRender(); }catch(_eCap){}   // ★ v5.387.0 格數列
 }
+
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.387.0(2026-11-12・老師「登入冒險關卡時說我的背包滿了要我賣掉或送出一些東西,在背包頁面頂端新增
+//    持有物品總數量/背包上限和『賣出持有物品』按鈕,按下去後開啟賣出物品清單,依照物品類型分頁(同超商)。
+//    並將背包上限提高至 300 格。」)★★
+//   ・「背包滿了」提示來自裝備:全帳號裝備持有上限 window._GEAR_MAX_OWNED(game_battle.js,100 → 300)。
+//     一般道具沒有總格數(每種最多 99 個)⇒ 格數列主數字 = 裝備 n / 300 格,第二行列出道具總數。
+//   ・#bag-cap-bar:插在 #backpack-main 最上面(#gc 畫布內·設計 px);openBackpackOverlay/_renderBackpackMain 都會重畫。
+//   ・賣出清單 #lxps-sell-ov:body 直下 position:fixed 真實 px 視窗(PC 由 #lxps-pc-zoom-js 自動放大;手機橫放 @media 縮)。
+//     分頁 = 超商分類(_SHOP_CAT_DEFS:召喚/強化/寵物/重置/肖像,沿用 _shopProductCat)＋📦 戰利品(sell_only)＋🛡️ 裝備。
+//     道具賣出走既有 shopSellItem(冷卻/果實每日 5 顆/帳本/雲端存檔全照舊);裝備賣出走既有 window._gearSell(半價、帳本 sold)。
+//     只列 sellPrice>0 且持有 >0 的道具(經驗書/技能書等刻意不給 sellPrice 的照舊不能賣)。
+// ════════════════════════════════════════════════════════════════════
+window._lxpsBagCapCss = function(){
+  try{
+    if(document.getElementById('lxps-bagcap-css')) return;
+    var st = document.createElement('style');
+    st.id = 'lxps-bagcap-css';
+    st.textContent = ''
+      // 背包頁格數列(#gc 畫布內·設計 px)
+      + '#bag-cap-bar{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:0 0 16px;padding:16px 22px;border-radius:18px;'
+      +   'background:rgba(0,10,40,0.62);border:2.5px solid rgba(120,190,255,0.55);box-sizing:border-box;}'
+      + '#bag-cap-bar .bc-main{flex:1 1 520px;min-width:0;}'
+      + '#bag-cap-bar .bc-num{font-size:48px;font-weight:900;color:#e8f4ff;letter-spacing:1px;line-height:1.2;}'
+      + '#bag-cap-bar .bc-num b{color:#7fe0a0;}'
+      + '#bag-cap-bar.full .bc-num b{color:#ff8a8a;}'
+      + '#bag-cap-bar.near .bc-num b{color:#ffd166;}'
+      + '#bag-cap-bar .bc-bar{margin-top:10px;height:22px;border-radius:11px;background:rgba(255,255,255,0.12);overflow:hidden;}'
+      + '#bag-cap-bar .bc-bar i{display:block;height:100%;background:linear-gradient(90deg,#43d17a,#9be15d);}'
+      + '#bag-cap-bar.near .bc-bar i{background:linear-gradient(90deg,#ffb347,#ffd166);}'
+      + '#bag-cap-bar.full .bc-bar i{background:linear-gradient(90deg,#ff5f6d,#ff9a8b);}'
+      + '#bag-cap-bar .bc-sub{margin-top:8px;font-size:30px;font-weight:700;color:#a9c8f0;}'
+      + '#bag-cap-bar .bc-sell{flex:0 0 auto;padding:16px 34px;font-size:44px;font-weight:900;font-family:inherit;cursor:pointer;border-radius:16px;'
+      +   'background:linear-gradient(135deg,#ffb347,#ff8a3c);border:3px solid #ffe08a;color:#2a1500;letter-spacing:2px;white-space:nowrap;'
+      +   'box-shadow:0 0 18px rgba(255,170,70,0.55);}'
+      // 賣出清單(body 直下·真實 px)
+      + '#lxps-sell-ov{position:fixed;inset:0;z-index:100400;display:flex;align-items:safe center;justify-content:center;background:rgba(0,0,14,0.82);'
+      +   'padding:12px;box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+      + '#lxps-sell-card{width:min(1080px,96vw);max-height:min(92dvh,92vh);display:flex;flex-direction:column;box-sizing:border-box;'
+      +   'background:linear-gradient(160deg,rgba(40,26,6,0.98),rgba(20,12,4,0.98));border:2.5px solid rgba(255,190,80,0.8);border-radius:18px;'
+      +   'box-shadow:0 0 40px rgba(255,170,60,0.3);overflow:hidden;color:#fff;}'
+      + '#lxps-sell-card>*{flex:0 0 auto;}'
+      + '#lxps-sell-card .sl-head{display:flex;align-items:center;gap:12px;padding:14px 18px 6px;}'
+      + '#lxps-sell-card .sl-title{flex:1;font-size:32px;font-weight:900;color:#ffd98a;letter-spacing:1px;}'
+      + '#lxps-sell-card .sl-coin{font-size:22px;font-weight:800;color:#ffee88;background:rgba(255,180,0,0.15);border:1.5px solid rgba(255,180,50,0.5);padding:4px 12px;border-radius:10px;white-space:nowrap;}'
+      + '#lxps-sell-card .sl-close{min-width:88px;min-height:44px;padding:6px 16px;font-size:18px;font-weight:800;background:rgba(70,20,20,0.55);border:2px solid #e86a6a;color:#ffd0d0;border-radius:10px;cursor:pointer;font-family:inherit;}'
+      + '#lxps-sell-card .sl-cap{padding:0 18px 6px;font-size:20px;font-weight:700;color:#d8c7a0;}'
+      + '#lxps-sell-card .sl-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 10px;border-bottom:1px solid rgba(255,200,120,0.25);}'
+      + '#lxps-sell-card .sl-tab{flex:0 0 auto;min-height:48px;padding:8px 16px;font-size:22px;font-weight:800;font-family:inherit;border-radius:10px;cursor:pointer;letter-spacing:1px;white-space:nowrap;'
+      +   'background:rgba(60,42,10,0.6);border:1.5px solid rgba(255,180,50,0.45);color:#ffd88a;}'
+      + '#lxps-sell-card .sl-tab.on{background:linear-gradient(135deg,rgba(255,180,40,0.9),rgba(255,140,20,0.85));border:2px solid #ffd866;color:#3a2400;box-shadow:0 0 12px rgba(255,180,60,0.55);}'
+      + '#lxps-sell-card .sl-tab:disabled{background:rgba(50,40,20,0.35);border:1.5px solid #5a4a2a;color:#6a5a3a;opacity:0.55;cursor:default;}'
+      + '#lxps-sell-card .sl-tab span{font-size:0.82em;opacity:0.85;margin-left:4px;}'
+      + '#lxps-sell-card .sl-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 18px 14px;}'
+      + '#lxps-sell-card .sl-row{display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid rgba(255,255,255,0.08);}'
+      + '#lxps-sell-card .sl-ic{flex:0 0 auto;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:44px;}'
+      + '#lxps-sell-card .sl-ic img{width:60px;height:60px;object-fit:cover;border-radius:8px;}'
+      + '#lxps-sell-card .sl-info{flex:1 1 auto;min-width:0;}'
+      + '#lxps-sell-card .sl-nm{font-size:25px;font-weight:900;color:#fff;line-height:1.3;}'
+      + '#lxps-sell-card .sl-meta{font-size:19px;color:#e0cfa8;margin-top:2px;line-height:1.4;}'
+      + '#lxps-sell-card .sl-tag{display:inline-block;margin-left:6px;padding:0 8px;border-radius:9px;font-size:16px;background:rgba(120,200,255,0.18);border:1px solid rgba(120,200,255,0.5);color:#bfe6ff;}'
+      + '#lxps-sell-card .sl-qty{flex:0 0 auto;display:flex;align-items:center;gap:6px;}'
+      + '#lxps-sell-card .sl-qb{min-width:44px;min-height:44px;font-size:22px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,220,150,0.5);color:#ffe8b0;}'
+      + '#lxps-sell-card .sl-qn{min-width:44px;text-align:center;font-size:24px;font-weight:900;}'
+      + '#lxps-sell-card .sl-go{flex:0 0 auto;min-height:48px;padding:8px 18px;font-size:21px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+      +   'background:rgba(50,160,50,0.35);border:1.5px solid #44ff88;color:#aaffcc;}'
+      + '#lxps-sell-card .sl-all{margin:4px 0 8px;width:100%;min-height:52px;font-size:22px;font-weight:900;border-radius:12px;cursor:pointer;font-family:inherit;'
+      +   'background:linear-gradient(135deg,rgba(255,180,40,0.85),rgba(255,140,20,0.8));border:2px solid #ffd866;color:#2a1500;}'
+      + '#lxps-sell-card .sl-empty{padding:30px 10px;text-align:center;color:#c8b896;font-size:21px;}'
+      + '#lxps-sell-card .sl-foot{padding:8px 18px 12px;font-size:16px;line-height:1.5;color:#c8b896;border-top:1px solid rgba(255,255,255,0.08);}'
+      + '@media (min-width:1000px) and (min-height:700px){#lxps-sell-card .sl-nm{font-size:26px;}#lxps-sell-card .sl-meta{font-size:20px;}}'
+      // 手機橫放(高 ≤ 520):壓縮留白、分頁單行橫捲
+      + '@media (orientation:landscape) and (max-height:520px){'
+      +   '#lxps-sell-ov{padding:4px;}'
+      +   '#lxps-sell-card{width:min(880px,98vw);max-height:calc(100dvh - 8px);border-radius:12px;}'
+      +   '#lxps-sell-card .sl-head{padding:6px 12px 2px;}'
+      +   '#lxps-sell-card .sl-title{font-size:20px;}'
+      +   '#lxps-sell-card .sl-coin{font-size:15px;}'
+      +   '#lxps-sell-card .sl-cap{padding:0 12px 2px;font-size:13px;}'
+      +   '#lxps-sell-card .sl-tabs{flex-wrap:nowrap;overflow-x:auto;padding:2px 12px 6px;gap:6px;}'
+      +   '#lxps-sell-card .sl-tab{font-size:15px;padding:4px 10px;}'
+      +   '#lxps-sell-card .sl-list{padding:2px 12px 6px;}'
+      +   '#lxps-sell-card .sl-row{padding:6px 4px;gap:8px;}'
+      +   '#lxps-sell-card .sl-ic{width:40px;height:40px;font-size:28px;}'
+      +   '#lxps-sell-card .sl-ic img{width:40px;height:40px;}'
+      +   '#lxps-sell-card .sl-nm{font-size:16px;}'
+      +   '#lxps-sell-card .sl-meta{font-size:13px;}'
+      +   '#lxps-sell-card .sl-qn{font-size:16px;min-width:30px;}'
+      +   '#lxps-sell-card .sl-go{font-size:15px;padding:6px 10px;}'
+      +   '#lxps-sell-card .sl-foot{padding:4px 12px 6px;font-size:12px;}'
+      // 背包格數列(#gc 畫布內·手機約縮 0.36 倍)⇒ 放大
+      +   '#bag-cap-bar .bc-num{font-size:64px;}'
+      +   '#bag-cap-bar .bc-sub{font-size:40px;}'
+      +   '#bag-cap-bar .bc-sell{font-size:62px;padding:20px 34px;}'
+      + '}';
+    document.head.appendChild(st);
+  }catch(_e){}
+};
+
+// 道具總數(只算一般道具;召喚卷等也是背包道具,一起算)
+window._lxpsBagItemTotal = function(){
+  var kinds = 0, total = 0;
+  try{
+    Object.keys(BACKPACK_ITEM_DEF).forEach(function(id){
+      var n = (typeof backpackGet === 'function') ? (backpackGet(id) || 0) : 0;
+      if(n > 0){ kinds++; total += n; }
+    });
+  }catch(_){}
+  return { kinds: kinds, total: total };
+};
+
+window._lxpsBagCapRender = function(){
+  try{
+    window._lxpsBagCapCss();
+    var main = document.getElementById('backpack-main');
+    if(!main) return;
+    var bar = document.getElementById('bag-cap-bar');
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'bag-cap-bar';
+      main.insertBefore(bar, main.firstChild);
+    }
+    var cute = (window._artStyle === 'cute');
+    var cap = window._GEAR_MAX_OWNED || 300;
+    var n = (typeof window._gearOwnedCount === 'function') ? window._gearOwnedCount() : 0;
+    var it = window._lxpsBagItemTotal();
+    var pct = Math.min(100, Math.round(n / cap * 100));
+    bar.className = (n >= cap) ? 'full' : (n >= cap * 0.9 ? 'near' : '');
+    var warn = (n >= cap) ? (cute ? ' 滿了!' : '(已滿)') : '';
+    bar.innerHTML =
+      '<div class="bc-main">'
+      +   '<div class="bc-num">🎒 ' + (cute ? '背包裝了' : '背包持有') + ' <b>' + n + ' / ' + cap + '</b> ' + (cute ? '格' : '格') + warn
+      +     '<span style="font-size:0.62em;color:#a9c8f0;font-weight:700;margin-left:12px;">(' + (cute ? '裝備' : '裝備數') + ')</span></div>'
+      +   '<div class="bc-bar"><i style="width:' + pct + '%"></i></div>'
+      +   '<div class="bc-sub">📦 ' + (cute ? '道具 ' + it.kinds + ' 種、一共 ' + it.total + ' 個(每種最多 99 個,不佔格子)'
+                                         : '道具 ' + it.kinds + ' 種・共 ' + it.total + ' 個(每種上限 99 個,不計入格數)') + '</div>'
+      + '</div>'
+      + '<button type="button" class="bc-sell" onclick="try{playSfx(\'sfx-sel\',0.6);}catch(_){} window._lxpsOpenSellList();">💰 '
+      +   (cute ? '賣出持有物品' : '賣出持有物品') + '</button>';
+  }catch(_e){ console.warn('[背包格數列]', _e); }
+};
+
+// 賣出清單分類:超商分類 + 戰利品 + 裝備
+window._lxpsSellCatOf = function(id){
+  try{
+    var def = BACKPACK_ITEM_DEF[id] || {};
+    if(def.type === 'sell_only') return 'loot';
+    return (typeof window._shopProductCat === 'function') ? window._shopProductCat({ id: id }) : 'enhance';
+  }catch(_){ return 'enhance'; }
+};
+window._lxpsSellCats = function(){
+  var cute = (window._artStyle === 'cute');
+  var cats = (window._SHOP_CAT_DEFS || []).slice();
+  cats.push({ id:'loot', label: cute ? '📦 戰利品' : '📦 戰利品' });
+  var gearOn = true;
+  try{ if(typeof window._gearVisibleForMe === 'function') gearOn = !!window._gearVisibleForMe(); }catch(_){}
+  if(gearOn) cats.push({ id:'gear', label:'🛡️ 裝備' });
+  return cats;
+};
+window._lxpsSellItems = function(){   // { cat: [ {id, n, def} ] }
+  var out = {};
+  try{
+    Object.keys(BACKPACK_ITEM_DEF).forEach(function(id){
+      var def = BACKPACK_ITEM_DEF[id];
+      if(!def || !((def.sellPrice || 0) > 0)) return;
+      var n = (typeof backpackGet === 'function') ? (backpackGet(id) || 0) : 0;
+      if(n <= 0) return;
+      var c = window._lxpsSellCatOf(id);
+      (out[c] = out[c] || []).push({ id: id, n: n, def: def });
+    });
+  }catch(_){}
+  try{
+    var ins = (window._gearData && window._gearData.instances) || {};
+    var rows = [];
+    Object.keys(ins).forEach(function(u){
+      var x = ins[u]; if(!x || !GEAR_DB[x.itemId]) return;
+      rows.push({ uid: u, inst: x, def: GEAR_DB[x.itemId] });
+    });
+    var RO = { rare:0, epic:1, legend:2, mythic:3 };
+    var SO = { head:0, body:1, main:2, off:3, legs:4, acc:5 };
+    // 便宜的、沒裝備的排前面(最常要賣的)
+    rows.sort(function(a, b){
+      var e = (a.inst.equippedTo ? 1 : 0) - (b.inst.equippedTo ? 1 : 0); if(e) return e;
+      var r = (RO[a.def.r] || 0) - (RO[b.def.r] || 0); if(r) return r;
+      var s = (SO[a.def.slot] || 0) - (SO[b.def.slot] || 0); if(s) return s;
+      return (a.inst.at || 0) - (b.inst.at || 0);
+    });
+    if(rows.length) out.gear = rows;
+  }catch(_){}
+  return out;
+};
+
+window._lxpsOpenSellList = function(cat){
+  try{
+    window._lxpsBagCapCss();
+    var cute = (window._artStyle === 'cute');
+    var T = function(c, p){ return cute ? c : p; };
+    var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+    var items = window._lxpsSellItems();
+    var cats = window._lxpsSellCats();
+    var cnt = function(c){ var a = items[c.id]; return a ? a.length : 0; };
+    if(cat) window._lxpsSellCat = cat;
+    var cur = window._lxpsSellCat;
+    if(!cur || !cats.some(function(c){ return c.id === cur && cnt(c) > 0; })){
+      var first = cats.find(function(c){ return cnt(c) > 0; });
+      cur = first ? first.id : (cats[0] && cats[0].id);
+    }
+    window._lxpsSellCat = cur;
+
+    var ov = document.getElementById('lxps-sell-ov');
+    var keepScroll = 0;
+    if(ov){ try{ var _l0 = ov.querySelector('.sl-list'); if(_l0 && ov._cat === cur) keepScroll = _l0.scrollTop; }catch(_){} }
+    else{
+      ov = document.createElement('div');
+      ov.id = 'lxps-sell-ov';
+      ov.addEventListener('click', function(ev){ if(ev.target === ov) window._lxpsCloseSellList(); });
+      document.body.appendChild(ov);
+    }
+    ov._cat = cur;
+    var capN = (typeof window._gearOwnedCount === 'function') ? window._gearOwnedCount() : 0;
+    var cap = window._GEAR_MAX_OWNED || 300;
+
+    var h = '<div id="lxps-sell-card" role="dialog" aria-modal="true">'
+      + '<div class="sl-head"><div class="sl-title">💰 ' + T('賣出持有物品', '賣出持有物品') + '</div>'
+      +   '<div class="sl-coin">💰 ' + ((typeof _knowledgeCoins !== 'undefined' ? _knowledgeCoins : 0) || 0).toLocaleString() + '</div>'
+      +   '<button type="button" class="sl-close" onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){} window._lxpsCloseSellList();">✕ ' + T('關閉', '關閉') + '</button></div>'
+      + '<div class="sl-cap">🎒 ' + T('背包裝備 ', '裝備持有 ') + '<b style="color:' + (capN >= cap ? '#ff8a8a' : '#9effb0') + ';">' + capN + ' / ' + cap + '</b> ' + T('格', '格')
+      +   (capN >= cap ? T(',滿了!賣掉一些就能再拿新裝備', '(已滿,賣出後才能再獲得裝備)') : '') + '</div>'
+      + '<div class="sl-tabs">' + cats.map(function(c){
+          var n = cnt(c);
+          return '<button type="button" class="sl-tab' + (c.id === cur ? ' on' : '') + '"' + (n ? '' : ' disabled')
+            + (n ? ' onclick="try{playSfx(\'sfx-sel\',0.3);}catch(_){} window._lxpsOpenSellList(\'' + c.id + '\');"' : '')
+            + '>' + c.label + '<span>' + n + '</span></button>';
+        }).join('') + '</div>'
+      + '<div class="sl-list">';
+
+    var list = items[cur] || [];
+    if(!list.length){
+      h += '<div class="sl-empty">' + T('這一類沒有可以賣的東西喔!', '此分類沒有可賣出的物品') + '</div>';
+    } else if(cur === 'gear'){
+      list.forEach(function(r){
+        var R = (typeof GEAR_RARITY !== 'undefined' && GEAR_RARITY[r.def.r]) || { name:'稀有', color:'#66ddff', price:1000 };
+        var S = (typeof GEAR_SLOT_INFO !== 'undefined' && GEAR_SLOT_INFO[r.def.slot]) || { n:'', icon:'' };
+        var price = Math.floor((R.price || 1000) / 2);
+        var nAff = (r.inst.affixes && r.inst.affixes.length) || 0;
+        var img = '';
+        try{ if(r.def.img) img = '<img src="./' + encodeURIComponent(r.def.img) + '" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'' + esc(r.def.icon || '🛡️') + '\'))">'; }catch(_){}
+        h += '<div class="sl-row">'
+          + '<div class="sl-ic">' + (img || esc(r.def.icon || '🛡️')) + '</div>'
+          + '<div class="sl-info"><div class="sl-nm" style="color:' + R.color + ';">' + esc(r.def.n)
+          +   (r.inst.equippedTo ? '<span class="sl-tag">⚔ ' + T(esc(r.inst.equippedTo) + ' 穿著', esc(r.inst.equippedTo) + ' 裝備中') + '</span>' : '')
+          +   (r.inst.gifted ? '<span class="sl-tag">🎁 ' + T('好友送的', '受贈') + '</span>' : '') + '</div>'
+          +   '<div class="sl-meta">' + R.name + ' ・ ' + S.icon + ' ' + S.n + ' ・ ' + T('詞條 ', '詞條 ') + nAff + ' ・ 💰 ' + price.toLocaleString() + '</div></div>'
+          + '<button type="button" class="sl-go" onclick="window._lxpsSellGear(\'' + r.uid + '\')">💱 ' + T('賣出', '賣出') + '</button>'
+          + '</div>';
+      });
+    } else {
+      if(cur === 'loot'){
+        var tot = 0; list.forEach(function(r){ tot += (r.def.sellPrice || 0) * r.n; });
+        h += '<button type="button" class="sl-all" onclick="window._lxpsSellAllLoot()">💰 ' + T('戰利品全部賣掉', '戰利品全部賣出') + '(' + tot.toLocaleString() + ' 💰)</button>';
+      }
+      list.forEach(function(r){
+        var key = '_lxpsSellQ_' + r.id;
+        var mx = r.n;
+        if(r.id === 'burst_upgrade_fruit'){ try{ mx = Math.min(mx, _fruitSellRemainingToday()); }catch(_){} }
+        var q = Math.max(1, Math.min(window[key] || 1, Math.max(1, mx)));
+        window[key] = q;
+        var dis = (mx <= 0);
+        h += '<div class="sl-row">'
+          + '<div class="sl-ic">' + esc(r.def.icon || '📦') + '</div>'
+          + '<div class="sl-info"><div class="sl-nm">' + esc(r.def.name || r.id) + ' <span style="color:#ffe08a;">×' + r.n + '</span></div>'
+          +   '<div class="sl-meta">💰 ' + T('一個 ', '單價 ') + (r.def.sellPrice || 0).toLocaleString()
+          +     (r.id === 'burst_upgrade_fruit' ? ' ・ 🍑 ' + T('今天還能賣 ', '今日剩 ') + Math.max(0, mx) + T(' 顆', ' 顆可賣') : '') + '</div></div>'
+          + '<div class="sl-qty">'
+          +   '<button type="button" class="sl-qb" onclick="window._lxpsSellQty(\'' + r.id + '\',-1,' + mx + ')">−</button>'
+          +   '<span class="sl-qn" id="lxps-sq-' + r.id + '">' + q + '</span>'
+          +   '<button type="button" class="sl-qb" onclick="window._lxpsSellQty(\'' + r.id + '\',1,' + mx + ')">+</button>'
+          +   '<button type="button" class="sl-qb" style="font-size:16px;padding:0 8px;" onclick="window._lxpsSellQty(\'' + r.id + '\',999,' + mx + ')">' + T('全部', '全部') + '</button>'
+          + '</div>'
+          + '<button type="button" class="sl-go"' + (dis ? ' disabled style="opacity:0.45;"' : '') + ' onclick="window._lxpsSellItem(\'' + r.id + '\')">💱 '
+          +   T('賣 ', '賣出 ') + '<span id="lxps-sqt-' + r.id + '">' + ((r.def.sellPrice || 0) * q).toLocaleString() + '</span>💰</button>'
+          + '</div>';
+      });
+    }
+    h += '</div>'
+      + '<div class="sl-foot">' + T('📖 經驗書、技能書這類養成道具不能賣。裝備賣出可以拿到定價的一半,穿在英雄身上的裝備賣掉會自動脫下。',
+                                    '經驗書/技能書等養成道具不可賣出。裝備以定價半價賣出;英雄裝備中的裝備賣出時自動卸下。') + '</div>'
+      + '</div>';
+    ov.innerHTML = h;
+    try{ var _l1 = ov.querySelector('.sl-list'); if(_l1) _l1.scrollTop = keepScroll; }catch(_){}
+  }catch(_e){ console.warn('[賣出持有物品]', _e); }
+};
+window._lxpsCloseSellList = function(){
+  try{ if(window._lxpsSellWatch){ clearInterval(window._lxpsSellWatch); window._lxpsSellWatch = null; } }catch(_){}
+  try{ var ov = document.getElementById('lxps-sell-ov'); if(ov) ov.remove(); }catch(_){}
+  window._lxpsSellRefreshBag();
+};
+window._lxpsSellRefreshBag = function(){
+  try{ var cv = document.getElementById('bag-coins-val'); if(cv) cv.textContent = (_knowledgeCoins || 0).toLocaleString(); }catch(_){}
+  try{ var bo = document.getElementById('backpack-overlay'); if(bo && bo.style.display !== 'none') _renderBackpackMain(); }catch(_){}
+};
+window._lxpsSellQty = function(id, d, mx){
+  try{
+    mx = Math.max(1, mx | 0);
+    var key = '_lxpsSellQ_' + id, q = window[key] || 1;
+    if(d === 999) q = mx;
+    else if(d > 0) q = (q >= mx) ? mx : q + 1;
+    else q = (q <= 1) ? mx : q - 1;   // 1 再按 − 跳到最大(同背包賣出數量規則)
+    window[key] = q;
+    try{ playSfx('sfx-sel', 0.3); }catch(_){}
+    var e = document.getElementById('lxps-sq-' + id); if(e) e.textContent = q;
+    var def = BACKPACK_ITEM_DEF[id] || {};
+    var t = document.getElementById('lxps-sqt-' + id); if(t) t.textContent = ((def.sellPrice || 0) * q).toLocaleString();
+  }catch(_){}
+};
+window._lxpsSellItem = async function(id){
+  try{
+    var q = window['_lxpsSellQ_' + id] || 1;
+    try{ playSfx('sfx-coin', 0.5); }catch(_){}
+    if(typeof shopSellItem === 'function') await shopSellItem(id, q);   // 冷卻/果實上限/帳本/雲端存檔照舊
+    window['_lxpsSellQ_' + id] = 1;
+  }catch(_e){ console.warn('[賣出持有物品] 道具', _e); }
+  if(document.getElementById('lxps-sell-ov')) window._lxpsOpenSellList();
+  window._lxpsSellRefreshBag();
+};
+window._lxpsSellAllLoot = function(){
+  try{
+    var cute = (window._artStyle === 'cute');
+    var list = (window._lxpsSellItems().loot || []);
+    if(!list.length) return;
+    var tot = 0; list.forEach(function(r){ tot += (r.def.sellPrice || 0) * r.n; });
+    var msg = cute ? ('要把 ' + list.length + ' 種戰利品全部賣掉嗎?\n\n💰 可以拿到 ' + tot.toLocaleString() + ' 知識幣')
+                   : ('確認一次賣出 ' + list.length + ' 種戰利品?\n\n💰 總收益:' + tot.toLocaleString() + ' 知識幣');
+    var doIt = async function(){
+      try{
+        if(typeof window._btnCooldown === 'function' && !window._btnCooldown('shop_sell', 800)) return;
+        var got = 0, kinds = 0, tw = false, ys = false;
+        (window._lxpsSellItems().loot || []).forEach(function(r){   // 確認當下重讀一次數量
+          var have = backpackGet(r.id) || 0; if(have <= 0) return;
+          var c = (r.def.sellPrice || 0) * have;
+          backpackRemove(r.id, have);
+          _knowledgeCoins = (_knowledgeCoins || 0) + c;
+          try{ _logCoinTx(c, '收入:賣出-' + (r.def.name || r.id)); }catch(_){}
+          got += c; kinds++;
+          if(String(r.id).indexOf('tw_') === 0){ tw = true; if(r.id === 'tw_yushan_core') ys = true; }
+        });
+        try{ if(tw && typeof window._checkTaiwanSellMedals === 'function'){ window._checkTaiwanSellMedals('tw_xxx'); if(ys) window._checkTaiwanSellMedals('tw_yushan_core'); } }catch(_){}
+        try{ var sf = document.getElementById('sfx-sell-item'); if(sf){ sf.currentTime = 0; sf.volume = 0.7; sf.play().catch(function(){}); } else playSfx('sfx-coin', 0.75); }catch(_){}
+        try{ _showInGameToast('💰 ' + (cute ? '賣掉 ' : '已賣出 ') + kinds + (cute ? ' 種戰利品,拿到 ' : ' 種戰利品,獲得 ') + got.toLocaleString() + ' 知識幣!', '#ffcc44', 3200); }catch(_){}
+        try{ _syncCoinsDisplay(); }catch(_){}
+        try{ _renderShopProducts(); _renderShopBagPanel(); }catch(_){}
+        if(document.getElementById('lxps-sell-ov')) window._lxpsOpenSellList();
+        window._lxpsSellRefreshBag();
+        try{ await gameCloudSave(); }catch(e){ console.error('[賣出持有物品 戰利品全賣 雲端存檔]', e); }
+      }catch(_e2){ console.warn('[賣出持有物品] 戰利品全賣', _e2); }
+    };
+    if(typeof _customConfirm === 'function') _customConfirm(msg, doIt);
+    else window._lxpsConfirm(msg).then(function(ok){ if(ok) doIt(); });
+  }catch(_e){ console.warn('[賣出持有物品] 戰利品全賣', _e); }
+};
+window._lxpsSellGear = function(eqUid){
+  try{
+    if(typeof window._gearSell !== 'function') return;
+    window._gearSell(eqUid);   // 自己會跳確認視窗(半價、裝備中會提醒自動卸下)
+    var t0 = Date.now();
+    if(window._lxpsSellWatch) clearInterval(window._lxpsSellWatch);
+    window._lxpsSellWatch = setInterval(function(){
+      var gone = !(window._gearData && window._gearData.instances && window._gearData.instances[eqUid]);
+      if(gone || Date.now() - t0 > 60000 || !document.getElementById('lxps-sell-ov')){
+        clearInterval(window._lxpsSellWatch); window._lxpsSellWatch = null;
+        if(gone && document.getElementById('lxps-sell-ov')) window._lxpsOpenSellList();
+        window._lxpsSellRefreshBag();
+      }
+    }, 400);
+  }catch(_e){ console.warn('[賣出持有物品] 裝備', _e); }
+};
 
 
 // ★ 背包物品說明彈窗（商店右欄 ? 按鈕）

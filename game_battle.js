@@ -79417,7 +79417,7 @@ function _gearWriteLedger(eqUid, itemId, src, giftFrom, sourceTag){
 // ── 取得(生成實例)──
 // ★ 老師裁定(2026-08-11):同名裝備可重複獲得(詞條各異)全部保留;
 //   全帳號持有上限 100 件(六部位合計),達上限不再獲得(玩家需賣出/贈送好友騰位·Phase 3/4 開通)。
-window._GEAR_MAX_OWNED = 100;
+window._GEAR_MAX_OWNED = 300;   // ★ v5.387.0(2026-11-12 老師「背包上限提高至 300 格」)100 → 300;所有提示文字讀這個值
 // ★ v5.79.0(2026-08-19)— 老師裁定:裝備圖鑑的「數量上限」不再寫死,每次開放新裝備自動增加。
 //   單一真相 = GEAR_DB 的鍵數;全遊戲所有玩家可見的「總件數」文案一律走這支,
 //   日後只要往 GEAR_DB 加一件,圖鑑分母/活動介紹卡/選單副標全部自動跟上,零手改。
@@ -79438,7 +79438,7 @@ function _gearGrant(itemId, src, opts){
     // 持有上限守門(GM 測試補發帶 ignoreCap 豁免;正式取得途徑一律受限)
     if(!(opts && opts.ignoreCap) && _gearOwnedCount() >= window._GEAR_MAX_OWNED){
       console.warn('[裝備] 已達持有上限 ' + window._GEAR_MAX_OWNED + ' 件,無法獲得', itemId);
-      try{ if(typeof _showInGameToast === 'function') _showInGameToast(((window._artStyle === 'cute') ? '🎒 裝備背包滿了(100 件)!先賣掉或送給好友再來拿吧~' : '🎒 裝備持有已達上限 100 件,請先賣出或贈送好友'), '#ffaa66', 4000); }catch(_){}
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast(((window._artStyle === 'cute') ? '🎒 裝備背包滿了(' + (window._GEAR_MAX_OWNED || 300) + ' 件)!到背包按「💰 賣出持有物品」或送給好友再來拿吧~' : '🎒 裝備持有已達上限 ' + (window._GEAR_MAX_OWNED || 300) + ' 件,請到背包「💰 賣出持有物品」或贈送好友'), '#ffaa66', 4000); }catch(_){}
       return null;
     }
     const eqUid = _gearGenUid();
@@ -80504,7 +80504,7 @@ window._gearShopBuy = function(itemId){
     }
     const price = (GEAR_RARITY[def.r] && GEAR_RARITY[def.r].price) || 1000;
     if(_gearOwnedCount() >= window._GEAR_MAX_OWNED){
-      try{ _showInGameToast(((window._artStyle === 'cute') ? '🎒 裝備背包滿了(100 件)!先賣掉一些再來買吧~' : '🎒 裝備已達持有上限 100 件,請先賣出或贈送好友'), '#ffaa66', 3000); }catch(_){}
+      try{ _showInGameToast(((window._artStyle === 'cute') ? '🎒 裝備背包滿了(' + (window._GEAR_MAX_OWNED || 300) + ' 件)!先到背包賣掉一些再來買吧~' : '🎒 裝備已達持有上限 ' + (window._GEAR_MAX_OWNED || 300) + ' 件,請先到背包賣出或贈送好友'), '#ffaa66', 3000); }catch(_){}
       return;
     }
     if((_knowledgeCoins || 0) < price){
@@ -80930,7 +80930,7 @@ window._gearReceiveGift = function(gift){
     if(_gearOwnedCount() >= window._GEAR_MAX_OWNED){
       _knowledgeCoins = (_knowledgeCoins || 0) + 3000;   // 滿 100 件 → 比照背包滿轉幣前例
       try{ if(typeof _logCoinTx === 'function') _logCoinTx(3000, '收禮:裝備背包滿轉幣'); }catch(_){}   // ★ v5.247.0
-      return { ok:true, text:'💰 3,000 知識幣(裝備背包已滿 100 件,好友的裝備自動兌換)', replaced:true };
+      return { ok:true, text:'💰 3,000 知識幣(裝備背包已滿 ' + (window._GEAR_MAX_OWNED || 300) + ' 件,好友的裝備自動兌換)', replaced:true };
     }
     const _afs = [];
     (Array.isArray(g.affixes) ? g.affixes : []).forEach(function(af){
