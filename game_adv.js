@@ -15609,6 +15609,7 @@ function advStartBattle(){
       console.log('[advStartBattle] worldboss stage:跳過 BGM 切換,交給世界戰處理');
     }
   }catch(_){}
+  try{ if(window._RSV) window._RSV.restoreFront(); }catch(_eRsvBb){}   // ★ v5.378.0 新的一場從前鋒開始(後備待命)
   // ★ BOSS戰前玩家HP全滿 + 重置極限爆發次數 + 重置技能疲勞（小怪戰累積的疲勞/爆發到BOSS戰完全歸零）
   if(typeof G !== 'undefined' && G && G.p1){
     G.p1.forEach(h=>{
@@ -16019,6 +16020,13 @@ function advStartBattle(){
       renderCard(h);
     }
   });
+  // ★ v5.378.0(老師「補上開場天賦效果」;14:20「龍王戰也要正確發動開場天賦。所有地方都要發動」)— BOSS 戰開場效果(與鬥技場同一份 _lxpsBattleOpenFx)
+  //   涵蓋:故事冒險 BOSS 戰、主線實戰(mainstory 也走 advStartBattle)、龍王戰單人/房主。
+  //   ⚠ 龍王戰連線「非房主」端只繪畫面(_wbClientMode/_wbConnectedClientMode),戰局由房主權威計算後經 wire 推送 ⇒ 這裡不跑,避免同一個開場效果套兩次(同 _fmApply 守門口徑)。
+  try{
+    var _bofCli = (_adventureStage === 'worldboss') && (window._wbClientMode === true || window._wbConnectedClientMode === true);   // 只在龍王戰判斷(一般冒險可能留著舊的 client 旗標)
+    if(!_bofCli && typeof window._lxpsBattleOpenFx === 'function') window._lxpsBattleOpenFx();
+  }catch(_eBofB){ console.warn('[BOSS 戰開場效果]', _eBofB); }
   // Boss 登場對白
   if(!_advBossIntroShown){ try{ advShowBossIntro(); }catch(_){} }
   // 戰鬥開始演出
@@ -21213,10 +21221,12 @@ function advCheckContinue() {
   }catch(_eMsCcGuard){ console.warn('[advCheckContinue v4.89.0 mainstory 守門] 例外', _eMsCcGuard); }
   // ★ 若已呼叫 advGiveUp（G._resultShown=true），不再重複顯示接關視窗
   if(typeof G !== 'undefined' && G && G._resultShown) return false;
-  if (_advContinueCount >= ADV_MAX_CONTINUES) return false;
+  // ★ v5.378.0(老師 2026-11-11「原有的接關改成只有一次」)— 故事冒險接關只剩 1 次(前鋒+後備制);世界 BOSS 維持 ADV_MAX_CONTINUES(2)
+  const _advMaxC = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') ? ADV_MAX_CONTINUES : 1;
+  if (_advContinueCount >= _advMaxC) return false;
   _advStats.continueCount++;
   document.getElementById('adv-continue-count').textContent =
-    `剩餘接關次數：${ADV_MAX_CONTINUES - _advContinueCount} 次`;
+    `剩餘接關次數：${_advMaxC - _advContinueCount} 次`;
   document.getElementById('adv-continue-overlay').classList.add('show');
   // ════════════════════════════════════════════════════════════
   // ★ v3.13.9(2026-06-01)鐵律 1.145:接關 modal 顯示時必須清 5 秒 watchdog
@@ -21276,6 +21286,8 @@ function advDoContinue() {
     }
     console.log('[v3.13.9 接關後清守門] 清 _showResultWatchdog + _advResultDramaDone(本戰)+ _advBattleResultShown,確保流程乾淨');
   }catch(_eClearAfterRevive){ console.warn('[v3.13.9 接關後清守門] 例外', _eClearAfterRevive); }
+  // ★ v5.378.0 接關:從「前鋒」全滿開始接(後備下次全滅時再現建,一樣全滿)
+  try{ if(window._RSV) window._RSV.restoreFront(); }catch(_eRsvCont){}
   // 隊伍全部復活
   G.p1.forEach(h => {
     h.curHp = h.hp;
@@ -21362,6 +21374,7 @@ function advRestartBattle() {
     h.s2used=false; h._burstUsed=0; h._risingSpiritCount=0;
     delete h._lifelineUsed; delete h._lifeline1HpUsed; delete h._lifelineBurstApplied;
   };
+  try{ if(window._RSV) window._RSV.restoreFront(); }catch(_eRsvRb){}   // ★ v5.378.0 重新開戰從前鋒開始
   G.p1.forEach(_resetH);
   G.p2.forEach(_resetH);
   // ★ v3.16.46 — 連招疲勞同步歸零(與正常開戰一致)
@@ -27652,6 +27665,8 @@ function _buildSafeData() {
     autoBattleCfg_s: (function(){ try{ return JSON.stringify(window._autoBattleHeroCfg || {}); }catch(_){ return '{}'; } })(),
     // ★ v5.287.0 — 考試複習勾選(版本/冊/單元;純偏好,不含任何養成資料;自寫欄位不需改 firestore.rules)
     examPref_s: (function(){ try{ return JSON.stringify(window._lxpsExamPref || null); }catch(_){ return 'null'; } })(),
+    // ★ v5.378.0 — 故事冒險後備隊伍(英雄名/屬性/替換技能 + 新玩法說明已讀;綁 UID,自寫欄位不需改 firestore.rules)
+    advReserve_s: (function(){ try{ return (window._RSV && typeof window._RSV.toCloud === 'function') ? window._RSV.toCloud() : 'null'; }catch(_){ return 'null'; } })(),
     // ★ v5.289.0 — 考試複習挑戰(鎖定範圍/本輪答對題/已領次數;自寫欄位不需改 firestore.rules)
     examChal_s: (function(){ try{ return (typeof window._advExamChalSaveStr === 'function') ? window._advExamChalSaveStr() : 'null'; }catch(_){ return 'null'; } })(),
     // ★ v1.0.20260428.1700 — 台灣環島至寶資料(等級/經驗/裝備英雄)
@@ -28912,6 +28927,8 @@ function _applySafeData(raw) {
     window._advExamSel = null;
     try{ if(window.ExamCore) window.ExamCore.resetPrefCache(); }catch(_eExR){}
   }catch(_eExLoad){}
+  // ★ v5.378.0 — 載入後備隊伍(共用 iPad:一律以本帳號雲端值覆蓋,沒有就清空;uid 不符不採用)
+  try{ if(window._RSV && typeof window._RSV.fromCloud === 'function') window._RSV.fromCloud(typeof data.advReserve_s === 'string' ? data.advReserve_s : null); }catch(_eRsvLoad){}
   // ★ v5.289.0 — 載入考試複習挑戰(本帳號雲端值 + 同 uid 本機備份逐科合併;沒有就清空,不沿用上一位玩家)
   try{ window._lxpsExamChal = null; if(typeof window._advExamChalLoad === 'function') window._advExamChalLoad(typeof data.examChal_s === 'string' ? data.examChal_s : null); }catch(_eChLoad){}
   // ★ v1.0.20260428.1700 — 載入台灣環島至寶資料
@@ -47739,8 +47756,12 @@ window._lxpsRestorePresetPrep = function(pt){
 function _applyPresetTeam(slotIdx, overridePt){
   const pt = overridePt || _getCurrentPresetTeams()[slotIdx];
   if(!pt){ _showInGameToast('此欄位沒有儲存的陣容', '#ff8844', 1500); return; }
+  // ★ v5.378.0 後備書籤中套用預設陣容 ⇒ 只填進後備隊伍(不出發);至寶/裝備/寵物前鋒優先
+  try{ if(window._RSV && window._RSV.isRearTab()){ window._RSV.loadPreset(pt); return; } }catch(_eRsvPt){ console.warn('[後備隊伍 套用預設陣容]', _eRsvPt); return; }
 
   const isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
+  // ★ v5.378.0 用預設陣容當前鋒出發:後備沒編好/重複/UR 超標 ⇒ 擋下;後備裝備會被前鋒拿走 ⇒ 先提醒,玩家按「出發」再重入
+  try{ if(isAdvMode && window._RSV && window._RSV.gate(pt.heroes.slice(), pt, function(){ _applyPresetTeam(slotIdx, pt); })) return; }catch(_eRsvGate2){ console.warn('[後備隊伍 預設陣容出發守門]', _eRsvGate2); }
   if(isAdvMode){
     try{
       const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
@@ -68011,6 +68032,7 @@ function advStartMiniBattle(nextSceneIdx) {
         mobs[Math.floor(Math.random() * mobs.length)] = '貔貅';
       }
     }
+    try{ if(window._RSV) window._RSV.restoreFront(); }catch(_eRsvMb){}   // ★ v5.378.0 新的一場從前鋒開始(後備待命)
     // ★ 玩家隊伍HP全滿
     if(G.p1) G.p1.forEach(h=>{ try{ if(typeof _lxpsStatFxRestoreAll === 'function') _lxpsStatFxRestoreAll(h); }catch(_){} h.curHp=h.hp; h.status=[]; h.buffs=[]; h.acted=false; });   // ★ v5.239.0
     // ════════════════════════════════════════════════════════════════════
@@ -68290,6 +68312,8 @@ function advStartMiniBattle(nextSceneIdx) {
     }catch(_){}
     try{ renderItems(); updateUI(); }catch(_){}
     log('═══ 小怪戰鬥開始 ═══');
+    // ★ v5.378.0(老師「補上開場天賦效果」)— 小怪戰開場效果(與鬥技場同一份)
+    try{ if(typeof window._lxpsBattleOpenFx === 'function') window._lxpsBattleOpenFx(); }catch(_eBofM){ console.warn('[小怪戰開場效果]', _eBofM); }
 
     // ── 開場動畫
     flashScreen('rgba(255,150,50,0.6)', 400);

@@ -8334,6 +8334,8 @@ function _lxpsStatFxRestoreOne(h, e){
         if(e._spdBoost !== undefined){ h.spd = Math.max(1, (h.spd || 0) - e._spdBoost); h._sprintOrigSpd = undefined; did = true; } break;
       case '_slamSpd':
         if(e._spdBoost !== undefined){ h.spd = Math.max(1, (h.spd || 0) - e._spdBoost); did = true; } break;
+      case '_gunGuardSpd':   // ★ v5.378.0 神槍手「武裝守護」速度:冒險連場(小怪戰→BOSS 戰共用英雄)清 buff 前要扣回,否則每場疊一次
+        if(e._spdBoost !== undefined){ h.spd = Math.max(1, (h.spd || 0) - e._spdBoost); delete h._gunGuardOrigSpd; did = true; } break;
     }
   }catch(_){}
   e._fxDone = true;
@@ -8377,7 +8379,7 @@ function _lxpsStatFxSanitizeCopies(list){
 }
 //   連場/戰鬥結束時用:把所有改素質的效果「還原並拿掉」(其他 buff/status 不動)
 var _LXPS_STATFX_TYPES = ['strengthened','_soulSwap','doubleatk','_amaSunAtk','_bugStack','_scholarBreak','_rogueSwift','_ponyMaxHpBuff',
-  'traitSlow','_tenguSpdDown','_zeusSpDown','traitWeak','_cryDebuff','_dreamDebuff','_cuteWeaken','weakened','_aquariusWeak','traitRage','_sprint','_slamSpd'];
+  'traitSlow','_tenguSpdDown','_zeusSpDown','traitWeak','_cryDebuff','_dreamDebuff','_cuteWeaken','weakened','_aquariusWeak','traitRage','_sprint','_slamSpd','_gunGuardSpd'];
 function _lxpsStatFxStripAll(h){
   if(!h) return 0;
   let n = 0;
@@ -10352,6 +10354,7 @@ function showElemPickForHero(pos, heroes, cb){
   _epRenderHeroes();
   _epBuildAttrPanel();
   _epActivateHero(0);
+  try{ if(window._RSV) window._RSV.epShow(); }catch(_eRsvEp){ console.warn('[後備 屬性頁]', _eRsvEp); }   // ★ v5.378.0 左側前鋒/後備切換標籤
   beep(550,'sine',0.05,0.06); setTimeout(()=>beep(770,'sine',0.07,0.07),100);
   // 顯示對手陣容屬性
   const _eeEl=document.getElementById('ep-enemy-elems');
@@ -10546,6 +10549,7 @@ function _epRenderHeroes(){
   // 舊按鈕（在ep-right裡，已隱藏）
   const oldBtn=document.getElementById('ep-finish-btn');
   if(oldBtn) oldBtn.style.display='none';
+  try{ if(window._RSV) window._RSV.epAfterRender(); }catch(_eRsvEpR){}   // ★ v5.378.0 兩隊都選完才能進技能配置
 }
 
 function _epActivateHero(pos){
@@ -10881,6 +10885,7 @@ function _epSpawnParticles(key, color){
 }
 
 function finishElemPick(){
+  try{ if(window._RSV && window._RSV.epFinishGate()) return; }catch(_eRsvEpF){ console.warn('[後備 屬性完成守門]', _eRsvEpF); }   // ★ v5.378.0 先換回前鋒、後備沒選完帶過去
   if(Object.keys(_epAssigned).length<_epHeroes.length){ log('請為所有英雄選擇元素屬性！'); return; }
   playSfx('sfx-confirm2',0.9);
   document.getElementById('elem-pick-overlay').style.display='none';
@@ -10926,6 +10931,7 @@ function showHeroPickOverlay(){
   try{ const _gcG=document.getElementById('gc'); if(_gcG) _gcG.classList.remove('adv-battle'); }catch(_){}
   const _hpoSafe = document.getElementById('hero-pick-overlay');
   const _ensureHPO = ()=>{ if(_hpoSafe){ _hpoSafe.style.display='flex'; } };
+  try{ if(window._RSV) window._RSV.onOpen(); }catch(_eRsvOpen){}   // ★ v5.378.0 前鋒/後備書籤:每次開頁從前鋒開始、讀本帳號後備
   try {
   // ★★ 角色選擇專屬BGM（不重播）
   // ★ v3.13.24(2026-06-02) — 鬥技場流程保持 lobby BGM 不切換(鐵律 1.154)
@@ -12110,6 +12116,7 @@ function focusHero(idx, name){
 }
 
 function inviteHero(idx, name){
+  try{ if(window._RSV && window._RSV.blockInvite(name)){ try{ dismissFocus(); }catch(_){} return; } }catch(_eRsvInv){}   // ★ v5.378.0 後備書籤不可選前鋒英雄/好友英雄
   // ★ v1.0.20260511.6070 防作弊:冒險模式下強制檢查 name 是否在白名單內
   //   防止 (a) console 直接呼叫;(b) _heroPickPool 被異常注入未解鎖名
   if(window._isAdventurePickMode === true){
@@ -13751,6 +13758,7 @@ function updatePickedBadges(){
   }
   try{ if(window._fmDecoratePick) window._fmDecoratePick(); }catch(_eFmDec){}   // ★ v5.283.0 英魂陣型 右上四張隊員立繪的魂格圓標(立繪剛重畫完)
   try{ if(window._lxpsPickLayoutFit) setTimeout(window._lxpsPickLayoutFit, 0); }catch(_eFit){}   // ★ v5.368.0
+  try{ if(window._RSV) window._RSV.afterBadges(); }catch(_eRsvAb){}   // ★ v5.378.0 前鋒/後備書籤人數、重複檢查
 }
 
 /* ★ v5.368.0(2026-11-09・老師附 PC 截圖「右側的英雄特殊能力標籤被下方區塊覆蓋到了，調整標籤高度不要被遮蓋」「把對手陣容和友方陣容中間分開一點小縫隙」)
@@ -13835,6 +13843,8 @@ window._lxpsPurgeOverURPresets = function(){
   }catch(e){ try{ console.warn('[冒險 UR 上限] 清理例外', e); }catch(_){} return 0; }
 };
 function confirmHeroPick(){
+  // ★ v5.378.0 前鋒/後備:先切回前鋒書籤(_heroPickSelected 一定是前鋒),後備沒編好/重複/UR 超標 ⇒ 擋下並帶去後備書籤
+  try{ if(window._RSV){ window._RSV.toFront(); if(_heroPickSelected.length >= 4 && window._RSV.gate(_heroPickSelected.slice(), null, null)) return; } }catch(_eRsvGate){ console.warn('[後備隊伍 出發守門]', _eRsvGate); }
   if(_heroPickSelected.length < 4) return;
   document.getElementById('hero-pick-overlay').style.display = 'none';
   // ★ 恢復屬性相剋圖（僅在非冒險模式時，冒險模式不需要它）
@@ -14368,6 +14378,7 @@ function showSkillReplaceOverlay(){
   buildSkillPicker();
 
   document.getElementById('skill-replace-overlay').style.display = 'flex';
+  try{ if(window._RSV) window._RSV.srShow(); }catch(_eRsvSr){ console.warn('[後備 技能頁]', _eRsvSr); }   // ★ v5.378.0 上方前鋒/後備切換標籤
   beep(550,'sine',0.06,0.08); setTimeout(()=>beep(440,'sine',0.08,0.1),100); setTimeout(()=>beep(660,'sine',0.1,0.1),200);
 }
 
@@ -14615,6 +14626,7 @@ function playBattleStartSfx(){
 
 // ★ 鬥技：選角頁返回首頁
 function goBackFromHeroPick(){
+  try{ if(window._RSV) window._RSV.toFront(); }catch(_eRsvBk){}   // ★ v5.378.0 後備書籤中返回 ⇒ 後備已存,切回前鋒
   const hpo = document.getElementById('hero-pick-overlay');
   if(hpo) hpo.style.display = 'none';
   // 重置選角狀態
@@ -14633,6 +14645,7 @@ function goBackFromHeroPick(){
 
 // ★ 元素選擇返回選角頁（冒險/鬥技場都適用）
 function goBackFromElemPick(){
+  try{ if(window._RSV) window._RSV.epBack(); }catch(_eRsvEb){}   // ★ v5.378.0
   const epOv = document.getElementById('elem-pick-overlay');
   if(epOv) epOv.style.display = 'none';
   const hpo = document.getElementById('hero-pick-overlay');
@@ -14643,6 +14656,7 @@ function goBackFromElemPick(){
 }
 
 function goBackToHeroPick(){
+  try{ if(window._RSV){ window._RSV.srBack(); window._RSV.epBack(); } }catch(_eRsvBh){}   // ★ v5.378.0 後備的屬性/技能先存起來、換回前鋒
   // 關閉所有可能開著的 overlay
   ['skill-replace-overlay','elem-pick-overlay'].forEach(id=>{
     const el=document.getElementById(id);
@@ -14663,6 +14677,7 @@ function goBackToHeroPick(){
 
 // ★ 技能替換頂部「← 返回」→ 只返回元素選擇，不重置整個狀態
 function goBackToElemPick(){
+  try{ if(window._RSV) window._RSV.srBack(); }catch(_eRsvBe){}   // ★ v5.378.0
   const sro = document.getElementById('skill-replace-overlay');
   if(sro) sro.style.display = 'none';
   const epOv = document.getElementById('elem-pick-overlay');
@@ -14776,6 +14791,7 @@ function _showHealWarning(onContinue) {
 }
 
 function confirmSkillReplace(){
+  try{ if(window._RSV) window._RSV.srConfirm(); }catch(_eRsvSc){ console.warn('[後備 技能確認]', _eRsvSc); }   // ★ v5.378.0 換回前鋒、後備替換技能存起來
   // ★ 先檢查治療技能數量
   const healCount = _countTeamHealSkills();
   if(healCount < 2) {
@@ -15008,9 +15024,28 @@ function _doConfirmSkillReplace(){
         setTimeout(function(){ bsOv.classList.remove('show'); }, 3200);
       }
     })();
+    // ★ v5.378.0(老師 2026-11-11「補上開場天賦效果」)— 原本這裡的一整段開場效果(田徑起跑/動態天賦/七職人/裝備開場/神槍手/網路駭客/鳳凰/操偶師/UR/菇女/小力/元素增幅…)
+    //   搬到下方獨立函式 _lxpsBattleOpenFx(),內容逐字不變;鬥技場照舊在這裡呼叫,故事冒險的小怪戰/BOSS 戰開場與後備隊伍登場也呼叫同一份。
+    try{ _lxpsBattleOpenFx(); }catch(_eBof){ console.warn('[戰鬥開場效果]', _eBof); }
+    _pSetTimeout(()=>{
+      // ★ 鬥技場初次戰鬥教學
+      if(!_adventureMode && !_tutorialDone) {
+        _checkShowTutorial('arena');
+      } else {
+        startTurn();
+      }
+    }, G.p1.length * 200 + G.p2.length * 200 + 600);
+  }, 400);
+}
+// ════════════════════════════════════════════════════════════════════════════
+// ★ v5.378.0 戰鬥開場效果(由 _doConfirmSkillReplace 原地搬出,內容不變;唯一改動:田徑隊員第一段起跑衝刺加 !h._sprintTriggered,
+//   避免冒險 BOSS 戰 advStartBattle 已經起跑過再疊一次;第二段「重置」照舊以 _sprintOrigSpd 為基準 ⇒ 只算一次)。
+//   呼叫點:鬥技場(_doConfirmSkillReplace)、冒險 advStartBattle(非世界 BOSS)、advStartMiniBattle、後備隊伍登場(window._RSV,只對新上場的我方生效)。
+// ════════════════════════════════════════════════════════════════════════════
+function _lxpsBattleOpenFx(){
     // 田徑隊員：起跑衝刺開場自動觸發（基礎5回合，每升3級+1）
     [...G.p1,...G.p2].forEach(h=>{
-      if(h.name==='田徑隊員' && h.curHp>0 && (h.s1.n==='起跑衝刺'||h.s2.n==='起跑衝刺')){
+      if(h.name==='田徑隊員' && h.curHp>0 && (h.s1.n==='起跑衝刺'||h.s2.n==='起跑衝刺') && !h._sprintTriggered){   // ★ v5.378.0 冒險 BOSS 戰已起跑過就不再疊
         const _sprintBoost=Math.ceil(h.spd*0.5);
         // 取技能等級決定持續回合
         const _sprSlot = (h.s1 && h.s1.n==='起跑衝刺') ? 's1' : (h.s2 && h.s2.n==='起跑衝刺') ? 's2' : null;
@@ -15196,8 +15231,13 @@ function _doConfirmSkillReplace(){
     // 田徑隊員：時間倒轉後重新觸發起跑衝刺
   [...G.p1,...G.p2].forEach(h=>{
     if(h.name==='田徑隊員' && h.curHp>0 && (h.s1.n==='起跑衝刺'||h.s2.n==='起跑衝刺')){
-      if(h._sprintOrigSpd!==undefined){ h.spd=h._sprintOrigSpd; }
-      const _sprintBoost2=Math.ceil(h.spd*0.5);
+      // ★ v5.378.0 舊行「h.spd = h._sprintOrigSpd」會把起跑之後才加的速度(神槍手武裝守護等)一起洗掉 ⇒ 改成只扣回上一段起跑的加成;加成量仍以「起跑前速度」計(數值與原本相同)
+      //   舊行備查:if(h._sprintOrigSpd!==undefined){ h.spd=h._sprintOrigSpd; }  const _sprintBoost2=Math.ceil(h.spd*0.5);
+      const _sprPrev2 = (h.status||[]).find(s=>s && s.type==='_sprint');
+      const _sprBase2 = (h._sprintOrigSpd!==undefined) ? h._sprintOrigSpd : h.spd;
+      if(_sprPrev2 && typeof _sprPrev2._spdBoost === 'number'){ h.spd -= _sprPrev2._spdBoost; }
+      else if(h._sprintOrigSpd!==undefined){ h.spd=h._sprintOrigSpd; }
+      const _sprintBoost2=Math.ceil(_sprBase2*0.5);
       // 取技能等級決定持續回合
       const _sprSlot2 = (h.s1 && h.s1.n==='起跑衝刺') ? 's1' : (h.s2 && h.s2.n==='起跑衝刺') ? 's2' : null;
       const _sprLv2 = (_sprSlot2 && h._skLv) ? (h._skLv[_sprSlot2]||0) : 0;
@@ -15232,16 +15272,8 @@ function _doConfirmSkillReplace(){
         renderCard(h);
       }
     });
-    _pSetTimeout(()=>{
-      // ★ 鬥技場初次戰鬥教學
-      if(!_adventureMode && !_tutorialDone) {
-        _checkShowTutorial('arena');
-      } else {
-        startTurn();
-      }
-    }, G.p1.length * 200 + G.p2.length * 200 + 600);
-  }, 400);
 }
+window._lxpsBattleOpenFx = _lxpsBattleOpenFx;
 
 // ════════════════════════════════════════════════════════════════
 // ★ v3.15.67 — 科學發明家「新發明物品卡」子系統(6 張)。設計:5 年 4 班 楊寓如。
@@ -16471,6 +16503,7 @@ function updateUI(){
     bar.innerHTML='';
     for(let i=0;i<10;i++) bar.innerHTML+=`<div class="eslot ${i<G.energy[s]?'on':''}"></div>`;
     bar.innerHTML+='<span class="ebar-v-label">能量</span>';
+    if(s==='p1'){ try{ if(window._RSV) bar.innerHTML+=window._RSV.phaseTag(); }catch(_eRsvTag){} }   // ★ v5.378.0 能量條旁「前鋒/後衛」
     // 滿格時加藍色火光
     if(G.energy[s]>=10) bar.classList.add('energy-full');
     else bar.classList.remove('energy-full');
@@ -69313,7 +69346,9 @@ function checkWin(){
   }catch(_wbCheckWinErr){
     console.warn('[checkWin→WB] 守門例外,fallback 主程式 checkWin', _wbCheckWinErr);
   }
-  if(G.p1.every(h=>h.curHp<=0)){ _showResultWithDrama(false); return true; }
+  if(G.p1.every(h=>h.curHp<=0)){
+    try{ if(window._RSV && window._RSV.trySwap()) return true; }catch(_eRsvCw){}   // ★ v5.378.0 前鋒全滅 ⇒ 後備隊伍登場
+    _showResultWithDrama(false); return true; }
   // ★★★ v3.15.9 — 埃及雙王「不離不棄」即時互救(BUG1 甲):放在勝負判定前。
   //   一王 HP≤0 而另一王存活 → 存活者立刻耗自身最大 HP 5%、復活倒下者至最大 HP 25%
   //   (沿用 startTurn 既有耗血/復活量)後不 return,讓 checkWin 繼續(此時兩王皆活,
@@ -69440,6 +69475,8 @@ function checkWin(){
 }
 // 慢動作 → 大標題 → 結算的完整流程
 function _showResultWithDrama(win){
+  // ★ v5.378.0 後備隊伍:任何「敗北結算」入口(checkWin 之外的 watchdog/巡邏/計時器)也先讓後備登場
+  if(!win){ try{ if(window._RSV && window._RSV.trySwap()) return; }catch(_eRsvSr){} }
   // ★ v3.13.29 — 鬥技場戰鬥結束(顯示結算)→ 清中斷快照,避免結算後跳出誤彈續戰
   try{ if(typeof _adventureMode !== 'undefined' && _adventureMode === false && typeof _arenaClearBattleSnap === 'function') _arenaClearBattleSnap(); }catch(_){}
   // ★ v3.13.14(2026-06-02) — 鬥技場結算發放鬥技之證
@@ -83106,6 +83143,8 @@ window._lxpsFlushPendingToCloud = async function(fromVerifiedEntry){
 function openAdventureOverlay(){
   // ★ v5.374.0 📊 四種模式遊玩人次:故事冒險(每人每天 1 次;未登入/GM 不計;同一天之後只查本機記號,不碰雲端)— 見 game_cloud.js _setupModePlays
   try{ if(typeof window._lxpsModePlay === 'function') window._lxpsModePlay('adv'); }catch(_eMp){}
+  // ★ v5.378.0 首次進入關卡選擇頁:前鋒/後備新玩法說明(每帳號一次;關卡頁確實顯示才彈)
+  try{ setTimeout(function(){ try{ var _ao = document.getElementById('adventure-overlay'); if(_ao && _ao.style.display !== 'none' && getComputedStyle(_ao).display !== 'none' && window._RSV) window._RSV.maybeIntro(); }catch(_){} }, 1200); }catch(_eRsvIntro){}
   // ★ v4.2.0 — 依「寵物系統 GM 測試限定」開關,隱藏/顯示主選單寵物鈕(cosmetic·存取另有守門)
   // ★ v4.3.0 — 首次進關卡頁時拉一次雲端開關(gameConfig/petSystemSwitch);載完會自行再套用一次 gate
   try{ if(window._petSysCloudOpen === null && window._fbLoadPetSysSwitch) window._fbLoadPetSysSwitch(); }catch(_){}
@@ -90515,6 +90554,810 @@ window._FM_DEFS = {
     var R = window._CST_EFFECTS || (window._CST_EFFECTS = {});
     NAMES.forEach(function(nm){ R[nm] = R[nm] || {}; ['t1','t2','s1','s2','b1','b2'].forEach(function(s){ R[nm][s] = { impl:1, partial:'' }; }); });
   }catch(_eSr7Cst){}
+})();
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * ★ v5.378.0(2026-11-11・老師需求)— 故事冒險「前鋒隊伍 / 後備隊伍」 window._RSV
+ *   老師 13:26:原本隊伍=前鋒;前鋒全滅 ⇒ 全部下場換後備,後備登場「重新開始該回合」(戰鬥開始生效的天賦/技能可發動),
+ *              對手身上的有利/不利狀態、雙方能量繼承;畫面中心醒目提示;鬥技場不生效;後備可直接套用預設隊伍,
+ *              兩隊有相同角色必定提醒重新選擇取代;戰鬥畫面下方能量條旁顯示「前鋒」或「後衛」。
+ *        13:33:接關改成只有一次,接關時前鋒(含後備)都從全滿開始;後備的至寶/裝備/寵物不可與前鋒共用(前鋒優先,
+ *              後備被卸下要提醒補齊);雲端同步與反污染;更新後首次進入冒險關卡選擇頁彈出說明視窗。
+ *        13:35:編組頁右側四張圖片格式不變,最左邊緣加「前鋒隊伍 / 後備隊伍」上下兩個書籤切換;沒編後備 ⇒ 跳提醒,必須編輯。
+ *   資料:window._lxpsRsvCfg = { uid, heroes:[名], elem:{名:屬性}, sk:{名:{slot,skillName}}, intro:1 }
+ *        上雲欄位 advReserve_s(game_adv.js gameCloudSave/載入;自寫欄位不需改 firestore.rules)。
+ *        ⚠ 反污染:載入一律以本帳號雲端值覆蓋(沒有就清空);使用前再比對 cfg.uid === window._gUserId,不符一律視為沒有後備。
+ *   一場戰鬥的流程:confirmHeroPick / _applyPresetTeam 守門通過 ⇒ arm(本關);前鋒全滅(checkWin、_showResultWithDrama(false) 兩個入口)
+ *        ⇒ trySwap():用 cfg 現建 4 位(newHero + 投資/等級/技能/爆發/戰前養成/屬性/替換技能),G._rsvFront 保留前鋒;
+ *        每場新戰鬥(小怪戰/BOSS 戰/重新開戰/接關)⇒ restoreFront() 換回前鋒,後備下次再現建(全滿)。
+ *   階段判定一律看「G.p1 裡有沒有 _rsvRear 英雄」⇒ 回溯/續戰快照自然正確,不另存旗標。
+ * ══════════════════════════════════════════════════════════════════════════ */
+;(function(){
+  var W = window;
+  function cute(){ try{ return W._artStyle === 'cute'; }catch(_){ return false; } }
+  function T(c, p){ return cute() ? c : p; }
+  function uid(){ try{ return W._gUserId || null; }catch(_){ return null; } }
+  function inAdvPick(){ try{ return W._isAdventurePickMode === true && _adventureMode === true && typeof _adventureStage === 'string' && !!_adventureStage && _adventureStage !== 'worldboss'; }catch(_){ return false; } }
+  function stageOk(){
+    try{
+      if(!(typeof _adventureMode !== 'undefined' && _adventureMode === true)) return false;
+      if(typeof _adventureStage !== 'string' || !_adventureStage || _adventureStage === 'worldboss') return false;
+      if(W._pvpCtx && W._pvpCtx.battleLive) return false;
+      if(W._wbClientMode === true || W._wbConnectedClientMode === true) return false;
+      return true;
+    }catch(_){ return false; }
+  }
+  function cfg(){
+    var c = W._lxpsRsvCfg;
+    if(!c || typeof c !== 'object') return null;
+    if(!c.uid || c.uid !== uid()) return null;   // 反污染:別人的後備一律不用
+    return c;
+  }
+  function ensureCfg(){
+    var c = cfg();
+    if(!c){ c = { uid: uid(), heroes: [], elem: {}, sk: {} }; W._lxpsRsvCfg = c; }
+    if(!Array.isArray(c.heroes)) c.heroes = [];
+    if(!c.elem || typeof c.elem !== 'object') c.elem = {};
+    if(!c.sk || typeof c.sk !== 'object') c.sk = {};
+    return c;
+  }
+  var _saveT = null;
+  function save(){
+    try{ if(_saveT) clearTimeout(_saveT); }catch(_){}
+    _saveT = setTimeout(function(){ _saveT = null; try{ if(uid() && typeof gameCloudSave === 'function') Promise.resolve(gameCloudSave()).catch(function(){}); }catch(_){} }, 1200);
+  }
+  // 可用英雄 = 冒險合法池(與 _applyPresetTeam 冒險檢查同口徑),排除好友借用
+  function allowedSet(){
+    var s = {};
+    try{ ((typeof ADV_HERO_POOL !== 'undefined' && ADV_HERO_POOL.maokong) || []).forEach(function(n){ s[n] = 1; }); }catch(_){}
+    try{ ((typeof ADV_HERO_POOL !== 'undefined' && typeof _adventureStage === 'string' && ADV_HERO_POOL[_adventureStage]) || []).forEach(function(n){ s[n] = 1; }); }catch(_){}
+    try{ ((typeof advGetUnlockedHeroes === 'function' && advGetUnlockedHeroes()) || []).forEach(function(n){ s[n] = 1; }); }catch(_){}
+    try{ var b = (typeof W._advBorrowedHeroNames === 'function') ? W._advBorrowedHeroNames() : null; if(b && b.forEach) b.forEach(function(n){ delete s[n]; }); }catch(_){}
+    try{ Object.keys(s).forEach(function(n){ if(typeof HERO_DB === 'undefined' || !HERO_DB[n]) delete s[n]; }); }catch(_){}
+    return s;
+  }
+  function isBorrowed(n){ try{ var b = (typeof W._advBorrowedHeroNames === 'function') ? W._advBorrowedHeroNames() : null; return !!(b && b.has && b.has(n)); }catch(_){ return false; } }
+
+  /* ── 編組頁:左側書籤 ── */
+  var S = { tab: 'front', front: [], rear: [] };
+  function css(){
+    if(document.getElementById('lxps-rsv-css')) return;
+    var st = document.createElement('style'); st.id = 'lxps-rsv-css';
+    st.textContent = ''
+      + '#rsv-tabs{position:absolute;left:0;top:240px;z-index:12;display:none;flex-direction:column;gap:18px;}'
+      + '.rsv-tab.rsv-swap{height:160px !important;background:linear-gradient(90deg,#1d4f7a,#2d6fb0);color:#e8f6ff;border-color:rgba(140,210,255,0.85);gap:4px;}'
+      + '.rsv-tab.rsv-swap .rsv-tt{font-size:26px;letter-spacing:3px;}'
+      + '.rsv-sw-i{font-size:34px;line-height:1;}'
+      + '.rsv-tab:active{transform:translateX(3px) scale(0.97);}'
+      + '#hero-pick-overlay.rsv-on #rsv-tabs{display:flex;}'
+      + '#hero-pick-overlay.rsv-on #hero-pick-arena{margin-left:84px;}'
+      + '.rsv-tab{width:78px;height:210px;box-sizing:border-box;border:3px solid rgba(255,220,140,0.55);border-left:none;border-radius:0 22px 22px 0;'
+      +   'background:linear-gradient(90deg,rgba(30,24,60,0.92),rgba(55,40,95,0.92));color:#cfc6ff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;'
+      +   'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;font-weight:800;box-shadow:4px 4px 14px rgba(0,0,0,0.5);transition:transform .15s;}'
+      + '.rsv-tab .rsv-tt{writing-mode:vertical-rl;font-size:34px;letter-spacing:6px;line-height:1;}'
+      + '.rsv-tab .rsv-tn{font-size:24px;color:#ffe6a0;}'
+      + '.rsv-tab.on{background:linear-gradient(90deg,#ffe28a,#ffb340);color:#3a2200;border-color:#fff2c0;transform:translateX(6px);box-shadow:0 0 22px rgba(255,200,80,0.8),4px 4px 14px rgba(0,0,0,0.5);}'
+      + '.rsv-tab.on .rsv-tn{color:#5a3300;}'
+      + '.rsv-tab.warn{border-color:#ff6a6a;}'
+      + '.rsv-tab.warn .rsv-tn{color:#ff8080;}'
+      + '.rsv-tab.on.warn .rsv-tn{color:#b00000;}'
+      + '.hpick-adv-node[data-rsv-other]::after{content:attr(data-rsv-other);position:absolute;right:4px;top:4px;font-size:22px;font-weight:900;color:#3a2200;z-index:3;'
+      +   'background:linear-gradient(180deg,#ffe28a,#ffb340);padding:3px 10px;border-radius:10px;letter-spacing:2px;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.6);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+      + '.hpick-adv-node[data-rsv-other]{filter:saturate(0.55);}'
+      + '#e1-bar{position:relative;}'
+      + '.rsv-phase{position:absolute;right:calc(100% + 4px);top:50%;transform:translateY(-50%);writing-mode:vertical-rl;font-size:26px;font-weight:900;letter-spacing:6px;'
+      +   'padding:12px 5px;border-radius:12px;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;white-space:nowrap;pointer-events:none;}'
+      + '.rsv-phase.f{color:#3a2200;background:linear-gradient(180deg,#ffe28a,#ffb340);box-shadow:0 0 10px rgba(255,190,70,0.7);}'
+      + '.rsv-phase.r{color:#fff;background:linear-gradient(180deg,#7fd1ff,#3d7cff);box-shadow:0 0 12px rgba(90,170,255,0.85);}'
+      + '#rsv-banner{position:absolute;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;pointer-events:none;}'
+      + '#rsv-banner .rb-in{text-align:center;padding:40px 90px;border-radius:40px;background:radial-gradient(ellipse at center,rgba(20,40,110,0.92),rgba(10,10,40,0.0) 75%);animation:rsvBn 2.6s ease-out forwards;}'
+      + '#rsv-banner .rb-t{font-size:110px;font-weight:900;color:#fff4c0;letter-spacing:10px;text-shadow:0 0 30px #ffb340,0 0 60px #ff8a00,0 6px 0 #7a3a00;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+      + '#rsv-banner .rb-s{margin-top:18px;font-size:52px;font-weight:800;color:#bfe6ff;text-shadow:0 0 18px #3d7cff,0 3px 0 #001a4a;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+      + '@keyframes rsvBn{0%{opacity:0;transform:scale(0.4)}14%{opacity:1;transform:scale(1.12)}24%{transform:scale(1)}82%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.08)}}';
+    document.head.appendChild(st);
+  }
+  function tabsEl(){
+    var hpo = document.getElementById('hero-pick-overlay');
+    if(!hpo) return null;
+    var el = document.getElementById('rsv-tabs');
+    if(!el){
+      css();
+      el = document.createElement('div'); el.id = 'rsv-tabs';
+      el.innerHTML = '<div class="rsv-tab" id="rsv-tab-front"><span class="rsv-tt">前鋒隊伍</span><span class="rsv-tn"></span></div>'
+                   + '<div class="rsv-tab" id="rsv-tab-rear"><span class="rsv-tt">後備隊伍</span><span class="rsv-tn"></span></div>'
+                   + '<div class="rsv-tab rsv-swap" id="rsv-tab-swap"><span class="rsv-sw-i">⇅</span><span class="rsv-tt">一鍵交換</span></div>';
+      hpo.appendChild(el);
+      el.querySelector('#rsv-tab-front').onclick = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} setTab('front'); };
+      el.querySelector('#rsv-tab-rear').onclick  = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} setTab('rear'); };
+      el.querySelector('#rsv-tab-swap').onclick  = function(){ try{ playSfx('sfx-deal', 0.6); }catch(_){} swapTeams(); };
+    }
+    return el;
+  }
+  // ★ 老師 13:56「編組時新增第三個鍵:一鍵交換前鋒和後衛」
+  function swapTeams(){
+    var fr = frontList().slice(), rr = rearList().slice();
+    if(S.tab === 'rear'){ S.front = rr; _heroPickSelected = fr; }
+    else { _heroPickSelected = rr; S.rear = fr; }
+    syncCfg();
+    rebuild();
+    try{ _showInGameToast(T('⇅ 前鋒和後備交換好了!', '⇅ 前鋒隊伍與後備隊伍已互換'), '#7fd1ff', 1800); }catch(_){}
+  }
+  function frontList(){ return (S.tab === 'rear') ? S.front : (typeof _heroPickSelected !== 'undefined' ? _heroPickSelected : []); }
+  function rearList(){ return (S.tab === 'rear') ? (typeof _heroPickSelected !== 'undefined' ? _heroPickSelected : []) : S.rear; }
+  function needRear(){
+    var al = allowedSet(), fr = frontList(), n = 0;
+    Object.keys(al).forEach(function(k){ if(fr.indexOf(k) < 0) n++; });
+    return Math.min(4, n);
+  }
+  function rebuild(){
+    try{ if(typeof _buildHeroPickNodes === 'function') _buildHeroPickNodes(); }catch(_e){ console.warn('[後備隊伍] 重建清單失敗', _e); }
+    try{ if(typeof updatePickedBadges === 'function') updatePickedBadges(); }catch(_){}
+    try{ if(typeof dismissFocus === 'function') dismissFocus(); }catch(_){}
+  }
+  function setTab(t){
+    if(t !== 'front' && t !== 'rear') return;
+    if(S.tab === t){ refresh(); return; }
+    if(t === 'rear'){ S.front = _heroPickSelected.slice(); _heroPickSelected = S.rear.slice(); }
+    else { S.rear = _heroPickSelected.slice(); _heroPickSelected = S.front.slice(); syncCfg(); }
+    S.tab = t;
+    rebuild();
+  }
+  function syncCfg(){
+    try{
+      if(!uid()) return;
+      var c = ensureCfg(), r = rearList().slice(0, 4);
+      if(JSON.stringify(c.heroes) !== JSON.stringify(r)){ c.heroes = r; save(); }
+    }catch(_){}
+  }
+  // 由 confirmHeroPick / _applyPresetTeam / goBack 呼叫:切回前鋒(_heroPickSelected 一定是前鋒)
+  function toFront(){
+    if(S.tab !== 'rear') return;
+    S.rear = _heroPickSelected.slice(); _heroPickSelected = S.front.slice(); S.tab = 'front'; syncCfg();
+    // 畫面還開著(例如出發被擋下、玩家按「等一下」)⇒ 右側四張圖與清單同步回前鋒
+    setTimeout(function(){ try{ var hpo = document.getElementById('hero-pick-overlay'); if(hpo && hpo.style.display !== 'none' && S.tab === 'front') rebuild(); }catch(_){} }, 0);
+  }
+  // 開頁:讀 cfg(只留合法、不在前鋒的)
+  function onOpen(){
+    toFront();
+    S.tab = 'front'; S.front = [];
+    var c = cfg(), al = allowedSet();
+    S.rear = (c && Array.isArray(c.heroes)) ? c.heroes.filter(function(n, i, a){ return al[n] && a.indexOf(n) === i; }).slice(0, 4) : [];
+    var hpo = document.getElementById('hero-pick-overlay');
+    if(hpo) hpo.classList.toggle('rsv-on', inAdvPick());
+  }
+  var _abT = null;
+  function afterBadges(){
+    if(_abT) return;
+    _abT = setTimeout(function(){ _abT = null; try{ refresh(); }catch(_e){ console.warn('[後備隊伍] refresh', _e); } }, 0);
+  }
+  function refresh(){
+    var hpo = document.getElementById('hero-pick-overlay');
+    if(!hpo) return;
+    var on = inAdvPick();
+    hpo.classList.toggle('rsv-on', on);
+    var el = tabsEl();
+    if(!on){ if(S.tab === 'rear') toFront(); return; }
+    // 同角色在兩隊:前鋒優先 ⇒ 從後備拿掉並提醒補選(鬥技/推薦/預設陣容等任何路徑都兜得住)
+    var fr = frontList(), rr = rearList(), dup = rr.filter(function(n){ return fr.indexOf(n) >= 0; });
+    if(dup.length){
+      if(S.tab === 'rear') _heroPickSelected = _heroPickSelected.filter(function(n){ return fr.indexOf(n) < 0; });
+      else S.rear = S.rear.filter(function(n){ return fr.indexOf(n) < 0; });
+      syncCfg();
+      try{ W._lxpsAlert(T('「' + dup.join('、') + '」已經在前鋒隊伍裡了,同一位英雄不能兩隊都帶喔!\n\n已從後備隊伍拿掉,請到「後備隊伍」書籤重新選一位英雄補上那一格。',
+                          '「' + dup.join('、') + '」已編入前鋒隊伍,同一名英雄不能同時出現在兩隊。\n\n已自後備隊伍移除,請切換到「後備隊伍」書籤,重新選擇英雄取代該位置。'),
+                        { title: T('⚠ 有英雄重複了', '⚠ 隊伍成員重複') }); }catch(_){}
+      if(S.tab === 'rear'){ rebuild(); return; }
+      fr = frontList(); rr = rearList();
+    }
+    var need = needRear();
+    var tf = el.querySelector('#rsv-tab-front'), tr = el.querySelector('#rsv-tab-rear');
+    tf.classList.toggle('on', S.tab === 'front'); tr.classList.toggle('on', S.tab === 'rear');
+    tf.querySelector('.rsv-tn').textContent = fr.length + '/4';
+    tr.querySelector('.rsv-tn').textContent = rr.length + '/' + (need || 4);
+    tf.classList.toggle('warn', fr.length < 4); tr.classList.toggle('warn', rr.length < need);
+    // 另一隊的英雄在清單上標示
+    try{
+      var other = (S.tab === 'rear') ? fr : rr, lab = (S.tab === 'rear') ? '前鋒' : '後備';
+      (typeof _heroPickPool !== 'undefined' ? _heroPickPool : []).forEach(function(n, i){
+        var nd = document.getElementById('hpick-' + i); if(!nd) return;
+        if(other.indexOf(n) >= 0) nd.setAttribute('data-rsv-other', lab); else nd.removeAttribute('data-rsv-other');
+      });
+    }catch(_){}
+    if(S.tab === 'rear'){
+      syncCfg();
+      var cnt = document.getElementById('hero-pick-count');
+      if(cnt) cnt.textContent = T('🛡 後備隊伍:前鋒全倒下時換他們上場!(已選 ' + rr.length + ' / ' + (need || 4) + ')',
+                                  '🛡 後備隊伍:前鋒全滅時接替上場(已選 ' + rr.length + ' / ' + (need || 4) + ')');
+      var cb = document.getElementById('hero-pick-confirm');
+      if(cb) cb.disabled = fr.length < 4;
+    }
+  }
+  // 後備書籤中點選前鋒英雄 ⇒ 擋下(回 true = 已攔截)
+  function blockInvite(name){
+    if(!inAdvPick() || S.tab !== 'rear') return false;
+    if(_heroPickSelected.indexOf(name) >= 0) return false;   // 取消選取照常
+    if(S.front.indexOf(name) >= 0){
+      try{ _showInGameToast(T('「' + name + '」已經在前鋒隊伍囉,後備請選別人!', '「' + name + '」已在前鋒隊伍,後備請選擇其他英雄'), '#ffaa44', 2600); }catch(_){}
+      return true;
+    }
+    if(isBorrowed(name)){
+      try{ _showInGameToast(T('好友借來的英雄只能放在前鋒喔!', '好友英雄僅能編入前鋒隊伍'), '#ffaa44', 2600); }catch(_){}
+      return true;
+    }
+    return false;
+  }
+
+  /* ── 預設陣容套用到後備(後備書籤中按「常用預設陣容」) ──
+   *   前鋒優先:這份陣容存的至寶/裝備/寵物若正被前鋒英雄使用,一律保留給前鋒、後備不拿,並列出缺少的欄位提醒補齊。 */
+  function loadPreset(pt){
+    if(!pt || !Array.isArray(pt.heroes)) return;
+    var al = allowedSet(), fr = S.front, kept = [], lost = [], dup = [], locked = [];
+    pt.heroes.forEach(function(n, i){
+      if(!n) return;
+      if(fr.indexOf(n) >= 0){ dup.push(n); return; }
+      if(!al[n]){ locked.push(n); return; }
+      if(kept.length < 4 && kept.indexOf(n) < 0) kept.push({ n: n, i: i });
+    });
+    var c = ensureCfg();
+    kept.forEach(function(k){
+      var e = pt.elements && pt.elements[k.i];
+      if(e) c.elem[k.n] = e; else delete c.elem[k.n];
+      var sk = pt.skills && pt.skills[k.i];
+      if(sk && sk.slot && sk.skillName) c.sk[k.n] = { slot: sk.slot, skillName: sk.skillName }; else delete c.sk[k.n];
+    });
+    var frSet = {}; fr.forEach(function(n){ frSet[n] = 1; });
+    var nm = function(o){ return o; };
+    // 寵物
+    try{
+      if(Array.isArray(pt.pets) && typeof W._petSetFollow === 'function'){
+        kept.forEach(function(k){
+          var pn = pt.pets[k.i]; if(!pn) return;
+          if(typeof W._petIsTamed === 'function' && !W._petIsTamed(pn)) return;
+          var rec = W._tamedPets && W._tamedPets[pn];
+          if(rec && rec.followTo && frSet[rec.followTo]){ lost.push({ h: k.n, t: '寵物', x: pn, by: rec.followTo }); return; }
+          W._petSetFollow(pn, k.n);
+        });
+      }
+    }catch(_ePt){ console.warn('[後備隊伍 套用寵物]', _ePt); }
+    // 至寶
+    try{
+      if(Array.isArray(pt.treasures) && typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
+        var mine = {}; kept.forEach(function(k){ mine[k.n] = 1; });
+        Object.keys(_taiwanTreasureData).forEach(function(tid){ var r = _taiwanTreasureData[tid]; if(r && r.equippedTo && mine[r.equippedTo]) r.equippedTo = null; });
+        kept.forEach(function(k){
+          var ids = pt.treasures[k.i]; if(!Array.isArray(ids)) return;
+          ids.forEach(function(tid){
+            var r = tid && _taiwanTreasureData[tid]; if(!r) return;
+            if(typeof TAIWAN_TREASURES !== 'undefined' && !TAIWAN_TREASURES[tid]) return;
+            if(r.equippedTo && frSet[r.equippedTo]){ lost.push({ h: k.n, t: '至寶', x: (TAIWAN_TREASURES[tid] && TAIWAN_TREASURES[tid].name) || tid, by: r.equippedTo }); return; }
+            r.equippedTo = k.n;
+          });
+        });
+        try{ if(typeof _saveTaiwanTreasureData === 'function') _saveTaiwanTreasureData(); }catch(_){}
+      }
+    }catch(_eTr){ console.warn('[後備隊伍 套用至寶]', _eTr); }
+    // 裝備
+    try{
+      if(Array.isArray(pt.gear) && typeof _gearGetHeroEquipped === 'function' && typeof W._gearEquipToHero === 'function'){
+        kept.forEach(function(k){ try{ (_gearGetHeroEquipped(k.n) || []).forEach(function(x){ if(x && x.eqUid) W._gearUnequip(x.eqUid); }); }catch(_){} });
+        kept.forEach(function(k){
+          var ids = pt.gear[k.i]; if(!Array.isArray(ids)) return;
+          ids.forEach(function(u){
+            if(!u) return;
+            var inst = null; try{ inst = _gearGetInstance(u); }catch(_){}
+            if(!inst) return;
+            if(inst.equippedTo && frSet[inst.equippedTo]){
+              var gn = ''; try{ gn = (GEAR_DB[inst.itemId] && GEAR_DB[inst.itemId].name) || inst.itemId; }catch(_){}
+              lost.push({ h: k.n, t: '裝備', x: gn, by: inst.equippedTo }); return;
+            }
+            W._gearEquipToHero(u, k.n);
+          });
+        });
+        try{ if(typeof _gearRepairEquipped === 'function') _gearRepairEquipped(); }catch(_){}
+      }
+    }catch(_eGr){ console.warn('[後備隊伍 套用裝備]', _eGr); }
+    _heroPickSelected = kept.map(function(k){ return k.n; });
+    syncCfg();
+    rebuild();
+    try{ _showInGameToast(T('✅ 後備隊伍套用「' + (pt.name || '預設陣容') + '」!', '✅ 後備隊伍已套用「' + (pt.name || '預設陣容') + '」'), '#cc99ff', 2200); }catch(_){}
+    var msg = [];
+    if(dup.length) msg.push(T('🔁 「' + dup.join('、') + '」已在前鋒隊伍,沒有放進後備,請重新選英雄補上那幾格。',
+                              '🔁 「' + dup.join('、') + '」已在前鋒隊伍,未編入後備,請重新選擇英雄取代這些位置。'));
+    if(locked.length) msg.push(T('🔒 「' + locked.join('、') + '」還沒解鎖,不能帶。', '🔒 「' + locked.join('、') + '」尚未解鎖,無法編入。'));
+    if(lost.length) msg.push(lostText(lost));
+    if(msg.length) try{ W._lxpsAlert(msg.join('\n\n'), { title: T('📋 後備隊伍套用好了,請看一下', '📋 後備隊伍套用結果') }); }catch(_){}
+  }
+  function lostText(lost){
+    return T('🛡 前鋒優先使用裝備!下面這些被前鋒拿去用,後備英雄少了這一格,記得到「📖 圖鑑整備」幫他們補上:\n',
+             '🛡 裝備以前鋒為優先:下列物品正由前鋒使用,已從後備卸下;請至「📖 圖鑑整備」補齊後備英雄缺少的欄位:\n')
+      + lost.map(function(l){ return '・' + l.h + ' 的' + l.t + '「' + l.x + '」→ 前鋒 ' + l.by; }).join('\n');
+  }
+  // 出發前:前鋒用預設陣容(frontPt)時,它存的至寶/裝備/寵物會被搬回前鋒 ⇒ 預先列出後備會被卸下的
+  function predictLost(frontNames, frontPt){
+    var lost = [];
+    if(!frontPt) return lost;
+    try{
+      var rr = rearList();
+      frontNames.forEach(function(fn, i){
+        var by = fn;
+        if(Array.isArray(frontPt.treasures) && Array.isArray(frontPt.treasures[i]) && typeof _taiwanTreasureData !== 'undefined'){
+          frontPt.treasures[i].forEach(function(tid){ var r = tid && _taiwanTreasureData[tid]; if(r && r.equippedTo && rr.indexOf(r.equippedTo) >= 0) lost.push({ h: r.equippedTo, t: '至寶', x: (TAIWAN_TREASURES[tid] && TAIWAN_TREASURES[tid].name) || tid, by: by }); });
+        }
+        if(Array.isArray(frontPt.gear) && Array.isArray(frontPt.gear[i])){
+          frontPt.gear[i].forEach(function(u){ var inst = null; try{ inst = _gearGetInstance(u); }catch(_){} if(inst && inst.equippedTo && rr.indexOf(inst.equippedTo) >= 0){ var gn = ''; try{ gn = (GEAR_DB[inst.itemId] && GEAR_DB[inst.itemId].name) || inst.itemId; }catch(_){} lost.push({ h: inst.equippedTo, t: '裝備', x: gn, by: by }); } });
+        }
+        if(Array.isArray(frontPt.pets) && frontPt.pets[i]){
+          var rec = W._tamedPets && W._tamedPets[frontPt.pets[i]];
+          if(rec && rec.followTo && rr.indexOf(rec.followTo) >= 0) lost.push({ h: rec.followTo, t: '寵物', x: frontPt.pets[i], by: by });
+        }
+      });
+    }catch(_e){ console.warn('[後備隊伍 predictLost]', _e); }
+    return lost;
+  }
+
+  /* ── 出發守門(回 true = 已攔截,呼叫端 return) ──
+   *   frontNames:前鋒名單;frontPt:用預設陣容出發時的陣容;resume:玩家按「知道了,出發」後重入的函式 */
+  var _gatePass = false;
+  function gate(frontNames, frontPt, resume){
+    if(!inAdvPick()) { W._lxpsRsvArmed = null; return false; }
+    if(_gatePass){ _gatePass = false; arm(); return false; }
+    toFront();
+    var al = allowedSet(), fr = frontNames || [], need = 0;
+    Object.keys(al).forEach(function(k){ if(fr.indexOf(k) < 0) need++; });
+    need = Math.min(4, need);
+    // 後備:去掉不合法/重複
+    var dup = S.rear.filter(function(n){ return fr.indexOf(n) >= 0; });
+    S.rear = S.rear.filter(function(n, i, a){ return al[n] && fr.indexOf(n) < 0 && a.indexOf(n) === i; });
+    syncCfg();
+    var goRear = function(){ try{ var hpo = document.getElementById('hero-pick-overlay'); if(hpo) hpo.style.display = 'flex'; }catch(_){} setTab('rear'); };
+    if(dup.length){
+      W._lxpsConfirm(T('「' + dup.join('、') + '」同時在前鋒和後備隊伍裡,同一位英雄不能兩隊都帶!\n\n已從後備拿掉,請重新選英雄補上那一格再出發。',
+                       '「' + dup.join('、') + '」同時編入前鋒與後備隊伍,同一名英雄不能出現在兩隊。\n\n已自後備隊伍移除,請重新選擇英雄取代該位置後再出發。'),
+        { title: T('⚠ 有英雄重複了', '⚠ 隊伍成員重複'), okText: T('🛡 去選後備', '🛡 編輯後備隊伍'), cancelText: T('等一下', '稍後') }).then(function(ok){ if(ok) goRear(); });
+      return true;
+    }
+    if(need > 0 && S.rear.length < need){
+      W._lxpsConfirm(T('出發前一定要編好「後備隊伍」喔!\n\n前鋒隊伍全部倒下時,後備隊伍會馬上衝上場接力。\n還差 ' + (need - S.rear.length) + ' 位,請按左邊的「後備隊伍」書籤選好英雄。',
+                       '出發前必須編成「後備隊伍」。\n\n前鋒隊伍全滅時,後備隊伍將立即接替上場。\n目前尚缺 ' + (need - S.rear.length) + ' 名,請點選左側「後備隊伍」書籤完成編組。'),
+        { title: T('🛡 還沒編後備隊伍', '🛡 尚未編成後備隊伍'), okText: T('🛡 去編後備', '🛡 編輯後備隊伍'), cancelText: T('等一下', '稍後') }).then(function(ok){ if(ok) goRear(); });
+      return true;
+    }
+    try{
+      var u = W._lxpsAdvURCheck ? W._lxpsAdvURCheck(S.rear) : null;
+      if(u && u.over){
+        W._lxpsConfirm(T('後備隊伍最多只能帶 ' + u.max + ' 位 UR 英雄,現在有 ' + u.n + ' 位(' + u.names.join('、') + '),請換掉 ' + (u.n - u.max) + ' 位。',
+                         '後備隊伍最多只能編入 ' + u.max + ' 名 UR 英雄,目前 ' + u.n + ' 名(' + u.names.join('、') + '),請替換 ' + (u.n - u.max) + ' 名。'),
+          { title: '⛔ UR', okText: T('🛡 去換人', '🛡 編輯後備隊伍'), cancelText: T('等一下', '稍後') }).then(function(ok){ if(ok) goRear(); });
+        return true;
+      }
+    }catch(_){}
+    var lost = predictLost(fr, frontPt);
+    // 用預設陣容出發不會經過「選屬性/替換技能」頁 ⇒ 後備沒選過屬性的先提醒(可以回去改走「確認出戰」流程選)
+    var noEl = [];
+    try{ if(frontPt){ var c0 = cfg(); S.rear.forEach(function(n){ if(!(c0 && c0.elem[n] && ELEMENT_DB[c0.elem[n]])) noEl.push(n); }); } }catch(_){}
+    if((lost.length || noEl.length) && typeof resume === 'function'){
+      var msgs = [];
+      if(noEl.length) msgs.push(T('🎨 後備隊伍的「' + noEl.join('、') + '」還沒選屬性!\n用預設陣容出發不會經過選屬性的畫面,想幫他們選屬性,請按「回去調整」再用「▶ 確認出戰」出發。',
+                                  '🎨 後備隊伍「' + noEl.join('、') + '」尚未選擇屬性。\n以預設陣容出發將略過屬性/技能配置頁;如需設定,請返回後改按「▶ 確認出戰」。'));
+      if(lost.length) msgs.push(lostText(lost));
+      W._lxpsConfirm(msgs.join('\n\n'), { title: T('🛡 出發前看一下後備隊伍', '🛡 後備隊伍出發提醒'), okText: T('知道了,出發!', '了解,出發'), cancelText: T('回去調整', '返回調整') })
+        .then(function(ok){ if(ok){ _gatePass = true; try{ resume(); }catch(_e){ _gatePass = false; console.warn('[後備隊伍 出發]', _e); } } else goRear(); });
+      return true;
+    }
+    arm();
+    return false;
+  }
+  function arm(){
+    var c = cfg();
+    W._lxpsRsvArmed = (c && c.heroes.length) ? { stage: _adventureStage, uid: uid() } : null;
+  }
+  function armed(){
+    var a = W._lxpsRsvArmed;
+    if(!a || !stageOk()) return false;
+    if(a.uid !== uid() || a.stage !== _adventureStage) return false;
+    var c = cfg(); return !!(c && c.heroes.length);
+  }
+
+  /* ── 戰鬥:建立後備英雄(與 confirmHeroPick 冒險分支同一套養成套用) ── */
+  function buildHero(n, i){
+    var h = newHero(n, 'p1', i);
+    try{ if(W._isProtagHero && W._isProtagHero(h.name) && typeof W._pgiApplyToHero === 'function') W._pgiApplyToHero(h); }catch(_){}
+    var inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[n]) || {};
+    if(inv.hp){ h.hp += inv.hp; h.curHp = h.hp; }
+    if(inv.atk) h.atk += inv.atk;
+    if(inv.sp)  h.sp  += inv.sp;
+    if(inv.spd) h.spd += inv.spd;
+    try{ _applyAdvLevelHpBonus(h); }catch(_){}
+    h._skLv = (typeof _heroSkillLevels !== 'undefined' && _heroSkillLevels && _heroSkillLevels[n]) ? { s1: (_heroSkillLevels[n].s1 || 0), s2: (_heroSkillLevels[n].s2 || 0) } : { s1: 0, s2: 0 };
+    h._burstLvAdv = (typeof _heroBurstLevels !== 'undefined' && _heroBurstLevels && _heroBurstLevels[n]) || 0;
+    try{ if(typeof W._applyBattlePrepToHero === 'function') W._applyBattlePrepToHero(h, 'reserve'); }catch(e){ console.warn('[後備隊伍 戰前養成]', e); }
+    var c = cfg();
+    try{ var e = c && c.elem[n]; if(e && typeof ELEMENT_DB !== 'undefined' && ELEMENT_DB[e]){ h.element = e; applyElemBonus(h); } }catch(_){}
+    try{
+      var sk = c && c.sk[n];
+      if(sk && sk.slot && sk.skillName && typeof NEW_SKILLS_DB !== 'undefined'){
+        var nm = (sk.skillName === '兵貫神速之計') ? '兵貴神速之計' : sk.skillName;
+        var d = NEW_SKILLS_DB.find(function(s){ return s.n === nm; });
+        if(d) h[sk.slot] = Object.assign({}, d);
+      }
+    }catch(_){}
+    h._initState = { hp: h.hp, atk: h.atk, sp: h.sp, spd: h.spd };
+    h._rsvRear = true;
+    return h;
+  }
+  var LINES = [
+    ['前鋒的努力不會白費!接力上吧!', '前鋒的奮戰不會白費——接力,出擊!'],
+    ['換我們上場了!一起加油!', '輪到我們了,全員迎戰!'],
+    ['還沒結束!真正的勇者現在才登場!', '勝負未定!真正的戰鬥現在才開始!'],
+    ['大家的心意,我們接住了!', '承接夥伴的意志,絕不退後!'],
+    ['不要放棄!後備隊伍來救援!', '永不言敗!後備隊伍馳援戰場!']
+  ];
+  function banner(){
+    try{
+      css();
+      var gc = document.getElementById('gc'); if(!gc) return;
+      var old = document.getElementById('rsv-banner'); if(old) old.remove();
+      var L = LINES[Math.floor(Math.random() * LINES.length)];
+      var d = document.createElement('div'); d.id = 'rsv-banner';
+      d.innerHTML = '<div class="rb-in"><div class="rb-t">' + T('🛡 後備隊伍登場!', '🛡 後備隊伍 登場') + '</div><div class="rb-s">' + T(L[0], L[1]) + '</div></div>';
+      gc.appendChild(d);
+      setTimeout(function(){ try{ d.remove(); }catch(_){} }, 2700);
+      try{ sndGong(); }catch(_){}
+      try{ flashScreen('rgba(120,190,255,0.9)', 450); }catch(_){}
+    }catch(_){}
+  }
+  // 戰鬥開始生效的效果:與一般開戰同一份 _lxpsBattleOpenFx(開場天賦/技能/裝備開場…)+ 獅子星神王者威光 + 英魂陣型;
+  //   ⚠ 只能作用在新上場的我方:跑的期間把 G.p2 換成「影子」(原型繼承讀得到對手數值,寫入只落在影子上、跑完丟掉)
+  //     ⇒ 對手的開場天賦不會再發動一次,對手身上的有利/不利狀態一個都不動(老師:對手狀態繼承)。能量最後照原值還原(老師:能量繼承)。
+  function ghost(h){
+    if(!h) return h;
+    var g = Object.create(h);
+    g.buffs = Array.isArray(h.buffs) ? h.buffs.slice() : [];
+    g.status = Array.isArray(h.status) ? h.status.slice() : [];
+    ['curHp','hp','atk','sp','spd','acted'].forEach(function(k){ g[k] = h[k]; });
+    return g;
+  }
+  function battleStartFx(team){
+    var e1 = G.energy ? G.energy.p1 : null, e2 = G.energy ? G.energy.p2 : null;
+    var real = G.p2;
+    try{
+      G.p2 = (real || []).map(ghost);
+      if(typeof W._lxpsBattleOpenFx === 'function') W._lxpsBattleOpenFx();
+    }catch(_eBo){ console.warn('[後備隊伍 開場效果]', _eBo); }
+    finally{ G.p2 = real; }
+    if(G.energy && e1 != null){ G.energy.p1 = e1; G.energy.p2 = e2; }
+    try{ if(typeof W._lxpsLeoMajesty === 'function') W._lxpsLeoMajesty(); }catch(_){}
+    try{
+      var e1 = G.energy ? G.energy.p1 : null, e2 = G.energy ? G.energy.p2 : null, fm2 = G._fm ? G._fm.p2 : undefined;
+      if(G._fm) delete G._fm.p1;
+      if(typeof W._fmApply === 'function') W._fmApply();
+      if(G._fm && fm2 !== undefined && !G._fm.p2) G._fm.p2 = fm2;
+      if(G.energy && e1 != null){ G.energy.p1 = e1; G.energy.p2 = e2; }   // 老師:雙方能量繼承(陣型開場能量不另給)
+    }catch(_eFm){ console.warn('[後備隊伍 陣型]', _eFm); }
+  }
+  var _busy = false;
+  function trySwap(){
+    try{
+      if(_busy || !armed() || typeof G === 'undefined' || !G || G._resultShown) return false;
+      if(!Array.isArray(G.p1) || !G.p1.length || !G.p1.every(function(h){ return !h || h.curHp <= 0; })) return false;
+      if(G.p1.some(function(h){ return h && h._rsvRear; })) return false;          // 已經是後衛
+      if(!Array.isArray(G.p2) || !G.p2.some(function(h){ return h && h.curHp > 0; })) return false;
+      var al = allowedSet(), fnm = G.p1.map(function(h){ return h && h.name; });
+      var names = cfg().heroes.filter(function(n, i, a){ return al[n] && fnm.indexOf(n) < 0 && a.indexOf(n) === i; }).slice(0, 4);
+      if(!names.length) return false;
+      var team = [];
+      names.forEach(function(n, i){ try{ team.push(buildHero(n, i)); }catch(e){ console.warn('[後備隊伍] 建立失敗', n, e); } });
+      if(!team.length) return false;
+      _busy = true;
+      try{ clearTurnTimer(); }catch(_){}
+      try{ if(typeof _clearPendingTimers === 'function') _clearPendingTimers('後備隊伍登場'); }catch(_){}
+      G._rsvFront = G.p1;
+      G.p1 = team;
+      (G.p2 || []).forEach(function(h){ if(h) h.acted = false; });   // 重新開始該回合
+      G.activeChar = null; G.selMove = null; G.selItem = null; G.pendingTarget = null; G.waitFor = null;
+      G.guardFor = null; G.interruptTarget = null; G.gunnerTarget = null;
+      try{ if(G.taunted && G.taunted.side === 'p1') G.taunted = null; }catch(_){}
+      try{ pendingCb = null; }catch(_){}
+      ['comboFatigueByHero', 'lastSkillByHero'].forEach(function(k){ try{ var o = G[k]; if(o) Object.keys(o).forEach(function(x){ if(x.indexOf('p1-') === 0) delete o[x]; }); }catch(_){} });
+      try{ _gamePaused = false; }catch(_){}
+      try{ var ap = document.getElementById('action-panel'); if(ap) ap.style.display = 'none'; }catch(_){}
+      log(T('🛡 前鋒隊伍全部倒下……後備隊伍「' + names.join('、') + '」接力登場!本回合重新開始!',
+            '🛡 前鋒隊伍全滅——後備隊伍「' + names.join('、') + '」接替上場,本回合重新開始!'));
+      try{ renderField(true); }catch(e){ console.error('[後備隊伍 renderField]', e); }
+      try{ if(typeof markAdventureBossCards === 'function') markAdventureBossCards(); }catch(_){}
+      battleStartFx(team);
+      try{ renderItems(); updateUI(); }catch(_){}
+      banner();
+      setTimeout(function(){ _busy = false; }, 500);
+      _pSetTimeout(startTurn, 2800);
+      return true;
+    }catch(e){ _busy = false; console.warn('[後備隊伍 換場] 失敗(照舊結算)', e); return false; }
+  }
+  // 新的一場(小怪戰/BOSS 戰/重新開戰/接關)前:換回前鋒
+  function restoreFront(){
+    try{
+      if(typeof G === 'undefined' || !G || !Array.isArray(G._rsvFront)) return false;
+      if(!Array.isArray(G.p1) || !G.p1.some(function(h){ return h && h._rsvRear; })) { G._rsvFront = null; return false; }
+      G.p1 = G._rsvFront; G._rsvFront = null;
+      G.p1.forEach(function(h){ if(h) h.acted = false; });
+      return true;
+    }catch(_){ return false; }
+  }
+  function phaseTag(){
+    try{
+      if(!stageOk() || !W._lxpsRsvArmed || typeof G === 'undefined' || !G || !Array.isArray(G.p1)) return '';
+      css();
+      var r = G.p1.some(function(h){ return h && h._rsvRear; });
+      return '<span class="rsv-phase ' + (r ? 'r' : 'f') + '">' + (r ? '後衛' : '前鋒') + '</span>';
+    }catch(_){ return ''; }
+  }
+
+  /* ── 首次進入冒險關卡選擇頁:新玩法說明(每帳號一次;旗標存在 cfg.intro 上雲 + 本機同 uid 鏡像) ── */
+  var _introBusy = false;
+  function maybeIntro(){
+    try{
+      var u = uid();
+      if(!u || _introBusy) return;
+      if(W._progressLoaded !== true && W._cloudLoadDone !== true) return;
+      var c = cfg();
+      if(c && c.intro) return;
+      try{ if(localStorage.getItem('lxps_rsv_intro_' + u) === '1'){ ensureCfg().intro = 1; save(); return; } }catch(_){}
+      _introBusy = true;
+      setTimeout(function(){
+        var html = T(
+          '<div style="font-size:1.05em;line-height:1.75;text-align:left">'
+          + '冒險隊伍現在分成<b style="color:#ffcc55">兩隊</b>啦!<br>'
+          + '⚔️ <b style="color:#ffcc55">前鋒隊伍</b>:一開始上場戰鬥的 4 位英雄。<br>'
+          + '🛡 <b style="color:#7fd1ff">後備隊伍</b>:前鋒全部倒下時,馬上換這 4 位衝上場!<br>'
+          + '・後備上場時這一回合<b>重新開始</b>,開場天賦也會發動。<br>'
+          + '・敵人身上的好狀態、壞狀態,還有雙方能量都會<b>留著</b>。<br>'
+          + '・同一位英雄不能兩隊都帶,至寶、裝備、寵物<b>前鋒先用</b>。<br>'
+          + '・<b style="color:#ff9a9a">接關只剩 1 次</b>,接關時前鋒和後備都會回到滿血。<br><br>'
+          + '在編組頁最左邊點「前鋒隊伍 / 後備隊伍」書籤就能切換編組,按「⇅ 一鍵交換」可以把兩隊對調;選屬性、換技能的畫面也有一樣的切換標籤喔!<br>'
+          + '多培養幾位英雄、試試不同的組合,打出最強的接力吧!💪</div>',
+          '<div style="font-size:1.05em;line-height:1.75;text-align:left">'
+          + '冒險隊伍現已改為<b style="color:#ffcc55">雙隊編成</b>。<br>'
+          + '⚔️ <b style="color:#ffcc55">前鋒隊伍</b>:開戰時出陣的四名英雄。<br>'
+          + '🛡 <b style="color:#7fd1ff">後備隊伍</b>:前鋒全滅時立即接替上場。<br>'
+          + '・後備登場時本回合<b>重新開始</b>,戰鬥開始生效的天賦與技能將再次發動。<br>'
+          + '・對手身上的有利/不利狀態與雙方能量<b>全數繼承</b>。<br>'
+          + '・同一名英雄不可同時編入兩隊;至寶、裝備、寵物<b>以前鋒為優先</b>。<br>'
+          + '・<b style="color:#ff9a9a">接關次數調整為 1 次</b>,接關時前鋒與後備皆恢復全滿狀態。<br><br>'
+          + '於編組頁最左側點選「前鋒隊伍 / 後備隊伍」書籤即可切換編成,「⇅ 一鍵交換」可將兩隊互換;屬性選擇與技能替換頁面亦提供相同的切換標籤。<br>'
+          + '培養更多英雄、嘗試多樣陣容,打造最強的接力戰術。</div>');
+        W._lxpsAlert(html, { html: true, title: T('🆕 新玩法:前鋒隊伍 × 後備隊伍', '🆕 新玩法:前鋒隊伍 × 後備隊伍'), okText: T('好,我知道了!', '了解') }).then(function(){
+          _introBusy = false;
+          if(uid() !== u) return;   // 看說明期間換了帳號 ⇒ 不寫到別人身上
+          try{ localStorage.setItem('lxps_rsv_intro_' + u, '1'); }catch(_){}
+          ensureCfg().intro = 1; save();
+        });
+      }, 900);
+    }catch(_e){ _introBusy = false; }
+  }
+
+  /* ── 雲端:存/讀(game_adv.js 呼叫) ── */
+  function toCloud(){
+    try{ var c = cfg(); if(!c) return 'null'; return JSON.stringify({ uid: c.uid, heroes: c.heroes.slice(0, 4), elem: c.elem, sk: c.sk, intro: c.intro ? 1 : 0 }); }catch(_){ return 'null'; }
+  }
+  function fromCloud(s){
+    var v = null;
+    try{ if(typeof s === 'string') v = JSON.parse(s); }catch(_){ v = null; }
+    var u = uid();
+    if(v && typeof v === 'object' && (u || v.uid) && (!u || !v.uid || v.uid === u)){
+      v.uid = u || v.uid;
+      if(!Array.isArray(v.heroes)) v.heroes = [];
+      v.heroes = v.heroes.filter(function(n){ return typeof n === 'string'; }).slice(0, 4);
+      if(!v.elem || typeof v.elem !== 'object') v.elem = {};
+      if(!v.sk || typeof v.sk !== 'object') v.sk = {};
+      W._lxpsRsvCfg = v;
+    } else {
+      W._lxpsRsvCfg = null;   // 共用平板:沒有就清空,不沿用上一位玩家
+    }
+    W._lxpsRsvArmed = null;
+    S.rear = []; S.front = []; S.tab = 'front';
+  }
+
+
+  /* ── 屬性選擇頁 / 替換技能頁:前鋒 ↔ 後備 切換標籤(老師 13:53「後備也要選屬性和替換技能」) ──
+   *   做法:頁面原本的狀態變數(_epHeroes/_epAssigned/_epApplied/_epActivePos、G.p1/_skillReplaceMap)整組換掉再重畫,
+   *        原本的選屬性、推薦屬性、選技能、取消替換流程一行都不用改;離開頁面(完成/返回)前一定先換回前鋒。
+   *   後備用的是「只給畫面用」的暫時英雄(newHero),選好的屬性/技能以英雄名記在 cfg.elem / cfg.sk,真正上場時 buildHero 再套。 */
+  var EP = { on: false, tab: 'front', front: null, rear: null };
+  var SR = { on: false, tab: 'front', front: null, rear: null };
+  function css2(){
+    css();
+    if(document.getElementById('lxps-rsv-css2')) return;
+    var st = document.createElement('style'); st.id = 'lxps-rsv-css2';
+    st.textContent = ''
+      + '.rsv-tabs2{position:absolute;left:0;top:250px;z-index:12;display:none;flex-direction:column;gap:18px;}'
+      + '#elem-pick-overlay.rsv-on .rsv-tabs2{display:flex;}'
+      + '#elem-pick-overlay.rsv-on #ep-heroes{margin-left:84px;}'
+      + '#rsv-sr-tabs{display:none;gap:14px;align-items:center;margin-left:28px;}'
+      + '#skill-replace-overlay.rsv-on #rsv-sr-tabs{display:inline-flex;}'
+      + '#skill-replace-overlay.rsv-on #sro-header{display:flex;align-items:center;flex-wrap:wrap;}'
+      + '.rsv-htab{padding:8px 26px;font-size:32px;font-weight:800;border-radius:18px 18px 0 0;border:3px solid rgba(255,220,140,0.55);border-bottom:none;cursor:pointer;'
+      +   'background:linear-gradient(180deg,rgba(55,40,95,0.95),rgba(30,24,60,0.95));color:#cfc6ff;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;letter-spacing:3px;}'
+      + '.rsv-htab .rsv-tn{font-size:24px;margin-left:8px;color:#ffe6a0;}'
+      + '.rsv-htab.on{background:linear-gradient(180deg,#ffe28a,#ffb340);color:#3a2200;border-color:#fff2c0;box-shadow:0 0 18px rgba(255,200,80,0.7);}'
+      + '.rsv-htab.on .rsv-tn{color:#5a3300;}'
+      + '.rsv-htab.warn .rsv-tn,.rsv-tab.warn .rsv-tn{color:#ff8080;}'
+      // 手機橫放(鐵律 三平台):左下角有常駐「戰報/SOS」浮動鈕 ⇒ 屬性頁標籤往上收、縮短,避開
+      + '@media (orientation:landscape) and (max-height:520px){ .rsv-tabs2{top:110px;gap:14px;} .rsv-tabs2 .rsv-tab{height:190px;gap:4px;} .rsv-tabs2 .rsv-tt{font-size:30px;letter-spacing:1px;} .rsv-tabs2 .rsv-tn{font-size:22px;} }';
+    document.head.appendChild(st);
+  }
+  function rsvOn(){ return armed(); }
+  function tmpHeroes(){
+    var c = cfg(); if(!c) return [];
+    var al = allowedSet();
+    return c.heroes.filter(function(n){ return al[n]; }).slice(0, 4).map(function(n, i){
+      var h = newHero(n, 'p1', i);
+      try{ var e = c.elem[n]; if(e && ELEMENT_DB[e]){ h.element = e; applyElemBonus(h); } }catch(_){}
+      return h;
+    });
+  }
+  // ── 屬性選擇頁 ──
+  function epTabsEl(){
+    var ov = document.getElementById('elem-pick-overlay'); if(!ov) return null;
+    var el = document.getElementById('rsv-ep-tabs');
+    if(!el){
+      css2();
+      el = document.createElement('div'); el.id = 'rsv-ep-tabs'; el.className = 'rsv-tabs2';
+      el.innerHTML = '<div class="rsv-tab" data-t="front"><span class="rsv-tt">前鋒隊伍</span><span class="rsv-tn"></span></div>'
+                   + '<div class="rsv-tab" data-t="rear"><span class="rsv-tt">後備隊伍</span><span class="rsv-tn"></span></div>';
+      // ⚠ 不可 append 成最後一個子元素:main.css 手機版用「#elem-pick-overlay > div:last-child」抓底部按鈕列(會被改成 fixed 貼右邊)
+      var _tb = document.getElementById('ep-topbar');
+      if(_tb && _tb.parentNode === ov) ov.insertBefore(el, _tb); else ov.insertBefore(el, ov.firstChild);
+      Array.prototype.forEach.call(el.querySelectorAll('.rsv-tab'), function(b){ b.onclick = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} epSet(b.getAttribute('data-t')); }; });
+    }
+    return el;
+  }
+  function epSnap(){ return { h: _epHeroes, a: _epAssigned, ap: _epApplied, pos: _epActivePos }; }
+  function epLoad(s){ _epHeroes = s.h; _epAssigned = s.a; _epApplied = s.ap; _epActivePos = s.pos; }
+  function epDone(s){ if(!s) return 0; var n = 0; for(var i = 0; i < s.h.length; i++) if(s.a[i] && ELEMENT_DB[s.a[i]]) n++; return n; }
+  function epShow(){   // showElemPickForHero 尾端呼叫
+    var ov = document.getElementById('elem-pick-overlay');
+    EP.on = false; EP.tab = 'front'; EP.front = null; EP.rear = null;
+    if(!rsvOn()){ if(ov) ov.classList.remove('rsv-on'); return; }
+    var hs = tmpHeroes();
+    if(!hs.length){ if(ov) ov.classList.remove('rsv-on'); return; }
+    var c = cfg(), a = {}, ap = {};
+    hs.forEach(function(h, i){ if(h.element){ a[i] = h.element; ap[i] = h.element; } });
+    EP.rear = { h: hs, a: a, ap: ap, pos: 0 };
+    EP.on = true;
+    epTabsEl();
+    if(ov) ov.classList.add('rsv-on');
+    epAfterRender();
+  }
+  function epSet(t){
+    if(!EP.on || EP.tab === t || (t !== 'front' && t !== 'rear')) return;
+    try{ var pv = document.getElementById('ep-hero-preview'); if(pv) pv.remove(); _epPreviewPos = -1; }catch(_){}
+    if(t === 'rear'){ EP.front = epSnap(); epLoad(EP.rear); } else { EP.rear = epSnap(); epLoad(EP.front); }
+    EP.tab = t;
+    _epRenderHeroes();
+    var nx = 0; for(var i = 0; i < _epHeroes.length; i++){ if(!_epAssigned[i]){ nx = i; break; } }
+    try{ _epActivateHero(nx); }catch(_){}
+  }
+  function epToFront(){ if(EP.on && EP.tab === 'rear') epSet('front'); }
+  function epSaveRear(){
+    try{
+      var s = (EP.tab === 'rear') ? epSnap() : EP.rear; if(!s) return;
+      var c = ensureCfg();
+      s.h.forEach(function(h, i){ if(s.a[i] && ELEMENT_DB[s.a[i]]) c.elem[h.name] = s.a[i]; });
+      save();
+    }catch(_){}
+  }
+  function epAfterRender(){   // _epRenderHeroes 尾端呼叫
+    if(!EP.on) return;
+    var el = epTabsEl(); if(!el) return;
+    var f = (EP.tab === 'front') ? epSnap() : EP.front, r = (EP.tab === 'rear') ? epSnap() : EP.rear;
+    var fd = f ? epDone(f) : 0, fn = f ? f.h.length : 4, rd = epDone(r), rn = r ? r.h.length : 0;
+    Array.prototype.forEach.call(el.querySelectorAll('.rsv-tab'), function(b){
+      var t = b.getAttribute('data-t');
+      b.classList.toggle('on', t === EP.tab);
+      b.querySelector('.rsv-tn').textContent = (t === 'front') ? (fd + '/' + fn) : (rd + '/' + rn);
+      b.classList.toggle('warn', t === 'front' ? fd < fn : rd < rn);
+    });
+    if(EP.tab === 'rear'){ var p = document.getElementById('ep-progress'); if(p) p.textContent = T('🛡 後備隊伍 已選 ', '🛡 後備隊伍 已選 ') + rd + ' / ' + rn; }
+    var fb = document.getElementById('ep-finish-btn-bar');
+    if(fb){ var ok = (fd >= fn) && (rd >= rn); fb.disabled = !ok; fb.style.opacity = ok ? '1' : '0.3'; fb.style.cursor = ok ? 'pointer' : 'default'; }
+  }
+  function epFinishGate(){   // finishElemPick 開頭呼叫;回 true = 擋下
+    if(!EP.on) return false;
+    epToFront();
+    var f = epSnap(), r = EP.rear;
+    if(epDone(f) < f.h.length){
+      try{ _showInGameToast(T('前鋒隊伍還有英雄沒選屬性喔!', '前鋒隊伍尚有英雄未選擇屬性'), '#ffaa44', 2400); }catch(_){}
+      return true;
+    }
+    if(r && epDone(r) < r.h.length){
+      try{ _showInGameToast(T('後備隊伍還有英雄沒選屬性,幫他們也選一個吧!', '後備隊伍尚有英雄未選擇屬性,請完成選擇'), '#ffaa44', 2600); }catch(_){}
+      epSet('rear');
+      return true;
+    }
+    epSaveRear();
+    EP.on = false;
+    return false;
+  }
+  function epBack(){ epToFront(); EP.on = false; try{ var ov = document.getElementById('elem-pick-overlay'); if(ov) ov.classList.remove('rsv-on'); }catch(_){} }
+  // ── 替換技能頁 ──
+  function srTabsEl(){
+    var hd = document.getElementById('sro-header'); if(!hd) return null;
+    var el = document.getElementById('rsv-sr-tabs');
+    if(!el){
+      css2();
+      el = document.createElement('div'); el.id = 'rsv-sr-tabs';
+      el.innerHTML = '<div class="rsv-htab" data-t="front">⚔ 前鋒隊伍<span class="rsv-tn"></span></div>'
+                   + '<div class="rsv-htab" data-t="rear">🛡 後備隊伍<span class="rsv-tn"></span></div>';
+      hd.appendChild(el);
+      Array.prototype.forEach.call(el.querySelectorAll('.rsv-htab'), function(b){ b.onclick = function(){ try{ playSfx('sfx-sel', 0.6); }catch(_){} srSet(b.getAttribute('data-t')); }; });
+    }
+    return el;
+  }
+  function srRender(){
+    try{ var ce = document.getElementById('sro-cards'); if(ce) ce.innerHTML = G.p1.map(function(h){ return buildSrhBlock(h); }).join(''); }catch(e){ console.warn('[後備 替換技能 重畫]', e); }
+    try{ buildSkillPicker(); }catch(_){}
+    srTabsRefresh();
+  }
+  function srTabsRefresh(){
+    var el = srTabsEl(); if(!el) return;
+    var cnt = function(m){ var n = 0; Object.keys(m || {}).forEach(function(k){ if(m[k]) n++; }); return n; };
+    var fm = (SR.tab === 'front') ? _skillReplaceMap : (SR.front && SR.front.map), rm = (SR.tab === 'rear') ? _skillReplaceMap : (SR.rear && SR.rear.map);
+    Array.prototype.forEach.call(el.querySelectorAll('.rsv-htab'), function(b){
+      var t = b.getAttribute('data-t');
+      b.classList.toggle('on', t === SR.tab);
+      b.querySelector('.rsv-tn').textContent = T('換 ', '替換 ') + cnt(t === 'front' ? fm : rm);
+    });
+  }
+  function srShow(){   // showSkillReplaceOverlay 尾端呼叫
+    var ov = document.getElementById('skill-replace-overlay');
+    SR.on = false; SR.tab = 'front'; SR.front = null; SR.rear = null;
+    if(!rsvOn()){ if(ov) ov.classList.remove('rsv-on'); return; }
+    var hs = tmpHeroes(); if(!hs.length){ if(ov) ov.classList.remove('rsv-on'); return; }
+    var c = cfg(), m = {};
+    hs.forEach(function(h){
+      m[h.pos] = null;
+      try{
+        var sk = c.sk[h.name];
+        if(sk && sk.slot && sk.skillName && typeof NEW_SKILLS_DB !== 'undefined'){
+          var d = NEW_SKILLS_DB.find(function(s){ return s.n === sk.skillName; });
+          if(d) m[h.pos] = { slot: sk.slot, skill: Object.assign({}, d) };
+        }
+      }catch(_){}
+    });
+    SR.rear = { p1: hs, map: m };
+    SR.on = true;
+    if(ov) ov.classList.add('rsv-on');
+    srTabsRefresh();
+  }
+  function srSet(t){
+    if(!SR.on || SR.tab === t || (t !== 'front' && t !== 'rear')) return;
+    var cur = { p1: G.p1, map: _skillReplaceMap };
+    if(t === 'rear'){ SR.front = cur; G.p1 = SR.rear.p1; _skillReplaceMap = SR.rear.map; }
+    else { SR.rear = cur; G.p1 = SR.front.p1; _skillReplaceMap = SR.front.map; }
+    SR.tab = t;
+    try{ _selectedPickSkill = null; _pickerFocusPos = null; }catch(_){}
+    srRender();
+  }
+  function srToFront(){ if(SR.on && SR.tab === 'rear') srSet('front'); }
+  function srSaveRear(){
+    try{
+      var r = SR.rear; if(!r) return;
+      var c = ensureCfg();
+      r.p1.forEach(function(h){
+        var rep = r.map[h.pos];
+        if(rep && rep.slot && rep.skill && rep.skill.n) c.sk[h.name] = { slot: rep.slot, skillName: rep.skill.n }; else delete c.sk[h.name];
+      });
+      save();
+    }catch(_){}
+  }
+  function srConfirm(){ if(!SR.on) return; srToFront(); srSaveRear(); SR.on = false; }   // confirmSkillReplace 開頭
+  function srBack(){ srToFront(); srSaveRear(); SR.on = false; try{ var ov = document.getElementById('skill-replace-overlay'); if(ov) ov.classList.remove('rsv-on'); }catch(_){} }
+  W._RSV = { onOpen: onOpen, afterBadges: afterBadges, blockInvite: blockInvite, isRearTab: function(){ return inAdvPick() && S.tab === 'rear'; },
+             loadPreset: loadPreset, gate: gate, toFront: toFront, trySwap: trySwap, restoreFront: restoreFront, phaseTag: phaseTag,
+             maybeIntro: maybeIntro, toCloud: toCloud, fromCloud: fromCloud, swapTeams: swapTeams,
+             epShow: epShow, epAfterRender: epAfterRender, epFinishGate: epFinishGate, epBack: epBack,
+             srShow: srShow, srConfirm: srConfirm, srBack: srBack, _S: S, _EP: EP, _SR: SR };
 })();
 
 ;(window._LXPS_MOD_OK || (window._LXPS_MOD_OK = {}))['game_battle.js'] = 1;   /* ★ v5.235.0 載入完成記號(必須是本檔最後一行) */
