@@ -80093,6 +80093,7 @@ function _gearItemLineHtml(x, showDesc, noIcon){   // ★ v5.381.0 noIcon:選單
     + '<div style="font-weight:900;color:' + rc + ';font-size:18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' + (noIcon ? '' : _gearIconHtml(x.def, 30, 18)) + '<span>' + x.def.n + '</span>'
     + ' <span style="font-size:13px;color:#ccc;font-weight:700;">' + rn + '</span>'
     + (x.inst.gifted ? ' <span style="font-size:12px;color:#ffaacc;border:1px solid rgba(255,150,200,0.5);border-radius:6px;padding:0 5px;">好友贈禮</span>' : '')
+    + (x.inst.locked ? ' <span style="font-size:12px;color:#ffd870;border:1px solid rgba(255,210,100,0.6);border-radius:6px;padding:0 5px;">🔒 ' + (cute ? '上鎖' : '已上鎖') + '</span>' : '')   // ★ v5.388.0
     + '</div>'
     + '<div style="font-size:14px;color:#ffe8a0;margin-top:3px;">' + baseTxt + '</div>'
     + (afTxt ? ('<div style="font-size:13px;margin-top:3px;">' + afTxt + '</div>') : '')
@@ -80189,10 +80190,16 @@ window._showGearSlotPicker = function(heroName, slot){
     } else {
       btns += '<button onclick="window._gearPickerEquip(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 14px;font-size:15px;font-weight:800;background:rgba(90,180,255,0.18);border:1.5px solid rgba(120,180,255,0.6);color:#bbddff;border-radius:8px;cursor:pointer;font-family:inherit;">' + (elsewhere ? '轉裝到此' : '裝備') + '</button>';
     }
+    // ★ v5.388.0 上鎖/解鎖(上鎖時賣出、送好友變灰,按了只跳提醒)
+    const _lk = !!x.inst.locked;
+    const _lkOff = _lk ? 'opacity:0.4;filter:grayscale(0.8);' : '';
+    btns += '<button onclick="window._gearToggleLock(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;'
+      + (_lk ? 'background:rgba(255,200,80,0.22);border:1.5px solid rgba(255,210,100,0.8);color:#ffd870;' : 'background:rgba(200,200,220,0.10);border:1.5px solid rgba(200,210,230,0.45);color:#dde4f0;')
+      + 'border-radius:8px;cursor:pointer;font-family:inherit;">' + (_lk ? '🔓 解鎖' : '🔒 上鎖') + '</button>';
     // ★ v5.31.0 — 裝備 Phase 3:半價賣出(售價=定價÷2·確認視窗·裝備中會自動卸下)
-    btns += '<button onclick="window._gearSell(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,220,100,0.12);border:1.5px solid rgba(255,220,120,0.5);color:#ffe8a0;border-radius:8px;cursor:pointer;font-family:inherit;">💰 賣出(半價)</button>';
+    btns += '<button onclick="window._gearSell(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,220,100,0.12);border:1.5px solid rgba(255,220,120,0.5);color:#ffe8a0;border-radius:8px;cursor:pointer;font-family:inherit;' + _lkOff + '">💰 賣出(半價)</button>';
     // ★ v5.31.0 — 裝備 Phase 4:送好友(整顆實例原樣送出·稀有+2/史詩+3/傳說+5/神話+8 心·受贈品轉送 0 心)
-    btns += '<button onclick="window._gearGiftOpen(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,150,200,0.12);border:1.5px solid rgba(255,170,210,0.5);color:#ffc8de;border-radius:8px;cursor:pointer;font-family:inherit;">🎁 送好友</button>';
+    btns += '<button onclick="window._gearGiftOpen(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,150,200,0.12);border:1.5px solid rgba(255,170,210,0.5);color:#ffc8de;border-radius:8px;cursor:pointer;font-family:inherit;' + _lkOff + '">🎁 送好友</button>';
     if(isAdmin){
       btns += '<button onclick="window._gearPickerReroll(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,200,80,0.14);border:1.5px solid rgba(255,200,80,0.55);color:#ffe8a0;border-radius:8px;cursor:pointer;font-family:inherit;">🎲 重Roll<span style="font-size:11px;color:#ccaa66;">(GM)</span></button>';
     }
@@ -80566,11 +80573,45 @@ window._gearRenderShopGrid = function(listEl){
     listEl.innerHTML = html;
   }catch(_e){ console.warn('[裝備超商] 渲染失敗', _e); }
 };
+// ── ★ v5.388.0(2026-11-12・老師「裝備新增上鎖/解鎖功能可以防止不小心賣出」)裝備上鎖 ──
+//   實例欄位 inst.locked = true(解鎖就刪掉這個欄位);切換時更新 at2 ⇒ 三槽合併「at2 新者整包勝出」會帶著鎖的狀態走。
+//   上鎖的裝備:不能賣出(所有賣出入口最後都經 _gearSell)、也不能送好友(_gearGiftOpen/_gearGiftSend);穿脫照常。
+window._gearIsLocked = function(eqUid){
+  try{ const inst = _gearGetInstance(eqUid); return !!(inst && inst.locked); }catch(_){ return false; }
+};
+window._gearLockedToast = function(def){
+  try{
+    const nm = (def && def.n) ? ('「' + def.n + '」') : '這件裝備';
+    _showInGameToast((window._artStyle === 'cute')
+      ? ('🔒 ' + nm + '上鎖了,不能賣也不能送喔!要先按「🔓 解鎖」')
+      : ('🔒 ' + nm + '已上鎖,無法賣出或贈送;請先解鎖'), '#ffcc66', 2800);
+  }catch(_){}
+};
+window._gearToggleLock = function(eqUid, heroName, slot){
+  try{
+    if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_lock', 300)) return false;
+    const inst = _gearGetInstance(eqUid); if(!inst) return false;
+    const def = GEAR_DB[inst.itemId] || {};
+    if(inst.locked) delete inst.locked; else inst.locked = true;
+    inst.at2 = Date.now();
+    _gearRequestSave();
+    try{ playSfx(inst.locked ? 'sfx-equip' : 'sfx-sel', 0.5); }catch(_){}
+    try{
+      const cute = (window._artStyle === 'cute');
+      _showInGameToast(inst.locked
+        ? ('🔒 ' + (cute ? '「' + (def.n || '') + '」上鎖了!不會被不小心賣掉' : '已上鎖「' + (def.n || '') + '」,不會被誤賣'))
+        : ('🔓 ' + (cute ? '「' + (def.n || '') + '」解鎖了,現在可以賣或送人' : '已解鎖「' + (def.n || '') + '」')), inst.locked ? '#ffcc66' : '#aaddff', 2000);
+    }catch(_){}
+    if(heroName && slot){ try{ _gearPickerRefresh(heroName, slot); }catch(_){} }
+    return true;
+  }catch(_e){ console.warn('[裝備上鎖] 失敗', _e); return false; }
+};
 // ── 半價賣出(售價=該稀有度定價÷2;帳本 source:'sold' → 多槽合併稽核感知不復活)──
 window._gearSell = async function(eqUid, heroName, slot){
   try{
     if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_sell', 800)) return;
     const inst = _gearGetInstance(eqUid); if(!inst) return;
+    if(inst.locked){ window._gearLockedToast(GEAR_DB[inst.itemId]); return; }   // ★ v5.388.0 上鎖不能賣
     const def = GEAR_DB[inst.itemId]; if(!def) return;
     const rn = (GEAR_RARITY[def.r] && GEAR_RARITY[def.r].name) || '稀有';
     const price = Math.floor(((GEAR_RARITY[def.r] && GEAR_RARITY[def.r].price) || 1000) / 2);
@@ -80581,6 +80622,7 @@ window._gearSell = async function(eqUid, heroName, slot){
     const _doSell = function(){
       try{
         const inst2 = _gearGetInstance(eqUid); if(!inst2) return;
+        if(inst2.locked){ window._gearLockedToast(GEAR_DB[inst2.itemId]); return; }   // ★ v5.388.0 確認視窗開著時被鎖上
         _gearWriteLedger(eqUid, inst2.itemId, 'sold', null, 'sold');   // ★ 稽核感知:合併端視為已移除(殘槽不復活)
         delete window._gearData.instances[eqUid];
         _knowledgeCoins = (_knowledgeCoins || 0) + price;
@@ -80960,6 +81002,7 @@ window._gearGiftOpen = function(eqUid, heroName, slot){
     if(!window._gearAcqEnabled()) return;
     const inst = _gearGetInstance(eqUid); if(!inst) return;
     const def = GEAR_DB[inst.itemId]; if(!def) return;
+    if(inst.locked){ window._gearLockedToast(def); return; }   // ★ v5.388.0 上鎖不能送
     const _fl = (typeof _friendList !== 'undefined' && Array.isArray(_friendList) && _friendList.length)
       ? _friendList : (Array.isArray(window._friendList) ? window._friendList : []);
     if(!_fl.length){
@@ -81012,6 +81055,7 @@ window._gearGiftSend = async function(eqUid, friendIdx, heroName, slot){
     const inst = _gearGetInstance(eqUid);
     if(!f || !f.uid || !inst){ try{ bannerFX(null, '❌ 資料不齊,請重試', '#ff6666', 1800); }catch(_){} return; }
     const def = GEAR_DB[inst.itemId]; if(!def) return;
+    if(inst.locked){ window._gearLockedToast(def); return; }   // ★ v5.388.0 上鎖不能送
     // 再次守門(防開著視窗期間達每日額度)
     try{
       const _st = (typeof window._giftGetStateForFriend === 'function') ? window._giftGetStateForFriend(f.uid) : { canSend:true };

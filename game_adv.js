@@ -45538,6 +45538,21 @@ window._lxpsBagCapCss = function(){
       + '#lxps-sell-card .sl-all{margin:4px 0 8px;width:100%;min-height:52px;font-size:22px;font-weight:900;border-radius:12px;cursor:pointer;font-family:inherit;'
       +   'background:linear-gradient(135deg,rgba(255,180,40,0.85),rgba(255,140,20,0.8));border:2px solid #ffd866;color:#2a1500;}'
       + '#lxps-sell-card .sl-empty{padding:30px 10px;text-align:center;color:#c8b896;font-size:21px;}'
+      // ★ v5.388.0 裝備詞條(每條一顆標籤＋數值高低)與上鎖鈕
+      + '#lxps-sell-card .sl-afs{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:6px;}'
+      + '#lxps-sell-card .sl-af{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:9px;font-size:18px;font-weight:700;line-height:1.35;'
+      +   'background:rgba(120,190,255,0.12);border:1px solid rgba(140,200,255,0.45);color:#cfe8ff;}'
+      + '#lxps-sell-card .sl-af i{font-style:normal;font-size:0.8em;font-weight:900;padding:0 6px;border-radius:7px;}'
+      + '#lxps-sell-card .sl-af.q-hi i{background:#2f9e5a;color:#eaffef;}'
+      + '#lxps-sell-card .sl-af.q-mid i{background:#8a7a2a;color:#fff6cc;}'
+      + '#lxps-sell-card .sl-af.q-lo i{background:#a3413c;color:#ffe2df;}'
+      + '#lxps-sell-card .sl-af.q-sp{background:rgba(200,140,255,0.14);border-color:rgba(210,160,255,0.55);color:#ead6ff;}'
+      + '#lxps-sell-card .sl-af.q-none{opacity:0.75;}'
+      + '#lxps-sell-card .sl-row.lk{background:rgba(255,200,80,0.07);}'
+      + '#lxps-sell-card .sl-lk{flex:0 0 auto;min-height:48px;min-width:48px;padding:6px 12px;font-size:20px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+      +   'background:rgba(200,200,220,0.10);border:1.5px solid rgba(200,210,230,0.5);color:#dde4f0;}'
+      + '#lxps-sell-card .sl-lk.on{background:rgba(255,200,80,0.25);border:1.5px solid #ffd870;color:#ffe08a;}'
+      + '#lxps-sell-card .sl-go:disabled{opacity:0.35;filter:grayscale(0.9);cursor:default;}'
       + '#lxps-sell-card .sl-foot{padding:8px 18px 12px;font-size:16px;line-height:1.5;color:#c8b896;border-top:1px solid rgba(255,255,255,0.08);}'
       + '@media (min-width:1000px) and (min-height:700px){#lxps-sell-card .sl-nm{font-size:26px;}#lxps-sell-card .sl-meta{font-size:20px;}}'
       // 手機橫放(高 ≤ 520):壓縮留白、分頁單行橫捲
@@ -45559,6 +45574,9 @@ window._lxpsBagCapCss = function(){
       +   '#lxps-sell-card .sl-qn{font-size:16px;min-width:30px;}'
       +   '#lxps-sell-card .sl-go{font-size:15px;padding:6px 10px;}'
       +   '#lxps-sell-card .sl-foot{padding:4px 12px 6px;font-size:12px;}'
+      +   '#lxps-sell-card .sl-afs{gap:4px 6px;margin-top:3px;}'
+      +   '#lxps-sell-card .sl-af{font-size:13px;padding:1px 7px;}'
+      +   '#lxps-sell-card .sl-lk{font-size:15px;padding:4px 8px;min-height:40px;min-width:40px;}'
       // 背包格數列(#gc 畫布內·手機約縮 0.36 倍)⇒ 放大
       +   '#bag-cap-bar .bc-num{font-size:64px;}'
       +   '#bag-cap-bar .bc-sub{font-size:40px;}'
@@ -45651,6 +45669,7 @@ window._lxpsSellItems = function(){   // { cat: [ {id, n, def} ] }
     var SO = { head:0, body:1, main:2, off:3, legs:4, acc:5 };
     // 便宜的、沒裝備的排前面(最常要賣的)
     rows.sort(function(a, b){
+      var l = (a.inst.locked ? 1 : 0) - (b.inst.locked ? 1 : 0); if(l) return l;   // ★ v5.388.0 上鎖的排最後
       var e = (a.inst.equippedTo ? 1 : 0) - (b.inst.equippedTo ? 1 : 0); if(e) return e;
       var r = (RO[a.def.r] || 0) - (RO[b.def.r] || 0); if(r) return r;
       var s = (SO[a.def.slot] || 0) - (SO[b.def.slot] || 0); if(s) return s;
@@ -45716,13 +45735,18 @@ window._lxpsOpenSellList = function(cat){
         var nAff = (r.inst.affixes && r.inst.affixes.length) || 0;
         var img = '';
         try{ if(r.def.img) img = '<img src="./' + encodeURIComponent(r.def.img) + '" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'' + esc(r.def.icon || '🛡️') + '\'))">'; }catch(_){}
-        h += '<div class="sl-row">'
+        var lk = !!r.inst.locked;   // ★ v5.388.0 上鎖的裝備不能賣
+        h += '<div class="sl-row' + (lk ? ' lk' : '') + '">'
           + '<div class="sl-ic">' + (img || esc(r.def.icon || '🛡️')) + '</div>'
           + '<div class="sl-info"><div class="sl-nm" style="color:' + R.color + ';">' + esc(r.def.n)
+          +   (lk ? '<span class="sl-tag" style="background:rgba(255,200,80,0.2);border-color:#ffd870;color:#ffe08a;">🔒 ' + T('上鎖', '已上鎖') + '</span>' : '')
           +   (r.inst.equippedTo ? '<span class="sl-tag">⚔ ' + T(esc(r.inst.equippedTo) + ' 穿著', esc(r.inst.equippedTo) + ' 裝備中') + '</span>' : '')
           +   (r.inst.gifted ? '<span class="sl-tag">🎁 ' + T('好友送的', '受贈') + '</span>' : '') + '</div>'
-          +   '<div class="sl-meta">' + R.name + ' ・ ' + S.icon + ' ' + S.n + ' ・ ' + T('詞條 ', '詞條 ') + nAff + ' ・ 💰 ' + price.toLocaleString() + '</div></div>'
-          + '<button type="button" class="sl-go" onclick="window._lxpsSellGear(\'' + r.uid + '\')">💱 ' + T('賣出', '賣出') + '</button>'
+          +   '<div class="sl-meta">' + R.name + ' ・ ' + S.icon + ' ' + S.n + ' ・ ' + T('詞條 ', '詞條 ') + nAff + ' ・ 💰 ' + price.toLocaleString() + '</div>'
+          +   window._lxpsSellAffixHtml(r.inst, cute, esc) + '</div>'
+          + '<button type="button" class="sl-lk' + (lk ? ' on' : '') + '" title="' + (lk ? T('按一下解鎖', '解鎖') : T('上鎖後就不會被不小心賣掉', '上鎖防止誤賣')) + '"'
+          +   ' onclick="window._lxpsSellToggleLock(\'' + r.uid + '\')">' + (lk ? '🔓 ' + T('解鎖', '解鎖') : '🔒 ' + T('上鎖', '上鎖')) + '</button>'
+          + '<button type="button" class="sl-go"' + (lk ? ' disabled' : '') + ' onclick="window._lxpsSellGear(\'' + r.uid + '\')">💱 ' + T('賣出', '賣出') + '</button>'
           + '</div>';
       });
     } else {
@@ -45754,8 +45778,10 @@ window._lxpsOpenSellList = function(cat){
       });
     }
     h += '</div>'
-      + '<div class="sl-foot">' + T('📖 經驗書、技能書這類養成道具不能賣。裝備賣出可以拿到定價的一半,穿在英雄身上的裝備賣掉會自動脫下。',
-                                    '經驗書/技能書等養成道具不可賣出。裝備以定價半價賣出;英雄裝備中的裝備賣出時自動卸下。') + '</div>'
+      + '<div class="sl-foot">' + T('📖 經驗書、技能書這類養成道具不能賣。裝備賣出可以拿到定價的一半,穿在英雄身上的裝備賣掉會自動脫下。'
+                                      + (cur === 'gear' ? '詞條旁的「高/中/低」是這條數值在同種詞條裡算好還是差;喜歡的裝備按「🔒 上鎖」就不會被賣掉或送走。' : ''),
+                                    '經驗書/技能書等養成道具不可賣出。裝備以定價半價賣出;英雄裝備中的裝備賣出時自動卸下。'
+                                      + (cur === 'gear' ? '詞條「高/中/低」= 數值在該詞條範圍內的位置;上鎖的裝備無法賣出或贈送。' : '')) + '</div>'
       + '</div>';
     ov.innerHTML = h;
     try{ var _l1 = ov.querySelector('.sl-list'); if(_l1) _l1.scrollTop = keepScroll; }catch(_){}
@@ -45844,6 +45870,42 @@ window._lxpsSellGear = function(eqUid){
       }
     }, 400);
   }catch(_e){ console.warn('[賣出持有物品] 裝備', _e); }
+};
+// ★ v5.388.0(2026-11-12・老師「賣出裝備的列表中要顯示詞條內容。才知道哪些詞條不好要賣掉」)
+//   每條詞條一顆標籤:文字沿用 game_battle.js _gearAffixText(與英雄裝備選單同一套說明);
+//   有數值範圍(min~max)的詞條再標「高/中/低」= 這次 roll 到的數值落在範圍的上/中/下三分之一;免疫等沒有範圍的標「特殊」。
+window._lxpsSellAffixHtml = function(inst, cute, esc){
+  try{
+    var afs = (inst && inst.affixes) || [];
+    if(!afs.length) return '';
+    var pool = (typeof GEAR_AFFIX_POOL !== 'undefined') ? GEAR_AFFIX_POOL : [];
+    return '<div class="sl-afs">' + afs.map(function(af){
+      var d = null;
+      for(var i = 0; i < pool.length; i++){ if(pool[i].id === af.id){ d = pool[i]; break; } }
+      var txt = '';
+      try{ txt = (typeof _gearAffixText === 'function') ? _gearAffixText(af) : ''; }catch(_){}
+      if(!txt) txt = (d && d.n) || af.id;
+      var cls = 'q-none', tag = '';
+      if(d && typeof d.min === 'number' && typeof d.max === 'number' && typeof af.v === 'number'){
+        var p = (d.max > d.min) ? (af.v - d.min) / (d.max - d.min) : 1;
+        if(p >= 0.67){ cls = 'q-hi'; tag = cute ? '高' : '高'; }
+        else if(p >= 0.34){ cls = 'q-mid'; tag = cute ? '中' : '中'; }
+        else { cls = 'q-lo'; tag = cute ? '低' : '低'; }
+        tag += ' ' + af.v + '/' + d.max;
+      } else if(d){
+        cls = 'q-sp'; tag = cute ? '特殊' : '特殊';
+      }
+      return '<span class="sl-af ' + cls + '">◆ ' + esc(txt) + (tag ? '<i>' + tag + '</i>' : '') + '</span>';
+    }).join('') + '</div>';
+  }catch(_e){ return ''; }
+};
+window._lxpsSellToggleLock = function(eqUid){
+  try{
+    if(typeof window._gearToggleLock !== 'function') return;
+    if(window._gearToggleLock(eqUid)){
+      if(document.getElementById('lxps-sell-ov')) window._lxpsOpenSellList();
+    }
+  }catch(_e){ console.warn('[賣出持有物品] 上鎖', _e); }
 };
 
 
