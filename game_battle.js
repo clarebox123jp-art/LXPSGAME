@@ -7369,6 +7369,7 @@ function newHero(name,side,pos){
     //   _odinRagnarokUsed:爆發被動「諸神的黃昏」全滅自動復活,每場限 1 次(false=未用)
     if(name === '主神奧汀'){
       _h._odinRagnarokUsed = false;
+      _h._cstOdGod2 = false;   // ★ v5.389.0 神格覺醒「眾神之父」第 2 次
     }
     // ★ v5.232.0 — 第四～六隻 UR 初始化(戰鬥開場 hook 會再設一次;這裡是任何建隊路徑的保底預設)
     //   究極神兵:_ubGuardLeft(本回合剩餘代承次數)/ _ubImmuneReady(本回合首傷免疫是否可用)
@@ -7765,11 +7766,11 @@ function addStatus(h,t,dur=1){
   if(t !== 'strongTaunt' && h.name === '魔劍姬‧伊莉雅' && typeof BAD_STATUS !== 'undefined' && BAD_STATUS.includes(t)){
     const _ilTl = (typeof _getTraitLv === 'function') ? (_getTraitLv('魔劍姬‧伊莉雅') || 0) : 0;
     let _ilImmRate = Math.min(0.80, 0.60 + _ilTl * 0.05);
-    let _cstIlyT1 = false; try{ _cstIlyT1 = !!window._cstHasN(h,'t1','魔劍姬‧伊莉雅'); if(_cstIlyT1) _ilImmRate = Math.min(1, _ilImmRate + 0.15); }catch(_eCstIlyT1){ _cstIlyT1 = false; }   // ✨ 命星 伊莉雅 t1:免疫機率 +15pp
+    let _cstIlyT1 = false; try{ _cstIlyT1 = !!window._cstHasN(h,'t1','魔劍姬‧伊莉雅'); if(_cstIlyT1) _ilImmRate = 1; }catch(_eCstIlyT1){ _cstIlyT1 = false; }   /* ★ v5.389.0 UR 命星強化:t1 點亮 ⇒ 普通不利 100% 免疫 */   // ✨ 命星 伊莉雅 t1:免疫機率 +15pp
     if(Math.random() < _ilImmRate){
       try{ if(typeof showShieldVFX === 'function') showShieldVFX(h,'immune'); }catch(_){}
       try{ log(`🗡️ [${h.name}] 魔尊血脈:免疫 ${(typeof statusName==='function')?statusName(t):t}!`); }catch(_){}
-      try{ if(_cstIlyT1 && !h._cstIlyRage){ h._cstIlyRage = 1; log('✨ [' + h.name + '] 命星:魔血屏障!獲得「血怒」,下一次技能傷害 +10%!'); } }catch(_eCstIlyT1r){}
+      try{ if(_cstIlyT1 && (h._cstIlyRage || 0) < 3){ h._cstIlyRage = (h._cstIlyRage || 0) + 1; log('✨ [' + h.name + '] 命星:魔血屏障!「血怒」' + h._cstIlyRage + ' 層,下一次技能傷害 +' + (h._cstIlyRage * 15) + '%!'); } }catch(_eCstIlyT1r){}   /* ★ v5.389.0 血怒最多 3 層,每層 +15% */
       try{ if(typeof bannerFX === 'function') bannerFX(h, '🗡️ 免疫', '#b048ff', 500); }catch(_){}
       return;
     }
@@ -9115,12 +9116,16 @@ function tickStatus(h){
       try{ if(h._cstIlB2) window._cstIlB2End(h); }catch(_eCstIlB2e){}   // ✨ v5.273.0 命星 ⚙ 伊莉雅 b2(只認命星寫入的 _cstIlB2)
       // ★ v5.316.0(老師裁定)副作用:強制「調息」2 回合(只能休息或使用物品)。
       //   本段在 tickStatus 的「buff 到期處理」內,同一次 tickStatus 稍後會把所有 status dur-1 ⇒ 寫 3,實際涵蓋接下來 2 個回合。
+      // ★ v5.389.0 UR 命星強化:b1 點亮 ⇒ 調息 2 → 1 回合
+      //   神格覺醒「魔皇真身」(老師 11-12 23:17):調息再減 1 回合(即 1 回合),且調息期間隊友每次攻擊對手,伊莉雅以普通攻擊 100% 協同追擊同一目標
       try{
         if(h.curHp > 0){
           h.status = (h.status || []).filter(function(s){ return !(s && s.type === '_iliyaRest'); });
-          h.status.push({ type:'_iliyaRest', dur:3, _strong:true, _protected:true, _noStripe:true });
-          log(`🧘 [${h.name}] 魔尊之力反噬,進入「調息」2 回合:只能休息或使用物品!`);
-          try{ bannerFX(h, '🧘 調息中(2回合)', '#9b8cff', 1100); }catch(_){}
+          const _ilGod = window._cstGodOn(h, '魔劍姬‧伊莉雅');
+          const _ilRestN = (_ilGod || window._cstHasN(h,'b1','魔劍姬‧伊莉雅')) ? 1 : 2;
+          h.status.push({ type:'_iliyaRest', dur:_ilRestN + 1, _strong:true, _protected:true, _noStripe:true, _cstIlyCo:(_ilGod ? 1 : 0) });
+          log(`🧘 [${h.name}] 魔尊之力反噬,進入「調息」${_ilRestN} 回合:只能休息或使用物品!` + (_ilGod ? '(🌟 魔皇真身:調息期間會跟著隊友協同攻擊)' : (_ilRestN === 1 ? '(命星魔尊延燼:調息縮短)' : '')));
+          try{ bannerFX(h, _ilGod ? '🌟 魔皇真身・調息協攻' : ('🧘 調息中(' + _ilRestN + '回合)'), _ilGod ? '#e080ff' : '#9b8cff', 1100); }catch(_){}
         }
       }catch(_eIlRest){}
       try{ renderCard(h); }catch(_){}
@@ -17067,6 +17072,9 @@ window._CST_EFFECTS = window._CST_EFFECTS || {};   /* 命星戰鬥效果登錄�
 window._cstHas = function(h, slot){ try{ return !!(h && h._cst && h._cst.lit && h._cst.lit[slot]); }catch(_){ return false; } };
 /* ★ v5.255.0 各命星效果一律走 _cstHasN(英雄物件, 槽, 星的主人名):多驗「這個物件就是星的主人」。
    理由:凡人「模仿／臨摹」別人的技能或爆發時,施放者物件是凡人,若只問 _cstHas 會把凡人自己的同槽命星誤套到別人的招式上。 */
+/* ★ v5.389.0 UR「神格覺醒」:點滿 6 顆命星(t1,t2,s1,s2,b1,b2 全亮)才成立;一樣只認星的主人本人(臨摹/模仿不算) */
+window._cstGodOn = function(h, owner){ try{ if(!h || h.name !== owner || !h._cst || !h._cst.lit) return false; var L = h._cst.lit; return !!(L.t1 && L.t2 && L.s1 && L.s2 && L.b1 && L.b2); }catch(_){ return false; } };
+window._cstGodFind = function(side, owner){ try{ return ((typeof G !== 'undefined' && G && G[side]) || []).find(function(x){ return x && x.curHp > 0 && window._cstGodOn(x, owner); }) || null; }catch(_){ return null; } };
 window._cstHasN = function(h, slot, owner){ try{ return !!(h && h.name === owner && h._cst && h._cst.lit && h._cst.lit[slot]); }catch(_){ return false; } };
 /* ★ 主角命星專用:主角在戰鬥中的名字可能是「主角」或「主角‧覺醒」⇒ 一律用 _isProtagHero(定義在 game_adv.js)判斷本人。
    凡人臨摹/模仿主角時施放者物件是凡人 ⇒ 不成立。 */
@@ -18469,6 +18477,15 @@ function _clairAddShield(target, amt, actor){
   }catch(_e){ console.warn('[克雷爾 護盾] 失敗', _e); }
 }
 //   _clairAddStrongBuff:加「強力」有利狀態(_strong:true → 不可被消除/奪取/交換,通則 v3.13.46)
+// ★ v5.389.0 命星 克雷爾 s1 七彩虹光(UR 命星強化):主目標以外的存活友方各恢復本次治療量 40%
+window._cstClS1Spread = function(a, main, amt){
+  try{
+    if(!a || !(amt > 0)) return;
+    var v = Math.max(1, Math.floor(amt * 0.40)), n = 0;
+    (G[a.side] || []).forEach(function(al){ if(al && al !== main && al.curHp > 0){ doHeal(al, v, { actor:a, isHeal:true }); n++; try{ renderCard(al); }catch(_){} } });
+    if(n) log('✨ [' + a.name + '] 命星:七彩虹光!神光擴散,其餘 ' + n + ' 名友方各恢復 ' + v + ' HP!');
+  }catch(_){}
+};
 function _clairAddStrongBuff(target, type, dur){
   if(!target || target.curHp <= 0) return;
   try{
@@ -18674,10 +18691,33 @@ function _ur4CleanseN(h, n){
   }catch(_e){ console.warn('[v5.232.0 神兵 自動解除不利]', _e); return 0; }
 }
 //   究極神兵:每回合重置(代承次數 1+天賦級、首傷免疫就緒)
+// ★ v5.389.0 命星 究極神兵 s1 貫甲神槍(UR 命星強化):擊碎目標全部有利狀態(含強力;BOSS 合計最多 2 個),每擊碎 1 個本擊傷害 +15%(最多 +60%)
+window._cstUbS1Strip = function(a, t, already){
+  var n = already || 0;
+  try{
+    if(!a || !t || !window._cstHasN(a,'s1','究極神兵')) return n;
+    var boss = (typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(t)) || (typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(t));
+    var lim = boss ? 2 : 99, names = [];
+    while(n < lim){ var r = _ur4StripOneGood(t); if(!r) break; n++; names.push(r); }
+    if(names.length){ log('✨ [' + a.name + '] 命星:貫甲神槍!再擊碎 [' + t.name + '] 的「' + names.join('」「') + '」!'); try{ renderCard(t); }catch(_){} }
+  }catch(_){}
+  return n;
+};
+window._cstUbS1Boost = function(a, d, n, opts){
+  try{
+    if(!(n > 0) || !window._cstHasN(a,'s1','究極神兵')) return d;
+    var k = window._cstCap.capHit(opts, 'dmg', Math.min(0.60, n * 0.15));
+    if(k > 0){ log('✨ [' + a.name + '] 命星:貫甲神槍!擊碎 ' + n + ' 個有利狀態,這一槍傷害 +' + Math.round(k * 100) + '%!'); return Math.max(1, Math.floor(d * (1 + k))); }
+  }catch(_){}
+  return d;
+};
+// ★ v5.389.0 命星 月讀大神 s1 弦月映刃(UR 命星強化):目標魅惑中 ⇒ 必定暴擊
+window._cstTkS1Crit = function(a, t){ try{ if(a && t && window._cstHasN(a,'s1','月讀大神') && (t.status || []).some(function(s){ return s && s.type === 'charm'; })){ log('✨ [' + a.name + '] 命星:弦月映刃!對魅惑中的 [' + t.name + '] 必定暴擊!'); return { forceCritRate:1.0 }; } }catch(_){} return {}; };
 function _ur4ShinheiReset(h){
   try{
     var _tl = (typeof _getTraitLv === 'function') ? (_getTraitLv('究極神兵') || 0) : 0;
     h._ubGuardLeft = 1 + _tl;
+    try{ if(window._cstHasN(h,'t1','究極神兵')) h._ubGuardLeft += 1; }catch(_eCstUbT1g){}   // ★ v5.389.0 UR 命星強化 t1 合金守衛:每回合代承傷次數 +1
     h._ubImmuneReady = true;
   }catch(_){}
 }
@@ -18687,7 +18727,7 @@ function _moonSpawn(h, isRespawn){
   try{
     var _tl = (typeof _getTraitLv === 'function') ? (_getTraitLv('月讀大神') || 0) : 0;
     var _mult = 2.0 + _tl * 0.2;
-    try{ if(window._cstHasN(h,'t1','月讀大神')){ _mult = _mult * 1.2; log('✨ [' + h.name + '] 命星:碎月回輝!衛月 HP 提升為月讀最大 HP ' + Math.round(_mult*100) + '%'); } }catch(_eCstTkT1a){}   // ✨ 命星 月讀大神 t1:200%→240%(×1.2 保留天賦等級成長)
+    try{ if(window._cstHasN(h,'t1','月讀大神')){ _mult = _mult * 1.5; log('✨ [' + h.name + '] 命星:碎月回輝!衛月 HP 提升為月讀最大 HP ' + Math.round(_mult*100) + '%'); }   /* ★ v5.389.0 UR 命星強化:×1.2 → ×1.5(200%→300%) */ }catch(_eCstTkT1a){}   // ✨ 命星 月讀大神 t1:200%→240%(×1.2 保留天賦等級成長)
     h._moonHpMax = Math.max(1, Math.floor((h.hp || 1) * _mult));
     h._moonHp = h._moonHpMax;
     h._moonActive = true;
@@ -18707,7 +18747,15 @@ function _moonShatter(h){
     h._moonActive = false;
     h._moonRespawnIn = 2;
     try{ if(window._cstHasN(h,'t1','月讀大神') && h.curHp > 0){ const _cstTkE = window._cstCap.gainEnergy(h.side, 2); if(_cstTkE > 0) log('✨ [' + h.name + '] 命星:碎月回輝!衛月碎裂,月讀恢復 ' + _cstTkE + ' 能量'); } }catch(_eCstTkT1b){}   // ✨ 命星 月讀大神 t1
+    // ★ v5.389.0 UR 命星強化 t1 碎月回輝:每場第一次碎裂 ⇒ 不等 2 回合,立刻重新召喚衛月
+    var _cstTkQuick = false;
+    try{ if(window._cstHasN(h,'t1','月讀大神') && h.curHp > 0 && !_cstBidOk(h._cstTkT1G)){ h._cstTkT1G = _cstBidD(); _cstTkQuick = true; } }catch(_eCstTkT1q){}
+    if(_cstTkQuick){
+      try{ log('✨ [' + h.name + '] 命星:碎月回輝!衛月碎裂的瞬間,新月立刻再度升起(每場 1 次)!'); }catch(_){}
+      setTimeout(function(){ try{ if(h.curHp > 0 && !h._moonActive) _moonSpawn(h, true); }catch(_){} }, 700);
+    } else {
     try{ log(`🌙💥 [${h.name}] 衛月碎裂成月光!相隔 2 回合後將重新升起。`); }catch(_){}
+    }
     try{ bannerFX(h, '🌙💥 衛月 碎裂!', '#9aa4ff', 1100); }catch(_){}
     try{ renderCard(h); }catch(_){}
     var _total = Math.max(1, Math.floor(_max * 2.0));
@@ -18720,6 +18768,7 @@ function _moonShatter(h){
         try{ log(`🌙✨ 衛月的月光轟擊敵方全體!(總威力 ${_total},每人 ${_per})`); }catch(_){}
         _foes.forEach(function(f){
           var _amt = _per;
+          try{ if(window._cstGodOn(h, '月讀大神') && (f.status || []).some(function(s){ return s && s.type === 'charm'; })) _amt = Math.floor(_amt * 1.30); }catch(_){}   // ★ v5.389.0 長夜之主:衛月月光對魅惑中的對手 +30%
           try{ if(typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(f)) _amt = Math.min(_amt, 5000); }catch(_){}
           try{ doDmg(f, _amt, { actor:h, isAoe:true, fixedDmg:true, mustHit:true, ignoreEvasion:true, noCounter:true, _moonBlast:true, elem:'dark' }); }catch(_){}
           try{ renderCard(f); }catch(_){}
@@ -21971,7 +22020,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   if(burstName==='究極神兵・天穹裂光'){
     const _oppU = side==='p1'?'p2':'p1';
     const _foesU = G[_oppU].filter(x => x && x.curHp > 0);
-    let _cstUbB1M = 9.0; try{ if(window._cstHasN(h,'b1','究極神兵')){ _cstUbB1M = 10.5; log('✨ [' + h.name + '] 命星:天穹過載!天穹裂光倍率提升為攻擊 1050%!'); } }catch(_eCstUbB1){ _cstUbB1M = 9.0; }   // ✨ 命星 究極神兵 b1
+    let _cstUbB1M = 9.0; try{ if(window._cstHasN(h,'b1','究極神兵')){ _cstUbB1M = 11.0; log('✨ [' + h.name + '] 命星:天穹過載!天穹裂光倍率提升為攻擊 1100%!');   /* ★ v5.389.0 1050%→1100% */ } }catch(_eCstUbB1){ _cstUbB1M = 9.0; }   // ✨ 命星 究極神兵 b1
     const _totU = Math.max(1, Math.floor(_rbAtkv * _cstUbB1M * _burstMult));
     log(`🤖 [${h.name}] 究極神兵・天穹裂光!貫穿天穹的主砲裂光!(總威力 ${_totU})`);
     bannerFX(h, '🤖 天穹裂光!', '#9fd6ff', 1400);
@@ -21991,7 +22040,8 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     }
     _pSetTimeout(() => {
       try{
-        const _immDurU = 1 + _lv5Extra;
+        let _immDurU = 1 + _lv5Extra;
+        try{ if(window._cstHasN(h,'b1','究極神兵')){ _immDurU += 1; log('✨ [' + h.name + '] 命星:天穹過載!全隊無敵延長 1 回合!'); } }catch(_eCstUbB1i){}   // ★ v5.389.0 UR 命星強化
         (G[side] || []).filter(x => x && x.curHp > 0).forEach(al => { addBuff(al, 'immune', _immDurU); renderCard(al); });
         log(`🤖 [${h.name}] 全體友方獲得「無敵」${_immDurU} 回合!`);
         bannerFX(h, '🤖 全隊無敵!', '#cfe8ff', 900);
@@ -22009,7 +22059,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     bannerFX(h, '☀️ 永晝!', '#ffd27a', 1400);
     // Step 1:復活倒下友方(一半 HP;doRevive 內已清不利)+ 全體強力再生 2 回合(每回合特技 50%×_burstMult)
     let _cstAmB1Rv = 0.5;
-    try{ if(window._cstHasN(h,'b1','天照大神')){ _cstAmB1Rv = 0.6; log('✨ [' + h.name + '] 命星:晨曦再臨!永晝復活的 HP 提升為 60%'); if((G[side] || []).some(function(x){ return x && x.name === '月讀大神' && x.curHp > 0; })){ const _cstAmB1E = window._cstCap.gainEnergy(side, 2, {gift:true}); if(_cstAmB1E > 0) log('✨ [' + h.name + '] 命星:晨曦再臨!日月同輝,我方能量 +' + _cstAmB1E + '(本回合不能用於極限爆發)'); } } }catch(_eCstAmB1){ _cstAmB1Rv = 0.5; }   // ✨ 命星 天照大神 b1
+    try{ if(window._cstHasN(h,'b1','天照大神')){ _cstAmB1Rv = 1.0; const _cstAmMoon = (G[side] || []).some(function(x){ return x && x.name === '月讀大神' && x.curHp > 0; }); const _cstAmB1E = window._cstCap.gainEnergy(side, _cstAmMoon ? 3 : 2, {gift:true}); log('✨ [' + h.name + '] 命星:晨曦再臨!永晝以滿 HP 復活倒下的友方' + (_cstAmB1E > 0 ? ',我方能量 +' + _cstAmB1E + (_cstAmMoon ? '(月讀在隊)' : '') + '(本回合不能拿來放極限爆發)' : '') + '!'); } }catch(_eCstAmB1){ _cstAmB1Rv = 0.5; }   // ★ v5.389.0 UR 命星強化:60% → 滿 HP;能量 +2(月讀在隊 +3)
     try{
       (G[side] || []).forEach(al => {
         if(!al) return;
@@ -22057,7 +22107,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
                 for(let _ci = 0; _ci < _cstTkN && f.curHp > 0; _ci++) doDmg(f, _cstTkD, { actor:h, isSkill:true, mustHit:true, ignoreEvasion:true, elem:'dark' });
               }catch(_eCstTkB1b){}
             }
-            if(f.curHp > 0 && _ur4PushStrong(f, 'charm', 2, h)){
+            if(f.curHp > 0 && _ur4PushStrong(f, 'charm', (window._cstGodOn(h, '月讀大神') ? 3 : 2), h)){   // ★ v5.389.0 神格覺醒「長夜之主」:強力魅惑 2→3 回合
               try{ if(_cstTkB1 && (G[side] || []).some(function(x){ return x && x.name === '天照大神' && x.curHp > 0; })){ addStatus(f, 'forecast', 1); log('✨ [' + h.name + '] 命星:長夜吞輝!日月交輝,被魅惑的 [' + f.name + '] 陷入失明 1 回合'); } }catch(_eCstTkB1c){}
             }
           }
@@ -22091,7 +22141,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
       });
     }
     _pSetTimeout(() => {
-      try{ if(window._cstHasN(h,'b1','主神奧汀')){ const _cstOdnSh = Math.max(1, Math.floor((h.hp || 0) * 0.15)); let _cstOdnN = 0; (G[side] || []).forEach(function(al){ if(al && al.curHp > 0){ _cstBAddShield(al, _cstOdnSh, 1); _cstOdnN++; try{ renderCard(al); }catch(_){} } }); if(_cstOdnN > 0) log('✨ [' + h.name + '] 命星:黃昏之盾!全體友方獲得 ' + _cstOdnSh + ' 護盾(奧汀最大 HP 15%)1 回合!'); } }catch(_eCstOdnB1){}   // ✨ 命星 奧汀 b1(主動版)
+      try{ if(window._cstHasN(h,'b1','主神奧汀')){ const _cstOdnSh = Math.max(1, Math.floor((h.hp || 0) * 0.30)); let _cstOdnN = 0; (G[side] || []).forEach(function(al){ if(al && al.curHp > 0){ _cstBAddShield(al, _cstOdnSh, 2); _cstOdnN++; try{ renderCard(al); }catch(_){} } }); if(_cstOdnN > 0){ const _cstOdnE = window._cstCap.gainEnergy(side, 2, { gift:true }); log('✨ [' + h.name + '] 命星:黃昏之盾!全體友方獲得 ' + _cstOdnSh + ' 護盾(奧汀最大 HP 30%)2 回合,能量 +' + _cstOdnE + '(本回合不能拿來放極限爆發)!'); } }   /* ★ v5.389.0 UR 命星強化:15%/1回合 → 30%/2回合＋能量 +2 */ }catch(_eCstOdnB1){}   // ✨ 命星 奧汀 b1(主動版)
       updateUI(); _burstFinish(h, _interrupted);
     }, (_foesO.length * 120) + 600);
     return;
@@ -22296,7 +22346,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     // Step 1:對 1 名敵方造成 min(目標maxHP×20%, 上限) 傷害
     if(_tgtC){
       let _cstArtB1P = 0.20, _cstArtB1Cap = _capC;
-      try{ if(window._cstHasN(h,'b1','藝天使．克雷爾')){ _cstArtB1P = 0.24; _cstArtB1Cap = Math.floor(_capC * 1.2); log('✨ [' + h.name + '] 命星:毀滅彩墨!強制傷害提升為最大 HP 24%(上限 ' + _cstArtB1Cap + ')!'); } }catch(_eCstArtB1){ _cstArtB1P = 0.20; _cstArtB1Cap = _capC; }   // ✨ 命星 克雷爾 b1:20%→24%、上限 ×1.2(保留等級成長)
+      try{ if(window._cstHasN(h,'b1','藝天使．克雷爾')){ _cstArtB1P = 0.30; _cstArtB1Cap = Math.floor(_capC * 1.75); log('✨ [' + h.name + '] 命星:毀滅彩墨!強制傷害提升為最大 HP 30%(上限 ' + _cstArtB1Cap + ')!'); } }catch(_eCstArtB1){ _cstArtB1P = 0.20; _cstArtB1Cap = _capC; }   // ✨ 命星 克雷爾 b1:20%→24%、上限 ×1.2(保留等級成長)
       const _dmgC = Math.max(1, Math.min(Math.floor((_tgtC.hp || 1) * _cstArtB1P), _cstArtB1Cap));
       doDmg(_tgtC, _dmgC, { actor:h, isSkill:true, fixedDmg:true, skillName:'天界彩繪．毀滅與重生' });
       renderCard(_tgtC);
@@ -22323,7 +22373,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
         });
         try{ bannerFX(h, '🎨 重生!全隊復活', '#fff3c8', 1100); }catch(_){}
         try{ window._cstClB2Arm(h); }catch(_eCstClB2){}   // ✨ v5.269.0 命星 克雷爾 b2 天界畫布
-        try{ if(_cstArtRevN >= 2 && !h._cstArtB1E && h.curHp > 0 && window._cstHasN(h,'b1','藝天使．克雷爾')){ h._cstArtB1E = true; const _cstArtE = window._cstCap.gainEnergy(side, 1); log('✨ [' + h.name + '] 命星:毀滅彩墨!一次救起 ' + _cstArtRevN + ' 名隊友,能量 +' + _cstArtE + '(本場限 1 次)'); } }catch(_eCstArtB1e){}
+        try{ if(h.curHp > 0 && window._cstHasN(h,'b1','藝天使．克雷爾') && !_cstBidOk(h._cstClB1G)){ window._cstS1ReAct(h, '毀滅彩墨!克雷爾再行動 1 次!(每場 1 次)', '_cstClB1G'); log('✨ [' + h.name + '] 命星:毀滅彩墨!這次爆發結束後再行動 1 次(每場 1 次)'); } }catch(_eCstArtB1e){}   // ★ v5.389.0 UR 命星強化:改為爆發後再行動(原:救起 2 人以上 +1 能量)
       }catch(_eC){ console.warn('[克雷爾 爆發] 失敗', _eC); }
       _burstFinish(h, _interrupted);
     }, 700);
@@ -33460,6 +33510,38 @@ window._cstOnKo = function(target, opts){
   try{
     if(!target || typeof G === 'undefined' || !G) return;
     opts = opts || {};
+    // ★ v5.389.0 UR 神格覺醒(6 顆命星全亮;每場 1 次;倒下事件之前就站起來 ⇒ 不觸發其他「倒下」效果)
+    //   究極神兵「天穹終焉」:以 50% HP 重新啟動＋我方能量 +2;天照大神「天照日輪」:以 50% HP 復活並立刻觸發一次日出回復
+    try{
+      if(target.curHp === 0 && target.name === '究極神兵' && window._cstGodOn(target, '究極神兵') && !_cstBidOk(target._cstUbGodG)){
+        target._cstUbGodG = _cstBidD();
+        try{ doRevive(target, 0.5); }catch(_eGodRv){ console.warn('[神格覺醒 復活]', _eGodRv); }
+        if(target.curHp > 0){
+          const _ubGE = window._cstCap.gainEnergy(target.side, 2);
+          log('🌟 [' + target.name + '] 神格覺醒「天穹終焉」!裝甲重新啟動,以 ' + target.curHp + ' HP 站起' + (_ubGE > 0 ? ',我方能量 +' + _ubGE : '') + '!');
+          try{ bannerFX(target, '🌟 天穹終焉・重新啟動!', '#9fd6ff', 1200); renderCard(target); }catch(_){}
+          return;
+        }
+      }
+      if(target.curHp === 0 && target.name === '天照大神' && window._cstGodOn(target, '天照大神') && !_cstBidOk(target._cstAmGodG)){
+        target._cstAmGodG = _cstBidD();
+        try{ doRevive(target, 0.5); }catch(_eGodRv){ console.warn('[神格覺醒 復活]', _eGodRv); }
+        if(target.curHp > 0){
+          log('🌟 [' + target.name + '] 神格覺醒「天照日輪」!太陽再度升起,天照以 ' + target.curHp + ' HP 復活!');
+          try{ bannerFX(target, '🌟 天照日輪!', '#ffd27a', 1200); }catch(_){}
+          try{
+            const _amTlG = (typeof _getTraitLv === 'function') ? (_getTraitLv('天照大神') || 0) : 0;
+            let _amSpG = 0.50 + _amTlG * 0.10; if(window._cstHasN(target,'t1','天照大神')) _amSpG = _amSpG * 1.2;
+            const _amHpG = 0.05 + _amTlG * 0.01, _sp = window._lxpsSpv(target);
+            let _nG = 0;
+            (G[target.side] || []).forEach(function(al){ if(al && al.curHp > 0 && al.curHp < al.hp){ doHeal(al, Math.max(1, Math.floor(_sp * _amSpG) + Math.floor((al.hp || 0) * _amHpG)), { actor:target, _healSrc:target, isHeal:true, noDice:true }); _nG++; try{ renderCard(al); }catch(_){} } });
+            if(_nG) log('☀️ [天照大神] 日出!朝陽照耀全隊,' + _nG + ' 名友方恢復 HP!');
+          }catch(_eAmGodH){}
+          try{ renderCard(target); }catch(_){}
+          return;
+        }
+      }
+    }catch(_eCstGodKo){}
     if(target._cstGrit){ target._cstGrit = 0; try{ log('✨ [' + target.name + '] 命星:倒下,「韌性」層數清空'); }catch(_){} }
     const _vSide = (target.side === 'p1') ? 'p2' : ((target.side === 'p2') ? 'p1' : null);
     if(_vSide){
@@ -34490,7 +34572,7 @@ function doDmg(target, rawDmg, opts={}){
           const _odTl2 = (typeof _getTraitLv === 'function') ? (_getTraitLv('主神奧汀') || 0) : 0;
           const _ctrDmg = Math.max(1, Math.floor((_odinH.atk || 1) * (1 + 0.10 * _odTl2)));
           // ✨ v5.260.0 命星 奧汀 t1(老師 10/16 07:34 裁定丙):天賦已滿額(天賦 Lv3 起整隊 4 人)時,注視守護發動的這一擊額外減傷 20%
-          try{ if(_odTl2 >= 3 && window._cstHasN(_odinH,'t1','主神奧汀')){ rawDmg = Math.max(1, Math.floor(rawDmg * 0.8)); log('✨ [' + _odinH.name + '] 命星:雙鴉注視!注視已滿額,這一擊額外減傷 20%'); } }catch(_eCstOdnT1dr){}
+          try{ if(window._cstHasN(_odinH,'t1','主神奧汀')){ rawDmg = Math.max(1, Math.floor(rawDmg * 0.7)); log('✨ [' + _odinH.name + '] 命星:雙鴉注視!注視守護這一擊減傷 30%'); } }catch(_eCstOdnT1dr){}   // ★ v5.389.0 UR 命星強化:不再要求天賦滿額,減傷 20% → 30%
           try{ if(typeof showShieldVFX === 'function') showShieldVFX(target,'immune'); }catch(_){}
           try{ bannerFX(target, '👁️ 注視守護!', '#ffe6a8', 700); }catch(_){}
           try{ if(typeof renderCard === 'function') renderCard(target); }catch(_){}
@@ -34532,7 +34614,7 @@ function doDmg(target, rawDmg, opts={}){
         _ub._ubGuardLeft = Math.max(0, (_ub._ubGuardLeft || 0) - 1);
         try{ log(`🤖 [究極神兵] 神兵裝甲!挺身替 [${target.name}] 擋下攻擊!(本回合剩 ${_ub._ubGuardLeft} 次)`); }catch(_){}
         try{ bannerFX(_ub, '🤖 代替承傷!', '#9fd6ff', 700); }catch(_){}
-        let _cstUbRaw = rawDmg; try{ if(window._cstHasN(_ub,'t1','究極神兵')){ _cstUbRaw = Math.max(1, Math.floor(rawDmg * 0.8)); log('✨ [' + _ub.name + '] 命星:合金守衛!代承的這次傷害減少 20%(' + rawDmg + '→' + _cstUbRaw + ')'); } }catch(_eCstUbT1){ _cstUbRaw = rawDmg; }   // ✨ 命星 究極神兵 t1
+        let _cstUbRaw = rawDmg; try{ if(window._cstHasN(_ub,'t1','究極神兵')){ _cstUbRaw = Math.max(1, Math.floor(rawDmg * 0.7)); log('✨ [' + _ub.name + '] 命星:合金守衛!代承的這次傷害減少 30%(' + rawDmg + '→' + _cstUbRaw + ')'); }   /* ★ v5.389.0 20%→30% */ }catch(_eCstUbT1){ _cstUbRaw = rawDmg; }   // ✨ 命星 究極神兵 t1
         return doDmg(_ub, _cstUbRaw, Object.assign({}, opts, { _ubRedirect:true, _odinRedirect:true, _odinGazeRedirect:true }));
       }
     }catch(_eUb1){ console.warn('[v5.232.0 神兵 代替承傷]', _eUb1); }
@@ -35653,12 +35735,17 @@ function doDmg(target, rawDmg, opts={}){
         let _cstArtT1F = null; try{ _cstArtT1F = (G[target.side] || []).find(x => x && x.name === '藝天使．克雷爾' && x.curHp > 0 && window._cstHasN(x,'t1','藝天使．克雷爾')) || null; }catch(_eCstArtT1F){ _cstArtT1F = null; }   // ✨ 命星 克雷爾 t1(fixedDmg 路徑,照抄主路徑)
         if(_clairAliveF && !(_cstArtT1F && target._cstArtT1R === G.round)){
           const _clTraitLvF = (typeof _getTraitLv === 'function') ? (_getTraitLv('藝天使．克雷爾') || 0) : 0;
-          const _saveChanceF = 0.50 + _clTraitLvF * 0.06;   // Lv0=50% → Lv4(MAX)=74%
+          let _saveChanceF = 0.50 + _clTraitLvF * 0.06;   // Lv0=50% → Lv4(MAX)=74%
+          if(_cstArtT1F) _saveChanceF = Math.max(_saveChanceF, 0.75);   // ★ v5.389.0 命星 t1 天使護羽:至少 75%
+          // ★ v5.389.0 神格覺醒「天界聖繪」:每名友方每場第一次致命傷 ⇒ 祝福必定觸發
+          let _cstClGodF = false; try{ _cstClGodF = !!(window._cstGodFind(target.side, '藝天使．克雷爾') && !_cstBidOk(target._cstClGodG)); }catch(_){}
+          if(_cstClGodF) _saveChanceF = 1;
           if(Math.random() < _saveChanceF){
+            if(_cstClGodF){ target._cstClGodG = _cstBidD(); try{ log('🌟 神格覺醒「天界聖繪」![' + target.name + '] 本場第一次致命傷,天使的祝福必定降臨!'); }catch(_){} }
             target.curHp = 1; try{ renderCard(target); }catch(_){}
             try{ log(`👼 [${target.name}] 天使的祝福!以 1HP 奇蹟生還!`); }catch(_){}
             try{ bannerFX(target, '👼 天使的祝福!', '#fff3c8', 900); }catch(_){}
-            try{ if(_cstArtT1F){ target._cstArtT1R = G.round; const _cstArtShF = Math.max(1, Math.floor(window._lxpsSpv(_cstArtT1F) * 0.5)); _cstBAddShield(target, _cstArtShF, 1); log('✨ [' + _cstArtT1F.name + '] 命星:天使護羽![' + target.name + '] 獲得 ' + _cstArtShF + ' 護盾(特技 50%)1 回合!(本回合不會再被天使的祝福救起)'); } }catch(_eCstArtT1sF){}
+            try{ if(_cstArtT1F){ target._cstArtT1R = G.round; const _cstArtShF = Math.max(1, Math.floor(window._lxpsSpv(_cstArtT1F) * 0.5)); _cstBAddShield(target, _cstArtShF, 1); try{ addBuff(target, 'halfDmg', 1); }catch(_){} log('✨ [' + _cstArtT1F.name + '] 命星:天使護羽![' + target.name + '] 獲得 ' + _cstArtShF + ' 護盾(特技 50%)與「減傷」1 回合!(本回合不會再被天使的祝福救起)'); } }catch(_eCstArtT1sF){}
             try{ window._cstClT2Paint(target); }catch(_eCstClT2f){}   // ✨ v5.269.0 命星 克雷爾 t2 守護畫像(沒有點亮的克雷爾 ⇒ 不做事)
           }
         }
@@ -37929,8 +38016,11 @@ function doDmg(target, rawDmg, opts={}){
   if(a && a.name === '魔劍姬‧伊莉雅' && a._iliyaAtkMul && a._iliyaAtkMul > 1 && !opts.isHeal){
     dmg = Math.max(1, Math.floor(dmg * a._iliyaAtkMul));
   }
+
   // ✨ 命星 伊莉雅 t1:「血怒」下一次技能傷害 +10%(用掉即消失;_cstIlyRage 只由點亮的命星寫入)
-  try{ if(a && a._cstIlyRage && opts.isSkill && !opts.isHeal && dmg > 0 && window._cstHasN(a,'t1','魔劍姬‧伊莉雅')){ a._cstIlyRage = 0; const _cstIlyK = window._cstCap.capHit(opts, 'dmg', 0.10); dmg = Math.max(1, Math.floor(dmg * (_cstIlyK >= 0.10 ? 1.10 : 1 + _cstIlyK))); log('✨ [' + a.name + '] 命星:血怒爆發!這次技能傷害 +10%!'); } }catch(_eCstIlyT1d){}   // ★ v5.262.0 命座 G9:命星「造成傷害增加」合計 ≤+60%
+  try{ if(a && a._cstIlyRage && opts.isSkill && !opts.isHeal && dmg > 0 && window._cstHasN(a,'t1','魔劍姬‧伊莉雅')){ const _cstIlyP = Math.min(3, a._cstIlyRage || 1) * 0.15; a._cstIlyRage = 0; const _cstIlyK = window._cstCap.capHit(opts, 'dmg', _cstIlyP); if(_cstIlyK > 0) dmg = Math.max(1, Math.floor(dmg * (1 + _cstIlyK))); log('✨ [' + a.name + '] 命星:血怒爆發!這次技能傷害 +' + Math.round(_cstIlyK * 100) + '%!'); }   /* ★ v5.389.0 每層 +15% */ }catch(_eCstIlyT1d){}   // ★ v5.262.0 命座 G9:命星「造成傷害增加」合計 ≤+60%
+  // ★ v5.389.0 神格覺醒「長夜之主」:魅惑中的對手受到月讀的傷害 +30%
+  try{ if(a && a.name === '月讀大神' && dmg > 0 && !opts.isHeal && target && (target.status || []).some(function(s){ return s && s.type === 'charm'; }) && window._cstGodOn(a, '月讀大神')) dmg = Math.max(1, Math.floor(dmg * 1.30)); }catch(_eCstTkGod){}
   // ✨ 命星 大力士 s2「磐石積蓄星」:泰山壓頂帶 _cstRockPct(只由點亮的命星寫入)⇒ 本擊傷害 +15%/層(G9 capHit 'dmg')
   try{ if(opts._cstRockPct > 0 && dmg > 0 && !opts.isHeal){ const _cstRkP = opts._cstRockPct; opts._cstRockPct = 0; const _cstRkK = window._cstCap.capHit(opts, 'dmg', _cstRkP); if(_cstRkK > 0) dmg = Math.max(1, Math.floor(dmg * (1 + _cstRkK))); } }catch(_eCstHerS2c){}
   // 極速閃燃：下次傷害×(2+升級)(使用後移除)
@@ -40377,12 +40467,17 @@ function doDmg(target, rawDmg, opts={}){
       let _cstArtT1 = null; try{ _cstArtT1 = (G[target.side] || []).find(x => x && x.name === '藝天使．克雷爾' && x.curHp > 0 && window._cstHasN(x,'t1','藝天使．克雷爾')) || null; }catch(_eCstArtT1){ _cstArtT1 = null; }   // ✨ 命星 克雷爾 t1:觸發時給護盾;同一友方每回合最多 1 次
       if(_clairAlive && !(_cstArtT1 && target._cstArtT1R === G.round)){
         const _clTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('藝天使．克雷爾') || 0) : 0;
-        const _saveChance = 0.50 + _clTraitLv * 0.06;   // Lv0=50% → Lv4(MAX)=74%
+        let _saveChance = 0.50 + _clTraitLv * 0.06;   // Lv0=50% → Lv4(MAX)=74%
+        if(_cstArtT1) _saveChance = Math.max(_saveChance, 0.75);   // ★ v5.389.0 命星 t1 天使護羽:至少 75%
+        // ★ v5.389.0 神格覺醒「天界聖繪」:每名友方每場第一次致命傷 ⇒ 祝福必定觸發
+        let _cstClGod = false; try{ _cstClGod = !!(window._cstGodFind(target.side, '藝天使．克雷爾') && !_cstBidOk(target._cstClGodG)); }catch(_){}
+        if(_cstClGod) _saveChance = 1;
         if(Math.random() < _saveChance){
+          if(_cstClGod){ target._cstClGodG = _cstBidD(); try{ log('🌟 神格覺醒「天界聖繪」![' + target.name + '] 本場第一次致命傷,天使的祝福必定降臨!'); }catch(_){} }
           target.curHp = 1; renderCard(target);
           try{ log(`👼 [${target.name}] 天使的祝福!以 1HP 奇蹟生還!`); }catch(_){}
           try{ bannerFX(target, '👼 天使的祝福!', '#fff3c8', 900); }catch(_){}
-          try{ if(_cstArtT1){ target._cstArtT1R = G.round; const _cstArtSh = Math.max(1, Math.floor(window._lxpsSpv(_cstArtT1) * 0.5)); _cstBAddShield(target, _cstArtSh, 1); log('✨ [' + _cstArtT1.name + '] 命星:天使護羽![' + target.name + '] 獲得 ' + _cstArtSh + ' 護盾(特技 50%)1 回合!(本回合不會再被天使的祝福救起)'); } }catch(_eCstArtT1s){}
+          try{ if(_cstArtT1){ target._cstArtT1R = G.round; const _cstArtSh = Math.max(1, Math.floor(window._lxpsSpv(_cstArtT1) * 0.5)); _cstBAddShield(target, _cstArtSh, 1); try{ addBuff(target, 'halfDmg', 1); }catch(_){} log('✨ [' + _cstArtT1.name + '] 命星:天使護羽![' + target.name + '] 獲得 ' + _cstArtSh + ' 護盾(特技 50%)與「減傷」1 回合!(本回合不會再被天使的祝福救起)'); } }catch(_eCstArtT1s){}
           try{ window._cstClT2Paint(target); }catch(_eCstClT2m){}   // ✨ v5.269.0 命星 克雷爾 t2 守護畫像
         }
       }
@@ -40391,19 +40486,41 @@ function doDmg(target, rawDmg, opts={}){
 
   // ✨ 命星 魔劍姬‧伊莉雅 b1(魔尊延燼星):魔尊覺醒期間首次擊倒非 BOSS 對手 ⇒ 覺醒 +1 回合(延長那回合不死失效,每場 1 次)
   try{
-    if(target.curHp===0 && old>0 && a && a !== target && a.side !== target.side && a.curHp > 0 && a._iliyaBurstActive && !a._cstIlyB1Used
-       && window._cstHasN(a,'b1','魔劍姬‧伊莉雅')
-       && !((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(target)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(target)))){
+    // ★ v5.389.0 UR 命星強化:每擊倒 1 名對手(含 BOSS 召喚物;BOSS 本體倒下戰鬥就結束)覺醒 +1 回合,每次覺醒最多 +2;延長的回合「不會倒下」照常生效
+    if(target.curHp===0 && old>0 && a && a !== target && a.side !== target.side && a.curHp > 0 && a._iliyaBurstActive
+       && window._cstHasN(a,'b1','魔劍姬‧伊莉雅')){
       const _cstIlyBf = (a.buffs || []).find(function(b){ return b && b.type === '_iliyaBurst'; });
-      if(_cstIlyBf){
-        a._cstIlyB1Used = true;
-        _cstIlyBf.dur = (_cstIlyBf.dur || 0) + 1; _cstIlyBf._cstIlyExt = 1;
+      if(_cstIlyBf && (_cstIlyBf._cstIlyExtN || 0) < 2){
+        _cstIlyBf._cstIlyExtN = (_cstIlyBf._cstIlyExtN || 0) + 1;
+        _cstIlyBf.dur = (_cstIlyBf.dur || 0) + 1;
         (a.buffs || []).forEach(function(b){ if(b && (b.type === 'zeroCost' || b.type === 'statusImmune')) b.dur = (b.dur || 0) + 1; });
-        log('✨ [' + a.name + '] 命星:魔尊延燼!擊倒 [' + target.name + '],魔尊覺醒延長 1 回合(延長的那回合「不會倒下」不生效,本場限 1 次)!');
+        log('✨ [' + a.name + '] 命星:魔尊延燼!擊倒 [' + target.name + '],魔尊覺醒延長 1 回合(這次覺醒已延長 ' + _cstIlyBf._cstIlyExtN + ' / 2)!');
         try{ renderCard(a); }catch(_){}
       }
     }
   }catch(_eCstIlyB1){}
+
+  // ★ v5.389.0 神格覺醒「魔皇真身」協同攻擊:伊莉雅調息中(帶 _cstIlyCo 標記),隊友對對手造成直接傷害 ⇒ 伊莉雅以普通攻擊 100% 追擊同一目標
+  //   每次隊友行動(G._actSeq)最多協攻 1 次;DoT/反彈/治療/追擊/協攻本身不觸發,避免連鎖。
+  try{
+    if(a && a !== target && a.side !== target.side && a.name !== '魔劍姬‧伊莉雅' && old > target.curHp && target.curHp > 0
+       && !opts.isHeal && !opts.isRebound && !opts._isDotTick && !opts._fromBleedProc && !opts._fromBurn && !opts._cstReact && !opts._cstIlyCo && !opts.noCounter){
+      const _ilyCo = (G[a.side] || []).find(function(x){ return x && x.name === '魔劍姬‧伊莉雅' && x.curHp > 0 && (x.status || []).some(function(s){ return s && s.type === '_iliyaRest' && s._cstIlyCo; }) && window._cstGodOn(x, '魔劍姬‧伊莉雅'); });
+      const _ilySeq = (G._actSeq || 0) + ':' + (G.round || 0);
+      if(_ilyCo && _ilyCo._cstIlyCoSeq !== _ilySeq){
+        _ilyCo._cstIlyCoSeq = _ilySeq;
+        const _ilyCoT = target, _ilyCoD = Math.max(1, Math.floor(window._lxpsAtkv(_ilyCo) * 1.0));
+        setTimeout(function(){
+          try{
+            if(!(_ilyCo.curHp > 0) || !(_ilyCoT.curHp > 0)) return;
+            log('🌟 [' + _ilyCo.name + '] 魔皇真身!調息中仍與 [' + a.name + '] 協同出劍,追擊 [' + _ilyCoT.name + ']!');
+            doDmg(_ilyCoT, _ilyCoD, { actor:_ilyCo, mustHit:true, noCounter:true, _cstIlyCo:true, _cstReact:1 });
+            try{ renderCard(_ilyCoT); if(typeof updateUI === 'function') updateUI(); if(typeof checkWin === 'function') checkWin(); }catch(_){}
+          }catch(_eIlyCo2){}
+        }, 260);
+      }
+    }
+  }catch(_eIlyCo){}
 
   // 緊急治療：友方受到傷害後，持有者用 SP×50% 恢復該友方 HP（可再行動）
   if(old>0 && target.curHp<old && target.curHp>0){
@@ -46028,10 +46145,12 @@ function execSkill(a, sk, cost, stype){
       const _hpBefore = t.curHp;
       doHeal(t, _healAmt, {actor:a, isHeal:true});
       const _ov = Math.max(0, _healFull - Math.max(0, t.curHp - _hpBefore));
-      if(_ov > 0) _clairAddShield(t, _cstArtS1 ? Math.floor(_ov * 1.2) : _ov, a);
+      let _cstArtS1L = false; try{ _cstArtS1L = window._cstHasN(a,'s1','藝天使．克雷爾'); }catch(_){}   // ★ v5.389.0 命星 s1 點亮(群體治療＋溢出護盾 +40%)
+      if(_ov > 0) _clairAddShield(t, _cstArtS1L ? Math.floor(_ov * 1.4) : _ov, a);
       _clairAddStrongBuff(t, 'hpRegen', 2); t._hpRegenAmt = Math.max(12, Math.floor(spv(a) * 0.5));
       _clairAddStrongBuff(t, 'halfDmg', 2);
-      try{ if(_cstArtS1){ const _cstArtCl = _cstArtCleanseOne(t); log('✨ [' + a.name + '] 命星:七彩虹光!溢出護盾 +20%' + (_cstArtCl ? ',並解除 [' + t.name + '] 1 個不利狀態!' : '!')); } }catch(_eCstArtS1b){}
+      try{ if(_cstArtS1){ const _cstArtCl = _cstArtCleanseOne(t); log('✨ [' + a.name + '] 命星:七彩虹光!' + (_cstArtCl ? '解除 [' + t.name + '] 1 個不利狀態!' : '')); } }catch(_eCstArtS1b){}
+      try{ if(_cstArtS1L) window._cstClS1Spread(a, t, _healAmt); }catch(_eCstArtS1g){}   // ★ v5.389.0 七彩虹光:其餘友方各恢復 40%
       renderCard(t);
       try{ bannerFX(a,'🎨 七彩天使神光','#ffd86b',900); }catch(_){}
       endAction(a,cost);
@@ -46076,7 +46195,8 @@ function execSkill(a, sk, cost, stype){
       try{ playSkillFX('神魔滅殺',a,[t]); }catch(_){}
       try{ bannerFX(a,'🗡️ 神魔滅殺','#b048ff',900); }catch(_){}
       beginBatchTotals();
-      doDmg(t, _dmg, { actor:a, isSkill:true, mustHit:true, ignoreBuffs:true });
+      const _ilyS1O = { actor:a, isSkill:true, mustHit:true, ignoreBuffs:true };
+      doDmg(t, (function(_a, _t, _d0, _o){ try{ if(!window._cstHasN(_a,'s1','魔劍姬‧伊莉雅')) return _d0; var _nb = Math.min(3, ((_t && _t.buffs) || []).filter(function(b){ return b && !b._protected && !b._noStripe; }).length); if(!_nb) return _d0; var _k = window._cstCap.capHit(_o, 'dmg', _nb * 0.20); if(!(_k > 0)) return _d0; log('✨ [' + _a.name + '] 命星:滅神斷光!目標身上 ' + _nb + ' 個有利狀態化為劍氣,傷害 +' + Math.round(_k * 100) + '%!'); return Math.max(1, Math.floor(_d0 * (1 + _k))); }catch(_){ return _d0; } })(a, t, _dmg, _ilyS1O), _ilyS1O);   // ★ v5.389.0 命星 s1 滅神斷光:每個有利 +20%(最多 +60%)
       try{ window._iliyaClearDouki(a); }catch(_eIlClr){}   // ★ v5.316.0 神魔滅殺造成傷害後清除魔皇鬥氣累積的攻擊提升
       _pSetTimeout(() => {
         if(t && t.curHp > 0){
@@ -46095,7 +46215,7 @@ function execSkill(a, sk, cost, stype){
           try{ addBuff(t, '_buffSeal', 2); if(typeof bannerFX==='function') bannerFX(t,'🚫 禁有利 2回合','#aa66ff',700); }catch(_){}
           // ③ 承傷 +50% 2 回合(dmgVuln — doDmg 內既有 hook 自動 +50%)
           try{ addStatus(t, 'dmgVuln', 2); }catch(_){}
-          try{ if(window._cstHasN(a,'s1','魔劍姬‧伊莉雅') && (a._cstIlyS1N || 0) >= 2){ const _cstIlyV = (t.status || []).find(function(s){ return s && s.type === 'dmgVuln'; }); if(_cstIlyV){ _cstIlyV._cstIlyVuln = 1; log('✨ [' + a.name + '] 命星:滅神斷光!消除 ' + a._cstIlyS1N + ' 個有利狀態,[' + t.name + '] 易傷提升為承傷 +35%!'); } } }catch(_eCstIlyS1){}
+          try{ if(window._cstHasN(a,'s1','魔劍姬‧伊莉雅') && (a._cstIlyS1N || 0) >= 1){ const _cstIlyV = (t.status || []).find(function(s){ return s && s.type === 'dmgVuln'; }); if(_cstIlyV){ _cstIlyV._cstIlyVuln = 1; log('✨ [' + a.name + '] 命星:滅神斷光!消除 ' + a._cstIlyS1N + ' 個有利狀態,[' + t.name + '] 易傷提升為承傷 +35%!'); } } }catch(_eCstIlyS1){}
           try{ renderCard(t); }catch(_){}
         }
         setTimeout(endBatchTotals, 50);
@@ -46157,7 +46277,7 @@ function execSkill(a, sk, cost, stype){
     setPending('enemy', t => {
       if(!t || t.curHp <= 0){ endAction(a, cost); return; }
       let _s1Mult = 3.0 * (1 + (_activeSkLv||0) * 0.05);
-      try{ if(window._cstHasN(a,'s1','主神奧汀')){ _s1Mult = _s1Mult * 1.2; log('✨ [' + a.name + '] 命星:永恆神槍!攻擊倍率 300%→360%!'); } }catch(_eCstOdnS1m){}   // ✨ 命星 奧汀 s1:×(360/300) 保留等級成長
+      try{ if(window._cstHasN(a,'s1','主神奧汀')){ _s1Mult = _s1Mult * (4 / 3); log('✨ [' + a.name + '] 命星:永恆神槍!攻擊倍率 300%→400%!');   /* ★ v5.389.0 UR 命星強化 */ } }catch(_eCstOdnS1m){}   // ✨ 命星 奧汀 s1:×(360/300) 保留等級成長
       // ★ v3.15.60 — 目標最大 HP 加成:一般 10%,對 BOSS 為 5%(老師裁示;_zeusIsTrueBoss 權威清單)
       // ★ v5.80.0(老師裁定③)— 舊「對 BOSS 另外減半」分支取消,統一由新的 HP% 上限(當前HP 5%)收束;不取消會變 2.5% 過弱。舊行備查於下。
           //   舊行:const _s1HpPct = (typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(t)) ? 0.05 : 0.10;
@@ -46184,7 +46304,7 @@ function execSkill(a, sk, cost, stype){
           if(_ep){ _ep.dur = Math.max(_ep.dur, 1); _ep._strong = true; }
           else { if(!t.status) t.status = []; t.status.push({ type:'para', dur:1, _strong:true }); }
           try{ log(`🔱 [${t.name}] 被永恆之槍貫穿,強力麻痺 1 回合!`); }catch(_){}
-          try{ if(window._cstHasN(a,'s1','主神奧汀') && a._cstOdnGuardR === G.round){ addStatus(t,'breakDef',1); log('✨ [' + a.name + '] 命星:永恆神槍!本回合曾代替隊友承傷,[' + t.name + '] 破防 1 回合!'); } }catch(_eCstOdnS1d){}
+          try{ if(window._cstHasN(a,'s1','主神奧汀') && a._cstOdnGuardR === G.round){ addStatus(t,'breakDef',1); if(!((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(t)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(t)))){ try{ addStatus(t,'_traitSeal',1); }catch(_){} } log('✨ [' + a.name + '] 命星:永恆神槍!本回合曾代替隊友承傷,[' + t.name + '] 破防' + ((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(t)) ? '' : '＋封印天賦') + ' 1 回合!'); } }catch(_eCstOdnS1d){}
           try{ bannerFX(t,'⚡ 強力麻痺!','#ffe066',900); }catch(_){}
           try{ renderCard(t); }catch(_){}
         }
@@ -46241,13 +46361,14 @@ function execSkill(a, sk, cost, stype){
       try{ playSkillFX('破盾神槍',a,[t]); }catch(_){}
       try{ bannerFX(a,'🤖 破盾神槍','#9fd6ff',900); }catch(_){}
       const _ubRm = _ur4StripOneGood(t);
-      try{ if(window._cstHasN(a,'s1','究極神兵')){ const _cstUbRm2 = _ur4StripOneGood(t); if(_cstUbRm2){ log('✨ [' + a.name + '] 命星:貫甲神槍!再擊碎 [' + t.name + '] 的「' + _cstUbRm2 + '」!'); try{ renderCard(t); }catch(_){} } } }catch(_eCstUbS1){}   // ✨ 命星 究極神兵 s1:消除 1→2 個(護盾優先)
+      const _cstUbN = window._cstUbS1Strip(a, t, _ubRm ? 1 : 0);   // ★ v5.389.0 命星 s1 貫甲神槍:擊碎全部有利(BOSS 最多 2 個),回傳總消除數   // ✨ 命星 究極神兵 s1:消除 1→2 個(護盾優先)
       if(_ubRm){
         try{ log(`💥 [${t.name}] 的「${_ubRm}」被破盾神槍擊碎!`); }catch(_){}
         try{ bannerFX(t,'💥 破盾!','#9fd6ff',700); renderCard(t); }catch(_){}
       }
       beginBatchTotals();
-      doDmg(t, _ubD1, { actor:a, isSkill:true, mustHit:true, ignoreEvasion:true });
+      const _ubO1 = { actor:a, isSkill:true, mustHit:true, ignoreEvasion:true };
+      doDmg(t, window._cstUbS1Boost(a, _ubD1, _cstUbN, _ubO1), _ubO1);
       try{ if(a._cstUbCh) window._cstUbT2Fire(a, t); }catch(_eCstUbT2f){}   // ✨ v5.273.0 命星 ⚙ 究極神兵 t2 裝甲充能追加一擊(只認命星寫入的 _cstUbCh)
       try{ renderCard(t); }catch(_){}
       _pSetTimeout(() => {
@@ -46329,11 +46450,11 @@ function execSkill(a, sk, cost, stype){
       // 🔧 v5.259.0 舊 bug:弦月先乘 (1+等級×5%),doDmg(isSkill) 又乘 _activeSkLvMult ⇒ 等級算兩次;只放 Lv1 基準(命星 540% 那行同修)。(原:spv(a) * 4.5 * (1 + (_activeSkLv||0) * 0.05))
       let _tkD1 = Math.max(1, Math.floor(spv(a) * 4.5));   // 特技 450%(等級由 doDmg 乘)
       log(`🌙 [${a.name}] 弦月 → [${t.name}]!`);
-      try{ if(window._cstHasN(a,'s1','月讀大神')){ _tkD1 = Math.max(1, Math.floor(spv(a) * 5.4)); log('✨ [' + a.name + '] 命星:弦月映刃!弦月倍率提升為特技 540%'); if((t.status || []).some(function(s){ return s && s.type === 'charm'; }) && typeof G !== 'undefined' && G && a._cstTkS1R !== G.round){ a._cstTkS1R = G.round; const _cstTkS1E = window._cstCap.gainEnergy(a.side, 1); if(_cstTkS1E > 0) log('✨ [' + a.name + '] 命星:弦月映刃!目標已被魅惑,月讀恢復 ' + _cstTkS1E + ' 能量(每回合 1 次)'); } } }catch(_eCstTkS1){}   // ✨ 命星 月讀大神 s1   // 🔧 v5.259.0 舊 bug:命星 540% 也只放 Lv1 基準,等級交給 doDmg 乘一次(原:spv(a) * 5.4 * (1 + (_activeSkLv||0) * 0.05))
+      try{ if(window._cstHasN(a,'s1','月讀大神')){ _tkD1 = Math.max(1, Math.floor(spv(a) * 6.0)); log('✨ [' + a.name + '] 命星:弦月映刃!弦月倍率提升為特技 600%'); if((t.status || []).some(function(s){ return s && s.type === 'charm'; }) && typeof G !== 'undefined' && G && a._cstTkS1R !== G.round){ a._cstTkS1R = G.round; const _cstTkS1E = window._cstCap.gainEnergy(a.side, 1); if(_cstTkS1E > 0) log('✨ [' + a.name + '] 命星:弦月映刃!目標已被魅惑,月讀恢復 ' + _cstTkS1E + ' 能量(每回合 1 次)'); } } }catch(_eCstTkS1){}   // ✨ 命星 月讀大神 s1   // 🔧 v5.259.0 舊 bug:命星 540% 也只放 Lv1 基準,等級交給 doDmg 乘一次(原:spv(a) * 5.4 * (1 + (_activeSkLv||0) * 0.05))
       try{ playSkillFX('弦月',a,[t]); }catch(_){}
       try{ bannerFX(a,'🌙 弦月','#b8c0ff',900); }catch(_){}
       beginBatchTotals();
-      doDmg(t, _tkD1, { actor:a, isSkill:true, mustHit:true, ignoreEvasion:true, elem:'dark' });
+      doDmg(t, _tkD1, Object.assign({ actor:a, isSkill:true, mustHit:true, ignoreEvasion:true, elem:'dark' }, window._cstTkS1Crit(a, t)));   // ★ v5.389.0 命星 s1:魅惑中必定暴擊
       _pSetTimeout(() => {
         if(t && t.curHp > 0 && _ur4PushStrong(t, 'charm', 2, a)){
           try{ log(`💕 [${t.name}] 被弦月之光迷惑,陷入強力魅惑 2 回合!`); bannerFX(t,'💕 強力魅惑!','#ff88cc',800); renderCard(t); }catch(_){}
@@ -58058,7 +58179,7 @@ function startTurn(){
     try{
       const _odTraitLv = (typeof _getTraitLv === 'function') ? (_getTraitLv('主神奧汀') || 0) : 0;
       let _budget = Math.min(4, 1 + _odTraitLv);  // Lv0=1 ... Lv3+=4
-      try{ if(window._cstHasN(next,'t1','主神奧汀')){ const _cstOdnB0 = _budget; _budget = Math.min(4, _budget + 1); if(_budget > _cstOdnB0) log('✨ [' + next.name + '] 命星:雙鴉注視!本回合注視人數 +1(' + _budget + ' 人)'); } }catch(_eCstOdnT1){}   // ✨ 命星 奧汀 t1:注視 1→2 人(次數 +1,隊伍最多 4 人)
+      try{ if(window._cstHasN(next,'t1','主神奧汀')){ _budget = 99; log('✨ [' + next.name + '] 命星:雙鴉注視!雙鴉巡天,本回合全體友方都被注視!'); } }catch(_eCstOdnT1b){}   // ★ v5.389.0 UR 命星強化:t1 點亮 ⇒ 全隊注視(每人仍 1 層)
       let _gazedAny = false;
       while(_budget > 0){
         const _live = (G[next.side] || []).filter(h => h && h.curHp > 0)
@@ -60784,6 +60905,14 @@ G.p1.concat(G.p2).forEach(h=>{
             });
           }
         }catch(_eCstAmT1b){}   // ✨ 命星 天照大神 t1:月讀在隊 ⇒ 衛月同步回復
+        // ★ v5.389.0 UR 命星強化 t1 朝陽照衛:每回合為全體友方各解除 1 個普通不利狀態
+        try{
+          if(_cstAmT1){
+            var _cstAmCl = 0;
+            (G[_uh.side] || []).forEach(function(_al){ try{ if(_al && _al.curHp > 0 && _cstUrClear1(_al, false)){ _cstAmCl++; renderCard(_al); } }catch(_){} });
+            if(_cstAmCl) log('✨ [' + _uh.name + '] 命星:朝陽照衛!晨光驅散陰霾,解除 ' + _cstAmCl + ' 名友方各 1 個不利狀態!');
+          }
+        }catch(_eCstAmT1c){}
         if(_amCnt > 0){
           try{ log(`☀️ [天照大神] 日出!朝陽照耀全隊,${_amCnt} 名友方恢復 HP!`); }catch(_){}
           try{ bannerFX(_uh, '☀️ 日出!', '#ffd27a', 800); }catch(_){}
@@ -64748,10 +64877,12 @@ function aiUseSkill(a,sk,cost,pref){
       const _hpB = _tC.curHp;
       doHeal(_tC, _healC1, {actor:a, isHeal:true});
       const _ov = Math.max(0, _healC1 - Math.max(0, _tC.curHp - _hpB));
-      if(_ov > 0) _clairAddShield(_tC, _cstArtS1A ? Math.floor(_ov * 1.2) : _ov, a);
+      let _cstArtS1LA = false; try{ _cstArtS1LA = window._cstHasN(a,'s1','藝天使．克雷爾'); }catch(_){}   // ★ v5.389.0 命星 s1(AI)
+      if(_ov > 0) _clairAddShield(_tC, _cstArtS1LA ? Math.floor(_ov * 1.4) : _ov, a);
       _clairAddStrongBuff(_tC, 'hpRegen', 2); _tC._hpRegenAmt = Math.max(12, Math.floor(spv(a) * 0.5));
       _clairAddStrongBuff(_tC, 'halfDmg', 2);
-      try{ if(_cstArtS1A){ const _cstArtClA = _cstArtCleanseOne(_tC); log('✨ [' + a.name + '] 命星:七彩虹光!溢出護盾 +20%' + (_cstArtClA ? ',並解除 [' + _tC.name + '] 1 個不利狀態!' : '!')); } }catch(_eCstArtS1Ab){}
+      try{ if(_cstArtS1A){ const _cstArtClA = _cstArtCleanseOne(_tC); log('✨ [' + a.name + '] 命星:七彩虹光!' + (_cstArtClA ? '解除 [' + _tC.name + '] 1 個不利狀態!' : '')); } }catch(_eCstArtS1Ab){}
+      try{ if(_cstArtS1LA) window._cstClS1Spread(a, _tC, _healC1); }catch(_eCstArtS1gA){}   // ★ v5.389.0 七彩虹光(AI)
     }
   }
   else if(n==='聖潔彩繪'){
@@ -64780,7 +64911,8 @@ function aiUseSkill(a,sk,cost,pref){
       const _dmgI = Math.max(1, Math.floor(atkv(a) * 5.0 * (1 + _lvI1 * 0.05)));
       log(`🗡️ [${a.name}] 神魔滅殺 → [${_t.name}]!`);
       try{ if(typeof playSkillFX==='function') playSkillFX('神魔滅殺',a,[_t]); }catch(_){}
-      doDmg(_t, _dmgI, { actor:a, isSkill:true, mustHit:true, ignoreBuffs:true });
+      const _ilyS1OA = { actor:a, isSkill:true, mustHit:true, ignoreBuffs:true };
+      doDmg(_t, (function(_a, _t, _d0, _o){ try{ if(!window._cstHasN(_a,'s1','魔劍姬‧伊莉雅')) return _d0; var _nb = Math.min(3, ((_t && _t.buffs) || []).filter(function(b){ return b && !b._protected && !b._noStripe; }).length); if(!_nb) return _d0; var _k = window._cstCap.capHit(_o, 'dmg', _nb * 0.20); if(!(_k > 0)) return _d0; log('✨ [' + _a.name + '] 命星:滅神斷光!目標身上 ' + _nb + ' 個有利狀態化為劍氣,傷害 +' + Math.round(_k * 100) + '%!'); return Math.max(1, Math.floor(_d0 * (1 + _k))); }catch(_){ return _d0; } })(a, _t, _dmgI, _ilyS1OA), _ilyS1OA);   // ★ v5.389.0 命星 s1(AI)
       try{ window._iliyaClearDouki(a); }catch(_eIlClrA){}   // ★ v5.316.0 神魔滅殺造成傷害後清除魔皇鬥氣累積的攻擊提升(AI 路徑同步)
       if(_t.curHp > 0){
         try{
@@ -64790,7 +64922,7 @@ function aiUseSkill(a,sk,cost,pref){
         }catch(_){}
         try{ addBuff(_t, '_buffSeal', 2); }catch(_){}
         try{ addStatus(_t, 'dmgVuln', 2); }catch(_){}
-        try{ if(window._cstHasN(a,'s1','魔劍姬‧伊莉雅') && (a._cstIlyS1N || 0) >= 2){ const _cstIlyVA = (_t.status || []).find(function(s){ return s && s.type === 'dmgVuln'; }); if(_cstIlyVA){ _cstIlyVA._cstIlyVuln = 1; log('✨ [' + a.name + '] 命星:滅神斷光!消除 ' + a._cstIlyS1N + ' 個有利狀態,[' + _t.name + '] 易傷提升為承傷 +35%!'); } } }catch(_eCstIlyS1A){}
+        try{ if(window._cstHasN(a,'s1','魔劍姬‧伊莉雅') && (a._cstIlyS1N || 0) >= 1){ const _cstIlyVA = (_t.status || []).find(function(s){ return s && s.type === 'dmgVuln'; }); if(_cstIlyVA){ _cstIlyVA._cstIlyVuln = 1; log('✨ [' + a.name + '] 命星:滅神斷光!消除 ' + a._cstIlyS1N + ' 個有利狀態,[' + _t.name + '] 易傷提升為承傷 +35%!'); } } }catch(_eCstIlyS1A){}
         try{ if(typeof renderCard==='function') renderCard(_t); }catch(_){}
       }
     }
@@ -64807,7 +64939,7 @@ function aiUseSkill(a,sk,cost,pref){
         //   舊行:const _s1HpPctO = (typeof _zeusIsTrueBoss === 'function' && _zeusIsTrueBoss(_t)) ? 0.05 : 0.10;
         const _s1HpPctO = 0.10;
       const _s1HpLvO = (typeof _heroLevels !== 'undefined' && _lxHeroLv(a)) ? _lxHeroLv(a) : 1;
-      let _cstOdnMA = 1; try{ if(window._cstHasN(a,'s1','主神奧汀')){ _cstOdnMA = 1.2; log('✨ [' + a.name + '] 命星:永恆神槍!攻擊倍率 300%→360%!'); } }catch(_eCstOdnS1mA){ _cstOdnMA = 1; }   // ✨ 命星 奧汀 s1(AI)
+      let _cstOdnMA = 1; try{ if(window._cstHasN(a,'s1','主神奧汀')){ _cstOdnMA = 4 / 3; log('✨ [' + a.name + '] 命星:永恆神槍!攻擊倍率 300%→400%!');   /* ★ v5.389.0 */ } }catch(_eCstOdnS1mA){ _cstOdnMA = 1; }   // ✨ 命星 奧汀 s1(AI)
       const _dmgO = Math.max(1, Math.floor(atkv(a) * 3.0 * (1 + _lvO1 * 0.05) * _cstOdnMA) + Math.min(Math.floor((_t.hp||0) * _s1HpPctO), window._hpPctCap(_t, _s1HpLvO * 20)));
       log(`🔱 [${a.name}] 岡格尼爾的制裁 → [${_t.name}]!`);
       try{ if(typeof playSkillFX==='function') playSkillFX('岡格尼爾的制裁',a,[_t]); }catch(_){}
@@ -64819,7 +64951,7 @@ function aiUseSkill(a,sk,cost,pref){
         if(_ep){ _ep.dur = Math.max(_ep.dur, 1); _ep._strong = true; }
         else { if(!_t.status) _t.status = []; _t.status.push({ type:'para', dur:1, _strong:true }); }
         try{ bannerFX(_t,'⚡ 強力麻痺!','#ffe066',900); }catch(_){}
-        try{ if(window._cstHasN(a,'s1','主神奧汀') && a._cstOdnGuardR === G.round){ addStatus(_t,'breakDef',1); log('✨ [' + a.name + '] 命星:永恆神槍!本回合曾代替隊友承傷,[' + _t.name + '] 破防 1 回合!'); } }catch(_eCstOdnS1dA){}
+        try{ if(window._cstHasN(a,'s1','主神奧汀') && a._cstOdnGuardR === G.round){ addStatus(_t,'breakDef',1); if(!((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(_t)) || (typeof _isWorldBossTarget==='function' && _isWorldBossTarget(_t)))){ try{ addStatus(_t,'_traitSeal',1); }catch(_){} } log('✨ [' + a.name + '] 命星:永恆神槍!本回合曾代替隊友承傷,[' + _t.name + '] 破防' + ((typeof _zeusIsTrueBoss==='function' && _zeusIsTrueBoss(_t)) ? '' : '＋封印天賦') + ' 1 回合!'); } }catch(_eCstOdnS1dA){}
       }
     }
   }
@@ -64854,9 +64986,10 @@ function aiUseSkill(a,sk,cost,pref){
         log(`🤖 [${a.name}] 破盾神槍 → [${_t.name}]!`);
         try{ if(typeof playSkillFX==='function') playSkillFX('破盾神槍',a,[_t]); }catch(_){}
         const _rm = _ur4StripOneGood(_t);
-        try{ if(window._cstHasN(a,'s1','究極神兵')){ const _cstUbRm2A = _ur4StripOneGood(_t); if(_cstUbRm2A) log('✨ [' + a.name + '] 命星:貫甲神槍!再擊碎 [' + _t.name + '] 的「' + _cstUbRm2A + '」!'); } }catch(_eCstUbS1A){}   // ✨ 命星 究極神兵 s1(AI)
+        const _cstUbNA = window._cstUbS1Strip(a, _t, _rm ? 1 : 0);   // ★ v5.389.0 命星 s1(AI)   // ✨ 命星 究極神兵 s1(AI)
         if(_rm){ try{ log(`💥 [${_t.name}] 的「${_rm}」被破盾神槍擊碎!`); bannerFX(_t,'💥 破盾!','#9fd6ff',700); }catch(_){} }
-        doDmg(_t, Math.max(1, Math.floor(atkv(a) * 5.0 * _u4Mul)), { actor:a, isSkill:true, mustHit:true, ignoreEvasion:true });
+        const _ubO1A = { actor:a, isSkill:true, mustHit:true, ignoreEvasion:true };
+        doDmg(_t, window._cstUbS1Boost(a, Math.max(1, Math.floor(atkv(a) * 5.0 * _u4Mul)), _cstUbNA, _ubO1A), _ubO1A);
         try{ if(a._cstUbCh) window._cstUbT2Fire(a, _t); }catch(_eCstUbT2fA){}   // ✨ v5.273.0 命星 ⚙ 究極神兵 t2(AI)
         try{ renderCard(_t); }catch(_){}
       }
@@ -64896,8 +65029,8 @@ function aiUseSkill(a,sk,cost,pref){
     else if(n==='弦月'){
       if(_u4Top){
         log(`🌙 [${a.name}] 弦月 → [${_u4Top.name}]!`);
-        let _cstTkM = 4.5; try{ if(window._cstHasN(a,'s1','月讀大神')){ _cstTkM = 5.4; log('✨ [' + a.name + '] 命星:弦月映刃!弦月倍率提升為特技 540%'); if((_u4Top.status || []).some(function(s){ return s && s.type === 'charm'; }) && typeof G !== 'undefined' && G && a._cstTkS1R !== G.round){ a._cstTkS1R = G.round; const _cstTkS1EA = window._cstCap.gainEnergy(a.side, 1); if(_cstTkS1EA > 0) log('✨ [' + a.name + '] 命星:弦月映刃!目標已被魅惑,月讀恢復 ' + _cstTkS1EA + ' 能量(每回合 1 次)'); } } }catch(_eCstTkS1A){ _cstTkM = 4.5; }   // ✨ 命星 月讀大神 s1(AI)
-        doDmg(_u4Top, Math.max(1, Math.floor(spv(a) * _cstTkM * _u4Mul)), { actor:a, isSkill:true, mustHit:true, ignoreEvasion:true, elem:'dark' });
+        let _cstTkM = 4.5; try{ if(window._cstHasN(a,'s1','月讀大神')){ _cstTkM = 6.0; log('✨ [' + a.name + '] 命星:弦月映刃!弦月倍率提升為特技 600%'); if((_u4Top.status || []).some(function(s){ return s && s.type === 'charm'; }) && typeof G !== 'undefined' && G && a._cstTkS1R !== G.round){ a._cstTkS1R = G.round; const _cstTkS1EA = window._cstCap.gainEnergy(a.side, 1); if(_cstTkS1EA > 0) log('✨ [' + a.name + '] 命星:弦月映刃!目標已被魅惑,月讀恢復 ' + _cstTkS1EA + ' 能量(每回合 1 次)'); } } }catch(_eCstTkS1A){ _cstTkM = 4.5; }   // ✨ 命星 月讀大神 s1(AI)
+        doDmg(_u4Top, Math.max(1, Math.floor(spv(a) * _cstTkM * _u4Mul)), Object.assign({ actor:a, isSkill:true, mustHit:true, ignoreEvasion:true, elem:'dark' }, window._cstTkS1Crit(a, _u4Top)));   // ★ v5.389.0 命星 s1(AI)
         if(_u4Top.curHp > 0) _ur4PushStrong(_u4Top, 'charm', 2, a);
         try{ renderCard(_u4Top); }catch(_){}
       }
@@ -69355,9 +69488,12 @@ function checkWin(){
   // ════════════════════════════════════════════════════════════════
   try{
     const _odinR = (G && G.p1) ? G.p1.find(h => h && h.name === '主神奧汀') : null;
-    if(_odinR && !_odinR._odinRagnarokUsed
+    // ★ v5.389.0 神格覺醒「眾神之父」:6 顆命星全亮 ⇒ 被動版諸神的黃昏每場可觸發第 2 次
+    let _odGod2 = false; try{ _odGod2 = !!(_odinR && _odinR._odinRagnarokUsed && !_odinR._cstOdGod2 && window._cstGodOn(_odinR, '主神奧汀')); }catch(_){}
+    if(_odinR && (!_odinR._odinRagnarokUsed || _odGod2)
        && G.p1.every(h => !h || h.curHp <= 0)
        && G.p2 && G.p2.some(h => h && h.curHp > 0)){
+      if(_odGod2){ _odinR._cstOdGod2 = true; try{ log('🌟 [主神奧汀] 神格覺醒「眾神之父」!諸神的黃昏第二次降臨!'); }catch(_){} }
       _odinR._odinRagnarokUsed = true;
       const _sumO = G.p1.reduce((s, x) => s + (x ? (x.hp || 0) : 0), 0);
       const _ragO = Math.max(1, Math.floor(_sumO * 6));   // ★ v3.15.60 老師調整:×10 → ×6

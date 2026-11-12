@@ -33067,7 +33067,10 @@ window._ticketNewTid = function(itemId){
   var _u = '';
   try{ _u = String(window._gUserId || 'anon').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6); }catch(_){ _u = 'anon'; }
   var _r = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return _u + '-' + window._ticketShortCode(itemId) + '-' + Date.now().toString(36).toUpperCase() + '-' + _r;
+  // ★ v5.389.0 答對題數獎章發的 UR 卷用專屬券碼(例 M2000URP)⇒ 編號一眼分得出,不和老師發的 GURP 混淆
+  var _code = window._ticketShortCode(itemId);
+  try{ if(window._ticketTidTag && /^[A-Z0-9]{2,10}$/.test(window._ticketTidTag)) _code = window._ticketTidTag; }catch(_){}
+  return _u + '-' + _code + '-' + Date.now().toString(36).toUpperCase() + '-' + _r;
 };
 window._ticketEnsure = function(){
   var d = window._ticketData;
@@ -76660,6 +76663,11 @@ const MEDAL_DEFS = [
   { id:'perfect_mini',      icon:'⭐', name:'完美出擊',       desc:'同一場小怪戰中全部答對',         cat:'答題' },
   { id:'quiz_ace',          icon:'🏆', name:'答題王',         desc:'單場BOSS戰答對10題以上',         cat:'答題' },
   { id:'hard_100',          icon:'💪', name:'好問精神',       desc:'累積選擇「我很會」難度答題100次', cat:'答題' },
+  // ★ v5.389.0(2026-11-12・老師「設計獎章可獲得UR自選」→ 22:46 更正「累積答對2000、4000、6000題,各可以得到1張UR自選+10水晶+10萬幣。此獎章很重要,要發出提醒在新增獎章挑戰中」)
+  //   題數 = minigameScores/{uid}.quizUC.n(大對抗＋小遊戲＋荒島,同一題只算一次);獎勵見 window._MEDAL_EXTRA_REWARD(UR 卷經雲端領取記號發放)
+  { id:'quiz_uc_2000',      icon:'🧠', name:'兩千題智者',     desc:'不重複題目累積答對 2000 題(不用連續;故事冒險、知識王、龍王戰、小遊戲、荒島都算)', cute:'答對 2000 題不一樣的題目!(不用一次答完,知識王、小遊戲和荒島的也算喔)', cat:'答題' },
+  { id:'quiz_uc_4000',      icon:'📚', name:'四千題博士',     desc:'不重複題目累積答對 4000 題(不用連續;故事冒險、知識王、龍王戰、小遊戲、荒島都算)', cute:'答對 4000 題不一樣的題目!(慢慢累積就好,知識王、小遊戲和荒島的也算喔)', cat:'答題' },
+  { id:'quiz_uc_6000',      icon:'🌌', name:'六千題傳奇',     desc:'不重複題目累積答對 6000 題(不用連續;故事冒險、知識王、龍王戰、小遊戲、荒島都算)', cute:'答對 6000 題不一樣的題目!(超級厲害的挑戰,知識王、小遊戲和荒島的也算喔)', cat:'答題' },
   // ── 戰鬥成就 ──
   { id:'defeat_chest',      icon:'📦', name:'寶箱獵人',       desc:'第一次打倒寶箱怪',              cat:'戰鬥' },
   { id:'defeat_devil',      icon:'😈', name:'惡魔剋星',       desc:'第一次打倒小惡魔',              cat:'戰鬥' },
@@ -77350,6 +77358,259 @@ const _MEDAL_TOP_TIER = new Set([
   'mg_all_5star',
 ]);
 
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.389.0(2026-11-12・老師「設計獎章可獲得UR自選」→ 22:46 更正「累積答對2000、4000、6000題,各可以得到1張UR自選+10水晶+10萬幣」、22:47「是累積答對不重複的題目」)
+//   獎章額外獎勵表(一般 🔮/💰 照 _unlockMedal 原規則另外發)。
+//   UR 卷「不」在 _unlockMedal 裡發:由 window._quizUcCheck 先在雲端 minigameScores/{uid}.quizUC.rw[獎章id]
+//   用 transaction 記號(題數夠、還沒領才成功)⇒ 換平板/兩台同時/本機紀錄被清,都只發一次。
+//   發卷同時寫 _ticketExtraGrants {item:'summon_ticket_ur_pick', via:'medal:<id>'} ⇒ UR 對帳稽核算進合法額度。
+// ════════════════════════════════════════════════════════════════════
+//   crystals/coins:這幾枚的 🔮/💰 改用自己的數量(老師 22:46:各 10 水晶＋10 萬幣),其他獎章照舊 1/2000、頂級 5/10000。
+window._MEDAL_EXTRA_REWARD = {
+  quiz_uc_2000: { item: 'summon_ticket_ur_pick', n: 1, need: 2000, crystals: 10, coins: 100000, label: '👑 UR 自選召喚卷 ×1' },
+  quiz_uc_4000: { item: 'summon_ticket_ur_pick', n: 1, need: 4000, crystals: 10, coins: 100000, label: '👑 UR 自選召喚卷 ×1' },
+  quiz_uc_6000: { item: 'summon_ticket_ur_pick', n: 1, need: 6000, crystals: 10, coins: 100000, label: '👑 UR 自選召喚卷 ×1' }
+};
+// 各獎章的 🔮/💰 數量(單一出口:解鎖發獎、獎章頁、補發掃描都讀這裡)
+window._medalRewardAmt = function(id){
+  const x = window._MEDAL_EXTRA_REWARD && window._MEDAL_EXTRA_REWARD[id];
+  if(x && typeof x.crystals === 'number') return { crystals: x.crystals, coins: x.coins || 0, top: false };
+  const top = (typeof _MEDAL_TOP_TIER !== 'undefined') && _MEDAL_TOP_TIER.has(id);
+  return { crystals: top ? 5 : 1, coins: top ? 10000 : 2000, top: top };
+};
+// ════════════════════════════════════════════════════════════════════
+// ★ v5.389.0(老師 22:55「這三個獎章新增『我的答題數』開啟題庫清單,用分數顯示玩家在各主題各答對了多少題」)
+//   window._quizUcOpenDetail():讀雲端 quizUC.s(答對過的題鍵),依題鍵分到各題庫/主題,顯示「答對 n / 題庫總數」。
+//   題鍵 → 題庫:'a'+數字 id → ADV_QUIZ_DB(依科目)或 TAIWAN_QUIZ_DB(台灣關);'a'+考試複習 id(如 H6AS1-xxxx)→ 該冊(冊別+科目);
+//   'm' 開頭 → 小遊戲;'i' 開頭 → 荒島;其他('a#'無 id 的互動題等)→ 其他。
+//   分母:冒險/台灣關讀 ADV_QUIZ_DB/TAIWAN_QUIZ_DB 實際題數;考試複習讀 exam/exam_index.js(三個版本合計);
+//   小遊戲/荒島題庫不在大對抗裡 ⇒ 用 2026-11-12 從 minigame_db.js/minigame_island_db.js 數出的約略題數(_UC_MG_TOTAL/_UC_ISL_TOTAL)。
+// ════════════════════════════════════════════════════════════════════
+const _UC_MG_TOTAL = 1041;    // 小遊戲:各關題目＋分類/配對項目(約略)
+const _UC_ISL_TOTAL = 717;    // 荒島:知識題庫 ISL_DB.QUIZ(約略)
+let _ucAdvMap = null;          // id → { g:分組, t:主題 }
+function _ucBuildAdvMap(){
+  if(_ucAdvMap) return _ucAdvMap;
+  const m = {}, tot = {};
+  try{ (typeof ADV_QUIZ_DB !== 'undefined' ? ADV_QUIZ_DB : []).forEach(function(q){ if(q && q.id != null){ const t = String(q.subject || '其他'); m[String(q.id)] = { g: 'adv', t: t }; tot['adv|' + t] = (tot['adv|' + t] || 0) + 1; } }); }catch(_){}
+  try{ (typeof TAIWAN_QUIZ_DB !== 'undefined' ? TAIWAN_QUIZ_DB : []).forEach(function(q){ if(q && q.id != null){ m[String(q.id)] = { g: 'tw', t: '台灣關' }; tot['tw|台灣關'] = (tot['tw|台灣關'] || 0) + 1; } }); }catch(_){}
+  _ucAdvMap = { m: m, tot: tot };
+  return _ucAdvMap;
+}
+function _ucExamBook(id){
+  // 例 H6AS1-e11485:版本 H、6A=六上、S=自然(O=社會)
+  const mm = /^[NHK]([3-6])([AB])([SO])\d+-/.exec(id);
+  if(!mm) return '';
+  const g = ['', '', '', '三', '四', '五', '六'][+mm[1]];
+  return g + (mm[2] === 'A' ? '上' : '下') + (mm[3] === 'S' ? '自然' : '社會');
+}
+function _ucLoadExamIndex(){
+  return new Promise(function(res){
+    try{
+      if(window.EXAM_INDEX && window.EXAM_INDEX.books) return res(window.EXAM_INDEX);
+      const sc = document.createElement('script');
+      sc.src = 'exam/exam_index.js?t=' + Date.now();
+      sc.onload = function(){ res(window.EXAM_INDEX || null); };
+      sc.onerror = function(){ res(null); };
+      document.head.appendChild(sc);
+      setTimeout(function(){ res(window.EXAM_INDEX || null); }, 6000);
+    }catch(_){ res(null); }
+  });
+}
+// ★ v5.389.0 共用:題鍵串 → 各題庫/主題「答對 n / 總數」的 HTML(玩家「📊 我的答題數」與 GM 查詢共用)
+window._quizUcBreakdownHtml = async function(keyStr, cute){
+  const u = { s: String(keyStr || '') };
+  const A = _ucBuildAdvMap();
+  const exIdx = await _ucLoadExamIndex();
+  const exTot = {};
+  try{
+    if(exIdx && exIdx.books) Object.keys(exIdx.books).forEach(function(b){
+      let s = 0; const us = exIdx.books[b].units || {};
+      Object.keys(us).forEach(function(v){ (us[v] || []).forEach(function(x){ s += (x && x.n) || 0; }); });
+      exTot[b] = s;
+    });
+  }catch(_){}
+  const cnt = {};   // 'grp|主題' → n
+  const add = function(k){ cnt[k] = (cnt[k] || 0) + 1; };
+  (u.s ? u.s.split(',') : []).forEach(function(k){
+    if(!k) return;
+    const c0 = k.charAt(0), rest = k.slice(1);
+    if(c0 === 'm') return add('mg|小遊戲');
+    if(c0 === 'i') return add('isl|荒島求生');
+    if(c0 === 'a' && rest.charAt(0) !== '#'){
+      const hit = A.m[rest];
+      if(hit) return add(hit.g + '|' + hit.t);
+      const bk = _ucExamBook(rest);
+      if(bk) return add('exam|' + bk);
+    }
+    add('etc|' + (cute ? '其他題目' : '其他(互動題等)'));
+  });
+  const GROUPS = [
+    { g: 'adv',  icon: '🗺️', name: cute ? '冒險題庫(故事冒險、知識王、龍王戰)' : '冒險題庫(故事冒險／知識王／龍王戰)' },
+    { g: 'tw',   icon: '🏝️', name: cute ? '台灣關 BOSS 題' : '台灣關 BOSS 專屬題' },
+    { g: 'exam', icon: '📝', name: cute ? '考試複習(三個版本加起來)' : '考試複習(南一・翰林・康軒合計)' },
+    { g: 'mg',   icon: '🎮', name: '小遊戲' },
+    { g: 'isl',  icon: '🌴', name: '荒島求生' },
+    { g: 'etc',  icon: '❓', name: cute ? '其他' : '其他' }
+  ];
+  const totOf = function(g, t){
+    if(g === 'adv' || g === 'tw') return A.tot[g + '|' + t] || 0;
+    if(g === 'exam') return exTot[t] || 0;
+    if(g === 'mg') return _UC_MG_TOTAL;
+    if(g === 'isl') return _UC_ISL_TOTAL;
+    return 0;
+  };
+  const rowHtml = function(t, n, tot, approx){
+    const pct = tot ? Math.max(0, Math.min(100, Math.round(n * 100 / tot))) : 0;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:6px 4px;">'
+      + '<div style="flex:0 0 38%;font-size:16px;font-weight:800;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + t + '</div>'
+      + '<div style="flex:1;height:10px;border-radius:6px;background:rgba(255,255,255,0.12);overflow:hidden;">' + (tot ? '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#ff5e9c,#ffd966);"></div>' : '') + '</div>'
+      + '<div style="flex:0 0 auto;min-width:118px;text-align:right;font-size:17px;font-weight:900;color:#ffe066;">' + n + (tot ? ' <span style="color:#aaa;font-weight:700;font-size:14px;">/ ' + (approx ? (cute ? '約 ' : '約 ') : '') + tot.toLocaleString() + '</span>' : (cute ? ' 題' : ' 題')) + '</div>'
+      + '</div>';
+  };
+  // 冒險題庫:12 科順序固定,關卡專屬題接在後面;沒答對過的科目也列出來(分子 0)
+  const ADV_ORDER = ['國語文','英文','數學','社會','自然','美術','音樂','表演藝術','健康與體育','資訊科技','本土語','生活常識'];
+  let body = '';
+  GROUPS.forEach(function(G){
+    let topics = [];
+    if(G.g === 'adv'){
+      const all = Object.keys(A.tot).filter(function(k){ return k.indexOf('adv|') === 0; }).map(function(k){ return k.slice(4); });
+      topics = ADV_ORDER.filter(function(t){ return all.indexOf(t) >= 0; }).concat(all.filter(function(t){ return ADV_ORDER.indexOf(t) < 0; }));
+    } else if(G.g === 'exam'){
+      const bks = Object.keys(exTot);
+      Object.keys(cnt).forEach(function(k){ if(k.indexOf('exam|') === 0 && bks.indexOf(k.slice(5)) < 0) bks.push(k.slice(5)); });
+      const ord = function(b){ return ('三四五六'.indexOf(b.charAt(0)) * 10) + (b.charAt(1) === '上' ? 0 : 5) + (b.indexOf('社會') >= 0 ? 1 : 0); };
+      topics = bks.sort(function(x, y){ return ord(x) - ord(y); });
+    } else if(G.g === 'tw'){ topics = ['台灣關']; }
+    else if(G.g === 'mg'){ topics = ['小遊戲']; }
+    else if(G.g === 'isl'){ topics = ['荒島求生']; }
+    else { topics = Object.keys(cnt).filter(function(k){ return k.indexOf('etc|') === 0; }).map(function(k){ return k.slice(4); }); }
+    if(!topics.length) return;
+    let gN = 0, gT = 0, rows = '';
+    topics.forEach(function(t){
+      const n = cnt[G.g + '|' + t] || 0, tot = totOf(G.g, t);
+      gN += n; gT += tot;
+      rows += rowHtml(t, n, tot, G.g === 'mg' || G.g === 'isl');
+    });
+    body += '<div style="margin-top:14px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);">'
+      + '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,220,0,0.2);padding-bottom:6px;margin-bottom:4px;">'
+      + '<div style="font-size:19px;font-weight:900;color:#ffd86b;">' + G.icon + ' ' + G.name + '</div>'
+      + '<div style="font-size:16px;font-weight:900;color:#fff;white-space:nowrap;">' + gN + (gT ? ' / ' + gT.toLocaleString() : '') + '</div></div>'
+      + rows + '</div>';
+  });
+  return body;
+};
+window._quizUcOpenDetail = async function(){
+  try{ playSfx('sfx-sel', 0.6); }catch(_){}
+  const cute = (window._artStyle === 'cute');
+  const old = document.getElementById('_uc-detail-ov'); if(old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = '_uc-detail-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100500;display:flex;align-items:safe center;justify-content:center;background:rgba(0,0,0,0.75);padding:14px;box-sizing:border-box;';
+  ov.innerHTML = '<div id="_uc-detail-card" style="width:min(760px,96vw);max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;'
+    + 'background:linear-gradient(160deg,#241a3a,#1a1230);border:2px solid #ff5e9c;border-radius:18px;box-shadow:0 0 30px rgba(255,94,156,0.45);padding:18px 20px;color:#eee;">'
+    + '<div style="font-size:24px;font-weight:900;color:#ffe066;text-align:center;">📊 ' + (cute ? '我的答題數' : '我的答題數(不重複答對)') + '</div>'
+    + '<div style="text-align:center;color:#ccc;margin-top:10px;">' + (cute ? '讀取中,等一下下…' : '讀取雲端紀錄中…') + '</div></div>';
+  ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  const uidAtOpen = window._gUserId;
+  let u = null;
+  try{ if(uidAtOpen && window._quizAcc && typeof window._quizAcc.readUc === 'function') u = await window._quizAcc.readUc(); }catch(_){}
+  const card = document.getElementById('_uc-detail-card');
+  if(!card || window._gUserId !== uidAtOpen) return;
+  if(!u){
+    card.innerHTML = '<div style="font-size:22px;font-weight:900;color:#ffe066;text-align:center;">📊 我的答題數</div>'
+      + '<div style="text-align:center;color:#ffb3c7;margin:16px 0;">' + (uidAtOpen ? (cute ? '現在讀不到紀錄,等一下再試試看喔!' : '目前無法讀取雲端紀錄,請稍後再試。') : (cute ? '要先登入自己的帳號才看得到喔!' : '請先登入帳號。')) + '</div>'
+      + '<div style="text-align:center;"><button onclick="document.getElementById(\'_uc-detail-ov\').remove()" style="padding:10px 30px;font-size:17px;font-weight:900;border:none;border-radius:11px;background:linear-gradient(135deg,#ffd86b,#ffb347);color:#1a0c2e;cursor:pointer;font-family:inherit;">' + (cute ? '好' : '關閉') + '</button></div>';
+    return;
+  }
+  window._quizUcN = u.n;
+  const body = await window._quizUcBreakdownHtml(u.s, cute);
+  const X = window._MEDAL_EXTRA_REWARD || {};
+  const goals = Object.keys(X).map(function(mid){ const need = X[mid].need; const ok = u.n >= need; return '<span style="display:inline-block;margin:3px 4px;padding:3px 10px;border-radius:10px;font-size:14px;font-weight:900;'
+    + (ok ? 'background:rgba(120,220,120,0.2);color:#bff0bf;border:1px solid rgba(120,220,120,0.6);' : 'background:rgba(255,94,156,0.15);color:#ffd9ea;border:1px solid #ff5e9c;') + '">' + (ok ? '✅ ' : '🎯 ') + need + (cute ? ' 題' : '') + '</span>'; }).join('');
+  card.innerHTML = '<div style="font-size:24px;font-weight:900;color:#ffe066;text-align:center;">📊 ' + (cute ? '我的答題數' : '我的答題數(不重複答對)') + '</div>'
+    + '<div style="text-align:center;margin-top:6px;font-size:16px;color:#ddd;">' + (cute ? '答對過的不一樣題目,一共' : '不重複答對題數合計') + ' <span style="font-size:30px;font-weight:900;color:#ff8fbf;">' + u.n.toLocaleString() + '</span> ' + (cute ? '題!' : '題') + '</div>'
+    + '<div style="text-align:center;margin-top:4px;">' + goals + '</div>'
+    + '<div style="text-align:center;margin-top:6px;font-size:13px;color:#aaa;line-height:1.5;">' + (cute ? '同一題答對很多次只算 1 題;從 2026/11/12 這次更新開始記錄(那一週答對的也算)。小遊戲、荒島的題數是大約的數字。' : '同一題只計一次;自 2026/11/12 更新起記錄(含當週已答對)。小遊戲/荒島分母為約略題數。') + '</div>'
+    + '<div style="margin-top:10px;padding:8px 12px;border-radius:12px;background:rgba(255,216,107,0.12);border:1px solid rgba(255,216,107,0.45);font-size:15px;font-weight:800;color:#ffe9a6;line-height:1.5;">💡 '
+    + (cute ? '多玩不同的題庫,題數長得最快!故事冒險換不同科目、知識王、考試複習、小遊戲、荒島,答到沒答過的新題目都會加 1 題。' : '建議多元練習:跨科目冒險、知識王、考試複習、小遊戲與荒島的新題目都會累計,同一題重複答對不加分。') + '</div>'
+    + body
+    + '<div style="text-align:center;margin-top:16px;"><button onclick="document.getElementById(\'_uc-detail-ov\').remove()" style="padding:11px 36px;font-size:18px;font-weight:900;border:none;border-radius:11px;background:linear-gradient(135deg,#ffd86b,#ffb347);color:#1a0c2e;cursor:pointer;font-family:inherit;">' + (cute ? '好' : '關閉') + '</button></div>';
+};
+window._quizUcBusy = false;
+window._quizUcCheck = async function(n){
+  try{
+    if(window._quizUcBusy) return;
+    const uid = window._gUserId;
+    if(!uid || window._cloudLoadDone !== true) return;          // 雲端存檔(含獎章)合併完才判定,免得新平板重複慶祝
+    if(typeof _medals !== 'object' || !_medals) return;
+    if(!window._quizAcc || typeof window._quizAcc.claimUc !== 'function') return;
+    const X = window._MEDAL_EXTRA_REWARD;
+    const todo = Object.keys(X).filter(function(mid){ return (n || 0) >= X[mid].need && !(_medals[mid] && _medals[mid].urGiven); });
+    if(!todo.length) return;
+    window._quizUcBusy = true;
+    try{
+      for(const mid of todo){
+        if(window._gUserId !== uid) break;                         // 中途換帳號就停
+        const x = X[mid];
+        const r = await window._quizAcc.claimUc(mid, x.need);
+        if(window._gUserId !== uid) break;
+        const def = (typeof MEDAL_DEFS !== 'undefined') ? MEDAL_DEFS.find(function(m){ return m.id === mid; }) : null;
+        if(r && r.ok){
+          // ★ v5.389.0 老師 22:57「也都有各自的編號不和GM發的搞混」⇒ 券編號用專屬券碼 M<題數>URP(例 abc123-M2000URP-…)
+          const _tag = 'M' + x.need + 'URP';
+          let _tid = '';
+          window._ticketTidTag = _tag;
+          try{ if(typeof backpackAdd === 'function') backpackAdd(x.item, x.n, '獎章獎勵·' + (def ? def.name : mid)); }catch(_eB){ console.warn('[答對題數獎章] 發卷', _eB); }
+          finally{ window._ticketTidTag = null; }
+          try{
+            const _inst = (window._ticketData && window._ticketData.inst) || {};
+            const _hit = Object.keys(_inst).filter(function(t){ return t.indexOf('-' + _tag + '-') > 0; }).sort(function(a, b){ return (_inst[b].at || 0) - (_inst[a].at || 0); });
+            _tid = _hit[0] || '';
+          }catch(_){}
+          try{ if(typeof window._lxpsLogExtraTicketGrant === 'function') window._lxpsLogExtraTicketGrant(x.item, 'medal:' + mid); }catch(_){}
+          try{ if(_tid && window._quizAcc && typeof window._quizAcc.setUcTid === 'function') window._quizAcc.setUcTid(mid, _tid); }catch(_){}
+          if(_medals[mid]){
+            // 本機早已有這枚(極少見:舊資料)⇒ 不重發 🔮/💰,只補 UR 並提示
+            _medals[mid].urGiven = Date.now();
+            if(_tid) _medals[mid].urTid = _tid;
+            try{ _showInGameToast('👑 「' + (def ? def.name : mid) + '」獎章獎勵:UR 自選召喚卷 ×1 已放進背包!', '#ffccee', 4000); }catch(_){}
+          } else {
+            _unlockMedal(mid);                                     // 🔮/💰＋慶祝橫幅(橫幅會讀 _MEDAL_EXTRA_REWARD 顯示 UR)
+            if(_medals[mid]){ _medals[mid].urGiven = Date.now(); if(_tid) _medals[mid].urTid = _tid; }
+          }
+          _saveMedals();
+          try{ if(typeof gameCloudSave === 'function'){ const _p = gameCloudSave(); if(_p && _p.catch) _p.catch(function(){}); } }catch(_){}
+          console.log('[千題獎章] ✅ ' + mid + ' 已發 UR 自選召喚卷(雲端記號成功,題數 ' + (r.n || n) + ')');
+        } else if(r && r.already){
+          // 別台已經領過 ⇒ 本機補上已解鎖＋已發記號,不再發任何東西
+          if(!_medals[mid]) _medals[mid] = { unlockedAt: r.at || Date.now(), rewarded: true, rewardedAt: r.at || Date.now(), inferred: true, celebrated: true };
+          _medals[mid].urGiven = r.at || Date.now();
+          _saveMedals();
+        }
+      }
+    } finally { window._quizUcBusy = false; }
+  }catch(e){ window._quizUcBusy = false; console.warn('[千題獎章] 檢查失敗', e); }
+};
+// 登入後補檢查一次(之前在小遊戲/荒島答到門檻、或上次領取時斷線)
+(function _setupQuizUcLoginCheck(){
+  let _doneUid = '';
+  setInterval(function(){
+    try{
+      const uid = window._gUserId;
+      if(!uid){ _doneUid = ''; return; }
+      if(uid === _doneUid || window._cloudLoadDone !== true || !window._quizAcc || typeof window._quizAcc.readUc !== 'function') return;
+      _doneUid = uid;
+      window._quizAcc.readUc().then(function(u){
+        if(!u || window._gUserId !== uid) return;
+        window._quizUcN = u.n;
+        window._quizUcCheck(u.n);
+      }).catch(function(){ _doneUid = ''; });
+    }catch(_){}
+  }, 4000);
+})();
+
 function _unlockMedal(id){
   if(_medals[id]) return; // already unlocked
 
@@ -77374,8 +77635,9 @@ function _unlockMedal(id){
   _medals[id] = { unlockedAt: Date.now() };
   // ★ v1.0.20260501.4750 — 解鎖時自動發放獎勵(水晶+知識幣)
   const _isTopTier = _MEDAL_TOP_TIER.has(id);
-  const _crystalReward = _isTopTier ? 5 : 1;
-  const _coinReward = _isTopTier ? 10000 : 2000;
+  const _rwAmt = window._medalRewardAmt(id);            // ★ v5.389.0 答對題數獎章用自己的數量
+  const _crystalReward = _rwAmt.crystals;
+  const _coinReward = _rwAmt.coins;
   try{
     if(typeof backpackAdd === 'function'){
       backpackAdd('summon_crystal', _crystalReward, '獎章獎勵');
@@ -78154,6 +78416,7 @@ function _showMedalCelebration(def, reward){
         box-shadow:0 0 14px ${_isTop?'rgba(255,180,40,0.55)':'rgba(255,200,80,0.4)'};">
         💰 +${_r.coins.toLocaleString()}
       </div>
+      ${(window._MEDAL_EXTRA_REWARD && def && window._MEDAL_EXTRA_REWARD[def.id]) ? `<div style="background:linear-gradient(135deg,rgba(255,94,156,0.4),rgba(255,200,60,0.3));border:2px solid #ff5e9c;border-radius:12px;padding:6px 16px;font-size:clamp(18px,1.8vw,24px);font-weight:900;color:#fff0f6;box-shadow:0 0 18px rgba(255,94,156,0.6);">${window._MEDAL_EXTRA_REWARD[def.id].label}</div>` : ''}
       ${_isTop ? '<div style="font-size:14px;font-weight:900;color:#ff66cc;letter-spacing:2px;text-shadow:0 0 8px rgba(255,100,200,0.7);">⭐ 大類最難獎章 ⭐</div>' : ''}
     </div>
   ` : '';
@@ -78255,6 +78518,8 @@ function _setMedalDot(show){
 //   ④ 全部達成 → 徽章與視窗皆自動不再出現
 // ────────────────────────────────────────────────────────────────────
 const _GM_MEDAL_WAVE1 = [
+  // ★ v5.389.0 老師 22:46「此獎章很重要,要發出提醒在新增獎章挑戰中」⇒ 答對題數三枚放最前面並特別標示
+  'quiz_uc_2000','quiz_uc_4000','quiz_uc_6000',
   // 收藏成就
   'ssr_unlock_20','ssr_unlock_40','first_ur_hero','shard_synth_first',
   // 台灣關
@@ -78277,8 +78542,9 @@ function _gmMedalW1Stats(){
     const def = (typeof MEDAL_DEFS !== 'undefined') ? MEDAL_DEFS.find(function(m){ return m.id===id; }) : null;
     const got = !!(typeof _medals !== 'undefined' && _medals[id]);
     if(got) _done++;
+    const _xr = (window._MEDAL_EXTRA_REWARD && window._MEDAL_EXTRA_REWARD[id]) || null;   // ★ v5.389.0 重要獎章
     return { id:id, got:got,
-      icon:(def&&def.icon)||'🏅', name:(def&&def.name)||id, desc:(def&&def.desc)||'' };
+      icon:(def&&def.icon)||'🏅', name:(def&&def.name)||id, desc:(def&&def.desc)||'', xr:_xr };
   });
   return { done:_done, total:_GM_MEDAL_WAVE1.length, allDone:(_done>=_GM_MEDAL_WAVE1.length), list:_list };
 }
@@ -78337,8 +78603,30 @@ function _showGmMedalW1Popup(){
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;'
       + 'justify-content:center;background:rgba(0,0,0,0.72);padding:18px;';
     let rows = '';
+    const _cuteP = (window._artStyle === 'cute');
     st.list.forEach(function(m){
       const mk = m.got ? '✅' : '⬜';
+      // ★ v5.389.0 答對題數獎章(UR 自選)特別標示:粉金框＋「👑 重要」＋獎勵＋進度
+      if(m.xr){
+        const _n = (typeof window._quizUcN === 'number') ? window._quizUcN : null;
+        const _pct = (_n === null) ? 0 : Math.max(0, Math.min(100, Math.floor(_n * 100 / m.xr.need)));
+        rows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:9px;'
+          + 'background:' + (m.got ? 'rgba(120,220,120,0.14)' : 'linear-gradient(135deg,rgba(255,94,156,0.22),rgba(255,200,60,0.14))')
+          + ';border:2px solid ' + (m.got ? 'rgba(120,220,120,0.6)' : '#ff5e9c') + ';box-shadow:0 0 12px rgba(255,94,156,0.35);">'
+          + '<div style="font-size:30px;min-width:36px;text-align:center;">' + m.icon + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-size:17px;font-weight:900;color:#fff0f6;">' + m.name
+          + ' <span style="font-size:12px;background:#ff5e9c;color:#fff;border-radius:8px;padding:1px 8px;vertical-align:2px;">👑 ' + (_cuteP ? '超重要' : '重要') + '</span></div>'
+          + '<div style="font-size:13px;color:#ffd9ea;line-height:1.35;">' + (_cuteP ? ('答對 ' + m.xr.need + ' 題不一樣的題目(同一題只算 1 次)') : ('不重複題目累積答對 ' + m.xr.need + ' 題')) + '</div>'
+          + '<div style="font-size:13px;font-weight:900;color:#ffe066;margin-top:2px;">🎁 ' + m.xr.label + ' + 🔮 ×' + m.xr.crystals + ' + 💰 ' + (m.xr.coins >= 10000 ? (m.xr.coins / 10000) + ' 萬' : m.xr.coins) + '</div>'
+          + '<button onclick="event.stopPropagation();window._quizUcOpenDetail&&window._quizUcOpenDetail()" style="margin-top:5px;padding:4px 12px;font-size:13px;font-weight:900;cursor:pointer;border-radius:9px;border:1px solid #ff5e9c;background:rgba(255,94,156,0.18);color:#fff0f6;font-family:inherit;">📊 我的答題數</button>'
+          + ((_n !== null && !m.got) ? ('<div style="margin-top:4px;font-size:12px;color:#ddd;">' + (_cuteP ? '目前答對 ' : '進度 ') + Math.min(_n, m.xr.need) + ' / ' + m.xr.need + ' 題</div>'
+              + '<div style="margin-top:2px;height:7px;border-radius:5px;background:rgba(255,255,255,0.14);overflow:hidden;"><div style="height:100%;width:' + _pct + '%;background:linear-gradient(90deg,#ff5e9c,#ffd966);"></div></div>') : '')
+          + '</div>'
+          + '<div style="font-size:20px;min-width:26px;text-align:center;">' + mk + '</div>'
+          + '</div>';
+        return;
+      }
       rows += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;'
         + 'margin-bottom:7px;background:' + (m.got?'rgba(120,220,120,0.12)':'rgba(255,255,255,0.04)')
         + ';border:1px solid ' + (m.got?'rgba(120,220,120,0.45)':'rgba(255,255,255,0.08)') + ';">'
@@ -78360,6 +78648,11 @@ function _showGmMedalW1Popup(){
       + '老師為大家加碼了一整批全新獎章!每一枚解鎖都能拿到<br>'
       + '<span style="color:#ddccff;font-weight:900;">🔮 召喚水晶 ×5</span> + '
       + '<span style="color:#ffe066;font-weight:900;">💰 知識幣 +10,000</span>,快來挑戰看看吧!</div>'
+      // ★ v5.389.0 答對題數獎章特別提醒
+      + '<div style="margin-top:10px;padding:8px 10px;border-radius:12px;background:linear-gradient(135deg,rgba(255,94,156,0.3),rgba(255,200,60,0.2));border:2px solid #ff5e9c;'
+      + 'font-size:15px;font-weight:900;color:#fff0f6;line-height:1.5;">👑 ' + ((window._artStyle === 'cute') ? '新!答對不一樣的題目 2000、4000、6000 題' : '新增:不重複題目累積答對 2000/4000/6000 題')
+      + '<br><span style="color:#ffe066;">每一枚都送 UR 自選召喚卷 ×1 + 🔮 ×10 + 💰 10 萬!</span>'
+      + '<br><span style="font-size:12px;color:#ffd9ea;font-weight:700;">' + ((window._artStyle === 'cute') ? '冒險、知識王、龍王戰、小遊戲、荒島答對都算,同一題只算 1 次' : '大對抗、小遊戲、荒島皆計入;同一題只計一次') + '</span></div>'
       + '<div style="font-size:15px;color:#ffd86b;font-weight:900;margin-top:10px;">'
       + '目前進度:已達成 ' + st.done + ' / ' + st.total + ' 枚</div>'
       + '</div>'
@@ -80428,6 +80721,22 @@ function closeMedalPage(){
 function _buildMedalPage(){
   const el = document.getElementById('medal-page-content');
   if(!el) return;
+  // ★ v5.389.0 答對題數獎章(2000/4000/6000)進度:每次開獎章頁背景讀一次雲端題數,讀到後重畫(只重畫一次)
+  try{
+    if(window._gUserId && window._quizAcc && typeof window._quizAcc.readUc === 'function' && !window._medalUcFetching){
+      window._medalUcFetching = true;
+      const _uidM = window._gUserId;
+      window._quizAcc.readUc().then(function(u){
+        window._medalUcFetching = false;
+        if(!u || window._gUserId !== _uidM) return;
+        const _chg = (window._quizUcN !== u.n);
+        window._quizUcN = u.n;
+        try{ window._quizUcCheck(u.n); }catch(_){}
+        const _ov = document.getElementById('medal-page-overlay');
+        if(_chg && _ov && _ov.style.display !== 'none'){ window._medalUcFetching = true; try{ _buildMedalPage(); }finally{ window._medalUcFetching = false; } }
+      }).catch(function(){ window._medalUcFetching = false; });
+    }
+  }catch(_){ window._medalUcFetching = false; }
   // ★ v3.5.66 — 新增「世界BOSS」「小博士」兩個類別,對應 20 個新獎章
   // ★ v3.15.61 — 補上漏列的「埃及關」「鬥技場」(否則該兩類獎章不顯示);順序依主題分組
   // ★ v4.6.0 — 加入「寵物」類別(14 枚:馴養 7 + 互動 7)
@@ -80444,9 +80753,9 @@ function _buildMedalPage(){
   MEDAL_DEFS.forEach(_md => {
     const _data = _medals[_md.id];
     if(!_data || _data.rewarded !== true) return;
-    const _isTop = (typeof _MEDAL_TOP_TIER !== 'undefined') && _MEDAL_TOP_TIER.has(_md.id);
-    _totalCrystalsEarned += _isTop ? 5 : 1;
-    _totalCoinsEarned    += _isTop ? 10000 : 2000;
+    const _amt = window._medalRewardAmt(_md.id);          // ★ v5.389.0
+    _totalCrystalsEarned += _amt.crystals;
+    _totalCoinsEarned    += _amt.coins;
   });
 
   let html = `<div style="font-size:22px;color:#aaa;margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;">
@@ -80477,8 +80786,9 @@ function _buildMedalPage(){
 
       // ★ v1.0.20260501.4810 — 依「獎勵狀態」三段顯示
       const _isTop = (typeof _MEDAL_TOP_TIER !== 'undefined') && _MEDAL_TOP_TIER.has(m.id);
-      const _crystalAmt = _isTop ? 5 : 1;
-      const _coinAmt    = _isTop ? 10000 : 2000;
+      const _amtM = window._medalRewardAmt(m.id);          // ★ v5.389.0
+      const _crystalAmt = _amtM.crystals;
+      const _coinAmt    = _amtM.coins;
       const _topBadge   = _isTop ? ' <span style="color:#ff88cc;font-size:11px;">⭐ 最難</span>' : '';
       const _isRewarded = !!(medalData && medalData.rewarded === true);
       let _rewardLine = '';
@@ -80499,6 +80809,25 @@ function _buildMedalPage(){
         </div>`;
       }
 
+      // ★ v5.389.0 額外獎勵(答對題數獎章的 UR 自選卷)＋進度
+      let _xtraLine = '';
+      try{
+        const _xr = window._MEDAL_EXTRA_REWARD && window._MEDAL_EXTRA_REWARD[m.id];
+        if(_xr){
+          const _cuteX = (window._artStyle === 'cute');
+          const _got = !!(medalData && medalData.urGiven);
+          const _n = (typeof window._quizUcN === 'number') ? window._quizUcN : null;
+          _xtraLine = `<div style="font-size:14px;font-weight:800;margin-top:4px;color:${_got ? '#88dd88' : '#ff8fbf'};">`
+            + (_got ? ('✅ 已獲取:' + _xr.label) : ('🎁 ' + (_cuteX ? '另外送' : '額外獎勵') + ':' + _xr.label)) + `</div>`;
+          if(!unlocked && _n !== null){
+            const _pct = Math.max(0, Math.min(100, Math.floor(_n * 100 / _xr.need)));
+            _xtraLine += `<div style="margin-top:6px;font-size:13px;color:#ccc;">${_cuteX ? '目前答對' : '進度'} ${Math.min(_n, _xr.need)} / ${_xr.need} ${_cuteX ? '題' : '題(不重複)'}</div>`
+              + `<div style="margin-top:3px;height:8px;border-radius:5px;background:rgba(255,255,255,0.12);overflow:hidden;"><div style="height:100%;width:${_pct}%;background:linear-gradient(90deg,#ff5e9c,#ffd966);"></div></div>`;
+          }
+          // ★ v5.389.0 老師 22:55「新增『我的答題數』開啟題庫清單」
+          _xtraLine += `<button onclick="event.stopPropagation();window._quizUcOpenDetail&&window._quizUcOpenDetail()" style="margin-top:8px;padding:6px 14px;font-size:14px;font-weight:900;cursor:pointer;border-radius:10px;border:1px solid #ff5e9c;background:rgba(255,94,156,0.18);color:#fff0f6;font-family:inherit;">📊 我的答題數</button>`;
+        }
+      }catch(_){}
       html += `<div style="border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;
         background:${unlocked?'rgba(255,200,0,0.08)':'rgba(255,255,255,0.03)'};
         border:1.5px solid ${unlocked?'rgba(255,200,0,0.4)':'rgba(255,255,255,0.08)'};
@@ -80509,6 +80838,7 @@ function _buildMedalPage(){
           <div style="font-size:15px;color:#aaa;">${(window._artStyle==='cute' && m.cute) ? m.cute : m.desc}</div>
           ${date?`<div style="font-size:13px;color:#666;margin-top:4px;">${date} 解鎖</div>`:''}
           ${_rewardLine}
+          ${_xtraLine}
         </div>
       </div>`;
     }
@@ -81139,14 +81469,10 @@ window._grantRetroactiveMedalRewards = async function(){
     let _topTierCount = 0;
     _pendingIds.forEach(id => {
       const isTop = (typeof _MEDAL_TOP_TIER !== 'undefined') && _MEDAL_TOP_TIER.has(id);
-      if(isTop){
-        _totalCrystals += 5;
-        _totalCoins += 10000;
-        _topTierCount++;
-      } else {
-        _totalCrystals += 1;
-        _totalCoins += 2000;
-      }
+      const _amtR = window._medalRewardAmt(id);            // ★ v5.389.0
+      _totalCrystals += _amtR.crystals;
+      _totalCoins += _amtR.coins;
+      if(isTop) _topTierCount++;
     });
 
     // === 發放獎勵 ===
@@ -84244,6 +84570,10 @@ function makeRadar(dims, size) {
       +   '<div class="cst-lore">' + _esc(e.l) + '</div>'
       +   '<div class="cst-stat">' + _T('命星', '命星') + ' <b>' + lit.length + '</b> / ' + held + _T(' 亮了', ' 已點亮') + '・' + _T('還可以點', '可分配') + ' <b>' + free + '</b>・' + _T('最多 6 顆', '上限 6') + (owned ? '' : _T('・(還沒有這位英雄)', '・(尚未擁有)')) + '</div>'
       +   protagNote
+      // ★ v5.389.0 UR「神格覺醒」:6 顆命星全亮才生效(constellation_db 的 god 欄位)
+      +   ((e.god && e.god.n) ? ('<div class="cst-stat" style="margin-top:6px;padding:6px 10px;border-radius:10px;border:1px solid ' + (lit.length >= 6 ? '#ffd86b' : 'rgba(255,216,107,0.35)') + ';background:' + (lit.length >= 6 ? 'rgba(255,216,107,0.16)' : 'rgba(255,255,255,0.04)') + ';color:' + (lit.length >= 6 ? '#fff3c8' : '#cbbf9a') + ';line-height:1.5;">'
+          + '🌟 <b>' + _T('神格覺醒', '神格覺醒') + '「' + _esc(e.god.n) + '」</b>' + (lit.length >= 6 ? _T('(已覺醒!)', '(已生效)') : _T('(6 顆命星全亮才會覺醒)', '(6 顆全數點亮後生效)'))
+          + '<br>' + _esc(_T(e.god.sd || e.god.fd, e.god.fd)) + '</div>') : '')
       + '</div></div>'
       + '<div class="cst-body">'
       +   '<div class="cst-mapwrap">' + _svg(k, e, lit, held, owned, canLight) + '</div>'

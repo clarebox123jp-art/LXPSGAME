@@ -18850,7 +18850,9 @@
         if(String(x.item || x.key || '').indexOf('ur_pick') >= 0) _arenaTk += Math.abs(parseInt(x.n, 10) || 1);
       });
     }catch(_){}
-    var _urQuota = _grantedN.ur + _quotaAdj + _arenaTk;
+    // ★ v5.389.0 獎章「兩千題智者/四千題博士/六千題傳奇」發的 UR 自選卷(_ticketExtraGrants via medal:quiz_uc_*,每枚最多 1 張)是合法額度
+    var _medalUrTk = (function(_x){ try{ var _m = {}; (Array.isArray(_x) ? _x : []).forEach(function(e){ if(e && String(e.item || '') === 'summon_ticket_ur_pick' && /^medal:quiz_uc_(2000|4000|6000)$/.test(String(e.via || ''))) _m[e.via] = 1; }); return Object.keys(_m).length; }catch(_){ return 0; } })(_d._ticketExtraGrants);
+    var _urQuota = _grantedN.ur + _quotaAdj + _arenaTk + _medalUrTk;
 
     var _urDetail = _ownedUR.map(function(n){
       var _r = _lastRec[n];
@@ -19066,6 +19068,7 @@
       // ★ v5.129.0 — 讓老師看得出「這個數字是怎麼算出來的」，而不是只丟一個結論
       urQuota: _urQuota,                    // 券總額度 = 三來源發出 + 稽核補發授權 + 鬥技場兌換
       quotaAdj: _quotaAdj,                  // 其中：稽核補發授權(_urQuotaAdjust)
+      medalTk: _medalUrTk,                  // ★ v5.389.0 其中:千題/三千題獎章發的 UR 自選卷
       arenaTk: _arenaTk,                    // 其中：鬥技場兌換
       gmCount: _gmOwned.length,             // 老師直接發放的隻數
       ticketCount: _ticketOwned.length,     // 券換取的隻數
@@ -19549,6 +19552,9 @@
           _ticketQuota = _gift.ticketN + _quotaAdj;
         }
         var _pendingTk    = Math.max(0, _gift.ticketN - _ticketQuota);   // 老師發了但查無領取紀錄
+        // ★ v5.389.0 獎章「兩千題智者/四千題博士/六千題傳奇」發的 UR 自選卷(_ticketExtraGrants via medal:quiz_uc_*,每枚最多 1 張)是合法額度
+        var _medalUrTk = (function(_x){ try{ var _m = {}; (Array.isArray(_x) ? _x : []).forEach(function(e){ if(e && String(e.item || '') === 'summon_ticket_ur_pick' && /^medal:quiz_uc_(2000|4000|6000)$/.test(String(e.via || ''))) _m[e.via] = 1; }); return Object.keys(_m).length; }catch(_){ return 0; } })(d._ticketExtraGrants);
+        _ticketQuota += _medalUrTk;
 
         // ── (c2) ★ v5.93.0 型態 B 分辨：老師發的券「是不是還躺在收件箱沒領」──
         //   課堂獎勵是寄到 gmClassRewards 收件箱、學生自己按「確認領取」才入帳。
@@ -19874,6 +19880,7 @@
           claimedRaw: _claimedRaw,         // 夾制前的原始領取筆數合計
           quotaCapped: _quotaCapped,       // 被甲式夾制夾掉幾張（>0＝領取紀錄比發放紀錄多，需明示）
           quotaAdj: _quotaAdj,             // 稽核補發的額度調整（_urQuotaAdjust·乙裁定獨立欄位）
+          medalTk: _medalUrTk,                  // ★ v5.389.0 其中:千題/三千題獎章發的 UR 自選卷
           recoverSkipped: _recoverSkipped, // 被濾掉的「系統補發漏領」紀錄筆數
           claimDupSkipped: _dupSkipped,    // ★ v5.124.0 ⑤ 被備援鍵去重掉的重複領取紀錄筆數
           coverGap: _coverGap,             // ★ v5.124.0 甲案 查無對應發放文件的領取筆數（>0＝本列不夾制）
@@ -27608,6 +27615,73 @@
       function _writeMeta(uid, m){ try{ localStorage.setItem(_metaKey(uid), JSON.stringify(m)); }catch(_){} }
       function _isAdmin(){ try{ return typeof window._isAdminUser === 'function' && window._isAdminUser(); }catch(_){ return false; } }
 
+      // ════════════════════════════════════════════════════════════════
+      // ★ v5.389.0(2026-11-12・老師「設計獎章可獲得UR自選:1.不重複題目累積答對1000題 2.不重複題目累積答對3000題(不用連續)」→ 22:46 更正為 2000/4000/6000 題,各 UR 自選＋10 水晶＋10 萬幣;22:47「是累積答對不重複的題目」)
+      //   minigameScores/{uid}.quizUC = { v:1, n:不重複答對題數, s:'題鍵,題鍵,…'(逗號串,不建索引), at, rw:{獎章id:領取時間} }
+      //   ・題鍵與答對率同一套(大對抗 'a'+題id、小遊戲 'm'+…、荒島 'i'+…)⇒ 同一題跨模式只算一次;答錯不算、答對過就算。
+      //   ・大對抗 flushNow 與小遊戲 mgAccFlush 兩邊都在同一個 transaction 裡更新(小遊戲 v1.440.0 起)。
+      //   ・只收到 UC_CAP 題為止(三枚獎章都拿到後不必再長,文件大小有上限,約 80KB)。
+      //   ・舊資料沒有逐題答對紀錄 ⇒ 第一次建立時只能收本週答對過的題鍵(qa.wq 值為 1)。
+      //   ・rw 只由 claimUc 寫(transaction:題數夠、還沒領 ⇒ 記時間),發 UR 卷的唯一依據 ⇒ 換平板/兩台同時也只發一次。
+      // ════════════════════════════════════════════════════════════════
+      const UC_CAP = 6000;
+      function _ucKey(k){ return String(k || '').replace(/[,\s]/g, '_').slice(0, 48); }
+      function _ucMerge(oldUc, qa, pend){
+        const u = (oldUc && typeof oldUc === 'object') ? oldUc : null;
+        const s0 = (u && typeof u.s === 'string') ? u.s : '';
+        const set = new Set(s0 ? s0.split(',') : []);
+        let changed = !u;
+        if(!u && qa && qa.wq && typeof qa.wq === 'object'){
+          Object.keys(qa.wq).forEach(function(k){ if(qa.wq[k] === 1 && set.size < UC_CAP){ const kk = _ucKey(k); if(kk) set.add(kk); } });
+        }
+        (pend || []).forEach(function(p){
+          if(!p || !p.ok || !p.k || set.size >= UC_CAP) return;
+          const kk = _ucKey(p.k); if(!kk || set.has(kk)) return;
+          set.add(kk); changed = true;
+        });
+        const arr = Array.from(set);
+        return { changed: changed, n: arr.length, s: arr.join(',') };
+      }
+      // 讀自己的不重複答對題數與領取記號(獎章頁/登入補檢查用)
+      async function readUc(){
+        const uid = window._gUserId; if(!uid || !_fbDb) return null;
+        try{
+          const snap = await getDoc(PRIV_DOC(uid));
+          const d = snap.exists() ? (snap.data() || {}) : {};
+          const u = d.quizUC || null;
+          let n = (u && typeof u.n === 'number') ? u.n : 0;
+          if(!u && d.quizAcc && d.quizAcc.wq){ n = Object.keys(d.quizAcc.wq).filter(function(k){ return d.quizAcc.wq[k] === 1; }).length; }
+          // ★ v5.389.0 s = 答對過的題鍵串(獎章「📊 我的答題數」依題庫分類用);還沒建立時用本週答對的題鍵
+          let ks = (u && typeof u.s === 'string') ? u.s : '';
+          if(!u && d.quizAcc && d.quizAcc.wq){ ks = Object.keys(d.quizAcc.wq).filter(function(k){ return d.quizAcc.wq[k] === 1; }).map(_ucKey).join(','); }
+          return { n: n, s: ks, rw: (u && u.rw && typeof u.rw === 'object') ? u.rw : {}, has: !!u };
+        }catch(e){ console.warn('[不重複答對] readUc 失敗', e); return null; }
+      }
+      // 領獎章 UR:雲端 transaction 確認題數夠且還沒領過才記號(唯一發放依據)
+      async function claimUc(mid, need){
+        const uid = window._gUserId; if(!uid || !_fbDb || !mid) return { ok: false, reason: 'nouser' };
+        try{
+          return await runTransaction(_fbDb, async (tx) => {
+            const snap = await tx.get(PRIV_DOC(uid));
+            const d = snap.exists() ? (snap.data() || {}) : {};
+            const u = d.quizUC || {};
+            if(!((u.n || 0) >= need)) return { ok: false, reason: 'count', n: u.n || 0 };
+            const rw = (u.rw && typeof u.rw === 'object') ? u.rw : {};
+            if(rw[mid]) return { ok: false, already: true, at: rw[mid] };
+            const upd = {}; upd['quizUC.rw.' + mid] = Date.now();
+            tx.update(PRIV_DOC(uid), upd);
+            return { ok: true, n: u.n || 0 };
+          });
+        }catch(e){ console.warn('[不重複答對] claimUc 失敗', e); return { ok: false, reason: 'error' }; }
+      }
+
+      // ★ v5.389.0 記下獎章 UR 卷的券編號(GM 查詢用;只寫 quizUC.tk.<獎章id>,不碰其他欄位)
+      async function setUcTid(mid, tid){
+        const uid = window._gUserId; if(!uid || !_fbDb || !mid || !tid) return false;
+        try{ const upd = {}; upd['quizUC.tk.' + mid] = String(tid).slice(0, 60); await updateDoc(PRIV_DOC(uid), upd); return true; }
+        catch(e){ console.warn('[不重複答對] setUcTid 失敗', e); return false; }
+      }
+
       let _timer = 0;
       // 作答一題(答對/答錯都要記)。只記登入帳號;共用 iPad 依 uid 分開暫存。
       function record(q, ok, src){
@@ -27652,13 +27726,20 @@
                 }
               });
               const nqa = { v: 1, subj: subj, tot: tot, wk: curWk, wq: wq, wa: wa, wc: wc, updatedAt: Date.now() };
-              if(snap.exists()) tx.update(PRIV_DOC(uid), { uid: uid, quizAcc: nqa });
-              else tx.set(PRIV_DOC(uid), { uid: uid, quizAcc: nqa });
-              return { wa: wa, wc: wc, wk: curWk };
+              // ★ v5.389.0 不重複答對題數(獎章「兩千題智者/四千題博士/六千題傳奇」):quizUC 是獨立欄位,
+              //   用欄位路徑只改 n/s/v ⇒ 不會蓋掉 rw(獎章 UR 領取記號)。第一次建立時先收本週已答對的題鍵。
+              const uc = _ucMerge(d.quizUC, qa, pend);
+              const upd = { uid: uid, quizAcc: nqa };
+              if(uc.changed){ upd['quizUC.v'] = 1; upd['quizUC.n'] = uc.n; upd['quizUC.s'] = uc.s; upd['quizUC.at'] = Date.now(); }
+              if(snap.exists()) tx.update(PRIV_DOC(uid), upd);
+              else tx.set(PRIV_DOC(uid), { uid: uid, quizAcc: nqa, quizUC: { v: 1, n: uc.n, s: uc.s, at: Date.now() } });
+              return { wa: wa, wc: wc, wk: curWk, ucN: uc.n };
             });
             // 只移除這次送出的(送出途中又答的題目保留)
             const now = _readPend(uid);
             _writePend(uid, now.slice(n));
+            // ★ v5.389.0 不重複答對題數 → 獎章檢查(game_adv.js window._quizUcCheck;內部自己守門)
+            try{ if(res && typeof res.ucN === 'number'){ window._quizUcN = res.ucN; if(typeof window._quizUcCheck === 'function') window._quizUcCheck(res.ucN); } }catch(_eUc){}
           }
           // 排行榜格子:每人最多 3 分鐘寫一次(本週第一次立即);管理員不上榜
           if(!_isAdmin()){
@@ -27844,7 +27925,8 @@
         const snap = await getDoc(PRIV_DOC(uid));
         const qa = snap.exists() ? ((snap.data() || {}).quizAcc || null) : null;
         if(qa && qa.wk !== getWeekKey()){ qa.wa = 0; qa.wc = 0; qa.wk = getWeekKey(); }
-        return { uid: uid, email: email, name: name, quizAcc: qa };
+        const uc = snap.exists() ? ((snap.data() || {}).quizUC || null) : null;   // ★ v5.389.0 不重複答對題數＋獎章 UR 領取/券編號
+        return { uid: uid, email: email, name: name, quizAcc: qa, quizUC: uc };
       }
       // GM:本週全部(含未滿 100 題)
       function adminWeekAll(){
@@ -27864,7 +27946,8 @@
         MIN_Q: MIN_Q, record: record, flushNow: flushNow, readMine: readMine, qKey: qKey,
         getTopN: getTopN, getMyRank: getMyRank, awardByRank: _awardByRank,
         trySettleLastWeek: trySettleLastWeek, claimMyAward: claimMyAward,
-        adminLookup: adminLookup, adminWeekAll: adminWeekAll, getWeekKey: getWeekKey
+        adminLookup: adminLookup, adminWeekAll: adminWeekAll, getWeekKey: getWeekKey,
+        UC_CAP: UC_CAP, readUc: readUc, claimUc: claimUc, setUcTid: setUcTid   // ★ v5.389.0 不重複答對題數(獎章)
       };
       console.log('[答對率] ✅ 各科答對率＋每週答對率排行模組已掛載');
     })();
