@@ -22532,6 +22532,8 @@ const ADMIN_ALL_HEROES = [
   '主神奧汀',
   // ★ v5.232.0 — 第四～六隻 UR(陳祈宏老師設計,只送不抽);稀有度=UR ⇒ 不會進 SR/SSR 任何召喚池(SUMMON_SR_HEROES 以 rarity==='SR' 過濾)
   '究極神兵','天照大神','月讀大神',
+  // ★ v5.391.0 — 第七、八隻 UR 媽祖/鄭成功(陳祈宏老師設計,只送不抽)
+  '媽祖','鄭成功',
   // ★ v3.15.0 — 埃及雙王(SSR,埃及 BOSS 戰限定收服)
   '法老王','埃及豔后',
   // ★ v3.15.43 — 5 年 3 班 龎苡睿設計(喚龍使‧蜜鶴林,v3.15.41 新增英雄,SSR 召喚池);先前漏列→管理員 advGetUnlockedHeroes 直接回傳 ADMIN_ALL_HEROES 不含它→管理員帳號(連抽到也)永遠未解鎖
@@ -49496,6 +49498,12 @@ const SKILL_UPGRADE_DEF = {
   '烈日':           { cat:'special_amaterasu_s2', label:'全隊攻擊上升(特技%)/強力失明+燃燒回合數' },
   '弦月':           { cat:'dmg', label:'單體傷害(強力魅惑2回合固定)' },
   '滿月':           { cat:'dmg', label:'全體傷害(清除全部有利固定)' },
+  // ★ v5.391.0 — 第七、八隻 UR 媽祖/鄭成功:四招 fd 都「只有一個 %」= 主倍率 ⇒ 通用 cat ×(1+lv*0.05),
+  //   與 game_battle.js window._URMZ RUN(玩家路徑 _activeSkLvMult / AI 路徑手動乘;順風令加速 1+0.5×(1+lv×0.05))同算式。
+  '平浪':           { cat:'heal',  label:'全體治療(解除全部不利/無敵1回合固定)' },
+  '順風令':         { cat:'mixed', label:'全隊加速幅度(+5能量/連續行動2次固定)' },
+  '破城砲':         { cat:'dmg',   label:'單體傷害(拆城/強力破防/封印2回合固定)' },
+  '艦隊齊射':       { cat:'dmg',   label:'每段傷害(5段/燃燒2回合固定)' },
 };
 
 /* ★★ v5.112.0 — 圖鑑「升級數值替換」容錯單一真相（老師 2026-08-24 裁定②）★★
@@ -50896,6 +50904,22 @@ function _renderTraitFdWithLv(heroName, originalFd, traitLv){
              .replace(/最大\s*HP\s*5\s*%/g, '最大 HP ' + HL(_amH + '%'));
       break;
     }
+    // ★ v5.391.0 — 第七、八隻 UR(_getTraitLv 0~4;與 window._URMZ earPct/backPct/tideStep 逐字同算式)
+    case '媽祖': {
+      // 順風耳 -50% +5%/級、回港返場 60% HP +5%/級;小船 4 艘/每 3 回合/千里眼 固定不替換
+      const _mzE = 50 + traitLv * 5, _mzB = 60 + traitLv * 5;
+      fd = fd.replace(/傷害\s*-\s*50\s*%/g, '傷害 -' + HL(_mzE + '%'))
+             .replace(/少受\s*50\s*%/g, '少受 ' + HL(_mzE + '%'))
+             .replace(/以\s*60\s*%\s*HP/g, '以 ' + HL(_mzB + '%') + ' HP')
+             .replace(/帶著\s*60\s*%\s*血/g, '帶著 ' + HL(_mzB + '%') + ' 血');
+      break;
+    }
+    case '鄭成功': {
+      // 每層攻擊 +15% +2%/級;暴擊率 +10%、大潮 ×1.5 固定不替換
+      const _zcT = 15 + traitLv * 2;
+      fd = fd.replace(/攻擊\s*\+\s*15\s*%/g, '攻擊 +' + HL(_zcT + '%'));
+      break;
+    }
     case '月讀大神': {
       // 衛月 HP = 最大HP 200% +20%/級;碎裂傷害「衛月總HP 200%」與 2 回合補充、光暗 ±% 固定不替換
       const _tkM = 200 + traitLv * 20;
@@ -51274,6 +51298,20 @@ function _renderBurstFdWithLv(burstName, originalFd, burstLv){
     // ★ v5.384.0 — SR 七職人爆發(老師 2026-11-11 改版):百分數照 _burstMult 放大(點心師傅「復活 25%」是固定值不放大);
     //   爆發 MAX(Lv5)時,爆發給的所有狀態回合數 +1(與 game_battle.js _SR7.burst 的 X 同口徑)。fd 與 sd 都走這裡。
     //   太空人「流星雨墜落」沒有狀態、沒有固定百分數 ⇒ 交給通用引擎。
+    // ★ v5.391.0 — 第七、八隻 UR 爆發:倍率/庇佑回復/全隊增攻 ×(1+lv×0.10);「50% HP 復活」「速度 -50%」固定;MAX 狀態 +1 回合
+    case '聖母護世': case '鹿耳門大捷': {
+      // 先處理回合數(MAX +1;兩招 fd/sd 裡帶數字的「N 回合」全部是爆發給的狀態),再處理百分數(避免 HL 標籤干擾比對)
+      if(burstLv >= 4){
+        fd = fd.replace(/(\d+)\s*回合/g, function(m, num){ return HL((parseInt(num, 10) + 1) + ' 回合'); });
+      }
+      if(burstLv > 0){
+        fd = fd.replace(/(\d+(?:\.\d+)?)\s*%/g, function(m, num){
+          if(burstName === '聖母護世' && num === '50') return m;   // 50% HP 復活、速度 -50% 固定
+          return HL((Math.round(parseFloat(num) * _mult * 10) / 10) + '%');
+        });
+      }
+      _customHandled = true; break;
+    }
     case '奇蹟・閃耀星光砲': case '巔峰演唱會': case '夢幻甜點塔': case '完結篇・跨頁大格': case '閃耀改造秀': case '滿漢全席': {
       if(burstLv > 0){
         fd = fd.replace(/(\d+(?:\.\d+)?)\s*%/g, function(m, num){
@@ -53380,6 +53418,9 @@ const _RARITY_UR_HEROES = new Set([
   '究極神兵',
   '天照大神',
   '月讀大神',
+  // ★ v5.391.0 — 第七、八隻 UR(陳祈宏老師設計;老師 2026-11-13「設計新的2隻UR,媽祖、鄭成功」)
+  '媽祖',
+  '鄭成功',
 ]);
 function _getHeroRarity(heroName){
   if(!heroName) return null;

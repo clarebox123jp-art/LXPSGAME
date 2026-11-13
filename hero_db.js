@@ -8709,3 +8709,88 @@ var _LXPS_HERO_SD = {
   });
 })();
 // ★★★ v5.376.0 SR 七職人 登錄表 END ★★★
+
+
+// ★★★ v5.391.0 第七、八隻 UR「媽祖／鄭成功」登錄表(老師 2026-11-13 15:46「設計新的2隻UR,媽祖、鄭成功」;16:32 改版＋裁定;16:36「繼續」)★★★
+//   陳祈宏老師設計・只送不抽・鬥技場禁用(UR 唯一權威 _RARITY_UR_HEROES 在 game_adv.js)。設計書:專案知識庫 claude/UR媽祖鄭成功_設計書.md v3。
+//   立繪:老師的 ChatGPT 生成,二次元年輕風格(媽祖 v2 = 指揮千里眼／順風耳兩隻小精靈的動感英姿)。
+//   配點總和 120(UR 慣例),hp 欄位已 ×1.3(媽祖 70→91、鄭成功 66→86;pre-multiplied,不進 _v384HpFix 清單)。
+//   fd/desc 只寫 Lv1 基準(鐵律 1.160);每段 fd+sd 雙版(鐵律 1.232)。戰鬥邏輯在 game_battle.js 檔尾 window._URMZ。
+//   寫入方式比照 SR 七職人登錄表:只新增、不覆蓋任何既有條目(_put)。
+(function(){
+  var _put = function(tbl, k, v){ try{ if(tbl && !Object.prototype.hasOwnProperty.call(tbl, k)) tbl[k] = v; }catch(_){} };
+  var IMG = function(f){ return './' + encodeURIComponent(f); };
+  var GIF = function(f){ return 'https://raw.githubusercontent.com/clarebox123jp-art/LXPSGAME/main/' + encodeURIComponent(f); };
+  var DESIGNER = { class:'教師作品', name:'陳祈宏老師', year:2026 };
+  var L = [
+    { name:'媽祖', emoji:'🌊', img:'媽祖.webp', pos:['120% auto','center 8%'], thumb:'center 6%', cls:'heal', cats:['heal','ctrl'], hex:{ heal:10, ctrl:6 },
+      st:{ hp:91, atk:4, sp:30, spd:16 },
+      s1:{ n:'平浪', c:4, d:'特技 130% 恢復全體友方 HP(溢出轉護盾)＋解除全部不利狀態(含強力)＋全體無敵 1 回合',
+           fd:'媽祖輕撫海面,讓風浪平息,以特技 130% 恢復全體友方 HP(補滿後多出來的部分轉為護盾),解除全體友方所有不利狀態(包含強力版),並使全體友方獲得「無敵」1 回合。',
+           sd:'用特技 130% 幫全隊補血(補滿多的變護盾),全隊壞狀態全部清光(強力的也行),還讓全隊無敵 1 回合!' },
+      s2:{ n:'順風令', c:5, d:'指定 1 名隊友:清除所有不利狀態、我方 +5 能量、立即連續行動 2 次;全隊加速(速度 +50%)2 回合',
+           fd:'媽祖發號施令,順風立起!指定 1 名友方(不能是媽祖自己):立即解除其所有不利狀態(包含強力版),我方獲得 5 能量(本回合不能用來施放極限爆發),並讓該友方立即連續行動 2 次;同時全體友方「加速」2 回合(速度 +50%)。指定鄭成功時,他的潮汐 +1。每回合限用 1 次。',
+           sd:'媽祖一聲令下!指定的隊友壞狀態全清、我們拿到 5 能量(這回合不能放爆發),他還能馬上連動 2 次!全隊速度 +50% 2 回合。指定鄭成功的話潮汐 +1!(每回合 1 次)' },
+      tr:{ name:'千里眼‧順風耳', icon:'👁️', desc:'千里眼:對手無法隱身/迴避、全隊攻擊必中;順風耳:每回合對手第一招傷害 -50%;海燈歸航:開場 4 次回港(全隊共用,每 3 回合恢復 1 次)',
+           fd:'(被動)媽祖存活時,三重守護同時生效——【千里眼】全體對手無法獲得「隱身」與「迴避」(已有的立即失效),全體友方的攻擊必中;【順風耳】每個新回合,對手第一次用技能或極限爆發攻擊我方時,被打中的友方該次傷害 -50%;【海燈歸航】戰鬥開始時我方有 4 次「回港」(全隊共用,⛵ 標在媽祖卡牌底部,每 3 回合自動恢復 1 次,最多 4 次):友方(媽祖除外)受到致命傷害(包含即死)時,消耗 1 次改為「回港」——離開戰場 1 回合(不受任何傷害與效果、不行動),下個新回合以 60% HP、解除所有不利狀態並獲得護盾(媽祖特技 100%)重返戰場。',
+           sd:'千里眼:敵人躲不了也閃不掉,全隊攻擊一定打中!順風耳:每回合敵人第一招,被打的隊友少受 50% 傷害!海燈歸航:開場有 4 艘小船⛵(全隊共用,每 3 回合補 1 艘),隊友快倒下時坐船回港休息 1 回合,再帶著 60% 血、護盾、乾淨的狀態回來!' },
+      lv:{ base:'順風耳 -50%、回港返場 60% HP', bonus:'順風耳 +5%/級、返場 HP +5%/級', max:'順風耳 -70%、返場 80% HP(Lv5)', effect:'(被動)千里眼(對手不能隱身/迴避、全隊攻擊必中)固定;回港 ⛵ 開場 4 次全隊共用、每 3 回合恢復 1 次(固定)' },
+      bu:{ n:'聖母護世', d:'回港中的友方立即返場回滿 HP、倒下的友方 50% HP 復活、回港次數補滿;全體「媽祖庇佑」2 回合;特技 700% 敵全體分攤水屬性傷害+強力緩速 2 回合',
+           fd:'天上聖母現身海上!所有「回港」中的友方立即返場並回滿 HP,倒下的友方以 50% HP 復活,並把回港次數補滿為 4 次;全體友方獲得「媽祖庇佑」2 回合(受到致命傷害時保留 1 HP,並立即恢復媽祖特技 100% 的 HP,每人限觸發 1 次);同時掀起護世巨浪,以特技 700% 對敵方全體分攤水屬性傷害,並使全體對手「強力緩速」2 回合(速度 -50%,無法免疫)。',
+           sd:'媽祖顯靈!回港的隊友馬上回來還滿血,倒下的隊友半血復活,小船⛵補滿 4 艘!全隊拿到媽祖庇佑 2 回合(快倒下時留 1 滴血、馬上補特技 100%)。再用特技 700% 水屬性平分打所有敵人,讓他們強力變慢 2 回合!' },
+      gif:{ url:GIF('深海大漩渦.gif'), sfx:[['sfx-cleopatra-burst',1.0],['sfx-heal',0.85],['sfx-revive',0.7]], tint:'rgba(90,190,235,0.22)' },
+      tags:['死後重生','全體回復HP','解除不利狀態','再行動','無敵','回復能量','護盾','必中','減傷','加速','免死(HP剩1)','復活','全體傷害','水屬性傷害','緩速'],
+      bio:{ role:'守護大海與航行者的女神,本名林默,人稱天上聖母,身邊跟著千里眼、順風耳兩隻小精靈', trait:'溫柔沉靜、慈悲護人,風浪越大越鎮定', hobby:'在湄洲島點亮海燈、聽海風的聲音、守望每一艘出海的船', quote:'「別怕風浪,我一直看著你們回家的路。」', designer:DESIGNER },
+      lore:'守護大海的天上聖母,帶著千里眼、順風耳兩隻小精靈。千里眼看穿敵人的藏身與閃躲,順風耳搶先聽見攻擊的風聲;倒下的同伴會被海燈接回港灣、休整後再出航,「順風令」更能讓夥伴乘風連續出手——只要海燈還亮著,就沒有人會迷航。'
+    },
+    { name:'鄭成功', emoji:'⚓', img:'鄭成功.webp', pos:['120% auto','center 12%'], thumb:'center 10%', cls:'dmg', cats:['dmg','ctrl'], hex:{ heal:1, ctrl:6 },
+      st:{ hp:86, atk:30, sp:6, spd:18 },
+      s1:{ n:'破城砲', c:5, d:'攻擊 500% 火屬性傷害 1 名(必中);先拆掉目標所有防禦類有利狀態,再強力破防 2 回合＋封印技能 2 回合',
+           fd:'紅衣大砲對準敵城!以攻擊 500% 對 1 名對手造成火屬性傷害(必中),先「拆城」——消除目標身上所有防禦類有利狀態(護盾、減傷、格擋、無敵、免疫等,包含強力版;BOSS 每次最多消除 2 個),再使其「強力破防」2 回合(無法免疫),並「封印技能」2 回合。',
+           sd:'大砲轟城門!攻擊 500% 火屬性打 1 個對手(一定打中),先拆掉他所有防禦(護盾、減傷、格擋、無敵…),再讓他強力破防 2 回合,還不能用技能 2 回合!' },
+      s2:{ n:'艦隊齊射', c:6, d:'攻擊 120% 連續 5 段隨機攻擊對手(火屬性、必中),每段附加燃燒 2 回合;對破防中的對手必定暴擊',
+           fd:'鄭家水師全艦開砲!以攻擊 120% 連續 5 段隨機攻擊對手,造成火屬性傷害(必中),每段附加「燃燒」2 回合;對處於「破防」狀態的對手必定暴擊。',
+           sd:'整支艦隊連開 5 砲!每砲攻擊 120% 隨機打 1 個對手(一定打中)還會燒起來;破防的對手一定被暴擊!' },
+      tr:{ name:'鹿耳門漲潮', icon:'🌊', desc:'每回合 +1 層潮汐(最多 3;媽祖在隊 +2),每層攻擊 +15%、暴擊率 +10%;擊倒對手 +1 層;滿 3 層「大潮」:下一招必中、無視有利、傷害 ×1.5',
+           fd:'(被動)每個新回合開始,鄭成功獲得 1 層「潮汐」(最多 3 層;媽祖在隊時每回合 2 層),每層使自身攻擊 +15%、暴擊率 +10%;鄭成功每擊倒 1 名對手,潮汐 +1。潮汐滿 3 層時進入「大潮」:下一次技能或極限爆發必中、無視有利狀態、傷害 ×1.5,施放後潮汐歸零。',
+           sd:'每回合漲 1 層潮汐(媽祖在隊漲 2 層,最多 3 層),每層攻擊 +15%、暴擊率 +10%,打倒敵人再 +1 層!滿 3 層是大潮:下一招一定打中、無視好狀態、傷害 1.5 倍,用完歸零。' },
+      lv:{ base:'每層潮汐 攻擊 +15%', bonus:'+2%/天賦級', max:'每層 +23%(Lv5,滿潮 +69%)', effect:'(被動)每層暴擊率 +10%、大潮必中＋無視有利＋傷害 ×1.5(固定);媽祖在隊每回合漲 2 層' },
+      bu:{ n:'鹿耳門大捷', d:'攻擊 900% 敵全體分攤火屬性傷害(必中、無視有利)+強力破防+強力燃燒 2 回合;全隊攻擊 +50% 2 回合;潮汐補滿;乘潮奇襲:本回合結束後我方全隊再行動一輪(每場 1 次)',
+           fd:'潮水大漲,艦隊乘潮駛入台江!以攻擊 900% 對敵方全體分攤火屬性傷害(必中、無視有利狀態),使全體對手陷入「強力破防」與「強力燃燒」2 回合(無法免疫),全體友方攻擊上升 50% 2 回合,潮汐立即補滿 3 層;並發動「乘潮奇襲」:本回合結束時,我方全體立即再進行一整輪行動(對手跳過這一輪,不補能量、回合數不增加;每場限 1 次)。',
+           sd:'潮水大漲衝進台江!攻擊 900% 火屬性平分打所有敵人(一定打中),讓他們強力破防＋強力燃燒 2 回合,全隊攻擊 +50%,潮汐馬上滿 3 層!還有乘潮奇襲:這回合結束後我們全隊再動一輪,敵人只能看(每場 1 次)!' },
+      gif:{ url:GIF('多火球射線.gif'), sfx:[['sfx-explode',1.0],['sfx-crit',0.8],['sfx-rapidfire',0.7]], tint:'rgba(255,140,60,0.22)', dur:2470 },
+      tags:['再行動','破防','封印技能','必中','無視有利狀態','消除敵方有利狀態','燃燒','暴擊增加','增攻擊','造成傷害增加','單體傷害','火屬性傷害'],
+      bio:{ role:'統率鄭家水師的年輕將領,1661 年率艦隊經鹿耳門登陸台灣,1662 年使荷蘭人退出熱蘭遮城', trait:'意志堅定、果斷勇敢,越是逆風越不退', hobby:'看潮汐、研究海圖、在船頭練劍', quote:'「等潮水一來,全軍出航!」', designer:DESIGNER },
+      lore:'明末的海上名將,人稱國姓爺、延平郡王。天賦「鹿耳門漲潮」讓潮汐一層層累積,滿潮時一砲必中、威力倍增;「破城砲」拆掉敵人所有防禦,「艦隊齊射」對破防的敵人必定暴擊,爆發「鹿耳門大捷」重現 1661 年艦隊乘潮駛入台江的奇襲——潮水一來,全軍再出擊一輪!'
+    }
+  ];
+  window._URMZ_LIST = [];
+  L.forEach(function(e){
+    var nm = e.name;
+    window._URMZ_LIST.push(nm);
+    try{
+      if(typeof HERO_DB !== 'undefined' && !HERO_DB[nm]){
+        HERO_DB[nm] = { hp:e.st.hp, atk:e.st.atk, sp:e.st.sp, spd:e.st.spd,
+          s1:{ n:e.s1.n, c:e.s1.c, d:e.s1.d, fd:e.s1.fd, sd:e.s1.sd },
+          s2:{ n:e.s2.n, c:e.s2.c, d:e.s2.d, fd:e.s2.fd, sd:e.s2.sd } };
+      }
+    }catch(_eH){ console.warn('[URMZ HERO_DB]', nm, _eH); }
+    try{ if(typeof AVATARS !== 'undefined') _put(AVATARS, nm, e.emoji); }catch(_){}
+    try{ if(typeof HERO_IMGS !== 'undefined') _put(HERO_IMGS, nm, IMG(e.img)); }catch(_){}
+    try{ if(typeof HERO_IMG_POS !== 'undefined') _put(HERO_IMG_POS, nm, e.pos); }catch(_){}
+    try{ if(typeof HERO_THUMB_POS !== 'undefined') _put(HERO_THUMB_POS, nm, e.thumb); }catch(_){}
+    try{ if(typeof HERO_BIO !== 'undefined') _put(HERO_BIO, nm, e.bio); }catch(_){}
+    try{ if(typeof BURST_DB !== 'undefined') _put(BURST_DB, nm, { n:e.bu.n, d:e.bu.d, fd:e.bu.fd, sd:e.bu.sd }); }catch(_){}
+    try{ if(typeof HERO_LORE !== 'undefined') _put(HERO_LORE, nm, e.lore); }catch(_){}
+    try{ if(typeof HERO_TRAIT !== 'undefined') _put(HERO_TRAIT, nm, { name:e.tr.name, icon:e.tr.icon, desc:e.tr.desc, fd:e.tr.fd, sd:e.tr.sd }); }catch(_){}
+    try{ if(typeof BURST_GIF_DB !== 'undefined') _put(BURST_GIF_DB, e.bu.n, e.gif); }catch(_){}
+    try{ if(typeof HERO_CATEGORIES_OVERRIDE !== 'undefined') _put(HERO_CATEGORIES_OVERRIDE, nm, e.cats); }catch(_){}
+    try{ if(typeof HERO_HEX_OVERRIDE !== 'undefined') _put(HERO_HEX_OVERRIDE, nm, e.hex); }catch(_){}
+    try{ if(typeof _TRAIT_LV_INFO !== 'undefined') _put(_TRAIT_LV_INFO, nm, e.lv); }catch(_){}
+    try{ if(typeof HERO_PRIMARY_CLASS !== 'undefined') _put(HERO_PRIMARY_CLASS, nm, e.cls); }catch(_){}
+    try{ if(typeof HERO_SKILL_EFFECTS !== 'undefined') _put(HERO_SKILL_EFFECTS, nm, e.tags); }catch(_){}
+    try{ if(typeof _LXPS_HERO_SD !== 'undefined') _put(_LXPS_HERO_SD, nm, { trait:e.tr.sd, s1:e.s1.sd, s2:e.s2.sd, burst:e.bu.sd }); }catch(_){}
+    try{ if(typeof HERO_PORTRAIT_LIBRARY !== 'undefined') _put(HERO_PORTRAIT_LIBRARY, nm, [{ id:'default', name:'原始肖像', url:IMG(e.img) }]); }catch(_){}
+  });
+})();
+// ★★★ v5.391.0 UR 媽祖／鄭成功 登錄表 END ★★★

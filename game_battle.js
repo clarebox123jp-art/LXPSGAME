@@ -77,6 +77,7 @@ const _PLAYER_HERO_NAMES = new Set([
   '主神奧汀',
   // ★ v5.232.0 — 第四～六隻 UR(陳祈宏老師設計,只送不抽)存檔守門白名單(漏列 ⇒ _cleanseHeroLevelsByEmail 會誤刪正版持有者的等級)
   '究極神兵','天照大神','月讀大神',
+  '媽祖','鄭成功',   // ★ v5.391.0 — 第七、八隻 UR(陳祈宏老師設計,只送不抽)
   // ★ v3.15.42 — 5 年 3 班 龎苡睿設計(喚龍使‧蜜鶴林,v3.15.41 新增英雄,SSR 召喚池);先前漏列補上(否則守門計數/_cleanseHeroLevelsByEmail 會把它當非白名單英雄誤刪)
   '喚龍使‧蜜鶴林',
   // ★ v3.15.71 — 鐵匠(陳祈宏老師設計,SR 召喚池);存檔守門白名單(否則 _cleanseHeroLevelsByEmail 會把正版持有者的鐵匠 heroLevels 鍵誤刪)
@@ -3949,6 +3950,23 @@ function playSkillFX(skillName,actor,targets){
         },i*100);
       });
       break;
+    // ★ v5.391.0 — UR 媽祖/鄭成功技能特效(沿用既有粒子/光環/光束)
+    case '平浪':
+      playSfx('sfx-heal',0.75);
+      targets.forEach(function(h,i){ setTimeout(function(){ try{ ringFX(h,'#9fe0ff',650); var rc=cardRect(h); if(rc) spawnParticles(rc.x,rc.y,{count:12,color:'#bff0ff',size:6,spread:50,duration:700,gravity:-0.15}); }catch(_){} }, i*90); });
+      break;
+    case '順風令':
+      playSfx('sfx-powerup',0.75);
+      if(t0){ try{ beamFX(actor,t0,'#bff0ff',380); ringFX(t0,'#bff0ff',700); var rc2=cardRect(t0); if(rc2) spawnParticles(rc2.x,rc2.y,{count:16,color:'#e6fbff',size:6,spread:60,duration:700}); }catch(_){} }
+      break;
+    case '破城砲':
+      playSfx('sfx-explode',0.85);
+      if(t0){ try{ beamFX(actor,t0,'#ff9a5c',320); setTimeout(function(){ flashCard(t0,'rgba(255,120,60,0.8)',260); var rc3=cardRect(t0); if(rc3) spawnParticles(rc3.x,rc3.y,{count:20,color:'#ff8a3c',size:8,spread:70,duration:800,gravity:0.2}); }, 220); }catch(_){} }
+      break;
+    case '艦隊齊射':
+      playSfx('sfx-rapidfire',0.8);
+      targets.forEach(function(h,i){ setTimeout(function(){ try{ flashCard(h,'rgba(255,140,60,0.65)',180); var rc4=cardRect(h); if(rc4) spawnParticles(rc4.x,rc4.y,{count:10,color:'#ffb36b',size:6,spread:45,duration:600,gravity:0.25}); }catch(_){} }, i*120); });
+      break;
     default:break;
   }
 }
@@ -6352,6 +6370,21 @@ const BURST_UPGRADE_DEF = {
     [3,'復活+強力再生(特技65%)+特技×1040% 分攤光屬性+強力失明/燃燒2回合'],
     [4,'復活+強力再生(特技70%)+特技×1120% 分攤光屬性+強力失明/燃燒2回合(MAX)'],
   ] },
+  // ★ v5.391.0 — 第七、八隻 UR 爆發逐級(每級 +10% 乘算 = _runBurst _burstMult;MAX 起爆發給的狀態 +1 回合 = window._URMZ.burst 的 X)
+  '媽祖': { rows: [
+    [0,'回港者返場回滿+倒下者50%HP復活+小船補滿;媽祖庇佑2回合(致命留1HP+回特技100%);特技×700% 敵全體分攤水屬性+強力緩速2回合'],
+    [1,'媽祖庇佑2回合(回特技110%);特技×770% 分攤水屬性+強力緩速2回合'],
+    [2,'媽祖庇佑2回合(回特技120%);特技×840% 分攤水屬性+強力緩速2回合'],
+    [3,'媽祖庇佑2回合(回特技130%);特技×910% 分攤水屬性+強力緩速2回合'],
+    [4,'媽祖庇佑3回合(回特技140%);特技×980% 分攤水屬性+強力緩速3回合(MAX)'],
+  ] },
+  '鄭成功': { rows: [
+    [0,'攻擊×900% 敵全體分攤火屬性(必中、無視有利)+強力破防/燃燒2回合+全隊攻擊+50% 2回合+潮汐補滿+乘潮奇襲'],
+    [1,'攻擊×990% 分攤火屬性+強力破防/燃燒2回合+全隊攻擊+55% 2回合'],
+    [2,'攻擊×1080% 分攤火屬性+強力破防/燃燒2回合+全隊攻擊+60% 2回合'],
+    [3,'攻擊×1170% 分攤火屬性+強力破防/燃燒2回合+全隊攻擊+65% 2回合'],
+    [4,'攻擊×1260% 分攤火屬性+強力破防/燃燒3回合+全隊攻擊+70% 3回合(MAX)'],
+  ] },
   '月讀大神': { rows: [
     [0,'特技×800% 敵全體分攤暗屬性+強力魅惑2回合+清除所有有利(含強力)'],
     [1,'特技×880% 敵全體分攤暗屬性+強力魅惑2回合+清除所有有利'],
@@ -7790,6 +7823,7 @@ function _bvStatDownImmune(h, label){
 }
 function addStatus(h,t,dur=1){
   if(!h||h.curHp<=0) return;
+  try{ if(h._mzPort && window._URMZ && window._URMZ.statusBlock(h, t)) return; }catch(_eMzSb){}   // ★ v5.391.0 回港中不受任何狀態
   try{ if(h.name === '太空人' && window._SR7 && window._SR7.statusBlock(h, t)) return; }catch(_eSr7Sb){}   // ★ v5.376.0 SR 七職人:太空人天賦「太空訓練」不會暈眩/睡眠
   try{ if(typeof G !== 'undefined' && G && G._fm && window._fmCtrlResist && window._fmCtrlResist(h, t)) return; }catch(_eFmCr){}   // ★ v5.282.0 英魂陣型 奔雷鐵騎/閃電風暴:受到硬控時機率抵抗(沒有陣型時不進來)
   try{ if(typeof G !== 'undefined' && G && G._cstJsB2 && h.side && G._cstJsB2[h.side] && window._cstJsB2Reflect(h, t, dur)) return; }catch(_eCstJsB2r){}   // ✨ 命星 ✦ 軍師 b2「空城反間星」:G._cstJsB2 只由點亮的 b2 寫入
@@ -8463,6 +8497,7 @@ function addStatus(h,t,dur=1){
 }
 function addBuff(h,t,dur=1){
   if(!h||h.curHp<=0) return;
+  try{ if(window._URMZ && typeof G !== 'undefined' && G && G._urmz && window._URMZ.buffBlock(h, t)) return; }catch(_eMzBb){}   // ★ v5.391.0 媽祖千里眼:對手不能隱身/迴避;鄭成功紅衣大砲星
   // ✨ 命星 偵探 s2「揭露真面目星」:被揭露者 2 回合內無法獲得隱身/迴避(欄位只由點亮的命星寫入 ⇒ 未點亮時恆不成立)
   try{ if(h._cstRevealB && window._cstRevealOn && window._cstRevealOn(h) && window._CST_REVEAL_TY && window._CST_REVEAL_TY.indexOf(t) >= 0){ log('✨ 命星:【' + h.name + '】真面目已被揭露,無法隱身或迴避!'); return; } }catch(_eCstRvB){}   // ★ v5.262.0 比對戰鬥序號
   try{ if(typeof G !== 'undefined' && G && Array.isArray(G._cstFcD) && G._cstFcD.length && window._CST_REVEAL_TY && window._CST_REVEAL_TY.indexOf(t) >= 0 && window._cstAmDayFoe && window._cstAmDayFoe(h)){ log('✨ 命星:永晝高懸,【' + h.name + '】無所遁形,無法隱身或迴避!'); return; } }catch(_eCstAmB2b){}   // ✨ v5.269.0 命星 天照大神 b2(沒有命星戰場卡 ⇒ 不判斷)
@@ -15328,6 +15363,7 @@ function _lxpsBattleOpenFx(){
     });
     // ★ v5.18.0 — 動態英雄天賦引擎:戰開模板 T1(自身)/T2(全隊)(三期;守門 _traitSeal/imprison/confused 在引擎內)
     try{ if(typeof window._dynTraitBattleStart === 'function') window._dynTraitBattleStart(); }catch(_eDynT12){ console.warn('[動態英雄 戰開天賦 hook] 失敗', _eDynT12); }
+    try{ if(window._URMZ) window._URMZ.battleStart(); }catch(_eMzBs){ console.warn('[UR 媽祖/鄭成功 戰開 hook] 失敗', _eMzBs); }   // ★ v5.391.0 小船 ⛵×4、千里眼、潮汐歸零
     try{ if(window._SR7) window._SR7.battleStart(); }catch(_eSr7Bs){ console.warn('[SR 七職人 戰開天賦 hook] 失敗', _eSr7Bs); }   // ★ v5.376.0 魔法少女變身/美容師完美妝容
     // ★ v5.30.0 — 裝備開場效果(openBuff/openShield;飾品「開場增益」詞條與基礎功能)
     try{ if(typeof _gearBattleOpen === 'function') _gearBattleOpen(); }catch(_eGearOpen){ console.warn('[裝備戰開 hook] 失敗', _eGearOpen); }
@@ -16093,6 +16129,7 @@ function renderCard(h){
             <div style="position:absolute;right:6px;top:-1px;font-size:10px;color:${_isWall?'#fff':'#ddeeff'};text-shadow:0 0 3px #000;font-weight:bold;">${_pcur}/${_pmax}</div>
           </div>`;
         }
+        try{ if(window._URMZ) _summonsHtml += window._URMZ.cardBars(h); }catch(_eMzCb){}   // ★ v5.391.0 媽祖 ⛵ 回港次數 / 鄭成功 🌊 潮汐 / 回港中
         // ★ v5.232.0 — 月讀大神「衛月」召喚物 HP 條(比照操偶;碎裂中顯示補充倒數)
         if(h.name === '月讀大神' && ((h._moonActive && (h._moonHp||0) > 0) || (h._moonRespawnIn||0) > 0)){
           const _mmax = h._moonHpMax || 1;
@@ -19348,7 +19385,10 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   //   檔案為 540×960 faststart 輕量版(各約 1.4～1.9MB);本筆上線前尚無玩家抓過這三個檔名,不需 bump _BV_ASSET_VER。
   '天照大神': { url: _BV_RAW('天照大神動畫.mp4') },
   '月讀大神': { url: _BV_RAW('月讀大神動畫.mp4') },
-  '究極神兵': { url: _BV_RAW('究極神兵動畫.mp4') }
+  '究極神兵': { url: _BV_RAW('究極神兵動畫.mp4') },
+  // ★ v5.391.0 — 第七、八隻 UR 爆發動畫(2026-11-13 老師 Google Vids 生成;540×960 輕量版;新檔名、無舊快取 ⇒ 不需 bump _BV_ASSET_VER)
+  '媽祖': { url: _BV_RAW('媽祖動畫.mp4') },
+  '鄭成功': { url: _BV_RAW('鄭成功動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
@@ -19981,7 +20021,11 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
   //   → 世界BOSS 5000cap/鐵律1.31 自動;動畫音效由 execBurst 依 BURST_GIF_DB[bd.n] 自動播(註冊即生效);
   //   倍率=1+burstLv×0.05(引擎內手動乘,BURST_UPGRADE_DEF 五列自動對齊)。失敗不中斷,落回原鏈(無分支=無效果但流程完好)。
   // ★ v5.376.0 SR 七職人 爆發(鏈首;傳入既有 _burstMult ⇒ 爆發等級/煉丹/桃園羈絆加成全部沿用)
-  if(window._SR7 && window._SR7.isBurst(name)){
+  if(window._URMZ && window._URMZ.isBurst(name)){   // ★ v5.391.0 UR 媽祖「聖母護世」/鄭成功「鹿耳門大捷」
+    try{ window._URMZ.burst(h, side, _burstMult, name, _burstLv); }
+    catch(_eMzBu){ console.warn('[UR 媽祖/鄭成功] 爆發 hook 失敗', _eMzBu); }
+  }
+  else if(window._SR7 && window._SR7.isBurst(name)){
     try{ window._SR7.burst(h, side, _burstMult, name, _burstLv); }   /* ★ v5.384.0 第 5 參數 = 爆發等級(MAX 時狀態回合 +1,_lv5Extra 慣例) */
     catch(_eSr7Bu){ console.warn('[SR 七職人] 爆發 hook 失敗', _eSr7Bu); }
   }
@@ -34166,6 +34210,7 @@ function _wbContribUid(opts){
 function doDmg(target, rawDmg, opts={}){
   // opts: {ignoreBuffs, ignoreEvasion, piercing, isSkill}
   // ★ v5.376.0 SR 七職人:太空人迴避/主廚代替承傷(回 -1 = 這次不成立)、魔法少女變身增傷、主廚減傷
+  if(rawDmg > 0 && target && window._URMZ){ try{ const _mzr = window._URMZ.preDmg(target, rawDmg, opts || {}); if(_mzr === -1) return 0; if(typeof _mzr === 'number' && _mzr > 0) rawDmg = _mzr; }catch(_eMzPd){} }   // ★ v5.391.0 UR 媽祖/鄭成功:回港中不受傷、順風耳減傷、千里眼必中、潮汐/大潮增傷
   if(rawDmg > 0 && target && window._SR7){ try{ const _sr7r = window._SR7.preDmg(target, rawDmg, opts || {}); if(_sr7r === -1) return 0; if(typeof _sr7r === 'number' && _sr7r > 0) rawDmg = _sr7r; }catch(_eSr7Pd){} }
   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹 50%/射手星神 s2 箭囊(G._cstMyHalf、actor._cstSgQv 只由點亮的命星寫入 ⇒ 未點亮時條件恆不成立)
   if(rawDmg > 0 && opts && typeof G !== 'undefined' && G && (G._cstMyHalf || (opts.actor && opts.actor._cstSgQv))){ try{ rawDmg = window._cstS9Raw(target, rawDmg, opts); }catch(_eCstS9R){} }
@@ -35900,6 +35945,7 @@ function doDmg(target, rawDmg, opts={}){
         }
       }catch(_eAngF){ console.warn('[克雷爾 天賦① fixedDmg] 失敗', _eAngF); }
     }
+    try{ if(_yyOldHpF > 0 && target && target.curHp === 0 && window._URMZ) window._URMZ.ko(target, opts); }catch(_eMzKoF){}   // ★ v5.391.0 UR 媽祖(fixedDmg 路徑)
     try{ if(_yyOldHpF > 0 && target && target.curHp === 0 && typeof window._cstOnKo === 'function') window._cstOnKo(target, opts); }catch(_eCstKoF){}   // ✨ 命星 ✦ 倒下事件(fixedDmg 路徑,所有保命之後)
     try{ if(_yyOldHpF > 0 && target && target.curHp > 0 && target.name === '武士' && target._cst) window._cstWsS2Low(target); }catch(_eCstWsS2lf){}   // ✨ 命星 ✦ 武士 s2(fixedDmg 路徑)
     try{ showPopup(target, '-'+rawDmg, 'dmg'); }catch(_){}
@@ -40286,6 +40332,7 @@ function doDmg(target, rawDmg, opts={}){
   try{ if(target.curHp===0 && old>0 && !opts._ignoreDeathImmune && G && Array.isArray(G._cstFcD) && G._cstFcD.length && window._cstCtB2Restore(target)){ try{ renderCard(target); }catch(_){} } }catch(_eCstCtB2m){}   // ✨ v5.267.0 命星 電腦老師 b2 還原點(只在有命星戰場卡時檢查)
   try{ if(target.curHp===0 && old>0) window._cstAsB2Mark(target); }catch(_eCstAsB2m){}
   try{ if(target.curHp > 0 && old > 0 && target.name === '武士' && target._cst) window._cstWsS2Low(target); }catch(_eCstWsS2l){}   // ✨ 命星 ✦ 武士 s2:所有保命結算完、仍活著 ⇒ 判定是否首次跌破 30%
+  try{ if(target.curHp===0 && old>0 && window._URMZ) window._URMZ.ko(target, opts); }catch(_eMzKo){}   // ★ v5.391.0 UR 媽祖庇佑/海燈歸航(排在所有保命之後);沒被救 ⇒ 鄭成功擊倒漲潮
   if(target.curHp===0){
     log(`💀 [${target.name}] 倒下！`);
     // ★ v3.11.19 — 幽幽 S1「惡鬼撲食」吞食擊殺回血轉護盾(5 年 4 班 高同學設計)
@@ -41950,6 +41997,8 @@ function _healCurseGate(target, amt){
 try{ window._healCurseGate = _healCurseGate; }catch(_eHCG2){}
 
 function doHeal(target, rawAmt, opts={}){
+  try{ if(rawAmt > 0 && target && window._URMZ && typeof G !== 'undefined' && G && G._urmz) rawAmt = window._URMZ.healMul(target, rawAmt, opts || {}); }catch(_eMzHm){}   // ★ v5.391.0 回港中不吃治療;順風令命星
+  if(!(rawAmt > 0) && target && target._mzPort) return 0;
   try{ if(rawAmt > 0 && window._SR7) window._SR7.onHeal(target, rawAmt, opts || {}); }catch(_eSr7Oh){}   // ★ v5.376.0 七職人 雙人合聲:技能治療跟唱
   try{ if(rawAmt > 0 && typeof G !== 'undefined' && G && G._cstMyHalf) rawAmt = window._cstS9Heal(rawAmt, opts); }catch(_eCstS9H){}
   try{ if(rawAmt > 0 && target && typeof G !== 'undefined' && G && G._fm && window._fmHealMod) rawAmt = window._fmHealMod(target, rawAmt, opts); }catch(_eFmHeal){}   // ★ v5.282.0 英魂陣型 治療 +X%/仁智雙輝/春風疾行(沒有陣型時不進來)   // ✨ v5.272.0 命星 沐雲雪 b2 雙虹:治療 50%(G._cstMyHalf 只由點亮的命星寫入)
@@ -46172,6 +46221,7 @@ function execSkill(a, sk, cost, stype){
   try{ if(sk && !sk.p && window._cstR) window._cstR.onSkill(a, sk); }catch(_eCstROnSk1){}   // ✨ v5.314.0 R 卡命星:我方使用技能(直笛 b2 安可合奏)
   try{ if(sk && !sk.p && typeof G !== 'undefined' && G && (G[a.side] || []).some(function(d){ return d && d._cstDcB2; })) a._cstDcArm = (G._actSeq || 0); }catch(_eCstDb2s1){}   // ★ v5.262.0 審查:(review8_2 M1)舞者 b2 手動:只「預約」,endAction 確認真的施放了技能才計次(選目標時取消再改選不再灌水;_cstDcB2 只由點亮的 b2 寫入)
   // ★ v5.376.0 SR 七職人(玩家路徑):_activeSkLvMult 已設好 ⇒ 引擎傳基礎值,doDmg/doHeal 自動套等級;引擎自行選目標並 endAction
+  try{ if(window._URMZ && window._URMZ.has(n) && window._URMZ.skill(a, sk, cost)) return; }catch(_eMzSk){ console.warn('[UR 媽祖/鄭成功] 玩家技能 hook 失敗', _eMzSk); }   // ★ v5.391.0
   try{ if(window._SR7 && window._SR7.has(n) && window._SR7.skill(a, sk, cost)) return; }catch(_eSr7Sk){ console.warn('[SR 七職人] 玩家技能 hook 失敗', _eSr7Sk); }
   // ====== 劍士 ======
   // ★ v3.13.31(2026-06-03) — 修正:hero_db.js 描述為「連續攻擊3次」,但原實作只打 2 次
@@ -58096,6 +58146,7 @@ function startTurn(){
   G.waitFor=null; // 清除等待旗標
   // 還原被暴風雪/擊退效果降低的spd（在排序前還原，避免永久降速）
   // 只有當該角色即將行動時才還原（已排到最後、要輪到它了）
+  let _mzForced = null; try{ if(window._URMZ) _mzForced = window._URMZ.preCut(); }catch(_eMzPc){}   // ★ v5.391.0 媽祖順風令:被指定的隊友立即連續行動 2 次(插隊)
   const alive=[...G.p1,...G.p2].filter(h=>h.curHp>0&&!h.acted);
   if(!alive.length){
     // ★ v1.0.20260428.4010 — [診斷] 進入 nextRound
@@ -58121,7 +58172,8 @@ function startTurn(){
     }
   });
 
-  const next=alive.sort(sortFn)[0];
+  let next=alive.sort(sortFn)[0];
+  try{ if(_mzForced && alive.indexOf(_mzForced) >= 0) next = _mzForced; }catch(_eMzPc2){}
   try{ if(next && next._cstPush) next._cstPush = 0; }catch(_eCstPush){}   // ✨ 命星「擊退行動條」只影響被擊退者的下一次行動:輪到他時清除
   // ★ v3.15.33 任務4:復活無敵在「自己回合開始」解除(於 next 確定後、本回合各 hook 前)
   try{
@@ -58755,6 +58807,7 @@ function startTurn(){
   // ✨ v5.272.0 命星 ⚙ 第二批後半:法老王 s2 流沙(跳過行動判定之前)/雙魚 b2 鏡海之淚結算/沐雲雪 b2 補收尾(條件欄位只由點亮的命星寫入 ⇒ 未點亮時不進入)
   if(next && typeof G !== 'undefined' && G && ((Array.isArray(G._cstFcD) && G._cstFcD.length) || G._cstPsTearOn || G._cstMyHalf || G._cstMyArm || G._cstTzOn)){ try{ window._cstS9ActStart(next); }catch(_eCstS9As){} }
   // Skip if stunned/frozen/sleeping/paralyzed/trapped/detained
+  try{ if(next && next._mzPort && window._URMZ && window._URMZ.portSkip(next)) return; }catch(_eMzPs){}   // ★ v5.391.0 回港休整中:跳過行動
   const skip=['stun','freeze','sleep','para','trap','detain','_confess','imprison'];
   const skipStatus=next.status.find(s=>skip.includes(s.type));
   if(skipStatus){
@@ -59718,6 +59771,7 @@ function _restoreRoundSnapshot(snap){
 }
 
 function nextRound(){
+  try{ if(window._URMZ && typeof G !== 'undefined' && G && G._urmz && G._urmz.raid && window._URMZ.raidRound()) return; }catch(_eMzRaid){}   // ★ v5.391.0 鄭成功「乘潮奇襲」:我方全隊再一輪(不補能量、回合數不加)
   // ★ v3.15.13 — 動物學家「資產保護」(_assetGuard)逐回合遞減(動物守護 S2 / 動物大軍爆發設 =2,2 回合後失效);此旗標用於免疫埃及豔后減能量/查封
   try{
     if(G._assetGuard){
@@ -60823,6 +60877,7 @@ G.p1.concat(G.p2).forEach(h=>{
   // 能量補充（每回合固定+3）
   G.energy.p1=Math.min(10,G.energy.p1+3);
   G.energy.p2=Math.min(10,G.energy.p2+3);
+  try{ if(window._URMZ) window._URMZ.roundStart(); }catch(_eMzRs){ console.warn('[UR 媽祖/鄭成功 回合開始 hook] 失敗', _eMzRs); }   // ★ v5.391.0 回港返場/小船恢復/漲潮
   try{ if(window._SR7) window._SR7.roundStart(); }catch(_eSr7Rs){ console.warn('[SR 七職人 回合開始 hook] 失敗', _eSr7Rs); }   // ★ v5.376.0 偶像歌手應援/漫畫家分鏡/變身與鐵鍋倒數
   try{ if(window._cstCap && window._cstCap.noteBase) window._cstCap.noteBase(); }catch(_eCstG5b){}
   try{ if(typeof G !== 'undefined' && G && G._fm && window._fmRoundStart) window._fmRoundStart(); }catch(_eFmRs){}   // ★ v5.282.0 英魂陣型 每回合回復 X% 最大 HP(沒有陣型時不進來)   // ★ v5.262.0 命座 G5:敵方基本 +3 先入帳 ⇒ 標記入帳並結算延後的命星扣能(沒有命星扣能時只寫 G._cstCap 記號)
@@ -61808,8 +61863,8 @@ function _realAiAct(a){
   }
   _v3_12_17_trace('通過暈眩判定');
   const opp_side = a.side==='p1'?'p2':'p1';
-  const enemies = G[opp_side].filter(h=>h.curHp>0);
-  const allies  = G[a.side].filter(h=>h.curHp>0);
+  const enemies = G[opp_side].filter(h=>h.curHp>0 && !h._mzPort);   // ★ v5.391.0 回港中的英雄不是目標
+  const allies  = G[a.side].filter(h=>h.curHp>0 && !h._mzPort);
   _v3_12_17_trace('enemies/allies 計算完', 'enemies=' + enemies.length + ', allies=' + allies.length);
   if(!enemies.length){
     _v3_12_17_trace('⚠ enemies=0 silent return');
@@ -62009,7 +62064,7 @@ function _realAiAct(a){
     + ', canSeal=' + canSeal
     + ', invLen=' + inv.length);
 
-  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧','神籤','水盤守護','狐火護佑','巨蟹庇佑頌','豐收神光','淨土之風','現烤馬卡龍','煥然一新'];   /* ★ v5.376.0 SR 七職人 點心師傅/美容師治療技 */   // ★ v5.192.0 追加:處女星神 S1/S2(單體/全體治療+可復活+淨化):不登錄的話 AI 治療決策路徑永遠選不到它(評分函式已回 -1 排除於攻擊選擇) ｜ ★ v5.191.0 — 巨蟹星神 S2(全體治療+護盾+復活1名)同理
+  const HEAL_SKILLS = ['救贖神光','治癒之風','神聖鎚擊','天堂樂章','全體治療','賢者之石','持續恢復','神之賜福','慈悲之雨','黃昏詩歌','獻祭的餘暉','雙小提琴協奏曲','餘音繞樑','轉禍為福','道具複製','不熟練習曲','邏輯優化','色彩噴濺','動物守護','一壺鐵觀音','一壺包種茶','流浪者之歌','天籟之音','治療之光','復活術','BUG修復','杏林春霧','神籤','水盤守護','狐火護佑','巨蟹庇佑頌','豐收神光','淨土之風','現烤馬卡龍','煥然一新','平浪'];   /* ★ v5.376.0 SR 七職人 點心師傅/美容師治療技 ｜ ★ v5.391.0 UR 媽祖 S1 平浪 */   // ★ v5.192.0 追加:處女星神 S1/S2(單體/全體治療+可復活+淨化):不登錄的話 AI 治療決策路徑永遠選不到它(評分函式已回 -1 排除於攻擊選擇) ｜ ★ v5.191.0 — 巨蟹星神 S2(全體治療+護盾+復活1名)同理
   const TANK_SKILLS = ['挺身守護','嘲諷','群體挑釁','聖殿領域','護盾術','強勢對決','懲戒之盾','不動如山','復仇之盾','金鐘罩','仁王挺立','崛起鬥志','忠犬守護','愛護校犬','動物守護','冰晶凝聚','樹葉守護','死氣結界','羽刃陣列','仁王不動','龍岩逆鱗','中華鐵鍋'];   /* ★ v5.376.0 SR 七職人 主廚 */   // ★ v5.191.0 — 金牛星神 S2(強化版仁王·代全隊承傷)同理登錄坦克決策清單 ｜ ★ v5.193.0 追加:摩羯星神 S2(自身2回合反震80%,純防禦不宜列入攻擊評分)
   const isHealer = HEAL_SKILLS.includes(a.s1.n)||HEAL_SKILLS.includes(a.s2.n)||(typeof HERO_PRIMARY_CLASS!=='undefined' && HERO_PRIMARY_CLASS[a.name]==='heal');
   const isTank   = TANK_SKILLS.includes(a.s1.n)||TANK_SKILLS.includes(a.s2.n)||a.name==='守衛'||a.name==='武鬥家'||a.name==='大力士'||a.name==='小力';
@@ -62083,6 +62138,7 @@ function _realAiAct(a){
   // ── HELPER: 估算技能傷害 ──
   function estSkillDmg(sk){
     const n=sk.n, foes=enemies;
+    try{ if(window._URMZ && window._URMZ.has(n)){ const _mzV = window._URMZ.est(a, n, foes); if(_mzV !== null && _mzV !== undefined) return _mzV; } }catch(_eMzEst){}   // ★ v5.391.0
     try{ if(window._SR7 && window._SR7.has(n)){ const _sr7V = window._SR7.est(a, n, foes); if(_sr7V !== null && _sr7V !== undefined) return _sr7V; } }catch(_eSr7Est){}   // ★ v5.376.0 SR 七職人 AI 估值(治療/坦克技回 -1,走下方 HEAL_SKILLS/TANK_SKILLS 決策)
     // ★ v5.293.0 — 《繪卷新章》新敵人技能估值(資料驅動)+ 新 SSR 楊戩
     try{ if(window._CN2 && window._CN2.skillMap && window._CN2.skillMap[n] && typeof window._cn2EstSkill === 'function'){ const _cn2V = window._cn2EstSkill(a, n, foes.length); if(_cn2V !== null) return _cn2V; } }catch(_eCn2Est){}
@@ -62329,7 +62385,7 @@ function _realAiAct(a){
     const _woundedCount = G[a.side].filter(h=>h&&h.curHp>0&&h.curHp<h.hp*0.75).length;
     const _preferGroupHeal = _woundedCount >= 2;
     // 群體治療技能(實際恢復「多名/全體」友方 HP 者;單體治療/復活/純淨化不列入)
-    const GROUP_HEAL_SKILLS = ['全體治療','治癒之風','天堂樂章','餘音繞樑','雙小提琴協奏曲','一壺鐵觀音','流浪者之歌','天籟之音','BUG修復','神籤'];   /* ★ v5.376.0 點心師傅 S2 原本的「下午茶時間」已換成職人絕活「甜點融合」(非治療),第二輪移出 */
+    const GROUP_HEAL_SKILLS = ['全體治療','治癒之風','天堂樂章','餘音繞樑','雙小提琴協奏曲','一壺鐵觀音','流浪者之歌','天籟之音','BUG修復','神籤','平浪'];   /* ★ v5.391.0 媽祖平浪 */   /* ★ v5.376.0 點心師傅 S2 原本的「下午茶時間」已換成職人絕活「甜點融合」(非治療),第二輪移出 */
     const _isGroupHealSk = sk => sk && GROUP_HEAL_SKILLS.includes(sk.n);
     const healSks = (_abAllowHeal && healNeeded.curHp > 0)
       ? [a.s1,a.s2].filter(sk=>HEAL_SKILLS.includes(sk.n))
@@ -69285,6 +69341,10 @@ function aiUseSkill(a,sk,cost,pref){
   //   由鏈尾統一收尾(a.acted=true → startTurn);能量已於鏈頭扣除;
   //   AI 路徑不經 _activeSkLvMult → 引擎內手動乘 (1+skLv×0.05)。
   // ★ v5.376.0 SR 七職人(AI 路徑):純效果,鏈尾統一收尾;「安可！」自己接手再行動 ⇒ 回 'return' 時直接結束本函式
+  else if(window._URMZ && window._URMZ.has(n)){   // ★ v5.391.0 UR 媽祖/鄭成功(AI 路徑):純效果,鏈尾統一收尾
+    try{ window._URMZ.skillAI(a, sk, cost, t, al); }
+    catch(_eMzAi){ console.warn('[UR 媽祖/鄭成功] AI 技能 hook 失敗', _eMzAi); }
+  }
   else if(window._SR7 && window._SR7.has(n)){
     let _sr7Ai = 'done';
     try{ _sr7Ai = window._SR7.skillAI(a, sk, cost, t, al); }
@@ -69621,6 +69681,7 @@ function _lxpsEgyptPairRevivePlayer(){
   }catch(_eEPR){ console.warn('[🔧 雙王互救 玩家版] 失敗', _eEPR); }
 }
 function checkWin(){
+  try{ if(window._URMZ && typeof G !== 'undefined' && G && G._urmz) window._URMZ.koScan(); }catch(_eMzKs){}   // ★ v5.391.0 海燈歸航:即死/死亡宣告等不經 doDmg 的倒下
   // ★ v3.17.0(2026-06-30)— 記錄「本場曾出現過敵人」(逃走小怪卡死根治的判定依據)。
   //   寶箱怪/小惡魔逃跑時會把自己從 G.p2 splice 移除 → p2 變空陣列;下方 v3.11.4 防呆
   //   見「空陣列」就 return false 不判勝利(原為擋黑暗球 init 失敗 p2 從沒生成的漏洞),
@@ -84986,6 +85047,81 @@ function _showNewHeroAnnouncement(forceShow){
     return _head + _defs.map(_card).join('') + _how;
   };
 
+  // ★★★ v5.391.0(2026-11-13)— 第七、八隻 UR「媽祖／鄭成功」登場介紹(版型沿用 buildNewURTrioSection 的 _card 寫法;雙版文案;技能文字讀 hero_db 單一真相)
+  const buildNewURDuoSection = () => {
+    const _pc = (window._artStyle === 'cute');
+    const _sdOf = (n, k) => { try{ return (window._LXPS_HERO_SD && window._LXPS_HERO_SD[n] && window._LXPS_HERO_SD[n][k]) || ''; }catch(_){ return ''; } };
+    const _defs = [
+      { n:'媽祖', emo:'🌊', ord:'第七隻', col:'#9fe0ff', glow:'rgba(120,210,255,0.7)', bg:'rgba(14,40,70,0.95)', role:'💚 守護・輔助',
+        cute:'守護大海的媽祖來了!身邊跟著千里眼、順風耳兩隻小精靈:敵人躲不了也閃不掉,每回合第一招還會被提前聽到、傷害變少。最特別的是<b>海燈小船⛵</b>:隊友快倒下時會坐船回港休息,下回合又回來!還能下「順風令」讓隊友馬上連動 2 次!',
+        prem:'守護大海與航行者的天上聖母,本名林默,千里眼與順風耳兩位小精靈隨侍。<br><span style="color:#9fe0ff;font-weight:800;">⛵ 海燈歸航:</span>開場 4 艘小船全隊共用,友方受到致命傷改為「回港」離場 1 回合,下回合淨化、帶護盾返場;每 3 回合補 1 艘。<br><span style="color:#9fe0ff;font-weight:800;">🌬️ 順風令:</span>指定隊友清除不利、+5 能量並立即連續行動 2 次。<br><span style="color:#9fe0ff;font-weight:800;">👁️ 千里眼‧順風耳:</span>對手無法隱身迴避、全隊攻擊必中,每回合對手第一招傷害減半。' },
+      { n:'鄭成功', emo:'⚓', ord:'第八隻', col:'#ffb36b', glow:'rgba(255,160,90,0.7)', bg:'rgba(62,24,10,0.95)', role:'⚔️ 輸出・控場',
+        cute:'國姓爺鄭成功出航!每回合潮水都會漲高(🌊),攻擊越來越強,漲滿 3 層就是「大潮」:下一招一定打中、傷害 1.5 倍!放大絕「鹿耳門大捷」後,我們全隊還能<b>再多動一整輪</b>,敵人只能看!和媽祖同隊時潮水漲得更快喔!',
+        prem:'明末的海上名將,人稱國姓爺、延平郡王,1661 年率艦隊乘潮經鹿耳門駛入台江。<br><span style="color:#ffb36b;font-weight:800;">🌊 鹿耳門漲潮:</span>每回合累積潮汐(每層攻擊 +15%、暴擊 +10%),滿 3 層「大潮」⇒ 下一招必中、無視有利、傷害 ×1.5;媽祖在隊每回合漲 2 層。<br><span style="color:#ffb36b;font-weight:800;">💥 破城砲・艦隊齊射:</span>拆光防禦＋強力破防＋封印技能,再以 5 段砲擊必暴破防目標。<br><span style="color:#ffb36b;font-weight:800;">⛵ 乘潮奇襲:</span>爆發後我方全隊再行動一整輪(每場 1 次)。' }
+    ];
+    const _card = (d) => {
+      const _h = (typeof HERO_DB !== 'undefined' && HERO_DB[d.n]) || null;
+      if(!_h) return '';
+      const _img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[d.n]) || ('./' + encodeURIComponent(d.n + '.webp'));
+      const _tr = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[d.n]) || null;
+      const _bu = (typeof BURST_DB !== 'undefined' && BURST_DB[d.n]) || null;
+      const _t  = _pc ? (_sdOf(d.n,'trait') || (_tr && _tr.desc) || '') : ((_tr && _tr.desc) || '');
+      const _s1 = _pc ? (_sdOf(d.n,'s1') || _h.s1.d) : _h.s1.d;
+      const _s2 = _pc ? (_sdOf(d.n,'s2') || _h.s2.d) : _h.s2.d;
+      const _bd = _pc ? (_sdOf(d.n,'burst') || (_bu && _bu.d) || '') : ((_bu && _bu.d) || '');
+      return `
+      <div class="new-hero-card" style="border-color:${d.col};
+        background:linear-gradient(135deg,${d.bg},rgba(10,8,20,0.97));
+        box-shadow:0 8px 30px rgba(0,0,0,0.55),0 0 44px ${d.glow},inset 0 1px 0 rgba(255,255,255,0.12);
+        position:relative;overflow:hidden;margin-bottom:18px;">
+        <div style="position:absolute;top:14px;right:14px;font-size:18px;font-weight:900;
+          background:linear-gradient(135deg,#fff3c8,${d.col});color:#1a1030;
+          padding:4px 14px;border-radius:20px;letter-spacing:3px;box-shadow:0 4px 14px ${d.glow};
+          animation:newHeroSparkle 1.8s ease-in-out infinite;">${d.emo} UR 最高稀有度</div>
+        <div style="font-size:clamp(19px,1.9vw,25px);color:${d.col};margin-bottom:16px;font-weight:800;letter-spacing:1px;position:relative;padding-right:170px;">
+          ${d.emo} ${d.ord} UR ── ${d.n} ${d.emo}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:clamp(14px,2.5vw,24px);align-items:flex-start;position:relative;">
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div class="new-hero-portrait-wrap" style="border-color:${d.col};box-shadow:0 0 50px ${d.glow},inset 0 0 20px rgba(0,0,0,0.35);">
+              <img src="${_img}" alt="${d.n}" loading="lazy" onload="try{ window._lxpsFaceFitImg && window._lxpsFaceFitImg(this); }catch(_){}" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<div style=&quot;font-size:80px;text-align:center;line-height:1.6;&quot;>${d.emo}</div>');">
+            </div>
+            <div style="font-size:clamp(28px,3.6vw,40px);font-weight:900;color:#fff3e0;text-shadow:0 0 14px ${d.glow},0 2px 4px rgba(0,0,0,0.85);letter-spacing:2px;">${d.n}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+              <span style="font-size:17px;color:#1a1030;background:linear-gradient(135deg,#fff3c8,${d.col});border-radius:8px;padding:4px 14px;font-weight:800;">${d.role}</span>
+              <span style="font-size:17px;color:#fff;background:rgba(255,255,255,0.10);border:1.5px solid ${d.col};border-radius:8px;padding:4px 14px;font-weight:700;">❤️${_h.hp} ⚔️${_h.atk} ✨${_h.sp} 💨${_h.spd}</span>
+            </div>
+          </div>
+          <div style="flex:1 1 320px;min-width:0;">
+            <div style="background:rgba(0,0,0,0.28);border-left:4px solid ${d.col};padding:14px 16px;border-radius:8px;margin-bottom:14px;">
+              <div style="font-size:18px;color:#ffe;line-height:1.75;">${_pc ? d.cute : d.prem}</div>
+            </div>
+            ${_tr ? `<div style="background:rgba(255,255,255,0.06);border:1.5px solid ${d.col};border-radius:10px;padding:12px 16px;margin-bottom:8px;">
+              <div style="font-size:19px;color:${d.col};font-weight:800;margin-bottom:5px;">${_tr.icon||'✨'} 天賦:${_tr.name||''}</div>
+              <div style="font-size:16px;color:#ffe;line-height:1.55;">${_t}</div></div>` : ''}
+            <div class="new-hero-skill-row"><div style="font-size:19px;color:${d.col};font-weight:800;margin-bottom:5px;">💠 ${_h.s1.n} <span style="font-size:15px;color:#ddd;font-weight:600;">(消耗 ${_h.s1.c||0} 能量)</span></div><div style="font-size:16px;color:#ffe;line-height:1.55;">${_s1}</div></div>
+            <div class="new-hero-skill-row"><div style="font-size:19px;color:${d.col};font-weight:800;margin-bottom:5px;">💠 ${_h.s2.n} <span style="font-size:15px;color:#ddd;font-weight:600;">(消耗 ${_h.s2.c||0} 能量)</span></div><div style="font-size:16px;color:#ffe;line-height:1.55;">${_s2}</div></div>
+            ${_bu ? `<div class="new-hero-burst-row"><div style="font-size:19px;color:${d.col};font-weight:800;margin-bottom:5px;">⚡ 爆發技:${_bu.n}</div><div style="font-size:16px;color:#ffe;line-height:1.55;">${_bd}</div></div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    };
+    const _head = `
+      <div style="text-align:center;padding:6px 16px 14px;">
+        <div style="font-size:clamp(26px,3.2vw,38px);font-weight:900;color:#bff0ff;text-shadow:0 0 18px rgba(120,210,255,0.85);">🌊 媽祖 × 鄭成功 ── 鹿耳門的潮水來了!</div>
+        <div style="font-size:clamp(16px,1.8vw,20px);color:#ddeeff;margin-top:6px;font-weight:600;">${_pc
+          ? '傳說鄭成功的船隊進鹿耳門時水太淺,向媽祖祈求後潮水大漲!所以兩人同隊時,鄭成功每回合會漲 2 層潮汐喔!'
+          : '民間傳說 1661 年鄭成功艦隊進鹿耳門遇水淺,祈求媽祖後潮水大漲——兩人同隊時「鹿耳門神蹟」發動,鄭成功每回合漲 2 層潮汐。'}</div>
+      </div>`;
+    const _how = `
+      <div style="margin-top:4px;padding:14px 16px;background:rgba(120,90,30,0.2);border-left:4px solid #ffcc44;border-radius:8px;font-size:16px;color:#ffe9c8;line-height:1.65;">
+        🏆 <span style="font-weight:800;">如何取得:</span>${_pc
+          ? '和其他 UR 一樣<b style="color:#ffe6a8;">抽不到</b>!由老師頒發,或是<b style="color:#7fe3ff;">答對 2000、4000、6000 題</b>拿到的 UR 自選召喚卷也能選他們!想了解鄭成功的故事,可以去<b style="color:#ffcc66;">台灣關的台南</b>找找看喔!'
+          : '與其他 UR 相同 ── <span style="color:#ffe6a8;font-weight:800;">無法抽取</span>,由老師頒發,或以答對不重複 2000／4000／6000 題獎章的 UR 自選召喚卷選擇;UR 英雄替換卷可換。鄭成功的歷史可在<span style="color:#ffcc66;font-weight:900;">台灣關・台南(安平古堡)</span>的知識題中找到。'}
+      </div>`;
+    return _head + _defs.map(_card).join('') + _how;
+  };
+
   // ★ v3.13.96(2026-06-09)— 「近期活動與新角色」改成主題縮圖選單(原本一長串內容太長)。
   //   每個主題 = 縮圖 + 標題,點擊開「詳細視窗」(點視窗外面或右上 ✕ 關閉,不會關掉主選單)。
   //   新增「🔮 SSR 角色取得方法」主題,放在 UR 角色之下、世界 BOSS 之上。所有既有 builder 沿用為詳細內容。
@@ -86712,6 +86848,11 @@ function _showNewHeroAnnouncement(forceShow){
   };
 
   const _themes = [
+    // ★ v5.391.0 — 第七、八隻 UR 媽祖/鄭成功登場介紹卡(最新內容置頂;登錄表缺席時整張不列出)
+    ...((window._URMZ_LIST && window._URMZ_LIST.length) ? [
+      { id:'ur_mz', emoji:'🌊', accent:'#9fe0ff', title:'NEW!媽祖 × 鄭成功・第七、八隻 UR 降臨', sub:'海燈歸航 · 順風令 · 潮汐大潮 · 乘潮奇襲 · 老師頒發或答題獎章 UR 自選卷',
+        imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['媽祖']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['鄭成功']) || ''],
+        detail: buildNewURDuoSection() } ] : []),
     // ★ v5.376.0 — SR 七職人登場介紹卡(最新內容置頂;登錄表缺席時整張不列出)
     ...((window._SR7_LIST && window._SR7_LIST.length) ? [
       { id:'sr7', emoji:'🌟', accent:'#ffb3e0', title:'NEW!七職人登場・全新 SR 英雄', sub:'魔法少女 · 偶像歌手 · 點心師傅 · 漫畫家 · 美容師 · 主廚 · 太空人 · 每位 6 顆命星',
@@ -86745,7 +86886,7 @@ function _showNewHeroAnnouncement(forceShow){
     { id:'mainstory', emoji:'📖', accent:'#c9a0ff', title:((window._MAINSTORY_ADMIN_ONLY===false)?'NEW!主線劇情故事與自訂主角系統':'即將推出！主線劇情故事與自訂主角系統（預告）'), sub:'捏出你自己的主角 · 七章異世界冒險 · 覺醒成 SSR', imgs:['./' + encodeURIComponent('主線_封面_序章.jpg'), './' + encodeURIComponent('主線_序章_雙月河堤.jpg')], detail: buildMainStorySection() },   // ★ v5.20.0 — 選單列補 2 張縮圖(封面+雙月河堤·零新圖)·sub 捏主角前置
     { id:'pets',   emoji:'🐾', accent:'#7dffb0', title:((window._petSysPublicOpen&&window._petSysPublicOpen())?'NEW!寵物馴養大系統':'即將推出！寵物馴養大系統（預告）'), sub:((window._petSysPublicOpen&&window._petSysPublicOpen())?'馴養寵物 · 寵物小屋 · 好感度與忠誠夥伴 · 知識問答':'敬請期待 · 馴養寵物 · 寵物小屋 · 好感度 · 知識問答'), imgs:[_imgPetHouse], detail: buildPetSystemSection() },
     { id:'guide',  emoji:'📚', accent:'#7dffb0', title:'遊戲指引（新手必看）', sub:'戰鬥、英雄、模式全攻略 · 圖文章節說明', imgs:[], detail: '<div style="text-align:center;padding:24px 16px 18px;"><div style="font-size:52px;margin-bottom:12px;">📚</div><div style="font-size:clamp(22px,2.6vw,30px);font-weight:900;color:#7dffb0;margin-bottom:10px;">遊戲指引（新手必看）</div><div style="font-size:clamp(16px,1.8vw,21px);color:#cceedd;line-height:1.7;margin-bottom:20px;">圖文章節說明，帶你快速了解所有遊戲系統！<br>⚔️ 故事冒險 13 章:認識遊戲・主線劇情・我的主角・戰鬥系統・英雄培育・命座突破・英魂陣型・遊戲模式・好友支援・考試複習・每日習慣・寵物系統・帳號與求救<br>🏝 荒島求生・🎮 小遊戲・🎨 創藝工坊 也各有自己的指引</div><button onclick="try{this.closest(\'[style*=z-index:9970]\').remove();}catch(_){}try{this.closest(\'[style*=z-index:9960]\').remove();}catch(_){}try{playSfx(\'sfx-confirm\',0.6);}catch(_){}setTimeout(function(){try{window._showNewbieGuide(0);}catch(e){}},200);" style="padding:16px 48px;font-size:clamp(20px,2.3vw,28px);font-weight:900;background:linear-gradient(135deg,rgba(40,120,70,0.95),rgba(60,180,100,0.95));border:2.5px solid rgba(100,255,160,0.9);color:#d0ffe8;border-radius:14px;cursor:pointer;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;letter-spacing:1px;box-shadow:0 0 24px rgba(80,220,140,0.5);">📖 開啟遊戲指引</button></div>' },
-    { id:'ur',     emoji:'🏆', accent:'#ffd34d', title:'成績優異・答題達人限定 UR 角色', sub:'六位 UR · 老師頒發 · 答對 2000／4000／6000 題獎章送 UR 自選召喚卷', imgs:[_imgClair, _imgIliya, _imgOdin], detail: buildURDebutSection() + buildIliyaDebutSection() + buildOdinDebutSection() + buildNewURTrioSection() },   // ★ v5.232.0 三位→六位(舊行備查:sub:'三位 UR 強勢登場 · 由老師頒發',detail 只接前三張)
+    { id:'ur',     emoji:'🏆', accent:'#ffd34d', title:'成績優異・答題達人限定 UR 角色', sub:'八位 UR · 老師頒發 · 答對 2000／4000／6000 題獎章送 UR 自選召喚卷', imgs:[_imgClair, _imgIliya, _imgOdin], detail: buildURDebutSection() + buildIliyaDebutSection() + buildOdinDebutSection() + buildNewURTrioSection() + ((window._URMZ_LIST && window._URMZ_LIST.length) ? buildNewURDuoSection() : '') },   /* ★ v5.391.0 六位→八位 */   // ★ v5.232.0 三位→六位(舊行備查:sub:'三位 UR 強勢登場 · 由老師頒發',detail 只接前三張)
     { id:'ssr',    emoji:'🔮', accent:'#cc99ff', title:'SSR 角色取得方法',     sub:'所有取得 SSR 角色的方法總整理', imgs:[_imgTun],            detail: buildSsrMethodsSection() },
     { id:'wb',     emoji:'🐉', accent:'#ff7a4d', title:'世界 BOSS 討伐戰',     sub:'多人連線一起討伐巨龍',         imgs:[_imgDragon],         detail: buildWorldBossSection() },
     { id:'twboss', emoji:'🗾', accent:'#7ec8ff', title:'高難度台灣 BOSS + 至寶', sub:'環島 10 大魔王 + 台灣至寶系統', imgs:[],                  detail: buildTaiwanBossSection() },
@@ -91988,5 +92129,749 @@ window._FM_DEFS = {
              epShow: epShow, epAfterRender: epAfterRender, epFinishGate: epFinishGate, epBack: epBack,
              srShow: srShow, srConfirm: srConfirm, srBack: srBack, _S: S, _EP: EP, _SR: SR };
 })();
+
+
+// ════════════════════════════════════════════════════════════════════════
+// ★★★ v5.391.0 第七、八隻 UR「媽祖／鄭成功」戰鬥引擎 window._URMZ(老師 2026-11-13 16:32 改版＋裁定;16:36「繼續」)★★★
+//   資料在 hero_db.js 檔尾「UR 媽祖／鄭成功 登錄表」;設計書:專案知識庫 claude/UR媽祖鄭成功_設計書.md v3。
+//   ★ 招牌機制(全遊戲唯一):
+//     媽祖  ① 海燈歸航:開場 ⛵×4 全隊共用,友方致命傷(含即死)改為「回港」離場 1 回合,下回合 60% HP＋淨化＋護盾返場;每 3 回合補 1 艘。
+//           ② 順風令:指定隊友清除所有不利、我方 +5 能量(本回合不能放爆發)、立即連續行動 2 次(插隊,不吃命星 G2)。
+//     鄭成功 ① 潮汐/大潮:每回合漲潮(每層攻擊 +15%、暴擊 +10%),滿 3 層下一招必中、無視有利、傷害 ×1.5。
+//           ② 乘潮奇襲:爆發後本回合結束時,我方全隊再行動一整輪(對手跳過,不補能量、回合數不加;每場 1 次)。
+//   接線點(本檔各處只加一行 hook,全部 try 包住、找不到 window._URMZ 時零影響):
+//     doDmg 最頂端 preDmg(回港無敵/順風耳減傷/千里眼必中/潮汐增傷)、doDmg 倒下前 ko(海燈歸航/媽祖庇佑/擊倒漲潮;主路徑＋fixedDmg 路徑)、
+//     checkWin 開頭 koScan(即死等不經 doDmg 的倒下保險網)、addStatus/addBuff 開頭(回港中不受效果、千里眼不給對手隱身迴避)、
+//     doHeal 開頭 healMul、startTurn(回港跳過行動、順風令插隊 preCut)、nextRound 開頭 raidRound(乘潮奇襲)、
+//     nextRound +3 能量後 roundStart、戰開天賦 battleStart、execSkill/aiUseSkill/_runBurst/_realAiAct 估值、renderCard 卡牌條。
+//   ★ 作用域鐵則:本區一律用 window._lxpsAtkv / window._lxpsSpv。
+//   ★ 技能等級:玩家路徑 doDmg/doHeal 由 _activeSkLvMult 自動乘(本區傳基礎值);AI 路徑手動乘 (1+技能等級×0.05);護盾/加速兩路徑都手動乘。
+//   ★ BOSS:全部是倍率傷害/我方保護,沒有 HP%、固定傷害、即死(鐵律 1.31);千里眼對 BOSS/龍王也生效(老師裁定)。
+// ════════════════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  var NAMES = ['媽祖','鄭成功'];
+  var SK = { '平浪':'媽祖', '順風令':'媽祖', '破城砲':'鄭成功', '艦隊齊射':'鄭成功' };
+  var BU = { '媽祖':1, '鄭成功':1 };
+  var PICK = { '平浪':'none', '順風令':'ally_other', '破城砲':'enemy', '艦隊齊射':'none' };
+  var PORT_MAX = 4, PORT_EVERY = 3;
+  var DEF_TY = ['shield','bigshield','halfDmg','nezhaGuard','niuGuard','nioGuard','_jzyBlock','immune','reviveImmune','statusImmune','ctrlImmune','immovable','absorb','evasion','spdAvoid','_windEvade','hidden'];
+  var REVEAL = function(){ return window._CST_REVEAL_TY || ['evasion','spdAvoid','_windEvade','hidden','_youyouDarkwalk']; };
+
+  function SPV(a){ try{ return window._lxpsSpv(a); }catch(_){ return Math.floor(((a&&a.sp)||0)*(1+((a&&a.sp)||0)*0.01)); } }
+  function ATKV(a){ try{ return window._lxpsAtkv(a); }catch(_){ return Math.floor(((a&&a.atk)||0)*(1+((a&&a.atk)||0)*0.01)); } }
+  function L(m){ try{ log(m); }catch(_){} }
+  function BN(h, t, c, d){ try{ bannerFX(h, t, c || '#ffd866', d || 800); }catch(_){} }
+  function RC(h){ try{ renderCard(h); }catch(_){} }
+  function hasG(){ return typeof G !== 'undefined' && !!G; }
+  function alive(side){ return ((hasG() && G[side]) || []).filter(function(x){ return x && x.curHp > 0 && !x._mzPort; }); }
+  function opp(side){ return side === 'p1' ? 'p2' : 'p1'; }
+  function rnd(arr){ return arr.length ? arr[Math.floor(Math.random() * arr.length)] : null; }
+  function isBoss(t){ try{ return typeof _zeusIsTrueBoss === 'function' && !!_zeusIsTrueBoss(t); }catch(_){ return false; } }
+  function star(h, slot){ try{ return !!(h && window._cstHasN && window._cstHasN(h, slot, h.name)); }catch(_){ return false; } }
+  function god(h){ try{ return !!(h && window._cstGodOn && window._cstGodOn(h, h.name)); }catch(_){ return false; } }
+  function traitLv(name){ try{ return (typeof _getTraitLv === 'function') ? (_getTraitLv(name) || 0) : 0; }catch(_){ return 0; } }
+  function traitOff(h){ try{ return (h.status || []).some(function(s){ return s && (s.type === '_traitSeal' || s.type === 'imprison' || s.type === 'confused'); }); }catch(_){ return false; } }
+  function bid(){ try{ return (typeof _cstBidD === 'function') ? _cstBidD() : 0; }catch(_){ return 0; } }
+  function bidOk(v){ try{ return (typeof _cstBidOk === 'function') ? _cstBidOk(v) : false; }catch(_){ return false; } }
+  function slotOf(a, n){ return (a && a.s1 && a.s1.n === n) ? 's1' : 's2'; }
+  function skLvAI(a, n){ var sl = slotOf(a, n); try{ if(a._skLv && typeof a._skLv[sl] === 'number') return a._skLv[sl]; }catch(_){} return 0; }
+  function curSkLv(){ try{ return (typeof _activeSkLv === 'number') ? _activeSkLv : 0; }catch(_){ return 0; } }
+  function later(fn, ms){ try{ if(typeof _pSetTimeout === 'function') return _pSetTimeout(fn, ms); }catch(_){} return setTimeout(fn, ms); }
+  function fx(n, a, ts){ try{ playSkillFX(n, a, ts || []); }catch(_){} }
+  function batchOn(){ try{ beginBatchTotals(); return true; }catch(_){ return false; } }
+  function batchOff(on){ if(on){ try{ setTimeout(function(){ try{ endBatchTotals(); }catch(_){} }, 60); }catch(_){} } }
+  function addShield(h, amt){
+    if(!h || h.curHp <= 0 || !(amt > 0)) return;
+    h.shield = (h.shield || 0) + Math.floor(amt);
+    try{ showShieldVFX(h, 'gain'); }catch(_){}
+    BN(h, '🛡 +' + Math.floor(amt), '#aaddff', 800); RC(h);
+  }
+  function addHaste(h, dur, mult){
+    if(!h || h.curHp <= 0) return;
+    try{ addBuff(h, 'haste', dur); var hb = (h.buffs || []).find(function(b){ return b && b.type === 'haste'; }); if(hb){ hb.dur = Math.max(hb.dur || 0, dur); hb._cstSpd = Math.max(hb._cstSpd || 1, mult || 1.5); } }catch(_){}
+    RC(h);
+  }
+  function heal(t, amt, a){ try{ if(t && t.curHp > 0 && !t._mzPort) doHeal(t, Math.max(1, Math.floor(amt)), { actor:a, isHeal:true, noDice:true, noWarhorn:true }); }catch(_){} }
+  function hit(t, amt, a, extra){
+    if(!t || t.curHp <= 0) return 0;
+    var o = { actor:a, isSkill:true }; if(extra){ for(var k in extra) o[k] = extra[k]; }
+    try{ return doDmg(t, Math.max(1, Math.floor(amt)), o) || 0; }catch(_){ return 0; }
+  }
+  // 解除全部不利(含強力):沿用究極神兵 _ur4CleanseN(強力優先、會還原降素質狀態)
+  function cleanseAllStrong(h){
+    var n = 0;
+    try{ if(typeof _ur4CleanseN === 'function') n = _ur4CleanseN(h, 99) || 0; else { clearBadStatus(h); } }catch(_){}
+    RC(h); return n;
+  }
+  function gift(side, n){   // 隊友給的能量:本回合不能拿去放爆發(沿用命座 G3 的 lock 帳;不受命星 +4 上限)
+    try{
+      var b = G.energy[side] || 0; G.energy[side] = Math.min(10, b + n); var real = G.energy[side] - b;
+      try{ if(window._cstCap && window._cstCap.gainEnergy) window._cstCap.gainEnergy(side, 0); var s = G._cstCap; if(s && s.lock && real > 0) s.lock[side] = (s.lock[side] || 0) + real; }catch(_){}
+      return real;
+    }catch(_){ return 0; }
+  }
+
+  // ══════════════ 媽祖:天賦狀態 ══════════════
+  function mazuOf(side){   // 我方存活、天賦沒被封的媽祖
+    return ((hasG() && G[side]) || []).filter(function(x){ return x && x.name === '媽祖' && x.curHp > 0 && !x._mzPort && !traitOff(x); })[0] || null;
+  }
+  function S(){ if(!G._urmz || G._urmz.b !== bid()){ G._urmz = { b:bid(), port:{}, portMax:{}, ear:{}, raid:null, raidUsed:{} }; } return G._urmz; }
+  function portN(side){ var s = S(); return s.port[side] || 0; }
+  function portMaxOf(side){ var s = S(); return s.portMax[side] || PORT_MAX; }
+  function earPct(m){ var p = 0.50 + traitLv('媽祖') * 0.05; if(god(m)) p += 0.20; return Math.min(0.90, p); }
+  function backPct(){ return 0.60 + traitLv('媽祖') * 0.05; }
+  function enterPort(t, m, why){
+    var s = S();
+    s.port[t.side] = Math.max(0, (s.port[t.side] || 0) - 1);
+    t.curHp = 1;
+    t._mzPort = { r:(G.round || 1), b:bid(), sh:Math.max(1, Math.floor(SPV(m))), t2:star(m, 't2') };
+    t.acted = true;
+    try{ t.status = (t.status || []).filter(function(x){ return x && x.type === 'deathimmune'; }); }catch(_){}
+    L('⛵ [' + t.name + '] ' + (why || '受到致命傷害') + ',海燈亮起——坐上小船回港休整!下個新回合返場。(剩 ' + portN(t.side) + ' 艘)');
+    BN(t, '⛵ 回港!', '#9fe0ff', 1100);
+    try{ var mm = mazuOf(t.side); if(mm) RC(mm); }catch(_){}
+    RC(t);
+  }
+  function canPort(t){
+    if(!t || !hasG() || t._mzPort || t._scarabEscaped || isBoss(t)) return null;
+    var m = mazuOf(t.side); if(!m) return null;
+    if(portN(t.side) <= 0) return null;
+    if(t === m || t.name === '媽祖'){
+      if(!god(m) || bidOk(m._mzSelfPortG)) return null;   // 神格覺醒:媽祖自己也能回港 1 次
+    }
+    // 自帶的神格覺醒復活優先(不浪費小船)
+    try{
+      if(t.name === '究極神兵' && window._cstGodOn(t, '究極神兵') && !bidOk(t._cstUbGodG)) return null;
+      if(t.name === '天照大神' && window._cstGodOn(t, '天照大神') && !bidOk(t._cstAmGodG)) return null;
+    }catch(_){}
+    return m;
+  }
+  function blessSave(t){   // 媽祖庇佑(爆發):致命傷保留 1 HP 並回復
+    try{
+      var b = (t.buffs || []).find(function(x){ return x && x.type === '_mzBless'; });
+      if(!b || !bidOk(b._b)) return false;
+      t.buffs = t.buffs.filter(function(x){ return x !== b; });
+      t.curHp = 1;
+      var amt = Math.max(1, b._amt || 1);
+      L('🙏 [' + t.name + '] 媽祖庇佑!在致命一擊前被海風托住,保留 1 HP!');
+      BN(t, '🙏 媽祖庇佑!', '#ffe8a8', 1000);
+      try{ doHeal(t, amt, { actor:b._by || t, isHeal:true, noDice:true, noWarhorn:true, _urmzBless:1 }); }catch(_){}
+      if(b._clean){ try{ if(typeof _clearOneBadStatus === 'function') _clearOneBadStatus(t); }catch(_){} }
+      RC(t); return true;
+    }catch(_){ return false; }
+  }
+  function portReturn(h){
+    var p = h._mzPort; if(!p) return;
+    delete h._mzPort;
+    var pct = p.t2 ? 1.0 : backPct();
+    h.curHp = Math.max(1, Math.min(h.hp, Math.floor((h.hp || 1) * pct)));
+    cleanseAllStrong(h);
+    addShield(h, p.sh || 1);
+    if(p.t2){ try{ addBuff(h, 'halfDmg', 1); }catch(_){} }
+    L('⛵ [' + h.name + '] 休整完畢,乘著海燈的光重返戰場!(' + h.curHp + ' HP、不利狀態全清、獲得護盾)');
+    BN(h, '⛵ 返場!', '#9fe0ff', 1000);
+    RC(h);
+  }
+  function stripReveal(side){   // 千里眼:對手已有的隱身/迴避立即失效
+    var ty = REVEAL(), n = 0;
+    ((hasG() && G[side]) || []).forEach(function(f){
+      if(!f || f.curHp <= 0 || !Array.isArray(f.buffs)) return;
+      var rm = f.buffs.filter(function(b){ return b && ty.indexOf(b.type) >= 0 && !b._protected; });
+      if(rm.length){ f.buffs = f.buffs.filter(function(b){ return rm.indexOf(b) < 0; }); n += rm.length; RC(f); }
+    });
+    return n;
+  }
+
+  // ══════════════ 鄭成功:潮汐 ══════════════
+  function tideStep(h){ return 0.15 + traitLv('鄭成功') * 0.02 + (star(h, 't1') ? 0.05 : 0); }
+  function tideAdd(h, n, why){
+    if(!h || h.curHp <= 0 || traitOff(h)) return;
+    var b = h._zcTide || 0;
+    h._zcTide = Math.min(3, b + n);
+    if(h._zcTide > b){
+      if(h._zcTide >= 3 && b < 3){ L('🌊 [' + h.name + '] ' + (why ? why + ',' : '') + '大潮來了!下一次技能或極限爆發必中、無視有利狀態、傷害 ×1.5!'); BN(h, '🌊 大潮!', '#7fd4ff', 1100); }
+      else L('🌊 [' + h.name + '] ' + (why ? why + ',' : '') + '潮汐 +' + (h._zcTide - b) + '(現在 ' + h._zcTide + ' 層)');
+      RC(h);
+    }
+  }
+  function floodBegin(a){   // 施放技能/爆發開頭:滿潮 ⇒ 本次行動(同一個行動序號)吃大潮
+    if(!a || a.name !== '鄭成功') return false;
+    if((a._zcTide || 0) >= 3 && !traitOff(a)){
+      a._zcFloodSeq = (G._actSeq || 0); a._zcFloodLay = a._zcTide;
+      a._zcTide = god(a) ? 1 : 0;
+      L('🌊 [' + a.name + '] 大潮!這一擊必中、無視有利狀態、傷害 ×' + (god(a) ? 2 : 1.5) + '!');
+      BN(a, '🌊 大潮!', '#7fd4ff', 900);
+      if(god(a)){ L('🌟 [' + a.name + '] 神格覺醒「開臺聖王」:大潮後潮汐保留 1 層!'); }
+      RC(a);
+      return true;
+    }
+    return false;
+  }
+  function floodOn(a){ return !!(a && a._zcFloodSeq && a._zcFloodSeq === (G._actSeq || 0)); }
+  function tideLayers(a){ return floodOn(a) ? (a._zcFloodLay || 0) : (a._zcTide || 0); }
+  function floodAfter(a){   // 大潮施放的技能結束後:命星 t2 艦隊追加砲擊
+    try{
+      if(!a || !floodOn(a) || !star(a, 't2') || a._zcFloodT2 === a._zcFloodSeq) return;
+      a._zcFloodT2 = a._zcFloodSeq;
+      var foes = alive(opp(a.side)); if(!foes.length) return;
+      L('✨ [' + a.name + '] 命星:大潮砲擊!艦隊追加一輪砲擊!');
+      foes.forEach(function(f){ hit(f, ATKV(a) * 0.8, a, { isAoe:true, elem:'fire', element:'fire', mustHit:true, ignoreEvasion:true, _urmzT2:1 }); });
+    }catch(_){}
+  }
+  var ATKUP = '_zcAtkUp';
+  function atkUpRemove(h, why){
+    try{
+      var amt = h._zcAtkAmt || 0;
+      if(amt > 0){ h.atk = Math.max(1, (h.atk || 0) - amt); if(why) L('⚓ [' + h.name + '] 國姓軍威結束,攻擊力恢復(-' + amt + ')。'); }
+      delete h._zcAtkAmt;
+    }catch(_){}
+  }
+  function atkUpReconcile(h){
+    try{ if(h && h._zcAtkAmt > 0 && !(h.buffs || []).some(function(b){ return b && b.type === ATKUP; })){ atkUpRemove(h, 'expire'); RC(h); } }catch(_){}
+  }
+  function atkUpApply(h, pct, dur){
+    if(!h || h.curHp <= 0) return;
+    try{
+      if(h._zcAtkAmt > 0) atkUpRemove(h);
+      h.buffs = (h.buffs || []).filter(function(b){ return !(b && b.type === ATKUP); });
+      addBuff(h, ATKUP, dur);
+      var b = (h.buffs || []).find(function(x){ return x && x.type === ATKUP; });
+      if(!b) return;
+      var amt = Math.max(1, Math.floor((h.atk || 0) * pct));
+      b._atk = amt; b._pct = pct; h._zcAtkAmt = amt; h.atk = (h.atk || 0) + amt;
+      BN(h, '⚓ 攻擊 +' + Math.round(pct * 100) + '%', '#ffb36b', 700); RC(h);
+    }catch(_){}
+  }
+
+  // ══════════════ 技能本體(玩家/AI 共用)══════════════
+  //   isAI:AI 路徑(傷害/治療手動乘等級);lv:技能等級(0~9)。
+  var RUN = {
+    '平浪': function(a, t, isAI, lv){
+      var m = 1.3 * (star(a, 's1') ? (1.7 / 1.3) : 1);
+      var base = SPV(a) * m, eff = Math.floor(base * (1 + lv * 0.05));
+      var al = alive(a.side);
+      L('🌊 [' + a.name + '] 平浪!海面風平浪靜,全隊回復 HP、解除所有不利狀態並獲得無敵 1 回合!');
+      fx('平浪', a, al);
+      al.forEach(function(x){
+        var before = x.curHp;
+        heal(x, isAI ? eff : base, a);
+        var got = Math.max(0, x.curHp - before);
+        var over = eff - got;
+        if(over > 0) addShield(x, over);
+        cleanseAllStrong(x);
+        try{ addBuff(x, 'immune', 1); }catch(_){}
+        if(star(a, 's1') && x.hp > 0 && before < x.hp * 0.30){ try{ addBuff(x, 'hpRegen', 2); x._hpRegenAmt = Math.max(x._hpRegenAmt || 0, Math.max(1, Math.floor(SPV(a) * 0.3))); }catch(_){} }
+        RC(x);
+      });
+      if(star(a, 's1')) L('✨ [' + a.name + '] 命星:平浪餘波!治療提升為特技 170%,危急的隊友獲得持續回復!');
+    },
+    '順風令': function(a, t, isAI, lv){
+      if(!t || t === a || t.curHp <= 0 || t._mzPort) return;
+      a._mzS2R = (G.round || 1); a._mzS2B = bid();
+      L('🌬️ [' + a.name + '] 順風令!順風立起——[' + t.name + '] 立即連續行動 2 次!');
+      fx('順風令', a, [t]);
+      BN(t, '🌬️ 順風令!', '#bff0ff', 1100);
+      cleanseAllStrong(t);
+      var g = gift(a.side, 5);
+      if(g > 0) L('🌬️ 我方能量 +' + g + '(本回合不能拿來施放極限爆發)');
+      var mult = 1 + 0.5 * (1 + lv * 0.05);
+      alive(a.side).forEach(function(x){ addHaste(x, 2, mult); });
+      L('🌬️ 全隊乘風加速(速度 +' + Math.round((mult - 1) * 100) + '%)2 回合!');
+      t._mzCut = { left:2, cur:false, b:bid(), boost:star(a, 's2') ? 1.3 : 1 };
+      if(t.name === '鄭成功'){
+        if(star(a, 's2')){ tideAdd(t, 3, '順風令(命星:順風破浪)'); }
+        else tideAdd(t, 1, '順風令');
+      }
+      RC(t); RC(a);
+    },
+    '破城砲': function(a, t, isAI, lv){
+      if(!t || t.curHp <= 0) return;
+      floodBegin(a);
+      var m = star(a, 's1') ? 6.5 : 5.0;
+      L('💥 [' + a.name + '] 破城砲!紅衣大砲對準 [' + t.name + ']!');
+      fx('破城砲', a, [t]);
+      // 拆城:消除所有防禦類有利(含強力;BOSS 最多 2 個)
+      try{
+        var cap = isBoss(t) ? 2 : 99, rm = [], gone = 0;
+        (t.buffs || []).forEach(function(b){ if(rm.length + gone < cap && b && DEF_TY.indexOf(b.type) >= 0 && !b._protected && !b._noStripe) rm.push(b); });
+        if(rm.length){ t.buffs = t.buffs.filter(function(b){ return rm.indexOf(b) < 0; }); try{ _ur4RestoreBuffStats(t, rm); }catch(_){} }
+        if((t.shield || 0) > 0 && rm.length < cap){ t.shield = isBoss(t) ? Math.floor(t.shield / 2) : 0; gone++; }
+        if(rm.length || gone){ L('💥 拆城![' + t.name + '] 的 ' + (rm.length + gone) + ' 層防禦被轟開!'); BN(t, '💥 拆城!', '#ff9a5c', 900); }
+      }catch(_){}
+      hit(t, ATKV(a) * m * (isAI ? (1 + lv * 0.05) : 1), a, { elem:'fire', element:'fire', mustHit:true, ignoreEvasion:true });
+      if(t.curHp > 0){
+        try{ if(typeof _ur4PushStrong === 'function' && _ur4PushStrong(t, 'breakDef', 2, a)) BN(t, '💣 強力破防', '#ff7f50', 800); }catch(_){}
+        try{ addStatus(t, 'seal', 2); if(hasStatus(t, 'seal')) BN(t, '🚫 封印技能', '#aa66ff', 800); }catch(_){}
+        if(star(a, 's1')){ try{ if(!Array.isArray(t.status)) t.status = []; t._zcNoBuffUntil = (G.round || 1) + 2; L('✨ [' + a.name + '] 命星:紅衣大砲!被拆城的 [' + t.name + '] 2 回合內無法獲得有利狀態!'); }catch(_){} }
+        RC(t);
+      }
+      floodAfter(a);
+      a._zcFloodSeq = 0;
+    },
+    '艦隊齊射': function(a, t, isAI, lv){
+      floodBegin(a);
+      L('⚓ [' + a.name + '] 艦隊齊射!鄭家水師連開 5 砲!');
+      fx('艦隊齊射', a, alive(opp(a.side)));
+      var crit = false;
+      for(var i = 0; i < 5; i++){
+        var pool = alive(opp(a.side)); if(!pool.length) break;
+        var f = rnd(pool);
+        var bd = false; try{ bd = hasStatus(f, 'breakDef'); }catch(_){}
+        var o = { elem:'fire', element:'fire', mustHit:true, ignoreEvasion:true };
+        if(bd){ o.forceCritRate = 1.0; crit = true; }
+        hit(f, ATKV(a) * 1.2 * (isAI ? (1 + lv * 0.05) : 1), a, o);
+        if(f.curHp > 0){ try{ addStatus(f, 'hellfire', 2); }catch(_){} RC(f); }
+      }
+      if(crit && star(a, 's2')) tideAdd(a, 1, '命星:連環齊射');
+      floodAfter(a);
+      a._zcFloodSeq = 0;
+    }
+  };
+
+  function blockWhy(a, n){
+    if(n === '順風令'){
+      if(a._mzS2R === (G.round || 1) && bidOk(a._mzS2B)) return '這回合已經下過順風令了(每回合 1 次)';
+      if(!alive(a.side).some(function(x){ return x !== a; })) return '沒有可以指揮的隊友';
+    }
+    return '';
+  }
+
+  var URMZ = {
+    names: NAMES,
+    has: function(n){ return !!SK[n]; },
+    isBurst: function(name){ return !!BU[name]; },
+
+    // ── 玩家路徑(execSkill)──
+    skill: function(a, sk, cost){
+      var n = sk && sk.n; if(!n || !SK[n] || !RUN[n]) return false;
+      var lv = curSkLv();
+      var cancel = function(msg){ if(msg){ L(msg); try{ _showInGameToast(msg); }catch(_){} } try{ clearSel(); updateUI(); }catch(_){} };
+      var go = function(t){ try{ RUN[n](a, t, false, lv); }catch(e){ console.warn('[URMZ 技能]', n, e); } try{ updateUI(); }catch(_){} endAction(a, cost); };
+      var why = blockWhy(a, n);
+      if(why){ cancel('⚠ ' + why); return true; }
+      var pk = PICK[n];
+      if(pk === 'ally_other'){
+        setPending('ally', function(t){
+          if(!t || t === a || t.curHp <= 0){ cancel('⚠ 請選擇媽祖以外的隊友!'); return; }
+          if(t._mzPort){ cancel('⚠ [' + t.name + '] 正在回港休整,下回合才會返場!'); return; }
+          go(t);
+        });
+        return true;
+      }
+      if(pk === 'enemy'){ setPending('enemy', go); return true; }
+      go(null);
+      return true;
+    },
+
+    // ── AI 路徑(aiUseSkill 鏈):能量已在鏈頭扣除 ──
+    skillAI: function(a, sk, cost, t, al){
+      var n = sk && sk.n; if(!n || !SK[n]) return false;
+      var lv = skLvAI(a, n);
+      try{
+        var why = blockWhy(a, n);
+        if(why){ L('[' + a.name + '] ' + why + '(改為休息,能量退回)'); try{ G.energy[a.side] = Math.min(10, (G.energy[a.side] || 0) + cost); }catch(_){} return 'done'; }
+        var foes = alive(opp(a.side)), mates = alive(a.side), tgt = null;
+        if(n === '順風令'){
+          var ctrl = function(h){ return ['stun','freeze','sleep','para','imprison','charm','seal'].some(function(s){ try{ return hasStatus(h, s); }catch(_){ return false; } }); };
+          var cand = mates.filter(function(x){ return x !== a; });
+          cand.sort(function(x, y){
+            var sx = Math.max(x.atk||0, x.sp||0) + (ctrl(x) ? 60 : 0) + (x.name === '鄭成功' ? 25 : 0);
+            var sy = Math.max(y.atk||0, y.sp||0) + (ctrl(y) ? 60 : 0) + (y.name === '鄭成功' ? 25 : 0);
+            return sy - sx;
+          });
+          tgt = cand[0] || null;
+        } else if(n === '破城砲'){
+          var defN = function(f){ return (f.buffs || []).filter(function(b){ return b && DEF_TY.indexOf(b.type) >= 0; }).length + ((f.shield || 0) > 0 ? 1 : 0); };
+          tgt = (t && t.curHp > 0 && t.side !== a.side && !t._mzPort) ? t : null;
+          var best = foes.slice().sort(function(x, y){ return (defN(y) * 1000 + y.curHp) - (defN(x) * 1000 + x.curHp); })[0];
+          if(best && (defN(best) > 0 || !tgt)) tgt = best;
+        }
+        RUN[n](a, tgt, true, lv);
+      }catch(e){ console.warn('[URMZ AI 技能]', n, e); }
+      return 'done';
+    },
+
+    // ── 爆發(_runBurst 鏈首):bm = 既有 _burstMult ──
+    burst: function(h, side, bm, srcName, bLv){
+      var name = srcName || (h && h.name); if(!h || !BU[name]) return false;
+      bm = bm || 1;
+      var X = ((bLv || 0) >= 4) ? 1 : 0;
+      var on = batchOn();
+      try{
+        if(name === '媽祖'){
+          var s = S();
+          L('🌊 [' + h.name + '] 聖母護世!天上聖母現身海上!');
+          // ① 回港中的友方立即返場回滿 HP
+          ((G[side]) || []).forEach(function(x){
+            if(x && x._mzPort){ x._mzPort.t2 = true; portReturn(x); x.curHp = x.hp; RC(x); }
+          });
+          // ② 倒下的友方 50% HP 復活
+          var rev = [];
+          ((G[side]) || []).filter(function(x){ return x && x.curHp <= 0 && !x._scarabEscaped; }).forEach(function(d){
+            try{ doRevive(d, 0.5, false, { actor:h }); }catch(_){}
+            if(d.curHp > 0){ rev.push(d.name); BN(d, '🌊 復活!', '#9fe0ff', 900); }
+          });
+          if(rev.length) L('🌊 海燈照亮歸途,[' + rev.join('、') + '] 以 50% HP 復活!');
+          // ③ 小船補滿
+          s.port[side] = portMaxOf(side);
+          L('⛵ 回港小船補滿為 ' + s.port[side] + ' 艘!');
+          // ④ 媽祖庇佑 2 回合
+          var amt = Math.max(1, Math.floor(SPV(h) * 1.0 * bm * (star(h, 'b1') ? 1.5 : 1)));
+          alive(side).forEach(function(x){
+            try{
+              x.buffs = (x.buffs || []).filter(function(b){ return !(b && b.type === '_mzBless'); });
+              addBuff(x, '_mzBless', 2 + X);
+              var bb = (x.buffs || []).find(function(b){ return b && b.type === '_mzBless'; });
+              if(bb){ bb._b = bid(); bb._amt = amt; bb._by = h; bb._clean = star(h, 'b1'); bb.dur = Math.max(bb.dur || 0, 2 + X); }
+            }catch(_){}
+            RC(x);
+          });
+          L('🙏 全體友方獲得「媽祖庇佑」' + (2 + X) + ' 回合(致命傷保留 1 HP 並回復 ' + amt + ' HP)!');
+          // ⑤ 護世巨浪
+          var foes = alive(opp(side));
+          var share = 7.0 * bm / Math.max(1, foes.length);
+          foes.forEach(function(f){
+            hit(f, SPV(h) * share, h, { isAoe:true, elem:'water', element:'water', mustHit:true, ignoreEvasion:true });
+            if(f.curHp > 0){
+              try{ if(typeof _cstApplySlow === 'function') _cstApplySlow(f, 2 + X); var sl = (f.status || []).find(function(x){ return x && x.type === 'traitSlow'; }); if(sl) sl._strong = true; }catch(_){}
+              BN(f, '🌊 強力緩速', '#7fd4ff', 800); RC(f);
+            }
+          });
+          if(star(h, 'b2')){
+            G._mzFieldB2 = { side:side, until:(G.round || 1) + 2, b:bid() };
+            L('✨ [' + h.name + '] 命星:海神護佑!2 回合內我方受到的燃燒/中毒/出血傷害減半!');
+            ((G[side]) || []).forEach(function(z){ if(z && z.name === '鄭成功' && z.curHp > 0) tideAdd(z, 3, '命星:海神護佑'); });
+          }
+        }
+        else if(name === '鄭成功'){
+          floodBegin(h);
+          var foes2 = alive(opp(side));
+          var mm = (star(h, 'b1') ? 11.0 : 9.0) * bm;
+          L('⚓ [' + h.name + '] 鹿耳門大捷!潮水大漲,艦隊乘潮駛入台江!');
+          var share2 = mm / Math.max(1, foes2.length);
+          foes2.forEach(function(f){
+            hit(f, ATKV(h) * share2, h, { isAoe:true, elem:'fire', element:'fire', mustHit:true, ignoreEvasion:true, ignoreBuffs:true });
+            if(f.curHp > 0){
+              try{ _ur4PushStrong(f, 'breakDef', 2 + X, h); _ur4PushStrong(f, 'hellfire', 2 + X, h); }catch(_){}
+              BN(f, '💣 強力破防+燃燒', '#ff7f50', 800); RC(f);
+            }
+          });
+          var pct = 0.50 * bm;
+          alive(side).forEach(function(x){ atkUpApply(x, pct, 2 + X); });
+          L('⚓ 國姓軍威!全體友方攻擊 +' + Math.round(pct * 100) + '% ' + (2 + X) + ' 回合!');
+          if(star(h, 'b1')){ var ge = gift(side, 2); if(ge > 0) L('✨ [' + h.name + '] 命星:乘潮破浪!我方能量 +' + ge + '(本回合不能施放極限爆發)'); }
+          if(star(h, 'b2')){ G._zcFlagB2 = { side:side, until:(G.round || 1) + 2, b:bid() }; L('✨ [' + h.name + '] 命星:國姓旗!2 回合內全體友方暴擊率 +20%!'); }
+          floodAfter(h);
+          h._zcFloodSeq = 0;
+          h._zcTide = 3; RC(h);
+          L('🌊 潮汐補滿 3 層!下一招就是大潮!');
+          // 乘潮奇襲(每場 1 次;神格覺醒 2 次)
+          var s2 = S(), used = s2.raidUsed[side] || 0, cap = god(h) ? 2 : 1;
+          if(used < cap && !s2.raid){
+            s2.raid = { side:side, r:(G.round || 1) };
+            s2.raidUsed[side] = used + 1;
+            L('⛵ 乘潮奇襲!本回合結束時,我方全體再行動一整輪!' + (cap > 1 ? '(神格覺醒:每場 2 次)' : ''));
+            BN(h, '⛵ 乘潮奇襲!', '#7fd4ff', 1300);
+          }
+        }
+      }catch(e){ console.warn('[URMZ 爆發]', name, e); }
+      batchOff(on);
+      try{ updateUI(); }catch(_){}
+      return true;
+    },
+
+    // ── 戰開天賦 ──
+    battleStart: function(){
+      try{
+        if(!hasG()) return;
+        var fresh = !G._urmz || G._urmz.b !== bid();   // 後備隊伍登場也會跑戰開效果(同一場)⇒ 不重置小船與奇襲次數
+        var s = S();
+        if(fresh){ delete G._mzFieldB2; delete G._zcFlagB2; }
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(h){
+          if(!h || (!fresh && h._urmzInit === s.b)) return;
+          h._urmzInit = s.b;
+          delete h._mzPort; delete h._mzCut; delete h._mzKoSeen; delete h._zcNoBuffUntil;
+          if(h._zcAtkAmt > 0) atkUpRemove(h);
+          if(h.name === '鄭成功'){ h._zcTide = star(h, 't1') ? 1 : 0; delete h._zcFloodSeq; }
+        });
+        ['p1','p2'].forEach(function(side){
+          var m = ((G[side]) || []).filter(function(x){ return x && x.name === '媽祖' && x.curHp > 0; })[0];
+          if(!m) return;
+          var mx = god(m) ? 6 : PORT_MAX;
+          if(s.portMax[side] === undefined || mx > s.portMax[side]){ s.portMax[side] = mx; s.port[side] = mx; }
+          if(traitOff(m)) return;
+          var n = stripReveal(opp(side));
+          L('👁️ [媽祖] 千里眼‧順風耳!對手無法隱身或迴避,我方攻擊必中;海燈小船 ⛵×' + mx + ' 準備好了!' + (n ? '(看穿 ' + n + ' 個隱身/迴避)' : ''));
+          BN(m, '⛵×' + mx, '#9fe0ff', 1000);
+          RC(m);
+        });
+      }catch(e){ console.warn('[URMZ 戰開]', e); }
+    },
+
+    // ── 每回合開始(nextRound,+3 能量之後;G.round 已是新回合)──
+    roundStart: function(){
+      try{
+        if(!hasG()) return;
+        var s = S(), r = G.round || 1;
+        // 回港的人返場(媽祖倒下也照樣回來)
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(h){ if(h && h._mzPort && h._mzPort.r < r) portReturn(h); });
+        ['p1','p2'].forEach(function(side){
+          var m = mazuOf(side);
+          if(m){
+            var every = star(m, 't2') ? 2 : PORT_EVERY;
+            if(r > 1 && (r - 1) % every === 0 && portN(side) < portMaxOf(side)){
+              s.port[side] = portN(side) + 1;
+              L('⛵ [媽祖] 海燈又點亮一艘小船!(⛵×' + s.port[side] + ')'); BN(m, '⛵ +1', '#9fe0ff', 800); RC(m);
+            }
+            stripReveal(opp(side));
+          }
+          ((G[side]) || []).forEach(function(z){
+            if(!z || z.name !== '鄭成功' || z.curHp <= 0 || z._mzPort || traitOff(z)) return;
+            var hasM = ((G[side]) || []).some(function(x){ return x && x.name === '媽祖' && x.curHp > 0; });
+            tideAdd(z, hasM ? 2 : 1, hasM ? '鹿耳門神蹟(媽祖在隊)' : '漲潮');
+          });
+        });
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(h){ if(h) atkUpReconcile(h); });
+      }catch(e){ console.warn('[URMZ 回合開始]', e); }
+    },
+
+    // ── doDmg 最頂端:回 -1 = 這次傷害不成立;其餘回傳新的 rawDmg ──
+    preDmg: function(target, raw, o){
+      if(!target || !(raw > 0) || !o || o.isHeal) return raw;
+      if(target._mzPort) return -1;   // 回港中:不受任何傷害
+      if(!hasG()) return raw;
+      var A = o.actor, r = raw;
+      var foeHit = !!(A && A.side && target.side && A.side !== target.side);
+      var dot = !!(o._isDotTick || o._isDot || o._fromBurn || o._fromBleedProc);
+      if(foeHit && !o.isRebound && !o.isReflect){
+        // 千里眼:全隊攻擊必中(媽祖存活、天賦未封)
+        var mA = mazuOf(A.side);
+        if(mA && !dot){ o.mustHit = true; o.ignoreEvasion = true; o.noHidden = true; if(star(mA, 't1')) o._skPierceBlock = 100; }   // 命星 t1:看穿的對手無法格擋
+        // 鄭成功 潮汐/大潮
+        if(A.name === '鄭成功' && !dot && !o.fixedDmg && !traitOff(A)){
+          var lay = tideLayers(A);
+          if(lay > 0){ r = r * (1 + lay * tideStep(A)); o.critBoost = (typeof o.critBoost === 'number' ? o.critBoost : 0) + lay * 0.10; }
+          if(floodOn(A)){ r = r * (god(A) ? 2 : 1.5); o.mustHit = true; o.ignoreEvasion = true; o.ignoreBuffs = true; o.noHidden = true; }
+        }
+        // 國姓旗(命星 b2):暴擊率 +20%
+        try{ var fl = G._zcFlagB2; if(fl && bidOk(fl.b) && fl.side === A.side && (G.round || 1) <= fl.until && !dot) o.critBoost = (typeof o.critBoost === 'number' ? o.critBoost : 0) + 0.20; }catch(_){}
+        // 順風令 命星 s2:被指定者額外行動的傷害 +30%
+        if(A._mzCut && A._mzCut.cur && A._mzCut.boost > 1 && !dot) r = r * A._mzCut.boost;
+        // 順風耳:每回合對手第一次技能/爆發 ⇒ 被打中的友方傷害 -50%(+5%/級)
+        var m = mazuOf(target.side);
+        if(m && !dot && (o.isSkill || window._burstCastActive)){
+          var s = S(), e = s.ear[target.side], seq = G._actSeq || 0, rd = G.round || 1;
+          var lim = star(m, 't1') ? 2 : 1;
+          if(!e || e.r !== rd){ e = s.ear[target.side] = { r:rd, seqs:[] }; }
+          if(e.seqs.indexOf(seq) < 0 && e.seqs.length < lim) e.seqs.push(seq);
+          if(e.seqs.indexOf(seq) >= 0){
+            var p = earPct(m);
+            r = r * (1 - p);
+            if(e.logged !== seq){ e.logged = seq; L('👂 [媽祖] 順風耳!搶先聽見攻擊的風聲,這一擊傷害 -' + Math.round(p * 100) + '%!'); }
+            BN(target, '👂 -' + Math.round(p * 100) + '%', '#bff0ff', 600);
+          }
+        }
+      }
+      // 海神護佑(命星 b2):我方受到的燃燒/中毒/出血傷害減半
+      try{ var fb = G._mzFieldB2; if(fb && dot && bidOk(fb.b) && fb.side === target.side && (G.round || 1) <= fb.until) r = r * 0.5; }catch(_){}
+      // 國姓旗 + 媽祖在隊:旗下友方受到傷害 -15%
+      try{ var fl2 = G._zcFlagB2; if(fl2 && bidOk(fl2.b) && fl2.side === target.side && (G.round || 1) <= fl2.until && ((G[target.side]) || []).some(function(x){ return x && x.name === '媽祖' && x.curHp > 0; })) r = r * 0.85; }catch(_){}
+      return Math.max(1, Math.floor(r));
+    },
+
+    // ── 倒下前(doDmg 主路徑「倒下」log 之前 / fixedDmg 路徑 _cstOnKo 之前):媽祖庇佑 → 海燈歸航;沒被救 ⇒ 擊倒者若是鄭成功,潮汐 +1 ──
+    ko: function(target, o){
+      try{
+        if(!target || target.curHp !== 0 || !hasG()) return false;
+        if(blessSave(target)) return true;
+        var m = canPort(target);
+        if(m){
+          if(target === m || target.name === '媽祖') m._mzSelfPortG = bid();
+          enterPort(target, m);
+          if(target === m) L('🌟 [媽祖] 神格覺醒「天上聖母」:媽祖自己也乘著海燈回港!');
+          return true;
+        }
+        var A = o && o.actor;
+        if(A && A.name === '鄭成功' && A.curHp > 0 && A.side !== target.side && !target._zcKoCredited){
+          target._zcKoCredited = bid();
+          tideAdd(A, 1, '擊倒 [' + target.name + ']');
+        }
+      }catch(e){ console.warn('[URMZ 倒下]', e); }
+      return false;
+    },
+    // ── checkWin 開頭:不經 doDmg 的倒下(即死、死亡宣告到期、審判終結…)保險網 ──
+    koScan: function(){
+      try{
+        if(!hasG()) return;
+        ['p1','p2'].forEach(function(side){
+          ((G[side]) || []).forEach(function(h){
+            if(!h) return;
+            if(h.curHp > 0){ if(h._mzKoSeen) delete h._mzKoSeen; return; }
+            if(h._mzKoSeen === bid()) return;
+            h._mzKoSeen = bid();
+            if(blessSave(h)) return;
+            var m = canPort(h);
+            if(m){ if(h.name === '媽祖') m._mzSelfPortG = bid(); enterPort(h, m, '倒下的瞬間'); }
+          });
+        });
+      }catch(_){}
+    },
+
+    // ── addStatus 最頂端:回港中不受任何狀態 ──
+    statusBlock: function(h, t){ return !!(h && h._mzPort); },
+    // ── addBuff 最頂端:千里眼(對手不能隱身/迴避)、紅衣大砲星(拆城後 2 回合不能獲得有利)──
+    buffBlock: function(h, t){
+      try{
+        if(!h || !hasG()) return false;
+        if(t && t.charAt(0) !== '_' && h._zcNoBuffUntil && (G.round || 1) <= h._zcNoBuffUntil){ L('💥 [' + h.name + '] 城牆被轟開,無法獲得有利狀態!'); return true; }
+        if(REVEAL().indexOf(t) >= 0 && mazuOf(opp(h.side))){ L('👁️ [媽祖] 千里眼!看穿 [' + h.name + '],無法隱身或迴避!'); BN(h, '👁️ 看穿!', '#bff0ff', 600); return true; }
+      }catch(_){}
+      return false;
+    },
+    // ── doHeal 開頭:回港中不吃治療;順風令命星 s2 額外行動治療 +30% ──
+    healMul: function(target, amt, o){
+      try{
+        if(target && target._mzPort && !(o && o._urmzBless)) return 0;
+        var A = o && o.actor;
+        if(A && A._mzCut && A._mzCut.cur && A._mzCut.boost > 1 && o && o.isHeal) return Math.floor(amt * A._mzCut.boost);
+      }catch(_){}
+      return amt;
+    },
+
+    // ── startTurn:回港中的人跳過行動 ──
+    portSkip: function(next){
+      if(!next || !next._mzPort) return false;
+      L('⛵ [' + next.name + '] 正在港灣休整,本回合不行動。');
+      next.acted = true;
+      try{ G.pendingTarget = null; }catch(_){}
+      try{ updateUI(); }catch(_){}
+      later(startTurn, 450);
+      return true;
+    },
+    // ── startTurn 選人之前:順風令插隊(回傳要插隊的人)──
+    preCut: function(){
+      var forced = null;
+      try{
+        if(!hasG()) return null;
+        [].concat(G.p1 || [], G.p2 || []).forEach(function(h){
+          var c = h && h._mzCut; if(!c) return;
+          if(!bidOk(c.b) || h.curHp <= 0 || h._mzPort){ delete h._mzCut; return; }
+          if(c.cur && h.acted){ c.left--; c.cur = false; }
+          if(c.left <= 0){ delete h._mzCut; RC(h); return; }
+          if(forced) return;
+          if(!c.cur){
+            c.cur = true; h.acted = false;
+            L('🌬️ [' + h.name + '] 乘著順風立即行動!(第 ' + (3 - c.left) + '/2 次)');
+            BN(h, '🌬️ 行動 ' + (3 - c.left) + '/2', '#bff0ff', 800);
+          }
+          if(!h.acted) forced = h;
+        });
+      }catch(_){}
+      return forced;
+    },
+    // ── nextRound 開頭:乘潮奇襲(我方全隊再一輪;回 true = 本次 nextRound 由奇襲接手)──
+    raidRound: function(){
+      try{
+        if(!hasG()) return false;
+        var s = S(), rd = s.raid; if(!rd) return false;
+        s.raid = null;
+        if(rd.r !== (G.round || 1)) return false;
+        var mine = alive(rd.side), foes = alive(opp(rd.side));
+        if(!mine.length || !foes.length) return false;
+        mine.forEach(function(h){ h.acted = false; RC(h); });
+        ((G[opp(rd.side)]) || []).forEach(function(h){ if(h) h.acted = true; });
+        L('⛵⛵ 乘潮奇襲!潮水推著艦隊直衝敵陣——我方全體再行動一輪,對手來不及反應!');
+        try{ (mine[0] && bannerFX(mine[0], '⛵ 乘潮奇襲!', '#7fd4ff', 1300)); }catch(_){}
+        try{ updateUI(); }catch(_){}
+        later(startTurn, 700);
+        return true;
+      }catch(e){ console.warn('[URMZ 乘潮奇襲]', e); return false; }
+    },
+
+    // ── renderCard 卡牌條:媽祖 ⛵×N、鄭成功 🌊 潮汐、回港中 ──
+    cardBars: function(h){
+      var html = '';
+      try{
+        if(!h || !hasG() || !G._urmz) return '';
+        if(h._mzPort){
+          html += '<div class="card-hp-wrap2" style="margin-bottom:2px;height:14px;border:1.5px solid #9fe0ff;background:rgba(20,60,90,0.6);position:relative;border-radius:7px;overflow:hidden;"><div style="position:absolute;left:6px;top:-1px;font-size:10px;color:#dff6ff;text-shadow:0 0 3px #000;font-weight:bold;letter-spacing:1px;">⛵ 回港休整中・下回合返場</div></div>';
+        }
+        if(h.name === '媽祖' && h.curHp > 0){
+          var n = portN(h.side), mx = portMaxOf(h.side), boats = '';
+          for(var i = 0; i < mx; i++) boats += (i < n) ? '⛵' : '<span style="opacity:.28">⛵</span>';
+          html += '<div class="card-hp-wrap2 mz-port-bar" style="margin-bottom:2px;height:15px;border:1.5px solid #9fe0ff;background:rgba(20,60,90,0.5);position:relative;border-radius:7px;overflow:hidden;"><div style="position:absolute;left:6px;top:-1px;font-size:10px;color:#dff6ff;text-shadow:0 0 3px #000;font-weight:bold;">回港</div><div style="position:absolute;right:5px;top:-1px;font-size:10px;letter-spacing:-1px;">' + boats + '</div></div>';
+        }
+        if(h.name === '鄭成功' && h.curHp > 0){
+          var t = h._zcTide || 0, fl = t >= 3;
+          var w = '';
+          for(var j = 0; j < 3; j++) w += (j < t) ? '🌊' : '<span style="opacity:.28">🌊</span>';
+          html += '<div class="card-hp-wrap2 zc-tide-bar" style="margin-bottom:2px;height:15px;border:' + (fl ? '2px solid #7fd4ff' : '1.5px solid #5fa8d0') + ';background:rgba(20,50,90,0.5);position:relative;border-radius:7px;overflow:hidden;' + (fl ? 'box-shadow:0 0 8px rgba(127,212,255,0.75);' : '') + '"><div style="position:absolute;left:6px;top:-1px;font-size:10px;color:#dff6ff;text-shadow:0 0 3px #000;font-weight:bold;">' + (fl ? '大潮!' : '潮汐') + '</div><div style="position:absolute;right:5px;top:-1px;font-size:10px;letter-spacing:-1px;">' + w + '</div></div>';
+        }
+      }catch(_){}
+      return html;
+    },
+    // renderCard 收尾:回港中整張卡半透明
+    cardPost: function(h){
+      try{
+        if(!h) return;
+        var el = document.getElementById('card-' + h.side + '-' + h.pos); if(!el) return;
+        if(h._mzPort){ el.style.opacity = '0.55'; el.setAttribute('data-mz-port', '1'); }
+        else if(el.getAttribute('data-mz-port')){ el.style.opacity = ''; el.removeAttribute('data-mz-port'); }
+      }catch(_){}
+    },
+
+    // ── AI 估值(_realAiAct.estSkillDmg)──
+    est: function(a, n, foes){
+      if(!SK[n]) return null;
+      switch(n){
+        case '平浪': return -1;   // 走 HEAL_SKILLS 治療決策
+        case '順風令': return blockWhy(a, n) ? -1 : 85;
+        case '破城砲': return Math.floor(ATKV(a) * 5.0 * (1 + 0.15 * tideLayers(a))) + 25;
+        case '艦隊齊射': return Math.floor(ATKV(a) * 1.2 * 5 * (1 + 0.15 * tideLayers(a)));
+      }
+      return null;
+    },
+    tide: function(h){ return (h && h._zcTide) || 0; },
+    ports: function(side){ return portN(side); },
+    atkUpReconcile: atkUpReconcile
+  };
+  window._URMZ = URMZ;
+
+  // 屬性登錄(引擎 doDmg 也帶 elem;此處供屬性顯示/計算一致)、英魂陣型魂格
+  try{ ['破城砲','艦隊齊射','鹿耳門大捷'].forEach(function(k){ if(!SKILL_FORCE_ELEMENT[k]) SKILL_FORCE_ELEMENT[k] = 'fire'; }); if(!SKILL_FORCE_ELEMENT['聖母護世']) SKILL_FORCE_ELEMENT['聖母護世'] = 'water'; }catch(_){}
+  try{ if(window._FM_SOUL){ if(!window._FM_SOUL['媽祖']) window._FM_SOUL['媽祖'] = 'C'; if(!window._FM_SOUL['鄭成功']) window._FM_SOUL['鄭成功'] = 'X'; } }catch(_){}
+  // 自訂 buff 顯示名
+  try{
+    var _bnOrig = buffName;
+    buffName = function(t){
+      if(t === '_zcAtkUp') return '⚓ 國姓軍威(攻擊上升)';
+      if(t === '_mzBless') return '🙏 媽祖庇佑';
+      return _bnOrig.apply(this, arguments);
+    };
+  }catch(_eBn){ console.warn('[URMZ buffName]', _eBn); }
+  // 回港中整張卡半透明(renderCard 收尾)
+  try{
+    var _rcOrig = renderCard;
+    renderCard = function(h){ var r = _rcOrig.apply(this, arguments); try{ if(h && (h._mzPort || h._urmzInit)) URMZ.cardPost(h); }catch(_){} return r; };
+  }catch(_eRc){ console.warn('[URMZ renderCard]', _eRc); }
+  // 國姓軍威到期/被消除 ⇒ 還原攻擊力(tickStatus 之後自我校正)
+  try{
+    var _tsOrig = tickStatus;
+    tickStatus = function(h){ var r = _tsOrig.apply(this, arguments); try{ atkUpReconcile(h); }catch(_){} return r; };
+  }catch(_eTs){ console.warn('[URMZ tickStatus]', _eTs); }
+  try{ if(Array.isArray(_LXPS_STATFX_TYPES) && _LXPS_STATFX_TYPES.indexOf('_zcAtkUp') < 0) _LXPS_STATFX_TYPES.push('_zcAtkUp'); }catch(_){}
+  // 命星效果登錄(圖鑑據此顯示「效果已上線」;12 顆＋神格覺醒的效果本體都在上面以 star()/god() 守門)
+  try{
+    var CR = window._CST_EFFECTS || (window._CST_EFFECTS = {});
+    NAMES.forEach(function(nm){ CR[nm] = CR[nm] || {}; ['t1','t2','s1','s2','b1','b2'].forEach(function(s){ CR[nm][s] = { impl:1, partial:'' }; }); });
+  }catch(_eUrmzCst){}
+  // 臉部表(立繪 1024×1536,老師 ChatGPT 生成;媽祖 v2 鳳冠頂 0.049、鄭成功 紅纓 0.065/盔頂 0.094)
+  try{
+    Object.assign(window._LXPS_FACE_T, { '媽祖.webp':[40,1500], '鄭成功.webp':[65,1500] });
+    Object.assign(window._LXPS_THUMB_FACE_YMAX, { '媽祖.webp':3, '鄭成功.webp':9 });
+  }catch(_eUrmzFace){}
+})();
+// ★★★ v5.391.0 UR 媽祖／鄭成功 戰鬥引擎 END ★★★
 
 ;(window._LXPS_MOD_OK || (window._LXPS_MOD_OK = {}))['game_battle.js'] = 1;   /* ★ v5.235.0 載入完成記號(必須是本檔最後一行) */
