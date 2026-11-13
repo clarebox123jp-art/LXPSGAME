@@ -56128,6 +56128,83 @@ function investStat(name, stat) {
   document.getElementById('_invest_no').onclick = () => box.remove();
 }
 
+// ★ v5.393.0(2026-11-13 老師「pc版，英雄圖鑑中技能升級的小視窗字太大了，改成不用捲動就能完整看到所有等級且字又大又舒適。檢查ipad和手機是否大小適中」)
+//   技能升級確認視窗(#upgrade-confirm-box.upg2fit)所有字級都用 --u(px)計算;window._upg2Fit 從「舒適大字」開始往下試,
+//   找到 10 級全部放得下、不用捲動的最大字級。左欄(確認資訊)窄、右欄升級表寬 ⇒ 長說明多半一行放完。
+//   起始字級:PC(滑鼠)= min(螢幕寬/72, 螢幕高/40) 夾在 18~40px(1920×1080≈26.5、2560×1440≈35.5、1366×768≈19);
+//     iPad/平板 = min(螢幕寬/44, 螢幕高/30) 夾在 20~44px(1180×820≈27、1024×768≈23);手機橫放 20px。視窗寬度跟著字級(約 56 字寬),字小時不會拉得很空。
+//   下限 15px;真的放不下(超長說明)才保留捲動。手機橫放例外(老師 20:39):固定適中字級、可捲動,不硬塞一頁。全部用真實螢幕 px(不用 zoom,PC 放大層也不碰它)。
+//   ⚠ main.css 對本視窗有多條 !important(≤1180px td 20px、按鈕 18px、max-height 90vh)⇒ 這裡選擇器加 .upg2fit 提高權重並帶 !important。
+(function(){
+  if(window._upg2Fit) return;
+  function css(){
+    if(document.getElementById('lxps-upg2fit-css')) return;
+    var st = document.createElement('style'); st.id = 'lxps-upg2fit-css';
+    st.textContent = [
+      '#upgrade-confirm-box.upg2fit{--u:24px;padding:calc(var(--u)*0.7) calc(var(--u)*0.85) !important;border-radius:calc(var(--u)*0.9) !important;box-sizing:border-box !important;}',
+      '#upgrade-confirm-box.upg2fit > .u2-wrap{display:flex !important;gap:calc(var(--u)*0.8);align-items:center;flex-wrap:nowrap;max-width:none !important;max-height:none !important;overflow:visible !important;}',
+      '#upgrade-confirm-box.upg2fit .u2-left{flex:0 0 32%;min-width:0;text-align:center;}',
+      '#upgrade-confirm-box.upg2fit.u2ph .u2-left{flex-basis:27%;}',
+      '#upgrade-confirm-box.upg2fit.u2ph .u2-ico{display:none;}',
+      '#upgrade-confirm-box.upg2fit.u2ph > .u2-wrap{align-items:flex-start;}',
+      '#upgrade-confirm-box.upg2fit.u2ph .u2-left{position:sticky;top:0;align-self:flex-start;}',
+      '#upgrade-confirm-box.upg2fit.u2ph{padding:calc(var(--u)*0.6) calc(var(--u)*0.7) !important;}',
+      '#upgrade-confirm-box.upg2fit .u2-ico{font-size:calc(var(--u)*2);line-height:1.1;margin-bottom:calc(var(--u)*0.2);}',
+      '#upgrade-confirm-box.upg2fit .u2-ttl{font-size:calc(var(--u)*1.35);font-weight:900;color:#88ccff;margin-bottom:calc(var(--u)*0.45);line-height:1.25;}',
+      '#upgrade-confirm-box.upg2fit .u2-txt{font-size:calc(var(--u)*1.1);color:#eee;margin-bottom:calc(var(--u)*0.7);line-height:1.55;}',
+      '#upgrade-confirm-box.upg2fit .u2-btns{display:flex;gap:calc(var(--u)*0.45);justify-content:center;flex-wrap:wrap;}',
+      '#upgrade-confirm-box.upg2fit .u2-btns button{font-size:calc(var(--u)*1.05) !important;padding:calc(var(--u)*0.45) calc(var(--u)*0.9) !important;border-radius:calc(var(--u)*0.45) !important;border-width:max(2px,calc(var(--u)*0.09)) !important;}',
+      '#upgrade-confirm-box.upg2fit #_upg2-tbl{flex:1 1 auto;min-width:0;background:rgba(5,8,20,0.85);border:2px solid rgba(100,180,255,0.2);border-radius:calc(var(--u)*0.6);padding:calc(var(--u)*0.35) calc(var(--u)*0.25);}',
+      '#upgrade-confirm-box.upg2fit .u2-tt{font-size:calc(var(--u)*0.95);color:#88aaff;font-weight:700;text-align:center;margin-bottom:calc(var(--u)*0.25);letter-spacing:2px;}',
+      '#upgrade-confirm-box.upg2fit #_upg2-tbl td{font-size:var(--u) !important;padding:calc(var(--u)*0.16) calc(var(--u)*0.4) !important;line-height:1.3 !important;vertical-align:middle;}',
+      '#upgrade-confirm-box.upg2fit #_upg2-tbl th{font-size:var(--u) !important;}',
+      '#upgrade-confirm-box.upg2fit #_upg2-tbl tr > td:first-child{white-space:nowrap;width:1%;}'
+    ].join('\n');
+    (document.head || document.documentElement).appendChild(st);
+  }
+  window._upg2Fit = function(box){
+    if(!box || !box.isConnected) return;
+    css();
+    var W = window.innerWidth || 1024, H = window.innerHeight || 768;
+    var phone = !!(window._cnPhoneShort && window._cnPhoneShort());
+    var bw = Math.floor(phone ? W * 0.97 : Math.min(W * 0.94, 1700));
+    var bh = Math.floor(H * (phone ? 0.95 : 0.92));
+    box.style.setProperty('zoom', '1', 'important');
+    box.classList.toggle('u2ph', phone);   // 手機橫放:左欄窄一點、不放書本圖示,讓升級表多一點寬度
+    box.style.setProperty('width', bw + 'px', 'important');
+    box.style.setProperty('max-width', bw + 'px', 'important');
+    box.style.setProperty('max-height', bh + 'px', 'important');
+    box.style.setProperty('overflow-y', 'auto', 'important');
+    var pc = !!window._lxpsPcZoomOn && !phone;
+    var u = phone ? 20 : (pc ? Math.max(18, Math.min(40, Math.min(W / 72, H / 40))) : Math.max(20, Math.min(44, Math.min(W / 44, H / 30))));
+    var umin = phone ? 12 : 15;
+    u = Math.round(u * 2) / 2;
+    var w2 = Math.min(bw, Math.round(u * 56));   // 寬度依起始字級決定;往下縮字時寬度不跟著縮(一行才放得多)
+    box.style.setProperty('width', w2 + 'px', 'important');
+    box.style.setProperty('max-width', w2 + 'px', 'important');
+    if(phone){   // ★ 老師 2026-11-13 20:39「手機板改成可以捲動，字體適中」⇒ 手機不硬塞一頁:固定適中字級(依螢幕高約 16~18px),升級表往下捲;左欄確認按鈕捲動時固定在畫面上
+      u = Math.round(Math.max(15, Math.min(18, H / 24)) * 2) / 2;
+      box.style.setProperty('width', bw + 'px', 'important');
+      box.style.setProperty('max-width', bw + 'px', 'important');
+      box.style.setProperty('--u', u + 'px');
+      box._upg2U = u;
+      return;
+    }
+    for(var i = 0; i < 80; i++){
+      if(i === 1 && w2 < bw){ w2 = bw; box.style.setProperty('width', w2 + 'px', 'important'); box.style.setProperty('max-width', w2 + 'px', 'important'); }   // 起始字放不下 ⇒ 先把寬度放到最大再縮字
+      box.style.setProperty('--u', u + 'px');
+      if(box.scrollHeight <= box.clientHeight + 1 || u <= umin) break;
+      u -= 0.5;
+    }
+    box._upg2U = u;
+  };
+  window.addEventListener('resize', function(){
+    clearTimeout(window._upg2FitT);
+    window._upg2FitT = setTimeout(function(){
+      try{ var b = document.getElementById('upgrade-confirm-box'); if(b && b.classList.contains('upg2fit')) window._upg2Fit(b); }catch(_){}
+    }, 150);
+  });
+})();
 function upgradeSkill(name, slot) {
   // ★ v3.16.30 — 待審查英雄不可升級技能(待 GM 審核)。
   try{ if(window._isAuditPending && window._isAuditPending(name)){ if(typeof _showInGameToast==='function') _showInGameToast('⚠ 這隻英雄正在審查中，要等老師審查結束才能提升技能喔。', '#ffaa44', 2600); return; } }catch(_){}
@@ -56176,19 +56253,21 @@ function upgradeSkill(name, slot) {
     'box-shadow:0 0 80px rgba(60,140,255,0.4);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
+  boxU2.className = 'upg2fit';   // ★ v5.393.0 一頁看完全部等級(window._upg2Fit 依螢幕自動決定字級)
+  boxU2.setAttribute('data-lxps-no-pczoom', '1');
   boxU2.innerHTML = `
-  <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;">
+  <div class="u2-wrap">
     <!-- 左：確認資訊 -->
-    <div style="flex:1;min-width:260px;text-align:center;">
-      <div style="font-size:68px;margin-bottom:10px;">📖</div>
-      <div style="font-size:42px;font-weight:900;color:#88ccff;margin-bottom:16px;">技能升級確認</div>
-      <div style="font-size:34px;color:#eee;margin-bottom:22px;line-height:1.7;">
+    <div class="u2-left">
+      <div class="u2-ico">📖</div>
+      <div class="u2-ttl">技能升級確認</div>
+      <div class="u2-txt">
         使用 <span style="color:#ffcc44;font-weight:800;">1 本</span> 技能升級書<br>
         提升 <span style="color:#88ddff;font-weight:800;">【${name}】</span> 的技能<br>
         <span style="color:#aaddff;font-weight:800;">【${skName}】</span><br>
         Lv.${nextLv} → <span style="color:#44ff88;font-weight:900;">Lv.${nextLv+1}</span>
       </div>
-      <div style="display:flex;gap:14px;justify-content:center;">
+      <div class="u2-btns">
         <button id="_upg_yes2" style="padding:16px 40px;font-size:34px;white-space:nowrap;font-weight:800;
           background:rgba(50,120,255,0.3);border:3px solid #4499ff;color:#88ccff;
           border-radius:14px;cursor:pointer;font-family:inherit;"
@@ -56202,32 +56281,15 @@ function upgradeSkill(name, slot) {
       </div>
     </div>
     <!-- 右：Lv.0~9 效果一覽 -->
-    <div id="_upg2-tbl" style="width:min(540px,100%);flex-shrink:0;background:rgba(5,8,20,0.85);border:2px solid rgba(100,180,255,0.2);border-radius:18px;padding:10px 6px;">
-      <div style="font-size:24px;color:#88aaff;font-weight:700;text-align:center;margin-bottom:8px;letter-spacing:2px;">── 升級效果一覽 ──</div>
+    <div id="_upg2-tbl">
+      <div class="u2-tt">── 升級效果一覽 ──</div>
       ${(typeof buildSkillLvTable==='function') ? buildSkillLvTable(skName, nextLv-1) : ''}
     </div>
   </div>`;
   document.body.appendChild(boxU2);
-  // ★ v5.384.0(老師 2026-11-11「圖鑑的技能升級視窗內文字要放大」)— 左側字 26→34px、標題 32→42px;
-  //   右側升級一覽表(buildSkillLvTable 共用,只在本視窗內放大)每格 clamp(11~16px)→clamp(16~26px);
-  //   手機橫放(高 ≤520)整體縮回 0.72 倍免得一頁只放得下幾行;PC 再依螢幕倍率放大(同九州輿圖 _cnPcZoomCard)。
-  //   「⚠ 此操作無法反悔」刪除(商店有技能等級重置之書)。
-  try{
-    // main.css 對 ≤1180px 螢幕用 !important 把本視窗的表格 20px、按鈕 18px 壓回去 ⇒ 這裡一律帶 important
-    boxU2.querySelectorAll('#_upg2-tbl td').forEach(function(td){ td.style.setProperty('font-size', 'clamp(16px,1.9vw,26px)', 'important'); td.style.setProperty('padding', '5px 10px', 'important'); });
-    boxU2.querySelectorAll('#_upg_yes2,#_upg_no2').forEach(function(bt){ bt.style.setProperty('font-size', '30px', 'important'); bt.style.setProperty('padding', '14px 30px', 'important'); });
-    if(window._cnPhoneShort && window._cnPhoneShort()){   // 手機橫放:整窗縮 0.72 倍,寬高換算回螢幕內 ⇒ 左右兩欄並排(表格字 22px×0.72≈16px)
-      var _uz = 0.72;   // 用真實螢幕 px 換算(手機上 zoom 內的 vw/vh 各瀏覽器算法不一致,不用 vw)
-      boxU2.querySelectorAll('#_upg2-tbl td').forEach(function(td){ td.style.setProperty('font-size', '22px', 'important'); td.style.setProperty('padding', '3px 8px', 'important'); });
-      boxU2.style.zoom = String(_uz); boxU2.style.padding = '18px 24px';
-      var _uw = Math.floor(Math.min(window.innerWidth * 0.94, 1300 * _uz) / _uz), _uh = Math.floor(window.innerHeight * 0.92 / _uz);
-      boxU2.style.width = _uw + 'px';
-      boxU2.style.setProperty('max-width', _uw + 'px', 'important');   // main.css [id$="-confirm-box"] 有 max-width/max-height !important
-      boxU2.style.setProperty('max-height', _uh + 'px', 'important');
-      try{ var _uin = boxU2.firstElementChild; if(_uin) _uin.style.setProperty('max-width', 'none', 'important'); }catch(_){}   // main.css「#upgrade-confirm-box > div」也用 vw 夾寬
-    }
-    else if(window._cnPcZoomCard) window._cnPcZoomCard(boxU2, 92, 1200, 90);
-  }catch(_eUpg2Z){}
+  // ★ v5.384.0 放大 ⇒ ★ v5.393.0(老師 2026-11-13「pc版，英雄圖鑑中技能升級的小視窗字太大了，改成不用捲動就能完整看到所有等級且字又大又舒適。檢查ipad和手機是否大小適中」)
+  //   改由 window._upg2Fit 依真實螢幕 px 找「放得下全部 10 級的最大字」(不再用 zoom / 0.72 倍縮放);視窗改大小時自動重算。
+  try{ if(window._upg2Fit) window._upg2Fit(boxU2); }catch(_eUpg2Z){}
   // ★ v3.16.71 — 開技能升級視窗不再播音效(避免 iOS 連播兩音卡頓→視窗即時開啟);音效改在按下「✔ 確定升級」時才播
   document.getElementById('_upg_yes2').onclick = () => {
     try{ if(typeof playSfx === 'function') playSfx('sfx-statup', 0.7); }catch(_){}   // ★ v3.16.71 — 音效移到按下「確定升級」時
