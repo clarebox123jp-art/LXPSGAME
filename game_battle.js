@@ -5384,6 +5384,25 @@ function _codexRefreshBurstAnimBtn(name, isUnlocked){
     _posAnimBtnAboveBar();
     try{ requestAnimationFrame(_posAnimBtnAboveBar); }catch(__){ setTimeout(_posAnimBtnAboveBar, 60); }
     var _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+    /* ★ v5.395.0(2026-11-13・老師「英雄圖鑑中所有目前尚未有爆發動畫的英雄，「播放動畫」按鈕都改成灰色的「動畫日後開放」。」)
+       沒有動畫(_codexVideoUrlFor 查不到)⇒ 灰色「⏳ 動畫日後開放」,不論是否收錄;有動畫照舊(收錄可點/未收錄灰階)。
+       日後在 _BURST_VIDEO_DB/_SKILL_VIDEO_DB 加一筆,按鈕自動變回金色「🎬 播放動畫」。 */
+    if(!_btn.dataset.bg0) _btn.dataset.bg0 = _btn.style.background || '';
+    if(!_btn.dataset.bd0) _btn.dataset.bd0 = _btn.style.borderColor || '';
+    var _hasVid = !!_codexVideoUrlFor(name);
+    _btn.dataset.novid = _hasVid ? '0' : '1';
+    if(!_hasVid){
+      _btn.textContent = '⏳ 動畫日後開放';
+      _btn.style.background = 'linear-gradient(135deg,rgba(120,120,128,0.95),rgba(84,84,92,0.95))';
+      _btn.style.borderColor = 'rgba(200,200,210,0.6)';
+      _btn.style.color = '#e6e6ea';
+      _btn.style.opacity = '0.85'; _btn.style.filter = ''; _btn.style.cursor = 'not-allowed';
+      _btn.dataset.locked = isUnlocked ? '0' : '1';
+      _btn.title = _cute ? '這個英雄的動畫還在做,之後就能看囉!' : '此英雄的動畫將於日後開放';
+      return;
+    }
+    _btn.textContent = '🎬 播放動畫';
+    _btn.style.background = _btn.dataset.bg0; _btn.style.borderColor = _btn.dataset.bd0; _btn.style.color = '#1a1206';
     if(isUnlocked){
       _btn.dataset.locked = '0';
       _btn.style.opacity = '1'; _btn.style.filter = ''; _btn.style.cursor = 'pointer';
@@ -5404,6 +5423,11 @@ function _codexOnAnimBtnClick(){
     if(!_btn) return;
     var name = _btn.dataset.hero || '';
     var _cute = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+    if(_btn.dataset.novid === '1'){   /* ★ v5.395.0 動畫日後開放 */
+      try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+      _codexAnimNotice(_cute ? '這個英雄的動畫還在做,日後開放喔! 🎬' : '此英雄的動畫將於日後開放,敬請期待! 🎬');
+      return;
+    }
     if(_btn.dataset.locked === '1'){
       try{ playSfx('sfx-cancel', 0.4); }catch(_){}
       _codexAnimNotice(_cute ? '要先收錄這個英雄,才能看牠的動畫喔! 😊' : '收錄此英雄後即可解鎖「動畫欣賞」。');
