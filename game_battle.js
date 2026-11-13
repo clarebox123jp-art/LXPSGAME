@@ -92883,6 +92883,17 @@ window._FM_DEFS = {
     Object.assign(window._LXPS_FACE_T, { '媽祖.webp':[40,1500], '鄭成功.webp':[65,1500] });
     Object.assign(window._LXPS_THUMB_FACE_YMAX, { '媽祖.webp':3, '鄭成功.webp':9 });
   }catch(_eUrmzFace){}
+  // ★ v5.394.0 UR 命座造型 8 張(768×1152,老師 ChatGPT 生成;hero_db.js 檔尾 window._UR_CST_SKINS)臉部表:頭頂(含預留)千分比
+  try{
+    Object.assign(window._LXPS_FACE_T, {
+      '藝天使_星夜畫境.webp':[105,1500], '魔劍姬_伊莉雅_白銀聖劍姬.webp':[120,1500], '主神奧汀_北境狼王.webp':[125,1500],
+      '究極神兵_赤焰決戰型態.webp':[150,1500], '天照大神_夏祭花火.webp':[25,1500], '月讀大神_雪月清輝.webp':[110,1500],
+      '媽祖_海天巡航.webp':[65,1500], '鄭成功_延平破浪.webp':[70,1500] });
+    Object.assign(window._LXPS_THUMB_FACE_YMAX, {
+      '藝天使_星夜畫境.webp':15, '魔劍姬_伊莉雅_白銀聖劍姬.webp':17, '主神奧汀_北境狼王.webp':18,
+      '究極神兵_赤焰決戰型態.webp':21, '天照大神_夏祭花火.webp':3, '月讀大神_雪月清輝.webp':15,
+      '媽祖_海天巡航.webp':9, '鄭成功_延平破浪.webp':10 });
+  }catch(_eUrCstFace){}
 })();
 // ★★★ v5.391.0 UR 媽祖／鄭成功 戰鬥引擎 END ★★★
 

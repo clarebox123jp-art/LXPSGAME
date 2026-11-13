@@ -8794,3 +8794,37 @@ var _LXPS_HERO_SD = {
   });
 })();
 // ★★★ v5.391.0 UR 媽祖／鄭成功 登錄表 END ★★★
+
+
+// ★★★ v5.394.0 UR 命座造型(老師 2026-11-13 20:49「請gpt幫我繪製所有UR的新外觀，解鎖條件是該角色的命座點亮2顆。」;21:11「鄭成功變成熟帥氣版，不戴帽子。全部你幫我轉好檔案上傳」)★★★
+//   立繪:老師的 ChatGPT「小克 陳」以原圖為參考生成(保留臉與招牌特徵、換服裝主題),768×1152 webp,檔案放 repo 根目錄。
+//   解鎖:cstUnlock:2 = 該英雄命座「已點亮」≥ 2 顆 ⇒ game_adv.js _scanCstUnlockPortraits 自動寫進 _heroPortraitUnlocked(永久,重置星圖不收回)。
+//   臉部表(鐵律 2026-11-11)在 game_battle.js _URMZ 段尾一起加。只新增、不覆蓋既有條目。
+(function(){
+  var IMG = function(f){ return './' + encodeURIComponent(f); };
+  var L = [
+    ['藝天使．克雷爾', 'ur_claire_cst2',  '星夜畫境',     '藝天使_星夜畫境.webp'],
+    ['魔劍姬‧伊莉雅', 'ur_ilya_cst2',    '白銀聖劍姬',   '魔劍姬_伊莉雅_白銀聖劍姬.webp'],
+    ['主神奧汀',       'ur_odin_cst2',    '北境狼王',     '主神奧汀_北境狼王.webp'],
+    ['究極神兵',       'ur_shinhei_cst2', '赤焰決戰型態', '究極神兵_赤焰決戰型態.webp'],
+    ['天照大神',       'ur_amaterasu_cst2','夏祭花火',    '天照大神_夏祭花火.webp'],
+    ['月讀大神',       'ur_tsukuyomi_cst2','雪月清輝',    '月讀大神_雪月清輝.webp'],
+    ['媽祖',           'ur_mazu_cst2',    '海天巡航',     '媽祖_海天巡航.webp'],
+    ['鄭成功',         'ur_koxinga_cst2', '延平破浪',     '鄭成功_延平破浪.webp']
+  ];
+  window._UR_CST_SKINS = L;
+  L.forEach(function(e){
+    try{
+      if(typeof HERO_PORTRAIT_LIBRARY === 'undefined') return;
+      var lib = HERO_PORTRAIT_LIBRARY[e[0]];
+      if(!lib){
+        var _def = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[e[0]]) || '';
+        if(!_def) return;
+        lib = HERO_PORTRAIT_LIBRARY[e[0]] = [{ id:'default', name:'原始肖像', url:_def }];
+      }
+      for(var i = 0; i < lib.length; i++){ if(lib[i] && lib[i].id === e[1]) return; }
+      lib.push({ id:e[1], name:e[2], url:IMG(e[3]), requiresUnlock:true, cstUnlock:2 });
+    }catch(_){}
+  });
+})();
+// ★★★ v5.394.0 UR 命座造型 END ★★★

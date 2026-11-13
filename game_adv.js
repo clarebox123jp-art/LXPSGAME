@@ -38526,10 +38526,49 @@ function _scanAllLvUnlockPortraits(){
     const newly = _checkLvUnlockPortraits(name);
     _totalNew += newly.length;
   });
+  try{ _totalNew += _scanCstUnlockPortraits().length; }catch(_){}   // ★ v5.394.0 UR 命座造型(命座點亮 ≥2 顆)
   if(_totalNew > 0){
     try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
   }
   return _totalNew;
+}
+
+// ★ v5.394.0(2026-11-13・老師「請gpt幫我繪製所有UR的新外觀，解鎖條件是該角色的命座點亮2顆。」)
+//   命座造型:HERO_PORTRAIT_LIBRARY 條目帶 cstUnlock:N ⇒ 該英雄命座「已點亮」≥ N 顆(window._cstLit)就自動解鎖,
+//   寫進 _heroPortraitUnlocked(既有雲端存檔欄位,跟帳號走;共用 iPad 清帳號時一起清)。永久:重置星圖不收回。
+//   呼叫:_scanAllLvUnlockPortraits(雲端載入後/進英雄圖鑑)＋ _cstLight 點亮成功當下(onlyName)。命星資料還沒載入時 _cstLit 回空 ⇒ 不會誤解鎖。
+function _scanCstUnlockPortraits(onlyName){
+  const out = [];
+  try{
+    if(typeof HERO_PORTRAIT_LIBRARY === 'undefined' || typeof window._cstLit !== 'function') return out;
+    if(window._cstHydrated === false) return out;
+    const names = onlyName ? [onlyName] : Object.keys(HERO_PORTRAIT_LIBRARY);
+    names.forEach(name => {
+      const lib = HERO_PORTRAIT_LIBRARY[name];
+      if(!Array.isArray(lib)) return;
+      const need = lib.filter(p => p && (p.cstUnlock|0) > 0);
+      if(!need.length) return;
+      let lit = 0;
+      try{ lit = (window._cstLit(name) || []).length; }catch(_){ lit = 0; }
+      need.forEach(p => {
+        if(lit < (p.cstUnlock|0)) return;
+        if(!_heroPortraitUnlocked[name]) _heroPortraitUnlocked[name] = [];
+        if(_heroPortraitUnlocked[name].includes(p.id)) return;
+        _heroPortraitUnlocked[name].push(p.id);
+        try{ _logSkinUnlock(name, p.id, 'constellation'); }catch(_){}
+        out.push({ name: name, id: p.id, label: p.name });
+      });
+    });
+  }catch(_){}
+  return out;
+}
+// 未解鎖提示文字(雙版;鐵律 1.232)
+function _cstSkinLockMsg(entry, forTitle){
+  const n = (entry && entry.cstUnlock) | 0;
+  if(!n) return '';
+  const cute = (typeof _artStyle === 'undefined') || _artStyle === 'cute';
+  if(forTitle) return cute ? `🔒 命座點亮 ${n} 顆就能換上 — 點擊預覽大圖` : `🔒 尚未解鎖（命座點亮 ${n} 顆自動解鎖）— 點擊預覽大圖`;
+  return cute ? `🔒 這套造型還沒解鎖（命座點亮 ${n} 顆就能換上喔）` : `🔒 此造型尚未解鎖（命座點亮 ${n} 顆自動解鎖）`;
 }
 
 // ★ 冒險模式：等級每級 +2% 原始HP上限（線性疊加，無條件進位）
@@ -44567,9 +44606,9 @@ function _showPortraitPreview(heroName, portraitId){
   // ★ v1.0.20260428 — 依 portrait id 判斷解鎖來源,顯示對應提示
   //   _lv10 / _lv20 = 等級達標自動解鎖,其餘 = 商店購買
   const _lvMatch = (entry.id || '').match(/_lv(10|20)$/);
-  const _lockMsg = _lvMatch
+  const _lockMsg = (entry.cstUnlock ? _cstSkinLockMsg(entry, false) : '') || (_lvMatch
     ? `🔒 此肖像尚未解鎖（英雄達 Lv${_lvMatch[1]} 自動解鎖）`
-    : '🔒 此肖像尚未解鎖（可至不可思議超商購買）';
+    : '🔒 此肖像尚未解鎖（可至不可思議超商購買）');
   // 移除既有預覽
   const _old = document.getElementById('_portrait-preview-overlay');
   if(_old) _old.remove();
@@ -55016,16 +55055,16 @@ function _renderHeroDetail(name, box) {
           const badge = isSel ?
             '<div style="position:absolute;top:2px;right:2px;background:#ffcc44;color:#000;font-size:11px;font-weight:900;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;">★</div>' : '';
           const _lvMatchT = (p.id || '').match(/_lv(10|20)$/);
-          const _lockTitle = _lvMatchT
+          const _lockTitle = (p.cstUnlock ? _cstSkinLockMsg(p, true) : '') || (_lvMatchT
             ? `🔒 尚未解鎖（英雄達 Lv${_lvMatchT[1]} 自動解鎖）— 點擊預覽大圖`
-            : '🔒 尚未解鎖（可至不可思議超商購買）— 點擊預覽大圖';
+            : '🔒 尚未解鎖（可至不可思議超商購買）— 點擊預覽大圖');
           const clickAttr = isUnlocked
             ? `onclick="_onPortraitSwitcherClick('${name}','${p.id}')"`
             : `onclick="_showPortraitPreview('${name}','${p.id}')"
                title="${_lockTitle}"`;
           return `<div ${clickAttr} title="${p.name}" style="position:relative;cursor:pointer;border:2px solid ${border};border-radius:10px;overflow:hidden;width:64px;height:64px;background:rgba(0,0,0,0.4);transition:transform 0.15s;">`
-               + `<img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'"/>`
-               + overlay + badge + `</div>`;
+               + `<img src="${p.url}" style="width:100%;height:100%;object-fit:cover;display:block;" onload="try{window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)}catch(_){}" onerror="this.style.display='none'"/>`
+               + overlay + badge + (p.cstUnlock && !isUnlocked ? `<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(40,20,80,0.85);color:#ffe9a8;font-size:10px;font-weight:900;text-align:center;line-height:15px;">✦ 命座 ${p.cstUnlock|0}</div>` : '') + `</div>`;
         }).join('');
         _sw.style.display = '';
       } else {
@@ -83731,6 +83770,16 @@ function makeRadar(dims, size) {
     d.lit[k] = { s: lit.concat([slot]), at: Date.now() };
     _log('lit', k, 1, slot);
     _save();
+    /* ★ v5.394.0 命座造型:點亮到門檻當下解鎖並提示(_scanCstUnlockPortraits 在本檔外層) */
+    try{
+      if(typeof _scanCstUnlockPortraits === 'function'){
+        var _nu = _scanCstUnlockPortraits(k);
+        if(_nu.length){
+          try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+          setTimeout(function(){ try{ _showInGameToast(_T('🎨 解鎖新造型「' + _nu[0].label + '」!到英雄圖鑑換上看看', '🎨 解鎖命座造型「' + _nu[0].label + '」,可於英雄圖鑑切換'), '#ffcc44', 3200); }catch(_){} }, 900);
+        }
+      }
+    }catch(_){}
     return { ok:true };
   };
 
