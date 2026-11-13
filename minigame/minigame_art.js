@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.2.2';   /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」「每次復原,要減去操作數」)右欄三段(.rtop 固定選色器+滑桿/.rlw 圖層小視窗自己捲/.rbot 貼紙最近調色盤);復原扣回 S.strokes(cntOp/op.n);13:58 今日挑戰「重玩一關拿到二星以上」(dailyHit improve = old>0 且 ≥2★) */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -928,7 +928,7 @@ function dailyList(){
   if(!A.save) return [];
   var dk = dayKey(), key = (A.uid || 'guest') + '|' + dk, r, pool = [], out = [], i, d, W, any = false, k;
   if(A.dlKey === key && A.dl) return A.dl;
-  for(k in A.save.stars){ if(A.save.stars.hasOwnProperty(k) && (A.save.stars[k] | 0) > 0 && (A.save.stars[k] | 0) < 3) any = true; }
+  for(k in A.save.stars){ if(A.save.stars.hasOwnProperty(k) && (A.save.stars[k] | 0) > 0) any = true; }   /* ★ v1.2.2 重玩挑戰:只要有過關過的關卡就能出(原本要有未滿 3★ 的) */
   for(i = 0; i < D.DAILY.length; i++){ d = D.DAILY[i];
     if(d.t === 'ws'){ W = wsDef(d.ws); if(!W || !wsOpen(W)) continue; }
     if(d.t === 'improve' && !any) continue;
@@ -948,7 +948,7 @@ function dailyHit(type, info){
       else if(d.t === 'star3' && info.stars === 3) hit = true;
       else if(d.t === 'nomiss' && info.miss === 0) hit = true;
       else if(d.t === 'ws' && info.ws === d.ws) hit = true;
-      else if(d.t === 'improve' && info.old > 0 && info.stars > info.old) hit = true;
+      else if(d.t === 'improve' && info.old > 0 && info.stars >= 2) hit = true;   /* ★ v1.2.2 老師「重玩一關拿到二星以上」 */
     } else if(type === 'build' && d.t === 'build') hit = true;
     else if(type === 'paint' && d.t === 'paint'){
       if(d.k === 'cool') hit = info.colored > 0.05 && info.cool >= 0.7;
@@ -2055,8 +2055,11 @@ function canvasOpen(opt){
     var b = S.bb, x0 = Math.max(0, Math.floor(b[0])), y0 = Math.max(0, Math.floor(b[1])), x1 = Math.min(W, Math.ceil(b[2])), y1 = Math.min(H, Math.ceil(b[3])), c;
     if(x1 <= x0 || y1 <= y0) return;
     c = document.createElement('canvas'); c.width = x1 - x0; c.height = y1 - y0; c.getContext('2d').drawImage(snap, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
-    opPush({ t: 'px', L: L, x: x0, y: y0, c: c });
+    return opPush({ t: 'px', L: L, x: x0, y: y0, c: c });
   }
+  /* ★ v1.2.2(2026-11-13・老師「每次復原,要減去操作數」)— 有算進 S.strokes(交件門檻、自由畫星數、完成度分數)的動作,在那一步復原紀錄記 n:1;
+     undo 扣回、redo 加回 ⇒ 畫了又全部復原,次數回到 0,不能靠「畫一筆、復原」灌次數 */
+  function cntOp(op){ if(!op) return; S.strokes++; op.n = 1; }   /* 沒有留下復原步驟(什麼都沒畫到)就不算 */
 
   wrap = document.createElement('div'); wrap.id = 'art-cv';
   wrap.style.cssText = 'position:absolute;inset:0;z-index:40;background:#2b2335;display:flex;flex-direction:column;touch-action:none';
@@ -2088,18 +2091,30 @@ function canvasOpen(opt){
     + '#art-cv .ctx{position:fixed;z-index:60;background:#fff;border:.4vmin solid #3a2f45;border-radius:1.4vmin;padding:.6vmin;display:flex;flex-direction:column;gap:.4vmin}'
     + '#art-cv .cvtimer{font-weight:900;font-size:2.6vmin;padding:.4vmin 1.2vmin;border-radius:1.4vmin;background:#ffe9a8;border:.35vmin solid #3a2f45;white-space:nowrap}#art-cv .cvtimer.red{background:#ff8a8a;animation:artBeat .8s ease-in-out infinite}'
     + '#art-cv .stk{font-size:3.6vmin;cursor:pointer;display:inline-block;padding:.2vmin .5vmin;border-radius:1vmin}#art-cv .stk.on{background:#ffd93b;box-shadow:0 0 0 .3vmin #ff7a59}'
-    + '@media (orientation:landscape) and (max-height:520px){#art-cv .cvl{width:13vmin}#art-cv .cvb{width:11vmin;font-size:4.4vmin}#art-cv .cvb small{font-size:2.2vmin}#art-cv .cvr{width:28vmin}#art-cv .cvtop .tt{font-size:3.2vmin}#art-cv .lyr,#art-cv .mini{font-size:2.6vmin}#art-cv .cvtimer{font-size:3.4vmin}#art-cv .stk{font-size:4.6vmin}#art-cv .lmn{font-size:2.6vmin}#art-cv .lmn .q{width:5vmin;height:5vmin;font-size:2.6vmin}#art-cv .lmn input[type=checkbox]{width:4vmin;height:4vmin}}</style>'
+    /* ★ v1.2.2 右欄三段:整欄不捲(選色器固定右上),圖層小視窗與下段各自捲動 */
+    + '#art-cv .cvr{overflow:hidden;gap:.6vmin}#art-cv .rtop{flex:0 0 auto;display:flex;flex-direction:column;gap:.6vmin}'
+    + '#art-cv .rlw{flex:3 1 0;min-height:22vmin;display:flex;flex-direction:column;border:.3vmin solid #3a2f45;border-radius:1.2vmin;background:#fff3dc;overflow:hidden}'
+    + '#art-cv .rlh{flex:0 0 auto;display:flex;align-items:center;flex-wrap:nowrap;gap:.3vmin;padding:.4vmin .4vmin;background:#ffe2a6;border-bottom:.25vmin solid #3a2f45}#art-cv .rlh .slab{flex:1 1 auto;min-width:0;overflow:hidden;text-align:left;white-space:nowrap}#art-cv .rlh .mini{flex:0 0 auto;padding:.2vmin .5vmin;font-size:1.7vmin}'
+    + '#art-cv #art-cv-lyr{position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:.5vmin;display:flex;flex-direction:column;gap:.5vmin}#art-cv #art-cv-lyr>*{flex:0 0 auto}'
+    + '#art-cv .rbot{flex:2 1 0;min-height:9vmin;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;display:flex;flex-direction:column;gap:.6vmin}'
+    + '@media (orientation:landscape) and (max-height:520px){#art-cv .cvl{width:13vmin}#art-cv .cvb{width:11vmin;font-size:4.4vmin}#art-cv .cvb small{font-size:2.2vmin}#art-cv .cvr{width:28vmin}#art-cv .cvtop .tt{font-size:3.2vmin}#art-cv .lyr,#art-cv .mini{font-size:2.6vmin}#art-cv .cvtimer{font-size:3.4vmin}#art-cv .stk{font-size:4.6vmin}#art-cv .lmn{font-size:2.6vmin}#art-cv .lmn .q{width:5vmin;height:5vmin;font-size:2.6vmin}#art-cv .lmn input[type=checkbox]{width:4vmin;height:4vmin}#art-cv .rlh .mini{font-size:2.6vmin;padding:.2vmin .4vmin}#art-cv .rlh .slab{font-size:2.2vmin}#art-cv .rlw{flex-grow:2}#art-cv .rbot{flex-grow:1}}</style>'
     + '<div class="cvtop"><button class="abtn ghost" data-c="x">← 離開</button><span class="tt">🎨 ' + esc(opt.title || '創作畫布') + (opt.ask ? ':' + esc(opt.ask) : '') + '</span>'
     + (opt.endMs ? '<span class="cvtimer" id="art-cv-timer">⏱</span>' : '')
     + '<button class="abtn" data-c="undo" title="復原 (Ctrl+Z)">↶</button><button class="abtn" data-c="redo" title="重做 (Ctrl+Shift+Z)">↷</button><button class="abtn" data-c="grid" title="三分法格線">#️⃣</button><button class="abtn" data-c="fit" title="置中 (Ctrl+0)">⤢</button><button class="abtn" data-c="keys" title="快捷鍵 (?)">⌨</button><button class="abtn" data-c="how" title="怎麼玩">❓</button>'
     + (opt.task ? '<button class="abtn go" id="art-cv-done" data-c="done">' + (opt.submitLabel || '✅ 交件') + '</button>' : '<button class="abtn go" id="art-cv-done" data-c="save">💾 儲存</button>') + '</div>'
     + '<div class="cvmain"><div class="cvl" id="art-cv-left">' + bh + '</div>'
     + '<div class="stage" id="art-cv-stage"><canvas id="art-cv-c"></canvas></div>'
-    + '<div class="cvr" id="art-cv-right"><div style="display:flex;align-items:center;gap:1vmin"><span class="sw" id="art-cv-cur" style="width:7vmin;height:7vmin"></span><span class="slab" id="art-cv-hex"></span></div>'
-    /* ★ v1.1.3(檢查報告第 6 項):粗細/透明度從左欄(工具多時要捲才看得到)搬到右欄最上面,改成橫向滑桿,三種平台都一眼看得到 */
+    /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」)— 右欄分三段,右欄本身不再整欄捲動:
+       ① .rtop 固定:目前顏色+選色器(環形色相;灰階關卡/沒有 paintkit 時是 art-cv-pal)+粗細/透明滑桿
+       ② .rlw 圖層小視窗:標題列(＋▲▼🗑)固定,圖層清單 #art-cv-lyr 自己捲(最少約 22vmin 高,剩下的空間都給它)
+       ③ .rbot 貼紙/最近/調色盤色票:空間不夠時自己捲 */
+    + '<div class="cvr" id="art-cv-right"><div class="rtop" id="art-cv-rtop"><div style="display:flex;align-items:center;gap:1vmin"><span class="sw" id="art-cv-cur" style="width:7vmin;height:7vmin"></span><span class="slab" id="art-cv-hex"></span></div>'
+    + (PK && !opt.gray ? '<div id="art-cv-wheel"></div>' : '<div id="art-cv-pal"></div>')
+    /* ★ v1.1.3(檢查報告第 6 項):粗細/透明度改成橫向滑桿,三種平台都一眼看得到(v1.2.2 起跟選色器一起固定在右上) */
     + '<div class="srow"><span class="slab" id="art-cv-sizel">粗細</span><input class="hsl" type="range" min="1" max="100" id="art-cv-size"><span class="slab sv" id="art-cv-sizev"></span></div>'
-    + '<div class="srow"><span class="slab">透明</span><input class="hsl" type="range" min="5" max="100" id="art-cv-op"><span class="slab sv" id="art-cv-opv"></span></div>' + '<div class="slab" style="text-align:left;margin-top:.6vmin">📚 圖層</div><div id="art-cv-lyr"></div><div style="display:flex;gap:.6vmin;flex-wrap:wrap"><button class="mini" data-c="ladd">＋新增</button><button class="mini" data-c="lup">▲</button><button class="mini" data-c="ldn">▼</button><button class="mini" data-c="ldel">🗑</button></div>'   /* ★ v1.1.3:圖層區移到調色盤上面,不用捲到底才找得到 */
-    + (allowed.indexOf('stamp') >= 0 ? '<div class="slab" style="text-align:left">🏷 貼紙</div><div id="art-cv-stk"></div>' : '') + '<div class="slab" style="text-align:left">🕘 最近</div><div id="art-cv-rec"></div><div class="slab" style="text-align:left">🎨 調色盤</div>' + (PK && !opt.gray ? '<div id="art-cv-wheel"></div>' : '') + '<div id="art-cv-pal"></div></div></div>';
+    + '<div class="srow"><span class="slab">透明</span><input class="hsl" type="range" min="5" max="100" id="art-cv-op"><span class="slab sv" id="art-cv-opv"></span></div></div>'
+    + '<div class="rlw" id="art-cv-lwin"><div class="rlh"><span class="slab">📚 圖層</span><button class="mini" data-c="ladd" title="新增圖層">＋</button><button class="mini" data-c="lup" title="往上移">▲</button><button class="mini" data-c="ldn" title="往下移">▼</button><button class="mini" data-c="ldel" title="刪除圖層(可以復原)">🗑</button></div><div id="art-cv-lyr"></div></div>'
+    + '<div class="rbot" id="art-cv-rbot">' + (allowed.indexOf('stamp') >= 0 ? '<div class="slab" style="text-align:left">🏷 貼紙</div><div id="art-cv-stk"></div>' : '') + '<div class="slab" style="text-align:left">🕘 最近</div><div id="art-cv-rec"></div>' + (PK && !opt.gray ? '<div class="slab" style="text-align:left">🎨 調色盤</div><div id="art-cv-pal"></div>' : '') + '</div></div></div>';
   root.appendChild(wrap);
   var stage = $('art-cv-stage'), dc = $('art-cv-c'), dx = dc.getContext('2d'), dpr = A.lite ? 1 : Math.min(2, window.devicePixelRatio || 1);   /* ★ v1.1.1 省電:螢幕畫布不用 2 倍解析度(Retina iPad 每幀像素少 3/4) */
   /* 舊作品的圖層:全部載完再「照順序」放回去(原本誰先載完誰先放,順序可能亂掉) */
@@ -2141,7 +2156,7 @@ function canvasOpen(opt){
   /* ★ v1.0.3(老師「刪除圖層、調整圖層順序也改成能復原」)— 復原紀錄改成「動作」:
      px=筆畫(記那個圖層物件+畫之前的樣子)、del=刪圖層(記圖層物件與原位置)、move=調順序、add=新增圖層。
      記的是圖層「物件」不是索引 ⇒ 刪除/調順序之後,更早的筆畫照樣能正確復原到對的圖層。 */
-  function opPush(op){ S.undo.push(op); if(S.undo.length > undoMax) S.undo.shift(); S.redo = []; }
+  function opPush(op){ S.undo.push(op); if(S.undo.length > undoMax) S.undo.shift(); S.redo = []; return op; }
   /* px 動作只存「範圍」{x,y,c(小畫布)};復原/重做時把那一塊換回來,再把換掉的那塊存起來給重做用 */
   function swapPx(op){ var w = op.c.width, h = op.c.height, cur = document.createElement('canvas'), x; cur.width = w; cur.height = h; cur.getContext('2d').drawImage(op.L.c, op.x, op.y, w, h, 0, 0, w, h);
     x = op.L.c.getContext('2d'); x.clearRect(op.x, op.y, w, h); x.drawImage(op.c, op.x, op.y); op.c = cur; }
@@ -2154,8 +2169,8 @@ function canvasOpen(opt){
     else if(op.t === 'move'){ i = S.layers.indexOf(op.L); var to = back ? op.from : op.to; if(i >= 0){ S.layers.splice(i, 1); S.layers.splice(to, 0, op.L); S.li = to; } }
   }
   var OPN = { px: '筆畫', del: '刪除圖層', add: '新增圖層', move: '調整圖層順序', multi: '剪下/變形' };
-  function undo(){ if(S.float){ floatCancel(); return; } tolClose(); var u = S.undo.pop(); if(!u){ toast('沒有可以復原的了'); return; } applyOp(u, true); S.redo.push(u); if(u.t !== 'px') toast('↶ 復原:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
-  function redo(){ if(S.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } tolClose(); var u = S.redo.pop(); if(!u){ toast('沒有可以重做的了'); return; } applyOp(u, false); S.undo.push(u); if(u.t !== 'px') toast('↷ 重做:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
+  function undo(){ if(S.float){ floatCancel(); return; } tolClose(); var u = S.undo.pop(); if(!u){ toast('沒有可以復原的了'); return; } applyOp(u, true); S.redo.push(u); if(u.n) S.strokes = Math.max(0, S.strokes - u.n); if(u.t !== 'px') toast('↶ 復原:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
+  function redo(){ if(S.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } tolClose(); var u = S.redo.pop(); if(!u){ toast('沒有可以重做的了'); return; } applyOp(u, false); S.undo.push(u); if(u.n) S.strokes += u.n; if(u.t !== 'px') toast('↷ 重做:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
   function dab(ctx, x, y, r, b){ var g; if(b.soft){ g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, S.color); g.addColorStop(1, S.color + '00'); ctx.fillStyle = g; } else ctx.fillStyle = S.color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); bbAdd(x, y, r); }
   function lineSeg(ctx, b, x0, y0, x1, y1, w, st){
     var col = S.color;
@@ -2185,8 +2200,8 @@ function canvasOpen(opt){
     if(p.x < 0 || p.y < 0 || p.x > W || p.y > H) return;
     snapTake(S.li);
     x = L.c.getContext('2d'); x.save(); x.globalAlpha = S.op; if(L.lk) x.globalCompositeOperation = 'source-atop'; x.font = sz + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(S.sticker, p.x, p.y); x.restore();
-    bbAdd(p.x, p.y, sz * 0.75); undoFromSnap(L);
-    S.used.stamp = 1; S.strokes++; S.dirty++; sfx('sfx-gentle', 0.35); req(); paintLayersSoon(); draftSoon();
+    bbAdd(p.x, p.y, sz * 0.75); cntOp(undoFromSnap(L));
+    S.used.stamp = 1; S.dirty++; sfx('sfx-gentle', 0.35); req(); paintLayersSoon(); draftSoon();
   }
   function strokeStart(e, tool){
     var p = toWorld(e.clientX, e.clientY), L = S.layers[S.li], base = S.size[tool] || 10, pen = e.pointerType === 'pen';
@@ -2247,9 +2262,9 @@ function canvasOpen(opt){
     if(st.shift && st.mode === 'erase' && st.end){ }
     L = S.layers[st.li];
     if(st.mode !== 'erase'){ var x = L.c.getContext('2d'); x.globalAlpha = S.op; if(L.lk) x.globalCompositeOperation = 'source-atop'; x.drawImage(sc, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; scx.clearRect(0, 0, W, H); }   /* ★ v1.2.0 🔒 阿爾法鎖定 */
-    undoFromSnap(L);   /* ★ v1.1.0 只存畫到的範圍 */
+    cntOp(undoFromSnap(L));   /* ★ v1.1.0 只存畫到的範圍;★ v1.2.2 這一步復原會扣回次數 */
     S.used[st.tool] = 1;
-    S.stroke = null; S.strokes++; S.dirty++; req(); paintLayersSoon(); draftSoon();
+    S.stroke = null; S.dirty++; req(); paintLayersSoon(); draftSoon();
   }
   function cancelStroke(){ if(!S.stroke) return; if(S.stroke.hold) S.stroke.hold.stop(); scx.clearRect(0, 0, W, H); if(S.stroke.mode === 'erase'){ var x = S.layers[S.stroke.li].c.getContext('2d'); x.clearRect(0, 0, W, H); x.drawImage(snap, 0, 0); } S.stroke = null; req(); }
   /* ★ v1.1.3(檢查報告第 3 項):fromLong = 手指長按吸色;按在空白紙上不吸(原本會吸到白色,之後畫的都看不見) */
@@ -2289,13 +2304,14 @@ function canvasOpen(opt){
     if(opt.gray){ var g = PK.hex2rgb(hex), lum = Math.round(0.299 * g[0] + 0.587 * g[1] + 0.114 * g[2]), h2 = ('0' + lum.toString(16)).slice(-2); hex = '#' + h2 + h2 + h2; }
     f = { L: L, x: p.x, y: p.y, hex: hex, tol: tol, src: sampleAll(), bak: mkC() }; f.bak.getContext('2d').drawImage(L.c, 0, 0);
     if(!fillDo(f)) return false;
-    S.lastFill = f; S.used.bucket = 1; S.strokes++; S.dirty++; sfx('sfx-gentle', 0.4); cacheDirty(); req(); paintLayersSoon(); draftSoon();
+    S.lastFill = f; S.used.bucket = 1; cntOp(f.op); f.cnt = 1; S.dirty++; sfx('sfx-gentle', 0.4); cacheDirty(); req(); paintLayersSoon(); draftSoon();
     if(f.n > W * H * 0.96) toast(T({ c: '🪣 整張都填滿了:線條沒有圍起來(有缺口),或臨界值太大', p: '🪣 已填滿整張:請確認線條是否封閉,或調低臨界值' }));
     return true; }
   function bucketRe(tol){ var f = S.lastFill, x; if(!f || S.closed) return; f.tol = tol;
     if(S.undo.length && S.undo[S.undo.length - 1] === f.op) S.undo.pop();
     x = f.L.c.getContext('2d'); x.clearRect(0, 0, W, H); x.drawImage(f.bak, 0, 0);
-    fillDo(f); cacheDirty(); req(); paintLayersSoon(); draftSoon(); }
+    /* ★ v1.2.2 同一步重填:次數記號跟著新的復原步驟;臨界值拉到填不到任何地方 = 那一步沒了,次數也扣回(拉回來又填到就再算回 1 次) */
+    if(fillDo(f)){ if(f.cnt) f.op.n = 1; else { cntOp(f.op); f.cnt = 1; } } else if(f.cnt){ S.strokes = Math.max(0, S.strokes - 1); f.cnt = 0; } cacheDirty(); req(); paintLayersSoon(); draftSoon(); }
   function tolShow(){ if(!S.lastFill || S.closed) return; tolClose(true); S.tolBar = PK.tolBar(stage, S.lastFill.tol, function(t){ S.tol = t; bucketRe(t); }, function(){ S.tolBar = null; S.lastFill = null; paintTools(); }); }
   function tolClose(keep){ if(S.tolBar){ var b = S.tolBar; S.tolBar = null; b.close(); } if(!keep) S.lastFill = null; }
   /* ══ ★ v1.2.0 ✂️ 剪刀 / ⤡ 變形(老師「剪刀工具,把包圍起來區塊內的圖剪下、拖曳移到指定圖層」「變形工具」)══
@@ -2326,8 +2342,8 @@ function canvasOpen(opt){
     b = PK.floatBox(F); x0 = Math.max(0, Math.floor(b.x) - 2); y0 = Math.max(0, Math.floor(b.y) - 2); x1 = Math.min(W, Math.ceil(b.x + b.w) + 2); y1 = Math.min(H, Math.ceil(b.y + b.h) + 2);
     if(x1 > x0 && y1 > y0){ c = document.createElement('canvas'); c.width = x1 - x0; c.height = y1 - y0; c.getContext('2d').drawImage(tgt.c, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
       PK.floatDraw(tgt.c.getContext('2d'), F, true); ops.push({ t: 'px', L: tgt, x: x0, y: y0, c: c }); }
-    opPush({ t: 'multi', ops: ops });
-    S.li = S.layers.indexOf(tgt); S.used[f.cut ? 'cut' : 'xform'] = 1; S.strokes++; S.dirty++;
+    cntOp(opPush({ t: 'multi', ops: ops }));
+    S.li = S.layers.indexOf(tgt); S.used[f.cut ? 'cut' : 'xform'] = 1; S.dirty++;
     sfx('sfx-gentle', 0.4); if(tgt !== f.src) toast('📚 放到「' + tgt.n + '」了');
     cacheDirty(); req(); paintLayers(); draftSoon();
   }
@@ -2588,7 +2604,20 @@ function canvasOpen(opt){
       /* ★ v1.2.0(老師 18:44「圖層新增右側功能鍵可開啟下拉視窗:透明度、參照、阿爾法鎖定。都有 ? 可開啟說明視窗。參考 procreate」) */
       if(PK && S.lmenu === L.id) h += '<div class="lmn"><div class="r"><button class="mini" data-ren="' + i + '" style="flex:1">✏️ 改名字</button></div><div class="r">🔅 透明 <input type="range" min="10" max="100" value="' + Math.round(L.a * 100) + '" data-lmo="' + i + '"><b>' + Math.round(L.a * 100) + '%</b><button class="q" data-lmh="op">?</button></div>'
         + '<div class="r"><label><input type="checkbox" data-lmr="' + i + '"' + (L.ref ? ' checked' : '') + '>🎯 參照</label><button class="q" data-lmh="ref">?</button></div><div class="r"><label><input type="checkbox" data-lmk="' + i + '"' + (L.lk ? ' checked' : '') + '>🔒 阿爾法鎖定</label><button class="q" data-lmh="lk">?</button></div></div>'; }
-    $('art-cv-lyr').innerHTML = h;
+    /* ★ v1.2.2 圖層清單在自己的小視窗裡捲:重畫縮圖時保持原本捲到的位置;換作用圖層、加減圖層、開關 ⋯ 選單時才自動捲到看得到那一列 */
+    var box = $('art-cv-lyr'), st = box.scrollTop, key = S.li + '|' + S.layers.length + '|' + (S.lmenu || 0);
+    box.innerHTML = h; box.scrollTop = st;
+    if(key !== S.lyKey){ S.lyKey = key; lyShow(box); }
+  }
+  function lyShow(box){
+    var t = box.querySelector('.lyr.on'), m = box.querySelector('.lmn'), a, b, top, bot;
+    if(m && m.previousSibling) t = m.previousSibling;
+    if(!t) return;
+    a = t.offsetTop - 4; b = (m || t).offsetTop + (m || t).offsetHeight + 4;
+    top = box.scrollTop; bot = top + box.clientHeight;
+    if(b > bot) top = b - box.clientHeight;
+    if(a < top) top = a;
+    box.scrollTop = Math.max(0, top);
   }
   function layerRename(i){
     var L = S.layers[i]; if(!L) return;

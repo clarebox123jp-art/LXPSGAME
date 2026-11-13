@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
+var VER = 'v1.1.3';   /* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
 var S = { on: false, uid: '', guest: true, cfg: null, vkey: '', xwords: [], names: null, style: 'c', ed: null, gmTab: 'flag' };
@@ -210,6 +210,8 @@ var CSS = [
 '.dsg-new button+button{background:linear-gradient(135deg,#43c59e,#2a7fd4)}.dsg-new small{display:block;font-size:2vmin;font-weight:700;opacity:.9;margin-top:.6vmin}',
 '.dsg-drafts{display:grid;grid-template-columns:repeat(auto-fill,minmax(22vmin,1fr));gap:1.6vmin}',
 '.dsg-dr{position:relative;background:rgba(255,255,255,.14);border-radius:1.8vmin;padding:1vmin;font-size:1.9vmin;text-align:center}',
+'.dsg-dr .dl{display:block;width:100%;margin-top:.8vmin;border:.3vmin solid rgba(255,255,255,.7);border-radius:1.2vmin;background:rgba(40,150,90,.85);color:#fff;font:inherit;font-weight:900;padding:.7vmin .4vmin;cursor:pointer;touch-action:manipulation}.dsg-dr .dl:active{transform:translateY(.2vmin)}',   /* ★ v1.1.3 ⬇️ 下載圖片 */
+'.dsg-dlpv{display:flex;gap:2vmin;justify-content:center;align-items:flex-end;margin:1.2vmin 0}.dsg-dlpv label{display:flex;flex-direction:column;align-items:center;gap:.6vmin;cursor:pointer;font-weight:900}.dsg-dlpv .pv{width:min(22vmin,30vw);height:min(22vmin,30vw);border-radius:1.2vmin;border:.4vmin solid #c9c2d6;display:flex;align-items:center;justify-content:center;overflow:hidden}.dsg-dlpv .pv img{max-width:100%;max-height:100%}.dsg-dlpv .pv.ck{background:#fff url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%23ddd%27/%3E%3Crect x=%278%27 y=%278%27 width=%278%27 height=%278%27 fill=%27%23ddd%27/%3E%3C/svg%3E")}.dsg-dlpv .pv.wh{background:#fff}.dsg-dlpv label{position:relative}.dsg-dlpv input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}.dsg-dlpv input:checked+.pv{border-color:#ffd23f;box-shadow:0 0 0 .5vmin #ff7a59}.dsg-dlpv input:checked~.cap{color:#e0561f}.dsg-dlpv input:checked~.cap::before{content:"✔ "}',
 '.dsg-dr .th{height:22vmin;border-radius:1.2vmin;background:#fff url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%23eee%27/%3E%3Crect x=%278%27 y=%278%27 width=%278%27 height=%278%27 fill=%27%23eee%27/%3E%3C/svg%3E");display:flex;align-items:center;justify-content:center;overflow:hidden}',
 '.dsg-dr .x.rn{right:auto;left:.4vmin;background:rgba(40,90,200,.75)}.dsg-dr .th img{max-width:100%;max-height:100%}.dsg-dr .x{position:absolute;right:.4vmin;top:.4vmin;border:0;border-radius:50%;width:4.4vmin;height:4.4vmin;background:rgba(0,0,0,.55);color:#fff;font-size:2.2vmin}',
 /* 編輯器 */
@@ -259,6 +261,12 @@ var CSS = [
 '#dsg-ed .prop{overflow-y:auto;background:rgba(0,0,0,.18);padding:1.2vmin calc(1.2vmin + env(safe-area-inset-right)) 2vmin 1.2vmin;font-size:2vmin;-webkit-overflow-scrolling:touch}',
 '#dsg-ed .prop label{display:block;margin:1vmin 0 .3vmin;font-weight:800}#dsg-ed .prop input[type=range]{width:100%;height:4vmin}',
 '#dsg-ed .prop .row{display:flex;flex-wrap:wrap;gap:.6vmin;margin-top:1vmin}#dsg-ed .prop .row .dsg-b{font-size:1.8vmin;padding:.8vmin 1vmin}',
+/* ★ v1.1.3(老師「設計師畫布也改成同樣的固定方式」)右欄三段:選色器固定在上面、圖層小視窗自己捲、選到物件的屬性在最下面(內容多時自己捲);直式版面維持整欄捲(放在下方 portrait 區塊覆寫) */
+'#dsg-ed .prop{display:flex;flex-direction:column;overflow:hidden}#dsg-pcol{flex:0 0 auto}',
+'#dsg-ed .dsg-lwin{flex:1 1 0;min-height:20vmin;display:flex;flex-direction:column;margin-top:.8vmin;border:.3vmin solid rgba(255,255,255,.35);border-radius:1.2vmin;background:rgba(0,0,0,.15);overflow:hidden}',
+'#dsg-ed .dsg-lwh{flex:0 0 auto;display:flex;align-items:center;gap:.6vmin;padding:.3vmin .6vmin;background:rgba(255,255,255,.12);border-bottom:.25vmin solid rgba(255,255,255,.3)}#dsg-ed .dsg-lwh .dsg-sec{margin:0;white-space:nowrap}#dsg-ed .dsg-lwh .dsg-lyb{flex:1;min-width:0}',
+'#dsg-lys{position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:0 .5vmin}',
+'#dsg-pitem{flex:0 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}',
 '#dsg-ed input[type=text],.dsg-m input[type=text],.dsg-m textarea,.dsg-m select,#dsg-ed select{font-size:2.2vmin;padding:.8vmin;border-radius:1vmin;border:0;width:100%;font-family:inherit}',
 '.dsg-sw{display:inline-block;width:4.6vmin;height:4.6vmin;border-radius:50%;border:.4vmin solid #fff;margin:.3vmin}.dsg-sw.on{box-shadow:0 0 0 .5vmin #ffd45a}',
 '#dsg-ed.locked .lib,#dsg-ed.locked .prop{opacity:.55;pointer-events:none}',
@@ -298,7 +306,8 @@ var CSS = [
 '@media (orientation:portrait){#dsg-ed{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) 34vh}',
 ' #dsg-ed .bar{grid-column:1/3;grid-row:1}#dsg-ed .mid{grid-column:1/3;grid-row:2}#dsg-ed .lib{grid-column:1;grid-row:3;border-top:.4vmin solid rgba(255,255,255,.22);padding-left:0}#dsg-ed .prop{grid-column:2;grid-row:3;border-top:.4vmin solid rgba(255,255,255,.22);padding-bottom:calc(2vmin + env(safe-area-inset-bottom))}',
 ' #dsg-ed .lbody{padding-bottom:calc(2vmin + env(safe-area-inset-bottom))}#dsg-ed .bar .t{max-width:40vw}',
-' #dsg-ed.pc{grid-template-columns:1fr 1fr !important;grid-template-rows:auto minmax(0,1fr) 0}.dsg-lockbar{white-space:normal;text-align:center;width:90%}}',
+' #dsg-ed.pc{grid-template-columns:1fr 1fr !important;grid-template-rows:auto minmax(0,1fr) 0}.dsg-lockbar{white-space:normal;text-align:center;width:90%}',
+' #dsg-ed .prop{display:block;overflow-y:auto}#dsg-ed .dsg-lwin{display:block;overflow:visible}#dsg-lys,#dsg-pitem{overflow:visible}}',   /* ★ v1.1.3 直式:右下面板只有 34vh 高,選色器固定會把圖層擠沒 ⇒ 維持整個面板一起捲 */
 '@media (orientation:portrait) and (max-width:600px){#dsg-ed{grid-template-rows:auto minmax(0,1fr) 38vh}#dsg-ed .bar .lb{display:none}#dsg-ed .bar .dsg-b{font-size:4.2vmin;padding:1.4vmin 2.2vmin}#dsg-ed .bar .t{font-size:3.8vmin;max-width:34vw}#dsg-ed .bar .ops{font-size:3.4vmin}',
 ' #dsg-ed .tabs button{font-size:3.3vmin;padding:1.3vmin 1.6vmin}.dsg-grid{grid-template-columns:repeat(auto-fill,minmax(15vmin,1fr))}.dsg-it{height:15vmin;font-size:2.6vmin}.dsg-it img{max-height:10vmin}',
 ' .dsg-chips button{font-size:3.2vmin}.dsg-sec{font-size:3.4vmin}#dsg-ed .prop{font-size:3.3vmin}#dsg-ed .prop .row .dsg-b{font-size:3.2vmin}#dsg-ed .prop label{font-size:3.3vmin}#dsg-ed .prop input[type=range]{height:6vmin}',
@@ -307,7 +316,9 @@ var CSS = [
 ' .dsg-m .box{font-size:3.7vmin}.dsg-m h3{font-size:4.8vmin}.dsg-m .dsg-b{font-size:3.7vmin}.dsg-chip{font-size:3.2vmin}.dsg-gc{font-size:3.2vmin}.dsg-lockbar{font-size:3.4vmin}.dsg-zb{font-size:13px}}',
 /* ★ v1.1.0 新面板(畫筆格、圖層列、選色器)手機橫放/直放字級(放最後,鐵律〇之二) */
 '@media (orientation:landscape) and (max-height:520px){.dsg-brs{grid-template-columns:repeat(auto-fill,minmax(12vmin,1fr))}.dsg-brs button{font-size:2.3vmin}.dsg-brs button b{font-size:4.4vmin}.dsg-lyr,.dsg-lyr button,.dsg-lyb button,.dsg-lya{font-size:2.7vmin}.dsg-lyr img,.dsg-lyr .lic{width:7vmin;height:7vmin}.dsg-curc b{font-size:2.6vmin}.dsg-curc .dsg-sw{width:8vmin;height:8vmin}.dsg-qsw .dsg-sw{width:5.4vmin;height:5.4vmin}.dsg-lmn{font-size:2.7vmin}.dsg-lmn button{width:5.4vmin;height:5.4vmin;font-size:2.8vmin}.dsg-lmn input[type=checkbox]{width:4.4vmin;height:4.4vmin}}',
-'@media (orientation:portrait) and (max-width:600px){.dsg-brs{grid-template-columns:repeat(auto-fill,minmax(13vmin,1fr))}.dsg-brs button{font-size:2.6vmin}.dsg-brs button b{font-size:5vmin}.dsg-lyr,.dsg-lyr button,.dsg-lyb button,.dsg-lya{font-size:3.1vmin}.dsg-lyr img,.dsg-lyr .lic{width:8vmin;height:8vmin}.dsg-curc b{font-size:3vmin}.dsg-qsw .dsg-sw{width:6vmin;height:6vmin}.dsg-lmn{font-size:3.1vmin}.dsg-lmn button{width:6vmin;height:6vmin;font-size:3.2vmin}.dsg-lmn input[type=checkbox]{width:5vmin;height:5vmin}}'
+'@media (orientation:portrait) and (max-width:600px){.dsg-brs{grid-template-columns:repeat(auto-fill,minmax(13vmin,1fr))}.dsg-brs button{font-size:2.6vmin}.dsg-brs button b{font-size:5vmin}.dsg-lyr,.dsg-lyr button,.dsg-lyb button,.dsg-lya{font-size:3.1vmin}.dsg-lyr img,.dsg-lyr .lic{width:8vmin;height:8vmin}.dsg-curc b{font-size:3vmin}.dsg-qsw .dsg-sw{width:6vmin;height:6vmin}.dsg-lmn{font-size:3.1vmin}.dsg-lmn button{width:6vmin;height:6vmin;font-size:3.2vmin}.dsg-lmn input[type=checkbox]{width:5vmin;height:5vmin}}',
+/* ★ v1.1.3 手機橫放:右欄矮,選色器縮到約三成畫面高,留空間給圖層小視窗 */
+'@media (orientation:landscape) and (max-height:520px){#dsg-wheel canvas{max-width:min(230px,27vh) !important}#dsg-pcol>.dsg-sec{display:none}#dsg-pcol .dsg-curc{margin:0 0 .4vmin}#dsg-pcol .dsg-curc .dsg-sw{width:5.4vmin;height:5.4vmin}#dsg-pcol .dsg-qsw .dsg-sw{width:4.6vmin;height:4.6vmin}#dsg-ed .dsg-lwin{min-height:16vmin;margin-top:.4vmin}#dsg-ed .dsg-lwh .dsg-sec{font-size:2.6vmin}}'
 ].join('\n');
 function injectCss(){ if($('dsg-css')) return; var s = document.createElement('style'); s.id = 'dsg-css'; s.textContent = CSS; document.head.appendChild(s); }
 
@@ -430,8 +441,9 @@ function hub(){
   h += '<div class="top"><div class="dsg-sec" style="font-size:2.6vmin">📁 我的作品</div><div class="sp"></div>' + (S.guest ? '' : '<span id="dsg-cs" style="font-size:1.9vmin;opacity:.8;margin-right:1vmin">' + esc((csNow() && S.cs.status().msg) || '') + '</span><button class="dsg-b ghost" data-k="cloud">☁ 立即同步</button>') + '</div><div class="dsg-drafts" id="dsg-drafts">讀取中…</div></div>';   /* ★ v1.0.7 自動同步;按鈕 = 手動保險 */
   root.innerHTML = h;
   root.onclick = function(ev){
-    var t = ev.target, k = null, did = null, dx = null, drn = null;
-    while(t && t !== root){ if(t.getAttribute){ k = k || t.getAttribute('data-k'); did = did || t.getAttribute('data-d'); dx = dx || t.getAttribute('data-x'); drn = drn || t.getAttribute('data-rn'); } t = t.parentNode; }
+    var t = ev.target, k = null, did = null, dx = null, drn = null, ddl = null;
+    while(t && t !== root){ if(t.getAttribute){ k = k || t.getAttribute('data-k'); did = did || t.getAttribute('data-d'); dx = dx || t.getAttribute('data-x'); drn = drn || t.getAttribute('data-rn'); ddl = ddl || t.getAttribute('data-dl'); } t = t.parentNode; }
+    if(ddl){ sfx('sfx-tap', 0.3); dlWork(ddl); return; }   /* ★ v1.1.3 ⬇️ 下載圖片(要在 data-d 開作品之前攔下) */
     if(dx){ sfx('sfx-tap', 0.3); delDraft(dx); return; }
     if(drn){ sfx('sfx-tap', 0.3); renameDraft(drn); return; }   /* ★ v1.0.3 ✏️ 改作品名稱 */
     if(did){ sfx('sfx-tap', 0.3); openDraft(did); return; }
@@ -455,7 +467,7 @@ function draftsPaint(){
     if(!a.length){ el.innerHTML = '<div style="opacity:.8;font-size:2.2vmin">還沒有作品,按上面的按鈕開始設計吧!</div>'; return; }
     for(i = 0; i < a.length; i++){ r = a[i];
       st = r.lock === 'sub' ? '<span class="dsg-chip pend">⏳ 已繳交・等老師審核</span>' : r.lock === 'live' ? '<span class="dsg-chip live">✅ 老師通過</span>' : (r.back ? '<span class="dsg-chip back">↩ 老師退件・可修改</span>' : '<span class="dsg-chip none">✏️ 編輯中</span>');
-      h += '<div class="dsg-dr" data-d="' + esc(r.id) + '"><div class="th">' + (r.th ? '<img src="' + r.th + '">' : D.KINDS[r.kind].e) + '</div><div>' + D.KINDS[r.kind].e + ' ' + esc(r.title || D.KINDS[r.kind].n) + '</div><div>' + st + '</div><div style="opacity:.85">💾 ' + esc(r.stamp || fmtStamp(r.at)) + '</div><div style="opacity:.75">操作 ' + ((r.d && r.d.ops) | 0) + ' 次' + (S.guest || !S.cs ? '' : (S.cs.synced(r) ? '・☁ 已同步' : '・⏳ 等待上傳')) + '</div>' + (r.lock ? '' : '<button class="x" data-x="' + esc(r.id) + '">✕</button><button class="x rn" data-rn="' + esc(r.id) + '" title="改名字">✏️</button>') + '</div>'; }
+      h += '<div class="dsg-dr" data-d="' + esc(r.id) + '"><div class="th">' + (r.th ? '<img src="' + r.th + '">' : D.KINDS[r.kind].e) + '</div><div>' + D.KINDS[r.kind].e + ' ' + esc(r.title || D.KINDS[r.kind].n) + '</div><div>' + st + '</div><div style="opacity:.85">💾 ' + esc(r.stamp || fmtStamp(r.at)) + '</div><div style="opacity:.75">操作 ' + ((r.d && r.d.ops) | 0) + ' 次' + (S.guest || !S.cs ? '' : (S.cs.synced(r) ? '・☁ 已同步' : '・⏳ 等待上傳')) + '</div>' + (r.lock ? '' : '<button class="x" data-x="' + esc(r.id) + '">✕</button><button class="x rn" data-rn="' + esc(r.id) + '" title="改名字">✏️</button>') + '<button class="dl" data-dl="' + esc(r.id) + '" title="把作品存成 PNG 圖片(可以去背)">⬇️ 下載圖片</button></div>'; }   /* ★ v1.1.3 老師「我的作品新增作品圖片下載,PNG(可背景透明)」;已繳交/已通過的作品也能下載 */
     el.innerHTML = h;
   });
 }
@@ -536,6 +548,63 @@ function renameDraft(id){
   nameAsk(r.title || '', function(v){ r.title = v; idbPut(myKey(r.id), JSON.parse(JSON.stringify(r)), function(ok){ toast(ok ? '✏️ 改好名字了' : '改名失敗,請再試一次'); draftsPaint(); }); }, '✏️ 改好了');
 }
 
+/* ══ ★ v1.1.3(2026-11-13・老師「美術設計工作室『我的作品』新增作品圖片下載功能,PNG 格式(可背景透明),下載到裝置預設下載圖片儲存位置」)══
+   recEd(r):不開編輯器,把存檔裡的圖層 PNG 載進暫時畫布 ⇒ renderComposite(…, E0) 合成原尺寸(隱藏的圖層、描圖參考、骨架都不進圖片)。
+   先把「透明背景/白色背景」兩張都做好(toBlob)才跳選擇視窗 ⇒ 按「下載」那一下直接存檔,不會因為等待而被瀏覽器擋:
+   · iPad/iPhone:跳系統分享選單 →「儲存影像」存到「照片」(或「儲存到檔案」);取消就什麼都不做
+   · 電腦/Android:<a download> 存進瀏覽器的下載資料夾(老師的 Chrome = D:\Downloads) */
+function recEd(r, cb){
+  var d, K = D.KINDS[r.kind] || {}, P = {}, plc = {}, n = 1, i, k;
+  try{ d = JSON.parse(JSON.stringify(r.d)); }catch(e){ cb(null); return; }
+  if(!d.W) d.W = K.W; if(!d.H) d.H = K.H; if(!d.items) d.items = [];
+  for(i = 0; i < d.items.length; i++) delete d.items[i].im;
+  if(!d.layers || !d.layers.length){ var P1 = { id: 'p1', k: 'p', n: '圖層 1', vis: 1, a: 1 }, O1 = { id: 'o', k: 'o', n: '物件層', vis: 1, a: 1 }; d.layers = r.pls ? [P1, O1] : (d.pb ? [P1, O1] : [O1, P1]); }   /* 同 lyInit 舊作品轉換 */
+  if(r.pls){ for(k in r.pls){ if(r.pls.hasOwnProperty(k)) P[k] = r.pls[k]; } } else if(r.paint) P.p1 = r.paint;
+  function one(){ n--; if(n === 0) cb({ d: d, r: r, plc: plc }); }
+  for(i = 0; i < d.layers.length; i++){ if(d.layers[i].k !== 'p') continue;
+    (function(id){ var c = document.createElement('canvas'), im; c.width = d.W; c.height = d.H; plc[id] = c; if(!P[id]) return;
+      n++; im = new Image(); im.onload = function(){ try{ c.getContext('2d').drawImage(im, 0, 0); }catch(e){} one(); }; im.onerror = one; im.src = P[id]; })(d.layers[i].id); }
+  one();
+}
+function dlName(r, clear){ var t = String(r.title || (D.KINDS[r.kind] || {}).n || '作品').replace(/[\\\/:*?"<>|\s]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 24) || '作品', d = new Date(); function z(v){ return (v < 10 ? '0' : '') + v; }
+  return '小英雄_' + t + '_' + d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes()) + (clear ? '_去背' : '') + '.png'; }
+function isIOSDev(){ var u = navigator.userAgent || ''; return /iP(ad|hone|od)/.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function dlSave(blob, name){
+  var f = null;
+  function anchorDl(){ var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; a.rel = 'noopener'; a.style.display = 'none'; document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(u); }catch(e){} if(a.parentNode) a.parentNode.removeChild(a); }, 5000);
+    toast(T({ c: '⬇️ 下載好了:' + name + '(在「下載」資料夾)', p: '⬇️ 已下載 ' + name + '(位於裝置「下載」資料夾)' })); }
+  try{ f = new File([blob], name, { type: 'image/png', lastModified: now() }); }catch(e){ f = null; }
+  if(isIOSDev() && f && navigator.share && navigator.canShare && navigator.canShare({ files: [f] })){
+    navigator.share({ files: [f], title: name }).then(function(){ toast(T({ c: '✅ 存好了!選「儲存影像」的在「照片」裡', p: '✅ 已儲存;選擇「儲存影像」者位於「照片」' })); }, function(e){ if(e && e.name === 'AbortError') return; anchorDl(); });
+    return; }
+  anchorDl();
+}
+function dlWork(id){
+  var a = S.drafts || [], i, r = null; for(i = 0; i < a.length; i++){ if(a[i].id === id) r = a[i]; }
+  if(!r){ toast('找不到這件作品,請重新整理'); return; }
+  busy(true, T({ c: '正在把作品做成圖片…', p: '正在輸出作品圖片…' }));
+  recEd(r, function(E){
+    if(!E){ busy(false); toast('這件作品讀不出來,沒辦法下載'); return; }
+    renderComposite(false, 0, function(cvT){ renderComposite(true, 0, function(cvW){
+      var B2 = {}, left = 2;
+      function got(k){ return function(b){ B2[k] = b; left--; if(left === 0) show(); }; }
+      try{ cvT.toBlob(got('t'), 'image/png'); cvW.toBlob(got('w'), 'image/png'); }catch(e){ busy(false); toast('這台裝置沒辦法輸出圖片'); return; }
+      function show(){
+        busy(false);
+        if(!B2.t || !B2.w){ toast('做圖片失敗,請再試一次'); return; }
+        var pt = '', pw = ''; try{ pt = cvT.toDataURL('image/png'); pw = cvW.toDataURL('image/png'); }catch(e){}
+        var clear = lsGet('dsg_dlbg') !== 'w';
+        modal('<h3>⬇️ ' + T({ c: '下載作品圖片', p: '下載作品圖片(PNG)' }) + '</h3><p style="margin:.4vmin 0">' + esc(r.title || D.KINDS[r.kind].n) + '(' + E.d.W + '×' + E.d.H + ')</p>'
+          + '<div class="dsg-dlpv"><label><input type="radio" name="dsg-dlbg" value="t"' + (clear ? ' checked' : '') + '><span class="pv ck"><img src="' + pt + '" alt=""></span><span class="cap">🔲 ' + T({ c: '透明背景(去背)', p: '透明背景' }) + '</span></label>'
+          + '<label><input type="radio" name="dsg-dlbg" value="w"' + (clear ? '' : ' checked') + '><span class="pv wh"><img src="' + pw + '" alt=""></span><span class="cap">⬜ ' + T({ c: '白色背景', p: '白色背景' }) + '</span></label></div>'
+          + '<p style="font-size:.85em;opacity:.85;margin:.4vmin 0">' + (isIOSDev() ? T({ c: '📱 iPad:按下載會跳出選單,選「儲存影像」就存到「照片」;也可以選「儲存到檔案」。', p: 'iPad/iPhone:將開啟分享選單,選「儲存影像」存入「照片」,或「儲存到檔案」。' }) : T({ c: '💻 會存進這台裝置的「下載」資料夾。', p: '檔案將存入裝置的「下載」資料夾。' })) + '</p>',
+          [{ t: '取消', cls: 'ghost' }, { t: '⬇️ 下載', cb: function(m){ var c = m.querySelector('input[name=dsg-dlbg]:checked'), k = c ? c.value : 't'; lsSet('dsg_dlbg', k); dlSave(B2[k], dlName(r, k === 't')); } }]);
+      }
+    }, E); }, E);
+  });
+}
+
 /* ══ 新作品/打開/刪除 ══ */
 function blankDesign(kind){ var K = D.KINDS[kind]; return { v: 1, kind: kind, W: K.W, H: K.H, bt: 'boy', slots: {}, tint: {}, items: [], ops: 0, hd: 1, layers: [{ id: 'p1', k: 'p', n: '圖層 1', vis: 1, a: 1 }, { id: 'o', k: 'o', n: '物件層', vis: 1, a: 1 }], guide: kind === 'skin' ? { t: 'pose', id: 'stand', on: 1 } : null }; }   /* ★ v1.0.3 手繪原創:新作品是一張白紙(hd=1 不畫人物底座);角色皮膚預設開「站好」骨架參考 */
 function newWork(kind){
@@ -566,11 +635,11 @@ function editorOpen(r){
   if(r.stamp) h += '<div class="dsg-stamp" id="dsg-stamp">💾 ' + esc(r.stamp) + '</div>';
   if(r.lock) h += '<div class="dsg-lockbar">' + (r.lock === 'live' ? '✅ 老師已通過,這件作品不能再改了' : '🔒 已繳交,等老師審核;老師退件後才能修改') + '</div>';
   /* ★ v1.1.0 老師「常駐選色器、圖層在畫布的右側」:右欄 = 🎨 選色器 + 📚 圖層(一直都在)+ 選到物件時的屬性 */
-  h += '</div><div class="prop" id="dsg-prop"><div id="dsg-pcol"></div><div class="dsg-sec">📚 <span class="lb">圖層</span></div><div id="dsg-lys"></div><div id="dsg-pitem"></div></div></div>';
+  h += '</div><div class="prop" id="dsg-prop"><div id="dsg-pcol"></div><div class="dsg-lwin" id="dsg-lwin"><div class="dsg-lwh" id="dsg-lwh"><div class="dsg-sec">📚 <span class="lb">圖層</span></div><div class="dsg-lyb"><button data-lk="add" title="新增圖層">＋</button><button data-lk="up" title="往上">▲</button><button data-lk="dn" title="往下">▼</button><button data-lk="del" title="刪除圖層(可以復原)">🗑</button></div></div><div id="dsg-lys"></div></div><div id="dsg-pitem"></div></div></div>';
   root.innerHTML = h;
   root.onclick = function(ev){ var t = ev.target, k = null; while(t && t !== root){ if(t.getAttribute) k = k || t.getAttribute('data-k'); t = t.parentNode; } if(!k) return; sfx('sfx-tap', 0.3); barCmd(k); };
   lyInit(r); plsBuild();
-  $('dsg-lys').onclick = lyClick;
+  $('dsg-lys').onclick = lyClick; $('dsg-lwh').onclick = lyClick;   /* ★ v1.1.3 ＋▲▼🗑 在小視窗標題列 */
   $('dsg-lys').oninput = function(ev){ var li = ev.target.getAttribute('data-lmo'), L = li != null ? lyList()[+li] : null, b; if(!L || locked()) return; if(!S.ed._laOp){ beginOp(); S.ed._laOp = 1; } L.a = (+ev.target.value) / 100; b = ev.target.nextSibling; if(b) b.textContent = ev.target.value + '%'; plsBuild(); };
   $('dsg-lys').onchange = function(ev){ if(ev.target.getAttribute('data-lmo') != null && S.ed._laOp){ S.ed._laOp = 0; endOp(false); lyPanel(); } };
   $('dsg-pcol').onclick = function(ev){ var t = ev.target; if(t.getAttribute && t.getAttribute('data-pc')){ ev.stopPropagation(); if(locked()) return; sfx('sfx-tap', 0.2); colorSet(t.getAttribute('data-pc'), false, true); } };
@@ -717,8 +786,8 @@ function restore(sn){ var E = S.ed, k, gd = E.d.guide; E.d = JSON.parse(sn.d); E
   if(!lyGet(E.al) || lyGet(E.al).k !== 'p'){ var a = lyList(), i; for(i = a.length - 1; i >= 0; i--){ if(a[i].k === 'p'){ E.al = a[i].id; break; } } }
   plsBuild(); lyPanel();
   E.sel = -1; layersPaint(); libPaint(); propPaint(); dirty(); }
-function undo(){ var E = S.ed; if(E && E.float){ flCancel(); return; } tolClose(); if(locked() || !E.undo.length){ return; } var cur = snapNow(), ops = E.d.ops, oh = E.d.oh; E.redo.push(cur); restore(E.undo.pop()); E.d.ops = ops; E.d.oh = oh; opsPaint(); }   /* ★ v1.0.2 算過的畫面指紋 oh 也不跟著復原 */
-function redo(){ var E = S.ed; if(E && E.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } tolClose(); if(locked() || !E.redo.length) return; var ops = E.d.ops, oh = E.d.oh; E.undo.push(snapNow()); restore(E.redo.pop()); E.d.ops = ops; E.d.oh = oh; opsPaint(); }   /* 復原不扣操作次數(做過的努力都算) */
+function undo(){ var E = S.ed; if(E && E.float){ flCancel(); return; } tolClose(); if(locked() || !E.undo.length){ return; } var cur = snapNow(); E.redo.push(cur); restore(E.undo.pop()); opsPaint(); }   /* ★ v1.2.2(2026-11-13・老師「每次復原,要減去操作數」)快照本來就存著當時的 ops 與畫面指紋 oh,復原整份換回 ⇒ 那一步算過的次數扣回、指紋也退回(重做或再做一次會再算回來) */
+function redo(){ var E = S.ed; if(E && E.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } tolClose(); if(locked() || !E.redo.length) return; E.undo.push(snapNow()); restore(E.redo.pop()); opsPaint(); }   /* ★ v1.2.2 重做 = 換回當時的快照,扣掉的次數加回來 */
 var dT = null;
 function dirty(){ var E = S.ed; if(!E) return; E.dirty = true; E.cloudDirty = true; clearTimeout(dT); dT = setTimeout(function(){ saveLocal(false); }, 1500); }
 
@@ -1685,8 +1754,20 @@ function lyPanel(){
     /* ★ v1.1.0(老師 18:44「圖層新增右側功能鍵可開啟下拉視窗:透明度、參照、阿爾法鎖定。都有 ? 可開啟說明視窗。參考 procreate」) */
     if(E.lmenu === L.id) h += '<div class="dsg-lmn"><div class="r">🔅 透明度 <input type="range" min="10" max="100" value="' + Math.round((L.a == null ? 1 : L.a) * 100) + '" data-lmo="' + i + '"><b>' + Math.round((L.a == null ? 1 : L.a) * 100) + '%</b><button data-lmh="op">?</button></div>'
       + (L.k === 'p' ? '<div class="r"><label><input type="checkbox" data-lmr="' + i + '"' + (L.ref ? ' checked' : '') + '> 🎯 參照</label><button data-lmh="ref">?</button></div><div class="r"><label><input type="checkbox" data-lmk="' + i + '"' + (L.lk ? ' checked' : '') + '> 🔒 阿爾法鎖定</label><button data-lmh="lk">?</button></div>' : '<div class="r" style="opacity:.75;font-size:.9em">' + esc(T({ c: '物件層放文字和向量形狀,只能調透明度', p: '物件層僅能調整透明度' })) + '</div>') + '</div>'; }
-  h += '<div class="dsg-lyb"><button data-lk="add" title="新增圖層">＋<span class="lb">新增</span></button><button data-lk="up" title="往上">▲</button><button data-lk="dn" title="往下">▼</button><button data-lk="del" title="刪除圖層">🗑</button></div>';
-  el.innerHTML = h;
+  /* ★ v1.1.3(2026-11-13・老師「設計師畫布也改成同樣的固定方式」)＋▲▼🗑 搬到圖層小視窗的標題列(editorOpen 的 .dsg-lwh,不跟著捲);
+     清單在自己的小視窗裡捲:重畫時保持捲到的位置,換作用圖層/加減圖層/開關 ⋯ 時才捲到看得到那一列 */
+  var st = el.scrollTop, key = E.al + '|' + a.length + '|' + (E.lmenu || '');
+  el.innerHTML = h; el.scrollTop = st;
+  if(key !== E.lyKey){ E.lyKey = key; lyShowIn(el); }
+}
+function lyShowIn(box){
+  var t = box.querySelector('.dsg-lyr.on'), m = box.querySelector('.dsg-lmn'), a, b, top;
+  if(m && m.previousSibling) t = m.previousSibling;
+  if(!t) return;
+  a = t.offsetTop - 4; b = (m || t).offsetTop + (m || t).offsetHeight + 4; top = box.scrollTop;
+  if(b > top + box.clientHeight) top = b - box.clientHeight;
+  if(a < top) top = a;
+  box.scrollTop = Math.max(0, top);
 }
 function lyHot(i){ var rows = document.querySelectorAll('#dsg-lys .dsg-lyr'), j, v; for(j = 0; j < rows.length; j++){ v = +rows[j].getAttribute('data-dl'); rows[j].classList.toggle('hot', i != null && v === i); } }
 function lyRename(i){
@@ -1765,19 +1846,19 @@ function pxFill(p){
 }
 
 /* ══ 合成整張圖(匯出/縮圖/品質檢查/審核共用) ══ */
-function renderComposite(flat, maxSide, cb){
-  var E = S.ed, d = E.d, W = d.W, H = d.H, sc = maxSide ? Math.min(1, maxSide / Math.max(W, H)) : 1, cv = document.createElement('canvas'), x, list = [], i, it, n = 0;
+function renderComposite(flat, maxSide, cb, E0){   /* ★ v1.1.3 E0 = 不開編輯器也能合成(「我的作品」下載 PNG 用 recEd 做出來的暫時作品) */
+  var E = E0 || S.ed, d = E.d, W = d.W, H = d.H, sc = maxSide ? Math.min(1, maxSide / Math.max(W, H)) : 1, cv = document.createElement('canvas'), x, list = [], i, it, n = 0;
   cv.width = Math.round(W * sc); cv.height = Math.round(H * sc); x = cv.getContext('2d');
   if(flat){ x.fillStyle = '#ffffff'; x.fillRect(0, 0, cv.width, cv.height); }
   var sl = slotList(d);
   for(i = 0; i < sl.length; i++) list.push({ slot: 1, src: 'av:' + sl[i][0], tint: sl[i][1] });
   for(i = 0; i < d.items.length; i++){ it = JSON.parse(JSON.stringify(d.items[i])); delete it.im; list.push(it); }   /* 複本:圖片物件不可以寫回作品資料(會被存檔、算進指紋) */
   function draw(){
-    var j, o, c, li, LY = lyList();
+    var j, o, c, li, LY = E0 ? (d.layers || []) : lyList();
     x.setTransform(sc, 0, 0, sc, 0, 0);
     /* ★ v1.1.0 照圖層順序合成:一般圖層(畫筆)與物件層(人物部件/素材/文字/形狀);隱藏的圖層不進作品 */
     for(li = 0; li < LY.length; li++){ if(!LY[li].vis) continue;
-      if(LY[li].k === 'p'){ c = plCv(LY[li].id); if(c){ x.globalAlpha = LY[li].a == null ? 1 : LY[li].a; x.drawImage(c, 0, 0, W, H); x.globalAlpha = 1; } continue; }
+      if(LY[li].k === 'p'){ c = E0 ? E0.plc[LY[li].id] : plCv(LY[li].id); if(c){ x.globalAlpha = LY[li].a == null ? 1 : LY[li].a; x.drawImage(c, 0, 0, W, H); x.globalAlpha = 1; } continue; }
     var oa = LY[li].a == null ? 1 : LY[li].a; x.globalAlpha = oa;   /* 物件層透明度 */
     for(j = 0; j < list.length; j++){ o = list[j]; x.globalAlpha = oa;
       if(o.slot){ if(o.im){ c = o.tint ? tintCv(o.im, o.tint[0], o.tint[1]) : o.im; x.drawImage(c, 0, 0, W, H); } continue; }
@@ -1824,7 +1905,7 @@ function qualityCheck(cb){
   var E = S.ed, q = qOf(E.r.kind);
   renderComposite(false, 360, function(cv){
     var st = qualityStats(cv), a = [], d = E.d, bald = false;
-    a.push({ ok: (d.ops | 0) >= q.ops, ic: '✋', n: '操作次數', have: (d.ops | 0) + ' 次', need: q.ops + ' 次以上', tip: '只有「增加」和「變色」的動作才算:放素材、放文字、畫形狀、用畫筆或像素筆加細節(每一筆都算)、複製一份、選人物部件、換顏色;而且改完要跟原本不一樣(選回同一個顏色、換回原本的樣子不算)。拖曳、縮放、旋轉、往前往後不算' });
+    a.push({ ok: (d.ops | 0) >= q.ops, ic: '✋', n: '操作次數', have: (d.ops | 0) + ' 次', need: q.ops + ' 次以上', tip: '只有「增加」和「變色」的動作才算:放素材、放文字、畫形狀、用畫筆或像素筆加細節(每一筆都算)、複製一份、選人物部件、換顏色;而且改完要跟原本不一樣(選回同一個顏色、換回原本的樣子不算)。拖曳、縮放、旋轉、往前往後不算;按 ↶ 復原會把那一步算過的次數扣回來' });
     a.push({ ok: st.bbox >= q.bbox, ic: '📐', n: '圖案範圍', have: Math.round(st.bbox * 100) + '%', need: Math.round(q.bbox * 100) + '% 以上', tip: d.kind === 'skin' ? '只有人物太窄了:讓角色拿武器、帶寵物站旁邊,或加上特效,讓作品撐滿畫面' : '把裝飾放大、多擺幾樣東西,讓作品撐滿畫面' });
     a.push({ ok: st.fill >= q.fill, ic: '🖍', n: '上色比例', have: Math.round(st.fill * 100) + '%', need: Math.round(q.fill * 100) + '% 以上', tip: '空白太多了:把東西放大一點,或用畫筆把空的地方補上圖案' });
     a.push({ ok: st.colors >= q.colors, ic: '🌈', n: '顏色數量', have: st.colors + ' 種', need: q.colors + ' 種以上', tip: '顏色太少了:換不同顏色的衣服、用 🎨 顏色滑桿改色,或用畫筆加顏色' });
