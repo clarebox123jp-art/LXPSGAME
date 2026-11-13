@@ -757,6 +757,18 @@ window._lxpsTieredAudioPrewarm = function(){
   try{
     if(window._lxpsAudioPrewarmDone) return;
     window._lxpsAudioPrewarmDone = true;
+    // ★ v5.390.0(2026-11-13・老師「iPad 進遊戲後按什麼都沒反應,要等 30~60 秒」「只有 iPad 才有」)
+    //   iPad/iPhone 的 <audio> 每個都在系統媒體程序裡建一個播放器,play/seek/載入都要跟它同步溝通;
+    //   這裡原本開機後把 163 個 <audio>(含 74 首 BGM 約 200MB)全部 load() 一輪 ⇒ 那段時間媒體程序塞滿,
+    //   玩家一按鈕(playSfx/BGM 切換都碰 <audio>)主執行緒就得排隊等 ⇒ 整個畫面像當掉。
+    //   iOS 改成完全不預熱 <audio>:音效走 Web Audio 預先解碼(_lxpsWaSfx),BGM 用到才載。
+    //   緊急恢復:localStorage.lxps_ios_audio_prewarm = 'on'。
+    try{
+      var _uaP = navigator.userAgent || '';
+      var _iosP = /iPad|iPhone|iPod/.test(_uaP) || (/Macintosh/.test(_uaP) && (navigator.maxTouchPoints || 0) > 1);
+      var _forceP = false; try{ _forceP = localStorage.getItem('lxps_ios_audio_prewarm') === 'on'; }catch(_){}
+      if(_iosP && !_forceP){ console.log('[音訊預熱 v5.390.0] iPad/iPhone ⇒ 不預熱 <audio>(音效走 Web Audio、BGM 用到才載)'); return; }
+    }catch(_){}
     var all = Array.prototype.slice.call(document.querySelectorAll('audio[id]'));
     var sfx = [], bgm = [];
     all.forEach(function(a){
@@ -1464,6 +1476,90 @@ function noise(dur,vol){
  * 【緊急關閉】localStorage.lxps_wa_sfx = 'off' ⇒ 全部退回 <audio> 原路徑。
  * 【靜音鍵】navigator.audioSession.type='playback'(iPadOS 17+):Web Audio 不受靜音模式影響,與原本 <audio> 行為一致。
  * ══════════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════
+ * ★ v5.390.0(2026-11-13・老師「只有 iPad:進遊戲後按什麼都沒反應,要等 30~60 秒才有反應」)— 卡頓黑盒子
+ *   沙盒與電腦版重現不了 ⇒ 在遊戲裡自動記錄,下次發生時「🐛 卡死或 BUG 回報」會自動附上:
+ *   ①畫面停住:每 250ms 打一次心跳,間隔超過 1.5 秒就記一筆(停多久、當時開著哪些全螢幕視窗、媒體/下載忙不忙)
+ *   ②點按延遲:手指按下到程式收到超過 0.4 秒就記一筆
+ *   ③透明層擋點擊:按到的是「幾乎看不見的全螢幕層」就記下它的 id/class
+ *   只記最近 40 筆;只在發生時寫一次 localStorage(lxps_stallbox),平常不寫。純記錄,不改任何遊戲行為。
+ * ════════════════════════════════════════════════════════════════════════ */
+(function _lxpsStallBoxInit(){
+  var B = window._lxpsStallBox = { log: [], crumbs: [], since: Date.now() };
+  function now(){ try{ return performance.now(); }catch(_){ return Date.now(); } }
+  function hhmm(){ try{ var d = new Date(); return d.toTimeString().slice(0, 8); }catch(_){ return '?'; } }
+  function desc(el){
+    try{
+      if(!el || el === document || el === window) return '?';
+      var s = (el.tagName || '').toLowerCase();
+      if(el.id) s += '#' + el.id;
+      else if(el.className && typeof el.className === 'string') s += '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.');
+      var t = (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 14);
+      if(t) s += '「' + t + '」';
+      return s.slice(0, 90);
+    }catch(_){ return '?'; }
+  }
+  function ctx(){
+    var o = [];
+    try{
+      var W = innerWidth, H = innerHeight, kids = document.body ? document.body.children : [];
+      for(var i = 0; i < kids.length; i++){
+        var e = kids[i], cs = getComputedStyle(e);
+        if(cs.display === 'none' || cs.visibility === 'hidden') continue;
+        if(cs.position !== 'fixed' && cs.position !== 'absolute') continue;
+        var r = e.getBoundingClientRect();
+        if(r.width * r.height < W * H * 0.5) continue;
+        o.push((e.id || (typeof e.className === 'string' ? e.className.split(' ')[0] : '') || e.tagName) + '(z' + cs.zIndex + (parseFloat(cs.opacity) < 0.1 ? ',透明' : '') + (cs.pointerEvents === 'none' ? ',不擋' : '') + ')');
+      }
+    }catch(_){}
+    var m = 0;
+    try{ var as = document.getElementsByTagName('audio'); for(var j = 0; j < as.length; j++){ if(as[j].networkState === 2) m++; } }catch(_){}
+    var od = '';
+    try{ var OD = window._lxpsOD; if(OD) od = '下載中' + (OD.inflight || 0) + '/排隊' + ((OD.queue && OD.queue.length) || 0); }catch(_){}
+    return '視窗[' + o.join(' ') + '] 音訊載入中' + m + ' ' + od + (window._lxpsPwaBusy && window._lxpsPwaBusy() ? ' 完整下載中' : '');
+  }
+  function save(){ try{ localStorage.setItem('lxps_stallbox', JSON.stringify({ at: Date.now(), v: window._GAME_LOADED_VERSION || '', log: B.log.slice(-40) })); }catch(_){} }
+  function push(o){ B.log.push(o); if(B.log.length > 40) B.log.shift(); save(); }
+  B.crumb = function(s){ B.crumbs.push(hhmm() + ' ' + s); if(B.crumbs.length > 20) B.crumbs.shift(); };
+  try{ var old = JSON.parse(localStorage.getItem('lxps_stallbox') || 'null'); if(old && old.log) B.prev = old; }catch(_){}
+  var last = now();
+  setInterval(function(){
+    var n = now(), gap = n - last; last = n;
+    if(document.hidden) return;
+    if(gap > 1500) push({ t: hhmm(), type: '畫面停住', ms: Math.round(gap - 250), ctx: ctx(), after: B.crumbs.slice(-3).join(' ← ') });
+  }, 250);
+  document.addEventListener('visibilitychange', function(){ last = now(); B.crumb(document.hidden ? '切到背景' : '回到前景'); });
+  document.addEventListener('pointerdown', function(e){
+    try{
+      var lag = (e.timeStamp && e.timeStamp > 1e12) ? (Date.now() - e.timeStamp) : (now() - e.timeStamp);
+      var tg = e.target, cs = tg && tg.nodeType === 1 ? getComputedStyle(tg) : null;
+      B.crumb('點 ' + desc(tg));
+      if(lag > 400) push({ t: hhmm(), type: '點按延遲', ms: Math.round(lag), target: desc(tg), ctx: ctx() });
+      if(cs && (cs.position === 'fixed' || cs.position === 'absolute')){
+        var r = tg.getBoundingClientRect();
+        var tiny = parseFloat(cs.opacity) < 0.1 || cs.visibility === 'hidden';
+        var empty = !tg.children.length && !(tg.innerText || '').trim() && (cs.backgroundColor === 'rgba(0, 0, 0, 0)' || cs.backgroundColor === 'transparent') && cs.backgroundImage === 'none';
+        if(r.width * r.height > innerWidth * innerHeight * 0.5 && (tiny || empty)) push({ t: hhmm(), type: '透明層擋住點擊', target: desc(tg), z: cs.zIndex });
+      }
+    }catch(_){}
+  }, { capture: true, passive: true });
+  B.report = function(){
+    var L = [];
+    try{
+      L.push('## 🐢 卡頓黑盒子(v5.390.0)');
+      L.push('- 裝置: ' + (window._lxpsIsIOS ? 'iPad/iPhone' : '其他') + ' ・ 流暢模式: ' + (window._lxpsLiteOn && window._lxpsLiteOn() ? '開' : '關') + ' ・ 本次開啟 ' + Math.round((Date.now() - B.since) / 60000) + ' 分鐘');
+      var lg = B.log.length ? B.log : ((B.prev && B.prev.log) || []);
+      if(!B.log.length && B.prev) L.push('- (本次沒有紀錄,以下是上一次開遊戲的紀錄)');
+      if(!lg.length) L.push('- 沒有偵測到卡頓');
+      lg.slice(-15).forEach(function(x){
+        L.push(('- ' + x.t + ' ' + x.type + (x.ms ? ' ' + x.ms + 'ms' : '') + (x.target ? ' 點:' + x.target : '') + (x.z ? ' z' + x.z : '') + (x.ctx ? ' | ' + x.ctx : '') + (x.after ? ' | 前面:' + x.after : '')).slice(0, 220));
+      });
+      L.push('- 最近操作: ' + B.crumbs.slice(-8).join(' → '));
+    }catch(_){}
+    return L.join('\n');
+  };
+  window._lxpsStallReport = B.report;
+})();
 (function _lxpsWaSfxInit(){
   var W = window._lxpsWaSfx = { bufs: {}, used: {}, loading: {}, failed: {}, cur: {}, bytes: 0, on: true, hit: 0, miss: 0 };
   var IOS = false;
@@ -1471,6 +1567,7 @@ function noise(dur,vol){
     var _ua = navigator.userAgent || '';
     IOS = /iPad|iPhone|iPod/.test(_ua) || (/Macintosh/.test(_ua) && (navigator.maxTouchPoints || 0) > 1);
   }catch(_){}
+  window._lxpsIsIOS = IOS;   // ★ v5.390.0 iPad 卡頓修正共用旗標(playSfx / 邊玩邊下載 / 卡頓黑盒子)
   try{ if(localStorage.getItem('lxps_wa_sfx') === 'off') W.on = false; }catch(_){}
   try{ if(navigator.audioSession && IOS) navigator.audioSession.type = 'playback'; }catch(_){}
   function _ac(){ try{ return (typeof AC !== 'undefined' && AC) ? AC : null; }catch(_){ return null; } }
@@ -1549,10 +1646,12 @@ function noise(dur,vol){
   function _preload(){
     if(_pre || !W.on) return; _pre = true;
     setTimeout(function(){
-      var i = 0, lim = (window._lxpsLiteOn && window._lxpsLiteOn()) ? 12 : HOT.length;   // 流暢模式只預解碼最常用的 12 個
+      var i = 0, lim = (window._lxpsLiteOn && window._lxpsLiteOn()) ? (IOS ? 18 : 12) : HOT.length;   // 流暢模式只預解碼最常用的 12 個(★ v5.390.0 iPad 18 個)
       (function next(){
-        if(i >= lim) return;
-        W.load(HOT[i++], null, function(){ setTimeout(next, 120); });
+        if(i >= lim || i >= HOT.length) return;
+        var _id = HOT[i++];
+        try{ if(window._LXPS_CLICK_SFX && window._LXPS_CLICK_SFX[_id] && window._lxpsBtnSfxOn && !window._lxpsBtnSfxOn()){ lim++; next(); return; } }catch(_){}   // ★ v5.390.0 點擊聲關閉 ⇒ 不解碼
+        W.load(_id, null, function(){ setTimeout(next, 120); });
       })();
     }, 4000);
   }
@@ -1561,7 +1660,51 @@ function noise(dur,vol){
       document.addEventListener(_ev, _preload, { once: true, capture: true, passive: true });
     });
   }catch(_){}
+  /* ★ v5.390.0(老師選 1)— iPad/iPhone:答對/答錯/升級/賣出/獎章等「直接叫 <audio>.play()」的音效也改走 Web Audio。
+     做法:攔 HTMLMediaElement.prototype.play,只管 id 以 sfx- 開頭的 <audio>;有解碼好的緩衝 ⇒ 用 Web Audio 播並回傳完成;
+     還沒解碼 ⇒ 背景開始解碼,這一聲先不出聲(不當場建立系統播放器);Web Audio 關閉/失敗/沒有 AudioContext ⇒ 照舊。
+     BGM、影片、聽音題(id 不是 sfx-)一律不受影響。這些常用音效另外排進預先解碼清單。 */
+  if(IOS){
+    try{
+      // 新加的常用音效排最前面(倒著 unshift ⇒ 答對/答錯最先解碼)
+      ['sfx-friend-login','sfx-gm-message','sfx-rescue-chime','sfx-battle-enter','sfx-adv-start','sfx-sell-item','sfx-level-up','sfx-quiz-wrong','sfx-quiz-correct'].forEach(function(s){ if(HOT.indexOf(s) < 0) HOT.unshift(s); });
+      var _origPlay = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function(){
+        try{
+          var me = this;
+          if(me && me.tagName === 'AUDIO' && me.id && me.id.indexOf('sfx-') === 0 && !W._inSfx && W.on && !W.failed[me.id] && _ac()){
+            var _muted = false; try{ _muted = (typeof _sfxMuted !== 'undefined') && _sfxMuted; }catch(_){}
+            if(_muted) return Promise.resolve();
+            var _uv = (typeof window._sfxUserVol === 'number') ? window._sfxUserVol : 1;
+            var _dk = (typeof window._lxpsEarDuckSfxMul === 'number') ? window._lxpsEarDuckSfxMul : 1;
+            if(W.play(me.id, me, 0.7 * 0.49 * _uv * _dk)) return Promise.resolve();
+            if(me.readyState < 2) return Promise.resolve();
+          }
+        }catch(_){}
+        return _origPlay.apply(this, arguments);
+      };
+    }catch(_eHp){ console.warn('[Web Audio 音效 v5.390.0] 攔截 play 失敗,照舊', _eHp); }
+  }
 })();
+
+/* ★ v5.390.0(老師選 2、3)— 按鈕點擊聲開關:純點擊的「嗶」聲(選擇/返回/確認類)可以關掉,iPad 每按一次少一件事。
+   設定存 localStorage.lxps_btn_sfx('on'/'off');沒設定過 ⇒ iPad/iPhone 預設關、其他裝置預設開。影音設定的「音效音量」面板可切換。
+   戰鬥、獎勵、答題等有意義的音效不受影響。 */
+window._LXPS_CLICK_SFX = { 'sfx-sel':1, 'sfx-gentle':1, 'sfx-cancel':1, 'sfx-confirm':1, 'sfx-confirm2':1 };
+window._lxpsBtnSfxOn = function(){
+  try{ var p = localStorage.getItem('lxps_btn_sfx'); if(p === 'on') return true; if(p === 'off') return false; }catch(_){}
+  return !window._lxpsIsIOS;
+};
+window._lxpsBtnSfxSet = function(on){
+  try{ localStorage.setItem('lxps_btn_sfx', on ? 'on' : 'off'); }catch(_){}
+  try{ var b = document.getElementById('ctrl-btnsfx-tg'); if(b) window._lxpsBtnSfxPaint(b); }catch(_){}
+};
+window._lxpsBtnSfxPaint = function(b){
+  var on = window._lxpsBtnSfxOn();
+  b.textContent = on ? '開' : '關';
+  b.style.background = on ? 'rgba(40,140,80,0.55)' : 'rgba(90,90,100,0.45)';
+  b.style.borderColor = on ? '#6fe08a' : '#999';
+};
 
 function playSfx(id, vol, fadeStartMs){
   // ★ v3.3.3 — FX 同步:把音效事件加入佇列(client 後續會重播)
@@ -1574,6 +1717,7 @@ function playSfx(id, vol, fadeStartMs){
     }
   }catch(_){}
   if(_sfxMuted) return;
+  try{ if(window._LXPS_CLICK_SFX[id] && !window._lxpsBtnSfxOn()) return; }catch(_){}   // ★ v5.390.0 按鈕點擊聲關閉時不播
   const el=document.getElementById(id);
   if(!el) return;
   try{
@@ -1586,6 +1730,9 @@ function playSfx(id, vol, fadeStartMs){
     // ★ v5.337.0(老師選乙)— 先走 Web Audio(已解碼的緩衝,按下立即出聲、不用每次 seek 播放器);
     //   還沒解碼好/AudioContext 沒在跑 ⇒ 回 false,照舊用 <audio> 元素播(同時背景開始解碼,下次就走 Web Audio)。
     try{ if(window._lxpsWaSfx && window._lxpsWaSfx.play(id, el, v, fadeStartMs)) return; }catch(_eWa){}
+    // ★ v5.390.0 iPad/iPhone:Web Audio 還沒解碼好、而這個 <audio> 也還沒載入 ⇒ 這一聲先不出聲(背景已在解碼,下次就有聲)。
+    //   在 iPad 上「當場建立播放器+載檔」是按鈕卡住的主因之一;已載入的 <audio> 照舊可以播。
+    try{ var _wI = window._lxpsWaSfx; if(window._lxpsIsIOS && el.readyState < 2 && _wI && _wI.on && !_wI.failed[id] && typeof AC !== 'undefined' && AC) return; }catch(_){}
     if(el._fadeTimer){ clearTimeout(el._fadeTimer); el._fadeTimer=null; }
     if(el._fadeIv){ clearInterval(el._fadeIv); el._fadeIv=null; }
     el.currentTime=0;
@@ -1594,6 +1741,8 @@ function playSfx(id, vol, fadeStartMs){
     // ★ v1.0.20260422.0110 — 可選 fadeStartMs 參數：指定多少毫秒後開始淡出（預設 2700ms）
     const _fadeStart = (typeof fadeStartMs === 'number' && fadeStartMs > 0) ? fadeStartMs : 2700;
     el._fadeTimer=setTimeout(()=>{
+      // ★ v5.390.0 iOS 的 <audio>.volume 是唯讀,逐步調音量沒有效果、只會多 20 次跟媒體程序溝通 ⇒ 直接停
+      if(window._lxpsIsIOS){ el._fadeTimer=null; try{ el.pause(); }catch(_){} return; }
       const steps=20, dur=300;
       let step=0;
       el._fadeIv=setInterval(()=>{
@@ -72981,8 +73130,13 @@ function ctrlOpenVolumePanel(kind){
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">'
     + '<div style="font-size:14px;color:#8a8a9a;">' + _cvT('拉到最左邊就沒聲音囉', '拉桿最左端 = 靜音') + '</div>'
     + '<div id="ctrl-vol-pct" style="font-size:20px;font-weight:900;color:#eee;min-width:64px;text-align:right;">' + (curPct <= 0 ? _cvT('靜音', '靜音') : (curPct + '%')) + '</div>'
-    + '</div>';
+    + '</div>'
+    + (isBgm ? '' : ('<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.15);">'
+      + '<div style="font-size:16px;color:#ddd;line-height:1.4;">' + _cvT('🔘 按按鈕的「嗶」聲', '🔘 按鈕點擊音效') + '<div style="font-size:12px;color:#8a8a9a;">' + _cvT('iPad 關掉會比較順', 'iPad 建議關閉,可減少卡頓') + '</div></div>'
+      + '<button id="ctrl-btnsfx-tg" onclick="window._lxpsBtnSfxSet(!window._lxpsBtnSfxOn())" style="min-width:58px;padding:6px 12px;font-size:17px;font-weight:900;color:#fff;border:2px solid #999;border-radius:9px;cursor:pointer;font-family:inherit;"></button>'
+      + '</div>'));
   document.body.appendChild(pv);
+  try{ var _tg = document.getElementById('ctrl-btnsfx-tg'); if(_tg) window._lxpsBtnSfxPaint(_tg); }catch(_){}   // ★ v5.390.0
   // 點面板外側自動關閉(下一拍才掛·避免開啟這一下立即觸發)
   setTimeout(function(){
     document.addEventListener('click', _ctrlVolOutsideClose, true);
@@ -84265,7 +84419,7 @@ function _showNewHeroAnnouncement(forceShow){
           </div>
           <div style="font-size:19px;color:#e8ffd8;line-height:1.85;">
             <!-- ★ v3.11.7(2026-05-28) — 護盾啟動回合對齊實際邏輯 3/5/7/9 -->
-            兩千年沉睡淬煉的意志:<b>單次受傷上限固定 5,000 傷害</b>(不隨 HP 變動)<br>
+            兩千年沉睡淬煉的意志:<b>傷害軟上限</b>——每位英雄一次出手超過 5,000 的部分只算一半,最多 9,999<br>
             戰鬥的第 <b style="color:#ff9966;">5 / 9</b> 回合會自動啟動「四元素護盾」:
             <br>・身上同時浮現 <b style="color:#ff6644;">火</b> / <b style="color:#88dddd;">風</b> /
             <b style="color:#bb8855;">土</b> / <b style="color:#cc99ff;">暗</b> 四種護盾,每個元素各 <b>1 層</b>
@@ -84299,7 +84453,7 @@ function _showNewHeroAnnouncement(forceShow){
             ⏳ 戰鬥節奏(10 回合 · 拚累積傷害排名)
           </div>
           <div style="font-size:19px;color:#ffe;line-height:1.85;">
-            龍王 HP <b style="color:#ff8866;">1,000 萬</b>、單次傷害上限 <b style="color:#ff8866;">5,000</b>,
+            龍王 HP <b style="color:#ff8866;">1,000 萬</b>、超過 5,000 的傷害只算一半(最多 <b style="color:#ff8866;">9,999</b>),
             <b style="color:#ffd966;">單場無法獨力擊敗</b>。請在 10 回合內努力存活,
             並盡可能打出更高的累積傷害,所有玩家的傷害會即時加總到全伺服器排行榜!<br>
             ・每場戰鬥共 <b style="color:#ffd966;">11 次答題機會</b>:開場 1 題 + 第 1~10 回合各 1 題<br>
@@ -84326,7 +84480,7 @@ function _showNewHeroAnnouncement(forceShow){
           <div style="margin-top:10px;padding:8px 12px;background:rgba(255,200,80,0.12);
             border:1px solid rgba(255,200,80,0.4);border-radius:8px;
             font-size:17px;color:#ffdc88;line-height:1.65;">
-            📚 <b>考題來源:</b>世界 BOSS 戰的題目會從「<b style="color:#ffe066;">所有題庫</b>」(冒險答題 / 台灣環島 / 五下自然 / 領養狗狗 / 嬰幼兒照顧 等)隨機抽取,難度與綜合知識挑戰並重
+            📚 <b>考題來源:</b>由<b style="color:#ffe066;">房主</b>選本場出題範圍:「一般題庫」(冒險答題 / 台灣環島 / 自然 / 養護專題 等隨機抽取)或「📝 考試複習」(照課本範圍出題)
           </div>
           <div style="margin-top:10px;padding:8px 12px;background:rgba(93,202,165,0.12);
             border:1px solid rgba(93,202,165,0.4);border-radius:8px;
@@ -84498,7 +84652,7 @@ function _showNewHeroAnnouncement(forceShow){
         <div style="background:rgba(40,40,80,0.5);border-left:4px solid rgba(180,200,255,0.6);
           padding:14px 18px;border-radius:8px;">
           <div style="font-size:18px;color:#aaccff;font-weight:700;line-height:1.65;">
-            📍 <span style="font-weight:800;">代表英雄設定:</span>主選單 → 玩家頭像/名字 → 「代表英雄」<br>
+            📍 <span style="font-weight:800;">代表英雄設定:</span>關卡選擇頁上方的「代表英雄」小卡(圓形頭像),點一下就能換<br>
             🔮 <span style="font-weight:800;">免費召喚:</span>左下角「召喚」按鈕進入,點「召喚 1 次」即可!
           </div>
         </div>
@@ -84584,11 +84738,11 @@ function _showNewHeroAnnouncement(forceShow){
           </div>
           <div style="font-size:18px;color:#ffe;line-height:1.75;">
             UR 是 <span style="color:#ffe066;font-weight:800;">無法抽取、也不會在 BOSS 戰隨機解鎖</span>的尊貴角色!<br>
-            只有透過 <span style="color:#ffd86b;font-weight:900;">學校真實考試的優異成績</span>,或 <span style="color:#ffd86b;font-weight:900;">特殊的優良表現</span>,由老師親自頒發給最傑出的小英雄 🎖️
+            取得方式有兩種:① 透過 <span style="color:#ffd86b;font-weight:900;">學校真實考試的優異成績</span>,或 <span style="color:#ffd86b;font-weight:900;">特殊的優良表現</span>,由老師親自頒發給最傑出的小英雄 🎖️;② <span style="color:#7fe3ff;font-weight:900;">累積答對不重複的題目 2000／4000／6000 題</span>,每拿到一枚答題獎章就送 1 張 <span style="color:#ffd86b;font-weight:900;">UR 自選召喚卷</span>(關卡選擇頁「🏅 獎章」→「答題」分類看進度)。
           </div>
           <div style="margin-top:12px;padding:12px 14px;background:rgba(120,80,200,0.22);
             border-left:4px solid #cc99ff;border-radius:8px;font-size:17px;color:#e8d8ff;line-height:1.65;">
-            🔮 <span style="font-weight:800;">未來預告：</span>之後還會陸續開放更多<span style="color:#ffcc66;font-weight:800;">全新 UR 角色</span>與<span style="color:#ff99cc;font-weight:800;">究極至寶</span>,敬請期待,一起繼續努力爭取吧!
+            🧠 <span style="font-weight:800;">答題也能拿 UR:</span>冒險、考試複習、小遊戲、荒島、知識王答對的題目都算,同一題只算一次;六位 UR 已全數登場,用心答題就有機會親手選一位!
           </div>
           <div style="margin-top:8px;font-size:14px;color:#cbb;line-height:1.5;">※ UR 角色僅用於冒險,鬥技場不可使用。</div>
         </div>
@@ -84668,7 +84822,7 @@ function _showNewHeroAnnouncement(forceShow){
         </div>
         <div style="margin-top:16px;padding:14px 16px;background:rgba(120,40,80,0.2);
           border-left:4px solid #ff5a7a;border-radius:8px;font-size:16px;color:#ffd8e4;line-height:1.65;">
-          🏆 <span style="font-weight:800;">如何取得：</span>與藝天使相同 ── UR <span style="color:#ff9fb5;font-weight:800;">無法抽取</span>,只能靠<span style="color:#ffcc66;font-weight:900;">學校考試優異成績</span>或<span style="color:#ffcc66;font-weight:900;">特殊優良表現</span>由老師親自頒發。<span style="color:#cbb;">(僅用於冒險,鬥技場不可使用)</span>
+          🏆 <span style="font-weight:800;">如何取得：</span>與藝天使相同 ── <span style="color:#ffe6a8;font-weight:800;">無法抽取</span>,可由 <span style="color:#ffcc66;font-weight:900;">學校考試優異成績</span>或<span style="color:#ffcc66;font-weight:900;">特殊優良表現</span>由老師親自頒發,或<span style="color:#7fe3ff;font-weight:900;">累積答對不重複的題目 2000／4000／6000 題</span>領取答題獎章附贈的 UR 自選召喚卷。<span style="color:#cbb;">(僅用於冒險,鬥技場不可使用)</span>
         </div>
       </div>
     `;
@@ -84746,7 +84900,7 @@ function _showNewHeroAnnouncement(forceShow){
         </div>
         <div style="margin-top:16px;padding:14px 16px;background:rgba(120,90,30,0.2);
           border-left:4px solid #ffcc44;border-radius:8px;font-size:16px;color:#ffe9c8;line-height:1.65;">
-          🏆 <span style="font-weight:800;">如何取得：</span>與前兩隻 UR 相同 ── <span style="color:#ffe6a8;font-weight:800;">無法抽取</span>,只能靠<span style="color:#ffcc66;font-weight:900;">學校考試優異成績</span>或<span style="color:#ffcc66;font-weight:900;">特殊優良表現</span>由老師親自頒發。<span style="color:#cbb;">(僅用於冒險,鬥技場不可使用)</span>
+          🏆 <span style="font-weight:800;">如何取得：</span>與前兩隻 UR 相同 ── <span style="color:#ffe6a8;font-weight:800;">無法抽取</span>,可由 <span style="color:#ffcc66;font-weight:900;">學校考試優異成績</span>或<span style="color:#ffcc66;font-weight:900;">特殊優良表現</span>由老師親自頒發,或<span style="color:#7fe3ff;font-weight:900;">累積答對不重複的題目 2000／4000／6000 題</span>領取答題獎章附贈的 UR 自選召喚卷。<span style="color:#cbb;">(僅用於冒險,鬥技場不可使用)</span>
         </div>
       </div>
     `;
@@ -84826,8 +84980,8 @@ function _showNewHeroAnnouncement(forceShow){
     const _how = `
       <div style="margin-top:4px;padding:14px 16px;background:rgba(120,90,30,0.2);border-left:4px solid #ffcc44;border-radius:8px;font-size:16px;color:#ffe9c8;line-height:1.65;">
         🏆 <span style="font-weight:800;">如何取得:</span>${_pc
-          ? '和前三隻 UR 一樣<b style="color:#ffe6a8;">抽不到</b>!要在<b style="color:#ffcc66;">考試考得很棒</b>或<b style="color:#ffcc66;">表現特別好</b>時,由老師頒發。已經有 UR 的同學,也可以用「UR 英雄替換卷」換成新的 UR!(鬥技場不能用)'
-          : '與前三隻 UR 相同 ── <span style="color:#ffe6a8;font-weight:800;">無法抽取</span>,只能靠<span style="color:#ffcc66;font-weight:900;">學校考試優異成績</span>或<span style="color:#ffcc66;font-weight:900;">特殊優良表現</span>由老師親自頒發;已持有 UR 者亦可使用「UR 英雄替換卷」換成新 UR。<span style="color:#cbb;">(僅用於冒險,鬥技場不可使用)</span>'}
+          ? '和前三隻 UR 一樣<b style="color:#ffe6a8;">抽不到</b>!要在<b style="color:#ffcc66;">考試考得很棒</b>或<b style="color:#ffcc66;">表現特別好</b>時,由老師頒發;或是<b style="color:#7fe3ff;">答對 2000、4000、6000 題</b>(同一題只算一次)拿到答題獎章,也會送你 UR 自選召喚卷!已經有 UR 的同學,也可以用「UR 英雄替換卷」換成新的 UR!(鬥技場不能用)'
+          : '與前三隻 UR 相同 ── <span style="color:#ffe6a8;font-weight:800;">無法抽取</span>,可由<span style="color:#ffcc66;font-weight:900;">學校考試優異成績</span>或<span style="color:#ffcc66;font-weight:900;">特殊優良表現</span>由老師親自頒發,或<span style="color:#7fe3ff;font-weight:900;">累積答對不重複的題目 2000／4000／6000 題</span>領取答題獎章附贈的 UR 自選召喚卷;已持有 UR 者亦可使用「UR 英雄替換卷」換成新 UR。<span style="color:#cbb;">(僅用於冒險,鬥技場不可使用)</span>'}
       </div>`;
     return _head + _defs.map(_card).join('') + _how;
   };
@@ -84847,7 +85001,7 @@ function _showNewHeroAnnouncement(forceShow){
         <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
           <div style="background:rgba(60,40,100,0.4);border:2px solid rgba(180,140,255,0.5);border-radius:12px;padding:14px 16px;">
             <div style="font-size:20px;color:#cbb8ff;font-weight:800;margin-bottom:8px;">🔮 召喚星空(用召喚水晶)</div>
-            <div style="font-size:17px;color:#ffe;line-height:1.6;">每抽有 <b style="color:#ffe066;">5%</b> 機率獲得「未收錄的 SSR 角色或未馴養的 SSR 寵物」(寵物直接馴養收服)!(英雄全收錄且寵物全馴養後改給 📘 寵物訓練書 ×6)</div>
+            <div style="font-size:17px;color:#ffe;line-height:1.6;">每抽有 <b style="color:#ffe066;">5%</b> 機率出現 SSR:SSR 英雄(還沒有的機率是已有的 3 倍;抽到已有的會變成他的命星 ×1)或未馴養的 SSR 寵物(直接馴養收服)!每天第 1 抽免費。</div>
           </div>
           <div style="background:rgba(40,55,90,0.45);border:2px solid rgba(120,200,255,0.5);border-radius:12px;padding:14px 16px;">
             <div style="font-size:20px;color:#aaddff;font-weight:800;margin-bottom:8px;">🎟 SSR 英雄召喚卷(用了保證得 1 名未收錄 SSR)</div>
@@ -84870,13 +85024,29 @@ function _showNewHeroAnnouncement(forceShow){
               ・日本 BOSS 拿到 S 評價:15% 收服該日本 BOSS 妖怪
             </div>
           </div>
+          <div style="background:rgba(70,40,90,0.42);border:2px solid rgba(255,170,230,0.5);border-radius:12px;padding:14px 16px;">
+            <div style="font-size:20px;color:#ffb3e6;font-weight:800;margin-bottom:8px;">🌠 祈願・指定英雄 UP</div>
+            <div style="font-size:17px;color:#ffe;line-height:1.6;">召喚星空「召喚 1 次」左邊的星星鈕:每週選 1 位 SSR,那一週抽到的第一隻 SSR 就是他(隨機 SSR 召喚卷也算);每週一 08:00 重置。</div>
+          </div>
+          <div style="background:rgba(85,45,25,0.42);border:2px solid rgba(255,170,110,0.5);border-radius:12px;padding:14px 16px;">
+            <div style="font-size:20px;color:#ffb36b;font-weight:800;margin-bottom:8px;">🏯 中國關卡收服</div>
+            <div style="font-size:16px;color:#ffe;line-height:1.75;">
+              ・妖王與《繪卷新章》BOSS 拿到 S 評價:各 15% 機率收服對應的中華英雄<br>
+              ・五條路線全通 → 諸葛亮;六條新路線全通 → 楊戩;雙路線首通保底新 SSR<br>
+              ・詳細名單見「🏯 第三關」與「📜 繪卷新章」介紹卡
+            </div>
+          </div>
+          <div style="background:rgba(45,45,95,0.42);border:2px solid rgba(255,217,122,0.5);border-radius:12px;padding:14px 16px;">
+            <div style="font-size:20px;color:#ffd97a;font-weight:800;margin-bottom:8px;">✨ SSR 自選命星換英雄</div>
+            <div style="font-size:17px;color:#ffe;line-height:1.6;">SSR 自選命星(命星工坊 3 顆合成、世界龍王戰排名獎勵、老師發放)可以直接換一位還沒有的 SSR 英雄(0 命)。</div>
+          </div>
           <div style="background:rgba(40,70,50,0.42);border:2px solid rgba(120,220,150,0.5);border-radius:12px;padding:14px 16px;">
             <div style="font-size:20px;color:#88ff99;font-weight:800;margin-bottom:8px;">🎨 設計師同學</div>
             <div style="font-size:17px;color:#ffe;line-height:1.6;">英雄被採用的設計者,第一次登入會自動收到自己設計的 SSR 英雄!</div>
           </div>
         </div>
         <div style="margin-top:14px;padding:12px 16px;background:rgba(60,40,100,0.35);border-left:4px solid #cc99ff;border-radius:8px;font-size:16px;color:#ddccff;line-height:1.6;">
-          💡 同一名 SSR 收齊後就不會重複抽到;召喚卷 / 碎片在「SSR 已全收齊」時會暫時用不掉(可先保留),或自動轉成其他獎勵。
+          💡 召喚時還沒有的 SSR 出現機率是已有的 3 倍;抽到已經有的 SSR 會變成他的命星 ×1。SSR 已全部收齊時,召喚卷照樣可以用,改成已收錄英雄的命星 ×1。
         </div>
       </div>
     `;
@@ -85016,9 +85186,14 @@ function _showNewHeroAnnouncement(forceShow){
         + '<div style="font-size:15px;color:#ddffee;font-weight:800;margin-top:2px;">' + n + ' 隻</div></div>';
     };
     // 圖文特色卡:上圖(可省)+ 標題 + 內文
-    const _petCard = function(icon, title, bodyCute, bodyPrem, img){
+    // ★ v5.390.0(老師「有沒有英雄或寵物圖片的臉部被裁切」)— 寵物立繪是直式圖,舊版固定 104px 高橫幅取中間 ⇒ 台灣黑熊/台灣藍鵲/石虎的頭被切掉。
+    //   傳 faceY(object-position 的 Y%)時改用 16:7 固定比例(各寬度看到的範圍一樣),並對準頭部;沒傳的(寵物小屋橫圖)照舊。
+    const _petCard = function(icon, title, bodyCute, bodyPrem, img, faceY){
+      const _imgSz = (typeof faceY === 'number')
+        ? 'width:100%;height:auto;aspect-ratio:16/7;object-fit:cover;object-position:50% ' + faceY + '%;'
+        : 'width:100%;height:104px;object-fit:cover;';
       return '<div style="background:rgba(30,60,40,0.45);border:2px solid rgba(140,230,170,0.5);border-radius:12px;overflow:hidden;">'
-        + (img ? '<img src="' + img + '" alt="" loading="lazy"' + _hideErr + ' style="width:100%;height:104px;object-fit:cover;display:block;border-bottom:2px solid rgba(140,230,170,0.35);"/>' : '')
+        + (img ? '<img src="' + img + '" alt="" loading="lazy"' + _hideErr + ' style="' + _imgSz + 'display:block;border-bottom:2px solid rgba(140,230,170,0.35);"/>' : '')
         + '<div style="padding:12px 15px;">'
         + '<div style="font-size:20px;color:#aaffcc;font-weight:800;margin-bottom:7px;">' + icon + ' ' + title + '</div>'
         + '<div style="font-size:17px;color:#ffe;line-height:1.7;">' + (_pc ? bodyCute : bodyPrem) + '</div></div></div>';
@@ -85061,15 +85236,15 @@ function _showNewHeroAnnouncement(forceShow){
       + _petCard('🐾', '馴養寵物 + 知識問答',
           '戰鬥時帶著寵物,買飼料按 🐾 馴養牠!餵之前會考 1 題寵物小知識,答對成功率 ×1.5!',
           '於商店購買寵物飼料,冒險戰鬥中攜帶未馴養寵物時按 🐾 馴養按鈕。每次使用飼料會出 1 題該寵物知識問答:答對成功率 ×1.5、答錯 ×0.5。',
-          _petImgOf('台灣黑熊'))
+          _petImgOf('台灣黑熊'), 18)
       + _petCard('🎓', '跟隨英雄 · 一起升級',
           '馴養好的寵物可以跟著一位英雄出戰,幫他加素質,打贏還會拿經驗升級(最高 Lv.20)!',
           '馴養成功的寵物可設定跟隨 1 位英雄:出戰自動附加素質加成與寵物效果,勝利戰鬥後累積經驗升級(上限 Lv.20)。',
-          _petImgOf('台灣藍鵲'))
+          _petImgOf('台灣藍鵲'), 22)
       + _petCard('💖', '好感度 · 忠誠夥伴',
           '一起戰鬥、打贏 BOSS、在小屋互動,好感度會增加!好感度夠高,主人倒下時寵物會救活他,滿 100 還能多放一次寵物爆發!和寵物越要好,寵物大絕的威力也越強喔!',
           '好感度獨立累積(初始 0、上限 100):戰鬥每場 20% +1、戰勝 BOSS +1、小屋互動 +1~+2。達 25/50/75/100 解鎖忠誠夥伴四階:主人倒下時復活 10/20/30/40% HP,滿 100 寵物極限爆發 +1 次。寵物極限爆發威力並隨好感度五階提升:25% → 50% → 75% → 100% → 125%(不離不棄)。',
-          _petImgOf('梅花鹿'))
+          _petImgOf('梅花鹿'), 40)
       + _petCard('🏠', '寵物小屋',
           '寵物圖鑑上方新的大按鈕!每天可以撫摸、玩耍、餵食,餵對主食好感 +2!還有專屬音樂和可愛動畫!',
           '由寵物圖鑑上方進入:每日可與 3 隻入住寵物各互動一次(撫摸/玩耍 EXP+10 好感+1;餵食需從主食表選出正確食物,餵對好感+2、EXP+1,餵錯好感−1 可重試)。',
@@ -85077,7 +85252,7 @@ function _showNewHeroAnnouncement(forceShow){
       + _petCard('🎟️', '隨機寵物召喚卷(新道具)',
           '老師發的神奇獎勵!用一張直接收服 1 隻還沒馴養的寵物(SSR 10%/SR 30%/R 60%)!',
           '由老師 GM 獎勵發放:使用 1 張直接馴養收服 1 隻未馴養寵物(SSR 10%/SR 30%/R 60%);全數收錄馴養後自動轉換為頂級寵物飼料×1。',
-          _petImgOf('石虎'))
+          _petImgOf('石虎'), 28)
       + '</div>'
       + '<div style="margin-top:14px;padding:12px 16px;background:rgba(30,60,40,0.4);border-left:4px solid #aaffcc;border-radius:8px;font-size:16px;color:#ddffee;line-height:1.6;">'
       + (_pc ? '💡 快打開「🐾 寵物圖鑑」看看你的寵物,再去 🏠 寵物小屋陪牠們玩吧!' : '💡 詳細玩法請見「🐾 寵物圖鑑」頁面說明與遊戲指引的「寵物系統」章節。')
@@ -85219,8 +85394,8 @@ function _showNewHeroAnnouncement(forceShow){
           '四大取得途徑:①特殊小怪(寶箱怪/小惡魔等)50%、其餘小怪 10% 掉落 ②冒險 BOSS 75% 掉落(傳說/神話) ③星空召喚 20% 機率獲得裝備 ④不可思議超商「🛡️ 裝備」分頁每日上架 6 件(每日 08:00 更新)。',
           '冠軍獎盃.png')
       + _gCard('💰', '賣出 & 送好友',
-          '不要的裝備可以半價賣掉換知識幣,也可以包裝成禮物送給好友,還會增加友情之心喔(裝備越稀有,心越多)!',
-          '裝備選擇器內可半價賣出(裝備中自動卸下);亦可透過好友系統贈送裝備:依稀有度獲得 2/3/5/8 友情之心(受贈品轉送不另計心數)。',
+          '不要的裝備可以半價賣掉換知識幣,也可以包裝成禮物送給好友,還會增加友情之心喔(裝備越稀有,心越多)!最多可以放 300 件,背包的「💰 賣出持有物品」一次看全部;喜歡的裝備按 🔒 上鎖就不會賣錯!',
+          '裝備選擇器內可半價賣出(裝備中自動卸下);亦可透過好友系統贈送裝備:依稀有度獲得 2/3/5/8 友情之心(受贈品轉送不另計心數)。全帳號上限 300 件;背包頁「💰 賣出持有物品」可分類檢視詞條後批次處理,🔒 上鎖的裝備無法賣出或贈送。',
           '花束.png')
       + _gCard('📖', '裝備圖鑑開張!',
           '至寶圖鑑旁邊多了「🛡️ 裝備圖鑑」按鈕!收集過的裝備都會記錄下來,還能看每件裝備的故事和詞條,努力蒐集齊 ' + _gTotalN + ' 件吧!',
@@ -85252,8 +85427,8 @@ function _showNewHeroAnnouncement(forceShow){
         + '<div style="font-size:17px;color:#ffe;line-height:1.7;">' + (_mc ? bodyCute : bodyPrem) + '</div></div></div>';
     };
     // 七章封面縮圖帶(素材=章節選單封面同組·零新圖)
-    const _covers = ['主線_封面_序章.jpg','主線_封面_第一章.jpg','主線_封面_第二章.jpg','主線_封面_第三章.jpg','主線_封面_第四章.jpg','主線_封面_第五章.jpg','主線_封面_第六章.jpg'];
-    const _coverLabels = ['序章','第1章','第2章','第3章','第4章','第5章','第6章'];
+    const _covers = ['主線_封面_序章.jpg','主線_封面_第一章.jpg','主線_封面_第二章.jpg','主線_封面_第三章.jpg','主線_封面_第四章.jpg','主線_封面_第五章.jpg','主線_封面_第六章.jpg','主線_封面_第七章.jpg'];   // ★ v5.390.0 補第七章
+    const _coverLabels = ['序章','第1章','第2章','第3章','第4章','第5章','第6章','第7章'];
     const _coverStrip = '<div style="display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;-webkit-overflow-scrolling:touch;">'
       + _covers.map(function(c, i){
           return '<div style="flex:0 0 auto;width:96px;text-align:center;">'
@@ -85281,7 +85456,7 @@ function _showNewHeroAnnouncement(forceShow){
       + '</div>'
       + '<div style="font-size:17px;color:#e6d8ff;line-height:1.7;margin-bottom:14px;">'
       + (_msPub
-          ? (_mc ? '這個故事的主角不是別人——就是<b style="color:#ffd98a;">你</b>!先捏出你自己的樣子,再和夥伴一起打倒大魔王吧!' : '這個故事的主角,正是<b style="color:#ffd98a;">你自己</b>!打造專屬於你的主角,與夥伴們展開七個章節的冒險吧!')
+          ? (_mc ? '這個故事的主角不是別人——就是<b style="color:#ffd98a;">你</b>!先捏出你自己的樣子,再和夥伴一起打倒大魔王吧!' : '這個故事的主角,正是<b style="color:#ffd98a;">你自己</b>!打造專屬於你的主角,與夥伴們從序章一路冒險到第七章吧!')
           : (_mc ? '這個故事的主角不是別人——就是<b style="color:#ffd98a;">你</b>!以後可以捏出你自己的樣子,和夥伴一起冒險!' : '這個故事的主角,正是<b style="color:#ffd98a;">你自己</b>!即將可以打造專屬於你的主角,與夥伴們展開七個章節的冒險!'))
       + '</div>'
       /* ── ② 主打區:捏出你的主角(鼓勵創造) ── */
@@ -85304,7 +85479,7 @@ function _showNewHeroAnnouncement(forceShow){
       +   '</div>'
       + '</div>'
       /* ── ③ 七章封面縮圖帶 ── */
-      + '<div style="font-size:19px;font-weight:900;color:#d8bfff;margin-bottom:6px;">📖 ' + (_mc ? '七章大冒險,一章一張封面!' : '七個章節的冒險舞台') + '</div>'
+      + '<div style="font-size:19px;font-weight:900;color:#d8bfff;margin-bottom:6px;">📖 ' + (_mc ? '序章到第七章,一章一張封面!' : '序章＋七個章節的冒險舞台') + '</div>'
       + _coverStrip
       /* ── ④ 特色卡(圖+文) ── */
       + '<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:6px;">'
@@ -85317,8 +85492,8 @@ function _showNewHeroAnnouncement(forceShow){
           '隨著章節推進,劇情中相遇的夥伴英雄(劍士、祭司、火法師等)將正式解鎖加入隊伍,並可實際編組出戰。',
           '主線_第二章_社團教室.jpg')
       + _msCard('⭐', '主角覺醒成 SSR',
-          '走到最後的大決戰,你捏的主角會覺醒——從 R 卡變成超強的 SSR,圖鑑多一張新卡!',
-          '在主線最終決戰中,你的主角將迎來覺醒──由 R 階躍升為 SSR「主角‧覺醒」,圖鑑同步收錄全新卡片!',
+          '打到第六章和黑暗球決戰時,你捏的主角會覺醒——從 R 卡變成超強的 SSR,圖鑑多一張新卡,還能上場打仗!',
+          '第六章對決黑暗球時,你的主角將迎來覺醒──由 R 階躍升為 SSR「主角‧覺醒」,圖鑑同步收錄全新卡片,並可編入隊伍出戰!',
           '主線_第六章_黑暗球降臨.jpg')
       + _msCard('🎁', '每章通關大獎勵',
           '每一章第一次打贏:🔮 召喚水晶 ×5 + 💰 知識幣 20,000,戰鬥還會拿經驗值!之後回顧重玩不會重複拿喔!',
@@ -85326,7 +85501,7 @@ function _showNewHeroAnnouncement(forceShow){
           '')
       + '</div>'
       + '<div style="margin-top:14px;padding:12px 16px;background:rgba(45,30,75,0.45);border-left:4px solid #d8bfff;border-radius:8px;font-size:16px;color:#e6d8ff;line-height:1.7;">'
-      + (_mc ? '💡 入口在「關卡選擇」最上面的 📖 主線劇情按鈕,按鈕右上角還會顯示你打完幾章囉!' : '💡 入口位於「關卡選擇」列表最上方的 📖 主線劇情按鈕;按鈕右上角會即時顯示已完成的章節進度。')
+      + (_mc ? '💡 入口在「關卡選擇」最上面的 📖 主線劇情按鈕,按下去右邊會列出每一章和上場的英雄,點頭像就能去圖鑑幫他變強!' : '💡 入口位於「關卡選擇」列表最上方的 📖 主線劇情按鈕(右上角即時顯示已完成章節);點選後右側面板列出各章節與每場劇情戰的出戰英雄,點頭像可直接前往圖鑑強化。')
       + '</div></div>';
   };
   // ★ v5.45.0 — 中國關 Phase 6:近期活動介紹卡(鐵律 1.232 簡單風/精緻風雙版;
@@ -85635,7 +85810,7 @@ function _showNewHeroAnnouncement(forceShow){
       +       '🏺 ' + _aT('神農鼎煉丹術・大擴充！', '神農鼎煉丹術・大擴充') + '</div>'
       +     '<div style="font-size:16px;color:#e2f5d8;line-height:1.7;">'
       +       _aT('九州山野裡又找到好多新的藥材囉！這次一口氣多了 <b>10 種新丹藥材</b>和 <b>6 種全新功能的丹藥</b>，還有 6 張新丹方。快去神農鼎煉煉看吧！',
-      +           '本次擴充新增 <b>10 種丹藥材</b>（材料 12 → 22 種）與 <b>6 種全新功能丹藥</b>（丹藥 12 → 18 種），並配套 6 張新丹方。六顆新丹藥的效果型態皆為既有 12 顆所無，補齊淨化、護盾、持續回復、封印、暴擊與免死六個空白。')
+                  '本次擴充新增 <b>10 種丹藥材</b>（材料 12 → 22 種）與 <b>6 種全新功能丹藥</b>（丹藥 12 → 18 種），並配套 6 張新丹方。六顆新丹藥的效果型態皆為既有 12 顆所無，補齊淨化、護盾、持續回復、封印、暴擊與免死六個空白。')
       +     '</div>'
       +   '</div>'
       + '</div>';
@@ -86557,7 +86732,7 @@ function _showNewHeroAnnouncement(forceShow){
     // ★ v5.275.0 — 英雄命座系統介紹卡(最新功能置頂;_CST_ADMIN_ONLY===false 自動切 NEW! 正式文案·true 顯預告)
     { id:'constellation', emoji:'✨', accent:'#ffd97a', title:((window._CST_ADMIN_ONLY===false)?'NEW!英雄命座系統正式開放':'即將推出！英雄命座系統（預告）'), sub:'每位英雄 6 顆專屬命星 · 天賦／技能／大絕三條路 · 好友借用也帶命星', imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['藝天使．克雷爾']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['孫悟空']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['獅子星神']) || ''], detail: buildConstellationSection() },
     // ★ v5.232.0 — 第四～六隻 UR 登場介紹卡(最新功能置頂;比照前三隻 UR 版型)
-    { id:'ur_new', emoji:'👑', accent:'#ffd34d', title:'NEW!三位全新 UR 降臨・究極神兵/天照大神/月讀大神', sub:'第四～六隻 UR · 由老師頒發 · UR 英雄替換卷可換', imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['究極神兵']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['天照大神']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['月讀大神']) || ''], detail: buildNewURTrioSection() },
+    { id:'ur_new', emoji:'👑', accent:'#ffd34d', title:'NEW!三位全新 UR 降臨・究極神兵/天照大神/月讀大神', sub:'第四～六隻 UR · 老師頒發或答題獎章 UR 自選卷 · UR 英雄替換卷可換', imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['究極神兵']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['天照大神']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['月讀大神']) || ''], detail: buildNewURTrioSection() },
     // ★ v5.200.0 — 十二星神登場介紹卡(最新功能置頂;老師需求「比照之前新角色公告的格式」)
     { id:'zodiac', emoji:'✨', accent:'#c9a8ff', title:'NEW!十二星神降臨・全新 SSR 英雄群像', sub:'12 位黃道星神 · 火土風水四象 · 召喚水晶／召喚卷／黑暗球皆可獲得', imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['牡羊星神']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['獅子星神']) || '', (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['天蠍星神']) || ''], detail: buildZodiacHeroesSection() },
     // ★ v5.109.0 — 神農鼎煉丹術大擴充 ＋ 新角色煉丹小藥童（老師 2026-08-22 需求：合為一張卡·置頂最新功能）
@@ -86569,8 +86744,8 @@ function _showNewHeroAnnouncement(forceShow){
     // ★ v5.6.0 — 主線劇情故事與自訂主角系統(老師需求2·置頂最新功能;標題依 _MAINSTORY_ADMIN_ONLY 雙態切換,現值 false ⇒ NEW!)
     { id:'mainstory', emoji:'📖', accent:'#c9a0ff', title:((window._MAINSTORY_ADMIN_ONLY===false)?'NEW!主線劇情故事與自訂主角系統':'即將推出！主線劇情故事與自訂主角系統（預告）'), sub:'捏出你自己的主角 · 七章異世界冒險 · 覺醒成 SSR', imgs:['./' + encodeURIComponent('主線_封面_序章.jpg'), './' + encodeURIComponent('主線_序章_雙月河堤.jpg')], detail: buildMainStorySection() },   // ★ v5.20.0 — 選單列補 2 張縮圖(封面+雙月河堤·零新圖)·sub 捏主角前置
     { id:'pets',   emoji:'🐾', accent:'#7dffb0', title:((window._petSysPublicOpen&&window._petSysPublicOpen())?'NEW!寵物馴養大系統':'即將推出！寵物馴養大系統（預告）'), sub:((window._petSysPublicOpen&&window._petSysPublicOpen())?'馴養寵物 · 寵物小屋 · 好感度與忠誠夥伴 · 知識問答':'敬請期待 · 馴養寵物 · 寵物小屋 · 好感度 · 知識問答'), imgs:[_imgPetHouse], detail: buildPetSystemSection() },
-    { id:'guide',  emoji:'📚', accent:'#7dffb0', title:'遊戲指引（新手必看）', sub:'戰鬥、英雄、模式全攻略 · 圖文章節說明', imgs:[], detail: '<div style="text-align:center;padding:24px 16px 18px;"><div style="font-size:52px;margin-bottom:12px;">📚</div><div style="font-size:clamp(22px,2.6vw,30px);font-weight:900;color:#7dffb0;margin-bottom:10px;">遊戲指引（新手必看）</div><div style="font-size:clamp(16px,1.8vw,21px);color:#cceedd;line-height:1.7;margin-bottom:20px;">圖文章節說明，帶你快速了解所有遊戲系統！<br>① 認識遊戲　② 戰鬥系統　③ 英雄培育<br>④ 遊戲模式　⑤ 每日習慣　⑥ 寵物系統<br>⑦ 主線劇情　⑧ 我的主角</div><button onclick="try{this.closest(\'[style*=z-index:9970]\').remove();}catch(_){}try{this.closest(\'[style*=z-index:9960]\').remove();}catch(_){}try{playSfx(\'sfx-confirm\',0.6);}catch(_){}setTimeout(function(){try{window._showNewbieGuide(0);}catch(e){}},200);" style="padding:16px 48px;font-size:clamp(20px,2.3vw,28px);font-weight:900;background:linear-gradient(135deg,rgba(40,120,70,0.95),rgba(60,180,100,0.95));border:2.5px solid rgba(100,255,160,0.9);color:#d0ffe8;border-radius:14px;cursor:pointer;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;letter-spacing:1px;box-shadow:0 0 24px rgba(80,220,140,0.5);">📖 開啟遊戲指引</button></div>' },
-    { id:'ur',     emoji:'🏆', accent:'#ffd34d', title:'成績優異限定 UR 角色', sub:'六位 UR 強勢登場 · 由老師頒發', imgs:[_imgClair, _imgIliya, _imgOdin], detail: buildURDebutSection() + buildIliyaDebutSection() + buildOdinDebutSection() + buildNewURTrioSection() },   // ★ v5.232.0 三位→六位(舊行備查:sub:'三位 UR 強勢登場 · 由老師頒發',detail 只接前三張)
+    { id:'guide',  emoji:'📚', accent:'#7dffb0', title:'遊戲指引（新手必看）', sub:'戰鬥、英雄、模式全攻略 · 圖文章節說明', imgs:[], detail: '<div style="text-align:center;padding:24px 16px 18px;"><div style="font-size:52px;margin-bottom:12px;">📚</div><div style="font-size:clamp(22px,2.6vw,30px);font-weight:900;color:#7dffb0;margin-bottom:10px;">遊戲指引（新手必看）</div><div style="font-size:clamp(16px,1.8vw,21px);color:#cceedd;line-height:1.7;margin-bottom:20px;">圖文章節說明，帶你快速了解所有遊戲系統！<br>⚔️ 故事冒險 13 章:認識遊戲・主線劇情・我的主角・戰鬥系統・英雄培育・命座突破・英魂陣型・遊戲模式・好友支援・考試複習・每日習慣・寵物系統・帳號與求救<br>🏝 荒島求生・🎮 小遊戲・🎨 創藝工坊 也各有自己的指引</div><button onclick="try{this.closest(\'[style*=z-index:9970]\').remove();}catch(_){}try{this.closest(\'[style*=z-index:9960]\').remove();}catch(_){}try{playSfx(\'sfx-confirm\',0.6);}catch(_){}setTimeout(function(){try{window._showNewbieGuide(0);}catch(e){}},200);" style="padding:16px 48px;font-size:clamp(20px,2.3vw,28px);font-weight:900;background:linear-gradient(135deg,rgba(40,120,70,0.95),rgba(60,180,100,0.95));border:2.5px solid rgba(100,255,160,0.9);color:#d0ffe8;border-radius:14px;cursor:pointer;font-family:\'M PLUS Rounded 1c\',\'Nunito\',sans-serif;letter-spacing:1px;box-shadow:0 0 24px rgba(80,220,140,0.5);">📖 開啟遊戲指引</button></div>' },
+    { id:'ur',     emoji:'🏆', accent:'#ffd34d', title:'成績優異・答題達人限定 UR 角色', sub:'六位 UR · 老師頒發 · 答對 2000／4000／6000 題獎章送 UR 自選召喚卷', imgs:[_imgClair, _imgIliya, _imgOdin], detail: buildURDebutSection() + buildIliyaDebutSection() + buildOdinDebutSection() + buildNewURTrioSection() },   // ★ v5.232.0 三位→六位(舊行備查:sub:'三位 UR 強勢登場 · 由老師頒發',detail 只接前三張)
     { id:'ssr',    emoji:'🔮', accent:'#cc99ff', title:'SSR 角色取得方法',     sub:'所有取得 SSR 角色的方法總整理', imgs:[_imgTun],            detail: buildSsrMethodsSection() },
     { id:'wb',     emoji:'🐉', accent:'#ff7a4d', title:'世界 BOSS 討伐戰',     sub:'多人連線一起討伐巨龍',         imgs:[_imgDragon],         detail: buildWorldBossSection() },
     { id:'twboss', emoji:'🗾', accent:'#7ec8ff', title:'高難度台灣 BOSS + 至寶', sub:'環島 10 大魔王 + 台灣至寶系統', imgs:[],                  detail: buildTaiwanBossSection() },

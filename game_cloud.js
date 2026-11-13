@@ -6761,6 +6761,7 @@
           lines.push('- 時間: ' + new Date().toLocaleString('zh-TW'));
           lines.push('- 版本: ' + (window._GAME_LOADED_VERSION || 'unknown'));
           lines.push('- 頁面: ' + ((payload && payload.page) || 'unknown'));
+          try{ if(typeof window._lxpsStallReport === 'function'){ lines.push(''); lines.push(window._lxpsStallReport()); } }catch(_){}   // ★ v5.390.0 卡頓黑盒子
           if(typeof _adventureMode !== 'undefined' && _adventureMode){
             lines.push('');
             lines.push('## ⚔ 冒險狀態');
