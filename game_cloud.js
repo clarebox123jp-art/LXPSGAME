@@ -23628,6 +23628,9 @@
         _assetGuard: G._assetGuard != null ? G._assetGuard : null,
         // ★ v5.283.0 英魂陣型:房主判定的陣型一起傳(世界 BOSS 連線/PvP);接收端只顯示、不自己再套用能力加成
         _fm: G._fm ? _wireDeepClone(G._fm, 0) : null,
+        // ★ v5.392.0 UR 媽祖/鄭成功:每場狀態(回港小船數 port/上限 portMax、順風耳次數、乘潮奇襲 raid/raidUsed)由房主判定,隊友端只顯示
+        //   (英雄身上的 _mzPort 回港中/_zcTide 潮汐/_mzCut 順風令連動/_mzBless 庇佑 走 _heroToWireV6 深拷貝,已自動同步)
+        _urmz: G._urmz ? _wireDeepClone(G._urmz, 0) : null,
       };
       return out;
     }
@@ -23673,6 +23676,8 @@
       G._assetGuard     = wire._assetGuard;
       // ★ v5.283.0 英魂陣型:以房主為準;標記已套用 ⇒ 本機 startTurn 不會再自己判定、不會重複加 HP/特技
       try{ if(wire._fm && typeof wire._fm === 'object') G._fm = wire._fm; else delete G._fm; G._fmDone = true; G._fmP2Ref = G.p2; }catch(_){}
+      // ★ v5.392.0 UR 媽祖/鄭成功每場狀態:以房主為準(舊版房主沒帶這欄 ⇒ 保留本機的,不刪)
+      try{ if(wire._urmz && typeof wire._urmz === 'object') G._urmz = wire._urmz; }catch(_){}
       // 「目前選中」相關欄位 reset(由本機 UI 重建)
       G.activeChar = null;
       G.selMove = null;

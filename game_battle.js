@@ -6372,11 +6372,12 @@ const BURST_UPGRADE_DEF = {
   ] },
   // ★ v5.391.0 — 第七、八隻 UR 爆發逐級(每級 +10% 乘算 = _runBurst _burstMult;MAX 起爆發給的狀態 +1 回合 = window._URMZ.burst 的 X)
   '媽祖': { rows: [
-    [0,'回港者返場回滿+倒下者50%HP復活+小船補滿;媽祖庇佑2回合(致命留1HP+回特技100%);特技×700% 敵全體分攤水屬性+強力緩速2回合'],
-    [1,'媽祖庇佑2回合(回特技110%);特技×770% 分攤水屬性+強力緩速2回合'],
-    [2,'媽祖庇佑2回合(回特技120%);特技×840% 分攤水屬性+強力緩速2回合'],
-    [3,'媽祖庇佑2回合(回特技130%);特技×910% 分攤水屬性+強力緩速2回合'],
-    [4,'媽祖庇佑3回合(回特技140%);特技×980% 分攤水屬性+強力緩速3回合(MAX)'],
+    // ★ v5.392.0 老師:爆發傷害 700%→500%(逐級 ×1.1 照舊)
+    [0,'回港者返場回滿+倒下者50%HP復活+小船補滿;媽祖庇佑2回合(致命留1HP+回特技100%);特技×500% 敵全體分攤水屬性+強力緩速2回合'],
+    [1,'媽祖庇佑2回合(回特技110%);特技×550% 分攤水屬性+強力緩速2回合'],
+    [2,'媽祖庇佑2回合(回特技120%);特技×600% 分攤水屬性+強力緩速2回合'],
+    [3,'媽祖庇佑2回合(回特技130%);特技×650% 分攤水屬性+強力緩速2回合'],
+    [4,'媽祖庇佑3回合(回特技140%);特技×700% 分攤水屬性+強力緩速3回合(MAX)'],
   ] },
   '鄭成功': { rows: [
     [0,'攻擊×900% 敵全體分攤火屬性(必中、無視有利)+強力破防/燃燒2回合+全隊攻擊+50% 2回合+潮汐補滿+乘潮奇襲'],
@@ -27602,6 +27603,7 @@ function onCard(h, _evt){
   if(pt==='ally_or_dead' && h.side===a.side) valid=true;
   if(pt==='self_or_ally' && h.side===a.side && h.curHp>0) valid=true;
 
+  if(valid && h._mzPort){ log('⛵ [' + h.name + '] 正在回港休整,不能被選為目標'); return; }   // ★ v5.392.0 回港中的英雄不是目標
   if(!valid){ log('❌ 無效目標，請重新選擇'); return; }
 
   execPending(h);
@@ -27609,6 +27611,7 @@ function onCard(h, _evt){
 
 let pendingCb=null;
 function setPending(type, cb){
+  // ★ v5.392.0 — 下方所有「自動選目標」都排除回港休整中的英雄(h._mzPort;HP 停在 1,會被當成最低血一直選到)
   // ★ v3.14.6 — PvP 連線對戰:本機玩家(p1)選定目標時記錄目標座標,
   //   供 guest 端把「指定目標」一併傳給房主重放(自我守門,非 PvP 零開銷)。
   try{
@@ -27667,11 +27670,11 @@ function setPending(type, cb){
     const _opp = 'p1';
     let _autoT = null;
     if(type==='enemy'||type==='any_e'){
-      const _foes=G[_opp]?G[_opp].filter(h=>h.curHp>0):[];
+      const _foes=G[_opp]?G[_opp].filter(h=>h.curHp>0&&!h._mzPort):[];
       _autoT=_foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
     } else if(type==='ally'||type==='self_or_ally'){
       // ★ v3.5.60 — 友方治療目標選擇:操偶損壞的操偶師優先
-      const _al=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp>0):[];
+      const _al=G[_pendingActor.side]?G[_pendingActor.side].filter(h=>h.curHp>0&&!h._mzPort):[];
       _autoT=_al.sort((x,y)=>_puppetHealPriorityKey(x)-_puppetHealPriorityKey(y))[0]||null;
     } else if(type==='ally_dead'||type==='ally_or_dead'){
       // ★ v3.5.60 — 復活目標選擇:操偶損壞的操偶師也可作為復活目標(在「真倒下」之前優先)
@@ -27681,7 +27684,7 @@ function setPending(type, cb){
       // 優先操偶損壞 > 真倒下
       _autoT = _puppetBroken[0] || _dead[0] || null;
     } else if(type==='any'){
-      const _all=(G.p1||[]).concat(G.p2||[]).filter(h=>h.curHp>0);
+      const _all=(G.p1||[]).concat(G.p2||[]).filter(h=>h.curHp>0&&!h._mzPort);
       _autoT=_all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
     }
     if(_autoT){ setTimeout(()=>{ try{ cb(_autoT); }catch(e){ console.error('[AI setPending]',e); } }, 300); return; }
@@ -27702,11 +27705,11 @@ function setPending(type, cb){
     const opp=a.side==='p1'?'p2':'p1';
     let autoTarget=null;
     if(type==='enemy'||type==='any_e'){
-      const foes=G[opp].filter(h=>h.curHp>0);
+      const foes=G[opp].filter(h=>h.curHp>0&&!h._mzPort);
       autoTarget=foes.sort((x,y)=>x.curHp-y.curHp)[0]||null;
     } else if(type==='ally'||type==='self_or_ally'){
       // ★ v3.5.60 — 友方治療目標選擇:操偶損壞的操偶師優先
-      const al=G[a.side].filter(h=>h.curHp>0);
+      const al=G[a.side].filter(h=>h.curHp>0&&!h._mzPort);
       autoTarget=al.sort((x,y)=>_puppetHealPriorityKey(x)-_puppetHealPriorityKey(y))[0]||null;
     } else if(type==='ally_dead'||type==='ally_or_dead'){
       // ★ v3.5.60 — 復活目標選擇:操偶損壞的操偶師優先於真倒下
@@ -27714,10 +27717,10 @@ function setPending(type, cb){
       const _puppetBroken = G[a.side].filter(h =>
         h.name==='操偶師' && h.curHp>0 && (h._puppetHp||0)<=0 && !h._puppetWall);
       autoTarget = _puppetBroken[0] || dead[0]
-        || G[a.side].filter(h=>h.curHp>0).sort((x,y)=>_puppetHealPriorityKey(x)-_puppetHealPriorityKey(y))[0]
+        || G[a.side].filter(h=>h.curHp>0&&!h._mzPort).sort((x,y)=>_puppetHealPriorityKey(x)-_puppetHealPriorityKey(y))[0]
         || null;
     } else if(type==='any'){
-      const all=G.p1.concat(G.p2).filter(h=>h.curHp>0);
+      const all=G.p1.concat(G.p2).filter(h=>h.curHp>0&&!h._mzPort);
       autoTarget=all.sort((x,y)=>x.curHp-y.curHp)[0]||null;
     }
     if(autoTarget && cb){ cb(autoTarget); return; }
@@ -92216,7 +92219,9 @@ window._FM_DEFS = {
   function mazuOf(side){   // 我方存活、天賦沒被封的媽祖
     return ((hasG() && G[side]) || []).filter(function(x){ return x && x.name === '媽祖' && x.curHp > 0 && !x._mzPort && !traitOff(x); })[0] || null;
   }
-  function S(){ if(!G._urmz || G._urmz.b !== bid()){ G._urmz = { b:bid(), port:{}, portMax:{}, ear:{}, raid:null, raidUsed:{} }; } return G._urmz; }
+  function wbCli(){ try{ return (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') && (window._wbClientMode === true || window._wbConnectedClientMode === true); }catch(_){ return false; } }   // ★ v5.392.0 龍王戰連線隊友端
+  function S(){ if(G._urmz && wbCli()) return G._urmz;   // ★ v5.392.0 隊友端:小船數/奇襲狀態以房主同步的 G._urmz 為準(戰鬥序號不同,不可重建)
+    if(!G._urmz || G._urmz.b !== bid()){ G._urmz = { b:bid(), port:{}, portMax:{}, ear:{}, raid:null, raidUsed:{} }; } return G._urmz; }
   function portN(side){ var s = S(); return s.port[side] || 0; }
   function portMaxOf(side){ var s = S(); return s.portMax[side] || PORT_MAX; }
   function earPct(m){ var p = 0.50 + traitLv('媽祖') * 0.05; if(god(m)) p += 0.20; return Math.min(0.90, p); }
@@ -92355,10 +92360,7 @@ window._FM_DEFS = {
       fx('平浪', a, al);
       al.forEach(function(x){
         var before = x.curHp;
-        heal(x, isAI ? eff : base, a);
-        var got = Math.max(0, x.curHp - before);
-        var over = eff - got;
-        if(over > 0) addShield(x, over);
+        heal(x, isAI ? eff : base, a);   // ★ v5.392.0 老師:移除溢出轉護盾
         cleanseAllStrong(x);
         try{ addBuff(x, 'immune', 1); }catch(_){}
         if(star(a, 's1') && x.hp > 0 && before < x.hp * 0.30){ try{ addBuff(x, 'hpRegen', 2); x._hpRegenAmt = Math.max(x._hpRegenAmt || 0, Math.max(1, Math.floor(SPV(a) * 0.3))); }catch(_){} }
@@ -92429,6 +92431,22 @@ window._FM_DEFS = {
     }
   };
 
+  // ★ v5.392.0 順風令自動選人(AI/自動戰鬥/龍王戰連線代執行共用;同一戰況兩端算出同一人):被控場 > 鄭成功 > 攻擊或特技最高
+  function pickMate(a){
+    var ctrl = function(h){ return ['stun','freeze','sleep','para','imprison','charm','seal'].some(function(s){ try{ return hasStatus(h, s); }catch(_){ return false; } }); };
+    var cand = alive(a.side).filter(function(x){ return x !== a; });
+    cand.sort(function(x, y){
+      var sx = Math.max(x.atk||0, x.sp||0) + (ctrl(x) ? 60 : 0) + (x.name === '鄭成功' ? 25 : 0);
+      var sy = Math.max(y.atk||0, y.sp||0) + (ctrl(y) ? 60 : 0) + (y.name === '鄭成功' ? 25 : 0);
+      return (sy - sx) || ((x.pos || 0) - (y.pos || 0));
+    });
+    return cand[0] || null;
+  }
+  function autoPick(a){   // 這次行動不是本機玩家親手點目標
+    try{ if(window._wbAutoTargetForOtherPlayer) return true; }catch(_){}
+    try{ if(typeof _autoBattle !== 'undefined' && _autoBattle) return true; }catch(_){}
+    return !!(a && a.side !== 'p1');
+  }
   function blockWhy(a, n){
     if(n === '順風令'){
       if(a._mzS2R === (G.round || 1) && bidOk(a._mzS2B)) return '這回合已經下過順風令了(每回合 1 次)';
@@ -92452,6 +92470,7 @@ window._FM_DEFS = {
       if(why){ cancel('⚠ ' + why); return true; }
       var pk = PICK[n];
       if(pk === 'ally_other'){
+        if(autoPick(a)){ var _pm = pickMate(a); if(_pm){ go(_pm); } else { cancel('⚠ 沒有可以指揮的隊友'); try{ if(!a.acted){ a.acted = true; later(startTurn, 300); } }catch(_){} } return true; }   // ★ v5.392.0 自動/代執行:不走 setPending(最低血自動選會選到媽祖自己或回港中的人而卡住)
         setPending('ally', function(t){
           if(!t || t === a || t.curHp <= 0){ cancel('⚠ 請選擇媽祖以外的隊友!'); return; }
           if(t._mzPort){ cancel('⚠ [' + t.name + '] 正在回港休整,下回合才會返場!'); return; }
@@ -92473,14 +92492,7 @@ window._FM_DEFS = {
         if(why){ L('[' + a.name + '] ' + why + '(改為休息,能量退回)'); try{ G.energy[a.side] = Math.min(10, (G.energy[a.side] || 0) + cost); }catch(_){} return 'done'; }
         var foes = alive(opp(a.side)), mates = alive(a.side), tgt = null;
         if(n === '順風令'){
-          var ctrl = function(h){ return ['stun','freeze','sleep','para','imprison','charm','seal'].some(function(s){ try{ return hasStatus(h, s); }catch(_){ return false; } }); };
-          var cand = mates.filter(function(x){ return x !== a; });
-          cand.sort(function(x, y){
-            var sx = Math.max(x.atk||0, x.sp||0) + (ctrl(x) ? 60 : 0) + (x.name === '鄭成功' ? 25 : 0);
-            var sy = Math.max(y.atk||0, y.sp||0) + (ctrl(y) ? 60 : 0) + (y.name === '鄭成功' ? 25 : 0);
-            return sy - sx;
-          });
-          tgt = cand[0] || null;
+          tgt = pickMate(a);   // ★ v5.392.0 與玩家自動/龍王戰代執行同一套規則
         } else if(n === '破城砲'){
           var defN = function(f){ return (f.buffs || []).filter(function(b){ return b && DEF_TY.indexOf(b.type) >= 0; }).length + ((f.shield || 0) > 0 ? 1 : 0); };
           tgt = (t && t.curHp > 0 && t.side !== a.side && !t._mzPort) ? t : null;
@@ -92530,7 +92542,7 @@ window._FM_DEFS = {
           L('🙏 全體友方獲得「媽祖庇佑」' + (2 + X) + ' 回合(致命傷保留 1 HP 並回復 ' + amt + ' HP)!');
           // ⑤ 護世巨浪
           var foes = alive(opp(side));
-          var share = 7.0 * bm / Math.max(1, foes.length);
+          var share = 5.0 * bm / Math.max(1, foes.length);   // ★ v5.392.0 老師:700%→500%
           foes.forEach(function(f){
             hit(f, SPV(h) * share, h, { isAoe:true, elem:'water', element:'water', mustHit:true, ignoreEvasion:true });
             if(f.curHp > 0){

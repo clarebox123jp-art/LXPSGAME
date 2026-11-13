@@ -4419,6 +4419,7 @@
     const _origSetPending = window.setPending;
     window.setPending = function(type, cb){
       if(window._wbAutoTargetForOtherPlayer){
+        // ★ v5.392.0 — 自動選目標一律排除回港休整中的英雄(媽祖「海燈歸航」h._mzPort;HP 停在 1 會被當成最低血一直選到)
         try{
           const G = (typeof window._wbGetG === 'function') ? window._wbGetG() : window.G;
           const a = G && G.activeChar;
@@ -4435,18 +4436,18 @@
           let autoT = null;
           let matched = true;
           if(type === 'enemy' || type === 'any_e' || type === 'foe' || type === 'foe_count'){
-            const foes = (G[opp] || []).filter(h => h && h.curHp > 0);
+            const foes = (G[opp] || []).filter(h => h && h.curHp > 0 && !h._mzPort);
             // 世界戰只有 BOSS,但保險還是用 sort
             autoT = foes.sort((x, y) => y.curHp - x.curHp)[0] || null;
           }else if(type === 'ally' || type === 'self_or_ally'){
-            const al = (G[a.side] || []).filter(h => h && h.curHp > 0);
+            const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && !h._mzPort);
             autoT = al.sort((x, y) => x.curHp - y.curHp)[0] || null;
           }else if(type === 'ally_dead' || type === 'ally_or_dead' || type === 'dead_ally' || type === 'dead'){
             const dead = (G[a.side] || []).filter(h => h && h.curHp === 0);
             autoT = dead[0] || null;
             // 沒倒下隊友 → 退而選自己以外的活著隊友(讓技能不空轉)
             if(!autoT){
-              const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && h !== a);
+              const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && h !== a && !h._mzPort);
               autoT = al.sort((x, y) => x.curHp - y.curHp)[0] || null;
             }
           }else if(type === 'self' || type === 'self_e'){
@@ -4454,10 +4455,10 @@
             autoT = a;
           }else if(type === 'mimic_target' || type === 'mimic'){
             // 臨摹大師:自動選 HP 最高的活著友方(代表能力最完整的)
-            const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && h !== a);
+            const al = (G[a.side] || []).filter(h => h && h.curHp > 0 && h !== a && !h._mzPort);
             autoT = al.sort((x, y) => y.curHp - x.curHp)[0] || null;
           }else if(type === 'any'){
-            const all = (G.p1 || []).concat(G.p2 || []).filter(h => h && h.curHp > 0);
+            const all = (G.p1 || []).concat(G.p2 || []).filter(h => h && h.curHp > 0 && !h._mzPort);
             autoT = all.sort((x, y) => x.curHp - y.curHp)[0] || null;
           }else{
             // ★ 未匹配 type → 標記 matched=false,走 default 兜底
