@@ -32580,7 +32580,7 @@ const BACKPACK_ITEM_DEF = {
   'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）', sellPrice: 300 },
   // ★ v5.398.0(2026-11-14・老師)裝備研磨劑/裝備洗鍊劑:不給 sellPrice(養成道具不可賣);使用 → 選裝備 → 裝備研磨視窗 window._lxpsGearForge
   'gear_grind_agent': { name:'裝備研磨劑', icon:'🧪', desc:'把裝備上的一條數值詞條磨得更強!使用後選 1 件裝備、勾 1 條詞條研磨:成功(80%)數值 +50%,大成功(20%)數值 +100%(翻倍),最高不超過該詞條上限。', type:'use', useLabel:'使用(選擇裝備)' },
-  'gear_reroll_agent': { name:'裝備洗鍊劑', icon:'🎲', desc:'把裝備上的一條詞條重新洗成隨機的新詞條!使用後選 1 件裝備、勾 1 條詞條洗鍊,新詞條可以和裝備上現有的重複,數值在該詞條的範圍內隨機。', type:'use', useLabel:'使用(選擇裝備)' },
+  'gear_reroll_agent': { name:'裝備洗鍊劑', icon:'🎲', desc:'把裝備上的一條詞條重新洗成隨機的新詞條!使用後選 1 件裝備、勾 1 條詞條洗鍊,新詞條可以和裝備上現有的重複,數值在該詞條的範圍內隨機;洗出來後可以選「保留原有詞條」或「換成新的詞條」。', type:'use', useLabel:'使用(選擇裝備)' },
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）', sellPrice:250 },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）', sellPrice:250 },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
@@ -32804,7 +32804,7 @@ const SHOP_PRODUCTS = [
     desc:'工匠祕傳的研磨膏。使用後選 1 件裝備,勾 1 條有數值的詞條研磨:成功(80%)數值提高 50%,大成功(20%)數值提高 100%,最高不超過該詞條上限。例:特技 +4(最高 8)→ 成功 +6、大成功 +8。每週商店限購 10 個。',
     price:10000, stock:'每週10個', weeklyLimit:10 },   // ★ 老師 15:47 更正:每日 1 個 → 每週 10 個
   { id:'gear_reroll_agent', name:'裝備洗鍊劑', icon:'🎲',
-    desc:'閃著七彩光芒的洗鍊藥水。使用後選 1 件裝備,勾 1 條詞條重新洗成隨機的新詞條(可以和裝備上現有的詞條重複),數值在該詞條的範圍內隨機。每週商店限購 10 個。',
+    desc:'閃著七彩光芒的洗鍊藥水。使用後選 1 件裝備,勾 1 條詞條重新洗成隨機的新詞條(可以和裝備上現有的詞條重複),數值在該詞條的範圍內隨機;洗出來後可選擇保留原有詞條或換成新的詞條。每週商店限購 10 個。',
     price:5000, stock:'每週10個', weeklyLimit:10 },   // ★ 老師 15:47 更正:每日 1 個 → 每週 10 個
   // ★ v5.314.0(2026-10-30・老師「超商每週限購 1 個自選 R 卡命星,價值 1 萬」;裁定 2乙)——
   //   不進背包:買下直接變成命星資料裡的「R 自選命星」(召喚星空 ✨ 命星工坊 R 分頁使用;買完自動打開)。
@@ -46163,59 +46163,69 @@ window._lxpsForgeCss = function(){
   st.id = 'lxps-forge-css';
   st.textContent = ''
     + '#lxps-forge-ov{position:fixed;inset:0;z-index:100500;display:flex;align-items:safe center;justify-content:center;background:rgba(0,4,18,0.86);'
-    +   'padding:12px;box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
-    + '#lxps-forge-card{position:relative;width:min(980px,96vw);max-height:min(92dvh,92vh);overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;'
-    +   'background:linear-gradient(160deg,rgba(10,24,48,0.98),rgba(6,10,26,0.98));border:2.5px solid rgba(120,200,255,0.8);border-radius:18px;'
-    +   'box-shadow:0 0 40px rgba(90,180,255,0.3);color:#fff;padding:14px 20px 16px;}'
-    + '#lxps-forge-card .fg-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}'
-    + '#lxps-forge-card .fg-title{flex:1;font-size:30px;font-weight:900;color:#bfe6ff;letter-spacing:1px;}'
-    + '#lxps-forge-card .fg-btn{min-height:46px;padding:6px 16px;font-size:19px;font-weight:900;border-radius:11px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+    +   'padding:calc(var(--fz)*0.6);box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+    + '#lxps-forge-card{position:relative;width:96vw;max-height:min(96dvh,96vh);min-height:min(88dvh,88vh);display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;'
+    +   'background:linear-gradient(160deg,rgba(10,24,48,0.98),rgba(6,10,26,0.98));border:2.5px solid rgba(120,200,255,0.8);border-radius:calc(var(--fz)*0.9);'
+    +   'box-shadow:0 0 calc(var(--fz)*2) rgba(90,180,255,0.3);color:#fff;padding:calc(var(--fz)*0.7) calc(var(--fz)*1) calc(var(--fz)*0.8);}'
+    + '#lxps-forge-card > *{flex-shrink:0;}'
+    + '#lxps-forge-card .fg-head{display:flex;align-items:center;gap:calc(var(--fz)*0.5);flex-wrap:wrap;}'
+    + '#lxps-forge-card .fg-title{flex:1;font-size:calc(var(--fz)*1.5);font-weight:900;color:#bfe6ff;letter-spacing:1px;}'
+    + '#lxps-forge-card .fg-btn{min-height:calc(var(--fz)*2.3);padding:calc(var(--fz)*0.3) calc(var(--fz)*0.8);font-size:calc(var(--fz)*0.95);font-weight:900;border-radius:calc(var(--fz)*0.55);cursor:pointer;font-family:inherit;white-space:nowrap;'
     +   'background:rgba(255,255,255,0.08);border:1.5px solid rgba(200,220,255,0.55);color:#e6f0ff;}'
     + '#lxps-forge-card .fg-btn.x{background:rgba(70,20,20,0.55);border-color:#e86a6a;color:#ffd0d0;}'
-    + '#lxps-forge-card .fg-modes{display:flex;gap:10px;margin:12px 0 10px;}'
-    + '#lxps-forge-card .fg-mode{flex:1;min-height:58px;font-size:23px;font-weight:900;border-radius:14px;cursor:pointer;font-family:inherit;'
+    + '#lxps-forge-card .fg-modes{display:flex;gap:calc(var(--fz)*0.5);margin:calc(var(--fz)*0.6) 0 calc(var(--fz)*0.5);}'
+    + '#lxps-forge-card .fg-mode{flex:1;min-height:calc(var(--fz)*2.9);font-size:calc(var(--fz)*1.15);font-weight:900;border-radius:calc(var(--fz)*0.7);cursor:pointer;font-family:inherit;'
     +   'background:rgba(40,60,100,0.5);border:2px solid rgba(140,190,255,0.4);color:#a9c8ee;}'
-    + '#lxps-forge-card .fg-mode small{display:block;font-size:15px;font-weight:700;opacity:0.85;}'
-    + '#lxps-forge-card .fg-mode.on.g{background:linear-gradient(135deg,#38c6ff,#2f6dff);border-color:#bfe9ff;color:#fff;box-shadow:0 0 16px rgba(80,180,255,0.6);}'
-    + '#lxps-forge-card .fg-mode.on.r{background:linear-gradient(135deg,#c56bff,#ff6fb4);border-color:#ffd0f0;color:#fff;box-shadow:0 0 16px rgba(220,110,255,0.6);}'
-    + '#lxps-forge-card .fg-body{display:flex;gap:18px;align-items:flex-start;}'
-    + '#lxps-forge-card .fg-gear{flex:0 0 220px;position:relative;text-align:center;}'
-    + '#lxps-forge-card .fg-pic{position:relative;width:200px;height:200px;margin:0 auto;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:110px;'
+    + '#lxps-forge-card .fg-mode small{display:block;font-size:calc(var(--fz)*0.75);font-weight:700;opacity:0.85;}'
+    + '#lxps-forge-card .fg-mode.on.g{background:linear-gradient(135deg,#38c6ff,#2f6dff);border-color:#bfe9ff;color:#fff;box-shadow:0 0 calc(var(--fz)*0.8) rgba(80,180,255,0.6);}'
+    + '#lxps-forge-card .fg-mode.on.r{background:linear-gradient(135deg,#c56bff,#ff6fb4);border-color:#ffd0f0;color:#fff;box-shadow:0 0 calc(var(--fz)*0.8) rgba(220,110,255,0.6);}'
+    + '#lxps-forge-card .fg-body{flex:1 0 auto;display:flex;gap:calc(var(--fz)*1.2);align-items:flex-start;}'
+    + '#lxps-forge-card .fg-gear{flex:0 0 calc(var(--fz)*15);position:relative;text-align:center;}'
+    + '#lxps-forge-card .fg-pic{position:relative;width:calc(var(--fz)*14);height:calc(var(--fz)*14);margin:0 auto;border-radius:calc(var(--fz)*0.9);display:flex;align-items:center;justify-content:center;font-size:calc(var(--fz)*5.5);'
     +   'background:radial-gradient(circle,rgba(120,190,255,0.22),rgba(0,0,0,0.25));border:2px solid rgba(140,200,255,0.4);}'
-    + '#lxps-forge-card .fg-pic img{width:180px;height:180px;object-fit:contain;}'
-    + '#lxps-forge-card .fg-gn{font-size:24px;font-weight:900;margin-top:8px;line-height:1.3;}'
-    + '#lxps-forge-card .fg-gm{font-size:16px;color:#b8c8e0;margin-top:2px;}'
-    + '#lxps-forge-card .fg-afs{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}'
-    + '#lxps-forge-card .fg-af{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;text-align:left;font-family:inherit;color:#e6f0ff;'
-    +   'background:rgba(255,255,255,0.05);border:2px solid rgba(160,200,255,0.3);font-size:20px;font-weight:800;}'
-    + '#lxps-forge-card .fg-af .ck{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:2.5px solid rgba(200,225,255,0.7);display:flex;align-items:center;justify-content:center;font-size:18px;}'
+    + '#lxps-forge-card .fg-pic img{width:calc(var(--fz)*13);height:calc(var(--fz)*13);object-fit:contain;}'
+    + '#lxps-forge-card .fg-gn{font-size:calc(var(--fz)*1.2);font-weight:900;margin-top:calc(var(--fz)*0.4);line-height:1.3;}'
+    + '#lxps-forge-card .fg-gm{font-size:calc(var(--fz)*0.8);color:#b8c8e0;margin-top:2px;}'
+    + '#lxps-forge-card .fg-afs{flex:1;min-width:0;display:flex;flex-direction:column;gap:calc(var(--fz)*0.4);}'
+    + '#lxps-forge-card .fg-af{display:flex;align-items:center;gap:calc(var(--fz)*0.5);padding:calc(var(--fz)*0.5) calc(var(--fz)*0.6);border-radius:calc(var(--fz)*0.6);cursor:pointer;text-align:left;font-family:inherit;color:#e6f0ff;'
+    +   'background:rgba(255,255,255,0.05);border:2px solid rgba(160,200,255,0.3);font-size:calc(var(--fz)*1);font-weight:800;}'
+    + '#lxps-forge-card .fg-af .ck{flex:0 0 auto;width:calc(var(--fz)*1.5);height:calc(var(--fz)*1.5);border-radius:50%;border:2.5px solid rgba(200,225,255,0.7);display:flex;align-items:center;justify-content:center;font-size:calc(var(--fz)*0.9);}'
     + '#lxps-forge-card .fg-af.on{background:rgba(80,170,255,0.2);border-color:#7fd0ff;}'
     + '#lxps-forge-card .fg-af.on .ck{background:#3fb6ff;border-color:#e6f6ff;color:#002;}'
     + '#lxps-forge-card .fg-af.r.on{background:rgba(220,110,255,0.18);border-color:#e7a8ff;}'
     + '#lxps-forge-card .fg-af.r.on .ck{background:#d27bff;}'
     + '#lxps-forge-card .fg-af:disabled{opacity:0.45;cursor:default;}'
     + '#lxps-forge-card .fg-af .tx{flex:1;min-width:0;}'
-    + '#lxps-forge-card .fg-af .tg{flex:0 0 auto;font-size:15px;font-weight:900;padding:2px 9px;border-radius:8px;background:rgba(255,255,255,0.1);color:#cfe3ff;}'
+    + '#lxps-forge-card .fg-af .tg{flex:0 0 auto;font-size:calc(var(--fz)*0.75);font-weight:900;padding:2px calc(var(--fz)*0.45);border-radius:calc(var(--fz)*0.4);background:rgba(255,255,255,0.1);color:#cfe3ff;}'
     + '#lxps-forge-card .fg-af.new{animation:fgNew 1.6s ease;}'
-    + '#lxps-forge-card .fg-prev{margin-top:4px;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.3);font-size:18px;line-height:1.6;color:#d8e8ff;}'
+    + '#lxps-forge-card .fg-prev{margin-top:calc(var(--fz)*0.2);padding:calc(var(--fz)*0.5) calc(var(--fz)*0.7);border-radius:calc(var(--fz)*0.6);background:rgba(0,0,0,0.3);font-size:calc(var(--fz)*0.9);line-height:1.6;color:#d8e8ff;}'
     + '#lxps-forge-card .fg-prev b{color:#7fe0ff;} #lxps-forge-card .fg-prev em{font-style:normal;color:#ffd84a;font-weight:900;}'
-    + '#lxps-forge-card .fg-go{width:100%;margin-top:10px;min-height:62px;font-size:26px;font-weight:900;border-radius:14px;cursor:pointer;font-family:inherit;letter-spacing:2px;'
-    +   'background:linear-gradient(135deg,#38c6ff,#2f6dff);border:2.5px solid #bfe9ff;color:#fff;box-shadow:0 0 18px rgba(80,180,255,0.5);}'
-    + '#lxps-forge-card .fg-go.r{background:linear-gradient(135deg,#c56bff,#ff6fb4);border-color:#ffd0f0;box-shadow:0 0 18px rgba(230,110,255,0.5);}'
+    + '#lxps-forge-card .fg-choose{display:flex;flex-direction:column;gap:calc(var(--fz)*0.45);}'
+    + '#lxps-forge-card .fg-ch-t{font-size:calc(var(--fz)*1.05);font-weight:900;color:#f0c4ff;}'
+    + '#lxps-forge-card .fg-ch-row{display:flex;gap:calc(var(--fz)*0.6);}'
+    + '#lxps-forge-card .fg-ch{flex:1;min-width:0;min-height:calc(var(--fz)*3.6);padding:calc(var(--fz)*0.4) calc(var(--fz)*0.6);border-radius:calc(var(--fz)*0.65);cursor:pointer;font-family:inherit;'
+    +   'font-size:calc(var(--fz)*1.05);font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--fz)*0.2);}'
+    + '#lxps-forge-card .fg-ch span{font-size:calc(var(--fz)*0.9);font-weight:800;opacity:0.95;}'
+    + '#lxps-forge-card .fg-ch.keep{background:rgba(60,80,110,0.6);border:2px solid rgba(180,210,255,0.7);color:#e6f0ff;}'
+    + '#lxps-forge-card .fg-ch.new{background:linear-gradient(135deg,#c56bff,#ff6fb4);border:2px solid #ffd0f0;color:#fff;box-shadow:0 0 calc(var(--fz)*0.8) rgba(230,110,255,0.6);}'
+    + '#lxps-forge-card .fg-ch-h{font-size:calc(var(--fz)*0.72);color:#b9a8cc;}'
+    + '#lxps-forge-card .fg-go{width:100%;margin-top:calc(var(--fz)*0.5);min-height:calc(var(--fz)*3.1);font-size:calc(var(--fz)*1.3);font-weight:900;border-radius:calc(var(--fz)*0.7);cursor:pointer;font-family:inherit;letter-spacing:2px;'
+    +   'background:linear-gradient(135deg,#38c6ff,#2f6dff);border:2.5px solid #bfe9ff;color:#fff;box-shadow:0 0 calc(var(--fz)*0.9) rgba(80,180,255,0.5);}'
+    + '#lxps-forge-card .fg-go.r{background:linear-gradient(135deg,#c56bff,#ff6fb4);border-color:#ffd0f0;box-shadow:0 0 calc(var(--fz)*0.9) rgba(230,110,255,0.5);}'
     + '#lxps-forge-card .fg-go:disabled{opacity:0.4;filter:grayscale(0.8);cursor:default;box-shadow:none;}'
-    + '#lxps-forge-card .fg-foot{margin-top:10px;font-size:15px;line-height:1.55;color:#9fb2cc;}'
+    + '#lxps-forge-card .fg-foot{margin-top:calc(var(--fz)*0.5);font-size:calc(var(--fz)*0.75);line-height:1.55;color:#9fb2cc;}'
     // 研磨中:裝備抖動＋火花
     + '#lxps-forge-card .fg-pic.busy{animation:fgShake 0.12s linear infinite;}'
-    + '#lxps-forge-card .fg-spark{position:absolute;left:50%;top:50%;font-size:26px;pointer-events:none;animation:fgSpark 0.7s ease-out forwards;}'
+    + '#lxps-forge-card .fg-spark{position:absolute;left:50%;top:50%;font-size:calc(var(--fz)*1.3);pointer-events:none;animation:fgSpark 0.7s ease-out forwards;}'
     // 大字報
     + '.fg-pop{position:absolute;left:50%;top:38%;z-index:5;pointer-events:none;white-space:nowrap;font-weight:900;transform:translate(-50%,-50%);'
-    +   'animation:fgPop 2.2s cubic-bezier(.2,1.6,.4,1) forwards;letter-spacing:4px;}'
-    + '.fg-pop.s{font-size:64px;color:#e8fbff;text-shadow:0 0 10px #39c6ff,0 0 26px #2f8dff,0 4px 0 #0a3a7a;-webkit-text-stroke:2px #0b4fa0;}'
-    + '.fg-pop.b{font-size:92px;background:linear-gradient(180deg,#fff7c2 10%,#ffd84a 45%,#ff8a00 90%);-webkit-background-clip:text;background-clip:text;color:transparent;'
-    +   '-webkit-text-stroke:3px #7a3a00;filter:drop-shadow(0 0 14px rgba(255,210,60,0.95)) drop-shadow(0 0 32px rgba(255,120,0,0.8));animation:fgPopBig 2.6s cubic-bezier(.2,1.7,.4,1) forwards;}'
-    + '.fg-pop.r{font-size:66px;color:#fff0ff;text-shadow:0 0 12px #d27bff,0 0 28px #ff6fb4,0 4px 0 #5a1a7a;-webkit-text-stroke:2px #7a2aa0;}'
-    + '.fg-sub{position:absolute;left:50%;top:70%;transform:translate(-50%,0);z-index:5;pointer-events:none;font-size:26px;font-weight:900;color:#fff;white-space:nowrap;'
-    +   'text-shadow:0 2px 6px #000;animation:fgSub 2.4s ease forwards;}'
+    +   'animation:fgPop 2.2s cubic-bezier(.2,1.6,.4,1) forwards;letter-spacing:calc(var(--fz)*0.2);}'
+    + '.fg-pop.s{font-size:calc(var(--fz)*3.2);color:#e8fbff;text-shadow:0 0 calc(var(--fz)*0.5) #39c6ff,0 0 calc(var(--fz)*1.3) #2f8dff,0 calc(var(--fz)*0.2) 0 #0a3a7a;-webkit-text-stroke:2px #0b4fa0;}'
+    + '.fg-pop.b{font-size:calc(var(--fz)*4.6);background:linear-gradient(180deg,#fff7c2 10%,#ffd84a 45%,#ff8a00 90%);-webkit-background-clip:text;background-clip:text;color:transparent;'
+    +   '-webkit-text-stroke:3px #7a3a00;filter:drop-shadow(0 0 calc(var(--fz)*0.7) rgba(255,210,60,0.95)) drop-shadow(0 0 calc(var(--fz)*1.6) rgba(255,120,0,0.8));animation:fgPopBig 2.6s cubic-bezier(.2,1.7,.4,1) forwards;}'
+    + '.fg-pop.r{font-size:calc(var(--fz)*3.3);color:#fff0ff;text-shadow:0 0 calc(var(--fz)*0.6) #d27bff,0 0 calc(var(--fz)*1.4) #ff6fb4,0 calc(var(--fz)*0.2) 0 #5a1a7a;-webkit-text-stroke:2px #7a2aa0;}'
+    + '.fg-sub{position:absolute;left:50%;top:70%;transform:translate(-50%,0);z-index:5;pointer-events:none;font-size:calc(var(--fz)*1.3);font-weight:900;color:#fff;white-space:nowrap;'
+    +   'text-shadow:0 2px calc(var(--fz)*0.3) #000;animation:fgSub 2.4s ease forwards;}'
     + '#lxps-forge-flash{position:fixed;inset:0;z-index:100600;pointer-events:none;background:radial-gradient(circle,rgba(255,240,170,0.95),rgba(255,180,40,0.5) 45%,rgba(255,140,0,0) 75%);animation:fgFlash 0.9s ease-out forwards;}'
     + '.fg-conf{position:fixed;z-index:100610;pointer-events:none;font-size:30px;animation:fgConf 1.8s cubic-bezier(.15,.7,.4,1) forwards;}'
     + '@keyframes fgShake{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-4px,2px) rotate(-3deg)}50%{transform:translate(3px,-2px) rotate(2deg)}75%{transform:translate(-2px,-3px) rotate(-1deg)}100%{transform:translate(0,0) rotate(0)}}'
@@ -46226,32 +46236,45 @@ window._lxpsForgeCss = function(){
     + '@keyframes fgFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}'
     + '@keyframes fgConf{0%{opacity:1;transform:translate(0,0) rotate(0) scale(0.6)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(1.1)}}'
     + '@keyframes fgNew{0%{box-shadow:0 0 0 0 rgba(255,220,80,0)}25%{box-shadow:0 0 0 5px rgba(255,220,80,0.95)}100%{box-shadow:0 0 0 0 rgba(255,220,80,0)}}'
-    // 手機橫放(高 ≤ 520):兩欄變窄、字縮小
+    // ★ v5.399.0 字級全部吃 --fz(window._lxpsForgeUnit 依螢幕算:PC min(W/86,H/48)、平板 min(W/54,H/36)、手機橫放 H/28),卡片 96vw × 88~96vh 接近全螢幕;
+    //   手機橫放只再把左欄裝備圖縮小、間距收緊
     + '@media (orientation:landscape) and (max-height:520px){'
     +   '#lxps-forge-ov{padding:4px;}'
-    +   '#lxps-forge-card{width:min(860px,98vw);max-height:calc(100dvh - 8px);padding:8px 12px 10px;border-radius:12px;}'
-    +   '#lxps-forge-card .fg-title{font-size:20px;}'
-    +   '#lxps-forge-card .fg-btn{min-height:38px;font-size:15px;padding:4px 10px;}'
-    +   '#lxps-forge-card .fg-modes{margin:6px 0;gap:6px;}'
-    +   '#lxps-forge-card .fg-mode{min-height:42px;font-size:17px;}'
-    +   '#lxps-forge-card .fg-mode small{font-size:12px;}'
-    +   '#lxps-forge-card .fg-body{gap:10px;}'
-    +   '#lxps-forge-card .fg-gear{flex:0 0 140px;}'
-    +   '#lxps-forge-card .fg-pic{width:120px;height:120px;font-size:64px;}'
-    +   '#lxps-forge-card .fg-pic img{width:108px;height:108px;}'
-    +   '#lxps-forge-card .fg-gn{font-size:16px;margin-top:4px;}'
-    +   '#lxps-forge-card .fg-gm{font-size:12px;}'
-    +   '#lxps-forge-card .fg-af{font-size:15px;padding:6px 8px;gap:6px;}'
-    +   '#lxps-forge-card .fg-af .ck{width:22px;height:22px;font-size:13px;}'
-    +   '#lxps-forge-card .fg-af .tg{font-size:12px;}'
-    +   '#lxps-forge-card .fg-prev{font-size:14px;padding:6px 10px;}'
-    +   '#lxps-forge-card .fg-go{min-height:46px;font-size:19px;margin-top:6px;}'
-    +   '#lxps-forge-card .fg-foot{font-size:12px;margin-top:6px;}'
-    +   '.fg-pop.s,.fg-pop.r{font-size:42px;} .fg-pop.b{font-size:58px;} .fg-sub{font-size:17px;}'
+    +   '#lxps-forge-card{width:98vw;max-height:calc(100dvh - 8px);min-height:calc(100dvh - 8px);padding:calc(var(--fz)*0.5) calc(var(--fz)*0.8);}'
+    +   '#lxps-forge-card .fg-modes{margin:calc(var(--fz)*0.35) 0;}'
+    +   '#lxps-forge-card .fg-gear{flex:0 0 calc(var(--fz)*10);}'
+    +   '#lxps-forge-card .fg-pic{width:calc(var(--fz)*8.5);height:calc(var(--fz)*8.5);font-size:calc(var(--fz)*4.5);}'
+    +   '#lxps-forge-card .fg-pic img{width:calc(var(--fz)*7.8);height:calc(var(--fz)*7.8);}'
+    +   '#lxps-forge-card .fg-af{padding:calc(var(--fz)*0.3) calc(var(--fz)*0.45);}'
+    +   '#lxps-forge-card .fg-foot{margin-top:calc(var(--fz)*0.35);}'
     + '}';
   document.head.appendChild(st);
 };
-window._lxpsForgeState = null;   // { uid, mode, sel, busy, last }
+window._lxpsForgeState = null;   // { uid, mode, sel, busy, last, pend }
+// ★ v5.399.0(老師「研磨和洗鍊教學視窗檢查三種平台的尺寸都是接近全螢幕的適當大小」)— 研磨視窗字級單位(px)
+window._lxpsForgeUnit = function(){
+  var W = window.innerWidth || 1280, H = window.innerHeight || 720;
+  if(H <= 520 && W > H) return Math.max(12, Math.min(16, H / 28));                       // 手機橫放(891×411 ⇒ 14.7)
+  var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if(touch && W <= 1400) return Math.max(16, Math.min(30, W / 54, H / 36));             // 平板(1180×820 ⇒ 21.9)
+  return Math.max(15, Math.min(40, W / 86, H / 48));                                       // 電腦(1920×1080 ⇒ 22.3;2560×1440 ⇒ 29.8)
+};
+window._lxpsForgeResizeHook = function(){
+  if(window._lxpsForgeRzOn) return;
+  window._lxpsForgeRzOn = 1;
+  var t = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(t);
+    t = setTimeout(function(){
+      try{
+        var ov = document.getElementById('lxps-forge-ov');
+        if(ov) ov.style.setProperty('--fz', window._lxpsForgeUnit().toFixed(2) + 'px');
+        var ft = document.getElementById('lxps-ftut');
+        if(ft) ft.style.setProperty('--fu', window._ftutUnit().toFixed(2) + 'px');
+      }catch(_){}
+    }, 150);
+  });
+};
 window._lxpsForgeOpen = function(eqUid, mode){
   try{
     window._lxpsCloseSellList();
@@ -46262,6 +46285,8 @@ window._lxpsForgeOpen = function(eqUid, mode){
   }catch(_e){ console.warn('[裝備研磨] 開視窗', _e); }
 };
 window._lxpsForgeClose = function(back){
+  // ★ v5.399.0 洗鍊結果還沒選就關掉 ⇒ 一律當「保留原有詞條」(洗鍊劑已用掉)
+  try{ var S0 = window._lxpsForgeState; if(S0 && S0.pend) window._lxpsForgeChoose(false, true); }catch(_){}
   try{ var ov = document.getElementById('lxps-forge-ov'); if(ov) ov.remove(); }catch(_){}
   var m = window._lxpsForgeState && window._lxpsForgeState.mode;
   window._lxpsForgeState = null;
@@ -46269,7 +46294,7 @@ window._lxpsForgeClose = function(back){
   if(back) window._lxpsForgePick(m || 'grind');
 };
 window._lxpsForgeSetMode = function(mode){
-  var S = window._lxpsForgeState; if(!S || S.busy) return;
+  var S = window._lxpsForgeState; if(!S || S.busy || S.pend) return;
   if(S.mode === mode) return;
   S.mode = mode; S.sel = -1; S.last = null;
   try{ playSfx('sfx-sel', 0.4); }catch(_){}
@@ -46277,7 +46302,7 @@ window._lxpsForgeSetMode = function(mode){
   try{ if(window._ftutOn && mode === 'reroll') window._ftutOn('mode'); }catch(_){}
 };
 window._lxpsForgeSel = function(i){
-  var S = window._lxpsForgeState; if(!S || S.busy) return;
+  var S = window._lxpsForgeState; if(!S || S.busy || S.pend) return;
   S.sel = (S.sel === i) ? -1 : i;
   try{ playSfx('sfx-sel', 0.3); }catch(_){}
   window._lxpsForgeRender();
@@ -46292,12 +46317,15 @@ window._lxpsForgeRender = function(){
     var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
     var inst = (typeof _gearGetInstance === 'function') ? _gearGetInstance(S.uid) : null;
     var ov = document.getElementById('lxps-forge-ov');
+    window._lxpsForgeResizeHook();
     if(!ov){
       ov = document.createElement('div');
       ov.id = 'lxps-forge-ov';
-      ov.addEventListener('click', function(ev){ if(ev.target === ov && !(window._lxpsForgeState && window._lxpsForgeState.busy)) window._lxpsForgeClose(); });
+      ov.setAttribute('data-lxps-no-pczoom', '1');   // ★ v5.399.0 自己依螢幕算字級(--fz),不吃全域 PC 放大(否則 96vw 會再被放大超出畫面)
+      ov.addEventListener('click', function(ev){ if(ev.target === ov && !(window._lxpsForgeState && (window._lxpsForgeState.busy || window._lxpsForgeState.pend))) window._lxpsForgeClose(); });
       document.body.appendChild(ov);
     }
+    try{ ov.style.setProperty('--fz', window._lxpsForgeUnit().toFixed(2) + 'px'); }catch(_){}
     if(!inst || !GEAR_DB[inst.itemId]){
       ov.innerHTML = '<div id="lxps-forge-card"><div class="fg-head"><div class="fg-title">' + T('找不到這件裝備了', '找不到這件裝備') + '</div>'
         + '<button type="button" class="fg-btn x" onclick="window._lxpsForgeClose()">✕ ' + T('關閉', '關閉') + '</button></div></div>';
@@ -46324,7 +46352,7 @@ window._lxpsForgeRender = function(){
       +   '<div class="fg-gear"><div class="fg-pic" id="lxps-forge-pic">' + (img || esc(def.icon || '🛡️')) + '</div>'
       +     '<div class="fg-gn" style="color:' + R.color + ';">' + esc(def.n) + '</div>'
       +     '<div class="fg-gm">' + R.name + ' ・ ' + SI.icon + ' ' + SI.n + (inst.equippedTo ? ' ・ ⚔ ' + esc(inst.equippedTo) : '') + '</div></div>'
-      +   '<div class="fg-afs"><div style="font-size:18px;font-weight:900;color:#cfe3ff;">' + (isG ? T('👇 勾一條要研磨的詞條', '勾選要研磨的詞條') : T('👇 勾一條要洗掉重來的詞條', '勾選要洗鍊的詞條')) + '</div>';
+      +   '<div class="fg-afs"><div style="font-size:calc(var(--fz)*0.95);font-weight:900;color:#cfe3ff;">' + (isG ? T('👇 勾一條要研磨的詞條', '勾選要研磨的詞條') : T('👇 勾一條要洗掉重來的詞條', '勾選要洗鍊的詞條')) + '</div>';
     (inst.affixes || []).forEach(function(af, i){
       var d = window._lxpsAffixDef(af.id);
       var txt = ''; try{ txt = _gearAffixText(af); }catch(_){}
@@ -46342,7 +46370,16 @@ window._lxpsForgeRender = function(){
     // 預覽
     var prev = '';
     var selAf = (S.sel >= 0) ? (inst.affixes || [])[S.sel] : null;
-    if(S.last){
+    if(S.pend){
+      // ★ v5.399.0(老師 17:37「洗鍊增加 保留原有詞條 換成新的詞條 的選擇」)洗出來先給玩家選,選了才寫進裝備
+      var _o = '', _n = '';
+      try{ _o = _gearAffixText(S.pend.old); }catch(_){}
+      try{ _n = _gearAffixText(S.pend.nw); }catch(_){}
+      prev = '<div class="fg-choose"><div class="fg-ch-t">🎲 ' + T('洗出新詞條了!要換嗎?', '洗鍊結果:請選擇是否更換') + '</div><div class="fg-ch-row">'
+        + '<button type="button" class="fg-ch keep" onclick="window._lxpsForgeChoose(false)">🛡️ ' + T('保留原有詞條', '保留原有詞條') + '<span>' + esc(_o) + '</span></button>'
+        + '<button type="button" class="fg-ch new" onclick="window._lxpsForgeChoose(true)">✨ ' + T('換成新的詞條', '換成新的詞條') + '<span>' + esc(_n) + '</span></button>'
+        + '</div><div class="fg-ch-h">' + T('不管選哪個,洗鍊劑都已經用掉囉。', '無論選擇哪一項,洗鍊劑皆已消耗。') + '</div></div>';
+    } else if(S.last){
       prev = S.last.html;
     } else if(selAf){
       if(isG){
@@ -46361,7 +46398,7 @@ window._lxpsForgeRender = function(){
       prev = isG ? T('先勾一條有數值、還沒到最高的詞條。', '請先勾選一條尚未達上限的數值詞條。') : T('先勾一條想換掉的詞條。', '請先勾選一條要洗鍊的詞條。');
     }
     h += '<div class="fg-prev">' + prev + '</div>';
-    var goDis = S.busy || S.sel < 0 || held <= 0 || (isG && selAf && !window._lxpsGrindCalc(selAf).ok);
+    var goDis = S.busy || !!S.pend || S.sel < 0 || held <= 0 || (isG && selAf && !window._lxpsGrindCalc(selAf).ok);
     h += '<button type="button" class="fg-go' + (isG ? '' : ' r') + '"' + (goDis ? ' disabled' : '') + ' onclick="window._lxpsForgeGo()">'
       + (held <= 0 ? (isG ? T('🧪 沒有研磨劑了', '🧪 研磨劑不足') : T('🎲 沒有洗鍊劑了', '🎲 洗鍊劑不足'))
                    : (isG ? '🧪 ' + T('研磨!', '開始研磨') : '🎲 ' + T('洗鍊!', '開始洗鍊')) + ' <span style="font-size:0.7em;">(' + T('用掉 1 個,還有 ', '消耗 1,持有 ') + held + ')</span>')
@@ -46370,14 +46407,44 @@ window._lxpsForgeRender = function(){
       + '<div class="fg-foot">' + (isG
           ? T('🧪 研磨:成功時數值多一半,大成功時數值變兩倍,但不會超過最高值。沒有數值的詞條(像免疫)不能研磨。研磨劑和洗鍊劑在超商「💪 強化」買,每週各限購 10 個。',
               '研磨:成功 +50%、大成功 +100%(以現值計,不超過該詞條上限);無數值詞條(免疫等)不可研磨。研磨劑/洗鍊劑於超商「強化」分類販售,每週各限購 10 個。')
-          : T('🎲 洗鍊:把勾的那條詞條換成隨機新詞條,有可能比原本好也可能比較差,想清楚再洗喔!研磨劑和洗鍊劑在超商「💪 強化」買,每週各限購 10 個。',
-              '洗鍊:勾選的詞條會重洗為隨機新詞條(可能變好或變差,無法復原)。研磨劑/洗鍊劑於超商「強化」分類販售,每週各限購 10 個。')) + '</div>'
+          : T('🎲 洗鍊:把勾的那條詞條洗出一條隨機新詞條,洗好後你可以選「保留原有詞條」或「換成新的詞條」!研磨劑和洗鍊劑在超商「💪 強化」買,每週各限購 10 個。',
+              '洗鍊:勾選的詞條會洗出隨機新詞條,洗出後可選擇保留原有詞條或換成新詞條(洗鍊劑皆消耗)。研磨劑/洗鍊劑於超商「強化」分類販售,每週各限購 10 個。')) + '</div>'
       + '</div>';
     var card0 = document.getElementById('lxps-forge-card');
     var st0 = card0 ? card0.scrollTop : 0;
     ov.innerHTML = h;
     try{ var card1 = document.getElementById('lxps-forge-card'); if(card1) card1.scrollTop = st0; }catch(_){}
   }catch(_e){ console.warn('[裝備研磨] 畫面', _e); }
+};
+// ★ v5.399.0 洗鍊結果二選一:rep=true 換成新詞條、false 保留原有;silent=關視窗時自動保留(不重畫、不出聲)
+window._lxpsForgeChoose = function(rep, silent){
+  var S = window._lxpsForgeState; if(!S || !S.pend) return;
+  var P = S.pend; S.pend = null;
+  var cute = (window._artStyle === 'cute');
+  var T = function(c, p){ return cute ? c : p; };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+  var oT = '', nT = '';
+  try{ oT = _gearAffixText(P.old); nT = _gearAffixText(P.nw); }catch(_){}
+  var did = false;
+  try{
+    var inst = _gearGetInstance(P.uid);
+    if(inst){
+      var cur = (inst.affixes || [])[P.idx];
+      if(rep && cur && cur.id === P.old.id && cur.v === P.old.v){ inst.affixes[P.idx] = P.nw; did = true; }
+      var rec = { m:'r', a: P.old.id, f: (typeof P.old.v === 'number' ? P.old.v : null), n: P.nw.id, t: (typeof P.nw.v === 'number' ? P.nw.v : null), k: did ? 1 : 0, at: Date.now() };
+      inst.fg = (Array.isArray(inst.fg) ? inst.fg : []).concat([rec]).slice(-20);
+      inst.at2 = Date.now();
+      try{ _gearRequestSave(); }catch(_){}
+      try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(function(){}); }catch(_){}
+    }
+  }catch(_e){ console.warn('[裝備洗鍊] 選擇', _e); }
+  if(silent) return;
+  S.last = { idx: P.idx, html: did
+    ? ('<b style="color:#f0b0ff;">✨ ' + T('換成新的詞條了!', '已更換為新詞條') + '</b><br>' + esc(oT) + ' → <em>' + esc(nT) + '</em>')
+    : ('<b>🛡️ ' + T('保留原有詞條', '已保留原有詞條') + '</b><br>' + esc(oT) + '<span style="opacity:0.7;">(' + T('沒換:', '捨棄:') + esc(nT) + ')</span>') };
+  try{ playSfx(did ? 'sfx-equip' : 'sfx-cancel', 0.55); }catch(_){}
+  window._lxpsForgeRender();
+  try{ if(window._ftutOn) window._ftutOn('choose'); }catch(_){}
 };
 window._lxpsForgeFx = function(kind, mainTxt, subTxt){
   try{
@@ -46453,14 +46520,17 @@ window._lxpsForgeGo = function(){
       rec = { m:'g', a: af.id, f: af.v, t: nv, b: big ? 1 : 0, at: Date.now() };
       af.v = nv;
     } else {
-      rec = { m:'r', a: af.id, f: (typeof af.v === 'number' ? af.v : null), n: newAf.id, t: (typeof newAf.v === 'number' ? newAf.v : null), at: Date.now() };
-      inst.affixes[S.sel] = newAf;
+      // ★ v5.399.0 洗鍊:先不寫進裝備,等玩家選「保留原有/換成新的」(window._lxpsForgeChoose);劑已扣
+      S.pend = { uid: S.uid, idx: S.sel, old: JSON.parse(JSON.stringify(af)), nw: newAf };
+      rec = null;
     }
-    inst.fg = (Array.isArray(inst.fg) ? inst.fg : []).concat([rec]).slice(-20);
-    inst.at2 = Date.now();
-    try{ _gearRequestSave(); }catch(_){}
+    if(rec){
+      inst.fg = (Array.isArray(inst.fg) ? inst.fg : []).concat([rec]).slice(-20);
+      inst.at2 = Date.now();
+      try{ _gearRequestSave(); }catch(_){}
+    }
     try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(function(){}); }catch(_){}
-    var newTxt = ''; try{ newTxt = _gearAffixText(inst.affixes[S.sel]); }catch(_){}
+    var newTxt = ''; try{ newTxt = _gearAffixText(isG ? inst.affixes[S.sel] : newAf); }catch(_){}
     // ④ 演出:研磨中抖動＋火花 0.9 秒 → 大字報
     window._lxpsForgeRender();
     var pic = document.getElementById('lxps-forge-pic');
@@ -46480,9 +46550,7 @@ window._lxpsForgeGo = function(){
       try{
         var S2 = window._lxpsForgeState; if(!S2) return;
         S2.busy = false;
-        S2.last = { idx: S.sel, html: isG
-          ? ((big ? '<em>🌟 ' + T('大成功!!', '大成功!') + '</em>' : '<b>✨ ' + T('研磨成功!', '研磨成功!') + '</b>') + '<br>' + esc(oldTxt) + ' → <em>' + esc(newTxt) + '</em>')
-          : ('<b style="color:#f0b0ff;">🎲 ' + T('洗鍊完成!', '洗鍊完成!') + '</b><br>' + esc(oldTxt) + ' → <em>' + esc(newTxt) + '</em>') };
+        S2.last = isG ? { idx: S.sel, html: ((big ? '<em>🌟 ' + T('大成功!!', '大成功!') + '</em>' : '<b>✨ ' + T('研磨成功!', '研磨成功!') + '</b>') + '<br>' + esc(oldTxt) + ' → <em>' + esc(newTxt) + '</em>') } : null;
         window._lxpsForgeRender();
         if(isG && big){
           window._lxpsForgeFx('b', T('大成功!!', '大成功!!'), esc(newTxt));
@@ -46590,42 +46658,41 @@ window._ftutCss = function(){
   var st = document.createElement('style');
   st.id = 'lxps-ftut-css';
   st.textContent = ''
-    + '#lxps-ftut{position:fixed;inset:0;z-index:100700;pointer-events:none;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+    // ★ v5.399.0(老師 2026-11-14 17:34「教學視窗太小了」,PC 2557×1375 截圖):教學層不吃 PC 放大(data-lxps-no-pczoom),原本固定 px ⇒ 大螢幕顯得很小。
+    //   改成全部吃 --fu(1920×1080 ⇒ 26px、2560×1440 ⇒ 34.7px、iPad 1180×820 ⇒ 下限 23px,上限 46px);手機橫放 @media 照舊用 px。
+    + '#lxps-ftut{position:fixed;inset:0;z-index:100700;pointer-events:none;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;--fu:clamp(23px,min(1.36vw,2.42vh),46px);}'
     + '#lxps-ftut .ft-blk{position:fixed;pointer-events:auto;background:transparent;}'
     + '#lxps-ftut .ft-dim{position:fixed;inset:0;background:rgba(0,0,0,0.66);pointer-events:auto;}'
     + '#lxps-ftut .ft-hole{position:fixed;border-radius:14px;border:3px solid #ffd84a;box-shadow:0 0 0 9999px rgba(0,0,0,0.62),0 0 18px 4px rgba(255,216,74,0.8);'
     +   'pointer-events:none;animation:ftHole 1.2s ease-in-out infinite;transition:left .25s,top .25s,width .25s,height .25s;}'
-    + '#lxps-ftut .ft-arrow{position:fixed;font-size:58px;line-height:1;pointer-events:none;filter:drop-shadow(0 0 8px rgba(255,216,74,0.9));animation:ftBounceD 0.8s ease-in-out infinite;}'
+    + '#lxps-ftut .ft-arrow{position:fixed;font-size:calc(var(--fu)*2.8);line-height:1;pointer-events:none;filter:drop-shadow(0 0 8px rgba(255,216,74,0.9));animation:ftBounceD 0.8s ease-in-out infinite;}'
     + '#lxps-ftut .ft-arrow.up{animation-name:ftBounceU;}'
-    + '#lxps-ftut .ft-bub{position:fixed;left:50%;transform:translateX(-50%);width:min(820px,94vw);box-sizing:border-box;pointer-events:auto;display:flex;gap:14px;align-items:flex-start;'
-    +   'padding:14px 16px;border-radius:18px;background:linear-gradient(160deg,rgba(60,36,14,0.97),rgba(28,16,6,0.97));border:2.5px solid #ffb35c;'
+    + '#lxps-ftut .ft-bub{position:fixed;left:50%;transform:translateX(-50%);width:min(calc(var(--fu)*62),95vw);box-sizing:border-box;pointer-events:auto;display:flex;gap:calc(var(--fu)*0.7);align-items:flex-start;'
+    +   'padding:calc(var(--fu)*0.7) calc(var(--fu)*0.85);border-radius:calc(var(--fu)*0.85);border-width:3px !important;background:linear-gradient(160deg,rgba(60,36,14,0.97),rgba(28,16,6,0.97));border:2.5px solid #ffb35c;'
     +   'box-shadow:0 8px 30px rgba(0,0,0,0.6),0 0 22px rgba(255,170,70,0.35);color:#fff;}'
     + '#lxps-ftut .ft-bub.shake{animation:ftShake 0.4s ease;}'
-    + '#lxps-ftut .ft-av{flex:0 0 auto;width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid #ffcf7a;background:#3a2410;display:flex;align-items:center;justify-content:center;font-size:52px;}'
+    + '#lxps-ftut .ft-av{flex:0 0 auto;width:calc(var(--fu)*4.8);height:calc(var(--fu)*4.8);border-radius:50%;overflow:hidden;border:3px solid #ffcf7a;background:#3a2410;display:flex;align-items:center;justify-content:center;font-size:calc(var(--fu)*2.5);}'
     + '#lxps-ftut .ft-av img{width:100%;height:100%;object-fit:cover;}'
     + '#lxps-ftut .ft-tx{flex:1;min-width:0;}'
-    + '#lxps-ftut .ft-nm{font-size:18px;font-weight:900;color:#ffcf7a;margin-bottom:4px;}'
-    + '#lxps-ftut .ft-say{font-size:21px;font-weight:700;line-height:1.6;color:#fff8e6;}'
+    + '#lxps-ftut .ft-nm{font-size:calc(var(--fu)*0.85);font-weight:900;color:#ffcf7a;margin-bottom:calc(var(--fu)*0.2);}'
+    + '#lxps-ftut .ft-say{font-size:var(--fu);font-weight:700;line-height:1.6;color:#fff8e6;}'
     + '#lxps-ftut .ft-say b{color:#ffd84a;} #lxps-ftut .ft-say em{font-style:normal;color:#7fe0ff;font-weight:900;}'
-    + '#lxps-ftut .ft-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap;}'
-    + '#lxps-ftut .ft-btn{min-height:46px;padding:6px 20px;font-size:20px;font-weight:900;border-radius:12px;cursor:pointer;font-family:inherit;'
+    + '#lxps-ftut .ft-btns{display:flex;gap:calc(var(--fu)*0.5);justify-content:flex-end;margin-top:calc(var(--fu)*0.5);flex-wrap:wrap;}'
+    + '#lxps-ftut .ft-btn{min-height:calc(var(--fu)*2.2);padding:calc(var(--fu)*0.3) calc(var(--fu)*1);font-size:calc(var(--fu)*0.98);font-weight:900;border-radius:calc(var(--fu)*0.55);cursor:pointer;font-family:inherit;'
     +   'background:linear-gradient(135deg,#ffd84a,#ff9f2e);border:2px solid #fff0b0;color:#2a1700;}'
-    + '#lxps-ftut .ft-skip{min-height:40px;padding:4px 14px;font-size:15px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;'
+    + '#lxps-ftut .ft-skip{min-height:calc(var(--fu)*1.9);padding:calc(var(--fu)*0.2) calc(var(--fu)*0.65);font-size:calc(var(--fu)*0.74);font-weight:800;border-radius:calc(var(--fu)*0.45);cursor:pointer;font-family:inherit;'
     +   'background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,220,180,0.45);color:#e8d6bc;}'
-    + '#lxps-ftut .ft-step{font-size:14px;font-weight:800;color:#d8b98a;margin-left:6px;}'
+    + '#lxps-ftut .ft-step{font-size:calc(var(--fu)*0.68);font-weight:800;color:#d8b98a;margin-left:calc(var(--fu)*0.3);}'
     + '@keyframes ftHole{0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.62),0 0 14px 2px rgba(255,216,74,0.6)}50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.62),0 0 26px 8px rgba(255,216,74,1)}}'
     + '@keyframes ftBounceD{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}'
     + '@keyframes ftBounceU{0%,100%{transform:translateY(0) rotate(180deg)}50%{transform:translateY(-14px) rotate(180deg)}}'
     + '@keyframes ftShake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 10px))}75%{transform:translateX(calc(-50% + 10px))}}'
     + '@media (orientation:landscape) and (max-height:520px){'
-    +   '#lxps-ftut .ft-bub{width:min(760px,96vw);padding:8px 10px;gap:8px;border-radius:12px;}'
-    +   '#lxps-ftut .ft-av{width:58px;height:58px;font-size:32px;}'
-    +   '#lxps-ftut .ft-nm{font-size:13px;margin-bottom:1px;}'
-    +   '#lxps-ftut .ft-say{font-size:15px;line-height:1.45;}'
-    +   '#lxps-ftut .ft-btns{margin-top:5px;gap:6px;}'
-    +   '#lxps-ftut .ft-btn{min-height:38px;font-size:16px;padding:4px 14px;}'
-    +   '#lxps-ftut .ft-skip{min-height:34px;font-size:12px;}'
-    +   '#lxps-ftut .ft-arrow{font-size:40px;}'
+    // ★ v5.399.0 手機橫放也吃 --fu(_ftutUnit:H/25),只把頭像縮小、行距收緊,讓泡泡不要太高
+    +   '#lxps-ftut .ft-bub{width:97vw;padding:calc(var(--fu)*0.45) calc(var(--fu)*0.6);gap:calc(var(--fu)*0.5);}'
+    +   '#lxps-ftut .ft-av{width:calc(var(--fu)*3.6);height:calc(var(--fu)*3.6);font-size:calc(var(--fu)*2);}'
+    +   '#lxps-ftut .ft-say{line-height:1.42;}'
+    +   '#lxps-ftut .ft-arrow{font-size:calc(var(--fu)*2.4);}'
     + '}';
   document.head.appendChild(st);
 };
@@ -46651,7 +46718,10 @@ window._ftutSteps = function(cute){
     { id:'sel2', t:'#lxps-forge-card .fg-af:nth-of-type(3)', wait:'sel',
       say:T('洗鍊會把一條詞條<b>整個換掉</b>,變成隨機的新詞條,數值也重新決定。<br>👉 勾選第三條<em>「命中率 +5%」</em>試試看!', '洗鍊會將勾選的詞條重洗為隨機新詞條,數值於該詞條範圍內隨機。<br>請勾選<em>「命中率 +5%」</em>。') },
     { id:'go2', t:'#lxps-forge-card .fg-go', wait:'done', bubTop:true,
-      say:T('洗鍊可能洗到更好的,也可能比較差,還可能跟別條一樣喔!<br>👉 按<em>「🎲 洗鍊!」</em>!', '洗鍊結果可能更好或更差,也可能與其他詞條重複,無法復原。<br>請按<em>「開始洗鍊」</em>。') },
+      say:T('洗鍊可能洗到更好的,也可能比較差,還可能跟別條一樣;洗好後可以選要不要換喔!<br>👉 按<em>「🎲 洗鍊!」</em>!', '洗鍊結果可能更好或更差,也可能與其他詞條重複;洗出後可再選擇是否更換。<br>請按<em>「開始洗鍊」</em>。') },
+    { id:'choose', t:'#lxps-forge-card .fg-choose', wait:'choose',
+      say:T('洗出新詞條了!左邊是<b>原本的</b>,右邊是<b>新的</b>。喜歡新的就按<em>「換成新的詞條」</em>,不喜歡就按<em>「保留原有詞條」</em>。<br>👉 選一個吧!',
+            '洗鍊結果出爐:左為原詞條、右為新詞條。可選<em>「換成新的詞條」</em>或<em>「保留原有詞條」</em>(洗鍊劑皆會消耗)。<br>請選擇其中一項。') },
     { id:'res2', next:true, t:'#lxps-forge-card .fg-prev', delay:500,
       say:T('洗好了!洗到喜歡的詞條,再用研磨把它磨到最高,裝備就超強!', '洗鍊完成。建議先洗出理想詞條,再以研磨將數值推到上限。') },
     { id:'where', next:true, nextTxt:T('我學會了!', '完成教學'),
@@ -46660,7 +46730,7 @@ window._ftutSteps = function(cute){
   ];
   // 示範模式(重看教學/上次看到一半):不真的消耗研磨劑,點亮目標後按「下一步」;不經過挑裝備清單
   if(demo){
-    arr = arr.filter(function(x){ return x.id !== 'pick'; });
+    arr = arr.filter(function(x){ return x.id !== 'pick' && x.id !== 'choose'; });
     arr.forEach(function(x){
       if(x.wait){ x.wait = null; x.next = true; x.say = x.say.replace(/👉 /g, '👀 '); }
       if(x.id === 'res1' || x.id === 'res2'){ x.delay = 0; x.say = T('研磨/洗鍊完成後,上面會跳出大大的「成功!」「大成功!!」或「洗鍊!」,這裡會寫出變化前後的詞條。', '執行後裝備圖上會跳出「成功/大成功/洗鍊」大字報,此處列出變化前後的詞條。'); }
@@ -46668,6 +46738,14 @@ window._ftutSteps = function(cute){
     if(arr[0]) arr[0].say = T('嗨!我是<b>鐵匠</b>🔨。再帶你看一次<em>🧪 研磨</em>和<em>🎲 洗鍊</em>怎麼用(這次只看不會用掉藥劑)。', '這裡再示範一次<em>🧪 研磨</em>與<em>🎲 洗鍊</em>的操作(示範模式,不消耗藥劑)。');
   }
   return arr;
+};
+// ★ v5.399.0 教學字級單位(px):電腦 min(W/68,H/38)(1920×1080 ⇒ 28)、平板 min(W/46,H/32)(1180×820 ⇒ 25.6)、手機橫放 H/25(891×411 ⇒ 16.4)
+window._ftutUnit = function(){
+  var W = window.innerWidth || 1280, H = window.innerHeight || 720;
+  if(H <= 520 && W > H) return Math.max(13, Math.min(19, H / 25));
+  var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if(touch && W <= 1400) return Math.max(18, Math.min(34, W / 46, H / 32));
+  return Math.max(18, Math.min(48, W / 68, H / 38));
 };
 window._ftutStart = function(replay){
   try{
@@ -46682,6 +46760,7 @@ window._ftutStart = function(replay){
     root.id = 'lxps-ftut';
     root.setAttribute('data-lxps-no-pczoom', '1');
     root.setAttribute('data-lxps-no-scrollfix', '1');
+    try{ root.style.setProperty('--fu', window._ftutUnit().toFixed(2) + 'px'); window._lxpsForgeResizeHook(); }catch(_){}
     document.body.appendChild(root);
     window._ftutRender();
     window._ftut.iv = setInterval(window._ftutPlace, 200);
@@ -46818,11 +46897,12 @@ window._ftutPlace = function(){
     var below = (r.top + r.height / 2) < H / 2;
     if(st.bubTop){ bub.style.top = '8px'; }
     else {
-    if(below){ bub.style.top = Math.min(H - bh - 8, y + h + 64) + 'px'; }
-    else { bub.style.top = Math.max(8, y - bh - 64) + 'px'; }
+    var gA = ((arr && arr.offsetHeight) || 58) + 8;   // ★ v5.399.0 泡泡與目標的距離跟著箭頭大小(箭頭改成隨螢幕放大)
+    if(below){ bub.style.top = Math.min(H - bh - 8, y + h + gA) + 'px'; }
+    else { bub.style.top = Math.max(8, y - bh - gA) + 'px'; }
     // 泡泡蓋到目標 ⇒ 改放到畫面另一端
     var bt = parseFloat(bub.style.top);
-    if(bt < y + h && bt + bh > y){ bub.style.top = (below ? Math.max(8, y - bh - 64) : Math.min(H - bh - 8, y + h + 64)) + 'px'; }
+    if(bt < y + h && bt + bh > y){ bub.style.top = (below ? Math.max(8, y - bh - gA) : Math.min(H - bh - 8, y + h + gA)) + 'px'; }
     }
     // 箭頭:在目標上方往下指;目標太靠上就放下方往上指
     var aw = arr.offsetWidth || 58, ah = arr.offsetHeight || 58;

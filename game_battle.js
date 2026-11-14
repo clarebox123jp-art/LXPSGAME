@@ -86905,8 +86905,8 @@ function _showNewHeroAnnouncement(forceShow){
       h += '<div class="new-hero-method-card" style="padding:16px 18px;border-color:rgba(231,168,255,0.6);">'
         + '<div style="font-size:clamp(22px,2.6vw,28px);font-weight:900;color:#e7a8ff;margin-bottom:8px;">🎲 ' + _T('洗鍊', '裝備洗鍊') + '</div>'
         + '<div style="font-size:17px;color:#eef;line-height:1.75;">'
-        + _T('勾一條詞條,把它整條換成隨機的新詞條,數字也重新決定。可能更好也可能更差,還可能和別條一樣!',
-             '勾選 1 條詞條重洗為隨機新詞條(可與現有詞條重複),數值於該詞條範圍內隨機;結果無法復原。') + '<br>'
+        + _T('勾一條詞條,洗出一條隨機的新詞條,數字也重新決定(可能和別條一樣)。洗好後可以選「保留原有詞條」或「換成新的詞條」,不怕洗壞!',
+             '勾選 1 條詞條洗出隨機新詞條(可與現有詞條重複),數值於該詞條範圍內隨機;洗出後可選擇保留原有詞條或換成新詞條。') + '<br>'
         + '💡 ' + _T('先洗出喜歡的詞條,再用研磨把它磨到最高!', '建議先洗出理想詞條,再以研磨推到上限。')
         + '</div></div>';
       h += '</div>';
