@@ -25541,6 +25541,24 @@ async function advStartWinSequence() {
       });
     }
   }catch(_eJpElite){ console.warn('[v5.313.0 日本菁英 BOSS 戰掉落]', _eJpElite); }
+  // ★ v5.398.0(老師 2026-11-14 15:58「木柵貓空以外的冒險關卡 BOSS 都有機率額外掉落裝備研磨劑(基礎10%)1個和裝備洗鍊劑(基礎10%)1個,分開計算」)
+  //   基礎 10% × 難度掉寶倍率(_advDropRateMult)× 龍王祝福(_gameBlessingMult),上限 95%,與其他 BOSS 掉落同口徑;
+  //   本函式是冒險 BOSS 勝利結算(世界 BOSS/主線已在前面擋掉);貓空(maokong)不掉。
+  try{
+    const _stF = (typeof _adventureStage !== 'undefined') ? _adventureStage : null;
+    if(_stF && ['maokong','worldboss','mainstory','arena'].indexOf(_stF) < 0){
+      const _fMult = ((typeof _advDropRateMult === 'function') ? _advDropRateMult() : 1.00)
+                   * ((typeof window._gameBlessingMult === 'function') ? window._gameBlessingMult() : 1.0);
+      const _fp = Math.min(0.95, 0.10 * _fMult);
+      [['gear_grind_agent','🧪','裝備研磨劑','#7fd0ff'], ['gear_reroll_agent','🎲','裝備洗鍊劑','#e7a8ff']].forEach(function(d, k){
+        if(Math.random() < _fp){
+          backpackAdd(d[0], 1, 'BOSS掉落');
+          try{ log(d[1] + ' [' + _mainBoss + '] 額外掉落了【' + d[2] + '】×1!已放入背包。'); }catch(_){}
+          try{ setTimeout(function(){ _showInGameToast(d[1] + ' ' + ((window._artStyle === 'cute') ? '撿到' : '獲得') + d[2] + ' ×1!', d[3], 2800); }, 600 + k * 900); }catch(_){}
+        }
+      });
+    }
+  }catch(_eForgeDrop){ console.warn('[v5.398.0 研磨劑/洗鍊劑 BOSS 掉落]', _eForgeDrop); }
   if(_JAPAN_BOSS_DROPS[_mainBoss]){
     const _jd = _JAPAN_BOSS_DROPS[_mainBoss];
     // ★ v3.14.13(丙)— 龍王的祝福:物品掉寶率 +25%(上限 95%)
@@ -28911,7 +28929,9 @@ function _applySafeData(raw) {
                         'wbJoinCount','wbQuizCorrect','wbTotalDmg','wbMaxSingleHit',
                         'wqLifetimeCorrect','wqTopRankStreak',
                         // ★ v4.6.0 — 寵物互動累計(餵對/撫摸/玩耍勝利·取較大值只增不減·供寵物獎章)
-                        'petFeedOk','petPat','petPlayWin'];
+                        'petFeedOk','petPat','petPlayWin',
+                        // ★ v5.398.0 鐵匠研磨/洗鍊教學:送禮時間/完成時間(時間戳,取較大 ⇒ 換平板不重送、不重跳)
+                        'forgeTutGift','forgeTutDone'];
       _numKeys.forEach(k => {
         const c = Number(_cloudStats[k] || 0);
         const l = Number(_medalStats[k] || 0);
@@ -28928,6 +28948,15 @@ function _applySafeData(raw) {
       });
       // ★ v3.5.66 — 最近一次排名:採雲端值(最新紀錄)
       if(typeof _cloudStats.wqLastRank === 'number') _medalStats.wqLastRank = _cloudStats.wqLastRank;
+      // ★ v5.398.0 獎章追蹤＋分類置頂(_medalStats.medalTrack):整份取 at 較新的那邊(不是 union/max ⇒ 取消追蹤也能跨平板同步)
+      try{
+        const _ctM = _cloudStats.medalTrack, _ltM = _medalStats.medalTrack;
+        if(_ctM && typeof _ctM === 'object' && Array.isArray(_ctM.ids) && typeof _ctM.at === 'number'
+           && (!_ltM || typeof _ltM !== 'object' || typeof _ltM.at !== 'number' || _ctM.at > _ltM.at)){
+          _medalStats.medalTrack = { ids: _ctM.ids.filter(function(x){ return typeof x === 'string'; }).slice(0, 3),
+                                     cat: (typeof _ctM.cat === 'string' ? _ctM.cat : ''), at: _ctM.at };
+        }
+      }catch(_eMt){}
       // 布林值：任一為 true 就保留 true
       ['hadRevive','jpTreasuresConsumed',
        // ★ v3.5.66 — wb 首次造成傷害旗標
@@ -32549,6 +32578,9 @@ let _playerBackpack = {};
 const BACKPACK_ITEM_DEF = {
   'hero_exp_book':    { name:'英雄經驗值之書', icon:'📗', desc:'使用後為選定英雄增加50 EXP', type:'use', useLabel:'使用（選擇英雄）', sellPrice: 25 },
   'skill_upgrade_book':{ name:'技能升級書',    icon:'📖', desc:'使用後為選定英雄升級一個技能', type:'use', useLabel:'使用（選擇英雄）', sellPrice: 300 },
+  // ★ v5.398.0(2026-11-14・老師)裝備研磨劑/裝備洗鍊劑:不給 sellPrice(養成道具不可賣);使用 → 選裝備 → 裝備研磨視窗 window._lxpsGearForge
+  'gear_grind_agent': { name:'裝備研磨劑', icon:'🧪', desc:'把裝備上的一條數值詞條磨得更強!使用後選 1 件裝備、勾 1 條詞條研磨:成功(80%)數值 +50%,大成功(20%)數值 +100%(翻倍),最高不超過該詞條上限。', type:'use', useLabel:'使用(選擇裝備)' },
+  'gear_reroll_agent': { name:'裝備洗鍊劑', icon:'🎲', desc:'把裝備上的一條詞條重新洗成隨機的新詞條!使用後選 1 件裝備、勾 1 條詞條洗鍊,新詞條可以和裝備上現有的重複,數值在該詞條的範圍內隨機。', type:'use', useLabel:'使用(選擇裝備)' },
   'stat_reset_book':  { name:'能力素質重置之書', icon:'📕', desc:'重置選定英雄所有投資的素質點數，可重新分配。', type:'use', useLabel:'使用（選擇英雄）', sellPrice:250 },
   'skill_reset_book': { name:'技能等級重置之書', icon:'📘', desc:'重置選定英雄所有技能等級至初始狀態，可重新升級。', type:'use', useLabel:'使用（選擇英雄）', sellPrice:250 },
   'antique_teacup':   { name:'骨董茶杯',       icon:'🍵', desc:'精美的古董茶杯，收藏家夢寐以求。前往不可思議超商可賣出換取知識幣。', type:'sell_only', sellPrice:1000 },
@@ -32766,6 +32798,14 @@ const SHOP_PRODUCTS = [
   { id:'skill_upgrade_book', name:'技能升級書', icon:'📖',
     desc:'記載英雄招式奧義的祕笈。使用後選擇 1 名英雄,為他的一個技能提升 1 級。每日商店限購 10 本。',
     price:2500, stock:'每日10個', dailyLimit:10 },   // 老師定價 2500
+  // ★ v5.398.0(2026-11-14・老師「超商的強化類新增 1.裝備研磨劑,1萬知識幣 … 2.裝備洗鍊劑,5000知識幣」;15:47 更正「兩個商品都改成每週限購10個」)
+  //   id 不含 reset/summon/pet_food ⇒ _shopProductCat 自動落在「💪 強化」。使用流程見 window._lxpsGearForge(本檔賣出清單區塊後面)。
+  { id:'gear_grind_agent', name:'裝備研磨劑', icon:'🧪',
+    desc:'工匠祕傳的研磨膏。使用後選 1 件裝備,勾 1 條有數值的詞條研磨:成功(80%)數值提高 50%,大成功(20%)數值提高 100%,最高不超過該詞條上限。例:特技 +4(最高 8)→ 成功 +6、大成功 +8。每週商店限購 10 個。',
+    price:10000, stock:'每週10個', weeklyLimit:10 },   // ★ 老師 15:47 更正:每日 1 個 → 每週 10 個
+  { id:'gear_reroll_agent', name:'裝備洗鍊劑', icon:'🎲',
+    desc:'閃著七彩光芒的洗鍊藥水。使用後選 1 件裝備,勾 1 條詞條重新洗成隨機的新詞條(可以和裝備上現有的詞條重複),數值在該詞條的範圍內隨機。每週商店限購 10 個。',
+    price:5000, stock:'每週10個', weeklyLimit:10 },   // ★ 老師 15:47 更正:每日 1 個 → 每週 10 個
   // ★ v5.314.0(2026-10-30・老師「超商每週限購 1 個自選 R 卡命星,價值 1 萬」;裁定 2乙)——
   //   不進背包:買下直接變成命星資料裡的「R 自選命星」(召喚星空 ✨ 命星工坊 R 分頁使用;買完自動打開)。
   //   每週計數另寫在命星資料(雲端取大值,換裝置不能重買);不參加每日 7 折特價。全部 R 卡滿命 ⇒ 按鈕灰掉「已全部滿命」。
@@ -39911,6 +39951,9 @@ const ARENA_EXCHANGE_ITEMS = [
   { id:'arena_x_summon_crystal', name:'召喚水晶',          icon:'🔮', cost:3,  desc:'用於各種召喚的水晶' },
   /* ★ v4.83.0 老師裁定：鬥技場卡片背景 = 鬥技之證 ×20 兌換(主角卡片背景唯一兌換管道) */
   { id:'arena_x_avatar_bg_arena', name:'鬥技場卡片背景', icon:'🖼️', cost:20, desc:'造型工房「卡片背景」解鎖【鬥技場】場景圖(已擁有則不重複扣點)' },
+  /* ★ v5.398.0(老師 2026-11-14 15:58「鬥技之證可以換到裝備研磨劑(5證)和裝備洗鍊劑(3證)」)不限購 */
+  { id:'arena_x_gear_grind',     name:'裝備研磨劑',        icon:'🧪', cost:5,  desc:'獲得 裝備研磨劑 ×1:選 1 條裝備詞條研磨,成功數值 +50%、大成功 +100%(不超過上限)' },
+  { id:'arena_x_gear_reroll',    name:'裝備洗鍊劑',        icon:'🎲', cost:3,  desc:'獲得 裝備洗鍊劑 ×1:選 1 條裝備詞條重洗成隨機新詞條' },
 ];
 window.ARENA_EXCHANGE_ITEMS = ARENA_EXCHANGE_ITEMS;
 
@@ -40068,6 +40111,12 @@ function _arenaGrantExchangeItem(it){
       case 'arena_x_skill_book':   // ★ v5.306.0
         if(typeof backpackAdd === 'function') backpackAdd('skill_upgrade_book', 1, '兌換:鬥技場商店');
         return '✅ 兌換成功!獲得 技能升級書 ×1 📖';
+      case 'arena_x_gear_grind':   // ★ v5.398.0
+        if(typeof backpackAdd === 'function') backpackAdd('gear_grind_agent', 1, '兌換:鬥技場商店');
+        return '✅ 兌換成功!獲得 裝備研磨劑 ×1 🧪';
+      case 'arena_x_gear_reroll':  // ★ v5.398.0
+        if(typeof backpackAdd === 'function') backpackAdd('gear_reroll_agent', 1, '兌換:鬥技場商店');
+        return '✅ 兌換成功!獲得 裝備洗鍊劑 ×1 🎲';
       case 'arena_x_treasure_exp':
         if(typeof backpackAdd === 'function') backpackAdd('treasure_exp_scroll', 1);
         return '✅ 兌換成功!獲得 至寶經驗卷軸 ×1 📜';
@@ -40782,7 +40831,11 @@ const SUMMON_RATES = [
   { kind:'treasure_scroll',pct: 9, label:'📜 至寶經驗卷軸 ×1',       desc:'幫台灣至寶累積經驗(+10 EXP)' },
   { kind:'skill_book',     pct:15, label:'📖 技能升級書 ×2',         desc:'升級英雄技能用' },
   { kind:'exp_book_dlx',   pct:23, label:'📗 精裝英雄經驗之書 ×5',   desc:'快速升級英雄' },
-  { kind:'boss_sell',      pct:23, label:'💰 BOSS 賣錢物品 ×1',      desc:'從日本 6 種 + 台灣 10 種隨機抽 1 件,超商高價收購' },
+  // ★ v5.398.0(老師 2026-11-14 15:47「召喚星空有 7% 機率抽到裝備研磨劑和裝備洗鍊劑」)— 新增 7% 槽,一次給研磨劑或洗鍊劑其中 1 個(各半);
+  //   7% 從 BOSS 賣錢物品挪(23% → 16%),總和仍 100。舊值保留備查:{ kind:'boss_sell', pct:23, … }
+  { kind:'gear_forge',     pct: 7, label:'🧪 裝備研磨劑/🎲 洗鍊劑 ×1', desc:'裝備研磨劑或裝備洗鍊劑其中 1 個(各半機率):研磨讓詞條數值變強、洗鍊把詞條換成隨機新詞條',
+    descC:'研磨劑或洗鍊劑抽 1 個(一半一半):研磨讓裝備詞條變強,洗鍊把詞條換成新的!' },
+  { kind:'boss_sell',      pct:16, label:'💰 BOSS 賣錢物品 ×1',      desc:'從日本 6 種 + 台灣 10 種隨機抽 1 件,超商高價收購' },
 ];
 
 // 螢火蟲粒子 timer handle
@@ -41877,6 +41930,12 @@ function _rollOneSummon(_batchExcl){
   }
   if(chosen === 'burst_fruit'){
     return { kind:'burst_fruit', id:'burst_upgrade_fruit', name:'超越極限果實', icon:'🍑', qty:1, isRare:true };
+  }
+  if(chosen === 'gear_forge'){
+    // ★ v5.398.0 裝備研磨劑/洗鍊劑各半(走 _applySummonReward 的 rwd.id → backpackAdd 通用路徑)
+    return (Math.random() < 0.5)
+      ? { kind:'gear_forge', id:'gear_grind_agent',  name:'裝備研磨劑', icon:'🧪', qty:1 }
+      : { kind:'gear_forge', id:'gear_reroll_agent', name:'裝備洗鍊劑', icon:'🎲', qty:1 };
   }
   // 安全預設
   return { kind:'skill_book', id:'skill_upgrade_book', name:'技能升級書', icon:'📖', qty:2 };
@@ -45783,6 +45842,9 @@ window._lxpsOpenSellList = function(cat){
       cur = first ? first.id : (cats[0] && cats[0].id);
     }
     window._lxpsSellCat = cur;
+    // ★ v5.398.0 挑裝備模式(裝備研磨劑/洗鍊劑):只列裝備、每列一顆「研磨/洗鍊」鈕,不能賣/上鎖
+    var _fm = (window._lxpsSellMode === 'grind' || window._lxpsSellMode === 'reroll') ? window._lxpsSellMode : '';
+    if(_fm) cur = 'gear';
 
     var ov = document.getElementById('lxps-sell-ov');
     var keepScroll = 0;
@@ -45798,22 +45860,33 @@ window._lxpsOpenSellList = function(cat){
     var cap = window._GEAR_MAX_OWNED || 300;
 
     var h = '<div id="lxps-sell-card" role="dialog" aria-modal="true">'
-      + '<div class="sl-head"><div class="sl-title">💰 ' + T('賣出持有物品', '賣出持有物品') + '</div>'
+      + '<div class="sl-head"><div class="sl-title">' + (_fm
+          ? ((_fm === 'grind' ? '🧪 ' : '🎲 ') + T('選一件要' + (_fm === 'grind' ? '研磨' : '洗鍊') + '的裝備', '選擇要' + (_fm === 'grind' ? '研磨' : '洗鍊') + '的裝備'))
+          : ('💰 ' + T('賣出持有物品', '賣出持有物品'))) + '</div>'
       +   '<div class="sl-coin">💰 ' + ((typeof _knowledgeCoins !== 'undefined' ? _knowledgeCoins : 0) || 0).toLocaleString() + '</div>'
       +   '<button type="button" class="sl-close" onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){} window._lxpsCloseSellList();">✕ ' + T('關閉', '關閉') + '</button></div>'
       + '<div class="sl-cap">🎒 ' + T('背包裝備 ', '裝備持有 ') + '<b style="color:' + (capN >= cap ? '#ff8a8a' : '#9effb0') + ';">' + capN + ' / ' + cap + '</b> ' + T('格', '格')
       +   (capN >= cap ? T(',滿了!賣掉一些就能再拿新裝備', '(已滿,賣出後才能再獲得裝備)') : '') + '</div>'
-      + '<div class="sl-tabs">' + cats.map(function(c){
+      + (_fm ? ('<div class="sl-tabs" style="font-size:19px;font-weight:800;color:#bfe6ff;">' + window._lxpsForgeHeldLine(cute) + '</div>') : '')
+      + (_fm ? '' : '<div class="sl-tabs">' + cats.map(function(c){
           var n = cnt(c);
           return '<button type="button" class="sl-tab' + (c.id === cur ? ' on' : '') + '"' + (n ? '' : ' disabled')
             + (n ? ' onclick="try{playSfx(\'sfx-sel\',0.3);}catch(_){} window._lxpsOpenSellList(\'' + c.id + '\');"' : '')
             + '>' + c.label + '<span>' + n + '</span></button>';
-        }).join('') + '</div>'
+        }).join('') + '</div>')
       + '<div class="sl-list">';
 
     var list = items[cur] || [];
+    if(_fm && list.length){   // ★ v5.398.0 研磨:還能研磨的排前面;同一組內稀有度高的排前面
+      list = list.slice().sort(function(a, b){
+        var ga = window._lxpsForgeCanUse(a.inst, _fm) ? 0 : 1, gb = window._lxpsForgeCanUse(b.inst, _fm) ? 0 : 1;
+        if(ga !== gb) return ga - gb;
+        var RO2 = { rare:0, epic:1, legend:2, mythic:3 };
+        return (RO2[b.def.r] || 0) - (RO2[a.def.r] || 0);
+      });
+    }
     if(!list.length){
-      h += '<div class="sl-empty">' + T('這一類沒有可以賣的東西喔!', '此分類沒有可賣出的物品') + '</div>';
+      h += '<div class="sl-empty">' + (_fm ? T('你還沒有任何裝備喔!打冒險關卡或到超商買裝備吧~', '目前沒有持有任何裝備') : T('這一類沒有可以賣的東西喔!', '此分類沒有可賣出的物品')) + '</div>';
     } else if(cur === 'gear'){
       list.forEach(function(r){
         var R = (typeof GEAR_RARITY !== 'undefined' && GEAR_RARITY[r.def.r]) || { name:'稀有', color:'#66ddff', price:1000 };
@@ -45831,9 +45904,13 @@ window._lxpsOpenSellList = function(cat){
           +   (r.inst.gifted ? '<span class="sl-tag">🎁 ' + T('好友送的', '受贈') + '</span>' : '') + '</div>'
           +   '<div class="sl-meta">' + R.name + ' ・ ' + S.icon + ' ' + S.n + ' ・ ' + T('詞條 ', '詞條 ') + nAff + ' ・ 💰 ' + price.toLocaleString() + '</div>'
           +   window._lxpsSellAffixHtml(r.inst, cute, esc) + '</div>'
-          + '<button type="button" class="sl-lk' + (lk ? ' on' : '') + '" title="' + (lk ? T('按一下解鎖', '解鎖') : T('上鎖後就不會被不小心賣掉', '上鎖防止誤賣')) + '"'
+          + (_fm
+            ? (window._lxpsForgeCanUse(r.inst, _fm)
+                ? '<button type="button" class="sl-go" data-fuid="' + r.uid + '" style="background:rgba(40,120,200,0.45);border-color:#7fd0ff;color:#e6f6ff;" onclick="window._lxpsForgeOpen(\'' + r.uid + '\',\'' + _fm + '\')">' + (_fm === 'grind' ? '🧪 ' + T('研磨', '研磨') : '🎲 ' + T('洗鍊', '洗鍊')) + '</button>'
+                : '<button type="button" class="sl-go" disabled title="' + T('每條詞條都已經是最高了', '詞條皆已達上限或無數值') + '">' + T('已經最強', '無可研磨') + '</button>')
+            : ('<button type="button" class="sl-lk' + (lk ? ' on' : '') + '" title="' + (lk ? T('按一下解鎖', '解鎖') : T('上鎖後就不會被不小心賣掉', '上鎖防止誤賣')) + '"'
           +   ' onclick="window._lxpsSellToggleLock(\'' + r.uid + '\')">' + (lk ? '🔓 ' + T('解鎖', '解鎖') : '🔒 ' + T('上鎖', '上鎖')) + '</button>'
-          + '<button type="button" class="sl-go"' + (lk ? ' disabled' : '') + ' onclick="window._lxpsSellGear(\'' + r.uid + '\')">💱 ' + T('賣出', '賣出') + '</button>'
+          + '<button type="button" class="sl-go"' + (lk ? ' disabled' : '') + ' onclick="window._lxpsSellGear(\'' + r.uid + '\')">💱 ' + T('賣出', '賣出') + '</button>'))
           + '</div>';
       });
     } else {
@@ -45865,16 +45942,19 @@ window._lxpsOpenSellList = function(cat){
       });
     }
     h += '</div>'
-      + '<div class="sl-foot">' + T('📖 經驗書、技能書這類養成道具不能賣。裝備賣出可以拿到定價的一半,穿在英雄身上的裝備賣掉會自動脫下。'
+      + (_fm ? ('<div class="sl-foot">' + T('👆 選一件裝備,下一步再勾要' + (_fm === 'grind' ? '研磨' : '洗鍊') + '的詞條。詞條旁的「高/中/低」是這條數值在同種詞條裡算好還是差。',
+                                            '選擇裝備後,下一步勾選要' + (_fm === 'grind' ? '研磨' : '洗鍊') + '的詞條。「高/中/低」= 數值在該詞條範圍內的位置。') + '</div>') : '')
+      + (_fm ? '' : '<div class="sl-foot">' + T('📖 經驗書、技能書這類養成道具不能賣。裝備賣出可以拿到定價的一半,穿在英雄身上的裝備賣掉會自動脫下。'
                                       + (cur === 'gear' ? '詞條旁的「高/中/低」是這條數值在同種詞條裡算好還是差;喜歡的裝備按「🔒 上鎖」就不會被賣掉或送走。' : ''),
                                     '經驗書/技能書等養成道具不可賣出。裝備以定價半價賣出;英雄裝備中的裝備賣出時自動卸下。'
-                                      + (cur === 'gear' ? '詞條「高/中/低」= 數值在該詞條範圍內的位置;上鎖的裝備無法賣出或贈送。' : '')) + '</div>'
+                                      + (cur === 'gear' ? '詞條「高/中/低」= 數值在該詞條範圍內的位置;上鎖的裝備無法賣出或贈送。' : '')) + '</div>')
       + '</div>';
     ov.innerHTML = h;
     try{ var _l1 = ov.querySelector('.sl-list'); if(_l1) _l1.scrollTop = keepScroll; }catch(_){}
   }catch(_e){ console.warn('[賣出持有物品]', _e); }
 };
 window._lxpsCloseSellList = function(){
+  window._lxpsSellMode = '';   // ★ v5.398.0 關掉清單一律回到一般賣出模式
   try{ if(window._lxpsSellWatch){ clearInterval(window._lxpsSellWatch); window._lxpsSellWatch = null; } }catch(_){}
   try{ var ov = document.getElementById('lxps-sell-ov'); if(ov) ov.remove(); }catch(_){}
   window._lxpsSellRefreshBag();
@@ -45993,6 +46073,763 @@ window._lxpsSellToggleLock = function(eqUid){
       if(document.getElementById('lxps-sell-ov')) window._lxpsOpenSellList();
     }
   }catch(_e){ console.warn('[賣出持有物品] 上鎖', _e); }
+};
+
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.398.0(2026-11-14・老師)🧪 裝備研磨劑 ＋ 🎲 裝備洗鍊劑 ＝ 「裝備研磨視窗」#lxps-forge-ov ★★
+//   老師 15:44「裝備研磨劑…選擇1件裝備進入裝備研磨功能視窗,然後選其中一個隨機詞條進行勾選,使該項目強度提高至現有的50%(成功)~100%(超成功),
+//     最高不超過該欄位上限。例如藍色品質的裝備詞條特技+4(最高8),『成功』後特技+6,『大成功』後變成特技+8。成功和大成功都有大字報在裝備上跳起,
+//     有不同的音效和特效給予反饋感。」
+//   老師 15:46「裝備洗鍊劑…用剛才的研磨功能視窗,切換成洗鍊,也是勾選一個詞條,使該詞條重新洗成隨機新詞條。可以和裝備上現有的重複。數值也是符合品質上限。」
+//   老師 15:47「兩個商品都改成每週限購 10 個」(SHOP_PRODUCTS weeklyLimit:10)。
+//   流程:背包使用 → window._lxpsForgePick(mode) 開「賣出清單」的挑裝備模式(_lxpsSellMode)→ 按「研磨/洗鍊」→ window._lxpsForgeOpen(eqUid, mode)。
+//   研磨數學(window._lxpsGrindCalc):只限有數值範圍(min~max)的詞條;成功 = 現值 + max(1, round(現值×50%)),大成功 = 現值×2,都不超過該詞條 max;
+//     已達 max 的詞條不能研磨。大成功機率 _FORGE_BIG_RATE = 20%(其餘 80% 成功,沒有失敗)。
+//   洗鍊數學(window._lxpsRerollAffix):候選 = 與 _gearRollAffixes 同一套部位/稀有度過濾(頭部限定、飾品限定、武器限定、免疫限傳說以上),
+//     可以和裝備上其他詞條重複(老師裁定);仍避開「同狀態免疫↔抵抗」互斥與「開場增益同件最多 2 條」兩條既有規則(避免出現引擎沒處理過的組合);
+//     數值 = 該詞條 min~max 隨機(與取得裝備時同一範圍)。
+//   安全:先檢查 背包有劑 / 實例存在 / 詞條還在 → 扣 1 劑 → 改詞條 → inst.at2 = 現在(三槽合併新者勝)→ _gearRequestSave + gameCloudSave;
+//     實例另記 inst.fg(最近 20 筆研磨/洗鍊紀錄 {m,a,f,t,b,at})供 GM 查證。上鎖不影響(研磨/洗鍊不是移除裝備)。
+// ════════════════════════════════════════════════════════════════════
+window._FORGE_BIG_RATE = 0.20;
+window._FORGE_ITEM = { grind:'gear_grind_agent', reroll:'gear_reroll_agent' };
+window._lxpsAffixDef = function(id){
+  try{ for(var i = 0; i < GEAR_AFFIX_POOL.length; i++){ if(GEAR_AFFIX_POOL[i].id === id) return GEAR_AFFIX_POOL[i]; } }catch(_){}
+  return null;
+};
+window._lxpsGrindCalc = function(af){
+  var d = af ? window._lxpsAffixDef(af.id) : null;
+  if(!d || typeof d.min !== 'number' || typeof d.max !== 'number' || typeof af.v !== 'number') return { ok:false, why:'none' };
+  if(af.v >= d.max) return { ok:false, why:'max', v:af.v, max:d.max };
+  var s = Math.min(d.max, af.v + Math.max(1, Math.round(af.v * 0.5)));
+  var b = Math.min(d.max, Math.max(af.v + 1, af.v * 2));
+  return { ok:true, v:af.v, max:d.max, s:s, b:b };
+};
+window._lxpsForgeCanUse = function(inst, mode){
+  try{
+    var afs = (inst && inst.affixes) || [];
+    if(!afs.length) return false;
+    if(mode === 'reroll') return true;
+    return afs.some(function(af){ return window._lxpsGrindCalc(af).ok; });
+  }catch(_){ return false; }
+};
+window._lxpsForgeHeldLine = function(cute){
+  var g = 0, r = 0;
+  try{ g = backpackGet('gear_grind_agent') || 0; r = backpackGet('gear_reroll_agent') || 0; }catch(_){}
+  return (cute ? '你有 ' : '持有 ') + '🧪 ' + (cute ? '研磨劑 ' : '裝備研磨劑 ×') + g + (cute ? ' 個' : '') + ' ・ 🎲 ' + (cute ? '洗鍊劑 ' : '裝備洗鍊劑 ×') + r + (cute ? ' 個' : '');
+};
+window._lxpsForgePick = function(mode){
+  try{
+    if(typeof window._gearVisibleForMe === 'function' && !window._gearVisibleForMe()){
+      _showInGameToast((window._artStyle === 'cute') ? '🛡️ 裝備還沒開放喔~' : '🛡️ 裝備系統尚未開放', '#ffaa66', 2500); return;
+    }
+    window._lxpsSellMode = (mode === 'reroll') ? 'reroll' : 'grind';
+    window._lxpsOpenSellList('gear');
+  }catch(_e){ console.warn('[裝備研磨] 開清單', _e); }
+};
+// 洗鍊候選池:與 _gearRollAffixes 同一套部位/稀有度過濾;避開與「其他詞條」互斥、開場增益超過 2 條
+window._lxpsRerollPool = function(inst, idx){
+  var item = GEAR_DB[inst.itemId];
+  if(!item) return [];
+  var rIdx = _GEAR_RARITY_ORDER[item.r] || 0;
+  var isWeapon = (item.slot === 'main') || (item.slot === 'off' && item.sub === 'weapon');
+  var others = (inst.affixes || []).filter(function(_, i){ return i !== idx; });
+  var openN = others.filter(function(o){ var d = window._lxpsAffixDef(o.id); return d && d.t === 'open'; }).length;
+  var bad = {};
+  others.forEach(function(o){ (_GEAR_CONFLICT[o.id] || []).forEach(function(x){ bad[x] = 1; }); });
+  return GEAR_AFFIX_POOL.filter(function(a){
+    if(a.slot === 'head' && item.slot !== 'head') return false;
+    if(a.slot === 'acc' && item.slot !== 'acc') return false;
+    if(a.slot === 'weapon' && !isWeapon) return false;
+    if(a.minR && rIdx < (_GEAR_RARITY_ORDER[a.minR] || 0)) return false;
+    if(bad[a.id]) return false;
+    if(a.t === 'open' && openN >= 2) return false;
+    return true;
+  });
+};
+window._lxpsRerollAffix = function(inst, idx){
+  var pool = window._lxpsRerollPool(inst, idx);
+  if(!pool.length) return null;
+  var tot = 0; pool.forEach(function(a){ tot += (a.w || 1); });
+  var roll = Math.random() * tot, ch = pool[pool.length - 1];
+  for(var j = 0; j < pool.length; j++){ roll -= (pool[j].w || 1); if(roll <= 0){ ch = pool[j]; break; } }
+  var af = { id: ch.id };
+  if(typeof ch.min === 'number' && typeof ch.max === 'number') af.v = ch.min + Math.floor(Math.random() * (ch.max - ch.min + 1));
+  return af;
+};
+window._lxpsForgeCss = function(){
+  if(document.getElementById('lxps-forge-css')) return;
+  var st = document.createElement('style');
+  st.id = 'lxps-forge-css';
+  st.textContent = ''
+    + '#lxps-forge-ov{position:fixed;inset:0;z-index:100500;display:flex;align-items:safe center;justify-content:center;background:rgba(0,4,18,0.86);'
+    +   'padding:12px;box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+    + '#lxps-forge-card{position:relative;width:min(980px,96vw);max-height:min(92dvh,92vh);overflow-y:auto;-webkit-overflow-scrolling:touch;box-sizing:border-box;'
+    +   'background:linear-gradient(160deg,rgba(10,24,48,0.98),rgba(6,10,26,0.98));border:2.5px solid rgba(120,200,255,0.8);border-radius:18px;'
+    +   'box-shadow:0 0 40px rgba(90,180,255,0.3);color:#fff;padding:14px 20px 16px;}'
+    + '#lxps-forge-card .fg-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}'
+    + '#lxps-forge-card .fg-title{flex:1;font-size:30px;font-weight:900;color:#bfe6ff;letter-spacing:1px;}'
+    + '#lxps-forge-card .fg-btn{min-height:46px;padding:6px 16px;font-size:19px;font-weight:900;border-radius:11px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+    +   'background:rgba(255,255,255,0.08);border:1.5px solid rgba(200,220,255,0.55);color:#e6f0ff;}'
+    + '#lxps-forge-card .fg-btn.x{background:rgba(70,20,20,0.55);border-color:#e86a6a;color:#ffd0d0;}'
+    + '#lxps-forge-card .fg-modes{display:flex;gap:10px;margin:12px 0 10px;}'
+    + '#lxps-forge-card .fg-mode{flex:1;min-height:58px;font-size:23px;font-weight:900;border-radius:14px;cursor:pointer;font-family:inherit;'
+    +   'background:rgba(40,60,100,0.5);border:2px solid rgba(140,190,255,0.4);color:#a9c8ee;}'
+    + '#lxps-forge-card .fg-mode small{display:block;font-size:15px;font-weight:700;opacity:0.85;}'
+    + '#lxps-forge-card .fg-mode.on.g{background:linear-gradient(135deg,#38c6ff,#2f6dff);border-color:#bfe9ff;color:#fff;box-shadow:0 0 16px rgba(80,180,255,0.6);}'
+    + '#lxps-forge-card .fg-mode.on.r{background:linear-gradient(135deg,#c56bff,#ff6fb4);border-color:#ffd0f0;color:#fff;box-shadow:0 0 16px rgba(220,110,255,0.6);}'
+    + '#lxps-forge-card .fg-body{display:flex;gap:18px;align-items:flex-start;}'
+    + '#lxps-forge-card .fg-gear{flex:0 0 220px;position:relative;text-align:center;}'
+    + '#lxps-forge-card .fg-pic{position:relative;width:200px;height:200px;margin:0 auto;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:110px;'
+    +   'background:radial-gradient(circle,rgba(120,190,255,0.22),rgba(0,0,0,0.25));border:2px solid rgba(140,200,255,0.4);}'
+    + '#lxps-forge-card .fg-pic img{width:180px;height:180px;object-fit:contain;}'
+    + '#lxps-forge-card .fg-gn{font-size:24px;font-weight:900;margin-top:8px;line-height:1.3;}'
+    + '#lxps-forge-card .fg-gm{font-size:16px;color:#b8c8e0;margin-top:2px;}'
+    + '#lxps-forge-card .fg-afs{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}'
+    + '#lxps-forge-card .fg-af{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;text-align:left;font-family:inherit;color:#e6f0ff;'
+    +   'background:rgba(255,255,255,0.05);border:2px solid rgba(160,200,255,0.3);font-size:20px;font-weight:800;}'
+    + '#lxps-forge-card .fg-af .ck{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:2.5px solid rgba(200,225,255,0.7);display:flex;align-items:center;justify-content:center;font-size:18px;}'
+    + '#lxps-forge-card .fg-af.on{background:rgba(80,170,255,0.2);border-color:#7fd0ff;}'
+    + '#lxps-forge-card .fg-af.on .ck{background:#3fb6ff;border-color:#e6f6ff;color:#002;}'
+    + '#lxps-forge-card .fg-af.r.on{background:rgba(220,110,255,0.18);border-color:#e7a8ff;}'
+    + '#lxps-forge-card .fg-af.r.on .ck{background:#d27bff;}'
+    + '#lxps-forge-card .fg-af:disabled{opacity:0.45;cursor:default;}'
+    + '#lxps-forge-card .fg-af .tx{flex:1;min-width:0;}'
+    + '#lxps-forge-card .fg-af .tg{flex:0 0 auto;font-size:15px;font-weight:900;padding:2px 9px;border-radius:8px;background:rgba(255,255,255,0.1);color:#cfe3ff;}'
+    + '#lxps-forge-card .fg-af.new{animation:fgNew 1.6s ease;}'
+    + '#lxps-forge-card .fg-prev{margin-top:4px;padding:10px 14px;border-radius:12px;background:rgba(0,0,0,0.3);font-size:18px;line-height:1.6;color:#d8e8ff;}'
+    + '#lxps-forge-card .fg-prev b{color:#7fe0ff;} #lxps-forge-card .fg-prev em{font-style:normal;color:#ffd84a;font-weight:900;}'
+    + '#lxps-forge-card .fg-go{width:100%;margin-top:10px;min-height:62px;font-size:26px;font-weight:900;border-radius:14px;cursor:pointer;font-family:inherit;letter-spacing:2px;'
+    +   'background:linear-gradient(135deg,#38c6ff,#2f6dff);border:2.5px solid #bfe9ff;color:#fff;box-shadow:0 0 18px rgba(80,180,255,0.5);}'
+    + '#lxps-forge-card .fg-go.r{background:linear-gradient(135deg,#c56bff,#ff6fb4);border-color:#ffd0f0;box-shadow:0 0 18px rgba(230,110,255,0.5);}'
+    + '#lxps-forge-card .fg-go:disabled{opacity:0.4;filter:grayscale(0.8);cursor:default;box-shadow:none;}'
+    + '#lxps-forge-card .fg-foot{margin-top:10px;font-size:15px;line-height:1.55;color:#9fb2cc;}'
+    // 研磨中:裝備抖動＋火花
+    + '#lxps-forge-card .fg-pic.busy{animation:fgShake 0.12s linear infinite;}'
+    + '#lxps-forge-card .fg-spark{position:absolute;left:50%;top:50%;font-size:26px;pointer-events:none;animation:fgSpark 0.7s ease-out forwards;}'
+    // 大字報
+    + '.fg-pop{position:absolute;left:50%;top:38%;z-index:5;pointer-events:none;white-space:nowrap;font-weight:900;transform:translate(-50%,-50%);'
+    +   'animation:fgPop 2.2s cubic-bezier(.2,1.6,.4,1) forwards;letter-spacing:4px;}'
+    + '.fg-pop.s{font-size:64px;color:#e8fbff;text-shadow:0 0 10px #39c6ff,0 0 26px #2f8dff,0 4px 0 #0a3a7a;-webkit-text-stroke:2px #0b4fa0;}'
+    + '.fg-pop.b{font-size:92px;background:linear-gradient(180deg,#fff7c2 10%,#ffd84a 45%,#ff8a00 90%);-webkit-background-clip:text;background-clip:text;color:transparent;'
+    +   '-webkit-text-stroke:3px #7a3a00;filter:drop-shadow(0 0 14px rgba(255,210,60,0.95)) drop-shadow(0 0 32px rgba(255,120,0,0.8));animation:fgPopBig 2.6s cubic-bezier(.2,1.7,.4,1) forwards;}'
+    + '.fg-pop.r{font-size:66px;color:#fff0ff;text-shadow:0 0 12px #d27bff,0 0 28px #ff6fb4,0 4px 0 #5a1a7a;-webkit-text-stroke:2px #7a2aa0;}'
+    + '.fg-sub{position:absolute;left:50%;top:70%;transform:translate(-50%,0);z-index:5;pointer-events:none;font-size:26px;font-weight:900;color:#fff;white-space:nowrap;'
+    +   'text-shadow:0 2px 6px #000;animation:fgSub 2.4s ease forwards;}'
+    + '#lxps-forge-flash{position:fixed;inset:0;z-index:100600;pointer-events:none;background:radial-gradient(circle,rgba(255,240,170,0.95),rgba(255,180,40,0.5) 45%,rgba(255,140,0,0) 75%);animation:fgFlash 0.9s ease-out forwards;}'
+    + '.fg-conf{position:fixed;z-index:100610;pointer-events:none;font-size:30px;animation:fgConf 1.8s cubic-bezier(.15,.7,.4,1) forwards;}'
+    + '@keyframes fgShake{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-4px,2px) rotate(-3deg)}50%{transform:translate(3px,-2px) rotate(2deg)}75%{transform:translate(-2px,-3px) rotate(-1deg)}100%{transform:translate(0,0) rotate(0)}}'
+    + '@keyframes fgSpark{0%{opacity:1;transform:translate(-50%,-50%) scale(0.4)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.2)}}'
+    + '@keyframes fgPop{0%{opacity:0;transform:translate(-50%,30%) scale(0.2)}18%{opacity:1;transform:translate(-50%,-70%) scale(1.25)}32%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-62%) scale(1)}100%{opacity:0;transform:translate(-50%,-90%) scale(0.95)}}'
+    + '@keyframes fgPopBig{0%{opacity:0;transform:translate(-50%,40%) scale(0.1) rotate(-12deg)}15%{opacity:1;transform:translate(-50%,-80%) scale(1.45) rotate(4deg)}26%{transform:translate(-50%,-50%) scale(0.95) rotate(-2deg)}36%{transform:translate(-50%,-55%) scale(1.08) rotate(0)}82%{opacity:1;transform:translate(-50%,-62%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-95%) scale(1)}}'
+    + '@keyframes fgSub{0%,20%{opacity:0;transform:translate(-50%,20px)}32%{opacity:1;transform:translate(-50%,0)}85%{opacity:1}100%{opacity:0}}'
+    + '@keyframes fgFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}'
+    + '@keyframes fgConf{0%{opacity:1;transform:translate(0,0) rotate(0) scale(0.6)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(1.1)}}'
+    + '@keyframes fgNew{0%{box-shadow:0 0 0 0 rgba(255,220,80,0)}25%{box-shadow:0 0 0 5px rgba(255,220,80,0.95)}100%{box-shadow:0 0 0 0 rgba(255,220,80,0)}}'
+    // 手機橫放(高 ≤ 520):兩欄變窄、字縮小
+    + '@media (orientation:landscape) and (max-height:520px){'
+    +   '#lxps-forge-ov{padding:4px;}'
+    +   '#lxps-forge-card{width:min(860px,98vw);max-height:calc(100dvh - 8px);padding:8px 12px 10px;border-radius:12px;}'
+    +   '#lxps-forge-card .fg-title{font-size:20px;}'
+    +   '#lxps-forge-card .fg-btn{min-height:38px;font-size:15px;padding:4px 10px;}'
+    +   '#lxps-forge-card .fg-modes{margin:6px 0;gap:6px;}'
+    +   '#lxps-forge-card .fg-mode{min-height:42px;font-size:17px;}'
+    +   '#lxps-forge-card .fg-mode small{font-size:12px;}'
+    +   '#lxps-forge-card .fg-body{gap:10px;}'
+    +   '#lxps-forge-card .fg-gear{flex:0 0 140px;}'
+    +   '#lxps-forge-card .fg-pic{width:120px;height:120px;font-size:64px;}'
+    +   '#lxps-forge-card .fg-pic img{width:108px;height:108px;}'
+    +   '#lxps-forge-card .fg-gn{font-size:16px;margin-top:4px;}'
+    +   '#lxps-forge-card .fg-gm{font-size:12px;}'
+    +   '#lxps-forge-card .fg-af{font-size:15px;padding:6px 8px;gap:6px;}'
+    +   '#lxps-forge-card .fg-af .ck{width:22px;height:22px;font-size:13px;}'
+    +   '#lxps-forge-card .fg-af .tg{font-size:12px;}'
+    +   '#lxps-forge-card .fg-prev{font-size:14px;padding:6px 10px;}'
+    +   '#lxps-forge-card .fg-go{min-height:46px;font-size:19px;margin-top:6px;}'
+    +   '#lxps-forge-card .fg-foot{font-size:12px;margin-top:6px;}'
+    +   '.fg-pop.s,.fg-pop.r{font-size:42px;} .fg-pop.b{font-size:58px;} .fg-sub{font-size:17px;}'
+    + '}';
+  document.head.appendChild(st);
+};
+window._lxpsForgeState = null;   // { uid, mode, sel, busy, last }
+window._lxpsForgeOpen = function(eqUid, mode){
+  try{
+    window._lxpsCloseSellList();
+    window._lxpsForgeState = { uid: eqUid, mode: (mode === 'reroll' ? 'reroll' : 'grind'), sel: -1, busy: false, last: null };
+    window._lxpsForgeRender();
+    try{ playSfx('sfx-equip', 0.5); }catch(_){}
+    try{ if(window._ftutOn) window._ftutOn('open'); }catch(_){}   // 鐵匠教學
+  }catch(_e){ console.warn('[裝備研磨] 開視窗', _e); }
+};
+window._lxpsForgeClose = function(back){
+  try{ var ov = document.getElementById('lxps-forge-ov'); if(ov) ov.remove(); }catch(_){}
+  var m = window._lxpsForgeState && window._lxpsForgeState.mode;
+  window._lxpsForgeState = null;
+  try{ if(typeof _renderBackpackMain === 'function') _renderBackpackMain(); }catch(_){}
+  if(back) window._lxpsForgePick(m || 'grind');
+};
+window._lxpsForgeSetMode = function(mode){
+  var S = window._lxpsForgeState; if(!S || S.busy) return;
+  if(S.mode === mode) return;
+  S.mode = mode; S.sel = -1; S.last = null;
+  try{ playSfx('sfx-sel', 0.4); }catch(_){}
+  window._lxpsForgeRender();
+  try{ if(window._ftutOn && mode === 'reroll') window._ftutOn('mode'); }catch(_){}
+};
+window._lxpsForgeSel = function(i){
+  var S = window._lxpsForgeState; if(!S || S.busy) return;
+  S.sel = (S.sel === i) ? -1 : i;
+  try{ playSfx('sfx-sel', 0.3); }catch(_){}
+  window._lxpsForgeRender();
+  try{ if(window._ftutOn) window._ftutOn('sel'); }catch(_){}
+};
+window._lxpsForgeRender = function(){
+  try{
+    var S = window._lxpsForgeState; if(!S) return;
+    window._lxpsForgeCss();
+    var cute = (window._artStyle === 'cute');
+    var T = function(c, p){ return cute ? c : p; };
+    var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+    var inst = (typeof _gearGetInstance === 'function') ? _gearGetInstance(S.uid) : null;
+    var ov = document.getElementById('lxps-forge-ov');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'lxps-forge-ov';
+      ov.addEventListener('click', function(ev){ if(ev.target === ov && !(window._lxpsForgeState && window._lxpsForgeState.busy)) window._lxpsForgeClose(); });
+      document.body.appendChild(ov);
+    }
+    if(!inst || !GEAR_DB[inst.itemId]){
+      ov.innerHTML = '<div id="lxps-forge-card"><div class="fg-head"><div class="fg-title">' + T('找不到這件裝備了', '找不到這件裝備') + '</div>'
+        + '<button type="button" class="fg-btn x" onclick="window._lxpsForgeClose()">✕ ' + T('關閉', '關閉') + '</button></div></div>';
+      return;
+    }
+    var def = GEAR_DB[inst.itemId];
+    var R = GEAR_RARITY[def.r] || { name:'稀有', color:'#66ddff' };
+    var SI = GEAR_SLOT_INFO[def.slot] || { n:'', icon:'' };
+    var isG = (S.mode === 'grind');
+    var held = backpackGet(window._FORGE_ITEM[S.mode]) || 0;
+    var gN = backpackGet('gear_grind_agent') || 0, rN = backpackGet('gear_reroll_agent') || 0;
+    var img = '';
+    try{ if(def.img) img = '<img src="./' + encodeURIComponent(def.img) + '" alt="" onerror="this.replaceWith(document.createTextNode(\'' + esc(def.icon || '🛡️') + '\'))">'; }catch(_){}
+    var h = '<div id="lxps-forge-card" role="dialog" aria-modal="true">'
+      + '<div class="fg-head"><div class="fg-title">' + (isG ? '🧪 ' + T('裝備研磨', '裝備研磨') : '🎲 ' + T('裝備洗鍊', '裝備洗鍊')) + '</div>'
+      +   (window._ftut ? '' : '<button type="button" class="fg-btn" onclick="window._lxpsForgeClose();window._ftutStart(true)">❓ ' + T('教學', '教學') + '</button>')
+      +   '<button type="button" class="fg-btn" onclick="window._lxpsForgeClose(true)">🔄 ' + T('換一件裝備', '更換裝備') + '</button>'
+      +   '<button type="button" class="fg-btn x" onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){} window._lxpsForgeClose()">✕ ' + T('關閉', '關閉') + '</button></div>'
+      + '<div class="fg-modes">'
+      +   '<button type="button" class="fg-mode g' + (isG ? ' on' : '') + '" onclick="window._lxpsForgeSetMode(\'grind\')">🧪 ' + T('研磨', '研磨') + '<small>' + T('數值變強', '強化詞條數值') + ' ・ ' + T('有 ', '持有 ') + gN + '</small></button>'
+      +   '<button type="button" class="fg-mode r' + (!isG ? ' on' : '') + '" onclick="window._lxpsForgeSetMode(\'reroll\')">🎲 ' + T('洗鍊', '洗鍊') + '<small>' + T('換成新詞條', '重洗為隨機詞條') + ' ・ ' + T('有 ', '持有 ') + rN + '</small></button>'
+      + '</div>'
+      + '<div class="fg-body">'
+      +   '<div class="fg-gear"><div class="fg-pic" id="lxps-forge-pic">' + (img || esc(def.icon || '🛡️')) + '</div>'
+      +     '<div class="fg-gn" style="color:' + R.color + ';">' + esc(def.n) + '</div>'
+      +     '<div class="fg-gm">' + R.name + ' ・ ' + SI.icon + ' ' + SI.n + (inst.equippedTo ? ' ・ ⚔ ' + esc(inst.equippedTo) : '') + '</div></div>'
+      +   '<div class="fg-afs"><div style="font-size:18px;font-weight:900;color:#cfe3ff;">' + (isG ? T('👇 勾一條要研磨的詞條', '勾選要研磨的詞條') : T('👇 勾一條要洗掉重來的詞條', '勾選要洗鍊的詞條')) + '</div>';
+    (inst.affixes || []).forEach(function(af, i){
+      var d = window._lxpsAffixDef(af.id);
+      var txt = ''; try{ txt = _gearAffixText(af); }catch(_){}
+      var gc = window._lxpsGrindCalc(af);
+      var can = isG ? gc.ok : true;
+      var tg = '';
+      if(d && typeof d.max === 'number' && typeof af.v === 'number') tg = af.v + ' / ' + T('最高 ', '上限 ') + d.max;
+      else tg = T('特殊', '特殊');
+      if(isG && !gc.ok) tg = (gc.why === 'max') ? T('已經最高', '已達上限') : T('沒有數值,不能研磨', '無數值,不可研磨');
+      var isNew = S.last && S.last.idx === i;
+      h += '<button type="button" class="fg-af' + (isG ? '' : ' r') + (S.sel === i ? ' on' : '') + (isNew ? ' new' : '') + '"' + (can ? '' : ' disabled')
+        + ' onclick="window._lxpsForgeSel(' + i + ')"><span class="ck">' + (S.sel === i ? '✔' : '') + '</span>'
+        + '<span class="tx">◆ ' + esc(txt || (d && d.n) || af.id) + '</span><span class="tg">' + tg + '</span></button>';
+    });
+    // 預覽
+    var prev = '';
+    var selAf = (S.sel >= 0) ? (inst.affixes || [])[S.sel] : null;
+    if(S.last){
+      prev = S.last.html;
+    } else if(selAf){
+      if(isG){
+        var c = window._lxpsGrindCalc(selAf);
+        if(c.ok){
+          var lab = function(v){ var a = { id: selAf.id, v: v }; try{ return esc(_gearAffixText(a)); }catch(_){ return v; } };
+          prev = T('研磨後會變成:', '研磨結果:') + '<br><b>✨ ' + T('成功', '成功') + '(' + Math.round((1 - window._FORGE_BIG_RATE) * 100) + '%)</b> ' + lab(c.s)
+            + '<br><em>🌟 ' + T('大成功', '大成功') + '(' + Math.round(window._FORGE_BIG_RATE * 100) + '%)</em> ' + lab(c.b)
+            + '<br><span style="font-size:0.85em;color:#9fb2cc;">' + T('最高只到 ', '上限 ') + c.max + T(',不會超過喔', '') + '</span>';
+        }
+      } else {
+        var pool = window._lxpsRerollPool(inst, S.sel);
+        prev = T('會從 ', '將從 ') + '<b>' + pool.length + '</b> ' + T('種詞條裡隨機抽一種(可能和其他詞條一樣),數值在那種詞條的範圍內隨機。', '種詞條中隨機抽出 1 種(可與現有詞條重複),數值於該詞條範圍內隨機。');
+      }
+    } else {
+      prev = isG ? T('先勾一條有數值、還沒到最高的詞條。', '請先勾選一條尚未達上限的數值詞條。') : T('先勾一條想換掉的詞條。', '請先勾選一條要洗鍊的詞條。');
+    }
+    h += '<div class="fg-prev">' + prev + '</div>';
+    var goDis = S.busy || S.sel < 0 || held <= 0 || (isG && selAf && !window._lxpsGrindCalc(selAf).ok);
+    h += '<button type="button" class="fg-go' + (isG ? '' : ' r') + '"' + (goDis ? ' disabled' : '') + ' onclick="window._lxpsForgeGo()">'
+      + (held <= 0 ? (isG ? T('🧪 沒有研磨劑了', '🧪 研磨劑不足') : T('🎲 沒有洗鍊劑了', '🎲 洗鍊劑不足'))
+                   : (isG ? '🧪 ' + T('研磨!', '開始研磨') : '🎲 ' + T('洗鍊!', '開始洗鍊')) + ' <span style="font-size:0.7em;">(' + T('用掉 1 個,還有 ', '消耗 1,持有 ') + held + ')</span>')
+      + '</button>';
+    h += '</div></div>'
+      + '<div class="fg-foot">' + (isG
+          ? T('🧪 研磨:成功時數值多一半,大成功時數值變兩倍,但不會超過最高值。沒有數值的詞條(像免疫)不能研磨。研磨劑和洗鍊劑在超商「💪 強化」買,每週各限購 10 個。',
+              '研磨:成功 +50%、大成功 +100%(以現值計,不超過該詞條上限);無數值詞條(免疫等)不可研磨。研磨劑/洗鍊劑於超商「強化」分類販售,每週各限購 10 個。')
+          : T('🎲 洗鍊:把勾的那條詞條換成隨機新詞條,有可能比原本好也可能比較差,想清楚再洗喔!研磨劑和洗鍊劑在超商「💪 強化」買,每週各限購 10 個。',
+              '洗鍊:勾選的詞條會重洗為隨機新詞條(可能變好或變差,無法復原)。研磨劑/洗鍊劑於超商「強化」分類販售,每週各限購 10 個。')) + '</div>'
+      + '</div>';
+    var card0 = document.getElementById('lxps-forge-card');
+    var st0 = card0 ? card0.scrollTop : 0;
+    ov.innerHTML = h;
+    try{ var card1 = document.getElementById('lxps-forge-card'); if(card1) card1.scrollTop = st0; }catch(_){}
+  }catch(_e){ console.warn('[裝備研磨] 畫面', _e); }
+};
+window._lxpsForgeFx = function(kind, mainTxt, subTxt){
+  try{
+    var pic = document.getElementById('lxps-forge-pic');
+    var host = document.getElementById('lxps-forge-card');
+    if(!pic || !host) return;
+    var pr = pic.getBoundingClientRect(), hr = host.getBoundingClientRect();
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;left:' + (pr.left - hr.left + host.scrollLeft) + 'px;top:' + (pr.top - hr.top + host.scrollTop) + 'px;width:' + pr.width + 'px;height:' + pr.height + 'px;pointer-events:none;z-index:6;';
+    wrap.innerHTML = '<div class="fg-pop ' + kind + '">' + mainTxt + '</div>' + (subTxt ? '<div class="fg-sub">' + subTxt + '</div>' : '');
+    host.appendChild(wrap);
+    // 大字報置中在裝備圖上;太寬(例:手機的「大成功!!」)會超出卡片左邊 ⇒ 量出字寬後把中心往右挪到放得下
+    try{
+      var pop = wrap.querySelector('.fg-pop');
+      var ms = document.createElement('div'); ms.className = pop.className; ms.textContent = pop.textContent;
+      ms.style.cssText = 'animation:none;position:absolute;visibility:hidden;left:0;top:0;transform:none;';
+      host.appendChild(ms);
+      var tw = ms.getBoundingClientRect().width * 1.15; ms.remove();
+      var cxL = (pr.left - hr.left) + pr.width / 2;
+      var minC = tw / 2 + 10, maxC = hr.width - tw / 2 - 10;
+      var cx2 = Math.max(minC, Math.min(maxC, cxL));
+      if(Math.abs(cx2 - cxL) > 1) wrap.style.left = (parseFloat(wrap.style.left) + (cx2 - cxL)) + 'px';
+    }catch(_){}
+    setTimeout(function(){ try{ wrap.remove(); }catch(_){} }, 2800);
+    var emo = kind === 'b' ? ['🌟','✨','💛','⭐','🎉','💎'] : (kind === 'r' ? ['💜','✨','🔮','💫'] : ['✨','💠','⭐']);
+    var n = kind === 'b' ? 34 : 12;
+    var cx = pr.left + pr.width / 2, cy = pr.top + pr.height / 2;
+    for(var i = 0; i < n; i++){
+      var c = document.createElement('div');
+      c.className = 'fg-conf';
+      c.textContent = emo[i % emo.length];
+      var ang = Math.random() * Math.PI * 2, dist = (kind === 'b' ? 220 : 130) + Math.random() * (kind === 'b' ? 260 : 120);
+      c.style.left = cx + 'px'; c.style.top = cy + 'px';
+      c.style.setProperty('--dx', Math.round(Math.cos(ang) * dist) + 'px');
+      c.style.setProperty('--dy', Math.round(Math.sin(ang) * dist - 40) + 'px');
+      c.style.setProperty('--rot', Math.round(Math.random() * 720 - 360) + 'deg');
+      if(kind === 'b') c.style.fontSize = (24 + Math.random() * 22) + 'px';
+      document.body.appendChild(c);
+      (function(el){ setTimeout(function(){ try{ el.remove(); }catch(_){} }, 1900); })(c);
+    }
+    if(kind === 'b'){
+      var f = document.createElement('div'); f.id = 'lxps-forge-flash'; document.body.appendChild(f);
+      setTimeout(function(){ try{ f.remove(); }catch(_){} }, 1000);
+    }
+  }catch(_){}
+};
+window._lxpsForgeGo = function(){
+  var S = window._lxpsForgeState; if(!S || S.busy) return;
+  try{
+    if(typeof window._btnCooldown === 'function' && !window._btnCooldown('gear_forge', 900)) return;
+    var cute = (window._artStyle === 'cute');
+    var T = function(c, p){ return cute ? c : p; };
+    var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+    var isG = (S.mode === 'grind');
+    var itemId = window._FORGE_ITEM[S.mode];
+    var inst = _gearGetInstance(S.uid);
+    if(!inst){ _showInGameToast(T('找不到這件裝備了', '找不到這件裝備'), '#ff8844', 2200); window._lxpsForgeClose(); return; }
+    var af = (inst.affixes || [])[S.sel];
+    if(!af){ S.sel = -1; window._lxpsForgeRender(); return; }
+    if((backpackGet(itemId) || 0) <= 0){ _showInGameToast(isG ? T('沒有研磨劑了,到超商買吧!', '裝備研磨劑不足') : T('沒有洗鍊劑了,到超商買吧!', '裝備洗鍊劑不足'), '#ff8844', 2400); return; }
+    var c = isG ? window._lxpsGrindCalc(af) : null;
+    if(isG && !c.ok){ _showInGameToast(T('這條已經是最高了', '此詞條已達上限'), '#ffcc66', 2000); return; }
+    var newAf = isG ? null : window._lxpsRerollAffix(inst, S.sel);
+    if(!isG && !newAf){ _showInGameToast(T('這件裝備沒辦法洗鍊', '此裝備無可洗鍊的詞條'), '#ffcc66', 2000); return; }
+    S.busy = true; S.last = null;
+    var oldTxt = ''; try{ oldTxt = _gearAffixText(af); }catch(_){}
+    // ① 扣 1 劑 → ② 改詞條 → ③ 存檔(扣劑與改詞條同一個同步段落,中間不會被打斷)
+    backpackAdd(itemId, -1, isG ? 'gear_grind' : 'gear_reroll');
+    var big = false, rec;
+    if(isG){
+      big = (Math.random() < window._FORGE_BIG_RATE);
+      var nv = big ? c.b : c.s;
+      rec = { m:'g', a: af.id, f: af.v, t: nv, b: big ? 1 : 0, at: Date.now() };
+      af.v = nv;
+    } else {
+      rec = { m:'r', a: af.id, f: (typeof af.v === 'number' ? af.v : null), n: newAf.id, t: (typeof newAf.v === 'number' ? newAf.v : null), at: Date.now() };
+      inst.affixes[S.sel] = newAf;
+    }
+    inst.fg = (Array.isArray(inst.fg) ? inst.fg : []).concat([rec]).slice(-20);
+    inst.at2 = Date.now();
+    try{ _gearRequestSave(); }catch(_){}
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(function(){}); }catch(_){}
+    var newTxt = ''; try{ newTxt = _gearAffixText(inst.affixes[S.sel]); }catch(_){}
+    // ④ 演出:研磨中抖動＋火花 0.9 秒 → 大字報
+    window._lxpsForgeRender();
+    var pic = document.getElementById('lxps-forge-pic');
+    if(pic){
+      pic.classList.add('busy');
+      for(var k = 0; k < 10; k++){
+        var sp = document.createElement('span'); sp.className = 'fg-spark'; sp.textContent = isG ? '✦' : '✧';
+        sp.style.color = isG ? '#9fe6ff' : '#f0b0ff';
+        var a = Math.random() * Math.PI * 2, dd = 60 + Math.random() * 60;
+        sp.style.setProperty('--dx', Math.round(Math.cos(a) * dd) + 'px'); sp.style.setProperty('--dy', Math.round(Math.sin(a) * dd) + 'px');
+        sp.style.animationDelay = (k * 0.08) + 's';
+        pic.appendChild(sp);
+      }
+    }
+    try{ playSfx('sfx-recharge', 0.55); }catch(_){}
+    setTimeout(function(){
+      try{
+        var S2 = window._lxpsForgeState; if(!S2) return;
+        S2.busy = false;
+        S2.last = { idx: S.sel, html: isG
+          ? ((big ? '<em>🌟 ' + T('大成功!!', '大成功!') + '</em>' : '<b>✨ ' + T('研磨成功!', '研磨成功!') + '</b>') + '<br>' + esc(oldTxt) + ' → <em>' + esc(newTxt) + '</em>')
+          : ('<b style="color:#f0b0ff;">🎲 ' + T('洗鍊完成!', '洗鍊完成!') + '</b><br>' + esc(oldTxt) + ' → <em>' + esc(newTxt) + '</em>') };
+        window._lxpsForgeRender();
+        if(isG && big){
+          window._lxpsForgeFx('b', T('大成功!!', '大成功!!'), esc(newTxt));
+          try{ playSfx('sfx-summon-reveal', 0.8); }catch(_){}
+          setTimeout(function(){ try{ playSfx('sfx-level-up', 0.7); }catch(_){} }, 350);
+          setTimeout(function(){ try{ playSfx('sfx-applause', 0.6); }catch(_){} }, 700);
+        } else if(isG){
+          window._lxpsForgeFx('s', T('成功!', '成功!'), esc(newTxt));
+          try{ playSfx('sfx-statup', 0.75); }catch(_){}
+        } else {
+          window._lxpsForgeFx('r', T('洗鍊!', '洗鍊完成'), esc(newTxt));
+          try{ playSfx('sfx-fantasy', 0.7); }catch(_){}
+        }
+        try{ if(typeof _renderBackpackMain === 'function') _renderBackpackMain(); }catch(_){}
+        try{ if(window._ftutOn) window._ftutOn('done'); }catch(_){}
+      }catch(_e2){ console.warn('[裝備研磨] 演出', _e2); }
+    }, 950);
+  }catch(_e){
+    S.busy = false;
+    console.warn('[裝備研磨] 失敗', _e);
+    try{ window._lxpsForgeRender(); }catch(_){}
+  }
+};
+
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.398.0(2026-11-14 15:58・老師)🔨 研磨/洗鍊教學 —— SR 鐵匠當導師 ★★
+//   老師:「新增研磨/洗鍊教學,讓SR鐵匠來當教學指引說明導師。先送所有玩家一件傳說的裝備(固定數值,教學用),
+//          一步一步用箭頭游標、遮罩點亮等引導方式教玩家洗鍊和研磨。」
+//   ・送禮(每個帳號一次):傳說「機車安全帽」固定詞條 攻擊+4 / 特技+3 / 命中+5%(src='forge_tut',走 _gearGrant 帳本)
+//     ＋ 練習用 研磨劑 ×1、洗鍊劑 ×1(沒有劑就沒辦法實際操作)。裝備滿 300 件也照送(ignoreCap,與 GM 補發同口徑)。
+//   ・紀錄:_medalStats.forgeTutGift / forgeTutDone = 時間戳(數字 ⇒ 三槽合併取大、雲端合併 _numKeys 取大,換平板不會重送、不會重跳)。
+//     雙保險:已有 src='forge_tut' 的裝備實例就不再送。
+//   ・觸發:進冒險關卡選擇頁 2.5 秒後(登入、雲端進度載入完成、裝備已載入、沒有其他對話框/全畫面視窗時);條件不符每 4 秒再試,最多 15 次。
+//   ・步驟:開場 → 清單點「研磨」→ 勾詞條 → 按開始研磨 → 結果說明 → 切「洗鍊」→ 勾詞條 → 按開始洗鍊 → 結果說明 → 哪裡拿得到 → 完成。
+//     遮罩只留目標亮著(四塊擋板擋住其他地方,點到擋板泡泡會晃一下),箭頭在目標旁上下跳。任何時候可按「跳過教學」(禮物照收)。
+//     研磨視窗右上「❓ 教學」可以再看一次(不再送禮)。
+//   ・研磨視窗事件:window._ftutOn(ev, data) 由 _lxpsForgeOpen/_lxpsForgeSel/_lxpsForgeSetMode/_lxpsForgeGo 完成時呼叫。
+// ════════════════════════════════════════════════════════════════════
+window._FTUT_GEAR = 'head_helmet';
+window._FTUT_AFFIXES = [{ id:'af_atk', v:4 }, { id:'af_sp', v:3 }, { id:'af_hit', v:5 }];
+window._ftutFindGear = function(){
+  try{
+    var ins = (window._gearData && window._gearData.instances) || {};
+    var ks = Object.keys(ins);
+    for(var i = 0; i < ks.length; i++){ if(ins[ks[i]] && ins[ks[i]].src === 'forge_tut') return ks[i]; }
+  }catch(_){}
+  return null;
+};
+window._ftutGiveGift = function(){
+  try{
+    if(!(_medalStats.forgeTutGift > 0) && !window._ftutFindGear()){
+      var u = (typeof _gearGrant === 'function') ? _gearGrant(window._FTUT_GEAR, 'forge_tut', { ignoreCap:true }) : null;
+      var inst = u ? _gearGetInstance(u) : null;
+      if(inst){
+        inst.affixes = window._FTUT_AFFIXES.map(function(a){ return { id:a.id, v:a.v }; });
+        inst.at2 = Date.now();
+        try{ _gearRequestSave(); }catch(_){}
+      }
+      backpackAdd('gear_grind_agent', 1, '研磨洗鍊教學');
+      backpackAdd('gear_reroll_agent', 1, '研磨洗鍊教學');
+    }
+    if(!(_medalStats.forgeTutGift > 0)){ _medalStats.forgeTutGift = Date.now(); _saveMedals(); }
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave().catch(function(){}); }catch(_){}
+  }catch(_e){ console.warn('[研磨教學] 送禮失敗', _e); }
+  return window._ftutFindGear();
+};
+window._ftutCanStart = function(){
+  try{
+    if(!window._gUserId || window._progressLoaded !== true || window._gearHydrated !== true) return false;
+    if(typeof window._gearVisibleForMe === 'function' && !window._gearVisibleForMe()) return false;
+    if(typeof _medalStats === 'undefined' || _medalStats.forgeTutDone > 0) return false;
+    if(window._ftut) return false;
+    var adv = document.getElementById('adventure-overlay');
+    if(!adv || getComputedStyle(adv).display === 'none') return false;
+    if(window._lxpsDlg && window._lxpsDlg.isOpen && window._lxpsDlg.isOpen()) return false;
+    if(document.getElementById('lxps-sell-ov') || document.getElementById('lxps-forge-ov')) return false;
+    if(typeof G !== 'undefined' && G && document.getElementById('gc') && document.getElementById('gc').classList.contains('adv-battle')) return false;
+    // 其他 body 直屬的全畫面視窗開著(公告、獎勵…)就先不要插隊
+    var kids = document.body.children;
+    for(var i = 0; i < kids.length; i++){
+      var k = kids[i];
+      if(!k.id || k.id === '_gc_wrapper' || k.tagName === 'SCRIPT' || k.tagName === 'STYLE') continue;
+      var cs = getComputedStyle(k);
+      if(cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && cs.pointerEvents !== 'none'
+         && k.offsetWidth > window.innerWidth * 0.6 && k.offsetHeight > window.innerHeight * 0.6 && (parseInt(cs.zIndex, 10) || 0) > 1000) return false;
+    }
+    return true;
+  }catch(_){ return false; }
+};
+window._ftutSchedule = function(){
+  try{
+    if(window._ftutTimer) return;
+    var n = 0;
+    var tick = function(){
+      window._ftutTimer = null;
+      if(typeof _medalStats !== 'undefined' && _medalStats.forgeTutDone > 0) return;
+      if(window._ftutCanStart()){ window._ftutStart(false); return; }
+      if(++n < 15) window._ftutTimer = setTimeout(tick, 4000);
+    };
+    window._ftutTimer = setTimeout(tick, 2500);
+  }catch(_){}
+};
+window._ftutCss = function(){
+  if(document.getElementById('lxps-ftut-css')) return;
+  var st = document.createElement('style');
+  st.id = 'lxps-ftut-css';
+  st.textContent = ''
+    + '#lxps-ftut{position:fixed;inset:0;z-index:100700;pointer-events:none;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;}'
+    + '#lxps-ftut .ft-blk{position:fixed;pointer-events:auto;background:transparent;}'
+    + '#lxps-ftut .ft-dim{position:fixed;inset:0;background:rgba(0,0,0,0.66);pointer-events:auto;}'
+    + '#lxps-ftut .ft-hole{position:fixed;border-radius:14px;border:3px solid #ffd84a;box-shadow:0 0 0 9999px rgba(0,0,0,0.62),0 0 18px 4px rgba(255,216,74,0.8);'
+    +   'pointer-events:none;animation:ftHole 1.2s ease-in-out infinite;transition:left .25s,top .25s,width .25s,height .25s;}'
+    + '#lxps-ftut .ft-arrow{position:fixed;font-size:58px;line-height:1;pointer-events:none;filter:drop-shadow(0 0 8px rgba(255,216,74,0.9));animation:ftBounceD 0.8s ease-in-out infinite;}'
+    + '#lxps-ftut .ft-arrow.up{animation-name:ftBounceU;}'
+    + '#lxps-ftut .ft-bub{position:fixed;left:50%;transform:translateX(-50%);width:min(820px,94vw);box-sizing:border-box;pointer-events:auto;display:flex;gap:14px;align-items:flex-start;'
+    +   'padding:14px 16px;border-radius:18px;background:linear-gradient(160deg,rgba(60,36,14,0.97),rgba(28,16,6,0.97));border:2.5px solid #ffb35c;'
+    +   'box-shadow:0 8px 30px rgba(0,0,0,0.6),0 0 22px rgba(255,170,70,0.35);color:#fff;}'
+    + '#lxps-ftut .ft-bub.shake{animation:ftShake 0.4s ease;}'
+    + '#lxps-ftut .ft-av{flex:0 0 auto;width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid #ffcf7a;background:#3a2410;display:flex;align-items:center;justify-content:center;font-size:52px;}'
+    + '#lxps-ftut .ft-av img{width:100%;height:100%;object-fit:cover;}'
+    + '#lxps-ftut .ft-tx{flex:1;min-width:0;}'
+    + '#lxps-ftut .ft-nm{font-size:18px;font-weight:900;color:#ffcf7a;margin-bottom:4px;}'
+    + '#lxps-ftut .ft-say{font-size:21px;font-weight:700;line-height:1.6;color:#fff8e6;}'
+    + '#lxps-ftut .ft-say b{color:#ffd84a;} #lxps-ftut .ft-say em{font-style:normal;color:#7fe0ff;font-weight:900;}'
+    + '#lxps-ftut .ft-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap;}'
+    + '#lxps-ftut .ft-btn{min-height:46px;padding:6px 20px;font-size:20px;font-weight:900;border-radius:12px;cursor:pointer;font-family:inherit;'
+    +   'background:linear-gradient(135deg,#ffd84a,#ff9f2e);border:2px solid #fff0b0;color:#2a1700;}'
+    + '#lxps-ftut .ft-skip{min-height:40px;padding:4px 14px;font-size:15px;font-weight:800;border-radius:10px;cursor:pointer;font-family:inherit;'
+    +   'background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,220,180,0.45);color:#e8d6bc;}'
+    + '#lxps-ftut .ft-step{font-size:14px;font-weight:800;color:#d8b98a;margin-left:6px;}'
+    + '@keyframes ftHole{0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.62),0 0 14px 2px rgba(255,216,74,0.6)}50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.62),0 0 26px 8px rgba(255,216,74,1)}}'
+    + '@keyframes ftBounceD{0%,100%{transform:translateY(0)}50%{transform:translateY(14px)}}'
+    + '@keyframes ftBounceU{0%,100%{transform:translateY(0) rotate(180deg)}50%{transform:translateY(-14px) rotate(180deg)}}'
+    + '@keyframes ftShake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 10px))}75%{transform:translateX(calc(-50% + 10px))}}'
+    + '@media (orientation:landscape) and (max-height:520px){'
+    +   '#lxps-ftut .ft-bub{width:min(760px,96vw);padding:8px 10px;gap:8px;border-radius:12px;}'
+    +   '#lxps-ftut .ft-av{width:58px;height:58px;font-size:32px;}'
+    +   '#lxps-ftut .ft-nm{font-size:13px;margin-bottom:1px;}'
+    +   '#lxps-ftut .ft-say{font-size:15px;line-height:1.45;}'
+    +   '#lxps-ftut .ft-btns{margin-top:5px;gap:6px;}'
+    +   '#lxps-ftut .ft-btn{min-height:38px;font-size:16px;padding:4px 14px;}'
+    +   '#lxps-ftut .ft-skip{min-height:34px;font-size:12px;}'
+    +   '#lxps-ftut .ft-arrow{font-size:40px;}'
+    + '}';
+  document.head.appendChild(st);
+};
+// 步驟表:t = 目標選擇器(沒有 = 只有說明泡泡、全畫面變暗);wait = 等研磨視窗事件才前進;next = 顯示「下一步」鈕
+window._ftutSteps = function(cute){
+  var T = function(c, p){ return cute ? c : p; };
+  var uid = window._ftut && window._ftut.uid;
+  var demo = !!(window._ftut && window._ftut.demo);
+  var arr = [
+    { id:'intro', next:true, nextTxt:T('好,開始吧!', '開始教學'),
+      say:T('嗨!我是<b>鐵匠</b>🔨。打造裝備是我的專長!今天教你兩招讓裝備變更強的祕技:<em>🧪 研磨</em>和<em>🎲 洗鍊</em>。<br>我先送你一頂傳說裝備<b>「機車安全帽」</b>,再送你研磨劑和洗鍊劑各 1 個練習用!',
+            '你好,我是<b>鐵匠</b>🔨。接下來示範兩種強化裝備的方法:<em>🧪 研磨</em>(強化詞條數值)與<em>🎲 洗鍊</em>(重洗詞條)。<br>先贈送教學用的傳說裝備<b>「機車安全帽」</b>,以及研磨劑、洗鍊劑各 1 個。') },
+    { id:'pick', t:'#lxps-sell-ov .sl-go[data-fuid="' + uid + '"]', wait:'open',
+      say:T('這是你的<b>裝備清單</b>。研磨劑和洗鍊劑在背包按「使用」也會打開這裡。<br>👉 點剛拿到的機車安全帽右邊的<em>「🧪 研磨」</em>!', '這是持有裝備清單(背包使用研磨劑/洗鍊劑時也會開啟)。<br>請點選「機車安全帽」右側的<em>「🧪 研磨」</em>。') },
+    { id:'sel1', t:'#lxps-forge-card .fg-af:nth-of-type(1)', wait:'sel',
+      say:T('這裡列出裝備的<b>詞條</b>。研磨會讓<b>一條</b>詞條的數字變大。<br>👉 勾選第一條<em>「攻擊 +4」</em>(最高可以到 8)!', '右側為裝備詞條,研磨一次強化其中一條。<br>請勾選<em>「攻擊 +4」</em>(上限 8)。') },
+    { id:'go1', t:'#lxps-forge-card .fg-go', wait:'done', bubTop:true,
+      say:T('按鈕上面會先告訴你結果:<b>成功</b>數字多一半(+4 → +6),<b>大成功</b>直接變兩倍(+4 → +8)!最高不會超過上限。<br>👉 按<em>「🧪 研磨!」</em>!', '預覽顯示:成功 +50%(+4 → +6)、大成功 +100%(+4 → +8),皆不超過上限。<br>請按<em>「開始研磨」</em>。') },
+    { id:'res1', next:true, t:'#lxps-forge-card .fg-prev', delay:500,
+      say:T('磨好了!看到大大的字跳出來了嗎?數字變大,你的英雄穿上就更強。<br>已經到最高的詞條就不能再磨囉。', '研磨完成,數值已提升;裝備在英雄身上會立即生效。<br>已達上限的詞條無法再研磨。') },
+    { id:'mode', t:'#lxps-forge-card .fg-mode.r', wait:'mode',
+      say:T('接下來是第二招!<br>👉 點上面的<em>「🎲 洗鍊」</em>切換過去。', '接著示範洗鍊。<br>請點選上方<em>「🎲 洗鍊」</em>。') },
+    { id:'sel2', t:'#lxps-forge-card .fg-af:nth-of-type(3)', wait:'sel',
+      say:T('洗鍊會把一條詞條<b>整個換掉</b>,變成隨機的新詞條,數值也重新決定。<br>👉 勾選第三條<em>「命中率 +5%」</em>試試看!', '洗鍊會將勾選的詞條重洗為隨機新詞條,數值於該詞條範圍內隨機。<br>請勾選<em>「命中率 +5%」</em>。') },
+    { id:'go2', t:'#lxps-forge-card .fg-go', wait:'done', bubTop:true,
+      say:T('洗鍊可能洗到更好的,也可能比較差,還可能跟別條一樣喔!<br>👉 按<em>「🎲 洗鍊!」</em>!', '洗鍊結果可能更好或更差,也可能與其他詞條重複,無法復原。<br>請按<em>「開始洗鍊」</em>。') },
+    { id:'res2', next:true, t:'#lxps-forge-card .fg-prev', delay:500,
+      say:T('洗好了!洗到喜歡的詞條,再用研磨把它磨到最高,裝備就超強!', '洗鍊完成。建議先洗出理想詞條,再以研磨將數值推到上限。') },
+    { id:'where', next:true, nextTxt:T('我學會了!', '完成教學'),
+      say:T('研磨劑、洗鍊劑可以在這些地方拿到:<br>🏪 不可思議超商「💪 強化」(研磨劑 1 萬、洗鍊劑 5 千,每週各 10 個)<br>⚔ 鬥技場兌換(研磨劑 5 證、洗鍊劑 3 證)<br>👹 貓空以外冒險關卡的 BOSS 掉落 ・ 🔮 召喚星空<br>這頂機車安全帽送你,好好用!',
+            '研磨劑/洗鍊劑取得管道:<br>🏪 不可思議超商「強化」(研磨劑 10,000、洗鍊劑 5,000;每週各限購 10)<br>⚔ 鬥技場兌換(研磨劑 5 證、洗鍊劑 3 證)<br>👹 木柵貓空以外冒險關卡 BOSS 掉落 ・ 🔮 召喚星空<br>教學用機車安全帽請留著使用。') }
+  ];
+  // 示範模式(重看教學/上次看到一半):不真的消耗研磨劑,點亮目標後按「下一步」;不經過挑裝備清單
+  if(demo){
+    arr = arr.filter(function(x){ return x.id !== 'pick'; });
+    arr.forEach(function(x){
+      if(x.wait){ x.wait = null; x.next = true; x.say = x.say.replace(/👉 /g, '👀 '); }
+      if(x.id === 'res1' || x.id === 'res2'){ x.delay = 0; x.say = T('研磨/洗鍊完成後,上面會跳出大大的「成功!」「大成功!!」或「洗鍊!」,這裡會寫出變化前後的詞條。', '執行後裝備圖上會跳出「成功/大成功/洗鍊」大字報,此處列出變化前後的詞條。'); }
+    });
+    if(arr[0]) arr[0].say = T('嗨!我是<b>鐵匠</b>🔨。再帶你看一次<em>🧪 研磨</em>和<em>🎲 洗鍊</em>怎麼用(這次只看不會用掉藥劑)。', '這裡再示範一次<em>🧪 研磨</em>與<em>🎲 洗鍊</em>的操作(示範模式,不消耗藥劑)。');
+  }
+  return arr;
+};
+window._ftutStart = function(replay){
+  try{
+    if(window._ftut) return;
+    window._ftutCss();
+    var uid = replay ? window._ftutFindGear() : null;
+    // 上次教學看到一半(禮物已送、還沒完成)⇒ 改示範模式,避免藥劑已用掉卡在「開始研磨」
+    var resumed = !replay && (_medalStats.forgeTutGift > 0);
+    window._ftut = { i:0, replay: !!replay, demo: !!(replay || resumed), uid: uid };
+    try{ if(window._lxpsForgeState) window._lxpsForgeClose(); window._lxpsCloseSellList(); }catch(_){}
+    var root = document.createElement('div');
+    root.id = 'lxps-ftut';
+    root.setAttribute('data-lxps-no-pczoom', '1');
+    root.setAttribute('data-lxps-no-scrollfix', '1');
+    document.body.appendChild(root);
+    window._ftutRender();
+    window._ftut.iv = setInterval(window._ftutPlace, 200);
+    try{ playSfx('sfx-gentle', 0.5); }catch(_){}
+  }catch(_e){ console.warn('[研磨教學] 開始失敗', _e); window._ftutEnd(true); }
+};
+window._ftutEnd = function(markDone){
+  try{ if(window._ftut && window._ftut.iv) clearInterval(window._ftut.iv); }catch(_){}
+  try{ var r = document.getElementById('lxps-ftut'); if(r) r.remove(); }catch(_){}
+  var wasReplay = window._ftut && window._ftut.replay;
+  window._ftut = null;
+  if(markDone && !wasReplay){
+    try{ if(!(_medalStats.forgeTutDone > 0)){ _medalStats.forgeTutDone = Date.now(); _saveMedals(); } }catch(_){}
+  }
+};
+window._ftutSkip = function(){
+  try{
+    var F = window._ftut; if(!F) return;
+    if(!F.replay && !(_medalStats.forgeTutGift > 0)) window._ftutGiveGift();
+    try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+    window._ftutEnd(true);
+    try{ _showInGameToast((window._artStyle === 'cute') ? '🔨 想再看教學,到研磨視窗右上按「❓ 教學」喔!' : '🔨 可於研磨視窗右上「❓ 教學」重看教學', '#ffcf7a', 3200); }catch(_){}
+  }catch(_){}
+};
+window._ftutNext = function(){
+  var F = window._ftut; if(!F) return;
+  var steps = window._ftutSteps(window._artStyle === 'cute');
+  var cur = steps[F.i];
+  try{ playSfx('sfx-confirm', 0.45); }catch(_){}
+  if(cur && cur.id === 'intro'){
+    if(!F.replay) F.uid = window._ftutGiveGift();
+    if(!F.uid) F.uid = window._ftutFindGear();
+    if(!F.uid && F.demo){ try{ F.uid = Object.keys((window._gearData && window._gearData.instances) || {})[0] || null; }catch(_){} }
+    if(!F.uid){
+      try{ _showInGameToast((window._artStyle === 'cute') ? '🛡️ 你現在沒有裝備,先拿到裝備再來看教學喔!' : '🛡️ 目前沒有裝備可示範', '#ffaa66', 2800); }catch(_){}
+      window._ftutEnd(!F.replay); return;
+    }
+    if(F.demo){ window._lxpsForgeOpen(F.uid, 'grind'); try{ window._lxpsForgeState.sel = 0; window._lxpsForgeRender(); }catch(_){} }
+    else window._lxpsForgePick('grind');
+  }
+  if(F.demo && cur && cur.id === 'mode'){ try{ window._lxpsForgeSetMode('reroll'); var _n = ((_gearGetInstance(F.uid) || {}).affixes || []).length; window._lxpsForgeState.sel = Math.min(2, Math.max(0, _n - 1)); window._lxpsForgeRender(); }catch(_){} }
+  if(cur && cur.id === 'where'){
+    window._ftutEnd(true);
+    try{ _showInGameToast((window._artStyle === 'cute') ? '🔨 學會研磨和洗鍊了!' : '🔨 研磨/洗鍊教學完成', '#ffcf7a', 2600); }catch(_){}
+    return;
+  }
+  window._ftutGo(F.i + 1);
+};
+window._ftutGo = function(i){
+  var F = window._ftut; if(!F) return;
+  F.i = i; F.shownAt = Date.now();
+  var steps = window._ftutSteps(window._artStyle === 'cute');
+  var st = steps[i];
+  if(st && st.id === 'where'){ try{ if(window._lxpsForgeState) window._lxpsForgeClose(); }catch(_){} }
+  window._ftutRender();
+};
+// 研磨視窗事件
+window._ftutOn = function(ev){
+  try{
+    var F = window._ftut; if(!F) return;
+    var steps = window._ftutSteps(window._artStyle === 'cute');
+    var st = steps[F.i]; if(!st || st.wait !== ev) return;
+    if(ev === 'open' && window._lxpsForgeState && window._lxpsForgeState.uid !== F.uid) return;
+    if(ev === 'sel' && !(window._lxpsForgeState && window._lxpsForgeState.sel >= 0)) return;
+    if(ev === 'done'){
+      // 先讓「成功/大成功/洗鍊」大字報完整演完(這段時間全畫面透明擋板,不變暗、不擋視線),再出鐵匠說明
+      try{ var rt = document.getElementById('lxps-ftut'); if(rt) rt.innerHTML = '<div class="ft-blk" style="left:0;top:0;right:0;bottom:0;"></div>'; }catch(_){}
+      F.waitFx = 1;
+      setTimeout(function(){ if(window._ftut === F){ F.waitFx = 0; window._ftutGo(F.i + 1); } }, 2400);
+      return;
+    }
+    setTimeout(function(){ window._ftutGo(F.i + 1); }, 120);
+  }catch(_){}
+};
+window._ftutRender = function(){
+  try{
+    var F = window._ftut; if(!F) return;
+    var root = document.getElementById('lxps-ftut'); if(!root) return;
+    var cute = (window._artStyle === 'cute');
+    var steps = window._ftutSteps(cute);
+    var st = steps[F.i]; if(!st){ window._ftutEnd(true); return; }
+    var img = '';
+    try{ img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['鐵匠']) || ''; }catch(_){}
+    var av = img ? '<img src="' + img + '" alt="" onload="try{window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this,\'鐵匠\');}catch(_){}" onerror="this.replaceWith(document.createTextNode(\'🔨\'))">' : '🔨';
+    var total = steps.length;
+    var btns = '';
+    if(st.next) btns += '<button type="button" class="ft-btn" onclick="window._ftutNext()">' + (st.nextTxt || (cute ? '下一步 ▶' : '下一步 ▶')) + '</button>';
+    var skip = (st.id !== 'where') ? '<button type="button" class="ft-skip" onclick="window._ftutSkip()">' + (cute ? '跳過教學' : '略過教學') + '</button>' : '';
+    root.innerHTML = (st.t ? '<div class="ft-blk" data-b="0"></div><div class="ft-blk" data-b="1"></div><div class="ft-blk" data-b="2"></div><div class="ft-blk" data-b="3"></div><div class="ft-hole"></div><div class="ft-arrow">👇</div>' : '<div class="ft-dim"></div>')
+      + '<div class="ft-bub"><div class="ft-av">' + av + '</div><div class="ft-tx"><div class="ft-nm">🔨 ' + (cute ? '鐵匠老師' : '鐵匠') + '<span class="ft-step">' + (F.i + 1) + ' / ' + total + '</span></div>'
+      + '<div class="ft-say">' + st.say + '</div><div class="ft-btns">' + skip + btns + '</div></div></div>';
+    root.querySelectorAll('.ft-blk,.ft-dim').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); var bb = root.querySelector('.ft-bub'); if(bb){ bb.classList.remove('shake'); void bb.offsetWidth; bb.classList.add('shake'); } });
+    });
+    if(st.next && st.t && st.delay){
+      // 結果說明:先讓大字報演完,這段時間不放「下一步」
+      var nb = root.querySelector('.ft-btn'); if(nb){ nb.disabled = true; nb.style.opacity = '0.4'; setTimeout(function(){ try{ nb.disabled = false; nb.style.opacity = ''; }catch(_){} }, st.delay); }
+    }
+    window._ftutPlace();
+  }catch(_e){ console.warn('[研磨教學] 畫面', _e); }
+};
+window._ftutPlace = function(){
+  try{
+    var F = window._ftut; if(!F || F.waitFx) return;
+    var root = document.getElementById('lxps-ftut'); if(!root) return;
+    var st = window._ftutSteps(window._artStyle === 'cute')[F.i]; if(!st) return;
+    var bub = root.querySelector('.ft-bub');
+    var W = window.innerWidth, H = window.innerHeight;
+    if(!st.t){ if(bub){ bub.style.top = Math.max(10, (H - bub.offsetHeight) / 2) + 'px'; bub.style.bottom = ''; } return; }
+    var el = document.querySelector(st.t);
+    // 挑裝備那一步:清單被關掉了 ⇒ 幫忙重新打開
+    if(!el && st.id === 'pick' && !document.getElementById('lxps-sell-ov') && !document.getElementById('lxps-forge-ov')){ window._lxpsForgePick('grind'); return; }
+    var hole = root.querySelector('.ft-hole'), arr = root.querySelector('.ft-arrow');
+    if(!el){ if(hole) hole.style.display = 'none'; if(arr) arr.style.display = 'none'; return; }
+    try{
+      var list = el.closest('.sl-list, #lxps-forge-card');
+      if(list && !F['sc' + F.i]){ F['sc' + F.i] = 1; el.scrollIntoView({ block:'center' }); }
+    }catch(_){}
+    var r = el.getBoundingClientRect();
+    var pad = 6, x = r.left - pad, y = r.top - pad, w = r.width + pad * 2, h = r.height + pad * 2;
+    hole.style.display = ''; arr.style.display = '';
+    hole.style.left = x + 'px'; hole.style.top = y + 'px'; hole.style.width = w + 'px'; hole.style.height = h + 'px';
+    var bl = root.querySelectorAll('.ft-blk');
+    if(bl.length === 4){
+      bl[0].style.cssText = 'left:0;top:0;width:' + W + 'px;height:' + Math.max(0, y) + 'px;';
+      bl[1].style.cssText = 'left:0;top:' + (y + h) + 'px;width:' + W + 'px;height:' + Math.max(0, H - y - h) + 'px;';
+      bl[2].style.cssText = 'left:0;top:' + y + 'px;width:' + Math.max(0, x) + 'px;height:' + h + 'px;';
+      bl[3].style.cssText = 'left:' + (x + w) + 'px;top:' + y + 'px;width:' + Math.max(0, W - x - w) + 'px;height:' + h + 'px;';
+      // 結果說明步驟:不擋(下一步鈕在泡泡裡);目標框只是指給你看
+      if(st.next) bl.forEach(function(b){ b.style.pointerEvents = 'auto'; });
+    }
+    // 泡泡放在目標的另一邊(目標在下半 ⇒ 泡泡在上)
+    var bh = bub.offsetHeight;
+    var below = (r.top + r.height / 2) < H / 2;
+    if(st.bubTop){ bub.style.top = '8px'; }
+    else {
+    if(below){ bub.style.top = Math.min(H - bh - 8, y + h + 64) + 'px'; }
+    else { bub.style.top = Math.max(8, y - bh - 64) + 'px'; }
+    // 泡泡蓋到目標 ⇒ 改放到畫面另一端
+    var bt = parseFloat(bub.style.top);
+    if(bt < y + h && bt + bh > y){ bub.style.top = (below ? Math.max(8, y - bh - 64) : Math.min(H - bh - 8, y + h + 64)) + 'px'; }
+    }
+    // 箭頭:在目標上方往下指;目標太靠上就放下方往上指
+    var aw = arr.offsetWidth || 58, ah = arr.offsetHeight || 58;
+    arr.style.left = (r.left + r.width / 2 - aw / 2) + 'px';
+    if(r.top > ah + 20){ arr.classList.remove('up'); arr.style.top = (y - ah - 4) + 'px'; }
+    else { arr.classList.add('up'); arr.style.top = (y + h + 4) + 'px'; }
+  }catch(_){}
 };
 
 
@@ -46327,6 +47164,10 @@ function useBackpackItem(id){
     closeBackpackOverlay();
     openHeroPage();
     setTimeout(() => { _highlightHeroesForExpBook(); }, 200);
+
+  } else if(id==='gear_grind_agent' || id==='gear_reroll_agent'){
+    // ★ v5.398.0 裝備研磨劑/洗鍊劑:打開持有裝備清單(沿用賣出清單)選 1 件 → 裝備研磨視窗
+    try{ window._lxpsForgePick(id === 'gear_grind_agent' ? 'grind' : 'reroll'); }catch(_e){ console.warn('[裝備研磨/洗鍊]', _e); }
 
   } else if(id==='skill_upgrade_book'){
     // ★ 直接跳圖鑑，高亮有技能可升級的英雄
@@ -80934,9 +81775,210 @@ function closeMedalPage(){
   if(ov) ov.style.display = 'none';
 }
 
+// ★ v5.398.0(2026-11-14・老師「獎章頁面頂端新增索引標籤，點了可以將該類型置頂，並新增『追蹤獎章』按鈕，最多可以勾選3個獎章進行追蹤顯示常駐在獎章頁最上方置頂，可以取消勾選。」)
+//   ① 分類索引標籤:獎章頁頂端一排分類按鈕(含 已解鎖/總數),點一下把該分類移到最上面,再點一次恢復預設順序。
+//   ② 追蹤獎章:每張「還沒解鎖」的獎章右邊有「📌 追蹤」,最多 3 個;追蹤中的獎章常駐在頁面頂端(往下捲也看得到),可取消。
+//   資料唯一來源:_medalStats.medalTrack = { ids:[最多 3 個獎章 id], cat:'置頂分類'(''=預設順序), at:最後修改時間 }
+//   ・跟著 _saveMedals 寫 localStorage(分帳號命名空間)＋ gameCloudSave(medalStats 欄位)⇒ 換一台平板也在。
+//   ・雲端合併一律「at 較新的那份整份取代」(本檔獎章統計合併 + game_cloud.js 三槽合併)⇒ 取消追蹤不會被別槽救回。
+//   ・換帳號清理(_medalStats 物件逐 key 清成 {})自動涵蓋,不會帶到下一位同學。
+//   ★ 順修:分類清單改「固定順序 + MEDAL_DEFS 裡出現但沒列到的分類自動補在後面」——
+//     「小遊戲」分類 35 枚原本漏列(v5.164.0 起)⇒ 獎章頁一枚都沒畫出來(總數分母卻有算);「中國古代關」補圖示 🏯。
+const _MEDAL_CAT_ORDER = ['主角','答題','戰鬥','鬥技場','英雄','其他','日本關','台灣關','埃及關','中國古代關','預習','世界BOSS','小博士','寵物','小遊戲'];
+const _MEDAL_CAT_ICON = { '主角':'🎬','答題':'📝','戰鬥':'⚔️','鬥技場':'🏟','英雄':'🦸','其他':'🌟','日本關':'🗾','台灣關':'🏝','埃及關':'🏜','中國古代關':'🏯','預習':'📚','世界BOSS':'🐉','小博士':'📊','寵物':'🐾','小遊戲':'🎮' };
+const _MEDAL_TRACK_MAX = 3;
+function _medalCatIcon(c){ return _MEDAL_CAT_ICON[c] || '🌟'; }
+function _medalCatsAll(){
+  const out = _MEDAL_CAT_ORDER.filter(function(c){ return MEDAL_DEFS.some(function(m){ return m.cat === c; }); });
+  MEDAL_DEFS.forEach(function(m){ if(m && m.cat && out.indexOf(m.cat) < 0) out.push(m.cat); });
+  return out;
+}
+function _medalTrackGet(){
+  let t = null;
+  try{ t = (typeof _medalStats !== 'undefined' && _medalStats) ? _medalStats.medalTrack : null; }catch(_){}
+  const ids = [];
+  if(t && Array.isArray(t.ids)){
+    t.ids.forEach(function(id){
+      if(typeof id === 'string' && ids.indexOf(id) < 0 && ids.length < _MEDAL_TRACK_MAX
+         && MEDAL_DEFS.some(function(m){ return m.id === id; })) ids.push(id);
+    });
+  }
+  let cat = (t && typeof t.cat === 'string') ? t.cat : '';
+  if(cat && !MEDAL_DEFS.some(function(m){ return m.cat === cat; })) cat = '';
+  return { ids: ids, cat: cat, at: (t && typeof t.at === 'number') ? t.at : 0 };
+}
+function _medalTrackPut(ids, cat){
+  try{
+    _medalStats.medalTrack = { ids: ids.slice(0, _MEDAL_TRACK_MAX), cat: cat || '', at: Date.now() };
+    _saveMedals();
+  }catch(e){ console.warn('[獎章追蹤] 儲存失敗', e); }
+}
+function _medalRebuildKeepScroll(){
+  const el = document.getElementById('medal-page-content');
+  const st = el ? el.scrollTop : 0;
+  _buildMedalPage();
+  if(el) el.scrollTop = st;
+}
+window._medalTrackToggle = function(id){
+  const t = _medalTrackGet();
+  const cute = (window._artStyle === 'cute');
+  const i = t.ids.indexOf(id);
+  if(i >= 0){
+    t.ids.splice(i, 1);
+    try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+  } else {
+    if(!MEDAL_DEFS.some(function(m){ return m.id === id; })) return;
+    if(t.ids.length >= _MEDAL_TRACK_MAX){
+      try{ playSfx('sfx-cancel', 0.4); }catch(_){}
+      const msg = cute
+        ? '最多只能追蹤 3 個獎章喔!\n先在最上面按「✕ 取消」拿掉一個,再追蹤新的。'
+        : '追蹤上限為 3 個獎章。\n請先在頁面頂端取消一個追蹤中的獎章,再加入新的。';
+      try{ if(typeof window._lxpsAlert === 'function') window._lxpsAlert(msg); }catch(_){}
+      return;
+    }
+    t.ids.push(id);
+    try{ playSfx('sfx-confirm', 0.4); }catch(_){}
+  }
+  _medalTrackPut(t.ids, t.cat);
+  _medalRebuildKeepScroll();
+};
+window._medalPinCat = function(idx){
+  const cats = window._medalCatsShown || [];
+  const c = cats[idx];
+  if(!c) return;
+  const t = _medalTrackGet();
+  const nc = (t.cat === c) ? '' : c;
+  try{ playSfx(nc ? 'sfx-confirm' : 'sfx-cancel', 0.4); }catch(_){}
+  _medalTrackPut(t.ids, nc);
+  _buildMedalPage();
+  const el = document.getElementById('medal-page-content');
+  if(el) el.scrollTop = 0;
+};
+window._medalJumpTo = function(id){
+  const card = document.getElementById('mdl-card-' + id);
+  if(!card) return;
+  try{ card.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(_){ try{ card.scrollIntoView(); }catch(__){} }
+  card.classList.remove('mdl-flash'); void card.offsetWidth; card.classList.add('mdl-flash');
+};
+function _medalCssEnsure(){
+  if(document.getElementById('mdl-trk-css')) return;
+  const st = document.createElement('style');
+  st.id = 'mdl-trk-css';
+  st.textContent = ''
+    + '#medal-page-content .mdl-sticky{position:sticky;top:-20px;z-index:6;margin:0 -28px 22px;padding:12px 28px 12px;'
+    +   'background:linear-gradient(180deg,rgba(8,11,24,0.98),rgba(8,11,24,0.95));border-bottom:1px solid rgba(255,220,0,0.22);box-shadow:0 6px 14px rgba(0,0,0,0.45);}'
+    + '#medal-page-content .mdl-trk-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;font-size:20px;font-weight:900;color:#7fe7ff;margin-bottom:8px;}'
+    + '#medal-page-content .mdl-trk-h small{font-size:14px;font-weight:700;color:#8aa;}'
+    + '#medal-page-content .mdl-trk-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}'
+    + '#medal-page-content .mdl-trk-empty{font-size:15px;color:#8a96a8;padding:10px 14px;border:1.5px dashed rgba(127,231,255,0.3);border-radius:12px;}'
+    + '#medal-page-content .mdl-tc{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;min-width:0;'
+    +   'background:rgba(94,224,255,0.08);border:1.5px solid rgba(94,224,255,0.55);box-sizing:border-box;}'
+    + '#medal-page-content .mdl-tc.done{background:rgba(120,230,120,0.10);border-color:rgba(130,230,130,0.65);}'
+    + '#medal-page-content .mdl-tc-ic{font-size:30px;min-width:36px;text-align:center;}'
+    + '#medal-page-content .mdl-tc-b{flex:1;min-width:0;}'
+    + '#medal-page-content .mdl-tc-n{font-size:17px;font-weight:900;color:#ffe066;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:62px;}'
+    + '#medal-page-content .mdl-tc-d{font-size:13px;color:#aab;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}'
+    + '#medal-page-content .mdl-tc-s{font-size:13px;font-weight:800;margin-top:3px;color:#ffcf7a;}'
+    + '#medal-page-content .mdl-tc.done .mdl-tc-s{color:#88dd88;}'
+    + '#medal-page-content .mdl-tc-x{position:absolute;top:6px;right:6px;padding:3px 9px;font-size:13px;font-weight:900;border-radius:8px;cursor:pointer;'
+    +   'border:1px solid rgba(255,140,140,0.6);background:rgba(120,20,20,0.55);color:#ffd6d6;font-family:inherit;}'
+    + '#medal-page-content .mdl-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}'
+    + '#medal-page-content .mdl-tab{padding:7px 13px;font-size:16px;font-weight:800;border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+    +   'border:1.5px solid rgba(255,220,0,0.28);background:rgba(255,255,255,0.05);color:#e8dcb0;}'
+    + '#medal-page-content .mdl-tab b{font-size:13px;color:#b9a970;margin-left:4px;font-weight:800;}'
+    + '#medal-page-content .mdl-tab.on{background:linear-gradient(135deg,#ffd84a,#ff9f2e);border-color:#ffe066;color:#2a1700;}'
+    + '#medal-page-content .mdl-tab.on b{color:#4a2c00;}'
+    + '#medal-page-content .mdl-tabs-hint{font-size:13px;color:#8a8f9c;margin-top:6px;}'
+    + '#medal-page-content .mdl-trkbtn{position:absolute;top:10px;right:10px;padding:5px 10px;font-size:14px;font-weight:900;border-radius:10px;cursor:pointer;font-family:inherit;white-space:nowrap;'
+    +   'border:1.5px solid rgba(94,224,255,0.7);background:rgba(20,70,90,0.55);color:#dff8ff;}'
+    + '#medal-page-content .mdl-trkbtn.on{background:linear-gradient(135deg,#5ee0ff,#3b9dff);border-color:#aef0ff;color:#021a2a;}'
+    + '#medal-page-content .mdl-pinned-tag{font-size:15px;font-weight:900;color:#2a1700;background:#ffd84a;border-radius:10px;padding:2px 10px;margin-left:10px;vertical-align:middle;}'
+    + '@keyframes mdlFlash{0%,100%{box-shadow:0 0 0 0 rgba(94,224,255,0)}30%{box-shadow:0 0 0 4px rgba(94,224,255,0.95)}60%{box-shadow:0 0 0 2px rgba(94,224,255,0.5)}}'
+    + '#medal-page-content .mdl-flash{animation:mdlFlash 1.3s ease 2;}'
+    /* 手機橫放(獎章內容本身在 main.css 已 zoom 1.6):追蹤卡改小一點、說明只留一行,頂端區塊不要佔太高 */
+    + '@media (max-height: 500px){'
+    +   '#medal-page-content .mdl-sticky{padding:8px 28px 8px;margin-bottom:16px;}'
+    +   '#medal-page-content .mdl-trk-h{font-size:16px;margin-bottom:5px;}'
+    +   '#medal-page-content .mdl-trk-h small{display:none;}'
+    +   '#medal-page-content .mdl-tc{padding:6px 8px;gap:6px;}'
+    +   '#medal-page-content .mdl-tc-ic{font-size:22px;min-width:26px;}'
+    +   '#medal-page-content .mdl-tc-n{font-size:14px;padding-right:50px;}'
+    +   '#medal-page-content .mdl-tc-d{display:none;}'
+    +   '#medal-page-content .mdl-tc-s{font-size:12px;margin-top:1px;}'
+    +   '#medal-page-content .mdl-tc-x{font-size:12px;padding:2px 7px;top:4px;right:4px;}'
+    +   '#medal-page-content .mdl-tabs{gap:5px;margin-top:7px;}'
+    +   '#medal-page-content .mdl-tab{padding:4px 9px;font-size:13px;}'
+    +   '#medal-page-content .mdl-tab b{font-size:11px;}'
+    +   '#medal-page-content .mdl-tabs-hint{display:none;}'
+    +   '#medal-page-content .mdl-trkbtn{padding:4px 8px;font-size:13px;top:8px;right:8px;}'
+    + '}';
+  document.head.appendChild(st);
+}
+function _medalStickyHtml(cats, trk){
+  const cute = (window._artStyle === 'cute');
+  const esc = function(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  let h = '<div class="mdl-sticky">';
+  // ── 追蹤中的獎章(最多 3 個)──
+  h += '<div class="mdl-trk-h">' + (cute ? '📌 我在追的獎章' : '📌 追蹤中的獎章')
+     + ' <span style="color:#cfefff;">' + trk.ids.length + ' / ' + _MEDAL_TRACK_MAX + '</span>'
+     + '<small>' + (cute ? '點卡片會跳到那個獎章' : '點卡片可跳至獎章位置') + '</small></div>';
+  if(!trk.ids.length){
+    h += '<div class="mdl-trk-empty">' + (cute
+      ? '還沒有追蹤喔～在下面的獎章按「📌 追蹤」,最多可以選 3 個!'
+      : '尚未追蹤任何獎章。點下方獎章右側的「📌 追蹤」即可加入,最多 3 個。') + '</div>';
+  } else {
+    h += '<div class="mdl-trk-row">';
+    trk.ids.forEach(function(id){
+      const m = MEDAL_DEFS.find(function(x){ return x.id === id; });
+      if(!m) return;
+      const done = !!_medals[id];
+      let prog = '';
+      try{
+        const xr = window._MEDAL_EXTRA_REWARD && window._MEDAL_EXTRA_REWARD[id];
+        const n = (typeof window._quizUcN === 'number') ? window._quizUcN : null;
+        if(xr && !done && n !== null){
+          const pct = Math.max(0, Math.min(100, Math.floor(n * 100 / xr.need)));
+          prog = '<div style="margin-top:4px;height:6px;border-radius:4px;background:rgba(255,255,255,0.12);overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#5ee0ff,#ffd966);"></div></div>'
+               + '<div style="font-size:12px;color:#cde;margin-top:2px;">' + Math.min(n, xr.need) + ' / ' + xr.need + (cute ? ' 題' : ' 題(不重複)') + '</div>';
+        }
+      }catch(_){}
+      const desc = (cute && m.cute) ? m.cute : m.desc;
+      h += '<div class="mdl-tc' + (done ? ' done' : '') + '" onclick="window._medalJumpTo(\'' + id + '\')">'
+         +   '<div class="mdl-tc-ic"' + (done ? '' : ' style="filter:grayscale(60%)"') + '>' + m.icon + '</div>'
+         +   '<div class="mdl-tc-b">'
+         +     '<div class="mdl-tc-n">' + esc(m.name) + '</div>'
+         +     '<div class="mdl-tc-d">' + esc(desc) + '</div>'
+         +     '<div class="mdl-tc-s">' + (done
+                 ? (cute ? '✅ 達成了!可以取消,換追下一個' : '✅ 已達成,可取消追蹤改追下一個')
+                 : (cute ? '🔒 還沒達成,加油!' : '🔒 尚未達成')) + '</div>'
+         +     prog
+         +   '</div>'
+         +   '<button class="mdl-tc-x" title="' + (cute ? '不追蹤這個了' : '取消追蹤') + '" onclick="event.stopPropagation();window._medalTrackToggle(\'' + id + '\')">✕ 取消</button>'
+         + '</div>';
+    });
+    h += '</div>';
+  }
+  // ── 分類索引標籤 ──
+  h += '<div class="mdl-tabs">';
+  cats.forEach(function(c, i){
+    const all = MEDAL_DEFS.filter(function(m){ return m.cat === c; });
+    const got = all.filter(function(m){ return _medals[m.id]; }).length;
+    const on = (trk.cat === c);
+    h += '<button class="mdl-tab' + (on ? ' on' : '') + '" onclick="window._medalPinCat(' + i + ')">'
+       + (on ? '📌 ' : '') + _medalCatIcon(c) + ' ' + esc(c) + '<b>' + got + '/' + all.length + '</b></button>';
+  });
+  h += '</div>';
+  h += '<div class="mdl-tabs-hint">' + (trk.cat
+    ? (cute ? ('「' + esc(trk.cat) + '」排在最上面了,再點一次就回到原本順序') : ('已將「' + esc(trk.cat) + '」置頂,再點一次恢復預設順序'))
+    : (cute ? '👆 點分類,它就會跑到最上面' : '點選分類可將該類獎章置頂')) + '</div>';
+  h += '</div>';
+  return h;
+}
+
 function _buildMedalPage(){
   const el = document.getElementById('medal-page-content');
   if(!el) return;
+  try{ _medalCssEnsure(); }catch(_){}
   // ★ v5.389.0 答對題數獎章(2000/4000/6000)進度:每次開獎章頁背景讀一次雲端題數,讀到後重畫(只重畫一次)
   try{
     if(window._gUserId && window._quizAcc && typeof window._quizAcc.readUc === 'function' && !window._medalUcFetching){
@@ -80959,7 +82001,12 @@ function _buildMedalPage(){
   // ★★ v5.70.0 — 補「中國古代關」:v5.41.0 起陸續加到 40 枚的中國關獎章,因為這份 cats
   //   從未補上對應鍵,**在獎章頁一枚都渲染不出來**(與寵物圖鑑漏分區同型事故)。
   //   ⚠ 新關卡上線時,MEDAL_DEFS 的 cat 值必須同步加進這裡,否則整類獎章靜默消失。
-  const cats = ['主角','答題','戰鬥','鬥技場','英雄','其他','日本關','台灣關','埃及關','中國古代關','預習','世界BOSS','小博士','寵物'];   // ★ v5.9.0 新增「主角」類(主線/成長/造型 20 枚)置首
+  // const cats = ['主角','答題','戰鬥','鬥技場','英雄','其他','日本關','台灣關','埃及關','中國古代關','預習','世界BOSS','小博士','寵物'];   // ★ v5.9.0 新增「主角」類(主線/成長/造型 20 枚)置首
+  // ★ v5.398.0 改用 _medalCatsAll()(固定順序 + 漏列分類自動補;順修「小遊戲」35 枚沒顯示),玩家置頂的分類移到第一個
+  const _trkM = _medalTrackGet();
+  const cats = _medalCatsAll();
+  window._medalCatsShown = cats.slice();
+  const _catsOrd = (_trkM.cat && cats.indexOf(_trkM.cat) >= 0) ? [_trkM.cat].concat(cats.filter(function(c){ return c !== _trkM.cat; })) : cats;
   const unlockedCount = MEDAL_DEFS.filter(m=>_medals[m.id]).length;
 
   // ★ v1.0.20260501.4810 — 計算「已獲取」獎勵總計(只算 rewarded:true 的)
@@ -80985,13 +82032,15 @@ function _buildMedalPage(){
         </span>`
       : `<span style="font-size:14px;color:#666;">解鎖每枚獎章自動發獎勵 ✨</span>`}
   </div>`;
-  for(const cat of cats){
+  try{ html += _medalStickyHtml(cats, _trkM); }catch(_eStk){ console.warn('[獎章追蹤] 頂端區塊失敗', _eStk); }   // ★ v5.398.0
+  for(const cat of _catsOrd){
     const catMedals = MEDAL_DEFS.filter(m=>m.cat===cat);
-    html += `<div style="margin-bottom:28px;">
+    const _catPinned = (_trkM.cat === cat);   // ★ v5.398.0
+    html += `<div style="margin-bottom:28px;" id="mdl-cat-${cats.indexOf(cat)}">
       <!-- ★ v3.5.66 — 加入「世界BOSS」「小博士」類別圖示 -->
       <div style="font-size:26px;font-weight:900;color:#ffe066;margin-bottom:12px;
         padding-bottom:6px;border-bottom:1px solid rgba(255,220,0,0.2);">
-        ${cat==='主角'?'🎬':cat==='答題'?'📝':cat==='戰鬥'?'⚔️':cat==='鬥技場'?'🏟':cat==='英雄'?'🦸':cat==='日本關'?'🗾':cat==='台灣關'?'🏝':cat==='埃及關'?'🏜':cat==='預習'?'📚':cat==='世界BOSS'?'🐉':cat==='小博士'?'📊':cat==='寵物'?'🐾':'🌟'} ${cat}成就
+        ${_medalCatIcon(cat)} ${cat}成就${_catPinned ? '<span class="mdl-pinned-tag">📌 置頂中</span>' : ''}
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">`;
     for(const m of catMedals){
@@ -81044,18 +82093,24 @@ function _buildMedalPage(){
           _xtraLine += `<button onclick="event.stopPropagation();window._quizUcOpenDetail&&window._quizUcOpenDetail()" style="margin-top:8px;padding:6px 14px;font-size:14px;font-weight:900;cursor:pointer;border-radius:10px;border:1px solid #ff5e9c;background:rgba(255,94,156,0.18);color:#fff0f6;font-family:inherit;">📊 我的答題數</button>`;
         }
       }catch(_){}
-      html += `<div style="border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;
+      // ★ v5.398.0 追蹤按鈕:未解鎖才可以加入追蹤;已在追蹤中(含追蹤後才達成)一律顯示「✔ 追蹤中」可按掉
+      const _isTrk = _trkM.ids.indexOf(m.id) >= 0;
+      const _cuteT = (window._artStyle === 'cute');
+      const _trkBtn = _isTrk
+        ? `<button class="mdl-trkbtn on" title="${_cuteT ? '再按一次就不追蹤' : '點擊取消追蹤'}" onclick="event.stopPropagation();window._medalTrackToggle('${m.id}')">✔ 追蹤中</button>`
+        : (!unlocked ? `<button class="mdl-trkbtn" title="${_cuteT ? '放到最上面隨時看' : '加入頂端追蹤清單(最多 3 個)'}" onclick="event.stopPropagation();window._medalTrackToggle('${m.id}')">📌 追蹤</button>` : '');
+      html += `<div id="mdl-card-${m.id}" style="position:relative;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;
         background:${unlocked?'rgba(255,200,0,0.08)':'rgba(255,255,255,0.03)'};
-        border:1.5px solid ${unlocked?'rgba(255,200,0,0.4)':'rgba(255,255,255,0.08)'};
-        opacity:${unlocked?'1':'0.55'};">
-        <div style="font-size:36px;min-width:44px;text-align:center;${unlocked?'':'filter:grayscale(100%)'}">${m.icon}</div>
-        <div style="flex:1;">
-          <div style="font-size:20px;font-weight:800;color:${unlocked?'#ffe066':'#888'};margin-bottom:3px;">${m.name}${unlocked?'':'  🔒'}</div>
+        border:1.5px solid ${_isTrk?'rgba(94,224,255,0.85)':(unlocked?'rgba(255,200,0,0.4)':'rgba(255,255,255,0.08)')};">
+        <div style="font-size:36px;min-width:44px;text-align:center;opacity:${unlocked?'1':'0.55'};${unlocked?'':'filter:grayscale(100%)'}">${m.icon}</div>
+        <div style="flex:1;min-width:0;opacity:${unlocked?'1':'0.55'};">
+          <div style="font-size:20px;font-weight:800;color:${unlocked?'#ffe066':'#888'};margin-bottom:3px;${_trkBtn?'padding-right:92px;':''}">${m.name}${unlocked?'':'  🔒'}</div>
           <div style="font-size:15px;color:#aaa;">${(window._artStyle==='cute' && m.cute) ? m.cute : m.desc}</div>
           ${date?`<div style="font-size:13px;color:#666;margin-top:4px;">${date} 解鎖</div>`:''}
           ${_rewardLine}
           ${_xtraLine}
         </div>
+        ${_trkBtn}
       </div>`;
     }
     html += '</div></div>';

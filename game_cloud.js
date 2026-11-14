@@ -2877,6 +2877,17 @@
           else if(k in _medalStatsAcc) delete _medalStatsAcc[k];
         });
       }catch(_eMsLatest){ console.warn('[medalStats 歸零型欄位取最新槽] 失敗', _eMsLatest); }
+      // ★ v5.398.0 獎章追蹤＋分類置頂 medalStats.medalTrack = {ids,cat,at}:取 at 最大的那一槽整份
+      //   (物件欄位在上面逐鍵合併是「先遇到的槽」為準 ⇒ 舊槽可能蓋掉剛改的追蹤;取消追蹤也必須能同步,所以不能 union)
+      try{
+        var _mtBest = null;
+        slots.forEach(function(s){
+          var o = _lxpsObjFromSlot(s, 'medalStats');
+          var t = o && o.medalTrack;
+          if(t && typeof t === 'object' && Array.isArray(t.ids) && typeof t.at === 'number' && (!_mtBest || t.at > _mtBest.at)) _mtBest = t;
+        });
+        if(_mtBest) _medalStatsAcc.medalTrack = _mtBest;
+      }catch(_eMt){ console.warn('[medalTrack 取最新槽] 失敗', _eMt); }
       // ── 6b) petsEverCollected:累積型(已相遇寵物·v4.9.0 正名),跨槽 union(_applySafeData 是直接覆蓋,不 union 會遺失) ──
       var _petsSet = {};
       slots.forEach(function(s){ var a = _lxpsArrFromSlot(s, 'petsEverCollected'); a.forEach(function(p){ if(p) _petsSet[p] = 1; }); });

@@ -83725,6 +83725,8 @@ function openAdventureOverlay(){
   try{ if(typeof window._lxpsModePlay === 'function') window._lxpsModePlay('adv'); }catch(_eMp){}
   // ★ v5.378.0 首次進入關卡選擇頁:前鋒/後備新玩法說明(每帳號一次;關卡頁確實顯示才彈)
   try{ setTimeout(function(){ try{ var _ao = document.getElementById('adventure-overlay'); if(_ao && _ao.style.display !== 'none' && getComputedStyle(_ao).display !== 'none' && window._RSV) window._RSV.maybeIntro(); }catch(_){} }, 1200); }catch(_eRsvIntro){}
+  // ★ v5.398.0 首次進關卡選擇頁:鐵匠研磨/洗鍊教學(每帳號一次;送教學用傳說裝備;條件不符會自己再等)— 見 game_adv.js window._ftutSchedule
+  try{ if(typeof window._ftutSchedule === 'function') window._ftutSchedule(); }catch(_eFt){}
   // ★ v4.2.0 — 依「寵物系統 GM 測試限定」開關,隱藏/顯示主選單寵物鈕(cosmetic·存取另有守門)
   // ★ v4.3.0 — 首次進關卡頁時拉一次雲端開關(gameConfig/petSystemSwitch);載完會自行再套用一次 gate
   try{ if(window._petSysCloudOpen === null && window._fbLoadPetSysSwitch) window._fbLoadPetSysSwitch(); }catch(_){}
@@ -86874,7 +86876,57 @@ function _showNewHeroAnnouncement(forceShow){
     }catch(_eFmIntro){ console.warn('[v5.368.0 魂格系統介紹卡]', _eFmIntro); return ''; }
   };
 
+  // ★ v5.398.0(老師 2026-11-14「近期活動新增此系統介紹」)— 裝備研磨/洗鍊介紹卡(數字直接讀 game_adv.js 的設定,改機率/價格這裡自動跟著變)
+  const buildForgeSection = function(){
+    try{
+      const _cu = (window._artStyle === 'cute');
+      const _T = function(c, p){ return _cu ? c : p; };
+      const big = Math.round((window._FORGE_BIG_RATE || 0.2) * 100);
+      const _pp = function(id){ try{ const p = (typeof SHOP_PRODUCTS !== 'undefined') ? SHOP_PRODUCTS.find(function(x){ return x.id === id; }) : null; return p ? (p.price || 0).toLocaleString() : '—'; }catch(_){ return '—'; } };
+      const _ac = function(id){ try{ const a = (window.ARENA_EXCHANGE_ITEMS || []).find(function(x){ return x.id === id; }); return a ? a.cost : '—'; }catch(_){ return '—'; } };
+      const _smith = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS['鐵匠']) || '';
+      let h = '<div style="display:flex;gap:16px;align-items:center;padding:6px 10px 10px;flex-wrap:wrap;">'
+        + (_smith ? '<div style="flex:0 0 auto;width:110px;height:110px;border-radius:50%;overflow:hidden;border:3px solid #ffcf7a;"><img src="' + _smith + '" alt="" style="width:100%;height:100%;object-fit:cover;" onload="try{window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this,\'鐵匠\');}catch(_){}"></div>' : '')
+        + '<div style="flex:1;min-width:240px;">'
+        +   '<div style="font-size:clamp(22px,2.6vw,28px);color:#ffeebb;line-height:1.5;font-weight:800;">🔨 ' + _T('鐵匠教你:讓裝備變更強的兩招!', '裝備強化新系統:研磨 × 洗鍊') + '</div>'
+        +   '<div style="font-size:clamp(16px,1.8vw,19px);color:#ddccff;margin-top:6px;line-height:1.6;">'
+        +   _T('第一次進冒險關卡選擇頁,鐵匠會一步一步教你,還會送你一頂<b style="color:#ffaa44;">傳說「機車安全帽」</b>和研磨劑、洗鍊劑各 1 個!',
+               '首次進入冒險關卡選擇頁時,SR 鐵匠會逐步示範操作,並贈送教學用<b style="color:#ffaa44;">傳說「機車安全帽」</b>(固定詞條)與研磨劑、洗鍊劑各 1 個。')
+        +   '</div></div></div>';
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">';
+      h += '<div class="new-hero-method-card" style="padding:16px 18px;border-color:rgba(127,208,255,0.6);">'
+        + '<div style="font-size:clamp(22px,2.6vw,28px);font-weight:900;color:#7fd0ff;margin-bottom:8px;">🧪 ' + _T('研磨', '裝備研磨') + '</div>'
+        + '<div style="font-size:17px;color:#eef;line-height:1.75;">'
+        + _T('勾一條有數字的詞條,把它磨得更強!', '勾選 1 條數值詞條強化:') + '<br>'
+        + '✨ <b>' + _T('成功', '成功') + '</b>(' + (100 - big) + '%):' + _T('數字多一半', '數值 +50%') + '<br>'
+        + '🌟 <b style="color:#ffd84a;">' + _T('大成功', '大成功') + '</b>(' + big + '%):' + _T('數字變兩倍', '數值 +100%') + '<br>'
+        + _T('例:特技 +4(最高 8)→ 成功 +6、大成功 +8。不會超過最高值;免疫這種沒有數字的詞條不能磨。', '例:特技 +4(上限 8)→ 成功 +6/大成功 +8;不超過該詞條上限,無數值詞條(免疫等)不可研磨。')
+        + '</div></div>';
+      h += '<div class="new-hero-method-card" style="padding:16px 18px;border-color:rgba(231,168,255,0.6);">'
+        + '<div style="font-size:clamp(22px,2.6vw,28px);font-weight:900;color:#e7a8ff;margin-bottom:8px;">🎲 ' + _T('洗鍊', '裝備洗鍊') + '</div>'
+        + '<div style="font-size:17px;color:#eef;line-height:1.75;">'
+        + _T('勾一條詞條,把它整條換成隨機的新詞條,數字也重新決定。可能更好也可能更差,還可能和別條一樣!',
+             '勾選 1 條詞條重洗為隨機新詞條(可與現有詞條重複),數值於該詞條範圍內隨機;結果無法復原。') + '<br>'
+        + '💡 ' + _T('先洗出喜歡的詞條,再用研磨把它磨到最高!', '建議先洗出理想詞條,再以研磨推到上限。')
+        + '</div></div>';
+      h += '</div>';
+      h += '<div class="new-hero-method-card" style="padding:16px 18px;border-color:rgba(255,211,106,0.55);margin-top:12px;">'
+        + '<div style="font-size:clamp(22px,2.6vw,28px);font-weight:900;color:#ffd36a;margin-bottom:8px;">🧭 ' + _T('去哪裡拿?怎麼用?', '取得與使用') + '</div>'
+        + '<div style="font-size:17px;color:#ffe;line-height:1.75;">'
+        + '🏪 ' + _T('不可思議超商「💪 強化」:研磨劑 ', '不可思議超商「強化」:研磨劑 ') + _pp('gear_grind_agent') + '、' + _T('洗鍊劑 ', '洗鍊劑 ') + _pp('gear_reroll_agent') + _T(' 知識幣,每週各限買 10 個', ' 知識幣,每週各限購 10 個') + '<br>'
+        + '⚔ ' + _T('鬥技場兌換:研磨劑 ', '鬥技場兌換:研磨劑 ') + _ac('arena_x_gear_grind') + _T(' 個鬥技之證、洗鍊劑 ', ' 證、洗鍊劑 ') + _ac('arena_x_gear_reroll') + _T(' 個鬥技之證', ' 證') + '<br>'
+        + '👹 ' + _T('木柵貓空以外的冒險關卡 BOSS:打贏有機會額外掉研磨劑、洗鍊劑(各自 10%,難度越高越容易掉)', '木柵貓空以外冒險關卡 BOSS:勝利時研磨劑、洗鍊劑各自基礎 10% 掉落(受難度與龍王祝福加成)') + '<br>'
+        + '🔮 ' + _T('召喚星空也有機會抽到', '召喚星空亦可能抽中') + '<br>'
+        + '🎒 ' + _T('使用:背包點研磨劑或洗鍊劑 →「使用」→ 選裝備 → 勾詞條 → 開始!研磨視窗上面可以切換研磨/洗鍊,右上「❓ 教學」可以再看一次。', '使用:背包選擇研磨劑/洗鍊劑 →「使用」→ 選擇裝備 → 勾選詞條 → 執行;視窗上方可切換研磨/洗鍊,右上「❓ 教學」可重看示範。')
+        + '</div></div>';
+      return h;
+    }catch(_eFg){ console.warn('[v5.398.0 研磨洗鍊介紹卡]', _eFg); return ''; }
+  };
+
   const _themes = [
+    // ★ v5.398.0 — 裝備研磨/洗鍊介紹卡(最新內容置頂)
+    { id:'forge', emoji:'🧪', accent:'#7fd0ff', title:'NEW!裝備研磨 × 洗鍊・鐵匠來教你', sub:'研磨讓詞條變強(大成功數值翻倍)· 洗鍊換成新詞條 · 超商/鬥技場/BOSS/召喚星空都拿得到',
+      imgs:[(typeof HERO_IMGS !== 'undefined' && HERO_IMGS['鐵匠']) || ''], detail: buildForgeSection() },
     // ★ v5.391.0 — 第七、八隻 UR 媽祖/鄭成功登場介紹卡(最新內容置頂;登錄表缺席時整張不列出)
     ...((window._URMZ_LIST && window._URMZ_LIST.length) ? [
       { id:'ur_mz', emoji:'🌊', accent:'#9fe0ff', title:'NEW!媽祖 × 鄭成功・第七、八隻 UR 降臨', sub:'海燈歸航 · 順風令 · 潮汐大潮 · 乘潮奇襲 · 老師頒發或答題獎章 UR 自選卷',
