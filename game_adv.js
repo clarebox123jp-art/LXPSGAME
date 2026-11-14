@@ -32590,8 +32590,8 @@ const BACKPACK_ITEM_DEF = {
   // ★ v1.1.0 — 至寶重置靈水(可重置至寶投資點數並退回所有已使用的卷軸)
   'treasure_reset_potion': { name:'至寶重置靈水', icon:'💧', desc:'蘊含太古泉水的神秘靈藥,使用後可選擇 1 件至寶,將其等級重置為 Lv.1,並退回升級時實際花費的至寶經驗卷軸與知識幣。', type:'use', useLabel:'使用(選擇至寶)', sellPrice:2500 },
   // ★ v3.11.23 — 知識王「持之以恆」獎勵:英雄召喚卷(在召喚星空使用,必得隨機未收錄對應稀有度英雄)
-  'summon_ticket_ssr': { name:'SSR 英雄召喚卷', icon:'🌈', desc:'知識王「持之以恆」累積 10 天(每天 ≥90 分)的稀世獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!(若 SSR 已全收錄,改成隨機換一位已收錄 SSR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用' },
-  'summon_ticket_sr':  { name:'SR 英雄召喚卷',  icon:'⭐', desc:'知識王「持之以恆」累積 5 天(每天 ≥80 分)的努力獎勵。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!(若 SR 已全收錄,改成隨機換一位已收錄 SR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_ssr': { name:'SSR 英雄召喚卷', icon:'🌈', desc:'稀世獎勵!可從知識王「持之以恆」累積 10 天(每天 ≥90 分)、鬥技場兌換、友情之心、特別挑戰等管道獲得——不論從哪裡拿到都是同一張卷,效果完全相同。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SSR 英雄!(若 SSR 已全收錄,改成隨機換一位已收錄 SSR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用' },
+  'summon_ticket_sr':  { name:'SR 英雄召喚卷',  icon:'⭐', desc:'努力獎勵!可從知識王「持之以恆」累積 5 天(每天 ≥80 分)、鬥技場兌換等管道獲得——不論從哪裡拿到都是同一張卷,效果完全相同。前往召喚星空使用,必定獲得一名隨機「尚未收錄」的 SR 英雄!(若 SR 已全收錄,改成隨機換一位已收錄 SR 的 1 顆命星)', type:'use', useLabel:'前往召喚星空使用' },
   // ★ v3.13.74 — 自選召喚卷(老師指定):與「隨機券」並存,使用時可從尚未收錄的對應稀有度英雄中「自己挑一名」
   'summon_ticket_ssr_pick': { name:'SSR 自選召喚卷', icon:'🌟', desc:'珍貴的自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 SSR 英雄中,親自挑選一名加入隊伍!已經收錄的 SSR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
   'summon_ticket_ur_pick': { name:'UR 自選召喚卷', icon:'👑', desc:'極為稀有的 UR 自選召喚卷!前往召喚星空使用時,可從所有「尚未收錄」的 UR 英雄中,親自挑選一名加入隊伍!已經收錄的 UR 英雄也能選,會換成那位英雄的 1 顆命星(滿 6 命的不能選)。', type:'use', useLabel:'前往召喚星空使用' },
@@ -32896,6 +32896,39 @@ const SHOP_PRODUCTS = [
   // ★ v1.0.20260501.5110 — 新增劍士「絕世劍意」付費肖像
   { id:'kenshi_portrait',     name:'劍士肖像:絕世劍意',     icon:'⚔️', desc:'全新繪製的劍士替代肖像「絕世劍意」。購買後即永久解鎖,可在英雄圖鑑的劍士詳細頁切換使用(原始肖像仍保留)。',         price:3000, stock:'限購1', dailyLimit:0, oneTime:true },
 ];
+// ★ v5.397.0(2026-11-14 老師「SR 角色沒有新皮膚的…請 GPT 繪製全新風格的新皮膚，並且上架到超商」「以不同性別展示」)
+//   10 位 SR 異性版肖像上架不可思議超商(肖像分類),資料唯一來源 = hero_db.js window._SR_ALT_SKINS
+//   [英雄, 肖像 id, 肖像名, 檔名, 商品 id, 圖示, 性別版]。BACKPACK_ITEM_DEF 補 type:'portrait'(shopBuyItem 依此解鎖並自動套用);
+//   商品插在肖像商品最前面(新貨先看到),價格比照其他肖像 3,000、限購 1。
+(function(){
+  try{
+    var L = (typeof window !== 'undefined' && window._SR_ALT_SKINS) || [];
+    var _newProds = [];
+    L.forEach(function(e){
+      var hero = e[0], pid = e[1], pn = e[2], id = e[4], ic = e[5], ver = e[6];
+      var nm = hero + '肖像:' + pn + '(' + ver + ')';
+      if(!BACKPACK_ITEM_DEF[id]){
+        BACKPACK_ITEM_DEF[id] = { name:nm, icon:ic,
+          desc:'全新繪製的' + hero + '「' + ver + '」肖像「' + pn + '」,購買後可在英雄圖鑑的' + hero + '詳細頁切換使用(原肖像永遠保留)。',
+          type:'portrait', heroName:hero, portraitId:pid, useLabel:'前往切換' };
+      }
+      if(!SHOP_PRODUCTS.some(function(p){ return p && p.id === id; })){
+        _newProds.push({ id:id, name:nm, icon:ic,
+          desc:'全新繪製的' + hero + '異性版替代肖像「' + pn + '」(' + ver + ')。購買後即永久解鎖,可在英雄圖鑑的' + hero + '詳細頁切換使用(原始肖像仍保留)。',
+          price:3000, stock:'限購1', dailyLimit:0, oneTime:true });
+      }
+    });
+    if(_newProds.length){
+      var _at = -1;
+      for(var i = 0; i < SHOP_PRODUCTS.length; i++){
+        var _d = SHOP_PRODUCTS[i] && BACKPACK_ITEM_DEF[SHOP_PRODUCTS[i].id];
+        if(_d && _d.type === 'portrait'){ _at = i; break; }
+      }
+      if(_at < 0) _at = SHOP_PRODUCTS.length;
+      Array.prototype.splice.apply(SHOP_PRODUCTS, [_at, 0].concat(_newProds));
+    }
+  }catch(_eSrAlt){ try{ console.warn('[v5.397.0 SR 異性版肖像上架] 失敗', _eSrAlt); }catch(__){} }
+})();
 const SHOP_SELL_ITEMS = [
   { id:'antique_teacup',  name:'骨董茶杯',       icon:'🍵', sellPrice:1000 },
   { id:'apricot_rouge',   name:'杏花胭脂',       icon:'💄', sellPrice:1500 },
@@ -33911,7 +33944,7 @@ function _nbgPageCst(cute){
     + B.s('取得命星')
     + B.items([
         ['🌟', 'R 自選命星', 'R 卡不在召喚池,命星只能從不可思議超商購買「R 自選命星」(10,000 知識幣、每週限購 1 個,週一 08:00 重置)或由老師發放;可指定任一位已擁有、未滿 6 命的 R 卡(主角除外)。'],
-        ['🔮', '重複召喚', '召喚到已擁有的 SR/SSR 英雄 ⇒ 轉為該英雄命星 ×1,結果畫面會標「✨ 重複角色→命星 +1」。召喚時尚未擁有的英雄出現機率是已擁有的 3 倍。'],
+        ['🔮', '重複召喚', '召喚到已擁有的 SR/SSR 英雄 ⇒ 轉為該英雄命星 ×1,結果畫面會標「✨ 重複角色→命星 +1」。召喚時尚未擁有和已擁有的英雄出現機率相同。'],
         ['🎟️', '自選召喚卷', 'SR/SSR/UR 自選召喚卷可選「已經有的英雄」換 1 顆命星(已滿 6 命的英雄不會出現在清單)。'],
         ['🎁', '老師獎勵', '課堂獎勵、全班獎勵、虛寶序號與補償都能發放指定英雄命星或自選命星;還沒擁有該英雄也會先存著。'],
         ['🌠', '主角命星', '主角不在召喚池,命星只由主線大章節取得:第三、六、七章各 1 顆,覺醒後才能點亮。'],
@@ -40722,8 +40755,17 @@ const SUMMON_RANDOM_TREASURES = [
 //     兩邊「都」收齊(英雄全收錄·寵物全馴養·v4.9.0 口徑) → 轉「寵物訓練書」:SSR ×6、SR ×3(取代舊 果實×1/精裝書×5)。
 const SUMMON_RATES = [
   { kind:'random_treasure',pct: 2, label:'🏆 隨機台灣至寶',         desc:'極稀有!10 種台灣至寶任 1 件;若已擁有自動轉換為至寶經驗卷軸 ×5' },
-  { kind:'rare_ssr',       pct: 5, label:'🌈 SSR 稀有角色/寵物',     desc:'未收錄之 SSR 角色「或」未馴養之 SSR 寵物,單次只會出其中 1 位(寵物直接馴養收服;英雄全收錄且寵物全馴養後,轉化為寵物訓練書 ×6)' },
-  { kind:'rare_sr',        pct:10, label:'⭐ SR 稀有角色/寵物',       desc:'未收錄之 SR 角色「或」未馴養之 SR 寵物,單次只會出其中 1 位(寵物直接馴養收服;英雄全收錄且寵物全馴養後,轉化為寵物訓練書 ×3)' },
+  /* ★ v5.396.0(老師 2026-11-14「召喚星空直接用水晶召喚沒有必得未收錄」)— 說明對齊 v5.254.0 命座權重:
+     水晶召喚「不保證」未收錄(11:02 老師再裁定權重 未擁有×1/已擁有×1 ⇒ 每位英雄機率相同;抽到已收錄 ⇒ 命星 ×1、滿 6 命 ⇒ 虛無的命星);
+     必得未收錄的是 SSR/SR「隨機召喚卷」(所有管道同一張卷、同一條 _useSummonTicket)。
+     舊「全收錄轉寵物訓練書」在命座開放後已不會發生(已收錄英雄留在池中),一併移除。descC = 簡單風(鐵律 1.232)。
+     (舊文保留備查:'未收錄之 SSR 角色「或」未馴養之 SSR 寵物,單次只會出其中 1 位(寵物直接馴養收服;英雄全收錄且寵物全馴養後,轉化為寵物訓練書 ×6)';SR 同,×3) */
+  { kind:'rare_ssr',       pct: 5, label:'🌈 SSR 稀有角色/寵物',
+    desc:'SSR 英雄「或」未馴養之 SSR 寵物,單次只會出其中 1 位(寵物直接馴養收服)。⚠ 水晶召喚不保證未收錄:未收錄與已收錄英雄的出現機率相同;抽到已收錄英雄轉為該英雄命星 ×1(已滿 6 命轉為虛無的命星)。想必得未收錄 SSR,請使用 SSR 隨機召喚卷。',
+    descC:'可能出 SSR 英雄或 SSR 寵物(一次只出一位,寵物直接收服)。⚠ 用水晶召喚「不一定」是新英雄:還沒有的和已經有的英雄出現機會一樣,抽到已經有的英雄會變成他的命星 ×1(滿 6 命變成虛無的命星)。想要一定是新的 SSR 英雄,請用 SSR 召喚卷!' },
+  { kind:'rare_sr',        pct:10, label:'⭐ SR 稀有角色/寵物',
+    desc:'SR 英雄「或」未馴養之 SR 寵物,單次只會出其中 1 位(寵物直接馴養收服)。⚠ 水晶召喚不保證未收錄:未收錄與已收錄英雄的出現機率相同;抽到已收錄英雄轉為該英雄命星 ×1(已滿 6 命轉為虛無的命星)。想必得未收錄 SR,請使用 SR 隨機召喚卷。',
+    descC:'可能出 SR 英雄或 SR 寵物(一次只出一位,寵物直接收服)。⚠ 用水晶召喚「不一定」是新英雄:還沒有的和已經有的英雄出現機會一樣,抽到已經有的英雄會變成他的命星 ×1(滿 6 命變成虛無的命星)。想要一定是新的 SR 英雄,請用 SR 召喚卷!' },
   // ★★ v5.101.0(老師 2026-08-21 裁定)— 新增「當期最新英雄」1% 專屬 spotlight 槽 ★★
   //   老師原話:「1% 專屬召喚『當期最新版本英雄』用。保留,以後沿用。」
   //             「1% 池是以後所有新關卡的新英雄(老師設計的)。學生設計 SSR 可以去黑暗球刷、
@@ -41485,7 +41527,7 @@ function _showSummonHelp(){
     html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:rgba(60,40,100,0.4);border-radius:8px;border-left:3px solid ' + _color + ';">'
       + '<span style="font-size:22px;font-weight:900;color:' + _color + ';min-width:50px;">' + _ratePctTxt(r.pct) + '</span>'
       + '<div style="flex:1;"><div style="font-size:18px;font-weight:700;color:' + _color + ';">' + r.label + '</div>'
-      + '<div style="font-size:14px;color:#aab;line-height:1.4;margin-top:2px;">' + r.desc + '</div></div>'
+      + '<div style="font-size:14px;color:#aab;line-height:1.4;margin-top:2px;">' + ((_isSimpleSH && r.descC) ? r.descC : r.desc) + '</div></div>'   /* ★ v5.396.0 雙版說明 */
       + '</div>';
   });
   html += '</div>';
@@ -84087,6 +84129,8 @@ function makeRadar(dims, size) {
   /* ── 召喚權重(由 _rollOneSummon 的 SSR/SR 槽呼叫)──
      unowned/owned:呼叫端用與原本完全相同的濾網算好(關卡限定、測試期、資料未到齊…都已排除)
      寵物比例維持原本(風險 B2):寵物機率 = 寵物數 /(未擁有英雄數 + 寵物數),和舊版一樣;剩下的機率才給英雄,英雄內部 未擁有×3/已擁有×1。
+     ★ v5.396.0(老師 2026-11-14「召喚星空的加權修改：未擁有x1/已擁有x1」)英雄內部改 未擁有×1/已擁有×1(每位英雄機率相同);寵物比例照舊。
+       改權重只改下面的 _CST_W_UNOWNED 一個數字(舊值 3)。
      回傳 null ⇒ 交回原本的程式處理(例如全部都被本批排除)。 */
   W._cstSummonPick = function(tier, unowned, owned, pets, icon){
     try{
@@ -84097,11 +84141,12 @@ function makeRadar(dims, size) {
         var pn = P[Math.floor(Math.random() * P.length)];
         return { kind:'rare_pet', name:pn, petName:pn, icon:'🐾', qty:1, isRare:true, _rarityTier:tier };
       }
-      var wU = U.length * 3, wO = O.length;
+      var _CST_W_UNOWNED = 1;   /* ★ v5.396.0 3→1(老師裁定未擁有×1/已擁有×1) */
+      var wU = U.length * _CST_W_UNOWNED, wO = O.length;
       if(wU + wO <= 0) return null;
       var r = Math.random() * (wU + wO);
       if(r < wU){
-        var hn = U[Math.min(U.length - 1, Math.floor(r / 3))];
+        var hn = U[Math.min(U.length - 1, Math.floor(r / _CST_W_UNOWNED))];
         return { kind:'rare_hero', name:hn, heroName:hn, icon:icon, qty:1, isRare:true, _rarityTier:tier };
       }
       var on = O[Math.min(O.length - 1, Math.floor(r - wU))];

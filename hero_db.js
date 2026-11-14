@@ -8828,3 +8828,42 @@ var _LXPS_HERO_SD = {
   });
 })();
 // ★★★ v5.394.0 UR 命座造型 END ★★★
+
+
+// ★★★ v5.397.0 SR 異性版皮膚(老師 2026-11-14 13:21「查詢目前 SR 角色沒有新皮膚的，請 GPT 幫他們繪製全新風格的新皮膚，並且上架到超商」;13:23「以不同性別展示」)★★★
+//   對象:SR 38 隻裡完全沒有替代肖像的 10 隻(舊 28 隻都已有 3 號肖像或 Lv20 肖像)。
+//   立繪:老師的 ChatGPT「小克 陳」生成,異性版、全新場景,768×1152 webp,檔名「<英雄>_異性版.webp」放 repo 根目錄。
+//   取得:不可思議超商「肖像」分類 3,000 知識幣、限購 1(game_adv.js SHOP_PRODUCTS / BACKPACK_ITEM_DEF 的 *_alt_portrait),
+//         購買 ⇒ shopBuyItem 寫 _heroPortraitUnlocked 並自動套用;沒收錄英雄也能先買(購買前提醒)。
+//   臉部表(鐵律 2026-11-11)在 game_battle.js _URMZ 段尾 v5.397.0 區塊。只新增、不覆蓋既有條目。
+(function(){
+  var IMG = function(f){ return './' + encodeURIComponent(f); };
+  //  [英雄, 肖像 id, 肖像名, 檔名, 商品 id, 圖示, 性別版]
+  var L = [
+    ['鐵匠',       'smith_alt',     '星火鍛魂', '鐵匠_異性版.webp',       'smith_alt_portrait',     '🔨', '女生版'],
+    ['偵探',       'detective_alt', '蒸汽謎蹤', '偵探_異性版.webp',       'detective_alt_portrait', '🔍', '女生版'],
+    ['煉丹小藥童', 'apothec_alt',   '仙山採藥', '煉丹小藥童_異性版.webp', 'apothec_alt_portrait',   '🌿', '女生版'],
+    ['魔法少女',   'magical_alt',   '流星王子', '魔法少女_異性版.webp',   'magical_alt_portrait',   '🪄', '男生版'],
+    ['偶像歌手',   'idol_alt',      '夏日海風', '偶像歌手_異性版.webp',   'idol_alt_portrait',      '🎤', '男生版'],
+    ['點心師傅',   'pastry_alt',    '糖果森林', '點心師傅_異性版.webp',   'pastry_alt_portrait',    '🧁', '女生版'],
+    ['漫畫家',     'manga_alt',     '墨龍飛騰', '漫畫家_異性版.webp',     'manga_alt_portrait',     '✒️', '男生版'],
+    ['美容師',     'beauty_alt',    '花園沙龍', '美容師_異性版.webp',     'beauty_alt_portrait',    '💄', '男生版'],
+    ['主廚',       'chef_alt',      '夜市火龍', '主廚_異性版.webp',       'chef_alt_portrait',      '🍳', '女生版'],
+    ['太空人',     'astro_alt',     '月面躍動', '太空人_異性版.webp',     'astro_alt_portrait',     '🚀', '女生版']
+  ];
+  window._SR_ALT_SKINS = L;
+  L.forEach(function(e){
+    try{
+      if(typeof HERO_PORTRAIT_LIBRARY === 'undefined') return;
+      var lib = HERO_PORTRAIT_LIBRARY[e[0]];
+      if(!lib){
+        var _def = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[e[0]]) || '';
+        if(!_def) return;
+        lib = HERO_PORTRAIT_LIBRARY[e[0]] = [{ id:'default', name:'原始肖像', url:_def }];
+      }
+      for(var i = 0; i < lib.length; i++){ if(lib[i] && lib[i].id === e[1]) return; }
+      lib.push({ id:e[1], name:e[2] + '(' + e[6] + ')', url:IMG(e[3]), requiresUnlock:true });
+    }catch(_){}
+  });
+})();
+// ★★★ v5.397.0 SR 異性版皮膚 END ★★★

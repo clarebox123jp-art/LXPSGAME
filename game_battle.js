@@ -85164,7 +85164,7 @@ function _showNewHeroAnnouncement(forceShow){
         <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));">
           <div style="background:rgba(60,40,100,0.4);border:2px solid rgba(180,140,255,0.5);border-radius:12px;padding:14px 16px;">
             <div style="font-size:20px;color:#cbb8ff;font-weight:800;margin-bottom:8px;">🔮 召喚星空(用召喚水晶)</div>
-            <div style="font-size:17px;color:#ffe;line-height:1.6;">每抽有 <b style="color:#ffe066;">5%</b> 機率出現 SSR:SSR 英雄(還沒有的機率是已有的 3 倍;抽到已有的會變成他的命星 ×1)或未馴養的 SSR 寵物(直接馴養收服)!每天第 1 抽免費。</div>
+            <div style="font-size:17px;color:#ffe;line-height:1.6;">每抽有 <b style="color:#ffe066;">5%</b> 機率出現 SSR:SSR 英雄(還沒有的和已經有的機率一樣,不保證是新英雄;抽到已有的會變成他的命星 ×1)或未馴養的 SSR 寵物(直接馴養收服)!每天第 1 抽免費。</div>
           </div>
           <div style="background:rgba(40,55,90,0.45);border:2px solid rgba(120,200,255,0.5);border-radius:12px;padding:14px 16px;">
             <div style="font-size:20px;color:#aaddff;font-weight:800;margin-bottom:8px;">🎟 SSR 英雄召喚卷(用了保證得 1 名未收錄 SSR)</div>
@@ -85209,7 +85209,7 @@ function _showNewHeroAnnouncement(forceShow){
           </div>
         </div>
         <div style="margin-top:14px;padding:12px 16px;background:rgba(60,40,100,0.35);border-left:4px solid #cc99ff;border-radius:8px;font-size:16px;color:#ddccff;line-height:1.6;">
-          💡 召喚時還沒有的 SSR 出現機率是已有的 3 倍;抽到已經有的 SSR 會變成他的命星 ×1。SSR 已全部收齊時,召喚卷照樣可以用,改成已收錄英雄的命星 ×1。
+          💡 用水晶召喚時,還沒有的和已經有的 SSR 出現機率一樣(不保證是新英雄);抽到已經有的 SSR 會變成他的命星 ×1。想一定拿到新 SSR,請用 SSR 召喚卷(必得未收錄)。SSR 已全部收齊時,召喚卷照樣可以用,改成已收錄英雄的命星 ×1。
         </div>
       </div>
     `;
@@ -92918,6 +92918,20 @@ window._FM_DEFS = {
       '究極神兵_赤焰決戰型態.webp':21, '天照大神_夏祭花火.webp':3, '月讀大神_雪月清輝.webp':15,
       '媽祖_海天巡航.webp':9, '鄭成功_延平破浪.webp':10 });
   }catch(_eUrCstFace){}
+  // ★ v5.397.0 SR 異性版肖像 10 張(768×1152,老師 ChatGPT 生成;hero_db.js 檔尾 window._SR_ALT_SKINS)臉部表:頭頂(含預留)千分比
+  //   目視頭頂(含髮飾/帽子):主廚 0.15/偵探 0.15(獵鹿帽)/偶像 0.10/漫畫家 0.14(貝雷帽)/藥童 0.22(丸子頭)/美容師 0.13/鐵匠 0.18/魔法少年 0.17/點心 0.10(廚師帽)/太空人 0.07(呆毛)
+  try{
+    Object.assign(window._LXPS_FACE_T, {
+      '鐵匠_異性版.webp':[165,1500], '偵探_異性版.webp':[135,1500], '煉丹小藥童_異性版.webp':[200,1500],
+      '魔法少女_異性版.webp':[155,1500], '偶像歌手_異性版.webp':[85,1500], '點心師傅_異性版.webp':[85,1500],
+      '漫畫家_異性版.webp':[125,1500], '美容師_異性版.webp':[115,1500], '主廚_異性版.webp':[135,1500],
+      '太空人_異性版.webp':[55,1500] });
+    Object.assign(window._LXPS_THUMB_FACE_YMAX, {
+      '鐵匠_異性版.webp':23, '偵探_異性版.webp':19, '煉丹小藥童_異性版.webp':28,
+      '魔法少女_異性版.webp':22, '偶像歌手_異性版.webp':12, '點心師傅_異性版.webp':12,
+      '漫畫家_異性版.webp':17, '美容師_異性版.webp':16, '主廚_異性版.webp':19,
+      '太空人_異性版.webp':8 });
+  }catch(_eSrAltFace){}
 })();
 // ★★★ v5.391.0 UR 媽祖／鄭成功 戰鬥引擎 END ★★★
 
