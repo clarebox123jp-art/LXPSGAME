@@ -80574,6 +80574,23 @@ window._showGearSlotPicker = function(heroName, slot){
     btns += '<button onclick="window._gearToggleLock(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;'
       + (_lk ? 'background:rgba(255,200,80,0.22);border:1.5px solid rgba(255,210,100,0.8);color:#ffd870;' : 'background:rgba(200,200,220,0.10);border:1.5px solid rgba(200,210,230,0.45);color:#dde4f0;')
       + 'border-radius:8px;cursor:pointer;font-family:inherit;">' + (_lk ? '🔓 解鎖' : '🔒 上鎖') + '</button>';
+    // ★ v5.400.0(老師 2026-11-14 18:29「英雄圖鑑的裝備欄位點選裝備打開裝備清單時,每件裝備中都有研磨和洗鍊的按鈕」)
+    //   開 game_adv.js 研磨視窗(window._lxpsForgeOpen 帶 from),關掉後 _gearPickerRefresh 重畫;按鈕上顯示持有數,所有詞條都滿時研磨鈕變淡(仍可打開看)
+    try{
+      const _cuF = (window._artStyle === 'cute');
+      const _gN = (typeof backpackGet === 'function') ? (backpackGet('gear_grind_agent') || 0) : 0;
+      const _rN = (typeof backpackGet === 'function') ? (backpackGet('gear_reroll_agent') || 0) : 0;
+      const _canG = (typeof window._lxpsForgeCanUse === 'function') ? window._lxpsForgeCanUse(x.inst, 'grind') : true;
+      const _canR = (typeof window._lxpsForgeCanUse === 'function') ? window._lxpsForgeCanUse(x.inst, 'reroll') : true;
+      btns += '<button onclick="window._gearPickerForge(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\',\'grind\')" title="'
+        + (_canG ? (_cuF ? '把一條詞條磨得更強' : '研磨:強化一條詞條數值') : (_cuF ? '詞條都已經最高了' : '詞條皆已達上限')) + '" style="padding:7px 12px;font-size:15px;font-weight:800;'
+        + 'background:rgba(60,170,255,0.18);border:1.5px solid rgba(120,200,255,0.7);color:#cfeeff;border-radius:8px;cursor:pointer;font-family:inherit;' + (_canG ? '' : 'opacity:0.45;') + '">'
+        + '🧪 ' + (_cuF ? '研磨' : '研磨') + ' <span style="font-size:12px;opacity:0.85;">×' + _gN + '</span></button>';
+      btns += '<button onclick="window._gearPickerForge(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\',\'reroll\')" title="'
+        + (_cuF ? '把一條詞條洗成新的' : '洗鍊:重洗一條詞條') + '" style="padding:7px 12px;font-size:15px;font-weight:800;'
+        + 'background:rgba(210,110,255,0.18);border:1.5px solid rgba(230,160,255,0.7);color:#f4d8ff;border-radius:8px;cursor:pointer;font-family:inherit;' + (_canR ? '' : 'opacity:0.45;') + '">'
+        + '🎲 ' + (_cuF ? '洗鍊' : '洗鍊') + ' <span style="font-size:12px;opacity:0.85;">×' + _rN + '</span></button>';
+    }catch(_eFg){}
     // ★ v5.31.0 — 裝備 Phase 3:半價賣出(售價=定價÷2·確認視窗·裝備中會自動卸下)
     btns += '<button onclick="window._gearSell(\'' + x.eqUid + '\',\'' + nameEsc + '\',\'' + slot + '\')" style="padding:7px 12px;font-size:15px;font-weight:800;background:rgba(255,220,100,0.12);border:1.5px solid rgba(255,220,120,0.5);color:#ffe8a0;border-radius:8px;cursor:pointer;font-family:inherit;' + _lkOff + '">💰 賣出(半價)</button>';
     // ★ v5.31.0 — 裝備 Phase 4:送好友(整顆實例原樣送出·稀有+2/史詩+3/傳說+5/神話+8 心·受贈品轉送 0 心)
@@ -80606,6 +80623,13 @@ window._showGearSlotPicker = function(heroName, slot){
   document.body.appendChild(modal);
 };
 
+// ★ v5.400.0 圖鑑裝備清單 → 研磨視窗(game_adv.js);清單留在底下,研磨視窗關掉時由 _lxpsForgeClose 呼叫 _gearPickerRefresh 重畫
+window._gearPickerForge = function(eqUid, heroName, slot, mode){
+  try{
+    if(typeof window._lxpsForgeOpen !== 'function') return;
+    window._lxpsForgeOpen(eqUid, mode, { hero: heroName, slot: slot });
+  }catch(e){ console.warn('[圖鑑裝備研磨]', e); }
+};
 function _gearPickerRefresh(heroName, slot){
   try{
     const box = document.getElementById('hero-detail-content');

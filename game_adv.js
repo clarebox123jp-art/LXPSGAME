@@ -46275,10 +46275,12 @@ window._lxpsForgeResizeHook = function(){
     }, 150);
   });
 };
-window._lxpsForgeOpen = function(eqUid, mode){
+// ★ v5.400.0 from = { hero, slot }:從英雄圖鑑「裝備欄位」清單打開(game_battle.js window._gearPickerForge);關閉時重畫圖鑑＋清單,「換一件裝備」改成回裝備清單
+window._lxpsForgeOpen = function(eqUid, mode, from){
   try{
     window._lxpsCloseSellList();
-    window._lxpsForgeState = { uid: eqUid, mode: (mode === 'reroll' ? 'reroll' : 'grind'), sel: -1, busy: false, last: null };
+    window._lxpsForgeState = { uid: eqUid, mode: (mode === 'reroll' ? 'reroll' : 'grind'), sel: -1, busy: false, last: null,
+                               from: (from && from.hero && from.slot) ? { hero: String(from.hero), slot: String(from.slot) } : null };
     window._lxpsForgeRender();
     try{ playSfx('sfx-equip', 0.5); }catch(_){}
     try{ if(window._ftutOn) window._ftutOn('open'); }catch(_){}   // 鐵匠教學
@@ -46289,8 +46291,14 @@ window._lxpsForgeClose = function(back){
   try{ var S0 = window._lxpsForgeState; if(S0 && S0.pend) window._lxpsForgeChoose(false, true); }catch(_){}
   try{ var ov = document.getElementById('lxps-forge-ov'); if(ov) ov.remove(); }catch(_){}
   var m = window._lxpsForgeState && window._lxpsForgeState.mode;
+  var fr = window._lxpsForgeState && window._lxpsForgeState.from;
   window._lxpsForgeState = null;
   try{ if(typeof _renderBackpackMain === 'function') _renderBackpackMain(); }catch(_){}
+  if(fr){
+    // ★ v5.400.0 從圖鑑裝備清單來的:重畫圖鑑詳情＋重開同一部位清單(數值即時更新),不走背包的挑裝備清單
+    try{ if(typeof _gearPickerRefresh === 'function') _gearPickerRefresh(fr.hero, fr.slot); }catch(_){}
+    return;
+  }
   if(back) window._lxpsForgePick(m || 'grind');
 };
 window._lxpsForgeSetMode = function(mode){
@@ -46342,7 +46350,7 @@ window._lxpsForgeRender = function(){
     var h = '<div id="lxps-forge-card" role="dialog" aria-modal="true">'
       + '<div class="fg-head"><div class="fg-title">' + (isG ? '🧪 ' + T('裝備研磨', '裝備研磨') : '🎲 ' + T('裝備洗鍊', '裝備洗鍊')) + '</div>'
       +   (window._ftut ? '' : '<button type="button" class="fg-btn" onclick="window._lxpsForgeClose();window._ftutStart(true)">❓ ' + T('教學', '教學') + '</button>')
-      +   '<button type="button" class="fg-btn" onclick="window._lxpsForgeClose(true)">🔄 ' + T('換一件裝備', '更換裝備') + '</button>'
+      +   '<button type="button" class="fg-btn" onclick="window._lxpsForgeClose(true)">' + (S.from ? '🔙 ' + T('回裝備清單', '返回裝備清單') : '🔄 ' + T('換一件裝備', '更換裝備')) + '</button>'
       +   '<button type="button" class="fg-btn x" onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){} window._lxpsForgeClose()">✕ ' + T('關閉', '關閉') + '</button></div>'
       + '<div class="fg-modes">'
       +   '<button type="button" class="fg-mode g' + (isG ? ' on' : '') + '" onclick="window._lxpsForgeSetMode(\'grind\')">🧪 ' + T('研磨', '研磨') + '<small>' + T('數值變強', '強化詞條數值') + ' ・ ' + T('有 ', '持有 ') + gN + '</small></button>'
