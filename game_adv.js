@@ -44623,7 +44623,7 @@ function _renderShopProducts(){
         `}
       </div>
       <div style="font-size:15px;color:${_alreadyOwned?'#666':(canAfford?(_onSale?'#ff99bb':'#ffe066'):'#888')};text-align:center;line-height:1.2;">${_alreadyOwned?'—':'合計 '+total.toLocaleString()+'💰'}</div>
-      <button onclick="playSfx('sfx-coin',0.6);shopBuyItem('${prod.id}')" style="padding:8px 6px;font-size:18px;font-weight:800;
+      <button onclick="shopBuyItem('${prod.id}')" style="padding:8px 6px;font-size:18px;font-weight:800;
         background:${_btnBg};border:1.5px solid ${_btnBorder};color:${_btnColor};
         border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:1px;
         ${_btnEnabled?'':'pointer-events:none;'}">${_btnLabel}</button>
@@ -45155,7 +45155,13 @@ async function shopBuyItem(id, _portraitConfirmed){
   try{ if(typeof window._msShopTutNotify === 'function') window._msShopTutNotify('buy', id); }catch(_msTutE2){}
   try{ _checkMedalShop(); }catch(_){}
   _showInGameToast(`✅ 購買 ${prod.name} ×${qty}！支出 ${total.toLocaleString()} 知識幣`, '#44ff88', 2500);
-  try{ playSfx('sfx-powerup', 0.7); }catch(_){}
+  // ★ v5.403.0(2026-11-15・老師「超商購買成功的音效(很大聲那個)刪除,只保留跟販售一樣的錢幣音效」)
+  //   舊:按鈕按下 sfx-coin ＋ 成功 sfx-powerup(能力上升.mp3,很大聲)。新:按鈕不再出聲,成功只播與賣出(shopSellItem)同一支 sfx-sell-item(賣出.mp3)。
+  try{
+    const _sfxBuy = document.getElementById('sfx-sell-item');
+    if(_sfxBuy){ _sfxBuy.currentTime = 0; _sfxBuy.volume = 0.595; _sfxBuy.play().catch(()=>{}); }
+    else playSfx('sfx-coin', 0.7);
+  }catch(_){}
   // ★ 立即同步知識幣顯示（跟賣出時一致）
   _syncCoinsDisplay();
   // ★ 不用 openShopOverlay() 避免觸發 BGM 重播；只重新渲染商品列表與背包欄
@@ -55740,6 +55746,23 @@ function _openHeroCodexFromWbSwap(name){
 }
 try{ window._openHeroCodexFromWbSwap = _openHeroCodexFromWbSwap; }catch(_e){}
 
+// ★ v5.403.0(2026-11-15)英雄圖鑑 UR「🏆 老師頒發／答題獎章」旁的 ? → 展開/收起「怎麼拿到 UR?」說明框(預設收合,不記憶)
+window._hdUrHowToggle = function(btn){
+  try{
+    var host = btn, box = null;
+    for(var i = 0; i < 8 && host && !box; i++){
+      host = host.parentElement;
+      if(host) box = host.querySelector('._hd-ur-how');
+    }
+    if(!box) return;
+    var open = (box.style.display === 'none');
+    box.style.display = open ? '' : 'none';
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.textContent = open ? '✕' : '?';
+    try{ playSfx(open ? 'sfx-sel' : 'sfx-cancel', 0.4); }catch(_){}
+  }catch(_e){ console.warn('[v5.403.0 UR 取得方式 ?]', _e); }
+};
+
 function openHeroDetail(name) {
   const ov = document.getElementById('hero-detail-overlay');
   const box = document.getElementById('hero-detail-content');
@@ -56186,7 +56209,13 @@ function _renderHeroDetail(name, box) {
               return `<div style="margin:6px 0 4px;display:inline-block;font-size:24px;color:#c9a3ff;background:rgba(170,120,255,0.15);border:1.5px solid rgba(190,140,255,0.6);border-radius:9px;padding:4px 14px;letter-spacing:1px;font-weight:800;">🌌 異世界英雄</div>`;
             }
             if(_rr === 'UR'){
-              return `<div style="margin:6px 0 4px;display:inline-block;font-size:24px;color:#ffe08a;background:rgba(255,216,107,0.15);border:1.5px solid rgba(255,216,107,0.6);border-radius:9px;padding:4px 14px;letter-spacing:1px;font-weight:800;">🏆 老師頒發／答題獎章</div>`;
+              // ★ v5.403.0(2026-11-15・老師「英雄圖鑑『怎麼拿到UR?』的視窗改成預設收合到『老師頒發/答題獎章』旁的?」)
+              //   UR 取得方式說明框(._hd-ur-how)預設 display:none,點這顆 ? 展開/再點收起(window._hdUrHowToggle)。
+              const _cuQ = (window._artStyle === 'cute');
+              return `<div style="margin:6px 0 4px;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;">`
+                + `<div style="display:inline-block;font-size:24px;color:#ffe08a;background:rgba(255,216,107,0.15);border:1.5px solid rgba(255,216,107,0.6);border-radius:9px;padding:4px 14px;letter-spacing:1px;font-weight:800;">🏆 老師頒發／答題獎章</div>`
+                + `<button type="button" class="_hd-ur-how-q" aria-expanded="false" onclick="window._hdUrHowToggle&&window._hdUrHowToggle(this)" title="${_cuQ ? '怎麼拿到 UR?點我看' : '點擊查看 UR 取得方式'}" style="width:54px;height:54px;border-radius:50%;padding:0;font-size:32px;font-weight:900;line-height:1;cursor:pointer;font-family:inherit;color:#1a1200;background:linear-gradient(135deg,#ffe08a,#ffb84a);border:2px solid #fff3c8;box-shadow:0 0 10px rgba(255,216,107,0.55);flex:0 0 auto;">?</button>`
+                + `</div>`;
             }
             if(_rr === 'R' && !_isEvt){
               return `<div style="margin:6px 0 4px;display:inline-block;font-size:24px;color:#8fbcff;background:rgba(100,160,255,0.15);border:1.5px solid rgba(120,170,255,0.6);border-radius:9px;padding:4px 14px;letter-spacing:1px;font-weight:800;">🏫 初始校園英雄</div>`;
@@ -56208,7 +56237,11 @@ function _renderHeroDetail(name, box) {
                  '② <b style="color:#7fe3ff;">累積答對不重複的題目 2000／4000／6000 題</b>(冒險、考試複習、小遊戲、荒島、知識王皆計入),三枚答題獎章各附 1 張 <b style="color:#ffe08a;">UR 自選召喚卷</b>;進度見關卡選擇頁「🏅 獎章」→「答題」。',
                  '③ 已持有 UR 者可使用「UR 英雄替換卷」換成這一位。'];
             const _ft = _cuU ? '召喚星空抽不到 UR;UR 只能在冒險用,鬥技場不能上場喔!' : '※ 召喚星空與鬥技場商店皆不出 UR;UR 僅用於冒險,鬥技場不可上場。';
-            return `<div class="_hd-ur-how" style="margin:6px 0 10px;padding:10px 16px;background:rgba(255,216,107,0.10);border:2px solid rgba(255,216,107,0.5);border-radius:10px;font-size:20px;color:#fff3c8;line-height:1.55;font-weight:600;">`
+            // ★ v5.403.0 預設收合(由稀有度標籤旁的 ? 展開);萬一標籤沒畫出來(例如被其他來源標籤搶先),就直接顯示不收合,免得看不到
+            const _urQOk = !((typeof CHINA_EXCLUSIVE_HEROES !== 'undefined' && CHINA_EXCLUSIVE_HEROES.has && CHINA_EXCLUSIVE_HEROES.has(name))
+              || (typeof EGYPT_EXCLUSIVE_HEROES !== 'undefined' && EGYPT_EXCLUSIVE_HEROES.has && EGYPT_EXCLUSIVE_HEROES.has(name))
+              || (window._STUDENT_DESIGNED_HERO_SET && window._STUDENT_DESIGNED_HERO_SET.has && window._STUDENT_DESIGNED_HERO_SET.has(name) && _getHeroRarity(name) === 'SSR'));
+            return `<div class="_hd-ur-how" style="${_urQOk ? 'display:none;' : ''}margin:6px 0 10px;padding:10px 16px;background:rgba(255,216,107,0.10);border:2px solid rgba(255,216,107,0.5);border-radius:10px;font-size:20px;color:#fff3c8;line-height:1.55;font-weight:600;">`
               + `<div style="font-weight:900;color:#ffe08a;margin-bottom:4px;">🔓 ${_cuU ? '怎麼拿到 UR?' : 'UR 取得方式'}</div>`
               + _li.map(function(t){ return '<div>' + t + '</div>'; }).join('')
               + `<div style="font-size:16px;color:#cbb;margin-top:4px;">${_ft}</div></div>`;
