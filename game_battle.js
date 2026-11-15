@@ -19435,7 +19435,17 @@ window._BURST_VIDEO_DB = window._BURST_VIDEO_DB || {
   '究極神兵': { url: _BV_RAW('究極神兵動畫.mp4') },
   // ★ v5.391.0 — 第七、八隻 UR 爆發動畫(2026-11-13 老師 Google Vids 生成;540×960 輕量版;新檔名、無舊快取 ⇒ 不需 bump _BV_ASSET_VER)
   '媽祖': { url: _BV_RAW('媽祖動畫.mp4') },
-  '鄭成功': { url: _BV_RAW('鄭成功動畫.mp4') }
+  '鄭成功': { url: _BV_RAW('鄭成功動畫.mp4') },
+  // ★ v5.412.0(2026-11-15)— 中國關《繪卷新章》七位 SSR 爆發動畫(老師 Gemini 生成、Claude 剪成 6 秒 540×960 輕量版;只有音效)。
+  //   標準流程一筆=戰鬥爆發+圖鑑欣賞雙處自動生效;七位皆招募英雄、無 BOSS 版 ⇒ 不帶 bossSide;新檔名無舊快取 ⇒ 不需 bump _BV_ASSET_VER。
+  //   影片未上傳前 _playBurstVideo 的 onerror/5s 兜底自動退回 BURST_GIF_DB 既有 GIF。
+  '楊戩':   { url: _BV_RAW('楊戩動畫.mp4') },
+  '劉備':   { url: _BV_RAW('劉備動畫.mp4') },
+  '張飛':   { url: _BV_RAW('張飛動畫.mp4') },
+  '趙雲':   { url: _BV_RAW('趙雲動畫.mp4') },
+  '唐三藏': { url: _BV_RAW('唐三藏動畫.mp4') },
+  '豬八戒': { url: _BV_RAW('豬八戒動畫.mp4') },
+  '沙悟淨': { url: _BV_RAW('沙悟淨動畫.mp4') }
 };
 window._SKILL_VIDEO_DB = window._SKILL_VIDEO_DB || {
   // 英雄名 → 特定技能+條件才播(魔劍姬僅在爆發「魔尊覺醒」再行動狀態下的 0 消耗 S1)
