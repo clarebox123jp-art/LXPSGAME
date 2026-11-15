@@ -1694,7 +1694,8 @@ try{
     }
     // 識別當前玩家的隊伍(高亮)
     const _myUid = window._gUserId || '';
-    list.innerHTML = entries.map((e, i) => {
+    // ★ v5.405.0(2026-11-15・老師「重新排版龍王戰排行榜」)— 先把每隊做成卡片,最後再分「前五名」(1~3 名一行、4~5 名一行)與「第 6 名以後」兩區
+    const _lbCards = entries.map((e, i) => {
       const rank = i + 1;
       const isMyTeam = e.teamKey && _myUid && e.teamKey.indexOf(_myUid) >= 0;
       let rankIcon = '#' + rank;
@@ -1891,34 +1892,54 @@ try{
           '📜 展開每場戰績(' + e.battleHistory.length + ')</button>';
       }
 
+      // ★ v5.405.0 精簡卡片:第一行「名次＋玩家名＋總傷害」,下面只留 2 行(陣容＋最佳表現/場次＋最近一場＋展開鈕)
+      //   陣容與最佳表現合成一行:最佳表現圖示直接標在那隻英雄後面(🗡最高傷害 💚最高治療 🛡最強肉盾 🎯最強控場)
+      const _csX = e.championStats || null;
+      const _bpList = _csX ? [['🗡', _csX.topDmg, '最高傷害'], ['💚', _csX.topHeal, '最高治療'], ['🛡', _csX.topTank, '最強肉盾'], ['🎯', _csX.topCtrl, '最強控場']]
+          .filter(function(x){ return x[1] && x[1].name; }) : [];
+      const _bpUsed = {};
+      const _heroArr = (Array.isArray(e.teamHeroes) && e.teamHeroes.length) ? e.teamHeroes.slice(0, 4) : [];
+      const _hl = _heroArr.map(function(h, hi){
+          const _hn = (h && h.name) || '?';
+          const _ic = _bpList.filter(function(x, xi){ if(x[1].name === _hn){ _bpUsed[xi] = 1; return true; } return false; })
+            .map(function(x){ return '<span title="' + x[2] + '">' + x[0] + '</span>'; }).join('');
+          return '<span class="wb-lbc-h"><b>' + _esc(_hn) + '</b><i>' + ((h && h.lv) || 1) + '</i>' + (_ic ? '<span class="wb-lbc-ic">' + _ic + '</span>' : '') + '</span>';
+        }).join('・');
+      const _bp = _bpList.filter(function(x, xi){ return !_bpUsed[xi]; })
+        .map(function(x){ return '<span title="' + x[2] + '">' + x[0] + '<b>' + _esc(x[1].name) + '</b></span>'; }).join(' ');
+      const _bonusN = (e.bonusBattleCount || 0) + (e.bonusTicketCount || 0);
+      let _lastTxt = '';
+      if(_lastBh && _lastBh.at){
+        const _t2 = new Date(_lastBh.at);
+        const _p2 = function(n){ return n < 10 ? '0' + n : '' + n; };
+        _lastTxt = '🕒' + (_t2.getMonth() + 1) + '/' + _t2.getDate() + ' ' + _p2(_t2.getHours()) + ':' + _p2(_t2.getMinutes())
+          + ' ⏱' + (_lastBh.turns || '—') + '回 📚' + (_lastBh.qc || 0) + '題 💥' + (_lastBh.tb || 0);
+      }
+      const _l2 = '⚔ ' + (e.battles || 0) + ' 場'
+        + (_bonusN > 0 ? '<span style="color:#ff88bb;" title="每日儲備場次(含 GM 補償與挑戰入場券),傷害計入排行榜總傷">(含🎁' + _bonusN + ')</span>' : '')
+        + (_todayCountTxt ? '・' + _todayCountTxt : '')
+        + (_lastTxt ? '・<span class="wb-lbc-last">' + _lastTxt + '</span>' : '');
+      const _hbtn = (Array.isArray(e.battleHistory) && e.battleHistory.length > 0)
+        ? ' <button class="_wb-player-history-btn wb-lbc-hb" data-teamkey="' + (e.teamKey || '').replace(/"/g, '&quot;') + '">📜 每場(' + e.battleHistory.length + ')</button>'
+        : '';
       return ''
-        + '<div class="wb-lb-row" style="display:grid;grid-template-columns:55px 1fr 130px;align-items:center;gap:12px;'
-        + 'padding:12px 16px;background:' + _bg + ';border:' + _border + ';border-radius:10px;">'
-        + '<div style="font-size:28px;font-weight:800;text-align:center;color:' + (rank<=3?'#ffe066':'#aabbdd') + ';">'
-        +   rankIcon
-        + '</div>'
-        + '<div style="font-size:20px;line-height:1.5;color:#ffe8a0;overflow:hidden;text-overflow:ellipsis;">'
-        +   '<div style="font-weight:700;">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;font-weight:800;">(你)</span>' : '') + '</div>'
-        +   _heroesRow            // ★ v3.5.43 — 四隻參戰英雄 + 等級
-        +   _championsRow         // ★ v3.5.43 — 四英雄冠軍(已排除答題+聯手爆發)
-        +   _lastBattleRow        // ★ v3.10.18 — 最近一場時間 + MVP
-        +   '<div style="font-size:13px;color:#aaa;margin-top:4px;">' + (e.battles||0) + ' 場累積'
-        +       (((e.bonusBattleCount||0) + (e.bonusTicketCount||0)) > 0
-              ? ' <span style="color:#ff88bb;font-weight:700;" title="每日儲備場次(含 GM 補償與挑戰入場券),傷害計入排行榜總傷">🎁 含 ' + ((e.bonusBattleCount||0) + (e.bonusTicketCount||0)) + ' 場每日儲備</span>'
-              : '')
-        +       /* ★ v3.13.7 — 入場券場次累計徽章(綠色,跟 GM 補償粉色區分) */
-                (false && (e.bonusTicketCount||0) > 0
-              ? ' <span style="color:#66ddaa;font-weight:700;" title="使用世界 BOSS 挑戰入場券打的額外場次,傷害計入排行榜總傷">🎁 含 ' + e.bonusTicketCount + ' 場每日儲備</span>'
-              : '')
-        +       (_todayCountTxt ? ' · ' + _todayCountTxt : '')
+        + '<div class="wb-lbc' + (isMyTeam ? ' is-me' : '') + '" style="background:' + _bg + ';border:' + _border + ';">'
+        +   '<div class="wb-lbc-top">'
+        +     '<span class="wb-lbc-rk" style="color:' + (rank <= 3 ? '#ffe066' : '#aabbdd') + ';">' + rankIcon + '</span>'
+        +     '<span class="wb-lbc-nm' + (_nmList.length > 1 ? ' multi' : '') + '">' + _namesHtml + (isMyTeam ? ' <span style="color:#ffe066;">(你)</span>' : '') + '</span>'
+        +     '<span class="wb-lbc-dmg">' + _formatDmg(e.totalDmg || 0) + '</span>'
         +   '</div>'
-        +   _myHistoryBtn         // ★ v3.12.9 — 所有人都能展開每場
-        + '</div>'
-        + '<div style="font-size:26px;font-weight:800;color:#ff8866;text-align:right;text-shadow:0 0 6px rgba(255,120,80,0.4);">'
-        +   _formatDmg(e.totalDmg || 0)
-        + '</div>'
+        +   '<div class="wb-lbc-l1">' + (_hl ? '👥 ' + _hl : '') + (_bp ? '<span class="wb-lbc-bp">' + (_hl ? '｜' : '') + _bp + '</span>' : '') + '</div>'
+        +   '<div class="wb-lbc-l2">' + _l2 + _hbtn + '</div>'
         + '</div>';
-    }).join('');
+    });
+    const _cuLb = (typeof _artStyle !== 'undefined' && _artStyle === 'cute');
+    const _top3 = _lbCards.slice(0, 3), _t45 = _lbCards.slice(3, 5), _rest = _lbCards.slice(5);
+    list.innerHTML = ''
+      + '<div class="wb-lb-sec">👑 ' + (_cuLb ? '最厲害的前五名' : '前五名') + '</div>'
+      + '<div class="wb-lb-g3">' + _top3.join('') + '</div>'
+      + (_t45.length ? '<div class="wb-lb-g2">' + _t45.join('') + '</div>' : '')
+      + (_rest.length ? '<div class="wb-lb-sec wb-lb-sec2">📋 ' + (_cuLb ? '其他隊伍(第 6 名以後)' : '第 6 名以後') + '</div><div class="wb-lb-gr">' + _rest.join('') + '</div>' : '');
   }
   // 首次渲染
   _renderLb();
@@ -15889,4 +15910,81 @@ try{
     #wb-entry-overlay #wb-leaderboard-list [style*="font-size:11px"]{ font-size:11px !important; }
     #wb-entry-overlay .wb-back-top{ font-size:17px !important; padding:10px 28px; margin-top:18px; }
   }
+</style>
+
+<!-- ★ v5.405.0(2026-11-15・老師截圖「重新排版龍王戰排行榜:1.『當前排行榜』標題字體放大 2.分成前五名區和第六名以後區,前三名欄位放大一起在同一行,
+     第四五名並列在第二行。所有玩家名稱字體都放大顯示。空白區域很多,把陣容、最佳表現、場次傷害等所有資訊精簡成 2 行字」)
+     _renderLb 改出 .wb-lbc 卡片,分 .wb-lb-g3(1~3 名)/.wb-lb-g2(4~5 名)/.wb-lb-gr(6 名以後,兩欄)。蓋過 v5.403.0 #wb-lobby-compact-css 的兩欄 grid。
+     iPad 用預設值;PC 由 #lxps-pc-zoom-js 依螢幕放大;手機橫放在下方 @media 另一組。 -->
+<style id="wb-lb-v5405-css">
+  #wb-entry-overlay #wb-current-leaderboard > div:first-child > div:first-child{ font-size:34px !important; letter-spacing:3px !important; }
+  #wb-entry-overlay #wb-leaderboard-refresh-btn{ font-size:18px !important; padding:8px 16px !important; }
+  #wb-entry-overlay #wb-leaderboard-list{ display:block !important; }
+  #wb-entry-overlay .wb-lb-sec{ font-size:22px !important; font-weight:900; color:#ffe066; letter-spacing:2px; margin:6px 2px 8px; }
+  #wb-entry-overlay .wb-lb-sec2{ margin-top:18px; color:#c8b8ff; }
+  #wb-entry-overlay .wb-lb-g3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+  #wb-entry-overlay .wb-lb-g2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:10px; }
+  #wb-entry-overlay .wb-lb-gr{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  #wb-entry-overlay .wb-lbc{ min-width:0; padding:10px 14px; border-radius:12px; box-sizing:border-box; }
+  #wb-entry-overlay .wb-lbc-top{ display:flex; align-items:center; gap:10px; }
+  #wb-entry-overlay .wb-lbc-rk{ flex:0 0 auto; font-size:26px; font-weight:900; line-height:1; }
+  #wb-entry-overlay .wb-lbc-nm{ flex:1 1 auto; min-width:0; font-size:21px; font-weight:900; color:#ffe8a0; line-height:1.25; word-break:break-all; }
+  #wb-entry-overlay .wb-lbc-dmg{ flex:0 0 auto; font-size:22px; font-weight:900; color:#ff8866; text-shadow:0 0 6px rgba(255,120,80,0.4); }
+  #wb-entry-overlay .wb-lbc-l1,
+  #wb-entry-overlay .wb-lbc-l2{ font-size:14px; color:#cfc6e6; line-height:1.5; margin-top:4px; }
+  #wb-entry-overlay .wb-lbc-l1 b{ font-weight:800; color:#e8dcff; }
+  #wb-entry-overlay .wb-lbc-l1 i{ font-style:normal; color:#ffd066; font-size:0.85em; margin-left:2px; }
+  #wb-entry-overlay .wb-lbc-bp{ white-space:nowrap; }
+  #wb-entry-overlay .wb-lbc-bp b{ margin-left:1px; margin-right:4px; }
+  #wb-entry-overlay .wb-lbc-last{ color:#aabbdd; white-space:nowrap; }
+  #wb-entry-overlay .wb-lbc-hb{ margin-left:6px; padding:2px 10px; font-size:13px; font-weight:800; cursor:pointer; vertical-align:middle;
+    background:linear-gradient(135deg,rgba(80,150,200,0.4),rgba(40,100,160,0.6)); border:1.5px solid #66bbdd; color:#cce8ff; border-radius:6px; font-family:inherit; }
+  /* 前三名:欄位放大 */
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc{ padding:14px 16px; border-width:2px !important; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-rk{ font-size:40px; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-nm{ font-size:26px; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-dmg{ font-size:28px; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-l1,
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-l2{ font-size:15px; }
+  /* 4、5 名 */
+  #wb-entry-overlay .wb-lb-g2 .wb-lbc-rk{ font-size:30px; }
+  #wb-entry-overlay .wb-lb-g2 .wb-lbc-nm{ font-size:24px; }
+  #wb-entry-overlay .wb-lb-g2 .wb-lbc-dmg{ font-size:26px; }
+  #wb-entry-overlay .wb-lbc.is-me{ box-shadow:0 0 12px rgba(255,224,102,0.45); }
+  @media (max-width:700px){
+    #wb-entry-overlay .wb-lb-g3, #wb-entry-overlay .wb-lb-g2, #wb-entry-overlay .wb-lb-gr{ grid-template-columns:minmax(0,1fr); }
+  }
+  /* 手機橫放 */
+  @media (orientation:landscape) and (max-height:520px){
+    #wb-entry-overlay #wb-current-leaderboard > div:first-child > div:first-child{ font-size:22px !important; }
+    #wb-entry-overlay #wb-leaderboard-refresh-btn{ font-size:13px !important; padding:5px 10px !important; }
+    #wb-entry-overlay .wb-lb-sec{ font-size:15px !important; }
+    #wb-entry-overlay .wb-lbc{ padding:7px 9px; }
+    #wb-entry-overlay .wb-lb-g3 .wb-lbc{ padding:8px 9px; }
+    #wb-entry-overlay .wb-lbc-rk, #wb-entry-overlay .wb-lb-g2 .wb-lbc-rk{ font-size:18px; }
+    #wb-entry-overlay .wb-lb-g3 .wb-lbc-rk{ font-size:24px; }
+    #wb-entry-overlay .wb-lbc-nm, #wb-entry-overlay .wb-lb-g2 .wb-lbc-nm{ font-size:15px; }
+    #wb-entry-overlay .wb-lb-g3 .wb-lbc-nm{ font-size:16px; }
+    #wb-entry-overlay .wb-lbc-dmg, #wb-entry-overlay .wb-lb-g2 .wb-lbc-dmg{ font-size:15px; }
+    #wb-entry-overlay .wb-lb-g3 .wb-lbc-dmg{ font-size:17px; }
+    #wb-entry-overlay .wb-lbc-l1, #wb-entry-overlay .wb-lbc-l2,
+    #wb-entry-overlay .wb-lb-g3 .wb-lbc-l1, #wb-entry-overlay .wb-lb-g3 .wb-lbc-l2{ font-size:11px; }
+    #wb-entry-overlay .wb-lbc-hb{ font-size:11px; padding:1px 6px; }
+  }
+</style>
+<style id="wb-lb-v5405b-css">
+  /* 前三名卡比較窄:名次＋傷害在第一行,玩家名獨立一行(大字);多人隊伍名字稍小 */
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-top{ flex-wrap:wrap; row-gap:4px; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-dmg{ margin-left:auto; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-nm{ order:3; flex:1 0 100%; }
+  #wb-entry-overlay .wb-lb-g3 .wb-lbc-nm.multi{ font-size:21px; }
+  #wb-entry-overlay .wb-lb-g2 .wb-lbc-nm.multi, #wb-entry-overlay .wb-lb-gr .wb-lbc-nm.multi{ font-size:19px; }
+  @media (orientation:landscape) and (max-height:520px){ #wb-entry-overlay .wb-lbc-nm.multi, #wb-entry-overlay .wb-lb-g3 .wb-lbc-nm.multi{ font-size:13px; } }
+  #wb-entry-overlay .wb-lbc-last{ white-space:normal; }
+</style>
+<style id="wb-lb-v5405c-css">
+  #wb-entry-overlay .wb-lbc-ic{ margin-left:1px; letter-spacing:-1px; }
+</style>
+<style id="wb-lb-v5405d-css">
+  #wb-entry-overlay .wb-lbc-h{ white-space:nowrap; }
 </style>
