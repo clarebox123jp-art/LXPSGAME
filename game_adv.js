@@ -24447,7 +24447,22 @@ window._advRecordBattleResult = function(battleId, type, payload){
   };
   const _check = function(){
     try{
-      if(!_inBattle()){ _reparentDone = false; return; }
+      if(!_inBattle()){
+        _reparentDone = false;
+        // ★ v5.408.0(老師 11-15「打完第一場小怪後按暫時先回到學校,左下戰報和 SOS 沒隱藏,擋到召喚」)
+        //   兜底:這兩顆鈕只有本 watchdog 會在戰鬥中把它顯示出來,所以「不在戰鬥中」時一律收起,
+        //   任何漏掉隱藏的離開戰鬥路徑(例如小怪戰「先回學校」)都會在 1.5 秒內自動收掉。
+        try{
+          _ids.forEach(function(id){
+            const btn = document.getElementById(id);
+            if(btn && btn.style.display !== 'none'){
+              btn.style.display = 'none';
+              if(id === 'adv-battle-help-fab'){ btn.dataset.state = ''; btn.style.animation = 'none'; }
+            }
+          });
+        }catch(_){}
+        return;
+      }
       // ① 逃出 stacking context:掛到 body 最末端(每場戰鬥做一次即可,避免反覆 reflow)
       if(!_reparentDone){
         _ids.forEach(function(id){
@@ -71125,6 +71140,14 @@ async function advMiniResultGoHome() {
     // 隱藏戰鬥畫面
     const gc = document.getElementById('gc');
     if(gc){ gc.classList.remove('adv-battle'); }
+    // ★ v5.408.0 — 小怪戰「先回學校」也要收起左下 🆘 與「戰報」鈕(原本只有其他回選關頁路徑會收,這條漏掉 → 擋到選單「召喚」)
+    try{
+      const _sosH = document.getElementById('adv-battle-help-fab');
+      if(_sosH){ _sosH.style.display = 'none'; _sosH.dataset.state = ''; _sosH.style.animation = 'none'; }
+      const _logH = document.getElementById('log-toggle-btn');
+      if(_logH) _logH.style.display = 'none';
+      if(typeof window._collapseBattleLog === 'function') window._collapseBattleLog();
+    }catch(_){}
     // 重置冒險戰鬥旗標（不完全退出冒險模式）
     _adventureMode = false;
     _advMiniBattleActive = false;
