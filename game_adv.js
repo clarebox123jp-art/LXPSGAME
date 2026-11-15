@@ -77026,7 +77026,8 @@ function openMonsterDetail(name) {
     }catch(_eDrop){ console.warn('[v5.67.0 魔物圖鑑掉落情報] 失敗', _eDrop); return ''; }
   })();
 
-  box.innerHTML = `
+  // ★ v5.404.0 整頁內容包一層 ._md-zoom(iPad 由 index.html #lxps-ipad-item-css 放大魔物詳情;英雄詳情不受影響)
+  box.innerHTML = `<div class="_md-zoom">
     <div style="position:sticky;top:0;z-index:10;margin-bottom:16px;display:flex;gap:10px;align-items:center;">
       <button onclick="playSfx('sfx-cancel',0.4);closeHeroDetail();openMonsterPage();" style="padding:10px 24px;font-size:26px;font-weight:800;
         background:rgba(40,10,10,0.85);border:2px solid rgba(220,80,80,0.6);
@@ -77172,7 +77173,7 @@ function openMonsterDetail(name) {
       if(!drops.length&&!rt&&!_twDropHtml) return '';
       let rows=drops.map(d=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,0.05);margin-bottom:6px;"><span style="font-size:24px;min-width:32px;">'+d.icon+'</span><span style="flex:1;font-size:18px;color:#ddd;">'+d.name+(d.note?'<span style="color:#666;font-size:14px;margin-left:6px;">（'+d.note+'）</span>':'')+' </span><span style="font-size:18px;font-weight:700;color:#ffcc44;">'+d.rate+'</span></div>').join('');
       return '<div style="margin-top:20px;padding:16px 20px;background:rgba(255,200,0,0.06);border-radius:14px;border:1px solid rgba(255,200,0,0.25);"><div style="font-size:22px;font-weight:900;color:#ffe066;margin-bottom:10px;">🎁 掉落物與獎勵</div>'+(rt?'<div style="margin-bottom:10px;font-size:18px;">'+rt+'</div>':'')+rows+_twDropHtml+'</div>';
-    })()}`;
+    })()}</div>`;
   ov.style.display = 'flex';
 }
 
