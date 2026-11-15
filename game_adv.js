@@ -10911,7 +10911,7 @@ window._showTaiwanMap = function(){
     'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);' +
     'border:1.5px solid rgba(120,200,255,0.25);' +
     'box-shadow:0 8px 24px rgba(0,0,0,0.5);' +
-    'justify-content:space-around;z-index:10;';
+    'justify-content:flex-start;z-index:10;';   // ★ v5.413.0 space-around 超出時頂端捲不到 → 改卡片 margin:auto(安全平均分配)
   ((_twCh === 2) ? window._TW2.leftIds : TAIWAN_LEFT_BOSSES).forEach(bossId => {   // ★ v5.308.0 依章節
     const c = buildBossCard(bossId);
     if(c) leftCol.appendChild(c);
@@ -10992,7 +10992,7 @@ window._showTaiwanMap = function(){
   const rightCol = document.createElement('div');
   rightCol.className = 'taiwan-map-side-col taiwan-map-right-col';
   rightCol.style.cssText =
-    'position:absolute;right:8px;top:80px;bottom:8px;' +
+    'position:absolute;right:8px;top:8px;bottom:8px;' +   // ★ v5.413.0 原 top:80px → 與左欄同高(老師 PC 回報右欄比左欄矮)
     'width:clamp(260px,22vw,340px);' +
     'display:flex;flex-direction:column;gap:14px;' +
     'overflow-y:auto;-webkit-overflow-scrolling:touch;' +
@@ -11001,14 +11001,48 @@ window._showTaiwanMap = function(){
     'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);' +
     'border:1.5px solid rgba(120,200,255,0.25);' +
     'box-shadow:0 8px 24px rgba(0,0,0,0.5);' +
-    'justify-content:space-around;z-index:10;';
+    'justify-content:flex-start;z-index:10;';   // ★ v5.413.0 space-around 超出時頂端捲不到 → 改卡片 margin:auto(安全平均分配)
   ((_twCh === 2) ? window._TW2.rightIds : TAIWAN_RIGHT_BOSSES).forEach(bossId => {   // ★ v5.308.0 依章節
     const c = buildBossCard(bossId);
     if(c) rightCol.appendChild(c);
   });
   mainArea.appendChild(rightCol);
 
+  // ★ v5.413.0 — 左右 BOSS 欄等高對齊(第一章/第二章、三平台共用):
+  //   卡片用 margin:auto 平均分配(空間夠時同 space-around;不夠時自動歸零,第一張不會被切到),
+  //   欄內可捲動;若右上控制列壓到欄位頂端,左右兩欄一起往下移同樣距離,維持等高。
+  if(!document.getElementById('_tw-col-css')){
+    const _cc = document.createElement('style');
+    _cc.id = '_tw-col-css';
+    _cc.textContent =
+      '#taiwan-map-overlay .taiwan-map-side-col>.taiwan-boss-card{margin-top:auto;margin-bottom:auto;}' +
+      '#taiwan-map-overlay .taiwan-map-side-col{overscroll-behavior:contain;scrollbar-width:thin;}';
+    document.head.appendChild(_cc);
+  }
+  const _twAlignCols = function(){
+    try{
+      if(!ov.isConnected) return;
+      const _cb = document.getElementById('taiwan-map-ctrl-bar');
+      const _mt = mainArea.getBoundingClientRect().top;
+      let _top = 8;
+      if(_cb){
+        const _z = (mainArea.getBoundingClientRect().height / (mainArea.offsetHeight || 1)) || 1;   // PC zoom 換算
+        const _ov = (_cb.getBoundingClientRect().bottom - _mt) / _z + 6;
+        if(_ov > _top) _top = Math.ceil(_ov);
+      }
+      leftCol.style.top = _top + 'px';
+      rightCol.style.top = _top + 'px';
+    }catch(_eAl){}
+  };
+  const _twOnResize = function(){
+    if(!ov.isConnected){ window.removeEventListener('resize', _twOnResize); return; }
+    _twAlignCols();
+  };
+  window.addEventListener('resize', _twOnResize);
+
   document.body.appendChild(ov);
+  _twAlignCols();
+  setTimeout(_twAlignCols, 300);
 
   // 返回按鈕
   document.getElementById('taiwan-map-back').onclick = function(){
