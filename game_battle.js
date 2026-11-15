@@ -13741,6 +13741,28 @@ function recommendTeamPick(){
   }
   window._lxpsCounterAces = _aceSet;                      // 供卡片標「🎯 本關剋星」
   if(!_pick.length) _pick = _scored.slice(0, 4).map(function(x){ return x.n; });
+  // ★ v5.411.0(老師 11-15 14:34「推薦陣容 UR 只能兩隻」)— 冒險隊伍 UR 上限(_LXPS_ADV_UR_MAX,目前 2)。
+  //   推薦流程(定位配額、剋星保障席、補滿)都沒看 UR 上限 ⇒ 會推出 3~4 隻 UR,按確認出戰才被擋。
+  //   在這裡統一收尾:依序保留前 2 隻 UR,多的換成「分數最高、不是 UR、還沒選」的英雄;沒人可換就直接拿掉。
+  //   鬥技場 UR 本來就不能上場(池子不含 UR),只套冒險。
+  try{
+    if(_isAdv && typeof window._lxpsIsUR === 'function'){
+      var _urMax = (window._LXPS_ADV_UR_MAX | 0) || 2, _urN = 0, _capPick = [];
+      _pick.forEach(function(_n){
+        if(window._lxpsIsUR(_n)){
+          if(_urN < _urMax){ _urN++; _capPick.push(_n); }
+          else { try{ delete _aceSet[_n]; }catch(_){} }
+        } else _capPick.push(_n);
+      });
+      if(_capPick.length < _pick.length){
+        for(var _ci = 0; _ci < _scored.length && _capPick.length < 4; _ci++){
+          var _cn = _scored[_ci].n;
+          if(_capPick.indexOf(_cn) < 0 && !window._lxpsIsUR(_cn)) _capPick.push(_cn);
+        }
+        _pick = _capPick;
+      }
+    }
+  }catch(_eUrCap){ console.warn('[v5.411.0 推薦陣容 UR 上限]', _eUrCap); }
 
   // ── ⑥ 套進選擇狀態(與 randomTeamPick 同口徑:整隊重抽 → 玩家仍可自由單獨調整)──
   try{
