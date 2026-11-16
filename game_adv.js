@@ -42201,6 +42201,7 @@ function _playSummon10xFx(onDone){
     try{ var _oldFx = document.getElementById('summon-fx-layer'); if(_oldFx){ _oldFx.innerHTML = ''; _oldFx.style.display = 'none'; } }catch(_){}
     _ov = document.createElement('div');
     _ov.id = '_summon-10x-ov';
+    _ov.setAttribute('data-lxps-no-pczoom', '1');   // ★ v5.414.0 全螢幕黑幕自己撐滿,不吃 PC 全域放大(避免再被 zoom 疊乘)
     _ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:#000;opacity:0;transition:opacity 0.4s ease;display:flex;align-items:center;justify-content:center;overflow:hidden;';
     // 影片本體(等比置中·max 填滿不裁切·黑底補滿)
     vid = document.createElement('video');
@@ -42210,7 +42211,10 @@ function _playSummon10xFx(onDone){
     vid.preload = 'auto';
     vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
     vid.playsInline = true;
-    vid.style.cssText = 'max-width:100%;max-height:100%;width:auto;height:auto;display:block;background:#000;';
+    // ★ v5.414.0(老師 2026-11-16「PC 版召喚星空的動畫改回全螢幕」)— 舊寫法 max-width/max-height:100% + width/height:auto 只會「縮小」不會「放大」:
+    //   影片原尺寸 1280×720,在 2557×1375 的 PC 上只顯示約 1400×788、四周大片黑邊。改 width/height:100% + object-fit:contain
+    //   ⇒ 任何螢幕都等比撐到最大(16:9 螢幕全滿,4:3 iPad 上下留黑不裁切,手機橫向同理)。
+    vid.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;background:#000;';
     vid.onended = _finish;
     vid.onerror = _finish;   // 影片抓不到就直接進結果,不卡關
     _ov.appendChild(vid);
@@ -45716,7 +45720,11 @@ window._lxpsBagCapCss = function(){
       + '#lxps-sell-card .sl-title{flex:1;font-size:32px;font-weight:900;color:#ffd98a;letter-spacing:1px;}'
       + '#lxps-sell-card .sl-coin{font-size:22px;font-weight:800;color:#ffee88;background:rgba(255,180,0,0.15);border:1.5px solid rgba(255,180,50,0.5);padding:4px 12px;border-radius:10px;white-space:nowrap;}'
       + '#lxps-sell-card .sl-close{min-width:88px;min-height:44px;padding:6px 16px;font-size:18px;font-weight:800;background:rgba(70,20,20,0.55);border:2px solid #e86a6a;color:#ffd0d0;border-radius:10px;cursor:pointer;font-family:inherit;}'
-      + '#lxps-sell-card .sl-cap{padding:0 18px 6px;font-size:20px;font-weight:700;color:#d8c7a0;}'
+      + '#lxps-sell-card .sl-cap{padding:0 18px 6px;font-size:20px;font-weight:700;color:#d8c7a0;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}'
+      // ★ v5.414.0 視窗頂端「一鍵賣出所有戰利品」(同超商那顆:不分目前停在哪個分頁都能按)
+      + '#lxps-sell-card .sl-topall{flex:0 0 auto;min-height:44px;padding:6px 18px;font-size:21px;font-weight:900;font-family:inherit;border-radius:10px;cursor:pointer;white-space:nowrap;letter-spacing:1px;'
+      +   'background:linear-gradient(135deg,rgba(180,60,0,0.55),rgba(255,120,40,0.45));border:2px solid #ff8844;color:#ffd9a8;}'
+      + '#lxps-sell-card .sl-topall:disabled{opacity:0.45;cursor:default;}'
       + '#lxps-sell-card .sl-tabs{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 10px;border-bottom:1px solid rgba(255,200,120,0.25);}'
       + '#lxps-sell-card .sl-tab{flex:0 0 auto;min-height:48px;padding:8px 16px;font-size:22px;font-weight:800;font-family:inherit;border-radius:10px;cursor:pointer;letter-spacing:1px;white-space:nowrap;'
       +   'background:rgba(60,42,10,0.6);border:1.5px solid rgba(255,180,50,0.45);color:#ffd88a;}'
@@ -45763,7 +45771,8 @@ window._lxpsBagCapCss = function(){
       +   '#lxps-sell-card .sl-head{padding:6px 12px 2px;}'
       +   '#lxps-sell-card .sl-title{font-size:20px;}'
       +   '#lxps-sell-card .sl-coin{font-size:15px;}'
-      +   '#lxps-sell-card .sl-cap{padding:0 12px 2px;font-size:13px;}'
+      +   '#lxps-sell-card .sl-cap{padding:0 12px 2px;font-size:13px;gap:6px;flex-wrap:nowrap;}'
+      +   '#lxps-sell-card .sl-topall{min-height:32px;padding:3px 10px;font-size:14px;}'
       +   '#lxps-sell-card .sl-tabs{flex-wrap:nowrap;overflow-x:auto;padding:2px 12px 6px;gap:6px;}'
       +   '#lxps-sell-card .sl-tab{font-size:15px;padding:4px 10px;}'
       +   '#lxps-sell-card .sl-list{padding:2px 12px 6px;}'
@@ -45920,8 +45929,14 @@ window._lxpsOpenSellList = function(cat){
           : ('💰 ' + T('賣出持有物品', '賣出持有物品'))) + '</div>'
       +   '<div class="sl-coin">💰 ' + ((typeof _knowledgeCoins !== 'undefined' ? _knowledgeCoins : 0) || 0).toLocaleString() + '</div>'
       +   '<button type="button" class="sl-close" onclick="try{playSfx(\'sfx-cancel\',0.4);}catch(_){} window._lxpsCloseSellList();">✕ ' + T('關閉', '關閉') + '</button></div>'
-      + '<div class="sl-cap">🎒 ' + T('背包裝備 ', '裝備持有 ') + '<b style="color:' + (capN >= cap ? '#ff8a8a' : '#9effb0') + ';">' + capN + ' / ' + cap + '</b> ' + T('格', '格')
-      +   (capN >= cap ? T(',滿了!賣掉一些就能再拿新裝備', '(已滿,賣出後才能再獲得裝備)') : '') + '</div>'
+      + '<div class="sl-cap"><span>🎒 ' + T('背包裝備 ', '裝備持有 ') + '<b style="color:' + (capN >= cap ? '#ff8a8a' : '#9effb0') + ';">' + capN + ' / ' + cap + '</b> ' + T('格', '格')
+      +   (capN >= cap ? T(',滿了!賣掉一些就能再拿新裝備', '(已滿,賣出後才能再獲得裝備)') : '') + '</span>'
+      +   (_fm ? '' : (function(){   // ★ v5.414.0 一鍵賣出所有戰利品(老師 2026-11-16:同超商「一鍵賣出所有賣錢物品」)
+            var lt = items.loot || [], tt = 0; lt.forEach(function(r){ tt += (r.def.sellPrice || 0) * r.n; });
+            return '<button type="button" class="sl-topall"' + (lt.length ? '' : ' disabled')
+              + ' onclick="window._lxpsSellAllLoot()">💱 ' + T('一鍵賣出所有戰利品', '一鍵賣出所有戰利品') + (lt.length ? '(' + tt.toLocaleString() + ' 💰)' : '') + '</button>';
+          })())
+      + '</div>'
       + (_fm ? ('<div class="sl-tabs" style="font-size:19px;font-weight:800;color:#bfe6ff;">' + window._lxpsForgeHeldLine(cute) + '</div>') : '')
       + (_fm ? '' : '<div class="sl-tabs">' + cats.map(function(c){
           var n = cnt(c);
@@ -45969,10 +45984,6 @@ window._lxpsOpenSellList = function(cat){
           + '</div>';
       });
     } else {
-      if(cur === 'loot'){
-        var tot = 0; list.forEach(function(r){ tot += (r.def.sellPrice || 0) * r.n; });
-        h += '<button type="button" class="sl-all" onclick="window._lxpsSellAllLoot()">💰 ' + T('戰利品全部賣掉', '戰利品全部賣出') + '(' + tot.toLocaleString() + ' 💰)</button>';
-      }
       list.forEach(function(r){
         var key = '_lxpsSellQ_' + r.id;
         var mx = r.n;
@@ -56370,7 +56381,10 @@ function _renderHeroDetail(name, box) {
             const gearBonusHtml = gearBonus > 0
               ? `<span style="font-size:13px;color:#88bbff;font-weight:700;" title="裝備加成(含詞條·出戰時生效)"> +${gearBonus} 🛡️</span>`
               : '';
-            const totalDisplay = base + bonus + tBonus + capBonus + petBonus + gearBonus;
+            // ★ v5.416.0(老師 2026-11-16)— 混天綾等「HP 上限 +%」:基準=裝備前 HP(基礎+投資+膠囊+至寶+寵物+等級加成),與戰鬥同公式;只加在 HP
+            const gearHpPctAdd = (stat === 'hp' && typeof window._lxpsGearHpPctAdd === 'function')
+              ? window._lxpsGearHpPctAdd(name, base + bonus + capBonus + tBonus + petBonus + lvBonusVal) : 0;
+            const totalDisplay = base + bonus + tBonus + capBonus + petBonus + gearBonus + gearHpPctAdd;
             const capBonusHtml = capBonus > 0
               ? `<span style="font-size:13px;color:#c9a0ff;font-weight:700;" title="極限膠囊加成"> +${capBonus} 🧪</span>`
               : '';
@@ -56385,7 +56399,8 @@ function _renderHeroDetail(name, box) {
             if(capBonus > 0)   _sbRows.push(['#c9a0ff', '🧪 極限膠囊', '+' + capBonus]);
             if(petBonus > 0)   _sbRows.push(['#7dffcf', '🐾 跟隨寵物' + ((_petFB && _petFB._pn) ? ('·' + _petFB._pn) : ''), '+' + petBonus]);
             if(gearBonus > 0)  _sbRows.push(['#88bbff', '🛡️ 裝備(含詞條)', '+' + gearBonus]);
-            const _sbSum = bonus + lvBonusVal + tBonus + capBonus + petBonus + gearBonus;
+            if(gearHpPctAdd > 0) _sbRows.push(['#88bbff', '🎗️ 裝備 HP 上限 +%', '+' + gearHpPctAdd]);
+            const _sbSum = bonus + lvBonusVal + tBonus + capBonus + petBonus + gearBonus + gearHpPctAdd;
             let _sbBtnHtml = '';
             if(_sbRows.length){
               // 明細 HTML 存進全域表,按鈕只傳 stat 字串(避開中文與多層引號逃脫)
@@ -56679,6 +56694,8 @@ function _renderHeroDetail(name, box) {
           let _hp  = (hd.hp ||0) + (inv.hp ||0) + (_tB.hp ||0) + (_gB.hp ||0);
           // HP 等級加成 +2%/級 (戰鬥時生效,跟著 lvBonusHtml 的算法一致)
           if(lv > 1){ _hp += Math.ceil(_hp * 0.02 * (lv - 1)); }
+          // ★ v5.416.0 — 混天綾等「HP 上限 +%」也算進面板 HP(基準=裝備前 HP,與戰鬥同公式)
+          try{ if(typeof window._lxpsGearHpPctAdd === 'function') _hp += window._lxpsGearHpPctAdd(name, Math.max(0, _hp - (_gB.hp||0))); }catch(_eGp){}
           // 計算各加成值(來自素質點)
           const _skillPow  = _sp;                                              // 技能威力
           const _hitEva    = _spd;                                             // 命中/迴避

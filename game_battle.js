@@ -79987,6 +79987,32 @@ function _calcHeroGearBonus(heroName){
   return total;
 }
 
+// ★ v5.416.0(老師 2026-11-16「混天綾這類 HP+% 裝備詞條要算進排序與圖鑑詳情」)— 裝備「HP 上限 +%」百分比軌。
+//   公式與戰鬥 _applyGearToHero 完全一致:加成 = max(1, floor(裝備前 HP × min(30, 各件 hpPct 合計) / 100));
+//   「裝備前 HP」= 基礎+素質投資+極限膠囊+至寶+跟隨寵物+等級加成(不含裝備數值型 HP)。回傳 {pct, add}(add 由呼叫端給 basis)。
+function _calcHeroGearHpPct(heroName){
+  let sum = 0;
+  try{
+    _gearGetHeroEquipped(heroName).forEach(x => {
+      (x.def.eff || []).forEach(e => { if(e && e.k === 'hpPct' && typeof e.v === 'number') sum += e.v; });
+      (x.inst.affixes || []).forEach(af => {
+        const adef = GEAR_AFFIX_POOL.find(a => a.id === af.id);
+        if(!adef || !adef.eff || adef.eff.k !== 'hpPct') return;
+        const v = (typeof af.v === 'number') ? af.v : adef.eff.v;
+        if(typeof v === 'number') sum += v;
+      });
+    });
+  }catch(_){}
+  return sum;
+}
+window._lxpsGearHpPctAdd = function(heroName, basisHp){
+  try{
+    const pct = Math.min(30, _calcHeroGearHpPct(heroName));
+    if(!(pct > 0)) return 0;
+    return Math.max(1, Math.floor((basisHp || 0) * pct / 100));
+  }catch(_){ return 0; }
+};
+
 // ════════════════════════════════════════════════════════════════
 // ★ v5.30.0 — 裝備系統 Phase 2 戰鬥機制引擎 helper 集(設計表 v4.1 已裁定規則全落實)
 //   三上限:減傷 50% / 抗性(通用+特定合計)50% / 格擋 35%;格擋成功=傷害減半(最優先);
@@ -81611,7 +81637,15 @@ function _getHeroEffectiveStat(name, stat){
   }
   const hd = (typeof HERO_DB !== 'undefined') ? HERO_DB[name] : null;
   if(!hd) return 0;
-  const base = hd[stat] || 0;
+  let base = hd[stat] || 0;
+  // ★ v5.415.0(老師 2026-11-16「排序要算進所有最終值」)— 招募版弱化素質:日本三妖怪/埃及雙王/中國三妖王在 HERO_DB 存的是 BOSS 版高素質,
+  //   玩家版實際用 JP/EGYPT/CHINA_BOSS_HERO_STATS(與 newHero、圖鑑詳情同一套);舊排序讀 HERO_DB 原值 ⇒ 這 8 位永遠排在最前面。
+  try{
+    const _wk = (typeof JP_BOSS_HERO_STATS !== 'undefined' && JP_BOSS_HERO_STATS[name])
+      || (typeof EGYPT_BOSS_HERO_STATS !== 'undefined' && EGYPT_BOSS_HERO_STATS[name])
+      || (typeof CHINA_BOSS_HERO_STATS !== 'undefined' && CHINA_BOSS_HERO_STATS[name]);
+    if(_wk && typeof _wk[stat] === 'number') base = _wk[stat];
+  }catch(_){}
   // 投資點數
   const inv = (typeof _heroStatInvested !== 'undefined' && _heroStatInvested && _heroStatInvested[name]) || {};
   // ★ v3.13.83 — 極限膠囊投資也算進實戰值(排序/顯示一致)
@@ -81633,7 +81667,17 @@ function _getHeroEffectiveStat(name, stat){
       gBonus = (gb && gb[stat]) || 0;
     }
   }catch(_){}
-  let total = base + invested + tBonus + gBonus;
+  // ★ v5.415.0 — 跟隨寵物素質加成(含隨機成長;與英雄圖鑑詳情素質卡 _petStatBonusFull 同一來源)。舊排序漏算 ⇒ 有帶寵物的英雄排序不準。
+  let pBonus = 0;
+  try{
+    const _pfn = (typeof window._petFollowOf === 'function') ? window._petFollowOf(name) : null;
+    if(_pfn && typeof window._petStatBonusFull === 'function'){
+      const _pfr = (window._tamedPets && window._tamedPets[_pfn]) || { lv:1 };
+      const _pfb = window._petStatBonusFull(_pfn, _pfr.lv, _pfr);
+      pBonus = (_pfb && (_pfb[stat] | 0)) || 0;
+    }
+  }catch(_){}
+  let total = base + invested + tBonus + gBonus + pBonus;
   // HP 等級加成(+2%/級, Lv2 起戰鬥實際生效) — 依當前 Lv 推算
   if(stat === 'hp'){
     try{
@@ -81644,6 +81688,11 @@ function _getHeroEffectiveStat(name, stat){
         const lvBonus = Math.ceil((base + invested) * 0.02 * (lv - 1));
         total += lvBonus;
       }
+    }catch(_){}
+    // ★ v5.416.0 — 混天綾等「HP 上限 +%」:基準 = 裝備前 HP(基礎+投資+膠囊+至寶+寵物+等級加成,不含裝備數值),與戰鬥 _applyGearToHero 同公式
+    try{
+      const _lvB = (typeof getHeroLevel === 'function' && (getHeroLevel(name) || 1) > 1) ? Math.ceil((base + invested) * 0.02 * ((getHeroLevel(name) || 1) - 1)) : 0;
+      total += window._lxpsGearHpPctAdd(name, base + invested + tBonus + pBonus + _lvB);
     }catch(_){}
   }
   return total;
