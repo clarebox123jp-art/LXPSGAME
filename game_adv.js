@@ -56383,7 +56383,7 @@ function _renderHeroDetail(name, box) {
               : '';
             // ★ v5.416.0(老師 2026-11-16)— 混天綾等「HP 上限 +%」:基準=裝備前 HP(基礎+投資+膠囊+至寶+寵物+等級加成),與戰鬥同公式;只加在 HP
             const gearHpPctAdd = (stat === 'hp' && typeof window._lxpsGearHpPctAdd === 'function')
-              ? window._lxpsGearHpPctAdd(name, base + bonus + capBonus + tBonus + petBonus + lvBonusVal) : 0;
+              ? window._lxpsGearHpPctAdd(name, base + bonus + capBonus + tBonus + lvBonusVal) : 0;   // ★ v5.417.0 基準不含寵物 HP(戰前順序 至寶→裝備→寵物;舊版誤含 petBonus)
             const totalDisplay = base + bonus + tBonus + capBonus + petBonus + gearBonus + gearHpPctAdd;
             const capBonusHtml = capBonus > 0
               ? `<span style="font-size:13px;color:#c9a0ff;font-weight:700;" title="極限膠囊加成"> +${capBonus} 🧪</span>`

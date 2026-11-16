@@ -36819,7 +36819,7 @@ function doDmg(target, rawDmg, opts={}){
             if(_tzHero){
               var _tzLv  = (typeof _getTraitLv === 'function') ? (_getTraitLv('金牛星神') || 0) : 0;
               var _tzCut = Math.floor(window._lxpsSpv(_tzHero) * Math.min(0.80, 0.60 + _tzLv * 0.05));
-              try{ if(window._cstHasN(_tzHero,'t1','金牛星神')){ _tzCut = Math.floor(window._lxpsSpv(_tzHero) * Math.min(0.80, 0.60 + _tzLv * 0.05) * 80 / 60); log('✨ [' + _tzHero.name + '] 命星:畢宿五紅眼!盤石之心以特技 ' + Math.round(Math.min(0.80, 0.60 + _tzLv * 0.05) * 80 / 60 * 100) + '% 抵消(' + _tzCut + ' 點)!'); } }catch(_eCstTzT1){}   // ✨ 命星 金牛星神 t1:抵消 60%→80%(×80/60,保留天賦成長)
+              try{ if(window._cstHasN(_tzHero,'t1','金牛星神')){ _tzCut = Math.floor(window._lxpsSpv(_tzHero) * Math.min(1.0, Math.min(0.80, 0.60 + _tzLv * 0.05) + 0.20)); log('✨ [' + _tzHero.name + '] 命星:畢宿五紅眼!盤石之心以特技 ' + Math.round(Math.min(1.0, Math.min(0.80, 0.60 + _tzLv * 0.05) + 0.20) * 100) + '% 抵消(' + _tzCut + ' 點)!'); } }catch(_eCstTzT1){}   // ✨ 命星 金牛星神 t1:抵消 60%→80%(×80/60,保留天賦成長)
               var _tzLeft = Math.max(1, rawDmg - _tzCut);
               try{ playSfx('sfx-guard', 0.7); }catch(_){}
               try{ log(`🪨 [${_tzHero.name}] 盤石之心!橫身擋在 [${target.name}] 身前,並以特技削去 ${_tzCut} 點鋒芒(${rawDmg} → ${_tzLeft})!`); }catch(_){}
@@ -38258,7 +38258,8 @@ function doDmg(target, rawDmg, opts={}){
   }
   // ════════════════════════════════════════════════════════════════
   // ★ 技能升級倍率（只對 isSkill:true 的傷害有效）
-  if(opts.isSkill && _activeSkLvMult > 1.0) dmg = Math.round(dmg * _activeSkLvMult);
+  // ★ v5.417.0 命座:命星反應/追加傷害(opts._cstReact,只由命星程式寫入)數字固定,不吃施放者當下技能的等級倍率(設計書「命星數字不受技能等級放大」;沒有命星時此旗標不存在 ⇒ 行為完全不變)
+  if(opts.isSkill && !opts._cstReact && _activeSkLvMult > 1.0) dmg = Math.round(dmg * _activeSkLvMult);
   if(a&&hasBuff(a,'dmgup')&&!opts.isHeal){
     // ★ v1.0.20260501.5120 — 熱情之舞升級:dmgup buff 若帶 _passionBonus,加成從 0.5 提升至該值
     //   其他來源的 dmgup(警長爆發、戰意等)維持原本 +50% 特技
@@ -48701,7 +48702,7 @@ function execSkill(a, sk, cost, stype){
     //     重複使用效果不疊加 → 下方 filter(同 type 先移除)+push 已是「只刷新不疊加」，行為本就正確。
     //   免疫類不放大(設計表建議);消費點=_gearBkMult(h,'atk');無裝備者掛了也無效果(PVP 鬥技場鐵匠已排除上場)。
     const _bkAllies = G[a.side].filter(h=>h.curHp>0);
-    const _bkWpPct = Math.min(0.50, 0.05 + _activeSkLv*0.05) * ((function(){ try{ return window._cstHasN(a,'s1','鐵匠') ? 1.6 : 1; }catch(_){ return 1; } })());   // Lv1=+5% → 每級+5%,上限+50%
+    const _bkWpPct = Math.min(0.50, 0.05 + _activeSkLv*0.05) + ((function(){ try{ return window._cstHasN(a,'s1','鐵匠') ? 0.03 : 0; }catch(_){ return 0; } })());   // Lv1=+5% → 每級+5%,上限+50%;★ v5.417.0 命星 利刃星 5%→8% = 加 3 個百分點(舊:整體 ×1.6,滿級會衝到 80% 超過上限;命星後上限 53%,比照機關王雙人組 +5pp 先例)
     log(`🔨 [${a.name}] 武器精煉強化!為全體友方的裝備淬鍊出鋒利之力!(攻擊面裝備效果 +${Math.round(_bkWpPct*100)}%)`);
     try{ bannerFX(a,'🔨 武器精煉強化!','#ffb347',1100); }catch(_){}
     try{ if(typeof playSkillFX==='function') playSkillFX('武器精煉強化',a,_bkAllies); }catch(_){}
@@ -65826,7 +65827,7 @@ function aiUseSkill(a,sk,cost,pref){
   else if(n==='武器精煉強化'){
     const _bkS1LvA = (a._skLv) ? (((a.s1 && a.s1.n==='武器精煉強化') ? a._skLv.s1 : (a.s2 && a.s2.n==='武器精煉強化') ? a._skLv.s2 : 0)||0) : 0;
     // ★ v5.30.0 — 鐵匠 S1 改版(AI 版·鐵律 1.128 雙實作同步):攻擊面裝備效果 ×(1+5%+5%/級,上限+50%)
-    const _bkWpPctA = Math.min(0.50, 0.05 + _bkS1LvA*0.05) * ((function(){ try{ return window._cstHasN(a,'s1','鐵匠') ? 1.6 : 1; }catch(_){ return 1; } })());
+    const _bkWpPctA = Math.min(0.50, 0.05 + _bkS1LvA*0.05) + ((function(){ try{ return window._cstHasN(a,'s1','鐵匠') ? 0.03 : 0; }catch(_){ return 0; } })());   // ★ v5.417.0 命星 利刃星 加 3 個百分點(同手動路徑,不再整體 ×1.6)
     log(`🔨 [${a.name}] 武器精煉強化!為全體友方的裝備淬鍊出鋒利之力!(攻擊面裝備效果 +${Math.round(_bkWpPctA*100)}%)`);
     try{ bannerFX(a,'🔨 武器精煉強化!','#ffb347',1000); }catch(_){}
     allies.filter(h=>h.curHp>0).forEach(t=>{
@@ -81692,7 +81693,7 @@ function _getHeroEffectiveStat(name, stat){
     // ★ v5.416.0 — 混天綾等「HP 上限 +%」:基準 = 裝備前 HP(基礎+投資+膠囊+至寶+寵物+等級加成,不含裝備數值),與戰鬥 _applyGearToHero 同公式
     try{
       const _lvB = (typeof getHeroLevel === 'function' && (getHeroLevel(name) || 1) > 1) ? Math.ceil((base + invested) * 0.02 * ((getHeroLevel(name) || 1) - 1)) : 0;
-      total += window._lxpsGearHpPctAdd(name, base + invested + tBonus + pBonus + _lvB);
+      total += window._lxpsGearHpPctAdd(name, base + invested + tBonus + _lvB);   // ★ v5.417.0 戰前順序是 至寶→裝備→寵物(寵物在裝備之後才加),基準不含寵物 HP(舊 v5.416.0 誤含 pBonus ⇒ 排序比實戰高)
     }catch(_){}
   }
   return total;
