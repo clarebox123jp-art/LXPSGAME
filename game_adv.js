@@ -50178,7 +50178,7 @@ const SKILL_UPGRADE_DEF = {
   '斷橋怒吼':     { cat:'mixed', label:'群攻減傷' },   // ★ v5.295.0 張飛 S2 改版(當陽怒吼 → 斷橋怒吼):群攻減傷 30% ×(1+5%/級)(上限 60%;實作 _cn2RunFx fx.bridge)
   '龍膽亮銀槍':   { cat:'dmg', label:'技能傷害' },
   '七進七出':     { cat:'dmg', label:'技能傷害' },
-  '緊箍真言':     { cat:'dmg', label:'技能傷害' },
+  '緊箍真言':     { cat:'dmg', label:'技能傷害', first:1 },   // ★ v5.421.0 first:只放大 180%;失敗率 +2個百分點/級、頭痛 +5%/級 由 game_battle 緊箍套上時依技能等級計算
   '慈悲普渡':     { cat:'heal', label:'治療量' },
   '九齒釘鈀':     { cat:'dmg', label:'技能傷害', first:1 },   // ★ v5.295.0 first:「50%機率」破防固定
   '天蓬吃飽飽':   { cat:'heal', label:'治療量' },   // ★ v5.295.0 改版:肚量 100% 平均分給全體(fd 唯一百分數 = 成長值)
@@ -52495,10 +52495,10 @@ function _renderBurstFdWithLv(burstName, originalFd, burstLv){
     }
     case '至公審判': {
       // 特技 600%×(1+lv×0.10)；MAX(Lv5) 敵方全體強化消耗 1→2 回合（對齊 _runBurst 的 1 + _lv5Extra）。
-      const _lbBP = Math.round(600 * _mult);
+      const _lbBP = Math.round(300 * _mult);   // ★ v5.421.0 改為 光 300% + 暗 300%(兩段同倍率)
       const _lbBDur = 1 + ((burstLv >= 4) ? 1 : 0);
-      fd = fd.replace(/特技值的\s*600\s*%/g, '特技值的 ' + HL(_lbBP + '%'))
-             .replace(/特技\s*600\s*%/g, '特技 ' + HL(_lbBP + '%'));
+      fd = fd.replace(/特技值的\s*300\s*%/g, '特技值的 ' + HL(_lbBP + '%'))
+             .replace(/特技\s*300\s*%/g, '特技 ' + HL(_lbBP + '%'));
       if(burstLv >= 4){
         fd = fd.replace(/「消耗」\s*1\s*回合/g, '「消耗」' + HL(_lbBDur + ' 回合'));
       }
