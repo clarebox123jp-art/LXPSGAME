@@ -42860,9 +42860,24 @@ function _openSummonTicketPickModal(tier){
         + '<div class="stp-nm">' + name + '</div>'
         + '</button>';
     };
-    const _grid = _pool.map(_heroCard).join('')
-      + ((_cstURList.length && typeof window._cstTicketSectionHtml === 'function') ? window._cstTicketSectionHtml(tier, _cstURList)
-         : ((_cstURList.length && typeof window._cstURTicketSectionHtml === 'function') ? window._cstURTicketSectionHtml(_cstURList) : ''));   /* ★ v5.254.0 / v5.279.0 SR·SSR 也有 */
+    /* ★ v5.420.0(老師 2026-11-17「UR自選卷無法選已有的UR英雄」,學生看到的挑選視窗沒有已擁有區)
+       ①「已收錄 → 換 1 顆命星」區改放在最上面(原本排在未收錄英雄後面,iPad 放大後被擠到要捲動才看得到);
+       ② 未收錄區加一行標題;③ 擁有同稀有度英雄卻一位都不能換時,寫出每位的原因(_cstTicketStarDiag),不再整區消失沒交代。 */
+    const _starSec = (_cstURList.length && typeof window._cstTicketSectionHtml === 'function') ? window._cstTicketSectionHtml(tier, _cstURList)
+         : ((_cstURList.length && typeof window._cstURTicketSectionHtml === 'function') ? window._cstURTicketSectionHtml(_cstURList) : '');   /* ★ v5.254.0 / v5.279.0 SR·SSR 也有 */
+    let _diagHtml = '';
+    try{
+      const _dg = (typeof window._cstTicketStarDiag === 'function') ? window._cstTicketStarDiag(tier) : [];
+      if(_dg.length){
+        _diagHtml = '<div class="stp-sec" style="flex-basis:100%;width:100%;margin:10px 0 2px;font-size:16px;color:#ffcf9a;text-align:center;line-height:1.5;">'
+          + '你已經有的 ' + tier + ' 這次不能換命星:' + _dg.map(function(x){ return x.n + '(' + x.why + ')'; }).join('、') + '</div>';
+      }
+    }catch(_){}
+    const _unSecHd = (_pool.length && (_starSec || _diagHtml))
+      ? '<div class="stp-sec" style="flex-basis:100%;width:100%;margin:12px 0 4px;padding-top:12px;border-top:1px dashed rgba(255,200,255,0.4);font-size:21px;font-weight:900;color:#cfe8ff;text-align:center;">🆕 還沒有的 ' + tier + ' → 直接收進隊伍</div>'
+      : '';
+    const _grid = (_starSec ? _starSec.replace('margin:12px 0 4px;padding-top:12px;border-top:1px dashed rgba(255,200,255,0.4);', 'margin:0 0 4px;') : '')
+      + _diagHtml + _unSecHd + _pool.map(_heroCard).join('');
     const _modal = document.createElement('div');
     _modal.id = '_summon-ticket-pick-modal';
     _modal.style.cssText = 'position:fixed;inset:0;z-index:910;display:flex;align-items:center;justify-content:center;'
@@ -85423,6 +85438,30 @@ function makeRadar(dims, size) {
     });
   };
   W._cstURStarCandidates = function(){ return W._cstTicketStarCandidates('UR'); };   /* 舊名保留(相容) */
+  /* ★ v5.420.0(老師 2026-11-17「冒險模式UR自選卷目前無法選已有的UR英雄，無法獲得命星」;症狀=挑選視窗沒有已擁有區)
+     診斷:列出「這位玩家擁有、同稀有度、卻沒進換命星名單」的英雄與原因,顯示在挑選視窗並存進 window._lxpsCstTkDiag(🐛 回報可帶)。 */
+  W._cstTicketStarDiag = function(tier){
+    var out = [];
+    try{
+      var u = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];
+      var uni = null;
+      try{ if(typeof W._summonTicketPickUniverse === 'function'){ var uu = W._summonTicketPickUniverse(tier); if(uu && uu.length) uni = uu; } }catch(_){}
+      var cands = W._cstTicketStarCandidates(tier);
+      (u || []).forEach(function(n){
+        var k = W._cstKey(n);
+        if(!k || _isProtag(k) || cands.indexOf(k) >= 0) return;
+        if(W._cstRarity(k) !== tier) return;
+        var why = !W._cstOpenForMe() ? '命座未開放'
+          : !_db()[k] ? '命座表沒有這位'
+          : (W._cstHeld(k) >= W._CST_MAX) ? '已滿 6 命'
+          : (uni && uni.indexOf(k) < 0) ? '不在這張卷的範圍'
+          : '其他';
+        out.push({ n: k, why: why });
+      });
+      W._lxpsCstTkDiag = { at: Date.now(), tier: tier, owned: (u || []).filter(function(n){ try{ return W._cstRarity(n) === tier; }catch(_){ return false; } }), cands: cands, miss: out };
+    }catch(e){ W._lxpsCstTkDiag = { at: Date.now(), tier: tier, err: String(e && e.message || e) }; }
+    return out;
+  };
   /* ★ v5.339.0(老師「SSR英雄召喚卷在全收錄時…應該要開放可以召喚」「UR、SR也是一樣」)——
    *   SR/SSR「隨機」召喚卷全收錄時可換命星的對象 = 自選卷可換命星的名單,再排除隨機卷本來就抽不到的
    *   (BOSS 同名英雄 _bossHeroNoRandom、測試期 _summonTestPhaseLocked),避免隨機卷繞路拿到原本拿不到的角色命星。 */

@@ -1990,6 +1990,237 @@
     '🪴 10 件外島新裝飾(冰晶天鵝雕、椰子吊床、珊瑚魚缸、四島主紀念碑……)和 4 件新工具(象牙冰鎬、乳膠手套、磷蝦網、硫磺火石)。'
   ] });
 
+  /* ══ ★ v1.444.0(2026-11-17・老師「開放遺跡地下秘穴區域地圖、怪物和目前尚缺乏的素材」;裁定:三區+3 魔物+3 素材、圖用老師 ChatGPT 生成、隨時可進、進去花 1 AP)══
+     遺跡地下秘穴 = 三個可以走的地下區域(不放進 D.ZONES、不在大地圖上;從遺跡「🕳 地下入口」走樓梯下去):
+       dg_b1 石灰岩迴廊 → dg_b2 銅脈水晶窟 → dg_b3 守墓者之間(頭目 守墓石像・不朽之王,原 D.BOSSES_HIDDEN.guardian 正式上線)。
+     遮罩沿用外島的 D.seaMask(依區 id 固定亂數),場景大小 32×24(2048×1536 圖)。
+     index 端:islUnder* 一組函式(進場 1 AP、上下樓梯、解鎖 B2/B3 = 上一層探索 ≥50%)。 */
+  (function(){
+    var U = D.UNDER = {
+      ap: 1,
+      zones: [
+        { id:'dg_b1', n:'石灰岩迴廊', e:'🪨', order:1, floor:'B1', lv:[42,45], up:'ruins' },
+        { id:'dg_b2', n:'銅脈水晶窟', e:'💎', order:2, floor:'B2', lv:[45,48], up:'dg_b1' },
+        { id:'dg_b3', n:'守墓者之間', e:'🗿', order:3, floor:'B3', lv:[48,51], up:'dg_b2' }
+      ],
+      intro: ['石板底下的階梯一路往下,空氣又冷又濕……牆上的石頭摸起來滑滑的。', '(地下秘穴三層:越往下魔物越強。上一層探索到一半,才找得到往下的樓梯;最深處住著守墓石像・不朽之王。)']
+    }, i, z, id, d, sc, k, nd, cnt, mid;
+    U.zone = function(id){ var j; for(j = 0; j < U.zones.length; j++){ if(U.zones[j].id === id) return U.zones[j]; } return null; };
+    U.next = function(id){ var j; for(j = 0; j < U.zones.length - 1; j++){ if(U.zones[j].id === id) return U.zones[j + 1]; } return null; };
+    (function(){ var _z1 = D.zone; D.zone = function(id){ return _z1(id) || U.zone(id); }; })();
+    for(i = 0; i < U.zones.length; i++){ z = U.zones[i]; z.under = true; z.p1 = true; z.unlockText = (z.order === 1 ? '解開遺跡機關' : '上一層探索 ≥50%'); D.IMG['zone_' + z.id] = 'island_zone_' + z.id + '.jpg'; }
+
+    /* 材料 */
+    var IT = {
+      copper:   { n:'銅礦',   e:'🟠', cat:'misc' },
+      calcite:  { n:'方解石', e:'🤍', cat:'res' },
+      glowcap:  { n:'發光蕈傘', e:'🍄', cat:'food' },
+      boss_guardcore: { n:'不朽石心', e:'🗿', cat:'misc' }
+    }, SELL = { copper:8, calcite:6, glowcap:5, boss_guardcore:60 };
+    for(k in IT){ if(!IT.hasOwnProperty(k)) continue; IT[k].img = 'res_' + k; D.ITEMS[k] = IT[k]; D.IMG['res_' + k] = 'island_res_' + k + '.png'; if(D.ITEM_ORDER.indexOf(k) < 0) D.ITEM_ORDER.push(k); D.SHOP.sell[k] = SELL[k]; }
+    if(D.MAT_VAL){ D.MAT_VAL.copper = 8; D.MAT_VAL.calcite = 6; D.MAT_VAL.glowcap = 5; }
+
+    /* 資源點 */
+    var NODES = {
+      stalactite: { act:'quarry', e:'🪨', gives:'calcite', bonus:'stone', label:'鐘乳石柱', cat:'earth', d:'含有二氧化碳的地下水會慢慢溶解石灰岩,水滴到洞頂再把碳酸鈣留下來,一年只長不到 1 公釐;我們只撿已經斷掉掉在地上的碎塊。' },
+      coppervein: { act:'quarry', e:'🟠', gives:'copper', label:'銅礦脈', cat:'earth', d:'綠綠的銅鏽(孔雀石)常常是找到銅礦的線索。銅很會導電,所以電線裡面用的就是銅。' },
+      glowshroom: { act:'gather', e:'🍄', gives:'glowcap', label:'發光蕈傘叢', cat:'plant', d:'有些菇類身體裡有會發光的化學物質(螢光素),在全黑的地方會發出淡淡的綠光;真菌不能行光合作用,要靠分解枯木和落葉過活。' }
+    };
+    for(k in NODES){ if(!NODES.hasOwnProperty(k)) continue; D.IMG['node_' + k] = 'island_node_' + k + '.png'; }
+    D.IMG.poi_dgdown = 'island_poi_dgdown.png'; D.IMG.poi_dgup = 'island_poi_dgup.png';   /* 往下/往上的石階(192×192 去背) */
+    U.NODES = NODES;
+
+    /* 場景 */
+    var DEF = {
+      dg_b1: { bg:'#6d6a63', wall:'#3b3934', dense:0, spawn:[['stalactite',4],['glowshroom',2]], pick:['stone','pebble','calcite'] },
+      dg_b2: { bg:'#4d5b66', wall:'#27313a', dense:1, spawn:[['coppervein',4],['glowshroom',3],['stalactite',2]], pick:['pebble','crystal','copper'] },
+      dg_b3: { bg:'#3f3a4a', wall:'#221f2a', dense:0, spawn:[['coppervein',2],['stalactite',2],['glowshroom',2]], pick:['relic','stone','pebble'] }
+    };
+    /* 遮罩依 ChatGPT 生成的三張場景圖逐格手描(32×24,. = 可走),連通性已用 BFS 驗證;樓梯/出生點對齊圖上的石階 */
+    var MASK = {
+      dg_b1: [
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '#######...######################',
+        '#######...######################',
+        '#..............................#',
+        '#..............................#',
+        '#.....................#####....#',
+        '#####.....#......#....#####..###',
+        '#######...##..#######.#..##..###',
+        '#######......#######.......#####',
+        '########.....#######......######',
+        '###########..########.....######',
+        '######################...#######',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################'
+      ],
+      dg_b2: [
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '#######...######################',
+        '#######...######################',
+        '#..............................#',
+        '#..............................#',
+        '#.....................#####...##',
+        '#####.....#......#....#####..###',
+        '#######...###....###..#..##..###',
+        '########...##..#####.......#####',
+        '#########....########......#####',
+        '###########..#########.....#####',
+        '#######################...######',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################'
+      ],
+      dg_b3: [
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '################################',
+        '###..###########################',
+        '###...##########################',
+        '####...########......###########',
+        '####.....####.........#####..###',
+        '###......##...........#####...##',
+        '#.............................##',
+        '#..............................#',
+        '#.##..........................##',
+        '####.........................###',
+        '######....................######',
+        '##########.#.............#######',
+        '############............########',
+        '############...........#########',
+        '###############...........######',
+        '#################....#.......###',
+        '#########################....###',
+        '################################',
+        '################################',
+        '################################'
+      ]
+    };
+
+    var POS = { dg_b1:{ sp:{x:8,y:10}, up:{x:8,y:9}, dn:{x:23,y:14} }, dg_b2:{ sp:{x:8,y:10}, up:{x:8,y:9}, dn:{x:23,y:14} }, dg_b3:{ sp:{x:6,y:9}, up:{x:4,y:6}, dn:null } };
+    for(id in DEF){ if(!DEF.hasOwnProperty(id)) continue;
+      d = DEF[id]; mid = 12;
+      sc = D.SCENE[id] = {
+        bg: 'zone_' + id, bgColor: d.bg, wallColor: d.wall, waterColor: '#4a7fa0', under: true,
+        cols: 32, rows: 24,
+        spawn0: POS[id].sp, exit: null, campGate: null,
+        dgUp: POS[id].up, dgDown: POS[id].dn,
+        mask: MASK[id] || D.seaMask(id, 32, 24, { dense: !!d.dense }),
+        spawn: {}, pick: { n: [3, 5], minGap: 3, items: d.pick }
+      };
+      for(i = 0; i < d.spawn.length; i++){
+        k = d.spawn[i][0]; cnt = d.spawn[i][1]; nd = NODES[k];
+        sc.spawn[k] = { n: cnt, minGap: 2, act: nd.act, node: 'node_' + k, e: nd.e, gives: nd.gives, label: nd.label, pool: D.seaPool(id, k, cnt * 3, 32, 24) };
+        if(nd.bonus) sc.spawn[k].bonus = nd.bonus;
+      }
+    }
+
+    /* 魔物 3 種(圖 island_bt_m_<k>_<idle|atk|hit|stun|down>.png 512×512 面朝左;缺圖顯示 emoji) */
+    var MONS = [
+      { k:'stalagolem', n:'鐘乳石魔', e:'🪨', race:'rock', tag:'hard', tool:'gong', zone:'遺跡地下秘穴',
+        bt:{ hp:46, atk:13, def:6, spd:2, crit:5, drop:{ shell:[6,9], item:'calcite', p:0.7 }, d:'洞頂垂下來的鐘乳石長出手腳,一步一步滴著水走過來。' },
+        sk:{ t:'quake', n:'落石雨', e:'🪨', p:40, cd:3, mul:0.8, stunP:25, tele:'牠用力撞向洞壁,洞頂的鐘乳石開始搖晃……', hint:'全體受傷、可能被砸暈;🔔 銅鑼的振動能讓又脆又硬的鐘乳石裂開。' },
+        tr:'石灰岩身:體力多、防禦高', hint:'敲銅鑼讓牠振動裂開', why:'鐘乳石又硬又脆,強烈的振動會讓它從細縫斷開。',
+        q:{ q:'洞穴裡的鐘乳石是怎麼形成的?', o:['含碳酸鈣的水一滴滴沉積','洞頂的岩石被火山熔化滴下','動物把石頭一塊塊黏上去','冬天結冰的冰柱慢慢變成石頭'], a:0, why:'雨水帶著二氧化碳溶解石灰岩,滴到洞頂時把碳酸鈣留下,很慢很慢地長成鐘乳石。' },
+        cx:'【岩石族・石灰岩身】鐘乳石從洞頂往下長、石筍從地上往上長,兩個連在一起就叫石柱;台灣的墾丁、綠島都有石灰岩洞。',
+        wit:'又硬又脆的石頭,遇到強烈的振動會怎麼樣?' },
+      { k:'blindsala', n:'盲眼穴螈', e:'🦎', race:'amphibian', tag:'soft', tool:'bait', zone:'遺跡地下秘穴',
+        bt:{ hp:36, atk:14, def:2, spd:7, crit:10, regenP:5, drop:{ shell:[6,9], item:'glowcap', p:0.6 }, d:'全身粉白、沒有眼睛的大蠑螈,靠皮膚感覺水流找獵物。' },
+        sk:{ t:'burn', n:'腐蝕黏液', e:'🫧', p:40, cd:3, mul:0.5, dot:6, dur:2, tele:'牠扭動身體,皮膚冒出一層黏黏的液體……', hint:'全體受到持續傷害 2 回合;🪱 誘餌的味道能把牠引開。' },
+        tr:'再生:每回合回復 5% 體力', hint:'牠靠嗅覺和觸覺找食物,用誘餌引開', why:'洞穴蠑螈看不見,全靠氣味和水流感覺獵物在哪裡。',
+        q:{ q:'一直住在全黑洞穴裡的動物,眼睛常常會怎樣?', o:['退化變小甚至消失','變得特別大顆','會自己發出亮光','長出好幾對'], a:0, why:'在完全沒有光的地方,眼睛沒有用處,經過很多世代慢慢退化;反而觸覺和嗅覺變得很靈敏。' },
+        cx:'【兩棲族・再生】歐洲的「洞螈」可以活超過 100 年,好幾年不吃東西也餓不死;蠑螈斷掉的腳還能重新長出來。',
+        wit:'牠看不見,靠什麼找食物?要是丟出香香的東西呢?' },
+      { k:'coilserpent', n:'銅線蛇', e:'🐍', race:'construct', tag:'hard', tool:'glove', zone:'遺跡地下秘穴',
+        bt:{ hp:40, atk:15, def:4, spd:6, crit:15, stunOnHitP:15, drop:{ shell:[7,10], item:'copper', p:0.6 }, d:'古人用銅線一圈圈繞成的機關蛇,身上劈哩啪啦冒著電火花。' },
+        sk:{ t:'chain', n:'電弧連鎖', e:'⚡', p:45, cd:2, mul:1.1, n2:3, metalP:50, tele:'銅線越轉越快,蛇身亮起藍白色的電光……', hint:'隨機打 3 下,穿鐵甲更痛;🧤 橡膠手套隔絕電流就能抓住牠。' },
+        tr:'線圈電流:普攻 15% 讓人麻痺', hint:'戴橡膠手套抓住牠', why:'橡膠是絕緣體,電流過不去;銅是導體,電流很容易通過。',
+        q:{ q:'電線裡面用銅、外面包塑膠,是為什麼?', o:['銅會導電,塑膠不導電保護手','銅比較便宜,塑膠比較好看','銅會發光,塑膠能把光擋住','銅很輕,塑膠可以讓電線變重'], a:0, why:'銅是電的良導體,電流容易通過;塑膠是絕緣體,包在外面才不會觸電。' },
+        cx:'【機關族・線圈電流】把銅線一圈圈繞在鐵釘上再通電,鐵釘就會變成磁鐵,這叫「電磁鐵」;遺跡的古人好像早就知道這件事。',
+        wit:'電流最怕遇到什麼材料?電工手上戴的是什麼?' }
+    ];
+    var st = ['idle','atk','hit','stun','down'], m, j;
+    for(i = 0; i < MONS.length; i++){
+      m = MONS[i];
+      D.MONSTERS.push({ k:m.k, n:m.n, e:m.e, tool:m.tool, from:1, wild:true, race:m.race, tr:m.tr, hint:m.hint, why:m.why, q:m.q });
+      D.MON_BT[m.k] = m.bt; D.MON_SKILL[m.k] = m.sk; D.MON_TAG_OF[m.k] = m.tag; D.MON_RACE_OF[m.k] = m.race;
+      D.CODEX.push({ id:m.k, cat:'monster', n:m.n, e:m.e, img:'bt_m_' + m.k + '_idle', where:m.zone + '(野外)', d:m.cx + '(怕:' + D.defTool(m.tool).e + D.defTool(m.tool).n + ')' });
+      if(D.WIT_HINT) D.WIT_HINT[m.k] = m.wit;
+      for(j = 0; j < st.length; j++) D.IMG['bt_m_' + m.k + '_' + st[j]] = 'island_bt_m_' + m.k + '_' + st[j] + '.png';
+    }
+    if(D.ELITE && D.ELITE.DROP){ D.ELITE.DROP.stalagolem = 'calcite'; D.ELITE.DROP.blindsala = 'glowcap'; D.ELITE.DROP.coilserpent = 'core_spark'; }   /* 銅線蛇精英掉「雷精核心」:雲豹自動相機等要用,原本只有雷精精英掉 */
+
+    /* 遇敵 */
+    D.ENC.dg_b1 = { n:4, from:1, mons:['stalagolem','blindsala','clockwork'], num:[3,4], lv:U.zones[0].lv };
+    D.ENC.dg_b2 = { n:4, from:1, mons:['blindsala','coilserpent','stalagolem','wraith'], num:[4,4], lv:U.zones[1].lv };
+    D.ENC.dg_b3 = { n:4, from:1, mons:['coilserpent','clockwork','stalagolem','wraith'], num:[4,4], lv:U.zones[2].lv };
+    if(D.ENC_TEAM_HINT){ D.ENC_TEAM_HINT.dg_b1 = 3; D.ENC_TEAM_HINT.dg_b2 = 3; D.ENC_TEAM_HINT.dg_b3 = 3; }
+
+    /* 頭目:守墓石像・不朽之王(圖 island_bt_m_guardian_*.png 已在 repo) */
+    var G = D.BOSSES_HIDDEN && D.BOSSES_HIDDEN.guardian;
+    if(G && !D.bossByZone('dg_b3')){
+      D.BOSSES.push({ zone:'dg_b3', k:'guardian', n:G.n, e:G.e, lv:55, hp:400, atk:56, def:5, spd:4, crit:10, tool:'gong', weakWp:['hammer'], weakPets:G.weakPets || [], core:'boss_guardcore',
+        hint:'🔔 石像會共振!敲銅鑼打亂它的振動;錘子的重擊最能讓石頭裂開。',
+        skills:[ { t:'quake', n:'碎地重踏', e:'🦶', p:45, cd:2, mul:1.1, stunP:20, tele:'石像抬起巨大的石腳,地面裂開了——全隊都會受傷!', hint:'全體受傷、可能被震暈;按 🛡 防禦或讓坦克型夥伴嘲諷。' },
+                 { t:'petrify', n:'石化凝視', e:'👁', p:40, cd:3, mul:0.6, stun:1, tele:'石像的雙眼亮起灰光……被看到會石化一回合!', hint:'被石化 1 回合不能動;🔔 銅鑼智取可以取消。' },
+                 { t:'summon', n:'喚醒守衛', e:'⚙', p:30, cd:4, k:'clockwork', cnt:1, tele:'石像敲了敲地面,牆裡傳來齒輪轉動的聲音……', hint:'會叫出 1 隻發條守衛。' } ],
+        p2:{ atkMul:1.25, summon:'clockwork', text:G.p2 ? G.p2.text : '石像的裂縫裡爬出發條守衛!' },
+        ult:{ n:G.ult.n, e:'🗿', every:4, cd:2, mul:2.4, cover:0.15, tele:'石像全身發出嗡嗡的共振聲,整座洞窟都在晃……', q:G.ult.qs } });
+      D.MON_BT.guardian = { hp:400, atk:56, def:5, spd:4, crit:10, drop:{ shell:[0,0], item:null, p:0 }, d:'古人留下的守護石像,會跟聲音一起共振。' };
+      D.MON_TAG_OF.guardian = 'hard'; D.MON_RACE_OF.guardian = 'rock';
+      for(j = 0; j < 6; j++) D.IMG['bt_m_guardian_' + ['idle','atk','hit','stun','down','skill'][j]] = 'island_bt_m_guardian_' + ['idle','atk','hit','stun','down','skill'][j] + '.png';
+      D.IMG.poi_lair_dg_b3 = 'island_poi_lair_dg_b3.png';
+      if(D.WIT_HINT) D.WIT_HINT.guardian = '這座石像一直在嗡嗡震動……用什麼一樣會振動的東西打亂它?';
+      for(j = 0; j < D.CODEX.length; j++){ if(D.CODEX[j].id === 'guardian'){ D.CODEX[j].where = '遺跡地下秘穴・守墓者之間'; } }
+      if(D.ACCS) D.ACCS.push({ id:'acc_guardian', zone:'dg_b3', n:'不朽石紋護符', e:'🗿', eff:{ defP:12, hpP:10, stunResP:30, res:{ thunder:25 } }, d:'防禦 +12%、體力上限 +10%、30% 機率抵抗暈眩/石化、雷抗性 +25%。' });
+    }
+
+    /* 新裝飾 3 件(用地下材料做;圖選配) */
+    var DC = [
+      { id:'glowlamp',   n:'螢光蕈燈',   e:'🍄', comfort:5, cost:{ glowcap:4, calcite:2, fiber:2 }, d:'把螢光蕈養在方解石碗裡,晚上會發出淡淡的綠光。' },
+      { id:'calcitecol', n:'鐘乳石柱擺飾', e:'🪨', comfort:6, out:1, cost:{ calcite:8, stone:6 }, d:'撿回來的鐘乳石碎塊拼成的小石柱;真正的石柱要長好幾萬年。', sz:1.2 },
+      { id:'copperbell', n:'銅風鈴',     e:'🔔', comfort:4, out:1, cost:{ copper:4, wood:2, fiber:2 }, d:'銅片敲起來聲音清脆又傳得遠,所以鐘和風鈴常用銅做。' }
+    ];
+    for(i = 0; i < DC.length; i++){ DC[i].img = 'deco_' + DC[i].id; D.IMG['deco_' + DC[i].id] = 'island_deco_' + DC[i].id + '.png'; D.DECOS.push(DC[i]); if(DC[i].out && D.DECO_TAB_OUT) D.DECO_TAB_OUT[DC[i].id] = 1; }
+    D.OBJ_TALK = D.OBJ_TALK || {};
+    D.OBJ_TALK.glowlamp = ['晚上關了燈,它就自己亮起來,好像小小的星星。', '菇類竟然會發光,大自然好神奇。'];
+    D.OBJ_TALK.calcitecol = ['摸起來涼涼的,像回到了地下秘穴。', '一年長不到 1 公釐……真的要好有耐心。'];
+    D.OBJ_TALK.copperbell = ['風一吹,叮叮噹噹好好聽。', '銅片的聲音又清又亮。'];
+
+    /* 第一次踏進 */
+    D.STORY.zoneIntro = D.STORY.zoneIntro || {};
+    D.STORY.zoneIntro.dg_b1 = '牆上掛滿一根根尖尖的石頭,水一滴一滴從尖端落下……這些石頭是被水「滴」出來的嗎?';
+    D.STORY.zoneIntro.dg_b2 = '岩壁上有一條條綠色的紋路,摸起來冰冰的——是銅鏽!旁邊的菇竟然在發光。';
+    D.STORY.zoneIntro.dg_b3 = '好大的空間……正中間站著一座巨大的石像,整座洞窟跟著它一起嗡嗡震動。';
+  })();
+  D.LOG.unshift({ v: 'v1.444.0', d: '2026-11-17', items: [
+    '🕳 遺跡地下秘穴正式開放!解開遺跡機關後,從「地下入口」走下去(⚡1),三層可以自由探索:石灰岩迴廊、銅脈水晶窟、守墓者之間。',
+    '🗿 最深處的守墓石像・不朽之王是全島最強頭目(Lv55),打倒可以拿到「不朽石心」和頭目飾品「不朽石紋護符」。',
+    '🪨 新魔物:鐘乳石魔、盲眼穴螈、銅線蛇;新材料:方解石、銅礦、發光蕈傘;新裝飾:螢光蕈燈、鐘乳石柱擺飾、銅風鈴。',
+    '💰 營地的設施也可以賣給阿獺了(材料價一半);施工中的設施不會再被多蓋一座。'
+  ] });
+
   /* 本檔新增的圖鍵全部列為選配:圖還沒上傳前「完整下載」不會因此算失敗(index 端 islInstallUrls 讀 D.SEA_IMG) */
   D.SEA_IMG = {};
   for(_k0 in D.IMG){ if(D.IMG.hasOwnProperty(_k0) && !_imgKeys0[_k0]) D.SEA_IMG[_k0] = 1; }

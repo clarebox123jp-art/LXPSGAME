@@ -2225,22 +2225,43 @@
     var e = _hlEnt(L, name);
     if(!(e.r > 0) || at > e.r){ e.r = at; e.rs = String(src || '').slice(0, 40); if(ru) e.ru = String(ru).slice(0, 12); else delete e.ru; }
   };
+  // ★★ v5.420.0(老師 2026-11-17「羅晨豪表示他突然又出現不是他的UR藝天使」,老師裁定直接修程式)★★
+  //   UR 被移除過(老師刪、UR 替換卷換出、學生「不是我的」)之後,只有「UR 的正規來源」能讓它回來:
+  //     老師發放/救援/還原(admin_*、gm_*)、UR 自選卷(ticket_ur_pick)、UR 替換卷換入(ticket_ur_swap)、設計者本人(student_designer)。
+  //   其他任何「獲得」紀錄(舊平板寫回、殘槽合併、系統自動還原、召喚/掉落類來源…)都不算數 ⇒ 證明維持「已移除」,
+  //   登入時 v5.281.0 的自動再刪除就會把它拿掉。只看 UR;沒被移除過的 UR、所有非 UR 英雄一行行為都不變。
+  window._LXPS_UR_LEGIT_SRC = { 'admin_grant':1, 'admin_restore':1, 'gm_auto':1, 'gm_auto_unlock':1, 'ticket_ur_pick':1, 'ticket_ur_swap':1, 'student_designer':1 };
+  function _hlUrLegit(src){
+    var s = String(src || '');
+    if(window._LXPS_UR_LEGIT_SRC[s]) return true;
+    if(s === 'admin_delete') return false;
+    return /^(admin_|gm_)/.test(s);
+  }
+  function _hlIsUR(name){ try{ return (typeof window._lxpsIsUR === 'function') && !!window._lxpsIsUR(name); }catch(_){ return false; } }
+  // 有效的「實際獲得」時間:UR 被移除過、而最近一次獲得不是正規來源 ⇒ 0
+  window._lxpsHeroLedgerEffL = function(e, name){
+    var l = +(e && e.l) || 0;
+    if(l > 0 && (+(e.r) || 0) > 0 && _hlIsUR(name) && !_hlUrLegit(e.ls)) return 0;
+    return l;
+  };
   // 實際獲得晚於最後一次移除(老師帳本反推、幽靈英雄稽核只認這個)
   window._lxpsHeroLedgerStrong = function(L, name){
     var e = L && L.h && L.h[name];
-    return !!(e && (e.l || 0) > 0 && (e.l || 0) > (e.r || 0));
+    var l = e ? window._lxpsHeroLedgerEffL(e, name) : 0;
+    return !!(e && l > 0 && l > (e.r || 0));
   };
   // 擁有 = 實際獲得晚於移除,或「看見持有、而且從來沒被移除過」
   window._lxpsHeroLedgerOwned = function(L, name){
     var e = L && L.h && L.h[name];
     if(!e) return false;
-    if((e.l || 0) > 0 && (e.l || 0) > (e.r || 0)) return true;
+    var l = window._lxpsHeroLedgerEffL(e, name);
+    if(l > 0 && l > (e.r || 0)) return true;
     return (e.w || 0) > 0 && !((e.r || 0) > 0);
   };
   // 最近一次是移除(擋任何「加回來」;不會把已在清單裡的英雄拿掉)
   window._lxpsHeroLedgerRemoved = function(L, name){
     var e = L && L.h && L.h[name];
-    return !!(e && (e.r || 0) > 0 && (e.r || 0) >= (e.l || 0));
+    return !!(e && (e.r || 0) > 0 && (e.r || 0) >= window._lxpsHeroLedgerEffL(e, name));
   };
   // ════════════════════════════════════════════════════════════════════════
   // ★★ v5.281.0 自動刪除「已刪又被寫回」的英雄(老師 2026-10-19 19:07 交代)
@@ -2258,7 +2279,7 @@
   window._lxpsHeroShouldAutoRedelete = function(L, name, u12){
     var e = L && L.h && L.h[name];
     if(!e) return false;
-    var r = +e.r || 0, l = +e.l || 0;
+    var r = +e.r || 0, l = window._lxpsHeroLedgerEffL(e, name);   /* ★ v5.420.0 UR 移除後非正規來源的獲得不算 */
     if(!(r > window._LXPS_AUTO_REDEL_SINCE)) return false;
     if(!(r >= l)) return false;
     if(!u12 || String(e.ru || '') !== String(u12).slice(0, 12)) return false;

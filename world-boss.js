@@ -1137,16 +1137,97 @@
   // 9. 入口函式 — 按鈕 onclick 呼叫
   // ───────────────────────────────────────────────────────────────────
   // ★ v3.2 — 休戰期狀態工具:從 window._wbCeasefireState 讀,若未載入則預設休戰
+  /* ══ ★ v5.420.0(老師 2026-11-17 16:11 截圖「龍王被打倒了,系統應該要自動幫我替換訊息,並自動預告下一隻龍王開戰時間」)══
+     根因:打倒龍王時只有「最後一刀是管理員」才會自動寫 worldBossControl(學生沒有寫入權限),
+           所以學生打倒之後公告一直停在「小英雄們正與龍王激戰中!」、下次開戰也沒預告。
+     做法(純顯示判斷,每位玩家自己算,不需要寫入權限):
+       ① 當前龍王已倒下(stats.wbBossDownTimes[當前] 有值,或雲端 HP ≤ 0)⇒ 視為休戰;
+          公告自動換成「🏆 ○○已被小英雄們打倒了!…」,下次開戰 = 結算接班時間(倒下後的下一個台灣 08:00,_wbSettle.getStatus().settleAt)+ 下一隻龍王名字。
+       ② 接班後(新龍王上場、沒有倒下紀錄),若雲端還留著自動的「打倒」公告(管理員自動寫入的)⇒ 視為開放,公告換成「⚔️ 新龍王登場!」。
+       ③ 管理員打開龍王戰時,若雲端狀態和上面算的不一致,自動寫回 worldBossControl(_wbAutoSyncControl,只改公告/預告/開關,不重置 HP 與排行榜)。
+     管理員自己手動輸入的公告與預告(非自動格式)一律優先顯示。 */
+  const _WB_AUTO_DOWN_MARK = '已被小英雄們打倒';
+  const _WB_AUTO_UP_MARK = '登場!小英雄們';
+  function _wbFmtTw(ts){
+    try{
+      const d = new Date(ts + 8 * 3600000);   // 以 UTC 方法讀台灣時間
+      const wk = '日一二三四五六'.charAt(d.getUTCDay());
+      const hh = String(d.getUTCHours()).padStart(2, '0'), mm = String(d.getUTCMinutes()).padStart(2, '0');
+      return (d.getUTCMonth() + 1) + '/' + d.getUTCDate() + '(' + wk + ') ' + hh + ':' + mm;
+    }catch(_){ return ''; }
+  }
+  function _wbBossNameOf(id){
+    try{ const b = (window.WORLD_BOSS_LINEUP || []).find(function(x){ return x && x.id === id; }); return (b && b.name) || '龍王'; }catch(_){ return '龍王'; }
+  }
+  function _wbAutoState(){
+    try{
+      const gs = window._cachedGlobalStats || {};
+      const cur = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : '';
+      if(!cur) return null;
+      const downAt = (gs.wbBossDownTimes && +gs.wbBossDownTimes[cur]) || 0;
+      const hp = gs.worldBossHp ? gs.worldBossHp[cur] : undefined;
+      const curName = _wbBossNameOf(cur);
+      if(downAt > 0 || (typeof hp === 'number' && hp <= 0)){
+        let settleAt = 0;
+        try{ if(window._wbSettle && typeof window._wbSettle.getStatus === 'function') settleAt = +(window._wbSettle.getStatus(cur) || {}).settleAt || 0; }catch(_){}
+        const nextId = (typeof window._wbGetNextBossId === 'function') ? window._wbGetNextBossId(cur) : '';
+        const nextName = _wbBossNameOf(nextId);
+        const whenTxt = settleAt > 0 ? _wbFmtTw(settleAt) : '下一個早上 08:00';
+        return { kind: 'down', bossId: cur, curName: curName, nextName: nextName, settleAt: settleAt,
+          nextText: nextName + ' ' + whenTxt + ' 登場開戰',
+          message: '🏆 ' + curName + _WB_AUTO_DOWN_MARK + '了!感謝所有參戰的勇者,排名獎勵會在 ' + whenTxt + ' 自動發放;下一隻「' + nextName + '」同時登場!' };
+      }
+      const st = window._wbCeasefireState || {};
+      if(st._loaded && st.ceasefire && String(st.message || '').indexOf(_WB_AUTO_DOWN_MARK) >= 0 && String(st.message || '').indexOf(curName + _WB_AUTO_DOWN_MARK) < 0){
+        return { kind: 'up', bossId: cur, curName: curName, nextText: '', message: '⚔️ ' + curName + _WB_AUTO_UP_MARK + '集合,一起討伐吧!' };
+      }
+    }catch(_){}
+    return null;
+  }
+  window._wbAutoState = _wbAutoState;
+  function _wbIsAutoMsg(m){ m = String(m || ''); return !m || m.indexOf(_WB_AUTO_DOWN_MARK) >= 0 || m.indexOf(_WB_AUTO_UP_MARK) >= 0 || m.indexOf('激戰中') >= 0 || m.indexOf('已被全伺服器擊敗') >= 0; }
+  /* 顯示用公告:自動狀態優先(管理員手動寫的非自動公告除外) */
+  function _wbDisplayMessage(){
+    const st = window._wbCeasefireState || {};
+    const a = _wbAutoState();
+    if(a && _wbIsAutoMsg(st.message)) return a.message;
+    return st.message || '';
+  }
+  window._wbDisplayMessage = _wbDisplayMessage;
   function _wbIsCeasefire(){
     const st = window._wbCeasefireState || {};
     // 文件未載入時 → 採保守策略,維持「休戰期」直到 Firestore 同步完成
     if(!st._loaded) return true;
+    const a = _wbAutoState();
+    if(a && a.kind === 'down') return true;    /* ★ v5.420.0 龍王已倒下 ⇒ 休戰(等接班) */
+    if(a && a.kind === 'up') return false;     /* ★ v5.420.0 已接班新龍王、雲端還是自動休戰 ⇒ 開放 */
     return !!st.ceasefire;
   }
   function _wbGetNextOpenText(){
     const st = window._wbCeasefireState || {};
+    const a = _wbAutoState();
+    if(a && a.kind === 'down' && (!st.nextOpenTime || st.nextOpenTime.indexOf('登場開戰') >= 0 || !st.ceasefire)) return a.nextText;
+    if(a && a.kind === 'up') return '';
     return st.nextOpenTime || '';
   }
+  /* ★ v5.420.0 管理員看到的雲端狀態和自動狀態不一致 ⇒ 寫回 worldBossControl(每 60 秒最多一次;不重置 HP/排行榜) */
+  function _wbAutoSyncControl(){
+    try{
+      if(!(typeof window._isAdminUser === 'function' && window._isAdminUser())) return;
+      if(!window._wbControl || typeof window._wbControl.set !== 'function') return;
+      const st = window._wbCeasefireState || {};
+      if(!st._loaded) return;
+      const a = _wbAutoState(); if(!a) return;
+      if(!_wbIsAutoMsg(st.message)) return;   // 老師自己寫的公告不蓋掉
+      const want = { ceasefire: a.kind === 'down', nextOpenTime: a.kind === 'down' ? a.nextText : '', message: a.message };
+      if(!!st.ceasefire === want.ceasefire && (st.nextOpenTime || '') === want.nextOpenTime && (st.message || '') === want.message) return;
+      const now = Date.now();
+      if(window._wbAutoSyncAt && now - window._wbAutoSyncAt < 60000) return;
+      window._wbAutoSyncAt = now;
+      window._wbControl.set(want).then(function(){ console.log('[WB 自動公告 v5.420.0] 已同步', want); }).catch(function(e){ console.warn('[WB 自動公告] 寫入失敗', e); });
+    }catch(_){}
+  }
+  window._wbAutoSyncControl = _wbAutoSyncControl;
   window._wbIsCeasefire = _wbIsCeasefire;
   window._wbGetNextOpenText = _wbGetNextOpenText;
 
@@ -1232,6 +1313,7 @@
 
   // 入口 overlay 內的「狀態看板」(休戰中/開放中 + 預告時間)即時刷新
   function _wbSyncCeasefireBanner(){
+    try{ _wbAutoSyncControl(); }catch(_){}   /* ★ v5.420.0 管理員打開時自動把雲端公告/預告/開關對齊 */
     const banner = document.getElementById('wb-ceasefire-banner');
     if(!banner) return;
     const isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
@@ -1248,7 +1330,7 @@
                 ? ('📅 下次開戰:<b>' + _escapeHtml(_wbGetNextOpenText()) + '</b>')
                 : '尚未公告下次開戰時間,請等管理員預告') +
             '</div>' +
-            (st.message ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(st.message) + '</div>' : '') +
+            (_wbDisplayMessage() ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(_wbDisplayMessage()) + '</div>' : '') +
           '</div>' +
         '</div>';
     }else{
@@ -1272,7 +1354,7 @@
           '<div class="wb-cf-main">' +
             '<div class="wb-cf-title">挑戰開放中!</div>' +
             '<div class="wb-cf-sub">隨時可以開房間 / 加入房間 / 練習模式' + _remainingText + '</div>' +
-            (st.message ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(st.message) + '</div>' : '') +
+            (_wbDisplayMessage() ? '<div class="wb-cf-msg">📢 ' + _escapeHtml(_wbDisplayMessage()) + '</div>' : '') +
           '</div>' +
         '</div>';
       // 異步刷新今日剩餘場次(管理員顯示無限,玩家顯示實際剩餘)
@@ -5294,11 +5376,8 @@
               try{
                 if(window._wbControl && typeof window._wbControl.set === 'function'
                    && typeof window._isAdminUser === 'function' && window._isAdminUser()){
-                  window._wbControl.set({
-                    ceasefire: true,
-                    nextOpenTime: '',
-                    message: '🏆 BOSS 已被全伺服器擊敗!感謝參戰勇者,下次開戰時間即將公告。',
-                  }).catch(e => console.warn('[WB] 自動休戰失敗', e));
+                  /* ★ v5.420.0 改走自動公告(寫入「○○已被小英雄們打倒了」＋下一隻龍王登場時間);等倒下紀錄同步回來再寫 */
+                  setTimeout(function(){ try{ window._wbAutoSyncAt = 0; window._wbAutoSyncControl(); }catch(_){} }, 3000);
                 }
               }catch(_){}
             }
