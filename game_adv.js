@@ -42909,10 +42909,178 @@ function _openSummonTicketPickModal(tier){
   }catch(e){ console.warn('[自選召喚卷面板]', e); }
 }
 
-// ★ v3.13.74 — 自選券:確認挑選某英雄(二次確認 → 扣券 + 解鎖)
-async function _confirmSummonTicketPick(tier, heroName){
+// ★ v5.424.0(老師 2026-11-18 21:00「所有自選卷在選擇英雄清單中,點選英雄時先展開『英雄介紹』視窗
+//   (可看到核心能力和現有命星狀況),玩家可按取消關閉該視窗,也可直接按『確定召喚』」)
+//   共用視窗:未收錄英雄(mode 'new')與已收錄換命星(mode 'star')兩區都走這裡;按「確定召喚」= 原本二次確認按「確定」,
+//   之後流程(先發英雄→驗證到手→扣券、原子上雲、防連點、防換帳號)完全沿用,一行都沒改。
+//   尺寸:比照 v5.399.0 鐵則 —— 接近全螢幕卡片,字級全部吃 --fz(window._lxpsForgeUnit),視窗縮放時重算;data-lxps-no-pczoom。
+window._lxpsPickIntroShow = function(tier, name, mode, onGo){
   try{
-    if(!(await window._lxpsConfirm('確定要選擇「' + heroName + '」嗎?\n\n使用後將消耗 1 張 ' + tier + ' 自選召喚卷,並立即解鎖此英雄。'))) return;
+    var _cute = true; try{ _cute = (typeof _artStyle === 'undefined') || _artStyle === 'cute'; }catch(_){}
+    var _T = function(c, p){ return _cute ? c : p; };
+    var _e = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]; }); };
+    var old = document.getElementById('lxps-pick-intro-ov'); if(old) old.remove();
+    if(!document.getElementById('lxps-pick-intro-css')){
+      var st = document.createElement('style'); st.id = 'lxps-pick-intro-css';
+      st.textContent = [
+        '#lxps-pick-intro-ov{position:fixed;inset:0;z-index:10750;display:flex;align-items:safe center;justify-content:center;padding:1.5vh 1.5vw;box-sizing:border-box;background:rgba(5,3,18,0.9);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;font-size:var(--fz,20px);}',
+        '#lxps-pick-intro-ov .pi-card{width:96vw;max-width:96vw;max-height:94vh;min-height:min(88vh,40em);box-sizing:border-box;display:flex;flex-direction:column;background:linear-gradient(160deg,#1d1245,#0c0826);border:0.15em solid var(--pi-ac,#ffd97a);border-radius:1em;padding:0.8em 1.1em;box-shadow:0 0 2.4em color-mix(in srgb,var(--pi-ac,#ffd97a) 40%,transparent);color:#fff;}',
+        '#lxps-pick-intro-ov .pi-hd{font-size:1.55em;font-weight:900;text-align:center;color:var(--pi-ac,#ffd97a);letter-spacing:0.1em;margin-bottom:0.35em;}',
+        '#lxps-pick-intro-ov .pi-body{flex:1 1 auto;min-height:0;display:flex;gap:1em;}',
+        '#lxps-pick-intro-ov .pi-left{flex:0 0 30%;display:flex;flex-direction:column;align-items:center;gap:0.4em;min-width:0;}',
+        '#lxps-pick-intro-ov .pi-pic{position:relative;width:100%;flex:1 1 auto;min-height:8em;border-radius:0.8em;overflow:hidden;border:0.12em solid var(--pi-ac,#ffd97a);background:#0a0a18;}',
+        '#lxps-pick-intro-ov .pi-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}',
+        '#lxps-pick-intro-ov .pi-pic .pi-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:5em;}',
+        '#lxps-pick-intro-ov .pi-badge{position:absolute;left:0.4em;top:0.4em;font-size:1em;font-weight:900;padding:0.1em 0.7em;border-radius:99em;color:#2a1600;background:var(--pi-ac,#ffd97a);}',
+        '#lxps-pick-intro-ov .pi-name{font-size:1.6em;font-weight:900;color:#ffe9a0;text-align:center;line-height:1.2;}',
+        '#lxps-pick-intro-ov .pi-role{font-size:0.95em;color:#cfc4ff;text-align:center;line-height:1.35;}',
+        '#lxps-pick-intro-ov .pi-right{flex:1 1 auto;min-width:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:0.3em;}',
+        '#lxps-pick-intro-ov .pi-sec{font-size:1.15em;font-weight:900;color:#9fd8ff;margin:0.5em 0 0.3em;}',
+        '#lxps-pick-intro-ov .pi-sec:first-child{margin-top:0;}',
+        '#lxps-pick-intro-ov .pi-chips{display:flex;flex-wrap:wrap;gap:0.35em;}',
+        '#lxps-pick-intro-ov .pi-chip{font-size:0.95em;font-weight:800;padding:0.15em 0.6em;border-radius:0.5em;border:0.08em solid;white-space:nowrap;}',
+        '#lxps-pick-intro-ov .pi-sk{background:rgba(60,40,110,0.5);border-radius:0.6em;padding:0.4em 0.7em;margin-top:0.35em;}',
+        '#lxps-pick-intro-ov .pi-sk b{color:#ffcc66;font-size:1.02em;}',
+        '#lxps-pick-intro-ov .pi-sk div{font-size:0.92em;color:#e6e2ff;line-height:1.5;margin-top:0.15em;}',
+        '#lxps-pick-intro-ov .pi-stars{font-size:1.6em;letter-spacing:0.15em;line-height:1.1;text-align:center;}',
+        '#lxps-pick-intro-ov .pi-stars .on{color:#ffd24a;text-shadow:0 0 0.4em rgba(255,200,60,0.9);}',
+        '#lxps-pick-intro-ov .pi-stars .hd{color:#ffe9a8;opacity:0.75;}',
+        '#lxps-pick-intro-ov .pi-stars .off{color:rgba(200,200,255,0.25);}',
+        '#lxps-pick-intro-ov .pi-cnt{font-size:0.95em;color:#ffe08a;font-weight:800;text-align:center;line-height:1.35;}',
+        '@media (orientation:landscape) and (max-height:520px){#lxps-pick-intro-ov .pi-stars{font-size:1.3em;} #lxps-pick-intro-ov .pi-name{font-size:1.35em;} #lxps-pick-intro-ov .pi-role{display:none;}}',
+        '#lxps-pick-intro-ov .pi-cs{display:flex;gap:0.5em;align-items:flex-start;font-size:0.9em;line-height:1.45;padding:0.25em 0.5em;border-radius:0.5em;margin-top:0.2em;background:rgba(255,255,255,0.04);}',
+        '#lxps-pick-intro-ov .pi-cs.lit{background:rgba(255,210,80,0.14);}',
+        '#lxps-pick-intro-ov .pi-cs .k{flex:0 0 auto;font-weight:900;color:#ffd97a;white-space:nowrap;}',
+        '#lxps-pick-intro-ov .pi-cs .t{color:#ddd8ff;min-width:0;}',
+        '#lxps-pick-intro-ov .pi-eff{font-size:1.05em;font-weight:800;text-align:center;color:#fff3cf;margin:0.5em 0 0.3em;line-height:1.4;}',
+        '#lxps-pick-intro-ov .pi-btns{display:flex;gap:1em;justify-content:center;flex-wrap:wrap;}',
+        '#lxps-pick-intro-ov .pi-btn{min-height:2.4em;padding:0.4em 1.8em;font-size:1.2em;font-weight:900;border-radius:0.7em;cursor:pointer;font-family:inherit;letter-spacing:0.1em;color:#fff;}',
+        '#lxps-pick-intro-ov .pi-no{background:rgba(40,30,70,0.9);border:0.12em solid rgba(180,140,255,0.6);color:#e4dcff;}',
+        '#lxps-pick-intro-ov .pi-go{background:linear-gradient(135deg,rgba(60,170,90,0.95),rgba(30,120,60,0.95));border:0.12em solid #8dffb0;box-shadow:0 0 1em rgba(100,255,150,0.45);}',
+        '@media (max-width:620px){#lxps-pick-intro-ov .pi-body{flex-direction:column;} #lxps-pick-intro-ov .pi-left{flex:0 0 auto;} #lxps-pick-intro-ov .pi-pic{min-height:14em;}}'
+      ].join('\n');
+      (document.head || document.documentElement).appendChild(st);
+    }
+    var ac = (tier === 'UR') ? '#ff5e9c' : (tier === 'SSR') ? '#ffb347' : '#7fe0ff';
+    var img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) ? HERO_IMGS[name] : '';
+    var av = (typeof AVATARS !== 'undefined' && AVATARS[name]) || '⭐';
+    var op = 'center 15%'; try{ if(typeof getHeroObjPos === 'function') op = getHeroObjPos(name) || op; }catch(_){}
+    var bio = (typeof HERO_BIO !== 'undefined' && HERO_BIO[name]) ? HERO_BIO[name] : null;
+    var hdb = (typeof HERO_DB !== 'undefined' && HERO_DB[name]) ? HERO_DB[name] : null;
+    var tr = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) ? HERO_TRAIT[name] : null;
+    var bu = (typeof BURST_DB !== 'undefined' && BURST_DB[name]) ? BURST_DB[name] : null;
+    var _txt = function(o){ if(!o) return ''; return _cute ? (o.sd || o.d || o.desc || '') : (o.d || o.desc || o.sd || ''); };
+    // ① 核心能力(與編組頁卡片同一份口徑 _lxpsHeroCoreTags,不另做第二套)
+    var chips = '';
+    try{
+      var tags = (typeof window._lxpsHeroCoreTags === 'function') ? window._lxpsHeroCoreTags(name, {}, 12) : [];
+      var COL = window._LXPS_TAG_COLORS || {};
+      tags.forEach(function(t){
+        var c = COL[t.group] || { bg:'rgba(60,60,90,0.9)', bd:'#99a', fg:'#eef' };
+        chips += '<span class="pi-chip" style="background:' + c.bg + ';border-color:' + c.bd + ';color:' + c.fg + ';">' + _e(t.tag) + '</span>';
+      });
+    }catch(_){}
+    var sk = '';
+    if(tr) sk += '<div class="pi-sk"><b>' + _e((tr.icon || '🌟') + ' ' + _T('天賦', '天賦') + ':' + (tr.name || '')) + '</b><div>' + _e(_txt(tr)) + '</div></div>';
+    if(hdb && hdb.s1) sk += '<div class="pi-sk"><b>⚔ ' + _e(hdb.s1.n || '') + '</b><div>' + _e(_txt(hdb.s1)) + '</div></div>';
+    if(hdb && hdb.s2) sk += '<div class="pi-sk"><b>⚔ ' + _e(hdb.s2.n || '') + '</b><div>' + _e(_txt(hdb.s2)) + '</div></div>';
+    if(bu) sk += '<div class="pi-sk"><b>💥 ' + _T('大絕招', '極限爆發') + ':' + _e(bu.n || '') + '</b><div>' + _e(_txt(bu)) + '</div></div>';
+    // ② 命星狀況(持有/點亮/6 顆星名與說明)
+    var held = 0, litArr = [];
+    try{ held = (typeof window._cstHeld === 'function') ? (window._cstHeld(name) | 0) : 0; }catch(_){}
+    try{ litArr = (typeof window._cstLit === 'function') ? (window._cstLit(name) || []) : []; }catch(_){}
+    var maxS = window._CST_MAX || 6;
+    var stars = '';
+    for(var i = 0; i < maxS; i++) stars += '<span class="' + (i < litArr.length ? 'on' : (i < held ? 'hd' : 'off')) + '">★</span>';
+    var cdb = (window.CONSTELLATION_DB && window.CONSTELLATION_DB[(typeof window._cstKey === 'function') ? window._cstKey(name) : name]) || null;
+    var SL = ['t1', 't2', 's1', 's2', 'b1', 'b2'];
+    var SLB = { t1:'天·壹', t2:'天·貳', s1:'技·壹', s2:'技·貳', b1:'爆·壹', b2:'爆·貳' };
+    var csRows = '';
+    if(cdb && cdb.s){
+      SL.forEach(function(s){
+        var o = cdb.s[s]; if(!o) return;
+        var on = litArr.indexOf(s) >= 0;
+        csRows += '<div class="pi-cs' + (on ? ' lit' : '') + '"><span class="k">' + (on ? '★ ' : '☆ ') + SLB[s] + ' ' + _e(o.n || '') + '</span><span class="t">' + _e(_cute ? (o.sd || o.fd || '') : (o.fd || o.sd || '')) + '</span></div>';
+      });
+    }
+    var owned = (mode === 'star');
+    var cntTxt = owned
+      ? _T('現在有 ' + held + ' / ' + maxS + ' 顆命星(點亮 ' + litArr.length + ' 顆)', '目前命星 ' + held + ' / ' + maxS + '(已點亮 ' + litArr.length + ')')
+      : (held > 0
+          ? _T('還沒有這位英雄,但已經先存了 ' + held + ' 顆命星', '尚未收錄;已預存命星 ' + held + ' 顆')
+          : _T('還沒有這位英雄,召喚後是 0 命,命星之後再慢慢收集', '尚未收錄;獲得時為 0 命'));
+    var eff = owned
+      ? _T('按「確定召喚」會用掉 1 張 ' + tier + ' 自選卷,「' + name + '」命星 ' + held + ' → ' + Math.min(maxS, held + 1) + ' 顆',
+           '確定召喚:消耗 1 張 ' + tier + ' 自選召喚卷,「' + name + '」命星 ' + held + ' → ' + Math.min(maxS, held + 1))
+      : _T('按「確定召喚」會用掉 1 張 ' + tier + ' 自選卷,「' + name + '」馬上加入你的隊伍',
+           '確定召喚:消耗 1 張 ' + tier + ' 自選召喚卷,立即獲得「' + name + '」');
+    var html = '<div class="pi-card" role="dialog" aria-modal="true">'
+      + '<div class="pi-hd">' + _T('📖 英雄介紹', '📖 英雄介紹') + '</div>'
+      + '<div class="pi-body">'
+      +   '<div class="pi-left">'
+      +     '<div class="pi-pic">'
+      +       (img ? '<img src="' + _e(img) + '" alt="" style="object-position:' + op + ';" onload="window._lxpsFaceFitImg&&window._lxpsFaceFitImg(this)">' : '<div class="pi-ph">' + _e(av) + '</div>')
+      +       '<div class="pi-badge">' + _e(tier) + '</div>'
+      +     '</div>'
+      +     '<div class="pi-name">' + _e(name) + '</div>'
+      +     (bio && bio.role ? '<div class="pi-role">' + _e(bio.role) + '</div>' : '')
+      +     '<div class="pi-stars" aria-label="命星 ' + held + '/' + maxS + '">' + stars + '</div>'
+      +     '<div class="pi-cnt">' + _e(cntTxt) + '</div>'
+      +   '</div>'
+      +   '<div class="pi-right">'
+      +     '<div class="pi-sec">' + _T('💪 核心能力', '💪 核心能力') + '</div>'
+      +     (chips ? '<div class="pi-chips">' + chips + '</div>' : '')
+      +     sk
+      +     (csRows ? '<div class="pi-sec">' + _T('⭐ 命星狀況(★ 已點亮 ☆ 還沒點亮)', '⭐ 命星狀況(★ 已點亮/☆ 未點亮)') + '</div>' + csRows : '')
+      +   '</div>'
+      + '</div>'
+      + '<div class="pi-eff">' + _e(eff) + '</div>'
+      + '<div class="pi-btns">'
+      +   '<button type="button" class="pi-btn pi-no" data-pi="no">' + _T('取消', '取消') + '</button>'
+      +   '<button type="button" class="pi-btn pi-go" data-pi="go">' + _T('✅ 確定召喚', '✅ 確定召喚') + '</button>'
+      + '</div>'
+      + '</div>';
+    var ov = document.createElement('div');
+    ov.id = 'lxps-pick-intro-ov';
+    ov.setAttribute('data-lxps-no-pczoom', '1');
+    ov.style.setProperty('--pi-ac', ac);
+    try{ ov.style.setProperty('--fz', ((typeof window._lxpsForgeUnit === 'function') ? window._lxpsForgeUnit() : 20).toFixed(2) + 'px'); }catch(_){}
+    ov.innerHTML = html;
+    var uidAtOpen = String(window._gUserId || '');
+    var _close = function(){
+      try{ ov.remove(); }catch(_){}
+      try{ window.removeEventListener('resize', _rz); }catch(_){}
+    };
+    var _rz = function(){ try{ ov.style.setProperty('--fz', window._lxpsForgeUnit().toFixed(2) + 'px'); }catch(_){} };
+    window.addEventListener('resize', _rz);
+    ov.addEventListener('click', function(ev){
+      if(ev.target === ov){ try{ playSfx('sfx-cancel', 0.5); }catch(_){} _close(); return; }
+      var b = ev.target;
+      while(b && b !== ov && !(b.getAttribute && b.getAttribute('data-pi'))) b = b.parentNode;
+      if(!b || b === ov) return;
+      var a = b.getAttribute('data-pi');
+      if(a === 'no'){ try{ playSfx('sfx-cancel', 0.5); }catch(_){} _close(); return; }
+      if(a === 'go'){
+        _close();
+        /* 視窗開著時換了帳號(共用 iPad)⇒ 不動作,請重新打開 */
+        if(String(window._gUserId || '') !== uidAtOpen){ try{ _showInGameToast(_T('帳號換過了,請重新打開召喚卷', '帳號已變更,請重新開啟召喚卷'), '#ffaa44', 2600); }catch(_){} return; }
+        try{ playSfx('sfx-confirm', 0.6); }catch(_){}
+        try{ if(typeof onGo === 'function') onGo(); }catch(e){ console.warn('[英雄介紹 確定召喚]', e); }
+      }
+    });
+    document.body.appendChild(ov);
+    try{ if(typeof window._lxpsFaceFitIn === 'function') window._lxpsFaceFitIn(ov); }catch(_){}
+    return true;
+  }catch(e){ console.warn('[英雄介紹視窗]', e); return false; }
+};
+
+// ★ v3.13.74 — 自選券:確認挑選某英雄(二次確認 → 扣券 + 解鎖)
+//   ★ v5.424.0 — 二次確認改成「英雄介紹」視窗(按確定召喚才往下);skipAsk=true 由介紹視窗回呼。介紹視窗開不出來才退回原本的文字確認。
+async function _confirmSummonTicketPick(tier, heroName, skipAsk){
+  try{
+    if(!skipAsk && typeof window._lxpsPickIntroShow === 'function'
+       && window._lxpsPickIntroShow(tier, heroName, 'new', function(){ _confirmSummonTicketPick(tier, heroName, true); })) return;
+    if(!skipAsk && !(await window._lxpsConfirm('確定要選擇「' + heroName + '」嗎?\n\n使用後將消耗 1 張 ' + tier + ' 自選召喚卷,並立即解鎖此英雄。'))) return;
     /* ★★ v5.198.0 — `_useSummonTicketPick` 是 **async function**:它內部丟出的例外會變成
        「被拒絕的 Promise」,**外面這層 try/catch 一個字都接不到**(舊碼的 catch 從來沒有機會執行)
        ⇒ 學生按下去之後畫面就停在那裡、沒有任何訊息,這正是「白頻 + 不知道發生什麼事」的成因之一。
@@ -85636,6 +85804,7 @@ function makeRadar(dims, size) {
           }
         }catch(e2){ console.warn('[命座] 自選卷轉命星例外', e2); _toast('發生錯誤:' + (e2 && e2.message ? e2.message : e2), '#ff8844'); }
       };
+      if(opts && opts.skipAsk && !isRnd){ go(); return; }   /* ★ v5.424.0 已在「英雄介紹」視窗按過確定召喚 */
       if(typeof _customConfirm === 'function') _customConfirm(_esc(msg), go); else if((await window._lxpsConfirm(msg))) go();
     }catch(e){ console.warn('[命座] 自選卷轉命星', e); }
   };
@@ -85645,7 +85814,11 @@ function makeRadar(dims, size) {
     while(t && t !== document && !(t.getAttribute && t.getAttribute('data-cst-urtk'))) t = t.parentNode;
     if(!t || t === document) return;
     try{ playSfx('sfx-sel', 0.6); }catch(_){}
-    W._cstUseTicketForStar(t.getAttribute('data-cst-tktier') || 'UR', t.getAttribute('data-cst-urtk'));
+    /* ★ v5.424.0 先開「英雄介紹」視窗(核心能力＋命星狀況),按「確定召喚」才換命星(不再跳第二次文字確認);開不出來才走原本流程 */
+    var _tkT = t.getAttribute('data-cst-tktier') || 'UR', _tkN = t.getAttribute('data-cst-urtk');
+    if(typeof W._lxpsPickIntroShow === 'function'
+       && W._lxpsPickIntroShow(_tkT, _tkN, 'star', function(){ W._cstUseTicketForStar(_tkT, _tkN, { skipAsk: true }); })) return;
+    W._cstUseTicketForStar(_tkT, _tkN);
   }, true);
 
   /* ── 戰前套用(由 game_battle.js _applyBattlePrepToHero ④ 呼叫)── */

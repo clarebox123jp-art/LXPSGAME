@@ -22193,6 +22193,13 @@
       //   給強制登入閘門 openAdventureOverlay 判斷用(避免遊戲中 race 誤擋)。
       window._lxpsLoggedInThisSession = true;
       try{ sessionStorage.setItem('lxps_sess_uid', String(user.uid)); }catch(_){}   // ★ v5.379.0 同分頁重載放行記號(見 onAuth _sameSessionReload)
+      /* ★ v5.424.0(老師 2026-11-18「學生登入後一秒立即登出,換平板就可以」)— 走到這裡＝已通過共用平板攔截、確定是本人登入。
+         立刻把裝置層「最後操作時間」lxps_idle_last 蓋成這位、現在。
+         【根因】閒置模組要等下面 gameCloudLoad 等好幾個 await 跑完才啟動、才寫 lxps_idle_last;這段期間若頁面重新載入
+           (登入完成後的強制更新、舊 iPad 記憶體不足自動重載…),這台平板上留的還是「這位同學上次在這台玩」的舊時間(>30 分鐘)
+           ⇒ 重載後 _idleExpiredRestore 成立 ⇒ 被當成上一位沒登出的人強制登出。只在「最後一位使用者剛好是他本人」的平板發生,所以換平板就好。
+         【安全】共用平板防線不變:這行只在本輪已判定合法登入之後才寫,放著沒人碰 30 分鐘仍照樣要重新登入(閒置模組之後照常更新這筆)。 */
+      try{ localStorage.setItem('lxps_idle_last', JSON.stringify({ uid: String(user.uid), t: Date.now() })); }catch(_){}
       // ★ v5.141.0 — 帳號列先畫再說（不等下面 6～7 次 Firestore 讀寫）；雲端暱稱到貨後原段落會再覆蓋成最終值
       try{ window._lxpsPaintAccountBar(user); }catch(_){}
       // ════════════════════════════════════════════════════════════
