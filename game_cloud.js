@@ -6397,6 +6397,7 @@
   window._lxpsRescueBadgeStart = function(){
     try{
       if(typeof window._isAdminUser !== 'function' || !window._isAdminUser()) return;   // 只 GM
+      try{ if(typeof window._lxpsDsgBadgeStart === 'function') window._lxpsDsgBadgeStart(); }catch(_eDsg){}   // ★ v5.425.0 第二個提醒視窗「收到設計師投稿」
       if(window._lxpsRescueBadgeUnsubA || window._lxpsRescueBadgeUnsubB) return;         // 已啟用
       window._lxpsRescueBadgeTotalSeen = -1;
       if(typeof window._fbWatchAccountRescuePending === 'function'){
@@ -6417,6 +6418,7 @@
     try{ if(window._lxpsRescueBadgeUnsubA){ window._lxpsRescueBadgeUnsubA(); window._lxpsRescueBadgeUnsubA = null; } }catch(_){}
     try{ if(window._lxpsRescueBadgeUnsubB){ window._lxpsRescueBadgeUnsubB(); window._lxpsRescueBadgeUnsubB = null; } }catch(_){}
     try{ var _b = document.getElementById('_lxps-rescue-badge'); if(_b) _b.remove(); }catch(_){}
+    try{ if(typeof window._lxpsDsgBadgeStop === 'function') window._lxpsDsgBadgeStop(); }catch(_eDsg){}   // ★ v5.425.0
     window._lxpsRescuePendingCount = 0;
     window._lxpsBugUnhandledCount  = 0;
     window._lxpsRescueBadgeTotalSeen = -1;
@@ -6430,7 +6432,7 @@
       var _isNew = (window._lxpsRescueBadgeTotalSeen >= 0 && _total > window._lxpsRescueBadgeTotalSeen);
       window._lxpsRescueBadgeTotalSeen = _total;
       var _b = document.getElementById('_lxps-rescue-badge');
-      if(_total <= 0){ if(_b) _b.remove(); return; }
+      if(_total <= 0){ if(_b) _b.remove(); try{ if(typeof window._lxpsDsgBadgePlace === 'function') window._lxpsDsgBadgePlace(); }catch(_eDp0){} return; }
       if(!_b){
         _b = document.createElement('div');
         _b.id = '_lxps-rescue-badge';
@@ -6465,7 +6467,100 @@
         try{ window._lxpsPlayRescueChime(); }catch(_){}
         try{ _b.animate([{transform:'scale(1)'},{transform:'scale(1.13)'},{transform:'scale(1)'}], {duration:560, iterations:2}); }catch(_){}
       }
+      try{ if(typeof window._lxpsDsgBadgePlace === 'function') window._lxpsDsgBadgePlace(); }catch(_eDp){}   // ★ v5.425.0 設計師投稿視窗排在這個視窗上方
     }catch(e){ console.warn('[GM 即時提醒徽章] 渲染失敗', e); }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.425.0(2026-11-18・老師「創藝工坊的學生作品提交投稿時,gm 會如同收到錯誤和救援申請一樣,收到第二個有音效的視窗『收到設計師投稿』」)
+  //   第二個 GM 提醒視窗:監聽 designSubmit where st=='pend'(遊戲美術設計師待審投稿,GM list 權限既有)。
+  //   數量比上次多(且不是登入當下第一次快照)⇒ 播同一支提示音(收到救援申請.mp3,失敗退合成音)+ 脈動;
+  //   點視窗 → 開 GM 選單「🎨 美術設計師投稿區」(admin_panel.js _admin-dsgsub-section)。
+  //   位置:救援/錯誤回報視窗在時排在它上方,不在時在同一位置(右下)。
+  // ════════════════════════════════════════════════════════════════
+  window._lxpsDsgBadgeUnsub = null;
+  window._lxpsDsgPendCount = 0;
+  window._lxpsDsgSeen = -1;
+  window._lxpsDsgLatest = null;
+  window._fbWatchDesignSubmitPending = function(onChange){
+    try{
+      return onSnapshot(query(collection(_fbDb, 'designSubmit'), where('st', '==', 'pend')), function(snap){
+        var _n = 0, _last = null;
+        snap.forEach(function(d){
+          var _r = d.data() || {}; _n++;
+          var _t = (_r.at && typeof _r.at.toMillis === 'function') ? _r.at.toMillis() : 0;
+          if(!_last || _t > _last.t) _last = { t: _t, title: String(_r.title || ''), pen: String(_r.pen || ''), nm: String(_r.nm || ''), kind: _r.kind };
+        });
+        try{ onChange(_n, _last); }catch(_){}
+      }, function(err){ console.warn('[設計師投稿提醒] 監聽失敗', err); try{ onChange(-1, null); }catch(_){} });
+    }catch(e){ console.warn('[設計師投稿提醒] 啟動失敗', e); return null; }
+  };
+  window._lxpsDsgBadgeStart = function(){
+    try{
+      if(typeof window._isAdminUser !== 'function' || !window._isAdminUser()) return;
+      if(window._lxpsDsgBadgeUnsub) return;
+      window._lxpsDsgSeen = -1;
+      window._lxpsDsgBadgeUnsub = window._fbWatchDesignSubmitPending(function(_c, _last){
+        if(_c < 0) return;
+        window._lxpsDsgPendCount = _c; window._lxpsDsgLatest = _last;
+        window._lxpsDsgBadgeRender();
+      });
+    }catch(e){ console.warn('[設計師投稿提醒] 啟動失敗', e); }
+  };
+  window._lxpsDsgBadgeStop = function(){
+    try{ if(window._lxpsDsgBadgeUnsub){ window._lxpsDsgBadgeUnsub(); window._lxpsDsgBadgeUnsub = null; } }catch(_){}
+    try{ var _b = document.getElementById('_lxps-dsg-badge'); if(_b) _b.remove(); }catch(_){}
+    window._lxpsDsgPendCount = 0; window._lxpsDsgSeen = -1; window._lxpsDsgLatest = null;
+  };
+  window._lxpsDsgBadgePlace = function(){
+    try{
+      var _b = document.getElementById('_lxps-dsg-badge'); if(!_b) return;
+      var _r = document.getElementById('_lxps-rescue-badge');
+      _b.style.bottom = (_r ? (96 + (_r.offsetHeight || 70) + 10) : 96) + 'px';
+    }catch(_){}
+  };
+  window._lxpsDsgBadgeRender = function(){
+    try{
+      var _n = window._lxpsDsgPendCount || 0;
+      var _isNew = (window._lxpsDsgSeen >= 0 && _n > window._lxpsDsgSeen);
+      window._lxpsDsgSeen = _n;
+      var _b = document.getElementById('_lxps-dsg-badge');
+      if(_n <= 0){ if(_b) _b.remove(); return; }
+      if(!_b){
+        _b = document.createElement('div');
+        _b.id = '_lxps-dsg-badge';
+        _b.setAttribute('data-lxps-no-pczoom', '1');
+        _b.style.cssText = 'position:fixed;right:14px;bottom:96px;z-index:2147483000;'
+          + 'background:linear-gradient(135deg,#6a3aa0,#3a1d62);border:2px solid #f0b8ff;'
+          + 'border-radius:14px;padding:10px 14px;cursor:pointer;'
+          + 'box-shadow:0 6px 22px rgba(190,90,255,0.5);'
+          + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;color:#fbefff;'
+          + 'font-size:14px;font-weight:800;max-width:260px;line-height:1.4;'
+          + 'display:flex;align-items:center;gap:10px;';
+        _b.onclick = function(){
+          try{ if(typeof window._showAdminStatsPanel === 'function') window._showAdminStatsPanel(); }catch(_){}
+          var _tries = 0;
+          var _iv = setInterval(function(){
+            _tries++;
+            var _btn = document.querySelector('.admin-sidebar-item[data-sec="_admin-dsgsub-section"]');
+            if(_btn){ try{ _btn.click(); }catch(_){} clearInterval(_iv); }
+            else if(_tries > 40){ clearInterval(_iv); }
+          }, 150);
+        };
+        document.body.appendChild(_b);
+      }
+      var _L = window._lxpsDsgLatest, _e = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); };
+      _b.innerHTML = '<span style="font-size:24px;flex-shrink:0;">🎨</span>'
+        + '<span><b style="color:#fff;font-size:15px;">收到設計師投稿</b><br>'
+        + '<span style="font-size:12px;color:#f3d6ff;">待審 <b style="color:#fff;font-size:15px;">' + _n + '</b> 件'
+        + (_L && _L.title ? '・最新「' + _e(_L.title).slice(0, 16) + '」' + (_L.nm ? '(' + _e(_L.nm).slice(0, 10) + ')' : '') : '') + '</span><br>'
+        + '<span style="font-size:10.5px;color:#e6c2ff;opacity:0.85;">點我打開「美術設計師投稿區」</span></span>';
+      window._lxpsDsgBadgePlace();
+      if(_isNew){
+        try{ window._lxpsPlayRescueChime(); }catch(_){}
+        try{ _b.animate([{transform:'scale(1)'},{transform:'scale(1.13)'},{transform:'scale(1)'}], {duration:560, iterations:2}); }catch(_){}
+      }
+    }catch(e){ console.warn('[設計師投稿提醒] 渲染失敗', e); }
   };
 
   // ══════════════════════════════════════════════════════════════════
