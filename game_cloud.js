@@ -22309,7 +22309,13 @@
             try { if(window._fbSignOut) window._fbSignOut(); } catch(_){}
             try {
               window._restScheduleCache = _restSch;
-              if(typeof window._showRestOverlay === 'function') window._showRestOverlay(_restSch, _restEv.bootAtMs);
+              /* ★ v5.434.0(2026-11-20・老師「伺服器休息中的畫面改成只在點了任意遊戲入口才顯示」)—
+                 人在首頁(開機自動登入、按 Google 登入)時不再蓋全螢幕休息畫面,只跳一則小提示說明為什麼沒登入;
+                 等學生點遊戲入口時再由入口攔截顯示休息畫面。不在首頁時照舊蓋上。 */
+              const _restHome = (typeof window._lxpsRestOnHomePage === 'function') && window._lxpsRestOnHomePage();
+              if(_restHome){
+                if(typeof window._lxpsToast === 'function') window._lxpsToast('🌙 伺服器休息中,現在無法登入。開機時間到就能回來玩囉!', 'warn');
+              } else if(typeof window._showRestOverlay === 'function') window._showRestOverlay(_restSch, _restEv.bootAtMs);
             } catch(_e2) { console.error('[休息排程] 顯示休息畫面失敗', _e2); }
             return;  // 停止後續登入流程
           }

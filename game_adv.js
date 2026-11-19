@@ -84018,6 +84018,21 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
     }catch(_e){ console.warn('[休息排程] 預告 banner 失敗', _e); }
   };
 
+  // ★ v5.434.0 — 「人在首頁」判斷(與 index.html #lxps-cover-js _isHome 同口徑,這裡自己一份,不依賴載入順序):
+  //   #overlay 顯示中、關卡選擇頁 #adventure-overlay 沒顯示、#gc 不在戰鬥中。判斷失敗一律當「不在首頁」(維持原本會蓋畫面的行為)。
+  function _restOnHomePage(){
+    try{
+      const ov = document.getElementById('overlay');
+      if(!ov || getComputedStyle(ov).display === 'none') return false;
+      const adv = document.getElementById('adventure-overlay');
+      if(adv && adv.offsetParent !== null && getComputedStyle(adv).display !== 'none') return false;
+      const gc = document.getElementById('gc');
+      if(gc && gc.classList.contains('adv-battle')) return false;
+      return true;
+    }catch(_){ return false; }
+  }
+  window._lxpsRestOnHomePage = _restOnHomePage;
+
   // ── 套用目前狀態(watcher / ticker 共用) ──
   let _restEnteredRest = false;  // 防重複存檔
   function _restApply(){
@@ -84038,6 +84053,11 @@ if(document.readyState === 'complete' || document.readyState === 'interactive') 
           try{ if(window._progressLoaded && typeof window._lxpsInstantPersist === 'function') window._lxpsInstantPersist('伺服器休息排程'); }catch(_){}
         }
         try{ const _wb = document.getElementById('_restWarnBanner'); if(_wb) _wb.remove(); }catch(_){}
+        /* ★ v5.434.0(2026-11-20・老師「伺服器休息中的畫面改成只在點了任意遊戲入口才顯示」)—
+           人在首頁時,監聽/20 秒 ticker 不再主動蓋休息畫面(也不收掉入口攔截叫出來的那張);
+           首頁四入口＋搶答擂台按下時由 _lxpsRestBlockEntry 叫出。
+           人在遊戲裡(關卡選擇頁、戰鬥…)撞上休息時段仍照舊蓋上(先存檔再擋,時間到就收工的語意不變)。 */
+        if(_restOnHomePage()) return;
         window._showRestOverlay(sch, ev.bootAtMs);
       } else {
         _restEnteredRest = false;
