@@ -18353,14 +18353,44 @@ window.islSosReport = function(){
     + '<textarea id="isl-sos-say" rows="3" placeholder="例如:按回營地以後畫面就不動了" style="width:100%;font-size:17px;padding:8px;border-radius:8px;border:1px solid #3d6b86;background:#0b1e2c;color:#fff"></textarea>'
     + '<p style="margin:10px 0 6px;opacity:.9">2. 下面是自動幫你抓到的資訊(不用改):</p>'
     + '<textarea id="isl-sos-diag" rows="7" readonly style="width:100%;font-size:14px;padding:8px;border-radius:8px;border:1px solid #3d6b86;background:#0b1e2c;color:#cfe6f5">' + islEsc(islSosDiag()) + '</textarea>'
-    + '<p style="margin:10px 0 10px"><button class="isl-btn gold" style="width:100%" onclick="islSosCopy()">📋 複製全部(貼給老師)</button></p>'
-    + '<p style="margin:0 0 10px;font-size:15px;opacity:.85">複製不了也沒關係——直接<b>截圖這個畫面</b>拿給老師看就可以了。</p>'
+    + (islSosCanSend() ? '<p style="margin:10px 0 10px"><button id="isl-sos-send" class="isl-btn gold" style="width:100%" onclick="islSosSend()">📨 送出給老師</button></p>' : '<p style="margin:10px 0 6px;font-size:15px;opacity:.85">訪客(沒登入)沒辦法直接送給老師,請按下面複製或截圖。</p>')
+    + '<p style="margin:0 0 10px"><button class="isl-btn ' + (islSosCanSend() ? 'ghost' : 'gold') + '" style="width:100%" onclick="islSosCopy()">📋 複製全部(貼給老師)</button></p>'
+    + '<p style="margin:0 0 10px;font-size:15px;opacity:.85">送不出去或複製不了也沒關係——直接<b>截圖這個畫面</b>拿給老師看就可以了。</p>'
     + '<p style="margin:0"><button class="isl-btn ghost" style="width:100%" onclick="islSosOpen()">← 上一頁</button></p>');
 };
+/* ★ v1.449.0(2026-11-19・老師「荒島回報錯誤時,按了 複製全部(貼給老師) 卻沒有發通知給 gm」)
+   原本(測試期設計)只複製到剪貼簿、刻意不寫雲端 ⇒ 老師收不到。改成登入的學生把回報寫進大對抗同一個 bugReports
+   (既有規則:登入者可建立;GM 選單「錯誤回報」清單＋大對抗 GM 提醒視窗 _fbWatchBugReportsUnhandled 會亮、可直接回覆學生)。
+   page:'island'(GM 選單標「🏝 荒島求生回報」)。新增「📨 送出給老師」鈕;按「📋 複製全部」也會順便送一次(同一段內容只送一次)。
+   訪客(沒登入)沒有寫入權限 ⇒ 只能複製/截圖。 */
+function islSosCanSend(){ return !!(MG.user && MG.user.uid && MG.fb && MG.fb.db); }
+function islSosText(){ var say = $('isl-sos-say'), box = $('isl-sos-diag');
+  return '學生描述:' + ((say && say.value) ? say.value : '(沒寫)') + '\n' + ((box && box.value) ? box.value : islSosDiag()); }
+function islSosPost(txt, done){
+  var u = MG.user, id, say = $('isl-sos-say');
+  if(!islSosCanSend()){ if(done) done(false); return; }
+  if(window._islSosSentTxt === txt){ if(done) done(true, true); return; }   /* 同一段已經送過 */
+  id = 'bug_' + islNow() + '_' + Math.random().toString(36).slice(2, 8);
+  try{
+    MG.fb.db.collection('bugReports').doc(id).set({
+      id: id, email: String(u.email || '').slice(0, 200), uid: String(u.uid).slice(0, 200),
+      content: String(txt).slice(0, 7950), page: 'island', version: 'minigame ' + MG_VER, timestamp: islNow(),
+      _userText: String((say && say.value) || '').slice(0, 500), _hasConsoleDump: false, categories: []
+    }).then(function(){ window._islSosSentTxt = txt; if(done) done(true); })['catch'](function(e){ try{ console.warn('[island sos] 送出失敗', e && (e.code || e.message)); }catch(_){} if(done) done(false); });
+  }catch(e){ if(done) done(false); }
+}
+window.islSosSend = function(){
+  var b = $('isl-sos-send');
+  if(b){ if(b.disabled) return; b.disabled = true; b.textContent = '送出中…'; }
+  islSosPost(islSosText(), function(ok, dup){
+    if(ok){ try{ playSfx('sfx-ok', 0.4); }catch(e){} toast(dup ? '📨 這段已經送給老師了' : '📨 已經送給老師了,謝謝你!'); if(b) b.textContent = '✅ 已送出'; }
+    else { toast('送不出去(可能沒網路),請按複製或截圖給老師'); if(b){ b.disabled = false; b.textContent = '📨 再送一次'; } }
+  });
+};
 window.islSosCopy = function(){
-  var say = $('isl-sos-say'), box = $('isl-sos-diag'), txt;
-  txt = '學生描述:' + ((say && say.value) ? say.value : '(沒寫)') + '\n' + ((box && box.value) ? box.value : islSosDiag());
-  function ok(){ try{ playSfx('sfx-ok', 0.4); }catch(e){} toast('📋 複製好了,貼給老師吧'); }
+  var txt = islSosText();
+  islSosPost(txt, function(sent){ if(sent){ var b = $('isl-sos-send'); if(b){ b.disabled = true; b.textContent = '✅ 已送出'; } } });   /* ★ v1.449.0 複製時也順便送給老師 */
+  function ok(){ try{ playSfx('sfx-ok', 0.4); }catch(e){} toast(islSosCanSend() ? '📋 複製好了,也已經送給老師' : '📋 複製好了,貼給老師吧'); }
   try{
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok)['catch'](function(){ islSosCopyFallback(txt, ok); }); return; }
   }catch(e){}
