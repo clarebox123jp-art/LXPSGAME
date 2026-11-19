@@ -28769,13 +28769,18 @@
           if(!ws.exists()) return false;
           const set0 = (ws.data() || {}).artSet || {};
           if(set0[lastWk]) return false;   // 已結算
+          // ★ v5.427.0(2026-11-19・老師「現有的排行榜先清空,下週一再開始計算」;同時創藝工坊 v1.2.3 降基本分)
+          //   ART_RANK_FROM 以前的週(2026-11-16 那週,大家都卡 1000)一律當沒人上榜:照樣寫一筆空的 artSet[週](u 空 ⇒ 沒人領得到,含參加獎與荒島貝幣),不再重算。
+          //   2026-11-23 那週結算時,上一週在 FROM 以前 ⇒ 沒有可比的基準,不發進步之星(prevMap = 自己本週分 ⇒ 進步 0)。
+          const ART_RANK_FROM = '20261123';
           const rows = [];
-          (await getDocs(collection(_fbDb, 'artRank', lastWk, 'u'))).forEach((d) => {
+          if(String(lastWk) >= ART_RANK_FROM) (await getDocs(collection(_fbDb, 'artRank', lastWk, 'u'))).forEach((d) => {
             const x = d.data() || {}; if(x.uid !== d.id) return;
             rows.push({ uid: d.id, p: x.p | 0, pen: x.pen || '', cls: x.cls || '', at: (x.at && typeof x.at.toMillis === 'function') ? x.at.toMillis() : 0 });
           });
           const prevMap = {};
-          if(rows.length){
+          if(rows.length && String(prevWk) < ART_RANK_FROM) rows.forEach((x) => { prevMap[x.uid] = x.p | 0; });
+          else if(rows.length){
             try{ (await getDocs(collection(_fbDb, 'artRank', prevWk, 'u'))).forEach((d) => { const x = d.data() || {}; if(x.uid === d.id) prevMap[d.id] = x.p | 0; }); }catch(_){}
           }
           const classDocs = [];

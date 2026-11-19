@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.2.2';   /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」「每次復原,要減去操作數」)右欄三段(.rtop 固定選色器+滑桿/.rlw 圖層小視窗自己捲/.rbot 貼紙最近調色盤);復原扣回 S.strokes(cntOp/op.n);13:58 今日挑戰「重玩一關拿到二星以上」(dailyHit improve = old>0 且 ≥2★) */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.2.3';   /* ★ v1.2.3(2026-11-19・老師「個人榜都在上限,沒有意義」→ 裁定甲:降基本分、保留答題品質(數值在 art_db);「現有的排行榜先清空,下週一再開始計算」:D.RANK_FROM 以前的週不寫 artRank、排行榜顯示清空說明) */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」「每次復原,要減去操作數」)右欄三段(.rtop 固定選色器+滑桿/.rlw 圖層小視窗自己捲/.rbot 貼紙最近調色盤);復原扣回 S.strokes(cntOp/op.n);13:58 今日挑戰「重玩一關拿到二星以上」(dailyHit improve = old>0 且 ≥2★) */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -281,7 +281,7 @@ function cloudSync(cb){
         tx.set(ref.collection('ledger').doc(), { uid: uid, at: f.serverTimestamp(), dev: DEV, ver: ART_VER, k: e.k, id: e.id, st: e.st, g: e.g, r: e.r, day: e.day, cl: e.cl }); }
       /* ★ v1.1.0 排行(第 17 項):本週積分有變才寫 artRank/{週}/u/{uid};有班級再寫 artRank/{週}/c/{班級}.m.{uid} */
       wp = weekPts(m);
-      if(f && String(wp) !== rankSent && !isGm()){   /* ★ v1.1.5 GM 帳號(老師測試)不上排行榜,不佔學生名次 */
+      if(f && String(wp) !== rankSent && !isGm() && +wk >= (D.RANK_FROM | 0)){   /* ★ v1.1.5 GM 帳號(老師測試)不上排行榜,不佔學生名次;★ v1.2.3 RANK_FROM 以前的週不寫排行(老師:先清空) */
         tx.set(fb.db.collection('artRank').doc(wk).collection('u').doc(uid), { uid: uid, w: wk, pen: penOf(m), cls: cls || '', p: wp, at: f.serverTimestamp() });
         if(cls){ var cm = {}; cm[uid] = wp; tx.set(fb.db.collection('artRank').doc(wk).collection('c').doc(cls), { w: wk, c: cls, at: f.serverTimestamp(), m: cm }, { merge: true }); }
       }
@@ -779,6 +779,9 @@ function rankPanel(tab){
   t = [['me', '⭐ 我的積分'], ['u', '🎨 個人榜'], ['c', '🏘 班級榜']];
   for(var i = 0; i < t.length; i++) h += '<button class="mini' + (tab === t[i][0] ? ' on' : '') + '" data-tab="' + t[i][0] + '">' + t[i][1] + '</button>';
   h += '</div><div id="art-rank-body">';
+  /* ★ v1.2.3(老師 09:30「現有的排行榜先清空,下週一再開始計算」)RANK_FROM 以前的週:個人榜/班級榜不讀,改顯示說明 */
+  var preRank = +wk < (D.RANK_FROM | 0), fromTxt = String(D.RANK_FROM).slice(4, 6).replace(/^0/, '') + '/' + String(D.RANK_FROM).slice(6, 8).replace(/^0/, '');
+  if(preRank) h += '<div class="scard" style="background:#fff3b0;line-height:1.7">📢 ' + esc(T({ c: '積分的算法調整了:每次答題的基本分數變少,答得越準、越快分數越高。這週的排行榜已經清空、不發獎,下週一(' + fromTxt + ')早上 8 點開始重新計算!', p: '積分規則已調整:基本分數下修,答對率與作答速度權重提高。本週排行已清空且不結算,自下週一(' + fromTxt + ')08:00 起重新計算。' })) + '</div>';
   if(tab === 'me'){
     h += '<p>本週你的藝術積分:<b>⭐ ' + weekPts() + '</b><br>今天:<b>' + (A.save.pts[dayKey()] | 0) + ' / ' + capNow() + '</b>(每天最多計 ' + capNow() + ' 分,所有平板加起來算;重玩只算比上次多的星星)</p>';
     h += '<div class="scard">🖋 你的筆名:<b>' + esc(penOf()) + '</b>(排行和作品牆只顯示筆名,到 ⚙ 設定可以換)</div>';
@@ -799,6 +802,7 @@ function rankPanel(tab){
     for(j = 0; j < bs.length; j++) bs[j].onclick = function(ev){ ev.stopPropagation(); rankPanel(this.getAttribute('data-tab')); };
   } });
   if(tab === 'me' || A.guest || !fb) return;
+  if(preRank){ var elP = $('art-rank-body'); if(elP) elP.innerHTML = elP.innerHTML.replace(/<p style="color:#6b6178">[^<]*<\/p>$/, '') + '<p>排行榜從 ' + fromTxt + '(週一)08:00 開始,先去練習把題目答得又準又快吧!</p>'; return; }
   var col = fb.db.collection('artRank').doc(wk).collection(tab === 'u' ? 'u' : 'c'), q = tab === 'u' ? col.orderBy('p', 'desc').limit(20) : col.limit(80);
   q.get().then(function(snap){
     var el = $('art-rank-body'), rows = [], o = '', k, n, s, mn = minClass(), r = 0;
