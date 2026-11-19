@@ -1607,6 +1607,13 @@
                 }
                 _writeData = Object.assign({}, _writeData, _patchL);
               }
+              // ★ v5.428.0(查 601 奧汀時發現)雲端舊的字串備份 unlockedHeroes_s 不再跟著存檔更新 ⇒ 停在舊清單(劉晨宇少 14 隻含 3 隻 UR)。
+              //   陣列版是權威,但幾個「陣列空才讀字串版」的備援路徑一旦觸發就會讀到舊清單 ⇒ 存檔時一律把字串版同步成陣列版。
+              try{
+                if(Array.isArray(_writeData.unlockedHeroes) && _writeData.unlockedHeroes.length && typeof _writeData.unlockedHeroes_s !== 'string' && _exGate && typeof _exGate.unlockedHeroes_s === 'string'){
+                  _writeData = Object.assign({}, _writeData, { unlockedHeroes_s: JSON.stringify(_writeData.unlockedHeroes) });
+                }
+              }catch(_eUs){}
             }catch(_eLg){ console.warn('[_fbSave v5.280.0 永久擁有證明合併] 例外(本次照舊寫入)', _eLg); }
             const _calcSum = (d) => {
               if(d && d._dataSummary && typeof d._dataSummary === 'object'){
@@ -6328,12 +6335,19 @@
   window._fbWatchAccountRescuePending = function(onChange){
     try{
       return onSnapshot(collection(_fbDb, 'accountRescueRequests'), function(snap){
-        var _n = 0;
+        var _n = 0, _items = [];
         snap.forEach(function(d){
           var _r = d.data() || {};
-          if(_r.status !== 'resolved' && _r.status !== 'rejected') _n++;
+          if(_r.status !== 'resolved' && _r.status !== 'rejected'){
+            _n++;
+            // ★ v5.428.0 合併提醒視窗:帶出申請人/時間/申請項目摘要
+            var _cl = _r.claims || {}, _ks = [];
+            try{ Object.keys(_cl).forEach(function(k){ var v = _cl[k]; if(v && (v === true || (Array.isArray(v) && v.length) || (typeof v === 'object' && Object.keys(v).length) || typeof v === 'number' || typeof v === 'string')) _ks.push(k); }); }catch(_){}
+            _items.push({ t: +_r.createdAt || 0, who: String(_r.displayLabel || _r.email || d.id), em: String(_r.email || ''), txt: (_cl.appeal ? String(_cl.appeal) : ''), n: _ks.length });
+          }
         });
-        try{ onChange(_n); }catch(_){}
+        _items.sort(function(a, b){ return b.t - a.t; });
+        try{ onChange(_n, _items.slice(0, 6)); }catch(_){}
       }, function(err){ console.warn('[救援即時提醒] 監聽失敗', err); try{ onChange(-1); }catch(_){} });
     }catch(e){ console.warn('[救援即時提醒] 啟動失敗', e); return null; }
   };
@@ -6341,9 +6355,16 @@
   window._fbWatchBugReportsUnhandled = function(onChange){
     try{
       return onSnapshot(collection(_fbDb, 'bugReports'), function(snap){
-        var _n = 0;
-        snap.forEach(function(d){ var _r = d.data() || {}; if(!_r.adminReply) _n++; });
-        try{ onChange(_n); }catch(_){}
+        var _n = 0, _items = [];
+        snap.forEach(function(d){
+          var _r = d.data() || {};
+          if(!_r.adminReply){
+            _n++;
+            _items.push({ t: +_r.timestamp || 0, who: String(_r.email || _r.uid || ''), em: String(_r.email || ''), txt: String(_r._userText || '').slice(0, 80), page: String(_r.page || '') });
+          }
+        });
+        _items.sort(function(a, b){ return b.t - a.t; });
+        try{ onChange(_n, _items.slice(0, 6)); }catch(_){}
       }, function(err){ console.warn('[錯誤回報即時提醒] 監聽失敗', err); try{ onChange(-1); }catch(_){} });
     }catch(e){ console.warn('[錯誤回報即時提醒] 啟動失敗', e); return null; }
   };
@@ -6394,6 +6415,14 @@
   window._lxpsRescuePendingCount = 0;
   window._lxpsBugUnhandledCount  = 0;
   window._lxpsRescueBadgeTotalSeen = -1;    // -1 = 尚未取得第一次快照(首次不播音)
+  // ★ v5.428.0(老師「救援、錯誤回報、作品繳交的通知視窗合併成一個,有三個分頁可以切換查看」)
+  //   三種提醒共用同一個視窗 #_lxps-rescue-badge,上方三個分頁(🛟 救援申請/🐛 錯誤回報/🎨 作品繳交),
+  //   分頁內列最新 6 筆(誰、何時、摘要),「打開後台處理」切到該分頁對應的 GM 卡片。
+  //   任一種數量增加(非首次快照)⇒ 播提示音＋自動切到那個分頁。可按「－」縮小成一列、再按展開。
+  window._lxpsGmNoteItems = window._lxpsGmNoteItems || { rescue: [], bug: [], dsg: [] };
+  window._lxpsGmNoteTab = window._lxpsGmNoteTab || '';
+  window._lxpsGmNoteMini = !!window._lxpsGmNoteMini;
+  window._lxpsGmNoteSeen = { rescue: -1, bug: -1, dsg: -1 };
   window._lxpsRescueBadgeStart = function(){
     try{
       if(typeof window._isAdminUser !== 'function' || !window._isAdminUser()) return;   // 只 GM
@@ -6401,14 +6430,14 @@
       if(window._lxpsRescueBadgeUnsubA || window._lxpsRescueBadgeUnsubB) return;         // 已啟用
       window._lxpsRescueBadgeTotalSeen = -1;
       if(typeof window._fbWatchAccountRescuePending === 'function'){
-        window._lxpsRescueBadgeUnsubA = window._fbWatchAccountRescuePending(function(_c){
-          if(_c >= 0) window._lxpsRescuePendingCount = _c;
+        window._lxpsRescueBadgeUnsubA = window._fbWatchAccountRescuePending(function(_c, _its){
+          if(_c >= 0){ window._lxpsRescuePendingCount = _c; window._lxpsGmNoteItems.rescue = _its || []; }
           window._lxpsRescueBadgeRender();
         });
       }
       if(typeof window._fbWatchBugReportsUnhandled === 'function'){
-        window._lxpsRescueBadgeUnsubB = window._fbWatchBugReportsUnhandled(function(_c){
-          if(_c >= 0) window._lxpsBugUnhandledCount = _c;
+        window._lxpsRescueBadgeUnsubB = window._fbWatchBugReportsUnhandled(function(_c, _its){
+          if(_c >= 0){ window._lxpsBugUnhandledCount = _c; window._lxpsGmNoteItems.bug = _its || []; }
           window._lxpsRescueBadgeRender();
         });
       }
@@ -6422,6 +6451,8 @@
     window._lxpsRescuePendingCount = 0;
     window._lxpsBugUnhandledCount  = 0;
     window._lxpsRescueBadgeTotalSeen = -1;
+    window._lxpsGmNoteSeen = { rescue: -1, bug: -1, dsg: -1 };   // ★ v5.428.0
+    window._lxpsGmNoteItems = { rescue: [], bug: [], dsg: [] };
   };
   window._lxpsRescueBadgeRender = function(){
     try{
@@ -6485,13 +6516,16 @@
   window._fbWatchDesignSubmitPending = function(onChange){
     try{
       return onSnapshot(query(collection(_fbDb, 'designSubmit'), where('st', '==', 'pend')), function(snap){
-        var _n = 0, _last = null;
+        var _n = 0, _last = null, _items = [];
         snap.forEach(function(d){
           var _r = d.data() || {}; _n++;
-          var _t = (_r.at && typeof _r.at.toMillis === 'function') ? _r.at.toMillis() : 0;
-          if(!_last || _t > _last.t) _last = { t: _t, title: String(_r.title || ''), pen: String(_r.pen || ''), nm: String(_r.nm || ''), kind: _r.kind };
+          var _t = (_r.at && typeof _r.at.toMillis === 'function') ? _r.at.toMillis() : (+_r.at || 0);
+          var _it = { t: _t, title: String(_r.title || ''), pen: String(_r.pen || ''), nm: String(_r.nm || ''), kind: _r.kind };
+          _items.push(_it);
+          if(!_last || _t > _last.t) _last = _it;
         });
-        try{ onChange(_n, _last); }catch(_){}
+        _items.sort(function(a, b){ return b.t - a.t; });
+        try{ onChange(_n, _last, _items.slice(0, 6)); }catch(_){}
       }, function(err){ console.warn('[設計師投稿提醒] 監聽失敗', err); try{ onChange(-1, null); }catch(_){} });
     }catch(e){ console.warn('[設計師投稿提醒] 啟動失敗', e); return null; }
   };
@@ -6561,6 +6595,147 @@
         try{ _b.animate([{transform:'scale(1)'},{transform:'scale(1.13)'},{transform:'scale(1)'}], {duration:560, iterations:2}); }catch(_){}
       }
     }catch(e){ console.warn('[設計師投稿提醒] 渲染失敗', e); }
+  };
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.428.0 — 三合一 GM 提醒視窗(救援申請/錯誤回報/作品繳交 三分頁)
+  //   取代上面 v3.16.32 的 _lxpsRescueBadgeRender 與 v5.425.0 的 _lxps-dsg-badge(後定義覆蓋前定義;舊函式保留不呼叫)。
+  //   三個監聽照舊(各自計數＋最新 6 筆摘要),畫面只剩一個視窗 #_lxps-rescue-badge。
+  // ════════════════════════════════════════════════════════════════
+  window._lxpsDsgBadgeStart = function(){
+    try{
+      if(typeof window._isAdminUser !== 'function' || !window._isAdminUser()) return;
+      if(window._lxpsDsgBadgeUnsub) return;
+      window._lxpsDsgBadgeUnsub = window._fbWatchDesignSubmitPending(function(_c, _last, _its){
+        if(_c < 0) return;
+        window._lxpsDsgPendCount = _c; window._lxpsDsgLatest = _last;
+        window._lxpsGmNoteItems.dsg = _its || [];
+        window._lxpsRescueBadgeRender();
+      });
+    }catch(e){ console.warn('[設計師投稿提醒] 啟動失敗', e); }
+  };
+  window._lxpsDsgBadgeStop = function(){
+    try{ if(window._lxpsDsgBadgeUnsub){ window._lxpsDsgBadgeUnsub(); window._lxpsDsgBadgeUnsub = null; } }catch(_){}
+    try{ var _b = document.getElementById('_lxps-dsg-badge'); if(_b) _b.remove(); }catch(_){}
+    window._lxpsDsgPendCount = 0; window._lxpsDsgSeen = -1; window._lxpsDsgLatest = null;
+    window._lxpsGmNoteItems.dsg = []; window._lxpsGmNoteSeen.dsg = -1;
+    if(window._lxpsRescueBadgeUnsubA || window._lxpsRescueBadgeUnsubB){ try{ window._lxpsRescueBadgeRender(); }catch(_){} }
+  };
+  window._lxpsDsgBadgePlace = function(){ try{ var _o = document.getElementById('_lxps-dsg-badge'); if(_o) _o.remove(); }catch(_){} };
+  window._lxpsDsgBadgeRender = function(){ try{ window._lxpsRescueBadgeRender(); }catch(_){} };
+  var _GMN_TABS = [
+    { k:'rescue', ic:'🛟', nm:'救援申請', sec:'_admin-rescue-req-section', col:'#8fe3b4' },
+    { k:'bug',    ic:'🐛', nm:'錯誤回報', sec:'_admin-bug-section',        col:'#ffd27a' },
+    { k:'dsg',    ic:'🎨', nm:'作品繳交', sec:'_admin-dsgsub-section',     col:'#f0b8ff' }
+  ];
+  function _gmnCount(k){ return k === 'rescue' ? (window._lxpsRescuePendingCount || 0) : (k === 'bug' ? (window._lxpsBugUnhandledCount || 0) : (window._lxpsDsgPendCount || 0)); }
+  function _gmnEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function _gmnWho(it){
+    var w = String(it.who || '');
+    try{
+      var em = String(it.em || '').toLowerCase();
+      if(em && typeof window._getRosterEntry === 'function'){
+        var r = window._getRosterEntry(em);
+        if(r && r.class) w = r.class + (r.seatNo ? (r.seatNo + '號') : '') + ' ' + (r.fullName || r.surname || '');
+      }
+    }catch(_){}
+    return w;
+  }
+  function _gmnTime(t){
+    if(!t) return '';
+    try{ var d = new Date(+t), p = function(n){ return (n < 10 ? '0' : '') + n; }; return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }catch(_){ return ''; }
+  }
+  window._lxpsGmNoteOpen = function(sec){
+    try{ if(typeof window._showAdminStatsPanel === 'function') window._showAdminStatsPanel(); }catch(_){}
+    var _tries = 0;
+    var _iv = setInterval(function(){
+      _tries++;
+      var _btn = document.querySelector('.admin-sidebar-item[data-sec="' + sec + '"]');
+      if(_btn){ try{ _btn.click(); }catch(_){} clearInterval(_iv); }
+      else if(_tries > 40){ clearInterval(_iv); }
+    }, 150);
+  };
+  window._lxpsRescueBadgeRender = function(){
+    try{
+      try{ var _old = document.getElementById('_lxps-dsg-badge'); if(_old) _old.remove(); }catch(_){}
+      var S = window._lxpsGmNoteSeen, total = 0, newTab = '';
+      _GMN_TABS.forEach(function(T){
+        var c = _gmnCount(T.k); total += c;
+        if(S[T.k] >= 0 && c > S[T.k] && !newTab) newTab = T.k;
+        S[T.k] = c;
+      });
+      window._lxpsRescueBadgeTotalSeen = total;
+      var _b = document.getElementById('_lxps-rescue-badge');
+      if(total <= 0){ if(_b) _b.remove(); return; }
+      if(newTab){ window._lxpsGmNoteTab = newTab; window._lxpsGmNoteMini = false; }
+      var tab = window._lxpsGmNoteTab;
+      if(!tab || _gmnCount(tab) <= 0){ tab = ''; _GMN_TABS.forEach(function(T){ if(!tab && _gmnCount(T.k) > 0) tab = T.k; }); window._lxpsGmNoteTab = tab; }
+      if(!_b){
+        _b = document.createElement('div');
+        _b.id = '_lxps-rescue-badge';
+        _b.setAttribute('data-lxps-no-pczoom', '1');
+        document.body.appendChild(_b);
+        _b.addEventListener('click', function(ev){
+          var el = ev.target;
+          while(el && el !== _b && !(el.getAttribute && (el.getAttribute('data-gmn-tab') || el.getAttribute('data-gmn-act')))) el = el.parentNode;
+          if(!el || el === _b) return;
+          ev.stopPropagation();
+          var tk = el.getAttribute('data-gmn-tab'), act = el.getAttribute('data-gmn-act');
+          if(tk){ window._lxpsGmNoteTab = tk; window._lxpsGmNoteMini = false; window._lxpsRescueBadgeRender(); return; }
+          if(act === 'mini'){ window._lxpsGmNoteMini = !window._lxpsGmNoteMini; window._lxpsRescueBadgeRender(); return; }
+          if(act === 'open'){
+            var T0 = null; _GMN_TABS.forEach(function(T){ if(T.k === window._lxpsGmNoteTab) T0 = T; });
+            window._lxpsGmNoteOpen((T0 || _GMN_TABS[0]).sec);
+          }
+        });
+      }
+      var mini = window._lxpsGmNoteMini;
+      // 尺寸:PC/iPad/手機共用,依視窗寬度用 vmin 換算(最小/最大夾住)
+      var fz = 'clamp(12px,1.6vmin,16px)';
+      _b.style.cssText = 'position:fixed;right:14px;bottom:96px;z-index:2147483000;'
+        + 'background:linear-gradient(160deg,#20384f,#111d2c);border:2px solid #8fd0ff;border-radius:14px;'
+        + 'box-shadow:0 6px 22px rgba(60,150,230,0.45);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;color:#eaf6ff;'
+        + 'font-size:' + fz + ';font-weight:700;line-height:1.4;box-sizing:border-box;'
+        + 'width:' + (mini ? 'auto' : 'min(380px,calc(100vw - 28px))') + ';max-height:min(70vh,520px);display:flex;flex-direction:column;overflow:hidden;';
+      var head = '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;' + (mini ? '' : 'border-bottom:1px solid rgba(143,208,255,0.3);') + '">'
+        + '<span style="font-size:1.6em;">🔔</span>'
+        + '<span style="flex:1;cursor:pointer;" data-gmn-act="mini">GM 待處理 <b style="color:#fff;font-size:1.2em;">' + total + '</b> 筆'
+        + (mini ? ('<br><span style="font-size:0.8em;color:#bcd;">' + _GMN_TABS.filter(function(T){ return _gmnCount(T.k) > 0; }).map(function(T){ return T.ic + T.nm + ' ' + _gmnCount(T.k); }).join(' ・ ') + '</span>') : '') + '</span>'
+        + '<button type="button" data-gmn-act="mini" style="min-width:36px;min-height:36px;border-radius:8px;border:1px solid #8fd0ff;background:rgba(255,255,255,0.08);color:#eaf6ff;font-size:1.1em;font-weight:900;cursor:pointer;" title="' + (mini ? '展開' : '縮小') + '">' + (mini ? '▴' : '－') + '</button></div>';
+      if(mini){ _b.innerHTML = head; }
+      else {
+        var tabs = '<div style="display:flex;gap:4px;padding:6px 8px 0;">' + _GMN_TABS.map(function(T){
+          var c = _gmnCount(T.k), on = (T.k === tab);
+          return '<button type="button" data-gmn-tab="' + T.k + '" style="flex:1;min-height:40px;padding:4px 2px;border-radius:9px 9px 0 0;cursor:pointer;font-family:inherit;font-size:0.92em;font-weight:800;'
+            + 'border:1.5px solid ' + (on ? T.col : 'rgba(255,255,255,0.18)') + ';border-bottom:none;'
+            + 'background:' + (on ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.25)') + ';color:' + (on ? '#fff' : (c > 0 ? T.col : '#8899aa')) + ';">'
+            + T.ic + ' ' + T.nm + '<br><b style="font-size:1.15em;">' + c + '</b></button>';
+        }).join('') + '</div>';
+        var T1 = null; _GMN_TABS.forEach(function(T){ if(T.k === tab) T1 = T; }); T1 = T1 || _GMN_TABS[0];
+        var its = (window._lxpsGmNoteItems[T1.k] || []);
+        var body = '<div style="flex:1;overflow-y:auto;padding:8px 10px;background:rgba(255,255,255,0.05);border-top:1.5px solid ' + T1.col + ';">';
+        if(!_gmnCount(T1.k)) body += '<div style="color:#9ab;padding:6px 0;">目前沒有待處理的' + T1.nm + '。</div>';
+        else if(!its.length) body += '<div style="color:#9ab;padding:6px 0;">有 ' + _gmnCount(T1.k) + ' 筆,打開後台查看。</div>';
+        else its.forEach(function(it){
+          var line2 = '';
+          if(T1.k === 'rescue') line2 = (it.n ? ('申請 ' + it.n + ' 類項目') : '帳號救援申請') + (it.txt ? (' ・ 「' + _gmnEsc(it.txt.slice(0, 40)) + '」') : '');
+          else if(T1.k === 'bug') line2 = (it.page === 'island' ? '🏝 荒島 ・ ' : '') + (it.txt ? ('「' + _gmnEsc(it.txt.slice(0, 50)) + '」') : '(沒有文字說明)');
+          else line2 = '「' + _gmnEsc((it.title || '').slice(0, 20)) + '」' + (it.pen ? (' ・ 筆名 ' + _gmnEsc(it.pen.slice(0, 12))) : '');
+          var who = T1.k === 'dsg' ? (it.nm || it.pen || '') : _gmnWho(it);
+          body += '<div style="padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.12);">'
+            + '<div style="display:flex;gap:6px;"><b style="flex:1;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + _gmnEsc(who || '(未具名)') + '</b><span style="color:#9ab;font-size:0.85em;white-space:nowrap;">' + _gmnTime(it.t) + '</span></div>'
+            + '<div style="color:#cde;font-size:0.88em;font-weight:600;word-break:break-all;">' + line2 + '</div></div>';
+        });
+        if(its.length && _gmnCount(T1.k) > its.length) body += '<div style="color:#9ab;font-size:0.85em;padding-top:4px;">…還有 ' + (_gmnCount(T1.k) - its.length) + ' 筆</div>';
+        body += '</div>';
+        var foot = '<div style="padding:8px 10px;"><button type="button" data-gmn-act="open" style="width:100%;min-height:42px;border-radius:9px;border:2px solid ' + T1.col + ';background:rgba(255,255,255,0.1);color:#fff;font-family:inherit;font-size:1em;font-weight:900;cursor:pointer;">打開後台處理「' + T1.nm + '」 ▶</button></div>';
+        _b.innerHTML = head + tabs + body + foot;
+      }
+      if(newTab){
+        try{ window._lxpsPlayRescueChime(); }catch(_){}
+        try{ _b.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}], {duration:560, iterations:2}); }catch(_){}
+      }
+    }catch(e){ console.warn('[GM 三合一提醒視窗] 渲染失敗', e); }
   };
 
   // ══════════════════════════════════════════════════════════════════
@@ -11547,7 +11722,11 @@
     let _type;
     let _resolvedInput = _raw;
     const _sidEmail = (typeof window._lxpsStudentIdToEmail === 'function') ? window._lxpsStudentIdToEmail(_raw) : null;
-    if(_raw.includes('@')) _type = 'email';
+    // ★ v5.428.0 — 班級座號(60216 / 6216 / 6年2班16號)名冊唯一命中 ⇒ 直接當該生 email 查
+    let _csOne = null;
+    try{ _csOne = (!_raw.includes('@') && typeof window._lxpsRosterClassSeatEmail === 'function') ? window._lxpsRosterClassSeatEmail(_raw) : null; }catch(_){}
+    if(_csOne){ _type = 'email'; _resolvedInput = _csOne.email; console.log('[_fbAdminFindPlayerByEmail] 班級座號 ' + _raw + ' → ' + _csOne.label + ' ' + _csOne.email); }
+    else if(_raw.includes('@')) _type = 'email';
     else if(/^[A-Za-z0-9-]{20,}$/.test(_raw)) _type = 'uid';
     else if(_sidEmail){
       // ★ v3.13.49 — 學號(lsps110046 或純 6 位)→ 完整 email
@@ -11767,6 +11946,36 @@
     // ★ v3.12.4(2026-05-30) — 班級座號純數字搜尋判定:4-6 位純數字 = 班級座號
     const _isClassNum = /^\d{3,6}$/.test(_norm);
     console.log('[_fbAdminFindPlayersByName] 開始查詢:「' + _norm + '」 isClassNum=' + _isClassNum);
+
+    // ★ v5.428.0 — 班級座號走名冊(60216 / 6216 / 6年2班16號 / 602 整班):
+    //   舊路徑只比對 displayName 開頭數字,現在 displayName 是真名 ⇒ 永遠查無。先用名冊 class+seatNo 找 email,再 email in 查玩家。
+    try{
+      const _csHits = (typeof window._lxpsRosterClassSeatFind === 'function') ? window._lxpsRosterClassSeatFind(name, { cls: true }) : null;
+      if(_csHits && _csHits.length){
+        const _csPlayers = [], _csSeen = new Set(), _csLbl = {};
+        _csHits.forEach(h => { _csLbl[h.email] = h.label; });
+        const _csEms = _csHits.map(h => h.email);
+        for(let _bi = 0; _bi < _csEms.length && _bi < 120; _bi += 30){
+          const _snapCs = await getDocs(query(collection(_fbDb, 'players'), where('email', 'in', _csEms.slice(_bi, _bi + 30))));
+          _snapCs.forEach(d => {
+            if(_csSeen.has(d.id)) return; _csSeen.add(d.id);
+            const _dt = d.data() || {}, _em = String(_dt.email || '').toLowerCase().trim();
+            _csPlayers.push({
+              uid: d.id, name: _csLbl[_em] || _dt.displayName || _dt.name || '', displayName: _dt.displayName || '', email: _dt.email || '',
+              knowledgeCoins: _dt.knowledgeCoins || 0,
+              unlockedCount: Array.isArray(_dt.unlockedHeroes) ? _dt.unlockedHeroes.length : 0,
+              matchType: 'roster_class_seat', _rosterFullName: (_csHits.find(h => h.email === _em) || {}).entry ? (_csHits.find(h => h.email === _em).entry.fullName || '') : '',
+            });
+          });
+        }
+        if(_csPlayers.length){
+          _csPlayers.sort((a, b) => _csEms.indexOf(String(a.email).toLowerCase()) - _csEms.indexOf(String(b.email).toLowerCase()));
+          console.log('[_fbAdminFindPlayersByName] ✅ 名冊班級座號 → ' + _csPlayers.length + ' 位');
+          return { found: true, matchType: 'roster_class_seat', count: _csPlayers.length, truncated: _csPlayers.length > _maxReturn, players: _csPlayers.slice(0, Math.max(_maxReturn, 40)) };
+        }
+        console.log('[_fbAdminFindPlayersByName] 名冊班級座號命中 ' + _csHits.length + ' 人,但查無玩家文件(還沒登入過),fallback 舊路徑');
+      }
+    }catch(_eCs){ console.warn('[_fbAdminFindPlayersByName] 名冊班級座號查詢失敗,fallback', _eCs); }
 
     try {
       // ── 階段 1:精確比對(快路徑) ──
@@ -28054,6 +28263,9 @@
       // GM:查單一玩家(uid 或 email)
       async function adminLookup(q){
         q = String(q || '').trim(); if(!q) throw new Error('請輸入信箱或 uid');
+        // ★ v5.428.0 班級座號 / 學號 也能查
+        try{ const _cs = (typeof window._lxpsRosterClassSeatEmail === 'function') ? window._lxpsRosterClassSeatEmail(q) : null; if(_cs) q = _cs.email; }catch(_){}
+        try{ if(q.indexOf('@') < 0 && typeof window._lxpsStudentIdToEmail === 'function'){ const _sid = window._lxpsStudentIdToEmail(q); if(_sid) q = _sid; } }catch(_){}
         let uid = q, email = '', name = '';
         if(q.indexOf('@') >= 0){
           const s = await getDocs(query(collection(_fbDb, 'players'), where('email', '==', q.toLowerCase()), limit(3)));

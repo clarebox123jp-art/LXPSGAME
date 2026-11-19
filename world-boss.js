@@ -1162,12 +1162,24 @@
   function _wbAutoState(){
     try{
       const gs = window._cachedGlobalStats || {};
-      const cur = (typeof window._wbGetCurrentBossId === 'function') ? window._wbGetCurrentBossId() : '';
-      if(!cur) return null;
-      const downAt = (gs.wbBossDownTimes && +gs.wbBossDownTimes[cur]) || 0;
+      /* ★ v5.428.0(老師 2026-11-19「現在是神聖光龍王期間,但自動公告顯示火山炎龍王」)根因兩個:
+         ① 雲端統計還沒讀到(或沒有 wbCurrentBossId)時,_wbGetCurrentBossId() 退回預設「火山炎龍王」,
+            而火山炎龍王 6 月倒下的舊紀錄還在 ⇒ 算成「火山炎龍王已被打倒」,管理員在線時 _wbAutoSyncControl 還會把它寫回雲端公告。
+         ② 龍王輪完一圈回來時,wbBossDownTimes 裡是「上一輪」的倒下時間 ⇒ 新上場就被當成已倒下。
+         修法:沒有確定的當前龍王 ⇒ 不出自動公告(交給雲端原文);倒下時間必須晚於這隻龍王這一輪的登場時間
+              (wbBossSpawnTimes,沒有就用輪替上一隻的倒下時間)才算數。 */
+      const cur = gs.wbCurrentBossId;
+      if(!cur || !(window.WORLD_BOSS_LINEUP || []).some(function(b){ return b && b.id === cur; })) return null;
+      let spawnAt = (gs.wbBossSpawnTimes && +gs.wbBossSpawnTimes[cur]) || 0;
+      try{
+        const rot = window._WB_BOSS_ROTATION || [], ci = rot.indexOf(cur);
+        if(ci >= 0){ const prev = rot[(ci - 1 + rot.length) % rot.length]; const pd = (gs.wbBossDownTimes && +gs.wbBossDownTimes[prev]) || 0; if(pd > spawnAt) spawnAt = pd; }
+      }catch(_){}
+      let downAt = (gs.wbBossDownTimes && +gs.wbBossDownTimes[cur]) || 0;
+      if(downAt > 0 && spawnAt > 0 && downAt <= spawnAt) downAt = 0;   // 上一輪的舊倒下紀錄
       const hp = gs.worldBossHp ? gs.worldBossHp[cur] : undefined;
       const curName = _wbBossNameOf(cur);
-      if(downAt > 0 || (typeof hp === 'number' && hp <= 0)){
+      if(downAt > 0 || (typeof hp === 'number' && hp <= 0 && !((gs.wbBossDownTimes && +gs.wbBossDownTimes[cur]) > 0 && downAt === 0))){
         let settleAt = 0;
         try{ if(window._wbSettle && typeof window._wbSettle.getStatus === 'function') settleAt = +(window._wbSettle.getStatus(cur) || {}).settleAt || 0; }catch(_){}
         const nextId = (typeof window._wbGetNextBossId === 'function') ? window._wbGetNextBossId(cur) : '';
