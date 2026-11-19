@@ -27870,6 +27870,11 @@ function _buildSafeData() {
                 fxOff: !!window._lxpsFxOff,
                 fxAsk: (window._lxpsFxAsk === false) ? false : true,
                 fxAskedDay: String(window._lxpsFxAskedDay || ''),
+                /* ★ v5.429.0(老師「玩家可在影音設定勾選最愛封面圖…此設定存到雲端,不管在哪個裝置開都會讀取到」)—
+                   coverFav  = 最愛封面 key 陣列(空陣列 = 全部隨機);coverMode = 關卡選擇頁右側 'img' 封面 / 'txt' 文字說明。
+                   邏輯在 index.html 檔尾 #lxps-cover-js(window._lxpsCover)。 */
+                coverFav: (function(){ try{ return (window._lxpsCover && window._lxpsCover.favForCloud) ? window._lxpsCover.favForCloud() : []; }catch(_){ return []; } })(),
+                coverMode: (function(){ try{ return (window._lxpsCover && window._lxpsCover.mode === 'img') ? 'img' : 'txt'; }catch(_){ return 'txt'; } })(),
                 // ★ v5.37.0 — 使用者音量(0~100·音量面板)持久化
                 bgmVol: Math.round(((typeof window._bgmUserVol === 'number') ? window._bgmUserVol : 1) * 100),
                 sfxVol: Math.round(((typeof window._sfxUserVol === 'number') ? window._sfxUserVol : 1) * 100) },
@@ -29524,6 +29529,10 @@ function _applySafeData(raw) {
       if(typeof data.settings.fxAskedDay === 'string') window._lxpsFxAskedDay = data.settings.fxAskedDay;
       if(typeof window._lxpsFxSyncBtn === 'function') window._lxpsFxSyncBtn();
     }catch(_eFx){}
+    /* ★ v5.429.0 最愛封面圖/關卡封面模式(跨裝置同步;舊存檔沒有這兩欄 ⇒ 不動,維持全部隨機＋文字說明) */
+    try{
+      if(window._lxpsCover && typeof window._lxpsCover.fromCloud === 'function') window._lxpsCover.fromCloud(data.settings.coverFav, data.settings.coverMode);
+    }catch(_eCov){}
     // ★ v5.37.0 — 使用者音量載回(0~100 夾值)+ 同步 BGM_VOLUME/當前 BGM 元素/🎵🔊 按鈕圖示
     try{
       if(typeof data.settings.bgmVol === 'number') window._bgmUserVol = Math.max(0, Math.min(1, data.settings.bgmVol / 100));
