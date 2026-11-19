@@ -17,7 +17,9 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
+var VER = 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
+   橫放左欄 28vw→21vw、右欄 22vw→18vw,面板字級約縮 15%;自由手繪接共用筆畫濾波器(防抖/筆壓平滑與軟硬/速度模擬筆壓/曲線內插,設定跟創藝工坊共用);↔ 翻轉檢視;
+   每一筆下筆/收筆不再整串重算所有圖層的指紋(plsHash 快取)⇒ 舊 iPad 下筆不頓。選色器多了 🎡 配色(MGPK)。 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
    寫進 designSubmit.wish / wishTxt / em(信箱)。Firestore 規則還沒發布新版時,這三格會被擋 ⇒ 自動改放進 mod.wish/mod.wishTxt/mod.em 再交一次(作品照常繳交成功)。 */ void 'v1.1.3';/* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
 var D = window.DSG_DB;
 var B = window.MG_ART_BRIDGE || {};
@@ -42,10 +44,15 @@ function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
 function vzOf(el){ var r, w; if(!el) return 1; try{ r = el.getBoundingClientRect(); w = el.offsetWidth; }catch(e){ return 1; } return (w > 0 && r.width > 0) ? r.width / w : 1; }
 function stPt(cx, cy){ var st = $('dsg-stage'), E = S.ed, rc, w, h; if(!st || !E) return { x: 0, y: 0 }; rc = st.getBoundingClientRect(); w = st.offsetWidth || E.d.W; h = st.offsetHeight || E.d.H;
   if(!(rc.width > 0) || !(rc.height > 0)) return { x: (cx - rc.left) / E.k, y: (cy - rc.top) / E.k };
-  return { x: (cx - rc.left) * w / rc.width, y: (cy - rc.top) * h / rc.height }; }
+  var x0 = (cx - rc.left) * w / rc.width; if(E.flip) x0 = w - x0;   /* ★ v1.2.0 翻轉檢視:螢幕左右相反,換回作品座標 */
+  return { x: x0, y: (cy - rc.top) * h / rc.height }; }
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
 function fb(){ try{ return B.fbNow ? B.fbNow() : null; }catch(e){ return null; } }
+/* ★ v1.2.0 筆跡設定(防抖/筆壓曲線/速度模擬筆壓):跟創藝工坊畫布共用同一份(這台裝置 localStorage art_cv_pref) */
+var PK_GAMMA = { soft: 0.6, std: 1, hard: 1.65 };
+function pkPref(){ var P = { sl: 25, pc: 'std', spd: false }, o = null, k; try{ o = JSON.parse(lsGet('art_cv_pref') || 'null'); }catch(e){} if(o && typeof o === 'object'){ for(k in P){ if(P.hasOwnProperty(k) && o.hasOwnProperty(k) && typeof o[k] === typeof P[k]) P[k] = o[k]; } } return P; }
+function pkSet(k, v){ var o = null; try{ o = JSON.parse(lsGet('art_cv_pref') || 'null'); }catch(e){} if(!o || typeof o !== 'object') o = {}; o[k] = v; lsSet('art_cv_pref', JSON.stringify(o)); }
 function FV(){ try{ return window.firebase.firestore.FieldValue; }catch(e){ return null; } }
 function ownerOk(){ var u = user(); return !S.guest && !!(u && u.uid === S.uid); }
 function rid(){ return 'w' + now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -328,7 +335,21 @@ var CSS = [
 '#dsg-ed .dsg-lwin{min-height:23vmin}#dsg-pitem{max-height:42%}',
 '@media (orientation:landscape) and (max-height:520px){#dsg-ed .dsg-lyr{font-size:2.3vmin;min-height:6.2vmin;padding:.2vmin .5vmin;margin:.25vmin 0}#dsg-ed .dsg-lyr img,#dsg-ed .dsg-lyr .lic{width:5.4vmin;height:5.4vmin;font-size:3vmin}#dsg-ed .dsg-lyr button{font-size:2.6vmin;padding:.3vmin .8vmin}#dsg-ed .dsg-lwh .dsg-lyb button{font-size:2.1vmin;padding:.2vmin 0}#dsg-ed .dsg-lwh .dsg-sec{font-size:2.3vmin}#dsg-ed .dsg-lwin{min-height:28vmin}#dsg-wheel canvas{max-width:min(200px,23vh) !important}#dsg-pcol .dsg-qsw .dsg-sw{width:4.2vmin;height:4.2vmin}}',
 '@media (orientation:portrait) and (max-width:600px){#dsg-ed .dsg-lyr{font-size:2.9vmin;min-height:7vmin}#dsg-ed .dsg-lyr img,#dsg-ed .dsg-lyr .lic{width:6vmin;height:6vmin}#dsg-ed .dsg-lyr button{font-size:2.6vmin}#dsg-ed .dsg-lwh .dsg-lyb button{font-size:2.7vmin}}',
-'@media (orientation:portrait){#dsg-ed .dsg-lwin{min-height:0}#dsg-pitem{max-height:none}}'
+'@media (orientation:portrait){#dsg-ed .dsg-lwin{min-height:0}#dsg-pitem{max-height:none}}',
+/* ★ v1.2.0(2026-11-19・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」)
+   橫放(電腦/iPad/手機):左欄 28vw→21vw、右欄 22vw→18vw(iPad 30/23→22/19、手機橫放 31/25→25/21)⇒ 中間畫布寬度約多 10~15% 螢幕寬;
+   面板裡的分頁、素材格、筆刷格、屬性、按鈕字級約縮 15%。直式版面不動。放整個 CSS 最後(鐵律〇之二),選擇器都加 #dsg-ed 確保蓋過前面。 */
+'@media (orientation:landscape){#dsg-ed{grid-template-columns:21vw 1fr 18vw}#dsg-ed .tabs{gap:.45vmin;padding:.7vmin}#dsg-ed .tabs button{font-size:1.6vmin;padding:.6vmin .8vmin}#dsg-ed .lbody{padding:0 .7vmin 1.6vmin}',
+' #dsg-ed .dsg-grid{grid-template-columns:repeat(auto-fill,minmax(9vmin,1fr));gap:.6vmin}#dsg-ed .dsg-it{height:9vmin;font-size:1.3vmin}#dsg-ed .dsg-it img{max-height:6vmin}#dsg-ed .dsg-sec{font-size:1.7vmin;margin:.9vmin 0 .45vmin}',
+' #dsg-ed .dsg-chips button{font-size:1.55vmin;padding:.55vmin .9vmin}#dsg-ed .dsg-brs{grid-template-columns:repeat(auto-fill,minmax(7vmin,1fr));gap:.45vmin}#dsg-ed .dsg-brs button{font-size:1.35vmin}#dsg-ed .dsg-brs button b{font-size:2.7vmin}',
+' #dsg-ed .dsg-pm button{font-size:1.55vmin;padding:.7vmin .3vmin}#dsg-ed .dsg-pm b{font-size:2.8vmin}#dsg-ed .dsg-tip{font-size:1.55vmin}#dsg-ed .prop{font-size:1.7vmin;padding:.9vmin calc(.9vmin + env(safe-area-inset-right)) 1.6vmin .9vmin}#dsg-ed .prop label{margin:.7vmin 0 .2vmin}#dsg-ed .prop input[type=range]{height:3.4vmin}#dsg-ed .prop .row .dsg-b{font-size:1.55vmin;padding:.6vmin .8vmin}',
+' #dsg-ed .dsg-curc .dsg-sw{width:4.8vmin;height:4.8vmin}#dsg-ed .dsg-curc b{font-size:1.55vmin}#dsg-ed .dsg-qsw .dsg-sw{width:3.2vmin;height:3.2vmin}#dsg-ed .dsg-lmn{font-size:1.55vmin}#dsg-ed input[type=text],#dsg-ed select{font-size:1.9vmin;padding:.6vmin}#dsg-ed .dsg-pkset{font-size:1.5vmin}#dsg-ed .lbody>label,#dsg-ed .lbody label[style]{font-size:1.7vmin}#dsg-ed .lbody input[type=range]{height:3vmin}}',
+'@media (orientation:landscape) and (min-aspect-ratio:4/3) and (max-aspect-ratio:3/2){#dsg-ed{grid-template-columns:22vw 1fr 19vw}}',
+'@media (orientation:landscape) and (max-height:520px){#dsg-ed{grid-template-columns:25vw 1fr 21vw}#dsg-ed .tabs button{font-size:2.4vmin;padding:.8vmin 1vmin}#dsg-ed .dsg-grid{grid-template-columns:repeat(auto-fill,minmax(12.5vmin,1fr))}#dsg-ed .dsg-it{height:12.5vmin;font-size:2vmin}#dsg-ed .dsg-it img{max-height:8.4vmin}',
+' #dsg-ed .dsg-chips button{font-size:2.3vmin}#dsg-ed .dsg-sec{font-size:2.5vmin}#dsg-ed .prop{font-size:2.5vmin}#dsg-ed .prop .row .dsg-b{font-size:2.3vmin}#dsg-ed .prop label{font-size:2.4vmin}#dsg-ed .dsg-pm button,#dsg-ed .dsg-tip{font-size:2.3vmin}#dsg-ed .dsg-pm b{font-size:3.8vmin}',
+' #dsg-ed .dsg-brs{grid-template-columns:repeat(auto-fill,minmax(10.5vmin,1fr))}#dsg-ed .dsg-brs button{font-size:2vmin}#dsg-ed .dsg-brs button b{font-size:3.8vmin}#dsg-ed .dsg-pkset{font-size:2.2vmin}#dsg-ed .lbody>label,#dsg-ed .lbody label[style]{font-size:2.4vmin}}',
+/* ★ v1.2.0 筆跡設定小區塊(防抖/筆壓,跟創藝工坊共用這台裝置的設定) */
+'.dsg-pkset{background:rgba(0,0,0,.22);border-radius:1.2vmin;padding:.5vmin .8vmin;margin:.6vmin 0;font-size:1.7vmin;font-weight:800}.dsg-pkset .r{display:flex;align-items:center;gap:.6vmin;margin:.3vmin 0;flex-wrap:wrap}.dsg-pkset input[type=range]{flex:1;min-width:0}.dsg-pkset button{border:0;border-radius:.8vmin;padding:.2vmin .7vmin;font:inherit;background:rgba(255,255,255,.85);color:#333}.dsg-pkset button.on{background:#ffd45a;color:#4a2a00}'
 ].join('\n');
 function injectCss(){ if($('dsg-css')) return; var s = document.createElement('style'); s.id = 'dsg-css'; s.textContent = CSS; document.head.appendChild(s); }
 
@@ -687,7 +708,7 @@ function fitStage(){
   E.k0 = k; k = k * (E.z || 1);   /* ★ v1.0.6 E.k = 剛好放得下的大小 × 手指縮放倍率;pt() 換算座標都用 E.k,所以畫筆/拖曳/關節不必另外改 */
   zoomClampPan(W * k, H * k, mid.clientWidth, mid.clientHeight);
   E.k = k; E.ox = (mid.clientWidth - W * k) / 2 + (E.panX || 0); E.oy = (mid.clientHeight - H * k) / 2 + (E.panY || 0);
-  st.style.transform = 'translate(' + E.ox + 'px,' + E.oy + 'px) scale(' + k + ')';
+  st.style.transform = E.flip ? 'translate(' + (E.ox + W * k) + 'px,' + E.oy + 'px) scale(' + (-k) + ',' + k + ')' : 'translate(' + E.ox + 'px,' + E.oy + 'px) scale(' + k + ')';   /* ★ v1.2.0 ↔ 翻轉檢視(作品本身不變) */
   zoomBadge();
   selPaint(); if(pzEditing()) guideDraw();   /* ★ v1.0.5 關節把手大小跟著畫面縮放 */
   fxDraw();   /* ★ v1.1.0 變形把手大小跟著畫面縮放 */
@@ -737,6 +758,7 @@ function zoomSet(z, px, py){ var E = S.ed; if(!E) return; E.z = clamp(z, ZMIN, Z
 /* 以畫面上 (cx,cy)(相對 #dsg-mid)為中心,把倍率改成 z1:那一點下面的作品座標保持不動 */
 function zoomAt(z1, cx, cy){ var E = S.ed, mid = $('dsg-mid'); if(!E || !mid) return; z1 = clamp(z1, ZMIN, ZMAX);
   var k1 = E.k0 * z1, sx = (cx - E.ox) / E.k, sy = (cy - E.oy) / E.k;
+  if(E.flip){ sx = (E.ox + E.d.W * E.k - cx) / E.k; E.z = z1; E.panX = cx - E.d.W * k1 + sx * k1 - (mid.clientWidth - E.d.W * k1) / 2; E.panY = cy - sy * k1 - (mid.clientHeight - E.d.H * k1) / 2; fitStage(); return; }   /* ★ v1.2.0 翻轉檢視時,手指下面那一點一樣不跑掉 */
   E.z = z1; E.panX = cx - sx * k1 - (mid.clientWidth - E.d.W * k1) / 2; E.panY = cy - sy * k1 - (mid.clientHeight - E.d.H * k1) / 2; fitStage(); }
 function zoomBind(){
   var E = S.ed, mid = $('dsg-mid'), T0 = {}, pin = null, hold = false, raf = 0, pan = null, tap = null;
@@ -752,6 +774,7 @@ function zoomBind(){
     raf = (window.requestAnimationFrame || function(f){ return setTimeout(f, 16); })(function(){ raf = 0; if(!pin || cnt() < 2) return;
       var a = two(), dx = a[1].x - a[0].x, dy = a[1].y - a[0].y, d = Math.max(20, Math.sqrt(dx * dx + dy * dy)), z1 = clamp(pin.z0 * d / pin.d0, ZMIN, ZMAX), mx = (a[0].x + a[1].x) / 2, my = (a[0].y + a[1].y) / 2, k1 = E.k0 * z1,
         sx = (pin.mx - pin.ox) / pin.k0, sy = (pin.my - pin.oy) / pin.k0;   /* 捏合開始時兩指中間那一點的作品座標 ⇒ 永遠跟著兩指中間走 */
+      if(E.flip){ sx = (pin.ox + E.d.W * pin.k0 - pin.mx) / pin.k0; E.z = z1; E.panX = mx - E.d.W * k1 + sx * k1 - (mid.clientWidth - E.d.W * k1) / 2; E.panY = my - sy * k1 - (mid.clientHeight - E.d.H * k1) / 2; fitStage(); return; }   /* ★ v1.2.0 翻轉檢視 */
       E.z = z1; E.panX = mx - sx * k1 - (mid.clientWidth - E.d.W * k1) / 2; E.panY = my - sy * k1 - (mid.clientHeight - E.d.H * k1) / 2; fitStage(); }); }
   function block(e){ e.stopPropagation(); if(e.cancelable) e.preventDefault(); }
   mid.addEventListener('pointerdown', function(e){
@@ -864,7 +887,12 @@ function beginOp(){ var E = S.ed; E.undo.push(snapNow()); if(E.undo.length > 30)
       指紋沒變(選同一色、拉了又拉回)不算;指紋出現過也不算 ⇒ A 色→B 色→換回 A、復原再重做、加了又刪再加回同一個,都不會重複計次。
       算過的指紋存在 d.oh(最多 600 個,跟著草稿存),換平板/重開草稿一樣有效。 */
 function opHash(s){ var h = 2166136261, i; s = String(s || ''); for(i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; } return h.toString(36) + '.' + s.length.toString(36); }
-function opKey(){ var E = S.ed, o = E.d.ops, oh = E.d.oh, gd = E.d.guide, s; E.d.ops = 0; E.d.oh = null; E.d.guide = null; try{ s = JSON.stringify(E.d); }catch(x){ s = ''; } E.d.ops = o; E.d.oh = oh; E.d.guide = gd; return opHash(s) + '|' + opHash(plsJoin()); }   /* ★ v1.1.0 所有圖層的筆跡 */
+function opKey(){ var E = S.ed, o = E.d.ops, oh = E.d.oh, gd = E.d.guide, s; E.d.ops = 0; E.d.oh = null; E.d.guide = null; try{ s = JSON.stringify(E.d); }catch(x){ s = ''; } E.d.ops = o; E.d.oh = oh; E.d.guide = gd; return opHash(s) + '|' + plsHash(); }
+/* ★ v1.2.0 流暢度(老師「即時反應和流暢感再提升」):原本每一筆的「下筆前+收筆後」都要把所有圖層的整張 PNG 字串(每層可能 1MB 以上)從頭算一次指紋,
+   舊 iPad 下筆會頓一下。改成每個圖層記住「上次算過的字串 → 指紋」,字串沒變就直接用;只有剛畫過的那一層重算。 */
+function plsHash(){ var E = S.ed, a = lyList(), o = [], i, id, s, c; if(!E.plh) E.plh = {};
+  for(i = 0; i < a.length; i++){ if(a[i].k !== 'p') continue; id = a[i].id; s = E.pls[id] || ''; c = E.plh[id]; if(!c || c.s !== s){ c = E.plh[id] = { s: s, h: opHash(s) }; } o.push(id + ':' + c.h); }
+  return opHash(o.join('|')); }   /* ★ v1.1.0 所有圖層的筆跡 */
 function endOp(add){ var E = S.ed, k, oh;
   if(add){ k = opKey(); oh = E.d.oh = (E.d.oh && E.d.oh.push) ? E.d.oh : [];
     if(E._bk && oh.indexOf(E._bk) < 0) oh.push(E._bk);   /* 改之前的樣子也記下來:之後換回原本的樣子不算 */
@@ -1305,6 +1333,8 @@ function libPaint(){
     if(sid){ if(!E._tintOp){ beginOp(); E._tintOp = 1; } E.d.tint[sid] = [+t.value, 1]; layersPaint(); }
     if(t.id === 'dsg-bw'){ E.brush.w = +t.value; $('dsg-bwv').textContent = t.value; }
     if(t.id === 'dsg-bo'){ E.brush.op = (+t.value) / 100; $('dsg-bov').textContent = t.value + '%'; }   /* ★ v1.1.0 筆刷透明度 */
+    if(t.id === 'dsg-sl'){ pkSet('sl', +t.value); $('dsg-slv').textContent = t.value; }   /* ★ v1.2.0 防抖 */
+    if(t.id === 'dsg-spd'){ pkSet('spd', !!t.checked); }
     if(t.id === 'dsg-tol'){ E.tol = +t.value; $('dsg-tolv').textContent = t.value + '%'; }   /* ★ v1.1.0 油漆桶臨界值 */
     if(t.id === 'dsg-pcol'){ E.brush.c = t.value; E.brush.er = false; if(E.px.tool === 'er') E.px.tool = 'pen'; }
     if(t.id === 'dsg-vsw'){ E.vec.sw = +t.value; $('dsg-vswv').textContent = t.value; }
@@ -1325,7 +1355,11 @@ function pmPanel(){
     if(bt === 'bucket') h += '<label style="display:block;margin-top:1vmin">🪣 <span class="lb">臨界值(越大填越多)</span> <b id="dsg-tolv">' + E.tol + '%</b></label><input type="range" min="0" max="100" value="' + E.tol + '" id="dsg-tol" style="width:100%">';
     else if(bt !== 'lasso') h += '<label style="display:block;margin-top:1vmin">📏 <span class="lb">粗細</span> <b id="dsg-bwv">' + E.brush.w + '</b></label><input type="range" min="2" max="60" value="' + E.brush.w + '" id="dsg-bw" style="width:100%">';
     if(bt !== 'eraser' && bt !== 'lasso') h += '<label style="display:block;margin-top:.6vmin">🔅 <span class="lb">透明度</span> <b id="dsg-bov">' + Math.round((E.brush.op || 1) * 100) + '%</b></label><input type="range" min="10" max="100" value="' + Math.round((E.brush.op || 1) * 100) + '" id="dsg-bo" style="width:100%">';
-    h += '<div class="dsg-chips" style="margin-top:1vmin"><button data-pclr="1">🗑<span class="lb"> 清掉這個圖層</span></button></div>';
+    if(PKon && bt !== 'bucket' && bt !== 'lasso' && bt !== 'eraser'){ var pp = pkPref();   /* ★ v1.2.0 防抖、筆壓軟硬(跟創藝工坊共用);↔ 翻轉檢視 */
+      h += '<div class="dsg-pkset"><div class="r">〰 <span class="lb">防抖</span><input type="range" min="0" max="100" value="' + pp.sl + '" id="dsg-sl"><b id="dsg-slv">' + pp.sl + '</b></div>'
+        + '<div class="r">🖊 <span class="lb">筆壓</span><button data-dpc="soft"' + (pp.pc === 'soft' ? ' class="on"' : '') + '>軟</button><button data-dpc="std"' + (pp.pc === 'std' ? ' class="on"' : '') + '>標準</button><button data-dpc="hard"' + (pp.pc === 'hard' ? ' class="on"' : '') + '>硬</button></div>'
+        + '<div class="r"><label style="display:flex;align-items:center;gap:.4vmin"><input type="checkbox" id="dsg-spd"' + (pp.spd ? ' checked' : '') + '><span class="lb">手指/滑鼠模擬筆壓</span><span>⚡</span></label></div></div>'; }
+    h += '<div class="dsg-chips" style="margin-top:1vmin"><button data-pclr="1">🗑<span class="lb"> 清掉這個圖層</span></button>' + (PKon ? '<button data-dflip="1"' + (E.flip ? ' class="on"' : '') + '>↔<span class="lb"> 翻轉檢視</span></button>' : '') + '</div>';
     h += '<div class="dsg-tip">' + esc(T({ c: '📐 畫完一筆,筆先不要拿起來停 2 秒,會變成工整的直線、圓、三角形、長方形(向量形狀)。', p: '📐 筆畫結束停留 2 秒即自動轉為向量幾何形狀。' })) + '</div>';
   } else if(E.pm === 'pixel'){
     h += '<div class="dsg-sec">👾 <span class="lb">像素點陣(格子對齊)</span></div>';
@@ -1344,6 +1378,10 @@ function pmPanel(){
 }
 function libClick(ev){
   var E = S.ed, t = ev.target, a = null, v;
+  /* ★ v1.2.0 筆壓軟硬、↔ 翻轉檢視(只改看的方式,不記復原、不算操作次數;鎖定的作品也能翻轉來看) */
+  var tq = t; while(tq && tq !== this && !(tq.getAttribute && (tq.getAttribute('data-dpc') || tq.getAttribute('data-dflip')))) tq = tq.parentNode;
+  if(tq && tq !== this && tq.getAttribute){ sfx('sfx-tap', 0.25); if(tq.getAttribute('data-dpc')){ if(locked()) return; pkSet('pc', tq.getAttribute('data-dpc')); libPaint(); return; }
+    E.flip = !E.flip; fitStage(); libPaint(); toast(E.flip ? T({ c: '↔ 畫面翻過來看了(作品沒變),再按一次翻回來', p: '↔ 已翻轉檢視(不影響作品)' }) : '↔ 翻回來了'); return; }
   if(locked()) return;
   /* ★ v1.0.3 描圖參考:🦴 骨架(data-gp)/🖼 參考圖片(data-gr)/🖌 開始畫(data-tab2)/參考組收合(summary)。只改 d.guide,不記復原、不算操作次數 */
   var g0 = t, gk = null, gv = null;
@@ -1542,14 +1580,22 @@ function stageBind(){
   function brushStart(p, e){
     var b = E.brush, t = b.t, q = { m: 'paint', pid: e.pointerId, t: t, last: { x: p.x, y: p.y }, pts: [{ x: p.x, y: p.y }], w: b.w, c: b.c, pr: e.pressure || 0.5, cw: 0, er: t === 'eraser' };
     if(q.er){ try{ q.snap = ctx.getImageData(0, 0, cv.width, cv.height); }catch(x){} ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(p.x, p.y, b.w / 2, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
-    else { q.x = scrOn(cv, (BRUSH[t] ? BRUSH[t].a : 1) * (b.op || 1)); bseg(q, p, { x: p.x + 0.01, y: p.y }); }
+    else { q.x = scrOn(cv, (BRUSH[t] ? BRUSH[t].a : 1) * (b.op || 1));
+      /* ★ v1.2.0(老師「畫筆感壓、即時反應和流暢感再提升」)共用 MGPK 筆畫濾波器:防抖+筆壓平滑/曲線+(手指/滑鼠)速度模擬筆壓+曲線內插;設定跟創藝工坊同一份(這台裝置) */
+      var pp = pkPref(), pen = e.pointerType === 'pen', spd = !pen && pp.spd;
+      if(PK && PK.stroke && t !== 'vec'){ q.pen = pen || spd; q.pr0 = q.pr;
+        q.f = PK.stroke({ sl: pp.sl / 100, gamma: PK_GAMMA[pp.pc] || 1, pen: pen, speed: spd, step: Math.max(1, Math.min(3, b.w * 0.12)), onSeg: function(a2, b2){ q.pr = q.pen ? b2.p : q.pr0; bseg(q, a2, b2); } });
+        q.f.add(p.x, p.y, e.pressure || 0, PK.tiltOf(e), e.timeStamp || now()); }
+      else bseg(q, p, { x: p.x + 0.01, y: p.y }); }
     if(PK && !q.er) q.hold = PK.holdTimer(2000, 8, function(){ qsFire(q); });
     return q;
   }
   function brushMove(q, e){
     var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [e], i, p;
     if(!evs.length) evs = [e];
-    for(i = 0; i < evs.length; i++){ p = pt(evs[i]); if(evs[i].pressure) q.pr = evs[i].pressure;
+    for(i = 0; i < evs.length; i++){ p = pt(evs[i]);
+      if(q.f){ q.vd = Math.sqrt((p.x - q.last.x) * (p.x - q.last.x) + (p.y - q.last.y) * (p.y - q.last.y)); q.f.add(p.x, p.y, evs[i].pressure || 0, PK.tiltOf(evs[i]), evs[i].timeStamp || now()); q.last = { x: p.x, y: p.y }; if(q.pts.length < 4000) q.pts.push(q.last); continue; }   /* ★ v1.2.0 濾波器 */
+      if(evs[i].pressure) q.pr = evs[i].pressure;
       if(q.er){ ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.lineCap = ctx.lineJoin = 'round'; ctx.lineWidth = q.w; ctx.beginPath(); ctx.moveTo(q.last.x, q.last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.restore(); }
       else bseg(q, q.last, p);
       q.last = { x: p.x, y: p.y }; if(q.pts.length < 4000) q.pts.push(q.last); }
@@ -1565,7 +1611,7 @@ function stageBind(){
     if(t === 'crayon'){ n = Math.max(1, Math.ceil(d / Math.max(1, w * 0.18))); for(i = 1; i <= n; i++){ u = i / n; x0 = a.x + dx * u; y0 = a.y + dy * u;
         for(k = 0; k < 7; k++){ var ang = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * w / 2, s2 = w * (0.08 + Math.random() * 0.12); X.globalAlpha = 0.45 + Math.random() * 0.5; X.fillRect(x0 + Math.cos(ang) * rr - s2 / 2, y0 + Math.sin(ang) * rr - s2 / 2, s2, s2); } } X.globalAlpha = 1; return; }
     if(t === 'ink'){   /* 毛筆:畫得快變細、慢變粗,起筆漸粗 */
-      var tw = w * (1.25 - Math.min(1, d / Math.max(4, w * 1.4)) * 0.85) * (0.55 + 0.9 * q.pr); if(!q.cw) q.cw = w * 0.35; var w0 = q.cw; q.cw = q.cw + (tw - q.cw) * 0.35;
+      var tw = w * (1.25 - Math.min(1, (q.f ? (q.vd || 0) : d) / Math.max(4, w * 1.4)) * 0.85) * (0.55 + 0.9 * q.pr); if(!q.cw) q.cw = w * 0.35; var w0 = q.cw; q.cw = q.cw + (tw - q.cw) * 0.35;
       n = Math.max(1, Math.ceil(d / Math.max(0.8, Math.min(w0, q.cw) * 0.25))); for(i = 1; i <= n; i++){ u = i / n; r = Math.max(0.6, (w0 + (q.cw - w0) * u) / 2); X.beginPath(); X.arc(a.x + dx * u, a.y + dy * u, r, 0, Math.PI * 2); X.fill(); } return; }
     if(t === 'mflat'){   /* 平頭麥克筆:斜 45° 的扁筆頭掃過去 */
       var vx = Math.cos(-Math.PI / 4) * w / 2, vy = Math.sin(-Math.PI / 4) * w / 2, h2 = w * 0.12;
@@ -1578,6 +1624,7 @@ function stageBind(){
     if(q.er){ plSave(cv); endOp(false); return; }   /* 橡皮擦不算操作次數 */
     if(q.t === 'vec'){ scrOff(); var it = pathItem(q.pts, q.c, Math.max(2, Math.round(q.w * 0.6))); if(!it){ E.undo.pop(); E.redo = q.rd || []; E._bk = null; return; }
       objPush(it); endOp(true); layersPaint(); propPaint(); return; }
+    if(q.f) q.f.end();   /* ★ v1.2.0 防抖收筆:追上最後一點 */
     scrMerge(cv, (BRUSH[q.t] ? BRUSH[q.t].a : 1) * (E.brush.op || 1)); plSave(cv); endOp(true);
   }
   function qsFire(q){

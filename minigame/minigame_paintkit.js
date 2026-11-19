@@ -8,10 +8,14 @@
    創藝工坊畫布(minigame_art.js canvasOpen)與遊戲美術設計師(minigame_designer.js)共用這一支:
    · 演算法(填色遮罩、手繪辨識成幾何、套索剪下、變形四角/扭曲網格)不碰任何畫面狀態,兩邊各自接自己的復原/存檔。
    · 介面小零件(環形色相+三角形明度彩度、拖顏色、臨界值條、變形工具列)用 inline style,不依賴任何一邊的 CSS 類名。
-   ES5(小遊戲鐵律):不用箭頭函式、樣板字面值、let/const、可選串連。 */
+   ES5(小遊戲鐵律):不用箭頭函式、樣板字面值、let/const、可選串連。
+   ★ v1.1.0(2026-11-19・老師選乙+「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)新增:
+     K.stroke 筆畫濾波器(防抖/筆壓平滑+曲線/速度模擬筆壓/曲線內插)、K.strokeReplay、K.tiltOf、K.rng、K.taperK;
+     K.fillMaskGap 縫隙偵測(學 Clip Studio Paint)、K.recolorPaint 重新著色、K.adjustData/K.blurData 調整、K.sel* 選取範圍、K.maskCut、
+     K.BM 混合模式表、K.loupe 吸色放大鏡;選色器 K.wheel 加 🎡 色彩和諧(o.harm === false 可關);新功能 ? 說明 K.layerHelp。 */
 (function(){
 'use strict';
-var K = { ver: 'v1.0.0' };
+var K = { ver: 'v1.1.0' };
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
 function now(){ return Date.now(); }
 
@@ -57,6 +61,73 @@ K.fillMask = function(src, sx, sy, tol, grow){
   }
   return { m: m, w: w, h: h, x0: x0, y0: y0, x1: x1, y1: y1, n: n };
 };
+/* ★ v1.1.0(老師「網路上推薦的其他繪圖 APP 好用功能學起來」— 學 Clip Studio Paint 油漆桶的「縫隙偵測」)
+   線條有小缺口時,一般油漆桶會「漏」到外面整張填滿;gap = 可以當作連起來的缺口半徑(像素)。
+   做法:①不是起點顏色的像素 = 牆 ②把牆往外加厚 gap 圈(缺口就被補起來)③在加厚的牆裡面填 ④再往外長 gap+1 圈貼回真正的線條(只長在不是牆的地方)。
+   起點本身落在加厚的牆裡(點在很窄的地方)⇒ 自動改回一般填色。 */
+function dilate(B, w, h, g){
+  var R = new Uint8Array(w * h), C = new Uint8Array(w * h), x, y, s, row, o;
+  for(y = 0; y < h; y++){ row = y * w; s = 0;
+    for(x = 0; x < Math.min(w, g); x++) s += B[row + x];
+    for(x = 0; x < w; x++){ if(x + g < w) s += B[row + x + g]; if(x - g - 1 >= 0) s -= B[row + x - g - 1]; R[row + x] = s > 0 ? 1 : 0; } }
+  for(x = 0; x < w; x++){ s = 0;
+    for(y = 0; y < Math.min(h, g); y++) s += R[y * w + x];
+    for(y = 0; y < h; y++){ o = y * w + x; if(y + g < h) s += R[(y + g) * w + x]; if(y - g - 1 >= 0) s -= R[(y - g - 1) * w + x]; C[o] = s > 0 ? 1 : 0; } }
+  return C;
+}
+K.fillMaskGap = function(src, sx, sy, tol, gap, grow){
+  gap = Math.round(gap || 0);
+  if(gap < 1) return K.fillMask(src, sx, sy, tol, grow);
+  var w = src.width, h = src.height, d = src.data, B, D, m, i, j, o, q, lim, r0, g0, b0, a0, st, x, y, xl, xr, n = 0, qu, qh, qt, dist2, step, nb, k;
+  sx = Math.floor(sx); sy = Math.floor(sy);
+  if(sx < 0 || sy < 0 || sx >= w || sy >= h) return null;
+  o = (sy * w + sx) * 4; r0 = d[o]; g0 = d[o + 1]; b0 = d[o + 2]; a0 = d[o + 3]; lim = clamp(tol == null ? 32 : tol, 0, 100) * 2.55 + 0.5;
+  B = new Uint8Array(w * h);
+  for(i = 0; i < w * h; i++){ q = i * 4; B[i] = (Math.abs(d[q] - r0) <= lim && Math.abs(d[q + 1] - g0) <= lim && Math.abs(d[q + 2] - b0) <= lim && Math.abs(d[q + 3] - a0) <= lim) ? 0 : 1; }
+  D = dilate(B, w, h, gap);
+  if(D[sy * w + sx]) return K.fillMask(src, sx, sy, tol, grow);
+  m = new Uint8Array(w * h); st = [sx, sy];
+  while(st.length){ y = st.pop(); x = st.pop(); o = y * w + x; if(m[o] || D[o]) continue;
+    xl = x; while(xl > 0 && !m[o - (x - xl) - 1] && !D[o - (x - xl) - 1]) xl--;
+    xr = x; while(xr < w - 1 && !m[o + (xr - x) + 1] && !D[o + (xr - x) + 1]) xr++;
+    var up = false, dn = false;
+    for(i = xl; i <= xr; i++){ q = y * w + i; m[q] = 1; n++;
+      if(y > 0){ if(!m[q - w] && !D[q - w]){ if(!up){ st.push(i, y - 1); up = true; } } else up = false; }
+      if(y < h - 1){ if(!m[q + w] && !D[q + w]){ if(!dn){ st.push(i, y + 1); dn = true; } } else dn = false; } } }
+  /* 往外長 gap+1 圈貼回線條(多起點 BFS,只走「不是牆」的像素) */
+  qu = new Int32Array(w * h); qh = 0; qt = 0; dist2 = new Uint8Array(w * h);
+  for(i = 0; i < w * h; i++){ if(m[i]){ qu[qt++] = i; } }
+  while(qh < qt){ o = qu[qh++]; step = dist2[o]; if(step > gap) continue; x = o % w; y = (o - x) / w;
+    for(k = 0; k < 4; k++){ nb = k === 0 ? (x > 0 ? o - 1 : -1) : k === 1 ? (x < w - 1 ? o + 1 : -1) : k === 2 ? (y > 0 ? o - w : -1) : (y < h - 1 ? o + w : -1);
+      if(nb < 0 || m[nb] || B[nb]) continue; m[nb] = 1; n++; dist2[nb] = step + 1; qu[qt++] = nb; } }
+  var x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for(j = 0; j < h; j++){ for(i = 0; i < w; i++){ if(m[j * w + i]){ if(i < x0) x0 = i; if(i > x1) x1 = i; if(j < y0) y0 = j; if(j > y1) y1 = j; } } }
+  grow = grow == null ? 2 : grow;
+  if(grow > 0 && n){ var gx0 = Math.max(0, x0 - grow), gy0 = Math.max(0, y0 - grow), gx1 = Math.min(w - 1, x1 + grow), gy1 = Math.min(h - 1, y1 + grow), pass, m2;
+    for(pass = 0; pass < grow; pass++){ m2 = new Uint8Array(m);
+      for(j = gy0; j <= gy1; j++){ for(i = gx0; i <= gx1; i++){ o = j * w + i; if(m[o]) continue;
+        if((i > 0 && m[o - 1]) || (i < w - 1 && m[o + 1]) || (j > 0 && m[o - w]) || (j < h - 1 && m[o + w])){ m2[o] = 1; n++; } } }
+      m = m2; }
+    x0 = gx0; y0 = gy0; x1 = gx1; y1 = gy1; }
+  return { m: m, w: w, h: h, x0: x0, y0: y0, x1: x1, y1: y1, n: n };
+};
+/* ★ v1.1.0 重新著色(Procreate Recolor):把遮罩範圍的顏色換成 hex,保留原本的透明度與深淺差(線條邊緣的反鋸齒不會變成硬邊)
+   layer = 作用圖層 canvas;F = fillMask 的結果(以「只看這一層」的取樣算);回傳改到的範圍 */
+K.recolorPaint = function(layer, F, hex, comp){
+  if(!F || !F.n) return null;
+  var bw = F.x1 - F.x0 + 1, bh = F.y1 - F.y0 + 1, x = layer.getContext('2d'), id, dd, i, j, q, col = K.hex2rgb(hex), L0 = 0, cnt = 0, lum, k;
+  try{ id = x.getImageData(F.x0, F.y0, bw, bh); }catch(e){ return null; } dd = id.data;
+  for(j = 0; j < bh; j++){ for(i = 0; i < bw; i++){ if(!F.m[(j + F.y0) * F.w + i + F.x0]) continue; q = (j * bw + i) * 4; if(dd[q + 3] < 8) continue; L0 += 0.299 * dd[q] + 0.587 * dd[q + 1] + 0.114 * dd[q + 2]; cnt++; } }
+  if(!cnt) return null; L0 /= cnt;
+  for(j = 0; j < bh; j++){ for(i = 0; i < bw; i++){ if(!F.m[(j + F.y0) * F.w + i + F.x0]) continue; q = (j * bw + i) * 4; if(dd[q + 3] < 8) continue;
+    lum = 0.299 * dd[q] + 0.587 * dd[q + 1] + 0.114 * dd[q + 2]; k = (lum - L0) * 0.6;
+    dd[q] = clamp(Math.round(col[0] + k), 0, 255); dd[q + 1] = clamp(Math.round(col[1] + k), 0, 255); dd[q + 2] = clamp(Math.round(col[2] + k), 0, 255); } }
+  x.putImageData(id, F.x0, F.y0);
+  return { x: F.x0, y: F.y0, w: bw, h: bh };
+};
+/* 只看一張 canvas(透明的地方當成透明)取樣 */
+K.layerData = function(c){ try{ return c.getContext('2d').getImageData(0, 0, c.width, c.height); }catch(e){ return null; } };
+
 /* 把遮罩用某個顏色畫到 ctx(畫布座標 = 遮罩座標 × k;k 給「取樣圖比畫布小」時用) */
 K.fillPaint = function(ctx, F, hex, alpha, k, comp){
   if(!F || !F.n) return null;
@@ -308,6 +379,21 @@ K.wheel = function(parent, o){
   var W = { h: 0, s: 1, v: 1, drag: null, dead: false }, cv = document.createElement('canvas'), x, N, dpr = Math.min(2, window.devicePixelRatio || 1), ring = null, R0, R1, RT, cx, cy;
   cv.style.cssText = 'display:block;width:100%;aspect-ratio:1/1;touch-action:none;cursor:crosshair;max-width:' + (o.max || 260) + 'px;margin:0 auto';
   parent.appendChild(cv); W.el = cv;
+  /* ★ v1.1.0(Procreate「色彩和諧」)— 選色器下面一列:模式鈕(點一下換:互補→相近→三等分→分割互補→關)+配色色票(點一下直接用)
+     色相環上同時標出配色的位置;模式記在這台(mgpk_harm)。o.harm === false 不顯示 */
+  var HM = [['off', '🎡 配色'], ['comp', '互補'], ['ana', '相近'], ['tri', '三等分'], ['split', '分割互補']], hrow = null;
+  try{ W.hm = localStorage.getItem('mgpk_harm') || 'off'; }catch(_h){ W.hm = 'off'; }
+  function harmH(){ var h = W.hm, a = W.h; return h === 'comp' ? [a + 180] : h === 'ana' ? [a - 30, a + 30] : h === 'tri' ? [a + 120, a + 240] : h === 'split' ? [a + 150, a + 210] : []; }
+  if(o.harm !== false){ hrow = document.createElement('div'); hrow.style.cssText = 'display:flex;align-items:center;gap:.5vmin;flex-wrap:wrap;justify-content:center;margin-top:.4vmin;font:900 clamp(10px,1.6vmin,15px) sans-serif;color:#2b2335';
+    parent.appendChild(hrow);
+    hrow.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+    hrow.onclick = function(e){ var t = e.target, i, hh; e.stopPropagation(); while(t && t !== hrow && !(t.getAttribute && (t.getAttribute('data-hm') || t.getAttribute('data-hh')))) t = t.parentNode; if(!t || t === hrow) return;
+      if(t.getAttribute('data-hm')){ for(i = 0; i < HM.length; i++){ if(HM[i][0] === W.hm){ W.hm = HM[(i + 1) % HM.length][0]; break; } } try{ localStorage.setItem('mgpk_harm', W.hm); }catch(_s){} paint(); return; }
+      hh = +t.getAttribute('data-hh'); W.h = ((hh % 360) + 360) % 360; if(W.s < 0.05) W.s = 0.8; if(W.v < 0.05) W.v = 0.8; paint(); emit(true); }; }
+  function harmPaint(){ if(!hrow) return; var hs = harmH(), h = '', i, nm = '🎡 配色'; for(i = 0; i < HM.length; i++){ if(HM[i][0] === W.hm) nm = HM[i][1]; }
+    h = '<button data-hm="1" title="色彩和諧:點一下換模式" style="font:inherit;padding:.25vmin .8vmin;border-radius:1vmin;border:.25vmin solid #3a2f45;background:' + (W.hm === 'off' ? '#fff' : '#ffd93b') + ';cursor:pointer">' + (W.hm === 'off' ? nm : '🎡 ' + nm) + '</button>';
+    for(i = 0; i < hs.length; i++){ var c2 = K.hsv2hex(hs[i], Math.max(W.s, 0.15), Math.max(W.v, 0.2)); h += '<span data-hh="' + Math.round(((hs[i] % 360) + 360) % 360) + '" data-sw="' + c2 + '" title="點一下用這個顏色" style="width:3.2vmin;height:3.2vmin;border-radius:50%;border:.3vmin solid #3a2f45;display:inline-block;cursor:pointer;background:' + c2 + '"></span>'; }
+    if(hrow.innerHTML !== h) hrow.innerHTML = h; }
   function size(){ var w = cv.clientWidth || o.size || 180; N = Math.max(80, Math.round(w * dpr)); if(cv.width !== N){ cv.width = N; cv.height = N; ring = null; } cx = N / 2; cy = N / 2; R1 = N / 2 - 1; R0 = R1 * 0.80; RT = R0 * 0.93; x = cv.getContext('2d'); }
   function mkRing(){ var c = document.createElement('canvas'), rx, id, d, i, j, dx, dy, r, h, col, q; c.width = N; c.height = N; rx = c.getContext('2d'); id = rx.createImageData(N, N); d = id.data;
     for(j = 0; j < N; j++){ for(i = 0; i < N; i++){ dx = i + 0.5 - cx; dy = j + 0.5 - cy; r = Math.sqrt(dx * dx + dy * dy); if(r < R0 - 1 || r > R1 + 1) continue;
@@ -327,7 +413,9 @@ K.wheel = function(parent, o){
     x.drawImage(T.c, T.x, T.y);
     x.lineWidth = lw; x.strokeStyle = '#fff'; x.beginPath(); x.arc(cx + Math.cos(a) * rm, cy + Math.sin(a) * rm, (R1 - R0) * 0.52, 0, Math.PI * 2); x.stroke(); x.strokeStyle = 'rgba(0,0,0,.6)'; x.lineWidth = lw * 0.5; x.stroke();
     px = V[0].x * W.v * W.s + V[1].x * W.v * (1 - W.s) + V[2].x * (1 - W.v); py = V[0].y * W.v * W.s + V[1].y * W.v * (1 - W.s) + V[2].y * (1 - W.v);
-    x.lineWidth = lw; x.strokeStyle = W.v > 0.55 && W.s < 0.6 ? '#222' : '#fff'; x.beginPath(); x.arc(px, py, N / 30, 0, Math.PI * 2); x.stroke(); }
+    x.lineWidth = lw; x.strokeStyle = W.v > 0.55 && W.s < 0.6 ? '#222' : '#fff'; x.beginPath(); x.arc(px, py, N / 30, 0, Math.PI * 2); x.stroke();
+    var hs = harmH(), hi, ha; for(hi = 0; hi < hs.length; hi++){ ha = hs[hi] * Math.PI / 180; x.lineWidth = lw * 0.8; x.strokeStyle = '#fff'; x.fillStyle = K.hsv2hex(hs[hi], 1, 1); x.beginPath(); x.arc(cx + Math.cos(ha) * rm, cy + Math.sin(ha) * rm, (R1 - R0) * 0.34, 0, Math.PI * 2); x.fill(); x.stroke(); }
+    harmPaint(); }
   function pos(e){ var r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * N / (r.width || 1), y: (e.clientY - r.top) * N / (r.height || 1) }; }
   function svAt(p){ var V = verts(), b = bary(p, V), sm, v, s;
     b[0] = Math.max(0, b[0]); b[1] = Math.max(0, b[1]); b[2] = Math.max(0, b[2]); sm = b[0] + b[1] + b[2] || 1; b[0] /= sm; b[1] /= sm; b[2] /= sm;
@@ -342,7 +430,7 @@ K.wheel = function(parent, o){
   W.set = function(hex){ if(W.drag) return; var hv = K.hex2hsv(hex); if(hv.s > 0.01 && hv.v > 0.01) W.h = hv.h; W.s = hv.s; W.v = hv.v; paint(); };
   W.get = function(){ return K.hsv2hex(W.h, W.s, W.v); };
   W.paint = paint;
-  W.destroy = function(){ W.dead = true; if(cv.parentNode) cv.parentNode.removeChild(cv); };
+  W.destroy = function(){ W.dead = true; if(cv.parentNode) cv.parentNode.removeChild(cv); if(hrow && hrow.parentNode) hrow.parentNode.removeChild(hrow); };
   W.set(o.hex || '#2e6fd8');
   setTimeout(paint, 0); setTimeout(paint, 120);
   return W;
@@ -445,6 +533,163 @@ K.layerHelp = {
   lk: { t: '🔒 阿爾法鎖定', c: '打開後,這個圖層只能畫在「本來就有顏色的地方」,空白的地方畫不上去。很適合幫畫好的形狀換顏色、加陰影或花紋,完全不會塗出界!鎖定時不能用橡皮擦;想再畫到外面,把鎖打開就好。',
         p: '開啟後僅能在圖層既有像素上繪製,透明區域不受影響,適合為既有形狀改色、加陰影或紋理而不超出邊界;鎖定期間無法使用橡皮擦。' }
 };
-K.helpHtml = function(k, style){ var h = K.layerHelp[k]; if(!h) return ''; return '<h3>' + h.t + '</h3><p style="line-height:1.7">' + (style === 'p' ? h.p : h.c) + '</p>'; };
+/* ★ v1.1.0 新功能的 ? 說明(創藝工坊與美術設計師共用) */
+(function(){ var H = {
+  clip: ['✂️ 剪切遮罩', '打開後,這個圖層只會顯示在「正下方那個圖層有畫的地方」。例如下面一層畫了一顆蘋果,上面一層開剪切遮罩,隨便塗陰影和亮光都不會跑出蘋果外面;而且兩層是分開的,隨時可以只改陰影。', '本圖層僅顯示於下方基底圖層有像素的範圍內,可將陰影、紋理與底色分層繪製而不超出邊界;與阿爾法鎖定不同,兩者保持在不同圖層,可分別修改。'],
+  bm: ['🎭 混合模式', '決定這個圖層怎麼「疊」在下面的圖上:\n・一般:直接蓋上去\n・色彩增值:像透明色紙疊上去,會變暗,最適合畫陰影\n・濾色:會變亮,適合畫光、星星、發光\n・覆蓋:讓亮的更亮、暗的更暗\n・顏色:只換顏色,保留下面的明暗,適合幫黑白素描上色', '設定圖層與下方畫面的合成方式:色彩增值(加深,適合陰影)、濾色(提亮,適合光效)、覆蓋(增強對比)、變暗/變亮、顏色(僅替換色相與彩度,保留明度)。'],
+  sym: ['🦋 對稱輔助', '打開後,所有筆刷畫一邊,另一邊會自動照鏡子畫出來:\n・左右:畫臉、面具、蝴蝶\n・上下:畫倒影\n・四向:畫雪花、窗花\n・放射:像萬花筒一樣轉圈複製(可選 4/6/8 份)', '啟用後所有筆刷會依對稱軸即時鏡射:左右、上下、四向(兩軸)與放射(旋轉複製 4/6/8 份)。'],
+  persp: ['📐 透視格線', '一點透視:一個消失點,適合畫一條路、走廊、鐵軌往遠方變小。兩點透視:兩個消失點,適合畫街角的房子。\n拖曳畫面上的紅色圓點可以移動消失點。打開「線條吸附」後,畫線會自動對齊格線方向,畫出來的線又直又準。', '一點透視適用於道路、走廊;兩點透視適用於建築轉角。可拖曳紅色消失點調整位置;開啟「線條吸附」後,筆畫會自動貼齊最接近的透視方向。'],
+  sl: ['〰 防抖', '手抖畫出來的線會歪歪扭扭。防抖越大,線條越平順,但筆跡會稍微「跟在後面」。寫字建議 10~30,畫長長的弧線可以開到 50 以上。', '平滑筆畫以降低手部抖動;數值越高線條越平順,但筆跡延遲越明顯。一般 10~30,長弧線可提高至 50 以上。'],
+  taper: ['✒ 頭尾變細', '讓每一筆的開頭和結尾自動變細,就像用毛筆或沾水筆畫出來的線,看起來更有精神。數字越大,變細的部分越長。', '筆畫起筆與收筆自動漸細,模擬毛筆或沾水筆的筆鋒;數值越大漸細段越長。'],
+  pc: ['🖊 筆壓', '用 Apple Pencil 或繪圖板時,壓得越用力線條越粗。\n・軟:輕輕畫就會粗(力氣小的人適合)\n・標準\n・硬:要很用力才會粗(容易畫出細線)\n「速度模擬筆壓」:用手指或滑鼠時,畫得快變細、畫得慢變粗。\n「筆壓控制透明」:炭筆、水彩、粉彩、噴槍壓輕會比較淡。', '筆壓曲線:軟(輕壓即可變粗)/標準/硬(需重壓);速度模擬筆壓適用於手指與滑鼠;筆壓控制透明度適用於炭筆、水彩、粉彩、噴槍。'],
+  gap: ['🧱 縫隙偵測', '線條沒有完全接起來、有小缺口時,油漆桶會漏出去把整張都塗滿。把縫隙偵測調大,電腦會當作缺口已經接起來,只塗在線條裡面。缺口越大,數字要越大。', '線稿有小缺口時,啟用縫隙偵測可將缺口視為封閉,避免填色外溢;數值代表可補的缺口寬度。'],
+  sel: ['⬚ 選取', '先圈出一塊範圍,之後畫畫、擦掉、油漆桶、調整顏色都只會影響這一塊,外面完全不會被畫到。\n・矩形/橢圓:拖一拖拉出範圍\n・手繪:自己圈\n・魔術棒:點一下,選起跟那裡顏色一樣的一整塊\n・反轉:改成選外面\n選取後按 ⤡ 變形,就只移動選起來的部分。', '建立選取範圍後,繪圖、橡皮擦、油漆桶與調整只作用於範圍內。提供矩形、橢圓、手繪套索、魔術棒(依顏色)與反轉;選取中使用變形僅作用於選取內容。'],
+  adj: ['🎛 調整', '把目前圖層(有選取時只改選起來的地方)整個調色:\n・色相:顏色繞著色相環轉\n・彩度:更鮮豔或更灰\n・明度:更亮或更暗\n・模糊:變得朦朧,適合畫遠山、背景\n拉好按「✅ 套用」,不滿意按「取消」或之後按 ↶ 復原。', '對作用圖層(或選取範圍)套用色相、彩度、明度與高斯模糊;按套用後可用復原撤銷。'],
+  recolor: ['🖌 重新著色', '點一下畫好的色塊,就把那一塊的顏色換成目前的顏色,線條邊緣的深淺也會一起照顧好。打開「全部同色」,整個圖層裡同樣顏色的地方會一起換,很適合快速試配色。', '點選色塊即替換為目前顏色,保留邊緣漸層;勾選「全部同色」會替換整個圖層中相近的顏色(不需相連)。'],
+  text: ['🔤 文字', '打字後文字會出現在畫面上,可以拖曳移動、拉角放大縮小、旋轉,放好按 ✅ 完成就畫進圖層。適合做海報、招牌、卡片。', '輸入文字後可拖曳、縮放、旋轉,按完成後合成至目標圖層;適用於海報、招牌與卡片設計。'],
+  refw: ['🖼 參考小視窗', '一個可以拖來拖去的小窗,隨時看得到整張畫的樣子。放大畫細節時,也知道整張畫看起來怎麼樣。', '可拖曳的縮圖視窗,即時顯示整張畫面,便於放大局部時掌握整體構圖。'],
+  gray: ['🌗 灰階檢視', '把畫面暫時變成黑白來看(作品本身不會變)。美術老師常說「先看明暗再看顏色」:變成黑白後,很容易看出哪裡太平、哪裡不夠暗。再按一次恢復彩色。', '暫時以灰階顯示畫面(不改變作品),便於檢查明暗層次與對比;再按一次恢復。'],
+  flip: ['↔ 翻轉檢視', '把畫面左右翻過來看(作品本身不會變)。畫家常用這招檢查:臉有沒有歪、構圖有沒有偏一邊。看久了不容易發現的問題,一翻就看出來了!', '暫時左右翻轉顯示畫面(不改變作品),用於檢查比例與構圖偏差。']
+}, k; for(k in H){ if(H.hasOwnProperty(k)) K.layerHelp[k] = { t: H[k][0], c: H[k][1], p: H[k][2] }; } })();
+K.helpHtml = function(k, style){ var h = K.layerHelp[k]; if(!h) return ''; return '<h3>' + h.t + '</h3><p style="line-height:1.7">' + String(style === 'p' ? h.p : h.c).replace(/\n/g, '<br>') + '</p>'; };
+
+/* ══ ★ v1.1.0 筆畫濾波器(老師「畫筆感壓、即時反應和流暢感再提升」)══
+   K.stroke({ sl:0~1 防抖, gamma 筆壓曲線(<1 軟、>1 硬), pen:是不是筆, speed:用速度模擬筆壓, step:取樣間距(畫布單位), onSeg(a,b) })
+   .add(x, y, pressure, tilt, t) 每個(coalesced)點丟進來;.end() 收筆(防抖追上最後一點+畫完最後一段)
+   一路上做四件事:
+   ①防抖 StreamLine:位置往手指「慢慢追」,追的速度跟時間有關(Apple Pencil 240Hz 和滑鼠 60Hz 手感一樣)
+   ②筆壓平滑+曲線:壓力先做指數平滑(不會一點一點忽粗忽細),再套曲線;沒有筆壓時可用速度模擬(快=細、慢=粗)
+   ③曲線內插:點跟點之間不是直線,而是穿過中點的二次曲線,快速畫圓也不會出現折角
+   ④輸出等距的小段 onSeg(a,b);每個點帶 p(0~1)、t(傾斜 0~1)、d(從起筆算起的距離)
+   濾波器本身沒有亂數 ⇒ 同一串輸入重播結果完全一樣(收筆時「頭尾變細」要整筆重畫用) */
+K.stroke = function(o){
+  var F = { raw: [], sm: null, prev: null, mid: null, last: null, d: 0, ps: null, ts: 0, tl: null, vp: 1, ended: false };
+  var k = clamp(o.sl || 0, 0, 1) * 0.9, gm = o.gamma || 1, step = o.step || 2;
+  function pz(pr, x, y, t){
+    var p, dt, v;
+    if(o.pen && pr > 0){ F.ps = F.ps == null ? pr : F.ps + (pr - F.ps) * 0.45; p = Math.pow(clamp(F.ps, 0.01, 1), gm); return p; }
+    if(o.speed){ if(F.tl){ dt = Math.max(1, t - F.tl.t); v = Math.sqrt((x - F.tl.x) * (x - F.tl.x) + (y - F.tl.y) * (y - F.tl.y)) / dt; F.vp = F.vp + (clamp(1.08 - v * 0.42, 0.28, 1) - F.vp) * 0.18; } F.tl = { x: x, y: y, t: t }; return F.vp; }
+    return 1;
+  }
+  function emit(q){ var a = F.last; if(!a){ F.last = { x: q.x, y: q.y, p: q.p, t: q.t, d: 0 }; o.onSeg(F.last, { x: q.x + 0.01, y: q.y, p: q.p, t: q.t, d: 0.01 }); return; }
+    var dd = Math.sqrt((q.x - a.x) * (q.x - a.x) + (q.y - a.y) * (q.y - a.y)); if(dd < 0.05) return;
+    var b = { x: q.x, y: q.y, p: q.p, t: q.t, d: a.d + dd }; o.onSeg(a, b); F.last = b; F.d = b.d; }
+  function quad(a, c, b){ var L = Math.sqrt((c.x - a.x) * (c.x - a.x) + (c.y - a.y) * (c.y - a.y)) + Math.sqrt((b.x - c.x) * (b.x - c.x) + (b.y - c.y) * (b.y - c.y)), n = Math.max(1, Math.ceil(L / step)), i, u, iu;
+    for(i = 1; i <= n; i++){ u = i / n; iu = 1 - u; emit({ x: iu * iu * a.x + 2 * iu * u * c.x + u * u * b.x, y: iu * iu * a.y + 2 * iu * u * c.y + u * u * b.y, p: a.p + (b.p - a.p) * u, t: a.t + (b.t - a.t) * u }); } }
+  function line(a, b){ var L = Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y)), n = Math.max(1, Math.ceil(L / step)), i, u; for(i = 1; i <= n; i++){ u = i / n; emit({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, p: a.p + (b.p - a.p) * u, t: a.t + (b.t - a.t) * u }); } }
+  function ctrl(c){
+    if(!F.prev){ F.prev = c; F.mid = c; emit(c); return; }
+    if(Math.abs(c.x - F.prev.x) + Math.abs(c.y - F.prev.y) < 0.6){ F.prev.p = c.p; F.prev.t = c.t; return; }
+    var m = { x: (F.prev.x + c.x) / 2, y: (F.prev.y + c.y) / 2, p: (F.prev.p + c.p) / 2, t: (F.prev.t + c.t) / 2 };
+    quad(F.mid, F.prev, m); F.mid = m; F.prev = c; }
+  F.add = function(x, y, pr, tilt, t){
+    if(F.ended) return; t = t || 0; F.raw.push([x, y, pr, tilt, t]);
+    var p = pz(pr, x, y, t), tt = tilt || 0, a;
+    if(!F.sm){ F.sm = { x: x, y: y, p: p, t: tt, tm: t }; ctrl({ x: x, y: y, p: p, t: tt }); return; }
+    a = k > 0 ? 1 - Math.pow(k, clamp((t - F.sm.tm) / 8.33, 0.25, 4)) : 1;
+    F.sm.x += (x - F.sm.x) * a; F.sm.y += (y - F.sm.y) * a; F.sm.p = p; F.sm.t += (tt - F.sm.t) * 0.3; F.sm.tm = t;
+    ctrl({ x: F.sm.x, y: F.sm.y, p: F.sm.p, t: F.sm.t });
+  };
+  F.end = function(){
+    if(F.ended || !F.sm) { F.ended = true; return; } F.ended = true;
+    var r = F.raw[F.raw.length - 1], i;
+    if(k > 0 && r){ for(i = 1; i <= 4; i++) ctrl({ x: F.sm.x + (r[0] - F.sm.x) * i / 4, y: F.sm.y + (r[1] - F.sm.y) * i / 4, p: F.sm.p, t: F.sm.t }); }   /* 防抖收筆:追上最後一點 */
+    if(F.prev && F.mid) line(F.mid, F.prev);
+  };
+  F.len = function(){ return F.d; };
+  F.head = function(){ return F.last; };
+  return F;
+};
+/* 重播:把一筆的原始輸入重新跑一次(收筆時套「頭尾變細」整筆重畫) */
+K.strokeReplay = function(raw, o){ var f = K.stroke(o), i; for(i = 0; i < raw.length; i++) f.add(raw[i][0], raw[i][1], raw[i][2], raw[i][3], raw[i][4]); f.end(); return f; };
+/* 筆的傾斜 0(直立)~1(躺平):Safari 用 altitudeAngle,Chrome/Edge 用 tiltX/tiltY */
+K.tiltOf = function(e){ if(!e || e.pointerType !== 'pen') return 0; if(typeof e.altitudeAngle === 'number' && e.altitudeAngle > 0) return clamp(1 - e.altitudeAngle / (Math.PI / 2), 0, 1);
+  var tx = e.tiltX || 0, ty = e.tiltY || 0; if(!tx && !ty) return 0; return clamp(Math.sqrt(tx * tx + ty * ty) / 70, 0, 1); };
+/* 可重播的亂數(同一個種子 ⇒ 同一串數字) */
+K.rng = function(seed){ var s = (seed >>> 0) || 1; return function(){ s = (s + 0x6D2B79F5) >>> 0; var t = s; t = Math.imul ? Math.imul(t ^ (t >>> 15), t | 1) : ((t ^ (t >>> 15)) * (t | 1)) >>> 0; t ^= t + (Math.imul ? Math.imul(t ^ (t >>> 7), t | 61) : ((t ^ (t >>> 7)) * (t | 61)) >>> 0); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+/* 頭尾變細的倍率:d = 這一點離起筆多遠、L = 整筆長(還不知道就給 0)、T = 變細長度 */
+K.taperK = function(d, L, T){ if(!(T > 0)) return 1; var a = clamp(d / T, 0, 1), b = L > 0 ? clamp((L - d) / T, 0, 1) : 1; a = 0.15 + 0.85 * Math.sin(a * Math.PI / 2); b = 0.15 + 0.85 * Math.sin(b * Math.PI / 2); return Math.min(a, b); };
+
+/* ══ ★ v1.1.0 圖層混合模式 ══ */
+K.BM = [['source-over', '一般'], ['multiply', '色彩增值'], ['screen', '濾色'], ['overlay', '覆蓋'], ['darken', '變暗'], ['lighten', '變亮'], ['color', '顏色']];
+K.bmName = function(m){ var i; for(i = 0; i < K.BM.length; i++){ if(K.BM[i][0] === m) return K.BM[i][1]; } return '一般'; };
+
+/* ══ ★ v1.1.0 調整:色相/彩度/明度/模糊(作用在 ImageData;mask = 選取遮罩的 alpha(Uint8ClampedArray,W×H×4)或 null)══ */
+K.adjustData = function(src, dst, o, mask){
+  var s = src.data, d = dst.data, n = s.length, i, r, g, b, mx, mn, h, sat, v, dd, f, p, q, t, hh = (o.h || 0) / 360, ks = 1 + (o.s || 0) / 100, kv = (o.v || 0) / 100, m;
+  for(i = 0; i < n; i += 4){
+    d[i + 3] = s[i + 3];
+    if(!s[i + 3] || (mask && !mask[i + 3])){ d[i] = s[i]; d[i + 1] = s[i + 1]; d[i + 2] = s[i + 2]; continue; }
+    r = s[i] / 255; g = s[i + 1] / 255; b = s[i + 2] / 255; mx = Math.max(r, g, b); mn = Math.min(r, g, b); dd = mx - mn; v = mx; sat = mx ? dd / mx : 0; h = 0;
+    if(dd){ if(mx === r) h = ((g - b) / dd) % 6; else if(mx === g) h = (b - r) / dd + 2; else h = (r - g) / dd + 4; h /= 6; if(h < 0) h += 1; }
+    h = (h + hh + 1) % 1; sat = clamp(sat * ks, 0, 1); v = kv >= 0 ? v + (1 - v) * kv : v * (1 + kv);
+    t = Math.floor(h * 6); f = h * 6 - t; p = v * (1 - sat); q = v * (1 - f * sat); var u = v * (1 - (1 - f) * sat);
+    switch(t % 6){ case 0: r = v; g = u; b = p; break; case 1: r = q; g = v; b = p; break; case 2: r = p; g = v; b = u; break; case 3: r = p; g = q; b = v; break; case 4: r = u; g = p; b = v; break; default: r = v; g = p; b = q; }
+    m = mask ? mask[i + 3] / 255 : 1;
+    d[i] = Math.round(s[i] + (r * 255 - s[i]) * m); d[i + 1] = Math.round(s[i + 1] + (g * 255 - s[i + 1]) * m); d[i + 2] = Math.round(s[i + 2] + (b * 255 - s[i + 2]) * m);
+  }
+  return dst;
+};
+/* 模糊:預乘 alpha 後做 3 次方框模糊(接近高斯);只改遮罩範圍 */
+K.blurData = function(img, rad, mask){
+  rad = Math.round(rad || 0); if(rad < 1) return img;
+  var w = img.width, h = img.height, d = img.data, n = w * h, A = new Float32Array(n * 4), B = new Float32Array(n * 4), i, pass, x, y, c, acc, o, rr, src, dst, k;
+  for(i = 0; i < n; i++){ var al = d[i * 4 + 3] / 255; A[i * 4] = d[i * 4] * al; A[i * 4 + 1] = d[i * 4 + 1] * al; A[i * 4 + 2] = d[i * 4 + 2] * al; A[i * 4 + 3] = d[i * 4 + 3]; }
+  rr = Math.max(1, Math.round(rad / 1.7));
+  for(pass = 0; pass < 3; pass++){
+    src = A; dst = B;
+    for(y = 0; y < h; y++){ for(c = 0; c < 4; c++){ acc = 0; o = y * w;
+      for(x = -rr; x <= rr; x++) acc += src[(o + clamp(x, 0, w - 1)) * 4 + c];
+      for(x = 0; x < w; x++){ dst[(o + x) * 4 + c] = acc / (2 * rr + 1); acc += src[(o + Math.min(w - 1, x + rr + 1)) * 4 + c] - src[(o + Math.max(0, x - rr)) * 4 + c]; } } }
+    src = B; dst = A;
+    for(x = 0; x < w; x++){ for(c = 0; c < 4; c++){ acc = 0;
+      for(y = -rr; y <= rr; y++) acc += src[(clamp(y, 0, h - 1) * w + x) * 4 + c];
+      for(y = 0; y < h; y++){ dst[(y * w + x) * 4 + c] = acc / (2 * rr + 1); acc += src[(Math.min(h - 1, y + rr + 1) * w + x) * 4 + c] - src[(Math.max(0, y - rr) * w + x) * 4 + c]; } } }
+  }
+  for(i = 0; i < n; i++){ k = mask ? mask[i * 4 + 3] / 255 : 1; if(!k) continue; var a2 = A[i * 4 + 3], ia = a2 > 0 ? 255 / a2 : 0;
+    d[i * 4] = Math.round(d[i * 4] + (clamp(A[i * 4] * ia, 0, 255) - d[i * 4]) * k); d[i * 4 + 1] = Math.round(d[i * 4 + 1] + (clamp(A[i * 4 + 1] * ia, 0, 255) - d[i * 4 + 1]) * k);
+    d[i * 4 + 2] = Math.round(d[i * 4 + 2] + (clamp(A[i * 4 + 2] * ia, 0, 255) - d[i * 4 + 2]) * k); d[i * 4 + 3] = Math.round(d[i * 4 + 3] + (a2 - d[i * 4 + 3]) * k); }
+  return img;
+};
+
+/* ══ ★ v1.1.0 選取範圍(一張跟畫布一樣大的 canvas,不透明 = 選起來)══ */
+K.selNew = function(W, H){ var c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+K.selShape = function(sel, kind, a, b, pts){ var x = sel.getContext('2d'), x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y), w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+  x.clearRect(0, 0, sel.width, sel.height); x.fillStyle = '#000';
+  if(kind === 'rect'){ x.fillRect(x0, y0, w, h); }
+  else if(kind === 'ell'){ x.beginPath(); if(x.ellipse) x.ellipse(x0 + w / 2, y0 + h / 2, Math.max(0.5, w / 2), Math.max(0.5, h / 2), 0, 0, Math.PI * 2); else { x.save(); x.translate(x0 + w / 2, y0 + h / 2); x.scale(Math.max(0.5, w / 2), Math.max(0.5, h / 2)); x.arc(0, 0, 1, 0, Math.PI * 2); x.restore(); } x.fill(); }
+  else if(kind === 'free' && pts && pts.length > 2){ K.pathOf(x, pts); x.fill(); }
+  return sel; };
+K.selFromMask = function(sel, F){ var x = sel.getContext('2d'); x.clearRect(0, 0, sel.width, sel.height); if(F && F.n) K.fillPaint(x, F, '#000000', 1, sel.width / F.w); return sel; };
+K.selInvert = function(sel){ var t = document.createElement('canvas'), x; t.width = sel.width; t.height = sel.height; x = t.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, t.width, t.height); x.globalCompositeOperation = 'destination-out'; x.drawImage(sel, 0, 0);
+  x = sel.getContext('2d'); x.clearRect(0, 0, sel.width, sel.height); x.drawImage(t, 0, 0); return sel; };
+K.selEmpty = function(sel){ return !opaqueBox(sel, 0, 0, sel.width, sel.height); };
+K.selBox = function(sel){ return opaqueBox(sel, 0, 0, sel.width, sel.height); };
+/* 選取外面畫上斜紋暗影(tmp = 重複使用的畫布,跟畫布一樣大) */
+K.selOverlay = function(ctx, sel, tmp, s){ var x = tmp.getContext('2d'), W = sel.width, H = sel.height, g = 14 / (s || 1), i;
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, W, H); x.fillStyle = 'rgba(40,30,70,.32)'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = g * 0.3; x.beginPath(); for(i = -H; i < W; i += g){ x.moveTo(i, 0); x.lineTo(i + H, H); } x.stroke();
+  x.globalCompositeOperation = 'destination-out'; x.drawImage(sel, 0, 0); x.globalCompositeOperation = 'source-over'; ctx.drawImage(tmp, 0, 0); };
+/* 把 c 的內容只留在選取裡;outside 給「選取外面要放回去的原圖」(沒給 = 外面變透明) */
+K.selKeep = function(c, sel, before, tmp){ var x = c.getContext('2d'), t, tx; x.save(); x.globalCompositeOperation = 'destination-in'; x.drawImage(sel, 0, 0); x.restore();
+  if(before){ t = tmp || document.createElement('canvas'); t.width = c.width; t.height = c.height; tx = t.getContext('2d'); tx.globalCompositeOperation = 'source-over'; tx.clearRect(0, 0, t.width, t.height); tx.drawImage(before, 0, 0); tx.globalCompositeOperation = 'destination-out'; tx.drawImage(sel, 0, 0); tx.globalCompositeOperation = 'source-over'; x.drawImage(t, 0, 0); } };
+/* 用選取範圍剪下(跟 lassoCut 回傳一樣的格式) */
+K.maskCut = function(layer, sel){
+  var W = layer.width, H = layer.height, bb = opaqueBox(sel, 0, 0, W, H), tmp, tx, ob, pc, orig, lx;
+  if(!bb) return null;
+  tmp = document.createElement('canvas'); tmp.width = bb.w; tmp.height = bb.h; tx = tmp.getContext('2d');
+  tx.drawImage(layer, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h); tx.globalCompositeOperation = 'destination-in'; tx.drawImage(sel, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h); tx.globalCompositeOperation = 'source-over';
+  ob = opaqueBox(tmp, 0, 0, bb.w, bb.h); if(!ob) return null;
+  pc = document.createElement('canvas'); pc.width = ob.w; pc.height = ob.h; pc.getContext('2d').drawImage(tmp, ob.x, ob.y, ob.w, ob.h, 0, 0, ob.w, ob.h);
+  orig = document.createElement('canvas'); orig.width = bb.w; orig.height = bb.h; orig.getContext('2d').drawImage(layer, bb.x, bb.y, bb.w, bb.h, 0, 0, bb.w, bb.h);
+  lx = layer.getContext('2d'); lx.save(); lx.globalCompositeOperation = 'destination-out'; lx.drawImage(sel, 0, 0); lx.restore();
+  return { F: K.floatMk(pc, bb.x + ob.x, bb.y + ob.y), orig: { c: orig, x: bb.x, y: bb.y } };
+};
+/* 吸色放大鏡(學 Procreate:吸色時手指旁邊出現一個圓環,外圈 = 吸到的顏色、內圈 = 原本的顏色) */
+K.loupe = function(cx, cy, hex, old){ var e = document.getElementById('pk-loupe');
+  if(!e){ e = document.createElement('div'); e.id = 'pk-loupe'; e.style.cssText = 'position:fixed;z-index:99996;width:13vmin;height:13vmin;margin:-17vmin 0 0 -6.5vmin;border-radius:50%;pointer-events:none;box-shadow:0 0 0 .35vmin #fff,0 0 0 .7vmin rgba(0,0,0,.35),0 .8vmin 2vmin rgba(0,0,0,.35);transition:opacity .25s'; document.body.appendChild(e); }
+  e.style.left = cx + 'px'; e.style.top = cy + 'px'; e.style.opacity = '1';
+  e.style.background = 'radial-gradient(circle,' + (old || hex) + ' 0 38%,#fff 38% 44%,' + hex + ' 44%)';
+  clearTimeout(K._lpT); K._lpT = setTimeout(function(){ e.style.opacity = '0'; }, 700); };
 window.MGPK = K;
 })();
