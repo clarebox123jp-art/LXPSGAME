@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.2.3';   /* ★ v1.2.3(2026-11-19・老師「個人榜都在上限,沒有意義」→ 裁定甲:降基本分、保留答題品質(數值在 art_db);「現有的排行榜先清空,下週一再開始計算」:D.RANK_FROM 以前的週不寫 artRank、排行榜顯示清空說明) */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」「每次復原,要減去操作數」)右欄三段(.rtop 固定選色器+滑桿/.rlw 圖層小視窗自己捲/.rbot 貼紙最近調色盤);復原扣回 S.strokes(cntOp/op.n);13:58 今日挑戰「重玩一關拿到二星以上」(dailyHit improve = old>0 且 ≥2★) */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
+var ART_VER = 'v1.2.4';   /* ★ v1.2.4(2026-11-19・老師看學生 iPad 照片「三分法判定有問題,放寬:中間有人物或動物形狀的主角、周圍有色塊背景就算通過」)— evalDraw thirds 加 thirdsLoose:分出背景色塊後找主角,過關至少 2★、主角靠近交叉點 3★;同日 12:36 第二輪「主角也可以是物品」「其他作圖考驗也一起檢查」⇒ thirdsLoose 拿掉方塊/輪廓檢查、gray5 只算均勻的灰+門檻也看整張畫布、dotCount 依形狀認點(大點、相連的點都算)、media3 改看 S.tlN(復原扣回、草稿保留) */ void 'v1.2.3';   /* ★ v1.2.3(2026-11-19・老師「個人榜都在上限,沒有意義」→ 裁定甲:降基本分、保留答題品質(數值在 art_db);「現有的排行榜先清空,下週一再開始計算」:D.RANK_FROM 以前的週不寫 artRank、排行榜顯示清空說明) */ void 'v1.2.2';   /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」「每次復原,要減去操作數」)右欄三段(.rtop 固定選色器+滑桿/.rlw 圖層小視窗自己捲/.rbot 貼紙最近調色盤);復原扣回 S.strokes(cntOp/op.n);13:58 今日挑戰「重玩一關拿到二星以上」(dailyHit improve = old>0 且 ≥2★) */ void 'v1.2.1';   /* ★ v1.2.1(2026-11-11・老師「PC 版快捷鍵 CTRL+Z 復原;空白鍵把游標切換成手掌拖曳畫布」)注音輸入法下也認得空白鍵/Ctrl+Z/Ctrl+Y(e.code)、拖曳中握拳游標、放開空白鍵不誤按按鈕、切視窗不卡手掌 */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-10・老師「創藝工坊所有手繪關卡新增 油漆桶(拖顏色填滿+臨界值)、長按 2 秒變直線/圓/幾何、圖層名稱可改、環形色相+三角形選色器、剪刀剪下移到指定圖層、變形工具」+「作品存檔自動標記年月日時分」)— 演算法在共用的 minigame_paintkit.js(MGPK) */ void 'v1.1.10';   /* ★ v1.1.10(2026-11-10・老師「自由畫圖工具一隻手指畫不出線條,反而變成縮放」)— 觸控以 e.touches 校正,清掉沒收到放開事件的幽靈手指(tSync)+lostpointercapture 清除 */ void 'v1.1.9';   /* ★ v1.1.9(2026-11-09・老師「檢查藝術村的題目,重複性高、難度太低的都重新設計優化」)quizShuffle 抽題(pick)+錯誤選項題庫(ans/wrong/must)、美感原則圖隨機畫法 svgPrVar、排序 sets/pick/gen、配對 pool/pick、光影題正上方+長短判斷、找不同後段差異變小;題目資料在 minigame_art_db.js 檔尾 v1.1.9 區塊 */ void 'v1.1.8';   /* ★ v1.1.8(2026-11-09)遊戲美術設計師有條件解鎖(全部關卡 ≥2★,dsgLockPanel)+ 作品集/設定自動雙向雲端同步(MG_CSYNC,畫室「☁ 立即同步」= 手動保險) */ void 'v1.1.7';   /* ★ v1.1.7(2026-11-08 18:07)手機版地圖入口不再被下方 dock/今日挑戰蓋住(mapFit),手機橫放 dock 直排右側 */ void 'v1.1.6';   /*★ v1.1.6(2026-11-08)頂部恢復度/資源/積分點一下展開說明小視窗(hudTip) */ void 'v1.1.5';   /* ★ v1.1.5(2026-11-08)GM 不上排行榜;🏆 我的積分加每週獎勵表(週一 08:00 結算、大對抗+荒島雙發) */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-07)— 下方 dock 多一顆「✏️ 設計師」:存好進度後前往遊戲美術設計師工作室(?mode=designer&from=art,離開時回創藝工坊) */   void 'v1.1.3';   /* ★ v1.1.3(2026-11-05・老師「改好後也幫我自動更新到Repo」)— 修檢查報告 v1.1.1:轉盤換題卡死、拖曳殘影、長按吸到白色、草稿壞圖層、答對連點跳題、滑桿看不到、縮放多蓋貼紙、教學蓋確認框、背景視窗蓋視窗、安全區、名牌圈太近、畫室草稿、擺設被重畫、構圖物件互疊、pointercancel、Shift 橡皮擦 */   void 'v1.1.2';   /* ★ v1.1.2(2026-11-05・老師「班級座號還是舊版的」)— 名字一律用目前名冊班級座號(小遊戲本體 mgPlayerFull,名冊讀不到退回 Google 帳號名) */
 var D = window.ART_DB;
 var B = window.MG_ART_BRIDGE || {};
 var A = { on: false, uid: '', guest: true, save: null, screen: 'hub', style: 'c', lite: false, wt: 0, syncing: false, lv: null, cv: null, led: [], evs: [], gm: null };
@@ -2026,7 +2026,7 @@ function canvasOpen(opt){
   var ratio = RATIOS[opt.ratio] ? opt.ratio : '4:3';
   W = Math.round(RATIOS[ratio][0] * scale); H = Math.round(RATIOS[ratio][1] * scale);
   var S = { tool: opt.gray ? 'pencil' : (opt.brushes && opt.brushes[0]) || 'pencil', size: {}, op: 1, color: opt.gray ? '#292929' : '#2e6fd8', prev: '#ffffff', recent: [], layers: [], li: 0, undo: [], redo: [], view: { s: 1, x: 0, y: 0 }, grid: !!opt.grid,
-            ptr: {}, stroke: null, gest: null, penSeen: false, space: false, dirty: 0, strokes: 0, eyedrop: false, rafq: false, closed: false, used: {}, lid: 0, ck: '', sticker: '⭐',
+            ptr: {}, stroke: null, gest: null, penSeen: false, space: false, dirty: 0, strokes: 0, eyedrop: false, rafq: false, closed: false, used: {}, tlN: {}, lid: 0, ck: '', sticker: '⭐',
             tol: 32, float: null, fdrag: null, lasso: null, xmode: 'uni', lastFill: null };   /* ★ v1.2.0 tol 油漆桶臨界值、float 剪下/變形中的浮動圖片、lasso 剪刀路徑 */
   var k; for(k in BRUSH){ if(BRUSH.hasOwnProperty(k)) S.size[k] = BRUSH[k].size; }
   /* 畫室自由創作:基本筆刷+已解鎖的特殊筆刷+貼紙;關卡畫畫題照關卡限制(評分公平) */
@@ -2173,8 +2173,8 @@ function canvasOpen(opt){
     else if(op.t === 'move'){ i = S.layers.indexOf(op.L); var to = back ? op.from : op.to; if(i >= 0){ S.layers.splice(i, 1); S.layers.splice(to, 0, op.L); S.li = to; } }
   }
   var OPN = { px: '筆畫', del: '刪除圖層', add: '新增圖層', move: '調整圖層順序', multi: '剪下/變形' };
-  function undo(){ if(S.float){ floatCancel(); return; } tolClose(); var u = S.undo.pop(); if(!u){ toast('沒有可以復原的了'); return; } applyOp(u, true); S.redo.push(u); if(u.n) S.strokes = Math.max(0, S.strokes - u.n); if(u.t !== 'px') toast('↶ 復原:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
-  function redo(){ if(S.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } tolClose(); var u = S.redo.pop(); if(!u){ toast('沒有可以重做的了'); return; } applyOp(u, false); S.undo.push(u); if(u.n) S.strokes += u.n; if(u.t !== 'px') toast('↷ 重做:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
+  function undo(){ if(S.float){ floatCancel(); return; } tolClose(); var u = S.undo.pop(); if(!u){ toast('沒有可以復原的了'); return; } applyOp(u, true); S.redo.push(u); if(u.n) S.strokes = Math.max(0, S.strokes - u.n); if(u.tl) S.tlN[u.tl] = Math.max(0, (S.tlN[u.tl] || 0) - 1); if(u.t !== 'px') toast('↶ 復原:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
+  function redo(){ if(S.float){ toast('先按 ✅ 完成或 ✖ 取消'); return; } tolClose(); var u = S.redo.pop(); if(!u){ toast('沒有可以重做的了'); return; } applyOp(u, false); S.undo.push(u); if(u.n) S.strokes += u.n; if(u.tl) S.tlN[u.tl] = (S.tlN[u.tl] || 0) + 1; if(u.t !== 'px') toast('↷ 重做:' + OPN[u.t]); cacheDirty(); req(); paintLayers(); }
   function dab(ctx, x, y, r, b){ var g; if(b.soft){ g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, S.color); g.addColorStop(1, S.color + '00'); ctx.fillStyle = g; } else ctx.fillStyle = S.color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); bbAdd(x, y, r); }
   function lineSeg(ctx, b, x0, y0, x1, y1, w, st){
     var col = S.color;
@@ -2266,7 +2266,8 @@ function canvasOpen(opt){
     if(st.shift && st.mode === 'erase' && st.end){ }
     L = S.layers[st.li];
     if(st.mode !== 'erase'){ var x = L.c.getContext('2d'); x.globalAlpha = S.op; if(L.lk) x.globalCompositeOperation = 'source-atop'; x.drawImage(sc, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; scx.clearRect(0, 0, W, H); }   /* ★ v1.2.0 🔒 阿爾法鎖定 */
-    cntOp(undoFromSnap(L));   /* ★ v1.1.0 只存畫到的範圍;★ v1.2.2 這一步復原會扣回次數 */
+    var sop = undoFromSnap(L); cntOp(sop);   /* ★ v1.1.0 只存畫到的範圍;★ v1.2.2 這一步復原會扣回次數 */
+    if(sop && st.mode !== 'erase' && BRUSH[st.tool]){ sop.tl = st.tool; S.tlN[st.tool] = (S.tlN[st.tool] || 0) + 1; }   /* ★ v1.2.4 每種筆刷還留在畫面上的筆畫數(復原扣回)⇒「三種筆觸」只算真的留下來的筆刷 */
     S.used[st.tool] = 1;
     S.stroke = null; S.dirty++; req(); paintLayersSoon(); draftSoon();
   }
@@ -2643,7 +2644,7 @@ function canvasOpen(opt){
   function sDraftSoon(){ clearTimeout(dT); dT = setTimeout(function(){ if(S.closed) return; if(S.float){ sDraftSoon(); return; } sDraftNow(); }, 2500); }   /* 剪下/變形中先不存(那一塊還浮在上面),完成後再存 */
   function onHide(){ if(document.hidden && !S.closed && sKey){ clearTimeout(dT); sDraftNow(); } }   /* 切背景/睡眠前先存 */
   document.addEventListener('visibilitychange', onHide);
-  function draftSoon(){ if(sKey){ sDraftSoon(); return; } if(!opt.task || !draftKey) return; clearTimeout(dT); dT = setTimeout(function(){ if(S.closed) return; if(S.float){ draftSoon(); return; } var rec = { uid: A.uid, id: 'draft_' + dId, t: now(), stamp: fmtStamp(), ratio: ratio, lnames: lnames(), lprops: lprops(),layers: S.layers.map(function(l){ return l.c.toDataURL('image/png'); }) }; idbPut(draftKey, rec); cloudDraftSoon(rec); }, 2500); }
+  function draftSoon(){ if(sKey){ sDraftSoon(); return; } if(!opt.task || !draftKey) return; clearTimeout(dT); dT = setTimeout(function(){ if(S.closed) return; if(S.float){ draftSoon(); return; } var rec = { uid: A.uid, id: 'draft_' + dId, t: now(), stamp: fmtStamp(), ratio: ratio, lnames: lnames(), lprops: lprops(), tln: S.tlN,layers: S.layers.map(function(l){ return l.c.toDataURL('image/png'); }) }; idbPut(draftKey, rec); cloudDraftSoon(rec); }, 2500); }
   /* 貼紙列 */
   function paintStk(){ var el = $('art-cv-stk'), a = stickersOwned(), h = '', i; if(!el) return; if(a.indexOf(S.sticker) < 0) S.sticker = a[0] || '⭐';
     for(i = 0; i < a.length; i++) h += '<span class="stk' + (a[i] === S.sticker ? ' on' : '') + '" data-stk="' + a[i] + '">' + a[i] + '</span>'; el.innerHTML = h; }
@@ -2692,7 +2693,7 @@ function canvasOpen(opt){
   $('art-cv-op').oninput = function(){ setOp(+this.value); };
   function flatten(maxSide){ var s = Math.min(1, (maxSide || 99999) / Math.max(W, H)), c = document.createElement('canvas'), x, i, L; c.width = Math.round(W * s); c.height = Math.round(H * s); x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); for(i = 0; i < S.layers.length; i++){ L = S.layers[i]; if(!L.vis) continue; x.globalAlpha = L.a; x.drawImage(L.c, 0, 0, c.width, c.height); } return c; }
   function analyzeImg(){ var c = flatten(160), used = 0, i, x = c.getContext('2d'), tl = 0, k2; for(i = 0; i < S.layers.length; i++){ if(layerUsed(S.layers[i].c)) used++; }
-    for(k2 in S.used){ if(S.used.hasOwnProperty(k2) && BRUSH[k2] && k2 !== 'eraser' && k2 !== 'stamp') tl++;   /* ★ v1.2.0 油漆桶/形狀/剪刀/變形不算「用了幾種筆刷」(評分公平) */ }
+    for(k2 in S.tlN){ if(S.tlN.hasOwnProperty(k2) && S.tlN[k2] > 0 && BRUSH[k2] && k2 !== 'eraser' && k2 !== 'stamp') tl++;   /* ★ v1.2.0 油漆桶/形狀/剪刀/變形不算「用了幾種筆刷」(評分公平);★ v1.2.4 改看 S.tlN:復原掉的筆刷不算、草稿接著畫也記得用過哪些 */ }
     return { d: x.getImageData(0, 0, c.width, c.height), w: c.width, h: c.height, strokes: S.strokes, layers: used, tools: tl }; }
   function layerUsed(c){ var t = document.createElement('canvas'), x, d, i; t.width = 40; t.height = 30; x = t.getContext('2d'); x.drawImage(c, 0, 0, 40, 30); d = x.getImageData(0, 0, 40, 30).data; for(i = 3; i < d.length; i += 4){ if(d[i] > 10) return true; } return false; }
   function saveWork(){
@@ -2715,7 +2716,7 @@ function canvasOpen(opt){
   function tutAfter(){ if(!S.closed) tutRun('canvas'); }
   /* 有沒交件的草稿 ⇒ 問要不要接著畫(只找本人 uid 的) */
   if(draftAsk) idbGet(draftKey, function(r){ if(S.closed) return; if(!r || r.uid !== A.uid || !r.layers || !r.layers.length){ tutAfter(); return; }
-    confirmBox('上次這題還沒交件的畫,要接著畫嗎?', function(ok){ if(!ok){ idbDel(draftKey); tutAfter(); return; } draftLoad(r.layers, function(){ S.strokes = 3; }, r.lnames, r.lprops); tutAfter(); }); });
+    confirmBox('上次這題還沒交件的畫,要接著畫嗎?', function(ok){ if(!ok){ idbDel(draftKey); tutAfter(); return; } draftLoad(r.layers, function(){ S.strokes = 3; if(r.tln && typeof r.tln === 'object') S.tlN = r.tln; }, r.lnames, r.lprops); tutAfter(); }); });
   /* ★ v1.1.3(檢查報告第 4 項):草稿圖層全部載完(成功或壞掉)才一起換上,壞掉的略過;全壞 ⇒ 留一張新畫紙。原本壞一層整張畫布每幀出錯、畫不出來 */
   function draftLoad(srcs, after, names, props){ var n = 0, i, ims = [], bad = 0;
     function fin(){ var j, c, ly = []; if(S.closed) return;
@@ -2749,7 +2750,16 @@ function evalDraw(task, img){
   var cover = painted / n;
   if(task === 'gray5'){
     var lv = 0, lo = 9, hi = -1;
-    for(k = 0; k < 9; k++){ if(bins[k] >= painted * 0.025 && bins[k] > 8){ lv++; if(k < lo) lo = k; if(k > hi) hi = k; } }
+    /* ★ v1.2.4 第二輪(老師「其他作圖考驗也檢查判定」):
+       ① 只算「一片均勻的灰」:畫布縮成 160 寬時,線條邊緣的反鋸齒會混出一整排深淺,只畫輪廓也被當成 5 階 ⇒ 像素跟上下左右差太多(>26)的不算。
+       ② 門檻改成「占塗色 2.5%」或「占整張畫布 0.8%」其中一個就算:背景整片塗灰時,球上每一階的面積相對很小,原本會被稀釋到數不到 */
+    var gb = [0, 0, 0, 0, 0, 0, 0, 0, 0], gw = img.w, gh = img.h, gL = new Array(n), gp = 0, gx2, gy2, gi, gm, gq;
+    for(gi = 0; gi < n; gi++) gL[gi] = 0.299 * d[gi * 4] + 0.587 * d[gi * 4 + 1] + 0.114 * d[gi * 4 + 2];
+    for(gy2 = 0; gy2 < gh; gy2++){ for(gx2 = 0; gx2 < gw; gx2++){ gi = gy2 * gw + gx2; if(gL[gi] > 244) continue; gm = 0;
+      if(gx2 > 0){ gq = Math.abs(gL[gi] - gL[gi - 1]); if(gq > gm) gm = gq; } if(gx2 < gw - 1){ gq = Math.abs(gL[gi] - gL[gi + 1]); if(gq > gm) gm = gq; }
+      if(gy2 > 0){ gq = Math.abs(gL[gi] - gL[gi - gw]); if(gq > gm) gm = gq; } if(gy2 < gh - 1){ gq = Math.abs(gL[gi] - gL[gi + gw]); if(gq > gm) gm = gq; }
+      if(gm > 26) continue; gp++; gb[Math.min(8, Math.floor(gL[gi] / 256 * 9))]++; } }
+    for(k = 0; k < 9; k++){ if(gb[k] > 8 && (gb[k] >= gp * 0.025 || gb[k] >= n * 0.008)){ lv++; if(k < lo) lo = k; if(k > hi) hi = k; } }
     if(cover < 0.06) return { stars: 0, card: [{ ok: 0, t: '畫面幾乎是空白的,多畫一點再交件。' }] };
     stars = lv >= 5 ? 3 : (lv === 4 ? 2 : (lv === 3 ? 1 : 0));
     if(lv >= 3) card.push({ ok: 1, t: '你畫出了 ' + lv + ' 種深淺不同的灰,明暗有層次!' });
@@ -2768,14 +2778,18 @@ function evalDraw(task, img){
     else { stars = 0; card.push({ ok: 0, t: sec < 0 ? '畫面主要只有 ' + D.WHEEL[top].n + ' 一種顏色,再加上它的互補色 ' + D.WHEEL[(top + 6) % 12].n + '。' : '目前的顏色在色相環上離得不夠遠,試試 ' + D.WHEEL[top].n + ' 配 ' + D.WHEEL[(top + 6) % 12].n + '。' }); }
   } else if(task === 'thirds'){
     if(cover < 0.08) return { stars: 0, card: [{ ok: 0, t: '畫面幾乎是空白的,先畫出你的主角。' }] };
+    var P = [[1 / 3, 1 / 3], [2 / 3, 1 / 3], [1 / 3, 2 / 3], [2 / 3, 2 / 3]], dq, best = 9, tl = thirdsLoose(img), lst = 0, ost = 0, cx = 0.5, cy = 0.5;
+    var nearP = function(px, py){ var bb = 9, j; for(j = 0; j < 4; j++){ dq = Math.sqrt(Math.pow(px - P[j][0], 2) + Math.pow((py - P[j][1]) * 0.75, 2)); if(dq < bb) bb = dq; } return bb; };
+    /* ★ v1.2.4 放寬:有主角(人物、動物或物品)+色塊背景 ⇒ 至少 2★ 過關;主角本身靠近交叉點 ⇒ 3★(已確認主角,不再過 subjectCheck) */
+    if(tl.ok){ lst = nearP(tl.cx, tl.cy) <= 0.10 ? 3 : 2; }
     for(i = 0; i < n; i++){ var w2 = Math.max(0, ws[i] - meanW * 1.1); w2 = w2 * w2; wx += (i % img.w) * w2; wy += Math.floor(i / img.w) * w2; wsum += w2; }
-    if(wsum <= 0) return { stars: 0, card: [{ ok: 0, t: '看不出主角在哪裡,讓主角顏色比背景更重、更鮮豔。' }] };
-    var cx = wx / wsum / img.w, cy = wy / wsum / img.h, best = 9, P = [[1 / 3, 1 / 3], [2 / 3, 1 / 3], [1 / 3, 2 / 3], [2 / 3, 2 / 3]], dq;
-    for(k = 0; k < 4; k++){ dq = Math.sqrt(Math.pow(cx - P[k][0], 2) + Math.pow((cy - P[k][1]) * 0.75, 2)); if(dq < best) best = dq; }
-    stars = best <= 0.08 ? 3 : (best <= 0.13 ? 2 : (best <= 0.19 ? 1 : 0));
-    if(stars >= 2) card.push({ ok: 1, t: '畫面的重心落在三分線交叉點附近,構圖很生動!' });
-    if(stars === 1) card.push({ ok: 1, t: '主角已經離開正中間了。' });
-    if(stars < 3) card.push({ ok: 0, t: Math.abs(cx - 0.5) < 0.08 && Math.abs(cy - 0.5) < 0.08 ? '主角在正中間,試著移到井字的交叉點上(打開 #️⃣ 格線對準)。' : '把最顯眼、顏色最重的主角再靠近一個交叉點。' });
+    if(wsum > 0){ cx = wx / wsum / img.w; cy = wy / wsum / img.h; best = nearP(cx, cy); ost = best <= 0.08 ? 3 : (best <= 0.13 ? 2 : (best <= 0.19 ? 1 : 0)); }
+    stars = Math.max(lst, ost);
+    if(tl.ok) card.push({ ok: 1, t: '畫面裡有清楚的主角,四周也用色塊畫好了背景,過關!' });
+    if(stars === 3) card.push({ ok: 1, t: '主角落在三分線交叉點附近,構圖很生動!' });
+    else if(!tl.ok && stars === 2) card.push({ ok: 1, t: '畫面的重心落在三分線交叉點附近,構圖很生動!' });
+    if(!tl.ok && stars === 1) card.push({ ok: 1, t: '主角已經離開正中間了。' });
+    if(stars < 3) card.push({ ok: 0, t: tl.ok ? '想拿 3 顆星:打開 #️⃣ 格線,把主角移到井字的交叉點附近。' : (stars === 0 ? tl.why : '把最顯眼、顏色最重的主角再靠近一個交叉點。') });
   } else if(task === 'media3'){   /* ★ v1.1.0 媒材工作室:用了幾種筆刷 */
     if(cover < 0.06) return { stars: 0, card: [{ ok: 0, t: '畫面幾乎是空白的,多畫一點再交件。' }] };
     k = img.tools | 0; stars = k >= 3 ? 3 : (k === 2 ? 2 : (k === 1 ? 1 : 0));
@@ -2797,9 +2811,61 @@ function evalDraw(task, img){
   }
   /* ★ v1.1.0 第 16 項:系統評分防取巧 — 要有「主角」(明暗有變化、形狀有變化)才給 3★;
      只塗幾條色帶/幾塊方塊(例如五條灰、兩塊互補色)最多 2★,剩下交給老師加減分 */
-  if(stars === 3 && task !== 'dots' && task !== 'media3'){ var sj = subjectCheck(img); if(!sj.ok){ stars = 2; card.push({ ok: 0, t: sj.why }); } }
+  if(stars === 3 && task !== 'dots' && task !== 'media3' && !(task === 'thirds' && tl && tl.ok)){ var sj = subjectCheck(img); if(!sj.ok){ stars = 2; card.push({ ok: 0, t: sj.why }); } }
   if(img.layers >= 2) card.push({ ok: 1, t: '用了 ' + img.layers + ' 個圖層分開畫,很有規劃!' });
   return { stars: stars, card: card };
+}
+/* ★ v1.2.4(2026-11-19・老師「三分法判定有問題,放寬:中間有人物或動物形狀的主角、周圍有色塊背景就算通過」)
+   原本整張畫的「顏色重心」會被塗滿的藍天綠地拉走,主角畫在中間的作品永遠不過。
+   這裡改成先分出背景色塊(面積大、塞滿外框、碰到畫面兩個邊以上),剩下的非白色像素連成一塊當主角:
+   主角(人物、動物或物品)面積 1.5%~55%、不太小,而且不貼在畫面邊緣 ⇒ 通過。
+   回傳 { ok, cx, cy, why }(cx/cy = 主角重心,0~1) */
+function thirdsLoose(img){
+  var w = img.w, h = img.h, n = w * h, d = img.d.data, key = new Array(n), B = {}, i, k, x, y, r, g, b, o, bgCol = 0, isBg = {}, ok;
+  for(i = 0; i < n; i++){ r = d[i * 4]; g = d[i * 4 + 1]; b = d[i * 4 + 2];
+    k = (r > 232 && g > 232 && b > 232) ? 'W' : ((r >> 6) + '_' + (g >> 6) + '_' + (b >> 6)); key[i] = k;
+    x = i % w; y = (i - x) / w; o = B[k];
+    if(!o) o = B[k] = { c: 0, x0: w, x1: 0, y0: h, y1: 0, s: 0 };
+    o.c++; if(x < o.x0) o.x0 = x; if(x > o.x1) o.x1 = x; if(y < o.y0) o.y0 = y; if(y > o.y1) o.y1 = y;
+    if(x === 0) o.s |= 1; if(x === w - 1) o.s |= 2; if(y === 0) o.s |= 4; if(y === h - 1) o.s |= 8; }
+  function sides(s){ return (s & 1 ? 1 : 0) + (s & 2 ? 1 : 0) + (s & 4 ? 1 : 0) + (s & 8 ? 1 : 0); }
+  for(k in B){ if(!B.hasOwnProperty(k)) continue; o = B[k];
+    if(k === 'W' || (o.c >= n * 0.05 && o.c / ((o.x1 - o.x0 + 1) * (o.y1 - o.y0 + 1)) >= 0.45 && sides(o.s) >= 2)){ isBg[k] = 1; if(k !== 'W') bgCol += o.c; } }
+  if(bgCol < n * 0.25) return { ok: false, why: '背景還沒塗上顏色,把天空、地面等背景用色塊塗滿。' };
+  /* 背景色塊的平均色;跟某個背景色很接近、或落在兩個背景色之間(交界的反鋸齒混色)的像素也算背景 */
+  var bcs = [], sum = {}, nbBg = new Array(n);
+  for(i = 0; i < n; i++){ k = key[i]; if(!isBg[k]) continue; o = sum[k] || (sum[k] = [0, 0, 0, 0]); o[0] += d[i * 4]; o[1] += d[i * 4 + 1]; o[2] += d[i * 4 + 2]; o[3]++; }
+  for(k in sum){ if(sum.hasOwnProperty(k)) bcs.push([sum[k][0] / sum[k][3], sum[k][1] / sum[k][3], sum[k][2] / sum[k][3]]); }
+  function segD(px, py, pz, A2, B2){ var vx = B2[0] - A2[0], vy = B2[1] - A2[1], vz = B2[2] - A2[2], L2 = vx * vx + vy * vy + vz * vz, t = L2 ? ((px - A2[0]) * vx + (py - A2[1]) * vy + (pz - A2[2]) * vz) / L2 : 0; t = Math.max(0, Math.min(1, t));
+    return Math.sqrt(Math.pow(px - A2[0] - vx * t, 2) + Math.pow(py - A2[1] - vy * t, 2) + Math.pow(pz - A2[2] - vz * t, 2)); }
+  for(i = 0; i < n; i++){ if(isBg[key[i]]){ nbBg[i] = 1; continue; } r = d[i * 4]; g = d[i * 4 + 1]; b = d[i * 4 + 2];
+    for(var u = 0; u < bcs.length && !nbBg[i]; u++){ for(var v = u; v < bcs.length; v++){ if(segD(r, g, b, bcs[u], bcs[v]) < 45){ nbBg[i] = 1; break; } } } }
+  /* 只有 1~2 格寬的細縫(色塊交界、雜點)不算主角:主角像素周圍 8 格至少要有 3 格也是主角 */
+  var fg = new Array(n);
+  for(y = 0; y < h; y++){ for(x = 0; x < w; x++){ i = y * w + x; if(nbBg[i]) continue; var nn = 0;
+    for(var ey = -1; ey <= 1; ey++){ for(var ex = -1; ex <= 1; ex++){ var x2 = x + ex, y2 = y + ey; if((ex || ey) && x2 >= 0 && y2 >= 0 && x2 < w && y2 < h && !nbBg[y2 * w + x2]) nn++; } }
+    if(nn >= 3) fg[i] = 1; } }
+  /* 主角像素 = 不是背景色塊、也不是白紙;取最大的一塊(8 連通),再把貼在它旁邊的小塊(頭髮、斑點)併進來 */
+  var lab = new Array(n), comps = [], st, p, c, best = -1, bc = 0;
+  for(i = 0; i < n; i++){ if(lab[i] || !fg[i]) continue; c = { c: 0, x0: w, x1: 0, y0: h, y1: 0, sx: 0, sy: 0, s: 0 }; comps.push(c); lab[i] = comps.length; st = [i];
+    while(st.length){ p = st.pop(); x = p % w; y = (p - x) / w; c.c++; c.sx += x; c.sy += y; if(x < c.x0) c.x0 = x; if(x > c.x1) c.x1 = x; if(y < c.y0) c.y0 = y; if(y > c.y1) c.y1 = y;
+      if(x === 0) c.s |= 1; if(x === w - 1) c.s |= 2; if(y === 0) c.s |= 4; if(y === h - 1) c.s |= 8;
+      for(var dy = -1; dy <= 1; dy++){ for(var dx = -1; dx <= 1; dx++){ var xx = x + dx, yy = y + dy, q; if(xx < 0 || yy < 0 || xx >= w || yy >= h) continue; q = yy * w + xx; if(!lab[q] && fg[q]){ lab[q] = comps.length; st.push(q); } } } } }
+  for(i = 0; i < comps.length; i++){ if(comps[i].c > bc){ bc = comps[i].c; best = i; } }
+  if(best < 0 || bc < n * 0.015) return { ok: false, why: '還看不出主角,在背景上畫一個清楚的主角(人物、動物或物品都可以)。' };
+  var m = comps[best], mx = Math.max(2, Math.round(w * 0.04)), my = Math.max(2, Math.round(h * 0.04)), S = { c: 0, x0: m.x0, x1: m.x1, y0: m.y0, y1: m.y1, sx: 0, sy: 0, s: 0 }, inS = {};
+  for(i = 0; i < comps.length; i++){ c = comps[i]; if(i !== best && (c.x1 < m.x0 - mx || c.x0 > m.x1 + mx || c.y1 < m.y0 - my || c.y0 > m.y1 + my)) continue;
+    inS[i + 1] = 1; S.c += c.c; S.sx += c.sx; S.sy += c.sy; S.s |= c.s; if(c.x0 < S.x0) S.x0 = c.x0; if(c.x1 > S.x1) S.x1 = c.x1; if(c.y0 < S.y0) S.y0 = c.y0; if(c.y1 > S.y1) S.y1 = c.y1; }
+  var bw = S.x1 - S.x0 + 1, bh = S.y1 - S.y0 + 1, fill = S.c / (bw * bh), cx = S.sx / S.c / w, cy = S.sy / S.c / h;
+  if(S.c > n * 0.55) return { ok: false, why: '主角太大、把畫面都蓋住了,留一些背景色塊在主角四周。' };
+  if(bw < w * 0.12 && bh < h * 0.15) return { ok: false, why: '主角太小了,畫大一點。' };
+  if(sides(S.s) >= 2) return { ok: false, why: '主角貼到畫面邊邊了,把主角畫在畫面中間一點。' };
+  /* ★ v1.2.4 第二輪(12:36 老師「主角也可以是物品」):拿掉「不能是方塊」「輪廓要有斜線圓弧」兩道檢查 ⇒ 房子、箱子、招牌等物品也算主角;
+     只塗背景色帶的畫,色帶本身會碰到畫面兩邊被當成背景,所以仍然看不到主角、不會過 */
+  void fill;
+  ok = cx >= 0.15 && cx <= 0.85 && cy >= 0.12 && cy <= 0.88;
+  if(!ok) return { ok: false, why: '主角太靠邊了,畫在畫面中間一點。' };
+  return { ok: true, cx: cx, cy: cy };
 }
 /* 主角檢查:Sobel 邊緣方向要夠多樣(不能只有直線/橫線的色帶或方塊)、明暗至少跨 3 個區間 */
 function subjectCheck(img){
@@ -2821,15 +2887,27 @@ function subjectCheck(img){
 function dotCount(img){
   var w = img.w, h = img.h, d = img.d.data, seen = new Array(w * h), i, n = 0, big = 0, painted = 0, st, p, cnt, x, y, hues = {}, r, g, b, mx, mn, hh;
   function isP(k){ return !(d[k * 4] > 235 && d[k * 4 + 1] > 235 && d[k * 4 + 2] > 235); }
+  /* ★ v1.2.4 第二輪(老師「其他作圖考驗也檢查判定」):原本面積 >60 格(畫布上直徑約 65px)一律當線條 ⇒ 粗細調大的點、
+     或像秀拉那樣點跟點連在一起,都被說成「連在一起的線條」0★。改成先收集每一塊,再看形狀:
+     · 圓圓的一塊(外框長寬比 ≤1.8、填滿率 ≥0.5)= 1 個點(不管多大,只要不超過畫面 4%)
+     · 不太細長、還算飽滿(長寬比 ≤3、填滿率 ≥0.35)= 一堆連在一起的點 ⇒ 用「一般點的面積」估算有幾個
+     · 細長或空心的(線條、輪廓)、或超過畫面 4% 的大色塊 ⇒ 才算線條 */
+  var blobs = [], areas = [], bx0, bx1, by0, by1, bwB, bhB, elB, flB, med, j2;
   for(i = 0; i < w * h; i++){ if(seen[i] || !isP(i)) continue;
-    st = [i]; seen[i] = 1; cnt = 0; var bestP = i, bestS = -1, ss;
-    while(st.length){ p = st.pop(); cnt++; x = p % w; y = (p - x) / w;
+    st = [i]; seen[i] = 1; cnt = 0; var bestP = i, bestS = -1, ss; bx0 = w; bx1 = 0; by0 = h; by1 = 0;
+    while(st.length){ p = st.pop(); cnt++; x = p % w; y = (p - x) / w; if(x < bx0) bx0 = x; if(x > bx1) bx1 = x; if(y < by0) by0 = y; if(y > by1) by1 = y;
       ss = Math.max(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]) - Math.min(d[p * 4], d[p * 4 + 1], d[p * 4 + 2]); if(ss > bestS){ bestS = ss; bestP = p; }   /* 用這一點裡最鮮豔的像素判斷顏色(邊緣反鋸齒比較淡) */
       if(x > 0 && !seen[p - 1] && isP(p - 1)){ seen[p - 1] = 1; st.push(p - 1); } if(x < w - 1 && !seen[p + 1] && isP(p + 1)){ seen[p + 1] = 1; st.push(p + 1); }
       if(y > 0 && !seen[p - w] && isP(p - w)){ seen[p - w] = 1; st.push(p - w); } if(y < h - 1 && !seen[p + w] && isP(p + w)){ seen[p + w] = 1; st.push(p + w); } }
-    painted += cnt;
-    if(cnt >= 2 && cnt <= 60){ n++; r = d[bestP * 4]; g = d[bestP * 4 + 1]; b = d[bestP * 4 + 2]; mx = Math.max(r, g, b); mn = Math.min(r, g, b); if(mx - mn > 40){ hh = hex2hsv('#' + ('0' + r.toString(16)).slice(-2) + ('0' + g.toString(16)).slice(-2) + ('0' + b.toString(16)).slice(-2)).h; hues[Math.floor(((hh + 15) % 360) / 30)] = 1; } }
-    else if(cnt > 60) big += cnt; }
+    painted += cnt; if(cnt < 2) continue;
+    bwB = bx1 - bx0 + 1; bhB = by1 - by0 + 1; elB = Math.max(bwB, bhB) / Math.min(bwB, bhB); flB = cnt / (bwB * bhB);
+    blobs.push({ c: cnt, p: bestP, k: cnt > w * h * 0.04 ? 'big' : (cnt <= 60 || (elB <= 1.8 && flB >= 0.5) ? 'dot' : (elB <= 3 && flB >= 0.35 ? 'grp' : 'big')) }); }
+  for(j2 = 0; j2 < blobs.length; j2++){ if(blobs[j2].k === 'dot') areas.push(blobs[j2].c); }
+  areas.sort(function(a, b2){ return a - b2; }); med = areas.length ? Math.max(4, areas[Math.floor(areas.length / 2)]) : 30;
+  for(j2 = 0; j2 < blobs.length; j2++){ cnt = blobs[j2].c;
+    if(blobs[j2].k === 'big'){ big += cnt; continue; }
+    n += blobs[j2].k === 'grp' ? Math.max(2, Math.round(cnt / med)) : 1;
+    r = d[blobs[j2].p * 4]; g = d[blobs[j2].p * 4 + 1]; b = d[blobs[j2].p * 4 + 2]; mx = Math.max(r, g, b); mn = Math.min(r, g, b); if(mx - mn > 40){ hh = hex2hsv('#' + ('0' + r.toString(16)).slice(-2) + ('0' + g.toString(16)).slice(-2) + ('0' + b.toString(16)).slice(-2)).h; hues[Math.floor(((hh + 15) % 360) / 30)] = 1; } }
   return { n: n, lines: painted ? big / painted : 0, hues: Object.keys(hues).length };
 }
 
