@@ -27875,6 +27875,9 @@ function _buildSafeData() {
                    邏輯在 index.html 檔尾 #lxps-cover-js(window._lxpsCover)。 */
                 coverFav: (function(){ try{ return (window._lxpsCover && window._lxpsCover.favForCloud) ? window._lxpsCover.favForCloud() : []; }catch(_){ return []; } })(),
                 coverMode: (function(){ try{ return (window._lxpsCover && window._lxpsCover.mode === 'img') ? 'img' : 'txt'; }catch(_){ return 'txt'; } })(),
+                /* ★ v5.438.0(老師「欣賞片頭動畫…可以設定成預設動畫,可以只播一首或是兩首輪流」)—
+                   opMode = 開遊戲自動播放的片頭動畫:'alt' 兩首輪流 / 'main' 只播星光覺醒 / 'isl' 只播潮聲裡的勇氣。邏輯在 index.html #lxps-op-js。 */
+                opMode: (function(){ var m = window._lxpsOpMode; return (m === 'main' || m === 'isl') ? m : 'alt'; })(),
                 // ★ v5.37.0 — 使用者音量(0~100·音量面板)持久化
                 bgmVol: Math.round(((typeof window._bgmUserVol === 'number') ? window._bgmUserVol : 1) * 100),
                 sfxVol: Math.round(((typeof window._sfxUserVol === 'number') ? window._sfxUserVol : 1) * 100) },
@@ -29533,6 +29536,10 @@ function _applySafeData(raw) {
     try{
       if(window._lxpsCover && typeof window._lxpsCover.fromCloud === 'function') window._lxpsCover.fromCloud(data.settings.coverFav, data.settings.coverMode);
     }catch(_eCov){}
+    /* ★ v5.438.0 片頭動畫播放方式(跨裝置同步;舊存檔沒欄位 ⇒ 兩首輪流,不沿用上一位同學) */
+    try{
+      if(typeof window._lxpsOpFromCloud === 'function') window._lxpsOpFromCloud(data.settings.opMode);
+    }catch(_eOp){}
     // ★ v5.37.0 — 使用者音量載回(0~100 夾值)+ 同步 BGM_VOLUME/當前 BGM 元素/🎵🔊 按鈕圖示
     try{
       if(typeof data.settings.bgmVol === 'number') window._bgmUserVol = Math.max(0, Math.min(1, data.settings.bgmVol / 100));
