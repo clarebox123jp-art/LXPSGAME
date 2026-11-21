@@ -49577,15 +49577,175 @@ window._lxpsRestorePresetPrep = function(pt){
     }catch(_ePresetGearApply){ console.warn('[預設陣容 還原裝備]', _ePresetGearApply); }
 };
 
-function _applyPresetTeam(slotIdx, overridePt){
+// ════════════════════════════════════════════════════════════════════
+// ★★ v5.440.0(2026-11-21 玩家 BUG 回報「裝好的裝備會自動卸下」)— 套用預設陣容前先問 ★★
+//   【根因】_lxpsRestorePresetPrep 會「先卸下這組陣容英雄身上全部的裝備/至寶,再換回陣容存的那一套」。
+//     玩家在圖鑑幫英雄換了新裝備,沒有回預設陣容視窗按「儲存變更」⇒ 陣容裡還是舊快照
+//     ⇒ 一按出發(冒險前鋒 / 後備書籤 / 龍王戰單人房 📋 套用)新裝備就被卸掉,
+//     陣容存的那件若正裝在別的英雄身上也會被拿走 ⇒ 玩家看到「裝好的裝備自動卸下」。
+//   【修法】套用前比對「陣容快照」與「英雄現在身上的」;不一樣就跳視窗讓玩家選:
+//     ① 保留身上現在的(推薦)⇒ 用現在的整備更新這組陣容並存雲端,再照常套用(還原變成零變動)
+//     ② 換回陣容存的那套 ⇒ 照舊還原(v5.107.0 老師裁定「一個陣容 = 一套完整整備組合」完整保留)
+//     ③ 取消 ⇒ 什麼都不做
+//   ⚠ 只比對陣容「本來就有」的欄位(Array.isArray 守門,與還原同口徑);快照裡已賣掉/送人/退養的不算差異
+//     (還原本來就會略過它們,算進去會變成每次都問)。寵物快照為空時還原不動寵物 ⇒ 也不算差異。
+// ════════════════════════════════════════════════════════════════════
+window._lxpsPresetPrepDiff = function(pt){
+  var out = [];
+  try{
+    if(!pt || !Array.isArray(pt.heroes)) return out;
+    var _sameSet = function(a, b){
+      var x = (a || []).slice().sort(), y = (b || []).slice().sort();
+      if(x.length !== y.length) return false;
+      for(var i = 0; i < x.length; i++){ if(x[i] !== y[i]) return false; }
+      return true;
+    };
+    var _team = {}; pt.heroes.forEach(function(hn){ if(hn) _team[hn] = 1; });
+    pt.heroes.forEach(function(hn, i){
+      if(!hn) return;
+      var row = { hero: hn, i: i, gear: false, tre: false, pet: false, takeFrom: [] };
+      try{
+        if(Array.isArray(pt.gear) && typeof _gearGetHeroEquipped === 'function'){
+          var snapG = (Array.isArray(pt.gear[i]) ? pt.gear[i] : []).filter(function(u){
+            return u && typeof _gearGetInstance === 'function' && !!_gearGetInstance(u);
+          });
+          var curG = (_gearGetHeroEquipped(hn) || []).map(function(x){ return x.eqUid; }).filter(Boolean);
+          if(!_sameSet(snapG, curG)) row.gear = true;
+          snapG.forEach(function(u){
+            var ins = _gearGetInstance(u);
+            if(ins && ins.equippedTo && ins.equippedTo !== hn && !_team[ins.equippedTo] && row.takeFrom.indexOf(ins.equippedTo) < 0) row.takeFrom.push(ins.equippedTo);
+          });
+        }
+      }catch(_eG){}
+      try{
+        if(Array.isArray(pt.treasures) && typeof _taiwanTreasureData !== 'undefined' && _taiwanTreasureData){
+          var snapT = (Array.isArray(pt.treasures[i]) ? pt.treasures[i] : []).filter(function(t){
+            return t && _taiwanTreasureData[t] && (typeof TAIWAN_TREASURES === 'undefined' || TAIWAN_TREASURES[t]);
+          });
+          var curT = Object.keys(_taiwanTreasureData).filter(function(t){ var r = _taiwanTreasureData[t]; return r && r.equippedTo === hn; });
+          if(!_sameSet(snapT, curT)) row.tre = true;
+          snapT.forEach(function(t){
+            var r = _taiwanTreasureData[t];
+            if(r && r.equippedTo && r.equippedTo !== hn && !_team[r.equippedTo] && row.takeFrom.indexOf(r.equippedTo) < 0) row.takeFrom.push(r.equippedTo);
+          });
+        }
+      }catch(_eT){}
+      try{
+        if(Array.isArray(pt.pets) && pt.pets[i] && typeof window._petFollowOf === 'function'){
+          var pn = pt.pets[i];
+          var tamed = (typeof window._petIsTamed !== 'function') || window._petIsTamed(pn);
+          if(tamed && (window._petFollowOf(hn) || '') !== pn) row.pet = true;
+        }
+      }catch(_eP){}
+      if(row.gear || row.tre || row.pet) out.push(row);
+    });
+  }catch(_e){ console.warn('[v5.440.0 陣容整備比對]', _e); }
+  return out;
+};
+// 用英雄「現在身上的」整備改寫這組陣容(只改陣容本來就有的欄位)
+window._lxpsPresetPrepTakeCurrent = function(pt){
+  try{
+    if(!pt || !Array.isArray(pt.heroes)) return false;
+    pt.heroes.forEach(function(hn, i){
+      if(Array.isArray(pt.gear)){
+        var g = [];
+        try{ if(hn && typeof _gearGetHeroEquipped === 'function') g = (_gearGetHeroEquipped(hn) || []).map(function(x){ return x.eqUid; }).filter(Boolean).sort(); }catch(_){}
+        pt.gear[i] = g;
+      }
+      if(Array.isArray(pt.treasures)){
+        var t = [];
+        try{ if(hn && typeof _getHeroEquippedTreasures === 'function') t = (_getHeroEquippedTreasures(hn) || []).map(function(x){ return x.id; }).filter(Boolean); }catch(_){}
+        pt.treasures[i] = t;
+      }
+      if(Array.isArray(pt.pets)){
+        var p = null;
+        try{ if(hn && typeof window._petFollowOf === 'function') p = window._petFollowOf(hn) || null; }catch(_){}
+        pt.pets[i] = p;
+      }
+    });
+    try{ if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+    return true;
+  }catch(_e){ console.warn('[v5.440.0 陣容改存現在整備]', _e); return false; }
+};
+// 有差異 ⇒ 跳選擇視窗;沒差異 ⇒ 直接 go()。go 只會被呼叫一次。
+window._lxpsPresetPrepAsk = function(pt, go){
+  var diff = window._lxpsPresetPrepDiff(pt);
+  if(!diff.length){ go(); return; }
+  try{
+    var cute = (window._artStyle === 'cute');
+    var esc = function(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' }[c]; }); };
+    var old = document.getElementById('_lxps-prep-ask'); if(old) old.remove();
+    var ov = document.createElement('div');
+    ov.id = '_lxps-prep-ask';
+    ov.setAttribute('data-lxps-no-pczoom', '1');
+    var setU = function(){ try{ ov.style.setProperty('--pu', ((typeof window._lxpsForgeUnit === 'function') ? window._lxpsForgeUnit() : 18) + 'px'); }catch(_){} };
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483645;display:flex;align-items:safe center;justify-content:center;background:rgba(0,0,0,0.72);font-family:"M PLUS Rounded 1c","Nunito",sans-serif;';
+    setU();
+    var rows = diff.map(function(r){
+      var what = [];
+      if(r.gear) what.push(cute ? '裝備' : '裝備');
+      if(r.tre)  what.push(cute ? '至寶' : '至寶');
+      if(r.pet)  what.push(cute ? '跟隨寵物' : '跟隨寵物');
+      var extra = r.takeFrom.length ? ('<div style="font-size:calc(var(--pu)*0.8);color:#ffcc88;">' + (cute ? '(換回去會從「' : '(換回時會從「') + esc(r.takeFrom.join('、')) + (cute ? '」身上拿走)' : '」身上取回)') + '</div>') : '';
+      return '<div style="padding:calc(var(--pu)*0.45) calc(var(--pu)*0.7);margin:calc(var(--pu)*0.3) 0;background:rgba(255,255,255,0.07);border-radius:calc(var(--pu)*0.5);text-align:left;">'
+        + '<b style="color:#ffe9a8;">' + esc(r.hero) + '</b>:' + esc(what.join('、')) + extra + '</div>';
+    }).join('');
+    var btn = function(id, txt, bg, bd){
+      return '<button id="' + id + '" style="display:block;width:100%;margin-top:calc(var(--pu)*0.6);padding:calc(var(--pu)*0.7) calc(var(--pu)*0.6);font-size:calc(var(--pu)*1.05);font-weight:900;border-radius:calc(var(--pu)*0.7);cursor:pointer;font-family:inherit;color:#fff;background:' + bg + ';border:2px solid ' + bd + ';">' + txt + '</button>';
+    };
+    ov.innerHTML = '<div class="_lxps-prep-card" style="box-sizing:border-box;width:min(94vw,calc(var(--pu)*34));max-height:min(92dvh,92vh);overflow-y:auto;padding:calc(var(--pu)*1.1);background:linear-gradient(160deg,#2b1d4f,#1a1433);border:2px solid #b98cff;border-radius:calc(var(--pu)*1);color:#f2ecff;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.6);">'
+      + '<div style="font-size:calc(var(--pu)*1.35);font-weight:900;margin-bottom:calc(var(--pu)*0.4);">' + (cute ? '🧐 英雄身上的東西跟陣容不一樣喔!' : '⚠️ 英雄目前整備與此陣容存檔不同') + '</div>'
+      + '<div style="font-size:calc(var(--pu)*0.95);line-height:1.5;color:#d8ccff;">' + (cute ? '你後來有幫英雄換過東西,這組陣容還記得舊的。要用哪一套出發呢?' : '您在存好陣容後更換過以下英雄的整備,請選擇本次要使用哪一套:') + '</div>'
+      + '<div style="font-size:calc(var(--pu)*0.95);margin:calc(var(--pu)*0.5) 0;">' + rows + '</div>'
+      + btn('_lxps-prep-keep', cute ? '👍 用身上現在的(順便存進陣容)' : '👍 保留目前身上的整備(並更新此陣容)', 'rgba(80,190,120,0.35)', '#66dd99')
+      + btn('_lxps-prep-restore', cute ? '🔄 換回陣容存的那一套' : '🔄 換回陣容儲存的整備', 'rgba(120,110,255,0.3)', '#9a8cff')
+      + btn('_lxps-prep-cancel', cute ? '先不要' : '取消', 'rgba(120,120,120,0.3)', '#888')
+      + '</div>';
+    document.body.appendChild(ov);
+    var onRz = function(){ setU(); };
+    window.addEventListener('resize', onRz);
+    var done = false;
+    var close = function(){ try{ window.removeEventListener('resize', onRz); }catch(_){} try{ ov.remove(); }catch(_){} };
+    var pick = function(kind){
+      if(done) return; done = true;
+      close();
+      try{ if(typeof playSfx === 'function') playSfx(kind === 'cancel' ? 'sfx-cancel' : 'sfx-confirm', 0.5); }catch(_){}
+      if(kind === 'cancel') return;
+      if(kind === 'keep') window._lxpsPresetPrepTakeCurrent(pt);
+      go();
+    };
+    document.getElementById('_lxps-prep-keep').onclick = function(){ pick('keep'); };
+    document.getElementById('_lxps-prep-restore').onclick = function(){ pick('restore'); };
+    document.getElementById('_lxps-prep-cancel').onclick = function(){ pick('cancel'); };
+  }catch(_eUi){
+    // 視窗做不出來 ⇒ 安全預設:保留玩家身上的(不卸任何東西),再照常套用
+    console.warn('[v5.440.0 陣容整備詢問視窗]', _eUi);
+    window._lxpsPresetPrepTakeCurrent(pt);
+    go();
+  }
+};
+
+function _applyPresetTeam(slotIdx, overridePt, _prepAsked){
   const pt = overridePt || _getCurrentPresetTeams()[slotIdx];
   if(!pt){ _showInGameToast('此欄位沒有儲存的陣容', '#ff8844', 1500); return; }
+  // ★ v5.440.0 套用前先比對整備;不一樣就讓玩家選「保留現在的 / 換回陣容那套」(防「裝好的裝備自動卸下」)
+  //   只在會還原整備的路徑問(冒險前鋒出發 / 後備書籤);鬥技場不還原整備 ⇒ 不問。
+  if(!_prepAsked){
+    try{
+      const _rearNow = !!(window._RSV && window._RSV.isRearTab());
+      const _advNow = window._advSystemReady && _adventureMode === true && !!_adventureStage;
+      if((_rearNow || _advNow) && typeof window._lxpsPresetPrepAsk === 'function'){
+        window._lxpsPresetPrepAsk(pt, function(){ _applyPresetTeam(slotIdx, pt, true); });
+        return;
+      }
+    }catch(_eAsk){ console.warn('[v5.440.0 陣容整備詢問]', _eAsk); }
+  }
   // ★ v5.378.0 後備書籤中套用預設陣容 ⇒ 只填進後備隊伍(不出發);至寶/裝備/寵物前鋒優先
   try{ if(window._RSV && window._RSV.isRearTab()){ window._RSV.loadPreset(pt); return; } }catch(_eRsvPt){ console.warn('[後備隊伍 套用預設陣容]', _eRsvPt); return; }
 
   const isAdvMode = window._advSystemReady && _adventureMode === true && !!_adventureStage;
   // ★ v5.378.0 用預設陣容當前鋒出發:後備沒編好/重複/UR 超標 ⇒ 擋下;後備裝備會被前鋒拿走 ⇒ 先提醒,玩家按「出發」再重入
-  try{ if(isAdvMode && window._RSV && window._RSV.gate(pt.heroes.slice(), pt, function(){ _applyPresetTeam(slotIdx, pt); })) return; }catch(_eRsvGate2){ console.warn('[後備隊伍 預設陣容出發守門]', _eRsvGate2); }
+  try{ if(isAdvMode && window._RSV && window._RSV.gate(pt.heroes.slice(), pt, function(){ _applyPresetTeam(slotIdx, pt, true); })) return; }catch(_eRsvGate2){ console.warn('[後備隊伍 預設陣容出發守門]', _eRsvGate2); }
   if(isAdvMode){
     try{
       const _unlocked = (typeof advGetUnlockedHeroes === 'function') ? advGetUnlockedHeroes() : [];

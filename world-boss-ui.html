@@ -13507,12 +13507,18 @@ try{
       + '<button class="wb-ps-close" onclick="_wbPsClose()">關閉</button>');
   };
 
-  window._wbTcApplyPreset = function(idx){
+  window._wbTcApplyPreset = function(idx, _prepAsked){
     const teams = _wbPsTeams();
     const pt = teams && teams[idx];
     if(!pt || !Array.isArray(pt.heroes)){ _wbGameAlert('這組陣容是空的'); return; }
     if(!_wbPsSoloHost()){ _wbGameAlert('有隊友在房裡時不能套用預設陣容'); return; }
     _wbPsClose();
+    // ★ v5.440.0(玩家回報「裝好的裝備會自動卸下」)— 陣容存的整備跟英雄現在身上的不同 ⇒ 先讓玩家選
+    //   保留現在的(並更新陣容)/ 換回陣容那套 / 取消(game_adv.js window._lxpsPresetPrepAsk,與冒險同一支)
+    if(!_prepAsked && typeof window._lxpsPresetPrepAsk === 'function'){
+      window._lxpsPresetPrepAsk(pt, function(){ window._wbTcApplyPreset(idx, true); });
+      return;
+    }
     const pool = new Set((typeof _wbGetAvailableHeroes === 'function') ? (_wbGetAvailableHeroes() || []) : []);
     const used = {}, skipped = [], picks = [];
     pt.heroes.forEach(function(h, i){
