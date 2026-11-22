@@ -1491,6 +1491,101 @@
     }catch(_e){ console.warn('[Firestore 安全網] 掃描失敗,原樣放行', _e); return data; }
   };
 
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.442.0(2026-11-22・玩家回報「召喚水晶全都不見了」,老師:「追因修好」)— 過時裝置寫入守門
+  //   災情(lsps110041 帳本):知識幣在「約 130 萬」與「約 1~40 萬」之間來回跳,且每次跳回都「剛好等於
+  //   幾天前某一筆的餘額」(11/9 20:31 的 1,356,853 在 11/13 原封不動復活、11/9 11:58 的 390,570 在 11/12 復活)。
+  //   ⇒ 同一帳號有一台裝置的分頁開著好幾天(平板/手機切到背景被凍結),回到前景或按「重新取得控制」後,
+  //     用記憶體裡好幾天前的舊進度直接存檔,把另一台裝置的新進度整份蓋掉(水晶 84→0、幣 130 萬→2 千、
+  //     已領過的獎章與一次性「審查道歉補償」旗標也一起倒退 ⇒ 被重複再領)。
+  //   既有守門只擋英雄數/最高等級倒退(知識幣倒退檢查 v3.5.46 已依老師指示移除),所以擋不到這種覆蓋。
+  //   修法:每份存檔帶上寫入它的 session(_saveSid)。本裝置記住「最後一次載入/寫入的雲端存檔時間」(基準)。
+  //         寫入前比對雲端現有那份:若它是「別台裝置」在本裝置基準之後才寫的 ⇒ 本裝置記憶體已過時
+  //         ⇒ 拒絕寫入,並改為:別台持有登入 → 顯示「已在其他裝置登入」;本台仍持有 → 自動重整讀最新進度。
+  //   只在「確定是別台、確定比較新」時才擋,其餘一律照舊放行(不影響正常存檔、GM 操作、部分欄位寫入)。
+  // ════════════════════════════════════════════════════════════════
+  window._lxpsCloudBaseAt = window._lxpsCloudBaseAt || 0;
+  window._lxpsBumpCloudBase = function(t){
+    try{ t = +t || 0; if(t > (+window._lxpsCloudBaseAt || 0)) window._lxpsCloudBaseAt = t; }catch(_){}
+  };
+  window._lxpsStaleWriteBlocked = function(existing, where, uid){
+    try{
+      if(!uid || uid !== window._gUserId) return false;          // 只守「自己帳號」的寫入(GM 改別人帳號不受影響)
+      if(window._lxpsStaleGuardOff) return false;               // 本頁已觸發過重整保險絲 ⇒ 不再擋(絕不讓學生卡在不能存檔)
+      if(window._lxpsStaleBlocked) return true;
+      if(!existing || typeof existing !== 'object') return false;
+      var _mySid = window._mySessionId;
+      var _base = +window._lxpsCloudBaseAt || 0;
+      if(!_mySid || !_base) return false;                       // 尚未載入過/沒有 session ⇒ 不判定(交給其他守門)
+      // 主檔帶有登入權:本台的登入已確認送達,但雲端登入權已是別台 ⇒ 本台其實已被踢(監聽斷線沒收到通知),不准再寫
+      if(where === 'main' && window._sessionClaimConfirmed === true
+         && existing.activeSession && existing.activeSession !== _mySid){
+        console.error('🛡️ [過時裝置守門 v5.442.0] 拒絕寫入 main — 登入權已在別台裝置(本台沒收到被踢通知)');
+        window._lxpsStaleBlocked = true;
+        try{ setTimeout(function(){ try{ window._lxpsOnStaleSession(where, 0); }catch(_){} }, 0); }catch(_){}
+        return true;
+      }
+      var _exSid = existing._saveSid;
+      var _exAt = +existing.savedAt || 0;
+      if(!_exSid || _exSid === _mySid) return false;            // 舊存檔沒戳記或本台自己寫的 ⇒ 放行
+      if(_exAt <= _base + 1000) return false;                   // 不比本台基準新 ⇒ 本台沒漏掉任何進度
+      console.error('🛡️ [過時裝置守門 v5.442.0] 拒絕寫入 ' + where + ' — 別台裝置在本台載入之後已存過更新的進度',
+        { cloudSavedAt: new Date(_exAt).toLocaleString(), myBase: new Date(_base).toLocaleString() });
+      window._lxpsStaleBlocked = true;
+      try{ setTimeout(function(){ try{ window._lxpsOnStaleSession(where, _exAt); }catch(_){} }, 0); }catch(_){}
+      return true;
+    }catch(_e){ return false; }
+  };
+  window._lxpsOnStaleSession = async function(where, exAt){
+    if(window._lxpsStaleHandled) return;
+    window._lxpsStaleHandled = true;
+    window._lxpsStaleBlocked = true;
+    try{ if(window._safeSlotInterval){ clearInterval(window._safeSlotInterval); window._safeSlotInterval = null; } }catch(_){}
+    // 看目前登入權在誰手上
+    var _holder = null;
+    try{
+      var _snap = await getDoc(doc(_fbDb, 'players', window._gUserId));
+      if(_snap && _snap.exists()) _holder = (_snap.data() || {}).activeSession || null;
+    }catch(_eH){}
+    if(_holder && _holder !== window._mySessionId){
+      // 別台持有登入 ⇒ 本台視同被踢(不存檔、顯示「已在其他裝置登入」;按「重新取得控制」會重整讀最新進度)
+      window._kickedFromSession = true;
+      try{ if(window._sessionListenerUnsub){ window._sessionListenerUnsub(); } }catch(_){}
+      window._sessionListenerUnsub = null;
+      try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice(); }catch(_){}
+      return;
+    }
+    // 保險絲:同一分頁 10 分鐘內已因此重整 2 次(可能另一台還在背景亂寫)⇒ 不再重整、不再擋,照舊存檔
+    try{
+      var _fk = 'lxps_stale_reload_' + (window._gUserId || 'nouid');
+      var _fl = []; try{ _fl = JSON.parse(sessionStorage.getItem(_fk) || '[]') || []; }catch(_){ _fl = []; }
+      _fl = _fl.filter(function(t){ return Date.now() - t < 10 * 60 * 1000; });
+      if(_fl.length >= 2){
+        console.warn('[過時裝置守門 v5.442.0] 10 分鐘內已重整 2 次 ⇒ 本頁停用守門,照常存檔');
+        window._lxpsStaleGuardOff = true; window._lxpsStaleBlocked = false; window._lxpsStaleHandled = false;
+        try{ if(typeof window._lxpsBumpCloudBase === 'function') window._lxpsBumpCloudBase(exAt); }catch(_){}
+        return;
+      }
+      _fl.push(Date.now()); sessionStorage.setItem(_fk, JSON.stringify(_fl));
+    }catch(_eFuse){}
+    // 本台仍持有登入但記憶體過時 ⇒ 重整讀最新進度(戰鬥中等打完再重整,最多等 15 分鐘)
+    var _doReload = function(){ try{ if(typeof window._lxpsReloadKeepLogin === 'function'){ window._lxpsReloadKeepLogin(); return; } }catch(_){} try{ location.reload(); }catch(_){} };
+    var _inB = false;
+    try{ _inB = (typeof _isInBattleNow === 'function') && _isInBattleNow(); }catch(_){}
+    if(_inB){
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast('🔄 你在別台裝置有更新的進度,打完這場會自動載入最新進度', '#88ccff', 4200); }catch(_){}
+      var _t0 = Date.now();
+      var _poll = setInterval(function(){
+        var _still = false;
+        try{ _still = (typeof _isInBattleNow === 'function') && _isInBattleNow(); }catch(_){}
+        if(!_still || Date.now() - _t0 > 15 * 60 * 1000){ clearInterval(_poll); setTimeout(_doReload, 1200); }
+      }, 1500);
+      return;
+    }
+    try{ if(typeof _showInGameToast === 'function') _showInGameToast('🔄 你在別台裝置有更新的進度,正在載入最新進度…', '#88ccff', 2200); }catch(_){}
+    setTimeout(_doReload, 1800);
+  };
+
   window._fbSave = async function(uid, data) {
     if(!uid || typeof uid !== 'string'){
       console.warn('[_fbSave] 收到無效 uid,跳過儲存:', uid);
@@ -1553,6 +1648,10 @@
               return false;
             }
             console.warn('[_fbSave v3.13.90] 比對讀取失敗但為管理員強制 → 放行', _eRead);
+          }
+          // ★ v5.442.0 — 過時裝置寫入守門(見 _lxpsStaleWriteBlocked):別台在本台載入後已存過更新進度 ⇒ 不寫
+          if(_exGate && !_adminForce && typeof window._lxpsStaleWriteBlocked === 'function' && window._lxpsStaleWriteBlocked(_exGate, 'main', uid)){
+            return false;
           }
           if(_exGate){
             // ★ v3.16.93 — 稽核感知倒退豁免:雲端/本地「最近一筆解鎖紀錄=admin_delete(GM 收回過度補償)
@@ -3294,6 +3393,11 @@
             return { written: true, reason: 'first_write' };
           }
           const _existing = _liveSnap.data();
+          // ★ v5.442.0 — 過時裝置寫入守門(live 槽)
+          if(!(data && (data._adminForceRestore || data._adminRescueSignal))
+             && typeof window._lxpsStaleWriteBlocked === 'function' && window._lxpsStaleWriteBlocked(_existing, 'live', uid)){
+            return { written: false, reason: 'stale_session', rejectReasons: [] };
+          }
           // ★ v3.13.47 — 皮膚保護(live 槽):與雲端既有皮膚 + 選擇 聯集,只增不減
           let _liveWriteData = data;
           if(data && (data.heroPortraitUnlocked || data.heroPortraitChoice)){
@@ -3453,6 +3557,7 @@
           tx.set(_liveRef, _liveWriteData, { merge: true });
           return { written: true, reason: 'health_check_passed' };
         });
+        if(!_gateResult.written && _gateResult.reason === 'stale_session') return false;   // ★ v5.442.0 過時裝置:安靜拒寫(不跳紅框)
         if(!_gateResult.written){
           console.error('🛡️ [_fbSaveLive v3.6.5 健康度守門] 拒絕寫入 — 偵測到資料倒退:',
             _gateResult.rejectReasons);
@@ -3707,6 +3812,11 @@
         const _safeRef = doc(_fbDb, 'players', uid, 'saves', 'safe');
         const _safeSnap = await tx.get(_safeRef);
         const _existing = _safeSnap.exists() ? _safeSnap.data() : null;
+        // ★ v5.442.0 — 過時裝置寫入守門(safe 槽;被踢前的「保命存檔」也走這裡,過時就不寫)
+        if(_existing && !(data._adminForceRestore || data._adminRescueSignal)
+           && typeof window._lxpsStaleWriteBlocked === 'function' && window._lxpsStaleWriteBlocked(_existing, 'safe', uid)){
+          return { written: false, reason: 'stale_session', prevSummary: _existing._dataSummary || null, newSummary: data._dataSummary || null };
+        }
         const _existingSummary = _existing ? _existing._dataSummary : null;
         const _newSummary = data._dataSummary;
         // ★ v3.13.47 — safe 槽皮膚/選擇聯集(只增不減);first_write 無 existing 不需聯集

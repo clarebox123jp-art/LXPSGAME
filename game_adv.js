@@ -30084,7 +30084,15 @@ async function gameCloudSave() {
     window._lxpsCloudSaveLastAt = _thrNow;
   }catch(_eThr){ console.warn('[雲端節流 v4.47.0] 守門例外(保守放行照常存檔)', _eThr); }
 
+  // ★ v5.442.0 — 已判定本台記憶體過時(別台有更新的進度)⇒ 一律不存,等重整/重新取得控制
+  if(window._gUserId && window._lxpsStaleBlocked){
+    console.warn('⛔ [過時裝置守門 v5.442.0] 本台進度比雲端舊,拒絕儲存(避免蓋掉別台裝置的新進度)');
+    return false;
+  }
+
   const data = _buildSafeData();
+  // ★ v5.442.0 — 存檔帶上「是哪一個登入(session)寫的」,讓別台裝置能判斷自己是否過時
+  try{ if(window._mySessionId) data._saveSid = String(window._mySessionId).slice(0, 48); }catch(_){}
 
   // ★★★ v1.0.20260419.1930 CRITICAL 保護層 2：空白狀態不得覆蓋已有進度 ★★★
   //   即使 _progressLoaded=true，仍檢查當前狀態是否「像新玩家」；
@@ -30233,6 +30241,8 @@ async function gameCloudSave() {
         const _ok = _results.filter(r => r.status === 'fulfilled' && r.value !== false).length;
         const _failed = _results.map((r, i) => r.status === 'rejected' ? _saveOps[i].name : null).filter(Boolean);
         if(_ok > 0) _cloudOk = true;
+        // ★ v5.442.0 — 本台成功寫入 ⇒ 基準推進到這份存檔的時間(過時裝置守門用)
+        if(_ok > 0){ try{ if(typeof window._lxpsBumpCloudBase === 'function') window._lxpsBumpCloudBase(data.savedAt); }catch(_){} }
         if(_ok > 0 && _failed.length === 0){
           /* ★ v3.16.56 — 移除「☁️ 雲端已同步」戰鬥 LOG 洗頻(存檔極頻繁·改僅 console) */
           try{ console.log('☁️ 雲端已同步'); }catch(_){}
@@ -30248,7 +30258,7 @@ async function gameCloudSave() {
       if(_cloudOk){
         window._lxpsSaveRetryN = 0;
         if(window._lxpsSaveRetryT){ clearTimeout(window._lxpsSaveRetryT); window._lxpsSaveRetryT = null; }
-      } else if(!window._lxpsSaveRetryT){
+      } else if(!window._lxpsSaveRetryT && !window._lxpsStaleBlocked){   /* ★ v5.442.0 過時裝置被擋不算網路失敗,不排補傳 */
         const _rn = window._lxpsSaveRetryN || 0;
         const _RD = [15000, 30000, 60000, 120000, 240000, 300000];
         if(_rn < _RD.length){
@@ -32158,6 +32168,17 @@ window.gameCloudLoad = async function(uid) {
       cloudOk = false;
     }
   }
+  /* ★ v5.442.0 過時裝置寫入守門:記下「本台這次載入時,雲端三槽最新的存檔時間」當基準。
+     之後若有別台裝置在這個時間之後存檔,本台的舊記憶體就不准再寫回雲端(game_cloud.js _lxpsStaleWriteBlocked)。 */
+  try{
+    if(cloudOk){
+      window._lxpsStaleBlocked = false; window._lxpsStaleHandled = false;
+      var _bSlots = (window._lxpsLastRawSlots && window._lxpsLastRawSlots.uid === uid && Array.isArray(window._lxpsLastRawSlots.slots)) ? window._lxpsLastRawSlots.slots : [data];
+      var _bMax = 0;
+      _bSlots.forEach(function(s){ var t = (s && typeof s.savedAt === 'number') ? s.savedAt : 0; if(t > _bMax) _bMax = t; });
+      window._lxpsCloudBaseAt = _bMax || Date.now();
+    }
+  }catch(_eBase){}
   /* ★ v5.280.0 永久擁有證明登入對帳(老師 2026-10-19「獲得角色要永久保留不可刪除」):
      英雄清單 = 選定資料 ∪ 證明裡擁有的 ∪ 任一槽有投資證據的,扣掉最近一次是移除的;補回的英雄帶回各槽最高養成。
      原地修改 data(權威下載的 _lxpsAuthoritativeData 是同一個物件,一起更新)。任何錯誤都回傳原資料。 */
@@ -83671,7 +83692,22 @@ function _sessionReclaim(){
   const newSid = Math.random().toString(36).slice(2) + Date.now().toString(36);
   localStorage.setItem('lxps_session_' + window._gUserId, newSid);
   window._mySessionId = newSid;
-  if(window._fbCreateSession) window._fbCreateSession(window._gUserId, newSid);
+  // ★ v5.442.0(玩家回報「召喚水晶全都不見了」根因之一)— 重新取得控制後一定要「重整讀雲端最新進度」:
+  //   舊版取回控制就直接沿用本台記憶體繼續玩/存檔。被踢的這台通常已經好幾天沒更新(另一台一直在玩),
+  //   一存檔就把另一台的知識幣/水晶/已領獎章整份蓋回好幾天前。現在:取回登入權 → 不存檔 → 重整載入最新進度。
+  //   (_kickedFromSession 保持 true 直到重整,期間任何存檔都會被拒,舊記憶體絕不會寫回雲端)
+  try{
+    const pop0 = document.getElementById('_kicked-notice');
+    if(pop0) pop0.innerHTML = '<div style="color:#aaffcc;font-size:22px;font-weight:900;text-align:center;padding:30px;">🔄 正在載入你最新的進度…</div>';
+  }catch(_){}
+  const _rcReload = function(){ try{ if(typeof window._lxpsReloadKeepLogin === 'function'){ window._lxpsReloadKeepLogin(); return; } }catch(_){} try{ location.reload(); }catch(_){} };
+  if(window._fbCreateSession){
+    Promise.race([ Promise.resolve(window._fbCreateSession(window._gUserId, newSid)), new Promise(function(r){ setTimeout(r, 4000); }) ])
+      .catch(function(){}).then(function(){ setTimeout(_rcReload, 300); });
+  } else {
+    setTimeout(_rcReload, 300);
+  }
+  return;
   // ★ v1.0.20260424.1110 — 重置「被踢」flag 並重啟心跳(5 秒間隔)
   window._kickedFromSession = false;
   // ★ v3.13.97 — 改用 onSnapshot 監聽 session(取代原 5 秒輪詢 _reclaimedHeartbeat)
