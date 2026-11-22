@@ -7649,6 +7649,20 @@ try{
 
   // ★ FIX 20260516 v2 — 取得英雄的當前 stats(含至寶加成)
   // ★ FIX 20260516 v3 — 改:接受 player 物件,從 ext.t 讀已選至寶並加上 baseStats + invested
+  // ★ v5.445.0(老師 2026-11-23 截圖:出戰前隊伍確認的大天狗 HP 1782「讀取到 BOSS 版能力。日本、埃及、中國的角色可能都有這問題」)
+  //   HERO_DB 裡日本三妖怪/埃及雙王/中國三妖王等存的是 BOSS 版素質;戰鬥中由 newHero(…,'p1') 換成招募版
+  //   (JP_/EGYPT_/CHINA_BOSS_HERO_STATS),所以進戰鬥正常、只有這頁錯。⇒ 英雄一律取 newHero 玩家版;世界龍王本身仍讀 HERO_DB。
+  function _wbTcHeroBase(name){
+    try{
+      if(typeof HERO_DB === 'undefined' || !HERO_DB[name]) return null;
+      if(window._wbIsBossName && window._wbIsBossName(name)) return HERO_DB[name];
+      if(typeof window.newHero === 'function'){
+        const _nh = window.newHero(name, 'p1', 0);
+        if(_nh && typeof _nh.hp === 'number') return _nh;
+      }
+    }catch(_){}
+    return HERO_DB[name];
+  }
   function _wbTcGetHeroStats(heroName, isMe, playerObj){
     try{
       if(typeof HERO_DB === 'undefined' || !HERO_DB[heroName]) return null;
@@ -7665,7 +7679,7 @@ try{
           }
         }
       }catch(_ePsS){}
-      const base = HERO_DB[heroName];
+      const base = _wbTcHeroBase(heroName) || HERO_DB[heroName];   // ★ v5.445.0 招募版素質(原:HERO_DB[heroName] = BOSS 版)
       // 起始:HERO_DB 的 baseStats
       let hp  = base.hp  || 0;
       let atk = base.atk || 0;
@@ -8614,7 +8628,7 @@ try{
   // 共用:組裝英雄/BOSS 資料 HTML(圖 2 風格)
   function _wbTcBuildInfoHtml(name){
     if(typeof HERO_DB === 'undefined' || !HERO_DB[name]) return '<div style="color:#aaa;padding:30px;text-align:center;">找不到資料</div>';
-    const h = HERO_DB[name];
+    const h = _wbTcHeroBase(name) || HERO_DB[name];   // ★ v5.445.0 英雄顯示招募版素質(龍王本身照舊 HERO_DB)
     const img = (typeof HERO_IMGS !== 'undefined' && HERO_IMGS[name]) || '';
     const lore = (typeof MONSTER_LORE !== 'undefined' && MONSTER_LORE[name]) || '';
     const trait = (typeof HERO_TRAIT !== 'undefined' && HERO_TRAIT[name]) || null;

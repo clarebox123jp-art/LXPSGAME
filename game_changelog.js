@@ -27,6 +27,7 @@ window.GAME_CHANGELOG = [
       '🩸 龍王戰:修正出血傷害會被重複計算的問題。現在龍王身上的出血只會依「出血迸裂」規則(每回合最多 2 次)造成傷害。',
       '🔒 龍王戰:每位英雄每一回合打到龍王的傷害,不管是自己出手,還是在別人回合的出血、反擊、協攻,加起來最多 9999。',
       '💥 龍王戰:火爆女「怒火滿格」被打時回能量,每回合最多 2 次(暴擊率累積不變)。',
+      '🐉 龍王戰「出戰前隊伍確認」:大天狗、酒吞童子、玉藻前、法老王、埃及豔后、牛魔王、呂布、蚩尤等英雄的能力值,以前誤顯示成 BOSS 版的數字,現在跟戰鬥中一樣正確了(戰鬥本來就是對的)。',
       '💰 龍王戰新增「溢傷」:打超過 9999 上限的傷害會顯示在累積傷害旁邊,溢傷不算排名傷害;戰鬥結束寫入排名後,溢傷的一半會變成額外的知識幣獎勵!',
       '🧘 魔劍姬伊莉雅「調息」時,不會再出現在「知識化為力量・極限爆發」的選人名單裡,也修好了選她之後整場戰鬥按不動的問題。'
     ],
@@ -34,6 +35,7 @@ window.GAME_CHANGELOG = [
       '★ v5.445.0【出血重複計算】doDmg fixedDmg 與主路徑仍保留 v3.13.73「出血命中追加」(每下最大HP 6%/9%,無次數限制、不讀龍王固定值)⇒ 對 1000 萬血龍王每下 60 萬原始傷害,直接灌滿出手者當回合 9999;並會再觸發 v5.80.0 觸發式出血(連鎖)。修法:世界龍王跳過舊路徑(老師裁定乙:冒險/鬥技場不動);_bleedTryProc 也擋 _fromBleedProc。',
       '★ v5.445.0【每回合合計上限】_wbSoftBudget 記在龍王身上、每次 startTurn 歸零 ⇒ 別人回合(尤其龍王回合)的出血/反擊/協攻吃到全新額度。新增 window._wbActorRoundCap(_WB_ROUND_CAP_DEFAULT 9999,名單 _WB_ROUND_CAP_HEROES 可個別設定),接在三處軟上限之後,依 opts.actor 記每位英雄每大回合實扣合計;老師 01:30 裁定擴大到所有英雄。',
       '★ v5.445.0【怒火滿格】龍王戰受傷回能量每大回合最多 2 次(window._wbFbEnergyOk)。',
+      '★ v5.445.0【隊伍確認數值】world-boss-ui.html _wbTcGetHeroStats 舊算法與 _wbTcBuildInfoHtml 直接讀 HERO_DB(日本三妖怪/埃及雙王/中國三妖王存 BOSS 版),新增 _wbTcHeroBase(name):龍王照舊 HERO_DB、英雄改 newHero(name,p1,0) 招募版(JP_/EGYPT_/CHINA_BOSS_HERO_STATS)。戰鬥中本來就走 newHero,不受影響。',
       '★ v5.445.0【溢傷】溢傷 = 每位角色每回合原始累計超過 9999 的部分(_wbSoftBudget 另記不封頂 _wbTurnRawU)＋被每回合合計上限擋下的部分;window._wbNoteOverflow 記進 contributions[主人 uid].overflow(不加進 dmgDealt);_wbOvfRender 在 #wb-cur-dmg-display/#wb-solo-cur-dmg-display 旁顯示全隊溢傷;world-boss.js 結算 updateLeaderboard 成功(含 dup)後 window._wbPayOverflowCoins 依自己(房主含 host_npc_*)溢傷 ×50% 發知識幣,localStorage lxps_wb_ovf_paid 記 battleKey 每場一次,寫帳本並 gameCloudSave。練習模式/管理員不寫排名 ⇒ 不發。',
       '★ v5.445.0【卡死】知識化為力量 instant_burst 走 _advTriggerBurstFor 直接 _runBurst(不經 _canBurst)⇒ 調息中伊莉雅可被選;選到正在行動的自己時 _interrupted===h,魔尊覺醒/極速閃燃的再行動分支把她自己標回 acted ⇒ 面板按不動。修法:兩分支加 _interrupted!==h;game_adv.js 選人排除 _iliyaIsResting。'
     ]
