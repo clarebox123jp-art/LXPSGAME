@@ -5638,9 +5638,19 @@
                 const _lbWriteArgs = [bossId, _teamKey, _teamNames, _dealt, _tieBreaker, _teamHeroes,
                   _championStats, _dmgSources, _teamEmails, _v3_12_17_isBonusBattle, undefined, _wbBattleKey];
                 const _lbDelay = (!isHost && _wbBattleKey) ? 6000 : 0;
+                // ★ v5.445.0(老師 2026-11-23)溢傷:戰鬥結束寫入排名後,自己英雄的溢傷 50% 轉成知識幣(溢傷不算排名傷害)。
+                //   先在這裡把「我的溢傷」算好(之後 contributions 可能被清掉);房主代打槽 host_npc_* 也算房主的(同 myDmg)。
+                let _wbOvfMine = 0;
+                try{
+                  const _cO = (window._wbNet && typeof window._wbNet.getContributions === 'function') ? (window._wbNet.getContributions() || {}) : {};
+                  Object.keys(_cO).forEach(function(_u){
+                    if(_u === myUid || (isHost && /^host_npc_/i.test(_u))) _wbOvfMine += (_cO[_u] && _cO[_u].overflow) || 0;
+                  });
+                }catch(_eOvfM){ _wbOvfMine = 0; }
                 new Promise(function(r){ setTimeout(r, _lbDelay); })
                   .then(function(){ return window._wbHpSync.updateLeaderboard.apply(window._wbHpSync, _lbWriteArgs); })
                   .then(res => {
+                    try{ if(res) window._wbPayOverflowCoins(_wbOvfMine, _wbBattleKey || ('wb_' + Date.now())); }catch(_eOvfPay){ console.warn('[WB-Overflow v5.445.0] 發放失敗', _eOvfPay); }
                     if(res && res.dup){ console.log('[WB-Leaderboard v5.383.0] 這一場隊友已記過,不重複寫入 (' + _wbBattleKey + ')'); }
                     if(res) console.log('[WB-Leaderboard] 隊伍排名更新: rank=' + res.rank + ', totalDmg=' + res.totalDmg
                       + ', champions=', _championStats);
@@ -6542,6 +6552,39 @@
     // 戰鬥畫面出現/消失時即時收放(不必等 20 秒)
     setInterval(function(){ try{ if(_info) _render(); }catch(_){} }, 1500);
   })();
+
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.445.0(老師 2026-11-23「龍王戰打超出9999的溢傷顯示在累積傷害旁邊,這個溢傷在戰鬥結束(全滅或崩壞)
+  //   並寫入排名後,50%轉換成額外的知識幣獎勵,溢傷不會算進排名傷害」)
+  //   呼叫點:上方結算 updateLeaderboard 成功(含「隊友已記過」)之後;練習模式/管理員不寫排名 ⇒ 不會走到這裡。
+  //   每場只發一次(battleKey 記在 localStorage,重整也不會重複領);發放寫知識幣帳本並立刻存雲端。
+  // ════════════════════════════════════════════════════════════════
+  window._WB_OVF_COIN_RATE = 0.5;
+  window._wbPayOverflowCoins = function(ovf, key){
+    try{
+      ovf = Math.max(0, Math.floor(ovf || 0));
+      const coins = Math.floor(ovf * window._WB_OVF_COIN_RATE);
+      if(!(coins > 0) || !key) return 0;
+      let paid = [];
+      try{ paid = JSON.parse(localStorage.getItem('lxps_wb_ovf_paid') || '[]'); if(!Array.isArray(paid)) paid = []; }catch(_){ paid = []; }
+      if(paid.indexOf(key) >= 0){ console.log('[WB-Overflow v5.445.0] 這一場已發過溢傷知識幣,跳過 (' + key + ')'); return 0; }
+      paid.push(key); if(paid.length > 30) paid = paid.slice(-30);
+      try{ localStorage.setItem('lxps_wb_ovf_paid', JSON.stringify(paid)); }catch(_){}
+      window._knowledgeCoins = (Number(window._knowledgeCoins) || 0) + coins;
+      try{ if(typeof window._logCoinTx === 'function') window._logCoinTx(coins, '龍王戰溢傷轉換(' + ovf + ')'); }catch(_){}
+      try{ if(typeof updateCoinDisplay === 'function') updateCoinDisplay(); }catch(_){}
+      try{ if(typeof window.gameCloudSave === 'function') window.gameCloudSave(); }catch(_){}
+      console.log('[WB-Overflow v5.445.0] 溢傷 ' + ovf + ' → 知識幣 +' + coins + ' (' + key + ')');
+      try{
+        const cute = (window._artStyle === 'cute');
+        const msg = cute
+          ? ('💥 超過上限的傷害 ' + ovf.toLocaleString() + ' 變成知識幣 +' + coins.toLocaleString() + ' 囉!')
+          : ('💥 溢傷 ' + ovf.toLocaleString() + ' 已轉換為 💰 知識幣 +' + coins.toLocaleString() + '(不計入排名傷害)');
+        if(typeof _showInGameToast === 'function') _showInGameToast(msg, '#ffb347', 4200);
+      }catch(_){}
+      return coins;
+    }catch(e){ console.warn('[WB-Overflow v5.445.0] 例外', e); return 0; }
+  };
 
   _wbBootstrap();
 })();

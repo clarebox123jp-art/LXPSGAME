@@ -20666,8 +20666,12 @@ function advApplyReward(id) {
     } else if (id === 'instant_burst') {
       // 選擇1名存活隊友立即發動極限爆發
       _advBurstRewardUsed = true;
-      const alives = G.p1.filter(h=>h.curHp>0);
-      if (!alives.length) { advOnQuizSkip(); return; }
+      // ★ v5.445.0(玩家 BUG 回報:伊莉雅調息中被指定放爆發 ⇒ 卡死)— 調息中的魔劍姬不能放爆發(v5.316.0 裁定),不列入可選
+      const alives = G.p1.filter(h=>h.curHp>0 && !(window._iliyaIsResting && window._iliyaIsResting(h)));
+      if (!alives.length) {
+        try{ if(G.p1.some(h=>h.curHp>0)) _showInGameToast((window._artStyle==='cute') ? '現在沒有可以放大絕的英雄耶!' : '目前沒有可發動極限爆發的英雄。', '#ffaa44', 2400); }catch(_){}
+        advOnQuizSkip(); return;
+      }
       // ★ v1.0.20260421.3019 — 修正失效：兩條分支都要 return，避免外面 setTimeout 再呼叫 advOnQuizSkip
       //   導致 BOSS 插隊、爆發施法中場上狀態已變而效果錯亂
       if (alives.length === 1) {
@@ -57359,6 +57363,7 @@ function upgradeBurst(name) {
         border-radius:12px;cursor:pointer;font-family:inherit;">✕ 取消</button>
     </div>`;
   document.body.appendChild(box);
+  try{ if(window._lxpsAboveHeroDetail) window._lxpsAboveHeroDetail(box); }catch(_eHdT){}   /* ★ v5.444.0 圖鑑整備時蓋過圖鑑 */
   document.getElementById('_burst_yes').onclick = () => {
     try{ if(typeof playSfx === 'function') playSfx('sfx-statup', 0.7); }catch(_){}   // ★ v3.16.71 — 音效移到按下「確定升級」時
     box.remove();
@@ -57605,6 +57610,7 @@ function investStat(name, stat) {
         onmouseout="this.style.background='rgba(60,10,10,0.3)'">✕ 取消</button>
     </div>`;
   document.body.appendChild(box);
+  try{ if(window._lxpsAboveHeroDetail) window._lxpsAboveHeroDetail(box); }catch(_eHdT){}   /* ★ v5.444.0 圖鑑整備時蓋過圖鑑 */
   document.getElementById('_invest_yes').onclick = async () => {
     box.remove();
     _heroStatPoints[name]--;
@@ -57777,6 +57783,7 @@ function upgradeSkill(name, slot) {
     </div>
   </div>`;
   document.body.appendChild(boxU2);
+  try{ if(window._lxpsAboveHeroDetail) window._lxpsAboveHeroDetail(boxU2); }catch(_eHdT){}   /* ★ v5.444.0 圖鑑整備時蓋過圖鑑(老師:技能升級視窗階層太低) */
   // ★ v5.384.0 放大 ⇒ ★ v5.393.0(老師 2026-11-13「pc版，英雄圖鑑中技能升級的小視窗字太大了，改成不用捲動就能完整看到所有等級且字又大又舒適。檢查ipad和手機是否大小適中」)
   //   改由 window._upg2Fit 依真實螢幕 px 找「放得下全部 10 級的最大字」(不再用 zoom / 0.72 倍縮放);視窗改大小時自動重算。
   try{ if(window._upg2Fit) window._upg2Fit(boxU2); }catch(_eUpg2Z){}
@@ -57803,6 +57810,57 @@ function upgradeSkill(name, slot) {
   };
   document.getElementById('_upg_no2').onclick = () => boxU2.remove();
 }
+
+// ★ v5.444.0(2026-11-23・老師「圖鑑整備按技能升級的視窗階層太低」)
+//   根因:從編組頁/預設陣容/龍王戰替補按「📖 圖鑑整備」時,圖鑑兩層(hero-page-overlay 10000、
+//   hero-detail-overlay 10500)會被搬到 body 末端(v3.12.0 範式),而技能升級(9500)、爆發升級(9600)、
+//   素質投資(9500)等確認視窗都是 body 直系、z 低於 10500 ⇒ 被壓在圖鑑底下看不到/按不到。
+//   (從主選單開圖鑑時圖鑑困在 #_gc_wrapper 內,所以一切正常。)
+//   修法(單一出口):window._lxpsAboveHeroDetail(el) — 只在圖鑑兩層「是 body 直系且顯示中」時,
+//   把 z 低於圖鑑的新 body 直系 fixed/absolute 視窗升到圖鑑之上(圖鑑 z + 200)。
+//   另掛 body childList 觀察器,以後從圖鑑整備開的新視窗自動適用。圖鑑沒被搬出來時一律不動。
+(function(){
+  if(window._lxpsHdTopNet) return;
+  window._lxpsHdTopNet = 1;
+  var SKIP = { 'hero-page-overlay':1, 'hero-detail-overlay':1, '_gc_wrapper':1, 'gc':1 };
+  function _shown(el){
+    try{ return !!el && el.parentNode === document.body && el.style.display !== 'none' && getComputedStyle(el).display !== 'none'; }
+    catch(_){ return false; }
+  }
+  function _hdTopZ(){
+    var z = 0;
+    ['hero-page-overlay', 'hero-detail-overlay'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(_shown(el)){ var v = parseInt(getComputedStyle(el).zIndex, 10); if(!isNaN(v) && v > z) z = v; }
+    });
+    return z;
+  }
+  window._lxpsAboveHeroDetail = function(el){
+    try{
+      if(!el || el.nodeType !== 1 || el.parentNode !== document.body || SKIP[el.id]) return;
+      var z = _hdTopZ();
+      if(!z) return;
+      var cs = getComputedStyle(el);
+      if(cs.position !== 'fixed' && cs.position !== 'absolute') return;
+      var cur = parseInt(cs.zIndex, 10);
+      if(isNaN(cur) || cur <= 0 || cur > z) return;
+      el.setAttribute('data-lxps-hdtop', String(cur));
+      el.style.zIndex = String(z + 200);
+    }catch(_){}
+  };
+  function _start(){
+    try{
+      new MutationObserver(function(muts){
+        if(!_hdTopZ()) return;
+        for(var i = 0; i < muts.length; i++){
+          var a = muts[i].addedNodes;
+          for(var j = 0; j < a.length; j++) window._lxpsAboveHeroDetail(a[j]);
+        }
+      }).observe(document.body, { childList: true });
+    }catch(_){}
+  }
+  if(document.body) _start(); else document.addEventListener('DOMContentLoaded', _start);
+})();
 
 // 結束冒險時自動讀取圖鑑
 function closeHeroPage() {
@@ -78149,6 +78207,42 @@ function _showTraitLvPopup(heroName, el){
   var radarSvg = gc ? gc.querySelector('#hero-detail-content svg') : null;
   if(!radarSvg){ var container2 = document.getElementById('hero-detail-box') || document.body; radarSvg = container2.querySelector('svg'); }
   pop.style.position = 'absolute';
+  // ★ v5.444.0(老師「查看天賦升級效果…都被蓋住看不到」)— 圖鑑整備時圖鑑被搬到 body 最上層(z 10500),
+  //   這張卡原本掛進 #gc 就會被壓在下面。此時改掛 body、position:fixed、z 蓋過圖鑑,
+  //   用 transform:scale 跟畫布同比例(不用 zoom,避開 iPad 文字不放大問題),位置照樣放在天賦文字左邊。
+  var _hdoT = document.getElementById('hero-detail-overlay');
+  var _hdoTop = 0;
+  try{ if(_hdoT && _hdoT.parentNode === document.body && getComputedStyle(_hdoT).display !== 'none') _hdoTop = parseInt(getComputedStyle(_hdoT).zIndex, 10) || 10500; }catch(_eHdT){}
+  if(_hdoTop){
+    var _scT = 1;
+    try{
+      if(el && el.getBoundingClientRect && el.offsetWidth > 0){ _scT = el.getBoundingClientRect().width / el.offsetWidth; }
+      if(!(_scT > 0.05 && _scT < 20) && gc){ _scT = gc.getBoundingClientRect().width / 1920; }
+      if(!(_scT > 0.05 && _scT < 20)) _scT = 1;
+    }catch(_eSc){ _scT = 1; }
+    var _pwT = 640;
+    pop.style.position = 'fixed';
+    pop.style.width = _pwT + 'px';
+    pop.style.boxSizing = 'border-box';
+    pop.style.transformOrigin = '0 0';
+    pop.style.transform = 'scale(' + _scT + ')';
+    pop.style.zIndex = String(_hdoTop + 300);
+    pop.setAttribute('data-lxps-no-pczoom', '1');
+    document.body.appendChild(pop);
+    var _vwT = window.innerWidth, _vhT = window.innerHeight;
+    var _phT = pop.offsetHeight * _scT, _pwS = _pwT * _scT;
+    var _lT = 8, _tT = Math.max(8, _vhT / 4);
+    if(el && el.getBoundingClientRect){
+      var _eR = el.getBoundingClientRect();
+      _lT = _eR.left - _pwS - 20 * _scT;
+      if(_lT < 8) _lT = Math.min(_vwT - _pwS - 8, _eR.right + 20 * _scT);
+      _tT = _eR.top - 160 * _scT;
+    }
+    _lT = Math.max(8, Math.min(_vwT - _pwS - 8, _lT));
+    _tT = Math.max(8, Math.min(_vhT - _phT - 8, _tT));
+    pop.style.left = _lT + 'px';
+    pop.style.top = _tT + 'px';
+  } else
   if(gc){
     var gcR = gc.getBoundingClientRect();
     var sc = gcR.width / 1920;
@@ -85084,6 +85178,29 @@ function _showRadarLabelInfo(key, shortLabel, svgX, svgY){
   var radarSvg = gc ? gc.querySelector('#hero-detail-content svg') : null;
   if(!radarSvg) radarSvg = container.querySelector('svg');
   pop.style.position = 'absolute';
+  // ★ v5.444.0 — 圖鑑整備時圖鑑在 body 最上層(z 10500),掛進 #gc 會被壓住 ⇒ 改掛 body 並蓋過圖鑑(同天賦升級效果卡)
+  var _hdoR = document.getElementById('hero-detail-overlay'), _hdoRz = 0;
+  try{ if(_hdoR && _hdoR.parentNode === document.body && getComputedStyle(_hdoR).display !== 'none') _hdoRz = parseInt(getComputedStyle(_hdoR).zIndex, 10) || 10500; }catch(_eHdR){}
+  if(_hdoRz && radarSvg){
+    var _scR = gc ? (gc.getBoundingClientRect().width / 1920) : 1;
+    try{ var _bx = radarSvg.getBoundingClientRect(), _bw = radarSvg.width && radarSvg.width.baseVal ? radarSvg.width.baseVal.value : 0; if(_bw > 0 && _bx.width > 0) _scR = _bx.width / _bw; }catch(_eSR){}
+    if(!(_scR > 0.05 && _scR < 20)) _scR = 1;
+    var _pwR = 560;
+    pop.style.position = 'fixed';
+    pop.style.width = _pwR + 'px';
+    pop.style.boxSizing = 'border-box';
+    pop.style.transformOrigin = '0 0';
+    pop.style.transform = 'scale(' + _scR + ')';
+    pop.style.zIndex = String(_hdoRz + 300);
+    pop.setAttribute('data-lxps-no-pczoom', '1');
+    document.body.appendChild(pop);
+    var _sR = radarSvg.getBoundingClientRect();
+    var _pwRS = _pwR * _scR, _phRS = pop.offsetHeight * _scR;
+    var _lR = (_sR.left + _sR.right) / 2 - _pwRS / 2, _tR = _sR.top - _phRS - 10 * _scR;
+    if(_tR < 8) _tR = _sR.bottom + 10 * _scR;
+    pop.style.left = Math.max(8, Math.min(vw - _pwRS - 8, _lR)) + 'px';
+    pop.style.top = Math.max(8, Math.min(vh - _phRS - 8, _tR)) + 'px';
+  } else
   if(radarSvg && gc){
     var gcR = gc.getBoundingClientRect();
     var svgR = radarSvg.getBoundingClientRect();

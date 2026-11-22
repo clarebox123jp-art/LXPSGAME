@@ -1126,9 +1126,17 @@ window._wbSoftCapF = function(x){
   return Math.min(M, S + Math.floor((x - S) / 2));
 };
 // 把「這一下」的傷害 dmg 記進目標本回合的原始累計,回傳實際要扣的血量(並同步 _wbTurnDmgTaken = 已實扣累計)
-window._wbSoftBudget = function(target, dmg){
+window._wbSoftBudget = function(target, dmg, opts){
   try{
     dmg = Math.max(0, Math.floor(dmg || 0));
+    // ★ v5.445.0(老師 2026-11-23「龍王戰打超出9999的溢傷顯示在累積傷害旁邊…50%轉換成額外的知識幣」)
+    //   溢傷 = 這位角色這回合「原始累計」超過 9999 的部分(不封頂另記一份 _wbTurnRawU,不影響下方原本的計算)。
+    try{
+      var U0 = target._wbTurnRawU || 0, U1 = U0 + dmg;
+      target._wbTurnRawU = U1;
+      var _ovf = Math.max(0, U1 - Math.max(window._WB_HARD_CAP, U0));
+      if(_ovf > 0) window._wbNoteOverflow(_ovf, opts);
+    }catch(_eOvf){}
     var R0 = target._wbTurnRaw || 0;
     var R1 = Math.min(window._WB_RAW_CEIL, R0 + dmg);
     var eff = Math.max(0, window._wbSoftCapF(R1) - window._wbSoftCapF(R0));
@@ -1136,6 +1144,103 @@ window._wbSoftBudget = function(target, dmg){
     target._wbTurnDmgTaken = window._wbSoftCapF(R1);
     return eff;
   }catch(_){ return Math.min(dmg || 0, 5000); }
+};
+// ══════════════════════════════════════════════════════════════════════
+// ★★ v5.445.0(老師 2026-11-23「修正火爆女失衡的技能效果,重新調整他在龍王戰每回合能打出的傷害上限」)★★
+//   漏洞:上面的軟上限記在「龍王身上、每位角色 startTurn 歸零」⇒ 管得到自己回合,管不到別人回合裡的傷害。
+//   火爆女的傷害有一大塊發生在別人(尤其龍王自己)的回合:
+//     ・三刀射擊/第四刀掛的出血 ⇒ 龍王行動或被隊友打到時迸裂(1500/3000,記在火爆女名下)
+//     ・命星 t2「怒火爆表」⇒ 龍王打她時水柱反擊(每回合 2 次)
+//   龍王回合開始時額度是全新的 9999 ⇒ 這些傷害等於多吃一份上限,所以總傷超過 UR 魔劍姬。
+//   修法:另記每位英雄「每一大回合(G.round)」自己打到龍王的實扣合計 ⇒ 自己回合＋別人回合加總最多 9999。
+//   只在世界龍王身上生效;其他模式零改動。
+//   ★ 老師 01:30 裁定「這個每回合合計上限擴大到其他會在別人回合打傷害的英雄」⇒ 我方所有英雄一律適用(預設 _WB_ROUND_CAP_DEFAULT);
+//     名單 _WB_ROUND_CAP_HEROES 留作個別英雄另設上限用(目前與預設相同)。
+//     傷害算在誰頭上 = opts.actor(出血=上出血的人 _dotSrc、反擊/協攻=反擊者),沒有 actor 時才用當前行動者。
+window._WB_ROUND_CAP_DEFAULT = 9999;
+window._WB_ROUND_CAP_HEROES = { '火爆女': 9999 };
+window._wbActorRoundCap = function(target, dmg, opts){
+  try{
+    dmg = Math.max(0, Math.floor(dmg || 0));
+    if(!(dmg > 0)) return dmg;
+    if(!(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target))) return dmg;
+    var a = (opts && opts.actor) || null;
+    if(!a && typeof G !== 'undefined' && G && G.activeChar) a = G.activeChar;
+    if(!a || a.side !== 'p1') return dmg;
+    var cap = window._WB_ROUND_CAP_HEROES[a.name] || window._WB_ROUND_CAP_DEFAULT;
+    if(!cap) return dmg;
+    var r = (typeof G !== 'undefined' && G && G.round) || 0;
+    if(a._wbRndCapR !== r){ a._wbRndCapR = r; a._wbRndCapUsed = 0; }
+    var left = Math.max(0, cap - (a._wbRndCapUsed || 0));
+    var eff = Math.min(dmg, left);
+    a._wbRndCapUsed = (a._wbRndCapUsed || 0) + eff;
+    if(eff < dmg){
+      try{ window._wbNoteOverflow(dmg - eff, opts); }catch(_eOvfA){}   // ★ v5.445.0 被每回合合計上限擋下的也算溢傷
+      try{ log('🔒 [' + a.name + '] 龍王戰每回合傷害合計上限(含別人回合的出血/反擊/協攻):' + dmg + ' → ' + eff + '(本回合 ' + a._wbRndCapUsed + '/' + cap + ')'); }catch(_){}
+    }
+    return eff;
+  }catch(_){ return dmg; }
+};
+// ★ v5.445.0 溢傷記帳:記在出手英雄主人名下(同 dmgDealt,房主權威、隨 contributions 同步給隊友;練習模式記在 _wbSoloContrib)。
+//   溢傷不加進 dmgDealt ⇒ 不算排名傷害;結算寫入排名後由 world-boss.js 依自己的溢傷 50% 發知識幣。
+window._wbNoteOverflow = function(n, opts){
+  try{
+    n = Math.max(0, Math.floor(n || 0));
+    if(!n) return;
+    if(!(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss')) return;
+    if(window._wbClientMode) return;
+    var a = (opts && opts.actor) || null;
+    if(!a && typeof G !== 'undefined' && G && G.activeChar) a = G.activeChar;
+    if(!a || a.side !== 'p1') return;
+    if(window._wbNet && typeof window._wbNet.addContribution === 'function'){
+      window._wbNet.addContribution(_wbContribUid(opts), 'overflow', n);
+    }
+    try{ window._wbOvfRender(); }catch(_){}
+  }catch(_){}
+};
+window._wbOvfTeamTotal = function(){
+  var c = null;
+  try{ if(window._wbNet && typeof window._wbNet.getContributions === 'function') c = window._wbNet.getContributions(); }catch(_){}
+  if(!c || !Object.keys(c).length) c = window._wbSoloContrib || {};
+  var t = 0;
+  try{ Object.keys(c).forEach(function(u){ t += (c[u] && c[u].overflow) || 0; }); }catch(_){}
+  return t;
+};
+// 顯示在「本場累積傷害」數字旁邊(房主/隊友/練習三種畫面共用同一個數字元素);每秒同步一次(隊友端靠房主同步的 contributions)
+window._wbOvfRender = function(){
+  try{
+    var el = document.getElementById('wb-cur-dmg-display') || document.getElementById('wb-solo-cur-dmg-display');
+    var sp = document.getElementById('wb-ovf-display');
+    var inWb = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss');
+    var t = inWb ? window._wbOvfTeamTotal() : 0;
+    if(!el || !t){ if(sp) sp.style.display = 'none'; return; }
+    if(!sp || sp.parentNode !== el.parentNode){
+      if(sp) sp.remove();
+      sp = document.createElement('span');
+      sp.id = 'wb-ovf-display';
+      sp.style.cssText = 'margin-left:0.5em;font-size:0.72em;font-weight:900;color:#ffb347;white-space:nowrap;text-shadow:0 0 6px rgba(255,140,0,0.6);';
+      el.parentNode.insertBefore(sp, el.nextSibling);
+    }
+    var cute = (window._artStyle === 'cute');
+    sp.textContent = (cute ? '💥 超過上限 +' : '💥 溢傷 +') + t.toLocaleString();
+    sp.title = cute ? '打超過上限的傷害不算排名,打完後一半會變成知識幣喔!' : '超出上限的溢傷不計入排名傷害;戰鬥結算寫入排名後,50% 轉換為知識幣。';
+    sp.style.display = '';
+  }catch(_){}
+};
+try{ setInterval(function(){ try{ if(typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') window._wbOvfRender(); else { var s = document.getElementById('wb-ovf-display'); if(s) s.style.display = 'none'; } }catch(_){} }, 1000); }catch(_){}
+// 怒火滿格「受傷回能量」在龍王戰每回合最多 2 次(龍王多段/全體攻擊一回合會打很多下 ⇒ 原本能量幾乎永遠是滿的)
+window._WB_FB_ENERGY_PER_ROUND = 2;
+window._wbFbEnergyOk = function(t){
+  try{
+    var inWb = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss')
+            || (typeof G !== 'undefined' && G && Array.isArray(G.p2) && typeof _isWorldBossTarget === 'function' && G.p2.some(function(x){ return x && _isWorldBossTarget(x); }));
+    if(!inWb) return true;
+    var r = (typeof G !== 'undefined' && G && G.round) || 0;
+    if(t._wbFbEnR !== r){ t._wbFbEnR = r; t._wbFbEnN = 0; }
+    if((t._wbFbEnN || 0) >= window._WB_FB_ENERGY_PER_ROUND) return false;
+    t._wbFbEnN = (t._wbFbEnN || 0) + 1;
+    return true;
+  }catch(_){ return true; }
 };
 window._advDmgCap = function(target, dmg){
   try{
@@ -1242,7 +1347,7 @@ window._bleedTryProc = function(h, reason, opts){
     if(typeof hasStatus !== 'function' || !hasStatus(h, 'bleed')) return;
     const o = opts || {};
     // 防連鎖:出血自身 / DoT tick / 治療 / 反彈 / 共傷 / 混沌 一律不觸發
-    if(o._isBleedProc || o._isDotTick || o.isHeal || o.isRebound || o.isTraitShare || o.isChaos) return;
+    if(o._isBleedProc || o._fromBleedProc || o._isDotTick || o.isHeal || o.isRebound || o.isTraitShare || o.isChaos) return;   // ★ v5.445.0 補 _fromBleedProc:舊「受擊追加」的傷害不可再觸發一次迸裂(原本會連鎖)
     // 每回合上限 2 次
     if((h._bleedProcTurn || 0) >= 2) return;
     // 同一次行動只計 1 次(多段技整組只算一次)
@@ -20912,7 +21017,9 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     updateUI();
     if(checkWin()) return;
     G.passiveInterruptUsed = false; G.interruptTarget = null; G.pendingTarget = null; pendingCb = null;
-    if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
+    // ★ v5.445.0(玩家 BUG 回報:知識化為力量指定伊莉雅自己放爆發 ⇒ 卡死)— 施放者就是被插隊的人時不標 acted,
+    //   否則上一行 h.acted=false 會被這裡改回 true ⇒ 面板打開但每顆鈕都按不動(requestAction 見 acted 就 return)
+    if(_interrupted && _interrupted !== h && _interrupted.curHp>0 && !_interrupted.acted){
       _interrupted.acted = true;
       log(`[${_interrupted.name}] 被極限爆發插隊,跳過本次行動。`);
     }
@@ -21618,7 +21725,7 @@ function _runBurst(h, bd, side, _interrupted, _mimicSourceName){
     updateUI();
     if(checkWin()) return;
     G.passiveInterruptUsed = false; G.interruptTarget = null; G.pendingTarget = null; pendingCb = null;
-    if(_interrupted && _interrupted.curHp>0 && !_interrupted.acted){
+    if(_interrupted && _interrupted !== h && _interrupted.curHp>0 && !_interrupted.acted){   // ★ v5.445.0 同魔尊覺醒:施放者=被插隊者時不標 acted(否則再行動卡死)
       _interrupted.acted = true;
       log(`[${_interrupted.name}] 被極限爆發插隊,跳過本次行動。`);
     }
@@ -35734,7 +35841,8 @@ function doDmg(target, rawDmg, opts={}){
         // ★ v5.361.0 軟上限(取代「單下 5000 + 每回合累計 5000」;舊碼備查:if(rawDmg>5000) rawDmg=5000;
         //   const _wbBudgetFx = Math.max(0, 5000 - (target._wbTurnDmgTaken||0)); rawDmg=min(rawDmg,_wbBudgetFx); _wbTurnDmgTaken += rawDmg;)
         const _wbFxIn = rawDmg;
-        rawDmg = window._wbSoftBudget(target, rawDmg);
+        rawDmg = window._wbSoftBudget(target, rawDmg, opts);
+        rawDmg = window._wbActorRoundCap(target, rawDmg, opts);   // ★ v5.445.0 火爆女每大回合合計上限(含別人回合的出血/反擊)
         if(rawDmg !== _wbFxIn){
           try{ log(`🔒 [${target.name}] 傷害軟上限(固定傷害):${_wbFxIn} → ${rawDmg}(本回合已扣 ${target._wbTurnDmgTaken}/${window._WB_HARD_CAP},超過 ${window._WB_SOFT_CAP} 的部分減半)`); }catch(_){}
         }
@@ -36015,7 +36123,10 @@ function doDmg(target, rawDmg, opts={}){
     try{ if(_yyOldHpF > 0 && target && target.curHp > 0 && target.name === '武士' && target._cst) window._cstWsS2Low(target); }catch(_eCstWsS2lf){}   // ✨ 命星 ✦ 武士 s2(fixedDmg 路徑)
     try{ showPopup(target, '-'+rawDmg, 'dmg'); }catch(_){}
     // ★ v3.13.73 — 出血命中追加(fixedDmg 路徑,鐵律1.202):真實傷害才觸發,DoT/追加/治療不觸發
-    if(target && target.curHp > 0 && rawDmg > 0 && !opts._isDotTick && !opts._fromBleedProc && !opts.isHeal && !opts.isRebound && typeof hasStatus === 'function' && hasStatus(target,'bleed')){
+    // ★ v5.445.0(老師 2026-11-23「懷疑是她的出血傷害在一回合內被多次計算」)— 世界龍王不走這條舊的「受擊追加 最大HP 6%/9%」:
+    //   v5.80.0 觸發式出血(_bleedTryProc,每回合 2 次、龍王固定 1500/3000)已涵蓋「受到攻擊」,這條是沒拔掉的舊碼 ⇒
+    //   對龍王每一下都多 60 萬原始傷害,把出手者當回合 9999 額度直接灌滿(火爆女三刀第 2、3 刀必中)。
+    if(target && target.curHp > 0 && rawDmg > 0 && !opts._isDotTick && !opts._fromBleedProc && !opts.isHeal && !opts.isRebound && !(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target)) && typeof hasStatus === 'function' && hasStatus(target,'bleed')){
       try{
         const _bsF = (target.status||[]).find(s=>s.type==='bleed');
         const _bdF = Math.max(1, Math.floor((target.hp||1) * ((_bsF && _bsF._strong) ? 0.09 : 0.06)));
@@ -38890,7 +39001,8 @@ function doDmg(target, rawDmg, opts={}){
       //   _wbTurnRaw/_wbTurnDmgTaken 在每位角色 startTurn 歸零。舊碼備查:if(dmg>5000) dmg=5000;
       //   const _wbBudgetMain = Math.max(0, 5000 - (target._wbTurnDmgTaken||0)); dmg=min(dmg,_wbBudgetMain); _wbTurnDmgTaken += dmg;
       const _wbMainIn = dmg;
-      dmg = window._wbSoftBudget(target, dmg);
+      dmg = window._wbSoftBudget(target, dmg, opts);
+      dmg = window._wbActorRoundCap(target, dmg, opts);   // ★ v5.445.0 火爆女每大回合合計上限(含別人回合的出血/反擊)
       if(dmg !== _wbMainIn){
         try{ log(`🔒 [${target.name}] 傷害軟上限:${_wbMainIn} → ${dmg}(本回合已扣 ${target._wbTurnDmgTaken}/${window._WB_HARD_CAP},超過 ${window._WB_SOFT_CAP} 的部分減半)`); }catch(_){}
       }
@@ -39499,7 +39611,8 @@ function doDmg(target, rawDmg, opts={}){
 
   // ★ v3.13.73 — 出血命中追加(主路徑,放在鬥技場統計之後避免重複計入):目標帶出血且本次為「真實傷害」→ 額外扣最大HP 6%/9%
   //   受護盾/減傷(走一般 doDmg,不帶 _dotIgnoreShield);鬥技場不調降;_fromBleedProc 防遞迴;BOSS 走 5000 cap
-  if(target && target.curHp > 0 && dmg > 0 && !opts._isDotTick && !opts._fromBleedProc && !opts.isHeal && !opts.isRebound && typeof hasStatus === 'function' && hasStatus(target,'bleed')){
+  // ★ v5.445.0 世界龍王不走這條舊的受擊追加(理由同 fixedDmg 路徑;v5.80.0 觸發式出血已涵蓋)
+  if(target && target.curHp > 0 && dmg > 0 && !opts._isDotTick && !opts._fromBleedProc && !opts.isHeal && !opts.isRebound && !(typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(target)) && typeof hasStatus === 'function' && hasStatus(target,'bleed')){
     try{
       const _bsH = (target.status||[]).find(s=>s.type==='bleed');
       const _bdH = Math.max(1, Math.floor((target.hp||1) * ((_bsH && _bsH._strong) ? 0.09 : 0.06)));
@@ -39809,7 +39922,8 @@ function doDmg(target, rawDmg, opts={}){
       if(target && _isWorldBossTarget(target) && _wbCapStageOk() /* ★ v4.34.0 乙:龍王一律 cap,不依賴 _adventureStage(舊: && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss') */){
         // ★ v5.361.0 軟上限(舊碼備查:const _wbCritBudget = Math.max(0, 5000 - (target._wbTurnDmgTaken||0)); 夾住後累加)
         const _wbCrIn = _wbCritExtraToDeduct;
-        _wbCritExtraToDeduct = window._wbSoftBudget(target, _wbCritExtraToDeduct);
+        _wbCritExtraToDeduct = window._wbSoftBudget(target, _wbCritExtraToDeduct, opts);
+        _wbCritExtraToDeduct = window._wbActorRoundCap(target, _wbCritExtraToDeduct, opts);   // ★ v5.445.0 火爆女每大回合合計上限
         if(_wbCritExtraToDeduct !== _wbCrIn){
           try{ log(`🔒 [${target.name}] 傷害軟上限(爆擊補扣):${_wbCrIn} → ${_wbCritExtraToDeduct}`); }catch(_){}
         }
@@ -41128,7 +41242,10 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
   // ════════════════════════════════════════════════════════════════
   if(target && target.name==='火爆女' && target.curHp>0 && old>0 && target.curHp<old){
     // (a) 能量 +1(不超過上限,沿用一般 addEnergy 規則)
-    if(typeof addEnergy === 'function'){
+    // ★ v5.445.0 龍王戰:受傷回能量每大回合最多 2 次(暴擊率累積照舊)
+    const _fbEnOk = window._wbFbEnergyOk(target);
+    if(!_fbEnOk){ /* 龍王戰本回合已回滿 2 次能量 */ }
+    else if(typeof addEnergy === 'function'){
       try{ addEnergy(target, 1); }catch(_eFE){
         // 退化方案:直接寫入 ep
         target.ep = Math.min(((typeof MAX_EP!=='undefined') ? MAX_EP : 9), (target.ep||0) + 1);
@@ -41142,7 +41259,7 @@ if(a && a.side!==target.side && old>0 && target.curHp<old && target.curHp>0 && !
     target._firebrandBonusCrit = Math.min(0.80, (target._firebrandBonusCrit || 0) + _cstFbT1Add);
     try{ if(_cstFbT1Add !== 0.03) log('✨ [' + target.name + '] 命星:暴怒累積!本次暴擊率累積 +5%'); }catch(_){}
     try{
-      log(`💥 [${target.name}] 怒火滿格!能量 +1,暴擊率本場 +3%(目前累積 +${Math.round(target._firebrandBonusCrit*100)}%)`);
+      log(`💥 [${target.name}] 怒火滿格!` + (_fbEnOk ? '能量 +1,' : '(龍王戰本回合回能量已達 2 次)') + `暴擊率本場 +3%(目前累積 +${Math.round(target._firebrandBonusCrit*100)}%)`);
     }catch(_){}
     try{ bannerFX(target, '💥 怒火滿格!', '#ff3300', 600); }catch(_){}
     try{ window._cstFbT2Rage(target, opts.actor || a, opts); }catch(_eCstFbT2){}   // ✨ v5.266.0 命星 火爆女 t2「怒火爆表星」
@@ -57817,7 +57934,7 @@ function startTurn(){
        && typeof G !== 'undefined' && G && Array.isArray(G.p2)){
       for(let _bi=0; _bi<G.p2.length; _bi++){
         const _b = G.p2[_bi];
-        if(_b && _isWorldBossTarget(_b)){ _b._wbTurnDmgTaken = 0; _b._wbTurnRaw = 0; }   // ★ v5.361.0 軟上限:原始累計一起歸零
+        if(_b && _isWorldBossTarget(_b)){ _b._wbTurnDmgTaken = 0; _b._wbTurnRaw = 0; _b._wbTurnRawU = 0; }   // ★ v5.361.0 軟上限:原始累計一起歸零
       }
     }
   }catch(_eWbTurnReset){}
