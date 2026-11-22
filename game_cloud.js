@@ -1202,10 +1202,10 @@
     const GRACE_MS = 4000;  // session 建立寫入傳播緩衝，避免剛登入/剛取回就誤判被踢
 
     // 被踢處理(原 _checkHeartbeat 'kicked' 分支，集中一處)
-    const _onKicked = function(){
+    const _onKicked = function(newSid){
       if(window._kickedFromSession) return;
-      try{ if(typeof window._forceSaveBattleSnapshotAndSync === 'function') window._forceSaveBattleSnapshotAndSync('about_to_be_kicked'); }catch(_){}
-      try{ if(typeof window._trySaveSafeIfHealthier === 'function') window._trySaveSafeIfHealthier('about_to_be_kicked'); }catch(_){}
+      // ★ v5.443.0 — 不再「被踢當下」各自補存(那會和新裝置的讀檔同時進行,新裝置讀到補存前的舊雲端)。
+      //   改為先鎖住一般存檔,再由 _lxpsHandoffOut 依序:回條 → 確認不是過時裝置 → 最後一次存檔 → 完成回條 → 自動登出。
       window._kickedFromSession = true;
       console.warn('⛔ [Session] 已被其他裝置踢出，後續存檔將被拒絕');
       try{ if(window._sessionListenerUnsub){ window._sessionListenerUnsub(); } }catch(_){}
@@ -1213,7 +1213,11 @@
       try{ if(window._sessionGraceTimer){ clearTimeout(window._sessionGraceTimer); } }catch(_){}
       window._sessionGraceTimer = null;
       if(window._safeSlotInterval){ clearInterval(window._safeSlotInterval); window._safeSlotInterval = null; }
-      try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice(); }catch(_){}
+      if(typeof window._lxpsHandoffOut === 'function'){
+        try{ window._lxpsHandoffOut(newSid); }catch(_eHO){ try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice({ synced:false, reason:'exception' }); }catch(_){} }
+      } else {
+        try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice(); }catch(_){}
+      }
     };
 
     // ★ v3.16.5 — 偵測到 GM 權威操作(補償/還原/重建)後的處置:鎖存(_authoritativeReloadTriggered → gameCloudSave 拒存)+ 重新載入,避免「補償前就已載入的過時 session」一存檔就蓋掉老師的操作(110082 補了又消失根治)
@@ -1298,11 +1302,27 @@
           }
         }
       }catch(_eGC){}
+      // ★ v5.443.0 — 登入交接保底(新裝置):讀檔之後才收到舊裝置「已存好最後進度」的回條,
+      //   而且那份比本台讀到的還新 ⇒ 本台記憶體不是最新 ⇒ 停存並自動重整讀最新(戰鬥中打完再重整)。
+      try{
+        var _ho = d.sessionHandoff;
+        if(_ho && _ho.to && _ho.to === window._mySessionId && _ho.state === 'done' && _ho.ok
+           && window._progressLoaded && !window._lxpsHandoffInPending && !window._lxpsLateHandoffSeen){
+          var _hoAt = +_ho.savedAt || 0;
+          if(_hoAt > (+window._lxpsCloudBaseAt || 0) + 1000){
+            window._lxpsLateHandoffSeen = true;
+            console.warn('🤝 [登入交接 v5.443.0] 舊裝置在本台讀檔之後才存好最後進度 ⇒ 停存並重新載入最新進度');
+            window._lxpsStaleBlocked = true;
+            try{ if(typeof window._lxpsOnStaleSession === 'function') window._lxpsOnStaleSession('handoff_late', _hoAt); }catch(_){}
+            return;
+          }
+        }
+      }catch(_eHL){}
       if(window._sessionClaimConfirmed !== true) return;    // ★ v3.14.4 (1)
       // 只有「別的裝置帶真實 session 上線」才算被踢；activeSession 為空不踢(避免誤殺)
       if(d.activeSession && d.activeSession !== window._mySessionId){
         if(withinGrace) return;  // 緩衝期內先忽略(claim 寫入可能還沒到)
-        _onKicked();
+        _onKicked(d.activeSession);
       }
     };
 
@@ -1519,7 +1539,8 @@
       if(!_mySid || !_base) return false;                       // 尚未載入過/沒有 session ⇒ 不判定(交給其他守門)
       // 主檔帶有登入權:本台的登入已確認送達,但雲端登入權已是別台 ⇒ 本台其實已被踢(監聽斷線沒收到通知),不准再寫
       if(where === 'main' && window._sessionClaimConfirmed === true
-         && existing.activeSession && existing.activeSession !== _mySid){
+         && existing.activeSession && existing.activeSession !== _mySid
+         && !(window._lxpsHandoffTo && existing.activeSession === window._lxpsHandoffTo)){   // ★ v5.443.0 登入交接:登入權剛交給新裝置、新裝置正在等本台的最後存檔 ⇒ 放行(下面的過時檢查照做)
         console.error('🛡️ [過時裝置守門 v5.442.0] 拒絕寫入 main — 登入權已在別台裝置(本台沒收到被踢通知)');
         window._lxpsStaleBlocked = true;
         try{ setTimeout(function(){ try{ window._lxpsOnStaleSession(where, 0); }catch(_){} }, 0); }catch(_){}
@@ -1536,7 +1557,168 @@
       return true;
     }catch(_e){ return false; }
   };
+  // ════════════════════════════════════════════════════════════════
+  // ★ v5.443.0(2026-11-22・老師:「玩家在新的裝置登入會取得控制權,此時把上一個帳號登出,並且同步最後存檔到雲端。
+  //   取得控制權的新裝置立刻下載雲端上面的最新版檔案,確定每一次登入取得控制權都是最新版本的存檔,
+  //   不要有原裝置過去舊記錄覆寫的問題發生。」)— 登入交接(session handoff)
+  //   舊版流程:新裝置搶登入權後「立刻」讀雲端;舊裝置收到被踢才補存 ⇒ 兩邊同時進行,
+  //     新裝置常常讀到「舊裝置補存之前」的雲端,接著舊裝置的補存又落地 ⇒ 新裝置拿著舊資料玩,或之後被迫重整。
+  //   新流程(兩邊對話,有先後):
+  //     ① 新裝置:登入前先記下「目前是哪一台持有登入」(prev),搶登入權,然後「等舊裝置交接」才讀雲端。
+  //     ② 舊裝置:收到被踢 ⇒ 立刻停止一般存檔 ⇒ 寫回條 sessionHandoff{to:新裝置, state:'saving'}
+  //        ⇒ 先確認自己不是過時裝置(雲端主檔最後一筆是自己寫的,或不比自己的基準新)⇒ 最後一次完整存檔
+  //        ⇒ 寫 sessionHandoff{state:'done', ok, savedAt} ⇒ 顯示「已在其他裝置登入,進度已同步」⇒ 自動登出。
+  //        過時裝置(分頁凍結好幾天)⇒ 不存檔,直接登出(舊記錄絕不覆寫)。
+  //     ③ 新裝置:收到 'done'(或 4 秒內沒有任何回條 = 舊裝置已關閉/睡著)⇒ 才下載雲端最新存檔。
+  //        舊裝置有回 'saving' 就最多再等 12 秒等它存完。
+  //     ④ 保底:讀檔之後若才收到舊裝置的 'done'(比本台讀到的還新)⇒ 本台停存並自動重整讀最新(戰鬥中打完再重整)。
+  //        這時舊裝置寫的是它真正的最新進度(它已通過「不是過時裝置」檢查),新裝置還沒存過,所以沒有東西會被蓋掉。
+  // ════════════════════════════════════════════════════════════════
+  window._lxpsHandoffBanner = function(msg){
+    try{
+      var _id = '_lxps-handoff-banner';
+      var el = document.getElementById(_id);
+      if(!msg){ if(el) el.remove(); return; }
+      if(!el){
+        el = document.createElement('div');
+        el.id = _id;
+        el.setAttribute('data-lxps-no-pczoom', '1');
+        el.style.cssText = 'position:fixed;left:50%;top:max(12px,3vmin);transform:translateX(-50%);z-index:2147483600;'
+          + 'max-width:92vw;box-sizing:border-box;padding:0.7em 1.3em;border-radius:1em;'
+          + 'background:rgba(10,30,50,0.94);border:2px solid #66ccff;color:#cfefff;font-weight:900;text-align:center;'
+          + 'font-size:clamp(15px,calc(1.2vmin + 9px),26px);line-height:1.5;box-shadow:0 0 24px rgba(80,180,255,0.45);'
+          + 'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;pointer-events:none;';
+        (document.body || document.documentElement).appendChild(el);
+      }
+      el.textContent = msg;
+    }catch(_){}
+  };
+  // 新裝置:登入前讀「目前持有登入的是誰」(最多 3 秒;讀不到就當沒有,照舊流程)
+  window._lxpsReadPrevSession = async function(uid){
+    try{
+      if(!uid || typeof _fbDb === 'undefined' || !_fbDb) return null;
+      var _rd = (typeof getDocFromServer === 'function') ? getDocFromServer : getDoc;
+      var _snap = await Promise.race([
+        _rd(doc(_fbDb, 'players', uid)).catch(function(){ return null; }),
+        new Promise(function(r){ setTimeout(function(){ r(null); }, 3000); })
+      ]);
+      if(!_snap || !_snap.exists()) return null;
+      var d = _snap.data() || {};
+      return { sid: d.activeSession || null, saveSid: d._saveSid || null, savedAt: +d.savedAt || 0 };
+    }catch(_){ return null; }
+  };
+  // 新裝置:等舊裝置交接(回傳 'none' | 'done' | 'skip' | 'timeout' | 'timeout_saving')
+  window._lxpsAwaitSessionHandoff = function(uid, mySid, prev){
+    return new Promise(function(resolve){
+      try{
+        if(!uid || !mySid || !prev || !prev.sid || prev.sid === mySid){ resolve('none'); return; }
+        // 上一台最後一次存檔已超過 40 分鐘(還開著的裝置 30 分鐘沒動作就會被強制登出)⇒ 那台早就不在線上,不用等
+        if(prev.saveSid === prev.sid && prev.savedAt > 0 && (Date.now() - prev.savedAt) > 40 * 60 * 1000){ resolve('none_idle'); return; }
+        if(typeof onSnapshot !== 'function' || typeof _fbDb === 'undefined' || !_fbDb){ resolve('none'); return; }
+      }catch(_){ resolve('none'); return; }
+      var _cute = (window._artStyle === 'cute');
+      var _ACK_MS = 4000, _DONE_MS = 12000;
+      var _t0 = Date.now(), _sawSaving = false, _fin = false, _unsub = null, _tm = null;
+      window._lxpsHandoffInPending = true;
+      var _finish = function(r){
+        if(_fin) return; _fin = true;
+        window._lxpsHandoffInPending = false;
+        try{ if(_unsub) _unsub(); }catch(_){}
+        try{ if(_tm) clearTimeout(_tm); }catch(_){}
+        try{ window._lxpsHandoffBanner(''); }catch(_){}
+        console.log('🤝 [登入交接 v5.443.0] 新裝置等待結果:' + r + '(' + (Date.now() - _t0) + 'ms)');
+        resolve(r);
+      };
+      window._lxpsHandoffBanner(_cute ? '🔄 正在把你在另一台的進度搬過來…' : '🔄 正在同步你在另一台裝置的最新進度…');
+      var _arm = function(ms, tag){ try{ if(_tm) clearTimeout(_tm); }catch(_){} _tm = setTimeout(function(){ _finish(tag); }, ms); };
+      _arm(_ACK_MS, 'timeout');
+      try{
+        _unsub = onSnapshot(doc(_fbDb, 'players', uid), function(snap){
+          try{
+            if(_fin || !snap || !snap.exists()) return;
+            if(snap.metadata && snap.metadata.hasPendingWrites) return;
+            var h = (snap.data() || {}).sessionHandoff;
+            if(!h || h.to !== mySid) return;
+            if(h.state === 'done'){ _finish(h.ok ? 'done' : 'skip'); return; }
+            if(h.state === 'saving' && !_sawSaving){
+              _sawSaving = true;
+              window._lxpsHandoffBanner(_cute ? '💾 另一台正在幫你存檔,馬上好…' : '💾 另一台裝置正在儲存最後進度,請稍候…');
+              _arm(Math.max(1000, _DONE_MS - (Date.now() - _t0)), 'timeout_saving');
+            }
+          }catch(_){}
+        }, function(){ _finish('timeout'); });
+      }catch(_){ _finish('none'); }
+    });
+  };
+  // 舊裝置:被踢後的交接(回條 → 最後存檔 → 完成回條 → 顯示通知並自動登出)
+  window._lxpsHandoffOut = async function(toSid){
+    if(window._lxpsHandoffOutActive) return;
+    window._lxpsHandoffOutActive = true;
+    var uid = window._gUserId, mySid = window._mySessionId;
+    var _res = { synced: false, stale: false, reason: '' };
+    var _mark = function(state, extra){
+      try{
+        if(!uid || !toSid) return Promise.resolve();
+        var h = { from: String(mySid || '').slice(0, 48), to: String(toSid).slice(0, 48), state: state, at: Date.now() };
+        if(extra){ for(var k in extra){ if(Object.prototype.hasOwnProperty.call(extra, k)) h[k] = extra[k]; } }
+        return Promise.race([
+          updateDoc(doc(_fbDb, 'players', uid), { sessionHandoff: h }).catch(function(e){ console.warn('[登入交接] 回條寫入失敗', e); }),
+          new Promise(function(r){ setTimeout(r, 4000); })
+        ]);
+      }catch(_){ return Promise.resolve(); }
+    };
+    try{
+      // 只有「新裝置真的在等我」(雲端登入權已是對方)才交接;其餘情況只顯示通知
+      if(!uid || !mySid || !toSid || toSid === mySid){ _res.reason = 'no_target'; }
+      else if(!window._progressLoaded || window._lxpsStaleBlocked || window._authoritativeReloadTriggered || window._lxpsTabYielded){
+        _res.reason = 'not_eligible'; _res.stale = !!window._lxpsStaleBlocked;
+        await _mark('done', { ok: false, why: _res.reason });
+      } else {
+        await _mark('saving');
+        // 先確認本台不是過時裝置:雲端主檔最後一筆若是「別台」在本台基準之後寫的 ⇒ 本台記憶體是舊的,絕不存
+        var _base = +window._lxpsCloudBaseAt || 0, _stale = false, _readOk = false;
+        try{
+          var _rd = (typeof getDocFromServer === 'function') ? getDocFromServer : getDoc;
+          var _s = await Promise.race([
+            _rd(doc(_fbDb, 'players', uid)).catch(function(){ return null; }),
+            new Promise(function(r){ setTimeout(function(){ r(null); }, 4000); })
+          ]);
+          if(_s && _s.exists()){
+            _readOk = true;
+            var _e = _s.data() || {};
+            if(_e._saveSid && _e._saveSid !== mySid && (+_e.savedAt || 0) > _base + 1000) _stale = true;
+            if(_e.activeSession && _e.activeSession !== toSid) _res.reason = 'session_moved';   // 又換了第三台 ⇒ 以最新那台為準,本台不再寫
+          }
+        }catch(_){}
+        if(!_readOk){ _res.reason = 'cloud_unreachable'; }                // 讀不到雲端(斷線)⇒ 不冒險寫入,免得離線排隊的舊資料日後蓋掉新裝置
+        else if(_stale){ _res.stale = true; _res.reason = 'stale'; }
+        else if(_res.reason !== 'session_moved'){
+          try{ if(typeof window._forceSaveBattleSnapshotAndSync === 'function') window._forceSaveBattleSnapshotAndSync('handoff_out'); }catch(_){}   // 戰鬥中先把本回合快照存到本機(它的雲端存檔會被擋,下面統一存)
+          var _ok = false;
+          try{
+            window._lxpsHandoffTo = toSid;        // 讓 _lxpsStaleWriteBlocked 允許「登入權已交給這台」時的最後一次存檔
+            window._lxpsHandoffSaving = true;     // 讓 gameCloudSave 放行被踢狀態(只限這一次呼叫)
+            window._lxpsCloudSaveForceNext = true;
+            var _p = (typeof window.gameCloudSave === 'function') ? window.gameCloudSave() : Promise.resolve(false);
+            window._lxpsHandoffSaving = false;
+            _ok = await Promise.race([ Promise.resolve(_p).catch(function(){ return false; }), new Promise(function(r){ setTimeout(function(){ r(false); }, 9000); }) ]);
+          }catch(_eS){ _ok = false; }
+          window._lxpsHandoffSaving = false;
+          _res.synced = !!_ok && !window._lxpsStaleBlocked;
+          if(window._lxpsStaleBlocked) _res.stale = true;
+          _res.reason = _res.synced ? 'saved' : (_res.stale ? 'stale' : 'save_failed');
+        }
+        await _mark('done', { ok: _res.synced, savedAt: _res.synced ? (+window._lxpsCloudBaseAt || 0) : 0, why: _res.reason });
+      }
+    }catch(_eH){ console.warn('[登入交接] 舊裝置交接例外', _eH); try{ await _mark('done', { ok: false, why: 'exception' }); }catch(_){} }
+    window._lxpsHandoffTo = null;
+    console.warn('🤝 [登入交接 v5.443.0] 舊裝置交接完成', _res);
+    try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice(_res); }catch(_){}
+    return _res;
+  };
+
   window._lxpsOnStaleSession = async function(where, exAt){
+    if(window._lxpsHandoffOutActive) return;   // ★ v5.443.0 交接中由 _lxpsHandoffOut 統一處理
     if(window._lxpsStaleHandled) return;
     window._lxpsStaleHandled = true;
     window._lxpsStaleBlocked = true;
@@ -1552,7 +1734,7 @@
       window._kickedFromSession = true;
       try{ if(window._sessionListenerUnsub){ window._sessionListenerUnsub(); } }catch(_){}
       window._sessionListenerUnsub = null;
-      try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice(); }catch(_){}
+      try{ if(typeof window._showKickedNotice === 'function') window._showKickedNotice({ synced: false, stale: true, reason: 'stale' }); }catch(_){}   // ★ v5.443.0 過時裝置不存檔、直接登出
       return;
     }
     // 保險絲:同一分頁 10 分鐘內已因此重整 2 次(可能另一台還在背景亂寫)⇒ 不再重整、不再擋,照舊存檔
@@ -5768,7 +5950,7 @@
     const _srcData = _oldP.data();
     ['_suspended', '_suspendedAt', '_suspendedBy', '_suspendReason',
      '_unsuspendedAt', '_unsuspendedBy',
-     'activeSession', 'sessionAt'].forEach(function(k){ delete _srcData[k]; });
+     'activeSession', 'sessionAt', 'sessionHandoff'].forEach(function(k){ delete _srcData[k]; });
     // ★ v3.16.61 — 修「轉移後新帳號無法登入」殘留根因:存檔內含 ownerUid(這份存檔屬於哪個 uid)。
     //   遷移整份複製會把舊帳號的 ownerUid 一起搬進新帳號 → 新帳號登入時 gameCloudLoad 的 Layer B
     //   發現 data.ownerUid(舊uid)≠ 現在登入 uid(新uid)→ 判定「外來資料」拒絕套用 → 卡「載入失敗」視窗。
@@ -22790,6 +22972,10 @@
       const _sid = localStorage.getItem('lxps_session_' + user.uid) || (Math.random().toString(36).slice(2) + Date.now().toString(36));
       localStorage.setItem('lxps_session_' + user.uid, _sid);
       window._mySessionId = _sid;
+      // ★ v5.443.0 登入交接 — 搶登入權之前先記下「目前是哪一台持有登入」(最多 3 秒;讀不到就照舊流程)
+      let _prevSess = null;
+      try{ if(typeof window._lxpsReadPrevSession === 'function') _prevSess = await window._lxpsReadPrevSession(user.uid); }catch(_){}
+      window._lxpsLateHandoffSeen = false;
       // ★★ v5.250.0(2026-10-13・老師「部分 iPad 登入卡很久進不了遊戲」)— 這一筆 updateDoc 原本**沒有逾時**:
       //   Firestore 寫入要等 server 確認才 resolve,斷線/壅塞時不會 reject、只會一直等 ⇒ 25 台同時登入時,
       //   後面的 gameCloudLoad 與自動進冒險全部被它擋住,學生看到「已登入」卻什麼都不動。
@@ -22798,6 +22984,13 @@
       if(window._fbCreateSession) {
         try{ await Promise.race([ window._fbCreateSession(user.uid, _sid), new Promise(function(r){ setTimeout(r, 4000); }) ]); }catch(_){}
       }
+      // ★ v5.443.0 登入交接 — 上一台還持有登入 ⇒ 先等它把最後進度存到雲端(它沒回應 4 秒就不等;有回應最多等 12 秒),
+      //   之後才下載雲端,確保讀到的一定是最新版存檔。同一台重新整理(sid 相同)不等。
+      try{
+        if(_prevSess && _prevSess.sid && _prevSess.sid !== _sid && typeof window._lxpsAwaitSessionHandoff === 'function'){
+          await window._lxpsAwaitSessionHandoff(user.uid, _sid, _prevSess);
+        }
+      }catch(_eHI){ window._lxpsHandoffInPending = false; }
       // ★ 2. 從雲端讀取最新進度(此時 A 電腦的存檔權已被搶走,雲端是 A 最後寫入版)
       if(typeof window.gameCloudLoad === 'function') await window.gameCloudLoad(user.uid);
       // ★ v3.15.93 — 雲端讀取完成 = 帳號資料就緒 → 通知練習營頂端「已經可以進入遊戲」

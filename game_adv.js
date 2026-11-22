@@ -30028,7 +30028,8 @@ async function gameCloudSave() {
 
   // ★ v1.0.20260424.1100 — 保護層 1.5:若已被其他裝置踢出,拒絕儲存
   //   避免 A 電腦在被 B 踢出後 (心跳尚未檢查到) 持續存檔,把 B 的進度蓋回去
-  if(window._gUserId && window._kickedFromSession) {
+  // ★ v5.443.0 — 唯一例外:登入交接的「最後一次存檔」(_lxpsHandoffOut 只在確認本台不是過時裝置後才設 _lxpsHandoffSaving)
+  if(window._gUserId && window._kickedFromSession && !window._lxpsHandoffSaving) {
     console.warn('⛔ [存檔保護] 已被其他裝置踢出,拒絕儲存');
     return false;
   }
@@ -83629,7 +83630,64 @@ function _showRetroMedalRewardNotice(opts){
 
 
 // ══ 多裝置保護：被踢出通知 ══
-function _showKickedNotice(){
+// ★ v5.443.0(老師:「玩家在新的裝置登入會取得控制權,此時把上一個帳號登出,並且同步最後存檔到雲端」)
+//   舊裝置被踢後由 game_cloud.js _lxpsHandoffOut 完成最後存檔,這裡只負責告訴學生結果並「自動登出」(倒數 6 秒,可按立即登出)。
+//   不再提供「重新取得控制」:想回這台玩 ⇒ 重新登入 = 走一次正常的登入交接,讀到的一定是最新存檔。
+//   opts = { synced:true/false, stale:true/false, reason } ;舊版呼叫(沒有 opts)視同未同步。
+function _showKickedNotice(opts){
+  opts = opts || {};
+  try{ if(typeof _gamePaused !== 'undefined') _gamePaused = true; }catch(_){}
+  var _cute = (window._artStyle === 'cute');
+  var _msg;
+  if(opts.synced){
+    _msg = _cute ? '這台最後的進度已經存到雲端,<br>在新的那台登入就能接著玩!'
+                 : '本裝置的最後進度已同步至雲端,<br>新登入的裝置已取得最新存檔,可以直接繼續遊戲。';
+  } else if(opts.stale){
+    _msg = _cute ? '這台的進度比較舊,所以沒有存檔,<br>新的那台會用你最新的進度。'
+                 : '本裝置的資料比雲端舊,為了保護你的最新進度,本次不寫入雲端;<br>新登入的裝置會使用雲端最新存檔。';
+  } else {
+    _msg = _cute ? '你的進度會以雲端最新的存檔為準。'
+                 : '進度以雲端最新存檔為準(本裝置這次沒有新的進度需要同步)。';
+  }
+  var _old = document.getElementById('_kicked-notice');
+  if(_old) _old.remove();
+  var pop = document.createElement('div');
+  pop.id = '_kicked-notice';
+  pop.setAttribute('data-lxps-no-pczoom', '1');
+  pop.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);'
+    + 'display:flex;align-items:safe center;justify-content:center;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
+    + '--kn:clamp(12px,calc(min(100vw,100vh*1.6)/60),30px);';
+  pop.innerHTML = '<div style="background:linear-gradient(135deg,#1a0820,#0d0515);border:3px solid #ff4488;'
+    + 'border-radius:calc(var(--kn)*1.4);padding:calc(var(--kn)*2) calc(var(--kn)*2.4);width:min(92vw,calc(var(--kn)*44));'
+    + 'max-height:min(92dvh,92vh);overflow-y:auto;box-sizing:border-box;text-align:center;box-shadow:0 0 60px rgba(255,50,120,0.5);">'
+    + '<div style="font-size:calc(var(--kn)*3.4);margin-bottom:calc(var(--kn)*0.6);">📱</div>'
+    + '<div style="font-size:calc(var(--kn)*1.7);font-weight:900;color:#ff4488;margin-bottom:calc(var(--kn)*0.8);">'
+    + (_cute ? '你的帳號在別台登入囉!' : '帳號已在其他裝置登入') + '</div>'
+    + '<div style="font-size:calc(var(--kn)*1.15);color:#ddd;margin-bottom:calc(var(--kn)*0.8);line-height:1.6;">' + _msg + '</div>'
+    + '<div style="font-size:calc(var(--kn)*1.05);color:#ffcc66;margin-bottom:calc(var(--kn)*0.6);font-weight:900;">'
+    + (_cute ? '這台會在 <span id="_kicked-cd">6</span> 秒後自動登出' : '本裝置將於 <span id="_kicked-cd">6</span> 秒後自動登出') + '</div>'
+    + '<div style="font-size:calc(var(--kn)*0.9);color:#888;margin-bottom:calc(var(--kn)*1.1);">'
+    + (_cute ? '(不是你登入的?趕快告訴老師)' : '(若不是你本人在其他裝置登入,請告知老師確認帳號安全)') + '</div>'
+    + '<button onclick="_sessionForceLogout()" style="padding:calc(var(--kn)*0.7) calc(var(--kn)*2.2);font-size:calc(var(--kn)*1.25);font-weight:900;'
+    + 'background:linear-gradient(135deg,rgba(255,50,120,0.3),rgba(180,20,80,0.3));'
+    + 'border:2px solid #ff4488;color:#ff88bb;border-radius:calc(var(--kn)*0.8);cursor:pointer;">'
+    + (_cute ? '馬上登出' : '立即登出') + '</button>'
+    + '</div>';
+  document.body.appendChild(pop);
+  // 倒數自動登出(只排一次)
+  try{ if(window._kickedLogoutTimer) clearInterval(window._kickedLogoutTimer); }catch(_){}
+  var _left = 6;
+  window._kickedLogoutTimer = setInterval(function(){
+    _left--;
+    try{ var c = document.getElementById('_kicked-cd'); if(c) c.textContent = String(Math.max(0, _left)); }catch(_){}
+    if(_left <= 0){
+      clearInterval(window._kickedLogoutTimer); window._kickedLogoutTimer = null;
+      try{ _sessionForceLogout(); }catch(_){ try{ location.reload(); }catch(__){} }
+    }
+  }, 1000);
+}
+// 舊版被踢視窗(v5.443.0 起不再使用,保留備查)
+function _showKickedNoticeLegacy(){
   // ★ v3.5.16 — 在被踢通知前再寫一次快照(雙保險,即使 _checkHeartbeat 那邊漏掉)
   try{
     if(typeof window._forceSaveBattleSnapshotAndSync === 'function'){
@@ -83701,12 +83759,9 @@ function _sessionReclaim(){
     if(pop0) pop0.innerHTML = '<div style="color:#aaffcc;font-size:22px;font-weight:900;text-align:center;padding:30px;">🔄 正在載入你最新的進度…</div>';
   }catch(_){}
   const _rcReload = function(){ try{ if(typeof window._lxpsReloadKeepLogin === 'function'){ window._lxpsReloadKeepLogin(); return; } }catch(_){} try{ location.reload(); }catch(_){} };
-  if(window._fbCreateSession){
-    Promise.race([ Promise.resolve(window._fbCreateSession(window._gUserId, newSid)), new Promise(function(r){ setTimeout(r, 4000); }) ])
-      .catch(function(){}).then(function(){ setTimeout(_rcReload, 300); });
-  } else {
-    setTimeout(_rcReload, 300);
-  }
+  // ★ v5.443.0 — 不在重整前搶登入權:重整後的登入流程會「先等另一台存好最後進度、再下載」(登入交接),
+  //   若這裡先搶,重整後會以為登入權本來就在自己手上而不等待。
+  setTimeout(_rcReload, 300);
   return;
   // ★ v1.0.20260424.1110 — 重置「被踢」flag 並重啟心跳(5 秒間隔)
   window._kickedFromSession = false;
@@ -83719,6 +83774,10 @@ function _sessionReclaim(){
 }
 
 function _sessionForceLogout(){
+  // ★ v5.443.0 — 倒數自動登出與按鈕可能同時觸發 ⇒ 只執行一次
+  try{ if(window._kickedLogoutTimer){ clearInterval(window._kickedLogoutTimer); window._kickedLogoutTimer = null; } }catch(_){}
+  if(window._kickedLogoutRunning) return;
+  window._kickedLogoutRunning = true;
   const pop = document.getElementById('_kicked-notice');
   if(pop) pop.remove();
   // ★ v5.136.0 — 與 _showLogoutPin 同口徑:登出後強制重載,確保 Firebase SDK 與 IndexedDB
