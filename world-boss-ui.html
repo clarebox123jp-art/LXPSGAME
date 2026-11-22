@@ -7679,6 +7679,21 @@ try{
           }
         }
       }catch(_ePsS){}
+      // ★ v5.445.0(老師 2026-11-23 同一張截圖:伊莉雅確認頁 186、戰鬥 219;漫畫家 132、戰鬥 154)
+      //   房主自己的槽(含房主代打)開戰時是用 _wbBuildPrepSnap 算(投資/膠囊/等級HP/至寶/裝備/寵物),
+      //   確認頁卻走下方舊算法(只有基礎+投資+等級,而且讀 BOSS 版)⇒ 數字不一致。⇒ 自己的槽改用同一支 builder。
+      if(isMe && typeof window._wbBuildPrepSnap === 'function'){
+        try{
+          let _tIds = null;
+          try{ const _exT = playerObj ? _wbTcParsePlayerExt(playerObj) : null; if(_exT && Array.isArray(_exT.t) && _exT.t.length) _tIds = _exT.t; }catch(_){}
+          const _psMe = window._wbBuildPrepSnap(heroName, _tIds);
+          if(_psMe && _psMe.f){
+            const _b1 = _wbTcHeroBase(heroName) || HERO_DB[heroName];
+            const _pk = function(k){ return (typeof _psMe.f[k] === 'number') ? _psMe.f[k] : ((_b1 && _b1[k]) || 0); };
+            return { hp: _pk('hp'), atk: _pk('atk'), sp: _pk('sp'), spd: _pk('spd') };
+          }
+        }catch(_ePsMe){}
+      }
       const base = _wbTcHeroBase(heroName) || HERO_DB[heroName];   // ★ v5.445.0 招募版素質(原:HERO_DB[heroName] = BOSS 版)
       // 起始:HERO_DB 的 baseStats
       let hp  = base.hp  || 0;
