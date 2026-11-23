@@ -2365,6 +2365,7 @@ function exitAdventureMode(){
       'wb-boss-opening-quiz',       // 開戰題視窗 (回合 1 那題)
       'wb-adv-boss-info-popup',     // BOSS 能力介紹彈窗
       'wb-battle-flame-layer',      // 火焰粒子層 (戰鬥背景特效)
+      'wb-dragon-aura-layer',       // ★ v5.450.0 龍王圖片上的屬性發光粒子層
       'wb-boss-click-layer',        // BOSS 透明點擊層
       'wb-shield-hint-modal',       // 護盾啟動提示視窗 (8 秒自動消但保險清掉)
       'wb-quiz-overlay-active',     // 每回合答題視窗
@@ -15799,6 +15800,7 @@ function advStartBattle(){
   (function(){
     const _bb=document.getElementById('adv-battle-bg');
     if(_bb){
+      try{ const _oldAura = document.getElementById('wb-dragon-aura-layer'); if(_oldAura) _oldAura.remove(); }catch(_){}   // ★ v5.450.0 上一場龍王戰的屬性粒子層(放在 #adv-battle-bg 裡,其他關卡要清掉)
       _bb.className='';
       _bb.style.backgroundImage = ''; // 清掉 inline 背景
       let _bgCls;
@@ -16044,6 +16046,64 @@ function advStartBattle(){
           + '<span class="'+_pc+' wb-flame-top" style="--i:6;--x:25%;--delay:0.45s;"></span>'
           + '<span class="'+_pc+' wb-flame-top" style="--i:7;--x:70%;--delay:1.05s;"></span>';
         document.body.appendChild(_fl);
+        // ★ v5.450.0(2026-11-23・老師「所有龍王戰的戰鬥畫面都在龍王圖片上追加對應屬性的發光升起粒子，讓戰鬥畫面更有動態感」)
+        //   粒子層放在 #adv-battle-bg「裡面」(z-index:1,壓在 ::after 暗化遮罩之上、英雄卡之下),跟著龍王圖一起震動;
+        //   顏色依 WORLD_BOSS_LINEUP[].element(火/水/風/土/暗/光/草;幻=omni 多色)。
+        //   只用 transform/opacity 動畫、不用 filter/box-shadow(平板省效能);流暢模式 body.lxps-lite 只留一半粒子。
+        //   上升距離用「粒子柱高 42% × translateY(-100%)」做,不在 @keyframes 裡用 var()(舊 iPad Safari 相容)、不用 vh。
+        try{
+          const _AURA_PAL = {
+            fire:  [['#fffbe0','#ffb347','rgba(255,80,20,0)']],
+            water: [['#f0fbff','#6fd0ff','rgba(30,110,255,0)']],
+            wind:  [['#f4fff9','#9fffe0','rgba(40,220,170,0)']],
+            earth: [['#fff3d6','#e6b86a','rgba(170,110,40,0)']],
+            dark:  [['#f6e6ff','#b06aff','rgba(90,20,160,0)']],
+            light: [['#ffffff','#ffe066','rgba(255,185,30,0)']],
+            grass: [['#f1ffe8','#8ef08a','rgba(40,170,60,0)']],
+            omni:  [['#fdf0ff','#d38bff','rgba(140,60,255,0)'], ['#eef8ff','#7fc8ff','rgba(40,120,255,0)'],
+                    ['#fff0f8','#ff8fcf','rgba(255,60,160,0)'], ['#fffbe8','#ffe27a','rgba(255,190,40,0)']]
+          };
+          const _pal = _AURA_PAL[_wbElem] || _AURA_PAL.fire;
+          if(!document.getElementById('wb-dragon-aura-style')){
+            const _ast = document.createElement('style');
+            _ast.id = 'wb-dragon-aura-style';
+            _ast.textContent = ''
+              + '#wb-dragon-aura-layer{position:absolute;left:0;top:0;right:0;bottom:0;z-index:1;pointer-events:none;overflow:hidden;}'
+              + '#wb-dragon-aura-layer .wb-aura-p{position:absolute;left:var(--x);bottom:var(--b);width:var(--s);height:42%;margin-left:calc(var(--s) / -2);'
+              + 'opacity:0;will-change:transform,opacity;animation:wbAuraRiseA var(--d) linear infinite;animation-delay:var(--dl);}'
+              + '#wb-dragon-aura-layer .wb-aura-p.wb-aura-b{animation-name:wbAuraRiseB;}'
+              + '#wb-dragon-aura-layer .wb-aura-p::before{content:"";position:absolute;left:0;bottom:0;width:var(--s);height:var(--s);border-radius:50%;'
+              + 'background:radial-gradient(circle,var(--c1) 0%,var(--c2) 34%,var(--c3) 72%);}'
+              + '#wb-dragon-aura-layer .wb-aura-p.wb-aura-big::before{background:radial-gradient(circle,var(--c1) 0%,var(--c2) 22%,var(--c3) 70%);}'
+              + '@keyframes wbAuraRiseA{0%{transform:translate(0,0) scale(0.45);opacity:0;}'
+              + '12%{opacity:0.95;}50%{transform:translate(14px,-52%) scale(1);opacity:0.9;}'
+              + '100%{transform:translate(-6px,-100%) scale(0.3);opacity:0;}}'
+              + '@keyframes wbAuraRiseB{0%{transform:translate(0,0) scale(0.45);opacity:0;}'
+              + '12%{opacity:0.95;}50%{transform:translate(-14px,-48%) scale(1);opacity:0.9;}'
+              + '100%{transform:translate(8px,-100%) scale(0.3);opacity:0;}}'
+              + 'body.lxps-lite #wb-dragon-aura-layer .wb-aura-p:nth-child(2n){display:none;}';
+            document.head.appendChild(_ast);
+          }
+          const _aur = document.createElement('div');
+          _aur.id = 'wb-dragon-aura-layer';
+          _aur.setAttribute('data-wb-elem', _wbElem);
+          let _ah = '';
+          const _AN = 24;
+          for(let _ai = 0; _ai < _AN; _ai++){
+            const _c = _pal[_ai % _pal.length];
+            const _big = (_ai % 6 === 0);
+            const _x = (20 + ((_ai * 37) % 61) + Math.random() * 4).toFixed(1);      // 20%~85%:龍王身體所在的中間區
+            const _b = (6 + ((_ai * 23) % 38) + Math.random() * 3).toFixed(1);        // 從畫面下方 6%~47% 冒出
+            const _s = _big ? (34 + Math.round(Math.random() * 12)) : (13 + Math.round(Math.random() * 11));   // 設計 px(跟著 #gc 縮放)
+            const _d = (3.4 + ((_ai * 7) % 20) / 10 + Math.random() * 0.6).toFixed(2);
+            const _dl = (-(_ai * 0.37) % 5.5).toFixed(2);                              // 負延遲:一進場就滿畫面,不會空白幾秒
+            _ah += '<span class="wb-aura-p' + (_ai % 2 ? ' wb-aura-b' : '') + (_big ? ' wb-aura-big' : '') + '" style="'
+                 + '--x:' + _x + '%;--b:' + _b + '%;--s:' + _s + 'px;--d:' + _d + 's;--dl:' + _dl + 's;'
+                 + '--c1:' + _c[0] + ';--c2:' + _c[1] + ';--c3:' + _c[2] + ';"></span>';
+          }
+          _aur.innerHTML = _ah;
+          _bb.appendChild(_aur);
+        }catch(_eAura){ console.warn('[v5.450.0 龍王屬性粒子]', _eAura); }
       } else if(_stage === 'mainstory'){
         // ★★ v4.91.0(老師裁定 ❸甲)— 主線戰鬥背景改用「該場戰鬥所在的主線場景圖」,劇情與戰場完全連貫。
         //   舊行為:沒有 mainstory 分支 → 六場全部落到 else 套 bg-boss(貓空茶園 BOSS 背景),
