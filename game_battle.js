@@ -61988,6 +61988,17 @@ function _realAiAct(a){
   var _abAllowHeal  = !(_abCfg && _abCfg.healRevive === false);
   var _abTgtHigh    = !!(_abCfg && _abCfg.tgtHigh === true);
   var _abTgtLow     = !!(_abCfg && _abCfg.tgtLow  === true);
+  // ★ v5.445.0(老師 2026-11-23「元素護盾那回合全員用普攻打就可以」)— 龍王戰我方 AI(自動戰鬥/房主代打):
+  //   龍王身上還有元素護盾時,這一動一律普攻破盾(不放技能、不放爆發,能量留給破盾後輸出)。
+  //   破完(護盾 0)就恢復原本設定。只影響龍王戰我方;冒險/鬥技場/敵方 AI 不變。
+  try{
+    if(a && a.side === 'p1' && typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss'
+       && typeof window._wbGetTotalShield === 'function' && typeof _isWorldBossTarget === 'function'
+       && Array.isArray(G.p2) && G.p2.some(function(b){ return b && b.curHp > 0 && _isWorldBossTarget(b) && window._wbGetTotalShield(b) > 0; })){
+      _abAllowAtk = true; _abAllowS1 = false; _abAllowS2 = false; _abAllowBurst = false;
+      try{ console.log('[WB-AI v5.445.0] 元素護盾回合 ⇒ ' + a.name + ' 普攻破盾'); }catch(_){}
+    }
+  }catch(_eWbShAtk){}
   // ★ v1.0.20260428.4010 — [診斷] _realAiAct 進入
   try{
     // ★ v1.0.20260513.6440 — 擴充:不再限 taiwan,所有冒險模式都印
