@@ -5242,8 +5242,60 @@ try{
     const ov = document.getElementById('wb-visibility-overlay');
     if(ov) ov.style.display = 'none';
   };
+  // ═════════════════════════════════════════════════════════════════
+  // ★ v5.448.0(老師 2026-11-23 10:20)開房前提醒視窗:單人(練習/正式)可存檔續戰;多人組隊無法存檔、預估 10 分鐘
+  //   「確認開戰」才進編組頁,「取消」回入口。字級用 --u(同續戰視窗 _wbSoloResumeUnit:PC/平板/手機橫放三套)。
+  //   回傳 Promise<boolean>
+  // ═════════════════════════════════════════════════════════════════
+  window._wbStartConfirm = function(kind){
+    return new Promise(function(resolve){
+      try{
+        const old = document.getElementById('wb-start-confirm-ov'); if(old) old.remove();
+        const solo = (kind !== 'multi');
+        const cute = (window._artStyle === 'cute');
+        let U = { u:22, W:window.innerWidth||1024, H:window.innerHeight||768, phone:false };
+        try{ if(typeof window._wbSoloResumeUnit === 'function') U = window._wbSoloResumeUnit(); }catch(_){}
+        const title = solo
+          ? (kind === 'practice' ? '🧪 單人練習' : '👤 單人龍王戰')
+          : '👥 多人組隊龍王戰';
+        const body = solo
+          ? (cute ? '單人龍王戰打到一半可以<b style="color:#88ffcc;">存檔離開遊戲</b>,<br>下次進遊戲可以接著<b style="color:#88ffcc;">繼續打完</b>。'
+                  : '單人龍王戰打到一半可以<b style="color:#88ffcc;">存檔離開遊戲</b>,<br>下次進遊戲可接著<b style="color:#88ffcc;">繼續打完</b>。')
+          : '多人組隊龍王戰打到一半<b style="color:#ff8888;">無法存檔</b>,<br>中途退出遊戲<b style="color:#ff8888;">不會留下任何記錄或獎勵</b>。<br><br>'
+            + '請確認現在是否有充足時間<br>(預估 <b style="color:#ffe066;">10 分鐘</b>左右)可以和隊友完成戰鬥。';
+        const tip = solo ? '存檔方法:戰鬥中按「⏸ 暫停」→「存檔並關閉」' : '';
+        const bd = solo ? 'rgba(93,202,165,0.9)' : 'rgba(255,170,100,0.9)';
+        const ov = document.createElement('div');
+        ov.id = 'wb-start-confirm-ov';
+        ov.setAttribute('data-lxps-no-pczoom', '1');
+        ov.style.cssText = 'position:fixed;inset:0;z-index:10050;background:rgba(0,0,10,0.88);display:flex;align-items:safe center;justify-content:center;'
+          + 'padding:calc(var(--u)*0.6);box-sizing:border-box;overflow-y:auto;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;--u:' + U.u + 'px;';
+        const cardW = Math.floor(Math.min(U.W * (U.phone ? 0.96 : 0.9), U.u * 26));
+        ov.innerHTML =
+          '<div style="width:' + cardW + 'px;max-height:' + Math.floor(U.H * 0.94) + 'px;overflow-y:auto;box-sizing:border-box;text-align:center;'
+          + 'background:linear-gradient(160deg,rgba(24,20,48,0.99),rgba(10,8,24,0.99));border:max(2px,calc(var(--u)*0.1)) solid ' + bd + ';'
+          + 'border-radius:calc(var(--u)*0.9);padding:calc(var(--u)*1) calc(var(--u)*1.2);box-shadow:0 0 50px rgba(120,100,255,0.35);">'
+          + '<div style="font-size:calc(var(--u)*1.45);font-weight:900;color:#fff;margin-bottom:calc(var(--u)*0.6);line-height:1.25;">' + title + '</div>'
+          + '<div style="font-size:calc(var(--u)*1.1);color:#eee;line-height:1.75;margin-bottom:calc(var(--u)*0.6);">' + body + '</div>'
+          + (tip ? '<div style="font-size:calc(var(--u)*0.85);color:#a0e6c8;margin-bottom:calc(var(--u)*0.6);">' + tip + '</div>' : '')
+          + '<div style="display:flex;gap:calc(var(--u)*0.6);justify-content:center;flex-wrap:wrap;margin-top:calc(var(--u)*0.3);">'
+          +   '<button id="wb-sc-go" style="flex:1 1 auto;min-width:calc(var(--u)*7);padding:calc(var(--u)*0.55) calc(var(--u)*0.8);font-size:calc(var(--u)*1.1);font-weight:900;'
+          +     'border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#d0702a,#8a3a10);border:max(2px,calc(var(--u)*0.09)) solid #ffb070;color:#fff;">⚔ 確認開戰</button>'
+          +   '<button id="wb-sc-no" style="flex:1 1 auto;min-width:calc(var(--u)*7);padding:calc(var(--u)*0.55) calc(var(--u)*0.8);font-size:calc(var(--u)*1.1);font-weight:900;'
+          +     'border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;background:rgba(50,50,70,0.9);border:max(2px,calc(var(--u)*0.09)) solid #8888aa;color:#ddd;">取消</button>'
+          + '</div></div>';
+        document.body.appendChild(ov);
+        const done = function(v){ try{ ov.remove(); }catch(_){} resolve(v); };
+        document.getElementById('wb-sc-go').onclick = function(){ try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.5); }catch(_){} done(true); };
+        document.getElementById('wb-sc-no').onclick = function(){ try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.4); }catch(_){} done(false); };
+      }catch(e){ console.warn('[v5.448.0 開戰提醒] 例外,直接放行', e); resolve(true); }
+    });
+  };
+
   window._wbUiConfirmCreate = async function(visibility){
     _wbUiCloseVisibilityChoice();
+    // ★ v5.448.0 多人房先提醒「無法存檔、約 10 分鐘」,確認才開房
+    if(!(await window._wbStartConfirm('multi'))) return;
     await window._wbUiCreateRoom(visibility);
   };
 
@@ -13360,6 +13412,11 @@ try{
     // ★ FIX 20260516 — 單人練習改成:先進隊伍確認頁讓玩家挑 4 英雄/元素/至寶,再開戰
     // ★ v5.447.0 若上一場是「單人挑戰(正式)」途中走掉的,旗標可能殘留 —— 練習一律清掉,絕不算正式
     if(!window._wbSoloOfficialStarting){ window._wbSoloOfficial = false; window._wbSoloBattleKey = null; }
+    // ★ v5.448.0 單人(練習/正式)先提醒「可存檔續戰」,確認才進編組頁
+    if(!(await window._wbStartConfirm(window._wbSoloOfficial ? 'solo' : 'practice'))){
+      if(!window._wbSoloOfficialStarting){ window._wbSoloOfficial = false; }
+      return;
+    }
     _wbSoloOpenTeamConfirm();
   };
 
