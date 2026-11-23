@@ -74342,9 +74342,27 @@ function _exitToStageAfterSave(){
       window._wbSoloSavingExit = true;   // 假連線 leaveRoom 看到這個就不寫「練習最高紀錄」(還沒打完)
       try{ if(window._wbNet && typeof window._wbNet.leaveRoom === 'function') window._wbNet.leaveRoom(); }catch(eWbL){ console.warn('[v5.447.0 龍王存檔離開] leaveRoom 失敗', eWbL); }
       window._wbSoloSavingExit = false;
-      try{ if(_wbSnapKeep) localStorage.setItem('adv_battle_snap', _wbSnapKeep); }catch(_){}
+      // ★ v5.449.0(老師 2026-11-23 14:25「龍王戰存檔後應該要直接退出,目前存檔後龍王頂部血條消失、變成卡牌模式,右上角暫停變成鬥技場的模式」)
+      //   根因:leaveRoom 只收掉龍王戰外殼(頂部血條 overlay、_adventureStage=null),底下 #gc 的戰鬥(G、計時器、AI)還在跑
+      //   ⇒ 露出一般卡牌戰鬥、暫停鈕因為沒有 _adventureStage 被當成鬥技場;若玩家再按「投降」會走 backToHomeArena 把快照清掉 = 存檔不見。
+      //   修法:存完檔就把整場戰鬥真正停掉、清空畫面(不碰快照),再顯示「已存檔」視窗,按鈕直接回關卡頁。
+      try{ if(typeof clearTurnTimer === 'function') clearTurnTimer(); }catch(_){}
+      try{ if(typeof _clearPendingTimers === 'function') _clearPendingTimers('龍王存檔離開'); }catch(_){}
+      try{ ['_aiWatchdog','_deadlockWatchdog','_execSkillGuard','_quizDeadlockWatchdog','_advRoundQuizTimeout'].forEach(function(k){ if(window[k]){ clearTimeout(window[k]); window[k] = null; } }); }catch(_){}
+      try{ if(typeof _stuckCheckTimer !== 'undefined' && _stuckCheckTimer) clearInterval(_stuckCheckTimer); }catch(_){}
+      try{ if(typeof exitAdventureMode === 'function') exitAdventureMode(); }catch(eWbX){ console.warn('[v5.449.0 龍王存檔離開] exitAdventureMode 失敗', eWbX); }
+      try{ if(typeof ctrlBattleToggle === 'function') ctrlBattleToggle(false); }catch(_){}
+      try{ var _tfbW = document.getElementById('_tut-float-btn'); if(_tfbW) _tfbW.style.display = 'none'; }catch(_){}
+      try{ ['pause-overlay','quiz-overlay','burst-panel','action-confirm-bar','passive-prompt','burst-priority-modal','adv-quiz-overlay','wb-adv-battle-overlay','wb-boss-opening-quiz','wb-solo-cur-dmg-bar'].forEach(function(id){ var el = document.getElementById(id); if(el){ el.style.display = 'none'; if(el.classList) el.classList.remove('show'); } }); }catch(_){}
+      try{ G = {}; fieldCards = []; if(typeof updateFieldFX === 'function') updateFieldFX(); }catch(_){}
+      try{ ['row1','row2','log'].forEach(function(id){ var el = document.getElementById(id); if(el) el.innerHTML = ''; }); var _apW = document.getElementById('action-panel'); if(_apW) _apW.style.display = 'none'; }catch(_){}
+      try{ if(typeof bgmFadeTo === 'function') bgmFadeTo('bgm-home', 600); }catch(_){}
+      _gamePaused = false;
+      try{ if(_wbSnapKeep) localStorage.setItem('adv_battle_snap', _wbSnapKeep); }catch(_){}   // 上面每一步都可能動到快照 ⇒ 最後再寫回一次
       try{ window._lxpsCloudSaveForceNext = true; if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
       console.log('[v5.447.0 龍王存檔離開] 已離開單人龍王戰,快照' + (_wbSnapKeep ? '保留' : '⚠ 沒讀到'));
+      _showCloseGameLockOverlay({ wb: true, ok: !!_wbSnapKeep });
+      return;
     }else
     // 1. 用既有的 exitAdventureMode 做完整清理(_adventureMode/_advMiniBattleActive/各種 overlay/BGM/背景等)
     try{
@@ -74380,10 +74398,53 @@ function _exitToStageAfterSave(){
 
 // ── ★ v3.10.10 — 「請關閉遊戲」全螢幕鎖定頁 ───────────────────────
 //   顯示存檔成功 + 兩個按鈕:「我要放棄」(紅色,二次確認)、「我知道了」(關彈窗但背景仍鎖死)
-function _showCloseGameLockOverlay(){
+function _showCloseGameLockOverlay(opt){
   // 防重複
   const _old = document.getElementById('_close-game-lock');
   if(_old) _old.remove();
+  // ★ v5.449.0 單人龍王戰存檔離開:戰鬥已經整場收掉 ⇒ 清楚告訴玩家「已存檔」,按鈕直接回關卡頁(不必關遊戲)
+  if(opt && opt.wb){
+    var _cute = (window._artStyle === 'cute'), _snapW = null, _rdW = 0;
+    try{ _snapW = JSON.parse(localStorage.getItem('adv_battle_snap') || 'null'); _rdW = (_snapW && (_snapW.round || (_snapW.battleState || {}).round)) || 0; }catch(_){}
+    var _U = _wbSoloResumeUnit(), _cw = Math.floor(Math.min(_U.W * (_U.phone ? 0.96 : 0.92), _U.u * 26));
+    var _btnCss = 'flex:1 1 auto;min-width:calc(var(--u)*8);padding:calc(var(--u)*0.55) calc(var(--u)*0.8);font-size:calc(var(--u)*1.1);font-weight:900;border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;';
+    const ovw = document.createElement('div');
+    ovw.id = '_close-game-lock';
+    ovw.setAttribute('data-lxps-no-pczoom', '1');
+    ovw.style.cssText = 'position:fixed;inset:0;z-index:99500;background:rgba(0,0,8,0.93);display:flex;align-items:safe center;justify-content:center;padding:calc(var(--u)*0.6);box-sizing:border-box;overflow-y:auto;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;--u:' + _U.u + 'px;';
+    ovw.innerHTML = '<div style="width:' + _cw + 'px;max-height:' + Math.floor(_U.H * 0.94) + 'px;overflow-y:auto;box-sizing:border-box;text-align:center;color:#fff;margin:auto;'
+      + 'background:linear-gradient(160deg,rgba(18,40,24,0.99),rgba(6,16,10,0.99));border:max(2px,calc(var(--u)*0.1)) solid rgba(120,255,160,0.8);border-radius:calc(var(--u)*0.9);padding:calc(var(--u)*0.9) calc(var(--u)*1.1);box-shadow:0 0 60px rgba(80,255,140,0.35);">'
+      + '<div style="font-size:calc(var(--u)*2.2);line-height:1.1;margin-bottom:calc(var(--u)*0.25);">🐉💾</div>'
+      + '<div style="font-size:calc(var(--u)*1.45);font-weight:900;color:#88ffaa;margin-bottom:calc(var(--u)*0.4);line-height:1.25;">'
+      +   (opt.ok ? (_cute ? '✅ 存檔成功!已經離開龍王戰' : '✅ 存檔完成,已離開龍王戰') : (_cute ? '⚠ 存檔可能沒成功' : '⚠ 存檔狀態不明')) + '</div>'
+      + '<div style="font-size:calc(var(--u)*1.05);color:#e8ffe8;line-height:1.7;margin-bottom:calc(var(--u)*0.6);">'
+      +   (opt.ok
+            ? ((_rdW ? (_cute ? '打到第 <b style="color:#ffe066;">' + _rdW + '</b> 回合的進度已經存好了。<br>' : '第 <b style="color:#ffe066;">' + _rdW + '</b> 回合的戰況已保存。<br>') : '')
+              + (_cute ? '下次進遊戲(或再進龍王戰)會問你要不要<b style="color:#ffcc66;">接著打完</b>。' : '下次進入遊戲時會詢問是否<b style="color:#ffcc66;">繼續完成</b>這場戰鬥。'))
+            : (_cute ? '沒有讀到這場的存檔,請重新進遊戲看看有沒有「繼續打完」。' : '未讀取到本場快照,請重新進入遊戲確認是否出現續戰視窗。'))
+      + '</div>'
+      + '<div style="font-size:calc(var(--u)*0.85);color:#ffcc88;line-height:1.55;margin-bottom:calc(var(--u)*0.8);">'
+      +   (_cute ? '⚠ 打完或放棄這場之前,其他功能會先鎖住' : '⚠ 完成或放棄本場之前,其他功能暫時無法使用') + '</div>'
+      + '<div style="display:flex;gap:calc(var(--u)*0.5);justify-content:center;flex-wrap:wrap;">'
+      +   '<button id="_cgl_wb_home" style="' + _btnCss + 'background:linear-gradient(135deg,#2f9a55,#16602f);border:max(2px,calc(var(--u)*0.09)) solid #8fffb0;color:#fff;">' + (_cute ? '🏠 好,回關卡頁' : '🏠 返回關卡頁') + '</button>'
+      +   (opt.ok && _snapW && _snapW.wb && _snapW.wb.solo ? '<button id="_cgl_wb_go" style="' + _btnCss + 'background:rgba(90,50,20,0.9);border:max(2px,calc(var(--u)*0.09)) solid #ffb070;color:#ffe0c0;">' + (_cute ? '⚔ 改變主意,現在接著打' : '⚔ 立即繼續戰鬥') + '</button>' : '')
+      + '</div></div>';
+    document.body.appendChild(ovw);
+    document.getElementById('_cgl_wb_home').onclick = function(){
+      try{ if(typeof playSfx === 'function') playSfx('sfx-gentle', 0.4); }catch(_){}
+      ovw.remove();
+      try{ if(typeof openAdventureOverlay === 'function') openAdventureOverlay(); }catch(eO){ console.warn('[v5.449.0 龍王存檔] 回關卡頁失敗', eO); }
+      try{ if(typeof _renderPendingBattleBanner === 'function') _renderPendingBattleBanner(); }catch(_){}
+    };
+    var _goW = document.getElementById('_cgl_wb_go');
+    if(_goW) _goW.onclick = function(){
+      try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.4); }catch(_){}
+      ovw.remove();
+      try{ _wbSoloShowResumeBox(_snapW); }catch(eR){ console.warn('[v5.449.0 龍王存檔] 開續戰視窗失敗', eR); }
+    };
+    console.log('[v5.449.0 龍王存檔離開] 顯示已存檔視窗 round=' + _rdW);
+    return;
+  }
 
   const ov = document.createElement('div');
   ov.id = '_close-game-lock';

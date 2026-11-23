@@ -36,7 +36,7 @@
 (function(){
 'use strict';
 if(window.ARTW) return;
-var ART_VER = 'v1.3.0';   /* ★ v1.3.0(2026-11-19 15:09・老師選「乙」:跟 Procreate 比還缺的 17 項 +「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)
+var ART_VER = 'v1.3.1';   /* ★ v1.3.1(2026-11-23・老師「旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」):👁 檢視加旋轉區(目前角度、逆/順 45°/90°/180°、復原 0°)+ 畫布左上角度標籤(viewRotTo/degTxt/rotBadge) */ void 'v1.3.0';   /* ★ v1.3.0(2026-11-19 15:09・老師選「乙」:跟 Procreate 比還缺的 17 項 +「畫筆感壓、即時反應和流暢感再提升」「網路上推薦的其他繪圖 APP 好用功能學起來」)
    ① 色彩和諧(選色器下 🎡 配色:互補/相近/三等分/分割互補)② 圖層 ⧉ 複製、⤓ 向下合併(Ctrl+J/E)③ ✂️ 剪切遮罩 ④ 〰 防抖 StreamLine ⑤ 👆 塗抹筆
    ⑥ ↔ 翻轉檢視 ⑦ 兩指旋轉畫布(Shift+滾輪)⑧ 四指點一下/Tab 全螢幕 ⑨ 🦋 對稱輔助(左右/上下/四向/放射,所有筆刷)⑩ 📐 透視格線一點/兩點+線條吸附
    ⑪ ⬚ 選取(矩形/橢圓/手繪/魔術棒/反轉/移動選取,畫/擦/填/調整都只在選取裡)⑫ 🎛 調整(色相/彩度/明度/模糊)+ 🌗 灰階檢視 ⑬ 🔁 重新著色 ⑭ 🎭 混合模式
@@ -2147,6 +2147,12 @@ function canvasOpen(opt){
     + '#art-cv .cvtop{padding-left:calc(1.4vmin + env(safe-area-inset-left));padding-right:calc(1.4vmin + env(safe-area-inset-right))}#art-cv .cvmain{padding-bottom:env(safe-area-inset-bottom)}#art-cv .cvl{padding-left:calc(1vmin + env(safe-area-inset-left))}#art-cv .cvr{padding-right:calc(1vmin + env(safe-area-inset-right))}'
     + '#art-cv .stage{flex:1;position:relative;overflow:hidden;touch-action:none;cursor:crosshair}'
     + '#art-cv .stage canvas{position:absolute;left:0;top:0;width:100%;height:100%}'
+    /* ★ v1.3.1 角度標籤(左上角,畫布沒轉時藏起來)+ 檢視面板的旋轉按鈕排 */
+    + '#art-cv .rotb{position:absolute;left:1vmin;top:1vmin;z-index:30;display:none;align-items:center;gap:.7vmin;background:rgba(43,35,53,.88);color:#fff;border:.35vmin solid #ffd93b;border-radius:1.6vmin;padding:.5vmin .6vmin .5vmin 1.1vmin;font:900 clamp(13px,2.2vmin,22px) sans-serif;box-shadow:0 .5vmin 1.4vmin rgba(0,0,0,.35);touch-action:manipulation}'
+    + '#art-cv .rotb span{cursor:pointer;white-space:nowrap}#art-cv .rotb button{font:900 clamp(12px,1.9vmin,19px) sans-serif;padding:.45vmin 1vmin;border-radius:1.2vmin;border:.3vmin solid #3a2f45;background:#ffd93b;color:#2b2335;cursor:pointer;white-space:nowrap}'
+    + '#art-cv .cvpop .rdeg{display:block;text-align:center;font-size:2.4vmin;background:#2b2335;color:#ffd93b;border-radius:1.2vmin;padding:.6vmin;margin:.4vmin 0 .7vmin}'
+    + '#art-cv .cvpop .rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6vmin;margin:.5vmin 0}#art-cv .cvpop .rgrid .mini{width:100%;padding:.7vmin .3vmin;font-size:1.9vmin;white-space:nowrap}'
+    + '#art-cv .cvpop .rgrid .mini.rz{grid-column:1 / -1;background:#c9f2c0}'
     + '#art-cv .sw{width:4.6vmin;height:4.6vmin;border-radius:1vmin;border:.3vmin solid #3a2f45;cursor:pointer;display:inline-block;margin:.3vmin;touch-action:none}'
     + '#art-cv .lmn{border:.3vmin solid #3a2f45;border-top:0;border-radius:0 0 1vmin 1vmin;background:#fff3c4;margin:-.6vmin 0 .4vmin;padding:.5vmin .6vmin;font-size:1.7vmin;font-weight:900}#art-cv .lmn .r{display:flex;align-items:center;gap:.5vmin;margin:.3vmin 0}#art-cv .lmn input[type=range]{flex:1;min-width:0}#art-cv .lmn label{flex:1;display:flex;align-items:center;gap:.4vmin}#art-cv .lmn input[type=checkbox]{width:2.8vmin;height:2.8vmin}#art-cv .lmn .q{border:.3vmin solid #3a2f45;border-radius:50%;width:3.4vmin;height:3.4vmin;background:#9fd3ff;font-weight:900;font-size:1.8vmin;padding:0;cursor:pointer;flex:0 0 auto}'
     + '#art-cv #art-cv-lyr .lyr{gap:.4vmin}#art-cv #art-cv-lyr .lyr img{width:4.6vmin;height:3.6vmin;flex:0 0 auto}#art-cv #art-cv-lyr .lyr .mini{padding:.2vmin .5vmin;flex:0 0 auto}'
@@ -2168,13 +2174,15 @@ function canvasOpen(opt){
     + '#art-cv .rlh{flex:0 0 auto;display:flex;align-items:center;flex-wrap:nowrap;gap:.3vmin;padding:.4vmin .4vmin;background:#ffe2a6;border-bottom:.25vmin solid #3a2f45}#art-cv .rlh .slab{flex:1 1 auto;min-width:0;overflow:hidden;text-align:left;white-space:nowrap}#art-cv .rlh .mini{flex:0 0 auto;padding:.2vmin .5vmin;font-size:1.7vmin}'
     + '#art-cv #art-cv-lyr{position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:.5vmin;display:flex;flex-direction:column;gap:.5vmin}#art-cv #art-cv-lyr>*{flex:0 0 auto}'
     + '#art-cv .rbot{flex:2 1 0;min-height:9vmin;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;display:flex;flex-direction:column;gap:.6vmin}'
-    + '@media (orientation:landscape) and (max-height:520px){#art-cv .cvl{width:13vmin}#art-cv .cvb{width:11vmin;font-size:4.4vmin}#art-cv .cvb small{font-size:2.2vmin}#art-cv .cvr{width:28vmin}#art-cv .cvtop .tt{font-size:3.2vmin}#art-cv .lyr,#art-cv .mini{font-size:2.6vmin}#art-cv .cvtimer{font-size:3.4vmin}#art-cv .stk{font-size:4.6vmin}#art-cv .lmn{font-size:2.6vmin}#art-cv .lmn .q{width:5vmin;height:5vmin;font-size:2.6vmin}#art-cv .lmn input[type=checkbox]{width:4vmin;height:4vmin}#art-cv .rlh .mini{font-size:2.6vmin;padding:.2vmin .4vmin}#art-cv .rlh .slab{font-size:2.2vmin}#art-cv .rlw{flex-grow:2}#art-cv .rbot{flex-grow:1}}</style>'
+    + '@media (orientation:landscape) and (max-height:520px){#art-cv .cvl{width:13vmin}#art-cv .cvb{width:11vmin;font-size:4.4vmin}#art-cv .cvb small{font-size:2.2vmin}#art-cv .cvr{width:28vmin}#art-cv .cvtop .tt{font-size:3.2vmin}#art-cv .lyr,#art-cv .mini{font-size:2.6vmin}#art-cv .cvtimer{font-size:3.4vmin}#art-cv .stk{font-size:4.6vmin}#art-cv .lmn{font-size:2.6vmin}#art-cv .lmn .q{width:5vmin;height:5vmin;font-size:2.6vmin}#art-cv .lmn input[type=checkbox]{width:4vmin;height:4vmin}#art-cv .rlh .mini{font-size:2.6vmin;padding:.2vmin .4vmin}#art-cv .rlh .slab{font-size:2.2vmin}#art-cv .rlw{flex-grow:2}#art-cv .rbot{flex-grow:1}#art-cv .cvpop .rdeg{font-size:3.2vmin}#art-cv .cvpop .rgrid .mini{font-size:2.8vmin;padding:1vmin .3vmin}#art-cv .rotb{font-size:3.2vmin}#art-cv .rotb button{font-size:2.9vmin}}</style>'
     + '<div class="cvtop"><button class="abtn ghost" data-c="x">← 離開</button><span class="tt">🎨 ' + esc(opt.title || '創作畫布') + (opt.ask ? ':' + esc(opt.ask) : '') + '</span>'
     + (opt.endMs ? '<span class="cvtimer" id="art-cv-timer">⏱</span>' : '')
     + '<button class="abtn" data-c="undo" title="復原 (Ctrl+Z)">↶</button><button class="abtn" data-c="redo" title="重做 (Ctrl+Shift+Z)">↷</button><button class="abtn" data-c="grid" title="三分法格線">#️⃣</button>' + (PK ? '<button class="abtn" data-c="guide" title="繪圖輔助:對稱、透視格線">📏</button><button class="abtn" data-c="adj" title="調整:色相、彩度、明度、模糊">🎛</button><button class="abtn" data-c="view" title="檢視:翻轉、灰階、參考小視窗、全螢幕">👁</button>' : '') + '<button class="abtn" data-c="fit" title="置中 (Ctrl+0)">⤢</button><button class="abtn" data-c="keys" title="快捷鍵 (?)">⌨</button><button class="abtn" data-c="how" title="怎麼玩">❓</button>'
     + (opt.task ? '<button class="abtn go" id="art-cv-done" data-c="done">' + (opt.submitLabel || '✅ 交件') + '</button>' : '<button class="abtn go" id="art-cv-done" data-c="save">💾 儲存</button>') + '</div>'
     + '<div class="cvmain"><div class="cvl" id="art-cv-left">' + bh + '</div>'
-    + '<div class="stage" id="art-cv-stage"><canvas id="art-cv-c"></canvas></div>'
+    + '<div class="stage" id="art-cv-stage"><canvas id="art-cv-c"></canvas>'
+    /* ★ v1.3.1(2026-11-23・老師「旋轉畫布功能,顯示當前角度、復原原本角度、45/90/180 度順逆時針旋轉」)— 畫布轉歪時左上角顯示目前角度;點字 = 打開旋轉面板,點 ⟲ = 回到原本角度 */
+    + '<div class="rotb" id="art-cv-rotb"><span data-rb="open" id="art-cv-rotbt"></span><button data-rb="0" title="復原原本角度">⟲ 復原</button></div></div>'
     /* ★ v1.2.2(2026-11-13・老師「圖層改成單獨視窗內捲動,讓選色器永遠固定在右上區域」)— 右欄分三段,右欄本身不再整欄捲動:
        ① .rtop 固定:目前顏色+選色器(環形色相;灰階關卡/沒有 paintkit 時是 art-cv-pal)+粗細/透明滑桿
        ② .rlw 圖層小視窗:標題列(＋▲▼🗑)固定,圖層清單 #art-cv-lyr 自己捲(最少約 22vmin 高,剩下的空間都給它)
@@ -2188,6 +2196,10 @@ function canvasOpen(opt){
     + '<div class="rbot" id="art-cv-rbot">' + (allowed.indexOf('stamp') >= 0 ? '<div class="slab" style="text-align:left">🏷 貼紙</div><div id="art-cv-stk"></div>' : '') + '<div class="slab" style="text-align:left">🕘 最近</div><div id="art-cv-rec"></div>' + (PK && !opt.gray ? '<div class="slab" style="text-align:left">🎨 調色盤</div><div id="art-cv-pal"></div>' : '') + '</div></div></div>';
   root.appendChild(wrap);
   var stage = $('art-cv-stage'), dc = $('art-cv-c'), dx = null, dOut = null, bbuf = null, dpr = A.lite ? 1 : Math.min(2, window.devicePixelRatio || 1);   /* ★ v1.1.1 省電:螢幕畫布不用 2 倍解析度(Retina iPad 每幀像素少 3/4) */
+  /* ★ v1.3.1 左上角角度標籤:點字開「👁 檢視」旋轉面板、點 ⟲ 復原原本角度;按在標籤上不會畫到畫布 */
+  (function(){ var rb = $('art-cv-rotb'); if(!rb) return; rb.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+    rb.addEventListener('click', function(e){ var t = upFind(e.target, 'data-rb'); if(!t) return; e.stopPropagation(); sfx('sfx-tap', 0.2);
+      if(t.getAttribute('data-rb') === '0'){ viewRotTo(0); toast(T({ c: '⟲ 畫布轉回原本角度了', p: '⟲ 已復原原本角度' })); } else if(S.popId !== 'view') viewPop(); }); })();
   /* ★ v1.3.0 低延遲(老師「即時反應和流暢感再提升」):Windows/ChromeOS 的 Chrome、Edge 支援 desynchronized 畫布 ⇒ 畫面不等網頁排版直接上螢幕(筆跡少延遲約一格)。
      為了不閃爍,先畫在後台畫布 bbuf,畫好整張一次貼上。iPad Safari 不支援 ⇒ 照舊直接畫(行為完全不變)。 */
   (function(){ var ua = navigator.userAgent || '', want = /Windows|CrOS/.test(ua) && /Chrome|Edg/.test(ua), c0 = null, at;
@@ -2209,6 +2221,7 @@ function canvasOpen(opt){
   function req(){ if(S.rafq) return; S.rafq = true; requestAnimationFrame(render); }
   function render(){
     S.rafq = false; if(S.closed) return;
+    rotBadge();
     var v = S.view, i, L, m = vm();
     dx.setTransform(1, 0, 0, 1, 0, 0); dx.globalAlpha = 1; dx.globalCompositeOperation = 'source-over'; dx.fillStyle = '#3d3449'; dx.fillRect(0, 0, dc.width, dc.height);
     dx.setTransform(dpr * m.a, dpr * m.b, dpr * m.c, dpr * m.d, dpr * m.e, dpr * m.f);
@@ -2989,12 +3002,34 @@ function canvasOpen(opt){
       + '<div class="r">' + chip('data-vw', 'flip', S.view.fx < 0, '↔ 翻轉檢視') + q('flip') + '</div>'
       + '<div class="r">' + chip('data-vw', 'gray', S.gview, '🌗 灰階檢視') + q('gray') + '</div>'
       + '<div class="r">' + chip('data-vw', 'ref', S.refw, '🖼 參考小視窗') + q('refw') + '</div>'
-      + '<div class="r">' + chip('data-vw', 'rot0', false, '⟲ 轉正') + chip('data-vw', 'ui', !S.ui, '⛶ 全螢幕') + '</div>'
+      /* ★ v1.3.1 旋轉畫布:目前角度 + 逆/順時針 45°/90°/180° + 復原原本角度(只轉畫面,作品不會變) */
+      + '<div class="r" style="margin-top:1vmin">🔄 ' + T({ c: '旋轉畫布(只轉畫面,作品不會變)', p: '旋轉畫布(僅檢視,不影響作品)' }) + '</div>'
+      + '<span class="rdeg" id="art-cv-rdeg">' + T({ c: '目前角度:', p: '目前角度:' }) + degTxt(S.view.r) + '</span>'
+      + '<div class="rgrid">' + chip('data-vw', 'r-45', false, '↺ 逆 45°') + chip('data-vw', 'r-90', false, '↺ 逆 90°') + chip('data-vw', 'r-180', false, '↺ 逆 180°')
+      + chip('data-vw', 'r45', false, '↻ 順 45°') + chip('data-vw', 'r90', false, '↻ 順 90°') + chip('data-vw', 'r180', false, '↻ 順 180°')
+      + chip('data-vw', 'rot0', false, '⟲ 復原原本角度(0°)').replace('class="mini"', 'class="mini rz"') + '</div>'
+      + '<div class="r">' + chip('data-vw', 'ui', !S.ui, '⛶ 全螢幕') + '</div>'
       + '<div class="r" style="font-weight:700;opacity:.75">兩指轉動可以旋轉畫布;四指點一下 = 全螢幕;電腦 Shift+滾輪旋轉、Tab 全螢幕</div>'; }
     popShow('view', html(), function(m){
       m.onclick = function(e){ var t = upFind(e.target, 'data-vw'), a; if(!t) return; e.stopPropagation(); sfx('sfx-tap', 0.2); a = t.getAttribute('data-vw');
-        if(a === 'flip') viewFlip(); else if(a === 'gray') grayToggle(); else if(a === 'ref') refToggle(); else if(a === 'rot0'){ var r0 = stage.getBoundingClientRect(), wp = toWorld(r0.left + r0.width / 2, r0.top + r0.height / 2); S.view.r = 0; anchor(wp, r0.width / 2, r0.height / 2); req(); } else if(a === 'ui') uiToggle();
+        if(a === 'flip') viewFlip(); else if(a === 'gray') grayToggle(); else if(a === 'ref') refToggle(); else if(a === 'rot0') viewRotTo(0); else if(/^r-?\d+$/.test(a)) viewRotTo((S.view.r || 0) + (+a.slice(1)) * Math.PI / 180); else if(a === 'ui') uiToggle();
         if(S.pop === m) m.innerHTML = html(); }; }); }
+  /* ★ v1.3.1 旋轉角度工具:正 = 順時針(螢幕 y 軸朝下);顯示時整理成 -180°~180° */
+  function degOf(r){ var d = Math.round((r || 0) * 180 / Math.PI); d = ((d % 360) + 360) % 360; if(d > 180) d -= 360; return d; }
+  function degTxt(r){ var d = degOf(r); return d === 0 ? '0°(原本角度)' : d === 180 ? '180°(上下顛倒)' : d > 0 ? '順時針 ' + d + '°' : '逆時針 ' + (-d) + '°'; }
+  /* 以畫面中心為軸轉到 r1(弧度),0.22 秒滑順轉過去;結束後把角度收回 -π~π,接近 45° 倍數的小誤差吸正 */
+  function viewRotTo(r1){ var rs = stage.getBoundingClientRect(), wp = toWorld(rs.left + rs.width / 2, rs.top + rs.height / 2), from = S.view.r || 0, t0 = now(), q45 = Math.PI / 4, sn = Math.round(r1 / q45) * q45;
+    if(Math.abs(r1 - sn) < 0.002) r1 = sn;
+    if(S.rotAnim) cancelAnimationFrame(S.rotAnim);
+    function fin(){ var r = r1 % (Math.PI * 2); if(r > Math.PI) r -= Math.PI * 2; if(r <= -Math.PI) r += Math.PI * 2; if(Math.abs(r) < 1e-9) r = 0; return r; }
+    function step(){ if(S.closed) return; var k = Math.min(1, (now() - t0) / 220), ez = 1 - Math.pow(1 - k, 3);
+      S.view.r = k < 1 ? from + (r1 - from) * ez : fin(); anchor(wp, rs.width / 2, rs.height / 2); req();
+      if(k < 1) S.rotAnim = requestAnimationFrame(step); else { S.rotAnim = 0; var el = $('art-cv-rdeg'); if(el) el.textContent = '目前角度:' + degTxt(S.view.r); } }
+    step(); }
+  /* 左上角角度標籤:每幀呼叫,只有角度變了才動 DOM */
+  function rotBadge(){ var b = $('art-cv-rotb'), d = degOf(S.view.r), t; if(!b || S.rbD === d) return; S.rbD = d;
+    b.style.display = d === 0 ? 'none' : 'flex'; t = $('art-cv-rotbt'); if(t) t.textContent = '🔄 ' + degTxt(S.view.r);
+    var el = $('art-cv-rdeg'); if(el && !S.rotAnim) el.textContent = '目前角度:' + degTxt(S.view.r); }
   function viewFlip(){ var r0 = stage.getBoundingClientRect(), wp = toWorld(r0.left + r0.width / 2, r0.top + r0.height / 2); S.view.fx = S.view.fx < 0 ? 1 : -1; anchor(wp, r0.width / 2, r0.height / 2); req(); toast(S.view.fx < 0 ? T({ c: '↔ 畫面翻過來看了(作品沒變),再按一次翻回來', p: '↔ 已翻轉檢視(不影響作品)' }) : '↔ 翻回來了'); }
   function grayToggle(){ S.gview = !S.gview; dc.style.filter = S.gview ? 'grayscale(1)' : ''; toast(S.gview ? T({ c: '🌗 黑白檢視:看看明暗夠不夠(作品沒變)', p: '🌗 灰階檢視中(不影響作品)' }) : '🌈 恢復彩色'); }
   function uiToggle(){ S.ui = !S.ui; var a = ['art-cv-left', 'art-cv-right'], i, tp = wrap.querySelector('.cvtop'), b = $('art-cv-uib'); for(i = 0; i < a.length; i++){ if($(a[i])) $(a[i]).style.display = S.ui ? '' : 'none'; } if(tp) tp.style.display = S.ui ? '' : 'none';

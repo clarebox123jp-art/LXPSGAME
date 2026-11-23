@@ -45717,7 +45717,8 @@ window._lxpsGainLogRows = function(){
     try{ if(typeof BACKPACK_ITEM_DEF !== 'undefined' && BACKPACK_ITEM_DEF[id]) return BACKPACK_ITEM_DEF[id]; }catch(_){}
     return null;
   };
-  var _itemNm = function(id){ var d = _def(id); return d ? (String(d.icon || '') + ' ' + String(d.name || id)) : ('📦 ' + id); };
+  var _PSEUDO = { '#pick_SSR':'✨ SSR 自選命星', '#pick_SR':'✨ SR 自選命星', '#pick_UR':'✨ UR 自選命星', '#pick_R':'✨ R 自選命星' };   // ★ v5.449.0 龍王戰獎勵的自選命星(命座資料,不在背包)
+  var _itemNm = function(id){ if(_PSEUDO[id]) return _PSEUDO[id]; var d = _def(id); return d ? (String(d.icon || '') + ' ' + String(d.name || id)) : ('📦 ' + id); };
   var _treNm = function(id){
     try{ var db = window.TAIWAN_TREASURES; if(db && db[id] && db[id].name) return String(db[id].name); }catch(_){}
     return String(id);

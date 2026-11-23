@@ -17,7 +17,7 @@
 (function(){
 'use strict';
 if(window.DSGW) return;
-var VER = 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
+var VER = 'v1.2.1';   /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」):回工作室的取名視窗多「🚪 不存檔直接退出」(discardExit) */ void 'v1.2.0';   /* ★ v1.2.0(2026-11-19 15:09・老師「美術設計師的面板適當縮小左右的工具介面面板尺寸和字體,讓中央畫圖區域加大些」「畫筆感壓、即時反應和流暢感再提升」)
    橫放左欄 28vw→21vw、右欄 22vw→18vw,面板字級約縮 15%;自由手繪接共用筆畫濾波器(防抖/筆壓平滑與軟硬/速度模擬筆壓/曲線內插,設定跟創藝工坊共用);↔ 翻轉檢視;
    每一筆下筆/收筆不再整串重算所有圖層的指紋(plsHash 快取)⇒ 舊 iPad 下筆不頓。選色器多了 🎡 配色(MGPK)。 */ void 'v1.1.4';   /* ★ v1.1.4(2026-11-18・老師「設計師成功投稿時,可預先勾選至多三種希望的獎勵」)— 繳交作品資料視窗多一區「🎁 希望獲得的獎勵」(D.WISH,最多 3 種,「其他」要自己寫);
    寫進 designSubmit.wish / wishTxt / em(信箱)。Firestore 規則還沒發布新版時,這三格會被擋 ⇒ 自動改放進 mod.wish/mod.wishTxt/mod.em 再交一次(作品照常繳交成功)。 */ void 'v1.1.3';/* ★ v1.1.3(2026-11-13・老師)①「每次復原,要減去操作數」:undo/redo 整份換回快照(含 ops 與指紋 oh)②「我的作品」⬇️ 下載圖片 PNG(透明/白色背景;recEd/dlWork/dlSave,iPad 走分享選單「儲存影像」)③ 13:58「設計師畫布也改成同樣的固定方式」:右欄選色器固定、圖層小視窗 .dsg-lwin 自己捲(＋▲▼🗑 在標題列 #dsg-lwh)、物件屬性在下;直式維持整欄捲 */ void 'v1.1.2';   /* ★ v1.1.2(2026-11-11 20:50・老師)PC 快捷鍵 Ctrl+Z 復原/Ctrl+Y 重做、按住空白鍵游標變手掌拖曳畫布(dsgKey/handSet) */ void 'v1.1.1';   /* ★ v1.1.1(2026-11-11・老師「PC 版手繪、點陣、像素畫出來的點(線)都比滑鼠游標低」)滑鼠/筆座標改用畫布在螢幕上的實際大小換算(stPt/vzOf),PC 放大後也精準 */ void 'v1.1.0';   /* ★ v1.1.0(2026-11-10・老師)圖層(可改名、⋯ 透明度/參照/阿爾法鎖定)、選色器+圖層常駐右欄、環形色相+三角形選色器、7 種畫筆(鉛筆/水彩/蠟筆/毛筆/圓頭麥克筆/平頭麥克筆/向量筆)、油漆桶(拖顏色+臨界值)、長按 2 秒變向量形狀、剪刀剪下移到指定圖層、變形、小提示與繳交標準收進「怎麼玩」、存檔時間標記、每月繳交 皮膚 1 件+荒島裝飾 1 件分開計算 */ void 'v1.0.7';   /* ★ v1.0.7(2026-11-09)有條件解鎖(創藝工坊全部關卡 ≥2★,unlockCheck/gate('stars'))+ 作品集/設定自動雙向雲端同步(MG_CSYNC;「☁ 立即同步」= 手動保險) */ void 'v1.0.6';   /* ★ v1.0.6(2026-11-08 18:07)雙指捏合縮放/挪動畫布(PC 滾輪、空白鍵/中鍵拖曳)、手機平板直式版面、◧ 面板收合 */ void 'v1.0.5';   /*★ v1.0.5(2026-11-08 13:06~13:24)動作骨架改成 3D 關節人偶:拖關節擺姿勢、拖空白處轉視角、範本當起手式;脊椎 3 節、頭部球體+十字線定位眼鼻(fc 臉方向點)、立體圓柱四肢與關節球;骨架功能鍵 復原/重做/向前/向後/拉近/拉遠;我的姿勢命名儲存(見 pzDraw/pzDragTo/pzNudge/pzCmd) */ void 'v1.0.4';   /* ★ v1.0.4(2026-11-08 11:27)作品名不可與已上架商品同名(nameAsk/繳交都查)、角色皮膚繳交存透明全身圖 th→上架複製成 designShopItems.img、老師台「🛒 上架商品」改價/上下架/分紅比例 */ void 'v1.0.3';   /* ★ v1.0.3(2026-11-08 11:03)手繪原創:皮膚只留畫筆+動作骨架、荒島裝飾素材收進參考圖片(描圖層不進作品)、預設畫筆、回工作室先命名、作品集可改名 */ void 'v1.0.2';   /* ★ v1.0.2(2026-11-08 10:51)操作次數算「增加、變色」,且改完要跟原本不一樣(見 endOp/opKey) */ void 'v1.0.1';   /* ★ v1.0.1(2026-11-08)操作次數只算「增加」的動作(見 endOp) */ void 'v1.0.0';
@@ -553,14 +553,28 @@ function rulesCard(cb){
    名字最多 16 字、不能空白、會過不雅字詞檢查(wordHits);鎖住(已繳交/已通過)的作品不能改名。 */
 var TITLE_MAX = 16;
 function titleCheck(v){ v = String(v || '').replace(/\s+/g, ' ').replace(/^ | $/g, ''); if(!v) return { e: '請幫作品取一個名字' }; if(v.length > TITLE_MAX) v = v.slice(0, TITLE_MAX); if(wordHits(v).length) return { e: '名字裡有不適合的字詞,請換一個' }; return { v: v }; }
-function nameAsk(cur, cb, okT){
-  var h = '<h3>✏️ 幫作品取名字</h3><p style="font-size:2vmin;opacity:.85">' + esc(T({ c: '取一個好名字,老師和同學看作品時就會看到它!(最多 ' + TITLE_MAX + ' 個字)', p: '請為作品命名(最多 ' + TITLE_MAX + ' 字),審核與上架時會顯示此名稱。' })) + '</p>' +
+/* ★ v1.2.1 不存檔直接退出:先確認;編輯中自動存到平板(1.5 秒)或雲端(每 5 分鐘)的都換回開啟時的原樣(時間改成現在,雲端同步才會以它為準);
+   這次才開的新作品 ⇒ 平板與雲端都刪掉(不留空白草稿) */
+function discardExit(){
+  var E = S.ed; if(!E) return;
+  confirmBox(T({ c: '不存檔直接離開?<br>這次打開之後畫的、改的<b>全部都不會留下來</b>' + (E.isNew ? ',這件新作品也會一起丟掉' : ',作品會回到打開前的樣子') + '。', p: '確定不存檔離開?<br>本次開啟後的所有修改將<b>全部捨棄</b>' + (E.isNew ? ',此新作品不會保留' : ',作品恢復為開啟前的版本') + '。' }), function(ok){
+    if(!ok) return;
+    var r = E.r, o = E.orig, key = (r.uid || 'guest') + '|' + r.id, cloud = !S.guest && ownerOk() && csNow();
+    clearTimeout(dT); E.dirty = false; E.cloudDirty = false;
+    if(E.isNew || !o){ idbDel(key, function(){}); if(cloud && E.isNew) S.cs.del(r.id); }
+    else { o.at = now(); idbPut(key, JSON.parse(JSON.stringify(o)), function(){}); if(cloud) S.cs.put(JSON.parse(JSON.stringify(o)), function(){}); }
+    toast(T({ c: '🚪 沒有存檔,已經離開', p: '🚪 已捨棄修改並離開' }));
+    hub();
+  }, '🚪 不存檔離開');
+}
+function nameAsk(cur, cb, okT, onDiscard){
+  var h ='<h3>✏️ 幫作品取名字</h3><p style="font-size:2vmin;opacity:.85">' + esc(T({ c: '取一個好名字,老師和同學看作品時就會看到它!(最多 ' + TITLE_MAX + ' 個字)', p: '請為作品命名(最多 ' + TITLE_MAX + ' 字),審核與上架時會顯示此名稱。' })) + '</p>' +
     '<input type="text" id="dsg-title" maxlength="' + TITLE_MAX + '" value="' + esc(cur || '') + '" placeholder="例如:火焰魔法少年" style="width:100%;box-sizing:border-box;font-size:2.6vmin;padding:1vmin;border-radius:1vmin;border:0"><div id="dsg-titlem" style="min-height:2.6vmin;color:#ffb0b0;font-size:1.9vmin"></div>';
-  modal(h, [{ t: '取消', cls: 'ghost' }, { t: okT || '💾 存好回工作室', keep: true, cb: function(m){ var r = titleCheck($('dsg-title').value); if(r.e){ $('dsg-titlem').textContent = '⚠ ' + r.e; return; }
+  modal(h, [{ t: '取消', cls: 'ghost' }].concat(onDiscard ? [{ t: '🚪 不存檔直接退出', cls: 'ghost', cb: function(){ setTimeout(onDiscard, 0); } }] : []).concat([{ t: okT || '💾 存好回工作室', keep: true, cb: function(m){ var r = titleCheck($('dsg-title').value); if(r.e){ $('dsg-titlem').textContent = '⚠ ' + r.e; return; }
     $('dsg-titlem').textContent = ''; if(m._chk) return; m._chk = 1;
     shopTitleTaken(r.v, function(tk){ m._chk = 0; if(!$('dsg-title')) return; if(tk){ var mm = $('dsg-titlem'); if(mm) mm.textContent = '⚠ 已經有上架的作品叫「' + tk + '」了,作品名稱不能重複,請換一個名字'; return; } modalClose(); cb(r.v); });   /* ★ v1.0.4 不可與已上架商品同名 */
-  } }],
-    { onOpen: function(m){ var ip = $('dsg-title'); if(ip){ setTimeout(function(){ try{ ip.focus(); ip.select(); }catch(e){} }, 80); ip.onkeydown = function(ev){ if(ev.keyCode === 13){ var bs = m.querySelectorAll('.btns button'); if(bs[1]) bs[1].click(); } }; } } });
+  } }]),
+    { onOpen: function(m){ var ip = $('dsg-title'); if(ip){ setTimeout(function(){ try{ ip.focus(); ip.select(); }catch(e){} }, 80); ip.onkeydown = function(ev){ if(ev.keyCode === 13){ var bs = m.querySelectorAll('.btns button'); if(bs.length) bs[bs.length - 1].click();   /* ★ v1.2.1 Enter = 最後一顆(存檔);多了「不存檔」鈕後不能再寫死第 2 顆 */ } }; } } });
 }
 /* ★ v1.0.4(2026-11-08・老師「作品名稱如果和已經上架的商品重複必須提醒玩家進行修改,不可重複」)
    比對 designShopItems(所有已上架商品,含已下架的)的作品名;去掉空白、英文不分大小寫。讀一次快取 60 秒;讀不到(訪客/規則/網路)就不擋。 */
@@ -643,7 +657,7 @@ function newWork(kind){
     var n = 0, i; for(i = 0; i < a.length; i++){ if(!a[i].lock) n++; }
     if(n >= D.DRAFT_MAX){ modal('<p>編輯中的作品最多 ' + D.DRAFT_MAX + ' 件,先刪掉不要的再開新的喔。</p>'); return; }
     var r = { id: rid(), uid: S.guest ? 'guest' : S.uid, kind: kind, at: now(), title: '', d: blankDesign(kind), paint: '', th: '', lock: '', sub: null, back: null };
-    editorOpen(r);
+    editorOpen(r, true);
   });
 }
 function openDraft(id){ var a = S.drafts || [], i; for(i = 0; i < a.length; i++){ if(a[i].id === id){ editorOpen(JSON.parse(JSON.stringify(a[i]))); return; } } }
@@ -651,12 +665,15 @@ function delDraft(id){ confirmBox('刪掉這件作品?刪掉就找不回來了(�
   if(!S.guest && ownerOk() && csNow()) S.cs.del(id); }, '刪掉'); }   /* ★ v1.0.7 雲端刪除+墓碑(別台平板開啟時一起刪) */
 
 /* ══ 編輯器 ══ */
-function editorOpen(r){
+function editorOpen(r, isNew){
   var root = $('dsg-root'), K = D.KINDS[r.kind], h = '', i0;
   for(i0 = 0; r.d && r.d.items && i0 < r.d.items.length; i0++) delete r.d.items[i0].im;
   S.screen = 'ed';
   S.ed = { z: 1, panX: 0, panY: 0, r: r, d: r.d, sel: -1, tab: D.TABS[r.kind][0].id, undo: [], redo: [], k: 1, dirty: false, cloudDirty: false, lastCloud: now(), pls: {}, al: '', tol: 32, brush: { c: '#1b1b1b', w: 12, er: false, t: BRUSH[lsGet('dsg_br')] ? lsGet('dsg_br') : 'mround', op: 1 }, tk: 'sign', font: 'hei',
     pm: lsGet('dsg_pm') || 'free', px: { n: +(lsGet('dsg_pxn') || 32), tool: 'pen' }, vec: { sh: 'rect', fill: '#ffd23f', st: '#1b1b1b', sw: 6 } };
+  /* ★ v1.2.1(2026-11-23・老師「美術設計師的作品增加『不存檔直接退出』的選項」)— 開啟當下的原樣留一份,不存檔退出時整份放回去;新作品則直接丟掉 */
+  try{ S.ed.orig = JSON.parse(JSON.stringify(r)); }catch(eO){ S.ed.orig = null; }
+  S.ed.isNew = !!isNew;   /* 只有從「開新作品」進來才算新作品(不靠草稿清單猜,免得誤刪舊作品) */
   h += '<div id="dsg-ed" class="' + (r.lock ? 'locked' : '') + (lsGet('dsg_pc') === '1' ? ' pc' : '') + '"><div class="bar"><button class="dsg-b ghost" data-k="back">🔙<span class="lb"> 回工作室</span></button><div class="t">' + K.e + ' ' + esc(r.title || K.n) + '</div>';
   h += '<button class="dsg-b ghost" data-k="undo">↶<span class="lb"> 復原</span></button><button class="dsg-b ghost" data-k="redo">↷<span class="lb"> 重做</span></button><div class="ops" id="dsg-ops"></div><div class="sp"></div>';
   h += '<button class="dsg-b ghost" data-k="pnl" title="收合/展開工具面板">◧<span class="lb"> 面板</span></button>';   /* ★ v1.0.6 老師「面板優化讓繪圖區更寬敞」:收起兩側(直式是下方)面板 */
@@ -691,7 +708,7 @@ function editorOpen(r){
 function locked(){ return !!(S.ed && S.ed.r.lock); }
 function barCmd(k){
   var E = S.ed; if(!E) return;
-  if(k === 'back'){ if(locked()){ saveLocal(true); backupNow(false); hub(); return; } nameAsk(E.r.title || '', function(v){ E.r.title = v; var tt = $('dsg-root') && $('dsg-root').querySelector('#dsg-ed .bar .t'); if(tt) tt.textContent = D.KINDS[E.r.kind].e + ' ' + v; dirty(); saveLocal(true, function(){ backupNow(false); hub(); }); }); }   /* ★ v1.0.3 回工作室前先幫作品取名字 */
+  if(k === 'back'){ if(locked()){ saveLocal(true); backupNow(false); hub(); return; } nameAsk(E.r.title || '', function(v){ E.r.title = v; var tt = $('dsg-root') && $('dsg-root').querySelector('#dsg-ed .bar .t'); if(tt) tt.textContent = D.KINDS[E.r.kind].e + ' ' + v; dirty(); saveLocal(true, function(){ backupNow(false); hub(); }); }, null, discardExit); }   /* ★ v1.0.3 回工作室前先幫作品取名字;★ v1.2.1 多一顆「🚪 不存檔直接退出」 */
   else if(k === 'undo') undo(); else if(k === 'redo') redo();
   else if(k === 'how') howEditor();
   else if(k === 'zreset'){ zoomSet(1, 0, 0); toast('🔍 回到原本大小'); }   /* ★ v1.0.6 */

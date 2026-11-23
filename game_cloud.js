@@ -23471,6 +23471,8 @@
           }catch(_eS){ console.warn('[WbSettle 登入結算]', _eS); }
           // ② 檢查自己有沒有 pending
           try{
+            // ★ v5.449.0 先整理:已領的補記「最近獲得」、備份裡沒領的升回、結算時沒寫到的自己補寫(見 housekeep 註解)
+            try{ if(typeof window._wbSettle.housekeep === 'function') await window._wbSettle.housekeep(); }catch(_eHk){ console.warn('[WbSettle housekeep]', _eHk); }
             const _pending = await window._wbSettle.getMyPending();
             if(_pending && !_pending.claimedAt){
               // 延遲一拍彈窗,讓其他登入通知先跑完
@@ -30160,6 +30162,8 @@
               if(typeof _syncSummonCrystalDisplay === 'function') _syncSummonCrystalDisplay();
               if(typeof refreshAllCoinsDisplay === 'function') refreshAllCoinsDisplay();
             }catch(_eSync){ console.warn('[WbSettle claim 本地同步]', _eSync); }
+            // ★ v5.449.0 本機餘額一加完就記帳(要搶在任何 gameCloudSave 的對帳之前,否則會先被記成「未分類變動」);SSR 自選命星擲完後再補記
+            try{ _wbAwardLogGain(_result, Date.now(), { live: true }); }catch(_eLg0){}
 
             // ── 機率部分(在 transaction 外擲,雲端不參與) ──
             // (1) 火龍王之牙:依 rank tier 機率擲;若中且已擁有 → 補 3 張至寶 EXP 卷軸
@@ -30323,6 +30327,8 @@
               }, { merge: true });
               console.log('[WbSettle claim] ✅ grantedManifest 已寫回雲端(補償精準比對用)');
             }catch(_eMf){ console.warn('[WbSettle claim] grantedManifest 寫回失敗(不影響領獎)', _eMf); }
+            // ★ v5.449.0 寫進背包「📜 最近獲得」(知識幣/水晶/經驗書/卷軸/SSR 自選命星;龍王至寶與未收錄至寶走至寶解鎖歷史本來就看得到)
+            try{ _wbAwardLogGain(_result, Date.now(), { live: true, cstPick: (_cstPickResult && _cstPickResult.granted) ? 1 : 0 }); }catch(_eLg){}
           }
           return _result;
         }catch(e){
@@ -30388,7 +30394,112 @@
         }
       }
 
+      // ════════════════════════════════════════════════════════════════════
+      // ★ v5.449.0(老師 2026-11-23「今天週一發放龍王戰獎勵,要顯示到背包的最近獲得物資一覽。且卓秉均表示他上週11-20名沒有拿到獎勵,檢查是否有發獎勵的缺失並修復」)
+      //   缺失 ①:claimPending 用 transaction 直接改雲端 knowledgeCoins/playerBackpack,沒經過 backpackAdd/_logCoinTx/_logCrystalTx
+      //          ⇒ 知識幣/水晶/經驗書/卷軸/SSR 自選命星「完全不進」背包「📜 最近獲得」,學生無從確認有沒有拿到。
+      //   缺失 ②:結算 Phase 2 由「第一個登入的玩家」那台裝置逐一寫 100 位玩家的 wbPendingAward;那台 iPad 中途關掉/睡眠
+      //          ⇒ 後面名次的人永遠沒寫到(沒有 catch 到錯誤,wbSettlementFailures 也不會記)。
+      //   缺失 ③:舊輪 pending 沒領時被下一輪擠進 wbPendingAwardBackup,之後沒有任何程式會再發 ⇒ 永遠領不到。
+      //   修法:_wbAwardLogGain 把領獎寫進三本帳(有固定 id 不重複);housekeep() 登入時:已領的補記帳、備份裡沒領的升回 pending、
+      //         最近一輪結算有我卻沒寫到 pending(pending 建立時間早於結算時間)⇒ 自己補寫 pending。之後照常跳領獎視窗。
+      // ════════════════════════════════════════════════════════════════════
+      function _wbAwardLogGain(p, at, extra){
+        try{
+          if(!p || !p.roundKey) return 0;
+          if(window._progressLoaded !== true) return 0;
+          at = Number(at) || Date.now(); extra = extra || {};
+          const uid12 = String(window._gUserId || '').slice(0, 12);
+          const base = 'wbaw_' + String(p.roundKey) + '_';
+          const src = '龍王戰排名獎勵' + (p.rank ? '(第' + p.rank + '名)' : '');
+          const rd = function(k){ try{ const r = localStorage.getItem(k); const a = r ? JSON.parse(r) : []; return Array.isArray(a) ? a : []; }catch(_){ return []; } };
+          const has = function(arr, id){ for(let i = 0; i < arr.length; i++){ if(arr[i] && arr[i].id === id) return true; } return false; };
+          let n = 0;
+          // 知識幣 / 召喚水晶 → lxps_coin_tx / lxps_crystal_tx(背包「最近獲得」的 💰/💠)
+          //   ⚠ 這兩本帳的「最後一筆 balance」是存檔對帳(_reconcileCoinTx/_reconcileCrystalTx)的基準,不能亂插:
+          //     · 剛領(live):本機餘額已加上 ⇒ 照一般方式追加一筆,balance = 現在餘額(對帳就不會再多出「未分類變動」)
+          //     · 補記舊的:當時對帳通常已經記成一筆「(未分類變動)」同金額 ⇒ 找到就改名;找不到才依時間插入,balance 抄前一筆
+          [['lxps_coin_tx', 'c', p.coins, function(){ return (typeof _knowledgeCoins !== 'undefined') ? (_knowledgeCoins || 0) : 0; }],
+           ['lxps_crystal_tx', 'k', p.summonCrystals, function(){ return (typeof _getCrystalBal === 'function') ? _getCrystalBal() : 0; }]].forEach(function(t){
+            const amt = Math.round(Number(t[2]) || 0); if(amt <= 0) return;
+            const h = rd(t[0]), id = base + t[1]; if(has(h, id)) return;
+            if(extra.live){
+              h.push({ at: at, amount: amt, balance: t[3](), reason: '獲得:' + src, id: id, uid: uid12 });
+            }else{
+              let hit = -1;
+              for(let i = 0; i < h.length; i++){ const x = h[i]; if(x && x.reason === '(未分類變動)' && Math.round(Number(x.amount) || 0) === amt && (x.at || 0) >= at - 60000 && (x.at || 0) <= at + 3 * 86400000){ hit = i; break; } }
+              if(hit >= 0){ h[hit].reason = '獲得:' + src; h[hit].id2 = id; h[hit].id = id; }
+              else {
+                let k = h.length; while(k > 0 && (h[k - 1].at || 0) > at) k--;
+                const prevBal = k > 0 ? h[k - 1].balance : 0;
+                h.splice(k, 0, { at: at, amount: amt, balance: (k === h.length) ? t[3]() : prevBal,   /* 插在最後 ⇒ 用現在餘額(對帳基準不歪) */ reason: '獲得:' + src, id: id, uid: uid12 });
+              }
+            }
+            try{ localStorage.setItem(t[0], JSON.stringify(h.slice(-400))); n++; }catch(_){}
+          });
+          // 經驗書 / 至寶卷軸 / SSR 自選命星 → lxps_item_log(背包「最近獲得」的 🎒)
+          const items = [['hero_exp_book_deluxe', p.expBookDeluxe], ['treasure_exp_scroll', p.expScrollTreasure]];
+          if(extra.cstPick) items.push(['#pick_SSR', extra.cstPick]);
+          const il = rd(window._LXPS_ITEM_LOG_KEY || 'lxps_item_log'); let ch = false;
+          items.forEach(function(t){
+            const q = Math.round(Number(t[1]) || 0); if(q <= 0) return;
+            const id = base + t[0]; if(has(il, id)) return;
+            il.push({ at: at, it: t[0], n: q, s: src.slice(0, 30), uid: uid12, id: id }); ch = true; n++;
+          });
+          if(ch){ il.sort(function(a, b){ return (a.at || 0) - (b.at || 0); }); try{ localStorage.setItem(window._LXPS_ITEM_LOG_KEY || 'lxps_item_log', JSON.stringify(il.slice(-(window._LXPS_ITEM_LOG_CAP || 300)))); }catch(_){} }
+          if(n){ try{ if(typeof window._lxpsScheduleBackpackSync === 'function') window._lxpsScheduleBackpackSync(); }catch(_){} }
+          return n;
+        }catch(e){ console.warn('[v5.449.0 龍王獎勵記帳] 失敗', e); return 0; }
+      }
+
+      async function housekeep(){
+        const uid = window._gUserId; if(!uid) return null;
+        try{
+          const snap = await getDoc(PLAYER_DOC(uid)); if(!snap.exists()) return null;
+          const data = snap.data() || {};
+          const p = data.wbPendingAward || null;
+          // (A) 已領過 ⇒ 補記到「最近獲得」(固定 id,重複呼叫不會重複記)
+          if(p && p.claimedAt){
+            const mf = p.grantedManifest || {};
+            _wbAwardLogGain(p, p.claimedAt, { cstPick: mf.cstPickSsr ? 1 : 0 });
+          }
+          if(p && !p.claimedAt) return p;   // 還有沒領的 ⇒ 交給原本的領獎視窗
+          const now = Date.now(), DAY = 86400000;
+          const backup = Array.isArray(data.wbPendingAwardBackup) ? data.wbPendingAwardBackup : [];
+          // (B) 備份裡沒領的(45 天內)⇒ 升回 pending
+          const bi = backup.findIndex(function(b){ return b && !b.claimedAt && b.roundKey && (!p || b.roundKey !== p.roundKey) && (now - (Number(b._backupAt || b.createdAt) || 0)) < 45 * DAY; });
+          if(bi >= 0){
+            const nb = backup.slice(); const pick = nb.splice(bi, 1)[0];
+            const np = Object.assign({}, pick, { createdAt: now, claimedAt: null, _fromBackup: true });
+            delete np._backupAt;
+            await setDoc(PLAYER_DOC(uid), { wbPendingAward: np, wbPendingAwardBackup: nb }, { merge: true });
+            console.log('[v5.449.0 龍王獎勵] 備份裡沒領的獎勵升回 pending:' + np.roundKey + ' 第' + np.rank + '名');
+            return np;
+          }
+          // (C) 最近一輪結算(30 天內)名單有我,但 pending 從沒寫到(建立時間早於結算時間)⇒ 自己補寫
+          const st = (window._cachedGlobalStats && window._cachedGlobalStats.wbSettlement) || {};
+          let last = null;
+          Object.keys(st).forEach(function(b){ Object.keys(st[b] || {}).forEach(function(r){ const e = st[b][r]; if(e && e.settledAt > 0 && (!last || e.settledAt > last.settledAt)) last = e; }); });
+          if(last && (now - last.settledAt) < 30 * DAY && last.awards && last.awards[uid]){
+            const a = last.awards[uid];
+            const written = (p && p.roundKey === a.roundKey && p.bossId === a.bossId) || (p && (Number(p.createdAt) || 0) >= last.settledAt)
+                         || backup.some(function(b){ return b && b.roundKey === a.roundKey; });
+            if(!written){
+              const np = Object.assign({}, a, { createdAt: now, claimedAt: null, _selfHealed: true });
+              const patch = { wbPendingAward: np };
+              if(p && !p.claimedAt){ patch.wbPendingAwardBackup = backup.concat([Object.assign({}, p, { _backupAt: now })]).slice(-5); }
+              await setDoc(PLAYER_DOC(uid), patch, { merge: true });
+              console.log('[v5.449.0 龍王獎勵] 結算時沒寫到我的獎勵 ⇒ 自動補寫 pending:' + a.roundKey + ' 第' + a.rank + '名');
+              return np;
+            }
+          }
+          return null;
+        }catch(e){ console.warn('[v5.449.0 龍王獎勵 housekeep] 失敗', e); return null; }
+      }
+
       window._wbSettle = {
+        housekeep: housekeep,                 // ★ v5.449.0
+        logGain: _wbAwardLogGain,             // ★ v5.449.0
         trySettle: trySettle,
         getMyPending: getMyPending,
         claimPending: claimPending,
