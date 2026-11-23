@@ -73172,6 +73172,27 @@ function _saveBattleRoundSnapshot(){
         twBossCur:   window._taiwanCurrentBossId || null,
       }
     };
+    // ★ v5.447.0(老師 2026-11-23「單人版龍王戰的練習和正式版新增戰鬥到一半可以存檔的功能，和冒險關卡一樣，視同單人BOSS戰」)
+    //   龍王戰快照多記一包 wb:只有「本機單人戰」(練習/正式單人)才標 solo=true 可續戰;連線多人房照舊不可續戰。
+    try{
+      if(snap.stage === 'worldboss'){
+        if(window._wbAdvBattleEnded || window._wbResultExecuting) return;   // 已在結算,不再寫
+        const _wbSoloNow = !!window._wbSoloPracticeMode && !window._wbConnectedHostMode
+          && !window._wbConnectedClientMode && !window._wbClientMode;
+        const _bossW = (G.p2 || []).find(function(h){ return h && typeof _isWorldBossTarget === 'function' && _isWorldBossTarget(h); }) || G.p2[0];
+        snap.wb = {
+          solo: _wbSoloNow,
+          official: _wbSoloNow && !!window._wbSoloOfficial,
+          battleKey: window._wbSoloBattleKey || null,
+          startTs: window._wbSoloStartTs || Date.now(),
+          contrib: JSON.parse(JSON.stringify(window._wbSoloContrib || {})),
+          quizState: JSON.parse(JSON.stringify(window._wbQuizState || {})),
+          correctCnt: JSON.parse(JSON.stringify(window._wbCorrectCnt || {})),
+          bossName: _bossW ? _bossW.name : null,
+          uid: window._gUserId || null
+        };
+      }
+    }catch(_eWbSnap){ console.warn('[v5.447.0 龍王戰快照]', _eWbSnap); }
     localStorage.setItem('adv_battle_snap', JSON.stringify(snap));
     // ★ v4.47.0 任務D — 快照寫入診斷 log(每回合一筆·供 BUG 回報 console 追溯快照最後存在時間點)
     try{ console.log('[續戰診斷 v4.47.0] 已存戰鬥快照 stage=' + snap.stage + ' round=' + snap.round + (snap.isArena ? ' (鬥技場)' : '')); }catch(_){}
@@ -73908,7 +73929,8 @@ window._advHasPendingBattle = function(){
     // 24 小時內才算有效
     if(Date.now() - (snap.ts || 0) > 24*60*60*1000) return false;
     // 世界 BOSS 快照不參與凍結(連線層無法續戰,走別的引導路徑)
-    if(snap.stage === 'worldboss') return false;
+    // ★ v5.447.0 本機單人龍王戰(練習/正式單人)可續戰 ⇒ 跟冒險一樣凍結其他功能,直到打完或放棄
+    if(snap.stage === 'worldboss' && !(snap.wb && snap.wb.solo)) return false;
     // 必須有真實戰鬥資料(過濾掉雲端 fallback 殘留)
     const _bs = snap.battleState;
     const _p1 = (_bs && _bs.p1) || snap.p1;
@@ -74027,11 +74049,12 @@ function _canShowPauseExitDialog(){
     if(typeof G === 'undefined' || !G) return false;
     if(!Array.isArray(G.p1) || !Array.isArray(G.p2)) return false;
     if(!(G.round >= 1)) return false;
-    // 排除世界 BOSS(任何 wb 變體都不允許)
-    if(window._wbInWorldBossMode) return false;
+    // 排除連線世界 BOSS;★ v5.447.0 本機單人龍王戰(練習/正式單人)視同單人 BOSS 戰,允許暫停存檔
     if(window._wbConnectedClientMode) return false;
     if(window._wbConnectedHostMode) return false;
-    if(window._wbSoloPracticeMode) return false;
+    if(window._wbClientMode) return false;
+    if(window._wbInWorldBossMode && !window._wbSoloPracticeMode) return false;
+    if(window._wbSoloPracticeMode && (window._wbAdvBattleEnded || window._wbResultExecuting)) return false;
     // 結算面板已顯示
     if(window._advBattleResultShown) return false;
     if(G._arenaResultShown) return false;
@@ -74092,6 +74115,10 @@ function _showPauseExitDialog(){
 
   let _stageDisplayName;
   try{
+    if(_adventureStage === 'worldboss'){   // ★ v5.447.0 單人龍王戰
+      const _bn = ((G.p2 || [])[0] || {}).name || '龍王';
+      _stageDisplayName = '🐉 ' + _bn + (window._wbSoloOfficial ? ' 單人挑戰(正式)' : ' 單人練習');
+    }else
     _stageDisplayName = _isArenaCtx ? '鬥技場 單人挑戰' :
       _advGetStageDisplayName(_adventureStage, {
         battleState: { p2: G.p2, taiwanBoss: window._advSelectedTaiwanBoss }
@@ -74306,6 +74333,19 @@ function _pauseExitDoResume(skipModalRemove){
 //   現在的設計:存檔成功 = 玩家被鎖在「請關閉遊戲」頁,無路可走除非放棄戰鬥
 function _exitToStageAfterSave(){
   try{
+    // ★ v5.447.0 單人龍王戰「存檔並關閉遊戲」:走單人戰自己的離開流程(收掉龍王戰畫面/假連線/旗標),
+    //   但那條流程(_wbCleanupAdvAfterBattle)會清掉戰鬥快照 ⇒ 先把快照拿在手上,離開後寫回去。
+    const _isWbSolo = (typeof _adventureStage !== 'undefined' && _adventureStage === 'worldboss' && window._wbSoloPracticeMode);
+    if(_isWbSolo){
+      let _wbSnapKeep = null;
+      try{ _wbSnapKeep = localStorage.getItem('adv_battle_snap'); }catch(_){}
+      window._wbSoloSavingExit = true;   // 假連線 leaveRoom 看到這個就不寫「練習最高紀錄」(還沒打完)
+      try{ if(window._wbNet && typeof window._wbNet.leaveRoom === 'function') window._wbNet.leaveRoom(); }catch(eWbL){ console.warn('[v5.447.0 龍王存檔離開] leaveRoom 失敗', eWbL); }
+      window._wbSoloSavingExit = false;
+      try{ if(_wbSnapKeep) localStorage.setItem('adv_battle_snap', _wbSnapKeep); }catch(_){}
+      try{ window._lxpsCloudSaveForceNext = true; if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}
+      console.log('[v5.447.0 龍王存檔離開] 已離開單人龍王戰,快照' + (_wbSnapKeep ? '保留' : '⚠ 沒讀到'));
+    }else
     // 1. 用既有的 exitAdventureMode 做完整清理(_adventureMode/_advMiniBattleActive/各種 overlay/BGM/背景等)
     try{
       if(typeof exitAdventureMode === 'function') exitAdventureMode();
@@ -87627,6 +87667,157 @@ function _showNewHeroAnnouncement(forceShow){
   });
 }
 
+// ════════════════════════════════════════════════════════════════
+// ★ v5.447.0(老師 2026-11-23)單人龍王戰續戰視窗:「繼續打完 / 放棄」
+//   放棄(老師裁定):視同打到一半退出 —— 不寫排名、不發獎勵、不扣龍王 HP、不扣自己的場次(三者本來就只在結算時才做,
+//   所以放棄＝只清快照、不進結算)。練習模式放棄就是直接結束。
+//   視窗字級用 --u(同技能/爆發升級視窗:PC min(寬/72,高/40) 18~40、平板 min(寬/44,高/30) 20~44、手機橫放 高/24 15~18)。
+// ════════════════════════════════════════════════════════════════
+function _wbSoloResumeUnit(){
+  var W = window.innerWidth || 1024, H = window.innerHeight || 768;
+  var phone = !!(window._cnPhoneShort && window._cnPhoneShort());
+  var pc = !!window._lxpsPcZoomOn && !phone;
+  var u = phone ? Math.max(15, Math.min(18, H / 24))
+        : (pc ? Math.max(18, Math.min(40, Math.min(W / 72, H / 40))) : Math.max(20, Math.min(44, Math.min(W / 44, H / 30))));
+  return { u: Math.round(u * 2) / 2, W: W, H: H, phone: phone };
+}
+function _wbSoloShowResumeBox(snap){
+  try{
+    ['adv-crash-recovery-box','_crv_discard_confirm','adv-wb-crash-notice'].forEach(function(id){ var o = document.getElementById(id); if(o) o.remove(); });
+    var wb = snap.wb || {};
+    var bs = snap.battleState || {};
+    var cute = (window._artStyle === 'cute');
+    var official = !!wb.official;
+    var round = snap.round || bs.round || 1;
+    var p1 = (bs.p1 || []).filter(function(h){ return h && h.name; });
+    var alive = p1.filter(function(h){ return (h.curHp || 0) > 0; }).length;
+    var myDmg = 0;
+    try{ Object.keys(wb.contrib || {}).forEach(function(k){ myDmg += ((wb.contrib[k] || {}).dmgDealt) || 0; }); }catch(_){}
+    var mins = Math.round((Date.now() - (snap.ts || Date.now())) / 60000);
+    var ago = mins < 2 ? '剛才' : (mins < 60 ? mins + ' 分鐘前' : Math.round(mins / 60) + ' 小時前');
+    var modeTxt = official ? (cute ? '單人挑戰(正式)' : '單人挑戰・正式戰') : (cute ? '單人練習' : '單人練習模式');
+    var dropTxt = official
+      ? (cute ? '「放棄」= 這場當作沒打:不算排名、沒有獎勵、不扣龍王血、也不算今天的場次'
+              : '「放棄」視同中途退出:不寫入排名、不發獎勵、不扣龍王 HP,也不計入今日場次')
+      : (cute ? '「放棄」就是結束這次練習' : '「放棄」將直接結束本次練習');
+    var U = _wbSoloResumeUnit();
+    var box = document.createElement('div');
+    box.id = 'adv-crash-recovery-box';
+    box.setAttribute('data-lxps-no-pczoom', '1');
+    box.style.cssText = 'position:fixed;inset:0;z-index:9900;background:rgba(0,0,8,0.93);display:flex;align-items:safe center;justify-content:center;'
+      + 'padding:calc(var(--u)*0.6);box-sizing:border-box;font-family:"M PLUS Rounded 1c","Nunito",sans-serif;--u:' + U.u + 'px;';
+    var cardW = Math.floor(Math.min(U.W * (U.phone ? 0.96 : 0.92), U.u * 26));
+    box.innerHTML =
+      '<div style="width:' + cardW + 'px;max-height:' + Math.floor(U.H * 0.94) + 'px;overflow-y:auto;box-sizing:border-box;text-align:center;'
+      + 'background:linear-gradient(160deg,rgba(40,16,8,0.99),rgba(16,6,4,0.99));border:max(2px,calc(var(--u)*0.1)) solid rgba(255,140,60,0.85);'
+      + 'border-radius:calc(var(--u)*0.9);padding:calc(var(--u)*0.9) calc(var(--u)*1.1);box-shadow:0 0 60px rgba(255,120,40,0.4);">'
+      + '<div style="font-size:calc(var(--u)*2.2);line-height:1.1;margin-bottom:calc(var(--u)*0.25);">🐉</div>'
+      + '<div style="font-size:calc(var(--u)*1.35);font-weight:900;color:#ffbb77;margin-bottom:calc(var(--u)*0.25);line-height:1.25;">'
+      +   (cute ? '龍王戰還沒打完喔!' : '龍王戰尚未完成') + '</div>'
+      + '<div style="font-size:calc(var(--u)*0.9);color:#ccb;margin-bottom:calc(var(--u)*0.55);">' + modeTxt + '・' + ago + (cute ? '存的進度' : '保存的進度') + '</div>'
+      + '<div style="font-size:calc(var(--u)*1.05);color:#eee;line-height:1.7;margin-bottom:calc(var(--u)*0.5);">'
+      +   (wb.bossName ? '<b style="color:#ffcc66;">' + wb.bossName + '</b><br>' : '')
+      +   '第 <b style="color:#ffcc44;">' + round + '</b> 回合｜' + (cute ? '還站著的英雄 ' : '我方存活 ') + '<b style="color:#88ffcc;">' + alive + '/' + p1.length + '</b><br>'
+      +   (cute ? '已經打了 ' : '本場已造成 ') + '<b style="color:#ffe066;">' + myDmg.toLocaleString() + '</b>' + (cute ? ' 傷害' : ' 點傷害')
+      + '</div>'
+      + '<div style="font-size:calc(var(--u)*0.85);color:#ffaa77;line-height:1.55;margin-bottom:calc(var(--u)*0.8);">'
+      +   (cute ? '⚠ 要先打完或放棄,才能做其他事' : '⚠ 處理完這場之前無法使用其他功能') + '<br>' + dropTxt + '</div>'
+      + '<div style="display:flex;gap:calc(var(--u)*0.5);justify-content:center;flex-wrap:wrap;">'
+      +   '<button id="_wbsr_go" style="flex:1 1 auto;min-width:calc(var(--u)*7);padding:calc(var(--u)*0.5) calc(var(--u)*0.8);font-size:calc(var(--u)*1.05);font-weight:900;'
+      +     'border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#d0702a,#8a3a10);border:max(2px,calc(var(--u)*0.09)) solid #ffb070;color:#fff;">'
+      +     (cute ? '⚔ 繼續打完' : '⚔ 繼續戰鬥') + '</button>'
+      +   '<button id="_wbsr_drop" style="flex:1 1 auto;min-width:calc(var(--u)*7);padding:calc(var(--u)*0.5) calc(var(--u)*0.8);font-size:calc(var(--u)*1.05);font-weight:900;'
+      +     'border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;background:rgba(60,30,30,0.9);border:max(2px,calc(var(--u)*0.09)) solid #aa5555;color:#ffaaaa;">'
+      +     '🏳 放棄</button>'
+      + '</div></div>';
+    document.body.appendChild(box);
+    document.getElementById('_wbsr_go').onclick = async function(){
+      try{ if(typeof playSfx === 'function') playSfx('sfx-confirm', 0.5); }catch(_){}
+      var btn = this; btn.disabled = true; btn.textContent = cute ? '⏳ 載入中…' : '⏳ 載入龍王戰…';
+      var ok = false;
+      try{
+        var uiOk = (typeof window._wbEnsureUi === 'function') ? await window._wbEnsureUi() : false;
+        if(uiOk && typeof window._wbSoloResumeFromSnap === 'function'){
+          ok = await window._wbSoloResumeFromSnap(snap);
+        }
+      }catch(eGo){ console.warn('[v5.447.0 龍王續戰] 例外', eGo); }
+      if(ok){ box.remove(); try{ if(typeof _renderPendingBattleBanner === 'function') _renderPendingBattleBanner(); }catch(_){} return; }
+      btn.disabled = false; btn.textContent = cute ? '⚔ 繼續打完' : '⚔ 繼續戰鬥';
+    };
+    document.getElementById('_wbsr_drop').onclick = async function(){
+      try{ if(typeof playSfx === 'function') playSfx('sfx-cancel', 0.4); }catch(_){}
+      var sure = true;
+      try{
+        if(typeof window._lxpsConfirm === 'function'){
+          sure = await window._lxpsConfirm(official
+            ? (cute ? '真的要放棄嗎?這場會當作沒打過(不算排名、沒有獎勵)。' : '確定放棄?本場視同中途退出,不寫入排名也不發獎勵。')
+            : (cute ? '要結束這次練習嗎?' : '確定結束本次練習?'));
+        }
+      }catch(_){}
+      if(!sure) return;
+      window._wbSoloDropSnapshot(official ? 'official_drop' : 'practice_drop');
+      box.remove();
+      try{ if(typeof _renderPendingBattleBanner === 'function') _renderPendingBattleBanner(); }catch(_){}
+      try{ if(typeof _showInGameToast === 'function') _showInGameToast(official
+        ? (cute ? '已放棄這場龍王戰,不算場次也不算排名' : '已放棄本場龍王戰(未計排名、未扣場次)')
+        : (cute ? '練習結束囉' : '已結束本次練習'), '#ffaa66', 3200); }catch(_){}
+    };
+    console.log('[v5.447.0 龍王續戰] 顯示續戰視窗 round=' + round + ' official=' + official);
+  }catch(e){ console.warn('[v5.447.0 龍王續戰視窗] 例外', e); }
+}
+// 清掉單人龍王戰快照(放棄/無法續戰時)— 不進結算 ⇒ 不寫排名、不發獎、不扣龍王 HP、不扣場次
+window._wbSoloDropSnapshot = function(reason){
+  try{ localStorage.removeItem('adv_battle_snap'); localStorage.removeItem('adv_crash_snapshot'); }catch(_){}
+  try{ window._lxpsCloudSaveForceNext = true; if(typeof gameCloudSave === 'function') gameCloudSave(); }catch(_){}   // 雲端 advSnapshot 一起清
+  console.log('[v5.447.0 龍王續戰] 已清除單人龍王戰快照(' + (reason || '') + '),不進結算');
+};
+window._wbSoloShowResumeBox = _wbSoloShowResumeBox;
+// ★ v5.447.0 單人龍王戰續戰:advStartBattle 跑完(startTurn 被 _gamePaused 排隊中)後,把快照的戰況蓋回 G
+//   (同 _advRestoreBattleState 的 G 還原段,但不碰冒險的 BGM/背景/獎勵/寶物欄 —— 那些龍王戰自己管)
+window._wbSoloApplySnapToG = function(bs){
+  try{
+    if(!bs || typeof G === 'undefined' || !G) return false;
+    var _cp = function(hSnap){
+      var h = Object.assign({}, hSnap);
+      h.status = hSnap.status || [];
+      h.buffs  = hSnap.buffs  || [];
+      if(h.side === 'p1'){ h._skLv = hSnap._skLv || {s1:0, s2:0}; h._burstLvAdv = hSnap._burstLvAdv || 0; }
+      h.av = (typeof AVATARS !== 'undefined' && AVATARS[h.name]) || h.av || '🗡️';
+      h.acted = !((h.curHp || 0) > 0);    // 死掉的視同已行動;活著的從新回合重跑
+      return h;
+    };
+    G.p1 = (bs.p1 || []).map(_cp);
+    G.p2 = (bs.p2 || []).map(_cp);
+    G.energy = Object.assign({p1:0, p2:0}, bs.energy || {});
+    G.inv  = JSON.parse(JSON.stringify(bs.inv  || []));
+    G.inv2 = JSON.parse(JSON.stringify(bs.inv2 || []));
+    G.round = bs.round || 1;
+    try{ if(window._fmRestore) window._fmRestore(bs); }catch(_){}
+    G._resultShown = false; G.pendingTarget = null; G.sellUsed = new Set(); G.activeChar = null;
+    G.taunted = null; G.guardFor = null; G.gunnerTarget = null; G.passiveInterruptUsed = false;
+    G.interruptTarget = null; G.waitFor = null;
+    G.fieldCards = bs.fieldCards || [];
+    try{ fieldCards = G.fieldCards; }catch(_){}
+    if(typeof bs.comboFatigue === 'number') G.comboFatigue = bs.comboFatigue;
+    if(bs.comboFatigueByHero) G.comboFatigueByHero = JSON.parse(JSON.stringify(bs.comboFatigueByHero));
+    if('lastSkillName' in bs) G.lastSkillName = bs.lastSkillName || null;
+    if(bs.lastSkillByHero) G.lastSkillByHero = JSON.parse(JSON.stringify(bs.lastSkillByHero));
+    G._alchUsed = (typeof bs.alchUsed === 'number') ? (bs.alchUsed | 0) : 0;
+    G._alchFx   = bs.alchFx ? JSON.parse(JSON.stringify(bs.alchFx)) : null;
+    try{ if(typeof bs.contCount === 'number' && typeof _advContinueCount !== 'undefined') _advContinueCount = bs.contCount; }catch(_){}
+    try{
+      if(bs.knowledgePowerReward) window._advKnowledgePowerReward = bs.knowledgePowerReward;
+      if(typeof bs.lastQuizRound === 'number') window._advLastQuizRound = bs.lastQuizRound;
+      if(typeof _advRefreshSkill3Btn === 'function') _advRefreshSkill3Btn();
+    }catch(_){}
+    try{ window._advBattleResultShown = false; }catch(_){}
+    try{ renderField(true); }catch(_){}
+    try{ renderItems(); updateUI(); }catch(_){}
+    console.log('[v5.447.0 龍王續戰] 已還原戰況:第 ' + G.round + ' 回合');
+    return true;
+  }catch(e){ console.warn('[v5.447.0 龍王續戰] 還原 G 失敗', e); return false; }
+};
+
 function _advCheckCrashRecovery(){
   try{
     // ★ 優先讀戰鬥快照（含 battleState），其次讀舊快照
@@ -87679,6 +87870,11 @@ function _advCheckCrashRecovery(){
 
     // ★ v3.5.16 — 世界 BOSS 戰排除:單純還原戰場無法重建連線層 _wbNet,
     //   進去也會看到空白/錯亂戰場。改成顯示溫和提示,引導玩家重新進入世界 BOSS。
+    // ★ v5.447.0 本機單人龍王戰(練習/正式單人)→ 跟冒險/鬥技場一樣跳「繼續打完/放棄」
+    if(snap.stage === 'worldboss' && snap.wb && snap.wb.solo){
+      _wbSoloShowResumeBox(snap);
+      return;
+    }
     if(snap.stage === 'worldboss'){
       console.log('[crash recovery] 偵測到上次世界 BOSS 戰中斷(round=' + snap.round
         + '),改顯示重新加入提示(不嘗試還原戰場)');

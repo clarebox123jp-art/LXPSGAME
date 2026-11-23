@@ -1153,6 +1153,13 @@
           🏅 你的最高紀錄:<span id="wb-solo-best-dmg">--</span>
         </div>
       </div>
+      <!-- ★ v5.447.0(老師 2026-11-23)單人挑戰(正式):不開連線房(不進房間表、不能邀請),
+           照正式戰結算(排名/獎勵/扣龍王HP/算場次);可中途存檔、下次開遊戲繼續打完 -->
+      <div class="wb-entry-big-btn" id="wb-entry-btn-solo-official" onclick="_wbUiSoloOfficial()" style="border-color:#ff8844;background:linear-gradient(160deg,rgba(255,136,68,0.20) 0%,rgba(255,136,68,0.05) 100%);">
+        <span class="ico">👤</span>
+        <div class="ttl" style="color:#ffaa66;">單人挑戰(正式)</div>
+        <div class="desc">一個人上場,算排名與獎勵<br>不開房、別人看不到<br>可中途存檔再繼續</div>
+      </div>
     </div>
 
     <!-- 房號輸入區 -->
@@ -4103,6 +4110,12 @@ try{
       <div class="wb-vis-opt-desc">建立私人房後,直接從好友清單發出邀請,對方左側會跳通知。</div>
     </div>
 
+    <!-- ★ v5.447.0 單人房 = 單人挑戰(正式):不建立連線房,房間表看不到,也無法邀請 -->
+    <div class="wb-vis-opt" onclick="_wbUiCloseVisibilityChoice();_wbUiSoloOfficial()" style="border-color:#ff8844;background:linear-gradient(160deg,rgba(255,136,68,0.18),rgba(255,136,68,0.04));">
+      <span class="wb-vis-opt-ico">👤</span><span class="wb-vis-opt-ttl" style="color:#ffaa66;">單人房(正式挑戰)</span>
+      <div class="wb-vis-opt-desc">自己一個人打,房間表看不到、也不能邀請別人。照常算排名與獎勵,可以中途存檔。</div>
+    </div>
+
     <button class="wb-vis-cancel" onclick="_wbUiCloseVisibilityChoice()">取消</button>
   </div>
 </div>
@@ -6092,8 +6105,13 @@ try{
   window._wbUiLeaveRoom = async function(){
     // ★ FIX 20260517(v) — 單人練習模式特殊處理:不走真正的 leaveRoom
     if(window._wbSoloPracticeMode){
-      const _msg = window._wbInWorldBossMode ? '確定要離開戰鬥嗎?' : '確定要取消練習嗎?';
+      // ★ v5.447.0 正式單人戰中途離開 = 放棄(不寫排名、不發獎勵、不扣龍王 HP、不扣場次);想保留進度要用「⏸ 暫停 → 存檔並關閉」
+      const _msg = window._wbInWorldBossMode
+        ? (window._wbSoloOfficial ? '確定要放棄這場單人挑戰嗎?\n(不算排名、沒有獎勵、不扣場次;想下次接著打請改用「暫停 → 存檔並關閉」)' : '確定要離開戰鬥嗎?')
+        : (window._wbSoloOfficial ? '確定要取消單人挑戰嗎?' : '確定要取消練習嗎?');
       if(!(await _wbGameConfirm(_msg))) return;
+      try{ if(window._wbInWorldBossMode && typeof window._wbSoloDropSnapshot === 'function') window._wbSoloDropSnapshot('leave_button'); }catch(_){}
+      try{ if(window._wbInWorldBossMode && typeof window._wbCleanupAdvAfterBattle === 'function') window._wbCleanupAdvAfterBattle(); }catch(_){}   // 停掉每回合快照(否則放棄後又被寫回)
       try{
         // 還原真實 _wbNet
         if(window._wbSoloRealWbNet){
@@ -6126,6 +6144,8 @@ try{
         // 清 flag
         window._wbInWorldBossMode = false;
         window._wbSoloPracticeMode = false;
+        window._wbSoloOfficial = false;     // ★ v5.447.0
+        window._wbSoloBattleKey = null;
         window._wbHostG = null;
         // 切回原本 BGM
         try{
@@ -6721,7 +6741,7 @@ try{
   // ════════════════════════════════════════════════════════════════════
   window._wbApplyEntryGateLock = async function(){
     try{
-      const _ids = ['wb-entry-btn-create', 'wb-entry-btn-public', 'wb-entry-btn-join'];
+      const _ids = ['wb-entry-btn-create', 'wb-entry-btn-public', 'wb-entry-btn-join', 'wb-entry-btn-solo-official'];   // ★ v5.447.0 正式單人也算場次
       if(!window._wbDailyLimit || typeof window._wbDailyLimit.canEnter !== 'function'){
         // 模組未掛載 → 不鎖,放行
         _ids.forEach(function(id){
@@ -6826,7 +6846,7 @@ try{
         if(isSolo){
           // 單人練習:房號徽章顯示「單人練習」字樣,複製按鈕灰掉
           roomcodeBadge.style.display = '';
-          roomcodeVal.textContent = '練習';
+          roomcodeVal.textContent = window._wbSoloOfficial ? '單人' : '練習';   // ★ v5.447.0
           roomcodeBadge.classList.add('wb-tc-solo-mode');
         }else if(roomId){
           roomcodeBadge.style.display = '';
@@ -9302,7 +9322,7 @@ try{
       if(window._wbSoloRealWbNet){
         try{
           const _curRid = (window._wbNet && typeof window._wbNet.getRoomId === 'function') ? window._wbNet.getRoomId() : null;
-          if(_curRid === '練習' || !_curRid){
+          if(_curRid === '練習' || _curRid === '單人' || !_curRid){
             console.warn('[WB-Host v3.12.15] _wbNet 仍是 solo mock,還原 realWbNet');
             window._wbNet = window._wbSoloRealWbNet;
           }
@@ -13338,7 +13358,30 @@ try{
     }
 
     // ★ FIX 20260516 — 單人練習改成:先進隊伍確認頁讓玩家挑 4 英雄/元素/至寶,再開戰
+    // ★ v5.447.0 若上一場是「單人挑戰(正式)」途中走掉的,旗標可能殘留 —— 練習一律清掉,絕不算正式
+    if(!window._wbSoloOfficialStarting){ window._wbSoloOfficial = false; window._wbSoloBattleKey = null; }
     _wbSoloOpenTeamConfirm();
+  };
+
+  // ═════════════════════════════════════════════════════════════════
+  // ★ v5.447.0(老師 2026-11-23)— 單人挑戰(正式)/ 開新房間「單人房」
+  //   ・不建立 Firestore 房間 ⇒ 公開房間表看不到、也沒有邀請(走本機單人戰同一套,_wbSoloPracticeMode=true)
+  //   ・window._wbSoloOfficial=true ⇒ 結算照正式戰:寫排名、扣雲端龍王 HP、今日場次 +1、溢傷知識幣
+  //   ・跟開房一樣:嚴格預檢 + 今日場次檢查(場次在結算時才 +1;中途放棄＝不算)
+  //   ・可中途「存檔並關閉」,下次開遊戲跳續戰視窗(game_battle.js _wbSoloShowResumeBox)
+  // ═════════════════════════════════════════════════════════════════
+  window._wbUiSoloOfficial = async function(){
+    const _passed = await _wbPreflightGuard(true);
+    if(!_passed){ console.log('[WB 單人正式] 預檢未通過,中止'); return; }
+    const _dailyOk = await _wbCheckDailyLimit();
+    if(!_dailyOk){ console.log('[WB 單人正式] 已達每日上限,中止'); return; }
+    window._wbSoloOfficialStarting = true;
+    try{
+      window._wbSoloOfficial = true;
+      window._wbSoloBattleKey = null;   // 開戰那一刻才產生(uid + 開戰時間)
+      await window._wbUiSoloTest();
+    }finally{ window._wbSoloOfficialStarting = false; }
+    console.log('[WB 單人正式] 進入隊伍確認頁(正式單人)');
   };
 
   // ════════════════════════════════════════════════════════════════════
@@ -13954,7 +13997,7 @@ try{
         players: _wbSoloFakePlayers,
         meta: { hostUid: _wbSoloFakePlayers[0] ? _wbSoloFakePlayers[0].uid : 'solo_user', status: 'picking' }
       }),
-      getRoomId: () => '練習',
+      getRoomId: () => (window._wbSoloOfficial ? '單人' : '練習'),   // ★ v5.447.0
       isHost: () => true,
       getMySlot: () => 0,  // ★ 單人模式:玩家永遠在槽 0
       // ★ FIX 20260517(v) — 單人模式只改槽 0(房主),其他槽用「房主指派」操作(走 _wbHostAssignedSlots)
@@ -14012,7 +14055,50 @@ try{
   //   - main.css 5624 行台灣關樣式全部繼承,免改
   // ════════════════════════════════════════════════════════════════════
   // ★ FIX 20260517 — 改為 async,讓內部能 await BOSS 開戰題流程
-  async function _wbSoloBeginBattle(){
+  // ★ v5.447.0 開機續戰入口(game_battle.js 續戰視窗按「繼續」→ _wbEnsureUi → 這裡)
+  //   回傳 true = 已進戰場;false = 無法續戰(已提示並清快照,或資料不全)
+  window._wbSoloResumeFromSnap = async function(snap){
+    try{
+      const w = (snap && snap.wb) || {};
+      const bs = (snap && snap.battleState) || {};
+      if(!w.solo || !Array.isArray(bs.p1) || !bs.p1.length || !Array.isArray(bs.p2) || !bs.p2.length){
+        _wbGameAlert('⚠ 這場龍王戰的存檔資料不完整,無法繼續。');
+        window._wbSoloDropSnapshot && window._wbSoloDropSnapshot('bad_snap');
+        return true;   // 視窗可以關(快照已清)
+      }
+      if(w.uid && window._gUserId && w.uid !== window._gUserId){
+        _wbGameAlert('⚠ 這份龍王戰存檔是別的帳號的,無法在這個帳號繼續。');
+        window._wbSoloDropSnapshot && window._wbSoloDropSnapshot('uid_mismatch');
+        return true;
+      }
+      const cur = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;
+      const ceasefire = (typeof window._wbIsCeasefireNow === 'function') && window._wbIsCeasefireNow();
+      const isAdmin = (typeof window._isAdminUser === 'function' && window._isAdminUser());
+      let remoteHp = null;
+      try{ if(cur && window._wbHpSync && typeof window._wbHpSync.getCurrentHp === 'function') remoteHp = window._wbHpSync.getCurrentHp(cur.id); }catch(_){}
+      if((cur && w.bossName && cur.name !== w.bossName) || (ceasefire && !isAdmin) || remoteHp === 0){
+        _wbGameAlert('🐉 ' + (w.bossName || '龍王') + ' 這一輪已經結束(已被擊敗或換了新龍王),這場存檔無法再繼續。\n\n'
+          + (w.official ? '本場不算排名、不扣場次。' : ''));
+        window._wbSoloDropSnapshot && window._wbSoloDropSnapshot('boss_changed');
+        return true;
+      }
+      try{ window._wbSoloRealWbNet = window._wbSoloRealWbNet || window._wbNet; }catch(_){}
+      try{ if(typeof bgmFadeTo === 'function') bgmFadeTo((typeof window._wbGetCurrentBossBattleBgmId === 'function' ? window._wbGetCurrentBossBattleBgmId() : 'bgm-wb-vesuvius-battle'), 600); }catch(_){}
+      await _wbSoloBeginBattle({ resume: snap });
+      const ok = (typeof _adventureStage !== 'undefined') ? (_adventureStage === 'worldboss') : !!window._wbInWorldBossMode;
+      console.log('[v5.447.0 龍王續戰] _wbSoloBeginBattle(resume) 完成 ok=' + ok + ' official=' + !!w.official);
+      return ok || !!window._wbInWorldBossMode;
+    }catch(e){
+      console.warn('[v5.447.0 龍王續戰] 例外', e);
+      _wbGameAlert('⚠ 續戰失敗:' + (e && e.message || e));
+      return false;
+    }
+  };
+
+  async function _wbSoloBeginBattle(opts){
+    // ★ v5.447.0 續戰模式:opts.resume = 快照(adv_battle_snap)⇒ 陣容/龍王/戰況全部從快照來,不重抽、不同步雲端殘血、不跑開戰題
+    const _rs = (opts && opts.resume) || null;
+    const _rsBs = _rs ? (_rs.battleState || {}) : null;
     // 還原 _wbNet 的 _gUserId(單人模式只記第一格的真實 uid)
     if(window._wbSoloEditUidBackup){
       window._gUserId = window._wbSoloEditUidBackup;
@@ -14037,12 +14123,13 @@ try{
     // ★ FIX 20260517(v) — 新流程:_wbSoloFakePlayers 只有槽 0 是 me,
     //   其他槽是 null。要從 _wbHostAssignedSlots 讀房主指派的 NPC,
     //   沒指派的槽位用房主英雄當 fallback(跟連線房主模式邏輯一致)
-    const _myFakeP = _wbSoloFakePlayers[0];
+    const _myFakeP = (_wbSoloFakePlayers && _wbSoloFakePlayers[0]) || null;   // ★ v5.447.0 續戰時沒有隊伍確認頁資料
     const _myExt = _myFakeP ? _wbTcParsePlayerExt(_myFakeP) : { e:null, es:[], t:[] };
     const _myHeroName = (_myFakeP && _myFakeP.heroName) || '劍士';
     const _hostAssignSolo = window._wbHostAssignedSlots || {};
     const p1 = [];
-    for(let i = 0; i < 4; i++){
+    if(_rs){ (_rsBs.p1 || []).forEach(function(hs){ if(hs) p1.push(Object.assign({}, hs)); }); }
+    for(let i = 0; i < 4 && !_rs; i++){
       let _heroName, _ext;
       if(i === 0){
         // 槽 0:房主本人
@@ -14133,7 +14220,9 @@ try{
       p1.push(h);
     }
     const _curWbBossS = (typeof window._wbGetCurrentBoss === 'function' && window._wbGetCurrentBoss()) || null;  // ★ v3.14.20 動態當前龍王
-    const boss = newHero((_curWbBossS && _curWbBossS.name) || '火山炎龍王', 'p2', 0);
+    const _rsBossSnap = _rs ? ((_rsBs.p2 || []).find(function(h){ return h && window._wbIsBossName && window._wbIsBossName(h.name); }) || (_rsBs.p2 || [])[0]) : null;
+    const boss = _rsBossSnap ? Object.assign({}, _rsBossSnap) : newHero((_curWbBossS && _curWbBossS.name) || '火山炎龍王', 'p2', 0);
+    if(!_rs){
     boss._wbShieldHistory = {};
     boss._wbShields = null;
     // ★ v3.7.10 — 先記下「真正的」滿血上限,避免下面殘血同步污染百分比運算
@@ -14157,6 +14246,7 @@ try{
         }
       }
     }catch(eRem){ console.warn('[WB-Solo] 讀雲端殘血失敗,沿用滿血', eRem); }
+    }   // ★ v5.447.0 end if(!_rs)
 
     // ── 透過主程式對外入口設定 _adventureStage 與 G ────────────────
     // (let _adventureStage 無法從外部直接寫,必須走 window._wbSetupAdvForBattle)
@@ -14186,6 +14276,20 @@ try{
     window._wbAdvBattleEnded = false;
     window._wbSoloStartTs = Date.now();
     window._wbSoloContrib = {};
+    // ★ v5.447.0 續戰:沿用原本那場的開戰時間/傷害/溢傷/答題紀錄/正式旗標/場次識別碼
+    if(_rs){
+      const _w = _rs.wb || {};
+      window._wbSoloOfficial = !!_w.official;
+      window._wbSoloStartTs = _w.startTs || Date.now();
+      try{ window._wbSoloContrib = JSON.parse(JSON.stringify(_w.contrib || {})); }catch(_){ window._wbSoloContrib = {}; }
+      try{ window._wbQuizState = JSON.parse(JSON.stringify(_w.quizState || {})); }catch(_){}
+      try{ window._wbCorrectCnt = JSON.parse(JSON.stringify(_w.correctCnt || {})); }catch(_){}
+      window._wbSoloBattleKey = _w.battleKey || null;
+    }
+    if(window._wbSoloOfficial && !window._wbSoloBattleKey){
+      window._wbSoloBattleKey = 'wbs_' + (window._gUserId || 'u') + '_' + window._wbSoloStartTs;
+    }
+    if(!window._wbSoloOfficial) window._wbSoloBattleKey = null;
 
     // ★ FIX 20260517(w) — 已停用 AI auto-act hook(_wbIsNpc 永遠 false,
     //   呼叫此 hook 安裝後也不會接管任何槽位,等於空操作。
@@ -14208,7 +14312,8 @@ try{
     const realWbNet = window._wbSoloRealWbNet || window._wbNet;
     window._wbNet = {
       getSnapshot: () => ({ players: fakePlayers, meta: { hostUid: fakePlayers[0].uid, status: 'fighting' } }),
-      getRoomId:   () => '練習',
+      getRoomId:   () => (window._wbSoloOfficial ? '單人' : '練習'),   // ★ v5.447.0
+      getContributions: () => (window._wbSoloContrib || {}),          // ★ v5.447.0 結算/溢傷共用
       isHost:      () => true,
       getMySlot:   () => 0,
       // 戰鬥狀態推送已不走這個(主程式自跑),保留空 stub 避免外部呼叫炸掉
@@ -14247,7 +14352,8 @@ try{
       },
       QUICK_EMOJI: realWbNet ? realWbNet.QUICK_EMOJI : {},
       leaveRoom: async function(){
-        if(window._wbSoloPracticeMode){
+        // ★ v5.447.0 正式單人戰不寫「練習最高紀錄」;存檔離開(_wbSoloSavingExit)也不寫(還沒打完)
+        if(window._wbSoloPracticeMode && !window._wbSoloOfficial && !window._wbSoloSavingExit){
           const myUid = fakePlayers[0].uid;
           const myDmg = (window._wbSoloContrib[myUid] && window._wbSoloContrib[myUid].dmgDealt) || 0;
           if(myDmg > 0){
@@ -14257,6 +14363,8 @@ try{
         window._wbNet = realWbNet;
         window._wbInWorldBossMode = false;
         window._wbSoloPracticeMode = false;
+        window._wbSoloOfficial = false;      // ★ v5.447.0
+        window._wbSoloBattleKey = null;
         // ★ v4.0 — 走主程式對外清理入口(let _adventureStage 才能正確清掉)
         try{
           if(typeof window._wbCleanupAdvAfterBattle === 'function') window._wbCleanupAdvAfterBattle();
@@ -14409,6 +14517,27 @@ try{
     //   不用 setTimeout,直接 IIFE async 觸發。
     //   advStartBattle 內 _pSetTimeout(startTurn, 800) 已被 _gamePaused=true queue 住,
     //   等開戰題答完才解除。
+    // ★ v5.447.0 續戰:不跑開戰題 —— 把快照戰況蓋回 G、更新傷害數字,直接解除暫停讓排隊中的 startTurn 推進
+    if(_rs){
+      setTimeout(function(){
+        try{ if(typeof window._wbSoloApplySnapToG === 'function') window._wbSoloApplySnapToG(_rsBs); }catch(eAp){ console.warn('[v5.447.0 龍王續戰] 還原例外', eAp); }
+        try{
+          const _myU = fakePlayers[0].uid;
+          const _d = (window._wbSoloContrib[_myU] && window._wbSoloContrib[_myU].dmgDealt) || 0;
+          const _dd = document.getElementById('wb-solo-cur-dmg-display');
+          if(_dd) _dd.textContent = _d.toLocaleString();
+          if(typeof window._wbOvfRender === 'function') window._wbOvfRender();
+        }catch(_){}
+        try{ if(typeof bannerFX === 'function') bannerFX(null, '✅ 已恢復至第 ' + ((window.G && window.G.round) || 1) + ' 回合!', '#44ff88', 3500); }catch(_){}
+        setTimeout(function(){
+          try{
+            if(typeof _gamePaused !== 'undefined') _gamePaused = false;
+            if(typeof _resumeTimers === 'function') _resumeTimers();
+            console.log('[v5.447.0 龍王續戰] 🔓 解除暫停,從第 ' + ((window.G && window.G.round) || 1) + ' 回合繼續');
+          }catch(_){}
+        }, 600);
+      }, 120);
+    }else
     (async () => {
       try{
         if(typeof window._wbStartBossOpening === 'function'){
@@ -15877,7 +16006,7 @@ try{
   #wb-entry-overlay .wb-entry-big-btn{ flex:1 1 0 !important; min-width:0 !important; padding:14px 8px !important;
     display:flex !important; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; }
   #wb-entry-overlay .wb-entry-big-btn .ico{ font-size:44px !important; margin-bottom:4px !important; line-height:1.1; }
-  #wb-entry-overlay .wb-entry-big-btn .ttl{ font-size:clamp(20px,2.7vw,40px) !important; letter-spacing:1px !important;
+  #wb-entry-overlay .wb-entry-big-btn .ttl{ font-size:clamp(17px,2.1vw,34px) !important; letter-spacing:1px !important;   /* ★ v5.447.0 五顆按鈕(多了單人挑戰)縮一點 */
     margin:0 !important; white-space:nowrap; line-height:1.2; }
   #wb-entry-overlay .wb-entry-big-btn .desc{ display:none !important; }
   #wb-entry-overlay #wb-solo-best-record{ font-size:16px !important; margin-top:6px !important; padding:3px 8px !important; }
@@ -15928,7 +16057,7 @@ try{
     #wb-entry-overlay .wb-entry-btn-row{ gap:8px !important; margin-top:14px !important; }
     #wb-entry-overlay .wb-entry-big-btn{ padding:10px 4px !important; }
     #wb-entry-overlay .wb-entry-big-btn .ico{ font-size:28px !important; }
-    #wb-entry-overlay .wb-entry-big-btn .ttl{ font-size:19px !important; letter-spacing:0 !important; }
+    #wb-entry-overlay .wb-entry-big-btn .ttl{ font-size:15px !important; letter-spacing:0 !important; }
     #wb-entry-overlay #wb-solo-best-record{ font-size:12px !important; }
     #wb-entry-overlay .wb-entry-big-btn.wb-locked::after,
     #wb-entry-overlay .wb-entry-big-btn.wb-daily-locked::after{ font-size:12px !important; }

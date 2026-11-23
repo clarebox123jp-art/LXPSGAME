@@ -1084,6 +1084,7 @@
   let _wbUiLoaded = false;
   let _wbUiLoadingPromise = null;
 
+  window._wbEnsureUi = function(){ return _wbEnsureUi(); };   // ★ v5.447.0 開機續戰單人龍王戰時要先載入 UI 檔
   async function _wbEnsureUi(){
     if(_wbUiLoaded) return true;
     if(_wbUiLoadingPromise) return _wbUiLoadingPromise;
@@ -1451,6 +1452,7 @@
     }
   }
   window._wbSyncStartButtonGate = _wbSyncStartButtonGate;
+  window._wbIsCeasefireNow = function(){ try{ return !!_wbIsCeasefire(); }catch(_){ return false; } };   // ★ v5.447.0 續戰前檢查
 
   // 休戰期點按鈕的提示(短暫 toast)
   window._wbShowCeasefireToast = function(){
@@ -5158,7 +5160,11 @@
         }
       }
     }catch(_eRid){ console.warn('[WB-Result v3.12.15] roomId 判定例外,沿用旗標', _eRid); }
-    const isHost = !!window._wbConnectedHostMode;
+    // ★ v5.447.0(老師 2026-11-23 單人龍王戰正式版)— 本機單人戰但標了「正式」⇒ 照正式戰結算:
+    //   寫排名、扣雲端龍王 HP、算今日場次、發溢傷知識幣;自己就是房主(代打槽 host_npc_* 算自己的)。
+    const _wbSoloOff = !!window._wbSoloOfficial && !!window._wbSoloPracticeMode;
+    if(_wbSoloOff) isSolo = false;
+    const isHost = !!window._wbConnectedHostMode || _wbSoloOff;
     // ★ v5.383.0(老師「這三個人一場次同樣傷害,應該只佔一個排名」)— 這一場的識別碼:房號＋房主開戰時間
     //   每位隊友結算都會算出同一個值 ⇒ 排行榜/雲端扣血交易內看到同一場就只算一次。
     let _wbBattleKey = '';
@@ -5169,6 +5175,10 @@
         const _mK = (_snK && _snK.meta) || {};
         const _tK = Number(_mK.battleStartedAt) || Number(_mK.createdAt) || 0;
         if(typeof _ridK === 'string' && /^[A-Z0-9]{6}$/.test(_ridK)) _wbBattleKey = 'wb_' + _ridK + '_' + _tK;
+      }
+      // ★ v5.447.0 正式單人戰沒有房號 ⇒ 用「uid＋開戰時間」當這一場的識別碼(續戰沿用同一個,只會扣一次血、記一次排名)
+      if(_wbSoloOff && !_wbBattleKey){
+        _wbBattleKey = window._wbSoloBattleKey || ('wbs_' + (window._gUserId || 'u') + '_' + (window._wbSoloStartTs || Date.now()));
       }
     }catch(_eBk){}
     try{ console.log('[WB-Result v3.12.15] 最終判定 isSolo=' + isSolo + ', isHost=' + isHost
@@ -5779,6 +5789,8 @@
     }catch(_){}
     window._wbInWorldBossMode = false;
     window._wbSoloPracticeMode = false;
+    window._wbSoloOfficial = false;     // ★ v5.447.0 正式單人戰旗標(上面結算已用完)
+    window._wbSoloBattleKey = null;
     window._wbAdvBattleEnded = false;
     // ★ v3.12.15(2026-05-30) — 移除此處的 _wbResultExecuting=false
     //   原 v3.12.12 設計錯誤:把重置點對齊 _wbAdvBattleEnded=false,但這裡是

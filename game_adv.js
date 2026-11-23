@@ -57344,23 +57344,42 @@ function upgradeBurst(name) {
     'box-shadow:0 0 60px rgba(255,120,0,0.4);',
     'font-family:"M PLUS Rounded 1c","Nunito",sans-serif;'
   ].join('');
-    if(window.innerWidth > 1180){ box.style.width='min(96vw,960px)'; box.style.fontSize='200%'; }
+  // ★ v5.446.0(老師 2026-11-23 PC 截圖「爆發技能升級確認視窗太小，和技能升級視窗一樣適當放大」)
+  //   舊寫法 PC 只把外框拉到 960px＋fontSize 200%,但內文都是寫死的 px ⇒ 字沒變大、框很空。
+  //   改成跟技能升級視窗(window._upg2Fit)同一套字級單位 --u(真實螢幕 px,不用 zoom,不給 PC 放大層再縮放):
+  //   PC = min(寬/72,高/40) 夾 18~40;平板 = min(寬/44,高/30) 夾 20~44;手機橫放 = 高/24 夾 15~18。
+  //   各字級倍率與技能升級左欄相同(圖示 2u、標題 1.35u、說明 1.1u、按鈕 1.05u);寬度約 24 字。
+  (function(){
+    var W = window.innerWidth || 1024, H = window.innerHeight || 768;
+    var phone = !!(window._cnPhoneShort && window._cnPhoneShort());
+    var pc = !!window._lxpsPcZoomOn && !phone;
+    var u = phone ? Math.max(15, Math.min(18, H / 24))
+          : (pc ? Math.max(18, Math.min(40, Math.min(W / 72, H / 40))) : Math.max(20, Math.min(44, Math.min(W / 44, H / 30))));
+    u = Math.round(u * 2) / 2;
+    box.style.setProperty('--u', u + 'px');
+    box.style.width = Math.floor(Math.min(W * (phone ? 0.96 : 0.92), u * 24)) + 'px';
+    box.style.padding = 'calc(var(--u)*0.9) calc(var(--u)*1.1)';
+    box.style.borderRadius = 'calc(var(--u)*0.9)';
+    box.style.borderWidth = 'max(2px,calc(var(--u)*0.1))';
+    box.style.boxSizing = 'border-box';
+    box.style.maxHeight = Math.floor(H * 0.92) + 'px';
+    box.setAttribute('data-lxps-no-pczoom', '1');
+  })();
   box.innerHTML = `
-    <div style="font-size:52px;margin-bottom:10px;">🍑</div>
-    <div style="font-size:26px;font-weight:900;color:#ffaa44;margin-bottom:8px;">極限爆發升級確認</div>
-    <div style="font-size:20px;color:#eee;margin-bottom:6px;line-height:1.7;">
+    <div style="font-size:calc(var(--u)*2);line-height:1.1;margin-bottom:calc(var(--u)*0.25);">🍑</div>
+    <div style="font-size:calc(var(--u)*1.35);font-weight:900;color:#ffaa44;margin-bottom:calc(var(--u)*0.45);line-height:1.25;">極限爆發升級確認</div>
+    <div style="font-size:calc(var(--u)*1.1);color:#eee;margin-bottom:calc(var(--u)*0.8);line-height:1.6;">
       使用 <span style="color:#ffcc44;font-weight:800;">1 顆</span> 超越極限果實<br>
       提升 <span style="color:#ff9966;font-weight:800;">【${name}】</span> 的極限爆發<br>
       Lv.${curLv+1} → <span style="color:#ffcc44;font-weight:900;">Lv.${nextLv+1}</span>（效果 +${nextLv*10}%）
-    </div>
-    <div style="margin-bottom:20px;"></div><!-- ★ v5.384.0 老師 2026-11-11:刪除「此操作無法反悔」(商店有極限重置秘藥) -->
-    <div style="display:flex;gap:12px;justify-content:center;">
-      <button id="_burst_yes" style="padding:12px 36px;font-size:22px;font-weight:800;
-        background:rgba(255,140,0,0.25);border:2px solid #ffaa44;color:#ffcc88;
-        border-radius:12px;cursor:pointer;font-family:inherit;">✔ 確定升級</button>
-      <button id="_burst_no" style="padding:12px 24px;font-size:22px;font-weight:800;
-        background:rgba(60,10,10,0.3);border:2px solid #e84040;color:#e84040;
-        border-radius:12px;cursor:pointer;font-family:inherit;">✕ 取消</button>
+    </div><!-- ★ v5.384.0 老師 2026-11-11:刪除「此操作無法反悔」(商店有極限重置秘藥) -->
+    <div style="display:flex;gap:calc(var(--u)*0.5);justify-content:center;flex-wrap:wrap;">
+      <button id="_burst_yes" style="padding:calc(var(--u)*0.45) calc(var(--u)*1.2);font-size:calc(var(--u)*1.05);font-weight:800;white-space:nowrap;
+        background:rgba(255,140,0,0.25);border:max(2px,calc(var(--u)*0.09)) solid #ffaa44;color:#ffcc88;
+        border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;">✔ 確定升級</button>
+      <button id="_burst_no" style="padding:calc(var(--u)*0.45) calc(var(--u)*0.9);font-size:calc(var(--u)*1.05);font-weight:800;white-space:nowrap;
+        background:rgba(60,10,10,0.3);border:max(2px,calc(var(--u)*0.09)) solid #e84040;color:#e84040;
+        border-radius:calc(var(--u)*0.45);cursor:pointer;font-family:inherit;">✕ 取消</button>
     </div>`;
   document.body.appendChild(box);
   try{ if(window._lxpsAboveHeroDetail) window._lxpsAboveHeroDetail(box); }catch(_eHdT){}   /* ★ v5.444.0 圖鑑整備時蓋過圖鑑 */
