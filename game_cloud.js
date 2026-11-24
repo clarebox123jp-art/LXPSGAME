@@ -17047,7 +17047,13 @@
     }
 
     // 6) 背包物品:加總式合併(各物品 += 補償數量,上限 99)
-    const _existBp = (existing.playerBackpack && typeof existing.playerBackpack === 'object') ? existing.playerBackpack : {};
+    // ★ v5.451.0 背包一律優先讀字串版 playerBackpack_s(同 v3.15.57 洗錢 BUG):map 欄位被 merge 深度合併,賣掉/用完(歸 0 刪鍵)的道具會殘留舊數量,
+    //   舊版補償以 map 為底 ⇒ 補一次就把學生賣掉的戰利品、用掉的卷/書全部復活(2026-11-24 龍王補發四位學生實際發生)。三槽都改。
+    const _lxpsCmpBp = function(slotDoc){
+      try{ if(slotDoc && typeof slotDoc.playerBackpack_s === 'string' && slotDoc.playerBackpack_s){ const _o = JSON.parse(slotDoc.playerBackpack_s); if(_o && typeof _o === 'object' && !Array.isArray(_o)) return _o; } }catch(_){}
+      return (slotDoc && slotDoc.playerBackpack && typeof slotDoc.playerBackpack === 'object') ? slotDoc.playerBackpack : {};
+    };
+    const _existBp = _lxpsCmpBp(existing);
     const _newBp = Object.assign({}, _existBp);
     if(compensation.backpack && typeof compensation.backpack === 'object'){
       Object.keys(compensation.backpack).forEach(itemId => {
@@ -17309,7 +17315,7 @@
         }
       }
       // 背包(以 live 既有版本為基底,加總,上限 99)
-      const _liveExistBp = (_existingLive.playerBackpack && typeof _existingLive.playerBackpack === 'object') ? _existingLive.playerBackpack : {};
+      const _liveExistBp = _lxpsCmpBp(_existingLive);   // ★ v5.451.0 優先字串版
       const _liveNewBp = Object.assign({}, _liveExistBp);
       if(compensation.backpack && typeof compensation.backpack === 'object'){
         Object.keys(compensation.backpack).forEach(function(itemId){
@@ -17422,7 +17428,7 @@
         }
       }
       // 背包 — 同主文件邏輯
-      const _safeExistBp = (_existingSafe.playerBackpack && typeof _existingSafe.playerBackpack === 'object') ? _existingSafe.playerBackpack : {};
+      const _safeExistBp = _lxpsCmpBp(_existingSafe);   // ★ v5.451.0 優先字串版
       const _safeNewBp = Object.assign({}, _safeExistBp);
       if(compensation.backpack && typeof compensation.backpack === 'object'){
         Object.keys(compensation.backpack).forEach(function(itemId){
@@ -30089,6 +30095,10 @@
       async function claimPending(){
         if(!window._gUserId) return null;
         try{
+          // ★ v5.451.0 存檔沒載完、或剛登入 12 秒內(登入獎勵/帳本對帳還在跑)⇒ 先等,最多 25 秒;仍沒載完就不領(pending 留著,下次再跳)
+          //   卓秉均 11/23 14:06 與另 3 位都是登入後 10 秒內按領取 ⇒ 雲端標已領、本機入帳隨即被蓋掉
+          window._wbClaimNotReady = false;
+          if(!(await _wbClaimReady())) { window._wbClaimNotReady = true; console.warn('[v5.451.0 龍王領獎] 存檔尚未就緒,這次先不領(獎勵保留)'); return null; }
           // 先讀一次
           const _peekSnap = await getDoc(PLAYER_DOC(window._gUserId));
           if(!_peekSnap.exists()) return null;
@@ -30136,7 +30146,8 @@
               knowledgeCoins: _newCoins,
               playerBackpack: _newBp,
               playerBackpack_s: JSON.stringify(_newBp),
-              wbPendingAward: Object.assign({}, _txPending, { claimedAt: Date.now() }),
+              // ★ v5.451.0 _claimStage:'tx' = 雲端標已領但還沒確認存進存檔槽;存檔成功才改 'saved'(housekeep 依此判斷入帳中斷)
+              wbPendingAward: Object.assign({}, _txPending, { claimedAt: Date.now(), _claimStage: 'tx', _claimSid: String(window._mySessionId || '') }),
             }, { merge: true });
             return Object.assign({}, _txPending);
           });
@@ -30164,6 +30175,18 @@
             }catch(_eSync){ console.warn('[WbSettle claim 本地同步]', _eSync); }
             // ★ v5.449.0 本機餘額一加完就記帳(要搶在任何 gameCloudSave 的對帳之前,否則會先被記成「未分類變動」);SSR 自選命星擲完後再補記
             try{ _wbAwardLogGain(_result, Date.now(), { live: true }); }catch(_eLg0){}
+            // ★ v5.451.0 立刻存檔(不等下一次自動存檔):載入時知識幣/背包取「savedAt 最新的存檔槽」,
+            //   上面 transaction 只改主檔數字、沒動 savedAt ⇒ 沒存檔前關 App/重整,獎勵就消失(卓秉均 11/23 案)。
+            //   存成功才標 'saved';沒成功維持 'tx',下次登入 housekeep 會讓它重新領一次。
+            try{
+              const _sv = await Promise.race([
+                (typeof window.gameCloudSave === 'function') ? window.gameCloudSave() : Promise.resolve(false),
+                new Promise(function(r){ setTimeout(function(){ r(false); }, 15000); })
+              ]);
+              if(_sv && _sv !== false){
+                await setDoc(PLAYER_DOC(window._gUserId), { wbPendingAward: { _claimStage: 'saved', _claimSavedAt: Date.now() } }, { merge: true });
+              } else { console.warn('[v5.451.0 龍王領獎] 領獎後立即存檔沒有成功 ⇒ 維持 tx,下次登入會補'); }
+            }catch(_eSv){ console.warn('[v5.451.0 龍王領獎] 領獎後存檔例外', _eSv); }
 
             // ── 機率部分(在 transaction 外擲,雲端不參與) ──
             // (1) 火龍王之牙:依 rank tier 機率擲;若中且已擁有 → 補 3 張至寶 EXP 卷軸
@@ -30452,16 +30475,41 @@
         }catch(e){ console.warn('[v5.449.0 龍王獎勵記帳] 失敗', e); return 0; }
       }
 
+      // ★ v5.451.0 領獎前等存檔就緒:_progressLoaded 且登入整理(housekeep)開始滿 12 秒;最多等 25 秒
+      async function _wbClaimReady(){
+        const t0 = Date.now();
+        while(Date.now() - t0 < 25000){
+          if(window._progressLoaded === true && (Date.now() - (window._wbHkAt || 0)) >= 12000) return true;
+          await new Promise(function(r){ setTimeout(r, 500); });
+        }
+        return window._progressLoaded === true;
+      }
+
       async function housekeep(){
         const uid = window._gUserId; if(!uid) return null;
+        try{ window._wbHkAt = Date.now(); }catch(_){}
         try{
           const snap = await getDoc(PLAYER_DOC(uid)); if(!snap.exists()) return null;
           const data = snap.data() || {};
-          const p = data.wbPendingAward || null;
+          let p = data.wbPendingAward || null;
+          const now0 = Date.now();
+          // (D) ★ v5.451.0 入帳中斷:雲端標已領(_claimStage 'tx')但領完沒存檔成功,超過 10 分鐘 ⇒ 讓它重新領一次
+          //   (transaction 加在主檔的數字會被下次存檔蓋掉,重領時本機從最新存檔槽再加一次 ⇒ 只會入帳一次)
+          if(p && p.claimedAt && p._claimStage === 'tx' && !p._gmCompensatedAt
+             && (now0 - p.claimedAt) > 10 * 60000 && (now0 - p.claimedAt) < 45 * 86400000){
+            const np = Object.assign({}, p, { claimedAt: null, _claimStage: null, _reclaimFrom: p.claimedAt });
+            await setDoc(PLAYER_DOC(uid), { wbPendingAward: np }, { merge: true });
+            try{ localStorage.removeItem('lxps_wb_claimed_' + p.bossId + '_' + p.roundKey); }catch(_){}
+            console.log('[v5.451.0 龍王獎勵] 上次領獎入帳中斷 ⇒ 重新開放領取:' + p.roundKey + ' 第' + p.rank + '名');
+            return np;
+          }
           // (A) 已領過 ⇒ 補記到「最近獲得」(固定 id,重複呼叫不會重複記)
-          if(p && p.claimedAt){
+          //   ★ v5.451.0 只補記「確定有入帳」的:新版 _claimStage==='saved';舊版看 grantedManifest.at 不早於 claimedAt
+          //     (舊版入帳中斷時 manifest 沒寫到 ⇒ 不可記成「已獲得」,卓秉均就是被這樣誤記);GM 補發過的不記(補發有自己的紀錄)
+          if(p && p.claimedAt && !p._gmCompensatedAt){
             const mf = p.grantedManifest || {};
-            _wbAwardLogGain(p, p.claimedAt, { cstPick: mf.cstPickSsr ? 1 : 0 });
+            const okDone = (p._claimStage === 'saved') || (!p._claimStage && mf.at && mf.at >= p.claimedAt - 5000);
+            if(okDone) _wbAwardLogGain(p, p.claimedAt, { cstPick: mf.cstPickSsr ? 1 : 0 });
           }
           if(p && !p.claimedAt) return p;   // 還有沒領的 ⇒ 交給原本的領獎視窗
           const now = Date.now(), DAY = 86400000;
@@ -30477,14 +30525,21 @@
             return np;
           }
           // (C) 最近一輪結算(30 天內)名單有我,但 pending 從沒寫到(建立時間早於結算時間)⇒ 自己補寫
-          const st = (window._cachedGlobalStats && window._cachedGlobalStats.wbSettlement) || {};
-          let last = null;
-          Object.keys(st).forEach(function(b){ Object.keys(st[b] || {}).forEach(function(r){ const e = st[b][r]; if(e && e.settledAt > 0 && (!last || e.settledAt > last.settledAt)) last = e; }); });
-          if(last && (now - last.settledAt) < 30 * DAY && last.awards && last.awards[uid]){
+          //   ★ v5.451.0 直接讀雲端最新結算(不靠背景訂閱的快取,慢 iPad 3.5 秒時常常還沒到 ⇒ 舊版靜靜跳過);
+          //     並檢查 30 天內「每一輪」,不只最後一輪(由新到舊,補第一個沒寫到的)
+          let st = null;
+          try{ const ss = await getDoc(STATS_DOC()); st = ss.exists() ? ((ss.data() || {}).wbSettlement || {}) : null; }catch(_eSt){ st = null; }
+          if(!st) st = (window._cachedGlobalStats && window._cachedGlobalStats.wbSettlement) || {};
+          const rounds = [];
+          Object.keys(st).forEach(function(b){ Object.keys(st[b] || {}).forEach(function(r){ const e = st[b][r]; if(e && e.settledAt > 0 && (now - e.settledAt) < 30 * DAY && e.awards && e.awards[uid]) rounds.push(e); }); });
+          rounds.sort(function(x, y){ return y.settledAt - x.settledAt; });
+          for(let ri = 0; ri < rounds.length; ri++){
+            const last = rounds[ri];
             const a = last.awards[uid];
             const written = (p && p.roundKey === a.roundKey && p.bossId === a.bossId) || (p && (Number(p.createdAt) || 0) >= last.settledAt)
                          || backup.some(function(b){ return b && b.roundKey === a.roundKey; });
-            if(!written){
+            if(written) continue;
+            {
               const np = Object.assign({}, a, { createdAt: now, claimedAt: null, _selfHealed: true });
               const patch = { wbPendingAward: np };
               if(p && !p.claimedAt){ patch.wbPendingAwardBackup = backup.concat([Object.assign({}, p, { _backupAt: now })]).slice(-5); }
@@ -30685,7 +30740,9 @@
           const _body = document.getElementById('wb-award-modal-body');
           if(!_r){
             if(_body) _body.innerHTML = '<div style="font-size:clamp(16px,2vw,20px);color:#ffcc99;line-height:1.7;text-align:center;">'
-              + 'ℹ️ 獎勵可能已在其他裝置領取,或暫時無法連線。<br>若尚未入帳,下次登入會自動再提醒。</div>';
+              + (window._wbClaimNotReady
+                  ? '⏳ 遊戲資料還在載入,獎勵先幫你保留著。<br>下次登入會再跳出來讓你領取。'
+                  : 'ℹ️ 獎勵可能已在其他裝置領取,或暫時無法連線。<br>若尚未入帳,下次登入會自動再提醒。') + '</div>';
             _btn.textContent = '關閉';
             _btn.disabled = false; _btn.style.opacity = '1';
             _btn.onclick = _close;
